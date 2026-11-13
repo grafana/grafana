@@ -25,6 +25,9 @@ import { getStandardTransformers } from 'app/features/transformers/standardTrans
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
+import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
+import { AutoGridLayout } from '../scene/layout-auto-grid/AutoGridLayout';
+import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
 import { type DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
@@ -135,6 +138,17 @@ describe('InspectJsonTab', () => {
     const obj = JSON.parse(tab.state.jsonText);
     expect(obj.gridPos).toEqual({ x: 0, y: 0, w: 8, h: 10 });
     expect(obj.type).toEqual('table');
+    expect(tab.isEditable()).toBe(false);
+  });
+
+  it('Can show panel json for a library panel laid out by the V2 auto grid', async () => {
+    const { tab } = await buildTestSceneWithV2LibraryPanel();
+
+    // V2 dashboards wrap a library panel in an AutoGridItem, but the legacy representation needs a
+    // DashboardGridItem parent, so building the JSON threw instead of showing the panel.
+    const obj = JSON.parse(tab.state.jsonText);
+    expect(obj.kind).toBe('LibraryPanel');
+    expect(obj.spec.libraryPanel).toEqual({ uid: '111', name: 'LibraryPanel A' });
     expect(tab.isEditable()).toBe(false);
   });
 
@@ -428,6 +442,68 @@ async function buildTestSceneWithV2Spec() {
 
   const tab = new InspectJsonTab({
     panelRef: panel.getRef(),
+    onClose: jest.fn(),
+  });
+
+  return { scene, tab, panel };
+}
+
+async function buildTestSceneWithV2LibraryPanel() {
+  const libraryPanel = new VizPanel({
+    title: 'Panel A',
+    pluginId: 'table',
+    key: 'panel-12',
+    $behaviors: [new LibraryPanelBehavior({ name: 'LibraryPanel A', uid: '111' })],
+    titleItems: [new VizPanelLinks({ menu: new VizPanelLinksMenu({}) })],
+    $data: new SceneDataTransformer({
+      transformations: [
+        {
+          id: 'reduce',
+          options: {
+            reducers: ['last'],
+          },
+        },
+      ],
+      $data: new SceneQueryRunner({
+        datasource: { uid: 'abcdef' },
+        queries: [{ refId: 'A' }],
+      }),
+    }),
+  });
+
+  const panel = vizPanelToPanel(libraryPanel.clone({ $behaviors: undefined }));
+
+  jest.spyOn(libpanels, 'getLibraryPanel').mockResolvedValue({
+    name: 'LibraryPanel A',
+    title: 'LibraryPanel A title',
+    uid: '111',
+    panelKey: 'panel-22',
+    model: panel,
+    type: 'table',
+    version: 1,
+    ...panel,
+  });
+
+  const scene = new DashboardScene(
+    {
+      title: 'hello',
+      uid: 'dash-1',
+      meta: {
+        canEdit: true,
+      },
+      body: new AutoGridLayoutManager({
+        layout: new AutoGridLayout({ children: [new AutoGridItem({ body: libraryPanel })] }),
+      }),
+    },
+    'v2'
+  );
+
+  activateFullSceneTree(scene);
+
+  await new Promise((r) => setTimeout(r, 1));
+
+  const tab = new InspectJsonTab({
+    panelRef: libraryPanel.getRef(),
     onClose: jest.fn(),
   });
 
