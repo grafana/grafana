@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -247,20 +248,30 @@ func TestQueryAPI(t *testing.T) {
 
 type mockInstanceProvider struct {
 	stubbedFrame *data.Frame
+	raw          *mockRawResponse
 }
 
 type mockInstance struct {
 	stubbedFrame *data.Frame
+	raw          *mockRawResponse
 	logger       log.Logger
 }
 
 type mockClient struct {
 	stubbedFrame *data.Frame
+	raw          *mockRawResponse
+}
+
+// mockRawResponse is what mockClient.QueryDataHttpResponse returns, instead of re-encoding QueryData's result
+type mockRawResponse struct {
+	statusCode int
+	body       string
 }
 
 func (m mockInstanceProvider) GetInstance(ctx context.Context, logger log.Logger, headers map[string]string) (clientapi.Instance, error) {
 	instance := mockInstance{
 		stubbedFrame: m.stubbedFrame,
+		raw:          m.raw,
 		logger:       logger,
 	}
 	return instance, nil
@@ -280,6 +291,7 @@ func (m mockInstance) GetLogger() log.Logger {
 func (m mockInstance) GetDataSourceClient(ctx context.Context, ref dataapi.DataSourceRef) (clientapi.QueryDataClient, error) {
 	mclient := mockClient{
 		stubbedFrame: m.stubbedFrame,
+		raw:          m.raw,
 	}
 	return mclient, nil
 }
@@ -297,6 +309,21 @@ func (m mockClient) QueryData(ctx context.Context, req dataapi.QueryDataRequest)
 	}
 	return &backend.QueryDataResponse{
 		Responses: responses,
+	}, nil
+}
+
+func (m mockClient) QueryDataHttpResponse(ctx context.Context, req dataapi.QueryDataRequest) (*http.Response, error) {
+	if m.raw == nil {
+		qdr, err := m.QueryData(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+		return clientapi.NewQDRHttpResponse(queryapi.GetResponseCode(qdr), qdr)
+	}
+	return &http.Response{
+		StatusCode: m.raw.statusCode,
+		Header:     http.Header{"Content-Type": {"application/json"}},
+		Body:       io.NopCloser(strings.NewReader(m.raw.body)),
 	}, nil
 }
 

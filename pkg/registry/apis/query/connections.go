@@ -134,6 +134,10 @@ func getSliceInfo(length int64, offset int64, limit int64) (int64, int64, bool) 
 }
 
 func isConnectionsEnabled(ctx context.Context, namespace string) bool {
+	return isEnabledForNamespace(ctx, namespace, featuremgmt.FlagQueryServiceWithConnections)
+}
+
+func isEnabledForNamespace(ctx context.Context, namespace string, flag string) bool {
 	namespaceAwareEvalCtx := openfeature.NewEvaluationContext(namespace, map[string]any{
 		"namespace": namespace,
 	})
@@ -142,5 +146,5 @@ func isConnectionsEnabled(ctx context.Context, namespace string) bool {
 
 	openfeatureClient := openfeature.NewDefaultClient()
 
-	return openfeatureClient.Boolean(ctx, featuremgmt.FlagQueryServiceWithConnections, false, openfeature.TransactionContext(ctx))
+	return openfeatureClient.Boolean(ctx, flag, false, openfeature.TransactionContext(ctx))
 }
