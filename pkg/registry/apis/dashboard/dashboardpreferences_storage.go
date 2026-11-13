@@ -34,7 +34,7 @@ import (
 const (
 	// The most folders a list page covers: each costs a read of its folder tier.
 	dashboardPreferencesListPageSize = 500
-	// How many folder tiers a list page reads at once.
+	// How many tiers a list page or a merge reads at once.
 	dashboardPreferencesFolderTierReads = 16
 )
 
@@ -306,12 +306,21 @@ func (s *dashboardPreferencesStorage) visibleFolderTier(ctx context.Context, req
 
 // getStoredFolderTiers returns, in order, the folder tier of each folder that has one.
 func (s *dashboardPreferencesStorage) getStoredFolderTiers(ctx context.Context, folderUIDs []string) ([]dashv2beta1.DashboardPreferences, error) {
-	found := make([][]dashv2beta1.DashboardPreferences, len(folderUIDs))
+	names := make([]string, 0, len(folderUIDs))
+	for _, folderUID := range folderUIDs {
+		names = append(names, dashv2beta1.DashboardPreferencesFolderName(folderUID))
+	}
+	return s.getStoredTiers(ctx, names)
+}
+
+// getStoredTiers returns, in order, the named objects that are stored.
+func (s *dashboardPreferencesStorage) getStoredTiers(ctx context.Context, names []string) ([]dashv2beta1.DashboardPreferences, error) {
+	found := make([][]dashv2beta1.DashboardPreferences, len(names))
 	g, gctx := errgroup.WithContext(ctx)
 	g.SetLimit(dashboardPreferencesFolderTierReads)
-	for i, folderUID := range folderUIDs {
+	for i, name := range names {
 		g.Go(func() error {
-			items, err := s.getStored(gctx, dashv2beta1.DashboardPreferencesFolderName(folderUID))
+			items, err := s.getStored(gctx, name)
 			found[i] = items
 			return err
 		})
@@ -363,14 +372,14 @@ type batchItemErrorClient struct {
 func (c batchItemErrorClient) BatchCheck(ctx context.Context, info authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
 	resp, err := c.AccessClient.BatchCheck(ctx, info, req)
 	if err != nil {
-		logging.FromContext(ctx).Error("dashboard preferences list failed to check folder access",
+		logging.FromContext(ctx).Error("dashboard preferences failed to check folder access",
 			"namespace", req.Namespace, "err", err)
 		return authlib.BatchCheckResponse{}, &accessCheckError{subject: "folder", cause: err}
 	}
 	// In request order, because the results are a map and the first failure should not vary.
 	for _, check := range req.Checks {
 		if result := resp.Results[check.CorrelationID]; result.Error != nil {
-			logging.FromContext(ctx).Error("dashboard preferences list failed to check folder access",
+			logging.FromContext(ctx).Error("dashboard preferences failed to check folder access",
 				"namespace", req.Namespace, "folder", check.Name, "err", result.Error)
 			return authlib.BatchCheckResponse{}, &accessCheckError{subject: "folder", cause: result.Error}
 		}

@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"maps"
 	"net/http"
 	"slices"
 	"strings"
@@ -536,6 +537,299 @@ func TestDashboardPreferencesMergedFolders(t *testing.T) {
 			require.Contains(t, record["err"], tt.wantLoggedErr)
 		})
 	}
+}
+
+func TestDashboardPreferencesMerged(t *testing.T) {
+	nsCtx := k8srequest.WithNamespace(context.Background(), "stacks-1")
+	get := []string{utils.VerbGet}
+	specs := map[string]string{
+		"namespace": `{"dashboard":{"autoRefresh":"1m","preload":false}}`,
+		"folder-g":  `{"dashboard":{"hideTimepicker":true,"preload":true}}`,
+		"folder-p":  `{"dashboard":{"cursorSync":"Crosshair"}}`,
+		"folder-c":  `{"dashboard":{"preload":true},"reset":["dashboard.timeRange"]}`,
+		"user-u1":   `{"dashboard":{"preload":false}}`,
+		"user-u2":   `{"dashboard":{"nowDelay":"5m"}}`,
+	}
+	newStored := func() map[string]*dashv2beta1.DashboardPreferences {
+		stored := make(map[string]*dashv2beta1.DashboardPreferences, len(specs))
+		for name, spec := range specs {
+			obj := newDashboardPreferences(name)
+			obj.Spec = dashboardPreferencesSpecFromJSON(t, spec)
+			stored[name] = obj
+		}
+		return stored
+	}
+	// g is the top-level parent of c, and the caller can't read it.
+	newAccessClient := func() *dashboardPreferencesAccessClient {
+		return &dashboardPreferencesAccessClient{grants: map[string][]string{"c": get, "p": get, "x": get}}
+	}
+	newParents := func() *dashboardPreferencesFolderParents {
+		return &dashboardPreferencesFolderParents{chains: map[string][]folders.FolderInfo{"c": dashboardPreferencesFolderChain("g", "p", "c")}}
+	}
+	newStorage := func(store *dashboardPreferencesListStore, accessClient *dashboardPreferencesAccessClient, parents *dashboardPreferencesFolderParents) *dashboardPreferencesStorage {
+		return newDashboardPreferencesStorage(store, dashv2beta1.DashboardPreferencesResourceInfo.GroupVersionKind(), accessClient, nil, &staticHandlerProvider{handler: parents})
+	}
+
+	u1 := dashboardPreferencesRequester(authlib.TypeUser, "u1", identity.RoleViewer)
+	serviceAccount := dashboardPreferencesRequester(authlib.TypeServiceAccount, "sa", identity.RoleAdmin)
+	_, service := identity.WithServiceIdentity(context.Background(), 1)
+	noIdentifier := dashboardPreferencesRequester(authlib.TypeUser, "", identity.RoleViewer)
+
+	fromUser := dashv2beta1.DashboardPreferencesMergedSource{Tier: dashv2beta1.DashboardPreferencesMergedTierUser, Name: "user-u1"}
+	fromC := dashv2beta1.DashboardPreferencesMergedSource{Tier: dashv2beta1.DashboardPreferencesMergedTierFolder, Name: "folder-c"}
+	resetByC := fromC
+	resetByC.Reset = true
+	fromP := dashv2beta1.DashboardPreferencesMergedSource{Tier: dashv2beta1.DashboardPreferencesMergedTierFolder, Name: "folder-p"}
+	// g applies although the caller can't read it, so sources gives its tier without its name.
+	fromG := dashv2beta1.DashboardPreferencesMergedSource{Tier: dashv2beta1.DashboardPreferencesMergedTierFolder}
+	fromOrg := dashv2beta1.DashboardPreferencesMergedSource{Tier: dashv2beta1.DashboardPreferencesMergedTierOrg, Name: dashv2beta1.DashboardPreferencesOrgName}
+
+	withUserGets := []string{"user-u1", "folder-c", "folder-p", "folder-g", "namespace"}
+	withoutUserGets := []string{"folder-c", "folder-p", "folder-g", "namespace"}
+	const withoutUserSpec = `{"dashboard":{"preload":true,"autoRefresh":"1m","hideTimepicker":true,"cursorSync":"Crosshair"}}`
+	withoutUserSources := map[string]dashv2beta1.DashboardPreferencesMergedSource{
+		"dashboard.preload":        fromC,
+		"dashboard.timeRange":      resetByC,
+		"dashboard.cursorSync":     fromP,
+		"dashboard.hideTimepicker": fromG,
+		"dashboard.autoRefresh":    fromOrg,
+	}
+
+	tests := []struct {
+		name        string
+		requester   identity.Requester
+		folder      string
+		includeUser bool
+		// Change the fakes from what every row starts with.
+		stored  func(map[string]*dashv2beta1.DashboardPreferences)
+		parents func(*dashboardPreferencesFolderParents)
+
+		wantGets    []string
+		wantSpec    string
+		wantSources map[string]dashv2beta1.DashboardPreferencesMergedSource
+		// The folders of the one batch check, in order; nil for no batch check.
+		wantBatchCheck []string
+	}{
+		{
+			name:        "a user in a nested folder",
+			requester:   u1,
+			folder:      "c",
+			includeUser: true,
+			wantGets:    withUserGets,
+			wantSpec:    `{"dashboard":{"preload":false,"autoRefresh":"1m","hideTimepicker":true,"cursorSync":"Crosshair"}}`,
+			wantSources: map[string]dashv2beta1.DashboardPreferencesMergedSource{
+				"dashboard.preload":        fromUser,
+				"dashboard.timeRange":      resetByC,
+				"dashboard.cursorSync":     fromP,
+				"dashboard.hideTimepicker": fromG,
+				"dashboard.autoRefresh":    fromOrg,
+			},
+			// The ancestry check left c out: the caller had to read it to get this far.
+			wantBatchCheck: []string{"p", "g"},
+		},
+		{
+			name:           "without the user tier",
+			requester:      u1,
+			folder:         "c",
+			wantGets:       withoutUserGets,
+			wantSpec:       withoutUserSpec,
+			wantSources:    withoutUserSources,
+			wantBatchCheck: []string{"p", "g"},
+		},
+		{
+			name:        "at the top level",
+			requester:   u1,
+			folder:      "",
+			includeUser: true,
+			wantGets:    []string{"user-u1", "namespace"},
+			wantSpec:    `{"dashboard":{"preload":false,"autoRefresh":"1m"}}`,
+			wantSources: map[string]dashv2beta1.DashboardPreferencesMergedSource{
+				"dashboard.preload":     fromUser,
+				"dashboard.autoRefresh": fromOrg,
+			},
+		},
+		{
+			name:           "a service account has no user tier",
+			requester:      serviceAccount,
+			folder:         "c",
+			includeUser:    true,
+			wantGets:       withoutUserGets,
+			wantSpec:       withoutUserSpec,
+			wantSources:    withoutUserSources,
+			wantBatchCheck: []string{"p", "g"},
+		},
+		{
+			name:           "the service identity has no user tier",
+			requester:      service,
+			folder:         "c",
+			includeUser:    true,
+			wantGets:       withoutUserGets,
+			wantSpec:       withoutUserSpec,
+			wantSources:    withoutUserSources,
+			wantBatchCheck: []string{"p", "g"},
+		},
+		{
+			name:        "a user without an identifier has no user tier",
+			requester:   noIdentifier,
+			folder:      "",
+			includeUser: true,
+			wantGets:    []string{"namespace"},
+			wantSpec:    `{"dashboard":{"preload":false,"autoRefresh":"1m"}}`,
+			wantSources: map[string]dashv2beta1.DashboardPreferencesMergedSource{
+				"dashboard.preload":     fromOrg,
+				"dashboard.autoRefresh": fromOrg,
+			},
+		},
+		{
+			name:        "an ancestor whose UID makes no tier name is not read",
+			requester:   u1,
+			folder:      "c",
+			includeUser: true,
+			parents: func(p *dashboardPreferencesFolderParents) {
+				p.chains["c"] = dashboardPreferencesFolderChain("g", "has space", "c")
+			},
+			wantGets: []string{"user-u1", "folder-c", "folder-g", "namespace"},
+			wantSpec: `{"dashboard":{"preload":false,"autoRefresh":"1m","hideTimepicker":true}}`,
+			wantSources: map[string]dashv2beta1.DashboardPreferencesMergedSource{
+				"dashboard.preload":        fromUser,
+				"dashboard.timeRange":      resetByC,
+				"dashboard.hideTimepicker": fromG,
+				"dashboard.autoRefresh":    fromOrg,
+			},
+			wantBatchCheck: []string{"g"},
+		},
+		{
+			name:        "nothing stored",
+			requester:   u1,
+			folder:      "c",
+			includeUser: true,
+			stored: func(stored map[string]*dashv2beta1.DashboardPreferences) {
+				clear(stored)
+			},
+			wantGets:    withUserGets,
+			wantSpec:    `{}`,
+			wantSources: map[string]dashv2beta1.DashboardPreferencesMergedSource{},
+		},
+		{
+			name:      "a tier being deleted doesn't apply",
+			requester: u1,
+			folder:    "c",
+			stored: func(stored map[string]*dashv2beta1.DashboardPreferences) {
+				deleting := metav1.Unix(1, 0)
+				stored["folder-c"].DeletionTimestamp = &deleting
+			},
+			wantGets: withoutUserGets,
+			wantSpec: `{"dashboard":{"preload":true,"autoRefresh":"1m","hideTimepicker":true,"cursorSync":"Crosshair"}}`,
+			wantSources: map[string]dashv2beta1.DashboardPreferencesMergedSource{
+				"dashboard.preload":        fromG,
+				"dashboard.cursorSync":     fromP,
+				"dashboard.hideTimepicker": fromG,
+				"dashboard.autoRefresh":    fromOrg,
+			},
+			wantBatchCheck: []string{"p", "g"},
+		},
+		{
+			name:        "no ancestor tier needs no check",
+			requester:   u1,
+			folder:      "c",
+			includeUser: true,
+			stored: func(stored map[string]*dashv2beta1.DashboardPreferences) {
+				maps.DeleteFunc(stored, func(name string, _ *dashv2beta1.DashboardPreferences) bool {
+					return name != "namespace" && name != "folder-c"
+				})
+			},
+			wantGets: withUserGets,
+			wantSpec: `{"dashboard":{"preload":true,"autoRefresh":"1m"}}`,
+			wantSources: map[string]dashv2beta1.DashboardPreferencesMergedSource{
+				"dashboard.preload":     fromC,
+				"dashboard.timeRange":   resetByC,
+				"dashboard.autoRefresh": fromOrg,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			stored := newStored()
+			if tt.stored != nil {
+				tt.stored(stored)
+			}
+			store := newDashboardPreferencesListStore(t, stored)
+			accessClient := newAccessClient()
+			parents := newParents()
+			if tt.parents != nil {
+				tt.parents(parents)
+			}
+
+			merged, err := newStorage(store, accessClient, parents).merged(identity.WithRequester(nsCtx, tt.requester), tt.folder, tt.includeUser)
+			require.NoError(t, err)
+
+			// The tiers are read at once, so in no set order. Every tier is read by name, so this also shows
+			// that no other user's tier is read.
+			require.ElementsMatch(t, tt.wantGets, store.getNames())
+			require.Equal(t, tt.wantSources, merged.Sources)
+			spec, err := json.Marshal(merged.Spec)
+			require.NoError(t, err)
+			require.JSONEq(t, tt.wantSpec, string(spec))
+
+			if tt.wantBatchCheck == nil {
+				require.Empty(t, accessClient.batchRequests)
+			} else {
+				require.Len(t, accessClient.batchRequests, 1)
+				request := accessClient.batchRequests[0]
+				require.Equal(t, "stacks-1", request.Namespace)
+				names := make([]string, 0, len(request.Checks))
+				for _, check := range request.Checks {
+					names = append(names, check.Name)
+				}
+				require.Equal(t, tt.wantBatchCheck, names)
+			}
+			// A check made as the service identity would pass on the service's own permissions, and name
+			// parents the caller can't read.
+			for _, caller := range accessClient.callers {
+				require.Equal(t, tt.requester.GetUID(), caller)
+			}
+			if tt.folder == "" {
+				require.Empty(t, accessClient.requests)
+				require.Empty(t, parents.gets)
+			}
+		})
+	}
+
+	t.Run("a parent whose check failed is an error", func(t *testing.T) {
+		errG := errors.New("g check failed")
+		accessClient := newAccessClient()
+		accessClient.batchItemErrs = map[string]error{"g": errG}
+		var logs bytes.Buffer
+		ctx := logging.Context(identity.WithRequester(nsCtx, u1), logging.NewSLogLogger(slog.NewJSONHandler(&logs, nil)))
+
+		merged, err := newStorage(newDashboardPreferencesListStore(t, newStored()), accessClient, newParents()).merged(ctx, "c", true)
+
+		require.ErrorIs(t, err, errG)
+		require.ErrorContains(t, err, "folder access could not be checked")
+		// The apiserver sends the error's text to the client, and the cause can be the access backend's raw
+		// message.
+		require.NotContains(t, err.Error(), errG.Error())
+		require.Nil(t, merged)
+
+		var record map[string]any
+		require.NoError(t, json.Unmarshal(logs.Bytes(), &record), "expected one log record, got %s", logs.String())
+		require.Equal(t, "ERROR", record["level"])
+		require.Equal(t, "dashboard preferences failed to check folder access", record["msg"])
+		require.Equal(t, "stacks-1", record["namespace"])
+		require.Equal(t, "g", record["folder"])
+		require.Equal(t, errG.Error(), record["err"])
+	})
+
+	t.Run("a failed tier read is an error", func(t *testing.T) {
+		boom := errors.New("boom")
+		store := newDashboardPreferencesListStore(t, newStored())
+		store.getErr = boom
+
+		merged, err := newStorage(store, newAccessClient(), newParents()).merged(identity.WithRequester(nsCtx, u1), "c", true)
+
+		require.ErrorIs(t, err, boom)
+		require.Nil(t, merged)
+	})
 }
 
 // Decodes strictly, so a misspelled key in a fixture fails the test instead of leaving the field unset.

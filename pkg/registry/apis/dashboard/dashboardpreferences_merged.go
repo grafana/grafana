@@ -20,6 +20,7 @@ import (
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/folder"
 )
 
@@ -142,6 +143,64 @@ func setDashboardPreferencesField(values map[string]any, path string, value any)
 	obj[keys[len(keys)-1]] = value
 }
 
+func (s *dashboardPreferencesStorage) merged(ctx context.Context, folderUID string, includeUser bool) (*dashv2beta1.DashboardPreferencesMerged, error) {
+	requester, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("error getting requester: %w", err)
+	}
+	nsInfo, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, err
+	}
+	folderUIDs, err := s.mergedFolders(ctx, requester, nsInfo, folderUID)
+	if err != nil {
+		return nil, err
+	}
+
+	names := make([]string, 0, len(folderUIDs)+2)
+	// The authorizer let the caller read the org tier, which takes membership of this namespace, so the
+	// caller's own tier passes the user tier's rule.
+	if includeUser && requester.IsIdentityType(authlib.TypeUser) {
+		names = append(names, dashv2beta1.DashboardPreferencesUserName(requester.GetIdentifier()))
+	}
+	for _, uid := range folderUIDs {
+		names = append(names, dashv2beta1.DashboardPreferencesFolderName(uid))
+	}
+	names = append(names, dashv2beta1.DashboardPreferencesOrgName)
+	// Storage can't hold a name that isn't a scope, such as one with an empty identifier or an odd ancestor
+	// UID, so it isn't read.
+	names = slices.DeleteFunc(names, func(name string) bool {
+		_, ok := dashboardPreferencesScopeFromName(name)
+		return !ok
+	})
+
+	stored, err := s.getStoredTiers(ctx, names)
+	if err != nil {
+		return nil, err
+	}
+	// Mutation strips finalizers (mutate.go:275-276), so no tier waits in deletion today; this keeps one that
+	// ever does from applying.
+	stored = slices.DeleteFunc(stored, func(item dashv2beta1.DashboardPreferences) bool {
+		return item.DeletionTimestamp != nil
+	})
+
+	hidden, err := s.unreadableAncestorTiers(ctx, requester, nsInfo.Value, folderUIDs, stored)
+	if err != nil {
+		return nil, err
+	}
+
+	tiers := make([]dashboardPreferencesMergeTier, 0, len(stored))
+	for _, item := range stored {
+		scope, _ := dashboardPreferencesScopeFromName(item.Name)
+		name := item.Name
+		if hidden[item.Name] {
+			name = ""
+		}
+		tiers = append(tiers, dashboardPreferencesMergeTier{tier: scope.Tier, name: name, spec: item.Spec})
+	}
+	return mergeDashboardPreferences(tiers)
+}
+
 // mergedFolders returns the folder and its ancestors, nearest first, or nothing for the top level.
 func (s *dashboardPreferencesStorage) mergedFolders(ctx context.Context, requester identity.Requester, nsInfo authlib.NamespaceInfo, folderUID string) ([]string, error) {
 	// The top level has only the org tier, whose read rule the authorizer already applied.
@@ -221,4 +280,40 @@ func dashboardPreferencesAncestryError(ctx context.Context, namespace, folderUID
 	logging.FromContext(ctx).Error("dashboard preferences failed to read folder ancestry",
 		"namespace", namespace, "folder", folderUID, "err", err)
 	return apierrors.NewInternalError(errors.New("folder ancestry could not be read"))
+}
+
+// Parent folders apply whether or not the caller can read them, but sources names only those it can read.
+func (s *dashboardPreferencesStorage) unreadableAncestorTiers(ctx context.Context, requester identity.Requester, namespace string, folderUIDs []string, stored []dashv2beta1.DashboardPreferences) (map[string]bool, error) {
+	// The first folder is the target, which mergedFolders already required the caller to read.
+	ancestors := map[string]bool{}
+	if len(folderUIDs) > 1 {
+		for _, folderUID := range folderUIDs[1:] {
+			ancestors[dashv2beta1.DashboardPreferencesFolderName(folderUID)] = true
+		}
+	}
+	var items []dashv2beta1.DashboardPreferences
+	hidden := map[string]bool{}
+	for _, item := range stored {
+		if ancestors[item.Name] {
+			items = append(items, item)
+			hidden[item.Name] = true
+		}
+	}
+	if len(items) == 0 {
+		return nil, nil
+	}
+
+	// mergedFolders checked the target with the same client and namespace, so this only keeps a nil client
+	// from being called.
+	if !s.canCheckFolderAccess(requester, namespace) {
+		return hidden, nil
+	}
+	readable, err := s.readableFolderTier(ctx, namespace, items)
+	if err != nil {
+		return nil, err
+	}
+	for _, item := range readable {
+		delete(hidden, item.Name)
+	}
+	return hidden, nil
 }
