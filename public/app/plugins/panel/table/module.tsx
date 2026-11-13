@@ -11,7 +11,7 @@ import { type TransformationKind } from '@grafana/schema/apis/dashboard.grafana.
 import { addTableCustomConfig } from 'app/features/panel/table/addTableCustomConfig';
 import { addTableCustomPanelOptions } from 'app/features/panel/table/addTableCustomPanelOptions';
 
-import { TableCellOptionEditor } from './TableCellOptionEditor';
+import { TableCellOptionEditor, getCellTypeOptionSearchKeywords } from './TableCellOptionEditor';
 import { TablePanel } from './TablePanel';
 import { tableMigrationHandler, tablePanelChangedHandler } from './migrations';
 import { type FieldConfig, type Options } from './panelcfg.gen';
@@ -86,6 +86,9 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
           process: identityOverrideProcessor,
           category: cellCategory,
           shouldApply: () => true,
+          // The dependent sub-options (e.g. the sparkline "Hide value" switch) render inside the
+          // editors, so index their titles for the options-pane search. See #136909.
+          keywords: getCellTypeOptionSearchKeywords(),
         })
         .addBooleanSwitch({
           path: 'inspect',

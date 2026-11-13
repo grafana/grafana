@@ -29,6 +29,7 @@ import {
   getVisualizationOptions2,
   isFieldConfigOptionVisible,
 } from './getVisualizationOptions';
+import { OptionSearchEngine } from './state/OptionSearchEngine';
 
 standardEditorsRegistry.setInit(getAllOptionEditors);
 
@@ -353,6 +354,54 @@ describe('getVisualizationOptions', () => {
 
       expect(vizOptions.length).toEqual(1);
       expect(vizOptions[0].items.length).toEqual(2);
+    });
+
+    it('indexes field option keywords on the pane item, so dependent sub-options match in search', () => {
+      const vizPanel = new VizPanel({
+        title: 'Panel A',
+        pluginId: 'timeseries',
+        key: 'panel-keywords',
+      });
+
+      // Like the table Cell type editor: "Hide value" is not a registered option, it renders
+      // inside the editor, so the search can only match it through the item's keywords (#136909)
+      const cellType: FieldConfigPropertyItem = {
+        id: 'custom.cellOptions',
+        path: 'cellOptions',
+        isCustom: true,
+        process: (value) => value,
+        shouldApply: () => true,
+        override: jest.fn(),
+        editor: jest.fn(),
+        name: 'Cell type',
+        keywords: ['Hide value', 'Colored background'],
+      };
+
+      const plugin = {
+        meta: { skipDataQuery: false },
+        getPanelOptionsSupplier: jest.fn,
+        fieldConfigRegistry: new Registry<FieldConfigPropertyItem>(() => [cellType]),
+      } as unknown as PanelPlugin;
+
+      const vizOptions = getVisualizationOptions2({
+        panel: vizPanel,
+        eventBus: new EventBusSrv(),
+        plugin: plugin,
+        instanceState: {},
+        currentOptions: {},
+        currentFieldConfig: {
+          defaults: {},
+          overrides: [],
+        },
+        reportInteractionUI: 'panel-edit',
+      });
+
+      const item = vizOptions[0].items[0];
+      expect(item.props.keywords).toEqual(['Hide value', 'Colored background']);
+
+      const results = new OptionSearchEngine(vizOptions, []).search('Hide value');
+      expect(results.optionHits).toHaveLength(1);
+      expect(results.optionHits[0].props.title).toBe('Cell type');
     });
 
     const fieldConfig = {
