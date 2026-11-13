@@ -165,7 +165,7 @@ func hybridManifest(gv schema.GroupVersion) *app.ManifestData {
 		Versions: []app.ManifestVersion{{
 			Name: gv.Version, Served: true,
 			Kinds: []app.ManifestVersionKind{{
-				Kind: "Widget", Plural: "widgets", Scope: namespacedScope,
+				Kind: "Widget", Plural: "widgets", Resource: "widgets", Scope: namespacedScope,
 				Search: &app.ManifestVersionKindSearch{Hybrid: &enabled},
 			}},
 		}},
@@ -241,8 +241,8 @@ func TestBuild_MountsKindsWithoutSearchFields(t *testing.T) {
 				Name:   gv.Version,
 				Served: true,
 				Kinds: []app.ManifestVersionKind{{
-					Kind:         "Playlist",
-					Plural:       "playlists",
+					Kind:   "Playlist",
+					Plural: "playlists", Resource: "playlists",
 					Scope:        namespacedScope,
 					SearchFields: fields,
 				}},
@@ -298,7 +298,7 @@ func TestBuild_UsesFullBuilderManifest(t *testing.T) {
 			Name:   gv.Version,
 			Served: true,
 			Kinds: []app.ManifestVersionKind{{
-				Kind: "Widget", Plural: "widgets", Scope: namespacedScope,
+				Kind: "Widget", Plural: "widgets", Resource: "widgets", Scope: namespacedScope,
 				Search: &app.ManifestVersionKindSearch{Endpoint: &searchDisabled},
 			}},
 		}},
@@ -314,6 +314,28 @@ func TestBuild_UsesFullBuilderManifest(t *testing.T) {
 	got := paths(Build(true, false, nil, fakeClient{}, builders, nil, Options{}))
 
 	assert.Empty(t, got, "the full manifest opt-out must win over synthesized resource declarations")
+}
+
+func TestBuild_SkipsKindsWithoutResource(t *testing.T) {
+	gv := schema.GroupVersion{Group: "example.grafana.app", Version: "v1"}
+	manifest := &app.ManifestData{
+		Group: gv.Group,
+		Versions: []app.ManifestVersion{{
+			Name:   gv.Version,
+			Served: true,
+			Kinds: []app.ManifestVersionKind{{
+				Kind: "Widget", Plural: "widgets", Scope: namespacedScope,
+			}},
+		}},
+	}
+	builders := []builder.APIGroupBuilder{&manifestBuilder{
+		resourceBuilder: &resourceBuilder{fakeBuilder: &fakeBuilder{gvs: []schema.GroupVersion{gv}}},
+		manifest:        manifest,
+	}}
+
+	got := paths(Build(true, false, nil, fakeClient{}, builders, nil, Options{}))
+
+	assert.Empty(t, got, "a kind with no resource name has no path to mount under")
 }
 
 func TestBuild_SkipsBuilderAdvertisedClusterScopedKinds(t *testing.T) {
@@ -367,7 +389,7 @@ func TestBuild_MountsKindsDeclaredByManifestAndBuilderOnce(t *testing.T) {
 			Name:   gv.Version,
 			Served: true,
 			Kinds: []app.ManifestVersionKind{{
-				Kind: "Widget", Plural: "widgets", Scope: namespacedScope,
+				Kind: "Widget", Plural: "widgets", Resource: "widgets", Scope: namespacedScope,
 			}},
 		}},
 	}}
@@ -653,7 +675,7 @@ func TestBuild_ManifestOptOutIsHonoured(t *testing.T) {
 				Served: true,
 				Kinds: []app.ManifestVersionKind{{
 					Kind:   "Dashboard",
-					Plural: "dashboards",
+					Plural: "dashboards", Resource: "dashboards",
 					Scope:  namespacedScope,
 					Search: search,
 					// Enrols the kind, so what is under test is the opt-out alone.
@@ -707,8 +729,8 @@ func todoManifest(gv schema.GroupVersion, fieldType, capability string) []*app.M
 			Served: true,
 			Kinds: []app.ManifestVersionKind{{
 				Kind:   "Todo",
-				Plural: "todos",
-				Scope:  "Namespaced",
+				Plural: "todos", Resource: "todos",
+				Scope: "Namespaced",
 				SearchFields: []app.ManifestVersionKindSearchField{
 					{Name: "title", Path: "spec.title", Type: fieldType, Capabilities: []string{capability}},
 				},

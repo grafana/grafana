@@ -16,6 +16,7 @@
           {
             "kind": "Widget",
             "plural": "Widgets",
+            "resource": "widgets",
             "scope": "Namespaced",
             "schemas": {
               "OperatorState": {
@@ -88,6 +89,7 @@
           {
             "kind": "WorkflowSteps",
             "plural": "WorkflowSteps",
+            "resource": "workflowsteps",
             "scope": "Cluster",
             "userReadable": true,
             "schemas": {
@@ -124,6 +126,7 @@
           {
             "kind": "WorkflowConfigs",
             "plural": "WorkflowConfigs",
+            "resource": "workflowconfigs",
             "scope": "Cluster",
             "userReadable": false,
             "schemas": {
@@ -166,6 +169,7 @@
           {
             "kind": "Widget",
             "plural": "Widgets",
+            "resource": "widgets",
             "scope": "Namespaced",
             "schemas": {
               "OperatorState": {
@@ -250,6 +254,7 @@
           {
             "kind": "WorkflowSteps",
             "plural": "WorkflowSteps",
+            "resource": "workflowsteps",
             "scope": "Cluster",
             "userReadable": true,
             "schemas": {
@@ -286,6 +291,7 @@
           {
             "kind": "WorkflowConfigs",
             "plural": "WorkflowConfigs",
+            "resource": "workflowconfigs",
             "scope": "Cluster",
             "userReadable": false,
             "schemas": {

@@ -125,14 +125,14 @@ func httpTestManifest() *app.ManifestData {
 		Name: "v1",
 		Kinds: []app.ManifestVersionKind{{
 			Kind:   "Widget",
-			Plural: "widgets",
+			Plural: "widgets", Resource: "widgets",
 			Admission: &app.AdmissionCapabilities{
 				Validation: &app.ValidationCapability{Operations: ops},
 				Mutation:   &app.MutationCapability{Operations: ops},
 			},
 		}, {
 			Kind:   "Gadget",
-			Plural: "gadgets",
+			Plural: "gadgets", Resource: "gadgets",
 			Admission: &app.AdmissionCapabilities{
 				Validation: &app.ValidationCapability{Operations: []app.AdmissionOperation{app.AdmissionOperationAny}},
 			},

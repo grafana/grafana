@@ -17,8 +17,8 @@ func TestRouteIndexCandidate(t *testing.T) {
 	version := app.ManifestVersion{
 		Name: "v1",
 		Kinds: []app.ManifestVersionKind{
-			{Kind: "Thing", Plural: "Things", Scope: "Namespaced"},
-			{Kind: "Node", Plural: "Nodes", Scope: "Cluster"},
+			{Kind: "Thing", Plural: "Things", Resource: "things", Scope: "Namespaced"},
+			{Kind: "Node", Plural: "Nodes", Resource: "nodes", Scope: "Cluster"},
 		},
 		OpenAPI: app.ManifestVersionOpenAPI{Paths: map[string]spec3.PathProps{
 			"/report":                         get,
