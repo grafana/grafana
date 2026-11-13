@@ -12468,6 +12468,7 @@
       "has-error": "Has errors",
       "has-error-fields": "Has error fields",
       "has-stacktrace": "Has a stack trace",
+      "is-from-time-machine": "Retrieved from Time Machine",
       "is-sampled": "Is sampled",
       "show-less": "show less",
       "show-more": "show more",
