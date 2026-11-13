@@ -1934,7 +1934,7 @@
       "synthetic-monitoring-card-title": "Synthetic Monitoring",
       "tiles": {
         "active-rules": "Active rules",
-        "active-rules-hint": "evaluating now",
+        "active-rules-hint": "{{percent}}% of all rules",
         "active-silences": "Active silences",
         "active-silences-hint_one": "{{count}} expires in the next 24 hours",
         "active-silences-hint_other": "{{count}} expire in the next 24 hours",

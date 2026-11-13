@@ -305,7 +305,7 @@ describe('RevampedHome with Grafana-managed rules', () => {
 
     render(<RevampedHome />);
 
-    expect(await ui.tile('Active rules').find()).toHaveTextContent('Active rules3');
+    expect(await ui.tile('Active rules').find()).toHaveTextContent('Active rules375% of all rules');
     expect(ui.tile('Evaluations succeeding').get()).toHaveTextContent(
       'Evaluations succeeding66.67%2 of 3 rules, last evaluation'
     );
@@ -655,6 +655,18 @@ describe('RevampedHome with Grafana Cloud usage metrics', () => {
     }
     // Tile values stay current: they come from the rules, not from the last usage sample.
     expect(ui.tile('Firing instances').get()).toHaveTextContent('Firing instances10');
+  });
+
+  it('shows the rules firing now when none of them fired anew in the range', async () => {
+    // A rule that has been firing since before the range has no state change in it, so no times fired.
+    setDataSourceQueries({ mostFired: [], firingTrend: [] });
+
+    render(<RevampedHome />);
+
+    const table = await ui.topFiringRules.find();
+    const rows = within(table).getAllByRole('row').slice(1);
+    expect(rows.map((row) => row.textContent)).toEqual(['CPU high7', 'Disk full3']);
+    expect(ui.mostFiredRules.query()).not.toBeInTheDocument();
   });
 
   it('lists the most fired rules over the range with a trend for each, instead of the rules firing now', async () => {

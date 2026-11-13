@@ -86,7 +86,13 @@ export function RunningOverview({
         <Tile
           label={t('alerting.home.tiles.active-rules', 'Active rules')}
           value={rules.activeRules}
-          hint={t('alerting.home.tiles.active-rules-hint', 'evaluating now')}
+          hint={
+            rules.totalRules
+              ? t('alerting.home.tiles.active-rules-hint', '{{percent}}% of all rules', {
+                  percent: Math.round((rules.activeRules / rules.totalRules) * 100),
+                })
+              : undefined
+          }
           trend={usage?.activeRules}
           trendLabel={trendLabel}
         />
@@ -489,8 +495,10 @@ function MostFiredRules({
   const mostFired = useMostFiredRules(range, source);
   const mostFiredRules = mostFired.value?.rules;
 
-  // Without state history results the rules firing now are the next best ranking.
-  if (mostFired.error) {
+  // Without state history results, or when no rule fired anew in the range (a rule that has been firing
+  // since before it has no state change in it), the rules firing now are the next best ranking.
+  const nothingFiredAnew = !mostFired.loading && mostFired.value?.rules.length === 0;
+  if (mostFired.error || (nothingFiredAnew && rules.topFiringRules.length > 0)) {
     return <TopFiringRules rules={rules} />;
   }
 
