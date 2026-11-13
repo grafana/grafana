@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	"github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/legacyscopes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 )
 
 type localScopeResolver func(context.Context, types.NamespaceInfo, legacyscopes.ScopeReference) (string, error)
@@ -53,7 +55,10 @@ func TestPermissionSearchResolvesUIDFilterBeforeLegacyStorage(t *testing.T) {
 		}
 		return "platform", nil
 	})
-	got, err := service.SearchUsersPermissions(t.Context(), &user.SignedInUser{OrgID: 1, Namespace: "default"}, accesscontrol.SearchOptions{UserID: 2, Action: "teams:read", Scope: "teams:uid:platform"})
+	requester := &user.SignedInUser{OrgID: 1, Namespace: "default", Permissions: map[int64]map[string][]string{
+		1: {accesscontrol.ActionUsersPermissionsRead: {"users:id:2"}},
+	}}
+	got, err := service.SearchUsersPermissions(t.Context(), requester, accesscontrol.SearchOptions{UserID: 2, Action: "teams:read", Scope: "teams:uid:platform"})
 	require.NoError(t, err)
 	require.Equal(t, map[int64][]accesscontrol.Permission{2: {{Action: "teams:read", Scope: "teams:uid:platform"}}}, got)
 }
@@ -115,6 +120,73 @@ func TestPermissionSearchSeparatesUserIDsAndUIDs(t *testing.T) {
 			require.Len(t, got, len(tc.wantIDs))
 			for _, id := range tc.wantIDs {
 				require.Equal(t, []accesscontrol.Permission{permission}, got[id])
+			}
+		})
+	}
+}
+
+func TestPermissionSearchFiltersMergedResults(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		userID     int64
+		scopes     []string
+		legacyOnly bool
+		wantIDs    []int64
+	}{
+		{name: "broad scoped visibility", scopes: []string{"users:id:8"}, wantIDs: []int64{8}},
+		{name: "cached target denied", userID: 42, scopes: []string{"users:id:8"}},
+		{name: "cached target allowed", userID: 8, scopes: []string{"users:id:8"}, wantIDs: []int64{8}},
+		{name: "UID visibility", scopes: []string{"users:uid:alice"}, wantIDs: []int64{8}},
+		{name: "wildcard visibility", scopes: []string{"users:*"}, wantIDs: []int64{8, 42}},
+		{name: "no visibility"},
+		{name: "legacy cached target denied", userID: 42, scopes: []string{"users:id:8"}, legacyOnly: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			permission := accesscontrol.Permission{Action: "dashboards:read", Scope: "dashboards:uid:legacy"}
+			store := &actest.FakeStore{
+				ExpectedUsersRoles:       map[int64][]string{8: {"Viewer"}, 42: {"Viewer"}},
+				ExpectedUsersPermissions: map[int64][]accesscontrol.Permission{8: {permission}, 42: {permission}},
+			}
+			uid := "bob"
+			if tc.userID == 8 {
+				uid = "alice"
+			}
+			users := &usertest.FakeUserService{
+				ExpectedUser: &user.User{ID: tc.userID, UID: uid},
+				ExpectedSearchUsers: user.SearchUserQueryResult{TotalCount: 2, Users: []*user.UserSearchHitDTO{
+					{ID: 8, UID: "alice"}, {ID: 42, UID: "bob"},
+				}},
+			}
+			service := setupServiceWithFakeStore(t, store, &fakeZanzanaClient{listResp: &authzv1.ListResponse{Items: []string{"zanzana"}}}, users)
+			service.roles = map[string]*accesscontrol.RoleDTO{"Viewer": {}}
+			service.scopeResolver = localScopeResolver(func(context.Context, types.NamespaceInfo, legacyscopes.ScopeReference) (string, error) {
+				return "8", nil
+			})
+			if tc.legacyOnly {
+				service.zanzanaResolver = nil
+			}
+			requester := &user.SignedInUser{OrgID: 1, Namespace: "default", Permissions: map[int64]map[string][]string{1: {
+				accesscontrol.ActionUsersPermissionsRead: tc.scopes,
+				"users:read":                             {"global.users:id:8", "global.users:id:42"},
+			}}}
+			options := accesscontrol.SearchOptions{Action: permission.Action, UserID: tc.userID}
+			if tc.userID > 0 {
+				// Cached target grants must still be filtered for each requester.
+				cachedOptions := options
+				cachedOptions.RolePrefixes = OSSRolesPrefixes
+				_, err := service.SearchUserPermissions(t.Context(), 1, cachedOptions)
+				require.NoError(t, err)
+				_, cached := service.searchUserPermissionsFromCache(t.Context(), 1, cachedOptions)
+				require.True(t, cached)
+			}
+			got, err := service.SearchUsersPermissions(t.Context(), requester, options)
+			require.NoError(t, err)
+			require.Len(t, got, len(tc.wantIDs))
+			for _, id := range tc.wantIDs {
+				require.Contains(t, got[id], permission)
+				if !tc.legacyOnly {
+					require.Contains(t, got[id], accesscontrol.Permission{Action: permission.Action, Scope: "dashboards:uid:zanzana"})
+				}
 			}
 		})
 	}

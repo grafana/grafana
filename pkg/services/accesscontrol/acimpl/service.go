@@ -788,6 +788,11 @@ func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Reque
 	// Limit roles to available in OSS
 	options.RolePrefixes = OSSRolesPrefixes
 
+	canView, err := legacyscopes.UserPermissionsReadFilter(ctx, usr, s.scopeResolver)
+	if err != nil {
+		return nil, err
+	}
+
 	var res map[int64][]accesscontrol.Permission
 
 	if options.UserID > 0 {
@@ -829,11 +834,6 @@ func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Reque
 			return nil, err
 		}
 
-		canView, err := legacyscopes.UserPermissionsReadFilter(ctx, usr, s.scopeResolver)
-		if err != nil {
-			return nil, err
-		}
-
 		// Merge stored (DB) and basic role permissions (RAM)
 		// Assumes that all users with stored permissions have org roles
 		res = map[int64][]accesscontrol.Permission{}
@@ -865,7 +865,14 @@ func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Reque
 	}
 
 	options.Scope = originalScope
-	return legacyscopes.ResolveSearchScopes(ctx, usr, originalScope, s.scopeResolver, s.zanzanaResolver.MergeSearch(ctx, usr, usr.GetOrgID(), options, res, s.log))
+	res = s.zanzanaResolver.MergeSearch(ctx, usr, usr.GetOrgID(), options, res, s.log)
+	// Zanzana can add users after legacy filtering, so check the complete result.
+	for userID := range res {
+		if !canView(userID) {
+			delete(res, userID)
+		}
+	}
+	return legacyscopes.ResolveSearchScopes(ctx, usr, originalScope, s.scopeResolver, res)
 }
 
 func (s *Service) SearchUserPermissions(ctx context.Context, orgID int64, searchOptions accesscontrol.SearchOptions) ([]accesscontrol.Permission, error) {
