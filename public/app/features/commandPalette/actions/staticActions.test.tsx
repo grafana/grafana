@@ -62,6 +62,9 @@ it('offers every selectable theme in the command palette', () => {
     getSelectableThemes().map((theme) => `preferences/${theme.id}-theme`)
   );
   expect(themeActions.map((action) => action.name)).toContain('System preference');
+  expect(themeActions.map((action) => action.subtitle)).toEqual(
+    getSelectableThemes().map((theme) => (theme.isExtra ? 'Experimental' : undefined))
+  );
 });
 
 const hasTemplateAction = (actions: CommandPaletteAction[]) =>

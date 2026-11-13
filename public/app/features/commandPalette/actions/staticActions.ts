@@ -136,6 +136,7 @@ function getGlobalActions(): CommandPaletteAction[] {
     ...getSelectableThemes().map((theme) => ({
       id: `preferences/${theme.id}-theme`,
       name: themeNames[theme.id] ?? theme.name,
+      subtitle: theme.isExtra ? t('command-palette.action.experimental', 'Experimental') : undefined,
       keywords: `${theme.name} theme`,
       perform: () => changeTheme(theme.id),
       parent: 'preferences/theme',
