@@ -1014,7 +1014,8 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	pullRequestWorker := pullrequest.ProvidePullRequestWorker(cfg, renderingService, v5, eventualRestConfigProvider, registerer)
 	v14 := extras.ProvideExtraWorkers(pullRequestWorker)
 	factory := github.ProvideFactory()
-	v15 := extras.ProvideProvisioningOSSRepositoryExtras(cfg, decryptService, factory, webhookExtraBuilder, registerer)
+	secureValueClient := secret.ProvideSecureValueClient(secureValueService, secureValueValidator, accessClient)
+	v15 := extras.ProvideProvisioningOSSRepositoryExtras(cfg, decryptService, factory, webhookExtraBuilder, registerer, secureValueClient)
 	repositoryFactory, err := extras.ProvideFactoryFromConfig(cfg, tracingService, v15)
 	if err != nil {
 		return nil, err
@@ -1026,8 +1027,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 		return nil, err
 	}
 	quotaGetter := extras.ProvideQuotaGetter(cfg)
-	secureValueClient := secret.ProvideSecureValueClient(secureValueService, secureValueValidator, accessClient)
-	provisioningAPIBuilder, err := provisioning3.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, v5, eventualRestConfigProvider, accessClient, dualwriteService, usageStats, orgService, tracingService, v13, v14, repositoryFactory, connectionFactory, quotaGetter, subscriberService, secureValueClient)
+	provisioningAPIBuilder, err := provisioning3.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, v5, eventualRestConfigProvider, accessClient, dualwriteService, usageStats, orgService, tracingService, v13, v14, repositoryFactory, connectionFactory, quotaGetter, subscriberService)
 	if err != nil {
 		return nil, err
 	}
@@ -1817,7 +1817,8 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	pullRequestWorker := pullrequest.ProvidePullRequestWorker(cfg, renderingService, v5, eventualRestConfigProvider, registerer)
 	v14 := extras.ProvideExtraWorkers(pullRequestWorker)
 	factory := github.ProvideFactory()
-	v15 := extras.ProvideProvisioningOSSRepositoryExtras(cfg, decryptService, factory, webhookExtraBuilder, registerer)
+	secureValueClient := secret.ProvideSecureValueClient(secureValueService, secureValueValidator, accessClient)
+	v15 := extras.ProvideProvisioningOSSRepositoryExtras(cfg, decryptService, factory, webhookExtraBuilder, registerer, secureValueClient)
 	repositoryFactory, err := extras.ProvideFactoryFromConfig(cfg, tracingService, v15)
 	if err != nil {
 		return nil, err
@@ -1829,8 +1830,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	quotaGetter := extras.ProvideQuotaGetter(cfg)
-	secureValueClient := secret.ProvideSecureValueClient(secureValueService, secureValueValidator, accessClient)
-	provisioningAPIBuilder, err := provisioning3.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, v5, eventualRestConfigProvider, accessClient, dualwriteService, usageStats, orgService, tracingService, v13, v14, repositoryFactory, connectionFactory, quotaGetter, subscriberService, secureValueClient)
+	provisioningAPIBuilder, err := provisioning3.RegisterAPIService(cfg, featureToggles, apiserverService, registerer, v5, eventualRestConfigProvider, accessClient, dualwriteService, usageStats, orgService, tracingService, v13, v14, repositoryFactory, connectionFactory, quotaGetter, subscriberService)
 	if err != nil {
 		return nil, err
 	}

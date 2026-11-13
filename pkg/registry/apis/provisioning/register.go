@@ -41,7 +41,6 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	repogithub "github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
-	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apiserver/auditing"
@@ -65,7 +64,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/usage"
-	secretcontracts "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -378,7 +376,6 @@ func RegisterAPIService(
 	connectionFactory connection.Factory,
 	quotaGetter quotas.QuotaGetter,
 	natsSubscriber nats.Subscriber,
-	secureValues secretcontracts.SecureValueClient,
 ) (*APIBuilder, error) {
 	if !cfg.ProvisioningEnabled {
 		return nil, nil
@@ -395,15 +392,9 @@ func RegisterAPIService(
 		return nil, fmt.Errorf("invalid [provisioning] resources configuration: %w", err)
 	}
 
-	// The secrets API is served only by Enterprise, but the service behind it is wired here, so
-	// a declared secrets kind is addressed in process: that is enough for a local repository,
-	// whose files never leave the instance and are the only ones allowed to carry a secret.
-	if secureValues != nil {
-		resources.ServeInProcess(supportedResources,
-			secretv1beta1.SecureValuesResourceInfo.GroupVersionKind(),
-			secretv1beta1.SecureValuesResourceInfo.GroupVersionResource(),
-			secureValues)
-	}
+	// Where the secrets API is not served, a declared secrets kind is addressed in process
+	// instead: enough for a local repository, the only one allowed to carry a secret.
+	serveSecureValues(supportedResources)
 
 	jobHistoryConfig := createJobHistoryConfigFromSettings(cfg)
 	maxFileSize := cfg.ProvisioningMaxFileSize
