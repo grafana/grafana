@@ -111,6 +111,7 @@ export function useCommonTableProps(options: CommonTableOptions, fieldConfig: Fi
       contentAwareWidthsEnabled,
       tableRefreshEnabled,
       jsonSyntaxHighlightingEnabled: refreshNewFeaturesEnabled,
+      autoDetectJsonEnabled: refreshNewFeaturesEnabled,
       rangeFiltersEnabled: refreshNewFeaturesEnabled,
     }),
     [

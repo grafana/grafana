@@ -1984,7 +1984,8 @@ function isPlainObject(value: unknown): value is object {
 export function buildInspectValue(
   value: unknown,
   field: Field,
-  formatGeometry?: OpenLayersContextValue['formatGeometry']
+  formatGeometry?: OpenLayersContextValue['formatGeometry'],
+  autoDetectJson = false
 ): [string, TableCellInspectorMode] {
   const cellOptions = getCellOptions(field);
 
@@ -2026,6 +2027,17 @@ export function buildInspectValue(
     mode = TableCellInspectorMode.code;
   } else {
     inspectValue = String(value ?? '');
+    if (autoDetectJson && field.type === FieldType.string && typeof value === 'string') {
+      const text = value.trim();
+      if ((text.startsWith('{') && text.endsWith('}')) || (text.startsWith('[') && text.endsWith(']'))) {
+        try {
+          inspectValue = JSON.stringify(JSON.parse(text), null, '  ');
+          mode = TableCellInspectorMode.code;
+        } catch {
+          // Keep malformed JSON as plain text.
+        }
+      }
+    }
   }
 
   return [inspectValue, mode];

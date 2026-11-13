@@ -12,6 +12,7 @@ export type CommonTableNGProps = Omit<
   | 'tableRefreshEnabled'
   | 'contentAwareWidthsEnabled'
   | 'jsonSyntaxHighlightingEnabled'
+  | 'autoDetectJsonEnabled'
   | 'rangeFiltersEnabled'
   | 'timeZone'
 > & { timeZone: string };
@@ -33,6 +34,7 @@ export function CommonTableNG(props: CommonTableNGProps) {
       tableRefreshEnabled={tableRefreshEnabled}
       contentAwareWidthsEnabled={contentAwareWidthsEnabled}
       jsonSyntaxHighlightingEnabled={refreshNewFeaturesEnabled}
+      autoDetectJsonEnabled={refreshNewFeaturesEnabled}
       rangeFiltersEnabled={refreshNewFeaturesEnabled}
     />
   );

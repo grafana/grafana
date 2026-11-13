@@ -58,6 +58,7 @@ export const TableCellActions = memo(
     cellInspect,
     showFilters,
     tableRefreshEnabled,
+    autoDetectJsonEnabled,
     onAddToAssistant,
     groups,
   }: TableCellActionsProps) => {
@@ -82,7 +83,7 @@ export const TableCellActions = memo(
           icon: 'eye',
           testId: selectors.components.Panels.Visualization.TableNG.cellActions.inspectButton,
           onClick: () => {
-            const [inspectValue, mode] = buildInspectValue(value, field, formatGeometry);
+            const [inspectValue, mode] = buildInspectValue(value, field, formatGeometry, autoDetectJsonEnabled);
             setInspectCell({ value: inspectValue, mode });
           },
         },
@@ -157,7 +158,7 @@ export const TableCellActions = memo(
             data-testid={selectors.components.Panels.Visualization.TableNG.cellActions.inspectButton}
             aria-label={t('grafana-ui.table.cell-inspect-tooltip', 'Inspect value')}
             onClick={() => {
-              const [inspectValue, mode] = buildInspectValue(value, field, formatGeometry);
+              const [inspectValue, mode] = buildInspectValue(value, field, formatGeometry, autoDetectJsonEnabled);
               setInspectCell({ value: inspectValue, mode });
             }}
           />

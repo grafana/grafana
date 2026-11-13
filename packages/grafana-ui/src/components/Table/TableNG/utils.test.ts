@@ -20,6 +20,7 @@ import { getPillElements } from '@grafana/data/internal';
 import { type SortColumn } from '@grafana/react-data-grid';
 import { BarGaugeDisplayMode, TableCellBackgroundDisplayMode, TableCellHeight } from '@grafana/schema';
 
+import { TableCellInspectorMode } from '../TableCellInspector';
 import { TableCellDisplayMode, type TableCellOptions } from '../types';
 
 import { COLUMN, FIRST_COLUMN_CLASS, LAST_COLUMN_CLASS, NESTED_ROW_CLASS, STRIPED_ROW_CLASS, TABLE } from './constants';
@@ -3525,6 +3526,44 @@ describe('TableNG utils', () => {
   });
 
   describe('buildInspectValue', () => {
+    it.each([
+      {
+        name: 'object',
+        value: '{"region":"eu","count":3}',
+        enabled: true,
+        expected: '{\n  "region": "eu",\n  "count": 3\n}',
+        mode: TableCellInspectorMode.code,
+      },
+      {
+        name: 'array with surrounding whitespace',
+        value: '  [1,2] \n',
+        enabled: true,
+        expected: '[\n  1,\n  2\n]',
+        mode: TableCellInspectorMode.code,
+      },
+      {
+        name: 'disabled detection',
+        value: '{"count":3}',
+        enabled: false,
+        expected: '{"count":3}',
+        mode: TableCellInspectorMode.text,
+      },
+      {
+        name: 'invalid object',
+        value: '{not JSON}',
+        enabled: true,
+        expected: '{not JSON}',
+        mode: TableCellInspectorMode.text,
+      },
+      { name: 'invalid array', value: '[1,]', enabled: true, expected: '[1,]', mode: TableCellInspectorMode.text },
+      { name: 'scalar', value: '42', enabled: true, expected: '42', mode: TableCellInspectorMode.text },
+      { name: 'null cell', value: null, enabled: true, expected: '', mode: TableCellInspectorMode.text },
+      { name: 'ordinary text', value: ' text ', enabled: true, expected: ' text ', mode: TableCellInspectorMode.text },
+    ])('auto-detects JSON for inspection: $name', ({ value, enabled, expected, mode }) => {
+      const field: Field = { name: 'value', type: FieldType.string, values: [null, value], config: {} };
+      expect(buildInspectValue(value, field, undefined, enabled)).toEqual([expected, mode]);
+    });
+
     const numberFieldWithNulls: Field = {
       name: 'numbers-with-nulls',
       type: FieldType.number,
