@@ -271,6 +271,7 @@ type PluginMetaDTO struct {
 	Signature                 SignatureStatus   `json:"signature"`
 	Module                    string            `json:"module"`
 	ModuleHash                string            `json:"moduleHash,omitempty"`
+	BuildHash                 string            `json:"buildHash,omitempty"`
 	BaseURL                   string            `json:"baseUrl"`
 	Angular                   AngularMeta       `json:"angular"`
 	MultiValueFilterOperators bool              `json:"multiValueFilterOperators"`
@@ -328,6 +329,7 @@ type PanelDTO struct {
 	Angular          AngularMeta       `json:"angular"`
 	LoadingStrategy  LoadingStrategy   `json:"loadingStrategy"`
 	ModuleHash       string            `json:"moduleHash,omitempty"`
+	BuildHash        string            `json:"buildHash,omitempty"`
 	Translations     map[string]string `json:"translations,omitempty"`
 }
 
@@ -341,6 +343,7 @@ type AppDTO struct {
 	Extensions      Extensions        `json:"extensions"`
 	Dependencies    Dependencies      `json:"dependencies"`
 	ModuleHash      string            `json:"moduleHash,omitempty"`
+	BuildHash       string            `json:"buildHash,omitempty"`
 	Translations    map[string]string `json:"translations,omitempty"`
 	BuildMode       string            `json:"buildMode,omitempty"`
 }
