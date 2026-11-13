@@ -2,11 +2,17 @@ import { render, screen, within } from '@testing-library/react';
 import { uniqueId } from 'lodash';
 
 import {
+  applyFieldOverrides,
+  createTheme,
   dateMath,
   dateTime,
   type EventBus,
+  FieldConfigOptionsRegistry,
   type FieldDisplay,
+  FieldType,
   LoadingState,
+  ReducerID,
+  standardEditorsRegistry,
   type TimeRange,
   toDataFrame,
   VizOrientation,
@@ -21,6 +27,7 @@ import {
   LegendDisplayMode,
   type LegendPlacement,
 } from '@grafana/schema';
+import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 
 import {
   BarGaugePanel,
@@ -35,6 +42,8 @@ import { defaultOptions, type Options } from './panelcfg.gen';
 
 const valueSelector = selectors.components.Panels.Visualization.BarGauge.valueV2;
 
+standardEditorsRegistry.setInit(getAllOptionEditors);
+
 describe('BarGaugePanel', () => {
   describe('when there is no data', () => {
     it('show a "No Data" message', () => {
@@ -47,6 +56,43 @@ describe('BarGaugePanel', () => {
   });
 
   describe('when there is data', () => {
+    it.each([
+      { name: 'shared automatic bounds', bounds: {}, widths: ['276px', '552px'] },
+      { name: 'an explicit maximum', bounds: { max: 4000 }, widths: ['138px', '276px'] },
+      { name: 'an explicit minimum', bounds: { min: 500 }, widths: ['184px', '552px'] },
+      { name: 'two explicit bounds', bounds: { min: 500, max: 2500 }, widths: ['138px', '414px'] },
+      { name: 'per-field bounds', bounds: { fieldMinMax: true }, widths: ['552px', '552px'] },
+    ])('scales delta bars using $name', ({ bounds, widths }) => {
+      const panelData = buildPanelData();
+      panelData.options = {
+        ...panelData.options,
+        displayMode: BarGaugeDisplayMode.Basic,
+        textMode: BigValueTextMode.None,
+        reduceOptions: { calcs: [ReducerID.delta], values: false },
+      };
+      panelData.fieldConfig.defaults = bounds;
+      panelData.data.series = applyFieldOverrides(
+        {
+          fieldConfig: panelData.fieldConfig,
+          fieldConfigRegistry: new FieldConfigOptionsRegistry(getAllStandardFieldConfigs),
+          replaceVariables: (value) => value,
+          theme: createTheme(),
+        },
+        [
+          toDataFrame({
+            fields: [
+              { name: 'requests', type: FieldType.number, values: [999000, 1000000] },
+              { name: 'jobs', type: FieldType.number, values: [998000, 1000000] },
+            ],
+          }),
+        ]
+      );
+
+      const { container } = render(<BarGaugePanel {...panelData} />);
+      const bars = container.querySelectorAll<HTMLElement>('[style*="transition: width"]');
+      expect(Array.from(bars, (bar) => bar.style.width)).toEqual(widths);
+    });
+
     it('shows the panel', () => {
       const firstBarPanel = 'firstBarPanel';
       const secondBarPanel = 'secondBarPanel';
