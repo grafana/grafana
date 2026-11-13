@@ -107,6 +107,8 @@ export type TracePageHeaderProps = {
   hideHeaderDetails?: boolean;
   /** Trace-level related-logs link (no span id filter). */
   logsLinkModel?: LinkModel;
+  /** False when the data source has several logs destinations, so the header link stays on the first one. */
+  allowLogsDatasourceFallback?: boolean;
 };
 
 export const TracePageHeader = memo((props: TracePageHeaderProps) => {
@@ -130,6 +132,7 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
     viewRange,
     hideHeaderDetails = false,
     logsLinkModel,
+    allowLogsDatasourceFallback = true,
   } = props;
 
   const styles = useStyles2(getStyles);
@@ -363,7 +366,14 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
                 : null}
             </div>
 
-            {logsLinkModel && <LogsLinkButton linkModel={logsLinkModel} traceDatasourceUid={datasourceUid} forTrace />}
+            {logsLinkModel && (
+              <LogsLinkButton
+                linkModel={logsLinkModel}
+                traceDatasourceUid={datasourceUid}
+                forTrace
+                allowDatasourceFallback={allowLogsDatasourceFallback}
+              />
+            )}
 
             <Dropdown overlay={shareDropdownMenu} placement="bottom-end">
               <Button
