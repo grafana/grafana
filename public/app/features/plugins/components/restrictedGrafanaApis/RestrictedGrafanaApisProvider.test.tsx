@@ -4,6 +4,10 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { useRestrictedGrafanaApis } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
+import {
+  type RestrictedGrafanaApisWithQueryCoauthoring,
+  isQueryCoauthoringAPI,
+} from 'app/features/dashboard-scene/panel-edit/PanelEditNext/QueryEditor/coauthoring/queryCoauthoringContracts';
 
 import { RestrictedGrafanaApisProvider } from './RestrictedGrafanaApisProvider';
 import { composerApi } from './composer/composerApi';
@@ -156,3 +160,49 @@ function renderRestrictedApis(pluginId: string) {
     ),
   });
 }
+
+describe('restricted query coauthoring API', () => {
+  afterEach(() => {
+    act(() => setTestFlags({}));
+    jest.restoreAllMocks();
+  });
+
+  it('reactively exposes and removes the internal API with its flag', async () => {
+    jest.replaceProperty(config.bootData, 'settings', {
+      ...config.bootData.settings,
+      pluginRestrictedAPIsAllowList: { queryCoauthoring: ['grafana-assistant-app'] },
+    });
+    setTestFlags({ 'queryeditor.coauthoringUi': false });
+    const { result } = renderRestrictedApis('grafana-assistant-app');
+    expect(result.current).toEqual({});
+    act(() => setTestFlags({ 'queryeditor.coauthoringUi': true }));
+    await waitFor(() =>
+      expect(
+        isQueryCoauthoringAPI((result.current as RestrictedGrafanaApisWithQueryCoauthoring).queryCoauthoring)
+      ).toBe(true)
+    );
+    const api = (result.current as RestrictedGrafanaApisWithQueryCoauthoring).queryCoauthoring!;
+    expect(api.canEnter({ panelId: 1, refId: 'A' })).toEqual({ ok: false, reason: 'not_in_panel_edit' });
+    act(() => setTestFlags({ 'queryeditor.coauthoringUi': false }));
+    await waitFor(() => expect(result.current).toEqual({}));
+  });
+
+  it('applies block lists at load and preserves explicit allow-list precedence', () => {
+    setTestFlags({ 'queryeditor.coauthoringUi': true });
+    jest.replaceProperty(config.bootData, 'settings', {
+      ...config.bootData.settings,
+      pluginRestrictedAPIsAllowList: undefined,
+      pluginRestrictedAPIsBlockList: { queryCoauthoring: ['grafana-assistant-app'] },
+    });
+    expect(getRestrictedGrafanaApisAtLoad('grafana-assistant-app')).not.toHaveProperty('queryCoauthoring');
+    const permitted: RestrictedGrafanaApisWithQueryCoauthoring = getRestrictedGrafanaApisAtLoad('other-app');
+    expect(isQueryCoauthoringAPI(permitted.queryCoauthoring)).toBe(true);
+    jest.replaceProperty(config.bootData, 'settings', {
+      ...config.bootData.settings,
+      pluginRestrictedAPIsAllowList: { queryCoauthoring: ['grafana-assistant-app'] },
+    });
+    const explicitlyAllowed: RestrictedGrafanaApisWithQueryCoauthoring =
+      getRestrictedGrafanaApisAtLoad('grafana-assistant-app');
+    expect(isQueryCoauthoringAPI(explicitlyAllowed.queryCoauthoring)).toBe(true);
+  });
+});

@@ -68,3 +68,15 @@ After Prometheus and expressions implement the contracts, compare their needs an
 - `closeCoauthoringSession` supplies the flag-off and panel-leave reasons; pane deactivation disposes the owner. Removing or renaming the Focus closes the session, while other canonical changes make the Proposal stale.
 
 The Surface work wires listener gating, selection, row/editor projection, the restricted API, flags, badges and telemetry. It must use the session state subscription to rerender proposed rows and pass the editor selection callback when entering; preview itself never changes the selected query. Closing or moving the Assistant must not call the session's exit operation.
+
+## v2 Core Surface
+
+The restricted `queryCoauthoring` API is declared internally and shared through the existing plugin allow/block lists, including the Assistant allow-list entry. It exists while `queryeditor.coauthoringUi` is enabled. A registered entry listener plus the visual refresh enables v2; without the listener, Core retains the private v1 prop and inline flow. Core does not read Assistant flags or listen to its layout/close events.
+
+`QueryEditorContextWrapper` mounts the panel with `useMountedCoauthoringPanel`. It supplies explicit selection and resolves the per-query language contracts with runtime version guards. The API passes entry ranges and the entry-click session ID to the existing engine. The Surface subscribes to session snapshots to project proposed editor text and row state. Editor handles are version-checked, unsubscribed, and cleared on disposal; optional line marks replace the current Option and clear when its preview ends. Preview never selects a query.
+
+The pane remains the session owner across row switches and Assistant changes. Its flag subscription closes sessions as `flag_off`; panel departure, Focus removal, explicit Exit and replacement retain the engine's lifecycle rules. Entry and Resume dispatch separate listener requests. Resuming an ended session is impossible.
+
+Core reports the existing coauthoring interaction names with `sessionId` and no prompt/query text. New session-open and Proposal-staged events connect the `query_coauthoring` journey's entry and first-preview-outcome steps under `panel_edit`. Only the user entry handler starts a Faro user action.
+
+Local integration tests use the restricted API, mounted editor-host seam and real PanelEditNext context wrapper with the existing engine and expressions contract. The test editor is a contract harness, not the deployed Prometheus editor or Assistant. Their hosted integration acceptance remains separate.

@@ -1,5 +1,5 @@
 import { ProviderStatus, useBooleanFlagDetails, useOpenFeatureClientStatus } from '@openfeature/react-sdk';
-import { useEffect, useMemo, useState } from 'react';
+import { type ComponentProps, type ComponentType, useEffect, useMemo, useState } from 'react';
 
 import {
   CoreApp,
@@ -23,12 +23,14 @@ import {
   useQueryEditorUIContext,
   useQueryRunnerContext,
 } from './QueryEditorContext';
+import { useCoauthoringEditor } from './coauthoring/QueryCoauthoringEditor';
 import { QueryCoauthoringSurface } from './coauthoring/QueryCoauthoringSurface';
 import {
   type InternalQueryEditorCoauthoringPropsV1,
   type QueryEditorCoauthoringAdapterV1,
   type QueryEditorCoauthoringRegistrationV1,
 } from './coauthoring/internalCoauthoringContract';
+import { type QueryEditorPropsWithCoauthoring } from './coauthoring/queryCoauthoringContracts';
 import { reportQueryCoauthoringDecision } from './coauthoring/queryCoauthoringDecision';
 import { type QueryPreview } from './coauthoring/queryPreview';
 import { supportsQueryCoauthoring } from './coauthoring/supportsQueryCoauthoring';
@@ -64,6 +66,7 @@ export function QueryEditorPanel({
   runQueries,
   startQueryPreview,
 }: QueryEditorPanelProps) {
+  const v2 = useCoauthoringEditor(query, queries);
   const coauthoringFlag = useBooleanFlagDetails(FlagKeys.QueryeditorCoauthoringUi, false);
   const providerStatus = useOpenFeatureClientStatus();
   const coauthoringEnabled = coauthoringFlag.value;
@@ -104,6 +107,13 @@ export function QueryEditorPanel({
     runQueries,
     startQueryPreview,
   });
+
+  const revertV1 = proposalTransaction.revert;
+  useEffect(() => {
+    if (v2.active) {
+      revertV1();
+    }
+  }, [v2.active, revertV1]);
 
   const coauthoringHost = useMemo(
     () => ({
@@ -176,26 +186,31 @@ export function QueryEditorPanel({
 
   const { datasource, dsSettings } = queryDsData;
   const internalCoauthoringProps: InternalQueryEditorCoauthoringPropsV1 = {
-    unstable_queryEditorCoauthoringV1: coauthoringEnabled && coauthoringSupported ? coauthoringRegistration : undefined,
+    unstable_queryEditorCoauthoringV1:
+      coauthoringEnabled && !v2.active && coauthoringSupported ? coauthoringRegistration : undefined,
   };
+  const Editor: ComponentType<QueryEditorPropsWithCoauthoring<ComponentProps<typeof QueryEditorComponent>>> =
+    QueryEditorComponent;
   return (
     <>
+      {v2.toolbar}
       <DataSourcePluginContextProvider instanceSettings={dsSettings}>
         <ErrorBoundaryAlert boundaryName="query-editor-renderer">
-          <QueryEditorComponent
+          <Editor
             key={coauthoringIdentity}
             {...internalCoauthoringProps}
+            {...(v2.host ? { queryCoauthoring: v2.host } : {})}
             app={CoreApp.PanelEditor}
             data={filteredData}
             datasource={datasource}
             onAddQuery={addQuery}
             onChange={proposalTransaction.onChange}
             onRunQuery={proposalTransaction.run}
-            queries={proposalTransaction.editorQueries}
-            query={proposalTransaction.editorQuery ?? query}
+            queries={v2.active ? v2.editorQueries : proposalTransaction.editorQueries}
+            query={(v2.active ? v2.editorQuery : proposalTransaction.editorQuery) ?? query}
             range={filteredData?.timeRange}
           />
-          {coauthoringAdapter && (
+          {!v2.active && coauthoringAdapter && (
             <QueryCoauthoringSurface
               adapter={coauthoringAdapter}
               host={coauthoringHost}

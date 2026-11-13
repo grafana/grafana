@@ -74,13 +74,14 @@ export class QueryCoauthoringSessionEngine {
   public enter(
     refId: string,
     ranges: QueryCoauthoringRange[] = [],
-    select: (refId: string) => void = () => undefined
+    select: (refId: string) => void = () => undefined,
+    sessionId?: string
   ): QueryCoauthoringSession {
     if (!this.runner.state.queries.some((query) => query.refId === refId)) {
       throw new Error('Unknown query');
     }
     this.close('replaced');
-    this.session = new Session(this, this.panel, this.runner, refId, ranges, select);
+    this.session = new Session(this, this.panel, this.runner, refId, ranges, select, sessionId);
     return this.session;
   }
 
@@ -152,7 +153,8 @@ class Session implements QueryCoauthoringSession {
     private runner: SceneQueryRunner,
     private focus: string,
     private ranges: QueryCoauthoringRange[],
-    private selectQuery: (refId: string) => void
+    private selectQuery: (refId: string) => void,
+    sessionId = generateUUID()
   ) {
     this.closed = new Promise((resolve) => {
       this.resolveClosed = resolve;
@@ -160,7 +162,7 @@ class Session implements QueryCoauthoringSession {
     this.original = cloneDeep(runner.state.queries);
     this.originalDatasource = cloneDeep(runner.state.datasource);
     this.state = {
-      sessionId: generateUUID(),
+      sessionId,
       revision: owner.getRevision(),
       step: 'review',
       queries: cloneDeep(this.original),

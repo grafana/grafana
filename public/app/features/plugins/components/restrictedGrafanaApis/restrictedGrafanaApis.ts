@@ -2,6 +2,11 @@ import { type DashboardMutationAPI, type RestrictedGrafanaApisContextType } from
 import { getAllowedRestrictedGrafanaApis } from '@grafana/data/internal';
 import { config } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+import {
+  isQueryCoauthoringEnabled,
+  queryCoauthoringApi,
+} from 'app/features/dashboard-scene/panel-edit/PanelEditNext/QueryEditor/coauthoring/queryCoauthoringApi';
+import { type RestrictedGrafanaApisWithQueryCoauthoring } from 'app/features/dashboard-scene/panel-edit/PanelEditNext/QueryEditor/coauthoring/queryCoauthoringContracts';
 import { alertingAlertRuleFormSchemaApi } from 'app/features/plugins/components/restrictedGrafanaApis/alerting/alertRuleFormSchema';
 
 import { composerApi } from './composer/composerApi';
@@ -24,13 +29,16 @@ export function isComposerEnabled(): boolean {
  */
 export function getRestrictedGrafanaApis({
   composerEnabled,
+  coauthoringEnabled = isQueryCoauthoringEnabled(),
   dashboardMutationAPI,
 }: {
   composerEnabled: boolean;
+  coauthoringEnabled?: boolean;
   dashboardMutationAPI?: DashboardMutationAPI;
-}): RestrictedGrafanaApisContextType {
+}): RestrictedGrafanaApisWithQueryCoauthoring {
   return {
     ...sharedApis,
+    ...(coauthoringEnabled ? { queryCoauthoring: queryCoauthoringApi } : {}),
     ...(dashboardMutationAPI ? { dashboardMutationAPI } : {}),
     ...(composerEnabled ? { composer: composerApi } : {}),
   };
