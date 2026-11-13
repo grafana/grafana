@@ -4,8 +4,11 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"sync"
 	"testing"
+	"testing/synctest"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/plugins"
@@ -303,6 +306,123 @@ func TestInMemory_Remove(t *testing.T) {
 			require.Equal(t, tt.err, err)
 		})
 	}
+}
+
+func TestInMemory_Notify(t *testing.T) {
+	newPlugin := func(id string) *plugins.Plugin {
+		return &plugins.Plugin{JSONData: plugins.JSONData{ID: id}}
+	}
+
+	t.Run("Notifies after a plugin is added or removed", func(t *testing.T) {
+		i := NewInMemory()
+		ch := i.Notify(t.Context())
+
+		require.NoError(t, i.Add(t.Context(), newPlugin(pluginID)))
+		require.Len(t, ch, 1)
+		<-ch
+
+		require.NoError(t, i.Remove(t.Context(), pluginID, ""))
+		require.Len(t, ch, 1)
+	})
+
+	t.Run("Does not notify when nothing changes", func(t *testing.T) {
+		i := NewInMemory()
+		require.NoError(t, i.Add(t.Context(), newPlugin(pluginID)))
+		ch := i.Notify(t.Context())
+
+		require.Error(t, i.Add(t.Context(), newPlugin(pluginID)))
+		require.Error(t, i.Remove(t.Context(), "other-ds", ""))
+		require.Empty(t, ch)
+	})
+
+	t.Run("Coalesces changes that were not received", func(t *testing.T) {
+		i := NewInMemory()
+		ch := i.Notify(t.Context())
+
+		require.NoError(t, i.Add(t.Context(), newPlugin("a-ds")))
+		require.NoError(t, i.Add(t.Context(), newPlugin("b-ds")))
+		require.Len(t, ch, 1)
+	})
+
+	t.Run("Notifies every subscriber", func(t *testing.T) {
+		i := NewInMemory()
+		first := i.Notify(t.Context())
+		second := i.Notify(t.Context())
+
+		require.NoError(t, i.Add(t.Context(), newPlugin(pluginID)))
+		require.Len(t, first, 1)
+		require.Len(t, second, 1)
+	})
+
+	t.Run("Works on a registry built without NewInMemory", func(t *testing.T) {
+		i := &InMemory{store: map[string]*plugins.Plugin{}, alias: map[string]*plugins.Plugin{}}
+		ch := i.Notify(t.Context())
+
+		require.NoError(t, i.Add(t.Context(), newPlugin(pluginID)))
+		require.Len(t, ch, 1)
+	})
+
+	t.Run("Closes the channel once the context is done", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			i := NewInMemory()
+			ctx, cancel := context.WithCancel(t.Context())
+			ch := i.Notify(ctx)
+			other := i.Notify(t.Context())
+
+			cancel()
+			synctest.Wait()
+
+			_, ok := <-ch
+			require.False(t, ok)
+			require.NoError(t, i.Add(t.Context(), newPlugin(pluginID)))
+			require.Len(t, other, 1)
+			require.Equal(t, 1, subscriberCount(i))
+		})
+	})
+
+	t.Run("Closes the channel when the context is already done", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			i := NewInMemory()
+			ctx, cancel := context.WithCancel(t.Context())
+			cancel()
+
+			ch := i.Notify(ctx)
+			synctest.Wait()
+
+			_, ok := <-ch
+			require.False(t, ok)
+			require.Zero(t, subscriberCount(i))
+		})
+	})
+
+	t.Run("Is safe to use concurrently", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			i := NewInMemory()
+			var wg sync.WaitGroup
+			for n := range 20 {
+				wg.Go(func() {
+					ctx, cancel := context.WithCancel(t.Context())
+					i.Notify(ctx)
+					cancel()
+				})
+				wg.Go(func() {
+					id := fmt.Sprintf("plugin-%d", n)
+					assert.NoError(t, i.Add(t.Context(), newPlugin(id)))
+					assert.NoError(t, i.Remove(t.Context(), id, ""))
+				})
+			}
+			wg.Wait()
+			synctest.Wait()
+
+			require.Zero(t, subscriberCount(i))
+		})
+	})
+}
+
+func subscriberCount(i *InMemory) int {
+	i.subMu.Lock()
+	defer i.subMu.Unlock()
+	return len(i.subscribers)
 }
 
 func TestAliasSupport(t *testing.T) {

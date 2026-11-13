@@ -19,6 +19,7 @@ import (
 )
 
 var _ Store = (*Service)(nil)
+var _ Notifier = (*Service)(nil)
 var _ v3.ClientV3Loader = (*Service)(nil)
 
 const ServiceName = "plugins.store"
@@ -30,6 +31,15 @@ type Store interface {
 	Plugin(ctx context.Context, pluginID string) (Plugin, bool)
 	// Plugins returns plugins by their requested type.
 	Plugins(ctx context.Context, pluginTypes ...plugins.Type) []Plugin
+}
+
+// Notifier reports changes to the plugins in the store.
+type Notifier interface {
+	// Notify returns a channel that receives a value after a plugin is added to or
+	// removed from the store. Changes are coalesced: a receiver that falls behind
+	// gets one value for several changes, so it should read the plugins again after
+	// each receive. The channel is closed once ctx is done.
+	Notify(ctx context.Context) <-chan struct{}
 }
 
 type Service struct {
@@ -232,6 +242,18 @@ func (s *Service) Routes(ctx context.Context) []*plugins.StaticRoute {
 		}
 	}
 	return staticRoutes
+}
+
+// Notify does not wait for startup, so a subscriber that calls it early hears about the plugins the store loads
+// while it starts.
+func (s *Service) Notify(ctx context.Context) <-chan struct{} {
+	if n, ok := s.pluginRegistry.(registry.Notifier); ok {
+		return n.Notify(ctx)
+	}
+
+	ch := make(chan struct{})
+	context.AfterFunc(ctx, func() { close(ch) })
+	return ch
 }
 
 func (s *Service) shutdown(ctx context.Context) error {
