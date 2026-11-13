@@ -6,6 +6,7 @@ import { getWrapper, renderHook } from 'test/test-utils';
 import { type DataSourceInstanceListItem, type NavModelItem } from '@grafana/data';
 import { config, useDataSourceInstanceList } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
+import { getSelectableThemes } from 'app/core/components/ThemeSelector/getSelectableThemes';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getDashboardTemplatesTab } from 'app/features/dashboard/dashgrid/DashboardLibrary/enterprise-components/DashboardTemplatesTabExtension';
 import { setMobileViewport } from 'app/features/dashboard-scene/utils/mobileViewportTestUtils';
@@ -50,6 +51,18 @@ function renderStaticActions(navBarTree: NavModelItem[] = []) {
   const wrapper = ({ children }: { children: ReactNode }) => <Wrapper>{children}</Wrapper>;
   return renderHook(() => useStaticActions(), { wrapper });
 }
+
+it('offers every selectable theme in the command palette', () => {
+  const { result } = renderStaticActions();
+  const themeActions = result.current.filter(
+    (action) => action.id.startsWith('preferences/') && action.id.endsWith('-theme')
+  );
+
+  expect(themeActions.map((action) => action.id)).toEqual(
+    getSelectableThemes().map((theme) => `preferences/${theme.id}-theme`)
+  );
+  expect(themeActions.map((action) => action.name)).toContain('System preference');
+});
 
 const hasTemplateAction = (actions: CommandPaletteAction[]) =>
   actions.some((action) => action.id === 'browse-template-dashboard');

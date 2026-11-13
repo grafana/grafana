@@ -10,6 +10,7 @@ import {
   shouldRenderInviteUserButton,
   performInviteUserClick,
 } from 'app/core/components/AppChrome/TopBar/InviteUserButtonUtils';
+import { getSelectableThemes } from 'app/core/components/ThemeSelector/getSelectableThemes';
 import { useNavTree } from 'app/core/navtree/useNavTree';
 import { contextSrv } from 'app/core/services/context_srv';
 import { changeTheme } from 'app/core/services/theme';
@@ -123,23 +124,24 @@ function getGlobalActions(): CommandPaletteAction[] {
       sectionId: SECTION_PREFERENCES,
       priority: PREFERENCES_PRIORITY,
     },
-    {
-      id: 'preferences/dark-theme',
-      name: t('command-palette.action.dark-theme', 'Dark'),
-      keywords: 'dark theme',
-      perform: () => changeTheme('dark'),
-      parent: 'preferences/theme',
-      priority: PREFERENCES_PRIORITY,
-    },
-    {
-      id: 'preferences/light-theme',
-      name: t('command-palette.action.light-theme', 'Light'),
-      keywords: 'light theme',
-      perform: () => changeTheme('light'),
-      parent: 'preferences/theme',
-      priority: PREFERENCES_PRIORITY,
-    },
   ];
+
+  const themeNames: Record<string, string> = {
+    dark: t('command-palette.action.dark-theme', 'Dark'),
+    light: t('command-palette.action.light-theme', 'Light'),
+    system: t('shared.preferences.theme.system-label', 'System preference'),
+  };
+
+  actions.push(
+    ...getSelectableThemes().map((theme) => ({
+      id: `preferences/${theme.id}-theme`,
+      name: themeNames[theme.id] ?? theme.name,
+      keywords: `${theme.name} theme`,
+      perform: () => changeTheme(theme.id),
+      parent: 'preferences/theme',
+      priority: PREFERENCES_PRIORITY,
+    }))
+  );
 
   if (process.env.NODE_ENV === 'development') {
     // eslint-disable @grafana/i18n/no-untranslated-strings
