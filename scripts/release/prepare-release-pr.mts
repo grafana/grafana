@@ -4,17 +4,17 @@
 //
 // Usage: node scripts/release/prepare-release-pr.mts
 // Reads INDEPENDENT_PACKAGES (the packages output of independent-packages.mts) from the environment and needs
-// the git tags fetched. Run from the repo root, with NX_DAEMON=false in CI. Writes changed to GITHUB_OUTPUT,
+// the git tags fetched. Run from the repo root. Writes changed to GITHUB_OUTPUT,
 // and when it is true also summary_path: a JSON list of {name, currentVersion, newVersion, changelog} written
 // to RUNNER_TEMP.
 
 import { execFileSync } from 'node:child_process';
-import { readFileSync, realpathSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 
 import { writeOutputs } from './lib/github-output.mts';
+import { isMainModule } from './lib/main.mts';
 import { parsePackages, type IndependentPackage } from './lib/packages.mts';
 import type { PackageRelease } from './lib/releases.mts';
 import { tagFor } from './lib/tags.mts';
@@ -149,7 +149,7 @@ export async function createVersioningDeps(packages: IndependentPackage[]): Prom
   };
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === realpathSync(process.argv[1])) {
+if (isMainModule(import.meta.url)) {
   try {
     const packages = parsePackages(process.env.INDEPENDENT_PACKAGES);
     const result = await prepareReleasePr(await createVersioningDeps(packages));

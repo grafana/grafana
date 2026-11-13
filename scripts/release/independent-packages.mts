@@ -5,11 +5,11 @@
 // Writes packages=<JSON list of {group, name, root, manifestPath}> to GITHUB_OUTPUT, or to stdout.
 
 import { execFileSync } from 'node:child_process';
-import { readFileSync, realpathSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
 
 import { writeOutputs } from './lib/github-output.mts';
+import { isMainModule } from './lib/main.mts';
 import type { IndependentPackage } from './lib/packages.mts';
 
 interface ReleaseGroup {
@@ -70,7 +70,7 @@ export function createDeps(): Deps {
   };
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === realpathSync(process.argv[1])) {
+if (isMainModule(import.meta.url)) {
   try {
     writeOutputs({ packages: JSON.stringify(getIndependentPackages(createDeps())) });
   } catch (error) {

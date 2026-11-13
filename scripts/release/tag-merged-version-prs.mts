@@ -4,15 +4,14 @@
 //
 // Usage: node scripts/release/tag-merged-version-prs.mts
 // Reads its input from the environment: INDEPENDENT_PACKAGES (the packages output of independent-packages.mts),
-// GITHUB_REPOSITORY, GITHUB_SHA, a GH_TOKEN that may create tag refs, and optionally DRY_RUN=true or
+// GITHUB_REPOSITORY, GITHUB_SHA, a GH_TOKEN that may list and edit pull requests, GH_WRITER_TOKEN (falls back to
+// GH_TOKEN) for creating the tag refs, which only the writer app may do, and optionally DRY_RUN=true or
 // TAGS=<name@version>[,<name@version>...]. With TAGS it only checks that the given tags exist and reports
 // them, which is how a manual run publishes. Writes release_created, tagged and sha to GITHUB_OUTPUT.
 
-import { realpathSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-
 import { requireEnv } from './lib/env.mts';
 import { writeOutputs } from './lib/github-output.mts';
+import { isMainModule } from './lib/main.mts';
 import { parsePackages, type IndependentPackage } from './lib/packages.mts';
 import { run, stderrOf } from './lib/shell.mts';
 import { tagFor } from './lib/tags.mts';
@@ -241,6 +240,9 @@ function apiGet(path: string): { object: { type: string; sha: string } } | null 
 
 export function createTaggingDeps(): Deps {
   const repo = requireEnv(process.env, 'GITHUB_REPOSITORY');
+  const writerEnv: Record<string, string> = process.env.GH_WRITER_TOKEN
+    ? { GH_TOKEN: process.env.GH_WRITER_TOKEN }
+    : {};
 
   return {
     packages: parsePackages(process.env.INDEPENDENT_PACKAGES),
@@ -272,32 +274,40 @@ export function createTaggingDeps(): Deps {
       return { annotated: true, commit: tagObject.object.sha };
     },
     createTag: (tag, commit) => {
-      const tagObjectSha = run('gh', [
-        'api',
-        `repos/${repo}/git/tags`,
-        '--method',
-        'POST',
-        '-f',
-        `tag=${tag}`,
-        '-f',
-        `message=${tag}`,
-        '-f',
-        `object=${commit}`,
-        '-f',
-        'type=commit',
-        '--jq',
-        '.sha',
-      ]).trim();
-      run('gh', [
-        'api',
-        `repos/${repo}/git/refs`,
-        '--method',
-        'POST',
-        '-f',
-        `ref=refs/tags/${tag}`,
-        '-f',
-        `sha=${tagObjectSha}`,
-      ]);
+      const tagObjectSha = run(
+        'gh',
+        [
+          'api',
+          `repos/${repo}/git/tags`,
+          '--method',
+          'POST',
+          '-f',
+          `tag=${tag}`,
+          '-f',
+          `message=${tag}`,
+          '-f',
+          `object=${commit}`,
+          '-f',
+          'type=commit',
+          '--jq',
+          '.sha',
+        ],
+        writerEnv
+      ).trim();
+      run(
+        'gh',
+        [
+          'api',
+          `repos/${repo}/git/refs`,
+          '--method',
+          'POST',
+          '-f',
+          `ref=refs/tags/${tag}`,
+          '-f',
+          `sha=${tagObjectSha}`,
+        ],
+        writerEnv
+      );
     },
     swapLabel: (pr) => {
       run('gh', [
@@ -317,7 +327,7 @@ export function createTaggingDeps(): Deps {
   };
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === realpathSync(process.argv[1])) {
+if (isMainModule(import.meta.url)) {
   try {
     const { dryRun, tags } = readOptions(process.env);
     const deps = createTaggingDeps();
