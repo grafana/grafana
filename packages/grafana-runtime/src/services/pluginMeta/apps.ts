@@ -4,7 +4,7 @@ import { config } from '../../config';
 import { getFeatureFlagClient } from '../../internal/openFeature';
 import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 
-import { FALLBACK_TO_BOOTDATA_ERROR_WARNING, FALLBACK_TO_BOOTDATA_WARNING } from './constants';
+import { FALLBACK_TO_BOOTDATA_ERROR_WARNING, FALLBACK_TO_BOOTDATA_WARNING, META_FAILED_ERROR } from './constants';
 import { logPluginMetaDebug, logPluginMetaError, logPluginMetaWarning } from './logging';
 import { getAppPluginMapper } from './mappers/mappers';
 import { getPluginMetasUrl, initPluginMetas } from './plugins';
@@ -25,13 +25,24 @@ function setApps(input: AppPluginMetas) {
 }
 
 function setMetas(metas: PluginMetasResponse | null) {
-  if (!metas?.items.length) {
+  if (
+    !metas?.items.length &&
+    !getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsDisableMTPluginsFallback, false)
+  ) {
     // null means plugin meta failed to load, empty items means the API had nothing
     const message = metas ? FALLBACK_TO_BOOTDATA_WARNING : FALLBACK_TO_BOOTDATA_ERROR_WARNING;
     // eslint-disable-next-line @grafana/no-config-apps
     setApps(config.apps);
     logPluginMetaWarning(message, { pluginType: PluginType.app, requestUrl: getPluginMetasUrl() });
     return;
+  }
+
+  if (!metas) {
+    logPluginMetaError(META_FAILED_ERROR, new Error(META_FAILED_ERROR), {
+      pluginType: PluginType.app,
+      requestUrl: getPluginMetasUrl(),
+    });
+    throw new Error(META_FAILED_ERROR);
   }
 
   const mapper = getAppPluginMapper();

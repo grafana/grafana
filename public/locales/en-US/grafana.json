@@ -14432,6 +14432,9 @@
     "empty-state": {
       "message": "No plugins found"
     },
+    "errors": {
+      "app-plugin-metas-error": "Failed to load app plugin metas"
+    },
     "extensions": {
       "extension-error-alert-description": "Check the console for more details on the error.",
       "extension-error-alert-title": "Extension failed to load: \"{{pluginId}}/{{extensionTitle}}\""
