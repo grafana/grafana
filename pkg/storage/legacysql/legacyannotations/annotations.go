@@ -43,7 +43,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apimachinery/managerauthz"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
@@ -134,7 +133,7 @@ func CheckManagerOnCreate(ctx context.Context, obj metav1.Object) error {
 	if err != nil {
 		return err
 	}
-	return asForbidden(managerauthz.CheckOnCreate(auth, accessorOf(obj)))
+	return asForbidden(identity.CheckManagerOnCreate(auth, accessorOf(obj)))
 }
 
 func CheckManagerOnUpdate(ctx context.Context, proposed, old metav1.Object) error {
@@ -145,7 +144,7 @@ func CheckManagerOnUpdate(ctx context.Context, proposed, old metav1.Object) erro
 	if err != nil {
 		return err
 	}
-	return asForbidden(managerauthz.CheckOnUpdate(auth, accessorOf(proposed), accessorOf(old)))
+	return asForbidden(identity.CheckManagerOnUpdate(auth, accessorOf(proposed), accessorOf(old)))
 }
 
 func CheckManagerOnDelete(ctx context.Context, obj metav1.Object) error {
@@ -156,7 +155,7 @@ func CheckManagerOnDelete(ctx context.Context, obj metav1.Object) error {
 	if err != nil {
 		return err
 	}
-	return asForbidden(managerauthz.CheckOnDelete(auth, accessorOf(obj)))
+	return asForbidden(identity.CheckManagerOnDelete(auth, accessorOf(obj)))
 }
 
 // IsManaged reports whether obj carries manager annotations.
@@ -166,7 +165,7 @@ func IsManaged(obj metav1.Object) bool {
 }
 
 func asForbidden(err error) error {
-	if !errors.Is(err, managerauthz.ErrResourceIsManagedInRepository) {
+	if !errors.Is(err, identity.ErrResourceIsManagedInRepository) {
 		return err
 	}
 	return &apierrors.StatusError{ErrStatus: metav1.Status{
