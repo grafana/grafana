@@ -466,6 +466,10 @@ func TestIntegrationDashboardPreferencesV2Beta1FlagDisabled(t *testing.T) {
 	_, err = admin.Resource.Create(ctx, buildDashboardPreferencesObject(t, "", preloadDashboardPreferencesSpec()), metav1.CreateOptions{})
 	require.True(t, apierrors.IsForbidden(err), "expected Forbidden, got %v", err)
 	require.ErrorContains(t, err, denyReason)
+
+	merged := getMergedDashboardPreferences(t, helper, helper.Org1.Admin, nil)
+	require.Equal(t, http.StatusForbidden, merged.Response.StatusCode, string(merged.Body))
+	require.Contains(t, merged.Status.Message, denyReason)
 }
 
 func dashboardPreferencesClient(helper *apis.K8sTestHelper, user apis.User) *apis.K8sResourceClient {
