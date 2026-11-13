@@ -137,6 +137,9 @@ interface EditorProps {
 
 export function Editor({ variable }: EditorProps) {
   const { datasource: datasourceRef, sort, query, regex, regexApplyTo } = variable.useState();
+  const onQueryChange = (query: VariableQueryType) => {
+    variable.setState({ query, definition: getQueryDef(query) });
+  };
   const { value: timeRange } = sceneGraph.getTimeRange(variable).useState();
   const { value: dsConfig } = useAsync(async () => {
     const datasource = await getDataSourceInstance(datasourceRef ?? '');
@@ -166,9 +169,6 @@ export function Editor({ variable }: EditorProps) {
     variable.setState({ datasource });
   };
 
-  const onQueryChange = (query: VariableQueryType) => {
-    variable.setState({ query, definition: getQueryDef(query) });
-  };
   const onRegExChange = (event: React.FormEvent<HTMLTextAreaElement>) => {
     variable.setState({ regex: event.currentTarget.value });
   };
