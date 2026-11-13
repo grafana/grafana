@@ -57,7 +57,9 @@ func ValidateDashboardSpec(obj *Dashboard) field.ErrorList {
 			))
 		}
 
-		return errs
+		if len(errs) > 0 {
+			return errs
+		}
 	}
 
 	return validateUniqueElementReferences(obj.Spec.Layout)

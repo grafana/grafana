@@ -143,4 +143,12 @@ func TestValidateDashboardSpecRejectsDuplicateElementReferences(t *testing.T) {
 	require.Len(t, errs, 1)
 	assert.Equal(t, field.ErrorTypeDuplicate, errs[0].Type)
 	assert.Equal(t, "spec.layout.spec.tabs[1].spec.layout.spec.items[0].spec.element.name", errs[0].Field)
+
+	// A nil slice marshals as null, which CUE rejects and the validator then ignores.
+	// The duplicate check must still run when every CUE error is ignored.
+	withNilLinks := newDashboard("panel-1")
+	withNilLinks.Spec.Links = nil
+	errs = ValidateDashboardSpec(withNilLinks)
+	require.Len(t, errs, 1)
+	assert.Equal(t, field.ErrorTypeDuplicate, errs[0].Type)
 }
