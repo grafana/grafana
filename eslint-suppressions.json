@@ -1372,11 +1372,6 @@
       "count": 3
     }
   },
-  "public/app/features/admin/UserOrgs.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 2
-    }
-  },
   "public/app/features/admin/UserProfile.tsx": {
     "react-hooks/set-state-in-effect": {
       "count": 1
