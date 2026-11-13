@@ -23,6 +23,7 @@ import {
   type FieldOverrideEnv,
   findNumericFieldMinMax,
   getLinksSupplier,
+  getValueDataContext,
   setDynamicConfigValue,
   setFieldConfigDefaults,
   validateFieldConfig,
@@ -2199,6 +2200,99 @@ describe('getLinksSupplier', () => {
     expect(replaceSpy).toHaveBeenCalledTimes(5);
     // check that onClick variable replacer has scoped vars bound to it
     expect(replaceSpy.mock.calls[1][1]).toHaveProperty('foo', { text: 'bar', value: 'bar' });
+  });
+
+  // A dashboard refresh empties the previous result's field values in place.
+  it('keeps the clicked row for onClick links when the panel data is emptied before the click', () => {
+    locationUtil.initialize({
+      config: {} as GrafanaConfig,
+      getVariablesUrlParams: () => ({}),
+      getTimeRangeForUrl: () => ({ from: 'now-7d', to: 'now' }),
+    });
+    let clickScopedVars: ScopedVars | undefined;
+    const replaceVariables: InterpolateFunction = (value, scopedVars) => {
+      clickScopedVars = scopedVars;
+      return value;
+    };
+    const f0 = createDataFrame({
+      fields: [
+        {
+          name: 'Host',
+          type: FieldType.string,
+          values: ['host-a', 'host-b'],
+          config: {
+            links: [{ title: 'Open', url: '', onClick: (evt) => evt.replaceVariables?.('${__data.fields.Host}') }],
+          },
+        },
+      ],
+    });
+
+    const [link] = getLinksSupplier(f0, f0.fields[0], {}, replaceVariables)({ valueRowIndex: 1 });
+    f0.fields[0].values.length = 0;
+    link.onClick!({});
+
+    const { frame, rowIndex } = clickScopedVars!.__dataContext!.value;
+    expect(frame.fields[0].values[rowIndex!]).toBe('host-b');
+  });
+});
+
+describe('getValueDataContext', () => {
+  it('copies the row so it survives the original field values being emptied', () => {
+    const frame = createDataFrame({
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [1000, 2000], nanos: [11, 22] },
+        { name: 'Host', type: FieldType.string, values: ['host-a', 'host-b'] },
+      ],
+    });
+    const hostField = frame.fields[1];
+
+    const { value } = getValueDataContext(frame, hostField, {}, { valueRowIndex: 1 });
+    for (const field of frame.fields) {
+      field.values.length = 0;
+    }
+    frame.fields[0].nanos!.length = 0;
+
+    expect(value.rowIndex).toBe(0);
+    expect(value.frame.length).toBe(1);
+    expect(value.frame.fields.map((f) => f.values)).toEqual([[2000], ['host-b']]);
+    expect(value.frame.fields[0].nanos).toEqual([22]);
+    expect(value.field).toBe(value.frame.fields[1]);
+  });
+
+  it('copies the row from the field state data context when there is one', () => {
+    const panelFrame = createDataFrame({ fields: [{ name: 'Host', type: FieldType.string, values: ['x', 'y'] }] });
+    const contextFrame = createDataFrame({
+      fields: [{ name: 'Host', type: FieldType.string, values: ['host-a', 'host-b'] }],
+    });
+    const scopedVars: ScopedVars = {
+      __dataContext: { value: { frame: contextFrame, field: contextFrame.fields[0], data: [contextFrame] } },
+    };
+
+    const { value } = getValueDataContext(panelFrame, panelFrame.fields[0], scopedVars, { valueRowIndex: 1 });
+
+    expect(value.field.values).toEqual(['host-b']);
+    expect(value.data).toEqual([contextFrame]);
+  });
+
+  it('copies the row of a field that is not part of the frame', () => {
+    const frame = createDataFrame({ fields: [{ name: 'Host', type: FieldType.string, values: ['host-a', 'host-b'] }] });
+    const joinedField: Field = { name: 'Status', type: FieldType.string, values: ['up', 'down'], config: {} };
+
+    const { value } = getValueDataContext(frame, joinedField, {}, { valueRowIndex: 1 });
+
+    expect(value.field.values).toEqual(['down']);
+    expect(value.frame.fields.map((f) => f.values)).toEqual([['host-b']]);
+  });
+
+  it('uses the calculated value and keeps the original frame for reduced values', () => {
+    const frame = createDataFrame({ fields: [{ name: 'Count', type: FieldType.number, values: [1, 2] }] });
+    const calculatedValue = { numeric: 3, text: '3' };
+
+    const { value } = getValueDataContext(frame, frame.fields[0], {}, { calculatedValue });
+
+    expect(value.calculatedValue).toBe(calculatedValue);
+    expect(value.rowIndex).toBeUndefined();
+    expect(value.frame).toBe(frame);
   });
 });
 

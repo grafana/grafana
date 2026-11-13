@@ -663,8 +663,10 @@ export const getLinksSupplier =
       return [];
     }
 
+    const valueDataContext = getValueDataContext(frame, field, fieldScopedVars, config);
+
     const linkModels = field.config.links.map((link: DataLink) => {
-      const dataContext: DataContextScopedVar = getFieldDataContextClone(frame, field, fieldScopedVars);
+      const dataContext: DataContextScopedVar = { value: { ...valueDataContext.value } };
       const dataLinkScopedVars = {
         ...fieldScopedVars,
         __dataContext: dataContext,
@@ -672,13 +674,6 @@ export const getLinksSupplier =
 
       const boundReplaceVariables: InterpolateFunction = (value, scopedVars, format) =>
         replaceVariables(value, { ...dataLinkScopedVars, ...scopedVars }, format);
-
-      // We are not displaying reduction result
-      if (config.valueRowIndex !== undefined && !isNaN(config.valueRowIndex)) {
-        dataContext.value.rowIndex = config.valueRowIndex;
-      } else {
-        dataContext.value.calculatedValue = config.calculatedValue;
-      }
 
       let linkModel: LinkModel<Field>;
 
@@ -845,6 +840,49 @@ export function getFieldDataContextClone(frame: DataFrame, field: Field, fieldSc
   }
 
   return { value: { frame, field, data: [frame] } };
+}
+
+/**
+ * Builds the data context that a link or action interpolates against for one value.
+ *
+ * For a row value it points at a one-row copy of the frame. Some links and actions interpolate row macros
+ * like `${__data.fields.X}` only when clicked, which can be after a dashboard refresh. A refresh empties the
+ * previous result's `field.values` arrays in place to release memory, so reading the original frame then would
+ * resolve to an empty value instead of the row the menu was opened from.
+ *
+ * @internal
+ */
+export function getValueDataContext(
+  frame: DataFrame,
+  field: Field,
+  fieldScopedVars: ScopedVars,
+  config: ValueLinkConfig
+): DataContextScopedVar {
+  const dataContext: DataContextScopedVar = getFieldDataContextClone(frame, field, fieldScopedVars);
+  const rowIndex = config.valueRowIndex;
+
+  if (rowIndex === undefined || isNaN(rowIndex)) {
+    dataContext.value.calculatedValue = config.calculatedValue;
+    return dataContext;
+  }
+
+  const copyField = (f: Field): Field => {
+    const copy = { ...f, values: [f.values[rowIndex]] };
+    if (f.nanos) {
+      copy.nanos = [f.nanos[rowIndex]];
+    }
+    return copy;
+  };
+
+  const { frame: contextFrame, field: contextField } = dataContext.value;
+  const fields = contextFrame.fields.map(copyField);
+  const fieldIndex = contextFrame.fields.indexOf(contextField);
+
+  dataContext.value.frame = { ...contextFrame, fields, length: 1 };
+  dataContext.value.field = fieldIndex === -1 ? copyField(contextField) : fields[fieldIndex];
+  dataContext.value.rowIndex = 0;
+
+  return dataContext;
 }
 
 /**
