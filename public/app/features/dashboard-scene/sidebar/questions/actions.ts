@@ -1,14 +1,14 @@
 import { t } from '@grafana/i18n';
 import { type SceneObject } from '@grafana/scenes';
-import { type Question } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 import { edit } from '../../actions/utils/edit';
+import { type SceneQuestion } from '../../questions/types';
 
 import { type QuestionsOwner } from './types';
 
 /** Undoable changes to the questions saved on a dashboard, row, or tab. */
 export const questionActions = {
-  add({ owner, question, addedObject }: { owner: QuestionsOwner; question: Question; addedObject?: SceneObject }) {
+  add({ owner, question, addedObject }: { owner: QuestionsOwner; question: SceneQuestion; addedObject?: SceneObject }) {
     const before = owner.state.questions;
 
     edit({
@@ -41,10 +41,10 @@ export const questionActions = {
   }: {
     owner: QuestionsOwner;
     index: number;
-    previous: Question;
-    next: Question;
+    previous: SceneQuestion;
+    next: SceneQuestion;
   }) {
-    const replace = (question: Question) => {
+    const replace = (question: SceneQuestion) => {
       const questions = [...(owner.state.questions ?? [])];
       questions[index] = question;
       owner.setState({ questions });

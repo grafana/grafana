@@ -1,14 +1,15 @@
-import { useId, useMemo, useRef } from 'react';
+import { type FormEvent, useId, useMemo, useRef } from 'react';
 
 import { t } from '@grafana/i18n';
 import { SceneObjectBase, type SceneObjectRef, type SceneObjectState } from '@grafana/scenes';
-import { type Question } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { Field, Input } from '@grafana/ui';
+import { Field, Input, TextArea } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
+import { type SceneQuestion } from '../../questions/types';
+import { getQuestionLabel, getQuestionSelectionId } from '../../questions/utils';
 import { useSidebarInputAutoFocus } from '../../scene/layouts-shared/utils';
 import {
   type EditableDashboardElement,
@@ -36,8 +37,8 @@ export class QuestionEdit extends SceneObjectBase<QuestionEditState> implements 
   public getEditableElementInfo(): EditableDashboardElementInfo {
     return {
       typeName: t('dashboard.sidebar.elements.question', 'Question'),
-      icon: 'question-circle',
-      instanceName: this.getQuestion()?.text || t('dashboard.sidebar.questions.new-question', 'New question'),
+      icon: 'ai-sparkle',
+      instanceName: this.getName(),
     };
   }
 
@@ -50,7 +51,7 @@ export class QuestionEdit extends SceneObjectBase<QuestionEditState> implements 
   }
 
   public onConfirmDelete() {
-    const name = this.getQuestion()?.text || t('dashboard.sidebar.questions.new-question', 'New question');
+    const name = this.getName();
     appEvents.publish(
       new ShowConfirmModalEvent({
         title: t('dashboard-scene.question-edit.delete-title', 'Delete question'),
@@ -77,8 +78,13 @@ export class QuestionEdit extends SceneObjectBase<QuestionEditState> implements 
     return this.state.ownerRef.resolve();
   }
 
-  private getQuestion(): Question | undefined {
+  private getQuestion(): SceneQuestion | undefined {
     return this.getOwner().state.questions?.[this.state.questionIndex];
+  }
+
+  private getName(): string {
+    const question = this.getQuestion();
+    return (question && getQuestionLabel(question)) || t('dashboard.sidebar.questions.new-question', 'New question');
   }
 }
 
@@ -87,7 +93,7 @@ function createQuestionEdit(owner: QuestionsOwner, ownerKind: QuestionsOwnerKind
     ownerRef: owner.getRef(),
     ownerKind,
     questionIndex,
-    key: `${owner.state.key ?? ownerKind}-question-${questionIndex}`,
+    key: getQuestionSelectionId(owner, ownerKind, questionIndex),
   });
 }
 
@@ -113,9 +119,13 @@ export function duplicateQuestion(owner: QuestionsOwner, ownerKind: QuestionsOwn
     return;
   }
 
+  // Viewers tell the copy apart by its label. The question asked stays the same, unless it is the label.
+  const copy = question.title?.trim()
+    ? { ...question, title: `${question.title} - Copy` }
+    : { ...question, text: `${question.text} - Copy` };
   questionActions.add({
     owner,
-    question: { ...question, text: `${question.text} - Copy` },
+    question: copy,
     addedObject: createQuestionEdit(owner, ownerKind, questions.length),
   });
   openEditQuestionPane(owner, ownerKind, questions.length);
@@ -125,6 +135,7 @@ function useQuestionOptions(this: QuestionEdit, isNewElement: boolean): OptionsP
   const questionEdit = this;
   const categoryId = useId();
   const textId = useId();
+  const titleId = useId();
   const sourcesId = useId();
 
   return useMemo(
@@ -140,12 +151,19 @@ function useQuestionOptions(this: QuestionEdit, isNewElement: boolean): OptionsP
         .addItem(
           new OptionsPaneItemDescriptor({
             title: '',
+            id: titleId,
+            render: () => <QuestionTitleInput questionEdit={questionEdit} />,
+          })
+        )
+        .addItem(
+          new OptionsPaneItemDescriptor({
+            title: '',
             id: sourcesId,
             render: () => <QuestionSourcesField questionEdit={questionEdit} />,
           })
         ),
     ],
-    [categoryId, textId, sourcesId, questionEdit, isNewElement]
+    [categoryId, textId, titleId, sourcesId, questionEdit, isNewElement]
   );
 }
 
@@ -209,19 +227,67 @@ const QUESTION_DESCRIPTIONS: Record<QuestionsOwnerKind, () => string> = {
   tab: () => t('dashboard.sidebar.questions.description-tab', 'Viewers can ask it about the panels in this tab.'),
 };
 
-/** Changes the question as the author types, and records one undoable change when the field loses focus. */
-export function QuestionTextInput({ questionEdit, autoFocus }: { questionEdit: QuestionEdit; autoFocus?: boolean }) {
+type QuestionStringProp = 'text' | 'title';
+
+/** `question` with `prop` set to `value`. An empty title is left out, so the question shows instead. */
+function withQuestionProp(question: SceneQuestion, prop: QuestionStringProp, value: string): SceneQuestion {
+  if (prop === 'title' && !value) {
+    const { title: _, ...rest } = question;
+    return rest;
+  }
+  return { ...question, [prop]: value };
+}
+
+/**
+ * Edits one of a question's texts: changes it as the author types, and records one undoable change when the field
+ * loses focus. Undefined once the question is removed.
+ */
+function useQuestionStringProp(questionEdit: QuestionEdit, prop: QuestionStringProp) {
   const { ownerRef, ownerKind, questionIndex } = questionEdit.useState();
   const owner = ownerRef.resolve();
   const { questions } = owner.useState();
   const question = questions?.[questionIndex];
-  const ref = useSidebarInputAutoFocus({ autoFocus });
-  const id = useId();
-  const textOnFocus = useRef(question?.text ?? '');
+  const valueOnFocus = useRef(question?.[prop] ?? '');
 
   if (!question) {
+    return undefined;
+  }
+
+  return {
+    ownerKind,
+    value: question[prop] ?? '',
+    onFocus: () => {
+      valueOnFocus.current = question[prop] ?? '';
+    },
+    onChange: (event: FormEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      const questions = [...(owner.state.questions ?? [])];
+      questions[questionIndex] = withQuestionProp(question, prop, event.currentTarget.value);
+      owner.setState({ questions });
+    },
+    onBlur: () => {
+      if (valueOnFocus.current !== (question[prop] ?? '')) {
+        questionActions.update({
+          owner,
+          index: questionIndex,
+          previous: withQuestionProp(question, prop, valueOnFocus.current),
+          next: question,
+        });
+      }
+    },
+  };
+}
+
+/** The question that is asked. It can run long, since viewers see its title when it has one. */
+export function QuestionTextInput({ questionEdit, autoFocus }: { questionEdit: QuestionEdit; autoFocus?: boolean }) {
+  const editing = useQuestionStringProp(questionEdit, 'text');
+  const ref = useSidebarInputAutoFocus<HTMLTextAreaElement>({ autoFocus });
+  const id = useId();
+
+  if (!editing) {
     return null;
   }
+
+  const { ownerKind, ...field } = editing;
 
   return (
     <Field
@@ -229,29 +295,41 @@ export function QuestionTextInput({ questionEdit, autoFocus }: { questionEdit: Q
       description={QUESTION_DESCRIPTIONS[ownerKind]()}
       noMargin
     >
-      <Input
+      <TextArea
         id={id}
         ref={ref}
-        value={question.text}
+        rows={3}
         placeholder={t('dashboard.sidebar.questions.placeholder', 'What changed since the previous period?')}
-        onFocus={() => {
-          textOnFocus.current = question.text;
-        }}
-        onChange={(event) => {
-          const questions = [...(owner.state.questions ?? [])];
-          questions[questionIndex] = { ...question, text: event.currentTarget.value };
-          owner.setState({ questions });
-        }}
-        onBlur={() => {
-          if (textOnFocus.current !== question.text) {
-            questionActions.update({
-              owner,
-              index: questionIndex,
-              previous: { ...question, text: textOnFocus.current },
-              next: question,
-            });
-          }
-        }}
+        {...field}
+      />
+    </Field>
+  );
+}
+
+/** A short title viewers see on the dashboard instead of the question. */
+export function QuestionTitleInput({ questionEdit }: { questionEdit: QuestionEdit }) {
+  const editing = useQuestionStringProp(questionEdit, 'title');
+  const id = useId();
+
+  if (!editing) {
+    return null;
+  }
+
+  const { ownerKind: _, ...field } = editing;
+
+  return (
+    <Field
+      label={t('dashboard.sidebar.questions.question-title', 'Title')}
+      description={t(
+        'dashboard.sidebar.questions.question-title-description',
+        'Viewers see it on the dashboard instead of the question. Leave it empty to show the question.'
+      )}
+      noMargin
+    >
+      <Input
+        id={id}
+        placeholder={t('dashboard.sidebar.questions.question-title-placeholder', 'What changed?')}
+        {...field}
       />
     </Field>
   );

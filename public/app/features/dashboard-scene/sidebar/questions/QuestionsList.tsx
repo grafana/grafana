@@ -2,19 +2,20 @@ import { type DropResult } from '@hello-pangea/dnd';
 import { useCallback, useId, useMemo } from 'react';
 
 import { t } from '@grafana/i18n';
-import { type Question } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { Stack } from '@grafana/ui';
 import { useDragAndDrop } from '@grafana/ui/internal';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
-import { useQuestionsEnabled } from '../../scene/DashboardControlsExtensionPoint';
-import { V2DashboardSerializer } from '../../serialization/DashboardSceneSerializer';
-import { getDashboardSceneFor } from '../../utils/utils';
+import { type SceneQuestion } from '../../questions/types';
+import { getQuestionLabel } from '../../questions/utils';
+import { useCanEditQuestions } from '../../scene/DashboardControlsExtensionPoint';
 import { DraggableListItems } from '../dashboard/DraggableList';
 import { SidebarAddButton } from '../dashboard/SidebarAddButton';
 import { toDraggableListItemActions } from '../dashboard/helpers';
 import { SidebarCategoryType } from '../types';
 
+import { AiSparkleIcon } from './AiSparkleIcon';
 import { duplicateQuestion, openAddQuestionPane, openEditQuestionPane, QuestionEdit } from './QuestionEdit';
 import { questionActions } from './actions';
 import { type QuestionsOwner, type QuestionsOwnerKind } from './types';
@@ -27,15 +28,14 @@ const CATEGORY_IDS: Record<QuestionsOwnerKind, SidebarCategoryType> = {
 
 /**
  * The "Questions" category of a dashboard's, row's, or tab's options, laid out like "Links": a count, an add
- * button, and a list to reorder, edit, duplicate, or delete questions. Empty unless questions are enabled (see
- * `useQuestionsEnabled`) and the dashboard saves as v2: a v1 save drops the questions, and turns rows and tabs into
- * v1 rows.
+ * button, and a list to reorder, edit, duplicate, or delete questions. Empty unless editors can edit questions (see
+ * `useCanEditQuestions`).
  */
 export function useQuestionsCategory(
   owner: QuestionsOwner,
   ownerKind: QuestionsOwnerKind
 ): OptionsPaneCategoryDescriptor[] {
-  const enabled = useQuestionsEnabled() && getDashboardSceneFor(owner).serializer instanceof V2DashboardSerializer;
+  const enabled = useCanEditQuestions(owner);
   const { questions } = owner.useState();
   const listId = useId();
   const count = questions?.length ?? 0;
@@ -51,7 +51,7 @@ export function useQuestionsCategory(
       id: CATEGORY_IDS[ownerKind],
       headerActions: <AddQuestionButton owner={owner} ownerKind={ownerKind} />,
       itemsCount: count,
-      renderTitle: () => title,
+      renderTitle: () => <QuestionsCategoryTitle title={title} />,
       isDashboardSidebar: true,
     });
 
@@ -71,7 +71,7 @@ export function useQuestionsCategory(
 }
 
 // Questions made Scene-like for DraggableListItems, keyed by their index.
-type QuestionItem = Question & { state: { key: string; name: string } };
+type QuestionItem = SceneQuestion & { state: { key: string; name: string } };
 
 export function QuestionsList({ owner, ownerKind }: { owner: QuestionsOwner; ownerKind: QuestionsOwnerKind }) {
   const { DragDropContext, Droppable } = useDragAndDrop();
@@ -81,7 +81,10 @@ export function QuestionsList({ owner, ownerKind }: { owner: QuestionsOwner; own
   const items = useMemo(
     () =>
       (questions ?? []).map(
-        (question, index): QuestionItem => ({ ...question, state: { key: String(index), name: question.text } })
+        (question, index): QuestionItem => ({
+          ...question,
+          state: { key: String(index), name: getQuestionLabel(question) },
+        })
       ),
     [questions]
   );
@@ -122,9 +125,19 @@ export function QuestionsList({ owner, ownerKind }: { owner: QuestionsOwner; own
 
 const renderItemLabel = (question: QuestionItem) => (
   <span data-testid="question-text">
-    {question.text || t('dashboard.sidebar.questions.new-question', 'New question')}
+    {question.state.name || t('dashboard.sidebar.questions.new-question', 'New question')}
   </span>
 );
+
+/** Marks questions as an Assistant feature, as the controls that ask them do. */
+function QuestionsCategoryTitle({ title }: { title: string }) {
+  return (
+    <Stack direction="row" alignItems="center" gap={1}>
+      <AiSparkleIcon />
+      <span>{title}</span>
+    </Stack>
+  );
+}
 
 function AddQuestionButton({ owner, ownerKind }: { owner: QuestionsOwner; ownerKind: QuestionsOwnerKind }) {
   const onAdd = useCallback(() => openAddQuestionPane(owner, ownerKind), [owner, ownerKind]);

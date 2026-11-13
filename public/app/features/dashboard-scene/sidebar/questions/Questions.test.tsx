@@ -10,12 +10,12 @@ import { selectors } from '@grafana/e2e-selectors';
 import { setPluginImportUtils, usePluginComponents } from '@grafana/runtime';
 import { setGetObservablePluginLinks } from '@grafana/runtime/internal';
 import { SceneDataNode, SceneGridLayout, SceneGridRow, SceneTimeRange, VizPanel } from '@grafana/scenes';
-import { type Question } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { appEvents } from 'app/core/app_events';
 import { createComponentWithMeta } from 'app/features/plugins/extensions/usePluginComponents';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
+import { type SceneQuestion } from '../../questions/types';
 import { DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
@@ -27,7 +27,13 @@ import { activateFullSceneTree } from '../../utils/test-utils';
 import { DashboardEditableElement } from '../dashboard/DashboardEditableElement';
 import { SidebarCategoryType } from '../types';
 
-import { openAddQuestionPane, QuestionEdit, QuestionSourcesField, QuestionTextInput } from './QuestionEdit';
+import {
+  openAddQuestionPane,
+  QuestionTitleInput,
+  QuestionEdit,
+  QuestionSourcesField,
+  QuestionTextInput,
+} from './QuestionEdit';
 import { QuestionsList } from './QuestionsList';
 
 jest.mock('@grafana/scenes', () => ({
@@ -178,6 +184,34 @@ describe('editing questions', () => {
     expect(input).toHaveValue('What stands out?');
   });
 
+  it('saves a title as one undo step, and leaves it out once cleared', async () => {
+    const text = 'Which services drove the rise in errors, and when did it start?';
+    const dashboard = setup([{ text }]);
+    render(
+      <TestProvider>
+        <QuestionTitleInput questionEdit={editFor(dashboard, 0)} />
+      </TestProvider>
+    );
+    const input = screen.getByRole('textbox', { name: /^Title/ });
+
+    fireEvent.focus(input);
+    await userEvent.type(input, 'Errors');
+    fireEvent.blur(input);
+
+    expect(dashboard.state.questions).toEqual([{ text, title: 'Errors' }]);
+    expect(dashboard.state.sidebar.state.undoStack).toHaveLength(1);
+
+    fireEvent.focus(input);
+    await userEvent.clear(input);
+    fireEvent.blur(input);
+
+    expect(dashboard.state.questions).toEqual([{ text }]);
+
+    act(() => dashboard.state.sidebar.undoAction());
+
+    expect(dashboard.state.questions).toEqual([{ text, title: 'Errors' }]);
+  });
+
   it('deletes a question once the author confirms, and undo brings it back', async () => {
     const questions = [{ text: 'What stands out?' }, { text: 'Why did errors rise?' }];
     const dashboard = setup(questions);
@@ -206,6 +240,19 @@ describe('editing questions', () => {
     );
 
     expect(dashboard.state.questions).toEqual([{ text: 'What stands out?' }, { text: 'What stands out? - Copy' }]);
+  });
+
+  it('lists a question by its title, and names its copy by its title, keeping the question asked', async () => {
+    const original = { text: 'Which services drove the rise in errors?', title: 'Errors' };
+    const dashboard = setup([original]);
+    renderList(dashboard);
+
+    await userEvent.click(
+      screen.getByTestId(selectors.components.PanelEditor.ElementEditPane.List.ListItem.duplicateButton('0'))
+    );
+
+    expect(dashboard.state.questions).toEqual([original, { ...original, title: 'Errors - Copy' }]);
+    expect(screen.getAllByTestId('question-text').map((item) => item.textContent)).toEqual(['Errors', 'Errors - Copy']);
   });
 });
 
@@ -301,7 +348,7 @@ describe('picking the panels a question is answered from', () => {
   });
 });
 
-function setup(questions: Question[]) {
+function setup(questions: SceneQuestion[]) {
   const dashboard = transformSaveModelToScene({
     dashboard: { title: 'Dashboard', uid: 'my-uid', schemaVersion: 30, panels: [], version: 10 },
     meta: {},
@@ -326,7 +373,7 @@ function v2Dashboard() {
 }
 
 /** A "Requests" panel on the dashboard, and an "Errors" row holding an "Error rate" panel. */
-function setupWithPanels(questions: Question[]) {
+function setupWithPanels(questions: SceneQuestion[]) {
   const panel = (id: number, title: string) =>
     new DashboardGridItem({
       body: new VizPanel({
