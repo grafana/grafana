@@ -186,6 +186,13 @@ export const checkLogsSampled = (logRow: LogRowModel): string | undefined => {
     : `${logRow.labels.__adaptive_logs_sampled__}% of logs like this one have been dropped by Adaptive Logs`;
 };
 
+export const checkLogsFromTimeMachine = (logRow: LogRowModel): string | undefined => {
+  if (!logRow.labels.__time_machine__) {
+    return undefined;
+  }
+  return 'This log line was retrieved from Time Machine';
+};
+
 export const escapeUnescapedString = (string: string) =>
   string.replace(/\\r\\n|\\n|\\t|\\r/g, (match: string) => (match.slice(1) === 't' ? '\t' : '\n'));
 
