@@ -1,4 +1,4 @@
-import { type ScopeNode, store as storeImpl } from '@grafana/data';
+import { type Scope, type ScopeNode, store as storeImpl } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { type performanceUtils } from '@grafana/scenes';
 import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
@@ -85,6 +85,31 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       },
     });
   }
+
+  // Hover tooltips, recent scopes and selecting a scope all ask for the same scope, so share one request per id.
+  private scopeRequests: Record<string, Promise<Scope | undefined>> = {};
+
+  public getScope = async (scopeId: string): Promise<Scope | undefined> => {
+    const cached = this.state.scopes[scopeId];
+    if (cached) {
+      return cached;
+    }
+
+    if (!this.scopeRequests[scopeId]) {
+      this.scopeRequests[scopeId] = this.apiClient
+        .fetchScope(scopeId)
+        .then((scope) => {
+          if (scope) {
+            this.updateState({ scopes: { ...this.state.scopes, [scope.metadata.name]: scope } });
+          }
+          return scope;
+        })
+        .finally(() => {
+          delete this.scopeRequests[scopeId];
+        });
+    }
+    return this.scopeRequests[scopeId];
+  };
 
   // Loads a node from the API and adds it to the nodes cache
   public getScopeNode = async (scopeNodeId: string) => {
@@ -321,13 +346,9 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       throw new Error(`Trying to select node id ${scopeNodeId} that does not have a linkId`);
     }
 
-    // We prefetch the scope metadata to make sure we have it cached before we apply the scope.
-    this.apiClient.fetchScope(scopeNode.spec.linkId).then((scope) => {
-      // We don't need to wait for the update here, so we can use then instead of await.
-      if (scope) {
-        this.updateState({ scopes: { ...this.state.scopes, [scope.metadata.name]: scope } });
-      }
-    });
+    // We prefetch the scope metadata to make sure we have it cached before we apply the scope. We don't need to wait
+    // for it here.
+    this.getScope(scopeNode.spec.linkId);
 
     // TODO: if we do global search we may not have a parent node loaded. We have the ID but there is not an API that
     //   would allow us to load scopeNode by ID right now so this can be undefined which means we skip the
