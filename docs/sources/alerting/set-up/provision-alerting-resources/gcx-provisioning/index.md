@@ -139,55 +139,63 @@ Grafana exports secure fields as `[REDACTED]`, so exported files don't contain s
 
 ### Manage resources using CRUD operations
 
-Use the operations available for each resource type to create, read, update, or delete resources. For example, to create and update a contact point:
+Use the operations available for each resource type to create, read, update, or delete resources. The following examples use contact points:
 
-1. Create a file named `contact-point.yaml`:
+- [**Create**](/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/gcx/cli-reference/#gcx-alert-contact-points-create) a contact point from a file. For example, save the following definition as `contact-point.yaml`:
 
-   ```yaml
-   name: team-webhook
-   type: webhook
-   settings:
-     url: https://example.com/alerts
-   ```
+  ```yaml
+  name: team-webhook
+  type: webhook
+  settings:
+    url: https://example.com/alerts
+  ```
 
-1. Create the contact point:
+  Then create the contact point:
 
-   ```bash
-   gcx alert contact-points create --filename contact-point.yaml
-   ```
+  ```bash
+  gcx alert contact-points create --filename contact-point.yaml
+  ```
 
-1. Verify that it exists:
+- [**List**](/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/gcx/cli-reference/#gcx-alert-contact-points-list) contact points to verify that the new one exists:
 
-   ```bash
-   gcx alert contact-points list
-   ```
+  ```bash
+  gcx alert contact-points list
+  ```
 
-   This command returns the list of contact points with their UID, name, type, and provenance state.
+  This command returns the contact points with their UID, name, type, and provenance state.
 
-   ```
-   ┌──────────────────┬─────────────────┬──────────┬─────────────┐
-   │ UID              │ NAME            │ TYPE     │ PROVENANCE  │
-   ├────-─────────────┼──────-──────────┼──────────┼─────────────┤
-   │ dg40y30b347wgb   │ team-webhook    | webhook  │             │
-   └──────-───────────┴─────────────────┴──────────┴─────────────┘
-   ```
+  ```
+  ┌──────────────────┬─────────────────┬──────────┬─────────────┐
+  │ UID              │ NAME            │ TYPE     │ PROVENANCE  │
+  ├────-─────────────┼──────-──────────┼──────────┼─────────────┤
+  │ dg40y30b347wgb   │ team-webhook    | webhook  │             │
+  └──────-───────────┴─────────────────┴──────────┴─────────────┘
+  ```
 
-1. To update the contact point, edit `contact-point.yaml` and run update with its `UID`:
+- [**Get**](/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/gcx/cli-reference/#gcx-alert-contact-points-get) an existing contact point and save it to a file for editing. Use `-o` (`--output`) to choose the output format, `json` or `yaml`:
 
-   ```bash
-   gcx alert contact-points update <UID> --filename contact-point.yaml
-   ```
+  ```bash
+  gcx alert contact-points get <UID> -o yaml > contact-point.yaml
+  ```
 
-You can also use `get` to save an existing resource to a file for editing:
+- [**Update**](/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/gcx/cli-reference/#gcx-alert-contact-points-update) a contact point. Edit the file and run `update` with the contact point `UID`:
 
-```bash
-gcx alert contact-points get <UID> -o json > contact-point.json
-```
+  ```bash
+  gcx alert contact-points update <UID> --filename contact-point.yaml
+  ```
+
+- [**Delete**](/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/gcx/cli-reference/#gcx-alert-contact-points-delete) a contact point by its `UID`:
+
+  ```bash
+  gcx alert contact-points delete <UID>
+  ```
+
+  `gcx` asks for confirmation before it deletes the contact point. To skip the prompt, add `--force`.
 
 Some operations replace or update existing data:
 
-- `gcx alert notification-policies set` replaces the entire notification policy tree. Export the current tree before you run it.
-- `gcx alert templates upsert` creates a template or updates it if a template with the same name exists.
+- [`gcx alert notification-policies set`](/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/gcx/cli-reference/#gcx-alert-notification-policies-set) replaces the entire notification policy tree. Export the current tree before you run it.
+- [`gcx alert templates upsert`](/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/gcx/cli-reference/#gcx-alert-templates-upsert) creates a template or updates it if a template with the same name exists.
 
 ### Disable updates in the Grafana UI
 
