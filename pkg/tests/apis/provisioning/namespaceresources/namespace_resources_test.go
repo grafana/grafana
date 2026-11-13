@@ -210,18 +210,28 @@ func TestIntegrationProvisioning_NamespaceResources(t *testing.T) {
 		var paged []provisioning.ResourceListItem
 		written := false
 		finished := false
+		pages := 0
 		for range 50 {
 			list, err := listNamespace(t, helper.AdminREST, helper.Namespace, page)
 			require.NoError(t, err)
+			pages++
 			paged = append(paged, list.Items...)
 			if !written {
-				_, err := helper.DashboardsV1.Resource.Create(t.Context(), &unstructured.Unstructured{Object: map[string]any{
+				created, err := helper.DashboardsV1.Resource.Create(t.Context(), &unstructured.Unstructured{Object: map[string]any{
 					"apiVersion": dashboardAPIVersion,
 					"kind":       "Dashboard",
 					"metadata":   map[string]any{"generateName": "paging-write-"},
 					"spec":       map[string]any{"title": "Written between pages", "schemaVersion": 41},
 				}}, metav1.CreateOptions{})
 				require.NoError(t, err)
+				// Create returns once storage accepts it, but the walk reads the search
+				// index. Without waiting for the index the remaining pages can all be
+				// read before the write is visible, and nothing is exercised.
+				newRow := resourceKey{"dashboard.grafana.app", "dashboards", created.GetName()}
+				require.EventuallyWithT(t, func(c *assert.CollectT) {
+					found := listNamespaceAll(t, helper, map[string]string{"managed": "false"})
+					assert.Contains(c, keysOf(found), newRow)
+				}, 30*time.Second, 200*time.Millisecond, "the dashboard written mid-walk should be indexed")
 				written = true
 			}
 			if list.Continue == "" {
@@ -231,6 +241,8 @@ func TestIntegrationProvisioning_NamespaceResources(t *testing.T) {
 			page["continue"] = list.Continue
 		}
 		require.True(t, finished, "paging across a concurrent write did not terminate")
+		// Otherwise the write landed after the only page and nothing was interleaved.
+		require.Greater(t, pages, 1, "the walk must span more than one page to interleave a write")
 
 		got := keysOf(paged)
 		assert.Equal(t, len(got), len(paged), "a row must not appear on more than one page")

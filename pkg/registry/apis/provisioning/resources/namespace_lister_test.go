@@ -286,6 +286,33 @@ func TestNamespaceLister_DropsAnIdentityBearingRowFromUnmanaged(t *testing.T) {
 	}, got.Items)
 }
 
+// Rows the managed filter discards cost a search each and buy no progress, so a long enough run
+// of them would spend the route's whole deadline in one request.
+func TestNamespaceLister_AnswersShortRatherThanScanALongDiscardedRun(t *testing.T) {
+	unmanaged := false
+	store := resource.NewMockResourceClient(t)
+	// Every search returns a full page of rows the filter drops, so the kind never looks
+	// exhausted and the page never fills.
+	store.EXPECT().Search(mock.Anything, mock.Anything).RunAndReturn(
+		func(_ context.Context, req *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
+			return searchResponse(responseFields(nil), searchRow{name: "db-1", managerID: "my-repo"}), nil
+		}).Times(maxFruitlessSearches)
+
+	lister := namespaceListerFor(t, store, dashboardGVR)
+	got, err := lister.ListNamespace(context.Background(), "default", NamespaceListOptions{
+		Managed: &unmanaged,
+		Limit:   1,
+	})
+	require.NoError(t, err)
+	require.Empty(t, got.Items, "every row was discarded by the filter")
+	require.NotEmpty(t, got.Continue, "a short page must still say where to resume")
+
+	cursor, err := decodeCursor(got.Continue)
+	require.NoError(t, err)
+	require.Equal(t, "dashboard.grafana.app", cursor.Group)
+	require.Equal(t, []string{"db-1"}, cursor.After, "resumes at the last row examined")
+}
+
 // A truncated inventory must not be presented as a complete one.
 func TestNamespaceLister_RefusesAContinueTokenForAKindNoLongerListed(t *testing.T) {
 	token, err := encodeCursor(namespaceListCursor{

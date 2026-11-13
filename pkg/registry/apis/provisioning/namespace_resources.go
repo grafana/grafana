@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -39,7 +40,15 @@ func (b *APIBuilder) handleNamespaceResources(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	opts, err := parseNamespaceListOptions(r.URL.Query())
+	// Not r.URL.Query(): it drops a parameter whose escaping is malformed and reports no
+	// error, so ?managed=false%ZZ would read as no filter at all and answer everything.
+	query, err := url.ParseQuery(r.URL.RawQuery)
+	if err != nil {
+		errhttp.Write(ctx, apierrors.NewBadRequest(err.Error()), w)
+		return
+	}
+
+	opts, err := parseNamespaceListOptions(query)
 	if err != nil {
 		errhttp.Write(ctx, apierrors.NewBadRequest(err.Error()), w)
 		return

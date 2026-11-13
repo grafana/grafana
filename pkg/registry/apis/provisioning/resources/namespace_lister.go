@@ -173,6 +173,7 @@ func (l *NamespaceListerFromSearch) ListNamespace(ctx context.Context, namespace
 
 	list := &provisioning.ResourceList{Items: make([]provisioning.ResourceListItem, 0, limit)}
 	after := cursor.After
+	fruitless := 0
 	for i, key := range keys {
 		for int64(len(list.Items)) < limit {
 			rows, sortFields, err := l.searchKind(ctx, namespace, key, filters, fields, limit-int64(len(list.Items)), after, keep)
@@ -186,6 +187,15 @@ func (l *NamespaceListerFromSearch) ListNamespace(ctx context.Context, namespace
 				break
 			}
 			after = sortFields
+			// A search that read rows and kept none buys no progress towards the page:
+			// a long enough run of them would spend the route's whole deadline here. A
+			// productive search is not counted, being bounded by the page size itself.
+			if len(rows) > 0 {
+				continue
+			}
+			if fruitless++; fruitless == maxFruitlessSearches {
+				return l.pageFrom(list, namespaceListCursor{Group: key.Group, Resource: key.Resource, After: after})
+			}
 		}
 		if int64(len(list.Items)) < limit {
 			continue
@@ -199,13 +209,22 @@ func (l *NamespaceListerFromSearch) ListNamespace(ctx context.Context, namespace
 			}
 			next = namespaceListCursor{Group: keys[i+1].Group, Resource: keys[i+1].Resource}
 		}
-		token, err := encodeCursor(next)
-		if err != nil {
-			return nil, err
-		}
-		list.Continue = token
-		return list, nil
+		return l.pageFrom(list, next)
 	}
+	return list, nil
+}
+
+// maxFruitlessSearches bounds the searches one request may spend on rows the managed
+// filter discards, after which it answers short and lets the client resume.
+const maxFruitlessSearches = 20
+
+// pageFrom returns the page built so far, resumable at next.
+func (l *NamespaceListerFromSearch) pageFrom(list *provisioning.ResourceList, next namespaceListCursor) (*provisioning.ResourceList, error) {
+	token, err := encodeCursor(next)
+	if err != nil {
+		return nil, err
+	}
+	list.Continue = token
 	return list, nil
 }
 

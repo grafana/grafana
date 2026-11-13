@@ -133,6 +133,14 @@ func TestHandleNamespaceResources(t *testing.T) {
 		require.Equal(t, http.StatusOK, rec.Code)
 	})
 
+	// url.URL.Query() drops a parameter whose escaping is malformed and reports no error,
+	// so the filter would vanish and the endpoint would answer everything.
+	t.Run("rejects a malformed query escape rather than dropping the filter", func(t *testing.T) {
+		b := &APIBuilder{namespaceLister: resources.NewMockNamespaceLister(t), gv: provisioning.SchemeGroupVersion}
+		rec := serveNamespaceResources(t, b, "stacks-1", "?managed=false%ZZ")
+		require.Equal(t, http.StatusBadRequest, rec.Code)
+	})
+
 	t.Run("rejects an unparseable parameter before reading anything", func(t *testing.T) {
 		b := &APIBuilder{namespaceLister: resources.NewMockNamespaceLister(t), gv: provisioning.SchemeGroupVersion}
 		rec := serveNamespaceResources(t, b, "stacks-1", "?managed=maybe")
