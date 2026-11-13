@@ -10646,6 +10646,8 @@
             "name-clock-ms": "clock (ms)",
             "name-clock-s": "clock (s)",
             "name-days": "days (d)",
+            "name-duration-compact-ms": "duration compact (ms)",
+            "name-duration-compact-s": "duration compact (s)",
             "name-duration-dhms": "duration (d hh:mm:ss)",
             "name-duration-hms": "duration (hh:mm:ss)",
             "name-duration-ms": "duration (ms)",

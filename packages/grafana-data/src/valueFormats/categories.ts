@@ -26,6 +26,8 @@ import {
   toDurationInHoursMinutesSeconds,
   toDurationInMilliseconds,
   toDurationInSeconds,
+  toCompactDurationInMilliseconds,
+  toCompactDurationInSeconds,
   toHours,
   toMicroSeconds,
   toMilliSeconds,
@@ -1383,6 +1385,16 @@ export const getCategories = (): ValueFormatCategory[] => [
         name: t('grafana-data.valueFormats.categories.time.formats.name-duration-s', 'duration (s)'),
         id: 'dtdurations',
         fn: toDurationInSeconds,
+      },
+      {
+        name: t('grafana-data.valueFormats.categories.time.formats.name-duration-compact-ms', 'duration compact (ms)'),
+        id: 'dtdurationcompactms',
+        fn: toCompactDurationInMilliseconds,
+      },
+      {
+        name: t('grafana-data.valueFormats.categories.time.formats.name-duration-compact-s', 'duration compact (s)'),
+        id: 'dtdurationcompacts',
+        fn: toCompactDurationInSeconds,
       },
       {
         name: t('grafana-data.valueFormats.categories.time.formats.name-duration-hms', 'duration (hh:mm:ss)'),
