@@ -10,6 +10,7 @@ import (
 	"google.golang.org/grpc/codes"
 	grpcstatus "google.golang.org/grpc/status"
 
+	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/instrumentationutils"
@@ -40,13 +41,13 @@ func newMetricsMiddleware(promRegisterer prometheus.Registerer, pluginRegistry r
 		Name:      "plugin_request_total",
 		Help:      "The total amount of plugin requests",
 	}, append([]string{"plugin_id", "endpoint", "status", "target", "plugin_version"}, additionalLabels...))
-	pluginRequestDuration := prometheus.NewHistogramVec(prometheus.HistogramOpts{
+	pluginRequestDuration := metricutil.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "grafana",
 		Name:      "plugin_request_duration_milliseconds",
 		Help:      "Plugin request duration",
 		Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 50, 100},
 	}, append([]string{"plugin_id", "endpoint", "target", "plugin_version"}, additionalLabels...))
-	pluginRequestSize := prometheus.NewHistogramVec(
+	pluginRequestSize := metricutil.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Namespace: "grafana",
 			Name:      "plugin_request_size_bytes",
@@ -54,7 +55,7 @@ func newMetricsMiddleware(promRegisterer prometheus.Registerer, pluginRegistry r
 			Buckets:   []float64{128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536, 131072, 262144, 524288, 1048576},
 		}, []string{"source", "plugin_id", "endpoint", "target", "plugin_version"},
 	)
-	pluginRequestDurationSeconds := prometheus.NewHistogramVec(prometheus.HistogramOpts{
+	pluginRequestDurationSeconds := metricutil.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "grafana",
 		Name:      "plugin_request_duration_seconds",
 		Help:      "Plugin request duration in seconds",
