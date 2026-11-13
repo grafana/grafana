@@ -141,6 +141,14 @@ describe('InspectJsonTab', () => {
     expect(tab.isEditable()).toBe(false);
   });
 
+  it('Can show panel json for a library panel in a V2 default grid', async () => {
+    const { tab } = await buildTestSceneWithLibraryPanel('v2');
+
+    const obj = JSON.parse(tab.state.jsonText);
+    expect(obj.kind).toBe('LibraryPanel');
+    expect(obj.spec.libraryPanel).toEqual({ uid: '111', name: 'LibraryPanel A' });
+  });
+
   it('Can show panel json for a library panel laid out by the V2 auto grid', async () => {
     const { tab } = await buildTestSceneWithV2LibraryPanel();
 
@@ -364,7 +372,7 @@ async function buildTestScene() {
   return { scene, tab, panel };
 }
 
-async function buildTestSceneWithLibraryPanel() {
+async function buildTestSceneWithLibraryPanel(serializerVersion: 'v1' | 'v2' = 'v1') {
   const libraryPanel = new VizPanel({
     title: 'Panel A',
     pluginId: 'table',
@@ -408,7 +416,7 @@ async function buildTestSceneWithLibraryPanel() {
       canEdit: true,
     },
     body: DefaultGridLayoutManager.fromVizPanels([libraryPanel]),
-  });
+  }, serializerVersion);
 
   activateFullSceneTree(scene);
 
