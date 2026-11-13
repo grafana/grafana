@@ -2406,8 +2406,10 @@ func (DashboardSwitchVariableSpec) OpenAPIModelName() string {
 // A question viewers can ask about a dashboard, row, or tab, offered by plugins in its controls.
 // +k8s:openapi-gen=true
 type DashboardQuestion struct {
-	// The question as viewers see and ask it.
+	// The question that is asked. Viewers see it on the dashboard unless it has a title.
 	Text string `json:"text"`
+	// A short title viewers see on the dashboard instead of the question. Unset to show the question.
+	Title *string `json:"title,omitempty"`
 	// The panels to answer it from. Unset for every panel in the dashboard, row, or tab the question is saved on.
 	Sources []DashboardQuestionSource `json:"sources,omitempty"`
 }
@@ -2425,13 +2427,15 @@ func (DashboardQuestion) OpenAPIModelName() string {
 // A panel that a question is answered from.
 // +k8s:openapi-gen=true
 type DashboardQuestionSource struct {
-	// The panel's ID.
-	PanelId float64 `json:"panelId"`
+	// The panel, by its name in dashboard.spec.elements.
+	Element DashboardElementReference `json:"element"`
 }
 
 // NewDashboardQuestionSource creates a new DashboardQuestionSource object.
 func NewDashboardQuestionSource() *DashboardQuestionSource {
-	return &DashboardQuestionSource{}
+	return &DashboardQuestionSource{
+		Element: *NewDashboardElementReference(),
+	}
 }
 
 // OpenAPIModelName returns the OpenAPI model name for DashboardQuestionSource.
