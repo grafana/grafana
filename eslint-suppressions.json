@@ -1820,11 +1820,6 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/hooks/useFilteredRules.ts": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/hooks/useGenericSavedSearches.ts": {
     "react-hooks/exhaustive-deps": {
       "count": 1

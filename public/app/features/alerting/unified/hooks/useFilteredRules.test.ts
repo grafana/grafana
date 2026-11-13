@@ -1,4 +1,7 @@
+import { renderHook } from '@testing-library/react';
+
 import { DEFAULT_ROUTING_TREE_NAME_ALIAS, USER_DEFINED_TREE_NAME } from '@grafana/alerting';
+import { useDataSourceInstanceList } from '@grafana/runtime';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 
 import { PromAlertingRuleState } from '../../../../types/unified-alerting-dto';
@@ -20,7 +23,22 @@ import { Annotation } from '../utils/constants';
 import { parsePromQLStyleMatcherLooseSafe } from '../utils/matchers';
 import { getFilter } from '../utils/search';
 
-import { filterRules } from './useFilteredRules';
+import { filterRules, useFilteredRules } from './useFilteredRules';
+
+jest.mock('@grafana/runtime', () => {
+  const actual = jest.requireActual('@grafana/runtime');
+  return {
+    ...actual,
+    useDataSourceInstanceList: jest.fn(actual.useDataSourceInstanceList),
+  };
+});
+
+const runtime = jest.requireActual('@grafana/runtime');
+const useDataSourceInstanceListMock = jest.mocked(useDataSourceInstanceList);
+
+afterEach(() => {
+  useDataSourceInstanceListMock.mockImplementation(runtime.useDataSourceInstanceList);
+});
 
 const dataSources = {
   prometheus: mockDataSource({ uid: 'prom-1', name: 'prometheus' }),
@@ -39,7 +57,7 @@ describe('filterRules', function () {
       groups: [mockCombinedRuleGroup('Resources usage group', rules)],
     });
 
-    const filtered = filterRules([ns], getFilter({ ruleName: nameFilter }));
+    const filtered = filterRules([ns], getFilter({ ruleName: nameFilter }), new Set());
 
     expect(filtered[0].groups[0].rules).toHaveLength(1);
     expect(filtered[0].groups[0].rules[0].name).toBe('High CPU usage');
@@ -56,7 +74,7 @@ describe('filterRules', function () {
         ],
       });
 
-      const filtered = filterRules([ns], getFilter({ groupName: groupFilter }));
+      const filtered = filterRules([ns], getFilter({ groupName: groupFilter }), new Set());
 
       expect(filtered[0].groups).toHaveLength(1);
       expect(filtered[0].groups[0].rules[0].name).toBe('Memory too low');
@@ -73,7 +91,7 @@ describe('filterRules', function () {
       groups: [mockCombinedRuleGroup('Resources usage group', rules)],
     });
 
-    const filtered = filterRules([ns], getFilter({ labels: ['severity=critical'] }));
+    const filtered = filterRules([ns], getFilter({ labels: ['severity=critical'] }), new Set());
 
     expect(filtered[0].groups[0].rules).toHaveLength(1);
     expect(filtered[0].groups[0].rules[0].name).toBe('Memory too low');
@@ -95,7 +113,7 @@ describe('filterRules', function () {
       groups: [mockCombinedRuleGroup('Resources usage group', rules)],
     });
 
-    const filtered = filterRules([ns], getFilter({ labels: ['severity=warning'] }));
+    const filtered = filterRules([ns], getFilter({ labels: ['severity=warning'] }), new Set());
 
     expect(filtered[0].groups[0].rules).toHaveLength(1);
     expect(filtered[0].groups[0].rules[0].name).toBe('High CPU usage');
@@ -117,7 +135,7 @@ describe('filterRules', function () {
       groups: [mockCombinedRuleGroup('Resources usage group', rules)],
     });
 
-    const filtered = filterRules([ns], getFilter({ ruleState: PromAlertingRuleState.Firing }));
+    const filtered = filterRules([ns], getFilter({ ruleState: PromAlertingRuleState.Firing }), new Set());
 
     expect(filtered[0].groups[0].rules).toHaveLength(1);
     expect(filtered[0].groups[0].rules[0].name).toBe('Memory too low');
@@ -139,7 +157,7 @@ describe('filterRules', function () {
       groups: [mockCombinedRuleGroup('Resources usage group', rules)],
     });
 
-    const filtered = filterRules([ns], getFilter({ ruleHealth: RuleHealth.Error }));
+    const filtered = filterRules([ns], getFilter({ ruleHealth: RuleHealth.Error }), new Set());
 
     expect(filtered[0].groups[0].rules).toHaveLength(1);
     expect(filtered[0].groups[0].rules[0].name).toBe('Memory too low');
@@ -172,7 +190,11 @@ describe('filterRules', function () {
       'Prometheus-ds'
     );
 
-    const filtered = filterRules([ns, cloudNs], getFilter({ dataSourceNames: ['loki', 'Prometheus-ds'] }));
+    const filtered = filterRules(
+      [ns, cloudNs],
+      getFilter({ dataSourceNames: ['loki', 'Prometheus-ds'] }),
+      new Set([dataSources.loki.uid])
+    );
 
     expect(filtered[0].groups[0].rules).toHaveLength(2);
     expect(filtered[0].groups[0].rules[0].name).toBe('Memory too low');
@@ -206,7 +228,8 @@ describe('filterRules', function () {
       getFilter({
         ruleHealth: RuleHealth.Ok,
         labels: ['team=operations', 'region=EMEA'],
-      })
+      }),
+      new Set()
     );
 
     expect(filtered[0]?.groups[0]?.rules).toHaveLength(1);
@@ -228,7 +251,7 @@ describe('filterRules', function () {
       groups: [mockCombinedRuleGroup('Memory group', [memoryRule])],
     });
 
-    const filtered = filterRules([teamEmeaNs, teamNasaNs], getFilter({ namespace: namespaceFilter }));
+    const filtered = filterRules([teamEmeaNs, teamNasaNs], getFilter({ namespace: namespaceFilter }), new Set());
 
     expect(filtered[0].groups[0].rules).toHaveLength(1);
     expect(filtered[0].groups[0].rules[0].name).toBe('Memory too low');
@@ -253,7 +276,7 @@ describe('filterRules', function () {
       groups: [mockCombinedRuleGroup('Resources usage group', rules)],
     });
 
-    const filtered = filterRules([ns], getFilter({ dashboardUid: 'dashboard-cpu' }));
+    const filtered = filterRules([ns], getFilter({ dashboardUid: 'dashboard-cpu' }), new Set());
 
     expect(filtered[0]?.groups[0]?.rules).toHaveLength(1);
     expect(filtered[0]?.groups[0]?.rules[0]?.name).toBe('CPU too high');
@@ -277,12 +300,13 @@ describe('filterRules', function () {
     const groupQuery = 'some|group';
     const freeForm = '.+';
 
-    expect(() =>
+    expect(
       filterRules(
         [ns],
-        getFilter({ groupName: groupQuery, ruleName: ruleQuery, namespace: namespaceQuery, freeFormWords: [freeForm] })
+        getFilter({ groupName: groupQuery, ruleName: ruleQuery, namespace: namespaceQuery, freeFormWords: [freeForm] }),
+        new Set()
       )
-    ).not.toThrow();
+    ).toEqual(expect.any(Array));
   });
 
   // these test may same to be the same as the one above but it tests different edge-cases
@@ -294,7 +318,7 @@ describe('filterRules', function () {
       groups: [mockCombinedRuleGroup('group', rules)],
     });
 
-    expect(() => filterRules([ns], getFilter({ freeFormWords: ['.+'] }))).not.toThrow();
+    expect(filterRules([ns], getFilter({ freeFormWords: ['.+'] }), new Set())).toEqual(expect.any(Array));
   });
 
   it.each(['[square-bracket]', '[5m]', '(bracket-test)', 'aste-risk*', 'with+ plus'])(
@@ -307,7 +331,7 @@ describe('filterRules', function () {
         groups: [mockCombinedRuleGroup('group', rules)],
       });
 
-      const filtered = filterRules([ns], getFilter({ freeFormWords: [expression] }));
+      const filtered = filterRules([ns], getFilter({ freeFormWords: [expression] }), new Set());
 
       expect(filtered[0]?.groups[0]?.rules).toHaveLength(1);
       expect(filtered[0]?.groups[0]?.rules[0]?.name).toBe(expression);
@@ -323,7 +347,7 @@ describe('filterRules', function () {
     });
 
     const longSearchTerm = 'very:long:rule:name:that:definitely:exceeds:max:needle:length';
-    const filtered = filterRules([ns], getFilter({ ruleName: longSearchTerm }));
+    const filtered = filterRules([ns], getFilter({ ruleName: longSearchTerm }), new Set());
 
     expect(filtered[0]?.groups[0]?.rules).toHaveLength(1);
     expect(filtered[0]?.groups[0]?.rules[0]?.name).toBe(longRuleName);
@@ -373,11 +397,33 @@ describe('filterRules — default policy recognition', () => {
         groups: [mockCombinedRuleGroup('g', [defaultPolicyRule, namedPolicyRule])],
       });
 
-      const filtered = filterRules([ns], getFilter({ policy }));
+      const filtered = filterRules([ns], getFilter({ policy }), new Set());
       const names = filtered[0]?.groups[0]?.rules.map((r) => r.name) ?? [];
 
       expect(names).toContain('Default policy rule');
       expect(names).not.toContain('Named policy rule');
     }
   );
+});
+
+describe('useFilteredRules — data source list errors', () => {
+  it('exposes the data source error when a data source filter is active', () => {
+    const error = new Error('data source list failed');
+    useDataSourceInstanceListMock.mockReturnValue({ items: [], isLoading: false, error });
+
+    const { result } = renderHook(() => useFilteredRules([], getFilter({ dataSourceNames: ['loki'] })));
+
+    expect(result.current.error).toBe(error);
+    expect(result.current.isLoading).toBe(false);
+  });
+
+  it('ignores data source list errors when no data source filter is active', () => {
+    const error = new Error('data source list failed');
+    useDataSourceInstanceListMock.mockReturnValue({ items: [], isLoading: false, error });
+
+    const { result } = renderHook(() => useFilteredRules([], getFilter({ dataSourceNames: [] })));
+
+    expect(result.current.error).toBeUndefined();
+    expect(result.current.isLoading).toBe(false);
+  });
 });

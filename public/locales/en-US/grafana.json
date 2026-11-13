@@ -3161,6 +3161,10 @@
       "checking-data-sources_one": "Checking {{count}} more data source",
       "checking-data-sources_other": "Checking {{count}} more data sources",
       "configure-datasource": "Configure",
+      "data-source-filter": {
+        "error-description": "The selected data sources could not be loaded, so the rules cannot be filtered. Try refreshing the page.",
+        "error-title": "Unable to load data sources"
+      },
       "datasource-managed-notice": {
         "action": "View rules in Prometheus Alerting",
         "body": "Their alert and recording rules are no longer shown here.",
@@ -3241,7 +3245,8 @@
         "switch-button": "Switch to the new list",
         "title": "This version of the alert rule list is deprecated"
       },
-      "expand-all": "Expand all"
+      "expand-all": "Expand all",
+      "loading": "Loading alert rules"
     },
     "rule-list-v2": {
       "import-to-gma": "Import alert rules"
