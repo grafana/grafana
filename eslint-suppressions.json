@@ -707,11 +707,6 @@
       "count": 2
     }
   },
-  "packages/grafana-ui/src/components/Monaco/CodeEditor.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/PanelChrome/PanelChrome.tsx": {
     "react-hooks/immutability": {
       "count": 1
@@ -3321,9 +3316,6 @@
     }
   },
   "public/app/features/library-panels/components/AddLibraryPanelModal/AddLibraryPanelModal.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 2
-    },
     "react-hooks/exhaustive-deps": {
       "count": 1
     },
