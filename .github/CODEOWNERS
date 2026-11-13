@@ -142,7 +142,7 @@
 /pkg/components/simplejson/ @grafana/grafana-backend-services-squad
 /pkg/configprovider/ @grafana/grafana-backend-services-squad
 /pkg/events/ @grafana/grafana-backend-services-squad
-/pkg/extensions/ @grafana/grafana-operator-experience-squad
+/pkg/extensions/ # Empty codeowners for shared integration files and packages that are changed by many teams.
 /pkg/ifaces/ @grafana/grafana-backend-services-squad
 /pkg/infra/db/ @grafana/grafana-search-and-storage
 /pkg/infra/features/ @grafana/grafana-backend-services-squad
