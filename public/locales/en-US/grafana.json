@@ -10990,6 +10990,8 @@
       "tooltip": {
         "category": "Tooltip",
         "description-hover-proximity": "How close the cursor must be to a point to trigger the tooltip, in pixels",
+        "description-max-height": "Maximum height of the tooltip, in pixels",
+        "description-max-width": "Maximum width of the tooltip, in pixels",
         "modeOptions": {
           "label-all": "All",
           "label-hidden": "Hidden",
