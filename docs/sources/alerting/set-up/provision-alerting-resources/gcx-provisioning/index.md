@@ -23,7 +23,7 @@ weight: 400
 
 `gcx` provides two ways to manage alerting resources:
 
-- [`gcx resources`](#manage-resources-with-gcx-resources) to export and provision alerting resources as manifest files. Provisioned resources cannot be edited in the Grafana UI.
+- [`gcx resources`](#manage-resources-with-gcx-resources) to export and provision alerting resources as manifest files. Provisioned alert rules and recording rules cannot be edited in the Grafana UI.
 
 - [`gcx alert` commands](#manage-resources-with-gcx-alert) to export and manage alerting resources. These resources are editable in the Grafana UI by default.
 
@@ -68,9 +68,10 @@ gcx resources push alertrules/<RULE_ID> --path ./alerting/
 
 {{< admonition type="note" >}}
 
-Pushing an existing resource replaces it. You cannot edit the provisioned resource in the Grafana UI.
+Pushing an existing resource replaces it. 
 
-This prevents UI changes that would be overwritten when the resource is provisioned again. To change the resource, update its manifest file and push it again.
+You cannot edit provisioned alert rules and recording rules in the Grafana UI. This prevents UI changes that would be overwritten when the resource is provisioned again.
+
 
 {{< /admonition >}}
 
@@ -199,7 +200,7 @@ Some operations replace or update existing data:
 
 ### Disable updates in the Grafana UI
 
-By default, resources written by `gcx alert` are editable in the Grafana UI. Resources provisioned with `gcx resources push` cannot be edited in the UI.
+By default, resources written by `gcx alert` are editable in the Grafana UI. Alert rules and recording rules provisioned with `gcx resources push` cannot be edited in the UI.
 
 To prevent UI updates so that a resource can only be changed through provisioning, set `--allow-ui-updates=false`:
 
