@@ -8,12 +8,13 @@
 // TAGS=<name@version>[,<name@version>...]. With TAGS it only checks that the given tags exist and reports
 // them, which is how a manual run publishes. Writes release_created, tagged and sha to GITHUB_OUTPUT.
 
-import { execFileSync } from 'node:child_process';
 import { realpathSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
+import { requireEnv } from './lib/env.mts';
 import { writeOutputs } from './lib/github-output.mts';
 import { parsePackages, type IndependentPackage } from './lib/packages.mts';
+import { run, stderrOf } from './lib/shell.mts';
 import { tagFor } from './lib/tags.mts';
 
 export interface PendingPr {
@@ -201,22 +202,6 @@ export function formatOutputs(result: Result): Record<string, string> {
   };
 }
 
-function requireEnv(name: string): string {
-  const value = process.env[name];
-  if (!value) {
-    throw new Error(`${name} is not set.`);
-  }
-  return value;
-}
-
-function run(command: string, args: string[]): string {
-  return execFileSync(command, args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
-}
-
-function stderrOf(error: unknown): string {
-  return error instanceof Error && 'stderr' in error ? String(error.stderr) : '';
-}
-
 function listMergedPendingPrs(repo: string): PendingPr[] {
   const prs: Array<{ number: number; mergeCommit: { oid: string }; mergedAt: string }> = JSON.parse(
     run('gh', [
@@ -255,11 +240,11 @@ function apiGet(path: string): { object: { type: string; sha: string } } | null 
 }
 
 export function createTaggingDeps(): Deps {
-  const repo = requireEnv('GITHUB_REPOSITORY');
+  const repo = requireEnv(process.env, 'GITHUB_REPOSITORY');
 
   return {
     packages: parsePackages(process.env.INDEPENDENT_PACKAGES),
-    sha: requireEnv('GITHUB_SHA'),
+    sha: requireEnv(process.env, 'GITHUB_SHA'),
     listPendingPrs: () => listMergedPendingPrs(repo),
     parentOf: (commit) => run('git', ['rev-parse', `${commit}^1`]).trim(),
     readVersionAt: (commit, manifestPath) => {

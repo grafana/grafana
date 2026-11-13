@@ -16,18 +16,12 @@ import { fileURLToPath } from 'node:url';
 
 import { writeOutputs } from './lib/github-output.mts';
 import { parsePackages, type IndependentPackage } from './lib/packages.mts';
+import type { PackageRelease } from './lib/releases.mts';
 import { tagFor } from './lib/tags.mts';
 
 export interface VersionChange {
   currentVersion: string;
   newVersion: string | null;
-}
-
-export interface PackageRelease {
-  name: string;
-  currentVersion: string;
-  newVersion: string;
-  changelog: string;
 }
 
 export interface Result {
