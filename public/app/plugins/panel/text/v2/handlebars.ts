@@ -3,6 +3,7 @@ import Handlebars from 'handlebars';
 import {
   type DataFrame,
   type DateTimeInput,
+  type Field,
   dateTimeFormat,
   formattedValueToString,
   getFieldDisplayName,
@@ -41,7 +42,8 @@ export type CompiledTemplate = (context: TemplateContext) => string;
 export function buildRows(frame: DataFrame, series: DataFrame[], maxRows = Infinity, startRow = 0): TemplateRow[] {
   const names = frame.fields.map((field) => getFieldDisplayName(field, frame, series));
   const formattedRows = new WeakMap<object, FormattedRow>();
-  const formattedFields = createFormattedFields(frame, names, formattedRows);
+  const state: FormattingState = { eager: false };
+  const formattedFields = createFormattedFields(frame, names, formattedRows, state);
 
   return Array.from({ length: Math.max(Math.min(frame.length - startRow, maxRows), 0) }, (_, offset) => {
     const rowIndex = startRow + offset;
@@ -49,8 +51,12 @@ export function buildRows(frame: DataFrame, series: DataFrame[], maxRows = Infin
 
     Object.defineProperty(row, FORMATTED_KEY, {
       get(this: object) {
+        if (state.eager) {
+          return assign(this, FORMATTED_KEY, formatRow(frame, names, rowIndex));
+        }
+
         const formatted = Object.defineProperties({}, formattedFields);
-        formattedRows.set(formatted, { rowIndex, values: [] });
+        formattedRows.set(formatted, { rowIndex, values: [], read: 0 });
         return assign(this, FORMATTED_KEY, formatted);
       },
       set(this: object, value: unknown) {
@@ -74,6 +80,29 @@ interface FormattedRow {
   rowIndex: number;
   /** Display strings by field index, filled as they are read. */
   values: Array<string | undefined>;
+  /** How many fields have been formatted. */
+  read: number;
+}
+
+// Once one row has read most of its fields, the template most likely reads them all, and defining
+// an accessor per field costs more than the formatting it would skip. Rows read after that build
+// `fmt` the way it was built before it was lazy.
+interface FormattingState {
+  eager: boolean;
+}
+
+function formatValue(field: Field, value: unknown): string {
+  return field.display ? formattedValueToString(field.display(value)) : toText(value);
+}
+
+function formatRow(frame: DataFrame, names: string[], rowIndex: number): TemplateRow {
+  const formatted: TemplateRow = {};
+
+  frame.fields.forEach((field, fieldIndex) => {
+    formatted[names[fieldIndex]] = formatValue(field, field.values[rowIndex]);
+  });
+
+  return formatted;
 }
 
 // One accessor per field, shared by every row of the frame. Keyed by name in field order, so a
@@ -81,7 +110,8 @@ interface FormattedRow {
 function createFormattedFields(
   frame: DataFrame,
   names: string[],
-  formattedRows: WeakMap<object, FormattedRow>
+  formattedRows: WeakMap<object, FormattedRow>,
+  state: FormattingState
 ): PropertyDescriptorMap {
   const descriptors: PropertyDescriptorMap = Object.create(null);
 
@@ -100,10 +130,17 @@ function createFormattedFields(
           return undefined;
         }
 
-        const { rowIndex, values } = formatted;
-        const value = field.values[rowIndex];
+        const cached = formatted.values[fieldIndex];
+        if (cached !== undefined) {
+          return cached;
+        }
 
-        return (values[fieldIndex] ??= field.display ? formattedValueToString(field.display(value)) : toText(value));
+        const value = (formatted.values[fieldIndex] = formatValue(field, field.values[formatted.rowIndex]));
+        if (++formatted.read * 2 > frame.fields.length) {
+          state.eager = true;
+        }
+
+        return value;
       },
       set(this: object, value: unknown) {
         assign(this, name, value);

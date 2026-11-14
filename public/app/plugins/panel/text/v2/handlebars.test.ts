@@ -218,6 +218,26 @@ describe('lazy `fmt`', () => {
     expect(() => render('{{#each data}}{{fmt.cpu}}{{/each}}', context)).toThrow('broken processor');
   });
 
+  it('formats whole rows once a row has read most of its fields', () => {
+    const { frame, calls } = counted();
+
+    expect(
+      render(
+        '{{#each data}}{{#if @first}}{{fmt.host}}{{fmt.cpu}}{{/if}}{{fmt.mem}};{{/each}}',
+        buildAllRowsContext([frame])
+      )
+    ).toBe('&lt;web-1&gt; u&lt;0.84&gt; u&lt;512&gt; u;&lt;256&gt; u;');
+    expect(calls).toEqual({ host: 2, cpu: 2, mem: 2 });
+  });
+
+  it('keeps formatting only what is read while rows read less than half their fields', () => {
+    const { frame, calls } = counted();
+
+    render('{{#each data}}{{fmt.host}};{{/each}}', buildAllRowsContext([frame]));
+
+    expect(calls).toEqual({ host: 2, cpu: 0, mem: 0 });
+  });
+
   describe('renders the same as building `fmt` eagerly', () => {
     const frame = () =>
       withCountedDisplay(
