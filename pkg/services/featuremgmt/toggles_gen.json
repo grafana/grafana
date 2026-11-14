@@ -6342,12 +6342,15 @@
     {
       "metadata": {
         "name": "suggestedDashboards",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-11-07T13:38:59Z"
+        "resourceVersion": "1794351089930",
+        "creationTimestamp": "2025-11-07T13:38:59Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-10 22:51:29.930059 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Displays datasource provisioned and community dashboards in dashboard empty page, only when coming from datasource configuration page",
-        "stage": "experimental",
+        "description": "Displays data source provisioned and community dashboards in dashboard empty page, only when coming from data source configuration page",
+        "stage": "preview",
         "codeowner": "@grafana/sharing-squad",
         "expression": "false"
       }
@@ -6355,12 +6358,15 @@
     {
       "metadata": {
         "name": "suggestedDashboardsAssistantButton",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-03-12T16:18:10Z"
+        "resourceVersion": "1794350723658",
+        "creationTimestamp": "2026-03-12T16:18:10Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-10 22:45:23.658984 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the 'Customize with Assistant' button on suggested dashboard cards",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/sharing-squad",
         "frontend": true,
         "expression": "false"

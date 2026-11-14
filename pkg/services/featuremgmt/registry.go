@@ -1056,8 +1056,8 @@ var (
 		},
 		{
 			Name:        "suggestedDashboards",
-			Description: "Displays datasource provisioned and community dashboards in dashboard empty page, only when coming from datasource configuration page",
-			Stage:       FeatureStageExperimental,
+			Description: "Displays data source provisioned and community dashboards in dashboard empty page, only when coming from data source configuration page",
+			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaSharingSquad,
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true},
 			Expression:  "false",
@@ -1105,7 +1105,7 @@ var (
 		{
 			Name:        "suggestedDashboardsAssistantButton",
 			Description: "Enables the 'Customize with Assistant' button on suggested dashboard cards",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaSharingSquad,
 			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 			Expression:  "false",
