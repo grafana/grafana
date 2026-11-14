@@ -36,6 +36,9 @@ export enum NodeGraphDataFrameFieldNames {
   // @deprecated -- for edges use color instead
   highlighted = 'highlighted',
 
+  // Defines the color of the highlight if string (hex or html named value) is a valid color.
+  highlightColor = 'highlightcolor',
+
   // Defines the stroke dash array for the edge [edges]. See SVG strokeDasharray definition for syntax.
   strokeDasharray = 'strokedasharray',
 

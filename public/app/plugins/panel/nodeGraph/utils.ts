@@ -60,6 +60,7 @@ export type NodeFields = {
   icon?: Field;
   nodeRadius?: Field;
   highlighted?: Field;
+  highlightColor?: Field;
   isInstrumented?: Field;
 };
 
@@ -83,6 +84,7 @@ export function getNodeFields(nodes: DataFrame): NodeFields {
     icon: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.icon),
     nodeRadius: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.nodeRadius.toLowerCase()),
     highlighted: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.highlighted.toLowerCase()),
+    highlightColor: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.highlightColor.toLowerCase()),
     fixedX: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.fixedX.toLowerCase()),
     fixedY: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.fixedY.toLowerCase()),
     isInstrumented: fieldsCache.getFieldByName(NodeGraphDataFrameFieldNames.isInstrumented.toLowerCase()),
@@ -442,6 +444,7 @@ function makeNodeDatum(id: string, nodeFields: NodeFields, index: number): NodeD
     icon: nodeFields.icon?.values[index] || '',
     nodeRadius: nodeFields.nodeRadius,
     highlighted: nodeFields.highlighted?.values[index] || false,
+    highlightColor: nodeFields.highlightColor,
     x: nodeFields.fixedX?.values[index] ?? undefined,
     y: nodeFields.fixedY?.values[index] ?? undefined,
     isInstrumented: nodeFields.isInstrumented?.values[index] ?? true,
