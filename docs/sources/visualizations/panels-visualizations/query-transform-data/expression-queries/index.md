@@ -160,7 +160,7 @@ is_number takes a number or a series and returns `1` for all real number values 
 
 ###### log
 
-Log returns the natural logarithm of of its argument which can be a number or a series. If the value is less than 0, NaN is returned. For example `log(-1)` or `log($A)`.
+Log returns the natural logarithm of its argument which can be a number or a series. If the value is less than 0, NaN is returned. For example `log(-1)` or `log($A)`.
 
 ###### inf, infn, nan, and null
 
