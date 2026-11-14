@@ -7,6 +7,7 @@ import {
   type JobStatus,
   type RepositorySpec,
   type RepositoryStatus,
+  type ResourceList,
   type Status,
 } from '@grafana/api-clients/rtkq/provisioning/v0alpha1';
 import { t } from '@grafana/i18n';
@@ -317,6 +318,20 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
       },
     },
   },
+});
+
+// Lookup results belong to the current document, not a shared query cache.
+export const { useLookupRepositoryPathsMutation } = provisioningAPIv0alpha1.injectEndpoints({
+  endpoints: (build) => ({
+    lookupRepositoryPaths: build.mutation<ResourceList, { name: string; paths: string[] }>({
+      query: ({ name, paths }) => ({
+        url: `/repositories/${name}/resources`,
+        method: 'POST',
+        body: { paths },
+        showSuccessAlert: false,
+      }),
+    }),
+  }),
 });
 
 // eslint-disable-next-line no-barrel-files/no-barrel-files
