@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
+	"github.com/grafana/grafana/pkg/storage/unified/apistore/securevalue"
 )
 
 type LocalInlineSecureValueService struct {
@@ -71,6 +72,11 @@ func (s *LocalInlineSecureValueService) CanReference(ctx context.Context, owner 
 	for _, name := range names {
 		if name == "" {
 			return fmt.Errorf("empty secure value name: %w", contracts.ErrInlineSecureValueInvalidName)
+		}
+
+		// Dynamic secure values are only supported by services that wrap this one to resolve them
+		if securevalue.IsDynamicSecureValueName(name) {
+			return fmt.Errorf("dynamic secure value %s is not supported: %w", name, contracts.ErrInlineSecureValueCannotReference)
 		}
 
 		owned, err := s.isSecureValueOwnedByResource(ctx, owner, name)
