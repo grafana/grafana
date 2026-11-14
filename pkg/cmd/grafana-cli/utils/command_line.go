@@ -51,9 +51,24 @@ func (c *ContextCommandLine) Application() *cli.App {
 	return c.App
 }
 
-func (c *ContextCommandLine) HomePath() string { return c.String("homepath") }
+func (c *ContextCommandLine) HomePath() string { return c.stringSetInLineage("homepath") }
 
-func (c *ContextCommandLine) ConfigFile() string { return c.String("config") }
+func (c *ContextCommandLine) ConfigFile() string { return c.stringSetInLineage("config") }
+
+func (c *ContextCommandLine) ConfigOverrides() string { return c.stringSetInLineage("configOverrides") }
+
+// stringSetInLineage returns the value from the nearest command that explicitly
+// set the flag. cli.Context.String stops at the nearest command that defines
+// the flag, so a subcommand redefining a global flag such as --config would
+// otherwise hide the value passed to `grafana cli`.
+func (c *ContextCommandLine) stringSetInLineage(name string) string {
+	for _, ctx := range c.Lineage() {
+		if ctx.IsSet(name) {
+			return ctx.String(name)
+		}
+	}
+	return c.String(name)
+}
 
 func (c *ContextCommandLine) PluginDirectory() string {
 	return c.String("pluginsDir")
@@ -90,11 +105,12 @@ func (c *ContextCommandLine) PluginRepoURL() string {
 }
 
 func (c *ContextCommandLine) Config() (*setting.Cfg, error) {
-	configOptions := strings.Split(c.String("configOverrides"), " ")
+	configOptions := strings.Split(c.ConfigOverrides(), " ")
 	return setting.NewCfgFromArgs(setting.CommandLineArgs{
 		Config:   c.ConfigFile(),
 		HomePath: c.HomePath(),
-		Args:     append(configOptions, c.Args().Slice()...),
+		// tailing arguments have precedence over the options string
+		Args: append(configOptions, c.Args().Slice()...),
 	})
 }
 

@@ -3,7 +3,6 @@ package commands
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/urfave/cli/v2"
 
@@ -56,13 +55,7 @@ func runDbCommand(command func(commandLine utils.CommandLine, cfg *setting.Cfg, 
 }
 
 func initializeRunner(ctx context.Context, cmd *utils.ContextCommandLine) (server.Runner, error) {
-	configOptions := strings.Split(cmd.String("configOverrides"), " ")
-	cfg, err := setting.NewCfgFromArgs(setting.CommandLineArgs{
-		Config:   cmd.ConfigFile(),
-		HomePath: cmd.HomePath(),
-		// tailing arguments have precedence over the options string
-		Args: append(configOptions, cmd.Args().Slice()...),
-	})
+	cfg, err := cmd.Config()
 	if err != nil {
 		return server.Runner{}, err
 	}
@@ -234,15 +227,38 @@ var adminCommands = []*cli.Command{
 		Action: runDbCommand(flushSeedAssignment),
 	},
 	{
-		Name:   "db-migrate",
-		Usage:  "Run schema migrations against the database configured in --config.",
+		Name: "db-migrate",
+		Usage: "Run the Grafana schema migrations against the database configured in --config, creating the schema if the database is empty. " +
+			"Does not run the unified storage resource migrations; use resource-db-migrate for those. Exits non-zero on failure.",
 		Action: runDbCommand(logLastMigration),
+		Flags:  configFlags(),
 	},
 	{
-		Name:   "resource-db-migrate",
-		Usage:  "Run the unified storage resource schema migrations against the database configured in --config. ",
+		Name: "resource-db-migrate",
+		Usage: "Run the unified storage resource schema migrations against the database configured in --config, creating the tables if they are missing. " +
+			"Does not run the Grafana schema migrations. Exits non-zero on failure.",
 		Action: resourceDbMigrateCommand,
+		Flags:  configFlags(),
 	},
+}
+
+// configFlags lets commands accept the global configuration flags after the
+// subcommand name too, e.g. `grafana cli admin db-migrate --config=...`.
+func configFlags() []cli.Flag {
+	return []cli.Flag{
+		&cli.StringFlag{
+			Name:  "config",
+			Usage: "Path to config file",
+		},
+		&cli.StringFlag{
+			Name:  "homepath",
+			Usage: "Path to Grafana install/home path, defaults to working directory",
+		},
+		&cli.StringFlag{
+			Name:  "configOverrides",
+			Usage: "Configuration options to override defaults as a string. e.g. cfg:default.paths.log=/dev/null",
+		},
+	}
 }
 
 var Commands = []*cli.Command{
