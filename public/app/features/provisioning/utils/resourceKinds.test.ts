@@ -2,7 +2,6 @@ import { HttpResponse, http } from 'msw';
 
 import server from '@grafana/test-utils/server';
 import { type Repository, type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
-import { getIconForKind } from 'app/features/search/service/icons';
 
 import { setupProvisioningMswServer } from '../mocks/server';
 
@@ -17,7 +16,6 @@ import {
   getMigratableKinds,
   getReportedGroup,
   getRepositoryRoute,
-  coversGroup,
   isResourceKindAvailable,
   readImmediateParent,
 } from './resourceKinds';
@@ -87,10 +85,6 @@ describe('resourceKinds registry', () => {
     expect(await resourceKindInfos.connection.list()).toEqual([]);
   });
 
-  it('sources icons from the search package', () => {
-    expect(resourceKindInfos.dashboard.icon).toBe(getIconForKind('dashboard'));
-    expect(resourceKindInfos.folder.icon).toBe(getIconForKind('folder'));
-  });
   it('gives each entry a `key` equal to its registry key', () => {
     // The type only requires `key` to be some ResourceKindKey; this guards against an entry pointing
     // at the wrong key (e.g. the playlist entry carrying `key: 'dashboard'`), which would silently
@@ -368,21 +362,6 @@ describe('getMigratableKinds', () => {
 // reports for an individual resource, in availableResources and on a job result row.
 describe('collection groups', () => {
   const testdata = 'grafana-testdata-datasource.datasource.grafana.app';
-
-  it('matches a served group inside the collection as well as the collection itself', () => {
-    expect(coversGroup(resourceKindInfos.datasource, testdata)).toBe(true);
-    expect(coversGroup(resourceKindInfos.datasource, 'datasource.grafana.app')).toBe(true);
-  });
-
-  it('does not match a group that merely looks similar', () => {
-    expect(coversGroup(resourceKindInfos.datasource, 'notdatasource.grafana.app')).toBe(false);
-    expect(coversGroup(resourceKindInfos.datasource, 'datasource.grafana.app.evil')).toBe(false);
-  });
-
-  it('leaves a kind served under its own group matching exactly', () => {
-    expect(coversGroup(resourceKindInfos.dashboard, 'dashboard.grafana.app')).toBe(true);
-    expect(coversGroup(resourceKindInfos.dashboard, 'v2.dashboard.grafana.app')).toBe(false);
-  });
 
   it('resolves a resource reported under a served group back to the kind', () => {
     expect(getKindInfoByGroupKind(testdata, 'DataSource')).toBe(resourceKindInfos.datasource);

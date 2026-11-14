@@ -17,7 +17,7 @@ import { config, getBackendSrv } from '@grafana/runtime';
 import { generatedAPI, type ListStarsApiResponse } from 'app/api/clients/collections/v1alpha1';
 import { getAPIBaseURL } from 'app/api/utils';
 import { type TermCount } from 'app/core/components/TagFilter/TagFilter';
-import kbn from 'app/core/utils/kbn';
+import { CORE_KINDS } from 'app/core/kinds/coreKinds';
 import { STARRED_KINDS } from 'app/features/stars/kinds';
 import { findStarredNames, userStarsFieldSelector } from 'app/features/stars/utils';
 import { dispatch } from 'app/store/store';
@@ -438,13 +438,17 @@ export function toDashboardResults(rsp: SearchAPIResponse, sort: string): DataFr
     const isRoot = hit.resource === 'dashboards' && isRootFolderUID(hit.folder);
     const location = isRoot ? 'general' : hit.folder;
     const folder = isRoot ? 'general' : hit.folder || 'general';
+    const route =
+      hit.resource === 'folders'
+        ? CORE_KINDS.folder.getRoute(hit.name)
+        : CORE_KINDS.dashboard.getRoute(hit.name, hit.title);
 
     const field = Object.fromEntries(Array.from(fieldNames, (name) => [name, hit.field?.[name] ?? null]));
 
     return {
       ...hit,
       uid: hit.name,
-      url: toURL(hit.resource, hit.name, hit.title),
+      url: `${config.appSubUrl}${route}`,
       // Sort tags so we aren't reliant on the backend having done this for us
       // Sorting order can be different between APIs/search implementations
       tags: (hit.tags || []).sort(),
@@ -502,18 +506,10 @@ async function loadLocationInfo(): Promise<Record<string, LocationInfo>> {
         locationInfo[hit.name] = {
           name: hit.title,
           kind: 'folder',
-          url: toURL('folders', hit.name, hit.title),
+          url: `${config.appSubUrl}${CORE_KINDS.folder.getRoute(hit.name)}`,
         };
       }
       return locationInfo;
     });
   return rsp;
-}
-
-export function toURL(resource: string, name: string, title: string): string {
-  if (resource === 'folders') {
-    return `${config.appSubUrl}/dashboards/f/${name}`;
-  }
-  const slug = kbn.slugifyForUrl(title);
-  return `${config.appSubUrl}/d/${name}/${slug}`;
 }
