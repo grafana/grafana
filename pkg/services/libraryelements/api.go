@@ -1402,6 +1402,36 @@ func (lk8s *libraryElementsK8sHandler) getClient(c *contextmodel.ReqContext) (dy
 	return dyn.Resource(lk8s.gvr).Namespace(lk8s.namespacer(c.OrgID)), true
 }
 
+func (lk8s *libraryElementsK8sHandler) getLibraryPanelFolderUID(ctx context.Context, orgID int64, uid string) (string, error) {
+	if lk8s == nil || lk8s.clientConfigProvider == nil {
+		return "", errors.New("library panel API client is not configured")
+	}
+	lookupCtx, _ := identity.WithServiceIdentity(ctx, orgID)
+	req, err := http.NewRequestWithContext(lookupCtx, http.MethodGet, "/", nil)
+	if err != nil {
+		return "", err
+	}
+	cfg := lk8s.clientConfigProvider.GetDirectRestConfig(&contextmodel.ReqContext{
+		Context:      &web.Context{Req: req},
+		SignedInUser: &user.SignedInUser{OrgID: orgID},
+	})
+	if cfg == nil {
+		return "", errors.New("library panel API client configuration is unavailable")
+	}
+	dyn, err := dynamic.NewForConfig(cfg)
+	if err != nil {
+		return "", err
+	}
+	// LegacyCheck RPCs do not preserve the request-local panel-to-folder map.
+	// Resolve metadata as a service to avoid recursively authorizing the panel
+	// before its scopes are known; evaluation still uses the original caller.
+	panel, err := dyn.Resource(lk8s.gvr).Namespace(lk8s.namespacer(orgID)).Get(lookupCtx, uid, v1.GetOptions{})
+	if err != nil {
+		return "", err
+	}
+	return panel.GetAnnotations()[utils.AnnoKeyFolder], nil
+}
+
 func (lk8s *libraryElementsK8sHandler) folderUIDFromLegacyID(c *contextmodel.ReqContext, folderID int64) (string, bool) {
 	if folderID == 0 {
 		return ac.GeneralFolderUID, true
