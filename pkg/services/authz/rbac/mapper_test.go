@@ -718,6 +718,29 @@ func TestMapperRegistry_Settings(t *testing.T) {
 	assert.False(t, mapping.HasFolderSupport())
 }
 
+func TestMapperRegistry_Banners(t *testing.T) {
+	reg := NewMapperRegistry()
+
+	mapping, ok := reg.Get("banners.grafana.app", "announcementbanners", "")
+	require.True(t, ok, "announcementbanners should be registered in the mapper")
+
+	for _, verb := range []string{utils.VerbGet, utils.VerbList, utils.VerbWatch} {
+		action, ok := mapping.Action(verb)
+		assert.True(t, ok)
+		assert.Equal(t, "banners:read", action)
+		assert.True(t, mapping.SkipScope(verb))
+		assert.True(t, mapping.OpenToAll(verb))
+	}
+	for _, verb := range []string{utils.VerbCreate, utils.VerbUpdate, utils.VerbPatch, utils.VerbDelete, utils.VerbDeleteCollection} {
+		action, ok := mapping.Action(verb)
+		assert.True(t, ok)
+		assert.Equal(t, "banners:write", action)
+		assert.True(t, mapping.SkipScope(verb))
+		assert.False(t, mapping.OpenToAll(verb))
+	}
+	assert.False(t, mapping.HasFolderSupport())
+}
+
 func TestMapperRegistry_ResourceMappings_UnknownGroup(t *testing.T) {
 	reg := NewMapperRegistry()
 	assert.Nil(t, reg.ResourceMappings("unknown.grafana.app"))
