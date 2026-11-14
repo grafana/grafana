@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	clientrest "k8s.io/client-go/rest"
@@ -29,9 +30,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
-type testDirectRestConfigProvider struct{ serverURL string }
+type testDirectRestConfigProvider struct {
+	serverURL string
+	calls     int
+}
 
 func (p *testDirectRestConfigProvider) GetDirectRestConfig(*contextmodel.ReqContext) *clientrest.Config {
+	p.calls++
 	return &clientrest.Config{Host: p.serverURL}
 }
 func (*testDirectRestConfigProvider) DirectlyServeHTTP(http.ResponseWriter, *http.Request) {}
@@ -422,6 +427,9 @@ func TestStore_GetUserAuthModules(t *testing.T) {
 			modules, err := store.GetUserAuthModules(contextWithReqContext(7), 42)
 			require.NoError(t, err)
 			assert.ElementsMatch(t, tc.want, modules)
+			batch, err := store.GetUsersAuthModules(contextWithReqContext(7), []int64{42})
+			require.NoError(t, err)
+			assert.ElementsMatch(t, tc.want, batch[42])
 		})
 	}
 }
@@ -880,6 +888,78 @@ func TestStore_DeleteAuthInfo(t *testing.T) {
 			if tc.check != nil {
 				tc.check(t)
 			}
+		})
+	}
+}
+
+func TestStore_GetUsersAuthModules(t *testing.T) {
+	for _, tt := range []struct {
+		name         string
+		userIDs      []int64
+		failSecond   bool
+		wantRequests int
+		want         map[int64][]string
+	}{
+		{name: "groups modules by user", userIDs: []int64{1, 2}, wantRequests: 4, want: map[int64][]string{1: {"ldap"}, 2: {"oauth_github"}}},
+		{name: "returns later lookup error without partial results", userIDs: []int64{1, 2}, wantRequests: 4, failSecond: true},
+		{name: "omits missing users and users without modules", userIDs: []int64{3, 4}, wantRequests: 3, want: map[int64][]string{}},
+		{name: "empty input makes no requests", want: map[int64][]string{}},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			requests := 0
+			store := newTestStore(t, func(w http.ResponseWriter, r *http.Request) {
+				requests++
+				switch {
+				case strings.HasSuffix(r.URL.Path, "/users"):
+					switch r.URL.Query().Get("labelSelector") {
+					case utils.LabelKeyDeprecatedInternalID + "=1":
+						usersResponse(t, w, "first")
+					case utils.LabelKeyDeprecatedInternalID + "=2":
+						usersResponse(t, w, "second")
+					case utils.LabelKeyDeprecatedInternalID + "=3":
+						noUsersResponse(t, w)
+					case utils.LabelKeyDeprecatedInternalID + "=4":
+						usersResponse(t, w, "no-modules")
+					default:
+						t.Errorf("unexpected user selector: %s", r.URL.RawQuery)
+						http.Error(w, "unexpected selector", http.StatusBadRequest)
+					}
+				case strings.HasSuffix(r.URL.Path, "/authinfos"):
+					if r.URL.Query().Get("fieldSelector") == "spec.userRef.name=no-modules" {
+						writeJSON(t, w, iamv0alpha1.AuthInfoList{})
+						return
+					}
+					uid, module := "first", "ldap"
+					if r.URL.Query().Get("fieldSelector") == "spec.userRef.name=second" {
+						if tt.failSecond {
+							http.Error(w, "second user lookup failed", http.StatusBadRequest)
+							return
+						}
+						uid, module = "second", "oauth_github"
+					} else {
+						assert.Equal(t, "spec.userRef.name=first", r.URL.Query().Get("fieldSelector"))
+					}
+					writeJSON(t, w, iamv0alpha1.AuthInfoList{Items: []iamv0alpha1.AuthInfo{authInfoItem(uid+"."+module, uid, module, "auth-id", time.Now())}})
+				default:
+					t.Errorf("unexpected request: %s", r.URL.Path)
+					http.NotFound(w, r)
+				}
+			})
+			modules, err := store.GetUsersAuthModules(contextWithReqContext(7), tt.userIDs)
+			if tt.failSecond {
+				require.Error(t, err)
+				require.True(t, apierrors.IsBadRequest(err))
+				require.Nil(t, modules)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.want, modules)
+			}
+			require.Equal(t, tt.wantRequests, requests)
+			wantClientCalls := 0
+			if len(tt.userIDs) > 0 {
+				wantClientCalls = 1
+			}
+			require.Equal(t, wantClientCalls, store.configProvider.(*testDirectRestConfigProvider).calls)
 		})
 	}
 }

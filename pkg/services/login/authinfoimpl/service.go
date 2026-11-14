@@ -87,6 +87,10 @@ func (s *Service) GetUserAuthModuleLabels(ctx context.Context, userID int64) ([]
 	return result, nil
 }
 
+func (s *Service) GetUsersAuthModules(ctx context.Context, userIDs []int64) (map[int64][]string, error) {
+	return s.authInfoStore.GetUsersAuthModules(ctx, userIDs)
+}
+
 func (s *Service) GetUsersRecentlyUsedLabel(ctx context.Context, query login.GetUserLabelsQuery) (map[int64]string, error) {
 	if len(query.UserIDs) == 0 {
 		return map[int64]string{}, nil

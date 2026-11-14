@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -162,6 +163,34 @@ func (s *Store) GetUserAuthModules(ctx context.Context, userID int64) ([]string,
 		}
 		seen[r.AuthModule] = struct{}{}
 		modules = append(modules, r.AuthModule)
+	}
+	return modules, nil
+}
+
+// GetUsersAuthModules returns distinct modules per user, most recently used first.
+func (s *Store) GetUsersAuthModules(ctx context.Context, userIDs []int64) (map[int64][]string, error) {
+	modules := make(map[int64][]string, len(userIDs))
+	if len(userIDs) == 0 {
+		return modules, nil
+	}
+	rows := make([]struct {
+		UserID     int64  `xorm:"user_id"`
+		AuthModule string `xorm:"auth_module"`
+	}, 0)
+	dbHelper, err := s.sql(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get legacy DB: %w", err)
+	}
+	err = dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
+		return sess.Table(dbHelper.Table("user_auth")).In("user_id", userIDs).Desc("created").Cols("user_id", "auth_module").Find(&rows)
+	})
+	if err != nil {
+		return nil, err
+	}
+	for _, row := range rows {
+		if !slices.Contains(modules[row.UserID], row.AuthModule) {
+			modules[row.UserID] = append(modules[row.UserID], row.AuthModule)
+		}
 	}
 	return modules, nil
 }
