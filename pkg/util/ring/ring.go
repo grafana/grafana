@@ -83,8 +83,8 @@ func (rq *Ring[T]) Clear() int {
 	if rq.len > 0 && !shouldMigrate {
 		// if we migrate we don't need to clear items, since moving to the new
 		// slice will just have the old slice garbage collected
-		chunk := min(rq.back+rq.len, len(rq.buf))
-		clear(rq.buf[rq.back:chunk])
+		chunk := min(rq.len, len(rq.buf)-rq.back)
+		clear(rq.buf[rq.back : rq.back+chunk])
 		clear(rq.buf[:rq.len-chunk])
 	}
 	rq.back = 0
