@@ -224,6 +224,26 @@ func TestQueryFramesNumericSelect(t *testing.T) {
 	}
 }
 
+func TestQueryFramesSampleAggregates(t *testing.T) {
+	input := data.NewFrame("a", data.NewField("v", nil, []float64{1, 2, 3, 4}))
+	input.RefID = "a"
+
+	db := DB{}
+	qry := `SELECT STDDEV_SAMP(v) AS sd, VAR_SAMP(v) AS vr FROM a`
+
+	resultFrame, err := db.QueryFrames(context.Background(), &testTracer{}, "b", qry, []*data.Frame{input})
+	require.NoError(t, err)
+	require.Len(t, resultFrame.Fields, 2)
+
+	stddev, ok := resultFrame.Fields[0].ConcreteAt(0)
+	require.True(t, ok)
+	require.InDelta(t, 1.2909944487358056, stddev, 1e-12)
+
+	variance, ok := resultFrame.Fields[1].ConcreteAt(0)
+	require.True(t, ok)
+	require.InDelta(t, 1.6666666666666667, variance, 1e-12)
+}
+
 func TestQueryFramesDateTimeSelect(t *testing.T) {
 	expectedFrame := &data.Frame{
 		RefID: "a",
