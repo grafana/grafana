@@ -1,6 +1,5 @@
 import { urlUtil } from '@grafana/data';
 import { type ResourceListItem } from 'app/api/clients/provisioning/v0alpha1';
-import { kindPath } from 'app/core/kinds/urls';
 
 import { splitPath } from '../components/utils/path';
 import { FOLDER_METADATA_FILE } from '../constants';
@@ -61,8 +60,7 @@ export function createGrafanaLinkResolver(
       return undefined;
     }
 
-    const info = getKindInfoByResource(resource.resource);
-    return info && kindPath(info, resource.name);
+    return getKindInfoByResource(resource.resource)?.getRoute?.(resource.name);
   };
 }
 
@@ -80,7 +78,7 @@ function resolveMarkdownDocRoute(byPath: Map<string, ResourceListItem>, path: st
     return undefined;
   }
 
-  return urlUtil.renderUrl(kindPath(resourceKindInfos.folder, folder.name), { [FOLDER_DOC_TAB_PARAM]: filename });
+  return urlUtil.renderUrl(resourceKindInfos.folder.getRoute(folder.name), { [FOLDER_DOC_TAB_PARAM]: filename });
 }
 
 function joinRepoPath(prefix: string | undefined, path: string): string {

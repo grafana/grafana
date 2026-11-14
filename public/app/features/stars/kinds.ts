@@ -12,9 +12,9 @@ export interface StarredKind extends KindInfo {
   sortWeight: number;
 }
 
-const DASHBOARD: StarredKind = { ...CORE_KINDS.dashboard, sortWeight: 0 };
+const DASHBOARD: StarredKind = { ...CORE_KINDS.dashboard, searchKind: 'dashboard', sortWeight: 0 };
 
-const FOLDER: StarredKind = { ...CORE_KINDS.folder, sortWeight: 1 };
+const FOLDER: StarredKind = { ...CORE_KINDS.folder, searchKind: 'folder', sortWeight: 1 };
 
 /** The kinds whose stars Grafana shows, in display order. */
 export const STARRED_KINDS: readonly StarredKind[] = [DASHBOARD, FOLDER];

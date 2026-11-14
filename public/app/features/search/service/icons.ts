@@ -1,14 +1,18 @@
 import { type IconName } from '@grafana/data';
-import { findKindBySearchKind } from 'app/core/kinds/registry';
+import { CORE_KINDS } from 'app/core/kinds/coreKinds';
 
 export function getIconForKind(kind: string, isOpen?: boolean): IconName {
-  if (kind === 'folder' && isOpen) {
-    return 'folder-open';
+  if (kind === 'dashboard') {
+    return CORE_KINDS.dashboard.icon;
+  }
+
+  if (kind === 'folder') {
+    return isOpen ? 'folder-open' : CORE_KINDS.folder.icon;
   }
 
   if (kind === 'sharedwithme') {
     return 'users-alt';
   }
 
-  return findKindBySearchKind(kind)?.icon ?? 'question-circle';
+  return 'question-circle';
 }

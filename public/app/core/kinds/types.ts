@@ -11,18 +11,15 @@ export interface KindInfo {
   kind: string;
   /** Plural resource name in API paths, e.g. `dashboards`. */
   resource: string;
-  /** The kind string the dashboard search index labels its rows with; absent for kinds it does not hold. */
-  searchKind?: string;
   /** Translated plural name, as a title: "Dashboards". A function, so it translates at render and not at module load. */
   pluralLabel: () => string;
   icon: IconName;
   /**
-   * Path of the page for one object, with `{name}` standing for its `metadata.name` and without the
-   * app sub path. Absent when the kind has no page for a single object.
+   * Builds the path of the page for one object from its `metadata.name`, without the app sub path.
+   * A `title` adds its slug where the page takes one. Absent when the kind has no page for a single
+   * object.
    */
-  url?: string;
-  /** Whether that page's path also takes a slug of the object's title: `/d/{name}/{slug}`. */
-  titleSlug?: boolean;
+  getRoute?: (name: string, title?: string) => string;
   /** Path of the page that lists the kind's objects, without the app sub path. */
-  listUrl?: string;
+  listRoute: string;
 }

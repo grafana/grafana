@@ -36,7 +36,7 @@ export interface ProvisionedResourceDrawerHandlers {
  * Shared navigation/cache handlers for a provisioned resource's save and delete drawers.
  *
  * The redirect and list-navigation logic is identical across kinds — and across the save/delete
- * variants of one kind — differing only by the kind's `listUrl` and the commit action, both read
+ * variants of one kind — differing only by the kind's `listRoute` and the commit action, both read
  * from the {@link ResourceKindInfo}. The kind's `invalidateListTags` (if any) is dispatched so the
  * committed change shows up on its list page.
  */
@@ -53,7 +53,7 @@ export function useProvisionedResourceDrawerHandlers(kind: ResourceKindInfo): Pr
 
   const goToList = () => {
     invalidate();
-    navigate(kind.listUrl);
+    navigate(kind.listRoute);
   };
 
   const makeOnBranchSuccess =
@@ -62,7 +62,7 @@ export function useProvisionedResourceDrawerHandlers(kind: ResourceKindInfo): Pr
       invalidate();
       navigate(
         buildResourceBranchRedirectUrl({
-          baseUrl: kind.listUrl,
+          baseUrl: kind.listRoute,
           paramName: 'new_pull_request_url',
           paramValue: urls?.newPullRequestURL,
           repoType,

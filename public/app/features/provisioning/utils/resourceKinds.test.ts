@@ -2,7 +2,6 @@ import { HttpResponse, http } from 'msw';
 
 import server from '@grafana/test-utils/server';
 import { type Repository, type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
-import { kindPath } from 'app/core/kinds/urls';
 
 import { setupProvisioningMswServer } from '../mocks/server';
 
@@ -76,9 +75,9 @@ describe('resourceKinds registry', () => {
     const connection = getKindInfoByStat({ group: 'provisioning.grafana.app', resource: 'connections' });
 
     expect(repository?.icon).toBe('code-branch');
-    expect(repository && kindPath(repository, 'bootstrap')).toBe('/admin/provisioning/bootstrap');
+    expect(repository?.getRoute?.('bootstrap')).toBe('/admin/provisioning/bootstrap');
     expect(connection?.icon).toBe('plug');
-    expect(connection && kindPath(connection, 'github-app')).toBe('/admin/provisioning/connections/github-app/edit');
+    expect(connection?.getRoute?.('github-app')).toBe('/admin/provisioning/connections/github-app/edit');
   });
 
   // They are configuration, not content: the Migrate flow must never offer to move them.
@@ -217,11 +216,17 @@ describe('getKindInfoByStat', () => {
   });
 });
 
-describe('routes to a single resource', () => {
+describe('getRoute', () => {
   it('builds in-app routes per kind', () => {
-    expect(kindPath(resourceKindInfos.dashboard, 'abc')).toBe('/d/abc');
-    expect(kindPath(resourceKindInfos.folder, 'xyz')).toBe('/dashboards/f/xyz');
-    expect(kindPath(resourceKindInfos.playlist, 'pl1')).toBe('/playlists/edit/pl1');
+    expect(resourceKindInfos.dashboard.getRoute('abc')).toBe('/d/abc');
+    expect(resourceKindInfos.folder.getRoute('xyz')).toBe('/dashboards/f/xyz');
+    expect(resourceKindInfos.playlist.getRoute('pl1')).toBe('/playlists/edit/pl1');
+  });
+
+  it('encodes the object name in its page path', () => {
+    expect(resourceKindInfos.connection.getRoute('git hub/app')).toBe(
+      '/admin/provisioning/connections/git%20hub%2Fapp/edit'
+    );
   });
 });
 
