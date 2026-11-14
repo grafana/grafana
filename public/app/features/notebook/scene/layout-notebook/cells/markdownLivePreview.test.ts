@@ -9,6 +9,7 @@ import { createTheme } from '@grafana/data';
 import {
   BOLD_NODE,
   buildDecorations,
+  emptyOrderedTaskMarkerRange,
   enclosingListKind,
   findEnclosingMarkNode,
   INLINE_CODE_NODE,
@@ -371,6 +372,19 @@ describe('checklists', () => {
 
   it.each(['1. [ ] ', '1. [x] '])('does not continue an empty numbered task %s', (doc) => {
     expect(nextOrderedTaskContinuation(createState(doc), doc.length)).toBeUndefined();
+  });
+
+  it.each(['1. [ ] ', '1. [x] ', '12. [ ] '])('marks an empty numbered task %s for list exit', (doc) => {
+    expect(emptyOrderedTaskMarkerRange(createState(doc), doc.length)).toEqual({ from: 0, to: doc.length });
+  });
+
+  it('marks only the empty item when it follows a filled numbered task', () => {
+    const doc = '1. [x] First\n2. [ ] ';
+    expect(emptyOrderedTaskMarkerRange(createState(doc), doc.length)).toEqual({ from: 13, to: doc.length });
+  });
+
+  it.each(['1. [ ] First', '- [ ] ', '1. ', 'plain text'])('has no list exit for %s', (doc) => {
+    expect(emptyOrderedTaskMarkerRange(createState(doc), doc.length)).toBeUndefined();
   });
 
   it.each(['1. First', '- [x] First', 'plain text'])('has no numbered task continuation for %s', (doc) => {
