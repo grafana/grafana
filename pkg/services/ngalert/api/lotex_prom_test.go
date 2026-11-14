@@ -43,7 +43,7 @@ func TestLotexProm_GetEndpoints(t *testing.T) {
 			name:            "with an unsupported datasource type",
 			namedParams:     map[string]string{":DatasourceUID": "d164"},
 			datasourceCache: fakeCacheService{datasource: &datasources.DataSource{URL: "http://loki.com", Type: "unsupported-type"}},
-			err:             errors.New("unexpected datasource type 'unsupported-type', expected loki, prometheus, amazon prometheus, azure prometheus"),
+			err:             errors.New("unexpected datasource type 'unsupported-type', expected loki, prometheus, amazon prometheus, azure prometheus, victoriametrics, victorialogs"),
 		},
 		{
 			name:            "with a Loki datasource",
@@ -71,6 +71,20 @@ func TestLotexProm_GetEndpoints(t *testing.T) {
 			namedParams:     map[string]string{":DatasourceUID": "d164"},
 			datasourceCache: fakeCacheService{datasource: &datasources.DataSource{URL: "http://azp.com", Type: datasources.DS_AZURE_PROMETHEUS}},
 			expectedRoutes:  &prometheusEndpoints,
+			err:             nil,
+		},
+		{
+			name:            "with a VictoriaMetrics datasource",
+			namedParams:     map[string]string{":DatasourceUID": "d164"},
+			datasourceCache: fakeCacheService{datasource: &datasources.DataSource{URL: "http://vm.com", Type: datasources.DS_VICTORIA_METRICS}},
+			expectedRoutes:  &prometheusEndpoints,
+			err:             nil,
+		},
+		{
+			name:            "with a VictoriaLogs datasource",
+			namedParams:     map[string]string{":DatasourceUID": "d164"},
+			datasourceCache: fakeCacheService{datasource: &datasources.DataSource{URL: "http://vl.com", Type: datasources.DS_VICTORIA_LOGS}},
+			expectedRoutes:  &victoriaLogsEndpoints,
 			err:             nil,
 		},
 	}

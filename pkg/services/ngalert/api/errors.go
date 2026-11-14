@@ -15,6 +15,10 @@ import (
 var (
 	errUnexpectedDatasourceType = errors.New("unexpected datasource type")
 
+	// errRulerNotSupported must contain "ruler not supported": the frontend matches on it
+	// to show a rules source as read-only instead of failing feature discovery.
+	errRulerNotSupported = errors.New("ruler not supported")
+
 	// errFolderAccess is used as a wrapper to propagate folder related errors and correctly map to the response status
 	errFolderAccess = errors.New("cannot get folder")
 )

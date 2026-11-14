@@ -9,6 +9,7 @@ export {
   SUPPORTED_EXTERNAL_RULE_SOURCE_TYPES,
   type SupportedExternalPrometheusFlavoredRulesSourceType,
   type SupportedExternalRulesSourceType,
+  VICTORIA_LOGS_RULES_SOURCE_TYPE,
   isAlertManagerWithConfigAPI,
   isSupportedExternalPrometheusFlavoredRulesSourceType,
   isSupportedExternalRulesSourceType,

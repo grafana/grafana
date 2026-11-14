@@ -50,7 +50,7 @@ func TestLotexRuler_ValidateAndGetPrefix(t *testing.T) {
 			name:            "with an unsupported datasource type",
 			namedParams:     map[string]string{":DatasourceUID": "d164"},
 			datasourceCache: fakeCacheService{datasource: &datasources.DataSource{URL: "http://loki.com", Type: "unsupported-type"}},
-			err:             errors.New("unexpected datasource type 'unsupported-type', expected loki, prometheus, amazon prometheus, azure prometheus"),
+			err:             errors.New("unexpected datasource type 'unsupported-type', expected loki, prometheus, amazon prometheus, azure prometheus, victoriametrics, victorialogs"),
 		},
 		{
 			name:            "with a Loki datasource",
@@ -75,6 +75,18 @@ func TestLotexRuler_ValidateAndGetPrefix(t *testing.T) {
 			namedParams:     map[string]string{":DatasourceUID": "d164"},
 			datasourceCache: fakeCacheService{datasource: &datasources.DataSource{URL: "http://azp.com", Type: datasources.DS_AZURE_PROMETHEUS}},
 			expected:        "/rules",
+		},
+		{
+			name:            "with a VictoriaMetrics datasource",
+			namedParams:     map[string]string{":DatasourceUID": "d164"},
+			datasourceCache: fakeCacheService{datasource: &datasources.DataSource{URL: "http://vm.com", Type: datasources.DS_VICTORIA_METRICS}},
+			expected:        "/rules",
+		},
+		{
+			name:            "with a VictoriaLogs datasource",
+			namedParams:     map[string]string{":DatasourceUID": "d164"},
+			datasourceCache: fakeCacheService{datasource: &datasources.DataSource{URL: "http://vl.com", Type: datasources.DS_VICTORIA_LOGS}},
+			err:             errors.New("ruler not supported for datasource type victoriametrics-logs-datasource"),
 		},
 		{
 			name:            "with a Prometheus datasource and subtype of Cortex",
