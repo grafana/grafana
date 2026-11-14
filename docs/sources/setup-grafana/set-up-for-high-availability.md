@@ -63,6 +63,13 @@ For further information and instructions on setting up alerting high availabilit
 
 Legacy Grafana Alerting supports a limited form of high availability. In this model, alert notifications are deduplicated when running multiple servers. This means all alerts are executed on every server, but alert notifications are only sent once per alert. Grafana does not support load distribution between servers.
 
+## Unified storage watches
+
+By default, each Grafana server polls the shared database to learn about the changes that the other servers write.
+On large clusters, this polling adds significant load to the database.
+In Grafana 13.4 and later, you can turn on an embedded NATS message bus so that the servers notify each other of their writes instead.
+For more information, refer to [Set up NATS for high availability](../set-up-nats-for-high-availability/).
+
 ## Grafana Live
 
 Grafana Live works with limitations in highly available setup. For details, refer to the [Configure Grafana Live HA setup](../set-up-grafana-live/#configure-grafana-live-ha-setup).
