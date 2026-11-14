@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -33,7 +34,16 @@ type LocalAccessPolicy struct {
 	// DelegatedPermissions are delegated to its tokens on behalf of a caller,
 	// where they only narrow what the caller may do.
 	DelegatedPermissions []string
+	// AllowUnattendedDelegation comes from Grafana configuration, never the plugin manifest.
+	AllowUnattendedDelegation bool
+	// MaxUnattendedDelegationTokenLifetime limits asserted-subject requests.
+	// Zero uses the default lifetime.
+	MaxUnattendedDelegationTokenLifetime time.Duration
 }
+
+// DefaultLocalUnattendedDelegationTokenLifetime applies when an asserted-subject
+// request omits ExpiresIn.
+const DefaultLocalUnattendedDelegationTokenLifetime = localTokenTTL
 
 // ErrLocalAccessDenied is returned by SignLocalAccessToken for a request that
 // the policy does not allow.
@@ -110,11 +120,10 @@ func LookupLocalAccessPolicyToken(token string) (pluginID string, manifest *app.
 // token exchange does for an access policy. Grafana's API trusts these tokens
 // when it trusts LocalKeyRetriever.
 //
-// Without a subject token, the token acts as the plugin, with the policy's
-// permissions. With one, it acts on behalf of the subject's caller, with the
-// policy's permissions as delegated permissions. The subject token must be a
-// local access token issued to the plugin, which is what Grafana sends with
-// each plugin request, so a plugin can only act for callers that called it.
+// Without a subject or subject token, the token acts as the plugin. A subject
+// token must be a local access token issued to that plugin, limiting this path
+// to callers that called it. AllowUnattendedDelegation authorizes the plugin to
+// assert an identity directly. Both OBO forms use the policy's DelegatedPermissions.
 func SignLocalAccessToken(ctx context.Context, policy LocalAccessPolicy, req authnlib.TokenExchangeRequest) (string, error) {
 	e, err := sharedLocalExchanger()
 	if err != nil {
@@ -130,8 +139,11 @@ func (e *localExchanger) signForPolicy(ctx context.Context, policy LocalAccessPo
 	if err := validateExchangeRequest(req); err != nil {
 		return "", err
 	}
-	if req.Subject != nil {
+	if req.Subject != nil && !policy.AllowUnattendedDelegation {
 		return "", fmt.Errorf("%w: signing for an asserted subject is not supported", ErrLocalAccessDenied)
+	}
+	if req.Subject != nil && req.SubjectToken != "" {
+		return "", errors.New("local plugin token exchange: subject and subjectToken are mutually exclusive")
 	}
 	for _, audience := range req.Audiences {
 		if !slices.Contains(policy.Audiences, audience) {
@@ -139,7 +151,8 @@ func (e *localExchanger) signForPolicy(ctx context.Context, policy LocalAccessPo
 		}
 	}
 	claims := authnlib.AccessTokenClaims{Namespace: req.Namespace}
-	if req.SubjectToken == "" {
+	lifetime := localTokenTTL
+	if req.Subject == nil && req.SubjectToken == "" {
 		claims.Permissions = policy.Permissions
 	} else {
 		// Like a token exchange, the restriction narrows only what is delegated.
@@ -155,6 +168,19 @@ func (e *localExchanger) signForPolicy(ctx context.Context, policy LocalAccessPo
 		if len(permissions) == 0 {
 			return "", fmt.Errorf("%w: no permissions to delegate", ErrLocalAccessDenied)
 		}
+		claims.DelegatedPermissions = permissions
+	}
+	if req.Subject != nil {
+		actor, err := actorFromSubject(req.Subject, req.Namespace)
+		if err != nil {
+			return "", err
+		}
+		claims.Actor = actor
+		lifetime, err = unattendedDelegationTokenLifetime(policy.MaxUnattendedDelegationTokenLifetime, req.ExpiresIn)
+		if err != nil {
+			return "", err
+		}
+	} else if req.SubjectToken != "" {
 		verifier := authnlib.NewAccessTokenVerifier(authnlib.VerifierConfig{AllowedAudiences: []string{policy.PluginID}}, e.keys)
 		subject, err := verifier.Verify(ctx, req.SubjectToken)
 		if err != nil {
@@ -168,19 +194,57 @@ func (e *localExchanger) signForPolicy(ctx context.Context, policy LocalAccessPo
 			ServiceIdentity: subject.Rest.ServiceIdentity,
 			Actor:           subject.Rest.Actor,
 		}
-		claims.DelegatedPermissions = permissions
 	}
-	return e.sign(types.NewTypeID(types.TypeAccessPolicy, policy.PluginID), req.Audiences, claims)
+	return e.sign(types.NewTypeID(types.TypeAccessPolicy, policy.PluginID), req.Audiences, claims, lifetime)
 }
 
-func (e *localExchanger) sign(subject string, audiences []string, claims authnlib.AccessTokenClaims) (string, error) {
+func actorFromSubject(subject *authnlib.TokenExchangeSubject, namespace string) (*authnlib.ActorClaims, error) {
+	deny := func(reason string) (*authnlib.ActorClaims, error) {
+		return nil, fmt.Errorf("%w: %s", ErrLocalAccessDenied, reason)
+	}
+	ns, err := types.ParseNamespace(namespace)
+	if err != nil || ns.OrgID < 1 || types.OrgNamespaceFormatter(ns.OrgID) != namespace || subject.Namespace != namespace {
+		return deny("subject and request must name the same concrete organization namespace")
+	}
+	typ, id, err := types.ParseTypeID(subject.Sub)
+	if err != nil || !types.IsIdentityType(typ, types.TypeUser, types.TypeServiceAccount) || string(typ) != subject.Type {
+		return deny("subject must identify a user or service account with a matching type")
+	}
+	numericID, err := strconv.ParseInt(id, 10, 64)
+	if err != nil || numericID < 1 || strconv.FormatInt(numericID, 10) != id || strings.TrimSpace(subject.Identifier) == "" {
+		return deny("subject requires a positive numeric ID and a UID identifier")
+	}
+	// Grafana resolves the account's current profile, role and permissions when
+	// the token is used; caller-supplied copies must not become authority.
+	return &authnlib.ActorClaims{Subject: subject.Sub, IDTokenClaims: authnlib.IDTokenClaims{
+		Identifier: subject.Identifier,
+		Type:       typ,
+		Namespace:  namespace,
+	}}, nil
+}
+
+func unattendedDelegationTokenLifetime(maximum time.Duration, requested *int) (time.Duration, error) {
+	if maximum == 0 {
+		maximum = DefaultLocalUnattendedDelegationTokenLifetime
+	}
+	if requested == nil {
+		return DefaultLocalUnattendedDelegationTokenLifetime, nil
+	}
+	// Compare seconds before conversion so an oversized integer cannot overflow.
+	if *requested <= 0 || int64(*requested) > int64(maximum/time.Second) {
+		return 0, fmt.Errorf("%w: expiresIn must be positive and no greater than %d seconds", ErrLocalAccessDenied, maximum/time.Second)
+	}
+	return time.Duration(*requested) * time.Second, nil
+}
+
+func (e *localExchanger) sign(subject string, audiences []string, claims authnlib.AccessTokenClaims, lifetime time.Duration) (string, error) {
 	now := time.Now()
 	token, err := jwt.Signed(e.signer).Claims(jwt.Claims{
 		Subject:   subject,
 		Audience:  jwt.Audience(audiences),
 		IssuedAt:  jwt.NewNumericDate(now),
 		NotBefore: jwt.NewNumericDate(now),
-		Expiry:    jwt.NewNumericDate(now.Add(localTokenTTL)),
+		Expiry:    jwt.NewNumericDate(now.Add(lifetime)),
 	}).Claims(claims).Serialize()
 	if err != nil {
 		return "", fmt.Errorf("local plugin token exchange: %w", err)
