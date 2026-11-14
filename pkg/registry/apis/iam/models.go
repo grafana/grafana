@@ -59,6 +59,7 @@ type IdentityAccessManagementAPIBuilder struct {
 	roleApiInstaller           RoleApiInstaller
 	globalRoleApiInstaller     GlobalRoleApiInstaller
 	teamLBACApiInstaller       TeamLBACApiInstaller
+	legacyRoleReconcileAPI     LegacyRoleReconcileAPI
 	resourcePermissionsStorage resource.StorageBackend
 	mappers                    *resourcepermission.MappersRegistry
 	roleBindingsApiInstaller   RoleBindingApiInstaller

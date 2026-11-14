@@ -224,7 +224,12 @@ func NewAPIService(
 	mappers *resourcepermission.MappersRegistry,
 	settingService settingsvc.Service,
 	features Features,
+	options ...APIServiceOption,
 ) *IdentityAccessManagementAPIBuilder {
+	config := apiServiceConfig{legacyRoleReconcileAPI: NoopLegacyRoleReconcileAPI{}}
+	for _, option := range options {
+		option(&config)
+	}
 	store := legacy.NewLegacySQLStores(dbProvider)
 	resourcePermissionsStorage := resourcepermission.ProvideStorageBackend(dbProvider, mappers)
 	registerMetrics(reg)
@@ -246,6 +251,7 @@ func NewAPIService(
 
 	builder := &IdentityAccessManagementAPIBuilder{
 		store:                   store,
+		legacyRoleReconcileAPI:  config.legacyRoleReconcileAPI,
 		userLegacyStore:         user.NewLegacyStore(store, accessClient, tracingService),
 		saLegacyStore:           serviceaccount.NewLegacyStore(store, accessClient, tracingService),
 		legacyTeamStore:         team.NewLegacyStore(store, accessClient, tracingService, nil),
@@ -278,6 +284,9 @@ func NewAPIService(
 		ssoLegacyStore: sso.NewLegacyStore(ssosettingsimpl.ProvideReadOnlyDBService(dbProvider), tracingService),
 		authorizer: authorizer.AuthorizerFunc(
 			func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
+				if a.IsResourceRequest() && a.GetAPIGroup() == iamv0.GroupVersion.Group && a.GetResource() == "reconcilelegacyroles" {
+					return config.legacyRoleReconcileAPI.GetAuthorizer().Authorize(ctx, a)
+				}
 				user, ok := types.AuthInfoFrom(ctx)
 				if !ok {
 					return authorizer.DecisionDeny, "no identity found", apierrors.NewUnauthorized("no identity found in context")
@@ -1139,6 +1148,9 @@ func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes(gv schema.GroupVersion
 
 	routes := make([]*builder.APIRoutes, 0, 2+len(searchRoutes))
 	routes = append(routes, b.display.GetAPIRoutes(defs))
+	if gv == iamv0.GroupVersion && b.legacyRoleReconcileAPI != nil {
+		routes = append(routes, b.legacyRoleReconcileAPI.GetAPIRoutes(defs))
+	}
 	if enableUserPermissionsApi && b.userPermissions != nil {
 		routes = append(routes, b.userPermissions.GetAPIRoutes(defs))
 	}
