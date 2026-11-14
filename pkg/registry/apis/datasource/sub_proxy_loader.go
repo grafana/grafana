@@ -2,7 +2,10 @@ package datasource
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
@@ -28,6 +31,7 @@ type datasourceLoader struct {
 	settings           *backend.DataSourceInstanceSettings
 	transports         *proxyTransportCache
 	transportConfigKey string
+	defaultTimeout     time.Duration
 }
 
 var _ pluginproxy.DataSourceLoader = (*datasourceLoader)(nil)
@@ -97,6 +101,9 @@ func (l *datasourceLoader) GetHTTPTransport(ctx context.Context, clientProvider 
 	if err != nil {
 		return nil, err
 	}
+	if opts.Timeouts != nil {
+		opts.Timeouts.Timeout = l.responseHeaderTimeout(settings.JSONData)
+	}
 	// Without a namespace, do not risk sharing connections between tenants.
 	namespace := krequest.NamespaceValue(ctx)
 	if l.transports == nil || namespace == "" {
@@ -120,4 +127,29 @@ func (l *datasourceLoader) GetHTTPTransport(ctx context.Context, clientProvider 
 		}
 		return rt, closeIdle, err
 	})
+}
+
+// responseHeaderTimeout prefers the datasource's own timeout, read as the legacy
+// proxy reads it. The SDK would otherwise fall back to its process-wide default,
+// which is not the tenant's configuration in multi-tenant Grafana.
+func (l *datasourceLoader) responseHeaderTimeout(jsonData json.RawMessage) time.Duration {
+	var data struct {
+		Timeout any `json:"timeout"`
+	}
+	if err := json.Unmarshal(jsonData, &data); err == nil {
+		switch v := data.Timeout.(type) {
+		case float64:
+			if v > 0 {
+				return time.Duration(v) * time.Second
+			}
+		case string:
+			if n, err := strconv.Atoi(v); err == nil && n > 0 {
+				return time.Duration(n) * time.Second
+			}
+		}
+	}
+	if l.defaultTimeout > 0 {
+		return l.defaultTimeout
+	}
+	return defaultProxyTimeout
 }

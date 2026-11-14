@@ -249,3 +249,29 @@ type failingRoundTripper struct{}
 func (failingRoundTripper) RoundTrip(*http.Request) (*http.Response, error) {
 	return nil, errors.New("some error")
 }
+
+type wrappedTimeoutRoundTripper struct{}
+
+func (wrappedTimeoutRoundTripper) RoundTrip(*http.Request) (*http.Response, error) {
+	return nil, fmt.Errorf("datasource request failed: %w", context.DeadlineExceeded)
+}
+
+func TestReverseProxy_WrappedTimeouts(t *testing.T) {
+	for _, tc := range []struct {
+		desc     string
+		opts     []ReverseProxyOption
+		expected int
+	}{
+		{desc: "reported as 502 by default", expected: http.StatusBadGateway},
+		{desc: "reported as 504 when unwrapped", opts: []ReverseProxyOption{WithUnwrappedTimeouts(log.New("test"))}, expected: http.StatusGatewayTimeout},
+	} {
+		t.Run(tc.desc, func(t *testing.T) {
+			ctx := requestmeta.SetRequestMetaData(context.Background(), requestmeta.RequestMetaData{})
+			req := httptest.NewRequestWithContext(ctx, http.MethodGet, "http://upstream.invalid", nil)
+			rec := httptest.NewRecorder()
+			opts := append([]ReverseProxyOption{WithTransport(wrappedTimeoutRoundTripper{})}, tc.opts...)
+			NewReverseProxy(log.New("test"), func(*http.Request) {}, opts...).ServeHTTP(rec, req)
+			require.Equal(t, tc.expected, rec.Code)
+		})
+	}
+}

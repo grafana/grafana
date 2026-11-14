@@ -36,7 +36,7 @@ func NewReverseProxy(logger glog.Logger, director func(*http.Request), opts ...R
 
 	p := &httputil.ReverseProxy{
 		FlushInterval: time.Millisecond * 200,
-		ErrorHandler:  errorHandler(logger),
+		ErrorHandler:  errorHandler(logger, false),
 		ErrorLog:      log.New(&logWrapper{logger: logger}, "", 0),
 		Director:      director, // nolint:staticcheck // Preserve the director-based API until callers migrate to Rewrite.
 	}
@@ -116,12 +116,30 @@ type timeoutError interface {
 	Timeout() bool
 }
 
+func isTimeout(err error, unwrap bool) bool {
+	var timeoutErr timeoutError
+	if unwrap {
+		return errors.As(err, &timeoutErr) && timeoutErr.Timeout()
+	}
+	// nolint:errorlint
+	timeoutErr, ok := err.(timeoutError)
+	return ok && timeoutErr.Timeout()
+}
+
+// WithUnwrappedTimeouts reports an upstream timeout as 504 even when HTTP client
+// middleware has wrapped the timeout error, which is otherwise reported as 502.
+func WithUnwrappedTimeouts(logger glog.Logger) ReverseProxyOption {
+	return func(p *httputil.ReverseProxy) {
+		p.ErrorHandler = errorHandler(logger, true)
+	}
+}
+
 // errorHandler handles any errors happening while proxying a request and enforces
 // certain HTTP status based on the kind of error.
 // If client cancel/close the request we return 499 StatusClientClosedRequest.
 // If timeout happens while communicating with upstream server we return http.StatusGatewayTimeout.
 // If any other error we return http.StatusBadGateway.
-func errorHandler(logger glog.Logger) func(http.ResponseWriter, *http.Request, error) {
+func errorHandler(logger glog.Logger, unwrapTimeouts bool) func(http.ResponseWriter, *http.Request, error) {
 	return func(w http.ResponseWriter, r *http.Request, err error) {
 		ctxLogger := logger.FromContext(r.Context())
 		requestmeta.WithDownstreamStatusSource(r.Context())
@@ -132,8 +150,7 @@ func errorHandler(logger glog.Logger) func(http.ResponseWriter, *http.Request, e
 			return
 		}
 
-		// nolint:errorlint
-		if timeoutErr, ok := err.(timeoutError); ok && timeoutErr.Timeout() {
+		if isTimeout(err, unwrapTimeouts) {
 			ctxLogger.Error("Proxy request timed out", "err", err)
 			w.WriteHeader(http.StatusGatewayTimeout)
 			return
