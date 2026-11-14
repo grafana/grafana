@@ -37,7 +37,6 @@ import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 import * as libAPI from 'app/features/library-panels/state/api';
 import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/constants';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
-import { dispatch } from 'app/store/store';
 
 import { edit } from '../actions/utils/edit';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -120,11 +119,6 @@ class RuntimeTestDataSource extends RuntimeDataSource {
 // Runtime datasources skip plugin loading, so query runners reach the mocked runRequest.
 registerRuntimeDataSource({ dataSource: new RuntimeTestDataSource('panel-editor-runtime-ds', RUNTIME_DS_UID) });
 
-jest.mock('app/store/store', () => ({
-  ...jest.requireActual('app/store/store'),
-  dispatch: jest.fn(),
-}));
-
 let deactivate: CancelActivationHandler | undefined;
 
 describe('PanelEditor', () => {
@@ -167,8 +161,6 @@ describe('PanelEditor', () => {
   });
 
   describe('Entering panel edit', () => {
-    beforeEach(() => jest.mocked(dispatch).mockClear());
-
     it('applies panel options and tracks changes after the preview layout item remounts', async () => {
       const { panelEditor, panel, gridItem, deactivatePanel } = await setup({ activateFullTree: false });
       let observedDisplayMode = panel.state.displayMode;
@@ -229,29 +221,15 @@ describe('PanelEditor', () => {
       expect(replacement.isActive).toBe(false);
     });
 
-    it('pauses ad hoc table transformations and restores them on exit', async () => {
+    it('keeps ad hoc table transformations applied while editing and after leaving', async () => {
       const transformations: DataTransformerConfig[] = [{ id: 'organize', options: { indexByName: { B: 0, A: 1 } } }];
       const { panel } = await setup({ pluginId: 'table', initialTableTransformations: transformations });
 
-      expect(panel.getRuntimeTransformations().get(TABLE_TRANSFORMATIONS_OWNER)).toEqual([]);
-      expect(dispatch).toHaveBeenCalledWith(
-        expect.objectContaining({
-          payload: expect.objectContaining({
-            title: 'Ad hoc transformations are disabled in edit mode',
-          }),
-        })
-      );
+      expect(panel.getRuntimeTransformations().get(TABLE_TRANSFORMATIONS_OWNER)).toEqual(transformations);
 
       deactivate!();
       deactivate = undefined;
       expect(panel.getRuntimeTransformations().get(TABLE_TRANSFORMATIONS_OWNER)).toEqual(transformations);
-    });
-
-    it('does not notify when the table has no ad hoc transformations', async () => {
-      const { panel } = await setup({ pluginId: 'table' });
-
-      expect(panel.getRuntimeTransformations().get(TABLE_TRANSFORMATIONS_OWNER)).toEqual([]);
-      expect(dispatch).not.toHaveBeenCalled();
     });
 
     it('should clear sidebar selection', () => {
@@ -424,6 +402,37 @@ describe('PanelEditor', () => {
       expect(discardedPanel.state.title).toBe('original title');
     });
 
+    it('gives the reverted panel the ad hoc table transformations it showed', async () => {
+      const hideB: DataTransformerConfig[] = [{ id: 'organize', options: { excludeByName: { B: true } } }];
+      const { panelEditor, panel, dashboard } = await setup({ pluginId: 'table', initialTableTransformations: [] });
+
+      panel.setState({ title: 'changed title' });
+      panel.getRuntimeTransformations().set(TABLE_TRANSFORMATIONS_OWNER, hideB);
+      panelEditor.onDiscard();
+
+      const discardedPanel = findVizPanelByKey(dashboard, panel.state.key!)!;
+      expect(discardedPanel.state.title).toBe('original title');
+      expect(discardedPanel.getRuntimeTransformations().get(TABLE_TRANSFORMATIONS_OWNER)).toEqual(hideB);
+    });
+
+    it('gives the reverted panel its ad hoc table transformations from when editing started if its transformations changed', async () => {
+      const hideA: DataTransformerConfig[] = [{ id: 'organize', options: { excludeByName: { A: true } } }];
+      const hideB: DataTransformerConfig[] = [{ id: 'organize', options: { excludeByName: { B: true } } }];
+      const { panelEditor, panel, dashboard } = await setup({ pluginId: 'table', initialTableTransformations: hideA });
+      const transformer = panel.state.$data;
+      if (!(transformer instanceof SceneDataTransformer)) {
+        throw new Error('Expected a data transformer');
+      }
+
+      transformer.setState({ transformations: [{ id: 'organize', options: { renameByName: { A: 'Renamed' } } }] });
+      panel.getRuntimeTransformations().set(TABLE_TRANSFORMATIONS_OWNER, hideB);
+      panelEditor.onDiscard();
+
+      const discardedPanel = findVizPanelByKey(dashboard, panel.state.key!)!;
+      expect(discardedPanel.state.$data?.state).toMatchObject({ transformations: [] });
+      expect(discardedPanel.getRuntimeTransformations().get(TABLE_TRANSFORMATIONS_OWNER)).toEqual(hideA);
+    });
+
     it('should discard a newly added panel', async () => {
       const { panelEditor, dashboard } = await setup({ isNewPanel: true });
       panelEditor.onDiscard();
@@ -447,12 +456,46 @@ describe('PanelEditor', () => {
     });
   });
 
+  describe('When panel changes are undone', () => {
+    afterEach(() => setTestFlags({}));
+
+    it('keeps the ad hoc table transformations a panel shows when its panel changes are undone and redone', async () => {
+      setTestFlags({ dashboardNewLayouts: true });
+      const hideB: DataTransformerConfig[] = [{ id: 'organize', options: { excludeByName: { B: true } } }];
+      const { dashboard, panel, gridItem } = await setup({ pluginId: 'table', initialTableTransformations: [] });
+      panel.setState({ title: 'changed title' });
+      panel.getRuntimeTransformations().set(TABLE_TRANSFORMATIONS_OWNER, hideB);
+      deactivate!();
+      deactivate = undefined;
+      dashboard.setState({ editPanel: undefined });
+      deactivate = activateFullSceneTree(dashboard);
+
+      dashboard.state.sidebar.undoAction();
+      expect(gridItem.state.body.state.title).toBe('original title');
+      expect(gridItem.state.body.getRuntimeTransformations().get(TABLE_TRANSFORMATIONS_OWNER)).toEqual(hideB);
+
+      dashboard.state.sidebar.redoAction();
+      expect(gridItem.state.body.state.title).toBe('changed title');
+      expect(gridItem.state.body.getRuntimeTransformations().get(TABLE_TRANSFORMATIONS_OWNER)).toEqual(hideB);
+    });
+  });
+
   describe('When changes are made', () => {
     it('Should set state to dirty', async () => {
       const { panelEditor, panel } = await setup({});
 
       expect(panelEditor.state.isDirty).toBe(undefined);
 
+      panel.setState({ title: 'changed title' });
+
+      expect(panelEditor.state.isDirty).toBe(true);
+    });
+
+    it('sets state to dirty for changes made after the editor is activated again', async () => {
+      const { panelEditor, panel } = await setup({ activateFullTree: false });
+
+      deactivate!();
+      deactivate = panelEditor.activate();
       panel.setState({ title: 'changed title' });
 
       expect(panelEditor.state.isDirty).toBe(true);

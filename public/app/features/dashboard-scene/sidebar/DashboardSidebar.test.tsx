@@ -54,7 +54,7 @@ import { MultiSelectedVizPanelsEditableElement } from './MultiSelectedVizPanelsE
 import { VizPanelEditableElement } from './VizPanelEditableElement';
 import { AddNewPane } from './add-new/AddNewPane';
 import { DashboardCrossDashboardVariablesPane } from './dashboard/DashboardCrossDashboardVariablesPane';
-import { DashboardStateChangedEvent } from './events';
+import { DashboardEditActionEvent, DashboardStateChangedEvent } from './events';
 import { DashboardOutline } from './outline/DashboardOutline';
 import { type DashboardSidebarLike } from './types';
 
@@ -444,6 +444,43 @@ describe('DashboardSidebar', () => {
 
     // should clear selection
     expect(sidebar.getSelectedObject()).toBeUndefined();
+  });
+
+  describe('Panel edit actions', () => {
+    function panelEditAction(scene: DashboardScene) {
+      return new DashboardEditActionEvent({
+        meta: { actionId: 'panel.edit' },
+        description: 'Panel changes',
+        source: scene.state.body,
+        perform: jest.fn(),
+        undo: jest.fn(),
+      });
+    }
+
+    it('records the panel edit action right away when the sidebar is already active', () => {
+      const scene = buildTestScene();
+      const { sidebar } = scene.state;
+
+      sidebar.setPanelEditAction(panelEditAction(scene));
+
+      expect(sidebar.state.undoStack.map((action) => action.description)).toEqual(['Panel changes']);
+    });
+
+    it('records the panel edit action when the sidebar activates', () => {
+      const scene = new DashboardScene({ title: 'hello', uid: 'dash-1', editable: true });
+      const deactivateScene = scene.activate();
+      const deactivateBody = scene.state.body.activate();
+      const { sidebar } = scene.state;
+
+      sidebar.setPanelEditAction(panelEditAction(scene));
+      expect(sidebar.state.undoStack).toEqual([]);
+      const deactivateSidebar = sidebar.activate();
+
+      expect(sidebar.state.undoStack.map((action) => action.description)).toEqual(['Panel changes']);
+      deactivateSidebar();
+      deactivateBody();
+      deactivateScene();
+    });
   });
 
   it('when new action comes in clears redo stack', async () => {

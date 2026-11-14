@@ -113,7 +113,7 @@ function panel(
   );
 }
 
-it('filters rows locally in panel edit without changing saved transformations', async () => {
+it('writes row filters to the ad hoc transformations in panel edit', async () => {
   const sourceSeries = [makeFrame()];
   const set = jest.fn();
   render(panel(sourceSeries, ({ linkModel }) => linkModel, 0, sourceSeries, set, CoreApp.PanelEditor));
@@ -123,8 +123,14 @@ it('filters rows locally in panel edit without changing saved transformations', 
   await userEvent.type(screen.getByRole('textbox', { name: 'Maximum' }), '10');
   await userEvent.click(screen.getByRole('button', { name: 'Apply' }));
 
-  expect(screen.getAllByRole('link', { name: 'Inspect' })).toHaveLength(1);
-  expect(set).not.toHaveBeenCalled();
+  expect(set).toHaveBeenCalledWith('grafana:table-view', [
+    expect.objectContaining({
+      id: 'filterByValue',
+      options: expect.objectContaining({
+        target: { refId: 'A', frameIndex: 0, frameKey: '["A",0]', parentIndex: undefined, parentKey: undefined },
+      }),
+    }),
+  ]);
 });
 
 it('keeps local filters when a frame gains a column with the new-features flag off', async () => {

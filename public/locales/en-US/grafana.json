@@ -6415,9 +6415,6 @@
       "placeholder-search-options": "Search options",
       "visualization-button-tooltip": "Search options"
     },
-    "panel-editor": {
-      "ad-hoc-transformations-disabled": "Ad hoc transformations are disabled in edit mode"
-    },
     "plan-building-overlay": {
       "quip-corners": "Polishing the panel corners…",
       "quip-green": "Picking a nice shade of green…",

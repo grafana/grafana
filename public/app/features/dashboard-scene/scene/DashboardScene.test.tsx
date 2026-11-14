@@ -43,6 +43,7 @@ import { type DecoratedRevisionModel } from 'app/features/dashboard/types/revisi
 import { setDesktopViewport, setMobileViewport } from 'app/features/dashboard-scene/utils/mobileViewportTestUtils';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { DashboardEventAction } from 'app/features/live/dashboard/types';
+import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/constants';
 import { VariablesChanged } from 'app/features/variables/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
@@ -172,6 +173,60 @@ describe('DashboardScene', () => {
 
         // @ts-expect-error it is a private property
         expect(scene._changesWorker).toBeUndefined();
+      });
+    });
+
+    describe('Discarding with ad hoc table transformations', () => {
+      const hideA = [{ id: 'organize', options: { excludeByName: { A: true } } }];
+      const hideB = [{ id: 'organize', options: { excludeByName: { B: true } } }];
+      let scene: DashboardScene;
+      let deactivateScene: () => void;
+
+      function getAdHocTransformations(key: string) {
+        return findVizPanelByKey(scene, key)!.getRuntimeTransformations().get(TABLE_TRANSFORMATIONS_OWNER);
+      }
+
+      beforeEach(() => {
+        scene = buildTestScene();
+        locationService.push('/d/dash-1');
+        deactivateScene = scene.activate();
+        findVizPanelByKey(scene, 'panel-1')!.getRuntimeTransformations().set(TABLE_TRANSFORMATIONS_OWNER, hideA);
+        scene.onEnterEditMode();
+        findVizPanelByKey(scene, 'panel-2')!.getRuntimeTransformations().set(TABLE_TRANSFORMATIONS_OWNER, hideB);
+        scene.setState({ title: 'Updated title' });
+      });
+
+      afterEach(() => deactivateScene());
+
+      it('keeps the ad hoc table transformations each panel shows when leaving edit mode', () => {
+        scene.exitEditMode({ skipConfirm: true, restoreInitialState: true });
+
+        expect(scene.state.title).toBe('hello');
+        expect(getAdHocTransformations('panel-1')).toEqual(hideA);
+        expect(getAdHocTransformations('panel-2')).toEqual(hideB);
+      });
+
+      it('keeps the ad hoc table transformations each panel shows when discarding and editing on', () => {
+        scene.discardChangesAndKeepEditing();
+
+        expect(scene.state.title).toBe('hello');
+        expect(getAdHocTransformations('panel-1')).toEqual(hideA);
+        expect(getAdHocTransformations('panel-2')).toEqual(hideB);
+      });
+
+      it('gives a panel whose transformations changed its ad hoc table transformations from when editing started', () => {
+        const panel = findVizPanelByKey(scene, 'panel-1')!;
+        const transformer = panel.state.$data;
+        if (!(transformer instanceof SceneDataTransformer)) {
+          throw new Error('Expected a data transformer');
+        }
+        transformer.setState({ transformations: [{ id: 'organize', options: { renameByName: { A: 'Renamed' } } }] });
+        panel.getRuntimeTransformations().set(TABLE_TRANSFORMATIONS_OWNER, hideB);
+
+        scene.exitEditMode({ skipConfirm: true, restoreInitialState: true });
+
+        expect(findVizPanelByKey(scene, 'panel-1')!.state.$data?.state).toMatchObject({ transformations: [] });
+        expect(getAdHocTransformations('panel-1')).toEqual(hideA);
       });
     });
 
