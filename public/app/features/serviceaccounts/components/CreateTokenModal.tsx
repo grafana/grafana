@@ -12,6 +12,7 @@ import {
   Input,
   Modal,
   RadioButtonGroup,
+  Stack,
   useStyles2,
 } from '@grafana/ui';
 
@@ -107,8 +108,9 @@ export const CreateTokenModal = ({ isOpen, token, serviceAccountLogin, onCreateT
   return (
     <Modal isOpen={isOpen} title={modalTitle} onDismiss={onCloseInternal} className={styles.modal}>
       {!token ? (
-        <div>
+        <Stack direction="column" gap={2}>
           <Field
+            noMargin
             label={t('serviceaccounts.create-token-modal.label-display-name', 'Display name')}
             description={t(
               'serviceaccounts.create-token-modal.description-name-to-easily-identify-the-token',
@@ -127,7 +129,7 @@ export const CreateTokenModal = ({ isOpen, token, serviceAccountLogin, onCreateT
               }}
             />
           </Field>
-          <Field label={t('serviceaccounts.create-token-modal.label-expiration', 'Expiration')}>
+          <Field noMargin label={t('serviceaccounts.create-token-modal.label-expiration', 'Expiration')}>
             <RadioButtonGroup
               options={getExpirationOptions()}
               disabledOptions={isTokenExpirationDayLimitConfigured ? [NO_EXPIRATION_OPTION] : []}
@@ -137,7 +139,7 @@ export const CreateTokenModal = ({ isOpen, token, serviceAccountLogin, onCreateT
             />
           </Field>
           {expirationOption === CUSTOM_EXPIRATION_OPTION && (
-            <Field label={t('serviceaccounts.create-token-modal.label-expiration-date', 'Expiration date')}>
+            <Field noMargin label={t('serviceaccounts.create-token-modal.label-expiration-date', 'Expiration date')}>
               <DatePickerWithInput
                 onChange={onExpirationDateChange}
                 value={newTokenExpirationDate}
@@ -155,10 +157,11 @@ export const CreateTokenModal = ({ isOpen, token, serviceAccountLogin, onCreateT
               <Trans i18nKey="serviceaccounts.create-token-modal.generate-token">Generate token</Trans>
             </Button>
           </Modal.ButtonRow>
-        </div>
+        </Stack>
       ) : (
-        <>
+        <Stack direction="column" gap={2}>
           <Field
+            noMargin
             label={t('serviceaccounts.create-token-modal.label-token', 'Token')}
             description={t(
               'serviceaccounts.create-token-modal.description-token',
@@ -188,7 +191,7 @@ export const CreateTokenModal = ({ isOpen, token, serviceAccountLogin, onCreateT
               <Trans i18nKey="serviceaccounts.create-token-modal.close">Close</Trans>
             </Button>
           </Modal.ButtonRow>
-        </>
+        </Stack>
       )}
     </Modal>
   );
