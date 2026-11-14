@@ -325,7 +325,7 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 		return nil, fmt.Errorf("failed to convert TLS config for transport: %w", err)
 	}
 
-	for group, url := range apiServerURLs {
+	newConfigProvider := func(group, url string) apiserver.RestConfigProvider {
 		// Build audiences: always include the group, and add provisioning.GROUP only if different
 		audiences := []string{group}
 		if group != provisioning.GROUP {
@@ -348,10 +348,21 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 			},
 			RateLimiter: flowcontrol.NewFakeAlwaysRateLimiter(),
 		}
-		configProviders[group] = NewDirectConfigProvider(config)
+		return NewDirectConfigProvider(config)
+	}
+	for group, url := range apiServerURLs {
+		configProviders[group] = newConfigProvider(group, url)
 	}
 
-	clients := resources.NewClientFactoryForMultipleAPIServers(configProviders, supportedResources...)
+	// The aggregated server is the router, which also publishes the app manifests.
+	var fallback func(group string) apiserver.RestConfigProvider
+	var manifests resources.ManifestLister
+	if aggregatedServerURL != "" {
+		fallback = func(group string) apiserver.RestConfigProvider { return newConfigProvider(group, aggregatedServerURL) }
+		manifests = resources.NewRemoteManifestLister(fallback(resource.ManifestDiscoveryGVR.Group))
+	}
+
+	clients := resources.NewClientFactoryForMultipleAPIServersWithResources(configProviders, fallback, resources.ManifestSupportedResources(manifests, supportedResources))
 	c.clients = clients
 	return clients, nil
 }
