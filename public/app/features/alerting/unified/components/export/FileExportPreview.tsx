@@ -1,12 +1,14 @@
 import { css } from '@emotion/css';
 import saveAs from 'file-saver';
+import { noop } from 'lodash';
 import { useCallback, useMemo } from 'react';
 import * as React from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Button, ClipboardButton, CodeEditor, TextLink, useStyles2 } from '@grafana/ui';
+import { Alert, Button, ClipboardButton, TextLink, useStyles2 } from '@grafana/ui';
+import { CodeMirrorEditor } from '@grafana/ui/unstable';
 
 import {
   DOCS_URL_FILE_PROVISIONING,
@@ -47,19 +49,13 @@ export function FileExportPreview({ format, textDefinition, downloadFileName, on
       <div className={styles.content}>
         <AutoSizer disableWidth>
           {({ height }) => (
-            <CodeEditor
-              width="100%"
-              height={height}
+            <CodeMirrorEditor
+              height={`${height}px`}
               language={format}
               value={formattedTextDefinition}
-              monacoOptions={{
-                minimap: {
-                  enabled: false,
-                },
-                scrollBeyondLastLine: false,
-                lineNumbers: 'on',
-                readOnly: true,
-              }}
+              onChange={noop}
+              readOnly
+              aria-label={t('alerting.file-export-preview.preview', 'Export preview')}
             />
           )}
         </AutoSizer>

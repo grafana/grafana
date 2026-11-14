@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Route, Routes } from 'react-router-dom-v5-compat';
 import { type Props } from 'react-virtualized-auto-sizer';
 import { render, userEvent, waitFor, waitForElementToBeRemoved } from 'test/test-utils';
-import { byRole, byTestId, byText } from 'testing-library-selector';
+import { byRole, byText } from 'testing-library-selector';
 
 import { mockExportApi, setupMswServer } from '../../mockApi';
 import { grafanaRulerRule, mockPreviewApiResponse } from '../../mocks/grafanaRulerApi';
@@ -24,10 +24,6 @@ jest.mock('react-virtualized-auto-sizer', () => {
       width: 1,
     });
 });
-jest.mock('@grafana/ui', () => ({
-  ...jest.requireActual('@grafana/ui'),
-  CodeEditor: ({ value }: { value: string }) => <textarea data-testid="code-editor" value={value} readOnly />,
-}));
 
 const ui = {
   loading: byText('Loading the rule...'),
@@ -38,7 +34,7 @@ const ui = {
   exportDrawer: {
     dialog: byRole('dialog', { name: /Export Group/ }),
     yamlTab: byRole('tab', { name: /YAML/ }),
-    editor: byTestId('code-editor'),
+    editor: byRole('textbox', { name: 'Export preview' }),
   },
 };
 

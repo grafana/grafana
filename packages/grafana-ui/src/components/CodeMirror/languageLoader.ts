@@ -9,6 +9,9 @@ const DEFAULT_SQL_DIALECT: CodeMirrorSqlDialect = 'standardSql';
 const loadGo = async (): Promise<CodeMirrorExtension> =>
   (await import(/* webpackChunkName: "codemirror-lang-go" */ '@codemirror/lang-go')).go();
 
+const loadHcl = async (): Promise<CodeMirrorExtension> =>
+  (await import(/* webpackChunkName: "codemirror-lang-hcl" */ './hcl')).hclLanguage;
+
 const loadHtml = async (): Promise<CodeMirrorExtension> =>
   (await import(/* webpackChunkName: "codemirror-lang-html" */ '@codemirror/lang-html')).html();
 
@@ -81,6 +84,8 @@ const resolveLoad = (
   switch (language) {
     case 'go':
       return { cacheKey: 'go', load: loadGo };
+    case 'hcl':
+      return { cacheKey: 'hcl', load: loadHcl };
     case 'html':
       return { cacheKey: 'html', load: loadHtml };
     case 'ini':

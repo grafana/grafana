@@ -95,6 +95,25 @@ LIMIT 100`,
   height: '240px',
 };
 
+export const HclExport = ControlledEditor.bind({});
+HclExport.args = {
+  value: `resource "grafana_rule_group" "alerts" {
+  name             = "Production alerts"
+  folder_uid       = "alerting"
+  interval_seconds = 60
+
+  rule {
+    name      = "High CPU usage"
+    condition = "A"
+    for       = "5m"
+    is_paused = false
+  }
+}`,
+  language: 'hcl',
+  readOnly: true,
+  height: '360px',
+};
+
 export const WithCompletions = ControlledEditor.bind({});
 WithCompletions.args = {
   value: 'SEL',
