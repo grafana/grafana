@@ -411,6 +411,56 @@ describe('PieChartPanel', () => {
     });
   });
 
+  describe('solid slice colors', () => {
+    const fixedColor = { mode: FieldColorModeId.Fixed, fixedColor: '#e11e4c' };
+
+    const getSliceFills = () =>
+      screen
+        .getAllByTestId('data testid Pie Chart Slice')
+        .map((slice) => slice.querySelector('path')?.getAttribute('fill'));
+
+    const renderFixedColorSeries = (options: Partial<Options> = {}) => {
+      const series = makeSeries([
+        { name: 'Chrome', value: 60, config: { color: fixedColor } },
+        { name: 'Firefox', value: 40, config: { color: fixedColor } },
+      ]);
+      return setup({ options: buildOptions(options), data: { series } });
+    };
+
+    it('uses the radial gradient fill by default', () => {
+      renderFixedColorSeries();
+      const fills = getSliceFills();
+      expect(fills).toHaveLength(2);
+      fills.forEach((fill) => expect(fill).toMatch(/^url\(#/));
+    });
+
+    it('uses the exact field color when solidColors is enabled', () => {
+      const { container } = renderFixedColorSeries({ solidColors: true });
+      const fills = getSliceFills();
+      expect(fills).toHaveLength(2);
+      fills.forEach((fill) => expect(fill).toBe('#e11e4c'));
+      // No gradients are registered when slices are solid.
+      expect(container.querySelector('radialGradient')).toBeNull();
+    });
+
+    it('keeps the gradient scheme fills when solidColors is enabled', () => {
+      const gradientColor = { mode: FieldColorModeId.Gradient, fixedColor: '#73BF69', gradientColorTo: '#F2495C' };
+      const series = makeSeries([
+        { name: 'Chrome', value: 60, config: { color: gradientColor } },
+        { name: 'Firefox', value: 40, config: { color: gradientColor } },
+      ]);
+      setup({
+        options: buildOptions({ solidColors: true }),
+        data: { series },
+      });
+      const fills = getSliceFills();
+      expect(fills).toHaveLength(2);
+      // Largest slice gets the start color, smallest the end color.
+      expect(fills[0]).toBe('#73bf69');
+      expect(fills[1]).toBe('#f2495c');
+    });
+  });
+
   describe('tooltip modes', () => {
     it('shows only the hovered series in single mode, not the whole series list', async () => {
       setup({

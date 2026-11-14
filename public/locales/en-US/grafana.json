@@ -14207,6 +14207,7 @@
     "category-pie-chart": "Pie chart",
     "description-labels": "Select the labels to be displayed in the pie chart",
     "description-pie-chart-type": "How the pie chart should be rendered",
+    "description-solid-colors": "Use the exact field color for each slice instead of a radial gradient",
     "labels-options": {
       "label-name": "Name",
       "label-percent": "Percent",
@@ -14219,6 +14220,7 @@
     "name-labels": "Labels",
     "name-legend-values": "Legend values",
     "name-pie-chart-type": "Pie chart type",
+    "name-solid-colors": "Solid slice colors",
     "pie-chart-type-options": {
       "label-donut": "Donut",
       "label-pie": "Pie"
