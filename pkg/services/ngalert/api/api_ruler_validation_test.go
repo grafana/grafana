@@ -1157,3 +1157,24 @@ func TestValidateRuleNodeEmptyLabelKey(t *testing.T) {
 	require.Error(t, err)
 	require.ErrorContains(t, err, "label key cannot be empty")
 }
+
+// TestValidateRuleGroup_LegacyEmptyLabelKeyDoesNotBlockGroup is the #130220
+// regression: a rule that already carries an empty label key in storage must
+// not cause ValidateRuleGroup to reject the whole group payload. Grafana-
+// managed writes are whole-group, so an empty key on an untouched sibling
+// otherwise blocks edit/pause/delete of every other rule.
+func TestValidateRuleGroup_LegacyEmptyLabelKeyDoesNotBlockGroup(t *testing.T) {
+	orgId := rand.Int64()
+	folder := randFolder()
+	cfg := config(t)
+	limits := makeLimits(cfg)
+
+	ruleA := validRule()
+	ruleA.Labels = map[string]string{"": "oops", "team": "sre"}
+	ruleB := validRule()
+	ruleB.Labels = map[string]string{"team": "sre", "severity": "warning"}
+
+	g := validGroup(cfg, ruleA, ruleB)
+	_, err := ValidateRuleGroup(&g, orgId, folder.UID, limits)
+	require.NoError(t, err, "legacy empty label key on one rule must not reject the whole group")
+}
