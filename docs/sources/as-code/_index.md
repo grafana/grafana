@@ -36,6 +36,10 @@ hero:
   description: Manage resources, including folders and dashboards, and configurations with as code workflows.
 cards:
   items:
+    - title: Managed resources
+      height: 24
+      href: ./managed-resources/
+      description: Understand how Grafana records which tool manages a resource, and what that means for editing or releasing it.
     - title: Git Sync
       height: 24
       href: ./git-sync/
