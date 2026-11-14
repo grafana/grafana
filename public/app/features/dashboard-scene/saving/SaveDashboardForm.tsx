@@ -52,6 +52,7 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
         },
       },
       rawDashboardJSON: changedSaveModel,
+      collapseRows: drawer.state.collapseRows,
       overwrite,
     });
     if (result.status === 'success') {
@@ -215,9 +216,10 @@ export function SaveDashboardFormCommonOptions({ drawer, changeInfo }: SaveDashb
     saveVariables = false,
     saveTimeRange = false,
     saveRefresh = false,
+    collapseRows = false,
     showVariablesWarning = false,
   } = drawer.useState();
-  const { hasTimeChanges, hasVariableValueChanges, hasRefreshChange } = changeInfo;
+  const { hasTimeChanges, hasVariableValueChanges, hasRefreshChange, hasExpandedRows } = changeInfo;
 
   return (
     <Stack direction={'column'} alignItems={'flex-start'}>
@@ -286,6 +288,21 @@ export function SaveDashboardFormCommonOptions({ drawer, changeInfo }: SaveDashb
             </Alert>
           )}
         </>
+      )}
+      {hasExpandedRows && (
+        <Checkbox
+          id="save-collapse-rows"
+          label={t(
+            'dashboard-scene.save-dashboard-form-common-options.save-collapse-rows-label-collapse-all-rows',
+            'Collapse all rows'
+          )}
+          description={t(
+            'dashboard-scene.save-dashboard-form-common-options.save-collapse-rows-description-save-rows-collapsed',
+            'Will save every row collapsed'
+          )}
+          checked={collapseRows}
+          onChange={drawer.onToggleCollapseRows}
+        />
       )}
     </Stack>
   );

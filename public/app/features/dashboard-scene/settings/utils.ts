@@ -22,6 +22,7 @@ export interface DashboardEditListViewState extends DashboardEditViewState {
 export interface DashboardEditView extends SceneObject {
   getUrlKey(): string;
   getEditedSaveModel?(): Dashboard | DashboardV2Spec;
+  setEditedSaveModel?(saveModel: Dashboard | DashboardV2Spec): void;
 }
 
 export function useDashboardEditPageNav(dashboard: DashboardScene, currentEditView: string) {
