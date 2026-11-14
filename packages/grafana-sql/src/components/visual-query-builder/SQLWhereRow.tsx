@@ -54,14 +54,13 @@ function mapFieldsToTypes(columns: SQLSelectableValue[]) {
   return fields;
 }
 
+// A multi-value variable interpolates to a list of already quoted values, so the builder must not quote it.
 export function removeQuotesForMultiVariables(val: SQLExpression, templateVars: TypedVariableModel[]) {
-  const multiVariableInWhereString = (tv: TypedVariableModel) =>
-    'multi' in tv &&
-    tv.multi &&
-    (val.whereString?.includes(`\${${tv.name}}`) || val.whereString?.includes(`$${tv.name}`));
-
-  if (templateVars.some((tv) => multiVariableInWhereString(tv))) {
-    val.whereString = val.whereString?.replaceAll("')", ')');
-    val.whereString = val.whereString?.replaceAll("('", '(');
+  for (const tv of templateVars) {
+    if ('multi' in tv && tv.multi) {
+      for (const variable of [`$${tv.name}`, `\${${tv.name}}`]) {
+        val.whereString = val.whereString?.replaceAll(`'${variable}'`, variable);
+      }
+    }
   }
 }
