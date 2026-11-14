@@ -2941,7 +2941,7 @@ var (
 		},
 		{
 			Name:        "assistant.fullscreenWorkspace",
-			Description: "Enables the global fullscreen Workspace (Grafana Assistant workspace shell) in the top bar",
+			Description: "Shows the Grafana Assistant Chat and Workspace buttons in the top bar, and Exit Workspace on the Assistant Workspace page",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaFrontendPlatformSquad,
 			Expression:  "false",

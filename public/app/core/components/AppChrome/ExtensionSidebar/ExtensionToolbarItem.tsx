@@ -45,7 +45,7 @@ export function ExtensionToolbarItem({ compact }: Props) {
     if (interactiveLearningPluginIds.includes(pluginId)) {
       return null;
     }
-    // Fullscreen workspace renders its own Chat/Workspace buttons (`AssistantToolbarButtons`
+    // With the workspace flag on, the assistant has its own Chat/Workspace buttons (`AssistantToolbarButtons`
     // in `SingleTopBar`) instead of the generic extension-sidebar button for this plugin
     if (fullscreenWorkspaceEnabled && pluginId === 'grafana-assistant-app') {
       return null;

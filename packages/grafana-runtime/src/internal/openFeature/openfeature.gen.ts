@@ -80,7 +80,7 @@ export const FlagKeys = {
   AssistantDashboardPlanning: "assistant.dashboardPlanning",
   /** Enables the template dashboard assistant */
   AssistantFrontendToolsDashboardTemplates: "assistant.frontend.tools.dashboardTemplates",
-  /** Enables the global fullscreen Workspace (Grafana Assistant workspace shell) in the top bar */
+  /** Shows the Grafana Assistant Chat and Workspace buttons in the top bar, and Exit Workspace on the Assistant Workspace page */
   AssistantFullscreenWorkspace: "assistant.fullscreenWorkspace",
   /** Generate a per-datasource external ID for Grafana Assume Role (jsonData.grafanaExternalId). When disabled, new datasources keep using the stack-level external ID. */
   AwsAssumeRolePerDatasourceExternalId: "awsAssumeRolePerDatasourceExternalId",
@@ -776,7 +776,7 @@ export const useFlagAssistantFrontendToolsDashboardTemplates = (options?: ReactF
 };
 
 /**
- * Enables the global fullscreen Workspace (Grafana Assistant workspace shell) in the top bar
+ * Shows the Grafana Assistant Chat and Workspace buttons in the top bar, and Exit Workspace on the Assistant Workspace page
  *
  * **Details:**
  * - flag key: `assistant.fullscreenWorkspace`

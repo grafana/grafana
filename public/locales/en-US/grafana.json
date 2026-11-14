@@ -13447,6 +13447,12 @@
     }
   },
   "navigation": {
+    "assistant-workspace": {
+      "exit": "Exit Workspace",
+      "exit-tooltip": "Return to the page you were on",
+      "open": "Workspace",
+      "open-tooltip": "Open Assistant Workspace"
+    },
     "breadcrumbs": {
       "aria-label": "Breadcrumbs"
     },
@@ -13462,14 +13468,6 @@
         "open-all": "Open AI assistants and sidebar apps"
       },
       "floating-resize": "Resize sidebar width"
-    },
-    "fullscreen-workspace": {
-      "enter": "Enter Workspace",
-      "error-exit": "Exit workspace",
-      "error-message": "The Grafana Assistant workspace could not be loaded.",
-      "error-reload": "Reload page",
-      "error-title": "Workspace unavailable",
-      "workspace": "Workspace"
     },
     "help": {
       "aria-label": "Help",

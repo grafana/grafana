@@ -1114,11 +1114,14 @@
     {
       "metadata": {
         "name": "assistant.fullscreenWorkspace",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-07-16T10:13:54Z"
+        "resourceVersion": "1794516179400",
+        "creationTimestamp": "2026-07-16T10:13:54Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-12 20:42:59.400754 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Enables the global fullscreen Workspace (Grafana Assistant workspace shell) in the top bar",
+        "description": "Shows the Grafana Assistant Chat and Workspace buttons in the top bar, and Exit Workspace on the Assistant Workspace page",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-platform",
         "frontend": true,
