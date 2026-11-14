@@ -70,7 +70,7 @@ func TestIntegrationDefaultPermissionsRefreshAfterCommit(t *testing.T) {
 							cache := localcache.New(0, 0)
 							license := &licensing.OSSLicensingService{}
 							catalog := legacypermissions.NewRoleCatalog()
-							client := legacypermissions.NewEmbeddedClient(legacypermissions.NewLoader(sql, catalog, actions, cache, cfg, features, license, nil), cfg)
+							client := legacypermissions.NewEmbeddedClient(legacypermissions.NewLoader(sql, catalog, actions, cache, cfg, license, nil), cfg)
 							var store accesscontrol.Store = database.ProvideService(sql)
 							if legacy {
 								store = actest.FakeStore{ExpectedErr: errors.New("local enumeration must not run")}

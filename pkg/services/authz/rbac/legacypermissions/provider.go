@@ -25,7 +25,7 @@ func ProvideLoader(sql db.DB, catalog *RoleCatalog, actions ac.ActionResolver,
 		// search methods need it. The REST client remains lazy to avoid an apiserver cycle.
 		migrated = NewZanzanaPermissionResolver(zanzanaClient, nil, restConfig, cfg.IDUseExternalGroupsForGroupsClaim)
 	}
-	loader := NewLoader(sql, catalog, actions, cache, cfg, features, license, migrated)
+	loader := NewLoader(sql, catalog, actions, cache, cfg, license, migrated)
 	loader.scopeResolver = NewPermissionScopeResolver(features, restConfig)
 	return loader
 }

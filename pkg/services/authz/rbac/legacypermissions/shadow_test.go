@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -31,7 +30,7 @@ func TestIntegrationShadowDoesNotWritePermissionCache(t *testing.T) {
 					cache := localcache.New(0, 0)
 					cfg := loaderConfig(true)
 					migrated := &migratedGrants{permissions: []ac.Permission{{Action: "folders:read", Scope: "folders:uid:migrated"}}}
-					loader := legacypermissions.NewLoader(sql, legacypermissions.NewRoleCatalog(), resourcepermissions.NewActionSetService(), cache, cfg, featuremgmt.WithFeatures(), &enforcementLicense{enabled: enterprise}, migrated)
+					loader := legacypermissions.NewLoader(sql, legacypermissions.NewRoleCatalog(), resourcepermissions.NewActionSetService(), cache, cfg, &enforcementLicense{enabled: enterprise}, migrated)
 					seedGrant(t, sql, "managed:shadow", 1, 7, ac.Permission{Action: "folders:read", Scope: "folders:uid:shadow"})
 					require.NoError(t, sql.WithDbSession(t.Context(), func(sess *db.Session) error {
 						var role ac.Role

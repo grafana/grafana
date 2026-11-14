@@ -31,7 +31,7 @@ func TestIntegrationLegacyPermissionRouting(t *testing.T) {
 			t.Cleanup(func() { require.NoError(t, openfeature.SetProviderAndWait(openfeature.NoopProvider{})) })
 			s := setupTestEnv(t, false)
 			seedContractSources(t, s.sql)
-			s.legacyClient = legacypermissions.NewEmbeddedClient(legacypermissions.NewLoader(s.sql, s.RoleCatalog(), s.actionResolver, s.cache, s.cfg, s.features, &licensing.OSSLicensingService{}, nil), s.cfg)
+			s.legacyClient = legacypermissions.NewEmbeddedClient(legacypermissions.NewLoader(s.sql, s.RoleCatalog(), s.actionResolver, s.cache, s.cfg, &licensing.OSSLicensingService{}, nil), s.cfg)
 			if enabled {
 				s.store = nil
 			} else {
