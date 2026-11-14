@@ -864,6 +864,9 @@ func TestDashboardPreferencesMergedRoute(t *testing.T) {
 		params[param.Name] = param
 	}
 	require.Len(t, params, 3)
+	for name, param := range params {
+		require.NotEmpty(t, param.Description, name)
+	}
 	require.Equal(t, "path", params["namespace"].In)
 	require.True(t, params["namespace"].Required)
 	require.Equal(t, spec.StringOrArray{"string"}, params["namespace"].Schema.Type)

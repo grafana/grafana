@@ -49,10 +49,12 @@ func (b *DashboardsAPIBuilder) dashboardPreferencesMergedRoute() builder.APIRout
 					Parameters: []*spec3.Parameter{
 						{
 							ParameterProps: spec3.ParameterProps{
-								Name:     "namespace",
-								In:       "path",
-								Required: true,
-								Schema:   spec.StringProperty(),
+								Name:        "namespace",
+								In:          "path",
+								Required:    true,
+								Example:     "default",
+								Description: "workspace",
+								Schema:      spec.StringProperty(),
 							},
 						},
 						{
@@ -68,7 +70,7 @@ func (b *DashboardsAPIBuilder) dashboardPreferencesMergedRoute() builder.APIRout
 							ParameterProps: spec3.ParameterProps{
 								Name:        dashboardPreferencesMergedIncludeUserParam,
 								In:          "query",
-								Description: "Whether the caller's own preferences apply. Defaults to true; false shows what a folder inherits.",
+								Description: "Whether the caller's own preferences apply. Defaults to true. False leaves them out, giving what any dashboard created in the folder starts from, the folder's own preferences included. To see what a folder inherits, pass its parent as folder.",
 								Schema:      spec.BooleanProperty(),
 							},
 						},

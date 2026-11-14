@@ -269,10 +269,12 @@
           {
             "name": "namespace",
             "in": "path",
+            "description": "workspace",
             "required": true,
             "schema": {
               "type": "string"
-            }
+            },
+            "example": "default"
           },
           {
             "name": "folder",
@@ -285,7 +287,7 @@
           {
             "name": "includeUser",
             "in": "query",
-            "description": "Whether the caller's own preferences apply. Defaults to true; false shows what a folder inherits.",
+            "description": "Whether the caller's own preferences apply. Defaults to true. False leaves them out, giving what any dashboard created in the folder starts from, the folder's own preferences included. To see what a folder inherits, pass its parent as folder.",
             "schema": {
               "type": "boolean"
             }

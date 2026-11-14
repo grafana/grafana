@@ -470,7 +470,7 @@ export type GetMergedDashboardPreferencesApiResponse =
 export type GetMergedDashboardPreferencesApiArg = {
   /** UID of the folder the dashboard is created in. Omit it, or use general, for the top level. */
   folder?: string;
-  /** Whether the caller's own preferences apply. Defaults to true; false shows what a folder inherits. */
+  /** Whether the caller's own preferences apply. Defaults to true. False leaves them out, giving what any dashboard created in the folder starts from, the folder's own preferences included. To see what a folder inherits, pass its parent as folder. */
   includeUser?: boolean;
 };
 export type GetDashboardPreferencesApiResponse = /** status 200 OK */ DashboardPreferences;
