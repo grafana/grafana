@@ -10,7 +10,6 @@ import (
 
 	storage "cloud.google.com/go/storage"
 	gomock "github.com/golang/mock/gomock"
-	google "golang.org/x/oauth2/google"
 	jwt "golang.org/x/oauth2/jwt"
 
 	gcsifaces "github.com/grafana/grafana/pkg/ifaces/gcsifaces"
@@ -51,21 +50,6 @@ func (m *MockStorageClient) Bucket(name string) gcsifaces.StorageBucket {
 func (mr *MockStorageClientMockRecorder) Bucket(name any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Bucket", reflect.TypeOf((*MockStorageClient)(nil).Bucket), name)
-}
-
-// FindDefaultCredentials mocks base method
-func (m *MockStorageClient) FindDefaultCredentials(ctx context.Context, scope string) (*google.Credentials, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FindDefaultCredentials", ctx, scope)
-	ret0, _ := ret[0].(*google.Credentials)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// FindDefaultCredentials indicates an expected call of FindDefaultCredentials
-func (mr *MockStorageClientMockRecorder) FindDefaultCredentials(ctx, scope any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindDefaultCredentials", reflect.TypeOf((*MockStorageClient)(nil).FindDefaultCredentials), ctx, scope)
 }
 
 // JWTConfigFromJSON mocks base method
@@ -133,6 +117,21 @@ func (m *MockStorageBucket) Object(key string) gcsifaces.StorageObject {
 func (mr *MockStorageBucketMockRecorder) Object(key any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Object", reflect.TypeOf((*MockStorageBucket)(nil).Object), key)
+}
+
+// SignedURL mocks base method
+func (m *MockStorageBucket) SignedURL(object string, opts *storage.SignedURLOptions) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SignedURL", object, opts)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SignedURL indicates an expected call of SignedURL
+func (mr *MockStorageBucketMockRecorder) SignedURL(object, opts any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SignedURL", reflect.TypeOf((*MockStorageBucket)(nil).SignedURL), object, opts)
 }
 
 // MockStorageObject is a mock of StorageObject interface
