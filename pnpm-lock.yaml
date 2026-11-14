@@ -404,8 +404,8 @@ importers:
         specifier: 3.12.0
         version: 3.12.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@welldone-software/why-did-you-render':
-        specifier: 8.0.3
-        version: 8.0.3(react@19.2.8)
+        specifier: 10.0.1
+        version: 10.0.1(react@19.2.8)
       ansicolor:
         specifier: 2.0.3
         version: 2.0.3
@@ -7941,10 +7941,10 @@ packages:
       webpack-dev-server:
         optional: true
 
-  '@welldone-software/why-did-you-render@8.0.3':
-    resolution: {integrity: sha512-bb5bKPMStYnocyTBVBu4UTegZdBqzV1mPhxc0UIV/S43KFUSRflux9gvzJfu2aM4EWLJ3egTvdjOi+viK+LKGA==}
+  '@welldone-software/why-did-you-render@10.0.1':
+    resolution: {integrity: sha512-tMgGkt30iVYeLMUKExNmtm019QgyjLtA7lwB0QAizYNEuihlCG2eoAWBBaz/bDeI7LeqAJ9msC6hY3vX+JB97g==}
     peerDependencies:
-      react: ^18
+      react: ^19
 
   '@wojtekmaj/date-utils@1.4.1':
     resolution: {integrity: sha512-Fjs0KJz0//0AmlJVFx9AQmWpmxOTw4foDo4DKoswWVVjHsna4rdu+fXwid5YHNgzv/wHi9AkZCRPmHWsf890lg==}
@@ -21345,7 +21345,7 @@ snapshots:
       webpack: 5.105.0(@swc/core@1.13.3(@swc/helpers@0.5.17))(clean-css@5.3.3)(esbuild@0.28.1)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.31)(uglify-js@3.17.4)(webpack-cli@6.0.1)
       webpack-cli: 6.0.1(webpack-bundle-analyzer@4.10.2)(webpack@5.105.0)
 
-  '@welldone-software/why-did-you-render@8.0.3(react@19.2.8)':
+  '@welldone-software/why-did-you-render@10.0.1(react@19.2.8)':
     dependencies:
       lodash: 4.18.1
       react: 19.2.8

@@ -315,7 +315,7 @@
     "@visx/group": "3.12.0",
     "@visx/shape": "3.12.0",
     "@visx/tooltip": "3.12.0",
-    "@welldone-software/why-did-you-render": "8.0.3",
+    "@welldone-software/why-did-you-render": "10.0.1",
     "ansicolor": "2.0.3",
     "centrifuge": "5.8.0",
     "clsx": "^2.1.1",
