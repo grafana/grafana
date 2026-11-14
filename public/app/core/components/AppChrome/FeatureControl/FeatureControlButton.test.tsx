@@ -21,6 +21,9 @@ const buildContext = (overrides: Partial<FeatureControlContextType> = {}): Featu
   isOpen: false,
   setIsOpen,
   overrides: [],
+  isSuspended: false,
+  resetToDefaults: jest.fn(),
+  restoreOverrides: jest.fn(),
   ...overrides,
 });
 
