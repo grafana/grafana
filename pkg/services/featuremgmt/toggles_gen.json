@@ -6067,7 +6067,8 @@
       "metadata": {
         "name": "savedQueriesRBAC",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-01-27T13:12:08Z"
+        "creationTimestamp": "2026-01-27T13:12:08Z",
+        "deletionTimestamp": "2026-11-02T20:38:39Z"
       },
       "spec": {
         "description": "Enables Saved queries (query library) RBAC permissions",
