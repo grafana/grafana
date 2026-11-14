@@ -190,6 +190,8 @@ export const FlagKeys = {
   GrafanaDashboardComposer: "grafana.dashboardComposer",
   /** Enables global and folder-scoped dashboard variables via dashboard.grafana.app */
   GrafanaDashboardGlobalVariables: "grafana.dashboardGlobalVariables",
+  /** Allow viewers to pin one dashboard panel above the canvas for the current session */
+  GrafanaDashboardPanelPinning: "grafana.dashboardPanelPinning",
   /** Enables org, folder and user preferences for new dashboards and panels (DashboardPreferences in dashboard.grafana.app) */
   GrafanaDashboardPreferences: "grafana.dashboardPreferences",
   /** Enables Viewing and Editing modes for dynamic dashboards */
@@ -1378,6 +1380,17 @@ export const useFlagGrafanaDashboardComposer = (options?: ReactFlagEvaluationOpt
  */
 export const useFlagGrafanaDashboardGlobalVariables = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.dashboardGlobalVariables", false, options).value;
+};
+
+/**
+ * Allow viewers to pin one dashboard panel above the canvas for the current session
+ *
+ * **Details:**
+ * - flag key: `grafana.dashboardPanelPinning`
+ * - default value: `false`
+ */
+export const useFlagGrafanaDashboardPanelPinning = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.dashboardPanelPinning", false, options).value;
 };
 
 /**

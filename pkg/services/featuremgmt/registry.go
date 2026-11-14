@@ -631,6 +631,14 @@ var (
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:        "grafana.dashboardPanelPinning",
+			Description: "Allow viewers to pin one dashboard panel above the canvas for the current session",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "dashboardNewLayouts",
 			Description: "Enables new dashboard layouts",
 			Stage:       FeatureStageGeneralAvailability,
