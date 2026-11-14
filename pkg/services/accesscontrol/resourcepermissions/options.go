@@ -65,7 +65,9 @@ type Options struct {
 	GetParentFolder ParentFolderResolver
 	// LicenseMV if configured is applied to endpoints that can modify permissions
 	LicenseMW web.Handler
-	// RestConfigProvider if configured enables K8s API redirect for resource permissions
+	// RestConfigProvider if configured enables K8s API redirect for resource permissions.
+	// Leave it nil for resources the K8s API does not serve: with the redirect enabled, their
+	// permissions use legacy storage in Mode0-3 and fail once unified storage is authoritative.
 	RestConfigProvider apiserver.DirectRestConfigProvider
 	// RequestValidator if configured is called before each handler. Return an error to abort the request.
 	// The returned context, if non-nil, replaces the request context for subsequent processing.

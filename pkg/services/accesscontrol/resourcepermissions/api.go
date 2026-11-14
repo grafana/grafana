@@ -63,8 +63,14 @@ func newApi(cfg *setting.Cfg, ac accesscontrol.AccessControl, router routing.Rou
 	}
 }
 
-// shouldUseK8sAPIs returns true if both gates for K8s API redirect are enabled.
+// shouldUseK8sAPIs returns true if both gates for K8s API redirect are enabled. Without a rest config
+// provider the K8s call cannot succeed, so it is skipped while legacy is still written (Mode0-3).
+// Once unified storage is authoritative the call is kept so the request fails instead of reading
+// legacy data the authorizer no longer uses.
 func (a *api) shouldUseK8sAPIs(ctx context.Context) bool {
+	if a.restConfigProvider == nil && !a.unifiedStorageIsAuthoritative(iamv0.ResourcePermissionInfo.GroupResource().String()) {
+		return false
+	}
 	return k8sResourcePermissionRedirectEnabled(ctx, a.iamFeatures.ResourcePermissionsAPI)
 }
 
