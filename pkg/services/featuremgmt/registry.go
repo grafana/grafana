@@ -1186,6 +1186,15 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:         "personalAccessTokens",
+			Description:  "Enables user-issued personal access tokens that act as the owning user",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{LegacyGo: true, React: true},
+		},
+		{
 			Name:         "authz.legacyUserPermissionsShadow",
 			Description:  "Compare local permissions with embedded AuthZ in the background when authz.legacyUserPermissions is enabled.",
 			Stage:        FeatureStageExperimental,

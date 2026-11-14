@@ -446,6 +446,9 @@ type Cfg struct {
 	// Service Accounts
 	SATokenExpirationDayLimit int
 
+	// Personal access tokens
+	PersonalAccessTokens PersonalAccessTokensSettings
+
 	// Annotations
 	AnnotationCleanupJobBatchSize      int64
 	AnnotationMaximumTagsLength        int64
@@ -1672,6 +1675,8 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	if err := readUserSettings(iniFile, cfg); err != nil {
 		return err
 	}
+	cfg.PersonalAccessTokens = readPersonalAccessTokensSettings(iniFile)
+
 	if err := readServiceAccountSettings(iniFile, cfg); err != nil {
 		return err
 	}
