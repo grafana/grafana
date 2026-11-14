@@ -1,4 +1,4 @@
-import { type FormEvent } from 'react';
+import { type FormEvent, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
 import {
@@ -10,7 +10,7 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { getDataSourceInstance } from '@grafana/runtime';
-import { type QueryVariable, sceneGraph } from '@grafana/scenes';
+import { type QueryVariable, SafeSerializableSceneObject, sceneGraph } from '@grafana/scenes';
 import { type VariableRefresh, type VariableSort } from '@grafana/schema';
 import { Field, Stack } from '@grafana/ui';
 import { QueryEditor } from 'app/features/dashboard-scene/settings/variables/components/QueryEditor';
@@ -48,6 +48,7 @@ export function QueryVariableEditor({ variable, onRunQuery }: QueryVariableEdito
     staticOptionsOrder,
   } = variable.useState();
   const { value: timeRange } = sceneGraph.getTimeRange(variable).useState();
+  const scopedVars = useMemo(() => ({ __sceneObject: new SafeSerializableSceneObject(variable) }), [variable]);
 
   const onRegExChange = (event: React.FormEvent<HTMLTextAreaElement>) => {
     variable.setState({ regex: event.currentTarget.value });
@@ -101,6 +102,7 @@ export function QueryVariableEditor({ variable, onRunQuery }: QueryVariableEdito
   return (
     <QueryVariableEditorForm
       datasource={datasource ?? undefined}
+      scopedVars={scopedVars}
       onDataSourceChange={onDataSourceChange}
       query={query}
       onQueryChange={onQueryChange}
@@ -141,8 +143,9 @@ export function Editor({ variable }: EditorProps) {
     variable.setState({ query, definition: getQueryDef(query) });
   };
   const { value: timeRange } = sceneGraph.getTimeRange(variable).useState();
+  const scopedVars = useMemo(() => ({ __sceneObject: new SafeSerializableSceneObject(variable) }), [variable]);
   const { value: dsConfig } = useAsync(async () => {
-    const datasource = await getDataSourceInstance(datasourceRef ?? '');
+    const datasource = await getDataSourceInstance(datasourceRef ?? '', scopedVars);
     const VariableQueryEditor = await getVariableQueryEditor(datasource);
     const defaultQuery = datasource?.variables?.getDefaultQuery?.();
 
@@ -154,7 +157,7 @@ export function Editor({ variable }: EditorProps) {
 
     return { datasource, VariableQueryEditor };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [datasourceRef]);
+  }, [datasourceRef, scopedVars]);
 
   const { datasource: selectedDatasource, VariableQueryEditor } = dsConfig ?? {};
 
@@ -189,7 +192,13 @@ export function Editor({ variable }: EditorProps) {
         htmlFor="data-source-picker"
         noMargin
       >
-        <DataSourcePicker current={datasourceRef} onChange={onDataSourceChange} variables={true} width={30} />
+        <DataSourcePicker
+          current={datasourceRef}
+          onChange={onDataSourceChange}
+          variables={true}
+          width={30}
+          scopedVars={scopedVars}
+        />
       </Field>
 
       {selectedDatasource && VariableQueryEditor && (
