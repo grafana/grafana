@@ -35,6 +35,11 @@ describe('dateTimeParse', () => {
     expect(date.format()).toEqual('2025-03-12T07:09:37Z');
   });
 
+  it('evaluates a quick date against the now option instead of the clock', () => {
+    const date = dateTimeParse('now-1h', { timeZone: 'utc', now: Date.parse('2020-03-02T15:00:00Z') });
+    expect(date.format()).toEqual('2020-03-02T14:00:00Z');
+  });
+
   it('should be able to parse array formats used by calendar', () => {
     const date = dateTimeParse([2020, 5, 10, 10, 30, 20], { timeZone: 'utc' });
     expect(date.format()).toEqual('2020-06-10T10:30:20Z');
