@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/prometheus/alertmanager/matchers/compat"
 	"github.com/prometheus/alertmanager/pkg/labels"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -80,7 +81,7 @@ func ParseHistoryQuery(orgID int64, user identity.Requester, query url.Values) (
 		}
 	}
 	for _, s := range query["matchers"] {
-		parsed, err := labels.ParseMatchers(s)
+		parsed, err := compat.Matchers(s, "api")
 		if err != nil {
 			return models.HistoryQuery{}, fmt.Errorf("invalid matchers: %w", err)
 		}
