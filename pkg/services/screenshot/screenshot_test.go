@@ -3,6 +3,7 @@ package screenshot
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"testing"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -68,6 +69,18 @@ func TestHeadlessScreenshotService(t *testing.T) {
 		Render(ctx, rendering.RenderPNG, renderOpts).
 		Return(&rendering.RenderResult{FilePath: "panel.png"}, nil)
 	screenshot, err = s.Take(ctx, opts)
+	require.NoError(t, err)
+	assert.Equal(t, Screenshot{Path: "panel.png"}, *screenshot)
+
+	// dashboard variables should be added to the panel's URL
+	withVariables := renderOpts
+	withVariables.Path = "d-solo/foo/bar?disableAlertHistory=true&from=now-6h&orgId=2&panelId=4&to=now-2h&var-cluster=prod&var-service=api"
+	optsWithVariables := opts
+	optsWithVariables.Variables = url.Values{"var-cluster": {"prod"}, "var-service": {"api"}}
+	r.EXPECT().
+		Render(ctx, rendering.RenderPNG, withVariables).
+		Return(&rendering.RenderResult{FilePath: "panel.png"}, nil)
+	screenshot, err = s.Take(ctx, optsWithVariables)
 	require.NoError(t, err)
 	assert.Equal(t, Screenshot{Path: "panel.png"}, *screenshot)
 

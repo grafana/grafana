@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"net/url"
 	"slices"
 	"sync"
 	"time"
@@ -106,14 +107,14 @@ func (f *FakeHistorian) Record(ctx context.Context, rule history_model.RuleMeta,
 // NotAvailableImageService is a service that returns ErrScreenshotsUnavailable.
 type NotAvailableImageService struct{}
 
-func (s *NotAvailableImageService) NewImage(_ context.Context, _ *models.AlertRule) (*models.Image, error) {
+func (s *NotAvailableImageService) NewImage(_ context.Context, _ *models.AlertRule, _ url.Values) (*models.Image, error) {
 	return nil, screenshot.ErrScreenshotsUnavailable
 }
 
 // NoopImageService is a no-op image service.
 type NoopImageService struct{}
 
-func (s *NoopImageService) NewImage(_ context.Context, _ *models.AlertRule) (*models.Image, error) {
+func (s *NoopImageService) NewImage(_ context.Context, _ *models.AlertRule, _ url.Values) (*models.Image, error) {
 	return &models.Image{}, nil
 }
 
@@ -125,12 +126,15 @@ type CountingImageService struct {
 	Called int
 	Image  *models.Image
 	Err    error
+	// Variables are the dashboard variables of each call.
+	Variables []url.Values
 }
 
-func (c *CountingImageService) NewImage(_ context.Context, _ *models.AlertRule) (*models.Image, error) {
+func (c *CountingImageService) NewImage(_ context.Context, _ *models.AlertRule, variables url.Values) (*models.Image, error) {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 	c.Called += 1
+	c.Variables = append(c.Variables, variables)
 	return c.Image, c.Err
 }
 

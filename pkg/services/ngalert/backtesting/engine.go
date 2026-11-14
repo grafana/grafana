@@ -250,7 +250,7 @@ func newBacktestingEvaluator(ctx context.Context, evalFactory eval.EvaluatorFact
 // NoopImageService is a no-op image service.
 type NoopImageService struct{}
 
-func (s *NoopImageService) NewImage(_ context.Context, _ *models.AlertRule) (*models.Image, error) {
+func (s *NoopImageService) NewImage(_ context.Context, _ *models.AlertRule, _ url.Values) (*models.Image, error) {
 	return &models.Image{}, nil
 }
 
