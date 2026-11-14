@@ -207,6 +207,7 @@ resource "grafana_contact_point" "contact_point_2b661702215368fe" {
   }
 
   telegram {
+    api_url                  = "http://localhost:8081/telegram"
     token                    = "test-token"
     chat_id                  = "12345678"
     message_thread_id        = "13579"
@@ -215,6 +216,7 @@ resource "grafana_contact_point" "contact_point_2b661702215368fe" {
     disable_web_page_preview = true
     protect_content          = true
     disable_notifications    = true
+    send_message_as_caption  = true
   }
 
   threema {
