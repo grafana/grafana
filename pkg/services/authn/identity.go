@@ -73,6 +73,12 @@ type Identity struct {
 	ClientParams ClientParams
 	// Permissions is the list of permissions the entity has.
 	Permissions map[int64]map[string][]string
+	// PersonalTokenID is set when the identity was authenticated with a personal access token.
+	PersonalTokenID int64
+	// PersonalTokenScopes limits the effective permissions of a personal access token (action pattern -> scopes).
+	PersonalTokenScopes map[string][]string
+	// PersonalTokenResourceScoped is true when any token scope narrows to specific resources.
+	PersonalTokenResourceScoped bool
 	// AccessToken is the access token that went into authenticating this identity. This will be empty for legacy auth mechanisms and in-process service identities.
 	AccessToken string
 	// IDToken is a signed token representing the identity that can be forwarded to plugins and external services.
@@ -179,6 +185,11 @@ func (i *Identity) GetName() string {
 
 func (i *Identity) GetAuthID() string {
 	return i.AuthID
+}
+
+// IsPersonalTokenResourceScoped reports whether the identity is a personal access token limited to specific resources.
+func (i *Identity) IsPersonalTokenResourceScoped() bool {
+	return i.PersonalTokenResourceScoped
 }
 
 func (i *Identity) GetAuthenticatedBy() string {
@@ -292,29 +303,31 @@ func (i *Identity) IsNil() bool {
 // SignedInUser returns a SignedInUser from the identity.
 func (i *Identity) SignedInUser() *user.SignedInUser {
 	u := &user.SignedInUser{
-		OrgID:             i.OrgID,
-		OrgName:           i.OrgName,
-		OrgRole:           i.GetOrgRole(),
-		Login:             i.Login,
-		Name:              i.Name,
-		Email:             i.Email,
-		EmailVerified:     i.EmailVerified,
-		AuthID:            i.AuthID,
-		AuthenticatedBy:   i.AuthenticatedBy,
-		Namespace:         i.Namespace,
-		IsGrafanaAdmin:    i.GetIsGrafanaAdmin(),
-		IsAnonymous:       i.IsIdentityType(claims.TypeAnonymous),
-		IsDisabled:        i.IsDisabled,
-		LastSeenAt:        i.LastSeenAt,
-		TeamIDs:           i.TeamIDs, //nolint:staticcheck // Preserve legacy field compatibility.
-		TeamUIDs:          i.Groups,
-		ExternalGroups:    i.ExternalGroups,
-		Permissions:       i.Permissions,
-		IDToken:           i.IDToken,
-		IDTokenClaims:     i.IDTokenClaims,
-		AccessTokenClaims: i.AccessTokenClaims,
-		AccessToken:       i.AccessToken,
-		FallbackType:      i.Type,
+		OrgID:           i.OrgID,
+		OrgName:         i.OrgName,
+		OrgRole:         i.GetOrgRole(),
+		Login:           i.Login,
+		Name:            i.Name,
+		Email:           i.Email,
+		EmailVerified:   i.EmailVerified,
+		AuthID:          i.AuthID,
+		AuthenticatedBy: i.AuthenticatedBy,
+		Namespace:       i.Namespace,
+
+		PersonalTokenResourceScoped: i.PersonalTokenResourceScoped,
+		IsGrafanaAdmin:              i.GetIsGrafanaAdmin(),
+		IsAnonymous:                 i.IsIdentityType(claims.TypeAnonymous),
+		IsDisabled:                  i.IsDisabled,
+		LastSeenAt:                  i.LastSeenAt,
+		TeamIDs:                     i.TeamIDs, //nolint:staticcheck // Preserve legacy field compatibility.
+		TeamUIDs:                    i.Groups,
+		ExternalGroups:              i.ExternalGroups,
+		Permissions:                 i.Permissions,
+		IDToken:                     i.IDToken,
+		IDTokenClaims:               i.IDTokenClaims,
+		AccessTokenClaims:           i.AccessTokenClaims,
+		AccessToken:                 i.AccessToken,
+		FallbackType:                i.Type,
 	}
 
 	if i.IsIdentityType(claims.TypeAPIKey) {

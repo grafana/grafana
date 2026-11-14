@@ -675,7 +675,8 @@ func (hs *HTTPServer) applyRoutes() {
 	// start with middlewares & static routes
 	hs.addMiddlewaresAndStaticRoutes()
 	// then add view routes & api routes
-	hs.RouteRegister.Register(hs.web, hs.namedMiddlewares...)
+	named := append([]routing.RegisterNamedMiddleware{middleware.PersonalTokenGuard(func() bool { return hs.Cfg.PersonalAccessTokens.AllowAdminActions })}, hs.namedMiddlewares...)
+	hs.RouteRegister.Register(hs.web, named...)
 	// lastly not found route
 	hs.web.NotFound(middleware.ProvideRouteOperationName("notfound"), middleware.ReqSignedIn, hs.NotFoundHandler)
 }
@@ -727,6 +728,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	m.Use(hs.frontendLogEndpoints())
 
 	m.UseMiddleware(hs.ContextHandler.Middleware)
+	m.Use(middleware.PersonalTokenKubernetesGuard())
 	m.Use(middleware.OrgRedirect(hs.Cfg, hs.userService))
 
 	// needs to be after context handler

@@ -292,7 +292,7 @@ func (hs *HTTPServer) registerRoutes() {
 			userRoute.Get("/orgs", routing.Wrap(hs.GetSignedInUserOrgList))
 			userRoute.Get("/teams", routing.Wrap(hs.GetSignedInUserTeamList))
 
-			userRoute.Get("/stars", routing.Wrap(hs.starApi.GetStars))
+			userRoute.Get("/stars", hs.personalTokenRequiresDashboardsRead(), routing.Wrap(hs.starApi.GetStars))
 			userRoute.Post("/stars/dashboard/uid/:uid", routing.Wrap(hs.starApi.StarDashboardByUID))     //nolint:staticcheck // legacy plumbing
 			userRoute.Delete("/stars/dashboard/uid/:uid", routing.Wrap(hs.starApi.UnstarDashboardByUID)) //nolint:staticcheck // legacy plumbing
 
@@ -401,11 +401,11 @@ func (hs *HTTPServer) registerRoutes() {
 			datasourceRoute.Delete("/uid/:uid", authorize(ac.EvalPermission(datasources.ActionDelete, uidScope)), routing.Wrap(hs.DeleteDataSourceByUID))
 			datasourceRoute.Get("/uid/:uid", authorize(ac.EvalPermission(datasources.ActionRead, uidScope)), hs.getK8sDataSourceByUIDHandler())
 
-			datasourceRoute.Any("/uid/:uid/health", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.callK8sDataSourceHealthHandler())
-			datasourceRoute.Any("/uid/:uid/resources", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.callK8sDataSourceResourceHandler())
-			datasourceRoute.Any("/uid/:uid/resources/*", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.callK8sDataSourceResourceHandler())
-			datasourceRoute.Any("/proxy/uid/:uid", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.ProxyDataSourceRequestWithUID)
-			datasourceRoute.Any("/proxy/uid/:uid/*", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.ProxyDataSourceRequestWithUID)
+			datasourceRoute.Any("/uid/:uid/health", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery, uidScope)), hs.callK8sDataSourceHealthHandler())
+			datasourceRoute.Any("/uid/:uid/resources", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery, uidScope)), hs.callK8sDataSourceResourceHandler())
+			datasourceRoute.Any("/uid/:uid/resources/*", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery, uidScope)), hs.callK8sDataSourceResourceHandler())
+			datasourceRoute.Any("/proxy/uid/:uid", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery, uidScope)), hs.ProxyDataSourceRequestWithUID)
+			datasourceRoute.Any("/proxy/uid/:uid/*", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery, uidScope)), hs.ProxyDataSourceRequestWithUID)
 
 			//nolint:staticcheck // not yet migrated to OpenFeature
 			if hs.Features.IsEnabledGlobally(featuremgmt.FlagDatasourceLegacyIdApi) {
@@ -493,7 +493,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// Search
 		apiRoute.Get("/search/sorting", routing.Wrap(hs.ListSortOptions))
-		apiRoute.Get("/search/", routing.Wrap(hs.Search))
+		apiRoute.Get("/search/", authorize(ac.EvalAny(ac.EvalPermission(dashboards.ActionDashboardsRead), ac.EvalPermission(folder.ActionFoldersRead))), routing.Wrap(hs.Search))
 
 		// metrics
 		// DataSource w/ expressions

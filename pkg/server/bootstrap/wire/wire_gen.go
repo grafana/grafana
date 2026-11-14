@@ -175,6 +175,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/oauthtoken/oauthtokentest"
 	"github.com/grafana/grafana/pkg/services/ofrep"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/personalaccesstokens/patstore"
 	service8 "github.com/grafana/grafana/pkg/services/plugindashboards/service"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/advisor"
@@ -1047,7 +1048,8 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 		return nil, err
 	}
 	ossUserProtectionImpl := authinfoimpl.ProvideOSSUserProtectionService()
-	registration, err := authnimpl.ProvideRegistration(ctx, configProvider, authnService, orgService, userAuthTokenService, acimplService, permissionRegistry, apikeyService, userimplService, authService, ossUserProtectionImpl, loginattemptimplService, quotaService, authinfoimplService, renderingService, featureToggles, oauthtokenService, socialService, remoteCache, ldapImpl, ossImpl, tracingService, tempuserService, notificationService, pluginauthConfig)
+	patstoreStore := patstore.ProvideStore(sqlStore)
+	registration, err := authnimpl.ProvideRegistration(ctx, configProvider, authnService, orgService, userAuthTokenService, acimplService, permissionRegistry, apikeyService, userimplService, authService, ossUserProtectionImpl, loginattemptimplService, quotaService, authinfoimplService, renderingService, featureToggles, oauthtokenService, socialService, remoteCache, ldapImpl, ossImpl, tracingService, tempuserService, notificationService, pluginauthConfig, patstoreStore)
 	if err != nil {
 		return nil, err
 	}
@@ -1847,7 +1849,8 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	ossUserProtectionImpl := authinfoimpl.ProvideOSSUserProtectionService()
-	registration, err := authnimpl.ProvideRegistration(ctx, configProvider, authnService, orgService, userAuthTokenService, acimplService, permissionRegistry, apikeyService, userimplService, authService, ossUserProtectionImpl, loginattemptimplService, quotaService, authinfoimplService, renderingService, featureToggles, oauthtokentestService, socialService, remoteCache, ldapImpl, ossImpl, tracingService, tempuserService, notificationServiceMock, pluginauthConfig)
+	patstoreStore := patstore.ProvideStore(sqlStore)
+	registration, err := authnimpl.ProvideRegistration(ctx, configProvider, authnService, orgService, userAuthTokenService, acimplService, permissionRegistry, apikeyService, userimplService, authService, ossUserProtectionImpl, loginattemptimplService, quotaService, authinfoimplService, renderingService, featureToggles, oauthtokentestService, socialService, remoteCache, ldapImpl, ossImpl, tracingService, tempuserService, notificationServiceMock, pluginauthConfig, patstoreStore)
 	if err != nil {
 		return nil, err
 	}

@@ -44,11 +44,23 @@ func (hs *HTTPServer) getDSQueryEndpoint() web.Handler {
 				errhttp.Write(r.Context(), fmt.Errorf("no user"), w)
 				return
 			}
+			if personalTokenScopedDelegationDenied(user, datasources.ActionQuery) {
+				writePersonalTokenDelegationDenied(w)
+				return
+			}
 			r.URL.Path = "/apis/datasource.grafana.app/v0alpha1/namespaces/" + namespaceMapper(user.GetOrgID()) + "/query"
 			hs.clientConfigProvider.DirectlyServeHTTP(w, r)
 		}
 	}
-	return routing.Wrap(hs.QueryMetricsV2)
+	return func(c *contextmodel.ReqContext) {
+		// Queries name their datasources in the body, so a token narrowed to
+		// specific datasources cannot be checked here; refuse it.
+		if personalTokenScopedDelegationDenied(c.SignedInUser, datasources.ActionQuery) {
+			writePersonalTokenDelegationDenied(c.Resp)
+			return
+		}
+		routing.Wrap(hs.QueryMetricsV2).(func(*contextmodel.ReqContext))(c)
+	}
 }
 
 // QueryMetricsV2 returns query metrics.

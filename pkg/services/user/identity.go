@@ -33,6 +33,8 @@ type SignedInUser struct {
 	// AuthenticatedBy be set if user signed in using external method
 	AuthenticatedBy string
 	Namespace       string
+	// PersonalTokenResourceScoped is true for personal access tokens narrowed to specific resources.
+	PersonalTokenResourceScoped bool
 
 	ApiKeyID         int64 `xorm:"api_key_id"`
 	IsServiceAccount bool  `xorm:"is_service_account"`
@@ -309,6 +311,11 @@ func (u *SignedInUser) getTypeAndID() (claims.IdentityType, string) {
 
 func (u *SignedInUser) GetAuthID() string {
 	return u.AuthID
+}
+
+// IsPersonalTokenResourceScoped reports whether the identity is a personal access token limited to specific resources.
+func (u *SignedInUser) IsPersonalTokenResourceScoped() bool {
+	return u.PersonalTokenResourceScoped
 }
 
 func (u *SignedInUser) GetAuthenticatedBy() string {

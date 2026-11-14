@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/personalaccesstokens/patstore"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginauth"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -46,7 +47,7 @@ func ProvideRegistration(
 	socialService social.Service, cache *remotecache.RemoteCache,
 	ldapService service.LDAP, settingsProvider setting.Provider,
 	tracer tracing.Tracer, tempUserService tempuser.Service, notificationService notifications.Service,
-	pluginAuth *pluginauth.Config,
+	pluginAuth *pluginauth.Config, patStore patstore.Store,
 ) (Registration, error) {
 	logger := log.New("authn.registration")
 
@@ -57,6 +58,13 @@ func ProvideRegistration(
 
 	authnSvc.RegisterClient(clients.ProvideRender(renderService))
 	authnSvc.RegisterClient(clients.ProvideAPIKey(apikeyService, tracer))
+
+	patEnabled := func(ctx context.Context) bool {
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		return features.IsEnabledGlobally(featuremgmt.FlagPersonalAccessTokens)
+	}
+	patOrgEnabled := func(context.Context, int64) bool { return true }
+	authnSvc.RegisterClient(clients.ProvidePersonalToken(patStore, userService, orgService, patEnabled, patOrgEnabled, func() bool { return cfg.PersonalAccessTokens.AllowAdminActions }, tracer).WithTrustedProxies(cfg.PersonalAccessTokens.TrustedProxyHeader, cfg.PersonalAccessTokens.TrustedProxies))
 
 	if cfg.LoginCookieName != "" {
 		authnSvc.RegisterClient(clients.ProvideSession(cfgProvider, sessionService, authInfoService, tracer))
@@ -138,6 +146,7 @@ func ProvideRegistration(
 	authnSvc.RegisterPreLogoutHook(gcomsso.ProvideGComSSOService(cfg).LogoutHook, 50)
 
 	authnSvc.RegisterPostAuthHook(rbacSync.SyncPermissionsHook, 120)
+	authnSvc.RegisterPostAuthHook(sync.ProvidePersonalTokenScopeHook(func() bool { return cfg.PersonalAccessTokens.AllowAdminActions }).Hook, 125)
 	authnSvc.RegisterPostLoginHook(orgSync.SetDefaultOrgHook, 140)
 	authnSvc.RegisterPostLoginHook(userSync.CatalogLoginHook, 145)
 	authnSvc.RegisterPostLoginHook(rbacSync.ClearUserPermissionCacheHook, 170)
