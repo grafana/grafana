@@ -58,6 +58,31 @@ describe('Duration util', () => {
       expect(isValidGoDuration(durationString)).toEqual(true);
     });
 
+    it.each(['1h30m', '1m30.5s', '2h45m30.5s', '1h2m3s4ms5us6ns', '-1h30m', '+5s'])(
+      'valid duration without spaces %s returns true',
+      (durationString) => {
+        expect(isValidGoDuration(durationString)).toEqual(true);
+      }
+    );
+
+    it.each([
+      ['micro sign', '10µs'],
+      ['greek small letter mu', '10μs'],
+    ])('valid duration with the %s returns true', (_name, durationString) => {
+      expect(isValidGoDuration(durationString)).toEqual(true);
+    });
+
+    it.each(['abc5s', 'x1h30m', '5sabc', '1h30', '1h30x', '1h 30', '', '   '])(
+      'invalid duration %j returns false',
+      (durationString) => {
+        expect(isValidGoDuration(durationString)).toEqual(false);
+      }
+    );
+
+    it('rejects a long run of digits without a unit quickly', () => {
+      expect(isValidGoDuration('1'.repeat(50000))).toEqual(false);
+    });
+
     it('invalid duration string returns false', () => {
       const durationString = '3M 6v 5b 4m';
       expect(isValidGoDuration(durationString)).toEqual(false);
@@ -78,6 +103,21 @@ describe('Duration util', () => {
     it('valid float number duration string returns true', () => {
       const durationString = '7.1y 6.1M 5.1w 4.1d 3.1h 4.0m 0.1s 2.11ms 0.03us 5.3333ns';
       expect(isValidGrafanaDuration(durationString)).toEqual(true);
+    });
+
+    it.each([
+      ['micro sign', '10µs'],
+      ['greek small letter mu', '10μs'],
+    ])('valid duration with the %s returns true', (_name, durationString) => {
+      expect(isValidGrafanaDuration(durationString)).toEqual(true);
+    });
+
+    it.each(['1y 2M', '-4.0m', 'now-5m'])('valid duration %s returns true', (durationString) => {
+      expect(isValidGrafanaDuration(durationString)).toEqual(true);
+    });
+
+    it.each(['5sabc', '1h30m', '1d30'])('invalid duration %j returns false', (durationString) => {
+      expect(isValidGrafanaDuration(durationString)).toEqual(false);
     });
 
     it('invalid duration string returns false', () => {
