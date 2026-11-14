@@ -748,6 +748,13 @@ func (s *Storage) processItem(ctx context.Context, item *resourcepb.ResourceWrap
 }
 
 func (s *Storage) processDecodedItem(obj runtime.Object, resourceVersion int64, opts storage.ListOptions, predicate storage.SelectionPredicate) (runtime.Object, bool, error) {
+	if declared := s.opts.GVK; !declared.Empty() {
+		gvk := obj.GetObjectKind().GroupVersionKind()
+		if gvk.Group == declared.Group {
+			obj.GetObjectKind().SetGroupVersionKind(declared.GroupVersion().WithKind(gvk.Kind))
+		}
+	}
+
 	if err := s.versioner.UpdateObject(obj, uint64(resourceVersion)); err != nil {
 		return nil, false, err
 	}
