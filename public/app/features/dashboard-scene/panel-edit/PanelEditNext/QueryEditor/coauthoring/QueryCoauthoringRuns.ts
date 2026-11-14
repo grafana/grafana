@@ -35,7 +35,12 @@ export class QueryCoauthoringRuns {
   }
 
   public ownsData(data: PanelData | undefined): boolean {
-    return data !== undefined && this.projected !== undefined && data.series === this.projected.series;
+    // Layer updates on Original must refresh its snapshot; Option updates must stay isolated.
+    return (
+      data !== undefined &&
+      this.projected !== undefined &&
+      (data === this.projected || (this.selected !== 'original' && data.series === this.projected.series))
+    );
   }
 
   public canonicalData(data: PanelData | undefined): void {
