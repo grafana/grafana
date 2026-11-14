@@ -13925,7 +13925,8 @@
       "swatch-placeholder-aria-label": "Pick a color, {{placeholder}}"
     },
     "field-color": {
-      "color-by-label": "Color series by"
+      "color-by-label": "Color series by",
+      "reverse-label": "Reverse colors"
     },
     "number-input": {
       "error-out-of-range": "Out of range. {{range}}",

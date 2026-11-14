@@ -19,7 +19,7 @@ export function buildGradientColors(
   fieldDisplay: FieldDisplay,
   baseColor = fieldDisplay.display.color ?? FALLBACK_COLOR
 ): GradientStop[] {
-  const colorMode = getFieldColorMode(fieldDisplay.field.color?.mode);
+  const colorMode = getFieldColorMode(fieldDisplay.field.color?.mode, fieldDisplay.field.color?.reverse);
 
   // thresholds get special handling
   if (colorMode.id === FieldColorModeId.Thresholds) {

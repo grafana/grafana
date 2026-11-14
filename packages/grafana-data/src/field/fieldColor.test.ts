@@ -2,7 +2,13 @@ import { createTheme } from '../themes/createTheme';
 import { type DataFrame, type Field, FieldType } from '../types/dataFrame';
 import { FieldColorModeId } from '../types/fieldColor';
 
-import { fieldColorModeRegistry, type FieldValueColorCalculator } from './fieldColor';
+import {
+  fieldColorModeRegistry,
+  getFieldColorMode,
+  getFieldColorModeForField,
+  isReversibleFieldColorMode,
+  type FieldValueColorCalculator,
+} from './fieldColor';
 import { cacheFieldDisplayNames } from './fieldState';
 import { getFieldSeriesColor } from './scale';
 
@@ -154,5 +160,58 @@ describe('fieldColorModeRegistry', () => {
 
     const calcFn = getCalculator({ mode, seriesIndex: 0, name: 'series1' });
     expect(calcFn(70, 0, undefined)).toEqual(firstColor);
+  });
+});
+
+describe('reverse color scheme', () => {
+  const theme = createTheme();
+
+  function getReversedField(mode: string, reverse?: boolean): Field {
+    return { ...getTestField(mode), config: { color: { mode, reverse } } };
+  }
+
+  it('returns the colors of a list based scheme in reverse order', () => {
+    const reversed = getFieldColorModeForField(getReversedField(FieldColorModeId.ContinuousGrYlRd, true));
+
+    expect(reversed.getColors!(theme)).toEqual(['red', 'yellow', 'green'].map(theme.visualization.getColorByName));
+  });
+
+  it('mirrors the interpolator of an interpolated scheme', () => {
+    const field = getReversedField(FieldColorModeId.ContinuousViridis, true);
+    const calc = getFieldColorModeForField(field).getCalculator(field, theme);
+
+    expect(calc(0, 0)).toBe('#fde725');
+    expect(calc(0, 0.25)).toBe('#5ec962');
+    expect(calc(0, 1)).toBe('#440154');
+  });
+
+  it('returns the registered scheme when reverse is unset or false', () => {
+    const mode = fieldColorModeRegistry.get(FieldColorModeId.ContinuousGrYlRd);
+
+    expect(getFieldColorModeForField(getReversedField(FieldColorModeId.ContinuousGrYlRd))).toBe(mode);
+    expect(getFieldColorModeForField(getReversedField(FieldColorModeId.ContinuousGrYlRd, false))).toBe(mode);
+  });
+
+  it.each([
+    { name: 'fixed', id: FieldColorModeId.Fixed },
+    { name: 'thresholds', id: FieldColorModeId.Thresholds },
+    { name: 'classic palette', id: FieldColorModeId.PaletteClassic },
+  ])('ignores reverse for the $name mode', ({ id }) => {
+    const mode = fieldColorModeRegistry.get(id);
+
+    expect(isReversibleFieldColorMode(mode)).toBe(false);
+    expect(getFieldColorMode(id, true)).toBe(mode);
+  });
+
+  it('reverses the scheme when the mode is looked up by id', () => {
+    expect(getFieldColorMode(FieldColorModeId.ContinuousBlYlRd, true).getColors!(theme)).toEqual(
+      ['dark-red', 'super-light-yellow', 'dark-blue'].map(theme.visualization.getColorByName)
+    );
+  });
+
+  it('returns the same reversed scheme instance on every lookup', () => {
+    expect(getFieldColorMode(FieldColorModeId.ContinuousGrYlRd, true)).toBe(
+      getFieldColorMode(FieldColorModeId.ContinuousGrYlRd, true)
+    );
   });
 });

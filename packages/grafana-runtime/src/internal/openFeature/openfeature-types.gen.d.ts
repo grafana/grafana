@@ -121,6 +121,7 @@ declare module "@openfeature/core" {
     | "azureResourcePickerUpdates"
     | "heatmapNegativeLogBuckets"
     | "pieChartGradientColorScheme"
+    | "dataviz.reverseColorScheme"
     | "pluginInsights"
     | "transformationsEmptyPlaceholder"
     | "plugins.useMTPlugins"
