@@ -1570,6 +1570,12 @@
         "view-list": "リスト",
         "wildcard-in-text": "検索文字列に*または%を含めることはできません。"
       },
+      "sequence-pill": {
+        "label": "",
+        "label-with-interval": "",
+        "tooltip": "",
+        "tooltip-with-interval": ""
+      },
       "shared": {
         "load-more": "さらに読み込む",
         "load-more-error": "追加の検索結果の読み込みに失敗しました",
@@ -5302,6 +5308,7 @@
       "change-theme": "テーマを変更",
       "dark-theme": "ダーク",
       "dashboard-from-template": "テンプレートからダッシュボードを作成",
+      "experimental": "",
       "light-theme": "ライト",
       "open-saved-queries": "保存したクエリを開く",
       "scopes": "スコープ"
@@ -5756,12 +5763,18 @@
       "annotation-pin-remove": "",
       "apply-undo-title": "Assistant Composerを編集",
       "overlay": {
+        "hint-elements": "",
+        "hint-layer": "",
+        "hint-layer-select": "",
         "hint-not-removable": "",
-        "hint-panel": "クリックしてパネルにコメントするか、ドラッグして範囲を指定します",
+        "hint-panel": "",
+        "hint-panel-select": "",
         "hint-region": "ドラッグして範囲を指定します",
         "hint-remove": "",
+        "hint-screenshot": "",
         "hint-text": "",
-        "hint-variable": ""
+        "hint-variable": "",
+        "hint-variable-select": ""
       },
       "region": "範囲",
       "untitled-panel": "パネル{{panelId}}",
@@ -6154,6 +6167,10 @@
         "title": "タイトル",
         "transparent-background": "透明の背景"
       }
+    },
+    "get-var-mapping-option-overrides": {
+      "defaults": "",
+      "rule": ""
     },
     "inspect": {
       "data-tab": "データ",
@@ -6675,7 +6692,6 @@
           "no-title": "<タイトルなし>"
         }
       },
-      "redo": "やり直し",
       "row": {
         "header": {
           "hide": "非表示",
@@ -6692,7 +6708,6 @@
         "title": "ソース",
         "tooltip": "元のダッシュボードを開く"
       },
-      "undo": "元に戻す",
       "variable": {
         "change-type": "種類を変更",
         "change-type-aria-label": "変数の種類を変更",
@@ -6729,8 +6744,6 @@
         "open-editor": "変数エディタを開く",
         "open-editor-tooltip": "その他の変数オプションは変数エディタで設定できます",
         "query-options": {
-          "close": "閉じる",
-          "old-modal-title": "クエリ変数",
           "preview": "プレビュー"
         },
         "remove": "削除",
@@ -6901,6 +6914,8 @@
       "playlist-next": "次のダッシュボードに移動",
       "playlist-previous": "前のダッシュボードに戻る",
       "playlist-stop": "プレイリストを停止",
+      "redo": "",
+      "redo-action": "",
       "save-as-template": {
         "label": "テンプレートとして保存"
       },
@@ -6919,6 +6934,8 @@
       "star-added": "お気に入りに追加されました",
       "star-remove-error": "お気に入りから削除できませんでした",
       "star-removed": "お気に入りから削除されました",
+      "undo": "",
+      "undo-action": "",
       "unlink-library-panel": "ライブラリパネルのリンクを解除",
       "unlink-library-panel-short": "リンクを解除"
     },
@@ -7739,6 +7756,19 @@
       "aria-label-remove-option": "オプションを削除",
       "title-drag-and-drop-to-reorder": "ドラッグ＆ドロップで並べ替え",
       "tooltip-remove-option": "オプションを削除"
+    },
+    "panel-actions-popover": {
+      "aria-label": "",
+      "edit": "",
+      "edit-tooltip-disabled": "",
+      "expand": "",
+      "explore": "",
+      "more-actions": "",
+      "remove": "",
+      "remove-confirm": "",
+      "remove-tooltip-disabled": "",
+      "restore-size": "",
+      "settings": ""
     },
     "panel-data-alerting-tab": {
       "tab-label": "アラート"
@@ -9720,6 +9750,9 @@
     "select-aria-label": "フォルダフィルター",
     "select-placeholder": "フォルダでフィルタリング"
   },
+  "folder-picker": {
+    "read-only-folder-tooltip": ""
+  },
   "folders": {
     "api": {
       "anonymous-user": "匿名",
@@ -10699,6 +10732,8 @@
       "tooltip": {
         "category": "ツールチップ",
         "description-hover-proximity": "カーソルをポイントにどれだけ近づけるとツールチップがトリガーされるか（ピクセル単位）",
+        "description-max-height": "",
+        "description-max-width": "",
         "modeOptions": {
           "label-all": "すべて",
           "label-hidden": "非表示",
@@ -11201,6 +11236,8 @@
         "unbounded": "上限なし"
       },
       "reorder-column-label": "{{columnName}}の順序を変更",
+      "row-number": "",
+      "row-number-column": "",
       "show-column-label": "{{columnName}}を表示",
       "sort-by-column": "「{{column}}」列で並べ替え",
       "sort-by-column-ascending": "「{{column}}」列で並べ替え（昇順）",
@@ -12975,6 +13012,10 @@
       "subtitle": "アラートインスタンスが発生したときにコンタクトポイントに通知する方法を選択します",
       "title": "コンタクトポイント"
     },
+    "alerting-recording-rules": {
+      "subtitle": "",
+      "title": ""
+    },
     "alerting-silences": {
       "subtitle": "1つ以上のアラートルールからの通知を停止する",
       "title": "サイレンス"
@@ -13159,6 +13200,9 @@
     },
     "new-folder": {
       "title": "新規フォルダ"
+    },
+    "new-grafana-page": {
+      "title": ""
     },
     "new-notebook": {
       "title": "新しいノートブック"
@@ -13818,6 +13862,32 @@
     },
     "units": {
       "clear-tooltip": "単位選択をクリア"
+    },
+    "var-mapping-checks": {
+      "data-macro": "",
+      "not-allowed": "",
+      "not-found": "",
+      "not-number": "",
+      "not-one-value": "",
+      "out-of-range": "",
+      "resolves": "",
+      "values": ""
+    },
+    "var-mapping-toggle": {
+      "aria-label-picker": "",
+      "fallback-off": "",
+      "fallback-on": "",
+      "group-matching": "",
+      "group-other": "",
+      "hint-boolean": "",
+      "hint-number": "",
+      "hint-option": "",
+      "hint-option-no-fallback": "",
+      "new-variable": "",
+      "option-current": "",
+      "placeholder": "",
+      "use-fixed-value": "",
+      "use-variable": ""
     }
   },
   "org": {
@@ -13920,12 +13990,14 @@
     "header-menu": {
       "add-to-notebook": "ノートブックに追加",
       "copy": "コピー",
+      "copy-repeated-panel": "",
       "copy-styles": "スタイルをコピー",
       "download-diagnostics": "診断情報をダウンロード",
       "duplicate": "複製",
       "edit": "編集",
       "explore": "探検",
       "get-help": "ヘルプを表示",
+      "group-by": "",
       "hide-legend": "凡例を非表示にする",
       "inspect": "調べる",
       "inspect-data": "データ",
@@ -15202,8 +15274,7 @@
       "message-resource-onprem_other": "インスタンスのリポジトリあたりの同期リソース数は{{count}}件までに制限されています。"
     },
     "read-only-badge": {
-      "pull-only": "",
-      "text": "読み取り専用"
+      "pull-only": ""
     },
     "read-only-local-tooltip": "このリソースは読み取り専用であり、ファイルプロビジョニングを通じてプロビジョニングされます。変更を加えるには、接続されているリポジトリを更新します。設定を変更するには、「管理」>「プロビジョニング」>「リポジトリ」の順で移動します。",
     "read-only-remote-tooltip": "このリソースは読み取り専用で、Gitを介してプロビジョニングされます。変更を加えるには、接続されているリポジトリを更新します。設定を変更するには、「管理」>「プロビジョニング」>「リポジトリ」の順で移動します。",
@@ -16036,6 +16107,9 @@
       "show-response": "応答の表示"
     },
     "query-editor-not-exported": "データソースプラグインは、クエリエディタコンポーネントをエクスポートしません"
+  },
+  "read-only-badge": {
+    "text": ""
   },
   "recent-queries": {
     "error-state": {
@@ -17045,6 +17119,7 @@
     "description-min-column-width": "列の自動サイズ変更の最小幅",
     "description-page-size": "1ページあたりの行数。空の場合、ページサイズはパネルの高さに基づいています。",
     "description-show-columns-sidebar": "列メニューではなく、パネルから列管理サイドバーを開きます。",
+    "description-show-row-numbers": "",
     "description-styling-from-field": "CSSプロパティを持つJSONオブジェクトを含むフィールド",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "1行おきに背景色を交互に切り替えます",
@@ -17087,6 +17162,7 @@
     "name-min-column-width": "最小列幅",
     "name-page-size": "ページサイズ",
     "name-show-columns-sidebar": "列のサイドバーを表示",
+    "name-show-row-numbers": "",
     "name-show-table-header": "テーブルヘッダーを表示",
     "name-sparkline-show-tooltip": "ホバーツールチップを表示",
     "name-styling-from-field": "フィールドからのスタイリング",

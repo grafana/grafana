@@ -1579,6 +1579,12 @@
         "view-list": "Liste",
         "wildcard-in-text": "Arama metni * veya % içeremez."
       },
+      "sequence-pill": {
+        "label": "",
+        "label-with-interval": "",
+        "tooltip": "",
+        "tooltip-with-interval": ""
+      },
       "shared": {
         "load-more": "Daha fazla yükle",
         "load-more-error": "Daha fazla sonuç yüklenemedi",
@@ -5351,6 +5357,7 @@
       "change-theme": "Temayı değiştir",
       "dark-theme": "Koyu",
       "dashboard-from-template": "Şablondan pano",
+      "experimental": "",
       "light-theme": "Açık",
       "open-saved-queries": "Kaydedilen sorguları aç",
       "scopes": "Kapsamlar"
@@ -5805,12 +5812,18 @@
       "annotation-pin-remove": "",
       "apply-undo-title": "Asistan Düzenleyici düzenlemesi",
       "overlay": {
+        "hint-elements": "",
+        "hint-layer": "",
+        "hint-layer-select": "",
         "hint-not-removable": "",
-        "hint-panel": "Bir panele yorum eklemek için tıklayın veya bir bölge çizmek için sürükleyin",
+        "hint-panel": "",
+        "hint-panel-select": "",
         "hint-region": "Bir bölge çizmek için sürükleyin",
         "hint-remove": "",
+        "hint-screenshot": "",
         "hint-text": "",
-        "hint-variable": ""
+        "hint-variable": "",
+        "hint-variable-select": ""
       },
       "region": "Bölge",
       "untitled-panel": "{{panelId}} paneli",
@@ -6203,6 +6216,10 @@
         "title": "Başlık",
         "transparent-background": "Şeffaf arka plan"
       }
+    },
+    "get-var-mapping-option-overrides": {
+      "defaults": "",
+      "rule": ""
     },
     "inspect": {
       "data-tab": "Veri",
@@ -6726,7 +6743,6 @@
           "no-title": "<başlık yok>"
         }
       },
-      "redo": "Yinele",
       "row": {
         "header": {
           "hide": "Gizle",
@@ -6743,7 +6759,6 @@
         "title": "Kaynak",
         "tooltip": "Orijinal panoyu aç"
       },
-      "undo": "Geri al",
       "variable": {
         "change-type": "Değişiklik türü",
         "change-type-aria-label": "Değişken türünü değiştir",
@@ -6780,8 +6795,6 @@
         "open-editor": "Değişken düzenleyicisini aç",
         "open-editor-tooltip": "Daha fazla değişken seçeneği için değişken düzenleyicisini açın",
         "query-options": {
-          "close": "Kapat",
-          "old-modal-title": "Sorgu Değişkeni",
           "preview": "Ön izleme"
         },
         "remove": "Kaldır",
@@ -6952,6 +6965,8 @@
       "playlist-next": "Sonraki panoya git",
       "playlist-previous": "Önceki panoya git",
       "playlist-stop": "Oynatma listesini durdur",
+      "redo": "",
+      "redo-action": "",
       "save-as-template": {
         "label": "Şablon olarak kaydet"
       },
@@ -6970,6 +6985,8 @@
       "star-added": "Favorilere eklendi",
       "star-remove-error": "Favorilerden kaldırılamadı",
       "star-removed": "Favorilerden kaldırıldı",
+      "undo": "",
+      "undo-action": "",
       "unlink-library-panel": "Kütüphane panelinin bağlantısını kaldır",
       "unlink-library-panel-short": "Bağlantıyı kaldır"
     },
@@ -7794,6 +7811,19 @@
       "aria-label-remove-option": "Seçeneği kaldır",
       "title-drag-and-drop-to-reorder": "Yeniden düzenlemek için sürükleyip bırakın",
       "tooltip-remove-option": "Seçeneği kaldır"
+    },
+    "panel-actions-popover": {
+      "aria-label": "",
+      "edit": "",
+      "edit-tooltip-disabled": "",
+      "expand": "",
+      "explore": "",
+      "more-actions": "",
+      "remove": "",
+      "remove-confirm": "",
+      "remove-tooltip-disabled": "",
+      "restore-size": "",
+      "settings": ""
     },
     "panel-data-alerting-tab": {
       "tab-label": "Uyarı"
@@ -9792,6 +9822,9 @@
     "select-aria-label": "Klasör filtresi",
     "select-placeholder": "Klasöre göre filtrele"
   },
+  "folder-picker": {
+    "read-only-folder-tooltip": ""
+  },
   "folders": {
     "api": {
       "anonymous-user": "Anonim",
@@ -10782,6 +10815,8 @@
       "tooltip": {
         "category": "Araç ipucu",
         "description-hover-proximity": "İmlecin, araç ipucunu tetiklemek için bir noktaya ne kadar yakın olması gerektiği (piksel cinsinden)",
+        "description-max-height": "",
+        "description-max-width": "",
         "modeOptions": {
           "label-all": "Tümü",
           "label-hidden": "Gizli",
@@ -11284,6 +11319,8 @@
         "unbounded": "Sınır yok"
       },
       "reorder-column-label": "{{columnName}} sütununu yeniden sırala",
+      "row-number": "",
+      "row-number-column": "",
       "show-column-label": "{{columnName}} sütununu göster",
       "sort-by-column": "Sütuna göre sırala: {{column}}",
       "sort-by-column-ascending": "Sütuna göre sırala: {{column}}, artan sırayla",
@@ -13080,6 +13117,10 @@
       "subtitle": "Bir uyarı örneği tetiklendiğinde, iletişim noktalarınızın nasıl bilgilendirileceğini seçin.",
       "title": "İletişim noktaları"
     },
+    "alerting-recording-rules": {
+      "subtitle": "",
+      "title": ""
+    },
     "alerting-silences": {
       "subtitle": "Bir veya daha fazla uyarı sistemi kuralından gelen bildirimleri durdurun",
       "title": "Sessize almalar"
@@ -13264,6 +13305,9 @@
     },
     "new-folder": {
       "title": "Yeni klasör"
+    },
+    "new-grafana-page": {
+      "title": ""
     },
     "new-notebook": {
       "title": "Yeni not defteri"
@@ -13929,6 +13973,32 @@
     },
     "units": {
       "clear-tooltip": "Birim seçimini temizle"
+    },
+    "var-mapping-checks": {
+      "data-macro": "",
+      "not-allowed": "",
+      "not-found": "",
+      "not-number": "",
+      "not-one-value": "",
+      "out-of-range": "",
+      "resolves": "",
+      "values": ""
+    },
+    "var-mapping-toggle": {
+      "aria-label-picker": "",
+      "fallback-off": "",
+      "fallback-on": "",
+      "group-matching": "",
+      "group-other": "",
+      "hint-boolean": "",
+      "hint-number": "",
+      "hint-option": "",
+      "hint-option-no-fallback": "",
+      "new-variable": "",
+      "option-current": "",
+      "placeholder": "",
+      "use-fixed-value": "",
+      "use-variable": ""
     }
   },
   "org": {
@@ -14031,12 +14101,14 @@
     "header-menu": {
       "add-to-notebook": "Not defterine ekle",
       "copy": "Kopyala",
+      "copy-repeated-panel": "",
       "copy-styles": "Stilleri kopyala",
       "download-diagnostics": "Tanılama verilerini indir",
       "duplicate": "Çoğalt",
       "edit": "Düzenle",
       "explore": "Keşfet",
       "get-help": "Yardım al",
+      "group-by": "",
       "hide-legend": "Açıklamayı gizle",
       "inspect": "İncele",
       "inspect-data": "Veri",
@@ -15331,8 +15403,7 @@
       "message-resource-onprem_other": "Örneğiniz depo başına {{count}} senkronize edilmiş kaynak ile sınırlıdır."
     },
     "read-only-badge": {
-      "pull-only": "",
-      "text": "Salt okunur"
+      "pull-only": ""
     },
     "read-only-local-tooltip": "Bu kaynak salt okunurdur ve dosya sağlama yoluyla sağlanır. Herhangi bir değişiklik yapmak için bağlı depoyu güncelleyin. Ayarları değiştirmek için Yönetim > Sağlama > Depolar'a gidin.",
     "read-only-remote-tooltip": "Bu kaynak salt okunurdur ve Git aracılığıyla sağlanır. Herhangi bir değişiklik yapmak için bağlı depoyu güncelleyin. Ayarları değiştirmek için Yönetim > Sağlama > Depolar'a gidin.",
@@ -16172,6 +16243,9 @@
       "show-response": "Yanıtı göster"
     },
     "query-editor-not-exported": "Veri kaynağı eklentisi herhangi bir Sorgu Düzenleyici bileşeni sunmuyor/içermiyor."
+  },
+  "read-only-badge": {
+    "text": ""
   },
   "recent-queries": {
     "error-state": {
@@ -17186,6 +17260,7 @@
     "description-min-column-width": "Sütunların otomatik olarak yeniden boyutlandırılması için minimum genişlik",
     "description-page-size": "Sayfa başına satır sayısı. Boş bırakıldığında sayfa boyutu panel yüksekliğini temel alır.",
     "description-show-columns-sidebar": "Sütun menüsünden değil, sütun yönetimi kenar çubuğunu panelle birlikte açın",
+    "description-show-row-numbers": "",
     "description-styling-from-field": "CSS özellikleri içeren JSON nesnelerinden oluşan bir alan",
     "description-tooltip-from-field": "Araç ipucunda (gizli veya görünür) bir alandaki hücreyi göster",
     "description-zebra-striping": "Arka plan rengini birer satır atlayarak değiştirin",
@@ -17228,6 +17303,7 @@
     "name-min-column-width": "Minimum sütun genişliği",
     "name-page-size": "Sayfa boyutu",
     "name-show-columns-sidebar": "Sütun kenar çubuğunu göster",
+    "name-show-row-numbers": "",
     "name-show-table-header": "Tablo başlığını göster",
     "name-sparkline-show-tooltip": "Üzerine gelince ipucunu göster",
     "name-styling-from-field": "Alan üzerinden stil uygulama",

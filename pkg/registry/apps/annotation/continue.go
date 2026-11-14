@@ -7,6 +7,11 @@ import (
 	"strings"
 )
 
+var (
+	errInvalidContinueToken  = fmt.Errorf("%w: invalid continue token", ErrInvalidInput)
+	errContinueLimitMismatch = fmt.Errorf("%w: continue token limit does not match the request limit", ErrInvalidInput)
+)
+
 // continueToken holds the next offset and limit for list pagination.
 // Token format: base64("offset/limit") so the limit can be validated across requests.
 type continueToken struct {
@@ -21,22 +26,22 @@ func decodeContinueToken(s string) (continueToken, error) {
 	}
 	decoded, err := base64.StdEncoding.DecodeString(s)
 	if err != nil {
-		return t, fmt.Errorf("invalid continue token")
+		return t, errInvalidContinueToken
 	}
 	parts := strings.Split(string(decoded), "/")
 	if len(parts) != 2 {
-		return t, fmt.Errorf("invalid continue token")
+		return t, errInvalidContinueToken
 	}
 	t.Offset, err = strconv.ParseInt(parts[0], 10, 64)
 	if err != nil {
-		return t, fmt.Errorf("invalid continue token (offset)")
+		return t, errInvalidContinueToken
 	}
 	t.Limit, err = strconv.ParseInt(parts[1], 10, 64)
 	if err != nil {
-		return t, fmt.Errorf("invalid continue token (limit)")
+		return t, errInvalidContinueToken
 	}
 	if t.Offset < 0 || t.Limit <= 0 {
-		return t, fmt.Errorf("invalid continue token")
+		return t, errInvalidContinueToken
 	}
 	return t, nil
 }

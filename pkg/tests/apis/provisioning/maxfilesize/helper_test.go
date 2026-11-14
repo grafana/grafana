@@ -12,7 +12,6 @@ import (
 const testMaxFileSize int64 = 4 * 1024
 
 var env = common.NewSharedEnv(
-	common.WithoutProvisioningFolderMetadata,
 	common.WithProvisioningMaxFileSize(testMaxFileSize),
 )
 

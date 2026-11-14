@@ -175,6 +175,39 @@ alertmanager_config: |
         - url: 'https://example.com/webhook'
 ```
 
+### Configuration validation errors
+
+Grafana validates the submitted Alertmanager configuration before it stages or promotes it. Validation is strict:
+
+- Grafana rejects configurations that contain unknown fields instead of ignoring those fields. A single error response can report multiple unknown fields.
+- Grafana rejects unsupported integration types. The error response identifies the unsupported integration configuration field, such as its `*_configs` field.
+- Error responses identify the offending fields or integration types and include YAML line numbers when they are available.
+
+For example, the following configuration contains an unknown email field and an unsupported integration type:
+
+```yaml
+route:
+  receiver: email
+receivers:
+  - name: email
+    email_configs:
+      - to: alerts@example.com
+        typo_field: value
+    foo_configs: [{}]
+```
+
+The error message reports both problems:
+
+```text
+yaml: unmarshal errors:
+  line 7: field typo_field not found in type config.plain
+  line 8: field foo_configs not found in type config.plain
+```
+
+Alertmanager also performs semantic validation while it parses the configuration. As a result, a semantic validation error can appear before errors for unknown fields. Fix the reported error and submit the configuration again to find any remaining errors.
+
+If validation fails, Grafana doesn't stage or promote the submitted configuration. Existing staged and active configurations remain unchanged. Valid configurations that use supported fields and integration types continue to import as before.
+
 A successful import returns the merge result:
 
 ```json

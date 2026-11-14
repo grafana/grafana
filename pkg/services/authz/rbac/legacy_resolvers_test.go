@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -16,11 +17,22 @@ import (
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
+	"github.com/grafana/grafana/pkg/services/folder/foldertest"
+	"github.com/grafana/grafana/pkg/services/search/sort"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 func TestLegacyCheckResolverParity(t *testing.T) {
@@ -358,6 +370,42 @@ func TestLegacyCheckSharedWithMeEnablesResolversWithoutStoredGrants(t *testing.T
 		},
 	}, permissions.queries)
 	require.Empty(t, permissions.presenceQueries)
+}
+
+func TestLegacyCheckMissingFolderIsScopeNotFound(t *testing.T) {
+	ac := acimpl.ProvideAccessControlTest()
+	folderSvc := &foldertest.FakeService{ExpectedError: folder.ErrFolderNotFound.Errorf("folder not found")}
+	ac.RegisterScopeAttributeResolver(folder.NewFolderUIDScopeResolver(folderSvc))
+	s := NewTestService("u-1", []accesscontrol.Permission{
+		{Action: folder.ActionFoldersRead, Scope: folder.ScopeFoldersProvider.GetResourceScopeUID("other")},
+	}, nil).WithLegacyScopeResolvers(acimpl.ProvideScopeResolverRegistry(ac), types.OrgNamespaceFormatter)
+
+	got, err := s.LegacyCheck(legacyCheckContext(t), legacyPermissionRequest(
+		"user:u-1", folder.ActionFoldersRead, folder.ScopeFoldersProvider.GetResourceScopeUID("missing"),
+	))
+	require.NoError(t, err)
+	require.False(t, got.Allowed)
+	require.Equal(t, authzextv1.LegacyCheckErrorCode_LEGACY_CHECK_ERROR_CODE_SCOPE_RESOURCE_NOT_FOUND, got.ErrorCode)
+}
+
+func TestLegacyCheckMissingFolderIDIsScopeNotFound(t *testing.T) {
+	// An empty search drives the real ID lookup behind the registered folders:id: resolver.
+	searchMock := resource.NewMockResourceClient(t)
+	searchMock.On("Search", mock.Anything, mock.Anything, mock.Anything).
+		Return(&resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES}, nil)
+	ac := acimpl.ProvideAccessControlTest()
+	folderimpl.ProvideService(ac, nil, featuremgmt.WithFeatures(), supportbundlestest.NewFakeBundleService(),
+		nil, setting.NewCfg(), nil, tracing.InitializeTracerForTest(), searchMock, sort.ProvideService(), apiserver.WithoutRestConfig)
+	s := NewTestService("u-1", []accesscontrol.Permission{
+		{Action: folder.ActionFoldersRead, Scope: folder.ScopeFoldersProvider.GetResourceScopeUID("other")},
+	}, nil).WithLegacyScopeResolvers(acimpl.ProvideScopeResolverRegistry(ac), types.OrgNamespaceFormatter)
+
+	got, err := s.LegacyCheck(legacyCheckContext(t), legacyPermissionRequest(
+		"user:u-1", folder.ActionFoldersRead, folder.ScopeFoldersProvider.GetResourceScope("123"),
+	))
+	require.NoError(t, err)
+	require.False(t, got.Allowed)
+	require.Equal(t, authzextv1.LegacyCheckErrorCode_LEGACY_CHECK_ERROR_CODE_SCOPE_RESOURCE_NOT_FOUND, got.ErrorCode)
 }
 
 func TestLegacyCheckResolversOverGRPC(t *testing.T) {

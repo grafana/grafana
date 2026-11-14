@@ -1579,6 +1579,12 @@
         "view-list": "Liste",
         "wildcard-in-text": "Le texte de recherche ne peut pas contenir les caractères * ou %."
       },
+      "sequence-pill": {
+        "label": "",
+        "label-with-interval": "",
+        "tooltip": "",
+        "tooltip-with-interval": ""
+      },
       "shared": {
         "load-more": "Charger plus",
         "load-more-error": "Échec du chargement de résultats supplémentaires",
@@ -5351,6 +5357,7 @@
       "change-theme": "Modifier le thème",
       "dark-theme": "Sombre",
       "dashboard-from-template": "Tableau de bord à partir d’un modèle",
+      "experimental": "",
       "light-theme": "Clair",
       "open-saved-queries": "Ouvrez les requêtes enregistrées",
       "scopes": "Portées"
@@ -5805,12 +5812,18 @@
       "annotation-pin-remove": "",
       "apply-undo-title": "Modification via Assistant Composer",
       "overlay": {
+        "hint-elements": "",
+        "hint-layer": "",
+        "hint-layer-select": "",
         "hint-not-removable": "",
-        "hint-panel": "Cliquez pour commenter un panneau, ou glissez pour tracer une zone",
+        "hint-panel": "",
+        "hint-panel-select": "",
         "hint-region": "Glissez pour tracer une zone",
         "hint-remove": "",
+        "hint-screenshot": "",
         "hint-text": "",
-        "hint-variable": ""
+        "hint-variable": "",
+        "hint-variable-select": ""
       },
       "region": "Zone",
       "untitled-panel": "Panneau {{panelId}}",
@@ -6203,6 +6216,10 @@
         "title": "Titre",
         "transparent-background": "Arrière-plan transparent"
       }
+    },
+    "get-var-mapping-option-overrides": {
+      "defaults": "",
+      "rule": ""
     },
     "inspect": {
       "data-tab": "Données",
@@ -6726,7 +6743,6 @@
           "no-title": "<sans titre>"
         }
       },
-      "redo": "Rétablir",
       "row": {
         "header": {
           "hide": "Masquer",
@@ -6743,7 +6759,6 @@
         "title": "Source",
         "tooltip": "Ouvrir le tableau de bord d’origine"
       },
-      "undo": "Annuler",
       "variable": {
         "change-type": "Modifier le type",
         "change-type-aria-label": "Modifiez le type de variable",
@@ -6780,8 +6795,6 @@
         "open-editor": "Ouvrir l’éditeur de variables",
         "open-editor-tooltip": "Pour accéder à plus d’options, ouvrez l’éditeur de variables",
         "query-options": {
-          "close": "Fermer",
-          "old-modal-title": "Variable de requête",
           "preview": "Aperçu"
         },
         "remove": "Supprimer",
@@ -6952,6 +6965,8 @@
       "playlist-next": "Accéder au tableau de bord suivant",
       "playlist-previous": "Accéder au tableau de bord précédent",
       "playlist-stop": "Arrêter la liste de lecture",
+      "redo": "",
+      "redo-action": "",
       "save-as-template": {
         "label": "Enregistrer comme modèle"
       },
@@ -6970,6 +6985,8 @@
       "star-added": "Ajouté aux favoris",
       "star-remove-error": "Échec de la suppression des favoris",
       "star-removed": "Supprimé des favoris",
+      "undo": "",
+      "undo-action": "",
       "unlink-library-panel": "Dissocier le panneau de la bibliothèque",
       "unlink-library-panel-short": "Dissocier"
     },
@@ -7794,6 +7811,19 @@
       "aria-label-remove-option": "Supprimer l’option",
       "title-drag-and-drop-to-reorder": "Glisser-déposer pour réorganiser",
       "tooltip-remove-option": "Supprimer l’option"
+    },
+    "panel-actions-popover": {
+      "aria-label": "",
+      "edit": "",
+      "edit-tooltip-disabled": "",
+      "expand": "",
+      "explore": "",
+      "more-actions": "",
+      "remove": "",
+      "remove-confirm": "",
+      "remove-tooltip-disabled": "",
+      "restore-size": "",
+      "settings": ""
     },
     "panel-data-alerting-tab": {
       "tab-label": "Alerte"
@@ -9792,6 +9822,9 @@
     "select-aria-label": "Filtre de dossier",
     "select-placeholder": "Filtrer par dossier"
   },
+  "folder-picker": {
+    "read-only-folder-tooltip": ""
+  },
   "folders": {
     "api": {
       "anonymous-user": "Anonyme",
@@ -10782,6 +10815,8 @@
       "tooltip": {
         "category": "Infobulle",
         "description-hover-proximity": "Distance maximale du curseur par rapport à un point pour afficher l’infobulle (en pixels)",
+        "description-max-height": "",
+        "description-max-width": "",
         "modeOptions": {
           "label-all": "Toutes",
           "label-hidden": "Masquée",
@@ -11284,6 +11319,8 @@
         "unbounded": "Aucune limite"
       },
       "reorder-column-label": "Réorganiser {{columnName}}",
+      "row-number": "",
+      "row-number-column": "",
       "show-column-label": "Afficher {{columnName}}",
       "sort-by-column": "Trier par colonne {{column}}",
       "sort-by-column-ascending": "Trier par colonne {{column}}, en ordre croissant",
@@ -13080,6 +13117,10 @@
       "subtitle": "Choisissez comment informer vos points de contact quand une instance d'alerte se déclenche",
       "title": "Points de contact"
     },
+    "alerting-recording-rules": {
+      "subtitle": "",
+      "title": ""
+    },
     "alerting-silences": {
       "subtitle": "Arrêter les notifications résultant d'une ou plusieurs règles d'alerte",
       "title": "Silences"
@@ -13264,6 +13305,9 @@
     },
     "new-folder": {
       "title": "Nouveau dossier"
+    },
+    "new-grafana-page": {
+      "title": ""
     },
     "new-notebook": {
       "title": "Nouveau notebook"
@@ -13929,6 +13973,32 @@
     },
     "units": {
       "clear-tooltip": "Effacer la sélection de l’unité"
+    },
+    "var-mapping-checks": {
+      "data-macro": "",
+      "not-allowed": "",
+      "not-found": "",
+      "not-number": "",
+      "not-one-value": "",
+      "out-of-range": "",
+      "resolves": "",
+      "values": ""
+    },
+    "var-mapping-toggle": {
+      "aria-label-picker": "",
+      "fallback-off": "",
+      "fallback-on": "",
+      "group-matching": "",
+      "group-other": "",
+      "hint-boolean": "",
+      "hint-number": "",
+      "hint-option": "",
+      "hint-option-no-fallback": "",
+      "new-variable": "",
+      "option-current": "",
+      "placeholder": "",
+      "use-fixed-value": "",
+      "use-variable": ""
     }
   },
   "org": {
@@ -14031,12 +14101,14 @@
     "header-menu": {
       "add-to-notebook": "Ajouter au notebook",
       "copy": "Copier",
+      "copy-repeated-panel": "",
       "copy-styles": "Copier les styles",
       "download-diagnostics": "Téléchargez les diagnostics",
       "duplicate": "Dupliquer",
       "edit": "Modifier",
       "explore": "Explorer",
       "get-help": "Obtenir de l’aide",
+      "group-by": "",
       "hide-legend": "Masquer la légende",
       "inspect": "Inspecter",
       "inspect-data": "Données",
@@ -15331,8 +15403,7 @@
       "message-resource-onprem_other": "Votre instance est limitée à {{count}} ressources synchronisées par référentiel."
     },
     "read-only-badge": {
-      "pull-only": "",
-      "text": "Lecture seule"
+      "pull-only": ""
     },
     "read-only-local-tooltip": "Cette ressource est en lecture seule et provisionnée via le provisionnement par fichiers. Pour effectuer des modifications, mettez à jour le référentiel connecté. Pour modifier les paramètres, accédez à Administration > Provisionnement > Référentiels.",
     "read-only-remote-tooltip": "Cette ressource est en lecture seule et provisionnée via Git. Pour effectuer des modifications, mettez à jour le référentiel connecté. Pour modifier les paramètres, accédez à Administration > Provisionnement > Référentiels.",
@@ -16172,6 +16243,9 @@
       "show-response": "Afficher la réponse"
     },
     "query-editor-not-exported": "Le plugin source de données n'exporte aucun composant de l'éditeur de requête"
+  },
+  "read-only-badge": {
+    "text": ""
   },
   "recent-queries": {
     "error-state": {
@@ -17186,6 +17260,7 @@
     "description-min-column-width": "La largeur minimale pour le redimensionnement automatique des colonnes",
     "description-page-size": "Nombre de lignes par page. Lorsque ce champ est vide, la taille de la page est basée sur la hauteur du panneau.",
     "description-show-columns-sidebar": "Ouvrir la barre latérale de gestion des colonnes en même temps que le panneau, plutôt que depuis un menu de colonne",
+    "description-show-row-numbers": "",
     "description-styling-from-field": "Un champ contenant des objets JSON avec des propriétés CSS",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "Alterner la couleur d’arrière-plan d’une ligne sur deux",
@@ -17228,6 +17303,7 @@
     "name-min-column-width": "Largeur minimale de colonne",
     "name-page-size": "Taille de la page",
     "name-show-columns-sidebar": "Afficher la barre latérale des colonnes",
+    "name-show-row-numbers": "",
     "name-show-table-header": "Afficher l’en-tête du tableau",
     "name-sparkline-show-tooltip": "Afficher la bulle d’aide au survol",
     "name-styling-from-field": "Style basé sur le champ",

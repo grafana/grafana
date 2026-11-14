@@ -2575,6 +2575,38 @@ describe('DashboardScene', () => {
     });
   });
 
+  describe('When changes are discarded', () => {
+    afterEach(restoreDefaultMocks);
+
+    it.each([
+      {
+        path: 'exit edit mode',
+        discard: (scene: DashboardScene) => scene.exitEditMode({ skipConfirm: true, restoreInitialState: true }),
+      },
+      { path: 'keep editing', discard: (scene: DashboardScene) => scene.discardChangesAndKeepEditing() },
+    ])('resolves multi-value operator support on the ad hoc variables it restores ($path)', async ({ discard }) => {
+      const scene = buildTestScene({
+        $variables: new SceneVariableSet({
+          variables: [new AdHocFiltersVariable({ name: 'filters', datasource: { uid: 'mvo', type: 'mvo' } })],
+        }),
+      });
+      // The baseline is taken before the lookup on the live variable resolves.
+      scene.onEnterEditMode();
+      const live = sceneGraph.lookupVariable('filters', scene);
+      if (!(live instanceof AdHocFiltersVariable)) {
+        throw new Error('expected an ad hoc variable');
+      }
+      live.setState({ supportsMultiValueOperators: true });
+      mockMultiValueOperatorSupport();
+
+      discard(scene);
+
+      const filters = sceneGraph.lookupVariable('filters', scene);
+      expect(filters).toBeInstanceOf(AdHocFiltersVariable);
+      await waitFor(() => expect(filters?.state).toMatchObject({ supportsMultiValueOperators: true }));
+    });
+  });
+
   describe('When a dashboard is restored', () => {
     let scene: DashboardScene;
 
@@ -2582,6 +2614,8 @@ describe('DashboardScene', () => {
       scene = buildTestScene();
       scene.onEnterEditMode();
     });
+
+    afterEach(restoreDefaultMocks);
 
     it('should restore the dashboard to the selected version and exit edit mode', () => {
       const newVersion = 3;
@@ -2600,6 +2634,31 @@ describe('DashboardScene', () => {
         expect(scene.state.version).toBe(newVersion);
         expect(scene.state.isEditing).toBe(false);
       });
+    });
+
+    it('resolves multi-value operator support on the ad hoc variables it restores', async () => {
+      const restored = new DashboardScene({
+        uid: 'dash-1',
+        $variables: new SceneVariableSet({
+          variables: [new AdHocFiltersVariable({ name: 'filters', datasource: { uid: 'mvo', type: 'mvo' } })],
+        }),
+      });
+      mockRestoreDashboardVersion.mockResolvedValue({ version: 3 });
+      jest.mocked(transformSaveModelToScene).mockReturnValue(restored);
+      mockMultiValueOperatorSupport();
+      // From a clean edit session, exiting edit mode keeps the restored version instead of discarding.
+      jest.mocked(worker.postMessage).mockImplementation(({ generation }) => {
+        worker.onmessage?.({ data: { hasChanges: false, generation } } as unknown as MessageEvent);
+      });
+      scene.setState({ isDirty: false });
+
+      await scene.onRestore(getVersionMock());
+
+      expect(scene.state.isDirty).toBe(false);
+
+      const filters = sceneGraph.lookupVariable('filters', scene);
+      expect(filters).toBeInstanceOf(AdHocFiltersVariable);
+      await waitFor(() => expect(filters?.state).toMatchObject({ supportsMultiValueOperators: true }));
     });
 
     it('should call dashboardWatcher.reloadPage even if dashboard is in editing mode', async () => {
@@ -4825,6 +4884,27 @@ void ((scene: DashboardScene, snapshot: DashboardSceneState, panel: VizPanel) =>
   // @ts-expect-error Synchronous state keys are not exposed as loaders.
   dashboardViews.body();
 });
+
+const defaultWorkerReply = jest.mocked(worker.postMessage).getMockImplementation();
+
+// Puts back the module-wide mocks that the multi-value operator tests replace.
+function restoreDefaultMocks() {
+  jest.mocked(getDataSourceInstanceSettings).mockResolvedValue({ uid: 'ds1' } as unknown as DataSourceInstanceSettings);
+  if (defaultWorkerReply) {
+    jest.mocked(worker.postMessage).mockImplementation(defaultWorkerReply);
+  }
+}
+
+// Only the `mvo` data source type takes multi-value operators; any other type gets the default mock.
+function mockMultiValueOperatorSupport() {
+  jest
+    .mocked(getDataSourceInstanceSettings)
+    .mockImplementation(async (ref) =>
+      typeof ref === 'object' && ref?.type === 'mvo'
+        ? ({ uid: 'mvo', meta: { multiValueFilterOperators: true } } as unknown as DataSourceInstanceSettings)
+        : ({ uid: 'ds1' } as unknown as DataSourceInstanceSettings)
+    );
+}
 
 function buildTestScene(overrides?: Partial<DashboardSceneState>) {
   const scene = new DashboardScene({

@@ -23,7 +23,6 @@ declare module "@openfeature/core" {
     | "grafana.recordedQueriesDisableCreate"
     | "awsAssumeRolePerDatasourceExternalId"
     | "grafanaAPIServerWithExperimentalAPIs"
-    | "provisioningFolderMetadata"
     | "provisioningExport"
     | "reportingHeaderSettings"
     | "reportingFooterSettings"
@@ -100,7 +99,6 @@ declare module "@openfeature/core" {
     | "datasourceConnectionsTab"
     | "connectionsFilterSidebar"
     | "alertingJiraIntegration"
-    | "useScopesNavigationEndpoint"
     | "scopeSearchAllLevels"
     | "alertRuleRestore"
     | "alertingMigrationWizardUI"
@@ -164,7 +162,6 @@ declare module "@openfeature/core" {
     | "grafana.cmdkDashboardTags"
     | "assistant.fullscreenWorkspace"
     | "assistant.dashboard.artifacts"
-    | "grafana.queryVarEditorRedesign"
     | "table.paginationPageSize"
     | "table.autoColumnWidths"
     | "table.refresh"
@@ -181,6 +178,7 @@ declare module "@openfeature/core" {
     | "grafana.onDemandDiagnostics"
     | "assistant.dashboardPlanning"
     | "assistant.dashboardPlanBuildingScreen"
+    | "assistant.dashboardPlanEditing"
     | "grafana.multiTenantNavTree"
     | "grafana.navigationInfoArchRefresh"
     | "grafana.exploreMetricsSidebar"
@@ -207,7 +205,8 @@ declare module "@openfeature/core" {
     | "grafana.panelActionsPopover"
     | "grafana.dashboardSidebarExplicitOpen"
     | "grafana.folderPickerFolderEditAccess"
-    | "grafana.panelOptionInterpolation";
+    | "grafana.panelOptionInterpolation"
+    | "datasources.gatewayRateLimits";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey =

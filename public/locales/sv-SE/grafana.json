@@ -1579,6 +1579,12 @@
         "view-list": "Lista",
         "wildcard-in-text": "Söktexten får inte innehålla * eller %."
       },
+      "sequence-pill": {
+        "label": "",
+        "label-with-interval": "",
+        "tooltip": "",
+        "tooltip-with-interval": ""
+      },
       "shared": {
         "load-more": "Ladda mer",
         "load-more-error": "Det gick inte att läsa in fler sökresultat",
@@ -5351,6 +5357,7 @@
       "change-theme": "Ändra tema",
       "dark-theme": "Mörk",
       "dashboard-from-template": "Instrumentpanel från mall",
+      "experimental": "",
       "light-theme": "Ljus",
       "open-saved-queries": "Öppna sparade frågor",
       "scopes": "Omfattningar"
@@ -5805,12 +5812,18 @@
       "annotation-pin-remove": "",
       "apply-undo-title": "Redigering i Assistant Composer",
       "overlay": {
+        "hint-elements": "",
+        "hint-layer": "",
+        "hint-layer-select": "",
         "hint-not-removable": "",
-        "hint-panel": "Klicka för att kommentera en panel eller dra för att rita ett område",
+        "hint-panel": "",
+        "hint-panel-select": "",
         "hint-region": "Dra för att rita en region",
         "hint-remove": "",
+        "hint-screenshot": "",
         "hint-text": "",
-        "hint-variable": ""
+        "hint-variable": "",
+        "hint-variable-select": ""
       },
       "region": "Region",
       "untitled-panel": "Panel {{panelId}}",
@@ -6203,6 +6216,10 @@
         "title": "Titel",
         "transparent-background": "Genomskinlig bakgrund"
       }
+    },
+    "get-var-mapping-option-overrides": {
+      "defaults": "",
+      "rule": ""
     },
     "inspect": {
       "data-tab": "Data",
@@ -6726,7 +6743,6 @@
           "no-title": "<no title>"
         }
       },
-      "redo": "Gör om",
       "row": {
         "header": {
           "hide": "Dölj",
@@ -6743,7 +6759,6 @@
         "title": "Källa",
         "tooltip": "Öppna ursprunglig instrumentpanel"
       },
-      "undo": "Ångra",
       "variable": {
         "change-type": "Ändringstyp",
         "change-type-aria-label": "Ändra variabeltyp",
@@ -6780,8 +6795,6 @@
         "open-editor": "Öppna variabelredigerare",
         "open-editor-tooltip": "För fler variabelalternativ öppna variabelredigeraren",
         "query-options": {
-          "close": "Stäng",
-          "old-modal-title": "Frågevariabel",
           "preview": "Förhandsgranska"
         },
         "remove": "Ta bort",
@@ -6952,6 +6965,8 @@
       "playlist-next": "Gå till nästa instrumentpanel",
       "playlist-previous": "Gå till föregående instrumentpanel",
       "playlist-stop": "Stoppa spellista",
+      "redo": "",
+      "redo-action": "",
       "save-as-template": {
         "label": "Spara som mall"
       },
@@ -6970,6 +6985,8 @@
       "star-added": "Tillagd i stjärnmärkta",
       "star-remove-error": "Det gick inte att ta bort från stjärnmärkta",
       "star-removed": "Borttagen från stjärnmärkta",
+      "undo": "",
+      "undo-action": "",
       "unlink-library-panel": "Ta bort länk till bibliotekspanel",
       "unlink-library-panel-short": "Ta bort länkning"
     },
@@ -7794,6 +7811,19 @@
       "aria-label-remove-option": "Ta bort alternativ",
       "title-drag-and-drop-to-reorder": "Ändra ordning genom dra och släpp",
       "tooltip-remove-option": "Ta bort alternativ"
+    },
+    "panel-actions-popover": {
+      "aria-label": "",
+      "edit": "",
+      "edit-tooltip-disabled": "",
+      "expand": "",
+      "explore": "",
+      "more-actions": "",
+      "remove": "",
+      "remove-confirm": "",
+      "remove-tooltip-disabled": "",
+      "restore-size": "",
+      "settings": ""
     },
     "panel-data-alerting-tab": {
       "tab-label": "Larm"
@@ -9792,6 +9822,9 @@
     "select-aria-label": "Mappfilter",
     "select-placeholder": "Filtrera efter mapp"
   },
+  "folder-picker": {
+    "read-only-folder-tooltip": ""
+  },
   "folders": {
     "api": {
       "anonymous-user": "Anonym",
@@ -10782,6 +10815,8 @@
       "tooltip": {
         "category": "Verktygstips",
         "description-hover-proximity": "Hur nära markören måste vara till en punkt för att utlösa verktygstips, i pixlar",
+        "description-max-height": "",
+        "description-max-width": "",
         "modeOptions": {
           "label-all": "Alla",
           "label-hidden": "Dolt",
@@ -11284,6 +11319,8 @@
         "unbounded": "Ingen gräns"
       },
       "reorder-column-label": "Ändra ordning för {{columnName}}",
+      "row-number": "",
+      "row-number-column": "",
       "show-column-label": "Visa {{columnName}}",
       "sort-by-column": "Sortera efter kolumnen {{column}}",
       "sort-by-column-ascending": "Sortera efter kolumn {{column}}, stigande",
@@ -13080,6 +13117,10 @@
       "subtitle": "Välj hur du vill att dina kontaktpunkter meddelas när en varningsinstans utlöses",
       "title": "Kontaktpunkter"
     },
+    "alerting-recording-rules": {
+      "subtitle": "",
+      "title": ""
+    },
     "alerting-silences": {
       "subtitle": "Stoppa aviseringar från en eller flera varningsregler",
       "title": "Tystnader"
@@ -13264,6 +13305,9 @@
     },
     "new-folder": {
       "title": "Ny mapp"
+    },
+    "new-grafana-page": {
+      "title": ""
     },
     "new-notebook": {
       "title": "Ny anteckningsbok"
@@ -13929,6 +13973,32 @@
     },
     "units": {
       "clear-tooltip": "Rensa enhetsval"
+    },
+    "var-mapping-checks": {
+      "data-macro": "",
+      "not-allowed": "",
+      "not-found": "",
+      "not-number": "",
+      "not-one-value": "",
+      "out-of-range": "",
+      "resolves": "",
+      "values": ""
+    },
+    "var-mapping-toggle": {
+      "aria-label-picker": "",
+      "fallback-off": "",
+      "fallback-on": "",
+      "group-matching": "",
+      "group-other": "",
+      "hint-boolean": "",
+      "hint-number": "",
+      "hint-option": "",
+      "hint-option-no-fallback": "",
+      "new-variable": "",
+      "option-current": "",
+      "placeholder": "",
+      "use-fixed-value": "",
+      "use-variable": ""
     }
   },
   "org": {
@@ -14031,12 +14101,14 @@
     "header-menu": {
       "add-to-notebook": "Lägg till i anteckningsbok",
       "copy": "Kopiera",
+      "copy-repeated-panel": "",
       "copy-styles": "Kopiera stilar",
       "download-diagnostics": "Ladda ner diagnostik",
       "duplicate": "Dubblett",
       "edit": "Redigera",
       "explore": "Utforska",
       "get-help": "Få hjälp",
+      "group-by": "",
       "hide-legend": "Dölj förklaring",
       "inspect": "Inspektera",
       "inspect-data": "Data",
@@ -15331,8 +15403,7 @@
       "message-resource-onprem_other": "Instansen är begränsad till {{count}} synkroniserade resurser per lagringsplats."
     },
     "read-only-badge": {
-      "pull-only": "",
-      "text": "Skrivskyddad"
+      "pull-only": ""
     },
     "read-only-local-tooltip": "Den här resursen är skrivskyddad och tilldelas via filprovisionering. Om du behöver göra ändringar måste du uppdatera det anslutna arkivet. Ändra inställningarna genom att gå till Administration > Tilldelning > Lagringsplatser.",
     "read-only-remote-tooltip": "Den här resursen är skrivskyddad och tilldelas via Git. Om du behöver göra ändringar måste du uppdatera det anslutna arkivet. Ändra inställningarna genom att gå till Administration > Tilldelning > Lagringsplatser.",
@@ -16172,6 +16243,9 @@
       "show-response": "Visa svar"
     },
     "query-editor-not-exported": "Tilläggsprogram för datakälla exporterar inte någon frågeredigerarkomponent"
+  },
+  "read-only-badge": {
+    "text": ""
   },
   "recent-queries": {
     "error-state": {
@@ -17186,6 +17260,7 @@
     "description-min-column-width": "Minsta bredd för automatisk storleksändring av kolumn",
     "description-page-size": "Antal rader per sida. När den är tom baseras sidstorleken på panelens höjd.",
     "description-show-columns-sidebar": "Öppna sidofältet för kolumnhantering med panelen, snarare än från en kolumnmeny",
+    "description-show-row-numbers": "",
     "description-styling-from-field": "Ett fält som innehåller JSON-objekt med CSS-egenskaper",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "Växla bakgrundsfärg varannan rad",
@@ -17228,6 +17303,7 @@
     "name-min-column-width": "Minsta kolumnbredd",
     "name-page-size": "Sidstorlek",
     "name-show-columns-sidebar": "Visa sidofält för kolumner",
+    "name-show-row-numbers": "",
     "name-show-table-header": "Visa tabellsidhuvud",
     "name-sparkline-show-tooltip": "Visa verktygstips vid hovring",
     "name-styling-from-field": "Styling från fält",

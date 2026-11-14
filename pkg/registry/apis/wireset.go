@@ -43,6 +43,8 @@ var WireSetExts = wire.NewSet(
 
 	wire.InterfaceValue(new(legacy.ExternalGroupReconciler), legacy.NoopExternalGroupReconciler{}),
 
+	dashboardinternal.ProvideNoopDashboardLifecycleExtras,
+
 	// Auditing Options
 	auditing.ProvideNoopBackend,
 	auditing.ProvideNoopPolicyRuleProvider,

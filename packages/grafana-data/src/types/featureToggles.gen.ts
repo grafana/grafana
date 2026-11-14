@@ -696,11 +696,6 @@ export interface FeatureToggles {
   */
   alertingUseNewSimplifiedRoutingHashAlgorithm?: boolean;
   /**
-  * Use the scopes navigation endpoint instead of the dashboardbindings endpoint
-  * @default true
-  */
-  useScopesNavigationEndpoint?: boolean;
-  /**
   * Enable scope search to include all levels of the scope node tree
   * @default false
   */

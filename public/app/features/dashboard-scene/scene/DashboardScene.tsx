@@ -8,13 +8,12 @@ import {
   type DataQueryRequest,
   type FieldConfig,
   type FieldConfigSource,
-  filterFieldConfigOverrides,
-  isStandardFieldProp,
   locationUtil,
   type NavIndex,
   type NavModelItem,
   store,
 } from '@grafana/data';
+import { clearCustomFieldConfig } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { config, getDataSourceSrv, locationService, RefreshEvent, reportInteraction } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient, getPanelPluginMeta } from '@grafana/runtime/internal';
@@ -111,9 +110,10 @@ import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
 import { normalizeTransformation } from '../serialization/transformationCompat';
 import { getDashboardTemplateExtension } from '../settings/enterprise-components/DashboardTemplateExtension';
 import { DashboardSidebar } from '../sidebar/DashboardSidebar';
-import { DashboardStateChangedEvent } from '../sidebar/events';
+import { type DashboardActionMeta, DashboardStateChangedEvent } from '../sidebar/events';
 import { type DashboardSidebarState } from '../sidebar/types';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
+import { resolveAdHocMultiValueOperators } from '../utils/applySupportsMultiValueOperators';
 import { clearDefaultQuery } from '../utils/clearDefaultQuery';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
 import {
@@ -167,6 +167,7 @@ import {
   isComposerMode,
   type DashboardMode,
 } from './dashboardModes';
+import { giveEmptyPlanTabsAGrid, readPlanLayout } from './dashboardPlan';
 import { dashboardViews, dashboardViewChanged, type DashboardViewRequest } from './dashboardViewRegistry';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
@@ -184,10 +185,11 @@ import { promotePanelAdHocChanges } from './panel-actions/promote/promotePanelAd
 import { PromotePanelAdHocChangesEvent } from './panel-actions/promote/utils';
 import { getUpdatedHoverHeader } from './panel-timerange/utils';
 import { takePendingPlanBuild } from './pendingPlanBuild';
-import { DashboardPlanningEvent } from './planningEvents';
+import { DashboardPlanChangedEvent, DashboardPlanningEvent } from './planningEvents';
 import { clearUnsavedDashboardConsent, copyDashboardConsent } from './sandbox-consent/sandboxConsent';
 import { type AnyDashboardLayoutManager, type DashboardLayoutManager } from './types/DashboardLayoutManager';
 import {
+  isArrangingPlan,
   isFullDashboardEditing,
   isDashboardReviewing,
   type DashboardSceneLike,
@@ -197,6 +199,19 @@ import {
 export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links', 'meta', 'preload'];
 const PANEL_SEARCH_VAR = 'systemPanelFilterVar';
 const PANELS_PER_ROW_VAR = 'systemDynamicRowSizeVar';
+
+/**
+ * The only edits a plan preview accepts: moving and resizing what the plan already has. Everything
+ * else is refused, so a new edit action stays unavailable during a preview until it is added here.
+ */
+const PLAN_ARRANGE_ACTIONS = new Set<DashboardActionMeta['actionId']>([
+  'panel.move',
+  'panel.moveOrResize',
+  'row.reorder',
+  'row.move',
+  'tab.reorder',
+  'tab.move',
+]);
 
 type PanelStyles = {
   fieldConfig?: { defaults: Partial<FieldConfig> };
@@ -387,6 +402,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public recordEditAction(actionId: string) {
+    if (isArrangingPlan(this.state)) {
+      this.syncPlanLayout();
+      return;
+    }
     if (!this.state.isEditing) {
       return;
     }
@@ -395,6 +414,25 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       const counts = this._assistantWrites > 0 ? this._editSession.aiEdits : this._editSession.manualEdits;
       counts.set(actionId, (counts.get(actionId) ?? 0) + 1);
     }
+  }
+
+  /**
+   * Feeds a layout arranged by hand back into the plan the preview owns. Only layout moves reach
+   * here while arranging (see PLAN_ARRANGE_ACTIONS), and only the layout is read back.
+   */
+  private syncPlanLayout() {
+    const { planning } = this.state;
+    if (planning?.phase !== 'preview' || !planning.editable) {
+      return;
+    }
+    giveEmptyPlanTabsAGrid(this.state.body);
+    const plan = readPlanLayout(this.state.body, planning.editable.plan);
+    if (isEqual(plan, planning.editable.plan)) {
+      return;
+    }
+    const revision = planning.editable.revision + 1;
+    this.setState({ planning: { ...planning, editable: { plan, revision } } });
+    appEvents.publish(new DashboardPlanChangedEvent({ planId: planning.planId, revision }));
   }
 
   private serializeForChangeTracking(): string | null {
@@ -442,7 +480,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
   }
 
-  public prepareEditAction() {
+  public prepareEditAction(meta?: DashboardActionMeta) {
+    if (isArrangingPlan(this.state)) {
+      return meta !== undefined && PLAN_ARRANGE_ACTIONS.has(meta.actionId);
+    }
     // In Composer only Assistant writes; one over Viewing switches Composer to Editing first.
     if (isComposerMode(this.state)) {
       return this._assistantWrites > 0 && (isComposerEditing(this.state) || this.startComposerEditingForAssistant());
@@ -629,7 +670,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       // closed) never got a Build or Dismiss decision — report that honestly as 'closed' rather
       // than leaving the caller holding a stale reference to a preview nothing is showing.
       if (this.state.planning) {
-        appEvents.publish(new DashboardPlanningEvent({ planId: this.state.planning.planId, action: 'closed' }));
+        const { planning } = this.state;
+        const editable = planning.phase === 'preview' ? planning.editable : undefined;
+        appEvents.publish(new DashboardPlanningEvent({ planId: planning.planId, action: 'closed', ...editable }));
         // Lifecycle hygiene, not a cache fix: a fresh /dashboard/new always builds an uncached
         // scene with no planning state, so this only matters if that ever changes.
         this.setState({ planning: undefined });
@@ -1338,6 +1381,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       const { loadingView, ...initialState } = this._initialState ?? {};
       this.setState({ ...initialState, isEditing: false, mode: undefined, composerEditing: undefined });
       restoreAdHocTransformations(this, adHocTransformations, this._initialAdHocTransformations);
+      // The baseline can be taken before a lookup started on the live tree resolves.
+      resolveAdHocMultiValueOperators(this);
       this.restoreSerializerAnnotationsFromInitialState();
       appEvents.publish(new DashboardDiscardedEvent());
       DashboardInteractions.dashboardEditDiscarded();
@@ -1372,6 +1417,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       this.serializer.initialSaveModel = sortedDeepCloneWithoutNulls(saveModel);
     }
     this.setState({ isDirty: false });
+  }
+
+  /** Whether the dashboard is saved with the v2 schema */
+  public isV2(): boolean {
+    return this.serializer instanceof V2DashboardSerializer;
   }
 
   public canDiscard() {
@@ -1435,6 +1485,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     restoreAdHocTransformations(this, adHocTransformations, this._initialAdHocTransformations);
 
     this.applyDashboardMode();
+    resolveAdHocMultiValueOperators(this);
 
     // We stay in edit mode, so re-activate the swapped-in pane to keep programmatic mutations working.
     if (hadProgrammaticSidebar) {
@@ -1518,6 +1569,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     newState.version = versionRsp.version;
 
     this.setState(newState);
+    resolveAdHocMultiValueOperators(this);
     this.exitEditMode({ skipConfirm: true, restoreInitialState: false });
 
     return true;
@@ -1911,10 +1963,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   ) {
     const { fieldConfig: prevFieldConfig, pluginId: previousPluginId } = panel.state;
 
-    let cleanFieldConfig: FieldConfigSource = {
-      defaults: { ...prevFieldConfig.defaults, custom: {} },
-      overrides: filterFieldConfigOverrides(prevFieldConfig.overrides, isStandardFieldProp),
-    };
+    let cleanFieldConfig: FieldConfigSource = clearCustomFieldConfig(prevFieldConfig);
 
     if (newFieldConfig) {
       cleanFieldConfig = { ...newFieldConfig, overrides: cleanFieldConfig.overrides };
