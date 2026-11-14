@@ -139,6 +139,16 @@ You can add more context to a visualization by adding series data values or [cal
 
 ![Legend showing values](/media/docs/grafana/panels-visualizations/screenshot-legend-values-10.3.png)
 
+### Sort by
+
+If you set the legend mode to **List**, the **Sort by** option becomes available. Choose **Name** to sort series alphabetically, or choose one of the calculations you added in [Values](#values) to sort series by that value. Clear the selection to show series in their default order.
+
+In **Table** mode, you sort series by clicking a column header instead. For more information, refer to [Sort series](#sort-series).
+
+### Sort direction
+
+After you select a **Sort by** value, choose **Ascending** or **Descending** order.
+
 ### Series visibility
 
 Toggle the **Series visibility** switch on to add the corresponding filter control next to or above the legend.
@@ -191,6 +201,27 @@ To isolate a series, follow these steps:
 To revert back to the default view that includes all data, click any series label twice.
 
 ## Sort series
+
+You can sort the series in a legend by name or by the values you add to it. How you sort depends on the legend mode.
+
+### Sort a list legend
+
+To sort series in a legend formatted as a list, follow these steps:
+
+1. Navigate to the panel you want to update.
+1. Hover over any part of the panel you want to work on to display the menu on the top right corner.
+1. Click the menu and select **Edit**.
+1. Scroll to the **Legend** section of the panel edit pane.
+1. Under **Mode**, select **List**.
+1. Optional: Under **Values**, select the value or calculation that you want to sort by.
+1. Under **Sort by**, select **Name** or the calculation you added.
+1. Under **Sort direction**, select **Ascending** or **Descending**.
+
+If you set a **Limit**, the legend shows the first series after sorting.
+
+The **Sort by** option is available for the following visualizations: bar chart, bar gauge, candlestick, histogram, time series, trend, and XY chart.
+
+### Sort a table legend
 
 When you format a legend as a table and add values to it, you can sort series in the table by those values. To do so, follow these steps:
 
