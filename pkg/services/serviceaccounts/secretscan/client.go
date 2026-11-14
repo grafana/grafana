@@ -41,6 +41,11 @@ var (
 	errSecretScanURL     = errors.New("secretscan url must be https")
 )
 
+// NewCheckerClient creates a client for the secret scanning service, for use by other token types.
+func NewCheckerClient(url, version string, dev bool) (CheckerClient, error) {
+	return newClient(url, version, dev)
+}
+
 func newClient(url, version string, dev bool) (*client, error) {
 	if !strings.HasPrefix(url, "https://") && !dev {
 		return nil, errSecretScanURL

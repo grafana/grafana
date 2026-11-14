@@ -31,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/personalaccesstokens/pattoken"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -104,7 +105,7 @@ func (l *loggerImpl) prepareLogParams(c *contextmodel.ReqContext, duration time.
 
 	logParams := []any{
 		"method", r.Method,
-		"path", r.URL.Path,
+		"path", pattoken.Redact(r.URL.Path),
 		"status", status,
 		"remote_addr", c.RemoteAddr(),
 		"time_ms", int64(duration / time.Millisecond),
@@ -144,12 +145,12 @@ func errorLogParams(err error) []any {
 
 	var gfErr errutil.Error
 	if !errors.As(err, &gfErr) {
-		return []any{"error", err.Error()}
+		return []any{"error", pattoken.Redact(err.Error())}
 	}
 
 	return []any{
 		"errorReason", gfErr.Reason,
 		"errorMessageID", gfErr.MessageID,
-		"error", gfErr.LogMessage,
+		"error", pattoken.Redact(gfErr.LogMessage),
 	}
 }
