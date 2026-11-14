@@ -916,11 +916,6 @@
       "count": 4
     }
   },
-  "packages/grafana-ui/src/components/Tags/Tag.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/Tooltip/Popover.tsx": {
     "react-hooks/refs": {
       "count": 1
