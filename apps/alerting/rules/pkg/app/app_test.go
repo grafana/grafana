@@ -507,6 +507,51 @@ func TestRecordingRuleValidation_Errors(t *testing.T) {
 	}), "want query expression requires relative time range error")
 }
 
+func TestRuleValidation_AllowGroupLabelWrites(t *testing.T) {
+	grouped := func(labels map[string]string) map[string]string {
+		labels[v1.GroupLabelKey] = "g1"
+		labels[v1.GroupIndexLabelKey] = "0"
+		return labels
+	}
+	// optIn is the annotation value, or "" to leave the annotation off.
+	validators := map[string]func(action resource.AdmissionAction, optIn string) error{
+		"alertrule": func(action resource.AdmissionAction, optIn string) error {
+			r := baseAlertRule()
+			r.Labels = grouped(r.Labels)
+			if optIn != "" {
+				r.Annotations[v1.AllowGroupWritesAnnotationKey] = optIn
+			}
+			req := &appsdk.AdmissionRequest{Action: action, Object: r}
+			if action == resource.AdmissionActionUpdate {
+				req.OldObject = baseAlertRule()
+			}
+			return alertRuleValidator(t, makeDefaultRuntimeConfig()).Validate(context.Background(), req)
+		},
+		"recordingrule": func(action resource.AdmissionAction, optIn string) error {
+			r := baseRecordingRule()
+			r.Labels = grouped(r.Labels)
+			if optIn != "" {
+				r.Annotations[v1.AllowGroupWritesAnnotationKey] = optIn
+			}
+			req := &appsdk.AdmissionRequest{Action: action, Object: r}
+			if action == resource.AdmissionActionUpdate {
+				req.OldObject = baseRecordingRule()
+			}
+			return recordingRuleValidator(t, makeDefaultRuntimeConfig()).Validate(context.Background(), req)
+		},
+	}
+	for name, validate := range validators {
+		for _, action := range []resource.AdmissionAction{resource.AdmissionActionCreate, resource.AdmissionActionUpdate} {
+			t.Run(name+"/"+string(action), func(t *testing.T) {
+				require.Error(t, validate(action, ""), "no annotation keeps the rejection")
+				require.Error(t, validate(action, "false"))
+				require.Error(t, validate(action, "True"), "only the exact value true opts in")
+				require.NoError(t, validate(action, "true"))
+			})
+		}
+	}
+}
+
 func TestAlertRuleValidation_DeleteAndMoveGuardrails(t *testing.T) {
 	baseCfg := makeDefaultRuntimeConfig()
 	baseCfg.FolderValidator = func(ctx context.Context, folderUID string) (bool, error) {
