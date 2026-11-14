@@ -2,6 +2,9 @@ package chunked
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
+	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
@@ -134,4 +137,96 @@ func TestRawChunkWriter_WriteFrame(t *testing.T) {
 	err := writer.WriteFrame(context.Background(), "ref", "frame-id", frame)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "rawChunkWriter does not support: WriteFrame")
+}
+
+func TestRawChunkWriterPreservesStatus(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		status  int32
+		message string
+		source  string
+	}{
+		{name: "unset status"},
+		{name: "successful frame", status: http.StatusOK},
+		{name: "downstream bad request", status: http.StatusBadRequest, message: "invalid query", source: "downstream"},
+		{name: "unauthorized", status: http.StatusUnauthorized, message: "unauthorized", source: "plugin"},
+		{name: "plugin failure", status: http.StatusInternalServerError, message: "plugin failed", source: "plugin"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			recorder := httptest.NewRecorder()
+			writer := NewChunkedHTTPWriter(recorder)
+			chunk := &pluginv2.QueryChunkedDataResponse{RefId: "A", Status: tc.status, Error: tc.message, ErrorSource: tc.source}
+			if tc.status == http.StatusOK {
+				frame, err := data.NewFrame("result", data.NewField("value", nil, []int64{42})).MarshalJSON()
+				require.NoError(t, err)
+				chunk.Frame = frame
+				chunk.Format = pluginv2.DataFrameFormat_JSON
+			}
+			require.NoError(t, writer.OnChunk(chunk))
+			require.Equal(t, http.StatusOK, recorder.Code, "the JSONL transport remains HTTP 200")
+			var record map[string]json.RawMessage
+			require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &record))
+			status, present := record["status"]
+			if tc.status == 0 {
+				require.False(t, present)
+			} else {
+				require.True(t, present)
+				var actual int32
+				require.NoError(t, json.Unmarshal(status, &actual), "status must be a JSON number")
+				require.Equal(t, tc.status, actual)
+			}
+			if tc.message != "" {
+				require.JSONEq(t, `"`+tc.message+`"`, string(record["error"]))
+				require.JSONEq(t, `"`+tc.source+`"`, string(record["errorSource"]))
+			}
+			require.True(t, recorder.Flushed)
+		})
+	}
+}
+
+type typedResponseErrorWriter struct {
+	refID  string
+	status backend.Status
+	err    error
+}
+
+func (*typedResponseErrorWriter) WriteFrame(context.Context, string, string, *data.Frame) error {
+	return nil
+}
+
+func (w *typedResponseErrorWriter) WriteError(_ context.Context, refID string, status backend.Status, err error) error {
+	w.refID, w.status, w.err = refID, status, err
+	return nil
+}
+
+func TestProcessTypedResponsePreservesErrorSource(t *testing.T) {
+	for _, tc := range []struct {
+		name                                   string
+		source, embeddedSource, expectedSource backend.ErrorSource
+		status                                 backend.Status
+	}{
+		{name: "explicit downstream", source: backend.ErrorSourceDownstream, expectedSource: backend.ErrorSourceDownstream, status: backend.StatusBadRequest},
+		{name: "explicit plugin", source: backend.ErrorSourcePlugin, expectedSource: backend.ErrorSourcePlugin, status: backend.StatusInternal},
+		{name: "unset source", status: backend.StatusUnauthorized},
+		{name: "existing error source", embeddedSource: backend.ErrorSourceDownstream, expectedSource: backend.ErrorSourceDownstream, status: backend.StatusBadRequest},
+		{name: "explicit source takes precedence", source: backend.ErrorSourcePlugin, embeddedSource: backend.ErrorSourceDownstream, expectedSource: backend.ErrorSourcePlugin, status: backend.StatusInternal},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cause := errors.New("query failed")
+			var queryErr error = cause
+			if tc.embeddedSource != "" {
+				queryErr = backend.NewErrorWithSource(queryErr, tc.embeddedSource)
+			}
+			response := &backend.QueryDataResponse{Responses: backend.Responses{
+				"A": {Status: tc.status, Error: queryErr, ErrorSource: tc.source},
+			}}
+			writer := &typedResponseErrorWriter{}
+			require.NoError(t, ProcessTypedResponse(context.Background(), response, writer))
+			require.Equal(t, "A", writer.refID)
+			require.Equal(t, tc.status, writer.status)
+			require.ErrorIs(t, writer.err, cause)
+			require.EqualError(t, writer.err, cause.Error())
+			require.Equal(t, tc.expectedSource, backend.ErrorResponseWithErrorSource(writer.err).ErrorSource)
+		})
+	}
 }

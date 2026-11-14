@@ -21,7 +21,11 @@ func ProcessTypedResponse(ctx context.Context, rsp *backend.QueryDataResponse, w
 			}
 		}
 		if res.Error != nil {
-			if err = w.WriteError(ctx, refID, res.Status, res.Error); err != nil {
+			queryErr := res.Error
+			if res.ErrorSource != "" {
+				queryErr = backend.NewErrorWithSource(queryErr, res.ErrorSource)
+			}
+			if err = w.WriteError(ctx, refID, res.Status, queryErr); err != nil {
 				return err
 			}
 		}

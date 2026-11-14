@@ -68,6 +68,10 @@ func (r *rawChunkWriter) OnChunk(chunk *pluginv2.QueryChunkedDataResponse) error
 		_, _ = r.w.Write(chunk.Frame) // raw JSON bytes
 	}
 
+	if chunk.Status != 0 {
+		_, _ = fmt.Fprintf(r.w, `,"status":%d`, chunk.Status)
+	}
+
 	if chunk.Error != "" {
 		r.writeField("error", chunk.Error)
 
