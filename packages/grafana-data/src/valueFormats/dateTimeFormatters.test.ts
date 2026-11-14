@@ -11,6 +11,7 @@ import {
   dateTimeFromNow,
   Interval,
   toClock,
+  toClockSeconds,
   toDuration,
   toDurationInMilliseconds,
   toDurationInSeconds,
@@ -327,6 +328,28 @@ describe('clock', () => {
     it('decimals equals 2', () => {
       const str = toClock(89999999, 2);
       expect(formattedValueToString(str)).toBe('24h:59m:59s');
+    });
+  });
+  describe('negative size', () => {
+    it('less than 1 second', () => {
+      const str = toClock(-500, 0);
+      expect(formattedValueToString(str)).toBe('500ms ago');
+    });
+    it('less than 1 minute', () => {
+      const str = toClock(-59999);
+      expect(formattedValueToString(str)).toBe('59s:999ms ago');
+    });
+    it('less than 1 hour', () => {
+      const str = toClock(-3599999, 1);
+      expect(formattedValueToString(str)).toBe('59m:59s ago');
+    });
+    it('greater than or equal 1 hour', () => {
+      const str = toClock(-7199999);
+      expect(formattedValueToString(str)).toBe('1h:59m:59s:999ms ago');
+    });
+    it('keeps the magnitude of seconds', () => {
+      expect(formattedValueToString(toClockSeconds(-3600, 0))).toBe('1h ago');
+      expect(formattedValueToString(toClockSeconds(-65, 1))).toBe('01m:05s ago');
     });
   });
   describe('size greater than or equal 100 hours', () => {
