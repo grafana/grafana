@@ -1597,6 +1597,12 @@
         "view-list": "Список",
         "wildcard-in-text": "Текст поискового запроса не может содержать * или %."
       },
+      "sequence-pill": {
+        "label": "",
+        "label-with-interval": "",
+        "tooltip": "",
+        "tooltip-with-interval": ""
+      },
       "shared": {
         "load-more": "Загрузить больше",
         "load-more-error": "Не удалось загрузить больше результатов",
@@ -5449,6 +5455,7 @@
       "change-theme": "Изменить тему",
       "dark-theme": "Темная",
       "dashboard-from-template": "Дашборд из шаблона",
+      "experimental": "",
       "light-theme": "Светлая",
       "open-saved-queries": "Открыть сохраненные запросы",
       "scopes": "Области"
@@ -5907,7 +5914,7 @@
         "hint-layer": "",
         "hint-layer-select": "",
         "hint-not-removable": "",
-        "hint-panel": "Нажмите, чтобы оставить комментарий на панели, или перетащите, чтобы выделить область",
+        "hint-panel": "",
         "hint-panel-select": "",
         "hint-region": "Перетащите, чтобы выделить область",
         "hint-remove": "",
@@ -6890,8 +6897,6 @@
         "open-editor": "Открыть редактор переменных",
         "open-editor-tooltip": "Для получения дополнительных параметров переменных откройте редактор переменных",
         "query-options": {
-          "close": "Закрыть",
-          "old-modal-title": "Переменная запроса",
           "preview": "Предварительный просмотр"
         },
         "remove": "Удалить",
@@ -10976,6 +10981,8 @@
       "tooltip": {
         "category": "Подсказка",
         "description-hover-proximity": "Насколько близко курсор должен быть к точке, чтобы вызвать всплывающую подсказку, в пикселях",
+        "description-max-height": "",
+        "description-max-width": "",
         "modeOptions": {
           "label-all": "Все",
           "label-hidden": "Скрыты",
@@ -13320,6 +13327,10 @@
       "subtitle": "Выбор способов уведомления точек контакта при возникновении оповещения",
       "title": "Точки контакта"
     },
+    "alerting-recording-rules": {
+      "subtitle": "",
+      "title": ""
+    },
     "alerting-silences": {
       "subtitle": "Остановка отправки уведомлений от одного или нескольких правил оповещения",
       "title": "Временные отключения"
@@ -14184,6 +14195,32 @@
     },
     "units": {
       "clear-tooltip": "Очистить выбор единицы"
+    },
+    "var-mapping-checks": {
+      "data-macro": "",
+      "not-allowed": "",
+      "not-found": "",
+      "not-number": "",
+      "not-one-value": "",
+      "out-of-range": "",
+      "resolves": "",
+      "values": ""
+    },
+    "var-mapping-toggle": {
+      "aria-label-picker": "",
+      "fallback-off": "",
+      "fallback-on": "",
+      "group-matching": "",
+      "group-other": "",
+      "hint-boolean": "",
+      "hint-number": "",
+      "hint-option": "",
+      "hint-option-no-fallback": "",
+      "new-variable": "",
+      "option-current": "",
+      "placeholder": "",
+      "use-fixed-value": "",
+      "use-variable": ""
     }
   },
   "org": {

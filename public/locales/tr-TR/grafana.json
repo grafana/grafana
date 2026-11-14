@@ -1579,6 +1579,12 @@
         "view-list": "Liste",
         "wildcard-in-text": "Arama metni * veya % içeremez."
       },
+      "sequence-pill": {
+        "label": "",
+        "label-with-interval": "",
+        "tooltip": "",
+        "tooltip-with-interval": ""
+      },
       "shared": {
         "load-more": "Daha fazla yükle",
         "load-more-error": "Daha fazla sonuç yüklenemedi",
@@ -5351,6 +5357,7 @@
       "change-theme": "Temayı değiştir",
       "dark-theme": "Koyu",
       "dashboard-from-template": "Şablondan pano",
+      "experimental": "",
       "light-theme": "Açık",
       "open-saved-queries": "Kaydedilen sorguları aç",
       "scopes": "Kapsamlar"
@@ -5809,7 +5816,7 @@
         "hint-layer": "",
         "hint-layer-select": "",
         "hint-not-removable": "",
-        "hint-panel": "Bir panele yorum eklemek için tıklayın veya bir bölge çizmek için sürükleyin",
+        "hint-panel": "",
         "hint-panel-select": "",
         "hint-region": "Bir bölge çizmek için sürükleyin",
         "hint-remove": "",
@@ -6788,8 +6795,6 @@
         "open-editor": "Değişken düzenleyicisini aç",
         "open-editor-tooltip": "Daha fazla değişken seçeneği için değişken düzenleyicisini açın",
         "query-options": {
-          "close": "Kapat",
-          "old-modal-title": "Sorgu Değişkeni",
           "preview": "Ön izleme"
         },
         "remove": "Kaldır",
@@ -10810,6 +10815,8 @@
       "tooltip": {
         "category": "Araç ipucu",
         "description-hover-proximity": "İmlecin, araç ipucunu tetiklemek için bir noktaya ne kadar yakın olması gerektiği (piksel cinsinden)",
+        "description-max-height": "",
+        "description-max-width": "",
         "modeOptions": {
           "label-all": "Tümü",
           "label-hidden": "Gizli",
@@ -13110,6 +13117,10 @@
       "subtitle": "Bir uyarı örneği tetiklendiğinde, iletişim noktalarınızın nasıl bilgilendirileceğini seçin.",
       "title": "İletişim noktaları"
     },
+    "alerting-recording-rules": {
+      "subtitle": "",
+      "title": ""
+    },
     "alerting-silences": {
       "subtitle": "Bir veya daha fazla uyarı sistemi kuralından gelen bildirimleri durdurun",
       "title": "Sessize almalar"
@@ -13962,6 +13973,32 @@
     },
     "units": {
       "clear-tooltip": "Birim seçimini temizle"
+    },
+    "var-mapping-checks": {
+      "data-macro": "",
+      "not-allowed": "",
+      "not-found": "",
+      "not-number": "",
+      "not-one-value": "",
+      "out-of-range": "",
+      "resolves": "",
+      "values": ""
+    },
+    "var-mapping-toggle": {
+      "aria-label-picker": "",
+      "fallback-off": "",
+      "fallback-on": "",
+      "group-matching": "",
+      "group-other": "",
+      "hint-boolean": "",
+      "hint-number": "",
+      "hint-option": "",
+      "hint-option-no-fallback": "",
+      "new-variable": "",
+      "option-current": "",
+      "placeholder": "",
+      "use-fixed-value": "",
+      "use-variable": ""
     }
   },
   "org": {
