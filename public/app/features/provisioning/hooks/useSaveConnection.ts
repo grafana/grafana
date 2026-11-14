@@ -12,7 +12,7 @@ import { extractFormErrors, getConnectionFormErrors } from '../utils/getFormErro
 
 import { useInvalidateConnectionList } from './useConnectionList';
 import { useCreateOrUpdateConnection } from './useCreateOrUpdateConnection';
-import { useOAuthAuthorization } from './useOAuthAuthorization';
+import { type AuthorizeParams, useOAuthAuthorization } from './useOAuthAuthorization';
 
 export type SaveConnectionResult =
   | { status: 'saved' | 'authorizing'; name: string }
@@ -112,6 +112,21 @@ export function useSaveConnection(onAuthorized: (connectionName: string) => void
     }
   };
 
+  // Re-runs the OAuth round-trip for a connection that is already stored. The code exchange
+  // uses the stored client ID and secret, so nothing is written and form state cannot ride along.
+  const authorizeStored = (params: AuthorizeParams) => {
+    setSubmitError(undefined);
+    cancel();
+    if (!authorize(params)) {
+      setSubmitError(
+        t(
+          'provisioning.save-connection.error-popup-blocked-authorize',
+          'The browser blocked the authorization tab. Allow pop-ups for Grafana and try again.'
+        )
+      );
+    }
+  };
+
   // Ends the UI's pending state and closes the tab where possible. A COOP-severed
   // handle ignores close(); an authorization finished later in that tab still
   // lands server-side, the form just stops waiting for it.
@@ -120,7 +135,15 @@ export function useSaveConnection(onAuthorized: (connectionName: string) => void
     closeTab();
   };
 
-  return { save, request, submitError, setSubmitError, isAuthorizing: isPending, cancelAuthorization };
+  return {
+    save,
+    authorizeStored,
+    request,
+    submitError,
+    setSubmitError,
+    isAuthorizing: isPending,
+    cancelAuthorization,
+  };
 }
 
 function errorResult(error: unknown, setError: UseFormSetError<ConnectionFormData>): SaveConnectionResult {

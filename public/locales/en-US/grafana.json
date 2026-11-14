@@ -14906,7 +14906,8 @@
       "placeholder-installation-id": "12345678",
       "placeholder-scopes": "Type a scope and press Enter",
       "placeholder-title": "My App",
-      "reauthorize-button": "Reauthorize"
+      "reauthorize-button": "Reauthorize",
+      "reauthorize-tooltip-dirty": "Reauthorizing uses the stored configuration. Unsaved changes are not applied."
     },
     "connection-oauth": {
       "error-authorize-failed": "Failed to complete authorization",
@@ -15590,7 +15591,8 @@
       "title-error-saving-file": "Error saving file"
     },
     "save-connection": {
-      "error-popup-blocked": "The connection was saved, but the browser blocked the authorization tab. Allow pop-ups for Grafana and save again to authorize."
+      "error-popup-blocked": "The connection was saved, but the browser blocked the authorization tab. Allow pop-ups for Grafana and save again to authorize.",
+      "error-popup-blocked-authorize": "The browser blocked the authorization tab. Allow pop-ups for Grafana and try again."
     },
     "save-resource": {
       "button-cancel": "Cancel",

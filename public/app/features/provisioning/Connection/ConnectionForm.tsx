@@ -116,14 +116,14 @@ export function ConnectionForm({ data, children }: ConnectionFormProps) {
       ? [{ value: 'oauth' as const, label: t('provisioning.wizard.github-app-kind-oauth', 'OAuth App') }]
       : []),
   ];
-  const reauthorizeRef = useRef(false);
   const navigateOnCompleteRef = useRef(false);
 
-  const { save, request, submitError, setSubmitError, isAuthorizing, cancelAuthorization } = useSaveConnection(() => {
-    if (navigateOnCompleteRef.current) {
-      navigate(CONNECTIONS_TAB_URL);
-    }
-  }, connectionName);
+  const { save, authorizeStored, request, submitError, setSubmitError, isAuthorizing, cancelAuthorization } =
+    useSaveConnection(() => {
+      if (navigateOnCompleteRef.current) {
+        navigate(CONNECTIONS_TAB_URL);
+      }
+    }, connectionName);
 
   // The client secret belongs to the OAuth app itself; pointing the connection at
   // a different app (client ID, or GHES host) makes the stored secret invalid for
@@ -142,8 +142,7 @@ export function ConnectionForm({ data, children }: ConnectionFormProps) {
     (!isEdit ||
       Boolean(form.clientSecret) ||
       oauthIdentityChanged(form) ||
-      fieldsChanged(form, OAUTH_AUTHORIZATION_FIELDS[form.type]) ||
-      reauthorizeRef.current);
+      fieldsChanged(form, OAUTH_AUTHORIZATION_FIELDS[form.type]));
 
   useEffect(() => {
     if (!isEdit && firstAvailableType && !selectedTypeAvailable) {
@@ -167,9 +166,22 @@ export function ConnectionForm({ data, children }: ConnectionFormProps) {
   // Field errors are shown inline in the form
   const showDisconnectMessage = readyCondition?.message && !data?.status?.fieldErrors?.length;
 
+  // Authorize from the stored spec, not the form: the fields stay editable even where the
+  // connection is read-only, so submitting them here would persist edits that are not allowed.
   const handleReauthorize = () => {
-    reauthorizeRef.current = true;
-    handleSubmit(onSubmit)();
+    const stored = getConnectionFormDefaults(data?.spec?.type, data);
+    if (!connectionName || !isOAuthConnectionType(stored.type) || !stored.clientID) {
+      return;
+    }
+    navigateOnCompleteRef.current = false;
+    authorizeStored({
+      type: stored.type,
+      clientID: stored.clientID,
+      name: connectionName,
+      serverUrl: stored.serverUrl,
+      authURL: stored.authURL,
+      scopes: stored.scopes,
+    });
   };
 
   const onSubmit = async (form: ConnectionFormData) => {
@@ -183,9 +195,8 @@ export function ConnectionForm({ data, children }: ConnectionFormProps) {
       });
       return;
     }
-    navigateOnCompleteRef.current = !reauthorizeRef.current;
+    navigateOnCompleteRef.current = true;
     const shouldAuthorize = needsAuthorization(form);
-    reauthorizeRef.current = false;
 
     const result = await save({ form, authorize: shouldAuthorize, setError });
     if (result.status === 'error') {
@@ -255,8 +266,19 @@ export function ConnectionForm({ data, children }: ConnectionFormProps) {
                 severity="error"
                 title={t('provisioning.connection.disconnected-title', 'Disconnected')}
                 action={
-                  isOAuthConnectionType(data?.spec?.type) && selectedTypeAvailable && !isReadOnly ? (
-                    <Button variant="secondary" onClick={handleReauthorize}>
+                  isOAuthConnectionType(data?.spec?.type) && selectedTypeAvailable ? (
+                    <Button
+                      variant="secondary"
+                      onClick={handleReauthorize}
+                      tooltip={
+                        isDirty
+                          ? t(
+                              'provisioning.connection-form.reauthorize-tooltip-dirty',
+                              'Reauthorizing uses the stored configuration. Unsaved changes are not applied.'
+                            )
+                          : undefined
+                      }
+                    >
                       {t('provisioning.connection-form.reauthorize-button', 'Reauthorize')}
                     </Button>
                   ) : undefined
