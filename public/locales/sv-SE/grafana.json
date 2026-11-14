@@ -1579,6 +1579,12 @@
         "view-list": "Lista",
         "wildcard-in-text": "Söktexten får inte innehålla * eller %."
       },
+      "sequence-pill": {
+        "label": "",
+        "label-with-interval": "",
+        "tooltip": "",
+        "tooltip-with-interval": ""
+      },
       "shared": {
         "load-more": "Ladda mer",
         "load-more-error": "Det gick inte att läsa in fler sökresultat",
@@ -5351,6 +5357,7 @@
       "change-theme": "Ändra tema",
       "dark-theme": "Mörk",
       "dashboard-from-template": "Instrumentpanel från mall",
+      "experimental": "",
       "light-theme": "Ljus",
       "open-saved-queries": "Öppna sparade frågor",
       "scopes": "Omfattningar"
@@ -5809,7 +5816,7 @@
         "hint-layer": "",
         "hint-layer-select": "",
         "hint-not-removable": "",
-        "hint-panel": "Klicka för att kommentera en panel eller dra för att rita ett område",
+        "hint-panel": "",
         "hint-panel-select": "",
         "hint-region": "Dra för att rita en region",
         "hint-remove": "",
@@ -6788,8 +6795,6 @@
         "open-editor": "Öppna variabelredigerare",
         "open-editor-tooltip": "För fler variabelalternativ öppna variabelredigeraren",
         "query-options": {
-          "close": "Stäng",
-          "old-modal-title": "Frågevariabel",
           "preview": "Förhandsgranska"
         },
         "remove": "Ta bort",
@@ -10810,6 +10815,8 @@
       "tooltip": {
         "category": "Verktygstips",
         "description-hover-proximity": "Hur nära markören måste vara till en punkt för att utlösa verktygstips, i pixlar",
+        "description-max-height": "",
+        "description-max-width": "",
         "modeOptions": {
           "label-all": "Alla",
           "label-hidden": "Dolt",
@@ -13110,6 +13117,10 @@
       "subtitle": "Välj hur du vill att dina kontaktpunkter meddelas när en varningsinstans utlöses",
       "title": "Kontaktpunkter"
     },
+    "alerting-recording-rules": {
+      "subtitle": "",
+      "title": ""
+    },
     "alerting-silences": {
       "subtitle": "Stoppa aviseringar från en eller flera varningsregler",
       "title": "Tystnader"
@@ -13962,6 +13973,32 @@
     },
     "units": {
       "clear-tooltip": "Rensa enhetsval"
+    },
+    "var-mapping-checks": {
+      "data-macro": "",
+      "not-allowed": "",
+      "not-found": "",
+      "not-number": "",
+      "not-one-value": "",
+      "out-of-range": "",
+      "resolves": "",
+      "values": ""
+    },
+    "var-mapping-toggle": {
+      "aria-label-picker": "",
+      "fallback-off": "",
+      "fallback-on": "",
+      "group-matching": "",
+      "group-other": "",
+      "hint-boolean": "",
+      "hint-number": "",
+      "hint-option": "",
+      "hint-option-no-fallback": "",
+      "new-variable": "",
+      "option-current": "",
+      "placeholder": "",
+      "use-fixed-value": "",
+      "use-variable": ""
     }
   },
   "org": {

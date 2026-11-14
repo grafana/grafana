@@ -72,54 +72,16 @@ func newExprMetrics(subsystem string) *ExprMetrics {
 
 // NewSSEMetrics creates a new ExprMetrics struct for the ST implementation of the expressions service
 func NewSSEMetrics(reg prometheus.Registerer) *ExprMetrics {
-	metricsSubSystem := "sse"
-
-	m := &ExprMetrics{
-		DSRequests: newExprMetrics(metricsSubSystem).DSRequests,
-
-		ExpressionsQuerySummary: newExprMetrics(metricsSubSystem).ExpressionsQuerySummary,
-
-		SqlCommandDuration: newExprMetrics(metricsSubSystem).SqlCommandDuration,
-
-		SqlCommandCount: newExprMetrics(metricsSubSystem).SqlCommandCount,
-
-		SqlCommandCellCount: newExprMetrics(metricsSubSystem).SqlCommandCellCount,
-
-		SqlCommandInputCount: newExprMetrics(metricsSubSystem).SqlCommandInputCount,
-	}
-
-	if reg != nil {
-		reg.MustRegister(
-			m.DSRequests,
-			m.ExpressionsQuerySummary,
-			m.SqlCommandDuration,
-			m.SqlCommandCount,
-			m.SqlCommandCellCount,
-			m.SqlCommandInputCount,
-		)
-	}
-
-	return m
+	return newRegisteredExprMetrics("sse", reg)
 }
 
 // NewQueryServiceExpressionsMetrics creates a new ExprMetrics struct for the query service implementation of the expressions service
 func NewQueryServiceExpressionsMetrics(reg prometheus.Registerer) *ExprMetrics {
-	metricsSubSystem := "queryservice"
+	return newRegisteredExprMetrics("queryservice", reg)
+}
 
-	m := &ExprMetrics{
-		DSRequests: newExprMetrics(metricsSubSystem).DSRequests,
-
-		ExpressionsQuerySummary: newExprMetrics(metricsSubSystem).ExpressionsQuerySummary,
-
-		SqlCommandDuration: newExprMetrics(metricsSubSystem).SqlCommandDuration,
-
-		SqlCommandCount: newExprMetrics(metricsSubSystem).SqlCommandCount,
-
-		SqlCommandCellCount: newExprMetrics(metricsSubSystem).SqlCommandCellCount,
-
-		SqlCommandInputCount: newExprMetrics(metricsSubSystem).SqlCommandInputCount,
-	}
-
+func newRegisteredExprMetrics(subsystem string, reg prometheus.Registerer) *ExprMetrics {
+	m := newExprMetrics(subsystem)
 	if reg != nil {
 		reg.MustRegister(
 			m.DSRequests,
@@ -130,7 +92,6 @@ func NewQueryServiceExpressionsMetrics(reg prometheus.Registerer) *ExprMetrics {
 			m.SqlCommandInputCount,
 		)
 	}
-
 	return m
 }
 
