@@ -1461,6 +1461,50 @@ func TestUpdateAlertRule(t *testing.T) {
 	})
 }
 
+func TestUpdateAlertRulePauseState(t *testing.T) {
+	for _, tc := range []struct {
+		name             string
+		canWriteAllRules bool
+		initialPaused    bool
+	}{
+		{name: "pause with write-all permissions", canWriteAllRules: true, initialPaused: false},
+		{name: "unpause with write-all permissions", canWriteAllRules: true, initialPaused: true},
+		{name: "pause with granular permissions", canWriteAllRules: false, initialPaused: false},
+		{name: "unpause with granular permissions", canWriteAllRules: false, initialPaused: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			service, ruleStore, _, ac := initService(t)
+			ac.CanWriteAllRulesFunc = func(context.Context, identity.Requester) (bool, error) {
+				return tc.canWriteAllRules, nil
+			}
+
+			const orgID int64 = 1
+			u := &user.SignedInUser{OrgID: orgID}
+			rule := dummyRule("pause-repro-rule", orgID)
+			rule.ID = 1
+			rule.UID = "pause-repro"
+			rule.IsPaused = tc.initialPaused
+			ruleStore.Rules[orgID] = []*models.AlertRule{models.CopyRule(&rule)}
+
+			rule.IsPaused = !tc.initialPaused
+			updated, err := service.UpdateAlertRule(context.Background(), u, rule, models.ProvenanceToManagerProperties(models.ProvenanceNone))
+			require.NoError(t, err)
+			assert.Equal(t, rule.IsPaused, updated.IsPaused, "the response should reflect the requested pause state")
+
+			updates := ruleStore.GetRecordedCommands(func(cmd any) (any, bool) {
+				update, ok := cmd.([]models.UpdateRule)
+				return update, ok
+			})
+			require.Len(t, updates, 1, "a successful pause-state change must reach the rule store")
+			batch := updates[0].([]models.UpdateRule)
+			require.Len(t, batch, 1)
+			assert.Equal(t, rule.UID, batch[0].New.UID)
+			assert.Equal(t, tc.initialPaused, batch[0].Existing.IsPaused)
+			assert.Equal(t, rule.IsPaused, batch[0].New.IsPaused, "the stored update should match the requested pause state")
+		})
+	}
+}
+
 func TestDeleteAlertRule(t *testing.T) {
 	orgID := rand.Int63()
 	u := &user.SignedInUser{OrgID: orgID}
