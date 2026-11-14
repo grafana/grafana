@@ -1579,6 +1579,12 @@
         "view-list": "Lista",
         "wildcard-in-text": "O texto de pesquisa não pode conter * ou %."
       },
+      "sequence-pill": {
+        "label": "",
+        "label-with-interval": "",
+        "tooltip": "",
+        "tooltip-with-interval": ""
+      },
       "shared": {
         "load-more": "Carregar mais",
         "load-more-error": "Falha ao carregar mais resultados",
@@ -5351,6 +5357,7 @@
       "change-theme": "Alterar tema",
       "dark-theme": "Escuro",
       "dashboard-from-template": "Painel de controlo a partir do modelo",
+      "experimental": "",
       "light-theme": "Claro",
       "open-saved-queries": "Abrir consultas guardadas",
       "scopes": "Âmbitos"
@@ -5809,7 +5816,7 @@
         "hint-layer": "",
         "hint-layer-select": "",
         "hint-not-removable": "",
-        "hint-panel": "Clique para comentar num painel ou arraste para desenhar uma região",
+        "hint-panel": "",
         "hint-panel-select": "",
         "hint-region": "Arrastar para desenhar uma região",
         "hint-remove": "",
@@ -6788,8 +6795,6 @@
         "open-editor": "Abrir editor de variáveis",
         "open-editor-tooltip": "Para mais opções de variáveis, abra o editor de variáveis",
         "query-options": {
-          "close": "Fechar",
-          "old-modal-title": "Variável de consulta",
           "preview": "Pré-visualizar"
         },
         "remove": "Remover",
@@ -10810,6 +10815,8 @@
       "tooltip": {
         "category": "Descrição",
         "description-hover-proximity": "Qual é a distância a que o cursor deve estar de um ponto para acionar a descrição, em píxeis",
+        "description-max-height": "",
+        "description-max-width": "",
         "modeOptions": {
           "label-all": "Tudo",
           "label-hidden": "Oculto",
@@ -13110,6 +13117,10 @@
       "subtitle": "Escolha como notificar os seus pontos de contacto quando uma instância de alerta for acionada",
       "title": "Pontos de contacto"
     },
+    "alerting-recording-rules": {
+      "subtitle": "",
+      "title": ""
+    },
     "alerting-silences": {
       "subtitle": "Parar as notificações de uma ou mais regras de alerta",
       "title": "Silêncio"
@@ -13962,6 +13973,32 @@
     },
     "units": {
       "clear-tooltip": "Limpar a seleção da unidade"
+    },
+    "var-mapping-checks": {
+      "data-macro": "",
+      "not-allowed": "",
+      "not-found": "",
+      "not-number": "",
+      "not-one-value": "",
+      "out-of-range": "",
+      "resolves": "",
+      "values": ""
+    },
+    "var-mapping-toggle": {
+      "aria-label-picker": "",
+      "fallback-off": "",
+      "fallback-on": "",
+      "group-matching": "",
+      "group-other": "",
+      "hint-boolean": "",
+      "hint-number": "",
+      "hint-option": "",
+      "hint-option-no-fallback": "",
+      "new-variable": "",
+      "option-current": "",
+      "placeholder": "",
+      "use-fixed-value": "",
+      "use-variable": ""
     }
   },
   "org": {

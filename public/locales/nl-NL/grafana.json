@@ -1579,6 +1579,12 @@
         "view-list": "Lijst",
         "wildcard-in-text": "Zoektekst mag geen * of % bevatten."
       },
+      "sequence-pill": {
+        "label": "",
+        "label-with-interval": "",
+        "tooltip": "",
+        "tooltip-with-interval": ""
+      },
       "shared": {
         "load-more": "Meer laden",
         "load-more-error": "Kan geen extra resultaten laden",
@@ -5351,6 +5357,7 @@
       "change-theme": "Thema wijzigen",
       "dark-theme": "Donker",
       "dashboard-from-template": "Dashboard van sjabloon",
+      "experimental": "",
       "light-theme": "Licht",
       "open-saved-queries": "Opgeslagen query's openen",
       "scopes": "Bereik"
@@ -5809,7 +5816,7 @@
         "hint-layer": "",
         "hint-layer-select": "",
         "hint-not-removable": "",
-        "hint-panel": "Klik om een opmerking te plaatsen bij een paneel, of sleep om een gebied te tekenen",
+        "hint-panel": "",
         "hint-panel-select": "",
         "hint-region": "Slepen om een gebied te tekenen",
         "hint-remove": "",
@@ -6788,8 +6795,6 @@
         "open-editor": "Open variabelebewerker",
         "open-editor-tooltip": "Open de variabelebewerker voor meer opties voor variabelen",
         "query-options": {
-          "close": "Sluiten",
-          "old-modal-title": "Queryvariabele",
           "preview": "Voorbeeld"
         },
         "remove": "Verwijderen",
@@ -10810,6 +10815,8 @@
       "tooltip": {
         "category": "Tooltip",
         "description-hover-proximity": "Hoe dicht de cursor bij een punt moet zijn om de tooltip te activeren, in pixels",
+        "description-max-height": "",
+        "description-max-width": "",
         "modeOptions": {
           "label-all": "Alle",
           "label-hidden": "Verborgen",
@@ -13110,6 +13117,10 @@
       "subtitle": "Kies hoe je je contactpunten op de hoogte wilt stellen wanneer een waarschuwingsinstantie afgaat",
       "title": "Contactpunten"
     },
+    "alerting-recording-rules": {
+      "subtitle": "",
+      "title": ""
+    },
     "alerting-silences": {
       "subtitle": "Stop meldingen van een of meer waarschuwingsregels",
       "title": "Stiltes"
@@ -13962,6 +13973,32 @@
     },
     "units": {
       "clear-tooltip": "Eenheidsselectie wissen"
+    },
+    "var-mapping-checks": {
+      "data-macro": "",
+      "not-allowed": "",
+      "not-found": "",
+      "not-number": "",
+      "not-one-value": "",
+      "out-of-range": "",
+      "resolves": "",
+      "values": ""
+    },
+    "var-mapping-toggle": {
+      "aria-label-picker": "",
+      "fallback-off": "",
+      "fallback-on": "",
+      "group-matching": "",
+      "group-other": "",
+      "hint-boolean": "",
+      "hint-number": "",
+      "hint-option": "",
+      "hint-option-no-fallback": "",
+      "new-variable": "",
+      "option-current": "",
+      "placeholder": "",
+      "use-fixed-value": "",
+      "use-variable": ""
     }
   },
   "org": {
