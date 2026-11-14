@@ -1945,21 +1945,6 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/triage/scene/tagKeysProviders.test.ts": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
-  "public/app/features/alerting/unified/triage/scene/tagKeysProviders.ts": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
-  "public/app/features/alerting/unified/triage/scene/useLabelsBreakdown.ts": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/types/alerting.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 3
