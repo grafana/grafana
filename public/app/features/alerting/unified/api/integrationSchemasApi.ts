@@ -16,8 +16,13 @@ const { useGrafanaNotifiersQuery } = alertmanagerApi;
  * Transforms a k8s API field to NotificationChannelOption.
  * Explicitly maps all fields to ensure type safety without assertions.
  */
-function transformField(field: GetIntegrationtypeschemasField, prefix = ''): NotificationChannelOption {
-  const secureFieldKey = field.secure ? `${prefix}${field.propertyName}` : undefined;
+function transformField(
+  field: GetIntegrationtypeschemasField,
+  prefix = '',
+  insideObjectMap = false
+): NotificationChannelOption {
+  const secureFieldKey = field.secure && !insideObjectMap ? `${prefix}${field.propertyName}` : undefined;
+  const childIsInsideObjectMap = insideObjectMap || field.element === 'key_value_object_map';
 
   return {
     // Generated k8s API types use `string` for element; the backend returns valid element types
@@ -44,7 +49,7 @@ function transformField(field: GetIntegrationtypeschemasField, prefix = ''): Not
     },
     validationRule: field.validationRule,
     subformOptions: field.subformOptions?.map((subfield) =>
-      transformField(subfield, `${prefix}${field.propertyName}.`)
+      transformField(subfield, `${prefix}${field.propertyName}.`, childIsInsideObjectMap)
     ),
     dependsOn: field.dependsOn,
   };

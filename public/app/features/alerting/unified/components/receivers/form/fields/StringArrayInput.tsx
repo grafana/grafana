@@ -8,11 +8,12 @@ import { ActionIcon } from '../../../rules/ActionIcon';
 
 interface Props {
   value?: string[];
+  inputType?: string;
   readOnly?: boolean;
   onChange: (value: string[]) => void;
 }
 
-export const StringArrayInput = ({ value, onChange, readOnly = false }: Props) => {
+export const StringArrayInput = ({ value, inputType = 'text', onChange, readOnly = false }: Props) => {
   const styles = useStyles2(getStyles);
 
   const deleteItem = (index: number) => {
@@ -36,7 +37,12 @@ export const StringArrayInput = ({ value, onChange, readOnly = false }: Props) =
       {!!value?.length &&
         value.map((v, index) => (
           <div key={index} className={styles.row}>
-            <Input readOnly={readOnly} value={v} onChange={(e) => updateValue(e.currentTarget.value, index)} />
+            <Input
+              readOnly={readOnly}
+              type={inputType}
+              value={v}
+              onChange={(e) => updateValue(e.currentTarget.value, index)}
+            />
             {!readOnly && (
               <ActionIcon
                 className={styles.deleteIcon}
