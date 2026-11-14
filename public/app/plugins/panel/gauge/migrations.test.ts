@@ -4,6 +4,21 @@ import { FieldColorModeId } from '@grafana/schema';
 import { gaugePanelMigrationHandler, gaugePanelChangedHandler } from './migrations';
 
 describe('Gauge Panel Migrations', () => {
+  it.each([
+    { color: undefined, showThresholdMarkers: true },
+    { color: { mode: FieldColorModeId.Thresholds }, showThresholdMarkers: true },
+    { color: undefined, showThresholdMarkers: false },
+  ])('preserves threshold markers with threshold colors: %j', ({ color, showThresholdMarkers }) => {
+    const panel = {
+      type: 'gauge',
+      pluginVersion: '12.3.0',
+      options: { showThresholdMarkers },
+      fieldConfig: { defaults: { color }, overrides: [] },
+    } as PanelModel;
+
+    expect(gaugePanelMigrationHandler(panel).showThresholdMarkers).toBe(showThresholdMarkers);
+  });
+
   it('from old gauge', () => {
     const panel = {
       id: 2,
