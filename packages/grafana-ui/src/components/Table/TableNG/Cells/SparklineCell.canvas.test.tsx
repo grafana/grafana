@@ -167,4 +167,48 @@ describe('TableNG SparklineCell threshold wiring (canvas)', () => {
     await waitFor(() => expect(uPlotInstance?.status).toBe(1));
     expect(prepareConfigSpy.mock.calls.at(-1)?.[4]).toBe(true);
   });
+
+  describe('y range', () => {
+    const twoRowField = (config: Field['config']) =>
+      applyFieldOverrides({
+        data: [
+          toDataFrame({
+            fields: [
+              {
+                name: 'trend',
+                type: FieldType.frame,
+                values: [
+                  getTsFrame(),
+                  toDataFrame({
+                    fields: [
+                      { name: 'time', type: FieldType.time, values: [1000, 2000] },
+                      { name: 'v', type: FieldType.number, values: [100, 200] },
+                    ],
+                  }),
+                ],
+                config: { custom: { cellOptions: { type: TableCellDisplayMode.Sparkline } }, ...config },
+              },
+            ],
+          }),
+        ],
+        fieldConfig: { defaults: {}, overrides: [] },
+        replaceVariables: (v) => v,
+        theme: createTheme(),
+        timeZone: 'utc',
+      })[0].fields[0];
+
+    it('uses the range of its own row by default', async () => {
+      renderSparklineCell(twoRowField({}));
+
+      await waitFor(() => expect(uPlotInstance?.status).toBe(1));
+      expect(uPlotInstance!.scales.__fixed).toMatchObject({ min: 1, max: 99 });
+    });
+
+    it('uses the range shared by the column when fieldMinMax is set', async () => {
+      renderSparklineCell(twoRowField({ fieldMinMax: true }));
+
+      await waitFor(() => expect(uPlotInstance?.status).toBe(1));
+      expect(uPlotInstance!.scales.__fixed).toMatchObject({ min: 1, max: 200 });
+    });
+  });
 });

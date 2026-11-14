@@ -5,9 +5,9 @@ import { FieldMatcherID } from '../transformations/matchers/ids';
 import { type ScopedVars } from '../types/ScopedVars';
 import { type GrafanaConfig } from '../types/config';
 import { NullValueMode } from '../types/data';
-import { FieldType, type DataFrame, type Field, type FieldConfig } from '../types/dataFrame';
+import { FieldType, type DataFrame, type Field, type FieldConfig, type FieldDTO } from '../types/dataFrame';
 import { FieldColorModeId } from '../types/fieldColor';
-import { type FieldConfigPropertyItem, type FieldConfigSource } from '../types/fieldOverrides';
+import { type DynamicConfigValue, type FieldConfigPropertyItem, type FieldConfigSource } from '../types/fieldOverrides';
 import { type InterpolateFunction } from '../types/panel';
 import { ThresholdsMode } from '../types/thresholds';
 import { MappingType, type ValueMapping } from '../types/valueMapping';
@@ -476,6 +476,199 @@ describe('applyFieldOverrides', () => {
           fieldConfigRegistry: customFieldRegistry,
         })
       ).not.toThrow();
+    });
+
+    describe('with fieldMinMax', () => {
+      const sparkline = (values: Array<number | null>) =>
+        createDataFrame({
+          fields: [
+            { name: 'time', type: FieldType.time, values: values.map((_, i) => 1752170223000 + i * 1000) },
+            { name: 'value', type: FieldType.number, values },
+          ],
+        });
+
+      const fieldMinMaxFor = (name: string, properties: DynamicConfigValue[] = []) => ({
+        matcher: { id: FieldMatcherID.byName, options: name },
+        properties: [{ id: 'fieldMinMax', value: true }, ...properties],
+      });
+
+      const apply = (fields: FieldDTO[], overrides: FieldConfigSource['overrides']) =>
+        applyFieldOverrides({
+          data: [createDataFrame({ name: 'A', fields })],
+          fieldConfig: { defaults: {}, overrides },
+          replaceVariables: (value) => value,
+          theme: createTheme(),
+          fieldConfigRegistry: customFieldRegistry,
+        })[0];
+
+      it('shares one range across the frames in every row', () => {
+        const frame = apply(
+          [{ name: 'trend', type: FieldType.frame, values: [sparkline([0, 5, 10]), sparkline([100, 150, 200])] }],
+          [fieldMinMaxFor('trend')]
+        );
+
+        expect(frame.fields[0].state!.range).toEqual({ min: 0, max: 200, delta: 200 });
+      });
+
+      it('calculates a separate range for each frame field', () => {
+        const frame = apply(
+          [
+            { name: 'cpu', type: FieldType.frame, values: [sparkline([0, 10]), sparkline([100, 200])] },
+            { name: 'memory', type: FieldType.frame, values: [sparkline([1, 2]), sparkline([3, 4])] },
+          ],
+          [fieldMinMaxFor('cpu'), fieldMinMaxFor('memory')]
+        );
+
+        expect(frame.fields[0].state!.range).toEqual({ min: 0, max: 200, delta: 200 });
+        expect(frame.fields[1].state!.range).toEqual({ min: 1, max: 4, delta: 3 });
+      });
+
+      it('keeps an explicit min and max ahead of the shared range', () => {
+        const frame = apply(
+          [
+            { name: 'withMin', type: FieldType.frame, values: [sparkline([0, 10]), sparkline([100, 200])] },
+            { name: 'withMinAndMax', type: FieldType.frame, values: [sparkline([0, 10]), sparkline([100, 200])] },
+          ],
+          [
+            fieldMinMaxFor('withMin', [{ id: 'min', value: -50 }]),
+            fieldMinMaxFor('withMinAndMax', [
+              { id: 'min', value: 0 },
+              { id: 'max', value: 1000 },
+            ]),
+          ]
+        );
+
+        expect(frame.fields[0].state!.range).toEqual({ min: -50, max: 200, delta: 250 });
+        expect(frame.fields[1].state!.range).toEqual({ min: 0, max: 1000, delta: 1000 });
+      });
+
+      it('ignores null values and missing or empty frames', () => {
+        const frame = apply(
+          [
+            {
+              name: 'sparse',
+              type: FieldType.frame,
+              values: [sparkline([null, 3]), undefined, createDataFrame({ fields: [] }), sparkline([7, null])],
+            },
+            { name: 'empty', type: FieldType.frame, values: [undefined, sparkline([null, null])] },
+          ],
+          [fieldMinMaxFor('sparse'), fieldMinMaxFor('empty')]
+        );
+
+        expect(frame.fields[0].state!.range).toEqual({ min: 3, max: 7, delta: 4 });
+        expect(frame.fields[1].state!.range).toBeUndefined();
+      });
+
+      it('leaves frame fields without a range when no frame has a number value', () => {
+        const withoutNumberField = createDataFrame({
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1752170223000, 1752170224000] },
+            { name: 'label', type: FieldType.string, values: ['a', 'b'] },
+          ],
+        });
+        const frame = apply(
+          [
+            { name: 'allNull', type: FieldType.frame, values: [sparkline([null, null]), sparkline([null])] },
+            { name: 'noNumbers', type: FieldType.frame, values: [withoutNumberField] },
+            { name: 'withMin', type: FieldType.frame, values: [sparkline([null, null])] },
+          ],
+          [fieldMinMaxFor('allNull'), fieldMinMaxFor('noNumbers'), fieldMinMaxFor('withMin', [{ id: 'min', value: 0 }])]
+        );
+
+        expect(frame.fields[0].state!.range).toBeUndefined();
+        expect(frame.fields[1].state!.range).toBeUndefined();
+        expect(frame.fields[2].state!.range).toBeUndefined();
+      });
+
+      it('guesses the types of nested fields that have none', () => {
+        const untyped = (values: number[]) => ({
+          length: values.length,
+          fields: [
+            { name: 'time', config: {}, values: values.map((_, i) => 1752170223000 + i * 1000) },
+            { name: 'value', config: {}, values },
+          ],
+        });
+        const typedAsOther = (values: number[]) => ({
+          length: values.length,
+          fields: [
+            { name: 'time', type: FieldType.other, config: {}, values: values.map((_, i) => 1752170223000 + i * 1000) },
+            { name: 'value', type: FieldType.other, config: {}, values },
+          ],
+        });
+        const frame = apply(
+          [{ name: 'trend', type: FieldType.frame, values: [untyped([0, 10]), typedAsOther([100, 200])] }],
+          [fieldMinMaxFor('trend')]
+        );
+
+        expect(frame.fields[0].state!.range).toEqual({ min: 0, max: 200, delta: 200 });
+      });
+
+      it('only uses the first number field of each frame, as the sparkline does', () => {
+        const withSecondNumberField = createDataFrame({
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1752170223000, 1752170224000] },
+            { name: 'value', type: FieldType.number, values: [100, 200] },
+            { name: 'other', type: FieldType.number, values: [-5000, 5000] },
+          ],
+        });
+        const frame = apply(
+          [{ name: 'trend', type: FieldType.frame, values: [sparkline([0, 10]), withSecondNumberField] }],
+          [fieldMinMaxFor('trend')]
+        );
+
+        expect(frame.fields[0].state!.range).toEqual({ min: 0, max: 200, delta: 200 });
+      });
+
+      it('ignores infinite values', () => {
+        const frame = apply(
+          [{ name: 'trend', type: FieldType.frame, values: [sparkline([0, Infinity]), sparkline([-Infinity, 200])] }],
+          [fieldMinMaxFor('trend')]
+        );
+
+        expect(frame.fields[0].state!.range).toEqual({ min: 0, max: 200, delta: 200 });
+      });
+
+      it('does not change the range of number fields', () => {
+        const frame = apply(
+          [
+            { name: 'value', type: FieldType.number, values: [1, 2] },
+            { name: 'trend', type: FieldType.frame, values: [sparkline([0, 10]), sparkline([100, 200])] },
+          ],
+          [fieldMinMaxFor('trend')]
+        );
+
+        expect(frame.fields[0].state!.range).toEqual({ min: 1, max: 2, delta: 1 });
+      });
+
+      it('does not pass an explicit min and max of a frame field on to later number fields', () => {
+        const frame = apply(
+          [
+            { name: 'trend', type: FieldType.frame, values: [sparkline([0, 10]), sparkline([100, 200])] },
+            { name: 'value', type: FieldType.number, values: [1, 2] },
+          ],
+          [
+            {
+              matcher: { id: FieldMatcherID.byName, options: 'trend' },
+              properties: [
+                { id: 'min', value: 0 },
+                { id: 'max', value: 1000 },
+              ],
+            },
+          ]
+        );
+
+        expect(frame.fields[0].state!.range).toEqual({ min: 0, max: 1000, delta: 1000 });
+        expect(frame.fields[1].state!.range).toEqual({ min: 1, max: 2, delta: 1 });
+      });
+
+      it('leaves frame fields without a range when it is not enabled', () => {
+        const frame = apply(
+          [{ name: 'trend', type: FieldType.frame, values: [sparkline([0, 10]), sparkline([100, 200])] }],
+          []
+        );
+
+        expect(frame.fields[0].state!.range).toBeUndefined();
+      });
     });
   });
 
