@@ -371,6 +371,15 @@ class DataSourceWithBackend<
   }
 
   /**
+   * Optional. Prepares this data source's queries when Grafana sends them to the backend without
+   * calling `query()`, for example as inputs to server-side expressions. `queries` holds all of
+   * this data source's queries. Return one query per input, with the same `refId`.
+   *
+   * @alpha
+   */
+  prepareBackendQueries?(queries: TQuery[], scopedVars: ScopedVars, filters?: AdHocVariableFilter[]): TQuery[];
+
+  /**
    * Optionally override the streaming behavior
    */
   streamOptionsProvider: StreamOptionsProvider<TQuery> = standardStreamOptionsProvider;
