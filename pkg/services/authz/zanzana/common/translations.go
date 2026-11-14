@@ -89,6 +89,22 @@ var (
 const annotationsSubresource = "annotations"
 
 var resourceTranslations = map[string]resourceTranslation{
+	"secret.securevalues": {
+		typ:      TypeResource,
+		group:    "secret.grafana.app",
+		resource: "securevalues",
+		mapping: map[string]actionMapping{
+			"secret.securevalues:view":              newMapping(RelationSetView, ""),
+			"secret.securevalues:edit":              newMapping(RelationSetEdit, ""),
+			"secret.securevalues:admin":             newMapping(RelationSetAdmin, ""),
+			"secret.securevalues:read":              newMapping(RelationGet, ""),
+			"secret.securevalues:write":             newMapping(RelationUpdate, ""),
+			"secret.securevalues:create":            newMapping(RelationCreate, ""),
+			"secret.securevalues:delete":            newMapping(RelationDelete, ""),
+			"secret.securevalues.permissions:read":  newMapping(RelationGetPermissions, ""),
+			"secret.securevalues.permissions:write": newMapping(RelationSetPermissions, ""),
+		},
+	},
 	KindAnnotations: {
 		typ:      TypeResource,
 		group:    annotationGroup,

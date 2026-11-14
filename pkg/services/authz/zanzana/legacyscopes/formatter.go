@@ -61,6 +61,10 @@ func userScopeKind(action string) string {
 
 // Permissions formats grant locations. Numeric aliases are added by the permission loader.
 func (r Formatter) Permissions(resource, action, scope string, resp *authzv1.ListResponse) []ac.Permission {
+	if resource == "securevalues" && strings.HasPrefix(action, "secret.securevalues") {
+		resource = "secret.securevalues"
+	}
+
 	permissions := []ac.Permission{}
 
 	// Build the set of scopes that satisfy the filter: the exact scope plus

@@ -2,6 +2,7 @@ package secret
 
 import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/org"
 )
 
@@ -142,14 +143,19 @@ func FixedRoleRegistrations() []accesscontrol.RoleRegistration {
 		Grants: []string{string(org.RoleAdmin)},
 	}
 
-	return []accesscontrol.RoleRegistration{
+	return append([]accesscontrol.RoleRegistration{
 		secureValuesCreator,
 		secureValuesReader,
 		secureValuesUpdater,
 		secureValuesDeleter,
 		keepersReader,
 		keepersWriter,
-	}
+	}, resourcepermissions.FixedRoleRegistrations(resourcepermissions.Options{
+		Resource:       "secret.securevalues",
+		ReaderRoleName: "Secure Value Permissions Reader",
+		WriterRoleName: "Secure Value Permissions Writer",
+		RoleGroup:      "Secrets Manager",
+	})...)
 }
 
 func registerAccessControlRoles(service accesscontrol.Service) error {

@@ -2140,7 +2140,7 @@ func runDashboardHttpTest(t *testing.T, ctx TestContext, foreignOrgCtx TestConte
 
 				if userTC.canCreate {
 					require.Equal(t, http.StatusCreated, createResp.Response.StatusCode,
-						"Failed to %s dashboard as %s: %s", "POST", userTC.user.Identity.GetLogin(), createResp.Response.Status)
+						"Failed to %s dashboard as %s: %s; body=%s", "POST", userTC.user.Identity.GetLogin(), createResp.Response.Status, createResp.Body)
 
 					// Construct the dashboard path with the actual UID for GET/DELETE
 					dashboardPath = fmt.Sprintf("/apis/dashboard.grafana.app/v1beta1/namespaces/%s/dashboards/%s",

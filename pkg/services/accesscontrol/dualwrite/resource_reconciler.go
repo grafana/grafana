@@ -14,6 +14,7 @@ import (
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	"github.com/grafana/grafana/pkg/services/folder"
 )
 
 // legacyTupleCollector collects tuples groupd by object and tupleKey
@@ -201,6 +202,10 @@ func (r resourceReconciler) collectOrphanDeletes(
 		}
 		// only cleanup the particular object types we are interested in (either dashboards or folders)
 		if !strings.HasPrefix(tuple.Key.Object, r.orphanObjectPrefix) {
+			continue
+		}
+		// The virtual root cannot be orphaned. Its grants come from role permissions.
+		if tuple.Key.Object == zanzana.NewTupleEntry(zanzana.TypeFolder, folder.GeneralFolderUID, "") {
 			continue
 		}
 		// if legacy returned this object, it's not orphaned
