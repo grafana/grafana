@@ -31,7 +31,9 @@ func TestAuthZClientsExposeCapabilitiesSeparately(t *testing.T) {
 	permissionsClient := &testUserPermissionsClient{}
 	clients := newAuthZClients(accessClient, legacyAccessClient, permissionsClient)
 
-	require.Same(t, accessClient, ProvideAuthZAccessClient(clients))
+	guarded, ok := ProvideAuthZAccessClient(clients).(*patAccessClient)
+	require.True(t, ok, "access client is wrapped with the personal token guard")
+	require.Same(t, accessClient, guarded.AccessClient)
 	require.Same(t, legacyAccessClient, ProvideAuthZLegacyAccessClient(clients))
 	require.Same(t, permissionsClient, ProvideAuthZUserPermissionsClient(clients))
 }

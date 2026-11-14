@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
+	"slices"
 	"sort"
 	"strconv"
 	"time"
@@ -26,6 +28,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/personalaccesstokens/patscope"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -165,7 +169,39 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 		return "", nil, err
 	}
 
-	return result.(resultType).token, result.(resultType).idClaims, nil
+	res := result.(resultType)
+	if id.GetAuthenticatedBy() == login.PersonalTokenAuthModule {
+		patscope.RememberGrants(res.token, patGrants(id), res.idClaims.Expiry.Time())
+	}
+	return res.token, res.idClaims, nil
+}
+
+func patGrants(id identity.Requester) patscope.Grants {
+	scoped, _ := id.(interface{ IsPersonalTokenResourceScoped() bool })
+	return patscope.Grants{Permissions: id.GetPermissions(), ResourceScoped: scoped != nil && scoped.IsPersonalTokenResourceScoped()}
+}
+
+// hashPATGrants keeps tokens of one owner with different limits from sharing a cached ID token,
+// because the limits are looked up by the token string.
+func hashPATGrants(ident identity.Requester) string {
+	if ident.GetAuthenticatedBy() != login.PersonalTokenAuthModule {
+		return ""
+	}
+	g := patGrants(ident)
+	keys := slices.Sorted(maps.Keys(g.Permissions))
+	h := xxhash.New()
+	_, _ = h.WriteString(strconv.FormatBool(g.ResourceScoped))
+	_, _ = h.Write([]byte{3})
+	for _, k := range keys {
+		_, _ = h.WriteString(k)
+		_, _ = h.Write([]byte{2})
+		for _, v := range slices.Sorted(slices.Values(g.Permissions[k])) {
+			_, _ = h.WriteString(v)
+			_, _ = h.Write([]byte{1})
+		}
+		_, _ = h.Write([]byte{0})
+	}
+	return strconv.FormatUint(h.Sum64(), 16)
 }
 
 func (s *Service) RemoveIDToken(ctx context.Context, id identity.Requester) error {
@@ -240,7 +276,7 @@ func (s *Service) cacheDisabled(ctx context.Context) bool {
 // name): a changed value must produce a new key.
 func (s *Service) getCacheKey(ident identity.Requester) string {
 	return cachePrefix + ident.GetCacheKey() + string(ident.GetOrgRole()) + ident.GetAuthenticatedBy() +
-		hashGroups(s.resolveGroupsClaim(ident)) + hashUserClaims(ident)
+		hashGroups(s.resolveGroupsClaim(ident)) + hashUserClaims(ident) + hashPATGrants(ident)
 }
 
 // hashUserClaims covers the claims that are only set for users, see SignIdentity.

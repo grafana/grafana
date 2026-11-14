@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/login"
 )
 
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/accesscontrol/acimpl")
@@ -72,7 +73,9 @@ func (a *AccessControl) evaluate(ctx context.Context, user identity.Requester, e
 	}
 
 	const defaultLegacyCheck = false
-	if a.openFeatureClient.Boolean(ctx, featuremgmt.FlagAuthzUseLegacyCheck, defaultLegacyCheck, openfeature.TransactionContext(ctx)) {
+	// The legacy check resolves the owner's stored permissions and would ignore the
+	// token-narrowed ones, so personal access tokens always use the in-memory path.
+	if !isPersonalToken(user) && a.openFeatureClient.Boolean(ctx, featuremgmt.FlagAuthzUseLegacyCheck, defaultLegacyCheck, openfeature.TransactionContext(ctx)) {
 		return a.evaluateLegacyCheck(ctx, user, evaluator)
 	}
 
@@ -130,4 +133,9 @@ func (a *AccessControl) debug(ctx context.Context, ident identity.Requester, msg
 	defer span.End()
 
 	a.log.FromContext(ctx).Debug(msg, "id", ident.GetID(), "orgID", ident.GetOrgID(), "permissions", eval.GoString())
+}
+
+func isPersonalToken(user identity.Requester) bool {
+	by, ok := user.(interface{ GetAuthenticatedBy() string })
+	return ok && by.GetAuthenticatedBy() == login.PersonalTokenAuthModule
 }

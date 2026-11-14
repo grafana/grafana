@@ -14,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/login"
 )
 
 const (
@@ -137,6 +138,12 @@ func wrapContext(ctx context.Context) (context.Context, error) {
 	user, err := identity.GetRequester(ctx)
 	if err != nil {
 		return ctx, err
+	}
+
+	// The metadata cannot carry a personal access token's narrowed scopes, and the
+	// remote side would otherwise act with the owner's full permissions.
+	if by, ok := user.(interface{ GetAuthenticatedBy() string }); ok && by.GetAuthenticatedBy() == login.PersonalTokenAuthModule {
+		return ctx, status.Error(codes.PermissionDenied, "personal access tokens cannot be forwarded to remote storage")
 	}
 
 	// set grpc metadata into the context to pass to the grpc server

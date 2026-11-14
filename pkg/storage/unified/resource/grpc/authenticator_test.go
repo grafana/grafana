@@ -11,6 +11,7 @@ import (
 	"go.opentelemetry.io/otel/trace/noop"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/services/login"
 )
 
 func TestBasicEncodeDecode(t *testing.T) {
@@ -61,4 +62,12 @@ func TestWrapContextWithNoPreviousMetadata(t *testing.T) {
 	require.True(t, ok)
 	val := outmd.Get(mdOrgID)
 	require.Equal(t, []string{"12345"}, val)
+}
+
+func TestWrapContextRejectsPersonalToken(t *testing.T) {
+	ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
+		UserID: 1, Login: "u", Type: claims.TypeUser, OrgID: 1, AuthenticatedBy: login.PersonalTokenAuthModule,
+	})
+	_, err := wrapContext(ctx)
+	require.Error(t, err)
 }
