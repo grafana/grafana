@@ -37,6 +37,8 @@ type fakeMarketplaceLicensing struct {
 	prepareErr   error
 	prepareCalls int
 	preparedWith string
+
+	validationKeys string
 }
 
 // newTestMarketplaceLicensing returns a fake marketplace environment with appURL.
@@ -54,6 +56,11 @@ func (e *fakeMarketplaceLicensing) LicenseToken(_ context.Context, pluginID stri
 	e.prepareCalls++
 	e.preparedWith = pluginID
 	return e.token, e.prepareErr
+}
+
+// ValidationKeys returns the configured validation keys.
+func (e *fakeMarketplaceLicensing) ValidationKeys() string {
+	return e.validationKeys
 }
 
 var _ marketplacelicensing.Licensing = (*fakeMarketplaceLicensing)(nil)
@@ -414,6 +421,18 @@ func TestPluginEnvVarsProvider_marketplaceLicensing(t *testing.T) {
 		require.Equal(t, "hmac:marketplace-environment", getEnvVar(envVars, "GF_MARKETPLACE_APP_URL"))
 		_, hasText := getEnvVarWithExists(envVars, "GF_MARKETPLACE_LICENSE_TEXT")
 		require.False(t, hasText)
+		_, hasValidationKeys := getEnvVarWithExists(envVars, "GF_MARKETPLACE_LICENSE_VALIDATION_KEY")
+		require.False(t, hasValidationKeys)
+	})
+
+	t.Run("passes validation keys with the license", func(t *testing.T) {
+		environment := newTestMarketplaceLicensing("hmac:marketplace-environment")
+		environment.token = "database-token"
+		environment.validationKeys = "validation-key-bundle"
+		envVars := newProvider(environment).PluginEnvVars(ctx, &plugins.Plugin{JSONData: plugins.JSONData{ID: "acme-widget"}})
+
+		require.Equal(t, "validation-key-bundle", getEnvVar(envVars, "GF_MARKETPLACE_LICENSE_VALIDATION_KEY"))
+		require.Equal(t, "database-token", getEnvVar(envVars, "GF_MARKETPLACE_LICENSE_TEXT"))
 	})
 
 	t.Run("nested plugin uses the parent's license", func(t *testing.T) {
@@ -531,6 +550,7 @@ func TestPluginEnvVarsProvider_marketplaceLicensing(t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
 				ctx := setOpenFeatureFlags(t, tc.flags)
 				environment := newTestMarketplaceLicensing("hmac:marketplace-environment")
+				environment.validationKeys = "validation-key-bundle"
 				provider := NewEnvVarsProvider(&PluginInstanceCfg{
 					MarketplaceLicenseDirectory: tc.directory,
 				}, tc.license, &fakeSSOSettingsProvider{}, environment)
@@ -539,8 +559,10 @@ func TestPluginEnvVarsProvider_marketplaceLicensing(t *testing.T) {
 				require.Zero(t, environment.prepareCalls)
 				_, hasLicense := getEnvVarWithExists(envVars, "GF_MARKETPLACE_LICENSE_PATH")
 				_, hasAppURL := getEnvVarWithExists(envVars, "GF_MARKETPLACE_APP_URL")
+				_, hasValidationKeys := getEnvVarWithExists(envVars, "GF_MARKETPLACE_LICENSE_VALIDATION_KEY")
 				require.False(t, hasLicense)
 				require.False(t, hasAppURL)
+				require.False(t, hasValidationKeys)
 			})
 		}
 	})
