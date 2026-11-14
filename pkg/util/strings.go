@@ -270,6 +270,14 @@ func stripBOMReflect(v reflect.Value) {
 	}
 
 	switch v.Kind() {
+	case reflect.Interface:
+		if !v.IsNil() && v.CanSet() {
+			value := reflect.New(v.Elem().Type()).Elem()
+			value.Set(v.Elem())
+			stripBOMReflect(value)
+			v.Set(value)
+		}
+
 	case reflect.String:
 		// Can't set unexported fields or non-addressable values
 		if v.CanSet() {
@@ -292,20 +300,13 @@ func stripBOMReflect(v reflect.Value) {
 		}
 
 	case reflect.Map:
-		// Recurse into all map values
 		iter := v.MapRange()
 		for iter.Next() {
-			val := iter.Value()
-			// For maps, we need to handle the key-value pair
-			if val.Kind() == reflect.String && val.CanInterface() {
-				// Map string values must be replaced (not addressable)
-				cleanedVal := reflect.ValueOf(StripBOM(val.String()))
-				v.SetMapIndex(iter.Key(), cleanedVal)
-			} else {
-				// For nested structures (structs, slices in map values),
-				// recurse to update their string fields in place
-				stripBOMReflect(val)
-			}
+			// Map values are not addressable, so update a copy and put it back.
+			val := reflect.New(iter.Value().Type()).Elem()
+			val.Set(iter.Value())
+			stripBOMReflect(val)
+			v.SetMapIndex(iter.Key(), val)
 		}
 
 	default:
