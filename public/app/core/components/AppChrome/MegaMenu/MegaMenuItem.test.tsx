@@ -111,6 +111,7 @@ describe('MegaMenuItem rendering branches', () => {
       text: 'My Folder',
       url: '/dashboards/f/abc',
       icon: 'folder',
+      starredKind: 'folder',
     };
 
     renderMenuItem(service, { link: starredFolder });
@@ -124,11 +125,25 @@ describe('MegaMenuItem rendering branches', () => {
       text: 'My Dashboard',
       url: '/d/xyz',
       icon: 'apps',
+      starredKind: 'dashboard',
     };
 
     renderMenuItem(service, { link: starredDashboard });
 
     expect(screen.getByTitle('Dashboard')).toBeInTheDocument();
+  });
+
+  it('leaves a starred leaf icon untitled when the leaf carries no kind, so a wrong kind is never announced', () => {
+    const bootDataLeaf: NavModelItem = {
+      id: 'starred/xyz',
+      text: 'My Dashboard',
+      url: '/d/xyz',
+      icon: 'apps',
+    };
+
+    renderMenuItem(service, { link: bootDataLeaf });
+
+    expect(screen.queryByTitle('Dashboard')).not.toBeInTheDocument();
   });
 
   it('renders loading skeletons for an expanded section whose children are being fetched', () => {

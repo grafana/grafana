@@ -38,6 +38,8 @@ export function useNavTree(): NavModelItem[] {
             text: row.name,
             url: row.url,
             icon: kind.icon,
+            // Labels the leaf's icon and its click analytics with the kind
+            starredKind: row.kind,
           })
         )
     );

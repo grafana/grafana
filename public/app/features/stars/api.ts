@@ -1,18 +1,22 @@
 import { chunk } from 'lodash';
 
+import { DataFrameView } from '@grafana/data';
 import { collectionsAPIv1alpha1 } from 'app/api/clients/collections/v1alpha1';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { type DashboardQueryResult } from 'app/features/search/service/types';
+import { toDashboardResults } from 'app/features/search/service/unified';
 import { type ThunkResult } from 'app/types/store';
 
-import { STARRED_KINDS } from './kinds';
+import { searchAppKindHits } from './kindSearch';
+import {
+  type DashboardSearchStarredKind,
+  getStarredKinds,
+  type KindSearchStarredKind,
+  partitionStarred,
+  type StarredNames,
+  type StarredNamesOfKind,
+} from './kinds';
 import { findStarredNames, userStarsFieldSelector } from './utils';
-
-/** The starred names of one search kind. */
-interface StarredNames {
-  kind: string;
-  names: string[];
-}
 
 /** Tag for the starred search rows, invalidated by changes that rewrite rows without changing the star set. */
 const STARRED_SEARCH_TAG = 'StarredSearch';
@@ -23,6 +27,40 @@ const NAMES_PER_REQUEST = 50;
 
 // Created once, not per sort
 const collator = new Intl.Collator();
+
+/** Rows of the kinds the dashboard search index holds, searched over the union of their starred uids. */
+async function searchDashboardIndex(
+  byKind: Array<StarredNamesOfKind<DashboardSearchStarredKind>>
+): Promise<DashboardQueryResult[]> {
+  const uids = [...new Set(byKind.flatMap(({ names }) => names))].sort();
+  if (uids.length === 0) {
+    return [];
+  }
+  const kinds = byKind.map(({ kind }) => kind.searchKind);
+  // A uid is matched against every kind asked for, so a resource of another kind that shares a starred uid
+  // comes back too: leave it room in the limit, drop it after.
+  const starredBySearchKind = new Map(byKind.map(({ kind, names }) => [kind.searchKind, new Set(names)]));
+  const searcher = getGrafanaSearcher();
+  const responses = await Promise.all(
+    chunk(uids, NAMES_PER_REQUEST).map((names) =>
+      searcher.search({ name: names, kind: kinds, limit: names.length * kinds.length })
+    )
+  );
+  return responses
+    .flatMap((response) => response.view.toArray())
+    .filter((row) => starredBySearchKind.get(row.kind)?.has(row.uid));
+}
+
+/** Rows of the app kinds, each through its own search endpoint; a kind whose API is unavailable yields none. */
+async function searchAppKinds(
+  byKind: Array<StarredNamesOfKind<KindSearchStarredKind>>
+): Promise<DashboardQueryResult[]> {
+  const hits = await searchAppKindHits(byKind);
+  if (hits.length === 0) {
+    return [];
+  }
+  return new DataFrameView<DashboardQueryResult>(toDashboardResults({ hits, totalHits: hits.length }, '')).toArray();
+}
 
 const starsAPI = collectionsAPIv1alpha1.enhanceEndpoints({ addTagTypes: [STARRED_SEARCH_TAG] }).injectEndpoints({
   endpoints: (build) => ({
@@ -35,28 +73,11 @@ const starsAPI = collectionsAPIv1alpha1.enhanceEndpoints({ addTagTypes: [STARRED
     searchStarred: build.query<DashboardQueryResult[], StarredNames[]>({
       providesTags: [STARRED_SEARCH_TAG],
       queryFn: async (starred) => {
-        const uids = [...new Set(starred.flatMap(({ names }) => names))].sort();
-        if (uids.length === 0) {
-          return { data: [] };
-        }
-        const kinds = starred.map(({ kind }) => kind);
-        // A uid is matched against every kind asked for, so a resource of another kind that shares a starred uid
-        // comes back too: leave it room in the limit, drop it after.
-        const starredByKind = new Map(starred.map(({ kind, names }) => [kind, new Set(names)]));
+        const { indexed, app } = partitionStarred(starred);
         try {
-          const searcher = getGrafanaSearcher();
-          const responses = await Promise.all(
-            chunk(uids, NAMES_PER_REQUEST).map((names) =>
-              searcher.search({ name: names, kind: kinds, limit: names.length * kinds.length })
-            )
-          );
-          // Each response is in title order; merged, the rows are sorted again so a star set that takes several
-          // requests reads like one that takes one
-          const rows = responses
-            .flatMap((response) => response.view.toArray())
-            .filter((row) => starredByKind.get(row.kind)?.has(row.uid))
-            .sort((a, b) => collator.compare(a.name, b.name));
-          return { data: rows };
+          const [indexedRows, appRows] = await Promise.all([searchDashboardIndex(indexed), searchAppKinds(app)]);
+          // Each search answers in its own order; sorted together, every kind reads as one list
+          return { data: [...indexedRows, ...appRows].sort((a, b) => collator.compare(a.name, b.name)) };
         } catch (error) {
           return { error };
         }
@@ -74,9 +95,9 @@ const starsAPI = collectionsAPIv1alpha1.enhanceEndpoints({ addTagTypes: [STARRED
 export const invalidateStarredSearch = () => starsAPI.util.invalidateTags([STARRED_SEARCH_TAG]);
 
 /**
- * Re-searches the starred rows when one of `uids` is starred, as any kind. A save, rename or delete of an unstarred
- * item changes no row, and most writes are to unstarred items, so the search is spared. Read from the cached star
- * set: the rows are derived from it, so a star it does not hold has no row to refresh either.
+ * Re-searches the starred rows when one of `uids` is starred, as any kind Grafana shows. A save, rename or delete
+ * of an unstarred item changes no row, and most writes are to unstarred items, so the search is spared. Read from
+ * the cached star set: the rows are derived from it, so a star it does not hold has no row to refresh either.
  */
 export const invalidateStarredSearchFor =
   (uids: string[]): ThunkResult<void> =>
@@ -84,7 +105,7 @@ export const invalidateStarredSearchFor =
     const { data } = collectionsAPIv1alpha1.endpoints.listStars.select({ fieldSelector: userStarsFieldSelector() })(
       getState()
     );
-    const starredNames = new Set(STARRED_KINDS.flatMap(({ group, kind }) => findStarredNames(data, group, kind)));
+    const starredNames = new Set(getStarredKinds().flatMap(({ group, kind }) => findStarredNames(data, group, kind)));
     if (uids.some((uid) => starredNames.has(uid))) {
       dispatch(invalidateStarredSearch());
     }
