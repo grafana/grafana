@@ -384,6 +384,7 @@ var Basic = wire.NewSet(
 	patpolicy.ProvideService,
 	wire.Bind(new(patpolicy.Policy), new(*patpolicy.Service)),
 	personalaccesstokens.ProvideService,
+	personalaccesstokens.ProvideMaintenance,
 	wire.Bind(new(personalaccesstokens.Service), new(*personalaccesstokens.ServiceImpl)),
 	dashverimpl.ProvideService,
 	publicdashboards.ProvideService,

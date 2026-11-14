@@ -108,6 +108,8 @@ func TestStoreUsesProviderTables(t *testing.T) {
 	mock.ExpectExec(`(?s)UPDATE .*test_schema.*user.*SET is_disabled = \?.*WHERE id IN \(\?, \?\).*is_service_account`).
 		WithArgs(true, int64(7), int64(11)).
 		WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectExec(`(?s)UPDATE .*test_schema.*personal_access_token.*SET revoked_at`).
+		WillReturnResult(sqlmock.NewResult(0, 0))
 	require.NoError(t, store.BatchDisableUsers(ctx, &user.BatchDisableUsersCommand{
 		UserIDs: []int64{7, 11}, IsDisabled: true,
 	}))

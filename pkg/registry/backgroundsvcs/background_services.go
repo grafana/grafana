@@ -35,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/ofrep"
+	"github.com/grafana/grafana/pkg/services/personalaccesstokens"
 	plugindashboardsservice "github.com/grafana/grafana/pkg/services/plugindashboards/service"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angulardetectorsprovider"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/installsync"
@@ -68,7 +69,7 @@ func ProvideBackgroundServiceRegistry(
 	pluginsUpdateChecker *updatemanager.PluginsService, metrics *metricsservice.InternalMetricsService,
 	secretsService *secretsManager.SecretsService, remoteCache *remotecache.RemoteCache, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	StorageService store.StorageService, // nolint:staticcheck
-	saService *samanager.ServiceAccountsService, grpcServerProvider grpcserver.Provider,
+	saService *samanager.ServiceAccountsService, patMaintenance *personalaccesstokens.Maintenance, grpcServerProvider grpcserver.Provider,
 	secretMigrationProvider secretsMigrations.SecretMigrationProvider, loginAttemptService *loginattemptimpl.Service,
 	bundleService *supportbundlesimpl.Service, publicDashboardsMetric *publicdashboards.MetricsService,
 	keyRetriever *dynamic.KeyRetriever, dynamicAngularDetectorsProvider *angulardetectorsprovider.Dynamic,
@@ -127,6 +128,7 @@ func ProvideBackgroundServiceRegistry(
 		StorageService,
 		grpcServerProvider,
 		saService,
+		patMaintenance,
 		pluginStore,
 		secretMigrationProvider,
 		loginAttemptService,

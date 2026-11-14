@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	jose "github.com/go-jose/go-jose/v4"
@@ -57,6 +58,28 @@ type Service struct {
 	tracer          tracing.Tracer
 
 	tokenRefreshDuration *prometheus.HistogramVec
+
+	refreshFailureMu    sync.RWMutex
+	refreshFailureHooks []RefreshFailureHook
+}
+
+// RefreshFailureHook is called after an OAuth token refresh fails and the stored tokens were invalidated.
+type RefreshFailureHook func(ctx context.Context, usr identity.Requester, authModule string)
+
+// RegisterRefreshFailureHook registers a hook that runs when refreshing a user's OAuth token fails.
+func (o *Service) RegisterRefreshFailureHook(hook RefreshFailureHook) {
+	o.refreshFailureMu.Lock()
+	defer o.refreshFailureMu.Unlock()
+	o.refreshFailureHooks = append(o.refreshFailureHooks, hook)
+}
+
+func (o *Service) runRefreshFailureHooks(ctx context.Context, usr identity.Requester, authModule string) {
+	o.refreshFailureMu.RLock()
+	hooks := append([]RefreshFailureHook(nil), o.refreshFailureHooks...)
+	o.refreshFailureMu.RUnlock()
+	for _, hook := range hooks {
+		hook(ctx, usr, authModule)
+	}
 }
 
 var _ OAuthTokenService = (*Service)(nil)
@@ -405,6 +428,7 @@ func (o *Service) tryGetOrRefreshOAuthToken(ctx context.Context, persistedToken 
 		if err := o.InvalidateOAuthTokens(ctx, usr, tokenRefreshMetadata); err != nil {
 			ctxLogger.Warn("Failed to invalidate OAuth tokens", "authID", tokenRefreshMetadata.AuthID, "error", err)
 		}
+		o.runRefreshFailureHooks(ctx, usr, tokenRefreshMetadata.AuthModule)
 
 		return nil, refreshErr
 	}
