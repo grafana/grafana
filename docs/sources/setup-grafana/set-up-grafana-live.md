@@ -153,6 +153,8 @@ By default, Live accepts connections with Origin header that matches configured 
 
 It is possible to provide a list of additional origin patterns to allow WebSocket connections from. This can be achieved using the [allowed_origins](../configure-grafana/#allowed_origins) option of Grafana Live configuration.
 
+If Grafana is run behind a reverse proxy which overrides the Host header additional headers which contain the real host may be specified via [csrf_additional_headers](../configure-grafana/#csrf_additional_headers) option to check the origin of WebSocket requests.
+
 #### Resource usage
 
 Each persistent connection costs some memory on a server. Typically, this should be about 50 KB per connection at this moment. Thus a server with 1 GB RAM is expected to handle about 20k connections max. Each active connection consumes additional CPU resources since the client and server send PING/PONG frames to each other to maintain a connection.
