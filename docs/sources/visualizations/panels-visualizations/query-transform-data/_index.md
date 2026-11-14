@@ -222,6 +222,13 @@ From the **Saved queries** dialog box, you can:
 
 You can apply all the same search, filter, and sort options in the **Starred queries** filter view.
 
+The dialog box adapts to your browser width.
+On wide screens, the filters, query list, and query details appear side by side.
+On narrower screens, the filters appear above the query list and details.
+On small screens, the query details appear below the list.
+Select a query in the list, then scroll down in the dialog box to review its details and access the query actions.
+Resizing the browser doesn't change your selected query or filters.
+
 {{< admonition type="tip">}}
 When you select a query with a Loki, Mimir, Tempo, or Pyroscope data source, the **Saved queries** dialog box displays a **Drilldown** button.
 Click the button to open the associated Drilldown app, while maintaining the context of the query.
