@@ -72,6 +72,7 @@ A definite pre-execution rejection cannot have committed a write.
 Use one statement per command, unqualified table names, and positional `?` parameters.
 Issue transaction boundaries through protocol commands; SQL `BEGIN`, `COMMIT`, and full `ROLLBACK` are unsupported.
 `SAVEPOINT`, `ROLLBACK TO SAVEPOINT`, and `RELEASE SAVEPOINT` are supported within a transaction.
+`SELECT ... FOR UPDATE` and `SELECT ... FOR SHARE` are currently unsupported in both read-only and read-write transactions.
 DDL, session changes, multiple statements, and cross-schema references are unsupported.
 
 Next, use the [Query contract](grpc-contract.md) for authentication and shared wire values.
