@@ -127,7 +127,7 @@ export class DashboardGridItem
       }
     }
 
-    if (this.state.variableName && this.state.repeatDirection === 'h' && this.state.width !== GRID_COLUMN_COUNT) {
+    if (this.state.variableName && this.getRepeatDirection() === 'h' && this.state.width !== GRID_COLUMN_COUNT) {
       this.setState({ width: GRID_COLUMN_COUNT });
     }
 

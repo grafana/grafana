@@ -1,0 +1,80 @@
+{
+  "kind": "Dashboard",
+  "apiVersion": "dashboard.grafana.app/v1beta1",
+  "metadata": {
+    "name": "repeat-direction-default-test"
+  },
+  "spec": {
+    "title": "Repeat Direction Default Test Dashboard",
+    "description": "Repeated panels with and without repeatDirection, to check that a missing direction is read as horizontal",
+    "schemaVersion": 42,
+    "panels": [
+      {
+        "id": 1,
+        "title": "Repeat without direction",
+        "type": "timeseries",
+        "gridPos": {
+          "x": 0,
+          "y": 0,
+          "w": 8,
+          "h": 8
+        },
+        "repeat": "env",
+        "maxPerRow": 4
+      },
+      {
+        "id": 2,
+        "title": "Repeat horizontal",
+        "type": "timeseries",
+        "gridPos": {
+          "x": 0,
+          "y": 8,
+          "w": 8,
+          "h": 8
+        },
+        "repeat": "env",
+        "repeatDirection": "h",
+        "maxPerRow": 4
+      },
+      {
+        "id": 3,
+        "title": "Repeat vertical",
+        "type": "timeseries",
+        "gridPos": {
+          "x": 0,
+          "y": 16,
+          "w": 8,
+          "h": 8
+        },
+        "repeat": "env",
+        "repeatDirection": "v"
+      }
+    ],
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "templating": {
+      "list": [
+        {
+          "name": "env",
+          "type": "custom",
+          "query": "dev,staging,prod",
+          "current": {
+            "selected": true,
+            "text": ["All"],
+            "value": ["$__all"]
+          },
+          "options": [],
+          "includeAll": true,
+          "multi": true,
+          "hide": 0
+        }
+      ]
+    },
+    "annotations": {
+      "list": []
+    },
+    "links": []
+  }
+}

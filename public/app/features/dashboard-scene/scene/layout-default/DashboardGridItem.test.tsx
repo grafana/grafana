@@ -281,3 +281,22 @@ describe('PanelRepeaterGridItem', () => {
     expect(gridItem.getClassName()).toBe('');
   });
 });
+
+describe('DashboardGridItem.handleEditChange', () => {
+  it.each([
+    { repeatDirection: undefined, width: 24 },
+    { repeatDirection: 'h' as const, width: 24 },
+    { repeatDirection: 'v' as const, width: 8 },
+  ])('sets width to $width for repeat direction $repeatDirection', ({ repeatDirection, width }) => {
+    const gridItem = new DashboardGridItem({
+      body: new VizPanel({ key: 'panel-1', pluginId: 'text' }),
+      variableName: 'server',
+      repeatDirection,
+      width: 8,
+    });
+
+    gridItem.handleEditChange();
+
+    expect(gridItem.state.width).toBe(width);
+  });
+});
