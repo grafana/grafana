@@ -146,7 +146,7 @@ describe('StateTimelinePanel', () => {
     });
 
     afterEach(() => {
-      Object.defineProperty(document.body, 'clientWidth', { value: 0, configurable: true });
+      Reflect.deleteProperty(document.body, 'clientWidth');
     });
 
     it('applies the configured legend width', () => {
