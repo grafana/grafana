@@ -76,6 +76,24 @@ func TestMiddleWareContentSecurityPolicyHeaders(t *testing.T) {
 		cfg.AppURL = "http://localhost:3000/"
 	})
 
+	middlewareScenario(t, "middleware should use configured embedding hosts in Content-Security-Policy", func(t *testing.T, sc *scenarioContext) {
+		sc.fakeReq("GET", "/api/").exec()
+		assert.Equal(t, "frame-ancestors wiki.example.com foo.example.com", sc.resp.Header().Get("Content-Security-Policy"))
+	}, func(cfg *setting.Cfg) {
+		cfg.CSPEnabled = true
+		cfg.CSPTemplate = "frame-ancestors $ALLOW_EMBEDDING_HOSTS"
+		cfg.AllowEmbeddingHosts = []string{"wiki.example.com", "foo.example.com"}
+	})
+
+	middlewareScenario(t, "middleware should use configured embedding hosts in Content-Security-Policy-Report-Only", func(t *testing.T, sc *scenarioContext) {
+		sc.fakeReq("GET", "/api/").exec()
+		assert.Equal(t, "frame-ancestors wiki.example.com foo.example.com", sc.resp.Header().Get("Content-Security-Policy-Report-Only"))
+	}, func(cfg *setting.Cfg) {
+		cfg.CSPReportOnlyEnabled = true
+		cfg.CSPReportOnlyTemplate = "frame-ancestors $ALLOW_EMBEDDING_HOSTS"
+		cfg.AllowEmbeddingHosts = []string{"wiki.example.com", "foo.example.com"}
+	})
+
 	middlewareScenario(t, "middleware can add both CSP and CSP-Report-Only", func(t *testing.T, sc *scenarioContext) {
 		sc.fakeReq("GET", "/api/").exec()
 
