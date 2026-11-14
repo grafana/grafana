@@ -2,7 +2,7 @@ import { HttpResponse, http } from 'msw';
 
 import server from '@grafana/test-utils/server';
 import { type Repository, type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
-import { getIconForKind } from 'app/features/search/service/icons';
+import { kindPath } from 'app/core/kinds/urls';
 
 import { setupProvisioningMswServer } from '../mocks/server';
 
@@ -76,9 +76,9 @@ describe('resourceKinds registry', () => {
     const connection = getKindInfoByStat({ group: 'provisioning.grafana.app', resource: 'connections' });
 
     expect(repository?.icon).toBe('code-branch');
-    expect(repository?.getRoute?.('bootstrap')).toBe('/admin/provisioning/bootstrap');
+    expect(repository && kindPath(repository, 'bootstrap')).toBe('/admin/provisioning/bootstrap');
     expect(connection?.icon).toBe('plug');
-    expect(connection?.getRoute?.('github-app')).toBe('/admin/provisioning/connections/github-app/edit');
+    expect(connection && kindPath(connection, 'github-app')).toBe('/admin/provisioning/connections/github-app/edit');
   });
 
   // They are configuration, not content: the Migrate flow must never offer to move them.
@@ -87,10 +87,6 @@ describe('resourceKinds registry', () => {
     expect(await resourceKindInfos.connection.list()).toEqual([]);
   });
 
-  it('sources icons from the search package', () => {
-    expect(resourceKindInfos.dashboard.icon).toBe(getIconForKind('dashboard'));
-    expect(resourceKindInfos.folder.icon).toBe(getIconForKind('folder'));
-  });
   it('gives each entry a `key` equal to its registry key', () => {
     // The type only requires `key` to be some ResourceKindKey; this guards against an entry pointing
     // at the wrong key (e.g. the playlist entry carrying `key: 'dashboard'`), which would silently
@@ -221,11 +217,11 @@ describe('getKindInfoByStat', () => {
   });
 });
 
-describe('getRoute', () => {
+describe('routes to a single resource', () => {
   it('builds in-app routes per kind', () => {
-    expect(resourceKindInfos.dashboard.getRoute('abc')).toBe('/d/abc');
-    expect(resourceKindInfos.folder.getRoute('xyz')).toBe('/dashboards/f/xyz');
-    expect(resourceKindInfos.playlist.getRoute('pl1')).toBe('/playlists/edit/pl1');
+    expect(kindPath(resourceKindInfos.dashboard, 'abc')).toBe('/d/abc');
+    expect(kindPath(resourceKindInfos.folder, 'xyz')).toBe('/dashboards/f/xyz');
+    expect(kindPath(resourceKindInfos.playlist, 'pl1')).toBe('/playlists/edit/pl1');
   });
 });
 

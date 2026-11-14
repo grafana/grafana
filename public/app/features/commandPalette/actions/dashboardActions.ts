@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import { t } from '@grafana/i18n';
 import { config, isFetchError } from '@grafana/runtime';
 import { useFlagDashboardNotebooks, useFlagGrafanaCmdkHybridSearch } from '@grafana/runtime/internal';
+import { CORE_KINDS } from 'app/core/kinds/coreKinds';
+import { kindHref } from 'app/core/kinds/urls';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getRecentlyViewedDashboards } from 'app/features/browse-dashboards/api/recentlyViewed';
 import { searchNotebookTitles } from 'app/features/notebook/list/notebookSearchApi';
@@ -12,7 +14,6 @@ import { notebookViewHref } from 'app/features/notebook/urls';
 import { isRootFolderUID } from 'app/features/search/constants';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { type LocationInfo } from 'app/features/search/service/types';
-import { toURL } from 'app/features/search/service/unified';
 import { extractManagerKind } from 'app/features/search/service/utils';
 
 import { searchDashboardsHybrid } from '../api/hybridSearch';
@@ -183,7 +184,8 @@ async function getHybridDashboardActions(searchQuery: string): Promise<CommandPa
   }
 
   return hits.map((hit) => {
-    const url = toURL(hit.resource.resource, hit.resource.name, hit.title);
+    // The hybrid endpoint returns dashboards only
+    const url = kindHref(CORE_KINDS.dashboard, hit.resource.name, hit.title);
     // Root-parented dashboards come back with an empty folder; collapse to the
     // synthetic "general" UID the location lookup uses for root items
     const location = isRootFolderUID(hit.folder) ? 'general' : hit.folder;

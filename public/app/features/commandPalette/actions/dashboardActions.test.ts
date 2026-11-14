@@ -13,7 +13,6 @@ import impressionSrv from 'app/core/services/impression_srv';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { searchNotebookTitles } from 'app/features/notebook/list/notebookSearchApi';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
-import { toURL } from 'app/features/search/service/unified';
 import { extractManagerKind } from 'app/features/search/service/utils';
 import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -407,7 +406,6 @@ describe('dashboardActions', () => {
           jest.doMock('../api/hybridSearch', () => ({ searchDashboardsHybrid }));
           jest.doMock('app/features/search/service/searcher', () => ({ getGrafanaSearcher }));
           jest.doMock('app/core/services/context_srv', () => ({ contextSrv }));
-          jest.doMock('app/features/search/service/unified', () => ({ toURL }));
           jest.doMock('app/features/search/service/utils', () => ({ extractManagerKind }));
           try {
             jest.isolateModules(() => {
@@ -417,7 +415,6 @@ describe('dashboardActions', () => {
             jest.dontMock('../api/hybridSearch');
             jest.dontMock('app/features/search/service/searcher');
             jest.dontMock('app/core/services/context_srv');
-            jest.dontMock('app/features/search/service/unified');
             jest.dontMock('app/features/search/service/utils');
           }
           jest.spyOn(console, 'error').mockImplementation(() => {});

@@ -17,7 +17,8 @@ import { config, getBackendSrv } from '@grafana/runtime';
 import { generatedAPI, type ListStarsApiResponse } from 'app/api/clients/collections/v1alpha1';
 import { getAPIBaseURL } from 'app/api/utils';
 import { type TermCount } from 'app/core/components/TagFilter/TagFilter';
-import kbn from 'app/core/utils/kbn';
+import { CORE_KINDS } from 'app/core/kinds/coreKinds';
+import { kindHref } from 'app/core/kinds/urls';
 import { STARRED_KINDS } from 'app/features/stars/kinds';
 import { findStarredNames, userStarsFieldSelector } from 'app/features/stars/utils';
 import { dispatch } from 'app/store/store';
@@ -510,10 +511,6 @@ async function loadLocationInfo(): Promise<Record<string, LocationInfo>> {
   return rsp;
 }
 
-export function toURL(resource: string, name: string, title: string): string {
-  if (resource === 'folders') {
-    return `${config.appSubUrl}/dashboards/f/${name}`;
-  }
-  const slug = kbn.slugifyForUrl(title);
-  return `${config.appSubUrl}/d/${name}/${slug}`;
+function toURL(resource: string, name: string, title: string): string {
+  return kindHref(resource === 'folders' ? CORE_KINDS.folder : CORE_KINDS.dashboard, name, title);
 }

@@ -24,6 +24,7 @@ import {
   useGetRepositoryFilesQuery,
   useGetRepositoryResourcesQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
+import { kindPath } from 'app/core/kinds/urls';
 
 import { type FlatTreeItem, type TreeItem } from '../types';
 import { getRepoFileUrl } from '../utils/git';
@@ -47,7 +48,8 @@ type TreeCell<T extends keyof FlatTreeItem = keyof FlatTreeItem> = CellProps<Fla
 
 function getGrafanaLink(item: TreeItem) {
   if (item.resourceName) {
-    return getKindInfoByItemType(item.type)?.getRoute?.(item.resourceName);
+    const info = getKindInfoByItemType(item.type);
+    return info && kindPath(info, item.resourceName);
   }
   return undefined;
 }
