@@ -47,7 +47,10 @@ Use `pull` to export existing alert rules to a local directory:
 
 ```bash
 gcx resources pull alertrules --path ./config/
-# ✔ 3 resources pulled, 0 errors
+```
+
+```output
+✔ 3 resources pulled, 0 errors
 ```
 
 By default, `gcx resources pull` writes JSON and names each file after `metadata.name`.
@@ -56,14 +59,20 @@ Use `push` to provision the alert rules saved into the directory.
 
 ```bash
 gcx resources push alertrules --path ./config/
-# ✔ 3 resources pushed, 0 errors
+```
+
+```output
+✔ 3 resources pushed, 0 errors
 ```
 
 To push one resource, add its `metadata.name` to the selector:
 
 ```bash
 gcx resources push alertrules/<UID> --path ./config/
-# ✔ 1 resources pushed, 0 errors
+```
+
+```output
+✔ 1 resources pushed, 0 errors
 ```
 
 {{< admonition type="note" >}}
@@ -99,32 +108,30 @@ rules.alerting.grafana.app           v1beta1   rulesequences
 
 Before pushing alert rules to a new Grafana instance, check the following requirements.
 
-1. Include the folders. 
-   
-    Alert rules belong to a folder, and that folder must exist in the target instance. If a folder is missing, the push fails with the following error:
+1. Include the folders.
 
-    ```output
-    403 Forbidden: alertrules.rules.alerting.grafana.app "<UID>" is forbidden: folder does not exist
-    ```
+   Alert rules belong to a folder, and that folder must exist in the target instance. If a folder is missing, the push fails with the following error:
 
-    You can pull folders and alert rules into the same directory and push them together. `gcx` pushes folders before other resources:
+   ```output
+   403 Forbidden: alertrules.rules.alerting.grafana.app "<UID>" is forbidden: folder does not exist
+   ```
 
+   You can pull folders and alert rules into the same directory and push them together. `gcx` pushes folders before other resources:
 
-    ```bash
-    gcx resources pull folders alertrules --path ./config/
-    gcx --context <NEW_INSTANCE> resources push folders alertrules --path ./config/
-    ```
+   ```bash
+   gcx resources pull folders alertrules --path ./config/
+   gcx --context <NEW_INSTANCE> resources push folders alertrules --path ./config/
+   ```
 
+1. Remove the group labels.
 
-1. Remove the group labels. 
+   Pulled rules might include the `grafana.com/group` and `grafana.com/group-index` labels. The target instance rejects rules with these labels when creating them:
 
-    Pulled rules might include the `grafana.com/group` and `grafana.com/group-index` labels. The target instance rejects rules with these labels when creating them:
-  
    ```output
    403 Forbidden: alertrules.rules.alerting.grafana.app "<UID>" is forbidden: cannot set group when creating a new rule
    ```
-  
-    If the push fails with this error, remove the `grafana.com/group` and `grafana.com/group-index` labels from the alert rule files and push again.
+
+   If the push fails with this error, remove the `grafana.com/group` and `grafana.com/group-index` labels from the alert rule files and push again.
 
 ## Manage resources with `gcx alert`
 
