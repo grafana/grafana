@@ -28,6 +28,16 @@ test(
     await page.setViewportSize({ width: 390, height: 844 });
     await expect(dock).toBeInViewport();
     await expect.poll(async () => (await dock.boundingBox())!.height).toBeLessThanOrEqual(338);
+    const placeholder = scrollContainer.getByText('This panel is pinned above the dashboard.', { exact: true });
+    const origin = placeholder.locator('xpath=ancestor::div[@tabindex="-1"][1]');
+    await origin.evaluate((element) => {
+      element.parentElement!.style.height = '160px';
+    });
+    await expect
+      .poll(() => origin.evaluate((element) => element.parentElement!.getBoundingClientRect().height))
+      .toBe(160);
+    await expect.poll(async () => (await origin.boundingBox())!.height).toBe(160);
+
     await panels.selectMenuItem(title, ['Unpin panel']);
     await scrollContainer.evaluate((element) => element.scrollTo(0, 0));
     await expect(panels.getPanel(title)).toBeVisible();

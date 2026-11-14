@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { Fragment, StrictMode, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { of } from 'rxjs';
 import { act, render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
@@ -27,6 +27,12 @@ function SearchContents({ variable, onMount }: { variable: LocalValueVariable; o
   );
 }
 
+function MountMeasurement({ onMeasure }: { onMeasure: (connected: boolean) => void }) {
+  const element = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => onMeasure(element.current!.isConnected), [onMeasure]);
+  return <div ref={element}>Measured panel</div>;
+}
+
 function setup(available = true) {
   const menu = new VizPanelMenu({ $behaviors: [panelMenuBehavior] });
   const panel = new VizPanel({ key: 'panel-1', pluginId: 'text', menu });
@@ -49,6 +55,26 @@ function setup(available = true) {
 
 describe('panel pinning', () => {
   beforeAll(() => setGetObservablePluginLinks(() => of([])));
+  it.each([false, true])('attaches the portal before child layout effects run (Strict Mode: %s)', (strict) => {
+    const panel = new VizPanel({ key: 'panel-1', pluginId: 'text' });
+    const dashboard = new DashboardScene({ body: DefaultGridLayoutManager.fromVizPanels([panel]) });
+    const onMeasure = jest.fn();
+    const Wrapper = strict ? StrictMode : Fragment;
+    render(
+      <Wrapper>
+        <PanelPinningProvider dashboard={dashboard} enabled>
+          <PinnedPanelDock />
+          <PinnablePanel panel={panel}>
+            <MountMeasurement onMeasure={onMeasure} />
+          </PinnablePanel>
+        </PanelPinningProvider>
+      </Wrapper>
+    );
+    expect(onMeasure).toHaveBeenCalled();
+    expect(onMeasure.mock.calls.every(([connected]) => connected)).toBe(true);
+    expect(screen.getByText('Measured panel')).toBeVisible();
+  });
+
   it('keeps input state, focus, and variable updates when pinning and unpinning the original panel', async () => {
     const { panel, dashboard, variable, onMount } = setup();
     const input = screen.getByRole('textbox', { name: 'Search' });

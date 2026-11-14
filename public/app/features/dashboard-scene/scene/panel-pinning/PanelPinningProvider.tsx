@@ -1,6 +1,8 @@
 import { css } from '@emotion/css';
 import {
   createContext,
+  useCallback,
+  useEffect,
   type ReactNode,
   useContext,
   useLayoutEffect,
@@ -89,11 +91,22 @@ export function PinnablePanel({ panel, children }: { panel: VizPanel; children: 
 function PanelHost({ panel, pinning, children }: { panel: VizPanel; pinning: PanelPinning; children: ReactNode }) {
   const origin = useRef<HTMLDivElement>(null);
   const styles = useStyles2(getStyles);
-  const [host] = useState(() => {
-    const element = document.createElement('div');
-    element.className = styles.host;
-    return element;
-  });
+  const hostRef = useRef<HTMLDivElement | null>(null);
+  const [host, setHost] = useState<HTMLDivElement | null>(null);
+  const attachOrigin = useCallback(
+    (element: HTMLDivElement | null) => {
+      origin.current = element;
+      if (element && !hostRef.current) {
+        const container = document.createElement('div');
+        container.className = styles.host;
+        element.appendChild(container);
+        hostRef.current = container;
+        // Mount descendants only after the portal container is connected and measurable.
+        setHost(container);
+      }
+    },
+    [styles.host]
+  );
   const pinned = useSyncExternalStore(pinning.subscribe, pinning.getSnapshot);
   const isPinned = pinned?.panel === panel;
 
@@ -105,24 +118,37 @@ function PanelHost({ panel, pinning, children }: { panel: VizPanel; pinning: Pan
   }, [panel, pinning]);
 
   useLayoutEffect(() => {
+    if (!host) {
+      return;
+    }
     const target = isPinned ? pinning.getDock() : origin.current;
     const focused = host.contains(document.activeElement) ? document.activeElement : null;
-    target?.appendChild(host);
+    if (target && host.parentElement !== target) {
+      target.appendChild(host);
+    }
     // Keep the same portal container so panel inputs, subscriptions, and query runners survive pin/unpin.
     if (focused instanceof HTMLElement) {
       focused.focus({ preventScroll: true });
     }
   }, [host, isPinned, pinning]);
 
-  useLayoutEffect(() => () => host.remove(), [host]);
+  useEffect(() => {
+    const element = origin.current;
+    return () => {
+      // Strict Mode replays effects while the origin stays mounted; keep the host attached then.
+      if (!element?.isConnected) {
+        host?.remove();
+      }
+    };
+  }, [host]);
 
   return (
     <>
       <div
-        ref={origin}
+        ref={attachOrigin}
         tabIndex={-1}
         className={styles.origin}
-        style={isPinned ? { height: pinned.height } : undefined}
+        style={isPinned ? { aspectRatio: pinned.aspectRatio } : undefined}
       >
         {isPinned && (
           <div className={styles.placeholder}>
@@ -131,7 +157,7 @@ function PanelHost({ panel, pinning, children }: { panel: VizPanel; pinning: Pan
           </div>
         )}
       </div>
-      {createPortal(children, host)}
+      {host && createPortal(children, host)}
     </>
   );
 }

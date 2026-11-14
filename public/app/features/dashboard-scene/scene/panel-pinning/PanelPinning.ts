@@ -5,6 +5,7 @@ import { type DashboardScene } from '../DashboardScene';
 export interface PinnedPanel {
   panel: VizPanel;
   height: number;
+  aspectRatio?: string;
 }
 
 /** Viewer-only state: pinning must not change the saved dashboard or its dirty state. */
@@ -47,7 +48,12 @@ export class PanelPinning {
     if (!element || !this.enabled) {
       return;
     }
-    this.pinned = { panel, height: Math.max(100, element.getBoundingClientRect().height) };
+    const { width, height } = element.getBoundingClientRect();
+    this.pinned = {
+      panel,
+      height: Math.max(100, height),
+      aspectRatio: width > 0 && height > 0 ? `${width} / ${height}` : undefined,
+    };
     this.notify();
   }
 

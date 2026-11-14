@@ -28,7 +28,7 @@ describe('PanelPinning', () => {
     const removeSecond = pinning.register(second, secondOrigin);
 
     pinning.pin(first);
-    expect(pinning.getSnapshot()).toEqual({ panel: first, height: 280 });
+    expect(pinning.getSnapshot()).toEqual({ panel: first, height: 280, aspectRatio: '500 / 280' });
     pinning.pin(second);
     expect(pinning.getSnapshot()).toEqual({ panel: second, height: 100 });
     removeFirst();
