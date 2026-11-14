@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/personalaccesstokens/patpolicy"
 	"github.com/grafana/grafana/pkg/services/personalaccesstokens/patstore"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginauth"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -47,7 +48,7 @@ func ProvideRegistration(
 	socialService social.Service, cache *remotecache.RemoteCache,
 	ldapService service.LDAP, settingsProvider setting.Provider,
 	tracer tracing.Tracer, tempUserService tempuser.Service, notificationService notifications.Service,
-	pluginAuth *pluginauth.Config, patStore patstore.Store,
+	pluginAuth *pluginauth.Config, patStore patstore.Store, patPolicy patpolicy.Policy,
 ) (Registration, error) {
 	logger := log.New("authn.registration")
 
@@ -61,10 +62,9 @@ func ProvideRegistration(
 
 	patEnabled := func(ctx context.Context) bool {
 		//nolint:staticcheck // not yet migrated to OpenFeature
-		return features.IsEnabledGlobally(featuremgmt.FlagPersonalAccessTokens)
+		return features.IsEnabledGlobally(featuremgmt.FlagPersonalAccessTokens) && patPolicy.InstanceEnabled(ctx)
 	}
-	patOrgEnabled := func(context.Context, int64) bool { return true }
-	authnSvc.RegisterClient(clients.ProvidePersonalToken(patStore, userService, orgService, patEnabled, patOrgEnabled, func() bool { return cfg.PersonalAccessTokens.AllowAdminActions }, tracer).WithTrustedProxies(cfg.PersonalAccessTokens.TrustedProxyHeader, cfg.PersonalAccessTokens.TrustedProxies))
+	authnSvc.RegisterClient(clients.ProvidePersonalToken(patStore, userService, orgService, patEnabled, patPolicy.OrgEnabled, func() bool { return cfg.PersonalAccessTokens.AllowAdminActions }, tracer).WithTrustedProxies(cfg.PersonalAccessTokens.TrustedProxyHeader, cfg.PersonalAccessTokens.TrustedProxies))
 
 	if cfg.LoginCookieName != "" {
 		authnSvc.RegisterClient(clients.ProvideSession(cfgProvider, sessionService, authInfoService, tracer))

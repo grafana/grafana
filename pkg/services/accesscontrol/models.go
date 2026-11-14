@@ -364,6 +364,15 @@ const (
 	ActionUsersQuotasUpdate      = "users.quotas:write"
 	ActionUsersPermissionsRead   = "users.permissions:read"
 
+	// Personal access token actions. Without a scope they apply to the caller's own tokens;
+	// with a users scope they apply to the tokens of those users.
+	// nolint:gosec
+	ActionUsersTokensCreate = "users.tokens:create"
+	// nolint:gosec
+	ActionUsersTokensRead = "users.tokens:read"
+	// nolint:gosec
+	ActionUsersTokensDelete = "users.tokens:delete"
+
 	// Org actions
 	ActionOrgsRead             = "orgs:read"
 	ActionOrgsPreferencesRead  = "orgs.preferences:read"

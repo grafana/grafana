@@ -86,6 +86,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/personalaccesstokens"
+	"github.com/grafana/grafana/pkg/services/personalaccesstokens/patpolicy"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
@@ -183,6 +185,8 @@ type HTTPServer struct {
 	queryDataService             query.Service
 	diagnosticsMetrics           *diagnostics.Metrics
 	serviceAccountsService       serviceaccounts.Service
+	personalTokenService         personalaccesstokens.Service
+	personalTokenPolicy          *patpolicy.Service
 	authInfoService              login.AuthInfoService
 	NotificationService          notifications.Service
 	DashboardService             dashboards.DashboardService
@@ -272,7 +276,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	annotationMigrationProxy *annotationsapi.MigrationProxy,
 	folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, dashboardVersionService dashver.Service,
-	starService star.Service, csrfService csrf.Service,
+	starService star.Service, csrfService csrf.Service, personalTokenService personalaccesstokens.Service, personalTokenPolicy *patpolicy.Service,
 	apiKeyService apikey.Service, kvStore kvstore.KVStore, usageStats usagestats.Service,
 	secretsMigrator secrets.Migrator, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
@@ -366,6 +370,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		dashboardPermissionsService:  dashboardPermissionsService,
 		dashboardVersionService:      dashboardVersionService,
 		starService:                  starService,
+		personalTokenService:         personalTokenService,
+		personalTokenPolicy:          personalTokenPolicy,
 		apiKeyService:                apiKeyService,
 		kvStore:                      kvStore,
 		PublicDashboardsApi:          pubdashApi,
