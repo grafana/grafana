@@ -1658,7 +1658,7 @@ Options are `debug`, `info`, `warn`, `error`. `critical` is an alias for `error`
 Optional settings to set different levels for specific loggers.
 For example: `filters = sqlstore:debug`
 
-You can use multiple filters with a comma-seperated list:
+You can use multiple filters with a comma-separated list:
 For example: `filters = sqlstore:debug,plugins:info`
 
 The equivalent for a `docker-compose.yaml` looks like this:
@@ -2224,7 +2224,7 @@ This section controls retention of annotations automatically created while evalu
 
 #### `max_age`
 
-Configures for how long alert annotations are stored. Default is 0, which keeps them forever. This setting should be expressed as an duration. Ex 6h (hours), 10d (days), 2w (weeks), 1M (month).
+Configures for how long alert annotations are stored. Default is 0, which keeps them forever. This setting should be expressed as a duration. Ex 6h (hours), 10d (days), 2w (weeks), 1M (month).
 
 #### `max_annotations_to_keep`
 
