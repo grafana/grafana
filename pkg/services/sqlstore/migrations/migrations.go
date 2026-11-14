@@ -195,4 +195,6 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 	ualert.ExpandAlertRuleMissingSeriesEvalsToResolve(mg)
 
 	accesscontrol.AddReceiverUIDPermissionsMigration(mg)
+
+	addPersonalAccessTokenMigrations(mg)
 }
