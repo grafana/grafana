@@ -16,7 +16,6 @@ import {
   getMigratableKinds,
   getReportedGroup,
   getRepositoryRoute,
-  coversGroup,
   isResourceKindAvailable,
   readImmediateParent,
 } from './resourceKinds';
@@ -222,12 +221,6 @@ describe('getRoute', () => {
     expect(resourceKindInfos.folder.getRoute('xyz')).toBe('/dashboards/f/xyz');
     expect(resourceKindInfos.playlist.getRoute('pl1')).toBe('/playlists/edit/pl1');
   });
-
-  it('encodes the object name in its page path', () => {
-    expect(resourceKindInfos.connection.getRoute('git hub/app')).toBe(
-      '/admin/provisioning/connections/git%20hub%2Fapp/edit'
-    );
-  });
 });
 
 describe('getRepositoryRoute', () => {
@@ -369,21 +362,6 @@ describe('getMigratableKinds', () => {
 // reports for an individual resource, in availableResources and on a job result row.
 describe('collection groups', () => {
   const testdata = 'grafana-testdata-datasource.datasource.grafana.app';
-
-  it('matches a served group inside the collection as well as the collection itself', () => {
-    expect(coversGroup(resourceKindInfos.datasource, testdata)).toBe(true);
-    expect(coversGroup(resourceKindInfos.datasource, 'datasource.grafana.app')).toBe(true);
-  });
-
-  it('does not match a group that merely looks similar', () => {
-    expect(coversGroup(resourceKindInfos.datasource, 'notdatasource.grafana.app')).toBe(false);
-    expect(coversGroup(resourceKindInfos.datasource, 'datasource.grafana.app.evil')).toBe(false);
-  });
-
-  it('leaves a kind served under its own group matching exactly', () => {
-    expect(coversGroup(resourceKindInfos.dashboard, 'dashboard.grafana.app')).toBe(true);
-    expect(coversGroup(resourceKindInfos.dashboard, 'v2.dashboard.grafana.app')).toBe(false);
-  });
 
   it('resolves a resource reported under a served group back to the kind', () => {
     expect(getKindInfoByGroupKind(testdata, 'DataSource')).toBe(resourceKindInfos.datasource);
