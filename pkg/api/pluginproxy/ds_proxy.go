@@ -400,6 +400,19 @@ func (proxy *DataSourceProxy) validateRequest() error {
 	}
 
 	// Trailing validation below this point for routes that were not matched
+	// Loki supports POST for its read-only query endpoint even though the
+	// plugin route metadata only declares GET. Keep other write methods and
+	// paths subject to the plugin route allow-list below.
+	if proxy.dataSource.PluginType() == datasources.DS_LOKI && proxy.ctx.Req.Method == http.MethodPost {
+		cleanPath, err := plugins.CleanRelativePath(proxy.proxyPath)
+		if err != nil {
+			return err
+		}
+		if cleanPath == "api/v1/query" {
+			return nil
+		}
+	}
+
 	switch proxy.dataSource.PluginType() {
 	case datasources.DS_PROMETHEUS,
 		datasources.DS_AMAZON_PROMETHEUS,
