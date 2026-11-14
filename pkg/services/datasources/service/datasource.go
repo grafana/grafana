@@ -22,6 +22,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	queryV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -313,6 +314,9 @@ func (s *Service) ListConnections(ctx context.Context, query queryV0.DataSourceC
 	return result, nil
 }
 
+// grafanaAnnotationPrefix bounds what a connection listing carries.
+const grafanaAnnotationPrefix = "grafana.app/"
+
 func (s *Service) asConnection(ds *datasources.DataSource) (*queryV0.DataSourceConnection, error) {
 	var labels map[string]string
 	if ds.IsDefault {
@@ -321,13 +325,38 @@ func (s *Service) asConnection(ds *datasources.DataSource) (*queryV0.DataSourceC
 		}
 	}
 
-	return &queryV0.DataSourceConnection{
+	conn := &queryV0.DataSourceConnection{
 		Title:    ds.Name,
 		APIGroup: fmt.Sprintf("%s.datasource.grafana.app", ds.Type),
 		Name:     ds.UID,
 		Plugin:   ds.Type,
 		Labels:   labels,
-	}, nil
+	}
+
+	conn.Annotations = connectionAnnotations(ds)
+	return conn, nil
+}
+
+// connectionAnnotations rebuilds the grafana.app annotations of a data source for a
+// connection listing: the manager from its columns, the rest from the blob. Keys
+// outside grafana.app are dropped -- see DataSourceConnection.Annotations.
+func connectionAnnotations(ds *datasources.DataSource) map[string]string {
+	annotations := make(map[string]string, len(ds.Annotations)+2)
+	for k, v := range ds.Annotations {
+		if strings.HasPrefix(k, grafanaAnnotationPrefix) {
+			annotations[k] = v
+		}
+	}
+	if ds.ManagerKind != "" {
+		annotations[utils.AnnoKeyManagerKind] = ds.ManagerKind
+	}
+	if ds.ManagerIdentity != "" {
+		annotations[utils.AnnoKeyManagerIdentity] = ds.ManagerIdentity
+	}
+	if len(annotations) == 0 {
+		return nil
+	}
+	return annotations
 }
 
 func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) (*datasources.DataSource, error) {

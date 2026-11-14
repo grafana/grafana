@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -69,14 +70,26 @@ func (dc *DatasourceProvisioner) provisionDataSources(ctx context.Context, cfg *
 		}
 
 		if errors.Is(err, datasources.ErrDataSourceNotFound) {
-			insertCmd := createInsertCommand(ds)
+			insertCmd := createInsertCommand(ds, cfg.SourceFile)
 			dc.log.Info("inserting datasource from configuration", "name", insertCmd.Name, "uid", insertCmd.UID)
 			_, err = dc.dsService.AddDataSource(ctx, insertCmd)
 			if err != nil {
 				return err
 			}
 		} else {
-			updateCmd := createUpdateCommand(ds, dataSource.ID)
+			if managedElsewhere(dataSource) {
+				// Matching is by name, so a file can land on a data source another
+				// manager already owns. Taking it over would rewrite its manager to
+				// classic-file-provisioning, which the app platform refuses for any
+				// other writer; doing it here silently is worse, not better.
+				dc.log.Warn("skipping datasource managed by another manager",
+					"name", dataSource.Name, "uid", dataSource.UID,
+					"managedBy", dataSource.ManagerKind, "managerId", dataSource.ManagerIdentity,
+					"file", cfg.SourceFile)
+				continue
+			}
+
+			updateCmd := createUpdateCommand(ds, dataSource.ID, cfg.SourceFile)
 			dc.log.Debug("updating datasource from configuration", "name", updateCmd.Name, "uid", updateCmd.UID)
 			if _, err := dc.dsService.UpdateDataSource(ctx, updateCmd); err != nil {
 				if errors.Is(err, datasources.ErrDataSourceUpdatingOldVersion) {
@@ -132,6 +145,19 @@ func (dc *DatasourceProvisioner) provisionCorrelations(ctx context.Context, cfg 
 		}
 	}
 	return nil
+}
+
+// managedElsewhere reports whether a data source already belongs to a manager that is
+// not file provisioning, and so must not be taken over by a config file.
+func managedElsewhere(ds *datasources.DataSource) bool {
+	switch utils.ParseManagerKindString(ds.ManagerKind) {
+	case utils.ManagerKindUnknown,
+		utils.ManagerKindClassicFP, //nolint:staticcheck
+		utils.ManagerKindFileProvisioning:
+		return false
+	default:
+		return true
+	}
 }
 
 type DataSourceMapKey struct {

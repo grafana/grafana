@@ -3,6 +3,7 @@ package converter
 import (
 	"encoding/json"
 	"errors"
+	"maps"
 	"os"
 	"path/filepath"
 	"testing"
@@ -10,7 +11,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/datasources"
 )
@@ -238,4 +242,166 @@ func TestConverter_DefaultLabel(t *testing.T) {
 			assert.Equal(t, tt.isDefault, legacy.IsDefault, "legacy conversion")
 		})
 	}
+}
+
+func TestAnnotations(t *testing.T) {
+	converter := NewConverter(
+		types.OrgNamespaceFormatter,
+		"testdata.grafana.datasource.app",
+		"grafana-testdata-datasource",
+		[]string{"testdata"},
+	)
+
+	tests := []struct {
+		name        string
+		annotations map[string]string
+		stored      map[string]string // the annotations column
+		kind        string            // the manager_kind column
+		identity    string            // the manager_identity column
+	}{
+		{
+			name: "the manager goes to columns, the rest to the blob",
+			annotations: map[string]string{
+				utils.AnnoKeyManagerKind:        string(utils.ManagerKindRepo),
+				utils.AnnoKeyManagerIdentity:    "my-repo",
+				utils.AnnoKeyManagerAllowsEdits: "true",
+				utils.AnnoKeySourcePath:         "datasources/prom.yaml",
+				utils.AnnoKeySourceChecksum:     "abc123",
+				utils.AnnoKeySourceTimestamp:    "1731283200000",
+			},
+			stored: map[string]string{
+				utils.AnnoKeyManagerAllowsEdits: "true",
+				utils.AnnoKeySourcePath:         "datasources/prom.yaml",
+				utils.AnnoKeySourceChecksum:     "abc123",
+				utils.AnnoKeySourceTimestamp:    "1731283200000",
+			},
+			kind:     string(utils.ManagerKindRepo),
+			identity: "my-repo",
+		},
+		{
+			name: "derived annotations are not in the blob",
+			annotations: map[string]string{
+				utils.AnnoKeyManagerKind:      string(utils.ManagerKindTerraform),
+				utils.AnnoKeyManagerIdentity:  "terraform-provider",
+				utils.AnnoKeyUpdatedTimestamp: "2026-01-01T00:00:00Z",
+			},
+			kind:     string(utils.ManagerKindTerraform),
+			identity: "terraform-provider",
+		},
+		{
+			name: "annotations the converter does not know about are kept",
+			annotations: map[string]string{
+				utils.AnnoKeyMessage: "committed from the UI",
+			},
+			stored: map[string]string{
+				utils.AnnoKeyMessage: "committed from the UI",
+			},
+		},
+		{
+			name: "only derived annotations stores nothing",
+			annotations: map[string]string{
+				utils.AnnoKeyUpdatedTimestamp: "2026-01-01T00:00:00Z",
+			},
+		},
+		{
+			name: "no annotations",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			obj := &datasourceV0.DataSource{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:        "ds-uid",
+					Namespace:   "default",
+					Annotations: tt.annotations,
+				},
+			}
+
+			add, err := converter.ToAddCommand(obj)
+			require.NoError(t, err)
+			require.Equal(t, tt.stored, add.Annotations)
+			require.Equal(t, tt.kind, add.ManagerKind)
+			require.Equal(t, tt.identity, add.ManagerIdentity)
+
+			update, err := converter.ToUpdateCommand(obj)
+			require.NoError(t, err)
+			require.Equal(t, tt.stored, update.Annotations)
+			require.Equal(t, tt.kind, update.ManagerKind)
+			require.Equal(t, tt.identity, update.ManagerIdentity)
+			require.True(t, update.UpdateAnnotations, "a PUT is authoritative for the annotations")
+
+			// Reading puts the columns back alongside the blob.
+			back, err := converter.AsDataSource(&datasources.DataSource{
+				UID:             "ds-uid",
+				Type:            "grafana-testdata-datasource",
+				Annotations:     add.Annotations,
+				ManagerKind:     add.ManagerKind,
+				ManagerIdentity: add.ManagerIdentity,
+			})
+			require.NoError(t, err)
+
+			wantBack := map[string]string{}
+			maps.Copy(wantBack, tt.stored)
+			if tt.kind != "" {
+				wantBack[utils.AnnoKeyManagerKind] = tt.kind
+			}
+			if tt.identity != "" {
+				wantBack[utils.AnnoKeyManagerIdentity] = tt.identity
+			}
+			if len(wantBack) == 0 {
+				wantBack = nil
+			}
+			require.Equal(t, wantBack, back.Annotations)
+		})
+	}
+
+	t.Run("manager and source properties survive the round trip", func(t *testing.T) {
+		obj := &datasourceV0.DataSource{
+			ObjectMeta: metav1.ObjectMeta{Name: "ds-uid", Namespace: "default"},
+		}
+		meta, err := utils.MetaAccessor(obj)
+		require.NoError(t, err)
+		meta.SetManagerProperties(utils.ManagerProperties{
+			Kind:        utils.ManagerKindRepo,
+			Identity:    "my-repo",
+			AllowsEdits: true,
+		})
+		meta.SetSourceProperties(utils.SourceProperties{
+			Path:            "datasources/prom.yaml",
+			Checksum:        "abc123",
+			TimestampMillis: 1731283200000,
+		})
+
+		add, err := converter.ToAddCommand(obj)
+		require.NoError(t, err)
+
+		back, err := converter.AsDataSource(&datasources.DataSource{
+			UID:             "ds-uid",
+			Type:            "grafana-testdata-datasource",
+			Annotations:     add.Annotations,
+			ManagerKind:     add.ManagerKind,
+			ManagerIdentity: add.ManagerIdentity,
+		})
+		require.NoError(t, err)
+
+		backMeta, err := utils.MetaAccessor(back)
+		require.NoError(t, err)
+
+		manager, managed := backMeta.GetManagerProperties()
+		require.True(t, managed)
+		require.Equal(t, utils.ManagerProperties{
+			Kind:        utils.ManagerKindRepo,
+			Identity:    "my-repo",
+			AllowsEdits: true,
+		}, manager)
+
+		source, hasSource := backMeta.GetSourceProperties()
+		require.True(t, hasSource)
+		require.Equal(t, utils.SourceProperties{
+			Path:            "datasources/prom.yaml",
+			Checksum:        "abc123",
+			TimestampMillis: 1731283200000,
+		}, source)
+	})
 }

@@ -150,4 +150,33 @@ func addDataSourceMigration(mg *Migrator) {
 	mg.AddMigration("Update json_data column to MediumText", NewRawSQLMigration("").
 		Mysql("ALTER TABLE data_source MODIFY COLUMN json_data MEDIUMTEXT;"),
 	)
+
+	// Holds metadata.annotations of the app platform API (manager and source
+	// properties). One opaque column rather than a column per annotation: the set
+	// grows, and a shipped migration can never be changed again.
+	//
+	// MEDIUMTEXT, not TEXT, because a kubectl-managed resource carries the whole
+	// object inside kubectl.kubernetes.io/last-applied-configuration, which would not
+	// fit MySQL's 64KB TEXT. Dropping that key instead would break apply semantics for
+	// ManagerKindKubectl, which needs it to diff. json_data and secure_json_data in
+	// this same table were widened the same way, just after the fact.
+	mg.AddMigration("Add annotations column", NewAddColumnMigration(tableV2, &Column{
+		Name: "annotations", Type: DB_MediumText, Nullable: true,
+	}))
+
+	// The manager is the one part of the metadata worth querying by -- "everything
+	// repo X manages" has to be answerable without the search index -- so it gets
+	// columns of its own and is derived out of the blob above rather than duplicated
+	// into it.
+	mg.AddMigration("Add manager_kind column", NewAddColumnMigration(tableV2, &Column{
+		Name: "manager_kind", Type: DB_NVarchar, Length: 40, Nullable: true,
+	}))
+
+	mg.AddMigration("Add manager_identity column", NewAddColumnMigration(tableV2, &Column{
+		Name: "manager_identity", Type: DB_NVarchar, Length: 190, Nullable: true,
+	}))
+
+	mg.AddMigration("add index data_source.org_id_manager", NewAddIndexMigration(tableV2, &Index{
+		Cols: []string{"org_id", "manager_kind", "manager_identity"},
+	}))
 }

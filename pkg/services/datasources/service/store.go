@@ -176,6 +176,27 @@ func (ss *SqlStore) GetDataSourcesByType(ctx context.Context, query *datasources
 	})
 }
 
+// GetDataSourcesByManager answers "everything this manager owns" from SQL, without
+// the unified search index. The manager lives in columns rather than the annotation
+// blob precisely so this query is possible.
+func (ss *SqlStore) GetDataSourcesByManager(ctx context.Context, query *datasources.GetDataSourcesByManagerQuery) ([]*datasources.DataSource, error) {
+	if query.ManagerKind == "" {
+		return nil, fmt.Errorf("manager kind cannot be empty")
+	}
+
+	where := "org_id=? AND manager_kind=?"
+	args := []any{query.OrgID, query.ManagerKind}
+	if query.ManagerIdentity != "" {
+		where += " AND manager_identity=?"
+		args = append(args, query.ManagerIdentity)
+	}
+
+	dataSources := make([]*datasources.DataSource, 0)
+	return dataSources, ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		return sess.Where(where, args...).Asc("id").Find(&dataSources)
+	})
+}
+
 // GetPrunableProvisionedDataSources returns all data sources that can be pruned
 func (ss *SqlStore) GetPrunableProvisionedDataSources(ctx context.Context) ([]*datasources.DataSource, error) {
 	prunableQuery := "is_prunable  = ?"
@@ -325,6 +346,9 @@ func (ss *SqlStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataS
 			UID:             cmd.UID,
 			IsPrunable:      cmd.IsPrunable,
 			APIVersion:      cmd.APIVersion,
+			Annotations:     cmd.Annotations,
+			ManagerKind:     cmd.ManagerKind,
+			ManagerIdentity: cmd.ManagerIdentity,
 		}
 
 		if _, err := sess.Insert(ds); err != nil {
@@ -401,6 +425,9 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 			UID:             cmd.UID,
 			IsPrunable:      cmd.IsPrunable,
 			APIVersion:      cmd.APIVersion,
+			Annotations:     cmd.Annotations,
+			ManagerKind:     cmd.ManagerKind,
+			ManagerIdentity: cmd.ManagerIdentity,
 		}
 
 		sess.UseBool("is_default")
@@ -419,6 +446,10 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 		// secure json data to the unified secrets table.
 		sess.MustCols("secure_json_data")
 		sess.MustCols("api_version")
+		if cmd.UpdateAnnotations {
+			// Only an authoritative caller clears these; see UpdateDataSourceCommand.UpdateAnnotations.
+			sess.MustCols("annotations", "manager_kind", "manager_identity")
+		}
 
 		var updateSession *xorm.Session
 		if cmd.Version != 0 {

@@ -21,7 +21,23 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/storage/legacysql/legacyannotations"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
+)
+
+// annotationPolicy records which annotations the data_source table keeps in columns
+// of its own -- the updated timestamp, and the manager so it stays queryable. Every
+// other annotation goes to the `annotations` blob.
+var annotationPolicy = legacyannotations.NewPolicy(
+	utils.AnnoKeyUpdatedTimestamp,
+	utils.AnnoKeyManagerKind,
+	utils.AnnoKeyManagerIdentity,
+).Dropping(
+	// kubectl apply records the manifest it sent, and a data source manifest can
+	// carry raw secure.<key>.create values. The annotations column is not encrypted
+	// and is returned on every read, so this one is never stored. kubectl falls back
+	// to a two-way merge without it, which loses field deletions but not secrets.
+	utils.AnnoKeyKubectlLastAppliedConfig,
 )
 
 type Converter struct {
@@ -90,6 +106,18 @@ func (r *Converter) AsDataSource(ds *datasources.DataSource) (*datasourceV0.Data
 			}
 		}
 	}
+
+	if ds.ManagerKind != "" {
+		if obj.Annotations == nil {
+			obj.Annotations = make(map[string]string, 2)
+		}
+		obj.Annotations[utils.AnnoKeyManagerKind] = ds.ManagerKind
+		if ds.ManagerIdentity != "" {
+			obj.Annotations[utils.AnnoKeyManagerIdentity] = ds.ManagerIdentity
+		}
+	}
+
+	annotationPolicy.Apply(obj, ds.Annotations)
 
 	if ds.APIVersion != "" {
 		obj.APIVersion = fmt.Sprintf("%s/%s", r.group, ds.APIVersion)
@@ -166,6 +194,9 @@ func (r *Converter) ToAddCommand(ds *datasourceV0.DataSource) (*datasources.AddD
 		IsDefault:       isDefault,
 	}
 
+	cmd.Annotations = annotationPolicy.ToStore(ds)
+	cmd.ManagerKind, cmd.ManagerIdentity = managerColumns(ds)
+
 	jsonData := ds.Spec.JSONData()
 	if jsonData != nil {
 		cmd.JsonData = simplejson.NewFromAny(jsonData)
@@ -173,6 +204,12 @@ func (r *Converter) ToAddCommand(ds *datasourceV0.DataSource) (*datasources.AddD
 
 	cmd.SecureJsonData = toSecureJsonData(ds)
 	return cmd, nil
+}
+
+// managerColumns reads the manager annotations that the data_source table keeps in
+// columns. Policy.ToStore drops them from the blob, so these are the only copy.
+func managerColumns(ds *datasourceV0.DataSource) (kind string, identity string) {
+	return ds.Annotations[utils.AnnoKeyManagerKind], ds.Annotations[utils.AnnoKeyManagerIdentity]
 }
 
 func (r *Converter) ToUpdateCommand(ds *datasourceV0.DataSource) (*datasources.UpdateDataSourceCommand, error) {
@@ -207,6 +244,12 @@ func (r *Converter) ToUpdateCommand(ds *datasourceV0.DataSource) (*datasources.U
 		// The only field different than add
 		Version: version,
 	}
+
+	cmd.Annotations = annotationPolicy.ToStore(ds)
+	cmd.ManagerKind, cmd.ManagerIdentity = managerColumns(ds)
+	// A PUT carries the whole object, so dropping the annotations means releasing
+	// the resource. The legacy HTTP API has no such annotations and leaves this false.
+	cmd.UpdateAnnotations = true
 
 	jsonData := ds.Spec.JSONData()
 	if jsonData != nil {
@@ -266,6 +309,9 @@ func (r Converter) AsLegacyDatasource(ds *datasourceV0.DataSource) (*datasources
 			legacyDS.ID, _ = strconv.ParseInt(idStr, 10, 64)
 		}
 	}
+
+	legacyDS.Annotations = annotationPolicy.ToStore(ds)
+	legacyDS.ManagerKind, legacyDS.ManagerIdentity = managerColumns(ds)
 
 	if jsonData := ds.Spec.JSONData(); jsonData != nil {
 		legacyDS.JsonData = simplejson.NewFromAny(jsonData)

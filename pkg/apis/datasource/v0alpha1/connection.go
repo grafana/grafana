@@ -42,6 +42,17 @@ type DataSourceConnection struct {
 	Plugin string `json:"plugin,omitempty"`
 
 	Labels map[string]string `json:"labels,omitempty"`
+
+	// The grafana.app annotations of the underlying data source: who manages this
+	// connection and where it came from. A cross-type listing is the only place that
+	// can answer "is this provisioned, and from which file" without fetching every
+	// data source in turn, which is what the provisioned badge and the view-source
+	// link need.
+	//
+	// Only grafana.app keys are carried. Third-party annotations are not: a client
+	// such as kubectl stores the whole object in one of its own, and this endpoint
+	// lists up to ten thousand connections.
+	Annotations map[string]string `json:"annotations,omitempty"`
 }
 
 func (DataSourceConnection) OpenAPIModelName() string {
