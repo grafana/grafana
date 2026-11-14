@@ -20,12 +20,12 @@ function pickBestJoinField(data: DataFrame[]): FieldMatcher {
 
   for (let i = 1; i < data.length; i++) {
     const names: string[] = [];
-    for (const f of data[0].fields) {
+    for (const f of data[i].fields) {
       if (f.type === FieldType.number) {
         names.push(f.name);
       }
     }
-    common = common.filter((v) => !names.includes(v));
+    common = common.filter((v) => names.includes(v));
   }
 
   return fieldMatchers.get(FieldMatcherID.byName).get(common[0]);
