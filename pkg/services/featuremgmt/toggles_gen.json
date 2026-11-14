@@ -5879,21 +5879,6 @@
     },
     {
       "metadata": {
-        "name": "reverseColorScheme",
-        "resourceVersion": "1793856728437",
-        "creationTimestamp": "2026-11-05T05:32:08Z",
-        "deletionTimestamp": "2026-11-12T06:41:15Z"
-      },
-      "spec": {
-        "description": "Enable the option to reverse by value color schemes",
-        "stage": "experimental",
-        "codeowner": "@grafana/dataviz-squad",
-        "frontend": true,
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
         "name": "rolePickerDrawer",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2024-09-26T12:51:38Z"
