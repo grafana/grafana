@@ -36,6 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 var (
@@ -122,6 +123,7 @@ func RegisterAPIService(
 	tracer tracing.Tracer,
 	legacyDatasourceLookup service.LegacyDataSourceLookup,
 	exprService *expr.Service,
+	unified resource.ResourceClient,
 ) (*QueryAPIBuilder, error) {
 	if !featuremgmt.AnyEnabled(features,
 		featuremgmt.FlagQueryService,
@@ -155,6 +157,12 @@ func RegisterAPIService(
 		}).Inc()
 	}
 
+	var connections datasourceV0.DataSourceConnectionProvider = dataSourcesService
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if unified != nil && features.IsEnabledGlobally(featuremgmt.FlagDatasourceUseNewCRUDAPIs) {
+		connections = newAnnotatedConnections(connections, unified)
+	}
+
 	builder, err := NewQueryAPIBuilder(
 		features,
 		client.NewSingleTenantInstanceProvider(cfg, features, pluginClient, pCtxProvider, accessControl),
@@ -163,7 +171,7 @@ func RegisterAPIService(
 		registerer,
 		tracer,
 		legacyDatasourceLookup,
-		dataSourcesService, // datasourceV0.DataSourceConnectionProvider
+		connections,
 		cfg.SectionWithEnvOverrides("query").Key("concurrent_query_limit").MustInt(runtime.NumCPU()),
 		reportStatus,
 	)
