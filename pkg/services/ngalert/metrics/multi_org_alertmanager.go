@@ -33,6 +33,14 @@ type MultiOrgAlertmanager struct {
 	// as float64), matching the pattern used by alertmanager_config_hash.
 	ExternalAMConfigSyncHash *prometheus.GaugeVec
 
+	// AlertBroadcastFullStateAlerts counts alerts published as full state of the
+	// alerts:broadcast cluster channel by the evaluating instance in HA single
+	// node evaluation mode.
+	AlertBroadcastFullStateAlerts prometheus.Counter
+	// AlertBroadcastFullStateSkipped counts push/pull rounds that published no
+	// alert full state because the Alertmanagers were being synchronized.
+	AlertBroadcastFullStateSkipped prometheus.Counter
+
 	aggregatedMetrics *AlertmanagerAggregatedMetrics
 }
 
@@ -40,6 +48,18 @@ func NewMultiOrgAlertmanagerMetrics(r prometheus.Registerer) *MultiOrgAlertmanag
 	registries := metrics.NewTenantRegistries(log.New("ngalert.multiorg.alertmanager.metrics")) // TODO: Should this be here? Probably not.
 	moa := &MultiOrgAlertmanager{
 		Registerer: r,
+		AlertBroadcastFullStateAlerts: promauto.With(r).NewCounter(prometheus.CounterOpts{
+			Namespace: Namespace,
+			Subsystem: Subsystem,
+			Name:      "alert_broadcast_full_state_alerts_total",
+			Help:      "Number of alerts published as full state of the alert broadcast channel to HA peers.",
+		}),
+		AlertBroadcastFullStateSkipped: promauto.With(r).NewCounter(prometheus.CounterOpts{
+			Namespace: Namespace,
+			Subsystem: Subsystem,
+			Name:      "alert_broadcast_full_state_skipped_rounds_total",
+			Help:      "Number of push/pull rounds without alert full state because the Alertmanagers were being synchronized.",
+		}),
 		registries: registries,
 		DiscoveredConfigurations: promauto.With(r).NewGauge(prometheus.GaugeOpts{
 			Namespace: Namespace,
