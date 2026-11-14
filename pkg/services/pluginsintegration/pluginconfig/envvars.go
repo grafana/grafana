@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/plugins"
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
+	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/definition"
 	"github.com/grafana/grafana/pkg/plugins/envvars"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -92,6 +93,7 @@ func (p *EnvVarsProvider) PluginEnvVars(ctx context.Context, plugin *plugins.Plu
 	hostEnv = append(hostEnv, p.pluginSettingsEnvVars(plugin.PluginID())...)
 	hostEnv = append(hostEnv, p.signingKeysEnvVars(plugin)...)
 	hostEnv = append(hostEnv, p.apiAccessEnvVars(plugin)...)
+	hostEnv = append(hostEnv, p.goRuntimeEnvVars(plugin.PluginID())...)
 
 	// If SkipHostEnvVars is enabled, get some allowed variables from the current process and pass
 	// them down to the plugin. If the flag is not set, do not add anything else because ALL env vars
@@ -402,7 +404,7 @@ func (p *EnvVarsProvider) pluginSettingsEnvVars(pluginID string) []string {
 
 	env := make([]string, 0, len(pluginSettings))
 	for k, v := range pluginSettings {
-		if k == "path" || strings.ToLower(k) == "id" {
+		if k == "path" || strings.ToLower(k) == "id" || strings.EqualFold(k, config.MemoryLimitKey) {
 			continue
 		}
 		if strings.EqualFold(k, insecureSkipAuthenticationSetting) && !p.cfg.DevMode {
@@ -419,6 +421,36 @@ func (p *EnvVarsProvider) pluginSettingsEnvVars(pluginID string) []string {
 	}
 
 	return env
+}
+
+func (p *EnvVarsProvider) goRuntimeEnvVars(pluginID string) []string {
+	var variables []string
+	if gogc := os.Getenv("GOGC"); gogc != "" && p.cfg.ForwardGoRuntimeEnvVars {
+		variables = append(variables, p.envVar("GOGC", gogc))
+	}
+	limit := p.memoryLimit(pluginID)
+	if limit == "" && p.cfg.ForwardGoRuntimeEnvVars {
+		limit = os.Getenv("GOMEMLIMIT")
+	}
+	if limit != "" {
+		variables = append(variables, p.envVar("GOMEMLIMIT", limit))
+	}
+	return variables
+}
+
+func (p *EnvVarsProvider) memoryLimit(pluginID string) string {
+	limit := p.cfg.PluginSettings.MemoryLimit(pluginID)
+	if limit == "" {
+		limit = p.cfg.DefaultMemoryLimit
+	}
+	if limit == "" {
+		return ""
+	}
+	if err := config.ValidateMemoryLimit(limit); err != nil {
+		p.logger.Warn("Ignoring memory limit the plugin process would not start with", "pluginId", pluginID, "error", err)
+		return ""
+	}
+	return limit
 }
 
 // envVar returns a string in the format "key=value" for an environment variable.
