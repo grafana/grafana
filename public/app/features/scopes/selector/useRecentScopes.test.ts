@@ -1,9 +1,9 @@
-import { renderHook } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 
 import { type Scope } from '@grafana/data';
 import { type ScopeNode } from 'app/api/clients/scope/v0alpha1/endpoints.gen';
 
-import { readStoredRecentScopes, type StoredRecentScopeSet } from './recentScopesStorage';
+import { getRecentScopesKey, readStoredRecentScopes, type StoredRecentScopeSet } from './recentScopesStorage';
 import { useRecentScopes } from './useRecentScopes';
 import { useScopesById, useScopeNodesByName } from './useScopesApi';
 
@@ -148,5 +148,20 @@ describe('useRecentScopes', () => {
     const { result } = renderHook(() => useRecentScopes([]));
 
     expect(result.current[0].scopes).toEqual([]);
+  });
+
+  it('re-reads on a storage event for the current key and ignores other keys', () => {
+    renderHook(() => useRecentScopes([]));
+    const callsBefore = mockReadStoredRecentScopes.mock.calls.length;
+
+    act(() => {
+      window.dispatchEvent(new StorageEvent('storage', { key: `${getRecentScopesKey()}.other` }));
+    });
+    expect(mockReadStoredRecentScopes.mock.calls.length).toBe(callsBefore);
+
+    act(() => {
+      window.dispatchEvent(new StorageEvent('storage', { key: getRecentScopesKey() }));
+    });
+    expect(mockReadStoredRecentScopes.mock.calls.length).toBeGreaterThan(callsBefore);
   });
 });
