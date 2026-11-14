@@ -36,6 +36,22 @@ import { MIXED_REQUEST_PREFIX } from '../mixed/MixedDataSource';
 
 import { type DashboardQuery } from './types';
 
+/**
+ * Copies a field's value buffers.
+ *
+ * The source panel keeps holding the frames this returns copies of, so the buffers cannot be
+ * shared: anything downstream that mutates a frame in place - a MutableDataFrame built from it, a
+ * table transformation, the data inspector - would otherwise overwrite the source panel's own data,
+ * which then renders as undefined until it re-queries.
+ */
+function copyFieldBuffers(field: Field): Field {
+  return {
+    ...field,
+    values: field.values.slice(),
+    ...(field.nanos && { nanos: field.nanos.slice() }),
+  };
+}
+
 function isSameRange(a: TimeRange | undefined, b: TimeRange | undefined): boolean {
   if (!a?.from || !a?.to || !b?.from || !b?.to) {
     return false;
@@ -168,6 +184,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
       const annotations = data.annotations ?? [];
       return annotations.map((frame) => ({
         ...frame,
+        fields: frame.fields.map(copyFieldBuffers),
         meta: {
           ...frame.meta,
           dataTopic: DataTopic.Series,
@@ -182,7 +199,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
         // Lets a panel reading several source panels tell their frames apart, since refIds can collide.
         meta: { ...s.meta, custom: { ...s.meta?.custom, dashboardSourcePanelId: query.panelId } },
         fields: s.fields.map((field: Field) => ({
-          ...field,
+          ...copyFieldBuffers(field),
           config: {
             ...field.config,
             // Enable AdHoc filtering for string and numeric fields only when per-panel setting is enabled

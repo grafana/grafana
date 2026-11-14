@@ -972,6 +972,63 @@ describe('DashboardDatasource', () => {
     });
   });
 
+  describe('Source frame isolation', () => {
+    function buildSourceScene(sourceFrame: DataFrame) {
+      const scene = new SceneFlexLayout({
+        children: [
+          new SceneFlexItem({
+            body: new VizPanel({
+              key: getVizPanelKeyForPanelId(1),
+              $data: new SceneDataNode({
+                data: {
+                  series: [sourceFrame],
+                  state: LoadingState.Done,
+                  timeRange: getDefaultTimeRange(),
+                },
+              }),
+            }),
+          }),
+        ],
+      });
+
+      const ds = new DashboardDatasource({} as DataSourceInstanceSettings);
+      return ds.query({
+        timezone: 'utc',
+        targets: [{ refId: 'A', panelId: 1 }],
+        requestId: '',
+        interval: '',
+        intervalMs: 0,
+        range: getDefaultTimeRange(),
+        scopedVars: { __sceneObject: new SafeSerializableSceneObject(scene) },
+        app: '',
+        startTime: 0,
+      });
+    }
+
+    it('hands the consuming panel its own value buffers, not the source panel ones', async () => {
+      const sourceFrame: DataFrame = {
+        refId: 'A',
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1, 2, 3], nanos: [10, 20, 30], config: {} },
+          { name: 'name', type: FieldType.string, values: ['John', 'Jane', 'Bob'], config: {} },
+        ],
+        length: 3,
+      };
+
+      const rsp = await lastValueFrom(buildSourceScene(sourceFrame));
+
+      expect(rsp.data[0].fields[1].values).not.toBe(sourceFrame.fields[1].values);
+      expect(rsp.data[0].fields[0].nanos).not.toBe(sourceFrame.fields[0].nanos);
+
+      // Anything downstream may mutate a frame in place - a table transformation, the data
+      // inspector, a MutableDataFrame built from it. That must not reach the source panel (#131861).
+      rsp.data[0].fields[1].values.length = 0;
+      rsp.data[0].fields[0].nanos!.length = 0;
+      expect(sourceFrame.fields[1].values).toEqual(['John', 'Jane', 'Bob']);
+      expect(sourceFrame.fields[0].nanos).toEqual([10, 20, 30]);
+    });
+  });
+
   describe('Annotation Handling', () => {
     it('should NOT include annotations from source panel in regular query response', async () => {
       const { observable } = setupWithAnnotations({ refId: 'A', panelId: 1 });
