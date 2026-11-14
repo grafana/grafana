@@ -298,8 +298,8 @@ func (s *dashboardPreferencesStorage) merged(ctx context.Context, folderUID stri
 	if err != nil {
 		return nil, err
 	}
-	// Mutation strips finalizers (mutate.go:275-276), so no tier waits in deletion today; this keeps one that
-	// ever does from applying.
+	// The mutation hook strips finalizers on every write, so no tier waits in deletion today; this keeps one
+	// that ever does from applying.
 	stored = slices.DeleteFunc(stored, func(item dashv2beta1.DashboardPreferences) bool {
 		return item.DeletionTimestamp != nil
 	})
