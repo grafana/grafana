@@ -251,7 +251,11 @@ func validateGroupInterval(incoming prommodels.Duration, limits RuleLimits) (tim
 		interval = limits.DefaultRuleEvaluationInterval
 	}
 
-	if interval < 0 || int64(interval.Seconds())%int64(limits.BaseInterval.Seconds()) != 0 {
+	if limits.BaseInterval <= 0 {
+		return 0, fmt.Errorf("base interval must be positive duration")
+	}
+
+	if interval <= 0 || interval < limits.BaseInterval || interval%limits.BaseInterval != 0 || interval%time.Second != 0 {
 		return 0, fmt.Errorf("rule evaluation interval (%d second) should be positive number that is multiple of the base interval of %d seconds", int64(interval.Seconds()), int64(limits.BaseInterval.Seconds()))
 	}
 
@@ -260,19 +264,17 @@ func validateGroupInterval(incoming prommodels.Duration, limits RuleLimits) (tim
 }
 
 func ValidateInterval(interval, baseInterval time.Duration) (int64, error) {
-	intervalSeconds := int64(interval.Seconds())
+	if baseInterval <= 0 {
+		return 0, fmt.Errorf("base interval must be positive duration")
+	}
 
 	baseIntervalSeconds := int64(baseInterval.Seconds())
 
-	if interval <= 0 {
-		return 0, fmt.Errorf("rule evaluation interval must be positive duration that is multiple of the base interval %d seconds", baseIntervalSeconds)
-	}
-
-	if intervalSeconds%baseIntervalSeconds != 0 {
+	if interval <= 0 || interval < baseInterval || interval%baseInterval != 0 || interval%time.Second != 0 {
 		return 0, fmt.Errorf("rule evaluation interval %d should be multiple of the base interval of %d seconds", int64(interval.Seconds()), baseIntervalSeconds)
 	}
 
-	return intervalSeconds, nil
+	return int64(interval.Seconds()), nil
 }
 
 // validateForInterval validates ApiRuleNode.For and converts it to time.Duration. If the field is not specified returns 0 if GrafanaManagedAlert.UID is empty and -1 if it is not.
