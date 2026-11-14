@@ -32,8 +32,15 @@ export default function spanAncestorIds(span: TraceSpan | TNil): string[] {
   if (!span) {
     return ancestorIDs;
   }
+  if (span.ancestorSpanIds) {
+    // Callers modify the result, so it can't be the array stored on the span.
+    return [...span.ancestorSpanIds];
+  }
+  // References can form a cycle, so each span is visited at most once.
+  const visited = new Set([span.spanID]);
   let ref = getFirstAncestor(span);
-  while (ref) {
+  while (ref && !visited.has(ref.spanID)) {
+    visited.add(ref.spanID);
     ancestorIDs.push(ref.spanID);
     ref = getFirstAncestor(ref);
   }

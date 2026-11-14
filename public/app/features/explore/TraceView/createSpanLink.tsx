@@ -348,12 +348,20 @@ function legacyCreateSpanLinkFactory(
     }
 
     // Get trace links
+    // Two spans linking to each other would otherwise list each other twice.
+    const linkedSpans = new Set<string>();
     if (span.references && createFocusSpanLink) {
       for (const reference of span.references) {
         // Ignore parent-child links
         if (reference.refType === 'CHILD_OF') {
           continue;
         }
+
+        const linkedSpanKey = `${reference.traceID}/${reference.spanID}`;
+        if (linkedSpans.has(linkedSpanKey)) {
+          continue;
+        }
+        linkedSpans.add(linkedSpanKey);
 
         const link = createFocusSpanLink(reference.traceID, reference.spanID);
         const title = getReferenceTitle(reference);
@@ -372,6 +380,12 @@ function legacyCreateSpanLinkFactory(
 
     if (span.subsidiarilyReferencedBy && createFocusSpanLink) {
       for (const reference of span.subsidiarilyReferencedBy) {
+        const linkedSpanKey = `${reference.traceID}/${reference.spanID}`;
+        if (linkedSpans.has(linkedSpanKey)) {
+          continue;
+        }
+        linkedSpans.add(linkedSpanKey);
+
         const link = createFocusSpanLink(reference.traceID, reference.spanID);
         const title = getReferenceTitle(reference);
 
