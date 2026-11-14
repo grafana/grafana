@@ -157,7 +157,7 @@ services:
         condition: service_completed_successfully
 
   maildev:
-    image: maildev/maildev:2.2.1@sha256:180ef51f65eefebb0e7122d8308813c1fd7bff164bc440ce5a3c2feee167a810
+    image: maildev/maildev:3.0.0@sha256:6e09695961f4aef9016a390ad391314a078220216601b15a35d389a7df2a3855
     ports:
       - '1080:1080'
 
