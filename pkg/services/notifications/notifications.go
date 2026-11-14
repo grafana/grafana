@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"path/filepath"
 	"strings"
+	texttemplate "text/template"
 
 	"github.com/Masterminds/sprig/v3"
 
@@ -42,7 +43,12 @@ type Service interface {
 	EmailVerificationMailer
 }
 
-var mailTemplates *template.Template
+// mailTemplates holds the HTML email templates, and textMailTemplates the plain-text (.txt) ones. Plain-text
+// templates use text/template so their output is not HTML-escaped.
+var (
+	mailTemplates     *template.Template
+	textMailTemplates *texttemplate.Template
+)
 
 const (
 	tmplResetPassword   = "reset_password"
@@ -66,20 +72,19 @@ func ProvideService(bus bus.Bus, cfg *setting.Cfg, cfgProvider configprovider.Co
 	ns.Bus.AddEventListener(ns.signUpStartedHandler)
 	ns.Bus.AddEventListener(ns.signUpCompletedHandler)
 
-	mailTemplates = template.New("name")
-	mailTemplates.Funcs(template.FuncMap{
+	funcs := map[string]any{
 		"Subject":                 subjectTemplateFunc,
 		"HiddenSubject":           hiddenSubjectTemplateFunc,
 		"__dangerouslyInjectHTML": __dangerouslyInjectHTML,
-	})
-	mailTemplates.Funcs(sprig.FuncMap())
+	}
+	mailTemplates = template.New("name").Funcs(funcs).Funcs(sprig.FuncMap())
+	textMailTemplates = texttemplate.New("name").Funcs(funcs).Funcs(sprig.TxtFuncMap())
 
 	// Parse invalid templates using 'or' logic. Return an error only if no paths are valid.
 	invalidTemplates := make([]string, 0)
 	for _, pattern := range ns.Cfg.Smtp.TemplatesPatterns {
 		templatePattern := filepath.Join(ns.Cfg.StaticRootPath, pattern)
-		_, err := mailTemplates.ParseGlob(templatePattern)
-		if err != nil {
+		if err := parseMailTemplates(templatePattern); err != nil {
 			invalidTemplates = append(invalidTemplates, templatePattern)
 		}
 	}
@@ -159,6 +164,37 @@ func (ns *NotificationService) SendWebhookSync(ctx context.Context, cmd *SendWeb
 		TLSConfig:   cmd.TLSConfig,
 		Validation:  cmd.Validation,
 	})
+}
+
+// parseMailTemplates parses the files matching pattern: .txt files into textMailTemplates and all others into
+// mailTemplates. Like ParseGlob, it returns an error when the pattern matches no files.
+func parseMailTemplates(pattern string) error {
+	files, err := filepath.Glob(pattern)
+	if err != nil {
+		return err
+	}
+	if len(files) == 0 {
+		return fmt.Errorf("pattern matches no files: %#q", pattern)
+	}
+	var textFiles, htmlFiles []string
+	for _, file := range files {
+		if filepath.Ext(file) == ".txt" {
+			textFiles = append(textFiles, file)
+		} else {
+			htmlFiles = append(htmlFiles, file)
+		}
+	}
+	if len(textFiles) > 0 {
+		if _, err := textMailTemplates.ParseFiles(textFiles...); err != nil {
+			return err
+		}
+	}
+	if len(htmlFiles) > 0 {
+		if _, err := mailTemplates.ParseFiles(htmlFiles...); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // hiddenSubjectTemplateFunc sets the subject template (value) on the map represented by `.Subject.` (obj) so that it can be compiled and executed later.

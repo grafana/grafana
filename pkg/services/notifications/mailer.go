@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"html/template"
+	"io"
 	"net/mail"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -82,8 +83,15 @@ func (ns *NotificationService) buildEmailMessage(ctx context.Context, cmd *SendE
 		if err != nil {
 			return nil, err
 		}
+		// text/plain bodies come from text/template, so they are not HTML-escaped
+		var templates interface {
+			ExecuteTemplate(wr io.Writer, name string, data any) error
+		} = mailTemplates
+		if contentType == "text/plain" {
+			templates = textMailTemplates
+		}
 		var buffer bytes.Buffer
-		err = mailTemplates.ExecuteTemplate(&buffer, cmd.Template+fileExtension, data)
+		err = templates.ExecuteTemplate(&buffer, cmd.Template+fileExtension, data)
 		if err != nil {
 			return nil, err
 		}
