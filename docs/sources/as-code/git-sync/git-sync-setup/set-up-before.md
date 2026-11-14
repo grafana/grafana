@@ -162,7 +162,7 @@ To create the GitHub App, follow these steps:
 On the app page:
 
 1. Copy the **AppID** from the **About** section
-1. Select the **Generate private key** from the banner or scroll down to to the **Private Keys** section to generate a key
+1. Select the **Generate private key** from the banner or scroll down to the **Private Keys** section to generate a key
 1. A PEM file containing your private key will be downloaded to your computer
 
 Finally, install the app:
