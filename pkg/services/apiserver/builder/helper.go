@@ -87,7 +87,8 @@ var PathRewriters = []filters.PathRewriter{
 func GetDefaultBuildHandlerChainFunc(builders []APIGroupBuilder, reg prometheus.Registerer) BuildHandlerChainFunc {
 	watchMetrics := newWatchMetrics(reg)
 	return func(delegateHandler http.Handler, c *genericapiserver.Config) http.Handler {
-		handler := filters.WithTracingHTTPLoggingAttributes(delegateHandler)
+		handler := filters.WithOpenAPIV3NotFound(delegateHandler)
+		handler = filters.WithTracingHTTPLoggingAttributes(handler)
 
 		// Runs inside DefaultBuildHandlerChain so RequestInfo and the resource-named
 		// request span are available: marks watch spans so long-running watch
