@@ -247,6 +247,44 @@ func TestQueryFramesDateTimeSelect(t *testing.T) {
 	}
 }
 
+func TestQueryFramesDateTimePrecisionSelect(t *testing.T) {
+	ts := time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC)
+	input := data.NewFrame("",
+		data.NewField("time", nil, []time.Time{ts}),
+	).SetRefID("A")
+
+	tests := []struct {
+		name     string
+		query    string
+		expected time.Time
+	}{
+		{"DATE_ADD", "SELECT DATE_ADD(time, INTERVAL 1 HOUR) AS t FROM A", ts.Add(time.Hour)},
+		{"TIMESTAMPADD", "SELECT TIMESTAMPADD(MINUTE, 5, time) AS t FROM A", ts.Add(5 * time.Minute)},
+		{"CAST AS DATETIME(3)", "SELECT CAST(time AS DATETIME(3)) AS t FROM A", ts},
+		{"CAST AS DATE", "SELECT CAST(time AS DATE) AS t FROM A", time.Date(2026, 1, 2, 0, 0, 0, 0, time.UTC)},
+		{"LAST_DAY", "SELECT LAST_DAY(time) AS t FROM A", time.Date(2026, 1, 31, 0, 0, 0, 0, time.UTC)},
+	}
+
+	db := DB{}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			f, err := db.QueryFrames(context.Background(), &testTracer{}, "B", tt.query, []*data.Frame{input})
+			require.NoError(t, err)
+			require.Len(t, f.Fields, 1)
+			require.Equal(t, 1, f.Fields[0].Len())
+			got, ok := f.Fields[0].ConcreteAt(0)
+			require.True(t, ok)
+			require.True(t, tt.expected.Equal(got.(time.Time)), "want %v, got %v", tt.expected, got)
+		})
+	}
+
+	// FROM_UNIXTIME also returns DATETIME(6). Its value depends on the session time zone,
+	// so only check that it converts.
+	f, err := db.QueryFrames(context.Background(), &testTracer{}, "B", "SELECT FROM_UNIXTIME(1767323045) AS t", nil)
+	require.NoError(t, err)
+	require.Equal(t, data.FieldTypeNullableTime, f.Fields[0].Type())
+}
+
 func TestNaNBecomesNull(t *testing.T) {
 	f := &data.Frame{
 		RefID: "a",
