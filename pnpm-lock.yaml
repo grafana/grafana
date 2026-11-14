@@ -387,7 +387,7 @@ importers:
         version: 2.12.0(react-redux@9.3.0(@types/react@19.2.18)(react@19.2.8)(redux@5.0.1))(react@19.2.8)
       '@tanstack/react-virtual':
         specifier: ^3.5.1
-        version: 3.14.13(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        version: 3.14.26(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@visx/event':
         specifier: 3.12.0
         version: 3.12.0
@@ -2416,7 +2416,7 @@ importers:
         version: 3.32.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@tanstack/react-virtual':
         specifier: ^3.5.1
-        version: 3.14.13(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        version: 3.14.26(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@types/jquery':
         specifier: ^3.5.33
         version: 3.5.33
@@ -6853,17 +6853,17 @@ packages:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
       react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
-  '@tanstack/react-virtual@3.14.13':
-    resolution: {integrity: sha512-JbDTAwtzZ99aOeCrAfW5EsE5KSq5RWh6Af2dtFwyLIIk48Ja7vm6n4axu/43T3vfjFnEGJalxJ1wyYjSQD6bSg==}
+  '@tanstack/react-virtual@3.14.26':
+    resolution: {integrity: sha512-HUDlfsrYH6ko5xH56L62Mcl/uzT+AGVNMHFuDNqDJMdZWc1AQa2oeVKNUvZ/RWBZQ4TYtyQerFrNvLnp39h65A==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
       react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
-  '@tanstack/virtual-core@3.17.11':
-    resolution: {integrity: sha512-+ILjvtHup6Y2hzQ6YzwMgX1Q+oQpxEGOXCEsCNaPoIP0VxMbizIBTmYTDtkerkIQS8/CbP1BRuyt8V/8BCsy1g==}
-
   '@tanstack/virtual-core@3.17.8':
     resolution: {integrity: sha512-BfEvehNpOT75r5Ksc5xW6NZuXujTfb7nlSEyVu4XHG3gdxNg1KqXruWbDewXOUaUYIo4oRbSfkjIajz4MAT8tA==}
+
+  '@tanstack/virtual-core@3.19.11':
+    resolution: {integrity: sha512-/5iHb0RHBvj8Di59FDs4ESNm45jls33aZAi4zccVXZjc/6ZvwQP6nzEYeT6weXjTf9E6/vrp2JhYWRyO+ZP13A==}
 
   '@testing-library/dom@10.4.1':
     resolution: {integrity: sha512-o4PXJQidqJl82ckFaXUeoAW+XysPLauYI43Abki5hABd853iMhitooc6znOnczgbTYmEP6U6/y1ZyKAIsvMKGg==}
@@ -16663,7 +16663,7 @@ snapshots:
       '@grafana/schema': link:packages/grafana-schema
       '@grafana/ui': link:packages/grafana-ui
       '@leeoniya/ufuzzy': 1.0.19
-      '@tanstack/react-virtual': 3.14.13(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@tanstack/react-virtual': 3.14.26(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       history: 4.10.1(patch_hash=59f0d46e6f153d50eca0dd02e201978d26ff20d01917acd8ba8e7769d585b15d)
       lodash: 4.18.1
       react: 19.2.8
@@ -20098,15 +20098,15 @@ snapshots:
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
 
-  '@tanstack/react-virtual@3.14.13(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
+  '@tanstack/react-virtual@3.14.26(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
     dependencies:
-      '@tanstack/virtual-core': 3.17.11
+      '@tanstack/virtual-core': 3.19.11
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
 
-  '@tanstack/virtual-core@3.17.11': {}
-
   '@tanstack/virtual-core@3.17.8': {}
+
+  '@tanstack/virtual-core@3.19.11': {}
 
   '@testing-library/dom@10.4.1':
     dependencies:
