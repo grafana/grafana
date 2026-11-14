@@ -39,6 +39,10 @@ export class ConditionalRenderingData extends SceneObjectBase<ConditionalRenderi
   private _dataProvider: SceneDataProvider | undefined = undefined;
   private _releaseDataProvider: CancelActivationHandler | undefined = undefined;
 
+  // Last hasData fact observed from a completed query. Used to keep the rule
+  // result stable while subsequent queries are (re)loading.
+  private _lastHasData: boolean | undefined = undefined;
+
   public constructor(state: ConditionalRenderingDataState) {
     super(state);
 
@@ -138,7 +142,14 @@ export class ConditionalRenderingData extends SceneObjectBase<ConditionalRenderi
       this._dataProvider.state.data.state === LoadingState.Loading ||
       this._dataProvider.state.data.state === LoadingState.NotStarted
     ) {
-      return undefined;
+      // Hold the last completed evaluation while a query is (re)running.
+      // Returning undefined makes the group fall back to its "no valid
+      // conditions" default of true, which flashes "has data" panels on every
+      // load and refresh (see #134713).
+      if (this._lastHasData === undefined) {
+        return undefined;
+      }
+      return this.state.value === this._lastHasData;
     }
 
     const series = this._dataProvider?.state.data?.series ?? [];
@@ -150,6 +161,8 @@ export class ConditionalRenderingData extends SceneObjectBase<ConditionalRenderi
         break;
       }
     }
+
+    this._lastHasData = hasData;
 
     // The logic here is pretty simple:
     // If value is true (meaning "has data"), then we check if the object has data
