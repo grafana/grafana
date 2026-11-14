@@ -16,6 +16,7 @@ import { type UserDTO, type UserOrg, type UserSession, type UserAdminError } fro
 import { UserLdapSyncInfo } from './UserLdapSyncInfo';
 import { UserOrgs } from './UserOrgs';
 import { UserPermissions } from './UserPermissions';
+import { UserPersonalAccessTokens } from './UserPersonalAccessTokens';
 import { UserProfile } from './UserProfile';
 import { UserSessions } from './UserSessions';
 import {
@@ -179,6 +180,7 @@ export const UserAdminPage = ({
               onAllSessionsRevoke={onAllSessionsRevoke}
             />
           )}
+          {user && <UserPersonalAccessTokens userId={user.id} />}
         </Stack>
       </Page.Contents>
     </Page>

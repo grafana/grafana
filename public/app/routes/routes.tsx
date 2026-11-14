@@ -441,6 +441,16 @@ export function getAppRoutes(): RouteDescriptor[] {
       component: SafeDynamicImport(() => import('app/features/admin/UpgradePage')),
     },
     {
+      path: '/admin/personal-access-tokens',
+      roles: () => (contextSrv.isGrafanaAdmin ? [] : ['Reject']),
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "AdminPersonalAccessTokensPage" */ 'app/features/personal-access-tokens/AdminPersonalAccessTokensPage'
+          )
+      ),
+    },
+    {
       path: '/admin/users',
       roles: () => contextSrv.evaluatePermission([AccessControlAction.OrgUsersRead, AccessControlAction.UsersRead]),
       component: SafeDynamicImport(

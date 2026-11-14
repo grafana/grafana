@@ -271,6 +271,12 @@ func (s *ServiceImpl) addHelpLinks(treeRoot *navtree.NavTreeRoot, c *contextmode
 	}
 }
 
+func (s *ServiceImpl) patUIEnabled(c *contextmodel.ReqContext) bool {
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	return s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagPersonalAccessTokens) &&
+		ac.HasAccess(s.accessControl, c)(ac.EvalPermission(ac.ActionUsersTokensRead))
+}
+
 func (s *ServiceImpl) getProfileNode(c *contextmodel.ReqContext) *navtree.NavLink {
 	// Only set login if it's different from the name
 	var login string
@@ -288,6 +294,13 @@ func (s *ServiceImpl) getProfileNode(c *contextmodel.ReqContext) *navtree.NavLin
 	children = append(children, &navtree.NavLink{
 		Text: "Notification history", Id: "profile/notifications", Url: s.cfg.AppSubURL + "/profile/notifications", Icon: "bell",
 	})
+
+	if s.patUIEnabled(c) {
+		children = append(children, &navtree.NavLink{
+			Text: "Personal access tokens", Id: "profile/personal-access-tokens", Url: s.cfg.AppSubURL + "/profile/personal-access-tokens",
+			Icon: "key-skeleton-alt",
+		})
+	}
 
 	if s.cfg.AddChangePasswordLink() {
 		children = append(children, &navtree.NavLink{

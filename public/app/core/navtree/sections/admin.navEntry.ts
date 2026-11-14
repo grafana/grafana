@@ -171,6 +171,17 @@ const ADMIN_ACCESS_CHILDREN: NavEntryBuilder[] = [
       url: '/org/serviceaccounts',
     }),
   },
+  {
+    when: () =>
+      getFeatureFlagClient().getBooleanValue(FlagKeys.PersonalAccessTokens, false) && contextSrv.isGrafanaAdmin,
+    build: () => ({
+      text: 'Personal access tokens',
+      id: 'personal-access-tokens-admin',
+      subTitle: 'Manage personal access tokens and the instance-wide switch',
+      icon: 'key-skeleton-alt',
+      url: '/admin/personal-access-tokens',
+    }),
+  },
 ];
 
 // The backend evaluates these with settings scopes (SAML/OAuth providers)
