@@ -32,6 +32,10 @@ import {
   type NotebookExportedProperties,
   type NotebookExportDestination,
   type NotebookExportSource,
+  type NotebookFeedbackRating,
+  type NotebookFeedbackReason,
+  type NotebookFeedbackSource,
+  type NotebookFeedbackSubmittedProperties,
   type NotebookIncidentAction,
   type NotebookIncidentActionClickedProperties,
   type NotebookIncidentActionCompletedProperties,
@@ -115,6 +119,8 @@ const createListFilteredEvent = createNotebookEvent<NotebookListFilteredProperti
  */
 const createAddFailedEvent = createNotebookEvent<NotebookAddFailedProperties>('add_to_notebook_failed');
 
+/** Fired when a person submits feedback from the notebooks list or notebook toolbar. */
+const createFeedbackSubmittedEvent = createNotebookEvent<NotebookFeedbackSubmittedProperties>('feedback_submitted');
 /** Fired when the user picks a block to insert, or duplicates one. Not for the empty block the editor keeps at the bottom, nor for Enter splitting a paragraph. */
 const createBlockInsertedEvent = createNotebookEvent<NotebookBlockInsertedProperties>('block_inserted');
 
@@ -152,6 +158,15 @@ function addedPanelProperties({ panel, isLibraryPanel }: AddedPanel) {
  * turn a scene into what each event sends, here and once, instead of at every place that fires one.
  */
 export const NotebookAnalytics = {
+  feedbackSubmitted(
+    rating: NotebookFeedbackRating,
+    reasons: NotebookFeedbackReason[],
+    comment: string,
+    source: NotebookFeedbackSource
+  ): void {
+    createFeedbackSubmittedEvent({ rating, reasons, source, ...(comment.trim() && { comment: comment.trim() }) });
+  },
+
   loaded(scene: NotebookScene, wasCached: boolean, embedded: boolean, source: NotebookLoadSource): void {
     createLoadedEvent({
       // Both call sites only reach this with a scene that already has a uid, so the fallback here is
