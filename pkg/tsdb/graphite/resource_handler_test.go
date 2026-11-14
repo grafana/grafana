@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -852,6 +853,24 @@ func TestHandleResourceReq_Success(t *testing.T) {
 	assert.Equal(t, mockEvents, result["data"])
 }
 
+func TestHandleResourceReq_NullBody(t *testing.T) {
+	svc := &Service{
+		logger: log.NewNullLogger(),
+		im:     &mockInstanceManager{instance: datasourceInfo{Id: 1}},
+	}
+
+	for _, body := range []string{"null", " \n null \t"} {
+		t.Run(body, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodPost, "/events", strings.NewReader(body))
+			rr := httptest.NewRecorder()
+			handleResourceReq(svc.handleEvents, svc)(rr, req)
+
+			assert.Equal(t, http.StatusBadRequest, rr.Code)
+			assert.Contains(t, rr.Body.String(), "request body must not be null")
+		})
+	}
+}
+
 func TestHandleResourceReq_GetDSInfoError(t *testing.T) {
 	svc := &Service{
 		logger: log.NewNullLogger(),
@@ -1154,6 +1173,12 @@ func TestParseRequestBody(t *testing.T) {
 			requestBody:   []byte(``),
 			expectError:   true,
 			errorContains: "unexpected error",
+		},
+		{
+			name:          "Null request body",
+			requestBody:   []byte(`null`),
+			expectError:   true,
+			errorContains: "request body must not be null",
 		},
 		{
 			name:          "Malformed JSON",
