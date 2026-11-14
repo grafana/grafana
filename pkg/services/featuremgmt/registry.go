@@ -1039,14 +1039,6 @@ var (
 			Expression:  "true",                                                      // enabled by default
 		},
 		{
-			Name:        "newSavedQueriesExperience",
-			Description: "Enables the new Saved queries (query library) modal experience",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaSharingSquad,
-			Generate:    Generate{LegacyFrontend: true, React: true},
-			Expression:  "true", // enabled by default
-		},
-		{
 			Name:        "dashboardLibrary",
 			Description: "Displays datasource provisioned dashboards in dashboard empty page, only when coming from datasource configuration page",
 			Stage:       FeatureStageExperimental,

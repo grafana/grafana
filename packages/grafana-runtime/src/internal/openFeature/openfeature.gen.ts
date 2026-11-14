@@ -304,8 +304,6 @@ export const FlagKeys = {
   ManagedPluginsV2: "managedPluginsV2",
   /** Enables filters and group by variables on all new dashboards. Variables are added only if default data source supports filtering. */
   NewDashboardWithFiltersAndGroupBy: "newDashboardWithFiltersAndGroupBy",
-  /** Enables the new Saved queries (query library) modal experience */
-  NewSavedQueriesExperience: "newSavedQueriesExperience",
   /** Applies OTel formatting templates to displayed logs */
   OtelLogsFormatting: "otelLogsFormatting",
   /** Search for dashboards using panel title */
@@ -2005,17 +2003,6 @@ export const useFlagManagedPluginsV2 = (options?: ReactFlagEvaluationOptions): b
  */
 export const useFlagNewDashboardWithFiltersAndGroupBy = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("newDashboardWithFiltersAndGroupBy", false, options).value;
-};
-
-/**
- * Enables the new Saved queries (query library) modal experience
- *
- * **Details:**
- * - flag key: `newSavedQueriesExperience`
- * - default value: `true`
- */
-export const useFlagNewSavedQueriesExperience = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("newSavedQueriesExperience", true, options).value;
 };
 
 /**
