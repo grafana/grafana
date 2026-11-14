@@ -5,6 +5,7 @@ import { useMedia } from 'react-use';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
+import { useFlagGrafanaDashboardPanelPinning } from '@grafana/runtime/internal';
 import { useSceneObjectState } from '@grafana/scenes';
 import {
   ElementSelectionContext,
@@ -27,6 +28,7 @@ import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { EditActionsLayoutProvider } from '../scene/edit-actions-popover/EditActionsLayoutContext';
 import { PublicDashboardBadge } from '../scene/new-toolbar/actions/PublicDashboardBadge';
 import { StarButton } from '../scene/new-toolbar/actions/StarButton';
+import { PanelPinningProvider, PinnedPanelDock } from '../scene/panel-pinning/PanelPinningProvider';
 import { getPlanningGround } from '../scene/planningGround';
 import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
@@ -67,6 +69,7 @@ function DashboardSidebarSplitterLegacy({ dashboard, isPlanning, body, controls 
 }
 
 function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, isPlanning, body, controls, overlay }: Props) {
+  const panelPinningEnabled = useFlagGrafanaDashboardPanelPinning();
   const { sidebar } = dashboard.state;
   const styles = useStyles2(getStyles);
   const { chrome } = useGrafana();
@@ -186,10 +189,17 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, isPlanning, 
         isDocked={sidebarContext.isDocked}
         isHidden={sidebarContext.isHidden}
       >
-        <ElementSelectionContext.Provider value={selectionContext}>
-          <DashboardControlsChrome onPointerDown={onClearSelection}>{controls}</DashboardControlsChrome>
-          {renderBody()}
-        </ElementSelectionContext.Provider>
+        <PanelPinningProvider
+          available={panelPinningEnabled}
+          dashboard={dashboard}
+          enabled={!isEditing && !isPlanning && !dashboard.state.meta.isEmbedded}
+        >
+          <ElementSelectionContext.Provider value={selectionContext}>
+            <DashboardControlsChrome onPointerDown={onClearSelection}>{controls}</DashboardControlsChrome>
+            <PinnedPanelDock />
+            {renderBody()}
+          </ElementSelectionContext.Provider>
+        </PanelPinningProvider>
       </EditActionsLayoutProvider>
       {overlay}
     </div>

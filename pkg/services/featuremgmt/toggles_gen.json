@@ -2983,6 +2983,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.dashboardPanelPinning",
+        "resourceVersion": "1794636255479",
+        "creationTimestamp": "2026-11-14T06:04:15Z"
+      },
+      "spec": {
+        "description": "Allow viewers to pin one dashboard panel above the canvas for the current session",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.dashboardPreferences",
         "resourceVersion": "1793194415309",
         "creationTimestamp": "2026-10-28T13:33:35Z"
