@@ -35,7 +35,7 @@ const (
 	// The most folders a list page covers: each costs a read of its folder tier.
 	dashboardPreferencesListPageSize = 500
 	// How many tiers a list page or a merge reads at once.
-	dashboardPreferencesFolderTierReads = 16
+	dashboardPreferencesTierReads = 16
 )
 
 // Embeds grafanarest.Storage, which has no rest.Watcher or rest.CollectionDeleter, so watch and
@@ -317,7 +317,7 @@ func (s *dashboardPreferencesStorage) getStoredFolderTiers(ctx context.Context, 
 func (s *dashboardPreferencesStorage) getStoredTiers(ctx context.Context, names []string) ([]dashv2beta1.DashboardPreferences, error) {
 	found := make([][]dashv2beta1.DashboardPreferences, len(names))
 	g, gctx := errgroup.WithContext(ctx)
-	g.SetLimit(dashboardPreferencesFolderTierReads)
+	g.SetLimit(dashboardPreferencesTierReads)
 	for i, name := range names {
 		g.Go(func() error {
 			items, err := s.getStored(gctx, name)
