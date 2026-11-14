@@ -33,22 +33,93 @@ export type CompiledTemplate = (context: TemplateContext) => string;
 
 // Values stay raw so the numeric helpers can compare them; `fmt` holds the
 // display strings. Fields are assigned last so a field named `fmt` wins.
+//
+// Formatting is the costly part of a row, and a template often reads few formatted values or
+// none, so `fmt` is built on first read and each of its fields is formatted on first read.
+// Own accessors rather than a Proxy: the interpreter only reads own properties, so a Proxy
+// would run two traps on every read.
 export function buildRows(frame: DataFrame, series: DataFrame[], maxRows = Infinity, startRow = 0): TemplateRow[] {
   const names = frame.fields.map((field) => getFieldDisplayName(field, frame, series));
+  const formattedRows = new WeakMap<object, FormattedRow>();
+  const formattedFields = createFormattedFields(frame, names, formattedRows);
 
   return Array.from({ length: Math.max(Math.min(frame.length - startRow, maxRows), 0) }, (_, offset) => {
     const rowIndex = startRow + offset;
-    const formatted: TemplateRow = {};
-    const row: TemplateRow = { fmt: formatted };
+    const row: TemplateRow = {};
+
+    Object.defineProperty(row, FORMATTED_KEY, {
+      get(this: object) {
+        const formatted = Object.defineProperties({}, formattedFields);
+        formattedRows.set(formatted, { rowIndex, values: [] });
+        return assign(this, FORMATTED_KEY, formatted);
+      },
+      set(this: object, value: unknown) {
+        assign(this, FORMATTED_KEY, value);
+      },
+      enumerable: true,
+      configurable: true,
+    });
 
     frame.fields.forEach((field, fieldIndex) => {
-      const value = field.values[rowIndex];
-      formatted[names[fieldIndex]] = field.display ? formattedValueToString(field.display(value)) : toText(value);
-      row[names[fieldIndex]] = value;
+      row[names[fieldIndex]] = field.values[rowIndex];
     });
 
     return row;
   });
+}
+
+const FORMATTED_KEY = 'fmt';
+
+interface FormattedRow {
+  rowIndex: number;
+  /** Display strings by field index, filled as they are read. */
+  values: Array<string | undefined>;
+}
+
+// One accessor per field, shared by every row of the frame. Keyed by name in field order, so a
+// later field with the same name wins and the keys keep the order assigning them gave.
+function createFormattedFields(
+  frame: DataFrame,
+  names: string[],
+  formattedRows: WeakMap<object, FormattedRow>
+): PropertyDescriptorMap {
+  const descriptors: PropertyDescriptorMap = Object.create(null);
+
+  frame.fields.forEach((field, fieldIndex) => {
+    const name = names[fieldIndex];
+
+    // Assigning a string to `__proto__` does nothing, so it was never a key of `fmt`.
+    if (name === '__proto__') {
+      return;
+    }
+
+    descriptors[name] = {
+      get(this: object) {
+        const formatted = formattedRows.get(this);
+        if (!formatted) {
+          return undefined;
+        }
+
+        const { rowIndex, values } = formatted;
+        const value = field.values[rowIndex];
+
+        return (values[fieldIndex] ??= field.display ? formattedValueToString(field.display(value)) : toText(value));
+      },
+      set(this: object, value: unknown) {
+        assign(this, name, value);
+      },
+      enumerable: true,
+      configurable: true,
+    };
+  });
+
+  return descriptors;
+}
+
+// Replaces an accessor with the plain property an assignment would have made.
+function assign<T>(target: object, key: string, value: T): T {
+  Object.defineProperty(target, key, { value, writable: true, enumerable: true, configurable: true });
+  return value;
 }
 
 // `maxRows` is a budget shared across frames, not a cap per frame. `onRowsRead` fires when the
