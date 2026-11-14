@@ -217,3 +217,21 @@ func TestGetRandomDigits(t *testing.T) {
 	// 99.99% probability for 9 degrees of freedom
 	assert.Less(t, chiSquared, 33.7199, "Chi squared value must be less than the 99.99% critical bound")
 }
+
+func TestGetRandomStringAlphabetSize(t *testing.T) {
+	alphabet := make([]byte, 256)
+	for i := range alphabet {
+		alphabet[i] = byte(i)
+	}
+
+	t.Run("all 256 possible bytes", func(t *testing.T) {
+		got, err := GetRandomString(64, alphabet...)
+		require.NoError(t, err)
+		assert.Len(t, got, 64)
+	})
+
+	t.Run("alphabet larger than 256 bytes", func(t *testing.T) {
+		_, err := GetRandomString(64, append(alphabet, 'x')...)
+		require.Error(t, err)
+	})
+}
