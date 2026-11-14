@@ -2,6 +2,7 @@ import { waitFor } from '@testing-library/react';
 import { Observable, of, type Subscriber } from 'rxjs';
 
 import {
+  AlertState,
   type DataQuery,
   type DataQueryRequest,
   FieldType,
@@ -287,6 +288,39 @@ it.each(['original', 'exit'] as const)(
     expect(canonical.state.data?.series[0].fields[0].values).toEqual([1]);
     expect(canonical.state.data?.errors).toBeUndefined();
     session.exit();
+  }
+);
+
+it.each(['original', 'exit'] as const)(
+  'retains layer updates received while Original is visible through %s',
+  async (action) => {
+    const { session, canonical, requests, finish } = setup();
+    const [result] = await session.stageProposal([{ changes: [{ refId: 'A', text: 'sum(up)' }] }], { baseRevision: 0 });
+    canonical.setState({
+      data: {
+        ...canonical.state.data!,
+        annotations: [
+          toDataFrame({ fields: [{ name: 'text', type: FieldType.string, values: ['fresh annotation'] }] }),
+        ],
+        alertState: { id: 1, dashboardUID: 'dashboard', panelId: 1, state: AlertState.Alerting },
+      },
+    });
+    expect(canonical.state.data?.annotations?.[0].fields[0].values).toEqual(['fresh annotation']);
+
+    if (action === 'original') {
+      session.preview(stagedId(result));
+      await waitFor(() => expect(requests.length).toBe(1));
+      finish(0, 5);
+      expect(canonical.state.data?.series[0].fields[0].values).toEqual([5]);
+      session.preview('original');
+    } else {
+      session.exit();
+    }
+
+    expect(canonical.state.data?.series[0].fields[0].values).toEqual([1]);
+    expect(canonical.state.data?.annotations?.[0].fields[0].values).toEqual(['fresh annotation']);
+    expect(canonical.state.data?.alertState?.state).toBe(AlertState.Alerting);
+    expect(session.getState().health).toEqual({ A: 'ok', B: 'ok' });
   }
 );
 
