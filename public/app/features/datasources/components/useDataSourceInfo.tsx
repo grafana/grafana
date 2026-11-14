@@ -1,6 +1,14 @@
 import { t } from '@grafana/i18n';
 import { Badge } from '@grafana/ui';
 import { type PageInfoItem } from 'app/core/components/Page/types';
+import { ManagedBadge } from 'app/features/provisioning/components/ManagedBadge';
+import {
+  getManagerIdentity,
+  getManagerKind,
+  getSourcePath,
+  isManaged,
+  type ManagedResource,
+} from 'app/features/provisioning/utils/managedResource';
 
 import { type DatasourceFailureDetails } from '../../connections/hooks/useDatasourceAdvisorChecks';
 
@@ -14,6 +22,8 @@ type DataSourceInfo = {
   failure?: DatasourceFailureDetails;
   // whether advisor has produced a completed check for this datasource
   advisorChecked?: boolean;
+  // the stored Kubernetes object, when it is managed; its annotations drive the provisioning badge
+  managedResource?: ManagedResource;
 };
 
 export const useDataSourceInfo = (dataSourceInfo: DataSourceInfo): PageInfoItem[] => {
@@ -42,6 +52,21 @@ export const useDataSourceInfo = (dataSourceInfo: DataSourceInfo): PageInfoItem[
               : t('datasources.use-data-source-info.badge-text-not-supported', 'Not supported')
           }
         ></Badge>
+      ),
+    });
+  }
+
+  const managedResource = dataSourceInfo.managedResource;
+  if (managedResource && isManaged(managedResource)) {
+    info.push({
+      label: t('datasources.use-data-source-info.label.managed-by', 'Managed by'),
+      value: (
+        <ManagedBadge
+          managerKind={getManagerKind(managedResource)}
+          name={getManagerIdentity(managedResource)}
+          repositoryName={getManagerIdentity(managedResource)}
+          sourcePath={getSourcePath(managedResource)}
+        />
       ),
     });
   }

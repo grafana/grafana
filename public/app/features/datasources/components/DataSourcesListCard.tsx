@@ -9,6 +9,8 @@ import { Card, LinkButton, Stack, Tag, useStyles2 } from '@grafana/ui';
 
 import { ROUTES } from '../../connections/constants';
 import { type DatasourceFailureDetails } from '../../connections/hooks/useDatasourceAdvisorChecks';
+import { ManagedBadge } from '../../provisioning/components/ManagedBadge';
+import { getManagerIdentity, getManagerKind, getSourcePath, isManaged } from '../../provisioning/utils/managedResource';
 import { constructDataSourceExploreUrl } from '../utils';
 
 import { BuildDashboardButton } from './BuildDashboardButton';
@@ -24,6 +26,8 @@ export interface Props {
 export function DataSourcesListCard({ dataSource, hasWriteRights, hasExploreRights, failure }: Props) {
   const dsLink = config.appSubUrl + ROUTES.DataSourcesEdit.replace(/:uid/gi, dataSource.uid);
   const styles = useStyles2(getStyles);
+  // Only present when the list came from an API group; the legacy endpoint has no annotations.
+  const managedResource = { metadata: { annotations: dataSource.annotations } };
 
   return (
     <Card
@@ -46,6 +50,17 @@ export function DataSourcesListCard({ dataSource, hasWriteRights, hasExploreRigh
         ]}
       </Card.Meta>
       <Card.Tags>
+        {/* Managed by. Lives here rather than in the meta row because Card renders its tags outside
+            the edit link, so the badge's own actions stay clickable. */}
+        {isManaged(managedResource) && (
+          <ManagedBadge
+            managerKind={getManagerKind(managedResource)}
+            name={getManagerIdentity(managedResource)}
+            repositoryName={getManagerIdentity(managedResource)}
+            sourcePath={getSourcePath(managedResource)}
+          />
+        )}
+
         {/* Build Dashboard */}
         <BuildDashboardButton dataSource={dataSource} size="md" fill="outline" context="datasource_list" />
 

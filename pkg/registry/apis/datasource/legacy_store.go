@@ -82,7 +82,21 @@ func (s *legacyStorage) Get(ctx context.Context, name string, options *metav1.Ge
 		}()
 	}
 
-	return s.datasources.GetDataSource(ctx, name)
+	ds, err := s.datasources.GetDataSource(ctx, name)
+	if err != nil {
+		return nil, s.asAPIError(err, name)
+	}
+	return ds, nil
+}
+
+// asAPIError translates the store's not-found into the Kubernetes one. The provider returns a plain
+// error, which every apiserver caller branching on apierrors.IsNotFound reads as a real failure --
+// provisioning, for one, abandons the sync instead of falling through to create.
+func (s *legacyStorage) asAPIError(err error, name string) error {
+	if errors.Is(err, datasources.ErrDataSourceNotFound) {
+		return apierrors.NewNotFound(s.resourceInfo.GroupResource(), name)
+	}
+	return err
 }
 
 // Create implements rest.Creater.
@@ -124,7 +138,43 @@ func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, createVa
 		}
 		return nil, err
 	}
+	if created, ok := obj.(*v0alpha1.DataSource); ok {
+		restoreUnstorableMeta(ds, created)
+	}
 	return obj, nil
+}
+
+// restoreUnstorableMeta copies the labels and annotations the data_source row cannot hold back onto
+// the object the store returns.
+//
+// The returned object is rebuilt from the row, which keeps only what the row has a column for, so
+// everything the caller set is otherwise lost -- and under dual write it is this object, not the
+// request, that gets written to unified storage, so the loss is permanent. Manager annotations are
+// the case that matters: without them a provisioned data source is not recognisable as managed.
+//
+// What the conversion derives from the row (the default marker, the deprecated internal ID, the
+// updated timestamp) stays as it is; only keys the caller set and the row dropped are put back.
+func restoreUnstorableMeta(from, to *v0alpha1.DataSource) {
+	if len(from.Labels) > 0 {
+		if to.Labels == nil {
+			to.Labels = make(map[string]string, len(from.Labels))
+		}
+		for key, value := range from.Labels {
+			if _, found := to.Labels[key]; !found {
+				to.Labels[key] = value
+			}
+		}
+	}
+	if len(from.Annotations) > 0 {
+		if to.Annotations == nil {
+			to.Annotations = make(map[string]string, len(from.Annotations))
+		}
+		for key, value := range from.Annotations {
+			if _, found := to.Annotations[key]; !found {
+				to.Annotations[key] = value
+			}
+		}
+	}
 }
 
 // Update implements rest.Updater.
@@ -220,8 +270,10 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 		}()
 	}
 
-	err := s.datasources.DeleteDataSource(ctx, name)
-	return nil, false, err
+	if err := s.datasources.DeleteDataSource(ctx, name); err != nil {
+		return nil, false, s.asAPIError(err, name)
+	}
+	return nil, false, nil
 }
 
 // DeleteCollection implements rest.CollectionDeleter.

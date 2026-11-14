@@ -8,6 +8,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
@@ -212,4 +213,36 @@ func TestIntegrationProvisioning_StatsAuthorization(t *testing.T) {
 		require.Equal(t, http.StatusForbidden, statusCode, "should return 403 Forbidden")
 		require.True(t, apierrors.IsForbidden(result.Error()), "error should be forbidden")
 	})
+}
+
+// TestIntegrationProvisioning_SettingsCollectionGroup verifies that a storage collection declared
+// as a wildcard in [provisioning] resources is reported to the frontend as the collection itself,
+// not expanded into one entry per installed plugin: the collection group is what the search index
+// reports a stored member under, so it is what the frontend matches stats and list rows against.
+func TestIntegrationProvisioning_SettingsCollectionGroup(t *testing.T) {
+	helper := common.RunGrafana(t, func(opts *testinfra.GrafanaOpts) {
+		opts.ProvisioningResources = []string{
+			"folder.grafana.app/Folder:folder",
+			"dashboard.grafana.app/Dashboard:folder",
+			"*.datasource.grafana.app/DataSource",
+		}
+		opts.EnableFeatureToggles = append(opts.EnableFeatureToggles, featuremgmt.FlagDatasourceUseNewCRUDAPIs)
+	})
+
+	settings := &provisioning.RepositoryViewList{}
+	result := helper.AdminREST.Get().
+		Namespace("default").
+		Resource("settings").
+		Do(t.Context())
+
+	require.NoError(t, result.Error(), "should be able to GET settings")
+	require.NoError(t, result.Into(settings), "should be able to unmarshal settings response")
+
+	require.Contains(t, settings.AvailableResources, provisioning.SupportedResource{
+		Group: "datasource.grafana.app", Kind: "DataSource",
+	}, "a wildcard entry is reported as the collection it names")
+
+	for _, r := range settings.AvailableResources {
+		require.NotContains(t, r.Group, "*", "the wildcard token itself is never surfaced")
+	}
 }

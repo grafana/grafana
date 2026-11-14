@@ -50,6 +50,8 @@ export {
   getAppPluginMetasSync,
   setAppPluginMetas,
 } from '../services/pluginMeta/apps';
+export { fetchConnections } from '../services/dataSource/sources/mt/api';
+export type { DataSourceConnection } from '../services/dataSource/sources/mt/types';
 export {
   getDatasourcePluginMeta,
   getDatasourcePluginMetas,

@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
+	dsregistry "github.com/grafana/grafana/pkg/registry/apis/datasource"
 	dsconverter "github.com/grafana/grafana/pkg/registry/apis/datasource/converter"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -324,4 +325,61 @@ func (hs *HTTPServer) handleK8sError(err error) response.Response {
 		}
 	}
 	return response.Error(http.StatusInternalServerError, "Failed to query datasource", err)
+}
+
+// getK8sDataSourcesHandler returns a handler that serves GET /api/datasources from unified storage
+// once unified storage is the source of truth for data sources.
+//
+// The legacy list reads the data_source table, so it cannot see a data source that lives only in
+// unified storage -- everything Git Sync provisions included. Below that the table is the complete
+// list and the collection holds only what has been written since dual-write started, so the mode is
+// checked per request and not just at registration: the API groups migrate before the data does,
+// and the toggle that reroutes this route only says the groups are served.
+//
+// Reading the collection is one request, not one per plugin: every plugin type is persisted in the
+// same collection and names the group serving it in a label. That also makes it see a data source
+// whose plugin is no longer installed, which a listing driven by the installed plugins cannot.
+func (hs *HTTPServer) getK8sDataSourcesHandler() web.Handler {
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if !hs.Features.IsEnabledGlobally(featuremgmt.FlagDatasourcesRerouteLegacyCRUDAPIs) {
+		return routing.Wrap(hs.GetDataSources)
+	}
+
+	// Unlike the by-UID reroute this resolves no connection, so the collection being readable is the
+	// only prerequisite.
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if !hs.Features.IsEnabledGlobally(featuremgmt.FlagDatasourceUseNewCRUDAPIs) {
+		return routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
+			return response.Error(http.StatusInternalServerError,
+				"datasourcesRerouteLegacyCRUDAPIs requires the datasource.useNewCRUDAPIs feature flag",
+				nil)
+		})
+	}
+
+	return routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
+		start := time.Now()
+		defer func() {
+			metricutil.ObserveWithExemplar(c.Req.Context(), hs.dsConfigHandlerRequestsDuration.WithLabelValues("getK8sDataSourcesHandler"), time.Since(start).Seconds())
+		}()
+
+		readUnified, err := hs.dualWrite.ReadFromUnified(c.Req.Context(), dsregistry.DataSourceCollectionResource)
+		if err != nil {
+			hs.log.Warn("could not read the data source storage mode, listing from legacy", "error", err)
+		}
+		if !readUnified {
+			return hs.GetDataSources(c)
+		}
+
+		dataSources, err := dsregistry.ListStoredDataSources(c.Req.Context(), hs.unifiedClient, hs.namespacer, hs.namespacer(c.GetOrgID()))
+		if err != nil {
+			return hs.handleK8sError(err)
+		}
+
+		filtered, err := hs.dsGuardian.New(c.SignedInUser.OrgID, c.SignedInUser).FilterDatasourcesByReadPermissions(dataSources)
+		if err != nil {
+			return response.Error(http.StatusInternalServerError, "Failed to query datasources", err)
+		}
+
+		return response.JSON(http.StatusOK, hs.dataSourceListDTOs(c.Req.Context(), filtered))
+	})
 }

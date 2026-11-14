@@ -2,7 +2,6 @@ package v0alpha1
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -15,17 +14,17 @@ import (
 const (
 	GROUP   = "datasource.grafana.app"
 	VERSION = "v0alpha1"
-
-	// LabelKeyGroup records which datasource API group a stored datasource belongs to.
-	// Every datasource type is persisted under GROUP, so this label tells them apart.
-	LabelKeyGroup = GROUP + "/group"
 )
+
+// LabelKeyGroup records which datasource API group a stored datasource belongs to.
+// Every datasource type is persisted under GROUP, so this label tells them apart.
+var LabelKeyGroup = utils.SharedGroupLabelKey(GROUP)
 
 // GroupLabelValue returns the LabelKeyGroup value for a datasource API group.
 // Label values are limited to 63 characters, so the shared suffix is dropped:
 // testdata.datasource.grafana.app is stored as "testdata".
 func GroupLabelValue(group string) string {
-	return strings.TrimSuffix(group, "."+GROUP)
+	return utils.SharedGroupLabelValue(GROUP, group)
 }
 
 var (

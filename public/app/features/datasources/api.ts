@@ -1,17 +1,83 @@
 import { isString } from 'lodash';
 import { lastValueFrom } from 'rxjs';
 
-import { type DataSourceSettings, type DataSourceJsonData } from '@grafana/data';
+import { type DataSourceSettings, type DataSourceJsonData, type DataSourcePluginMeta } from '@grafana/data';
 import { config, getDataSourceInstanceList, isFetchError } from '@grafana/runtime';
-import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+import {
+  type DataSourceConnection,
+  fetchConnections,
+  FlagKeys,
+  getDatasourcePluginMetas,
+  getFeatureFlagClient,
+} from '@grafana/runtime/internal';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
 import { getMessageFromError } from 'app/core/utils/errors';
 
 import { DeprecatedInternalId } from '../apiserver/types';
-
+/**
+ * Lists every data source the user can read.
+ *
+ * Reads the connections endpoint when the CRUD APIs serve the page, because that is the only list
+ * that covers every plugin group: /api/datasources reads the legacy table, so it cannot see a data
+ * source that lives only in unified storage, nor one whose plugin is no longer installed. It also
+ * carries the manager annotations, which the legacy list has no column for.
+ *
+ * The plugin meta supplies the display name and logo, the same join the runtime cache does; a
+ * connection whose plugin has no meta is kept, since dropping it would hide a data source from the
+ * page that administers it.
+ */
 export const getDataSources = async (): Promise<DataSourceSettings[]> => {
-  return await getBackendSrv().get('/api/datasources');
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.DatasourcesConfigUiUseNewDatasourceCRUDAPIs, false)) {
+    return await getBackendSrv().get('/api/datasources');
+  }
+
+  const [connections, metas] = await Promise.all([
+    fetchConnections({ requestId: 'datasources-list', isCurrent: () => true }),
+    getDatasourcePluginMetas(),
+  ]);
+
+  const metaByType = new Map(metas.map((meta) => [meta.id, meta]));
+  for (const meta of metas) {
+    for (const alias of meta.aliasIDs ?? []) {
+      if (!metaByType.has(alias)) {
+        metaByType.set(alias, meta);
+      }
+    }
+  }
+
+  return (connections?.items ?? []).map((connection) => toDataSourceSettings(connection, metaByType));
+};
+
+const toDataSourceSettings = (
+  connection: DataSourceConnection,
+  metaByType: Map<string, DataSourcePluginMeta>
+): DataSourceSettings => {
+  const type = connection.plugin || connection.group.replace(/\.datasource\.grafana\.app$/, '');
+  const meta = metaByType.get(type);
+  return {
+    // The connection answers what the list renders; the rest is only read on the settings page,
+    // which fetches the data source itself.
+    id: Number(connection.labels?.[DeprecatedInternalId] ?? 0),
+    uid: connection.name,
+    orgId: 0,
+    name: connection.title,
+    type: meta?.id ?? type,
+    typeName: meta?.name ?? type,
+    typeLogoUrl: meta?.info?.logos?.small ?? '',
+    url: connection.url ?? '',
+    annotations: connection.annotations,
+    isDefault: connection.labels?.default === 'true',
+    access: '',
+    user: '',
+    database: '',
+    basicAuth: false,
+    basicAuthUser: '',
+    withCredentials: false,
+    readOnly: false,
+    jsonData: {},
+    secureJsonFields: {},
+  };
 };
 
 // From pkg/storage/unified/apistore/secure.go
@@ -59,6 +125,8 @@ export interface DataSourceSettingsK8s {
 }
 
 const getDataSourceK8sGroup = async (uid: string): Promise<string> => {
+  // The instance list comes from boot data, which is built from the legacy table, so a data source
+  // that lives only in unified storage cannot be resolved to a group here.
   const instances = await getDataSourceInstanceList({ all: true });
   for (const ds of instances) {
     // Built-in data sources (-- Grafana --, -- Mixed --, -- Dashboard --) have no k8s group.
@@ -210,19 +278,41 @@ const fetchK8sResource = async <T>(url: string, failureMessage: string): Promise
   }
 };
 
-const getDataSourceFromK8sAPI = async (k8sName: string, namespace: string) => {
-  // TODO: read this from backend.
-  let k8sVersion = 'v0alpha1';
-  let k8sGroup = await getDataSourceK8sGroup(k8sName);
+// TODO: read this from backend.
+export const DATASOURCE_K8S_VERSION = 'v0alpha1';
+
+/**
+ * Reads the stored Kubernetes DataSource. Callers that only need the settings should use
+ * {@link getDataSourceByUid}; this is for the parts of the object the legacy settings model drops,
+ * above all `metadata.annotations`, which is where the provisioning manager lives.
+ */
+export const getDataSourceK8sResourceByUid = async (
+  k8sName: string,
+  namespace: string
+): Promise<DataSourceSettingsK8s> => {
+  const k8sGroup = await getDataSourceK8sGroup(k8sName);
   if (k8sGroup === '') {
     throw Error(`Could not find data source group with uid: "${k8sName}"`);
   }
 
-  const url = `/apis/${k8sGroup}/${k8sVersion}/namespaces/${namespace}/datasources/${k8sName}`;
-  const resource = await fetchK8sResource<DataSourceSettingsK8s>(url, `Could not load data source "${k8sName}"`);
-  const dsSettings = convertK8sDatasourceSettingsToLegacyDatasourceSettings(resource);
+  return fetchK8sResource<DataSourceSettingsK8s>(
+    `/apis/${k8sGroup}/${DATASOURCE_K8S_VERSION}/namespaces/${namespace}/datasources/${k8sName}`,
+    `Could not load data source "${k8sName}"`
+  );
+};
+
+const getDataSourceFromK8sAPI = async (k8sName: string, namespace: string) => {
+  // Resolved again here because the access subresource lives under the same group.
+  const k8sGroup = await getDataSourceK8sGroup(k8sName);
+  if (k8sGroup === '') {
+    throw Error(`Could not find data source group with uid: "${k8sName}"`);
+  }
+
+  const dsSettings = convertK8sDatasourceSettingsToLegacyDatasourceSettings(
+    await getDataSourceK8sResourceByUid(k8sName, namespace)
+  );
   const access = await fetchK8sResource<DatasourceAccessK8s>(
-    `${url}/access`,
+    `/apis/${k8sGroup}/${DATASOURCE_K8S_VERSION}/namespaces/${namespace}/datasources/${k8sName}/access`,
     `Could not load access information for data source "${k8sName}"`
   );
   dsSettings.accessControl = access.Permissions;
