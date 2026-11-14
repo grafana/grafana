@@ -113,7 +113,13 @@ func GetDefaultBuildHandlerChainFunc(builders []APIGroupBuilder, reg prometheus.
 		handler = filters.WithCanceledRequestStatus(handler)
 
 		handler = filters.WithAcceptHeader(handler)
-		handler = filters.WithPathRewriters(handler, PathRewriters)
+		rewriterHandler := filters.WithPathRewriters(handler, PathRewriters)
+		handler = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			// we log the original URL-path, to see if we still need to keep
+			// the backward-compatibility rewrites.
+			klog.InfoS("Request before path rewrite", "path", req.URL.Path)
+			rewriterHandler.ServeHTTP(w, req)
+		})
 		// Skip the top-level "KubernetesAPI" span for watch requests: their span
 		// would stay open for the whole long-running connection. See
 		// filters.WithWatchInstrumentation for the upstream request span.
