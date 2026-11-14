@@ -45,6 +45,19 @@ func TestConvertNumericWideToFullLong(t *testing.T) {
 		require.Contains(t, err.Error(), "no more than one row")
 	})
 
+	t.Run("MultiRowInLaterFieldShouldError", func(t *testing.T) {
+		input := data.Frames{
+			data.NewFrame("numeric",
+				data.NewField("cpu", nil, []float64{1.0}),
+				data.NewField("mem", nil, []float64{1.0, 2.0}),
+			),
+		}
+		input[0].Meta = &data.FrameMeta{Type: data.FrameTypeNumericWide}
+
+		_, err := ConvertToFullLong(input)
+		require.ErrorContains(t, err, `field "mem" has 2 rows`)
+	})
+
 	t.Run("TwoItemsWithSingleLabel", func(t *testing.T) {
 		input := data.Frames{
 			data.NewFrame("numeric",
@@ -363,6 +376,23 @@ func TestConvertNumericMultiToFullLong(t *testing.T) {
 			require.FailNowf(t, "Result mismatch (-want +got):%s", diff)
 		}
 	})
+}
+
+func TestConvertNumericMultiToFullLongMultiRowFrame(t *testing.T) {
+	input := data.Frames{
+		data.NewFrame("",
+			data.NewField("cpu", data.Labels{"host": "a"}, []float64{1.0}),
+		),
+		data.NewFrame("",
+			data.NewField("cpu", data.Labels{"host": "b"}, []float64{2.0, 3.0}),
+		),
+	}
+	for _, f := range input {
+		f.Meta = &data.FrameMeta{Type: data.FrameTypeNumericMulti}
+	}
+
+	_, err := ConvertToFullLong(input)
+	require.ErrorContains(t, err, `field "cpu" has 2 rows`)
 }
 
 func TestConvertTimeSeriesWideToFullLong(t *testing.T) {
