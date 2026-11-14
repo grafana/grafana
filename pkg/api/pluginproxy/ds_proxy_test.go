@@ -1128,9 +1128,21 @@ func TestDataSourceProxy_LokiRouteAccessControl(t *testing.T) {
 			wantErr:     errPluginProxyRouteAccessDenied,
 		},
 		{
+			name:   "allows POST to Loki query endpoint",
+			method: http.MethodPost,
+			path:   "api/v1/query",
+		},
+		{
 			name:        "denies non allow-listed Loki writes",
 			method:      http.MethodPost,
 			path:        "api/v1/unmatched",
+			permissions: map[string][]string{writeAction: {dsScope}},
+			wantErr:     errors.New("non allow-listed POSTs not allowed on proxied loki datasource"),
+		},
+		{
+			name:        "denies POST to unrelated Loki endpoint",
+			method:      http.MethodPost,
+			path:        "api/v1/query_range",
 			permissions: map[string][]string{writeAction: {dsScope}},
 			wantErr:     errors.New("non allow-listed POSTs not allowed on proxied loki datasource"),
 		},
