@@ -81,12 +81,13 @@ func (r *subHealthREST) Connect(ctx context.Context, name string, opts runtime.O
 			w.Header().Set("X-Grafana-DS-Apiserver", r.builder.cfg.HandlerOrigin)
 		}
 
-		_, reqSpan := tracing.Start(ctx, "datasource.health.request",
+		reqCtx, reqSpan := tracing.Start(ctx, "datasource.health.request",
 			attribute.String("namespace", namespace),
 			attribute.String("plugin_id", r.builder.pluginJSON.ID),
 			attribute.String("datasource_uid", name),
 		)
 		defer reqSpan.End()
+		req = req.WithContext(reqCtx)
 
 		// Validate the request the same way the legacy /health endpoint does,
 		// before reaching out to the datasource.
