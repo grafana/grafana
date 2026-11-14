@@ -3,6 +3,7 @@ package github_test
 import (
 	"encoding/base64"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
@@ -32,6 +33,21 @@ func TestGenerateJWTToken(t *testing.T) {
 		// Verify expiration is ~10 minutes
 		expiresIn := claims.ExpiresAt.Sub(claims.IssuedAt.Time)
 		assert.InDelta(t, 10*time.Minute, expiresIn, float64(time.Second))
+	})
+
+	t.Run("issues token in the past to allow for clock drift", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			token, _, err := github.GenerateJWTToken(appID, common.RawSecureValue(privateKeyBase64))
+			require.NoError(t, err)
+
+			parsedToken, _, err := new(jwt.Parser).ParseUnverified(string(token), &jwt.RegisteredClaims{})
+			require.NoError(t, err)
+
+			claims := parsedToken.Claims.(*jwt.RegisteredClaims)
+			now := time.Now()
+			assert.Equal(t, now.Add(-time.Minute).Unix(), claims.IssuedAt.Unix())
+			assert.Equal(t, now.Add(9*time.Minute).Unix(), claims.ExpiresAt.Unix())
+		})
 	})
 
 	t.Run("fails with invalid base64", func(t *testing.T) {
