@@ -1,18 +1,19 @@
 import { isEqual } from 'lodash';
 
 import { reportInteraction } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   NewSceneObjectAddedEvent,
+  sceneGraph,
   type SceneObject,
   SceneObjectBase,
   SceneObjectRemovedEvent,
-  sceneGraph,
   StateCommittedEvent,
   type StateCommittedPayload,
 } from '@grafana/scenes';
 import { type ElementSelectionContextItem, type ElementSelectionOnSelectOptions } from '@grafana/ui';
 import { getLayoutType } from 'app/features/dashboard/utils/tracking';
-import { isFullDashboardEditing, isDashboardReviewing } from 'app/features/dashboard-scene/scene/types/dashboard';
+import { isDashboardReviewing, isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
 
 import { getPendingChangesHistory, type PendingChangesHistory } from '../lifecycle/pendingChangePreview';
 import {
@@ -25,16 +26,16 @@ import { dashboardViewChanged } from '../scene/dashboardViewRegistry';
 import { TabItem } from '../scene/layout-tabs/TabItem';
 import { getRepeatCloneSourceKey } from '../utils/clone';
 import { DashboardInteractions } from '../utils/interactions';
-import { getDefaultVizPanel, getLayoutForObject, getDashboardSceneFor } from '../utils/utils';
+import { getDashboardSceneFor, getDefaultVizPanel, getLayoutForObject } from '../utils/utils';
 
 import { ElementEditPane } from './ElementEditPane';
 import {
   ConditionalRenderingChangedEvent,
-  type DashboardBatchEditActionEventPayload,
+  type DashboardActionMeta,
   DashboardBatchEditActionEndEvent,
+  type DashboardBatchEditActionEventPayload,
   DashboardBatchEditActionStartEvent,
   DashboardEditActionEvent,
-  type DashboardActionMeta,
   type DashboardEditActionEventPayload,
   DashboardStateChangedEvent,
   NewObjectAddedToCanvasEvent,
@@ -45,7 +46,7 @@ import {
   RepeatsUpdatedEvent,
 } from './events';
 import { DashboardOutline } from './outline/DashboardOutline';
-import { type DashboardSidebarPane, type DashboardSidebarLike, type DashboardSidebarState } from './types';
+import { type DashboardSidebarLike, type DashboardSidebarPane, type DashboardSidebarState } from './types';
 
 export const MAX_UNDO_ACTIONS = 100;
 
@@ -574,6 +575,23 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     this.selectObject(obj, options);
   }
 
+  public openElementSettings(obj: SceneObject) {
+    const sourceKey = getRepeatCloneSourceKey(obj);
+    const source = sourceKey ? sceneGraph.findByKey(this, sourceKey) : obj;
+    if (!source) {
+      return;
+    }
+
+    this.cancelPaneRequest();
+    // Reselecting a newly added element would clear the state that requests autofocus.
+    if (this.state.selectionContext.selected.length !== 1 || this.getSelectedObject() !== source) {
+      this.selectObject(source, { force: true });
+    }
+    if (this.state.openPane?.getId() !== 'element') {
+      this.openPane(new ElementEditPane({}));
+    }
+  }
+
   public selectObject(obj: SceneObject, { multi, force }: ElementSelectionOnSelectOptions = {}) {
     this.cancelPaneRequest();
     if (isDashboardReviewing(getDashboardSceneFor(this).state)) {
@@ -592,8 +610,13 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
       selectedDisconnectedObject = obj;
     }
 
-    // If current open pane is not showing selected element, then we should maintain selection (force = true) which disables selection toggling
-    if (this.state.openPane?.getId() !== 'element') {
+    const sidebarExplicitOpen = getFeatureFlagClient().getBooleanValue(
+      FlagKeys.GrafanaDashboardSidebarExplicitOpen,
+      false
+    );
+
+    // Keep the selection when opening element settings from a closed sidebar or another pane.
+    if ((!sidebarExplicitOpen || this.state.openPane) && this.state.openPane?.getId() !== 'element') {
       force = true;
     }
 
@@ -659,10 +682,16 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
       document.activeElement.blur();
     }
 
+    const sidebarExplicitOpen = getFeatureFlagClient().getBooleanValue(
+      FlagKeys.GrafanaDashboardSidebarExplicitOpen,
+      false
+    );
+    const shouldOpenPane = selected.length > 0 && (!sidebarExplicitOpen || Boolean(this.state.openPane));
+
     const newState: DashboardSidebarState = {
       ...this.state,
       selectionContext: { ...this.state.selectionContext, selected },
-      openPane: selected.length ? new ElementEditPane({}) : undefined,
+      openPane: shouldOpenPane ? new ElementEditPane({}) : undefined,
       isNewElement: false,
       selectedDisconnectedObject,
     };

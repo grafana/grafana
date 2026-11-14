@@ -61,6 +61,7 @@ export function AddControlsButton({ dashboard }: { dashboard: DashboardScene }) 
         return;
       }
       annotationEditActions.addAnnotation({ source: dataLayers, addedObject: newAnnotation });
+      dashboard.state.sidebar.openElementSettings(newAnnotation);
       DashboardInteractions.addAnnotationButtonClicked({ source: 'variable_controls' });
     });
   }, [dashboard]);

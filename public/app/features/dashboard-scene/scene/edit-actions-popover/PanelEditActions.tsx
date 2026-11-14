@@ -2,12 +2,13 @@ import { useMemo, type JSX } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
+import { useFlagGrafanaDashboardSidebarExplicitOpen } from '@grafana/runtime/internal';
 import { type VizPanel } from '@grafana/scenes';
 import { Text, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { duplicatePanel } from '../../actions/layout/duplicatePanel';
 import { removePanel, removePanels } from '../../actions/layout/removePanels';
-import { getRenderedInstanceCount, isRepeatCloneOrChildOf } from '../../utils/clone';
+import { getRenderedInstanceCount, getRepeatSourceObject, isRepeatCloneOrChildOf } from '../../utils/clone';
 import { DashboardInteractions } from '../../utils/interactions';
 import { getPanelIdForVizPanel } from '../../utils/utils-panels';
 import { useGroupSelection } from '../layouts-shared/GroupSelectedActions';
@@ -31,6 +32,7 @@ export function PanelEditActionsWrapper({ panel, children }: { panel: VizPanel; 
   // Repeat clones are selected through their source panel, so the selection never holds a clone key.
   const selectionCount = useSelectionCountFor(panel.state.repeatSourceKey ?? panel.state.key);
   const isPopoverSupported = useHoverPopoverSupported();
+  const sidebarExplicitOpen = useFlagGrafanaDashboardSidebarExplicitOpen();
   const { getPortalRoot, getSidebarShiftPadding } = useEditActionsLayout();
 
   // Branching stays on the selected element count so a lone repeat keeps the single panel actions.
@@ -41,8 +43,9 @@ export function PanelEditActionsWrapper({ panel, children }: { panel: VizPanel; 
 
   return (
     <EditActionsPopover
+      keyboardAccessible
       content={editActions}
-      disabled={!isPopoverSupported}
+      disabled={!sidebarExplicitOpen && !isPopoverSupported}
       placement="top-end"
       portalRoot={getPortalRoot}
       zIndex={theme.zIndex.dropdown}
@@ -59,8 +62,7 @@ export function PanelEditActionsSingle({ panel }: { panel: VizPanel }) {
 
   const onClickEdit = () => {
     DashboardInteractions.panelActionClicked('settings', getPanelIdForVizPanel(panel), 'edit_popover');
-    const { selectionContext } = getDashboardSceneLike(panel).state.sidebar.state;
-    selectionContext.onSelect({ id: panel.state.key! }, { force: true });
+    getDashboardSceneLike(panel).state.sidebar.openElementSettings(getRepeatSourceObject(panel));
   };
 
   const onClickEditVisualization = () => {

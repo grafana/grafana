@@ -34,7 +34,7 @@ export async function openAddFilterForm(
     sectionOwner.setState({ $variables: variablesSet });
   }
   addVariable({ source: variablesSet, addedObject: newVar });
-  dashboard.state.sidebar.selectObject(newVar, { force: true, multi: false });
+  dashboard.state.sidebar.openElementSettings(newVar);
 }
 
 export function AddFilters({ dashboardScene }: { dashboardScene: DashboardSceneLike }) {

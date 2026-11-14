@@ -46,8 +46,9 @@ export const useEditActionsPopover = () => useContext(EditActionsPopoverContext)
 
 /**
  * Checks whether the device supports fine-pointer hover (mouse/trackpad).
- * On touch, a panel tap opens both the hover popover and the edit sidebar at once.
- * Used for panels only: the popover would cover the sidebar that PanelChrome auto-opens; variable/annotation/link controls are fine without this guard.
+ * Panels use this guard when selection auto-opens the sidebar, preventing
+ * a touch tap from opening both the sidebar and popover.
+ * With explicit sidebar opening enabled (`grafana.dashboardSidebarExplicitOpen=true`), panels bypass this guard.
  */
 export function useHoverPopoverSupported(defaultValue = true) {
   return useMedia('(hover: hover) and (pointer: fine)', defaultValue);

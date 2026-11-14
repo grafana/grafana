@@ -5,16 +5,17 @@ import { reportInteraction, setPluginImportUtils } from '@grafana/runtime';
 import {
   ConstantVariable,
   CustomVariable,
-  type MultiValueVariable,
-  type SceneObject,
   SceneGridLayout,
   SceneTimeRange,
   SceneVariableSet,
   StateCommittedEvent,
   TestVariable,
   VizPanel,
+  type MultiValueVariable,
+  type SceneObject,
 } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/feature-flags';
+import { testWithFlags } from '@grafana/test-utils/unstable';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
 import { groupSelectionInto } from '../actions/layout/groupSelectionInto';
@@ -52,6 +53,7 @@ import { ElementEditPane } from './ElementEditPane';
 import { MultiSelectedObjectsEditableElement } from './MultiSelectedObjectsEditableElement';
 import { MultiSelectedVizPanelsEditableElement } from './MultiSelectedVizPanelsEditableElement';
 import { VizPanelEditableElement } from './VizPanelEditableElement';
+import { openAddFilterForm } from './add-new/AddFilters';
 import { AddNewPane } from './add-new/AddNewPane';
 import { DashboardCrossDashboardVariablesPane } from './dashboard/DashboardCrossDashboardVariablesPane';
 import { DashboardStateChangedEvent } from './events';
@@ -1671,3 +1673,119 @@ function setupWithTwoRows(): {
   activateFullSceneTree(dashboard);
   return { dashboard, row1, row2, row1Viz: panel, sidebar: dashboard.state.sidebar };
 }
+
+function buildPopoverSelectionScene() {
+  const panel = new VizPanel({ key: 'panel-1', pluginId: 'text', title: 'First panel' });
+  const secondPanel = new VizPanel({ key: 'panel-2', pluginId: 'text', title: 'Second panel' });
+  const row = new RowItem({
+    key: 'row-1',
+    title: 'Overview row',
+    layout: DefaultGridLayoutManager.fromVizPanels([panel, secondPanel]),
+  });
+  const tab = new TabItem({ key: 'tab-1', title: 'Overview', layout: new RowsLayoutManager({ rows: [row] }) });
+  const tabs = new TabsLayoutManager({ tabs: [tab] });
+  const dashboard = new DashboardScene({ isEditing: true, body: tabs });
+  tabs.setState({ currentTabSlug: tab.getSlug() });
+
+  return { sidebar: dashboard.state.sidebar, panel, secondPanel, row, tab };
+}
+
+describe.each([
+  { enabled: false, state: 'disabled' },
+  { enabled: true, state: 'enabled' },
+])('DashboardSidebar with grafana.dashboardSidebarExplicitOpen $state', ({ enabled }) => {
+  testWithFlags({ 'grafana.dashboardSidebarExplicitOpen': enabled });
+
+  it.each(['panel', 'row', 'tab'] as const)(
+    `when selecting a %s with the sidebar closed, settings ${enabled ? 'stay closed' : 'open'}`,
+    (kind) => {
+      const scene = buildPopoverSelectionScene();
+      const { sidebar } = scene;
+
+      sidebar.selectObject(scene[kind]);
+
+      expect(sidebar.state.selectionContext.selected).toEqual([{ id: scene[kind].state.key }]);
+      if (enabled) {
+        expect(sidebar.state.openPane).toBeUndefined();
+      } else {
+        expect(sidebar.state.openPane).toBeInstanceOf(ElementEditPane);
+      }
+    }
+  );
+
+  it(`when reselecting an element with the sidebar closed, ${enabled ? 'selection clears' : 'settings reopen'}`, () => {
+    const { sidebar, panel } = buildPopoverSelectionScene();
+    sidebar.setState({ selectionContext: { ...sidebar.state.selectionContext, selected: [{ id: panel.state.key! }] } });
+
+    sidebar.selectObject(panel);
+
+    if (enabled) {
+      expect(sidebar.state.selectionContext.selected).toEqual([]);
+      expect(sidebar.state.openPane).toBeUndefined();
+    } else {
+      expect(sidebar.state.selectionContext.selected).toEqual([{ id: panel.state.key }]);
+      expect(sidebar.state.openPane).toBeInstanceOf(ElementEditPane);
+    }
+  });
+
+  it('when selecting another element with settings open, settings follow the selection', () => {
+    const { sidebar, panel, row } = buildPopoverSelectionScene();
+    sidebar.openElementSettings(panel);
+
+    sidebar.selectObject(row);
+
+    expect(sidebar.getSelectedObject()).toBe(row);
+    expect(sidebar.state.openPane).toBeInstanceOf(ElementEditPane);
+  });
+
+  it('when opening settings for another element, clears the new-element autofocus request', () => {
+    const { sidebar, panel, row } = buildPopoverSelectionScene();
+    sidebar.openElementSettings(panel);
+    sidebar.setState({ isNewElement: true });
+
+    sidebar.openElementSettings(row);
+
+    expect(sidebar.getSelectedObject()).toBe(row);
+    expect(sidebar.state.openPane?.getId()).toBe('element');
+    expect(sidebar.state.isNewElement).toBe(false);
+  });
+
+  it('when adding a panel to the selection, both panels stay selected', () => {
+    const { sidebar, panel, secondPanel } = buildPopoverSelectionScene();
+    sidebar.selectObject(panel);
+
+    sidebar.selectObject(secondPanel, { multi: true });
+
+    expect(sidebar.state.selectionContext.selected).toEqual([{ id: panel.state.key }, { id: secondPanel.state.key }]);
+    if (enabled) {
+      expect(sidebar.state.openPane).toBeUndefined();
+    } else {
+      expect(sidebar.state.openPane).toBeInstanceOf(ElementEditPane);
+    }
+  });
+
+  it.each(['panel', 'row', 'tab'] as const)('when explicitly opening settings for a %s, the sidebar opens', (kind) => {
+    const scene = buildPopoverSelectionScene();
+    const { sidebar } = scene;
+
+    sidebar.openElementSettings(scene[kind]);
+
+    expect(sidebar.getSelectedObject()).toBe(scene[kind]);
+    expect(sidebar.state.openPane).toBeInstanceOf(ElementEditPane);
+  });
+
+  it('when adding a filter with the sidebar closed, opens the new filter configuration', async () => {
+    const dashboard = new DashboardScene({ isEditing: true });
+    const sidebar = dashboard.state.sidebar;
+    const deactivate = sidebar.activate();
+
+    try {
+      await openAddFilterForm(dashboard, dashboard);
+
+      expect(sidebar.getSelectedObject()?.state).toMatchObject({ name: 'filter0' });
+      expect(sidebar.state.openPane?.getId()).toBe('element');
+    } finally {
+      deactivate();
+    }
+  });
+});
