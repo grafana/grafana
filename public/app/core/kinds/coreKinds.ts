@@ -9,8 +9,8 @@ import { CONNECTIONS_URL, PROVISIONING_URL } from 'app/features/provisioning/con
 import { type KindInfo } from './types';
 
 /**
- * The kinds Grafana serves itself. The one place that says what each is called, which icon it gets
- * and where its pages are, so that every list of mixed kinds shows a kind the same way.
+ * Kinds Grafana serves itself, each described once: what it is called, which icon it gets and where
+ * its pages are, so that every list of mixed kinds shows a kind the same way.
  *
  * The plural labels keep the translation keys they had before this table existed: a renamed key
  * would show untranslated until it is translated again.
@@ -31,6 +31,7 @@ export const CORE_KINDS = {
     resource: 'dashboards',
     pluralLabel: () => t('provisioning.resource-kind.dashboards', 'Dashboards'),
     icon: 'apps',
+    // The page path is /d/:uid/:slug?, so the title that makes the slug is optional too
     getRoute: (name: string, title?: string) => {
       const path = `/d/${encodeURIComponent(name)}`;
       return title === undefined ? path : `${path}/${kbn.slugifyForUrl(title)}`;
@@ -87,4 +88,4 @@ export const CORE_KINDS = {
     getRoute: (name: string) => `/connections/datasources/edit/${encodeURIComponent(name)}`,
     listRoute: '/connections/datasources',
   },
-} satisfies Record<string, KindInfo>;
+} as const satisfies Record<string, KindInfo>;

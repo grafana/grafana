@@ -1,9 +1,12 @@
 import { CORE_KINDS } from './coreKinds';
 import { coversGroup } from './types';
 
+// Each row builds its own path, so nothing shared encodes the name for it
+const kindsWithPage = Object.values(CORE_KINDS).flatMap((kind) => ('getRoute' in kind ? [kind] : []));
+
 describe('getRoute', () => {
-  it('encodes the object name in its page path', () => {
-    expect(CORE_KINDS.connection.getRoute('git hub/app')).toBe('/admin/provisioning/connections/git%20hub%2Fapp/edit');
+  it.each(kindsWithPage)('encodes the object name in the $kind page path', ({ getRoute }) => {
+    expect(getRoute('git hub/app')).toContain('git%20hub%2Fapp');
   });
 
   it('adds a slug of the title to a dashboard page path', () => {

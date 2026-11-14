@@ -438,14 +438,17 @@ export function toDashboardResults(rsp: SearchAPIResponse, sort: string): DataFr
     const isRoot = hit.resource === 'dashboards' && isRootFolderUID(hit.folder);
     const location = isRoot ? 'general' : hit.folder;
     const folder = isRoot ? 'general' : hit.folder || 'general';
-    const kindInfo = hit.resource === 'folders' ? CORE_KINDS.folder : CORE_KINDS.dashboard;
+    const route =
+      hit.resource === 'folders'
+        ? CORE_KINDS.folder.getRoute(hit.name)
+        : CORE_KINDS.dashboard.getRoute(hit.name, hit.title);
 
     const field = Object.fromEntries(Array.from(fieldNames, (name) => [name, hit.field?.[name] ?? null]));
 
     return {
       ...hit,
       uid: hit.name,
-      url: `${config.appSubUrl}${kindInfo.getRoute(hit.name, hit.title)}`,
+      url: `${config.appSubUrl}${route}`,
       // Sort tags so we aren't reliant on the backend having done this for us
       // Sorting order can be different between APIs/search implementations
       tags: (hit.tags || []).sort(),
