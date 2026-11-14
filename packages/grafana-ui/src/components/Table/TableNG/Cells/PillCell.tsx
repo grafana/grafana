@@ -12,7 +12,7 @@ import {
   fieldColorModeRegistry,
   formattedValueToString,
 } from '@grafana/data';
-import { FieldColorModeId } from '@grafana/schema';
+import { FieldColorModeId, TableCellDisplayMode, TablePillColorMode } from '@grafana/schema';
 
 import { getTagColor, getTagColorsFromName } from '../../../../utils/tags';
 import { Tag } from '../../../Tags/Tag';
@@ -20,8 +20,9 @@ import { getActiveCellSelector, isTableCellStylesKeyEqual } from '../styles';
 import { type PillCellProps, type TableCellStyles } from '../types';
 import { inferPills } from '../utils';
 
-export function PillCell({ rowIdx, field, theme, getTextColorForBackground }: PillCellProps) {
+export function PillCell({ rowIdx, field, theme, getTextColorForBackground, cellOptions }: PillCellProps) {
   const value = field.values[rowIdx];
+  const colorMode = cellOptions?.type === TableCellDisplayMode.Pill ? cellOptions.colorMode : undefined;
   const pills: Pill[] = useMemo(() => {
     const pillValues = inferPills(value);
     return pillValues.length > 0
@@ -30,7 +31,14 @@ export function PillCell({ rowIdx, field, theme, getTextColorForBackground }: Pi
           // carries both the label and the mapped color — call it once and use both.
           const display = field.display!(pill);
           const renderedValue = formattedValueToString(display);
-          const { background, text } = getPillColors(display, renderedValue, field, theme, getTextColorForBackground);
+          const { background, text } = getPillColors(
+            display,
+            renderedValue,
+            field,
+            theme,
+            getTextColorForBackground,
+            colorMode
+          );
           return {
             value: renderedValue,
             key: `${pill}-${index}`,
@@ -39,7 +47,7 @@ export function PillCell({ rowIdx, field, theme, getTextColorForBackground }: Pi
           };
         })
       : [];
-  }, [value, field, theme, getTextColorForBackground]);
+  }, [value, field, theme, getTextColorForBackground, colorMode]);
 
   if (pills.length === 0) {
     return null;
@@ -81,11 +89,14 @@ function getPillColors(
   value: string,
   field: Field,
   theme: GrafanaTheme2,
-  getTextColorForBackground: (color: string) => string
+  getTextColorForBackground: (color: string) => string,
+  colorMode?: TablePillColorMode
 ): { background: string; text: string } {
   const cfg = field.config;
+  // The tonal tint keeps refreshed pills readable in both themes, but it means the background no
+  // longer matches the configured color, so the "background" mode opts out of it.
   const onBackground = (background: string) =>
-    theme.flags.visualDesignRefresh
+    theme.flags.visualDesignRefresh && colorMode !== TablePillColorMode.Background
       ? getTagColor(background, theme)
       : { background, text: getTextColorForBackground(background) };
 

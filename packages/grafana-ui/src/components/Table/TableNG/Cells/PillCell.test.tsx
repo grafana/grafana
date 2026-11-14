@@ -10,7 +10,7 @@ import {
   fieldColorModeRegistry,
   getColorByStringHash,
 } from '@grafana/data';
-import { FieldColorModeId } from '@grafana/schema';
+import { FieldColorModeId, TableCellDisplayMode, TablePillColorMode } from '@grafana/schema';
 
 import { getTextColorForBackground } from '../../../../utils/colors';
 import { getTagColorsFromName } from '../../../../utils/tags';
@@ -219,6 +219,76 @@ describe('PillCell', () => {
         </ThemeContext.Provider>
       );
       expect(screen.getByText('error')).toHaveStyle({ backgroundColor, color });
+    });
+
+    it.each(['dark', 'light'] as const)(
+      'uses the mapped color as the pill background in the background color mode in %s mode',
+      (mode) => {
+        const theme = createTheme({ colors: { mode } });
+        theme.flags.visualDesignRefresh = true;
+        const field = fieldWithValues(['error']);
+        field.config.mappings = [
+          { type: MappingType.ValueToText, options: { error: { color: 'rgb(204, 237, 204)' } } },
+        ];
+        field.display = () => ({ text: 'error', color: 'rgb(204, 237, 204)', numeric: 0 });
+
+        render(
+          <ThemeContext.Provider value={theme}>
+            <PillCell
+              field={field}
+              rowIdx={0}
+              theme={theme}
+              getTextColorForBackground={getTextColorForBackground}
+              cellOptions={{ type: TableCellDisplayMode.Pill, colorMode: TablePillColorMode.Background }}
+            />
+          </ThemeContext.Provider>
+        );
+        expect(screen.getByText('error')).toHaveStyle({
+          backgroundColor: 'rgb(204, 237, 204)',
+          color: getTextColorForBackground('rgb(204, 237, 204)'),
+        });
+      }
+    );
+
+    it('uses a fixed field color as the pill background in the background color mode', () => {
+      const theme = createTheme();
+      theme.flags.visualDesignRefresh = true;
+      const field = fieldWithValues(['value1']);
+      field.config.color = { mode: FieldColorModeId.Fixed, fixedColor: '#ff0000' };
+
+      render(
+        <ThemeContext.Provider value={theme}>
+          <PillCell
+            field={field}
+            rowIdx={0}
+            theme={theme}
+            getTextColorForBackground={getTextColorForBackground}
+            cellOptions={{ type: TableCellDisplayMode.Pill, colorMode: TablePillColorMode.Background }}
+          />
+        </ThemeContext.Provider>
+      );
+      expect(screen.getByText('value1')).toHaveStyle({ backgroundColor: 'rgb(255, 0, 0)' });
+    });
+
+    it('keeps the tonal colors in the auto color mode', () => {
+      const theme = createTheme();
+      theme.flags.visualDesignRefresh = true;
+      const field = fieldWithValues(['error']);
+      field.config.mappings = [{ type: MappingType.ValueToText, options: { error: { color: '#ff0000' } } }];
+      field.display = () => ({ text: 'error', color: '#ff0000', numeric: 0 });
+
+      render(
+        <ThemeContext.Provider value={theme}>
+          <PillCell
+            field={field}
+            rowIdx={0}
+            theme={theme}
+            getTextColorForBackground={getTextColorForBackground}
+            cellOptions={{ type: TableCellDisplayMode.Pill, colorMode: TablePillColorMode.Auto }}
+          />
+        </ThemeContext.Provider>
+      );
+      expect(screen.getByText('error')).toHaveStyle({ backgroundColor: 'rgb(38, 0, 0)', color: 'rgb(255, 166, 166)' });
     });
 
     // Tag reads the theme off context, so the flag has to be on the provided theme too — in the

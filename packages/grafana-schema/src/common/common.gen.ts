@@ -780,6 +780,15 @@ export enum TableCellBackgroundDisplayMode {
 }
 
 /**
+ * How a "Pill" cell turns the field's color into the pill colors. Auto adjusts
+ * the color for readability, Background uses it as the pill background as-is.
+ */
+export enum TablePillColorMode {
+  Auto = 'auto',
+  Background = 'background',
+}
+
+/**
  * Sort by field state
  */
 export interface TableSortByFieldState {
@@ -869,6 +878,7 @@ export interface TableColoredBackgroundCellOptions {
 }
 
 export interface TablePillCellOptions {
+  colorMode?: TablePillColorMode;
   type: TableCellDisplayMode.Pill;
 }
 
