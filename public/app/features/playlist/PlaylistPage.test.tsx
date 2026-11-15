@@ -1,4 +1,5 @@
 import { act, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { of } from 'rxjs';
 import { TestProvider } from 'test/helpers/TestProvider';
 
@@ -197,6 +198,38 @@ describe('PlaylistPage', () => {
           expect(screen.queryByRole('button', { name: /Delete/i })).not.toBeInTheDocument();
         });
       });
+    });
+  });
+
+  describe('when a playlist title has special characters', () => {
+    const title = `Ops / On-call & "TV" <wall>`;
+
+    beforeEach(() => {
+      jest.spyOn(backendSrv, 'fetch').mockImplementation(() =>
+        of(
+          createFetchResponse({
+            items: [{ spec: { title, interval: '10m', items: [] }, metadata: { name: 0, uid: 'playlist-0' } }],
+          })
+        )
+      );
+      (contextSrv as jest.Mocked<typeof contextSrv>).isEditor = true;
+    });
+
+    it('then the card buttons should be labelled with the title as typed', async () => {
+      setup();
+
+      expect(await screen.findByRole('button', { name: `Start playlist ${title}` })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: `Share playlist ${title}` })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: `Edit playlist ${title}` })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: `Delete playlist ${title}` })).toBeInTheDocument();
+    });
+
+    it('then the delete confirmation should show the title as typed', async () => {
+      setup();
+
+      await userEvent.click(await screen.findByRole('button', { name: /^Delete playlist/ }));
+
+      expect(await screen.findByText(`Are you sure you want to delete ${title} playlist?`)).toBeInTheDocument();
     });
   });
 

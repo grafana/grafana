@@ -94,6 +94,17 @@ describe('PlaylistForm', () => {
       expectCorrectRow({ index: 1, type: 'dashboard_by_uid', value: 'uid_2' });
       expectCorrectRow({ index: 2, type: 'dashboard_by_tag', value: 'tag_A' });
     });
+
+    it('then an item row label should keep special characters in the item value', () => {
+      getTestContext({
+        ...mockPlaylist,
+        spec: { ...mockPlaylist.spec, items: [{ type: 'dashboard_by_tag', value: 'team/ops & "infra"' }] },
+      });
+
+      expect(
+        screen.getByRole('cell', { name: 'Playlist item, dashboard_by_tag, team/ops & "infra"' })
+      ).toBeInTheDocument();
+    });
   });
 
   describe('when deleting a playlist item', () => {

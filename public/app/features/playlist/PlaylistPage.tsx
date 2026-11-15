@@ -112,6 +112,7 @@ export const PlaylistPage = () => {
                   confirmText={t('playlist-page.delete-modal.confirm-text', 'Delete')}
                   body={t('playlist-page.delete-modal.body', 'Are you sure you want to delete {{name}} playlist?', {
                     name: playlistToDelete.spec?.title,
+                    interpolation: { escapeValue: false },
                   })}
                   onConfirm={onDeletePlaylist}
                   isOpen={Boolean(playlistToDelete)}
