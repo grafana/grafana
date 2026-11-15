@@ -2,7 +2,11 @@ package folders
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/mock"
@@ -14,9 +18,13 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/endpoints/request"
+	"k8s.io/client-go/dynamic"
 	dynamicfake "k8s.io/client-go/dynamic/fake"
+	clientrest "k8s.io/client-go/rest"
 
 	authlib "github.com/grafana/authlib/types"
+	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -24,6 +32,7 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission/rpclient"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -92,6 +101,91 @@ func TestFolderDefaultResourcePermissionsUseRPClient(t *testing.T) {
 		b.afterDelete(obj, &metav1.DeleteOptions{})
 		_, err = resourceClient.Namespace("org-7").Get(context.Background(), rpName, metav1.GetOptions{})
 		require.True(t, apierrors.IsNotFound(err))
+	})
+}
+
+func TestFolderAPIBuilder_DashboardAppClients(t *testing.T) {
+	getters := []struct {
+		name string
+		get  func(*FolderAPIBuilder, context.Context) (*dynamic.NamespaceableResourceInterface, error)
+		gvr  schema.GroupVersionResource
+	}{
+		{"dashboards", (*FolderAPIBuilder).dashboardClient, dashv1.DashboardResourceInfo.GroupVersionResource()},
+		{"variables", (*FolderAPIBuilder).variableClient, dashv2beta1.VariableResourceInfo.GroupVersionResource()},
+		{"dashboard preferences", (*FolderAPIBuilder).dashboardPreferencesClient, prefsGVR},
+	}
+
+	t.Run("builds each client once from the rest config, for its own resource", func(t *testing.T) {
+		var (
+			mu    sync.Mutex
+			paths []string
+		)
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			mu.Lock()
+			paths = append(paths, r.URL.Path)
+			mu.Unlock()
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"kind":"Status","apiVersion":"v1","status":"Success"}`))
+		}))
+		t.Cleanup(srv.Close)
+		calls := 0
+		b := &FolderAPIBuilder{cascadeConfigProvider: apiserver.RestConfigProviderFunc(func(context.Context) (*clientrest.Config, error) {
+			calls++
+			return &clientrest.Config{Host: srv.URL}, nil
+		})}
+
+		want := make([]string, 0, len(getters))
+		for _, g := range getters {
+			client, err := g.get(b, context.Background())
+			require.NoError(t, err, g.name)
+			again, err := g.get(b, context.Background())
+			require.NoError(t, err, g.name)
+			require.Same(t, client, again, g.name)
+			require.NoError(t, (*client).Namespace("org-7").Delete(context.Background(), "x", metav1.DeleteOptions{}), g.name)
+			want = append(want, fmt.Sprintf("/apis/%s/%s/namespaces/org-7/%s/x", g.gvr.Group, g.gvr.Version, g.gvr.Resource))
+		}
+		require.Equal(t, len(getters), calls)
+		mu.Lock()
+		defer mu.Unlock()
+		require.Equal(t, want, paths)
+	})
+
+	t.Run("returns the injected client without a rest config provider", func(t *testing.T) {
+		dyn := newDashboardPreferencesFake()
+		injected := make([]dynamic.NamespaceableResourceInterface, len(getters))
+		for i, g := range getters {
+			injected[i] = dyn.Resource(g.gvr)
+		}
+		b := &FolderAPIBuilder{dashboardSvc: &injected[0], variableSvc: &injected[1], dashboardPreferencesSvc: &injected[2]}
+		for i, g := range getters {
+			client, err := g.get(b, context.Background())
+			require.NoError(t, err, g.name)
+			require.Same(t, &injected[i], client, g.name)
+
+			client, err = g.get(&FolderAPIBuilder{}, context.Background())
+			require.NoError(t, err, g.name)
+			require.Nil(t, client, g.name)
+		}
+	})
+
+	t.Run("a rest config error is returned and the next call builds the client", func(t *testing.T) {
+		fail := true
+		b := &FolderAPIBuilder{cascadeConfigProvider: apiserver.RestConfigProviderFunc(func(context.Context) (*clientrest.Config, error) {
+			if fail {
+				return nil, errors.New("not ready")
+			}
+			return &clientrest.Config{Host: "http://localhost"}, nil
+		})}
+		for _, g := range getters {
+			fail = true
+			_, err := g.get(b, context.Background())
+			require.ErrorContains(t, err, "get rest config: not ready", g.name)
+
+			fail = false
+			client, err := g.get(b, context.Background())
+			require.NoError(t, err, g.name)
+			require.NotNil(t, client, g.name)
+		}
 	})
 }
 

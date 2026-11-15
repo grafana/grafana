@@ -95,65 +95,29 @@ type FolderAPIBuilder struct {
 // dashboardClient builds the dashboard dynamic client lazily. Returns nil when no config provider is
 // set, in which case cascade delete skips dashboard cleanup.
 func (b *FolderAPIBuilder) dashboardClient(ctx context.Context) (*dynamic.NamespaceableResourceInterface, error) {
-	if b.cascadeConfigProvider == nil {
-		return b.dashboardSvc, nil
-	}
-
-	b.dashboardSvcMu.Lock()
-	defer b.dashboardSvcMu.Unlock()
-
-	if b.dashboardSvc != nil {
-		return b.dashboardSvc, nil
-	}
-
-	cfg, err := b.cascadeConfigProvider.GetRestConfig(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("get rest config: %w", err)
-	}
-	dyn, err := dynamic.NewForConfig(cfg)
-	if err != nil {
-		return nil, fmt.Errorf("create dynamic client: %w", err)
-	}
-	client := dyn.Resource(dashv1.DashboardResourceInfo.GroupVersionResource())
-	b.dashboardSvc = &client
-	return b.dashboardSvc, nil
+	return b.lazyDashboardAppClient(ctx, &b.dashboardSvcMu, &b.dashboardSvc, dashv1.DashboardResourceInfo.GroupVersionResource())
 }
 
 func (b *FolderAPIBuilder) variableClient(ctx context.Context) (*dynamic.NamespaceableResourceInterface, error) {
-	if b.cascadeConfigProvider == nil {
-		return b.variableSvc, nil
-	}
-
-	b.variableSvcMu.Lock()
-	defer b.variableSvcMu.Unlock()
-
-	if b.variableSvc != nil {
-		return b.variableSvc, nil
-	}
-
-	cfg, err := b.cascadeConfigProvider.GetRestConfig(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("get rest config: %w", err)
-	}
-	dyn, err := dynamic.NewForConfig(cfg)
-	if err != nil {
-		return nil, fmt.Errorf("create dynamic client: %w", err)
-	}
-	client := dyn.Resource(dashV2beta1.VariableResourceInfo.GroupVersionResource())
-	b.variableSvc = &client
-	return b.variableSvc, nil
+	return b.lazyDashboardAppClient(ctx, &b.variableSvcMu, &b.variableSvc, dashV2beta1.VariableResourceInfo.GroupVersionResource())
 }
 
 func (b *FolderAPIBuilder) dashboardPreferencesClient(ctx context.Context) (*dynamic.NamespaceableResourceInterface, error) {
+	return b.lazyDashboardAppClient(ctx, &b.dashboardPreferencesSvcMu, &b.dashboardPreferencesSvc, dashV2beta1.DashboardPreferencesResourceInfo.GroupVersionResource())
+}
+
+// lazyDashboardAppClient returns *slot, building it for gvr from cascadeConfigProvider on first use; a
+// failed build is not cached. Without a config provider it returns *slot as injected, which may be nil.
+func (b *FolderAPIBuilder) lazyDashboardAppClient(ctx context.Context, mu *sync.Mutex, slot **dynamic.NamespaceableResourceInterface, gvr schema.GroupVersionResource) (*dynamic.NamespaceableResourceInterface, error) {
 	if b.cascadeConfigProvider == nil {
-		return b.dashboardPreferencesSvc, nil
+		return *slot, nil
 	}
 
-	b.dashboardPreferencesSvcMu.Lock()
-	defer b.dashboardPreferencesSvcMu.Unlock()
+	mu.Lock()
+	defer mu.Unlock()
 
-	if b.dashboardPreferencesSvc != nil {
-		return b.dashboardPreferencesSvc, nil
+	if *slot != nil {
+		return *slot, nil
 	}
 
 	cfg, err := b.cascadeConfigProvider.GetRestConfig(ctx)
@@ -164,9 +128,9 @@ func (b *FolderAPIBuilder) dashboardPreferencesClient(ctx context.Context) (*dyn
 	if err != nil {
 		return nil, fmt.Errorf("create dynamic client: %w", err)
 	}
-	client := dyn.Resource(dashV2beta1.DashboardPreferencesResourceInfo.GroupVersionResource())
-	b.dashboardPreferencesSvc = &client
-	return b.dashboardPreferencesSvc, nil
+	client := dyn.Resource(gvr)
+	*slot = &client
+	return *slot, nil
 }
 
 func RegisterAPIService(cfg *setting.Cfg,
