@@ -16,6 +16,7 @@ import (
 	"k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -36,7 +37,8 @@ type fakeResponse struct {
 var statusSuccess = fakeResponse{http.StatusOK, "application/json", `{"kind":"Status","apiVersion":"v1","status":"Success"}`}
 
 // newTestCleaner returns a cleaner whose requests are answered by serve, and the "METHOD path" of each request it sends.
-// Every request must carry Grafana's service identity, limited to namespace.
+// The rest config must be asked for with a context that ignores the caller's cancellation and has a deadline, and every
+// request must carry Grafana's service identity, limited to namespace.
 func newTestCleaner(t *testing.T, namespace string, serve func(*http.Request) (fakeResponse, error)) (UserCleaner, *[]string) {
 	t.Helper()
 	var requests []string
@@ -58,7 +60,10 @@ func newTestCleaner(t *testing.T, namespace string, serve func(*http.Request) (f
 			Request:    req,
 		}, nil
 	})
-	cleaner := NewUserCleaner(func(context.Context) (*rest.Config, error) {
+	cleaner := NewUserCleaner(func(ctx context.Context) (*rest.Config, error) {
+		assert.NoError(t, ctx.Err(), "the wait for the rest config must not end with the caller's context")
+		_, bounded := ctx.Deadline()
+		assert.True(t, bounded, "the wait for the rest config must be bounded")
 		return &rest.Config{Host: "http://loopback", Transport: rt}, nil
 	})
 	return cleaner, &requests
@@ -177,17 +182,32 @@ func TestUserCleaner_OutlivesCallerCancellation(t *testing.T) {
 }
 
 func TestUserCleaner_BoundsTheDelete(t *testing.T) {
-	synctest.Test(t, func(t *testing.T) {
-		cleaner, _ := newTestCleaner(t, "default", func(req *http.Request) (fakeResponse, error) {
-			<-req.Context().Done()
-			return fakeResponse{}, req.Context().Err()
+	t.Run("an API server that doesn't answer", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			cleaner, _ := newTestCleaner(t, "default", func(req *http.Request) (fakeResponse, error) {
+				<-req.Context().Done()
+				return fakeResponse{}, req.Context().Err()
+			})
+			start := time.Now()
+
+			err := cleaner.DeleteUserPreferences(t.Context(), "default", "u1")
+
+			require.ErrorIs(t, err, context.DeadlineExceeded)
+			require.Equal(t, userCleanupTimeout, time.Since(start))
 		})
-		start := time.Now()
+	})
 
-		err := cleaner.DeleteUserPreferences(t.Context(), "default", "u1")
+	t.Run("an API server that isn't ready yet", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			// Until the API server starts, the eventual rest config returns only when its context is done.
+			cleaner := ProvideUserCleaner(apiserver.ProvideEventualRestConfigProvider())
+			start := time.Now()
 
-		require.ErrorIs(t, err, context.DeadlineExceeded)
-		require.Equal(t, userCleanupTimeout, time.Since(start))
+			err := cleaner.DeleteUserPreferences(t.Context(), "default", "u1")
+
+			require.ErrorIs(t, err, context.DeadlineExceeded)
+			require.Equal(t, userCleanupTimeout, time.Since(start))
+		})
 	})
 }
 
