@@ -335,9 +335,9 @@ func TestDeleteTeamPreservesFolderSearchErrorStatus(t *testing.T) {
 			err  error
 			code int
 		}{
-			"embedded": {resp: &resourcepb.ResourceSearchResponse{Error: &resourcepb.ErrorResult{
+			"detailed": {err: resource.GRPCStatusError(&resourcepb.ErrorResult{
 				Code: http.StatusTooManyRequests, Message: "index busy",
-			}}, code: http.StatusTooManyRequests},
+			}), code: http.StatusTooManyRequests},
 			"transport": {err: status.Error(codes.Unavailable, "index unavailable"), code: http.StatusServiceUnavailable},
 			"plain":     {err: errors.New("private database failure"), code: http.StatusInternalServerError},
 		} {
@@ -346,7 +346,7 @@ func TestDeleteTeamPreservesFolderSearchErrorStatus(t *testing.T) {
 				searcher := &teamFolderSearchClient{response: input.resp, err: input.err}
 				service := &deleteTeamService{FakeService: &teamtest.FakeService{ExpectedTeamDTO: &team.TeamDTO{ID: 1, UID: "a00001"}}}
 				if redirected {
-					service.err = resource.StatusErrorFromResponse(input.resp.GetError(), input.err)
+					service.err = resource.StatusErrorFromGRPC(input.err)
 				}
 				server := SetupAPITestServer(t, service, func(tapi *TeamAPI) {
 					tapi.folderSearcher = searcher

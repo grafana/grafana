@@ -34,8 +34,9 @@ requests when detected before execution, otherwise as SQL errors.
 | `x-access-token` | Exactly one raw signed access token from the CAP exchange, intended for the proxy. No `Bearer ` prefix. This matches authlib's gRPC token provider and client interceptor. |
 | `traceparent`, `tracestate` | Optional tracing context, supplied and consumed by tracing instrumentation. Never a source of identity or authorization. |
 
-Use authenticated transport according to the deployment's service transport
-configuration. Tokens must not be sent over an untrusted plaintext connection.
+Choose gRPC transport credentials that match the endpoint's TLS or plaintext configuration.
+CAP token authentication and namespace authorization apply with either transport.
+Plaintext does not encrypt tokens or query traffic or verify the server's identity.
 The authentication implementation verifies the token with configured trusted
 signing keys and validates its audience, signature, expiry, service allowlist,
 and namespace authorization against the requested namespace. It derives caller
@@ -220,8 +221,9 @@ Callers must use only the supported operations.
 
 ## Packages and releases
 
-The V1 API is published in the module `github.com/grafana/grafana/pkg/storage/dbproxy`.
+The API, client, and SQL driver share the module `github.com/grafana/grafana/pkg/storage/dbproxy`.
 Consumers pin a public module version independently of the proxy server image.
+For module versions, tag format, and the release procedure, see [Release the module](README.md#release-the-module).
 
 ## Compatible upgrades and rollback
 
@@ -263,4 +265,4 @@ make proto-breaking PROTO_BASE=/path/to/baseline/proto
 Skip that comparison until a baseline exists for this module.
 Commit changes to the schema and generated API together.
 
-Next, import the [generated Go API](api/dbproxy/v1) to build a client or server for this contract.
+Next, use the [Go SQL driver guide](sql-driver.md) to open a pool and check complete results.

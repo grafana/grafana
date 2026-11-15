@@ -240,23 +240,23 @@ Resample changes the time stamps in each time series to have a consistent time i
 
 ## Write an expression
 
-{{< admonition type="note" >}}
-The steps in this section describe the classic, generally available panel query editor.
-For information about the new panel query editor experience, currently in public preview, refer to the [Query and transform data documentation](https://grafana.com/docs/grafana/v13.1/visualizations/panels-visualizations/query-transform-data/).
-{{< /admonition >}}
-
-If your data source supports them, then Grafana displays the **Expression** button and shows any existing expressions in the query editor list.
+If your data source supports them, Grafana lists expressions alongside queries in the **Queries & Expressions** section of the query editor sidebar.
+Expressions aren't available with the **Dashboard** data source.
 
 For more information about expressions, refer to [About expressions](#about-expressions).
 
-1. Open the panel.
-1. Below the query, click **Expression**.
-1. In the **Operation** field, select the type of expression you want to write.
+1. Open the panel for editing.
+1. In the sidebar, click the plus icon next to **Queries & Expressions** and select **Add expression**.
+
+   To add the expression in a specific position, hover the cursor over the card it should follow and click the plus sign beside it.
+
+1. In the editor pane, select the type of expression you want to write.
 
    For more information about expression operations, refer to [About expressions](#about-expressions).
 
 1. Write the expression.
-1. Click **Apply**.
+
+For more information about the query editor, refer to [Navigate the query editor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#navigate-the-query-editor).
 
 ## Special cases
 

@@ -75,7 +75,10 @@ func (s *stubServer) GetStore(_ context.Context, ns string) (*zanzana.StoreInfo,
 // error, driving reconcileNamespace into its "namespace deleted" branch.
 type notFoundClientFactory struct{}
 
-func (notFoundClientFactory) Clients(_ context.Context, ns string) (resources.ResourceClients, error) {
+func (notFoundClientFactory) Clients(ctx context.Context, ns string) (resources.ResourceClients, error) {
+	if ns == "" {
+		return (fakeAnonClientFactory{dyn: newGlobalRoleTestClient()}).Clients(ctx, ns)
+	}
 	return nil, apierrors.NewNotFound(schema.GroupResource{Resource: "namespaces"}, ns)
 }
 

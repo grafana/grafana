@@ -109,6 +109,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
       fontFamily: theme.typography.fontFamilyMonospace,
       fontSize: theme.typography.bodySmall.fontSize,
     },
+    '& :not(pre) > code': {
+      whiteSpace: 'normal',
+      overflowWrap: 'anywhere',
+    },
     pre: {
       background: theme.colors.background.secondary,
       padding: theme.spacing(1),

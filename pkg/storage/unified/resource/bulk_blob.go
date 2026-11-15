@@ -30,7 +30,7 @@ func normalizeBulkBlobUploads(ctx context.Context, req *resourcepb.BulkRequest, 
 	if failure := verifyRequestKey(req.Key); failure != nil {
 		return nil, status.Error(codes.InvalidArgument, failure.Message)
 	}
-	body, blobs, err := decodeBulkBlobBody(req.Value)
+	body, blobs, err := decodeReferenceOnlyBlobBody(req.Value)
 	if err != nil {
 		return nil, err
 	}
@@ -72,9 +72,6 @@ func normalizeBulkBlobUploads(ctx context.Context, req *resourcepb.BulkRequest, 
 		}
 		if rsp == nil {
 			return nil, status.Error(codes.Internal, "blob backend returned no upload response")
-		}
-		if err := ErrorFromResponse(rsp.Error, nil); err != nil {
-			return nil, err
 		}
 		if err := ctx.Err(); err != nil {
 			return nil, status.FromContextError(err).Err()

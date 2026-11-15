@@ -107,7 +107,8 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 			return nil, err
 		}
 	}
-	targets, err := s.prepareHybridTargets(ctx, req, keys)
+	phaseCtx := withHybridPhaseObserver(ctx, s.vectorMetrics)
+	targets, err := s.prepareHybridTargets(phaseCtx, req, keys)
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +118,7 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 			return nil, err
 		}
 	}
-	candidates, err := s.hybridSearchCandidates(ctx, user, req, targets, semanticQuery, hybridFetchDepth(limit))
+	candidates, err := s.hybridSearchCandidates(phaseCtx, user, req, targets, semanticQuery, hybridFetchDepth(limit))
 	if err != nil {
 		return nil, err
 	}
@@ -126,7 +127,7 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 		results = interleaveHybridCandidates(candidates)
 	}
 	if !req.SkipRerank {
-		results, err = s.rerankHybridResults(ctx, semanticQuery, results, req.MinRelevance)
+		results, err = s.rerankHybridResults(phaseCtx, semanticQuery, results, req.MinRelevance)
 		if err != nil {
 			return nil, err
 		}
@@ -291,7 +292,7 @@ func (s *searchServer) hybridLexicalLeg(ctx context.Context, user types.AuthInfo
 				}
 			}
 		})
-		if err := searchCallError(lexResp, err); err != nil {
+		if err := searchCallError(err); err != nil {
 			return nil, fmt.Errorf("lexical leg: %w", err)
 		}
 		hits, err := lexicalHitsFromResponse(lexResp)
@@ -301,14 +302,17 @@ func (s *searchServer) hybridLexicalLeg(ctx context.Context, user types.AuthInfo
 		return hits, nil
 	}
 
-	hits, err := s.externalLexical.LexicalSearch(ctx, vector.LexicalQuery{
+	lexicalQuery := vector.LexicalQuery{
 		Namespace: target.storageNamespace,
 		Model:     s.embedder.Model,
 		Resource:  coll.PartitionKey,
 		Query:     req.Query,
 		Limit:     depth,
 		Filters:   filters,
-	})
+	}
+	lexicalStart := hybridPhaseStart(ctx)
+	hits, err := s.externalLexical.LexicalSearch(ctx, lexicalQuery)
+	observeHybridPhase(ctx, "database", lexicalStart, err)
 	if err != nil {
 		return nil, fmt.Errorf("lexical leg: %w", err)
 	}
@@ -340,9 +344,11 @@ func (s *searchServer) hybridLexicalLeg(ctx context.Context, user types.AuthInfo
 // hybridSemanticLeg filters vector hits using the target resource's authorization.
 func (s *searchServer) hybridSemanticLeg(ctx context.Context, user types.AuthInfo, target hybridTarget, dense []float32, depth int, filters []vector.SearchFilter) ([]vector.VectorSearchResult, error) {
 	key, coll := target.key, target.collection
+	searchStart := hybridPhaseStart(ctx)
 	results, err := s.vectorBackend.Search(ctx,
 		target.storageNamespace, s.embedder.Model, coll.PartitionKey,
 		dense, depth, filters...)
+	observeHybridPhase(ctx, "database", searchStart, err)
 	if err != nil {
 		return nil, fmt.Errorf("vector backend: %w", err)
 	}
@@ -394,7 +400,7 @@ func (s *searchServer) resolveSemanticMetadata(ctx context.Context, key *resourc
 		Fields:       []string{SEARCH_FIELD_MANAGER_KIND, SEARCH_FIELD_MANAGER_ID, SEARCH_FIELD_TAGS},
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	})
-	if err := searchCallError(resp, err); err != nil {
+	if err := searchCallError(err); err != nil {
 		s.log.Warn("hybrid search: semantic metadata resolution failed", "err", err)
 		return
 	}
@@ -455,7 +461,7 @@ func (s *searchServer) resolveFolderTitles(ctx context.Context, namespace string
 		Fields:       []string{SEARCH_FIELD_TITLE},
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	})
-	if err := searchCallError(resp, err); err != nil {
+	if err := searchCallError(err); err != nil {
 		s.log.Warn("hybrid search: folder title resolution failed", "err", err)
 		return
 	}
@@ -484,7 +490,9 @@ type resolvedReadTarget struct {
 
 // resolveAllowedCollection verifies catalog scope against trusted enrollment.
 func (s *searchServer) resolveAllowedCollection(ctx context.Context, namespace, group, resource string) (resolvedReadTarget, bool, error) {
+	resolveStart := hybridPhaseStart(ctx)
 	coll, found, err := s.vectorBackend.ResolveCollection(ctx, group, resource)
+	observeHybridPhase(ctx, "database", resolveStart, err)
 	if err != nil {
 		return resolvedReadTarget{}, false, err
 	}
@@ -548,13 +556,13 @@ func grpcErrorFromErrorResult(e *resourcepb.ErrorResult) error {
 	}
 }
 
-// searchCallError maps an ErrorResult — embedded in the response or attached
-// to a grpc error's details — to a single error, so either form yields
-// the same code. The result replaces the grpc error rather than joining
-// it, which would let the grpc status win status.Code.
-func searchCallError(resp *resourcepb.ResourceSearchResponse, err error) error {
+// searchCallError maps an ErrorResult attached to a grpc error's details
+// through grpcErrorFromErrorResult, so every in-process search failure
+// yields the same code. The result replaces the grpc error rather than
+// joining it, which would let the grpc status win status.Code.
+func searchCallError(err error) error {
 	if err == nil {
-		return grpcErrorFromErrorResult(resp.GetError())
+		return nil
 	}
 	if res := resourceutil.ErrorResultFromGRPCDetails(err); res != nil {
 		return grpcErrorFromErrorResult(res)
@@ -594,7 +602,9 @@ func (s *searchServer) rerankHybridResults(ctx context.Context, query string, re
 	}
 	trace.SpanFromContext(ctx).SetAttributes(attribute.Int("lexical_rerank_texts_truncated", lexicalRerankTextsTruncated))
 
+	scoreStart := hybridPhaseStart(ctx)
 	scores, err := s.reranker.Score(ctx, query, texts)
+	observeHybridPhase(ctx, "reranking", scoreStart, err)
 	if err != nil {
 		if ctx.Err() != nil {
 			return nil, status.FromContextError(ctx.Err()).Err()

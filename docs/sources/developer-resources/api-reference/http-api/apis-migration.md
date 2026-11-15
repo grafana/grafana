@@ -36,6 +36,6 @@ The API migration process is underway and there may not be an exact `/apis` matc
 
 ### Query history API
 
-The [Query History API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/query_history) will not be migrated.
+The [Query History API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/query_history) is partially replaced by the [Queries HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/queries/), which is only available in Grafana Enterprise and Grafana Cloud. If you use the Query History API to keep queries on the server, you can save them as saved queries instead. To learn how the endpoints match, refer to [Differences from the legacy Query history API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/queries/#differences-from-the-legacy-query-history-api).
 
-This functionality is being deprecated. Grafana will revert to using local on-device storage for this functionality, since this approach reduces the amount of traffic to the backend with minimal change in functionality. If you're using this API, consider using a similar approach.
+The rest of the query history functionality is being deprecated. Grafana will revert to using local on-device storage for query history, since this approach reduces the amount of traffic to the backend with minimal change in functionality. If you're using this API to record query history, consider using a similar approach.

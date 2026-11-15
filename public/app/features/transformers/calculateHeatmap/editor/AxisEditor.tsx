@@ -5,8 +5,8 @@ import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { type HeatmapCalculationBucketConfig, HeatmapCalculationMode } from '@grafana/schema';
 import { RadioButtonGroup, ScaleDistribution, Stack } from '@grafana/ui';
+import { SuggestionsInput } from 'app/core/components/SuggestionsInput/SuggestionsInput';
 
-import { SuggestionsInput } from '../../suggestionsInput/SuggestionsInput';
 import { numberOrVariableValidator } from '../../utils';
 import { convertDurationToMilliseconds } from '../utils';
 

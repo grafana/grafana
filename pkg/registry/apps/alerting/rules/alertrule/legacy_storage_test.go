@@ -23,8 +23,9 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
+	ngalertac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	"github.com/grafana/grafana/pkg/services/ngalert/rules/legacy"
 	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -131,22 +132,26 @@ func (fakeRuleAccessControl) AuthorizeAccessInFolder(context.Context, identity.R
 func (fakeRuleAccessControl) AuthorizeRuleChanges(context.Context, identity.Requester, *rulestore.GroupDelta) error {
 	return nil
 }
+func (fakeRuleAccessControl) AuthorizeNotificationSettings(context.Context, identity.Requester, []ngalertac.ReceiverRef) error {
+	return nil
+}
+
 func (fakeRuleAccessControl) HasAccessInFolder(context.Context, identity.Requester, ngmodels.Namespaced) (bool, error) {
 	return true, nil
 }
 
-func newTestLegacyStorage(t *testing.T, validator provisioning.RuleMutationValidator) *legacyStorage {
+func newTestLegacyStorage(t *testing.T, validator legacy.RuleMutationValidator) *legacyStorage {
 	t.Helper()
 	ruleStore := fakes.NewRuleStore(t)
 	provenanceStore := fakes.NewFakeProvisioningStore()
-	quotas := provisioning.MockQuotaChecker{}
+	quotas := legacy.MockQuotaChecker{}
 	quotas.EXPECT().LimitOK()
 	folderService := foldertest.NewFakeService()
 	folderService.ExpectedFolder = &folder.Folder{UID: "test-folder-uid", Title: "Test Folder"}
 
-	svc := provisioning.NewAlertRuleService(
+	svc := legacy.NewLegacyRuleService(
 		ruleStore, provenanceStore, folderService, &quotas, ruleStore,
-		60, 10, 100, log.NewNopLogger(), nil, fakeRuleAccessControl{}, validator,
+		60, log.NewNopLogger(), nil, fakeRuleAccessControl{}, validator,
 	)
 	return &legacyStorage{service: *svc, namespacer: nsMapperForTest()}
 }

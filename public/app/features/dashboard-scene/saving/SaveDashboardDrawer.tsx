@@ -36,6 +36,7 @@ interface SaveDashboardDrawerState extends SceneObjectState {
   saveDashboardTemplate?: boolean;
   showVariablesWarning?: boolean;
   onSaveSuccess?: () => void;
+  onDismiss?: () => void;
   recoverToNewBranch?: RecoverToNewBranch;
   /** Where a new save at the root of a folderless repository goes; unset means wherever the lookup says */
   saveTarget?: SaveTarget;
@@ -63,6 +64,7 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
       meta: shouldRestoreMeta ? (dashboard.getInitialState()?.meta ?? dashboard.state.meta) : dashboard.state.meta,
     });
     dashboard.closeModal();
+    this.state.onDismiss?.();
   };
 
   public onToggleSaveTimeRange = () => {

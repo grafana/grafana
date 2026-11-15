@@ -3,6 +3,7 @@ package serviceaccount
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -14,6 +15,10 @@ import (
 )
 
 func ValidateOnCreate(ctx context.Context, obj *iamv0alpha1.ServiceAccount) error {
+	if err := validateNameNotNumeric(obj.Name); err != nil {
+		return err
+	}
+
 	if obj.Spec.Title == "" {
 		return apierrors.NewBadRequest("service account must have a title")
 	}
@@ -48,6 +53,16 @@ func ValidateOnCreate(ctx context.Context, obj *iamv0alpha1.ServiceAccount) erro
 		return apierrors.NewForbidden(iamv0alpha1.ServiceAccountResourceInfo.GroupResource(),
 			obj.Name,
 			fmt.Errorf("cannot assign a role higher than user's role"))
+	}
+
+	return nil
+}
+
+// metadata.name is stored as user.uid. Reject numeric names to avoid confusing
+// them with internal user IDs, including values with leading zeros such as "01".
+func validateNameNotNumeric(name string) error {
+	if _, err := strconv.ParseInt(name, 10, 64); err == nil {
+		return apierrors.NewBadRequest("name must not be a number")
 	}
 
 	return nil

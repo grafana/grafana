@@ -320,7 +320,7 @@ func (s *cascadeDeleteStorage) dashboardsInFolder(ctx context.Context, namespace
 			Offset:       offset,
 			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		})
-		if err := resource.StatusErrorFromResponse(resp.GetError(), err); err != nil {
+		if err := resource.StatusErrorFromGRPC(err); err != nil {
 			logging.FromContext(ctx).Error("Failed to search dashboards in folder", "namespace", namespace, "folder", folderUID, "error", err)
 			return nil, err
 		}
@@ -400,7 +400,7 @@ func (s *cascadeDeleteStorage) variablesInFolder(ctx context.Context, namespace,
 			Offset:       offset,
 			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		})
-		if err := resource.StatusErrorFromResponse(resp.GetError(), err); err != nil {
+		if err := resource.StatusErrorFromGRPC(err); err != nil {
 			logging.FromContext(ctx).Error("Failed to search variables in folder", "namespace", namespace, "folder", folderUID, "error", err)
 			return nil, err
 		}

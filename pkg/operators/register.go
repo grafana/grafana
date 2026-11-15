@@ -9,7 +9,7 @@ import (
 func init() {
 	server.RegisterOperator(server.Operator{
 		Name:        "folder-controller",
-		Description: "Watch folders and log deletion events",
+		Description: "Delete the contents of folders being cascade-deleted",
 		RunFunc:     folder.RunFolderController,
 	})
 

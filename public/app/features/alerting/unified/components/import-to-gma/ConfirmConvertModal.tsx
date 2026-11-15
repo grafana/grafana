@@ -9,12 +9,17 @@ import { Alert, Collapse, ConfirmModal, Modal, Stack, Text, useStyles2 } from '@
 import { CodeMirrorEditor } from '@grafana/ui/unstable';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
-import { type RulerRuleDTO, type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
+import {
+  type RulerCloudRuleDTO,
+  type RulerCloudRulesConfigDTO,
+  type RulerRuleDTO,
+  type RulerRulesConfigDTO,
+} from 'app/types/unified-alerting-dto';
 
 import { trackImportToGMAError, trackImportToGMASuccess } from '../../Analytics';
-import { convertToGMAApi } from '../../api/convertToGMAApi';
+import { convertApi } from '../../api/convertToGMAApi';
 import { createListFilterLink } from '../../utils/navigation';
-import { getRuleName, isPluginProvidedRule } from '../../utils/rules';
+import { getRuleName, isPluginProvidedRule, rulerRuleType } from '../../utils/rules';
 
 import { type ImportFormValues } from './ImportToGMARules';
 import { useGetRulesThatMightBeOverwritten, useGetRulesToBeImported } from './hooks';
@@ -127,7 +132,7 @@ export const ConfirmConversionModal = ({ importPayload, isOpen, onDismiss }: Mod
 
   const { rulesThatMightBeOverwritten } = useGetRulesThatMightBeOverwritten(!isOpen, targetFolder, rulerRulesToPayload);
 
-  const [convert] = convertToGMAApi.useConvertToGMAMutation();
+  const [convert] = convertApi.usePostRuleGroupsMutation();
   const notifyApp = useAppNotification();
 
   if (isloadingCloudRules) {
@@ -159,12 +164,14 @@ export const ConfirmConversionModal = ({ importPayload, isOpen, onDismiss }: Mod
     }
     try {
       await convert({
-        dataSourceUID: importSource === 'yaml' ? (yamlImportTargetDatasourceUID ?? '') : (selectedDatasourceUID ?? ''),
-        targetFolderUID: targetFolder?.uid,
-        pauseRecordingRules: pauseRecordingRules,
-        pauseAlerts: pauseAlertingRules,
         payload: rulerRulesToPayload,
-        targetDatasourceUID,
+        datasourceUid: importSource === 'yaml' ? (yamlImportTargetDatasourceUID ?? '') : (selectedDatasourceUID ?? ''),
+        folderUid: targetFolder?.uid,
+        recordingRulesPaused: pauseRecordingRules,
+        alertRulesPaused: pauseAlertingRules,
+        targetDatasourceUid: targetDatasourceUID,
+        // Imported rules stay editable in the UI.
+        disableProvenance: true,
       }).unwrap();
 
       const isRootFolder = isEmpty(targetFolder?.uid);
@@ -264,8 +271,8 @@ export function filterRulerRulesConfig(
   rulerRulesConfig: RulerRulesConfigDTO,
   namespace?: string,
   groupName?: string
-): { filteredConfig: RulerRulesConfigDTO; someRulesAreSkipped: boolean } {
-  const filteredConfig: RulerRulesConfigDTO = {};
+): { filteredConfig: RulerCloudRulesConfigDTO; someRulesAreSkipped: boolean } {
+  const filteredConfig: RulerCloudRulesConfigDTO = {};
   let someRulesAreSkipped = false;
 
   Object.entries(rulerRulesConfig).forEach(([ns, groups]) => {
@@ -281,8 +288,9 @@ export function filterRulerRulesConfig(
         return true;
       })
       .map((group) => {
-        const filteredRules = group.rules.filter((rule) => {
-          const shouldSkip = isRuleManagedByExternalSystem(rule);
+        // Only data source rules can be imported, so Grafana-managed rules are skipped too.
+        const filteredRules = group.rules.filter((rule): rule is RulerCloudRuleDTO => {
+          const shouldSkip = !rulerRuleType.dataSource.rule(rule) || isRuleManagedByExternalSystem(rule);
           if (shouldSkip) {
             someRulesAreSkipped = true;
             return false;

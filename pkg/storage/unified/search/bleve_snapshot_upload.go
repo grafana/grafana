@@ -77,11 +77,11 @@ func (b *bleveBackend) uploadSnapshot(ctx context.Context, key resource.Namespac
 	if interval := b.opts.Snapshot.UploadInterval; interval > 0 {
 		// Reopened indexes can predate this binary; snapshots retain the index version.
 		bi, err := getBuildInfo(idx.index)
-		if err != nil {
-			return fmt.Errorf("reading index build info for snapshot upload: %w", err)
+		var k ulid.ULID
+		if err == nil {
+			notOlderThan := time.Now().Add(-interval)
+			k, _, err = findFreshSnapshotByUploadTime(ctx, b.opts.Snapshot.Store, key, notOlderThan, bi.BuildVersion, b.maxSupportedIndexFormat, logger)
 		}
-		notOlderThan := time.Now().Add(-interval)
-		k, _, err := findFreshSnapshotByUploadTime(ctx, b.opts.Snapshot.Store, key, notOlderThan, bi.BuildVersion, b.maxSupportedIndexFormat, logger)
 		if err != nil {
 			logger.Warn("Snapshot upload-time probe failed; proceeding with upload", "err", err)
 		} else if k != (ulid.ULID{}) {

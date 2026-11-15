@@ -2,6 +2,7 @@ package accesscontrol
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	"math/rand"
@@ -20,7 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
@@ -70,22 +71,6 @@ func getDatasourceScopesForRules(rules models.RulesGroup) []string {
 	for _, rule := range rules {
 		for _, query := range rule.Data {
 			scope := datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID)
-			if _, ok := scopesMap[scope]; ok {
-				continue
-			}
-			result = append(result, scope)
-			scopesMap[scope] = struct{}{}
-		}
-	}
-	return result
-}
-
-func getReceiverScopesForRules(rules models.RulesGroup) []string {
-	scopesMap := map[string]struct{}{}
-	var result []string
-	for _, rule := range rules {
-		if ns := rule.ContactPointRouting(); ns != nil {
-			scope := models.ScopeReceiversProvider.GetResourceScopeUID(legacy_storage.NameToUid(ns.Receiver))
 			if _, ok := scopesMap[scope]; ok {
 				continue
 			}
@@ -166,8 +151,7 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 					folder.ActionFoldersRead: {
 						namespaceIdScope,
 					},
-					datasources.ActionQuery:                   getDatasourceScopesForRules(c.New),
-					accesscontrol.ActionAlertingReceiversRead: getReceiverScopesForRules(c.New),
+					datasources.ActionQuery: getDatasourceScopesForRules(c.New),
 				}
 			},
 		},
@@ -478,86 +462,6 @@ func TestAuthorizeRuleChanges(t *testing.T) {
 						folder.ScopeFoldersProvider.GetResourceScopeUID(c.GroupKey.NamespaceUID),
 					},
 					datasources.ActionQuery: dsScopes,
-				}
-			},
-		},
-		{
-			name: "if there are new rules that have notification settings it should check access to all receivers",
-			changes: func() *rulestore.GroupDelta {
-				receiverName := "test-receiver"
-				genWithNotificationSettings := genWithGroupKey.With(gen.WithNotificationSettingsGen(models.NotificationSettingsGen(models.NSMuts.WithReceiver(receiverName))))
-				return &rulestore.GroupDelta{
-					GroupKey: groupKey,
-					New:      genWithNotificationSettings.GenerateManyRef(1, 5),
-					Update:   nil,
-					Delete:   nil,
-				}
-			},
-			permissions: func(c *rulestore.GroupDelta) map[string][]string {
-				return map[string][]string{
-					ruleCreate: {
-						namespaceIdScope,
-					},
-					ruleRead: {
-						namespaceIdScope,
-					},
-					folder.ActionFoldersRead: {
-						namespaceIdScope,
-					},
-					datasources.ActionQuery:                   getDatasourceScopesForRules(c.New),
-					accesscontrol.ActionAlertingReceiversRead: getReceiverScopesForRules(c.New),
-				}
-			},
-		},
-		{
-			name: "if there are rules that modify notification settings it should check access to all receivers",
-			changes: func() *rulestore.GroupDelta {
-				receiverName := "test-receiver"
-				genWithNotificationSettings := genWithGroupKey.With(gen.WithNotificationSettingsGen(models.NotificationSettingsGen(models.NSMuts.WithReceiver(receiverName))))
-				rules1 := genWithNotificationSettings.GenerateManyRef(1, 5)
-				rules := genWithNotificationSettings.GenerateManyRef(1, 5)
-				updates := make([]rulestore.RuleDelta, 0, len(rules))
-
-				for _, rule := range rules {
-					cp := models.CopyRule(rule)
-					if cpr := cp.ContactPointRouting(); cpr != nil {
-						cpr.Receiver = "new-receiver"
-					}
-					updates = append(updates, rulestore.RuleDelta{
-						Existing: rule,
-						New:      cp,
-						Diff: []cmputil.Diff{
-							{
-								Path: "NotificationSettings[0].Receiver",
-							},
-						},
-					})
-				}
-
-				return &rulestore.GroupDelta{
-					GroupKey: groupKey,
-					AffectedGroups: map[models.AlertRuleGroupKey]models.RulesGroup{
-						groupKey: append(rules, rules1...),
-					},
-					New:    nil,
-					Update: updates,
-					Delete: nil,
-				}
-			},
-			permissions: func(c *rulestore.GroupDelta) map[string][]string {
-				return map[string][]string{
-					ruleRead: {
-						namespaceIdScope,
-					},
-					folder.ActionFoldersRead: {
-						namespaceIdScope,
-					},
-					ruleUpdate: {
-						namespaceIdScope,
-					},
-					accesscontrol.ActionAlertingReceiversRead: getReceiverScopesForRules(mapUpdates(c.Update, func(update rulestore.RuleDelta) *models.AlertRule {
-						return update.New
-					})),
 				}
 			},
 		},
@@ -1030,4 +934,92 @@ func TestHasAccessInFolderWithScopeResolver(t *testing.T) {
 			assert.Equal(t, tc.expected, result)
 		})
 	}
+}
+
+type receiverReadRecorder struct {
+	uids       []string
+	uidErr     error
+	readAll    int
+	readAllErr error
+}
+
+func (r *receiverReadRecorder) AuthorizeRead(_ context.Context, _ identity.Requester, receiver ReceiverRef) error {
+	r.uids = append(r.uids, receiver.UID)
+	return r.uidErr
+}
+
+func (r *receiverReadRecorder) AuthorizeReadAll(context.Context, identity.Requester) error {
+	r.readAll++
+	return r.readAllErr
+}
+
+func TestReceiverRefs(t *testing.T) {
+	contactPoint := func(name string) models.NotificationSettings {
+		return models.NotificationSettings{ContactPointRouting: &models.ContactPointRouting{Receiver: name}}
+	}
+	cfg := &v1.AMConfigV1{Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
+		{ResourceMetadata: v1.ResourceMetadata{UID: "uid-a"}, Name: "a"},
+		{ResourceMetadata: v1.ResourceMetadata{UID: "uid-b"}, Name: "b"},
+	})}
+
+	t.Run("refers to the receivers by UID rather than by name", func(t *testing.T) {
+		require.Equal(t, []ReceiverRef{{UID: "uid-a"}, {UID: "uid-b"}, {UID: "uid-a"}},
+			ReceiverRefs(cfg, contactPoint("a"), contactPoint("b"), contactPoint("a")))
+	})
+
+	t.Run("has no UID for a receiver that does not exist, even if its name is the UID of another", func(t *testing.T) {
+		require.Equal(t, []ReceiverRef{{}, {}}, ReceiverRefs(cfg, contactPoint("missing"), contactPoint("uid-a")))
+		require.Equal(t, []ReceiverRef{{}}, ReceiverRefs(nil, contactPoint("a")))
+	})
+
+	t.Run("ignores settings that do not use a contact point", func(t *testing.T) {
+		require.Empty(t, ReceiverRefs(cfg, models.NotificationSettings{PolicyRouting: &models.PolicyRouting{Policy: "policy"}}))
+	})
+}
+
+func TestRuleService_AuthorizeNotificationSettings(t *testing.T) {
+	// The user can only read the receivers it is permitted, unless a test says otherwise.
+	newService := func() (*RuleService, *receiverReadRecorder) {
+		recorder := &receiverReadRecorder{readAllErr: errors.New("cannot read all receivers")}
+		svc := NewRuleService(nil)
+		svc.notificationSettingsAuth = recorder
+		return svc, recorder
+	}
+	a, b, missing := ReceiverRef{UID: "uid-a"}, ReceiverRef{UID: "uid-b"}, ReceiverRef{}
+
+	t.Run("authorizes each receiver", func(t *testing.T) {
+		svc, recorder := newService()
+		require.NoError(t, svc.AuthorizeNotificationSettings(context.Background(), nil, []ReceiverRef{a, b, a}))
+		require.Equal(t, []string{"uid-a", "uid-b", "uid-a"}, recorder.uids)
+	})
+
+	t.Run("does not look at receivers when the user can read all of them", func(t *testing.T) {
+		svc, recorder := newService()
+		recorder.readAllErr = nil
+		require.NoError(t, svc.AuthorizeNotificationSettings(context.Background(), nil, []ReceiverRef{a, missing}))
+		require.Empty(t, recorder.uids)
+		require.Equal(t, 1, recorder.readAll)
+	})
+
+	t.Run("requires access to all receivers for one that does not exist", func(t *testing.T) {
+		svc, recorder := newService()
+		err := svc.AuthorizeNotificationSettings(context.Background(), nil, []ReceiverRef{missing})
+		require.ErrorIs(t, err, recorder.readAllErr)
+		require.Empty(t, recorder.uids, "access to a receiver cannot be scoped to one that does not exist")
+	})
+
+	t.Run("authorizes nothing without receivers", func(t *testing.T) {
+		svc, recorder := newService()
+		require.NoError(t, svc.AuthorizeNotificationSettings(context.Background(), nil, nil))
+		require.Empty(t, recorder.uids)
+		require.Zero(t, recorder.readAll, "there is nothing to be authorized")
+	})
+
+	t.Run("stops at the first receiver that is not authorized", func(t *testing.T) {
+		svc, recorder := newService()
+		recorder.uidErr = errors.New("denied")
+		err := svc.AuthorizeNotificationSettings(context.Background(), nil, []ReceiverRef{a, b})
+		require.ErrorIs(t, err, recorder.uidErr)
+		require.Equal(t, []string{"uid-a"}, recorder.uids)
+	})
 }

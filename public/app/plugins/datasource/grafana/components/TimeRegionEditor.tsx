@@ -34,7 +34,7 @@ const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'
 export const TimeRegionEditor = ({ value, onChange }: Props) => {
   const styles = useStyles2(getStyles);
 
-  const timestamp = Date.now();
+  const [timestamp] = useState(Date.now);
   const timezoneInfo = getTimeZoneDisplayInfo(value.timezone ?? 'utc', timestamp);
   const isDashboardTimezone = getDashboardSrv().getCurrent()?.getTimezone() === value.timezone;
 

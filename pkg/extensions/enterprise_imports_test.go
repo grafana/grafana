@@ -8,6 +8,7 @@ package extensions
 import (
 	_ "github.com/DATA-DOG/go-sqlmock"
 	_ "github.com/alicebob/miniredis/v2"
+	_ "github.com/fullstorydev/grpchan/inprocgrpc"
 	_ "github.com/go-kit/log"
 	_ "github.com/google/go-github/v82/github"
 	_ "github.com/grafana/authlib/authz/proto/v1"
@@ -62,7 +63,6 @@ import (
 	_ "github.com/grafana/grafana/pkg/tests/testsuite"
 	_ "github.com/grafana/grafana/pkg/util/testutil"
 	_ "github.com/grafana/grafana/pkg/util/testutil/pgtest"
-	_ "github.com/grafana/grafana/pkg/util/xorm/core"
 	_ "github.com/grafana/grafana/pkg/web/webtest"
 	_ "github.com/grafana/nanogit/gittest"
 	_ "github.com/jackc/pgx/v5"
@@ -80,6 +80,7 @@ import (
 	_ "google.golang.org/grpc/resolver/manual"
 	_ "google.golang.org/grpc/stats"
 	_ "google.golang.org/protobuf/testing/protocmp"
+	_ "google.golang.org/protobuf/types/known/structpb"
 	_ "k8s.io/api/authentication/v1"
 	_ "k8s.io/api/authorization/v1"
 	_ "k8s.io/apimachinery/pkg/api/apitesting"

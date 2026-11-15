@@ -1493,6 +1493,7 @@ Key metrics for monitoring Unified Search:
 - `unified_search_indexing_duration_seconds`: Time to build/update indexes
 - `unified_search_shadow_requests_total`: Shadow traffic request counts
 - `unified_search_ring_members`: Number of active search server instances
+- `grafana_vector_storage_hybrid_search_phase_duration_seconds`: HybridSearch database, embedding, and reranking call latency by phase and status.
 
 ## Data migrations
 

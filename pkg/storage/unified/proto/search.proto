@@ -160,6 +160,10 @@ message ResourceSearchRequest {
 
   // Must be FIELD_VALUES. Retained for compatibility with supported peers.
   ResultFormat result_format = 16;
+
+  // Verbs to check for each returned row against the caller, such as update,
+  // delete and set_permissions. The answers are in ResourceSearchRow.access.
+  repeated string access_verbs = 17;
 }
 
 message ResourceSearchResponse {
@@ -292,6 +296,10 @@ message ResourceSearchRow {
 
   // Present only when the search calculated a score.
   optional double score = 5;
+
+  // Whether the caller may do each verb of ResourceSearchRequest.access_verbs
+  // to this row. A verb this server could not check is left out.
+  map<string, bool> access = 6;
 }
 
 message RebuildIndexesRequest {

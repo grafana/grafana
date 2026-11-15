@@ -240,8 +240,9 @@ func TestDefaultInstaller_InstallAPIs(t *testing.T) {
 			Name:   TestKind.Version(),
 			Served: true,
 			Kinds: []app.ManifestVersionKind{{
-				Kind:   TestKind.Kind(),
-				Plural: TestKind.Plural(),
+				Kind:     TestKind.Kind(),
+				Plural:   TestKind.Plural(),
+				Resource: TestKind.Plural(),
 				Admission: &app.AdmissionCapabilities{
 					Validation: &app.ValidationCapability{
 						Operations: []app.AdmissionOperation{app.AdmissionOperationAny},
@@ -373,8 +374,9 @@ func TestDefaultInstaller_AdmissionPlugin(t *testing.T) {
 				Name:   TestKind.Version(),
 				Served: true,
 				Kinds: []app.ManifestVersionKind{{
-					Kind:   TestKind.Kind(),
-					Plural: TestKind.Plural(),
+					Kind:     TestKind.Kind(),
+					Plural:   TestKind.Plural(),
+					Resource: TestKind.Plural(),
 					Admission: &app.AdmissionCapabilities{
 						Validation: &app.ValidationCapability{
 							Operations: []app.AdmissionOperation{app.AdmissionOperationAny},
@@ -400,8 +402,9 @@ func TestDefaultInstaller_AdmissionPlugin(t *testing.T) {
 				Name:   TestKind.Version(),
 				Served: true,
 				Kinds: []app.ManifestVersionKind{{
-					Kind:   TestKind.Kind(),
-					Plural: TestKind.Plural(),
+					Kind:     TestKind.Kind(),
+					Plural:   TestKind.Plural(),
+					Resource: TestKind.Plural(),
 					Admission: &app.AdmissionCapabilities{
 						Mutation: &app.MutationCapability{
 							Operations: []app.AdmissionOperation{app.AdmissionOperationAny},
@@ -444,7 +447,8 @@ func TestDefaultInstaller_InitializeApp(t *testing.T) {
 
 	t.Run("success", func(t *testing.T) {
 		md := app.ManifestData{
-			AppName: "test-app",
+			AppName:  "test-app",
+			Versions: []app.ManifestVersion{},
 		}
 		rcfg := clientrest.Config{
 			Host: "foo",

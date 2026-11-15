@@ -63,7 +63,10 @@ export function createTraceLogsLink({
       // If multiple queries are returned, use the first query to respect the interface.
       // LogsLink will then try to figure out which query to use and uppdate the link.
       // Otherwise, non-array, will use the legacy behavior.
-      query: Array.isArray(query) ? query[0] : query,
+      query: {
+        ...(Array.isArray(query) ? query[0] : query),
+        datasource: { type: logsDataSourceSettings.type, uid: logsDataSourceSettings.uid },
+      },
       range: getTimeRangeFromTrace(
         trace,
         {
@@ -123,7 +126,7 @@ export function createTraceLogsLink({
     link.interpolatedParams.alternativeQueries = interpolateQueries(query, scopedVars, replaceVariables).map(
       (query) => ({
         ...query,
-        datasource: { uid: logsDataSourceSettings.uid },
+        datasource: { type: logsDataSourceSettings.type, uid: logsDataSourceSettings.uid },
       })
     );
   }

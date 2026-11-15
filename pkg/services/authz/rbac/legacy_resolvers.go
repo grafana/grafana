@@ -5,10 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"time"
+
+	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
@@ -95,7 +99,19 @@ func (s *Service) newLegacyScopeMutator(
 	loadedActions := make(map[string]bool)
 	var requester identity.Requester
 
-	return func(ctx context.Context, scope string) ([]string, error) {
+	return func(ctx context.Context, scope string) (scopes []string, err error) {
+		start := time.Now()
+		ctx, span := s.tracer.Start(ctx, "authz_direct_db.service.resolveLegacyScope")
+		defer func() {
+			if err != nil && !errors.Is(err, accesscontrol.ErrResolverNotFound) {
+				_ = tracing.Error(span, err)
+			}
+
+			s.metrics.legacyScopeResolutionDuration.Observe(time.Since(start).Seconds())
+			span.SetAttributes(attribute.Int("resolved_scope_count", len(scopes)))
+			span.End()
+		}()
+
 		if err := s.validateLegacyScopeNamespace(req.namespace); err != nil {
 			return nil, err
 		}
@@ -108,6 +124,7 @@ func (s *Service) newLegacyScopeMutator(
 		if !ok {
 			return nil, accesscontrol.ErrResolverNotFound
 		}
+		span.SetAttributes(attribute.String("scope_prefix", accesscontrol.ScopePrefix(scope)))
 
 		if requester == nil {
 			var err error
@@ -124,7 +141,7 @@ func (s *Service) newLegacyScopeMutator(
 		// Resolvers must observe the checked subject, never that caller's privileges.
 		ctx = identity.WithRequester(ctx, requester)
 
-		scopes, err := resolver.Resolve(ctx, requester.GetOrgID(), scope)
+		scopes, err = resolver.Resolve(ctx, requester.GetOrgID(), scope)
 		if err != nil {
 			return nil, fmt.Errorf("could not resolve %v: %w", scope, err)
 		}

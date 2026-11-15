@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"strconv"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
@@ -14,6 +15,10 @@ import (
 )
 
 func ValidateOnCreate(ctx context.Context, search *dualwrite.Selector[SearchBackend], obj *iamv0alpha1.User) error {
+	if err := validateNameNotNumeric(obj.Name); err != nil {
+		return err
+	}
+
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
 		return apierrors.NewUnauthorized("no identity found")
@@ -44,6 +49,16 @@ func ValidateOnCreate(ctx context.Context, search *dualwrite.Selector[SearchBack
 
 	if err := validateLogin(ctx, userSearchClient, obj.GetNamespace(), obj.Name, obj.Spec.Login); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+// metadata.name is stored as user.uid. Reject numeric names to avoid confusing
+// them with internal user IDs, including values with leading zeros such as "01".
+func validateNameNotNumeric(name string) error {
+	if _, err := strconv.ParseInt(name, 10, 64); err == nil {
+		return apierrors.NewBadRequest("name must not be a number")
 	}
 
 	return nil

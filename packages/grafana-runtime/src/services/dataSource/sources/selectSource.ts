@@ -1,11 +1,13 @@
 import { config } from '../../../config';
 import { getFeatureFlagClient } from '../../../internal/openFeature';
 import { FlagKeys } from '../../../internal/openFeature/openfeature.gen';
+import { isSignedInAnonymousOrPublicAccess } from '../../user';
 import { MT_FILL_PREREQUISITES_MISSING_WARNING } from '../constants';
 import { logDataSourceDebug, logDataSourceWarning } from '../logging';
 
 import { BootDataSource } from './bootDataSource';
 import { MTDataSource } from './mt/mtSource';
+import { NoSessionDataSource } from './noSessionSource';
 import { type BootDataSourceSettings, type DataSourceCacheSource } from './types';
 
 interface MTFillGate {
@@ -64,6 +66,11 @@ export function createDataSourceCacheSource(boot: BootDataSourceSettings): DataS
   const gate = evaluateMTFillGate();
 
   if (gate.requested && gate.missing.length === 0) {
+    // Every sign-in reloads the page, so a session that starts later gets the MT source then.
+    if (!isSignedInAnonymousOrPublicAccess()) {
+      logDataSourceDebug('DataSource: no user session, the data source cache is not filled', {});
+      return new NoSessionDataSource();
+    }
     logDataSourceDebug('DataSource: filling the data source cache from the MT APIs', {});
     return new MTDataSource();
   }
