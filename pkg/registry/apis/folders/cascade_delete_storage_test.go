@@ -61,6 +61,20 @@ func newVariableCascade(store grafanarest.Storage, searcher resourcepb.ResourceI
 	return s, dyn
 }
 
+// newDashboardPreferencesCascade wires a cascade storage to a fake dashboard preferences apiserver
+// client holding tiers in namespace default.
+func newDashboardPreferencesCascade(t *testing.T, store grafanarest.Storage, searcher resourcepb.ResourceIndexClient, tiers ...string) (*cascadeDeleteStorage, *dynamicfake.FakeDynamicClient) {
+	t.Helper()
+	dyn := newDashboardPreferencesFake()
+	seedDashboardPreferences(t, dyn, "default", tiers...)
+	s := &cascadeDeleteStorage{Storage: store, searcher: searcher, dashboardClient: nilDashboardClient, variableClient: nilVariableClient,
+		dashboardPreferencesClient: func(context.Context) (*dynamic.NamespaceableResourceInterface, error) {
+			c := dyn.Resource(prefsGVR)
+			return &c, nil
+		}}
+	return s, dyn
+}
+
 // fakeFolderStorage records folder deletes and label stamps; only Delete/Update are exercised.
 type fakeFolderStorage struct {
 	grafanarest.Storage
@@ -364,18 +378,19 @@ func TestCascadeDelete_DeletesAllVariablesInFolder(t *testing.T) {
 }
 
 // recordingContentsDeleter records the folders whose contents were requested for deletion, the
-// requester each deletion was attributed to, and the ctx each call received.
+// requester each deletion was attributed to, and the ctx each call received. Every call returns err.
 type recordingContentsDeleter struct {
 	folders   []string
 	deletedBy []identity.Requester
 	gotCtx    []context.Context
+	err       error
 }
 
 func (r *recordingContentsDeleter) DeleteInFolder(ctx context.Context, _, folderUID string, user identity.Requester) error {
 	r.folders = append(r.folders, folderUID)
 	r.deletedBy = append(r.deletedBy, user)
 	r.gotCtx = append(r.gotCtx, ctx)
-	return nil
+	return r.err
 }
 
 func TestCascadeDelete_DeletesContentsPerFolder(t *testing.T) {
@@ -699,7 +714,7 @@ func TestCascadeDelete_ForwardsOptionalInterfaces(t *testing.T) {
 	setKubernetesFolderCascadeDeleteToggle(t, false)
 
 	inner := &watchableFolderStorage{fakeFolderStorage: &fakeFolderStorage{existing: map[string]*foldersv1.Folder{}}}
-	s := newCascadeDeleteStorage(inner, &fakeCascadeSearcher{}, nilDashboardClient, nilVariableClient, nil, nil)
+	s := newCascadeDeleteStorage(inner, &fakeCascadeSearcher{}, nilDashboardClient, nilVariableClient, nil, nil, nil)
 
 	watcher, ok := s.(rest.Watcher)
 	require.True(t, ok, "watch must be exposed when the wrapped store supports it")
@@ -719,7 +734,7 @@ func TestCascadeDelete_RejectsForcedCollectionDelete(t *testing.T) {
 
 	// A forced collection delete can't cascade, so it's rejected rather than orphaning content.
 	inner := &watchableFolderStorage{fakeFolderStorage: &fakeFolderStorage{existing: map[string]*foldersv1.Folder{}}}
-	deleter := newCascadeDeleteStorage(inner, &fakeCascadeSearcher{}, nilDashboardClient, nilVariableClient, nil, nil).(rest.CollectionDeleter)
+	deleter := newCascadeDeleteStorage(inner, &fakeCascadeSearcher{}, nilDashboardClient, nilVariableClient, nil, nil, nil).(rest.CollectionDeleter)
 
 	_, err := deleter.DeleteCollection(ctxWithNamespace(), nil, forceDelete(), nil)
 	require.True(t, apierrors.IsBadRequest(err))
@@ -733,7 +748,7 @@ func TestCascadeDelete_RejectsForcedCollectionDelete(t *testing.T) {
 
 func TestCascadeDelete_OptionalInterfacesNotExposedWhenUnsupported(t *testing.T) {
 	// Wrapped store lacks Watcher/CollectionDeleter: the wrapper must not advertise those verbs.
-	s := newCascadeDeleteStorage(&fakeFolderStorage{}, &fakeCascadeSearcher{}, nilDashboardClient, nilVariableClient, nil, nil)
+	s := newCascadeDeleteStorage(&fakeFolderStorage{}, &fakeCascadeSearcher{}, nilDashboardClient, nilVariableClient, nil, nil, nil)
 
 	_, isWatcher := s.(rest.Watcher)
 	require.False(t, isWatcher)
@@ -914,4 +929,140 @@ func TestCascadeDelete_ForbiddenWithoutVariablesDelete(t *testing.T) {
 	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, forceDelete())
 	require.True(t, apierrors.IsForbidden(err))
 	require.Empty(t, store.deleted, "folder must not be deleted when variables:delete is denied")
+}
+
+func TestCascadeDelete_DeletesDashboardPreferencesOfEveryFolder(t *testing.T) {
+	setKubernetesFolderCascadeDeleteToggle(t, true)
+
+	store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{
+		"root": newFolder("root"), "child": newFolder("child"), "leaf": newFolder("leaf"),
+	}}
+	searcher := &fakeCascadeSearcher{childrenByParent: map[string][]string{"root": {"child"}, "child": {"leaf"}}}
+	s, dyn := newDashboardPreferencesCascade(t, store, searcher, "folder-root", "folder-child", "folder-leaf", "folder-other")
+
+	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, forceDelete())
+	require.NoError(t, err)
+	require.Equal(t, []string{"leaf", "child", "root"}, store.deleted)
+
+	// The fake folder store runs no AfterDelete, so these are the cascade's own deletes: one per folder.
+	var deleted []string
+	for _, a := range dyn.Actions() {
+		if d, ok := a.(k8stesting.DeleteAction); ok && d.GetResource() == prefsGVR {
+			deleted = append(deleted, d.GetName())
+		}
+	}
+	require.Equal(t, []string{"folder-leaf", "folder-child", "folder-root"}, deleted)
+
+	for _, name := range []string{"folder-root", "folder-child", "folder-leaf"} {
+		requireDashboardPreferencesGone(t, dyn, "default", name)
+	}
+	requireDashboardPreferencesStored(t, dyn, "default", "folder-other")
+}
+
+func TestCascadeDelete_DeletesDashboardPreferencesBeforeTheFolder(t *testing.T) {
+	setKubernetesFolderCascadeDeleteToggle(t, true)
+
+	store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"root": newFolder("root")}}
+	s, dyn := newDashboardPreferencesCascade(t, store, &fakeCascadeSearcher{}, "folder-root")
+
+	var stillThere bool
+	dyn.PrependReactor("delete", "dashboardpreferences", func(k8stesting.Action) (bool, runtime.Object, error) {
+		_, stillThere = store.existing["root"]
+		return false, nil, nil
+	})
+
+	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, forceDelete())
+	require.NoError(t, err)
+	require.True(t, stillThere, "dashboard preferences must be deleted while the folder still exists")
+}
+
+func TestCascadeDelete_ContentsFailureKeepsDashboardPreferences(t *testing.T) {
+	setKubernetesFolderCascadeDeleteToggle(t, true)
+
+	store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"root": newFolder("root")}}
+	s, dyn := newDashboardPreferencesCascade(t, store, &fakeCascadeSearcher{}, "folder-root")
+	s.contentsDeleter = &recordingContentsDeleter{err: errors.New("contents boom")}
+
+	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, forceDelete())
+	require.ErrorContains(t, err, "contents boom")
+	require.Empty(t, dyn.Actions(), "dashboard preferences must not be deleted when the contents cleanup fails")
+	requireDashboardPreferencesStored(t, dyn, "default", "folder-root")
+	require.Empty(t, store.deleted)
+}
+
+func TestCascadeDelete_DashboardPreferencesNotFoundTolerated(t *testing.T) {
+	setKubernetesFolderCascadeDeleteToggle(t, true)
+
+	store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"root": newFolder("root")}}
+	s, dyn := newDashboardPreferencesCascade(t, store, &fakeCascadeSearcher{})
+
+	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, forceDelete())
+	require.NoError(t, err)
+	require.Len(t, dyn.Actions(), 1, "the missing tier's delete must still be sent")
+	require.Equal(t, []string{"root"}, store.deleted)
+}
+
+func TestCascadeDelete_DashboardPreferencesDeleteErrorAborts(t *testing.T) {
+	setKubernetesFolderCascadeDeleteToggle(t, true)
+
+	store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"root": newFolder("root")}}
+	s, dyn := newDashboardPreferencesCascade(t, store, &fakeCascadeSearcher{}, "folder-root")
+	dyn.PrependReactor("delete", "dashboardpreferences", func(k8stesting.Action) (bool, runtime.Object, error) {
+		return true, nil, apierrors.NewInternalError(errors.New("boom"))
+	})
+
+	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, forceDelete())
+	require.ErrorContains(t, err, `delete dashboard preferences "folder-root"`)
+	require.Empty(t, store.deleted, "folder must not be deleted when its dashboard preferences delete fails")
+	require.Contains(t, store.existing, "root")
+}
+
+func TestCascadeDelete_PropagatesDeleteOptionsToDashboardPreferences(t *testing.T) {
+	setKubernetesFolderCascadeDeleteToggle(t, true)
+
+	store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"root": newFolder("root")}}
+	s, dyn := newDashboardPreferencesCascade(t, store, &fakeCascadeSearcher{}, "folder-root")
+
+	var got metav1.DeleteOptions
+	dyn.PrependReactor("delete", "dashboardpreferences", func(a k8stesting.Action) (bool, runtime.Object, error) {
+		got = a.(k8stesting.DeleteActionImpl).DeleteOptions
+		return false, nil, nil
+	})
+
+	opts := forceDelete()
+	opts.DryRun = []string{metav1.DryRunAll}
+	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, opts)
+	require.NoError(t, err)
+
+	require.Equal(t, []string{metav1.DryRunAll}, got.DryRun)
+	require.NotNil(t, got.GracePeriodSeconds)
+	require.Equal(t, int64(0), *got.GracePeriodSeconds)
+}
+
+func TestCascadeDelete_DashboardPreferencesClientNilSkips(t *testing.T) {
+	setKubernetesFolderCascadeDeleteToggle(t, true)
+
+	store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"root": newFolder("root")}}
+	s := &cascadeDeleteStorage{Storage: store, searcher: &fakeCascadeSearcher{}, dashboardClient: nilDashboardClient, variableClient: nilVariableClient,
+		dashboardPreferencesClient: func(context.Context) (*dynamic.NamespaceableResourceInterface, error) {
+			return nil, nil
+		}}
+
+	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, forceDelete())
+	require.NoError(t, err)
+	require.Equal(t, []string{"root"}, store.deleted)
+}
+
+func TestCascadeDelete_DashboardPreferencesClientErrorAborts(t *testing.T) {
+	setKubernetesFolderCascadeDeleteToggle(t, true)
+
+	store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"root": newFolder("root")}}
+	s := &cascadeDeleteStorage{Storage: store, searcher: &fakeCascadeSearcher{}, dashboardClient: nilDashboardClient, variableClient: nilVariableClient,
+		dashboardPreferencesClient: func(context.Context) (*dynamic.NamespaceableResourceInterface, error) {
+			return nil, errors.New("no config")
+		}}
+
+	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, forceDelete())
+	require.ErrorContains(t, err, "get dashboard preferences client")
+	require.Empty(t, store.deleted, "folder must not be deleted when the dashboard preferences client fails")
 }
