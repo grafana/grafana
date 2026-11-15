@@ -1,6 +1,7 @@
 package folderimpl
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -20,12 +21,14 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
 	"google.golang.org/protobuf/proto"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/selection"
 	clientrest "k8s.io/client-go/rest"
 
 	dashboardapp "github.com/grafana/grafana/apps/dashboard/pkg/apis"
 	dashv0alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	dashboardv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -318,17 +321,20 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 	fakeK8sClient := new(client.MockK8sHandler)
 	variableK8sClient := new(client.MockK8sHandler)
 	variableK8sClient.On("Search", mock.Anything, mock.Anything, mock.Anything).Return(&resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES}, nil)
+	dashboardPreferencesK8sClient := new(client.MockK8sHandler)
+	dashboardPreferencesK8sClient.On("Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	folderService := &Service{
-		log:                    slog.New(logtest.NewTestHandler(t)).With("logger", "test-folder-service"),
-		unifiedStore:           unifiedStore,
-		features:               features,
-		accessControl:          acimpl.ProvideAccessControl(features),
-		registry:               make(map[string]folder.RegistryService),
-		tracer:                 tracer,
-		k8sclient:              k8sCli,
-		dashboardK8sClient:     fakeK8sClient,
-		variableK8sClient:      variableK8sClient,
-		publicDashboardService: publicDashboardService,
+		log:                           slog.New(logtest.NewTestHandler(t)).With("logger", "test-folder-service"),
+		unifiedStore:                  unifiedStore,
+		features:                      features,
+		accessControl:                 acimpl.ProvideAccessControl(features),
+		registry:                      make(map[string]folder.RegistryService),
+		tracer:                        tracer,
+		k8sclient:                     k8sCli,
+		dashboardK8sClient:            fakeK8sClient,
+		variableK8sClient:             variableK8sClient,
+		dashboardPreferencesK8sClient: dashboardPreferencesK8sClient,
+		publicDashboardService:        publicDashboardService,
 	}
 
 	_, err := ngrulesvc.ProvideService(&alertingStore, folderService)
@@ -1251,6 +1257,61 @@ func TestDeleteVariablesInFoldersSearchErrors(t *testing.T) {
 	}
 }
 
+func TestDeleteDashboardPreferencesOfFolders(t *testing.T) {
+	isService := mock.MatchedBy(func(ctx context.Context) bool { return identity.IsServiceIdentity(ctx) })
+	boom := apierrors.NewInternalError(errors.New("boom"))
+	for _, tc := range []struct {
+		name  string
+		uids  []string
+		setup func(cli *client.MockK8sHandler)
+		check func(t *testing.T, cli *client.MockK8sHandler, err error)
+	}{
+		{
+			name: "deletes the folder tier of every folder",
+			uids: []string{"a", "b"},
+			setup: func(cli *client.MockK8sHandler) {
+				cli.On("Delete", isService, "folder-a", int64(1), metav1.DeleteOptions{}).Return(nil).Once()
+				cli.On("Delete", isService, "folder-b", int64(1), metav1.DeleteOptions{}).Return(nil).Once()
+			},
+			check: func(t *testing.T, cli *client.MockK8sHandler, err error) {
+				require.NoError(t, err)
+				cli.AssertExpectations(t)
+			},
+		},
+		{
+			name: "a missing folder tier is not an error",
+			uids: []string{"a"},
+			setup: func(cli *client.MockK8sHandler) {
+				notFound := apierrors.NewNotFound(dashboardv2beta1.DashboardPreferencesResourceInfo.GroupResource(), "folder-a")
+				cli.On("Delete", isService, "folder-a", int64(1), metav1.DeleteOptions{}).Return(notFound).Once()
+			},
+			check: func(t *testing.T, cli *client.MockK8sHandler, err error) {
+				require.NoError(t, err)
+				cli.AssertExpectations(t)
+			},
+		},
+		{
+			name: "another error stops and is returned",
+			uids: []string{"a", "b"},
+			setup: func(cli *client.MockK8sHandler) {
+				cli.On("Delete", isService, "folder-a", int64(1), metav1.DeleteOptions{}).Return(boom).Once()
+			},
+			check: func(t *testing.T, cli *client.MockK8sHandler, err error) {
+				require.ErrorIs(t, err, boom)
+				require.ErrorContains(t, err, "failed to delete dashboard preferences folder-a")
+				cli.AssertNotCalled(t, "Delete", mock.Anything, "folder-b", mock.Anything, mock.Anything)
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cli := new(client.MockK8sHandler)
+			tc.setup(cli)
+			service := &Service{dashboardPreferencesK8sClient: cli, tracer: noop.NewTracerProvider().Tracer("test")}
+			tc.check(t, cli, service.deleteDashboardPreferencesOfFolders(t.Context(), 1, tc.uids))
+		})
+	}
+}
+
 // This measures search and decoding only, without delete RPCs or real authorization-service latency.
 func BenchmarkFolderDeletionSearchFields(b *testing.B) {
 	for _, resourceName := range []string{"dashboards", "variables"} {
@@ -1302,20 +1363,23 @@ func TestIntegrationDeleteFolders(t *testing.T) {
 	fakeK8sClient.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 	dashboardK8sclient := new(client.MockK8sHandler)
 	variableK8sClient := new(client.MockK8sHandler)
+	dashboardPreferencesK8sClient := new(client.MockK8sHandler)
+	dashboardPreferencesK8sClient.On("Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	fakeFolderStore := folder.NewFakeStore()
 	publicDashboardFakeService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
 	tracer := noop.NewTracerProvider().Tracer("TestDeleteFolders")
 	service := Service{
-		k8sclient:              fakeK8sClient,
-		dashboardK8sClient:     dashboardK8sclient,
-		variableK8sClient:      variableK8sClient,
-		unifiedStore:           fakeFolderStore,
-		publicDashboardService: publicDashboardFakeService,
-		accessControl:          actest.FakeAccessControl{ExpectedEvaluate: true},
-		registry:               make(map[string]folder.RegistryService),
-		features:               featuremgmt.WithFeatures(),
-		tracer:                 tracer,
-		log:                    slog.New(logtest.NewNopHandler(t)),
+		k8sclient:                     fakeK8sClient,
+		dashboardK8sClient:            dashboardK8sclient,
+		variableK8sClient:             variableK8sClient,
+		dashboardPreferencesK8sClient: dashboardPreferencesK8sClient,
+		unifiedStore:                  fakeFolderStore,
+		publicDashboardService:        publicDashboardFakeService,
+		accessControl:                 actest.FakeAccessControl{ExpectedEvaluate: true},
+		registry:                      make(map[string]folder.RegistryService),
+		features:                      featuremgmt.WithFeatures(),
+		tracer:                        tracer,
+		log:                           slog.New(logtest.NewNopHandler(t)),
 	}
 	user := &user.SignedInUser{OrgID: 1}
 	ctx := identity.WithRequester(context.Background(), user)
@@ -1509,11 +1573,12 @@ func (p *dashboardDeletePublicService) DeleteByDashboardUIDs(_ context.Context, 
 
 type dashboardDeleteStore struct {
 	folder.Store
-	deleted bool
+	descendants []*folder.Folder
+	deleted     bool
 }
 
 func (s *dashboardDeleteStore) GetDescendants(context.Context, int64, string) ([]*folder.Folder, error) {
-	return nil, nil
+	return s.descendants, nil
 }
 func (s *dashboardDeleteStore) Delete(context.Context, []string, int64) error {
 	s.deleted = true
@@ -1542,7 +1607,7 @@ func newDashboardDeleteService(t *testing.T, count int) (*Service, *dashboardDel
 		cli.uids = append(cli.uids, fmt.Sprintf("dashboard-%d", i))
 	}
 	svc := &Service{
-		cfg: setting.NewCfg(), dashboardK8sClient: cli, variableK8sClient: &dashboardDeleteClient{}, unifiedStore: &dashboardDeleteStore{},
+		cfg: setting.NewCfg(), dashboardK8sClient: cli, variableK8sClient: &dashboardDeleteClient{}, dashboardPreferencesK8sClient: &dashboardDeleteClient{}, unifiedStore: &dashboardDeleteStore{},
 		publicDashboardService: &dashboardDeletePublicService{client: cli},
 		tracer:                 noop.NewTracerProvider().Tracer("test"), log: slog.New(logtest.NewNopHandler(t)),
 		registry: map[string]folder.RegistryService{entity.StandardKindAlertRule: &emptyFolderRegistry{}, entity.StandardKindLibraryPanel: &emptyFolderRegistry{}},
@@ -1705,5 +1770,37 @@ func TestDeleteFolderDashboardFailureLetsInFlightDeletesFinish(t *testing.T) {
 		require.Len(t, cli.calls, 4, "no new deletes may start after the first failure")
 		require.Nil(t, svc.publicDashboardService.(*dashboardDeletePublicService).uids)
 		require.False(t, svc.unifiedStore.(*dashboardDeleteStore).deleted)
+	})
+}
+
+func TestDeleteFolderDashboardPreferencesBeforeFolders(t *testing.T) {
+	t.Run("deletes the tier of the folder and its descendants before any row", func(t *testing.T) {
+		svc, _, cmd, ctx := newDashboardDeleteService(t, 0)
+		store := svc.unifiedStore.(*dashboardDeleteStore)
+		store.descendants = []*folder.Folder{{UID: "child", ParentUID: "folder"}}
+		var deletedAtCall []bool
+		prefs := &dashboardDeleteClient{deleteFn: func(context.Context, string) error {
+			deletedAtCall = append(deletedAtCall, store.deleted)
+			return nil
+		}}
+		svc.dashboardPreferencesK8sClient = prefs
+
+		require.NoError(t, svc.Delete(ctx, cmd))
+		require.Equal(t, []string{"folder-child", "folder-folder"}, prefs.calls)
+		require.Equal(t, []bool{false, false}, deletedAtCall, "a folder row was deleted before the preferences sweep")
+		require.True(t, store.deleted)
+	})
+
+	t.Run("a failed tier delete is logged and the folder is deleted", func(t *testing.T) {
+		svc, _, cmd, ctx := newDashboardDeleteService(t, 0)
+		svc.dashboardPreferencesK8sClient = &dashboardDeleteClient{deleteFn: func(context.Context, string) error {
+			return apierrors.NewInternalError(errors.New("boom"))
+		}}
+		var logs bytes.Buffer
+		svc.log = slog.New(slog.NewJSONHandler(&logs, nil))
+
+		require.NoError(t, svc.Delete(ctx, cmd))
+		require.True(t, svc.unifiedStore.(*dashboardDeleteStore).deleted)
+		require.Contains(t, logs.String(), `"level":"ERROR","msg":"failed to delete folder dashboard preferences"`)
 	})
 }

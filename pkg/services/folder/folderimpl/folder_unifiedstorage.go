@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	dashboardv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -556,6 +557,24 @@ func (s *Service) deleteVariablesInFolders(ctx context.Context, orgID int64, fol
 	return nil
 }
 
+func (s *Service) deleteDashboardPreferencesOfFolders(ctx context.Context, orgID int64, folderUIDs []string) error {
+	ctx, span := s.tracer.Start(ctx, "folder.deleteDashboardPreferencesOfFolders")
+	defer span.End()
+
+	// Run as the service so the folder's preferences are deleted even when
+	// grafana.dashboardPreferences is off (user requests are denied) or the
+	// user cannot edit them.
+	ctx = identity.WithServiceIdentityContext(ctx, orgID)
+	for _, folderUID := range folderUIDs {
+		name := dashboardv2beta1.DashboardPreferencesFolderName(folderUID)
+		err := s.dashboardPreferencesK8sClient.Delete(ctx, name, orgID, metav1.DeleteOptions{})
+		if err != nil && !apierrors.IsNotFound(err) {
+			return folder.ErrInternal.Errorf("failed to delete dashboard preferences %s: %w", name, err)
+		}
+	}
+	return nil
+}
+
 func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) error {
 	ctx, span := s.tracer.Start(ctx, "folder.Delete")
 	defer span.End()
@@ -657,6 +676,11 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 
 	if err := s.deleteVariablesInFolders(ctx, cmd.OrgID, folders); err != nil {
 		return err
+	}
+
+	// Each folder's delete also removes its preferences, so a failure here doesn't block the folder delete.
+	if err := s.deleteDashboardPreferencesOfFolders(ctx, cmd.OrgID, folders); err != nil {
+		s.log.ErrorContext(ctx, "failed to delete folder dashboard preferences", "org_id", cmd.OrgID, "error", err)
 	}
 
 	err = s.unifiedStore.Delete(ctx, folders, cmd.OrgID)

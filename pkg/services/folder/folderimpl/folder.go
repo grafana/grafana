@@ -40,16 +40,17 @@ var (
 )
 
 type Service struct {
-	cfg                    *setting.Cfg
-	unifiedStore           folder.Store
-	log                    *slog.Logger
-	features               featuremgmt.FeatureToggles
-	accessControl          accesscontrol.AccessControl
-	k8sclient              client.K8sHandler
-	maxNestedFolderDepth   int
-	dashboardK8sClient     client.K8sHandler
-	publicDashboardService publicdashboards.ServiceWrapper
-	variableK8sClient      client.K8sHandler
+	cfg                           *setting.Cfg
+	unifiedStore                  folder.Store
+	log                           *slog.Logger
+	features                      featuremgmt.FeatureToggles
+	accessControl                 accesscontrol.AccessControl
+	k8sclient                     client.K8sHandler
+	maxNestedFolderDepth          int
+	dashboardK8sClient            client.K8sHandler
+	publicDashboardService        publicdashboards.ServiceWrapper
+	variableK8sClient             client.K8sHandler
+	dashboardPreferencesK8sClient client.K8sHandler
 
 	mutex    sync.RWMutex
 	registry map[string]folder.RegistryService
@@ -115,6 +116,15 @@ func ProvideService(
 		resourceClient,
 	)
 	srv.variableK8sClient = variableHandler
+
+	dashboardPreferencesHandler := client.NewK8sHandler(
+		request.GetNamespaceMapper(cfg),
+		dashboardv2beta1.DashboardPreferencesResourceInfo.GroupVersionResource(),
+		restConfig.GetRestConfig,
+		userService,
+		resourceClient,
+	)
+	srv.dashboardPreferencesK8sClient = dashboardPreferencesHandler
 
 	return srv
 }
