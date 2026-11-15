@@ -11,6 +11,7 @@ import {
   shouldAlignTimeCompare,
   useDataLinksContext,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { TooltipDisplayMode, VizOrientation } from '@grafana/schema';
 import {
@@ -118,7 +119,8 @@ export const TimeSeriesPanel = ({
         suggestions: s ? [s] : undefined,
       };
     }
-    return undefined;
+    const message = getTimestampOrderWarning(frames);
+    return message ? { message } : undefined;
   }, [frames, id]);
 
   const enableAnnotationCreation = Boolean(canAddAnnotations && canAddAnnotations());
@@ -263,3 +265,22 @@ export const TimeSeriesPanel = ({
     </TimeSeries>
   );
 };
+
+function getTimestampOrderWarning(frames: DataFrame[]) {
+  for (const frame of frames) {
+    const time = frame.fields.find((field) => field.type === FieldType.time);
+    if (time?.values.some((value, i, values) => i > 0 && value < values[i - 1])) {
+      return frame.refId
+        ? t(
+            'timeseries.time-series-panel.unsorted-time-query',
+            'Query {{refId}} returned timestamps out of order. Sort by time ascending in the query or use the Sort by transformation.',
+            { refId: frame.refId }
+          )
+        : t(
+            'timeseries.time-series-panel.unsorted-time',
+            'Timestamps are out of order. Sort by time ascending in the query or use the Sort by transformation.'
+          );
+    }
+  }
+  return undefined;
+}

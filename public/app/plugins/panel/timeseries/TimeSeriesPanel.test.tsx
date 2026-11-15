@@ -410,6 +410,32 @@ describe('TimeSeriesPanel', () => {
     expect(screen.queryByTestId(selectors.components.VizLayout.container)).not.toBeInTheDocument();
   });
 
+  it('identifies the query with out-of-order timestamps and suggests sorting it', () => {
+    const unsorted = createDataFrame({
+      refId: 'B',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1000, 3000, 2000] },
+        { name: 'value', type: FieldType.number, values: [1, 2, 3] },
+      ],
+    });
+    renderPanel(undefined, [validFrame, unsorted]);
+
+    expect(screen.getByText(/Query B returned timestamps out of order.*Sort by/)).toBeVisible();
+    expect(screen.queryByTestId(selectors.components.VizLayout.container)).not.toBeInTheDocument();
+  });
+
+  it('accepts repeated timestamps in ascending data', () => {
+    const frame = createDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1000, 1000, 2000] },
+        { name: 'value', type: FieldType.number, values: [1, 2, 3] },
+      ],
+    });
+    renderPanel(undefined, [frame]);
+
+    expect(screen.getByTestId(selectors.components.VizLayout.container)).toBeInTheDocument();
+  });
+
   it('should show error view when all frames are TimeSeriesLong', () => {
     const longFrame = createDataFrame({
       meta: { type: DataFrameType.TimeSeriesLong },
