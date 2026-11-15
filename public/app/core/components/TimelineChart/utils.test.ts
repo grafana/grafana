@@ -24,6 +24,7 @@ import {
   makeFramePerSeries,
   prepareTimelineFields,
   prepareTimelineLegendItems,
+  ZERO_DURATION_END_OFFSET,
 } from './utils';
 
 const theme = createTheme();
@@ -299,11 +300,11 @@ describe('prepare timeline graph', () => {
       return { frame, fields: info.frames![0].fields.map((f) => f.values) };
     };
 
-    it('ends a state that ends when it starts 1ms after its start', () => {
+    it('ends a state that ends when it starts just after its start', () => {
       const { fields } = prepare([10, 20, 30], [20, 20, 31]);
 
       expect(fields).toEqual([
-        [10, 20, 21, 30, 31],
+        [10, 20, 20 + ZERO_DURATION_END_OFFSET, 30, 31],
         ['a', 'b', null, 'c', null],
       ]);
     });
@@ -312,7 +313,7 @@ describe('prepare timeline graph', () => {
       const { fields } = prepare([10, 20, 30], [15, 18, 31]);
 
       expect(fields).toEqual([
-        [10, 15, 20, 21, 30, 31],
+        [10, 15, 20, 20 + ZERO_DURATION_END_OFFSET, 30, 31],
         ['a', null, 'b', null, 'c', null],
       ]);
     });
