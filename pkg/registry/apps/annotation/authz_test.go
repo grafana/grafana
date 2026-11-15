@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry/apis/dashboard/folderresolver"
 )
 
 var testTracer = noop.NewTracerProvider().Tracer("")
@@ -29,7 +30,7 @@ var testTracer = noop.NewTracerProvider().Tracer("")
 // no-op test implementations. An optional folderResolver may be passed; otherwise
 // a no-op resolver is used (sufficient for tests that don't exercise dashboard authz).
 func newTestAdapter(store Store, ac authtypes.AccessClient, fr ...DashboardFolderResolver) *k8sRESTAdapter {
-	var resolver DashboardFolderResolver = NoopDashboardFolderResolver{}
+	var resolver DashboardFolderResolver = folderresolver.NoopResolver{}
 	if len(fr) > 0 && fr[0] != nil {
 		resolver = fr[0]
 	}

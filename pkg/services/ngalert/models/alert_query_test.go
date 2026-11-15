@@ -16,14 +16,16 @@ import (
 
 func TestAlertQuery(t *testing.T) {
 	testCases := []struct {
-		desc                 string
-		alertQuery           AlertQuery
-		expectedIsExpression bool
-		expectedIsHysteresis bool
-		expectedDatasource   string
-		expectedMaxPoints    int64
-		expectedIntervalMS   int64
-		err                  error
+		desc                   string
+		alertQuery             AlertQuery
+		expectedIsExpression   bool
+		expectedIsHysteresis   bool
+		expectedThresholdRef   string
+		expectedThresholdRefOK bool
+		expectedDatasource     string
+		expectedMaxPoints      int64
+		expectedIntervalMS     int64
+		err                    error
 	}{
 		{
 			desc: "given an expression query",
@@ -145,6 +147,7 @@ func TestAlertQuery(t *testing.T) {
 	                "type": "threshold",
 					"queryType": "metricQuery",
 					"extraParam": "some text",
+					"expression": "B",
 	                "conditions": [
 		                {
 		                  "evaluator": {
@@ -157,7 +160,34 @@ func TestAlertQuery(t *testing.T) {
 		              ]
 				}`),
 			},
-			expectedIsExpression: true,
+			expectedIsExpression:   true,
+			expectedIsHysteresis:   false,
+			expectedThresholdRef:   "B",
+			expectedThresholdRefOK: true,
+			expectedMaxPoints:      int64(defaultMaxDataPoints),
+			expectedIntervalMS:     int64(defaultIntervalMS),
+		},
+		{
+			desc: "given a non-expression query whose model happens to look like a threshold expression",
+			alertQuery: AlertQuery{
+				RefID: "A",
+				Model: json.RawMessage(`{
+	                "type": "threshold",
+					"queryType": "metricQuery",
+					"extraParam": "some text",
+	                "conditions": [
+		                {
+		                  "evaluator": {
+		                    "params": [
+		                      4
+		                    ],
+		                    "type": "gt"
+		                  }
+		                }
+		              ]
+				}`),
+			},
+			expectedIsExpression: false,
 			expectedIsHysteresis: false,
 			expectedMaxPoints:    int64(defaultMaxDataPoints),
 			expectedIntervalMS:   int64(defaultIntervalMS),
@@ -189,10 +219,11 @@ func TestAlertQuery(t *testing.T) {
 		              ]
 				}`),
 			},
-			expectedMaxPoints:    int64(defaultMaxDataPoints),
-			expectedIntervalMS:   int64(defaultIntervalMS),
-			expectedIsExpression: true,
-			expectedIsHysteresis: true,
+			expectedMaxPoints:      int64(defaultMaxDataPoints),
+			expectedIntervalMS:     int64(defaultIntervalMS),
+			expectedIsExpression:   true,
+			expectedIsHysteresis:   true,
+			expectedThresholdRefOK: false, // the model above has no "expression" field
 		},
 	}
 
@@ -208,6 +239,13 @@ func TestAlertQuery(t *testing.T) {
 				isExpression, err := tc.alertQuery.IsHysteresisExpression()
 				require.NoError(t, err)
 				assert.Equal(t, tc.expectedIsHysteresis, isExpression)
+			})
+
+			t.Run("can recognize the threshold reference var", func(t *testing.T) {
+				value, ok, err := tc.alertQuery.ThresholdReferenceVar()
+				require.NoError(t, err)
+				assert.Equal(t, tc.expectedThresholdRefOK, ok)
+				assert.Equal(t, tc.expectedThresholdRef, value)
 			})
 
 			t.Run("can set queryType for expression", func(t *testing.T) {

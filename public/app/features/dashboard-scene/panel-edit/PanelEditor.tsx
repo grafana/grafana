@@ -20,11 +20,16 @@ import {
   type VizPanel,
 } from '@grafana/scenes';
 import { type Panel } from '@grafana/schema';
+import { createInfoNotification } from 'app/core/copy/appNotification';
+import { notifyApp } from 'app/core/reducers/appNotification';
 import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
 import { saveLibPanel } from 'app/features/library-panels/state/api';
 import { vizSuggestionsTracker } from 'app/features/panel/components/VizTypePicker/interactions';
+import { createDefaultQuery } from 'app/features/query/state/queryDefaults';
+import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/constants';
+import { dispatch } from 'app/store/store';
 
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { type LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
@@ -34,7 +39,9 @@ import { type DashboardLayoutItem, isDashboardLayoutItem } from '../scene/types/
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { DashboardEditActionEvent } from '../sidebar/events';
 import { SIDEBAR_COLLAPSED_KEY } from '../sidebar/shared';
+import { clearDefaultQuery } from '../utils/clearDefaultQuery';
 import { findVizPanelByKey } from '../utils/findVizPanel';
+import { getEmptyQueryRunnerState } from '../utils/queryRunnerState';
 import { getDashboardSceneFor, getLibraryPanelBehavior } from '../utils/utils';
 import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
@@ -79,7 +86,6 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   private _layoutItem: DashboardLayoutItem;
   private _originalSaveModel!: Panel;
   private _changesHaveBeenMade = false;
-  private _tableViewPanelActivationAdded = false;
 
   public constructor(state: PanelEditorState) {
     super(state);
@@ -100,6 +106,23 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     const panel = this.state.panelRef.resolve();
     const dashboard = getDashboardSceneFor(this);
 
+    const runtimeTransformations = panel.getRuntimeTransformations();
+    const tableTransformations = runtimeTransformations.get(TABLE_TRANSFORMATIONS_OWNER);
+    const pluginId = panel.state.pluginId;
+    if (pluginId === 'table' && tableTransformations.length > 0) {
+      runtimeTransformations.set(TABLE_TRANSFORMATIONS_OWNER, []);
+      dispatch(
+        notifyApp(
+          createInfoNotification(
+            t(
+              'dashboard.panel-editor.ad-hoc-transformations-disabled',
+              'Ad hoc transformations are disabled in edit mode'
+            )
+          )
+        )
+      );
+    }
+
     // Clear any panel selection when entering panel edit mode.
     // Need to clear selection here since selection is activated when panel edit mode is entered through the panel actions menu. This causes sidebar panel editor to be open when exiting panel edit mode
     dashboard.state.sidebar.clearSelection();
@@ -111,6 +134,14 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       }
     }
 
+    // Splitter layout and table view changes remount the preview; keep its event subscriptions alive.
+    this._subs.add(this._layoutItem.activate());
+    this._subs.add(panel.activate());
+
+    // An already-active provider may be owned by panel notices rather than the panel.
+    let deactivateData = panel.state.$data?.activate();
+    this._subs.add(() => deactivateData?.());
+
     this._subs.add(
       this._layoutItem.subscribeToEvent(DashboardEditActionEvent, ({ payload }) => {
         // TODO add support for undo/redo within panel edit
@@ -121,6 +152,10 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     // Listen for panel plugin changes
     this._subs.add(
       panel.subscribeToState((n, p) => {
+        if (n.$data !== p.$data) {
+          deactivateData?.();
+          deactivateData = n.$data?.activate();
+        }
         if (n.pluginId !== p.pluginId) {
           this.waitForPlugin();
         }
@@ -130,6 +165,9 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     this.waitForPlugin();
 
     return () => {
+      if (pluginId === panel.state.pluginId && tableTransformations.length > 0) {
+        runtimeTransformations.set(TABLE_TRANSFORMATIONS_OWNER, tableTransformations);
+      }
       this.commitChanges();
       reportInteraction('panel_edit_closed', {}, { silent: true });
     };
@@ -177,6 +215,9 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     // is not active while panel edit is active so we have to let the sidebar (which owns undo/redo)
     // publish this event when it activates
     const dashboard = getDashboardSceneFor(this);
+    if (this.state.isDirty) {
+      dashboard.recordEditMutation();
+    }
     dashboard.state.sidebar.setPanelEditAction(editAction);
   }
 
@@ -283,6 +324,10 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     }
 
     if (!skipDataQuery) {
+      if (plugin.meta.skipDefaultQuery && this.state.isNewPanel && this.state.isInitializing) {
+        clearDefaultQuery(panel);
+      }
+
       if (!this.state.dataPane) {
         const dataPane = createPanelDataPane(this.getPanel(), this.state.useQueryExperienceNext);
         this.setState({ dataPane });
@@ -301,7 +346,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
               datasource: {
                 uid: ds,
               },
-              queries: [{ refId: 'A' }],
+              ...(plugin.meta.skipDefaultQuery ? getEmptyQueryRunnerState() : { queries: [createDefaultQuery()] }),
             }),
             transformations: [],
           }),
@@ -402,13 +447,6 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     const dataProvider = panel.state.$data;
     if (!dataProvider) {
       return;
-    }
-
-    // In order to maintain panel active state when switching to table view call activate here so that the panel is never deactivated
-    // This is to make sure panel state subscriptions remain activate from the queries pane
-    if (!this._tableViewPanelActivationAdded) {
-      this._subs.add(panel.activate());
-      this._tableViewPanelActivationAdded = true;
     }
 
     this.setState({

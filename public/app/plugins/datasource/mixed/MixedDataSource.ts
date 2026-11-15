@@ -12,7 +12,7 @@ import {
   LoadingState,
   type ScopedVars,
 } from '@grafana/data';
-import { getDataSourceSrv, getTemplateSrv, toDataQueryError } from '@grafana/runtime';
+import { getDataSourceInstance, getTemplateSrv, toDataQueryError } from '@grafana/runtime';
 import { type CustomFormatterVariable } from '@grafana/scenes';
 
 import { SHARED_DASHBOARD_QUERY } from '../dashboard/constants';
@@ -27,6 +27,8 @@ export interface BatchedQueries {
   datasource: Promise<DataSourceApi>;
   queries: DataQuery[];
   scopedVars: ScopedVars;
+  /** The data source uid, used to name the data source in the error when it cannot be loaded. */
+  uid?: string;
 }
 
 export class MixedDatasource extends DataSourceApi<DataQuery> {
@@ -92,15 +94,20 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
             continue;
           }
 
-          const dsSettings = getDataSourceSrv().getInstanceSettings(uid);
+          const scopedVars: ScopedVars = {
+            ...request.scopedVars,
+            [variable.name]: { value: uid, text: undefined },
+          };
 
           batches.push({
-            datasource: getDataSourceSrv().get(uid),
+            // Keep batch construction sync. Set the display name before the query runs.
+            datasource: getDataSourceInstance(uid).then((api) => {
+              scopedVars[variable.name] = { value: uid, text: api.name };
+              return api;
+            }),
             queries: cloneDeep(queries),
-            scopedVars: {
-              ...request.scopedVars,
-              [variable.name]: { value: uid, text: dsSettings?.name },
-            },
+            scopedVars,
+            uid,
           });
         }
 
@@ -110,11 +117,12 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
 
     if (datasourceUid !== '') {
       batches.push({
-        datasource: getDataSourceSrv().get(datasourceUid),
+        datasource: getDataSourceInstance(datasourceUid),
         queries: cloneDeep(queries),
         scopedVars: {
           ...request.scopedVars,
         },
+        uid: datasourceUid,
       });
     }
 
@@ -156,19 +164,17 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
                   key: mixedRequestId(i, response.key),
                 };
               }),
-              catchError((err) => {
-                err = toDataQueryError(err);
-                err.message = `${api.name}: ${err.message}`;
-
-                return of<DataQueryResponse>({
-                  data: [],
-                  state: LoadingState.Error,
-                  error: err,
-                  key: mixedRequestId(i, dsRequest.requestId),
-                });
-              })
+              catchError((err) =>
+                of<DataQueryResponse>(toErrorResponse(err, api.name, mixedRequestId(i, dsRequest.requestId)))
+              )
             );
           }),
+          // A data source that fails to load fails only its own batch, so the other queries still render.
+          catchError((err) =>
+            of<DataQueryResponse>(
+              toErrorResponse(err, query.uid ?? 'Data source', mixedRequestId(i, request.requestId))
+            )
+          ),
           // A completed batch is no longer an active stream. This runs before `merge` completes,
           // so the trailing `Done` below is emitted only once no stream remains open.
           finalize(() => {
@@ -183,10 +189,15 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
       // back until it finishes. Per-datasource `catchError` keeps a failure isolated: a failed
       // source surfaces as an `Error` response without discarding the others.
       let lastResponse: DataQueryResponse | undefined;
+      let firstError: DataQueryResponse | undefined;
 
       return concat(
         merge(...runningQueries).pipe(
           map((response) => {
+            if (!firstError && response.state === LoadingState.Error) {
+              firstError = response;
+            }
+
             // `runRequest` derives the combined state from the latest packet, so while any stream
             // is open a finite source's terminal `Done` must be reported as `Streaming`. Errors
             // are forwarded as-is: `runRequest` already treats them as authoritative.
@@ -202,13 +213,26 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
         // Every underlying source has completed here (a never-completing stream keeps the source
         // open and skips this). Emit one trailing `Done` so a stream that genuinely terminates
         // does not leave the query reporting an active stream. Finite-only queries already ended
-        // on `Done`, and errors stay authoritative, so neither emits this packet.
+        // on `Done`, and errors stay authoritative, so neither emits the `Done` packet.
         defer(() => {
-          if (lastResponse && lastResponse.state !== LoadingState.Done && lastResponse.state !== LoadingState.Error) {
-            return of<DataQueryResponse>({ ...lastResponse, state: LoadingState.Done });
+          const trailing: Array<Observable<DataQueryResponse>> = [];
+
+          if (
+            !firstError &&
+            lastResponse &&
+            lastResponse.state !== LoadingState.Done &&
+            lastResponse.state !== LoadingState.Error
+          ) {
+            trailing.push(of<DataQueryResponse>({ ...lastResponse, state: LoadingState.Done }));
           }
 
-          return EMPTY;
+          // Preserve the legacy behaviour of repeating the first error after completion so the
+          // panel surfaces it, even when a later healthy packet replaced the error as the latest.
+          if (firstError) {
+            trailing.push(of<DataQueryResponse>(firstError));
+          }
+
+          return trailing.length ? concat(...trailing) : EMPTY;
         })
       );
     });
@@ -221,4 +245,11 @@ export class MixedDatasource extends DataSourceApi<DataQuery> {
   private isQueryable(query: BatchedQueries): boolean {
     return query && Array.isArray(query.queries) && query.queries.length > 0;
   }
+}
+
+function toErrorResponse(err: unknown, dataSourceName: string, key: string): DataQueryResponse {
+  const error = toDataQueryError(err);
+  error.message = `${dataSourceName}: ${error.message}`;
+
+  return { data: [], state: LoadingState.Error, error, key };
 }

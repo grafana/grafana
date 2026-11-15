@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 import { t } from '@grafana/i18n';
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { Button, type ButtonProps, Stack } from '@grafana/ui';
 
 import {
@@ -12,6 +12,7 @@ import {
 import { shouldShowAlertingListViewV2PreviewToggle, shouldUseAlertingListViewV2 } from '../featureToggles';
 import { setPreviewToggle } from '../previewToggles';
 import { ALERTING_PATHS } from '../utils/navigation';
+import { alertActivityEnabled } from '../utils/pageAccess';
 
 import { RevertToOldExperienceModal } from './AlertsActivityOptOutModal';
 
@@ -26,7 +27,7 @@ export function RuleListPageTitle({ title }: { title: string }) {
     targetView: listViewV2Enabled ? 'v1' : 'v2',
   });
 
-  const alertingTriageEnabled = config.featureToggles.alertingTriage ?? false;
+  const alertingTriageEnabled = alertActivityEnabled();
 
   const handleToggleClick = () => {
     trackViewExperienceToggleClick({
@@ -35,7 +36,7 @@ export function RuleListPageTitle({ title }: { title: string }) {
     });
 
     if (listViewV2Enabled) {
-      // Only show the "try Alert Activity" confirmation modal if alertingTriage is enabled.
+      // Only show the "try Alert Activity" confirmation modal if the alert activity page is available.
       // Otherwise just revert directly — no point mentioning a feature that isn't available.
       if (alertingTriageEnabled) {
         setShowConfirmModal(true);

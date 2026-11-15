@@ -1,14 +1,4 @@
-import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { iamAPIv0alpha1, type DisplayList } from 'app/api/clients/iam/v0alpha1';
-import {
-  AnnoKeyFolder,
-  AnnoKeyUpdatedBy,
-  EMPTY_TABLE_RESPONSE,
-  type TableResponse,
-  type TableRow,
-} from 'app/features/apiserver/types';
-import { DELETED_DASHBOARDS_LIMIT } from 'app/features/browse-dashboards/components/DeletedDashboardsLimitBanner';
-import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { dispatch } from 'app/types/store';
 
 import { getMessageFromError, getStatusFromError } from '../../../core/utils/errors';
@@ -26,10 +16,10 @@ import {
   type WhereNode,
 } from './trashSearchApi';
 import { type SearchHit } from './unified';
-import { DELETED_BY_REMOVED, DELETED_BY_UNKNOWN, filterSearchResults } from './utils';
+import { DELETED_BY_REMOVED, DELETED_BY_UNKNOWN } from './utils';
 
 /**
- * The query the Recently deleted page can express, whichever backend serves it.
+ * The query the Recently deleted page can express.
  *
  * `tags` rather than `tag`, because that is what the search state manager puts in a SearchQuery.
  */
@@ -38,6 +28,12 @@ interface DeletedDashboardsQuery {
   tags?: string[];
   sort?: string;
 }
+
+/**
+ * Most deleted dashboards the page shows for one query. This module is what enforces it, by
+ * stopping the fetch there and reporting whether more were left; the banner only prints it.
+ */
+export const DELETED_DASHBOARDS_LIMIT = 1000;
 
 /**
  * Server page size. The endpoint caps a page at 500, so asking for more just gets clamped.
@@ -75,13 +71,6 @@ const TRASH_SORT_FIELDS: Record<string, SortField> = {
   'deletedby-asc': { field: TRASH_FIELD_DELETED_BY, direction: 'asc' },
   'deletedby-desc': { field: TRASH_FIELD_DELETED_BY, direction: 'desc' },
 };
-
-// Evaluated per call rather than held: the flag's value can change under a running page.
-function isTrashEnabled(): boolean {
-  // The fallback matches the flag's registered default, so this and the pages reading it
-  // through the generated hook cannot disagree about which backend serves the list.
-  return getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardRecentlyDeletedViaTrash, true);
-}
 
 /**
  * The fields to ask for. The server's default set omits tags, and naming any field replaces
@@ -126,17 +115,11 @@ function buildTrashQuery(query: DeletedDashboardsQuery, continueToken: string | 
 }
 
 /**
- * Caches the deleted-dashboards `TableResponse` and the resolved deleter display names.
- * `clear()` invalidates the table but keeps `displayNameCache` — display names are
- * identity-scoped, so Restore/Delete actions don't stale them.
- *
- * The `SearchHit[]` projection (`get()`) is computed per call — it's an O(rows) loop
- * over the cached `TableResponse` + Map lookups, no network. This lets
- * `DELETED_BY_UNKNOWN` entries self-heal across calls when IAM retries succeed.
+ * Caches trash results per query, and the resolved deleter display names. `clear()` drops the
+ * results but keeps `displayNameCache`: display names are identity-scoped, so a restore or
+ * delete does not make them stale.
  */
 class DeletedDashboardsCache {
-  private tableCache: TableResponse | null = null;
-  private tablePromise: Promise<TableResponse> | null = null;
   private displayNameCache: Map<string, string> = new Map();
   /**
    * In-flight or settled trash fetch per query, since the server does the filtering and each
@@ -152,17 +135,8 @@ class DeletedDashboardsCache {
   /** Set when the fetch stopped at the row ceiling with more still available. */
   private trashTruncated = false;
 
-  /**
-   * The deleted dashboards matching `query`, already filtered and sorted.
-   *
-   * With the flag off the whole list is fetched and the browser filters it. With the flag on
-   * the server does both, so the two paths can return different sets — see the feature flag's
-   * description.
-   */
+  /** The deleted dashboards matching `query`, filtered and sorted by the server. */
   async search(query: DeletedDashboardsQuery): Promise<SearchHit[]> {
-    if (!isTrashEnabled()) {
-      return filterSearchResults(await this.get(), query);
-    }
     return this.searchTrash(query);
   }
 
@@ -174,43 +148,7 @@ class DeletedDashboardsCache {
    * the page says about its own results.
    */
   async searchAllForOptions(): Promise<SearchHit[]> {
-    if (!isTrashEnabled()) {
-      return this.get();
-    }
     return this.searchTrash({}, { reportState: false });
-  }
-
-  async get(): Promise<SearchHit[]> {
-    const table = await this.getAsTable();
-    const uids = new Set<string>();
-    for (const row of table.rows) {
-      const uid = row.object.metadata.annotations?.[AnnoKeyUpdatedBy];
-      if (uid) {
-        uids.add(uid);
-      }
-    }
-    const deletedByDisplayMap = await resolveDeletedByDisplayMap(uids, this.displayNameCache);
-    return tableToSearchResult(table, deletedByDisplayMap);
-  }
-
-  async getAsTable(): Promise<TableResponse> {
-    if (this.tableCache !== null) {
-      return this.tableCache;
-    }
-
-    if (this.tablePromise !== null) {
-      return this.tablePromise;
-    }
-
-    this.tablePromise = this.fetchTable();
-
-    try {
-      this.tableCache = await this.tablePromise;
-      return this.tableCache;
-    } catch (error) {
-      this.tablePromise = null;
-      throw error;
-    }
   }
 
   /**
@@ -230,8 +168,6 @@ class DeletedDashboardsCache {
   }
 
   clear(): void {
-    this.tableCache = null;
-    this.tablePromise = null;
     this.trashCache.clear();
     this.trashUnavailable = false;
     this.trashTruncated = false;
@@ -244,15 +180,6 @@ class DeletedDashboardsCache {
     for (const uid of uids) {
       this.restoredUids.add(uid);
     }
-
-    if (!this.tableCache) {
-      return;
-    }
-    const uidSet = new Set(uids);
-    this.tableCache = {
-      ...this.tableCache,
-      rows: this.tableCache.rows.filter((row) => !uidSet.has(row.object.metadata.name)),
-    };
   }
 
   private async searchTrash(
@@ -348,56 +275,6 @@ class DeletedDashboardsCache {
       // that does not serve the endpoint at all, reads as an empty list.
       console.error('Failed to fetch deleted dashboards from the trash endpoint:', error);
       return { failed: true, unavailable: getStatusFromError(error) === 503 };
-    }
-  }
-
-  private async fetchTable(): Promise<TableResponse> {
-    try {
-      const api = await getDashboardAPI();
-      // The backend may return multiple soft-deleted versions of the same dashboard
-      // after restore+re-delete cycles. Dedup by UID as we page so the limit counts
-      // unique dashboards, keeping the newest resourceVersion per UID.
-      const deduped = new Map<string, TableRow>();
-      let continueToken: string | undefined;
-      let lastResponse: TableResponse | undefined;
-
-      do {
-        const response = await api.listDeletedDashboards({
-          limit: DELETED_DASHBOARDS_LIMIT - deduped.size,
-          continue: continueToken,
-        });
-
-        if (!response.rows) {
-          break;
-        }
-
-        for (const row of response.rows) {
-          const uid = row.object.metadata.name;
-          const existing = deduped.get(uid);
-          if (
-            !existing ||
-            (row.object.metadata.resourceVersion ?? '') > (existing.object.metadata.resourceVersion ?? '')
-          ) {
-            deduped.set(uid, row);
-          }
-        }
-
-        continueToken = response.metadata.continue;
-        lastResponse = response;
-      } while (deduped.size < DELETED_DASHBOARDS_LIMIT && continueToken);
-
-      if (!lastResponse) {
-        return EMPTY_TABLE_RESPONSE;
-      }
-
-      return {
-        ...lastResponse,
-        metadata: { ...lastResponse.metadata, continue: continueToken },
-        rows: Array.from(deduped.values()),
-      };
-    } catch (error) {
-      console.error('Failed to fetch deleted dashboards:', error);
-      return EMPTY_TABLE_RESPONSE;
     }
   }
 }
@@ -515,41 +392,6 @@ function extractDisplayData(
     return undefined;
   }
   return settled.value.data;
-}
-
-/**
- * Converts a Table response to SearchHit[] for the deleted dashboards view.
- * Column indices are resolved by name from `columnDefinitions` — order is not guaranteed
- * across API versions.
- */
-function tableToSearchResult(table: TableResponse, deletedByDisplayMap?: Map<string, string>): SearchHit[] {
-  const titleIdx = table.columnDefinitions.findIndex((c) => c.name.toLowerCase() === 'title');
-  const tagsIdx = table.columnDefinitions.findIndex((c) => c.name.toLowerCase() === 'tags');
-
-  return table.rows.map((row) => {
-    const meta = row.object.metadata;
-    const field: Record<string, string | number> = {};
-    if (meta.deletionTimestamp) {
-      field.deletionTimestamp = meta.deletionTimestamp;
-    }
-    const deletedByUid = meta.annotations?.[AnnoKeyUpdatedBy];
-    if (deletedByUid) {
-      field.deletedBy = deletedByDisplayMap?.get(deletedByUid) ?? DELETED_BY_UNKNOWN;
-    }
-
-    const folder = meta.annotations?.[AnnoKeyFolder] ?? 'general';
-
-    return {
-      resource: 'dashboards',
-      name: meta.name,
-      title: titleIdx >= 0 ? String(row.cells[titleIdx] ?? '') : '',
-      location: folder || 'general',
-      folder: folder || 'general',
-      tags: tagsIdx >= 0 && Array.isArray(row.cells[tagsIdx]) ? row.cells[tagsIdx] : [],
-      field,
-      url: '',
-    };
-  });
 }
 
 /** Reads one string field off a trash item. Absent fields are omitted by the server. */

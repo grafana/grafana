@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 
@@ -11,6 +11,152 @@ import { TableNG } from './TableNG';
 beforeAll(() => {
   mockClientSize({ width: 800, height: 600 });
   mockBoundingClientRect({ width: 800, height: 600 });
+});
+
+const sidebarFocusData = createDataFrame({
+  fields: [
+    {
+      name: 'A',
+      type: FieldType.string,
+      values: ['value'],
+      config: { custom: { hideable: true } },
+      display: () => ({ text: 'value', numeric: NaN }),
+    },
+  ],
+});
+
+it('focuses the sidebar after keyboard opening, then tabs to its controls', async () => {
+  const user = userEvent.setup();
+  render(<TableNG data={sidebarFocusData} width={800} height={400} tableRefreshEnabled />);
+
+  act(() => screen.getByRole('button', { name: 'Column options for A' }).focus());
+  await user.keyboard('{Enter}');
+  const manageColumns = await screen.findByRole('menuitem', { name: 'Manage columns' });
+  act(() => manageColumns.focus());
+  await user.keyboard('{Enter}');
+
+  await waitFor(() => expect(screen.getByRole('group', { name: 'Column visibility' })).toHaveFocus());
+  await user.tab();
+  expect(screen.getByRole('button', { name: 'Close column visibility panel' })).toHaveFocus();
+  await user.keyboard('{Enter}');
+
+  expect(screen.queryByRole('group', { name: 'Column visibility' })).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Column options for A' })).toHaveFocus();
+});
+
+it('focuses the sidebar when Manage columns is selected again while it is open', async () => {
+  const user = userEvent.setup();
+  render(<TableNG data={sidebarFocusData} width={800} height={400} tableRefreshEnabled />);
+
+  const opener = screen.getByRole('button', { name: 'Column options for A' });
+  await user.click(opener);
+  await user.click(await screen.findByRole('menuitem', { name: 'Manage columns' }));
+
+  const sidebar = screen.getByRole('group', { name: 'Column visibility' });
+  await waitFor(() => expect(sidebar).toHaveFocus());
+
+  await user.click(opener);
+  await user.click(await screen.findByRole('menuitem', { name: 'Manage columns' }));
+
+  expect(screen.getByRole('group', { name: 'Column visibility' })).toBe(sidebar);
+  await waitFor(() => expect(sidebar).toHaveFocus());
+});
+
+it('preserves horizontal scroll and restores focus to a virtualized column after closing the sidebar', async () => {
+  const data = createDataFrame({
+    fields: Array.from({ length: 20 }, (_, index) => ({
+      name: `Column ${index}`,
+      type: FieldType.string,
+      values: [`value ${index}`],
+      config: { custom: { hideable: true, width: 180 } },
+      display: () => ({ text: `value ${index}`, numeric: NaN }),
+    })),
+  });
+  const user = userEvent.setup();
+  render(<TableNG data={data} width={800} height={400} tableRefreshEnabled />);
+
+  const grid = screen.getByRole('grid');
+  expect(screen.queryByRole('button', { name: 'Column options for Column 10' })).not.toBeInTheDocument();
+  grid.scrollLeft = 1600;
+  fireEvent.scroll(grid);
+  const opener = screen.getByRole('button', { name: 'Column options for Column 10' });
+  await user.click(opener);
+  await user.click(await screen.findByRole('menuitem', { name: 'Manage columns' }));
+  await waitFor(() => expect(screen.getByRole('group', { name: 'Column visibility' })).toHaveFocus());
+  await user.click(screen.getByRole('button', { name: 'Close column visibility panel' }));
+
+  expect(screen.getByRole('grid')).toBe(grid);
+  expect(grid.scrollLeft).toBe(1600);
+  expect(screen.getByRole('button', { name: 'Column options for Column 10' })).toHaveFocus();
+});
+
+it('focuses the grid when closing a sidebar opened from panel configuration', async () => {
+  const user = userEvent.setup();
+  render(<TableNG data={sidebarFocusData} width={800} height={400} tableRefreshEnabled showColumnsSidebar />);
+
+  expect(screen.getByRole('group', { name: 'Column visibility' })).not.toHaveFocus();
+  await user.click(screen.getByRole('button', { name: 'Close column visibility panel' }));
+
+  expect(screen.getByRole('grid')).toHaveFocus();
+});
+
+it('focuses the grid when the opening column was hidden', async () => {
+  const data = createDataFrame({
+    fields: [
+      {
+        name: 'A',
+        type: FieldType.string,
+        values: ['a'],
+        config: { custom: { hideable: true } },
+        display: () => ({ text: 'a', numeric: NaN }),
+      },
+      {
+        name: 'B',
+        type: FieldType.string,
+        values: ['b'],
+        config: { custom: { hideable: true } },
+        display: () => ({ text: 'b', numeric: NaN }),
+      },
+    ],
+  });
+  function Harness() {
+    const [hiddenColumns, setHiddenColumns] = useState<ReadonlySet<string>>(new Set());
+    return (
+      <TableNG
+        data={data}
+        width={800}
+        height={400}
+        tableRefreshEnabled
+        hiddenColumns={hiddenColumns}
+        onHiddenColumnsChange={setHiddenColumns}
+      />
+    );
+  }
+
+  const user = userEvent.setup();
+  render(<Harness />);
+  await user.click(screen.getByRole('button', { name: 'Column options for A' }));
+  await user.click(await screen.findByRole('menuitem', { name: 'Manage columns' }));
+  await user.click(screen.getByRole('checkbox', { name: 'Hide A' }));
+  await user.click(screen.getByRole('button', { name: 'Close column visibility panel' }));
+
+  expect(screen.queryByRole('button', { name: 'Column options for A' })).not.toBeInTheDocument();
+  expect(screen.getByRole('grid')).toHaveFocus();
+});
+
+it('does not steal focus on sidebar close when focus is elsewhere', () => {
+  render(
+    <>
+      <button>Outside table</button>
+      <TableNG data={sidebarFocusData} width={800} height={400} tableRefreshEnabled showColumnsSidebar />
+    </>
+  );
+
+  const outsideButton = screen.getByRole('button', { name: 'Outside table' });
+  act(() => outsideButton.focus());
+  act(() => screen.getByRole('button', { name: 'Close column visibility panel' }).click());
+
+  expect(outsideButton).toHaveFocus();
 });
 
 it('sizes the grid from the clamped sidebar width when the panel shrinks, grows, and is dragged', async () => {
@@ -31,22 +177,32 @@ it('sizes the grid from the clamped sidebar width when the panel shrinks, grows,
   const { rerender } = render(table(800));
   expect(screen.getByRole('grid')).toHaveStyle({ gridTemplateColumns: '571px' });
 
-  rerender(table(200));
-  expect(screen.getByRole('separator')).toHaveAttribute('aria-valuenow', '50');
-  expect(screen.getByRole('grid')).toHaveStyle({ gridTemplateColumns: '95px' });
-
-  rerender(table(800));
-  expect(screen.getByRole('grid')).toHaveStyle({ gridTemplateColumns: '571px' });
-
   const pane = screen.getByRole('group', { name: 'Column visibility' }).parentElement!;
   const rect = pane.getBoundingClientRect();
-  let paneWidth = 220;
+  let containerWidth = 800;
+  // The live ARIA updater measures both elements, so they need distinct sizes in jsdom.
+  const containerRect = jest.spyOn(pane.parentElement!, 'getBoundingClientRect').mockImplementation(() => ({
+    ...rect,
+    width: containerWidth,
+  }));
   // useSplitter measures its CSS limits by temporarily collapsing and expanding the pane.
   const paneRect = jest.spyOn(pane, 'getBoundingClientRect').mockImplementation(() => ({
     ...rect,
     width:
-      pane.style.flexGrow === '0' ? 0 : pane.style.flexGrow === '100' ? parseFloat(pane.style.maxWidth) : paneWidth,
+      pane.style.flexGrow === '100'
+        ? parseFloat(pane.style.maxWidth)
+        : parseFloat(pane.style.flexGrow) * (containerWidth - 8),
   }));
+
+  containerWidth = 200;
+  rerender(table(200));
+  expect(screen.getByRole('separator')).toHaveAttribute('aria-valuenow', '50');
+  expect(screen.getByRole('grid')).toHaveStyle({ gridTemplateColumns: '95px' });
+
+  containerWidth = 800;
+  rerender(table(800));
+  expect(screen.getByRole('grid')).toHaveStyle({ gridTemplateColumns: '571px' });
+
   const splitter = screen.getByRole('separator');
   splitter.setPointerCapture = jest.fn();
   splitter.releasePointerCapture = jest.fn();
@@ -58,10 +214,11 @@ it('sizes the grid from the clamped sidebar width when the panel shrinks, grows,
   expect(pane).toHaveStyle({ maxWidth: '396px' });
   expect(screen.getByRole('grid')).toHaveStyle({ gridTemplateColumns: '395px' });
 
-  paneWidth = 396;
   await user.pointer({ keys: '[/MouseLeft]', target: splitter });
+  expect(splitter).toHaveAttribute('aria-valuenow', '50');
   expect(screen.getByRole('grid')).toHaveStyle({ gridTemplateColumns: '395px' });
   paneRect.mockRestore();
+  containerRect.mockRestore();
 });
 
 it('reuses wrapped-cell measurements during unrelated renders with hidden columns', () => {
@@ -241,14 +398,23 @@ it('enables hiding after another catalog column is restored before transformed d
   expect(onHiddenColumnsChange).toHaveBeenCalledWith(new Set(['A']));
 });
 
-function Harness({ revision = 0 }: { revision?: number }) {
+function Harness({
+  revision = 0,
+  reorderable = true,
+  hideable = true,
+}: {
+  revision?: number;
+  reorderable?: boolean;
+  hideable?: boolean;
+}) {
   const [hiddenColumns, setHiddenColumns] = useState<ReadonlySet<string>>(new Set());
+  const [columnOrder, setColumnOrder] = useState<string[]>();
   const source = createDataFrame({
     fields: ['A', 'B', 'C'].map((name) => ({
       name,
       type: FieldType.string,
       values: [`${name}${revision}`],
-      config: { custom: { hideable: true } },
+      config: { custom: { hideable } },
     })),
   });
   const data = applyFieldOverrides({
@@ -264,8 +430,11 @@ function Harness({ revision = 0 }: { revision?: number }) {
       width={800}
       height={400}
       tableRefreshEnabled
+      reorderable={reorderable}
       showColumnsSidebar
       hiddenColumns={hiddenColumns}
+      columnOrder={columnOrder}
+      onColumnOrderChange={setColumnOrder}
       onHiddenColumnsChange={setHiddenColumns}
       columnCatalog={['A', 'B', 'C']}
       structureRev={revision}
@@ -292,4 +461,125 @@ it('restores hidden source columns after refresh and protects the last visible c
   await user.click(screen.getByRole('button', { name: 'Column options for A' }));
   await user.click(await screen.findByText('Manage columns'));
   expect(within(screen.getByRole('group', { name: 'Column visibility' })).getByText('B')).toBeVisible();
+});
+
+it('toggles reordering for the whole table without changing column visibility controls', () => {
+  const { rerender } = render(<Harness />);
+  expect(screen.getAllByRole('columnheader').map((header) => header.draggable)).toEqual([true, true, true]);
+  expect(screen.getAllByRole('button', { name: /^Reorder / })).toHaveLength(3);
+  expect(screen.getByRole('checkbox', { name: 'Hide A' })).toBeEnabled();
+
+  rerender(<Harness reorderable={false} />);
+  expect(screen.getAllByRole('columnheader').map((header) => header.draggable)).toEqual([false, false, false]);
+  expect(screen.queryByRole('button', { name: /^Reorder / })).not.toBeInTheDocument();
+  expect(screen.getByRole('checkbox', { name: 'Hide A' })).toBeEnabled();
+});
+
+it('allows reordering when no columns can be hidden', async () => {
+  const user = userEvent.setup();
+  render(<Harness hideable={false} />);
+  await user.click(screen.getByRole('button', { name: 'Reorder B' }));
+  await user.keyboard('{ArrowUp}');
+
+  expect(screen.getAllByRole('columnheader').map((cell) => cell.textContent)).toEqual(['B', 'A', 'C']);
+  expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+});
+
+it('keeps reordered hidden columns in position when restored after refresh', async () => {
+  const user = userEvent.setup();
+  const { rerender } = render(<Harness />);
+  await user.click(screen.getByRole('button', { name: 'Reorder B' }));
+  await user.keyboard('{ArrowUp}');
+  expect(screen.getAllByRole('columnheader').map((cell) => cell.textContent)).toEqual(['B', 'A', 'C']);
+  await user.click(screen.getByRole('checkbox', { name: 'Hide B' }));
+  rerender(<Harness revision={1} />);
+  await user.click(screen.getByRole('checkbox', { name: 'Show B' }));
+  expect(screen.getAllByRole('columnheader').map((cell) => cell.textContent)).toEqual(['B', 'A', 'C']);
+  expect(screen.getByRole('gridcell', { name: 'B1' })).toBeVisible();
+});
+
+it('moves header focus to the column taking the hidden slot when hiding the first column', async () => {
+  const user = userEvent.setup();
+  render(<Harness />);
+
+  await user.click(screen.getByRole('button', { name: 'Column options for A' }));
+  await user.click(await screen.findByRole('menuitem', { name: 'Hide column' }));
+
+  await waitFor(() => {
+    const header = (document.activeElement as HTMLElement | null)?.closest('[role="columnheader"]');
+    expect(header).not.toBeNull();
+  });
+  const focusedHeader = (document.activeElement as HTMLElement | null)?.closest('[role="columnheader"]');
+  expect(
+    within(focusedHeader as HTMLElement).getByRole('button', { name: 'Column options for B' })
+  ).toBeInTheDocument();
+});
+
+it('moves header focus to the column taking the hidden slot when hiding the middle column', async () => {
+  const user = userEvent.setup();
+  render(<Harness />);
+
+  await user.click(screen.getByRole('button', { name: 'Column options for B' }));
+  await user.click(await screen.findByRole('menuitem', { name: 'Hide column' }));
+
+  await waitFor(() => {
+    const header = (document.activeElement as HTMLElement | null)?.closest('[role="columnheader"]');
+    expect(header).not.toBeNull();
+  });
+  const focusedHeader = (document.activeElement as HTMLElement | null)?.closest('[role="columnheader"]');
+  expect(
+    within(focusedHeader as HTMLElement).getByRole('button', { name: 'Column options for C' })
+  ).toBeInTheDocument();
+});
+
+it('moves header focus to the previous column when hiding the last column', async () => {
+  const user = userEvent.setup();
+  render(<Harness />);
+
+  await user.click(screen.getByRole('button', { name: 'Column options for C' }));
+  await user.click(await screen.findByRole('menuitem', { name: 'Hide column' }));
+
+  await waitFor(() => {
+    const header = (document.activeElement as HTMLElement | null)?.closest('[role="columnheader"]');
+    expect(header).not.toBeNull();
+  });
+  const focusedHeader = (document.activeElement as HTMLElement | null)?.closest('[role="columnheader"]');
+  expect(
+    within(focusedHeader as HTMLElement).getByRole('button', { name: 'Column options for B' })
+  ).toBeInTheDocument();
+});
+
+it('focuses by displayed order rather than catalog order when hiding a reordered column', async () => {
+  const user = userEvent.setup();
+  render(<Harness />);
+
+  // Reorder to [B, A, C] so the catalog and the rendered order disagree: A is
+  // catalog index 0 but renders at index 1. Hiding A must focus C, which takes
+  // A's rendered slot - not B, which is what the catalog index would select.
+  await user.click(screen.getByRole('button', { name: 'Reorder B' }));
+  await user.keyboard('{ArrowUp}');
+  expect(screen.getAllByRole('columnheader').map((cell) => cell.textContent)).toEqual(['B', 'A', 'C']);
+
+  await user.click(screen.getByRole('button', { name: 'Column options for A' }));
+  await user.click(await screen.findByRole('menuitem', { name: 'Hide column' }));
+
+  await waitFor(() => {
+    const header = (document.activeElement as HTMLElement | null)?.closest('[role="columnheader"]');
+    expect(header).not.toBeNull();
+  });
+  const focusedHeader = (document.activeElement as HTMLElement | null)?.closest('[role="columnheader"]');
+  expect(
+    within(focusedHeader as HTMLElement).getByRole('button', { name: 'Column options for C' })
+  ).toBeInTheDocument();
+});
+
+it('keeps focus on the sidebar checkbox when hiding a column from the sidebar', async () => {
+  const user = userEvent.setup();
+  render(<Harness />);
+
+  const checkbox = screen.getByRole('checkbox', { name: 'Hide B' });
+  await user.click(checkbox);
+
+  expect(screen.queryByRole('gridcell', { name: 'B0' })).not.toBeInTheDocument();
+  expect(checkbox).toHaveFocus();
 });

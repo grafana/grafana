@@ -13,25 +13,30 @@ ARG JS_SRC=js-builder
 
 # Dependabot cannot update dependencies listed in ARGs
 # By using FROM instructions we can delegate dependency updates to dependabot
-FROM alpine:3.24.2 AS alpine-base
+FROM alpine:3.24.4 AS alpine-base
 FROM ubuntu:24.04 AS ubuntu-base
-FROM golang:1.27.2-alpine AS go-builder-base
-FROM --platform=${JS_PLATFORM} node:24-alpine AS js-builder-base
+FROM golang:1.27.4-alpine AS go-builder-base
+FROM --platform=${JS_PLATFORM} node:26.13.0-alpine3.24 AS js-builder-base
 FROM gcr.io/distroless/static-debian13 AS distroless-base
+# Empty by default. For local enterprise builds, override with:
+#   --build-context enterprise-src=../grafana-enterprise
+FROM scratch AS enterprise-src
 # Javascript build stage
 FROM --platform=${JS_PLATFORM} ${JS_IMAGE} AS js-builder
 ARG JS_NODE_ENV=production
-ARG JS_YARN_INSTALL_FLAG=--immutable
-ARG JS_YARN_BUILD_FLAG=build
+ARG JS_PNPM_INSTALL_FLAG=--frozen-lockfile
+ARG JS_PNPM_BUILD_FLAG=build
 
 ENV NODE_OPTIONS=--max_old_space_size=8000
 
 WORKDIR /tmp/grafana
 
-RUN apk add --no-cache make build-base python3
+RUN apk add --no-cache bash make build-base python3
 
-COPY package.json project.json nx.json yarn.lock .yarnrc.yml ./
-COPY .yarn .yarn
+COPY package.json project.json nx.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY Makefile ./
+COPY .citools/Variables.mk .citools/Variables.mk
+COPY patches patches
 COPY packages packages
 COPY e2e-playwright e2e-playwright
 COPY public public
@@ -43,18 +48,15 @@ COPY conf/defaults.ini ./conf/defaults.ini
 #
 ENV NODE_ENV=${JS_NODE_ENV}
 #
-RUN if [ "$JS_YARN_INSTALL_FLAG" = "" ]; then \
-    yarn install; \
-  else \
-    yarn install --immutable; \
-  fi
+RUN npm install -g "pnpm@$(node -p "require('./package.json').packageManager.split('@')[1].split('+')[0]")" && \
+  pnpm install ${JS_PNPM_INSTALL_FLAG}
 
 COPY tsconfig.json eslint.config.js .editorconfig .browserslistrc .prettierrc.js ./
 COPY scripts scripts
 COPY emails emails
 
 # Set the build argument according to default or argument passed
-RUN yarn ${JS_YARN_BUILD_FLAG}
+RUN FRONTEND_BUILD_SCRIPT="${JS_PNPM_BUILD_FLAG}" make build-js
 
 # Golang build stage
 FROM ${GO_IMAGE} AS go-builder
@@ -72,6 +74,10 @@ RUN if grep -i -q alpine /etc/issue; then \
   fi
 
 WORKDIR /tmp/grafana
+
+# The enterprise overlay adds `replace github.com/grafana/grafana-enterprise => ../grafana-enterprise`
+# to go.mod, which resolves to this path. No-op when building OSS.
+COPY --from=enterprise-src / /tmp/grafana-enterprise
 
 COPY go.mod go.sum go.work go.work.sum ./
 COPY .citools .citools
@@ -121,7 +127,8 @@ COPY ${GRAFANA_TGZ} /tmp/grafana.tar.gz
 # add -v to make tar print every file it extracts
 RUN tar x -z -f /tmp/grafana.tar.gz --strip-components=1
 
-RUN mkdir -p data/plugins-bundled
+RUN test -s public/build/assets-manifest.json && \
+  mkdir -p dist data/plugins-bundled && mv public dist/frontend
 
 # helpers for COPY --from
 FROM ${GO_SRC} AS go-src
@@ -136,7 +143,7 @@ ENV GF_PATHS_HOME="/usr/share/grafana"
 WORKDIR $GF_PATHS_HOME
 
 COPY --from=go-src /tmp/grafana/bin/grafana* /tmp/grafana/bin/*/grafana* ./bin/
-COPY --from=js-src /tmp/grafana/public ./public
+COPY --from=js-src /tmp/grafana/dist/frontend ./public
 COPY --from=js-src /tmp/grafana/LICENSE ./
 
 # Bundled plugins — shared by the 3 full (non-slim) variants, and by the 3 slim variants

@@ -9,9 +9,14 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+	grpccodes "google.golang.org/grpc/codes"
+	grpcstatus "google.golang.org/grpc/status"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	"github.com/grafana/grafana/pkg/storage/unified/federated"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -111,6 +116,143 @@ func TestSubCount_GetterErrorPropagates(t *testing.T) {
 	handler, err := rest.Connect(newChildrenCtx(), "missing", nil, &recordingResponder{})
 	require.Error(t, err)
 	require.Nil(t, handler)
+}
+
+func TestCountFailedError(t *testing.T) {
+	tests := []struct {
+		name          string
+		err           error
+		deleting      bool
+		wantPublicMsg string
+	}{
+		{
+			name:          "short resource name",
+			err:           &federated.CountError{Resources: []string{"alertrules"}, Err: errors.New("permission denied on table alert_rule")},
+			wantPublicMsg: "count failed: could not count alert rules",
+		},
+		{
+			name: "fully qualified resource names",
+			err: &federated.CountError{
+				Resources: []string{
+					"alertrules.rules.alerting.grafana.app",
+					"recordingrules.rules.alerting.grafana.app",
+					"librarypanels.dashboard.grafana.app",
+				},
+				Err: errors.New("legacy source unavailable"),
+			},
+			wantPublicMsg: "count failed: could not count alert rules, recording rules, library panels",
+		},
+		{
+			name:          "unknown resource",
+			err:           errors.New("index unavailable"),
+			wantPublicMsg: "count failed: could not count folder contents",
+		},
+		{
+			name:          "delete check",
+			err:           &federated.CountError{Resources: []string{"recordingrules"}, Err: errors.New("connection reset")},
+			deleting:      true,
+			wantPublicMsg: "Folder cannot be deleted: could not count recording rules",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := countFailedError(tt.err, tt.deleting)
+
+			var apiStatus apierrors.APIStatus
+			require.ErrorAs(t, err, &apiStatus)
+			require.Equal(t, int32(500), apiStatus.Status().Code)
+			require.Equal(t, tt.wantPublicMsg, apiStatus.Status().Message)
+			require.ErrorIs(t, err, tt.err)
+			require.Contains(t, err.Error(), tt.err.Error())
+			require.NotContains(t, apiStatus.Status().Message, tt.err.Error())
+		})
+	}
+}
+
+func TestCountStatsErrors(t *testing.T) {
+	forbidden := apierrors.NewForbidden(schema.GroupResource{}, "", errors.New("upstream denied"))
+	unstructuredGRPC := grpcstatus.Error(grpccodes.Internal, "pq: permission denied for table alert_rule")
+	notFoundStatus, statusErr := grpcstatus.New(grpccodes.NotFound, "index not found").
+		WithDetails(&resourcepb.ErrorResult{Code: 404, Reason: string(metav1.StatusReasonNotFound), Message: "index not found"})
+	require.NoError(t, statusErr)
+	structuredNotFound := notFoundStatus.Err()
+	canceledStatus, statusErr := grpcstatus.New(grpccodes.Canceled, "canceled").
+		WithDetails(&resourcepb.ErrorResult{Code: 499, Message: "client canceled"})
+	require.NoError(t, statusErr)
+
+	tests := []struct {
+		name          string
+		err           error
+		wantRaw       error
+		wantRawText   string
+		wantCode      int32
+		wantPublicMsg string
+	}{
+		{
+			name:          "wrapped status error keeps resource metadata",
+			err:           &federated.CountError{Resources: []string{"alertrules"}, Err: forbidden},
+			wantRaw:       forbidden,
+			wantCode:      500,
+			wantPublicMsg: "count failed: could not count alert rules",
+		},
+		{
+			name:          "unstructured gRPC error keeps its message for traces",
+			err:           unstructuredGRPC,
+			wantRaw:       unstructuredGRPC,
+			wantRawText:   "permission denied for table alert_rule",
+			wantCode:      500,
+			wantPublicMsg: "count failed: could not count folder contents",
+		},
+		{
+			name:          "structured gRPC 4xx becomes 500",
+			err:           structuredNotFound,
+			wantRaw:       structuredNotFound,
+			wantRawText:   "index not found",
+			wantCode:      500,
+			wantPublicMsg: "count failed: could not count folder contents",
+		},
+		{
+			name:          "structured gRPC cancel keeps its status",
+			err:           canceledStatus.Err(),
+			wantCode:      499,
+			wantPublicMsg: "client canceled",
+		},
+		{name: "local cancel", err: context.Canceled, wantRaw: context.Canceled, wantCode: 499},
+		{name: "local deadline", err: context.DeadlineExceeded, wantRaw: context.DeadlineExceeded, wantCode: 504},
+		{
+			name:     "wrapped local cancel",
+			err:      &federated.CountError{Resources: []string{"alertrules"}, Err: context.Canceled},
+			wantRaw:  context.Canceled,
+			wantCode: 499,
+		},
+		{name: "gRPC cancel", err: grpcstatus.Error(grpccodes.Canceled, "canceled"), wantCode: 499},
+		{name: "gRPC deadline", err: grpcstatus.Error(grpccodes.DeadlineExceeded, "deadline"), wantCode: 504},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			raw, public := countStatsErrors(tt.err, false)
+
+			require.Error(t, raw)
+			if tt.wantRaw != nil {
+				require.ErrorIs(t, raw, tt.wantRaw)
+			}
+			if tt.wantRawText != "" {
+				require.ErrorContains(t, raw, tt.wantRawText)
+			}
+
+			var apiStatus apierrors.APIStatus
+			require.ErrorAs(t, public, &apiStatus)
+			require.Equal(t, tt.wantCode, apiStatus.Status().Code)
+			if tt.wantPublicMsg != "" {
+				require.Equal(t, tt.wantPublicMsg, apiStatus.Status().Message)
+			}
+			if tt.wantRawText != "" {
+				require.NotContains(t, apiStatus.Status().Message, tt.wantRawText)
+			}
+		})
+	}
 }
 
 func TestSubCount_StatsErrorSurfaces(t *testing.T) {

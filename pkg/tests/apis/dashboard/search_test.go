@@ -24,7 +24,10 @@ import (
 	dashboardV2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -698,6 +701,59 @@ func setFolderPermissions(t *testing.T, helper *apis.K8sTestHelper, actingUser a
 	}, &struct{}{})
 
 	require.Equal(t, http.StatusOK, resp.Response.StatusCode, "Failed to set permissions for folder %s", folderUID)
+}
+
+func TestIntegrationSearchCreatePermissionSharedWithMe(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	for _, enabled := range []bool{true, false} {
+		t.Run(fmt.Sprintf("folderPickerCreatePermission=%t", enabled), func(t *testing.T) {
+			opts := testinfra.GrafanaOpts{
+				AppModeProduction:    true,
+				DisableAnonymous:     true,
+				APIServerStorageType: "unified",
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode5},
+					"folders.folder.grafana.app":       {DualWriterMode: rest.Mode5},
+				},
+			}
+			if enabled {
+				opts.EnableFeatureToggles = []string{featuremgmt.FlagFolderPickerCreatePermission}
+			}
+			helper := apis.NewK8sTestHelper(t, opts)
+			defer helper.Shutdown()
+
+			createFolder := func(uid, parent string) {
+				body, err := json.Marshal(map[string]string{"uid": uid, "title": uid, "parentUid": parent})
+				require.NoError(t, err)
+				resp := apis.DoRequest(helper, apis.RequestParams{
+					User: helper.Org1.Admin, Method: http.MethodPost, Path: "/api/folders", Body: body, ContentType: "application/json",
+				}, &struct{}{})
+				require.Equal(t, http.StatusOK, resp.Response.StatusCode)
+			}
+			createFolder("create-parent", "")
+			createFolder("create-child", "create-parent")
+
+			// Only dashboards:create on the child: no read on it, and no access to its parent.
+			createOnly := helper.CreateUser("create-only", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{{
+				Actions:           []string{dashboards.ActionDashboardsCreate},
+				Resource:          "folders",
+				ResourceAttribute: "uid",
+				ResourceID:        "create-child",
+			}})
+
+			path := fmt.Sprintf("/apis/dashboard.grafana.app/v0alpha1/namespaces/%s/search?type=folder&folder=sharedwithme&permission=create", createOnly.Identity.GetNamespace())
+			resp := apis.DoRequest(helper, apis.RequestParams{User: createOnly, Method: http.MethodGet, Path: path}, &dashboardV0.SearchResults{})
+			require.Equal(t, http.StatusOK, resp.Response.StatusCode)
+
+			found := false
+			for _, hit := range resp.Result.Hits {
+				found = found || hit.Name == "create-child"
+			}
+			// With the toggle off, create falls back to edit, which this user does not have.
+			assert.Equal(t, enabled, found)
+		})
+	}
 }
 
 // roundTo rounds a float64 to a specified number of decimal places.

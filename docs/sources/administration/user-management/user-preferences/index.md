@@ -53,7 +53,7 @@ Your profile includes your name, user name, and email address, which you can upd
 You can choose the way you would like data to appear in Grafana, including the user interface theme, home dashboard, timezone, and first day of the week. You can set these preferences for your own account, for a team, for an organization, or Grafana-wide using configuration settings. Your user preferences take precedence over team, organization, and Grafana default preferences. For more information, see [Grafana preferences](../../organization-preferences/).
 
 - **Interface theme** determines whether Grafana appears in light mode or dark mode. You can also choose from several experimental modes. By default, the interface theme is set to dark mode. You can also [quickly view and change themes](#view-and-change-themes) using the **Change theme** option.
-- **Home dashboard** refers to the dashboard you see when you sign in to Grafana. By default, this is set to the Home dashboard.
+- **Home dashboard** replaces the Grafana home page with a dashboard of your choice. If you don't choose one, you see the dashboard your team or organization sets, or the instance default. Select **Grafana home** to skip team and organization dashboards and see the instance default. For the full order, refer to [How Grafana picks the home page](../../organization-preferences/#how-grafana-picks-the-home-page).
 - **Timezone** is used by dashboards when you set time ranges, so that you view data in your timezone instead of UTC.
 - **Week start** is the first day of the week you want to use in dashboard time ranges, for example, `This week`.
 - **Language** determines the language used for parts of the Grafana interface.

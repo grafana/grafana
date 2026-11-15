@@ -17,3 +17,9 @@ func (tc evaluateTestCase) Evaluator() Evaluator             { return tc.evaluat
 func (tc evaluateTestCase) Permissions() map[string][]string { return tc.permissions }
 
 type PermissionEvaluatorForTest = permissionEvaluator
+
+type AllEvaluatorForTest = allEvaluator
+type AnyEvaluatorForTest = anyEvaluator
+
+func (a allEvaluator) ChildrenForTest() []Evaluator { return a.allOf }
+func (a anyEvaluator) ChildrenForTest() []Evaluator { return a.anyOf }

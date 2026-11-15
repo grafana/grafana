@@ -46,7 +46,7 @@ describe('Dashboard Export Image Utils', () => {
             // Reset the mock for this test case
             (getBackendSrv as jest.Mock).mockReset();
           },
-          expectedError: 'Image renderer plugin not installed',
+          expectedError: 'Image renderer service not configured',
         },
         {
           setup: () => {

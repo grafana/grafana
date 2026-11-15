@@ -79,7 +79,7 @@ func benchmarkBuildIndex(b *testing.B, docs int, fileThreshold int64) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for range b.N {
-		idx, err := backend.BuildIndex(ctx, key, int64(docs), "benchmark", writer, nil, true, time.Time{}, 0)
+		idx, err := backend.BuildIndex(ctx, key, int64(docs), "benchmark", writer, nil, true, time.Time{}, 0, resource.BuildIndexOptions{})
 		require.NoError(b, err)
 
 		b.StopTimer()

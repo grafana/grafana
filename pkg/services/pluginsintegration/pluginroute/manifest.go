@@ -19,9 +19,9 @@ import (
 	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/registry/apis/appplugin"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/kindstore"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -33,7 +33,7 @@ type manifestBuilder struct {
 	manifest      *app.ManifestData
 	clientV3      appclientv3.Client
 	decrypter     *secureValueLookup
-	accessChecker appplugin.PluginAccessChecker
+	accessChecker pluginaccesscontrol.AppAccessChecker
 	accessClient  authlib.AccessChecker
 	search        resourcepb.ResourceIndexClient
 	store         resourcepb.ResourceStoreClient

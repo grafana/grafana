@@ -87,7 +87,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
@@ -117,6 +116,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
+	unifiedmigrations "github.com/grafana/grafana/pkg/storage/unified/migrations/contract"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -190,6 +190,7 @@ type HTTPServer struct {
 	folderService                folder.Service
 	dsGuardian                   guardian.DatasourceGuardianProvider
 	dashboardsnapshotsService    dashboardsnapshots.Service
+	migrationStatusReader        unifiedmigrations.MigrationStatusReader
 	PluginSettings               pluginSettings.Service
 	AvatarCacheServer            *avatar.AvatarCacheServer
 	preferenceService            pref.Service
@@ -203,7 +204,6 @@ type HTTPServer struct {
 	apiKeyService                apikey.Service
 	kvStore                      kvstore.KVStore
 	pluginsCDNService            *pluginscdn.Service
-	managedPluginsService        managedplugins.Manager
 
 	userService                     user.Service
 	tempUserService                 tempUser.Service
@@ -266,13 +266,13 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	notificationService notifications.Service, dashboardService dashboards.DashboardService,
 	dashboardProvisioningService dashboards.DashboardProvisioningService, folderService folder.Service,
 	dsGuardian guardian.DatasourceGuardianProvider,
-	dashboardsnapshotsService dashboardsnapshots.Service, pluginSettings pluginSettings.Service,
+	dashboardsnapshotsService dashboardsnapshots.Service, migrationStatusReader unifiedmigrations.MigrationStatusReader, pluginSettings pluginSettings.Service,
 	avatarCacheServer *avatar.AvatarCacheServer, preferenceService pref.Service,
 	preferenceK8sHandler *prefapi.K8sHandler,
 	annotationMigrationProxy *annotationsapi.MigrationProxy,
 	folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, dashboardVersionService dashver.Service,
-	starService star.Service, csrfService csrf.Service, managedPlugins managedplugins.Manager,
+	starService star.Service, csrfService csrf.Service,
 	apiKeyService apikey.Service, kvStore kvstore.KVStore, usageStats usagestats.Service,
 	secretsMigrator secrets.Migrator, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
@@ -356,6 +356,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		folderService:                folderService,
 		dsGuardian:                   dsGuardian,
 		dashboardsnapshotsService:    dashboardsnapshotsService,
+		migrationStatusReader:        migrationStatusReader,
 		PluginSettings:               pluginSettings,
 		AvatarCacheServer:            avatarCacheServer,
 		preferenceService:            preferenceService,
@@ -382,7 +383,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		statsService:                 statsService,
 		authnService:                 authnService,
 		pluginsCDNService:            pluginsCDNService,
-		managedPluginsService:        managedPlugins,
 		starApi:                      starApi,
 		promRegister:                 promRegister,
 		promGatherer:                 promGatherer,
@@ -697,7 +697,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	m.UseMiddleware(hs.Csrf.Middleware())
 
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, webassets.BuildDir, "public/build")
-	hs.mapStatic(m, hs.Cfg.StaticRootPath, "", "public", "/public/views/swagger.html")
+	hs.mapStatic(m, hs.Cfg.StaticRootPath, "", "public")
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "robots.txt", "robots.txt")
 	hs.mapStatic(m, hs.Cfg.StaticRootPath, "mockServiceWorker.js", "mockServiceWorker.js")
 

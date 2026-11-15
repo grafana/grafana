@@ -54,7 +54,7 @@ func TestSelectSnapshotsToDelete_AgeCutoff(t *testing.T) {
 		fresh: mkMeta("11.5.0", 300, now.Add(-time.Hour)),
 	}
 
-	got := selectSnapshotsToDelete(metas, now, testCleanupMaxAge, testCleanupGrace)
+	got := selectSnapshotsToDelete(newTestNsResource(), metas, now, testCleanupMaxAge, testCleanupGrace)
 	// Expect: old deleted by rule A; mid deleted by rule B (fresh is the newest
 	// and stable beyond grace); fresh kept (newest in group).
 	assert.ElementsMatch(t, []ulid.ULID{old, mid}, got)
@@ -74,7 +74,7 @@ func TestSelectSnapshotsToDelete_NewestInGroupAlwaysKept(t *testing.T) {
 	// snapshot still wins as the per-group keep.
 	metas[keys[4]].UploadTimestamp = now.Add(-2 * time.Hour)
 
-	got := selectSnapshotsToDelete(metas, now, testCleanupMaxAge, testCleanupGrace)
+	got := selectSnapshotsToDelete(newTestNsResource(), metas, now, testCleanupMaxAge, testCleanupGrace)
 	// All except keys[4] must be deleted.
 	assert.NotContains(t, got, keys[4])
 	assert.Len(t, got, 4)
@@ -91,7 +91,7 @@ func TestSelectSnapshotsToDelete_OlderKeptWhileSuccessorStabilising(t *testing.T
 		s2: mkMeta("11.5.0", 200, now.Add(-time.Minute)),
 	}
 
-	got := selectSnapshotsToDelete(metas, now, testCleanupMaxAge, testCleanupGrace)
+	got := selectSnapshotsToDelete(newTestNsResource(), metas, now, testCleanupMaxAge, testCleanupGrace)
 	assert.Empty(t, got, "successor still inside grace window — predecessor must be retained")
 }
 
@@ -106,7 +106,7 @@ func TestSelectSnapshotsToDelete_OlderDeletedOnceSuccessorStabilises(t *testing.
 		s2: mkMeta("11.5.0", 200, now.Add(-testCleanupGrace-time.Minute)),
 	}
 
-	got := selectSnapshotsToDelete(metas, now, testCleanupMaxAge, testCleanupGrace)
+	got := selectSnapshotsToDelete(newTestNsResource(), metas, now, testCleanupMaxAge, testCleanupGrace)
 	assert.Equal(t, []ulid.ULID{s1}, got)
 }
 
@@ -119,7 +119,7 @@ func TestSelectSnapshotsToDelete_RuleAWinsOnLoneOldSnapshot(t *testing.T) {
 		only: mkMeta("11.5.0", 100, now.Add(-2*maxAge)),
 	}
 
-	got := selectSnapshotsToDelete(metas, now, maxAge, testCleanupGrace)
+	got := selectSnapshotsToDelete(newTestNsResource(), metas, now, maxAge, testCleanupGrace)
 	assert.Equal(t, []ulid.ULID{only}, got)
 }
 
@@ -136,7 +136,7 @@ func TestSelectSnapshotsToDelete_ZeroMaxAgeKeepsLoneOldSnapshot(t *testing.T) {
 		only: mkMeta("11.5.0", 100, now.Add(-30*24*time.Hour)),
 	}
 
-	got := selectSnapshotsToDelete(metas, now, 0, testCleanupGrace)
+	got := selectSnapshotsToDelete(newTestNsResource(), metas, now, 0, testCleanupGrace)
 	assert.Empty(t, got, "maxAge=0 must disable age-based deletion (rule A)")
 }
 
@@ -155,7 +155,7 @@ func TestSelectSnapshotsToDelete_PerVersionIsolation(t *testing.T) {
 		new16: mkMeta("11.6.0", 200, now.Add(-2*time.Hour)),
 	}
 
-	got := selectSnapshotsToDelete(metas, now, testCleanupMaxAge, testCleanupGrace)
+	got := selectSnapshotsToDelete(newTestNsResource(), metas, now, testCleanupMaxAge, testCleanupGrace)
 	// One predecessor per group is deletable; both newest are kept.
 	assert.ElementsMatch(t, []ulid.ULID{old15, old16}, got)
 }
@@ -168,28 +168,93 @@ func TestSelectSnapshotsToDelete_UnparseableVersionLeftAlone(t *testing.T) {
 		garbage: mkMeta("garbage", 100, now.Add(-time.Hour)),
 	}
 
-	got := selectSnapshotsToDelete(metas, now, testCleanupMaxAge, testCleanupGrace)
+	got := selectSnapshotsToDelete(newTestNsResource(), metas, now, testCleanupMaxAge, testCleanupGrace)
 	assert.Empty(t, got, "unparseable version must be skipped, not deleted by rule B")
 }
 
-// TestSelectSnapshotsToDelete_NeverDeletesDownloadPick pins the cross-package
-// invariant that cleanup must never delete a snapshot the download path would
-// prefer. selectSnapshotsToDelete and pickBestSnapshot have independent sort
-// orders today (cleanup: per-group RV desc, upload desc; download:
-// tier-asc/version-desc/RV-desc/upload-desc) and a future change to either
-// could make them disagree. This test runs both over the same input across a
-// few representative shapes and asserts the picked snapshot is always in the
-// keep set.
-//
-// We considered factoring the shared within-version-group comparator into a
-// single helper called from both sites, which would make the invariant
-// structurally true and let this test go away. We deferred that: the only
-// genuinely shared logic is a five-line comparator, and the rest of each
-// function (tier classification on the download side, grouping + grace-period
-// rule on the cleanup side) is intentionally distinct. The shared helper
-// would be small enough that the indirection costs more than it saves, while
-// this test catches the same drift directly. Revisit if more selection logic
-// ends up duplicated.
+func TestGlobalSnapshotPreference(t *testing.T) {
+	now := time.Date(2026, 4, 22, 12, 0, 0, 0, time.UTC)
+	older, newer := now.Add(-4*time.Hour), now.Add(-2*time.Hour)
+	uploaded := now.Add(-time.Hour)
+	unknown := time.Time{}
+	meta := func(builtAt, reconciledAt, uploadedAt time.Time) *IndexMeta {
+		return &IndexMeta{
+			BuildVersion:    "11.5.0",
+			BuildTime:       builtAt,
+			ReconciledAt:    reconciledAt,
+			UploadTimestamp: uploadedAt,
+		}
+	}
+
+	for _, tc := range []struct {
+		name      string
+		preferred *IndexMeta
+		other     *IndexMeta
+	}{
+		{
+			name:      "recent reconciliation beats later build and upload",
+			preferred: meta(older, newer, newer),
+			other:     meta(older.Add(time.Hour), older.Add(time.Hour), uploaded),
+		},
+		{
+			name:      "legacy build time is compared with reconciliation time",
+			preferred: meta(newer, unknown, newer),
+			other:     meta(older, older, uploaded),
+		},
+		{
+			name:      "reconciliation beats legacy build time",
+			preferred: meta(older, newer, newer),
+			other:     meta(older, unknown, uploaded),
+		},
+		{
+			name:      "legacy snapshots compare build time",
+			preferred: meta(newer, unknown, newer),
+			other:     meta(older, unknown, uploaded),
+		},
+		{
+			name:      "known time beats unknown time despite newer upload",
+			preferred: meta(unknown, older, newer),
+			other:     meta(unknown, unknown, uploaded),
+		},
+		{
+			name:      "equal reconciliation times compare upload time",
+			preferred: meta(older, older, uploaded),
+			other:     meta(older, older, newer),
+		},
+		{
+			name:      "unknown times compare upload time",
+			preferred: meta(unknown, unknown, uploaded),
+			other:     meta(unknown, unknown, newer),
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			preferred, other := makeULID(t, tc.preferred.UploadTimestamp), makeULID(t, tc.other.UploadTimestamp)
+			tc.preferred.LatestResourceVersion = 1
+			tc.other.LatestResourceVersion = 100
+			metas := map[ulid.ULID]*IndexMeta{preferred: tc.preferred, other: tc.other}
+			be := &bleveBackend{runningBuildVersion: semver.MustParse("11.5.0")}
+			global := resource.GlobalSearchKey("default")
+
+			ranked := be.rankSnapshots(global, metas, time.Time{}, log.NewNopLogger())
+			require.Len(t, ranked, 2)
+			assert.Equal(t, preferred, ranked[0].key)
+			assert.Equal(t, []ulid.ULID{other}, selectSnapshotsToDelete(global, metas, now, testCleanupMaxAge, testCleanupGrace))
+
+			perResource := newTestNsResource()
+			ranked = be.rankSnapshots(perResource, metas, time.Time{}, log.NewNopLogger())
+			require.Len(t, ranked, 2)
+			assert.Equal(t, other, ranked[0].key, "per-resource selection still prefers higher RV")
+			assert.Equal(t, []ulid.ULID{preferred}, selectSnapshotsToDelete(perResource, metas, now, testCleanupMaxAge, testCleanupGrace))
+
+			tc.preferred.UploadTimestamp = now.Add(-time.Minute)
+			assert.Empty(t, selectSnapshotsToDelete(global, metas, now, testCleanupMaxAge, testCleanupGrace),
+				"keep predecessors while the preferred snapshot is inside the upload grace period")
+		})
+	}
+}
+
+// Cleanup must retain the preferred download despite the different version
+// filtering and grace-period rules.
 func TestSelectSnapshotsToDelete_NeverDeletesDownloadPick(t *testing.T) {
 	now := time.Date(2026, 4, 22, 12, 0, 0, 0, time.UTC)
 	minV := semver.MustParse("11.0.0")
@@ -236,10 +301,10 @@ func TestSelectSnapshotsToDelete_NeverDeletesDownloadPick(t *testing.T) {
 				}},
 				runningBuildVersion: running,
 			}
-			picked, ok := be.pickBestSnapshot(metas, now.Add(-testCleanupMaxAge), be.log)
+			picked, ok := be.pickBestSnapshot(newTestNsResource(), metas, now.Add(-testCleanupMaxAge), be.log)
 			require.Truef(t, ok, "test case must yield a pickable snapshot — if a no-pick scenario is needed, add a dedicated test case rather than letting this one short-circuit")
 
-			deleted := selectSnapshotsToDelete(metas, now, testCleanupMaxAge, testCleanupGrace)
+			deleted := selectSnapshotsToDelete(newTestNsResource(), metas, now, testCleanupMaxAge, testCleanupGrace)
 			for _, k := range deleted {
 				assert.NotEqualf(t, picked.key, k,
 					"cleanup deleted snapshot %s but download would pick it (version=%s rv=%d uploaded=%s)",

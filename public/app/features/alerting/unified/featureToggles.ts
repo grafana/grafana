@@ -1,12 +1,19 @@
 import { config } from '@grafana/runtime';
-import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+import {
+  FlagKeys,
+  getFeatureFlagClient,
+  useFlagAlertingImportAlertmanagerAPI,
+  useFlagAlertingMigrationWizardUI,
+} from '@grafana/runtime/internal';
 
 import { getPreviewToggle } from './previewToggles';
-import { isAdmin } from './utils/environment';
 
 export const shouldUsePrometheusRulesPrimary = () => config.featureToggles.alertingPrometheusRulesPrimary ?? false;
 
 export const shouldUseRulesAPIV2 = () => config.featureToggles['alerting.rulesAPIV2'] ?? false;
+
+export const shouldUseGmaOnlyListView = () =>
+  getFeatureFlagClient().getBooleanValue(FlagKeys.AlertingGmaOnlyListView, false);
 
 /**
  * Whether the new list view is turned on for this instance. When it's off, everyone gets the old list,
@@ -31,12 +38,20 @@ export const shouldUseAlertingListViewV2 = () => {
   return getPreviewToggle('alertingListViewV2') ?? true;
 };
 
-export const shouldAllowRecoveringDeletedRules = () =>
-  isAdmin() &&
-  getFeatureFlagClient().getBooleanValue(FlagKeys.AlertingRuleRecoverDeleted, true) &&
-  getFeatureFlagClient().getBooleanValue(FlagKeys.AlertRuleRestore, true);
+export const isImportWizardEnabled = () =>
+  getFeatureFlagClient().getBooleanValue(FlagKeys.AlertingMigrationWizardUI, false);
 
-export const shouldAllowPermanentlyDeletingRules = () => shouldAllowRecoveringDeletedRules();
+/**
+ * Importing Alertmanager config (the wizard's notifications step, the staged config on the Import
+ * settings tab, and auto-sync) goes through the Alertmanager import API, which answers 501 while its
+ * flag is off. Rule import doesn't use that API, so the wizard itself only needs its own flag and just
+ * locks its notifications step.
+ */
+export function useIsAlertmanagerImportEnabled(): boolean {
+  const wizardUIEnabled = useFlagAlertingMigrationWizardUI();
+  const importAlertmanagerAPIEnabled = useFlagAlertingImportAlertmanagerAPI();
+  return wizardUIEnabled && importAlertmanagerAPIEnabled;
+}
 
 export const shouldUseBackendFilters = () => config.featureToggles.alertingUIUseBackendFilters ?? false;
 

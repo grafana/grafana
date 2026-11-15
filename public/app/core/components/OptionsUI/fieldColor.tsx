@@ -14,8 +14,11 @@ import {
   getFieldColorMode,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
-import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+import {
+  useFlagDatavizExperimentalColorSchemes,
+  useFlagEnableColorblindSafePanelOptions,
+  useFlagPieChartGradientColorScheme,
+} from '@grafana/runtime/internal';
 import { useStyles2, useTheme2, Field, RadioButtonGroup, Select, Stack } from '@grafana/ui';
 
 import { ColorValueEditor } from './color';
@@ -26,6 +29,9 @@ const GRADIENT_DEFAULT_TO = '#F2495C';
 type Props = StandardEditorProps<FieldColor | undefined, FieldColorConfigSettings>;
 
 export const FieldColorEditor = ({ value, onChange, item, id }: Props) => {
+  const colorblindSafePanelOptions = useFlagEnableColorblindSafePanelOptions();
+  const pieChartGradientColorScheme = useFlagPieChartGradientColorScheme();
+  const experimentalColorSchemesEnabled = useFlagDatavizExperimentalColorSchemes();
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
 
@@ -33,11 +39,6 @@ export const FieldColorEditor = ({ value, onChange, item, id }: Props) => {
   const availableOptions = item.settings?.byValueSupport
     ? fieldColorModeRegistry.list()
     : fieldColorModeRegistry.list().filter((m) => !m.isByValue);
-
-  const experimentalColorSchemesEnabled = getFeatureFlagClient().getBooleanValue(
-    FlagKeys.DatavizExperimentalColorSchemes,
-    false
-  );
 
   const experimentalColorSchemeModes: string[] = [
     FieldColorModeId.PaletteCategoricalNext,
@@ -48,10 +49,9 @@ export const FieldColorEditor = ({ value, onChange, item, id }: Props) => {
   const filteredOptions = availableOptions.filter(
     (option) =>
       !option.excludeFromPicker &&
-      (option.id !== FieldColorModeId.PaletteColorblind || config.featureToggles.enableColorblindSafePanelOptions) &&
+      (option.id !== FieldColorModeId.PaletteColorblind || colorblindSafePanelOptions) &&
       (!experimentalColorSchemeModes.includes(option.id) || experimentalColorSchemesEnabled) &&
-      (option.id !== FieldColorModeId.Gradient ||
-        (item.settings?.gradientSupport && config.featureToggles.pieChartGradientColorScheme))
+      (option.id !== FieldColorModeId.Gradient || (item.settings?.gradientSupport && pieChartGradientColorScheme))
   );
 
   const options: Array<SelectableValue<string>> = [];

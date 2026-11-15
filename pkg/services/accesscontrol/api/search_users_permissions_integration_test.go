@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/permreg"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+	"github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
@@ -499,7 +500,7 @@ func newSearchPermissionsFixture(t *testing.T) *searchPermissionsFixture {
 	cache := localcache.ProvideService()
 	store := &searchPermissionsStore{Store: database.ProvideService(sql)}
 	service := acimpl.ProvideOSSService(cfg, store, actions, cache,
-		features, tracer, sql, registry, nil, iam.Features{})
+		features, tracer, sql, registry, nil, iam.Features{}, nil, legacypermissions.NewRoleCatalog())
 
 	routes := routing.NewRouteRegister()
 	api.NewAccessControlAPI(routes, acimpl.ProvideAccessControl(features), service, users).RegisterAPIEndpoints()

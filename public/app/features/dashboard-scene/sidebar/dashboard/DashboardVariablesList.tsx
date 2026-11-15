@@ -3,7 +3,6 @@ import { useCallback, useMemo } from 'react';
 import { VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { type SceneVariableSet, type SceneVariable } from '@grafana/scenes';
 import { useDragAndDrop } from '@grafana/ui/internal';
 
@@ -52,7 +51,7 @@ export function DashboardVariablesList({
   const { variables: allVariables } = sourceVariableSet.useState();
   const listVariables = renderVariables ?? allVariables;
   const includePredefined = showPredefinedGroups;
-  const excludeFilters = Boolean(config.featureToggles.dashboardUnifiedDrilldownControls) && !includeAdHoc;
+  const excludeFilters = !includeAdHoc;
   const resolvedTopPlacementLabel = topPlacementLabel ? topPlacementLabel : getDefaultTopPlacementLabel();
   const { visible, controlsMenu, hidden } = useMemo(
     () => groupSidebarVariablesByDisplay(listVariables, { includePredefined, excludeFilters }),

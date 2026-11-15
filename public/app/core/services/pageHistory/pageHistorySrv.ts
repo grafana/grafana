@@ -1,8 +1,9 @@
 import { type Location } from 'history';
 import { throttle } from 'lodash';
 import { distinctUntilChanged } from 'rxjs';
-import * as z from 'zod';
+import * as z from 'zod/mini';
 
+import { type NavModelItem } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { UserStorage } from '@grafana/runtime/internal';
 import { type AppChromeService, getPageTitle } from 'app/core/components/AppChrome/AppChromeService';
@@ -12,6 +13,7 @@ import { parseJsonWithSchema } from 'app/core/utils/parseJsonWithSchema';
 import { isRenderTarget } from 'app/features/dashboard/services/isRenderTarget';
 
 import { classifyPage, recordableSearch } from './classifyPage';
+import { hasNothingToResume } from './hasNothingToResume';
 import {
   clearHistory,
   EMPTY_HISTORY,
@@ -36,18 +38,18 @@ const MAX_EPOCH_MS = 8.64e15;
 
 /** Persisted row. The page identity is derived from the pathname on load, so a rule change reclassifies old rows. */
 const StoredEntrySchema = z.object({
-  pathname: z
-    .string()
-    .startsWith('/')
-    .refine((pathname) => !pathname.startsWith('//')),
-  search: z.string().refine((search) => search === '' || search.startsWith('?')),
-  lastVisited: z.number().int().min(0).max(MAX_EPOCH_MS).optional(),
-  title: z.string().optional(),
+  pathname: z.string().check(
+    z.startsWith('/'),
+    z.refine((pathname) => !pathname.startsWith('//'))
+  ),
+  search: z.string().check(z.refine((search) => search === '' || search.startsWith('?'))),
+  lastVisited: z.optional(z.number().check(z.int(), z.minimum(0), z.maximum(MAX_EPOCH_MS))),
+  title: z.optional(z.string()),
 });
 
 /** Everything stored under the key. `clearedAt` is the epoch ms of the last clear, 0 when never cleared. */
 const StoredSchema = z.object({
-  clearedAt: z.number().int().min(0).max(MAX_EPOCH_MS),
+  clearedAt: z.number().check(z.int(), z.minimum(0), z.maximum(MAX_EPOCH_MS)),
   entries: z.array(z.unknown()),
 });
 
@@ -94,19 +96,30 @@ export class PageHistorySrv {
   private dirty = false;
   private readonly storage = new UserStorage(STORAGE_SERVICE);
   private ready: Promise<void> | undefined;
+  /**
+   * Changes made before the stored copy is in, replayed in order once it is. A visit that only refreshes a
+   * page's row (a menu destination, a rewrite) has to see the stored row, or it finds none and changes nothing.
+   */
+  private pending: Array<() => void> | undefined = [];
+  /** The menu as it is now, read per visit: items come and go with permissions, plugins and bookmarks. */
+  private navTree: () => NavModelItem[] = () => [];
 
   private readonly scheduleWrite = throttle(() => this.write(), PAGE_HISTORY_PERSIST_MS, {
     leading: false,
     trailing: true,
   });
 
-  /** Starts recording. Returns a function that stops it and drops any pending write. Renderer sessions record nothing. */
-  start(chrome: AppChromeService): () => void {
+  /**
+   * Starts recording. `navTree` is read on every visit to tell menu destinations from pages worth a row. Returns a
+   * function that stops recording and drops any pending write. Renderer sessions record nothing.
+   */
+  start(chrome: AppChromeService, navTree: () => NavModelItem[]): () => void {
     // Image-renderer and report captures load pages as the user; their visits are not the user's.
     if (isRenderTarget()) {
       return () => {};
     }
     this.ready = this.load();
+    this.navTree = navTree;
 
     // `history.listen` never emits the landing page.
     this.apply(locationService.getLocation(), false);
@@ -130,6 +143,7 @@ export class PageHistorySrv {
       unlisten();
       chromeSubscription.unsubscribe();
       document.removeEventListener('visibilitychange', onVisibilityChange);
+      this.pending = undefined;
       this.scheduleWrite.cancel();
     };
   }
@@ -163,6 +177,9 @@ export class PageHistorySrv {
     if ((await this.sync(false)) === 'empty') {
       await this.seed();
     }
+    const pending = this.pending;
+    this.pending = undefined;
+    pending?.forEach((change) => change());
   }
 
   /**
@@ -208,9 +225,14 @@ export class PageHistorySrv {
   /** Hash deliberately ignored. */
   private apply(location: Location, isRewrite: boolean): void {
     const page = classifyPage(location.pathname, location.search);
-    if (page) {
-      this.update(recordVisit(this.state, page, recordableSearch(page, location.search), Date.now(), isRewrite));
+    if (!page) {
+      return;
     }
+    // A page with nothing to resume gets no row, but a row it has is refreshed to where the user left it.
+    const refreshOnly = isRewrite || hasNothingToResume(page, location.search, this.navTree());
+    const search = recordableSearch(page, location.search);
+    const at = Date.now();
+    this.record(() => recordVisit(this.state, page, search, at, refreshOnly));
   }
 
   /**
@@ -227,8 +249,22 @@ export class PageHistorySrv {
     const { pathname, search } = locationService.getLocation();
     const page = classifyPage(pathname, search);
     if (page) {
-      this.update(recordTitle(this.state, page, title, Date.now()));
+      const at = Date.now();
+      this.record(() => recordTitle(this.state, page, title, at));
     }
+  }
+
+  /**
+   * Applies `change` to the state, after the stored copy is in. Stamps are taken when the change is made, so a
+   * replay keeps the order of events; the write it arms waits for the load as every write does.
+   */
+  private record(change: () => HistoryState): void {
+    if (this.pending) {
+      this.pending.push(() => this.update(change()));
+      this.persist();
+      return;
+    }
+    this.update(change());
   }
 
   /** Adopts a change made in this tab, if `next` is one: written at the end of the current window. */

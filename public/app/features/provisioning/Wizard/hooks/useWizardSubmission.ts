@@ -18,7 +18,7 @@ export interface UseWizardSubmissionParams {
   submitData: (
     spec: RepositorySpec,
     secureChanges?: RepositorySecureChanges
-  ) => Promise<{ data?: { metadata?: { name?: string } }; error?: unknown }>;
+  ) => Promise<{ data?: { metadata?: { name?: string }; spec?: RepositorySpec }; error?: unknown }>;
   setStepStatusInfo: (info: StepStatusInfo) => void;
   onSuccess: () => void;
 }
@@ -93,6 +93,11 @@ export function useWizardSubmission({
             });
           }
           return;
+        }
+
+        const savedGitUrl = rsp.data?.spec?.git?.url;
+        if (savedGitUrl && savedGitUrl !== formData.repository.url) {
+          setValue('repository.url', savedGitUrl);
         }
 
         const name = rsp.data?.metadata?.name;

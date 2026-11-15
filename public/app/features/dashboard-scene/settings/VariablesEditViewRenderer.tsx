@@ -8,8 +8,8 @@ import { type SceneComponentProps, type SceneVariable } from '@grafana/scenes';
 import { Alert, Button } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import {
-  HIGHLIGHT_CATEGORY_PARAM_NAME,
   CATEGORY_PARAM_NAME,
+  HIGHLIGHT_CATEGORY_PARAM_NAME,
 } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';
 
 import { type DashboardScene } from '../scene/DashboardScene';
@@ -17,7 +17,6 @@ import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { SidebarCategoryType } from '../sidebar/types';
 import { DashboardInteractions } from '../utils/interactions';
 import { isPredefinedOrigin } from '../utils/predefinedVariables';
-import { getDashboardSceneFor } from '../utils/utils';
 
 import { type VariablesEditView } from './VariablesEditView';
 import { useDashboardEditPageNav } from './utils';
@@ -46,14 +45,14 @@ export function VariablesEditViewRenderer({ model }: SceneComponentProps<Variabl
   const isSettingsPageRedesignEnabled = useFlagGrafanaDashboardSettingsRedesign();
 
   const goToSidebar = () => {
-    // close settings and open dashboard sidebar
-    const dashboard = getDashboardSceneFor(model);
-    dashboard.state.sidebar.selectObject(dashboard);
     locationService.partial({
       editview: null,
       [HIGHLIGHT_CATEGORY_PARAM_NAME]: SidebarCategoryType.DashboardVariables,
       [CATEGORY_PARAM_NAME]: SidebarCategoryType.DashboardVariables,
     });
+    setTimeout(() => {
+      dashboard.state.sidebar.selectObject(dashboard);
+    }, 0);
 
     DashboardInteractions.takeMeToSidebarClicked({ item: 'variables' });
   };

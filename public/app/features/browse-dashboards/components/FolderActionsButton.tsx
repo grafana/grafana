@@ -17,8 +17,9 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { ShowModalReactEvent } from 'app/types/events';
 import { type FolderDTO } from 'app/types/folders';
 
-import { useDeleteFolderMutationFacade, useMoveFolderMutationFacade } from '../../../api/clients/folder/v1beta1/hooks';
+import { useMoveFolder } from '../../../api/clients/folder/v1beta1/hooks';
 import { extractErrorMessage } from '../../../api/utils';
+import { useDeleteFolderMutation } from '../api/browseDashboardsAPI';
 import { getFolderPermissions } from '../permissions';
 
 import { DeleteModal } from './BrowseActions/DeleteModal';
@@ -39,8 +40,8 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo, reposito
   const [showManageOwnersModal, setShowManageOwnersModal] = useState(false);
   const [showDeleteProvisionedFolderDrawer, setShowDeleteProvisionedFolderDrawer] = useState(false);
   const [showMoveProvisionedFolderDrawer, setShowMoveProvisionedFolderDrawer] = useState(false);
-  const [moveFolder] = useMoveFolderMutationFacade();
-  const deleteFolder = useDeleteFolderMutationFacade();
+  const [moveFolder] = useMoveFolder();
+  const [deleteFolder] = useDeleteFolderMutation();
 
   const {
     canEditFolders,

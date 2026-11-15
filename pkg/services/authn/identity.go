@@ -68,6 +68,9 @@ type Identity struct {
 	SAMLSession *login.SAMLSession
 	// SessionToken is the session token used to authenticate the entity.
 	SessionToken *usertoken.UserToken
+	// ServiceAccountTokenID and ServiceAccountTokenName identify the service account token used to authenticate the entity, if any.
+	ServiceAccountTokenID   int64
+	ServiceAccountTokenName string
 	// ClientParams are hints for the auth service on how to handle the identity.
 	// Set by the authenticating client.
 	ClientParams ClientParams
@@ -325,6 +328,8 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		u.UserID = id
 		u.UserUID = i.UID
 		u.IsServiceAccount = i.IsIdentityType(claims.TypeServiceAccount)
+		u.ServiceAccountTokenID = i.ServiceAccountTokenID
+		u.ServiceAccountTokenName = i.ServiceAccountTokenName
 	}
 
 	return u

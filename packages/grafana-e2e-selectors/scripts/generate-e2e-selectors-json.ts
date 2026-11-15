@@ -21,7 +21,7 @@ export function generateE2ESelectorsJson(): string {
   });
 }
 
-// when run directly (yarn generate-e2e-selectors-json) emit the JSON; importing this module does not.
+// Emit JSON only when run directly; importing this module does not produce output.
 // --stdout prints the JSON so the frontend build can capture and emit it as an asset; otherwise write
 // the file for standalone/manual use.
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

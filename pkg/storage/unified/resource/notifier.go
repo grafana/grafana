@@ -22,9 +22,14 @@ const (
 	defaultBufferSize  = 10000
 )
 
-type notifier interface {
+// EventWatcher streams change events as they happen.
+type EventWatcher interface {
 	// Watch returns a channel that will receive events as they happen.
 	Watch(context.Context, WatchOptions) <-chan Event
+}
+
+type notifier interface {
+	EventWatcher
 	// Publish lets callers to inform watchers about events. Some notifiers
 	// (e.g., channel notifier) require callers to provide the events to be published.
 	// Others (e.g., polling notifier) queries events separately, making
@@ -59,13 +64,30 @@ type WatchOptions struct {
 	MinBackoff  time.Duration // Minimum interval between polling requests
 	MaxBackoff  time.Duration // Maximum interval between polling requests
 
-	// captureReady is a buffered, one-shot startup acknowledgment, not a timer.
-	captureReady chan<- error
+	// CaptureReady, when set, is a buffered channel that gets one value: nil
+	// once the notifier captures every later write, or the error that stopped it.
+	CaptureReady chan<- error
+
+	// Invalidate, when set, replaces the notifier's invalidator for this watch:
+	// it is called when this watch may have missed writes. It must not block.
+	Invalidate func()
+
+	// OnLate, when set, gets each event that arrived after the settle buffer
+	// had emitted a later RV of its collection, so it cannot be emitted in
+	// order. Returning true drops it, otherwise it is emitted out of order. It
+	// must not block.
+	OnLate func(Event) (drop bool)
+
+	// SettlePerCollection keeps RVs ascending per collection instead of across
+	// all of them, so a busy collection does not hold back the others. Only for
+	// backends whose RVs are not comparable across collections; KV watches
+	// rely on the global order, for example for bookmarks.
+	SettlePerCollection bool
 }
 
 func (opts WatchOptions) captured(err error) {
-	if opts.captureReady != nil {
-		opts.captureReady <- err
+	if opts.CaptureReady != nil {
+		opts.CaptureReady <- err
 	}
 }
 
@@ -144,50 +166,126 @@ func (cn *channelNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan 
 	return out
 }
 
-// settleEvents pumps raw to out, buffering events for opts.SettleDelay so late
-// or out-of-order arrivals are reordered: on each tick the buffer is sorted and
-// events settled past now-SettleDelay are emitted in ascending RV order. This
-// keeps downstream RVs monotonic, avoiding stale caches and 410 relist storms.
+// settleEvents pumps raw to out with ascending RVs, across all collections or,
+// with opts.SettlePerCollection, within each, so that watches stay monotonic,
+// avoiding stale caches and 410 relist storms. Each event is held for
+// opts.SettleDelay after it arrives, so an event with a lower RV that arrives up
+// to that much later is still emitted first. Holding from arrival, not from the
+// RV's timestamp, keeps the window independent of clock skew between writers,
+// the database and this instance. Events that arrive after a later RV of their
+// queue was emitted go to opts.OnLate and, unless it drops them, out at once.
 // Closes out and returns when ctx is canceled or raw is closed.
 func settleEvents(ctx context.Context, raw <-chan Event, out chan<- Event, opts WatchOptions) {
 	defer close(out)
-	var buffer []Event
+	queues := make(map[GroupResource]*settleQueue)
+	pending := 0
 
-	ticker := time.NewTicker(time.Second)
-	defer ticker.Stop()
+	// The timer is armed for the earliest due head of any collection. Events
+	// that arrive later are due later, so arrivals only arm a stopped timer.
+	timer := time.NewTimer(opts.SettleDelay)
+	timer.Stop()
+	defer timer.Stop()
+	armed := false
 
 	for {
-		// Wait for an event or a tick
+		var due <-chan time.Time
+		if armed {
+			due = timer.C
+		}
 		select {
 		case evt, ok := <-raw:
 			if !ok {
 				return // channel closed, context canceled
 			}
-			buffer = append(buffer, evt)
+			var key GroupResource
+			if opts.SettlePerCollection {
+				key = GroupResource{Group: evt.Group, Resource: evt.Resource}
+			}
+			q := queues[key]
+			if q == nil {
+				q = &settleQueue{}
+				queues[key] = q
+			}
+			if evt.ResourceVersion <= q.emitted {
+				if opts.OnLate != nil && opts.OnLate(evt) {
+					continue
+				}
+				// A later RV already went out, so holding it cannot restore the
+				// order, and as the queue head it would delay the events
+				// waiting behind it.
+				select {
+				case out <- evt:
+				case <-ctx.Done():
+					return
+				}
+				continue
+			}
+			q.insert(settlingEvent{Event: evt, due: time.Now().Add(opts.SettleDelay)})
+			pending++
+			if !armed {
+				timer.Reset(opts.SettleDelay)
+				armed = true
+			}
 			continue
-		case <-ticker.C:
+		case <-due:
+			armed = false
 		case <-ctx.Done():
 			return
 		}
 
-		// Sort buffer by RV
-		slices.SortFunc(buffer, func(a, b Event) int {
-			return cmp.Compare(a.ResourceVersion, b.ResourceVersion)
-		})
-
-		// Emit events that have "settled" (old enough that concurrent writes should have appeared).
-		threshold := snowflakeFromTime(time.Now().Add(-opts.SettleDelay))
-		emitted := 0
-		for emitted < len(buffer) && buffer[emitted].ResourceVersion <= threshold {
-			select {
-			case out <- buffer[emitted]:
-			case <-ctx.Done():
-				return
+		now := time.Now()
+		var next time.Time
+		for _, q := range queues {
+			// Within a queue the lowest RV holds back the rest until it settles.
+			settled := 0
+			for settled < len(q.events) && !q.events[settled].due.After(now) {
+				select {
+				case out <- q.events[settled].Event:
+				case <-ctx.Done():
+					return
+				}
+				q.emitted = max(q.emitted, q.events[settled].ResourceVersion)
+				settled++
 			}
-			emitted++
+			q.consume(settled)
+			pending -= settled
+			if len(q.events) > 0 && (next.IsZero() || q.events[0].due.Before(next)) {
+				next = q.events[0].due
+			}
 		}
-		buffer = buffer[emitted:]
+		if pending > 0 {
+			timer.Reset(time.Until(next))
+			armed = true
+		}
 	}
+}
+
+type settlingEvent struct {
+	Event
+	due time.Time
+}
+
+// settleQueue holds settling events in ascending RV order.
+type settleQueue struct {
+	events []settlingEvent
+	// emitted is the highest RV emitted from the queue.
+	emitted int64
+}
+
+func (q *settleQueue) insert(e settlingEvent) {
+	// Events mostly arrive in order or close to it, so the insert usually lands
+	// at or near the end.
+	i, _ := slices.BinarySearchFunc(q.events, e.ResourceVersion, func(p settlingEvent, rv int64) int {
+		return cmp.Compare(p.ResourceVersion, rv)
+	})
+	q.events = slices.Insert(q.events, i, e)
+}
+
+// consume drops the first n events without moving the rest, so flushing a
+// prefix does not copy the remaining backlog.
+func (q *settleQueue) consume(n int) {
+	clear(q.events[:n])
+	q.events = q.events[n:]
 }
 
 func (cn *channelNotifier) Publish(event Event) {
@@ -227,7 +325,7 @@ func (n *pollingNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan E
 		lastEmittedRV = 0 // No events yet, start from the beginning
 	} else if err != nil {
 		n.log.Error("Failed to get last event resource version", "error", err)
-		if opts.captureReady != nil {
+		if opts.CaptureReady != nil {
 			opts.captured(err)
 			close(events)
 			return events

@@ -15,11 +15,13 @@ import {
   type DataFrame,
   type DisplayProcessor,
   isDataFrame,
+  isDataFrameWithValue,
   reduceField,
   ReducerID,
   type FieldSparkline,
   type DecimalCount,
 } from '@grafana/data';
+import { getPillElements } from '@grafana/data/internal';
 import type { ColumnWidth, ColumnWidths, SortColumn } from '@grafana/react-data-grid';
 import {
   BarGaugeDisplayMode,
@@ -41,6 +43,7 @@ import {
   COLUMN,
   FIRST_COLUMN_CLASS,
   FIRST_COLUMN_EXTRA_PADDING,
+  HEADER_DRAG_HANDLE_SPACE,
   HEADER_ICON_SPACE,
   HEADER_MENU_SPACE,
   HEADER_TOOLTIP_SPACE,
@@ -59,85 +62,17 @@ import type {
   TypographyCtx,
   MeasureCellHeight,
   MeasureCellHeightEntry,
-  FilterType,
   GetActionsFunctionLocal,
   TableColumn,
-  FromFieldsResult,
   TextWrapFallback,
 } from './types';
 
 // inferPills lives here rather than in PillCell.tsx to avoid a circular dependency:
 // styles.ts → utils.tsx → renderers.tsx → PillCell.tsx → styles.ts
 /* ---------------------------- Pill inference ----------------------------- */
-const SPLIT_RE = /\s*,\s*/;
-
-function inferPillsImpl(rawValue: unknown): unknown[] {
-  if (rawValue === '' || rawValue == null) {
-    return [];
-  }
-
-  if (Array.isArray(rawValue)) {
-    return rawValue.filter((v) => v != null).map((v) => String(v).trim());
-  }
-
-  const value = String(rawValue);
-
-  if (value[0] === '[') {
-    try {
-      return JSON.parse(value);
-    } catch {
-      return value.trim().split(SPLIT_RE);
-    }
-  }
-
-  return value.trim().split(SPLIT_RE);
-}
-
-/**
- * @internal
- * A bounded cache with O(1) inserts and no per-insert eviction scan. It keeps two generations:
- * writes go to `primary`; when `primary` fills, it becomes `secondary` (whatever was in the old
- * `secondary` is dropped) and a fresh `primary` starts. Reads check both generations and promote a
- * survivor back into `primary`, which approximates LRU. Total live entries stay within ~2x maxSize.
- */
-export function createBoundedCache<K, V>(maxSize: number) {
-  let primary = new Map<K, V>();
-  let secondary = new Map<K, V>();
-
-  // Every write to `primary` — whether a fresh `set` or a promotion from `secondary` in `get` — goes
-  // through here so the rotation check runs on all growth paths. (Rotating only in `set` let `get`'s
-  // promotions grow `primary` past `maxSize` between writes, breaking the ~2x bound.)
-  const put = (key: K, value: V): void => {
-    primary.set(key, value);
-    if (primary.size >= maxSize) {
-      secondary = primary;
-      primary = new Map<K, V>();
-    }
-  };
-
-  return {
-    get(key: K): V | undefined {
-      const fromPrimary = primary.get(key);
-      if (fromPrimary !== undefined) {
-        return fromPrimary;
-      }
-      const fromSecondary = secondary.get(key);
-      if (fromSecondary !== undefined) {
-        put(key, fromSecondary); // promote into the current generation, keeping the size bound
-      }
-      return fromSecondary;
-    },
-    set: put,
-  };
-}
-
-// inferPills is pure and its inputs are stable across resizes, so we cache results. Array/object
-// values are cached by reference in a WeakMap (unbounded-safe, auto-GC'd). Primitive (string) values
-// persist for the whole app lifetime across every table, so they use a generational bounded cache
-// (see createBoundedCache) sized generously enough that a large table mostly hits.
-const arrayPillCache = new WeakMap<object, unknown[]>();
-const primitivePillCache = createBoundedCache<string, unknown[]>(15000);
-
+// The parsing and caches live in @grafana/data's shared pill elements so value
+// filtering reuses what rendering already inferred. Behavior is unchanged from
+// the old local copy, including the untrimmed '[' check.
 // Accepts an arbitrary raw cell value: pill columns hold string arrays (not in TableCellValue), and
 // values can be null, so this is deliberately typed `unknown` and narrowed at runtime.
 export function inferPills(rawValue: unknown): unknown[] {
@@ -145,22 +80,7 @@ export function inferPills(rawValue: unknown): unknown[] {
     return [];
   }
 
-  if (typeof rawValue === 'object') {
-    let cached = arrayPillCache.get(rawValue);
-    if (cached === undefined) {
-      cached = inferPillsImpl(rawValue);
-      arrayPillCache.set(rawValue, cached);
-    }
-    return cached;
-  }
-
-  const key = String(rawValue);
-  let cached = primitivePillCache.get(key);
-  if (cached === undefined) {
-    cached = inferPillsImpl(rawValue);
-    primitivePillCache.set(key, cached);
-  }
-  return cached;
+  return getPillElements(rawValue);
 }
 
 /* ---------------------------- Cell calculations --------------------------- */
@@ -732,16 +652,25 @@ export function getAlignmentFactor(
     }
     return alignmentFactor;
   } else {
-    // look at the next 1000 rows
-    alignmentFactor = { ...displayValue };
+    // look at the next 1000 rows and keep the longest formatted value, so every cell of the
+    // column reserves the same room for its text and the gauge bars are comparable; the winner
+    // and its length are tracked during the scan and copied once afterwards
+    let longest: DisplayValueAlignmentFactors = displayValue;
+    let longestLength = formattedValueToString(displayValue).length;
     const maxIndex = Math.min(field.values.length, rowIndex + 1000);
 
     for (let i = rowIndex + 1; i < maxIndex; i++) {
-      const nextDisplayValue = field.display?.(field.values[i]) ?? field.values[i];
-      if (formattedValueToString(alignmentFactor).length > formattedValueToString(nextDisplayValue).length) {
-        alignmentFactor.text = displayValue.text;
+      const rawValue = field.values[i];
+      const value = isDataFrame(rawValue) ? (isDataFrameWithValue(rawValue) ? rawValue.value : null) : rawValue;
+      const nextDisplayValue = field.display?.(value) ?? { text: String(value ?? '') };
+      const nextLength = formattedValueToString(nextDisplayValue).length;
+      if (nextLength > longestLength) {
+        longest = nextDisplayValue;
+        longestLength = nextLength;
       }
     }
+
+    alignmentFactor = { ...longest };
 
     if (field.state) {
       field.state.alignmentFactors = alignmentFactor;
@@ -921,70 +850,10 @@ export function applySort(
 
 export interface ApplyFilterResult {
   crossFilterOrder: string[];
-  crossFilterRows: Record<string, TableRow[]>;
+  /** Compute a column's cross-filter rows only when its popup opens. */
+  crossFilterRows: Record<string, () => TableRow[]>;
   crossFilterTailRows: TableRow[];
   filteredRows: TableRow[];
-}
-
-/**
- * @internal
- * Applies active filters to `rows` and computes cross-filter metadata for filter popup UIs.
- *
- * Filters are chained sequentially so that for each filter key, `crossFilterRows[key]`
- * holds the rows available *before* that filter was applied (i.e. the rows that passed all
- * preceding filters in the same scope). `crossFilterTailRows` holds the rows that survive
- * *all* filters — used for new filters that have not yet been applied.
- *
- * `filteredRows` is the display-ready result: equal to `crossFilterTailRows` for flat tables,
- * or wrapped with `processNestedTableRows` to preserve parent-child structure when
- * `hasNestedFrames` is true.
- *
- * When called for a nested table instance, pass `parentIndex` to scope filters to that level.
- */
-export function applyFilter(
-  rows: TableRow[],
-  filter: FilterType,
-  fields: Field[],
-  hasNestedFrames?: boolean,
-  parentIndex?: number
-): ApplyFilterResult {
-  // Scope rows to the relevant nesting level
-  const isNested = parentIndex !== undefined;
-  const scopedRows = !isNested ? rows.filter((r) => r.__depth === 0) : rows;
-
-  // Collect filter keys that belong to this scope (preserving JS insertion order)
-  const crossFilterOrder = Object.keys(filter).filter((key) => {
-    const entry = filter[key];
-    return !isNested ? entry.parentIndex == null : entry.parentIndex === parentIndex;
-  });
-
-  const crossFilterRows: Record<string, TableRow[]> = {};
-  let crossFilterTailRows = scopedRows;
-
-  for (const filterKey of crossFilterOrder) {
-    const filterEntry = filter[filterKey];
-    // Store rows available *before* this filter is applied
-    crossFilterRows[filterKey] = crossFilterTailRows;
-    // Advance the chain by applying this filter
-    crossFilterTailRows = crossFilterTailRows.filter((row) => {
-      const field = fields.find((f) => getDisplayName(f) === filterEntry.displayName);
-      if (!field || !field.display) {
-        return true;
-      }
-      const displayedValue = formattedValueToString(field.display(row[filterEntry.displayName]));
-      return filterEntry.filteredSet.has(displayedValue);
-    });
-  }
-
-  // For nested frames, wrap with processNestedTableRows so parent rows that have matching
-  // children are preserved for the expander UI. Use a Set for O(1) membership checks.
-  let filteredRows = crossFilterTailRows;
-  if (hasNestedFrames) {
-    const tailSet = new Set(crossFilterTailRows);
-    filteredRows = processNestedTableRows(rows, (parents) => parents.filter((row) => tailSet.has(row)));
-  }
-
-  return { crossFilterOrder, crossFilterRows, crossFilterTailRows, filteredRows };
 }
 
 /* ----------------------------- Data grid mapping ---------------------------- */
@@ -1228,6 +1097,28 @@ export function getVisibleFields(fields: Field[]): Field[] {
   return fields.filter((field) => field.type !== FieldType.nestedFrames && field.config.custom?.hideFrom?.viz !== true);
 }
 
+/** Reorders fields by display name and appends unmentioned fields. @internal */
+export function orderFieldsByDisplayNames(fields: Field[], order?: string[]): Field[] {
+  if (!order || order.length === 0) {
+    return fields;
+  }
+  const byDisplayName = new Map(fields.map((field) => [getDisplayName(field), field]));
+  const ordered: Field[] = [];
+  for (const name of order) {
+    const field = byDisplayName.get(name);
+    if (field) {
+      ordered.push(field);
+      byDisplayName.delete(name);
+    }
+  }
+  for (const field of fields) {
+    if (byDisplayName.has(getDisplayName(field))) {
+      ordered.push(field);
+    }
+  }
+  return ordered;
+}
+
 /** Removes fields hidden through table controls. @internal */
 export function filterFieldsByHiddenColumns(fields: Field[], hiddenColumns?: ReadonlySet<string>): Field[] {
   if (!hiddenColumns || hiddenColumns.size === 0) {
@@ -1340,8 +1231,11 @@ export interface ContentAwareColWidthsOptions {
    * Active filters. Under `table.refresh` a filtered column also reserves space for the persistent
    * filter icon that marks it — unlike the sort arrow, that icon only exists while the state holds.
    */
-  filter?: FilterType;
+  isFiltered?: (field: Field) => boolean;
+  headerFilterState?: (field: Field, parentCount?: number) => { controlVisible: boolean; filterEnabled: boolean };
+  filterParentCount?: number;
   hasColumnSidebar?: boolean;
+  reorderable?: boolean;
   /** The first column carries extra inline-start padding to line up with the panel title. */
   noPanelPadding?: boolean;
   /**
@@ -1472,6 +1366,8 @@ export interface HeaderAffordanceOptions {
   tableRefreshEnabled: boolean;
   /** Whether a filter is currently active on this column — only the refreshed header marks that. */
   isFiltered: boolean;
+  filterable?: boolean;
+  reorderable?: boolean;
 }
 
 /**
@@ -1483,9 +1379,16 @@ export interface HeaderAffordanceOptions {
  */
 export function getHeaderAffordanceWidth(
   field: Field,
-  { showTypeIcons, tableRefreshEnabled, isFiltered, hasColumnOptions = false }: HeaderAffordanceOptions
+  {
+    showTypeIcons,
+    tableRefreshEnabled,
+    isFiltered,
+    filterable,
+    hasColumnOptions = false,
+    reorderable = false,
+  }: HeaderAffordanceOptions
 ): number {
-  const isFilterable = isFieldFilterable(field);
+  const isFilterable = filterable ?? isFieldFilterable(field);
   let width = 0;
   width += showTypeIcons ? HEADER_ICON_SPACE : 0;
   // reserved on every sortable column, not just the currently-sorted one, so a wrapped header doesn't
@@ -1494,6 +1397,7 @@ export function getHeaderAffordanceWidth(
   // `headerTooltip` renders its info button in both header variants, and like the sort arrow above it
   // is there for as long as the option is set rather than only while some state holds.
   width += field.config.custom?.headerTooltip ? HEADER_TOOLTIP_SPACE : 0;
+  width += reorderable ? HEADER_DRAG_HANDLE_SPACE : 0;
   if (tableRefreshEnabled) {
     width += hasColumnOptions ? HEADER_MENU_SPACE : 0;
     // an active filter additionally marks itself with a persistent icon. Unlike the arrow, that icon
@@ -1799,9 +1703,12 @@ export function computeContentAwareColWidths(
     getActions,
     tableRefreshEnabled = false,
     theme,
-    filter,
+    isFiltered,
+    headerFilterState,
+    filterParentCount,
     sampleSize,
     hasColumnSidebar = false,
+    reorderable = false,
     noPanelPadding = false,
     preventHorizontalOverflow = false,
   }: ContentAwareColWidthsOptions
@@ -1834,25 +1741,21 @@ export function computeContentAwareColWidths(
   const shrinkFloors = new Map<number, number>();
 
   const measureCtx: ColWidthMeasureCtx = { typographyCtx, getActions, theme };
-  // Filter entries are keyed per parent on nested tables, so match on the display name they carry
-  // rather than the key: nested columns share one width, so any active filter widens the column.
-  const filteredKeys = new Set(
-    Object.values(filter ?? {})
-      .filter((entry) => entry.filtered != null)
-      .map((entry) => entry.displayName)
-  );
-
   for (const i of autoIdxs) {
     const field = fields[i];
+    const filterState = headerFilterState?.(field, filterParentCount);
+    const filterable = isFieldFilterable(field) && (filterState?.controlVisible ?? true);
     // A hidden header row has no label to fit, so it doesn't bound the column at all.
     const headerWidth = hasHeader
       ? measureHeaderWidth(field, headerTypographyCtx, {
           showTypeIcons,
           tableRefreshEnabled,
-          isFiltered: filteredKeys.has(getDisplayName(field)),
+          isFiltered: filterable && (filterState?.filterEnabled ?? isFiltered?.(field) ?? false),
+          filterable,
+          reorderable,
           hasColumnOptions:
             getColumnMenuOptions({
-              filterable: isFieldFilterable(field),
+              filterable,
               hideable: isFieldHideable(field),
               hasColumnSidebar,
               hasAssistantAction,
@@ -1946,37 +1849,28 @@ type CellClass<TRow> = string | null | undefined | ((row: TRow) => string | null
 const appendCellClass = <TRow>(existing: CellClass<TRow>, edgeClass: string): CellClass<TRow> =>
   typeof existing === 'function' ? (row: TRow) => clsx(existing(row), edgeClass) : clsx(existing, edgeClass);
 
-// react-data-grid types these fields `readonly` for callers building a column once; here we're
-// intentionally mutating an already-built one in place, so we cast that guard away locally.
-type MutableColumnClasses = {
-  -readonly [K in 'headerCellClass' | 'cellClass' | 'summaryCellClass']?: TableColumn[K];
-};
-
-const addEdgeClass = (column: TableColumn, edgeClass: string): void => {
-  const mutable: MutableColumnClasses = column;
-  mutable.headerCellClass = clsx(column.headerCellClass, edgeClass);
-  mutable.cellClass = appendCellClass(column.cellClass, edgeClass);
-  mutable.summaryCellClass = appendCellClass(column.summaryCellClass, edgeClass);
-};
+const withEdgeClass = (column: TableColumn, edgeClass: string): TableColumn => ({
+  ...column,
+  headerCellClass: clsx(column.headerCellClass, edgeClass),
+  cellClass: appendCellClass(column.cellClass, edgeClass),
+  summaryCellClass: appendCellClass(column.summaryCellClass, edgeClass),
+});
 
 /**
  * @internal
  * Tags the edge columns with {@link FIRST_COLUMN_CLASS}/{@link LAST_COLUMN_CLASS}. Call this on the
  * finished column list, after any programmatically injected columns (the nested table's row
  * expander) are in place — a field's own index isn't enough to tell whether it ends up on an edge.
- *
- * Mutates `columns` (and the edge column objects) in place rather than copying: the list is always
- * freshly built by the caller right before this call, so there's nothing else holding a reference
- * that immutability would protect, and it's the same assumption `result.columns.unshift(...)`
- * already makes elsewhere for the nested expander column.
  */
-export function markEdgeColumns(fromFieldsResult: FromFieldsResult): undefined {
-  const { columns } = fromFieldsResult;
+export function markEdgeColumns(columns: TableColumn[]): TableColumn[] {
   if (columns.length === 0) {
-    return;
+    return columns;
   }
-  addEdgeClass(columns[0], FIRST_COLUMN_CLASS);
-  addEdgeClass(columns[columns.length - 1], LAST_COLUMN_CLASS);
+  const marked = [...columns];
+  marked[0] = withEdgeClass(marked[0], FIRST_COLUMN_CLASS);
+  const lastIdx = marked.length - 1;
+  marked[lastIdx] = withEdgeClass(marked[lastIdx], LAST_COLUMN_CLASS);
+  return marked;
 }
 
 /**

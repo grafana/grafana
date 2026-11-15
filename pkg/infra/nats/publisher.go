@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
-const publisherName = "nats-publisher"
+const PublisherServiceName = "nats-publisher"
 
 // Publisher hides nats.go types so callers can mock it.
 type Publisher interface {
@@ -29,7 +29,7 @@ type PublisherService struct {
 func newPublisher(logger log.Logger, m *publisherMetrics, config *Config) *PublisherService {
 	conn := newConnection(rolePublisher, logger, m.connectionMetrics, config, config.PublisherCredentials)
 	p := &PublisherService{connection: conn, metrics: m}
-	p.NamedService = services.NewBasicService(p.starting, p.running, p.stopping).WithName(publisherName)
+	p.NamedService = services.NewBasicService(p.starting, p.running, p.stopping).WithName(PublisherServiceName)
 	return p
 }
 
@@ -65,6 +65,16 @@ func (p *PublisherService) stopping(_ error) error {
 
 func (p *PublisherService) Health(_ context.Context) error {
 	return p.healthy()
+}
+
+// MaxPayload returns the largest message the connected server accepts, or 0
+// while there is no established connection.
+func (p *PublisherService) MaxPayload() int64 {
+	nc, err := p.publishConn()
+	if err != nil {
+		return 0
+	}
+	return nc.MaxPayload()
 }
 
 func (p *PublisherService) Publish(ctx context.Context, subject string, data []byte) error {

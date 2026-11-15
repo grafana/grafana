@@ -1,43 +1,56 @@
-import { type NotebookElement, type PanelElement, type Spec as NotebookSpec } from '../types';
+import {
+  type CellKind,
+  type NotebookElement,
+  type NotebookLayoutItemKind,
+  type PanelElement,
+  type Spec as NotebookSpec,
+} from '../types';
 
 /** Used when a panel has no title, or a title that slugifies to nothing (e.g. all non-latin). */
 const FALLBACK_ELEMENT_NAME = 'panel';
+const MARKDOWN_ELEMENT_NAME = 'markdown';
+
+/** One cell to append, in document order. */
+export type AppendedElement =
+  // `isLibraryPanel` is for analytics only: a library panel is inlined by the time it gets here.
+  { kind: 'panel'; panel: PanelElement; isLibraryPanel?: boolean } | { kind: 'markdown'; text: string };
+
+/** Who authored an appended cell: the person adding it, or an assistant whose content they added. */
+export type AppendedCellSource = NotebookLayoutItemKind['spec']['source'];
 
 /** Long enough to stay recognisable in a spec, short enough that the suffix stays readable. */
 const MAX_SLUG_LENGTH = 50;
 
 /**
- * Appends a panel to a notebook spec, minting the element name and panel id it needs to coexist with
- * what is already there.
+ * Appends cells in order, minting the element names and panel ids they need to coexist with what is
+ * already there. Names and panel ids stay unique across the batch as well as the notebook.
  *
- * Pure and spec-level on purpose: the caller is on a dashboard or in Explore, so there is no
- * NotebookScene to mutate — the target notebook is fetched, appended to, and written back. Once cells
- * can be inserted in-scene, NotebookLayoutManager can call this too rather than growing a second
- * generator (see the note in serialization/transformNotebookSceneToSaveModel.ts).
+ * Pure and spec-level on purpose: a caller on a dashboard or in Explore has no NotebookScene to mutate,
+ * so the target notebook is fetched, appended to, and written back.
  */
-export function appendPanelToNotebook(spec: NotebookSpec, panel: PanelElement): NotebookSpec {
-  const elementName = uniqueElementName(panel.spec.title, spec.elements);
+export function appendElementsToNotebook(
+  spec: NotebookSpec,
+  appended: AppendedElement[],
+  source: AppendedCellSource = 'user'
+): NotebookSpec {
+  const elements = { ...spec.elements };
+  const cells = [...spec.layout.spec.cells];
+  let panelId = nextPanelId(elements);
 
-  return {
-    ...spec,
-    elements: {
-      ...spec.elements,
-      [elementName]: withPanelId(panel, nextPanelId(spec.elements)),
-    },
-    layout: {
-      ...spec.layout,
-      spec: {
-        ...spec.layout.spec,
-        cells: [
-          ...spec.layout.spec.cells,
-          {
-            kind: 'NotebookLayoutItem',
-            spec: { element: { kind: 'ElementReference', name: elementName }, source: 'user' },
-          },
-        ],
-      },
-    },
-  };
+  for (const item of appended) {
+    const name =
+      item.kind === 'panel'
+        ? uniqueElementName(item.panel.spec.title, elements, FALLBACK_ELEMENT_NAME)
+        : uniqueElementName(undefined, elements, MARKDOWN_ELEMENT_NAME);
+    elements[name] = item.kind === 'panel' ? withPanelId(item.panel, panelId++) : markdownCell(item.text);
+    cells.push({ kind: 'NotebookLayoutItem', spec: { element: { kind: 'ElementReference', name }, source } });
+  }
+
+  return { ...spec, elements, layout: { ...spec.layout, spec: { ...spec.layout.spec, cells } } };
+}
+
+function markdownCell(text: string): CellKind {
+  return { kind: 'Cell', spec: { content: { kind: 'Markdown', spec: { text } } } };
 }
 
 /**
@@ -72,8 +85,12 @@ function withPanelId(panel: PanelElement, id: number): PanelElement {
  * Own keys only. `in` would report true for `constructor`, `toString` and the rest of
  * Object.prototype, so a panel titled "Constructor" would be treated as colliding forever.
  */
-function uniqueElementName(title: string | undefined, elements: Record<string, NotebookElement>): string {
-  const base = slugify(title ?? '') || FALLBACK_ELEMENT_NAME;
+function uniqueElementName(
+  title: string | undefined,
+  elements: Record<string, NotebookElement>,
+  fallback: string
+): string {
+  const base = slugify(title ?? '') || fallback;
 
   let candidate = base;
   let suffix = 1;

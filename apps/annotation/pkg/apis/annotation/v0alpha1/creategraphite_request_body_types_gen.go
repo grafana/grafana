@@ -7,11 +7,15 @@ import (
 	errors "errors"
 )
 
+// Annotation event in the Graphite events format.
 type CreateGraphiteRequestBody struct {
-	What string  `json:"what"`
-	When *int64  `json:"when,omitempty"`
+	// Title of the event. Becomes the first line of the annotation text.
+	What string `json:"what"`
+	// Time of the event, in Unix seconds. Defaults to the current time.
+	When *int64 `json:"when,omitempty"`
+	// Additional event details, appended to the annotation text on a new line.
 	Data *string `json:"data,omitempty"`
-	// tags accepts either an array of strings or a single space-separated string
+	// Tags of the event, as an array of strings or a single space-separated string.
 	Tags CreateGraphiteRequestStringOrArrayOfString `json:"tags"`
 }
 

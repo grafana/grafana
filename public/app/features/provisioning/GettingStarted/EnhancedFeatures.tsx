@@ -80,7 +80,7 @@ export const EnhancedFeatures = ({ hasPublicAccess, hasImageRenderer, onSetupPub
           <LinkButton
             fill="outline"
             variant="secondary"
-            href="https://grafana.com/grafana/plugins/grafana-image-renderer/"
+            href="https://grafana.com/docs/grafana/latest/setup-grafana/image-rendering/"
             icon={hasImageRenderer ? 'check' : 'external-link-alt'}
             disabled={hasImageRenderer}
           >

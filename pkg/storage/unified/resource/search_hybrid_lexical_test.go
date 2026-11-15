@@ -21,14 +21,14 @@ func TestHybridSearch_LexicalHitRerankText(t *testing.T) {
 	for _, tt := range []struct {
 		name       string
 		semantic   bool
-		legacy     bool
+		titleOnly  bool
 		skipRerank bool
 		noReranker bool
 		wantText   string
 	}{
 		{name: "lexical only", wantText: "Overview\nDatabase operations\nUnrelated message\nRequests timeout during peak traffic\nInvestigating DATABASE connection failures"},
 		{name: "both legs", semantic: true, wantText: "Semantic context\nOverview\nDatabase operations\nUnrelated message\nRequests timeout during peak traffic\nInvestigating DATABASE connection failures"},
-		{name: "legacy response falls back to title", legacy: true, wantText: "Overview"},
+		{name: "response without other text uses title", titleOnly: true, wantText: "Overview"},
 		{name: "skip rerank", skipRerank: true},
 		{name: "no reranker", noReranker: true},
 	} {
@@ -48,8 +48,8 @@ func TestHybridSearch_LexicalHitRerankText(t *testing.T) {
 				&resourcepb.ResourceSearchValue{FieldIndex: 5, StringValues: []string{"provisioning"}},
 				&resourcepb.ResourceSearchValue{FieldIndex: 6, StringValues: []string{"repository-1"}},
 			)
-			if tt.legacy {
-				lexResp = lexTableResponse([3]string{"a", "Overview", ""})
+			if tt.titleOnly {
+				lexResp = lexFieldValueResponse([3]string{"a", "Overview", ""})
 			}
 			backend := &fakeVectorBackend{}
 			if tt.semantic {
@@ -85,10 +85,10 @@ func TestHybridSearch_LexicalHitRerankText(t *testing.T) {
 			} else {
 				assert.Equal(t, []string{tt.wantText}, scorer.gotTexts)
 				assert.Equal(t, "Different semantic wording", scorer.gotQ)
-				assert.ElementsMatch(t, []string{SEARCH_FIELD_TITLE, SEARCH_FIELD_FOLDER, SEARCH_FIELD_MANAGER_KIND, SEARCH_FIELD_MANAGER_ID, SEARCH_FIELD_DESCRIPTION, "summary", "messages"}, idx.gotReq.Fields)
+				assert.ElementsMatch(t, []string{SEARCH_FIELD_TITLE, SEARCH_FIELD_FOLDER, SEARCH_FIELD_MANAGER_KIND, SEARCH_FIELD_MANAGER_ID, SEARCH_FIELD_TAGS, SEARCH_FIELD_DESCRIPTION, "summary", "messages"}, idx.gotReq.Fields)
 			}
-			if tt.legacy {
-				assert.Nil(t, resp.Results[0].Lexical)
+			if tt.titleOnly {
+				assert.Equal(t, map[string]*structpb.Value{SEARCH_FIELD_TITLE: structpb.NewStringValue("Overview")}, resp.Results[0].Lexical)
 			} else {
 				wantLexical, err := structpb.NewStruct(map[string]any{
 					SEARCH_FIELD_TITLE:        "Overview",

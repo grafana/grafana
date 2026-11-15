@@ -136,7 +136,7 @@ export function AuthTypeStep({ onGitHubAppSubmit }: AuthTypeStepProps) {
             proceeding. For more details, see the{' '}
             <TextLink
               external
-              href="https://grafana.com/docs/grafana-cloud/as-code/observability-as-code/git-sync/usage-limits/#the-pure-git-repository-type"
+              href="https://grafana.com/docs/grafana-cloud/as-code/git-sync/usage-limits/#the-pure-git-repository-type"
             >
               usage limits documentation
             </TextLink>

@@ -91,9 +91,13 @@ describe('<TraceTimelineViewer>', () => {
 
   it('reports the summary span count with expand/collapse interactions', async () => {
     (reportInteraction as jest.Mock).mockClear();
+    // The default generator draws a random span count and can return a single span,
+    // which makes a hardcoded summary count of 2 fail. Pin the size so two of the
+    // three spans are summaries and the third stays a normal span.
+    const sizedTrace = transformTraceData(traceGenerator.trace({ numberOfSpans: 3 }))!;
     const summaryTrace = {
-      ...trace,
-      spans: trace!.spans.map((span, index) =>
+      ...sizedTrace,
+      spans: sizedTrace.spans.map((span, index) =>
         index < 2 ? { ...span, aggregation: { isSummary: true, isPreservedOutlier: false, spanCount: 2 } } : span
       ),
     };

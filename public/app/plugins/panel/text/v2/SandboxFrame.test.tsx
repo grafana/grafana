@@ -3,7 +3,7 @@ import { StrictMode } from 'react';
 
 import { SandboxFrame, type SandboxFrameProps, WATCHDOG_TIMEOUT_MS } from './SandboxFrame';
 import { loadSandboxMermaid, loadSandboxRuntime } from './loadSandboxRuntime';
-import { textSandboxPolicy } from './sandboxPolicy';
+import { MAX_BLOCKED_URL_CHARS, textSandboxPolicy } from './sandboxPolicy';
 import { TEXT_FRAME_PROTOCOL } from './sandboxProtocol';
 
 jest.mock('./loadSandboxRuntime', () => ({
@@ -162,6 +162,84 @@ it('retains the visible frame and reports a late violation', async () => {
   });
 });
 
+it('merges reported URLs per origin, keeping the highest count and dropping URLs from other origins', async () => {
+  const options = props();
+  render(<SandboxFrame {...options} />);
+  const element = await frame();
+  notify(element, 'ready');
+  const origin = 'https://external.test';
+  notify(element, 'blocked', {
+    resources: [
+      {
+        directive: 'img-src',
+        origin,
+        urls: [
+          { url: `${origin}/a.png`, count: 1 },
+          { url: 'https://elsewhere.test/b.png', count: 1 },
+        ],
+      },
+    ],
+  });
+  notify(element, 'blocked', {
+    resources: [
+      {
+        directive: 'img-src',
+        origin,
+        urls: [
+          { url: `${origin}/a.png`, count: 4 },
+          { url: `${origin}/c.png`, count: 1 },
+        ],
+      },
+    ],
+  });
+  expect(options.onState).toHaveBeenLastCalledWith({
+    status: 'loading',
+    resources: [
+      {
+        directive: 'img-src',
+        origin,
+        urls: [
+          { url: `${origin}/a.png`, count: 4 },
+          { url: `${origin}/c.png`, count: 1 },
+        ],
+      },
+    ],
+  });
+  const count = jest.mocked(options.onState).mock.calls.length;
+  notify(element, 'blocked', {
+    resources: [{ directive: 'img-src', origin, urls: [{ url: `${origin}/a.png`, count: 2 }] }],
+  });
+  expect(options.onState).toHaveBeenCalledTimes(count);
+});
+
+it('keeps the truncated flag from a report', async () => {
+  const options = props();
+  render(<SandboxFrame {...options} />);
+  const element = await frame();
+  notify(element, 'ready');
+  const urls = [{ url: 'https://external.test/collect?d=x', count: 1 }];
+  notify(element, 'blocked', {
+    resources: [{ directive: 'img-src', origin: 'https://external.test', urls, truncated: true }],
+  });
+  expect(options.onState).toHaveBeenLastCalledWith({
+    status: 'loading',
+    resources: [{ directive: 'img-src', origin: 'https://external.test', urls, truncated: true }],
+  });
+});
+
+it.each([
+  ['a non-string URL', [{ url: 1, count: 1 }]],
+  ['a zero count', [{ url: 'https://external.test/a.png', count: 0 }]],
+  ['URLs over the budget', [{ url: `https://external.test/${'x'.repeat(MAX_BLOCKED_URL_CHARS)}`, count: 1 }]],
+])('ignores reports with %s', async (_, urls) => {
+  const options = props();
+  render(<SandboxFrame {...options} />);
+  const element = await frame();
+  notify(element, 'ready');
+  notify(element, 'blocked', { resources: [{ directive: 'img-src', origin: 'https://external.test', urls }] });
+  expect(options.onState).toHaveBeenLastCalledWith({ status: 'loading', resources: [] });
+});
+
 it('omits CSP and sandbox completely without data', async () => {
   render(<SandboxFrame {...props({ policy: undefined, html: '<script>legacy()</script>' })} />);
   const element = await frame();
@@ -229,6 +307,43 @@ it('updates height and pagination metrics only from valid runtime messages', asy
   expect(options.onHeight).toHaveBeenLastCalledWith(180, 160);
   notify(element, 'resize', { height: -1, contentHeight: Infinity });
   expect(element.style.height).toBe('180px');
+});
+
+it.each(['dark', 'light'])(
+  'declares the host %s color scheme so the empty shell paints transparent',
+  async (scheme) => {
+    const original = window.getComputedStyle;
+    const spy = jest.spyOn(window, 'getComputedStyle').mockImplementation((element, pseudo) => {
+      const style = original(element, pseudo);
+      return element instanceof HTMLIFrameElement ? ({ ...style, colorScheme: scheme } as CSSStyleDeclaration) : style;
+    });
+    try {
+      render(<SandboxFrame {...props()} />);
+      const element = await frame();
+      const shell = new DOMParser().parseFromString(element.srcdoc, 'text/html');
+      expect(shell.head.querySelector('meta[name="color-scheme"]')?.getAttribute('content')).toBe(scheme);
+    } finally {
+      spy.mockRestore();
+    }
+  }
+);
+
+it('is a block element so its baseline gap cannot overflow a container sized to the frame', async () => {
+  render(<SandboxFrame {...props()} />);
+  expect((await frame()).style.display).toBe('block');
+});
+
+it('fills the minimum height without reporting it as content height', async () => {
+  const options = props({ minHeight: 300 });
+  render(<SandboxFrame {...options} />);
+  const element = await frame();
+  notify(element, 'ready');
+  notify(element, 'resize', { height: 11, contentHeight: 11 });
+  expect(element.style.height).toBe('300px');
+  expect(element).toHaveAttribute('data-text-content-height', '11');
+  expect(options.onHeight).toHaveBeenLastCalledWith(11, 11);
+  notify(element, 'resize', { height: 450, contentHeight: 450 });
+  expect(element.style.height).toBe('450px');
 });
 
 it.each(['html', 'policy', 'globalCss'] as const)(

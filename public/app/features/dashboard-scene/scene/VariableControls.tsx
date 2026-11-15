@@ -16,12 +16,13 @@ import {
 } from '@grafana/scenes';
 import { useElementSelection, useStyles2 } from '@grafana/ui';
 import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
+import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
 
 import { duplicateVariable } from '../actions/variable/duplicateVariable';
 import { removeVariable } from '../actions/variable/removeVariable';
 import { isVariableEditable } from '../settings/variables/utils';
 import { getPredefinedOrigin } from '../utils/predefinedVariables';
-import { removeOptedInPredefinedVariable } from '../utils/removeOptedInPredefinedVariable';
+import { getPredefinedDependentNames, removeOptedInPredefinedVariable } from '../utils/removeOptedInPredefinedVariable';
 import { filterSectionRepeatLocalVariables } from '../variables/utils';
 
 import { DashboardScene } from './DashboardScene';
@@ -46,7 +47,8 @@ export function VariableControls({
   variablesOverride?: SceneVariable[];
 }) {
   const { variables: dashboardVariables } = sceneGraph.getVariables(dashboard)!.useState();
-  const { isEditing } = dashboard.useState();
+  const dashboardState = dashboard.useState();
+  const isEditing = isFullDashboardEditing(dashboardState);
   const dashboardNewLayoutsEnabled = isDashboardNewLayoutsEnabled();
   const isEditingNewLayouts = isEditing && dashboardNewLayoutsEnabled;
   const variables = variablesOverride ?? dashboardVariables;
@@ -115,11 +117,20 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditing, isEdit
     void removeOptedInPredefinedVariable(variable);
   }, [variable]);
 
+  const { variables: siblingVariables } = sceneGraph.getVariables(variable).useState();
+  const requiredBy = useMemo(
+    () => (predefinedOrigin ? getPredefinedDependentNames(variable) : []),
+    // siblingVariables: dependents change when the injected set does.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [variable, predefinedOrigin, siblingVariables]
+  );
+
   const editActions = useMemo(
     () => (
       <VariableEditActions
         variable={variable}
         removeOnly={Boolean(predefinedOrigin)}
+        requiredBy={requiredBy}
         onClickEdit={onClickEditVariable}
         onClickEditQuery={onClickEditVariableQuery}
         onClickDuplicate={onClickDuplicateVariable}
@@ -129,6 +140,7 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditing, isEdit
     [
       variable,
       predefinedOrigin,
+      requiredBy,
       onClickDeleteVariable,
       onClickDuplicateVariable,
       onClickEditVariableQuery,
@@ -293,13 +305,7 @@ export function SectionVariableControls({ variableSet }: { variableSet: SceneVar
   }
 
   return (
-    // Prevent row selection on click (see RowItemRenderer onPointerUp)
-    // eslint-disable-next-line jsx-a11y/no-static-element-interactions
-    <div
-      className={styles.sectionVariables}
-      onPointerDown={(e) => e.stopPropagation()}
-      onPointerUp={(e) => e.stopPropagation()}
-    >
+    <div className={styles.sectionVariables}>
       {visibleVariables.map((variable) => (
         <VariableValueSelectWrapper key={variable.state.key} variable={variable} />
       ))}
@@ -307,13 +313,10 @@ export function SectionVariableControls({ variableSet }: { variableSet: SceneVar
   );
 }
 
-const getSectionVariableStyles = (theme: GrafanaTheme2) => ({
+const getSectionVariableStyles = (_theme: GrafanaTheme2) => ({
+  // Join the section controls row so variables and annotations share one wrapping line.
   sectionVariables: css({
-    display: 'flex',
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: theme.spacing(1),
-    marginBottom: theme.spacing(1),
+    display: 'contents',
   }),
 });
 

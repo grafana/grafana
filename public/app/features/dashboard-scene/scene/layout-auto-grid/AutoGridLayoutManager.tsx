@@ -16,6 +16,11 @@ import { GRID_CELL_VMARGIN } from 'app/core/constants';
 import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { type OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty/DashboardEmpty';
+import {
+  isDashboardReviewing,
+  isDashboardSceneLike,
+  isFullDashboardEditing,
+} from 'app/features/dashboard-scene/scene/types/dashboard';
 
 import { addElement } from '../../actions/element/addElement';
 import { removeElement } from '../../actions/element/removeElement';
@@ -29,6 +34,7 @@ import { getVizPanelKeyForPanelId } from '../../utils/utils-panels';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { canGroupSelection } from '../layouts-shared/groupLayout';
 import { clearClipboard, getAutoGridItemFromClipboard } from '../layouts-shared/paste';
+import { findAdjacentVizPanel, focusVizPanel } from '../layouts-shared/utils';
 import { type DashboardDropTarget } from '../types/DashboardDropTarget';
 import { type DashboardLayoutGrid } from '../types/DashboardLayoutGrid';
 import { type DashboardLayoutManager, type GroupTarget, type GroupingResult } from '../types/DashboardLayoutManager';
@@ -137,6 +143,10 @@ export class AutoGridLayoutManager
     });
 
     this.addActivationHandler(() => {
+      const root = this.getRoot();
+      if (isDashboardSceneLike(root) && isDashboardReviewing(root.state)) {
+        this.editModeChanged(false);
+      }
       // Children changes (add/remove/drag between grids, undo/redo) can change
       // whether any panel opts into content-fit, so autoRows must be recomputed.
       this._subs.add(
@@ -228,7 +238,9 @@ export class AutoGridLayoutManager
       return;
     }
 
-    const gridItemIndex = this.state.layout.state.children.indexOf(gridItem);
+    const siblings = this.state.layout.state.children;
+    const gridItemIndex = siblings.indexOf(gridItem);
+    const adjacentPanel = findAdjacentVizPanel(gridItem, siblings, (sibling) => sibling.state.body);
 
     removeElement({
       meta: { actionId: 'panel.remove', scope: 'auto-grid' },
@@ -238,6 +250,7 @@ export class AutoGridLayoutManager
         this.state.layout.setState({
           children: this.state.layout.state.children.filter((child) => child !== gridItem),
         });
+        focusVizPanel(adjacentPanel);
       },
       undo: () => {
         this.state.layout.setState({
@@ -437,7 +450,7 @@ export class AutoGridLayoutManager
     const layoutManager = AutoGridLayoutManager.createEmpty();
     layoutManager.state.layout.setState({
       children,
-      isDraggable: getDashboardSceneFor(layout).state.isEditing,
+      isDraggable: isFullDashboardEditing(getDashboardSceneFor(layout).state),
     });
 
     return layoutManager;
@@ -559,24 +572,23 @@ function getNamedColumWidthInPixels(columnWidth: AutoGridColumnWidth) {
 }
 
 /**
- * Resolves the configured max-height mode to a CSS `max-height` value. The
- * browser enforces the bound; unlimited maps to `none`.
+ * Resolves the configured max-height mode to pixels; unlimited maps to `undefined`.
  */
-export function getMaxHeightCssValue(
+export function getMaxHeightInPixels(
   mode: AutoGridMaxHeightMode | undefined,
   customPixels: number | undefined
-): string {
+): number | undefined {
   switch (mode) {
     case 'short':
     case 'standard':
     case 'tall':
-      return `${getNamedHeightInPixels(mode)}px`;
+      return getNamedHeightInPixels(mode);
     case 'custom':
-      return customPixels != null ? `${customPixels}px` : 'none';
+      return customPixels ?? undefined;
     case 'unlimited':
     case undefined:
     default:
-      return 'none';
+      return undefined;
   }
 }
 

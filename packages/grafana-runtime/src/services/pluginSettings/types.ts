@@ -4,16 +4,16 @@ import type { Spec as v0alpha1Spec } from '../pluginMeta/types/meta/types.spec.g
 
 interface UpdateInlineSecureValue {
   /**
-   * Update an existing secure value.
-   * - On PUT (write): the new plaintext to store for this key.
+   * Reference to an existing secure value.
    * - On GET (read): a redacted server-generated reference
    *   — never the plaintext. Treat as opaque.
+   * - On PUT (write): keeps the referenced value unchanged.
    */
   name: string;
 }
 
 interface CreateInlineSecureValue {
-  /** PUT-only: plaintext for a secure value that does not yet exist. */
+  /** PUT-only: new plaintext for this key, replacing any existing value. */
   create: string;
   /** PUT-only: optional description stored alongside the new value. */
   description?: string;

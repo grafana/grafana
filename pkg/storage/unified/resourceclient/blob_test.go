@@ -244,28 +244,44 @@ func TestBlobClientDoesNotReplayFailures(t *testing.T) {
 	}
 }
 
-func TestBlobClientPreservesErrorResults(t *testing.T) {
-	failure := &resourcepb.ErrorResult{Code: 403, Message: "denied"}
+func TestBlobClientPreservesStatusErrorDetails(t *testing.T) {
+	failure := &resourcepb.ErrorResult{Code: 403, Reason: "Forbidden", Message: "denied",
+		Details: &resourcepb.ErrorDetails{Name: "blob", Causes: []*resourcepb.ErrorCause{{Field: "value", Message: "denied"}}}}
+	st, err := status.New(codes.PermissionDenied, failure.Message).WithDetails(failure)
+	require.NoError(t, err)
 	srv := &blobTestServer{
 		put: func(stream resourcepb.BlobStoreStreaming_PutBlobStreamServer) error {
+			// Reject after the metadata message so the client observes the failure from
+			// CloseAndRecv rather than from the stream setup.
 			if _, err := stream.Recv(); err != nil {
 				return err
 			}
-			return stream.SendAndClose(&resourcepb.PutBlobResponse{Error: failure})
+			return st.Err()
 		},
-		get: func(_ *resourcepb.GetBlobRequest, stream resourcepb.BlobStoreStreaming_GetBlobStreamServer) error {
-			return stream.Send(&resourcepb.GetBlobResponse{Error: failure})
+		get: func(_ *resourcepb.GetBlobRequest, _ resourcepb.BlobStoreStreaming_GetBlobStreamServer) error {
+			return st.Err()
 		},
 	}
 	client := newBlobTestClient(t, srv, true)
+	requireDetails := func(t *testing.T, err error) {
+		t.Helper()
+		got, ok := status.FromError(err)
+		require.True(t, ok, "expected gRPC status, got %T: %v", err, err)
+		require.Equal(t, codes.PermissionDenied, got.Code())
+		require.Len(t, got.Details(), 1)
+		detail, ok := got.Details()[0].(*resourcepb.ErrorResult)
+		require.True(t, ok, "expected ErrorResult detail, got %T", got.Details()[0])
+		require.True(t, proto.Equal(failure, detail))
+	}
+
 	put, err := client.PutBlob(t.Context(), &resourcepb.PutBlobRequest{Value: bytes.Repeat([]byte("x"), 5<<20)})
-	require.NoError(t, err)
-	require.True(t, proto.Equal(failure, put.Error))
+	require.Nil(t, put)
+	requireDetails(t, err)
 	get, err := client.GetBlob(t.Context(), &resourcepb.GetBlobRequest{MustProxyBytes: true})
-	require.NoError(t, err)
-	require.True(t, proto.Equal(failure, get.Error))
-	require.Zero(t, srv.putCalls.Load())
-	require.Zero(t, srv.getCalls.Load())
+	require.Nil(t, get)
+	requireDetails(t, err)
+	require.Zero(t, srv.putCalls.Load(), "a rejected upload must not be replayed over unary")
+	require.Zero(t, srv.getCalls.Load(), "a rejected download must not be replayed over unary")
 }
 
 func TestBlobClientRejectsInvalidDownloads(t *testing.T) {

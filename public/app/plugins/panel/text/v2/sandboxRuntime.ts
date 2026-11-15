@@ -1,5 +1,11 @@
 import type { RenderDiagrams } from './sandboxMermaid';
-import { RESOURCE_DIRECTIVES, resourceOrigin, type BlockedResource } from './sandboxPolicy';
+import {
+  MAX_BLOCKED_URL_CHARS,
+  RESOURCE_DIRECTIVES,
+  resourceOrigin,
+  type BlockedResource,
+  type BlockedUrl,
+} from './sandboxPolicy';
 import {
   CSP_CHECK_URL,
   randomId,
@@ -39,7 +45,13 @@ let readyTimer = 0;
 let observer: ResizeObserver | undefined;
 let content: HTMLDivElement | undefined;
 let receiveMermaid: ((source: string) => void) | undefined;
-const resources: BlockedResource[] = [];
+const resources: Array<{
+  directive: string;
+  origin?: string;
+  violations?: Map<string, BlockedUrl>;
+  chars: number;
+  truncated?: boolean;
+}> = [];
 const check = document.createElement('img');
 
 function send(message: FrameNotification) {
@@ -64,19 +76,81 @@ function onViolation(event: SecurityPolicyViolationEvent) {
     }
     return;
   }
-  const resource: BlockedResource = {
-    directive: event.effectiveDirective,
-    origin:
-      event.originalPolicy === policy && RESOURCE_DIRECTIVES.has(event.effectiveDirective)
-        ? resourceOrigin(event.blockedURI)
-        : undefined,
-  };
-  if (!resources.some((entry) => entry.directive === resource.directive && entry.origin === resource.origin)) {
-    resources.push(resource);
-    // Batch queued violations without interrupting permitted content or later reports.
-    clearTimeout(violationTimer);
-    violationTimer = window.setTimeout(() => send({ type: 'blocked', resources }), 0);
+  const origin =
+    event.originalPolicy === policy && RESOURCE_DIRECTIVES.has(event.effectiveDirective)
+      ? resourceOrigin(event.blockedURI)
+      : undefined;
+  let resource = resources.find((entry) => entry.directive === event.effectiveDirective && entry.origin === origin);
+  if (resource && origin === undefined) {
+    return;
   }
+  if (!resource) {
+    resource = { directive: event.effectiveDirective, origin, chars: 0 };
+    resources.push(resource);
+  }
+  if (origin !== undefined) {
+    record(resource, event.blockedURI);
+  }
+  // Batch queued violations without interrupting permitted content or later reports.
+  clearTimeout(violationTimer);
+  violationTimer = window.setTimeout(() => {
+    const references = countReferences();
+    send({ type: 'blocked', resources: resources.map((resource) => report(resource, references)) });
+  }, 0);
+}
+
+function record(resource: (typeof resources)[number], url: string) {
+  const violations = (resource.violations ??= new Map());
+  const entry = violations.get(url);
+  if (entry) {
+    entry.count++;
+  } else if (resource.chars + url.length <= MAX_BLOCKED_URL_CHARS) {
+    violations.set(url, { url, count: 1 });
+    resource.chars += url.length;
+  } else {
+    resource.truncated = true;
+  }
+}
+
+// Browsers may load a repeated URL once, so a single violation can stand for many elements.
+function countReferences() {
+  const counts = new Map<string, number>();
+  for (const element of content?.querySelectorAll('img, source, video, audio, iframe, embed') ?? []) {
+    const urls = new Set<string>();
+    for (const url of [Reflect.get(element, 'src'), Reflect.get(element, 'poster')]) {
+      if (typeof url === 'string' && url) {
+        urls.add(withoutFragment(url));
+      }
+    }
+    for (const url of urls) {
+      counts.set(url, (counts.get(url) ?? 0) + 1);
+    }
+  }
+  return counts;
+}
+
+// CSP reports leave out the fragment, so references must too to match them.
+function withoutFragment(url: string) {
+  const hash = url.indexOf('#');
+  return hash === -1 ? url : url.slice(0, hash);
+}
+
+function report(
+  { directive, origin, violations, truncated }: (typeof resources)[number],
+  references: Map<string, number>
+): BlockedResource {
+  if (!violations) {
+    return { directive, origin };
+  }
+  return {
+    directive,
+    origin,
+    urls: Array.from(violations.values(), (entry) => ({
+      ...entry,
+      count: Math.max(entry.count, references.get(entry.url) ?? 0),
+    })),
+    ...(truncated && { truncated }),
+  };
 }
 
 function measure() {

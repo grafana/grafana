@@ -855,6 +855,7 @@ export interface TableBarGaugeCellOptions {
  */
 export interface TableSparklineCellOptions extends GraphFieldConfig {
   hideValue?: boolean;
+  showTooltip?: boolean;
   type: TableCellDisplayMode.Sparkline;
 }
 
@@ -1076,6 +1077,10 @@ export interface TableOptions {
    */
   showHeader: boolean;
   /**
+   * Whether to show generated row positions. Only applies when `table.refreshNewFeatures` is enabled.
+   */
+  showRowNumbers?: boolean;
+  /**
    * Controls whether the header should show icons for the column types
    */
   showTypeIcons?: boolean;
@@ -1095,6 +1100,7 @@ export const defaultTableOptions: Partial<TableOptions> = {
   frameIndex: 0,
   hoverOverflow: true,
   showHeader: true,
+  showRowNumbers: false,
   showTypeIcons: false,
   sortBy: [],
   zebraStriping: false,

@@ -165,6 +165,12 @@ describe('format', () => {
     expect(moment.utc('2021-01-01T00:00:00Z').format('GG')).toBe('20');
   });
 
+  it('formats quarter and day-of-year tokens like moment', () => {
+    expect(moment.utc('2024-11-05T08:05:09Z').format('[Q]Q YYYY')).toBe('Q4 2024');
+    expect(moment.utc('2024-11-05T08:05:09Z').format('YYYY-DDD')).toBe('2024-310');
+    expect(moment.utc('2024-01-01T00:00:00Z').format('YYYY-DDD DDDD')).toBe('2024-1 001');
+  });
+
   it('omits z for the local system zone like moment', () => {
     expect(moment(1587126975779).format('z')).toBe('');
     expect(moment(1587126975779).format('[z] z')).toBe('z ');
@@ -196,8 +202,27 @@ describe('formatted string parsing', () => {
     );
   });
 
+  it('parses one-digit values for two-digit tokens like moment', () => {
+    expect(moment.utc('2026-10-24 9:00:00', 'YYYY-MM-DD HH:mm:ss').toISOString()).toBe('2026-10-24T09:00:00.000Z');
+    expect(moment.utc('2026-10-24 09:00:00', 'YYYY-MM-DD HH:mm:ss').toISOString()).toBe('2026-10-24T09:00:00.000Z');
+    expect(moment.utc('2026-1-4 9:5:7', 'YYYY-MM-DD HH:mm:ss').toISOString()).toBe('2026-01-04T09:05:07.000Z');
+    expect(moment.utc('2026-10-24 9:05 PM', 'YYYY-MM-DD hh:mm A').toISOString()).toBe('2026-10-24T21:05:00.000Z');
+    expect(moment.utc('2026-10-24 9:00', 'YYYY-MM-DD kk:mm').toISOString()).toBe('2026-10-24T09:00:00.000Z');
+  });
+
+  it('parses compact formats with two-digit tokens like moment', () => {
+    expect(moment.utc('20261024090000', 'YYYYMMDDHHmmss').toISOString()).toBe('2026-10-24T09:00:00.000Z');
+    expect(moment.utc('2017-07-19 10:30:00', 'YYYYMMDD').toISOString()).toBe('2017-07-19T00:00:00.000Z');
+  });
+
   it('parses GG as the two-digit ISO week-year', () => {
     expect(moment.utc('20-53-5', 'GG-WW-E').toISOString()).toBe('2021-01-01T00:00:00.000Z');
+  });
+
+  it('parses quarter and day-of-year tokens like moment', () => {
+    expect(moment.utc('2024 Q4', 'YYYY [Q]Q').toISOString()).toBe('2024-10-01T00:00:00.000Z');
+    expect(moment.utc('2024-310', 'YYYY-DDD').toISOString()).toBe('2024-11-05T00:00:00.000Z');
+    expect(moment.utc('2024-001', 'YYYY-DDDD').toISOString()).toBe('2024-01-01T00:00:00.000Z');
   });
 
   it('accepts abbreviated month names for the long month token like moment', () => {

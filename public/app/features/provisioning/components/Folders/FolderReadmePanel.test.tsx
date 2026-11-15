@@ -1,6 +1,6 @@
 import mermaid from 'mermaid';
 import { HttpResponse, delay, http } from 'msw';
-import { act, render, screen, waitFor } from 'test/test-utils';
+import { act, render, screen, waitFor, within } from 'test/test-utils';
 
 import { type GrafanaConfig, locationUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
@@ -564,6 +564,45 @@ describe('FolderReadmePanel', () => {
     // DOMPurify strips the dangerous elements
     expect(markdownDiv!.querySelector('img[onerror]')).toBeNull();
     expect(markdownDiv!.innerHTML).not.toContain('onerror');
+  });
+
+  // Parsing and the table's layout are covered in markdownFrontmatter.test.ts and
+  // MarkdownFrontmatterTable.test.tsx; these check the document is split and wired up.
+  describe('front matter', () => {
+    it('renders a leading YAML block as a metadata table and the rest as the document', () => {
+      setReadmeResult({
+        markdownContent: ['---', 'title: Team A', 'tags:', '  - as-code', '---', '# Hello', '', 'Body.'].join('\n'),
+      });
+
+      setup();
+
+      const table = screen.getByRole('table', { name: 'Document metadata' });
+      expect(within(table).getByRole('rowheader', { name: 'title' })).toBeInTheDocument();
+      expect(within(table).getByRole('cell', { name: 'Team A' })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { level: 1, name: 'Hello' })).toBeInTheDocument();
+      expect(screen.getByText('Body.')).toBeInTheDocument();
+      // Left in the markdown, the opening `---` would render as an <hr> and the
+      // closing `---` would turn the YAML into a setext <h2>.
+      expect(screen.queryByRole('separator')).not.toBeInTheDocument();
+      expect(screen.queryByRole('heading', { level: 2 })).not.toBeInTheDocument();
+    });
+
+    it('renders no metadata table when the document has no front matter', () => {
+      setup();
+
+      expect(screen.getByRole('heading', { level: 1, name: 'Hello' })).toBeInTheDocument();
+      expect(screen.queryByRole('table')).not.toBeInTheDocument();
+    });
+
+    it('renders an invalid YAML block as plain markdown, like GitHub does', () => {
+      setReadmeResult({ markdownContent: '---\ntitle: [unclosed\n---\n# Hello' });
+
+      setup();
+
+      expect(screen.getByRole('heading', { level: 2, name: 'title: [unclosed' })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { level: 1, name: 'Hello' })).toBeInTheDocument();
+      expect(screen.queryByRole('table')).not.toBeInTheDocument();
+    });
   });
 
   // The renderer itself is covered in core/utils/mermaid.test.ts and

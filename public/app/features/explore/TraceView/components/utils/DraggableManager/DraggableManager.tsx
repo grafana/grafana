@@ -65,20 +65,31 @@ export default class DraggableManager {
   handleMouseLeave: (event: React.MouseEvent) => void;
   handleMouseDown: (event: React.MouseEvent) => void;
 
-  constructor({ getBounds, tag, resetBoundsOnResize = true, ...rest }: DraggableManagerOptions) {
+  constructor(options: DraggableManagerOptions) {
     this.handleMouseDown = this._handleDragEvent;
     this.handleMouseEnter = this._handleMinorMouseEvent;
     this.handleMouseMove = this._handleMinorMouseEvent;
     this.handleMouseLeave = this._handleMinorMouseEvent;
 
-    this.getBounds = getBounds;
-    this.tag = tag;
+    this.getBounds = options.getBounds;
     this._isDragging = false;
     this._bounds = undefined;
-    this._resetBoundsOnResize = Boolean(resetBoundsOnResize);
-    if (this._resetBoundsOnResize) {
+    this._resetBoundsOnResize = false;
+    this.setOptions(options);
+  }
+
+  /**
+   * Replaces the options. Safe to call mid-drag: the cached bounds are kept until `#resetBounds()`.
+   */
+  setOptions({ getBounds, tag, resetBoundsOnResize = true, ...rest }: DraggableManagerOptions) {
+    this.getBounds = getBounds;
+    this.tag = tag;
+    if (resetBoundsOnResize) {
       window.addEventListener('resize', this.resetBounds);
+    } else if (this._resetBoundsOnResize) {
+      window.removeEventListener('resize', this.resetBounds);
     }
+    this._resetBoundsOnResize = Boolean(resetBoundsOnResize);
     this._onMouseEnter = rest.onMouseEnter;
     this._onMouseLeave = rest.onMouseLeave;
     this._onMouseMove = rest.onMouseMove;

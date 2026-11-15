@@ -103,20 +103,17 @@ func TestUnifiedUserLookupResults(t *testing.T) {
 		response *resourcepb.ResourceSearchResponse
 		conflict bool
 	}{
-		{name: "no match", response: &resourcepb.ResourceSearchResponse{}},
-		{name: "old server table with same user", response: &resourcepb.ResourceSearchResponse{
-			TotalHits: 1,
-			Results: &resourcepb.ResourceTable{Rows: []*resourcepb.ResourceTableRow{{
-				Key: &resourcepb.ResourceKey{Name: "user-1"},
-			}}},
+		{name: "no match", response: &resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES}},
+		{name: "same user", response: &resourcepb.ResourceSearchResponse{
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			TotalHits:    1,
+			Rows:         []*resourcepb.ResourceSearchRow{{Key: &resourcepb.ResourceKey{Name: "user-1"}}},
 		}},
-		{name: "old server table with another user", conflict: true, response: &resourcepb.ResourceSearchResponse{
-			TotalHits: 1,
-			Results: &resourcepb.ResourceTable{Rows: []*resourcepb.ResourceTableRow{{
-				Key: &resourcepb.ResourceKey{Name: "other"},
-			}}},
+		{name: "another user", conflict: true, response: &resourcepb.ResourceSearchResponse{
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			TotalHits:    1,
+			Rows:         []*resourcepb.ResourceSearchRow{{Key: &resourcepb.ResourceKey{Name: "other"}}},
 		}},
-		{name: "count without a table", conflict: true, response: &resourcepb.ResourceSearchResponse{TotalHits: 1}},
 		{name: "count without field-value rows", conflict: true, response: &resourcepb.ResourceSearchResponse{
 			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES, TotalHits: 1,
 		}},
@@ -140,19 +137,20 @@ func TestUnifiedUserLookupInvalidResponse(t *testing.T) {
 	for _, tt := range []struct {
 		name     string
 		response *resourcepb.ResourceSearchResponse
+		err      error
 		want     string
 	}{
-		{name: "response error", response: &resourcepb.ResourceSearchResponse{
-			Error: &resourcepb.ErrorResult{Code: 500, Message: "index failed"},
-		}, want: "index failed"},
+		{name: "status detail", err: resource.GRPCStatusError(&resourcepb.ErrorResult{Code: 500, Message: "index failed"}), want: "index failed"},
 		{name: "unknown format", response: &resourcepb.ResourceSearchResponse{
 			ResultFormat: resourcepb.ResourceSearchRequest_ResultFormat(-1),
 		}, want: "unsupported search result format"},
-		{name: "nil table row", response: &resourcepb.ResourceSearchResponse{
-			Results: &resourcepb.ResourceTable{Rows: []*resourcepb.ResourceTableRow{nil}},
-		}, want: "has no resource key"},
-		{name: "table row without key", response: &resourcepb.ResourceSearchResponse{
-			Results: &resourcepb.ResourceTable{Rows: []*resourcepb.ResourceTableRow{{}}},
+		{name: "unspecified format", response: &resourcepb.ResourceSearchResponse{}, want: "unsupported search result format"},
+		{name: "table format", response: &resourcepb.ResourceSearchResponse{
+			ResultFormat: resourcepb.ResourceSearchRequest_RESOURCE_TABLE,
+		}, want: "unsupported search result format"},
+		{name: "nil field-value row", response: &resourcepb.ResourceSearchResponse{
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Rows:         []*resourcepb.ResourceSearchRow{nil},
 		}, want: "has no resource key"},
 		{name: "field-value row without key", response: &resourcepb.ResourceSearchResponse{
 			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
@@ -160,7 +158,7 @@ func TestUnifiedUserLookupInvalidResponse(t *testing.T) {
 		}, want: "has no resource key"},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			index := &MockClient{MockResponses: []*resourcepb.ResourceSearchResponse{tt.response}}
+			index := &MockClient{MockResponses: []*resourcepb.ResourceSearchResponse{tt.response}, MockError: tt.err}
 			client := NewUnifiedSearchClient(index, nil)
 
 			err := validateEmail(t.Context(), client, "stacks-1", "user-1", "taken")

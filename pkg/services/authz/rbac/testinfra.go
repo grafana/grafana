@@ -127,6 +127,15 @@ func (f *fakeStore) GetUserPermissions(ctx context.Context, namespace types.Name
 	return permissions, nil
 }
 
+func (f *fakeStore) HasUserPermissions(
+	ctx context.Context,
+	namespace types.NamespaceInfo,
+	query store.PermissionsQuery,
+) (bool, error) {
+	permissions, err := f.GetUserPermissions(ctx, namespace, query)
+	return len(permissions) > 0, err
+}
+
 func (f *fakeStore) ListFolders(ctx context.Context, namespace types.NamespaceInfo) ([]store.Folder, error) {
 	if ns, ok := request.NamespaceFrom(ctx); !f.disableNsCheck && (!ok || ns != namespace.Value) {
 		return nil, fmt.Errorf("namespace mismatch")

@@ -6,7 +6,7 @@ import (
 	"k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana-app-sdk/app"
-	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
+	appsdkapiserver "github.com/grafana/grafana/pkg/apiserver/appsdk"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/apps/advisor"

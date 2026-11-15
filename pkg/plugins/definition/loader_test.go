@@ -20,13 +20,13 @@ func manifestFS(content string) fstest.MapFS {
 
 func TestLoadManifest(t *testing.T) {
 	t.Run("missing manifest returns nil", func(t *testing.T) {
-		m, err := loadManifest(fstest.MapFS{})
+		m, err := LoadManifest(fstest.MapFS{})
 		require.NoError(t, err)
 		require.Nil(t, m)
 	})
 
 	t.Run("v1alpha2", func(t *testing.T) {
-		m, err := loadManifest(manifestFS(`{
+		m, err := LoadManifest(manifestFS(`{
 			"apiVersion": "apps.grafana.app/v1alpha2",
 			"kind": "AppManifest",
 			"spec": {"appName": "test", "group": "test-app", "versions": []}
@@ -38,7 +38,7 @@ func TestLoadManifest(t *testing.T) {
 	})
 
 	t.Run("v1alpha1", func(t *testing.T) {
-		m, err := loadManifest(manifestFS(`{
+		m, err := LoadManifest(manifestFS(`{
 			"apiVersion": "apps.grafana.app/v1alpha1",
 			"kind": "AppManifest",
 			"spec": {"appName": "old", "group": "old-app", "versions": []}
@@ -49,19 +49,19 @@ func TestLoadManifest(t *testing.T) {
 	})
 
 	t.Run("unsupported apiVersion", func(t *testing.T) {
-		_, err := loadManifest(manifestFS(`{"apiVersion": "apps.grafana.app/v9beta9", "spec": {}}`))
+		_, err := LoadManifest(manifestFS(`{"apiVersion": "apps.grafana.app/v9beta9", "spec": {}}`))
 		require.ErrorContains(t, err, "unsupported AppManifest apiVersion")
 	})
 
 	// Without a declared apiVersion there is no way to tell which CR schema the
 	// file follows, and guessing would silently drop version-specific fields.
 	t.Run("missing apiVersion", func(t *testing.T) {
-		_, err := loadManifest(manifestFS(`{"spec": {"appName": "test", "group": "test-app"}}`))
+		_, err := LoadManifest(manifestFS(`{"spec": {"appName": "test", "group": "test-app"}}`))
 		require.ErrorContains(t, err, `unsupported AppManifest apiVersion ""`)
 	})
 
 	t.Run("malformed json", func(t *testing.T) {
-		_, err := loadManifest(manifestFS(`{not json`))
+		_, err := LoadManifest(manifestFS(`{not json`))
 		require.Error(t, err)
 	})
 }
@@ -80,20 +80,20 @@ func TestLoadInfoToleratesBadManifest(t *testing.T) {
 
 func TestLoadManifestIOErrors(t *testing.T) {
 	t.Run("open failures other than not-exist are reported", func(t *testing.T) {
-		_, err := loadManifest(errFS{openErr: errors.New("permission denied")})
+		_, err := LoadManifest(errFS{openErr: errors.New("permission denied")})
 		require.ErrorContains(t, err, "opening "+appSDKManifestFile)
 		require.ErrorContains(t, err, "permission denied")
 	})
 
 	t.Run("read failures are reported", func(t *testing.T) {
-		_, err := loadManifest(errFS{readErr: errors.New("boom")})
+		_, err := LoadManifest(errFS{readErr: errors.New("boom")})
 		require.ErrorContains(t, err, "reading "+appSDKManifestFile)
 		require.ErrorContains(t, err, "boom")
 	})
 }
 
 // errFS is an fs.FS that fails on open or, when only readErr is set, hands back
-// a file that fails once loadManifest reaches io.ReadAll.
+// a file that fails once LoadManifest reaches io.ReadAll.
 type errFS struct {
 	openErr error
 	readErr error
@@ -114,7 +114,7 @@ func (f errFile) Close() error               { return nil }
 
 func TestLoadManifestDecodeErrors(t *testing.T) {
 	t.Run("v1alpha2 spec that does not match the CR", func(t *testing.T) {
-		_, err := loadManifest(manifestFS(`{
+		_, err := LoadManifest(manifestFS(`{
 			"apiVersion": "apps.grafana.app/v1alpha2",
 			"spec": {"appName": 42}
 		}`))
@@ -122,7 +122,7 @@ func TestLoadManifestDecodeErrors(t *testing.T) {
 	})
 
 	t.Run("v1alpha1 spec that does not match the CR", func(t *testing.T) {
-		_, err := loadManifest(manifestFS(`{
+		_, err := LoadManifest(manifestFS(`{
 			"apiVersion": "apps.grafana.app/v1alpha1",
 			"spec": {"appName": 42}
 		}`))
@@ -132,7 +132,7 @@ func TestLoadManifestDecodeErrors(t *testing.T) {
 	t.Run("spec that cannot be converted to ManifestData", func(t *testing.T) {
 		// The SDK requires a kind's schemas map to carry an entry named after
 		// the kind itself.
-		_, err := loadManifest(manifestFS(`{
+		_, err := LoadManifest(manifestFS(`{
 			"apiVersion": "apps.grafana.app/v1alpha2",
 			"spec": {
 				"appName": "test",

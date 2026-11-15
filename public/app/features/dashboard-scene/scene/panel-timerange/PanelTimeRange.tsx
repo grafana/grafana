@@ -9,7 +9,6 @@ import {
   rangeUtil,
   type TimeRange,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import {
   type ExtraQueryDescriptor,
   type SceneComponentProps,
@@ -247,11 +246,9 @@ function PanelTimeRangeRenderer({ model }: SceneComponentProps<PanelTimeRange>) 
     return null;
   }
 
-  const onClick = config.featureToggles.panelTimeSettings ? model.onOpenSettings : undefined;
-
   return (
     <Tooltip content={<TimePickerTooltip timeRange={model.state.value} timeZone={model.getTimeZone()} />}>
-      <PanelChrome.TitleItem className={styles.timeshift} onClick={onClick}>
+      <PanelChrome.TitleItem className={styles.timeshift} onClick={model.onOpenSettings}>
         <Stack gap={1} alignItems={'center'}>
           <Icon name="clock-nine" size="sm" />
           <div>{timeInfo}</div>

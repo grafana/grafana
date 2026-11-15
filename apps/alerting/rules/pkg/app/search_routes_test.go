@@ -2,15 +2,12 @@ package app
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	sdkapp "github.com/grafana/grafana-app-sdk/app"
-	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
 	"github.com/stretchr/testify/require"
 
-	v0alpha1 "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	rulesmanifest "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/manifestdata"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/config"
 )
@@ -26,8 +23,8 @@ func TestBuildSearchRoutes_perKindRoutes(t *testing.T) {
 
 	versionRoutes := routes["v0alpha1"]
 	require.Len(t, versionRoutes, 2)
-	for _, kind := range []resource.Kind{v0alpha1.AlertRuleKind(), v0alpha1.RecordingRuleKind()} {
-		path := fmt.Sprintf("/%s/%s", kind.Plural(), SearchRulesPathSegment)
+	for _, resource := range []string{SearchAlertRulesResource, SearchRecordingRulesResource} {
+		path := "/" + resource
 		_, ok := versionRoutes[simple.AppVersionRoute{
 			Namespaced: true,
 			Path:       path,
@@ -38,16 +35,16 @@ func TestBuildSearchRoutes_perKindRoutes(t *testing.T) {
 }
 
 // ValidateManifest does not check custom routes, and the authorizer matches on
-// SearchRulesPathSegment, so a path rename that misses it would make a search
-// require rule-create permission.
-func TestSearchRulesPathSegmentMatchesManifest(t *testing.T) {
+// the route names, so a path rename that misses them would leave a search
+// without its list check.
+func TestSearchRouteNamesMatchManifest(t *testing.T) {
 	paths := map[string]struct{}{}
 	for _, version := range rulesmanifest.LocalManifest().ManifestData.Versions {
 		for path := range version.OpenAPI.Paths {
 			paths[path] = struct{}{}
 		}
 	}
-	for _, kind := range []resource.Kind{v0alpha1.AlertRuleKind(), v0alpha1.RecordingRuleKind()} {
-		require.Contains(t, paths, fmt.Sprintf("/namespaces/{namespace}/%s/%s", kind.Plural(), SearchRulesPathSegment))
+	for _, resource := range []string{SearchAlertRulesResource, SearchRecordingRulesResource} {
+		require.Contains(t, paths, "/namespaces/{namespace}/"+resource)
 	}
 }

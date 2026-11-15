@@ -2,6 +2,7 @@ package folders
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -9,10 +10,14 @@ import (
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"google.golang.org/grpc"
+	grpccodes "google.golang.org/grpc/codes"
+	grpcstatus "google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
+	"k8s.io/apiserver/pkg/endpoints/request"
 
 	authlib "github.com/grafana/authlib/types"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
@@ -24,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/federated"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -470,7 +476,7 @@ func TestValidateCreate(t *testing.T) {
 				maxDepth = 5
 			}
 
-			ctx := context.Background()
+			ctx := request.WithNamespace(context.Background(), "default")
 			if tt.serviceAccount {
 				ctx = identity.WithRequester(ctx, &user.SignedInUser{UserID: 1, OrgID: 1, IsServiceAccount: true})
 			}
@@ -481,7 +487,7 @@ func TestValidateCreate(t *testing.T) {
 				mockStorage.On("Get", mock.Anything, name, &metav1.GetOptions{}).Return(f, nil).Maybe()
 			}
 
-			getter := newParentsGetter(mockStorage, maxDepth)
+			getter := newCreateParentsGetter(mockStorage)
 
 			err := validateOnCreate(ctx, tt.folder, getter, maxDepth, false)
 
@@ -495,40 +501,46 @@ func TestValidateCreate(t *testing.T) {
 	}
 }
 
-func TestValidateCreateDetachedParent(t *testing.T) {
-	for _, dryRun := range []bool{false, true} {
-		for _, ancestorMissing := range []bool{false, true} {
-			t.Run(fmt.Sprintf("dryRun=%t/ancestorMissing=%t", dryRun, ancestorMissing), func(t *testing.T) {
+func TestValidateCreateDetachedAncestors(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		brokenAt string
+		getErr   error
+	}{
+		{name: "immediate parent missing", brokenAt: "C", getErr: apierrors.NewNotFound(folders.FolderResourceInfo.GroupResource(), "C")},
+		{name: "immediate parent unreadable", brokenAt: "C", getErr: apierrors.NewForbidden(folders.FolderResourceInfo.GroupResource(), "C", errors.New("forbidden"))},
+		{name: "grandparent missing", brokenAt: "B", getErr: apierrors.NewNotFound(folders.FolderResourceInfo.GroupResource(), "B")},
+		{name: "great-grandparent missing", brokenAt: "A", getErr: apierrors.NewNotFound(folders.FolderResourceInfo.GroupResource(), "A")},
+		{name: "full chain readable"},
+	} {
+		for _, dryRun := range []bool{false, true} {
+			t.Run(fmt.Sprintf("%s/dryRun=%t", tc.name, dryRun), func(t *testing.T) {
 				storage := grafanarest.NewMockStorage(t)
-				parentName := "missing"
-				if ancestorMissing {
-					parentName = "parent"
-					storage.On("Get", mock.Anything, parentName, &metav1.GetOptions{}).Return(&folders.Folder{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:        parentName,
-							Annotations: map[string]string{utils.AnnoKeyFolder: "missing"},
-						},
+				parents := map[string]string{"C": "B", "B": "A", "A": folder.GeneralFolderUID}
+				for _, name := range []string{"C", "B", "A"} {
+					if name == tc.brokenAt {
+						storage.On("Get", mock.Anything, name, &metav1.GetOptions{}).Return(nil, tc.getErr).Once()
+						break
+					}
+					storage.On("Get", mock.Anything, name, &metav1.GetOptions{}).Return(&folders.Folder{
+						ObjectMeta: metav1.ObjectMeta{Name: name, Annotations: map[string]string{utils.AnnoKeyFolder: parents[name]}},
+						Spec:       folders.FolderSpec{Title: name},
 					}, nil).Once()
 				}
-				storage.On("Get", mock.Anything, "missing", &metav1.GetOptions{}).
-					Return(nil, apierrors.NewNotFound(folders.FolderResourceInfo.GroupResource(), "missing")).Once()
 
 				obj := &folders.Folder{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:        "orphan",
-						Annotations: map[string]string{utils.AnnoKeyFolder: parentName},
-					},
-					Spec: folders.FolderSpec{Title: "orphan"},
+					ObjectMeta: metav1.ObjectMeta{Name: "new", Annotations: map[string]string{utils.AnnoKeyFolder: "C"}},
+					Spec:       folders.FolderSpec{Title: "new"},
 				}
-				err := validateOnCreate(context.Background(), obj, newParentsGetter(storage, 5), 5, dryRun)
-				if dryRun {
+				ctx := request.WithNamespace(context.Background(), "default")
+				err := validateOnCreate(ctx, obj, newCreateParentsGetter(storage), 5, dryRun)
+				if dryRun || tc.brokenAt != "C" {
 					require.NoError(t, err)
 					return
 				}
-				require.Error(t, err)
 				require.True(t, apierrors.IsBadRequest(err), "expected BadRequest, got %v", err)
 				require.Equal(t, int32(http.StatusBadRequest), responsewriters.ErrorToAPIStatus(err).Code)
-				require.ErrorContains(t, err, "missing")
+				require.ErrorContains(t, err, "C")
 			})
 		}
 	}
@@ -1119,6 +1131,15 @@ func TestValidateDelete(t *testing.T) {
 			},
 		},
 	}, {
+		name: "stats error - nil response without error",
+		folder: &folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "nnn",
+			},
+		},
+		searcher:    &mockSearchClient{},
+		expectedErr: "folder delete count failed for folder contents: count response did not include stats",
+	}, {
 		name: "stats error - nil stats",
 		folder: &folders.Folder{
 			ObjectMeta: metav1.ObjectMeta{
@@ -1128,7 +1149,7 @@ func TestValidateDelete(t *testing.T) {
 		searcher: &mockSearchClient{
 			stats: &resourcepb.ResourceStatsResponse{},
 		},
-		expectedErr: "could not verify if folder is empty",
+		expectedErr: "folder delete count failed for folder contents: count response did not include stats",
 	}, {
 		name: "stats error - search error",
 		folder: &folders.Folder{
@@ -1141,20 +1162,18 @@ func TestValidateDelete(t *testing.T) {
 		},
 		expectedErr: "error running stats",
 	}, {
-		name: "stats error - error result",
+		name: "stats error - gRPC status with error result",
 		folder: &folders.Folder{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "nnn",
 			},
 		},
 		searcher: &mockSearchClient{
-			stats: &resourcepb.ResourceStatsResponse{
-				Error: &resourcepb.ErrorResult{
-					Reason:  string(metav1.StatusReasonInternalError),
-					Code:    http.StatusInternalServerError,
-					Message: "stats unavailable",
-				},
-			},
+			statsErr: mustStatusErr(t, grpccodes.Internal, &resourcepb.ErrorResult{
+				Reason:  string(metav1.StatusReasonInternalError),
+				Code:    http.StatusInternalServerError,
+				Message: "stats unavailable",
+			}),
 		},
 		expectedErr: "stats unavailable",
 	}, {
@@ -1198,6 +1217,68 @@ func TestValidateDelete(t *testing.T) {
 		deleteOptions:        &metav1.DeleteOptions{GracePeriodSeconds: &zeroGrace},
 		cascadeDeleteEnabled: false,
 		expectedErr:          "[folder.not-empty]",
+	}, {
+		name: "finalizer folder not empty with gracePeriodSeconds=0 is allowed when cascade flag is disabled",
+		folder: &folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:       "nnn",
+				Finalizers: []string{folders.CascadeDeleteFinalizer},
+			},
+		},
+		searcher: &mockSearchClient{
+			stats: &resourcepb.ResourceStatsResponse{
+				Stats: []*resourcepb.ResourceStatsResponse_Stats{
+					{
+						Group:    "folder.grafana.app",
+						Resource: "folders",
+						Count:    2,
+					},
+				},
+			},
+		},
+		deleteOptions:        &metav1.DeleteOptions{GracePeriodSeconds: &zeroGrace},
+		cascadeDeleteEnabled: false,
+	}, {
+		name: "finalizer folder not empty without gracePeriodSeconds=0 is blocked",
+		folder: &folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:       "nnn",
+				Finalizers: []string{folders.CascadeDeleteFinalizer},
+			},
+		},
+		searcher: &mockSearchClient{
+			stats: &resourcepb.ResourceStatsResponse{
+				Stats: []*resourcepb.ResourceStatsResponse_Stats{
+					{
+						Group:    "dashboard.grafana.app",
+						Resource: "dashboards",
+						Count:    1,
+					},
+				},
+			},
+		},
+		expectedErr: "[folder.not-empty]",
+	}, {
+		name: "folder with only another finalizer and gracePeriodSeconds=0 is blocked when cascade flag is disabled",
+		folder: &folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:       "nnn",
+				Finalizers: []string{"example.com/other"},
+			},
+		},
+		searcher: &mockSearchClient{
+			stats: &resourcepb.ResourceStatsResponse{
+				Stats: []*resourcepb.ResourceStatsResponse_Stats{
+					{
+						Group:    "dashboard.grafana.app",
+						Resource: "dashboards",
+						Count:    1,
+					},
+				},
+			},
+		},
+		deleteOptions: &metav1.DeleteOptions{GracePeriodSeconds: &zeroGrace},
+		expectedErr:   "[folder.not-empty]",
 	}, {
 		name: "folder not empty - contains dashboards",
 		folder: &folders.Folder{
@@ -1269,6 +1350,25 @@ func TestValidateDelete(t *testing.T) {
 						Group:    "library.grafana.app",
 						Resource: "library_elements",
 						Count:    3, // not empty
+					},
+				},
+			},
+		},
+		expectedErr: "[folder.not-empty]",
+	}, {
+		name: "folder not empty - contains migrated library panels",
+		folder: &folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "nnn",
+			},
+		},
+		searcher: &mockSearchClient{
+			stats: &resourcepb.ResourceStatsResponse{
+				Stats: []*resourcepb.ResourceStatsResponse_Stats{
+					{
+						Group:    "dashboard.grafana.app",
+						Resource: "librarypanels",
+						Count:    3,
 					},
 				},
 			},
@@ -1363,7 +1463,7 @@ func TestValidateDelete(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := validateOnDelete(context.Background(), tt.folder, tt.searcher, tt.deleteOptions, tt.cascadeDeleteEnabled)
+			err := validateOnDelete(context.Background(), tt.folder, tt.searcher, tt.deleteOptions, tt.cascadeDeleteEnabled, nil)
 
 			if tt.expectedErr == "" {
 				require.NoError(t, err)
@@ -1373,6 +1473,24 @@ func TestValidateDelete(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestValidateDeleteCountFailureIsSanitized500(t *testing.T) {
+	ctx, _, requestSpan := newFolderTrace(t)
+	original := errors.New("pq: permission denied for table alert_rule")
+	err := validateOnDelete(ctx, &folders.Folder{ObjectMeta: metav1.ObjectMeta{Name: "nnn"}}, &mockSearchClient{
+		statsErr: &federated.CountError{Resources: []string{"alertrules"}, Err: original},
+	}, nil, false, nil)
+
+	var apiStatus apierrors.APIStatus
+	require.ErrorAs(t, err, &apiStatus)
+	require.Equal(t, int32(500), apiStatus.Status().Code)
+	require.Equal(t, "Folder cannot be deleted: could not count alert rules", apiStatus.Status().Message)
+
+	recorded, ok := requestSpan.(sdktrace.ReadOnlySpan)
+	require.True(t, ok)
+	requireFolderSpanError(t, recorded)
+	require.Contains(t, recorded.Status().Description, original.Error())
 }
 
 func TestValidateOwnerReferencesOnManagedFolder(t *testing.T) {
@@ -1530,19 +1648,6 @@ func TestGetChildrenBatchPagination(t *testing.T) {
 		require.False(t, hasMore)
 	})
 
-	t.Run("hasMore true via NextPageToken even when TotalHits is missing", func(t *testing.T) {
-		searcher := &mockSearchClient{
-			folders:          makeFolders(5),
-			paginate:         true,
-			useNextPageToken: true,
-			dropTotalHits:    true,
-		}
-		children, hasMore, err := getChildrenBatch(context.Background(), searcher, namespace, []string{parent}, 2, 0)
-		require.NoError(t, err)
-		require.Len(t, children, 2)
-		require.True(t, hasMore)
-	})
-
 	t.Run("hasMore false when only one page exists and neither signal indicates more", func(t *testing.T) {
 		searcher := &mockSearchClient{folders: makeFolders(2), paginate: true}
 		children, hasMore, err := getChildrenBatch(context.Background(), searcher, namespace, []string{parent}, 10, 0)
@@ -1583,16 +1688,71 @@ var (
 	_ resourcepb.ResourceIndexClient = (*mockSearchClient)(nil)
 )
 
+// mustStatusErr builds the gRPC status error a unified storage server returns, with the
+// ErrorResult attached as a status detail.
+func mustStatusErr(t *testing.T, code grpccodes.Code, result *resourcepb.ErrorResult) error {
+	t.Helper()
+	st, err := grpcstatus.New(code, result.Message).WithDetails(result)
+	require.NoError(t, err)
+	return st.Err()
+}
+
+func TestGetChildrenBatchSearchErrors(t *testing.T) {
+	forbidden := &resourcepb.ErrorResult{
+		Code:    http.StatusForbidden,
+		Reason:  string(metav1.StatusReasonForbidden),
+		Message: backendDiagnostic,
+		Details: &resourcepb.ErrorDetails{Group: "folder.grafana.app", Kind: "folders"},
+	}
+	tests := []struct {
+		name   string
+		err    error
+		code   int32
+		reason metav1.StatusReason
+	}{
+		{
+			name:   "wrapped gRPC status with details",
+			err:    fmt.Errorf("search: %w", mustStatusErr(t, grpccodes.PermissionDenied, forbidden)),
+			code:   http.StatusForbidden,
+			reason: metav1.StatusReasonForbidden,
+		},
+		{
+			name:   "local cancellation",
+			err:    context.Canceled,
+			code:   499,
+			reason: "ClientClosedRequest",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			searcher := &mockSearchClient{searchErr: tt.err}
+
+			children, hasMore, err := getChildrenBatch(context.Background(), searcher, "default", []string{"parent"}, 10, 0)
+
+			require.Empty(t, children)
+			require.False(t, hasMore)
+			// Returned to the apiserver, so it must be an unwrapped APIStatus.
+			require.IsType(t, &apierrors.StatusError{}, err)
+			var statusErr *apierrors.StatusError
+			require.ErrorAs(t, err, &statusErr)
+			require.Equal(t, tt.code, statusErr.ErrStatus.Code)
+			require.Equal(t, tt.reason, statusErr.ErrStatus.Reason)
+			require.NotContains(t, statusErr.ErrStatus.Message, backendDiagnostic)
+		})
+	}
+}
+
 type mockSearchClient struct {
 	stats    *resourcepb.ResourceStatsResponse
 	statsErr error
 
+	// searchErr fails Search with a nil response, as a unified storage server does.
+	searchErr error
+
 	folders []folders.Folder
 
 	// pagination controls (opt-in: zero values preserve the original "return everything" behavior)
-	paginate         bool
-	useNextPageToken bool
-	dropTotalHits    bool
+	paginate bool
 
 	searchCalls       int
 	lastSearchRequest *resourcepb.ResourceSearchRequest
@@ -1607,6 +1767,9 @@ func (m *mockSearchClient) GetStats(ctx context.Context, in *resourcepb.Resource
 func (m *mockSearchClient) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest, opts ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
 	m.searchCalls++
 	m.lastSearchRequest = req
+	if m.searchErr != nil {
+		return nil, m.searchErr
+	}
 
 	// get the list of parents from the search request
 	parentSet := make(map[string]bool)
@@ -1621,7 +1784,7 @@ func (m *mockSearchClient) Search(ctx context.Context, req *resourcepb.ResourceS
 	}
 
 	// find children that match the parent filter
-	var rows []*resourcepb.ResourceTableRow
+	var rows []*resourcepb.ResourceSearchRow
 	for i := range m.folders {
 		meta, err := utils.MetaAccessor(&m.folders[i])
 		if err != nil {
@@ -1629,7 +1792,7 @@ func (m *mockSearchClient) Search(ctx context.Context, req *resourcepb.ResourceS
 		}
 		parentUID := meta.GetFolder()
 		if parentSet[parentUID] {
-			rows = append(rows, &resourcepb.ResourceTableRow{
+			rows = append(rows, &resourcepb.ResourceSearchRow{
 				Key: &resourcepb.ResourceKey{Name: m.folders[i].Name},
 			})
 		}
@@ -1637,7 +1800,9 @@ func (m *mockSearchClient) Search(ctx context.Context, req *resourcepb.ResourceS
 
 	if !m.paginate {
 		return &resourcepb.ResourceSearchResponse{
-			Results: &resourcepb.ResourceTable{Rows: rows},
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Rows:         rows,
+			TotalHits:    int64(len(rows)),
 		}, nil
 	}
 
@@ -1647,20 +1812,11 @@ func (m *mockSearchClient) Search(ctx context.Context, req *resourcepb.ResourceS
 	if req.Limit > 0 && offset+req.Limit < end {
 		end = offset + req.Limit
 	}
-	pageRows := rows[offset:end]
-
-	nextToken := ""
-	if m.useNextPageToken && end < total {
-		nextToken = fmt.Sprintf("next-%d", end)
-	}
-
-	resp := &resourcepb.ResourceSearchResponse{
-		Results: &resourcepb.ResourceTable{Rows: pageRows, NextPageToken: nextToken},
-	}
-	if !m.dropTotalHits {
-		resp.TotalHits = total
-	}
-	return resp, nil
+	return &resourcepb.ResourceSearchResponse{
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Rows:         rows[offset:end],
+		TotalHits:    total,
+	}, nil
 }
 
 // allow is a single (group, resource, verb, name, folder) tuple the mock
@@ -1858,12 +2014,13 @@ func TestCheckMoveAccess(t *testing.T) {
 		})
 	}
 
-	t.Run("surfaces BatchCheck transport error", func(t *testing.T) {
+	t.Run("sanitizes BatchCheck transport error", func(t *testing.T) {
 		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{UserID: 1, OrgID: orgID})
 		mock := newMockAccessClient(nil)
 		mock.batchCheckErr = fmt.Errorf("boom")
 		err := checkMoveAccess(ctx, namespace, sourceUID, oldParentUID, newParentUID, mock)
-		require.ErrorContains(t, err, "boom")
+		require.True(t, apierrors.IsInternalError(err))
+		require.NotContains(t, err.Error(), "boom")
 		require.Equal(t, 1, mock.batchCheckCall)
 	})
 

@@ -255,15 +255,15 @@ describe('dashboard tracking', () => {
   });
 
   describe('global variables interactions', () => {
-    it('reports dashboards_global_variables_loaded', () => {
-      DashboardInteractions.globalVariablesLoaded({
+    it('reports dashboards_predefined_variables_loaded', () => {
+      DashboardInteractions.predefinedVariablesLoaded({
         global_count: 2,
         folder_count: 1,
         total_count: 3,
         mode: 'all',
       });
 
-      expect(reportInteraction).toHaveBeenCalledWith('dashboards_global_variables_loaded', {
+      expect(reportInteraction).toHaveBeenCalledWith('dashboards_predefined_variables_loaded', {
         global_count: 2,
         folder_count: 1,
         total_count: 3,

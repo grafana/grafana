@@ -1,3 +1,5 @@
+import { waitFor } from '@testing-library/react';
+
 import { getPanelPlugin } from '@grafana/data/test';
 import { reportInteraction, setPluginImportUtils } from '@grafana/runtime';
 import {
@@ -12,7 +14,7 @@ import {
   TestVariable,
   VizPanel,
 } from '@grafana/scenes';
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { setTestFlags } from '@grafana/test-utils/feature-flags';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
 import { groupSelectionInto } from '../actions/layout/groupSelectionInto';
@@ -21,6 +23,12 @@ import { edit } from '../actions/utils/edit';
 import { changeVariableName } from '../actions/variable/changeVariableName';
 import { changeVariableType } from '../actions/variable/changeVariableType';
 import { removeVariable } from '../actions/variable/removeVariable';
+import { getPendingChangesHistory, type PendingChangesHistory } from '../lifecycle/pendingChangePreview';
+import {
+  pendingChangesRecorded,
+  pendingChangesSuperseded,
+  recordPendingChange,
+} from '../lifecycle/pendingChangesHistory';
 import { DashboardScene } from '../scene/DashboardScene';
 import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from '../scene/layout-auto-grid/AutoGridLayout';
@@ -38,9 +46,14 @@ import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManag
 import { toControlSourceRef } from '../utils/predefinedVariables';
 import { activateFullSceneTree, createDeferred } from '../utils/test-utils';
 
+import { DashboardCodePane } from './DashboardCodePane';
 import { MAX_UNDO_ACTIONS } from './DashboardSidebar';
+import { ElementEditPane } from './ElementEditPane';
 import { MultiSelectedObjectsEditableElement } from './MultiSelectedObjectsEditableElement';
 import { MultiSelectedVizPanelsEditableElement } from './MultiSelectedVizPanelsEditableElement';
+import { VizPanelEditableElement } from './VizPanelEditableElement';
+import { AddNewPane } from './add-new/AddNewPane';
+import { DashboardCrossDashboardVariablesPane } from './dashboard/DashboardCrossDashboardVariablesPane';
 import { DashboardStateChangedEvent } from './events';
 import { DashboardOutline } from './outline/DashboardOutline';
 import { type DashboardSidebarLike } from './types';
@@ -52,6 +65,17 @@ jest.mock('@grafana/runtime', () => ({
     getInstanceSettings: (_uid: string | null) => ({ uid: 'ds1' }),
   }),
   getDataSourceInstanceSettings: jest.fn().mockResolvedValue({ uid: 'ds1' }),
+}));
+// Off unless a test previews pending changes whose plugin keeps their history.
+jest.mock('../lifecycle/pendingChangePreview', () => ({
+  ...jest.requireActual('../lifecycle/pendingChangePreview'),
+  getPendingChangesHistory: jest.fn(),
+}));
+jest.mock('../lifecycle/pendingChangesHistory', () => ({
+  ...jest.requireActual('../lifecycle/pendingChangesHistory'),
+  pendingChangesRecorded: jest.fn(() => Promise.resolve()),
+  pendingChangesSuperseded: jest.fn(() => false),
+  recordPendingChange: jest.fn(),
 }));
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
@@ -197,6 +221,51 @@ describe('DashboardSidebar', () => {
       expect(sidebar.state.isLoading).toBe(false);
       pending.resolve(undefined);
       await opening;
+    });
+  });
+
+  describe('Viewing mode', () => {
+    afterEach(() => setTestFlags({}));
+    it('keeps selection disabled when direct selection or previous-pane navigation is requested', () => {
+      const { dashboard, sidebar } = setupEmptyDashboard();
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+      sidebar.selectObject(dashboard);
+      sidebar.openPane(new AddNewPane({}));
+      sidebar.closePane();
+      sidebar.disableSelection();
+      dashboard.setState({ mode: 'view' });
+
+      sidebar.enableSelection();
+      sidebar.selectObject(dashboard, { force: true });
+      sidebar.goBackToPrevious();
+
+      expect(sidebar.state.selectionContext).toMatchObject({ enabled: false, selected: [] });
+      expect(sidebar.state.openPane).toBeUndefined();
+      dashboard.setState({ mode: 'edit' });
+      sidebar.enableSelection();
+      sidebar.selectObject(dashboard);
+      expect(sidebar.getSelectedObject()).toBe(dashboard);
+    });
+
+    it.each([
+      ['add', () => new AddNewPane({})],
+      ['element', () => new ElementEditPane({})],
+      ['code', () => new DashboardCodePane({})],
+      ['cross-dashboard-variables', () => new DashboardCrossDashboardVariablesPane({})],
+    ] as const)('refuses the %s pane during review', (_, createPane) => {
+      const { dashboard, sidebar } = setupEmptyDashboard();
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+      sidebar.closePane();
+      dashboard.setState({ mode: 'view' });
+      const pane = createPane();
+
+      sidebar.openPane(pane);
+      expect(dashboard.state.isEditing).toBe(true);
+      expect(sidebar.state.openPane).toBeUndefined();
+
+      dashboard.setState({ mode: 'edit' });
+      sidebar.openPane(pane);
+      expect(sidebar.state.openPane).toBe(pane);
     });
   });
 
@@ -389,6 +458,102 @@ describe('DashboardSidebar', () => {
 
     await scene.onCreateNewPanel();
 
+    expect(sidebar.state.redoStack).toHaveLength(0);
+  });
+
+  describe('pending changes whose plugin keeps their history', () => {
+    const history: PendingChangesHistory = {
+      record: jest.fn(),
+      undo: jest.fn(),
+      redo: jest.fn(),
+      getState: () => ({}),
+      subscribe: () => () => {},
+    };
+
+    beforeEach(() => jest.mocked(getPendingChangesHistory).mockReturnValue(history));
+    afterEach(() => jest.mocked(getPendingChangesHistory).mockReturnValue(undefined));
+
+    it('records an edit in the plugin’s history instead of the undo stack', async () => {
+      const scene = buildTestScene();
+      const sidebar = scene.state.sidebar;
+      const before = scene.getSaveModel();
+
+      await scene.onCreateNewPanel();
+
+      expect(sidebar.state.undoStack).toHaveLength(0);
+      expect(recordPendingChange).toHaveBeenCalledWith(scene, history, expect.any(String), before);
+      // The edit itself stays: recording replays it after taking the scene before it.
+      expect(scene.getSaveModel()).not.toEqual(before);
+    });
+
+    it('steps through the plugin’s history with Undo and Redo', async () => {
+      const sidebar = buildTestScene().state.sidebar;
+
+      sidebar.undoAction();
+      await waitFor(() => expect(history.undo).toHaveBeenCalledTimes(1));
+      // Once the step settled: one runs at a time.
+      await new Promise((resolve) => setTimeout(resolve));
+      sidebar.redoAction();
+
+      await waitFor(() => expect(history.redo).toHaveBeenCalledTimes(1));
+    });
+
+    // A recording still on its way would land after the step and bring the undone change back.
+    it('steps only once the recordings sent before have settled', async () => {
+      let settle = () => {};
+      jest.mocked(pendingChangesRecorded).mockReturnValueOnce(new Promise<void>((resolve) => (settle = resolve)));
+      const sidebar = buildTestScene().state.sidebar;
+      jest.mocked(history.undo).mockClear();
+
+      sidebar.undoAction();
+      await Promise.resolve();
+      expect(history.undo).not.toHaveBeenCalled();
+
+      settle();
+      await waitFor(() => expect(history.undo).toHaveBeenCalledTimes(1));
+    });
+
+    // The plugin's history moved on past what the page shows: stepping it would undo the wrong revision.
+    it('takes no step once a recording found the pending changes changed', async () => {
+      jest.mocked(pendingChangesSuperseded).mockReturnValueOnce(true);
+      const sidebar = buildTestScene().state.sidebar;
+      jest.mocked(history.undo).mockClear();
+
+      sidebar.undoAction();
+      await new Promise((resolve) => setTimeout(resolve));
+
+      expect(history.undo).not.toHaveBeenCalled();
+    });
+
+    // Each step restores a revision and reloads the page: stacked ones would race.
+    it('takes one step for clicks made while a step waits for the recordings', async () => {
+      let settle = () => {};
+      jest.mocked(pendingChangesRecorded).mockReturnValueOnce(new Promise<void>((resolve) => (settle = resolve)));
+      const sidebar = buildTestScene().state.sidebar;
+      jest.mocked(history.undo).mockClear();
+
+      sidebar.undoAction();
+      sidebar.undoAction();
+      settle();
+
+      await waitFor(() => expect(history.undo).toHaveBeenCalledTimes(1));
+      await Promise.resolve();
+      expect(history.undo).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('clearHistory should empty undo and redo stacks', async () => {
+    const scene = buildTestScene();
+    const sidebar = scene.state.sidebar;
+
+    await scene.onCreateNewPanel();
+    await scene.onCreateNewPanel();
+
+    sidebar.undoAction();
+
+    sidebar.clearHistory();
+
+    expect(sidebar.state.undoStack).toHaveLength(0);
     expect(sidebar.state.redoStack).toHaveLength(0);
   });
 
@@ -822,20 +987,56 @@ describe('DashboardSidebar', () => {
       ]);
     });
 
-    it.each([
-      {
-        selection: 'mixed objects',
-        actionId: 'selection.remove',
-        create: (elements: BulkActionElement[], dashboard: DashboardScene) =>
-          new MultiSelectedObjectsEditableElement(elements, dashboard),
-      },
-      {
-        selection: 'panels',
-        actionId: 'panel.remove',
-        create: (elements: BulkActionElement[], dashboard: DashboardScene) =>
-          new MultiSelectedVizPanelsEditableElement(elements, dashboard),
-      },
-    ])('ends a multi-$selection delete batch when an element deletion throws', ({ actionId, create }) => {
+    it('ends a multi-panel delete batch when a panel deletion throws', () => {
+      const panels = [1, 2].map((id) => new VizPanel({ key: `panel-${id}`, pluginId: 'text' }));
+      const layout = new AutoGridLayoutManager({
+        layout: new AutoGridLayout({ children: panels.map((panel) => new AutoGridItem({ body: panel })) }),
+      });
+      const dashboard = new DashboardScene({ body: layout, isEditing: true });
+      setTestFlags({ dashboardNewLayouts: true });
+      const deactivate = activateFullSceneTree(dashboard);
+      const sidebar = dashboard.state.sidebar;
+      const selection = new MultiSelectedVizPanelsEditableElement(
+        panels.map((panel) => new VizPanelEditableElement(panel)),
+        dashboard
+      );
+      const removePanel = layout.removePanel.bind(layout);
+      const removePanelSpy = jest.spyOn(layout, 'removePanel').mockImplementation((panel) => {
+        if (panel === panels[1]) {
+          throw new Error('delete failed');
+        }
+        removePanel(panel);
+      });
+
+      try {
+        expect(() => selection.onDelete()).toThrow('delete failed');
+        expect(sidebar.state.undoStack.map((action) => action.meta.actionId)).toEqual(['panel.remove']);
+        expect(layout.getVizPanels()).toEqual([panels[1]]);
+
+        sidebar.undoAction();
+        expect(layout.getVizPanels()).toEqual(panels);
+
+        sidebar.redoAction();
+        expect(layout.getVizPanels()).toEqual([panels[1]]);
+
+        edit({
+          source: dashboard,
+          meta: { actionId: 'test.after-failure' },
+          perform: jest.fn(),
+          undo: jest.fn(),
+        });
+        expect(sidebar.state.undoStack.map((action) => action.meta.actionId)).toEqual([
+          'panel.remove',
+          'test.after-failure',
+        ]);
+      } finally {
+        removePanelSpy.mockRestore();
+        deactivate();
+      }
+    });
+
+    it('ends a mixed-object delete batch when an element deletion throws', () => {
+      const actionId = 'selection.remove';
       const dashboard = buildTestScene();
       const sidebar = dashboard.state.sidebar;
       let deleted = false;
@@ -855,7 +1056,9 @@ describe('DashboardSidebar', () => {
         throw new Error('delete failed');
       });
 
-      expect(() => create([successfulElement, failingElement], dashboard).onDelete()).toThrow('delete failed');
+      expect(() =>
+        new MultiSelectedObjectsEditableElement([successfulElement, failingElement], dashboard).onDelete()
+      ).toThrow('delete failed');
       expect(sidebar.state.undoStack.map((action) => action.meta.actionId)).toEqual([actionId]);
       expect(deleted).toBe(true);
 

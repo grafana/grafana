@@ -10,12 +10,15 @@ import {
   SceneQueryRunner,
   VizPanel,
 } from '@grafana/scenes';
+import { usePanelChromeHeaderControls } from '@grafana/ui/internal';
 
+import { PanelAdHocChangesAction } from './panel-actions/PanelAdHocChangesAction';
 import { PanelGroupByAction } from './panel-actions/PanelGroupByAction/PanelGroupByAction';
 
 export interface VizPanelHeaderActionsState extends SceneObjectState {
-  hideGroupByAction?: boolean;
   isGroupByActionSupported?: boolean;
+  /** The group by picker opened from the panel menu, used when the panel actions popover owns the header controls. */
+  isGroupByPickerOpen?: boolean;
 }
 
 export class VizPanelHeaderActions extends SceneObjectBase<VizPanelHeaderActionsState> {
@@ -26,10 +29,7 @@ export class VizPanelHeaderActions extends SceneObjectBase<VizPanelHeaderActions
   private _groupBySub?: Unsubscribable;
 
   constructor(state: Partial<VizPanelHeaderActionsState>) {
-    super({
-      hideGroupByAction: state.hideGroupByAction ?? false,
-      ...state,
-    });
+    super(state);
 
     this.addActivationHandler(this._onActivate);
   }
@@ -39,14 +39,35 @@ export class VizPanelHeaderActions extends SceneObjectBase<VizPanelHeaderActions
       throw new Error('VizPanelHeaderActions must be a child of a VizPanel');
     }
 
-    if (!this.state.hideGroupByAction) {
-      this.subscribeToGroupByChanges();
-    }
+    this.subscribeToGroupByChanges();
 
     return () => {
       this._groupBySub?.unsubscribe();
     };
   };
+
+  public canGroupBy(): boolean {
+    return Boolean(this.state.isGroupByActionSupported);
+  }
+
+  public openGroupByPicker() {
+    this.setState({ isGroupByPickerOpen: true });
+  }
+
+  public closeGroupByPicker() {
+    this.setState({ isGroupByPickerOpen: false });
+  }
+
+  public getGroupByVariables(): { groupByVariable?: GroupByVariable; adhocGroupByVariable?: AdHocFiltersVariable } {
+    const variables = sceneGraph.getVariables(this).state.variables;
+    return {
+      groupByVariable: variables.find((variable): variable is GroupByVariable => variable instanceof GroupByVariable),
+      adhocGroupByVariable: variables.find(
+        (variable): variable is AdHocFiltersVariable =>
+          variable instanceof AdHocFiltersVariable && variable.state.enableGroupBy === true
+      ),
+    };
+  }
 
   private updateGroupByActionSupport() {
     const queryRunner = this.getQueryRunner();
@@ -161,21 +182,17 @@ export class VizPanelHeaderActions extends SceneObjectBase<VizPanelHeaderActions
 }
 
 function VizPanelHeaderActionsRenderer({ model }: SceneComponentProps<VizPanelHeaderActions>) {
-  const { hideGroupByAction, isGroupByActionSupported } = model.useState();
-  const variables = sceneGraph.getVariables(model);
-  const groupByVariable = variables.state.variables.find(
-    (variable): variable is GroupByVariable => variable instanceof GroupByVariable
-  );
-  const adhocGroupByVariable = variables.state.variables.find(
-    (variable): variable is AdHocFiltersVariable =>
-      variable instanceof AdHocFiltersVariable && variable.state.enableGroupBy === true
-  );
+  const { isGroupByActionSupported } = model.useState();
+  // The panel actions popover offers group by from the panel menu instead.
+  const hasExternalHeaderControls = Boolean(usePanelChromeHeaderControls()?.external);
+  const { groupByVariable, adhocGroupByVariable } = model.getGroupByVariables();
   const queryRunner = model.getQueryRunner();
   const queries = queryRunner?.state.queries ?? [];
 
   return (
     <>
-      {!hideGroupByAction && isGroupByActionSupported && (groupByVariable || adhocGroupByVariable) && (
+      {model.parent instanceof VizPanel && <PanelAdHocChangesAction panel={model.parent} />}
+      {!hasExternalHeaderControls && isGroupByActionSupported && (groupByVariable || adhocGroupByVariable) && (
         <div className="show-on-hover">
           <PanelGroupByAction
             groupByVariable={groupByVariable}

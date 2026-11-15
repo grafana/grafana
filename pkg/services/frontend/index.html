@@ -214,10 +214,6 @@
         window.__grafanaReduceBootdataAPI = true;
       [[end]]
 
-      [[if .OFREPRootUrlEnabled]]
-        window.__grafanaOFREPRootUrlEnabled = true;
-      [[end]]
-
       [[if .PreviewAssetsFolder]]
         // Set when the assets on this page come from a PR preview build
         window.__grafanaPreviewAssets = '[[.PreviewAssetsFolder]]';
@@ -246,6 +242,11 @@
           user: [[.DefaultUser]],
         }
       [[end]]
+
+      [[if .LiveDisabled ]]
+        window.grafanaBootData.settings.liveEnabled = false;
+      [[end]]
+
 
     </script>
 

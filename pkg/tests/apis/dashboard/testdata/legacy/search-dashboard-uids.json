@@ -1,0 +1,37 @@
+{
+  "body": [
+    {
+      "id": "<id>",
+      "isDeleted": false,
+      "isStarred": false,
+      "orgId": 1,
+      "slug": "",
+      "sortMeta": 0,
+      "tags": [
+        "golden"
+      ],
+      "title": "Golden general",
+      "type": "dash-db",
+      "uid": "golden-general",
+      "uri": "db/golden-general",
+      "url": "/d/golden-general/golden-general"
+    },
+    {
+      "id": "<id>",
+      "isDeleted": false,
+      "isStarred": false,
+      "orgId": 1,
+      "slug": "",
+      "sortMeta": 0,
+      "tags": [
+        "golden"
+      ],
+      "title": "Golden v2",
+      "type": "dash-db",
+      "uid": "golden-v2",
+      "uri": "db/golden-v2",
+      "url": "/d/golden-v2/golden-v2"
+    }
+  ],
+  "status": 200
+}

@@ -60,9 +60,9 @@ Dashboard links can also be used as shortcuts to external systems, such as submi
 To see an example of dashboard links in action, check out:
 
 - [Dashboard links with variables](https://play.grafana.org/d/rUpVRdamz/dashboard-links-with-variables?orgId=1)
-- [Prometheus repeat](https://play.grafana.org/d/000000036/prometheus-repeat?orgId=1)
+- [Prometheus repeat](https://play.grafana.org/d/dbg1erw7kech6oe/placeholder-dashboard)
 
-Once you've added a dashboard link, it appears in the upper right corner of your dashboard.
+After you've added a dashboard link, it appears in the upper right corner of your dashboard.
 
 ### Add links to dashboards
 
@@ -70,7 +70,7 @@ To add a link to another dashboard at the top of your current dashboard, follow 
 
 {{< docs/list >}}
 
-1. In the dashboard you want to link, click **Edit**.
+1. In the dashboard you want to link, select **Editing** in the dashboard mode drop-down list.
 1. In the toolbar, click the **Dashboard options** icon.
 1. In the sidebar, click **View all settings**.
 1. Go to the **Links** tab and then click **Add dashboard link**. If the dashboard already has links, click **New link**.
@@ -95,7 +95,8 @@ The default link type is **Dashboards**.
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Back** and **Exit edit**.
+1. Click **Back**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 {{< /docs/list >}}
 
@@ -114,7 +115,7 @@ To add a URL link to your dashboard, follow these steps:
 
 {{< docs/list >}}
 
-1. In the dashboard you want to link, click **Edit**.
+1. In the dashboard you want to link, select **Editing** in the dashboard mode drop-down list.
 1. In the toolbar, click the **Dashboard options** icon.
 1. In the sidebar, click **View all settings**.
 1. Go to the **Links** tab and then click **Add dashboard link**. If the dashboard already has links, click **New link**.
@@ -138,7 +139,8 @@ To add a URL link to your dashboard, follow these steps:
 
 1. Click **Save** in the top-right corner.
 1. Enter an optional description of your changes and click **Save**.
-1. Click **Back** and then **Exit edit**.
+1. Click **Back**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 {{< /docs/list >}}
 
@@ -146,7 +148,7 @@ To add a URL link to your dashboard, follow these steps:
 
 To edit, duplicate, or delete dashboard link, follow these steps:
 
-1. In the dashboard you want to link, click **Edit**.
+1. In the dashboard you want to link, select **Editing** in the dashboard mode drop-down list.
 1. In the toolbar, click the **Dashboard options** icon.
 1. In the sidebar, click **View all settings**.
 1. Go to the **Links** tab.
@@ -157,7 +159,8 @@ To edit, duplicate, or delete dashboard link, follow these steps:
 
 1. Click **Save** in the top-right corner.
 1. Enter an optional description of your changes and click **Save**.
-1. Click **Back** and then **Exit edit**.
+1. Click **Back**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 ## Panel links
 
@@ -186,7 +189,8 @@ Click the icon next to the panel title to see available panel links.
 1. Click **Save** to save changes and close the dialog box.
 1. Click **Save** in the top-right corner.
 1. Enter an optional description of your changes and click **Save**.
-1. Click **Back** and then **Exit edit**.
+1. Click **Back**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 ### Update a panel link
 
@@ -202,7 +206,8 @@ Click the icon next to the panel title to see available panel links.
 1. Click **Save** to save changes and close the dialog box.
 1. Click **Save** in the top-right corner.
 1. Enter an optional description of your changes and click **Save**.
-1. Click **Back** and then **Exit edit**.
+1. Click **Back**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 ### Delete a panel link
 
@@ -216,4 +221,5 @@ Click the icon next to the panel title to see available panel links.
 1. Click the **X** icon next to the link you want to delete.
 1. Click **Save** in the top-right corner.
 1. Enter an optional description of your changes and click **Save**.
-1. Click **Back** and then **Exit edit**.
+1. Click **Back**.
+1. Select **Viewing** in the dashboard mode drop-down list.

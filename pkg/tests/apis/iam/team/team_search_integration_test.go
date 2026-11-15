@@ -454,6 +454,35 @@ func doTeamSearchTests(t *testing.T, helper *apis.K8sTestHelper, mode rest.DualW
 		require.NotNil(t, response)
 		require.Equal(t, http.StatusBadRequest, response.Response.StatusCode)
 	})
+	t.Run("member filter composes with pagination and title", func(t *testing.T) {
+		userUID := helper.Org1.Viewer.Identity.GetIdentifier()
+		body, err := json.Marshal(map[string]any{"name": userUID, "permission": "member", "external": false})
+		require.NoError(t, err)
+		for _, name := range []string{team1.GetName(), team2.GetName()} {
+			response := apis.DoRequest(helper, apis.RequestParams{User: helper.Org1.Admin, Method: http.MethodPost, Path: fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/%s/teams/%s/addmember", namespace, name), Body: body}, &map[string]any{})
+			require.Equal(t, http.StatusCreated, response.Response.StatusCode, string(response.Body))
+		}
+		search := func(params url.Values) iamv0alpha1.GetSearchTeamsResponse {
+			var result iamv0alpha1.GetSearchTeamsResponse
+			response := apis.DoRequest(helper, apis.RequestParams{User: helper.Org1.Admin, Method: http.MethodGet, Path: fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/%s/searchTeams?%s", namespace, params.Encode())}, &result)
+			require.Equal(t, http.StatusOK, response.Response.StatusCode, string(response.Body))
+			return result
+		}
+		first := search(url.Values{"member": {userUID}, "limit": {"1"}})
+		require.Equal(t, int64(2), first.TotalHits)
+		require.Len(t, first.Hits, 1)
+		second := search(url.Values{"member": {userUID}, "limit": {"1"}, "page": {"2"}})
+		require.Equal(t, int64(2), second.TotalHits)
+		require.Len(t, second.Hits, 1)
+		require.NotEqual(t, first.Hits[0].Name, second.Hits[0].Name)
+		exact := search(url.Values{"member": {userUID}, "title": {"Another Team"}})
+		require.Equal(t, int64(1), exact.TotalHits)
+		require.Len(t, exact.Hits, 1)
+		require.Equal(t, team2.GetName(), exact.Hits[0].Name)
+		missing := search(url.Values{"member": {"no-such-user"}})
+		require.Zero(t, missing.TotalHits)
+		require.Empty(t, missing.Hits)
+	})
 }
 
 func TestIntegrationTeamSearch_Pagination(t *testing.T) {

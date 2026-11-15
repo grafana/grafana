@@ -22,6 +22,18 @@ import { TemplateSrv } from '../../../features/templating/template_srv';
 import { MixedDatasource, MIXED_DATASOURCE_NAME } from './MixedDataSource';
 
 jest.mock('app/core/services/backend_srv');
+jest.mock('@grafana/runtime', () => {
+  const actual = jest.requireActual('@grafana/runtime');
+  return {
+    ...actual,
+    getDataSourceInstance: jest.fn((ref: DataSourceRef | string) => {
+      // Most tests replace the runtime service, so resolve through it when available. A few
+      // template-variable tests install a partial service and rely on this mock's defaults.
+      const srv = actual.getDataSourceSrv() as DataSourceSrv | undefined;
+      return srv && typeof srv.get === 'function' ? srv.get(ref) : datasourceSrv.get(ref);
+    }),
+  };
+});
 
 const defaultDS = new MockObservableDataSourceApi('DefaultDS', [{ data: ['DDD'] }]);
 const datasourceSrv = new DatasourceSrvMock(defaultDS, {
@@ -168,10 +180,9 @@ describe('MixedDatasource', () => {
       });
 
       await expect(ds.query(requestMixed)).toEmitValuesWith((results) => {
-        // Failed sources emit their own error packet alongside the healthy data; the error is
-        // no longer duplicated as a trailing packet because the aggregation in `runRequest`
-        // already surfaces an error state to the panel.
-        expect(results).toHaveLength(5);
+        // Failed sources emit their own error packet alongside the healthy data, and the first
+        // error is repeated after completion so the panel surfaces it (legacy behaviour).
+        expect(results).toHaveLength(6);
         expect(results[0].data).toEqual(['AAAA']);
         expect(results[0].state).toEqual(LoadingState.Done);
         expect(results[1].data).toEqual([]);
@@ -184,6 +195,9 @@ describe('MixedDatasource', () => {
         expect(results[3].error).toEqual({ message: 'DSE: syntax error near WHERE' });
         expect(results[4].data).toEqual(['CCCC']);
         expect(results[4].state).toEqual(LoadingState.Done);
+        expect(results[5].data).toEqual([]);
+        expect(results[5].state).toEqual(LoadingState.Error);
+        expect(results[5].error).toEqual({ message: 'DSD: syntax error near FROM' });
       });
     });
   });
@@ -223,6 +237,24 @@ describe('MixedDatasource', () => {
       });
     });
 
+    it('should set the variable display name from the loaded data source', async () => {
+      const ds = new MixedDatasource({} as DataSourceInstanceSettings);
+      const querySpyB = jest.spyOn(datasourceSrv['datasources'].B, 'query');
+      const querySpyC = jest.spyOn(datasourceSrv['datasources'].C, 'query');
+
+      const request = {
+        targets: [{ refId: 'AA', datasource: { uid: '$ds' } }],
+        scopedVars: {
+          __sceneObject: { value: scene },
+        },
+      } as unknown as DataQueryRequest;
+
+      await lastValueFrom(ds.query(request));
+
+      expect(querySpyB.mock.calls[0][0].scopedVars.ds).toEqual({ value: 'B', text: 'DSB' });
+      expect(querySpyC.mock.calls[0][0].scopedVars.ds).toEqual({ value: 'C', text: 'DSC' });
+    });
+
     it('should run query for picked datasource and template variable datasource', async () => {
       const ds = new MixedDatasource({} as DataSourceInstanceSettings);
       const request = {
@@ -236,15 +268,10 @@ describe('MixedDatasource', () => {
       } as unknown as DataQueryRequest;
 
       await expect(ds.query(request)).toEmitValuesWith((results) => {
+        // Responses are forwarded as each source resolves, so only the set of packets is ordered.
         expect(results).toHaveLength(4);
-        expect(results[0].key).toBe('mixed-0-');
-        expect(results[0].state).toBe(LoadingState.Done);
-        expect(results[1].key).toBe('mixed-1-');
-        expect(results[1].state).toBe(LoadingState.Done);
-        expect(results[2].key).toBe('mixed-2-A');
-        expect(results[2].state).toBe(LoadingState.Done);
-        expect(results[3].key).toBe('mixed-2-B');
-        expect(results[3].state).toBe(LoadingState.Done);
+        expect(results.map((r) => r.key).sort()).toEqual(['mixed-0-', 'mixed-1-', 'mixed-2-A', 'mixed-2-B']);
+        expect(results.every((r) => r.state === LoadingState.Done)).toBe(true);
       });
     });
   });
@@ -326,6 +353,27 @@ describe('MixedDatasource', () => {
       expect(results[0].key).toBe('mixed-0-');
       expect(results[1].key).toBe('mixed-1-');
       expect(results[1].state).toBe(LoadingState.Done);
+    });
+  });
+
+  it('should return an error only for the batch whose data source fails to load', async () => {
+    const ds = new MixedDatasource({} as DataSourceInstanceSettings);
+    const request = {
+      targets: [
+        { refId: 'QA', datasource: { uid: 'A' } },
+        { refId: 'QX', datasource: { uid: 'missing' } },
+        { refId: 'QB', datasource: { uid: 'B' } },
+      ],
+    } as DataQueryRequest;
+
+    await expect(ds.query(request)).toEmitValuesWith((results) => {
+      expect(results[0].data).toEqual(['AAAA']);
+      expect(results[1].state).toBe(LoadingState.Error);
+      expect(results[1].key).toBe('mixed-1-');
+      expect(results[1].error?.message).toBe('missing: Unknown Datasource: "missing"');
+      expect(results[2].data).toEqual(['BBBB']);
+      // The first error is repeated last so the panel shows it.
+      expect(results[3].state).toBe(LoadingState.Error);
     });
   });
 

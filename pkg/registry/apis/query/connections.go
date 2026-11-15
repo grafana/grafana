@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
-const maxConnectionsLimit = 1000
+const maxConnectionsLimit = 5000
 
 func (b *QueryAPIBuilder) GetConnections(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("X-Ds-Querier", b.instanceProvider.GetMode())

@@ -3,6 +3,7 @@ package datasource
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -30,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/proxyutil"
 )
 
 func TestSubProxyPDCRouting(t *testing.T) {
@@ -185,6 +187,53 @@ func TestSubProxyREST_Connect(t *testing.T) {
 		require.ErrorIs(t, responder.lastErr, unavailable)
 	})
 
+	t.Run("reports a canceled request as 499", func(t *testing.T) {
+		for name, tc := range map[string]struct {
+			depsErr error
+			cancel  bool
+		}{
+			"wrapped context error":           {depsErr: fmt.Errorf("load stack: %w", context.Canceled)},
+			"unwrapped error on canceled ctx": {depsErr: errors.New("rpc error: code = Canceled"), cancel: true},
+		} {
+			t.Run(name, func(t *testing.T) {
+				builder := newProxyTestBuilder(&proxyMockDatasourceProvider{})
+				builder.proxyDependencies = func(context.Context, *http.Request) (*ProxyDependencies, error) {
+					return nil, tc.depsErr
+				}
+				ctx, cancel := context.WithCancel(proxyTestContext())
+				defer cancel()
+				if tc.cancel {
+					cancel()
+				}
+				storage := &subProxyREST{builder: builder, transports: newProxyTransportCache()}
+				t.Cleanup(storage.Destroy)
+				responder := &resourceMockResponder{}
+				handler, err := storage.Connect(ctx, "test-ds", nil, responder)
+				require.NoError(t, err)
+				handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/datasources/test-ds/proxy/query", nil))
+
+				var status apierrors.APIStatus
+				require.ErrorAs(t, responder.lastErr, &status)
+				require.EqualValues(t, proxyutil.StatusClientClosedRequest, status.Status().Code)
+			})
+		}
+	})
+
+	t.Run("keeps other dependency errors unchanged", func(t *testing.T) {
+		builder := newProxyTestBuilder(&proxyMockDatasourceProvider{})
+		unavailable := errors.New("tenant settings unavailable")
+		builder.proxyDependencies = func(context.Context, *http.Request) (*ProxyDependencies, error) {
+			return nil, unavailable
+		}
+		storage := &subProxyREST{builder: builder, transports: newProxyTransportCache()}
+		t.Cleanup(storage.Destroy)
+		responder := &resourceMockResponder{}
+		handler, err := storage.Connect(proxyTestContext(), "test-ds", nil, responder)
+		require.NoError(t, err)
+		handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/datasources/test-ds/proxy/query", nil))
+		require.Same(t, unavailable, responder.lastErr)
+	})
+
 	t.Run("returns an error when proxy dependencies are not configured", func(t *testing.T) {
 		builder := newProxyTestBuilder(&proxyMockDatasourceProvider{})
 		builder.proxyDependencies = nil
@@ -285,7 +334,7 @@ func TestSubProxyREST_RouteAuthorization(t *testing.T) {
 			checks := 0
 			b.accessClient = proxyAccessClient{check: func(ctx context.Context, who authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
 				checks++
-				require.Equal(t, authlib.CheckRequest{Namespace: "stacks-11", Group: "test.datasource.grafana.app", Resource: "datasources", Name: "ds-1", Verb: "datasources:query"}, req)
+				require.Equal(t, authlib.CheckRequest{Namespace: "stacks-11", Group: "test.datasource.grafana.app", Resource: "datasources", Name: "ds-1", Subresource: "query", Verb: "create"}, req)
 				return authlib.CheckResponse{Allowed: tc.allowed}, tc.err
 			}}
 			resolved := 0

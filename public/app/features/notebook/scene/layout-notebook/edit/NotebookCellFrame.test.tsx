@@ -115,7 +115,7 @@ describe('NotebookCellFrame', () => {
   it('makes the hidden actions bar inert', async () => {
     renderFrame({ isEditing: true, onDuplicate: () => {}, onDelete: () => {} });
 
-    const actions = (await screen.findByRole('button', { name: 'Duplicate block' })).parentElement;
+    const actions = (await screen.findByRole('button', { name: 'Block actions' })).parentElement;
 
     expect(getComputedStyle(actions!).pointerEvents).toBe('none');
   });

@@ -48,7 +48,7 @@ The dashboard settings page allows you to:
 
 To access the dashboard setting page:
 
-1. Click **Edit**.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. In the toolbar, click the **Dashboard options** icon.
 1. In the sidebar, click **View all settings**.
 
@@ -71,7 +71,7 @@ Adjust dashboard time settings when you want to change the dashboard timezone, t
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Exit edit**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 ## Modify graph tooltip behavior
 
@@ -86,7 +86,7 @@ Use this option to control tooltip and hover highlight behavior across graph pan
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Exit edit**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 ## Add tags
 
@@ -105,7 +105,7 @@ To add tags to a dashboard, follow these steps:
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Exit edit**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 When you're on the **Dashboards** page, any tags you've entered show up under the **Tags** column.
 
@@ -136,7 +136,7 @@ Dashboard links enable you to place links to other dashboards and web sites dire
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Exit edit**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 ## View dashboard JSON model
 

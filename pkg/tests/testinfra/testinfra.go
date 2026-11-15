@@ -41,6 +41,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/util/testutil"
 
@@ -50,18 +51,23 @@ import (
 )
 
 // findTestLicense returns the absolute path to the enterprise test license
-// fixture bundled in the enterprise tree, or "" if it is not present (OSS build).
-// Used when wiring MT-mode Zanzana tests that need FeatureAccessControl enabled.
+// fixture, or "" if it is not present. Used when wiring MT-mode
+// Zanzana tests that need FeatureAccessControl enabled.
 func findTestLicense() string {
 	_, thisFile, _, ok := runtime.Caller(0)
 	if !ok {
 		return ""
 	}
-	candidate := filepath.Join(filepath.Dir(thisFile), "..", "..", "extensions", "apiserver", "testdata", "valid", "license.jwt")
-	if exists, err := fs.Exists(candidate); err != nil || !exists {
-		return ""
+	rootDir := filepath.Join(filepath.Dir(thisFile), "..", "..", "..")
+	for _, candidate := range []string{
+		filepath.Join(rootDir, "pkg", "extensions", "apiserver", "testdata", "valid", "license.jwt"),
+		filepath.Join(rootDir, "..", "grafana-enterprise", "pkg", "apiserver", "testdata", "valid", "license.jwt"),
+	} {
+		if exists, err := fs.Exists(candidate); err == nil && exists {
+			return candidate
+		}
 	}
-	return candidate
+	return ""
 }
 
 // StartGrafana starts a Grafana server.
@@ -88,6 +94,13 @@ func StartGrafanaEnvWithDB(t *testing.T, grafDir, cfgPath string) (string, *serv
 // cleanup function. This is useful when the server must outlive any single
 // test, e.g. when shared across an entire package via sync.Once.
 func StartGrafanaEnvWithManualCleanup(t *testing.T, grafDir, cfgPath string) (string, *server.TestEnv, *sqlutil.TestDB, func()) {
+	t.Helper()
+	return startGrafana(t, t, grafDir, cfgPath)
+}
+
+// startGrafana takes the ITestDB separately so a cluster peer can pass a
+// sqlutil.TestDBPeer and join the database instead of resetting it.
+func startGrafana(t *testing.T, testDBT sqlutil.ITestDB, grafDir, cfgPath string) (string, *server.TestEnv, *sqlutil.TestDB, func()) {
 	t.Helper()
 	ctx := context.Background()
 
@@ -146,7 +159,7 @@ func StartGrafanaEnvWithManualCleanup(t *testing.T, grafDir, cfgPath string) (st
 
 	t.Log("Using test database", "type", testDB.DriverName, "host", testDB.Host, "port", testDB.Port, "user", testDB.User, "name", testDB.Database, "path", testDB.Path)
 
-	env, err := server.InitializeForTest(ctx, t, t, cfg, serverOpts, apiServerOpts)
+	env, err := server.InitializeForTest(ctx, testDBT, t, cfg, serverOpts, apiServerOpts)
 	require.NoError(t, err)
 
 	require.NotNil(t, env.Cfg)
@@ -192,6 +205,7 @@ func StartGrafanaEnvWithManualCleanup(t *testing.T, grafDir, cfgPath string) (st
 		storage, err = sql.ProvideUnifiedStorageGrpcService(env.Cfg, env.FeatureToggles,
 			env.Cfg.Logger, registerer, nil, nil, nil, nil, nil, kv.Config{}, nil, storageBackend, nil, nil, nil, nil, grpcService)
 		require.NoError(t, err)
+		grpcService.Health.Register(storage, resourcepb.ResourceStore_ServiceDesc.ServiceName)
 		err = grpcService.StartAsync(ctx)
 		require.NoError(t, err)
 		err = grpcService.AwaitRunning(ctx)
@@ -275,33 +289,7 @@ func CreateGrafDirShared(t *testing.T, opts GrafanaOpts) (string, string) {
 func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, string) {
 	t.Helper()
 
-	// Search upwards in directory tree for project root
-	var rootDir string
-	found := false
-	for range 20 {
-		rootDir = filepath.Join(rootDir, "..")
-
-		dir, err := filepath.Abs(rootDir)
-		require.NoError(t, err)
-
-		// When running within an enterprise test, we need to move to the grafana directory
-		if strings.HasSuffix(dir, "grafana-enterprise") {
-			rootDir = filepath.Join(rootDir, "..", "grafana")
-			dir, err = filepath.Abs(rootDir)
-			require.NoError(t, err)
-		}
-
-		exists, err := fs.Exists(filepath.Join(dir, "public", "views"))
-		require.NoError(t, err)
-
-		if exists {
-			rootDir = dir
-			found = true
-			break
-		}
-	}
-
-	require.True(t, found, "Couldn't detect project root directory")
+	rootDir := testutil.GrafanaRootDir(t)
 
 	cfgDir := filepath.Join(tmpDir, "conf")
 	err := os.MkdirAll(cfgDir, 0o750)
@@ -411,10 +399,8 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 
 	openFeatureSect, err := cfg.NewSection("feature_toggles.openfeature")
 	require.NoError(t, err)
-	_, err = openFeatureSect.NewKey("enable_api", strconv.FormatBool(opts.OpenFeatureAPIEnabled))
-	require.NoError(t, err)
 
-	if opts.OpenFeatureAPIEnabled {
+	if opts.OpenFeatureStaticProvider {
 		_, err = openFeatureSect.NewKey("provider", "static")
 		require.NoError(t, err)
 		_, err = openFeatureSect.NewKey("targetingKey", "grafana")
@@ -788,12 +774,6 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 			require.NoError(t, err)
 		}
 	}
-	{
-		section, err := getOrCreateSection("unified_storage")
-		require.NoError(t, err)
-		_, err = section.NewKey("grpc_error_result_to_status", "true")
-		require.NoError(t, err)
-	}
 	if opts.UnifiedStorageDisableSearch {
 		section, err := getOrCreateSection("unified_storage")
 		require.NoError(t, err)
@@ -838,26 +818,44 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = section.NewKey("enable_sqlkv_backend", "true")
 		require.NoError(t, err)
 	}
+	// Always written so the defaults.ini default can't start an embedded server,
+	// bound to the fixed cluster_port, in every parallel test binary.
+	natsSect, err := getOrCreateSection("nats")
+	require.NoError(t, err)
+	_, err = natsSect.NewKey("enabled", strconv.FormatBool(opts.NATSEnabled))
+	require.NoError(t, err)
 	if opts.NATSEnabled {
 		listenAddress := opts.NATSListenAddress
 		if listenAddress == "" {
 			listenAddress = "127.0.0.1"
 		}
-		section, err := getOrCreateSection("nats")
+		_, err = natsSect.NewKey("mode", "embedded")
 		require.NoError(t, err)
-		_, err = section.NewKey("enabled", "true")
+		_, err = natsSect.NewKey("listen_address", listenAddress)
 		require.NoError(t, err)
-		_, err = section.NewKey("mode", "embedded")
+		_, err = natsSect.NewKey("client_port", strconv.Itoa(opts.NATSClientPort))
 		require.NoError(t, err)
-		_, err = section.NewKey("listen_address", listenAddress)
+		_, err = natsSect.NewKey("cluster_port", strconv.Itoa(opts.NATSClusterPort))
 		require.NoError(t, err)
-		_, err = section.NewKey("client_port", strconv.Itoa(opts.NATSClientPort))
+		// Single-node test bus unless the test builds a cluster.
+		_, err = natsSect.NewKey("discovery_enabled", strconv.FormatBool(opts.NATSDiscoveryEnabled))
 		require.NoError(t, err)
-		_, err = section.NewKey("cluster_port", strconv.Itoa(opts.NATSClusterPort))
-		require.NoError(t, err)
-		// Single-node test bus: skip KV-backed peer discovery/clustering.
-		_, err = section.NewKey("discovery_enabled", "false")
-		require.NoError(t, err)
+		if opts.NATSAdvertiseAddress != "" {
+			_, err = natsSect.NewKey("advertise_address", opts.NATSAdvertiseAddress)
+			require.NoError(t, err)
+		}
+		if opts.NATSDiscoveryInterval > 0 {
+			_, err = natsSect.NewKey("discovery_interval", opts.NATSDiscoveryInterval.String())
+			require.NoError(t, err)
+		}
+		if opts.NATSDiscoveryTTL > 0 {
+			_, err = natsSect.NewKey("discovery_ttl", opts.NATSDiscoveryTTL.String())
+			require.NoError(t, err)
+		}
+		for k, v := range opts.NATSExtraSettings {
+			_, err = natsSect.NewKey(k, v)
+			require.NoError(t, err)
+		}
 	}
 	if opts.PermittedProvisioningPaths != "" {
 		_, err = pathsSect.NewKey("permitted_provisioning_paths", opts.PermittedProvisioningPaths)
@@ -879,6 +877,12 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		provisioningSect, err := getOrCreateSection("provisioning")
 		require.NoError(t, err)
 		_, err = provisioningSect.NewKey("resources", strings.Join(opts.ProvisioningResources, ", "))
+		require.NoError(t, err)
+	}
+	if opts.ProvisioningBootstrapPath != "" {
+		provisioningSect, err := getOrCreateSection("provisioning")
+		require.NoError(t, err)
+		_, err = provisioningSect.NewKey("bootstrap_path", opts.ProvisioningBootstrapPath)
 		require.NoError(t, err)
 	}
 	if opts.ProvisioningAllowInsecure {
@@ -927,6 +931,12 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		provisioningSect, err := getOrCreateSection("provisioning")
 		require.NoError(t, err)
 		_, err = provisioningSect.NewKey("keys_only_relist", "true")
+		require.NoError(t, err)
+	}
+	if opts.ProvisioningResourceLister != "" {
+		provisioningSect, err := getOrCreateSection("provisioning")
+		require.NoError(t, err)
+		_, err = provisioningSect.NewKey("resource_lister", opts.ProvisioningResourceLister)
 		require.NoError(t, err)
 	}
 	// Write max_repositories if explicitly set.
@@ -1068,6 +1078,12 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = usSection.NewKey("global_search_index_enabled", "true")
 		require.NoError(t, err)
 	}
+	if opts.EnableGlobalHybridSearch {
+		section, err := getOrCreateSection("grafana-apiserver")
+		require.NoError(t, err)
+		_, err = section.NewKey("enable_global_hybrid_api", "true")
+		require.NoError(t, err)
+	}
 
 	if opts.ScopesApiEnabled {
 		section, err := getOrCreateSection("scopes")
@@ -1185,6 +1201,7 @@ type GrafanaOpts struct {
 	ProvisioningRepositoryTypes           []string
 	ProvisioningConnectionTypes           []string
 	ProvisioningResources                 []string
+	ProvisioningBootstrapPath             string
 	ProvisioningMaxResourcesPerRepository int64
 	ProvisioningMaxRepositories           int64
 	ProvisioningMaxIncrementalChanges     *int
@@ -1221,6 +1238,9 @@ type GrafanaOpts struct {
 	// connection informer's periodic re-list ask storage for keys instead of whole
 	// objects. Off by default, matching the shipped default.
 	ProvisioningKeysOnlyReList bool
+	// ProvisioningResourceLister sets [provisioning] resource_lister ("search" or "apis").
+	// Empty leaves the shipped default.
+	ProvisioningResourceLister string
 
 	// EnableKeysAPI turns on the per-resource list-keys endpoints, off by default.
 	EnableKeysAPI bool
@@ -1229,10 +1249,14 @@ type GrafanaOpts struct {
 	// index it reads. Both are off by default.
 	EnableGlobalSearch bool
 
+	// EnableGlobalHybridSearch turns on the global hybrid search endpoint, off by default.
+	EnableGlobalHybridSearch bool
+
 	// NATSEnabled starts an embedded Core NATS bus ([nats] enabled=true,
 	// mode=embedded). Provisioning controllers then consume resource-change
 	// notifications through the NATS-backed informer instead of the apiserver
 	// watch. Publishing requires EnableSQLKVBackend=true.
+	// Test servers keep NATS off without it, whatever conf/defaults.ini ships.
 	NATSEnabled bool
 	// NATSListenAddress is the embedded server's bind address; defaults to
 	// 127.0.0.1 when empty.
@@ -1240,10 +1264,22 @@ type GrafanaOpts struct {
 	// NATSClientPort / NATSClusterPort are the embedded server's ports. Callers
 	// should pass free ports so parallel test binaries don't collide on the
 	// conventional 4222/6222.
-	NATSClientPort                      int
-	NATSClusterPort                     int
+	NATSClientPort  int
+	NATSClusterPort int
+	// NATSDiscoveryEnabled turns on DB-backed peer discovery so the embedded
+	// servers of a StartGrafanaCluster form a mesh. Off by default.
+	NATSDiscoveryEnabled bool
+	// NATSAdvertiseAddress sets the host peers dial for this server's routes.
+	NATSAdvertiseAddress string
+	// NATSDiscoveryInterval / NATSDiscoveryTTL override the heartbeat cadence and
+	// how long a silent peer keeps its route. Zero leaves the ini defaults.
+	NATSDiscoveryInterval time.Duration
+	NATSDiscoveryTTL      time.Duration
+	// NATSExtraSettings sets more [nats] keys, applied last so they override the
+	// ones above (e.g. per-instance cluster TLS paths).
+	NATSExtraSettings                   map[string]string
 	SecretsManagerEnableDBMigrations    bool
-	OpenFeatureAPIEnabled               bool
+	OpenFeatureStaticProvider           bool
 	DisableAuthZClientCache             bool
 	ZanzanaReconciliationInterval       time.Duration
 	ZanzanaReconcilerMode               setting.ZanzanaReconcilerMode
@@ -1313,11 +1349,7 @@ func CreateUser(t *testing.T, store db.DB, cfg *setting.Cfg, cmd user.CreateUser
 func RunWithFeatureToggle(t *testing.T, flag string, run func(t *testing.T)) {
 	t.Helper()
 
-	for _, enabled := range []bool{
-		false,
-		// TODO: Uncomment when https://github.com/grafana/identity-access-team/issues/2436 is completed.
-		// true,
-	} {
+	for _, enabled := range []bool{false, true} {
 		t.Run(fmt.Sprintf("%s=%t", flag, enabled), func(t *testing.T) {
 			t.Setenv(fmt.Sprintf("GF_FEATURE_TOGGLES_%s", flag), strconv.FormatBool(enabled))
 
