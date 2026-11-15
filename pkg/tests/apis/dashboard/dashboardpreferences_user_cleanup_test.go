@@ -24,6 +24,74 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
+func TestIntegrationDashboardPreferencesUserCleanup(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		DisableAnonymous: true,
+	})
+	t.Cleanup(helper.Shutdown)
+
+	orgB := helper.CreateOrg(apis.Org2)
+	viewerUID := helper.Org1.Viewer.Identity.GetIdentifier()
+	seedDashboardPreferencesUserTier(t, helper, 1, viewerUID)
+	seedDashboardPreferencesUserTier(t, helper, orgB, viewerUID)
+
+	t.Run("removing a user from an org deletes their preferences in that org only", func(t *testing.T) {
+		u, id, uid := createDashboardPreferencesCleanupViewer(t, helper, "prefs-cleanup-org-removal")
+		helper.AddUserToOrg(u, apis.Org2, identity.RoleViewer)
+		seedDashboardPreferencesUserTier(t, helper, 1, uid)
+		seedDashboardPreferencesUserTier(t, helper, orgB, uid)
+
+		rsp := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: http.MethodDelete,
+			Path:   fmt.Sprintf("/api/orgs/%d/users/%d", orgB, id),
+		}, &struct{}{})
+		require.Equal(t, http.StatusOK, rsp.Response.StatusCode, "body: %s", string(rsp.Body))
+
+		requireDashboardPreferencesUserTier(t, helper, orgB, uid, false)
+		requireDashboardPreferencesUserTier(t, helper, 1, uid, true)
+		requireDashboardPreferencesUserTier(t, helper, orgB, viewerUID, true)
+	})
+
+	t.Run("deleting a user deletes their preferences in every org", func(t *testing.T) {
+		u, id, uid := createDashboardPreferencesCleanupViewer(t, helper, "prefs-cleanup-user-delete")
+		helper.AddUserToOrg(u, apis.Org2, identity.RoleViewer)
+		seedDashboardPreferencesUserTier(t, helper, 1, uid)
+		seedDashboardPreferencesUserTier(t, helper, orgB, uid)
+
+		rsp := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: http.MethodDelete,
+			Path:   fmt.Sprintf("/api/admin/users/%d", id),
+		}, &struct{}{})
+		require.Equal(t, http.StatusOK, rsp.Response.StatusCode, "body: %s", string(rsp.Body))
+
+		requireDashboardPreferencesUserTier(t, helper, 1, uid, false)
+		requireDashboardPreferencesUserTier(t, helper, orgB, uid, false)
+		requireDashboardPreferencesUserTier(t, helper, 1, viewerUID, true)
+		requireDashboardPreferencesUserTier(t, helper, orgB, viewerUID, true)
+	})
+
+	t.Run("removing a user from their only org deletes their preferences", func(t *testing.T) {
+		_, id, uid := createDashboardPreferencesCleanupViewer(t, helper, "prefs-cleanup-orphan")
+		seedDashboardPreferencesUserTier(t, helper, 1, uid)
+
+		rsp := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: http.MethodDelete,
+			Path:   fmt.Sprintf("/api/org/users/%d", id),
+		}, &struct {
+			Message string `json:"message"`
+		}{})
+		require.Equal(t, http.StatusOK, rsp.Response.StatusCode, "body: %s", string(rsp.Body))
+		require.Equal(t, "User deleted", rsp.Result.Message)
+
+		requireDashboardPreferencesUserTier(t, helper, 1, uid, false)
+	})
+}
+
 func TestIntegrationDashboardPreferencesUserCleanupKubernetesUsers(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -120,6 +188,17 @@ func TestIntegrationDashboardPreferencesUserCleanupKubernetesUsers(t *testing.T)
 			})
 		})
 	}
+}
+
+// createDashboardPreferencesCleanupViewer creates a Viewer in org 1 and returns the user, its ID and its UID.
+func createDashboardPreferencesCleanupViewer(t *testing.T, helper *apis.K8sTestHelper, name string) (apis.User, int64, string) {
+	t.Helper()
+	u := helper.CreateUser(name, apis.Org1, identity.RoleViewer, nil)
+	id, err := identity.UserIdentifier(u.Identity.GetID())
+	require.NoError(t, err)
+	uid := u.Identity.GetIdentifier()
+	require.NotEmpty(t, uid)
+	return u, id, uid
 }
 
 // createDashboardPreferencesCleanupUser creates a user through the admin API and returns its ID and UID.

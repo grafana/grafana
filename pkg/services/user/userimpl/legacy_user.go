@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardpreferences"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
@@ -40,6 +41,8 @@ type LegacyService struct {
 	tracer       tracing.Tracer
 	sql          legacysql.LegacyDatabaseProvider
 	watch        *legacywatch.Publisher
+	// preferences deletes the DashboardPreferences of a deleted user; nil when cleanup is not wired.
+	preferences dashboardpreferences.UserCleaner
 }
 
 func NewLegacyService(
@@ -50,6 +53,7 @@ func NewLegacyService(
 	cacheService *localcache.CacheService, tracer tracing.Tracer,
 	quotaService quota.Service, bundleRegistry supportbundles.Service,
 	watch *legacywatch.Publisher,
+	preferences dashboardpreferences.UserCleaner,
 ) (user.Service, error) {
 	store := ProvideStore(sql, cfg)
 	s := &LegacyService{
@@ -61,6 +65,7 @@ func NewLegacyService(
 		tracer:       tracer,
 		sql:          sql,
 		watch:        watch,
+		preferences:  preferences,
 	}
 
 	defaultLimits, err := readQuotaConfig(cfg)
@@ -236,11 +241,26 @@ func (s *LegacyService) Delete(ctx context.Context, cmd *user.DeleteUserCommand)
 		return err
 	}
 
+	var orgIDs []int64
+	if s.preferences != nil && s.orgService != nil && usr != nil && !usr.IsServiceAccount && usr.UID != "" {
+		// Read before the user row goes: the org list query joins the user table, and callers
+		// delete the user's memberships next.
+		orgs, err := s.orgService.GetUserOrgList(ctx, &org.GetUserOrgListQuery{UserID: cmd.UserID})
+		if err != nil {
+			logging.FromContext(ctx).Warn("Failed to delete a user's dashboard preferences", "userUID", usr.UID, "error", fmt.Errorf("list the user's orgs: %w", err))
+		} else {
+			for _, o := range orgs {
+				orgIDs = append(orgIDs, o.OrgID)
+			}
+		}
+	}
+
 	if err := s.store.Delete(ctx, cmd.UserID); err != nil {
 		return err
 	}
 	if usr != nil && !usr.IsServiceAccount {
 		s.watch.Publish(ctx, legacywatch.Deleted, userResource, usr.OrgID, usr.UID, 0)
+		dashboardpreferences.UserLeftOrgs(ctx, s.preferences, s.cfg, usr.UID, orgIDs, nil)
 	}
 	return nil
 }

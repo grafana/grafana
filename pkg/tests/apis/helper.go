@@ -208,7 +208,7 @@ func buildK8sTestHelper(t *testing.T, opts K8sTestHelperOpts, listenerAddress st
 	userSvc, err := userimpl.NewLegacyService(
 		legacysql.NewDatabaseProvider(c.env.SQLStore), orgSvc, c.env.Cfg, teamSvc,
 		localcache.ProvideService(), tracing.NewNoopTracerService(), quotaService,
-		supportbundlestest.NewFakeBundleService(), nil)
+		supportbundlestest.NewFakeBundleService(), nil, nil)
 	require.NoError(c.t, err)
 	c.userSvc = userSvc
 

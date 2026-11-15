@@ -389,7 +389,7 @@ var Basic = wire.NewSet(
 	annotationsapi.ProvideTokenExchanger,
 	annotationsapi.ProvideMigrationProxy,
 	starApi.ProvideK8sClients,
-	userimpl.ProvideServiceWithWatch,
+	userimpl.ProvideServiceWithPreferencesCleanup,
 	wire.Bind(new(user.Service), new(*userimpl.Service)),
 	orgimpl.ProvideServiceWithPreferencesCleanup,
 	orgimpl.ProvideDeletionService,

@@ -542,6 +542,179 @@ func TestLegacyService_GetSignedInUserSkipsTeamLookup(t *testing.T) {
 	require.True(t, got.IsServiceAccount)
 }
 
+func TestLegacyService_DeleteDeletesUserPreferences(t *testing.T) {
+	t.Run("deletes the tier in each of the user's orgs, read before the row is deleted", func(t *testing.T) {
+		f := newDeletePreferencesFixture(t, 1, 2)
+
+		err := f.delete(t)
+
+		require.NoError(t, err)
+		require.Equal(t, []int64{7}, f.orgs.lookups)
+		require.True(t, f.store.deleteRan)
+		require.ElementsMatch(t, []string{"default/u7", "org-2/u7"}, f.cleaner.calls)
+	})
+
+	t.Run("a failed delete keeps the tier", func(t *testing.T) {
+		f := newDeletePreferencesFixture(t, 1)
+		boom := errors.New("boom")
+		f.store.ExpectedDeleteUserError = boom
+
+		err := f.delete(t)
+
+		require.ErrorIs(t, err, boom)
+		require.Empty(t, f.cleaner.calls)
+	})
+
+	t.Run("a missing user", func(t *testing.T) {
+		f := newDeletePreferencesFixture(t, 1)
+		f.store.ExpectedError = user.ErrUserNotFound
+
+		err := f.delete(t)
+
+		require.ErrorIs(t, err, user.ErrUserNotFound)
+		require.Empty(t, f.cleaner.calls)
+	})
+
+	t.Run("a failed org lookup still deletes the user", func(t *testing.T) {
+		f := newDeletePreferencesFixture(t, 1)
+		f.orgs.ExpectedError = errors.New("boom")
+
+		err := f.delete(t)
+
+		require.NoError(t, err)
+		require.True(t, f.store.deleteRan)
+		require.Empty(t, f.cleaner.calls)
+	})
+
+	t.Run("a failed cleanup still deletes the user", func(t *testing.T) {
+		f := newDeletePreferencesFixture(t, 1)
+		f.cleaner.err = errors.New("boom")
+
+		err := f.delete(t)
+
+		require.NoError(t, err)
+		require.True(t, f.store.deleteRan)
+		require.ElementsMatch(t, []string{"default/u7"}, f.cleaner.calls)
+	})
+
+	t.Run("service accounts have no tier", func(t *testing.T) {
+		f := newDeletePreferencesFixture(t, 1)
+		f.store.ExpectedUser.IsServiceAccount = true
+
+		err := f.delete(t)
+
+		require.NoError(t, err)
+		require.Empty(t, f.orgs.lookups)
+		require.Empty(t, f.cleaner.calls)
+	})
+
+	t.Run("Cloud deletes the stack's tier once", func(t *testing.T) {
+		f := newDeletePreferencesFixture(t, 1, 2)
+		f.svc.cfg.StackID = "123"
+
+		err := f.delete(t)
+
+		require.NoError(t, err)
+		require.ElementsMatch(t, []string{"stacks-123/u7"}, f.cleaner.calls)
+	})
+
+	t.Run("no cleaner", func(t *testing.T) {
+		f := newDeletePreferencesFixture(t, 1)
+		f.svc.preferences = nil
+
+		err := f.delete(t)
+
+		require.NoError(t, err)
+		require.True(t, f.store.deleteRan)
+		require.Empty(t, f.orgs.lookups)
+	})
+
+	t.Run("a store that returns no user", func(t *testing.T) {
+		f := newDeletePreferencesFixture(t, 1)
+		f.store.ExpectedUser = nil
+
+		err := f.delete(t)
+
+		require.NoError(t, err)
+		require.True(t, f.store.deleteRan)
+		require.Empty(t, f.orgs.lookups)
+		require.Empty(t, f.cleaner.calls)
+	})
+}
+
+// deletePreferencesFixture deletes user 7 ("u7"), who is a member of the orgs the fixture is created with.
+type deletePreferencesFixture struct {
+	svc     *LegacyService
+	store   *deleteRecordingUserStore
+	orgs    *orgListBeforeDeleteService
+	cleaner *recordingPreferencesCleaner
+}
+
+func newDeletePreferencesFixture(t *testing.T, orgIDs ...int64) *deletePreferencesFixture {
+	t.Helper()
+	store := &deleteRecordingUserStore{FakeUserStore: FakeUserStore{ExpectedUser: &user.User{ID: 7, UID: "u7"}}}
+	orgs := &orgListBeforeDeleteService{t: t, store: store}
+	for _, orgID := range orgIDs {
+		orgs.ExpectedUserOrgDTO = append(orgs.ExpectedUserOrgDTO, &org.UserOrgDTO{OrgID: orgID})
+	}
+	cleaner := &recordingPreferencesCleaner{}
+	return &deletePreferencesFixture{
+		svc: &LegacyService{
+			store:       store,
+			orgService:  orgs,
+			cfg:         setting.NewCfg(),
+			tracer:      tracing.InitializeTracerForTest(),
+			preferences: cleaner,
+		},
+		store:   store,
+		orgs:    orgs,
+		cleaner: cleaner,
+	}
+}
+
+func (f *deletePreferencesFixture) delete(t *testing.T) error {
+	return f.svc.Delete(t.Context(), &user.DeleteUserCommand{UserID: 7})
+}
+
+// deleteRecordingUserStore records whether Delete ran.
+type deleteRecordingUserStore struct {
+	FakeUserStore
+	deleteRan bool
+}
+
+func (s *deleteRecordingUserStore) Delete(ctx context.Context, userID int64) error {
+	s.deleteRan = true
+	return s.FakeUserStore.Delete(ctx, userID)
+}
+
+// orgListBeforeDeleteService records the user ID of each GetUserOrgList and fails the test if one
+// runs after the user row is deleted.
+type orgListBeforeDeleteService struct {
+	orgtest.FakeOrgService
+	t       *testing.T
+	store   *deleteRecordingUserStore
+	lookups []int64
+}
+
+func (s *orgListBeforeDeleteService) GetUserOrgList(ctx context.Context, query *org.GetUserOrgListQuery) ([]*org.UserOrgDTO, error) {
+	if s.store.deleteRan {
+		s.t.Error("GetUserOrgList ran after the user row was deleted")
+	}
+	s.lookups = append(s.lookups, query.UserID)
+	return s.FakeOrgService.GetUserOrgList(ctx, query)
+}
+
+// recordingPreferencesCleaner records "<namespace>/<userUID>" for each delete and returns err.
+type recordingPreferencesCleaner struct {
+	err   error
+	calls []string
+}
+
+func (c *recordingPreferencesCleaner) DeleteUserPreferences(_ context.Context, namespace, userUID string) error {
+	c.calls = append(c.calls, namespace+"/"+userUID)
+	return c.err
+}
+
 // ctxCapturingUserService records the context passed to GetProfile so tests can
 // assert which identity the k8s lookup runs as.
 type ctxCapturingUserService struct {
