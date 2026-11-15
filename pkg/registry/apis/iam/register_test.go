@@ -30,14 +30,18 @@ import (
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	iamauthorizer "github.com/grafana/grafana/pkg/registry/apis/iam/authorizer"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/display"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/noopstorage"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/team"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/user"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/userpermissions"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
+	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer/storewrapper"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/versionpolicy"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardpreferences"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
@@ -464,6 +468,77 @@ func TestUpdateUsersAPIGroup_ReadOnly(t *testing.T) {
 			require.True(t, hasTeams)
 		})
 	}
+}
+
+type noopUserPreferencesCleaner struct{}
+
+func (noopUserPreferencesCleaner) DeleteUserPreferences(context.Context, string, string) error {
+	return nil
+}
+
+func TestNewUserDeleteCascade(t *testing.T) {
+	authInfos := struct {
+		rest.Storage
+		rest.Lister
+		rest.GracefulDeleter
+	}{}
+	userStore := struct{ storewrapper.K8sStorage }{}
+
+	for _, tt := range []struct {
+		name            string
+		authInfoStorage rest.Storage
+		preferences     dashboardpreferences.UserCleaner
+		readOnly        bool
+		wantCascade     bool
+	}{
+		{name: "nothing to cascade to"},
+		{name: "auth infos only", authInfoStorage: authInfos, wantCascade: true},
+		{name: "preferences only", preferences: noopUserPreferencesCleaner{}, wantCascade: true},
+		{name: "read-only API", authInfoStorage: authInfos, preferences: noopUserPreferencesCleaner{}, readOnly: true},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			got := newUserDeleteCascade(userStore, tt.authInfoStorage, tt.preferences, tt.readOnly)
+
+			_, isCascade := got.(*user.CascadeDeleter)
+			require.Equal(t, tt.wantCascade, isCascade)
+		})
+	}
+}
+
+func TestNewAPIService_WiresUserPreferencesCleanup(t *testing.T) {
+	newService := func(dialConfigs map[schema.GroupResource]iamauthorizer.DialConfig) *IdentityAccessManagementAPIBuilder {
+		return NewAPIService(
+			nil,
+			nil,
+			legacysql.NewDatabaseProvider(nil),
+			&NoopApiInstaller[*iamv0.RoleBinding]{ResourceInfo: iamv0.RoleBindingInfo},
+			&NoopApiInstaller[*iamv0.Role]{ResourceInfo: iamv0.RoleInfo},
+			&NoopApiInstaller[*iamv0.GlobalRole]{ResourceInfo: iamv0.GlobalRoleInfo},
+			&NoopApiInstaller[*iamv0.TeamLBACRule]{ResourceInfo: iamv0.TeamLBACRuleInfo},
+			nil,
+			prometheus.NewRegistry(),
+			nil,
+			dialConfigs,
+			tracing.InitializeTracerForTest(),
+			resourcepermission.NewMappersRegistry(),
+			nil,
+			Features{UsersAPI: true},
+		)
+	}
+
+	t.Run("builds a cleaner from the dashboards dial config", func(t *testing.T) {
+		b := newService(map[schema.GroupResource]iamauthorizer.DialConfig{
+			{Group: "dashboard.grafana.app", Resource: "dashboards"}: {Host: "https://dashboards.invalid", Audience: "dashboard.grafana.app"},
+		})
+
+		require.NotNil(t, b.userPreferences)
+	})
+
+	t.Run("builds no cleaner without a dashboards dial config", func(t *testing.T) {
+		b := newService(nil)
+
+		require.Nil(t, b.userPreferences)
+	})
 }
 
 func TestInstallSchema_ResourcePermissionsGate(t *testing.T) {

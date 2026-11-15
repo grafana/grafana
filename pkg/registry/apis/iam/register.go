@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
 
+	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	legacyiamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
@@ -57,6 +58,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/versionpolicy"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardpreferences"
 	"github.com/grafana/grafana/pkg/services/login/authinfoimpl"
 	"github.com/grafana/grafana/pkg/services/org"
 	settingsvc "github.com/grafana/grafana/pkg/services/setting"
@@ -199,6 +201,7 @@ func RegisterAPIService(
 		ssoLoginConfig:  sso.NewLoginConfigHandler(cfg, ssoService),
 		userPermissions: userpermissions.NewHandler(userPermissionsClient, cfg.IDUseExternalGroupsForGroupsClaim),
 		features:        features,
+		userPreferences: dashboardpreferences.ProvideUserCleaner(restConfig),
 	}
 	builder.userSearchHandler = user.NewSearchHandler(tracing, builder.userSearchClient, accessClient)
 	builder.teamSearchHandler = team.NewSearchHandler(tracing, builder.teamSearchClient, accessClient)
@@ -274,6 +277,7 @@ func NewAPIService(
 		teamLBACApiInstaller:             teamLBACApiInstaller,
 		settingService:                   settingService,
 		features:                         features,
+		userPreferences:                  newRemoteUserPreferencesCleaner(authorizerDialConfigs, tokenExchanger),
 		// Serve the SSOSetting kind read-only in standalone, gated by kubernetesSsoSettingsApi.
 		ssoLegacyStore: sso.NewLegacyStore(ssosettingsimpl.ProvideReadOnlyDBService(dbProvider), tracingService),
 		authorizer: authorizer.AuthorizerFunc(
@@ -791,9 +795,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateUsersAPIGroup(opts builder.AP
 	}
 
 	b.userGetter = userStore
-	if authInfos, ok := b.authInfoStorage.(user.AuthInfoStorage); ok && !readOnly {
-		userStore = user.NewCascadeDeleter(userStore, authInfos)
-	}
+	userStore = newUserDeleteCascade(userStore, b.authInfoStorage, b.userPreferences, readOnly)
 	var userAPIStore rest.Storage = storewrapper.New(
 		userStore,
 		iamv0.UserResourceInfo.GroupResource(),
@@ -831,6 +833,28 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateUsersAPIGroup(opts builder.AP
 	}
 
 	return nil
+}
+
+// newUserDeleteCascade wraps userStore in a CascadeDeleter when the API can delete and there is something to cascade to.
+func newUserDeleteCascade(userStore storewrapper.K8sStorage, authInfoStorage rest.Storage, preferences dashboardpreferences.UserCleaner, readOnly bool) storewrapper.K8sStorage {
+	authInfos, _ := authInfoStorage.(user.AuthInfoStorage)
+	if readOnly || (authInfos == nil && preferences == nil) {
+		return userStore
+	}
+	return user.NewCascadeDeleter(userStore, authInfos, preferences)
+}
+
+// newRemoteUserPreferencesCleaner returns nil without a dial config for {dashboard.grafana.app, dashboards}.
+func newRemoteUserPreferencesCleaner(dialConfigs map[schema.GroupResource]iamauthorizer.DialConfig, tokenExchanger authn.TokenExchanger) dashboardpreferences.UserCleaner {
+	gr := schema.GroupResource{Group: dashboardv1.GROUP, Resource: dashboardv1.DASHBOARD_RESOURCE}
+	cfg, ok := dialConfigs[gr]
+	if !ok {
+		return nil
+	}
+	// One API server serves the whole dashboard.grafana.app group, so the dashboards dial config
+	// also reaches dashboardpreferences.
+	configProvider := iamauthorizer.NewRemoteConfigProvider(map[schema.GroupResource]iamauthorizer.DialConfig{gr: cfg}, tokenExchanger)[gr]
+	return dashboardpreferences.NewUserCleaner(configProvider)
 }
 
 // useStatusDualWriter returns true when the user resource is in Mode 0-3 (legacy is still
