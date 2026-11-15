@@ -1,0 +1,10 @@
+{
+  "apiVersion": "folder.grafana.app/v1beta1",
+  "kind": "Folder",
+  "metadata": {
+    "name": "gdev-provisioning-notes"
+  },
+  "spec": {
+    "title": "Notes"
+  }
+}
