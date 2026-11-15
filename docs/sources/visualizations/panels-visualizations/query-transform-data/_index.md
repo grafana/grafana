@@ -237,6 +237,9 @@ The same toggle enables inline editing and previews in the **Saved queries** dia
 If you don't have access to this experience, you can still use the existing dialog box and open queries in Explore.
 For information about feature availability, refer to [Feature toggles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/).
 
+You need saved-query write permissions to create or edit queries.
+For details, refer to [Roles, permissions, and RBAC](#roles-permissions-and-rbac).
+
 #### Create or edit a query
 
 Use the Saved queries page to compose a new query or update a query you've already saved:
@@ -254,11 +257,28 @@ Editing an existing query runs it automatically when the editor opens.
 New queries don't run until you request a preview.
 Running a query doesn't save your edits, and **Cancel** on an in-flight run stops execution without saving or discarding the edits.
 If you leave an editor with unsaved changes, Grafana asks you to confirm that you want to discard them.
+Saving an edit updates the stored query for everyone who can access it.
+To keep the original query unchanged, duplicate it before editing.
 
 If **Add from recent queries** is available, click it and choose **Save query** on a history entry to use that entry as the starting point for a new saved query.
 Review the query, data source, and description, then click **Save**.
+If a history entry contains multiple queries, this action uses its first query.
 This option also requires the `queryHistory.recentQueriesUI` feature toggle.
 You can continue to use **New query in Explore** or **Edit in Explore** when you prefer the Explore workflow.
+If a data source doesn't provide an embedded query editor, use Explore to edit its query.
+
+#### Edit and reuse a query in the dialog box
+
+You can also edit the query itself, not just its metadata, from the [Saved queries dialog box](#saved-queries-dialog-box):
+
+1. Select a saved query from the list.
+1. Optionally, click **Run query** to preview its results before using it.
+1. To change the saved query, click **Edit**, update the query or metadata, then click **Save**.
+   The editor expands to use the dialog box, and **Back to saved queries** returns you to the list and details view.
+1. Click **Select query** to use the query in the editor that opened the dialog box.
+
+If you open the dialog box from the command palette, click **Open in Explore** instead of **Select query**.
+Selecting or previewing a query doesn't save changes to the original query.
 
 #### Preview query results
 
