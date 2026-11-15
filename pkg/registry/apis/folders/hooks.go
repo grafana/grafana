@@ -2,10 +2,12 @@ package folders
 
 import (
 	"context"
+	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/generic/registry"
+	"k8s.io/apiserver/pkg/util/dryrun"
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -71,7 +73,10 @@ func (b *FolderAPIBuilder) beginUpdate(ctx context.Context, obj runtime.Object, 
 	}, nil
 }
 
-func (b *FolderAPIBuilder) afterDelete(obj runtime.Object, _ *metav1.DeleteOptions) {
+// afterDelete runs inside the delete request, which the apiserver times out at 34 s.
+const afterDeleteTimeout = 5 * time.Second
+
+func (b *FolderAPIBuilder) afterDelete(obj runtime.Object, options *metav1.DeleteOptions) {
 	ctx := context.Background()
 	log := logging.DefaultLogger
 	meta, err := utils.MetaAccessor(obj)
@@ -79,6 +84,8 @@ func (b *FolderAPIBuilder) afterDelete(obj runtime.Object, _ *metav1.DeleteOptio
 		log.Error("Failed to access deleted folder object metadata", "error", err)
 		return
 	}
+
+	b.deleteDashboardPreferencesAfterDelete(meta.GetNamespace(), meta.GetName(), options)
 
 	if b.useZanzana {
 		log.Info("Propagating deleted folder to Zanzana", "folder", meta.GetName(), "parent", meta.GetFolder())
@@ -106,6 +113,30 @@ func (b *FolderAPIBuilder) afterDelete(obj runtime.Object, _ *metav1.DeleteOptio
 		if accessErr := b.folderPermissionsSvc.DeleteResourcePermissions(ctx, ns.OrgID, meta.GetName()); accessErr != nil {
 			log.Warn("failed to delete folder permission after successfully deleting folder resource", "folder", meta.GetName(), "error", accessErr)
 		}
+	}
+}
+
+// deleteDashboardPreferencesAfterDelete deletes the folder tier of a deleted folder. No-op for a
+// dry-run delete or when no client is configured; logs and returns on any error.
+func (b *FolderAPIBuilder) deleteDashboardPreferencesAfterDelete(namespace, folderUID string, options *metav1.DeleteOptions) {
+	if options != nil && dryrun.IsDryRun(options.DryRun) {
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), afterDeleteTimeout)
+	defer cancel()
+
+	log := logging.DefaultLogger
+	client, err := b.dashboardPreferencesClient(ctx)
+	if err != nil {
+		log.Error("failed to get dashboard preferences client", "error", err)
+		return
+	}
+	if client == nil {
+		return
+	}
+	if err := deleteFolderDashboardPreferences(ctx, *client, namespace, folderUID, metav1.DeleteOptions{}); err != nil {
+		log.Error("failed to delete folder dashboard preferences", "namespace", namespace, "folder", folderUID, "error", err)
 	}
 }
 

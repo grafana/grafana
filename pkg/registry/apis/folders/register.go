@@ -83,6 +83,9 @@ type FolderAPIBuilder struct {
 	dashboardSvcMu        sync.Mutex
 	variableSvc           *dynamic.NamespaceableResourceInterface
 	variableSvcMu         sync.Mutex
+	// Used by every folder delete, not only cascade delete; access via dashboardPreferencesClient(ctx).
+	dashboardPreferencesSvc   *dynamic.NamespaceableResourceInterface
+	dashboardPreferencesSvcMu sync.Mutex
 	// contentsDeleter removes alert rules and library elements contained in a folder during cascade
 	// delete. Always set by RegisterAPIService (embedded); set by NewAPIService (standalone) only
 	// when the deployment opts into that cleanup.
@@ -139,6 +142,31 @@ func (b *FolderAPIBuilder) variableClient(ctx context.Context) (*dynamic.Namespa
 	client := dyn.Resource(dashV2beta1.VariableResourceInfo.GroupVersionResource())
 	b.variableSvc = &client
 	return b.variableSvc, nil
+}
+
+func (b *FolderAPIBuilder) dashboardPreferencesClient(ctx context.Context) (*dynamic.NamespaceableResourceInterface, error) {
+	if b.cascadeConfigProvider == nil {
+		return b.dashboardPreferencesSvc, nil
+	}
+
+	b.dashboardPreferencesSvcMu.Lock()
+	defer b.dashboardPreferencesSvcMu.Unlock()
+
+	if b.dashboardPreferencesSvc != nil {
+		return b.dashboardPreferencesSvc, nil
+	}
+
+	cfg, err := b.cascadeConfigProvider.GetRestConfig(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get rest config: %w", err)
+	}
+	dyn, err := dynamic.NewForConfig(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("create dynamic client: %w", err)
+	}
+	client := dyn.Resource(dashV2beta1.DashboardPreferencesResourceInfo.GroupVersionResource())
+	b.dashboardPreferencesSvc = &client
+	return b.dashboardPreferencesSvc, nil
 }
 
 func RegisterAPIService(cfg *setting.Cfg,
@@ -215,6 +243,11 @@ func WithDeleteCheckMetrics(reg prometheus.Registerer, legacyJoinEnabled bool) A
 // WithCountMetrics exports the folder count counter on reg.
 func WithCountMetrics(reg prometheus.Registerer, legacyJoinEnabled bool) APIServiceOption {
 	return func(b *FolderAPIBuilder) { b.countMetrics = newCountMetrics(reg, legacyJoinEnabled) }
+}
+
+// WithDashboardPreferencesClient sets the client folder deletes use to delete the folder's dashboard preferences.
+func WithDashboardPreferencesClient(client *dynamic.NamespaceableResourceInterface) APIServiceOption {
+	return func(b *FolderAPIBuilder) { b.dashboardPreferencesSvc = client }
 }
 
 func (b *FolderAPIBuilder) GetGroupVersions() []schema.GroupVersion {
