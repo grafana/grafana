@@ -243,8 +243,7 @@ func (s *LegacyService) Delete(ctx context.Context, cmd *user.DeleteUserCommand)
 
 	var orgIDs []int64
 	if s.preferences != nil && s.orgService != nil && usr != nil && !usr.IsServiceAccount && usr.UID != "" {
-		// Read before the user row goes: the org list query joins the user table, and callers
-		// delete the user's memberships next.
+		// Read before the user row goes: the org list query joins the user table.
 		orgs, err := s.orgService.GetUserOrgList(ctx, &org.GetUserOrgListQuery{UserID: cmd.UserID})
 		if err != nil {
 			logging.FromContext(ctx).Warn("Failed to delete a user's dashboard preferences", "userUID", usr.UID, "error", fmt.Errorf("list the user's orgs: %w", err))

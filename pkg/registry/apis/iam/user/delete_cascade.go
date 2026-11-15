@@ -97,9 +97,9 @@ func (c *CascadeDeleter) deleteAuthInfos(ctx context.Context, userUID string) er
 	})
 }
 
-// Unlike a leftover AuthInfo, a leftover preferences object is named by a UID no other user
-// gets, so a failure here doesn't fail the user's delete. It runs after the user so that a
-// failed user delete keeps the user's preferences.
+// Unlike an AuthInfo, a leftover preferences object links the user to nothing and holds only
+// display defaults, so a failure here doesn't fail the user's delete. It runs after the user so
+// that a failed user delete keeps the user's preferences.
 func (c *CascadeDeleter) deletePreferences(ctx context.Context, userUID string) {
 	if c.preferences == nil {
 		return
