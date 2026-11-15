@@ -41,6 +41,16 @@ function elementNames(spec: NotebookSpec): string[] {
 }
 
 describe('appendElementsToNotebook with one panel', () => {
+  it('keeps the ids of the cells already there and sends the new one without', () => {
+    const existing = notebook({ intro: panel('Intro') });
+    const id = '00000000-0000-4000-8000-000000000001';
+    existing.layout.spec.cells[0].spec.id = id;
+
+    const spec = appendElementsToNotebook(existing, [{ kind: 'panel', panel: panel('Latency') }]);
+
+    expect(spec.layout.spec.cells.map((cell) => cell.spec.id)).toEqual([id, undefined]);
+  });
+
   it('appends the panel as the last cell, attributed to the user', () => {
     const spec = appendElementsToNotebook(notebook({ intro: panel('Intro') }), [
       { kind: 'panel', panel: panel('p95 latency') },

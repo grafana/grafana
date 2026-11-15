@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -27,7 +28,6 @@ func TestGetQuotaResponses(t *testing.T) {
 	}
 	grpcStatus, err := status.New(codes.Internal, "transport message").WithDetails(result)
 	require.NoError(t, err)
-	embedded := &resourcepb.QuotaUsageResponse{Error: result, Usage: 10, Limit: 20}
 	transportErr := errors.New("connection failed")
 	const errorBody = `{
 		"metadata":{}, "status":"Failure", "code":503, "reason":"ServiceUnavailable", "message":"quota unavailable",
@@ -42,9 +42,10 @@ func TestGetQuotaResponses(t *testing.T) {
 		body     string
 		wantErr  string
 	}{
-		{name: "embedded", response: embedded, code: http.StatusServiceUnavailable, body: errorBody},
 		{name: "grpc", err: grpcStatus.Err(), code: http.StatusServiceUnavailable, body: errorBody},
-		{name: "transport takes precedence", response: embedded, err: transportErr, wantErr: transportErr.Error()},
+		{name: "wrapped grpc", err: fmt.Errorf("call failed: %w", grpcStatus.Err()), code: http.StatusServiceUnavailable, body: errorBody},
+		{name: "grpc with partial response", response: &resourcepb.QuotaUsageResponse{Usage: 10, Limit: 20}, err: grpcStatus.Err(), code: http.StatusServiceUnavailable, body: errorBody},
+		{name: "plain error", err: transportErr, wantErr: transportErr.Error()},
 		{
 			name: "unstructured grpc", err: status.Error(codes.Unavailable, "private database failure"),
 			code: http.StatusServiceUnavailable, body: `{"metadata":{},"status":"Failure","code":503,"message":"Service Unavailable"}`,

@@ -114,7 +114,7 @@ func (c *blobStoreClient) GetBlob(ctx context.Context, req *resourcepb.GetBlobRe
 			result = rsp
 			continue
 		}
-		if rsp.Error != nil || rsp.Url != "" || rsp.ContentType != "" || len(rsp.Value) == 0 || result.Error != nil || result.Url != "" {
+		if rsp.Url != "" || rsp.ContentType != "" || len(rsp.Value) == 0 || result.Url != "" {
 			return nil, status.Error(codes.DataLoss, "blob chunk must contain only value")
 		}
 		if len(rsp.Value) > blobChunkSize || len(rsp.Value) > blobMaxSize-len(result.Value) {

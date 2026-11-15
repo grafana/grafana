@@ -44,6 +44,9 @@ func (rev *ConfigRevision) DeleteManagedRoute(name string) {
 	delete(rev.Config.ManagedRoutes, name)
 }
 
+// ManagedRouteNameMaxLength is the longest name a managed route can have.
+const ManagedRouteNameMaxLength = ualert.UIDMaxLength
+
 // validateManagedRouteName validates that a managed route name is non-empty, does not contain ':', and is a valid DNS1123 subdomain.
 func validateManagedRouteName(name string) error {
 	if strings.TrimSpace(name) == "" {
@@ -53,8 +56,8 @@ func validateManagedRouteName(name string) error {
 	if strings.Contains(name, ":") {
 		return fmt.Errorf("managed route name cannot contain invalid character ':'")
 	}
-	if len(name) > ualert.UIDMaxLength {
-		return fmt.Errorf("managed route name cannot be longer than %d characters", ualert.UIDMaxLength)
+	if len(name) > ManagedRouteNameMaxLength {
+		return fmt.Errorf("managed route name cannot be longer than %d characters", ManagedRouteNameMaxLength)
 	}
 	if errs := k8svalidation.IsDNS1123Subdomain(name); len(errs) > 0 {
 		return fmt.Errorf("managed route name must be a valid DNS subdomain: %s", strings.Join(errs, ", "))
@@ -124,8 +127,15 @@ func (rev *ConfigRevision) ResetUserDefinedRoute(defaultCfg *v1.AMConfigV1) (*v1
 	// Ensure the new default receiver exists and if not, create it.
 	if err := rev.validateReceiverReferences(*defaultCfg.AlertmanagerConfig.Route); err != nil {
 		// Default receiver doesn't exist, create it.
-		defaultRcvUID := v1.ReceiverUID(defaultCfg.AlertmanagerConfig.Route.Receiver) // TODO: This could work with static UIDs but a predetermined UID might make more sense.
-		defaultRcv, ok := defaultCfg.Receivers[defaultRcvUID]
+		var defaultRcvUID v1.ResourceUID
+		var defaultRcv v1.PostableApiReceiver
+		var ok bool
+		for uid, r := range defaultCfg.Receivers {
+			if r.Name == defaultCfg.AlertmanagerConfig.Route.Receiver {
+				defaultRcvUID, defaultRcv, ok = uid, r, true
+				break
+			}
+		}
 		if !ok {
 			return nil, fmt.Errorf("inconsistent default configuration: default receiver %q not found", defaultCfg.AlertmanagerConfig.Route.Receiver)
 		}

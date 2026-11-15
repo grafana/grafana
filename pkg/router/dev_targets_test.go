@@ -122,7 +122,7 @@ host = 127.0.0.1:10000
 
 func TestPluginLoaderServesDevTargetsWithoutPluginSources(t *testing.T) {
 	cfg := devTestCfg(t, "[router.dev.widgets]\nmanifest = "+writeDevManifest(t, devTestManifest)+"\nhost = http://127.0.0.1:8080\n")
-	loader, err := ProvideRoutesLoader(cfg, PluginLoaderDependencies{})
+	loader, err := ProvideRoutesLoader(cfg, PluginLoaderDependencies{}, nil)
 	require.NoError(t, err)
 
 	backends, err := loader.Load(t.Context())
@@ -134,7 +134,7 @@ func TestPluginLoaderServesDevTargetsWithoutPluginSources(t *testing.T) {
 func TestDevTargetsNotifyOnManifestChange(t *testing.T) {
 	manifest := writeDevManifest(t, devTestManifest)
 	cfg := devTestCfg(t, "[router.dev.widgets]\nmanifest = "+manifest+"\nhost = http://127.0.0.1:8080\n")
-	loader, err := ProvideRoutesLoader(cfg, PluginLoaderDependencies{})
+	loader, err := ProvideRoutesLoader(cfg, PluginLoaderDependencies{}, nil)
 	require.NoError(t, err)
 
 	dirty, err := loader.Notify(t.Context())

@@ -39,7 +39,7 @@ interface Props {
   onToggleResource: (key: string) => void;
   /** Selects or deselects a batch of individually-ticked resources by composite key. */
   onSetResourcesSelected: (keys: string[], selected: boolean) => void;
-  /** Folders + independently-ticked resources, shown in the migrate button. */
+  /** Number of resources the migration will include, shown in the migrate button. */
   selectedCount: number;
   /** True when every migratable folder is selected — drives the "Migrate all" label. */
   allSelected: boolean;

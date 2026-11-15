@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/validation"
 	annotationapp "github.com/grafana/grafana/pkg/registry/apps/annotation"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
@@ -31,6 +32,7 @@ const defaultAnnotationsLimit = 100
 //
 // Responses:
 // 200: getAnnotationsResponse
+// 400: badRequestError
 // 401: unauthorisedError
 // 500: internalServerError
 func (hs *HTTPServer) GetAnnotations(c *contextmodel.ReqContext) response.Response {
@@ -40,7 +42,6 @@ func (hs *HTTPServer) GetAnnotations(c *contextmodel.ReqContext) response.Respon
 		OrgID:        c.GetOrgID(),
 		UserID:       c.QueryInt64("userId"),
 		UserUID:      c.Query("userUID"),
-		AlertID:      c.QueryInt64("alertId"),
 		AlertUID:     c.Query("alertUID"),
 		DashboardID:  c.QueryInt64("dashboardId"), //nolint:staticcheck // Preserve legacy field compatibility.
 		DashboardUID: c.Query("dashboardUID"),
@@ -53,6 +54,12 @@ func (hs *HTTPServer) GetAnnotations(c *contextmodel.ReqContext) response.Respon
 	}
 	if query.Limit == 0 {
 		query.Limit = defaultAnnotationsLimit
+	}
+
+	if query.AlertUID != "" {
+		if errs := validation.IsValidGrafanaName(query.AlertUID); len(errs) > 0 {
+			return response.Error(http.StatusBadRequest, "Invalid alertUID in annotation request", errors.New(strings.Join(errs, "; ")))
+		}
 	}
 
 	// When dashboard ID exists without UID, find the UID from dashboards api
@@ -620,11 +627,6 @@ type GetAnnotationsParams struct {
 	// in:query
 	// required:false
 	UserUID string `json:"userUID"`
-	// Find annotations for a specified alert rule by its ID.
-	// deprecated: AlertID is deprecated and will be removed in future versions. Please use AlertUID instead.
-	// in:query
-	// required:false
-	AlertID int64 `json:"alertId"`
 	// Find annotations for a specified alert rule by its UID.
 	// in:query
 	// required:false

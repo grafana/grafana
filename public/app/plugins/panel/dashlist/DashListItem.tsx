@@ -3,6 +3,7 @@ import { Card, Icon, Link, Stack, Text, useStyles2 } from '@grafana/ui';
 import { DescriptionTooltip } from 'app/features/search/components/DescriptionTooltip';
 import { type LocationInfo } from 'app/features/search/service/types';
 import { StarToolbarButton } from 'app/features/stars/StarToolbarButton';
+import { findStarredKindBySearchKind } from 'app/features/stars/kinds';
 
 import { type Dashboard } from './DashList';
 import { ListRow } from './ListRow';
@@ -16,29 +17,15 @@ interface Props {
   layoutMode: 'list' | 'card';
   source: string; // for rudderstack analytics to track which page DashListItem click from
   order?: number; // for rudderstack analytics to track position in cards
-  onStarChange?: (id: string, isStarred: boolean) => void;
 }
-export function DashListItem({
-  dashboard,
-  url,
-  showFolderNames,
-  locationInfo,
-  layoutMode,
-  order,
-  onStarChange,
-  source,
-}: Props) {
+export function DashListItem({ dashboard, url, showFolderNames, locationInfo, layoutMode, order, source }: Props) {
   const css = useStyles2(getStyles);
 
-  const starButton = (
-    <StarToolbarButton
-      title={dashboard.name}
-      group="dashboard.grafana.app"
-      kind="Dashboard"
-      id={dashboard.uid}
-      onStarChange={onStarChange}
-    />
-  );
+  // Rows can be folders too; the star targets the row's own kind, and a kind nobody can star gets none
+  const starredKind = findStarredKindBySearchKind(dashboard.kind);
+  const starButton = starredKind ? (
+    <StarToolbarButton title={dashboard.name} group={starredKind.group} kind={starredKind.kind} id={dashboard.uid} />
+  ) : null;
 
   const onCardLinkClick = () => {
     reportInteraction('grafana_browse_dashboards_page_click_list_item', {

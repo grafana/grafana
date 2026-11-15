@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"maps"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -26,6 +27,7 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/client-go/util/flowcontrol"
+	"k8s.io/client-go/util/retry"
 )
 
 func TestRemoteSettingService_ListAsIni(t *testing.T) {
@@ -267,6 +269,95 @@ func TestRemoteSettingService_List(t *testing.T) {
 		require.Error(t, err)
 		assert.Nil(t, result)
 		assert.Contains(t, err.Error(), "connection refused")
+	})
+
+	t.Run("should retry when the connection is reset before the response", func(t *testing.T) {
+		server, attempts := newFlakyServer(t, 1, resetConnection)
+		defer server.Close()
+
+		client := newTestClient(t, server.URL, 500)
+		ctx := request.WithNamespace(context.Background(), "test-namespace")
+
+		result, err := client.List(ctx, metav1.LabelSelector{})
+
+		require.NoError(t, err)
+		require.Len(t, result, 1)
+		assert.Equal(t, int32(2), attempts.Load())
+	})
+
+	t.Run("should retry when the connection drops during the body read", func(t *testing.T) {
+		server, attempts := newFlakyServer(t, 1, truncateBody)
+		defer server.Close()
+
+		client := newTestClient(t, server.URL, 500)
+		ctx := request.WithNamespace(context.Background(), "test-namespace")
+
+		result, err := client.List(ctx, metav1.LabelSelector{})
+
+		require.NoError(t, err)
+		require.Len(t, result, 1)
+		assert.Equal(t, int32(2), attempts.Load())
+	})
+
+	t.Run("should retry when the connection is refused", func(t *testing.T) {
+		server := newTestServer(t, []Setting{{Section: "server", Key: "port", Value: "3000"}}, "")
+		defer server.Close()
+		closedServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+		closedAddr := closedServer.Listener.Addr().String()
+		closedServer.Close()
+
+		var attempts atomic.Int32
+		client, err := New(Config{
+			URL:      server.URL,
+			CacheTTL: -1,
+			WrapTransport: func(rt http.RoundTripper) http.RoundTripper {
+				return roundTripperFunc(func(req *http.Request) (*http.Response, error) {
+					if attempts.Add(1) == 1 {
+						req = req.Clone(req.Context())
+						req.URL.Host = closedAddr
+					}
+					return rt.RoundTrip(req)
+				})
+			},
+		})
+		require.NoError(t, err)
+		ctx := request.WithNamespace(context.Background(), "test-namespace")
+
+		result, err := client.List(ctx, metav1.LabelSelector{})
+
+		require.NoError(t, err)
+		require.Len(t, result, 1)
+		assert.Equal(t, int32(2), attempts.Load())
+	})
+
+	t.Run("should give up after repeated connection resets", func(t *testing.T) {
+		server, attempts := newFlakyServer(t, 100, resetConnection)
+		defer server.Close()
+
+		client := newTestClient(t, server.URL, 500)
+		ctx := request.WithNamespace(context.Background(), "test-namespace")
+
+		result, err := client.List(ctx, metav1.LabelSelector{})
+
+		require.Error(t, err)
+		assert.Nil(t, result)
+		assert.Equal(t, int32(retry.DefaultBackoff.Steps), attempts.Load())
+	})
+
+	t.Run("should not retry invalid response bodies", func(t *testing.T) {
+		server, attempts := newFlakyServer(t, 100, func(t *testing.T, w http.ResponseWriter) {
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"items":"x"}`))
+		})
+		defer server.Close()
+
+		client := newTestClient(t, server.URL, 500)
+		ctx := request.WithNamespace(context.Background(), "test-namespace")
+
+		_, err := client.List(ctx, metav1.LabelSelector{})
+
+		require.Error(t, err)
+		assert.Equal(t, int32(1), attempts.Load())
 	})
 
 	t.Run("should set user-agent header on requests", func(t *testing.T) {
@@ -1044,6 +1135,48 @@ func newTestServer(t *testing.T, settings []Setting, continueToken string) *http
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(generateSettingsJSON(settings, continueToken)))
 	}))
+}
+
+// newFlakyServer calls fail for the first failures requests, then serves one setting.
+func newFlakyServer(t *testing.T, failures int32, fail func(*testing.T, http.ResponseWriter)) (*httptest.Server, *atomic.Int32) {
+	t.Helper()
+	var attempts atomic.Int32
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if attempts.Add(1) <= failures {
+			fail(t, w)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(generateSettingsJSON([]Setting{{Section: "server", Key: "port", Value: "3000"}}, "")))
+	}))
+	return server, &attempts
+}
+
+type roundTripperFunc func(*http.Request) (*http.Response, error)
+
+func (f roundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) { return f(req) }
+
+func hijack(t *testing.T, w http.ResponseWriter) *net.TCPConn {
+	t.Helper()
+	conn, _, err := http.NewResponseController(w).Hijack()
+	require.NoError(t, err)
+	tcpConn, ok := conn.(*net.TCPConn)
+	require.True(t, ok)
+	return tcpConn
+}
+
+// resetConnection sends a TCP RST instead of a response.
+func resetConnection(t *testing.T, w http.ResponseWriter) {
+	conn := hijack(t, w)
+	_ = conn.SetLinger(0)
+	_ = conn.Close()
+}
+
+// truncateBody sends headers and part of the body, then closes the connection.
+func truncateBody(t *testing.T, w http.ResponseWriter) {
+	conn := hijack(t, w)
+	_, _ = conn.Write([]byte("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: 1000\r\n\r\n{\"items\":["))
+	_ = conn.Close()
 }
 
 func newTestClient(t *testing.T, serverURL string, pageSize int64) FieldSelectorService {

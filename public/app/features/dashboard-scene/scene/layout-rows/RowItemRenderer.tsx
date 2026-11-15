@@ -15,7 +15,7 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { useDragAndDrop } from '@grafana/ui/internal';
-import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
+import { canArrangeLayout, isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
 
 import { toggleRowCollapse } from '../../actions/layout/toggleRowCollapse';
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
@@ -23,7 +23,7 @@ import { useSoloPanelContext } from '../../solo/SoloPanelContext';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { useDashboardState, useInterpolatedTitle } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
-import { SectionVariableControls } from '../VariableControls';
+import { SectionControlsRow } from '../SectionAnnotationControls';
 import { LayoutModeIndicator } from '../layouts-shared/LayoutModeIndicator';
 import { mapIdToGridLayoutType } from '../layouts-shared/utils';
 import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';
@@ -72,7 +72,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
   const onHeaderLeave = useCallback(() => setSelectableHighlight(false), []);
   const layoutType = mapIdToGridLayoutType(layout.descriptor.id);
 
-  const isDraggable = !isClone && isEditing;
+  const isDraggable = !isClone && canArrangeLayout(dashboardState);
   const { Draggable } = useDragAndDrop(isDraggable);
 
   if (isHidden) {
@@ -199,7 +199,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
           )}
           {!isCollapsed && (
             <div className={styles.rowLayoutWrapper} id={contentId}>
-              {rowVariablesSet && <SectionVariableControls variableSet={rowVariablesSet} />}
+              <SectionControlsRow variableSet={rowVariablesSet} data={model.state.$data} />
               <layout.Component model={layout} />
             </div>
           )}

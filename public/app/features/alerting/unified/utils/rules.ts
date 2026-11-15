@@ -48,9 +48,9 @@ import { RuleHealth, RuleSource } from '../search/rulesSearchParser';
 import { RuleFormType, type RuleFormValues } from '../types/rule-form';
 
 import { GRAFANA_FOLDER_LABEL, MATCHER_ALERT_RULE_UID, RULER_NOT_SUPPORTED_MSG } from './constants';
-import { getRulesSourceName, isGrafanaRulesSource } from './datasource';
 import { GRAFANA_ORIGIN_LABEL } from './labels';
 import { type AsyncRequestState } from './redux';
+import { getRulesSourceName, isGrafanaRulesSource } from './rulesSource';
 import { formatPrometheusDuration, safeParsePrometheusDuration } from './time';
 
 /* Grafana managed rules */

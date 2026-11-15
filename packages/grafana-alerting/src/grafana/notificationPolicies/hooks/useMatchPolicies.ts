@@ -105,25 +105,26 @@ export function matchInstancesToRouteTrees(trees: RoutingTree[], instances: Labe
     return matchInstancesToRoute(rootRoute, instances);
   });
 
+  // Index each tree's matches by instance once, so grouping doesn't rescan every match for every instance.
+  const matchesByInstance = treeMatches.map(({ expandedTree, matchedPolicies }, index) => {
+    const routeTree = {
+      metadata: { name: trees[index].metadata.name ?? USER_DEFINED_TREE_NAME },
+      expandedSpec: expandedTree,
+    };
+    const byLabels = new Map<Label[], RouteMatch[]>();
+    for (const [route, results] of matchedPolicies) {
+      for (const matchDetails of results) {
+        const matches = byLabels.get(matchDetails.labels) ?? [];
+        matches.push({ route, routeTree, matchDetails });
+        byLabels.set(matchDetails.labels, matches);
+      }
+    }
+    return byLabels;
+  });
+
   // Group results by instance
   return instances.map<InstanceMatchResult>((labels) => {
-    // Collect matches for this specific instance from all trees
-    const allMatchedRoutes = treeMatches.flatMap(({ expandedTree, matchedPolicies }, index) => {
-      const tree = trees[index];
-
-      return Array.from(matchedPolicies.entries()).flatMap(([route, results]) =>
-        results
-          .filter((matchDetails) => matchDetails.labels === labels)
-          .map((matchDetails) => ({
-            route,
-            routeTree: {
-              metadata: { name: tree.metadata.name ?? USER_DEFINED_TREE_NAME },
-              expandedSpec: expandedTree,
-            },
-            matchDetails,
-          }))
-      );
-    });
+    const allMatchedRoutes = matchesByInstance.flatMap((byLabels) => byLabels.get(labels) ?? []);
 
     return {
       labels,

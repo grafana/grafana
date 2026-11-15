@@ -8,6 +8,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+	grpccodes "google.golang.org/grpc/codes"
+	grpcstatus "google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -286,6 +288,32 @@ func TestSearchChildLister(t *testing.T) {
 func TestSearchChildLister_Error(t *testing.T) {
 	_, _, err := NewSearchChildLister(&pagedSearcher{err: errors.New("index down")}).ListChildren(context.Background(), testNamespace, "parent", ChildFolder, 0, 10)
 	require.ErrorContains(t, err, "index down")
+}
+
+func TestSearchChildLister_StatusError(t *testing.T) {
+	result := &resourcepb.ErrorResult{
+		Code:    503,
+		Reason:  string(metav1.StatusReasonServiceUnavailable),
+		Message: "index unavailable",
+		Details: &resourcepb.ErrorDetails{RetryAfterSeconds: 7},
+	}
+	st, err := grpcstatus.New(grpccodes.Unavailable, result.Message).WithDetails(result)
+	require.NoError(t, err)
+
+	children, total, err := NewSearchChildLister(&pagedSearcher{err: st.Err()}).ListChildren(context.Background(), testNamespace, "parent", ChildDashboard, 0, 10)
+
+	require.Nil(t, children)
+	require.Zero(t, total)
+	var apiStatus apierrors.APIStatus
+	require.ErrorAs(t, err, &apiStatus)
+	require.Equal(t, metav1.Status{
+		Status:  metav1.StatusFailure,
+		Code:    503,
+		Reason:  metav1.StatusReasonServiceUnavailable,
+		Message: "index unavailable",
+		Details: &metav1.StatusDetails{RetryAfterSeconds: 7},
+	}, apiStatus.Status())
+	require.ErrorContains(t, err, `search dashboards in folder "parent"`)
 }
 
 func TestSearchChildLister_RejectsUnexpectedResultFormat(t *testing.T) {

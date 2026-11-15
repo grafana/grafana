@@ -26,10 +26,10 @@ export function GrafanaRoute(props: Props) {
   chrome.setMatchedRoute(props.route);
 
   useEffect(() => {
-    if (stPodReadyGateEnabled) {
+    if (isMtFallbackConfigured) {
       stPodReady.start();
     }
-  }, [stPodReadyGateEnabled, stPodReady]);
+  }, [isMtFallbackConfigured, stPodReady, props.location.pathname]);
 
   useLayoutEffect(() => {
     keybindings.clearAndInitGlobalBindings(props.route);

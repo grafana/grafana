@@ -3,6 +3,7 @@ import { cloneDeep } from 'lodash';
 import * as React from 'react';
 import { type ChangeEvent, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
+import Skeleton from 'react-loading-skeleton';
 
 import {
   CoreApp,
@@ -34,6 +35,8 @@ import { VizWrapper } from './VizWrapper';
 
 const DEFAULT_MAX_DATA_POINTS = 43200;
 const DEFAULT_MIN_INTERVAL = '1s';
+// Loads faster than this show nothing, so a cached data source does not flash a loading indicator.
+export const QUERY_ROW_LOADING_INDICATOR_DELAY_MS = 300;
 
 export interface AlertQueryOptions {
   maxDataPoints?: number | undefined;
@@ -58,6 +61,8 @@ interface Props {
   condition: string | null;
   onSetCondition: (refId: string) => void;
   onChangeQueryOptions: (options: AlertQueryOptions, index: number) => void;
+  onDataSourceLoaded: () => void;
+  showLoadingIndicator: boolean;
 }
 
 export const QueryWrapper = ({
@@ -78,6 +83,8 @@ export const QueryWrapper = ({
   condition,
   onSetCondition,
   onChangeQueryOptions,
+  onDataSourceLoaded,
+  showLoadingIndicator,
 }: Props) => {
   const styles = useStyles2(getStyles);
   const [dsInstance, setDsInstance] = useState<DataSourceApi>();
@@ -186,12 +193,17 @@ export const QueryWrapper = ({
   return (
     <Stack direction="column" gap={0.5}>
       <div className={styles.wrapper}>
+        {/* QueryEditorRow renders nothing until the plugin code loads, so the loading indicator holds its place */}
+        {showLoadingIndicator && <QueryRowSkeleton />}
         <QueryEditorRow<AlertDataQuery>
           hideRefId={!isAdvancedMode}
           hideActionButtons={!isAdvancedMode}
           collapsable={false}
           dataSource={dsSettings}
-          onDataSourceLoaded={setDsInstance}
+          onDataSourceLoaded={(instance) => {
+            setDsInstance(instance);
+            onDataSourceLoaded();
+          }}
           onChangeDataSource={(settings) => onChangeDataSource(settings, index)}
           id={query.refId}
           index={index}
@@ -220,6 +232,16 @@ export const EmptyQueryWrapper = ({ children }: React.PropsWithChildren<{}>) => 
   const styles = useStyles2(getStyles);
   return <div className={styles.wrapper}>{children}</div>;
 };
+
+export function QueryRowSkeleton() {
+  const styles = useStyles2(getStyles);
+  return (
+    <div className={styles.skeleton} data-testid="alert-query-row-skeleton">
+      <Skeleton width={200} height={24} />
+      <Skeleton height={64} />
+    </div>
+  );
+}
 
 export function MaxDataPointsOption({ value, onChange }: { value: string; onChange: (value: string) => void }) {
   return (
@@ -287,6 +309,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     button: {
       overflow: 'visible',
     },
+  }),
+  skeleton: css({
+    padding: theme.spacing(1),
   }),
   dsTooltip: css({
     display: 'flex',

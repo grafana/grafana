@@ -17,7 +17,6 @@ import (
 
 	dashV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/unified/migrations"
@@ -33,6 +32,8 @@ var sqlQuerySnapshots = template.Must(
 ).Lookup("query_snapshots.sql")
 
 type SnapshotMigrator interface {
+	// MigrateSnapshots requires a stream opened with inline-blob request metadata.
+	// The caller owns handshake cancellation and final bulk completion checks.
 	MigrateSnapshots(ctx context.Context, orgId int64, opts migrations.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error
 }
 
@@ -66,6 +67,13 @@ func NewSnapshotMigrator(sql legacysql.LegacyDatabaseProvider, decrypt func(ctx 
 
 // MigrateSnapshots handles the snapshot migration logic.
 func (m *snapshotMigrator) MigrateSnapshots(ctx context.Context, orgId int64, opts migrations.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
+	header, err := stream.Header()
+	if err != nil {
+		return fmt.Errorf("negotiate snapshot blob uploads: %w", err)
+	}
+	if err := resourcepb.ValidateInlineBlobAcknowledgement(header); err != nil {
+		return fmt.Errorf("negotiate snapshot blob uploads: %w", err)
+	}
 	opts.Progress(-1, "migrating snapshots...")
 
 	var lastID int64 = 0
@@ -121,8 +129,9 @@ func (m *snapshotMigrator) MigrateSnapshots(ctx context.Context, orgId int64, op
 		}
 
 		convertStart := time.Now()
-		chunk := make([]*resourcepb.BulkRequest, 0, len(rawRows))
+		chunk := make([]snapshotUpload, 0, len(rawRows))
 		for _, row := range rawRows {
+			var dashboard []byte
 			snap := &dashV0.Snapshot{
 				TypeMeta: metav1.TypeMeta{
 					APIVersion: dashV0.APIVERSION,
@@ -155,16 +164,11 @@ func (m *snapshotMigrator) MigrateSnapshots(ctx context.Context, orgId int64, op
 				if row.externalURL.Valid && row.externalURL.String != "" {
 					snap.Spec.ExternalUrl = &row.externalURL.String
 				}
-			} else if len(row.dashboardEncrypted) > 0 {
-				plain, err := m.decrypt(ctx, row.dashboardEncrypted)
+			} else {
+				dashboard, err = m.decryptDashboard(ctx, row)
 				if err != nil {
-					return fmt.Errorf("decrypt snapshot %q: %w", row.key, err)
+					return err
 				}
-				j, err := simplejson.NewJson(plain)
-				if err != nil {
-					return fmt.Errorf("parse dashboard JSON for snapshot %q: %w", row.key, err)
-				}
-				snap.Spec.Dashboard = j.MustMap()
 			}
 
 			// Mirror the logic in conversions.go: treat dates past year 2070 as "never expires".
@@ -184,7 +188,7 @@ func (m *snapshotMigrator) MigrateSnapshots(ctx context.Context, orgId int64, op
 				return err
 			}
 
-			chunk = append(chunk, &resourcepb.BulkRequest{
+			req := &resourcepb.BulkRequest{
 				Key: &resourcepb.ResourceKey{
 					Namespace: opts.Namespace,
 					Group:     dashV0.GROUP,
@@ -193,14 +197,20 @@ func (m *snapshotMigrator) MigrateSnapshots(ctx context.Context, orgId int64, op
 				},
 				Value:  body,
 				Action: resourcepb.BulkRequest_ADDED,
-			})
+			}
+			if len(dashboard) > 0 {
+				req.BlobUploads = []*resourcepb.BulkBlobUpload{{
+					Name: "dashboard", ContentType: "application/json", Size: int64(len(dashboard)),
+				}}
+			}
+			chunk = append(chunk, snapshotUpload{request: req, dashboard: dashboard})
 		}
 		convertDuration += time.Since(convertStart)
 
 		writeStart := time.Now()
-		for _, req := range chunk {
+		for _, upload := range chunk {
 			count++
-			if err := stream.Send(req); err != nil {
+			if err := upload.send(stream); err != nil {
 				if errors.Is(err, io.EOF) {
 					opts.Progress(count, fmt.Sprintf("stream EOF/cancelled. index=%d", count))
 				}
@@ -219,6 +229,51 @@ func (m *snapshotMigrator) MigrateSnapshots(ctx context.Context, orgId int64, op
 	opts.Progress(count, fmt.Sprintf("finished writing snapshots to unified storage in %s (%d)", writeDuration, count))
 	opts.Progress(-2, fmt.Sprintf("finished snapshots... (%d)", count))
 	return nil
+}
+
+func (m *snapshotMigrator) decryptDashboard(ctx context.Context, row snapshotRow) ([]byte, error) {
+	if len(row.dashboardEncrypted) == 0 {
+		return nil, fmt.Errorf("missing dashboard for local snapshot %q", row.key)
+	}
+	plain, err := m.decrypt(ctx, row.dashboardEncrypted)
+	if err != nil {
+		return nil, fmt.Errorf("decrypt snapshot %q: %w", row.key, err)
+	}
+	if len(plain) == 0 || len(plain) > resourcepb.MaxInlineBlobSize {
+		return nil, fmt.Errorf("invalid dashboard size for snapshot %q: %d", row.key, len(plain))
+	}
+	var object map[string]json.RawMessage
+	if err := json.Unmarshal(plain, &object); err != nil {
+		return nil, fmt.Errorf("parse dashboard JSON for snapshot %q: %w", row.key, err)
+	}
+	if object == nil {
+		return nil, fmt.Errorf("dashboard for snapshot %q must be a JSON object", row.key)
+	}
+	return plain, nil
+}
+
+type snapshotUpload struct {
+	request   *resourcepb.BulkRequest
+	dashboard []byte
+}
+
+func (u snapshotUpload) send(stream resourcepb.BulkStore_BulkProcessClient) error {
+	if err := stream.Send(u.request); err != nil {
+		return err
+	}
+	if len(u.dashboard) == 0 {
+		return nil
+	}
+	for remaining := u.dashboard; len(remaining) > 0; {
+		n := min(len(remaining), resourcepb.BulkBlobChunkSize)
+		if err := stream.Send(&resourcepb.BulkRequest{BlobChunk: &resourcepb.BulkBlobChunk{
+			Name: "dashboard", Value: remaining[:n],
+		}}); err != nil {
+			return err
+		}
+		remaining = remaining[n:]
+	}
+	return stream.Send(&resourcepb.BulkRequest{BlobChunk: &resourcepb.BulkBlobChunk{Name: "dashboard", Last: true}})
 }
 
 type snapshotRow struct {

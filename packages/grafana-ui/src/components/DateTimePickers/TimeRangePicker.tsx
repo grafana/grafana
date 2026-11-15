@@ -304,7 +304,7 @@ const ZoomOutTooltip = () => {
 
 export const TimePickerTooltip = ({ timeRange, timeZone }: { timeRange: TimeRange; timeZone?: TimeZone }) => {
   const styles = useStyles2(getLabelStyles);
-  const now = Date.now();
+  const [now] = useState(Date.now);
 
   // Get timezone info only if timeZone is provided
   const timeZoneInfo = timeZone ? getTimeZoneDisplayInfo(timeZone, now) : undefined;

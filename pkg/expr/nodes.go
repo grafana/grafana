@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"strings"
 	"time"
 
@@ -23,6 +24,9 @@ import (
 
 // label that is used when all mathexp.Series have 0 labels to make them identifiable by labels. The value of this label is extracted from value field names
 const nameLabelName = "__name__"
+
+// HeaderFromExpression marks data source requests made by the expression service.
+const HeaderFromExpression = "X-Grafana-From-Expr"
 
 var (
 	logger = log.New("expr")
@@ -282,22 +286,6 @@ func executeDSNodesGrouped(ctx context.Context, now time.Time, vars mathexp.Vars
 				attribute.String("datasource.uid", firstNode.datasource.UID),
 			)
 
-			req := &backend.QueryDataRequest{
-				Headers: firstNode.request.Headers,
-			}
-
-			// add all the queries from the node group to the request
-			for _, dn := range nodeGroup {
-				req.Queries = append(req.Queries, backend.DataQuery{
-					RefID:         dn.refID,
-					MaxDataPoints: dn.maxDP,
-					Interval:      time.Duration(int64(time.Millisecond) * dn.intervalMS),
-					JSON:          dn.query,
-					TimeRange:     dn.timeRange.AbsoluteTime(now),
-					QueryType:     dn.queryType,
-				})
-			}
-
 			instrument := func(e error, rt string) {
 				respStatus := "success"
 				responseType := rt
@@ -310,6 +298,37 @@ func executeDSNodesGrouped(ctx context.Context, now time.Time, vars mathexp.Vars
 				logger.Debug("Data source queried", "responseType", responseType)
 				useDataplane := strings.HasPrefix(responseType, "dataplane-")
 				s.metrics.DSRequests.WithLabelValues(respStatus, fmt.Sprintf("%t", useDataplane), firstNode.datasource.Type).Inc()
+			}
+
+			// A panic gets an error for each node in the group that has no
+			// result yet, so the rest of the request still runs.
+			defer func() {
+				if p := recover(); p != nil {
+					logger.Error("Panic while querying data source", "error", p, "stack", log.Stack(1))
+					for _, dn := range nodeGroup {
+						if _, ok := vars[dn.refID]; !ok {
+							vars[dn.refID] = mathexp.Results{Error: makePanicError(dn.refID)}
+						}
+					}
+					instrument(makePanicError(firstNode.refID), "")
+				}
+			}()
+
+			req := &backend.QueryDataRequest{
+				Headers: maps.Clone(firstNode.request.Headers),
+			}
+			req.SetHTTPHeader(HeaderFromExpression, "true")
+
+			// add all the queries from the node group to the request
+			for _, dn := range nodeGroup {
+				req.Queries = append(req.Queries, backend.DataQuery{
+					RefID:         dn.refID,
+					MaxDataPoints: dn.maxDP,
+					Interval:      time.Duration(int64(time.Millisecond) * dn.intervalMS),
+					JSON:          dn.query,
+					TimeRange:     dn.timeRange.AbsoluteTime(now),
+					QueryType:     dn.queryType,
+				})
 			}
 
 			var resp *backend.QueryDataResponse
@@ -398,8 +417,9 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 				QueryType:     dn.queryType,
 			},
 		},
-		Headers: dn.request.Headers,
+		Headers: maps.Clone(dn.request.Headers),
 	}
+	req.SetHTTPHeader(HeaderFromExpression, "true")
 
 	responseType := "unknown"
 	respStatus := "success"
@@ -413,6 +433,15 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 		logger.Debug("Data source queried", "responseType", responseType)
 		useDataplane := strings.HasPrefix(responseType, "dataplane-")
 		s.metrics.DSRequests.WithLabelValues(respStatus, fmt.Sprintf("%t", useDataplane), dn.datasource.Type).Inc()
+	}()
+
+	// Runs before the metrics defer above, so a panic counts as a failure.
+	defer func() {
+		if p := recover(); p != nil {
+			logger.Error("Panic while querying data source", "error", p, "stack", log.Stack(1))
+			r = mathexp.Results{}
+			e = makePanicError(dn.refID)
+		}
 	}()
 
 	var resp *backend.QueryDataResponse

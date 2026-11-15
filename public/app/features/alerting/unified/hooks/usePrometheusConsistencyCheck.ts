@@ -245,13 +245,6 @@ export function usePrometheusConsistencyCheck() {
   const removalConsistencyInterval = useRef<number | undefined>(undefined);
   const creationConsistencyInterval = useRef<number | undefined>(undefined);
 
-  useEffect(() => {
-    return () => {
-      clearRemovalInterval();
-      clearCreationInterval();
-    };
-  }, []);
-
   const clearRemovalInterval = () => {
     if (removalConsistencyInterval.current) {
       clearInterval(removalConsistencyInterval.current);
@@ -265,6 +258,13 @@ export function usePrometheusConsistencyCheck() {
       creationConsistencyInterval.current = undefined;
     }
   };
+
+  useEffect(() => {
+    return () => {
+      clearRemovalInterval();
+      clearCreationInterval();
+    };
+  }, []);
 
   async function waitForRemoval(ruleIdentifier: CloudRuleIdentifier) {
     // We can wait only for one rule at a time

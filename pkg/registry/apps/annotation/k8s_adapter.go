@@ -25,6 +25,7 @@ import (
 
 	authtypes "github.com/grafana/authlib/types"
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -42,15 +43,22 @@ const maxSafeJSInt = (1 << 52) - 1
 // TODO: determine appropriate future bound and maybe make configurable.
 const maxFutureWindow = 7 * 24 * time.Hour
 
-// toAPIError maps store-layer sentinels to the right k8s apierror so HTTP
-// status + telemetry classification agree. Already-typed apierrors and unknown
-// errors pass through unchanged (the apiserver will wrap the latter as 500).
+var errInternal = errutil.Internal("annotation.internal", errutil.WithPublicMessage("an internal error occurred"))
+
+// toAPIError returns a client-safe version of err. Wrapped status errors are
+// not trusted, because their status describes a dependency call.
 func toAPIError(err error, name string) error {
 	if err == nil {
 		return nil
 	}
-	if _, ok := err.(apierrors.APIStatus); ok {
-		return err
+	//nolint:errorlint // deliberately not unwrapping
+	switch e := err.(type) {
+	case errutil.Error:
+		return e
+	case apierrors.APIStatus:
+		if code := e.Status().Code; code >= http.StatusBadRequest && code < http.StatusInternalServerError {
+			return err
+		}
 	}
 	switch {
 	case errors.Is(err, ErrNotFound):
@@ -60,7 +68,7 @@ func toAPIError(err error, name string) error {
 	case errors.Is(err, ErrInvalidInput):
 		return apierrors.NewBadRequest(err.Error())
 	default:
-		return err
+		return errInternal.Errorf("%w", err)
 	}
 }
 
@@ -103,12 +111,12 @@ type k8sRESTAdapter struct {
 	// rejected by the settings loader.
 	maxScopeCount int
 
-	// retentionTTL bounds how far in the past an annotation's time may be,
+	// retentionTTL bounds how far in the past an annotation's end time may be,
 	// matching the cleanup window so we don't accept data that would be
 	// immediately purged. A zero TTL disables this bound.
 	retentionTTL time.Duration
 
-	// maxAge bounds how far in the past an annotation's time may be on write.
+	// maxAge bounds how far in the past an annotation's end time may be on write.
 	// If unset, the retention TTL is used as the maximum age (if one is set).
 	maxAge time.Duration
 
@@ -159,7 +167,10 @@ func (s *k8sRESTAdapter) List(ctx context.Context, options *internalversion.List
 	))
 	defer span.End()
 	start := time.Now()
-	defer func() { observe(ctx, s.logger, s.metrics.RequestDuration, "list", start, err) }()
+	defer func() {
+		err = toAPIError(err, "")
+		observe(ctx, s.logger, s.metrics.RequestDuration, "list", start, err)
+	}()
 
 	ff, err := parseFieldSelector(options.FieldSelector)
 	if err != nil {
@@ -221,7 +232,10 @@ func (s *k8sRESTAdapter) Get(ctx context.Context, name string, options *metav1.G
 	))
 	defer span.End()
 	start := time.Now()
-	defer func() { observe(ctx, s.logger, s.metrics.RequestDuration, "get", start, err) }()
+	defer func() {
+		err = toAPIError(err, name)
+		observe(ctx, s.logger, s.metrics.RequestDuration, "get", start, err)
+	}()
 
 	annotation, err := s.store.Get(ctx, namespace, name)
 	if err != nil {
@@ -256,7 +270,10 @@ func (s *k8sRESTAdapter) Create(ctx context.Context,
 	))
 	defer span.End()
 	start := time.Now()
-	defer func() { observe(ctx, s.logger, s.metrics.RequestDuration, "create", start, err) }()
+	defer func() {
+		err = toAPIError(err, "")
+		observe(ctx, s.logger, s.metrics.RequestDuration, "create", start, err)
+	}()
 
 	if options != nil && dryrun.IsDryRun(options.DryRun) {
 		return nil, apierrors.NewBadRequest("annotations do not support dry-run")
@@ -323,7 +340,10 @@ func (s *k8sRESTAdapter) Update(ctx context.Context,
 	))
 	defer span.End()
 	start := time.Now()
-	defer func() { observe(ctx, s.logger, s.metrics.RequestDuration, "update", start, err) }()
+	defer func() {
+		err = toAPIError(err, name)
+		observe(ctx, s.logger, s.metrics.RequestDuration, "update", start, err)
+	}()
 
 	if options != nil && dryrun.IsDryRun(options.DryRun) {
 		return nil, false, apierrors.NewBadRequest("annotations do not support dry-run")
@@ -409,7 +429,10 @@ func (s *k8sRESTAdapter) Delete(ctx context.Context, name string, deleteValidati
 	))
 	defer span.End()
 	start := time.Now()
-	defer func() { observe(ctx, s.logger, s.metrics.RequestDuration, "delete", start, err) }()
+	defer func() {
+		err = toAPIError(err, name)
+		observe(ctx, s.logger, s.metrics.RequestDuration, "delete", start, err)
+	}()
 
 	if options != nil && dryrun.IsDryRun(options.DryRun) {
 		return nil, false, apierrors.NewBadRequest("annotations do not support dry-run")
@@ -536,6 +559,11 @@ func (s *k8sRESTAdapter) validateAnnotation(anno *annotationV0.Annotation) error
 		return err
 	}
 
+	if anno.Spec.DashboardUID != nil && util.IsShortUIDTooLong(*anno.Spec.DashboardUID) {
+		return apierrors.NewBadRequest(fmt.Sprintf(
+			"%v: dashboardUID cannot be longer than %d characters", ErrInvalidInput, util.MaxUIDLength))
+	}
+
 	return validateMetadata(anno)
 }
 
@@ -569,31 +597,28 @@ func (s *k8sRESTAdapter) validateTimes(anno *annotationV0.Annotation) error {
 		return apierrors.NewBadRequest(fmt.Sprintf("%v: time is required and must be positive", ErrInvalidInput))
 	}
 
-	now := time.Now().UTC()
-	maxFuture := now.Add(maxFutureWindow).UnixMilli()
-
-	if anno.Spec.Time > maxFuture {
-		return apierrors.NewBadRequest(
-			fmt.Sprintf("%v: time cannot be more than 1 week in the future", ErrInvalidInput))
+	// Determine the effective end time for the annotation. If TimeEnd is not set, use Time as the end time.
+	end := anno.Spec.Time
+	if anno.Spec.TimeEnd != nil {
+		end = *anno.Spec.TimeEnd
 	}
+	if end < anno.Spec.Time {
+		return apierrors.NewBadRequest(fmt.Sprintf("%v: timeEnd must be after time", ErrInvalidInput))
+	}
+
+	now := time.Now().UTC()
+	if end > now.Add(maxFutureWindow).UnixMilli() {
+		return apierrors.NewBadRequest(
+			fmt.Sprintf("%v: end time cannot be more than 1 week in the future", ErrInvalidInput))
+	}
+
 	maxAge := s.maxAge
 	if maxAge == 0 {
 		maxAge = s.retentionTTL
 	}
-	if maxAge > 0 && anno.Spec.Time < now.Add(-maxAge).UnixMilli() {
+	if maxAge > 0 && end < now.Add(-maxAge).UnixMilli() {
 		return apierrors.NewBadRequest(
-			fmt.Sprintf("%v: time cannot be older than %v", ErrInvalidInput, maxAge))
-	}
-
-	// If timeEnd is set, validate it's after time and within future bounds
-	if anno.Spec.TimeEnd != nil {
-		if *anno.Spec.TimeEnd < anno.Spec.Time {
-			return apierrors.NewBadRequest(fmt.Sprintf("%v: timeEnd must be after time", ErrInvalidInput))
-		}
-		if *anno.Spec.TimeEnd > maxFuture {
-			return apierrors.NewBadRequest(
-				fmt.Sprintf("%v: timeEnd cannot be more than 1 week in the future", ErrInvalidInput))
-		}
+			fmt.Sprintf("%v: end time cannot be older than %v", ErrInvalidInput, maxAge))
 	}
 
 	return nil

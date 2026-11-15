@@ -27,10 +27,15 @@ const defaultHooksOptions = {
 // The older group-root dashboard search routes remain included.
 const perResourceSearch = /^\/[^/]+\/(search(?:\/hybrid)?|trash)$/;
 
-// The GMA-only rule list pages page through folders with a per-resource /search, which is the only
-// one with a frontend caller today, so it is allowlisted past the exclusion above rather than
-// lifting it entirely.
-const allowedPerResourceSearchPaths = ['/folders/search'];
+// The GMA-only rule list pages page through folders and rules, and look up rule sequence membership, with
+// these searches. The per-resource ones are the only ones with a frontend caller today, so they are allowlisted
+// past the exclusion above rather than lifting it entirely.
+const allowedPerResourceSearchPaths = [
+  '/folders/search',
+  '/rulesequences/search',
+  '/searchAlertRules',
+  '/searchRecordingRules',
+];
 
 export const withoutPerResourceSearch = (filterEndpoints?: EndpointMatcher): EndpointMatcher => {
   if (Array.isArray(filterEndpoints)) {
@@ -75,6 +80,17 @@ const createAPIConfigWithSearch = (app: string, version: string) =>
       },
     ],
   });
+
+// An allowlisted search reads resources through a POST, which RTK would otherwise treat as a mutation.
+const allowedSearchAsQuery = {
+  endpointOverrides: [
+    {
+      pattern: (_name: string, operation: OperationDefinition) =>
+        operation.verb === 'post' && allowedPerResourceSearchPaths.includes(operation.path),
+      type: 'query' as const,
+    },
+  ],
+};
 
 const config: ConfigFile = {
   schemaFile: '', // leave this empty, and instead populate the outputFiles object below
@@ -146,16 +162,7 @@ const config: ConfigFile = {
     ...createAPIConfig('dashboard', 'v1beta1'),
     ...createAPIConfig('dashboard', 'v2beta1'),
     ...createAPIConfig('dashboard', 'v2'),
-    ...createAPIConfig('folder', 'v1beta1', undefined, {
-      // The allowlisted search reads folders through a POST, which RTK would otherwise treat as a mutation.
-      endpointOverrides: [
-        {
-          pattern: (_name: string, operation: OperationDefinition) =>
-            operation.verb === 'post' && allowedPerResourceSearchPaths.includes(operation.path),
-          type: 'query',
-        },
-      ],
-    }),
+    ...createAPIConfig('folder', 'v1beta1', undefined, allowedSearchAsQuery),
     ...createAPIConfig('iam', 'v0alpha1'),
     ...createAPIConfig('playlist', 'v1'),
     ...createAPIConfig('collections', 'v1alpha1'),
@@ -164,14 +171,14 @@ const config: ConfigFile = {
     ...createAPIConfig('shorturl', 'v1beta1'),
     ...createAPIConfig('notifications.alerting', 'v0alpha1'),
     ...createAPIConfig('notifications.alerting', 'v1beta1'),
-    ...createAPIConfig('rules.alerting', 'v0alpha1'),
+    ...createAPIConfig('rules.alerting', 'v0alpha1', undefined, allowedSearchAsQuery),
     ...createAPIConfig('historian.alerting', 'v0alpha1'),
     ...createAPIConfig('logsdrilldown', 'v1beta1'),
     ...createAPIConfig('logsdrilldown', 'v1alpha1'),
     ...createAPIConfig('quotas', 'v0alpha1'),
     ...createAPIConfig('plugins', 'v0alpha1'),
     ...createAPIConfig('preferences', 'v1'),
-    ...createAPIConfig('rules.alerting', 'v1beta1'),
+    ...createAPIConfig('rules.alerting', 'v1beta1', undefined, allowedSearchAsQuery),
     // GENERATED:API_CLIENT — used by the API client generator
   },
 };

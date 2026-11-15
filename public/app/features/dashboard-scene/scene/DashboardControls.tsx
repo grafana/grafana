@@ -40,6 +40,7 @@ import { filterSectionRepeatLocalVariables } from '../variables/utils';
 
 import { AddControlsButton } from './ControlsAddButton';
 import { DashboardDataLayerControls } from './DashboardDataLayerControls';
+import { DashboardDataLayerSet } from './DashboardDataLayerSet';
 import { DashboardLinksControls } from './DashboardLinksControls';
 import { DashboardModePicker } from './DashboardModePicker';
 import { type DashboardScene } from './DashboardScene';
@@ -48,18 +49,44 @@ import { DashboardControlsButton } from './dashboard-controls-menu/DashboardCont
 import { hasDashboardControls, useHasDashboardControls } from './dashboard-controls-menu/utils';
 import { DashboardFiltersOverviewPaneToggle } from './dashboard-filters-overview/DashboardFiltersOverviewPaneToggle';
 import { dashboardModesEnabled, getPickerMode } from './dashboardModes';
+import { DashboardEditHistoryControls } from './new-toolbar/actions/DashboardEditHistoryControls';
 import { EditDashboardSwitch } from './new-toolbar/actions/EditDashboardSwitch';
 import { MakeDashboardEditableButton } from './new-toolbar/actions/MakeDashboardEditableButton';
 import { SaveDashboard } from './new-toolbar/actions/SaveDashboard';
 import { ShareDashboardButton } from './new-toolbar/actions/ShareDashboardButton';
 import { type ToolbarActionProps } from './new-toolbar/types';
 
-function getPanelEditVariables(dashboard: DashboardScene): SceneVariable[] | undefined {
+function getEditOrViewPanel(dashboard: DashboardScene) {
   const viewPanelKey = dashboard.state.viewPanel;
-  const panel =
+  return (
     dashboard.state.editPanel?.state.panelRef?.resolve() ??
     (viewPanelKey ? findVizPanelByPathId(dashboard, viewPanelKey) : null) ??
-    undefined;
+    undefined
+  );
+}
+
+/**
+ * Panel edit and view panel replace the dashboard body, which is where section controls render,
+ * so the section annotations that apply to the panel are shown with the dashboard controls instead.
+ */
+function getPanelEditSectionDataLayerSets(dashboard: DashboardScene): DashboardDataLayerSet[] {
+  const panel = getEditOrViewPanel(dashboard);
+  const sets: DashboardDataLayerSet[] = [];
+  let current: SceneObject | undefined = panel?.parent;
+
+  while (panel && current && current !== dashboard) {
+    const data = current.state.$data;
+    if (data instanceof DashboardDataLayerSet && data.isVisibleTo(panel)) {
+      sets.push(data);
+    }
+    current = current.parent;
+  }
+
+  return sets;
+}
+
+function getPanelEditVariables(dashboard: DashboardScene): SceneVariable[] | undefined {
+  const panel = getEditOrViewPanel(dashboard);
 
   if (!panel) {
     return undefined;
@@ -189,7 +216,11 @@ export class DashboardControls extends SceneObjectBase<DashboardControlsState> {
     const panelEditVariables = getPanelEditVariables(dashboard);
     const variables = panelEditVariables ?? sceneGraph.getVariables(this)?.state.variables ?? [];
     const hasVariables = variables.some((v) => v.state.hide !== VariableHide.hideVariable);
-    const hasAnnotations = sceneGraph.getDataLayers(this).some((d) => d.state.isEnabled && !d.state.isHidden);
+    const hasAnnotations =
+      sceneGraph.getDataLayers(this).some((d) => d.state.isEnabled && !d.state.isHidden) ||
+      getPanelEditSectionDataLayerSets(dashboard).some((set) =>
+        set.state.annotationLayers.some((layer) => !layer.state.isHidden)
+      );
     const hasLinks = getDashboardSceneFor(this).state.links?.length > 0;
     const hideLinks = this.state.hideLinksControls || !hasLinks;
     const hideVariables = this.state.hideVariableControls || (!hasAnnotations && !hasVariables);
@@ -218,6 +249,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
   const showDebugger = window.location.search.includes('scene-debugger');
   const hasDashboardControls = useHasDashboardControls(dashboard);
   const panelEditVariables = getPanelEditVariables(dashboard);
+  const panelEditSectionDataLayerSets = getPanelEditSectionDataLayerSets(dashboard);
   const { chrome } = useGrafana();
   const { kioskMode } = chrome.useState();
   const dashboardNewLayoutsEnabled = isDashboardNewLayoutsEnabled();
@@ -232,7 +264,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
           <div data-testid={selectors.pages.Dashboard.Controls} className={styles.controls}>
             {!hideVariableControls && <VariableControls dashboard={dashboard} />}
             {!hideVariableControls && dashboardNewLayoutsEnabled && <AddControlsButton dashboard={dashboard} />}
-            <div className={cx(styles.rightControls, editPanel && styles.rightControlsWrap)}>
+            <div className={cx(styles.rightControls, editPanel && styles.rightControlsWrap)} data-dashboard-actions>
               <div className={styles.fixedControls}>
                 <DashboardControlActions dashboard={dashboard} hidePlaylistNav={hidePlaylistNav} />
               </div>
@@ -256,7 +288,8 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
 
   return (
     <div data-testid={selectors.pages.Dashboard.Controls} className={styles.controls}>
-      <div className={cx(styles.rightControls, editPanel && styles.rightControlsWrap)}>
+      {/* Composer does not capture a region that covers the dashboard's own buttons. */}
+      <div className={cx(styles.rightControls, editPanel && styles.rightControlsWrap)} data-dashboard-actions>
         {!hideTimeControls && (
           <div className={styles.fixedControls}>
             <timePicker.Component model={timePicker} />
@@ -280,7 +313,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
       {!hideVariableControls && (
         <>
           <VariableControls dashboard={dashboard} variablesOverride={panelEditVariables} />
-          <DashboardDataLayerControls dashboard={dashboard} />
+          <DashboardDataLayerControls dashboard={dashboard} sectionDataLayerSets={panelEditSectionDataLayerSets} />
         </>
       )}
       {!hideLinksControls && !editPanel && <DashboardLinksControls links={links} dashboard={dashboard} />}
@@ -341,6 +374,7 @@ function DashboardControlActions({
   return (
     <>
       {showShareButton && <ShareDashboardButton dashboard={dashboard} />}
+      <DashboardEditHistoryControls dashboard={dashboard} />
       {showSaveButton && <SaveDashboard dashboard={dashboard} />}
       {!modesEnabled && showEditButton && <EditDashboardSwitch dashboard={dashboard} />}
       {showMakeEditableButton && <MakeDashboardEditableButton dashboard={dashboard} />}

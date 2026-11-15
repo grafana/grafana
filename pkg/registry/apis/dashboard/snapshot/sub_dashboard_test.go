@@ -57,8 +57,7 @@ func TestPublicSnapshotDashboardRemoteClient(t *testing.T) {
 			require.NoError(t, err)
 			snap := newBlobTestSnapshot()
 			snap.Namespace = namespace
-			snap.Spec.Dashboard = nil
-			snap.Blobs.Dashboard = &dashv0.SnapshotBlobReference{Uid: "blob-1"}
+			snap.Blobs.Dashboard = &dashv0.SnapshotBlobReference{Uid: new("blob-1")}
 			// Exercise blob credentials independently of the remote metadata lookup
 			// covered by TestPublicSnapshotMetadataWithStandaloneRemoteClient.
 			getter := grafanarest.NewMockStorage(t)

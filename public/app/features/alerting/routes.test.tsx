@@ -69,41 +69,41 @@ describe('alerting route guards', () => {
   });
 
   describe('Import to Grafana Alerting route', () => {
-    const importToGmaPath = '/alerting/import-to-gma';
-
-    it('allows users holding both convert permissions', () => {
+    // The wizard lives on the admin-only Settings > Import tab, and the old URL redirects there.
+    it.each(['/alerting/import-to-gma', '/alerting/admin/import'])('is admin-only: %s', (path) => {
       contextSrv.user.permissions = {
         [AccessControlAction.AlertingRuleCreate]: true,
         [AccessControlAction.AlertingProvisioningSetStatus]: true,
       };
 
-      const guard = getRouteRolesGuard(importToGmaPath);
-      expect(guard()).toEqual([]);
+      const guard = getRouteRolesGuard(path);
+      expect(guard()).toEqual(['Admin']);
+    });
+  });
+
+  describe('Import data source managed rules route', () => {
+    const path = '/alerting/import-datasource-managed-rules';
+    const importPermissions = {
+      [AccessControlAction.AlertingRuleCreate]: true,
+      [AccessControlAction.AlertingProvisioningSetStatus]: true,
+    };
+
+    afterEach(() => {
+      setTestFlags();
     });
 
-    it('rejects users with only rule-create permission', () => {
-      contextSrv.user.permissions = {
-        [AccessControlAction.AlertingRuleCreate]: true,
-      };
+    it('is admin-only while the wizard is on, since it redirects to the admin-only Settings > Import tab', () => {
+      setTestFlags({ [FlagKeys.AlertingMigrationWizardUI]: true });
+      contextSrv.user.permissions = importPermissions;
 
-      const guard = getRouteRolesGuard(importToGmaPath);
-      expect(guard()).toEqual(['Reject']);
+      expect(getRouteRolesGuard(path)()).toEqual(['Admin']);
     });
 
-    it('rejects users with only provisioning-set-status permission', () => {
-      contextSrv.user.permissions = {
-        [AccessControlAction.AlertingProvisioningSetStatus]: true,
-      };
+    it('keeps the permission check for the rules-only page while the wizard is off', () => {
+      setTestFlags({ [FlagKeys.AlertingMigrationWizardUI]: false });
+      contextSrv.user.permissions = importPermissions;
 
-      const guard = getRouteRolesGuard(importToGmaPath);
-      expect(guard()).toEqual(['Reject']);
-    });
-
-    it('rejects users with neither permission', () => {
-      contextSrv.user.permissions = {};
-
-      const guard = getRouteRolesGuard(importToGmaPath);
-      expect(guard()).toEqual(['Reject']);
+      expect(getRouteRolesGuard(path)()).toEqual([]);
     });
   });
 });

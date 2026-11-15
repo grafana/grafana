@@ -8,7 +8,6 @@ import (
 	"io"
 	"iter"
 	"math/rand"
-	"regexp"
 	"time"
 
 	badger "github.com/dgraph-io/badger/v4"
@@ -462,18 +461,27 @@ func PrefixRangeEnd(prefix string) string {
 	return string(end)
 }
 
-var (
-	// validKeyRegex validates keys used in the unified storage
-	// Keys can contain alphanumeric characters (both upper and lowercase), ':', '-', '.', '/', and '~'
-	// Any combination of these characters is allowed as long as the key is not empty
-	validKeyRegex = regexp.MustCompile(`^[a-zA-Z0-9.:/~_-]+$`)
-)
+// validKeyChars marks the bytes allowed in unified storage keys: ASCII
+// letters, digits, '.', ':', '/', '~', '_' and '-'. A lookup table instead of
+// a regexp because KV clients run IsValidKey on every key a Keys() scan returns.
+var validKeyChars = func() (t [256]bool) {
+	for _, c := range []byte("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.:/~_-") {
+		t[c] = true
+	}
+	return t
+}()
 
+// IsValidKey reports whether key is non-empty and contains only validKeyChars.
 func IsValidKey(key string) bool {
 	if key == "" {
 		return false
 	}
-	return validKeyRegex.MatchString(key)
+	for i := 0; i < len(key); i++ {
+		if !validKeyChars[key[i]] {
+			return false
+		}
+	}
+	return true
 }
 
 func (k *badgerKV) BatchDelete(ctx context.Context, section string, keys []string) error {

@@ -5,13 +5,13 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Badge, LinkButton, Stack, useStyles2 } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
+import { useNavTree } from 'app/core/navtree/useNavTree';
 import { contextSrv } from 'app/core/services/context_srv';
 import { DescriptionTooltip } from 'app/features/search/components/DescriptionTooltip';
 import { type LocationInfo } from 'app/features/search/service/types';
 import { StarToolbarButton } from 'app/features/stars/StarToolbarButton';
 import { ListRow } from 'app/plugins/panel/dashlist/ListRow';
 import { AccessControlAction } from 'app/types/accessControl';
-import { useSelector } from 'app/types/store';
 
 import { HomeList } from '../HomeList';
 import { TimeAgoCell } from '../TimeAgoCell';
@@ -25,8 +25,6 @@ import { type RecentActivity } from './useRecentActivity';
 interface Props {
   recent: RecentActivity;
   foldersByUid: Record<string, LocationInfo>;
-  /** Starring a dashboard here changes what the Starred tab shows. */
-  onStarChange: () => void;
 }
 
 /** An empty history means a new user or a fresh clear: point them at dashboards, as the Recent tab always did. */
@@ -54,10 +52,10 @@ function EmptyStateCta() {
   );
 }
 
-export function RecentActivityTab({ recent, foldersByUid, onStarChange }: Props) {
+export function RecentActivityTab({ recent, foldersByUid }: Props) {
   const { items, counts, total, filter, loading, error, retry } = recent;
   const styles = useStyles2(getStyles);
-  const navTree = useSelector((state) => state.navBarTree);
+  const navTree = useNavTree();
 
   // Once per display: the tab mounts when it becomes active and unmounts when the user leaves it.
   const shown = useRef(false);
@@ -135,7 +133,6 @@ export function RecentActivityTab({ recent, foldersByUid, onStarChange }: Props)
                         group="dashboard.grafana.app"
                         kind="Dashboard"
                         id={item.uid}
-                        onStarChange={onStarChange}
                       />
                     )}
                   </span>

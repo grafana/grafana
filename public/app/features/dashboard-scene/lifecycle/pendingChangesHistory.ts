@@ -10,6 +10,8 @@ import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { type DashboardScene } from '../scene/DashboardScene';
 
 import {
+  getPendingChangesHistory,
+  getScenePendingChangePreview,
   type PendingChangesHistory,
   type PendingChangesHistoryState,
   previewedDashboardUid,
@@ -42,6 +44,11 @@ const queues = new WeakMap<DashboardScene, Promise<void>>();
 const inFlight = new WeakMap<DashboardScene, number>();
 /** Scenes whose pending changes changed under them: their queued recordings would overwrite the newer ones. */
 const superseded = new WeakSet<DashboardScene>();
+/**
+ * How many times each scene was reloaded in place. A recording queued before the scene took newer
+ * pending changes in is of the ones they replaced: sent now, it would overwrite them.
+ */
+const reloads = new WeakMap<DashboardScene, number>();
 
 /**
  * Whether an edit on `scene` hasn't reached the plugin's history: still on its way, or failed. The
@@ -76,6 +83,24 @@ export function startRecordingPendingChanges(scene: DashboardScene, stored: Dash
   const serialized = scene.getSaveModel();
   if (isDashboardV2Spec(serialized)) {
     baselines.set(scene, { serialized, stored });
+  }
+}
+
+/**
+ * After newer pending changes were reloaded into `scene` in place: it shows them now, so it is no
+ * longer superseded, and an edit session records onto them from here, as edit mode starting would.
+ * Recordings queued before the reload, and an edit that failed to record, are of the pending changes
+ * it replaced: they are dropped.
+ */
+export function resumeRecordingPendingChanges(scene: DashboardScene) {
+  reloads.set(scene, (reloads.get(scene) ?? 0) + 1);
+  superseded.delete(scene);
+  // An edit that failed to record was of the replaced pending changes too: nothing is left unsaved.
+  unrecorded.delete(scene);
+  baselines.delete(scene);
+  const preview = getScenePendingChangePreview(scene.state);
+  if (scene.state.isEditing && preview && getPendingChangesHistory(scene.state)) {
+    startRecordingPendingChanges(scene, preview.pending.history?.getState().proposed ?? preview.pending.proposed);
   }
 }
 
@@ -132,8 +157,9 @@ export async function recordPendingChange(
     return;
   }
   inFlight.set(scene, (inFlight.get(scene) ?? 0) + 1);
+  const reload = reloads.get(scene) ?? 0;
   const sent = (queues.get(scene) ?? Promise.resolve())
-    .then(() => sendRecording(scene, history, proposed, description))
+    .then(() => sendRecording(scene, history, proposed, description, reload))
     .finally(() => inFlight.set(scene, (inFlight.get(scene) ?? 1) - 1));
   // The queue goes on past a recording that threw, so the later ones still go out.
   queues.set(scene, sent.then(ignore, ignore));
@@ -144,23 +170,36 @@ async function sendRecording(
   scene: DashboardScene,
   history: PendingChangesHistory,
   proposed: DashboardV2Spec,
-  description: string | undefined
+  description: string | undefined,
+  reload: number
 ): Promise<void> {
   // Its pending changes moved on, and the reload to them failed: this edit isn't kept, so leaving warns.
   if (superseded.has(scene)) {
     unrecorded.add(scene);
     return;
   }
+  // Made before the scene took newer pending changes in, which the user was told replaced it.
+  if ((reloads.get(scene) ?? 0) !== reload) {
+    return;
+  }
   let recorded: boolean;
   try {
     recorded = (await history.record({ proposed, description })).recorded;
   } catch (error) {
+    // The scene took newer pending changes in meanwhile, which replaced this edit.
+    if ((reloads.get(scene) ?? 0) !== reload) {
+      return;
+    }
     // `proposed` stays the baseline, so the next recording, or leaving edit mode, carries this edit.
     unrecorded.add(scene);
     appEvents.emit(AppEvents.alertError, [
       t('dashboard-scene.lifecycle.record-pending-change-failed', 'Your change could not be saved'),
       error instanceof Error ? error.message : String(error),
     ]);
+    return;
+  }
+  // The scene took newer pending changes in while this was on its way: it shows them, whatever this did.
+  if ((reloads.get(scene) ?? 0) !== reload) {
     return;
   }
   // Each recording carries the edits before it, so this one kept any that failed.
@@ -188,10 +227,10 @@ async function sendRecording(
 }
 
 /**
- * Loads the dashboard page again, fresh, back in edit mode when it was editing: a step through the
- * pending changes history loads a new scene, and leaves the requester where they were.
+ * Loads the dashboard page again, back in edit mode when it was editing, and leaves the requester
+ * where they were: into the open scene when it can (true), else onto a new scene.
  */
-export function reloadKeepingEditMode(uid: string, editing: boolean | undefined): Promise<void> {
+export function reloadKeepingEditMode(uid: string, editing: boolean | undefined): Promise<boolean> {
   return reloadPendingChangesPage(uid, editing);
 }
 

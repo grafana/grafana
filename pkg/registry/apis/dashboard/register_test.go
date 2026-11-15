@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"reflect"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -29,6 +30,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
+	"k8s.io/client-go/dynamic"
 	kubecommon "k8s.io/kube-openapi/pkg/common"
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis"
@@ -48,7 +50,9 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/snapshot"
 	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission/rpclient"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	apiserverbuilder "github.com/grafana/grafana/pkg/services/apiserver/builder"
 	apiserverrequest "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -57,6 +61,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
@@ -174,6 +179,154 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 	}
 }
 
+// Storage rejects a root folder create the user may not make with a 403 that carries no reason or
+// message, so v2 creates are checked at admission instead, the way every other folder already is.
+func TestDashboardAPIBuilder_ValidateCreateInRootFolder(t *testing.T) {
+	requester := &identity.StaticRequester{Type: authlib.TypeUser, OrgID: 1, UserID: 1, UserUID: "u1", Namespace: "default"}
+	v2Dashboard := &dashv2.Dashboard{
+		ObjectMeta: metav1.ObjectMeta{GenerateName: "new-"},
+		Spec:       dashv2.DashboardSpec{Title: "New dashboard"},
+	}
+	v2InGeneralFolder := &dashv2.Dashboard{
+		ObjectMeta: metav1.ObjectMeta{
+			GenerateName: "new-",
+			Annotations:  map[string]string{utils.AnnoKeyFolder: accesscontrol.GeneralFolderUID},
+		},
+		Spec: dashv2.DashboardSpec{Title: "New dashboard"},
+	}
+	v2beta1Dashboard := &dashv2beta1.Dashboard{
+		ObjectMeta: metav1.ObjectMeta{GenerateName: "new-"},
+		Spec:       dashv2beta1.DashboardSpec{Title: "New dashboard"},
+	}
+	v2alpha1Dashboard := &dashv2alpha1.Dashboard{
+		ObjectMeta: metav1.ObjectMeta{GenerateName: "new-"},
+		Spec:       dashv2alpha1.DashboardSpec{Title: "New dashboard"},
+	}
+	v1Dashboard := &dashv1.Dashboard{
+		ObjectMeta: metav1.ObjectMeta{GenerateName: "new-"},
+		Spec:       common.Unstructured{Object: map[string]any{"title": "New dashboard"}},
+	}
+
+	tests := []struct {
+		name           string
+		obj            runtime.Object
+		gvk            schema.GroupVersionKind
+		gvr            schema.GroupVersionResource
+		allowed        bool
+		noAccessClient bool
+		dryRun         bool
+		wantChecks     int
+		wantFolder     string
+		wantErr        string
+	}{
+		{
+			name:       "rejects a v2 create the user may not make with a Forbidden status",
+			obj:        v2Dashboard,
+			gvk:        dashv2.DashboardResourceInfo.GroupVersionKind(),
+			gvr:        dashv2.DashboardResourceInfo.GroupVersionResource(),
+			wantChecks: 1,
+			wantErr:    "folders.folder.grafana.app is forbidden: access denied to folder",
+		},
+		{
+			name:       "allows a v2 create the user may make",
+			obj:        v2Dashboard,
+			gvk:        dashv2.DashboardResourceInfo.GroupVersionKind(),
+			gvr:        dashv2.DashboardResourceInfo.GroupVersionResource(),
+			allowed:    true,
+			wantChecks: 1,
+		},
+		{
+			name:       "checks a v2 create in the general folder against that folder",
+			obj:        v2InGeneralFolder,
+			gvk:        dashv2.DashboardResourceInfo.GroupVersionKind(),
+			gvr:        dashv2.DashboardResourceInfo.GroupVersionResource(),
+			wantChecks: 1,
+			wantFolder: accesscontrol.GeneralFolderUID,
+			wantErr:    `folders.folder.grafana.app "general" is forbidden: access denied to folder`,
+		},
+		{
+			name:       "rejects a v2beta1 create the user may not make",
+			obj:        v2beta1Dashboard,
+			gvk:        dashv2beta1.DashboardResourceInfo.GroupVersionKind(),
+			gvr:        dashv2beta1.DashboardResourceInfo.GroupVersionResource(),
+			wantChecks: 1,
+			wantErr:    "folders.folder.grafana.app is forbidden: access denied to folder",
+		},
+		{
+			name:       "rejects a v2alpha1 create the user may not make",
+			obj:        v2alpha1Dashboard,
+			gvk:        dashv2alpha1.DashboardResourceInfo.GroupVersionKind(),
+			gvr:        dashv2alpha1.DashboardResourceInfo.GroupVersionResource(),
+			wantChecks: 1,
+			wantErr:    "folders.folder.grafana.app is forbidden: access denied to folder",
+		},
+		{
+			name:   "skips the check for a dry run",
+			obj:    v2Dashboard,
+			gvk:    dashv2.DashboardResourceInfo.GroupVersionKind(),
+			gvr:    dashv2.DashboardResourceInfo.GroupVersionResource(),
+			dryRun: true,
+		},
+		{
+			name: "leaves a v1 create to storage",
+			obj:  v1Dashboard,
+			gvk:  dashv1.DashboardResourceInfo.GroupVersionKind(),
+			gvr:  dashv1.DashboardResourceInfo.GroupVersionResource(),
+		},
+		{
+			name:           "leaves a v2 create to storage when no access client is configured",
+			obj:            v2Dashboard,
+			gvk:            dashv2.DashboardResourceInfo.GroupVersionKind(),
+			gvr:            dashv2.DashboardResourceInfo.GroupVersionResource(),
+			noAccessClient: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var checks []authlib.CheckRequest
+			var folders []string
+			dashboardService := dashboards.NewFakeDashboardService(t)
+			dashboardService.On("ValidateBasicDashboardProperties", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+			b := &DashboardsAPIBuilder{
+				dashboardService: dashboardService,
+				QuotaService:     quotatest.New(false, nil),
+			}
+			if !tt.noAccessClient {
+				b.accessClient = &recordingAccessClient{
+					check: func(_ context.Context, _ authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+						checks = append(checks, req)
+						folders = append(folders, folder)
+						return authlib.CheckResponse{Allowed: tt.allowed, Zookie: authlib.NoopZookie{}}, nil
+					},
+				}
+			}
+
+			err := b.Validate(identity.WithRequester(context.Background(), requester), admission.NewAttributesRecord(
+				tt.obj, nil, tt.gvk, "default", "", tt.gvr, "", admission.Create, &metav1.CreateOptions{}, tt.dryRun, nil,
+			), nil)
+
+			if tt.wantErr != "" {
+				require.True(t, apierrors.IsForbidden(err), "expected Forbidden, got: %v", err)
+				require.Equal(t, metav1.StatusReasonForbidden, apierrors.ReasonForError(err))
+				require.EqualError(t, err, tt.wantErr)
+			} else {
+				require.NoError(t, err)
+			}
+			require.Len(t, checks, tt.wantChecks)
+			for i := range checks {
+				require.Equal(t, authlib.CheckRequest{
+					Verb:      utils.VerbCreate,
+					Group:     dashv1.DashboardResourceInfo.GroupVersionResource().Group,
+					Resource:  dashv1.DashboardResourceInfo.GroupVersionResource().Resource,
+					Namespace: "default",
+				}, checks[i])
+				require.Equal(t, tt.wantFolder, folders[i], "the root folder is checked the way storage checks it")
+			}
+		})
+	}
+}
+
 func TestDashboardAPIBuilder_StandaloneLibraryPanelAdmissionEnforcesAccess(t *testing.T) {
 	requester := &identity.StaticRequester{
 		Type:      authlib.TypeServiceAccount,
@@ -234,6 +387,7 @@ func TestDashboardAPIBuilder_StandaloneLibraryPanelAdmissionEnforcesAccess(t *te
 				nil,
 				nil,
 				nil,
+				NoopDashboardLifecycleExtras{},
 			)
 			require.True(t, dashboardBuilder.isStandalone)
 			admissionPlugin := apiserverbuilder.NewAdmissionFromBuilders([]apiserverbuilder.APIGroupBuilder{dashboardBuilder})
@@ -422,6 +576,7 @@ func TestDashboardAPIBuilder_StandaloneLibraryPanelMoveRequiresSourceAndDestinat
 		nil,
 		nil,
 		nil,
+		NoopDashboardLifecycleExtras{},
 	)
 	admissionPlugin := apiserverbuilder.NewAdmissionFromBuilders([]apiserverbuilder.APIGroupBuilder{dashboardBuilder})
 
@@ -745,11 +900,6 @@ func TestLibraryPanelStorageDeclaresGVK(t *testing.T) {
 		"standalone writes must not accept client-supplied SQL IDs")
 }
 
-// The remaining resources in the group -- variables, notebooks and snapshots --
-// are each served by a single version, but they share the dashboard group with
-// six dashboard versions. Nothing about a stored object's group says which kind
-// it is, so each of these has to declare its own GVK or the codec would be free
-// to persist it under some other kind in the group.
 // TestSnapshotRegistrationFiltersEveryServedVersion is a registration-level guard:
 // it discovers every served Snapshot version from the manifest, exercises the GET
 // and LIST endpoints actually registered for that version, and verifies the
@@ -796,10 +946,10 @@ func TestSnapshotRegistrationFiltersEveryServedVersion(t *testing.T) {
 
 		t.Run(version, func(t *testing.T) {
 			deleteKey := "secret"
-			dashboard := map[string]any{"title": "dashboard"}
-			mine := dashv0.Snapshot{ObjectMeta: metav1.ObjectMeta{Name: "mine"}, Spec: dashv0.SnapshotSpec{DeleteKey: &deleteKey, Dashboard: dashboard}}
+			blobs := dashv0.SnapshotBlobs{Dashboard: &dashv0.SnapshotBlobReference{Data: new("e30="), ContentType: new("application/json")}}
+			mine := dashv0.Snapshot{ObjectMeta: metav1.ObjectMeta{Name: "mine"}, Spec: dashv0.SnapshotSpec{DeleteKey: &deleteKey}, Blobs: blobs}
 			mine.SetCreatedBy("user:alice")
-			theirs := dashv0.Snapshot{ObjectMeta: metav1.ObjectMeta{Name: "theirs"}, Spec: dashv0.SnapshotSpec{DeleteKey: &deleteKey, Dashboard: dashboard}}
+			theirs := dashv0.Snapshot{ObjectMeta: metav1.ObjectMeta{Name: "theirs"}, Spec: dashv0.SnapshotSpec{DeleteKey: &deleteKey}, Blobs: blobs}
 			theirs.SetCreatedBy("user:bob")
 
 			mockStore := grafanarest.NewMockStorage(t)
@@ -837,6 +987,10 @@ func TestSnapshotRegistrationFiltersEveryServedVersion(t *testing.T) {
 
 			getter, ok := snapStorage.(rest.Getter)
 			require.True(t, ok, "registered snapshot storage must support Get")
+			_, canCreate := snapStorage.(rest.Creater)
+			require.False(t, canCreate)
+			_, canUpdate := snapStorage.(rest.Updater)
+			require.False(t, canUpdate)
 			lister, ok := snapStorage.(rest.Lister)
 			require.True(t, ok, "registered snapshot storage must support List")
 
@@ -848,7 +1002,7 @@ func TestSnapshotRegistrationFiltersEveryServedVersion(t *testing.T) {
 			gotSnap, ok := getObj.(*dashv0.Snapshot)
 			require.True(t, ok)
 			require.Nil(t, gotSnap.Spec.DeleteKey)
-			require.Nil(t, gotSnap.Spec.Dashboard)
+			require.Nil(t, gotSnap.Blobs.Dashboard)
 
 			// Non-admin LIST excludes other creators' snapshots and omits sensitive fields.
 			nonAdminObj, err := lister.List(identity.WithRequester(ctx, &user.SignedInUser{OrgID: 1, UserID: 1, UserUID: "alice", OrgRole: org.RoleEditor}), &internalversion.ListOptions{})
@@ -858,7 +1012,7 @@ func TestSnapshotRegistrationFiltersEveryServedVersion(t *testing.T) {
 			require.Equal(t, []string{"mine"}, names(nonAdminList))
 			for i := range nonAdminList.Items {
 				require.Nil(t, nonAdminList.Items[i].Spec.DeleteKey)
-				require.Nil(t, nonAdminList.Items[i].Spec.Dashboard)
+				require.Nil(t, nonAdminList.Items[i].Blobs.Dashboard)
 			}
 
 			// Admin LIST includes other creators' snapshots (still stripped).
@@ -869,12 +1023,17 @@ func TestSnapshotRegistrationFiltersEveryServedVersion(t *testing.T) {
 			require.ElementsMatch(t, []string{"mine", "theirs"}, names(adminList))
 			for i := range adminList.Items {
 				require.Nil(t, adminList.Items[i].Spec.DeleteKey)
-				require.Nil(t, adminList.Items[i].Spec.Dashboard)
+				require.Nil(t, adminList.Items[i].Blobs.Dashboard)
 			}
 		})
 	}
 }
 
+// The remaining resources in the group -- variables, notebooks, snapshots and
+// dashboard preferences -- are each served by a single version, but they share
+// the dashboard group with six dashboard versions. Nothing about a stored
+// object's group says which kind it is, so each of these has to declare its own
+// GVK or the codec would be free to persist it under some other kind in the group.
 func TestOtherDashboardGroupResourcesDeclareGVK(t *testing.T) {
 	group := dashv0.DashboardResourceInfo.GroupResource().Group
 
@@ -887,6 +1046,7 @@ func TestOtherDashboardGroupResourcesDeclareGVK(t *testing.T) {
 		{"variables", dashv2beta1.VariableResourceInfo, variableStorageOpts(), true},
 		{"notebooks", dashv2beta1.NotebookResourceInfo, notebookStorageOpts(), false},
 		{"snapshots", dashv0.SnapshotResourceInfo, snapshotStorageOpts(), false},
+		{"dashboardpreferences", dashv2beta1.DashboardPreferencesResourceInfo, dashboardPreferencesStorageOpts(), false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			recorder := &gvkRecorder{}
@@ -903,11 +1063,97 @@ func TestOtherDashboardGroupResourcesDeclareGVK(t *testing.T) {
 			require.Equal(t, group, so.GVK.Group)
 			require.NotEmpty(t, so.GVK.Version, "an empty version persists without an apiVersion")
 			require.NotEmpty(t, so.GVK.Kind)
-			// Folder support is the one thing these three actually disagree on, and
-			// for notebooks it is load-bearing: their RBAC grant is a flat notebooks:*
+			require.Equal(t, tc.name == "snapshots", so.EnableInlineBlobs)
+			// For notebooks folder support is load-bearing: their RBAC grant is a flat notebooks:*
 			// wildcard, so a folder-scoped notebook would bypass the folder's ACL.
 			require.Equal(t, tc.folder, so.EnableFolderSupport)
 			require.False(t, so.RequireFolder)
 		})
+	}
+}
+
+// storageOptionsRecorder captures the storage options each store is built with. Unlike gvkRecorder, it
+// builds a real store, from the getter it wraps.
+type storageOptionsRecorder struct {
+	apistore.StorageOptionsGetter
+	recorded []apistore.StorageOptions
+}
+
+func (r *storageOptionsRecorder) WithStorageOptions(opts apistore.StorageOptions) generic.RESTOptionsGetter {
+	r.recorded = append(r.recorded, opts)
+	return r.StorageOptionsGetter.WithStorageOptions(opts)
+}
+
+// Unified storage does no per-user filtering for dashboard preferences, so what is served has to be the
+// wrapper that keeps a list to the caller's tiers, and it must serve neither watch nor deletecollection,
+// which span every tier.
+func TestDashboardPreferencesRegisteredAsWrapper(t *testing.T) {
+	scheme := runtime.NewScheme()
+	require.NoError(t, dashv2beta1.AddToScheme(scheme))
+	codecs := serializer.NewCodecFactory(scheme)
+	optsGetter, err := restoptions.NewRESTOptionsGetterMemory(storagebackend.Config{
+		Codec: codecs.LegacyCodec(dashv2beta1.DashboardPreferencesResourceInfo.GroupVersion()),
+	}, nil)
+	require.NoError(t, err)
+	recorder := &storageOptionsRecorder{StorageOptionsGetter: optsGetter}
+	opts := apiserverbuilder.APIGroupOptions{Scheme: scheme, OptsGetter: recorder}
+
+	b := &DashboardsAPIBuilder{
+		accessClient:         &dashboardPreferencesAccessClient{},
+		accessControl:        acimpl.ProvideAccessControl(featuremgmt.WithFeatures()),
+		folderClientProvider: &staticHandlerProvider{},
+	}
+	groupInfo := &genericapiserver.APIGroupInfo{VersionedResourcesStorageMap: map[string]map[string]rest.Storage{dashv2beta1.VERSION: {}}}
+	require.NoError(t, b.registerDashboardPreferencesStorage(groupInfo, opts))
+	s := groupInfo.VersionedResourcesStorageMap[dashv2beta1.VERSION]["dashboardpreferences"]
+	storage, isWrapper := s.(*dashboardPreferencesStorage)
+	_, isWatcher := s.(rest.Watcher)
+	_, isCollectionDeleter := s.(rest.CollectionDeleter)
+	require.True(t, isWrapper)
+	require.False(t, isWatcher)
+	require.False(t, isCollectionDeleter)
+
+	// Without an access client every list silently leaves out the folder tier.
+	require.Same(t, b.accessClient, storage.accessClient)
+	// Without it, a list would judge the org tier by the org role instead of the org preferences permission.
+	require.Same(t, b.accessControl, storage.accessControl)
+	// Without it, every list fails: the folder tier is read by paging through the caller's folders.
+	require.Same(t, b.folderClientProvider, storage.folders)
+
+	// With folder support, storage would hold the folder tier to its folder's rules for content, and a
+	// folder synced from a repository takes only that repository's objects.
+	require.Len(t, recorder.recorded, 1)
+	so := recorder.recorded[0]
+	require.Equal(t, dashv2beta1.DashboardPreferencesResourceInfo.GroupVersionKind(), so.GVK)
+	require.False(t, so.EnableFolderSupport)
+	require.False(t, so.RequireFolder)
+}
+
+func TestAfterDeleteStopsWaitingForAStalledPermissionDelete(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		var client dynamic.NamespaceableResourceInterface = &stalledPermissionClient{}
+		b := &DashboardsAPIBuilder{resourcePermissions: rpclient.New(rpclient.Static(client), dashv1.DashboardResourceInfo.GroupVersionResource().GroupResource())}
+
+		start := time.Now()
+		b.afterDelete(&dashv1.Dashboard{ObjectMeta: metav1.ObjectMeta{Name: "dash-uid", Namespace: "stacks-1"}}, &metav1.DeleteOptions{})
+
+		require.Equal(t, afterDeleteTimeout, time.Since(start))
+	})
+}
+
+type stalledPermissionClient struct {
+	dynamic.NamespaceableResourceInterface
+}
+
+func (c *stalledPermissionClient) Namespace(string) dynamic.ResourceInterface {
+	return c
+}
+
+func (c *stalledPermissionClient) Delete(ctx context.Context, _ string, _ metav1.DeleteOptions, _ ...string) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-time.After(time.Hour):
+		return nil
 	}
 }

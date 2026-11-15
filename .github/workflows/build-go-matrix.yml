@@ -152,7 +152,7 @@ jobs:
       - uses: ./.github/actions/setup-fpm
       - name: Create stub artifacts
         run: |
-          mkdir -p bin/linux/amd64 public/build data/plugins-bundled
+          mkdir -p bin/linux/amd64 dist/frontend data/plugins-bundled
           printf '#!/bin/sh\nexec true\n' > bin/linux/amd64/grafana
           chmod 0755 bin/linux/amd64/grafana
           touch data/plugins-bundled/.platform-linux-amd64.stamp
