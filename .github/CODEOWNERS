@@ -252,6 +252,9 @@
 /devenv/docker/blocks/self-instrumentation* @grafana/data-sources-plugins
 
 /devenv/bulk-dashboards/ @grafana/dashboards-squad
+/devenv/provisioning-bootstrap/ @grafana/grafana-app-platform-squad
+/devenv/provisioning-bootstrap.ini @grafana/grafana-app-platform-squad
+/devenv/provisioning-bootstrap-cleanup.ini @grafana/grafana-app-platform-squad
 /devenv/bulk-folders/ @grafana/grafana-frontend-platform
 /devenv/create_docker_compose.sh @grafana/grafana-backend-services-squad
 /devenv/alert_rules.yaml @grafana/alerting-squad

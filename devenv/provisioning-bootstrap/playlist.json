@@ -1,0 +1,17 @@
+{
+  "apiVersion": "playlist.grafana.app/v1",
+  "kind": "Playlist",
+  "metadata": {
+    "name": "gdev-provisioning-playlist"
+  },
+  "spec": {
+    "title": "gdev provisioning",
+    "interval": "5m",
+    "items": [
+      {
+        "type": "dashboard_by_tag",
+        "value": "provisioning"
+      }
+    ]
+  }
+}
