@@ -2,6 +2,7 @@ package orgimpl
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"regexp"
 	"strings"
@@ -20,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgdelete"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
@@ -1369,6 +1371,151 @@ func TestIntegration_SQLStore_RemoveOrgUser(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.NotNil(t, usr)
+}
+
+func TestIntegration_SQLStore_RemoveOrgUserDeletesUserPreferences(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	t.Run("removed from one of two orgs", func(t *testing.T) {
+		f := newPreferencesCleanupFixture(t, nil)
+		viewer := f.createViewer(t, f.orgA.ID, f.orgB.ID)
+
+		err := f.store.RemoveOrgUser(t.Context(), &org.RemoveOrgUserCommand{UserID: viewer.ID, OrgID: f.orgB.ID})
+
+		require.NoError(t, err)
+		require.Equal(t, []string{f.ns(f.orgB.ID) + "/" + viewer.UID}, f.cleaner.calls)
+	})
+
+	t.Run("removed from an org they aren't in", func(t *testing.T) {
+		f := newPreferencesCleanupFixture(t, nil)
+		viewer := f.createViewer(t, f.orgA.ID)
+
+		err := f.store.RemoveOrgUser(t.Context(), &org.RemoveOrgUserCommand{UserID: viewer.ID, OrgID: f.orgB.ID})
+
+		require.NoError(t, err)
+		require.Empty(t, f.cleaner.calls)
+	})
+
+	t.Run("an orphan is deleted with its preferences", func(t *testing.T) {
+		f := newPreferencesCleanupFixture(t, nil)
+		viewer := f.createViewer(t, f.orgB.ID)
+		cmd := &org.RemoveOrgUserCommand{UserID: viewer.ID, OrgID: f.orgB.ID, ShouldDeleteOrphanedUser: true}
+
+		err := f.store.RemoveOrgUser(t.Context(), cmd)
+
+		require.NoError(t, err)
+		require.True(t, cmd.UserWasDeleted)
+		require.Equal(t, []string{f.ns(f.orgB.ID) + "/" + viewer.UID}, f.cleaner.calls)
+	})
+
+	t.Run("the last admin can't leave", func(t *testing.T) {
+		f := newPreferencesCleanupFixture(t, nil)
+
+		err := f.store.RemoveOrgUser(t.Context(), &org.RemoveOrgUserCommand{UserID: f.bAdmin.ID, OrgID: f.orgB.ID})
+
+		require.ErrorIs(t, err, org.ErrLastOrgAdmin)
+		require.Empty(t, f.cleaner.calls)
+	})
+
+	t.Run("a cleanup failure doesn't fail the removal", func(t *testing.T) {
+		f := newPreferencesCleanupFixture(t, errors.New("boom"))
+		viewer := f.createViewer(t, f.orgA.ID, f.orgB.ID)
+
+		err := f.store.RemoveOrgUser(t.Context(), &org.RemoveOrgUserCommand{UserID: viewer.ID, OrgID: f.orgB.ID})
+
+		require.NoError(t, err)
+		require.Equal(t, []string{f.ns(f.orgB.ID) + "/" + viewer.UID}, f.cleaner.calls)
+		orgs, err := f.orgSvc.GetUserOrgList(t.Context(), &org.GetUserOrgListQuery{UserID: viewer.ID})
+		require.NoError(t, err)
+		require.Len(t, orgs, 1)
+		require.Equal(t, f.orgA.ID, orgs[0].OrgID)
+	})
+
+	t.Run("Cloud: still in another org of the stack", func(t *testing.T) {
+		f := newPreferencesCleanupFixture(t, nil)
+		f.cfg.StackID = "123"
+		viewer := f.createViewer(t, f.orgA.ID, f.orgB.ID)
+
+		err := f.store.RemoveOrgUser(t.Context(), &org.RemoveOrgUserCommand{UserID: viewer.ID, OrgID: f.orgB.ID})
+
+		require.NoError(t, err)
+		require.Empty(t, f.cleaner.calls)
+	})
+}
+
+// recordingPreferencesCleaner records "<namespace>/<userUID>" for each delete and returns err.
+type recordingPreferencesCleaner struct {
+	err   error
+	calls []string
+}
+
+func (c *recordingPreferencesCleaner) DeleteUserPreferences(_ context.Context, namespace, userUID string) error {
+	c.calls = append(c.calls, namespace+"/"+userUID)
+	return c.err
+}
+
+// preferencesCleanupFixture holds org A and org B, each created with its own admin.
+type preferencesCleanupFixture struct {
+	cfg        *setting.Cfg
+	store      *sqlStore
+	cleaner    *recordingPreferencesCleaner
+	orgSvc     org.Service
+	usrSvc     user.Service
+	orgA, orgB *org.Org
+	bAdmin     *user.User
+}
+
+func newPreferencesCleanupFixture(t *testing.T, cleanerErr error) *preferencesCleanupFixture {
+	t.Helper()
+
+	cfg := setting.NewCfg()
+	testDB := db.NewTestStore(t, sqlstore.WithCfg(cfg))
+	orgSvc, usrSvc := createOrgAndUserSvc(t, testDB, cfg)
+	cleaner := &recordingPreferencesCleaner{err: cleanerErr}
+	f := &preferencesCleanupFixture{
+		cfg: cfg,
+		store: &sqlStore{
+			sql:         legacysql.NewDatabaseProvider(testDB),
+			log:         log.NewNopLogger(),
+			cfg:         cfg,
+			preferences: cleaner,
+		},
+		cleaner: cleaner,
+		orgSvc:  orgSvc,
+		usrSvc:  usrSvc,
+	}
+
+	aAdmin := f.createUser(t, "a-admin")
+	var err error
+	f.orgA, err = orgSvc.CreateWithMember(t.Context(), &org.CreateOrgCommand{Name: "org A", UserID: aAdmin.ID})
+	require.NoError(t, err)
+	f.bAdmin = f.createUser(t, "b-admin")
+	f.orgB, err = orgSvc.CreateWithMember(t.Context(), &org.CreateOrgCommand{Name: "org B", UserID: f.bAdmin.ID})
+	require.NoError(t, err)
+	return f
+}
+
+func (f *preferencesCleanupFixture) createUser(t *testing.T, login string) *user.User {
+	t.Helper()
+	usr, err := f.usrSvc.Create(t.Context(), &user.CreateUserCommand{Login: login, SkipOrgSetup: true})
+	require.NoError(t, err)
+	require.NotEmpty(t, usr.UID)
+	return usr
+}
+
+// createViewer creates a user who is a Viewer in each of orgIDs.
+func (f *preferencesCleanupFixture) createViewer(t *testing.T, orgIDs ...int64) *user.User {
+	t.Helper()
+	viewer := f.createUser(t, "viewer")
+	for _, orgID := range orgIDs {
+		err := f.store.AddOrgUser(t.Context(), &org.AddOrgUserCommand{Role: org.RoleViewer, OrgID: orgID, UserID: viewer.ID})
+		require.NoError(t, err)
+	}
+	return viewer
+}
+
+func (f *preferencesCleanupFixture) ns(orgID int64) string {
+	return request.GetNamespaceMapper(f.cfg)(orgID)
 }
 
 func createOrgAndUserSvc(t *testing.T, store db.DB, cfg *setting.Cfg) (org.Service, user.Service) {
