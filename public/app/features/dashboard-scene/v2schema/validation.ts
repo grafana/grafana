@@ -1,4 +1,4 @@
-import * as z from 'zod';
+import * as z from 'zod/mini';
 
 import {
   type GridLayoutItemKind,
@@ -144,7 +144,7 @@ const GridLayoutItemKindSchema = z.object({
     height: z.number(),
     element: ElementReferenceSchema,
   }),
-}) satisfies z.ZodType<GridLayoutItemKind>;
+}) satisfies z.ZodMiniType<GridLayoutItemKind>;
 
 export function isGridLayoutItemKind(value: unknown): value is GridLayoutItemKind {
   return GridLayoutItemKindSchema.safeParse(value).success;
