@@ -149,19 +149,13 @@ func TestExtractFiles(t *testing.T) {
 	t.Run("Should detect if archive members point outside of the destination directory", func(t *testing.T) {
 		path, err := fs.extractFiles(context.Background(), zipFile(t, filepath.Join("testdata", "plugin-with-parent-member.zip")), "plugin-with-parent-member", SimpleDirNameGeneratorFunc)
 		require.Empty(t, path)
-		require.EqualError(t, err, fmt.Sprintf(
-			`archive member "../member.txt" tries to write outside of plugin directory: %q, this can be a security risk`,
-			testDir,
-		))
+		require.EqualError(t, err, `archive member "../member.txt" contains a path traversal component; rejecting for safety`)
 	})
 
 	t.Run("Should detect if archive members are absolute", func(t *testing.T) {
 		path, err := fs.extractFiles(context.Background(), zipFile(t, filepath.Join("testdata", "plugin-with-absolute-member.zip")), "plugin-with-absolute-member", SimpleDirNameGeneratorFunc)
 		require.Empty(t, path)
-		require.EqualError(t, err, fmt.Sprintf(
-			`archive member "/member.txt" tries to write outside of plugin directory: %q, this can be a security risk`,
-			testDir,
-		))
+		require.EqualError(t, err, `archive member "/member.txt" contains a path traversal component; rejecting for safety`)
 	})
 }
 
@@ -315,7 +309,7 @@ func TestExtractFilesSymlinkEscape(t *testing.T) {
 
 		path, err := fs.extractFiles(context.Background(), archive, pluginID, SimpleDirNameGeneratorFunc)
 		require.Empty(t, path)
-		require.ErrorContains(t, err, "tries to write outside of plugin directory")
+		require.ErrorContains(t, err, "contains a path traversal component")
 
 		_, err = os.Lstat(filepath.Join(pluginsDir, "evil.txt"))
 		require.True(t, os.IsNotExist(err))
