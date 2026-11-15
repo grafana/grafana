@@ -133,11 +133,11 @@ const LOG_DISTRIBUTION_OPTIONS: Array<SelectableValue<number>> = [
 ];
 
 const isValidLinearThreshold = (value: number): string | undefined => {
-  if (Number.isNaN(value)) {
+  if (!Number.isFinite(value)) {
     return t('grafana-ui.axis-builder.linear-threshold.warning.nan', 'Linear threshold must be a number');
   }
-  if (value === 0) {
-    return t('grafana-ui.axis-builder.linear-threshold.warning.zero', 'Linear threshold cannot be zero');
+  if (value <= 0) {
+    return t('grafana-ui.axis-builder.linear-threshold.warning.positive', 'Linear threshold must be greater than zero');
   }
   return;
 };
