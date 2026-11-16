@@ -236,6 +236,7 @@ export enum PluginExtensionPoints {
   AppChrome = 'grafana/app/chrome/v1',
   ExtensionSidebar = 'grafana/extension-sidebar/v0-alpha',
   MegaMenuAction = 'grafana/megamenu/action',
+  PageCanvas = 'grafana/page-canvas/v0-alpha',
   SingleTopBarAction = 'grafana/singletopbar/action',
   AdvisorCompletedChecks = 'grafana/advisor/completed-checks/v1',
   AdvisorCreateChecks = 'grafana/advisor/create-checks/v1',

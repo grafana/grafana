@@ -4293,6 +4293,17 @@
     }
   },
   "app-chrome": {
+    "page-canvas": {
+      "all-closed": "All tabs are closed",
+      "all-closed-hint": "Press Alt+Shift+T to reopen the last one, or reopen them all.",
+      "close-canvas": "Close canvas (Alt+C)",
+      "close-named-tab": "Close {{label}}",
+      "close-other-tabs": "Close other tabs",
+      "close-tab": "Close tab",
+      "close-tabs-right": "Close tabs to the right",
+      "open-as-page": "Open as a Grafana page",
+      "reopen-all": "Reopen all tabs"
+    },
     "skip-content-button": "Skip to main content",
     "st-loading": {
       "background-tooltip": "Preparing {{itemName}}",
