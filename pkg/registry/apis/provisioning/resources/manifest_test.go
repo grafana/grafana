@@ -1,7 +1,6 @@
 package resources
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -17,7 +16,7 @@ func TestManifestSupportedResources(t *testing.T) {
 	t.Run("returns the configured set before the manifests are read", func(t *testing.T) {
 		supported, _ := ManifestSupportedResources([]SupportedResource{folder})
 
-		require.Equal(t, []SupportedResource{folder}, supported(context.Background()))
+		require.Equal(t, []SupportedResource{folder}, supported())
 	})
 
 	t.Run("adds the kinds that opt in to provisioning", func(t *testing.T) {
@@ -36,7 +35,7 @@ func TestManifestSupportedResources(t *testing.T) {
 			folder,
 			{GroupKind: schema.GroupKind{Group: testManifestGroup, Kind: "Widget"}, Capabilities: sets.New(CapabilityFolder)},
 			{GroupKind: schema.GroupKind{Group: testManifestGroup, Kind: "Gadget"}, Capabilities: sets.New[string]()},
-		}, supported(context.Background()))
+		}, supported())
 	})
 
 	t.Run("skips the kinds of a version that is not served", func(t *testing.T) {
@@ -46,7 +45,7 @@ func TestManifestSupportedResources(t *testing.T) {
 
 		onManifests(manifests)
 
-		require.Equal(t, []SupportedResource{folder}, supported(context.Background()))
+		require.Equal(t, []SupportedResource{folder}, supported())
 	})
 
 	t.Run("keeps the configured capabilities of a kind that a manifest declares", func(t *testing.T) {
@@ -55,7 +54,7 @@ func TestManifestSupportedResources(t *testing.T) {
 
 		onManifests(testManifests(testManifestKind("Widget", true, true)))
 
-		require.Equal(t, []SupportedResource{configured}, supported(context.Background()))
+		require.Equal(t, []SupportedResource{configured}, supported())
 	})
 
 	t.Run("keeps the capabilities of a configured collection that covers the kind", func(t *testing.T) {
@@ -64,7 +63,7 @@ func TestManifestSupportedResources(t *testing.T) {
 
 		onManifests(testManifests(testManifestKind("Widget", true, true)))
 
-		require.Equal(t, []SupportedResource{collection}, supported(context.Background()))
+		require.Equal(t, []SupportedResource{collection}, supported())
 	})
 
 	t.Run("keeps the default set when none is configured", func(t *testing.T) {
@@ -72,7 +71,7 @@ func TestManifestSupportedResources(t *testing.T) {
 
 		onManifests(testManifests(testManifestKind("Widget", true, true)))
 
-		got := supported(context.Background())
+		got := supported()
 		require.Len(t, got, len(SupportedProvisioningResources)+1)
 		require.Subset(t, got, SupportedProvisioningResources)
 	})
@@ -81,10 +80,10 @@ func TestManifestSupportedResources(t *testing.T) {
 		supported, onManifests := ManifestSupportedResources([]SupportedResource{folder})
 
 		onManifests(testManifests(testManifestKind("Widget", true, true), testManifestKind("Gadget", true, true)))
-		require.Len(t, supported(context.Background()), 3)
+		require.Len(t, supported(), 3)
 
 		onManifests(testManifests(testManifestKind("Widget", true, true)))
-		require.Len(t, supported(context.Background()), 2)
+		require.Len(t, supported(), 2)
 	})
 }
 
@@ -96,6 +95,6 @@ func TestRemoteManifestSupportedResources(t *testing.T) {
 
 		require.NoError(t, err)
 		require.NotNil(t, watcher)
-		require.Equal(t, []SupportedResource{folder}, supported(context.Background()))
+		require.Equal(t, []SupportedResource{folder}, supported())
 	})
 }

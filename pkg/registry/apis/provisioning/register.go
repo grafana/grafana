@@ -112,7 +112,6 @@ type APIBuilder struct {
 	useExclusivelyAccessCheckerForAuthz bool
 
 	allowedTargets      []provisioning.SyncTargetType
-	configuredResources []resources.SupportedResource
 	supportedResources  resources.SupportedResourcesFunc
 	manifestWatcher     services.Service
 	allowImageRendering bool
@@ -226,8 +225,7 @@ func NewAPIBuilder(
 	extraWorkers []jobs.Worker,
 	jobHistoryConfig *JobHistoryConfig,
 	allowedTargets []provisioning.SyncTargetType,
-	supportedResources []resources.SupportedResource,
-	supported resources.SupportedResourcesFunc,
+	supportedResources resources.SupportedResourcesFunc,
 	manifestWatcher services.Service,
 	restConfigGetter func(context.Context) (*clientrest.Config, error),
 	allowImageRendering bool,
@@ -244,7 +242,7 @@ func NewAPIBuilder(
 	if newStandaloneClientFactoryFunc != nil {
 		clients = newStandaloneClientFactoryFunc(configProvider)
 	} else {
-		clients = resources.NewClientFactoryWithResources(configProvider, supported)
+		clients = resources.NewClientFactoryWithResources(configProvider, supportedResources)
 	}
 	if gv.Version == "" {
 		return nil, fmt.Errorf("invalid provisioning group/version")
@@ -271,8 +269,7 @@ func NewAPIBuilder(
 		repoFactory:                         repoFactory,
 		connectionFactory:                   connectionFactory,
 		clients:                             clients,
-		configuredResources:                 supportedResources,
-		supportedResources:                  supported,
+		supportedResources:                  supportedResources,
 		manifestWatcher:                     manifestWatcher,
 		parsers:                             parsers,
 		unified:                             unified,
@@ -295,7 +292,7 @@ func NewAPIBuilder(
 		maxJobBodySize: maxJobBodySize,
 	}
 
-	b.setResourceLister(resources.NewResourceLister(unified, clients, supportedResources))
+	b.setResourceLister(resources.NewResourceLister(unified, clients, supportedResources()))
 
 	for _, builder := range extraBuilders {
 		b.extras = append(b.extras, builder(b))
@@ -318,7 +315,7 @@ func (b *APIBuilder) SetResourceListerMode(mode string) error {
 	if err := resources.ValidateListerMode(mode); err != nil {
 		return err
 	}
-	b.setResourceLister(resources.NewResourceLister(b.unified, b.clients, b.configuredResources))
+	b.setResourceLister(resources.NewResourceLister(b.unified, b.clients, b.supportedResources()))
 	return nil
 }
 
@@ -440,7 +437,6 @@ func RegisterAPIService(
 		extraWorkers,
 		jobHistoryConfig,
 		allowedTargets,
-		supportedResources,
 		supported,
 		manifestWatcher,
 		nil, // restConfigGetter - will use loopback instead
@@ -496,7 +492,6 @@ func RegisterAPIService(
 		extraWorkers,
 		jobHistoryConfig,
 		allowedTargets,
-		supportedResources,
 		supported,
 		manifestWatcher,
 		nil, // restConfigGetter
@@ -964,8 +959,8 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	// Jobs mutator and validator. The mutator attributes each job to the acting
 	// user at creation time and the validator enforces that the recorded author
 	// is immutable.
-	jobSupportedResources := func(ctx context.Context) []provisioning.SupportedResource {
-		supported := b.supportedResources(ctx)
+	jobSupportedResources := func() []provisioning.SupportedResource {
+		supported := b.supportedResources()
 		out := make([]provisioning.SupportedResource, 0, len(supported))
 		for _, r := range supported {
 			out = append(out, provisioning.SupportedResource{

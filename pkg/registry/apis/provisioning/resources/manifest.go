@@ -1,7 +1,6 @@
 package resources
 
 import (
-	"context"
 	"slices"
 	"sync/atomic"
 	"time"
@@ -17,11 +16,10 @@ import (
 )
 
 // SupportedResourcesFunc returns the resources that provisioning supports at the time of the call.
-type SupportedResourcesFunc func(ctx context.Context) []SupportedResource
+type SupportedResourcesFunc func() []SupportedResource
 
-// StaticSupportedResources returns a SupportedResourcesFunc that always returns supported.
 func StaticSupportedResources(supported ...SupportedResource) SupportedResourcesFunc {
-	return func(context.Context) []SupportedResource { return supported }
+	return func() []SupportedResource { return supported }
 }
 
 // ManifestSupportedResources returns supported plus each kind that a published app manifest
@@ -30,7 +28,7 @@ func StaticSupportedResources(supported ...SupportedResource) SupportedResources
 func ManifestSupportedResources(supported []SupportedResource) (SupportedResourcesFunc, func([]*app.ManifestData)) {
 	var merged atomic.Pointer[[]SupportedResource]
 	merged.Store(&supported)
-	return func(context.Context) []SupportedResource { return *merged.Load() }, func(manifests []*app.ManifestData) {
+	return func() []SupportedResource { return *merged.Load() }, func(manifests []*app.ManifestData) {
 		out := mergeManifestResources(supported, manifests)
 		merged.Store(&out)
 	}

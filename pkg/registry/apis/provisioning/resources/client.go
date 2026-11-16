@@ -221,7 +221,7 @@ func (f *clientFactory) holds(collection string) bool {
 // is not cached — a cancelled or timed-out discovery would otherwise break provisioning until
 // restart — and the lock makes concurrent callers retry one at a time.
 func (f *clientFactory) supportedResources(ctx context.Context) ([]SupportedResource, error) {
-	configured := defaultSupportedResources(f.configuredResources(ctx))
+	configured := defaultSupportedResources(f.configuredResources())
 	f.expandMu.Lock()
 	defer f.expandMu.Unlock()
 	if f.expanded != nil && sameResources(f.expandedFrom, configured) {
@@ -342,8 +342,7 @@ func NewClientFactory(configProvider apiserver.RestConfigProvider, supported ...
 	return NewClientFactoryWithResources(configProvider, StaticSupportedResources(supported...))
 }
 
-// NewClientFactoryWithResources creates a ClientFactory that reads the supported set each
-// time it creates clients.
+// NewClientFactoryWithResources is NewClientFactory with a supported set that can change.
 func NewClientFactoryWithResources(configProvider apiserver.RestConfigProvider, supported SupportedResourcesFunc) ClientFactory {
 	return &clientFactory{
 		clientsProvider:     newSingleAPIClients(configProvider),
@@ -362,10 +361,9 @@ func NewClientFactoryForMultipleAPIServers(configProviders map[string]apiserver.
 	return NewClientFactoryForMultipleAPIServersWithResources(configProviders, nil, StaticSupportedResources(supported...))
 }
 
-// NewClientFactoryForMultipleAPIServersWithResources creates a ClientFactory for multiple API
-// servers that reads the supported set each time it creates clients. When fallback is set, it
-// provides the config for each supported group that has no config provider, or nil when the
-// group cannot be reached.
+// NewClientFactoryForMultipleAPIServersWithResources is NewClientFactoryForMultipleAPIServers
+// with a supported set that can change. fallback gives the config for a supported group that
+// has no config provider, or nil when the group cannot be reached.
 func NewClientFactoryForMultipleAPIServersWithResources(configProviders map[string]apiserver.RestConfigProvider, fallback func(group string) apiserver.RestConfigProvider, supported SupportedResourcesFunc) ClientFactory {
 	clientFactories := make(map[string]ClientFactory)
 	for api, configProvider := range configProviders {
@@ -431,7 +429,7 @@ func collectionResources(configured []SupportedResource) []SupportedResource {
 }
 
 func (m *multiClientFactory) Clients(ctx context.Context, namespace string) (ResourceClients, error) {
-	configured := defaultSupportedResources(m.supportedResources(ctx))
+	configured := defaultSupportedResources(m.supportedResources())
 
 	m.mutex.Lock()
 	if m.fallback != nil {
