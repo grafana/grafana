@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -11,7 +12,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 	dynamicfake "k8s.io/client-go/dynamic/fake"
+	"k8s.io/client-go/rest"
 	clienttesting "k8s.io/client-go/testing"
 
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
@@ -109,4 +112,23 @@ func TestDeleteByName(t *testing.T) {
 			require.Equal(t, options, deletes[0].GetDeleteOptions())
 		})
 	}
+}
+
+func TestDeleteByName_RouteNotServed(t *testing.T) {
+	var deletes int
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodDelete {
+			deletes++
+		}
+		http.NotFound(w, r)
+	}))
+	t.Cleanup(server.Close)
+	client, err := dynamic.NewForConfig(&rest.Config{Host: server.URL})
+	require.NoError(t, err)
+
+	err = deleteByName(t.Context(), client.Resource(dashv2beta1.DashboardPreferencesResourceInfo.GroupVersionResource()), "org-2", "user-u1", metav1.DeleteOptions{})
+
+	require.Equal(t, 1, deletes)
+	require.ErrorIs(t, err, ErrNotServed)
+	require.False(t, apierrors.IsNotFound(err), "must not read as a missing object: %v", err)
 }

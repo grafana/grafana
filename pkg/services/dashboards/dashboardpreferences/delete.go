@@ -17,9 +17,9 @@ import (
 var ErrNotServed = errors.New("the server does not serve dashboardpreferences")
 
 // IsNotFound reports whether err says that the DashboardPreferences object name doesn't exist. Only a
-// NotFound whose Status details name that object counts. A client reports a 404 without a Status body,
-// such as one from a route that isn't served, with those same details and an UnexpectedServerResponse
-// cause, so that doesn't count.
+// NotFound whose Status details name that object counts, so a 404 without a Status body, such as one
+// from a route that isn't served, doesn't: the dynamic client reports it with empty details, and a typed
+// client with the object's details plus an UnexpectedServerResponse cause.
 func IsNotFound(err error, name string) bool {
 	if !apierrors.IsNotFound(err) {
 		return false
