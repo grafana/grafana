@@ -1115,6 +1115,18 @@ describe('DashboardControls', () => {
 
       expect(renderer.queryByTestId('scopes-dashboards-expand')).toBeInTheDocument();
     });
+
+    it('hides the toggle when scopeFilters is off, even with the mega-menu flag off', async () => {
+      await act(async () => {
+        setTestFlags({ [FlagKeys.ScopeFilters]: false });
+      });
+      mockUseFlagScopesDashboardsMegaMenu.mockReturnValue(false);
+
+      const scene = buildTestScene();
+      const renderer = renderInGrafanaContext(<scene.Component model={scene} />);
+
+      expect(renderer.queryByTestId('scopes-dashboards-expand')).not.toBeInTheDocument();
+    });
   });
 });
 
