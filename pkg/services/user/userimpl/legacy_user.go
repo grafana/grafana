@@ -246,7 +246,7 @@ func (s *LegacyService) Delete(ctx context.Context, cmd *user.DeleteUserCommand)
 		// Read before the user row goes: the org list query joins the user table.
 		orgs, err := s.orgService.GetUserOrgList(ctx, &org.GetUserOrgListQuery{UserID: cmd.UserID})
 		if err != nil {
-			logging.FromContext(ctx).Warn("Failed to delete a user's dashboard preferences", "userUID", usr.UID, "error", fmt.Errorf("list the user's orgs: %w", err))
+			dashboardpreferences.WarnNotDeleted(ctx, "", usr.UID, fmt.Errorf("list the user's orgs: %w", err))
 		} else {
 			for _, o := range orgs {
 				orgIDs = append(orgIDs, o.OrgID)

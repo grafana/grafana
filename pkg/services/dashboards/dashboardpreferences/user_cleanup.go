@@ -95,11 +95,11 @@ func UserLeftNamespace(ctx context.Context, cleaner UserCleaner, namespace, user
 		return
 	}
 	if namespace == "" {
-		warnNotDeleted(ctx, namespace, userUID, errNamespaceMissing)
+		WarnNotDeleted(ctx, namespace, userUID, errNamespaceMissing)
 		return
 	}
 	if err := cleaner.DeleteUserPreferences(ctx, namespace, userUID); err != nil {
-		warnNotDeleted(ctx, namespace, userUID, err)
+		WarnNotDeleted(ctx, namespace, userUID, err)
 	}
 }
 
@@ -125,14 +125,16 @@ func UserLeftOrgs(ctx context.Context, cleaner UserCleaner, cfg *setting.Cfg, us
 		}
 		skip[namespace] = true
 		if inTransaction {
-			warnNotDeleted(ctx, namespace, userUID, errRemovalNotCommitted)
+			WarnNotDeleted(ctx, namespace, userUID, errRemovalNotCommitted)
 			continue
 		}
 		UserLeftNamespace(ctx, cleaner, namespace, userUID)
 	}
 }
 
-// warnNotDeleted logs every cleanup miss, so that each hook reports one message with one set of keys.
-func warnNotDeleted(ctx context.Context, namespace, userUID string, err error) {
+// WarnNotDeleted logs that user-<userUID> may remain in namespace, which is empty when the miss came
+// before the namespace was known. Every hook logs its misses through it, so that each miss is one
+// message with one set of keys.
+func WarnNotDeleted(ctx context.Context, namespace, userUID string, err error) {
 	logger.FromContext(ctx).Warn("Failed to delete a user's dashboard preferences", "namespace", namespace, "userUID", userUID, "error", err)
 }
