@@ -1,7 +1,7 @@
 import { type ComponentProps } from 'react';
 import { act, getWrapper, render, screen } from 'test/test-utils';
 
-import { type NavModelItem } from '@grafana/data';
+import { createTheme, ThemeContext, type NavModelItem } from '@grafana/data';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { StPodReadyService, StPodStatus } from 'app/core/services/StPodReadyService';
@@ -97,6 +97,28 @@ describe('MegaMenuItem rendering branches', () => {
   afterEach(() => {
     service.stop();
     contextSrv.isSignedIn = false;
+  });
+
+  it.each([false, true])('uses the accent colour on the pinned Starred section only: %s', async (isPinnedSection) => {
+    setTestFlags({ 'grafana.visualDesignRefresh': true });
+    const theme = createTheme();
+    const starred: NavModelItem = { id: 'starred', text: 'Starred', url: '/dashboards?starred', icon: 'star' };
+    try {
+      render(
+        <ThemeContext.Provider value={theme}>
+          <MegaMenuItem link={starred} onPin={noop} isPinned={() => true} isPinnedSection={isPinnedSection} />
+        </ThemeContext.Provider>
+      );
+      const icon = screen.getByTestId('icon-star');
+      expect(screen.getByRole('link', { name: 'Starred' })).toBeInTheDocument();
+      if (isPinnedSection) {
+        expect(icon).toHaveStyle({ color: theme.colors.accent.text });
+      } else {
+        expect(icon).not.toHaveStyle({ color: theme.colors.accent.text });
+      }
+    } finally {
+      await act(async () => setTestFlags({}));
+    }
   });
 
   it('renders nothing when the link has no url', () => {

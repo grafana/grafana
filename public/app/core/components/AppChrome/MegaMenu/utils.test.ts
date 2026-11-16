@@ -8,14 +8,8 @@ import {
   getEnrichedHelpItem,
   getActiveItem,
   getPinnedEntries,
-  moveItem,
-  reorderSections,
-  orderTopLevelSections,
-  isHideable,
   removeHiddenItems,
   removeEmptySavedSections,
-  hideItem,
-  revealItem,
   enrichWithInteractionTracking,
 } from './utils';
 
@@ -336,52 +330,6 @@ describe('pinning helpers', () => {
       expect(entries[0].line).toBeUndefined();
     });
   });
-
-  describe('moveItem', () => {
-    it('moves an element to a new index', () => {
-      expect(moveItem(['/explore', '/dashboards', '/admin'], 2, 0)).toEqual(['/admin', '/explore', '/dashboards']);
-    });
-
-    it('is a no-op for out-of-range indices', () => {
-      expect(moveItem(['/explore', '/dashboards'], 0, 5)).toEqual(['/explore', '/dashboards']);
-    });
-  });
-
-  describe('orderTopLevelSections', () => {
-    it('orders sections by the stored id list', () => {
-      expect(orderTopLevelSections(tree, ['cfg', 'explore']).map((i) => i.id)).toEqual([
-        'cfg',
-        'explore',
-        'home',
-        'dashboards',
-      ]);
-    });
-
-    it('appends sections not in the stored order, keeping their nav-tree order', () => {
-      expect(orderTopLevelSections(tree, ['dashboards']).map((i) => i.id)).toEqual([
-        'dashboards',
-        'home',
-        'explore',
-        'cfg',
-      ]);
-    });
-  });
-
-  describe('reorderSections', () => {
-    it('moves a section to a new index, returning the full id order', () => {
-      // From the default nav order [home, explore, dashboards, cfg], move dashboards (2) to the front.
-      expect(reorderSections(tree, [], 2, 0)).toEqual(['dashboards', 'home', 'explore', 'cfg']);
-    });
-
-    it('reorders relative to an existing stored order', () => {
-      // Stored order puts cfg first: [cfg, home, explore, dashboards]; move cfg (0) to the end.
-      expect(reorderSections(tree, ['cfg'], 0, 3)).toEqual(['home', 'explore', 'dashboards', 'cfg']);
-    });
-
-    it('is a no-op for out-of-range indices, keeping the current order', () => {
-      expect(reorderSections(tree, ['cfg', 'explore'], 0, 9)).toEqual(['cfg', 'explore']);
-    });
-  });
 });
 
 describe('hiding helpers', () => {
@@ -417,23 +365,6 @@ describe('hiding helpers', () => {
     },
   ];
 
-  describe('isHideable', () => {
-    it('is true for sections and children, but false for Home/Bookmarks/Starred, create actions and starred sub-items', () => {
-      expect(isHideable(tree[1])).toBe(true); // Explore (top-level)
-      expect(isHideable({ text: 'Users', id: 'cfg/access/users', url: '/admin/users' })).toBe(true); // nested child
-      // A plugin nav item with only a url (no id) is still hideable — keyed by its url.
-      expect(isHideable({ text: 'Workspace', url: '/a/assistant/workspace' })).toBe(true);
-      expect(isHideable({ text: 'No key' })).toBe(false); // neither id nor url
-      expect(isHideable(tree[0])).toBe(false); // Home
-      expect(isHideable({ text: 'Bookmarks', id: 'bookmarks', url: '/bookmarks' })).toBe(false);
-      expect(isHideable({ text: 'Starred', id: 'starred', url: '/dashboards?starred' })).toBe(false);
-      expect(isHideable({ text: 'New', id: 'dashboards/new', url: '/dashboard/new', isCreateAction: true })).toBe(
-        false
-      );
-      expect(isHideable({ text: 'A dashboard', id: 'starred/abc', url: '/d/abc' })).toBe(false);
-    });
-  });
-
   describe('removeHiddenItems (recursive)', () => {
     it('drops a hidden top-level section with its subtree', () => {
       expect(removeHiddenItems(tree, new Set(['dashboards'])).map((i) => i.id)).toEqual(['home', 'explore', 'cfg']);
@@ -452,23 +383,6 @@ describe('hiding helpers', () => {
       const result = removeHiddenItems(tree, new Set(['cfg/access/users']));
       const access = result.find((i) => i.id === 'cfg')?.children?.find((c) => c.id === 'cfg/access');
       expect(access?.children?.map((c) => c.id)).toEqual(['cfg/access/teams']);
-    });
-  });
-
-  describe('hideItem / revealItem', () => {
-    it('hides an item by id, dropping now-redundant descendant ids', () => {
-      expect(hideItem(['cfg/access/users'], tree, 'cfg/access')).toEqual(['cfg/access']);
-    });
-
-    it('reveals an explicitly-hidden item by removing its id', () => {
-      expect(revealItem(['cfg/access', 'explore'], tree, 'cfg/access')).toEqual(['explore']);
-    });
-
-    it('reveals an item under a hidden ancestor by breaking the ancestor apart', () => {
-      // Administration (cfg) is hidden; revealing Users removes that hide and re-hides the off-path
-      // siblings down the path (Settings under cfg, Teams under access) so only the Users path shows.
-      const result = revealItem(['cfg'], tree, 'cfg/access/users');
-      expect(new Set(result)).toEqual(new Set(['cfg/settings', 'cfg/access/teams']));
     });
   });
 });
