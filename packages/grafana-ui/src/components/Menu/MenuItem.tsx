@@ -32,6 +32,8 @@ export interface MenuItemProps<T = unknown> {
   description?: string;
   /** Aria label for accessibility support */
   ariaLabel?: string;
+  /** Identifies the current item in a set of related items */
+  ariaCurrent?: React.AriaAttributes['aria-current'];
   /** Aria checked for accessibility support */
   ariaChecked?: boolean;
   /** Target of the menu item (i.e. new window)  */
@@ -76,6 +78,7 @@ export const MenuItem = React.memo(
       label,
       description,
       ariaLabel,
+      ariaCurrent,
       ariaChecked,
       target,
       onClick,
@@ -206,6 +209,7 @@ export const MenuItem = React.memo(
         ref={localRef}
         data-testid={testId}
         aria-label={ariaLabel}
+        aria-current={ariaCurrent}
         aria-checked={ariaChecked}
         // Announce to screen readers that this item opens a submenu, and whether it is
         // currently expanded, so nested items (e.g. under "More...") are discoverable.
