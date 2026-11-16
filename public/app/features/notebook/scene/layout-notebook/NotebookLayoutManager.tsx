@@ -1188,9 +1188,9 @@ export class NotebookLayoutManager
   }
 
   /**
-   * `${base}-${n}` for the lowest n not yet taken. Checked against every cell rather than kept as a
-   * counter, because the names a saved notebook arrives with are arbitrary and a counter would
-   * eventually land on one of them.
+   * `${base}-${random}`, retried until no cell has it. Random rather than a counter: a counter hands
+   * out the name of a deleted cell again, and comments anchored to that name would attach to the new
+   * cell. Checked against every cell because the names a saved notebook arrives with are arbitrary.
    */
   private nextElementName(base: string): string {
     const taken = new Set(this.state.cells.map((current) => current.state.elementName));
