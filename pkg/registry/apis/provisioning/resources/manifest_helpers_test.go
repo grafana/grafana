@@ -10,7 +10,7 @@ func testManifests(kinds ...app.ManifestVersionKind) []*app.ManifestData {
 	return []*app.ManifestData{{
 		AppName:  "example",
 		Group:    testManifestGroup,
-		Versions: []app.ManifestVersion{{Name: "v1", Kinds: kinds}},
+		Versions: []app.ManifestVersion{{Name: "v1", Served: true, Kinds: kinds}},
 	}}
 }
 

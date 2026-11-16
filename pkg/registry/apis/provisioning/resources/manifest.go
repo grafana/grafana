@@ -58,6 +58,9 @@ func mergeManifestResources(supported []SupportedResource, manifests []*app.Mani
 	}
 	for _, data := range manifests {
 		for _, version := range data.Versions {
+			if !version.Served {
+				continue
+			}
 			for _, kind := range version.Kinds {
 				gk := schema.GroupKind{Group: data.Group, Kind: kind.Kind}
 				if seen.Has(gk) || !kind.IsProvisionable() || kind.Scope == "Cluster" || storingCollection(supported, gk) != "" {

@@ -39,6 +39,16 @@ func TestManifestSupportedResources(t *testing.T) {
 		}, supported(context.Background()))
 	})
 
+	t.Run("skips the kinds of a version that is not served", func(t *testing.T) {
+		manifests := testManifests(testManifestKind("Widget", true, true))
+		manifests[0].Versions[0].Served = false
+		supported, onManifests := ManifestSupportedResources([]SupportedResource{folder})
+
+		onManifests(manifests)
+
+		require.Equal(t, []SupportedResource{folder}, supported(context.Background()))
+	})
+
 	t.Run("keeps the configured capabilities of a kind that a manifest declares", func(t *testing.T) {
 		configured := SupportedResource{GroupKind: schema.GroupKind{Group: testManifestGroup, Kind: "Widget"}, Capabilities: sets.New(CapabilityDisabled)}
 		supported, onManifests := ManifestSupportedResources([]SupportedResource{configured})
