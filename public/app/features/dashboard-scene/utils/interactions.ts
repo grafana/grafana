@@ -212,9 +212,12 @@ export const DashboardInteractions = {
       | 'duplicate'
       | 'delete'
       | 'view'
+      | 'restore'
+      | 'explore'
+      | 'more_actions'
       | 'use_library_panel',
     id: number,
-    source: 'panel' | 'edit_pane' | 'edit_popover' | 'keyboard',
+    source: 'panel' | 'edit_pane' | 'edit_popover' | 'actions_popover' | 'keyboard',
     panelType?: string
   ) {
     reportDashboardInteraction('panel_action_clicked', { item, id, source, panelType });

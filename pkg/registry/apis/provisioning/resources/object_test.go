@@ -11,12 +11,14 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/sets"
 	dynamicfake "k8s.io/client-go/dynamic/fake"
+	"k8s.io/client-go/rest"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	provisioningresources "github.com/grafana/grafana/apps/provisioning/pkg/resources"
@@ -30,11 +32,21 @@ func TestResourceListerFromSearch_ListErrors(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			store := resource.NewMockResourceClient(t)
 			store.EXPECT().ListManagedObjects(mock.Anything, mock.Anything).Return(nil, tc.err).Once()
-			got, err := NewResourceLister(store, nil, nil).List(context.Background(), "default", "repo")
+			got, err := NewResourceLister(store, nil, nil).List(context.Background(), "default", "repo", ListOptions{})
 			require.Nil(t, got)
 			tc.assertError(t, err)
 		})
 	}
+}
+
+func TestResourceListerFromSearch_RejectsABadContinueTokenBeforeReading(t *testing.T) {
+	// No expectation on the store: a token that cannot be honoured must not cost a read, and must
+	// fail as a bad request rather than as whatever the reads returned.
+	store := resource.NewMockResourceClient(t)
+	got, err := NewResourceLister(store, nil, nil).
+		List(context.Background(), "default", "repo", ListOptions{Continue: "not-a-token!"})
+	require.Nil(t, got)
+	require.True(t, apierrors.IsBadRequest(err), "got %v", err)
 }
 
 func TestResourceListerFromSearch_CountErrors(t *testing.T) {
@@ -42,7 +54,7 @@ func TestResourceListerFromSearch_CountErrors(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			store := resource.NewMockResourceClient(t)
 			store.EXPECT().CountManagedObjects(mock.Anything, mock.Anything).Return(nil, tc.err).Once()
-			got, err := NewResourceLister(store, nil, nil).Stats(context.Background(), "default", "")
+			got, err := NewResourceLister(store, nil, nil).Stats(context.Background(), "default")
 			require.Nil(t, got)
 			tc.assertError(t, err)
 		})
@@ -55,7 +67,7 @@ func TestResourceListerFromSearch_GetStatsErrors(t *testing.T) {
 			store := resource.NewMockResourceClient(t)
 			store.EXPECT().CountManagedObjects(mock.Anything, mock.Anything).Return(&resourcepb.CountManagedObjectsResponse{}, nil).Once()
 			store.EXPECT().GetStats(mock.Anything, mock.Anything).Return(nil, tc.err).Once()
-			got, err := NewResourceLister(store, nil, nil).Stats(context.Background(), "default", "")
+			got, err := NewResourceLister(store, nil, nil).Stats(context.Background(), "default")
 			require.Nil(t, got)
 			tc.assertError(t, err)
 		})
@@ -130,11 +142,11 @@ func TestResourceListerFromSearch_ListsCollectionMembersThroughClients(t *testin
 		{GroupKind: schema.GroupKind{Group: provisioningresources.CollectionPrefix + collection, Kind: "DataSource"}},
 	})
 
-	got, err := lister.List(context.Background(), "default", repository)
+	got, err := lister.List(context.Background(), "default", repository, ListOptions{})
 	require.NoError(t, err)
 	require.Equal(t, []provisioning.ResourceListItem{
-		{Path: "pl-1.json", Group: "playlist.grafana.app", Resource: "playlists", Name: "pl-1", Title: "Playlist 1"},
 		{Path: "ds-1.json", Group: member, Resource: "datasources", Name: "ds-1", Hash: "abc", Title: "Test data"},
+		{Path: "pl-1.json", Group: "playlist.grafana.app", Resource: "playlists", Name: "pl-1", Title: "Playlist 1"},
 	}, got.Items, "the collection's index item is replaced by the one addressed through its served group")
 }
 
@@ -198,7 +210,7 @@ func TestResourceListerFromSearch_ListsAMemberOnceWhenAPatternCoversADeclaredKin
 		{GroupKind: schema.GroupKind{Group: "*.grafana.app", Kind: "Playlist"}},
 	})
 
-	got, err := lister.List(context.Background(), "default", repository)
+	got, err := lister.List(context.Background(), "default", repository, ListOptions{})
 	require.NoError(t, err)
 	require.Equal(t, []provisioning.ResourceListItem{
 		{Path: "db-1.json", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "db-1", Title: "Dashboard 1"},
@@ -255,7 +267,7 @@ func TestResourceListerFromSearch_KeepsADeclaredKindStoredInACollectionGroup(t *
 		{GroupKind: schema.GroupKind{Group: provisioningresources.CollectionWildcard + provisioningresources.CollectionSeparator + collection, Kind: "LibraryPanel"}},
 	})
 
-	got, err := lister.List(context.Background(), "default", repository)
+	got, err := lister.List(context.Background(), "default", repository, ListOptions{})
 	require.NoError(t, err)
 	require.Equal(t, []provisioning.ResourceListItem{
 		{Path: "db-1.json", Group: collection, Resource: "dashboards", Name: "db-1", Title: "Dashboard 1"},
@@ -308,9 +320,112 @@ func TestResourceListerFromSearch_KeepsADisabledKindStoredInACollectionGroup(t *
 		{GroupKind: schema.GroupKind{Group: provisioningresources.CollectionWildcard + provisioningresources.CollectionSeparator + collection, Kind: "LibraryPanel"}},
 	})
 
-	got, err := lister.List(context.Background(), "default", repository)
+	got, err := lister.List(context.Background(), "default", repository, ListOptions{})
 	require.NoError(t, err)
 	require.Equal(t, []provisioning.ResourceListItem{
 		{Path: "db-1.json", Group: collection, Resource: "dashboards", Name: "db-1", Title: "Dashboard 1"},
 	}, got.Items, "the disabled kind is still managed, and still has to be cleaned up")
+}
+
+func TestNewResourceListerForMode(t *testing.T) {
+	store := resource.NewMockResourceClient(t)
+
+	t.Run("an absent setting keeps the index reader", func(t *testing.T) {
+		lister, err := NewResourceListerForMode("", store, nil, nil, nil, 0)
+		require.NoError(t, err)
+		require.IsType(t, &ResourceListerFromSearch{}, lister)
+		require.True(t, NeedsResourceStore(""))
+	})
+
+	t.Run("search", func(t *testing.T) {
+		lister, err := NewResourceListerForMode(ListerSearch, store, nil, nil, nil, 0)
+		require.NoError(t, err)
+		require.IsType(t, &ResourceListerFromSearch{}, lister)
+		require.True(t, NeedsResourceStore(ListerSearch))
+	})
+
+	t.Run("apis reads the provisioning API and needs no store", func(t *testing.T) {
+		lister, err := NewResourceListerForMode(ListerAPIs, nil, nil, nil, &rest.RESTClient{}, 0)
+		require.NoError(t, err)
+		require.IsType(t, &ResourceListerFromProvisioningAPI{}, lister)
+		require.False(t, NeedsResourceStore(ListerAPIs))
+	})
+
+	t.Run("apis without a client fails construction", func(t *testing.T) {
+		_, err := NewResourceListerForMode(ListerAPIs, store, nil, nil, nil, 0)
+		require.EqualError(t, err, `[provisioning] resource_lister "apis" needs a provisioning API client`)
+	})
+
+	t.Run("an unknown mode names the valid values", func(t *testing.T) {
+		_, err := NewResourceListerForMode("index", store, nil, nil, nil, 0)
+		require.EqualError(t, err, `invalid [provisioning] resource_lister "index": expected "search" or "apis"`)
+		require.False(t, NeedsResourceStore("index"), "an unknown mode must fail validation, not a store lookup")
+	})
+}
+
+func TestResourceListerFromSearch_RepositoryStats(t *testing.T) {
+	const repository = "repo"
+
+	t.Run("narrows the count request to this repository and returns just its counts", func(t *testing.T) {
+		store := resource.NewMockResourceClient(t)
+		store.EXPECT().CountManagedObjects(mock.Anything, &resourcepb.CountManagedObjectsRequest{
+			Namespace: "default",
+			Kind:      string(utils.ManagerKindRepo),
+			Id:        repository,
+		}).Return(&resourcepb.CountManagedObjectsResponse{
+			Items: []*resourcepb.CountManagedObjectsResponse_ResourceCount{
+				{Kind: string(utils.ManagerKindRepo), Id: repository, Group: "dashboard.grafana.app", Resource: "dashboards", Count: 24},
+				{Kind: string(utils.ManagerKindRepo), Id: repository, Group: "folder.grafana.app", Resource: "folders", Count: 2},
+			},
+		}, nil).Once()
+
+		got, err := NewResourceLister(store, nil, nil).RepositoryStats(context.Background(), "default", repository)
+		require.NoError(t, err)
+		require.Equal(t, []provisioning.ResourceCount{
+			{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 24},
+			{Group: "folder.grafana.app", Resource: "folders", Count: 2},
+		}, got, "the counts alone, which is what status.stats holds")
+	})
+
+	// A search server at an older deployment cadence ignores the Kind filter, so both managers
+	// sharing the id come back; the bootstrap repository is managed by file-provisioning under
+	// its own name.
+	t.Run("selects its own manager when the server ignores the kind filter", func(t *testing.T) {
+		store := resource.NewMockResourceClient(t)
+		store.EXPECT().CountManagedObjects(mock.Anything, mock.Anything).Return(&resourcepb.CountManagedObjectsResponse{
+			Items: []*resourcepb.CountManagedObjectsResponse_ResourceCount{
+				{Kind: string(utils.ManagerKindFileProvisioning), Id: repository, Group: "provisioning.grafana.app", Resource: "repositories", Count: 1},
+				{Kind: string(utils.ManagerKindRepo), Id: repository, Group: "dashboard.grafana.app", Resource: "dashboards", Count: 24},
+			},
+		}, nil).Once()
+
+		got, err := NewResourceLister(store, nil, nil).RepositoryStats(context.Background(), "default", repository)
+		require.NoError(t, err)
+		require.Equal(t, []provisioning.ResourceCount{
+			{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 24},
+		}, got, "only the repo manager's counts, never the file-provisioning entry")
+	})
+
+	t.Run("another manager's counts under the same id are not the repository's", func(t *testing.T) {
+		store := resource.NewMockResourceClient(t)
+		store.EXPECT().CountManagedObjects(mock.Anything, mock.Anything).Return(&resourcepb.CountManagedObjectsResponse{
+			Items: []*resourcepb.CountManagedObjectsResponse_ResourceCount{
+				{Kind: string(utils.ManagerKindFileProvisioning), Id: repository, Group: "provisioning.grafana.app", Resource: "repositories", Count: 1},
+			},
+		}, nil).Once()
+
+		got, err := NewResourceLister(store, nil, nil).RepositoryStats(context.Background(), "default", repository)
+		require.Nil(t, got)
+		require.True(t, apierrors.IsNotFound(err), "expected a not-found error, got %v", err)
+	})
+
+	t.Run("a repository the index counts nothing for is not found", func(t *testing.T) {
+		store := resource.NewMockResourceClient(t)
+		store.EXPECT().CountManagedObjects(mock.Anything, mock.Anything).
+			Return(&resourcepb.CountManagedObjectsResponse{}, nil).Once()
+
+		got, err := NewResourceLister(store, nil, nil).RepositoryStats(context.Background(), "default", repository)
+		require.Nil(t, got)
+		require.True(t, apierrors.IsNotFound(err), "expected a not-found error, got %v", err)
+	})
 }

@@ -215,7 +215,6 @@ func runTestResourcePermissionScenarios(t *testing.T, backend resource.StorageBa
 					Key:   key,
 				})
 				require.NoError(t, err)
-				require.Nil(t, created.Error)
 
 				// Now try the update/move with the configured permissions
 				targetResourceJSON := fmt.Sprintf(`{
@@ -355,7 +354,6 @@ func runTestListTrashAccessControl(t *testing.T, backend resource.StorageBackend
 		Key:   key,
 	})
 	require.NoError(t, err)
-	require.Nil(t, created.Error)
 
 	// Delete the resource with user A
 	deleted, err := server.Delete(ctxA, &resourcepb.DeleteRequest{
@@ -377,7 +375,6 @@ func runTestListTrashAccessControl(t *testing.T, backend resource.StorageBackend
 		},
 	})
 	require.NoError(t, err)
-	require.Nil(t, trashList.Error)
 	require.Len(t, trashList.Items, 1, "Admin user should see the deleted resource in trash")
 
 	// Test 2: Non-admin user (user B) who didn't delete the resource should NOT see it in trash
@@ -393,7 +390,6 @@ func runTestListTrashAccessControl(t *testing.T, backend resource.StorageBackend
 		},
 	})
 	require.NoError(t, err)
-	require.Nil(t, trashListB.Error)
 	require.Len(t, trashListB.Items, 0, "Non-admin user who didn't delete the resource should not see it in trash")
 
 	// Test 3: Create and delete another resource with user B
@@ -435,7 +431,6 @@ func runTestListTrashAccessControl(t *testing.T, backend resource.StorageBackend
 		Key:   keyB,
 	})
 	require.NoError(t, err)
-	require.Nil(t, createdB.Error)
 
 	// Delete the resource with user B
 	deletedB, err := server.Delete(ctxB, &resourcepb.DeleteRequest{
@@ -457,7 +452,6 @@ func runTestListTrashAccessControl(t *testing.T, backend resource.StorageBackend
 		},
 	})
 	require.NoError(t, err)
-	require.Nil(t, trashListB2.Error)
 	require.Len(t, trashListB2.Items, 1, "User should see their own deleted resource in trash")
 
 	// Test 5: Admin user should see both deleted resources
@@ -472,7 +466,6 @@ func runTestListTrashAccessControl(t *testing.T, backend resource.StorageBackend
 		},
 	})
 	require.NoError(t, err)
-	require.Nil(t, trashListA2.Error)
 	require.Len(t, trashListA2.Items, 2, "Admin user should see all deleted resources in trash")
 
 	// Test 6: Verify the trash items have the correct metadata

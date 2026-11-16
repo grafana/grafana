@@ -104,8 +104,8 @@ func (s *Service) validateLegacyInternalEvaluation(
 		return errors.New("internal legacy identity cannot be combined with an action restriction")
 	}
 
-	if req.GetSubject() != "" || req.GetGlobalEvaluation() != nil {
-		return errors.New("internal legacy identity cannot be combined with a subject or global evaluation")
+	if req.GetSubject() != "" {
+		return errors.New("internal legacy identity cannot be combined with a subject")
 	}
 
 	if namespace.OrgID < 1 || s.legacyScopeNamespace == nil || s.legacyScopeNamespace(namespace.OrgID) != namespace.Value {

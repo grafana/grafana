@@ -22,7 +22,7 @@ func move(t *testing.T, helper *common.ProvisioningTestHelper, repo, originalPat
 	require.Equal(t, http.StatusOK, resp.StatusCode, "moving %q to %q should succeed", originalPath, targetPath)
 }
 
-func TestIntegrationProvisioning_MoveFile_FolderMetadataFlag(t *testing.T) {
+func TestIntegrationProvisioning_MoveFile_FolderMetadata(t *testing.T) {
 	helper := sharedHelper(t)
 
 	const repo = "folder-metadata-move-test-repo"

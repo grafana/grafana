@@ -6,10 +6,10 @@ Import the generated API as `dbproxyv1` from `github.com/grafana/grafana/pkg/sto
 
 ## Open a shared connection and SQL pool
 
-Supply the proxy target, service-authenticated gRPC transport credentials, and an `authn.TokenExchanger` to `client.NewConn`.
+Supply the proxy target, gRPC transport credentials matching the endpoint, and an `authn.TokenExchanger` to `client.NewConn`.
 The authlib stream interceptor exchanges a service token for audience `single-tenant-db-proxy` and namespace `*`.
 Each query still names one concrete stack.
-Use insecure transport only for an explicit local fixture.
+CAP token authentication applies with either TLS or plaintext transport.
 
 ```go
 conn, err := client.NewConn(target, transportCredentials, tokenExchanger)

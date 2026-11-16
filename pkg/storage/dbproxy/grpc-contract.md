@@ -34,8 +34,9 @@ requests when detected before execution, otherwise as SQL errors.
 | `x-access-token` | Exactly one raw signed access token from the CAP exchange, intended for the proxy. No `Bearer ` prefix. This matches authlib's gRPC token provider and client interceptor. |
 | `traceparent`, `tracestate` | Optional tracing context, supplied and consumed by tracing instrumentation. Never a source of identity or authorization. |
 
-Use authenticated transport according to the deployment's service transport
-configuration. Tokens must not be sent over an untrusted plaintext connection.
+Choose gRPC transport credentials that match the endpoint's TLS or plaintext configuration.
+CAP token authentication and namespace authorization apply with either transport.
+Plaintext does not encrypt tokens or query traffic or verify the server's identity.
 The authentication implementation verifies the token with configured trusted
 signing keys and validates its audience, signature, expiry, service allowlist,
 and namespace authorization against the requested namespace. It derives caller

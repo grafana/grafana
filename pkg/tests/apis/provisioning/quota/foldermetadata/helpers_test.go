@@ -13,9 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
-// Folder metadata is enabled by default — we intentionally omit
-// common.WithoutProvisioningFolderMetadata so that _folder.json files
-// are honoured during sync.
 var env = common.NewSharedGitEnv()
 
 func sharedGitHelper(t *testing.T) *common.GitTestHelper {

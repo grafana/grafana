@@ -146,31 +146,9 @@ func TestAsErrorResult_MixedJoinedErrors(t *testing.T) {
 					require.Equal(t, int32(http.StatusInternalServerError), got.Code)
 					require.Equal(t, err.Error(), got.Message)
 					require.Equal(t, codes.Internal, status.Code(GRPCStatusError(got)))
-					require.Equal(t, int32(http.StatusInternalServerError), AsErrorResult(StatusErrorFromResponse(nil, err)).Code)
+					require.Equal(t, int32(http.StatusInternalServerError), AsErrorResult(StatusErrorFromGRPC(err)).Code)
 				})
 			}
-		})
-	}
-}
-
-func TestHandleQueueError_ContextErrors(t *testing.T) {
-	t.Parallel()
-
-	for _, tc := range []struct {
-		err  error
-		want codes.Code
-	}{
-		{context.Canceled, codes.Canceled},
-		{context.DeadlineExceeded, codes.DeadlineExceeded},
-	} {
-		t.Run(tc.want.String(), func(t *testing.T) {
-			t.Parallel()
-			queueErr := fmt.Errorf("failed to enqueue for tenant stacks-13: %w", tc.err)
-			response, err := HandleQueueError(queueErr, func(e *resourcepb.ErrorResult) *resourcepb.ReadResponse {
-				return &resourcepb.ReadResponse{Error: e}
-			})
-			require.NoError(t, err)
-			require.Equal(t, tc.want, status.Code(GRPCStatusError(response.Error)))
 		})
 	}
 }
@@ -290,9 +268,8 @@ func TestGRPCStatusError(t *testing.T) {
 	}
 }
 
-// Clients must observe the same Kubernetes error whether the server embeds an
-// ErrorResult in the response or returns it as a gRPC status.
-func TestGRPCStatusError_RoundTripMatchesEmbeddedError(t *testing.T) {
+// Transport encoding must preserve the HTTP semantics of a direct conversion.
+func TestGRPCStatusError_RoundTripMatchesStatusError(t *testing.T) {
 	t.Parallel()
 
 	for _, tc := range []struct {
@@ -316,11 +293,11 @@ func TestGRPCStatusError_RoundTripMatchesEmbeddedError(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			embedded := StatusErrorFromResponse(tc.result, nil)
+			direct := StatusError(tc.result)
 			viaGRPC := StatusErrorFromGRPC(GRPCStatusError(tc.result))
 
 			var want, got apierrors.APIStatus
-			require.ErrorAs(t, embedded, &want)
+			require.ErrorAs(t, direct, &want)
 			require.ErrorAs(t, viaGRPC, &got)
 			require.Empty(t, cmp.Diff(want.Status(), got.Status()))
 		})
@@ -455,7 +432,7 @@ func TestStatusError_HTTPCode(t *testing.T) {
 		{name: "explicit server error", code: http.StatusServiceUnavailable, want: http.StatusServiceUnavailable},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			for _, source := range []string{"direct", "embedded", "grpc details"} {
+			for _, source := range []string{"direct", "grpc details"} {
 				t.Run(source, func(t *testing.T) {
 					res := &resourcepb.ErrorResult{
 						Code:    tc.code,
@@ -472,12 +449,10 @@ func TestStatusError_HTTPCode(t *testing.T) {
 					switch source {
 					case "direct":
 						got = StatusError(res)
-					case "embedded":
-						got = StatusErrorFromResponse(res, nil)
 					case "grpc details":
 						st, err := status.New(codes.Unavailable, "transport message").WithDetails(res)
 						require.NoError(t, err)
-						got = StatusErrorFromResponse(nil, st.Err())
+						got = StatusErrorFromGRPC(st.Err())
 					}
 
 					var apiStatus apierrors.APIStatus
@@ -500,11 +475,11 @@ func TestStatusError_HTTPCode(t *testing.T) {
 	}
 }
 
-func TestStatusErrorFromResponse_NoErrorsReturnsNil(t *testing.T) {
-	require.NoError(t, StatusErrorFromResponse(nil, nil))
+func TestStatusErrorFromGRPC_NoErrorsReturnsNil(t *testing.T) {
+	require.NoError(t, StatusErrorFromGRPC(nil))
 }
 
-func TestStatusErrorFromResponse_EmbeddedErrorPreservesStatus(t *testing.T) {
+func TestStatusErrorFromGRPC_PreservesStatusDetails(t *testing.T) {
 	responseError := &resourcepb.ErrorResult{
 		Code:    http.StatusConflict,
 		Reason:  string(metav1.StatusReasonConflict),
@@ -524,7 +499,7 @@ func TestStatusErrorFromResponse_EmbeddedErrorPreservesStatus(t *testing.T) {
 		},
 	}
 
-	err := StatusErrorFromResponse(responseError, nil)
+	err := StatusErrorFromGRPC(GRPCStatusError(responseError))
 
 	var apiStatus apierrors.APIStatus
 	require.ErrorAs(t, err, &apiStatus)
@@ -549,7 +524,7 @@ func TestStatusErrorFromResponse_EmbeddedErrorPreservesStatus(t *testing.T) {
 	}, apiStatus.Status())
 }
 
-func TestStatusErrorFromResponse_GRPCDetailsOverrideTransportStatus(t *testing.T) {
+func TestStatusErrorFromGRPC_GRPCDetailsOverrideTransportStatus(t *testing.T) {
 	grpcStatus, err := status.New(codes.Internal, "transport message").WithDetails(&resourcepb.ErrorResult{
 		Code:    http.StatusTooManyRequests,
 		Reason:  string(metav1.StatusReasonTooManyRequests),
@@ -559,7 +534,7 @@ func TestStatusErrorFromResponse_GRPCDetailsOverrideTransportStatus(t *testing.T
 	require.NoError(t, err)
 	transportError := fmt.Errorf("handler: %w", fmt.Errorf("search: %w", grpcStatus.Err()))
 
-	err = StatusErrorFromResponse(nil, transportError)
+	err = StatusErrorFromGRPC(transportError)
 
 	var apiStatus apierrors.APIStatus
 	require.ErrorAs(t, err, &apiStatus)
@@ -572,19 +547,7 @@ func TestStatusErrorFromResponse_GRPCDetailsOverrideTransportStatus(t *testing.T
 	}, apiStatus.Status())
 }
 
-func TestStatusErrorFromResponse_TransportErrorTakesPrecedenceOverResponseError(t *testing.T) {
-	responseError := &resourcepb.ErrorResult{Code: http.StatusNotFound, Message: "missing dashboard"}
-	transportError := status.Error(codes.Unavailable, "storage unavailable")
-
-	err := StatusErrorFromResponse(responseError, transportError)
-
-	var apiStatus apierrors.APIStatus
-	require.ErrorAs(t, err, &apiStatus)
-	require.Equal(t, int32(http.StatusServiceUnavailable), apiStatus.Status().Code)
-	require.Equal(t, http.StatusText(http.StatusServiceUnavailable), apiStatus.Status().Message)
-}
-
-func TestStatusErrorFromResponse_UnwrapsKubernetesStatusErrors(t *testing.T) {
+func TestStatusErrorFromGRPC_UnwrapsKubernetesStatusErrors(t *testing.T) {
 	want := metav1.Status{
 		Status:  metav1.StatusFailure,
 		Code:    http.StatusNotFound,
@@ -593,27 +556,27 @@ func TestStatusErrorFromResponse_UnwrapsKubernetesStatusErrors(t *testing.T) {
 	}
 	wrappedError := fmt.Errorf("search: %w", &apierrors.StatusError{ErrStatus: want})
 
-	err := StatusErrorFromResponse(nil, wrappedError)
+	err := StatusErrorFromGRPC(wrappedError)
 
 	var apiStatus apierrors.APIStatus
 	require.ErrorAs(t, err, &apiStatus)
 	require.Equal(t, want, apiStatus.Status())
 }
 
-func TestStatusErrorFromResponse_PreservesKubernetesServerError(t *testing.T) {
+func TestStatusErrorFromGRPC_PreservesKubernetesServerError(t *testing.T) {
 	original := apierrors.NewServiceUnavailable("index unavailable")
-	got := StatusErrorFromResponse(nil, fmt.Errorf("search: %w", original))
+	got := StatusErrorFromGRPC(fmt.Errorf("search: %w", original))
 
 	var apiStatus apierrors.APIStatus
 	require.ErrorAs(t, got, &apiStatus)
 	require.Equal(t, original.Status(), apiStatus.Status())
 }
 
-func TestStatusErrorFromResponse_HidesUnstructuredGRPCServerErrors(t *testing.T) {
+func TestStatusErrorFromGRPC_HidesUnstructuredGRPCServerErrors(t *testing.T) {
 	for _, grpcCode := range []codes.Code{codes.Unknown, codes.Internal, codes.Unavailable, codes.DeadlineExceeded} {
 		t.Run(grpcCode.String(), func(t *testing.T) {
 			transportErr := status.Error(grpcCode, "private database failure")
-			err := StatusErrorFromResponse(nil, fmt.Errorf("search: %w", transportErr))
+			err := StatusErrorFromGRPC(fmt.Errorf("search: %w", transportErr))
 
 			var apiStatus apierrors.APIStatus
 			require.ErrorAs(t, err, &apiStatus)
@@ -624,18 +587,18 @@ func TestStatusErrorFromResponse_HidesUnstructuredGRPCServerErrors(t *testing.T)
 	}
 }
 
-func TestStatusErrorFromResponse_PreservesStructuredGRPCServerError(t *testing.T) {
+func TestStatusErrorFromGRPC_PreservesStructuredGRPCServerError(t *testing.T) {
 	failure := &resourcepb.ErrorResult{Code: http.StatusServiceUnavailable, Message: "index unavailable"}
 	st, err := status.New(codes.Unavailable, "transport message").WithDetails(failure)
 	require.NoError(t, err)
 
-	got := StatusErrorFromResponse(nil, st.Err())
+	got := StatusErrorFromGRPC(st.Err())
 	var apiStatus apierrors.APIStatus
 	require.ErrorAs(t, got, &apiStatus)
 	require.Equal(t, failure.Message, apiStatus.Status().Message)
 }
 
-func TestStatusErrorFromResponse_MapsGRPCCodesWithoutDetails(t *testing.T) {
+func TestStatusErrorFromGRPC_MapsGRPCCodesWithoutDetails(t *testing.T) {
 	tests := []struct {
 		grpcCode codes.Code
 		httpCode int32
@@ -651,7 +614,7 @@ func TestStatusErrorFromResponse_MapsGRPCCodesWithoutDetails(t *testing.T) {
 		t.Run(tc.grpcCode.String(), func(t *testing.T) {
 			transportError := status.Error(tc.grpcCode, "request failed")
 
-			err := StatusErrorFromResponse(nil, transportError)
+			err := StatusErrorFromGRPC(transportError)
 
 			var apiStatus apierrors.APIStatus
 			require.ErrorAs(t, err, &apiStatus)
@@ -660,7 +623,7 @@ func TestStatusErrorFromResponse_MapsGRPCCodesWithoutDetails(t *testing.T) {
 	}
 }
 
-func TestStatusErrorFromResponse_MapsContextErrors(t *testing.T) {
+func TestStatusErrorFromGRPC_MapsContextErrors(t *testing.T) {
 	tests := []struct {
 		name     string
 		err      error
@@ -689,7 +652,7 @@ func TestStatusErrorFromResponse_MapsContextErrors(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			err := StatusErrorFromResponse(nil, tc.err)
+			err := StatusErrorFromGRPC(tc.err)
 
 			var apiStatus apierrors.APIStatus
 			require.ErrorAs(t, err, &apiStatus)
@@ -701,7 +664,7 @@ func TestStatusErrorFromResponse_MapsContextErrors(t *testing.T) {
 	}
 }
 
-func TestStatusErrorFromResponse_Passthroughs(t *testing.T) {
+func TestStatusErrorFromGRPC_Passthroughs(t *testing.T) {
 	cases := []struct {
 		name string
 		err  error
@@ -721,7 +684,7 @@ func TestStatusErrorFromResponse_Passthroughs(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			require.ErrorIs(t, StatusErrorFromResponse(nil, tc.err), tc.err)
+			require.ErrorIs(t, StatusErrorFromGRPC(tc.err), tc.err)
 		})
 	}
 }

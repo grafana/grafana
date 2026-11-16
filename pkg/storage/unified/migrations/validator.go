@@ -48,7 +48,6 @@ func filterResponse(response *resourcepb.BulkResponse, resources []schema.GroupR
 
 	// Create filtered response, preserving original processed count for percentage calculations
 	return &resourcepb.BulkResponse{
-		Error:     response.Error,
 		Processed: response.Processed,
 		Summary:   filteredSummaries,
 		Rejected:  filteredRejected,

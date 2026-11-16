@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/authlib/authn"
 	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
@@ -72,7 +73,7 @@ func TestAuthorizer_Authorize(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		resource      map[string][]ResourceOwner
+		resource      map[string][]resource.Owner
 		allowOrgAdmin bool
 		okNames       []string
 		accessClient  authlib.AccessClient
@@ -80,8 +81,8 @@ func TestAuthorizer_Authorize(t *testing.T) {
 	}{
 		{
 			name: "stars",
-			resource: map[string][]ResourceOwner{
-				"stars": {UserResourceOwner},
+			resource: map[string][]resource.Owner{
+				"stars": {resource.UserResourceOwner},
 			},
 			check: []testCase{{
 				name: "matches user",
@@ -113,9 +114,9 @@ func TestAuthorizer_Authorize(t *testing.T) {
 			}},
 		}, {
 			name: "fast path",
-			resource: map[string][]ResourceOwner{
-				"stars":       {UserResourceOwner},
-				"preferences": {TeamResourceOwner},
+			resource: map[string][]resource.Owner{
+				"stars":       {resource.UserResourceOwner},
+				"preferences": {resource.TeamResourceOwner},
 			},
 			check: []testCase{{
 				name:  "missing user",
@@ -231,8 +232,8 @@ func TestAuthorizer_Authorize(t *testing.T) {
 			}},
 		}, {
 			name: "unknown owner",
-			resource: map[string][]ResourceOwner{
-				"stars": {UnknownResourceOwner},
+			resource: map[string][]resource.Owner{
+				"stars": {resource.UnknownResourceOwner},
 			},
 			check: []testCase{{
 				name: "get",
@@ -250,8 +251,8 @@ func TestAuthorizer_Authorize(t *testing.T) {
 			}},
 		}, {
 			name: "namespace",
-			resource: map[string][]ResourceOwner{
-				"ns": {NamespaceResourceOwner},
+			resource: map[string][]resource.Owner{
+				"ns": {resource.NamespaceResourceOwner},
 			},
 			check: []testCase{{
 				name: "readonly",
@@ -304,9 +305,9 @@ func TestAuthorizer_Authorize(t *testing.T) {
 			}},
 		}, {
 			name: "preferences teams",
-			resource: map[string][]ResourceOwner{
+			resource: map[string][]resource.Owner{
 				"preferences": {
-					TeamResourceOwner,
+					resource.TeamResourceOwner,
 				},
 			},
 			check: []testCase{{
@@ -339,8 +340,8 @@ func TestAuthorizer_Authorize(t *testing.T) {
 			}},
 		}, {
 			name: "service call",
-			resource: map[string][]ResourceOwner{
-				"stars": {UserResourceOwner},
+			resource: map[string][]resource.Owner{
+				"stars": {resource.UserResourceOwner},
 			},
 			check: []testCase{{
 				// An access policy with explicit permissions is allowed before
@@ -390,8 +391,8 @@ func TestAuthorizer_Authorize(t *testing.T) {
 		}, {
 			name:          "allow org admin",
 			allowOrgAdmin: true,
-			resource: map[string][]ResourceOwner{
-				"preferences": {TeamResourceOwner},
+			resource: map[string][]resource.Owner{
+				"preferences": {resource.TeamResourceOwner},
 			},
 			check: []testCase{{
 				// With AllowOrgAdmin, an org admin is allowed before the owner
@@ -428,8 +429,8 @@ func TestAuthorizer_Authorize(t *testing.T) {
 			// Without AllowOrgAdmin, an org admin gets no special treatment and
 			// falls through to the normal owner checks.
 			name: "org admin not allowed when AllowOrgAdmin is false",
-			resource: map[string][]ResourceOwner{
-				"preferences": {TeamResourceOwner},
+			resource: map[string][]resource.Owner{
+				"preferences": {resource.TeamResourceOwner},
 			},
 			check: []testCase{{
 				name: "org admin follows owner checks",
@@ -449,8 +450,8 @@ func TestAuthorizer_Authorize(t *testing.T) {
 		}, {
 			name:    "ok names",
 			okNames: []string{"special"},
-			resource: map[string][]ResourceOwner{
-				"stars": {UserResourceOwner},
+			resource: map[string][]resource.Owner{
+				"stars": {resource.UserResourceOwner},
 			},
 			check: []testCase{{
 				// A name in OKNames is a pseudo sub-resource that is always allowed.
@@ -485,8 +486,8 @@ func TestAuthorizer_Authorize(t *testing.T) {
 		}, {
 			name:         "team access client error",
 			accessClient: &errAccessClient{err: errors.New("boom")},
-			resource: map[string][]ResourceOwner{
-				"preferences": {TeamResourceOwner},
+			resource: map[string][]resource.Owner{
+				"preferences": {resource.TeamResourceOwner},
 			},
 			check: []testCase{{
 				// An error checking team permissions is surfaced as a denial.
@@ -547,8 +548,8 @@ func TestAuthorizer_Authorize(t *testing.T) {
 }
 
 func TestAuthorizer_TeamAccessClient(t *testing.T) {
-	resource := map[string][]ResourceOwner{
-		"preferences": {TeamResourceOwner},
+	resource := map[string][]resource.Owner{
+		"preferences": {resource.TeamResourceOwner},
 	}
 	adminNotInTeam := &identity.StaticRequester{
 		UserUID: "admin-not-in-team",

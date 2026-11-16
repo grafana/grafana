@@ -3,6 +3,7 @@ import { type UnknownAction } from '@reduxjs/toolkit';
 import { API_GROUP as DASHBOARD_API_GROUP } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { API_GROUP as FOLDER_API_GROUP } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { API_GROUP as PLAYLIST_API_GROUP } from '@grafana/api-clients/rtkq/playlist/v1';
+import { API_GROUP as PROVISIONING_API_GROUP } from '@grafana/api-clients/rtkq/provisioning/v0alpha1';
 import { t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import { type IconName } from '@grafana/ui';
@@ -11,10 +12,13 @@ import { type Repository, type SupportedResource } from 'app/api/clients/provisi
 import { getAPIBaseURL } from 'app/api/utils';
 import { getAPIGroupDiscoveryList } from 'app/features/apiserver/discovery';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
+import { getIconForKind } from 'app/features/search/service/icons';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { type DashboardQueryResult } from 'app/features/search/service/types';
-import { getIconForKind, queryResultToViewItem } from 'app/features/search/service/utils';
+import { queryResultToViewItem } from 'app/features/search/service/utils';
 import { type AppDispatch } from 'app/store/configureStore';
+
+import { CONNECTIONS_URL, PROVISIONING_URL } from '../constants';
 
 import { isManaged } from './managedResource';
 
@@ -147,6 +151,41 @@ export const resourceKindInfos = {
     // default — they ship disabled and aren't in the static base — so this only
     // runs once the backend reports the kind as available.
     list: () => listViaApiserver(DASHBOARD_API_GROUP, 'v0alpha1', 'librarypanels'),
+    alwaysAvailable: false,
+  },
+  repository: {
+    key: 'repository',
+    getLabel: () => t('provisioning.resource-kind.repository', 'repository'),
+    pluralLabel: () => t('provisioning.resource-kind.repositories', 'Repositories'),
+    group: PROVISIONING_API_GROUP,
+    kind: 'Repository',
+    resource: 'repositories',
+    itemType: 'Repository',
+    // getIconForKind doesn't know provisioning's own kinds; a repository is a branch of files.
+    icon: 'code-branch',
+    getRoute: (name: string) => `${PROVISIONING_URL}/${name}`,
+    listRoute: PROVISIONING_URL,
+    // Repositories are instance-scoped configuration, not folder-contained.
+    folderScoped: false,
+    // Provisioning's own configuration is never a migration target: it is the mechanism that
+    // moves resources into a repository, so it is not one of the resources moved.
+    list: async () => [],
+    alwaysAvailable: false,
+  },
+  connection: {
+    key: 'connection',
+    getLabel: () => t('provisioning.resource-kind.connection', 'connection'),
+    pluralLabel: () => t('provisioning.resource-kind.connections', 'Connections'),
+    group: PROVISIONING_API_GROUP,
+    kind: 'Connection',
+    resource: 'connections',
+    itemType: 'Connection',
+    icon: 'plug',
+    getRoute: (name: string) => `${CONNECTIONS_URL}/${name}/edit`,
+    listRoute: CONNECTIONS_URL,
+    folderScoped: false,
+    // Not a migration target, for the same reason as repositories.
+    list: async () => [],
     alwaysAvailable: false,
   },
   datasource: {

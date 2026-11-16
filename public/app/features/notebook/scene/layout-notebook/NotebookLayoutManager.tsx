@@ -3,14 +3,8 @@ import { DragDropContext, Droppable, type DragStart, type DragUpdate, type DropR
 import { isEqual } from 'lodash';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import {
-  AppEvents,
-  CoreApp,
-  filterFieldConfigOverrides,
-  type GrafanaTheme2,
-  isStandardFieldProp,
-  type PanelPluginVisualizationSuggestion,
-} from '@grafana/data';
+import { AppEvents, CoreApp, type GrafanaTheme2, type PanelPluginVisualizationSuggestion } from '@grafana/data';
+import { clearCustomFieldConfig } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import {
   sceneGraph,
@@ -247,6 +241,8 @@ export class NotebookLayoutManager
       kind: 'NotebookLayoutItem',
       spec: {
         element: { kind: 'ElementReference', name: cell.state.elementName },
+        // Only sent once the server has given the cell one: an empty id would read as a new cell.
+        ...(cell.state.id ? { id: cell.state.id } : {}),
         source: cell.state.source,
         // Only write `collapsed` when it has a value, so a notebook that never had it does not gain it.
         ...(cell.state.collapsed !== undefined ? { collapsed: cell.state.collapsed } : {}),
@@ -672,10 +668,7 @@ export class NotebookLayoutManager
         before = panels.map(snapshotVisualization);
         const results = await Promise.allSettled(
           panels.map(async (panel) => {
-            const fieldConfig = {
-              defaults: { ...panel.state.fieldConfig.defaults, custom: {} },
-              overrides: filterFieldConfigOverrides(panel.state.fieldConfig.overrides, isStandardFieldProp),
-            };
+            const fieldConfig = clearCustomFieldConfig(panel.state.fieldConfig);
             const options = suggestion.options && structuredClone(suggestion.options);
             const nextFieldConfig = structuredClone({
               ...(suggestion.fieldConfig ?? fieldConfig),
@@ -1046,6 +1039,8 @@ export class NotebookLayoutManager
     const nextId = dashboardSceneGraph.getPanelIdGenerator(this);
     const copy = cell.clone({
       key: undefined,
+      // A copy is a new cell, so it must not share the original's identity.
+      id: undefined,
       elementName: this.nextElementName(`${cell.state.elementName}-copy`),
       body: cell.state.body?.clone({
         key: getVizPanelKeyForPanelId(nextId()),
@@ -1220,6 +1215,8 @@ export class NotebookLayoutManager
     const cells = this.state.cells.map((cell) =>
       cell.clone({
         key: undefined,
+        // A copy of the layout is a copy of its cells, which are new cells with ids of their own.
+        id: undefined,
         body: cell.state.body?.clone({ key: getVizPanelKeyForPanelId(nextId()) }),
         ...(cell.state.content ? { content: structuredClone(cell.state.content) } : {}),
         ...(cell.state.$timeRange ? { $timeRange: cell.state.$timeRange.clone({ key: undefined }) } : {}),

@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TestProvider } from 'test/helpers/TestProvider';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { appEvents } from 'app/core/app_events';
@@ -196,6 +197,20 @@ it('offers Composer while Assistant listens for dashboards, and drops it once no
 });
 
 describe('the mode menu', () => {
+  it('exposes e2e selectors for the picker button and the mode options', async () => {
+    await openPicker();
+
+    expect(screen.getByTestId(selectors.components.NavToolbar.editDashboard.modePickerButton)).toBe(
+      screen.getByRole('button', { name: /^Dashboard mode:/, hidden: true })
+    );
+    expect(screen.getByTestId(selectors.components.NavToolbar.editDashboard.modeViewingOption)).toBe(
+      screen.getByRole('menuitemradio', { name: /Viewing/ })
+    );
+    expect(screen.getByTestId(selectors.components.NavToolbar.editDashboard.modeEditingOption)).toBe(
+      screen.getByRole('menuitemradio', { name: /Editing/ })
+    );
+  });
+
   it('switches Viewing to Editing while Composer is available, without asking Assistant', async () => {
     const { user, scene } = await openPicker();
 
@@ -372,7 +387,7 @@ describe('before Assistant first registers', () => {
 describe('while Composer is active', () => {
   let session: ComposerSession;
   const enterComposer =
-    (from: 'view' | 'edit', { dirty = false, paused = false } = {}) =>
+    (from: 'view' | 'edit', { dirty = false, paused = false, working = false } = {}) =>
     (scene: DashboardScene) => {
       if (from === 'edit') {
         scene.setDashboardMode('edit', 'picker');
@@ -383,6 +398,9 @@ describe('while Composer is active', () => {
       }
       if (paused) {
         session.setPaused(true);
+      }
+      if (working) {
+        session.setWorking(true);
       }
     };
   const mainButton = (mode: string) => screen.getByRole('button', { name: `Dashboard mode: ${mode}`, hidden: true });
@@ -421,8 +439,11 @@ describe('while Composer is active', () => {
     expect(scene.state.title).toBe('Unsaved title');
   });
 
-  it('asks before turning Composer off while Assistant is running a turn', async () => {
-    const { user, scene } = renderPicker(enterComposer('view', { paused: true }));
+  it.each([
+    ['paused', { paused: true }],
+    ['working', { working: true }],
+  ])('asks before turning Composer off while Assistant is running a turn (%s)', async (_, turn) => {
+    const { user, scene } = renderPicker(enterComposer('view', turn));
 
     await user.click(composerItem()!);
     expect(await screen.findByRole('dialog', { name: 'Leave Composer?' })).toBeInTheDocument();

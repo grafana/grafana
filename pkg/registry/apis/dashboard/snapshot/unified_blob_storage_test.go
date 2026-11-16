@@ -14,6 +14,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -31,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourceclient"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -141,7 +143,7 @@ func TestSnapshotInlineUploadFailure(t *testing.T) {
 		err      error
 	}{
 		{"transport", nil, errors.New("upload failed")},
-		{"embedded", &resourcepb.PutBlobResponse{Error: &resourcepb.ErrorResult{Code: http.StatusNotImplemented}}, nil},
+		{"status details", nil, resource.GRPCStatusError(&resourcepb.ErrorResult{Code: http.StatusNotImplemented, Message: "blob store not configured"})},
 		{"status", nil, status.Error(codes.Unimplemented, "blob store not configured")},
 		{"incomplete", &resourcepb.PutBlobResponse{}, nil},
 	} {
@@ -152,6 +154,11 @@ func TestSnapshotInlineUploadFailure(t *testing.T) {
 			input := newBlobTestSnapshot()
 			_, err := storage.Create(ctx, input, nil, &metav1.CreateOptions{})
 			require.Error(t, err)
+			if tc.name == "status details" {
+				var apiStatus apierrors.APIStatus
+				require.ErrorAs(t, err, &apiStatus)
+				require.Equal(t, int32(http.StatusNotImplemented), apiStatus.Status().Code)
+			}
 			require.Zero(t, client.writes)
 			require.NotNil(t, input.Blobs.Dashboard.Data)
 		})

@@ -19,6 +19,8 @@ import {
 } from '../QueryEditorContext';
 import { QueryOptionField } from '../types';
 
+import { getHeaderSeparatorStyle } from './styles';
+
 interface QueryOptionItem {
   id: QueryOptionField;
   label: string;
@@ -262,10 +264,6 @@ function getStyles(theme: GrafanaTheme2) {
       alignItems: 'center',
       gap: theme.spacing(1),
     }),
-    separator: css({
-      width: 1,
-      height: theme.spacing(2),
-      background: theme.colors.border.medium,
-    }),
+    separator: getHeaderSeparatorStyle(theme),
   };
 }

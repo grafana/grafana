@@ -6,8 +6,6 @@ export { starsRoute } from './apis/collections.grafana.app/v1alpha1/handlers';
 export {
   getCustomSearchHandler,
   searchRoute,
-  getVectorSearchHandler,
-  vectorSearchRoute,
   getHybridSearchHandler,
   hybridSearchRoute,
 } from './apis/dashboard.grafana.app/v0alpha1/handlers';
