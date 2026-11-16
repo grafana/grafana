@@ -2,8 +2,13 @@ package provisioning
 
 import (
 	"context"
+	"net/url"
 
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/remote/client"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // LimitsProvider provides access to alertmanager limits for validation.
@@ -36,4 +41,32 @@ func NewRemoteLimitsProvider(c *client.Mimir) *RemoteLimitsProvider {
 
 func (p *RemoteLimitsProvider) GetLimits(ctx context.Context) (*client.TenantLimits, error) {
 	return p.client.GetLimits(ctx)
+}
+
+// NewLimitsProvider returns a RemoteLimitsProvider when the remote Alertmanager is enabled
+// and its client can be built, and a NoopLimitsProvider otherwise.
+func NewLimitsProvider(cfg setting.RemoteAlertmanagerSettings, remoteEnabled bool, m *metrics.RemoteAlertmanager, tracer tracing.Tracer, logger log.Logger) LimitsProvider {
+	if !remoteEnabled {
+		// The local Alertmanager enforces limits at runtime in the alerting library.
+		return &NoopLimitsProvider{}
+	}
+
+	remoteURL, err := url.Parse(cfg.URL)
+	if err != nil {
+		logger.Warn("Failed to parse remote alertmanager URL for limits provider, using noop limits", "error", err)
+		return &NoopLimitsProvider{}
+	}
+
+	mimirClient, err := client.New(&client.Config{
+		URL:      remoteURL,
+		TenantID: cfg.TenantID,
+		Password: cfg.Password,
+		Logger:   log.New("ngalert.remote.limits"),
+		Timeout:  cfg.Timeout,
+	}, m, tracer)
+	if err != nil {
+		logger.Warn("Failed to create MimirClient for limits provider, using noop limits", "error", err)
+		return &NoopLimitsProvider{}
+	}
+	return NewRemoteLimitsProvider(mimirClient)
 }
