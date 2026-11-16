@@ -2848,6 +2848,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.assistantPageCanvas",
+        "resourceVersion": "1794819031546",
+        "creationTimestamp": "2026-11-16T08:50:31Z"
+      },
+      "spec": {
+        "description": "Lets Grafana Assistant show a conversation's canvas as tabs above the page",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.cmdkDashboardTags",
         "resourceVersion": "1793824807529",
         "creationTimestamp": "2026-10-29T16:13:33Z",

@@ -237,6 +237,7 @@ export enum PluginExtensionPoints {
   ExtensionSidebar = 'grafana/extension-sidebar/v0-alpha',
   MegaMenuAction = 'grafana/megamenu/action',
   MegaMenuSection = 'grafana/megamenu/section/v0-alpha',
+  PageCanvas = 'grafana/page-canvas/v0-alpha',
   SingleTopBarAction = 'grafana/singletopbar/action',
   AdvisorCompletedChecks = 'grafana/advisor/completed-checks/v1',
   AdvisorCreateChecks = 'grafana/advisor/create-checks/v1',

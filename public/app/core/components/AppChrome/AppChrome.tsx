@@ -8,7 +8,11 @@ import { createPortal } from 'react-dom';
 import { type GrafanaTheme2, store } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { locationSearchToObject, locationService, useScopes } from '@grafana/runtime';
-import { useFlagGrafanaScopesDashboardsMegaMenu, useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
+import {
+  useFlagGrafanaAssistantPageCanvas,
+  useFlagGrafanaScopesDashboardsMegaMenu,
+  useFlagGrafanaVisualDesignRefresh,
+} from '@grafana/runtime/internal';
 import { ErrorBoundaryAlert, floatingUtils, getDragStyles, LinkButton, useStyles2 } from '@grafana/ui';
 import { DRAWER_INSIDE_ATTRIBUTE } from '@grafana/ui/internal';
 import { SplashScreenModal } from 'app/core/components/SplashScreenModal/SplashScreenModal';
@@ -33,6 +37,9 @@ import { useFullscreenWorkspace } from './FullscreenWorkspace/useFullscreenWorks
 import { MegaMenu, MENU_WIDTH } from './MegaMenu/MegaMenu';
 import { useMegaMenuFocusHelper } from './MegaMenu/utils';
 import { PageAreaEndsAboveDockContext } from './PageAreaEnd';
+import { PageCanvasFrame } from './PageCanvas/PageCanvasFrame';
+import { PageCanvasJoinContext } from './PageCanvas/PageCanvasJoin';
+import { usePageCanvas } from './PageCanvas/usePageCanvas';
 import { ReturnToPrevious } from './ReturnToPrevious/ReturnToPrevious';
 import { SingleTopBar } from './TopBar/SingleTopBar';
 import { getChromeHeaderLevelHeight, useChromeHeaderLevels } from './TopBar/useChromeHeaderHeight';
@@ -71,6 +78,11 @@ export function AppChrome({ children }: Props) {
   const state = chrome.useState();
   const scopes = useScopes();
   const isSplashScreenEnabled = useBooleanFlagValue('splashScreen', false);
+  const pageCanvasEnabled = useFlagGrafanaAssistantPageCanvas();
+  const { canvas: pageCanvas, pane: pageCanvasPane } = usePageCanvas(pageCanvasEnabled && !state.chromeless);
+  // With a canvas, its tab strip stays above the page, so the page scrolls inside the page area as it does beside the
+  // docked sidebar.
+  const pageAreaContained = !state.chromeless && (isExtensionSidebarOpen || pageCanvas !== null);
 
   const { fullscreenWorkspaceActive, fullscreenWorkspaceFeatureFlagEnabled } = useFullscreenWorkspace();
 
@@ -124,8 +136,56 @@ export function AppChrome({ children }: Props) {
   const contentClass = cx({
     [styles.content]: true,
     [styles.contentChromeless]: state.chromeless,
-    [styles.contentWithSidebar]: isExtensionSidebarOpen && !state.chromeless,
+    [styles.contentWithSidebar]: pageAreaContained,
   });
+
+  // Where the page area starts and how wide it is, past the docked nav and beside the docked sidebar. With the page
+  // canvas these apply to its frame, so the tab strip, the pane and the page share them.
+  const pageAreaClass = cx({
+    [styles.pageContainerMenuDocked]: menuDockedAndOpen || isScopesDashboardsOpen,
+    [styles.pageContainerMenuDockedScopes]: menuDockedAndOpen && isScopesDashboardsOpen,
+    // Floating takes no width from the page, so the docked width is 0.
+    [contentSizeStyles.contentWidth]:
+      !state.chromeless &&
+      isExtensionSidebarOpen &&
+      !isSmallScreen &&
+      !isExtensionSidebarFloating &&
+      !isExtensionSidebarDockedLeft &&
+      !isExtensionSidebarDockedBottom,
+    // Docked on the left, the sidebar takes its width from the start of the page, after the nav.
+    [contentSizeStyles.contentDockedLeft]: !state.chromeless && !isSmallScreen && isExtensionSidebarDockedLeft,
+    // Docked at the bottom, it takes its height from the page's bottom instead, so the page ends above it.
+    [contentSizeStyles.contentDockedBottom]: !state.chromeless && !isSmallScreen && isExtensionSidebarDockedBottom,
+  });
+
+  // The page learns, wherever it renders (in <main>, or portaled for the fullscreen workspace), whether a canvas strip
+  // sits on it and whether the sidebar is docked below it, where the page keeps its card's bottom edge in view.
+  const pageEndsAboveDock = !state.chromeless && !isSmallScreen && isExtensionSidebarDockedBottom;
+  const pageChildren = (
+    <PageAreaEndsAboveDockContext.Provider value={pageEndsAboveDock}>
+      {pageCanvasEnabled ? (
+        <PageCanvasJoinContext.Provider value={pageCanvas !== null}>{children}</PageCanvasJoinContext.Provider>
+      ) : (
+        children
+      )}
+    </PageAreaEndsAboveDockContext.Provider>
+  );
+
+  const renderPage = (covered: boolean) => (
+    <main
+      className={cx(styles.pageContainer, !pageCanvasEnabled && pageAreaClass, {
+        [styles.pageContainerWithSidebar]: pageAreaContained,
+      })}
+      id="pageContent"
+      tabIndex={-1}
+      ref={fullscreenWorkspaceFeatureFlagEnabled ? portalHostRef : undefined}
+      // A pane tab covers the page, which stays mounted and laid out underneath, out of reach.
+      inert={covered}
+      aria-hidden={covered || undefined}
+    >
+      {!fullscreenWorkspaceFeatureFlagEnabled && pageChildren}
+    </main>
+  );
 
   const handleMegaMenu = () => {
     chrome.setMegaMenuOpen(!state.megaMenuOpen);
@@ -149,13 +209,6 @@ export function AppChrome({ children }: Props) {
     const queryParams = locationSearchToObject(search);
     chrome.setKioskModeFromUrl(queryParams.kiosk);
   }, [chrome, search]);
-
-  // Wherever the page renders (in <main>, or portaled for the fullscreen workspace), it learns whether the sidebar is
-  // docked below it, where the page keeps its card's bottom edge in view.
-  const pageEndsAboveDock = !state.chromeless && !isSmallScreen && isExtensionSidebarDockedBottom;
-  const pageChildren = (
-    <PageAreaEndsAboveDockContext.Provider value={pageEndsAboveDock}>{children}</PageAreaEndsAboveDockContext.Provider>
-  );
 
   const fullscreenWorkspaceChrome = (
     <div id={floatingUtils.BOUNDARY_ELEMENT_ID}>
@@ -214,7 +267,7 @@ export function AppChrome({ children }: Props) {
         </>
       )}
       <div className={contentClass}>
-        <div className={cx(styles.panes, { [styles.panesWithSidebar]: isExtensionSidebarOpen })}>
+        <div className={cx(styles.panes, { [styles.panesWithSidebar]: isExtensionSidebarOpen || pageCanvas !== null })}>
           {!state.chromeless && !scopesMegaMenuEnabled && (
             <div
               className={cx(styles.scopesDashboardsContainer, {
@@ -226,32 +279,16 @@ export function AppChrome({ children }: Props) {
               </ErrorBoundaryAlert>
             </div>
           )}
-          <main
-            className={cx(styles.pageContainer, {
-              [styles.pageContainerMenuDocked]: menuDockedAndOpen || isScopesDashboardsOpen,
-              [styles.pageContainerMenuDockedScopes]: menuDockedAndOpen && isScopesDashboardsOpen,
-              [styles.pageContainerWithSidebar]: !state.chromeless && isExtensionSidebarOpen,
-              // Floating takes no width from the page, so the docked width is 0.
-              [contentSizeStyles.contentWidth]:
-                !state.chromeless &&
-                isExtensionSidebarOpen &&
-                !isSmallScreen &&
-                !isExtensionSidebarFloating &&
-                !isExtensionSidebarDockedLeft &&
-                !isExtensionSidebarDockedBottom,
-              // Docked on the left, the sidebar takes its width from the start of the page, after the nav.
-              [contentSizeStyles.contentDockedLeft]:
-                !state.chromeless && !isSmallScreen && isExtensionSidebarDockedLeft,
-              // Docked at the bottom, it takes its height from the page's bottom instead, so the page ends above it.
-              [contentSizeStyles.contentDockedBottom]:
-                !state.chromeless && !isSmallScreen && isExtensionSidebarDockedBottom,
-            })}
-            id="pageContent"
-            tabIndex={-1}
-            ref={fullscreenWorkspaceFeatureFlagEnabled ? portalHostRef : undefined}
-          >
-            {!fullscreenWorkspaceFeatureFlagEnabled && pageChildren}
-          </main>
+          {pageCanvasEnabled ? (
+            <PageCanvasFrame
+              canvas={pageCanvas}
+              pane={pageCanvasPane}
+              className={pageAreaClass}
+              renderPage={renderPage}
+            />
+          ) : (
+            renderPage(false)
+          )}
           {!state.chromeless &&
             isExtensionSidebarOpen &&
             (isSmallScreen ? (

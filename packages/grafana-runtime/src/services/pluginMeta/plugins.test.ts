@@ -509,7 +509,9 @@ describe('when plugins.useMTPlugins flag is disabled', () => {
 });
 
 describe('getPluginMetasUrl', () => {
-  it('should build the metas request url from api version and namespace', () => {
-    expect(getPluginMetasUrl()).toBe('apis/plugins.grafana.app/v0alpha1/namespaces/default/metas');
+  it('should build the metas request url from api version and namespace', async () => {
+    const url = await getPluginMetasUrl();
+
+    expect(url).toBe('apis/plugins.grafana.app/v0alpha1/namespaces/default/metas');
   });
 });
