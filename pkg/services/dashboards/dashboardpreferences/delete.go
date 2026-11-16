@@ -29,11 +29,8 @@ func IsNotFound(err error, name string) bool {
 		return false
 	}
 	details := status.Status().Details
-	info := dashv2beta1.DashboardPreferencesResourceInfo
-	if details == nil || details.Group != info.GroupResource().Group || details.Name != name {
-		return false
-	}
-	if details.Kind != info.GetName() && details.Kind != info.GroupVersionKind().Kind {
+	gr := dashv2beta1.DashboardPreferencesResourceInfo.GroupResource()
+	if details == nil || details.Group != gr.Group || details.Kind != gr.Resource || details.Name != name {
 		return false
 	}
 	return !apierrors.HasStatusCause(err, metav1.CauseTypeUnexpectedServerResponse)

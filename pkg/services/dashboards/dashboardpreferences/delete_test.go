@@ -29,14 +29,6 @@ func TestIsNotFound(t *testing.T) {
 		{name: "this object", err: apierrors.NewNotFound(gr, "user-u1"), want: true},
 		{name: "wrapped", err: fmt.Errorf("update: %w", apierrors.NewNotFound(gr, "user-u1")), want: true},
 		{
-			name: "this object, named by its kind",
-			err: &apierrors.StatusError{ErrStatus: metav1.Status{
-				Status: metav1.StatusFailure, Code: http.StatusNotFound, Reason: metav1.StatusReasonNotFound,
-				Details: &metav1.StatusDetails{Group: gr.Group, Kind: "DashboardPreferences", Name: "user-u1"},
-			}},
-			want: true,
-		},
-		{
 			name: "a 404 without a Status body",
 			err:  apierrors.NewGenericServerResponse(http.StatusNotFound, http.MethodDelete, gr, "user-u1", "404 page not found", 0, true),
 		},
