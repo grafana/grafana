@@ -11,10 +11,6 @@ interface A11yTestCase {
   ignoredRules?: string[];
 }
 
-test.use({
-  openFeature: { flags: { queryEditorNext: true } },
-});
-
 test.describe(
   'A11y smokescreen',
   {
