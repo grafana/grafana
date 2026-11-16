@@ -22,13 +22,15 @@ weight: 100
 # Dashboard API
 
 {{< admonition type="note" >}}
-Available in Grafana 12 and later.
+Available in Grafana 12.0 and later.
 
-This API complies with the new Grafana API structure. To learn more refer to documentation about the [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis).
+This API complies with the new Grafana API structure. To learn more refer to documentation about the [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+
+This API replaces the legacy `/api/dashboards/*` endpoints, although there may not be an exact match for all legacy endpoints.
+
+**This document may not contain the latest version of the API. For the most up-to-date list of available endpoints, refer to [dashboard.grafana.app/v1](https://play.grafana.org/swagger?api=dashboard.grafana.app-v1) and [dashboard.grafana.app/v2](https://play.grafana.org/swagger?api=dashboard.grafana.app-v2) in Swagger.**
 
 {{< /admonition >}}
-
-The Dashboard API (`/apis/dashboard.grafana.app/*`) replaces [`/api/dashboards/*`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/dashboard_public/), although there may not be an exact match for all legacy endpoints.
 
 ## API versions
 
@@ -39,11 +41,23 @@ The Dashboard API serves the same dashboards in two schemas. Choose the version 
 | `v1`    | Classic JSON model, with `panels`, `templating`, and `time` in `spec`                     | [dashboard.grafana.app/v1](https://play.grafana.org/swagger?api=dashboard.grafana.app-v1) |
 | `v2`    | Dashboard schema v2, with `elements`, `layout`, `variables`, and `timeSettings` in `spec` | [dashboard.grafana.app/v2](https://play.grafana.org/swagger?api=dashboard.grafana.app-v2) |
 
-Both versions use the same endpoints, query parameters, and permissions. Only the version in the path and the shape of `spec` change. For example, use `/apis/dashboard.grafana.app/v2/namespaces/:namespace/dashboards` to work with dashboards in the v2 schema.
+Both versions use the same endpoints, query parameters, and permissions. Only the version in the path and the shape of `spec` change. For example, use `/apis/dashboard.grafana.app/v2/namespaces/{namespace}/dashboards` to work with dashboards in the v2 schema.
 
 You can read any dashboard with either version, regardless of the schema it was saved in, because Grafana converts it. For details, refer to [Use the v2 schema](#use-the-v2-schema).
 
 Grafana also serves the older `v0alpha1`, `v1beta1`, `v2alpha1`, and `v2beta1` versions. Use `v1` or `v2` instead.
+
+{{< admonition type="note" >}}
+The `dashboard.grafana.app` API group also serves other resources, which this document doesn't cover:
+
+- **Library panels:** The `librarypanels` resource, in `v0alpha1`.
+- **Snapshots:** The `snapshots` resource, in `v0alpha1`.
+- **Search:** The `search` endpoint, in `v0alpha1`.
+- **Notebooks:** The `notebooks` resource, in `v2beta1`. Refer to [Notebooks HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/notebooks/).
+- **Global variables:** The `variables` resource, in `v2beta1`.
+
+Notebooks and global variables are only available if their feature is enabled. For the endpoints of these resources, refer to [dashboard.grafana.app/v0alpha1](https://play.grafana.org/swagger?api=dashboard.grafana.app-v0alpha1) and [dashboard.grafana.app/v2beta1](https://play.grafana.org/swagger?api=dashboard.grafana.app-v2beta1) in Swagger.
+{{< /admonition >}}
 
 The examples in the following sections use `v1`, except for [Use the v2 schema](#use-the-v2-schema).
 
@@ -53,26 +67,28 @@ If you're running Grafana Enterprise, you'll need to have specific permissions f
 
 ## Endpoints
 
-This document may not contain the latest version of the API. For the most up-to-date list of available endpoints, refer to [dashboard.grafana.app/v1](https://play.grafana.org/swagger?api=dashboard.grafana.app-v1) and [dashboard.grafana.app/v2](https://play.grafana.org/swagger?api=dashboard.grafana.app-v2) in Swagger.
+These are the available endpoints:
 
-| Method | Summary                                      | URI                                                                      |
-| ------ | -------------------------------------------- | ------------------------------------------------------------------------ |
-| POST   | [Create Dashboard](#create-dashboard)        | /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards          |
-| PUT    | [Update Dashboard](#update-dashboard)        | /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards/:uid     |
-| GET    | [Get Dashboard](#get-dashboard)              | /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards/:uid     |
-| GET    | [Get Dashboard (DTO format)](#get-dashboard) | /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards/:uid/dto |
-| GET    | [List Dashboards](#list-dashboards)          | /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards          |
-| DELETE | [Delete Dashboard](#delete-dashboard)        | /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards/:uid     |
+| Method | Summary                                                               | URI                                                                          |
+| ------ | --------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| POST   | [Create Dashboard](#create-dashboard)                                 | `/apis/dashboard.grafana.app/v1/namespaces/{namespace}/dashboards`           |
+| PUT    | [Update Dashboard](#update-dashboard)                                 | `/apis/dashboard.grafana.app/v1/namespaces/{namespace}/dashboards/{uid}`     |
+| GET    | [Get Dashboard](#get-dashboard)                                       | `/apis/dashboard.grafana.app/v1/namespaces/{namespace}/dashboards/{uid}`     |
+| GET    | [Get Dashboard (DTO format)](#retrieve-additional-access-information) | `/apis/dashboard.grafana.app/v1/namespaces/{namespace}/dashboards/{uid}/dto` |
+| GET    | [List Dashboards](#list-dashboards)                                   | `/apis/dashboard.grafana.app/v1/namespaces/{namespace}/dashboards`           |
+| DELETE | [Delete Dashboard](#delete-dashboard)                                 | `/apis/dashboard.grafana.app/v1/namespaces/{namespace}/dashboards/{uid}`     |
 
 ## Create Dashboard
 
-`POST /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards`
+`POST /apis/dashboard.grafana.app/v1/namespaces/{namespace}/dashboards`
 
 Creates a new dashboard.
 
-- namespace: to read more about the namespace to use, see the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
+**Path parameters**:
 
-**Required permissions**
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+
+**Required permissions**:
 
 See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
 
@@ -84,7 +100,9 @@ See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
 { .no-spacing-list }
 <!-- prettier-ignore-end -->
 
-**Example Create Request**:
+### Example request
+
+The following example shows a request to create a dashboard:
 
 ```http
 POST /apis/dashboard.grafana.app/v1/namespaces/default/dashboards HTTP/1.1
@@ -265,20 +283,22 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 }
 ```
 
-JSON Body schema:
+JSON body schema:
 
-- **metadata.name** – The Grafana [unique identifier]({{< ref "#identifier-id-vs-unique-identifier-uid" >}}). If you do not want to provide this, set metadata.generateName instead to the prefix you would like for the randomly generated uid (cannot be an empty string).
+- **metadata.name** – The Grafana [unique identifier]({{< ref "#identifier-id-vs-unique-identifier-uid" >}}). If you do not want to provide this, set metadata.generateName instead to the prefix you would like for the randomly generated `uid` (cannot be an empty string).
 - **metadata.annotations.grafana.app/folder** - Optional field, the unique identifier of the folder under which the dashboard should be created.
-- **spec** – The dashboard json.
+- **spec** – The dashboard JSON.
 
 {{< admonition type="note" >}}
 Custom labels and annotations in the metadata field are supported on some instances, with full support planned for all instances when these APIs reach general availability. If they are not yet supported on your instance, they will be ignored.
 {{< /admonition >}}
 
-**Example Response**:
+### Example response
+
+The following example shows the response:
 
 ```http
-HTTP/1.1 200 OK
+HTTP/1.1 201 Created
 Content-Type: application/json; charset=UTF-8
 Content-Length: 485
 
@@ -506,24 +526,28 @@ Content-Length: 485
   "status": {}
 ```
 
-Status Codes:
+### Status codes
 
-- **201** – Created
-- **400** – Errors (invalid json, missing or invalid fields, etc)
-- **401** – Unauthorized
-- **403** – Access denied
-- **409** – Conflict (dashboard with the same uid already exists)
+- **201:** Created
+- **400:** Errors (invalid JSON, missing or invalid fields)
+- **401:** Unauthorized
+- **403:** Access denied, for example because you can't access the folder or the dashboard quota is reached
+- **404:** The folder doesn't exist
+- **409:** Conflict (a dashboard with the same `uid` already exists)
+- **422:** The dashboard doesn't match the schema
 
 ## Update Dashboard
 
-`PUT /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards/:uid`
+`PUT /apis/dashboard.grafana.app/v1/namespaces/{namespace}/dashboards/{uid}`
 
-Updates an existing dashboard via the dashboard uid.
+Updates an existing dashboard via the dashboard `uid`.
 
-- namespace: to read more about the namespace to use, see the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
-- uid: the unique identifier of the dashboard to update. this will be the _name_ in the dashboard response
+**Path parameters**:
 
-**Required permissions**
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{uid}`: The unique identifier of the dashboard. This is the `metadata.name` field in the dashboard response and _not_ the `metadata.uid` field.
+
+**Required permissions**:
 
 See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
 
@@ -534,10 +558,12 @@ See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
 { .no-spacing-list }
 <!-- prettier-ignore-end -->
 
-**Example Update Request**:
+### Example request
+
+The following example shows a request to update a dashboard:
 
 ```http
-POST /apis/dashboard.grafana.app/v1/namespaces/default/dashboards/gdxccn HTTP/1.1
+PUT /apis/dashboard.grafana.app/v1/namespaces/default/dashboards/gdxccn HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
@@ -558,18 +584,20 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 }
 ```
 
-JSON Body schema:
+JSON body schema:
 
 - **metadata.name** – The [unique identifier]({{< ref "#identifier-id-vs-unique-identifier-uid" >}}).
 - **metadata.annotations.grafana.app/folder** - Optional field, the unique identifier of the folder under which the dashboard should be created.
 - **metadata.annotations.grafana.app/message** - Optional field, to set a commit message for the version history.
-- **spec** – The dashboard json.
+- **spec** – The dashboard JSON.
 
 {{< admonition type="note" >}}
 Custom labels and annotations in the metadata field are supported on some instances, with full support planned for all instances when these APIs reach general availability. If they are not yet supported on your instance, they will be ignored.
 {{< /admonition >}}
 
-**Example Response**:
+### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200 OK
@@ -601,24 +629,29 @@ Content-Length: 485
 }
 ```
 
-Status Codes:
+### Status codes
 
-- **200** – OK
-- **400** – Errors (invalid json, missing or invalid fields, etc)
-- **401** – Unauthorized
-- **403** – Access denied
-- **409** – Conflict (dashboard with the same version already exists)
+- **200:** OK
+- **201:** Created, if the dashboard doesn't exist
+- **400:** Errors (invalid JSON, missing or invalid fields)
+- **401:** Unauthorized
+- **403:** Access denied, for example because you can't access the folder
+- **404:** The folder doesn't exist
+- **409:** Conflict (the dashboard changed since you read it)
+- **422:** The dashboard doesn't match the schema
 
 ## Get Dashboard
 
-`GET /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards/:uid`
+`GET /apis/dashboard.grafana.app/v1/namespaces/{namespace}/dashboards/{uid}`
 
-Gets a dashboard via the dashboard uid.
+Gets a dashboard via the dashboard `uid`.
 
-- namespace: to read more about the namespace to use, see the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
-- uid: the unique identifier of the dashboard to update. this will be the _name_ in the dashboard response
+**Path parameters**:
 
-**Required permissions**
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{uid}`: The unique identifier of the dashboard. This is the `metadata.name` field in the dashboard response and _not_ the `metadata.uid` field.
+
+**Required permissions**:
 
 See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
 
@@ -629,7 +662,9 @@ See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
 { .no-spacing-list }
 <!-- prettier-ignore-end -->
 
-**Example Get Request**:
+### Example request
+
+The following example shows a request to get a dashboard:
 
 ```http
 GET /apis/dashboard.grafana.app/v1/namespaces/default/dashboards/gdxccn HTTP/1.1
@@ -638,7 +673,9 @@ Content-Type: application/json
 Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
-**Example Response**:
+### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200 OK
@@ -669,35 +706,62 @@ Content-Length: 485
 }
 ```
 
-Status Codes:
+### Status codes
 
-- **200** – OK
-- **401** – Unauthorized
-- **403** – Access denied
-- **404** – Not Found
+- **200:** OK
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** Not found
 
 ### Retrieve additional access information
 
-`GET /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards/:uid/dto`
+`GET /apis/dashboard.grafana.app/v1/namespaces/{namespace}/dashboards/{uid}/dto`
 
 Retrieves a dashboard with additional access information.
 
-The `GET` response includes an additional `access` section with data such as if it's a public dashboard, or the dashboard permissions (admin, editor) of the user who made the request.
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{uid}`: The unique identifier of the dashboard. This is the `metadata.name` field in the dashboard response and _not_ the `metadata.uid` field.
+
+#### Example request
+
+The following example shows a request to get a dashboard with additional access information:
+
+```http
+GET /apis/dashboard.grafana.app/v1/namespaces/default/dashboards/gdxccn/dto HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
+```
+
+#### Example response
+
+The `GET` response includes an additional `access` section with data such as if it's a public dashboard, or the dashboard permissions (admin, editor) of the user who made the request. For the rest of the response, refer to the response in [Get Dashboard](#get-dashboard).
+
+#### Status codes
+
+- **200:** Found
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** Not found
 
 ## List Dashboards
 
-`GET /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards`
+`GET /apis/dashboard.grafana.app/v1/namespaces/{namespace}/dashboards`
 
 Lists all dashboards in the given organization. You can control the maximum number of dashboards returned through the `limit` query parameter. You can then use the `continue` token returned to fetch the next page of dashboards.
 
-- namespace: to read more about the namespace to use, see the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 
 **Query parameters**:
 
 - **`limit`** (optional): Maximum number of dashboards to return
 - **`continue`** (optional): Continue token from a previous response to fetch the next page
 
-**Required permissions**
+**Required permissions**:
 
 See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
 
@@ -708,7 +772,9 @@ See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
 { .no-spacing-list }
 <!-- prettier-ignore-end -->
 
-**Example Get Request**:
+### Example request
+
+The following example shows a request to list dashboards:
 
 ```http
 GET /apis/dashboard.grafana.app/v1/namespaces/default/dashboards?limit=1 HTTP/1.1
@@ -717,7 +783,9 @@ Content-Type: application/json
 Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
-**Example Response**:
+### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200 OK
@@ -762,7 +830,9 @@ Content-Length: 644
 
 The `metadata.continue` field contains a token to fetch the next page.
 
-**Example subsequent request using continue token**:
+### Example subsequent request using continue token
+
+The following example shows a request for the next page, using the `continue` token from the previous response:
 
 ```http
 GET /apis/dashboard.grafana.app/v1/namespaces/default/dashboards?limit=1&continue=eyJvIjoxNTIsInYiOjE3NjE3MDQyMjQyMDcxODksInMiOmZhbHNlfQ== HTTP/1.1
@@ -771,7 +841,9 @@ Content-Type: application/json
 Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
-**Example subsequent response**:
+### Example subsequent response
+
+The following example shows the response for the next page:
 
 ```http
 HTTP/1.1 200 OK
@@ -811,11 +883,11 @@ Content-Type: application/json; charset=UTF-8
 
 Continue making requests with the updated `continue` token until you receive a response without a `continue` field in the metadata, indicating you've reached the last page.
 
-Status Codes:
+### Status codes
 
-- **200** – OK
-- **401** – Unauthorized
-- **403** – Access denied
+- **200:** OK
+- **401:** Unauthorized
+- **403:** Access denied
 
 ## List dashboard history
 
@@ -823,16 +895,18 @@ You can retrieve the full version history of a dashboard using the List endpoint
 
 ## Delete Dashboard
 
-`DELETE /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards/:uid`
+`DELETE /apis/dashboard.grafana.app/v1/namespaces/{namespace}/dashboards/{uid}`
 
-Deletes a dashboard via the dashboard uid.
+Deletes a dashboard via the dashboard `uid`.
 
-- **`namespace`**: To read more about the namespace to use, see the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
-- **`uid`**: The unique identifier of the dashboard to update. This is the `metadata.name` field in the dashboard response and _not_ the `metadata.uid` field.
+**Path parameters**:
 
-**Required permissions**
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{uid}`: The unique identifier of the dashboard. This is the `metadata.name` field in the dashboard response and _not_ the `metadata.uid` field.
 
-See note in the [introduction](#new-dashboard-apis) for an explanation.
+**Required permissions**:
+
+See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
 
 <!-- prettier-ignore-start -->
 | Action              | Scope                                                                                                   |
@@ -841,7 +915,9 @@ See note in the [introduction](#new-dashboard-apis) for an explanation.
 { .no-spacing-list }
 <!-- prettier-ignore-end -->
 
-**Example Delete Request**:
+### Example request
+
+The following example shows a request to delete a dashboard:
 
 ```http
 DELETE /apis/dashboard.grafana.app/v1/namespaces/default/dashboards/gdxccn HTTP/1.1
@@ -850,7 +926,9 @@ Content-Type: application/json
 Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
-**Example Response**:
+### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200 OK
@@ -871,12 +949,12 @@ Content-Length: 78
 }
 ```
 
-Status Codes:
+### Status codes
 
-- **200** – OK
-- **401** – Unauthorized
-- **403** – Access denied
-- **404** – Not found
+- **200:** OK
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** Not found
 
 ## Use the v2 schema
 
@@ -886,9 +964,15 @@ In the v2 schema, panels are defined once in `spec.elements` and placed on the d
 
 ### Create a dashboard with the v2 schema
 
-`POST /apis/dashboard.grafana.app/v2/namespaces/:namespace/dashboards`
+`POST /apis/dashboard.grafana.app/v2/namespaces/{namespace}/dashboards`
 
-**Example request**:
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+
+#### Example request
+
+The following example shows a request to create a dashboard with the v2 schema:
 
 ```http
 POST /apis/dashboard.grafana.app/v2/namespaces/default/dashboards HTTP/1.1
@@ -1011,7 +1095,9 @@ JSON body schema:
 - **spec.links** – Links to other dashboards or external websites.
 - **spec.cursorSync** – Whether panels share the crosshair or tooltip: `Off`, `Crosshair`, or `Tooltip`.
 
-**Example response**:
+#### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 201 Created
@@ -1039,6 +1125,16 @@ Content-Type: application/json; charset=UTF-8
   "status": {}
 }
 ```
+
+#### Status codes
+
+- **201:** Created
+- **400:** Errors (invalid JSON, missing or invalid fields)
+- **401:** Unauthorized
+- **403:** Access denied, for example because you can't access the folder or the dashboard quota is reached
+- **404:** The folder doesn't exist
+- **409:** Conflict (a dashboard with the same `uid` already exists)
+- **422:** The dashboard doesn't match the schema
 
 ### Read a dashboard saved in a different schema
 

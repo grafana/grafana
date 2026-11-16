@@ -26,7 +26,7 @@ import { type ConnectionProvider, getConnectionFormDefaults, toConnectionType } 
 import { connectionProviderType, isOAuthConnectionType } from '../utils/connectionOAuth';
 import { isConnectionPending } from '../utils/connectionStatus';
 import { getConnectionFormErrors } from '../utils/getFormErrors';
-import { isManagedResourceReadOnly } from '../utils/managedResource';
+import { isProvisioningResourceReadOnly } from '../utils/managedResource';
 
 import { DeleteConnectionButton } from './DeleteConnectionButton';
 
@@ -74,7 +74,7 @@ export function ConnectionForm({ data, children }: ConnectionFormProps) {
   const connectionName = data?.metadata?.name;
   const isEdit = Boolean(connectionName);
   // Externally managed connections (terraform, kubectl, ...) are read-only in the UI.
-  const isReadOnly = data ? isManagedResourceReadOnly(data) : false;
+  const isReadOnly = data ? isProvisioningResourceReadOnly(data) : false;
   const privateKey = data?.secure?.privateKey;
   const navigate = useNavigate();
 

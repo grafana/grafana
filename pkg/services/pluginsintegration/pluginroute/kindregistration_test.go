@@ -2,6 +2,7 @@ package pluginroute
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -150,8 +151,8 @@ func TestUpdateAPIGroupInfo(t *testing.T) {
 					Name:   "v1",
 					Served: true,
 					Kinds: []app.ManifestVersionKind{
-						{Kind: "Thing", Plural: "things", Scope: "Namespaced"},
-						{Kind: "Other", Plural: plural, Scope: "Namespaced"},
+						{Kind: "Thing", Plural: "things", Resource: "things", Scope: "Namespaced"},
+						{Kind: "Other", Plural: plural, Resource: strings.ToLower(plural), Scope: "Namespaced"},
 					},
 				}},
 			})
@@ -198,7 +199,7 @@ func TestInstallSchemaRejectsReservedKindNames(t *testing.T) {
 					Name:   "v1alpha1",
 					Served: true,
 					Kinds: []app.ManifestVersionKind{{
-						Kind: kind, Plural: kind + "s", Scope: "Namespaced",
+						Kind: kind, Plural: kind + "s", Resource: strings.ToLower(kind) + "s", Scope: "Namespaced",
 					}},
 				}},
 			}
@@ -222,7 +223,7 @@ func TestInstallSchemaRejectsReservedListName(t *testing.T) {
 		Versions: []app.ManifestVersion{{
 			Name:   "v1alpha1",
 			Served: true,
-			Kinds:  []app.ManifestVersionKind{{Kind: "SettingsList", Plural: "SettingsLists", Scope: "Namespaced"}},
+			Kinds:  []app.ManifestVersionKind{{Kind: "SettingsList", Plural: "SettingsLists", Resource: "settingslists", Scope: "Namespaced"}},
 		}},
 	}
 	b := testBuilder(t, manifest)
@@ -245,10 +246,10 @@ func TestUpdateAPIGroupInfoFolderScopeIsPerVersion(t *testing.T) {
 		PreferredVersion: "v1alpha1",
 		Versions: []app.ManifestVersion{
 			{Name: "v1alpha1", Served: true, Kinds: []app.ManifestVersionKind{
-				{Kind: "Thing", Plural: "Things", Scope: "Namespaced"}, // folder scoped by default
+				{Kind: "Thing", Plural: "Things", Resource: "things", Scope: "Namespaced"}, // folder scoped by default
 			}},
 			{Name: "v2alpha1", Served: true, Kinds: []app.ManifestVersionKind{
-				{Kind: "Thing", Plural: "Things", Scope: "Namespaced", FolderScoped: &falseValue},
+				{Kind: "Thing", Plural: "Things", Resource: "things", Scope: "Namespaced", FolderScoped: &falseValue},
 			}},
 		},
 	}

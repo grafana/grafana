@@ -347,6 +347,8 @@ func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource
 		var token string
 		var listRV int64
 		pages := 0
+		dataPages := 0
+		pageSizes := []int{}
 		assertNoKeyScans(t, opts, func() {
 			for {
 				resp, err := server.List(ctx, newReq(pageSize, token))
@@ -368,6 +370,10 @@ func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource
 				}
 
 				pages++
+				pageSizes = append(pageSizes, len(resp.Items))
+				if len(resp.Items) > 0 {
+					dataPages++
+				}
 				require.LessOrEqual(t, pages, authorized, "pagination did not terminate")
 				token = resp.NextPageToken
 				if token == "" {
@@ -376,11 +382,13 @@ func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource
 			}
 		})
 
-		require.Equal(t, 2, pages, "expected two pages")
+		// A continuation search has an inexact authorized total, so the last
+		// nonempty page can carry a token for one final empty page.
+		require.Equal(t, []int{pageSize, authorized - pageSize, 0}, pageSizes)
 		require.Equal(t, wantByName, got, "exact names, bodies, and updated resource versions")
-		assertListAuthorization(t, opts, access, pages, authorized)
+		assertListAuthorization(t, opts, access, dataPages, authorized)
 		if opts.ExpectBatchReads {
-			require.Equal(t, int64(6), counting.batchReads.Load(), "the two pages should use 10-row lazy batched reads")
+			require.Equal(t, int64(6), counting.batchReads.Load(), "the two nonempty pages should use 10-row lazy batched reads")
 			require.Equal(t, int64(0), counting.reads.Load())
 		}
 	})

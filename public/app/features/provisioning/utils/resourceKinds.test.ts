@@ -55,6 +55,36 @@ describe('resourceKinds registry', () => {
       itemType: 'DataSource',
       collectionGroup: true,
     });
+    expect(resourceKindInfos.repository).toMatchObject({
+      group: 'provisioning.grafana.app',
+      kind: 'Repository',
+      resource: 'repositories',
+      itemType: 'Repository',
+    });
+    expect(resourceKindInfos.connection).toMatchObject({
+      group: 'provisioning.grafana.app',
+      kind: 'Connection',
+      resource: 'connections',
+      itemType: 'Connection',
+    });
+  });
+
+  // A bootstrap repository provisions repositories and connections, and their stat badges fall
+  // back to a generic icon and a dead link for any kind the registry does not know.
+  it('resolves provisioning kinds from a repository stat, including their admin routes', () => {
+    const repository = getKindInfoByStat({ group: 'provisioning.grafana.app', resource: 'repositories' });
+    const connection = getKindInfoByStat({ group: 'provisioning.grafana.app', resource: 'connections' });
+
+    expect(repository?.icon).toBe('code-branch');
+    expect(repository?.getRoute?.('bootstrap')).toBe('/admin/provisioning/bootstrap');
+    expect(connection?.icon).toBe('plug');
+    expect(connection?.getRoute?.('github-app')).toBe('/admin/provisioning/connections/github-app/edit');
+  });
+
+  // They are configuration, not content: the Migrate flow must never offer to move them.
+  it('never enumerates provisioning kinds for migration', async () => {
+    expect(await resourceKindInfos.repository.list()).toEqual([]);
+    expect(await resourceKindInfos.connection.list()).toEqual([]);
   });
 
   it('sources icons from the search package', () => {
@@ -246,6 +276,8 @@ describe('getAvailableResourceKinds', () => {
       resourceKindInfos.dashboard,
       resourceKindInfos.playlist,
       resourceKindInfos.librarypanel,
+      resourceKindInfos.repository,
+      resourceKindInfos.connection,
       resourceKindInfos.datasource,
     ]);
   });

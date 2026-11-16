@@ -6,7 +6,7 @@ import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService, useScopes } from '@grafana/runtime';
-import { useFlagGrafanaScopesDashboardsMegaMenu } from '@grafana/runtime/internal';
+import { useFlagDashboardUndoRedo, useFlagGrafanaScopesDashboardsMegaMenu } from '@grafana/runtime/internal';
 import {
   CustomVariable,
   LocalValueVariable,
@@ -20,6 +20,7 @@ import {
 import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/feature-flags';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { contextSrv } from 'app/core/services/context_srv';
+import { setMobileViewport } from 'app/features/dashboard-scene/utils/mobileViewportTestUtils';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { KioskMode } from 'app/types/dashboard';
 
@@ -74,10 +75,12 @@ jest.mock('app/features/scopes/ScopesContextProvider', () => ({
 jest.mock('@grafana/runtime/internal', () => ({
   ...jest.requireActual('@grafana/runtime/internal'),
   useFlagGrafanaScopesDashboardsMegaMenu: jest.fn(),
+  useFlagDashboardUndoRedo: jest.fn(),
 }));
 
 const mockUseScopes = jest.mocked(useScopes);
 const mockUseFlagScopesDashboardsMegaMenu = jest.mocked(useFlagGrafanaScopesDashboardsMegaMenu);
+const mockUseFlagDashboardUndoRedo = jest.mocked(useFlagDashboardUndoRedo);
 
 function renderInGrafanaContext(child: React.ReactNode, kioskMode?: KioskMode) {
   const context = getGrafanaContextMock();
@@ -493,6 +496,7 @@ describe('DashboardControls', () => {
 
     it('should not show EditDashboardSwitch or MakeDashboardEditableButton on mobile when mobileEditDeprecation is enabled', async () => {
       setTestFlags({ dashboardNewLayouts: true, 'grafana.mobileEditDeprecation': true });
+      setMobileViewport();
       const controls = buildTestSceneWithEditable({ editable: true, canEdit: true });
       renderInGrafanaContext(<controls.Component model={controls} />, undefined);
 
@@ -510,6 +514,7 @@ describe('DashboardControls', () => {
 
     it('should not show MakeDashboardEditableButton on mobile when mobileEditDeprecation is enabled', async () => {
       setTestFlags({ dashboardNewLayouts: true, 'grafana.mobileEditDeprecation': true });
+      setMobileViewport();
       const controls = buildTestSceneWithEditable({ editable: false, canEdit: false, canMakeEditable: true });
       renderInGrafanaContext(<controls.Component model={controls} />, undefined);
 
@@ -676,6 +681,145 @@ describe('DashboardControls', () => {
 
       const save = screen.queryByTestId(selectors.components.NavToolbar.editDashboard.saveButton);
       expect(Boolean(save)).toBe(composerEditing);
+    });
+  });
+
+  describe('Undo and redo', () => {
+    const undoTestId = selectors.pages.Dashboard.EditHistory.undo;
+    const redoTestId = selectors.pages.Dashboard.EditHistory.redo;
+
+    beforeEach(() => {
+      jest.mocked(playlistSrv.useState).mockReturnValue({ isPlaying: false });
+      setTestFlags({ dashboardNewLayouts: true });
+      mockUseFlagDashboardUndoRedo.mockReturnValue(true);
+    });
+
+    afterEach(() => {
+      jest.clearAllMocks();
+      mockUseFlagDashboardUndoRedo.mockReset();
+    });
+
+    function editAction(description: string) {
+      return {
+        meta: { actionId: 'panel.move' as const },
+        source: new VizPanel({ pluginId: 'text' }),
+        description,
+        perform: jest.fn(),
+        undo: jest.fn(),
+      };
+    }
+
+    it('renders undo and redo directly before the save button while editing', async () => {
+      const controls = buildTestSceneWithEditable({ canSave: true, isEditing: true });
+      renderInGrafanaContext(<controls.Component model={controls} />);
+
+      const undo = await screen.findByTestId(undoTestId);
+      const redo = screen.getByTestId(redoTestId);
+      const save = screen.getByTestId(selectors.components.NavToolbar.editDashboard.saveButton);
+      const timePicker = screen.getByTestId(selectors.components.TimePicker.openButton);
+
+      expect(timePicker.compareDocumentPosition(undo) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      expect(undo.compareDocumentPosition(redo) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      expect(redo.parentElement?.nextElementSibling).toContainElement(save);
+    });
+
+    it('disables both buttons when there is nothing to undo or redo', async () => {
+      const controls = buildTestSceneWithEditable({ isEditing: true });
+      renderInGrafanaContext(<controls.Component model={controls} />);
+
+      expect(await screen.findByTestId(undoTestId)).toBeDisabled();
+      expect(screen.getByTestId(redoTestId)).toBeDisabled();
+    });
+
+    it('names the action in the tooltip and undoes or redoes it on click', async () => {
+      const controls = buildTestSceneWithEditable({ isEditing: true });
+      const sidebar = getDashboard(controls).state.sidebar;
+      const undoAction = jest.spyOn(sidebar, 'undoAction').mockImplementation(() => {});
+      const redoAction = jest.spyOn(sidebar, 'redoAction').mockImplementation(() => {});
+      sidebar.setState({ undoStack: [editAction('Move panel')], redoStack: [editAction('Remove panel')] });
+      renderInGrafanaContext(<controls.Component model={controls} />);
+
+      const undo = await screen.findByRole('button', { name: 'Undo' });
+      const redo = screen.getByRole('button', { name: 'Redo' });
+
+      await userEvent.hover(undo);
+      expect(await screen.findByText('Undo: Move panel')).toBeInTheDocument();
+      await userEvent.hover(redo);
+      expect(await screen.findByText('Redo: Remove panel')).toBeInTheDocument();
+
+      await userEvent.click(undo);
+      await userEvent.click(redo);
+
+      expect(undoAction).toHaveBeenCalledTimes(1);
+      expect(redoAction).toHaveBeenCalledTimes(1);
+    });
+
+    it('keeps pointer presses from reaching the selection-clearing controls row', async () => {
+      const controls = buildTestSceneWithEditable({ isEditing: true });
+      const sidebar = getDashboard(controls).state.sidebar;
+      jest.spyOn(sidebar, 'undoAction').mockImplementation(() => {});
+      sidebar.setState({ undoStack: [editAction('Move panel')] });
+      const clearSelection = jest.fn();
+      renderInGrafanaContext(
+        // eslint-disable-next-line jsx-a11y/no-static-element-interactions
+        <div onPointerDown={clearSelection}>
+          <controls.Component model={controls} />
+        </div>
+      );
+
+      await userEvent.click(await screen.findByRole('button', { name: 'Undo' }));
+
+      expect(clearSelection).not.toHaveBeenCalled();
+    });
+
+    it('still renders when the time controls are hidden', async () => {
+      const controls = buildTestSceneWithEditable({ isEditing: true });
+      controls.setState({ hideTimeControls: true });
+      renderInGrafanaContext(<controls.Component model={controls} />);
+
+      expect(await screen.findByTestId(undoTestId)).toBeInTheDocument();
+      expect(screen.queryByTestId(selectors.components.TimePicker.openButton)).not.toBeInTheDocument();
+    });
+
+    it('is hidden when the dashboard is not being edited', async () => {
+      const controls = buildTestSceneWithEditable({ isEditing: false });
+      renderInGrafanaContext(<controls.Component model={controls} />);
+
+      expect(await screen.findByTestId(selectors.components.TimePicker.openButton)).toBeInTheDocument();
+      expect(screen.queryByTestId(undoTestId)).not.toBeInTheDocument();
+    });
+
+    it('is hidden when the dashboardUndoRedo flag is off', async () => {
+      mockUseFlagDashboardUndoRedo.mockReturnValue(false);
+      const controls = buildTestSceneWithEditable({ isEditing: true });
+      renderInGrafanaContext(<controls.Component model={controls} />);
+
+      expect(await screen.findByTestId(selectors.components.TimePicker.openButton)).toBeInTheDocument();
+      expect(screen.queryByTestId(undoTestId)).not.toBeInTheDocument();
+    });
+
+    it('is hidden in kiosk mode', async () => {
+      const controls = buildTestSceneWithEditable({ isEditing: true });
+      renderInGrafanaContext(<controls.Component model={controls} />, KioskMode.Full);
+
+      expect(await screen.findByTestId(selectors.components.TimePicker.openButton)).toBeInTheDocument();
+      expect(screen.queryByTestId(undoTestId)).not.toBeInTheDocument();
+    });
+
+    it('is hidden in panel edit', () => {
+      const { controls, dashboard } = buildPanelEditControlsScene({
+        uid: 'panel-edit-undo',
+        editedPanelKey: 'edited-panel',
+        rows: [new RowItem({ title: 'Row' })],
+        dashboardVariables: [],
+      });
+      dashboard.setState({ isEditing: true });
+      renderInGrafanaContext(<controls.Component model={controls} />);
+
+      expect(
+        screen.getByTestId(selectors.components.NavToolbar.editDashboard.backToDashboardButton)
+      ).toBeInTheDocument();
+      expect(screen.queryByTestId(undoTestId)).not.toBeInTheDocument();
     });
   });
 

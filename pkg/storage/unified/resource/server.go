@@ -59,8 +59,8 @@ func watchSendError(err error) error {
 	return err
 }
 
-// queueRPCError is the error-only equivalent of HandleQueueError: a full
-// tenant queue is reported as 429/ResourceExhausted.
+// queueRPCError reports a full tenant queue as 429/ResourceExhausted;
+// other failures retain rpcErrorFrom's status and cancellation semantics.
 func queueRPCError(err error) error {
 	if errors.Is(err, scheduler.ErrTenantQueueFull) {
 		return GRPCStatusError(NewTooManyRequestsError("tenant queue is full, please try again later"))
@@ -430,11 +430,6 @@ type SearchOptions struct {
 
 	// Percentage of search requests that should fail immediately (0-100). 0 = disabled, 100 = all requests fail.
 	InjectFailuresPercent int
-
-	// PostRankAuthzEnabled mirrors the index backend's post-rank authorization
-	// setting. It selects the index features this server requires, so an index
-	// that predates them is rebuilt before that path serves a query.
-	PostRankAuthzEnabled bool
 
 	// GlobalIndexEnabled builds one index per namespace covering several resource
 	// types, alongside the per-resource indexes.

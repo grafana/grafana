@@ -7,7 +7,7 @@ import { Alert, useStyles2 } from '@grafana/ui';
 import { AlertmanagerChoice } from '../../../../plugins/datasource/alertmanager/types';
 import { alertmanagerApi } from '../api/alertmanagerApi';
 import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
-import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../utils/constants';
 
 interface GrafanaAlertmanagerWarningProps {
   currentAlertmanager: string;

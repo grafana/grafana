@@ -16,7 +16,7 @@ import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { mockPromRulesApiResponse } from 'app/features/alerting/unified/mocks/grafanaRulerApi';
 import { mockRulerRulesApiResponse } from 'app/features/alerting/unified/mocks/rulerApi';
 import { mockUnifiedAlertingStore } from 'app/features/alerting/unified/testSetup/mockUnifiedAlertingStore';
-import { Annotation } from 'app/features/alerting/unified/utils/constants';
+import { Annotation, GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/constants';
 import { type DashboardSrv, setDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import {
   type PromRuleGroupDTO,
@@ -33,7 +33,6 @@ import {
   mockPromRuleNamespace,
   mockRulerGrafanaRule,
 } from '../../../features/alerting/unified/mocks';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../../features/alerting/unified/utils/datasource';
 import { AccessControlAction } from '../../../types/accessControl';
 
 import { UnifiedAlertListPanel } from './UnifiedAlertList';

@@ -4752,32 +4752,26 @@ func TestServerListKeysOnly_BytesBudgetAppliesToIdentity(t *testing.T) {
 }
 
 func TestResourceServerQOSTenantIsolation(t *testing.T) {
-	access := &callbackAccessClient{fn: func(authlib.CheckRequest, string) (authlib.CheckResponse, error) {
-		return authlib.CheckResponse{Allowed: true}, nil
-	}}
-	srv := newWatchTestServer(t, watchTestServerOpts{AccessClient: access})
-	ctxFor := func(namespace string) context.Context {
-		return authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{
-			Type: authlib.TypeUser, UserID: 123, UserUID: "u123", OrgRole: identity.RoleEditor, Namespace: namespace,
-		})
-	}
-	keys := map[string]*resourcepb.ResourceKey{}
-	for _, namespace := range []string{"slow", "healthy"} {
-		key := &resourcepb.ResourceKey{Namespace: namespace, Group: "playlist.grafana.app", Resource: "playlists", Name: "test-playlist"}
-		value := []byte(fmt.Sprintf(`{"apiVersion":"playlist.grafana.app/v0alpha1","kind":"Playlist","metadata":{"name":"test-playlist","namespace":%q,"uid":"test-uid"},"spec":{"title":"test","interval":"5m","items":[]}}`, namespace))
-		rsp, err := srv.Create(ctxFor(namespace), &resourcepb.CreateRequest{Key: key, Value: value})
-		require.NoError(t, err)
-		require.NotNil(t, rsp)
-		keys[namespace] = key
-	}
 	synctest.Test(t, func(t *testing.T) {
 		q := scheduler.NewQueue(&scheduler.QueueOptions{MaxConcurrentPerTenant: 4})
 		startQOSTestService(t, q)
 		worker, err := scheduler.NewScheduler(q, &scheduler.Config{NumWorkers: 32})
 		require.NoError(t, err)
 		startQOSTestService(t, worker)
-		srv.queue = q
-		srv.queueConfig.Timeout = 5 * time.Second
+		access := &callbackAccessClient{}
+		// Badger's background goroutines cannot operate on channels created inside this bubble.
+		srv := &server{
+			backend:     &fakeBackend{},
+			access:      access,
+			log:         log.NewNopLogger(),
+			queue:       q,
+			queueConfig: QueueConfig{Timeout: 5 * time.Second},
+		}
+		ctxFor := func(namespace string) context.Context {
+			return authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{
+				Type: authlib.TypeUser, UserID: 123, UserUID: "u123", OrgRole: identity.RoleEditor, Namespace: namespace,
+			})
+		}
 
 		started := make(chan struct{}, 5)
 		release := make(chan struct{})
@@ -4795,7 +4789,9 @@ func TestResourceServerQOSTenantIsolation(t *testing.T) {
 			err error
 		}
 		read := func(namespace string) result {
-			rsp, err := srv.Read(ctxFor(namespace), &resourcepb.ReadRequest{Key: keys[namespace]})
+			rsp, err := srv.Read(ctxFor(namespace), &resourcepb.ReadRequest{Key: &resourcepb.ResourceKey{
+				Namespace: namespace, Group: "playlist.grafana.app", Resource: "playlists", Name: "test-playlist",
+			}})
 			return result{rsp: rsp, err: err}
 		}
 		assertRead := func(r result) {
@@ -5059,13 +5055,21 @@ func TestQueueRPCError(t *testing.T) {
 	requireRPCError(t, err, NewTooManyRequestsError("tenant queue is full, please try again later"))
 	require.Equal(t, codes.ResourceExhausted, status.Code(err))
 
-	// Matches the error HandleQueueError embeds in the response.
 	other := errors.New("timeout")
-	legacy, legacyErr := HandleQueueError(other, func(e *resourcepb.ErrorResult) *resourcepb.ReadResponse {
-		return &resourcepb.ReadResponse{Error: e}
-	})
-	require.NoError(t, legacyErr)
-	requireRPCError(t, queueRPCError(other), legacy.Error)
+	requireRPCError(t, queueRPCError(other), &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "timeout"})
+
+	for _, tc := range []struct {
+		err  error
+		want codes.Code
+	}{
+		{context.Canceled, codes.Canceled},
+		{context.DeadlineExceeded, codes.DeadlineExceeded},
+	} {
+		t.Run(tc.want.String(), func(t *testing.T) {
+			queueErr := fmt.Errorf("failed to enqueue for tenant stacks-13: %w", tc.err)
+			require.Equal(t, tc.want, status.Code(queueRPCError(queueErr)))
+		})
+	}
 }
 
 // Servers return native status errors without any conversion interceptor, both
