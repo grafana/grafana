@@ -207,6 +207,12 @@ func TestFolderAfterDelete_DashboardPreferences(t *testing.T) {
 			b.afterDelete(deletedFolderObj("org-7", "f1"), &metav1.DeleteOptions{})
 		})
 
+		require.Len(t, dyn.Actions(), 1)
+		sent, ok := dyn.Actions()[0].(k8stesting.DeleteAction)
+		require.True(t, ok, "want the tier delete, got %v", dyn.Actions()[0])
+		require.Equal(t, "org-7", sent.GetNamespace())
+		require.Equal(t, "folder-f1", sent.GetName())
+		requireDashboardPreferencesStored(t, dyn, "org-7", "folder-f1")
 		requireResourcePermissionGone(t, rp, rpName)
 	})
 
