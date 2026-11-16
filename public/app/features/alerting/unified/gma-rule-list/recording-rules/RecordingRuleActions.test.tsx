@@ -125,6 +125,23 @@ describe('RecordingRuleActions', () => {
     expect(screen.getByRole('menuitem', { name: /Copy link/i })).toBeInTheDocument();
   });
 
+  it('links View to the rule view with a way back to the current page', async () => {
+    render(
+      <ul>
+        <li>
+          <RecordingRuleActions rule={ruleWithPerms()} />
+        </li>
+      </ul>,
+      { historyOptions: { initialEntries: ['/alerting/rules/recording?search=cpu'] } }
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'More' }));
+    expect(await screen.findByRole('menuitem', { name: /View/i })).toHaveAttribute(
+      'href',
+      '/alerting/grafana/rule-1/view?returnTo=%2Falerting%2Frules%2Frecording%3Fsearch%3Dcpu'
+    );
+  });
+
   it('shows Duplicate when user has create permission', async () => {
     renderActions(ruleWithPerms());
 

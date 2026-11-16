@@ -86,7 +86,7 @@ export function RecordingRuleActions({ rule }: RecordingRuleActionsProps) {
       <Menu.Item
         label={t('alerting.gma-rule-list.recording-rule-actions.view', 'View')}
         icon="eye"
-        url={grafanaRulesNav.viewLink(uid)}
+        url={grafanaRulesNav.viewLink(uid, { includeReturnTo: true })}
       />
       {isGranted(abilities.duplicate) && (
         <Menu.Item
