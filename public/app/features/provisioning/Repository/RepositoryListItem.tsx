@@ -85,10 +85,10 @@ export function RepositoryListItem({ repository }: Props) {
         <Stack gap={2} direction="row" alignItems="center" wrap>
           {spec?.title && <Text variant="h3">{spec.title}</Text>}
           <StatusBadge repo={repository} />
-          {isReadOnlyRepo && <ReadOnlyBadge repoType={spec?.type} subject="repository" />}
-          {isReadOnly && <ReadOnlyBadge subject="configuration" />}
+          {isReadOnlyRepo && <ReadOnlyBadge repoType={spec?.type} />}
           {isManagedRepo && (
             <ManagedBadge
+              isReadOnly={isReadOnly}
               managerKind={getManagerKind(repository)}
               name={getManagerIdentity(repository)}
               repositoryName={getManagerIdentity(repository)}

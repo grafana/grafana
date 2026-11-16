@@ -15241,14 +15241,16 @@
       "path-required": "Repository path is required"
     },
     "managed-badge": {
+      "actions": "Managed resource actions",
       "classic-file-provisioning": "Managed by: File provisioning",
       "file-provisioning": "Managed by: Grafana configuration",
       "kubectl": "Managed by: Kubectl",
       "manage-repository": "Manage repository",
       "plugin": "Managed by: Plugin {{id}}",
       "provisioned": "Provisioned",
+      "read-only": "Read only, {{managedBy}}",
       "terraform": "Managed by: Terraform",
-      "view-source-file": "View source file"
+      "view-source": "View source"
     },
     "managed-by-repository-tooltip": "Managed by: Repository",
     "managed-by-repository-tooltip-with-title": "Managed by: Repository {{title}}",

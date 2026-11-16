@@ -1,11 +1,13 @@
-import { Stack } from '@grafana/ui';
+import { ManagerKind } from 'app/features/apiserver/types';
 import { ManagedBadge } from 'app/features/provisioning/components/ManagedBadge';
+import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 
 import { type DashboardScene } from './DashboardScene';
 
 export const ManagedDashboardNavBarBadge = ({ dashboard }: { dashboard: DashboardScene }) => {
   const kind = dashboard.getManagerKind();
   const id = dashboard.getManagerIdentity();
+  const { isReadOnlyRepo } = useGetResourceRepositoryView({ name: kind === ManagerKind.Repo ? id : undefined });
 
   if (!kind) {
     return null;
@@ -16,8 +18,13 @@ export const ManagedDashboardNavBarBadge = ({ dashboard }: { dashboard: Dashboar
   // source path carries the loaded ref as a `#fragment` (see loadProvisioningDashboard),
   // which the badge resolves to the right branch/commit.
   return (
-    <Stack direction="row" alignItems="stretch">
-      <ManagedBadge managerKind={kind} name={id} repositoryName={id} sourcePath={dashboard.getPath()} />
-    </Stack>
+    <ManagedBadge
+      managerKind={kind}
+      name={id}
+      // Only users who could otherwise edit need to know why they can't.
+      isReadOnly={isReadOnlyRepo && dashboard.canEditDashboard()}
+      repositoryName={id}
+      sourcePath={dashboard.getPath()}
+    />
   );
 };

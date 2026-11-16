@@ -1,9 +1,7 @@
-import { css } from '@emotion/css';
-
-import { type GrafanaTheme2, textUtil } from '@grafana/data';
+import { textUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Badge, type BadgeColor, Dropdown, Icon, type IconName, Menu, Text, useStyles2 } from '@grafana/ui';
+import { Badge, type BadgeColor, Dropdown, IconButton, type IconName, Menu, Stack, Text } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -11,6 +9,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { PROVISIONING_URL } from '../constants';
 import { RepoViewStatus, useGetResourceRepositoryView } from '../hooks/useGetResourceRepositoryView';
 import { getRepoFileUrl } from '../utils/git';
+import { getRepositoryTypeConfig } from '../utils/repositoryTypes';
 import { getManagedByRepositoryTooltip, getOrphanedRepositoryTooltip } from '../utils/tooltip';
 
 import { splitSourcePath } from './utils/path';
@@ -22,9 +21,11 @@ interface ManagedBadgeProps {
   name?: string;
   /** Repository-managed resource whose backing repository no longer exists. */
   isOrphaned?: boolean;
+  /** The manager does not allow edits; the badge shows a lock and says so in its tooltip. */
+  isReadOnly?: boolean;
   /**
-   * Manager identity (`grafana.app/managerId`). When set for a repository-managed resource, the
-   * badge becomes a dropdown exposing permission-gated actions (source file, repository admin).
+   * Manager identity (`grafana.app/managerId`). When set for a repository-managed resource, a
+   * menu button next to the badge exposes permission-gated actions (source file, repository admin).
    */
   repositoryName?: string;
   /**
@@ -41,40 +42,49 @@ interface ManagedBadgeProps {
  * `managerKind` is omitted/unknown. Use it for any resource that `getManagerKind`/`isManaged`
  * reports as managed so the styling stays consistent.
  *
- * When `repositoryName` is provided for a repository-managed resource, the badge turns into a
- * click-activated dropdown with the available actions: a link to the resource's source file in the
+ * When `repositoryName` is provided for a repository-managed resource, a menu button next to the
+ * badge lists the available actions: a link to the resource's source file in the
  * git provider (Editors/Admins, when `sourcePath` resolves to a browsable URL) and a link to the
  * repository administration page (repository managers with `provisioning.repositories:write`).
- * Users without any available action (e.g. Viewers) get the plain, non-interactive badge.
+ * Users without any available action (e.g. Viewers) get the badge alone.
  */
-export function ManagedBadge({ managerKind, name, isOrphaned = false, repositoryName, sourcePath }: ManagedBadgeProps) {
+export function ManagedBadge({
+  managerKind,
+  name,
+  isOrphaned = false,
+  isReadOnly = false,
+  repositoryName,
+  sourcePath,
+}: ManagedBadgeProps) {
   // The interactive variant is a separate component so the RTK Query hook only runs (and only
   // requires a store context) when a repository lookup can actually yield actions.
   if (config.provisioningEnabled && managerKind === ManagerKind.Repo && repositoryName && !isOrphaned) {
-    return <RepoManagedBadge name={name} repositoryName={repositoryName} sourcePath={sourcePath} />;
+    return (
+      <RepoManagedBadge name={name} isReadOnly={isReadOnly} repositoryName={repositoryName} sourcePath={sourcePath} />
+    );
   }
 
-  return <StaticManagedBadge managerKind={managerKind} name={name} isOrphaned={isOrphaned} />;
+  return <StaticManagedBadge managerKind={managerKind} name={name} isOrphaned={isOrphaned} isReadOnly={isReadOnly} />;
 }
 
 /** Plain, non-interactive badge with a hover tooltip. */
-function StaticManagedBadge({ managerKind, name, isOrphaned = false }: ManagedBadgeProps) {
-  const { color, icon, tooltip } = getBadgeDisplay({ managerKind, name, isOrphaned });
+function StaticManagedBadge({ managerKind, name, isOrphaned = false, isReadOnly }: ManagedBadgeProps) {
+  const { color, icon, tooltip } = getBadgeDisplay({ managerKind, name, isOrphaned, isReadOnly });
   return <Badge color={color} icon={icon} tooltip={tooltip} />;
 }
 
 interface RepoManagedBadgeProps {
   name?: string;
+  isReadOnly: boolean;
   repositoryName: string;
   sourcePath?: string;
 }
 
 /**
  * Repository-managed variant: resolves the repository view (viewer-safe endpoint) and, when the
- * user has any permitted action, renders the badge as a dropdown trigger.
+ * user has any permitted action, renders a menu button next to the badge.
  */
-function RepoManagedBadge({ name, repositoryName, sourcePath }: RepoManagedBadgeProps) {
-  const styles = useStyles2(getStyles);
+function RepoManagedBadge({ name, isReadOnly, repositoryName, sourcePath }: RepoManagedBadgeProps) {
   const { repository, status } = useGetResourceRepositoryView({ name: repositoryName });
 
   const isOrphaned = status === RepoViewStatus.Orphaned;
@@ -83,6 +93,7 @@ function RepoManagedBadge({ name, repositoryName, sourcePath }: RepoManagedBadge
     managerKind: ManagerKind.Repo,
     name: displayName,
     isOrphaned,
+    isReadOnly,
   });
 
   const { filePath, fragmentRef } = splitSourcePath(sourcePath);
@@ -110,46 +121,49 @@ function RepoManagedBadge({ name, repositoryName, sourcePath }: RepoManagedBadge
       ? `${PROVISIONING_URL}/${encodeURIComponent(repository.name ?? repositoryName)}`
       : undefined;
 
+  const badge = <Badge color={color} icon={icon} tooltip={tooltip} />;
+
   if (isOrphaned || (!sourceUrl && !manageUrl)) {
-    return <Badge color={color} icon={icon} tooltip={tooltip} />;
+    return badge;
   }
 
   return (
-    <Dropdown
-      overlay={
-        <Menu
-          header={
-            <Text variant="bodySmall" color="secondary">
-              {tooltip}
-            </Text>
-          }
-        >
-          {sourceUrl && (
-            <Menu.Item
-              icon="external-link-alt"
-              label={t('provisioning.managed-badge.view-source-file', 'View source file')}
-              url={sourceUrl}
-              target="_blank"
-            />
-          )}
-          {manageUrl && (
-            <Menu.Item
-              icon="cog"
-              label={t('provisioning.managed-badge.manage-repository', 'Manage repository')}
-              url={manageUrl}
-            />
-          )}
-        </Menu>
-      }
-    >
-      <button type="button" className={styles.trigger} aria-label={tooltip} aria-haspopup="menu">
-        <Badge color={color} icon={icon} text={<Icon name="angle-down" size="sm" />} tooltip={tooltip} />
-      </button>
-    </Dropdown>
+    <Stack direction="row" gap={0.5} alignItems="center">
+      {badge}
+      <Dropdown
+        overlay={
+          <Menu
+            header={
+              <Text variant="bodySmall" color="secondary">
+                {tooltip}
+              </Text>
+            }
+          >
+            {manageUrl && (
+              <Menu.Item
+                icon="cog"
+                label={t('provisioning.managed-badge.manage-repository', 'Manage repository')}
+                url={manageUrl}
+              />
+            )}
+            {sourceUrl && (
+              <Menu.Item
+                icon={(repository?.type && getRepositoryTypeConfig(repository.type)?.icon) || 'external-link-alt'}
+                label={t('provisioning.managed-badge.view-source', 'View source')}
+                url={sourceUrl}
+                target="_blank"
+              />
+            )}
+          </Menu>
+        }
+      >
+        <IconButton name="ellipsis-v" aria-label={t('provisioning.managed-badge.actions', 'Managed resource actions')} />
+      </Dropdown>
+    </Stack>
   );
 }
 
-function getBadgeDisplay({ managerKind, name, isOrphaned }: ManagedBadgeProps): {
+function getBadgeDisplay({ managerKind, name, isOrphaned, isReadOnly }: ManagedBadgeProps): {
   color: BadgeColor;
   icon: IconName;
   tooltip: string;
@@ -187,21 +201,13 @@ function getBadgeDisplay({ managerKind, name, isOrphaned }: ManagedBadgeProps): 
       tooltip = t('provisioning.managed-badge.provisioned', 'Provisioned');
   }
 
+  if (isReadOnly && !isOrphaned) {
+    icon = 'exchange-alt-lock';
+    tooltip = t('provisioning.managed-badge.read-only', 'Read only, {{managedBy}}', {
+      managedBy: tooltip,
+      interpolation: { escapeValue: false },
+    });
+  }
+
   return { color, icon, tooltip };
 }
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  trigger: css({
-    background: 'none',
-    border: 'none',
-    padding: 0,
-    display: 'inline-flex',
-    cursor: 'pointer',
-
-    '&:focus-visible': {
-      outline: `2px solid ${theme.colors.primary.main}`,
-      outlineOffset: '2px',
-      borderRadius: theme.shape.radius.sm,
-    },
-  }),
-});
