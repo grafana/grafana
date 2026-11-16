@@ -1442,11 +1442,82 @@ func TestIntegration_SQLStore_RemoveOrgUserDeletesUserPreferences(t *testing.T) 
 		require.NoError(t, err)
 		require.Empty(t, f.cleaner.Calls)
 	})
+
+	t.Run("a removal that rolls back after the user has left sends nothing", func(t *testing.T) {
+		f := newPreferencesCleanupFixture(t, nil)
+		viewer := f.createViewer(t, f.orgA.ID, f.orgB.ID)
+		rolledBack := errors.New("rolled back")
+		f.store.sql = legacysql.NewDatabaseProvider(&rollbackAfterCallbackDB{DB: f.db, err: rolledBack})
+
+		err := f.store.RemoveOrgUser(t.Context(), &org.RemoveOrgUserCommand{UserID: viewer.ID, OrgID: f.orgB.ID})
+
+		require.ErrorIs(t, err, rolledBack)
+		require.Empty(t, f.cleaner.Calls)
+		orgs, err := f.orgSvc.GetUserOrgList(t.Context(), &org.GetUserOrgListQuery{UserID: viewer.ID})
+		require.NoError(t, err)
+		require.Len(t, orgs, 2, "the removal should have rolled back")
+	})
+
+	t.Run("a retry that finds the user already gone sends nothing", func(t *testing.T) {
+		f := newPreferencesCleanupFixture(t, nil)
+		viewer := f.createViewer(t, f.orgA.ID, f.orgB.ID)
+		f.store.sql = legacysql.NewDatabaseProvider(&retryOnceDB{DB: f.db, beforeRetry: func(ctx context.Context) error {
+			return f.db.WithDbSession(ctx, func(sess *db.Session) error {
+				_, err := sess.Exec("DELETE FROM org_user WHERE org_id = ? AND user_id = ?", f.orgB.ID, viewer.ID)
+				return err
+			})
+		}})
+
+		err := f.store.RemoveOrgUser(t.Context(), &org.RemoveOrgUserCommand{UserID: viewer.ID, OrgID: f.orgB.ID})
+
+		require.NoError(t, err)
+		require.Empty(t, f.cleaner.Calls)
+	})
+}
+
+// rollbackAfterCallbackDB rolls back every transaction with err once its callback has succeeded.
+type rollbackAfterCallbackDB struct {
+	db.DB
+	err error
+}
+
+func (d *rollbackAfterCallbackDB) WithTransactionalDbSession(ctx context.Context, callback sqlstore.DBTransactionFunc) error {
+	return d.DB.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		if err := callback(sess); err != nil {
+			return err
+		}
+		return d.err
+	})
+}
+
+// retryOnceDB runs every transaction's callback twice, as a SQLite retry does: the first run is rolled
+// back, and beforeRetry changes the database before the second.
+type retryOnceDB struct {
+	db.DB
+	beforeRetry func(context.Context) error
+}
+
+func (d *retryOnceDB) WithTransactionalDbSession(ctx context.Context, callback sqlstore.DBTransactionFunc) error {
+	errRetry := errors.New("retry")
+	err := d.DB.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		if err := callback(sess); err != nil {
+			return err
+		}
+		return errRetry
+	})
+	if !errors.Is(err, errRetry) {
+		return fmt.Errorf("the first run must succeed and be rolled back, got %w", err)
+	}
+	if err := d.beforeRetry(ctx); err != nil {
+		return err
+	}
+	return d.DB.WithTransactionalDbSession(ctx, callback)
 }
 
 // preferencesCleanupFixture holds org A and org B, each created with its own admin.
 type preferencesCleanupFixture struct {
 	cfg        *setting.Cfg
+	db         db.DB
 	store      *sqlStore
 	cleaner    *dashboardpreferencestest.FakeUserCleaner
 	orgSvc     org.Service
@@ -1464,6 +1535,7 @@ func newPreferencesCleanupFixture(t *testing.T, cleanerErr error) *preferencesCl
 	cleaner := &dashboardpreferencestest.FakeUserCleaner{ExpectedError: cleanerErr}
 	f := &preferencesCleanupFixture{
 		cfg: cfg,
+		db:  testDB,
 		store: &sqlStore{
 			sql:         legacysql.NewDatabaseProvider(testDB),
 			log:         log.NewNopLogger(),
