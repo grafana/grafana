@@ -26,14 +26,16 @@ import { abandonOnRouteChange, collectUnsubs, str } from './utils';
  *   - list_render — from opening the dropdown until the list's rows are painted (dashboards_dspicker_list_rendered)
  *
  * Events (point-in-time):
- *   - search — user typed a search term (dashboards_dspicker_clicked item=search, debounced)
+ *   - search — user typed a search term (dashboards_dspicker_clicked item=search, debounced; a pending one is sent
+ *     before the open ends)
  *   - open_advanced — user switched to the advanced picker modal (dashboards_dspicker_clicked item=open_advanced_ds_picker)
  *
  * End conditions:
  *   - success: dashboards_dspicker_clicked item=select_ds — a different data source was selected
  *     (the picker also reports this for selections made in the advanced modal it opened, before the modal does)
  *   - success: dashboards_dspicker_cleared — the data source was cleared while the dropdown was open (cleared=true)
- *   - success: dashboards_dspicker_current_reselected — the already selected data source was picked again (changed=false)
+ *   - success: dashboards_dspicker_current_reselected — the already selected data source was picked again (changed=false),
+ *     in the dropdown or in the advanced modal it opened
  *   - discarded: dashboards_dspicker_dismissed — dropdown closed without a selection (click outside, Escape, Tab out)
  *   - abandoned: dashboards_dspicker_dismissed (reason=unmount) — picker unmounted while open
  *   - abandoned: route pathname changes (e.g. navigating away while the advanced modal is open)
@@ -57,14 +59,20 @@ const MODAL_EVENT = 'dashboards_dspickermodal_clicked';
 const CONFIG_NEW_DS_ITEMS = new Set(['config_new_ds', 'config_new_ds_empty_state']);
 
 // The trigger sets this right before startJourney, which runs the instance callback synchronously.
+// That holds because the trigger and instance are registered together in this module, so the registry
+// never has to buffer the handle until an instance callback is registered.
 let openingCycleId = '';
 
 // Counting every data source walks the whole list, so it's done once per session rather than on every
 // open of the picker. Data sources added later in the session aren't counted.
 let totalConfigured: Promise<number> | undefined;
+let totalConfiguredCount: number | undefined;
 function getTotalConfigured(): Promise<number> {
   if (!totalConfigured) {
-    totalConfigured = getDataSourceInstanceList({ all: true }).then((list) => list.length);
+    totalConfigured = getDataSourceInstanceList({ all: true }).then((list) => {
+      totalConfiguredCount = list.length;
+      return list.length;
+    });
     totalConfigured.catch(() => {
       totalConfigured = undefined;
     });
@@ -125,6 +133,20 @@ onJourneyInstance('datasource_picker_select', (handle) => {
       }
     });
 
+  // Attributes can't be set once the journey has ended, so the count also goes on the end attributes
+  // when it's already known. It may still be loading when the user selects quickly on the first open.
+  const end = (outcome: Parameters<typeof handle.end>[0], attributes: Record<string, string> = {}) => {
+    const all =
+      totalConfiguredCount === undefined
+        ? attributes
+        : { ...attributes, totalConfigured: String(totalConfiguredCount) };
+    if (Object.keys(all).length > 0) {
+      handle.end(outcome, all);
+    } else {
+      handle.end(outcome);
+    }
+  };
+
   const listRender = handle.startStep('list_render');
   const startPathname = locationService.getLocation().pathname;
   add(abandonOnRouteChange(handle, (pathname) => pathname === startPathname));
@@ -153,11 +175,11 @@ onJourneyInstance('datasource_picker_select', (handle) => {
           handle.recordEvent('open_advanced');
           break;
         case 'select_ds':
-          handle.end('success', { dsType: str(props.ds_type), changed: 'true', selectedIn });
+          end('success', { dsType: str(props.ds_type), changed: 'true', selectedIn });
           break;
         default:
           if (CONFIG_NEW_DS_ITEMS.has(str(props.item))) {
-            handle.end('abandoned', { reason: 'config_new_ds' });
+            end('abandoned', { reason: 'config_new_ds' });
           }
       }
     })
@@ -166,31 +188,31 @@ onJourneyInstance('datasource_picker_select', (handle) => {
   add(
     onInteraction(MODAL_EVENT, (props) => {
       if (props.item === 'dismiss') {
-        handle.end('discarded');
+        end('discarded');
       } else if (CONFIG_NEW_DS_ITEMS.has(str(props.item))) {
-        handle.end('abandoned', { reason: 'config_new_ds' });
+        end('abandoned', { reason: 'config_new_ds' });
       }
     })
   );
 
   add(
     onCycleInteraction('dashboards_dspicker_current_reselected', (props) => {
-      handle.end('success', { dsType: str(props.ds_type), changed: 'false', selectedIn });
+      end('success', { dsType: str(props.ds_type), changed: 'false', selectedIn });
     })
   );
 
   add(
     onCycleInteraction('dashboards_dspicker_cleared', () => {
-      handle.end('success', { changed: 'true', cleared: 'true', selectedIn });
+      end('success', { changed: 'true', cleared: 'true', selectedIn });
     })
   );
 
   add(
     onCycleInteraction('dashboards_dspicker_dismissed', (props) => {
       if (props.reason === 'unmount') {
-        handle.end('abandoned', { reason: 'unmount' });
+        end('abandoned', { reason: 'unmount' });
       } else {
-        handle.end('discarded');
+        end('discarded');
       }
     })
   );

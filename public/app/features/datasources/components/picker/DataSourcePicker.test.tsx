@@ -1,4 +1,4 @@
-import { act, findByText, render, screen, waitFor } from '@testing-library/react';
+import { act, findByText, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent, { type UserEvent } from '@testing-library/user-event';
 
 import {
@@ -556,6 +556,44 @@ describe('DataSourcePicker', () => {
 
       expect(await screen.findByText('Select data source')).toBeInTheDocument();
       expect(silentCalls('dashboards_dspicker_dismissed')).toHaveLength(0);
+    });
+
+    it('reports a reselection with the open cycle ID when the current data source is picked in the advanced modal', async () => {
+      getInstanceSettingsMock.mockReturnValue(MockDSBuiltIn);
+      render(
+        <ModalsProvider>
+          <DataSourcePicker onChange={jest.fn()} current={MockDSBuiltIn.name} />
+          <ModalRoot />
+        </ModalsProvider>
+      );
+      await user.click(await screen.findByRole('combobox'));
+      await user.click(await screen.findByText('Open advanced data source picker'));
+      const modal = await screen.findByRole('dialog', { name: 'Select data source' });
+      // The modal renders the built-in list twice, for the mobile layout
+      const [builtIn] = await within(modal).findAllByText(MockDSBuiltIn.name, { selector: 'span' });
+      await user.click(builtIn);
+
+      const cycleId = silentCalls('dashboards_dspicker_opened')[0][1].cycle_id;
+      expect(silentCalls('dashboards_dspicker_current_reselected')).toEqual([
+        [
+          'dashboards_dspicker_current_reselected',
+          { ds_type: MockDSBuiltIn.type, cycle_id: cycleId },
+          { silent: true },
+        ],
+      ]);
+    });
+
+    it('sends a pending search before the dismissal when the dropdown closes', async () => {
+      await setupOpenDropdown(user, { onChange: jest.fn() });
+
+      await user.keyboard('prom');
+      await user.keyboard('[Escape]');
+
+      const events = mockReportInteraction.mock.calls.map(([event, props]) => `${event}:${props?.item ?? ''}`);
+      expect(events.indexOf('dashboards_dspicker_clicked:search')).toBeGreaterThan(-1);
+      expect(events.indexOf('dashboards_dspicker_clicked:search')).toBeLessThan(
+        events.indexOf('dashboards_dspicker_dismissed:')
+      );
     });
 
     it('does not report a dismissal when a data source is selected', async () => {

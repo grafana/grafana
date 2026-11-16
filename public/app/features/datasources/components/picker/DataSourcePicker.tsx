@@ -183,19 +183,25 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
 
   // The open dropdown's cycle ID, for the datasource_picker_select CUJ. Events carry it so a late
   // event from one picker can't end the journey of another picker opened in the meantime.
-  const pickerId = useId();
-  const cycleCountRef = useRef(0);
   const cycleIdRef = useRef<string | null>(null);
+  // Kept after handing off to the advanced modal, whose selection comes back through onChange.
+  const modalCycleIdRef = useRef<string | null>(null);
 
   // Ends the open cycle, reporting how it ended. Without an interaction name the cycle is handed off
-  // to an event the journey already listens to (select_ds, or the advanced modal).
-  const endCycle = useCallback((interaction?: string, properties: Record<string, unknown> = {}) => {
-    const cycleId = cycleIdRef.current;
-    cycleIdRef.current = null;
-    if (cycleId && interaction) {
-      reportInteraction(interaction, { ...properties, cycle_id: cycleId }, { silent: true });
-    }
-  }, []);
+  // to an event the journey already listens to (select_ds, or the advanced modal's dismiss).
+  const endCycle = useCallback(
+    (interaction?: string, properties: Record<string, unknown> = {}) => {
+      // A pending search belongs to this cycle, so send it before the cycle ends
+      debouncedTrackSearch.flush();
+      const cycleId = cycleIdRef.current ?? modalCycleIdRef.current;
+      cycleIdRef.current = null;
+      modalCycleIdRef.current = null;
+      if (cycleId && interaction) {
+        reportInteraction(interaction, { ...properties, cycle_id: cycleId }, { silent: true });
+      }
+    },
+    [debouncedTrackSearch]
+  );
 
   // Every close that isn't a choice (click outside, Escape, Tab out) is a dismissal.
   const onClose = useCallback(() => {
@@ -207,6 +213,13 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
     endCycle();
     closeDropdown();
   }, [endCycle, closeDropdown]);
+
+  const handOffToModal = useCallback(() => {
+    debouncedTrackSearch.flush();
+    modalCycleIdRef.current = cycleIdRef.current;
+    cycleIdRef.current = null;
+    closeDropdown();
+  }, [debouncedTrackSearch, closeDropdown]);
 
   useEffect(() => () => endCycle('dashboards_dspicker_dismissed', { reason: 'unmount' }), [endCycle]);
 
@@ -252,9 +265,9 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
 
   function openDropdown() {
     if (!cycleIdRef.current) {
-      cycleCountRef.current += 1;
-      const cycleId = `${pickerId}-${cycleCountRef.current}`;
+      const cycleId = nextCycleId();
       cycleIdRef.current = cycleId;
+      modalCycleIdRef.current = null;
       reportInteraction(
         'dashboards_dspicker_opened',
         { surface: journeySurface ?? '', cycle_id: cycleId },
@@ -390,7 +403,7 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
                   closeDropdown();
                 }
               }}
-              onClose={closeHandedOff}
+              onClose={handOffToModal}
               onListRendered={(listedCount) => {
                 if (cycleIdRef.current) {
                   reportInteraction(
@@ -431,6 +444,13 @@ function getStylesDropdown(theme: GrafanaTheme2, props: DataSourcePickerProps) {
       },
     }),
   };
+}
+
+// Module-wide rather than useId(), which is only unique within one React root
+let cycleCounter = 0;
+function nextCycleId() {
+  cycleCounter += 1;
+  return `dspicker-${cycleCounter}`;
 }
 
 interface PickerContentProps extends DataSourcePickerProps {

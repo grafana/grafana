@@ -138,6 +138,29 @@ describe('datasourcePickerSelect journey wiring', () => {
     expect(mockGetDataSourceInstanceList).toHaveBeenCalledTimes(1);
   });
 
+  it('adds the configured count to the end attributes once it is known', async () => {
+    mockGetDataSourceInstanceList.mockResolvedValue(new Array(10000).fill({}));
+    loadWiring();
+    openPicker();
+    simulateInteraction('dashboards_dspicker_list_rendered', { total_listed: 20, cycle_id: 'c1' });
+    await waitFor(() => expect(mockHandle.setAttributes).toHaveBeenCalled());
+
+    openPicker();
+    simulateInteraction('dashboards_dspicker_dismissed', { cycle_id: 'c1' });
+
+    expect(mockHandle.end).toHaveBeenCalledWith('discarded', { totalConfigured: '10000' });
+  });
+
+  it('ends with success and changed=false when the current data source is picked again in the modal', () => {
+    loadWiring();
+    openPicker();
+
+    simulateInteraction('dashboards_dspicker_clicked', { item: 'open_advanced_ds_picker' });
+    simulateInteraction('dashboards_dspicker_current_reselected', { ds_type: 'loki', cycle_id: 'c1' });
+
+    expect(mockHandle.end).toHaveBeenCalledWith('success', { dsType: 'loki', changed: 'false', selectedIn: 'modal' });
+  });
+
   it('ignores events from another open of a picker', () => {
     loadWiring();
     openPicker();
