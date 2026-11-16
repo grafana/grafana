@@ -11,13 +11,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/selection"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/convert"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/common"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -263,12 +261,7 @@ func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.Up
 	return common.LegacyRuleUpdate(
 		ctx, name, objInfo, updateValidation,
 		&s.service, s.namespacer, ResourceInfo, s.Get,
-		func(orgID int64, rule *v1beta1.RecordingRule) (*ngmodels.AlertRule, utils.ManagerProperties, error) {
-			if rule.Name != "" {
-				rule.UID = types.UID(rule.Name)
-			}
-			return convertToDomainModel(orgID, rule)
-		}, convertToK8sResource,
+		convertToDomainModel, convertToK8sResource,
 	)
 }
 
