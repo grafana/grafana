@@ -1493,6 +1493,15 @@ var (
 			Generate:     Generate{Go: true, LegacyFrontend: true, React: true},
 		},
 		{
+			Name:         "alerting.ruleQualityTeamPolicies",
+			Description:  "Enable team-scoped alert rule quality policies, one per team, alongside the org policy.",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
+		{
 			Name:         "alerting.ruleQualityFix",
 			Description:  "Enable fixing alert rule quality issues with Grafana Assistant on the alert quality page.",
 			Stage:        FeatureStageExperimental,
