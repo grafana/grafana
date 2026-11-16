@@ -55,6 +55,39 @@ func TestIntegrationDashboardPreferencesFolderDelete(t *testing.T) {
 	})
 }
 
+func TestIntegrationDashboardPreferencesFolderDeleteCollection(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	// The folder API serves deletecollection only without the legacy folder permission wrapper, which
+	// the resource permissions API replaces.
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		DisableAnonymous:        true,
+		DisableAuthZClientCache: true,
+		EnableFeatureToggles:    []string{featuremgmt.FlagGrafanaDashboardPreferences, featuremgmt.FlagKubernetesAuthzResourcePermissionApis},
+	})
+	t.Cleanup(helper.Shutdown)
+
+	ctx := context.Background()
+	admin := dashboardPreferencesClient(helper, helper.Org1.Admin)
+	adminFolders := dashboardPreferencesFolderClient(helper, helper.Org1.Admin)
+
+	t.Run("a collection delete deletes the folder tier of each folder it deletes", func(t *testing.T) {
+		uid := createDashboardPreferencesFolder(t, ctx, helper, "pfd collection")
+		keep := createDashboardPreferencesFolder(t, ctx, helper, "pfd collection keep")
+		putFolderDashboardPreferences(t, ctx, admin, uid)
+		putFolderDashboardPreferences(t, ctx, admin, keep)
+
+		require.NoError(t, adminFolders.Resource.DeleteCollection(ctx, metav1.DeleteOptions{}, metav1.ListOptions{FieldSelector: "metadata.name=" + uid}))
+
+		_, err := adminFolders.Resource.Get(ctx, uid, metav1.GetOptions{})
+		require.True(t, apierrors.IsNotFound(err), "expected NotFound, got %v", err)
+		require.False(t, dashboardPreferencesStored(t, ctx, helper, "folder-"+uid))
+		_, err = adminFolders.Resource.Get(ctx, keep, metav1.GetOptions{})
+		require.NoError(t, err)
+		require.True(t, dashboardPreferencesStored(t, ctx, helper, "folder-"+keep))
+	})
+}
+
 func TestIntegrationDashboardPreferencesFolderDeleteSubtree(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
