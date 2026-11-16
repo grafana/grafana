@@ -104,11 +104,11 @@ func mergeManifestResources(supported []SupportedResource, manifests []*app.Mani
 		for _, version := range data.Versions {
 			for _, kind := range version.Kinds {
 				gk := schema.GroupKind{Group: data.Group, Kind: kind.Kind}
-				if seen.Has(gk) || !kind.IsProvisionable() {
+				if seen.Has(gk) || !kind.IsProvisionable() || kind.Scope == "Cluster" {
 					continue
 				}
 				caps := sets.New[string]()
-				if kind.Scope != "Cluster" && (kind.FolderScoped == nil || *kind.FolderScoped) {
+				if kind.FolderScoped == nil || *kind.FolderScoped {
 					caps.Insert(CapabilityFolder)
 				}
 				out = append(out, SupportedResource{GroupKind: gk, Capabilities: caps})

@@ -11,6 +11,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/sets"
+
+	appmanifestv1alpha2 "github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha2"
 )
 
 func TestManifestSupportedResources(t *testing.T) {
@@ -18,11 +20,14 @@ func TestManifestSupportedResources(t *testing.T) {
 
 	t.Run("adds the kinds that opt in to provisioning", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
+			clusterScoped := testManifestKind("Global", true, false)
+			clusterScoped.Scope = appmanifestv1alpha2.AppManifestManifestVersionKindScopeCluster
 			lister := NewMockManifestLister(t)
 			lister.EXPECT().ListManifests(mock.Anything).Return(testManifestList(
 				testManifestKind("Widget", true, true),
 				testManifestKind("Gadget", true, false),
 				testManifestKind("Other", false, true),
+				clusterScoped,
 			), nil)
 
 			got := watchManifestSupportedResources(t, lister, []SupportedResource{folder})(context.Background())

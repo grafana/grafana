@@ -242,7 +242,7 @@ func (f *clientFactory) supportedResources(ctx context.Context) ([]SupportedReso
 
 func sameResources(a, b []SupportedResource) bool {
 	return slices.EqualFunc(a, b, func(x, y SupportedResource) bool {
-		return x.GroupKind == y.GroupKind && x.IsActive() == y.IsActive()
+		return x.GroupKind == y.GroupKind && x.Capabilities.Equal(y.Capabilities)
 	})
 }
 
