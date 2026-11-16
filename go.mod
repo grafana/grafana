@@ -130,7 +130,7 @@ require (
 	github.com/google/wire v0.7.0 // @grafana/grafana-backend-group
 	github.com/googleapis/gax-go/v2 v2.24.1 // @grafana/grafana-backend-group
 	github.com/gorilla/mux v1.8.1 // @grafana/grafana-backend-group
-	github.com/grafana/alerting v0.0.0-20261014191024-71374176ca7b // @grafana/alerting-backend
+	github.com/grafana/alerting v0.0.0-20261113222548-56ba26dfa050 // @grafana/alerting-backend
 	github.com/grafana/alerting/apps/historian v0.0.0-20260729133334-340f1168af6c // @grafana/alerting-backend
 	github.com/grafana/authlib v0.0.0-20261108003752-80ed9e737add // @grafana/identity-access-team
 	github.com/grafana/authlib/types v0.0.0-20261020151310-7a9be4c0c1c3 // @grafana/identity-access-team
@@ -283,7 +283,7 @@ require (
 	golang.org/x/time v0.16.0 // @grafana/grafana-backend-group
 	gonum.org/v1/gonum v0.17.0 // @grafana/data-sources-plugins
 	google.golang.org/api v0.297.0 // @grafana/grafana-backend-group
-	google.golang.org/genproto/googleapis/api v0.0.0-20261026165753-2ffab32bce7e // @grafana/identity-access-team
+	google.golang.org/genproto/googleapis/api v0.0.0-20261104224025-d1e00e9f33ab // @grafana/identity-access-team
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20261104224025-d1e00e9f33ab // @grafana/identity-access-team
 	google.golang.org/grpc v1.85.0 // @grafana/grafana-catalog
 	google.golang.org/protobuf v1.36.12 // @grafana/grafana-catalog
