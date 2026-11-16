@@ -342,6 +342,74 @@ func TestIntegrationStore_SetBuiltInResourcePermission_RestoresMissingAssignment
 	assert.Equal(t, int64(1), count)
 }
 
+func TestIntegrationStore_insertRoleAssignment(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	store, sql, _ := setupTestEnv(t)
+	ctx := context.Background()
+
+	count := func(table, where string, args ...any) int64 {
+		var n int64
+		err := sql.WithDbSession(ctx, func(sess *db.Session) error {
+			var err error
+			n, err = sess.Table(table).Where(where, args...).Count()
+			return err
+		})
+		require.NoError(t, err)
+		return n
+	}
+
+	// Each adder runs twice in one transaction, and the transaction must still
+	// accept writes afterwards. The second call takes the existence-check path.
+	err := sql.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		for range 2 {
+			if err := store.userAdder(sess, 1, 10)(100); err != nil {
+				return err
+			}
+			if err := store.teamAdder(sess, 1, 20)(200); err != nil {
+				return err
+			}
+			if err := store.builtInRoleAdder(sess, 1, "Viewer")(300); err != nil {
+				return err
+			}
+		}
+		_, err := sess.Exec("INSERT INTO builtin_role (org_id, role_id, role, created, updated) VALUES (?, ?, ?, ?, ?)", 1, 301, "Editor", time.Now(), time.Now())
+		return err
+	})
+	require.NoError(t, err)
+
+	// Inserting a row that already exists, as a concurrent writer that passed the
+	// existence check would, must not fail or abort the transaction.
+	err = sql.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		if err := store.insertRoleAssignment(sess, "user_role",
+			[]string{"org_id", "user_id", "role_id", "group_mapping_uid"},
+			[]string{"org_id", "user_id", "role_id", "group_mapping_uid", "created"},
+			1, 10, 100, "", time.Now()); err != nil {
+			return err
+		}
+		if err := store.insertRoleAssignment(sess, "team_role",
+			[]string{"org_id", "team_id", "role_id"},
+			[]string{"org_id", "team_id", "role_id", "created"},
+			1, 20, 200, time.Now()); err != nil {
+			return err
+		}
+		if err := store.insertRoleAssignment(sess, "builtin_role",
+			[]string{"org_id", "role_id", "role"},
+			[]string{"org_id", "role_id", "role", "created", "updated"},
+			1, 300, "Viewer", time.Now(), time.Now()); err != nil {
+			return err
+		}
+		_, err := sess.Exec("INSERT INTO builtin_role (org_id, role_id, role, created, updated) VALUES (?, ?, ?, ?, ?)", 1, 302, "Editor", time.Now(), time.Now())
+		return err
+	})
+	require.NoError(t, err)
+
+	assert.Equal(t, int64(1), count("user_role", "org_id = ? AND user_id = ? AND role_id = ?", 1, 10, 100))
+	assert.Equal(t, int64(1), count("team_role", "org_id = ? AND team_id = ? AND role_id = ?", 1, 20, 200))
+	assert.Equal(t, int64(1), count("builtin_role", "org_id = ? AND role_id = ? AND role = ?", 1, 300, "Viewer"))
+	assert.Equal(t, int64(2), count("builtin_role", "org_id = ? AND role = ?", 1, "Editor"))
+}
+
 type setResourcePermissionsTest struct {
 	desc              string
 	orgID             int64

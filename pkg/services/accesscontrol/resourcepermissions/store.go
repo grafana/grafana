@@ -674,16 +674,11 @@ func (s *store) userAdder(sess *db.Session, orgID, userID int64) roleAdder {
 			return nil
 		}
 
-		userRole := &accesscontrol.UserRole{
-			OrgID:   orgID,
-			UserID:  userID,
-			RoleID:  roleID,
-			Created: time.Now(),
-		}
-
-		_, err := sess.Insert(userRole)
-
-		return err
+		return s.insertRoleAssignment(sess, "user_role",
+			[]string{"org_id", "user_id", "role_id", "group_mapping_uid"},
+			[]string{"org_id", "user_id", "role_id", "group_mapping_uid", "created"},
+			orgID, userID, roleID, "", time.Now(),
+		)
 	}
 }
 
@@ -695,15 +690,11 @@ func (s *store) teamAdder(sess *db.Session, orgID, teamID int64) roleAdder {
 			return nil
 		}
 
-		teamRole := &accesscontrol.TeamRole{
-			OrgID:   orgID,
-			TeamID:  teamID,
-			RoleID:  roleID,
-			Created: time.Now(),
-		}
-
-		_, err := sess.Insert(teamRole)
-		return err
+		return s.insertRoleAssignment(sess, "team_role",
+			[]string{"org_id", "team_id", "role_id"},
+			[]string{"org_id", "team_id", "role_id", "created"},
+			orgID, teamID, roleID, time.Now(),
+		)
 	}
 }
 
@@ -715,16 +706,22 @@ func (s *store) builtInRoleAdder(sess *db.Session, orgID int64, builtinRole stri
 			return nil
 		}
 
-		_, err := sess.Table("builtin_role").Insert(accesscontrol.BuiltinRole{
-			RoleID:  roleID,
-			OrgID:   orgID,
-			Role:    builtinRole,
-			Updated: time.Now(),
-			Created: time.Now(),
-		})
-
-		return err
+		now := time.Now()
+		return s.insertRoleAssignment(sess, "builtin_role",
+			[]string{"org_id", "role_id", "role"},
+			[]string{"org_id", "role_id", "role", "created", "updated"},
+			orgID, roleID, builtinRole, now, now,
+		)
 	}
+}
+
+// insertRoleAssignment inserts an assignment row unless one with the same key
+// columns exists. A concurrent writer can insert the same assignment between an
+// adder's existence check and this insert, so the insert is an upsert on the
+// table's unique index instead of failing the transaction.
+func (s *store) insertRoleAssignment(sess *db.Session, table string, keyCols, cols []string, args ...any) error {
+	_, err := sess.Exec(append([]any{s.sql.GetDialect().UpsertSQL(table, keyCols, cols)}, args...)...)
+	return err
 }
 
 func (s *store) getOrCreateManagedRole(sess *db.Session, orgID int64, name string, add roleAdder) (*accesscontrol.Role, error) {
