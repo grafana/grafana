@@ -9,13 +9,17 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
-import { useStyles2, useTheme2 } from '@grafana/ui';
+import { getPortalContainer, useStyles2, useTheme2 } from '@grafana/ui';
+import { MEGA_MENU_TOGGLE_ID } from 'app/core/constants';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
 import { MegaMenu, MENU_WIDTH } from './MegaMenu/MegaMenu';
 import { getChromeHeaderLevelHeight } from './TopBar/useChromeHeaderHeight';
 
 interface Props {}
+
+/** The backdrop is presentational: it has no role or name. */
+export const MEGA_MENU_BACKDROP_TESTID = 'mega-menu-backdrop';
 
 export function AppChromeMenu({}: Props) {
   const theme = useTheme2();
@@ -24,12 +28,15 @@ export function AppChromeMenu({}: Props) {
   const state = chrome.useState();
 
   const ref = useRef(null);
-  const backdropRef = useRef(null);
+  const backdropRef = useRef<HTMLDivElement>(null);
   const animationSpeed = theme.transitions.duration.shortest;
   const animationStyles = useStyles2(getAnimStyles, animationSpeed, visualRefreshEnabled);
 
   const isOpen = state.megaMenuOpen && !state.megaMenuDocked;
+  const isPeek = Boolean(state.megaMenuPeek);
   const onClose = () => chrome.setMegaMenuOpen(false);
+  // Pressing anything in a menu the pointer opened keeps it open, for example while a select inside it is open.
+  const keepOpen = () => isPeek && chrome.setMegaMenuOpen(true);
 
   const { overlayProps, underlayProps } = useOverlay(
     {
@@ -42,7 +49,16 @@ export function AppChromeMenu({}: Props) {
         const isSelectMenu = document
           .querySelector(`[data-testid="${selectors.components.Select.menu}"]`)
           ?.contains(element);
-        return !isSelectMenu;
+        // The toggle decides for itself: closing here would also swallow its click, so it could never dock the menu.
+        const isMenuToggle = document.getElementById(MEGA_MENU_TOGGLE_ID)?.contains(element);
+        // Like a modal, the menu owns what it opens into the portal container, for example a section's popover. The
+        // backdrop renders there too.
+        const portalContainer = getPortalContainer();
+        const isPortalContent =
+          portalContainer !== document.body &&
+          portalContainer.contains(element) &&
+          !backdropRef.current?.contains(element);
+        return !isSelectMenu && !isMenuToggle && !isPortalContent;
       },
     },
     ref
@@ -62,8 +78,18 @@ export function AppChromeMenu({}: Props) {
         >
           <>
             {isOpen && (
-              <FocusScope contain autoFocus restoreFocus>
-                <MegaMenu className={styles.menu} onClose={onClose} ref={ref} {...overlayProps} {...dialogProps} />
+              // A menu the pointer opened leaves focus where it was, so hovering never interrupts typing.
+              <FocusScope contain={!isPeek} autoFocus={!isPeek} restoreFocus>
+                <MegaMenu
+                  className={styles.menu}
+                  onClose={onClose}
+                  ref={ref}
+                  {...overlayProps}
+                  {...dialogProps}
+                  onPointerEnter={chrome.holdMegaMenuPeek}
+                  onPointerLeave={chrome.endMegaMenuPeek}
+                  onPointerDownCapture={keepOpen}
+                />
               </FocusScope>
             )}
           </>
@@ -75,7 +101,12 @@ export function AppChromeMenu({}: Props) {
           classNames={animationStyles.backdrop}
           timeout={{ enter: animationSpeed, exit: 0 }}
         >
-          <div ref={backdropRef} className={styles.backdrop} {...underlayProps} />
+          <div
+            ref={backdropRef}
+            className={styles.backdrop}
+            data-testid={MEGA_MENU_BACKDROP_TESTID}
+            {...underlayProps}
+          />
         </CSSTransition>
       </OverlayContainer>
     </div>
