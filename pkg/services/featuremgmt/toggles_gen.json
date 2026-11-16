@@ -5211,6 +5211,21 @@
     },
     {
       "metadata": {
+        "name": "plugins.disableMTPluginsFallback",
+        "resourceVersion": "1794397485768",
+        "creationTimestamp": "2026-11-11T11:44:45Z"
+      },
+      "spec": {
+        "description": "Disables the ST fallback for multi-tenant plugin api calls",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "plugins.initDataSourcesAsync",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-05-27T09:11:55Z"
@@ -5255,12 +5270,15 @@
     {
       "metadata": {
         "name": "plugins.useMTPlugins",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-05-08T08:32:12Z"
+        "resourceVersion": "1794397485768",
+        "creationTimestamp": "2026-05-08T08:32:12Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-11 11:44:45.768111 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables plugins decoupling from bootdata",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/grafana-catalog",
         "hideFromDocs": true,
         "expression": "false"
