@@ -324,6 +324,7 @@ export function GrafanaEvaluationBehaviorStep({
                         )}
                       >
                         <Select
+                          selectRef={ref}
                           disabled={!folder?.uid || loadingGroups}
                           inputId="group"
                           {...field}

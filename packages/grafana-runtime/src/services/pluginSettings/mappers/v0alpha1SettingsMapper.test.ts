@@ -143,6 +143,22 @@ describe('v0alpha1SettingsMapper', () => {
     expect(v0alpha1SettingsMapper(updatedSpec, updatedSettings).enabled).toBe(true);
   });
 
+  it('preserves declared skills in plugin settings', () => {
+    const spec = {
+      ...myOrgTestAppMeta.spec,
+      pluginJson: {
+        ...myOrgTestAppMeta.spec.pluginJson,
+        extensions: {
+          skills: { 'investigate-errors': { path: 'skills/investigate-errors/SKILL.md' } },
+        },
+      },
+    };
+
+    expect(v0alpha1SettingsMapper(spec, myOrgTestAppSettings).extensions?.skills).toEqual({
+      'investigate-errors': { path: 'skills/investigate-errors/SKILL.md' },
+    });
+  });
+
   it('should map extensions correctly', () => {
     expect(v0alpha1SettingsMapper(myOrgTestAppMeta.spec, myOrgTestAppSettings).extensions).toStrictEqual({
       addedComponents: [],

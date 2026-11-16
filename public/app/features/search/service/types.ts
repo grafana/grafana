@@ -35,7 +35,8 @@ export interface SearchQuery {
   // Used for pagination. See also offset param.
   from?: number;
   starred?: boolean;
-  permission?: PermissionLevel;
+  // `create` means the user can create dashboards in the folder
+  permission?: PermissionLevel | 'create';
   deleted?: boolean;
   // Same as from, but as we have 2 different searcher backends, one uses from and the other offset
   offset?: number;

@@ -23,6 +23,7 @@ import { appEvents } from 'app/core/app_events';
 import { updateNavIndex } from 'app/core/reducers/navModel';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
+import { getMessageFromError } from 'app/core/utils/errors';
 import { DatasourceAPIVersions } from 'app/features/apiserver/client';
 import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -129,9 +130,7 @@ export const initDataSourceSettings = (
 
       dispatch(initDataSourceSettingsSucceeded(importedPlugin));
     } catch (err) {
-      if (err instanceof Error) {
-        dispatch(initDataSourceSettingsFailed(err));
-      }
+      dispatch(initDataSourceSettingsFailed(err instanceof Error ? err : new Error(getMessageFromError(err))));
     }
   };
 };

@@ -117,11 +117,10 @@ func (r *ZanzanaPermissionResolver) searchPermissionsForIdentity(ctx context.Con
 
 	var err error
 	if options.Action != "" {
-		group, resource, subresource, verb := common.TranslateActionToListParams(options.Action)
-		if group != "" && resource != "" {
+		for _, entry := range common.TranslateActionToListParams(options.Action) {
 			// Per-user search resolves another identity's permissions; their request-time
 			// contextual team membership isn't available here, so no teams are passed.
-			perms, err := r.listPermissions(ctx, namespace, subject, nil, group, resource, subresource, verb, options.Action, options.Scope)
+			perms, err := r.listPermissions(ctx, namespace, subject, nil, entry.Group, entry.Resource, entry.Subresource, entry.Verb, options.Action, options.Scope)
 			if err != nil {
 				return nil, err
 			}

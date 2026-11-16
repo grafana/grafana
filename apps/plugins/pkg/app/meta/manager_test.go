@@ -507,7 +507,7 @@ func TestOriginCallerIdentity(t *testing.T) {
 
 func TestProviderManager_GetMeta_RecordsFetchErrors(t *testing.T) {
 	counter := func(reason string) float64 {
-		return testutil.ToFloat64(metrics.MetaFetchErrorsTotal.WithLabelValues("mock", reason))
+		return testutil.ToFloat64(metrics.MetaFetchErrorsTotal.WithLabelValues("mock", reason, "unknown"))
 	}
 	ref := PluginRef{ID: "test-plugin", Version: "1.0.0"}
 
@@ -533,6 +533,25 @@ func TestProviderManager_GetMeta_RecordsFetchErrors(t *testing.T) {
 
 		require.ErrorIs(t, err, ErrMissingCDNURL)
 		assert.Equal(t, before+1, counter("missing_cdn_url"))
+	})
+
+	t.Run("labels FetchError with the origin caller", func(t *testing.T) {
+		pm := NewProviderManager(&mockProvider{getMetaFunc: func(context.Context, PluginRef) (*Result, error) {
+			return nil, &FetchError{Reason: "missing_cdn_url", Err: ErrMissingCDNURL}
+		}})
+		ctx := authtypes.WithAuthInfo(context.Background(), extraOnlyAuthInfo{extra: map[string][]string{
+			authn.ServiceIdentityKey:          {"hosted-grafana-api"},
+			authn.InnermostServiceIdentityKey: {"advisor.grafana.app"},
+		}})
+		originCounter := func() float64 {
+			return testutil.ToFloat64(metrics.MetaFetchErrorsTotal.WithLabelValues("mock", "missing_cdn_url", "advisor.grafana.app"))
+		}
+		before := originCounter()
+
+		_, err := pm.GetMeta(ctx, ref)
+
+		require.ErrorIs(t, err, ErrMissingCDNURL)
+		assert.Equal(t, before+1, originCounter())
 	})
 
 	t.Run("does not count plain ErrMetaNotFound", func(t *testing.T) {

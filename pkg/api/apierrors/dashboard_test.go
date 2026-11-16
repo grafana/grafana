@@ -133,6 +133,12 @@ func TestToDashboardErrorResponse(t *testing.T) {
 			want:        response.Error(http.StatusBadRequest, dashboards.ErrFolderNotFound.Error(), nil),
 		},
 		{
+			name:        "wrapped folder not found keeps the plain message",
+			pluginStore: pluginStoreWithoutPlugin,
+			input:       folder.ErrFolderNotFound.Errorf("%w", dashboards.ErrFolderNotFound),
+			want:        response.Error(http.StatusBadRequest, "folder not found", nil),
+		},
+		{
 			// ErrDashboardNotFound carries Status="not-found", so the response
 			// is a JSON body produced by DashboardErr.Body().
 			name:        "ErrDashboardNotFound maps to 404 with status body",

@@ -1880,19 +1880,15 @@ func TestCombineBuildRequests(t *testing.T) {
 // features safe: requiring a feature this binary never records would rebuild
 // every index on every check, forever.
 func TestRequiredIndexFeaturesAreCurrent(t *testing.T) {
-	for _, postRankAuthz := range []bool{false, true} {
-		for _, required := range RequiredIndexFeatures(postRankAuthz) {
-			require.Contains(t, CurrentIndexFeatures(), required)
-		}
+	for _, required := range RequiredIndexFeatures() {
+		require.Contains(t, CurrentIndexFeatures(), required)
 	}
 }
 
 func TestSortableTrashResourceVersionIsRecordedButNotRequired(t *testing.T) {
 	require.Contains(t, CurrentIndexFeatures(), IndexFeatureSortableTrashResourceVersion)
 	require.NotContains(t, TrashIndexFeatures(), IndexFeatureSortableTrashResourceVersion)
-	for _, postRankAuthz := range []bool{false, true} {
-		require.NotContains(t, RequiredIndexFeatures(postRankAuthz), IndexFeatureSortableTrashResourceVersion)
-	}
+	require.NotContains(t, RequiredIndexFeatures(), IndexFeatureSortableTrashResourceVersion)
 }
 
 // Every index built now keeps deleted documents, and records it, so a reader can
@@ -1925,27 +1921,19 @@ func TestUnknownIndexRequirements(t *testing.T) {
 		UnknownIndexRequirements([]IndexFeature{IndexFeatureDeletedMarker, "feature-from-the-future"}))
 }
 
-// TestRequiredIndexFeaturesStoredFacets covers the gating that keeps the stored
-// facet mapping from rebuilding indexes where post-rank authorization is off.
+// PostRank facet aggregation needs stored facet fields on every index.
 func TestRequiredIndexFeaturesStoredFacets(t *testing.T) {
-	require.NotContains(t, RequiredIndexFeatures(false), IndexFeatureStoredFacets)
-	require.Contains(t, RequiredIndexFeatures(true), IndexFeatureStoredFacets)
+	require.Contains(t, RequiredIndexFeatures(), IndexFeatureStoredFacets)
 
-	// An index built before the stored facet mapping is reused with the option
-	// off, and rebuilt once it is on.
 	buildInfo := IndexBuildInfo{Features: slices.Concat(TrashIndexFeatures(), []IndexFeature{IndexFeatureHoldsDeletedDocuments})}
-	require.Empty(t, MissingIndexFeatures(buildInfo, RequiredIndexFeatures(false)))
-	require.Equal(t, []IndexFeature{IndexFeatureStoredFacets}, MissingIndexFeatures(buildInfo, RequiredIndexFeatures(true)))
+	require.Equal(t, []IndexFeature{IndexFeatureStoredFacets}, MissingIndexFeatures(buildInfo, RequiredIndexFeatures()))
 }
 
-// An index missing the trash mappings must be rebuilt rather than serve an empty
-// trash, whatever the facet option is set to.
+// An index missing the trash mappings must be rebuilt rather than serve an empty trash.
 func TestTrashIndexFeaturesAreRequired(t *testing.T) {
 	buildInfo := IndexBuildInfo{Features: []IndexFeature{IndexFeatureStoredFacets}}
 	want := slices.Sorted(slices.Values(slices.Concat(TrashIndexFeatures(), []IndexFeature{IndexFeatureHoldsDeletedDocuments})))
-	for _, postRankAuthz := range []bool{false, true} {
-		require.Equal(t, want, MissingIndexFeatures(buildInfo, RequiredIndexFeatures(postRankAuthz)))
-	}
+	require.Equal(t, want, MissingIndexFeatures(buildInfo, RequiredIndexFeatures()))
 }
 
 // An index that maps the trash fields but was built before deleted documents were kept
@@ -1953,8 +1941,8 @@ func TestTrashIndexFeaturesAreRequired(t *testing.T) {
 func TestHoldingDeletedDocumentsIsRequired(t *testing.T) {
 	buildInfo := IndexBuildInfo{Features: TrashIndexFeatures()}
 	require.Equal(t,
-		[]IndexFeature{IndexFeatureHoldsDeletedDocuments},
-		MissingIndexFeatures(buildInfo, RequiredIndexFeatures(false)))
+		[]IndexFeature{IndexFeatureStoredFacets, IndexFeatureHoldsDeletedDocuments},
+		MissingIndexFeatures(buildInfo, RequiredIndexFeatures()))
 }
 
 func TestShouldRebuildIndex(t *testing.T) {

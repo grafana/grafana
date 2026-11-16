@@ -15,7 +15,6 @@ import { SplashScreenModal } from 'app/core/components/SplashScreenModal/SplashS
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import { ScopesDashboards } from 'app/features/scopes/dashboards/ScopesDashboards';
-import { useVisualRefreshNudge } from 'app/features/visual-refresh/useVisualRefreshNudge';
 
 import { AppChromeMenu } from './AppChromeMenu';
 import { type AppChromeService, DOCKED_LOCAL_STORAGE_KEY } from './AppChromeService';
@@ -45,7 +44,6 @@ export function AppChrome({ children }: Props) {
   const { chrome } = useGrafana();
   const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const scopesMegaMenuEnabled = useFlagGrafanaScopesDashboardsMegaMenu();
-  useVisualRefreshNudge(visualRefreshEnabled);
   const {
     isOpen: isExtensionSidebarOpen,
     extensionSidebarWidth,

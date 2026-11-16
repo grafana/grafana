@@ -22,6 +22,30 @@ export const EnumMappingEditor = ({ input, options, transformIndex, onChange }: 
 
   const [enumRows, updateEnumRows] = useState<string[]>(options.conversions[transformIndex].enumConfig?.text ?? []);
 
+  const generateEnumValues = () => {
+    // Loop through all fields in provided data frames to find the target field
+    const targetField = input
+      .flatMap((inputItem) => inputItem?.fields ?? [])
+      .find((field) => field.name === options.conversions[transformIndex].targetField);
+
+    if (!targetField) {
+      return;
+    }
+
+    const enumValues = new Set(targetField?.values);
+
+    if (enumRows.length > 0 && !isEqual(enumRows, Array.from(enumValues))) {
+      const confirmed = window.confirm(
+        'This action will overwrite the existing configuration. Are you sure you want to continue?'
+      );
+      if (!confirmed) {
+        return;
+      }
+    }
+
+    updateEnumRows([...enumValues]);
+  };
+
   // Generate enum values from scratch when none exist in save model
   useEffect(() => {
     // TODO: consider case when changing target field
@@ -48,30 +72,6 @@ export const EnumMappingEditor = ({ input, options, transformIndex, onChange }: 
     applyEnumConfig();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [transformIndex, enumRows]);
-
-  const generateEnumValues = () => {
-    // Loop through all fields in provided data frames to find the target field
-    const targetField = input
-      .flatMap((inputItem) => inputItem?.fields ?? [])
-      .find((field) => field.name === options.conversions[transformIndex].targetField);
-
-    if (!targetField) {
-      return;
-    }
-
-    const enumValues = new Set(targetField?.values);
-
-    if (enumRows.length > 0 && !isEqual(enumRows, Array.from(enumValues))) {
-      const confirmed = window.confirm(
-        'This action will overwrite the existing configuration. Are you sure you want to continue?'
-      );
-      if (!confirmed) {
-        return;
-      }
-    }
-
-    updateEnumRows([...enumValues]);
-  };
 
   const onChangeEnumMapping = (index: number, enumRow: string) => {
     const newList = [...enumRows];

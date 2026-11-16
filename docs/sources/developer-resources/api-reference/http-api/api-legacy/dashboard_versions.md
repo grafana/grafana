@@ -25,6 +25,10 @@ title: 'Dashboard Versions HTTP API '
 
 {{< docs/shared lookup="developers/deprecated-apis.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
+{{< admonition type="note" >}}
+This HTTP API is deprecated. Use the [Resource history HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/resource-history/) instead. To list the versions of a dashboard, refer to [List resource history](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/resource-history/#list-resource-history). To get a specific version, refer to [Retrieve a specific version](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/resource-history/#retrieve-a-specific-version). To learn how the legacy endpoints and fields map to the new ones, refer to [Migrate from the legacy Dashboard Versions API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/resource-history/#migrate-from-the-legacy-dashboard-versions-api).
+{{< /admonition >}}
+
 ## Get all dashboard versions by dashboard UID
 
 Query parameters:

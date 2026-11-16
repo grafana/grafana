@@ -36,7 +36,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -907,7 +906,7 @@ func TestBleveSearchRequestDefaultSortIncludesNameTieBreaker(t *testing.T) {
 		searchReq, errResult := idx.toBleveSearchRequest(t.Context(), &resourcepb.ResourceSearchRequest{
 			Options: &resourcepb.ListOptions{},
 			Limit:   10,
-		}, nil, false, nil, nil)
+		}, false, nil)
 		require.Nil(t, errResult)
 		require.Len(t, searchReq.Sort, 2)
 
@@ -927,7 +926,7 @@ func TestBleveSearchRequestDefaultSortIncludesNameTieBreaker(t *testing.T) {
 			Options: &resourcepb.ListOptions{},
 			Limit:   10,
 			Query:   "grafana",
-		}, nil, false, nil, nil)
+		}, false, nil)
 		require.Nil(t, errResult)
 		require.Len(t, searchReq.Sort, 2)
 		_, ok := searchReq.Sort[0].(*blevesearch.SortScore)
@@ -946,7 +945,7 @@ func TestBleveSearchRequestDefaultSortIncludesNameTieBreaker(t *testing.T) {
 			Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
 				"tagValues": {Field: resource.SEARCH_FIELD_TAGS, Limit: 10},
 			},
-		}, nil, false, nil, nil)
+		}, false, nil)
 		require.Nil(t, errResult)
 		require.Contains(t, searchReq.Facets, "tagValues")
 		assert.Equal(t, resource.SEARCH_FIELD_TAGS, searchReq.Facets["tagValues"].Field)
@@ -959,7 +958,7 @@ func TestBleveSearchRequestDefaultSortIncludesNameTieBreaker(t *testing.T) {
 			Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
 				"region": {Field: "labels.region", Limit: 10},
 			},
-		}, nil, false, nil, nil)
+		}, false, nil)
 		require.Nil(t, searchReq)
 		require.NotNil(t, errResult)
 		assert.Contains(t, errResult.Message, `field "labels.region" does not support faceting`)
@@ -975,7 +974,7 @@ func TestBleveSearchRequestDefaultSortIncludesNameTieBreaker(t *testing.T) {
 				Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
 					"tagValues": {Field: resource.SEARCH_FIELD_TAGS, Limit: -1},
 				},
-			}, nil, postRankAuthz, nil, nil)
+			}, postRankAuthz, nil)
 			require.Nil(t, searchReq)
 			require.NotNil(t, errResult)
 			assert.Contains(t, errResult.Message, `facet "tagValues" has a negative limit`)
@@ -994,7 +993,7 @@ func TestBleveTrashSearchFailsWhenDeletedDocumentsAreNotIndexed(t *testing.T) {
 		Options:   &resourcepb.ListOptions{},
 		Limit:     10,
 		IsDeleted: true,
-	}, nil, false, nil, nil)
+	}, false, nil)
 
 	require.Nil(t, searchReq)
 	require.NotNil(t, errResult)
@@ -1030,13 +1029,13 @@ func TestBleveTrashResourceVersionSortRequiresIndexFeature(t *testing.T) {
 	}
 
 	t.Run("an older index still serves trash without the new sort", func(t *testing.T) {
-		searchReq, errResult := newIndex(oldFeatures).toBleveSearchRequest(t.Context(), request(false), nil, false, nil, nil)
+		searchReq, errResult := newIndex(oldFeatures).toBleveSearchRequest(t.Context(), request(false), false, nil)
 		require.NotNil(t, searchReq)
 		require.Nil(t, errResult)
 	})
 
 	t.Run("an older index refuses the new sort", func(t *testing.T) {
-		searchReq, errResult := newIndex(oldFeatures).toBleveSearchRequest(t.Context(), request(true), nil, false, nil, nil)
+		searchReq, errResult := newIndex(oldFeatures).toBleveSearchRequest(t.Context(), request(true), false, nil)
 		require.Nil(t, searchReq)
 		require.NotNil(t, errResult)
 		assert.Equal(t, int32(http.StatusServiceUnavailable), errResult.Code)
@@ -1045,7 +1044,7 @@ func TestBleveTrashResourceVersionSortRequiresIndexFeature(t *testing.T) {
 
 	t.Run("a rebuilt index accepts the new sort", func(t *testing.T) {
 		features := append(slices.Clone(oldFeatures), resource.IndexFeatureSortableTrashResourceVersion)
-		searchReq, errResult := newIndex(features).toBleveSearchRequest(t.Context(), request(true), nil, false, nil, nil)
+		searchReq, errResult := newIndex(features).toBleveSearchRequest(t.Context(), request(true), false, nil)
 		require.NotNil(t, searchReq)
 		require.Nil(t, errResult)
 	})
@@ -1110,7 +1109,7 @@ func TestBleveSortCapabilityCheck(t *testing.T) {
 	}
 	for _, tc := range accepted {
 		t.Run("accepts "+tc.name, func(t *testing.T) {
-			searchReq, errResult := newIndex().toBleveSearchRequest(t.Context(), sortBy(tc.field), nil, false, nil, nil)
+			searchReq, errResult := newIndex().toBleveSearchRequest(t.Context(), sortBy(tc.field), false, nil)
 			require.Nil(t, errResult)
 			require.NotNil(t, searchReq)
 		})
@@ -1132,7 +1131,7 @@ func TestBleveSortCapabilityCheck(t *testing.T) {
 	}
 	for _, tc := range rejected {
 		t.Run("rejects "+tc.name, func(t *testing.T) {
-			searchReq, errResult := newIndex().toBleveSearchRequest(t.Context(), sortBy(tc.field), nil, false, nil, nil)
+			searchReq, errResult := newIndex().toBleveSearchRequest(t.Context(), sortBy(tc.field), false, nil)
 			require.Nil(t, searchReq)
 			require.NotNil(t, errResult)
 			assert.Equal(t, int32(http.StatusBadRequest), errResult.Code)
@@ -1146,7 +1145,7 @@ func TestBleveSortCapabilityCheck(t *testing.T) {
 		idx.keepsDeletedDocuments = true
 		req := sortBy(resource.SEARCH_FIELD_DELETION_TIME)
 		req.IsDeleted = true
-		_, errResult := idx.toBleveSearchRequest(t.Context(), req, nil, false, nil, nil)
+		_, errResult := idx.toBleveSearchRequest(t.Context(), req, false, nil)
 		require.Nil(t, errResult)
 	})
 
@@ -1156,13 +1155,13 @@ func TestBleveSortCapabilityCheck(t *testing.T) {
 			logger:       log.NewNopLogger(),
 			indexMetrics: resource.ProvideIndexMetrics(nil),
 		}
-		_, errResult := idx.toBleveSearchRequest(t.Context(), sortBy(resource.SEARCH_FIELD_TITLE), nil, false, nil, nil)
+		_, errResult := idx.toBleveSearchRequest(t.Context(), sortBy(resource.SEARCH_FIELD_TITLE), false, nil)
 		require.Nil(t, errResult)
 
-		_, errResult = idx.toBleveSearchRequest(t.Context(), sortBy(resource.SEARCH_FIELD_CREATED), nil, false, nil, nil)
+		_, errResult = idx.toBleveSearchRequest(t.Context(), sortBy(resource.SEARCH_FIELD_CREATED), false, nil)
 		require.Nil(t, errResult)
 
-		_, errResult = idx.toBleveSearchRequest(t.Context(), sortBy(resource.SEARCH_FIELD_MANAGER_ALLOW_EDITS), nil, false, nil, nil)
+		_, errResult = idx.toBleveSearchRequest(t.Context(), sortBy(resource.SEARCH_FIELD_MANAGER_ALLOW_EDITS), false, nil)
 		require.NotNil(t, errResult)
 	})
 }
@@ -1382,20 +1381,9 @@ func withRequiredIndexFeatures(features ...resource.IndexFeature) setupOption {
 	}
 }
 
-func withPostRankAuthzEnabled() setupOption {
-	return func(options *BleveOptions) {
-		options.PostRankAuthzEnabled = true
-	}
-}
-
-// TestRequiredIndexFeaturesFollowPostRankAuthz covers the gate that keeps the
-// stored facet mapping from rebuilding indexes that serve facets from bleve.
-func TestRequiredIndexFeaturesFollowPostRankAuthz(t *testing.T) {
-	nativeFacets, _ := setupBleveBackend(t)
-	require.NotContains(t, nativeFacets.requiredFeatures, resource.IndexFeatureStoredFacets)
-
-	postRank, _ := setupBleveBackend(t, withPostRankAuthzEnabled())
-	require.Contains(t, postRank.requiredFeatures, resource.IndexFeatureStoredFacets)
+func TestRequiredIndexFeaturesIncludeStoredFacets(t *testing.T) {
+	backend, _ := setupBleveBackend(t)
+	require.Contains(t, backend.requiredFeatures, resource.IndexFeatureStoredFacets)
 }
 
 // TestBuildIndexReuseChecksRequiredFeatures covers an on-disk index built before
@@ -3593,46 +3581,4 @@ func TestScopeQueryKeepsScores(t *testing.T) {
 		id("trashed-1"): unscoped[id("trashed-1")],
 		id("trashed-2"): unscoped[id("trashed-2")],
 	}, scores(scopeQuery(textQuery, true, 0)))
-}
-
-func TestBatchAuthzSearcherLogsWhenNothingIsAuthorized(t *testing.T) {
-	searcher := func(candidates, authorized int64) (*batchAuthzSearcher, *logtest.Fake) {
-		fake := &logtest.Fake{}
-		s := &batchAuthzSearcher{
-			namespace: "stacks-1",
-			group:     "dashboard.grafana.app",
-			resources: map[string]string{"dashboard.grafana.app/dashboards": utils.VerbGet},
-			log:       fake,
-		}
-		s.candidates.Store(candidates)
-		s.authorized.Store(authorized)
-		return s, fake
-	}
-
-	t.Run("candidates found and none authorized", func(t *testing.T) {
-		s, fake := searcher(3, 0)
-		s.logIfNothingAuthorized()
-
-		require.Equal(t, 1, fake.WarnLogs.Calls)
-		require.Equal(t, "Search matched documents but none passed the permission check", fake.WarnLogs.Message)
-		require.Equal(t, []any{
-			"namespace", "stacks-1",
-			"group", "dashboard.grafana.app",
-			"resources", "dashboard.grafana.app/dashboards",
-			"candidates", int64(3),
-			"authorized", int64(0),
-		}, fake.WarnLogs.Ctx)
-	})
-
-	t.Run("nothing matched", func(t *testing.T) {
-		s, fake := searcher(0, 0)
-		s.logIfNothingAuthorized()
-		require.Equal(t, 0, fake.WarnLogs.Calls)
-	})
-
-	t.Run("some results authorized", func(t *testing.T) {
-		s, fake := searcher(3, 1)
-		s.logIfNothingAuthorized()
-		require.Equal(t, 0, fake.WarnLogs.Calls)
-	})
 }

@@ -14,6 +14,7 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getPluginImportUtils, PanelDataErrorView } from '@grafana/runtime';
+import { useFlagTablePaginationPageSize } from '@grafana/runtime/internal';
 import { TableCellHeight, type TableOptions } from '@grafana/schema';
 import { Combobox, Field, Stack, usePanelContext, useStyles2, useTheme2 } from '@grafana/ui';
 import { type AdHocFilterItem, getSourceFrameIndex } from '@grafana/ui/internal';
@@ -55,6 +56,7 @@ export function TablePanel(props: Props) {
     initialRowIndex,
     sortByBehavior = 'initial',
     fitContent,
+    fitMaxHeight,
   } = props;
 
   const theme = useTheme2();
@@ -172,8 +174,29 @@ export function TablePanel(props: Props) {
   });
 
   // Fit-content: the panel has no fixed height, so self-size from the row count.
-  // The cell's CSS min/max bounds (and scrolls) the result.
+  // The cell's CSS min/max bounds (and scrolls) the result. When the layout caps
+  // the panel (fitMaxHeight), lay out at the cap instead: the bounded height feeds
+  // the grid's auto page sizing so pages fit the visible area.
   let tableHeight = fitContent ? getNaturalTableHeight(main, options) : height;
+
+  if (fitContent && fitMaxHeight !== undefined) {
+    const pickerReserve = count > 1 ? getFramePickerHeight(theme, noPanelPadding) : 0;
+    tableHeight = Math.min(tableHeight, Math.max(fitMaxHeight - pickerReserve, 0));
+  }
+
+  // Uncapped fit-content matches Text v2: with no height bound there is no
+  // derived page size, so every row renders; an explicit page size still
+  // paginates. (Pagination against the estimated natural height split content
+  // at bogus page breaks, e.g. ending at row 48 of 50.)
+  // Two deliberate differences from Text v2's auto-pagination (text/v2/pagination.ts):
+  // capped tables paginate any row count (Text only past 100 rows in PerRow
+  // mode), and explicit page size stays behind the table pagination page-size
+  // flag while Text's is ungated.
+  const paginationPageSizeEnabled = useFlagTablePaginationPageSize();
+  const explicitPageSize = paginationPageSizeEnabled ? options.pageSize : undefined;
+  const uncappedFit = fitContent && fitMaxHeight === undefined;
+  const paginateTable =
+    options.enablePagination && (!uncappedFit || (explicitPageSize != null && explicitPageSize > 0));
 
   if (!count || !hasFields) {
     return <PanelDataErrorView panelId={id} fieldConfig={fieldConfig} data={data} />;
@@ -182,17 +205,14 @@ export function TablePanel(props: Props) {
   // Under `table.refresh` the panel drops its own padding so the table can run edge to edge, so the
   // frame picker below it has to bring its own.
   if (count > 1 && !fitContent) {
-    const inputHeight = theme.spacing.gridSize * theme.components.height.md;
-    const padding = theme.spacing.gridSize * (noPanelPadding ? 2 : 1);
-    const borderWidth = noPanelPadding ? FRAME_PICKER_BORDER_WIDTH : 0;
-
-    tableHeight = height - inputHeight - padding - borderWidth;
+    tableHeight = height - getFramePickerHeight(theme, noPanelPadding);
   }
 
   const tableElement = (
     <TableNG
       {...commonTableProps}
       {...adHocColumns}
+      enablePagination={paginateTable}
       reorderable={Boolean(adHocColumns)}
       showColumnsSidebar={columnManagementEnabled && options.showColumnsSidebar}
       rowTransformationsEnabled={adHocTransformationsEnabled}
@@ -243,24 +263,47 @@ export function TablePanel(props: Props) {
     };
   });
 
+  const framePicker = (
+    <div className={noPanelPadding ? styles.framePicker : undefined}>
+      <Field noMargin>
+        <Combobox
+          aria-label={t('table.frame-picker.label', 'Query')}
+          options={names}
+          value={names[currentIndex]}
+          onChange={(val) => onChangeTableSelection(val, props)}
+        />
+      </Field>
+    </div>
+  );
+
+  // Uncapped fit-content keeps the content/footer stack in normal flow like
+  // Text v2, so the layout measures the stack's natural height.
+  if (uncappedFit) {
+    return (
+      <Stack direction="column" gap={noPanelPadding ? 0 : 1.5}>
+        {tableElement}
+        {framePicker}
+      </Stack>
+    );
+  }
+
   return (
     <Stack direction="column" gap={noPanelPadding ? 0 : 1.5} justifyContent="space-between" height="100%">
       {tableElement}
-      <div className={noPanelPadding ? styles.framePicker : undefined}>
-        <Field noMargin>
-          <Combobox
-            aria-label={t('table.frame-picker.label', 'Query')}
-            options={names}
-            value={names[currentIndex]}
-            onChange={(val) => onChangeTableSelection(val, props)}
-          />
-        </Field>
-      </div>
+      {framePicker}
     </Stack>
   );
 }
 
 const FRAME_PICKER_BORDER_WIDTH = 1;
+
+function getFramePickerHeight(theme: GrafanaTheme2, noPanelPadding: boolean): number {
+  const inputHeight = theme.spacing.gridSize * theme.components.height.md;
+  const padding = theme.spacing.gridSize * (noPanelPadding ? 2 : 1);
+  const borderWidth = noPanelPadding ? FRAME_PICKER_BORDER_WIDTH : 0;
+
+  return inputHeight + padding + borderWidth;
+}
 
 const getStyles = (theme: GrafanaTheme2) => ({
   framePicker: css({
