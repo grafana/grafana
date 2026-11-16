@@ -138,7 +138,7 @@ func TestIntegrationRuleUpdatePreconditions(t *testing.T) {
 								store := rulestore.RuleStore{SQLStore: helper.GetEnv().SQLStore}
 								stored, err := store.GetAlertRuleByUID(ctx, &ngmodels.GetAlertRuleByUIDQuery{OrgID: helper.Org1.OrgID, UID: name})
 								require.NoError(t, err)
-								t.Logf("authoritative legacy: version=%d title=%q for=%s", stored.Version, stored.Title, time.Duration(stored.For))
+								t.Logf("authoritative legacy: version=%d title=%q for=%s", stored.Version, stored.Title, stored.For)
 								return stored.Version, toMap(t, stored)
 							}
 							versionBefore, before := readAuthoritative()

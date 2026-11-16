@@ -556,14 +556,8 @@ func (service *LegacyRuleService) UpdateAlertRule(ctx context.Context, user iden
 			return models.AlertRule{}, err
 		}
 		if delta.IsEmpty() {
-			for _, group := range delta.AffectedGroups {
-				for _, existing := range group {
-					if existing.GetKey() == rule.GetKey() {
-						if err := checkUpdatePreconditions(rule, existing); err != nil {
-							return models.AlertRule{}, err
-						}
-					}
-				}
+			if err := checkNoopUpdatePreconditions(rule, delta); err != nil {
+				return models.AlertRule{}, err
 			}
 			return rule, nil
 		}
@@ -653,6 +647,19 @@ func (service *LegacyRuleService) UpdateAlertRule(ctx context.Context, user iden
 		return models.AlertRule{}, err
 	}
 	return rule, err
+}
+
+func checkNoopUpdatePreconditions(rule models.AlertRule, delta *rulestore.GroupDelta) error {
+	for _, group := range delta.AffectedGroups {
+		for _, existing := range group {
+			if existing.GetKey() == rule.GetKey() {
+				if err := checkUpdatePreconditions(rule, existing); err != nil {
+					return err
+				}
+			}
+		}
+	}
+	return nil
 }
 
 func checkUpdatePreconditions(rule models.AlertRule, stored *models.AlertRule) error {
