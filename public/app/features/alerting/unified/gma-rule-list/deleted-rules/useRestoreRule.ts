@@ -1,5 +1,5 @@
 import { type AlertRule, useCreateAlertRuleMutation } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
-import { isFetchError } from '@grafana/runtime';
+import { getBackendSrv, isFetchError } from '@grafana/runtime';
 
 const ANNOTATIONS_TO_REMOVE = new Set([
   'grafana.com/provenance',
@@ -42,6 +42,7 @@ export function useRestoreAlertRule() {
   const [createAlertRule, { isLoading }] = useCreateAlertRuleMutation();
 
   const restore = async (rule: AlertRule): Promise<RestoreResult> => {
+    const guid = rule.metadata?.name ?? '';
     const payload = sanitizeForRestore(rule);
     const result = await createAlertRule({ alertRule: payload });
 
@@ -49,6 +50,15 @@ export function useRestoreAlertRule() {
       const isConflict = isFetchError(result.error) && result.error.status === 409;
       return { success: false, isConflict, error: result.error };
     }
+
+    // The k8s create endpoint does not automatically remove the tombstone, so
+    // we explicitly clean it up via the ruler trash endpoint after success.
+    try {
+      await getBackendSrv().delete(`/api/ruler/grafana/api/v1/trash/rule/guid/${guid}`);
+    } catch {
+      // Best-effort — a failure here just leaves a stale tombstone; the rule is restored.
+    }
+
     return { success: true, isConflict: false };
   };
 

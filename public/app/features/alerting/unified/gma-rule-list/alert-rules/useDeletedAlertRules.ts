@@ -33,11 +33,13 @@ export function useDeletedAlertRules(): UseDeletedAlertRulesResult {
   // Whether a next-page fetch is in progress
   const [fetchingNextPage, setFetchingNextPage] = useState(false);
 
-  // Always fetch the first page
-  const firstPage = useListAlertRuleQuery({
-    labelSelector: TRASH_LABEL_SELECTOR,
-    limit: PAGE_SIZE,
-  });
+  // Always fetch the first page; refetchOnMountOrArgChange ensures fresh data
+  // when the user navigates back after a restore (cache invalidation alone is
+  // not enough because RTK Query won't auto-refetch stale data on remount).
+  const firstPage = useListAlertRuleQuery(
+    { labelSelector: TRASH_LABEL_SELECTOR, limit: PAGE_SIZE },
+    { refetchOnMountOrArgChange: true }
+  );
 
   // Fetch subsequent pages only when triggered
   const nextPage = useListAlertRuleQuery(

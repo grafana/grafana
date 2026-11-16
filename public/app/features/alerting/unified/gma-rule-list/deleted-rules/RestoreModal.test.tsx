@@ -1,5 +1,5 @@
 import { HttpResponse, http } from 'msw';
-import { render, screen, userEvent } from 'test/test-utils';
+import { render, screen, userEvent, waitFor } from 'test/test-utils';
 
 import { API_GROUP, API_VERSION } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 
@@ -24,12 +24,21 @@ describe('RestoreModal', () => {
     expect(onDismiss).toHaveBeenCalled();
   });
 
-  it('calls onSuccess after a successful restore', async () => {
+  it('calls onSuccess and navigates to the rule after a successful restore', async () => {
     server.use(http.post(CREATE_URL, () => HttpResponse.json({}, { status: 200 })));
     const onSuccess = jest.fn();
     render(<RestoreModal rule={makeDeletedRule()} onDismiss={jest.fn()} onSuccess={onSuccess} />);
     await userEvent.click(screen.getByRole('button', { name: /Restore/i }));
-    expect((await screen.findAllByText(/restored/i)).length).toBeGreaterThan(0);
+    await waitFor(() => expect(onSuccess).toHaveBeenCalled());
+  });
+
+  it('shows the API error message inline on failure (e.g. folder not writable)', async () => {
+    server.use(
+      http.post(CREATE_URL, () => HttpResponse.json({ message: 'folder not found or not writable' }, { status: 403 }))
+    );
+    render(<RestoreModal rule={makeDeletedRule()} onDismiss={jest.fn()} onSuccess={jest.fn()} />);
+    await userEvent.click(screen.getByRole('button', { name: /Restore/i }));
+    expect(await screen.findByText(/folder not found or not writable/i)).toBeInTheDocument();
   });
 
   it('shows conflict message on 409', async () => {

@@ -46,10 +46,7 @@ export function AlertRulesDeletedView() {
         <RestoreModal
           rule={restoring}
           onDismiss={() => setRestoring(null)}
-          onSuccess={() => {
-            setRestoring(null);
-            refetch();
-          }}
+          onSuccess={() => setRestoring(null)}
           onRefetch={refetch}
         />
       )}

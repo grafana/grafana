@@ -34,12 +34,12 @@ function AlertRulesPage() {
       {admin && (
         <TabsBar>
           <Tab
-            label={<Trans i18nKey="alerting.gma-rule-list.tab.alert-rules">Alert rules</Trans>}
+            label={t('alerting.gma-rule-list.tab.alert-rules', 'Alert rules')}
             active={!isDeletedRoute}
             href="/alerting/rules/alert"
           />
           <Tab
-            label={<Trans i18nKey="alerting.gma-rule-list.tab.recently-deleted">Recently deleted</Trans>}
+            label={t('alerting.gma-rule-list.tab.recently-deleted', 'Recently deleted')}
             active={isDeletedRoute}
             href="/alerting/rules/alert/deleted"
           />

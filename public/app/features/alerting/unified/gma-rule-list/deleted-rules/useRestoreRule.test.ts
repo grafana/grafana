@@ -16,7 +16,7 @@ describe('sanitizeForRestore', () => {
     const rule = makeDeletedRule();
     rule.metadata.deletionTimestamp = '2026-11-10T10:00:00Z';
     rule.metadata.resourceVersion = 'abc123';
-    (rule as AlertRule & { status?: unknown }).status = { health: 'ok' };
+    (rule as AlertRule & { status?: unknown }).status = { health: 'OK' };
 
     const result = sanitizeForRestore(rule);
 

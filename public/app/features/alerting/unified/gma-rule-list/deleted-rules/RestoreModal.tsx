@@ -2,7 +2,10 @@ import { useState } from 'react';
 
 import { type AlertRule } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { t } from '@grafana/i18n';
+import { isFetchError, locationService } from '@grafana/runtime';
 import { Alert, ConfirmModal } from '@grafana/ui';
+
+import { grafanaRulesNav } from '../../utils/navigation';
 
 import { useRestoreAlertRule } from './useRestoreRule';
 
@@ -16,39 +19,37 @@ interface RestoreModalProps {
 export function RestoreModal({ rule, onDismiss, onSuccess, onRefetch }: RestoreModalProps) {
   const { restore, isRestoring } = useRestoreAlertRule();
   const [error, setError] = useState<string | null>(null);
-  const [restored, setRestored] = useState(false);
   const title = rule.spec?.title ?? '';
+  const uid = rule.metadata?.name ?? '';
 
   const handleConfirm = async () => {
     setError(null);
-    const result = await restore(rule);
-    if (result.success) {
-      setRestored(true);
-      onSuccess(rule.metadata?.name ?? '');
-    } else if (result.isConflict) {
-      // Rule already exists as active — refresh the list so the trash entry clears
-      onRefetch?.();
-      setError(t('alerting.recently-deleted.restore.conflict', 'A rule with this name already exists.'));
-    } else {
+    try {
+      const result = await restore(rule);
+      if (result.success) {
+        onSuccess(uid);
+        locationService.push(grafanaRulesNav.viewLink(uid, { includeReturnTo: true }));
+      } else if (result.isConflict) {
+        onRefetch?.();
+        setError(t('alerting.recently-deleted.restore.conflict', 'A rule with this name already exists.'));
+      } else {
+        // Show the API's error message (e.g. folder missing/not writable) if available
+        const errorData = isFetchError(result.error) ? result.error.data : null;
+        const apiMessage =
+          errorData !== null &&
+          typeof errorData === 'object' &&
+          'message' in errorData &&
+          typeof errorData.message === 'string'
+            ? errorData.message
+            : '';
+        setError(
+          apiMessage || t('alerting.recently-deleted.restore.error', 'Failed to restore rule. Please try again.')
+        );
+      }
+    } catch (err) {
       setError(t('alerting.recently-deleted.restore.error', 'Failed to restore rule. Please try again.'));
     }
   };
-
-  if (restored) {
-    return (
-      <ConfirmModal
-        isOpen
-        title={t('alerting.recently-deleted.restore.success-title', 'Rule restored')}
-        body={t('alerting.recently-deleted.restore.success-body', '"{{title}}" has been restored.', {
-          title,
-          interpolation: { escapeValue: false },
-        })}
-        confirmText={t('alerting.recently-deleted.restore.close', 'Close')}
-        onConfirm={onDismiss}
-        onDismiss={onDismiss}
-      />
-    );
-  }
 
   return (
     <ConfirmModal
