@@ -61,8 +61,10 @@ locationUtil.initialize({
   getTimeRangeForUrl: jest.fn(),
 });
 
+const mockReportInteraction = jest.fn();
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: (...args: unknown[]) => mockReportInteraction(...args),
   getTemplateSrv: () => {
     return {
       getVariables: () => [{ id: 'foo', type: 'datasource' }],
@@ -404,6 +406,57 @@ describe('DataSourcePicker', () => {
       await user.keyboard('{Enter}');
 
       expect(onChange).toHaveBeenCalledWith(mockDS2, undefined);
+    });
+  });
+
+  describe('journey interactions', () => {
+    const user = userEvent.setup();
+
+    beforeEach(() => {
+      mockReportInteraction.mockClear();
+    });
+
+    function silentCalls(name: string) {
+      return mockReportInteraction.mock.calls.filter(([event, , options]) => event === name && options?.silent);
+    }
+
+    it('reports when the list has rendered after opening', async () => {
+      await setupOpenDropdown(user, { onChange: jest.fn() });
+
+      await screen.findByText(mockDS1.name, { selector: 'span' });
+      expect(silentCalls('dashboards_dspicker_list_rendered')).toEqual([
+        ['dashboards_dspicker_list_rendered', { total_listed: mockDSList.length }, { silent: true }],
+      ]);
+    });
+
+    it('reports a dismissal when Escape closes the dropdown without a selection', async () => {
+      await setupOpenDropdown(user, { onChange: jest.fn() });
+
+      await user.keyboard('[Escape]');
+
+      expect(silentCalls('dashboards_dspicker_dismissed')).toHaveLength(1);
+    });
+
+    it('does not report a dismissal when a data source is selected', async () => {
+      await setupOpenDropdown(user, { onChange: jest.fn() });
+
+      await user.click(await screen.findByText(mockDS2.name, { selector: 'span' }));
+
+      expect(silentCalls('dashboards_dspicker_dismissed')).toHaveLength(0);
+      expect(mockReportInteraction).toHaveBeenCalledWith(
+        'dashboards_dspicker_clicked',
+        expect.objectContaining({ item: 'select_ds', ds_type: mockDS2.type })
+      );
+    });
+
+    it('reports a reselection when the current data source is clicked', async () => {
+      await setupOpenDropdown(user, { onChange: jest.fn() });
+
+      await user.click(await screen.findByText(mockDS1.name, { selector: 'span' }));
+
+      expect(silentCalls('dashboards_dspicker_current_reselected')).toEqual([
+        ['dashboards_dspicker_current_reselected', { ds_type: mockDS1.type }, { silent: true }],
+      ]);
     });
   });
 

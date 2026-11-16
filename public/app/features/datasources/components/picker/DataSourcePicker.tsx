@@ -174,6 +174,12 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
     markerElement?.focus();
   }, [setOpen, markerElement]);
 
+  // Separate from onClose, which also runs on selection and when handing off to the advanced modal.
+  const onDismiss = useCallback(() => {
+    onClose();
+    reportInteraction('dashboards_dspicker_dismissed', {}, { silent: true });
+  }, [onClose]);
+
   // Like Combobox, the clear control renders next to the dropdown indicator instead of replacing it
   const suffix = (
     <>
@@ -195,7 +201,7 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
 
   const { overlayProps, underlayProps } = useOverlay(
     {
-      onClose: onClose,
+      onClose: onDismiss,
       isDismissable: true,
       isOpen,
       shouldCloseOnInteractOutside: (element) => {
@@ -224,7 +230,7 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
     }
     // From the input, if we navigate back, it closes the dropdown
     if (keyEvent.key === 'Tab' && keyEvent.shiftKey && isOpen) {
-      onClose();
+      onDismiss();
     }
     onKeyDown(keyEvent);
   }
@@ -236,7 +242,7 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
       markerElement?.focus();
       // When navigating forward, the dropdown closes and the element next to the input element is focused.
     } else {
-      onClose();
+      onDismiss();
     }
   }
 
@@ -253,7 +259,7 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
             keyEvent.preventDefault();
             break;
           case 'Escape':
-            onClose();
+            onDismiss();
             keyEvent.preventDefault();
             break;
         }
@@ -335,10 +341,12 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
                       ? favoriteDataSources.isFavoriteDatasource(ds.uid)
                       : undefined,
                   });
+                } else {
+                  reportInteraction('dashboards_dspicker_current_reselected', { ds_type: ds.type }, { silent: true });
                 }
               }}
               onClose={onClose}
-              onDismiss={onClose}
+              onDismiss={onDismiss}
               onNavigateOutsiteFooter={onNavigateOutsiteFooter}
               dataSources={dataSources}
               favoriteDataSources={favoriteDataSources}
@@ -398,6 +406,13 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
   );
 
   const styles = useStyles2(getStylesPickerContent);
+
+  // Runs once the list has been filtered, sorted and committed, so it marks when the list became
+  // usable. This is the slow part on instances with 10k+ data sources.
+  useEffect(() => {
+    reportInteraction('dashboards_dspicker_list_rendered', { total_listed: dataSources.length }, { silent: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div style={props.style} ref={ref} className={styles.container}>
