@@ -38,6 +38,7 @@ function serveSequenceRules() {
       alertRuleFactory.inFolder('folder-1').build({
         metadata: { name: 'cpu-high' },
         spec: { title: 'CPU high', labels: { team: 'infra', severity: 'page' } },
+        status: { state: 'Firing', health: 'OK' },
       }),
     ]),
     getRecordingRuleHandler([
@@ -46,7 +47,11 @@ function serveSequenceRules() {
         spec: { title: 'cpu:rate5m' },
         status: { health: 'Error' },
       }),
-      recordingRuleFactory.inFolder('folder-1').build({ metadata: { name: 'cpu-avg' }, spec: { title: 'cpu:avg5m' } }),
+      recordingRuleFactory.inFolder('folder-1').build({
+        metadata: { name: 'cpu-avg' },
+        spec: { title: 'cpu:avg5m' },
+        status: { health: 'Recording' },
+      }),
     ])
   );
 }
@@ -79,7 +84,7 @@ describe('rule sequence drawer', () => {
     expect(['cpu:rate5m', 'cpu:avg5m', 'CPU high', 'cpu-deleted'].map(stepOf)).toEqual([0, 1, 2, 3]);
   });
 
-  it('marks the rule it was opened from and shows what is wrong with a failing step', async () => {
+  it('marks the rule it was opened from and shows the status of every step', async () => {
     mockRuleSearch('alert', () => ({ items: [ruleItem('alert', 'cpu-high', 'CPU high', 'folder-1')], metadata: {} }));
     serveSequenceRules();
     render(<AlertRulesPage />, { historyOptions: { initialEntries: ['/?view=list'] } });
@@ -91,6 +96,8 @@ describe('rule sequence drawer', () => {
     expect(within(drawer).getByRole('listitem', { name: 'cpu:rate5m' })).not.toHaveAttribute('aria-current');
     expect(within(cpuHigh).getByText('This rule')).toBeInTheDocument();
     expect(within(cpuHigh).getByText('2 labels')).toBeInTheDocument();
+    expect(within(cpuHigh).getByText('Firing')).toBeInTheDocument();
+    expect(within(drawer).getByRole('listitem', { name: 'cpu:avg5m' })).toHaveTextContent('Recording');
     const cpuRate = within(drawer).getByRole('listitem', { name: 'cpu:rate5m' });
     expect(within(cpuRate).getByText('Failed to evaluate rule')).toBeInTheDocument();
     expect(within(drawer).queryByText(/Rule sequence ·/)).not.toBeInTheDocument();

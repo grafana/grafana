@@ -11,6 +11,7 @@ import { RuleLabels } from '../rule-row/RuleLabels';
 import { RuleListItem } from '../rule-row/RuleListItem';
 import { RuleOriginBadge } from '../rule-row/RuleOriginBadge';
 import { RuleStatusIcon } from '../rule-row/RuleStatusIcon';
+import { getRecordingRuleStatus } from '../rule-row/ruleStatus';
 import { EffectiveRuleInterval } from '../rule-sequences/EffectiveRuleInterval';
 import { type RuleSequenceMembership } from '../rule-sequences/ruleSequenceMembership';
 
@@ -38,7 +39,7 @@ export function RecordingRuleRow({ searchHit, folderPath, rule, sequence, onSequ
   return (
     <RuleListItem
       aria-labelledby={titleId}
-      icon={<RuleStatusIcon kind="recording" health={searchHit.health} paused={searchHit.paused} />}
+      icon={<RuleStatusIcon status={getRecordingRuleStatus(searchHit)} />}
       title={
         <Stack direction="row" alignItems="center" gap={0.5} wrap={false}>
           <TextLink id={titleId} href={href} color="primary" inline={false}>

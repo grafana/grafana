@@ -20,6 +20,7 @@ import { RuleRecordedMetric } from '../recording-rules/RuleRecordedMetric';
 import { FolderPath } from '../rule-row/FolderPath';
 import { RuleLabels } from '../rule-row/RuleLabels';
 import { RuleListSkeleton } from '../rule-row/RuleListSkeleton';
+import { getAlertRuleStatus, getRecordingRuleStatus } from '../rule-row/ruleStatus';
 import { InlineRequestError } from '../shared/InlineRequestError';
 import { type RuleKind } from '../shared/ruleKind';
 
@@ -194,6 +195,10 @@ function RuleStep({ kind, uid, step, isCurrent }: RuleStepProps) {
   }
 
   const recordingSpec = recording.currentData?.spec;
+  const status =
+    kind === 'alert'
+      ? getAlertRuleStatus({ ...alert.currentData?.status, paused: rule.spec.paused })
+      : getRecordingRuleStatus({ ...recording.currentData?.status, paused: rule.spec.paused });
 
   return (
     <SequenceStep
@@ -206,7 +211,9 @@ function RuleStep({ kind, uid, step, isCurrent }: RuleStepProps) {
         </TextLink>
       }
     >
-      <StepProblem paused={rule.spec.paused} health={rule.status?.health} />
+      <Text variant="bodySmall" color={status.color}>
+        <Icon name={status.icon} size="xs" /> {status.label}
+      </Text>
       {recordingSpec && (
         <RuleRecordedMetric metric={recordingSpec.metric} targetDatasourceUID={recordingSpec.targetDatasourceUID} />
       )}
@@ -248,32 +255,6 @@ function SequenceStep({ step, isCurrent, title, children, ...ariaAttributes }: S
       </Stack>
     </li>
   );
-}
-
-/** Says why a step may not run or produce data; a healthy step shows nothing. */
-function StepProblem({ paused, health }: { paused?: boolean; health?: string }) {
-  if (paused) {
-    return (
-      <Text variant="bodySmall" color="warning">
-        <Icon name="pause" size="xs" /> {t('alerting.gma-rule-list.status.paused', 'Paused')}
-      </Text>
-    );
-  }
-  if (health === 'Error') {
-    return (
-      <Text variant="bodySmall" color="error">
-        <Icon name="times-circle" size="xs" /> {t('alerting.gma-rule-list.status.error', 'Failed to evaluate rule')}
-      </Text>
-    );
-  }
-  if (health === 'NoData') {
-    return (
-      <Text variant="bodySmall" color="warning">
-        <Icon name="exclamation-triangle" size="xs" /> {t('alerting.gma-rule-list.status.no-data', 'Insufficient data')}
-      </Text>
-    );
-  }
-  return null;
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
