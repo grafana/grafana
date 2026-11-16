@@ -78,7 +78,7 @@ function extractFromConfig(
   return seen;
 }
 
-export function setDatasourcePluginMetasFromResponse(metas: PluginMetasResponse | null): void {
+export async function setDatasourcePluginMetasFromResponse(metas: PluginMetasResponse | null): Promise<void> {
   if (
     !metas?.items.length &&
     !getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsDisableMTPluginsFallback, false)
@@ -87,14 +87,14 @@ export function setDatasourcePluginMetasFromResponse(metas: PluginMetasResponse 
     const message = metas ? FALLBACK_TO_BOOTDATA_WARNING : FALLBACK_TO_BOOTDATA_ERROR_WARNING;
     // eslint-disable-next-line @grafana/no-config-datasources
     setDatasourcesAndAliases(extractFromConfig(config.datasources));
-    logPluginMetaWarning(message, { pluginType: PluginType.datasource, requestUrl: getPluginMetasUrl() });
+    logPluginMetaWarning(message, { pluginType: PluginType.datasource, requestUrl: await getPluginMetasUrl() });
     return;
   }
 
   if (!metas) {
     logPluginMetaError(META_FAILED_ERROR, new Error(META_FAILED_ERROR), {
       pluginType: PluginType.datasource,
-      requestUrl: getPluginMetasUrl(),
+      requestUrl: await getPluginMetasUrl(),
     });
     throw new Error(META_FAILED_ERROR);
   }
@@ -113,7 +113,7 @@ async function initDatasourcePluginMetas(): Promise<void> {
   }
 
   const metas = await initPluginMetas();
-  setDatasourcePluginMetasFromResponse(metas);
+  await setDatasourcePluginMetasFromResponse(metas);
 }
 
 export async function getDatasourcePluginMetas(): Promise<DataSourcePluginMeta[]> {
@@ -176,5 +176,5 @@ export async function refetchDatasourcePluginMetas(): Promise<void> {
   }
 
   const metas = await refetchPluginMetas();
-  setDatasourcePluginMetasFromResponse(metas);
+  await setDatasourcePluginMetasFromResponse(metas);
 }

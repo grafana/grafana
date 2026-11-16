@@ -162,7 +162,6 @@ declare module "@openfeature/core" {
     | "grafana.cmdkDashboardTags"
     | "assistant.fullscreenWorkspace"
     | "assistant.dashboard.artifacts"
-    | "grafana.queryVarEditorRedesign"
     | "table.paginationPageSize"
     | "table.autoColumnWidths"
     | "table.refresh"

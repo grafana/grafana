@@ -1570,6 +1570,12 @@
         "view-list": "목록",
         "wildcard-in-text": "검색어에는 * 또는 %를 포함할 수 없습니다."
       },
+      "sequence-pill": {
+        "label": "",
+        "label-with-interval": "",
+        "tooltip": "",
+        "tooltip-with-interval": ""
+      },
       "shared": {
         "load-more": "더 보기",
         "load-more-error": "추가 결과를 불러오지 못했습니다",
@@ -5302,6 +5308,7 @@
       "change-theme": "테마 변경",
       "dark-theme": "다크",
       "dashboard-from-template": "템플릿 기반 대시보드",
+      "experimental": "",
       "light-theme": "라이트",
       "open-saved-queries": "저장된 쿼리 열기",
       "scopes": "범위"
@@ -5760,7 +5767,7 @@
         "hint-layer": "",
         "hint-layer-select": "",
         "hint-not-removable": "",
-        "hint-panel": "패널을 클릭하여 댓글을 작성하거나 드래그하여 영역을 지정하세요",
+        "hint-panel": "",
         "hint-panel-select": "",
         "hint-region": "드래그하여 영역 지정",
         "hint-remove": "",
@@ -6737,8 +6744,6 @@
         "open-editor": "변수 편집기 열기",
         "open-editor-tooltip": "더 많은 변수 옵션을 보려면 변수 편집기를 여세요",
         "query-options": {
-          "close": "닫기",
-          "old-modal-title": "쿼리 변수",
           "preview": "미리 보기"
         },
         "remove": "제거",
@@ -10727,6 +10732,8 @@
       "tooltip": {
         "category": "도구 설명",
         "description-hover-proximity": "도구 설명을 트리거하려면 커서가 포인트에 얼마나 가까이 있어야 하는지(픽셀 단위)",
+        "description-max-height": "",
+        "description-max-width": "",
         "modeOptions": {
           "label-all": "전체",
           "label-hidden": "숨김",
@@ -13005,6 +13012,10 @@
       "subtitle": "경고 인스턴스가 실행될 때 연락처에 알리는 방법을 선택",
       "title": "연락처"
     },
+    "alerting-recording-rules": {
+      "subtitle": "",
+      "title": ""
+    },
     "alerting-silences": {
       "subtitle": "하나 이상의 경고 규칙에서 알림 중지",
       "title": "알림 끄기"
@@ -13851,6 +13862,32 @@
     },
     "units": {
       "clear-tooltip": "단위 선택 지우기"
+    },
+    "var-mapping-checks": {
+      "data-macro": "",
+      "not-allowed": "",
+      "not-found": "",
+      "not-number": "",
+      "not-one-value": "",
+      "out-of-range": "",
+      "resolves": "",
+      "values": ""
+    },
+    "var-mapping-toggle": {
+      "aria-label-picker": "",
+      "fallback-off": "",
+      "fallback-on": "",
+      "group-matching": "",
+      "group-other": "",
+      "hint-boolean": "",
+      "hint-number": "",
+      "hint-option": "",
+      "hint-option-no-fallback": "",
+      "new-variable": "",
+      "option-current": "",
+      "placeholder": "",
+      "use-fixed-value": "",
+      "use-variable": ""
     }
   },
   "org": {

@@ -36,13 +36,17 @@ export function getLegacySettings(pluginId: string, showErrorAlert?: boolean): P
     });
 }
 
-export function getAppPluginSettings(pluginId: string, showErrorAlert?: boolean): Promise<v0alpha1Settings> {
+export function getAppPluginSettings(
+  pluginId: string,
+  showErrorAlert: boolean | undefined,
+  apiVersion: string
+): Promise<v0alpha1Settings> {
   const options = { showErrorAlert, validatePath: true };
   logPluginSettingsDebug('PluginSettings: getting plugin settings', { pluginId });
 
   return getBackendSrv()
     .get<v0alpha1Settings>(
-      `/apis/${pluginId}/${getApiVersion()}/namespaces/${getNamespace()}/app/instance`,
+      `/apis/${pluginId}/${apiVersion}/namespaces/${getNamespace()}/app/instance`,
       undefined,
       undefined,
       options
@@ -83,7 +87,7 @@ export async function getPluginSettings(pluginId: string, showErrorAlert = false
     return mapper(meta.spec);
   }
 
-  const settings = await getCachedAppSettings(pluginId, showErrorAlert);
+  const settings = await getCachedAppSettings(pluginId, showErrorAlert, await getApiVersion());
   const mapper = getSettingsMapper();
   return mapper(meta.spec, settings);
 }
