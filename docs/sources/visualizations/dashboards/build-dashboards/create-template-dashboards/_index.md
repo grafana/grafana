@@ -34,7 +34,7 @@ The templates provide standardized dashboard layouts designed to help you answer
 To create a dashboard from a template, follow these steps:
 
 1. Click **Dashboards** in the primary menu.
-1. Click **New** and select **Dashboard from template** in the drop-down menu.
+1. Click **New** and select **Use template** in the drop-down menu.
 
    The **Start a dashboard from a template** dialog box opens.
 
@@ -66,6 +66,10 @@ To create a dashboard from a template, follow these steps:
 
 ### Create a custom dashboard template
 
+{{< shared id="custom-dashboard" >}}
+
+{{< docs/public-preview product="Custom dashboard templates" >}}
+
 A custom dashboard template gives you and your team a consistent starting point for new dashboards.
 You can use it to apply your organization's preferred layout, panels, and settings.
 
@@ -80,10 +84,10 @@ To create a custom dashboard template, do the following:
 Now the template is available in the **Custom** tab of the **Start a dashboard from a template** dialog box.
 This is the dialog box that opens when someone selects the **Use template** option to create a dashboard.
 
-{{< admonition type="note" >}}
 Grafana stores custom dashboard templates in the root folder of **Dashboards**.
 To edit or delete a custom template&mdash;even one you've created&mdash;you need permissions for that folder.
-{{< /admonition >}}
+
+{{< /shared >}}
 
 <!--TODO: Are there any other limitations? -->
 
