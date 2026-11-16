@@ -210,7 +210,8 @@ declare module "@openfeature/core" {
     | "grafana.folderPickerFolderEditAccess"
     | "grafana.panelOptionInterpolation"
     | "datasources.gatewayRateLimits"
-    | "plugins.disableMTPluginsFallback";
+    | "plugins.disableMTPluginsFallback"
+    | "grafana.infiniteScrollTop";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey =

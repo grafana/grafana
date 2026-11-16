@@ -222,6 +222,8 @@ export const FlagKeys = {
   GrafanaFolderPickerFolderEditAccess: "grafana.folderPickerFolderEditAccess",
   /** Adds an experimental Protomaps vector basemap to the geomap panel */
   GrafanaGeomapProtomapsBasemap: "grafana.geomapProtomapsBasemap",
+  /** Enables infinite scrolling from the top of the component. */
+  GrafanaInfiniteScrollTop: "grafana.infiniteScrollTop",
   /** Enables usage of the new annotations API client */
   GrafanaKubernetesAnnotationsClient: "grafana.kubernetesAnnotationsClient",
   /** Enables log level inference from log line contents when level is not defined as a field or a label */
@@ -1562,6 +1564,17 @@ export const useFlagGrafanaFolderPickerFolderEditAccess = (options?: ReactFlagEv
  */
 export const useFlagGrafanaGeomapProtomapsBasemap = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.geomapProtomapsBasemap", false, options).value;
+};
+
+/**
+ * Enables infinite scrolling from the top of the component.
+ *
+ * **Details:**
+ * - flag key: `grafana.infiniteScrollTop`
+ * - default value: `false`
+ */
+export const useFlagGrafanaInfiniteScrollTop = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.infiniteScrollTop", false, options).value;
 };
 
 /**

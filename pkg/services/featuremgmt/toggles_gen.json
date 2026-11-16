@@ -3316,6 +3316,21 @@
     },
     {
       "metadata": {
+        "name": "grafana.infiniteScrollTop",
+        "resourceVersion": "1794848580634",
+        "creationTimestamp": "2026-11-16T17:03:00Z"
+      },
+      "spec": {
+        "description": "Enables infinite scrolling from the top of the component.",
+        "stage": "preview",
+        "codeowner": "@grafana/observability-logs",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.kubernetesAnnotationsClient",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-05-26T08:03:39Z"
