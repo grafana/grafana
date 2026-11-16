@@ -229,7 +229,7 @@ describe('Logs', () => {
   };
 
   it.each([true, false])('passes infiniteScrollTop=%s to the log list according to the flag', async (flag) => {
-    setBooleanFlags({ logsPanelControls: false, 'grafana.infiniteScrollTop': flag });
+    setBooleanFlags({ logsPanelControls: false, 'grafana.logsInfiniteScrollTop': flag });
     logListMock.mockClear();
 
     setup();

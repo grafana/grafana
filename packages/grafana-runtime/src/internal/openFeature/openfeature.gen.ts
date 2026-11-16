@@ -222,12 +222,12 @@ export const FlagKeys = {
   GrafanaFolderPickerFolderEditAccess: "grafana.folderPickerFolderEditAccess",
   /** Adds an experimental Protomaps vector basemap to the geomap panel */
   GrafanaGeomapProtomapsBasemap: "grafana.geomapProtomapsBasemap",
-  /** Enables infinite scrolling from the top of the component. */
-  GrafanaInfiniteScrollTop: "grafana.infiniteScrollTop",
   /** Enables usage of the new annotations API client */
   GrafanaKubernetesAnnotationsClient: "grafana.kubernetesAnnotationsClient",
   /** Enables log level inference from log line contents when level is not defined as a field or a label */
   GrafanaLogLevelInference: "grafana.logLevelInference",
+  /** Enables infinite scrolling from the top of the component. */
+  GrafanaLogsInfiniteScrollTop: "grafana.logsInfiniteScrollTop",
   /** Opens the mega menu over the page while the pointer rests on its toggle, and docks it when the toggle is clicked on wide screens. The toggle in the docked menu's header closes it, in place of the footer's dock button */
   GrafanaMegaMenuPeekAndDock: "grafana.megaMenuPeekAndDock",
   /** Disables dashboard edit mode (manual and assistant-driven) on mobile/small-screen viewports */
@@ -1567,17 +1567,6 @@ export const useFlagGrafanaGeomapProtomapsBasemap = (options?: ReactFlagEvaluati
 };
 
 /**
- * Enables infinite scrolling from the top of the component.
- *
- * **Details:**
- * - flag key: `grafana.infiniteScrollTop`
- * - default value: `false`
- */
-export const useFlagGrafanaInfiniteScrollTop = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.infiniteScrollTop", false, options).value;
-};
-
-/**
  * Enables usage of the new annotations API client
  *
  * **Details:**
@@ -1597,6 +1586,17 @@ export const useFlagGrafanaKubernetesAnnotationsClient = (options?: ReactFlagEva
  */
 export const useFlagGrafanaLogLevelInference = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.logLevelInference", false, options).value;
+};
+
+/**
+ * Enables infinite scrolling from the top of the component.
+ *
+ * **Details:**
+ * - flag key: `grafana.logsInfiniteScrollTop`
+ * - default value: `false`
+ */
+export const useFlagGrafanaLogsInfiniteScrollTop = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.logsInfiniteScrollTop", false, options).value;
 };
 
 /**

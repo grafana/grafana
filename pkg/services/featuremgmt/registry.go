@@ -3551,7 +3551,7 @@ var (
 			HideFromDocs: true,
 		},
 		{
-			Name:         "grafana.infiniteScrollTop",
+			Name:         "grafana.logsInfiniteScrollTop",
 			Description:  "Enables infinite scrolling from the top of the component.",
 			Stage:        FeatureStagePublicPreview,
 			Owner:        grafanaObservabilityLogsSquad,
