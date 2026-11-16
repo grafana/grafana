@@ -323,6 +323,34 @@ describe('SidebarCard', () => {
         document.body.removeChild(editorLike);
       }
     });
+
+    it('blurs the focused editor when the press lands on the card container outside the select control', async () => {
+      // The card's colour strip and border belong to the container, not the inner select control.
+      const onSelect = jest.fn();
+      const onEditorBlur = jest.fn();
+      const user = userEvent.setup();
+      const { container } = renderSidebarCard({ id: 'A', onSelect });
+
+      const suppressFocusTransfer = (e: Event) => e.preventDefault();
+      window.addEventListener('mousedown', suppressFocusTransfer, true);
+
+      const editorLike = document.createElement('input');
+      editorLike.addEventListener('blur', onEditorBlur, true);
+      document.body.appendChild(editorLike);
+      editorLike.focus();
+
+      try {
+        const card = container.querySelector<HTMLElement>('[data-query-sidebar-card="A"]');
+        expect(card).toBeInTheDocument();
+        await user.click(card!);
+
+        expect(onEditorBlur).toHaveBeenCalled();
+        expect(onSelect).toHaveBeenCalledTimes(1);
+      } finally {
+        window.removeEventListener('mousedown', suppressFocusTransfer, true);
+        document.body.removeChild(editorLike);
+      }
+    });
   });
 
   describe('multi-select checkbox', () => {

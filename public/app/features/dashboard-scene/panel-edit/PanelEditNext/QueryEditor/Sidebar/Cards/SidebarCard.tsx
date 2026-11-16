@@ -96,7 +96,7 @@ export const SidebarCard = ({
     }
     // @hello-pangea/dnd's capture-phase mousedown listener calls preventDefault, so browser focus
     // transfer never fires and Monaco never sees a natural blur. Force it imperatively.
-    if (document.activeElement instanceof HTMLElement && document.activeElement !== e.currentTarget) {
+    if (document.activeElement instanceof HTMLElement && !e.currentTarget.contains(document.activeElement)) {
       document.activeElement.blur();
     }
   };
@@ -168,6 +168,7 @@ export const SidebarCard = ({
         <div
           className={styles.card}
           onClick={handleCardClick}
+          onMouseDown={handleCardMouseDown}
           onFocus={handleFocus}
           onBlur={handleBlur}
           role="presentation"
@@ -176,7 +177,6 @@ export const SidebarCard = ({
           {/* Kept a div rather than a native <button>: @hello-pangea/dnd won't start a drag from a <button>. */}
           <div
             className={styles.cardSelect}
-            onMouseDown={handleCardMouseDown}
             onKeyDown={handleKeyDown}
             role="button"
             tabIndex={0}
