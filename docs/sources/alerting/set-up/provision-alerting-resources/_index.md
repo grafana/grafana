@@ -37,7 +37,7 @@ Choose from the options below to import (or provision) your Grafana Alerting res
 
 1. Use [Terraform to provision alerting resources](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/terraform-provisioning/).
 
-1. Use the [Alerting provisioning HTTP API](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/http-api-provisioning/) to manage alerting resources.
+1. Use the [new HTTP APIs](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/http-apis-provisioning/) (`/apis`) or the legacy [Alerting provisioning HTTP API](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/http-api-provisioning/) to manage alerting resources.
 
    {{< admonition type="note" >}}
 

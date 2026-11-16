@@ -1579,6 +1579,12 @@
         "view-list": "Liste",
         "wildcard-in-text": "Der Suchtext darf nicht * oder % enthalten."
       },
+      "sequence-pill": {
+        "label": "",
+        "label-with-interval": "",
+        "tooltip": "",
+        "tooltip-with-interval": ""
+      },
       "shared": {
         "load-more": "Mehr laden",
         "load-more-error": "Es konnten keine weiteren Ergebnisse geladen werden",
@@ -5351,6 +5357,7 @@
       "change-theme": "Thema ändern",
       "dark-theme": "Dunkel",
       "dashboard-from-template": "Dashboard aus Vorlage",
+      "experimental": "",
       "light-theme": "Hell",
       "open-saved-queries": "Gespeicherte Abfragen öffnen",
       "scopes": "Bereiche"
@@ -5809,7 +5816,7 @@
         "hint-layer": "",
         "hint-layer-select": "",
         "hint-not-removable": "",
-        "hint-panel": "Klicken Sie, um ein Panel zu kommentieren, oder ziehen Sie, um eine Region zu zeichnen",
+        "hint-panel": "",
         "hint-panel-select": "",
         "hint-region": "Zum Zeichnen einer Region ziehen",
         "hint-remove": "",
@@ -6788,8 +6795,6 @@
         "open-editor": "Variablen-Editor öffnen",
         "open-editor-tooltip": "Öffnen Sie den Variablen-Editor für weitere Variablenoptionen",
         "query-options": {
-          "close": "Schließen",
-          "old-modal-title": "Abfragevariable",
           "preview": "Vorschau"
         },
         "remove": "Entfernen",
@@ -10810,6 +10815,8 @@
       "tooltip": {
         "category": "Tooltip",
         "description-hover-proximity": "Wie nah der Cursor an einem Punkt sein muss, um den Tooltip auszulösen, in Pixeln",
+        "description-max-height": "",
+        "description-max-width": "",
         "modeOptions": {
           "label-all": "Alles",
           "label-hidden": "Ausgeblendet",
@@ -13110,6 +13117,10 @@
       "subtitle": "Wählen Sie, wie Ihre Kontaktpunkte benachrichtigen werden, wenn eine Warninstanz auslöst",
       "title": "Kontaktpunkte"
     },
+    "alerting-recording-rules": {
+      "subtitle": "",
+      "title": ""
+    },
     "alerting-silences": {
       "subtitle": "Schalte Benachrichtigungen von einer oder mehrerer Warnregeln aus",
       "title": "Stummschalten"
@@ -13962,6 +13973,32 @@
     },
     "units": {
       "clear-tooltip": "Einheitenauswahl löschen"
+    },
+    "var-mapping-checks": {
+      "data-macro": "",
+      "not-allowed": "",
+      "not-found": "",
+      "not-number": "",
+      "not-one-value": "",
+      "out-of-range": "",
+      "resolves": "",
+      "values": ""
+    },
+    "var-mapping-toggle": {
+      "aria-label-picker": "",
+      "fallback-off": "",
+      "fallback-on": "",
+      "group-matching": "",
+      "group-other": "",
+      "hint-boolean": "",
+      "hint-number": "",
+      "hint-option": "",
+      "hint-option-no-fallback": "",
+      "new-variable": "",
+      "option-current": "",
+      "placeholder": "",
+      "use-fixed-value": "",
+      "use-variable": ""
     }
   },
   "org": {

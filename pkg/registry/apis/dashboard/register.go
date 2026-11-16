@@ -212,6 +212,8 @@ func RegisterAPIService(
 		lifecycleExtras:          lifecycleExtras,
 	}
 
+	builder.search.lifecycleExtras = lifecycleExtras
+
 	accessControl.RegisterScopeAttributeResolver(VariableUIDScopeResolver(folderService))
 
 	// Opt into the App Platform permission path (lazy ResourcePermission client) when the flag is on.
@@ -250,6 +252,10 @@ func RegisterAPIService(
 
 func NewAPIService(ac authlib.AccessClient, folderClientProvider client.K8sHandlerProvider, datasourceProvider schemaversion.DataSourceIndexProvider, libraryElementProvider schemaversion.LibraryElementIndexProvider, resourcePermissions *rpclient.Client, search *SearchHandler, unified resource.ResourceClient, settingService settingservice.Service, lifecycleExtras DashboardLifecycleExtras) *DashboardsAPIBuilder {
 	migration.Initialize(datasourceProvider, libraryElementProvider, migration.DefaultCacheTTL)
+	// The handler is built by the caller, so the standalone path has to wire the lifecycle in as well.
+	if search != nil {
+		search.lifecycleExtras = lifecycleExtras
+	}
 	b := &DashboardsAPIBuilder{
 		minRefreshInterval:   defaultMinRefreshInterval,
 		settingService:       settingService,
@@ -1321,7 +1327,7 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 	unified.AfterDelete = b.afterDelete
 
 	if b.isStandalone {
-		storage[dashboards.StoragePath()] = unified
+		storage[dashboards.StoragePath()] = draftHidingStorage{Store: unified, lifecycleExtras: b.lifecycleExtras}
 		storage[dashboards.StoragePath("dto")], err = NewDTOConnector(
 			unified,
 			b.unified,
@@ -1361,6 +1367,7 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 		dashboardPermissionsSvc: b.dashboardPermissionsSvc,
 		live:                    b.dashboardActivityChannel,
 		iamFeatures:             b.iamFeatures,
+		lifecycleExtras:         b.lifecycleExtras,
 	}
 
 	// Register the DTO endpoint that will consolidate all dashboard bits
