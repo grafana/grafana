@@ -82,7 +82,7 @@ export function getVarMappingOptionOverrides(
  * variable in the defaults or in an override rule
  */
 function usesVariablesInText(fieldOption: FieldConfigPropertyItem, fieldConfig: FieldConfigSource): boolean {
-  if (lodashGet(fieldOption.settings, 'expandTemplateVars') !== true) {
+  if (fieldOption.settings?.expandTemplateVars !== true) {
     return false;
   }
   const hasVariable = (value: unknown) => typeof value === 'string' && hasVarMappingVariableReference(value);
