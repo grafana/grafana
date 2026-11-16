@@ -7727,7 +7727,7 @@
       "apply": "Apply",
       "apply-body": "Everyone with access will see them. You can restore the previous version from version history.",
       "apply-failed": "Couldn't apply the changes. Try again, or compare them first.",
-      "apply-needs-edit": "Applying needs edit access to “{{title}}”. You can preview these changes, but not apply them.",
+      "apply-needs-save": "You don’t have permission to save “{{title}}”, so you can preview these changes but not apply them. Ask an admin for permission to save it.",
       "apply-title_one": "Apply {{count}} change to “{{title}}”?",
       "apply-title_other": "Apply {{count}} changes to “{{title}}”?",
       "breadcrumb-draft": "Draft",
