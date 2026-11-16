@@ -5,7 +5,7 @@ import { type DataQuery } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Button, Portal, Stack } from '@grafana/ui';
 
-import { getCoauthoringSurface, isQueryCoauthoringV2Active, requestCoauthoringEntry } from './queryCoauthoringApi';
+import { getCoauthoringSurface, isQueryCoauthoringSurfaceActive, requestCoauthoringEntry } from './queryCoauthoringApi';
 import {
   isQueryCoauthoringEditorHandle,
   type QueryCoauthoringEditorHandle,
@@ -17,7 +17,7 @@ import { useCoauthoringSurface } from './useCoauthoringSurface';
 
 export function useCoauthoringEditor(query: DataQuery | null, queries: DataQuery[]) {
   const surface = useCoauthoringSurface();
-  const active = isQueryCoauthoringV2Active();
+  const active = isQueryCoauthoringSurfaceActive();
   const [handle, setHandle] = useState<QueryCoauthoringEditorHandle>();
   const [selection, setSelection] = useState<(QueryCoauthoringEditorSelection & { rect: DOMRect }) | null>(null);
   const registration = useRef<() => void>(() => {});
@@ -138,17 +138,17 @@ export function useCoauthoringEditor(query: DataQuery | null, queries: DataQuery
       <Portal>
         <div
           role="toolbar"
-          aria-label={t('query-coauthoring-v2.highlight-actions', 'Query selection actions')}
+          aria-label={t('query-coauthoring.surface.highlight-actions', 'Query selection actions')}
           style={{ position: 'fixed', left: rect.left, top: rect.bottom, zIndex: 1500 }}
           onMouseDown={(event) => event.preventDefault()}
         >
           <Stack>
             <Button size="sm" onClick={() => request('explain_or_modify')}>
-              {t('query-coauthoring-v2.explain-modify', 'Explain or modify')}
+              {t('query-coauthoring.surface.explain-modify', 'Explain or modify')}
             </Button>
             {broken && (
               <Button size="sm" onClick={() => request('debug')}>
-                {t('query-coauthoring-v2.debug', 'Debug query')}
+                {t('query-coauthoring.surface.debug', 'Debug query')}
               </Button>
             )}
           </Stack>

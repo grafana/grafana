@@ -15,8 +15,6 @@ import { type PanelDataPaneNext } from '../../PanelDataPaneNext';
 import { QueryCoauthoringSessionEngine } from './QueryCoauthoringSessionEngine';
 import { resolveCoauthoringQuery } from './queryCoauthoringContext';
 import {
-  type QueryCoauthoringAPI2,
-  type QueryCoauthoringEntryRequest2,
   type QueryCoauthoringAPI,
   type QueryCoauthoringEntryRequest,
   type QueryCoauthoringSession,
@@ -34,8 +32,7 @@ interface MountedPanel {
 }
 
 const enterListeners = new Set<(request: QueryCoauthoringEntryRequest) => void>();
-const enterListeners2 = new Set<(request: QueryCoauthoringEntryRequest2) => void>();
-let pending2: { request: QueryCoauthoringEntryRequest2; panel: VizPanel; consumed: boolean } | undefined;
+let pending: { request: QueryCoauthoringEntryRequest; panel: VizPanel; consumed: boolean } | undefined;
 let entryController: AbortController | undefined;
 
 const resumeListeners = new Set<(request: { sessionId: string }) => void>();
@@ -45,11 +42,7 @@ let session: QueryCoauthoringSession | undefined;
 let sessionPanel: VizPanel | undefined;
 let focus: string | undefined;
 let state: QueryCoauthoringState | undefined;
-let pending:
-  | { target: QueryCoauthoringTarget; ranges: QueryCoauthoringEntryRequest['ranges']; sessionId: string }
-  | undefined;
 let stopSession: (() => void) | undefined;
-let stopFlags: (() => void) | undefined;
 let generation = 0;
 
 export const subscribeToCoauthoring = (listener: () => void) => {
@@ -67,7 +60,7 @@ export function subscribeCoauthoringFlags(listener: () => void) {
 export const getCoauthoringGeneration = () => generation;
 export function publishCoauthoring() {
   if (sessionPanel) {
-    QueryCoauthoringSessionEngine.get(sessionPanel)?.setSurfaceActive(isQueryCoauthoringV2Active());
+    QueryCoauthoringSessionEngine.get(sessionPanel)?.setSurfaceActive(isQueryCoauthoringSurfaceActive());
   }
   generation++;
   subscribers.forEach((listener) => listener());
@@ -75,17 +68,11 @@ export function publishCoauthoring() {
 export function isQueryCoauthoringEnabled() {
   return getFeatureFlagClient().getBooleanValue(FlagKeys.QueryeditorCoauthoringUi, false);
 }
-export function isQueryCoauthoringV2Active() {
-  return (
-    isQueryCoauthoringEnabled() &&
-    getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaVisualDesignRefresh, false) &&
-    (enterListeners.size > 0 || (enterListeners2.size > 0 && availability().eligible))
-  );
+export function isQueryCoauthoringSurfaceActive() {
+  return enterListeners.size > 0 && availability().eligible;
 }
 export function canEnterCoauthoring(target: QueryCoauthoringTarget) {
-  return enterListeners2.size && availability().eligible
-    ? queryCoauthoringApiV2.canEnter(target)
-    : queryCoauthoringApi.canEnter(target);
+  return queryCoauthoringApi.canEnter(target);
 }
 
 export function getCoauthoringSurface(pane?: PanelDataPaneNext) {
@@ -123,7 +110,6 @@ export function mountCoauthoringPanel(panel: MountedPanel): () => void {
     if (mounted === panel) {
       mounted = undefined;
       pending = undefined;
-      pending2 = undefined;
       entryController?.abort();
       publishCoauthoring();
     }
@@ -131,80 +117,20 @@ export function mountCoauthoringPanel(panel: MountedPanel): () => void {
 }
 
 export function requestCoauthoringEntry(
-  request: QueryCoauthoringEntryRequest,
+  request: Omit<QueryCoauthoringEntryRequest, 'entryId' | 'baseline'>,
   source: 'highlight' | 'query_button' | 'debug'
 ) {
-  if (enterListeners2.size && availability().eligible) {
-    void requestEntry2(request, source);
-    return;
+  if (isQueryCoauthoringSurfaceActive()) {
+    void requestEntry(request, source);
   }
-  if (!isQueryCoauthoringV2Active() || !queryCoauthoringApi.canEnter(request.target).ok) {
-    return;
-  }
-  if (session && sessionPanel === mounted?.panel && focus !== request.target.refId) {
-    mounted?.pane.closeCoauthoringSession('replaced');
-  }
-  const sessionId = generateUUID();
-  pending = { target: request.target, ranges: request.ranges, sessionId };
-  faro.api?.startUserAction('query_coauthoring', { sessionId });
-  track('opened_popover', sessionId, { source });
-  enterListeners.forEach((listener) => listener(request));
 }
 export function requestCoauthoringResume() {
   const current = getCoauthoringSurface()?.session;
-  if (!current || current.signal.aborted || !isQueryCoauthoringV2Active()) {
+  if (!current || current.signal.aborted || !isQueryCoauthoringSurfaceActive()) {
     return;
   }
   resumeListeners.forEach((listener) => listener({ sessionId: current.getState().sessionId }));
 }
-
-export const queryCoauthoringApi: QueryCoauthoringAPI = {
-  version: 1,
-  onEnterRequested(listener) {
-    enterListeners.add(listener);
-    if (!stopFlags) {
-      const client = getFeatureFlagClient();
-      const update = () => publishCoauthoring();
-      client.addHandler(ProviderEvents.ConfigurationChanged, update);
-      stopFlags = () => client.removeHandler(ProviderEvents.ConfigurationChanged, update);
-    }
-    publishCoauthoring();
-    return () => {
-      enterListeners.delete(listener);
-      if (!enterListeners.size) {
-        stopFlags?.();
-        stopFlags = undefined;
-        pending = undefined;
-      }
-      publishCoauthoring();
-    };
-  },
-  onResumeRequested(listener) {
-    resumeListeners.add(listener);
-    return () => {
-      resumeListeners.delete(listener);
-    };
-  },
-  canEnter(target) {
-    if (!enterListeners.size || !isQueryCoauthoringV2Active() || !matches(target) || !mounted?.owner.isActive) {
-      return { ok: false, reason: 'not_in_panel_edit' };
-    }
-    const queries = mounted.pane.getCoauthoringEditorQueries() ?? [];
-    if (!queries.some((query) => query.refId === target.refId)) {
-      return { ok: false, reason: 'unknown_query' };
-    }
-    return mounted.supported.has(target.refId) ? { ok: true } : { ok: false, reason: 'unsupported_datasource' };
-  },
-  async enter(target) {
-    const check = queryCoauthoringApi.canEnter(target);
-    if (!check.ok || !mounted) {
-      throw new Error(`Query coauthoring unavailable: ${check.ok ? 'not_in_panel_edit' : check.reason}`);
-    }
-    const request = pending && matches(pending.target) && pending.target.refId === target.refId ? pending : undefined;
-    pending = undefined;
-    return enterSession(target, request);
-  },
-};
 
 function availability() {
   return {
@@ -215,8 +141,8 @@ function availability() {
   };
 }
 
-export const queryCoauthoringApiV2: QueryCoauthoringAPI2 = {
-  version: 2,
+export const queryCoauthoringApi: QueryCoauthoringAPI = {
+  version: 1,
   getAvailability: availability,
   subscribeAvailability(listener) {
     let previous = availability();
@@ -231,26 +157,31 @@ export const queryCoauthoringApiV2: QueryCoauthoringAPI2 = {
     return stop;
   },
   onEnterRequested(listener) {
-    enterListeners2.add(listener);
+    enterListeners.add(listener);
     const stop = subscribeCoauthoringFlags(() => {
       if (!availability().eligible) {
         entryController?.abort();
-        pending2 = undefined;
+        pending = undefined;
       }
       publishCoauthoring();
     });
     publishCoauthoring();
     return () => {
-      enterListeners2.delete(listener);
+      enterListeners.delete(listener);
       stop();
-      if (!enterListeners2.size) {
+      if (!enterListeners.size) {
         entryController?.abort();
-        pending2 = undefined;
+        pending = undefined;
       }
       publishCoauthoring();
     };
   },
-  onResumeRequested: (listener) => queryCoauthoringApi.onResumeRequested(listener),
+  onResumeRequested(listener) {
+    resumeListeners.add(listener);
+    return () => {
+      resumeListeners.delete(listener);
+    };
+  },
   canEnter(target) {
     if (!availability().eligible || !matches(target) || !mounted?.owner.isActive) {
       return { ok: false, reason: 'not_in_panel_edit' };
@@ -260,9 +191,9 @@ export const queryCoauthoringApiV2: QueryCoauthoringAPI2 = {
       : { ok: false, reason: 'unknown_query' };
   },
   async enter(target, { entryId }) {
-    const entry = pending2;
+    const entry = pending;
     if (
-      !queryCoauthoringApiV2.canEnter(target).ok ||
+      !queryCoauthoringApi.canEnter(target).ok ||
       !mounted ||
       !entry ||
       entry.consumed ||
@@ -280,19 +211,18 @@ export const queryCoauthoringApiV2: QueryCoauthoringAPI2 = {
       throw new Error('Query coauthoring entry expired');
     }
     entry.consumed = true;
-    const handle = enterSession(target, { ranges: entry.request.ranges, sessionId: entryId }, true);
-    return engine.asVersion2(handle, entry.request.baseline);
+    return enterSession(target, entry.request);
   },
 };
 
-async function requestEntry2(request: QueryCoauthoringEntryRequest, source: string) {
-  if (!queryCoauthoringApiV2.canEnter(request.target).ok || !mounted) {
+async function requestEntry(request: Omit<QueryCoauthoringEntryRequest, 'entryId' | 'baseline'>, source: string) {
+  if (!queryCoauthoringApi.canEnter(request.target).ok || !mounted) {
     return;
   }
   entryController?.abort();
   const controller = new AbortController();
   entryController = controller;
-  pending2 = undefined;
+  pending = undefined;
   const { panel, pane } = mounted;
   const runner = getQueryRunnerFor(panel);
   const query = cloneDeep(pane.getCoauthoringEditorQueries()?.find((query) => query.refId === request.target.refId));
@@ -315,7 +245,7 @@ async function requestEntry2(request: QueryCoauthoringEntryRequest, source: stri
     controller.signal.aborted ||
     mounted?.panel !== panel ||
     !availability().eligible ||
-    !enterListeners2.size ||
+    !enterListeners.size ||
     revision !== engine.getRevision() ||
     contextGeneration !== engine.getContextGeneration()
   ) {
@@ -326,7 +256,7 @@ async function requestEntry2(request: QueryCoauthoringEntryRequest, source: stri
     return;
   }
   const description = result.description;
-  const next: QueryCoauthoringEntryRequest2 = {
+  const next: QueryCoauthoringEntryRequest = {
     ...click,
     entryId,
     baseline: {
@@ -337,30 +267,27 @@ async function requestEntry2(request: QueryCoauthoringEntryRequest, source: stri
       ...(description.status === 'ready' ? { status: 'ready', text: description.value.text } : description),
     },
   };
-  pending2 = { request: cloneDeep(next), panel, consumed: false };
+  pending = { request: cloneDeep(next), panel, consumed: false };
   faro.api?.startUserAction('query_coauthoring', { sessionId: entryId });
   track('opened_popover', entryId, { source });
-  enterListeners2.forEach((listener) => listener(cloneDeep(next)));
+  enterListeners.forEach((listener) => listener(cloneDeep(next)));
 }
 
-function enterSession(
-  target: QueryCoauthoringTarget,
-  request?: { ranges: QueryCoauthoringEntryRequest['ranges']; sessionId: string },
-  v2 = false
-): QueryCoauthoringSession {
+function enterSession(target: QueryCoauthoringTarget, request: QueryCoauthoringEntryRequest): QueryCoauthoringSession {
   if (!mounted) {
     throw new Error('Panel is unavailable');
   }
   const { pane, panel } = mounted;
   const next = pane.startCoauthoringSession(
     target.refId,
-    request?.ranges,
+    request.ranges,
     (refId) => {
       if (mounted?.panel === panel) {
         mounted.select(refId);
       }
     },
-    request?.sessionId
+    request.entryId,
+    request.baseline
   );
   stopSession?.();
   session = next;
@@ -385,7 +312,7 @@ function enterSession(
     publishCoauthoring();
   });
   const stopSessionFlags = subscribeCoauthoringFlags(() => {
-    if (!isQueryCoauthoringEnabled() || (v2 && !availability().eligible)) {
+    if (!availability().eligible) {
       pane.closeCoauthoringSession('flag_off');
     }
   });
@@ -412,6 +339,7 @@ function enterSession(
     signal: next.signal,
     closed: next.closed,
     getState: next.getState,
+    getContext: next.getContext,
     subscribe: next.subscribe,
     stageProposal: next.stageProposal,
     preview(optionId) {

@@ -42,6 +42,7 @@ import { QueryEditorContent } from './QueryEditor/QueryEditorContent';
 import { QueryCoauthoringSessionEngine } from './QueryEditor/coauthoring/QueryCoauthoringSessionEngine';
 import {
   type QueryCoauthoringClosedReason,
+  type QueryCoauthoringEntryBaseline,
   type QueryCoauthoringRange,
   type QueryCoauthoringSession,
 } from './QueryEditor/coauthoring/queryCoauthoringContracts';
@@ -419,13 +420,15 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     refId: string,
     ranges: QueryCoauthoringRange[] = [],
     select?: (refId: string) => void,
-    sessionId?: string
+    sessionId?: string,
+    entry?: QueryCoauthoringEntryBaseline
   ): QueryCoauthoringSession => {
     return QueryCoauthoringSessionEngine.getOrCreate(this.state.panelRef.resolve()).enter(
       refId,
       ranges,
       select,
-      sessionId
+      sessionId,
+      entry
     );
   };
 

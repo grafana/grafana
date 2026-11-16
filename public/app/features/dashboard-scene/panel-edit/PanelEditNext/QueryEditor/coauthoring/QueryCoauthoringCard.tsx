@@ -2,7 +2,7 @@ import { t } from '@grafana/i18n';
 import { Badge, Button, Stack } from '@grafana/ui';
 
 import {
-  isQueryCoauthoringV2Active,
+  isQueryCoauthoringSurfaceActive,
   canEnterCoauthoring,
   requestCoauthoringEntry,
   requestCoauthoringResume,
@@ -12,7 +12,7 @@ import { useCoauthoringSurface, useCoauthoringCardHealth } from './useCoauthorin
 export function QueryCoauthoringCard({ refId }: { refId: string }) {
   const surface = useCoauthoringSurface();
   const health = useCoauthoringCardHealth(refId);
-  if (!surface || !isQueryCoauthoringV2Active()) {
+  if (!surface || !isQueryCoauthoringSurfaceActive()) {
     return null;
   }
   const target = { ...surface.target, refId };
@@ -22,9 +22,9 @@ export function QueryCoauthoringCard({ refId }: { refId: string }) {
   return (
     <span>
       <Stack gap={0.5}>
-        {proposed && <Badge color="blue" text={t('query-coauthoring-v2.proposed', 'Proposed')} />}
-        {health.error && <Badge color="red" text={t('query-coauthoring-v2.error', 'Error')} />}
-        {health.noData && <Badge color="orange" text={t('query-coauthoring-v2.no-data', 'No data')} />}
+        {proposed && <Badge color="blue" text={t('query-coauthoring.surface.proposed', 'Proposed')} />}
+        {health.error && <Badge color="red" text={t('query-coauthoring.surface.error', 'Error')} />}
+        {health.noData && <Badge color="orange" text={t('query-coauthoring.surface.no-data', 'No data')} />}
         {surface.focus === refId && surface.session ? (
           <Button
             size="sm"
@@ -35,7 +35,7 @@ export function QueryCoauthoringCard({ refId }: { refId: string }) {
               requestCoauthoringResume();
             }}
           >
-            {t('query-coauthoring-v2.resume', 'Resume')}
+            {t('query-coauthoring.surface.resume', 'Resume')}
           </Button>
         ) : (
           canEnterCoauthoring(target).ok && (
@@ -43,7 +43,7 @@ export function QueryCoauthoringCard({ refId }: { refId: string }) {
               size="sm"
               variant="secondary"
               icon="ai"
-              aria-label={t('query-coauthoring-v2.edit-query', 'Explain or modify query {{refId}}', { refId })}
+              aria-label={t('query-coauthoring.surface.edit-query', 'Explain or modify query {{refId}}', { refId })}
               onMouseDown={(event) => event.stopPropagation()}
               onClick={(event) => {
                 event.stopPropagation();

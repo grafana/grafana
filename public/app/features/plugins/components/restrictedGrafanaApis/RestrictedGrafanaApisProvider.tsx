@@ -4,7 +4,6 @@ import { useMemo, useSyncExternalStore, type PropsWithChildren, type ReactElemen
 import { RestrictedGrafanaApisContextProvider } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { getFeatureFlagClient } from '@grafana/runtime/internal';
-import { isQueryCoauthoringEnabled } from 'app/features/dashboard-scene/panel-edit/PanelEditNext/QueryEditor/coauthoring/queryCoauthoringApi';
 
 import { createDashboardMutationApi } from './dashboardMutation/dashboardMutationApi';
 import { getRestrictedGrafanaApis, isComposerEnabled } from './restrictedGrafanaApis';
@@ -19,10 +18,9 @@ export function RestrictedGrafanaApisProvider({
   // Composer exists only while one of its flags is on; flipping it off removes the API (and ends open
   // sessions). Each resource still checks its own flag.
   const composerEnabled = useComposerEnabled();
-  const coauthoringEnabled = useSyncExternalStore(subscribeToFlagChanges, isQueryCoauthoringEnabled);
   const apis = useMemo(
-    () => getRestrictedGrafanaApis({ composerEnabled, coauthoringEnabled, dashboardMutationAPI: mutationApi }),
-    [mutationApi, composerEnabled, coauthoringEnabled]
+    () => getRestrictedGrafanaApis({ composerEnabled, dashboardMutationAPI: mutationApi }),
+    [mutationApi, composerEnabled]
   );
   return (
     <RestrictedGrafanaApisContextProvider

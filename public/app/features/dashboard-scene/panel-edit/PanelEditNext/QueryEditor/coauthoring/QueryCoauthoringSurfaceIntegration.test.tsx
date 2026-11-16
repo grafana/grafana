@@ -36,8 +36,6 @@ import { ds1SettingsMock } from '../testUtils';
 import { QueryCoauthoringCard } from './QueryCoauthoringCard';
 import { requestCoauthoringEntry } from './queryCoauthoringApi';
 import {
-  isQueryCoauthoringAPI2,
-  isQueryCoauthoringSession2,
   isQueryCoauthoringAPI,
   isQueryCoauthoringSession,
   type QueryCoauthoringEditorHandle,
@@ -143,7 +141,11 @@ beforeEach(() => {
   marksSupported = true;
   jest.mocked(reportInteraction).mockClear();
   Object.defineProperty(navigator, 'userActivation', { configurable: true, value: { isActive: true } });
-  setTestFlags({ [FlagKeys.QueryeditorCoauthoringUi]: true, [FlagKeys.GrafanaVisualDesignRefresh]: true });
+  setTestFlags({
+    [FlagKeys.QueryeditorCoauthoringUi]: true,
+    [FlagKeys.GrafanaVisualDesignRefresh]: true,
+    [FlagKeys.GrafanaExtensionSidebarFloating]: true,
+  });
   jest.replaceProperty(config.bootData, 'settings', {
     ...config.bootData.settings,
     pluginRestrictedAPIsAllowList: { queryCoauthoring: ['grafana-assistant-app'] },
@@ -158,7 +160,7 @@ afterEach(() => {
 function api() {
   const apis: RestrictedGrafanaApisWithQueryCoauthoring = getRestrictedGrafanaApisAtLoad('grafana-assistant-app');
   if (!isQueryCoauthoringAPI(apis.queryCoauthoring)) {
-    throw new Error('Missing v1 API');
+    throw new Error('Missing coauthoring API');
   }
   return apis.queryCoauthoring;
 }
@@ -261,11 +263,25 @@ function setup(listener = true) {
       ),
   };
 }
-async function enter() {
+async function enterTarget(selectedTarget: { panelId: number; refId: string; dashboardUid?: string }) {
+  const entry = jest.fn();
+  const stop = api().onEnterRequested(entry);
+  try {
+    requestCoauthoringEntry(
+      { target: selectedTarget, ranges: [], intent: 'explain_or_modify', health: {} },
+      'query_button'
+    );
+    await waitFor(() => expect(entry).toHaveBeenCalledTimes(1));
+    return await api().enter(selectedTarget, { entryId: entry.mock.calls[0][0].entryId });
+  } finally {
+    stop();
+  }
+}
+async function enter(selectedTarget = target) {
   await waitFor(() => expect(api().canEnter(target)).toEqual({ ok: true }));
   let session: unknown;
   await act(async () => {
-    session = await api().enter(target);
+    session = await enterTarget(selectedTarget);
   });
   if (!isQueryCoauthoringSession(session)) {
     throw new Error('Invalid session handle');
@@ -277,7 +293,7 @@ async function propose(session: QueryCoauthoringSession, refId = 'B') {
   await act(async () => {
     const [result] = await session.stageProposal(
       [{ changes: [{ refId, text: '2' }] }, { changes: [{ refId, text: '3' }] }],
-      { baseRevision: session.getState().revision }
+      { baseContextGeneration: session.getState().contextGeneration, baseRevision: session.getState().revision }
     );
     if (result.status !== 'staged') {
       throw new Error(result.status);
@@ -288,7 +304,7 @@ async function propose(session: QueryCoauthoringSession, refId = 'B') {
   return id;
 }
 
-it('exposes only the allowed API under the flag, preserves v1 without a listener and switches back on unsubscribe', async () => {
+it('exposes only the allowed API under the flag, preserves inline coauthoring without a listener and switches back on unsubscribe', async () => {
   setup(false);
   expect(screen.getByLabelText('V1 registration')).toHaveTextContent('v1');
   expect(screen.getByLabelText('Host version')).toHaveTextContent('absent');
@@ -305,7 +321,7 @@ it('exposes only the allowed API under the flag, preserves v1 without a listener
   expect(screen.getByLabelText('V1 registration')).toHaveTextContent('v1');
   expect(cleanupEditor).toHaveBeenCalledTimes(1);
   act(() => setTestFlags({ [FlagKeys.QueryeditorCoauthoringUi]: false }));
-  expect(getRestrictedGrafanaApisAtLoad('grafana-assistant-app')).not.toHaveProperty('queryCoauthoring');
+  expect(api().getAvailability()).toEqual({ eligible: false });
 });
 
 it('forwards highlight ranges and shortcuts without selection, and emits Resume without ending a session', async () => {
@@ -316,6 +332,7 @@ it('forwards highlight ranges and shortcuts without selection, and emits Resume 
     notifySelection();
   });
   fireEvent.click(screen.getByRole('button', { name: 'Explain or modify' }));
+  await waitFor(() => expect(entry).toHaveBeenCalled());
   expect(entry).toHaveBeenLastCalledWith(
     expect.objectContaining({
       target,
@@ -333,7 +350,9 @@ it('forwards highlight ranges and shortcuts without selection, and emits Resume 
     selection = false;
     notifySelection();
   });
+  const count = entry.mock.calls.length;
   fireEvent.click(screen.getByRole('button', { name: 'Shortcut' }));
+  await waitFor(() => expect(entry).toHaveBeenCalledTimes(count + 1));
   expect(entry).toHaveBeenLastCalledWith(expect.objectContaining({ ranges: [] }));
   expect(session.signal.aborted).toBe(false);
 });
@@ -393,7 +412,7 @@ it.each(['exit', 'replaced', 'left_panel_edit', 'flag_off', 'focus_removed'] as 
         session.exit();
       }
       if (reason === 'replaced') {
-        await api().enter(target);
+        await enterTarget(target);
       }
       if (reason === 'left_panel_edit') {
         leavePanelEdit();
@@ -417,7 +436,6 @@ it.each(['exit', 'replaced', 'left_panel_edit', 'flag_off', 'focus_removed'] as 
 it('enforces activation through the restricted session and emits text-free lifecycle telemetry once', async () => {
   setup();
   await waitFor(() => expect(api().canEnter(target)).toEqual({ ok: true }));
-  fireEvent.click(screen.getByRole('button', { name: 'Explain or modify query B' }));
   const session = await enter();
   const id = await propose(session);
   Object.defineProperty(navigator, 'userActivation', { configurable: true, value: { isActive: false } });
@@ -467,7 +485,7 @@ it('rejects unknown editor handle versions while leaving the query editor usable
 });
 
 it.each(['missing', 'newer'])(
-  'keeps a query with a %s language contract visible and refuses entry or staging changes',
+  'keeps a query with a %s language contract visible for context and refuses staging changes',
   async (kind) => {
     const { datasource, canonical } = setup();
     const session = await enter();
@@ -476,18 +494,26 @@ it.each(['missing', 'newer'])(
       value: kind === 'missing' ? undefined : () => ({ version: 2 }),
     });
     await act(async () => canonical.setState({ queries: [...canonical.state.queries] }));
-    await waitFor(() => expect(api().canEnter(target)).toEqual({ ok: false, reason: 'unsupported_datasource' }));
+    expect(api().canEnter(target)).toEqual({ ok: true });
     expect(screen.getByRole('textbox', { name: 'Query text' })).toHaveValue('$A + 1');
     await act(async () => {
-      expect(await session.stageProposal([{ changes: [{ refId: 'B', text: '2' }] }], { baseRevision: 0 })).toEqual([
-        { status: 'unsupported' },
+      expect(
+        await session.stageProposal([{ changes: [{ refId: 'B', text: '2' }] }], {
+          baseContextGeneration: session.getState().contextGeneration,
+          baseRevision: 0,
+        })
+      ).toEqual([
+        {
+          status: 'unsupported',
+          issue: { kind: kind === 'missing' ? 'missing_language' : 'unsupported_language_version', refId: 'B' },
+        },
       ]);
     });
     expect(session.getState().queries).toEqual(original);
   }
 );
 
-it('shows upstream Error and No data only while v2 is active and gates Debug on broken health', async () => {
+it('shows upstream Error and No data only while the Surface is active and gates Debug on broken health', async () => {
   const { canonical, entry } = setup();
   await waitFor(() => expect(api().canEnter(target)).toEqual({ ok: true }));
   act(() => {
@@ -506,12 +532,15 @@ it('shows upstream Error and No data only while v2 is active and gates Debug on 
   });
   expect(screen.getByRole('button', { name: 'Debug query' })).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Debug query' }));
-  expect(entry).toHaveBeenCalledWith({
-    target: { dashboardUid: undefined, ...target },
-    ranges: [{ from: 0, to: 2 }],
-    intent: 'debug',
-    health: { A: 'error', B: 'ok' },
-  });
+  await waitFor(() => expect(entry).toHaveBeenCalled());
+  expect(entry).toHaveBeenCalledWith(
+    expect.objectContaining({
+      target: { dashboardUid: undefined, ...target },
+      ranges: [{ from: 0, to: 2 }],
+      intent: 'debug',
+      health: { A: 'error', B: 'ok' },
+    })
+  );
   act(() =>
     canonical.setState({ data: { ...canonical.state.data!, errors: [], series: [canonical.state.data!.series[1]] } })
   );
@@ -571,7 +600,7 @@ it('connects the real PanelEditNext context wrapper to the restricted session an
   await waitFor(() => expect(api().canEnter(panelTarget)).toEqual({ ok: true }));
   let session: unknown;
   await act(async () => {
-    session = await api().enter(panelTarget);
+    session = await enterTarget(panelTarget);
   });
   if (!isQueryCoauthoringSession(session)) {
     throw new Error('Invalid session');
@@ -617,11 +646,13 @@ it('retains the open session when the Assistant closes, collapses, moves, or unr
   act(() => resetExtensionSidebarPresentationForTests());
 });
 
-it('replaces an open session on a new query entry before the Assistant enters the new one', async () => {
+it('replaces the open session when the Assistant consumes a new query entry', async () => {
   setup();
   const session = await enter();
   await propose(session);
-  fireEvent.click(screen.getByRole('button', { name: 'Explain or modify query A' }));
+  await act(async () => {
+    await enterTarget({ ...target, refId: 'A' });
+  });
   expect(await session.closed).toBe('replaced');
   expect(screen.getByRole('textbox', { name: 'Query text' })).toHaveValue('$A + 1');
 });
@@ -736,28 +767,9 @@ it('starts a fresh session owner for a new edit of the same panel after disposin
   expect(await first.undo({})).toEqual({ status: 'closed' });
 });
 
-function api2() {
-  act(() =>
-    setTestFlags({
-      [FlagKeys.QueryeditorCoauthoringUi]: true,
-      [FlagKeys.GrafanaVisualDesignRefresh]: true,
-      [FlagKeys.GrafanaExtensionSidebarFloating]: true,
-    })
-  );
-  config.bootData.settings.pluginRestrictedAPIsAllowList = {
-    queryCoauthoring: ['grafana-assistant-app'],
-    queryCoauthoringV2: ['grafana-assistant-app'],
-  };
-  const apis: RestrictedGrafanaApisWithQueryCoauthoring = getRestrictedGrafanaApisAtLoad('grafana-assistant-app');
-  if (!isQueryCoauthoringAPI2(apis.queryCoauthoringV2)) {
-    throw new Error('Missing API2');
-  }
-  return apis.queryCoauthoringV2;
-}
-
-it('pins entry text/ranges to a single-use entryId and keeps API1 served in parallel', async () => {
+it('pins entry text/ranges to a single-use entryId and retains its immutable baseline', async () => {
   setup(false);
-  const next = api2();
+  const next = api();
   const entry = jest.fn();
   act(() => unlisten.push(next.onEnterRequested(entry)));
   expect(api().version).toBe(1);
@@ -787,8 +799,8 @@ it('pins entry text/ranges to a single-use entryId and keeps API1 served in para
   await act(async () => {
     handle = await next.enter(target, { entryId: second.entryId });
   });
-  if (!isQueryCoauthoringSession2(handle)) {
-    throw new Error('Expected Session2');
+  if (!isQueryCoauthoringSession(handle)) {
+    throw new Error('Expected coauthoring session');
   }
   expect(handle.getState().sessionId).toBe(second.entryId);
   expect(await handle.getContext({ baseRevision: 0 })).toMatchObject({
@@ -803,12 +815,11 @@ it('pins entry text/ranges to a single-use entryId and keeps API1 served in para
 
 it('does not deliver an obsolete rapid click and preserves a retained session across detach and Resume', async () => {
   const { hide, show } = setup(false);
-  const next = api2();
+  const next = api();
   const entry = jest.fn();
-  const legacyEntry = jest.fn();
   const resume = jest.fn();
   act(() => {
-    unlisten.push(next.onEnterRequested(entry), api().onEnterRequested(legacyEntry), next.onResumeRequested(resume));
+    unlisten.push(next.onEnterRequested(entry), next.onResumeRequested(resume));
   });
   await waitFor(() => expect(next.canEnter(target)).toEqual({ ok: true }));
   act(() => {
@@ -816,14 +827,13 @@ it('does not deliver an obsolete rapid click and preserves a retained session ac
     fireEvent.click(screen.getByText('Shortcut'));
   });
   await waitFor(() => expect(entry).toHaveBeenCalledTimes(1));
-  expect(legacyEntry).toHaveBeenCalledTimes(0);
   expect(entry.mock.calls[0][0].ranges).toEqual([]);
   let handle: unknown;
   await act(async () => {
     handle = await next.enter(entry.mock.calls[0][0].target, { entryId: entry.mock.calls[0][0].entryId });
   });
-  if (!isQueryCoauthoringSession2(handle)) {
-    throw new Error('Expected Session2');
+  if (!isQueryCoauthoringSession(handle)) {
+    throw new Error('Expected coauthoring session');
   }
   act(() => hide());
   expect(handle.signal.aborted).toBe(false);
@@ -835,9 +845,9 @@ it('does not deliver an obsolete rapid click and preserves a retained session ac
   expect(await handle.closed).toBe('exit');
 });
 
-it('shuts down Session2 when floating capability is removed and restores legacy fallback on unsubscribe', async () => {
+it('shuts down session when floating capability is removed and restores legacy fallback on unsubscribe', async () => {
   setup(false);
-  const next = api2();
+  const next = api();
   const entry = jest.fn();
   let stop = () => {};
   act(() => {
@@ -851,8 +861,8 @@ it('shuts down Session2 when floating capability is removed and restores legacy 
   await act(async () => {
     handle = await next.enter(entry.mock.calls[0][0].target, { entryId: entry.mock.calls[0][0].entryId });
   });
-  if (!isQueryCoauthoringSession2(handle)) {
-    throw new Error('Expected Session2');
+  if (!isQueryCoauthoringSession(handle)) {
+    throw new Error('Expected coauthoring session');
   }
   act(() =>
     setTestFlags({
@@ -885,7 +895,12 @@ it('retains supported rows during asynchronous refresh and atomically replaces r
   const { canonical, datasource } = setup();
   await waitFor(() => expect(api().canEnter(target)).toEqual({ ok: true }));
   let finish!: (datasource: ReturnType<typeof getMockDataSource>) => void;
+  act(() => {
+    selection = true;
+    notifySelection();
+  });
   mockGetDataSource
+    .mockResolvedValueOnce(datasource)
     .mockImplementationOnce(
       () =>
         new Promise((resolve) => {
@@ -899,13 +914,11 @@ it('retains supported rows during asynchronous refresh and atomically replaces r
   await act(async () => {
     finish(getMockDataSource());
   });
-  await waitFor(() =>
-    expect(api().canEnter({ ...target, refId: 'A' })).toEqual({ ok: false, reason: 'unsupported_datasource' })
-  );
+  await waitFor(() => expect(screen.queryByRole('button', { name: 'Explain or modify' })).not.toBeInTheDocument());
   expect(api().canEnter(target)).toEqual({ ok: true });
 });
 
-it('keeps layout-registered editor selection when enabling v2 and replacing query identity', async () => {
+it('keeps layout-registered editor selection when enabling the Surface and replacing query identity', async () => {
   const { canonical } = setup(false);
   const entry = jest.fn();
   act(() => {
@@ -919,6 +932,7 @@ it('keeps layout-registered editor selection when enabling v2 and replacing quer
     notifySelection();
   });
   fireEvent.click(screen.getByRole('button', { name: 'Explain or modify' }));
+  await waitFor(() => expect(entry).toHaveBeenCalled());
   expect(entry).toHaveBeenLastCalledWith(
     expect.objectContaining({ target: expect.objectContaining({ refId: 'C' }), ranges: [{ from: 0, to: 2 }] })
   );
@@ -936,7 +950,7 @@ it('keeps canonical error tooltip text while a preview reports a different error
   act(() => canonical.setState({ data: canonicalData }));
   let session: unknown;
   await act(async () => {
-    session = await api().enter({ ...target, dashboardUid: dashboard.state.uid });
+    session = await enterTarget({ ...target, dashboardUid: dashboard.state.uid });
   });
   if (!isQueryCoauthoringSession(session)) {
     throw new Error('Missing session');
@@ -953,7 +967,7 @@ it('keeps canonical error tooltip text while a preview reports a different error
   expect(screen.getByRole('tooltip')).not.toHaveTextContent('Preview-only failure');
 });
 
-it('hands projection from retained v2 to v1 and back without adopting v1 data as canonical', async () => {
+it('hands projection from the retained Surface to inline coauthoring and back without adopting inline data as canonical', async () => {
   const { canonical, pane } = setup();
   const session = await enter();
   setRunRequest((_ds, request) => {

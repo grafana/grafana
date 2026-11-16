@@ -825,8 +825,7 @@ describe('coauthoring Accept and Assistant checkpoint history', () => {
       const runner = getQueryRunnerFor(panel)!;
       setRunRequest((_ds, request) => of({ request, state: LoadingState.Done, series: [], timeRange: request.range }));
       engine = QueryCoauthoringSessionEngine.getOrCreate(panel);
-      const legacy = engine.enter('A');
-      const session = engine.asVersion2(legacy, {
+      const session = engine.enter('A', [], undefined, undefined, {
         refId: 'A',
         revision: engine.getRevision(),
         contextGeneration: engine.getContextGeneration(),
@@ -907,7 +906,7 @@ describe('coauthoring Accept and Assistant checkpoint history', () => {
   });
 });
 
-describe('Session2 Accept and server reload admission', () => {
+describe('Coauthoring Accept and server reload admission', () => {
   it.each([false, true])('keeps an accepted Panel Edit query unsaved with plugin history=%s', async (pluginHistory) => {
     setTestFlags({ dashboardNewLayouts: true, 'assistant.dashboard.artifacts': true });
     cachedPanelPlugin = getPanelPlugin({ id: 'timeseries' });
@@ -960,8 +959,7 @@ describe('Session2 Accept and server reload admission', () => {
       const panel = openPanelEdit(scene, 'panel-1');
       const runner = getQueryRunnerFor(panel)!;
       engine = QueryCoauthoringSessionEngine.getOrCreate(panel);
-      const legacy = engine.enter('A');
-      const session = engine.asVersion2(legacy, {
+      const session = engine.enter('A', [], undefined, undefined, {
         refId: 'A',
         revision: engine.getRevision(),
         contextGeneration: engine.getContextGeneration(),

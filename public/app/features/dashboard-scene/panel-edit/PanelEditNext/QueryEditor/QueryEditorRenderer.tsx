@@ -67,7 +67,7 @@ export function QueryEditorPanel({
   runQueries,
   startQueryPreview,
 }: QueryEditorPanelProps) {
-  const v2 = useCoauthoringEditor(query, queries);
+  const coauthoring = useCoauthoringEditor(query, queries);
   const coauthoringFlag = useBooleanFlagDetails(FlagKeys.QueryeditorCoauthoringUi, false);
   const providerStatus = useOpenFeatureClientStatus();
   const coauthoringEnabled = coauthoringFlag.value;
@@ -109,12 +109,12 @@ export function QueryEditorPanel({
     startQueryPreview,
   });
 
-  const revertV1 = proposalTransaction.revert;
+  const revertInline = proposalTransaction.revert;
   useEffect(() => {
-    if (v2.active) {
-      revertV1();
+    if (coauthoring.active) {
+      revertInline();
     }
-  }, [v2.active, revertV1]);
+  }, [coauthoring.active, revertInline]);
 
   const coauthoringHost = useMemo(
     () => ({
@@ -188,34 +188,34 @@ export function QueryEditorPanel({
   const { datasource, dsSettings } = queryDsData;
   const internalCoauthoringProps: InternalQueryEditorCoauthoringPropsV1 = {
     unstable_queryEditorCoauthoringV1:
-      coauthoringEnabled && !v2.active && coauthoringSupported ? coauthoringRegistration : undefined,
+      coauthoringEnabled && !coauthoring.active && coauthoringSupported ? coauthoringRegistration : undefined,
   };
   const Editor: ComponentType<QueryEditorPropsWithCoauthoring<ComponentProps<typeof QueryEditorComponent>>> =
     QueryEditorComponent;
   return (
     <>
-      {v2.toolbar}
+      {coauthoring.toolbar}
       <DataSourcePluginContextProvider instanceSettings={dsSettings}>
         <ErrorBoundaryAlert boundaryName="query-editor-renderer">
           <Editor
             key={coauthoringIdentity}
             {...internalCoauthoringProps}
-            {...(v2.host ? { queryCoauthoring: v2.host } : {})}
+            {...(coauthoring.host ? { queryCoauthoring: coauthoring.host } : {})}
             app={CoreApp.PanelEditor}
             data={filteredData}
             datasource={datasource}
             onAddQuery={addQuery}
             onChange={(updated) => {
-              if (!v2.active || !isEqual(updated, v2.editorQuery)) {
+              if (!coauthoring.active || !isEqual(updated, coauthoring.editorQuery)) {
                 proposalTransaction.onChange(updated);
               }
             }}
             onRunQuery={proposalTransaction.run}
-            queries={v2.active ? v2.editorQueries : proposalTransaction.editorQueries}
-            query={(v2.active ? v2.editorQuery : proposalTransaction.editorQuery) ?? query}
+            queries={coauthoring.active ? coauthoring.editorQueries : proposalTransaction.editorQueries}
+            query={(coauthoring.active ? coauthoring.editorQuery : proposalTransaction.editorQuery) ?? query}
             range={filteredData?.timeRange}
           />
-          {!v2.active && coauthoringAdapter && (
+          {!coauthoring.active && coauthoringAdapter && (
             <QueryCoauthoringSurface
               adapter={coauthoringAdapter}
               host={coauthoringHost}

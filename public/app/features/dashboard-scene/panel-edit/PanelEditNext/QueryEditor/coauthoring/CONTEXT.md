@@ -1,84 +1,11 @@
 # PanelEditNext query coauthoring
 
-## Scope
+Core owns entry UI, explicit query selection, session lifetime, previews and telemetry. A datasource supplies private language and editor contracts, both version 1. These contracts stay internal until a reviewed extension point replaces them.
 
-Query coauthoring is currently a `PanelEditNext` feature. The supported entry points are a toolbar shown for an editor selection and the editor's `Cmd/Ctrl + .` shortcut. A shortcut invocation without a selection focuses the whole query.
+The allowlisted `queryCoauthoring` restricted API (version 1) remains discoverable while disabled. Its availability observes the coauthoring flag, visual refresh and floating capability independently of listeners, panels and Assistant presentation. Entry UI requires an eligible registered listener. Otherwise `QueryEditorRenderer` retains the existing private inline adapter and `QueryCoauthoringSurface`, whose `useQueryCoauthoringSession` uses `useInlineAssistant`.
 
-## Ownership
+Entry IDs bind a single click's immutable text and ranges to its session. Sessions provide canonical context on demand; query revision and resolver context generation are separate staging fences. The optional language support hook determines editability: absent support is unknown, never inferred from guidance or speculative preparation. Descriptions remain readable for read-only and unknown adapters.
 
-The query row owns the coauthoring transaction:
+`PanelEditor` owns the engine through pane and Assistant remounts. Closing, collapsing or moving Assistant preserves the session; Resume uses the retained handle. Exit, panel departure, Focus removal, replacement or capability loss ends it. Proposed typed queries stay outside canonical runner queries until Accept. Manual edits stop the preview, and editor marks are cleared when projection ends.
 
-- the typed baseline query
-- the proposed typed query
-- the Core-owned toolbar and popover
-- the temporary panel-data preview
-- accept, discard, and manual-edit cancellation
-
-The Prometheus query editor registers a row-scoped `QueryEditorCoauthoringAdapterV1`. The adapter reports editor facts and constructs PromQL-specific context and typed proposals. It does not render Core UI or stage an editor-specific preview.
-
-## Private seam
-
-For this PanelEditNext experiment, Core passes the optional `unstable_queryEditorCoauthoringV1` prop only to the `prometheus` plugin type. Amazon Managed Service for Prometheus remains outside this experiment even though it reuses Prometheus editor modules. The interface is private to this paired Core and Prometheus implementation: each repository keeps a structurally identical copy rather than publishing an experimental contract from `@grafana/data`. An older Core omits the prop, and an older Prometheus plugin ignores it, so mixed versions degrade to the ordinary query editor.
-
-Before a second datasource adapter is added, promote a reviewed, generalized interface into `@grafana/data`; do not copy this private prop or either repository's local contract. The same promotion review is required before query coauthoring graduates from this experiment to a supported plugin extension point.
-
-## Internal modules
-
-`QueryCoauthoring` remains the transaction owner and render shell. Its internal implementation is split by responsibility:
-
-- `useQueryCoauthoringInvocation` owns atomic invocation loading, baseline synchronization, and cancellation.
-- `useQueryCoauthoringSession` routes Modify and on-demand Explain through the session reducer. Explain has no query-edit tools or preview side effects.
-- `createQueryCoauthoringRequest` owns Assistant tools and converts completion callbacks into typed clarification, fallback, proposal, ignored, or error outcomes.
-- `useQueryCoauthoringViewport` owns portal measurement and viewport/scroll observation.
-- `QueryCoauthoringViews` owns the presentational states.
-
-These are private implementation modules, not datasource extension seams. The datasource-facing interface remains `QueryEditorCoauthoringAdapterV1`.
-
-## Preview invariant
-
-Proposals must not enter the canonical `SceneQueryRunner.state.queries` until Accept. `startQueryPreview` clones the canonical runner, replaces only the selected query in the clone, and projects the clone's `PanelData` back into the canonical runner. Preview status comes directly from the clone because projected scene updates may batch away an intermediate loading state. Saving, sharing, query-library actions, and other query serializers continue to see the baseline query during preview.
-
-## Lifecycle
-
-1. The datasource publishes a selection or shortcut invocation.
-2. Core reads the atomic typed baseline and synchronizes any unblurred editor contents.
-3. Core asks the datasource to validate and construct a typed proposal.
-4. Core passes the proposal through normal query-editor props and starts the isolated panel preview.
-5. Accept commits the proposal. Discard disposes the preview and reruns the baseline.
-6. A genuine editor change or explicit query run during a proposal cancels coauthoring; an editor change then becomes normal query state.
-
-Only one transaction is owned by a given query row. Cross-row session coordination is intentionally outside this experiment.
-
-## Coauthoring v2 contract placement
-
-v2 intentionally keeps its contracts internal to Core in `queryCoauthoringContracts.ts`, next to the session and editor integration. This is an exception to the promotion-before-a-second-adapter rule above: expressions is the second adapter and lives in Core. No v2 contract is published in `@grafana/data`, `@grafana/data/unstable` or `@grafana/runtime`, or added to `DataSourceApi`.
-
-Prometheus and the Assistant keep structural copies of the declarations they use, naming that source file and their removal criteria. Language and editor contracts remain `version: 1`. The parallel restricted API and session contracts described below use version 2. Every side checks the contract version at runtime. A mirrored declaration change requires a coordinated update or a version bump. v2 reuses Composer vocabulary but shares no object or code with Composer.
-
-After Prometheus and expressions implement the contracts, compare their needs and promote the smallest surviving language and editor interfaces with an owner and breaking-change policy. Remove each copy when its repository pins a release containing the promoted types. Review the session contract separately; it stays private longest.
-
-## v2 session engine
-
-`PanelDataPaneNext.startCoauthoringSession` uses the engine retained per `VizPanel` and replaces any open session. `PanelEditor` disposes that engine when panel edit ends or the panel data provider changes. Query-pane and React remounts do not own its lifetime. The internal `QueryCoauthoringSessionEngine` owns the canonical revision and health subscription; a session owns its Original, Proposal, preview runs and one-level Undo. These contracts remain internal; the Core Surface exposes the versioned restricted entry point.
-
-- `getCoauthoringEditorQueries` returns the whole previewed Option for the editor surface. Passing an edited proposed row through `updateSelectedQuery` preserves that row as canonical state, stops the preview and leaves the other rows at their canonical Original.
-- Explicit `runQueries` invalidates the Proposal even with unchanged text. Mutations that also run queries advance the revision for the mutation, once.
-- `QueryCoauthoringRuns` retains a separate copy of cached and projected frame values, schedules Options in rank order, and never projects a background run. A time-range change replaces the pass without advancing the revision.
-- Canonical health derives only from canonical results. Projection and restoration retain data and series identity so Option layer re-emits are not interpreted as canonical runs. Layer updates on Original refresh its snapshot.
-- `closeCoauthoringSession` supplies the flag-off and panel-leave reasons; `PanelEditor` deactivation disposes the owner. Removing or renaming the Focus closes the session, while other canonical changes make the Proposal stale.
-
-The Surface work wires listener gating, selection, row/editor projection, the restricted API, flags, badges and telemetry. It must use the session state subscription to rerender proposed rows and pass the editor selection callback when entering; preview itself never changes the selected query. Closing or moving the Assistant must not call the session's exit operation.
-
-## v2 Core Surface
-
-The restricted `queryCoauthoring` API is declared internally and shared through the existing plugin allow/block lists, including the Assistant allow-list entry. The legacy API1 field exists while `queryeditor.coauthoringUi` is enabled. The parallel `queryCoauthoringV2` API2 field is always delivered to allowed consumers, including while disabled. This explicitly changes discovery lifetime only for the new field; API1/Session1 remain served unchanged. API2 availability observes the coauthoring flag, visual refresh and floating capability independently of listeners, panels and Assistant presentation. Entry UI still requires a registered supported listener, otherwise Core retains the private v1 prop and inline flow.
-
-Session2 reads canonical descriptions on demand and reports authoritative adapter editability, dependencies and scoped problems. Query revisions track query edits; a separate context generation fences resolver, time and variable changes. Staging requires both identities. Entry IDs pin a single click's text/ranges to its session and are consumed once; selected offsets are never reused against different text. Language adapters without the optional support hook remain readable with unknown editability, and cannot stage changes through Session2.
-
-`QueryEditorContextWrapper` mounts the panel with `useMountedCoauthoringPanel`. It forwards explicit selection to the currently attached editor and resolves the per-query language contracts with runtime version guards. The API passes entry ranges and the entry-click session ID to the existing engine. The Surface subscribes to session snapshots to project proposed editor text and row state. Editor handles are version-checked, unsubscribed, and cleared on disposal; optional line marks replace the current Option and clear when its preview ends. Preview never selects a query.
-
-The shared engine remains the session owner across row switches, pane remounts and Assistant changes. The React bridge only attaches the current pane and selection callback; it neither closes nor disposes the owner on unmount. Restricted entry checks the actual active `PanelEditor`. A session-scoped flag subscription remains installed while the pane is detached and closes the session as `flag_off`; panel departure, Focus removal, explicit Exit and replacement retain the engine's lifecycle rules. Entry and Resume dispatch separate listener requests. Resuming an ended session is impossible. Accept invalidates full-scene undo/redo snapshots and earlier closures tied to their replaced trees; newer standalone actions remain available. An open batch containing such a snapshot is invalidated as a unit.
-
-Core reports the existing coauthoring interaction names with `sessionId` and no prompt/query text. New session-open and Proposal-staged events connect the `query_coauthoring` journey's entry and first-preview-outcome steps under `panel_edit`. Only the user entry handler starts a Faro user action.
-
-Local integration tests use the restricted API, mounted editor-host seam and real PanelEditNext context wrapper with the existing engine and expressions contract. The test editor is a contract harness, not the deployed Prometheus editor or Assistant. Their hosted integration acceptance remains separate.
+Accept invalidates full-scene undo/redo snapshots and their obsolete tree-bound predecessors. A mixed batch containing such a snapshot is dropped as a unit; newer standalone actions and the session's own Undo remain available.

@@ -13,7 +13,7 @@ import {
   useQueryEditorTypeConfig,
 } from '../../QueryEditorContext';
 import { QueryCoauthoringCard } from '../../coauthoring/QueryCoauthoringCard';
-import { isQueryCoauthoringV2Active } from '../../coauthoring/queryCoauthoringApi';
+import { isQueryCoauthoringSurfaceActive } from '../../coauthoring/queryCoauthoringApi';
 import { useCoauthoringCardHealth } from '../../coauthoring/useCoauthoringSurface';
 import { usePanelScopedVars } from '../../hooks/usePanelScopedVars';
 import { getEditorType } from '../../utils';
@@ -46,7 +46,7 @@ export const QueryCard = ({ query }: { query: DataQuery }) => {
   const isHidden = !!query.hide;
 
   const item = queryToActionItem(query, {
-    error: isQueryCoauthoringV2Active()
+    error: isQueryCoauthoringSurfaceActive()
       ? health.error
         ? (health.errorMessage ?? t('query-coauthoring-v2.error', 'Error'))
         : undefined
