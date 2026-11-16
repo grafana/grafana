@@ -1738,6 +1738,17 @@ describe.each([
     expect(sidebar.state.openPane).toBeInstanceOf(ElementEditPane);
   });
 
+  it('when selecting an inactive tab after a panel in another tab, the tab becomes selected', () => {
+    const { sidebar, tab2, tab1Viz } = setupWithTwoTabs();
+    setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardSidebarExplicitOpen': enabled });
+    sidebar.selectObject(tab1Viz);
+    expect(tab2.isCurrentTab()).toBe(false);
+
+    sidebar.selectObject(tab2);
+
+    expect(sidebar.getSelectedObject()?.state.key).toBe(tab2.state.key);
+  });
+
   it('when opening settings for another element, clears the new-element autofocus request', () => {
     const { sidebar, panel, row } = buildPopoverSelectionScene();
     sidebar.openElementSettings(panel);

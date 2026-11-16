@@ -600,8 +600,14 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     const id = obj.state.key!;
     const hasItem = this.state.selectionContext.selected.find((i) => i.id === id);
 
-    // Special logic for tabs only select tab of open pane is not already open or tab is already active
-    if (!force && !this.state.openPane && obj instanceof TabItem && !obj.isCurrentTab()) {
+    const sidebarExplicitOpen = getFeatureFlagClient().getBooleanValue(
+      FlagKeys.GrafanaDashboardSidebarExplicitOpen,
+      false
+    );
+
+    // Special logic for tabs only select tab of open pane is not already open or tab is already active.
+    // With explicit open, a canvas click doesn't open the pane, so inactive tabs must stay selectable.
+    if (!sidebarExplicitOpen && !force && !this.state.openPane && obj instanceof TabItem && !obj.isCurrentTab()) {
       return;
     }
 
@@ -609,11 +615,6 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     if (obj.getRoot() !== this.getRoot() || obj.parent === this) {
       selectedDisconnectedObject = obj;
     }
-
-    const sidebarExplicitOpen = getFeatureFlagClient().getBooleanValue(
-      FlagKeys.GrafanaDashboardSidebarExplicitOpen,
-      false
-    );
 
     // Keep the selection when opening element settings from a closed sidebar or another pane.
     if ((!sidebarExplicitOpen || this.state.openPane) && this.state.openPane?.getId() !== 'element') {
