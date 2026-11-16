@@ -271,14 +271,14 @@ export function sortAlerts(sortOrder: SortOrder, alerts: Alert[]): Alert[] {
       alertInstanceKey(alert).toLocaleLowerCase(),
     ]);
   } else if (sortOrder === SortOrder.TimeAsc) {
-    return sortBy(alerts, (alert) => [
-      new Date(alert.activeAt) || new Date(),
-      alertInstanceKey(alert).toLocaleLowerCase(),
+    return sortBy(alerts, [
+      (alert) => new Date(alert.activeAt).getTime(),
+      (alert) => alertInstanceKey(alert).toLocaleLowerCase(),
     ]);
   } else if (sortOrder === SortOrder.TimeDesc) {
-    return sortBy(alerts, (alert) => [
-      new Date(alert.activeAt) || new Date(),
-      alertInstanceKey(alert).toLocaleLowerCase(),
+    return sortBy(alerts, [
+      (alert) => new Date(alert.activeAt).getTime(),
+      (alert) => alertInstanceKey(alert).toLocaleLowerCase(),
     ]).reverse();
   }
   const result = sortBy(alerts, (alert) => alertInstanceKey(alert).toLocaleLowerCase());
