@@ -1,10 +1,11 @@
 import { useLocation } from 'react-router-dom-v5-compat';
 
-import { type NavModelItem } from '@grafana/data';
+import { type NavIndex, type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { useSelector } from 'app/types/store';
 
+import { shouldUseGmaOnlyListView } from '../featureToggles';
 import { isAdmin } from '../utils/environment';
 
 import { useAlertRulesExtensionTabs } from './extensions';
@@ -14,13 +15,27 @@ import { useAlertRulesExtensionTabs } from './extensions';
  * Use this for pages that need to reference the Alert rules navigation.
  */
 export function getAlertRulesNavId(): string {
-  return config.featureToggles.alertingNavigationV2 ? 'alert-rules' : 'alert-list';
+  return shouldUseGmaOnlyListView() || config.featureToggles.alertingNavigationV2 ? 'alert-rules' : 'alert-list';
 }
 
 export function useAlertRulesNav() {
   const location = useLocation();
   const navIndex = useSelector((state) => state.navIndex);
   const extensionTabs = useAlertRulesExtensionTabs();
+
+  if (shouldUseGmaOnlyListView()) {
+    return buildGmaRulesNav(
+      navIndex,
+      'alert-rules',
+      location.pathname,
+      {
+        id: 'alert-rules-list',
+        text: t('alerting.navigation.alert-rules', 'Alert rules'),
+        url: '/alerting/rules/alert',
+      },
+      extensionTabs
+    );
+  }
 
   // Check if V2 navigation is enabled
   const useV2Nav = config.featureToggles.alertingNavigationV2;
@@ -75,5 +90,36 @@ export function useAlertRulesNav() {
   return {
     navId: 'alert-rules',
     pageNav,
+  };
+}
+
+export function useRecordingRulesNav() {
+  const location = useLocation();
+  const navIndex = useSelector((state) => state.navIndex);
+
+  return buildGmaRulesNav(navIndex, 'recording-rules', location.pathname, {
+    id: 'recording-rules-list',
+    text: t('alerting.navigation.recording-rules', 'Recording rules'),
+    url: '/alerting/rules/recording',
+  });
+}
+
+function buildGmaRulesNav(
+  navIndex: NavIndex,
+  navId: string,
+  pathname: string,
+  pageTab: NavModelItem,
+  extraTabs: NavModelItem[] = []
+) {
+  const parentItem = navIndex[navId];
+  if (!parentItem) {
+    return { navId };
+  }
+
+  const children = [{ ...pageTab, active: pathname === pageTab.url, parentItem }, ...extraTabs];
+
+  return {
+    navId,
+    pageNav: { ...parentItem, children: children.length > 1 ? children : undefined },
   };
 }
