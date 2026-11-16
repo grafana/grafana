@@ -52,11 +52,11 @@ Browse Grafana at http://localhost:3000 (admin/admin).
 
 Settings, all optional, read from the environment or a `.env` file next to `docker-compose.yaml`:
 
-| Variable | Default | Purpose |
-| --- | --- | --- |
-| `GRAFANA_IMAGE` | `grafana/grafana-oss:dev` | Grafana image for all three instances |
-| `GRAFANA_DB` | `mysql` | `mysql` or `postgres` |
-| `HTTP_PORT` | `3000` | Host port for nginx |
+| Variable                     | Default                   | Purpose                                                                                           |
+| ---------------------------- | ------------------------- | ------------------------------------------------------------------------------------------------- |
+| `GRAFANA_IMAGE`              | `grafana/grafana-oss:dev` | Grafana image for all three instances                                                             |
+| `GRAFANA_DB`                 | `mysql`                   | `mysql` or `postgres`                                                                             |
+| `HTTP_PORT`                  | `3000`                    | Host port for nginx                                                                               |
 | `SECRETS_MANAGER_SECRET_KEY` | `ha-test-nats-secret-key` | `[secrets_manager.encryption.secret_key.v1] secret_key`, which encrypts the NATS route credential |
 
 ## Smoke test
