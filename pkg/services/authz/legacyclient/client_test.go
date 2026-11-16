@@ -37,7 +37,9 @@ func legacyRequest() LegacyGetUserPermissionsRequest {
 
 func TestClient_LegacyGetUserPermissionsCompleteSnapshot(t *testing.T) {
 	rpc := &legacyTestRPC{responses: []*authzv1.LegacyGetUserPermissionsResponse{
+		{},
 		{Permissions: []*authzv1.LegacyUserPermission{{Action: "users:create"}}},
+		{},
 		{Permissions: []*authzv1.LegacyUserPermission{{Action: "users:create"}, {Action: "dashboards:read", Scope: "*"}}},
 	}}
 	client := &LegacyClient{clientV1: rpc, tracer: noop.Tracer{}}
@@ -73,6 +75,10 @@ func TestClient_LegacyGetUserPermissionsStreamFailures(t *testing.T) {
 		{name: "empty chunk", responses: []*authzv1.LegacyGetUserPermissionsResponse{{}}},
 		{name: "nil chunk", responses: []*authzv1.LegacyGetUserPermissionsResponse{nil}, wantError: true},
 		{name: "nil permission", responses: []*authzv1.LegacyGetUserPermissionsResponse{{Permissions: []*authzv1.LegacyUserPermission{nil}}}, wantError: true},
+		{name: "nil permission after valid chunk", responses: []*authzv1.LegacyGetUserPermissionsResponse{
+			{Permissions: []*authzv1.LegacyUserPermission{{Action: "users:create"}}},
+			{Permissions: []*authzv1.LegacyUserPermission{nil}},
+		}, wantError: true},
 		{name: "unsupported server", openErr: status.Error(codes.Unimplemented, "old server"), wantError: true},
 		{name: "failure after chunk", responses: []*authzv1.LegacyGetUserPermissionsResponse{{Permissions: []*authzv1.LegacyUserPermission{{Action: "users:create"}}}}, recvErr: status.Error(codes.Unavailable, "interrupted"), wantError: true},
 		{name: "canceled", recvErr: context.Canceled, wantError: true},

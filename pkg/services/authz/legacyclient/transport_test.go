@@ -192,12 +192,12 @@ func (s *legacyTransportServer) LegacyGetUserPermissions(req *authzv1.LegacyGetU
 	return s.handle(req, stream)
 }
 
-func newLegacyTransportClient(t *testing.T, handler authzv1.LegacyAuthzServiceServer) *LegacyClient {
+func newLegacyTransportClient(t testing.TB, handler authzv1.LegacyAuthzServiceServer) *LegacyClient {
 	t.Helper()
 	return NewLegacyClient(newLegacyTransportConn(t, handler))
 }
 
-func newLegacyTransportConn(t *testing.T, handler authzv1.LegacyAuthzServiceServer) *grpc.ClientConn {
+func newLegacyTransportConn(t testing.TB, handler authzv1.LegacyAuthzServiceServer) *grpc.ClientConn {
 	t.Helper()
 	listener := bufconn.Listen(1024 * 1024)
 	server := grpc.NewServer()

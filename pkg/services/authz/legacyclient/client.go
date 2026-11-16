@@ -97,10 +97,23 @@ func (c *LegacyClient) LegacyGetUserPermissions(ctx context.Context, caller type
 		span.RecordError(err)
 		return LegacyGetUserPermissionsResponse{}, err
 	}
-	var result LegacyGetUserPermissionsResponse
+	// Buffer compact action/scope chunks instead of repeatedly growing the complete result.
+	// Errors still discard the entire snapshot, and protobuf messages can be released after each receive.
+	var chunks [][]types.Permission
+	permissionCount := 0
 	for {
 		chunk, err := stream.Recv()
 		if errors.Is(err, io.EOF) {
+			if len(chunks) == 1 {
+				return LegacyGetUserPermissionsResponse{Permissions: chunks[0]}, nil
+			}
+			var result LegacyGetUserPermissionsResponse
+			if permissionCount != 0 {
+				result.Permissions = make([]types.Permission, 0, permissionCount)
+			}
+			for _, chunk := range chunks {
+				result.Permissions = append(result.Permissions, chunk...)
+			}
 			return result, nil
 		}
 		if err != nil {
@@ -110,12 +123,18 @@ func (c *LegacyClient) LegacyGetUserPermissions(ctx context.Context, caller type
 		if chunk == nil {
 			return LegacyGetUserPermissionsResponse{}, fmt.Errorf("%w: nil chunk", ErrInvalidLegacyUserPermissionsResponse)
 		}
-		for _, permission := range chunk.Permissions {
+		if len(chunk.Permissions) == 0 {
+			continue
+		}
+		permissions := make([]types.Permission, len(chunk.Permissions))
+		for i, permission := range chunk.Permissions {
 			if permission == nil {
 				return LegacyGetUserPermissionsResponse{}, fmt.Errorf("%w: nil permission", ErrInvalidLegacyUserPermissionsResponse)
 			}
-			result.Permissions = append(result.Permissions, types.Permission{Action: permission.Action, Scope: permission.Scope})
+			permissions[i] = types.Permission{Action: permission.Action, Scope: permission.Scope}
 		}
+		chunks = append(chunks, permissions)
+		permissionCount += len(permissions)
 	}
 }
 
