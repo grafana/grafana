@@ -186,6 +186,11 @@ type ProvisionedAlertRule struct {
 	Labels map[string]string `json:"labels,omitempty"`
 	// readonly: true
 	Provenance Provenance `json:"provenance,omitempty"`
+	// Optional http or https URL of the external source that owns this provisioned rule.
+	// An empty value clears a previously stored URL.
+	// example: https://example.com/alerts/rule.yaml
+	// maxLength: 2048
+	SourceURL string `json:"sourceUrl,omitempty"`
 	// example: false
 	IsPaused bool `json:"isPaused"`
 	// example: {"receiver":"email","group_by":["alertname","grafana_folder","cluster"],"group_wait":"30s","group_interval":"1m","repeat_interval":"4d","mute_time_intervals":["Weekends","Holidays"]}
@@ -338,6 +343,9 @@ type AlertRuleExport struct {
 	NotificationSettings        *AlertRuleNotificationSettingsExport `json:"notification_settings,omitempty" yaml:"notification_settings,omitempty" hcl:"notification_settings,block"`
 	Record                      *AlertRuleRecordExport               `json:"record,omitempty" yaml:"record,omitempty" hcl:"record,block"`
 	MissingSeriesEvalsToResolve *int64                               `json:"missing_series_evals_to_resolve,omitempty" yaml:"missing_series_evals_to_resolve,omitempty" hcl:"missing_series_evals_to_resolve"`
+	// SourceURL is the external source that owns this provisioned rule.
+	// Empty values are omitted so an export without a stored URL is unchanged.
+	SourceURL *string `json:"sourceUrl,omitempty" yaml:"sourceUrl,omitempty" hcl:"source_url"`
 }
 
 // AlertQueryExport is the provisioned export of models.AlertQuery.

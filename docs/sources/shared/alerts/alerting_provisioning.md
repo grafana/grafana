@@ -220,6 +220,28 @@ Content-Type: application/json
 }
 ```
 
+#### Source URL
+
+Provisioned alert rules can include an optional `sourceUrl` field. Use it to link a rule to the file or repository that defines it. Grafana stores the URL with the rule's provenance, so it's returned wherever the rule is read.
+
+- **Format:** The URL must use `http` or `https`, include a host, and not include user credentials. It can be up to 2048 characters long.
+- **Scope:** Each rule has its own URL. When you use the rule group endpoint, set `sourceUrl` on each rule in the group.
+- **Clear:** Send an empty string (`"sourceUrl": ""`) to remove the stored URL.
+- **Omitted field:** Grafana removes a stored URL when a create, update, or group request omits `sourceUrl`. Include the field on every update to keep the URL.
+- **Provenance:** Grafana returns `400 Bad Request` if you send a URL with the `X-Disable-Provenance: true` header. Only provisioned rules can have a source URL.
+
+Grafana returns `sourceUrl` in provisioning `GET` and export responses, in the ruler `grafana_alert` object, and in the Prometheus rules API. Grafana omits the field when no URL is stored.
+
+```json
+{
+  "uid": "SET_RULE_UID",
+  "title": "SET_RULE_TITLE",
+  "sourceUrl": "https://example.com/alerts/rule.yaml"
+}
+```
+
+`SET_RULE_UID` is the UID of the alert rule. `SET_RULE_TITLE` is the display name of the rule. Include the rest of the rule fields in your request, as shown in the examples above.
+
 #### Recording rules
 
 Recording rules allow you to pre-compute frequently used or computationally expensive queries and save the results as a new time series metric. The same alert rule provisioning endpoints support creating recording rules by including the `record` field instead of alert-specific fields like `condition`, `noDataState`, or `execErrState`.

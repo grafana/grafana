@@ -137,6 +137,9 @@ func convertToK8sResource(
 	if managerProps.Kind != utils.ManagerKindUnknown {
 		meta.SetManagerProperties(managerProps)
 	}
+	if rule.SourceURL != nil {
+		meta.SetSourceProperties(utils.SourceProperties{Path: *rule.SourceURL})
+	}
 
 	if def, err := rule.PrometheusRuleDefinition(); err == nil {
 		if k8sRule.Annotations == nil {
@@ -380,6 +383,9 @@ func convertToDomainModel(orgID int64, k8sRule *v1beta1.AlertRule) (*ngmodels.Al
 						mp.Kind, sourceProv, derivedProv)
 			}
 		}
+		if err := setRuleSourceURL(domainRule, meta, ngmodels.ManagerPropertiesToProvenance(mp)); err != nil {
+			return nil, utils.ManagerProperties{}, err
+		}
 		return domainRule, mp, nil
 	}
 
@@ -388,7 +394,24 @@ func convertToDomainModel(orgID int64, k8sRule *v1beta1.AlertRule) (*ngmodels.Al
 	if !slices.Contains(v1beta1.AcceptedProvenanceStatuses, sourceProv) {
 		return nil, utils.ManagerProperties{}, fmt.Errorf("invalid provenance status: %s", sourceProv)
 	}
-	return domainRule, ngmodels.ProvenanceToManagerProperties(ngmodels.Provenance(sourceProv)), nil
+	provenance := ngmodels.Provenance(sourceProv)
+	if err := setRuleSourceURL(domainRule, meta, provenance); err != nil {
+		return nil, utils.ManagerProperties{}, err
+	}
+	return domainRule, ngmodels.ProvenanceToManagerProperties(provenance), nil
+}
+
+func setRuleSourceURL(rule *ngmodels.AlertRule, meta utils.GrafanaMetaAccessor, provenance ngmodels.Provenance) error {
+	path := ""
+	if props, ok := meta.GetSourceProperties(); ok {
+		path = props.Path
+	}
+	ptr, err := ngmodels.SourceURLFromAnnotation(path, provenance)
+	if err != nil {
+		return err
+	}
+	rule.SourceURL = ptr
+	return nil
 }
 
 func convertToBaseDomainModel(orgID int64, k8sRule *v1beta1.AlertRule) (*ngmodels.AlertRule, error) {

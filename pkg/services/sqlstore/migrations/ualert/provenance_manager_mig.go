@@ -14,3 +14,11 @@ func AddManagerPropertiesColumnsToProvenanceType(mg *migrator.Migrator) {
 		Name: "manager_identity", Type: migrator.DB_NVarchar, Length: DefaultFieldMaxLength, Nullable: true,
 	}))
 }
+
+// AddSourceURLColumnToProvenanceType adds the optional source URL stored with a
+// provisioned object's provenance. Legacy provenance writes do not include this column.
+func AddSourceURLColumnToProvenanceType(mg *migrator.Migrator) {
+	mg.AddMigration("add source_url column to provenance_type table", migrator.NewAddColumnMigration(migrator.Table{Name: "provenance_type"}, &migrator.Column{
+		Name: "source_url", Type: migrator.DB_Text, Nullable: true,
+	}))
+}

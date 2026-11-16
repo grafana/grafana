@@ -389,6 +389,10 @@ type AlertRule struct {
 	// It is opaque to ngalert internals — persisted and surfaced only by the rules
 	// API legacy storage adapter. nil when no status has been written yet.
 	K8sStatus []byte
+	// SourceURL is a write intent for the URL stored on the provenance row.
+	// It is not a column of alert_rule. nil means this writer is not updating the URL,
+	// a pointer to an empty string clears it, and a pointer to a URL sets it.
+	SourceURL *string
 }
 
 type AlertRuleVersion struct {
@@ -639,7 +643,7 @@ func (alertRule *AlertRule) Diff(rule *AlertRule, ignore ...string) cmputil.Diff
 		ops,
 		cmp.Reporter(&reporter),
 		cmpopts.IgnoreFields(AlertQuery{}, "modelProps", "DatasourceType", "IsMTQuery"),
-		cmpopts.IgnoreFields(AlertRule{}, "K8sStatus"),
+		cmpopts.IgnoreFields(AlertRule{}, "K8sStatus", "SourceURL"),
 		jsonCmp,
 		cmpopts.EquateEmpty(),
 	)
@@ -942,6 +946,10 @@ func (alertRule *AlertRule) Copy() *AlertRule {
 		Metadata:                    alertRule.Metadata,
 		KeepFiringFor:               alertRule.KeepFiringFor,
 		MissingSeriesEvalsToResolve: alertRule.MissingSeriesEvalsToResolve,
+	}
+	if alertRule.SourceURL != nil {
+		sourceURL := *alertRule.SourceURL
+		result.SourceURL = &sourceURL
 	}
 
 	if alertRule.DashboardUID != nil {

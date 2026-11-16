@@ -234,6 +234,9 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 	if err != nil {
 		return nil, err
 	}
+	if err := s.attachSourceURLs(ctx, info.OrgID, rules); err != nil {
+		return nil, err
+	}
 	return convertToK8sResources(info.OrgID, rules, managerPropsMap, s.namespacer, continueToken)
 }
 
@@ -252,6 +255,9 @@ func (s *legacyStorage) Get(ctx context.Context, name string, _ *metav1.GetOptio
 		if errors.Is(err, ngmodels.ErrAlertRuleNotFound) {
 			return nil, k8serrors.NewNotFound(ResourceInfo.GroupResource(), name)
 		}
+		return nil, err
+	}
+	if err := s.attachSourceURL(ctx, info.OrgID, &rule); err != nil {
 		return nil, err
 	}
 
@@ -290,7 +296,7 @@ func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, createVa
 	}
 	domainModel, managerProps, err := convertToDomainModel(info.OrgID, p)
 	if err != nil {
-		return nil, err
+		return nil, toAPIError(p.GetName(), err)
 	}
 
 	created, err := s.service.CreateAlertRule(ctx, user, *domainModel, managerProps)
@@ -334,7 +340,7 @@ func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.Up
 
 	domainModel, managerProps, err := convertToDomainModel(info.OrgID, new)
 	if err != nil {
-		return old, false, err
+		return old, false, toAPIError(name, err)
 	}
 
 	_, err = s.service.UpdateAlertRule(ctx, user, *domainModel, managerProps)
@@ -344,6 +350,9 @@ func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.Up
 
 	updated, managerProps, err := s.service.GetAlertRule(ctx, user, name)
 	if err != nil {
+		return nil, false, err
+	}
+	if err := s.attachSourceURL(ctx, info.OrgID, &updated); err != nil {
 		return nil, false, err
 	}
 
@@ -394,6 +403,40 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 	}
 
 	return old, false, nil
+}
+
+func (s *legacyStorage) attachSourceURL(ctx context.Context, orgID int64, rule *ngmodels.AlertRule) error {
+	if rule == nil || rule.UID == "" {
+		return nil
+	}
+	sourceURL, err := s.service.GetSourceURL(ctx, orgID, rule.UID)
+	if err != nil {
+		return err
+	}
+	if sourceURL != "" {
+		rule.SourceURL = &sourceURL
+	}
+	return nil
+}
+
+func (s *legacyStorage) attachSourceURLs(ctx context.Context, orgID int64, rules []*ngmodels.AlertRule) error {
+	if len(rules) == 0 {
+		return nil
+	}
+	urls, err := s.service.GetSourceURLs(ctx, orgID)
+	if err != nil {
+		return err
+	}
+	for _, rule := range rules {
+		if rule == nil {
+			continue
+		}
+		if sourceURL, ok := urls[rule.UID]; ok && sourceURL != "" {
+			copied := sourceURL
+			rule.SourceURL = &copied
+		}
+	}
+	return nil
 }
 
 func (s *legacyStorage) DeleteCollection(_ context.Context, _ rest.ValidateObjectFunc, _ *metav1.DeleteOptions, _ *internalversion.ListOptions) (runtime.Object, error) {

@@ -2,6 +2,7 @@ package fakes
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -19,11 +20,17 @@ type FakeProvisioningStore struct {
 	GetManagerPropertiesFunc    func(ctx context.Context, o models.Provisionable, org int64) (utils.ManagerProperties, error)
 	GetAllManagerPropertiesFunc func(ctx context.Context, org int64, resourceType string) (map[string]utils.ManagerProperties, error)
 	SetManagerPropertiesFunc    func(ctx context.Context, o models.Provisionable, org int64, m utils.ManagerProperties) error
+	SourceURLs                  map[int64]map[string]string
+	SetSourceURLFunc            func(ctx context.Context, o models.Provisionable, org int64, sourceURL string) error
+	GetSourceURLFunc            func(ctx context.Context, o models.Provisionable, org int64) (string, error)
+	GetSourceURLsFunc           func(ctx context.Context, org int64, resourceType string) (map[string]string, error)
+	GetSourceURLsByUIDsFunc     func(ctx context.Context, org int64, resourceType string, uids []string) (map[string]string, error)
 }
 
 func NewFakeProvisioningStore() *FakeProvisioningStore {
 	return &FakeProvisioningStore{
-		Records: map[int64]map[string]models.Provenance{},
+		Records:    map[int64]map[string]models.Provenance{},
+		SourceURLs: map[int64]map[string]string{},
 	}
 }
 
@@ -96,6 +103,9 @@ func (f *FakeProvisioningStore) DeleteProvenance(ctx context.Context, o models.P
 	if val, ok := f.Records[org]; ok {
 		delete(val, o.ResourceID()+o.ResourceType())
 	}
+	if val, ok := f.SourceURLs[org]; ok {
+		delete(val, o.ResourceID()+o.ResourceType())
+	}
 	return nil
 }
 
@@ -140,4 +150,86 @@ func (f *FakeProvisioningStore) SetManagerProperties(ctx context.Context, o mode
 	}
 	f.Records[org][o.ResourceID()+o.ResourceType()] = models.ManagerPropertiesToProvenance(m)
 	return nil
+}
+
+func (f *FakeProvisioningStore) sourceKey(o models.Provisionable) string {
+	return o.ResourceID() + o.ResourceType()
+}
+
+func (f *FakeProvisioningStore) SetSourceURL(ctx context.Context, o models.Provisionable, org int64, sourceURL string) error {
+	f.Calls = append(f.Calls, Call{MethodName: "SetSourceURL", Arguments: []any{ctx, o, org, sourceURL}})
+	if f.SetSourceURLFunc != nil {
+		return f.SetSourceURLFunc(ctx, o, org, sourceURL)
+	}
+	if f.SourceURLs == nil {
+		f.SourceURLs = map[int64]map[string]string{}
+	}
+	if f.Records == nil {
+		f.Records = map[int64]map[string]models.Provenance{}
+	}
+	key := f.sourceKey(o)
+	if _, ok := f.Records[org]; !ok {
+		f.Records[org] = map[string]models.Provenance{}
+	}
+	if _, ok := f.Records[org][key]; !ok {
+		if sourceURL == "" {
+			return nil
+		}
+		return fmt.Errorf("failed to store source URL: provenance record does not exist")
+	}
+	if _, ok := f.SourceURLs[org]; !ok {
+		f.SourceURLs[org] = map[string]string{}
+	}
+	if sourceURL == "" {
+		delete(f.SourceURLs[org], key)
+		return nil
+	}
+	f.SourceURLs[org][key] = sourceURL
+	return nil
+}
+
+func (f *FakeProvisioningStore) GetSourceURL(ctx context.Context, o models.Provisionable, org int64) (string, error) {
+	f.Calls = append(f.Calls, Call{MethodName: "GetSourceURL", Arguments: []any{ctx, o, org}})
+	if f.GetSourceURLFunc != nil {
+		return f.GetSourceURLFunc(ctx, o, org)
+	}
+	if val, ok := f.SourceURLs[org]; ok {
+		return val[f.sourceKey(o)], nil
+	}
+	return "", nil
+}
+
+func (f *FakeProvisioningStore) GetSourceURLs(ctx context.Context, org int64, resourceType string) (map[string]string, error) {
+	f.Calls = append(f.Calls, Call{MethodName: "GetSourceURLs", Arguments: []any{ctx, org, resourceType}})
+	if f.GetSourceURLsFunc != nil {
+		return f.GetSourceURLsFunc(ctx, org, resourceType)
+	}
+	results := make(map[string]string)
+	if val, ok := f.SourceURLs[org]; ok {
+		for k, v := range val {
+			if v == "" {
+				continue
+			}
+			if before, ok0 := strings.CutSuffix(k, resourceType); ok0 {
+				results[before] = v
+			}
+		}
+	}
+	return results, nil
+}
+
+func (f *FakeProvisioningStore) GetSourceURLsByUIDs(ctx context.Context, org int64, resourceType string, uids []string) (map[string]string, error) {
+	f.Calls = append(f.Calls, Call{MethodName: "GetSourceURLsByUIDs", Arguments: []any{ctx, org, resourceType, uids}})
+	if f.GetSourceURLsByUIDsFunc != nil {
+		return f.GetSourceURLsByUIDsFunc(ctx, org, resourceType, uids)
+	}
+	results := make(map[string]string)
+	if val, ok := f.SourceURLs[org]; ok {
+		for _, uid := range uids {
+			if url, ok := val[uid+resourceType]; ok && url != "" {
+				results[uid] = url
+			}
+		}
+	}
+	return results, nil
 }

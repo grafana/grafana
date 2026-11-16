@@ -77,6 +77,9 @@ func (m *MockProvisioningStore_Expecter) GetReturns(p models.Provenance) *MockPr
 	m.GetProvenances(mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
 	m.GetManagerProperties(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceToManagerProperties(p), nil)
 	m.GetAllManagerProperties(mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
+	m.GetSourceURL(mock.Anything, mock.Anything, mock.Anything).Return("", nil)
+	m.GetSourceURLs(mock.Anything, mock.Anything, mock.Anything).Return(map[string]string{}, nil)
+	m.GetSourceURLsByUIDs(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(map[string]string{}, nil)
 	return m
 }
 
@@ -84,6 +87,7 @@ func (m *MockProvisioningStore_Expecter) SaveSucceeds() *MockProvisioningStore_E
 	m.SetProvenance(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	m.SetManagerProperties(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	m.DeleteProvenance(mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	m.SetSourceURL(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	return m
 }
 
