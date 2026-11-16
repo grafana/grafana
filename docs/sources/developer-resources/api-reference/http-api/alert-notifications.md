@@ -109,6 +109,26 @@ Lists all `Receiver` resources in the namespace that you have permission to read
 
 - `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 
+##### Example request
+
+The following example lists receivers in the namespace:
+
+```http
+GET /apis/notifications.alerting.grafana.app/v1beta1/namespaces/default/receivers HTTP/1.1
+Accept: application/json
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
+```
+
+##### Example response
+
+The response returns `200 OK` with a `ReceiverList` object containing `Receiver` items in `items`.
+
+##### Status codes
+
+- **200:** `OK`
+- **401:** Unauthorized
+- **403:** Access denied
+
 #### Get a receiver
 
 `GET /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/receivers/{name}`
@@ -119,6 +139,27 @@ Retrieves a `Receiver` resource by `metadata.name`.
 
 - `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 - `{name}`: The `metadata.name` of the receiver.
+
+##### Example request
+
+The following example gets a receiver:
+
+```http
+GET /apis/notifications.alerting.grafana.app/v1beta1/namespaces/default/receivers/oncall-webhook HTTP/1.1
+Accept: application/json
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
+```
+
+##### Example response
+
+The response returns `200 OK` with the `Receiver` object shown in [Create a receiver](#create-a-receiver).
+
+##### Status codes
+
+- **200:** Found
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** Receiver not found
 
 #### Create a receiver
 
@@ -200,6 +241,15 @@ Content-Type: application/json
 }
 ```
 
+##### Status codes
+
+- **201:** Created
+- **400:** Bad request (invalid JSON, invalid resource name, or invalid integration settings)
+- **401:** Unauthorized
+- **403:** Access denied (missing RBAC permission or provenance permission)
+- **409:** Conflict (a receiver with the same `metadata.name` or `spec.title` already exists)
+- **422:** Schema validation error
+
 #### Update a receiver
 
 `PUT /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/receivers/{name}`
@@ -211,16 +261,87 @@ Replaces an existing `Receiver` resource. Include `metadata.resourceVersion` fro
 - `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 - `{name}`: The `metadata.name` of the receiver.
 
+##### Example request
+
+The following example updates a receiver:
+
+```http
+PUT /apis/notifications.alerting.grafana.app/v1beta1/namespaces/default/receivers/oncall-webhook HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
+
+{
+  "apiVersion": "notifications.alerting.grafana.app/v1beta1",
+  "kind": "Receiver",
+  "metadata": {
+    "name": "oncall-webhook",
+    "resourceVersion": "a1b2c3d4e5f60718"
+  },
+  "spec": {
+    "title": "On-call webhook",
+    "integrations": [
+      {
+        "uid": "d9e8f7a6b5c4",
+        "type": "webhook",
+        "version": "1",
+        "disableResolveMessage": true,
+        "settings": {
+          "url": "https://example.com/alerts/webhook",
+          "httpMethod": "POST"
+        }
+      }
+    ]
+  }
+}
+```
+
+##### Example response
+
+The response returns `200 OK` with the updated `Receiver` object and a new `metadata.resourceVersion`.
+
+##### Status codes
+
+- **200:** Updated
+- **400:** Bad request (invalid JSON or invalid integration settings)
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** Receiver not found
+- **409:** Conflict (`metadata.resourceVersion` mismatch)
+- **422:** Schema validation error
+
 #### Delete a receiver
 
 `DELETE /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/receivers/{name}`
 
-Deletes a `Receiver` resource by `metadata.name`. Deleting a receiver that is still referenced by a notification policy or alert rule returns `409 Conflict`.
+Deletes a `Receiver` resource by `metadata.name`.
 
 **Path parameters**:
 
 - `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 - `{name}`: The `metadata.name` of the receiver.
+
+##### Example request
+
+The following example deletes a receiver:
+
+```http
+DELETE /apis/notifications.alerting.grafana.app/v1beta1/namespaces/default/receivers/oncall-webhook HTTP/1.1
+Accept: application/json
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
+```
+
+##### Example response
+
+The response returns `200 OK` with the deleted `Receiver` object (or a `Status` object).
+
+##### Status codes
+
+- **200:** Deleted
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** Receiver not found
+- **409:** Conflict (the receiver is still referenced by a notification policy or alert rule)
 
 #### Test a receiver integration
 
@@ -233,6 +354,58 @@ Sends a test alert notification through one integration. Pass an existing receiv
 - `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 - `{name}`: Receiver `metadata.name`, or `-` for an unsaved receiver.
 
+##### Example request
+
+The following example tests an unsaved webhook integration:
+
+```http
+POST /apis/notifications.alerting.grafana.app/v1beta1/namespaces/default/receivers/-/test HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
+
+{
+  "integration": {
+    "type": "webhook",
+    "version": "1",
+    "settings": {
+      "url": "https://example.com/alerts/webhook"
+    }
+  },
+  "alert": {
+    "labels": {
+      "alertname": "TestAlert",
+      "severity": "warning"
+    },
+    "annotations": {
+      "summary": "Test notification"
+    }
+  }
+}
+```
+
+##### Example response
+
+The following example shows the response:
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+  "status": "success",
+  "duration": 124
+}
+```
+
+##### Status codes
+
+- **200:** `OK` (check `status` in the response body for delivery `success` or `failure`)
+- **400:** Bad request (invalid integration configuration)
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** Receiver not found
+
 #### List integration type schemas
 
 `GET /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/integrationtypeschemas`
@@ -242,6 +415,26 @@ Returns the notifier integration `type` values, versions, and `settings` field d
 **Path parameters**:
 
 - `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+
+##### Example request
+
+The following example lists integration type schemas:
+
+```http
+GET /apis/notifications.alerting.grafana.app/v1beta1/namespaces/default/integrationtypeschemas HTTP/1.1
+Accept: application/json
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
+```
+
+##### Example response
+
+The response returns `200 OK` with an `items` array containing schema definitions for each integration type.
+
+##### Status codes
+
+- **200:** `OK`
+- **401:** Unauthorized
+- **403:** Access denied
 
 ### Details
 
@@ -281,6 +474,24 @@ Lists the default routing tree (`user-defined`) and any named routing trees in t
 
 - `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 
+##### Example request
+
+```http
+GET /apis/notifications.alerting.grafana.app/v1beta1/namespaces/default/routingtrees HTTP/1.1
+Accept: application/json
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
+```
+
+##### Example response
+
+The response returns `200 OK` with a `RoutingTreeList` object containing `RoutingTree` items in `items`.
+
+##### Status codes
+
+- **200:** `OK`
+- **401:** Unauthorized
+- **403:** Access denied
+
 #### Get a routing tree
 
 `GET /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/routingtrees/{name}`
@@ -292,6 +503,25 @@ Retrieves a `RoutingTree` resource by `metadata.name` (use `user-defined` or `de
 - `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 - `{name}`: `user-defined` (or `default`) for the default tree, or the `metadata.name` of a named routing tree.
 
+##### Example request
+
+```http
+GET /apis/notifications.alerting.grafana.app/v1beta1/namespaces/default/routingtrees/user-defined HTTP/1.1
+Accept: application/json
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
+```
+
+##### Example response
+
+The response returns `200 OK` with the `RoutingTree` object.
+
+##### Status codes
+
+- **200:** Found
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** Routing tree not found
+
 #### Create a named routing tree
 
 `POST /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/routingtrees`
@@ -301,6 +531,43 @@ Creates an additional named `RoutingTree` resource that alert rules can target w
 **Path parameters**:
 
 - `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+
+##### Example request
+
+```http
+POST /apis/notifications.alerting.grafana.app/v1beta1/namespaces/default/routingtrees HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
+
+{
+  "apiVersion": "notifications.alerting.grafana.app/v1beta1",
+  "kind": "RoutingTree",
+  "metadata": {
+    "name": "platform-routing"
+  },
+  "spec": {
+    "defaults": {
+      "receiver": "On-call webhook",
+      "group_by": ["grafana_folder", "alertname"]
+    },
+    "routes": []
+  }
+}
+```
+
+##### Example response
+
+The response returns `201 Created` with the created `RoutingTree` object.
+
+##### Status codes
+
+- **201:** Created
+- **400:** Bad request (invalid JSON, reserved name, or invalid route configuration)
+- **401:** Unauthorized
+- **403:** Access denied
+- **409:** Conflict (a routing tree with the same `metadata.name` already exists)
+- **422:** Schema validation error
 
 #### Update a routing tree
 
@@ -359,6 +626,16 @@ Replace `<RESOURCE_VERSION>` with the `metadata.resourceVersion` from `GET .../r
 
 On success, Grafana returns `200 OK` with the updated `RoutingTree` object.
 
+##### Status codes
+
+- **200:** Updated
+- **400:** Bad request (invalid JSON or invalid route configuration)
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** Routing tree not found
+- **409:** Conflict (`metadata.resourceVersion` mismatch)
+- **422:** Schema validation error
+
 #### Delete a routing tree
 
 `DELETE /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/routingtrees/{name}`
@@ -369,6 +646,26 @@ Resets the default routing tree (`user-defined`) to the instance defaults, or de
 
 - `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 - `{name}`: `user-defined` (or `default`) for the default tree, or the `metadata.name` of a named routing tree.
+
+##### Example request
+
+```http
+DELETE /apis/notifications.alerting.grafana.app/v1beta1/namespaces/default/routingtrees/platform-routing HTTP/1.1
+Accept: application/json
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
+```
+
+##### Example response
+
+The response returns `200 OK` with the deleted (or reset) `RoutingTree` object.
+
+##### Status codes
+
+- **200:** Deleted (or reset, for `user-defined`)
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** Routing tree not found
+- **409:** Conflict (the named routing tree is still referenced by an alert rule)
 
 ### Details
 
@@ -404,17 +701,67 @@ The following table lists the main endpoints for `TemplateGroup` resources. For 
 
 Lists all `TemplateGroup` resources in the namespace.
 
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+
+##### Example request
+
+```http
+GET /apis/notifications.alerting.grafana.app/v1beta1/namespaces/default/templategroups HTTP/1.1
+Accept: application/json
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
+```
+
+##### Example response
+
+The response returns `200 OK` with a `TemplateGroupList` object containing `TemplateGroup` items in `items`.
+
+##### Status codes
+
+- **200:** `OK`
+- **401:** Unauthorized
+- **403:** Access denied
+
 #### Get a template group
 
 `GET /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/templategroups/{name}`
 
 Retrieves a `TemplateGroup` resource by `metadata.name`.
 
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{name}`: The `metadata.name` of the template group.
+
+##### Example request
+
+```http
+GET /apis/notifications.alerting.grafana.app/v1beta1/namespaces/default/templategroups/slack-summary HTTP/1.1
+Accept: application/json
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
+```
+
+##### Example response
+
+The response returns `200 OK` with the `TemplateGroup` object.
+
+##### Status codes
+
+- **200:** Found
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** Template group not found
+
 #### Create a template group
 
 `POST /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/templategroups`
 
 Creates a `TemplateGroup` resource.
+
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 
 ##### Example request
 
@@ -438,17 +785,96 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 }
 ```
 
+##### Example response
+
+The response returns `201 Created` with the created `TemplateGroup` object.
+
+##### Status codes
+
+- **201:** Created
+- **400:** Bad request (invalid JSON or invalid Go template syntax)
+- **401:** Unauthorized
+- **403:** Access denied
+- **409:** Conflict (a template group with the same `metadata.name` already exists)
+- **422:** Schema validation error
+
 #### Update a template group
 
 `PUT /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/templategroups/{name}`
 
 Replaces an existing `TemplateGroup` resource. Include `metadata.resourceVersion` from the latest version you read.
 
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{name}`: The `metadata.name` of the template group.
+
+##### Example request
+
+```http
+PUT /apis/notifications.alerting.grafana.app/v1beta1/namespaces/default/templategroups/slack-summary HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
+
+{
+  "apiVersion": "notifications.alerting.grafana.app/v1beta1",
+  "kind": "TemplateGroup",
+  "metadata": {
+    "name": "slack-summary",
+    "resourceVersion": "<RESOURCE_VERSION>"
+  },
+  "spec": {
+    "title": "slack-summary",
+    "kind": "grafana",
+    "content": "{{ define \"slack.summary\" }}[{{ .Status | toUpper }}] {{ .CommonLabels.alertname }} ({{ .CommonLabels.severity }}){{ end }}"
+  }
+}
+```
+
+##### Example response
+
+The response returns `200 OK` with the updated `TemplateGroup` object.
+
+##### Status codes
+
+- **200:** Updated
+- **400:** Bad request (invalid JSON or invalid Go template syntax)
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** Template group not found
+- **409:** Conflict (`metadata.resourceVersion` mismatch)
+- **422:** Schema validation error
+
 #### Delete a template group
 
 `DELETE /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/templategroups/{name}`
 
 Deletes a `TemplateGroup` resource by `metadata.name`.
+
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{name}`: The `metadata.name` of the template group.
+
+##### Example request
+
+```http
+DELETE /apis/notifications.alerting.grafana.app/v1beta1/namespaces/default/templategroups/slack-summary HTTP/1.1
+Accept: application/json
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
+```
+
+##### Example response
+
+The response returns `200 OK` with the deleted `TemplateGroup` object (or a `Status` object).
+
+##### Status codes
+
+- **200:** Deleted
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** Template group not found
 
 ### Details
 
@@ -483,17 +909,67 @@ The following table lists the main endpoints for `TimeInterval` resources. For `
 
 Lists all `TimeInterval` resources in the namespace.
 
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+
+##### Example request
+
+```http
+GET /apis/notifications.alerting.grafana.app/v1beta1/namespaces/default/timeintervals HTTP/1.1
+Accept: application/json
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
+```
+
+##### Example response
+
+The response returns `200 OK` with a `TimeIntervalList` object containing `TimeInterval` items in `items`.
+
+##### Status codes
+
+- **200:** `OK`
+- **401:** Unauthorized
+- **403:** Access denied
+
 #### Get a time interval
 
 `GET /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/timeintervals/{name}`
 
 Retrieves a `TimeInterval` resource by `metadata.name`.
 
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{name}`: The `metadata.name` of the time interval.
+
+##### Example request
+
+```http
+GET /apis/notifications.alerting.grafana.app/v1beta1/namespaces/default/timeintervals/weekends HTTP/1.1
+Accept: application/json
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
+```
+
+##### Example response
+
+The response returns `200 OK` with the `TimeInterval` object.
+
+##### Status codes
+
+- **200:** Found
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** Time interval not found
+
 #### Create a time interval
 
 `POST /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/timeintervals`
 
 Creates a `TimeInterval` resource.
+
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 
 ##### Example request
 
@@ -521,17 +997,101 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 }
 ```
 
+##### Example response
+
+The response returns `201 Created` with the created `TimeInterval` object.
+
+##### Status codes
+
+- **201:** Created
+- **400:** Bad request (invalid JSON or invalid schedule syntax)
+- **401:** Unauthorized
+- **403:** Access denied
+- **409:** Conflict (a time interval with the same `metadata.name` or `spec.name` already exists)
+- **422:** Schema validation error
+
 #### Update a time interval
 
 `PUT /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/timeintervals/{name}`
 
 Replaces an existing `TimeInterval` resource. Include `metadata.resourceVersion` from the latest version you read.
 
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{name}`: The `metadata.name` of the time interval.
+
+##### Example request
+
+```http
+PUT /apis/notifications.alerting.grafana.app/v1beta1/namespaces/default/timeintervals/weekends HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
+
+{
+  "apiVersion": "notifications.alerting.grafana.app/v1beta1",
+  "kind": "TimeInterval",
+  "metadata": {
+    "name": "weekends",
+    "resourceVersion": "<RESOURCE_VERSION>"
+  },
+  "spec": {
+    "name": "Weekends",
+    "time_intervals": [
+      {
+        "weekdays": ["saturday", "sunday"],
+        "location": "Europe/London"
+      }
+    ]
+  }
+}
+```
+
+##### Example response
+
+The response returns `200 OK` with the updated `TimeInterval` object.
+
+##### Status codes
+
+- **200:** Updated
+- **400:** Bad request (invalid JSON or invalid schedule syntax)
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** Time interval not found
+- **409:** Conflict (`metadata.resourceVersion` mismatch)
+- **422:** Schema validation error
+
 #### Delete a time interval
 
 `DELETE /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/timeintervals/{name}`
 
 Deletes a `TimeInterval` resource by `metadata.name`.
+
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{name}`: The `metadata.name` of the time interval.
+
+##### Example request
+
+```http
+DELETE /apis/notifications.alerting.grafana.app/v1beta1/namespaces/default/timeintervals/weekends HTTP/1.1
+Accept: application/json
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
+```
+
+##### Example response
+
+The response returns `200 OK` with the deleted `TimeInterval` object (or a `Status` object).
+
+##### Status codes
+
+- **200:** Deleted
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** Time interval not found
+- **409:** Conflict (the time interval is still referenced by a routing tree or alert rule)
 
 ### Details
 
@@ -567,17 +1127,67 @@ The following table lists the main endpoints for `InhibitionRule` resources. For
 
 Lists all `InhibitionRule` resources in the namespace.
 
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+
+##### Example request
+
+```http
+GET /apis/notifications.alerting.grafana.app/v1beta1/namespaces/default/inhibitionrules HTTP/1.1
+Accept: application/json
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
+```
+
+##### Example response
+
+The response returns `200 OK` with an `InhibitionRuleList` object containing `InhibitionRule` items in `items`.
+
+##### Status codes
+
+- **200:** `OK`
+- **401:** Unauthorized
+- **403:** Access denied
+
 #### Get an inhibition rule
 
 `GET /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/inhibitionrules/{name}`
 
 Retrieves an `InhibitionRule` resource by `metadata.name`.
 
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{name}`: The `metadata.name` of the inhibition rule.
+
+##### Example request
+
+```http
+GET /apis/notifications.alerting.grafana.app/v1beta1/namespaces/default/inhibitionrules/840967b51b1bbda8 HTTP/1.1
+Accept: application/json
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
+```
+
+##### Example response
+
+The response returns `200 OK` with the `InhibitionRule` object.
+
+##### Status codes
+
+- **200:** Found
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** Inhibition rule not found
+
 #### Create an inhibition rule
 
 `POST /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/inhibitionrules`
 
 Creates an `InhibitionRule` resource.
+
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 
 ##### Example request
 
@@ -610,17 +1220,108 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 }
 ```
 
+##### Example response
+
+The response returns `201 Created` with the created `InhibitionRule` object and its generated `metadata.name`.
+
+##### Status codes
+
+- **201:** Created
+- **400:** Bad request (invalid JSON or invalid matcher syntax)
+- **401:** Unauthorized
+- **403:** Access denied
+- **409:** Conflict (an inhibition rule with the same `metadata.name` already exists)
+- **422:** Schema validation error
+
 #### Update an inhibition rule
 
 `PUT /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/inhibitionrules/{name}`
 
 Replaces an existing `InhibitionRule` resource. Include `metadata.resourceVersion` from the latest version you read.
 
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{name}`: The `metadata.name` of the inhibition rule.
+
+##### Example request
+
+```http
+PUT /apis/notifications.alerting.grafana.app/v1beta1/namespaces/default/inhibitionrules/840967b51b1bbda8 HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
+
+{
+  "apiVersion": "notifications.alerting.grafana.app/v1beta1",
+  "kind": "InhibitionRule",
+  "metadata": {
+    "name": "840967b51b1bbda8",
+    "resourceVersion": "<RESOURCE_VERSION>"
+  },
+  "spec": {
+    "source_matchers": [
+      {
+        "label": "severity",
+        "type": "=",
+        "value": "critical"
+      }
+    ],
+    "target_matchers": [
+      {
+        "label": "severity",
+        "type": "=",
+        "value": "warning"
+      }
+    ],
+    "equal": ["cluster", "namespace"]
+  }
+}
+```
+
+##### Example response
+
+The response returns `200 OK` with the updated `InhibitionRule` object.
+
+##### Status codes
+
+- **200:** Updated
+- **400:** Bad request (invalid JSON or invalid matcher syntax)
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** Inhibition rule not found
+- **409:** Conflict (`metadata.resourceVersion` mismatch)
+- **422:** Schema validation error
+
 #### Delete an inhibition rule
 
 `DELETE /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/inhibitionrules/{name}`
 
 Deletes an `InhibitionRule` resource by `metadata.name`.
+
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{name}`: The `metadata.name` of the inhibition rule.
+
+##### Example request
+
+```http
+DELETE /apis/notifications.alerting.grafana.app/v1beta1/namespaces/default/inhibitionrules/840967b51b1bbda8 HTTP/1.1
+Accept: application/json
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
+```
+
+##### Example response
+
+The response returns `200 OK` with the deleted `InhibitionRule` object (or a `Status` object).
+
+##### Status codes
+
+- **200:** Deleted
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** Inhibition rule not found
 
 ### Details
 
@@ -653,28 +1354,78 @@ The following table lists the main endpoints for the singleton `Config` resource
 
 Retrieves the organization's `Config` singleton, including current sync status in `status`.
 
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+
+##### Example request
+
+```http
+GET /apis/notifications.alerting.grafana.app/v1beta1/namespaces/default/configs/default HTTP/1.1
+Accept: application/json
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
+```
+
+##### Example response
+
+The response returns `200 OK` with the `Config` singleton object.
+
+##### Status codes
+
+- **200:** Found
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** Singleton configuration not yet initialized
+
 #### Update external Alertmanager sync configuration
 
 `PUT /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/configs/default`
 
 Updates `spec.externalAlertmanagerSync.datasourceUid` on the `default` `Config` singleton (you can also use `PATCH`). Users can't create other `Config` names with `POST` or delete `configs/default` with `DELETE`.
 
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+
+##### Example request
+
+```http
+PUT /apis/notifications.alerting.grafana.app/v1beta1/namespaces/default/configs/default HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
+
+{
+  "apiVersion": "notifications.alerting.grafana.app/v1beta1",
+  "kind": "Config",
+  "metadata": {
+    "name": "default",
+    "resourceVersion": "<RESOURCE_VERSION>"
+  },
+  "spec": {
+    "externalAlertmanagerSync": {
+      "datasourceUid": "<ALERTMANAGER_DATASOURCE_UID>"
+    }
+  }
+}
+```
+
+##### Example response
+
+The response returns `200 OK` with the updated `Config` singleton object.
+
+##### Status codes
+
+- **200:** Updated
+- **400:** Bad request (feature toggle disabled, operator `grafana.ini` override set, or ineligible data source)
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** Data source or configuration not found
+- **409:** Conflict (`metadata.resourceVersion` mismatch)
+
 ### Details
 
 Updating `spec.externalAlertmanagerSync.datasourceUid` requires the `alertingSyncExternalAlertmanager` feature toggle to be enabled and the `unified_alerting.external_alertmanager_uid` setting in `grafana.ini` to be unset (when set in `grafana.ini`, the operator override takes precedence and API writes are rejected).
-
-## Status codes
-
-Notification endpoints return the following status codes:
-
-- **200:** `OK` (get, list, update, patch, delete, or test)
-- **201:** Created
-- **400:** Bad request (invalid JSON, invalid resource name or matcher syntax, or invalid configuration)
-- **401:** Unauthorized
-- **403:** Access denied (missing RBAC permission or provenance permission)
-- **404:** Resource not found
-- **409:** Conflict (`metadata.name` already exists, `metadata.resourceVersion` mismatch, or resource is referenced by active policies or rules)
-- **422:** Schema validation error
 
 ## Migrate from the legacy Alerting Provisioning API
 

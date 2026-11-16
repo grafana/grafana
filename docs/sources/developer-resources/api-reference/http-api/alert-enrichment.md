@@ -178,6 +178,12 @@ Content-Type: application/json
 }
 ```
 
+##### Status codes
+
+- **200:** `OK`
+- **401:** Unauthorized
+- **403:** Access denied
+
 #### Get an alert enrichment
 
 `GET /apis/alertenrichment.grafana.app/v1beta1/namespaces/{namespace}/alert-enrichments/{name}`
@@ -202,6 +208,13 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ##### Example response
 
 The response returns `200 OK` with the `AlertEnrichment` object shown in [List alert enrichment resources](#list-alert-enrichment-resources).
+
+##### Status codes
+
+- **200:** Found
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** Alert enrichment not found
 
 #### Create an alert enrichment
 
@@ -310,6 +323,15 @@ Content-Type: application/json
 }
 ```
 
+##### Status codes
+
+- **201:** Created
+- **400:** Bad request (invalid JSON or invalid matcher or duration syntax)
+- **401:** Unauthorized
+- **403:** Access denied
+- **409:** Conflict (an alert enrichment with the same `metadata.name` already exists)
+- **422:** Schema validation error
+
 #### Update an alert enrichment
 
 `PUT /apis/alertenrichment.grafana.app/v1beta1/namespaces/{namespace}/alert-enrichments/{name}`
@@ -373,6 +395,16 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 The response returns `200 OK` with the updated `AlertEnrichment` resource and an incremented `metadata.resourceVersion`.
 
+##### Status codes
+
+- **200:** Updated
+- **400:** Bad request (invalid JSON)
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** Alert enrichment not found
+- **409:** Conflict (`metadata.resourceVersion` doesn't match the stored version)
+- **422:** Schema validation error
+
 #### Patch an alert enrichment
 
 `PATCH /apis/alertenrichment.grafana.app/v1beta1/namespaces/{namespace}/alert-enrichments/{name}`
@@ -404,6 +436,16 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ##### Example response
 
 The response returns `200 OK` with the updated `AlertEnrichment` resource.
+
+##### Status codes
+
+- **200:** Updated
+- **400:** Bad request (invalid JSON or patch)
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** Alert enrichment not found
+- **409:** Conflict (`metadata.resourceVersion` doesn't match the stored version)
+- **422:** Schema validation error
 
 #### Delete an alert enrichment
 
@@ -443,22 +485,16 @@ Content-Type: application/json
 }
 ```
 
-### Details
+##### Status codes
 
-When `spec.alertRuleUids` is omitted or empty, the enrichment is global and requires the Organization **Admin** role to read or modify. When `spec.alertRuleUids` lists one or more alert rule UIDs, users with `alert.enrichments:read` and `alert.enrichments:write` can manage it for those rules.
-
-## Status codes
-
-Endpoints in this API return the following status codes:
-
-- **200:** `OK` (get, list, update, patch, or delete)
-- **201:** Created
-- **400:** Bad request (invalid JSON or invalid matcher or duration syntax)
+- **200:** Deleted
 - **401:** Unauthorized
 - **403:** Access denied
 - **404:** Alert enrichment not found
-- **409:** Conflict (`metadata.name` already exists on create, or `metadata.resourceVersion` doesn't match on update)
-- **422:** Schema validation error
+
+### Details
+
+When `spec.alertRuleUids` is omitted or empty, the enrichment is global and requires the Organization **Admin** role to read or modify. When `spec.alertRuleUids` lists one or more alert rule UIDs, users with `alert.enrichments:read` and `alert.enrichments:write` can manage it for those rules.
 
 ## Related resources
 

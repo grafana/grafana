@@ -132,6 +132,13 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 The response returns `200 OK` with an `AlertRuleList` object containing matching `AlertRule` items in `items`.
 
+##### Status codes
+
+- **200:** `OK`
+- **400:** Bad request (invalid selector)
+- **401:** Unauthorized
+- **403:** Access denied
+
 #### Get an alert rule
 
 `GET /apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/alertrules/{name}`
@@ -145,6 +152,8 @@ Retrieves an `AlertRule` resource by `metadata.name`, including its runtime `sta
 
 ##### Example request
 
+The following example gets an alert rule:
+
 ```http
 GET /apis/rules.alerting.grafana.app/v1beta1/namespaces/default/alertrules/high-cpu-usage HTTP/1.1
 Accept: application/json
@@ -154,6 +163,13 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ##### Example response
 
 The response returns `200 OK` with the `AlertRule` object shown in [Create an alert rule](#create-an-alert-rule).
+
+##### Status codes
+
+- **200:** Found
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** Alert rule not found
 
 #### Create an alert rule
 
@@ -326,6 +342,16 @@ Content-Type: application/json
 }
 ```
 
+##### Status codes
+
+- **201:** Created
+- **400:** Bad request (invalid JSON, invalid duration or expression, or missing folder)
+- **401:** Unauthorized
+- **403:** Access denied (missing RBAC permission, missing provenance permission, or alert rule quota reached)
+- **404:** Target folder not found
+- **409:** Conflict (an alert rule with the same `metadata.name` already exists)
+- **422:** Schema validation error (for example, `notificationSettings.type` is missing)
+
 #### Update an alert rule
 
 `PUT /apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/alertrules/{name}`
@@ -336,6 +362,91 @@ Replaces an existing `AlertRule` resource. Retrieve the current resource first a
 
 - `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 - `{name}`: The `metadata.name` of the alert rule.
+
+##### Example request
+
+The following example updates the alert rule's title and pending duration:
+
+```http
+PUT /apis/rules.alerting.grafana.app/v1beta1/namespaces/default/alertrules/high-cpu-usage HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
+
+{
+  "apiVersion": "rules.alerting.grafana.app/v1beta1",
+  "kind": "AlertRule",
+  "metadata": {
+    "name": "high-cpu-usage",
+    "resourceVersion": "1",
+    "annotations": {
+      "grafana.app/folder": "<FOLDER_UID>"
+    }
+  },
+  "spec": {
+    "title": "High CPU usage (sustained)",
+    "trigger": {
+      "interval": "1m"
+    },
+    "for": "10m",
+    "noDataState": "NoData",
+    "execErrState": "Error",
+    "notificationSettings": {
+      "type": "SimplifiedRouting",
+      "receiver": "oncall-slack"
+    },
+    "expressions": {
+      "A": {
+        "queryType": "",
+        "datasourceUID": "<DATASOURCE_UID>",
+        "relativeTimeRange": {
+          "from": "5m",
+          "to": "0s"
+        },
+        "model": {
+          "expr": "100 - (avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)"
+        }
+      },
+      "B": {
+        "model": {
+          "type": "reduce",
+          "expression": "A",
+          "reducer": "last"
+        }
+      },
+      "C": {
+        "source": true,
+        "model": {
+          "type": "threshold",
+          "expression": "B",
+          "conditions": [
+            {
+              "evaluator": {
+                "type": "gt",
+                "params": [80]
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}
+```
+
+##### Example response
+
+The response returns `200 OK` with the updated `AlertRule` resource and an incremented `metadata.resourceVersion`.
+
+##### Status codes
+
+- **200:** Updated
+- **400:** Bad request (invalid JSON, invalid duration or expression, or missing folder)
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** Alert rule or target folder not found
+- **409:** Conflict (`metadata.resourceVersion` doesn't match the stored version)
+- **422:** Schema validation error
 
 #### Delete an alert rule
 
@@ -350,11 +461,25 @@ Deletes the `AlertRule` resource with the given `metadata.name`.
 
 ##### Example request
 
+The following example deletes an alert rule:
+
 ```http
 DELETE /apis/rules.alerting.grafana.app/v1beta1/namespaces/default/alertrules/high-cpu-usage HTTP/1.1
 Accept: application/json
 Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
+
+##### Example response
+
+The response returns `200 OK` with the deleted `AlertRule` object (or a `Status` object when served from unified storage).
+
+##### Status codes
+
+- **200:** Deleted
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** Alert rule not found
+- **409:** Conflict (the alert rule is still referenced by a `RuleSequence`)
 
 ### Details
 
@@ -401,6 +526,27 @@ Lists the `RecordingRule` resources in the namespace. Supports `limit`, `continu
 
 - `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 
+##### Example request
+
+The following example lists recording rules in a folder:
+
+```http
+GET /apis/rules.alerting.grafana.app/v1beta1/namespaces/default/recordingrules?labelSelector=grafana.app/folder=<FOLDER_UID> HTTP/1.1
+Accept: application/json
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
+```
+
+##### Example response
+
+The response returns `200 OK` with a `RecordingRuleList` object containing matching `RecordingRule` items in `items`.
+
+##### Status codes
+
+- **200:** `OK`
+- **400:** Bad request (invalid selector)
+- **401:** Unauthorized
+- **403:** Access denied
+
 #### Get a recording rule
 
 `GET /apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/recordingrules/{name}`
@@ -411,6 +557,27 @@ Retrieves a `RecordingRule` resource by `metadata.name`, including its runtime `
 
 - `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 - `{name}`: The `metadata.name` (rule UID) of the recording rule.
+
+##### Example request
+
+The following example gets a recording rule:
+
+```http
+GET /apis/rules.alerting.grafana.app/v1beta1/namespaces/default/recordingrules/service-request-rate HTTP/1.1
+Accept: application/json
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
+```
+
+##### Example response
+
+The response returns `200 OK` with the `RecordingRule` resource.
+
+##### Status codes
+
+- **200:** Found
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** Recording rule not found
 
 #### Create a recording rule
 
@@ -474,6 +641,16 @@ Replace `<SERVICE_ACCOUNT_TOKEN>`, `<FOLDER_UID>`, `<SOURCE_DATASOURCE_UID>`, an
 
 On success, Grafana returns `201 Created` with the created `RecordingRule` object.
 
+##### Status codes
+
+- **201:** Created
+- **400:** Bad request (invalid JSON, invalid metric name or duration, or missing folder)
+- **401:** Unauthorized
+- **403:** Access denied (missing RBAC permission, missing provenance permission, or rule quota reached)
+- **404:** Target folder not found
+- **409:** Conflict (a recording rule with the same `metadata.name` already exists)
+- **422:** Schema validation error
+
 #### Update a recording rule
 
 `PUT /apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/recordingrules/{name}`
@@ -485,6 +662,64 @@ Replaces an existing `RecordingRule` resource. Include `metadata.resourceVersion
 - `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 - `{name}`: The `metadata.name` of the recording rule.
 
+##### Example request
+
+The following example updates the recording rule's evaluation interval:
+
+```http
+PUT /apis/rules.alerting.grafana.app/v1beta1/namespaces/default/recordingrules/service-request-rate HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
+
+{
+  "apiVersion": "rules.alerting.grafana.app/v1beta1",
+  "kind": "RecordingRule",
+  "metadata": {
+    "name": "service-request-rate",
+    "resourceVersion": "1",
+    "annotations": {
+      "grafana.app/folder": "<FOLDER_UID>"
+    }
+  },
+  "spec": {
+    "title": "Service request rate",
+    "metric": "job:http_requests_total:rate5m",
+    "targetDatasourceUID": "<TARGET_DATASOURCE_UID>",
+    "trigger": {
+      "interval": "2m"
+    },
+    "expressions": {
+      "A": {
+        "source": true,
+        "datasourceUID": "<SOURCE_DATASOURCE_UID>",
+        "relativeTimeRange": {
+          "from": "5m",
+          "to": "0s"
+        },
+        "model": {
+          "expr": "sum by (job) (rate(http_requests_total[5m]))"
+        }
+      }
+    }
+  }
+}
+```
+
+##### Example response
+
+The response returns `200 OK` with the updated `RecordingRule` object and an incremented `metadata.resourceVersion`.
+
+##### Status codes
+
+- **200:** Updated
+- **400:** Bad request (invalid JSON, invalid metric name or duration, or missing folder)
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** Recording rule or target folder not found
+- **409:** Conflict (`metadata.resourceVersion` doesn't match the stored version)
+- **422:** Schema validation error
+
 #### Delete a recording rule
 
 `DELETE /apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/recordingrules/{name}`
@@ -495,6 +730,28 @@ Deletes a `RecordingRule` resource by `metadata.name`.
 
 - `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 - `{name}`: The `metadata.name` of the recording rule.
+
+##### Example request
+
+The following example deletes a recording rule:
+
+```http
+DELETE /apis/rules.alerting.grafana.app/v1beta1/namespaces/default/recordingrules/service-request-rate HTTP/1.1
+Accept: application/json
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
+```
+
+##### Example response
+
+The response returns `200 OK` with the deleted `RecordingRule` object (or a `Status` object when served from unified storage).
+
+##### Status codes
+
+- **200:** Deleted
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** Recording rule not found
+- **409:** Conflict (the recording rule is still referenced by a `RuleSequence`)
 
 ### Details
 
@@ -539,6 +796,26 @@ Lists the `RuleSequence` resources in the namespace.
 
 - `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 
+##### Example request
+
+The following example lists rule sequences in the namespace:
+
+```http
+GET /apis/rules.alerting.grafana.app/v1beta1/namespaces/default/rulesequences HTTP/1.1
+Accept: application/json
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
+```
+
+##### Example response
+
+The response returns `200 OK` with a `RuleSequenceList` object containing `RuleSequence` items in `items`.
+
+##### Status codes
+
+- **200:** `OK`
+- **401:** Unauthorized
+- **403:** Access denied
+
 #### Get a rule sequence
 
 `GET /apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/rulesequences/{name}`
@@ -549,6 +826,27 @@ Retrieves a `RuleSequence` resource by `metadata.name`.
 
 - `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 - `{name}`: The `metadata.name` of the rule sequence.
+
+##### Example request
+
+The following example gets a rule sequence:
+
+```http
+GET /apis/rules.alerting.grafana.app/v1beta1/namespaces/default/rulesequences/request-error-sequence HTTP/1.1
+Accept: application/json
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
+```
+
+##### Example response
+
+The response returns `200 OK` with the `RuleSequence` object.
+
+##### Status codes
+
+- **200:** Found
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** Rule sequence not found
 
 #### Create a rule sequence
 
@@ -600,6 +898,16 @@ Replace `<FOLDER_UID>` with the shared folder UID, and replace `<REQUEST_RATE_RU
 
 On success, Grafana returns `201 Created` with the created `RuleSequence` object.
 
+##### Status codes
+
+- **201:** Created
+- **400:** Bad request (invalid JSON or missing folder)
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** Target folder not found
+- **409:** Conflict (a rule sequence with the same `metadata.name` already exists)
+- **422:** Schema validation error (for example, a referenced rule is missing, in another folder, or already in another sequence)
+
 #### Update a rule sequence
 
 `PUT /apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/rulesequences/{name}`
@@ -610,6 +918,55 @@ Updates the evaluation order, rule membership, or interval of a `RuleSequence` r
 
 - `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 - `{name}`: The `metadata.name` of the rule sequence.
+
+##### Example request
+
+The following example updates the shared evaluation interval of a rule sequence:
+
+```http
+PUT /apis/rules.alerting.grafana.app/v1beta1/namespaces/default/rulesequences/request-error-sequence HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
+
+{
+  "apiVersion": "rules.alerting.grafana.app/v1beta1",
+  "kind": "RuleSequence",
+  "metadata": {
+    "name": "request-error-sequence",
+    "resourceVersion": "1",
+    "annotations": {
+      "grafana.app/folder": "<FOLDER_UID>"
+    }
+  },
+  "spec": {
+    "trigger": {
+      "interval": "2m"
+    },
+    "recordingRules": [
+      { "name": "<REQUEST_RATE_RULE_UID>" },
+      { "name": "<ERROR_RATIO_RULE_UID>" }
+    ],
+    "alertRules": [
+      { "name": "<ALERT_RULE_UID>" }
+    ]
+  }
+}
+```
+
+##### Example response
+
+The response returns `200 OK` with the updated `RuleSequence` object and an incremented `metadata.resourceVersion`.
+
+##### Status codes
+
+- **200:** Updated
+- **400:** Bad request (invalid JSON)
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** Rule sequence not found
+- **409:** Conflict (`metadata.resourceVersion` doesn't match the stored version)
+- **422:** Schema validation error
 
 #### Delete a rule sequence
 
@@ -622,23 +979,31 @@ Deletes a `RuleSequence` resource without deleting the rules it references. Remo
 - `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 - `{name}`: The `metadata.name` of the rule sequence.
 
+##### Example request
+
+The following example deletes a rule sequence:
+
+```http
+DELETE /apis/rules.alerting.grafana.app/v1beta1/namespaces/default/rulesequences/request-error-sequence HTTP/1.1
+Accept: application/json
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
+```
+
+##### Example response
+
+The response returns `200 OK` with a `Status` object confirming deletion.
+
+##### Status codes
+
+- **200:** Deleted
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** Rule sequence not found
+
 ### Details
 
 - **Same-folder requirement:** All referenced recording rules and alert rules must already exist in the same folder as the `RuleSequence`.
 - **Single-sequence membership:** Each rule can belong to at most one `RuleSequence`, and `spec.trigger.interval` must be an integer multiple of your instance's base evaluation interval.
-
-## Status codes
-
-Endpoints in this API return the following status codes:
-
-- **200:** `OK` (get, list, update, patch, or delete)
-- **201:** Created
-- **400:** Bad request (invalid JSON, invalid duration or expression, missing folder, or invalid selector)
-- **401:** Unauthorized
-- **403:** Access denied (missing RBAC permission, missing provenance permission, or alert rule quota reached)
-- **404:** Resource or target folder not found
-- **409:** Conflict (`metadata.name` already exists on create, or `metadata.resourceVersion` doesn't match on update)
-- **422:** Schema validation error (for example, `notificationSettings.type` is missing or a sequence constraint fails)
 
 ## Migrate from the legacy Alerting Provisioning API
 
