@@ -41,12 +41,6 @@ export function CodeMirrorEditor(props: CodeMirrorEditorProps) {
   );
 }
 
-/**
- * Grafana's CodeMirror editor plus raw CodeMirror extensions and theme extensions,
- * for core features that need behavior `CodeMirrorEditor` has no prop for. Plugins
- * use `CodeMirrorEditor`, because extensions built with a plugin's own copy of
- * CodeMirror don't work in Grafana's editor.
- */
 export function CustomCodeEditor({ loadingFallback, ...props }: CustomCodeEditorProps) {
   return (
     <LazyEditor loadingFallback={loadingFallback}>
