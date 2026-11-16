@@ -6,7 +6,7 @@ import { useAsync } from 'react-use';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Alert, RadioButtonGroup, Spinner, Stack, Tooltip, useStyles2 } from '@grafana/ui';
-import { CoreCodeMirrorEditor } from 'app/core/components/CodeMirror/CoreCodeMirrorEditor';
+import { CustomCodeEditor } from '@grafana/ui/internal';
 
 import { fetchDashboardSchema } from './dashboardSchemaFetcher';
 import { parseDashboardSchema } from './dashboardSchemaParser';
@@ -222,7 +222,7 @@ export function DashboardSchemaEditor({
       <div className={styles.editorContainer}>
         {contentOverride ?? (
           <div className={styles.codeEditorContainer}>
-            <CoreCodeMirrorEditor
+            <CustomCodeEditor
               key={format}
               height="100%"
               value={displayValue}
