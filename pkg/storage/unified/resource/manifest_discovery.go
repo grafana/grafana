@@ -11,8 +11,12 @@ import (
 // implements it; it is defined here so storage can depend on it without
 // importing the router, which imports storage.
 type ManifestDiscovery interface {
-	// ListManifests returns every published manifest, ordered by group.
-	ListManifests(ctx context.Context) (*appmanifestv1alpha2.AppManifestList, error)
+	ManifestLister
 	// GetManifest returns the manifest of one group, or a NotFound error.
 	GetManifest(ctx context.Context, group string) (*appmanifestv1alpha2.AppManifest, error)
+}
+
+type ManifestLister interface {
+	// ListManifests returns every published manifest, ordered by group.
+	ListManifests(ctx context.Context) (*appmanifestv1alpha2.AppManifestList, error)
 }

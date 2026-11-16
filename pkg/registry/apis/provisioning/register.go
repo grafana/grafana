@@ -227,22 +227,22 @@ func NewAPIBuilder(
 	jobHistoryConfig *JobHistoryConfig,
 	allowedTargets []provisioning.SyncTargetType,
 	supportedResources []resources.SupportedResource,
-	manifests resources.ManifestLister,
+	supported resources.SupportedResourcesFunc,
+	manifestWatcher services.Service,
 	restConfigGetter func(context.Context) (*clientrest.Config, error),
 	allowImageRendering bool,
 	minSyncInterval time.Duration,
 	registry prometheus.Registerer,
-	newStandaloneClientFactoryFunc func(loopbackConfigProvider apiserver.RestConfigProvider, supported resources.SupportedResourcesFunc) resources.ClientFactory,
+	newStandaloneClientFactoryFunc func(loopbackConfigProvider apiserver.RestConfigProvider) resources.ClientFactory,
 	useExclusivelyAccessCheckerForAuthz bool,
 	quotaGetter quotas.QuotaGetter,
 	incrementalPolicy repository.IncrementalSyncPolicy,
 	maxFileSize int64,
 	maxJobBodySize int64,
 ) (*APIBuilder, error) {
-	supported, manifestWatcher := resources.ManifestSupportedResources(manifests, supportedResources)
 	var clients resources.ClientFactory
 	if newStandaloneClientFactoryFunc != nil {
-		clients = newStandaloneClientFactoryFunc(configProvider, supported)
+		clients = newStandaloneClientFactoryFunc(configProvider)
 	} else {
 		clients = resources.NewClientFactoryWithResources(configProvider, supported)
 	}
@@ -396,6 +396,7 @@ func RegisterAPIService(
 	allowedTargets := allowedSyncTargets(cfg.ProvisioningAllowedTargets, bootstrapConfig.Enabled())
 
 	supportedResources, err := resources.ParseSupportedResources(cfg.ProvisioningResources)
+	supported, manifestWatcher := resources.ManifestSupportedResources(manifests, supportedResources)
 	if err != nil {
 		return nil, fmt.Errorf("invalid [provisioning] resources configuration: %w", err)
 	}
@@ -439,7 +440,8 @@ func RegisterAPIService(
 		jobHistoryConfig,
 		allowedTargets,
 		supportedResources,
-		manifests,
+		supported,
+		manifestWatcher,
 		nil, // restConfigGetter - will use loopback instead
 		cfg.ProvisioningAllowImageRendering,
 		cfg.ProvisioningMinSyncInterval,
@@ -494,7 +496,8 @@ func RegisterAPIService(
 		jobHistoryConfig,
 		allowedTargets,
 		supportedResources,
-		manifests,
+		supported,
+		manifestWatcher,
 		nil, // restConfigGetter
 		cfg.ProvisioningAllowImageRendering,
 		cfg.ProvisioningMinSyncInterval,
@@ -1097,9 +1100,8 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 	hookName := fmt.Sprintf("grafana-provisioning-%s", b.gv.Version)
 	postStartHooks := map[string]genericapiserver.PostStartHookFunc{
 		hookName: func(postStartHookCtx genericapiserver.PostStartHookContext) error {
-			if err := b.manifestWatcher.StartAsync(postStartHookCtx.Context); err != nil {
-				return fmt.Errorf("start manifest watcher: %w", err)
-			}
+			// The API versions share the watcher, and StartAsync only fails when it already started.
+			_ = b.manifestWatcher.StartAsync(postStartHookCtx.Context)
 			var config *clientrest.Config
 			var err error
 			if b.restConfigGetter == nil {

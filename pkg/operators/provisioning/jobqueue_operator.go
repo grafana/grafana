@@ -84,10 +84,8 @@ func RunJobQueueController(ctx context.Context, deps server.OperatorDependencies
 	if err != nil {
 		return fmt.Errorf("build driver: %w", err)
 	}
-	if controllerCfg.manifestWatcher != nil {
-		if err := services.StartAndAwaitRunning(ctx, controllerCfg.manifestWatcher); err != nil {
-			return fmt.Errorf("failed to start manifest watcher: %w", err)
-		}
+	if err := services.StartAndAwaitRunning(ctx, controllerCfg.manifestWatcher); err != nil {
+		return fmt.Errorf("failed to start manifest watcher: %w", err)
 	}
 
 	// Jobs informer feeding the driver's work queue with job keys. Under the NATS

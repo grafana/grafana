@@ -7,7 +7,6 @@ import (
 	"sync/atomic"
 
 	"github.com/grafana/dskit/services"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -71,12 +70,6 @@ func (l *remoteManifestLister) ListManifests(ctx context.Context) (*appmanifestv
 	return out, nil
 }
 
-type manifestDiscovery struct{ ManifestLister }
-
-func (manifestDiscovery) GetManifest(context.Context, string) (*appmanifestv1alpha2.AppManifest, error) {
-	return nil, apierrors.NewMethodNotSupported(resource.ManifestDiscoveryGVR.GroupResource(), "get")
-}
-
 // ManifestSupportedResources returns supported plus each kind that a published app manifest
 // opts in to provisioning, and the service that watches the manifests. Entries in supported
 // take precedence over the manifests. The set is supported until the service lists the
@@ -87,7 +80,7 @@ func ManifestSupportedResources(manifests ManifestLister, supported []SupportedR
 	}
 	var merged atomic.Pointer[[]SupportedResource]
 	merged.Store(&supported)
-	watcher := resource.NewLocalManifestWatcher(manifestDiscovery{manifests}, nil, func(data []*app.ManifestData) {
+	watcher := resource.NewLocalManifestWatcher(manifests, nil, func(data []*app.ManifestData) {
 		out := mergeManifestResources(supported, data)
 		merged.Store(&out)
 	}, log.New("provisioning-manifest-watcher"))
