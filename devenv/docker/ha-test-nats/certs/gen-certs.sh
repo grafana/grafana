@@ -15,8 +15,9 @@ nodes=${NATS_NODES:-3}
 days=${CERT_DAYS:-30}
 out=out
 
-rm -rf "$out"
+# Keep the directories: running containers bind-mount out/grafanaN and would not see recreated ones.
 mkdir -p "$out/rogue"
+find "$out" -type f -delete
 
 new_ca() {
 	local dir=$1 cn=$2
