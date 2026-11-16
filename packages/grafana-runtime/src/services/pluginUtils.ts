@@ -1,6 +1,6 @@
 import { config } from '../config';
 
-export function getApiVersion(): string {
+export async function getApiVersion(): Promise<string> {
   return 'v0alpha1';
 }
 
