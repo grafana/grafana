@@ -6,7 +6,7 @@ import AdCard from './AdCard';
 const LINK = 'https://grafana.com/auth/sign-up/create-user?redirectPath=irm&src=oss-grafana&cnt=alerting-irm';
 const STORAGE_KEY = 'irmCardDismissed';
 
-export default function IRMCard() {
+export default function IRMCard({ compact = false }: { compact?: boolean }) {
   return (
     <AdCard
       title={t('alerting.home.irm-card-title', 'Incident response and management')}
@@ -23,6 +23,7 @@ export default function IRMCard() {
         t('alerting.home.irm-card-item-4', 'Analyze past incidents to improve response and resilience.'),
       ]}
       storageKey={STORAGE_KEY}
+      compact={compact}
     />
   );
 }

@@ -7,7 +7,7 @@ const LINK =
   'https://grafana.com/auth/sign-up/create-user?redirectPath=synthetic-monitoring&src=oss-grafana&cnt=alerting-synthetic-monitoring';
 const STORAGE_KEY = 'syntheticMonitoringCardDismissed';
 
-export default function SyntheticMonitoringCard() {
+export default function SyntheticMonitoringCard({ compact = false }: { compact?: boolean }) {
   return (
     <AdCard
       title={t('alerting.home.synthetic-monitoring-card-title', 'Synthetic Monitoring')}
@@ -33,6 +33,7 @@ export default function SyntheticMonitoringCard() {
         ),
       ]}
       storageKey={STORAGE_KEY}
+      compact={compact}
     />
   );
 }
