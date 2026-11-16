@@ -1597,6 +1597,12 @@
         "view-list": "Seznam",
         "wildcard-in-text": "Hledaný text nemůže obsahovat * nebo %."
       },
+      "sequence-pill": {
+        "label": "",
+        "label-with-interval": "",
+        "tooltip": "",
+        "tooltip-with-interval": ""
+      },
       "shared": {
         "load-more": "Načíst další",
         "load-more-error": "Další výsledky se nepodařilo načíst",
@@ -5449,6 +5455,7 @@
       "change-theme": "Změnit motiv",
       "dark-theme": "Tmavý",
       "dashboard-from-template": "Nástěnka ze šablony",
+      "experimental": "",
       "light-theme": "Světlý",
       "open-saved-queries": "Otevřít uložené dotazy",
       "scopes": "Rozsahy"
@@ -5907,7 +5914,7 @@
         "hint-layer": "",
         "hint-layer-select": "",
         "hint-not-removable": "",
-        "hint-panel": "Kliknutím okomentujte panel nebo přetažením nakreslete oblast",
+        "hint-panel": "",
         "hint-panel-select": "",
         "hint-region": "Přetažením nakreslete oblast",
         "hint-remove": "",
@@ -6890,8 +6897,6 @@
         "open-editor": "Otevřít editor proměnných",
         "open-editor-tooltip": "Pro další možnosti proměnných otevřete editor proměnných",
         "query-options": {
-          "close": "Zavřít",
-          "old-modal-title": "Proměnná dotazu",
           "preview": "Náhled"
         },
         "remove": "Odebrat",
@@ -10976,6 +10981,8 @@
       "tooltip": {
         "category": "Popisek",
         "description-hover-proximity": "Jak blízko musí být kurzor k bodu, aby se spustil popisek, v pixelech",
+        "description-max-height": "",
+        "description-max-width": "",
         "modeOptions": {
           "label-all": "Vše",
           "label-hidden": "Skryté",
@@ -13320,6 +13327,10 @@
       "subtitle": "Vyberte, jak upozornit kontaktní bod, když je spuštěna instance výstrahy",
       "title": "Kontaktní body"
     },
+    "alerting-recording-rules": {
+      "subtitle": "",
+      "title": ""
+    },
     "alerting-silences": {
       "subtitle": "Zastavit oznamování z jednoho nebo více pravidel výstrahy",
       "title": "Potlačení"
@@ -14184,6 +14195,32 @@
     },
     "units": {
       "clear-tooltip": "Vymazat výběr jednotky"
+    },
+    "var-mapping-checks": {
+      "data-macro": "",
+      "not-allowed": "",
+      "not-found": "",
+      "not-number": "",
+      "not-one-value": "",
+      "out-of-range": "",
+      "resolves": "",
+      "values": ""
+    },
+    "var-mapping-toggle": {
+      "aria-label-picker": "",
+      "fallback-off": "",
+      "fallback-on": "",
+      "group-matching": "",
+      "group-other": "",
+      "hint-boolean": "",
+      "hint-number": "",
+      "hint-option": "",
+      "hint-option-no-fallback": "",
+      "new-variable": "",
+      "option-current": "",
+      "placeholder": "",
+      "use-fixed-value": "",
+      "use-variable": ""
     }
   },
   "org": {

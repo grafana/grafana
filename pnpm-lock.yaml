@@ -222,7 +222,7 @@ importers:
         version: 6.13.1
       '@codemirror/lint':
         specifier: ^6.8.0
-        version: 6.9.7
+        version: 6.9.8
       '@codemirror/state':
         specifier: 6.7.6
         version: 6.7.6
@@ -297,7 +297,7 @@ importers:
         version: 0.17.10(@grafana/data@packages+grafana-data)(@grafana/e2e-selectors@packages+grafana-e2e-selectors)(@grafana/runtime@packages+grafana-runtime)(@grafana/ui@packages+grafana-ui)(@testing-library/jest-dom@6.6.4)(@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(@testing-library/user-event@14.6.1(@testing-library/dom@10.4.1))(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(monaco-editor@0.34.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(supports-color@7.2.0)
       '@grafana/prometheus':
         specifier: 13.2.2
-        version: 13.2.2(c99293c5a82dfdb342e08b946b90b9c2)
+        version: 13.2.2(b0e6f1e1be0dfb3ea5cf0aa9b6616919)
       '@grafana/runtime':
         specifier: workspace:*
         version: link:packages/grafana-runtime
@@ -335,8 +335,8 @@ importers:
         specifier: 1.4.12
         version: 1.4.12
       '@lezer/markdown':
-        specifier: 1.7.2
-        version: 1.7.2
+        specifier: 1.8.1
+        version: 1.8.1
       '@locker/near-membrane-dom':
         specifier: 0.19.1
         version: 0.19.1
@@ -417,7 +417,7 @@ importers:
         version: 2.1.1
       codemirror-json-schema:
         specifier: ^0.8.1
-        version: 0.8.1(@codemirror/language@6.13.1)(@codemirror/lint@6.9.7)(@codemirror/state@6.7.6)(@codemirror/view@6.43.15)(@lezer/common@1.5.5)
+        version: 0.8.1(@codemirror/language@6.13.1)(@codemirror/lint@6.9.8)(@codemirror/state@6.7.6)(@codemirror/view@6.43.15)(@lezer/common@1.5.5)
       combokeys:
         specifier: ^3.0.0
         version: 3.0.1
@@ -674,8 +674,8 @@ importers:
         specifier: 1.6.0
         version: 1.6.0
       tslib:
-        specifier: 2.8.1
-        version: 2.8.1
+        specifier: 2.9.1
+        version: 2.9.1
       type-fest:
         specifier: ^4.18.2
         version: 4.41.0
@@ -2428,7 +2428,7 @@ importers:
         version: 7.7.20
       '@uiw/react-codemirror':
         specifier: ^4.25.9
-        version: 4.25.12(@babel/runtime@8.0.0)(@codemirror/autocomplete@6.20.4)(@codemirror/language@6.13.1)(@codemirror/lint@6.9.7)(@codemirror/search@6.6.0)(@codemirror/state@6.7.6)(@codemirror/theme-one-dark@6.1.3)(@codemirror/view@6.43.15)(codemirror@6.0.2)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        version: 4.25.12(@babel/runtime@8.0.0)(@codemirror/autocomplete@6.20.4)(@codemirror/language@6.13.1)(@codemirror/lint@6.9.8)(@codemirror/search@6.6.0)(@codemirror/state@6.7.6)(@codemirror/theme-one-dark@6.1.3)(@codemirror/view@6.43.15)(codemirror@6.0.2)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       calculate-size:
         specifier: ^1.1.1
         version: 1.1.1
@@ -2473,7 +2473,7 @@ importers:
         version: 6.0.1(patch_hash=2d8f851119870b6f0b94fdbbec3f07042cab7166e1a9a93275c449a6e47a0912)(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       react-codemirror-merge:
         specifier: ^4.25.12
-        version: 4.25.12(@babel/runtime@8.0.0)(@codemirror/autocomplete@6.20.4)(@codemirror/language@6.13.1)(@codemirror/lint@6.9.7)(@codemirror/search@6.6.0)(@codemirror/state@6.7.6)(@codemirror/theme-one-dark@6.1.3)(@codemirror/view@6.43.15)(codemirror@6.0.2)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        version: 4.25.12(@babel/runtime@8.0.0)(@codemirror/autocomplete@6.20.4)(@codemirror/language@6.13.1)(@codemirror/lint@6.9.8)(@codemirror/search@6.6.0)(@codemirror/state@6.7.6)(@codemirror/theme-one-dark@6.1.3)(@codemirror/view@6.43.15)(codemirror@6.0.2)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       react-colorful:
         specifier: ^5.6.1
         version: 5.8.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -3180,8 +3180,8 @@ packages:
   '@codemirror/legacy-modes@6.5.5':
     resolution: {integrity: sha512-9ltT214oMb3Y1w5eAZMSigzrjzZnMI2Wa3Feq73rU/i4C56MkwrpfswfQYOr28C5pXr6dWwspNTMyeHXlzWMxg==}
 
-  '@codemirror/lint@6.9.7':
-    resolution: {integrity: sha512-28/+iWLYxKxsvGYhSYL7zaCZqLz5+FFFDq9tVsvGv9kv8RY4fFAchJ5WX9M3YrrRlTIsECjsXPqeNgnSmNP2dg==}
+  '@codemirror/lint@6.9.8':
+    resolution: {integrity: sha512-qNvtcE73xUto/D1RvtgSRI4A1Hg8ekxlvtZpjHpdpisLBnhyu82EUEJMEgaxkjuQCA8vqnrylENWKOsEDCOHcw==}
 
   '@codemirror/merge@6.12.3':
     resolution: {integrity: sha512-Wq9wXrp41cW/nIpi1CQPyNwD+36kg8KIX676ym0Hyfn3Dpr+XQHNAIsZYVNlaivuVB4SAASbreG3V0VXinbqZA==}
@@ -4676,8 +4676,8 @@ packages:
   '@lezer/lr@1.4.12':
     resolution: {integrity: sha512-On9HU4oMMiHPMkQDgoTnGahjgG5n/MkN38CgG77sMraKLL+3JBbeQNi1FcCXV9QRqwF9/BUXP3caHyJC1fBOTQ==}
 
-  '@lezer/markdown@1.7.2':
-    resolution: {integrity: sha512-iTkYvoVcKt3WkeL7qUDyXHONZEwLio4wj8KTNi2dnjQEXBZKMV63BpQrPqfsM+OkvuRbiSTAcycYAsQzLhRNoQ==}
+  '@lezer/markdown@1.8.1':
+    resolution: {integrity: sha512-M5YmEcKWO4mJ45Y1hECwqyu8cLv25EiXOK554PVOvDOWOP0olwelHHQUWr9sjF+d1bENVhy0nfJ8E57XZUTiXg==}
 
   '@lezer/xml@1.0.6':
     resolution: {integrity: sha512-CdDwirL0OEaStFue/66ZmFSeppuL6Dwjlk8qk153mSQwiSH/Dlri4GNymrNWnUmPl2Um7QfV1FO9KFUyX3Twww==}
@@ -14634,6 +14634,9 @@ packages:
   tslib@2.8.1:
     resolution: {integrity: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==}
 
+  tslib@2.9.1:
+    resolution: {integrity: sha512-a4Ux9VKuIMHsOS7ENbEq6hK2ZGYIT27Rtl0E4eD9KqwxhKiQeMZE/9xb3IdYwWaSOyIBQLExhQgXDTYoiCxnWA==}
+
   tsutils@3.21.0:
     resolution: {integrity: sha512-mHKK3iUXL+3UF6xL5k0PEhKRUBKPBCv/+RkEOpjRWxxx27KKRBmmA60A9pgOUvMi8GKhRMPEmjBRPzs2W7O1OA==}
     engines: {node: '>= 6'}
@@ -15799,7 +15802,7 @@ snapshots:
     dependencies:
       '@codemirror/autocomplete': 6.20.4
       '@codemirror/language': 6.13.1
-      '@codemirror/lint': 6.9.7
+      '@codemirror/lint': 6.9.8
       '@codemirror/state': 6.7.6
       '@codemirror/view': 6.43.15
       '@lezer/common': 1.5.5
@@ -15818,7 +15821,7 @@ snapshots:
       '@codemirror/state': 6.7.6
       '@codemirror/view': 6.43.15
       '@lezer/common': 1.5.5
-      '@lezer/markdown': 1.7.2
+      '@lezer/markdown': 1.8.1
 
   '@codemirror/lang-sql@6.10.0':
     dependencies:
@@ -15862,7 +15865,7 @@ snapshots:
     dependencies:
       '@codemirror/streamparser': 6.0.0
 
-  '@codemirror/lint@6.9.7':
+  '@codemirror/lint@6.9.8':
     dependencies:
       '@codemirror/state': 6.7.6
       '@codemirror/view': 6.43.15
@@ -15941,89 +15944,89 @@ snapshots:
   '@emnapi/core@1.10.0':
     dependencies:
       '@emnapi/wasi-threads': 1.2.1
-      tslib: 2.8.1
+      tslib: 2.9.1
     optional: true
 
   '@emnapi/core@1.11.0':
     dependencies:
       '@emnapi/wasi-threads': 1.2.2
-      tslib: 2.8.1
+      tslib: 2.9.1
     optional: true
 
   '@emnapi/core@1.11.3':
     dependencies:
       '@emnapi/wasi-threads': 1.2.3
-      tslib: 2.8.1
+      tslib: 2.9.1
     optional: true
 
   '@emnapi/core@1.4.5':
     dependencies:
       '@emnapi/wasi-threads': 1.0.4
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@emnapi/core@1.9.2':
     dependencies:
       '@emnapi/wasi-threads': 1.2.1
-      tslib: 2.8.1
+      tslib: 2.9.1
     optional: true
 
   '@emnapi/core@2.0.0-beta.2':
     dependencies:
       '@emnapi/wasi-threads': 2.2.0
-      tslib: 2.8.1
+      tslib: 2.9.1
     optional: true
 
   '@emnapi/runtime@1.10.0':
     dependencies:
-      tslib: 2.8.1
+      tslib: 2.9.1
     optional: true
 
   '@emnapi/runtime@1.11.0':
     dependencies:
-      tslib: 2.8.1
+      tslib: 2.9.1
     optional: true
 
   '@emnapi/runtime@1.11.3':
     dependencies:
-      tslib: 2.8.1
+      tslib: 2.9.1
     optional: true
 
   '@emnapi/runtime@1.4.5':
     dependencies:
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@emnapi/runtime@1.9.2':
     dependencies:
-      tslib: 2.8.1
+      tslib: 2.9.1
     optional: true
 
   '@emnapi/runtime@2.0.0-beta.2':
     dependencies:
-      tslib: 2.8.1
+      tslib: 2.9.1
     optional: true
 
   '@emnapi/wasi-threads@1.0.4':
     dependencies:
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@emnapi/wasi-threads@1.2.1':
     dependencies:
-      tslib: 2.8.1
+      tslib: 2.9.1
     optional: true
 
   '@emnapi/wasi-threads@1.2.2':
     dependencies:
-      tslib: 2.8.1
+      tslib: 2.9.1
     optional: true
 
   '@emnapi/wasi-threads@1.2.3':
     dependencies:
-      tslib: 2.8.1
+      tslib: 2.9.1
     optional: true
 
   '@emnapi/wasi-threads@2.2.0':
     dependencies:
-      tslib: 2.8.1
+      tslib: 2.9.1
     optional: true
 
   '@emotion/babel-plugin@11.13.5(supports-color@7.2.0)':
@@ -16332,7 +16335,7 @@ snapshots:
 
   '@fingerprintjs/fingerprintjs@3.4.2':
     dependencies:
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@floating-ui/core@1.8.0':
     dependencies:
@@ -16550,7 +16553,7 @@ snapshots:
       - react-native
       - supports-color
 
-  '@grafana/prometheus@13.2.2(c99293c5a82dfdb342e08b946b90b9c2)':
+  '@grafana/prometheus@13.2.2(b0e6f1e1be0dfb3ea5cf0aa9b6616919)':
     dependencies:
       '@emotion/css': 11.13.5(supports-color@7.2.0)
       '@floating-ui/react': 0.27.20(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -16570,7 +16573,7 @@ snapshots:
       debounce-promise: 3.1.2
       lodash: 4.18.1
       monaco-editor: 0.34.1
-      monaco-promql: 1.9.0(@codemirror/autocomplete@6.20.4)(@codemirror/language@6.13.1)(@codemirror/lint@6.9.7)(@codemirror/state@6.7.6)(@codemirror/view@6.43.15)(@lezer/common@1.5.3)(@lezer/highlight@1.2.5)(@lezer/lr@1.4.10)
+      monaco-promql: 1.9.0(@codemirror/autocomplete@6.20.4)(@codemirror/language@6.13.1)(@codemirror/lint@6.9.8)(@codemirror/state@6.7.6)(@codemirror/view@6.43.15)(@lezer/common@1.5.3)(@lezer/highlight@1.2.5)(@lezer/lr@1.4.10)
       pluralize: 8.0.0
       prismjs: 1.30.0
       react: 19.2.8
@@ -17574,133 +17577,133 @@ snapshots:
 
   '@jsdevtools/ono@7.1.3': {}
 
-  '@jsonjoy.com/base64@1.1.2(tslib@2.8.1)':
+  '@jsonjoy.com/base64@1.1.2(tslib@2.9.1)':
     dependencies:
-      tslib: 2.8.1
+      tslib: 2.9.1
 
-  '@jsonjoy.com/base64@17.67.0(tslib@2.8.1)':
+  '@jsonjoy.com/base64@17.67.0(tslib@2.9.1)':
     dependencies:
-      tslib: 2.8.1
+      tslib: 2.9.1
 
-  '@jsonjoy.com/buffers@1.2.1(tslib@2.8.1)':
+  '@jsonjoy.com/buffers@1.2.1(tslib@2.9.1)':
     dependencies:
-      tslib: 2.8.1
+      tslib: 2.9.1
 
-  '@jsonjoy.com/buffers@17.67.0(tslib@2.8.1)':
+  '@jsonjoy.com/buffers@17.67.0(tslib@2.9.1)':
     dependencies:
-      tslib: 2.8.1
+      tslib: 2.9.1
 
-  '@jsonjoy.com/codegen@1.0.0(tslib@2.8.1)':
+  '@jsonjoy.com/codegen@1.0.0(tslib@2.9.1)':
     dependencies:
-      tslib: 2.8.1
+      tslib: 2.9.1
 
-  '@jsonjoy.com/codegen@17.67.0(tslib@2.8.1)':
+  '@jsonjoy.com/codegen@17.67.0(tslib@2.9.1)':
     dependencies:
-      tslib: 2.8.1
+      tslib: 2.9.1
 
-  '@jsonjoy.com/fs-core@4.68.0(tslib@2.8.1)':
+  '@jsonjoy.com/fs-core@4.68.0(tslib@2.9.1)':
     dependencies:
-      '@jsonjoy.com/fs-node-builtins': 4.68.0(tslib@2.8.1)
-      '@jsonjoy.com/fs-node-utils': 4.68.0(tslib@2.8.1)
-      thingies: 2.6.1(tslib@2.8.1)
-      tslib: 2.8.1
+      '@jsonjoy.com/fs-node-builtins': 4.68.0(tslib@2.9.1)
+      '@jsonjoy.com/fs-node-utils': 4.68.0(tslib@2.9.1)
+      thingies: 2.6.1(tslib@2.9.1)
+      tslib: 2.9.1
 
-  '@jsonjoy.com/fs-fsa@4.68.0(tslib@2.8.1)':
+  '@jsonjoy.com/fs-fsa@4.68.0(tslib@2.9.1)':
     dependencies:
-      '@jsonjoy.com/fs-core': 4.68.0(tslib@2.8.1)
-      '@jsonjoy.com/fs-node-builtins': 4.68.0(tslib@2.8.1)
-      '@jsonjoy.com/fs-node-utils': 4.68.0(tslib@2.8.1)
-      thingies: 2.6.1(tslib@2.8.1)
-      tslib: 2.8.1
+      '@jsonjoy.com/fs-core': 4.68.0(tslib@2.9.1)
+      '@jsonjoy.com/fs-node-builtins': 4.68.0(tslib@2.9.1)
+      '@jsonjoy.com/fs-node-utils': 4.68.0(tslib@2.9.1)
+      thingies: 2.6.1(tslib@2.9.1)
+      tslib: 2.9.1
 
-  '@jsonjoy.com/fs-node-builtins@4.68.0(tslib@2.8.1)':
+  '@jsonjoy.com/fs-node-builtins@4.68.0(tslib@2.9.1)':
     dependencies:
-      tslib: 2.8.1
+      tslib: 2.9.1
 
-  '@jsonjoy.com/fs-node-to-fsa@4.68.0(tslib@2.8.1)':
+  '@jsonjoy.com/fs-node-to-fsa@4.68.0(tslib@2.9.1)':
     dependencies:
-      '@jsonjoy.com/fs-fsa': 4.68.0(tslib@2.8.1)
-      '@jsonjoy.com/fs-node-builtins': 4.68.0(tslib@2.8.1)
-      '@jsonjoy.com/fs-node-utils': 4.68.0(tslib@2.8.1)
-      tslib: 2.8.1
+      '@jsonjoy.com/fs-fsa': 4.68.0(tslib@2.9.1)
+      '@jsonjoy.com/fs-node-builtins': 4.68.0(tslib@2.9.1)
+      '@jsonjoy.com/fs-node-utils': 4.68.0(tslib@2.9.1)
+      tslib: 2.9.1
 
-  '@jsonjoy.com/fs-node-utils@4.68.0(tslib@2.8.1)':
+  '@jsonjoy.com/fs-node-utils@4.68.0(tslib@2.9.1)':
     dependencies:
-      '@jsonjoy.com/fs-node-builtins': 4.68.0(tslib@2.8.1)
-      glob-to-regex.js: 1.2.0(tslib@2.8.1)
-      tslib: 2.8.1
+      '@jsonjoy.com/fs-node-builtins': 4.68.0(tslib@2.9.1)
+      glob-to-regex.js: 1.2.0(tslib@2.9.1)
+      tslib: 2.9.1
 
-  '@jsonjoy.com/fs-node@4.68.0(tslib@2.8.1)':
+  '@jsonjoy.com/fs-node@4.68.0(tslib@2.9.1)':
     dependencies:
-      '@jsonjoy.com/fs-core': 4.68.0(tslib@2.8.1)
-      '@jsonjoy.com/fs-node-builtins': 4.68.0(tslib@2.8.1)
-      '@jsonjoy.com/fs-node-utils': 4.68.0(tslib@2.8.1)
-      '@jsonjoy.com/fs-print': 4.68.0(tslib@2.8.1)
-      '@jsonjoy.com/fs-snapshot': 4.68.0(tslib@2.8.1)
-      glob-to-regex.js: 1.2.0(tslib@2.8.1)
-      thingies: 2.6.1(tslib@2.8.1)
-      tslib: 2.8.1
+      '@jsonjoy.com/fs-core': 4.68.0(tslib@2.9.1)
+      '@jsonjoy.com/fs-node-builtins': 4.68.0(tslib@2.9.1)
+      '@jsonjoy.com/fs-node-utils': 4.68.0(tslib@2.9.1)
+      '@jsonjoy.com/fs-print': 4.68.0(tslib@2.9.1)
+      '@jsonjoy.com/fs-snapshot': 4.68.0(tslib@2.9.1)
+      glob-to-regex.js: 1.2.0(tslib@2.9.1)
+      thingies: 2.6.1(tslib@2.9.1)
+      tslib: 2.9.1
 
-  '@jsonjoy.com/fs-print@4.68.0(tslib@2.8.1)':
+  '@jsonjoy.com/fs-print@4.68.0(tslib@2.9.1)':
     dependencies:
-      '@jsonjoy.com/fs-node-utils': 4.68.0(tslib@2.8.1)
-      tree-dump: 1.1.0(tslib@2.8.1)
-      tslib: 2.8.1
+      '@jsonjoy.com/fs-node-utils': 4.68.0(tslib@2.9.1)
+      tree-dump: 1.1.0(tslib@2.9.1)
+      tslib: 2.9.1
 
-  '@jsonjoy.com/fs-snapshot@4.68.0(tslib@2.8.1)':
+  '@jsonjoy.com/fs-snapshot@4.68.0(tslib@2.9.1)':
     dependencies:
-      '@jsonjoy.com/buffers': 17.67.0(tslib@2.8.1)
-      '@jsonjoy.com/fs-node-utils': 4.68.0(tslib@2.8.1)
-      '@jsonjoy.com/json-pack': 17.67.0(tslib@2.8.1)
-      '@jsonjoy.com/util': 17.67.0(tslib@2.8.1)
-      tslib: 2.8.1
+      '@jsonjoy.com/buffers': 17.67.0(tslib@2.9.1)
+      '@jsonjoy.com/fs-node-utils': 4.68.0(tslib@2.9.1)
+      '@jsonjoy.com/json-pack': 17.67.0(tslib@2.9.1)
+      '@jsonjoy.com/util': 17.67.0(tslib@2.9.1)
+      tslib: 2.9.1
 
-  '@jsonjoy.com/json-pack@1.21.0(tslib@2.8.1)':
+  '@jsonjoy.com/json-pack@1.21.0(tslib@2.9.1)':
     dependencies:
-      '@jsonjoy.com/base64': 1.1.2(tslib@2.8.1)
-      '@jsonjoy.com/buffers': 1.2.1(tslib@2.8.1)
-      '@jsonjoy.com/codegen': 1.0.0(tslib@2.8.1)
-      '@jsonjoy.com/json-pointer': 1.0.2(tslib@2.8.1)
-      '@jsonjoy.com/util': 1.9.0(tslib@2.8.1)
+      '@jsonjoy.com/base64': 1.1.2(tslib@2.9.1)
+      '@jsonjoy.com/buffers': 1.2.1(tslib@2.9.1)
+      '@jsonjoy.com/codegen': 1.0.0(tslib@2.9.1)
+      '@jsonjoy.com/json-pointer': 1.0.2(tslib@2.9.1)
+      '@jsonjoy.com/util': 1.9.0(tslib@2.9.1)
       hyperdyperid: 1.2.0
-      thingies: 2.6.1(tslib@2.8.1)
-      tree-dump: 1.1.0(tslib@2.8.1)
-      tslib: 2.8.1
+      thingies: 2.6.1(tslib@2.9.1)
+      tree-dump: 1.1.0(tslib@2.9.1)
+      tslib: 2.9.1
 
-  '@jsonjoy.com/json-pack@17.67.0(tslib@2.8.1)':
+  '@jsonjoy.com/json-pack@17.67.0(tslib@2.9.1)':
     dependencies:
-      '@jsonjoy.com/base64': 17.67.0(tslib@2.8.1)
-      '@jsonjoy.com/buffers': 17.67.0(tslib@2.8.1)
-      '@jsonjoy.com/codegen': 17.67.0(tslib@2.8.1)
-      '@jsonjoy.com/json-pointer': 17.67.0(tslib@2.8.1)
-      '@jsonjoy.com/util': 17.67.0(tslib@2.8.1)
+      '@jsonjoy.com/base64': 17.67.0(tslib@2.9.1)
+      '@jsonjoy.com/buffers': 17.67.0(tslib@2.9.1)
+      '@jsonjoy.com/codegen': 17.67.0(tslib@2.9.1)
+      '@jsonjoy.com/json-pointer': 17.67.0(tslib@2.9.1)
+      '@jsonjoy.com/util': 17.67.0(tslib@2.9.1)
       hyperdyperid: 1.2.0
-      thingies: 2.6.1(tslib@2.8.1)
-      tree-dump: 1.1.0(tslib@2.8.1)
-      tslib: 2.8.1
+      thingies: 2.6.1(tslib@2.9.1)
+      tree-dump: 1.1.0(tslib@2.9.1)
+      tslib: 2.9.1
 
-  '@jsonjoy.com/json-pointer@1.0.2(tslib@2.8.1)':
+  '@jsonjoy.com/json-pointer@1.0.2(tslib@2.9.1)':
     dependencies:
-      '@jsonjoy.com/codegen': 1.0.0(tslib@2.8.1)
-      '@jsonjoy.com/util': 1.9.0(tslib@2.8.1)
-      tslib: 2.8.1
+      '@jsonjoy.com/codegen': 1.0.0(tslib@2.9.1)
+      '@jsonjoy.com/util': 1.9.0(tslib@2.9.1)
+      tslib: 2.9.1
 
-  '@jsonjoy.com/json-pointer@17.67.0(tslib@2.8.1)':
+  '@jsonjoy.com/json-pointer@17.67.0(tslib@2.9.1)':
     dependencies:
-      '@jsonjoy.com/util': 17.67.0(tslib@2.8.1)
-      tslib: 2.8.1
+      '@jsonjoy.com/util': 17.67.0(tslib@2.9.1)
+      tslib: 2.9.1
 
-  '@jsonjoy.com/util@1.9.0(tslib@2.8.1)':
+  '@jsonjoy.com/util@1.9.0(tslib@2.9.1)':
     dependencies:
-      '@jsonjoy.com/buffers': 1.2.1(tslib@2.8.1)
-      '@jsonjoy.com/codegen': 1.0.0(tslib@2.8.1)
-      tslib: 2.8.1
+      '@jsonjoy.com/buffers': 1.2.1(tslib@2.9.1)
+      '@jsonjoy.com/codegen': 1.0.0(tslib@2.9.1)
+      tslib: 2.9.1
 
-  '@jsonjoy.com/util@17.67.0(tslib@2.8.1)':
+  '@jsonjoy.com/util@17.67.0(tslib@2.9.1)':
     dependencies:
-      '@jsonjoy.com/buffers': 17.67.0(tslib@2.8.1)
-      '@jsonjoy.com/codegen': 17.67.0(tslib@2.8.1)
-      tslib: 2.8.1
+      '@jsonjoy.com/buffers': 17.67.0(tslib@2.9.1)
+      '@jsonjoy.com/codegen': 17.67.0(tslib@2.9.1)
+      tslib: 2.9.1
 
   '@kusto/language-service-next@11.5.3': {}
 
@@ -17763,7 +17766,7 @@ snapshots:
     dependencies:
       '@lezer/common': 1.5.5
 
-  '@lezer/markdown@1.7.2':
+  '@lezer/markdown@1.8.1':
     dependencies:
       '@lezer/common': 1.5.5
       '@lezer/highlight': 1.2.5
@@ -18007,7 +18010,7 @@ snapshots:
   '@openfeature/localstorage-provider@0.1.2(@openfeature/web-sdk@1.10.0(@openfeature/core@1.12.0))':
     dependencies:
       '@openfeature/web-sdk': 1.10.0(@openfeature/core@1.12.0)
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@openfeature/ofrep-core@2.3.0(@openfeature/core@1.12.0)':
     dependencies:
@@ -18441,11 +18444,11 @@ snapshots:
 
   '@popperjs/core@2.11.8': {}
 
-  '@prometheus-io/codemirror-promql@0.311.3(@codemirror/autocomplete@6.20.4)(@codemirror/language@6.13.1)(@codemirror/lint@6.9.7)(@codemirror/state@6.7.6)(@codemirror/view@6.43.15)(@lezer/common@1.5.3)(@lezer/highlight@1.2.5)(@lezer/lr@1.4.10)':
+  '@prometheus-io/codemirror-promql@0.311.3(@codemirror/autocomplete@6.20.4)(@codemirror/language@6.13.1)(@codemirror/lint@6.9.8)(@codemirror/state@6.7.6)(@codemirror/view@6.43.15)(@lezer/common@1.5.3)(@lezer/highlight@1.2.5)(@lezer/lr@1.4.10)':
     dependencies:
       '@codemirror/autocomplete': 6.20.4
       '@codemirror/language': 6.13.1
-      '@codemirror/lint': 6.9.7
+      '@codemirror/lint': 6.9.8
       '@codemirror/state': 6.7.6
       '@codemirror/view': 6.43.15
       '@lezer/common': 1.5.3
@@ -19388,7 +19391,7 @@ snapshots:
       flat-cache: 3.1.1
       micromatch: 4.0.8
       react-docgen-typescript: 2.4.0(@typescript/typescript6@6.0.2)
-      tslib: 2.8.1
+      tslib: 2.9.1
       typescript: '@typescript/typescript6@6.0.2'
       webpack: 5.105.0(@swc/core@1.13.3(@swc/helpers@0.5.17))(clean-css@5.3.3)(esbuild@0.28.1)(html-minifier-terser@7.2.0)(lightningcss@1.33.0)(postcss@8.5.31)(uglify-js@3.17.4)(webpack-cli@6.0.1)
     transitivePeerDependencies:
@@ -20072,11 +20075,11 @@ snapshots:
 
   '@swc/helpers@0.5.17':
     dependencies:
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@swc/helpers@0.5.23':
     dependencies:
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@swc/jest@0.2.39(@swc/core@1.13.3(@swc/helpers@0.5.17))':
     dependencies:
@@ -20198,12 +20201,12 @@ snapshots:
 
   '@tybys/wasm-util@0.10.3':
     dependencies:
-      tslib: 2.8.1
+      tslib: 2.9.1
     optional: true
 
   '@tybys/wasm-util@0.9.0':
     dependencies:
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   '@types/aria-query@5.0.1': {}
 
@@ -20964,24 +20967,24 @@ snapshots:
     dependencies:
       '@typescript/old': typescript@6.0.2
 
-  '@uiw/codemirror-extensions-basic-setup@4.25.12(@codemirror/autocomplete@6.20.4)(@codemirror/commands@6.11.1)(@codemirror/language@6.13.1)(@codemirror/lint@6.9.7)(@codemirror/search@6.6.0)(@codemirror/state@6.7.6)(@codemirror/view@6.43.15)':
+  '@uiw/codemirror-extensions-basic-setup@4.25.12(@codemirror/autocomplete@6.20.4)(@codemirror/commands@6.11.1)(@codemirror/language@6.13.1)(@codemirror/lint@6.9.8)(@codemirror/search@6.6.0)(@codemirror/state@6.7.6)(@codemirror/view@6.43.15)':
     dependencies:
       '@codemirror/autocomplete': 6.20.4
       '@codemirror/commands': 6.11.1
       '@codemirror/language': 6.13.1
-      '@codemirror/lint': 6.9.7
+      '@codemirror/lint': 6.9.8
       '@codemirror/search': 6.6.0
       '@codemirror/state': 6.7.6
       '@codemirror/view': 6.43.15
 
-  '@uiw/react-codemirror@4.25.12(@babel/runtime@8.0.0)(@codemirror/autocomplete@6.20.4)(@codemirror/language@6.13.1)(@codemirror/lint@6.9.7)(@codemirror/search@6.6.0)(@codemirror/state@6.7.6)(@codemirror/theme-one-dark@6.1.3)(@codemirror/view@6.43.15)(codemirror@6.0.2)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
+  '@uiw/react-codemirror@4.25.12(@babel/runtime@8.0.0)(@codemirror/autocomplete@6.20.4)(@codemirror/language@6.13.1)(@codemirror/lint@6.9.8)(@codemirror/search@6.6.0)(@codemirror/state@6.7.6)(@codemirror/theme-one-dark@6.1.3)(@codemirror/view@6.43.15)(codemirror@6.0.2)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
     dependencies:
       '@babel/runtime': 8.0.0
       '@codemirror/commands': 6.11.1
       '@codemirror/state': 6.7.6
       '@codemirror/theme-one-dark': 6.1.3
       '@codemirror/view': 6.43.15
-      '@uiw/codemirror-extensions-basic-setup': 4.25.12(@codemirror/autocomplete@6.20.4)(@codemirror/commands@6.11.1)(@codemirror/language@6.13.1)(@codemirror/lint@6.9.7)(@codemirror/search@6.6.0)(@codemirror/state@6.7.6)(@codemirror/view@6.43.15)
+      '@uiw/codemirror-extensions-basic-setup': 4.25.12(@codemirror/autocomplete@6.20.4)(@codemirror/commands@6.11.1)(@codemirror/language@6.13.1)(@codemirror/lint@6.9.8)(@codemirror/search@6.6.0)(@codemirror/state@6.7.6)(@codemirror/view@6.43.15)
       codemirror: 6.0.2
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
@@ -21602,7 +21605,7 @@ snapshots:
 
   aria-hidden@1.2.6:
     dependencies:
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   aria-query@5.3.0:
     dependencies:
@@ -21694,7 +21697,7 @@ snapshots:
 
   ast-types@0.16.1:
     dependencies:
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   asynckit@0.4.0: {}
 
@@ -21702,7 +21705,7 @@ snapshots:
 
   autolinker@3.16.2:
     dependencies:
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   available-typed-arrays@1.0.7:
     dependencies:
@@ -21958,7 +21961,7 @@ snapshots:
   camel-case@4.1.2:
     dependencies:
       pascal-case: 3.1.2
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   camelcase@5.3.1: {}
 
@@ -22133,10 +22136,10 @@ snapshots:
 
   code-block-writer@13.0.3: {}
 
-  codemirror-json-schema@0.8.1(@codemirror/language@6.13.1)(@codemirror/lint@6.9.7)(@codemirror/state@6.7.6)(@codemirror/view@6.43.15)(@lezer/common@1.5.5):
+  codemirror-json-schema@0.8.1(@codemirror/language@6.13.1)(@codemirror/lint@6.9.8)(@codemirror/state@6.7.6)(@codemirror/view@6.43.15)(@lezer/common@1.5.5):
     dependencies:
       '@codemirror/language': 6.13.1
-      '@codemirror/lint': 6.9.7
+      '@codemirror/lint': 6.9.8
       '@codemirror/state': 6.7.6
       '@codemirror/view': 6.43.15
       '@lezer/common': 1.5.5
@@ -22172,7 +22175,7 @@ snapshots:
       '@codemirror/autocomplete': 6.20.4
       '@codemirror/commands': 6.11.1
       '@codemirror/language': 6.13.1
-      '@codemirror/lint': 6.9.7
+      '@codemirror/lint': 6.9.8
       '@codemirror/search': 6.6.0
       '@codemirror/state': 6.7.6
       '@codemirror/view': 6.43.15
@@ -22956,7 +22959,7 @@ snapshots:
   dot-case@3.0.4:
     dependencies:
       no-case: 3.0.4
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   dotenv-expand@12.0.3:
     dependencies:
@@ -22975,7 +22978,7 @@ snapshots:
       prop-types: 15.8.1
       react: 19.2.8
       react-is: 18.3.1
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   drange@1.1.1: {}
 
@@ -23786,7 +23789,7 @@ snapshots:
 
   file-selector@2.1.0:
     dependencies:
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   file-type@16.5.4:
     dependencies:
@@ -24085,9 +24088,9 @@ snapshots:
     dependencies:
       is-glob: 4.0.3
 
-  glob-to-regex.js@1.2.0(tslib@2.8.1):
+  glob-to-regex.js@1.2.0(tslib@2.9.1):
     dependencies:
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   glob-to-regexp@0.4.1: {}
 
@@ -24872,7 +24875,7 @@ snapshots:
   ix@7.0.0:
     dependencies:
       '@types/node': 26.6.5
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   jackspeak@3.1.2:
     dependencies:
@@ -26098,7 +26101,7 @@ snapshots:
 
   lower-case@2.0.2:
     dependencies:
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   lowlight@1.20.0:
     dependencies:
@@ -26210,20 +26213,20 @@ snapshots:
 
   memfs@4.68.0:
     dependencies:
-      '@jsonjoy.com/fs-core': 4.68.0(tslib@2.8.1)
-      '@jsonjoy.com/fs-fsa': 4.68.0(tslib@2.8.1)
-      '@jsonjoy.com/fs-node': 4.68.0(tslib@2.8.1)
-      '@jsonjoy.com/fs-node-builtins': 4.68.0(tslib@2.8.1)
-      '@jsonjoy.com/fs-node-to-fsa': 4.68.0(tslib@2.8.1)
-      '@jsonjoy.com/fs-node-utils': 4.68.0(tslib@2.8.1)
-      '@jsonjoy.com/fs-print': 4.68.0(tslib@2.8.1)
-      '@jsonjoy.com/fs-snapshot': 4.68.0(tslib@2.8.1)
-      '@jsonjoy.com/json-pack': 1.21.0(tslib@2.8.1)
-      '@jsonjoy.com/util': 1.9.0(tslib@2.8.1)
-      glob-to-regex.js: 1.2.0(tslib@2.8.1)
-      thingies: 2.6.1(tslib@2.8.1)
-      tree-dump: 1.1.0(tslib@2.8.1)
-      tslib: 2.8.1
+      '@jsonjoy.com/fs-core': 4.68.0(tslib@2.9.1)
+      '@jsonjoy.com/fs-fsa': 4.68.0(tslib@2.9.1)
+      '@jsonjoy.com/fs-node': 4.68.0(tslib@2.9.1)
+      '@jsonjoy.com/fs-node-builtins': 4.68.0(tslib@2.9.1)
+      '@jsonjoy.com/fs-node-to-fsa': 4.68.0(tslib@2.9.1)
+      '@jsonjoy.com/fs-node-utils': 4.68.0(tslib@2.9.1)
+      '@jsonjoy.com/fs-print': 4.68.0(tslib@2.9.1)
+      '@jsonjoy.com/fs-snapshot': 4.68.0(tslib@2.9.1)
+      '@jsonjoy.com/json-pack': 1.21.0(tslib@2.9.1)
+      '@jsonjoy.com/util': 1.9.0(tslib@2.9.1)
+      glob-to-regex.js: 1.2.0(tslib@2.9.1)
+      thingies: 2.6.1(tslib@2.9.1)
+      tree-dump: 1.1.0(tslib@2.9.1)
+      tslib: 2.9.1
 
   memoize-one@4.0.3: {}
 
@@ -26396,9 +26399,9 @@ snapshots:
 
   monaco-editor@0.34.1: {}
 
-  monaco-promql@1.9.0(@codemirror/autocomplete@6.20.4)(@codemirror/language@6.13.1)(@codemirror/lint@6.9.7)(@codemirror/state@6.7.6)(@codemirror/view@6.43.15)(@lezer/common@1.5.3)(@lezer/highlight@1.2.5)(@lezer/lr@1.4.10):
+  monaco-promql@1.9.0(@codemirror/autocomplete@6.20.4)(@codemirror/language@6.13.1)(@codemirror/lint@6.9.8)(@codemirror/state@6.7.6)(@codemirror/view@6.43.15)(@lezer/common@1.5.3)(@lezer/highlight@1.2.5)(@lezer/lr@1.4.10):
     dependencies:
-      '@prometheus-io/codemirror-promql': 0.311.3(@codemirror/autocomplete@6.20.4)(@codemirror/language@6.13.1)(@codemirror/lint@6.9.7)(@codemirror/state@6.7.6)(@codemirror/view@6.43.15)(@lezer/common@1.5.3)(@lezer/highlight@1.2.5)(@lezer/lr@1.4.10)
+      '@prometheus-io/codemirror-promql': 0.311.3(@codemirror/autocomplete@6.20.4)(@codemirror/language@6.13.1)(@codemirror/lint@6.9.8)(@codemirror/state@6.7.6)(@codemirror/view@6.43.15)(@lezer/common@1.5.3)(@lezer/highlight@1.2.5)(@lezer/lr@1.4.10)
     transitivePeerDependencies:
       - '@codemirror/autocomplete'
       - '@codemirror/language'
@@ -26529,7 +26532,7 @@ snapshots:
   no-case@3.0.4:
     dependencies:
       lower-case: 2.0.2
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   node-abort-controller@3.1.1: {}
 
@@ -27087,7 +27090,7 @@ snapshots:
   param-case@3.0.4:
     dependencies:
       dot-case: 3.0.4
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   parent-module@1.0.1:
     dependencies:
@@ -27154,7 +27157,7 @@ snapshots:
   pascal-case@3.1.2:
     dependencies:
       no-case: 3.0.4
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   path-browserify@1.0.1: {}
 
@@ -27531,14 +27534,14 @@ snapshots:
     optionalDependencies:
       '@types/react': 19.2.18
 
-  react-codemirror-merge@4.25.12(@babel/runtime@8.0.0)(@codemirror/autocomplete@6.20.4)(@codemirror/language@6.13.1)(@codemirror/lint@6.9.7)(@codemirror/search@6.6.0)(@codemirror/state@6.7.6)(@codemirror/theme-one-dark@6.1.3)(@codemirror/view@6.43.15)(codemirror@6.0.2)(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
+  react-codemirror-merge@4.25.12(@babel/runtime@8.0.0)(@codemirror/autocomplete@6.20.4)(@codemirror/language@6.13.1)(@codemirror/lint@6.9.8)(@codemirror/search@6.6.0)(@codemirror/state@6.7.6)(@codemirror/theme-one-dark@6.1.3)(@codemirror/view@6.43.15)(codemirror@6.0.2)(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
     dependencies:
       '@babel/runtime': 8.0.0
       '@codemirror/merge': 6.12.3
       '@codemirror/state': 6.7.6
       '@codemirror/theme-one-dark': 6.1.3
       '@codemirror/view': 6.43.15
-      '@uiw/react-codemirror': 4.25.12(@babel/runtime@8.0.0)(@codemirror/autocomplete@6.20.4)(@codemirror/language@6.13.1)(@codemirror/lint@6.9.7)(@codemirror/search@6.6.0)(@codemirror/state@6.7.6)(@codemirror/theme-one-dark@6.1.3)(@codemirror/view@6.43.15)(codemirror@6.0.2)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@uiw/react-codemirror': 4.25.12(@babel/runtime@8.0.0)(@codemirror/autocomplete@6.20.4)(@codemirror/language@6.13.1)(@codemirror/lint@6.9.8)(@codemirror/search@6.6.0)(@codemirror/state@6.7.6)(@codemirror/theme-one-dark@6.1.3)(@codemirror/view@6.43.15)(codemirror@6.0.2)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       codemirror: 6.0.2
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
@@ -27888,10 +27891,10 @@ snapshots:
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
 
-  react-universal-interface@0.6.2(react@19.2.8)(tslib@2.8.1):
+  react-universal-interface@0.6.2(react@19.2.8)(tslib@2.9.1):
     dependencies:
       react: 19.2.8
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   react-use-measure@2.0.4(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
     dependencies:
@@ -27910,13 +27913,13 @@ snapshots:
       nano-css: 5.6.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
-      react-universal-interface: 0.6.2(react@19.2.8)(tslib@2.8.1)
+      react-universal-interface: 0.6.2(react@19.2.8)(tslib@2.9.1)
       resize-observer-polyfill: 1.5.1
       screenfull: 5.1.0
       set-harmonic-interval: 1.0.1
       throttle-debounce: 3.0.1
       ts-easing: 0.2.0
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   react-virtual@2.10.4(react@19.2.8):
     dependencies:
@@ -27979,7 +27982,7 @@ snapshots:
       esprima: 4.0.1
       source-map: 0.6.1
       tiny-invariant: 1.3.3
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   rechoir@0.8.0:
     dependencies:
@@ -28310,11 +28313,11 @@ snapshots:
 
   rxjs@7.8.1:
     dependencies:
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   rxjs@7.8.2:
     dependencies:
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   sade@1.8.1:
     dependencies:
@@ -29332,9 +29335,9 @@ snapshots:
     dependencies:
       any-promise: 1.3.0
 
-  thingies@2.6.1(tslib@2.8.1):
+  thingies@2.6.1(tslib@2.9.1):
     dependencies:
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   throttle-debounce@3.0.1: {}
 
@@ -29413,9 +29416,9 @@ snapshots:
     dependencies:
       punycode: 2.3.1
 
-  tree-dump@1.1.0(tslib@2.8.1):
+  tree-dump@1.1.0(tslib@2.9.1):
     dependencies:
-      tslib: 2.8.1
+      tslib: 2.9.1
 
   tree-kill@1.2.2: {}
 
@@ -29558,6 +29561,8 @@ snapshots:
   tslib@1.14.1: {}
 
   tslib@2.8.1: {}
+
+  tslib@2.9.1: {}
 
   tsutils@3.21.0(@typescript/typescript6@6.0.2):
     dependencies:
