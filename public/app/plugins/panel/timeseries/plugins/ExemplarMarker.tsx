@@ -248,7 +248,7 @@ const getExemplarMarkerStyles = (theme: GrafanaTheme2, maxWidth: number | undefi
       whiteSpace: 'pre',
       borderRadius: theme.shape.radius.default,
       position: 'fixed',
-      border: `1px solid ${theme.colors.border.weak}`,
+      border: `1px solid ${theme.flags.visualDesignRefresh ? theme.colors.border.medium : theme.colors.border.weak}`,
       boxShadow: theme.shadows.z2,
       userSelect: 'text',
     }),

@@ -436,6 +436,7 @@ function getStylesPickerContent(theme: GrafanaTheme2) {
         display: 'flex',
         flexDirection: 'column',
         background: theme.colors.background.elevated,
+        border: theme.flags.visualDesignRefresh ? `1px solid ${theme.colors.border.medium}` : undefined,
         borderRadius: theme.shape.radius.default,
         boxShadow: theme.shadows.z3,
         overflow: 'hidden',

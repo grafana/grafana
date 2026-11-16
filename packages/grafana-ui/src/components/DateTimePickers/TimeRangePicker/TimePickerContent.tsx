@@ -321,7 +321,7 @@ const getStyles = (
       boxShadow: visualRefreshEnabled ? theme.shadows.z2 : theme.shadows.z3,
       width: `${isFullscreen ? '546px' : '262px'}`,
       borderRadius: theme.shape.radius.lg,
-      border: `1px solid ${theme.colors.border.weak}`,
+      border: `1px solid ${theme.flags.visualDesignRefresh ? theme.colors.border.medium : theme.colors.border.weak}`,
       [`${isReversed ? 'left' : 'right'}`]: 0,
       display: 'flex',
       flexDirection: 'column',

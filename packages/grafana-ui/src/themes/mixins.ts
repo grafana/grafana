@@ -90,6 +90,7 @@ export function getButtonFocusStyles(theme: GrafanaTheme2) {
 export const getTooltipContainerStyles = (theme: GrafanaTheme2) => ({
   overflow: 'hidden',
   background: theme.colors.background.elevated,
+  border: theme.flags.visualDesignRefresh ? `1px solid ${theme.colors.border.medium}` : undefined,
   boxShadow: theme.shadows.z2,
   maxWidth: '800px',
   padding: theme.spacing(1),

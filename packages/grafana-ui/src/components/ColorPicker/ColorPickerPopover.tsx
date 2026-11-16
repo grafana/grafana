@@ -122,7 +122,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
       background: theme.colors.background.elevated,
       padding: theme.spacing(0.5),
-      border: `1px solid ${theme.colors.border.weak}`,
+      border: `1px solid ${theme.flags.visualDesignRefresh ? theme.colors.border.medium : theme.colors.border.weak}`,
     }),
     colorPickerPopoverContent: css({
       width: '246px',

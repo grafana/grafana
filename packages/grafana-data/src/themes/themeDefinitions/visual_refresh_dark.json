@@ -23,7 +23,7 @@
       "backgroundEmphasis": "palette.ink650",
       "border": "palette.ink550",
       "borderEmphasis": "palette.ink500",
-      "subtleBackground": "palette.ink750",
+      "subtleBackground": "palette.ink700",
       "subtleBorder": "palette.ink650",
       "text": "palette.ink200",
       "contrastText": "palette.ink100"
@@ -107,8 +107,8 @@
     },
     "border": {
       "weak": "palette.ink700",
-      "medium": "palette.ink650",
-      "strong": "palette.ink550"
+      "medium": "palette.ink600",
+      "strong": "palette.ink500"
     },
     "gradients": {
       "brandHorizontal": "linear-gradient(270deg, palette.orange400 0%, palette.orange500 100%)",
@@ -167,14 +167,14 @@
       "background": "hsl(from palette.ink700 h s l / 0.6)"
     },
     "dropdown": {
-      "borderColor": "palette.ink700"
+      "borderColor": "palette.ink600"
     },
     "switch": {
       "activeBackground": "palette.orange600",
       "activeBackgroundHover": "palette.orange500"
     },
     "tooltip": {
-      "borderColor": "palette.ink700"
+      "borderColor": "palette.ink600"
     },
     "input": {
       "background": "palette.ink850"

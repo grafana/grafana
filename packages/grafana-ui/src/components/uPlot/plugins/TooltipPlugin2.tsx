@@ -789,7 +789,7 @@ const getStyles = (theme: GrafanaTheme2, maxWidth?: number) => ({
     borderRadius: theme.shape.radius.lg,
     position: 'fixed',
     background: theme.colors.background.elevated,
-    border: `1px solid ${theme.colors.border.weak}`,
+    border: `1px solid ${theme.flags.visualDesignRefresh ? theme.colors.border.medium : theme.colors.border.weak}`,
     boxShadow: theme.shadows.z2,
     userSelect: 'text',
     maxWidth: maxWidth ?? 'none',
