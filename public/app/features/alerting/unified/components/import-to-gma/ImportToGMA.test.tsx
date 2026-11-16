@@ -51,7 +51,8 @@ let mockScenario:
   | 'datasource-unnamed'
   | 'schema-derived-secrets'
   | 'no-secrets'
-  | 'flush-indented-yaml' = 'yaml';
+  | 'flush-indented-yaml'
+  | 'empty' = 'yaml';
 
 // Seeds form values directly instead of rendering the real step body (network-backed pickers we
 // don't need). policyTreeName also gets a real input, since tests below need to edit it.
@@ -62,6 +63,10 @@ jest.mock('./steps/Step1AlertmanagerResources', () => {
     Step1Content: function Step1Content() {
       const { setValue, register, getValues } = useFormContext();
       useEffect(() => {
+        // Nothing filled in: step 1's single Next button skips it.
+        if (mockScenario === 'empty') {
+          return;
+        }
         if (mockScenario === 'auto-sync' || mockScenario === 'auto-sync-custom-name') {
           if (mockScenario === 'auto-sync-custom-name') {
             setValue('policyTreeName', 'typed-before-auto-sync');
@@ -174,7 +179,7 @@ jest.mock('./steps/Step1AlertmanagerResources', () => {
 // source is chosen. A test that completes the step instead turns mockSeedRulesSource on, so
 // handleConfirmImport has the rulesDatasourceUID it needs to fire the import. The 'yaml' scenario seeds a
 // rules YAML upload instead, for tests that exercise the rules preview.
-let mockRulesScenario: 'datasource' | 'yaml' = 'datasource';
+let mockRulesScenario: 'datasource' | 'datasource-filtered' | 'yaml' = 'datasource';
 let mockSeedRulesSource = false;
 
 jest.mock('./steps/Step2AlertRules', () => {
@@ -196,6 +201,14 @@ jest.mock('./steps/Step2AlertRules', () => {
               { type: 'application/yaml' }
             )
           );
+          return;
+        }
+        if (mockRulesScenario === 'datasource-filtered') {
+          setValue('rulesSource', 'datasource');
+          setValue('rulesDatasourceUID', 'prometheus-uid');
+          setValue('rulesDatasourceName', 'Prometheus');
+          setValue('namespace', 'ns-a');
+          setValue('ruleGroup', 'group-a');
           return;
         }
         if (mockSeedRulesSource) {
@@ -226,6 +239,7 @@ afterEach(async () => {
 });
 
 beforeEach(() => {
+  mockScenario = 'yaml';
   mockSeedRulesSource = false;
   mockReportInteraction.mockClear();
   // Default: the notifications import succeeds. Individual tests override this to force a failure.
@@ -368,6 +382,70 @@ describe('ImportToGMA wizard — stage analytics', () => {
     expect(emitSpy).not.toHaveBeenCalledWith(AppEvents.alertWarning, expect.anything());
     expect(Object.values(store.getState().appNotifications.byId)).toHaveLength(0);
     emitSpy.mockRestore();
+  });
+
+  it('shows the confirmation again, not the old error, after closing a failed import and reopening it', async () => {
+    server.use(
+      http.post(CONVERT_URL, ({ request }) =>
+        request.headers.get('X-Grafana-Alerting-Dry-Run') === 'true'
+          ? HttpResponse.json(convertResponse())
+          : HttpResponse.json({ message: 'unsupported scheme "" for URL' }, { status: 500 })
+      )
+    );
+    const { user } = render(<ImportWizardGate />);
+
+    await importWith(user);
+    expect(await within(await screen.findByRole('dialog')).findByText(/unsupported scheme/)).toBeInTheDocument();
+
+    await user.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    await user.click(screen.getByRole('button', { name: /start import/i }));
+
+    const reopened = await screen.findByRole('dialog');
+    expect(within(reopened).getByText(/are you sure you want to start the import/i)).toBeInTheDocument();
+    expect(within(reopened).queryByText(/unsupported scheme/)).not.toBeInTheDocument();
+  });
+
+  it('keeps the confirmation open while the import is running', async () => {
+    server.use(
+      http.post(CONVERT_URL, ({ request }) =>
+        request.headers.get('X-Grafana-Alerting-Dry-Run') === 'true'
+          ? HttpResponse.json(convertResponse())
+          : new Promise<Response>(() => {})
+      )
+    );
+    const { user } = render(<ImportWizardGate />);
+
+    await importWith(user);
+    const dialog = await screen.findByRole('dialog');
+    expect(await within(dialog).findByText('Importing...')).toBeInTheDocument();
+
+    await user.keyboard('{Escape}');
+
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+  });
+
+  it('imports only rules when notifications are skipped, then toasts and goes to the rule list', async () => {
+    mockScenario = 'empty';
+    mockSeedRulesSource = true;
+    server.use(http.post('/api/convert/prometheus/config/v1/rules', () => HttpResponse.json(convertResponse())));
+    const store = configureStore();
+    const { user } = render(<ImportWizardGate />, { store });
+
+    await user.click(await screen.findByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
+    await screen.findByRole('group', { name: /import rules/i });
+    await user.click(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
+    await user.click(await screen.findByRole('button', { name: /start import/i }));
+    const dialog = await screen.findByRole('dialog');
+    await user.click(within(dialog).getByRole('button', { name: /start import/i }));
+
+    await waitFor(() => expect(locationService.getLocation().pathname).toContain('/alerting/list'), {
+      timeout: 3000,
+    });
+    expect(Object.values(store.getState().appNotifications.byId).map((notification) => notification.title)).toContain(
+      'Successfully imported resources to Grafana Alerting.'
+    );
+    expect(locationService.getLocation().pathname).not.toContain('/alerting/admin/import');
   });
 });
 
@@ -974,6 +1052,9 @@ describe('ImportToGMA wizard — auto-sync confirm flow', () => {
     await user.click(await screen.findByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
     await screen.findByText(/review import/i);
 
+    expect(screen.getByText(/will sync continuously/i)).toBeInTheDocument();
+    expect(screen.getByText(/Mimir Alertmanager/)).toBeInTheDocument();
+
     await user.click(screen.getByRole('button', { name: /enable auto-sync/i }));
     const dialog = await screen.findByRole('dialog');
     await user.click(within(dialog).getByRole('button', { name: /enable auto-sync/i }));
@@ -1359,5 +1440,125 @@ describe('dry-run wiring (wizard-level)', () => {
     // Next's own click-time check (for the edited value) isn't blocked by the still-pending,
     // now-irrelevant preview request for the old one.
     await screen.findByRole('group', { name: /import rules/i });
+  });
+});
+
+describe('dry-run outcomes (wizard-level)', () => {
+  async function clickNextOnStep1(user: ReturnType<typeof render>['user']) {
+    await screen.findByRole('group', { name: /import notification configuration/i });
+    await user.click(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
+  }
+
+  it('tracks renamed resources and carries on to Review, which lists them', async () => {
+    server.use(
+      http.post(CONVERT_URL, () =>
+        HttpResponse.json(
+          convertResponse({
+            rename_resources: { receivers: { 'team-email': 'team-email-1', pager: 'pager-1' }, time_intervals: {} },
+          })
+        )
+      )
+    );
+    const { user } = render(<ImportWizardGate />);
+
+    await clickNextOnStep1(user);
+    await screen.findByRole('group', { name: /import rules/i });
+    await user.click(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
+    await screen.findByText(/review import/i);
+
+    expect(mockReportInteraction).toHaveBeenCalledWith('grafana_alerting_import_to_gma_dryrun_warning', {
+      renamedReceiversCount: 2,
+      renamedTimeIntervalsCount: 0,
+    });
+    expect(screen.getByText(/some resources will be renamed/i)).toBeInTheDocument();
+    await user.click(screen.getByText(/2 contact points will be renamed/i));
+    expect(screen.getByText('team-email-1')).toBeInTheDocument();
+  });
+
+  it('tracks an error and stays on step 1 when the check answers 200 but is not a success', async () => {
+    server.use(
+      http.post(CONVERT_URL, () =>
+        HttpResponse.json(convertResponse({ status: 'error', error: 'template conflict', errorType: 'bad_data' }))
+      )
+    );
+    const { user } = render(<ImportWizardGate />);
+
+    await clickNextOnStep1(user);
+
+    await waitFor(() =>
+      expect(mockReportInteraction).toHaveBeenCalledWith('grafana_alerting_import_to_gma_dryrun_error')
+    );
+    expect(screen.queryByRole('group', { name: /import rules/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('group', { name: /import notification configuration/i })).toBeInTheDocument();
+  });
+});
+
+describe('ImportToGMA wizard — data source rules with a namespace and group filter', () => {
+  const rule = (alert: string, labels?: Record<string, string>) => ({ alert, expr: 'up == 0', labels });
+
+  beforeEach(() => {
+    mockScenario = 'empty';
+    mockRulesScenario = 'datasource-filtered';
+    // Reading a data source's rules needs the external-rules permission on top of the wizard's.
+    grantUserPermissions([
+      AccessControlAction.AlertingNotificationsWrite,
+      AccessControlAction.AlertingRuleCreate,
+      AccessControlAction.AlertingRuleExternalRead,
+      AccessControlAction.AlertingProvisioningSetStatus,
+      AccessControlAction.ActionAlertingNotificationsConfigRead,
+    ]);
+    setupDataSources(
+      mockDataSource({ uid: 'prometheus-uid', name: 'Prometheus', type: 'prometheus' }, { alerting: true })
+    );
+    server.use(
+      http.get('/api/datasources/proxy/uid/:uid/api/v1/status/buildinfo', () =>
+        HttpResponse.json({ status: 'success', data: { version: '2.0.0', features: { ruler_config_api: 'true' } } })
+      ),
+      http.get('/api/ruler/prometheus-uid/api/v1/rules', () =>
+        HttpResponse.json({
+          'ns-a': [
+            { name: 'group-a', rules: [rule('Kept'), rule('PluginManaged', { __grafana_origin: 'plugin' })] },
+            { name: 'group-b', rules: [rule('OtherGroup')] },
+          ],
+          'ns-b': [{ name: 'group-a', rules: [rule('OtherNamespace')] }],
+        })
+      )
+    );
+  });
+
+  afterEach(() => {
+    mockRulesScenario = 'datasource';
+  });
+
+  it('counts, previews and sends the same filtered rules', async () => {
+    let postedBody: unknown;
+    server.use(
+      http.post('/api/convert/prometheus/config/v1/rules', async ({ request }) => {
+        postedBody = await request.json();
+        return HttpResponse.json(convertResponse());
+      })
+    );
+    const { user } = render(<ImportWizardGate />);
+
+    await user.click(await screen.findByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
+    await screen.findByRole('group', { name: /import rules/i });
+    await user.click(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
+
+    expect(await screen.findByText('Will import 1 rules')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /preview alert rules/i }));
+    const preview = (await screen.findByTestId<HTMLTextAreaElement>('code-editor')).value;
+    expect(preview).toContain('Kept');
+    expect(preview).not.toMatch(/PluginManaged|OtherGroup|OtherNamespace/);
+    await user.keyboard('{Escape}');
+
+    await user.click(await screen.findByRole('button', { name: /start import/i }));
+    const dialog = await screen.findByRole('dialog');
+    await user.click(within(dialog).getByRole('button', { name: /start import/i }));
+
+    await waitFor(() => expect(postedBody).toBeDefined());
+    expect(JSON.stringify(postedBody)).toContain('Kept');
+    expect(JSON.stringify(postedBody)).not.toMatch(/PluginManaged|OtherGroup|OtherNamespace/);
+    expect(JSON.parse(preview)).toEqual(postedBody);
   });
 });

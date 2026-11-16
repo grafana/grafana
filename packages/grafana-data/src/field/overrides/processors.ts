@@ -1,3 +1,5 @@
+import { VariableFormatID } from '@grafana/schema';
+
 import { type Action } from '../../types/action';
 import { type Field } from '../../types/dataFrame';
 import { type DataLink } from '../../types/dataLink';
@@ -9,7 +11,7 @@ import {
 import { type SelectableValue } from '../../types/select';
 import { type SliderMarks } from '../../types/slider';
 import { type Threshold, type ThresholdsConfig } from '../../types/thresholds';
-import { type ValueMapping } from '../../types/valueMapping';
+import { MappingType, type ValueMapping, type ValueMappingResult } from '../../types/valueMapping';
 import { sortThresholds } from '../thresholds';
 
 export const identityOverrideProcessor = <T>(value: T) => {
@@ -76,15 +78,61 @@ export const actionsOverrideProcessor = (
   return value;
 };
 
-export interface ValueMappingFieldConfigSettings {}
+export interface ValueMappingFieldConfigSettings {
+  /** Interpolates dashboard variables in the display texts */
+  interpolateText?: boolean;
+}
 
 export const valueMappingsOverrideProcessor = (
   value: any,
-  _context: FieldOverrideContext,
-  _settings?: ValueMappingFieldConfigSettings
+  context: FieldOverrideContext,
+  settings?: ValueMappingFieldConfigSettings
 ): ValueMapping[] => {
-  return value; // !!!! likely not !!!!
+  const { replaceVariables } = context;
+  if (!settings?.interpolateText || !replaceVariables || !Array.isArray(value) || !value.some(hasTextWithVariable)) {
+    return value;
+  }
+
+  // A `$` that doesn't name a known variable, as in `$5 off`, is left as typed by the interpolation
+  const interpolate = (result: ValueMappingResult): ValueMappingResult =>
+    mayHaveVariable(result?.text)
+      ? { ...result, text: replaceVariables(result.text, context.field?.state?.scopedVars, VariableFormatID.Text) }
+      : result;
+
+  return value.map((mapping: ValueMapping): ValueMapping => {
+    switch (mapping.type) {
+      case MappingType.ValueToText:
+        return {
+          ...mapping,
+          options: Object.fromEntries(
+            Object.entries(mapping.options).map(([key, result]) => [key, interpolate(result)])
+          ),
+        };
+      case MappingType.RangeToText:
+        return { ...mapping, options: { ...mapping.options, result: interpolate(mapping.options.result) } };
+      case MappingType.RegexToText:
+        return { ...mapping, options: { ...mapping.options, result: interpolate(mapping.options.result) } };
+      case MappingType.SpecialValue:
+        return { ...mapping, options: { ...mapping.options, result: interpolate(mapping.options.result) } };
+      default:
+        return mapping;
+    }
+  });
 };
+
+function hasTextWithVariable(mapping: ValueMapping): boolean {
+  const results =
+    mapping.type === MappingType.ValueToText ? Object.values(mapping.options ?? {}) : [mapping.options?.result];
+  return results.some((result) => mayHaveVariable(result?.text));
+}
+
+/**
+ * Whether a display text may reference a variable, as `$var`, `${var}` or `[[var]]`. Hand-edited
+ * JSON can hold a text that isn't a string, which is left as is.
+ */
+function mayHaveVariable(text: unknown): text is string {
+  return typeof text === 'string' && (text.includes('$') || text.includes('[['));
+}
 
 export interface SelectFieldConfigSettings<T> {
   allowCustomValue?: boolean;
@@ -128,7 +176,14 @@ export const stringOverrideProcessor = (
   return `${value}`;
 };
 
-function interpolateVarMapping(expr: string, context: FieldOverrideContext): string | undefined {
+/**
+ * Interpolates a `varMappings` expression to trimmed text, or `undefined` when there is no
+ * `replaceVariables` or a referenced variable doesn't have exactly one value selected.
+ */
+export function interpolateVarMapping(
+  expr: string,
+  context: Pick<FieldOverrideContext, 'replaceVariables' | 'field'>
+): string | undefined {
   if (!context.replaceVariables) {
     return undefined;
   }
@@ -209,31 +264,115 @@ export function hasVarMappingVariableReference(text: string): boolean {
   return VARIABLE_REFERENCE.test(text);
 }
 
-export type VarMappingKind = 'number' | 'string';
+/**
+ * Resolves a `varMappings` expression to one of a select's option values, matched against the
+ * option value text case-insensitively. Returns the option's typed value (e.g. `-1` or `true`), or
+ * `undefined` for the same failures as `resolveVarMapping` or when no option matches. Options
+ * without a value, like "Auto", can't be matched.
+ */
+export function resolveVarMappingOption(
+  expr: string,
+  context: FieldOverrideContext,
+  options: Array<SelectableValue<unknown>>
+): unknown {
+  const text = interpolateVarMapping(expr, context);
+  return text === undefined ? undefined : matchVarMappingOption(text, options);
+}
+
+function matchVarMappingOption(text: string, options: Array<SelectableValue<unknown>>): unknown {
+  const lower = text.toLowerCase();
+  if (!lower) {
+    return undefined;
+  }
+
+  return options.find((option) => option.value !== undefined && String(option.value).toLowerCase() === lower)?.value;
+}
+
+const BOOLEAN_TEXT = new Map([
+  ['true', true],
+  ['1', true],
+  ['on', true],
+  ['yes', true],
+  ['false', false],
+  ['0', false],
+  ['off', false],
+  ['no', false],
+]);
+
+/**
+ * Resolves a `varMappings` expression to a boolean from common true/false spellings, or `undefined`
+ * for anything else and the same failures as `resolveVarMapping`.
+ */
+export function resolveVarMappingBoolean(expr: string, context: FieldOverrideContext): boolean | undefined {
+  const text = interpolateVarMapping(expr, context);
+
+  return text ? BOOLEAN_TEXT.get(text.toLowerCase()) : undefined;
+}
+
+export type VarMappingKind = 'number' | 'string' | 'option' | 'boolean';
+
+/**
+ * Resolves already interpolated text the way the number, option and boolean resolvers do, so an
+ * editor can check a variable's values against the same rules the panel renders with. `settings`
+ * are the property's settings, which hold a select's options and a number's range.
+ */
+export function resolveVarMappingText(
+  kind: Exclude<VarMappingKind, 'string'>,
+  text: string,
+  settings?: unknown
+): unknown {
+  switch (kind) {
+    case 'number':
+      return toVarMappingNumber(text, settings);
+    case 'option':
+      return matchVarMappingOption(text.trim(), getVarMappingOptions(settings));
+    case 'boolean':
+      return BOOLEAN_TEXT.get(text.trim().toLowerCase());
+  }
+}
 
 /**
  * How a property's `varMappings` expression resolves, or `undefined` when it can't have one.
  * Numeric properties resolve to a number. Only the standard unit resolves to a string; other string
- * properties either interpolate already (displayName) or would render unresolved syntax.
+ * properties either interpolate already (displayName) or would render unresolved syntax. Selects
+ * and radios resolve to one of their options, so they need a static option list to check against.
  * Shared by the `applyFieldOverrides` resolution and the editors so both agree on the same set.
  */
-export function getVarMappingKind(item: Pick<FieldConfigPropertyItem, 'id' | 'process'>): VarMappingKind | undefined {
+export function getVarMappingKind(
+  item: Pick<FieldConfigPropertyItem, 'id' | 'process' | 'settings'>
+): VarMappingKind | undefined {
   if (item.process === numberOverrideProcessor) {
     return 'number';
   }
   if (item.id === FieldConfigProperty.Unit) {
     return 'string';
   }
+  if (item.process === selectOverrideProcessor && getVarMappingOptions(item.settings).length > 0) {
+    return 'option';
+  }
+  if (item.process === booleanOverrideProcessor) {
+    return 'boolean';
+  }
   return undefined;
+}
+
+/** The synchronous options of a select property; async `getOptions` results can't be checked against */
+export function getVarMappingOptions(settings: unknown): Array<SelectableValue<unknown>> {
+  const options = typeof settings === 'object' && settings !== null && 'options' in settings ? settings.options : [];
+  return Array.isArray(options) ? options : [];
 }
 
 /**
  * Whether an editor value for a property of this kind is an expression to store in `varMappings`
- * rather than a plain value. Number editors only emit strings for expressions. A unit is always a
- * string, so it needs variable syntax; a custom unit like `prefix:$` stays a plain unit.
+ * rather than a plain value. Number editors only emit strings for expressions, and switches only
+ * emit booleans. A unit or an option value is a plain string, so it needs variable syntax; a custom
+ * unit like `prefix:$` stays a plain unit.
  */
 export function isVarMappingExpressionInput(kind: VarMappingKind, value: unknown): value is string {
-  return typeof value === 'string' && (kind === 'number' || VARIABLE_REFERENCE.test(value));
+  if (typeof value !== 'string') {
+    return false;
+  }
+  return kind === 'number' || kind === 'boolean' || VARIABLE_REFERENCE.test(value);
 }
 
 export interface ThresholdsFieldConfigSettings {

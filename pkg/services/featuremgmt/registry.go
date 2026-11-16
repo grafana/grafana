@@ -1544,6 +1544,15 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:         "datasources.rejectProvisionedLBACRules",
+			Description:  "Reject embedded LBAC rules in data source provisioning files",
+			HideFromDocs: true,
+			Stage:        FeatureStageGeneralAvailability,
+			Generate:     Generate{Go: true},
+			Owner:        identityAccessTeam,
+			Expression:   "true",
+		},
+		{
 			Name:        "datasources.teamHttpHeadersWriteGuard",
 			Description: "Guard embedded Team LBAC rules against external datasource Kubernetes API writes",
 			Stage:       FeatureStageExperimental,
@@ -1629,15 +1638,6 @@ var (
 			RequiresRestart: true,
 			Expression:      "true",
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:         "useScopesNavigationEndpoint",
-			Description:  "Use the scopes navigation endpoint instead of the dashboardbindings endpoint",
-			Stage:        FeatureStagePublicPreview,
-			Owner:        grafanaOperatorExperienceSquad,
-			Generate:     Generate{LegacyFrontend: true, React: true},
-			HideFromDocs: true,
-			Expression:   "true",
 		},
 		{
 			Name:         "scopeSearchAllLevels",
@@ -2965,14 +2965,6 @@ var (
 			Generate:     Generate{Go: true},
 		},
 		{
-			Name:        "grafana.queryVarEditorRedesign",
-			Description: "Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaDashboardsSquad,
-			Expression:  "true",
-			Generate:    Generate{React: true},
-		},
-		{
 			Name:         "table.paginationPageSize",
 			Description:  "Enables configuring a fixed page size for paginated tables instead of deriving it from the panel height",
 			Stage:        FeatureStageExperimental,
@@ -3174,6 +3166,14 @@ var (
 		{
 			Name:        "assistant.dashboardPlanBuildingScreen",
 			Description: "Shows a loading screen on the dashboard while the assistant prepares to build an approved dashboard plan",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
+			Name:        "assistant.dashboardPlanEditing",
+			Description: "Lets users rearrange and edit an assistant dashboard plan in its preview before it is built",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "false",
@@ -3498,6 +3498,15 @@ var (
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "false",
 			Generate:    Generate{React: true},
+		},
+		{
+			Name:         "datasources.gatewayRateLimits",
+			Description:  "Enable support for query gateway rate limits",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDataSourcesPlugins,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true, React: true},
 		},
 
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!

@@ -1320,13 +1320,13 @@ function hintText(copy: HintCopy, session: ComposerSession<unknown>, drag: 'regi
     case 'element':
       return session.elementHint(drag);
     case 'variable':
-      return t('dashboard.composer.overlay.hint-variable', 'Click to comment on a variable, or drag to draw a region');
+      return t('dashboard.composer.overlay.hint-variable', 'Click to ask about a variable, or drag to draw a region');
     case 'variable-elements':
-      return t('dashboard.composer.overlay.hint-variable-select', 'Click to comment on a variable, or drag to select');
+      return t('dashboard.composer.overlay.hint-variable-select', 'Click to ask about a variable, or drag to select');
     case 'layer':
-      return t('dashboard.composer.overlay.hint-layer', 'Click to comment on an annotation, or drag to draw a region');
+      return t('dashboard.composer.overlay.hint-layer', 'Click to ask about an annotation, or drag to draw a region');
     case 'layer-elements':
-      return t('dashboard.composer.overlay.hint-layer-select', 'Click to comment on an annotation, or drag to select');
+      return t('dashboard.composer.overlay.hint-layer-select', 'Click to ask about an annotation, or drag to select');
     case 'region':
       return t('dashboard.composer.overlay.hint-region', 'Drag to draw a region');
     case 'elements':
@@ -1334,7 +1334,7 @@ function hintText(copy: HintCopy, session: ComposerSession<unknown>, drag: 'regi
     case 'screenshot':
       return t('dashboard.composer.overlay.hint-screenshot', 'Drag to capture a region');
     case 'text':
-      return t('dashboard.composer.overlay.hint-text', 'Select text to comment on it');
+      return t('dashboard.composer.overlay.hint-text', 'Select text to ask about it');
     case 'remove':
       return t('dashboard.composer.overlay.hint-remove', 'Click to mark for removal');
     case 'not-removable':

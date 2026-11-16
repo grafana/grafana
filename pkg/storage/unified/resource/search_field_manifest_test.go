@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/grafana/grafana-app-sdk/app"
@@ -18,7 +19,7 @@ func manifestWithSearchFields() *app.ManifestData {
 				Name: "v1",
 				Kinds: []app.ManifestVersionKind{{
 					Kind:   "Widget",
-					Plural: "widgets",
+					Plural: "widgets", Resource: "widgets",
 					SearchFields: []app.ManifestVersionKindSearchField{
 						{Name: "color", Path: "spec.color", Type: "string", Capabilities: []string{"filter", "sort"}},
 					},
@@ -28,7 +29,7 @@ func manifestWithSearchFields() *app.ManifestData {
 				Name: "v2",
 				Kinds: []app.ManifestVersionKind{{
 					Kind:   "Widget",
-					Plural: "widgets",
+					Plural: "widgets", Resource: "widgets",
 					SearchFields: []app.ManifestVersionKindSearchField{
 						{Name: "color", Path: "spec.settings.color", Type: "string", Capabilities: []string{"filter", "sort"}},
 						{Name: "size", Path: "spec.size", Type: "int64", Array: true, EmitZeroIfAbsent: true, Capabilities: []string{"filter"}},
@@ -71,18 +72,21 @@ func TestNewManifestBackedProvider(t *testing.T) {
 	assert.Equal(t, "v2", p.PreferredVersion("widgets.example.test", "widgets"))
 }
 
-func TestNewManifestBackedProvider_DefaultsPluralAndPreferredVersion(t *testing.T) {
-	// No plural and no explicit preferredVersion: resource defaults to kind+"s"
-	// (lower-cased) and the last declaring version is preferred.
+func TestNewManifestBackedProvider_DefaultsPreferredVersion(t *testing.T) {
+	// No explicit preferredVersion: the last declaring version is preferred.
 	p := NewManifestBackedProvider(&app.ManifestData{
 		Group: "widgets.example.test",
 		Versions: []app.ManifestVersion{
 			{Name: "v1", Kinds: []app.ManifestVersionKind{{
 				Kind:         "Gadget",
+				Plural:       "Gadgets",
+				Resource:     "gadgets",
 				SearchFields: []app.ManifestVersionKindSearchField{{Name: "name", Path: "spec.name", Type: "string", Capabilities: []string{"filter"}}},
 			}}},
 			{Name: "v2", Kinds: []app.ManifestVersionKind{{
 				Kind:         "Gadget",
+				Plural:       "Gadgets",
+				Resource:     "gadgets",
 				SearchFields: []app.ManifestVersionKindSearchField{{Name: "name", Path: "spec.name", Type: "string", Capabilities: []string{"filter"}}},
 			}}},
 		},
@@ -113,7 +117,7 @@ func TestSearchFieldProviders_NoManifestDeclarationsIsEmpty(t *testing.T) {
 		Group: "widgets.example.test",
 		Versions: []app.ManifestVersion{{
 			Name:  "v1",
-			Kinds: []app.ManifestVersionKind{{Kind: "Widget", Plural: "widgets"}},
+			Kinds: []app.ManifestVersionKind{{Kind: "Widget", Plural: "widgets", Resource: "widgets"}},
 		}},
 	}
 
@@ -131,7 +135,7 @@ func TestSearchFieldProviders_InvalidManifestReturnsError(t *testing.T) {
 			Name: "v1",
 			Kinds: []app.ManifestVersionKind{{
 				Kind:   "Widget",
-				Plural: "widgets",
+				Plural: "widgets", Resource: "widgets",
 				SearchFields: []app.ManifestVersionKindSearchField{
 					{Name: "size", Path: "spec.size", Type: "int64", Capabilities: []string{"text"}},
 				},
@@ -156,7 +160,7 @@ func mergeTestManifest(appName, group string, versions ...app.ManifestVersion) *
 func mergeTestKind(kind, field string) app.ManifestVersionKind {
 	return app.ManifestVersionKind{
 		Kind:   kind,
-		Plural: kind + "s",
+		Plural: kind + "s", Resource: strings.ToLower(kind) + "s",
 		SearchFields: []app.ManifestVersionKindSearchField{
 			{Name: field, Path: "spec." + field, Type: "string", Capabilities: []string{"filter"}},
 		},
@@ -219,7 +223,7 @@ func TestMergeManifestsByKind(t *testing.T) {
 		// The higher-priority source declares Foo with selectable fields but no
 		// search fields, so it must not claim the kind and strip the built-in's
 		// search fields.
-		live := mergeTestManifest("live", "g.test", app.ManifestVersion{Name: "v1", Kinds: []app.ManifestVersionKind{{Kind: "Foo", Plural: "foos", SelectableFields: []string{"spec.x"}}}})
+		live := mergeTestManifest("live", "g.test", app.ManifestVersion{Name: "v1", Kinds: []app.ManifestVersionKind{{Kind: "Foo", Plural: "foos", Resource: "foos", SelectableFields: []string{"spec.x"}}}})
 
 		merged := MergeManifestsByKind([]*app.ManifestData{builtin}, []*app.ManifestData{live})
 
@@ -240,7 +244,7 @@ func TestMergeManifestsByKind(t *testing.T) {
 	t.Run("a selectable-only manifest survives the merge", func(t *testing.T) {
 		// Its kinds declare only selectable fields (no search fields), and the merge
 		// output drives selectable-field wiring too, so it must not be dropped.
-		kind := app.ManifestVersionKind{Kind: "Foo", Plural: "foos", SelectableFields: []string{"spec.x"}}
+		kind := app.ManifestVersionKind{Kind: "Foo", Plural: "foos", Resource: "foos", SelectableFields: []string{"spec.x"}}
 		in := []*app.ManifestData{mergeTestManifest("app", "g.test", app.ManifestVersion{Name: "v1", Kinds: []app.ManifestVersionKind{kind}})}
 
 		merged := MergeManifestsByKind(in)

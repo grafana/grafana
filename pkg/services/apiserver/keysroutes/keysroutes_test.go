@@ -101,7 +101,7 @@ func TestBuild_MountingRules(t *testing.T) {
 			}},
 		}}
 	}
-	widget := app.ManifestVersionKind{Kind: "Widget", Plural: "widgets", Scope: supportedKindScope}
+	widget := app.ManifestVersionKind{Kind: "Widget", Plural: "widgets", Resource: "widgets", Scope: supportedKindScope}
 	widgetOptedOut := widget
 	widgetOptedOut.Storage = &app.ManifestVersionKindStorage{ListKeys: new(false)}
 
@@ -120,7 +120,7 @@ func TestBuild_MountingRules(t *testing.T) {
 		},
 		"cluster-scoped kind is skipped": {
 			manifests: manifest(true, widget,
-				app.ManifestVersionKind{Kind: "Cluster", Plural: "clusters", Scope: "Cluster"}),
+				app.ManifestVersionKind{Kind: "Cluster", Plural: "clusters", Resource: "clusters", Scope: "Cluster"}),
 			want: []string{"widgets/list-keys"},
 		},
 		"unserved version is skipped": {
@@ -141,7 +141,7 @@ func TestBuild_MountingRules(t *testing.T) {
 
 func TestBuild_ListKeysOptOutWinsAcrossDuplicateDeclarations(t *testing.T) {
 	gv := schema.GroupVersion{Group: "example.grafana.app", Version: "v1"}
-	widget := app.ManifestVersionKind{Kind: "Widget", Plural: "widgets", Scope: supportedKindScope}
+	widget := app.ManifestVersionKind{Kind: "Widget", Plural: "widgets", Resource: "widgets", Scope: supportedKindScope}
 	widgetOptedOut := widget
 	widgetOptedOut.Storage = &app.ManifestVersionKindStorage{ListKeys: new(false)}
 	manifest := func(kind app.ManifestVersionKind) *app.ManifestData {
@@ -177,7 +177,7 @@ func TestBuild_MountsBothScopes(t *testing.T) {
 			Name:   gv.Version,
 			Served: true,
 			Kinds: []app.ManifestVersionKind{
-				{Kind: "Widget", Plural: "widgets", Scope: supportedKindScope},
+				{Kind: "Widget", Plural: "widgets", Resource: "widgets", Scope: supportedKindScope},
 			},
 		}},
 	}}
@@ -232,7 +232,7 @@ func TestBuild_MountsKindsDeclaredByManifestAndBuilderOnce(t *testing.T) {
 			Name:   gv.Version,
 			Served: true,
 			Kinds: []app.ManifestVersionKind{{
-				Kind: "Widget", Plural: "widgets", Scope: supportedKindScope,
+				Kind: "Widget", Plural: "widgets", Resource: "widgets", Scope: supportedKindScope,
 			}},
 		}},
 	}}
@@ -281,7 +281,7 @@ func TestBuild_SkipsClusterScopedKindsAtBothScopes(t *testing.T) {
 			Name:   gv.Version,
 			Served: true,
 			Kinds: []app.ManifestVersionKind{
-				{Kind: "Cluster", Plural: "clusters", Scope: "Cluster"},
+				{Kind: "Cluster", Plural: "clusters", Resource: "clusters", Scope: "Cluster"},
 			},
 		}},
 	}}

@@ -1,4 +1,4 @@
-import * as z from 'zod';
+import * as z from 'zod/mini';
 
 import { SceneMutationClient, type MutationTargetScene } from './SceneMutationClient';
 import type { LazyMutationCommand, MutationCommand } from './commands/types';
@@ -12,7 +12,7 @@ function scene(): MutationTargetScene & { forceRender: jest.Mock } {
 
 interface TestCommandOverrides<T> {
   name?: string;
-  payloadSchema?: z.ZodType<T>;
+  payloadSchema?: z.ZodMiniType<T>;
   permission?: MutationCommand<T, MutationTargetScene>['permission'];
   readOnly?: boolean;
   handler?: MutationCommand<T, MutationTargetScene>['handler'];
@@ -24,7 +24,7 @@ function command<T = any>(overrides: TestCommandOverrides<T> = {}): MutationComm
     name: 'TEST_COMMAND',
     description: 'A command that exists only for this suite.',
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- default schema for tests that do not care about the payload
-    payloadSchema: z.object({}) as unknown as z.ZodType<T>,
+    payloadSchema: z.object({}) as unknown as z.ZodMiniType<T>,
     permission: () => ({ allowed: true }),
     handler: async () => ({ success: true, changes: [] }),
     ...overrides,
@@ -205,7 +205,7 @@ describe('SceneMutationClient', () => {
         // being safe from it: write it either of those ways and the test passes with the clone taken out.
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the payload shape is the test's own; z.unknown() cannot express it
         command<{ spec: Record<string, unknown> }>({
-          payloadSchema: z.object({ spec: z.unknown() }) as unknown as z.ZodType<{ spec: Record<string, unknown> }>,
+          payloadSchema: z.object({ spec: z.unknown() }) as unknown as z.ZodMiniType<{ spec: Record<string, unknown> }>,
           handler: async (payload) => {
             payload.spec.title = 'mutated by the handler';
             return { success: true, changes: [] };

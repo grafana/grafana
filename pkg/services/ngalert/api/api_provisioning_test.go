@@ -801,6 +801,15 @@ func TestIntegrationProvisioningApi(t *testing.T) {
 				require.Equal(t, 404, response.Status())
 			})
 
+			t.Run("folder is missing, GET returns 500", func(t *testing.T) {
+				sut := createMissingFolderSut(t)
+				rc := createTestRequestCtx()
+
+				response := sut.RouteGetAlertRuleGroupExport(&rc, "folder-uid", "my-cool-group")
+
+				require.Equal(t, 500, response.Status())
+			})
+
 			t.Run("accept header contains yaml, GET returns text yaml", func(t *testing.T) {
 				sut := createProvisioningSrvSut(t)
 				rc := createTestRequestCtx()
@@ -1079,6 +1088,15 @@ func TestIntegrationProvisioningApi(t *testing.T) {
 				response := sut.RouteGetAlertRuleExport(&rc, "rule404")
 
 				require.Equal(t, 404, response.Status())
+			})
+
+			t.Run("folder is missing, GET returns 500", func(t *testing.T) {
+				sut := createMissingFolderSut(t)
+				rc := createTestRequestCtx()
+
+				response := sut.RouteGetAlertRuleExport(&rc, "rule1")
+
+				require.Equal(t, 500, response.Status())
 			})
 
 			t.Run("accept header contains yaml, GET returns text yaml", func(t *testing.T) {
@@ -2426,6 +2444,25 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 		nsValidator:      &provisioning.NotificationSettingsValidatorProviderFake{},
 		settings:         settings,
 	}
+}
+
+// missingFolderService fails folder lookups with the folder service's not-found error, which carries a 404 status.
+type missingFolderService struct {
+	folder.Service
+}
+
+func (missingFolderService) Get(context.Context, *folder.GetFolderQuery) (*folder.Folder, error) {
+	return nil, folder.ErrFolderNotFound.Errorf("%w", dashboards.ErrFolderNotFound)
+}
+
+// createMissingFolderSut returns a server whose stored rule "rule1" points at a folder that no longer exists.
+func createMissingFolderSut(t *testing.T) ProvisioningSrv {
+	t.Helper()
+
+	env := createTestEnv(t, testConfig)
+	insertRule(t, createProvisioningSrvSutFromEnv(t, &env), createTestAlertRule("rule1", 1))
+	env.folderService = missingFolderService{Service: env.folderService}
+	return createProvisioningSrvSutFromEnv(t, &env)
 }
 
 func createProvisioningSrvSut(t *testing.T) ProvisioningSrv {

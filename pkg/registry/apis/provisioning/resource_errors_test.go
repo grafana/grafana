@@ -66,9 +66,9 @@ func TestStatsConnector_StorageErrors(t *testing.T) {
 func TestHandleStats_StorageErrors(t *testing.T) {
 	for _, tc := range provisioningHTTPErrors(t) {
 		t.Run(tc.name, func(t *testing.T) {
-			lister := resources.NewMockResourceLister(t)
-			lister.EXPECT().Stats(mock.Anything, "default").Return(nil, tc.err).Once()
-			b := &APIBuilder{resourceLister: lister}
+			stats := resources.NewMockNamespaceStatsReader(t)
+			stats.EXPECT().Stats(mock.Anything, "default").Return(nil, tc.err).Once()
+			b := &APIBuilder{namespaceStats: stats}
 			ctx := authlib.WithAuthInfo(context.Background(), &identity.StaticRequester{Namespace: "default"})
 			w := httptest.NewRecorder()
 			b.handleStats(w, httptest.NewRequest(http.MethodGet, "/", nil).WithContext(ctx))

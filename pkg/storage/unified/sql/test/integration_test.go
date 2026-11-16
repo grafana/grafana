@@ -1005,3 +1005,151 @@ func TestIntegrationSQLBackendWatchRecoversFromBusRestart(t *testing.T) {
 		t.Fatal("a resume from before the lost write was accepted")
 	}
 }
+
+// recordingNATSPublisher publishes like unbufferedPublisher and keeps every
+// message, so a test can publish one again later.
+type recordingNATSPublisher struct {
+	unbufferedPublisher
+	mu   sync.Mutex
+	sent []*natsclient.Msg
+}
+
+func (p *recordingNATSPublisher) Publish(ctx context.Context, subject string, data []byte) error {
+	p.mu.Lock()
+	p.sent = append(p.sent, &natsclient.Msg{Subject: subject, Data: data})
+	p.mu.Unlock()
+	return p.unbufferedPublisher.Publish(ctx, subject, data)
+}
+
+func (p *recordingNATSPublisher) last() *natsclient.Msg {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	return p.sent[len(p.sent)-1]
+}
+
+// A notification that arrives after a later write of its collection was
+// delivered expires the open watches. A client that lists again must be able
+// to watch from the list's RV, which is that later write's when nothing was
+// written since.
+func TestIntegrationSQLBackendWatchAfterALateNotification(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	t.Cleanup(db.CleanupTestDB)
+
+	broker, err := natsserver.NewServer(&natsserver.Options{Host: "127.0.0.1", Port: natsserver.RANDOM_PORT, NoSigs: true, NoLog: true})
+	require.NoError(t, err)
+	broker.Start()
+	t.Cleanup(func() { broker.Shutdown(); broker.WaitForShutdown() })
+	require.True(t, broker.ReadyForConnections(busRestartTimeout))
+	ctx := identity.WithRequester(testutil.NewTestContext(t, time.Now().Add(5*time.Minute)), &identity.StaticRequester{
+		Type: types.TypeUser, UserID: 1, UserUID: "user-uid-1", OrgID: 1, Namespace: "default", Login: "testuser",
+	})
+
+	cfg := setting.NewCfg()
+	cfg.NATS = setting.NATSSettings{Enabled: true, Mode: setting.NATSModeExternal, ClientURLs: []string{broker.ClientURL()}, Notifier: true}
+	pubConn, err := natsclient.Connect(broker.ClientURL())
+	require.NoError(t, err)
+	t.Cleanup(pubConn.Close)
+	pub := &recordingNATSPublisher{unbufferedPublisher: unbufferedPublisher{conn: pubConn}}
+	sub := nats.ProvideSubscriber(nats.ProvideNATSConfig(cfg, nil), prometheus.NewRegistry())
+	require.NoError(t, services.StartAndAwaitRunning(ctx, sub))
+	expiry := resource.NewWatchExpiry()
+	backend := newSharedDBBackends(t, unified.NatsStorageBackendOptions(cfg, pub, sub, expiry))[0]
+	srv, err := sql.NewResourceServer(sql.ServerOptions{
+		Backend:      backend,
+		WatchExpiry:  expiry,
+		Cfg:          cfg,
+		AccessClient: types.FixedAccessClient(true),
+		Reg:          prometheus.NewPedanticRegistry(),
+	})
+	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, srv.Stop(context.Background()))
+		pubConn.Close()
+		require.NoError(t, services.StopAndAwaitTerminated(context.Background(), sub))
+	}()
+
+	create := func(name string) int64 {
+		t.Helper()
+		rsp, err := srv.Create(ctx, &resourcepb.CreateRequest{
+			Key:   &resourcepb.ResourceKey{Group: "group", Resource: "resource", Namespace: "default", Name: name},
+			Value: []byte(`{"apiVersion":"group/v0alpha1","kind":"resource","metadata":{"name":"` + name + `","namespace":"default"},"spec":{}}`),
+		})
+		require.NoError(t, err)
+		return rsp.ResourceVersion
+	}
+	collection := &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Group: "group", Resource: "resource", Namespace: "default"}}
+	startWatch := func(req *resourcepb.WatchRequest) (*watchStream, <-chan error) {
+		t.Helper()
+		ctx, cancel := context.WithCancel(ctx)
+		stream := &watchStream{ctx: ctx, events: make(chan *resourcepb.WatchEvent, 100)}
+		result := make(chan error, 1)
+		exited := make(chan struct{})
+		go func() {
+			defer close(exited)
+			result <- srv.Watch(req, stream)
+		}()
+		t.Cleanup(func() {
+			cancel()
+			select {
+			case <-exited:
+			case <-time.After(busRestartTimeout):
+				t.Error("watch did not stop")
+			}
+		})
+		return stream, result
+	}
+	awaitEvent := func(stream *watchStream, done <-chan error, typ resourcepb.WatchEvent_Type, rv int64) error {
+		t.Helper()
+		timer := time.NewTimer(busRestartTimeout)
+		defer timer.Stop()
+		for {
+			select {
+			case e := <-stream.events:
+				if e.Type == typ && (rv == 0 || e.Resource.Version == rv) {
+					return nil
+				}
+			case err := <-done:
+				require.Error(t, err, "watch ended without an error")
+				return err
+			case <-timer.C:
+				t.Fatalf("timed out waiting for %s at RV %d", typ, rv)
+			}
+		}
+	}
+
+	watch, watchDone := startWatch(&resourcepb.WatchRequest{Options: collection, SendInitialEvents: true, AllowWatchBookmarks: true})
+	require.NoError(t, awaitEvent(watch, watchDone, resourcepb.WatchEvent_BOOKMARK, 0))
+	first := create("first")
+	firstNotification := pub.last()
+	require.NoError(t, awaitEvent(watch, watchDone, resourcepb.WatchEvent_ADDED, first))
+	second := create("second")
+	require.NoError(t, awaitEvent(watch, watchDone, resourcepb.WatchEvent_ADDED, second))
+
+	// first's notification shows up again, after second was delivered.
+	require.NoError(t, pubConn.PublishMsg(firstNotification))
+	select {
+	case err := <-watchDone:
+		require.True(t, resource.IsResourceVersionExpired(err), "expected ResourceExpired, got %v", err)
+	case <-time.After(busRestartTimeout):
+		t.Fatal("the open watch did not expire on the late notification")
+	}
+
+	// A client that saw second but not first must not resume from second.
+	stale, staleDone := startWatch(&resourcepb.WatchRequest{Options: collection, Since: second})
+	select {
+	case err := <-staleDone:
+		require.True(t, resource.IsResourceVersionExpired(err), "expected ResourceExpired, got %v", err)
+	case e := <-stale.events:
+		t.Fatalf("a resume from the write that overtook the late one was accepted and got %s at RV %d", e.Type, e.Resource.Version)
+	case <-time.After(busRestartTimeout):
+		t.Fatal("a resume from the write that overtook the late one was accepted")
+	}
+
+	// A fresh list has first, and a watch from its RV must be admitted.
+	list, err := srv.List(ctx, &resourcepb.ListRequest{Options: collection})
+	require.NoError(t, err)
+	require.Len(t, list.Items, 2)
+	resumed, resumedDone := startWatch(&resourcepb.WatchRequest{Options: collection, Since: list.ResourceVersion})
+	third := create("third")
+	require.NoError(t, awaitEvent(resumed, resumedDone, resourcepb.WatchEvent_ADDED, third), "a watch from a fresh list's RV must be admitted")
+}

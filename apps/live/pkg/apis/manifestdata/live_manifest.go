@@ -42,7 +42,7 @@ var appManifestData = app.ManifestData{
 					Scope:      "Namespaced",
 					Conversion: false,
 					Search: &app.ManifestVersionKindSearch{
-						Endpoint: func(b bool) *bool { return &b }(false),
+						Endpoint: new(false),
 					},
 					Schema: &versionSchemaChannelv1alpha1,
 				},
