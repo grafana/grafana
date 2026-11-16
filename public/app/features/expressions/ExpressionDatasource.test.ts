@@ -45,6 +45,19 @@ describe('ExpressionDatasourceApi', () => {
 
   describe('query coauthoring language contract', () => {
     it.each([
+      [ExpressionQueryType.math, true],
+      [ExpressionQueryType.sql, true],
+      [ExpressionQueryType.reduce, false],
+      [ExpressionQueryType.resample, false],
+      [ExpressionQueryType.classic, false],
+      [ExpressionQueryType.threshold, false],
+    ])('reports authoritative editability for %s without preparing or mutating it', (type, editable) => {
+      const ds = new ExpressionDatasourceApi({} as DataSourceInstanceSettings);
+      const query = Object.freeze({ refId: 'B', type, expression: '' });
+      expect(ds.queryCoauthoring().getQuerySupport!(query)).toEqual({ editable });
+    });
+
+    it.each([
       { type: ExpressionQueryType.math, expression: '$A + 1', displayName: 'Math' },
       { type: ExpressionQueryType.sql, expression: 'SELECT * FROM A', displayName: 'SQL' },
     ])(

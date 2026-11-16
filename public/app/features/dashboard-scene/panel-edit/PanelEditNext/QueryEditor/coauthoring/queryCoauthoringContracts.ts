@@ -127,6 +127,7 @@ export type QueryCoauthoringPrepareResult<TQuery extends DataQuery = DataQuery> 
 
 export interface QueryCoauthoringLanguage<TQuery extends DataQuery = DataQuery> {
   readonly version: 1;
+  getQuerySupport?(query: TQuery): { editable: boolean };
   describe(query: TQuery, options: { signal?: AbortSignal }): Promise<QueryCoauthoringLanguageDescription>;
   prepare(baseline: TQuery, text: string): QueryCoauthoringPrepareResult<TQuery>;
 }
