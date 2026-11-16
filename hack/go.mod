@@ -5,7 +5,7 @@ go 1.27.4
 require k8s.io/code-generator v0.37.0
 
 require (
-	github.com/go-logr/logr v1.4.3 // indirect
+	github.com/go-logr/logr v1.4.4 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	golang.org/x/mod v0.41.0 // indirect
 	golang.org/x/sync v0.24.0 // indirect
