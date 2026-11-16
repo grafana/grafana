@@ -490,7 +490,12 @@ func (ng *AlertNG) init() error {
 		ruleMutator = apiprometheus.NewInMemoryRuleMutator(ng.schedule, ng.stateManager)
 	}
 
-	configStore := legacy_storage.NewAlertmanagerConfigStore(ng.store, notifier.NewExtraConfigsCrypto(ng.SecretsService), ng.FeatureToggles)
+	// The provider is shared by config size, template and silence limit validation.
+	// Both provisioning.LimitsProvider and notifier.LimitsProvider interfaces have identical
+	// signatures, so NoopLimitsProvider and RemoteLimitsProvider satisfy both via structural typing.
+	limitsProvider := provisioning.NewLimitsProvider(ng.Cfg.UnifiedAlerting.RemoteAlertmanager, remoteAMEnabled, ng.Metrics.GetRemoteAlertmanagerMetrics(), ng.tracer, ng.Log)
+
+	configStore := legacy_storage.NewAlertmanagerConfigStore(ng.store, notifier.NewExtraConfigsCrypto(ng.SecretsService), ng.FeatureToggles).WithLimitsProvider(limitsProvider)
 
 	routeAccess := ac.NewRouteAccess[*v1.ManagedRoute](ng.accesscontrol, ng.RouteResourcePermissions, false)
 	routeService := routes.NewService(configStore, ng.provenanceStore, ng.store, ng.Cfg.UnifiedAlerting, ng.FeatureToggles, ng.Log, validation.NewPermissionAwareValidator(ng.accesscontrol), ng.tracer, routeAccess)
@@ -554,38 +559,6 @@ func (ng *AlertNG) init() error {
 		emailValidator,
 		ng.MultiOrgAlertmanager,
 	)
-
-	// Create limits provider depending on whether the remote Alertmanager is enabled.
-	// The provider is used for both template and silence limit validation.
-	// Both provisioning.LimitsProvider and notifier.LimitsProvider interfaces have identical
-	// signatures, so NoopLimitsProvider and RemoteLimitsProvider satisfy both via structural typing.
-	var limitsProvider provisioning.LimitsProvider
-	if remoteAMEnabled {
-		// For remote alertmanager, create a MimirClient to fetch limits
-		remoteURL, err := url.Parse(ng.Cfg.UnifiedAlerting.RemoteAlertmanager.URL)
-		if err != nil {
-			ng.Log.Warn("Failed to parse remote alertmanager URL for limits provider, using noop limits", "error", err)
-			limitsProvider = &provisioning.NoopLimitsProvider{}
-		} else {
-			mimirCfg := &remoteClient.Config{
-				URL:      remoteURL,
-				TenantID: ng.Cfg.UnifiedAlerting.RemoteAlertmanager.TenantID,
-				Password: ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Password,
-				Logger:   log.New("ngalert.remote.limits"),
-				Timeout:  ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Timeout,
-			}
-			mimirClient, err := remoteClient.New(mimirCfg, ng.Metrics.GetRemoteAlertmanagerMetrics(), ng.tracer)
-			if err != nil {
-				ng.Log.Warn("Failed to create MimirClient for limits provider, using noop limits", "error", err)
-				limitsProvider = &provisioning.NoopLimitsProvider{}
-			} else {
-				limitsProvider = provisioning.NewRemoteLimitsProvider(mimirClient)
-			}
-		}
-	} else {
-		// For local alertmanager, skip limit validation (limits are enforced at runtime by the alerting library)
-		limitsProvider = &provisioning.NoopLimitsProvider{}
-	}
 
 	// Provisioning
 	policyService := provisioning.NewNotificationPolicyService(configStore, ng.provenanceStore, ng.store, provisionRouteService, ng.Cfg.UnifiedAlerting, ng.Log, validation.NewPermissionAwareValidator(ng.accesscontrol))
