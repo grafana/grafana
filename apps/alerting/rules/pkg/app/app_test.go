@@ -639,10 +639,12 @@ func ruleSequenceRuntimeConfig() config.RuntimeConfig {
 	cfg := makeDefaultRuntimeConfig()
 	cfg.ResolveRuleRef = func(ctx context.Context, uid string) (config.RuleRef, bool, error) {
 		switch uid {
-		case "rec-1", "rec-2", "alert-1":
+		case "rec-1", "rec-2":
+			return config.RuleRef{UID: uid, FolderUID: "f1", IsRecording: true}, true, nil
+		case "alert-1":
 			return config.RuleRef{UID: uid, FolderUID: "f1"}, true, nil
 		case "other-folder-rule":
-			return config.RuleRef{UID: uid, FolderUID: "f2"}, true, nil
+			return config.RuleRef{UID: uid, FolderUID: "f2", IsRecording: true}, true, nil
 		default:
 			return config.RuleRef{}, false, nil
 		}
@@ -726,6 +728,21 @@ func TestRuleSequenceValidation_Errors(t *testing.T) {
 			r.Spec.AlertRules = nil
 		})
 		require.Error(t, err)
+	})
+
+	t.Run("alert rule in recording rules", func(t *testing.T) {
+		err := mk(func(r *v1.RuleSequence) {
+			r.Spec.RecordingRules = []v1.RuleSequenceRuleRef{{Name: "alert-1"}}
+			r.Spec.AlertRules = nil
+		})
+		require.ErrorContains(t, err, `rule "alert-1" is an alert rule but is listed in recordingRules`)
+	})
+
+	t.Run("recording rule in alert rules", func(t *testing.T) {
+		err := mk(func(r *v1.RuleSequence) {
+			r.Spec.AlertRules = []v1.RuleSequenceRuleRef{{Name: "rec-2"}}
+		})
+		require.ErrorContains(t, err, `rule "rec-2" is a recording rule but is listed in alertRules`)
 	})
 
 	t.Run("invalid provenance", func(t *testing.T) {
