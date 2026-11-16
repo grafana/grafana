@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/permissioncache"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -46,7 +45,8 @@ type folderStorage struct {
 
 	permissionsOnCreate  bool // cfg.RBAC.PermissionsOnCreation("folder")
 	folderPermissionsSvc accesscontrol.FolderPermissionsService
-	acService            accesscontrol.Service
+	// refreshCreator reloads the creator's permissions once the default permissions are committed.
+	refreshCreator func(ctx context.Context, requester identity.Requester)
 }
 
 func (s *folderStorage) New() runtime.Object {
@@ -203,8 +203,8 @@ func (s *folderStorage) setDefaultFolderPermissions(ctx context.Context, orgID i
 	// SetPermissions only clears the local permission cache. Reload the creator's
 	// permissions so that delegated AuthZ caches also see the new grant and the
 	// creator can read the folder in its next request.
-	if s.acService != nil {
-		permissioncache.RefreshCreator(ctx, s.acService, user)
+	if s.refreshCreator != nil {
+		s.refreshCreator(ctx, user)
 	}
 
 	return nil

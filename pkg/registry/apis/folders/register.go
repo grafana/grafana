@@ -28,6 +28,7 @@ import (
 	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	foldersv1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -36,12 +37,14 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission/rpclient"
 	"github.com/grafana/grafana/pkg/registry/fieldselectors"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/permissioncache"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	grafanaauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -144,6 +147,7 @@ func RegisterAPIService(cfg *setting.Cfg,
 	apiregistration builder.APIRegistrar,
 	folderPermissionsSvc accesscontrol.FolderPermissionsService,
 	acService accesscontrol.Service,
+	sqlStore *sqlstore.SQLStore,
 	accessClient authlib.AccessClient,
 	registerer prometheus.Registerer,
 	unified resource.ResourceClient,
@@ -172,6 +176,7 @@ func RegisterAPIService(cfg *setting.Cfg,
 	} else {
 		builder.folderPermissionsSvc = folderPermissionsSvc
 		builder.acService = acService
+		sqlStore.Bus().AddEventListener(builder.onDefaultPermissionsSet)
 	}
 
 	// Cascade dashboard cleanup needs an apiserver client regardless of the authz flag above.
@@ -301,7 +306,7 @@ func (b *FolderAPIBuilder) storageForVersion(
 			resourceInfo:         folders,
 			tableConverter:       folders.TableConverter(),
 			folderPermissionsSvc: b.folderPermissionsSvc,
-			acService:            b.acService,
+			refreshCreator:       b.refreshCreatorAfterCommit,
 			permissionsOnCreate:  b.permissionsOnCreate,
 			store:                unified,
 		}
@@ -409,6 +414,29 @@ func buildDefaultFolderPermissions(id authlib.AuthInfo) []iamv0alpha1.ResourcePe
 		Verb: "admin",
 	})
 	return append(permissions, defaultPermissions...)
+}
+
+type folderDefaultPermissionsSet struct {
+	requester identity.Requester
+}
+
+// refreshCreatorAfterCommit reloads the creator's permissions after the outermost SQL
+// transaction on ctx commits, or immediately when ctx carries no transaction.
+func (b *FolderAPIBuilder) refreshCreatorAfterCommit(ctx context.Context, requester identity.Requester) {
+	if b.acService == nil || requester == nil || !requester.IsIdentityType(authlib.TypeUser, authlib.TypeServiceAccount) {
+		return
+	}
+	event := &folderDefaultPermissionsSet{requester: requester}
+	if sess := sqlstore.SessionFromContext(ctx); sess != nil {
+		sess.PublishAfterCommit(event)
+		return
+	}
+	_ = b.onDefaultPermissionsSet(ctx, event)
+}
+
+func (b *FolderAPIBuilder) onDefaultPermissionsSet(ctx context.Context, event *folderDefaultPermissionsSet) error {
+	permissioncache.RefreshCreator(ctx, b.acService, event.requester)
+	return nil
 }
 
 func (b *FolderAPIBuilder) setDefaultFolderPermissions(ctx context.Context, key *resourcepb.ResourceKey, id authlib.AuthInfo, obj utils.GrafanaMetaAccessor) error {
