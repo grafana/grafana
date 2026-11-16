@@ -10,6 +10,7 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 
+	authlib "github.com/grafana/authlib/types"
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/validation"
@@ -26,6 +27,7 @@ var (
 	logger = log.New("dashboardpreferences.cleanup")
 
 	errNamespaceMissing    = errors.New("namespace is missing")
+	errNamespaceUnknown    = errors.New("not an org or stack namespace")
 	errRemovalNotCommitted = errors.New("the user's removal has not been committed yet")
 )
 
@@ -58,6 +60,14 @@ func (c *userCleaner) DeleteUserPreferences(ctx context.Context, namespace, user
 	name := dashv2beta1.DashboardPreferencesUserName(userUID)
 	if len(validation.IsValidGrafanaName(name)) > 0 {
 		return nil
+	}
+	info, err := authlib.ParseNamespace(namespace)
+	// ParseNamespace returns no org, and no error, for a namespace it doesn't recognise.
+	if err == nil && info.OrgID < 1 {
+		err = errNamespaceUnknown
+	}
+	if err != nil {
+		return fmt.Errorf("invalid namespace %q: %w", namespace, err)
 	}
 
 	// The user has already left, so the cleanup outlives the caller. The bound keeps a login that

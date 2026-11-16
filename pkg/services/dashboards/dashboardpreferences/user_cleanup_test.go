@@ -129,6 +129,31 @@ func TestUserCleaner_DeleteUserPreferences(t *testing.T) {
 			},
 		},
 		{
+			name:      "an unknown namespace sends nothing",
+			namespace: "users",
+			userUID:   "u1",
+			wantErr: func(t *testing.T, err error) {
+				require.ErrorIs(t, err, errNamespaceUnknown)
+				require.ErrorContains(t, err, `invalid namespace "users"`)
+			},
+		},
+		{
+			name:      "a namespace that doesn't parse sends nothing",
+			namespace: "org-0",
+			userUID:   "u1",
+			wantErr: func(t *testing.T, err error) {
+				require.ErrorContains(t, err, `invalid namespace "org-0"`)
+			},
+		},
+		{
+			name:      "an empty namespace sends nothing",
+			namespace: "",
+			userUID:   "u1",
+			wantErr: func(t *testing.T, err error) {
+				require.ErrorIs(t, err, errNamespaceUnknown)
+			},
+		},
+		{
 			name:      "an empty user UID sends nothing",
 			namespace: "default",
 			userUID:   "",
