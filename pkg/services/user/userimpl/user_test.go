@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardpreferences/dashboardpreferencestest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
@@ -551,7 +552,7 @@ func TestLegacyService_DeleteDeletesUserPreferences(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, []int64{7}, f.orgs.lookups)
 		require.True(t, f.store.deleteRan)
-		require.ElementsMatch(t, []string{"default/u7", "org-2/u7"}, f.cleaner.calls)
+		require.ElementsMatch(t, []string{"default/u7", "org-2/u7"}, f.cleaner.Calls)
 	})
 
 	t.Run("a failed delete keeps the tier", func(t *testing.T) {
@@ -562,7 +563,7 @@ func TestLegacyService_DeleteDeletesUserPreferences(t *testing.T) {
 		err := f.delete(t)
 
 		require.ErrorIs(t, err, boom)
-		require.Empty(t, f.cleaner.calls)
+		require.Empty(t, f.cleaner.Calls)
 	})
 
 	t.Run("a missing user", func(t *testing.T) {
@@ -572,7 +573,7 @@ func TestLegacyService_DeleteDeletesUserPreferences(t *testing.T) {
 		err := f.delete(t)
 
 		require.ErrorIs(t, err, user.ErrUserNotFound)
-		require.Empty(t, f.cleaner.calls)
+		require.Empty(t, f.cleaner.Calls)
 	})
 
 	t.Run("a failed org lookup still deletes the user", func(t *testing.T) {
@@ -583,18 +584,18 @@ func TestLegacyService_DeleteDeletesUserPreferences(t *testing.T) {
 
 		require.NoError(t, err)
 		require.True(t, f.store.deleteRan)
-		require.Empty(t, f.cleaner.calls)
+		require.Empty(t, f.cleaner.Calls)
 	})
 
 	t.Run("a failed cleanup still deletes the user", func(t *testing.T) {
 		f := newDeletePreferencesFixture(t, 1)
-		f.cleaner.err = errors.New("boom")
+		f.cleaner.ExpectedError = errors.New("boom")
 
 		err := f.delete(t)
 
 		require.NoError(t, err)
 		require.True(t, f.store.deleteRan)
-		require.ElementsMatch(t, []string{"default/u7"}, f.cleaner.calls)
+		require.ElementsMatch(t, []string{"default/u7"}, f.cleaner.Calls)
 	})
 
 	t.Run("service accounts have no tier", func(t *testing.T) {
@@ -605,7 +606,7 @@ func TestLegacyService_DeleteDeletesUserPreferences(t *testing.T) {
 
 		require.NoError(t, err)
 		require.Empty(t, f.orgs.lookups)
-		require.Empty(t, f.cleaner.calls)
+		require.Empty(t, f.cleaner.Calls)
 	})
 
 	t.Run("Cloud deletes the stack's tier once", func(t *testing.T) {
@@ -615,7 +616,7 @@ func TestLegacyService_DeleteDeletesUserPreferences(t *testing.T) {
 		err := f.delete(t)
 
 		require.NoError(t, err)
-		require.ElementsMatch(t, []string{"stacks-123/u7"}, f.cleaner.calls)
+		require.ElementsMatch(t, []string{"stacks-123/u7"}, f.cleaner.Calls)
 	})
 
 	t.Run("no cleaner", func(t *testing.T) {
@@ -638,7 +639,7 @@ func TestLegacyService_DeleteDeletesUserPreferences(t *testing.T) {
 		require.NoError(t, err)
 		require.True(t, f.store.deleteRan)
 		require.Empty(t, f.orgs.lookups)
-		require.Empty(t, f.cleaner.calls)
+		require.Empty(t, f.cleaner.Calls)
 	})
 }
 
@@ -647,7 +648,7 @@ type deletePreferencesFixture struct {
 	svc     *LegacyService
 	store   *deleteRecordingUserStore
 	orgs    *orgListBeforeDeleteService
-	cleaner *recordingPreferencesCleaner
+	cleaner *dashboardpreferencestest.FakeUserCleaner
 }
 
 func newDeletePreferencesFixture(t *testing.T, orgIDs ...int64) *deletePreferencesFixture {
@@ -657,7 +658,7 @@ func newDeletePreferencesFixture(t *testing.T, orgIDs ...int64) *deletePreferenc
 	for _, orgID := range orgIDs {
 		orgs.ExpectedUserOrgDTO = append(orgs.ExpectedUserOrgDTO, &org.UserOrgDTO{OrgID: orgID})
 	}
-	cleaner := &recordingPreferencesCleaner{}
+	cleaner := &dashboardpreferencestest.FakeUserCleaner{}
 	return &deletePreferencesFixture{
 		svc: &LegacyService{
 			store:       store,
@@ -702,17 +703,6 @@ func (s *orgListBeforeDeleteService) GetUserOrgList(ctx context.Context, query *
 	}
 	s.lookups = append(s.lookups, query.UserID)
 	return s.FakeOrgService.GetUserOrgList(ctx, query)
-}
-
-// recordingPreferencesCleaner records "<namespace>/<userUID>" for each delete and returns err.
-type recordingPreferencesCleaner struct {
-	err   error
-	calls []string
-}
-
-func (c *recordingPreferencesCleaner) DeleteUserPreferences(_ context.Context, namespace, userUID string) error {
-	c.calls = append(c.calls, namespace+"/"+userUID)
-	return c.err
 }
 
 // ctxCapturingUserService records the context passed to GetProfile so tests can

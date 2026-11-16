@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardpreferences/dashboardpreferencestest"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgdelete"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
@@ -1383,7 +1384,7 @@ func TestIntegration_SQLStore_RemoveOrgUserDeletesUserPreferences(t *testing.T) 
 		err := f.store.RemoveOrgUser(t.Context(), &org.RemoveOrgUserCommand{UserID: viewer.ID, OrgID: f.orgB.ID})
 
 		require.NoError(t, err)
-		require.Equal(t, []string{f.ns(f.orgB.ID) + "/" + viewer.UID}, f.cleaner.calls)
+		require.Equal(t, []string{f.ns(f.orgB.ID) + "/" + viewer.UID}, f.cleaner.Calls)
 	})
 
 	t.Run("removed from an org they aren't in", func(t *testing.T) {
@@ -1393,7 +1394,7 @@ func TestIntegration_SQLStore_RemoveOrgUserDeletesUserPreferences(t *testing.T) 
 		err := f.store.RemoveOrgUser(t.Context(), &org.RemoveOrgUserCommand{UserID: viewer.ID, OrgID: f.orgB.ID})
 
 		require.NoError(t, err)
-		require.Empty(t, f.cleaner.calls)
+		require.Empty(t, f.cleaner.Calls)
 	})
 
 	t.Run("an orphan is deleted with its preferences", func(t *testing.T) {
@@ -1405,7 +1406,7 @@ func TestIntegration_SQLStore_RemoveOrgUserDeletesUserPreferences(t *testing.T) 
 
 		require.NoError(t, err)
 		require.True(t, cmd.UserWasDeleted)
-		require.Equal(t, []string{f.ns(f.orgB.ID) + "/" + viewer.UID}, f.cleaner.calls)
+		require.Equal(t, []string{f.ns(f.orgB.ID) + "/" + viewer.UID}, f.cleaner.Calls)
 	})
 
 	t.Run("the last admin can't leave", func(t *testing.T) {
@@ -1414,7 +1415,7 @@ func TestIntegration_SQLStore_RemoveOrgUserDeletesUserPreferences(t *testing.T) 
 		err := f.store.RemoveOrgUser(t.Context(), &org.RemoveOrgUserCommand{UserID: f.bAdmin.ID, OrgID: f.orgB.ID})
 
 		require.ErrorIs(t, err, org.ErrLastOrgAdmin)
-		require.Empty(t, f.cleaner.calls)
+		require.Empty(t, f.cleaner.Calls)
 	})
 
 	t.Run("a cleanup failure doesn't fail the removal", func(t *testing.T) {
@@ -1424,7 +1425,7 @@ func TestIntegration_SQLStore_RemoveOrgUserDeletesUserPreferences(t *testing.T) 
 		err := f.store.RemoveOrgUser(t.Context(), &org.RemoveOrgUserCommand{UserID: viewer.ID, OrgID: f.orgB.ID})
 
 		require.NoError(t, err)
-		require.Equal(t, []string{f.ns(f.orgB.ID) + "/" + viewer.UID}, f.cleaner.calls)
+		require.Equal(t, []string{f.ns(f.orgB.ID) + "/" + viewer.UID}, f.cleaner.Calls)
 		orgs, err := f.orgSvc.GetUserOrgList(t.Context(), &org.GetUserOrgListQuery{UserID: viewer.ID})
 		require.NoError(t, err)
 		require.Len(t, orgs, 1)
@@ -1439,26 +1440,15 @@ func TestIntegration_SQLStore_RemoveOrgUserDeletesUserPreferences(t *testing.T) 
 		err := f.store.RemoveOrgUser(t.Context(), &org.RemoveOrgUserCommand{UserID: viewer.ID, OrgID: f.orgB.ID})
 
 		require.NoError(t, err)
-		require.Empty(t, f.cleaner.calls)
+		require.Empty(t, f.cleaner.Calls)
 	})
-}
-
-// recordingPreferencesCleaner records "<namespace>/<userUID>" for each delete and returns err.
-type recordingPreferencesCleaner struct {
-	err   error
-	calls []string
-}
-
-func (c *recordingPreferencesCleaner) DeleteUserPreferences(_ context.Context, namespace, userUID string) error {
-	c.calls = append(c.calls, namespace+"/"+userUID)
-	return c.err
 }
 
 // preferencesCleanupFixture holds org A and org B, each created with its own admin.
 type preferencesCleanupFixture struct {
 	cfg        *setting.Cfg
 	store      *sqlStore
-	cleaner    *recordingPreferencesCleaner
+	cleaner    *dashboardpreferencestest.FakeUserCleaner
 	orgSvc     org.Service
 	usrSvc     user.Service
 	orgA, orgB *org.Org
@@ -1471,7 +1461,7 @@ func newPreferencesCleanupFixture(t *testing.T, cleanerErr error) *preferencesCl
 	cfg := setting.NewCfg()
 	testDB := db.NewTestStore(t, sqlstore.WithCfg(cfg))
 	orgSvc, usrSvc := createOrgAndUserSvc(t, testDB, cfg)
-	cleaner := &recordingPreferencesCleaner{err: cleanerErr}
+	cleaner := &dashboardpreferencestest.FakeUserCleaner{ExpectedError: cleanerErr}
 	f := &preferencesCleanupFixture{
 		cfg: cfg,
 		store: &sqlStore{
