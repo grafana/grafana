@@ -486,6 +486,12 @@ func (s *Storage) Delete(
 		if err != nil {
 			return fmt.Errorf("unable to read object %w", err)
 		}
+		// Read the version before routing: the routing re-reads into out, and the
+		// delete must stay conditional on the version that passed the checks above.
+		resourceVersion, err := meta.GetResourceVersionInt64()
+		if err != nil {
+			return resourceutil.StatusError(resourceutil.AsErrorResult(err))
+		}
 		if err = identity.CheckManagerOnDelete(info, meta); err != nil {
 			// Nothing left in git to delete, so remove the resource here rather than strand it.
 			if !s.isOrphanedRepositoryRootFolder(ctx, meta) {
@@ -497,10 +503,7 @@ func (s *Storage) Delete(
 			logging.FromContext(ctx).Info("deleting managed resource whose repository is gone", "key", key)
 		}
 
-		cmd.ResourceVersion, err = meta.GetResourceVersionInt64()
-		if err != nil {
-			return resourceutil.StatusError(resourceutil.AsErrorResult(err))
-		}
+		cmd.ResourceVersion = resourceVersion
 		rsp, err := s.store.Delete(ctx, cmd)
 		if err != nil {
 			// Classify before normalization so attached gRPC status details remain available.
