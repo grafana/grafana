@@ -206,7 +206,8 @@ declare module "@openfeature/core" {
     | "grafana.dashboardSidebarExplicitOpen"
     | "grafana.folderPickerFolderEditAccess"
     | "grafana.panelOptionInterpolation"
-    | "datasources.gatewayRateLimits";
+    | "datasources.gatewayRateLimits"
+    | "plugins.disableMTPluginsFallback";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey =

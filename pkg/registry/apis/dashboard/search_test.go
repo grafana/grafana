@@ -1996,3 +1996,50 @@ func TestSearchHandlerCreatePermissionSharedWithMe(t *testing.T) {
 		})
 	}
 }
+
+type hideDraftsExtras struct{ NoopDashboardLifecycleExtras }
+
+func (hideDraftsExtras) HideDraftsByDefault(context.Context) bool { return true }
+
+func TestSearchHidesDrafts(t *testing.T) {
+	lifecycleLabels := func(t *testing.T, extras DashboardLifecycleExtras, path string) []*resourcepb.Requirement {
+		t.Helper()
+		client := &MockClient{}
+		handler := NewSearchHandler(tracing.NewNoopTracerService(), client, nil)
+		handler.lifecycleExtras = extras
+
+		req := httptest.NewRequest("GET", path, nil)
+		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{Namespace: "test"}))
+		handler.DoSearch(httptest.NewRecorder(), req)
+
+		require.NotNil(t, client.LastSearchRequest)
+		var out []*resourcepb.Requirement
+		for _, l := range client.LastSearchRequest.Options.Labels {
+			if l.Key == utils.LabelKeyLifecycle {
+				out = append(out, l)
+			}
+		}
+		return out
+	}
+
+	t.Run("excludes drafts when the extras hide them", func(t *testing.T) {
+		got := lifecycleLabels(t, hideDraftsExtras{}, "/search")
+		require.Len(t, got, 1)
+		require.Equal(t, string(selection.NotIn), got[0].Operator)
+		require.Equal(t, []string{utils.LifecycleDraft}, got[0].Values)
+	})
+
+	t.Run("does not filter when the extras do not hide drafts", func(t *testing.T) {
+		require.Empty(t, lifecycleLabels(t, NoopDashboardLifecycleExtras{}, "/search"))
+	})
+
+	t.Run("lifecycle=all opts out", func(t *testing.T) {
+		require.Empty(t, lifecycleLabels(t, hideDraftsExtras{}, "/search?lifecycle=all"))
+	})
+
+	t.Run("lifecycle=draft returns only drafts", func(t *testing.T) {
+		got := lifecycleLabels(t, hideDraftsExtras{}, "/search?lifecycle=draft")
+		require.Len(t, got, 1)
+		require.Equal(t, string(selection.Equals), got[0].Operator)
+	})
+}

@@ -48,6 +48,11 @@ function clickSidebarCard(card: Locator, options?: { delay?: number }) {
   return card.locator('img, svg').first().click(options);
 }
 
+// Selected state lives on the card's select control, not the card container that also holds the actions.
+function cardSelectControl(card: Locator) {
+  return card.getByRole('button', { name: /^Select card/ });
+}
+
 async function switchDatasource(
   dashboardPage: DashboardPage,
   page: Page,
@@ -58,7 +63,7 @@ async function switchDatasource(
   const queryACard = page.locator('[data-query-sidebar-card="A"]').first();
   if ((await queryACard.count()) > 0) {
     await clickSidebarCard(queryACard);
-    await expect(queryACard).toHaveAttribute('aria-pressed', 'true');
+    await expect(cardSelectControl(queryACard)).toHaveAttribute('aria-pressed', 'true');
   }
 
   const dataSourceInput = dashboardPage.getByGrafanaSelector(selectors.components.DataSourcePicker.inputV2);
@@ -182,7 +187,7 @@ test.describe('Query Editor Next: Sidebar Query Management', { tag: ['@panels', 
 
     const cardA = page.locator('[data-query-sidebar-card="A"]');
     await expect(cardA).toBeVisible();
-    await expect(cardA).toHaveAttribute('aria-pressed', 'true');
+    await expect(cardSelectControl(cardA)).toHaveAttribute('aria-pressed', 'true');
   });
 
   test('can add a new query via the sidebar', async ({ gotoDashboardPage, page }) => {
@@ -202,12 +207,12 @@ test.describe('Query Editor Next: Sidebar Query Management', { tag: ['@panels', 
     const cardB = page.locator('[data-query-sidebar-card="B"]');
 
     await clickSidebarCard(cardA);
-    await expect(cardA).toHaveAttribute('aria-pressed', 'true');
-    await expect(cardB).toHaveAttribute('aria-pressed', 'false');
+    await expect(cardSelectControl(cardA)).toHaveAttribute('aria-pressed', 'true');
+    await expect(cardSelectControl(cardB)).toHaveAttribute('aria-pressed', 'false');
 
     await clickSidebarCard(cardB);
-    await expect(cardB).toHaveAttribute('aria-pressed', 'true');
-    await expect(cardA).toHaveAttribute('aria-pressed', 'false');
+    await expect(cardSelectControl(cardB)).toHaveAttribute('aria-pressed', 'true');
+    await expect(cardSelectControl(cardA)).toHaveAttribute('aria-pressed', 'false');
   });
 
   test('can delete a query from the sidebar', async ({ gotoDashboardPage, page }) => {
@@ -336,7 +341,7 @@ test.describe('Query Editor Next: Transformations', { tag: ['@panels', '@queryEd
     await clickSidebarCard(page.locator('[data-query-sidebar-card="A"]'));
     const reduceCard = page.locator('[data-query-sidebar-card]').filter({ hasText: 'Reduce' }).first();
     await clickSidebarCard(reduceCard);
-    await expect(reduceCard).toHaveAttribute('aria-pressed', 'true');
+    await expect(cardSelectControl(reduceCard)).toHaveAttribute('aria-pressed', 'true');
     await expect(page.getByTestId(selectors.components.TransformTab.transformationEditor('Reduce'))).toBeVisible();
   });
 
@@ -436,11 +441,11 @@ test.describe('Query Editor Next: Query State Preservation', { tag: ['@panels', 
     const cardC = page.locator('[data-query-sidebar-card="C"]');
 
     await clickSidebarCard(cardB);
-    await expect(cardB).toHaveAttribute('aria-pressed', 'true');
+    await expect(cardSelectControl(cardB)).toHaveAttribute('aria-pressed', 'true');
     await expect(page.getByText('SELECT 1 FROM A')).toBeVisible();
 
     await clickSidebarCard(cardC);
-    await expect(cardC).toHaveAttribute('aria-pressed', 'true');
+    await expect(cardSelectControl(cardC)).toHaveAttribute('aria-pressed', 'true');
     await expect(page.getByText('SELECT 2 FROM A')).toBeVisible();
 
     await clickSidebarCard(cardB);
@@ -471,7 +476,7 @@ test.describe('Query Editor Next: Query State Preservation', { tag: ['@panels', 
     const cardB = page.locator('[data-query-sidebar-card="B"]');
 
     await clickSidebarCard(cardA);
-    await expect(cardA).toHaveAttribute('aria-pressed', 'true');
+    await expect(cardSelectControl(cardA)).toHaveAttribute('aria-pressed', 'true');
 
     const queryText = 'up{job="grafana"}';
     await monacoTextarea.fill(queryText);
@@ -481,10 +486,10 @@ test.describe('Query Editor Next: Query State Preservation', { tag: ['@panels', 
     // `delay` separates mousedown from mouseup so Monaco's `setTimeout(0)`-deferred blur
     // can fire before React unmounts the editor — matching a real human click.
     await clickSidebarCard(cardB, { delay: 50 });
-    await expect(cardB).toHaveAttribute('aria-pressed', 'true');
+    await expect(cardSelectControl(cardB)).toHaveAttribute('aria-pressed', 'true');
 
     await clickSidebarCard(cardA);
-    await expect(cardA).toHaveAttribute('aria-pressed', 'true');
+    await expect(cardSelectControl(cardA)).toHaveAttribute('aria-pressed', 'true');
     await expect(page.getByText(queryText)).toBeVisible();
   });
 });

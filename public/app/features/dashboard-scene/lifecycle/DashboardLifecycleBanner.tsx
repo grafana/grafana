@@ -210,6 +210,8 @@ function PendingChangesBanner({
   const badges = useChangeHighlights(dashboard, stale || !highlighting ? undefined : changes, viewRoot);
   const title = saved?.title ?? dashboard.state.title;
   const changeCount = changes?.length;
+  // The API's canEdit is permission to save. The scene can still be editable without it: viewers_can_edit
+  // lets a viewer change a dashboard they can't save.
   const canApply = saved?.canEdit ?? false;
 
   const apply = useCallback(async () => {
@@ -312,8 +314,8 @@ function PendingChangesBanner({
                 saved && (
                   <Tooltip
                     content={t(
-                      'dashboard-scene.lifecycle.apply-needs-edit',
-                      'Applying needs edit access to “{{title}}”. You can preview these changes, but not apply them.',
+                      'dashboard-scene.lifecycle.apply-needs-save',
+                      'You don’t have permission to save “{{title}}”, so you can preview these changes but not apply them. Ask an admin for permission to save it.',
                       { title }
                     )}
                   >

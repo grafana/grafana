@@ -29,6 +29,10 @@ const LabelKeyLifecycle = "grafana.app/lifecycle"
 // LifecycleDraft is the LabelKeyLifecycle value for draft dashboards
 const LifecycleDraft = "draft"
 
+// LabelKeyIncludeDrafts is a request-only list flag (never stored) that includes drafts
+// in list results when drafts are hidden by default
+const LabelKeyIncludeDrafts = "grafana.app/include-drafts"
+
 // AnnoKeyKubectlLastAppliedConfig is the annotation kubectl writes with the entire previous config
 const AnnoKeyKubectlLastAppliedConfig = "kubectl.kubernetes.io/last-applied-configuration"
 
