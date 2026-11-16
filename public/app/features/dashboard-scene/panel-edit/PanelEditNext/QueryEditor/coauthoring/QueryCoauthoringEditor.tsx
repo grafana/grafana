@@ -74,7 +74,7 @@ export function useCoauthoringEditor(query: DataQuery | null, queries: DataQuery
   useLayoutEffect(() => {
     handleRef.current = handle;
   }, [handle]);
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!active) {
       registration.current();
     }

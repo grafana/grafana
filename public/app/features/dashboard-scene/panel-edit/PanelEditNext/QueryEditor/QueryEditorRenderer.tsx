@@ -1,4 +1,5 @@
 import { ProviderStatus, useBooleanFlagDetails, useOpenFeatureClientStatus } from '@openfeature/react-sdk';
+import { isEqual } from 'lodash';
 import { type ComponentProps, type ComponentType, useEffect, useMemo, useState } from 'react';
 
 import {
@@ -204,7 +205,11 @@ export function QueryEditorPanel({
             data={filteredData}
             datasource={datasource}
             onAddQuery={addQuery}
-            onChange={proposalTransaction.onChange}
+            onChange={(updated) => {
+              if (!v2.active || !isEqual(updated, v2.editorQuery)) {
+                proposalTransaction.onChange(updated);
+              }
+            }}
             onRunQuery={proposalTransaction.run}
             queries={v2.active ? v2.editorQueries : proposalTransaction.editorQueries}
             query={(v2.active ? v2.editorQuery : proposalTransaction.editorQuery) ?? query}

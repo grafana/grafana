@@ -66,6 +66,9 @@ export function subscribeCoauthoringFlags(listener: () => void) {
 }
 export const getCoauthoringGeneration = () => generation;
 export function publishCoauthoring() {
+  if (sessionPanel) {
+    QueryCoauthoringSessionEngine.get(sessionPanel)?.setSurfaceActive(isQueryCoauthoringV2Active());
+  }
   generation++;
   subscribers.forEach((listener) => listener());
 }
@@ -79,6 +82,12 @@ export function isQueryCoauthoringV2Active() {
     (enterListeners.size > 0 || (enterListeners2.size > 0 && availability().eligible))
   );
 }
+export function canEnterCoauthoring(target: QueryCoauthoringTarget) {
+  return enterListeners2.size && availability().eligible
+    ? queryCoauthoringApiV2.canEnter(target)
+    : queryCoauthoringApi.canEnter(target);
+}
+
 export function getCoauthoringSurface(pane?: PanelDataPaneNext) {
   if (pane && mounted?.pane !== pane) {
     return undefined;

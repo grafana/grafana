@@ -9,6 +9,7 @@ import { getPanelIdForVizPanel } from '../../../../utils/utils-panels';
 import { type PanelDataPaneNext } from '../../PanelDataPaneNext';
 import { getPanelScopedVars } from '../utils';
 
+import { QueryCoauthoringSessionEngine } from './QueryCoauthoringSessionEngine';
 import {
   getCoauthoringGeneration,
   getCoauthoringSurface,
@@ -20,6 +21,7 @@ import {
 } from './queryCoauthoringApi';
 import { type DataSourceWithQueryCoauthoring, isQueryCoauthoringLanguage } from './queryCoauthoringContracts';
 import { isQueryBroken } from './queryCoauthoringHealth';
+import { classifyQueryResult } from './queryCoauthoringPreviewOutcome';
 
 export function useCoauthoringSurface() {
   useSyncExternalStore(subscribeToCoauthoring, getCoauthoringGeneration);
@@ -64,7 +66,6 @@ export function useMountedCoauthoringPanel(
     if (!surface) {
       return;
     }
-    surface.supported.clear();
     pane.getCoauthoringHealth();
     void Promise.all(
       queries.map(async (query) => {
@@ -80,6 +81,7 @@ export function useMountedCoauthoringPanel(
       })
     ).then((refs) => {
       if (!cancelled) {
+        surface.supported.clear();
         refs.forEach((refId) => {
           if (refId) {
             surface.supported.add(refId);
@@ -99,10 +101,15 @@ export function useMountedCoauthoringPanel(
 export function useCoauthoringCardHealth(refId: string) {
   const surface = useCoauthoringSurface();
   const health = surface?.pane.getCoauthoringHealth() ?? {};
+  const outcome = classifyQueryResult(
+    surface && QueryCoauthoringSessionEngine.get(surface.panel)?.getCanonicalData(),
+    refId
+  );
   const errors = Object.fromEntries(
     Object.entries(health).map(([id, value]) => [id, value === 'no-data' ? ('ok' as const) : value])
   );
   return {
+    errorMessage: outcome.kind === 'error' ? outcome.message : undefined,
     error: surface
       ? isQueryBroken(refId, surface.state?.queries ?? surface.pane.getCoauthoringEditorQueries() ?? [], errors)
       : false,

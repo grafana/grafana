@@ -3,7 +3,7 @@ import { Badge, Button, Stack } from '@grafana/ui';
 
 import {
   isQueryCoauthoringV2Active,
-  queryCoauthoringApi,
+  canEnterCoauthoring,
   requestCoauthoringEntry,
   requestCoauthoringResume,
 } from './queryCoauthoringApi';
@@ -38,7 +38,7 @@ export function QueryCoauthoringCard({ refId }: { refId: string }) {
             {t('query-coauthoring-v2.resume', 'Resume')}
           </Button>
         ) : (
-          queryCoauthoringApi.canEnter(target).ok && (
+          canEnterCoauthoring(target).ok && (
             <Button
               size="sm"
               variant="secondary"

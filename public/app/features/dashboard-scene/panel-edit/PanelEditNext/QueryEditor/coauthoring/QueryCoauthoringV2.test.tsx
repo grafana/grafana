@@ -1,6 +1,7 @@
 import { OpenFeatureProvider } from '@openfeature/react-sdk';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { useEffect, useRef } from 'react';
+import userEvent from '@testing-library/user-event';
+import { useLayoutEffect, useRef } from 'react';
 import { of } from 'rxjs';
 
 import { type DataSourceApi, type QueryEditorProps, LoadingState, toDataFrame } from '@grafana/data';
@@ -75,7 +76,7 @@ let marksSupported = true;
 let cleanupEditor: jest.Mock;
 function Editor(props: QueryEditorPropsWithCoauthoring<QueryEditorProps<DataSourceApi>>) {
   const anchor = useRef<HTMLInputElement>(null);
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!props.queryCoauthoring) {
       return;
     }
@@ -83,8 +84,16 @@ function Editor(props: QueryEditorPropsWithCoauthoring<QueryEditorProps<DataSour
       version: handleVersion,
       getSelection: () => (selection ? { ranges: [{ from: 0, to: 2 }], anchor: anchor.current! } : null),
       subscribe: (listener: () => void) => {
-        notifySelection = listener;
-        return cleanupEditor;
+        let subscribed = true;
+        notifySelection = () => {
+          if (subscribed) {
+            listener();
+          }
+        };
+        return () => {
+          subscribed = false;
+          cleanupEditor();
+        };
       },
       ...(marksSupported ? { showChanges } : {}),
     };
@@ -103,6 +112,7 @@ function Editor(props: QueryEditorPropsWithCoauthoring<QueryEditorProps<DataSour
         }}
       />
       <button onClick={() => props.queryCoauthoring?.invoke()}>Shortcut</button>
+      <button onClick={() => props.onChange(props.query)}>Echo query</button>
       <output aria-label="Host version">{props.queryCoauthoring?.version ?? 'absent'}</output>
       <output aria-label="V1 registration">
         {'unstable_queryEditorCoauthoringV1' in props && props.unstable_queryEditorCoauthoringV1 ? 'v1' : 'absent'}
@@ -478,8 +488,14 @@ it.each(['missing', 'newer'])(
 );
 
 it('shows upstream Error and No data only while v2 is active and gates Debug on broken health', async () => {
-  const { canonical } = setup();
+  const { canonical, entry } = setup();
   await waitFor(() => expect(api().canEnter(target)).toEqual({ ok: true }));
+  act(() => {
+    selection = true;
+    notifySelection();
+  });
+  expect(screen.getByRole('button', { name: 'Explain or modify' })).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Debug query' })).not.toBeInTheDocument();
   act(() =>
     canonical.setState({ data: { ...canonical.state.data!, errors: [{ refId: 'A', message: 'Upstream failed' }] } })
   );
@@ -490,6 +506,12 @@ it('shows upstream Error and No data only while v2 is active and gates Debug on 
   });
   expect(screen.getByRole('button', { name: 'Debug query' })).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Debug query' }));
+  expect(entry).toHaveBeenCalledWith({
+    target: { dashboardUid: undefined, ...target },
+    ranges: [{ from: 0, to: 2 }],
+    intent: 'debug',
+    health: { A: 'error', B: 'ok' },
+  });
   act(() =>
     canonical.setState({ data: { ...canonical.state.data!, errors: [], series: [canonical.state.data!.series[1]] } })
   );
@@ -504,7 +526,7 @@ function MultiSelectToggle() {
   return <button onClick={() => setMultiSelectMode(true)}>Select multiple</button>;
 }
 
-it('connects the real PanelEditNext context wrapper to the restricted session and explicit editor selection', async () => {
+function setupCards() {
   const datasource = Object.assign(getMockDataSource(), {
     queryCoauthoring: () => dataSource.queryCoauthoring(),
     components: { QueryEditor: Editor },
@@ -540,6 +562,11 @@ it('connects the real PanelEditNext context wrapper to the restricted session an
       </QueryEditorContextWrapper>
     </OpenFeatureProvider>
   );
+  return { canonical, panel, pane, view, dashboard, leavePanelEdit };
+}
+
+it('connects the real PanelEditNext context wrapper to the restricted session and explicit editor selection', async () => {
+  const { canonical, view, dashboard, leavePanelEdit } = setupCards();
   const panelTarget = { ...target, dashboardUid: dashboard.state.uid };
   await waitFor(() => expect(api().canEnter(panelTarget)).toEqual({ ok: true }));
   let session: unknown;
@@ -735,6 +762,7 @@ it('pins entry text/ranges to a single-use entryId and keeps API1 served in para
   act(() => unlisten.push(next.onEnterRequested(entry)));
   expect(api().version).toBe(1);
   await waitFor(() => expect(next.canEnter(target)).toEqual({ ok: true }));
+  expect(screen.getByRole('button', { name: 'Explain or modify query A' })).toBeInTheDocument();
   const request = { target, ranges: [{ from: 0, to: 2 }], intent: 'explain_or_modify' as const, health: {} };
   act(() => requestCoauthoringEntry(request, 'highlight'));
   await waitFor(() => expect(entry).toHaveBeenCalledTimes(1));
@@ -837,4 +865,130 @@ it('shuts down Session2 when floating capability is removed and restores legacy 
   act(() => stop());
   expect(screen.getByLabelText('V1 registration')).toHaveTextContent('v1');
   expect(next.getAvailability()).toEqual({ eligible: false });
+});
+
+it('ignores proposed query echoes while forwarding real editor changes', async () => {
+  const { canonical } = setup();
+  const session = await enter();
+  await propose(session);
+  fireEvent.click(screen.getByRole('button', { name: 'Echo query' }));
+  expect(canonical.state.queries).toEqual(original);
+  expect(session.getState()).toMatchObject({ revision: 0, stale: false });
+  await act(async () => {
+    fireEvent.change(screen.getByRole('textbox', { name: 'Query text' }), { target: { value: 'manual edit' } });
+  });
+  expect(canonical.state.queries[1]).toMatchObject({ expression: 'manual edit' });
+  expect(session.getState().stale).toBe(true);
+});
+
+it('retains supported rows during asynchronous refresh and atomically replaces resolved support', async () => {
+  const { canonical, datasource } = setup();
+  await waitFor(() => expect(api().canEnter(target)).toEqual({ ok: true }));
+  let finish!: (datasource: ReturnType<typeof getMockDataSource>) => void;
+  mockGetDataSource
+    .mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        })
+    )
+    .mockResolvedValue(datasource);
+  act(() => canonical.setState({ queries: [{ ...original[0], expression: 'changed' }, original[1]] }));
+  expect(api().canEnter(target)).toEqual({ ok: true });
+  expect(screen.getByRole('button', { name: 'Explain or modify query B' })).toBeInTheDocument();
+  await act(async () => {
+    finish(getMockDataSource());
+  });
+  await waitFor(() =>
+    expect(api().canEnter({ ...target, refId: 'A' })).toEqual({ ok: false, reason: 'unsupported_datasource' })
+  );
+  expect(api().canEnter(target)).toEqual({ ok: true });
+});
+
+it('keeps layout-registered editor selection when enabling v2 and replacing query identity', async () => {
+  const { canonical } = setup(false);
+  const entry = jest.fn();
+  act(() => {
+    unlisten.push(api().onEnterRequested(entry));
+  });
+  await waitFor(() => expect(api().canEnter(target)).toEqual({ ok: true }));
+  act(() => canonical.setState({ queries: [original[0], { ...original[1], refId: 'C' }] }));
+  await waitFor(() => expect(api().canEnter({ ...target, refId: 'C' })).toEqual({ ok: true }));
+  act(() => {
+    selection = true;
+    notifySelection();
+  });
+  fireEvent.click(screen.getByRole('button', { name: 'Explain or modify' }));
+  expect(entry).toHaveBeenLastCalledWith(
+    expect.objectContaining({ target: expect.objectContaining({ refId: 'C' }), ranges: [{ from: 0, to: 2 }] })
+  );
+});
+
+it('keeps canonical error tooltip text while a preview reports a different error', async () => {
+  const { canonical, dashboard } = setupCards();
+  await waitFor(() => expect(api().canEnter({ ...target, dashboardUid: dashboard.state.uid })).toEqual({ ok: true }));
+  const canonicalData = {
+    state: LoadingState.Error,
+    series: [],
+    timeRange: new SceneTimeRange().state.value,
+    errors: [{ refId: 'A', message: 'Canonical failure' }],
+  };
+  act(() => canonical.setState({ data: canonicalData }));
+  let session: unknown;
+  await act(async () => {
+    session = await api().enter({ ...target, dashboardUid: dashboard.state.uid });
+  });
+  if (!isQueryCoauthoringSession(session)) {
+    throw new Error('Missing session');
+  }
+  setRunRequest((_ds, request) =>
+    of({ ...canonicalData, request, errors: [{ refId: 'A', message: 'Preview-only failure' }] })
+  );
+  await propose(session, 'A');
+  expect(session.getState().health.A).toBe('error');
+  const user = userEvent.setup();
+  await user.click(screen.getByRole('button', { name: 'Select card A' }));
+  await user.hover(screen.getAllByLabelText('Error')[0]);
+  expect(await screen.findByRole('tooltip')).toHaveTextContent('Canonical failure');
+  expect(screen.getByRole('tooltip')).not.toHaveTextContent('Preview-only failure');
+});
+
+it('hands projection from retained v2 to v1 and back without adopting v1 data as canonical', async () => {
+  const { canonical, pane } = setup();
+  const session = await enter();
+  setRunRequest((_ds, request) => {
+    const query = request.targets.find((query) => query.refId === 'B');
+    return of({
+      state: LoadingState.Done,
+      request,
+      timeRange: new SceneTimeRange().state.value,
+      series: [
+        toDataFrame({
+          refId: 'B',
+          fields: [{ name: 'value', values: [query && 'expression' in query ? Number(query.expression) : 1] }],
+        }),
+      ],
+    });
+  });
+  await propose(session);
+  expect(canonical.state.data?.series[0].fields[0].values[0]).toBe(2);
+  act(() => unlisten.forEach((stop) => stop()));
+  expect(canonical.state.data?.series[0].fields[0].values[0]).toBe(1);
+  expect(screen.getByRole('textbox', { name: 'Query text' })).toHaveValue('$A + 1');
+  let legacy: ReturnType<typeof pane.startQueryPreview>;
+  await act(async () => {
+    const proposed = { ...original[1], expression: '9' };
+    legacy = pane.startQueryPreview('B', proposed);
+  });
+  expect(canonical.state.data?.series[0].fields[0].values[0]).toBe(9);
+  act(() => canonical.setState({ data: { ...canonical.state.data!, annotations: [] } }));
+  expect(session.getState()).toMatchObject({ revision: 0, stale: false });
+  act(() => unlisten.push(api().onEnterRequested(jest.fn())));
+  expect(canonical.state.data?.series[0].fields[0].values[0]).toBe(2);
+  expect(screen.getByText('Proposed')).toBeInTheDocument();
+  act(() => legacy?.dispose());
+  expect(canonical.state.data?.series[0].fields[0].values[0]).toBe(2);
+  act(() => unlisten.forEach((stop) => stop()));
+  expect(canonical.state.data?.series[0].fields[0].values[0]).toBe(1);
+  expect(session.signal.aborted).toBe(false);
 });

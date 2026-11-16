@@ -37,6 +37,7 @@ import {
 } from './queryCoauthoringContracts';
 import { classifyOptionOutcome, deriveQueryHealth } from './queryCoauthoringHealth';
 import { createCoauthoringSession2 } from './queryCoauthoringSession2';
+import { isQueryPreviewData, setQueryPreviewBlocked, stopQueryPreview } from './queryPreview';
 
 /** Panel-edit scoped owner. The Surface supplies entry, selection and flag lifecycle signals. */
 export class QueryCoauthoringSessionEngine {
@@ -86,7 +87,11 @@ export class QueryCoauthoringSessionEngine {
           this.session?.canonicalChanged();
         }
       }
-      if (state.data !== previous.data && !this.session?.ownsData(state.data)) {
+      if (
+        state.data !== previous.data &&
+        !this.session?.ownsData(state.data) &&
+        !isQueryPreviewData(this.panel, state.data)
+      ) {
         this.canonicalPanelData = state.data;
         this.health = deriveQueryHealth(state.queries, state.data);
         this.session?.canonicalData(state.data);
@@ -124,6 +129,10 @@ export class QueryCoauthoringSessionEngine {
     this.close('replaced');
     this.session = new Session(this, this.panel, this.runner, refId, ranges, select, sessionId);
     return this.session;
+  }
+
+  public setSurfaceActive(active: boolean): void {
+    this.session?.setSurfaceActive(active);
   }
 
   public getRevision(): number {
@@ -187,6 +196,7 @@ export class QueryCoauthoringSessionEngine {
   }
 
   public commit(queries: DataQuery[]): void {
+    stopQueryPreview(this.panel);
     this.internalCommit = true;
     try {
       this.runner.setState({ queries: cloneDeep(queries) });
@@ -227,6 +237,7 @@ class Session implements QueryCoauthoringSession {
   private stageController?: AbortController;
   private nextOption = 0;
   private rangeKey: string;
+  private surfaceActive = true;
   private stopTime: () => void;
   private stopHistory: () => void;
 
@@ -245,6 +256,7 @@ class Session implements QueryCoauthoringSession {
     this.closed = new Promise((resolve) => {
       this.resolveClosed = resolve;
     });
+    setQueryPreviewBlocked(panel, true);
     this.original = cloneDeep(runner.state.queries);
     this.originalDatasource = cloneDeep(runner.state.datasource);
     this.state = {
@@ -385,6 +397,9 @@ class Session implements QueryCoauthoringSession {
   }
 
   public editorQueries(): DataQuery[] {
+    if (!this.surfaceActive) {
+      return cloneDeep(this.runner.state.queries);
+    }
     return cloneDeep(
       this.options.find((option) => option.id === this.state.previewedOption)?.queries ?? this.runner.state.queries
     );
@@ -570,6 +585,23 @@ class Session implements QueryCoauthoringSession {
     });
   }
 
+  public setSurfaceActive(active: boolean): void {
+    if (this.signal.aborted || this.surfaceActive === active) {
+      return;
+    }
+    this.surfaceActive = active;
+    if (active) {
+      setQueryPreviewBlocked(this.panel, true);
+      if (!this.state.stale) {
+        this.restartRuns();
+      }
+    } else {
+      this.stopRuns();
+      setQueryPreviewBlocked(this.panel, false);
+    }
+    this.publish();
+  }
+
   private stopRuns(): void {
     // Keep the projection marker installed while restoring Original so health never reads a preview.
     this.runs?.dispose();
@@ -581,7 +613,7 @@ class Session implements QueryCoauthoringSession {
     if (resetCache) {
       this.cache.clear();
     }
-    if (!this.options.length || this.signal.aborted) {
+    if (!this.surfaceActive || !this.options.length || this.signal.aborted) {
       return;
     }
     for (const option of this.state.proposal ?? []) {
@@ -630,6 +662,10 @@ class Session implements QueryCoauthoringSession {
       return { ok: false, reason: 'stale' };
     }
     this.state.previewedOption = optionId;
+    if (!this.surfaceActive) {
+      this.publish();
+      return { ok: true };
+    }
     if (!this.runs && optionId !== 'original') {
       this.restartRuns();
     } else {
@@ -732,6 +768,7 @@ class Session implements QueryCoauthoringSession {
     this.stopTime();
     this.stopHistory();
     this.stopRuns();
+    setQueryPreviewBlocked(this.panel, false);
     this.state.canUndo = false;
     this.state.previewedOption = 'original';
     this.listeners.clear();

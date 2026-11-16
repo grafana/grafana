@@ -46,7 +46,10 @@ it('measures entry and first preview outcome for the matching session', () => {
   expect(handle.startStep.mock.results[0].value.end).toHaveBeenCalledWith();
   emit('proposal_staged');
   expect(handle.startStep).toHaveBeenCalledWith('first_preview_outcome');
+  expect(handle.startStep.mock.results[1].value).not.toBe(handle.startStep.mock.results[0].value);
+  expect(handle.startStep.mock.results[1].value.end).not.toHaveBeenCalled();
   emit('preview_outcome_shown', 'another-session', { kind: 'ok' });
+  expect(handle.startStep.mock.results[1].value.end).not.toHaveBeenCalled();
   expect(handle.end).not.toHaveBeenCalled();
   emit('preview_outcome_shown', 'session-1', { kind: 'no-data' });
   expect(handle.startStep.mock.results[1].value.end).toHaveBeenCalledWith();
