@@ -9,11 +9,48 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	jsonpatch "gopkg.in/evanphx/json-patch.v4"
 
 	"github.com/grafana/authlib/types"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/datasources"
 )
+
+func TestUpdateCommandBasicAuthUserPatchSemantics(t *testing.T) {
+	base := []byte(`{"apiVersion":"prometheus.datasource.grafana.app/v0alpha1","kind":"DataSource","metadata":{"name":"example","namespace":"default"},"spec":{"title":"example","basicAuthUser":"original-user"}}`)
+	converter := NewConverter(types.OrgNamespaceFormatter, "prometheus.datasource.grafana.app", "prometheus", []string{"prometheus"})
+	for _, tc := range []struct {
+		name      string
+		patch     string
+		jsonPatch bool
+		want      string
+	}{
+		{name: "merge patch unrelated field", patch: `{"spec":{"title":"updated"}}`, want: "original-user"},
+		{name: "merge patch empty username", patch: `{"spec":{"basicAuthUser":""}}`},
+		{name: "merge patch removes username", patch: `{"spec":{"basicAuthUser":null}}`},
+		{name: "JSON patch unrelated field", patch: `[{"op":"replace","path":"/spec/title","value":"updated"}]`, jsonPatch: true, want: "original-user"},
+		{name: "JSON patch removes username", patch: `[{"op":"remove","path":"/spec/basicAuthUser"}]`, jsonPatch: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var raw []byte
+			var err error
+			if tc.jsonPatch {
+				patch, decodeErr := jsonpatch.DecodePatch([]byte(tc.patch))
+				require.NoError(t, decodeErr)
+				raw, err = patch.Apply(base)
+			} else {
+				raw, err = jsonpatch.MergePatch(base, []byte(tc.patch))
+			}
+			require.NoError(t, err)
+			var ds datasourceV0.DataSource
+			require.NoError(t, json.Unmarshal(raw, &ds))
+			cmd, err := converter.ToUpdateCommand(&ds)
+			require.NoError(t, err)
+			require.True(t, cmd.BasicAuthUserSet)
+			require.Equal(t, tc.want, cmd.BasicAuthUser)
+		})
+	}
+}
 
 func TestConverter(t *testing.T) {
 	t.Run("resource to command", func(t *testing.T) {
