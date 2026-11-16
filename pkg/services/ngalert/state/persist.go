@@ -36,6 +36,25 @@ type InstanceWriter interface {
 	FullSync(ctx context.Context, instances []models.AlertInstance, batchSize int, jitterFunc func(int) time.Duration) error
 }
 
+// RecordingSeriesStore is an optional addition to InstanceStore for the series
+// recording rules wrote. Stores that do not implement it keep working unchanged.
+type RecordingSeriesStore interface {
+	// SaveRecordingSeriesForRule overwrites the series of the rule. An empty set is saved too.
+	SaveRecordingSeriesForRule(ctx context.Context, key models.AlertRuleKeyWithGroup, series []models.RecordingSeries) error
+	// ListRecordingSeries returns the series of every rule in the org, by rule UID.
+	ListRecordingSeries(ctx context.Context, orgID int64) (map[string][]models.RecordingSeries, error)
+	// DeleteRecordingSeriesForRule removes only the series. A rule that changed type keeps the
+	// alert state its new routine saved, even if the old routine deletes late.
+	DeleteRecordingSeriesForRule(ctx context.Context, key models.AlertRuleKeyWithGroup) error
+	// FullSyncWithSeries is FullSync that also writes the series, including rows that have only series.
+	FullSyncWithSeries(ctx context.Context, instances []models.AlertInstance, series map[models.AlertRuleKey][]models.RecordingSeries, batchSize int, jitterFunc func(int) time.Duration) error
+}
+
+// RecordingSeriesProvider is an optional addition to AlertInstancesProvider.
+type RecordingSeriesProvider interface {
+	GetRecordingSeries() map[models.AlertRuleKey][]models.RecordingSeries
+}
+
 type OrgReader interface {
 	FetchOrgIds(ctx context.Context) ([]int64, error)
 }

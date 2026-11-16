@@ -120,12 +120,18 @@ func (st ProtoInstanceDBStore) DeleteAlertInstancesByRule(ctx context.Context, k
 }
 
 func (st ProtoInstanceDBStore) FullSync(ctx context.Context, instances []models.AlertInstance, batchSize int, jitterFunc func(int) time.Duration) error {
-	if len(instances) == 0 {
+	return st.FullSyncWithSeries(ctx, instances, nil, batchSize, jitterFunc)
+}
+
+// FullSyncWithSeries rewrites the table from the instances and the recording series.
+// A rule that has only series gets a row of its own.
+func (st ProtoInstanceDBStore) FullSyncWithSeries(ctx context.Context, instances []models.AlertInstance, series map[models.AlertRuleKey][]models.RecordingSeries, batchSize int, jitterFunc func(int) time.Duration) error {
+	if len(instances) == 0 && len(series) == 0 {
 		return nil
 	}
 
 	logger := st.Logger.FromContext(ctx)
-	logger.Debug("FullSync called", "total_instances", len(instances))
+	logger.Debug("FullSync called", "total_instances", len(instances), "rules_with_series", len(series))
 
 	ruleGroups := make(map[models.AlertRuleKeyWithGroup][]models.AlertInstance)
 	for _, instance := range instances {
@@ -138,6 +144,16 @@ func (st ProtoInstanceDBStore) FullSync(ctx context.Context, instances []models.
 		}
 		ruleGroups[ruleKey] = append(ruleGroups[ruleKey], instance)
 	}
+	seriesGroups := make(map[models.AlertRuleKeyWithGroup][]models.RecordingSeries, len(series))
+	for key, set := range series {
+		if len(set) == 0 {
+			continue
+		}
+		seriesGroups[models.AlertRuleKeyWithGroup{AlertRuleKey: key}] = set
+		if _, ok := ruleGroups[models.AlertRuleKeyWithGroup{AlertRuleKey: key}]; !ok {
+			ruleGroups[models.AlertRuleKeyWithGroup{AlertRuleKey: key}] = nil
+		}
+	}
 
 	type preparedRule struct {
 		ruleKey        models.AlertRuleKeyWithGroup
@@ -146,19 +162,18 @@ func (st ProtoInstanceDBStore) FullSync(ctx context.Context, instances []models.
 	preparedRules := make([]preparedRule, 0, len(ruleGroups))
 
 	for ruleKey, ruleInstances := range ruleGroups {
-		// Convert and compress instances
-		compressedAlertInstances, err := convertAndCompressAlertInstances(ruleInstances)
+		compressed, err := convertAndCompressRuleState(ruleInstances, seriesGroups[ruleKey])
 		if err != nil {
-			logger.Error("Failed to compress instances for rule", "rule_uid", ruleKey.UID, "error", err)
+			logger.Error("Failed to compress state for rule", "rule_uid", ruleKey.UID, "error", err)
 			continue
 		}
 
 		preparedRules = append(preparedRules, preparedRule{
 			ruleKey:        ruleKey,
-			compressedData: compressedAlertInstances,
+			compressedData: compressed,
 		})
 
-		logger.Debug("Prepared rule for sync", "rule_uid", ruleKey.UID, "org_id", ruleKey.OrgID, "instances", len(ruleInstances))
+		logger.Debug("Prepared rule for sync", "rule_uid", ruleKey.UID, "org_id", ruleKey.OrgID, "instances", len(ruleInstances), "series", len(seriesGroups[ruleKey]))
 	}
 
 	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
@@ -213,12 +228,17 @@ func alertInstanceModelToProto(modelInstance models.AlertInstance) *pb.AlertInst
 
 // convertAndCompressAlertInstances converts model instances to protobuf and compresses them
 func convertAndCompressAlertInstances(instances []models.AlertInstance) ([]byte, error) {
+	return convertAndCompressRuleState(instances, nil)
+}
+
+// convertAndCompressRuleState converts the instances and series of one rule and compresses them as one row.
+func convertAndCompressRuleState(instances []models.AlertInstance, series []models.RecordingSeries) ([]byte, error) {
 	alertInstancesProto := make([]*pb.AlertInstance, len(instances))
 	for i, instance := range instances {
 		alertInstancesProto[i] = alertInstanceModelToProto(instance)
 	}
 
-	return compressAlertInstances(alertInstancesProto)
+	return compressRuleState(alertInstancesProto, recordingSeriesModelsToProto(series))
 }
 
 // upsertCompressedAlertInstances performs upsert operation for compressed alert instances
@@ -236,7 +256,11 @@ func (st ProtoInstanceDBStore) upsertCompressedAlertInstances(sess *sqlstore.DBS
 }
 
 func compressAlertInstances(instances []*pb.AlertInstance) ([]byte, error) {
-	mProto, err := proto.Marshal(&pb.AlertInstances{Instances: instances})
+	return compressRuleState(instances, nil)
+}
+
+func compressRuleState(instances []*pb.AlertInstance, series []*pb.RecordingSeries) ([]byte, error) {
+	mProto, err := proto.Marshal(&pb.AlertInstances{Instances: instances, Series: series})
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal protobuf: %w", err)
 	}
@@ -251,6 +275,10 @@ func compressAlertInstances(instances []*pb.AlertInstance) ([]byte, error) {
 		return nil, fmt.Errorf("failed to close snappy writer: %w", err)
 	}
 
+	// An empty state compresses to nothing, and a nil slice would be written as NULL.
+	if b.Len() == 0 {
+		return []byte{}, nil
+	}
 	return b.Bytes(), nil
 }
 
@@ -291,6 +319,17 @@ func alertInstanceProtoToModel(ruleUID string, ruleOrgID int64, protoInstance *p
 }
 
 func decompressAlertInstances(compressed []byte) ([]*pb.AlertInstance, error) {
+	state, err := decompressRuleState(compressed)
+	if err != nil {
+		return nil, err
+	}
+	if state == nil {
+		return nil, nil
+	}
+	return state.Instances, nil
+}
+
+func decompressRuleState(compressed []byte) (*pb.AlertInstances, error) {
 	if len(compressed) == 0 {
 		return nil, nil
 	}
@@ -301,12 +340,12 @@ func decompressAlertInstances(compressed []byte) ([]*pb.AlertInstance, error) {
 		return nil, fmt.Errorf("failed to read compressed data: %w", err)
 	}
 
-	var instances pb.AlertInstances
-	if err := proto.Unmarshal(b.Bytes(), &instances); err != nil {
+	var state pb.AlertInstances
+	if err := proto.Unmarshal(b.Bytes(), &state); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal protobuf: %w", err)
 	}
 
-	return instances.Instances, nil
+	return &state, nil
 }
 
 // nullableTimeToTimestamp converts a nullable time.Time to nil, if it is nil, otherwise it converts to timestamppb.Timestamp.

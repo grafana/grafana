@@ -57,7 +57,15 @@ func (a *AsyncRuleStatePersister) fullSync(ctx context.Context, instancesProvide
 	instances := instancesProvider.GetAlertInstances()
 
 	// batchSize is set to 0 because compressed storage groups instances by ruleUID, not by batch size
-	err := a.store.FullSync(ctx, instances, 0, nil)
+	var err error
+	seriesStore, hasSeriesStore := a.store.(RecordingSeriesStore)
+	seriesProvider, hasSeriesProvider := instancesProvider.(RecordingSeriesProvider)
+	if hasSeriesStore && hasSeriesProvider {
+		// Series are written only here in async mode, so a snapshot cannot overwrite newer series.
+		err = seriesStore.FullSyncWithSeries(ctx, instances, seriesProvider.GetRecordingSeries(), 0, nil)
+	} else {
+		err = a.store.FullSync(ctx, instances, 0, nil)
+	}
 	if err != nil {
 		a.log.Error("Full compressed state sync failed", "duration", time.Since(startTime), "instances", len(instances))
 		return err

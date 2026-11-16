@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/golang/snappy"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	pb "github.com/grafana/grafana/pkg/services/ngalert/store/proto/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests"
 )
@@ -211,4 +213,120 @@ func decompressAlertInstances(compressed []byte) ([]*pb.AlertInstance, error) {
 	}
 
 	return instances.Instances, nil
+}
+
+func TestIntegration_RecordingSeriesInRuleState(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	ctx := context.Background()
+	ng, dbstore, ruleStore := tests.SetupTestEnv(t, baseIntervalSeconds)
+
+	recording := tests.CreateTestAlertRule(t, ctx, ruleStore, 60, 1)
+	alerting := tests.CreateTestAlertRule(t, ctx, ruleStore, 60, 1)
+	seriesStore, ok := ng.InstanceStore.(state.RecordingSeriesStore)
+	require.True(t, ok)
+
+	series := []models.RecordingSeries{
+		{TargetDatasourceUID: "ds", Metric: "metric", Labels: map[string]string{"job": "a"}, LastUpdate: time.Unix(1000, 0).UTC()},
+		{TargetDatasourceUID: "ds", Metric: "metric", Labels: map[string]string{"job": "b"}, LastUpdate: time.Unix(1000, 0).UTC()},
+	}
+	instance := func(rule *models.AlertRule, hash string) models.AlertInstance {
+		return *models.AlertInstanceGen(
+			models.InstanceMuts.WithOrgID(rule.OrgID),
+			models.InstanceMuts.WithRuleUID(rule.UID),
+			models.InstanceMuts.WithLabelsHash(hash),
+			models.InstanceMuts.WithState(models.InstanceStateNormal),
+			models.InstanceMuts.WithLabels(models.InstanceLabels{"label": hash}),
+		)
+	}
+	rowCount := func(t *testing.T, rule *models.AlertRule) int64 {
+		t.Helper()
+		var n int64
+		err := dbstore.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+			_, err := sess.SQL("SELECT COUNT(*) FROM alert_rule_state WHERE org_id = ? AND rule_uid = ?", rule.OrgID, rule.UID).Get(&n)
+			return err
+		})
+		require.NoError(t, err)
+		return n
+	}
+
+	t.Run("saved series are listed and are not alert instances", func(t *testing.T) {
+		require.NoError(t, seriesStore.SaveRecordingSeriesForRule(ctx, recording.GetKeyWithGroup(), series))
+
+		got, err := seriesStore.ListRecordingSeries(ctx, recording.OrgID)
+		require.NoError(t, err)
+		require.Equal(t, series, got[recording.UID])
+
+		instances, err := ng.InstanceStore.ListAlertInstances(ctx, &models.ListAlertInstancesQuery{RuleOrgID: recording.OrgID})
+		require.NoError(t, err)
+		require.Empty(t, instances)
+	})
+
+	t.Run("an empty set can be saved and keeps the row", func(t *testing.T) {
+		require.NoError(t, seriesStore.SaveRecordingSeriesForRule(ctx, recording.GetKeyWithGroup(), nil))
+
+		got, err := seriesStore.ListRecordingSeries(ctx, recording.OrgID)
+		require.NoError(t, err)
+		require.Empty(t, got[recording.UID])
+		require.EqualValues(t, 1, rowCount(t, recording))
+	})
+
+	t.Run("saving alert instances for one rule keeps the series of another", func(t *testing.T) {
+		require.NoError(t, seriesStore.SaveRecordingSeriesForRule(ctx, recording.GetKeyWithGroup(), series))
+
+		require.NoError(t, ng.InstanceStore.SaveAlertInstancesForRule(ctx, alerting.GetKeyWithGroup(), []models.AlertInstance{instance(alerting, "h1")}))
+
+		got, err := seriesStore.ListRecordingSeries(ctx, recording.OrgID)
+		require.NoError(t, err)
+		require.Equal(t, series, got[recording.UID])
+	})
+
+	t.Run("a full sync writes a row that has only series", func(t *testing.T) {
+		err := seriesStore.FullSyncWithSeries(ctx,
+			[]models.AlertInstance{instance(alerting, "h2")},
+			map[models.AlertRuleKey][]models.RecordingSeries{recording.GetKey(): series},
+			0, nil)
+		require.NoError(t, err)
+
+		got, err := seriesStore.ListRecordingSeries(ctx, recording.OrgID)
+		require.NoError(t, err)
+		require.Equal(t, series, got[recording.UID])
+
+		instances, err := ng.InstanceStore.ListAlertInstances(ctx, &models.ListAlertInstancesQuery{RuleOrgID: alerting.OrgID, RuleUID: alerting.UID})
+		require.NoError(t, err)
+		require.Len(t, instances, 1)
+	})
+
+	t.Run("a plain full sync drops the series, as the table is rewritten", func(t *testing.T) {
+		require.NoError(t, ng.InstanceStore.FullSync(ctx, []models.AlertInstance{instance(alerting, "h3")}, 0, nil))
+
+		got, err := seriesStore.ListRecordingSeries(ctx, recording.OrgID)
+		require.NoError(t, err)
+		require.Empty(t, got)
+	})
+
+	t.Run("deleting the series keeps the alert instances of the row", func(t *testing.T) {
+		mixed := alerting.GetKeyWithGroup()
+		require.NoError(t, seriesStore.FullSyncWithSeries(ctx,
+			[]models.AlertInstance{instance(alerting, "h4")},
+			map[models.AlertRuleKey][]models.RecordingSeries{alerting.GetKey(): series},
+			0, nil))
+
+		require.NoError(t, seriesStore.DeleteRecordingSeriesForRule(ctx, mixed))
+
+		got, err := seriesStore.ListRecordingSeries(ctx, alerting.OrgID)
+		require.NoError(t, err)
+		require.Empty(t, got)
+		instances, err := ng.InstanceStore.ListAlertInstances(ctx, &models.ListAlertInstancesQuery{RuleOrgID: alerting.OrgID, RuleUID: alerting.UID})
+		require.NoError(t, err)
+		require.Len(t, instances, 1)
+	})
+
+	t.Run("deleting the series of a series-only row removes the row", func(t *testing.T) {
+		require.NoError(t, seriesStore.SaveRecordingSeriesForRule(ctx, recording.GetKeyWithGroup(), series))
+		require.EqualValues(t, 1, rowCount(t, recording))
+
+		require.NoError(t, seriesStore.DeleteRecordingSeriesForRule(ctx, recording.GetKeyWithGroup()))
+		require.EqualValues(t, 0, rowCount(t, recording))
+	})
 }
