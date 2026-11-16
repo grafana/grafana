@@ -8823,14 +8823,6 @@
     },
     "title": "Drilldown"
   },
-  "drilldown-versions": {
-    "tabs": {
-      "nadine-real": "Nadine's design"
-    },
-    "views": {
-      "home": "Home"
-    }
-  },
   "embed": {
     "share": {
       "time-range-description": "Change the current relative time range to an absolute time range",
