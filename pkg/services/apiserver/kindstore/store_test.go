@@ -267,7 +267,7 @@ func TestNew(t *testing.T) {
 	t.Run("a kind declaring conversion requires a client", func(t *testing.T) {
 		opts, _ := newStoreOpts(t, gvk)
 		_, err := New(gvk, app.ManifestVersionKind{
-			Kind: gvk.Kind, Plural: "testkinds", Conversion: true,
+			Kind: gvk.Kind, Plural: "testkinds", Resource: "testkinds", Conversion: true,
 		}, nil, nil, opts, nil)
 		require.ErrorContains(t, err, "declares conversion but has no plugin client")
 	})
@@ -275,7 +275,7 @@ func TestNew(t *testing.T) {
 	t.Run("a namespaced kind is folder scoped by default", func(t *testing.T) {
 		opts, scoped := newStoreOpts(t, gvk)
 		s, err := New(gvk, app.ManifestVersionKind{
-			Kind: "TestKind", Plural: "TestKinds", Scope: "Namespaced",
+			Kind: "TestKind", Plural: "TestKinds", Resource: "testkinds", Scope: "Namespaced",
 		}, admission, nil, opts, nil)
 		require.NoError(t, err)
 
@@ -305,7 +305,7 @@ func TestNew(t *testing.T) {
 	t.Run("folderScoped false opts out of folder support", func(t *testing.T) {
 		opts, scoped := newStoreOpts(t, gvk)
 		_, err := New(gvk, app.ManifestVersionKind{
-			Kind: "TestKind", Plural: "testkinds", Scope: "Namespaced", FolderScoped: &falseValue,
+			Kind: "TestKind", Plural: "testkinds", Resource: "testkinds", Scope: "Namespaced", FolderScoped: &falseValue,
 		}, admission, nil, opts, nil)
 		require.NoError(t, err)
 
@@ -320,14 +320,14 @@ func TestNew(t *testing.T) {
 	t.Run("versions of one kind can declare different folder scopes", func(t *testing.T) {
 		v1, v1Scoped := newStoreOpts(t, gvk)
 		_, err := New(gvk, app.ManifestVersionKind{
-			Kind: "TestKind", Plural: "testkinds", Scope: "Namespaced",
+			Kind: "TestKind", Plural: "testkinds", Resource: "testkinds", Scope: "Namespaced",
 		}, admission, nil, v1, nil)
 		require.NoError(t, err)
 
 		v2gvk := schema.GroupVersionKind{Group: gvk.Group, Version: "v2alpha1", Kind: gvk.Kind}
 		v2, v2Scoped := newStoreOpts(t, v2gvk)
 		_, err = New(v2gvk, app.ManifestVersionKind{
-			Kind: "TestKind", Plural: "testkinds", Scope: "Namespaced", FolderScoped: &falseValue,
+			Kind: "TestKind", Plural: "testkinds", Resource: "testkinds", Scope: "Namespaced", FolderScoped: &falseValue,
 		}, admission, nil, v2, nil)
 		require.NoError(t, err)
 
@@ -342,7 +342,7 @@ func TestNew(t *testing.T) {
 	t.Run("a cluster kind cannot use folders", func(t *testing.T) {
 		opts, scoped := newStoreOpts(t, gvk)
 		s, err := New(gvk, app.ManifestVersionKind{
-			Kind: "TestKind", Plural: "testkinds", Scope: ClusterScope,
+			Kind: "TestKind", Plural: "testkinds", Resource: "testkinds", Scope: ClusterScope,
 		}, admission, nil, opts, nil)
 		require.NoError(t, err)
 
@@ -384,12 +384,12 @@ func TestNew(t *testing.T) {
 		require.ErrorContains(t, err, "missing expected schema key")
 	})
 
-	// The plural names the REST path; an empty one silently registers an
+	// The resource names the REST path; an empty one silently registers an
 	// unreachable resource, so New rejects it up front.
-	t.Run("a kind without a plural is an error", func(t *testing.T) {
+	t.Run("a kind without a resource is an error", func(t *testing.T) {
 		opts, _ := newStoreOpts(t, gvk)
 		_, err := New(gvk, app.ManifestVersionKind{Kind: "TestKind"}, admission, nil, opts, nil)
-		require.ErrorContains(t, err, "missing a plural name")
+		require.ErrorContains(t, err, "missing a resource name")
 	})
 
 	t.Run("storage that cannot be completed is an error", func(t *testing.T) {
@@ -398,7 +398,7 @@ func TestNew(t *testing.T) {
 			return failingRESTOptionsGetter{}
 		}
 		_, err := New(gvk, app.ManifestVersionKind{
-			Kind: "TestKind", Plural: "testkinds", Scope: "Namespaced",
+			Kind: "TestKind", Plural: "testkinds", Resource: "testkinds", Scope: "Namespaced",
 		}, admission, nil, opts, nil)
 		require.ErrorContains(t, err, "no storage configured")
 	})
@@ -408,7 +408,7 @@ func TestNew(t *testing.T) {
 	t.Run("new objects carry the kind", func(t *testing.T) {
 		opts, _ := newStoreOpts(t, gvk)
 		s, err := New(gvk, app.ManifestVersionKind{
-			Kind: "TestKind", Plural: "testkinds", Scope: "Namespaced",
+			Kind: "TestKind", Plural: "testkinds", Resource: "testkinds", Scope: "Namespaced",
 		}, admission, nil, opts, nil)
 		require.NoError(t, err)
 

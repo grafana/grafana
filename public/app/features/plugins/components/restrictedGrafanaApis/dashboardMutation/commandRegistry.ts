@@ -12,6 +12,7 @@ import {
 } from 'app/features/dashboard-scene/lifecycle/pendingChangesFlag';
 import { DASHBOARD_COMMAND_SCHEMAS } from 'app/features/dashboard-scene/mutation-api/commands/schemaRegistry';
 import type { MutationCommand } from 'app/features/dashboard-scene/mutation-api/commands/types';
+import { PLAN_EDITING_COMMANDS, dashboardPlanEditingEnabled } from 'app/features/dashboard-scene/scene/dashboardModes';
 import { NOTEBOOK_COMMANDS } from 'app/features/notebook/mutation-api/registry';
 
 /**
@@ -26,8 +27,8 @@ import { NOTEBOOK_COMMANDS } from 'app/features/notebook/mutation-api/registry';
  * Dashboard schemas now avoid command implementations, but keep registry reads and notebook flag
  * evaluation at call time.
  * Notebook commands are flag-gated for the same reason `DashboardMutationClient` gates them, and so
- * are the pending changes commands: a plugin reads RELOAD_FROM_SERVER's schema to tell whether this
- * build previews its pending changes.
+ * are the pending changes and plan editing commands: a plugin reads RELOAD_FROM_SERVER's schema to tell
+ * whether this build previews its pending changes, and GET_PLAN's to tell whether previews are editable.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- schemas come from commands with heterogeneous payload and scene types
 export function allMutationCommands(): Array<Pick<MutationCommand<any, any>, 'name' | 'payloadSchema'>> {
@@ -35,9 +36,13 @@ export function allMutationCommands(): Array<Pick<MutationCommand<any, any>, 'na
     ? NOTEBOOK_COMMANDS
     : [];
 
-  const dashboardCommands = isPendingChangesEnabled()
-    ? DASHBOARD_COMMAND_SCHEMAS
-    : DASHBOARD_COMMAND_SCHEMAS.filter((command) => !PENDING_CHANGES_COMMANDS.has(command.name));
+  const pendingChanges = isPendingChangesEnabled();
+  const planEditing = dashboardPlanEditingEnabled();
+  const dashboardCommands = DASHBOARD_COMMAND_SCHEMAS.filter(
+    (command) =>
+      (pendingChanges || !PENDING_CHANGES_COMMANDS.has(command.name)) &&
+      (planEditing || !PLAN_EDITING_COMMANDS.has(command.name))
+  );
 
   return [...dashboardCommands, ...notebookCommands];
 }

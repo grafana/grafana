@@ -1630,6 +1630,7 @@ func TestHybridSearch_ExternalFusesBothLegs(t *testing.T) {
 	manifest := hybridConfigManifest(hybridConfigVersion("v1", &enabled))
 	manifest.Group = "g"
 	manifest.Versions[0].Kinds[0].Plural = "r"
+	manifest.Versions[0].Kinds[0].Resource = "r"
 	s.hybridSearchConfig = NewHybridSearchConfigRegistry([]*app.ManifestData{manifest})
 
 	resp, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{

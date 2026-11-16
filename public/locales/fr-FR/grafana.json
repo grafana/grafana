@@ -1579,6 +1579,12 @@
         "view-list": "Liste",
         "wildcard-in-text": "Le texte de recherche ne peut pas contenir les caractères * ou %."
       },
+      "sequence-pill": {
+        "label": "",
+        "label-with-interval": "",
+        "tooltip": "",
+        "tooltip-with-interval": ""
+      },
       "shared": {
         "load-more": "Charger plus",
         "load-more-error": "Échec du chargement de résultats supplémentaires",
@@ -5351,6 +5357,7 @@
       "change-theme": "Modifier le thème",
       "dark-theme": "Sombre",
       "dashboard-from-template": "Tableau de bord à partir d’un modèle",
+      "experimental": "",
       "light-theme": "Clair",
       "open-saved-queries": "Ouvrez les requêtes enregistrées",
       "scopes": "Portées"
@@ -5809,7 +5816,7 @@
         "hint-layer": "",
         "hint-layer-select": "",
         "hint-not-removable": "",
-        "hint-panel": "Cliquez pour commenter un panneau, ou glissez pour tracer une zone",
+        "hint-panel": "",
         "hint-panel-select": "",
         "hint-region": "Glissez pour tracer une zone",
         "hint-remove": "",
@@ -6209,6 +6216,10 @@
         "title": "Titre",
         "transparent-background": "Arrière-plan transparent"
       }
+    },
+    "get-var-mapping-option-overrides": {
+      "defaults": "",
+      "rule": ""
     },
     "inspect": {
       "data-tab": "Données",
@@ -6784,8 +6795,6 @@
         "open-editor": "Ouvrir l’éditeur de variables",
         "open-editor-tooltip": "Pour accéder à plus d’options, ouvrez l’éditeur de variables",
         "query-options": {
-          "close": "Fermer",
-          "old-modal-title": "Variable de requête",
           "preview": "Aperçu"
         },
         "remove": "Supprimer",
@@ -7802,6 +7811,19 @@
       "aria-label-remove-option": "Supprimer l’option",
       "title-drag-and-drop-to-reorder": "Glisser-déposer pour réorganiser",
       "tooltip-remove-option": "Supprimer l’option"
+    },
+    "panel-actions-popover": {
+      "aria-label": "",
+      "edit": "",
+      "edit-tooltip-disabled": "",
+      "expand": "",
+      "explore": "",
+      "more-actions": "",
+      "remove": "",
+      "remove-confirm": "",
+      "remove-tooltip-disabled": "",
+      "restore-size": "",
+      "settings": ""
     },
     "panel-data-alerting-tab": {
       "tab-label": "Alerte"
@@ -10793,6 +10815,8 @@
       "tooltip": {
         "category": "Infobulle",
         "description-hover-proximity": "Distance maximale du curseur par rapport à un point pour afficher l’infobulle (en pixels)",
+        "description-max-height": "",
+        "description-max-width": "",
         "modeOptions": {
           "label-all": "Toutes",
           "label-hidden": "Masquée",
@@ -13093,6 +13117,10 @@
       "subtitle": "Choisissez comment informer vos points de contact quand une instance d'alerte se déclenche",
       "title": "Points de contact"
     },
+    "alerting-recording-rules": {
+      "subtitle": "",
+      "title": ""
+    },
     "alerting-silences": {
       "subtitle": "Arrêter les notifications résultant d'une ou plusieurs règles d'alerte",
       "title": "Silences"
@@ -13945,6 +13973,32 @@
     },
     "units": {
       "clear-tooltip": "Effacer la sélection de l’unité"
+    },
+    "var-mapping-checks": {
+      "data-macro": "",
+      "not-allowed": "",
+      "not-found": "",
+      "not-number": "",
+      "not-one-value": "",
+      "out-of-range": "",
+      "resolves": "",
+      "values": ""
+    },
+    "var-mapping-toggle": {
+      "aria-label-picker": "",
+      "fallback-off": "",
+      "fallback-on": "",
+      "group-matching": "",
+      "group-other": "",
+      "hint-boolean": "",
+      "hint-number": "",
+      "hint-option": "",
+      "hint-option-no-fallback": "",
+      "new-variable": "",
+      "option-current": "",
+      "placeholder": "",
+      "use-fixed-value": "",
+      "use-variable": ""
     }
   },
   "org": {
@@ -14047,12 +14101,14 @@
     "header-menu": {
       "add-to-notebook": "Ajouter au notebook",
       "copy": "Copier",
+      "copy-repeated-panel": "",
       "copy-styles": "Copier les styles",
       "download-diagnostics": "Téléchargez les diagnostics",
       "duplicate": "Dupliquer",
       "edit": "Modifier",
       "explore": "Explorer",
       "get-help": "Obtenir de l’aide",
+      "group-by": "",
       "hide-legend": "Masquer la légende",
       "inspect": "Inspecter",
       "inspect-data": "Données",
