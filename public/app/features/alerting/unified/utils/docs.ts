@@ -2,6 +2,8 @@
 const DOCS_BASE_URL = 'https://grafana.com/docs/grafana/latest';
 
 // Alerting Rules
+export const DOCS_URL_ALERT_RULES = `${DOCS_BASE_URL}/alerting/fundamentals/alert-rules/`;
+export const DOCS_URL_ALERT_RULE_STATE_AND_HEALTH = `${DOCS_BASE_URL}/alerting/fundamentals/alert-rule-evaluation/alert-rule-state-and-health/`;
 export const DOCS_URL_ALERT_RULE_TYPES = `${DOCS_BASE_URL}/alerting/fundamentals/alert-rules/alert-rule-types/`;
 export const DOCS_URL_RULE_EVALUATION = `${DOCS_BASE_URL}/alerting/fundamentals/alert-rules/rule-evaluation/`;
 export const DOCS_URL_STALE_ALERT_INSTANCES = `${DOCS_BASE_URL}/alerting/fundamentals/alert-rule-evaluation/stale-alert-instances/`;
@@ -15,6 +17,7 @@ export const DOCS_URL_ANNOTATIONS = `${DOCS_BASE_URL}/alerting/fundamentals/aler
 
 // Notifications
 export const DOCS_URL_NOTIFICATIONS = `${DOCS_BASE_URL}/alerting/fundamentals/notifications/`;
+export const DOCS_URL_CONTACT_POINTS = `${DOCS_BASE_URL}/alerting/fundamentals/notifications/contact-points/`;
 export const DOCS_URL_NOTIFICATION_POLICIES = `${DOCS_BASE_URL}/alerting/fundamentals/notifications/notification-policies/`;
 export const DOCS_URL_GROUP_ALERT_NOTIFICATIONS = `${DOCS_BASE_URL}/alerting/fundamentals/notifications/group-alert-notifications/`;
 export const DOCS_URL_INHIBITION_RULES = `${DOCS_BASE_URL}/alerting/configure-notifications/inhibition-rules/`;

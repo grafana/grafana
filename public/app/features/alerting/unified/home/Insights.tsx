@@ -118,6 +118,7 @@ export const insightsIsAvailable = () => {
   return cloudUsageDs.settings;
 };
 
+/** @lintignore Only the old home page used this; the Insights scenes below are still built from it. */
 export function getInsightsScenes() {
   const [ashDs, cloudUsageDs, grafanaCloudPromDs] = getInsightsDataSources();
 
