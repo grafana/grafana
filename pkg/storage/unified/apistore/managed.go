@@ -66,14 +66,13 @@ func (s *Storage) provisioningClient(ctx context.Context) (rest.Interface, error
 	return rest.RESTClientFor(cfg)
 }
 
-// The lookup runs as the
-// provisioning identity because a caller may be allowed to write a resource without being allowed
+// The lookup runs as the provisioning identity because a caller may be allowed to write a resource without being allowed
 // to read repositories, and this is only an existence probe.
-func (s *Storage) repositoryExists(ctx context.Context, namespace, name string) (bool, error) {
+func (s *Storage) repositoryExists(ctx context.Context, namespace, name string) (exists bool, err error) {
 	if s.configProvider == nil || name == "" {
 		return true, nil
 	}
-	ctx, _, err := identity.WithProvisioningIdentity(ctx, namespace)
+	ctx, _, err = identity.WithProvisioningIdentity(ctx, namespace)
 	if err != nil {
 		return false, err
 	}

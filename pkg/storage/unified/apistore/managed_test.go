@@ -2,6 +2,7 @@ package apistore
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -10,11 +11,13 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/storage"
 	clientrest "k8s.io/client-go/rest"
 
 	authtypes "github.com/grafana/authlib/types"
@@ -24,6 +27,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/storage/unified/resourceclient"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -1107,6 +1111,54 @@ func TestHandleManagedResourceRouting_ForwardsCommitMessage(t *testing.T) {
 			require.Equal(t, "true", captured.query.Get("skipDryRun"), "skipDryRun query parameter should be forwarded")
 		})
 	}
+}
+
+// rereadClient returns a higher resource version on every read, as if the resource changed between reads.
+type rereadClient struct {
+	resourceclient.ResourceClient
+	value          []byte
+	reads          int64
+	deleteVersions []int64
+}
+
+func (c *rereadClient) Read(context.Context, *resourcepb.ReadRequest, ...grpc.CallOption) (*resourcepb.ReadResponse, error) {
+	c.reads++
+	return &resourcepb.ReadResponse{Value: c.value, ResourceVersion: c.reads}, nil
+}
+
+func (c *rereadClient) Delete(_ context.Context, req *resourcepb.DeleteRequest, _ ...grpc.CallOption) (*resourcepb.DeleteResponse, error) {
+	c.deleteVersions = append(c.deleteVersions, req.ResourceVersion)
+	return &resourcepb.DeleteResponse{ResourceVersion: c.reads + 1}, nil
+}
+
+func TestDeleteOrphanedResourceKeepsValidatedResourceVersion(t *testing.T) {
+	raw, err := json.Marshal(map[string]any{
+		"apiVersion": "example.grafana.app/v1",
+		"kind":       "Example",
+		"metadata": map[string]any{
+			"namespace": "default",
+			"name":      "test",
+			"uid":       "u1",
+			"annotations": map[string]any{
+				utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+				utils.AnnoKeyManagerIdentity: "my-repo",
+				utils.AnnoKeySourcePath:      "dashboards/dash.json",
+			},
+		},
+	})
+	require.NoError(t, err)
+
+	client := &rereadClient{value: raw}
+	s := testStorage(t, client)
+	// The repository is gone, so the routing re-reads the resource and then reports errManagerGone.
+	repoStorage, _ := repositoryServer(t, http.StatusNotFound)
+	s.configProvider = repoStorage.configProvider
+
+	err = s.Delete(testContext(t), "example/test", &unstructured.Unstructured{}, nil, nil, nil, storage.DeleteOptions{})
+	require.NoError(t, err)
+
+	require.Equal(t, int64(2), client.reads, "the routing must re-read the resource")
+	require.Equal(t, []int64{1}, client.deleteVersions, "the delete must use the version that passed the checks, not the re-read one")
 }
 
 func TestEnsureSameRepoManager(t *testing.T) {
