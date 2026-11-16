@@ -2896,6 +2896,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.cmdkHybridSearchSkipRerank",
+        "resourceVersion": "1794828817249",
+        "creationTimestamp": "2026-11-16T11:33:37Z"
+      },
+      "spec": {
+        "description": "Skips reranking in command palette hybrid dashboard search",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.configFromQueryDynamicName",
         "resourceVersion": "1792594531964",
         "creationTimestamp": "2026-09-17T22:29:38Z",

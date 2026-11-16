@@ -178,6 +178,8 @@ export const FlagKeys = {
   GrafanaCmdkDashboardTags: "grafana.cmdkDashboardTags",
   /** Uses the hybrid (lexical + semantic) search endpoint as the dashboard search backend in the command palette */
   GrafanaCmdkHybridSearch: "grafana.cmdkHybridSearch",
+  /** Skips reranking in command palette hybrid dashboard search */
+  GrafanaCmdkHybridSearchSkipRerank: "grafana.cmdkHybridSearchSkipRerank",
   /** Enables using the Config From Query Results transformation's Dynamic Field Name option */
   GrafanaConfigFromQueryDynamicName: "grafana.configFromQueryDynamicName",
   /** Enables custom dashboard templates for enterprise */
@@ -1314,6 +1316,17 @@ export const useFlagGrafanaCmdkDashboardTags = (options?: ReactFlagEvaluationOpt
  */
 export const useFlagGrafanaCmdkHybridSearch = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.cmdkHybridSearch", false, options).value;
+};
+
+/**
+ * Skips reranking in command palette hybrid dashboard search
+ *
+ * **Details:**
+ * - flag key: `grafana.cmdkHybridSearchSkipRerank`
+ * - default value: `false`
+ */
+export const useFlagGrafanaCmdkHybridSearchSkipRerank = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.cmdkHybridSearchSkipRerank", false, options).value;
 };
 
 /**
