@@ -1,4 +1,4 @@
-import { useId } from 'react';
+import { type ReactNode, useId } from 'react';
 
 import { type RecordingRule } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { Stack, TextLink } from '@grafana/ui';
@@ -27,10 +27,19 @@ interface RecordingRuleRowProps {
   /** `null`: not in a sequence. Absent while loading or when the lookup failed. */
   sequence?: RuleSequenceMembership | null;
   onSequenceClick: () => void;
+  /** Edit button, More dropdown, or a loading skeleton — provided by RecordingRuleListEntry. */
+  actions?: ReactNode;
 }
 
 /** Presentation-only; missing health renders "unavailable", never recording. */
-export function RecordingRuleRow({ searchHit, folderPath, rule, sequence, onSequenceClick }: RecordingRuleRowProps) {
+export function RecordingRuleRow({
+  searchHit,
+  folderPath,
+  rule,
+  sequence,
+  onSequenceClick,
+  actions,
+}: RecordingRuleRowProps) {
   const titleId = useId();
   const href = grafanaRulesNav.viewLink(searchHit.uid, { includeReturnTo: true });
   // The write target is already shown in RuleRecordedMetric; exclude it from the queried list.
@@ -50,11 +59,14 @@ export function RecordingRuleRow({ searchHit, folderPath, rule, sequence, onSequ
       }
       description={searchHit.lastError && <RuleDescription lastError={searchHit.lastError} />}
       right={
-        <EffectiveRuleInterval
-          sequence={sequence}
-          ruleInterval={searchHit.interval}
-          onSequenceClick={onSequenceClick}
-        />
+        <Stack alignItems="center" gap={1.5} wrap={false}>
+          <EffectiveRuleInterval
+            sequence={sequence}
+            ruleInterval={searchHit.interval}
+            onSequenceClick={onSequenceClick}
+          />
+          {actions}
+        </Stack>
       }
       meta={[
         folderPath && folderPath.length > 0 && <FolderPath key="folder" segments={folderPath} />,

@@ -1,9 +1,11 @@
 import { useGetRecordingRuleQuery } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 
+import { RuleActionsSkeleton } from '../../rule-list/components/RuleActionsSkeleton';
 import { useFolderPath } from '../folder-browsing/folderLookups';
 import { useOpenRuleSequence } from '../rule-sequences/RuleSequenceDrawer';
 import { useRuleSequenceMembership } from '../rule-sequences/ruleSequenceMembership';
 
+import { RecordingRuleActions } from './RecordingRuleActions';
 import { RecordingRuleRow } from './RecordingRuleRow';
 import { type RecordingRuleSearchHit } from './recordingRuleSearchHit';
 
@@ -16,9 +18,16 @@ interface RecordingRuleListEntryProps {
 /** Runs the per-rule lookups once so the row stays presentation-only. */
 export function RecordingRuleListEntry({ searchHit, showFolderPath }: RecordingRuleListEntryProps) {
   const folderPath = useFolderPath(showFolderPath ? searchHit.folderUid : undefined);
-  const { data: fullRule } = useGetRecordingRuleQuery({ name: searchHit.uid });
+  const { data: fullRule, isLoading } = useGetRecordingRuleQuery({ name: searchHit.uid });
   const { sequence } = useRuleSequenceMembership('recording', searchHit.uid);
   const openRuleSequence = useOpenRuleSequence();
+
+  let actions = null;
+  if (isLoading) {
+    actions = <RuleActionsSkeleton />;
+  } else if (fullRule) {
+    actions = <RecordingRuleActions rule={fullRule} />;
+  }
 
   return (
     <RecordingRuleRow
@@ -29,6 +38,7 @@ export function RecordingRuleListEntry({ searchHit, showFolderPath }: RecordingR
       onSequenceClick={() =>
         sequence && openRuleSequence({ sequenceUid: sequence.uid, ruleKind: 'recording', ruleUid: searchHit.uid })
       }
+      actions={actions}
     />
   );
 }
