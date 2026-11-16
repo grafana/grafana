@@ -11,7 +11,7 @@ import {
 } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Badge, Drawer, Icon, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { Badge, Card, Drawer, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
 
 import { grafanaRulesNav } from '../../utils/navigation';
@@ -20,7 +20,6 @@ import { RuleRecordedMetric } from '../recording-rules/RuleRecordedMetric';
 import { FolderPath } from '../rule-row/FolderPath';
 import { RuleLabels } from '../rule-row/RuleLabels';
 import { RuleListSkeleton } from '../rule-row/RuleListSkeleton';
-import { getAlertRuleStatus, getRecordingRuleStatus } from '../rule-row/ruleStatus';
 import { InlineRequestError } from '../shared/InlineRequestError';
 import { type RuleKind } from '../shared/ruleKind';
 
@@ -172,7 +171,6 @@ interface RuleStepProps {
 
 /** Loads one member rule; only the query for its kind runs. */
 function RuleStep({ kind, uid, step, isCurrent }: RuleStepProps) {
-  const titleId = useId();
   const alert = useGetAlertRuleQuery(kind === 'alert' ? { name: uid } : skipToken);
   const recording = useGetRecordingRuleQuery(kind === 'recording' ? { name: uid } : skipToken);
   const { currentData: rule, isLoading, isError } = kind === 'alert' ? alert : recording;
@@ -195,25 +193,18 @@ function RuleStep({ kind, uid, step, isCurrent }: RuleStepProps) {
   }
 
   const recordingSpec = recording.currentData?.spec;
-  const status =
-    kind === 'alert'
-      ? getAlertRuleStatus({ ...alert.currentData?.status, paused: rule.spec.paused })
-      : getRecordingRuleStatus({ ...recording.currentData?.status, paused: rule.spec.paused });
 
   return (
     <SequenceStep
       step={step}
       isCurrent={isCurrent}
-      aria-labelledby={titleId}
+      aria-label={rule.spec.title}
       title={
-        <TextLink id={titleId} href={grafanaRulesNav.viewLink(uid)} color="primary" inline={false}>
+        <TextLink href={grafanaRulesNav.viewLink(uid)} color="primary" inline={false}>
           {rule.spec.title}
         </TextLink>
       }
     >
-      <Text variant="bodySmall" color={status.color}>
-        <Icon name={status.icon} size="xs" /> {status.label}
-      </Text>
       {recordingSpec && (
         <RuleRecordedMetric metric={recordingSpec.metric} targetDatasourceUID={recordingSpec.targetDatasourceUID} />
       )}
@@ -226,33 +217,32 @@ interface SequenceStepProps {
   step: number;
   isCurrent: boolean;
   title: ReactNode;
-  /** The step's details, shown in one wrapping row under the title. */
+  /** The step's details, shown in the card's meta row. */
   children: ReactNode;
   'aria-label'?: string;
-  'aria-labelledby'?: string;
   'aria-busy'?: boolean;
 }
 
-/** A numbered point on the sequence line, with the rule's title and details. */
+/** One rule as a card, numbered by its place in the evaluation order. */
 function SequenceStep({ step, isCurrent, title, children, ...ariaAttributes }: SequenceStepProps) {
   const styles = useStyles2(getStyles);
 
   return (
-    <li className={styles.step} aria-current={isCurrent || undefined} {...ariaAttributes}>
-      <span className={cx(styles.number, isCurrent && styles.currentNumber)} aria-hidden>
-        {step}
-      </span>
-      <Stack direction="column" gap={0.5} minWidth={0}>
-        <Stack direction="row" alignItems="center" gap={1}>
-          {title}
-          {isCurrent && (
+    <li aria-current={isCurrent || undefined} {...ariaAttributes}>
+      <Card isCompact noMargin className={cx(isCurrent && styles.currentCard)}>
+        <Card.Figure align="center" className={styles.figure}>
+          <span className={cx(styles.number, isCurrent && styles.currentNumber)} aria-hidden>
+            {step}
+          </span>
+        </Card.Figure>
+        <Card.Heading>{title}</Card.Heading>
+        {isCurrent && (
+          <Card.Tags>
             <Badge color="blue" text={t('alerting.gma-rule-list.sequence-drawer.this-rule', 'This rule')} />
-          )}
-        </Stack>
-        <Stack direction="row" alignItems="center" gap={1.5} wrap>
-          {children}
-        </Stack>
-      </Stack>
+          </Card.Tags>
+        )}
+        <Card.Meta>{children}</Card.Meta>
+      </Card>
     </li>
   );
 }
@@ -267,22 +257,11 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: 0,
       display: 'flex',
       flexDirection: 'column',
-      gap: theme.spacing(2),
+      gap: theme.spacing(1),
     }),
-    step: css({
-      position: 'relative',
-      display: 'grid',
-      gridTemplateColumns: `${numberSize} minmax(0, 1fr)`,
-      columnGap: theme.spacing(1.5),
-      // The line from this step's number down to the next one.
-      '&:not(:last-child)::before': {
-        content: '""',
-        position: 'absolute',
-        left: `calc(${numberSize} / 2)`,
-        top: numberSize,
-        bottom: `calc(-1 * ${theme.spacing(2)})`,
-        borderLeft: `1px solid ${theme.colors.border.medium}`,
-      },
+    figure: css({
+      width: numberSize,
+      marginRight: theme.spacing(1.5),
     }),
     number: css({
       width: numberSize,
@@ -298,6 +277,9 @@ const getStyles = (theme: GrafanaTheme2) => {
     currentNumber: css({
       borderColor: theme.colors.primary.main,
       color: theme.colors.primary.text,
+    }),
+    currentCard: css({
+      border: `1px solid ${theme.colors.primary.border}`,
     }),
   };
 };
