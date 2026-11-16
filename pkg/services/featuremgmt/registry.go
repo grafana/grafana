@@ -2914,6 +2914,14 @@ var (
 			Generate:    Generate{React: true},
 		},
 		{
+			Name:        "grafana.cmdkHybridSearchSkipRerank",
+			Description: "Skips reranking in command palette hybrid dashboard search",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaFrontendNavigation,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
 			Name:        "grafana.cmdkDashboardTags",
 			Description: "Shows dashboard tags in the command palette",
 			Stage:       FeatureStageExperimental,
