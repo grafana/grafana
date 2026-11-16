@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/config"
 
@@ -20,8 +21,10 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/datasourceproxy/proxymetrics"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
@@ -113,6 +116,11 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 	if r.builder.proxyDependencies == nil {
 		m.SetError()
 		m.Record()
+		r.builder.proxyMetrics.Observe(proxymetrics.Observation{
+			PluginID: r.builder.pluginJSON.ID,
+			Status:   http.StatusInternalServerError,
+			Source:   proxymetrics.SourceServer,
+		})
 		return nil, errors.New("datasource proxy is not configured")
 	}
 
@@ -120,8 +128,31 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		defer m.Record()
+
+		start := time.Now()
+		recorder := proxymetrics.NewStatusRecorder(w)
+		w = recorder
+		// Errors go through the responder rather than w, so their status is taken from the error.
+		var errStatus int
+		defer func() {
+			status := recorder.Status()
+			if errStatus != 0 {
+				status = errStatus
+			}
+			r.builder.proxyMetrics.Observe(proxymetrics.Observation{
+				PluginID: r.builder.pluginJSON.ID,
+				Method:   req.Method,
+				Path:     proxyPathFromRequest(req, name),
+				Status:   status,
+				Source:   proxymetrics.ClassifySource(status, requestmeta.GetRequestMetaData(req.Context()).StatusSource),
+				Duration: time.Since(start),
+			})
+		}()
+
 		respondError := func(err error) {
-			responder.Error(proxyResponseError(req.Context(), err))
+			err = proxyResponseError(req.Context(), err)
+			errStatus = errorStatus(err)
+			responder.Error(err)
 		}
 		if r.builder.cfg.HandlerOrigin != "" {
 			w.Header().Set("X-Grafana-DS-Apiserver", r.builder.cfg.HandlerOrigin)
@@ -136,6 +167,12 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			respondError(err)
 			return
 		}
+		// The apiserver chain does not carry request metadata. Provide it so the shared
+		// reverse proxy can record whether a failure came from the datasource. This
+		// follows dependency resolution, which must receive the connect context as is.
+		req = req.WithContext(requestmeta.SetRequestMetaData(req.Context(), requestmeta.RequestMetaData{
+			StatusSource: requestmeta.StatusSourceServer,
+		}))
 		if deps.GrafanaConfig != nil {
 			req = req.WithContext(config.WithGrafanaConfig(req.Context(), deps.GrafanaConfig))
 		}
@@ -198,6 +235,15 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 		}
 		proxy.HandleRequest()
 	}), nil
+}
+
+// errorStatus returns the HTTP status the apiserver reports for err.
+func errorStatus(err error) int {
+	var status apierrors.APIStatus
+	if errors.As(err, &status) && status.Status().Code != 0 {
+		return int(status.Status().Code)
+	}
+	return http.StatusInternalServerError
 }
 
 // proxyResponseError reports a request the client abandoned as 499, as the

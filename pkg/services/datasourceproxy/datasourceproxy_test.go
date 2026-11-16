@@ -9,9 +9,12 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/datasourceproxy/proxymetrics"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/web"
@@ -93,24 +96,28 @@ func TestDatasourceProxy_proxyDatasourceRequest(t *testing.T) {
 				{JSONData: plugins.JSONData{ID: pluginID}},
 			}}
 
+			reg := prometheus.NewPedanticRegistry()
 			p := DataSourceProxyService{
 				DataSourceRequestValidator: &fakeDataSourceRequestValidator{},
 				pluginStore:                pluginStore,
+				metrics:                    proxymetrics.New(reg, proxymetrics.VariantLegacy),
 			}
 
 			responseRecorder := httptest.NewRecorder()
 			c := &contextmodel.ReqContext{
 				Context: &web.Context{
-					Req:  &http.Request{URL: &url.URL{}},
+					Req:  &http.Request{Method: http.MethodGet, URL: &url.URL{}},
 					Resp: web.NewResponseWriter("GET", responseRecorder),
 				},
 				Logger: log.NewNopLogger(),
 			}
 
+			obs := p.observe(c)
 			p.proxyDatasourceRequest(c, &datasources.DataSource{
 				Type: pluginID,
 				URL:  tc.dsURL,
-			})
+			}, obs)
+			obs.finish()
 
 			resp := responseRecorder.Result()
 			body := resp.Body
@@ -125,8 +132,36 @@ func TestDatasourceProxy_proxyDatasourceRequest(t *testing.T) {
 
 			require.Equal(t, http.StatusBadRequest, resp.StatusCode)
 			require.Equal(t, fmt.Sprintf("Invalid data source URL: %q", tc.dsURL), jsonBody["message"])
+
+			require.Equal(t, map[string]string{
+				"variant":       proxymetrics.VariantLegacy,
+				"plugin_id":     pluginID,
+				"route_class":   "/",
+				"method":        http.MethodGet,
+				"status_code":   "400",
+				"status_source": proxymetrics.SourceServer,
+			}, onlyRequestSeries(t, reg))
 		})
 	}
+}
+
+func onlyRequestSeries(t *testing.T, reg *prometheus.Registry) map[string]string {
+	t.Helper()
+	families, err := reg.Gather()
+	require.NoError(t, err)
+	for _, f := range families {
+		if f.GetName() != "grafana_datasource_proxy_requests_total" {
+			continue
+		}
+		require.Len(t, f.GetMetric(), 1)
+		labels := map[string]string{}
+		for _, l := range f.GetMetric()[0].GetLabel() {
+			labels[l.GetName()] = l.GetValue()
+		}
+		return labels
+	}
+	t.Fatal("grafana_datasource_proxy_requests_total was not recorded")
+	return nil
 }
 
 type fakeDataSourceRequestValidator struct{}
