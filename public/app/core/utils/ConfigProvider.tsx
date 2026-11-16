@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import * as React from 'react';
 import { SkeletonTheme } from 'react-loading-skeleton';
 
@@ -8,6 +8,7 @@ import { useFlagDatavizTabularNums, useFlagGrafanaVisualDesignRefresh } from '@g
 
 import { appEvents } from '../app_events';
 import 'react-loading-skeleton/dist/skeleton.css';
+import { withLocaleTypography } from '../internationalization/appLocale';
 import { contextSrv } from '../services/context_srv';
 
 // temporarily remap dark/light to the visual refresh themes if the flag is enabled
@@ -54,7 +55,9 @@ export const ThemeProvider = ({ children, value }: { children: React.ReactNode; 
 
   const [theme, setTheme] = useState(() => maybeRemapTheme(value, visualRefreshEnabled, tabularNums));
 
-  config.theme2 = theme;
+  const language = config.language;
+  const localizedTheme = useMemo(() => withLocaleTypography(theme, language), [language, theme]);
+  config.theme2 = localizedTheme;
 
   useEffect(() => {
     const sub = appEvents.subscribe(ThemeChangedEvent, (event) => {
@@ -83,7 +86,7 @@ export const ThemeProvider = ({ children, value }: { children: React.ReactNode; 
   }, [value, visualRefreshEnabled, tabularNums]);
 
   return (
-    <ThemeContext.Provider value={theme}>
+    <ThemeContext.Provider value={localizedTheme}>
       <SkeletonTheme
         baseColor={theme.colors.emphasize(theme.colors.background.secondary)}
         highlightColor={theme.colors.emphasize(theme.colors.background.secondary, 0.1)}

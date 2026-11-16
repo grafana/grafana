@@ -6,7 +6,22 @@ export function getFontStyles(theme: GrafanaTheme2) {
   const grafanaPublicPath = typeof window !== 'undefined' && window.__grafana_public_path__;
   const fontRoot = grafanaPublicPath ? `${grafanaPublicPath}fonts/` : 'public/fonts/';
 
+  const vazirmatnWeights = [
+    { fontWeight: 400, name: 'Regular' },
+    { fontWeight: 600, name: 'SemiBold' },
+    { fontWeight: 700, name: 'Bold' },
+  ];
+
   return css([
+    ...vazirmatnWeights.map(({ fontWeight, name }) => ({
+      '@font-face': {
+        fontFamily: 'Vazirmatn',
+        fontStyle: 'normal',
+        fontWeight,
+        fontDisplay: 'swap',
+        src: `url('${fontRoot}vazirmatn/Vazirmatn-FD-${name}.woff2') format('woff2')`,
+      },
+    })),
     {
       /* latin */
       '@font-face': {

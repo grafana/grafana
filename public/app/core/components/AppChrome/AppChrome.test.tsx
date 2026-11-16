@@ -224,27 +224,34 @@ describe('AppChrome', () => {
   });
 
   describe('scopes dashboard drawer padding', () => {
+    const originalDirection = document.documentElement.dir;
+
+    afterEach(() => {
+      document.documentElement.dir = originalDirection;
+    });
+
     beforeEach(() => {
       mockUseScopes.mockReturnValue({
         state: { enabled: true, drawerOpened: true },
       } as ReturnType<typeof useScopes>);
     });
 
-    it('should apply left padding when scopes drawer is open', async () => {
+    it.each(['ltr', 'rtl'])('reserves space at inline start for the open scopes drawer in %s', async (direction) => {
+      document.documentElement.dir = direction;
       setup(<Page navId="child1">Children</Page>);
 
       const mainContent = document.getElementById('pageContent')!;
       await waitFor(() => {
-        expect(parseFloat(getComputedStyle(mainContent).paddingLeft)).toBeGreaterThan(0);
+        expect(parseFloat(getComputedStyle(mainContent).paddingInlineStart)).toBeGreaterThan(0);
       });
     });
 
-    it('should not apply left padding in kiosk mode when scopes drawer is open', async () => {
+    it('should not apply inline-start padding in kiosk mode when scopes drawer is open', async () => {
       const { context } = setup(<Page navId="child1">Children</Page>);
 
       const mainContent = document.getElementById('pageContent')!;
       await waitFor(() => {
-        expect(parseFloat(getComputedStyle(mainContent).paddingLeft)).toBeGreaterThan(0);
+        expect(parseFloat(getComputedStyle(mainContent).paddingInlineStart)).toBeGreaterThan(0);
       });
 
       act(() => {
@@ -252,7 +259,7 @@ describe('AppChrome', () => {
       });
 
       await waitFor(() => {
-        expect(parseFloat(getComputedStyle(mainContent).paddingLeft) || 0).toBe(0);
+        expect(parseFloat(getComputedStyle(mainContent).paddingInlineStart) || 0).toBe(0);
       });
     });
 
@@ -274,7 +281,7 @@ describe('AppChrome', () => {
       });
     });
 
-    it('gates the drawer container and left padding on the scopesDashboardsMegaMenu flag when there is real scoped content', async () => {
+    it('gates the drawer container and inline-start padding on the scopesDashboardsMegaMenu flag when there is real scoped content', async () => {
       // scopeNavigations is deliberately left empty: a non-empty list would make
       // useAutoOpenMegaMenuForScopedContent open the mega menu once the flag below flips on, and the
       // mega menu renders its own ScopesDashboardsMegaMenuSection with this exact same test id, which
@@ -288,7 +295,7 @@ describe('AppChrome', () => {
 
       await screen.findByTestId('scopes-dashboards-container');
       await waitFor(() => {
-        expect(parseFloat(getComputedStyle(mainContent).paddingLeft)).toBeGreaterThan(0);
+        expect(parseFloat(getComputedStyle(mainContent).paddingInlineStart)).toBeGreaterThan(0);
       });
 
       await act(async () => {
@@ -299,7 +306,7 @@ describe('AppChrome', () => {
         expect(screen.queryByTestId('scopes-dashboards-container')).not.toBeInTheDocument();
       });
       await waitFor(() => {
-        expect(parseFloat(getComputedStyle(mainContent).paddingLeft) || 0).toBe(0);
+        expect(parseFloat(getComputedStyle(mainContent).paddingInlineStart) || 0).toBe(0);
       });
     });
   });

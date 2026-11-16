@@ -1,0 +1,1 @@
+These webfonts are the Farsi Digits, Regular, SemiBold, and Bold variants from [Vazirmatn v33.003](https://github.com/rastikerdar/vazirmatn/tree/v33.003/misc/Farsi-Digits). The accompanying SIL Open Font License 1.1 is in [OFL.txt](OFL.txt).

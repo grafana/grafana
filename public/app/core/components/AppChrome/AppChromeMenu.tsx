@@ -96,18 +96,18 @@ const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => {
       display: 'flex',
       bottom: 0,
       flexDirection: 'column',
-      left: 0,
-      right: 0,
+      insetInlineStart: 0,
+      insetInlineEnd: 0,
       // Needs to below navbar should we change the navbarFixed? add add a new level?
       zIndex: theme.zIndex.modal,
       position: 'fixed',
       top: `${getChromeHeaderLevelHeight()}px`,
-      borderRight: `1px solid ${theme.colors.border.weak}`,
+      borderInlineEnd: `1px solid ${theme.colors.border.weak}`,
       backgroundColor: visualRefreshEnabled ? theme.colors.background.canvas : theme.colors.background.primary,
       flex: '1 1 0',
 
       [theme.breakpoints.up('md')]: {
-        right: 'unset',
+        insetInlineEnd: 'unset',
       },
     }),
     wrapper: css({
@@ -148,7 +148,7 @@ const getAnimStyles = (theme: GrafanaTheme2, animationDuration: number, visualRe
   const overlayOpen = {
     width: '100%',
     [theme.breakpoints.up('md')]: {
-      borderRight: visualRefreshEnabled ? undefined : `1px solid ${theme.colors.border.weak}`,
+      borderInlineEnd: visualRefreshEnabled ? undefined : `1px solid ${theme.colors.border.weak}`,
       boxShadow: theme.shadows.z3,
       width: MENU_WIDTH,
     },

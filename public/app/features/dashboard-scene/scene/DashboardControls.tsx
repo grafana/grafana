@@ -553,7 +553,7 @@ function getStyles(theme: GrafanaTheme2) {
       flexWrap: 'nowrap',
       position: 'relative',
       width: '100%',
-      marginLeft: 'auto',
+      marginInlineStart: 'auto',
       // flow-root, not inline-block: both establish a BFC that contains the floated rightControls,
       // but inline-block participates in inline layout, so its height depends on baseline alignment
       // (an inline-block with only floated children has its baseline at its bottom edge), adding a
@@ -577,7 +577,7 @@ function getStyles(theme: GrafanaTheme2) {
     rightControls: css({
       display: 'flex',
       gap: theme.spacing(1),
-      float: 'right',
+      float: 'inline-end',
       alignItems: 'flex-start',
       flexWrap: 'wrap',
       maxWidth: '100%',
@@ -589,17 +589,17 @@ function getStyles(theme: GrafanaTheme2) {
       gap: theme.spacing(1),
       marginBottom: theme.spacing(1),
       order: 2,
-      marginLeft: 'auto',
+      marginInlineStart: 'auto',
       flexShrink: 0,
       alignSelf: 'flex-start',
     }),
     dashboardControlsButton: css({
       order: 2,
-      marginLeft: 'auto',
+      marginInlineStart: 'auto',
     }),
     rightControlsWrap: css({
       flexWrap: 'wrap',
-      marginLeft: 'auto',
+      marginInlineStart: 'auto',
     }),
     contextualNavToggle: css({
       display: 'inline-flex',

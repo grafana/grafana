@@ -17,6 +17,8 @@ export function getUplotStyles(theme: GrafanaTheme2) {
 
   return css({
     '.uplot': {
+      // uPlot positions the plot area and time axis from the physical left edge.
+      direction: 'ltr',
       fontFamily: 'inherit',
     },
 
