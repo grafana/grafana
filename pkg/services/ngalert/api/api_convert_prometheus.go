@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	prommodel "github.com/prometheus/common/model"
 	"go.yaml.in/yaml/v3"
 
@@ -75,6 +76,8 @@ const (
 	// If it is not set, the rules get the converter default.
 	execErrStateHeader = "X-Grafana-Alerting-Exec-Err-State"
 
+	// importSourceHeader names the Grafana screen that made the request. Unknown values count as "other".
+	importSourceHeader = "X-Grafana-Alerting-Import-Source"
 	// versionMessageHeader is the header that specifies an optional message for rule versions.
 	versionMessageHeader = "X-Grafana-Alerting-Version-Message"
 )
@@ -146,6 +149,7 @@ type ConvertPrometheusSrv struct {
 	am               Alertmanager
 	importsAuthz     notifier.ExtraConfigAuthz
 	rulerSync        externalRulerSyncChecker
+	requests         *prometheus.CounterVec
 }
 
 // externalRulerSyncChecker reports whether external Mimir ruler sync is
@@ -176,6 +180,7 @@ func NewConvertPrometheusSrv(
 	am Alertmanager,
 	importsAuthz notifier.ExtraConfigAuthz,
 	rulerSync externalRulerSyncChecker,
+	requests *prometheus.CounterVec,
 ) *ConvertPrometheusSrv {
 	return &ConvertPrometheusSrv{
 		cfg:              cfg,
@@ -187,7 +192,53 @@ func NewConvertPrometheusSrv(
 		am:               am,
 		importsAuthz:     importsAuthz,
 		rulerSync:        rulerSync,
+		requests:         requests,
 	}
+}
+
+const (
+	operationPostRules           = "post_rules"
+	operationDeleteRules         = "delete_rules"
+	operationPostAlertmanager    = "post_alertmanager"
+	operationPromoteAlertmanager = "promote_alertmanager"
+	operationDeleteAlertmanager  = "delete_alertmanager"
+
+	importSourceWizard         = "wizard"
+	importSourceImportSettings = "import_settings"
+	importSourceOther          = "other"
+
+	resultAccepted = "accepted"
+	resultFailed   = "failed"
+)
+
+// importSource keeps the metric label bounded: the header is client-supplied.
+func importSource(c *contextmodel.ReqContext) string {
+	switch v := strings.TrimSpace(c.Req.Header.Get(importSourceHeader)); v {
+	case importSourceWizard, importSourceImportSettings:
+		return v
+	default:
+		return importSourceOther
+	}
+}
+
+func (srv *ConvertPrometheusSrv) requestLogger(c *contextmodel.ReqContext) log.Logger {
+	return srv.logger.FromContext(c.Req.Context()).New("source", importSource(c))
+}
+
+// recordRequest counts one finished import call. Alertmanager dry runs are skipped since they change nothing.
+func (srv *ConvertPrometheusSrv) recordRequest(c *contextmodel.ReqContext, operation string, resp response.Response) response.Response {
+	if srv.requests == nil {
+		return resp
+	}
+	if dryRun, _ := parseBooleanHeader(c.Req.Header.Get(dryRunHeader), dryRunHeader); dryRun && operation == operationPostAlertmanager {
+		return resp
+	}
+	result := resultAccepted
+	if resp.Status() >= http.StatusBadRequest {
+		result = resultFailed
+	}
+	srv.requests.WithLabelValues(operation, importSource(c), result).Inc()
+	return resp
 }
 
 // RouteConvertPrometheusGetRules returns all Grafana-managed alert rules in all namespaces (folders)
@@ -236,7 +287,11 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetRules(c *contextmodel.
 // RouteConvertPrometheusDeleteNamespace deletes all rule groups that were imported from a Prometheus-compatible source
 // within a specified namespace.
 func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteNamespace(c *contextmodel.ReqContext, namespaceTitle string) response.Response {
-	logger := srv.logger.FromContext(c.Req.Context())
+	return srv.recordRequest(c, operationDeleteRules, srv.deleteNamespace(c, namespaceTitle))
+}
+
+func (srv *ConvertPrometheusSrv) deleteNamespace(c *contextmodel.ReqContext, namespaceTitle string) response.Response {
+	logger := srv.requestLogger(c)
 
 	workingFolderUID := getWorkingFolderUID(c)
 	logger = logger.New("working_folder_uid", workingFolderUID)
@@ -274,7 +329,11 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteNamespace(c *contex
 
 // RouteConvertPrometheusDeleteRuleGroup deletes a specific rule group if it was imported from a Prometheus-compatible source.
 func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteRuleGroup(c *contextmodel.ReqContext, namespaceTitle string, group string) response.Response {
-	logger := srv.logger.FromContext(c.Req.Context())
+	return srv.recordRequest(c, operationDeleteRules, srv.deleteRuleGroup(c, namespaceTitle, group))
+}
+
+func (srv *ConvertPrometheusSrv) deleteRuleGroup(c *contextmodel.ReqContext, namespaceTitle string, group string) response.Response {
+	logger := srv.requestLogger(c)
 
 	workingFolderUID := getWorkingFolderUID(c)
 	logger = logger.New("working_folder_uid", workingFolderUID)
@@ -426,7 +485,11 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroup(c *contextm
 }
 
 func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroups(c *contextmodel.ReqContext, promNamespaces map[string][]apimodels.PrometheusRuleGroup) response.Response {
-	logger := srv.logger.FromContext(c.Req.Context())
+	return srv.recordRequest(c, operationPostRules, srv.postRuleGroups(c, promNamespaces))
+}
+
+func (srv *ConvertPrometheusSrv) postRuleGroups(c *contextmodel.ReqContext, promNamespaces map[string][]apimodels.PrometheusRuleGroup) response.Response {
+	logger := srv.requestLogger(c)
 
 	// 1. Parse the appropriate headers
 	workingFolderUID := getWorkingFolderUID(c)
@@ -605,12 +668,16 @@ func (srv *ConvertPrometheusSrv) getOrCreateNamespace(c *contextmodel.ReqContext
 }
 
 func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostAlertmanagerConfig(c *contextmodel.ReqContext, amCfg apimodels.AlertmanagerUserConfig) response.Response {
+	return srv.recordRequest(c, operationPostAlertmanager, srv.postAlertmanagerConfig(c, amCfg))
+}
+
+func (srv *ConvertPrometheusSrv) postAlertmanagerConfig(c *contextmodel.ReqContext, amCfg apimodels.AlertmanagerUserConfig) response.Response {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !srv.featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI) {
 		return response.Error(http.StatusNotImplemented, "Not Implemented", nil)
 	}
 
-	logger := srv.logger.FromContext(c.Req.Context())
+	logger := srv.requestLogger(c)
 	ctx := c.Req.Context()
 
 	// Refuse manual imports when external Alertmanager sync is configured for
@@ -753,12 +820,16 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusGetAlertmanagerConfig(c *
 }
 
 func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteAlertmanagerConfig(c *contextmodel.ReqContext) response.Response {
+	return srv.recordRequest(c, operationDeleteAlertmanager, srv.deleteAlertmanagerConfig(c))
+}
+
+func (srv *ConvertPrometheusSrv) deleteAlertmanagerConfig(c *contextmodel.ReqContext) response.Response {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !srv.featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI) {
 		return response.Error(http.StatusNotImplemented, "Not Implemented", nil)
 	}
 
-	logger := srv.logger.FromContext(c.Req.Context())
+	logger := srv.requestLogger(c)
 
 	identifier, err := parseConfigIdentifierHeader(c)
 	if err != nil {
@@ -777,12 +848,16 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusDeleteAlertmanagerConfig(
 }
 
 func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPromoteAlertmanagerConfig(c *contextmodel.ReqContext, identifier string) response.Response {
+	return srv.recordRequest(c, operationPromoteAlertmanager, srv.promoteAlertmanagerConfig(c, identifier))
+}
+
+func (srv *ConvertPrometheusSrv) promoteAlertmanagerConfig(c *contextmodel.ReqContext, identifier string) response.Response {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if !srv.featureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI) {
 		return response.Error(http.StatusNotImplemented, "Not Implemented", nil)
 	}
 
-	logger := srv.logger.FromContext(c.Req.Context())
+	logger := srv.requestLogger(c)
 
 	stats, err := srv.am.PromoteExtraConfiguration(c.Req.Context(), c.GetOrgID(), c.SignedInUser, srv.importsAuthz, identifier)
 	if err != nil {
