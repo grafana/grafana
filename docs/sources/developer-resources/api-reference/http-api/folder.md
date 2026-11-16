@@ -19,7 +19,7 @@ title: Folder HTTP API
 weight: 100
 ---
 
-# Folder APIs
+# Folder HTTP API
 
 {{< admonition type="note" >}}
 Available in Grafana 12.0 and later.
@@ -65,7 +65,7 @@ Returns all folders that the authenticated user has permission to view within th
 
 **Required permissions**:
 
-See note in the [introduction](#folder-apis) for an explanation.
+See note in the [introduction](#folder-http-api) for an explanation.
 
 | Action         | Scope       |
 | -------------- | ----------- |
@@ -187,7 +187,7 @@ Will return the folder given the folder `uid`.
 
 **Required permissions**:
 
-See note in the [introduction](#folder-apis) for an explanation.
+See note in the [introduction](#folder-http-api) for an explanation.
 
 | Action         | Scope       |
 | -------------- | ----------- |
@@ -254,7 +254,7 @@ Creates a new folder.
 
 **Required permissions**:
 
-See note in the [introduction](#folder-apis) for an explanation.
+See note in the [introduction](#folder-http-api) for an explanation.
 
 `folders:create` allows creating folders and subfolders. If granted with scope `folders:uid:general`, allows creating root level folders. Otherwise, allows creating subfolders under the specified folders.
 
@@ -347,7 +347,7 @@ Updates an existing folder identified by `uid`.
 
 **Required permissions**:
 
-See note in the [introduction](#folder-apis) for an explanation.
+See note in the [introduction](#folder-http-api) for an explanation.
 
 | Action          | Scope       |
 | --------------- | ----------- |
@@ -441,7 +441,7 @@ If [Grafana Alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alertin
 
 **Required permissions**:
 
-See note in the [introduction](#folder-apis) for an explanation.
+See note in the [introduction](#folder-http-api) for an explanation.
 
 | Action           | Scope       |
 | ---------------- | ----------- |
