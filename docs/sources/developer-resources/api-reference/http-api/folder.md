@@ -344,7 +344,7 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {
   "metadata": {
-    "name": "aef30vrzxs3y8d",
+    "name": "fef30w4jaxla8b",
     "annotations": {
       "grafana.app/folder": "xkj92m5pqw3vn4"
     }
@@ -399,9 +399,9 @@ Content-Type: application/json
 
 `DELETE /apis/folder.grafana.app/v1/namespaces/{namespace}/folders/{uid}`
 
-Deletes an existing folder identified by UID along with all dashboards (and their alerts) stored in the folder. This operation cannot be reverted.
+Deletes an existing empty folder identified by UID. This operation can't be reverted.
 
-If [Grafana Alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/) is enabled, you can set an optional query parameter `forceDeleteRules=false` so that requests will fail with 400 (Bad Request) error if the folder contains any Grafana alerts. However, if this parameter is set to `true` then it will delete any Grafana alerts under this folder.
+If the folder contains subfolders, dashboards, variables, library panels, alert rules, or recording rules, the request fails with `400 Bad Request`. Move or delete the folder contents first.
 
 **Path parameters**:
 
@@ -462,16 +462,17 @@ Content-Type: application/json
 
 The endpoints on this page return the following status codes:
 
-| Code  | Meaning                                                                                                               | Returned by                                                                                                                        |
-| ----- | --------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `200` | OK.                                                                                                                   | [Get all folders](#get-all-folders), [Get folder by `uid`](#get-folder-by-uid), [Update](#update-folder), [Delete](#delete-folder) |
-| `201` | Created.                                                                                                              | [Create](#create-folder)                                                                                                           |
-| `201` | Created, if the folder doesn't exist.                                                                                 | [Update](#update-folder)                                                                                                           |
-| `400` | Bad request (invalid JSON, missing or invalid fields).                                                                | [Create](#create-folder), [Update](#update-folder)                                                                                 |
-| `400` | Bad request (the folder isn't empty, for example it contains subfolders, dashboards, library panels, or alert rules). | [Delete](#delete-folder)                                                                                                           |
-| `401` | Unauthorized.                                                                                                         | All endpoints                                                                                                                      |
-| `403` | Access denied.                                                                                                        | All endpoints                                                                                                                      |
-| `404` | Folder not found.                                                                                                     | [Get folder by `uid`](#get-folder-by-uid), [Delete](#delete-folder)                                                                |
-| `404` | The parent folder doesn't exist.                                                                                      | [Update](#update-folder)                                                                                                           |
-| `409` | Conflict (a folder with the same `uid` already exists).                                                               | [Create](#create-folder)                                                                                                           |
-| `409` | Conflict (the folder changed since you read it).                                                                      | [Update](#update-folder)                                                                                                           |
+| Code  | Meaning                                                                                                                                           | Returned by                                                                                                                        |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `200` | OK.                                                                                                                                               | [Get all folders](#get-all-folders), [Get folder by `uid`](#get-folder-by-uid), [Update](#update-folder), [Delete](#delete-folder) |
+| `201` | Created.                                                                                                                                          | [Create](#create-folder)                                                                                                           |
+| `201` | Created, if the folder doesn't exist.                                                                                                             | [Update](#update-folder)                                                                                                           |
+| `400` | Bad request (invalid JSON, missing or invalid fields, or the parent folder doesn't exist).                                                        | [Create](#create-folder)                                                                                                           |
+| `400` | Bad request (invalid JSON, missing or invalid fields).                                                                                            | [Update](#update-folder)                                                                                                           |
+| `400` | Bad request (the folder isn't empty, for example it contains subfolders, dashboards, variables, library panels, alert rules, or recording rules). | [Delete](#delete-folder)                                                                                                           |
+| `401` | Unauthorized.                                                                                                                                     | All endpoints                                                                                                                      |
+| `403` | Access denied.                                                                                                                                    | All endpoints                                                                                                                      |
+| `404` | Folder not found.                                                                                                                                 | [Get folder by `uid`](#get-folder-by-uid), [Delete](#delete-folder)                                                                |
+| `404` | The parent folder doesn't exist.                                                                                                                  | [Update](#update-folder)                                                                                                           |
+| `409` | Conflict (a folder with the same `uid` already exists).                                                                                           | [Create](#create-folder)                                                                                                           |
+| `409` | Conflict (the folder changed since you read it).                                                                                                  | [Update](#update-folder)                                                                                                           |

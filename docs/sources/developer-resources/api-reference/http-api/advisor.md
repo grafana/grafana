@@ -204,11 +204,12 @@ Each entry in `status.report.failures` contains the following fields:
 
 The endpoints on this page return the following status codes:
 
-| Code  | Meaning                                                                          | Returned by          |
-| ----- | -------------------------------------------------------------------------------- | -------------------- |
-| `200` | OK.                                                                              | [List](#list-checks) |
-| `401` | Unauthorized.                                                                    | [List](#list-checks) |
-| `403` | Access denied, for example if the namespace doesn't belong to your organization. | [List](#list-checks) |
+| Code  | Meaning                                                                                                           | Returned by          |
+| ----- | ----------------------------------------------------------------------------------------------------------------- | -------------------- |
+| `200` | OK.                                                                                                               | [List](#list-checks) |
+| `400` | Bad request (invalid `labelSelector`).                                                                            | [List](#list-checks) |
+| `401` | Unauthorized.                                                                                                     | [List](#list-checks) |
+| `403` | Access denied, for example if you don't have the Admin role or the namespace doesn't belong to your organization. | [List](#list-checks) |
 
 ## Related resources
 

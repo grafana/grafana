@@ -210,14 +210,14 @@ This returns the complete resource as it existed at that version. For an example
 
 The endpoints on this page return the following status codes:
 
-| Code  | Meaning                                                         | Returned by                              |
-| ----- | --------------------------------------------------------------- | ---------------------------------------- |
-| `200` | OK.                                                             | All endpoints                            |
-| `400` | Bad request (missing `fieldSelector`, invalid `labelSelector`). | [List](#list-resource-history)           |
-| `400` | The resource version is newer than the latest version.          | [Retrieve](#retrieve-a-specific-version) |
-| `401` | Unauthorized.                                                   | All endpoints                            |
-| `403` | Access denied.                                                  | All endpoints                            |
-| `404` | Resource or version not found.                                  | [Retrieve](#retrieve-a-specific-version) |
+| Code  | Meaning                                                                                                                                                                      | Returned by                              |
+| ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
+| `200` | OK.                                                                                                                                                                          | All endpoints                            |
+| `400` | Bad request (missing `fieldSelector`, invalid `labelSelector`).                                                                                                              | [List](#list-resource-history)           |
+| `400` | The resource version is newer than the latest version, when Grafana uses the SQLKV storage backend. The default SQL backend returns the latest available version with `200`. | [Retrieve](#retrieve-a-specific-version) |
+| `401` | Unauthorized.                                                                                                                                                                | All endpoints                            |
+| `403` | Access denied.                                                                                                                                                               | All endpoints                            |
+| `404` | Resource or version not found.                                                                                                                                               | [Retrieve](#retrieve-a-specific-version) |
 
 ## Migrate from the legacy Dashboard Versions API
 

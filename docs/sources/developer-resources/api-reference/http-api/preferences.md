@@ -269,7 +269,7 @@ Creates the preferences for a user, a team, or the organization. You can also us
 
 - `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 
-**Required permissions**: Write access for the owner. Refer to [Requirements](#requirements).
+**Required permissions**: Only access-policy tokens with explicit permissions can create preferences with `POST`. User and service account requests return `403`. Use [Update preferences](#update-preferences) or [Patch preferences](#patch-preferences) instead.
 
 ### Example request
 

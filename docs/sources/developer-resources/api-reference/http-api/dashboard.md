@@ -534,7 +534,7 @@ Content-Length: 485
 
 `PUT /apis/dashboard.grafana.app/v1/namespaces/{namespace}/dashboards/{uid}`
 
-Updates an existing dashboard via the dashboard `uid`.
+Updates an existing dashboard via the dashboard `uid`. If no dashboard with that `uid` exists and the request body doesn't include `metadata.resourceVersion`, Grafana creates the dashboard and returns `201 Created`.
 
 **Path parameters**:
 
@@ -568,7 +568,7 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
     "annotations": {
       "grafana.app/folder": "fef30w4jaxla8b",
       "grafana.app/message": "commit message"
-    },
+    }
   },
   "spec": {
     "title": "New dashboard - updated",
@@ -1125,6 +1125,7 @@ The endpoints on this page return the following status codes:
 | `201` | Created.                                                                                          | [Create Dashboard](#create-dashboard), [Create a dashboard with the v2 schema](#create-a-dashboard-with-the-v2-schema)                                         |
 | `201` | Created, if the dashboard doesn't exist.                                                          | [Update](#update-dashboard)                                                                                                                                    |
 | `400` | Bad request (invalid JSON, missing or invalid fields).                                            | [Create Dashboard](#create-dashboard), [Update](#update-dashboard), [Create a dashboard with the v2 schema](#create-a-dashboard-with-the-v2-schema)            |
+| `400` | Bad request (the dashboard is provisioned from a file).                                           | [Delete](#delete-dashboard)                                                                                                                                    |
 | `401` | Unauthorized.                                                                                     | All endpoints                                                                                                                                                  |
 | `403` | Access denied, for example because you can't access the folder or the dashboard quota is reached. | [Create Dashboard](#create-dashboard), [Create a dashboard with the v2 schema](#create-a-dashboard-with-the-v2-schema)                                         |
 | `403` | Access denied, for example because you can't access the folder.                                   | [Update](#update-dashboard)                                                                                                                                    |

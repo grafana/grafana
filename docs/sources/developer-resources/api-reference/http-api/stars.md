@@ -64,6 +64,10 @@ Replace `{namespace}` with your namespace. To learn which namespace to use, refe
 
 Stars a resource for the signed-in user. One endpoint shape covers every starrable resource instead of one endpoint per kind. `{group}`, `{kind}`, and `{id}` identify the resource to star.
 
+{{< admonition type="note" >}}
+If Grafana uses legacy storage for stars, you can only star dashboards. Requests for other kinds, such as folders, fail with an error. This also applies to [Create stars](#create-stars), [Replace stars](#replace-stars), and [Patch stars](#patch-stars).
+{{< /admonition >}}
+
 **Path parameters**:
 
 - `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
@@ -127,6 +131,8 @@ Content-Type: application/json
   "code": 200
 }
 ```
+
+If the user's `Stars` resource doesn't exist, the response is `204 No Content`.
 
 Refer to [Star a resource](#star-a-resource) for more details.
 
@@ -323,7 +329,7 @@ Content-Type: application/json
 
 `PUT /apis/collections.grafana.app/v1alpha1/namespaces/{namespace}/stars/{name}`
 
-Replaces the `Stars` resource with the given name. The list in `spec.resource` replaces all the starred resources of the user. Include `metadata.resourceVersion` from the latest version you read to avoid overwriting changes.
+Replaces the `Stars` resource with the given name. The list in `spec.resource` replaces all the starred resources of the user. If Grafana uses unified storage for stars, include `metadata.resourceVersion` from the latest version you read to avoid overwriting changes. Legacy storage ignores `metadata.resourceVersion`.
 
 **Path parameters**:
 
@@ -472,7 +478,7 @@ The endpoints on this page return the following status codes:
 | `404` | Stars resource not found, if Grafana uses legacy storage for stars.                                                                                                                    | [Replace](#replace-stars)                                                                                                                                                 |
 | `404` | Stars resource not found, if Grafana uses unified storage for stars. Legacy storage returns `200` if the resource doesn't exist.                                                       | [Delete](#delete-stars)                                                                                                                                                   |
 | `409` | Conflict (a `Stars` resource with the same name already exists). If Grafana uses legacy storage for stars, it replaces the existing resource and returns `201` instead.                | [Create](#create-stars)                                                                                                                                                   |
-| `409` | Conflict (the `Stars` resource changed since you read it).                                                                                                                             | [Replace](#replace-stars), [Patch](#patch-stars)                                                                                                                          |
+| `409` | Conflict (the `Stars` resource changed since you read it), if Grafana uses unified storage for stars. Legacy storage ignores `metadata.resourceVersion`.                               | [Replace](#replace-stars), [Patch](#patch-stars)                                                                                                                          |
 
 ## Migration steps
 
@@ -482,7 +488,7 @@ To migrate from `/api/user/stars/*` to `/apis/collections.grafana.app/*` follow 
 1. Use `GET /api/user` to resolve the signed-in user's UID and cache it for the session.
 1. Determine the namespace your Grafana instance or stack uses for App Platform API calls.
 1. Replace the call with `PUT` (star) or `DELETE` (unstar) against `/apis/collections.grafana.app/v1alpha1/namespaces/{namespace}/stars/user-{user_uid}/update/dashboard.grafana.app/Dashboard/{dashboard_uid}`, **with no request body**.
-1. Update response handling. Treat `200` as success for both star and unstar.
+1. Update response handling. Treat `200` as success for both star and unstar. Unstar can also return `204` if the user has no starred resources.
 1. Leave any code that reads `GET /api/user/stars` as-is; it's unaffected by this change.
 
 ### Migration example
