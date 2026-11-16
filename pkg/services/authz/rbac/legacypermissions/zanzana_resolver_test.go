@@ -141,13 +141,13 @@ func legacyFilter(perms []ac.Permission, action, scope string) []ac.Permission {
 
 // zanzanaResolve runs the Zanzana list → legacy permission mapping for one action.
 func zanzanaResolve(resp *authzv1.ListResponse, action, scope string) ([]ac.Permission, error) {
-	group, resource, subresource, verb := common.TranslateActionToListParams(action)
-	if group == "" || resource == "" {
+	entry, ok := common.TranslateActionToListEntry(action)
+	if !ok {
 		return nil, nil
 	}
 	fake := &fakeZanzanaClient{listResp: resp}
 	r := &ZanzanaPermissionResolver{client: fake}
-	return r.listPermissions(context.Background(), "org:1", "user:parity", nil, group, resource, subresource, verb, action, scope)
+	return r.listPermissions(context.Background(), "org:1", "user:parity", nil, entry, scope)
 }
 
 func TestSearchPermissionsForIdentity_NoActionOrPrefix_ListsAllSupportedActions(t *testing.T) {
@@ -208,7 +208,8 @@ func TestSearchPermissionsForIdentity_WithAction_DoesNotListAll(t *testing.T) {
 }
 
 func TestListPermissions_ScopeFilter_AppliesToFolderScopes(t *testing.T) {
-	group, resource, subresource, verb := common.TranslateActionToListParams("dashboards:read")
+	entry, ok := common.TranslateActionToListEntry("dashboards:read")
+	require.True(t, ok)
 	fake := &fakeZanzanaClient{
 		listResp: &authzv1.ListResponse{
 			Folders: []string{"keep-me", "drop-me"},
@@ -221,11 +222,7 @@ func TestListPermissions_ScopeFilter_AppliesToFolderScopes(t *testing.T) {
 		"org:1",
 		"user:1",
 		nil,
-		group,
-		resource,
-		subresource,
-		verb,
-		"dashboards:read",
+		entry,
 		ac.Scope("folders", "uid", "keep-me"),
 	)
 	require.NoError(t, err)
@@ -238,7 +235,8 @@ func TestListPermissions_ScopeFilter_AppliesToFolderScopes(t *testing.T) {
 // Scope filter edge cases not covered by TestLegacyZanzanaParity (dashboard-namespace filter
 // with All=true; UID prefix must not false-positive).
 func TestListPermissions_ScopeFilter_IncludesWildcardGrants(t *testing.T) {
-	group, resource, subresource, verb := common.TranslateActionToListParams("dashboards:read")
+	entry, ok := common.TranslateActionToListEntry("dashboards:read")
+	require.True(t, ok)
 
 	t.Run("All=true keeps dashboards wildcard when scope is dashboards namespace", func(t *testing.T) {
 		fake := &fakeZanzanaClient{
@@ -251,11 +249,7 @@ func TestListPermissions_ScopeFilter_IncludesWildcardGrants(t *testing.T) {
 			"org:1",
 			"user:1",
 			nil,
-			group,
-			resource,
-			subresource,
-			verb,
-			"dashboards:read",
+			entry,
 			ac.Scope("dashboards", "uid", "some-dash"),
 		)
 		require.NoError(t, err)
@@ -279,11 +273,7 @@ func TestListPermissions_ScopeFilter_IncludesWildcardGrants(t *testing.T) {
 			"org:1",
 			"user:1",
 			nil,
-			group,
-			resource,
-			subresource,
-			verb,
-			"dashboards:read",
+			entry,
 			ac.Scope("dashboards", "uid", "abc"),
 		)
 		require.NoError(t, err)
@@ -295,7 +285,8 @@ func TestListPermissions_ScopeFilter_IncludesWildcardGrants(t *testing.T) {
 }
 
 func TestListPermissions_ScopeFilter_WildcardScopeQuery(t *testing.T) {
-	group, resource, subresource, verb := common.TranslateActionToListParams("dashboards:read")
+	entry, ok := common.TranslateActionToListEntry("dashboards:read")
+	require.True(t, ok)
 
 	t.Run("wildcard query scope matches only wildcards, not individual items", func(t *testing.T) {
 		fake := &fakeZanzanaClient{
@@ -313,11 +304,7 @@ func TestListPermissions_ScopeFilter_WildcardScopeQuery(t *testing.T) {
 			"org:1",
 			"user:1",
 			nil,
-			group,
-			resource,
-			subresource,
-			verb,
-			"dashboards:read",
+			entry,
 			ac.Scope("dashboards", "uid", "*"),
 		)
 		require.NoError(t, err)
@@ -335,11 +322,7 @@ func TestListPermissions_ScopeFilter_WildcardScopeQuery(t *testing.T) {
 			"org:1",
 			"user:1",
 			nil,
-			group,
-			resource,
-			subresource,
-			verb,
-			"dashboards:read",
+			entry,
 			ac.Scope("dashboards", "uid", "*"),
 		)
 		require.NoError(t, err)

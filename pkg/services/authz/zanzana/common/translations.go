@@ -38,10 +38,11 @@ var basicRolesUIDs = []string{
 }
 
 type resourceTranslation struct {
-	typ      string
-	group    string
-	resource string
-	mapping  map[string]actionMapping
+	legacyScopeKind string
+	typ             string
+	group           string
+	resource        string
+	mapping         map[string]actionMapping
 }
 
 type actionMapping struct {
@@ -83,9 +84,10 @@ var (
 
 var resourceTranslations = map[string]resourceTranslation{
 	"secret.securevalues": {
-		typ:      TypeResource,
-		group:    "secret.grafana.app",
-		resource: "securevalues",
+		legacyScopeKind: "secret.securevalues",
+		typ:             TypeResource,
+		group:           "secret.grafana.app",
+		resource:        "securevalues",
 		mapping: map[string]actionMapping{
 			"secret.securevalues:view":              newMapping(RelationSetView, ""),
 			"secret.securevalues:edit":              newMapping(RelationSetEdit, ""),
@@ -320,19 +322,18 @@ func translateActionToKubernetesAttributes(translation resourceTranslation, acti
 // TranslateActionToListParams translates an RBAC action to Zanzana List request parameters (group, resource, subresource, verb).
 // Returns empty strings if the action cannot be translated.
 func TranslateActionToListParams(action string) (group, resource, subresource, verb string) {
-	translationTypes := make([]string, 0, len(resourceTranslations))
-	for typ := range resourceTranslations {
-		translationTypes = append(translationTypes, typ)
-	}
-	sort.Strings(translationTypes)
+	entry, _ := TranslateActionToListEntry(action)
+	return entry.Group, entry.Resource, entry.Subresource, entry.Verb
+}
 
-	for _, typ := range translationTypes {
-		translation := resourceTranslations[typ]
-		if group, resource, subresource, verb, ok := translateActionToKubernetesAttributes(translation, action); ok {
-			return group, resource, subresource, verb
+// TranslateActionToListEntry uses the same mapping as full permission enumeration.
+func TranslateActionToListEntry(action string) (ActionListEntry, bool) {
+	for _, entry := range supportedActions {
+		if entry.Action == action {
+			return entry, true
 		}
 	}
-	return "", "", "", ""
+	return ActionListEntry{}, false
 }
 
 // ActionListEntry describes an action that Zanzana supports, along with
@@ -343,6 +344,8 @@ type ActionListEntry struct {
 	Resource    string
 	Subresource string
 	Verb        string
+	// LegacyScopeKind identifies returned Items in legacy scopes, not the action prefix.
+	LegacyScopeKind string
 }
 
 // supportedActions is the memoized result of building the action list from
@@ -375,13 +378,21 @@ var supportedActions = func() []ActionListEntry {
 				continue
 			}
 
+			// Action overrides can list a different resource (e.g. dashboards under
+			// the folder translation), so default to the effective API resource.
+			legacyScopeKind := translation.legacyScopeKind
+			if legacyScopeKind == "" {
+				legacyScopeKind = resource
+			}
+
 			seen[action] = struct{}{}
 			out = append(out, ActionListEntry{
-				Action:      action,
-				Group:       group,
-				Resource:    resource,
-				Subresource: subresource,
-				Verb:        verb,
+				Action:          action,
+				Group:           group,
+				Resource:        resource,
+				Subresource:     subresource,
+				Verb:            verb,
+				LegacyScopeKind: legacyScopeKind,
 			})
 		}
 	}

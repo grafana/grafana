@@ -117,11 +117,11 @@ func (r *ZanzanaPermissionResolver) searchPermissionsForIdentity(ctx context.Con
 
 	var err error
 	if options.Action != "" {
-		group, resource, subresource, verb := common.TranslateActionToListParams(options.Action)
-		if group != "" && resource != "" {
+		entry, ok := common.TranslateActionToListEntry(options.Action)
+		if ok {
 			// Per-user search resolves another identity's permissions; their request-time
 			// contextual team membership isn't available here, so no teams are passed.
-			perms, err := r.listPermissions(ctx, namespace, subject, nil, group, resource, subresource, verb, options.Action, options.Scope)
+			perms, err := r.listPermissions(ctx, namespace, subject, nil, entry, options.Scope)
 			if err != nil {
 				return nil, err
 			}
@@ -227,23 +227,13 @@ func (r *ZanzanaPermissionResolver) searchAllUsers(ctx context.Context, signedIn
 	return result, nil
 }
 
-// resourceScope scopes an object by the resource type Zanzana listed it under
-// (e.g. "folders:uid:abc"), not by the action prefix, so permission actions like
-// "folders.permissions:read" stay scoped on "folders:uid:<uid>".
-func resourceScope(group, resource, name string) string {
-	return ac.Scope(resourceScopePrefix(group, resource), "uid", name)
+// resourceScope uses the mapped legacy kind, which can differ from the API resource name.
+func resourceScope(kind, name string) string {
+	return ac.Scope(kind, "uid", name)
 }
 
-// resourceWildcardScope is the org-wide scope for the listed resource ("folders:*").
-func resourceWildcardScope(group, resource string) string {
-	return ac.Scope(resourceScopePrefix(group, resource), "*")
-}
-
-func resourceScopePrefix(group, resource string) string {
-	if group == "secret.grafana.app" && resource == "securevalues" {
-		return "secret.securevalues"
-	}
-	return resource
+func resourceWildcardScope(kind string) string {
+	return ac.Scope(kind, "*")
 }
 
 // folderScopeForLegacyRBAC returns a legacy RBAC scope for folder-scoped access (folders:uid:<uid>).
@@ -325,14 +315,14 @@ func userWildcardScope(action string) string {
 }
 
 // listPermissions lists permissions for a subject on a given group/resource
-func (r *ZanzanaPermissionResolver) listPermissions(ctx context.Context, namespace, subject string, teams []string, group, resource, subresource, verb, action, scope string) ([]ac.Permission, error) {
+func (r *ZanzanaPermissionResolver) listPermissions(ctx context.Context, namespace, subject string, teams []string, entry common.ActionListEntry, scope string) ([]ac.Permission, error) {
 	req := &authzv1.ListRequest{
 		Namespace:   namespace,
 		Subject:     subject,
-		Group:       group,
-		Verb:        verb,
-		Resource:    resource,
-		Subresource: subresource,
+		Group:       entry.Group,
+		Verb:        entry.Verb,
+		Resource:    entry.Resource,
+		Subresource: entry.Subresource,
 		Teams:       teams,
 	}
 
@@ -341,6 +331,7 @@ func (r *ZanzanaPermissionResolver) listPermissions(ctx context.Context, namespa
 		return nil, fmt.Errorf("zanzana list failed: %w", err)
 	}
 
+	action := entry.Action
 	permissions := []ac.Permission{}
 
 	// Build the set of scopes that satisfy the filter: the exact scope plus
@@ -380,7 +371,7 @@ func (r *ZanzanaPermissionResolver) listPermissions(ctx context.Context, namespa
 			}
 			appendIfMatches(ac.Permission{
 				Action: action,
-				Scope:  resourceWildcardScope(group, resource),
+				Scope:  resourceWildcardScope(entry.LegacyScopeKind),
 			})
 			// Generic dashboard list grants org-wide dashboard access; legacy RBAC also records
 			// folder wildcard for the same action (see SearchUsersPermissions / Reduce).
@@ -401,7 +392,7 @@ func (r *ZanzanaPermissionResolver) listPermissions(ctx context.Context, namespa
 		} else {
 			appendIfMatches(ac.Permission{
 				Action: action,
-				Scope:  resourceWildcardScope(group, resource),
+				Scope:  resourceWildcardScope(entry.LegacyScopeKind),
 			})
 		}
 	}
@@ -416,7 +407,7 @@ func (r *ZanzanaPermissionResolver) listPermissions(ctx context.Context, namespa
 			resolved, err := r.resolveTeamScope(ctx, namespace, item)
 			if err != nil {
 				zLogger.Warn("failed to resolve team UID to ID, using uid scope", "uid", item, "error", err)
-				itemScope = resourceScope(group, resource, item)
+				itemScope = resourceScope(entry.LegacyScopeKind, item)
 			} else {
 				itemScope = resolved
 			}
@@ -424,12 +415,12 @@ func (r *ZanzanaPermissionResolver) listPermissions(ctx context.Context, namespa
 			resolved, err := r.resolveUserScope(ctx, namespace, action, item)
 			if err != nil {
 				zLogger.Warn("failed to resolve user UID to ID, using uid scope", "uid", item, "error", err)
-				itemScope = resourceScope(group, resource, item)
+				itemScope = resourceScope(entry.LegacyScopeKind, item)
 			} else {
 				itemScope = resolved
 			}
 		default:
-			itemScope = resourceScope(group, resource, item)
+			itemScope = resourceScope(entry.LegacyScopeKind, item)
 		}
 		appendIfMatches(ac.Permission{
 			Action: action,
@@ -453,7 +444,7 @@ func (r *ZanzanaPermissionResolver) listAllWithPrefix(ctx context.Context, names
 	var permissions []ac.Permission
 	for _, entry := range common.SupportedActions() {
 		if strings.HasPrefix(entry.Action, prefix) {
-			perms, err := r.listPermissions(ctx, namespace, subject, teams, entry.Group, entry.Resource, entry.Subresource, entry.Verb, entry.Action, scope)
+			perms, err := r.listPermissions(ctx, namespace, subject, teams, entry, scope)
 			if err != nil {
 				if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 					return nil, err
