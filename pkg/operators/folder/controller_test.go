@@ -18,6 +18,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/setting"
@@ -32,18 +33,21 @@ func TestFolderControllerOwnsNATSSubscriber(t *testing.T) {
 
 	api := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		if r.Method == http.MethodPost {
+		if r.URL.Path == "/" {
 			_, _ = io.WriteString(w, `{"data":{"token":"test-access-token"}}`)
 			return
 		}
-		_, _ = io.WriteString(w, `{"apiVersion":"folder.grafana.app/v1","kind":"FolderList","metadata":{"resourceVersion":"1"},"items":[]}`)
+		_, _ = io.WriteString(w, `{"apiVersion":"storage.grafana.app/v0alpha1","kind":"ListKeyResponse","resourceVersion":"1","items":[]}`)
 	}))
 	t.Cleanup(api.Close)
 	cfg := setting.NewCfg()
 	cfg.NATS = setting.NATSSettings{Enabled: true, Mode: setting.NATSModeExternal, ClientURLs: []string{srv.ClientURL()}}
 	cfg.SectionWithEnvOverrides("operator").Key("folders_server_url").SetValue(api.URL)
+	cfg.SectionWithEnvOverrides("operator").Key("dashboards_server_url").SetValue(api.URL)
 	cfg.SectionWithEnvOverrides("grpc_client_authentication").Key("token").SetValue("test-token")
 	cfg.SectionWithEnvOverrides("grpc_client_authentication").Key("token_exchange_url").SetValue(api.URL)
+	// Dialing is lazy, so nothing needs to listen here.
+	cfg.SectionWithEnvOverrides("unified_storage").Key("grpc_address").SetValue("127.0.0.1:1")
 
 	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
@@ -51,7 +55,7 @@ func TestFolderControllerOwnsNATSSubscriber(t *testing.T) {
 	done := make(chan error, 1)
 	go func() {
 		done <- RunFolderController(ctx, server.OperatorDependencies{
-			Config: cfg, Registerer: prometheus.NewRegistry(), HealthNotifier: health,
+			Config: cfg, Registerer: prometheus.NewRegistry(), HealthNotifier: health, Tracer: tracing.NewNoopTracerService(),
 		})
 	}()
 	require.NoError(t, wait.PollUntilContextTimeout(ctx, 10*time.Millisecond, 5*time.Second, true, func(context.Context) (bool, error) {
@@ -81,7 +85,7 @@ func TestFolderControllerCacheSyncFailureCause(t *testing.T) {
 	release := make(chan struct{})
 	api := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		if r.Method == http.MethodPost {
+		if r.URL.Path == "/" {
 			_, _ = io.WriteString(w, `{"data":{"token":"test-access-token"}}`)
 			return
 		}
@@ -99,8 +103,11 @@ func TestFolderControllerCacheSyncFailureCause(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.NATS = setting.NATSSettings{Enabled: true, Mode: setting.NATSModeExternal, ClientURLs: []string{srv.ClientURL()}}
 	cfg.SectionWithEnvOverrides("operator").Key("folders_server_url").SetValue(api.URL)
+	cfg.SectionWithEnvOverrides("operator").Key("dashboards_server_url").SetValue(api.URL)
 	cfg.SectionWithEnvOverrides("grpc_client_authentication").Key("token").SetValue("test-token")
 	cfg.SectionWithEnvOverrides("grpc_client_authentication").Key("token_exchange_url").SetValue(api.URL)
+	// Dialing is lazy, so nothing needs to listen here.
+	cfg.SectionWithEnvOverrides("unified_storage").Key("grpc_address").SetValue("127.0.0.1:1")
 	health := server.NewHealthNotifier()
 	failure := errors.New("subscriber failed during initial list")
 	cancelOperator := make(chan context.CancelCauseFunc, 1)
@@ -109,7 +116,7 @@ func TestFolderControllerCacheSyncFailureCause(t *testing.T) {
 		defer cancel(nil)
 		cancelOperator <- cancel
 		return RunFolderController(ctx, server.OperatorDependencies{
-			Config: cfg, Registerer: prometheus.NewRegistry(), HealthNotifier: health,
+			Config: cfg, Registerer: prometheus.NewRegistry(), HealthNotifier: health, Tracer: tracing.NewNoopTracerService(),
 		})
 	}, nil)
 	owner := modules.New(log.NewNopLogger(), []string{"operator"}).WithDependencies(map[string][]string{})

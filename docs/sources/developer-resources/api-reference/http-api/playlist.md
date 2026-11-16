@@ -22,23 +22,39 @@ weight: 100
 # Playlist API
 
 {{< admonition type="note" >}}
-Available in Grafana 12 and later.
+Available in Grafana 12.4 and later.
 
-This API complies with the new Grafana API structure. To learn more refer to documentation about the [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis).
+This API complies with the new Grafana API structure. To learn more refer to documentation about the [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 
 **This document may not contain the latest version of the API. For the most up-to-date list of available endpoints, refer to [playlist.grafana.app/v1](https://play.grafana.org/swagger?api=playlist.grafana.app-v1) in Swagger.**
 
 {{< /admonition >}}
 
+## Endpoints
+
+These are the available endpoints:
+
+| Method | Summary                                 | URI                                                                     |
+| ------ | --------------------------------------- | ----------------------------------------------------------------------- |
+| GET    | [List Playlists](#list-playlists)       | `/apis/playlist.grafana.app/v1/namespaces/{namespace}/playlists`        |
+| GET    | [Get a Playlist](#get-a-playlist)       | `/apis/playlist.grafana.app/v1/namespaces/{namespace}/playlists/{name}` |
+| POST   | [Create a Playlist](#create-a-playlist) | `/apis/playlist.grafana.app/v1/namespaces/{namespace}/playlists`        |
+| PUT    | [Update a Playlist](#update-a-playlist) | `/apis/playlist.grafana.app/v1/namespaces/{namespace}/playlists/{name}` |
+| DELETE | [Delete a Playlist](#delete-a-playlist) | `/apis/playlist.grafana.app/v1/namespaces/{namespace}/playlists/{name}` |
+
 ## List Playlists
 
-`GET /apis/playlist.grafana.app/v1/namespaces/:namespace/playlists`
+`GET /apis/playlist.grafana.app/v1/namespaces/{namespace}/playlists`
 
 Lists all playlists in the specified namespace.
 
-- `namespace`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
+**Path parameters**:
 
-**Example Request**:
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+
+### Example request
+
+The following example shows a request to list playlists:
 
 ```http
 GET /apis/playlist.grafana.app/v1/namespaces/default/playlists HTTP/1.1
@@ -46,7 +62,9 @@ Accept: application/json
 Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
-**Example Response**:
+### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200
@@ -85,16 +103,26 @@ Content-Type: application/json
 }
 ```
 
+### Status codes
+
+- **200:** OK
+- **401:** Unauthorized
+- **403:** Access denied
+
 ## Get a Playlist
 
-`GET /apis/playlist.grafana.app/v1/namespaces/:namespace/playlists/:name`
+`GET /apis/playlist.grafana.app/v1/namespaces/{namespace}/playlists/{name}`
 
 Retrieves a specific playlist by name.
 
-- `namespace`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
-- `name`: The UID of the playlist.
+**Path parameters**:
 
-**Example Request**:
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{name}`: The UID of the playlist.
+
+### Example request
+
+The following example shows a request to get a playlist:
 
 ```http
 GET /apis/playlist.grafana.app/v1/namespaces/default/playlists/my-playlist-uid HTTP/1.1
@@ -102,7 +130,9 @@ Accept: application/json
 Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
-**Example Response**:
+### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200
@@ -134,15 +164,26 @@ Content-Type: application/json
 }
 ```
 
+### Status codes
+
+- **200:** Found
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** Playlist not found
+
 ## Create a Playlist
 
-`POST /apis/playlist.grafana.app/v1/namespaces/:namespace/playlists`
+`POST /apis/playlist.grafana.app/v1/namespaces/{namespace}/playlists`
 
 Creates a new playlist.
 
-- `namespace`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
+**Path parameters**:
 
-**Example Request**:
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+
+### Example request
+
+The following example shows a request to create a playlist:
 
 ```http
 POST /apis/playlist.grafana.app/v1/namespaces/default/playlists HTTP/1.1
@@ -173,7 +214,9 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 }
 ```
 
-**Example Response**:
+### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 201 Created
@@ -205,16 +248,28 @@ Content-Type: application/json
 }
 ```
 
+### Status codes
+
+- **201:** Created
+- **400:** Errors (invalid JSON)
+- **401:** Unauthorized
+- **403:** Access denied
+- **409:** Conflict (a playlist with the same `metadata.name` already exists)
+
 ## Update a Playlist
 
-`PUT /apis/playlist.grafana.app/v1/namespaces/:namespace/playlists/:name`
+`PUT /apis/playlist.grafana.app/v1/namespaces/{namespace}/playlists/{name}`
 
-Updates an existing playlist. The entire playlist spec must be provided.
+Updates an existing playlist. Provide the entire playlist, including `metadata.resourceVersion` from the latest version you read.
 
-- `namespace`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
-- `name`: The UID of the playlist.
+**Path parameters**:
 
-**Example Request**:
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{name}`: The UID of the playlist.
+
+### Example request
+
+The following example shows a request to update a playlist:
 
 ```http
 PUT /apis/playlist.grafana.app/v1/namespaces/default/playlists/my-playlist-uid HTTP/1.1
@@ -251,7 +306,9 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 }
 ```
 
-**Example Response**:
+### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200 OK
@@ -287,16 +344,30 @@ Content-Type: application/json
 }
 ```
 
+### Status codes
+
+- **200:** Updated
+- **400:** Errors (invalid JSON)
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** Playlist not found
+- **409:** Conflict (the playlist changed since you read it)
+- **422:** Invalid playlist, for example because `metadata.resourceVersion` is missing
+
 ## Delete a Playlist
 
-`DELETE /apis/playlist.grafana.app/v1/namespaces/:namespace/playlists/:name`
+`DELETE /apis/playlist.grafana.app/v1/namespaces/{namespace}/playlists/{name}`
 
 Deletes a playlist.
 
-- `namespace`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/).
-- `name`: The UID of the playlist.
+**Path parameters**:
 
-**Example Request**:
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{name}`: The UID of the playlist.
+
+### Example request
+
+The following example shows a request to delete a playlist:
 
 ```http
 DELETE /apis/playlist.grafana.app/v1/namespaces/default/playlists/my-playlist-uid HTTP/1.1
@@ -304,7 +375,9 @@ Accept: application/json
 Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
-**Example Response**:
+### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200 OK
@@ -318,6 +391,13 @@ Content-Type: application/json
   "code": 200
 }
 ```
+
+### Status codes
+
+- **200:** Deleted
+- **401:** Unauthorized
+- **403:** Access denied
+- **404:** Playlist not found
 
 ## Playlist Item Types
 

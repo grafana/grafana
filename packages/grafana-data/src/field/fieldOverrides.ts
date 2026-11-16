@@ -9,6 +9,7 @@ import { compareArrayValues, compareDataFrameStructures } from '../dataframe/fra
 import { guessFieldTypeForField } from '../dataframe/guessFieldType';
 import { createDataFrame } from '../dataframe/processDataFrame';
 import { type PanelPlugin } from '../panel/PanelPlugin';
+import { isVarMappingProp, unwrapVarMappingPropId } from '../panel/getPanelOptionsWithDefaults';
 import { asHexString } from '../themes/colorManipulator';
 import { type GrafanaTheme2 } from '../themes/types';
 import { fieldMatchers } from '../transformations/matchers';
@@ -28,6 +29,7 @@ import {
   type DynamicConfigValue,
   type ApplyFieldOverrideOptions,
   type FieldOverrideContext,
+  type FieldConfigPropertyItem,
   type DataLinkPostProcessor,
   type FieldConfigSource,
 } from '../types/fieldOverrides';
@@ -40,6 +42,15 @@ import { locationUtil } from '../utils/location';
 
 import { type FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
 import { getDisplayProcessor, getRawDisplayProcessor } from './displayProcessor';
+import {
+  getVarMappingKind,
+  getVarMappingOptions,
+  type VarMappingKind,
+  resolveVarMapping,
+  resolveVarMappingBoolean,
+  resolveVarMappingOption,
+  resolveVarMappingString,
+} from './overrides/processors';
 import { getMinMaxAndDelta } from './scale';
 import { standardFieldConfigEditorRegistry } from './standardFieldConfigEditorRegistry';
 
@@ -183,6 +194,8 @@ export function applyFieldOverrides(
         dataFrameIndex: index,
         replaceVariables: options.replaceVariables,
         fieldConfigRegistry: fieldConfigRegistry,
+        // Matching rules replace this with an edited copy, so the defaults and other fields keep theirs
+        varMappings: source.defaults?.varMappings,
       };
 
       // Anything in the field config that's not set by the datasource
@@ -190,11 +203,18 @@ export function applyFieldOverrides(
       setFieldConfigDefaults(config, source.defaults, context);
 
       // Find any matching rules and then override
+      const overriddenIds = new Set<string>();
       for (const rule of override) {
         if (rule.match(field, newFrame, data)) {
+          // Collected before the values are set, so a varMappings.<id> entry applies regardless of
+          // whether it comes before or after the property it maps
+          context.varMappings = applyRuleVarMappings(context.varMappings, rule.properties);
           for (const prop of rule.properties) {
+            if (isVarMappingProp(prop)) {
+              continue;
+            }
             // config.scopedVars is set already here
-            setDynamicConfigValue(config, prop, context);
+            setDynamicConfigValue(config, prop, context, overriddenIds);
           }
         }
       }
@@ -383,11 +403,87 @@ function cachingDisplayProcessor(disp: DisplayProcessor, maxCacheSize = 2500): D
   };
 }
 
-export interface FieldOverrideEnv extends FieldOverrideContext {
-  fieldConfigRegistry: FieldConfigOptionsRegistry;
+/**
+ * The mappings in effect after a matching rule. A property set by the rule only takes expressions
+ * from the same rule, so a plain value replaces earlier expressions. Returns `current` itself when
+ * the rule doesn't touch any mapping, so fields without mappings don't pay for a copy.
+ */
+function applyRuleVarMappings(
+  current: Record<string, string> | undefined,
+  properties: DynamicConfigValue[]
+): Record<string, string> | undefined {
+  const touchesMappings = properties.some(
+    (prop) => isVarMappingProp(prop) || (current !== undefined && prop.id in current)
+  );
+  if (!touchesMappings) {
+    return current;
+  }
+
+  const next = { ...current };
+  for (const prop of properties) {
+    if (!isVarMappingProp(prop)) {
+      delete next[prop.id];
+    }
+  }
+  for (const prop of properties) {
+    if (isVarMappingProp(prop) && typeof prop.value === 'string') {
+      next[unwrapVarMappingPropId(prop.id)] = prop.value;
+    }
+  }
+  return next;
 }
 
-export function setDynamicConfigValue(config: FieldConfig, value: DynamicConfigValue, context: FieldOverrideEnv) {
+export interface FieldOverrideEnv extends FieldOverrideContext {
+  fieldConfigRegistry: FieldConfigOptionsRegistry;
+  /** Property id -> variable expression, from defaults and matching `varMappings.<id>` overrides */
+  varMappings?: Record<string, string>;
+}
+
+/**
+ * Returns the resolved expression for an eligible property when it resolves to a usable value of
+ * the property's kind, otherwise the stored value, so an unresolvable expression falls back
+ * instead of breaking.
+ */
+function resolveVarMappingInput(
+  item: FieldConfigPropertyItem,
+  varMappingId: string,
+  rawValue: unknown,
+  context: FieldOverrideEnv
+): unknown {
+  const kind = getVarMappingKind(item);
+  const expr = context.varMappings?.[varMappingId];
+  if (!kind || typeof expr !== 'string') {
+    return rawValue;
+  }
+
+  const resolved = resolveVarMappingByKind(kind, expr, item, context);
+  return resolved !== undefined ? resolved : rawValue;
+}
+
+function resolveVarMappingByKind(
+  kind: VarMappingKind,
+  expr: string,
+  item: FieldConfigPropertyItem,
+  context: FieldOverrideEnv
+): unknown {
+  switch (kind) {
+    case 'number':
+      return resolveVarMapping(expr, context, item.settings);
+    case 'string':
+      return resolveVarMappingString(expr, context);
+    case 'option':
+      return resolveVarMappingOption(expr, context, getVarMappingOptions(item.settings));
+    case 'boolean':
+      return resolveVarMappingBoolean(expr, context);
+  }
+}
+
+export function setDynamicConfigValue(
+  config: FieldConfig,
+  value: DynamicConfigValue,
+  context: FieldOverrideEnv,
+  overriddenIds?: Set<string>
+) {
   const reg = context.fieldConfigRegistry;
   const item = reg.getIfExists(value.id);
 
@@ -395,7 +491,7 @@ export function setDynamicConfigValue(config: FieldConfig, value: DynamicConfigV
     return;
   }
 
-  let val = item.process(value.value, context, item.settings);
+  let val = item.process(resolveVarMappingInput(item, value.id, value.value, context), context, item.settings);
 
   const remove = val === undefined || val === null;
 
@@ -406,9 +502,12 @@ export function setDynamicConfigValue(config: FieldConfig, value: DynamicConfigV
       unset(config, item.path);
     }
   } else {
-    // Merge arrays (e.g. mappings) when multiple overrides target the same field
-    // Override values come first so they take precedence (first match wins in getValueMappingResult)
-    if (Array.isArray(val)) {
+    // Merge arrays (e.g. mappings) when multiple overrides target the same field.
+    // Panel defaults are already applied to config at this point, so an option with the 'replace'
+    // strategy only merges with values from earlier overrides, not with the inherited value.
+    // Later override values come first so they take precedence (first match wins in getValueMappingResult)
+    const shouldMerge = (item.arrayOverrideStrategy ?? 'merge') === 'merge' || overriddenIds?.has(item.id);
+    if (Array.isArray(val) && shouldMerge) {
       const existingValue = item.isCustom ? get(config.custom, item.path) : get(config, item.path);
 
       if (Array.isArray(existingValue)) {
@@ -425,6 +524,8 @@ export function setDynamicConfigValue(config: FieldConfig, value: DynamicConfigV
       set(config, item.path, val);
     }
   }
+
+  overriddenIds?.add(item.id);
 }
 
 // config -> from DS
@@ -470,7 +571,8 @@ export function setFieldConfigDefaults(config: FieldConfig, defaults: FieldConfi
       }
 
       if (item.shouldApply(context.field!)) {
-        const val = item.process(get(source, item.path), context, item.settings);
+        const rawValue = resolveVarMappingInput(item, item.id, get(source, item.path), context);
+        const val = item.process(rawValue, context, item.settings);
         if (val != null) {
           set(destination, item.path, val);
         }

@@ -191,7 +191,7 @@ it('restores checkbox controls from JSON and replaces an open draft only when it
   ).toEqual(['alpha']);
 });
 
-it('stores the panel timezone for a newly selected time value', async () => {
+it('interprets a new time range bound in the panel timezone', async () => {
   const { props, api } = setup();
   const timeZone = 'Pacific/Auckland';
   props.data = applyFieldOverrides({
@@ -200,6 +200,72 @@ it('stores the panel timezone for a newly selected time value', async () => {
         fields: [{ name: 'Time', type: FieldType.time, values: [1767225600000, 1767312000000] }],
       }),
     ],
+    fieldConfig: { defaults: {}, overrides: [] },
+    theme: createTheme(),
+    timeZone,
+    replaceVariables: (s) => s,
+  })[0];
+  render(<TableNG {...props} timeZone={timeZone} rangeFiltersEnabled />);
+  await userEvent.click(screen.getByRole('button', { name: 'Filter Time' }));
+  await userEvent.type(screen.getByRole('textbox', { name: 'Start' }), '2026-01-01 13:00:00.000');
+  await userEvent.type(screen.getByRole('textbox', { name: 'End' }), '2026-01-01 13:00:00.000');
+  await userEvent.click(screen.getByRole('button', { name: 'Apply' }));
+
+  expect(api.get('table')[0].options.filters[0].config).toEqual({
+    id: 'between',
+    options: {
+      from: 1767225600000,
+      to: 1767225600000,
+      inclusive: true,
+      allowOpenBounds: true,
+      includeMissing: false,
+    },
+  });
+  expect(screen.getAllByRole('row')).toHaveLength(2);
+});
+
+it('keeps time range bounds editable after the panel timezone changes', async () => {
+  const { props, api } = setup();
+  const first = 1767225600000;
+  const second = 1767312000000;
+  const makeFrame = (timeZone: string) =>
+    applyFieldOverrides({
+      data: [toDataFrame({ fields: [{ name: 'Time', type: FieldType.time, values: [first, second] }] })],
+      fieldConfig: { defaults: {}, overrides: [] },
+      theme: createTheme(),
+      timeZone,
+      replaceVariables: (s) => s,
+    })[0];
+  props.data = makeFrame('UTC');
+  const { rerender } = render(<TableNG {...props} timeZone="UTC" rangeFiltersEnabled />);
+
+  await userEvent.click(screen.getByRole('button', { name: 'Filter Time' }));
+  await userEvent.type(screen.getByRole('textbox', { name: 'Start' }), '2026-01-01 00:00:00.000');
+  await userEvent.type(screen.getByRole('textbox', { name: 'End' }), '2026-01-01 00:00:00.000');
+  await userEvent.click(screen.getByRole('button', { name: 'Apply' }));
+  expect(screen.getAllByRole('row')).toHaveLength(2);
+
+  props.data = makeFrame('Pacific/Auckland');
+  rerender(<TableNG {...props} timeZone="Pacific/Auckland" rangeFiltersEnabled />);
+  await userEvent.click(screen.getByRole('button', { name: 'Filter Time' }));
+  expect(screen.getByRole('textbox', { name: 'Start' })).toHaveValue('2026-01-01 13:00:00.000');
+  expect(screen.getByRole('textbox', { name: 'End' })).toHaveValue('2026-01-01 13:00:00.000');
+  await userEvent.clear(screen.getByRole('textbox', { name: 'End' }));
+  await userEvent.type(screen.getByRole('textbox', { name: 'End' }), '2026-01-02 13:00:00.000');
+  await userEvent.click(screen.getByRole('button', { name: 'Apply' }));
+
+  expect(screen.getAllByRole('row')).toHaveLength(3);
+  expect(api.get('table')[0].options.filters[0].config).toMatchObject({
+    id: 'between',
+    options: { from: first, to: second },
+  });
+});
+
+it('stores the panel timezone for a newly selected time value', async () => {
+  const { props, api } = setup();
+  const timeZone = 'Pacific/Auckland';
+  props.data = applyFieldOverrides({
+    data: [toDataFrame({ fields: [{ name: 'Time', type: FieldType.time, values: [1767225600000, 1767312000000] }] })],
     fieldConfig: { defaults: {}, overrides: [] },
     theme: createTheme(),
     timeZone,

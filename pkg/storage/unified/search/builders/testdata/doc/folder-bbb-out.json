@@ -14,6 +14,7 @@
   "title_phrase": "test-bbb",
   "created": 1730490142000,
   "createdBy": "user:1",
+  "updated": 1730490142000,
   "manager": {
     "kind": "repo",
     "id": "MyGIT"

@@ -43,6 +43,9 @@ type AlertsSender interface {
 
 type RecordingWriter interface {
 	WriteDatasource(ctx context.Context, dsUID string, name string, t time.Time, frames data.Frames, orgID int64, extraLabels map[string]string) error
+	// WriteStale ends series written with WriteDatasource. A label set is the full set
+	// of labels that was written, without the metric name.
+	WriteStale(ctx context.Context, dsUID string, name string, t time.Time, orgID int64, labelSets []map[string]string) error
 }
 
 // AlertRuleStopReasonProvider is an interface for determining the reason why an alert rule was stopped.

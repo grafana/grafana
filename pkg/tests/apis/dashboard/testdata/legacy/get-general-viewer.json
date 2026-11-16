@@ -1,0 +1,69 @@
+{
+  "body": {
+    "dashboard": {
+      "id": "<id>",
+      "panels": [
+        {
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 0
+          },
+          "id": 1,
+          "title": "Panel",
+          "type": "timeseries"
+        }
+      ],
+      "schemaVersion": 41,
+      "tags": [
+        "golden"
+      ],
+      "templating": {
+        "list": [
+          {
+            "name": "env",
+            "query": "dev,prod",
+            "type": "custom"
+          }
+        ]
+      },
+      "title": "Golden general",
+      "uid": "golden-general",
+      "version": 1
+    },
+    "meta": {
+      "annotationsPermissions": {
+        "dashboard": {
+          "canAdd": false,
+          "canDelete": false,
+          "canEdit": false
+        }
+      },
+      "apiVersion": "v0alpha1",
+      "canAdmin": false,
+      "canDelete": false,
+      "canEdit": false,
+      "canSave": false,
+      "canStar": true,
+      "created": "<timestamp>",
+      "createdBy": "grafana-admin",
+      "expires": "0001-01-01T00:00:00Z",
+      "folderId": 0,
+      "folderTitle": "General",
+      "folderUid": "",
+      "folderUrl": "",
+      "hasAcl": false,
+      "isFolder": false,
+      "provisioned": false,
+      "provisionedExternalId": "",
+      "slug": "golden-general",
+      "type": "db",
+      "updated": "<timestamp>",
+      "updatedBy": "grafana-admin",
+      "url": "/d/golden-general/golden-general",
+      "version": 1
+    }
+  },
+  "status": 200
+}

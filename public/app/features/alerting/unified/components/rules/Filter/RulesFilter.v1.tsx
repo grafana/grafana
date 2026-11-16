@@ -50,7 +50,7 @@ const RulesFilter = ({ onClear = () => undefined, viewMode, onViewModeChange }: 
   const canRenderContactPointSelector = isGranted(useGlobalContactPointAbility(ContactPointAction.View));
 
   // This key is used to force a rerender on the inputs when the filters are cleared
-  const [filterKey, setFilterKey] = useState<number>(Math.floor(Math.random() * 100));
+  const [filterKey, setFilterKey] = useState<number>(() => Math.floor(Math.random() * 100));
   const dataSourceKey = `dataSource-${filterKey}`;
   const queryStringKey = `queryString-${filterKey}`;
 

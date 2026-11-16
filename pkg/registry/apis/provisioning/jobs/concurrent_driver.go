@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/apifmt"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
 
@@ -54,6 +55,7 @@ type ConcurrentJobDriver struct {
 	historicJobs         HistoryWriter
 	workers              []Worker
 	metrics              *JobMetrics
+	tracer               tracing.Tracer
 	queue                workqueue.TypedRateLimitingInterface[string]
 
 	// processed classifies each delivery and records the processing metrics. It
@@ -152,6 +154,14 @@ func NewConcurrentJobDriver(
 	))
 
 	return driver, nil
+}
+
+// SetTracer sets the tracer that starts the root span of every job.
+// Call it before Run.
+// Spans that the workers start with tracing.Start only record when a parent span exists.
+// Without a tracer, the workers have no parent span, so they drop their spans.
+func (c *ConcurrentJobDriver) SetTracer(tracer tracing.Tracer) {
+	c.tracer = tracer
 }
 
 // EventHandler returns informer event handlers that feed the work queue.
@@ -347,7 +357,7 @@ func (c *ConcurrentJobDriver) popQueued(key string) (queuedEvent, bool) {
 // This is a blocking function that will run until the context is canceled.
 //
 // Note: This function intentionally does NOT create a tracing span because it runs indefinitely
-// until shutdown. Individual job processing operations already have their own spans.
+// until shutdown. Each job gets its own root span in processKey.
 func (c *ConcurrentJobDriver) Run(ctx context.Context) error {
 	logger := logging.FromContext(ctx).With("logger", "concurrent-job-driver", "num_drivers", c.numDrivers)
 	ctx = logging.Context(ctx, logger)
@@ -384,6 +394,7 @@ func (c *ConcurrentJobDriver) Run(ctx context.Context) error {
 				c.processed,
 				c.workers...,
 			)
+			processor.tracer = c.tracer
 
 			driverLogger.Debug("start job driver")
 			for c.processNextWorkItem(driverCtx, processor) {

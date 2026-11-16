@@ -21,8 +21,8 @@ var (
 		"email-desc":         newSortOption("email", true, 1),
 		"name-asc":           newSortOption("name", false, 2),
 		"name-desc":          newSortOption("name", true, 2),
-		"lastSeenAtAge-asc":  newTimeSortOption("last_seen_at", false, 3),
-		"lastSeenAtAge-desc": newTimeSortOption("last_seen_at", true, 3),
+		"lastSeenAtAge-asc":  newTimeSortOption("lastSeenAtAge", "last_seen_at", false, 3),
+		"lastSeenAtAge-desc": newTimeSortOption("lastSeenAtAge", "last_seen_at", true, 3),
 	}
 
 	ErrorUnknownSortingOption = errutil.BadRequest("unknown sorting option")
@@ -56,7 +56,7 @@ func newSortOption(field string, desc bool, index int) model.SortOption {
 	}
 }
 
-func newTimeSortOption(field string, desc bool, index int) model.SortOption {
+func newTimeSortOption(key, field string, desc bool, index int) model.SortOption {
 	direction := "asc"
 	description := ("Oldest-Newest")
 	if desc {
@@ -64,7 +64,7 @@ func newTimeSortOption(field string, desc bool, index int) model.SortOption {
 		description = ("Newest-Oldest")
 	}
 	return model.SortOption{
-		Name:        fmt.Sprintf("%v-%v", field, direction),
+		Name:        fmt.Sprintf("%v-%v", key, direction),
 		DisplayName: fmt.Sprintf("%v (%v)", cases.Title(language.Und).String(field), description),
 		Description: fmt.Sprintf("Sort %v by time in an %vending order", field, direction),
 		Index:       index,

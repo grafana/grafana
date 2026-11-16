@@ -1,3 +1,4 @@
+import * as parser from '@typescript-eslint/parser';
 import { RuleTester } from 'eslint';
 
 import noRestrictedSyntax from '../rules/no-restricted-syntax.cjs';
@@ -6,7 +7,7 @@ RuleTester.setDefaultConfig({
   languageOptions: {
     ecmaVersion: 2020,
     sourceType: 'module',
-    parser: require('@typescript-eslint/parser'),
+    parser,
   },
 });
 
@@ -18,7 +19,7 @@ const zodImportNamespaceRule = noRestrictedSyntax.rules['zod-import-namespace'];
 const expectedMessage =
   'Direct usage of createMonitoringLogger is not allowed. Register your logger source in packages/grafana-runtime/src/services/logging/loggers.ts and use getLogger from @grafana/runtime/unstable instead.';
 const expectedZodImportMessage =
-  "Zod imports must use exactly `import * as z from 'zod'` or `import type * as z from 'zod'`. Imports from zod subpaths are not allowed.";
+  "Zod imports must use exactly `import * as z from 'zod/mini'` or `import type * as z from 'zod/mini'`.";
 
 ruleTester.run('no-direct-create-monitoring-logger', rule, {
   valid: [
@@ -68,11 +69,11 @@ ruleTester.run('zod-import-namespace', zodImportNamespaceRule, {
   valid: [
     {
       name: 'value namespace import named z',
-      code: "import * as z from 'zod';",
+      code: "import * as z from 'zod/mini';",
     },
     {
       name: 'type namespace import named z',
-      code: "import type * as z from 'zod';",
+      code: "import type * as z from 'zod/mini';",
     },
     {
       name: 'non-zod imports are ignored',
@@ -82,22 +83,22 @@ ruleTester.run('zod-import-namespace', zodImportNamespaceRule, {
   invalid: [
     {
       name: 'named import is disallowed',
-      code: "import { z } from 'zod';",
+      code: "import { z } from 'zod/mini';",
       errors: [{ message: expectedZodImportMessage }],
     },
     {
       name: 'default import is disallowed',
-      code: "import z from 'zod';",
+      code: "import z from 'zod/mini';",
       errors: [{ message: expectedZodImportMessage }],
     },
     {
       name: 'namespace alias different from z is disallowed',
-      code: "import * as zod from 'zod';",
+      code: "import * as zod from 'zod/mini';",
       errors: [{ message: expectedZodImportMessage }],
     },
     {
       name: 'type named import is disallowed',
-      code: "import type { ZodType } from 'zod';",
+      code: "import type { ZodMiniType } from 'zod/mini';",
       errors: [{ message: expectedZodImportMessage }],
     },
     {
@@ -107,17 +108,17 @@ ruleTester.run('zod-import-namespace', zodImportNamespaceRule, {
     },
     {
       name: 'side effect import is disallowed',
-      code: "import 'zod';",
+      code: "import 'zod/mini';",
       errors: [{ message: expectedZodImportMessage }],
     },
     {
-      name: 'namespace import from zod subpath is disallowed',
-      code: "import * as z from 'zod/mini';",
+      name: 'namespace import from zod root is disallowed',
+      code: "import * as z from 'zod';",
       errors: [{ message: expectedZodImportMessage }],
     },
     {
-      name: 'named import from zod subpath is disallowed',
-      code: "import { z } from 'zod/mini';",
+      name: 'named import from zod root is disallowed',
+      code: "import { z } from 'zod';",
       errors: [{ message: expectedZodImportMessage }],
     },
     {
@@ -133,11 +134,11 @@ ruleTester.run('no-config-feature-toggles', featureTogglesRule, {
   valid: [
     {
       name: 'OpenFeature hook',
-      code: `const enabled = useFlagFoldersAppPlatformAPI();`,
+      code: `const enabled = useFlagOtelLogsFormatting();`,
     },
     {
       name: 'OpenFeature client outside React',
-      code: `const enabled = getFeatureFlagClient().getBooleanValue(FlagKeys.FoldersAppPlatformAPI, false);`,
+      code: `const enabled = getFeatureFlagClient().getBooleanValue(FlagKeys.OtelLogsFormatting, false);`,
     },
     {
       name: 'keyof FeatureToggles type reference',

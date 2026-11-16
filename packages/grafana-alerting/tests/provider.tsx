@@ -3,10 +3,10 @@ import { useEffect } from 'react';
 import { Provider } from 'react-redux';
 
 import { MockBackendSrv } from '@grafana/api-clients';
-import { generatedAPI as rulesAPIv0alpha1 } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { setBackendSrv } from '@grafana/runtime';
 
 import { notificationsAPI } from '../src/grafana/api/notifications';
+import { alertingAPIMiddleware, alertingAPIReducers } from '../src/grafana/api/store';
 
 // Initialize BackendSrv for tests - this allows RTKQ to make HTTP requests
 // The actual HTTP requests will be intercepted by MSW (setupMockServer)
@@ -22,13 +22,8 @@ export const store: ReturnType<typeof configureStore> = configureStore({
       // Disable performance-heavy middleware checks in tests
       serializableCheck: false,
       immutableCheck: false,
-    })
-      .concat(notificationsAPI.middleware)
-      .concat(rulesAPIv0alpha1.middleware),
-  reducer: {
-    [notificationsAPI.reducerPath]: notificationsAPI.reducer,
-    [rulesAPIv0alpha1.reducerPath]: rulesAPIv0alpha1.reducer,
-  },
+    }).concat(alertingAPIMiddleware),
+  reducer: alertingAPIReducers,
 });
 
 /**

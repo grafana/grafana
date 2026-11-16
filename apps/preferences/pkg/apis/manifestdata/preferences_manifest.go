@@ -40,13 +40,14 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "Preferences",
 					Plural:     "Preferences",
+					Resource:   "preferences",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Storage: &app.ManifestVersionKindStorage{
-						ListKeys: func(b bool) *bool { return &b }(false),
+						ListKeys: new(false),
 					},
 					Search: &app.ManifestVersionKindSearch{
-						Endpoint: func(b bool) *bool { return &b }(false),
+						Endpoint: new(false),
 					},
 					Admission: &app.AdmissionCapabilities{
 						Validation: &app.ValidationCapability{
@@ -68,13 +69,14 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "Preferences",
 					Plural:     "Preferences",
+					Resource:   "preferences",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Storage: &app.ManifestVersionKindStorage{
-						ListKeys: func(b bool) *bool { return &b }(false),
+						ListKeys: new(false),
 					},
 					Search: &app.ManifestVersionKindSearch{
-						Endpoint: func(b bool) *bool { return &b }(false),
+						Endpoint: new(false),
 					},
 					Admission: &app.AdmissionCapabilities{
 						Validation: &app.ValidationCapability{

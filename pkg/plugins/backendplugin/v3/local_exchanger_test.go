@@ -16,9 +16,10 @@ import (
 	"github.com/go-jose/go-jose/v4/jwt"
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
-	appplugin "github.com/grafana/grafana-app-sdk/plugin"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/metadata"
+
+	"github.com/grafana/grafana-app-sdk/plugin"
 )
 
 func TestLocalTokenExchangerIsShared(t *testing.T) {
@@ -36,15 +37,10 @@ func TestLocalTokenExchangerIsShared(t *testing.T) {
 	require.NoError(t, err, "the shared signing keys verify the shared exchanger's tokens")
 }
 
-func TestEnvVarSigningKeysMatchAppSDK(t *testing.T) {
-	require.Equal(t, appplugin.EnvVarGrafanaJWKS, EnvVarSigningKeys)
-	require.Equal(t, appplugin.EnvVarGrafanaJWKSURL, EnvVarSigningKeysURL)
-}
-
 func TestRealSigningKeysConfigured(t *testing.T) {
 	require.False(t, RealSigningKeysConfigured(""))
 	require.True(t, RealSigningKeysConfigured("https://auth.example.com/v1/keys"))
-	for _, key := range []string{EnvVarSigningKeys, EnvVarSigningKeysURL} {
+	for _, key := range []string{plugin.EnvVarGrafanaJWKS, plugin.EnvVarGrafanaJWKSURL} {
 		t.Run(key, func(t *testing.T) {
 			t.Setenv(key, "from-host")
 			require.True(t, RealSigningKeysConfigured(""))
@@ -116,7 +112,7 @@ func TestLocalExchangerCarriesTheCaller(t *testing.T) {
 }
 
 // jwksVerifier verifies access tokens with the keys of a JWKS, as a plugin
-// started with that JWKS in GRAFANA_JWKS does.
+// started with that JWKS in GF_JWKS does.
 func jwksVerifier(t *testing.T, jwks string, audience string) *authnlib.AccessTokenVerifier {
 	t.Helper()
 	var set jose.JSONWebKeySet

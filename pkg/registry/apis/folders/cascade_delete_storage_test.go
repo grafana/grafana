@@ -3,10 +3,14 @@ package folders
 import (
 	"context"
 	"errors"
+	"fmt"
+	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+	grpccodes "google.golang.org/grpc/codes"
+	grpcstatus "google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -146,13 +150,18 @@ type fakeCascadeSearcher struct {
 	childrenByParent   map[string][]string
 	dashboardsByFolder map[string][]string
 	variablesByFolder  map[string][]string
-	searchCtx          context.Context
-	requests           []*resourcepb.ResourceSearchRequest
+	// errByResource fails searches for a resource with a nil response, as a unified storage server does.
+	errByResource map[string]error
+	searchCtx     context.Context
+	requests      []*resourcepb.ResourceSearchRequest
 }
 
 func (s *fakeCascadeSearcher) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
 	s.searchCtx = ctx
 	s.requests = append(s.requests, req)
+	if err := s.errByResource[req.Options.Key.Resource]; err != nil {
+		return nil, err
+	}
 	var names []string
 	for _, uid := range folderFilterValues(req) {
 		switch req.Options.Key.Resource {
@@ -164,9 +173,9 @@ func (s *fakeCascadeSearcher) Search(ctx context.Context, req *resourcepb.Resour
 			names = append(names, s.variablesByFolder[uid]...)
 		}
 	}
-	rows := make([]*resourcepb.ResourceTableRow, 0, len(names))
+	rows := make([]*resourcepb.ResourceSearchRow, 0, len(names))
 	for _, n := range names {
-		rows = append(rows, &resourcepb.ResourceTableRow{Key: &resourcepb.ResourceKey{Name: n}})
+		rows = append(rows, &resourcepb.ResourceSearchRow{Key: &resourcepb.ResourceKey{Name: n}})
 	}
 
 	// Honor offset/limit so multi-page enumeration is exercised.
@@ -176,7 +185,7 @@ func (s *fakeCascadeSearcher) Search(ctx context.Context, req *resourcepb.Resour
 	if req.Limit > 0 && start+req.Limit < end {
 		end = start + req.Limit
 	}
-	return &resourcepb.ResourceSearchResponse{Results: &resourcepb.ResourceTable{Rows: rows[start:end]}, TotalHits: total}, nil
+	return &resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES, Rows: rows[start:end], TotalHits: total}, nil
 }
 
 func folderFilterValues(req *resourcepb.ResourceSearchRequest) []string {
@@ -354,16 +363,18 @@ func TestCascadeDelete_DeletesAllVariablesInFolder(t *testing.T) {
 	}
 }
 
-// recordingContentsDeleter records the folders whose contents were requested for deletion, and the
-// requester each deletion was attributed to.
+// recordingContentsDeleter records the folders whose contents were requested for deletion, the
+// requester each deletion was attributed to, and the ctx each call received.
 type recordingContentsDeleter struct {
 	folders   []string
 	deletedBy []identity.Requester
+	gotCtx    []context.Context
 }
 
-func (r *recordingContentsDeleter) DeleteInFolder(_ context.Context, _, folderUID string, user identity.Requester) error {
+func (r *recordingContentsDeleter) DeleteInFolder(ctx context.Context, _, folderUID string, user identity.Requester) error {
 	r.folders = append(r.folders, folderUID)
 	r.deletedBy = append(r.deletedBy, user)
+	r.gotCtx = append(r.gotCtx, ctx)
 	return nil
 }
 
@@ -386,6 +397,46 @@ func TestCascadeDelete_DeletesContentsPerFolder(t *testing.T) {
 	for _, got := range deleter.deletedBy {
 		require.Equal(t, requester, got, "contents must be attributed to the real requester, not the service identity used to enumerate the cascade")
 	}
+}
+
+func TestCascadeDelete_MarksUncheckedDeleteAuthorizedOnlyWhenAccessClientChecked(t *testing.T) {
+	t.Run("accessClient wired and checks pass: ctx is marked for this folder", func(t *testing.T) {
+		setKubernetesFolderCascadeDeleteToggle(t, true)
+		store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"root": newFolder("root")}}
+		deleter := &recordingContentsDeleter{}
+		s := &cascadeDeleteStorage{
+			Storage: store, searcher: &fakeCascadeSearcher{}, dashboardClient: nilDashboardClient,
+			variableClient: nilVariableClient, contentsDeleter: deleter, accessClient: &recordingAccessClient{},
+		}
+
+		_, _, err := s.Delete(ctxWithNamespace(), "root", nil, forceDelete())
+		require.NoError(t, err)
+		require.Len(t, deleter.gotCtx, 1)
+
+		requester, err := identity.GetRequester(ctxWithNamespace())
+		require.NoError(t, err)
+		require.True(t, folder.IsUncheckedDeleteAuthorized(deleter.gotCtx[0], 1, requester, []string{"root"}),
+			"an Unchecked contentsDeleter must be able to trust ctx once checkFolderContentsAccess has passed")
+	})
+
+	t.Run("no accessClient wired: ctx is not marked, since nothing was actually checked", func(t *testing.T) {
+		setKubernetesFolderCascadeDeleteToggle(t, true)
+		store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"root": newFolder("root")}}
+		deleter := &recordingContentsDeleter{}
+		s := &cascadeDeleteStorage{
+			Storage: store, searcher: &fakeCascadeSearcher{}, dashboardClient: nilDashboardClient,
+			variableClient: nilVariableClient, contentsDeleter: deleter,
+		}
+
+		_, _, err := s.Delete(ctxWithNamespace(), "root", nil, forceDelete())
+		require.NoError(t, err)
+		require.Len(t, deleter.gotCtx, 1)
+
+		requester, err := identity.GetRequester(ctxWithNamespace())
+		require.NoError(t, err)
+		require.False(t, folder.IsUncheckedDeleteAuthorized(deleter.gotCtx[0], 1, requester, []string{"root"}),
+			"checkFolderContentsAccess is a no-op without an accessClient, so ctx must not claim authorization")
+	})
 }
 
 func TestCascadeDelete_RejectsEnumerationIdentityAsRequester(t *testing.T) {
@@ -476,6 +527,42 @@ func TestCascadeDelete_DashboardDeleteErrorPropagates(t *testing.T) {
 	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, forceDelete())
 	require.Error(t, err)
 	require.Empty(t, store.deleted, "folder must not be deleted when a dashboard delete fails")
+}
+
+func TestCascadeDelete_ContentSearchErrorAborts(t *testing.T) {
+	unavailable := &resourcepb.ErrorResult{
+		Code:    http.StatusServiceUnavailable,
+		Reason:  string(metav1.StatusReasonServiceUnavailable),
+		Message: "index unavailable",
+		Details: &resourcepb.ErrorDetails{RetryAfterSeconds: 5},
+	}
+	st, err := grpcstatus.New(grpccodes.Unavailable, unavailable.Message).WithDetails(unavailable)
+	require.NoError(t, err)
+
+	for name, newCascade := range map[string]func(grafanarest.Storage, resourcepb.ResourceIndexClient, ...runtime.Object) (*cascadeDeleteStorage, *dynamicfake.FakeDynamicClient){
+		dashv1.DashboardResourceInfo.GroupVersionResource().Resource:     newDashboardCascade,
+		dashv2beta1.VariableResourceInfo.GroupVersionResource().Resource: newVariableCascade,
+	} {
+		t.Run(name, func(t *testing.T) {
+			setKubernetesFolderCascadeDeleteToggle(t, true)
+			store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"root": newFolder("root")}}
+			searcher := &fakeCascadeSearcher{errByResource: map[string]error{name: fmt.Errorf("search: %w", st.Err())}}
+			s, _ := newCascade(store, searcher)
+
+			_, _, err := s.Delete(ctxWithNamespace(), "root", nil, forceDelete())
+
+			require.Empty(t, store.deleted, "folder must not be deleted when its contents cannot be listed")
+			var apiStatus apierrors.APIStatus
+			require.ErrorAs(t, err, &apiStatus)
+			require.Equal(t, metav1.Status{
+				Status:  metav1.StatusFailure,
+				Code:    http.StatusServiceUnavailable,
+				Reason:  metav1.StatusReasonServiceUnavailable,
+				Message: "index unavailable",
+				Details: &metav1.StatusDetails{RetryAfterSeconds: 5},
+			}, apiStatus.Status())
+		})
+	}
 }
 
 func TestCascadeDelete_IdempotentOnMissingChild(t *testing.T) {
@@ -686,6 +773,35 @@ func TestCascadeDelete_DisabledDelegates(t *testing.T) {
 	// With the flag off only the requested folder is deleted; no cascade, no stamping.
 	require.Equal(t, []string{"root"}, store.deleted)
 	require.Empty(t, store.stamped)
+}
+
+func TestCascadeDelete_FinalizerFolderDelegates(t *testing.T) {
+	setKubernetesFolderCascadeDeleteToggle(t, true)
+
+	// A folder carrying the cascade finalizer is left to the cascade controller: the forced delete
+	// only marks it terminating, with no synchronous walk of its subtree.
+	root := newFolder("root")
+	root.Finalizers = []string{foldersv1.CascadeDeleteFinalizer}
+	store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"root": root, "child": newFolder("child")}}
+	searcher := &fakeCascadeSearcher{
+		childrenByParent:   map[string][]string{"root": {"child"}},
+		dashboardsByFolder: map[string][]string{"root": {"dash-1"}},
+	}
+	s, dyn := newDashboardCascade(store, searcher, unstructuredDashboard("default", "dash-1"))
+
+	validated := false
+	validate := func(context.Context, runtime.Object) error { validated = true; return nil }
+
+	_, _, err := s.Delete(ctxWithNamespace(), "root", validate, forceDelete())
+	require.NoError(t, err)
+	require.True(t, validated, "delete validation must still run")
+	require.Equal(t, []string{"root"}, store.deleted)
+	require.Empty(t, store.stamped)
+	require.Contains(t, store.existing, "child")
+
+	gvr := dashv1.DashboardResourceInfo.GroupVersionResource()
+	_, err = dyn.Resource(gvr).Namespace("default").Get(ctxWithNamespace(), "dash-1", metav1.GetOptions{})
+	require.NoError(t, err, "dashboard must be left for the cascade controller")
 }
 
 // recordingAccessClient records Check calls and optionally filters by allow.

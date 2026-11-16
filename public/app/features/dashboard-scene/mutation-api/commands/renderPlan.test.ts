@@ -1,17 +1,33 @@
 import { waitFor } from '@testing-library/react';
+import { makeDataSourceSettings } from 'test/helpers/makeDataSourceSettings';
+import {
+  type DataSourceFallbackWatcher,
+  seedDataSources,
+  watchDataSourceFallbacks,
+} from 'test/helpers/seedDataSources';
+import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 
 import { FieldType, LoadingState } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
 import { type CustomVariable, VizPanel, sceneGraph } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
+import { appEvents } from 'app/core/app_events';
 
+import { moveGridItem } from '../../actions/layout/moveGridItem';
+import { moveRowToTab } from '../../actions/layout/moveRowToTab';
+import { reorderRows } from '../../actions/layout/reorderRows';
+import { edit } from '../../actions/utils/edit';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { PlanPlaceholderBadge } from '../../scene/PlanPlaceholderBadge';
+import { type DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
+import { DashboardPlanChangedEvent, DashboardPlanningEvent } from '../../scene/planningEvents';
 import * as planningSampleData from '../../scene/planningSampleData';
+import { type DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
 import { type DashboardSceneState } from '../../scene/types/dashboard';
 import { AddNewPane } from '../../sidebar/add-new/AddNewPane';
 import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
@@ -19,12 +35,12 @@ import { DashboardMutationClient } from '../DashboardMutationClient';
 
 import { renderPlanContractFixture, renderPlanNestedTabsContractFixture } from './renderPlanContractFixture';
 
-// A dashboard built from a spec carries the built-in annotation layer, which looks up its
-// datasource on activation. Nothing here queries data, so that lookup never settles.
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: () => ({ get: () => new Promise(() => {}), getInstanceSettings: () => undefined }),
-}));
+// A dashboard built from a spec carries the built-in annotation layer, which resolves its
+// datasource on activation.
+beforeEach(() => {
+  const grafanaSettings = makeDataSourceSettings('-- Grafana --', 'Grafana', 'grafana');
+  seedDataSources([{ settings: grafanaSettings, api: new MockDataSourceApi(grafanaSettings) }], { legacySrv: 'mock' });
+});
 
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({ id })),
@@ -59,6 +75,16 @@ const plan = {
     { title: 'Errors', panels: [{ title: 'Error rate', vizType: 'timeseries' }] },
   ],
 };
+
+let dataSourceFallbacks: DataSourceFallbackWatcher;
+
+beforeEach(() => {
+  dataSourceFallbacks = watchDataSourceFallbacks();
+});
+
+afterEach(() => {
+  dataSourceFallbacks.expectNoFallbacks(['instance', 'settings', 'list']);
+});
 
 describe('RENDER_PLAN', () => {
   it('renders the whole plan in one call: rows, panels, and planning state', async () => {
@@ -388,6 +414,561 @@ describe('RENDER_PLAN', () => {
     });
   });
 
+  describe('with plan editing enabled, the rendered grids can be arranged by hand', () => {
+    const planEditingFlags = {
+      [FlagKeys.GrafanaDashboardPreviewMode]: true,
+      [FlagKeys.GrafanaDashboardComposer]: true,
+      [FlagKeys.AssistantDashboardPlanEditing]: true,
+    };
+
+    beforeEach(() => setTestFlags(planEditingFlags));
+    afterEach(() => setTestFlags({}));
+
+    function getGrid(scene: DashboardScene) {
+      const rows = (scene.state.body as RowsLayoutManager).state.rows;
+      return (rows[0].getLayout() as DefaultGridLayoutManager).state.grid;
+    }
+
+    it('on the marker path, while the scene stays in view mode', async () => {
+      const { scene, client } = setup();
+
+      await client.execute({ type: 'RENDER_PLAN', payload: plan });
+
+      const grid = getGrid(scene);
+      await waitFor(() => expect(grid.isDraggable()).toBe(true));
+      expect(grid.state.isResizable).toBe(true);
+      expect(scene.state.isEditing).toBeFalsy();
+    });
+
+    it('on the fallback path, where exiting edit mode would otherwise turn dragging off again', async () => {
+      const { scene, client } = setup();
+      scene.onEnterEditMode();
+
+      await client.execute({ type: 'RENDER_PLAN', payload: plan });
+
+      const grid = getGrid(scene);
+      await waitFor(() => expect(grid.isDraggable()).toBe(true));
+      expect(grid.state.isResizable).toBe(true);
+      expect(scene.state.isEditing).toBe(false);
+    });
+
+    it('stays fixed without the plan editing flag', async () => {
+      setTestFlags({ ...planEditingFlags, [FlagKeys.AssistantDashboardPlanEditing]: false });
+      const { scene, client } = setup();
+
+      await client.execute({ type: 'RENDER_PLAN', payload: plan });
+
+      const grid = getGrid(scene);
+      await waitFor(() => expect(grid.isDraggable()).toBe(false));
+      expect(grid.state.isResizable).toBe(false);
+    });
+
+    it('accepts moving a section but refuses any other edit', async () => {
+      const { scene, client } = setup();
+      await client.execute({ type: 'RENDER_PLAN', payload: plan });
+      const deactivateSidebar = scene.state.sidebar.activate();
+
+      try {
+        const layout = scene.state.body as RowsLayoutManager;
+        reorderRows(layout, 0, 1);
+        expect(layout.state.rows.map((row) => row.state.title)).toEqual(['Errors', 'Throughput']);
+
+        const perform = jest.fn();
+        edit({ source: layout, meta: { actionId: 'panel.remove' }, perform, undo: jest.fn() });
+        expect(perform).not.toHaveBeenCalled();
+        expect(scene.state.isEditing).toBeFalsy();
+      } finally {
+        deactivateSidebar();
+      }
+    });
+
+    it('accepts moving a panel into another section', async () => {
+      const { scene, client } = setup();
+      await client.execute({ type: 'RENDER_PLAN', payload: plan });
+      const deactivateSidebar = scene.state.sidebar.activate();
+
+      try {
+        const [throughput, errors] = (scene.state.body as RowsLayoutManager).state.rows;
+        const requests = throughput.getLayout().getVizPanels()[0];
+        moveGridItem({
+          source: throughput,
+          destination: errors,
+          gridItem: requests.parent as DashboardGridItem,
+          originalIndex: 0,
+        });
+
+        expect(
+          throughput
+            .getLayout()
+            .getVizPanels()
+            .map((panel) => panel.state.title)
+        ).toEqual([]);
+        expect(
+          errors
+            .getLayout()
+            .getVizPanels()
+            .map((panel) => panel.state.title)
+        ).toEqual(['Error rate', 'Requests']);
+      } finally {
+        deactivateSidebar();
+      }
+    });
+
+    it('refuses moving a section without the plan editing flag', async () => {
+      setTestFlags({ ...planEditingFlags, [FlagKeys.AssistantDashboardPlanEditing]: false });
+      const { scene, client } = setup();
+      await client.execute({ type: 'RENDER_PLAN', payload: plan });
+      const deactivateSidebar = scene.state.sidebar.activate();
+
+      try {
+        const layout = scene.state.body as RowsLayoutManager;
+        reorderRows(layout, 0, 1);
+        expect(layout.state.rows.map((row) => row.state.title)).toEqual(['Throughput', 'Errors']);
+      } finally {
+        deactivateSidebar();
+      }
+    });
+
+    it('stays fixed once the plan is building', async () => {
+      const { scene, client } = setup();
+
+      await client.execute({ type: 'RENDER_PLAN', payload: { ...plan, phase: 'building' } });
+
+      const grid = getGrid(scene);
+      await waitFor(() => expect(grid.isDraggable()).toBe(false));
+      expect(grid.state.isResizable).toBe(false);
+    });
+  });
+
+  describe('with plan editing enabled, the preview owns the plan', () => {
+    beforeEach(() =>
+      setTestFlags({
+        [FlagKeys.GrafanaDashboardPreviewMode]: true,
+        [FlagKeys.GrafanaDashboardComposer]: true,
+        [FlagKeys.AssistantDashboardPlanEditing]: true,
+      })
+    );
+    afterEach(() => setTestFlags({}));
+
+    const arrangedPlan = {
+      planId: 'plan-1',
+      title: 'Kafka overview',
+      layout: 'rows' as const,
+      sections: [
+        {
+          id: 'throughput',
+          title: 'Throughput',
+          panels: [
+            {
+              id: 4,
+              title: 'Requests',
+              vizType: 'timeseries',
+              intent: 'Requests per second by topic',
+              visualization: 'line chart',
+              gridPos: { x: 0, y: 0, w: 16, h: 8 },
+            },
+            { id: 9, title: 'Bytes in', vizType: 'timeseries', gridPos: { x: 16, y: 0, w: 8, h: 8 } },
+          ],
+        },
+        { id: 'errors', title: 'Errors', panels: [{ id: 2, title: 'Error rate', vizType: 'stat' }] },
+      ],
+    };
+
+    function getEditablePlan(scene: DashboardScene) {
+      const { planning } = scene.state;
+      return planning?.phase === 'preview' ? planning.editable : undefined;
+    }
+
+    function getRows(scene: DashboardScene) {
+      return (scene.state.body as RowsLayoutManager).state.rows;
+    }
+
+    function getGridItems(layout: DashboardLayoutManager) {
+      return (layout as DefaultGridLayoutManager).state.grid.state.children as DashboardGridItem[];
+    }
+
+    function collectPlanningEvents() {
+      const events: Array<DashboardPlanningEvent['payload'] | DashboardPlanChangedEvent['payload']> = [];
+      const decisions = appEvents.subscribe(DashboardPlanningEvent, (event) => events.push(event.payload));
+      const changes = appEvents.subscribe(DashboardPlanChangedEvent, (event) => events.push(event.payload));
+      return {
+        events,
+        unsubscribe: () => {
+          decisions.unsubscribe();
+          changes.unsubscribe();
+        },
+      };
+    }
+
+    it('names panels and sections by their plan ids, and places panels where the plan says', async () => {
+      const { scene, client } = setup();
+
+      await client.execute({ type: 'RENDER_PLAN', payload: arrangedPlan });
+
+      const [throughput, errors] = getRows(scene);
+      expect(throughput.state.key).toBe('plan-section-throughput');
+      expect(errors.state.key).toBe('plan-section-errors');
+      expect(
+        getGridItems(throughput.getLayout()).map(({ state }) => [state.body.state.key, state.x, state.y, state.width])
+      ).toEqual([
+        ['panel-4', 0, 0, 16],
+        ['panel-9', 16, 0, 8],
+      ]);
+      expect(throughput.getLayout().getVizPanels()[0].state.description).toBe('Requests per second by topic');
+    });
+
+    it('keeps the plan, with ids for everything and every position as rendered', async () => {
+      const { scene, client } = setup();
+
+      const result = await client.execute({ type: 'RENDER_PLAN', payload: plan });
+
+      expect(result.data).toEqual(getEditablePlan(scene));
+      expect(getEditablePlan(scene)).toEqual({
+        revision: 0,
+        plan: {
+          title: 'Kafka overview',
+          layout: 'rows',
+          sections: [
+            {
+              id: 'section-1',
+              title: 'Throughput',
+              panels: [{ id: 1, title: 'Requests', vizType: 'timeseries', gridPos: { x: 0, y: 0, w: 8, h: 10 } }],
+            },
+            {
+              id: 'section-2',
+              title: 'Errors',
+              panels: [{ id: 2, title: 'Error rate', vizType: 'timeseries', gridPos: { x: 0, y: 0, w: 8, h: 10 } }],
+            },
+          ],
+        },
+      });
+    });
+
+    it('packs a section automatically unless every panel in it has a position', async () => {
+      const { scene, client } = setup();
+      const [throughput] = arrangedPlan.sections;
+      const partlyPlaced = {
+        ...arrangedPlan,
+        sections: [{ ...throughput, panels: [throughput.panels[0], { ...throughput.panels[1], gridPos: undefined }] }],
+      };
+
+      await client.execute({ type: 'RENDER_PLAN', payload: partlyPlaced });
+
+      expect(getGridItems(getRows(scene)[0].getLayout()).map(({ state }) => [state.x, state.width])).toEqual([
+        [0, 8],
+        [8, 8],
+      ]);
+    });
+
+    it('refuses a plan that gives two panels the same id', async () => {
+      const { scene, client } = setup();
+      const [throughput, errors] = arrangedPlan.sections;
+
+      const result = await client.execute({
+        type: 'RENDER_PLAN',
+        payload: { ...arrangedPlan, sections: [throughput, { ...errors, panels: [{ ...errors.panels[0], id: 4 }] }] },
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('Panel id 4 is used more than once.');
+      expect(scene.isPlanning()).toBe(false);
+    });
+
+    it('takes a panel moved to another section into the plan, and reports the new revision', async () => {
+      const { scene, client } = setup();
+      await client.execute({ type: 'RENDER_PLAN', payload: arrangedPlan });
+      const deactivateSidebar = scene.state.sidebar.activate();
+      const { events, unsubscribe } = collectPlanningEvents();
+
+      try {
+        const [throughput, errors] = getRows(scene);
+        moveGridItem({
+          source: throughput,
+          destination: errors,
+          gridItem: getGridItems(throughput.getLayout())[1],
+          originalIndex: 1,
+        });
+
+        const editable = getEditablePlan(scene);
+        expect(editable?.revision).toBe(1);
+        expect(editable?.plan.sections.map(({ id, panels }) => [id, panels.map((panel) => panel.id)])).toEqual([
+          ['throughput', [4]],
+          ['errors', [2, 9]],
+        ]);
+        // Content comes from the plan, not the scene.
+        expect(editable?.plan.sections[0].panels[0]).toMatchObject({
+          title: 'Requests',
+          intent: 'Requests per second by topic',
+          visualization: 'line chart',
+        });
+        // Not a DashboardPlanningEvent, which a listener that predates plan editing reads as a dismissal.
+        expect(events).toEqual([{ planId: 'plan-1', revision: 1 }]);
+      } finally {
+        unsubscribe();
+        deactivateSidebar();
+      }
+    });
+
+    it('takes a resize into the plan', async () => {
+      const { scene, client } = setup();
+      await client.execute({ type: 'RENDER_PLAN', payload: arrangedPlan });
+      const deactivateSidebar = scene.state.sidebar.activate();
+
+      try {
+        const layout = getRows(scene)[0].getLayout() as DefaultGridLayoutManager;
+        const cells = getGridItems(layout).map(({ state }) => ({
+          i: state.key!,
+          x: state.x ?? 0,
+          y: state.y ?? 0,
+          w: state.width ?? 0,
+          h: state.height ?? 0,
+        }));
+        layout.state.grid.onResizeStop([{ ...cells[0], w: 12, h: 6 }, cells[1]]);
+
+        expect(getEditablePlan(scene)?.plan.sections[0].panels[0].gridPos).toEqual({ x: 0, y: 0, w: 12, h: 6 });
+        expect(getEditablePlan(scene)?.revision).toBe(1);
+      } finally {
+        deactivateSidebar();
+      }
+    });
+
+    it('takes a section reorder into the plan', async () => {
+      const { scene, client } = setup();
+      await client.execute({ type: 'RENDER_PLAN', payload: arrangedPlan });
+      const deactivateSidebar = scene.state.sidebar.activate();
+
+      try {
+        reorderRows(scene.state.body as RowsLayoutManager, 0, 1);
+
+        expect(getEditablePlan(scene)?.plan.sections.map((section) => section.id)).toEqual(['errors', 'throughput']);
+        expect(getEditablePlan(scene)?.revision).toBe(1);
+      } finally {
+        deactivateSidebar();
+      }
+    });
+
+    it("takes a tab's only row moved to another tab into the plan, leaving the first tab empty", async () => {
+      const { scene, client } = setup();
+      await client.execute({
+        type: 'RENDER_PLAN',
+        payload: {
+          planId: 'plan-1',
+          title: 'Kafka overview',
+          layout: 'tabs',
+          sections: [
+            {
+              id: 'alpha',
+              title: 'Alpha',
+              panels: [],
+              sections: [{ id: 'metrics', title: 'Metrics', panels: [{ id: 1, title: 'CPU', vizType: 'timeseries' }] }],
+            },
+            {
+              id: 'beta',
+              title: 'Beta',
+              panels: [],
+              sections: [{ id: 'logs', title: 'Logs', panels: [{ id: 2, title: 'Errors', vizType: 'logs' }] }],
+            },
+          ],
+        },
+      });
+      const deactivateSidebar = scene.state.sidebar.activate();
+
+      try {
+        const [alpha, beta] = (scene.state.body as TabsLayoutManager).state.tabs;
+        const source = alpha.getLayout() as RowsLayoutManager;
+        moveRowToTab({ row: source.state.rows[0], source, destination: beta });
+
+        const editable = getEditablePlan(scene);
+        expect(editable?.revision).toBe(1);
+        expect(
+          editable?.plan.sections.map(({ id, panels, sections }) => [
+            id,
+            panels.map((panel) => panel.id),
+            sections?.map((row) => [row.id, row.panels.map((panel) => panel.id)]),
+          ])
+        ).toEqual([
+          ['alpha', [], undefined],
+          [
+            'beta',
+            [],
+            [
+              ['logs', [2]],
+              ['metrics', [1]],
+            ],
+          ],
+        ]);
+
+        // A panel dropped into the emptied tab lands in a grid the plan can describe.
+        const emptied = alpha.getLayout();
+        expect(emptied).toBeInstanceOf(DefaultGridLayoutManager);
+        const [, metrics] = (beta.getLayout() as RowsLayoutManager).state.rows;
+        moveGridItem({
+          source: metrics,
+          destination: alpha,
+          gridItem: getGridItems(metrics.getLayout())[0],
+          originalIndex: 0,
+        });
+
+        expect(getEditablePlan(scene)?.revision).toBe(2);
+        expect(getEditablePlan(scene)?.plan.sections[0]).toMatchObject({
+          id: 'alpha',
+          panels: [{ id: 1, title: 'CPU' }],
+        });
+      } finally {
+        deactivateSidebar();
+      }
+    });
+
+    it('reports the arranged plan with Build, Dismiss and closing the preview', async () => {
+      const { scene, client } = setup();
+      await client.execute({ type: 'RENDER_PLAN', payload: arrangedPlan });
+      const deactivateSidebar = scene.state.sidebar.activate();
+      const { events, unsubscribe } = collectPlanningEvents();
+
+      try {
+        reorderRows(scene.state.body as RowsLayoutManager, 0, 1);
+        const { planning } = scene.state;
+        if (planning?.phase !== 'preview' || !planning.editable) {
+          throw new Error('Expected an editable plan preview');
+        }
+        const arranged = planning.editable;
+        planning.onBuild();
+        planning.onDismiss();
+        cleanUpPreviousScene();
+        cleanUpPreviousScene = () => {};
+
+        expect(arranged.revision).toBe(1);
+        expect(arranged.plan.sections.map((section) => section.id)).toEqual(['errors', 'throughput']);
+        expect(events.slice(1)).toEqual([
+          { planId: 'plan-1', action: 'build', ...arranged },
+          { planId: 'plan-1', action: 'dismiss', ...arranged },
+          { planId: 'plan-1', action: 'closed', ...arranged },
+        ]);
+      } finally {
+        unsubscribe();
+        deactivateSidebar();
+      }
+    });
+
+    it('builds a skeleton of the plan as arranged: real panels, the same keys and layout, no sample data', async () => {
+      const { scene, client } = setup();
+      await client.execute({ type: 'RENDER_PLAN', payload: arrangedPlan });
+      const deactivateSidebar = scene.state.sidebar.activate();
+      try {
+        const [throughput, errors] = getRows(scene);
+        moveGridItem({
+          source: throughput,
+          destination: errors,
+          gridItem: getGridItems(throughput.getLayout())[1],
+          originalIndex: 1,
+        });
+      } finally {
+        deactivateSidebar();
+      }
+      const arranged = getEditablePlan(scene)?.plan;
+
+      // The payload is the plan as proposed; the arranged one in the preview wins.
+      const result = await client.execute({ type: 'RENDER_PLAN', payload: { ...arrangedPlan, phase: 'building' } });
+
+      expect(result.data).toEqual({ plan: arranged });
+
+      expect(scene.state.planning).toMatchObject({ phase: 'building', planId: 'plan-1' });
+      const [throughput, errors] = getRows(scene);
+      expect([throughput.state.title, errors.state.title]).toEqual(['Throughput', 'Errors']);
+      const placed = (layout: DashboardLayoutManager) =>
+        getGridItems(layout).map(({ state }) => [state.body.state.key, state.x, state.y, state.width, state.height]);
+      expect(placed(throughput.getLayout())).toEqual([['panel-4', 0, 0, 16, 8]]);
+      expect(placed(errors.getLayout())).toEqual(
+        arranged?.sections[1].panels.map(({ id, gridPos }) => [
+          `panel-${id}`,
+          gridPos?.x,
+          gridPos?.y,
+          gridPos?.w,
+          gridPos?.h,
+        ])
+      );
+      for (const panel of scene.state.body.getVizPanels()) {
+        expect(getQueryRunnerFor(panel)).toBeDefined();
+        expect(panel.state.menu).toBeDefined();
+        expect(panel.state.description).toBeFalsy();
+        const titleItems = Array.isArray(panel.state.titleItems) ? panel.state.titleItems : [];
+        expect(titleItems.some((item) => item instanceof PlanPlaceholderBadge)).toBe(false);
+      }
+      expect(scene.state.$variables?.state.variables).toEqual([]);
+    });
+
+    it('builds the skeleton from the payload when no preview of the plan is open', async () => {
+      const { scene, client } = setup();
+
+      await client.execute({ type: 'RENDER_PLAN', payload: { ...arrangedPlan, phase: 'building' } });
+
+      expect(scene.state.body.getVizPanels().map((panel) => panel.state.key)).toEqual([
+        'panel-4',
+        'panel-9',
+        'panel-2',
+      ]);
+    });
+
+    it('clears undo history recorded against the panels a render replaces', async () => {
+      const { scene, client } = setup();
+      await client.execute({ type: 'RENDER_PLAN', payload: arrangedPlan });
+      const deactivateSidebar = scene.state.sidebar.activate();
+
+      try {
+        reorderRows(scene.state.body as RowsLayoutManager, 0, 1);
+        expect(scene.state.sidebar.state.undoStack).toHaveLength(1);
+
+        await client.execute({ type: 'RENDER_PLAN', payload: { ...arrangedPlan, phase: 'building' } });
+
+        expect(scene.state.sidebar.state.undoStack).toEqual([]);
+      } finally {
+        deactivateSidebar();
+      }
+    });
+  });
+
+  describe('GET_PLAN', () => {
+    beforeEach(() =>
+      setTestFlags({
+        [FlagKeys.GrafanaDashboardPreviewMode]: true,
+        [FlagKeys.GrafanaDashboardComposer]: true,
+        [FlagKeys.AssistantDashboardPlanEditing]: true,
+      })
+    );
+    afterEach(() => setTestFlags({}));
+
+    it('reads the plan the preview owns, with its revision, while every other command is refused', async () => {
+      const { scene, client } = setup();
+      await client.execute({ type: 'RENDER_PLAN', payload: plan });
+
+      const result = await client.execute({ type: 'GET_PLAN', payload: { planId: 'plan-1' } });
+
+      expect(result.success).toBe(true);
+      const { planning } = scene.state;
+      expect(result.data).toEqual(planning?.phase === 'preview' ? planning.editable : undefined);
+      expect(result.data).toMatchObject({ revision: 0, plan: { title: 'Kafka overview' } });
+    });
+
+    it('refuses a plan that is not the one being previewed', async () => {
+      const { client } = setup();
+      await client.execute({ type: 'RENDER_PLAN', payload: plan });
+
+      const result = await client.execute({ type: 'GET_PLAN', payload: { planId: 'plan-0' } });
+
+      expect(result).toMatchObject({ success: false, error: 'No editable preview of this plan is open.' });
+    });
+
+    it('is not available with plan editing off', async () => {
+      setTestFlags({});
+      const { client } = setup();
+      await client.execute({ type: 'RENDER_PLAN', payload: plan });
+
+      const result = await client.execute({ type: 'GET_PLAN', payload: { planId: 'plan-1' } });
+
+      expect(result.success).toBe(false);
+    });
+  });
+
   describe('precondition: refuses any target that is not a blank, unsaved dashboard', () => {
     // RENDER_PLAN replaces the whole body and END_PLANNING clears unconditionally -- safe only
     // if the target was already blank and unsaved. These guard against a caller that reaches
@@ -431,6 +1012,8 @@ describe('RENDER_PLAN', () => {
 
       expect(result.success).toBe(true);
       expect(scene.state.planning).toBeDefined();
+      // The plan is only returned with plan editing on.
+      expect(result.data).toBeUndefined();
     });
 
     it('does not refuse a re-render of an already-planning scene, even though it now has panels', async () => {

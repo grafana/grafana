@@ -1,8 +1,6 @@
 import { produce } from 'immer';
 import { HttpResponse, delay, http } from 'msw';
 
-export const MOCK_GRAFANA_ALERT_RULE_TITLE = 'Test alert';
-
 import {
   type GrafanaAlertState,
   type GrafanaRuleDefinition,

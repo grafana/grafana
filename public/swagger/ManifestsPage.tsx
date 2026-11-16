@@ -6,8 +6,15 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Alert, Badge, Button, Icon, IconButton, Input, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
 
-import { getTableStyles, RouterShell, Table } from './RouterShell';
-import { type GroupStatus, healthColors, type RouterStatus, routerStatusURL, SourceBadge } from './RouterStatusPage';
+import { devFixture, getTableStyles, RouterShell, Table } from './RouterShell';
+import {
+  type GroupStatus,
+  groupsBySourceHref,
+  healthColors,
+  type RouterStatus,
+  routerStatusURL,
+  SourceBadge,
+} from './RouterStatusPage';
 
 export const manifestsURL = 'apis/discovery/v1alpha2/manifests';
 
@@ -98,6 +105,10 @@ function capabilities(version?: ManifestVersion) {
 
 export const ManifestsPage = () => {
   const manifests = useAsyncRetry(async () => {
+    const fixture = devFixture<{ items: AppManifest[] }>('routerManifestsFixture');
+    if (fixture) {
+      return fixture.items ?? [];
+    }
     const rsp = await fetch(manifestsURL, { cache: 'no-store' });
     if (!rsp.ok) {
       throw new Error(`HTTP ${rsp.status} ${rsp.statusText}`);
@@ -107,6 +118,10 @@ export const ManifestsPage = () => {
   });
   // Status only adds a column, so the page still shows the manifests when it fails
   const status = useAsyncRetry(async () => {
+    const fixture = devFixture<RouterStatus>('routerStatusFixture');
+    if (fixture) {
+      return new Map(fixture.groups.map((g) => [g.group, g]));
+    }
     const rsp = await fetch(routerStatusURL, { cache: 'no-store' });
     if (!rsp.ok) {
       return new Map<string, GroupStatus>();
@@ -172,19 +187,7 @@ const ManifestsView = ({ manifests, status }: { manifests: AppManifest[]; status
       return next;
     });
 
-  const headers = [
-    '',
-    'App',
-    'Group',
-    'Status',
-    'Preferred',
-    'Versions',
-    'Kinds',
-    'Routes',
-    'Roles',
-    'Capabilities',
-    '',
-  ];
+  const headers = ['', 'Group', 'Status', 'Versions', 'Kinds', 'Routes', 'Roles', 'Capabilities', ''];
 
   return (
     <Stack direction="column" gap={2}>
@@ -282,38 +285,39 @@ const ManifestRow = ({
         />
       </td>
       <td>
-        <Stack direction="column" gap={0}>
-          <span>{spec.appDisplayName || spec.appName}</span>
-          {spec.appDisplayName && spec.appDisplayName !== spec.appName && (
-            <Text color="secondary" variant="bodySmall">
-              {spec.appName}
-            </Text>
-          )}
-        </Stack>
-      </td>
-      <td>
-        <code>{group}</code>
+        <Tooltip
+          content={
+            spec.appDisplayName && spec.appDisplayName !== spec.appName
+              ? `${spec.appDisplayName} (${spec.appName})`
+              : spec.appName
+          }
+        >
+          <code>{group}</code>
+        </Tooltip>
       </td>
       <td>
         {status ? (
           <Stack gap={0.5}>
-            <Badge color={healthColors[status.health] ?? 'darkgrey'} text={status.health} />
+            {status.health !== 'unknown' && (
+              <Badge color={healthColors[status.health] ?? 'darkgrey'} text={status.health} />
+            )}
             <Tooltip content={<code>{status.key}</code>}>
-              <span>
+              <a href={groupsBySourceHref(status.source)} onClick={(e) => e.stopPropagation()}>
                 <SourceBadge source={status.source} />
-              </span>
+              </a>
             </Tooltip>
           </Stack>
         ) : (
           <Text color="secondary">-</Text>
         )}
       </td>
-      <td>{preferred ?? '-'}</td>
       <td>
         <Stack gap={0.5}>
           {spec.versions.map((v) =>
             isServed(v) ? (
-              <Badge key={v.name} color={v.name === preferred ? 'blue' : 'darkgrey'} text={v.name} />
+              <a key={v.name} href={docsURL(group, v.name)} onClick={(e) => e.stopPropagation()}>
+                <Badge color={v.name === preferred ? 'blue' : 'darkgrey'} text={v.name} />
+              </a>
             ) : (
               <Tooltip key={v.name} content={t('swagger.manifests.not-served', 'Not served')}>
                 <span className={styles.unserved}>{v.name}</span>

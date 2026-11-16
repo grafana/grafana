@@ -17,28 +17,29 @@ port_goff     = base_port + 6   # +6  go feature flag
 manifest_path = 'public/build/assets-manifest.json'
 boot_path = 'public/build/boot.js'
 
-# A cold build (yarn install + serial plugin builds + main rspack compile) can take
+# A cold build (pnpm install + serial plugin builds + main rspack compile) can take
 # longer than Tilt's default 5m readiness timeout, which fails `tilt ci` even though the
 # build succeeds.
 ci_settings(readiness_timeout='15m')
 
 # --- Frontend processes
 local_resource(
-  'yarn install',
-  cmd='yarn install',
+  'pnpm install',
+  cmd='pnpm install',
   deps=[
-    'yarn.lock',
+    'pnpm-lock.yaml',
   ],
   labels=["local"]
 )
 
 local_resource(
-  'yarn start',
+  'pnpm start',
   cmd='rm -rf %s' % manifest_path,
   # noHmr: this stack serves assets from a disk-backed CDN mount, so the build has to write
   # files rather than hold them in a dev server.
-  serve_cmd='yarn start:noHmr -- --env noTsCheck=1 --env noLint=1',
-  resource_deps=['yarn install'],
+  # Keep a literal separator for Nx.
+  serve_cmd='pnpm run start:noHmr -- --env noTsCheck=1 --env noLint=1',
+  resource_deps=['pnpm install'],
 
   readiness_probe=probe(
     initial_delay_secs=10,
@@ -49,14 +50,14 @@ local_resource(
   labels=["local"]
 )
 
-# boot.js has its own rspack config, so the watch that 'yarn start' runs no longer rebuilds
+# boot.js has its own rspack config, so the watch that 'pnpm start' runs no longer rebuilds
 # it. The image copies boot.js and live_update syncs it, so without this an edit to
 # public/boot would never reach the container.
 local_resource(
   'rspack boot',
-  cmd='yarn build:boot --env develop',
+  cmd='pnpm run build:boot --env develop',
   deps=['../../public/boot'],
-  resource_deps=['yarn install'],
+  resource_deps=['pnpm install'],
   allow_parallel=True,
   labels=["local"]
 )
@@ -132,11 +133,11 @@ dc_resource("proxy",
   labels=["services"]
 )
 dc_resource("grafana-api",
-  resource_deps=["yarn start", "backend-build"],
+  resource_deps=["pnpm start", "backend-build"],
   labels=["services"]
 )
 dc_resource("frontend-service",
-  resource_deps=["yarn start", "backend-build"],
+  resource_deps=["pnpm start", "backend-build"],
   labels=["services"],
 )
 dc_resource("alloy", labels=["observability"])

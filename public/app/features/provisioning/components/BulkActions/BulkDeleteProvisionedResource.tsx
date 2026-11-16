@@ -40,7 +40,14 @@ interface FormProps extends BulkActionProvisionResourceProps {
   canPushToConfiguredBranch: boolean;
 }
 
-function FormContent({ initialValues, selectedItems, repository, canPushToConfiguredBranch, onDismiss }: FormProps) {
+function FormContent({
+  initialValues,
+  selectedItems,
+  repository,
+  canPushToConfiguredBranch,
+  onDismiss,
+  onJobCreated,
+}: FormProps) {
   const { submitted, submit, isCreating } = useResourceJob({ repository });
   const methods = useForm<BulkActionFormData>({ defaultValues: initialValues });
   const { handleSubmit, watch, setValue, formState } = methods;
@@ -89,6 +96,7 @@ function FormContent({ initialValues, selectedItems, repository, canPushToConfig
 
     try {
       await submit(jobSpec);
+      onJobCreated?.();
     } catch (error) {
       getAppEvents().publish({
         type: AppEvents.alertError.name,
@@ -168,6 +176,7 @@ export function BulkDeleteProvisionedResource({
   folderUid,
   selectedItems,
   onDismiss,
+  onJobCreated,
 }: BulkActionProvisionResourceProps) {
   // Check if we're on the root browser dashboards page
   const isRootPage = isRootFolderUID(folderUid);
@@ -197,6 +206,7 @@ export function BulkDeleteProvisionedResource({
         <FormContent
           selectedItems={selectedItems}
           onDismiss={onDismiss}
+          onJobCreated={onJobCreated}
           initialValues={initialValues}
           repository={repository}
           canPushToConfiguredBranch={canPushToConfiguredBranch}

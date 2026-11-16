@@ -70,6 +70,16 @@ type CallerScopedDiscovery interface {
 	CallerScopedDiscovery()
 }
 
+// NamespaceGroups reports whether a group is installed in a namespace. The
+// router calls Allowed for every served group on each request from a caller
+// with a namespace, so it must be safe for concurrent use and cheap: an
+// implementation caches what it needs, since it knows when its source changes.
+// When it cannot refresh a namespace, it answers from the last state it read,
+// and returns an error only when it has none; the router then hides the group.
+type NamespaceGroups interface {
+	Allowed(ctx context.Context, namespace, group string) (bool, error)
+}
+
 type RoutesLoader interface {
 	// Load all known routes
 	// NOTE: this implies that the set of ALL routes is always reasonable to hold in memory

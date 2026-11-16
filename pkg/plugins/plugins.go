@@ -103,8 +103,9 @@ type JSONData struct {
 	ActionSets []ActionSet        `json:"actionSets,omitempty"`
 
 	// Panel settings
-	SkipDataQuery bool `json:"skipDataQuery"`
-	Suggestions   bool `json:"suggestions,omitempty"`
+	SkipDataQuery    bool `json:"skipDataQuery"`
+	SkipDefaultQuery bool `json:"skipDefaultQuery,omitempty"`
+	Suggestions      bool `json:"suggestions,omitempty"`
 
 	// App settings
 	AutoEnabled bool       `json:"autoEnabled"`

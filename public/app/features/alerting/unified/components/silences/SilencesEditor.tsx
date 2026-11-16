@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import { skipToken } from '@reduxjs/toolkit/query';
-import { pickBy } from 'lodash';
 import { useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useParams } from 'react-router-dom-v5-compat';
@@ -178,17 +177,14 @@ export const SilencesEditor = ({
       : matchersFields;
 
     const matchersToSend = matchersWithRuleUid.map(matcherFieldToMatcher).filter((field) => field.name);
-    const payload = pickBy(
-      {
-        id,
-        startsAt,
-        endsAt,
-        comment,
-        createdBy,
-        matchers: matchersToSend,
-      },
-      (value) => !!value
-    ) as SilenceCreatePayload;
+    const payload: SilenceCreatePayload = {
+      startsAt,
+      endsAt,
+      comment,
+      createdBy,
+      matchers: matchersToSend,
+      ...(id ? { id } : {}),
+    };
 
     try {
       const newSilenceResponse = await createSilence({
@@ -391,9 +387,6 @@ function getSilencedRuleDescription(ruleUid: string, ruleLoaded: boolean) {
 const getStyles = (theme: GrafanaTheme2) => ({
   formContainer: css({
     maxWidth: theme.breakpoints.values.md,
-  }),
-  alertRule: css({
-    paddingBottom: theme.spacing(2),
   }),
   silencePeriod: css({
     display: 'flex',

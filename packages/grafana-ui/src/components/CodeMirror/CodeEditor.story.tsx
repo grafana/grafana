@@ -1,6 +1,6 @@
 import type { Meta, StoryFn } from '@storybook/react';
-import { useEffect, useState } from 'react';
 import { action } from 'storybook/actions';
+import { useArgs } from 'storybook/preview-api';
 
 import { CodeEditor } from './CodeEditor';
 import mdx from './CodeEditor.mdx';
@@ -63,19 +63,15 @@ const meta: Meta<typeof CodeEditor> = {
 };
 
 const ControlledEditor: StoryFn<typeof CodeEditor> = (args) => {
-  const [value, setValue] = useState(args.value);
-
-  useEffect(() => {
-    setValue(args.value);
-  }, [args.value]);
+  const [, updateArgs] = useArgs();
 
   return (
     <CodeEditor
       {...args}
-      value={value}
+      value={args.value}
       aria-label={args['aria-label'] ?? 'Code editor'}
       onChange={(nextValue) => {
-        setValue(nextValue);
+        updateArgs({ value: nextValue });
         action('onChange')(nextValue);
       }}
       onBlur={(currentValue) => action('onBlur')(currentValue)}

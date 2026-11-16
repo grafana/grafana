@@ -47,7 +47,14 @@ interface FormProps extends BulkActionProvisionResourceProps {
   canPushToConfiguredBranch: boolean;
 }
 
-function FormContent({ initialValues, selectedItems, repository, canPushToConfiguredBranch, onDismiss }: FormProps) {
+function FormContent({
+  initialValues,
+  selectedItems,
+  repository,
+  canPushToConfiguredBranch,
+  onDismiss,
+  onJobCreated,
+}: FormProps) {
   const [targetFolderUID, setTargetFolderUID] = useState<string | undefined>(undefined);
 
   const { submitted, submit, isCreating } = useResourceJob({ repository });
@@ -140,6 +147,7 @@ function FormContent({ initialValues, selectedItems, repository, canPushToConfig
 
     try {
       await submit(jobSpec);
+      onJobCreated?.();
     } catch (error) {
       getAppEvents().publish({
         type: AppEvents.alertError.name,
@@ -226,7 +234,12 @@ function FormContent({ initialValues, selectedItems, repository, canPushToConfig
   );
 }
 
-export function BulkMoveProvisionedResource({ folderUid, selectedItems, onDismiss }: BulkActionProvisionResourceProps) {
+export function BulkMoveProvisionedResource({
+  folderUid,
+  selectedItems,
+  onDismiss,
+  onJobCreated,
+}: BulkActionProvisionResourceProps) {
   // Check if we're on the root browser dashboards page
   const isRootPage = isRootFolderUID(folderUid);
   const { selectedItemsRepoUID } = useSelectionRepoValidation(selectedItems);
@@ -256,6 +269,7 @@ export function BulkMoveProvisionedResource({ folderUid, selectedItems, onDismis
         <FormContent
           selectedItems={selectedItems}
           onDismiss={onDismiss}
+          onJobCreated={onJobCreated}
           initialValues={initialValues}
           repository={repository}
           canPushToConfiguredBranch={canPushToConfiguredBranch}

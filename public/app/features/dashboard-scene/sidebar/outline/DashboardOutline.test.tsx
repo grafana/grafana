@@ -1,10 +1,10 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
 import { setPluginImportUtils } from '@grafana/runtime';
-import { SceneVariableSet, VizPanel } from '@grafana/scenes';
+import { CustomVariable, SceneVariableSet, VizPanel } from '@grafana/scenes';
 import { ElementSelectionContext, Sidebar, useSidebar } from '@grafana/ui';
 
 import { DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
@@ -458,6 +458,113 @@ describe('DashboardOutline', () => {
       expect(await screen.findByTestId(selectors.pages.Dashboard.Sidebar.outline.searchInput)).toHaveValue(
         'Row level 1'
       );
+    });
+  });
+
+  describe('rename', () => {
+    function setupRename() {
+      const panel = new VizPanel({ key: 'panel-1', title: 'CPU $host', pluginId: 'table' });
+      const labeledVariable = new CustomVariable({ name: 'env', label: 'Environment', query: 'prod,dev' });
+      const scene = new DashboardScene({
+        title: 'Test Dashboard',
+        $variables: new SceneVariableSet({
+          variables: [
+            new CustomVariable({ name: 'host', query: 'server1', value: 'server1', text: 'server1' }),
+            labeledVariable,
+          ],
+        }),
+        $data: new DashboardDataLayerSet({ annotationLayers: [] }),
+        body: new AutoGridLayoutManager({
+          layout: new AutoGridLayout({ children: [new AutoGridItem({ body: panel })] }),
+        }),
+      });
+      activateFullSceneTree(scene);
+
+      const sidebar = scene.state.sidebar;
+      const pane = new DashboardOutline({});
+      scene.onEnterEditMode();
+      sidebar.enableSelection();
+      sidebar.openPane(pane);
+
+      render(
+        <ElementSelectionContext.Provider value={sidebar.state.selectionContext}>
+          <WrapSidebar>
+            <pane.Component model={pane} />
+          </WrapSidebar>
+        </ElementSelectionContext.Provider>
+      );
+
+      return { panel, labeledVariable, sidebar };
+    }
+
+    async function startRenaming(user: ReturnType<typeof userEvent.setup>, name: string) {
+      const item = await screen.findByTestId(selectors.components.PanelEditor.Outline.item(name));
+      await user.dblClick(item);
+      // the input is focused and selected on mount, typing starts without clicking it, like a user does
+      return within(item).getByRole('textbox');
+    }
+
+    it('shows typed characters in the panel rename input and records one undoable rename', async () => {
+      const user = userEvent.setup();
+      const { panel, sidebar } = setupRename();
+
+      const input = await startRenaming(user, 'CPU server1');
+      // the raw title is edited, so variables in it are not replaced by their current value
+      expect(input).toHaveValue('CPU $host');
+
+      await user.clear(input);
+      await user.type(input, 'Memory', { skipClick: true });
+      expect(input).toHaveValue('Memory');
+      expect(panel.state.title).toBe('Memory');
+
+      await user.keyboard('{Enter}');
+      expect(sidebar.state.undoStack).toHaveLength(1);
+
+      act(() => sidebar.undoAction());
+      expect(panel.state.title).toBe('CPU $host');
+      expect(
+        await screen.findByTestId(selectors.components.PanelEditor.Outline.item('CPU server1'))
+      ).toBeInTheDocument();
+
+      act(() => sidebar.redoAction());
+      expect(await screen.findByTestId(selectors.components.PanelEditor.Outline.item('Memory'))).toBeInTheDocument();
+    });
+
+    it('renames the name of a labeled variable and records one undoable rename', async () => {
+      const user = userEvent.setup();
+      const { labeledVariable, sidebar } = setupRename();
+
+      await user.click(await screen.findByTestId(selectors.components.PanelEditor.Outline.node('Variables')));
+      const input = await startRenaming(user, 'Environment');
+      expect(input).toHaveValue('env');
+
+      await user.clear(input);
+      await user.type(input, 'region', { skipClick: true });
+      expect(input).toHaveValue('region');
+      expect(labeledVariable.state.name).toBe('region');
+      expect(labeledVariable.state.label).toBe('Environment');
+
+      await user.keyboard('{Enter}');
+      expect(sidebar.state.undoStack).toHaveLength(1);
+
+      act(() => sidebar.undoAction());
+      expect(labeledVariable.state.name).toBe('env');
+    });
+
+    it('restores the name of a labeled variable when the typed name is invalid', async () => {
+      const user = userEvent.setup();
+      const { labeledVariable, sidebar } = setupRename();
+
+      await user.click(await screen.findByTestId(selectors.components.PanelEditor.Outline.node('Variables')));
+      const input = await startRenaming(user, 'Environment');
+
+      // "host" is already used by another variable
+      await user.clear(input);
+      await user.type(input, 'host', { skipClick: true });
+      await user.keyboard('{Enter}');
+
+      expect(labeledVariable.state.name).toBe('env');
+      expect(sidebar.state.undoStack).toHaveLength(0);
     });
   });
 });

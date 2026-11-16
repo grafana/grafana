@@ -120,10 +120,10 @@ func TestGetAPIRoutesWithoutManifest(t *testing.T) {
 	require.Nil(t, b.GetAPIRoutes(schema.GroupVersion{Group: "example-app", Version: "v0alpha1"}))
 }
 
-// A kind with no plural has no REST path to hang subresource routes off.
+// A kind with no resource has no REST path to hang subresource routes off.
 // parseManifestRoutes leaves its routes out, and storage installation refuses
 // the kind outright.
-func TestKindsWithoutPluralNeverReachRouteRegistration(t *testing.T) {
+func TestKindsWithoutResourceNeverReachRouteRegistration(t *testing.T) {
 	manifest := testManifest(t)
 	manifest.Versions[1].Kinds = append(manifest.Versions[1].Kinds, app.ManifestVersionKind{
 		Kind:  "NoPlural",
@@ -137,7 +137,7 @@ func TestKindsWithoutPluralNeverReachRouteRegistration(t *testing.T) {
 
 	info, opts := testAPIGroupOptions(t, b)
 	require.ErrorContains(t, b.UpdateAPIGroupInfo(info, opts),
-		"kind NoPlural is missing a plural name")
+		"kind NoPlural is missing a resource name")
 }
 
 func TestGetAPIRoutesSkipsUnservedVersions(t *testing.T) {
@@ -160,8 +160,8 @@ func TestVersionRoutesKindRoutes(t *testing.T) {
 	manifest := testManifest(t)
 	manifest.Versions[1].Kinds = append(manifest.Versions[1].Kinds, app.ManifestVersionKind{
 		Kind:   "ClusterKind",
-		Plural: "ClusterKinds",
-		Scope:  kindstore.ClusterScope,
+		Plural: "ClusterKinds", Resource: "clusterkinds",
+		Scope: kindstore.ClusterScope,
 	})
 	manifest.Versions[1].OpenAPI.Paths["/clusterkinds/{name}/rebuild"] = spec3.PathProps{Post: &spec3.Operation{OperationProps: spec3.OperationProps{
 		OperationId: "rebuildClusterKind",
@@ -502,7 +502,7 @@ var (
 	testKindRoute    = manifestroutes.Route{
 		Path:        "testkinds/{name}/reload",
 		Namespaced:  true,
-		Kind:        &app.ManifestVersionKind{Kind: "TestKind", Plural: "TestKinds"},
+		Kind:        &app.ManifestVersionKind{Kind: "TestKind", Plural: "TestKinds", Resource: "testkinds"},
 		Subresource: "reload",
 	}
 )

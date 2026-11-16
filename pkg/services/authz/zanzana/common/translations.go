@@ -6,6 +6,7 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 
+	annotationv0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashboards "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
@@ -76,12 +77,29 @@ var (
 	notebookGroup    = dashv2beta1.NotebookResourceInfo.GroupResource().Group
 	notebookResource = dashv2beta1.NotebookResourceInfo.GroupResource().Resource
 
+	annotationGroup    = annotationv0.AnnotationKind().GroupVersionResource().Group
+	annotationResource = annotationv0.AnnotationKind().GroupVersionResource().Resource
+
 	iamGroup      = iamv0.TeamResourceInfo.GroupResource().Group
 	teamsResource = iamv0.TeamResourceInfo.GroupResource().Resource
 	usersResource = iamv0.UserResourceInfo.GroupResource().Resource
 )
 
+// annotationsSubresource is the subresource for dashboard-scoped annotations.
+const annotationsSubresource = "annotations"
+
 var resourceTranslations = map[string]resourceTranslation{
+	KindAnnotations: {
+		typ:      TypeResource,
+		group:    annotationGroup,
+		resource: annotationResource,
+		mapping: map[string]actionMapping{
+			"annotations:read":   newMapping(RelationGet, ""),
+			"annotations:write":  newMapping(RelationUpdate, ""),
+			"annotations:create": newMapping(RelationCreate, ""),
+			"annotations:delete": newMapping(RelationDelete, ""),
+		},
+	},
 	"datasources": {
 		typ:      TypeResource,
 		group:    "datasource.grafana.app",
@@ -131,6 +149,11 @@ var resourceTranslations = map[string]resourceTranslation{
 			"notebooks:view":   newScopedMapping(RelationSetView, notebookGroup, notebookResource, ""),
 			"notebooks:edit":   newScopedMapping(RelationSetEdit, notebookGroup, notebookResource, ""),
 			"notebooks:admin":  newScopedMapping(RelationSetAdmin, notebookGroup, notebookResource, ""),
+			// Dashboard annotations, scoped to the dashboards annotations subresource
+			"annotations:read":   newScopedMapping(RelationGet, dashboardGroup, dashboardResource, annotationsSubresource),
+			"annotations:write":  newScopedMapping(RelationUpdate, dashboardGroup, dashboardResource, annotationsSubresource),
+			"annotations:create": newScopedMapping(RelationCreate, dashboardGroup, dashboardResource, annotationsSubresource),
+			"annotations:delete": newScopedMapping(RelationDelete, dashboardGroup, dashboardResource, annotationsSubresource),
 		},
 	},
 	KindDashboards: {
@@ -149,6 +172,11 @@ var resourceTranslations = map[string]resourceTranslation{
 			"dashboards:view":  newMapping(RelationSetView, ""),
 			"dashboards:edit":  newMapping(RelationSetEdit, ""),
 			"dashboards:admin": newMapping(RelationSetAdmin, ""),
+			// Dashboard annotations
+			"annotations:read":   newMapping(RelationGet, annotationsSubresource),
+			"annotations:write":  newMapping(RelationUpdate, annotationsSubresource),
+			"annotations:create": newMapping(RelationCreate, annotationsSubresource),
+			"annotations:delete": newMapping(RelationDelete, annotationsSubresource),
 		},
 	},
 	KindNotebooks: {
@@ -174,6 +202,19 @@ var resourceTranslations = map[string]resourceTranslation{
 			"snapshots:read":   newUnscopedMapping(RelationGet),
 			"snapshots:create": newUnscopedMapping(RelationCreate),
 			"snapshots:delete": newUnscopedMapping(RelationDelete),
+		},
+	},
+	KindServiceAccounts: {
+		typ:      TypeServiceAccount,
+		group:    iamGroup,
+		resource: KindServiceAccounts,
+		mapping: map[string]actionMapping{
+			"serviceaccounts:create":            newUnscopedMapping(RelationCreate),
+			"serviceaccounts:read":              newMapping(RelationGet, ""),
+			"serviceaccounts:write":             newMapping(RelationUpdate, ""),
+			"serviceaccounts:delete":            newMapping(RelationDelete, ""),
+			"serviceaccounts.permissions:read":  newMapping(RelationGetPermissions, ""),
+			"serviceaccounts.permissions:write": newMapping(RelationSetPermissions, ""),
 		},
 	},
 	KindTeams: {
@@ -288,22 +329,16 @@ func translateActionToKubernetesAttributes(translation resourceTranslation, acti
 	return group, resource, subresource, verb, true
 }
 
-// TranslateActionToListParams translates an RBAC action to Zanzana List request parameters (group, resource, subresource, verb).
-// Returns empty strings if the action cannot be translated.
-func TranslateActionToListParams(action string) (group, resource, subresource, verb string) {
-	translationTypes := make([]string, 0, len(resourceTranslations))
-	for typ := range resourceTranslations {
-		translationTypes = append(translationTypes, typ)
-	}
-	sort.Strings(translationTypes)
-
-	for _, typ := range translationTypes {
-		translation := resourceTranslations[typ]
-		if group, resource, subresource, verb, ok := translateActionToKubernetesAttributes(translation, action); ok {
-			return group, resource, subresource, verb
+// TranslateActionToListParams returns every distinct List mapping for an RBAC action.
+// Returns nil if the action cannot be translated.
+func TranslateActionToListParams(action string) []ActionListEntry {
+	var entries []ActionListEntry
+	for _, entry := range supportedActions {
+		if entry.Action == action {
+			entries = append(entries, entry)
 		}
 	}
-	return "", "", "", ""
+	return entries
 }
 
 // ActionListEntry describes an action that Zanzana supports, along with
@@ -327,7 +362,7 @@ var supportedActions = func() []ActionListEntry {
 	sort.Strings(translationTypes)
 
 	var out []ActionListEntry
-	seen := make(map[string]struct{})
+	seen := make(map[ActionListEntry]struct{})
 	for _, typ := range translationTypes {
 		translation := resourceTranslations[typ]
 
@@ -338,29 +373,30 @@ var supportedActions = func() []ActionListEntry {
 		sort.Strings(actions)
 
 		for _, action := range actions {
-			if _, ok := seen[action]; ok {
-				continue
-			}
 			group, resource, subresource, verb, ok := translateActionToKubernetesAttributes(translation, action)
 			if !ok {
 				continue
 			}
 
-			seen[action] = struct{}{}
-			out = append(out, ActionListEntry{
+			entry := ActionListEntry{
 				Action:      action,
 				Group:       group,
 				Resource:    resource,
 				Subresource: subresource,
 				Verb:        verb,
-			})
+			}
+			if _, ok := seen[entry]; ok {
+				continue
+			}
+			seen[entry] = struct{}{}
+			out = append(out, entry)
 		}
 	}
 	return out
 }()
 
-// SupportedActions returns every RBAC action that Zanzana can resolve,
-// derived from the resource translation table.
+// SupportedActions returns the distinct List mappings derived from the translation table.
+// An action may have multiple entries when it applies to different resources.
 func SupportedActions() []ActionListEntry {
 	return supportedActions
 }

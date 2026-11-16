@@ -137,9 +137,6 @@ const MatchersField = ({ className, scopedToRule }: Props) => {
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    wrapper: css({
-      marginTop: theme.spacing(2),
-    }),
     row: css({
       marginTop: theme.spacing(1),
       display: 'flex',

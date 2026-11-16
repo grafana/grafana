@@ -20,6 +20,7 @@ var (
 
 	ErrKeeperNotFound      = errors.New("keeper not found")
 	ErrKeeperAlreadyExists = errors.New("keeper already exists")
+	ErrKeeperConflict      = errors.New("keeper was modified concurrently")
 )
 
 // KeeperMetadataStorage is the interface for wiring and dependency injection.

@@ -648,6 +648,14 @@ describe('NotebookScene', () => {
     });
   });
 
+  describe('getDashboardPanels', () => {
+    it('returns the panels of the panel cells', () => {
+      const { scene, panel } = buildSceneWithPanel();
+
+      expect(scene.getDashboardPanels()).toEqual([panel]);
+    });
+  });
+
   describe('enrichDataRequest', () => {
     // Notebook queries have to be attributable. CoreApp.Unknown cannot be told apart from a
     // genuinely unattributed query, and CoreApp.Dashboard is a behavioural branch (SqlDatasource
@@ -691,7 +699,7 @@ describe('NotebookScene', () => {
     });
 
     function buildScopesContext(value: Scope[]): ScopesContextValue {
-      const state = { drawerOpened: false, enabled: false, loading: false, readOnly: false, value };
+      const state = { drawerOpened: false, enabled: false, loading: false, value };
       const stateObservable = new BehaviorSubject(state);
 
       return {
@@ -700,7 +708,6 @@ describe('NotebookScene', () => {
         },
         stateObservable,
         changeScopes: jest.fn(),
-        setReadOnly: jest.fn(),
         setEnabled: jest.fn((enabled: boolean) => stateObservable.next({ ...stateObservable.getValue(), enabled })),
       };
     }

@@ -1,3 +1,4 @@
+import { createAssistantContextItem, OpenAssistantButton } from '@grafana/assistant';
 import { PluginExtensionPoints } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import {
@@ -10,7 +11,7 @@ import { Button, Dropdown, LinkButton, Menu, Icon, IconButton } from '@grafana/u
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { ALLOWED_DATASOURCE_EXTENSION_PLUGINS } from '../constants';
-import { useDataSource } from '../state/hooks';
+import { useDataSource, useDataSourceRights } from '../state/hooks';
 import { trackDsConfigClicked } from '../tracking';
 import { constructDataSourceExploreUrl } from '../utils';
 
@@ -59,6 +60,7 @@ const FavoriteButton = ({ uid }: { uid: string }) => {
 export function EditDataSourceActions({ uid }: Props) {
   const dataSource = useDataSource(uid);
   const hasExploreRights = contextSrv.hasAccessToExplore();
+  const { hasWriteRights } = useDataSourceRights(uid);
 
   // Fetch plugin extension links
   const { links: allLinks, isLoading } = usePluginLinks({
@@ -126,6 +128,15 @@ export function EditDataSourceActions({ uid }: Props) {
         </>
       )}
       <BuildDashboardButton dataSource={dataSource} size="sm" fill="solid" context="datasource_page" />
+      {hasWriteRights && (
+        <OpenAssistantButton
+          size="sm"
+          title={t('datasources.edit-data-source-actions.configure-with-assistant', 'Configure with assistant')}
+          origin="grafana/datasources-edit/configure-with-assistant"
+          prompt="Check the current settings of this data source, run a connection test, and tell me what is missing or misconfigured."
+          context={[createAssistantContextItem('datasource', { datasourceUid: dataSource.uid })]}
+        />
+      )}
     </>
   );
 }

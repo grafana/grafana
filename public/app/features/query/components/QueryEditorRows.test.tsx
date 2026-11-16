@@ -1,7 +1,7 @@
 import { act, queryByLabelText, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import type { DataSourceApi } from '@grafana/data';
+import type { DataSourceApi, FieldType, LoadingState, PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import {
   type DataSourceSrv,
@@ -11,10 +11,9 @@ import {
 } from '@grafana/runtime';
 import { type DataSourceRef, type DataQuery } from '@grafana/schema';
 import { mockBoundingClientRect } from '@grafana/test-utils';
-import { mockDataSource } from 'app/features/alerting/unified/mocks';
+import { mockDataSource } from 'app/features/alerting/unified/testSetup/mockDataSource';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 import { type InternalQueryEditorInsertionPropsV1 } from 'app/features/explore/SignalExplorer/internalInsertionContract';
-import createMockPanelData from 'app/plugins/datasource/azuremonitor/mocks/panelData';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { QueryEditorRows, type Props } from './QueryEditorRows';
@@ -99,6 +98,54 @@ async function selectQueriesFromLibrary(testProps: Props, queries: DataQuery[], 
   stagedSelection = { queries };
   render(<QueryEditorRows {...testProps} />);
   await userEvent.click(await screen.findByTestId(`select-from-library-${refId}`));
+}
+
+type DeepPartial<T> = {
+  [P in keyof T]?: DeepPartial<T[P]>;
+};
+
+function createMockPanelData(overrides?: DeepPartial<PanelData>) {
+  const _mockPanelData: DeepPartial<PanelData> = {
+    state: 'Loading' as LoadingState,
+    series: [
+      {
+        refId: 'A',
+        fields: [
+          {
+            name: 'Time',
+            type: 'time' as FieldType,
+            config: { links: Array(1) },
+            values: [],
+            state: null,
+          },
+        ],
+        length: 360,
+      },
+    ],
+    annotations: [],
+    request: {
+      app: 'dashboard',
+      requestId: 'request',
+      timezone: 'browser',
+      panelId: 1,
+      timeInfo: '',
+      interval: '20s',
+      intervalMs: 20000,
+      targets: [],
+      maxDataPoints: 100,
+      rangeRaw: {
+        from: 'now-6h',
+        to: 'now',
+      },
+    },
+
+    structureRev: 15,
+    ...overrides,
+  };
+
+  const mockPanelData = _mockPanelData as PanelData;
+
+  return jest.mocked(mockPanelData);
 }
 
 const props: Props = {

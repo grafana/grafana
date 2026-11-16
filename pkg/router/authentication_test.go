@@ -34,6 +34,12 @@ func newAuthenticatedRequest(method, target string, body io.Reader) *http.Reques
 	return req.WithContext(authenticatedTestContext(req.Context()))
 }
 
+// newRequestAs returns a request whose requester is requester.
+func newRequestAs(method, target string, requester identity.Requester) *http.Request {
+	req := httptest.NewRequest(method, target, nil)
+	return req.WithContext(identity.WithRequester(req.Context(), requester))
+}
+
 func authenticatedTestContext(ctx context.Context) context.Context {
 	return identity.WithRequester(ctx, &identity.StaticRequester{
 		Type: types.TypeUser, UserUID: "test-user", OrgID: 1, Namespace: "*",

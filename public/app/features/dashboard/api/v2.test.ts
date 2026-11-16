@@ -104,7 +104,7 @@ describe('v2 dashboard API', () => {
       },
     });
 
-    jest.spyOn(folderHooks, 'getFolderByUidFacade').mockResolvedValue({
+    jest.spyOn(folderHooks, 'getCombinedFolder').mockResolvedValue({
       id: 1,
       uid: 'new-folder',
       title: 'New Folder',
@@ -149,7 +149,7 @@ describe('v2 dashboard API', () => {
       },
     });
     jest
-      .spyOn(folderHooks, 'getFolderByUidFacade')
+      .spyOn(folderHooks, 'getCombinedFolder')
       .mockRejectedValueOnce({ message: 'folder not found', status: 'not-found' });
 
     const api = new K8sDashboardV2API();
@@ -161,7 +161,7 @@ describe('v2 dashboard API', () => {
       ...mockDashboardDto,
       metadata: { ...mockDashboardDto.metadata, annotations: { [AnnoKeyFolder]: 'new-folder' } },
     });
-    jest.spyOn(folderHooks, 'getFolderByUidFacade').mockRejectedValueOnce({ message: 'folder not found', status: 403 });
+    jest.spyOn(folderHooks, 'getCombinedFolder').mockRejectedValueOnce({ message: 'folder not found', status: 403 });
 
     const api = new K8sDashboardV2API();
     const dashboardDTO = await api.getDashboardDTO('test');

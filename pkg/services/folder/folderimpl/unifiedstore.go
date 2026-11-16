@@ -15,6 +15,7 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	internalfolders "github.com/grafana/grafana/pkg/registry/apis/folders"
@@ -34,6 +35,20 @@ const tracePrefix = "folder.unifiedstore."
 
 // Large name filters can cost more than a full search because Bleve opens a term query per UID.
 const maxFolderUIDFilterSize = 1000
+
+// errFolderNotFound matches folder.ErrFolderNotFound, which scope resolvers map to a 404,
+// and dashboards.ErrFolderNotFound, whose message it keeps for existing callers.
+var errFolderNotFound error = folderNotFoundError{
+	err: folder.ErrFolderNotFound.Errorf("%w", dashboards.ErrFolderNotFound),
+}
+
+type folderNotFoundError struct {
+	err errutil.Error
+}
+
+func (e folderNotFoundError) Error() string { return dashboards.ErrFolderNotFound.Error() }
+
+func (e folderNotFoundError) Unwrap() error { return e.err }
 
 var folderReferenceFields = []string{
 	resource.SEARCH_FIELD_TITLE,
@@ -119,7 +134,7 @@ func (ss *FolderUnifiedStoreImpl) Update(ctx context.Context, cmd folder.UpdateF
 	obj, err := ss.k8sclient.Get(ctx, cmd.UID, cmd.OrgID, v1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			return nil, dashboards.ErrFolderNotFound
+			return nil, errFolderNotFound
 		}
 
 		return nil, err
@@ -195,7 +210,7 @@ func (ss *FolderUnifiedStoreImpl) Get(ctx context.Context, q folder.GetFolderQue
 	if err != nil && !apierrors.IsNotFound(err) {
 		return nil, err
 	} else if err != nil || out == nil {
-		return nil, dashboards.ErrFolderNotFound
+		return nil, errFolderNotFound
 	}
 
 	return ss.UnstructuredToLegacyFolder(ctx, out)
@@ -297,7 +312,7 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 func (ss *FolderUnifiedStoreImpl) doSearchPage(ctx context.Context, orgID int64, req *resourcepb.ResourceSearchRequest) ([]*folder.FolderReference, bool, error) {
 	req.Fields = folderReferenceFields
 	out, err := ss.k8sclient.Search(ctx, orgID, req)
-	if err := resource.ErrorFromResponse(out.GetError(), err); err != nil {
+	if err != nil {
 		return nil, false, err
 	}
 	res, err := dashboardsearch.ParseResults(out, 0)
@@ -663,7 +678,7 @@ func (ss *FolderUnifiedStoreImpl) CountFolderContent(ctx context.Context, orgID 
 	counts, err := ss.k8sclient.Get(ctx, ancestor_uid, orgID, v1.GetOptions{}, "counts")
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			return nil, dashboards.ErrFolderNotFound
+			return nil, errFolderNotFound
 		}
 
 		return nil, err
@@ -675,7 +690,7 @@ func (ss *FolderUnifiedStoreImpl) CountFolderContent(ctx context.Context, orgID 
 
 func (ss *FolderUnifiedStoreImpl) CountInOrg(ctx context.Context, orgID int64) (int64, error) {
 	resp, err := ss.k8sclient.GetStats(ctx, orgID)
-	if err := resource.ErrorFromResponse(resp.GetError(), err); err != nil {
+	if err != nil {
 		return 0, err
 	}
 
@@ -739,8 +754,17 @@ func toFolderLegacyCounts(u *unstructured.Unstructured) (*folder.DescendantCount
 	// A resource can be reported twice, by unified storage and by the "sql-fallback"
 	// group. Resources not yet in unified storage still get an entry there with a count
 	// of 0, so treat 0 as no data, otherwise a folder holding only alert rules looks empty.
+	// A sql-fallback entry means legacy is authoritative for that resource; unified then only holds
+	// a dual-write copy that can outlive its legacy row.
+	legacyLibraryPanels := slices.ContainsFunc(ds.Counts, func(c folderv1.ResourceStats) bool {
+		return c.Group == "sql-fallback" && c.Resource == "library_elements"
+	})
+
 	var out = make(folder.DescendantCounts)
 	for _, v := range ds.Counts {
+		if legacyLibraryPanels && v.Resource == "librarypanels" {
+			continue
+		}
 		current, seen := out[v.Resource]
 		if !seen || current == 0 || (v.Group != "sql-fallback" && v.Count != 0) {
 			out[v.Resource] = v.Count

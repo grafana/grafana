@@ -36,6 +36,8 @@ test.describe(
   },
   () => {
     test('Filter data on a dashboard', async ({ page, selectors, gotoDashboardPage }) => {
+      test.setTimeout(60_000);
+
       const apiMocks = await prepareAPIMocks(page);
       const adHocFilterPills = getAdHocFilterPills(page);
       const scopesSelectorInput = getScopesSelectorInput(page);

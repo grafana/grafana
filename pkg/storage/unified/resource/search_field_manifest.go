@@ -81,7 +81,7 @@ func ManifestBackedProvider(manifests ...*app.ManifestData) (SearchFieldsProvide
 				gvr := schema.GroupVersionResource{
 					Group:    group,
 					Version:  version.Name,
-					Resource: ManifestResourceName(kind),
+					Resource: kind.Resource,
 				}
 				fields[gvr] = manifestSearchFieldsToDefinitions(kind.SearchFields)
 
@@ -100,38 +100,31 @@ func ManifestBackedProvider(manifests ...*app.ManifestData) (SearchFieldsProvide
 }
 
 // ManifestKinds names the kind of each resource a manifest declares, with the
-// version it is taken from: the manifest's preferred version, or else the first
-// version that declares the resource. A kind renamed between versions then has
-// one name, whatever order the versions are in. include, when set, limits the
-// versions and kinds considered.
+// version it is taken from: the manifest's preferred version, or else the last
+// version that declares the resource, as the app SDK does and as
+// ManifestBackedProvider does for search fields. A kind renamed between
+// versions then has one name in every place that uses this. include, when set,
+// limits the versions and kinds considered.
 func ManifestKinds(m *app.ManifestData, include func(app.ManifestVersion, app.ManifestVersionKind) bool) map[schema.GroupResource]schema.GroupVersionKind {
 	kinds := map[schema.GroupResource]schema.GroupVersionKind{}
 	if m == nil {
 		return kinds
 	}
+	preferred := map[schema.GroupResource]bool{}
 	for _, version := range m.Versions {
 		for _, kind := range version.Kinds {
 			if include != nil && !include(version, kind) {
 				continue
 			}
-			gr := schema.GroupResource{Group: m.Group, Resource: ManifestResourceName(kind)}
-			if _, ok := kinds[gr]; !ok || version.Name == m.PreferredVersion {
-				kinds[gr] = schema.GroupVersionKind{Group: m.Group, Version: version.Name, Kind: kind.Kind}
+			gr := schema.GroupResource{Group: m.Group, Resource: kind.Resource}
+			if preferred[gr] {
+				continue
 			}
+			kinds[gr] = schema.GroupVersionKind{Group: m.Group, Version: version.Name, Kind: kind.Kind}
+			preferred[gr] = version.Name == m.PreferredVersion
 		}
 	}
 	return kinds
-}
-
-// ManifestResourceName returns the lower-cased resource (plural) name for a
-// kind, defaulting to the kind name plus "s" when the manifest omits the
-// plural, which mirrors the app-sdk default.
-func ManifestResourceName(kind app.ManifestVersionKind) string {
-	plural := kind.Plural
-	if plural == "" {
-		plural = kind.Kind + "s"
-	}
-	return strings.ToLower(plural)
 }
 
 // manifestSearchFieldsToDefinitions converts the manifest's search field
@@ -171,7 +164,7 @@ func manifestDeclaredKindKeys(manifests []*app.ManifestData) map[LowerGroupResou
 				if len(kind.SearchFields) == 0 {
 					continue
 				}
-				keys[NewLowerGroupResource(m.Group, ManifestResourceName(kind))] = true
+				keys[NewLowerGroupResource(m.Group, kind.Resource)] = true
 			}
 		}
 	}
@@ -293,7 +286,7 @@ func warnDuplicateKindsWithinSource(src []*app.ManifestData) {
 		for _, v := range m.Versions {
 			for _, k := range v.Kinds {
 				if declaresSearchFields(k) {
-					declared[NewLowerGroupResource(group, ManifestResourceName(k))] = true
+					declared[NewLowerGroupResource(group, k.Resource)] = true
 				}
 			}
 		}
@@ -344,7 +337,7 @@ func pruneClaimedKinds(m *app.ManifestData, claimedBy map[LowerGroupResource]kin
 				anyKind = true
 				continue
 			}
-			key := NewLowerGroupResource(group, ManifestResourceName(k))
+			key := NewLowerGroupResource(group, k.Resource)
 			if declaredVersions[key] == nil {
 				declaredVersions[key] = map[string]bool{}
 			}

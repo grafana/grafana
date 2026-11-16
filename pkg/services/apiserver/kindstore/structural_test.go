@@ -23,7 +23,7 @@ func structuralFor(t *testing.T, schemas string) (*Store, error) {
 		Served: true,
 		Kinds: []app.ManifestVersionKind{{
 			Kind:   "TestKind",
-			Plural: "TestKinds",
+			Plural: "TestKinds", Resource: "testkinds",
 			Scope:  "Namespaced",
 			Schema: testVersionSchema(t, schemas),
 		}},
