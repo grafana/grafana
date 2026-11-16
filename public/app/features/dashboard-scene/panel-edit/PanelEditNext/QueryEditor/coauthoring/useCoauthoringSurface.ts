@@ -19,6 +19,7 @@ import {
   subscribeCoauthoringFlags,
   isQueryCoauthoringEnabled,
 } from './queryCoauthoringApi';
+import { reportCoauthoringError } from './queryCoauthoringContext';
 import { type DataSourceWithQueryCoauthoring, isQueryCoauthoringLanguage } from './queryCoauthoringContracts';
 import { isQueryBroken } from './queryCoauthoringHealth';
 import { classifyQueryResult } from './queryCoauthoringPreviewOutcome';
@@ -61,7 +62,7 @@ export function useMountedCoauthoringPanel(
   }, [pane, panel, enabled]);
 
   useEffect(() => {
-    let cancelled = false;
+    const controller = new AbortController();
     const surface = getCoauthoringSurface(pane);
     if (!surface) {
       return;
@@ -75,12 +76,13 @@ export function useMountedCoauthoringPanel(
             getPanelScopedVars(panel)
           );
           return isQueryCoauthoringLanguage(datasource.queryCoauthoring?.()) ? query.refId : undefined;
-        } catch {
+        } catch (error) {
+          reportCoauthoringError(error, controller.signal, 'support_scan');
           return undefined;
         }
       })
     ).then((refs) => {
-      if (!cancelled) {
+      if (!controller.signal.aborted) {
         surface.supported.clear();
         refs.forEach((refId) => {
           if (refId) {
@@ -92,7 +94,7 @@ export function useMountedCoauthoringPanel(
       }
     });
     return () => {
-      cancelled = true;
+      controller.abort();
     };
   }, [pane, panel, queries, enabled, defaultDatasource]);
   return useCoauthoringSurface();

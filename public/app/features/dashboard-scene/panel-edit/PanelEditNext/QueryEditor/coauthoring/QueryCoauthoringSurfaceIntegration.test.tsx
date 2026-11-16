@@ -7,7 +7,7 @@ import { of } from 'rxjs';
 import { type DataSourceApi, type QueryEditorProps, LoadingState, toDataFrame } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { faro } from '@grafana/faro-web-sdk';
-import { config, reportInteraction, setRunRequest } from '@grafana/runtime';
+import { config, logError, reportInteraction, setRunRequest } from '@grafana/runtime';
 import { FlagKeys, setExpressionDataSourceInstance } from '@grafana/runtime/internal';
 import { SceneQueryRunner, SceneTimeRange, VizPanel, SceneGridLayout } from '@grafana/scenes';
 import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
@@ -35,6 +35,7 @@ import { ds1SettingsMock } from '../testUtils';
 
 import { QueryCoauthoringCard } from './QueryCoauthoringCard';
 import { requestCoauthoringEntry } from './queryCoauthoringApi';
+import * as contextResolver from './queryCoauthoringContext';
 import {
   isQueryCoauthoringAPI,
   isQueryCoauthoringSession,
@@ -57,6 +58,7 @@ const mockGetDataSource = jest.fn();
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   reportInteraction: jest.fn(),
+  logError: jest.fn(),
   getPluginImportUtils: () => ({
     getPanelPluginFromCache: () => mockPanelPlugin,
     importPanelPlugin: async () => mockPanelPlugin,
@@ -134,6 +136,7 @@ beforeEach(() => {
   unlisten = [];
   cleanupOwners = [];
   showChanges.mockClear();
+  jest.mocked(logError).mockClear();
   jest.mocked(faro.api.startUserAction).mockClear();
   cleanupEditor = jest.fn();
   selection = false;
@@ -1005,4 +1008,104 @@ it('hands projection from the retained Surface to inline coauthoring and back wi
   act(() => unlisten.forEach((stop) => stop()));
   expect(canonical.state.data?.series[0].fields[0].values[0]).toBe(1);
   expect(session.signal.aborted).toBe(false);
+});
+
+it('reports a current entry resolver failure without delivering a successful baseline', async () => {
+  const { entry } = setup();
+  const failure = new Error('Resolver validation failed');
+  const resolve = contextResolver.resolveCoauthoringQuery;
+  jest.spyOn(contextResolver, 'resolveCoauthoringQuery').mockImplementationOnce(async (...args) => ({
+    ...(await resolve(...args)),
+    current: async () => {
+      throw failure;
+    },
+  }));
+  await act(async () => {
+    fireEvent.click(screen.getByText('Shortcut'));
+  });
+  await waitFor(() =>
+    expect(logError).toHaveBeenCalledWith(failure, { component: 'query-coauthoring', phase: 'entry' })
+  );
+  expect(logError).toHaveBeenCalledTimes(1);
+  expect(entry).not.toHaveBeenCalled();
+});
+
+it.each(['superseded', 'unmounted'] as const)(
+  'does not report a late %s entry failure as an operational error',
+  async (reason) => {
+    const { entry, unmount } = setup();
+    const resolve = contextResolver.resolveCoauthoringQuery;
+    let reject!: (error: Error) => void;
+    jest.spyOn(contextResolver, 'resolveCoauthoringQuery').mockImplementationOnce(async (...args) => ({
+      ...(await resolve(...args)),
+      current: () =>
+        new Promise<boolean>((_resolve, fail) => {
+          reject = fail;
+        }),
+    }));
+    fireEvent.click(screen.getByText('Shortcut'));
+    await waitFor(() => expect(typeof reject).toBe('function'));
+    if (reason === 'unmounted') {
+      unmount();
+    } else {
+      await act(async () => {
+        fireEvent.click(screen.getByText('Shortcut'));
+      });
+      await waitFor(() => expect(entry).toHaveBeenCalledTimes(1));
+    }
+    await act(async () => {
+      reject(new Error('Late resolver failure'));
+    });
+    expect(logError).not.toHaveBeenCalled();
+    expect(entry).toHaveBeenCalledTimes(reason === 'unmounted' ? 0 : 1);
+  }
+);
+
+it('does not report an AbortError from entry validation as an operational failure', async () => {
+  const { entry } = setup();
+  const resolve = contextResolver.resolveCoauthoringQuery;
+  jest.spyOn(contextResolver, 'resolveCoauthoringQuery').mockImplementationOnce(async (...args) => ({
+    ...(await resolve(...args)),
+    current: async () => {
+      throw new DOMException('Aborted', 'AbortError');
+    },
+  }));
+  await act(async () => {
+    fireEvent.click(screen.getByText('Shortcut'));
+  });
+  expect(logError).not.toHaveBeenCalled();
+  expect(entry).not.toHaveBeenCalled();
+});
+
+it('reports a support scan failure while keeping the editor usable', async () => {
+  const { canonical } = setup();
+  const failure = new Error('Support scan failed');
+  mockGetDataSource.mockRejectedValue(failure);
+  await act(async () => {
+    canonical.setState({ queries: [...canonical.state.queries] });
+  });
+  await waitFor(() =>
+    expect(logError).toHaveBeenCalledWith(failure, { component: 'query-coauthoring', phase: 'support_scan' })
+  );
+  expect(screen.getByRole('textbox', { name: 'Query text' })).toHaveValue('$A + 1');
+});
+
+it('does not report a support scan failure after its editor unmounts', async () => {
+  const { canonical, unmount } = setup();
+  let reject!: (error: Error) => void;
+  mockGetDataSource.mockImplementationOnce(
+    () =>
+      new Promise((_resolve, fail) => {
+        reject = fail;
+      })
+  );
+  act(() => {
+    canonical.setState({ queries: [...canonical.state.queries] });
+  });
+  await waitFor(() => expect(typeof reject).toBe('function'));
+  unmount();
+  await act(async () => {
+    reject(new Error('Late support scan failure'));
+  });
+  expect(logError).not.toHaveBeenCalled();
 });

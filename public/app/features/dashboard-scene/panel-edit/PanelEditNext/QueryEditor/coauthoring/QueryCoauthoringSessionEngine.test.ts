@@ -10,7 +10,7 @@ import {
   type PanelData,
   toDataFrame,
 } from '@grafana/data';
-import { setRunRequest } from '@grafana/runtime';
+import { logError, setRunRequest } from '@grafana/runtime';
 import { ConstantVariable, SceneVariableSet, SceneQueryRunner, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { getMockDataSource } from 'app/features/query/state/mocks/mockDataSource';
 
@@ -26,6 +26,7 @@ import {
 const mockGetDataSource = jest.fn();
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
+  logError: jest.fn(),
   getDataSourceSrv: () => ({ get: mockGetDataSource }),
   getDataSourceInstance: (...args: unknown[]) => mockGetDataSource(...args),
   getDataSourceInstanceSettings: async () => undefined,
@@ -138,6 +139,7 @@ function setup(ranges: Array<{ from: number; to: number }> = []): SessionFixture
 }
 
 beforeEach(() => {
+  jest.mocked(logError).mockClear();
   Object.defineProperty(navigator, 'userActivation', { configurable: true, value: { isActive: true } });
 });
 afterEach(() => {
@@ -1462,4 +1464,40 @@ it('advances resolver generation across supported, missing and restored language
     status: 'ready',
     queries: expect.arrayContaining([expect.objectContaining({ refId: 'A', editability: { kind: 'editable' } })]),
   });
+});
+
+it.each([
+  { phase: 'datasource_resolution', issue: 'datasource_resolution_failed' },
+  { phase: 'language_resolution', issue: 'language_resolution_failed' },
+  { phase: 'support_check', issue: 'support_check_failed' },
+  { phase: 'description', issue: 'description_failed' },
+  { phase: 'preparation', issue: 'preparation_failed' },
+])('reports thrown $phase failures while retaining the typed staging result', async ({ phase, issue }) => {
+  const { session, datasource } = setup();
+  const failure = new Error('Operational failure');
+  const fail = () => {
+    throw failure;
+  };
+  if (phase === 'datasource_resolution') {
+    mockGetDataSource.mockRejectedValue(failure);
+  } else if (phase === 'language_resolution') {
+    datasource.queryCoauthoring = fail;
+  } else {
+    datasource.queryCoauthoring = () => ({
+      ...language,
+      ...{
+        support_check: { getQuerySupport: fail },
+        description: { describe: fail },
+        preparation: { prepare: fail },
+      }[phase],
+    });
+  }
+  expect(
+    await session.stageProposal([{ changes: [{ refId: 'A', text: 'sum(up)' }] }], {
+      baseRevision: 0,
+      baseContextGeneration: session.getState().contextGeneration,
+    })
+  ).toEqual([{ status: 'failed', issue: { kind: issue, refId: 'A' } }]);
+  expect(logError).toHaveBeenCalledWith(failure, { component: 'query-coauthoring', phase });
+  expect(session.getState().proposal).toEqual([]);
 });

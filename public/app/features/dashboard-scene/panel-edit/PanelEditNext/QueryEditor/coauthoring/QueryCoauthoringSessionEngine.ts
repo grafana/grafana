@@ -20,6 +20,7 @@ import {
   resolveCoauthoringQuery,
   type ResolvedCoauthoringQuery,
   resolverInputs,
+  reportCoauthoringError,
   sameResolverIdentity,
 } from './queryCoauthoringContext';
 import {
@@ -523,7 +524,8 @@ class Session implements QueryCoauthoringSession {
             this.owner.invalidateContext();
             return stale();
           }
-        } catch {
+        } catch (error) {
+          reportCoauthoringError(error, controller.signal, 'context_validation');
           contexts.push({
             refId: query.refId,
             dependencies: deps[query.refId],
@@ -553,7 +555,8 @@ class Session implements QueryCoauthoringSession {
             this.owner.invalidateContext();
             return stale();
           }
-        } catch {
+        } catch (error) {
+          reportCoauthoringError(error, controller.signal, 'context_validation');
           const context = contexts.find((context) => context.refId === validator.refId)!;
           context.description = { status: 'failed', reason: 'datasource_resolution_failed' };
         }
@@ -672,7 +675,8 @@ class Session implements QueryCoauthoringSession {
             this.owner.invalidateContext();
             break;
           }
-        } catch {
+        } catch (error) {
+          reportCoauthoringError(error, controller.signal, 'staging_validation');
           if (!controller.signal.aborted) {
             this.owner.invalidateContext();
           }

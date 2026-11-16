@@ -8,6 +8,7 @@ import {
   type CoauthoringResolverIdentity,
   resolveCoauthoringQuery,
   untilAborted,
+  reportCoauthoringError,
   isCoauthoringDescription,
 } from './queryCoauthoringContext';
 import {
@@ -90,7 +91,8 @@ export async function prepareCoauthoringProposal({
       let description: unknown;
       try {
         description = await untilAborted(language.describe(cloneDeep(baseline[index]), { signal }), signal);
-      } catch {
+      } catch (error) {
+        reportCoauthoringError(error, signal, 'description');
         rejection = { status: 'failed', issue: { kind: 'description_failed', refId } };
         break;
       }
@@ -119,7 +121,8 @@ export async function prepareCoauthoringProposal({
       let prepared: unknown;
       try {
         prepared = language.prepare(cloneDeep(baseline[index]), change.text);
-      } catch {
+      } catch (error) {
+        reportCoauthoringError(error, signal, 'preparation');
         rejection = { status: 'failed', issue: { kind: 'preparation_failed', refId } };
         break;
       }
@@ -166,7 +169,8 @@ export async function prepareCoauthoringProposal({
           rejection = { status: 'stale' };
           break;
         }
-      } catch {
+      } catch (error) {
+        reportCoauthoringError(error, signal, 'preparation_validation');
         rejection = { status: 'failed', issue: { kind: 'datasource_resolution_failed', refId } };
         break;
       }
@@ -215,7 +219,8 @@ export async function prepareCoauthoringProposal({
         invalidateContext();
         return { options: [], results: proposal.map(() => ({ status: 'stale' })) };
       }
-    } catch {
+    } catch (error) {
+      reportCoauthoringError(error, signal, 'preparation_validation');
       const previous = results[validator.index];
       if (previous.status === 'staged') {
         options = options.filter((option) => option.id !== previous.id);

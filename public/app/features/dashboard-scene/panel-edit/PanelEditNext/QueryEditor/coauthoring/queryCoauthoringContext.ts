@@ -1,7 +1,7 @@
 import { cloneDeep, isEqual } from 'lodash';
 
 import { type DataQuery, type ScopedVars } from '@grafana/data';
-import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime';
+import { getDataSourceInstance, getDataSourceInstanceSettings, logError } from '@grafana/runtime';
 import { sceneGraph, type SceneObject, type SceneQueryRunner, type VizPanel } from '@grafana/scenes';
 
 import { getPanelScopedVars } from '../utils';
@@ -14,6 +14,16 @@ import {
   type QueryCoauthoringLanguage,
   type QueryCoauthoringLanguageDescription,
 } from './queryCoauthoringContracts';
+
+export function reportCoauthoringError(error: unknown, signal: AbortSignal, phase: string) {
+  if (signal.aborted || (record(error) && error.name === 'AbortError')) {
+    return;
+  }
+  logError(error instanceof Error ? error : new Error('Query coauthoring failed'), {
+    component: 'query-coauthoring',
+    phase,
+  });
+}
 
 export function resolverInputs(panel: VizPanel, runner: SceneQueryRunner) {
   const variables: unknown[] = [];
@@ -134,7 +144,8 @@ export async function resolveCoauthoringQuery(
       settings,
       instance: 'instanceSettings' in datasource ? datasource.instanceSettings : undefined,
     });
-  } catch {
+  } catch (error) {
+    reportCoauthoringError(error, signal, 'datasource_resolution');
     return failed('datasource_resolution_failed');
   }
   let candidate: unknown;
@@ -151,11 +162,12 @@ export async function resolveCoauthoringQuery(
     if (!isQueryCoauthoringLanguage(candidate)) {
       return failed('language_resolution_failed');
     }
-  } catch {
+  } catch (error) {
+    reportCoauthoringError(error, signal, 'language_resolution');
     return failed('language_resolution_failed');
   }
   const language = candidate;
-  const editability = readSupport(candidate, query);
+  const editability = readSupport(candidate, query, signal);
   let description: QueryCoauthoringDescriptionResult = { status: 'failed', reason: 'description_failed' };
   if (describe) {
     try {
@@ -163,8 +175,8 @@ export async function resolveCoauthoringQuery(
       if (isCoauthoringDescription(value)) {
         description = { status: 'ready', value: cloneDeep(value) };
       }
-    } catch {
-      /* Descriptions and authoritative editability have independent outcomes. */
+    } catch (error) {
+      reportCoauthoringError(error, signal, 'description');
     }
   }
   return outcome(editability, description, language);
@@ -182,7 +194,7 @@ export function sameResolverIdentity(
   );
 }
 
-function readSupport(candidate: unknown, query: DataQuery): QueryCoauthoringEditability {
+function readSupport(candidate: unknown, query: DataQuery, signal: AbortSignal): QueryCoauthoringEditability {
   try {
     if (!record(candidate)) {
       return { kind: 'unknown', reason: 'support_check_failed' };
@@ -199,7 +211,8 @@ function readSupport(candidate: unknown, query: DataQuery): QueryCoauthoringEdit
       return { kind: 'unknown', reason: 'support_check_failed' };
     }
     return { kind: support.editable ? 'editable' : 'read_only' };
-  } catch {
+  } catch (error) {
+    reportCoauthoringError(error, signal, 'support_check');
     return { kind: 'unknown', reason: 'support_check_failed' };
   }
 }

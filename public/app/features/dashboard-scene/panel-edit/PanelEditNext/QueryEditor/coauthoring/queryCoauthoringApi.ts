@@ -13,7 +13,7 @@ import { type PanelEditor } from '../../../PanelEditor';
 import { type PanelDataPaneNext } from '../../PanelDataPaneNext';
 
 import { QueryCoauthoringSessionEngine } from './QueryCoauthoringSessionEngine';
-import { resolveCoauthoringQuery } from './queryCoauthoringContext';
+import { resolveCoauthoringQuery, reportCoauthoringError } from './queryCoauthoringContext';
 import {
   type QueryCoauthoringAPI,
   type QueryCoauthoringEntryRequest,
@@ -236,10 +236,11 @@ async function requestEntry(request: Omit<QueryCoauthoringEntryRequest, 'entryId
   const entryId = generateUUID();
   const result = await resolveCoauthoringQuery(panel, query, cloneDeep(runner.state.datasource), controller.signal);
   let current = false;
+  let validationFailure: { error: unknown } | undefined;
   try {
     current = await result.current();
-  } catch {
-    /* Resolution failure remains an explicit baseline outcome. */
+  } catch (error) {
+    validationFailure = { error };
   }
   if (
     controller.signal.aborted ||
@@ -252,6 +253,9 @@ async function requestEntry(request: Omit<QueryCoauthoringEntryRequest, 'entryId
     return;
   }
   if (!current) {
+    if (validationFailure) {
+      reportCoauthoringError(validationFailure.error, controller.signal, 'entry');
+    }
     engine.invalidateContext();
     return;
   }
