@@ -72,11 +72,19 @@ export function createCodeEditorTheme(theme: GrafanaTheme2, options?: { transpar
       '.cm-panels.cm-panels-bottom': {
         borderTopColor: theme.colors.border.weak,
       },
-      // The find/replace panel is built by @codemirror/search, so we can only restyle its DOM.
-      '.cm-panel.cm-search': {
-        padding: theme.spacing(1, 5, 0.5, 1),
+      // CodeMirror builds the find/replace and go-to-line panels itself, so we can only restyle their DOM.
+      '.cm-panel.cm-search, .cm-dialog': {
+        padding: theme.spacing(1, 5, 1, 1),
         fontFamily: theme.typography.fontFamily,
         fontSize: theme.typography.bodySmall.fontSize,
+        '& label': {
+          color: theme.colors.text.secondary,
+          fontSize: 'inherit',
+        },
+      },
+      '.cm-panel.cm-search': {
+        // Each row already ends with a bottom margin.
+        paddingBottom: theme.spacing(0.5),
         '& input, & button, & label': {
           margin: theme.spacing(0, 0.5, 0.5, 0),
         },
@@ -87,8 +95,6 @@ export function createCodeEditorTheme(theme: GrafanaTheme2, options?: { transpar
           height: theme.spacing(theme.components.height.sm),
           marginLeft: theme.spacing(1),
           verticalAlign: 'middle',
-          color: theme.colors.text.secondary,
-          fontSize: 'inherit',
           cursor: 'pointer',
         },
         '& input[type=checkbox]': {
@@ -96,27 +102,25 @@ export function createCodeEditorTheme(theme: GrafanaTheme2, options?: { transpar
           accentColor: theme.colors.primary.main,
           cursor: 'pointer',
         },
-        '& [name=close]': {
-          top: theme.spacing(1),
-          right: theme.spacing(1),
-          width: theme.spacing(theme.components.height.sm),
-          height: theme.spacing(theme.components.height.sm),
-          borderRadius: theme.shape.radius.default,
-          color: theme.colors.text.secondary,
-          fontSize: theme.typography.h4.fontSize,
-          lineHeight: 1,
-          cursor: 'pointer',
-          '&:hover': {
-            color: theme.colors.text.primary,
-            backgroundColor: theme.colors.action.hover,
-          },
-          '&:focus-visible': getFocusStyles(theme),
+      },
+      '.cm-panel.cm-search [name=close], .cm-dialog-close': {
+        top: theme.spacing(1),
+        right: theme.spacing(1),
+        width: theme.spacing(theme.components.height.sm),
+        height: theme.spacing(theme.components.height.sm),
+        borderRadius: theme.shape.radius.default,
+        color: theme.colors.text.secondary,
+        fontSize: theme.typography.h4.fontSize,
+        lineHeight: 1,
+        '&:hover': {
+          color: theme.colors.text.primary,
+          backgroundColor: theme.colors.action.hover,
         },
+        '&:focus-visible': getFocusStyles(theme),
       },
       '.cm-textfield': {
         height: theme.spacing(theme.components.height.sm),
         padding: theme.spacing(0, 1),
-        verticalAlign: 'middle',
         fontFamily: theme.typography.fontFamilyMonospace,
         fontSize: theme.typography.bodySmall.fontSize,
         color: theme.components.input.text,
@@ -127,9 +131,6 @@ export function createCodeEditorTheme(theme: GrafanaTheme2, options?: { transpar
           borderColor: theme.components.input.borderHover,
         },
         '&:focus': getFocusStyles(theme),
-        '&::placeholder': {
-          color: theme.colors.text.disabled,
-        },
       },
       '.cm-button': {
         // Mirrors the solid secondary <Button> variant.
@@ -146,12 +147,9 @@ export function createCodeEditorTheme(theme: GrafanaTheme2, options?: { transpar
         },
         height: theme.spacing(theme.components.height.sm),
         padding: theme.spacing(0, 1),
-        verticalAlign: 'middle',
-        fontFamily: theme.typography.fontFamily,
         fontSize: theme.typography.bodySmall.fontSize,
         fontWeight: theme.typography.fontWeightMedium,
         borderRadius: theme.shape.radius.default,
-        cursor: 'pointer',
         '&:focus-visible': getFocusStyles(theme),
       },
       '.cm-searchMatch': {
