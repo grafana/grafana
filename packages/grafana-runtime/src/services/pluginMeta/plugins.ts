@@ -50,7 +50,8 @@ export async function installPluginMeta(pluginId: string, version: string): Prom
     status: {},
   };
 
-  const result = await fetch(`apis/plugins.grafana.app/${apiVersion}/namespaces/${config.namespace}/plugins`, {
+  const pluginsUrl = `apis/plugins.grafana.app/${apiVersion}/namespaces/${config.namespace}/plugins`;
+  const result = await fetch(pluginsUrl, {
     method: 'POST',
     body: JSON.stringify(data),
     headers: { 'content-type': 'application/json' },
