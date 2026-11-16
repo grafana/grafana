@@ -88,7 +88,7 @@ func ManifestSupportedResources(manifests ManifestLister, supported []SupportedR
 }
 
 func mergeManifestResources(supported []SupportedResource, manifests []*app.ManifestData) []SupportedResource {
-	out := slices.Clone(supported)
+	out := slices.Clone(defaultSupportedResources(supported))
 	seen := sets.New[schema.GroupKind]()
 	for _, r := range out {
 		seen.Insert(r.GroupKind)
@@ -97,7 +97,7 @@ func mergeManifestResources(supported []SupportedResource, manifests []*app.Mani
 		for _, version := range data.Versions {
 			for _, kind := range version.Kinds {
 				gk := schema.GroupKind{Group: data.Group, Kind: kind.Kind}
-				if seen.Has(gk) || !kind.IsProvisionable() || kind.Scope == "Cluster" {
+				if seen.Has(gk) || !kind.IsProvisionable() || kind.Scope == "Cluster" || storingCollection(supported, gk) != "" {
 					continue
 				}
 				caps := sets.New[string]()

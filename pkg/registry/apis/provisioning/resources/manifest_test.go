@@ -52,12 +52,36 @@ func TestManifestSupportedResources(t *testing.T) {
 		})
 	})
 
+	t.Run("keeps the capabilities of a configured collection that covers the kind", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			collection := SupportedResource{GroupKind: schema.GroupKind{Group: "*.ext.grafana.app", Kind: "Widget"}, Capabilities: sets.New(CapabilityDisabled)}
+			lister := NewMockManifestLister(t)
+			lister.EXPECT().ListManifests(mock.Anything).Return(testManifestList(testManifestKind("Widget", true, true)), nil)
+
+			got := watchManifestSupportedResources(t, lister, []SupportedResource{collection})(context.Background())
+
+			require.Equal(t, []SupportedResource{collection}, got)
+		})
+	})
+
+	t.Run("keeps the default set when none is configured", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			lister := NewMockManifestLister(t)
+			lister.EXPECT().ListManifests(mock.Anything).Return(testManifestList(testManifestKind("Widget", true, true)), nil)
+
+			got := watchManifestSupportedResources(t, lister, nil)(context.Background())
+
+			require.Len(t, got, len(SupportedProvisioningResources)+1)
+			require.Subset(t, got, SupportedProvisioningResources)
+		})
+	})
+
 	t.Run("follows the manifests as they change", func(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
 			lister := NewMockManifestLister(t)
 			lister.EXPECT().ListManifests(mock.Anything).Return(testManifestList(testManifestKind("Widget", true, true)), nil).Once()
-			supported := watchManifestSupportedResources(t, lister, nil)
-			require.Len(t, supported(context.Background()), 1)
+			supported := watchManifestSupportedResources(t, lister, []SupportedResource{folder})
+			require.Len(t, supported(context.Background()), 2)
 
 			lister.EXPECT().ListManifests(mock.Anything).Return(testManifestList(
 				testManifestKind("Widget", true, true),
@@ -65,7 +89,7 @@ func TestManifestSupportedResources(t *testing.T) {
 			), nil)
 			time.Sleep(time.Minute)
 			synctest.Wait()
-			require.Len(t, supported(context.Background()), 2)
+			require.Len(t, supported(context.Background()), 3)
 		})
 	})
 
@@ -73,13 +97,13 @@ func TestManifestSupportedResources(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
 			lister := NewMockManifestLister(t)
 			lister.EXPECT().ListManifests(mock.Anything).Return(testManifestList(testManifestKind("Widget", true, true)), nil).Once()
-			supported := watchManifestSupportedResources(t, lister, nil)
-			require.Len(t, supported(context.Background()), 1)
+			supported := watchManifestSupportedResources(t, lister, []SupportedResource{folder})
+			require.Len(t, supported(context.Background()), 2)
 
 			lister.EXPECT().ListManifests(mock.Anything).Return(nil, errors.New("unavailable"))
 			time.Sleep(time.Minute)
 			synctest.Wait()
-			require.Len(t, supported(context.Background()), 1)
+			require.Len(t, supported(context.Background()), 2)
 		})
 	})
 
