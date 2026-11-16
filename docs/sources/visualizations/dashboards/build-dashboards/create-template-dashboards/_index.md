@@ -39,7 +39,6 @@ To create a dashboard from a template, follow these steps:
    The **Start a dashboard from a template** dialog box opens.
 
 1. Do one of the following:
-
    - Stay in the **Custom** tab to select a template created by someone in your organization.
    - Click the **Grafana-provisioned** tab to select templates included with Grafana.
 
