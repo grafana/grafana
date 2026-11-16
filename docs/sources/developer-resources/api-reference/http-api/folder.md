@@ -43,7 +43,7 @@ This API complies with the new Grafana API structure. To learn more refer to doc
 
 ## Requirements
 
-If you're running Grafana Enterprise, you'll need to have specific permissions for some endpoints. Refer to [Role-based access control permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.
+If you're running Grafana Enterprise or Grafana Cloud, some endpoints require specific permissions. For more information, refer to [Role-based access control permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/).
 
 ## Endpoints
 

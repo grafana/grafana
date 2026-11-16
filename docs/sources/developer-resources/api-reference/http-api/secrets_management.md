@@ -47,7 +47,7 @@ The Grafana Secrets Management API allows you to manage secrets that are used by
 
 ## Requirements
 
-If you're running Grafana Enterprise, you'll need to have specific permissions for some endpoints. Refer to [Role-based access control permissions](ref:rbac-permissions) for more information.
+If you're running Grafana Enterprise or Grafana Cloud, some endpoints require specific permissions. For more information, refer to [Role-based access control permissions](ref:rbac-permissions).
 
 ## Endpoints
 

@@ -33,15 +33,7 @@ Use this API to read and change user, team, and organization preferences, such a
 
 ## Requirements
 
-Access depends on who owns the preferences, not on role-based access control actions:
-
-| Owner        | Read                                                     | Create, update, and delete             |
-| ------------ | -------------------------------------------------------- | -------------------------------------- |
-| User         | The user                                                 | The user                               |
-| Team         | Team members, and users with permission to read the team | Users with permission to edit the team |
-| Organization | Any user in the organization                             | Users with the Admin organization role |
-
-Organization administrators can't read or change the preferences of other users.
+Access depends on who owns the preferences, not on role-based access control actions. You can read and change your own preferences. Team members can read team preferences, and users who can edit the team can change them. Every user in the organization can read organization preferences, and users with the Admin role can change them. For more information, refer to [Organization preferences](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/organization-preferences/).
 
 ## Endpoints
 

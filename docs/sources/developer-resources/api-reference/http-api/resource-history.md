@@ -35,6 +35,10 @@ The new Grafana APIs track version history for resources. You can retrieve the h
 
 **Resource history is available on all stable (GA) API versions (for example, `v1`, `v2`)**. Alpha or beta versions may not support it.
 
+## Requirements
+
+To read the history of a resource, you need permission to read that resource. For the permissions each resource requires, refer to the requirements on its API page, for example the [Dashboard API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/dashboard/#requirements).
+
 ## Endpoints
 
 These are the available endpoints:

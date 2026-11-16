@@ -36,14 +36,7 @@ Use this API to create shortened URLs. A short URL represents a longer URL conta
 
 ## Requirements
 
-Short URLs don't use role-based access control actions. Access depends on the organization role of the user or service account that sends the request:
-
-| Operation                                     | Required role                                   |
-| --------------------------------------------- | ----------------------------------------------- |
-| Create, get, and resolve (`goto`) a short URL | Any authenticated user, including role **None** |
-| List, update, patch, and delete short URLs    | **Admin**                                       |
-
-Listing is restricted to admins because it exposes every short URL in the organization. Updating and deleting are restricted because they can change or remove short URLs that other users created.
+Short URLs don't use role-based access control. Any signed-in user, including users with the None role, can create, get, and resolve short URLs. Listing, updating, and deleting short URLs requires the Admin role. For more information, refer to [Organization roles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/#organization-roles).
 
 ## Endpoints
 

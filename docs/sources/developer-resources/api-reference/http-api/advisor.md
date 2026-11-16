@@ -41,6 +41,10 @@ Before you begin, ensure you have the following:
 - **Grafana Advisor enabled:** Advisor has generated at least one report. Refer to [Grafana Advisor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/grafana-advisor/) to generate your first report.
 - **A service account token with the Admin role:** Use it to authenticate your requests. Refer to [HTTP API authentication](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/authentication).
 
+## Requirements
+
+By default, only users with the Admin role can use the Advisor API. For more information, refer to [Organization roles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/#organization-roles).
+
 ## Endpoints
 
 {{< admonition type="note" >}}

@@ -42,16 +42,7 @@ Notebooks can't be stored in folders. Requests that set the `grafana.app/folder`
 
 ## Requirements
 
-You need the following permissions. For more information, refer to [Role-based access control permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/).
-
-| Operation        | Action             |
-| ---------------- | ------------------ |
-| Get and list     | `notebooks:read`   |
-| Create           | `notebooks:create` |
-| Update and patch | `notebooks:write`  |
-| Delete           | `notebooks:delete` |
-
-By default, Viewers can read all notebooks in the organization, and Editors can also create, update, and delete them.
+By default, users with the Viewer role can read all notebooks in the organization, and users with the Editor role can also create, update, and delete them. To customize access, use the `notebooks:read`, `notebooks:create`, `notebooks:write`, and `notebooks:delete` actions. For more information, refer to [Role-based access control permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/).
 
 ## Endpoints
 

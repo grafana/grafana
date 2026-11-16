@@ -35,6 +35,10 @@ The Collections API, `/apis/collections.grafana.app/*`, is designed to group Gra
 
 **Use the Collections API for any new integrations**.
 
+## Requirements
+
+Stars belong to individual users. You can read and change only your own stars, and users with the Admin role can access the stars of any user in the organization. For more information, refer to [Organization roles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/#organization-roles).
+
 ## Endpoints
 
 These are the available endpoints:

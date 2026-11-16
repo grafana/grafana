@@ -38,14 +38,7 @@ Saved queries are only available in Grafana Enterprise and Grafana Cloud.
 
 ## Requirements
 
-You need the following permissions. For more information, refer to [Role-based access control permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/).
-
-| Operation                  | Action          | Fixed role             |
-| -------------------------- | --------------- | ---------------------- |
-| Get and list               | `queries:read`  | `fixed:queries:reader` |
-| Create, update, and delete | `queries:write` | `fixed:queries:writer` |
-
-By default, the Viewer basic role includes `fixed:queries:reader`, and the Editor basic role includes `fixed:queries:writer`.
+By default, users with the Viewer role can read saved queries, and users with the Editor role can also create, update, and delete them. For the related actions and fixed roles, refer to [RBAC role definitions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions/).
 
 ## Endpoints
 

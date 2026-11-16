@@ -30,6 +30,10 @@ This API complies with the new Grafana API structure. To learn more refer to doc
 
 {{< /admonition >}}
 
+## Requirements
+
+By default, users with the Viewer role can read playlists, and users with the Editor or Admin role can also create, update, and delete them. For more information, refer to [Organization roles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/#organization-roles).
+
 ## Endpoints
 
 These are the available endpoints:
