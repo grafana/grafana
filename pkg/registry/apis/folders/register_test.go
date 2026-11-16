@@ -16,11 +16,15 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/endpoints/request"
+	genericapiserver "k8s.io/apiserver/pkg/server"
+	"k8s.io/apiserver/pkg/storage/storagebackend"
 	"k8s.io/client-go/dynamic"
 	dynamicfake "k8s.io/client-go/dynamic/fake"
 	clientrest "k8s.io/client-go/rest"
+	k8stesting "k8s.io/client-go/testing"
 
 	authlib "github.com/grafana/authlib/types"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
@@ -33,6 +37,8 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission/rpclient"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
+	apiserverbuilder "github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/apiserver/restoptions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -187,6 +193,60 @@ func TestFolderAPIBuilder_DashboardAppClients(t *testing.T) {
 			require.NotNil(t, client, g.name)
 		}
 	})
+}
+
+// The three dashboard app clients have one type, so a mixed-up or missing client where the cascade
+// storage is built only shows up as a delete sent to the wrong resource, or not sent.
+func TestUpdateAPIGroupInfo_CascadeSweepsUseTheirOwnClients(t *testing.T) {
+	dashboardsGVR := dashv1.DashboardResourceInfo.GroupVersionResource()
+	variablesGVR := dashv2beta1.VariableResourceInfo.GroupVersionResource()
+	dyn := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(runtime.NewScheme(), map[schema.GroupVersionResource]string{
+		dashboardsGVR: "DashboardList", variablesGVR: "VariableList", prefsGVR: "DashboardPreferencesList",
+	})
+	dashboards, variables, preferences := dyn.Resource(dashboardsGVR), dyn.Resource(variablesGVR), dyn.Resource(prefsGVR)
+	b := &FolderAPIBuilder{
+		searcher: &fakeCascadeSearcher{
+			dashboardsByFolder: map[string][]string{"f1": {"d1"}},
+			variablesByFolder:  map[string][]string{"f1": {"v1"}},
+		},
+		dashboardSvc:            &dashboards,
+		variableSvc:             &variables,
+		dashboardPreferencesSvc: &preferences,
+	}
+	scheme := runtime.NewScheme()
+	require.NoError(t, b.InstallSchema(scheme))
+	optsGetter, err := restoptions.NewRESTOptionsGetterMemory(storagebackend.Config{
+		Codec: serializer.NewCodecFactory(scheme).LegacyCodec(folders.FolderResourceInfo.GroupVersion()),
+	}, nil)
+	require.NoError(t, err)
+	info := genericapiserver.NewDefaultAPIGroupInfo(folders.GROUP, scheme, metav1.ParameterCodec, serializer.NewCodecFactory(scheme))
+
+	require.NoError(t, b.UpdateAPIGroupInfo(&info, apiserverbuilder.APIGroupOptions{Scheme: scheme, OptsGetter: optsGetter}))
+
+	type cascadeSweeps interface {
+		deleteDashboardsInFolder(ctx context.Context, namespace, folderUID string, options *metav1.DeleteOptions) error
+		deleteVariablesInFolder(ctx context.Context, namespace, folderUID string, options *metav1.DeleteOptions) error
+		deleteDashboardPreferencesOfFolder(ctx context.Context, namespace, folderUID string, options *metav1.DeleteOptions) error
+	}
+	require.NotEmpty(t, info.VersionedResourcesStorageMap)
+	for version, storage := range info.VersionedResourcesStorageMap {
+		sweeps, ok := storage["folders"].(cascadeSweeps)
+		require.True(t, ok, "version %s: the folder storage must be the cascade storage, got %T", version, storage["folders"])
+		dyn.ClearActions()
+		ctx := context.Background()
+
+		require.NoError(t, sweeps.deleteDashboardsInFolder(ctx, "default", "f1", &metav1.DeleteOptions{}), version)
+		require.NoError(t, sweeps.deleteVariablesInFolder(ctx, "default", "f1", &metav1.DeleteOptions{}), version)
+		require.NoError(t, sweeps.deleteDashboardPreferencesOfFolder(ctx, "default", "f1", &metav1.DeleteOptions{}), version)
+
+		var deletes []string
+		for _, a := range dyn.Actions() {
+			if d, ok := a.(k8stesting.DeleteAction); ok {
+				deletes = append(deletes, d.GetResource().Resource+"/"+d.GetName())
+			}
+		}
+		require.Equal(t, []string{"dashboards/d1", "variables/v1", "dashboardpreferences/folder-f1"}, deletes, "version %s", version)
+	}
 }
 
 func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
