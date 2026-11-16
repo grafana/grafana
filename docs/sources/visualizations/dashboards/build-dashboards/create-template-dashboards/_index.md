@@ -34,6 +34,11 @@ To create a dashboard from a template, follow these steps:
 
 1. Click **Dashboards** in the primary menu.
 1. Click **New** and select **Dashboard from template** in the drop-down menu.
+1. In the dialog box that opens, do one of the following:
+
+   - Stay in the **Custom** tab to select a template created by someone in your organization.
+   - Click the **Grafana-provisioned** tab to select templates included with Grafana.
+
 1. Hover the cursor over the template you want to use and click **View template**.
 
    The dashboard created includes a banner panel indicating the dashboard is using sample data:
