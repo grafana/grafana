@@ -3,12 +3,14 @@ import { type Extension } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
 import { tags } from '@lezer/highlight';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { colorManipulator, type GrafanaTheme2 } from '@grafana/data';
 
 import { getFocusStyles } from '../../themes/mixins';
 
 export function createCodeEditorTheme(theme: GrafanaTheme2, options?: { transparent?: boolean }): Extension {
   const background = options?.transparent ? 'transparent' : theme.components.input.background;
+  const secondary = theme.colors.secondary;
+  const visualRefresh = theme.flags.visualDesignRefresh;
   const selectionState = EditorView.editorAttributes.compute(
     ['selection'],
     (state): Record<string, string> => (state.selection.main.empty ? {} : { class: 'cm-hasSelection' })
@@ -69,6 +71,95 @@ export function createCodeEditorTheme(theme: GrafanaTheme2, options?: { transpar
       },
       '.cm-panels.cm-panels-bottom': {
         borderTopColor: theme.colors.border.weak,
+      },
+      // The find/replace panel is built by @codemirror/search, so we can only restyle its DOM.
+      '.cm-panel.cm-search': {
+        padding: theme.spacing(1, 5, 0.5, 1),
+        fontFamily: theme.typography.fontFamily,
+        fontSize: theme.typography.bodySmall.fontSize,
+        '& input, & button, & label': {
+          margin: theme.spacing(0, 0.5, 0.5, 0),
+        },
+        '& label': {
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: theme.spacing(0.5),
+          height: theme.spacing(theme.components.height.sm),
+          marginLeft: theme.spacing(1),
+          verticalAlign: 'middle',
+          color: theme.colors.text.secondary,
+          fontSize: 'inherit',
+          cursor: 'pointer',
+        },
+        '& input[type=checkbox]': {
+          margin: 0,
+          accentColor: theme.colors.primary.main,
+          cursor: 'pointer',
+        },
+        '& [name=close]': {
+          top: theme.spacing(1),
+          right: theme.spacing(1),
+          width: theme.spacing(theme.components.height.sm),
+          height: theme.spacing(theme.components.height.sm),
+          borderRadius: theme.shape.radius.default,
+          color: theme.colors.text.secondary,
+          fontSize: theme.typography.h4.fontSize,
+          lineHeight: 1,
+          cursor: 'pointer',
+          '&:hover': {
+            color: theme.colors.text.primary,
+            backgroundColor: theme.colors.action.hover,
+          },
+          '&:focus-visible': getFocusStyles(theme),
+        },
+      },
+      '.cm-textfield': {
+        height: theme.spacing(theme.components.height.sm),
+        padding: theme.spacing(0, 1),
+        verticalAlign: 'middle',
+        fontFamily: theme.typography.fontFamilyMonospace,
+        fontSize: theme.typography.bodySmall.fontSize,
+        color: theme.components.input.text,
+        backgroundColor: theme.components.input.background,
+        border: `1px solid ${theme.components.input.borderColor}`,
+        borderRadius: theme.shape.radius.default,
+        '&:hover': {
+          borderColor: theme.components.input.borderHover,
+        },
+        '&:focus': getFocusStyles(theme),
+        '&::placeholder': {
+          color: theme.colors.text.disabled,
+        },
+      },
+      '.cm-button': {
+        // Mirrors the solid secondary <Button> variant.
+        color: secondary.contrastText,
+        background: visualRefresh ? secondary.background : secondary.main,
+        border: `1px solid ${secondary.subtleBorder}`,
+        '&:hover': {
+          background: visualRefresh ? secondary.backgroundEmphasis : secondary.shade,
+          borderColor: secondary.border,
+          boxShadow: theme.shadows.z1,
+        },
+        '&:active': {
+          background: visualRefresh ? secondary.background : secondary.main,
+        },
+        height: theme.spacing(theme.components.height.sm),
+        padding: theme.spacing(0, 1),
+        verticalAlign: 'middle',
+        fontFamily: theme.typography.fontFamily,
+        fontSize: theme.typography.bodySmall.fontSize,
+        fontWeight: theme.typography.fontWeightMedium,
+        borderRadius: theme.shape.radius.default,
+        cursor: 'pointer',
+        '&:focus-visible': getFocusStyles(theme),
+      },
+      '.cm-searchMatch': {
+        backgroundColor: colorManipulator.alpha(theme.colors.warning.main, 0.3),
+      },
+      '.cm-searchMatch.cm-searchMatch-selected': {
+        backgroundColor: colorManipulator.alpha(theme.colors.primary.main, 0.45),
+        outline: `1px solid ${theme.colors.primary.border}`,
       },
       '.cm-tooltip': {
         color: theme.colors.text.primary,
