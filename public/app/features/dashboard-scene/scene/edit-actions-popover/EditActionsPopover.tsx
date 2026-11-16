@@ -208,7 +208,8 @@ export function EditActionsPopover({
   return (
     <>
       {cloneElement(children, {
-        ...getReferenceProps({ ref: mergedRef }),
+        // Passing the child's own props lets the interaction handlers chain with, not replace, its handlers.
+        ...getReferenceProps({ ...children.props, ref: mergedRef }),
         'data-edit-actions-id': context.floatingId,
       })}
       {showPopover && keyboardAccessible && (
