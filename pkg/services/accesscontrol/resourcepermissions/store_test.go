@@ -290,6 +290,58 @@ func TestIntegrationStore_SetBuiltInResourcePermission(t *testing.T) {
 	}
 }
 
+func TestIntegrationStore_SetBuiltInResourcePermission_RestoresMissingAssignment(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	store, sql, _ := setupTestEnv(t)
+	ctx := context.Background()
+	cmd := func(resourceID string) SetResourcePermissionCommand {
+		return SetResourcePermissionCommand{
+			Actions:           []string{"folders:read"},
+			Resource:          "folders",
+			ResourceID:        resourceID,
+			ResourceAttribute: "uid",
+		}
+	}
+
+	_, err := store.SetBuiltInResourcePermission(ctx, 1, "Viewer", cmd("a"), nil)
+	require.NoError(t, err)
+
+	// Drop the basic role assignment while keeping the managed role.
+	err = sql.WithDbSession(ctx, func(sess *db.Session) error {
+		_, err := sess.Exec("DELETE FROM builtin_role WHERE role = ? AND org_id = ?", "Viewer", 1)
+		return err
+	})
+	require.NoError(t, err)
+
+	_, err = store.SetBuiltInResourcePermission(ctx, 1, "Viewer", cmd("b"), nil)
+	require.NoError(t, err)
+
+	permissions, err := store.GetResourcePermissions(ctx, 1, GetResourcePermissionsQuery{
+		User:              &user.SignedInUser{OrgID: 1},
+		Actions:           []string{"folders:read"},
+		Resource:          "folders",
+		ResourceID:        "b",
+		ResourceAttribute: "uid",
+		OnlyManaged:       true,
+	})
+	require.NoError(t, err)
+	require.Len(t, permissions, 1)
+	assert.Equal(t, "Viewer", permissions[0].BuiltInRole)
+
+	// Writing again must not duplicate the assignment.
+	_, err = store.SetBuiltInResourcePermission(ctx, 1, "Viewer", cmd("c"), nil)
+	require.NoError(t, err)
+	var count int64
+	err = sql.WithDbSession(ctx, func(sess *db.Session) error {
+		var err error
+		count, err = sess.Table("builtin_role").Where("role = ? AND org_id = ?", "Viewer", 1).Count()
+		return err
+	})
+	require.NoError(t, err)
+	assert.Equal(t, int64(1), count)
+}
+
 type setResourcePermissionsTest struct {
 	desc              string
 	orgID             int64
