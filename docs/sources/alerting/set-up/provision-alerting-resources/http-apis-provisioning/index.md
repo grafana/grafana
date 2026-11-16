@@ -13,8 +13,8 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Provision alerting resources using the new HTTP API
 title: Use the new HTTP APIs to manage alerting resources
+menuTitle: Provision alerting using the new HTTP API
 weight: 400
 ---
 
@@ -38,6 +38,7 @@ Before you begin, ensure you have the following:
   - **Grafana Cloud:** `stacks-<STACK_ID>`.
 
   For more details, refer to [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/#namespace-namespace).
+
 - **Authentication and permissions:** Authenticate with a [service account token](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/authentication/) (or basic authentication in OSS and Enterprise). By default, **Viewer** grants read access and **Editor** or **Admin** grants write access. For granular role-based access control (RBAC) permissions, refer to [Configure RBAC for Grafana Alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-rbac/).
 - **A folder for rules:** Alert rules, recording rules, and rule sequences must belong to a folder. Pass the folder UID in `metadata.annotations["grafana.app/folder"]`.
 
