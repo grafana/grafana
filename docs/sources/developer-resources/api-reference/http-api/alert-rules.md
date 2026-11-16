@@ -50,18 +50,9 @@ Before you begin, ensure you have the following:
 
 ## Requirements
 
-If you're running Grafana Enterprise or Grafana Cloud, you need role-based access control (RBAC) permissions scoped to the target folder (`folders:*` or `folders:uid:<FOLDER_UID>`). For more information, refer to [Manage access using roles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-rbac/access-roles/).
+By default, users with the **Viewer** basic role can read alert rules, recording rules, and rule sequences in folders they have access to, and users with the **Editor** or **Admin** basic role can also create, update, and delete them.
 
-| Operation        | Required actions                            | Fixed role                    |
-| ---------------- | ------------------------------------------- | ----------------------------- |
-| Get and list     | `alert.rules:read`                          | `fixed:alerting.rules:reader` |
-| Create           | `alert.rules:read` and `alert.rules:create` | `fixed:alerting.rules:writer` |
-| Update and patch | `alert.rules:read` and `alert.rules:write`  | `fixed:alerting.rules:writer` |
-| Delete           | `alert.rules:read` and `alert.rules:delete` | `fixed:alerting.rules:writer` |
-
-By default, the Viewer basic role includes `fixed:alerting.rules:reader`, and the Editor and Admin basic roles include `fixed:alerting.rules:writer`.
-
-To mark a rule as provisioned (read-only in the UI) by setting `metadata.annotations["grafana.com/provenance"]` to `api`, the caller also needs `alert.provisioning:write` or `alert.provisioning.provenance:write`.
+If you're running Grafana Enterprise or Grafana Cloud and want to configure granular role-based access control (RBAC) permissions, including folder scopes, data source query permissions, and provenance permissions for `grafana.com/provenance`, refer to [Configure RBAC for Grafana Alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-rbac/).
 
 ## Alert rules
 

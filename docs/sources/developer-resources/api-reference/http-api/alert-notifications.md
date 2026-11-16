@@ -50,28 +50,9 @@ Before you begin, ensure you have the following:
 
 ## Requirements
 
-If you're running Grafana Enterprise or Grafana Cloud, you need role-based access control (RBAC) permissions for the resource type you're managing. For the full list of alerting permissions and scopes, refer to [Manage access using roles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-rbac/access-roles/).
+By default, users with the **Viewer** basic role can read notification resources, and users with the **Editor** or **Admin** basic role can create, update, and delete them (updating the singleton `Config` resource requires the **Admin** role).
 
-| Resource                             | Reader fixed role                        | Writer fixed role                        |
-| ------------------------------------ | ---------------------------------------- | ---------------------------------------- |
-| All notification resources           | `fixed:alerting.notifications:reader`    | `fixed:alerting.notifications:writer`    |
-| Receivers (`receivers`)              | `fixed:alerting.receivers:reader`        | `fixed:alerting.receivers:writer`        |
-| Routing trees (`routingtrees`)       | `fixed:alerting.routes:reader`           | `fixed:alerting.routes:writer`           |
-| Template groups (`templategroups`)   | `fixed:alerting.templates:reader`        | `fixed:alerting.templates:writer`        |
-| Time intervals (`timeintervals`)     | `fixed:alerting.time-intervals:reader`   | `fixed:alerting.time-intervals:writer`   |
-| Inhibition rules (`inhibitionrules`) | `fixed:alerting.inhibition-rules:reader` | `fixed:alerting.inhibition-rules:writer` |
-
-By default, the Viewer basic role includes read access to notification resources, and the Editor and Admin basic roles include write access. Reading or updating the singleton `Config` resource requires `alert.notifications.configs:read` (Viewer) or `alert.notifications.configs:update` (Admin).
-
-### Provenance annotation
-
-To mark a notification resource as provisioned (read-only in the Grafana UI), set `metadata.annotations["grafana.com/provenance"]` to `api`. Setting or changing provenance requires one of the following permissions:
-
-- `alert.provisioning:write`
-- `alert.notifications.provisioning:write`
-- `alert.provisioning.provenance:write`
-
-Callers without these permissions can still create, update, and delete notification resources without setting `grafana.com/provenance`.
+If you're running Grafana Enterprise or Grafana Cloud and want to configure granular role-based access control (RBAC) permissions, including per-resource roles, scopes, and provenance permissions for `grafana.com/provenance`, refer to [Configure RBAC for Grafana Alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-rbac/).
 
 ## Receivers (contact points)
 

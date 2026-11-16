@@ -40,14 +40,9 @@ Before you begin, ensure you have the following:
 
 ## Requirements
 
-Required permissions depend on whether the `AlertEnrichment` resource applies globally (across all alerts or label/annotation matchers) or is scoped to specific alert rules (`spec.alertRuleUids`):
+Managing global alert enrichment resources requires the **Admin** basic role. For per-rule alert enrichment (`spec.alertRuleUids`), users with the **Viewer** basic role can read configurations and users with the **Editor** or **Admin** basic role can create, update, and delete them.
 
-| Scope                     | Read                                                           | Create, update, patch, and delete                                                            |
-| ------------------------- | -------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| Global alert enrichment   | Organization **Admin** role                                    | Organization **Admin** role                                                                  |
-| Per-rule alert enrichment | `alert.enrichments:read` (`fixed:alerting.enrichments:reader`) | `alert.enrichments:read` and `alert.enrichments:write` (`fixed:alerting.enrichments:writer`) |
-
-For more information, refer to [Manage access using roles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-rbac/access-roles/).
+For details on granular role-based access control (RBAC) permissions and roles, refer to [Configure RBAC for Grafana Alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-rbac/#alert-enrichments) and [Alert enrichment](https://grafana.com/docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/alert-enrichment/#manage-access-to-enrichments).
 
 ## Alert enrichment
 
@@ -494,7 +489,7 @@ Content-Type: application/json
 
 ### Details
 
-When `spec.alertRuleUids` is omitted or empty, the enrichment is global and requires the Organization **Admin** role to read or modify. When `spec.alertRuleUids` lists one or more alert rule UIDs, users with `alert.enrichments:read` and `alert.enrichments:write` can manage it for those rules.
+When `spec.alertRuleUids` is omitted or empty, the enrichment applies globally across alerts matching `labelMatchers`, `annotationMatchers`, and `receivers`. When `spec.alertRuleUids` lists one or more alert rule UIDs, the enrichment runs only for those rules. Refer to [Requirements](#requirements) for how global and per-rule scoping affects access.
 
 ## Related resources
 
