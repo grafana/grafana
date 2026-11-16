@@ -53,6 +53,20 @@ func TestIntegrationDashboardPreferencesFolderDelete(t *testing.T) {
 
 		require.False(t, dashboardPreferencesStored(t, ctx, helper, "folder-pfd-e"))
 	})
+
+	t.Run("a k8s delete in another org deletes only that org's folder tier", func(t *testing.T) {
+		createLegacyFolder(t, helper, helper.Org1.Admin, map[string]any{"uid": "pfd-b", "title": "pfd-b"})
+		createLegacyFolder(t, helper, helper.OrgB.Admin, map[string]any{"uid": "pfd-b", "title": "pfd-b"})
+		putFolderDashboardPreferences(t, ctx, admin, "pfd-b")
+		putFolderDashboardPreferences(t, ctx, dashboardPreferencesClient(helper, helper.OrgB.Admin), "pfd-b")
+
+		require.NoError(t, dashboardPreferencesFolderClient(helper, helper.OrgB.Admin).Resource.Delete(ctx, "pfd-b", metav1.DeleteOptions{}))
+
+		require.False(t, dashboardPreferencesStoredInOrg(t, ctx, helper, helper.OrgB.OrgID, "folder-pfd-b"))
+		_, err := adminFolders.Resource.Get(ctx, "pfd-b", metav1.GetOptions{})
+		require.NoError(t, err)
+		require.True(t, dashboardPreferencesStored(t, ctx, helper, "folder-pfd-b"))
+	})
 }
 
 func TestIntegrationDashboardPreferencesFolderDeleteCollection(t *testing.T) {
@@ -148,6 +162,54 @@ func TestIntegrationDashboardPreferencesFolderDeleteSubtree(t *testing.T) {
 		}
 		require.True(t, dashboardPreferencesStored(t, ctx, helper, "folder-pfd-c-keep"))
 	})
+
+	orgBAdmin := dashboardPreferencesClient(helper, helper.OrgB.Admin)
+	// createOrgBSubtree creates prefix-parent with prefix-child in it in org B, and a folder
+	// prefix-parent in org 1, each with its folder tier, and returns org B's UIDs.
+	createOrgBSubtree := func(t *testing.T, prefix string) []string {
+		t.Helper()
+		parent, child := prefix+"-parent", prefix+"-child"
+		createLegacyFolder(t, helper, helper.Org1.Admin, map[string]any{"uid": parent, "title": parent})
+		putFolderDashboardPreferences(t, ctx, admin, parent)
+		createLegacyFolder(t, helper, helper.OrgB.Admin, map[string]any{"uid": parent, "title": parent})
+		createLegacyFolder(t, helper, helper.OrgB.Admin, map[string]any{"uid": child, "title": child, "parentUid": parent})
+		for _, uid := range []string{parent, child} {
+			putFolderDashboardPreferences(t, ctx, orgBAdmin, uid)
+		}
+		return []string{parent, child}
+	}
+	// requireOnlyOrgBTiersGone checks that org B's subtree tiers are gone and that org 1's same-named
+	// folder and tier remain.
+	requireOnlyOrgBTiersGone := func(t *testing.T, subtree []string) {
+		t.Helper()
+		for _, uid := range subtree {
+			require.False(t, dashboardPreferencesStoredInOrg(t, ctx, helper, helper.OrgB.OrgID, "folder-"+uid), "org B folder-%s", uid)
+		}
+		_, err := adminFolders.Resource.Get(ctx, subtree[0], metav1.GetOptions{})
+		require.NoError(t, err)
+		require.True(t, dashboardPreferencesStored(t, ctx, helper, "folder-"+subtree[0]))
+	}
+
+	t.Run("a legacy delete in another org deletes only that org's folder tiers", func(t *testing.T) {
+		subtree := createOrgBSubtree(t, "pfd-lb")
+
+		rsp := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.OrgB.Admin,
+			Method: http.MethodDelete,
+			Path:   "/api/folders/pfd-lb-parent",
+		}, &map[string]any{})
+		require.Equal(t, http.StatusOK, rsp.Response.StatusCode, "DELETE /api/folders/pfd-lb-parent: %s", rsp.Body)
+
+		requireOnlyOrgBTiersGone(t, subtree)
+	})
+
+	t.Run("a forced cascade delete in another org deletes only that org's folder tiers", func(t *testing.T) {
+		subtree := createOrgBSubtree(t, "pfd-cb")
+
+		require.NoError(t, dashboardPreferencesFolderClient(helper, helper.OrgB.Admin).Resource.Delete(ctx, "pfd-cb-parent", metav1.DeleteOptions{GracePeriodSeconds: &zero}))
+
+		requireOnlyOrgBTiersGone(t, subtree)
+	})
 }
 
 func TestIntegrationDashboardPreferencesFolderDeleteFinalizer(t *testing.T) {
@@ -234,9 +296,9 @@ func putFolderDashboardPreferences(t *testing.T, ctx context.Context, admin *api
 	require.NoError(t, err)
 }
 
-func dashboardPreferencesKey(helper *apis.K8sTestHelper, name string) *resourcepb.ResourceKey {
+func dashboardPreferencesKey(helper *apis.K8sTestHelper, orgID int64, name string) *resourcepb.ResourceKey {
 	return &resourcepb.ResourceKey{
-		Namespace: helper.Namespacer(helper.Org1.OrgID),
+		Namespace: helper.Namespacer(orgID),
 		Group:     "dashboard.grafana.app",
 		Resource:  "dashboardpreferences",
 		Name:      name,
@@ -252,17 +314,23 @@ func storeDashboardPreferences(t *testing.T, ctx context.Context, helper *apis.K
 	value, err := json.Marshal(obj.Object)
 	require.NoError(t, err)
 	_, err = helper.GetEnv().ResourceClient.Create(serviceCtx, &resourcepb.CreateRequest{
-		Key:   dashboardPreferencesKey(helper, name),
+		Key:   dashboardPreferencesKey(helper, helper.Org1.OrgID, name),
 		Value: value,
 	})
 	require.NoError(t, err)
 }
 
-// dashboardPreferencesStored reads storage as the service identity, so the folder the tier names need not exist.
+// dashboardPreferencesStored reports whether name is stored in org 1.
 func dashboardPreferencesStored(t *testing.T, ctx context.Context, helper *apis.K8sTestHelper, name string) bool {
 	t.Helper()
-	serviceCtx, _ := identity.WithServiceIdentity(ctx, helper.Org1.OrgID)
-	_, err := helper.GetEnv().ResourceClient.Read(serviceCtx, &resourcepb.ReadRequest{Key: dashboardPreferencesKey(helper, name)})
+	return dashboardPreferencesStoredInOrg(t, ctx, helper, helper.Org1.OrgID, name)
+}
+
+// dashboardPreferencesStoredInOrg reads storage as the service identity, so the folder the tier names need not exist.
+func dashboardPreferencesStoredInOrg(t *testing.T, ctx context.Context, helper *apis.K8sTestHelper, orgID int64, name string) bool {
+	t.Helper()
+	serviceCtx, _ := identity.WithServiceIdentity(ctx, orgID)
+	_, err := helper.GetEnv().ResourceClient.Read(serviceCtx, &resourcepb.ReadRequest{Key: dashboardPreferencesKey(helper, orgID, name)})
 	if err == nil {
 		return true
 	}
