@@ -23,7 +23,7 @@ import { deriveDryRunResult, deriveDryRunState, parseDryRunResponse } from './us
  * Step 1's dry run: a debounced live preview of the configuration being entered, and the fresh check that
  * Next runs before moving on.
  */
-export function useStep1DryRun({ watch, getValues }: UseFormReturn<ImportFormValues>) {
+export function useNotificationsDryRun({ watch, getValues }: UseFormReturn<ImportFormValues>) {
   const { setStepErrors } = useStepperState();
 
   const [
@@ -169,4 +169,4 @@ export function useStep1DryRun({ watch, getValues }: UseFormReturn<ImportFormVal
   return { liveStep1Values, autoSyncIdentifier, dryRunResult, dryRunState, isChecking, checkNow };
 }
 
-export type Step1DryRun = ReturnType<typeof useStep1DryRun>;
+export type NotificationsDryRun = ReturnType<typeof useNotificationsDryRun>;

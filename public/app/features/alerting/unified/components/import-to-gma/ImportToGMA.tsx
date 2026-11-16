@@ -23,9 +23,9 @@ import { ReviewStep } from './review/ReviewStep';
 import { type ImportFormValues } from './types';
 import { useCanImportToGMA } from './useCanImportToGMA';
 import { filterRulerRulesConfig } from './useImport';
-import { useRunImport } from './useRunImport';
-import { useStep1DryRun } from './useStep1DryRun';
-import { useStep1Handlers } from './useStep1Handlers';
+import { useImportJob } from './useImportJob';
+import { useNotificationsDryRun } from './useNotificationsDryRun';
+import { useNotificationsStepNavigation } from './useNotificationsStepNavigation';
 
 function Wizard({ notificationsLock }: { notificationsLock?: NotificationsLock }) {
   const [searchParams] = useURLSearchParams();
@@ -52,7 +52,7 @@ export function ImportWizardGate() {
   }
   // Follows the sync and the staged copy live, so acting on the staged card in step 1 (stopping or
   // restarting the sync, promoting or reverting the copy) unlocks or locks that step right away. The wizard
-  // holds on to the lock while its own import runs (see useRunImport), since that import is what stages a
+  // holds on to the lock while its own import runs (see useImportJob), since that import is what stages a
   // copy or turns sync on.
   let notificationsLock: NotificationsLock | undefined;
   if (isActive) {
@@ -108,8 +108,8 @@ function ImportWizardContent({ notificationsLock: liveNotificationsLock }: { not
   // Permission checks aligned with backend authorization.go
   const { canImportNotifications, canImportRules } = useCanImportToGMA();
 
-  const dryRun = useStep1DryRun(formAPI);
-  const step1 = useStep1Handlers(formAPI, dryRun);
+  const dryRun = useNotificationsDryRun(formAPI);
+  const step1 = useNotificationsStepNavigation(formAPI, dryRun);
 
   const handleStep2Next = useCallback((): boolean => {
     setValue('step2Completed', true);
@@ -145,8 +145,8 @@ function ImportWizardContent({ notificationsLock: liveNotificationsLock }: { not
     [rulesSource, rulesFromDatasource, namespace, ruleGroup]
   );
 
-  const { notificationsLock, showConfirmModal, importStatus, importError, startImport, confirmImport, cancelConfirm } =
-    useRunImport({ getImportValues, rulesToImport, liveNotificationsLock });
+  const { notificationsLock, showConfirmModal, importStatus, importError, startImport, confirmImport, closeConfirm } =
+    useImportJob({ getImportValues, rulesToImport, liveNotificationsLock });
 
   // A locked notifications step has nothing to fill in, so the sidebar shouldn't hold back the steps after
   // it. This only touches the sidebar's own state; the form never marks the step completed, so nothing
@@ -202,7 +202,7 @@ function ImportWizardContent({ notificationsLock: liveNotificationsLock }: { not
         autoSyncActive={plan.willEnableAutoSync}
         willImportRules={plan.willImportRules}
         onConfirm={confirmImport}
-        onDismiss={cancelConfirm}
+        onDismiss={closeConfirm}
       />
     </>
   );

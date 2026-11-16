@@ -7,7 +7,7 @@ import { reportInteraction } from '@grafana/runtime';
 import { StepperStateProvider } from './Wizard/StepperState';
 import { mockImportFormValues } from './testUtils';
 import { type ImportFormValues, type Step1Values } from './types';
-import { useStep1Handlers } from './useStep1Handlers';
+import { useNotificationsStepNavigation } from './useNotificationsStepNavigation';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -70,7 +70,7 @@ function setup({
           autoSyncNotificationsEnabled,
         ]
       );
-      const handlers = useStep1Handlers(form, { liveStep1Values, autoSyncIdentifier, checkNow });
+      const handlers = useNotificationsStepNavigation(form, { liveStep1Values, autoSyncIdentifier, checkNow });
       return { form, handlers };
     },
     { wrapper: Wrapper, initialProps: { autoSyncIdentifier: undefined as string | undefined } }
@@ -82,7 +82,7 @@ beforeEach(() => {
   jest.mocked(reportInteraction).mockClear();
 });
 
-describe('useStep1Handlers', () => {
+describe('useNotificationsStepNavigation', () => {
   describe('onNext', () => {
     it('completes the step, keeps what was validated, and fills the rules step with the new tree', async () => {
       const { result, checkNow } = setup({ formValues: { policyTreeName: 'imported' } });

@@ -12,7 +12,7 @@ import { StepperStateProvider, useStepperState } from './Wizard/StepperState';
 import { StepKey } from './Wizard/types';
 import { mockImportFormValues } from './testUtils';
 import { type ImportFormValues } from './types';
-import { useStep1DryRun } from './useStep1DryRun';
+import { useNotificationsDryRun } from './useNotificationsDryRun';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -37,7 +37,7 @@ function setup(formValues: Partial<ImportFormValues> = {}) {
   return renderHook(
     () => {
       const form = useForm<ImportFormValues>({ defaultValues: mockImportFormValues(formValues) });
-      const dryRun = useStep1DryRun(form);
+      const dryRun = useNotificationsDryRun(form);
       const { hasStepErrors } = useStepperState();
       return { form, dryRun, hasStepErrors };
     },
@@ -72,7 +72,7 @@ beforeEach(() => {
   server.use(http.post(CONVERT_URL, () => HttpResponse.json(convertResponse())));
 });
 
-describe('useStep1DryRun', () => {
+describe('useNotificationsDryRun', () => {
   describe('checkNow', () => {
     it('passes without a request when there is nothing to validate yet', async () => {
       const dryRuns = countDryRuns();

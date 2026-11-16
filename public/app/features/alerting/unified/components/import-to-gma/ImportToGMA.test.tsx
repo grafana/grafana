@@ -177,7 +177,7 @@ jest.mock('./steps/Step1AlertmanagerResources', () => {
 });
 // Most flows skip Rules, which needs the step left empty: its single button only skips while no rules
 // source is chosen. A test that completes the step instead turns mockSeedRulesSource on, so the import
-// (useRunImport) has the rulesDatasourceUID it needs to fire. The 'yaml' scenario seeds a rules YAML upload
+// (useImportJob) has the rulesDatasourceUID it needs to fire. The 'yaml' scenario seeds a rules YAML upload
 // instead, for tests that exercise the rules preview.
 let mockRulesScenario: 'datasource' | 'datasource-filtered' | 'yaml' = 'datasource';
 let mockSeedRulesSource = false;
@@ -261,6 +261,10 @@ beforeEach(() => {
  * Drives the wizard: complete the notifications step, skip the rules step, then open and accept the
  * confirm modal. Leaves the rest to the caller's assertions.
  */
+async function continueFromSuccess(user: ReturnType<typeof render>['user']) {
+  await user.click(await screen.findByRole('button', { name: /continue/i }));
+}
+
 async function importWith(user: ReturnType<typeof render>['user']) {
   await screen.findByRole('group', { name: /import notification configuration/i });
   // Notifications -> Rules: the stub triggers a dry-run; wait for it to pass so Next is enabled
@@ -329,9 +333,8 @@ describe('ImportToGMA wizard — stage analytics', () => {
         expect.objectContaining({ notificationsSource: 'yaml' })
       )
     );
-    await waitFor(() => expect(locationService.getLocation().pathname).toContain('/alerting/admin/import'), {
-      timeout: 3000,
-    });
+    await continueFromSuccess(user);
+    await waitFor(() => expect(locationService.getLocation().pathname).toContain('/alerting/admin/import'));
   });
 
   it('tracks an error when the import fails', async () => {
@@ -439,9 +442,8 @@ describe('ImportToGMA wizard — stage analytics', () => {
     const dialog = await screen.findByRole('dialog');
     await user.click(within(dialog).getByRole('button', { name: /start import/i }));
 
-    await waitFor(() => expect(locationService.getLocation().pathname).toContain('/alerting/list'), {
-      timeout: 3000,
-    });
+    await continueFromSuccess(user);
+    await waitFor(() => expect(locationService.getLocation().pathname).toContain('/alerting/list'));
     expect(Object.values(store.getState().appNotifications.byId).map((notification) => notification.title)).toContain(
       'Successfully imported resources to Grafana Alerting.'
     );
@@ -1067,9 +1069,8 @@ describe('ImportToGMA wizard — auto-sync confirm flow', () => {
         expect.objectContaining({ notificationsSource: 'datasource' })
       )
     );
-    await waitFor(() => expect(locationService.getLocation().pathname).toContain('/alerting/admin/import'), {
-      timeout: 3000,
-    });
+    await continueFromSuccess(user);
+    await waitFor(() => expect(locationService.getLocation().pathname).toContain('/alerting/admin/import'));
   });
 
   it('enables auto-sync and imports rules together when Rules is completed instead of skipped', async () => {

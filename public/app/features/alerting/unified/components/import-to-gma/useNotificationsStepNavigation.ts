@@ -9,19 +9,19 @@ import { isAutoSyncSelected } from './Wizard/steps';
 import { StepKey } from './Wizard/types';
 import { pickStep1Values } from './steps/utils';
 import { type ImportFormValues, type Step1Values } from './types';
-import { type Step1DryRun } from './useStep1DryRun';
+import { type NotificationsDryRun } from './useNotificationsDryRun';
 
 /**
  * Step 1's Next, Skip and continue-while-locked handlers, and the snapshot of the values Next validated.
  * WizardStep and NextButton own the stepper state; these only update form values and say whether to proceed.
  */
-export function useStep1Handlers(
+export function useNotificationsStepNavigation(
   { trigger, getValues, setValue }: UseFormReturn<ImportFormValues>,
   {
     liveStep1Values,
     autoSyncIdentifier,
     checkNow,
-  }: Pick<Step1DryRun, 'liveStep1Values' | 'autoSyncIdentifier' | 'checkNow'>
+  }: Pick<NotificationsDryRun, 'liveStep1Values' | 'autoSyncIdentifier' | 'checkNow'>
 ) {
   const { setStepCompleted } = useStepperState();
   const [validatedValues, setValidatedValues] = useState<Step1Values>();

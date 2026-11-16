@@ -1,5 +1,5 @@
 import { isEmpty } from 'lodash';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
@@ -61,14 +61,14 @@ export function getPostImportOutcome(plan: ImportPlan, targetFolder: Folder | un
   };
 }
 
-interface UseRunImportArgs {
+interface UseImportJobArgs {
   getImportValues: () => ImportFormValues;
   /** The rules to send, already filtered by namespace and group. Only set for a data source. */
   rulesToImport: RulerCloudRulesConfigDTO | undefined;
   liveNotificationsLock: NotificationsLock | undefined;
 }
 
-export function useRunImport({ getImportValues, rulesToImport, liveNotificationsLock }: UseRunImportArgs) {
+export function useImportJob({ getImportValues, rulesToImport, liveNotificationsLock }: UseImportJobArgs) {
   const importNotifications = useImportNotifications();
   const importRules = useImportRules();
   const { save: saveAutoSync } = useAutoSyncConfiguration();
@@ -84,8 +84,7 @@ export function useRunImport({ getImportValues, rulesToImport, liveNotifications
   const [lockAtImport, setLockAtImport] = useState(liveNotificationsLock);
   const notificationsLock = importStatus === 'idle' ? liveNotificationsLock : lockAtImport;
 
-  const redirectTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  useEffect(() => () => clearTimeout(redirectTimer.current), []);
+  const [outcome, setOutcome] = useState<PostImportOutcome>();
 
   const startImport = useCallback(() => {
     setShowConfirmModal(true);
@@ -138,6 +137,7 @@ export function useRunImport({ getImportValues, rulesToImport, liveNotifications
         await importRules({ ...baseParams, notificationSettings });
       }
 
+      setOutcome(getPostImportOutcome(plan, values.targetFolder));
       setImportStatus('success');
 
       trackImportToGMASuccess({
@@ -149,15 +149,6 @@ export function useRunImport({ getImportValues, rulesToImport, liveNotifications
         pauseRecordingRules: values.pauseRecordingRules,
         pauseAlertingRules: values.pauseAlertingRules,
       });
-
-      const outcome = getPostImportOutcome(plan, values.targetFolder);
-      // Holds the "Import Successful" state on screen for a beat — Modal has no close animation,
-      // so without this delay the confirmation would disappear instantly instead of being seen.
-      redirectTimer.current = setTimeout(() => {
-        setShowConfirmModal(false);
-        notifyApp.success(outcome.title, outcome.body);
-        locationService.push(outcome.redirectTo);
-      }, 1500);
     } catch (err) {
       // saveAutoSync resolves to false instead of throwing, so getting here with willEnableAutoSync means
       // sync was already turned on and the rules import after it failed. The copy must not say sync failed.
@@ -165,22 +156,22 @@ export function useRunImport({ getImportValues, rulesToImport, liveNotifications
       trackImportToGMAError({ notificationsSource: trackedNotificationsSource, rulesSource: trackedRulesSource });
       setImportError(stringifyErrorLike(err));
     }
-  }, [
-    getImportValues,
-    importNotifications,
-    importRules,
-    rulesToImport,
-    saveAutoSync,
-    notifyApp,
-    liveNotificationsLock,
-  ]);
+  }, [getImportValues, importNotifications, importRules, rulesToImport, saveAutoSync, liveNotificationsLock]);
 
-  const cancelConfirm = useCallback(() => {
-    if (importStatus !== 'importing') {
+  // Leaving the success state, by button, Escape or the close icon, is what takes the user on to the result.
+  const closeConfirm = useCallback(() => {
+    if (importStatus === 'success' && outcome) {
+      setShowConfirmModal(false);
+      // The Import tab hosts this wizard, so redirecting there doesn't unmount it. Go back to idle so the
+      // lock catches up with what the import did and the modal reopens on the confirmation.
+      setImportStatus('idle');
+      notifyApp.success(outcome.title, outcome.body);
+      locationService.push(outcome.redirectTo);
+    } else if (importStatus !== 'importing') {
       setShowConfirmModal(false);
       setImportStatus('idle');
     }
-  }, [importStatus]);
+  }, [importStatus, outcome, notifyApp]);
 
   return {
     notificationsLock,
@@ -189,6 +180,6 @@ export function useRunImport({ getImportValues, rulesToImport, liveNotifications
     importError,
     startImport,
     confirmImport,
-    cancelConfirm,
+    closeConfirm,
   };
 }
