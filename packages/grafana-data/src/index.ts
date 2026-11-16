@@ -137,10 +137,14 @@ export {
 export {
   getFieldColorModeForField,
   getFieldColorMode,
+  /** @internal */
+  getFieldColorPalette,
   fieldColorModeRegistry,
   type FieldColorMode,
   /** @internal */
   getColorByStringHash,
+  /** @internal */
+  getShadesOfColor,
 } from './field/fieldColor';
 export { FieldConfigOptionsRegistry } from './field/FieldConfigOptionsRegistry';
 export { sortThresholds, getActiveThreshold } from './field/thresholds';
@@ -226,7 +230,12 @@ export { DocsId } from './utils/docs';
 export { makeClassES5Compatible } from './utils/makeClassES5Compatible';
 export { anyToNumber } from './utils/anyToNumber';
 export { withLoadingIndicator, type WithLoadingIndicatorOptions } from './utils/withLoadingIndicator';
-export { convertOldAngularValueMappings, LegacyMappingType } from './utils/valueMappings';
+export {
+  convertOldAngularValueMappings,
+  getValueMappingResult,
+  isNumeric,
+  LegacyMappingType,
+} from './utils/valueMappings';
 export { containsSearchFilter, type SearchFilterOptions, getSearchFilterScopedVar } from './utils/variables';
 export { renderLegendFormat } from './utils/legend';
 export { matchPluginId } from './utils/matchPluginId';
