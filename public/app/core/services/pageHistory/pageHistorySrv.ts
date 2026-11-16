@@ -1,7 +1,7 @@
 import { type Location } from 'history';
 import { throttle } from 'lodash';
 import { distinctUntilChanged } from 'rxjs';
-import * as z from 'zod';
+import * as z from 'zod/mini';
 
 import { type NavModelItem } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
@@ -38,18 +38,18 @@ const MAX_EPOCH_MS = 8.64e15;
 
 /** Persisted row. The page identity is derived from the pathname on load, so a rule change reclassifies old rows. */
 const StoredEntrySchema = z.object({
-  pathname: z
-    .string()
-    .startsWith('/')
-    .refine((pathname) => !pathname.startsWith('//')),
-  search: z.string().refine((search) => search === '' || search.startsWith('?')),
-  lastVisited: z.number().int().min(0).max(MAX_EPOCH_MS).optional(),
-  title: z.string().optional(),
+  pathname: z.string().check(
+    z.startsWith('/'),
+    z.refine((pathname) => !pathname.startsWith('//'))
+  ),
+  search: z.string().check(z.refine((search) => search === '' || search.startsWith('?'))),
+  lastVisited: z.optional(z.number().check(z.int(), z.minimum(0), z.maximum(MAX_EPOCH_MS))),
+  title: z.optional(z.string()),
 });
 
 /** Everything stored under the key. `clearedAt` is the epoch ms of the last clear, 0 when never cleared. */
 const StoredSchema = z.object({
-  clearedAt: z.number().int().min(0).max(MAX_EPOCH_MS),
+  clearedAt: z.number().check(z.int(), z.minimum(0), z.maximum(MAX_EPOCH_MS)),
   entries: z.array(z.unknown()),
 });
 
