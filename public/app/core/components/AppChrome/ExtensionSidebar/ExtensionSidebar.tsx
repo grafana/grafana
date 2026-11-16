@@ -13,8 +13,10 @@ import {
   canCollapseFloatingExtensionSidebar,
   canFloatExtensionSidebar,
   collapseFloatingExtensionSidebar,
+  type ExtensionSidebarDockSide,
   type ExtensionSidebarPresentation,
   resolveExtensionSidebarPresentation,
+  setExtensionSidebarDockSide,
   setExtensionSidebarPresentation,
 } from './extensionSidebarLayout';
 import { getComponentMetaFromComponentId } from './extensionSidebarUtils';
@@ -37,7 +39,9 @@ export function ExtensionSidebar() {
   const {
     dockedComponentId,
     presentation,
+    dockSide,
     extensionSidebarWidth,
+    extensionSidebarHeight,
     floatingExtensionSidebarWidth,
     setFloatingExtensionSidebarWidth,
     props = {},
@@ -47,17 +51,25 @@ export function ExtensionSidebar() {
   const pluginId = dockedComponentId ? getComponentMetaFromComponentId(dockedComponentId)?.pluginId : undefined;
   const canDragToFloat =
     !floating && resolveExtensionSidebarPresentation('floating', canFloatExtensionSidebar(), pluginId) === 'floating';
+  // The left and bottom docks are part of floating's flag, as the drag that reaches them is.
   const floatingPreview = useFloatingDrag(floating ? wrapper : null, {
     dockWidth: extensionSidebarWidth,
+    dockHeight: extensionSidebarHeight,
     onDock: dockExtensionSidebar,
+    canDockLeft: canFloatExtensionSidebar,
+    canDockBottom: canFloatExtensionSidebar,
     canCollapse: canCollapseFloatingExtensionSidebar,
     onCollapse: collapseFloatingExtensionSidebar,
   });
-  const dockedPreview = useDockedDrag(
-    canDragToFloat ? wrapper : null,
-    floatingExtensionSidebarWidth,
-    floatExtensionSidebar
-  );
+  // Docking on another edge needs what floating needs.
+  const dockedPreview = useDockedDrag(canDragToFloat ? wrapper : null, {
+    dockSide,
+    dockWidth: extensionSidebarWidth,
+    dockHeight: extensionSidebarHeight,
+    floatingWidth: floatingExtensionSidebarWidth,
+    onFloat: floatExtensionSidebar,
+    onDock: dockExtensionSidebar,
+  });
   const edgeActionPreview = floatingPreview ?? dockedPreview;
   const { components, isLoading } = usePluginComponents<ExtensionSidebarComponentProps>({
     extensionPointId: PluginExtensionPoints.ExtensionSidebar,
@@ -85,6 +97,8 @@ export function ExtensionSidebar() {
       ref={setWrapper}
       className={cx(
         styles.sidebarWrapper,
+        !floating && dockSide === 'left' && styles.sidebarWrapperDockedLeft,
+        !floating && dockSide === 'bottom' && styles.sidebarWrapperDockedBottom,
         floating && styles.sidebarWrapperFloating,
         (floating || canDragToFloat) && styles.sidebarWrapperDraggable
       )}
@@ -117,7 +131,8 @@ export function ExtensionSidebar() {
   );
 }
 
-function dockExtensionSidebar() {
+function dockExtensionSidebar(side: ExtensionSidebarDockSide) {
+  setExtensionSidebarDockSide(side);
   setExtensionSidebarPresentation('docked');
 }
 
@@ -125,12 +140,26 @@ function floatExtensionSidebar() {
   setExtensionSidebarPresentation('floating');
 }
 
-/** The preview's box. Docked with the visual refresh, the sidebar leaves a gap at its right and bottom; so does the preview. */
-function previewBox({ action, top, left, width, height }: EdgeActionPreview, theme: GrafanaTheme2): CSSProperties {
+/**
+ * The preview's box. Docked with the visual refresh, the sidebar leaves a gap at its outer side and bottom; so does
+ * the preview.
+ */
+function previewBox(
+  { action, side, top, left, width, height }: EdgeActionPreview,
+  theme: GrafanaTheme2
+): CSSProperties {
   if (action !== 'dock') {
     return { top, left, width, height };
   }
   const gap = theme.flags.visualDesignRefresh ? theme.spacing.gridSize / 2 : 0;
+  if (side === 'left') {
+    // Mirrors the right dock: the gap is on the nav's side, and the corner there is square.
+    return { top, left: left + gap, width: width - gap, height: height - gap, borderTopLeftRadius: 0 };
+  }
+  if (side === 'bottom') {
+    // The gap is at the window's right edge and bottom, as the docked strip leaves it.
+    return { top, left, width: width - gap, height: height - gap };
+  }
   // Flush with the window's top-right corner, so that corner is square.
   return { top, left, width: width - gap, height: height - gap, borderTopRightRadius: 0 };
 }
@@ -165,6 +194,27 @@ const getStyles = (theme: GrafanaTheme2) => {
           margin: theme.spacing(0, 0.5, 0.5, 0.5),
           width: `calc(100% - ${theme.spacing(1)})`,
         },
+      }
+    ),
+    // Docked on the left, the border faces the page on the right, and the visual refresh's gap is on the nav's side.
+    sidebarWrapperDockedLeft: css(
+      {
+        borderLeft: 'none',
+        borderRight: `1px solid ${theme.colors.border.weak}`,
+      },
+      visualRefreshEnabled && {
+        border: `1px solid ${theme.colors.border.weak}`,
+        marginLeft: theme.spacing(0.5),
+      }
+    ),
+    // Docked at the bottom, the border faces the page above.
+    sidebarWrapperDockedBottom: css(
+      {
+        borderLeft: 'none',
+        borderTop: `1px solid ${theme.colors.border.weak}`,
+      },
+      visualRefreshEnabled && {
+        border: `1px solid ${theme.colors.border.weak}`,
       }
     ),
     // The extension draws the floating surface itself; core adds no background, border or shadow.

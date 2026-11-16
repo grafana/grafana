@@ -1,60 +1,187 @@
 import { css, cx } from '@emotion/css';
+import {
+  FloatingFocusManager,
+  FloatingPortal,
+  autoUpdate,
+  flip,
+  offset,
+  safePolygon,
+  shift,
+  useDismiss,
+  useFloating,
+  useHover,
+  useInteractions,
+  useRole,
+} from '@floating-ui/react';
+import {
+  type ComponentType,
+  type KeyboardEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { useFlagAssistantFullscreenWorkspace } from '@grafana/runtime/internal';
-import { Icon, ToolbarButton, useStyles2, useTheme2 } from '@grafana/ui';
+import {
+  Icon,
+  type IconName,
+  Menu,
+  ToolbarButton,
+  Tooltip,
+  getPortalContainer,
+  useStyles2,
+  useTheme2,
+} from '@grafana/ui';
+import { getFocusStyles } from '@grafana/ui/internal';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
+import { getModKey } from 'app/core/utils/browser';
 
 import { useExtensionSidebarContext } from '../ExtensionSidebar/ExtensionSidebarProvider';
+import {
+  canFloatExtensionSidebar,
+  canPopOutExtensionSidebar,
+  type ExtensionSidebarPlacement,
+  getExtensionSidebarPlacement,
+  isExtensionSidebarPoppedOut,
+  popInExtensionSidebar,
+  popOutExtensionSidebar,
+  setExtensionSidebarPlacement,
+  subscribeToExtensionSidebarPresentation,
+} from '../ExtensionSidebar/extensionSidebarLayout';
 import { getComponentIdFromComponentMeta } from '../ExtensionSidebar/extensionSidebarUtils';
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
 
 const ASSISTANT_PLUGIN_ID = 'grafana-assistant-app';
-const CHAT_ICON_GRADIENT_ID = 'grafana-assistant-chat-icon-gradient';
-const WORKSPACE_ICON_GRADIENT_ID = 'grafana-assistant-workspace-icon-gradient';
+const ASSISTANT_ICON_GRADIENT_ID = 'grafana-assistant-icon-gradient';
+/** Long enough that the pointer crossing the button on its way elsewhere does not open the menu. */
+const MENU_OPEN_DELAY_MS = 300;
 
-function getOrangeColor(theme: GrafanaTheme2) {
-  return theme.visualization.getColorByName('orange');
-}
-function getPurpleColor(theme: GrafanaTheme2) {
-  return theme.visualization.getColorByName('dark-purple');
-}
+/** Where the Assistant shows: docked on either side of the page or below it, or floating over it. */
+type AssistantLayout = ExtensionSidebarPlacement;
 
-function AssistantIconGradientDefs() {
-  const theme = useTheme2();
-  const orange = getOrangeColor(theme);
-  const purple = getPurpleColor(theme);
+/**
+ * What shares the window besides the page: the docked nav and the Assistant, the Assistant alone, or nothing. The
+ * Assistant shows wherever Move Assistant put it, so the presets that show it leave its placement as it is.
+ */
+type ArrangePreset = 'with-navigation' | 'without-navigation' | 'page-only';
 
-  return (
-    <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden focusable="false">
-      <defs>
-        <linearGradient id={CHAT_ICON_GRADIENT_ID} gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="32" y2="32">
-          <stop offset="0%" stopColor={orange} />
-          <stop offset="80%" stopColor={purple} />
-        </linearGradient>
-        <linearGradient id={WORKSPACE_ICON_GRADIENT_ID} gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="24" y2="24">
-          <stop offset="0%" stopColor={orange} />
-          <stop offset="80%" stopColor={purple} />
-        </linearGradient>
-      </defs>
-    </svg>
-  );
+/** A part of the window, as a preset's tile draws it. */
+type Pane = 'navigation' | 'page' | 'assistant';
+
+/**
+ * What a preset's tile draws: the panes side by side, left to right, and whether the Assistant floats over them or
+ * runs below the page, past the nav.
+ */
+interface PresetDrawing {
+  panes: readonly Pane[];
+  assistantFloating?: boolean;
+  assistantBelow?: boolean;
 }
 
 /**
- * The Grafana Assistant's top-bar buttons: a "Chat" pill (the sidebar toggle) and a
- * "Workspace" pill. Self-contained like `NavRightButton`/`InviteUserButton`: it decides for
- * itself whether it should render (fullscreen workspace flag on, not a small screen, and the
- * `grafana-assistant-app` plugin actually available), rather than the caller working that out.
+ * The digit after ⌘⌥ (Ctrl+Alt elsewhere) that moves the Assistant, in the menu's order; Pop up follows on 5. The
+ * browser's own ⌘1–9 switches tabs, so the shortcuts add ⌥.
+ */
+const LAYOUT_SHORTCUT_DIGITS: Record<AssistantLayout, number> = { left: 1, right: 2, bottom: 3, floating: 4 };
+const POP_UP_SHORTCUT_DIGIT = 5;
+/** The digit after ⌘⌥⇧ that arranges the window, in the order of the tiles. Fixed, so it means the same everywhere. */
+const PRESET_SHORTCUT_DIGITS: Record<ArrangePreset, number> = {
+  'with-navigation': 1,
+  'without-navigation': 2,
+  'page-only': 3,
+};
+
+/** A layout shortcut: the digit pressed, and whether with Shift, for the presets. */
+interface LayoutShortcut {
+  digit: number;
+  shift: boolean;
+}
+
+const isApplePlatform = () => getModKey() === '⌘';
+
+/** As a macOS menu writes it, `⌘⌥1`, to keep the hint short; spelled out elsewhere. */
+function formatLayoutShortcut({ digit, shift }: LayoutShortcut): string {
+  return isApplePlatform() ? `⌘⌥${shift ? '⇧' : ''}${digit}` : `Ctrl+Alt+${shift ? 'Shift+' : ''}${digit}`;
+}
+
+function getLayoutShortcutAria({ digit, shift }: LayoutShortcut): string {
+  return `${isApplePlatform() ? 'Meta' : 'Control'}+Alt+${shift ? 'Shift+' : ''}${digit}`;
+}
+
+const isTextEntry = (target: EventTarget | null) =>
+  target instanceof HTMLElement &&
+  (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName));
+
+/** The layout shortcut a key press makes, if any. Read from the key's position, as ⌥ and ⇧ change the character. */
+function readLayoutShortcut(event: globalThis.KeyboardEvent): LayoutShortcut | undefined {
+  const apple = isApplePlatform();
+  const modifier = apple ? event.metaKey && !event.ctrlKey : event.ctrlKey && !event.metaKey;
+  if (!modifier || !event.altKey || event.repeat || event.defaultPrevented) {
+    return undefined;
+  }
+  // Elsewhere Ctrl+Alt is AltGr, which types characters on many keyboards, so text fields keep it.
+  if (!apple && isTextEntry(event.target)) {
+    return undefined;
+  }
+  const digit = Number(/^Digit([1-5])$/.exec(event.code)?.[1]);
+  return Number.isNaN(digit) ? undefined : { digit, shift: event.shiftKey };
+}
+
+/** How the open menu was opened: by hover it leaves focus where it is, with Down arrow it takes it. */
+type MenuOpenedBy = 'hover' | 'keyboard';
+
+/**
+ * The Grafana Assistant's top-bar button. A click hides the Assistant, so the page takes the full width, or shows it
+ * again. Hovering it, or pressing Down arrow on it, opens a menu of the Assistant's layouts, presets that arrange the
+ * nav and the Assistant together, and, while the Assistant can, opening it in a new window; choosing a layout or a
+ * preset that shows the Assistant shows it if it is hidden. Without floating, which the other layouts need, there is
+ * no menu. Self-contained like `NavRightButton`: it decides for itself whether it renders (fullscreen workspace flag
+ * on, not a small screen, and the `grafana-assistant-app` plugin available).
  */
 export function AssistantToolbarButtons() {
   const styles = useStyles2(getStyles);
   const { chrome } = useGrafana();
+  const { megaMenuDocked, megaMenuOpen } = chrome.useState();
   const fullscreenWorkspaceEnabled = useFlagAssistantFullscreenWorkspace();
   const isSmallScreen = !useMediaQueryMinWidth('sm');
+  // Below this the nav cannot stay docked (`useResponsiveDockedMegaMenu`), and the nav offers no dock button.
+  const canDockNavigation = useMediaQueryMinWidth('xl');
   const { availableComponents, dockedComponentId, setDockedComponentId, floatingHidden } = useExtensionSidebarContext();
+  const layout = useAssistantLayout();
+  // In its own window the Assistant is in none of the page's layouts; moving it to one brings it back first.
+  const poppedOut = useSyncExternalStore(subscribeToExtensionSidebarPresentation, isExtensionSidebarPoppedOut);
+  const canChangeLayout = canFloatExtensionSidebar();
+  const [menuOpenedBy, setMenuOpenedBy] = useState<MenuOpenedBy | undefined>(undefined);
+  const menuOpen = menuOpenedBy !== undefined;
+  // The menu's own setter for the item it focuses, so moving along the presets keeps its place in step.
+  const focusMenuItem = useRef<((index: number) => void) | undefined>(undefined);
+  // After a click the menu stays shut until the pointer leaves, so it does not cover the Assistant it showed.
+  const [hoverPaused, setHoverPaused] = useState(false);
+
+  const { refs, floatingStyles, context } = useFloating({
+    open: menuOpen,
+    // Hover opens it; hover and dismissal close it.
+    onOpenChange: (open) => setMenuOpenedBy(open ? 'hover' : undefined),
+    placement: 'bottom-end',
+    middleware: [offset(8), flip(), shift({ padding: 8 })],
+    whileElementsMounted: autoUpdate,
+  });
+  const hover = useHover(context, {
+    enabled: canChangeLayout && !hoverPaused,
+    delay: { open: MENU_OPEN_DELAY_MS },
+    handleClose: safePolygon(),
+  });
+  const dismiss = useDismiss(context, { enabled: canChangeLayout });
+  const role = useRole(context, { enabled: canChangeLayout, role: 'menu' });
+  const { getReferenceProps, getFloatingProps } = useInteractions([hover, dismiss, role]);
+  // Callbacks, so `refs` is read when React attaches the elements rather than while rendering.
+  const setButtonElement = useCallback((element: HTMLButtonElement | null) => refs.setReference(element), [refs]);
+  const setMenuElement = useCallback((element: HTMLDivElement | null) => refs.setFloating(element), [refs]);
 
   const assistantComponentTitle = availableComponents.get(ASSISTANT_PLUGIN_ID)?.addedComponents[0]?.title;
   const assistantComponentId = assistantComponentTitle
@@ -63,87 +190,596 @@ export function AssistantToolbarButtons() {
   // Held hidden, the sidebar reads as closed, so the button shows it instead of closing it unseen.
   const isOpen = assistantComponentId !== undefined && dockedComponentId === assistantComponentId && !floatingHidden;
 
-  const shouldRender = fullscreenWorkspaceEnabled && !isSmallScreen && assistantComponentId !== undefined;
+  if (!fullscreenWorkspaceEnabled || isSmallScreen || assistantComponentId === undefined) {
+    return null;
+  }
+
+  const moveTo = (next: AssistantLayout) => {
+    setMenuOpenedBy(undefined);
+    if (poppedOut) {
+      popInExtensionSidebar();
+    }
+    setExtensionSidebarPlacement(next);
+    if (!isOpen) {
+      setDockedComponentId(assistantComponentId);
+    }
+  };
+
+  const arrange = (preset: ArrangePreset) => {
+    setMenuOpenedBy(undefined);
+    const withNavigation = preset === 'with-navigation';
+    // Docked first, so opening it persists; undocked first, as the nav's own dock button does.
+    chrome.setMegaMenuDocked(withNavigation);
+    chrome.setMegaMenuOpen(withNavigation);
+    if (preset === 'page-only') {
+      setDockedComponentId(undefined);
+      return;
+    }
+    // Shown where Move Assistant put it.
+    if (!isOpen) {
+      setDockedComponentId(assistantComponentId);
+    }
+  };
+  const preset = getArrangePreset(isOpen, megaMenuDocked && megaMenuOpen);
+
+  const openInNewWindow = () => {
+    setMenuOpenedBy(undefined);
+    if (poppedOut) {
+      return;
+    }
+    if (!isOpen) {
+      setDockedComponentId(assistantComponentId);
+    }
+    popOutExtensionSidebar();
+  };
+
+  const onShortcut = ({ digit, shift }: LayoutShortcut) => {
+    if (shift) {
+      const shortcutPreset = getArrangeOptions(canDockNavigation, layout).find(
+        (option) => PRESET_SHORTCUT_DIGITS[option.value] === digit
+      );
+      if (shortcutPreset) {
+        arrange(shortcutPreset.value);
+      }
+      return;
+    }
+    if (digit === POP_UP_SHORTCUT_DIGIT) {
+      if (canPopOutExtensionSidebar()) {
+        openInNewWindow();
+      }
+      return;
+    }
+    const shortcutLayout = getLayoutOptions().find((option) => LAYOUT_SHORTCUT_DIGITS[option.value] === digit);
+    if (shortcutLayout) {
+      moveTo(shortcutLayout.value);
+    }
+  };
+
+  const onKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
+    if (event.key === 'ArrowDown' && canChangeLayout) {
+      event.preventDefault();
+      setMenuOpenedBy('keyboard');
+    }
+  };
+
+  // Left and Right arrows move along the row of presets; the menu's own Left arrow would take focus off its items.
+  const moveAlongPresets = (event: KeyboardEvent<HTMLDivElement>) => {
+    const step = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0;
+    if (step === 0) {
+      return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    const row = event.currentTarget;
+    const tiles = Array.from(row.querySelectorAll<HTMLElement>('[data-role="menuitem"]'));
+    const next = tiles[tiles.findIndex((tile) => tile === event.target) + step];
+    const items = row.closest('[role="menu"]')?.querySelectorAll('[data-role="menuitem"]:not([data-disabled])');
+    if (next && items) {
+      focusMenuItem.current?.(Array.from(items).indexOf(next));
+    }
+  };
+
+  // Ahead of a focused preset's Tooltip, which would take Escape to close only itself; stopped as `useDismiss` does.
+  const closeOnEscape = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === 'Escape') {
+      event.stopPropagation();
+      setMenuOpenedBy(undefined);
+    }
+  };
+
+  // Held hidden by a page reads as hidden, so this shows it; opening releases the page's hold.
+  const onClick = () => {
+    setMenuOpenedBy(undefined);
+    setHoverPaused(true);
+    setDockedComponentId(isOpen ? undefined : assistantComponentId);
+  };
+
+  const label = isOpen
+    ? t('navigation.assistant-toolbar-button.hide', 'Hide Grafana Assistant')
+    : t('navigation.assistant-toolbar-button.open', 'Open Grafana Assistant');
 
   return (
-    shouldRender && (
-      <>
+    <>
+      {/* Its own parent, so rules that hide this button together with the element before it touch nothing else. */}
+      {canChangeLayout && <LayoutShortcuts onShortcut={onShortcut} />}
+      <span className={styles.wrapper}>
         <AssistantIconGradientDefs />
         <ToolbarButton
+          ref={setButtonElement}
+          {...getReferenceProps({ onKeyDown, onClick, onPointerLeave: () => setHoverPaused(false) })}
           icon={
-            <span className={styles.chatIcon}>
-              <Icon name="ai-sparkle" size="lg" />
-            </span>
+            isOpen ? (
+              'expand-alt'
+            ) : (
+              <span className={styles.assistantIcon}>
+                <Icon name="ai-sparkle" />
+              </span>
+            )
           }
-          onClick={() => setDockedComponentId(isOpen ? undefined : assistantComponentId)}
-          variant={isOpen ? 'active' : 'default'}
-          className={cx(styles.button, isOpen && styles.chatButtonActive)}
           data-testid={`extension-toolbar-button-${isOpen ? 'close' : 'open'}`}
-          aria-expanded={isOpen}
-          aria-pressed={isOpen}
-          aria-label={
-            isOpen
-              ? t('navigation.extension-sidebar.assistant-close', 'Close Grafana Assistant')
-              : t('navigation.extension-sidebar.assistant-open', 'Open Grafana Assistant')
-          }
-          tooltip={
-            isOpen
-              ? t('navigation.extension-sidebar.assistant-close-tooltip', 'Close Chat')
-              : t('navigation.extension-sidebar.assistant-open-tooltip', 'Open Chat')
-          }
-        >
-          {t('navigation.extension-sidebar.assistant-label', 'Chat')}
-        </ToolbarButton>
-        <NavToolbarSeparator />
-        <ToolbarButton
-          icon={
-            <span className={styles.workspaceIcon}>
-              <Icon name="message-sparkles" size="lg" />
+          aria-label={label}
+          aria-keyshortcuts={canChangeLayout ? 'ArrowDown' : undefined}
+          // The menu opens on hover, so a tooltip would cover it.
+          tooltip={canChangeLayout ? undefined : label}
+        />
+      </span>
+      <NavToolbarSeparator className={styles.separator} />
+      {menuOpen && (
+        // FloatingPortal keeps the menu in the tab order right after the button. Rendered where Grafana renders its
+        // overlays, so the tooltips its preset tiles open there stack above it.
+        <FloatingPortal root={getPortalContainer()}>
+          {/* Closing with focus inside, e.g. via Escape, returns focus to the button. Hover closes don't move focus. */}
+          <FloatingFocusManager context={context} modal={false} initialFocus={-1} returnFocus>
+            <div
+              ref={setMenuElement}
+              className={styles.menu}
+              style={floatingStyles}
+              {...getFloatingProps({ onKeyDownCapture: closeOnEscape })}
+            >
+              <Menu
+                // Down arrow on a hover-opened menu remounts it, so it takes focus as a keyboard-opened one does.
+                key={menuOpenedBy}
+                ariaLabel={t('navigation.assistant-toolbar-button.menu', 'Grafana Assistant layout')}
+                onOpen={(focusOnItem) => {
+                  focusMenuItem.current = focusOnItem;
+                  if (menuOpenedBy === 'hover') {
+                    // The menu focuses its first item when it opens; -1 focuses none.
+                    focusOnItem(-1);
+                  }
+                }}
+              >
+                <Menu.Group label={t('navigation.assistant-toolbar-button.move', 'Move Assistant')}>
+                  {getLayoutOptions().map((option) => (
+                    <Menu.Item
+                      key={option.value}
+                      label={option.label}
+                      ariaLabel={option.label}
+                      icon={option.icon}
+                      role="menuitemradio"
+                      ariaChecked={!poppedOut && layout === option.value}
+                      className={cx(
+                        styles.item,
+                        option.iconTurned && styles.itemIconTurned,
+                        !poppedOut && layout === option.value && styles.itemSelected
+                      )}
+                      component={getShortcutHint(LAYOUT_SHORTCUT_DIGITS[option.value])}
+                      onClick={() => moveTo(option.value)}
+                    />
+                  ))}
+                  {(poppedOut || canPopOutExtensionSidebar()) && (
+                    <Menu.Item
+                      label={t('navigation.assistant-toolbar-button.pop-up', 'Pop up')}
+                      ariaLabel={t('navigation.assistant-toolbar-button.pop-up', 'Pop up')}
+                      icon="external-link-alt"
+                      role="menuitemradio"
+                      ariaChecked={poppedOut}
+                      className={cx(styles.item, poppedOut && styles.itemSelected)}
+                      component={getShortcutHint(POP_UP_SHORTCUT_DIGIT)}
+                      onClick={openInNewWindow}
+                    />
+                  )}
+                </Menu.Group>
+                <Menu.Group label={t('navigation.assistant-toolbar-button.arrange-window', 'Arrange window')}>
+                  {/* One row of tiles, each drawing its layout, as a window-tiling menu shows its arrangements. */}
+                  {/* Only lays the tiles out, so it takes no role; their Tooltip owns each tile's own key handler. */}
+                  <div role="presentation" className={styles.presets} onKeyDown={moveAlongPresets}>
+                    {getArrangeOptions(canDockNavigation, layout).map((option) => (
+                      <PresetTile
+                        key={option.value}
+                        option={option}
+                        checked={preset === option.value}
+                        onClick={() => arrange(option.value)}
+                      />
+                    ))}
+                  </div>
+                </Menu.Group>
+              </Menu>
+            </div>
+          </FloatingFocusManager>
+        </FloatingPortal>
+      )}
+    </>
+  );
+}
+
+interface LayoutShortcutsProps {
+  onShortcut: (shortcut: LayoutShortcut) => void;
+}
+
+/** Listens for the layout shortcuts anywhere on the page while the menu can change the layout. */
+function LayoutShortcuts({ onShortcut }: LayoutShortcutsProps) {
+  useEffect(() => {
+    const onKeyDown = (event: globalThis.KeyboardEvent) => {
+      const shortcut = readLayoutShortcut(event);
+      if (shortcut) {
+        event.preventDefault();
+        onShortcut(shortcut);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [onShortcut]);
+  return null;
+}
+
+interface LayoutOption {
+  value: AssistantLayout;
+  label: string;
+  icon: IconName;
+  /** Shows the icon turned a quarter clockwise. */
+  iconTurned?: boolean;
+}
+
+function getLayoutOptions(): LayoutOption[] {
+  return [
+    { value: 'left', label: t('navigation.assistant-toolbar-button.left', 'Left'), icon: 'web-section-alt' },
+    { value: 'right', label: t('navigation.assistant-toolbar-button.right', 'Right'), icon: 'web-section' },
+    // Grafana has no icon with the panel at the bottom; the right one, turned, puts it there in the same glyph.
+    {
+      value: 'bottom',
+      label: t('navigation.assistant-toolbar-button.bottom', 'Bottom'),
+      icon: 'web-section',
+      iconTurned: true,
+    },
+    {
+      value: 'floating',
+      label: t('navigation.assistant-toolbar-button.floating', 'Floating'),
+      icon: 'gf-floating-panel',
+    },
+  ];
+}
+
+interface ArrangeOption {
+  value: ArrangePreset;
+  /** Names what the window shows, left to right, as the tile draws it. */
+  label: string;
+  drawing: PresetDrawing;
+}
+
+/** The presets, drawn and named for where the Assistant shows, without the nav one where the nav cannot stay docked. */
+function getArrangeOptions(canDockNavigation: boolean, layout: AssistantLayout): ArrangeOption[] {
+  const [withNavigation, withoutNavigation] = getAssistantPresets(layout);
+  return [
+    ...(canDockNavigation ? [withNavigation] : []),
+    withoutNavigation,
+    {
+      value: 'page-only',
+      label: t('navigation.assistant-toolbar-button.page-only', 'Page only'),
+      drawing: { panes: ['page'] },
+    },
+  ];
+}
+
+/** The two presets that show the Assistant, as they look where it shows; docked on the left, it follows the nav. */
+function getAssistantPresets(layout: AssistantLayout): [ArrangeOption, ArrangeOption] {
+  switch (layout) {
+    case 'left':
+      return [
+        {
+          value: 'with-navigation',
+          label: t('navigation.assistant-toolbar-button.navigation-assistant-page', 'Navigation, Assistant and page'),
+          drawing: { panes: ['navigation', 'assistant', 'page'] },
+        },
+        {
+          value: 'without-navigation',
+          label: t('navigation.assistant-toolbar-button.assistant-page', 'Assistant and page'),
+          drawing: { panes: ['assistant', 'page'] },
+        },
+      ];
+    case 'right':
+      return [
+        {
+          value: 'with-navigation',
+          label: t('navigation.assistant-toolbar-button.navigation-page-assistant', 'Navigation, page and Assistant'),
+          drawing: { panes: ['navigation', 'page', 'assistant'] },
+        },
+        {
+          value: 'without-navigation',
+          label: t('navigation.assistant-toolbar-button.page-assistant', 'Page and Assistant'),
+          drawing: { panes: ['page', 'assistant'] },
+        },
+      ];
+    case 'bottom':
+      return [
+        {
+          value: 'with-navigation',
+          label: t(
+            'navigation.assistant-toolbar-button.navigation-page-assistant-below',
+            'Navigation and page with Assistant below'
+          ),
+          drawing: { panes: ['navigation', 'page'], assistantBelow: true },
+        },
+        {
+          value: 'without-navigation',
+          label: t('navigation.assistant-toolbar-button.page-assistant-below', 'Page with Assistant below'),
+          drawing: { panes: ['page'], assistantBelow: true },
+        },
+      ];
+    case 'floating':
+      return [
+        {
+          value: 'with-navigation',
+          label: t(
+            'navigation.assistant-toolbar-button.navigation-page-floating-assistant',
+            'Navigation and page with floating Assistant'
+          ),
+          drawing: { panes: ['navigation', 'page'], assistantFloating: true },
+        },
+        {
+          value: 'without-navigation',
+          label: t('navigation.assistant-toolbar-button.page-floating-assistant', 'Page with floating Assistant'),
+          drawing: { panes: ['page'], assistantFloating: true },
+        },
+      ];
+  }
+}
+
+/**
+ * The preset the whole window is arranged in now, if any, wherever the Assistant shows: at most one, as each takes the
+ * nav as docked or not.
+ */
+function getArrangePreset(assistantShown: boolean, navigationDocked: boolean): ArrangePreset | undefined {
+  if (!assistantShown) {
+    return navigationDocked ? undefined : 'page-only';
+  }
+  return navigationDocked ? 'with-navigation' : 'without-navigation';
+}
+
+interface PresetTileProps {
+  option: ArrangeOption;
+  checked: boolean;
+  onClick: () => void;
+}
+
+/** A preset as a tile that draws the window it arranges, named by its tooltip, with a check while it is current. */
+function PresetTile({ option, checked, onClick }: PresetTileProps) {
+  const styles = useStyles2(getStyles);
+  const shortcut: LayoutShortcut = { digit: PRESET_SHORTCUT_DIGITS[option.value], shift: true };
+  return (
+    <Tooltip
+      content={
+        <>
+          {option.label} <span className={styles.shortcutHint}>{formatLayoutShortcut(shortcut)}</span>
+        </>
+      }
+      placement="bottom"
+    >
+      <button
+        type="button"
+        role="menuitemradio"
+        aria-checked={checked}
+        aria-label={option.label}
+        aria-keyshortcuts={getLayoutShortcutAria(shortcut)}
+        // How the menu finds its items for arrow keys, as `Menu.Item` marks its own; it sets their tab order too.
+        data-role="menuitem"
+        className={cx(styles.tile, checked && styles.tileChecked)}
+        onClick={onClick}
+      >
+        {option.drawing.panes.map((pane) =>
+          // Below the page: a column of the page over the Assistant, beside the nav's full height.
+          pane === 'page' && option.drawing.assistantBelow ? (
+            <span key={pane} className={styles.paneColumn}>
+              <span className={cx(styles.pane, styles.panes.page)} />
+              <span className={cx(styles.pane, styles.assistantBelow)}>
+                <Icon name="ai-sparkle" size="xs" />
+              </span>
             </span>
-          }
-          className={styles.button}
-          onClick={() => chrome.setFullscreenWorkspace({ fullscreenWorkspace: true })}
-          aria-label={t('navigation.fullscreen-workspace.workspace', 'Workspace')}
-          tooltip={t('navigation.fullscreen-workspace.enter', 'Enter Workspace')}
-        >
-          {t('navigation.fullscreen-workspace.workspace', 'Workspace')}
-        </ToolbarButton>
-        <NavToolbarSeparator className={styles.separator} />
-      </>
-    )
+          ) : (
+            <span key={pane} className={cx(styles.pane, styles.panes[pane])}>
+              {pane === 'assistant' && <Icon name="ai-sparkle" size="xs" />}
+            </span>
+          )
+        )}
+        {option.drawing.assistantFloating && (
+          <span className={cx(styles.pane, styles.floatingAssistant)}>
+            <Icon name="ai-sparkle" size="xs" />
+          </span>
+        )}
+        {checked && (
+          <span className={styles.tileCheck}>
+            <Icon name="check" size="xs" />
+          </span>
+        )}
+      </button>
+    </Tooltip>
+  );
+}
+
+/** The layout the Assistant shows in, or, while it is hidden, the one it opens in. */
+function useAssistantLayout(): AssistantLayout {
+  return useSyncExternalStore(subscribeToExtensionSidebarPresentation, () =>
+    getExtensionSidebarPlacement(ASSISTANT_PLUGIN_ID)
+  );
+}
+
+/** An item's shortcut at its end, small and dimmed, lined up down the menu. */
+function ShortcutHint({ digit }: { digit: number }) {
+  const styles = useStyles2(getStyles);
+  return (
+    <span className={cx(styles.itemEnd, styles.shortcutHint)} aria-hidden>
+      {formatLayoutShortcut({ digit, shift: false })}
+    </span>
+  );
+}
+
+// `Menu.Item` renders its `component` without props, so each hint is a component of its own, made once.
+const shortcutHints = new Map<number, ComponentType>();
+function getShortcutHint(digit: number): ComponentType {
+  let Hint = shortcutHints.get(digit);
+  if (!Hint) {
+    Hint = function LayoutShortcutHint() {
+      return <ShortcutHint digit={digit} />;
+    };
+    shortcutHints.set(digit, Hint);
+  }
+  return Hint;
+}
+
+/** The Assistant's orange-to-purple gradient, which its sparkle icon fills with, as the removed Chat button's did. */
+function AssistantIconGradientDefs() {
+  const theme = useTheme2();
+  return (
+    <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden focusable="false">
+      <defs>
+        {/* In the sparkle's own units: its viewBox is 32 by 32. */}
+        <linearGradient id={ASSISTANT_ICON_GRADIENT_ID} gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="32" y2="32">
+          <stop offset="0%" stopColor={theme.visualization.getColorByName('orange')} />
+          <stop offset="80%" stopColor={theme.visualization.getColorByName('dark-purple')} />
+        </linearGradient>
+      </defs>
+    </svg>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  wrapper: css({
+    display: 'contents',
+  }),
+  assistantIcon: css({
+    display: 'inline-flex',
+    '& svg path': {
+      fill: `url(#${ASSISTANT_ICON_GRADIENT_ID})`,
+      stroke: `url(#${ASSISTANT_ICON_GRADIENT_ID})`,
+    },
+  }),
   separator: css({
     marginRight: theme.spacing(1),
   }),
-  button: css({
-    color: theme.colors.text.primary,
-    fontWeight: theme.typography.fontWeightRegular,
+  menu: css({
+    zIndex: theme.zIndex.portal,
   }),
-  chatButtonActive: css({
-    '&:hover, &:focus': {
-      background: theme.colors.secondary.main,
-      border: `1px solid ${theme.colors.secondary.border}`,
+  // Room on the right for the check, as in the dashboard mode picker.
+  // Room on the right for the shortcut.
+  item: css({
+    paddingRight: theme.spacing(7),
+  }),
+  // The current layout, as the nav marks the current page; it stays marked under the pointer.
+  itemSelected: css({
+    '&, &:hover, &:focus-visible': {
+      background: theme.flags.visualDesignRefresh ? theme.colors.accent.subtleBackground : theme.colors.action.selected,
+    },
+    '@media (forced-colors: active)': {
+      outline: '1px solid Highlight',
     },
   }),
-  chatIcon: css({
-    display: 'inline-flex',
-    '& svg path': {
-      fill: `url(#${CHAT_ICON_GRADIENT_ID})`,
-      stroke: `url(#${CHAT_ICON_GRADIENT_ID})`,
+  // The item's leading icon: `Menu.Item` lays it out first in its row.
+  itemIconTurned: css({
+    '& > div > svg:first-child': {
+      transform: 'rotate(90deg)',
     },
   }),
-  workspaceIcon: css({
-    display: 'inline-flex',
-    '& svg path:first-of-type': {
-      fill: 'none',
-      stroke: `url(#${WORKSPACE_ICON_GRADIENT_ID})`,
+  itemEnd: css({
+    position: 'absolute',
+    right: theme.spacing(1.5),
+    top: '50%',
+    transform: 'translateY(-50%)',
+  }),
+  shortcutHint: css({
+    ...theme.typography.bodySmall,
+    color: theme.colors.text.disabled,
+    marginLeft: theme.spacing(0.5),
+  }),
+
+  presets: css({
+    display: 'flex',
+    gap: theme.spacing(1),
+    padding: theme.spacing(0.5, 1, 1),
+  }),
+  // A window in miniature: as wide as eight grid units and as tall as five.
+  tile: css({
+    position: 'relative',
+    display: 'flex',
+    gap: theme.spacing(0.25),
+    width: theme.spacing(8),
+    height: theme.spacing(5),
+    padding: theme.spacing(0.5),
+    background: 'none',
+    border: `1px solid ${theme.colors.border.medium}`,
+    borderRadius: theme.shape.radius.default,
+    color: theme.colors.text.secondary,
+    cursor: 'pointer',
+    '&:hover': {
+      background: theme.colors.action.hover,
+      borderColor: theme.colors.border.strong,
     },
-    '& svg path:not(:first-of-type)': {
-      fill: getPurpleColor(theme),
-      stroke: 'none',
+    '&:focus-visible': getFocusStyles(theme),
+  }),
+  tileChecked: css({
+    borderColor: theme.colors.primary.border,
+    '&:hover': {
+      borderColor: theme.colors.primary.border,
     },
+  }),
+  // The check marks the current preset by shape, not only by the border's colour.
+  tileCheck: css({
+    position: 'absolute',
+    top: theme.spacing(-0.75),
+    right: theme.spacing(-0.75),
+    display: 'flex',
+    padding: theme.spacing(0.25),
+    borderRadius: theme.shape.radius.circle,
+    background: theme.colors.primary.main,
+    color: theme.colors.primary.contrastText,
+  }),
+  pane: css({
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: theme.shape.radius.sm,
+  }),
+  panes: {
+    navigation: css({
+      flex: '0 0 18%',
+      background: theme.colors.border.medium,
+    }),
+    page: css({
+      flex: 1,
+      border: `1px solid ${theme.colors.border.medium}`,
+    }),
+    assistant: css({
+      flex: '0 0 32%',
+      background: theme.colors.border.medium,
+    }),
+  },
+  // The page over the Assistant docked below it, as wide as the page.
+  paneColumn: css({
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(0.25),
+  }),
+  assistantBelow: css({
+    flex: '0 0 40%',
+    background: theme.colors.border.medium,
+  }),
+  // Over the page, inside its bottom corner.
+  floatingAssistant: css({
+    position: 'absolute',
+    right: theme.spacing(1),
+    bottom: theme.spacing(1),
+    width: '32%',
+    height: '50%',
+    background: theme.colors.border.medium,
+    boxShadow: theme.shadows.z1,
   }),
 });

@@ -14,6 +14,7 @@ import {
   onExtensionSidebarClosed,
   resetExtensionSidebarPresentationForTests,
   setExtensionSidebarFloatingOverride,
+  setExtensionSidebarDockSide,
   setExtensionSidebarPresentation,
 } from './extensionSidebarLayout';
 import {
@@ -729,6 +730,30 @@ describe('ExtensionSidebarProvider', () => {
       });
 
       expect(screen.getByTestId('presentation')).toHaveTextContent('docked');
+    });
+
+    it('docks on the side the user picked while the sidebar can float, and on the right otherwise', async () => {
+      const DockSideComponent = () => <div data-testid="dock-side">{useExtensionSidebarContext().dockSide}</div>;
+      await act(async () => {
+        setTestFlags({ [FLOATING_FLAG]: true });
+      });
+      (store.get as jest.Mock).mockReturnValue(
+        getComponentIdFromComponentMeta(mockPluginMeta.pluginId, mockComponent.title)
+      );
+      render(
+        <ExtensionSidebarContextProvider>
+          <DockSideComponent />
+        </ExtensionSidebarContextProvider>
+      );
+      expect(screen.getByTestId('dock-side')).toHaveTextContent('right');
+
+      act(() => setExtensionSidebarDockSide('left'));
+      expect(screen.getByTestId('dock-side')).toHaveTextContent('left');
+
+      await act(async () => {
+        setTestFlags({ [FLOATING_FLAG]: false });
+      });
+      expect(screen.getByTestId('dock-side')).toHaveTextContent('right');
     });
   });
 

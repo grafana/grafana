@@ -13447,15 +13447,31 @@
     }
   },
   "navigation": {
+    "assistant-toolbar-button": {
+      "arrange-window": "Arrange window",
+      "assistant-page": "Assistant and page",
+      "bottom": "Bottom",
+      "floating": "Floating",
+      "hide": "Hide Grafana Assistant",
+      "left": "Left",
+      "menu": "Grafana Assistant layout",
+      "move": "Move Assistant",
+      "navigation-assistant-page": "Navigation, Assistant and page",
+      "navigation-page-assistant": "Navigation, page and Assistant",
+      "navigation-page-assistant-below": "Navigation and page with Assistant below",
+      "navigation-page-floating-assistant": "Navigation and page with floating Assistant",
+      "open": "Open Grafana Assistant",
+      "page-assistant": "Page and Assistant",
+      "page-assistant-below": "Page with Assistant below",
+      "page-floating-assistant": "Page with floating Assistant",
+      "page-only": "Page only",
+      "pop-up": "Pop up",
+      "right": "Right"
+    },
     "breadcrumbs": {
       "aria-label": "Breadcrumbs"
     },
     "extension-sidebar": {
-      "assistant-close": "Close Grafana Assistant",
-      "assistant-close-tooltip": "Close Chat",
-      "assistant-label": "Chat",
-      "assistant-open": "Open Grafana Assistant",
-      "assistant-open-tooltip": "Open Chat",
       "button-tooltip": {
         "close": "Close {{title}}",
         "open": "Open {{title}}",
@@ -13464,12 +13480,10 @@
       "floating-resize": "Resize sidebar width"
     },
     "fullscreen-workspace": {
-      "enter": "Enter Workspace",
       "error-exit": "Exit workspace",
       "error-message": "The Grafana Assistant workspace could not be loaded.",
       "error-reload": "Reload page",
-      "error-title": "Workspace unavailable",
-      "workspace": "Workspace"
+      "error-title": "Workspace unavailable"
     },
     "help": {
       "aria-label": "Help",

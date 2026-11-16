@@ -283,7 +283,7 @@ describe('ExtensionToolbarItem', () => {
 
     setup();
 
-    // Fullscreen workspace renders its own Chat/Workspace buttons elsewhere (`AssistantToolbarButtons`
+    // Fullscreen workspace renders its own Assistant button elsewhere (`AssistantToolbarButtons`
     // in `SingleTopBar`), so with no other plugin available there's nothing left for this component
     // to render — including no stray separator (see the "duplicated divider" regression this guards).
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
