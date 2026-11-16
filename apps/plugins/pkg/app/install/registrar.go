@@ -304,10 +304,10 @@ const maxSyncNamespacePasses = 5
 
 // SyncNamespace reconciles the namespace's plugin installs from the given
 // source to match desired, unregistering records not in it unless their ID is
-// in retain. In-sync records are skipped without a read, and because writes
+// in retain or they were created at or after since. In-sync records are skipped without a read, and because writes
 // fire storage hooks that can rewrite sibling records, passes repeat against a
 // fresh list until one writes nothing.
-func (r *InstallRegistrar) SyncNamespace(ctx context.Context, namespace string, source Source, desired []PluginInstall, retain []string) error {
+func (r *InstallRegistrar) SyncNamespace(ctx context.Context, namespace string, source Source, desired []PluginInstall, retain []string, since time.Time) error {
 	client, err := r.GetClient()
 	if err != nil {
 		return err
@@ -345,6 +345,13 @@ func (r *InstallRegistrar) SyncNamespace(ctx context.Context, namespace string, 
 			if _, ok := retainIDs[record.Spec.Id]; ok {
 				if pass == 0 {
 					r.logger.WithContext(ctx).Info("Keeping retained plugin install", "requestNamespace", namespace, "pluginId", record.Spec.Id)
+					metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "retained").Inc()
+				}
+				continue
+			}
+			if !record.CreationTimestamp.Time.Before(since) {
+				if pass == 0 {
+					r.logger.WithContext(ctx).Debug("Keeping plugin install created after sync start", "requestNamespace", namespace, "pluginId", record.Spec.Id, "createdAt", record.CreationTimestamp.Time, "since", since)
 					metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "retained").Inc()
 				}
 				continue

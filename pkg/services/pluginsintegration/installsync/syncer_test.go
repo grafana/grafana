@@ -536,6 +536,36 @@ func TestSyncer_syncNamespace(t *testing.T) {
 			unregisteredIDs:    []string{"plugin-gone"},
 		},
 		{
+			name:             "record created after process start is not unregistered",
+			installedPlugins: []pluginstore.Plugin{},
+			apiPlugins: []pluginsv0alpha1.Plugin{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:              "plugin-just-installed",
+						CreationTimestamp: metav1.Now(),
+						Annotations: map[string]string{
+							install.PluginInstallSourceAnnotation: install.SourcePluginStore,
+						},
+					},
+					Spec: pluginsv0alpha1.PluginSpec{Id: "plugin-just-installed", Version: "1.0.0"},
+				},
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:              "plugin-gone",
+						CreationTimestamp: metav1.NewTime(time.Now().Add(-time.Hour)),
+						Annotations: map[string]string{
+							install.PluginInstallSourceAnnotation: install.SourcePluginStore,
+						},
+					},
+					Spec: pluginsv0alpha1.PluginSpec{Id: "plugin-gone", Version: "1.0.0"},
+				},
+			},
+			expectedError:      nil,
+			expectedRegCalls:   0,
+			expectedUnregCalls: 1,
+			unregisteredIDs:    []string{"plugin-gone"},
+		},
+		{
 			name: "mixed - some match",
 			installedPlugins: []pluginstore.Plugin{
 				{JSONData: plugins.JSONData{ID: "plugin-1", Info: plugins.Info{Version: "1.0.0"}}, Class: plugins.ClassCore},
