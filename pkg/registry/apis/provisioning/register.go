@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/dskit/services"
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -111,7 +112,9 @@ type APIBuilder struct {
 	useExclusivelyAccessCheckerForAuthz bool
 
 	allowedTargets      []provisioning.SyncTargetType
+	configuredResources []resources.SupportedResource
 	supportedResources  resources.SupportedResourcesFunc
+	manifestWatcher     services.Service
 	allowImageRendering bool
 	minSyncInterval     time.Duration
 
@@ -229,17 +232,17 @@ func NewAPIBuilder(
 	allowImageRendering bool,
 	minSyncInterval time.Duration,
 	registry prometheus.Registerer,
-	newStandaloneClientFactoryFunc func(loopbackConfigProvider apiserver.RestConfigProvider) resources.ClientFactory,
+	newStandaloneClientFactoryFunc func(loopbackConfigProvider apiserver.RestConfigProvider, supported resources.SupportedResourcesFunc) resources.ClientFactory,
 	useExclusivelyAccessCheckerForAuthz bool,
 	quotaGetter quotas.QuotaGetter,
 	incrementalPolicy repository.IncrementalSyncPolicy,
 	maxFileSize int64,
 	maxJobBodySize int64,
 ) (*APIBuilder, error) {
-	supported := resources.ManifestSupportedResources(manifests, supportedResources)
+	supported, manifestWatcher := resources.ManifestSupportedResources(manifests, supportedResources)
 	var clients resources.ClientFactory
 	if newStandaloneClientFactoryFunc != nil {
-		clients = newStandaloneClientFactoryFunc(configProvider)
+		clients = newStandaloneClientFactoryFunc(configProvider, supported)
 	} else {
 		clients = resources.NewClientFactoryWithResources(configProvider, supported)
 	}
@@ -268,7 +271,9 @@ func NewAPIBuilder(
 		repoFactory:                         repoFactory,
 		connectionFactory:                   connectionFactory,
 		clients:                             clients,
+		configuredResources:                 supportedResources,
 		supportedResources:                  supported,
+		manifestWatcher:                     manifestWatcher,
 		parsers:                             parsers,
 		unified:                             unified,
 		access:                              accessChecker,
@@ -313,7 +318,7 @@ func (b *APIBuilder) SetResourceListerMode(mode string) error {
 	if err := resources.ValidateListerMode(mode); err != nil {
 		return err
 	}
-	b.setResourceLister(resources.NewResourceLister(b.unified, b.clients, b.supportedResources))
+	b.setResourceLister(resources.NewResourceLister(b.unified, b.clients, b.configuredResources))
 	return nil
 }
 
@@ -1092,6 +1097,9 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 	hookName := fmt.Sprintf("grafana-provisioning-%s", b.gv.Version)
 	postStartHooks := map[string]genericapiserver.PostStartHookFunc{
 		hookName: func(postStartHookCtx genericapiserver.PostStartHookContext) error {
+			if err := b.manifestWatcher.StartAsync(postStartHookCtx.Context); err != nil {
+				return fmt.Errorf("start manifest watcher: %w", err)
+			}
 			var config *clientrest.Config
 			var err error
 			if b.restConfigGetter == nil {

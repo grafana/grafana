@@ -4,26 +4,23 @@ import (
 	"context"
 	"fmt"
 	"slices"
-	"sync"
-	"time"
+	"sync/atomic"
 
+	"github.com/grafana/dskit/services"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/dynamic"
 
+	"github.com/grafana/grafana-app-sdk/app"
 	appmanifestv1alpha2 "github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha2"
-	"github.com/grafana/grafana-app-sdk/logging"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
-
-// manifestCacheTTL is how long a merged set is reused before the manifests are read again.
-// TODO: polling keeps manifest state in provisioning. Replace it with a shared mechanism that
-// notifies consumers of manifest changes, once the router or the app platform offers one.
-const manifestCacheTTL = 30 * time.Second
 
 // SupportedResourcesFunc returns the resources that provisioning supports at the time of the call.
 type SupportedResourcesFunc func(ctx context.Context) []SupportedResource
@@ -50,24 +47,18 @@ func NewRemoteManifestLister(configProvider apiserver.RestConfigProvider) Manife
 
 type remoteManifestLister struct {
 	configProvider apiserver.RestConfigProvider
-	once           sync.Once
-	client         dynamic.Interface
-	err            error
 }
 
 func (l *remoteManifestLister) ListManifests(ctx context.Context) (*appmanifestv1alpha2.AppManifestList, error) {
-	l.once.Do(func() {
-		cfg, err := l.configProvider.GetRestConfig(ctx)
-		if err != nil {
-			l.err = fmt.Errorf("get manifest discovery config: %w", err)
-			return
-		}
-		l.client, l.err = dynamic.NewForConfig(cfg)
-	})
-	if l.err != nil {
-		return nil, l.err
+	cfg, err := l.configProvider.GetRestConfig(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get manifest discovery config: %w", err)
 	}
-	list, err := l.client.Resource(resource.ManifestDiscoveryGVR).List(ctx, metav1.ListOptions{})
+	client, err := dynamic.NewForConfig(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("create manifest discovery client: %w", err)
+	}
+	list, err := client.Resource(resource.ManifestDiscoveryGVR).List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("list app manifests: %w", err)
 	}
@@ -80,46 +71,36 @@ func (l *remoteManifestLister) ListManifests(ctx context.Context) (*appmanifestv
 	return out, nil
 }
 
-// ManifestSupportedResources returns supported plus each kind that a published app manifest
-// opts in to provisioning. Entries in supported take precedence over the manifests. The merged
-// set is reused for manifestCacheTTL; when the manifests cannot be read, the last set is kept.
-func ManifestSupportedResources(manifests ManifestLister, supported []SupportedResource) SupportedResourcesFunc {
-	if manifests == nil {
-		return StaticSupportedResources(supported...)
-	}
-	var (
-		mu      sync.Mutex
-		merged  = supported
-		fetched time.Time
-	)
-	return func(ctx context.Context) []SupportedResource {
-		mu.Lock()
-		defer mu.Unlock()
-		if time.Since(fetched) < manifestCacheTTL {
-			return merged
-		}
-		fetched = time.Now()
-		list, err := manifests.ListManifests(ctx)
-		if err != nil {
-			logging.FromContext(ctx).Warn("failed to list app manifests for provisioning", "error", err)
-			return merged
-		}
-		merged = mergeManifestResources(supported, list.Items)
-		return merged
-	}
+type manifestDiscovery struct{ ManifestLister }
+
+func (manifestDiscovery) GetManifest(context.Context, string) (*appmanifestv1alpha2.AppManifest, error) {
+	return nil, apierrors.NewMethodNotSupported(resource.ManifestDiscoveryGVR.GroupResource(), "get")
 }
 
-func mergeManifestResources(supported []SupportedResource, manifests []appmanifestv1alpha2.AppManifest) []SupportedResource {
+// ManifestSupportedResources returns supported plus each kind that a published app manifest
+// opts in to provisioning, and the service that watches the manifests. Entries in supported
+// take precedence over the manifests. The set is supported until the service lists the
+// manifests; when the manifests cannot be read or none are listed, the last set is kept.
+func ManifestSupportedResources(manifests ManifestLister, supported []SupportedResource) (SupportedResourcesFunc, services.Service) {
+	if manifests == nil {
+		return StaticSupportedResources(supported...), services.NewIdleService(nil, nil)
+	}
+	var merged atomic.Pointer[[]SupportedResource]
+	merged.Store(&supported)
+	watcher := resource.NewLocalManifestWatcher(manifestDiscovery{manifests}, nil, func(data []*app.ManifestData) {
+		out := mergeManifestResources(supported, data)
+		merged.Store(&out)
+	}, log.New("provisioning-manifest-watcher"))
+	return func(context.Context) []SupportedResource { return *merged.Load() }, watcher
+}
+
+func mergeManifestResources(supported []SupportedResource, manifests []*app.ManifestData) []SupportedResource {
 	out := slices.Clone(supported)
 	seen := sets.New[schema.GroupKind]()
 	for _, r := range out {
 		seen.Insert(r.GroupKind)
 	}
-	for _, manifest := range manifests {
-		data, err := manifest.Spec.ToManifestData()
-		if err != nil {
-			continue
-		}
+	for _, data := range manifests {
 		for _, version := range data.Versions {
 			for _, kind := range version.Kinds {
 				gk := schema.GroupKind{Group: data.Group, Kind: kind.Kind}

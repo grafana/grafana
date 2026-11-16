@@ -1,10 +1,23 @@
 package resources
 
 import (
+	"testing"
+
+	"github.com/grafana/dskit/services"
+	"github.com/stretchr/testify/require"
+
 	appmanifestv1alpha2 "github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha2"
 )
 
 const testManifestGroup = "example.ext.grafana.app"
+
+func watchManifestSupportedResources(t *testing.T, lister ManifestLister, supported []SupportedResource) SupportedResourcesFunc {
+	t.Helper()
+	fn, watcher := ManifestSupportedResources(lister, supported)
+	require.NoError(t, services.StartAndAwaitRunning(t.Context(), watcher))
+	t.Cleanup(watcher.StopAsync)
+	return fn
+}
 
 func testManifestList(kinds ...appmanifestv1alpha2.AppManifestManifestVersionKind) *appmanifestv1alpha2.AppManifestList {
 	return &appmanifestv1alpha2.AppManifestList{Items: []appmanifestv1alpha2.AppManifest{{

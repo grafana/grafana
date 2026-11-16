@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/grafana/authlib/authn"
+	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
@@ -67,6 +68,7 @@ type ControllerConfig struct {
 	natsSubscriber        *nats.SubscriberService
 	unified               resources.ResourceStore
 	clients               resources.ClientFactory
+	manifestWatcher       services.Service
 	tokenExchangeClient   *authn.TokenExchangeClient
 	tlsConfig             *rest.TLSClientConfig
 	decryptService        decrypt.DecryptService
@@ -362,8 +364,10 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 		manifests = resources.NewRemoteManifestLister(fallback(resource.ManifestDiscoveryGVR.Group))
 	}
 
-	clients := resources.NewClientFactoryForMultipleAPIServersWithResources(configProviders, fallback, resources.ManifestSupportedResources(manifests, supportedResources))
+	supported, manifestWatcher := resources.ManifestSupportedResources(manifests, supportedResources)
+	clients := resources.NewClientFactoryForMultipleAPIServersWithResources(configProviders, fallback, supported)
 	c.clients = clients
+	c.manifestWatcher = manifestWatcher
 	return clients, nil
 }
 
