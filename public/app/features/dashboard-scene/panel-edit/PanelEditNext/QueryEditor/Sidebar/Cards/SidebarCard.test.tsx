@@ -142,6 +142,47 @@ describe('SidebarCard', () => {
       expect(setSelectedTransformation).toHaveBeenCalledWith(transformation);
       expect(toggleTransformationSelection).not.toHaveBeenCalled();
     });
+
+    it('selects a query when its data-query-sidebar-card container is clicked programmatically', () => {
+      const query: DataQuery = { refId: 'A', datasource: { type: 'test', uid: 'test' } };
+      const setSelectedQuery = jest.fn();
+
+      const { container } = renderWithQueryEditorProvider(<QueryCard query={query} />, {
+        queries: [query],
+        uiStateOverrides: { setSelectedQuery },
+      });
+
+      const card = container.querySelector<HTMLElement>('[data-query-sidebar-card="A"]');
+      expect(card).toBeInTheDocument();
+      card?.click();
+
+      expect(setSelectedQuery).toHaveBeenCalledTimes(1);
+      expect(setSelectedQuery).toHaveBeenCalledWith(query);
+    });
+
+    it('selects a transformation when its data-query-sidebar-card container is clicked programmatically', () => {
+      const query: DataQuery = { refId: 'A', datasource: { type: 'test', uid: 'test' } };
+      const transformation: Transformation = {
+        transformId: 'filterByValue-0',
+        registryItem: undefined,
+        transformConfig: { id: 'filterByValue', options: {} },
+      };
+      const setSelectedTransformation = jest.fn();
+
+      const { container } = renderWithQueryEditorProvider(<TransformationCard transformation={transformation} />, {
+        queries: [query],
+        transformations: [transformation],
+        selectedQuery: query,
+        uiStateOverrides: { setSelectedTransformation },
+      });
+
+      const card = container.querySelector<HTMLElement>('[data-query-sidebar-card="filterByValue-0"]');
+      expect(card).toBeInTheDocument();
+      card?.click();
+
+      expect(setSelectedTransformation).toHaveBeenCalledTimes(1);
+      expect(setSelectedTransformation).toHaveBeenCalledWith(transformation);
+    });
   });
 
   describe('add button and menu', () => {
@@ -347,6 +388,34 @@ describe('SidebarCard', () => {
       renderSidebarCard({ id: 'A', isHidden: true });
       const icons = screen.getAllByTestId('icon-eye-slash');
       expect(icons.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it.each([
+      { action: 'duplicate', label: /duplicate query/i },
+      { action: 'hide', label: /hide query/i },
+    ])('clicking the $action action does not select the card', async ({ label }) => {
+      const { user, onSelect } = renderSidebarCard({ id: 'A' });
+
+      await user.click(screen.getByRole('button', { name: label }));
+
+      expect(onSelect).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      { choice: 'confirm', label: /^confirm$/i, deletes: true },
+      { choice: 'cancel', label: /^cancel$/i, deletes: false },
+    ])('removing then choosing $choice does not select the card', async ({ label, deletes }) => {
+      const onDelete = jest.fn();
+      const { user, onSelect } = renderSidebarCard({
+        id: 'A',
+        actionsOverrides: { onDelete, onToggleHide: jest.fn(), onDuplicate: jest.fn() },
+      });
+
+      await user.click(screen.getByRole('button', { name: /remove query/i }));
+      await user.click(screen.getByRole('button', { name: label }));
+
+      expect(onDelete).toHaveBeenCalledTimes(deletes ? 1 : 0);
+      expect(onSelect).not.toHaveBeenCalled();
     });
 
     it('does not render the hover actions when hasActions is false', () => {

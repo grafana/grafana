@@ -165,11 +165,17 @@ export const SidebarCard = ({
             </div>
           )}
         </div>
-        <div className={styles.card} onFocus={handleFocus} onBlur={handleBlur} {...{ [SIDEBAR_CARD_DATA_ATTR]: id }}>
+        <div
+          className={styles.card}
+          onClick={handleCardClick}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+          role="presentation"
+          {...{ [SIDEBAR_CARD_DATA_ATTR]: id }}
+        >
           {/* Kept a div rather than a native <button>: @hello-pangea/dnd won't start a drag from a <button>. */}
           <div
             className={styles.cardSelect}
-            onClick={handleCardClick}
             onMouseDown={handleCardMouseDown}
             onKeyDown={handleKeyDown}
             role="button"
