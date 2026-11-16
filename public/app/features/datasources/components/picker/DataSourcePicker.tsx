@@ -175,43 +175,40 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
     [refs]
   );
 
-  const onClose = useCallback(() => {
+  const closeDropdown = useCallback(() => {
     setFilterTerm('');
     setOpen(false);
     markerElement?.focus();
   }, [setOpen, markerElement]);
 
-  // One open/close cycle of the dropdown, for the datasource_picker_select CUJ. `handedOff` is set
-  // once the user made a choice (selected, cleared or switched to the advanced modal); closing
-  // before that is a dismissal, whichever path closed it.
-  const openCycleRef = useRef<{ handedOff: boolean } | null>(null);
+  // The open dropdown's cycle ID, for the datasource_picker_select CUJ. Events carry it so a late
+  // event from one picker can't end the journey of another picker opened in the meantime.
+  const pickerId = useId();
+  const cycleCountRef = useRef(0);
+  const cycleIdRef = useRef<string | null>(null);
+
+  // Ends the open cycle, reporting how it ended. Without an interaction name the cycle is handed off
+  // to an event the journey already listens to (select_ds, or the advanced modal).
+  const endCycle = useCallback((interaction?: string, properties: Record<string, unknown> = {}) => {
+    const cycleId = cycleIdRef.current;
+    cycleIdRef.current = null;
+    if (cycleId && interaction) {
+      reportInteraction(interaction, { ...properties, cycle_id: cycleId }, { silent: true });
+    }
+  }, []);
+
+  // Every close that isn't a choice (click outside, Escape, Tab out) is a dismissal.
+  const onClose = useCallback(() => {
+    endCycle('dashboards_dspicker_dismissed');
+    closeDropdown();
+  }, [endCycle, closeDropdown]);
 
   const closeHandedOff = useCallback(() => {
-    if (openCycleRef.current) {
-      openCycleRef.current.handedOff = true;
-    }
-    onClose();
-  }, [onClose]);
+    endCycle();
+    closeDropdown();
+  }, [endCycle, closeDropdown]);
 
-  useEffect(() => {
-    const cycle = openCycleRef.current;
-    if (!isOpen && cycle) {
-      openCycleRef.current = null;
-      if (!cycle.handedOff) {
-        reportInteraction('dashboards_dspicker_dismissed', {}, { silent: true });
-      }
-    }
-  }, [isOpen]);
-
-  useEffect(
-    () => () => {
-      const cycle = openCycleRef.current;
-      if (cycle && !cycle.handedOff) {
-        reportInteraction('dashboards_dspicker_dismissed', { reason: 'unmount' }, { silent: true });
-      }
-    },
-    []
-  );
+  useEffect(() => () => endCycle('dashboards_dspicker_dismissed', { reason: 'unmount' }), [endCycle]);
 
   // Like Combobox, the clear control renders next to the dropdown indicator instead of replacing it
   const suffix = (
@@ -223,10 +220,8 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
           onClick={(e) => {
             // Don't let the click bubble up to the trigger, which would open the dropdown
             e.stopPropagation();
-            if (openCycleRef.current) {
-              reportInteraction('dashboards_dspicker_cleared', {}, { silent: true });
-            }
-            closeHandedOff();
+            endCycle('dashboards_dspicker_cleared');
+            closeDropdown();
             onClear();
           }}
         />
@@ -256,9 +251,15 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
   );
 
   function openDropdown() {
-    if (!openCycleRef.current) {
-      openCycleRef.current = { handedOff: false };
-      reportInteraction('dashboards_dspicker_opened', { surface: journeySurface ?? '' }, { silent: true });
+    if (!cycleIdRef.current) {
+      cycleCountRef.current += 1;
+      const cycleId = `${pickerId}-${cycleCountRef.current}`;
+      cycleIdRef.current = cycleId;
+      reportInteraction(
+        'dashboards_dspicker_opened',
+        { surface: journeySurface ?? '', cycle_id: cycleId },
+        { silent: true }
+      );
     }
     setOpen(true);
     markerElement?.focus();
@@ -374,8 +375,8 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
               filterTerm={filterTerm}
               keyboardEvents={keyboardEvents}
               onChange={(ds: DataSourceInstanceSettings, defaultQueries?: DataQuery[] | GrafanaQuery[]) => {
-                closeHandedOff();
                 if (ds.uid !== currentValue?.uid) {
+                  closeHandedOff();
                   onChange(ds, defaultQueries);
                   reportInteraction(INTERACTION_EVENT_NAME, {
                     item: INTERACTION_ITEM.SELECT_DS,
@@ -385,10 +386,20 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
                       : undefined,
                   });
                 } else {
-                  reportInteraction('dashboards_dspicker_current_reselected', { ds_type: ds.type }, { silent: true });
+                  endCycle('dashboards_dspicker_current_reselected', { ds_type: ds.type });
+                  closeDropdown();
                 }
               }}
               onClose={closeHandedOff}
+              onListRendered={(listedCount) => {
+                if (cycleIdRef.current) {
+                  reportInteraction(
+                    'dashboards_dspicker_list_rendered',
+                    { total_listed: listedCount, cycle_id: cycleIdRef.current },
+                    { silent: true }
+                  );
+                }
+              }}
               onNavigateOutsiteFooter={onNavigateOutsiteFooter}
               dataSources={dataSources}
               favoriteDataSources={favoriteDataSources}
@@ -428,6 +439,7 @@ interface PickerContentProps extends DataSourcePickerProps {
   filterTerm?: string;
   /** Closes the dropdown to hand off to the advanced modal */
   onClose: () => void;
+  onListRendered: (listedCount: number) => void;
   footerRef: (element: HTMLElement | null) => void;
   onNavigateOutsiteFooter: (e: React.KeyboardEvent<HTMLButtonElement>) => void;
   dataSources: Array<DataSourceInstanceSettings<DataSourceJsonData>>;
@@ -468,9 +480,7 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
           }
           dataSources={dataSources}
           scrollRef={scrollRef}
-          onRendered={(listedCount) =>
-            reportInteraction('dashboards_dspicker_list_rendered', { total_listed: listedCount }, { silent: true })
-          }
+          onRendered={props.onListRendered}
         ></DataSourceList>
       </ScrollContainer>
       <FocusScope>

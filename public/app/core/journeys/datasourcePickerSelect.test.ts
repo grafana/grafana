@@ -44,7 +44,7 @@ describe('datasourcePickerSelect journey wiring', () => {
   let registry: JourneyRegistryImpl;
 
   beforeEach(() => {
-    mockGetDataSourceInstanceList.mockResolvedValue([]);
+    mockGetDataSourceInstanceList.mockReset().mockResolvedValue([]);
     mockHandle = createMockHandle('datasource_picker_select');
     mockStep = createMockStepHandle();
     mockHandle.startStep.mockReturnValue(mockStep);
@@ -65,7 +65,7 @@ describe('datasourcePickerSelect journey wiring', () => {
   }
 
   function openPicker() {
-    simulateInteraction('dashboards_dspicker_opened', {});
+    simulateInteraction('dashboards_dspicker_opened', { cycle_id: 'c1' });
   }
 
   it('starts the journey with the surface when the picker opens', () => {
@@ -123,6 +123,36 @@ describe('datasourcePickerSelect journey wiring', () => {
 
     expect(mockGetDataSourceInstanceList).toHaveBeenCalledWith({ all: true });
     await waitFor(() => expect(mockHandle.setAttributes).toHaveBeenCalledWith({ totalConfigured: '10000' }));
+  });
+
+  it('counts configured data sources once per session, not on every open', async () => {
+    mockGetDataSourceInstanceList.mockResolvedValue(new Array(10000).fill({}));
+    loadWiring();
+
+    for (const cycleId of ['c1', 'c2']) {
+      simulateInteraction('dashboards_dspicker_opened', { cycle_id: cycleId });
+      simulateInteraction('dashboards_dspicker_list_rendered', { total_listed: 20, cycle_id: cycleId });
+    }
+
+    await waitFor(() => expect(mockHandle.setAttributes).toHaveBeenCalledTimes(2));
+    expect(mockGetDataSourceInstanceList).toHaveBeenCalledTimes(1);
+  });
+
+  it('ignores events from another open of a picker', () => {
+    loadWiring();
+    openPicker();
+
+    simulateInteraction('dashboards_dspicker_list_rendered', { total_listed: 5, cycle_id: 'other' });
+    simulateInteraction('dashboards_dspicker_dismissed', { cycle_id: 'other' });
+    simulateInteraction('dashboards_dspicker_cleared', { cycle_id: 'other' });
+    simulateInteraction('dashboards_dspicker_current_reselected', { cycle_id: 'other' });
+
+    expect(mockStep.end).not.toHaveBeenCalled();
+    expect(mockHandle.end).not.toHaveBeenCalled();
+
+    simulateInteraction('dashboards_dspicker_dismissed', { cycle_id: 'c1' });
+
+    expect(mockHandle.end).toHaveBeenCalledWith('discarded');
   });
 
   it('records search events', () => {
@@ -250,6 +280,15 @@ describe('datasourcePickerSelect journey wiring', () => {
     expect(mockHandle.end).toHaveBeenCalledWith('abandoned', { reason: 'config_new_ds' });
   });
 
+  it('ends as abandoned when the user leaves from the dropdown empty state to configure a new data source', () => {
+    loadWiring();
+    openPicker();
+
+    simulateInteraction('dashboards_dspicker_clicked', { item: 'config_new_ds_empty_state' });
+
+    expect(mockHandle.end).toHaveBeenCalledWith('abandoned', { reason: 'config_new_ds' });
+  });
+
   it('ignores unrelated picker interactions', () => {
     loadWiring();
     openPicker();
@@ -270,6 +309,7 @@ describe('getPickerSurface', () => {
     ['/d/abc/my-dashboard', '?editview=annotations', 'annotation_editor'],
     ['/d/abc/my-dashboard', '', 'dashboard'],
     ['/dashboard/new', '', 'dashboard'],
+    ['/dashboard/import', '', 'import'],
     ['/connections/datasources', '', 'other'],
   ])('maps %s%s to %s', (pathname, search, expected) => {
     expect(getPickerSurface(pathname, search)).toBe(expected);

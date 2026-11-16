@@ -428,7 +428,20 @@ describe('DataSourcePicker', () => {
         .filter(([, , options]) => options?.silent)
         .map(([event]) => event);
       expect(journeyEvents).toEqual(['dashboards_dspicker_opened', 'dashboards_dspicker_list_rendered']);
-      expect(silentCalls('dashboards_dspicker_opened')[0][1]).toEqual({ surface: '' });
+      expect(silentCalls('dashboards_dspicker_opened')[0][1]).toEqual({ surface: '', cycle_id: expect.any(String) });
+    });
+
+    it('tags every event of an open with the same cycle ID, and a new ID on the next open', async () => {
+      await setupOpenDropdown(user, { onChange: jest.fn() });
+      await waitFor(() => expect(silentCalls('dashboards_dspicker_list_rendered')).toHaveLength(1));
+      await user.keyboard('[Escape]');
+      await user.click(screen.getByRole('combobox'));
+
+      const [first, second] = silentCalls('dashboards_dspicker_opened').map(([, props]) => props.cycle_id);
+      expect(silentCalls('dashboards_dspicker_list_rendered')[0][1].cycle_id).toBe(first);
+      expect(silentCalls('dashboards_dspicker_dismissed')[0][1].cycle_id).toBe(first);
+      expect(second).toEqual(expect.any(String));
+      expect(second).not.toBe(first);
     });
 
     it('reports the journey surface when the caller sets one', async () => {
@@ -497,7 +510,7 @@ describe('DataSourcePicker', () => {
 
       await waitFor(() => expect(silentCalls('dashboards_dspicker_list_rendered')).toHaveLength(1));
       expect(silentCalls('dashboards_dspicker_list_rendered')).toEqual([
-        ['dashboards_dspicker_list_rendered', { total_listed: 1 }, { silent: true }],
+        ['dashboards_dspicker_list_rendered', { total_listed: 1, cycle_id: expect.any(String) }, { silent: true }],
       ]);
     });
 
@@ -507,7 +520,7 @@ describe('DataSourcePicker', () => {
       await user.keyboard('[Escape]');
 
       expect(silentCalls('dashboards_dspicker_dismissed')).toEqual([
-        ['dashboards_dspicker_dismissed', {}, { silent: true }],
+        ['dashboards_dspicker_dismissed', { cycle_id: expect.any(String) }, { silent: true }],
       ]);
     });
 
@@ -527,7 +540,7 @@ describe('DataSourcePicker', () => {
       unmount();
 
       expect(silentCalls('dashboards_dspicker_dismissed')).toEqual([
-        ['dashboards_dspicker_dismissed', { reason: 'unmount' }, { silent: true }],
+        ['dashboards_dspicker_dismissed', { reason: 'unmount', cycle_id: expect.any(String) }, { silent: true }],
       ]);
     });
 
@@ -563,7 +576,11 @@ describe('DataSourcePicker', () => {
       await user.click(await screen.findByText(mockDS1.name, { selector: 'span' }));
 
       expect(silentCalls('dashboards_dspicker_current_reselected')).toEqual([
-        ['dashboards_dspicker_current_reselected', { ds_type: mockDS1.type }, { silent: true }],
+        [
+          'dashboards_dspicker_current_reselected',
+          { ds_type: mockDS1.type, cycle_id: expect.any(String) },
+          { silent: true },
+        ],
       ]);
     });
   });
