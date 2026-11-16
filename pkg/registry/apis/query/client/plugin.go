@@ -161,6 +161,20 @@ func (d *pluginClient) QueryData(ctx context.Context, req data.QueryDataRequest)
 	return rsp, err
 }
 
+// QueryDataHttpResponse has no bytes to forward because plugins respond in-process,
+// so it re-encodes the decoded response.
+func (d *pluginClient) QueryDataHttpResponse(ctx context.Context, req data.QueryDataRequest) (*http.Response, error) {
+	rsp, err := d.QueryData(ctx, req)
+	if rsp == nil {
+		if err == nil {
+			err = fmt.Errorf("plugin returned an empty response")
+		}
+		return nil, err
+	}
+	// a partial response wins over err, matching how QueryDatasources treats a qdr returned with an error
+	return clientapi.NewQDRHttpResponse(dsV0.GetResponseCode(rsp), rsp)
+}
+
 // GetDatasourceAPI implements DataSourceRegistry.
 func (d *pluginRegistry) GetDatasourceGroupVersion(pluginId string) (schema.GroupVersion, error) {
 	d.pluginsMu.Lock()

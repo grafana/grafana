@@ -1,8 +1,12 @@
 package clientapi
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
+	"io"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -18,6 +22,29 @@ type Response struct {
 
 type QueryDataClient interface {
 	QueryData(ctx context.Context, req data.QueryDataRequest) (*backend.QueryDataResponse, error)
+	// QueryDataHttpResponse returns a response whose body is a JSON encoded QueryDataResponse.
+	// Implementations may stream the body from the datasource without decoding it.
+	// The caller must close the response body.
+	QueryDataHttpResponse(ctx context.Context, req data.QueryDataRequest) (*http.Response, error)
+}
+
+// NewQDRHttpResponse encodes an already decoded QueryDataResponse as an http.Response,
+// for QueryDataClient implementations that cannot forward the original bytes.
+func NewQDRHttpResponse(statusCode int, qdr *backend.QueryDataResponse) (*http.Response, error) {
+	body, err := json.Marshal(qdr)
+	if err != nil {
+		return nil, err
+	}
+	header := http.Header{}
+	header.Set("Content-Type", "application/json")
+	header.Set("Content-Length", strconv.Itoa(len(body)))
+	return &http.Response{
+		Status:        http.StatusText(statusCode),
+		StatusCode:    statusCode,
+		Header:        header,
+		Body:          io.NopCloser(bytes.NewReader(body)),
+		ContentLength: int64(len(body)),
+	}, nil
 }
 
 type InstanceConfigurationSettings struct {

@@ -14,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
+	dataapi "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -252,6 +253,55 @@ func QueryData(ctx context.Context, log log.Logger, dscache datasources.CacheSer
 	}
 
 	return s.QueryDataNew(ctx, user, false, reqDTO)
+}
+
+// PrepareSingleDatasourceRequest parses reqDTO exactly as QueryData would, and when the request is a
+// single query against a single datasource, without expressions and not from alerting, returns the
+// request to send to that datasource. ok is false when the request needs the full QueryData flow.
+func PrepareSingleDatasourceRequest(ctx context.Context, log log.Logger, dscache datasources.CacheService, reqDTO dtos.MetricRequest, headers map[string]string) (*dataapi.QueryDataRequest, *datasources.DataSource, bool, error) {
+	if headers[models.FromAlertHeaderName] == "true" {
+		return nil, nil, false, nil
+	}
+
+	s := &ServiceImpl{
+		log:                        log,
+		dataSourceCache:            dscache,
+		dataSourceRequestValidator: validations.ProvideValidator(),
+		headers:                    headers,
+	}
+
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, nil, false, err
+	}
+
+	// supportLocalTimeRange=true matches QueryDataNew, which QueryData uses
+	parsedReq, err := s.parseMetricRequest(ctx, user, false, reqDTO, true)
+	if err != nil {
+		return nil, nil, false, err
+	}
+
+	if parsedReq.hasExpression || len(parsedReq.parsedQueries) != 1 {
+		return nil, nil, false, nil
+	}
+	queries := parsedReq.getFlattenedQueries()
+	if len(queries) != 1 {
+		return nil, nil, false, nil
+	}
+
+	ds := queries[0].datasource
+	if err := s.dataSourceRequestValidator.Validate(ds.URL, ds.JsonDataMap(), nil); err != nil {
+		return nil, nil, false, datasources.ErrDataSourceAccessDenied
+	}
+
+	k8sReq, err := expr.ConvertBackendRequestToDataRequest(&backend.QueryDataRequest{
+		Headers: map[string]string{},
+		Queries: []backend.DataQuery{queries[0].query},
+	})
+	if err != nil {
+		return nil, nil, false, err
+	}
+	return k8sReq, ds, true, nil
 }
 
 // handleExpressions handles queries when there is an expression.

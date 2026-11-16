@@ -1007,3 +1007,11 @@ func (c *testClient) QueryData(ctx context.Context, req data.QueryDataRequest) (
 	}
 	return nil, errors.New("no response stubbed")
 }
+
+func (c *testClient) QueryDataHttpResponse(ctx context.Context, req data.QueryDataRequest) (*http.Response, error) {
+	qdr, err := c.QueryData(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	return clientapi.NewQDRHttpResponse(http.StatusOK, qdr)
+}
