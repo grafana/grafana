@@ -198,6 +198,7 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], visualRefr
   });
 
   const wrapperActiveVisualRefresh = css({
+    color: theme.isDark ? '#e7935a' : '#a64708',
     backgroundColor: theme.colors.accent.subtleBackground,
     position: 'relative',
     borderRadius: theme.shape.radius.default,

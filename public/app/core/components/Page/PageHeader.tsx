@@ -33,7 +33,7 @@ export function PageHeader({ navItem, renderTitle, actions, info, subTitle, onEd
             {navItem.img && <img className={styles.img} src={navItem.img} alt={`logo for ${navItem.text}`} />}
             {navItem.icon && !navItem.img && visualRefreshEnabled && (
               <AccentBoxBadge>
-                <Icon size="lg" name={navItem.icon} />
+                <Icon className={styles.icon} size="lg" name={navItem.icon} />
               </AccentBoxBadge>
             )}
             {onEditTitle ? (
@@ -55,6 +55,9 @@ export function PageHeader({ navItem, renderTitle, actions, info, subTitle, onEd
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
+    icon: css({
+      color: theme.isDark ? '#e7935a' : '#a64708',
+    }),
     title: css({
       display: 'flex',
       flexDirection: 'row',
