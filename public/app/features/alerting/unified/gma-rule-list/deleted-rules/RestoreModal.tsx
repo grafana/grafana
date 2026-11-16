@@ -7,6 +7,7 @@ import { Alert, ConfirmModal } from '@grafana/ui';
 
 import { grafanaRulesNav } from '../../utils/navigation';
 
+import { trackRestoreAttempt, trackRestoreFailure, trackRestoreSuccess } from './analytics';
 import { useRestoreAlertRule } from './useRestoreRule';
 
 interface RestoreModalProps {
@@ -24,15 +25,19 @@ export function RestoreModal({ rule, onDismiss, onSuccess, onRefetch }: RestoreM
 
   const handleConfirm = async () => {
     setError(null);
+    trackRestoreAttempt();
     try {
       const result = await restore(rule);
       if (result.success) {
+        trackRestoreSuccess();
         onSuccess(uid);
         locationService.push(grafanaRulesNav.viewLink(uid, { includeReturnTo: true }));
       } else if (result.isConflict) {
+        trackRestoreFailure('conflict');
         onRefetch?.();
         setError(t('alerting.recently-deleted.restore.conflict', 'A rule with this name already exists.'));
       } else {
+        trackRestoreFailure('error');
         // Show the API's error message (e.g. folder missing/not writable) if available
         const errorData = isFetchError(result.error) ? result.error.data : null;
         const apiMessage =
@@ -47,6 +52,7 @@ export function RestoreModal({ rule, onDismiss, onSuccess, onRefetch }: RestoreM
         );
       }
     } catch (err) {
+      trackRestoreFailure('error');
       setError(t('alerting.recently-deleted.restore.error', 'Failed to restore rule. Please try again.'));
     }
   };

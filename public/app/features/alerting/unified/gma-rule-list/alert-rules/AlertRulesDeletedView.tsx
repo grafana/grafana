@@ -7,13 +7,16 @@ import { Alert, Button, LoadingBar } from '@grafana/ui';
 import { DeletedRulesTable } from '../deleted-rules/DeletedRulesTable';
 import { RestoreModal } from '../deleted-rules/RestoreModal';
 import { ReviewDrawer } from '../deleted-rules/ReviewDrawer';
+import { trackJsonOpened, trackReviewOpened, useTrackDeletedRulesPageView } from '../deleted-rules/analytics';
 
 import { useDeletedAlertRules } from './useDeletedAlertRules';
 
 export function AlertRulesDeletedView() {
-  const { items, hasMore, isLoading, isFetchingMore, error, loadMore, refetch } = useDeletedAlertRules();
+  const { items, hasMore, isLoading, isFetchingMore, error, loadMore, refetch, totalFromApi } = useDeletedAlertRules();
   const [reviewing, setReviewing] = useState<AlertRule | null>(null);
   const [restoring, setRestoring] = useState<AlertRule | null>(null);
+
+  useTrackDeletedRulesPageView(totalFromApi);
 
   if (isLoading) {
     return <LoadingBar width={300} />;
@@ -35,13 +38,18 @@ export function AlertRulesDeletedView() {
         rules={items}
         folderPaths={{}}
         userNames={{}}
-        onReview={setReviewing}
+        onReview={(rule) => {
+          trackReviewOpened();
+          setReviewing(rule);
+        }}
         onRestore={setRestoring}
         hasMore={hasMore}
         isLoadingMore={isFetchingMore}
         onLoadMore={loadMore}
       />
-      {reviewing && <ReviewDrawer rule={reviewing} folderPath="" onClose={() => setReviewing(null)} />}
+      {reviewing && (
+        <ReviewDrawer rule={reviewing} folderPath="" onClose={() => setReviewing(null)} onJsonOpen={trackJsonOpened} />
+      )}
       {restoring && (
         <RestoreModal
           rule={restoring}

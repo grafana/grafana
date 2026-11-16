@@ -12,6 +12,8 @@ export interface UseDeletedAlertRulesResult {
   isLoading: boolean;
   isFetchingMore: boolean;
   error: unknown;
+  /** Total items returned by the API (all pages combined) — use for analytics, not display. */
+  totalFromApi: number | undefined;
   loadMore: () => void;
   refetch: () => void;
 }
@@ -93,6 +95,8 @@ export function useDeletedAlertRules(): UseDeletedAlertRulesResult {
     isLoading: firstPage.isLoading,
     isFetchingMore: fetchingNextPage,
     error: firstPage.error ?? nextPage.error,
+    // Total items seen across all fetched pages — undefined until first page loads.
+    totalFromApi: firstPage.data ? allItems.length : undefined,
     loadMore,
     refetch,
   };
