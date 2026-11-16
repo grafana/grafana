@@ -8,7 +8,8 @@ import {
 } from 'app/features/dashboard/dashgrid/DashboardLibrary/utils/assistantHelpers';
 import { getDatasourceTypes } from 'app/features/dashboard/dashgrid/DashboardLibrary/utils/dashboardLibraryHelpers';
 import { DASHBOARD_LIBRARY_ROUTES } from 'app/features/dashboard/dashgrid/types';
-import { type Options, RenderMode, TextMode } from 'app/plugins/panel/text/panelcfg.gen';
+import { getTextDataUsage } from 'app/plugins/panel/text/dataUsage';
+import { type Options, TextMode } from 'app/plugins/panel/text/panelcfg.gen';
 
 import { CustomDashboardTemplateInteractions } from '../analytics/dashboard-templates/main';
 import { type DashboardScene } from '../scene/DashboardScene';
@@ -124,8 +125,6 @@ export function trackDropItemCrossLayout(gridItem: SceneGridItemLike) {
 const TEXT_PANEL_PLUGIN_ID = 'text';
 
 const MERMAID_PATTERN = /(?:```|~~~)[ \t]*mermaid|class=["'][^"']*\bmermaid\b/i;
-const HANDLEBARS_PATTERN = /\{\{[^}]*\}\}/;
-const DATA_MACRO_PATTERN = /\$\{__(value|field|data|series)\b/;
 
 function trackTextPanelUsage(dashboard: DashboardScene) {
   if (!isTextV2WithNewFeatures()) {
@@ -164,22 +163,23 @@ function getTextPanelUsage(panels: VizPanel[]) {
   for (const panel of textPanels) {
     const options: Partial<Options> = panel.state.options;
     const content = options.content ?? '';
+    const dataUsage = getTextDataUsage(options);
 
     if (options.mode !== TextMode.Code) {
       if (MERMAID_PATTERN.test(content)) {
         usage.mermaid_count++;
       }
 
-      if (HANDLEBARS_PATTERN.test(content)) {
+      if (dataUsage.handlebars) {
         usage.handlebars_count++;
       }
     }
 
-    if (DATA_MACRO_PATTERN.test(content)) {
+    if (dataUsage.dataMacros) {
       usage.data_macro_count++;
     }
 
-    if (options.renderMode === RenderMode.PerRow) {
+    if (dataUsage.perRow) {
       usage.per_row_count++;
     }
   }

@@ -23,6 +23,8 @@ import {
 } from './types';
 
 export async function getPluginDetails(id: string): Promise<CatalogPluginDetails> {
+  assertPluginIdFormat(id);
+
   const remote = await getRemotePlugin(id);
   const isPublished = Boolean(remote);
   const [localPlugins, versions, localReadme, localChangelog] = await Promise.all([
@@ -70,6 +72,8 @@ export async function getPluginDetails(id: string): Promise<CatalogPluginDetails
 }
 
 export async function getPluginInsights(id: string, version: string | undefined): Promise<CatalogPluginInsights> {
+  assertPluginIdFormat(id);
+
   if (!version) {
     throw new Error('Version is required');
   }
@@ -272,6 +276,8 @@ export async function uninstallPlugin(id: string) {
 }
 
 export async function getPluginEntitlement(id: string): Promise<boolean> {
+  assertPluginIdFormat(id);
+
   try {
     await getBackendSrv().get(`${GCOM_API_ROOT}/plugins/${id}/entitlement`);
     return true;

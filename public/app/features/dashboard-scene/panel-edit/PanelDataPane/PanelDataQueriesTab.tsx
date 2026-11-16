@@ -287,7 +287,11 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
 
   public onQueriesChange = (queries: SceneDataQuery[]) => {
     const runner = this.queryRunner;
+    const isFirstQuery = runner.state.queries.length === 0 && queries.length > 0;
     setQueryRunnerQueries(runner, queries);
+    if (isFirstQuery) {
+      runner.runQueries();
+    }
   };
 
   public onRunQueries = () => {

@@ -11,8 +11,7 @@ behavior instead of existence, avoiding AI slop, verifying a test reaches its ta
 generic anti-flake rules, and the SDLC-phase gating). This skill covers what's specific to
 visualization code on top of that: data-frame/panel-prop builders, the canvas draw-call snapshot
 harness, panel accessibility and interaction-snapshot E2E, and canvas/uPlot-specific anti-flake
-rules. The visualization codeowner paths are opted into the gating
-`check-frontend-test-coverage.yml` check, so coverage that drops fails CI.
+rules.
 
 ## Step 1 — Set up data with the repo's builders
 

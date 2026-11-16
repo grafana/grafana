@@ -21,6 +21,7 @@ import (
 	natsserver "github.com/nats-io/nats-server/v2/server"
 	natsclient "github.com/nats-io/nats.go"
 	"github.com/prometheus/client_golang/prometheus"
+	promtestutil "github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -70,6 +71,98 @@ func TestServer(t *testing.T) {
 		// Embedded server has not been started by Run yet.
 		require.Error(t, s.Health(context.Background()))
 	})
+}
+
+// TestServerRoutesMetric checks that the routes gauge counts peers with an
+// established route rather than the routes discovery applied.
+func TestServerRoutesMetric(t *testing.T) {
+	t.Run("counts each routed peer once", func(t *testing.T) {
+		store := newSharedTestKV(t)
+		reg := prometheus.NewRegistry()
+		a, err := newServer(newEmbeddedTestCfg("127.0.0.1", "").NATS, store, testCredentials(t, store), "", log.New("infra.nats.server"), reg)
+		require.NoError(t, err)
+		requireRoutesMetric(t, reg, 0)
+
+		startService(t, t.Context(), a)
+		b := startTestAuthServer(t, store, nil)
+		// Delivery needs a registered route on both sides. The route pool holds
+		// several connections per peer, which must count once.
+		requireDelivery(t, a, b)
+		requireRoutesMetric(t, reg, 1)
+		require.Equal(t, 1.0, promtestutil.ToFloat64(b.metrics.embeddedServerRoutes))
+
+		// The surviving server must notice the lost peer. It closes the route
+		// asynchronously, and nats-server reports that to no hook we can wait on.
+		b.StopAsync()
+		require.NoError(t, b.AwaitTerminated(t.Context()))
+		waitForRoutesMetric(t, a, 0)
+		requireRoutesMetric(t, reg, 0)
+	})
+
+	t.Run("does not count a discovered peer whose cluster port is unreachable", func(t *testing.T) {
+		store := newSharedTestKV(t)
+		closed, err := net.Listen("tcp", "127.0.0.1:0")
+		require.NoError(t, err)
+		unreachable := "nats://" + closed.Addr().String()
+		require.NoError(t, closed.Close())
+		require.NoError(t, newKVPeerStore(store, discoveryClusterName).upsert(t.Context(), peer{ServerName: "unreachable", RouteURL: unreachable}))
+
+		hook := newLogHook()
+		a := startTestAuthServer(t, store, hook)
+		hook.waitForLog(t, "info: reconciled nats cluster routes")
+		hook.waitForLog(t, "Error trying to connect to route")
+		require.Zero(t, promtestutil.ToFloat64(a.metrics.embeddedServerRoutes))
+	})
+
+	t.Run("does not count a peer that rejects the route credential", func(t *testing.T) {
+		hookB := newLogHook()
+		a := startTestAuthServer(t, newSharedTestKV(t), nil)
+		b := startTestAuthServer(t, newSharedTestKV(t), hookB)
+
+		require.NoError(t, a.setRoutes(natsserver.RoutesFromStr(routeURLForServer(b.cfg, b.server))))
+		hookB.waitForLog(t, "authentication error")
+		// The accepting side checks credentials before it registers the route.
+		// The dialer counts it only until the rejection arrives, so it is not
+		// asserted here.
+		require.Zero(t, promtestutil.ToFloat64(b.metrics.embeddedServerRoutes))
+	})
+
+	t.Run("is not registered without an embedded server", func(t *testing.T) {
+		cfg := setting.NewCfg()
+		cfg.NATS = setting.NATSSettings{Enabled: true, Mode: setting.NATSModeExternal, ClientURLs: []string{"nats://example:4222"}}
+		reg := prometheus.NewRegistry()
+		_, err := ProvideServer(cfg, nil, nil, nil, nil, reg)
+		require.NoError(t, err)
+		n, err := promtestutil.GatherAndCount(reg, "grafana_nats_embedded_server_routes")
+		require.NoError(t, err)
+		require.Zero(t, n)
+	})
+}
+
+// waitForRoutesMetric waits until the routes gauge of s reads want.
+func waitForRoutesMetric(t *testing.T, s *Server, want float64) {
+	t.Helper()
+	guard := time.After(hangGuard)
+	for {
+		got := promtestutil.ToFloat64(s.metrics.embeddedServerRoutes)
+		if got == want {
+			return
+		}
+		select {
+		case <-guard:
+			t.Fatalf("routes metric %v, want %v", got, want)
+		case <-time.After(10 * time.Millisecond):
+		}
+	}
+}
+
+func requireRoutesMetric(t *testing.T, reg prometheus.Gatherer, want int) {
+	t.Helper()
+	expected := fmt.Sprintf(`# HELP grafana_nats_embedded_server_routes Number of other instances the embedded NATS server has an established cluster route to. Instances minus one when the cluster is fully connected.
+# TYPE grafana_nats_embedded_server_routes gauge
+grafana_nats_embedded_server_routes %d
+`, want)
+	require.NoError(t, promtestutil.GatherAndCompare(reg, strings.NewReader(expected), "grafana_nats_embedded_server_routes"))
 }
 
 func TestIsLoopbackRouteURL(t *testing.T) {

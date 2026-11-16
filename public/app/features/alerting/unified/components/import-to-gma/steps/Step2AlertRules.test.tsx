@@ -21,7 +21,7 @@ import { type SupportedRulesSourceType } from 'app/features/alerting/unified/uti
 import { AccessControlAction } from 'app/types/accessControl';
 import { type PromRulesResponse, type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
-import { type ImportFormValues } from '../ImportToGMA';
+import { type ImportFormValues } from '../types';
 
 import { Step2Content, useStep2Validation } from './Step2AlertRules';
 
@@ -258,6 +258,33 @@ describe('Step2AlertRules', () => {
       expect(screen.queryByRole('option', { name: /Loki/ })).not.toBeInTheDocument();
     });
 
+    it('clears the target together with the source only while the target was filled in from it', async () => {
+      const prometheus2 = mockDataSource(
+        { name: 'Prometheus 2', uid: 'prometheus-2-uid', type: 'prometheus' },
+        { alerting: true }
+      );
+      setupDataSources(prometheus, prometheus2);
+      const { user, sourcePicker, targetPicker } = renderStep2();
+      await waitFor(() => expect(sourcePicker).toBeEnabled());
+
+      await user.click(sourcePicker);
+      await user.click(await screen.findByRole('option', { name: /^Prometheus$/ }));
+      await waitFor(() => expect(targetPicker).toHaveAttribute('placeholder', 'Prometheus'));
+
+      await user.click(screen.getByRole('button', { name: /clear data source/i }));
+      await waitFor(() => expect(targetPicker).toHaveAttribute('placeholder', 'Select data source'));
+
+      await user.click(sourcePicker);
+      await user.click(await screen.findByRole('option', { name: /^Prometheus$/ }));
+      await user.click(targetPicker);
+      await user.click(await screen.findByRole('option', { name: /Prometheus 2/ }));
+      await waitFor(() => expect(targetPicker).toHaveAttribute('placeholder', 'Prometheus 2'));
+
+      await user.click(screen.getByRole('button', { name: /clear data source/i }));
+      await waitFor(() => expect(sourcePicker).toHaveAttribute('placeholder', 'Select data source'));
+      expect(targetPicker).toHaveAttribute('placeholder', 'Prometheus 2');
+    });
+
     it('shows an error on the target field when the valid targets cannot be loaded', async () => {
       failRecordingTargetDiscovery(hookMock);
       renderStep2();
@@ -289,6 +316,20 @@ describe('Step2AlertRules', () => {
 
       expect(screen.getByText(/notification routing/i)).toBeInTheDocument();
       expect(screen.getByPlaceholderText(/select a policy tree/i)).toBeInTheDocument();
+    });
+
+    it('offers the policy tree named in Step 1 first, even though the API does not know it yet', async () => {
+      const { user } = render(
+        <TestWrapper defaultValues={{ policyTreeName: 'brand-new-tree' }}>
+          <Step2Content step1Completed={true} canImport={true} />
+        </TestWrapper>
+      );
+
+      await user.click(screen.getByPlaceholderText(/select a policy tree/i));
+
+      // The Step 1 option renders at once; the API's trees arrive later.
+      await waitFor(() => expect(screen.getAllByRole('option').length).toBeGreaterThan(1));
+      expect(screen.getAllByRole('option')[0]).toHaveTextContent('brand-new-tree');
     });
 
     it('should render source selection and target settings', () => {
@@ -480,6 +521,28 @@ describe('Step2AlertRules', () => {
       await waitFor(() => {
         expect(screen.getByText(/failed to parse yaml file/i)).toBeInTheDocument();
       });
+    });
+
+    it('shows the parse error for an invalid file, and drops it for a valid file or once the file is removed', async () => {
+      const { user } = render(
+        <TestWrapper defaultValues={{ rulesSource: 'yaml' }}>
+          <Step2Content step1Completed={false} canImport={true} />
+        </TestWrapper>
+      );
+
+      const uploadInput = await screen.findByLabelText(/^rules yaml file/i);
+      await user.upload(uploadInput, new File(['not: valid: yaml: {{{'], 'invalid.yaml', { type: 'text/yaml' }));
+      expect(await screen.findByText(/failed to parse yaml file/i)).toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: /remove invalid\.yaml/i }));
+      await waitFor(() => expect(screen.queryByText(/failed to parse yaml file/i)).not.toBeInTheDocument());
+
+      await user.upload(
+        await screen.findByLabelText(/^rules yaml file/i),
+        new File(['groups: []'], 'valid.yaml', { type: 'text/yaml' })
+      );
+      expect(await screen.findByText('valid.yaml')).toBeInTheDocument();
+      expect(screen.queryByText(/failed to parse yaml file/i)).not.toBeInTheDocument();
     });
 
     it('should clear YAML file when switching from yaml to datasource source', async () => {

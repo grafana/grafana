@@ -138,6 +138,7 @@ export const availableIconsIndex = {
   'flask-bubbling': true,
   'filter-plus': true,
   'filter-minus': true,
+  fjord: true,
   flip: true,
   folder: true,
   font: true,

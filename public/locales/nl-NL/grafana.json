@@ -1579,6 +1579,12 @@
         "view-list": "Lijst",
         "wildcard-in-text": "Zoektekst mag geen * of % bevatten."
       },
+      "sequence-pill": {
+        "label": "",
+        "label-with-interval": "",
+        "tooltip": "",
+        "tooltip-with-interval": ""
+      },
       "shared": {
         "load-more": "Meer laden",
         "load-more-error": "Kan geen extra resultaten laden",
@@ -5351,6 +5357,7 @@
       "change-theme": "Thema wijzigen",
       "dark-theme": "Donker",
       "dashboard-from-template": "Dashboard van sjabloon",
+      "experimental": "",
       "light-theme": "Licht",
       "open-saved-queries": "Opgeslagen query's openen",
       "scopes": "Bereik"
@@ -5805,12 +5812,18 @@
       "annotation-pin-remove": "",
       "apply-undo-title": "Assistant Composer bewerken",
       "overlay": {
+        "hint-elements": "",
+        "hint-layer": "",
+        "hint-layer-select": "",
         "hint-not-removable": "",
-        "hint-panel": "Klik om een opmerking te plaatsen bij een paneel, of sleep om een gebied te tekenen",
+        "hint-panel": "",
+        "hint-panel-select": "",
         "hint-region": "Slepen om een gebied te tekenen",
         "hint-remove": "",
+        "hint-screenshot": "",
         "hint-text": "",
-        "hint-variable": ""
+        "hint-variable": "",
+        "hint-variable-select": ""
       },
       "region": "Regio",
       "untitled-panel": "Paneel {{panelId}}",
@@ -6203,6 +6216,10 @@
         "title": "Titel",
         "transparent-background": "Transparante achtergrond"
       }
+    },
+    "get-var-mapping-option-overrides": {
+      "defaults": "",
+      "rule": ""
     },
     "inspect": {
       "data-tab": "Gegevens",
@@ -6726,7 +6743,6 @@
           "no-title": "<geen titel>"
         }
       },
-      "redo": "Opnieuw uitvoeren",
       "row": {
         "header": {
           "hide": "Verbergen",
@@ -6743,7 +6759,6 @@
         "title": "Bron",
         "tooltip": "Origineel dashboard openen"
       },
-      "undo": "Ongedaan maken",
       "variable": {
         "change-type": "Type wijzigen",
         "change-type-aria-label": "Type variabele wijzigen",
@@ -6780,8 +6795,6 @@
         "open-editor": "Open variabelebewerker",
         "open-editor-tooltip": "Open de variabelebewerker voor meer opties voor variabelen",
         "query-options": {
-          "close": "Sluiten",
-          "old-modal-title": "Queryvariabele",
           "preview": "Voorbeeld"
         },
         "remove": "Verwijderen",
@@ -6952,6 +6965,8 @@
       "playlist-next": "Naar het volgende dashboard",
       "playlist-previous": "Naar het vorige dashboard",
       "playlist-stop": "Afspeellijst stoppen",
+      "redo": "",
+      "redo-action": "",
       "save-as-template": {
         "label": "Opslaan als sjabloon"
       },
@@ -6970,6 +6985,8 @@
       "star-added": "Toegevoegd aan favorieten",
       "star-remove-error": "Kan niet verwijderen uit favorieten",
       "star-removed": "Verwijderd uit favorieten",
+      "undo": "",
+      "undo-action": "",
       "unlink-library-panel": "Bibliotheekpaneel ontkoppelen",
       "unlink-library-panel-short": "Koppeling ongedaan maken"
     },
@@ -7794,6 +7811,19 @@
       "aria-label-remove-option": "Optie verwijderen",
       "title-drag-and-drop-to-reorder": "Slepen en neerzetten om de volgorde te wijzigen",
       "tooltip-remove-option": "Optie verwijderen"
+    },
+    "panel-actions-popover": {
+      "aria-label": "",
+      "edit": "",
+      "edit-tooltip-disabled": "",
+      "expand": "",
+      "explore": "",
+      "more-actions": "",
+      "remove": "",
+      "remove-confirm": "",
+      "remove-tooltip-disabled": "",
+      "restore-size": "",
+      "settings": ""
     },
     "panel-data-alerting-tab": {
       "tab-label": "Waarschuwing"
@@ -9792,6 +9822,9 @@
     "select-aria-label": "Mapfilter",
     "select-placeholder": "Filteren op map"
   },
+  "folder-picker": {
+    "read-only-folder-tooltip": ""
+  },
   "folders": {
     "api": {
       "anonymous-user": "Anoniem",
@@ -10782,6 +10815,8 @@
       "tooltip": {
         "category": "Tooltip",
         "description-hover-proximity": "Hoe dicht de cursor bij een punt moet zijn om de tooltip te activeren, in pixels",
+        "description-max-height": "",
+        "description-max-width": "",
         "modeOptions": {
           "label-all": "Alle",
           "label-hidden": "Verborgen",
@@ -11284,6 +11319,8 @@
         "unbounded": "Geen limiet"
       },
       "reorder-column-label": "{{columnName}} opnieuw ordenen",
+      "row-number": "",
+      "row-number-column": "",
       "show-column-label": "{{columnName}} weergeven",
       "sort-by-column": "Sorteren op kolom {{column}}",
       "sort-by-column-ascending": "Sorteren op kolom {{column}}, oplopend",
@@ -13080,6 +13117,10 @@
       "subtitle": "Kies hoe je je contactpunten op de hoogte wilt stellen wanneer een waarschuwingsinstantie afgaat",
       "title": "Contactpunten"
     },
+    "alerting-recording-rules": {
+      "subtitle": "",
+      "title": ""
+    },
     "alerting-silences": {
       "subtitle": "Stop meldingen van een of meer waarschuwingsregels",
       "title": "Stiltes"
@@ -13264,6 +13305,9 @@
     },
     "new-folder": {
       "title": "Nieuwe map"
+    },
+    "new-grafana-page": {
+      "title": ""
     },
     "new-notebook": {
       "title": "Nieuw notitieboek"
@@ -13929,6 +13973,32 @@
     },
     "units": {
       "clear-tooltip": "Eenheidsselectie wissen"
+    },
+    "var-mapping-checks": {
+      "data-macro": "",
+      "not-allowed": "",
+      "not-found": "",
+      "not-number": "",
+      "not-one-value": "",
+      "out-of-range": "",
+      "resolves": "",
+      "values": ""
+    },
+    "var-mapping-toggle": {
+      "aria-label-picker": "",
+      "fallback-off": "",
+      "fallback-on": "",
+      "group-matching": "",
+      "group-other": "",
+      "hint-boolean": "",
+      "hint-number": "",
+      "hint-option": "",
+      "hint-option-no-fallback": "",
+      "new-variable": "",
+      "option-current": "",
+      "placeholder": "",
+      "use-fixed-value": "",
+      "use-variable": ""
     }
   },
   "org": {
@@ -14031,12 +14101,14 @@
     "header-menu": {
       "add-to-notebook": "Aan notitieboek toevoegen",
       "copy": "Kopiëren",
+      "copy-repeated-panel": "",
       "copy-styles": "Stijlen kopiëren",
       "download-diagnostics": "Diagnostiek downloaden",
       "duplicate": "Dupliceren",
       "edit": "Bewerken",
       "explore": "Verkennen",
       "get-help": "Hulp inschakelen",
+      "group-by": "",
       "hide-legend": "Legenda verbergen",
       "inspect": "Inspecteren",
       "inspect-data": "Gegevens",
@@ -15331,8 +15403,7 @@
       "message-resource-onprem_other": "Je instantie is beperkt tot {{count}} gesynchroniseerde bronnen per repository."
     },
     "read-only-badge": {
-      "pull-only": "",
-      "text": "Alleen lezen"
+      "pull-only": ""
     },
     "read-only-local-tooltip": "Deze bron is alleen-lezen en wordt beheerd via bestandsvoorziening. Om wijzigingen aan te brengen, werk je de verbonden repository bij. Om de instellingen te wijzigen ga je naar Beheer > Voorziening > Repositories.",
     "read-only-remote-tooltip": "Deze bron is alleen-lezen en wordt beheerd via Git. Om wijzigingen aan te brengen, werk je de verbonden repository bij. Om de instellingen te wijzigen ga je naar Beheer > Voorziening > Repositories.",
@@ -16172,6 +16243,9 @@
       "show-response": "Antwoord weergeven"
     },
     "query-editor-not-exported": "Gegevensbronplug-in exporteert geen Query Editor-component"
+  },
+  "read-only-badge": {
+    "text": ""
   },
   "recent-queries": {
     "error-state": {
@@ -17186,6 +17260,7 @@
     "description-min-column-width": "De minimale breedte voor het automatisch aanpassen van de kolomgrootte",
     "description-page-size": "Aantal rijen per pagina. Wanneer leeg, is het paginaformaat gebaseerd op de paneelhoogte.",
     "description-show-columns-sidebar": "De zijbalk voor kolombeheer openen met het paneel, in plaats van vanuit een kolommenmenu",
+    "description-show-row-numbers": "",
     "description-styling-from-field": "Een veld met JSON-objecten met CSS-eigenschappen",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "De achtergrondkleur van elke tweede rij afwisselen",
@@ -17228,6 +17303,7 @@
     "name-min-column-width": "Minimale kolombreedte",
     "name-page-size": "Paginaformaat",
     "name-show-columns-sidebar": "Zijbalk met kolommen weergeven",
+    "name-show-row-numbers": "",
     "name-show-table-header": "Header tabel tonen",
     "name-sparkline-show-tooltip": "Hover-tooltip weergeven",
     "name-styling-from-field": "Styling vanuit veld",
