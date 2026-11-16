@@ -1,6 +1,6 @@
 ---
 canonical: https://grafana.com/docs/grafana/latest/developers/http_api/alerting_provisioning/
-description: Create and manage alerting resources using the HTTP API
+description: Provision alerting resources using the HTTP API (legacy)
 keywords:
   - grafana
   - alerting

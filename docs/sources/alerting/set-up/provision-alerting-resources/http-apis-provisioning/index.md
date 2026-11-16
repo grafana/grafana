@@ -13,7 +13,7 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Use the new HTTP APIs to provision
+menuTitle: Provision alerting resources using the new HTTP API
 title: Use the new HTTP APIs to manage alerting resources
 weight: 400
 ---
