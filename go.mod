@@ -135,7 +135,7 @@ require (
 	github.com/grafana/authlib v0.0.0-20261108003752-80ed9e737add // @grafana/identity-access-team
 	github.com/grafana/authlib/types v0.0.0-20261020151310-7a9be4c0c1c3 // @grafana/identity-access-team
 	github.com/grafana/dataplane/examples v0.0.1 // @grafana/observability-metrics
-	github.com/grafana/dataplane/sdata v0.0.9 // @grafana/observability-metrics
+	github.com/grafana/dataplane/sdata v0.0.10 // @grafana/observability-metrics
 	github.com/grafana/dskit v0.0.0-20260907092321-7585a53bb600 // @grafana/grafana-backend-group
 	github.com/grafana/e2e v0.1.2-0.20260309174126-b5393d4e610f // @grafana/grafana-app-platform-squad
 	github.com/grafana/gofpdf v0.0.0-20250307124105-3b9c5d35577f // @grafana/sharing-squad
