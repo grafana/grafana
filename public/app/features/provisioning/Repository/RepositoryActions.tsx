@@ -1,16 +1,16 @@
 import { textUtil } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Button, LinkButton, Stack } from '@grafana/ui';
+import { Badge, Button, LinkButton, Stack } from '@grafana/ui';
 import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 import { StatusBadge } from '../Shared/StatusBadge';
-import { ReadOnlyBadge } from '../components/ReadOnlyBadge';
 import { CONNECTIONS_URL, PROVISIONING_URL } from '../constants';
 import { getRepoHrefForProvider } from '../utils/git';
 import { getIsReadOnlyWorkflows } from '../utils/repository';
 import { getRepositoryTypeConfig } from '../utils/repositoryTypes';
 import { getRepositoryRoute, resourceKindInfos } from '../utils/resourceKinds';
+import { getPullOnlyTooltipText } from '../utils/tooltip';
 
 import { SyncRepository } from './SyncRepository';
 
@@ -33,7 +33,13 @@ export function RepositoryActions({ repository }: RepositoryActionsProps) {
 
   return (
     <Stack wrap="wrap" alignItems="center">
-      {isReadOnlyRepo && <ReadOnlyBadge repoType={repoType} />}
+      {isReadOnlyRepo && (
+        <Badge
+          color="darkgrey"
+          text={t('provisioning.read-only-badge.pull-only', 'Pull only')}
+          tooltip={getPullOnlyTooltipText({ isLocal: repoType === 'local' })}
+        />
+      )}
       <StatusBadge repo={repository} displayOnly />
       {isFolderContained && (
         <LinkButton

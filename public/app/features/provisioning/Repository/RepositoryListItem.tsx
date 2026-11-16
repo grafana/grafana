@@ -5,13 +5,12 @@ import { type GrafanaTheme2, dateTimeFormatTimeAgo } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Button, Card, LinkButton, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { Badge, Button, Card, LinkButton, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RepoIcon } from '../Shared/RepoIcon';
 import { StatusBadge } from '../Shared/StatusBadge';
 import { ManagedBadge } from '../components/ManagedBadge';
-import { ReadOnlyBadge } from '../components/ReadOnlyBadge';
 import { PROVISIONING_URL } from '../constants';
 import { exportResourceAsJson } from '../utils/export';
 import { formatRepoUrl, getRepoHrefForProvider } from '../utils/git';
@@ -24,7 +23,7 @@ import {
 } from '../utils/managedResource';
 import { getIsReadOnlyWorkflows, getRepositoryResourcesUrl } from '../utils/repository';
 import { getKindInfoByStat } from '../utils/resourceKinds';
-import { getManagedReadOnlyTooltip } from '../utils/tooltip';
+import { getManagedReadOnlyTooltip, getPullOnlyTooltipText } from '../utils/tooltip';
 
 import { SyncRepository } from './SyncRepository';
 
@@ -85,7 +84,13 @@ export function RepositoryListItem({ repository }: Props) {
         <Stack gap={2} direction="row" alignItems="center" wrap>
           {spec?.title && <Text variant="h3">{spec.title}</Text>}
           <StatusBadge repo={repository} />
-          {isReadOnlyRepo && <ReadOnlyBadge repoType={spec?.type} />}
+          {isReadOnlyRepo && (
+            <Badge
+              color="darkgrey"
+              text={t('provisioning.read-only-badge.pull-only', 'Pull only')}
+              tooltip={getPullOnlyTooltipText({ isLocal: spec?.type === 'local' })}
+            />
+          )}
           {isManagedRepo && (
             <ManagedBadge
               isReadOnly={isReadOnly}
