@@ -11,10 +11,12 @@ import (
 )
 
 // DeleteFolderPreferences deletes folder-<folderUID> in namespace through client, which must be for
-// dashboardpreferences, with options. It runs as Grafana's service identity limited to namespace, so the
-// tier is deleted while grafana.dashboardPreferences is off and whether or not the folder's deleter can
-// edit it. A missing object is not an error. A server that doesn't serve dashboardpreferences returns an
-// error that wraps ErrNotServed.
+// dashboardpreferences, with options. A missing object is not an error. A server that doesn't serve
+// dashboardpreferences returns an error that wraps ErrNotServed.
+//
+// The context carries Grafana's service identity limited to namespace, so an in-process client deletes
+// the tier while grafana.dashboardPreferences is off and whether or not the folder's deleter can edit it.
+// A client that brings its own credentials, like the multi-tenant folder app's, is authorized by those.
 func DeleteFolderPreferences(ctx context.Context, client dynamic.NamespaceableResourceInterface, namespace, folderUID string, options metav1.DeleteOptions) error {
 	if err := validateNamespace(namespace); err != nil {
 		return err
