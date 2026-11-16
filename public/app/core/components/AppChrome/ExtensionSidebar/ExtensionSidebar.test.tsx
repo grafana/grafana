@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
-import { type ExtensionInfo, PluginExtensionTypes } from '@grafana/data';
+import { createTheme, type ExtensionInfo, PluginExtensionTypes, ThemeContext } from '@grafana/data';
 import { config, usePluginComponents } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/feature-flags';
 import { type AddedComponentRegistryItem } from 'app/features/plugins/extensions/registry/AddedComponentsRegistry';
@@ -258,6 +258,31 @@ describe('ExtensionSidebar', () => {
       expect(preview.style.borderTopRightRadius).toBe('');
     });
 
+    it("insets the bottom dock preview as the page's card is, with the visual refresh", () => {
+      mockUseFloatingDrag.mockReturnValue({
+        action: 'dock',
+        side: 'bottom',
+        top: 448,
+        left: 320,
+        width: 704,
+        height: 320,
+      });
+
+      render(
+        <ThemeContext.Provider value={{ ...createTheme(), flags: { visualDesignRefresh: true } }}>
+          <ExtensionSidebar />
+        </ThemeContext.Provider>
+      );
+
+      // 4px in from the page area's left and right edges and from the window's bottom.
+      expect(screen.getByTestId('extension-sidebar-dock-preview')).toHaveStyle({
+        top: '448px',
+        left: '324px',
+        width: '696px',
+        height: '316px',
+      });
+    });
+
     it('shows the left dock preview after the nav, with its top-left corner square', () => {
       mockUseFloatingDrag.mockReturnValue({
         action: 'dock',
@@ -345,6 +370,29 @@ describe('ExtensionSidebar', () => {
       expect(mockUseDockedDrag.mock.lastCall?.[1]).toMatchObject({ floatingWidth: 480, dockSide: 'right' });
       mockUseDockedDrag.mock.lastCall?.[1].onFloat();
       expect(setExtensionSidebarPresentation).toHaveBeenCalledWith('floating');
+    });
+
+    it("lines up with the page's card when docked at the bottom, with the visual refresh", () => {
+      mockUsePluginComponents.mockReturnValue({
+        components: [createComponentWithMeta(addedComponentRegistryItemMock, extensionPointId)],
+        isLoading: false,
+      });
+      const theme = { ...createTheme(), flags: { visualDesignRefresh: true } };
+      const renderOn = (dockSide: ExtensionSidebarContextType['dockSide']) => {
+        mockUseExtensionSidebarContext.mockReturnValue({ ...extensionSidebarContextMock, dockSide });
+        const { container, unmount } = render(
+          <ThemeContext.Provider value={theme}>
+            <ExtensionSidebar />
+          </ThemeContext.Provider>
+        );
+        const marginLeft = getComputedStyle(container.firstElementChild!).marginLeft;
+        unmount();
+        return marginLeft;
+      };
+
+      // The page's card is inset 4px from the page area's edges; docked on the right, the gap is at the window's edge.
+      expect(renderOn('bottom')).toBe('4px');
+      expect(renderOn('right')).toBe('');
     });
 
     it.each(['left', 'bottom'] as const)('drags out from the %s it is docked on', (dockSide) => {
