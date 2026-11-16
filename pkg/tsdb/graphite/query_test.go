@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
+	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
@@ -379,6 +380,7 @@ func TestRunQueryE2E(t *testing.T) {
 		expectStatus    backend.Status
 		expectSource    backend.ErrorSource
 		multipleTargets map[string]string
+		streaming       bool
 	}{
 		{
 			name:         "successful single query with data",
@@ -724,7 +726,12 @@ func TestRunQueryE2E(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		tt.streaming = true
+		tests = append(tests, tt)
+	}
+
+	for _, tt := range tests {
+		t.Run(fmt.Sprintf("%s/streaming=%t", tt.name, tt.streaming), func(t *testing.T) {
 			testName := strings.ReplaceAll(tt.name, " ", "_")
 
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -758,6 +765,7 @@ func TestRunQueryE2E(t *testing.T) {
 
 			service := &Service{
 				logger: backend.Logger,
+				flags:  staticFlag(tt.streaming),
 			}
 
 			req := &backend.QueryDataRequest{
@@ -994,4 +1002,10 @@ Final error message here
 			assert.Equal(t, tt.expected, result)
 		})
 	}
+}
+
+type staticFlag bool
+
+func (f staticFlag) BooleanValue(context.Context, string, bool, openfeature.EvaluationContext, ...openfeature.Option) (bool, error) {
+	return bool(f), nil
 }

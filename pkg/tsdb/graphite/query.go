@@ -23,9 +23,10 @@ import (
 )
 
 type queryModel struct {
-	req       *http.Request
-	formData  url.Values
-	rawTarget string
+	req           *http.Request
+	formData      url.Values
+	rawTarget     string
+	maxDataPoints int64
 }
 
 func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datasourceInfo) (*backend.QueryDataResponse, error) {
@@ -46,9 +47,10 @@ func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, d
 		}
 
 		graphiteQueries[query.RefID] = queryModel{
-			req:       graphiteReq,
-			formData:  formData,
-			rawTarget: target,
+			req:           graphiteReq,
+			formData:      formData,
+			rawTarget:     target,
+			maxDataPoints: query.MaxDataPoints,
 		}
 	}
 
@@ -68,6 +70,7 @@ func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, d
 	}
 
 	frames := data.Frames{}
+	streamRender := s.streamingRenderDecoderEnabled(ctx, req.PluginContext)
 
 	for refId, graphiteReq := range graphiteQueries {
 		_, span := tracing.DefaultTracer().Start(ctx, "graphite query")
@@ -99,7 +102,12 @@ func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, d
 			}
 		}()
 
-		queryFrames, err := s.toDataFrames(res, refId)
+		var queryFrames data.Frames
+		if streamRender && res.StatusCode/100 == 2 {
+			queryFrames, err = s.decodeRenderResponse(res, refId, graphiteReq.maxDataPoints)
+		} else {
+			queryFrames, err = s.toDataFrames(res, refId)
+		}
 		if err != nil {
 			span.RecordError(err)
 			span.SetStatus(codes.Error, err.Error())

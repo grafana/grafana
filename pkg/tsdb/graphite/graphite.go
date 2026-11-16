@@ -23,6 +23,7 @@ type Service struct {
 	resourceHandler backend.CallResourceHandler
 	HTTPClient      *http.Client
 	caps            caps
+	flags           booleanFlagEvaluator
 }
 
 const (
