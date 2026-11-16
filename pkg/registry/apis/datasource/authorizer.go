@@ -12,7 +12,11 @@ import (
 )
 
 func (b *DataSourceAPIBuilder) GetAuthorizer() authorizer.Authorizer {
-	group := b.GetGroupVersion().Group
+	return NewAuthorizer(b.GetGroupVersion().Group, b.accessClient)
+}
+
+// NewAuthorizer applies the datasource endpoint policy without registering an API group.
+func NewAuthorizer(group string, accessClient authlib.AccessClient) authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
 			if !attr.IsResourceRequest() {
@@ -53,7 +57,7 @@ func (b *DataSourceAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 				req.Subresource = "query"
 			}
 
-			rsp, err := b.accessClient.Check(ctx, user, req, "")
+			rsp, err := accessClient.Check(ctx, user, req, "")
 			if err != nil {
 				recordAuthzDecision(group, sub, verb, caller, "deny", "error")
 				return authorizer.DecisionDeny, "failed to check permissions", err

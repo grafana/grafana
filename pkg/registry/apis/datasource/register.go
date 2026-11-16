@@ -275,19 +275,32 @@ func (b *DataSourceAPIBuilder) AllowedV0Alpha1Resources() []string {
 	return []string{builder.AllResourcesAllowed}
 }
 
+// GetSubresourceStorage constructs the datasource endpoints independently of API-group
+// registration. The caller owns the returned storage and must destroy it when done.
+func (b *DataSourceAPIBuilder) GetSubresourceStorage() map[string]rest.Storage {
+	storage := map[string]rest.Storage{
+		"query": &subQueryREST{builder: b},
+	}
+	if b.cfg.EnableResourceEndpoint {
+		storage["resources"] = &subResourceREST{builder: b}
+	}
+	if b.cfg.EnableHealthEndpoint {
+		storage["health"] = &subHealthREST{builder: b}
+	}
+	if b.cfg.UseDualWriter {
+		storage["access"] = &subAccessREST{builder: b}
+	}
+	if b.cfg.EnableProxyEndpoint && len(b.pluginJSON.Routes) > 0 {
+		storage["proxy"] = &subProxyREST{builder: b, transports: newProxyTransportCache()}
+	}
+	return storage
+}
+
 func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	storage := map[string]rest.Storage{}
-
-	// Register the raw datasource connection
 	ds := b.datasourceResourceInfo
-	storage[ds.StoragePath("query")] = &subQueryREST{builder: b}
-
-	if b.cfg.EnableResourceEndpoint {
-		storage[ds.StoragePath("resources")] = &subResourceREST{builder: b}
-	}
-
-	if b.cfg.EnableHealthEndpoint {
-		storage[ds.StoragePath("health")] = &subHealthREST{builder: b}
+	for subresource, endpoint := range b.GetSubresourceStorage() {
+		storage[ds.StoragePath(subresource)] = endpoint
 	}
 
 	if b.cfg.UseDualWriter {
@@ -323,9 +336,6 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 			return err
 		}
 		storage[ds.StoragePath()] = b.store
-		storage[ds.StoragePath("access")] = &subAccessREST{
-			builder: b,
-		}
 	} else {
 		// Read only datasources
 		storage[ds.StoragePath()] = &connectionAccess{
@@ -333,11 +343,6 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 			resourceInfo:   ds,
 			tableConverter: ds.TableConverter(),
 		}
-	}
-
-	// Frontend proxy
-	if b.cfg.EnableProxyEndpoint && len(b.pluginJSON.Routes) > 0 {
-		storage[ds.StoragePath("proxy")] = &subProxyREST{builder: b, transports: newProxyTransportCache()}
 	}
 
 	// Register query types (convert to real k8s type first)
