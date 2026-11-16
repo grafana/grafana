@@ -296,3 +296,23 @@ func TestMembershipPermissions_BatchRedaction(t *testing.T) {
 		})
 	}
 }
+
+func TestPermissionStore_PreservesWatchCapability(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		inner     rest.Storage
+		wantWatch bool
+	}{
+		{name: "legacy storage", inner: NewLegacyStore(nil, nil, nil, nil)},
+		{name: "storage without watch", inner: &struct{ grafanarest.Storage }{Storage: &permissionStoreFake{}}},
+		{name: "storage with watch", inner: &permissionStoreFake{}, wantWatch: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			storage, err := NewPermissionStore(tc.inner, &membershipAccessClient{})
+			require.NoError(t, err)
+			require.Implements(t, (*grafanarest.Storage)(nil), storage)
+			_, canWatch := storage.(rest.Watcher)
+			require.Equal(t, tc.wantWatch, canWatch)
+		})
+	}
+}

@@ -27,19 +27,28 @@ func NewPermissionStore(storage rest.Storage, accessClient types.AccessClient, o
 	}
 	permissions := &membershipPermissions{accessClient: accessClient}
 	options = append(options, storewrapper.WithPreserveIdentity())
-	return &permissionStore{
-		Wrapper:     storewrapper.New(inner, teamResource.GroupResource(), permissions, options...),
-		permissions: permissions,
-	}, nil
+	guarded := storewrapper.New(inner, teamResource.GroupResource(), permissions, options...)
+	store := &permissionStore{K8sStorage: guarded, permissions: permissions}
+	// Kubernetes discovers watch support from the returned storage's method set.
+	// Only advertise it when the underlying storage can actually serve watches.
+	if _, ok := inner.(rest.Watcher); ok {
+		return &watchablePermissionStore{permissionStore: store, Watcher: guarded}, nil
+	}
+	return store, nil
 }
 
 type permissionStore struct {
-	*storewrapper.Wrapper
+	storewrapper.K8sStorage
 	permissions *membershipPermissions
 }
 
+type watchablePermissionStore struct {
+	*permissionStore
+	rest.Watcher
+}
+
 func (s *permissionStore) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-	obj, err := s.Wrapper.Get(ctx, name, options)
+	obj, err := s.K8sStorage.Get(ctx, name, options)
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +56,7 @@ func (s *permissionStore) Get(ctx context.Context, name string, options *metav1.
 }
 
 func (s *permissionStore) Create(ctx context.Context, obj runtime.Object, validation rest.ValidateObjectFunc, options *metav1.CreateOptions) (runtime.Object, error) {
-	result, err := s.Wrapper.Create(ctx, obj, validation, options)
+	result, err := s.K8sStorage.Create(ctx, obj, validation, options)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +64,7 @@ func (s *permissionStore) Create(ctx context.Context, obj runtime.Object, valida
 }
 
 func (s *permissionStore) Update(ctx context.Context, name string, info rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
-	result, created, err := s.Wrapper.Update(ctx, name, info, createValidation, updateValidation, forceAllowCreate, options)
+	result, created, err := s.K8sStorage.Update(ctx, name, info, createValidation, updateValidation, forceAllowCreate, options)
 	if err != nil {
 		return nil, created, err
 	}
@@ -64,7 +73,7 @@ func (s *permissionStore) Update(ctx context.Context, name string, info rest.Upd
 }
 
 func (s *permissionStore) Delete(ctx context.Context, name string, validation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	result, deleted, err := s.Wrapper.Delete(ctx, name, validation, options)
+	result, deleted, err := s.K8sStorage.Delete(ctx, name, validation, options)
 	if err != nil {
 		return nil, deleted, err
 	}
@@ -77,7 +86,7 @@ func (s *permissionStore) Delete(ctx context.Context, name string, validation re
 
 var (
 	_ storewrapper.K8sStorage                = (*permissionStore)(nil)
-	_ rest.Watcher                           = (*permissionStore)(nil)
+	_ rest.Watcher                           = (*watchablePermissionStore)(nil)
 	_ storewrapper.ResourceStorageAuthorizer = (*membershipPermissions)(nil)
 )
 
