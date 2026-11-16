@@ -17,6 +17,7 @@ import userEvent from '@testing-library/user-event';
 
 import {
   CoreApp,
+  type DataFrame,
   type IconName,
   type LinkModel,
   MutableDataFrame,
@@ -41,6 +42,13 @@ jest.mock('@grafana/runtime', () => ({
   usePluginLinks: jest.fn(),
   usePluginComponents: jest.fn(),
   reportInteraction: jest.fn(),
+}));
+
+// Summary-span minimap gradients use fractional rgb() that jest-canvas-mock rejects; canvas isn't under test.
+jest.mock('./SpanGraph/render-into-canvas', () => ({
+  ...jest.requireActual('./SpanGraph/render-into-canvas'),
+  __esModule: true,
+  default: jest.fn(),
 }));
 
 jest.mock('../TraceTimelineViewer/SpanDetail/LogsLink', () => ({
@@ -97,7 +105,11 @@ const setup = (
   hideHeaderDetails = false,
   logsLinkModel?: LinkModel,
   traceOverride = trace,
-  overrides: { search?: TraceSearchProps; spanFilterMatches?: Set<string> } = {}
+  overrides: {
+    search?: TraceSearchProps;
+    spanFilterMatches?: Set<string>;
+    data?: DataFrame;
+  } = {}
 ) => {
   const mockUsePluginLinks = usePluginLinks as jest.MockedFunction<typeof usePluginLinks>;
   mockUsePluginLinks.mockReturnValue(pluginLinks);
@@ -119,7 +131,7 @@ const setup = (
     onGoToSpan: jest.fn(),
     datasourceType: 'tempo',
     setHeaderHeight: jest.fn(),
-    data: new MutableDataFrame(),
+    data: overrides.data ?? new MutableDataFrame(),
     datasourceName: 'test-datasource',
     datasourceUid: 'test-datasource-uid',
     updateNextViewRangeTime: jest.fn(),
@@ -183,6 +195,36 @@ describe('TracePageHeader test', () => {
     expect(
       screen.getByText('Services').compareDocumentPosition(screen.getByText('Spans')) & Node.DOCUMENT_POSITION_FOLLOWING
     ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+  });
+
+  describe('pruned badge', () => {
+    const prunedTrace = {
+      ...trace,
+      spans: [{ ...trace.spans[0], aggregation: { isSummary: true, isPreservedOutlier: false, spanCount: 4 } }],
+    };
+    const frameWith = (pruneStatus?: string) => new MutableDataFrame({ fields: [], meta: { custom: { pruneStatus } } });
+
+    it('is hidden unless the trace has a summary span', () => {
+      setup(undefined, false, undefined, trace, { data: frameWith('PRUNED_ON_READ') });
+      expect(screen.queryByText(/^Pruned/)).not.toBeInTheDocument();
+    });
+
+    it.each([
+      [undefined, 'Pruned', /collapsed into summary spans to make this trace smaller/],
+      ['PRUNED_ON_READ', 'Pruned', /collapsed into summary spans to make this trace smaller/],
+      ['PRUNED_ON_WRITE', 'Pruned on write', /original spans are not stored and cannot be retrieved/],
+    ])('for status %s shows "%s" next to the span count with its own tooltip', async (pruneStatus, label, tooltip) => {
+      setup(undefined, false, undefined, prunedTrace, { data: frameWith(pruneStatus) });
+      expect(screen.getByText('Spans').nextElementSibling).toHaveTextContent(label);
+
+      await userEvent.hover(screen.getByText(label, { exact: true }));
+      expect(await screen.findByText(tooltip)).toBeInTheDocument();
+    });
+
+    it('is hidden along with the other metadata when header details are hidden', () => {
+      setup(undefined, true, undefined, prunedTrace);
+      expect(screen.queryByText('Pruned')).not.toBeInTheDocument();
+    });
   });
 
   it('should render the new trace header', () => {

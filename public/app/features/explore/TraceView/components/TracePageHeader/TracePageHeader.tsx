@@ -55,6 +55,7 @@ import {
 import { useAppNotification } from 'app/core/copy/appNotification';
 
 import { downloadTraceAsJson } from '../../../../inspector/utils/download';
+import { getPruneStatus, type PruneStatus } from '../../utils/prune-status';
 import { LogsLinkButton } from '../TraceTimelineViewer/SpanDetail/LogsLink';
 import {
   type ViewRangeTimeUpdate,
@@ -66,6 +67,7 @@ import { getHeaderTags, getRootSpan } from '../model/trace-viewer';
 import { type Trace, type TraceViewPluginExtensionContext } from '../types/trace';
 import { formatSummaryDuration } from '../utils/date';
 import { getServiceColorKey, getServiceDisplayName } from '../utils/service-name';
+import { isSummarySpan } from '../utils/summary-span';
 
 import TracePageSearchBar from './SearchBar/TracePageSearchBar';
 import SpanGraph from './SpanGraph';
@@ -109,6 +111,27 @@ export type TracePageHeaderProps = {
   logsLinkModel?: LinkModel;
 };
 
+function getPrunedBadge(status: PruneStatus | undefined): { color: BadgeColor; text: string; tooltip: string } {
+  if (status === 'PRUNED_ON_WRITE') {
+    return {
+      color: 'orange',
+      text: t('explore.trace-page-header.pruned-on-write', 'Pruned on write'),
+      tooltip: t(
+        'explore.trace-page-header.tooltip-pruned-on-write',
+        'Groups of similar spans were collapsed into summary spans before this trace reached Tempo, so the original spans are not stored and cannot be retrieved.'
+      ),
+    };
+  }
+  return {
+    color: 'blue',
+    text: t('explore.trace-page-header.pruned', 'Pruned'),
+    tooltip: t(
+      'explore.trace-page-header.tooltip-pruned',
+      'Groups of similar spans were collapsed into summary spans to make this trace smaller and easier to read. Adjust pruning in the Query options.'
+    ),
+  };
+}
+
 export const TracePageHeader = memo((props: TracePageHeaderProps) => {
   const {
     trace,
@@ -133,6 +156,7 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
   } = props;
 
   const styles = useStyles2(getStyles);
+  const isPruned = useMemo(() => trace?.spans.some(isSummarySpan) ?? false, [trace]);
   const theme = useTheme2();
   const notifyApp = useAppNotification();
   const [copyTraceIdClicked, setCopyTraceIdClicked] = useState(false);
@@ -445,7 +469,10 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
 
             <div className={styles.metadataItem}>
               <span className={styles.metadataLabel}>{t('explore.trace-page-header.spans', 'Spans')}</span>
-              <span className={styles.metadataValue}>{trace.spans.length}</span>
+              <span className={styles.metadataValue}>
+                {trace.spans.length}
+                {isPruned && <Badge {...getPrunedBadge(getPruneStatus(data))} />}
+              </span>
             </div>
 
             {url && url.length > 0 && (
