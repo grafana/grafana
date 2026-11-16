@@ -94,7 +94,7 @@ Creates a new dashboard.
 
 **Required permissions**:
 
-See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
+See note in the [introduction](#dashboard-api) for an explanation.
 
 <!-- prettier-ignore-start -->
 | Action              | Scope                                                                                                   |
@@ -289,7 +289,7 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 JSON body schema:
 
-- **metadata.name** – The Grafana [unique identifier]({{< ref "#identifier-id-vs-unique-identifier-uid" >}}). If you do not want to provide this, set metadata.generateName instead to the prefix you would like for the randomly generated `uid` (cannot be an empty string).
+- **metadata.name** – The Grafana [unique identifier](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/#name-name). If you do not want to provide this, set metadata.generateName instead to the prefix you would like for the randomly generated `uid` (cannot be an empty string).
 - **metadata.annotations.grafana.app/folder** - Optional field, the unique identifier of the folder under which the dashboard should be created.
 - **spec** – The dashboard JSON.
 
@@ -553,7 +553,7 @@ Updates an existing dashboard via the dashboard `uid`.
 
 **Required permissions**:
 
-See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
+See note in the [introduction](#dashboard-api) for an explanation.
 
 <!-- prettier-ignore-start -->
 | Action              | Scope                                                                                                   |
@@ -590,7 +590,7 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 JSON body schema:
 
-- **metadata.name** – The [unique identifier]({{< ref "#identifier-id-vs-unique-identifier-uid" >}}).
+- **metadata.name** – The [unique identifier](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/#name-name).
 - **metadata.annotations.grafana.app/folder** - Optional field, the unique identifier of the folder under which the dashboard should be created.
 - **metadata.annotations.grafana.app/message** - Optional field, to set a commit message for the version history.
 - **spec** – The dashboard JSON.
@@ -657,7 +657,7 @@ Gets a dashboard via the dashboard `uid`.
 
 **Required permissions**:
 
-See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
+See note in the [introduction](#dashboard-api) for an explanation.
 
 <!-- prettier-ignore-start -->
 | Action            | Scope                                                                                                   |
@@ -767,7 +767,7 @@ Lists all dashboards in the given organization. You can control the maximum numb
 
 **Required permissions**:
 
-See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
+See note in the [introduction](#dashboard-api) for an explanation.
 
 <!-- prettier-ignore-start -->
 | Action            | Scope                                                                                                   |
@@ -910,7 +910,7 @@ Deletes a dashboard via the dashboard `uid`.
 
 **Required permissions**:
 
-See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
+See note in the [introduction](#dashboard-api) for an explanation.
 
 <!-- prettier-ignore-start -->
 | Action              | Scope                                                                                                   |
@@ -1086,7 +1086,7 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 JSON body schema:
 
-- **metadata.name** – The Grafana [unique identifier]({{< ref "#identifier-id-vs-unique-identifier-uid" >}}). If you don't want to provide one, set `metadata.generateName` to the prefix you want for the generated UID.
+- **metadata.name** – The Grafana [unique identifier](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/#name-name). If you don't want to provide one, set `metadata.generateName` to the prefix you want for the generated UID.
 - **metadata.annotations.grafana.app/folder** – Optional. The unique identifier of the folder to create the dashboard in.
 - **spec.title**, **spec.description**, **spec.tags** – The title, description, and tags of the dashboard.
 - **spec.elements** – The panels and library panels of the dashboard, keyed by a name that's unique within the dashboard.

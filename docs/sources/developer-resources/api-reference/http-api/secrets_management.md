@@ -16,17 +16,6 @@ labels:
     - enterprise
     - cloud
 title: Secrets Management HTTP API
-refs:
-  api-overview:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/developer-resources/api-reference/http-api/apis/
-  rbac-permissions:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/security-and-account-management/authentication-and-permissions/access-control/custom-role-actions-scopes/
 weight: 100
 ---
 
@@ -47,7 +36,7 @@ The Grafana Secrets Management API allows you to manage secrets that are used by
 
 ## Requirements
 
-If you're running Grafana Enterprise or Grafana Cloud, some endpoints require specific permissions. For more information, refer to [Role-based access control permissions](ref:rbac-permissions).
+If you're running Grafana Enterprise or Grafana Cloud, some endpoints require specific permissions. For more information, refer to [Role-based access control permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/).
 
 ## Endpoints
 
@@ -55,7 +44,7 @@ These are the available endpoints:
 
 **Base path:** `/apis/secret.grafana.app/v1beta1/namespaces/{namespace}/`
 
-Replace `{namespace}` with your namespace. To learn which namespace to use, refer to the [API overview](ref:api-overview).
+Replace `{namespace}` with your namespace. To learn which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 
 | Method | Summary                                         | Path                  |
 | ------ | ----------------------------------------------- | --------------------- |
@@ -83,7 +72,7 @@ Creates a new secure value.
 
 **Path parameters**:
 
-- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](ref:api-overview).
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 
 **Request body**:
 
@@ -172,7 +161,7 @@ List all secure values in a namespace.
 
 **Path parameters**:
 
-- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](ref:api-overview).
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 
 **Query parameters**:
 
@@ -248,7 +237,7 @@ Get the details of a specific secure value. It will not return the secret value.
 
 **Path parameters**:
 
-- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](ref:api-overview).
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 - `{name}`: The name of the secure value.
 
 **Required permissions**:
@@ -314,7 +303,7 @@ Replace an existing secure value with a new specification.
 
 **Path parameters**:
 
-- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](ref:api-overview).
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 - `{name}`: The name of the secure value.
 
 **Request body**:
@@ -398,7 +387,7 @@ Permanently delete a secure value. This also deletes the underlying stored secre
 
 **Path parameters**:
 
-- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](ref:api-overview).
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 - `{name}`: The name of the secure value.
 
 **Required permissions**:

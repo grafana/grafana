@@ -16,17 +16,6 @@ labels:
     - oss
     - cloud
 title: Folder HTTP API
-refs:
-  apis:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/
-    - pattern: /docs/grafana-cloud/
-      destination: ./apis/
-  alerting:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/
 weight: 100
 ---
 
@@ -49,7 +38,7 @@ If you're running Grafana Enterprise or Grafana Cloud, some endpoints require sp
 
 **Base path:** `/apis/folder.grafana.app/v1/namespaces/{namespace}/`
 
-Replace `{namespace}` with your namespace. To learn which namespace to use, refer to the [API overview](ref:apis).
+Replace `{namespace}` with your namespace. To learn which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 
 | Method | Summary                                   | Path            |
 | ------ | ----------------------------------------- | --------------- |
@@ -67,7 +56,7 @@ Returns all folders that the authenticated user has permission to view within th
 
 **Path parameters**:
 
-- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](ref:apis).
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 
 **Query parameters**:
 
@@ -76,7 +65,7 @@ Returns all folders that the authenticated user has permission to view within th
 
 **Required permissions**:
 
-See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
+See note in the [introduction](#folder-apis) for an explanation.
 
 | Action         | Scope       |
 | -------------- | ----------- |
@@ -193,12 +182,12 @@ Will return the folder given the folder `uid`.
 
 **Path parameters**:
 
-- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](ref:apis).
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 - `{uid}`: The unique identifier of the folder. This is the `metadata.name` field in the folder response.
 
 **Required permissions**:
 
-See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
+See note in the [introduction](#folder-apis) for an explanation.
 
 | Action         | Scope       |
 | -------------- | ----------- |
@@ -261,11 +250,11 @@ Creates a new folder.
 
 **Path parameters**:
 
-- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](ref:apis).
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 
 **Required permissions**:
 
-See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
+See note in the [introduction](#folder-apis) for an explanation.
 
 `folders:create` allows creating folders and subfolders. If granted with scope `folders:uid:general`, allows creating root level folders. Otherwise, allows creating subfolders under the specified folders.
 
@@ -299,7 +288,7 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 JSON body schema:
 
-- **metadata.name** – The Grafana [unique identifier]({{< ref "#identifier-id-vs-unique-identifier-uid" >}}). If you do not want to provide this, set metadata.generateName to the prefix you would like for the `uid`.
+- **metadata.name** – The Grafana [unique identifier](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/#name-name). If you do not want to provide this, set metadata.generateName to the prefix you would like for the `uid`.
 - **metadata.annotations.grafana.app/folder** - Optional field, the unique identifier of the parent folder under which the folder should be created. Requires nested folders to be enabled.
 - **spec.title** – The title of the folder.
 
@@ -353,12 +342,12 @@ Updates an existing folder identified by `uid`.
 
 **Path parameters**:
 
-- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](ref:apis).
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 - `{uid}`: The unique identifier of the folder. This is the `metadata.name` field in the folder response.
 
 **Required permissions**:
 
-See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
+See note in the [introduction](#folder-apis) for an explanation.
 
 | Action          | Scope       |
 | --------------- | ----------- |
@@ -389,7 +378,7 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 JSON body schema:
 
-- **metadata.name** – The [unique identifier]({{< ref "#identifier-id-vs-unique-identifier-uid" >}}) of the folder.
+- **metadata.name** – The [unique identifier](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/#name-name) of the folder.
 - **metadata.annotations.grafana.app/folder** - Optional field, the unique identifier of the parent folder under which the folder should be - update this to move the folder under a different parent folder. Requires nested folders to be enabled.
 - **spec.title** – The title of the folder.
 
@@ -443,16 +432,16 @@ Content-Type: application/json
 
 Deletes an existing folder identified by UID along with all dashboards (and their alerts) stored in the folder. This operation cannot be reverted.
 
-If [Grafana Alerting](ref:alerting) is enabled, you can set an optional query parameter `forceDeleteRules=false` so that requests will fail with 400 (Bad Request) error if the folder contains any Grafana alerts. However, if this parameter is set to `true` then it will delete any Grafana alerts under this folder.
+If [Grafana Alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/) is enabled, you can set an optional query parameter `forceDeleteRules=false` so that requests will fail with 400 (Bad Request) error if the folder contains any Grafana alerts. However, if this parameter is set to `true` then it will delete any Grafana alerts under this folder.
 
 **Path parameters**:
 
-- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](ref:apis).
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 - `{uid}`: The unique identifier of the folder. This is the `metadata.name` field in the folder response.
 
 **Required permissions**:
 
-See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
+See note in the [introduction](#folder-apis) for an explanation.
 
 | Action           | Scope       |
 | ---------------- | ----------- |
