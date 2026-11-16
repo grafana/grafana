@@ -272,6 +272,7 @@ export const LogListContextProvider = ({
   const [unwrappedColumns, setUnwrappedColumnsState] = useState(unwrappedColumnsProp);
   const [showLevel, setShowLevelState] = useState(showLevelProp);
   const otelLogsFormattingEnabled = useBooleanFlagValue('otelLogsFormatting', false);
+  const timeMachineLogsEnabled = useBooleanFlagValue('logs.enableTimeMachine', false);
 
   useEffect(() => {
     if (noInteractions) {
@@ -581,7 +582,10 @@ export const LogListContextProvider = ({
     [openAssistant]
   );
 
-  const hasLogsFromTimeMachine = useMemo(() => logs.some((log) => !!checkLogsFromTimeMachine(log)), [logs]);
+  const hasLogsFromTimeMachine = useMemo(
+    () => timeMachineLogsEnabled && logs.some((log) => !!checkLogsFromTimeMachine(log)),
+    [logs, timeMachineLogsEnabled]
+  );
   const hasLogsWithErrorAttributes = useMemo(() => logs.some(logHasErrorAttributes), [logs]);
   const hasLogsWithErrors = useMemo(() => logs.some((log) => !!checkLogsError(log)), [logs]);
   const hasSampledLogs = useMemo(() => logs.some((log) => !!checkLogsSampled(log)), [logs]);

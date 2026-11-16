@@ -336,6 +336,7 @@ const LogListComponent = ({
   );
   const styles = useStyles2(getStyles, dimensions, displayedFields, { unwrappedColumns }, listHeight);
   const otelLogsFormattingEnabled = useBooleanFlagValue('otelLogsFormatting', false);
+  const timeMachineLogsEnabled = useBooleanFlagValue('logs.enableTimeMachine', false);
   const widthContainer = wrapperRef.current ?? containerElement;
   const {
     closePopoverMenu,
@@ -390,6 +391,7 @@ const LogListComponent = ({
       preProcessLogs(
         logs,
         {
+          timeMachineLogsEnabled,
           getFieldLinks,
           escape: forceEscape ?? false,
           otelLogsFormattingEnabled,
@@ -404,6 +406,7 @@ const LogListComponent = ({
     );
     listRef.current?.resetAfterIndex(0);
   }, [
+    timeMachineLogsEnabled,
     forceEscape,
     getFieldLinks,
     grammar,
@@ -420,7 +423,16 @@ const LogListComponent = ({
   useEffect(() => {
     virtualization.resetLogLineSizes();
     listRef.current?.resetAfterIndex(0);
-  }, [forceEscape, otelLogsFormattingEnabled, prettifyJSON, sortOrder, timeZone, virtualization, wrapLogMessage]);
+  }, [
+    timeMachineLogsEnabled,
+    forceEscape,
+    otelLogsFormattingEnabled,
+    prettifyJSON,
+    sortOrder,
+    timeZone,
+    virtualization,
+    wrapLogMessage,
+  ]);
 
   // Cached height is only safe to carry over to a new `logs` array when it is the same underlying result set.
   const prevDataFramesRef = useRef(dataFrames);

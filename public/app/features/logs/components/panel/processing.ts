@@ -87,6 +87,7 @@ export class LogListModel implements LogRowModel {
       grammar,
       otelLogsFormattingEnabled = false,
       prettifyJSON,
+      timeMachineLogsEnabled = false,
       timeZone,
       virtualization,
       wrapLogMessage,
@@ -104,7 +105,7 @@ export class LogListModel implements LogRowModel {
     this.hasAnsi = log.hasAnsi;
     this.hasError = !!checkLogsError(log);
     this.hasUnescapedContent = log.hasUnescapedContent;
-    this.isFromTimeMachine = !!checkLogsFromTimeMachine(log);
+    this.isFromTimeMachine = timeMachineLogsEnabled && !!checkLogsFromTimeMachine(log);
     this.isSampled = !!checkLogsSampled(log);
     this.labels = log.labels;
     this.logLevel = log.logLevel;
@@ -334,6 +335,7 @@ export interface PreProcessOptions {
   otelLogsFormattingEnabled?: boolean;
   order: LogsSortOrder;
   prettifyJSON?: boolean;
+  timeMachineLogsEnabled?: boolean;
   timeZone: string;
   virtualization?: LogLineVirtualization;
   wrapLogMessage: boolean;
@@ -347,6 +349,7 @@ export const preProcessLogs = (
     otelLogsFormattingEnabled,
     order,
     prettifyJSON,
+    timeMachineLogsEnabled,
     timeZone,
     virtualization,
     wrapLogMessage,
@@ -363,6 +366,7 @@ export const preProcessLogs = (
         grammar,
         otelLogsFormattingEnabled,
         prettifyJSON,
+        timeMachineLogsEnabled,
         timeZone,
         virtualization,
         wrapLogMessage,
@@ -378,6 +382,7 @@ interface PreProcessLogOptions {
   grammar?: Grammar;
   otelLogsFormattingEnabled?: boolean;
   prettifyJSON?: boolean;
+  timeMachineLogsEnabled?: boolean;
   timeZone: string;
   virtualization?: LogLineVirtualization;
   wrapLogMessage: boolean;
