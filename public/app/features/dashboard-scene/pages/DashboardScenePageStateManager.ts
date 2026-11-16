@@ -85,6 +85,7 @@ import {
 import { getDashboardTemplateExtension } from '../settings/enterprise-components/DashboardTemplateExtension';
 import { registerDashboardPageStateCaches } from '../utils/cache';
 import {
+  applyUseCrossDashboardVariables,
   countPredefinedVariableOrigins,
   getGlobalVariablesMode,
   mayInjectAnyPredefinedVariables,
@@ -1126,9 +1127,14 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
         annotations[key] = value;
       }
     }
-    const resolutionInput = { annotations };
+    const localVariableNames = [
+      ...(rsp.spec.variables ?? []).map((variable) => variable.spec.name),
+      ...(options.defaultVariables ?? []).map((variable) => variable.spec.name),
+    ];
+    const resolutionInput = { annotations, localVariableNames };
 
-    const mode = getGlobalVariablesMode(parseUseCrossDashboardVariables(resolutionInput.annotations));
+    const selection = parseUseCrossDashboardVariables(resolutionInput.annotations);
+    const mode = getGlobalVariablesMode(selection);
 
     if (!mayInjectAnyPredefinedVariables(resolutionInput)) {
       DashboardInteractions.predefinedVariablesLoaded({
@@ -1146,7 +1152,10 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     // Fail open on initial load: a null fetch (error) is treated as no predefined variables.
     const candidates = (await fetchPredefinedVariables(folderUid)) ?? [];
     const predefinedVariables = resolvePredefinedVariablesForDashboard(candidates, resolutionInput);
-    const counts = countPredefinedVariableOrigins(predefinedVariables);
+    // Count what the user selected, not the datasource dependencies injected alongside it.
+    const counts = countPredefinedVariableOrigins(
+      selection ? applyUseCrossDashboardVariables(predefinedVariables, selection) : []
+    );
 
     DashboardInteractions.predefinedVariablesLoaded({
       ...counts,

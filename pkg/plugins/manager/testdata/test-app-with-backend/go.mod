@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/pkg/plugins/manager/testdata/test-app-with-backend
 
-go 1.27.3
+go 1.27.4
 
 require github.com/grafana/grafana-plugin-sdk-go v0.296.2
 

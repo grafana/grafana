@@ -34,9 +34,6 @@ outputs:
     value: ${{ steps.changed-files.outputs.e2e_any_modified == 'true' ||
       steps.changed-files.outputs.backend_any_modified == 'true' ||
       steps.changed-files.outputs.frontend_any_modified == 'true' }}
-  e2e-cloud-plugins:
-    description: Whether the cloud plugins code or tests have changed in any way
-    value: ${{ steps.changed-files.outputs.e2e_cloud_plugins_any_modified || 'true' }}
   dev-tooling:
     description: Whether the dev tooling or self have changed in any way
     value: ${{ steps.changed-files.outputs.dev_tooling_any_modified || 'true' }}
@@ -271,6 +268,8 @@ runs:
             - '.github/actions/change-detection/**'
             - 'packages/**'
             - './scripts/validate-npm-packages.sh'
+            - './scripts/prepare-npm-package.js'
+            - './scripts/tsconfig.base.json'
             - '${{ inputs.self }}'
           openapi:
             - 'pkg/tests/apis/openapi_snapshots/**'
@@ -293,11 +292,6 @@ runs:
             - '**.cue'
             - 'conf/**'
             - 'cypress.config.js'
-            - '${{ inputs.self }}'
-          e2e_cloud_plugins:
-            - 'pkg/tsdb/azuremonitor/**'
-            - 'public/app/plugins/datasource/azuremonitor/**'
-            - 'e2e-playwright/cloud-plugins-suite/azure-monitor.spec.ts'
             - '${{ inputs.self }}'
           dev_tooling:
             - '.github/actions/setup-enterprise/**'

@@ -3,14 +3,14 @@ import { type ComponentProps } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 import type AutoSizer from 'react-virtualized-auto-sizer';
 import { of } from 'rxjs';
-import { render as testRender, screen, waitFor } from 'test/test-utils';
+import { act, render as testRender, screen, waitFor } from 'test/test-utils';
 
 import { type DataSourceInstanceListItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, setBackendSrv } from '@grafana/runtime';
 import { mockComboboxRect } from '@grafana/test-utils';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import { getFolderFixtures } from '@grafana/test-utils/unstable';
+import { getFolderFixtures, setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 
@@ -455,8 +455,17 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
     // The starred view swaps the page's nav identity, so the nav index needs both entries.
     const preloadedState = {
       navIndex: {
-        'dashboards/browse': { text: 'Dashboards', id: 'dashboards/browse' },
-        starred: { text: 'Starred', id: 'starred' },
+        'dashboards/browse': {
+          text: 'Dashboards',
+          id: 'dashboards/browse',
+          url: '/dashboards',
+          children: [
+            { id: 'dashboards/library-panels', text: 'Library panels', url: '/library-panels' },
+            { id: 'dashboards/variables', text: 'Variables', url: '/dashboards/variables' },
+            { id: 'dashboards/recently-deleted', text: 'Recently deleted', url: '/dashboard/recently-deleted' },
+          ],
+        },
+        starred: { text: 'Starred', id: 'starred', url: '/dashboards?starred' },
       },
     };
 
@@ -482,6 +491,26 @@ describe('browse-dashboards BrowseDashboardsPage', () => {
       });
       expect(await screen.findByRole('heading', { name: 'Starred' })).toBeInTheDocument();
       expect(await screen.findByRole('link', { name: dashbdD.item.title })).toBeInTheDocument();
+    });
+
+    it('keeps the Dashboards tab active while Starred owns the page title', async () => {
+      setTestFlags({ 'grafana.navigationInfoArchRefresh': true });
+
+      try {
+        render(<BrowseDashboardsPage queryParams={{}} />, {
+          preloadedState,
+          historyOptions: { initialEntries: ['/dashboards?starred'] },
+        });
+
+        expect(await screen.findByRole('tab', { name: 'Dashboards' })).toHaveAttribute('aria-selected', 'true');
+        expect(screen.queryByRole('tab', { name: 'Starred' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('link', { name: 'Recently deleted' })).not.toBeInTheDocument();
+        await waitFor(() => expect(document.title).toBe('Starred - Grafana'));
+      } finally {
+        await act(async () => {
+          setTestFlags({});
+        });
+      }
     });
   });
 });

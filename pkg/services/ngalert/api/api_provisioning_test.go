@@ -801,6 +801,15 @@ func TestIntegrationProvisioningApi(t *testing.T) {
 				require.Equal(t, 404, response.Status())
 			})
 
+			t.Run("folder is missing, GET returns 500", func(t *testing.T) {
+				sut := createMissingFolderSut(t)
+				rc := createTestRequestCtx()
+
+				response := sut.RouteGetAlertRuleGroupExport(&rc, "folder-uid", "my-cool-group")
+
+				require.Equal(t, 500, response.Status())
+			})
+
 			t.Run("accept header contains yaml, GET returns text yaml", func(t *testing.T) {
 				sut := createProvisioningSrvSut(t)
 				rc := createTestRequestCtx()
@@ -1079,6 +1088,15 @@ func TestIntegrationProvisioningApi(t *testing.T) {
 				response := sut.RouteGetAlertRuleExport(&rc, "rule404")
 
 				require.Equal(t, 404, response.Status())
+			})
+
+			t.Run("folder is missing, GET returns 500", func(t *testing.T) {
+				sut := createMissingFolderSut(t)
+				rc := createTestRequestCtx()
+
+				response := sut.RouteGetAlertRuleExport(&rc, "rule1")
+
+				require.Equal(t, 500, response.Status())
 			})
 
 			t.Run("accept header contains yaml, GET returns text yaml", func(t *testing.T) {
@@ -2283,7 +2301,7 @@ type testEnvironment struct {
 	secrets          secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	log              log.Logger
 	store            store.DBstore
-	ruleStore        rulestore.Store
+	ruleService      rulesvc.RuleService
 	folderService    folder.Service
 	dashboardService dashboards.DashboardService
 	xact             provisioning.TransactionManager
@@ -2413,7 +2431,7 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 		secrets:          secretsService,
 		log:              log,
 		store:            store,
-		ruleStore:        ruleService,
+		ruleService:      ruleService,
 		folderService:    folderService,
 		dashboardService: dashboardService,
 		xact:             xact,
@@ -2426,6 +2444,25 @@ func createTestEnv(t *testing.T, testConfig string) testEnvironment {
 		nsValidator:      &provisioning.NotificationSettingsValidatorProviderFake{},
 		settings:         settings,
 	}
+}
+
+// missingFolderService fails folder lookups with the folder service's not-found error, which carries a 404 status.
+type missingFolderService struct {
+	folder.Service
+}
+
+func (missingFolderService) Get(context.Context, *folder.GetFolderQuery) (*folder.Folder, error) {
+	return nil, folder.ErrFolderNotFound.Errorf("%w", dashboards.ErrFolderNotFound)
+}
+
+// createMissingFolderSut returns a server whose stored rule "rule1" points at a folder that no longer exists.
+func createMissingFolderSut(t *testing.T) ProvisioningSrv {
+	t.Helper()
+
+	env := createTestEnv(t, testConfig)
+	insertRule(t, createProvisioningSrvSutFromEnv(t, &env), createTestAlertRule("rule1", 1))
+	env.folderService = missingFolderService{Service: env.folderService}
+	return createProvisioningSrvSutFromEnv(t, &env)
 }
 
 func createProvisioningSrvSut(t *testing.T) ProvisioningSrv {
@@ -2448,7 +2485,7 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 		receiverAuthz,
 		configStore,
 		env.prov,
-		env.ruleStore,
+		env.ruleService,
 		rs,
 		env.secrets,
 		env.xact,
@@ -2475,10 +2512,10 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 	return ProvisioningSrv{
 		log:                 env.log,
 		policies:            provisioning.NewNotificationPolicyService(configStore, env.prov, env.xact, provisionRouteService, env.settings, env.log, validation.ValidateProvenanceRelaxed),
-		contactPointService: provisioning.NewContactPointService(receiverAuthz, configStore, env.secrets, env.prov, env.xact, receiverSvc, env.log, env.ruleStore, ngalertfakes.NewFakeReceiverPermissionsService(), nil, &notifier.NoopOrgEmailValidator{}),
+		contactPointService: provisioning.NewContactPointService(receiverAuthz, configStore, env.secrets, env.prov, env.xact, receiverSvc, env.log, env.ruleService, ngalertfakes.NewFakeReceiverPermissionsService(), nil, &notifier.NoopOrgEmailValidator{}),
 		templates:           provisioning.NewTemplateService(configStore, env.prov, env.xact, env.log, validation.ValidateProvenanceRelaxed),
-		muteTimings:         provisioning.NewMuteTimingService(configStore, env.prov, env.xact, env.log, env.ruleStore, rs, validation.ValidateProvenanceRelaxed),
-		alertRules:          provisioning.NewAlertRuleService(env.ruleStore, env.prov, env.folderService, env.quotas, env.xact, 60, 10, 100, env.log, env.nsValidator, env.rulesAuthz, provisioning.NoopRuleMutationValidator{}),
+		muteTimings:         provisioning.NewMuteTimingService(configStore, env.prov, env.xact, env.log, env.ruleService, rs, validation.ValidateProvenanceRelaxed),
+		alertRules:          provisioning.NewAlertRuleService(env.ruleService, env.prov, env.folderService, env.quotas, env.xact, 60, 10, 100, env.log, env.nsValidator, env.rulesAuthz, provisioning.NoopRuleMutationValidator{}),
 		folderSvc:           env.folderService,
 		featureManager:      env.features,
 	}

@@ -38,6 +38,7 @@ import (
 	"github.com/grafana/dskit/concurrency"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	secrets "github.com/grafana/grafana/pkg/storage/unified/apistore/securevalue"
@@ -484,7 +485,7 @@ func (s *Storage) Delete(
 		if err != nil {
 			return fmt.Errorf("unable to read object %w", err)
 		}
-		if err = checkManagerPropertiesOnDelete(info, meta); err != nil {
+		if err = identity.CheckManagerOnDelete(info, meta); err != nil {
 			_, err = s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_DELETED, key, out, out)
 			return err
 		}
@@ -747,6 +748,13 @@ func (s *Storage) processItem(ctx context.Context, item *resourcepb.ResourceWrap
 }
 
 func (s *Storage) processDecodedItem(obj runtime.Object, resourceVersion int64, opts storage.ListOptions, predicate storage.SelectionPredicate) (runtime.Object, bool, error) {
+	if declared := s.opts.GVK; !declared.Empty() {
+		gvk := obj.GetObjectKind().GroupVersionKind()
+		if gvk.Group == declared.Group {
+			obj.GetObjectKind().SetGroupVersionKind(declared.GroupVersion().WithKind(gvk.Kind))
+		}
+	}
+
 	if err := s.versioner.UpdateObject(obj, uint64(resourceVersion)); err != nil {
 		return nil, false, err
 	}

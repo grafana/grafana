@@ -1,13 +1,10 @@
 // Pure derivations over the org's Config singleton, shared by the two auto-sync hooks.
+import { type AlertManagerDataSourceJsonData, AlertManagerImplementation } from '@grafana/alerting/internal';
 import { isDefaultRoutingTreeName } from '@grafana/alerting/unstable';
 import { type Config, type ConfigStatus } from '@grafana/api-clients/rtkq/notifications.alerting/v0alpha1';
 import { type DataSourceSettings } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
-import {
-  type AlertManagerDataSourceJsonData,
-  AlertManagerImplementation,
-} from 'app/plugins/datasource/alertmanager/types';
 
 import { isNotFoundError } from '../api/util';
 

@@ -31,17 +31,14 @@ import {
 } from 'app/features/expressions/types';
 import { type AlertQuery } from 'app/types/unified-alerting-dto';
 
+import { useDataSourcesForRules } from '../../../hooks/useDataSourcesForRules';
 import { useRouteProxyActive } from '../../../plugin-proxy/withRouteProxy';
 import {
   areQueriesTransformableToSimpleCondition,
   isExpressionQueryInAlert,
 } from '../../../rule-editor/formProcessing';
 import { RuleFormType, type RuleFormValues } from '../../../types/rule-form';
-import {
-  GRAFANA_RULES_SOURCE_NAME,
-  getDefaultOrFirstCompatibleDataSource,
-  getRulesDataSources,
-} from '../../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME, getDefaultOrFirstCompatibleDataSource } from '../../../utils/datasource';
 import { type PromOrLokiQuery, isPromOrLokiQuery } from '../../../utils/rule-form';
 import {
   isCloudAlertingRuleByType,
@@ -421,7 +418,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
 
   const { sectionTitle, helpLabel, helpContent, helpLink } = DESCRIPTIONS[type ?? RuleFormType.grafana];
   // Only show the data source managed option if there are data sources with manageAlerts enabled
-  const hasAlertEnabledDataSources = useMemo(() => getRulesDataSources().length > 0, []);
+  const hasAlertEnabledDataSources = useDataSourcesForRules().items.length > 0;
   // The Prometheus Alerting plugin has its own form for data source managed rules, so core only
   // authors Grafana managed ones once it's installed.
   const canSelectDataSourceManaged = onlyOneDSInQueries(queries) && hasAlertEnabledDataSources && !routeProxyActive;

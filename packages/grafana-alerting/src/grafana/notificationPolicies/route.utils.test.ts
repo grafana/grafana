@@ -1,7 +1,7 @@
 import { omit } from 'lodash';
 
 import { LabelMatcherFactory, RouteFactory } from '../api/notifications/v1beta1/mocks/fakes/Routes';
-import { type Label } from '../matchers/types';
+import { type Label, type LabelMatcher } from '../matchers/types';
 import { type LabelMatchDetails, matchLabels } from '../matchers/utils';
 
 import {
@@ -935,6 +935,52 @@ describe('computeInheritedTree', () => {
     expect(treeRoot).toHaveProperty('routes.0.routes.1.group_wait', '1m');
     expect(treeRoot).toHaveProperty('routes.0.routes.1.group_interval', '2m');
     expect(treeRoot).toHaveProperty('routes.0.routes.1.repeat_interval', '999m');
+  });
+});
+
+describe('route types other than Route', () => {
+  // A route shaped like one from a Prometheus Alertmanager config: an id of its own, matchers as
+  // strings, and no `continue` or `routes` unless they're set.
+  interface ConfigRoute {
+    id: string;
+    receiver?: string;
+    group_by?: string[];
+    matchers?: string[];
+    routes?: ConfigRoute[];
+  }
+
+  it('computeInheritedTree accepts them and keeps their own fields', () => {
+    const tree: ConfigRoute = computeInheritedTree<ConfigRoute>({
+      id: 'root',
+      receiver: 'root',
+      group_by: ['alertname'],
+      matchers: ['team="a"'],
+      routes: [{ id: 'child', matchers: ['severity="critical"'] }],
+    });
+
+    expect(tree.routes?.[0]).toEqual({
+      id: 'child',
+      receiver: 'root',
+      group_by: ['alertname'],
+      matchers: ['severity="critical"'],
+    });
+  });
+
+  it('findMatchingRoutes accepts them once their matchers are LabelMatchers', () => {
+    type ParsedRoute = Omit<ConfigRoute, 'matchers' | 'routes'> & {
+      matchers?: LabelMatcher[];
+      routes?: ParsedRoute[];
+    };
+    const tree: ParsedRoute = {
+      id: 'root',
+      routes: [
+        { id: 'critical', matchers: [LabelMatcherFactory.build({ label: 'severity', type: '=', value: 'critical' })] },
+      ],
+    };
+
+    const matches = findMatchingRoutes(tree, [['severity', 'critical']]);
+
+    expect(matches.map((match) => match.route.id)).toEqual(['critical']);
   });
 });
 

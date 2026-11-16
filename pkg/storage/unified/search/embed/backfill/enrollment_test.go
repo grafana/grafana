@@ -34,7 +34,7 @@ func folderManifest(revision int, fields ...app.ManifestVersionKindEmbedField) *
 		Versions: []app.ManifestVersion{{
 			Name: "v1",
 			Kinds: []app.ManifestVersionKind{{
-				Kind: "Folder", Plural: "folders", Embed: &app.ManifestVersionKindEmbed{Fields: fields},
+				Kind: "Folder", Plural: "folders", Resource: "folders", Embed: &app.ManifestVersionKindEmbed{Fields: fields},
 			}},
 		}},
 	}
