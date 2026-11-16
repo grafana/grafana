@@ -1,6 +1,11 @@
+import { SceneQueryRunner, VizPanel } from '@grafana/scenes';
+
+
 import { getPendingChangesHistory, type PendingChangesHistory } from '../../lifecycle/pendingChangePreview';
 import { hasUnrecordedPendingChange, reloadKeepingEditMode } from '../../lifecycle/pendingChangesHistory';
+import { buildPanelEditScene } from '../../panel-edit/PanelEditor';
 import { type DashboardScene } from '../../scene/DashboardScene';
+import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
 
 import { reloadFromServerCommand } from './reloadFromServer';
 import { type MutationContext } from './types';
@@ -14,12 +19,48 @@ jest.mock('../../lifecycle/pendingChangesHistory', () => ({
   reloadKeepingEditMode: jest.fn(),
 }));
 
-function contextFor(state: { isDirty: boolean; isEditing: boolean }): MutationContext {
+function contextFor(state: {
+  isDirty: boolean;
+  isEditing: boolean;
+  editPanel?: ReturnType<typeof buildPanelEditScene>;
+}): MutationContext {
   return { scene: { state: { uid: 'abc', meta: {}, ...state } } as unknown as DashboardScene } as MutationContext;
 }
 
 describe('RELOAD_FROM_SERVER', () => {
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.mocked(getPendingChangesHistory).mockReset();
+  });
+
+  it.each([false, true])('preserves an ordinary Panel Edit draft with plugin history=%s', async (pluginHistory) => {
+    const runner = new SceneQueryRunner({ queries: [{ refId: 'A', expression: '1' }] });
+    const panel = new VizPanel({ key: 'panel-1', pluginId: 'timeseries', $data: runner });
+    new DashboardGridItem({ body: panel });
+    const editor = buildPanelEditScene(panel);
+    const context = contextFor({ isDirty: false, isEditing: true, editPanel: editor });
+    if (pluginHistory) {
+      jest.mocked(getPendingChangesHistory).mockReturnValue({} as PendingChangesHistory);
+    }
+    runner.setState({ queries: [{ refId: 'A', expression: '2' }] });
+    expect(editor.state.isDirty).toBeUndefined();
+    expect(await reloadFromServerCommand.handler({}, context)).toMatchObject({
+      success: true,
+      data: { reloaded: false, reason: 'unsaved-changes' },
+    });
+    expect(runner.state.queries).toEqual([{ refId: 'A', expression: '2' }]);
+    expect(reloadKeepingEditMode).not.toHaveBeenCalled();
+    expect(await reloadFromServerCommand.handler({ pendingChanges: 'another-chat' }, context)).toMatchObject({
+      success: true,
+      data: { reloaded: false, reason: 'unsaved-changes' },
+    });
+    runner.setState({ queries: [{ refId: 'A', expression: '1' }] });
+    expect(await reloadFromServerCommand.handler({}, context)).toMatchObject({
+      success: true,
+      data: { reloaded: true },
+    });
+    expect(reloadKeepingEditMode).toHaveBeenCalledTimes(1);
+  });
 
   it('reports unsaved changes in the open scene instead of discarding them', async () => {
     const result = await reloadFromServerCommand.handler({}, contextFor({ isDirty: true, isEditing: true }));
