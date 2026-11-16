@@ -16,7 +16,8 @@ weight: 3
 
 # Create dashboards from templates and suggestions
 
-Grafana provides alternative ways to start building a dashboard with templates and suggested dashboards.
+To start a new dashboard faster, you can use a pre-built template or a suggested dashboard.
+You can also create custom dashboard templates for your organization.
 
 ## Dashboard templates
 
@@ -34,7 +35,10 @@ To create a dashboard from a template, follow these steps:
 
 1. Click **Dashboards** in the primary menu.
 1. Click **New** and select **Dashboard from template** in the drop-down menu.
-1. In the dialog box that opens, do one of the following:
+
+   The **Start a dashboard from a template** dialog box opens.
+
+1. Do one of the following:
 
    - Stay in the **Custom** tab to select a template created by someone in your organization.
    - Click the **Grafana-provisioned** tab to select templates included with Grafana.
@@ -60,6 +64,29 @@ To create a dashboard from a template, follow these steps:
 
 1. Click **Save**.
 1. Enter an optional description of your updates, and click **Save**.
+
+### Create a custom dashboard template
+
+A custom dashboard template gives you and your team a consistent starting point for new dashboards.
+You can use it to apply your organization's preferred layout, panels, and settings.
+
+To create a custom dashboard template, do the following:
+
+1. Create or navigate to a dashboard that you want to use as a template.
+1. When you're satisfied with the dashboard, click **Save > Save as template**.
+1. Enter a unique name for the template.
+1. (Optional) Enter a description for the template.
+1. Click **Save**.
+
+Now the template is available in the **Custom** tab of the **Start a dashboard from a template** dialog box.
+This is the dialog box that opens when someone selects the **Use template** option to create a dashboard.
+
+{{< admonition type="note" >}}
+Grafana stores custom dashboard templates in the root folder of **Dashboards**.
+To edit or delete a custom template&mdash;even one you've created&mdash;you need permissions for that folder.
+{{< /admonition >}}
+
+<!--TODO: Are there any other limitations? -->
 
 ## Suggested dashboards
 
