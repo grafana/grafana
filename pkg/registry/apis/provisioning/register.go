@@ -396,10 +396,11 @@ func RegisterAPIService(
 	allowedTargets := allowedSyncTargets(cfg.ProvisioningAllowedTargets, bootstrapConfig.Enabled())
 
 	supportedResources, err := resources.ParseSupportedResources(cfg.ProvisioningResources)
-	supported, manifestWatcher := resources.ManifestSupportedResources(manifests, supportedResources)
 	if err != nil {
 		return nil, fmt.Errorf("invalid [provisioning] resources configuration: %w", err)
 	}
+	supported, onManifests := resources.ManifestSupportedResources(supportedResources)
+	manifestWatcher := resource.NewLocalManifestWatcher(manifests, nil, onManifests, nil)
 
 	jobHistoryConfig := createJobHistoryConfigFromSettings(cfg)
 	maxFileSize := cfg.ProvisioningMaxFileSize

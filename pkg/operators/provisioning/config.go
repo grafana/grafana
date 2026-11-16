@@ -356,15 +356,23 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 		configProviders[group] = newConfigProvider(group, url)
 	}
 
-	// The aggregated server is the router, which also publishes the app manifests.
 	var fallback func(group string) apiserver.RestConfigProvider
-	var manifests resources.ManifestLister
 	if aggregatedServerURL != "" {
 		fallback = func(group string) apiserver.RestConfigProvider { return newConfigProvider(group, aggregatedServerURL) }
-		manifests = resources.NewRemoteManifestLister(fallback(resource.ManifestDiscoveryGVR.Group))
 	}
 
-	supported, manifestWatcher := resources.ManifestSupportedResources(manifests, supportedResources)
+	// The aggregated server is the router, which also publishes the app manifests.
+	gRPCAuth := c.Settings.SectionWithEnvOverrides("grpc_client_authentication")
+	supported, manifestWatcher, err := resources.RemoteManifestSupportedResources(supportedResources, resource.ManifestWatcherConfig{
+		DiscoveryURL:     aggregatedServerURL,
+		Token:            gRPCAuth.Key("token").String(),
+		TokenExchangeURL: gRPCAuth.Key("token_exchange_url").String(),
+		CAFile:           tlsConfig.CAFile,
+		AllowInsecure:    tlsConfig.Insecure,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create manifest watcher: %w", err)
+	}
 	clients := resources.NewClientFactoryForMultipleAPIServersWithResources(configProviders, fallback, supported)
 	c.clients = clients
 	c.manifestWatcher = manifestWatcher

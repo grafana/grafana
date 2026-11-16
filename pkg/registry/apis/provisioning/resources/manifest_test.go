@@ -2,112 +2,90 @@ package resources
 
 import (
 	"context"
-	"errors"
 	"testing"
-	"testing/synctest"
-	"time"
 
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/sets"
 
-	appmanifestv1alpha2 "github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha2"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 func TestManifestSupportedResources(t *testing.T) {
 	folder := SupportedResource{GroupKind: schema.GroupKind{Group: "folder.grafana.app", Kind: "Folder"}, Capabilities: sets.New(CapabilityFolder)}
 
+	t.Run("returns the configured set before the manifests are read", func(t *testing.T) {
+		supported, _ := ManifestSupportedResources([]SupportedResource{folder})
+
+		require.Equal(t, []SupportedResource{folder}, supported(context.Background()))
+	})
+
 	t.Run("adds the kinds that opt in to provisioning", func(t *testing.T) {
-		synctest.Test(t, func(t *testing.T) {
-			clusterScoped := testManifestKind("Global", true, false)
-			clusterScoped.Scope = appmanifestv1alpha2.AppManifestManifestVersionKindScopeCluster
-			lister := NewMockManifestLister(t)
-			lister.EXPECT().ListManifests(mock.Anything).Return(testManifestList(
-				testManifestKind("Widget", true, true),
-				testManifestKind("Gadget", true, false),
-				testManifestKind("Other", false, true),
-				clusterScoped,
-			), nil)
+		clusterScoped := testManifestKind("Global", true, false)
+		clusterScoped.Scope = "Cluster"
+		supported, onManifests := ManifestSupportedResources([]SupportedResource{folder})
 
-			got := watchManifestSupportedResources(t, lister, []SupportedResource{folder})(context.Background())
+		onManifests(testManifests(
+			testManifestKind("Widget", true, true),
+			testManifestKind("Gadget", true, false),
+			testManifestKind("Other", false, true),
+			clusterScoped,
+		))
 
-			require.Equal(t, []SupportedResource{
-				folder,
-				{GroupKind: schema.GroupKind{Group: testManifestGroup, Kind: "Widget"}, Capabilities: sets.New(CapabilityFolder)},
-				{GroupKind: schema.GroupKind{Group: testManifestGroup, Kind: "Gadget"}, Capabilities: sets.New[string]()},
-			}, got)
-		})
+		require.Equal(t, []SupportedResource{
+			folder,
+			{GroupKind: schema.GroupKind{Group: testManifestGroup, Kind: "Widget"}, Capabilities: sets.New(CapabilityFolder)},
+			{GroupKind: schema.GroupKind{Group: testManifestGroup, Kind: "Gadget"}, Capabilities: sets.New[string]()},
+		}, supported(context.Background()))
 	})
 
 	t.Run("keeps the configured capabilities of a kind that a manifest declares", func(t *testing.T) {
-		synctest.Test(t, func(t *testing.T) {
-			configured := SupportedResource{GroupKind: schema.GroupKind{Group: testManifestGroup, Kind: "Widget"}, Capabilities: sets.New(CapabilityDisabled)}
-			lister := NewMockManifestLister(t)
-			lister.EXPECT().ListManifests(mock.Anything).Return(testManifestList(testManifestKind("Widget", true, true)), nil)
+		configured := SupportedResource{GroupKind: schema.GroupKind{Group: testManifestGroup, Kind: "Widget"}, Capabilities: sets.New(CapabilityDisabled)}
+		supported, onManifests := ManifestSupportedResources([]SupportedResource{configured})
 
-			got := watchManifestSupportedResources(t, lister, []SupportedResource{configured})(context.Background())
+		onManifests(testManifests(testManifestKind("Widget", true, true)))
 
-			require.Equal(t, []SupportedResource{configured}, got)
-		})
+		require.Equal(t, []SupportedResource{configured}, supported(context.Background()))
 	})
 
 	t.Run("keeps the capabilities of a configured collection that covers the kind", func(t *testing.T) {
-		synctest.Test(t, func(t *testing.T) {
-			collection := SupportedResource{GroupKind: schema.GroupKind{Group: "*.ext.grafana.app", Kind: "Widget"}, Capabilities: sets.New(CapabilityDisabled)}
-			lister := NewMockManifestLister(t)
-			lister.EXPECT().ListManifests(mock.Anything).Return(testManifestList(testManifestKind("Widget", true, true)), nil)
+		collection := SupportedResource{GroupKind: schema.GroupKind{Group: "*.ext.grafana.app", Kind: "Widget"}, Capabilities: sets.New(CapabilityDisabled)}
+		supported, onManifests := ManifestSupportedResources([]SupportedResource{collection})
 
-			got := watchManifestSupportedResources(t, lister, []SupportedResource{collection})(context.Background())
+		onManifests(testManifests(testManifestKind("Widget", true, true)))
 
-			require.Equal(t, []SupportedResource{collection}, got)
-		})
+		require.Equal(t, []SupportedResource{collection}, supported(context.Background()))
 	})
 
 	t.Run("keeps the default set when none is configured", func(t *testing.T) {
-		synctest.Test(t, func(t *testing.T) {
-			lister := NewMockManifestLister(t)
-			lister.EXPECT().ListManifests(mock.Anything).Return(testManifestList(testManifestKind("Widget", true, true)), nil)
+		supported, onManifests := ManifestSupportedResources(nil)
 
-			got := watchManifestSupportedResources(t, lister, nil)(context.Background())
+		onManifests(testManifests(testManifestKind("Widget", true, true)))
 
-			require.Len(t, got, len(SupportedProvisioningResources)+1)
-			require.Subset(t, got, SupportedProvisioningResources)
-		})
+		got := supported(context.Background())
+		require.Len(t, got, len(SupportedProvisioningResources)+1)
+		require.Subset(t, got, SupportedProvisioningResources)
 	})
 
 	t.Run("follows the manifests as they change", func(t *testing.T) {
-		synctest.Test(t, func(t *testing.T) {
-			lister := NewMockManifestLister(t)
-			lister.EXPECT().ListManifests(mock.Anything).Return(testManifestList(testManifestKind("Widget", true, true)), nil).Once()
-			supported := watchManifestSupportedResources(t, lister, []SupportedResource{folder})
-			require.Len(t, supported(context.Background()), 2)
+		supported, onManifests := ManifestSupportedResources([]SupportedResource{folder})
 
-			lister.EXPECT().ListManifests(mock.Anything).Return(testManifestList(
-				testManifestKind("Widget", true, true),
-				testManifestKind("Gadget", true, true),
-			), nil)
-			time.Sleep(time.Minute)
-			synctest.Wait()
-			require.Len(t, supported(context.Background()), 3)
-		})
+		onManifests(testManifests(testManifestKind("Widget", true, true), testManifestKind("Gadget", true, true)))
+		require.Len(t, supported(context.Background()), 3)
+
+		onManifests(testManifests(testManifestKind("Widget", true, true)))
+		require.Len(t, supported(context.Background()), 2)
 	})
+}
 
-	t.Run("keeps the last set when the manifests cannot be read", func(t *testing.T) {
-		synctest.Test(t, func(t *testing.T) {
-			lister := NewMockManifestLister(t)
-			lister.EXPECT().ListManifests(mock.Anything).Return(testManifestList(testManifestKind("Widget", true, true)), nil).Once()
-			supported := watchManifestSupportedResources(t, lister, []SupportedResource{folder})
-			require.Len(t, supported(context.Background()), 2)
+func TestRemoteManifestSupportedResources(t *testing.T) {
+	folder := SupportedResource{GroupKind: schema.GroupKind{Group: "folder.grafana.app", Kind: "Folder"}, Capabilities: sets.New(CapabilityFolder)}
 
-			lister.EXPECT().ListManifests(mock.Anything).Return(nil, errors.New("unavailable"))
-			time.Sleep(time.Minute)
-			synctest.Wait()
-			require.Len(t, supported(context.Background()), 2)
-		})
-	})
+	t.Run("returns the configured set without a discovery URL", func(t *testing.T) {
+		supported, watcher, err := RemoteManifestSupportedResources([]SupportedResource{folder}, resource.ManifestWatcherConfig{})
 
-	t.Run("returns the configured set without a lister", func(t *testing.T) {
-		require.Equal(t, []SupportedResource{folder}, watchManifestSupportedResources(t, nil, []SupportedResource{folder})(context.Background()))
+		require.NoError(t, err)
+		require.NotNil(t, watcher)
+		require.Equal(t, []SupportedResource{folder}, supported(context.Background()))
 	})
 }

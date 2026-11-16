@@ -1,41 +1,26 @@
 package resources
 
 import (
-	"testing"
-
-	"github.com/grafana/dskit/services"
-	"github.com/stretchr/testify/require"
-
-	appmanifestv1alpha2 "github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha2"
+	"github.com/grafana/grafana-app-sdk/app"
 )
 
 const testManifestGroup = "example.ext.grafana.app"
 
-func watchManifestSupportedResources(t *testing.T, lister ManifestLister, supported []SupportedResource) SupportedResourcesFunc {
-	t.Helper()
-	fn, watcher := ManifestSupportedResources(lister, supported)
-	require.NoError(t, services.StartAndAwaitRunning(t.Context(), watcher))
-	t.Cleanup(watcher.StopAsync)
-	return fn
+func testManifests(kinds ...app.ManifestVersionKind) []*app.ManifestData {
+	return []*app.ManifestData{{
+		AppName:  "example",
+		Group:    testManifestGroup,
+		Versions: []app.ManifestVersion{{Name: "v1", Kinds: kinds}},
+	}}
 }
 
-func testManifestList(kinds ...appmanifestv1alpha2.AppManifestManifestVersionKind) *appmanifestv1alpha2.AppManifestList {
-	return &appmanifestv1alpha2.AppManifestList{Items: []appmanifestv1alpha2.AppManifest{{
-		Spec: appmanifestv1alpha2.AppManifestSpec{
-			AppName:  "example",
-			Group:    testManifestGroup,
-			Versions: []appmanifestv1alpha2.AppManifestManifestVersion{{Name: "v1", Kinds: kinds}},
-		},
-	}}}
-}
-
-func testManifestKind(kind string, provisionable bool, folderScoped bool) appmanifestv1alpha2.AppManifestManifestVersionKind {
-	return appmanifestv1alpha2.AppManifestManifestVersionKind{
+func testManifestKind(kind string, provisionable bool, folderScoped bool) app.ManifestVersionKind {
+	return app.ManifestVersionKind{
 		Kind:         kind,
-		Scope:        appmanifestv1alpha2.AppManifestManifestVersionKindScopeNamespaced,
+		Scope:        "Namespaced",
 		FolderScoped: &folderScoped,
-		Extensions: &appmanifestv1alpha2.AppManifestManifestVersionKindExtensions{
-			Provisioning: &appmanifestv1alpha2.AppManifestManifestVersionKindProvisioning{Enabled: &provisionable},
+		Extensions: &app.ManifestVersionKindExtensions{
+			Provisioning: &app.ManifestVersionKindProvisioning{Enabled: &provisionable},
 		},
 	}
 }
