@@ -6,7 +6,7 @@ import {
   type TypedUseInfiniteQueryHookResult,
 } from '@reduxjs/toolkit/query/react';
 import { useMemo } from 'react';
-import * as z from 'zod';
+import * as z from 'zod/mini';
 
 import { generatedAPI } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 
@@ -41,7 +41,7 @@ export function ruleSearchPageQueryFn<Hit extends { uid: string }, Filter, Arg>(
   kind: RuleKind;
   search: GeneratedSearch<Arg>;
   searchArg: (filter: Filter, continueToken: string | undefined) => Arg;
-  itemSchema: z.ZodType<Hit>;
+  itemSchema: z.ZodMiniType<Hit>;
 }) {
   const pageSchema = ruleSearchPageSchema(itemSchema);
   return async (
@@ -132,21 +132,22 @@ export function useRuleSearchResult<Hit, Filter>(query: RuleSearchInfiniteQuery<
 }
 
 // Only what the list reads. The total is optional to show, so a bad one hides the count instead of failing the page.
-function ruleSearchPageSchema<Hit>(itemSchema: z.ZodType<Hit>) {
-  return z
-    .object({
+function ruleSearchPageSchema<Hit>(itemSchema: z.ZodMiniType<Hit>) {
+  return z.pipe(
+    z.object({
       items: z.array(itemSchema),
       metadata: z.object({
-        continue: z.string().optional(),
-        totalHits: z.number().optional().catch(undefined),
-        totalHitsRelation: z.string().optional().catch(undefined),
+        continue: z.optional(z.string()),
+        totalHits: z.catch(z.optional(z.number()), undefined),
+        totalHitsRelation: z.catch(z.optional(z.string()), undefined),
       }),
-    })
-    .transform(
+    }),
+    z.transform(
       ({ items, metadata: { continue: continueToken, totalHits, totalHitsRelation } }): RuleSearchPage<Hit> => ({
         hits: items,
         continueToken,
         total: totalHits === undefined ? undefined : { count: totalHits, isLowerBound: totalHitsRelation === 'lte' },
       })
-    );
+    )
+  );
 }

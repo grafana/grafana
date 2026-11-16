@@ -1570,6 +1570,12 @@
         "view-list": "リスト",
         "wildcard-in-text": "検索文字列に*または%を含めることはできません。"
       },
+      "sequence-pill": {
+        "label": "",
+        "label-with-interval": "",
+        "tooltip": "",
+        "tooltip-with-interval": ""
+      },
       "shared": {
         "load-more": "さらに読み込む",
         "load-more-error": "追加の検索結果の読み込みに失敗しました",
@@ -5302,6 +5308,7 @@
       "change-theme": "テーマを変更",
       "dark-theme": "ダーク",
       "dashboard-from-template": "テンプレートからダッシュボードを作成",
+      "experimental": "",
       "light-theme": "ライト",
       "open-saved-queries": "保存したクエリを開く",
       "scopes": "スコープ"
@@ -5760,7 +5767,7 @@
         "hint-layer": "",
         "hint-layer-select": "",
         "hint-not-removable": "",
-        "hint-panel": "クリックしてパネルにコメントするか、ドラッグして範囲を指定します",
+        "hint-panel": "",
         "hint-panel-select": "",
         "hint-region": "ドラッグして範囲を指定します",
         "hint-remove": "",
@@ -6737,8 +6744,6 @@
         "open-editor": "変数エディタを開く",
         "open-editor-tooltip": "その他の変数オプションは変数エディタで設定できます",
         "query-options": {
-          "close": "閉じる",
-          "old-modal-title": "クエリ変数",
           "preview": "プレビュー"
         },
         "remove": "削除",
@@ -10727,6 +10732,8 @@
       "tooltip": {
         "category": "ツールチップ",
         "description-hover-proximity": "カーソルをポイントにどれだけ近づけるとツールチップがトリガーされるか（ピクセル単位）",
+        "description-max-height": "",
+        "description-max-width": "",
         "modeOptions": {
           "label-all": "すべて",
           "label-hidden": "非表示",
@@ -13005,6 +13012,10 @@
       "subtitle": "アラートインスタンスが発生したときにコンタクトポイントに通知する方法を選択します",
       "title": "コンタクトポイント"
     },
+    "alerting-recording-rules": {
+      "subtitle": "",
+      "title": ""
+    },
     "alerting-silences": {
       "subtitle": "1つ以上のアラートルールからの通知を停止する",
       "title": "サイレンス"
@@ -13851,6 +13862,32 @@
     },
     "units": {
       "clear-tooltip": "単位選択をクリア"
+    },
+    "var-mapping-checks": {
+      "data-macro": "",
+      "not-allowed": "",
+      "not-found": "",
+      "not-number": "",
+      "not-one-value": "",
+      "out-of-range": "",
+      "resolves": "",
+      "values": ""
+    },
+    "var-mapping-toggle": {
+      "aria-label-picker": "",
+      "fallback-off": "",
+      "fallback-on": "",
+      "group-matching": "",
+      "group-other": "",
+      "hint-boolean": "",
+      "hint-number": "",
+      "hint-option": "",
+      "hint-option-no-fallback": "",
+      "new-variable": "",
+      "option-current": "",
+      "placeholder": "",
+      "use-fixed-value": "",
+      "use-variable": ""
     }
   },
   "org": {
