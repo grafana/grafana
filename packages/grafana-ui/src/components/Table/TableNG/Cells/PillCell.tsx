@@ -7,9 +7,13 @@ import {
   classicColors,
   type DisplayValue,
   type Field,
+  FieldType,
   getColorByStringHash,
-  FALLBACK_COLOR,
-  fieldColorModeRegistry,
+  getFieldColorModeForField,
+  getFieldColorPalette,
+  getScaleCalculator,
+  getValueMappingResult,
+  isNumeric,
   formattedValueToString,
 } from '@grafana/data';
 import { FieldColorModeId, TableCellDisplayMode, TablePillColorMode } from '@grafana/schema';
@@ -23,22 +27,35 @@ import { inferPills } from '../utils';
 export function PillCell({ rowIdx, field, theme, getTextColorForBackground, cellOptions }: PillCellProps) {
   const value = field.values[rowIdx];
   const colorMode = cellOptions?.type === TableCellDisplayMode.Pill ? cellOptions.colorMode : undefined;
+  const resolveColor = useMemo(
+    () => createPillColorResolver(field, theme, getTextColorForBackground, colorMode),
+    // Field overrides can mutate config without changing field identity.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      field,
+      field.config.color?.mode,
+      field.config.color?.fixedColor,
+      field.config.color?.seriesBy,
+      field.config.mappings,
+      field.config.thresholds,
+      field.config.min,
+      field.config.max,
+      field.state?.range?.min,
+      field.state?.range?.max,
+      theme,
+      getTextColorForBackground,
+      colorMode,
+    ]
+  );
   const pills: Pill[] = useMemo(() => {
     const pillValues = inferPills(value);
     return pillValues.length > 0
       ? pillValues.map((pill, index) => {
-          // `display` resolves the value mappings, so it has to see the raw value, and its result
-          // carries both the label and the mapped color — call it once and use both.
+          // `display` resolves labels from the raw value. Color resolution also needs the raw value
+          // so explicit mapping colors and numeric scales take precedence over categorical schemes.
           const display = field.display!(pill);
           const renderedValue = formattedValueToString(display);
-          const { background, text } = getPillColors(
-            display,
-            renderedValue,
-            field,
-            theme,
-            getTextColorForBackground,
-            colorMode
-          );
+          const { background, text } = resolveColor(pill, display, renderedValue);
           return {
             value: renderedValue,
             key: `${pill}-${index}`,
@@ -47,7 +64,7 @@ export function PillCell({ rowIdx, field, theme, getTextColorForBackground, cell
           };
         })
       : [];
-  }, [value, field, theme, getTextColorForBackground, colorMode]);
+  }, [value, field, resolveColor]);
 
   if (pills.length === 0) {
     return null;
@@ -83,44 +100,60 @@ interface Pill {
 
 const TRANSPARENT = 'rgba(0,0,0,0)';
 
-// FIXME: this does not yet support "shades of a color"
-function getPillColors(
-  display: DisplayValue,
-  value: string,
+function createPillColorResolver(
   field: Field,
   theme: GrafanaTheme2,
   getTextColorForBackground: (color: string) => string,
   colorMode?: TablePillColorMode
-): { background: string; text: string } {
+): (rawValue: unknown, display: DisplayValue, value: string) => { background: string; text: string } {
   const cfg = field.config;
-  // The tonal tint keeps refreshed pills readable in both themes, but it means the background no
-  // longer matches the configured color, so the "background" mode opts out of it.
   const onBackground = (background: string) =>
     theme.flags.visualDesignRefresh && colorMode !== TablePillColorMode.Background
       ? getTagColor(background, theme)
       : { background, text: getTextColorForBackground(background) };
+  const mode = cfg.color && getFieldColorModeForField(field);
+  const hasMappings = Boolean(cfg.mappings?.length);
+  const schemeScale =
+    mode?.isByValue && mode.id !== FieldColorModeId.Thresholds ? getScaleCalculator(field, theme) : undefined;
+  const thresholdScale =
+    !hasMappings && mode?.id === FieldColorModeId.Thresholds ? getScaleCalculator(field, theme) : undefined;
+  const palette = getFieldColorPalette(field, theme);
 
-  if (cfg.mappings?.length) {
-    return onBackground(display.color ?? FALLBACK_COLOR);
-  }
+  const resolveBaseColor = (rawValue: unknown, display: DisplayValue, value: string) => {
+    if (schemeScale && isNumeric(rawValue)) {
+      return onBackground(schemeScale(Number(rawValue)).color);
+    }
 
-  if (cfg.color?.mode === FieldColorModeId.Fixed) {
-    return onBackground(theme.visualization.getColorByName(cfg.color.fixedColor ?? FALLBACK_COLOR));
-  }
+    if (palette?.length) {
+      return onBackground(getColorByStringHash(palette, value));
+    }
 
-  // Only a mode that carries a categorical palette can color pills. Modes that don't — thresholds,
-  // which every table field gets by default, and the continuous scales — leave the choice to us.
-  const mode = cfg.color && fieldColorModeRegistry.get(cfg.color.mode);
-  if (typeof mode?.getColors === 'function') {
-    return onBackground(getColorByStringHash(mode.getColors(theme), value));
-  }
+    if (field.type === FieldType.enum && display.color) {
+      return onBackground(display.color);
+    }
 
-  if (theme.flags.visualDesignRefresh) {
-    const { background, text } = getTagColorsFromName(value, theme);
-    return { background, text };
-  }
+    if (theme.flags.visualDesignRefresh) {
+      const { background, text } = getTagColorsFromName(value, theme);
+      return { background, text };
+    }
 
-  return onBackground(getColorByStringHash(classicColors, value));
+    return onBackground(getColorByStringHash(classicColors, value));
+  };
+
+  return (rawValue, display, value) => {
+    if (hasMappings) {
+      const mapping = getValueMappingResult(cfg.mappings!, rawValue);
+      return mapping?.color
+        ? onBackground(theme.visualization.getColorByName(mapping.color))
+        : resolveBaseColor(rawValue, display, value);
+    }
+
+    if (thresholdScale && isNumeric(rawValue)) {
+      return onBackground(thresholdScale(Number(rawValue)).color);
+    }
+
+    return resolveBaseColor(rawValue, display, value);
+  };
 }
 
 export const getStyles: TableCellStyles = memoize(
