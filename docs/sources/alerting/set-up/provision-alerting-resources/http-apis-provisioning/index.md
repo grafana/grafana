@@ -20,13 +20,13 @@ weight: 400
 
 # Use the new HTTP APIs to manage alerting resources
 
-Use the new Grafana HTTP APIs (`/apis`) to create, update, and delete Grafana-managed alerting resources as standalone, versioned objects. Unlike the legacy [Alerting Provisioning HTTP API](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/http-api-provisioning/), these APIs validate requests against a typed schema, track optimistic concurrency with `metadata.resourceVersion`, and let you manage individual rules without rewriting an entire rule group.
+Use the new Grafana HTTP APIs (`/apis`) to create, update, and delete Grafana-managed alerting resources as standalone, versioned objects. Unlike the legacy [Alerting Provisioning HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/http-api-provisioning/), these APIs validate requests against a typed schema, track optimistic concurrency with `metadata.resourceVersion`, and let you manage individual rules without rewriting an entire rule group.
 
 Alerting resources are served across two API groups (plus a Grafana Cloud API group for alert enrichment):
 
-- **`rules.alerting.grafana.app/v1beta1`:** Alert rules, recording rules, and rule sequences. For full schemas and status codes, refer to the [Alert rules HTTP API reference](/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/alert-rules/).
-- **`notifications.alerting.grafana.app/v1beta1`:** Contact points (`receivers`), notification policy trees (`routingtrees`), notification template groups (`templategroups`), mute timings and active time intervals (`timeintervals`), inhibition rules (`inhibitionrules`), and external Alertmanager sync (`configs`). For full schemas and status codes, refer to the [Alert notifications HTTP API reference](/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/alert-notifications/).
-- **`alertenrichment.grafana.app/v1beta1` (Grafana Cloud only):** Alert enrichment pipelines (`alert-enrichments`). Refer to the [Alert enrichment HTTP API reference](/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/alert-enrichment/).
+- **`rules.alerting.grafana.app/v1beta1`:** Alert rules, recording rules, and rule sequences. For full schemas and status codes, refer to the [Alert rules HTTP API reference](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/alert-rules/).
+- **`notifications.alerting.grafana.app/v1beta1`:** Contact points (`receivers`), notification policy trees (`routingtrees`), notification template groups (`templategroups`), mute timings and active time intervals (`timeintervals`), inhibition rules (`inhibitionrules`), and external Alertmanager sync (`configs`). For full schemas and status codes, refer to the [Alert notifications HTTP API reference](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/alert-notifications/).
+- **`alertenrichment.grafana.app/v1beta1` (Grafana Cloud only):** Alert enrichment pipelines (`alert-enrichments`). Refer to the [Alert enrichment HTTP API reference](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/alert-enrichment/).
 
 ## Before you begin
 
@@ -36,17 +36,18 @@ Before you begin, ensure you have the following:
 - **Namespace:** Determine your instance's `{namespace}`:
   - **Grafana OSS and Enterprise:** `default` for organization 1, or `org-<ORG_ID>` for other organizations.
   - **Grafana Cloud:** `stacks-<STACK_ID>`.
-  For more details, refer to [API structure in Grafana](/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/#namespace-namespace).
-- **Authentication and permissions:** Authenticate with a [service account token](/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/authentication/) (or basic authentication in OSS and Enterprise). By default, **Viewer** grants read access and **Editor** or **Admin** grants write access. For granular role-based access control (RBAC) permissions, refer to [Configure RBAC for Grafana Alerting](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-rbac/).
+
+  For more details, refer to [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/#namespace-namespace).
+- **Authentication and permissions:** Authenticate with a [service account token](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/authentication/) (or basic authentication in OSS and Enterprise). By default, **Viewer** grants read access and **Editor** or **Admin** grants write access. For granular role-based access control (RBAC) permissions, refer to [Configure RBAC for Grafana Alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-rbac/).
 - **A folder for rules:** Alert rules, recording rules, and rule sequences must belong to a folder. Pass the folder UID in `metadata.annotations["grafana.app/folder"]`.
 
 {{< admonition type="note" >}}
-The JSON returned by `/apis` endpoints uses the Kubernetes-style resource envelope (`apiVersion`, `kind`, `metadata`, `spec`) and isn't compatible with [provisioning via configuration files](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/file-provisioning/). To export resources in file-provisioning format, continue using the [Export API endpoints](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/export-alerting-resources/#export-api-endpoints) on the legacy API.
+The JSON returned by `/apis` endpoints uses the Kubernetes-style resource envelope (`apiVersion`, `kind`, `metadata`, `spec`) and isn't compatible with [provisioning via configuration files](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/file-provisioning/). To export resources in file-provisioning format, continue using the [Export API endpoints](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/export-alerting-resources/#export-api-endpoints) on the legacy API.
 {{< /admonition >}}
 
 ## Manage rules (`rules.alerting.grafana.app/v1beta1`)
 
-Each rule resource is stored in a folder (`metadata.annotations["grafana.app/folder"]`) and identified in URL paths by `metadata.name` (its rule UID). For complete field definitions and status codes, refer to the [Alert rules HTTP API reference](/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/alert-rules/).
+Each rule resource is stored in a folder (`metadata.annotations["grafana.app/folder"]`) and identified in URL paths by `metadata.name` (its rule UID). For complete field definitions and status codes, refer to the [Alert rules HTTP API reference](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/alert-rules/).
 
 | Resource        | Collection URI                                                                   | Item URI                                                                                |
 | --------------- | -------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
@@ -183,11 +184,11 @@ Replace `<SERVICE_ACCOUNT_TOKEN>`, `<FOLDER_UID>`, `<SOURCE_DATASOURCE_UID>`, an
 
 ### Order rule evaluation with rule sequences
 
-Because each rule is managed independently rather than inside a rule group payload, use a `RuleSequence` resource when a recording rule or alert rule depends on the output of another recording rule in the same folder. For details, refer to [Configure rule sequences](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/rule-sequences/) and [Rule sequences in the Alert rules HTTP API](/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/alert-rules/#rule-sequences).
+Because each rule is managed independently rather than inside a rule group payload, use a `RuleSequence` resource when a recording rule or alert rule depends on the output of another recording rule in the same folder. For details, refer to [Configure rule sequences](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/rule-sequences/) and [Rule sequences in the Alert rules HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/alert-rules/#rule-sequences).
 
 ## Manage notification resources (`notifications.alerting.grafana.app/v1beta1`)
 
-Notification resources are scoped to `{namespace}` (not to folders) and return resources from both active and staged Alertmanager configurations. For complete field definitions and status codes, refer to the [Alert notifications HTTP API reference](/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/alert-notifications/).
+Notification resources are scoped to `{namespace}` (not to folders) and return resources from both active and staged Alertmanager configurations. For complete field definitions and status codes, refer to the [Alert notifications HTTP API reference](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/alert-notifications/).
 
 | Resource                                       | Collection URI                                                                            | Item URI                                                                                         |
 | ---------------------------------------------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
@@ -198,7 +199,7 @@ Notification resources are scoped to `{namespace}` (not to folders) and return r
 | Inhibition rules (`InhibitionRule`)            | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/inhibitionrules` | `/apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/inhibitionrules/{name}` |
 
 {{< admonition type="note" >}}
-To manage access-control permissions on individual contact points for users, teams, or built-in roles, continue using the `/api/access-control/receivers/*` endpoints documented in [Receiver permissions](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/http-api-provisioning/#receiver-permissions).
+To manage access-control permissions on individual contact points for users, teams, or built-in roles, continue using the `/api/access-control/receivers/*` endpoints documented in [Receiver permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/http-api-provisioning/#receiver-permissions).
 {{< /admonition >}}
 
 ### Contact points
@@ -320,7 +321,7 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 In the `/apis` alerting endpoints, provenance is controlled per resource with the `metadata.annotations["grafana.com/provenance"]` annotation rather than the legacy `X-Disable-Provenance` HTTP header:
 
-- **Lock a resource from UI edits (provisioned):** Set `"grafana.com/provenance": "api"` in `metadata.annotations`. Setting provenance requires provisioning RBAC permissions; refer to [Configure RBAC for Grafana Alerting](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-rbac/#provisioning).
+- **Lock a resource from UI edits (provisioned):** Set `"grafana.com/provenance": "api"` in `metadata.annotations`. Setting provenance requires provisioning RBAC permissions; refer to [Configure RBAC for Grafana Alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-rbac/#provisioning).
 - **Allow editing in the Grafana UI:** Omit `grafana.com/provenance` from `metadata.annotations` when creating the resource. Resources created without this annotation remain editable in the Grafana UI.
 
 To reset the default notification policy tree and unlock it for editing in the Grafana UI, send `DELETE /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/routingtrees/user-defined`.
@@ -329,6 +330,6 @@ To reset the default notification policy tree and unlock it for editing in the G
 
 If you currently use `/api/v1/provisioning/*` endpoints, refer to the following guides for endpoint mappings and schema differences:
 
-- [Migrate to the new Grafana APIs](/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis-migration/#alerting-provisioning-api)
-- [Alert rules HTTP API migration guide](/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/alert-rules/#migrate-from-the-legacy-alerting-provisioning-api)
-- [Alert notifications HTTP API migration guide](/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/alert-notifications/#migrate-from-the-legacy-alerting-provisioning-api)
+- [Migrate to the new Grafana APIs](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis-migration/#alerting-provisioning-api)
+- [Alert rules HTTP API migration guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/alert-rules/#migrate-from-the-legacy-alerting-provisioning-api)
+- [Alert notifications HTTP API migration guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/alert-notifications/#migrate-from-the-legacy-alerting-provisioning-api)

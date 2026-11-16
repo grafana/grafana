@@ -19,7 +19,7 @@ title: Secrets Management HTTP API
 refs:
   api-overview:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/developer-resources/http_api/apis/
+      destination: /docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/developer-resources/api-reference/http-api/apis/
   rbac-permissions:
