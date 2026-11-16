@@ -685,6 +685,26 @@ func NewMapperRegistry() MapperRegistry {
 				skipScopeOnVerb: skipScopeOnAllVerbs,
 			},
 		},
+		"dashboardtemplates.grafana.app": {
+			// Its API authorizer checks the unscoped dashboardtemplates:read/write actions from
+			// its fixed roles, so every write verb maps to write and no verb is scoped.
+			"dashboardtemplates": translation{
+				resource:  "dashboardtemplates",
+				attribute: "uid",
+				verbMapping: map[string]string{
+					utils.VerbGet:              "dashboardtemplates:read",
+					utils.VerbList:             "dashboardtemplates:read",
+					utils.VerbWatch:            "dashboardtemplates:read",
+					utils.VerbCreate:           "dashboardtemplates:write",
+					utils.VerbUpdate:           "dashboardtemplates:write",
+					utils.VerbPatch:            "dashboardtemplates:write",
+					utils.VerbDelete:           "dashboardtemplates:write",
+					utils.VerbDeleteCollection: "dashboardtemplates:write",
+				},
+				folderSupport:   false,
+				skipScopeOnVerb: skipScopeOnAllVerbs,
+			},
+		},
 		"iam.grafana.app": {
 			// Users is a special case. We translate user permissions from id to uid based.
 			"users": translation{
