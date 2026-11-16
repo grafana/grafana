@@ -1380,14 +1380,35 @@ func TestInstallRegistrar_SyncNamespace(t *testing.T) {
 		)
 		registrar := NewInstallRegistrar(&logging.NoOpLogger{}, &fakeClientGenerator{client: fakeClient})
 
-		retained := testutil.ToFloat64(metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "retained"))
+		recent := testutil.ToFloat64(metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "recent"))
 
 		err := registrar.SyncNamespace(context.Background(), "org-1", SourcePluginStore, nil, nil, since)
 		require.NoError(t, err)
 		require.Equal(t, []string{"plugin-gone"}, c.gets)
 		require.Equal(t, 2, c.lists)
 		require.Equal(t, 1, c.deletes)
-		require.Equal(t, retained+2, testutil.ToFloat64(metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "retained")))
+		require.Equal(t, recent+2, testutil.ToFloat64(metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "recent")))
+	})
+
+	t.Run("recent records from another source are skipped, not counted as recent", func(t *testing.T) {
+		otherSource := newRecord("plugin-child", "plugin-child", "1.0.0", SourceChildPlugin)
+		otherSource.CreationTimestamp = metav1.NewTime(since.Add(time.Second))
+		c := &counters{}
+		fakeClient := newListsClient(c,
+			[]pluginsv0alpha1.Plugin{otherSource},
+			[]pluginsv0alpha1.Plugin{otherSource},
+		)
+		registrar := NewInstallRegistrar(&logging.NoOpLogger{}, &fakeClientGenerator{client: fakeClient})
+
+		recent := testutil.ToFloat64(metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "recent"))
+		skipped := testutil.ToFloat64(metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "skipped"))
+
+		err := registrar.SyncNamespace(context.Background(), "org-1", SourcePluginStore, nil, nil, since)
+		require.NoError(t, err)
+		require.Empty(t, c.gets)
+		require.Zero(t, c.deletes)
+		require.Equal(t, recent, testutil.ToFloat64(metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "recent")))
+		require.Equal(t, skipped+1, testutil.ToFloat64(metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "skipped")))
 	})
 
 	t.Run("unregisters records created before since", func(t *testing.T) {

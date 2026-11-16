@@ -566,6 +566,45 @@ func TestSyncer_syncNamespace(t *testing.T) {
 			unregisteredIDs:    []string{"plugin-gone"},
 		},
 		{
+			name:             "record created within the clock skew before process start is not unregistered",
+			installedPlugins: []pluginstore.Plugin{},
+			apiPlugins: []pluginsv0alpha1.Plugin{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:              "plugin-skewed",
+						CreationTimestamp: metav1.NewTime(time.Now().Add(-30 * time.Second)),
+						Annotations: map[string]string{
+							install.PluginInstallSourceAnnotation: install.SourcePluginStore,
+						},
+					},
+					Spec: pluginsv0alpha1.PluginSpec{Id: "plugin-skewed", Version: "1.0.0"},
+				},
+			},
+			expectedError:      nil,
+			expectedRegCalls:   0,
+			expectedUnregCalls: 0,
+		},
+		{
+			name:             "record created before the startup cutoff is unregistered",
+			installedPlugins: []pluginstore.Plugin{},
+			apiPlugins: []pluginsv0alpha1.Plugin{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:              "plugin-stale",
+						CreationTimestamp: metav1.NewTime(time.Now().Add(-2 * time.Minute)),
+						Annotations: map[string]string{
+							install.PluginInstallSourceAnnotation: install.SourcePluginStore,
+						},
+					},
+					Spec: pluginsv0alpha1.PluginSpec{Id: "plugin-stale", Version: "1.0.0"},
+				},
+			},
+			expectedError:      nil,
+			expectedRegCalls:   0,
+			expectedUnregCalls: 1,
+			unregisteredIDs:    []string{"plugin-stale"},
+		},
+		{
 			name: "mixed - some match",
 			installedPlugins: []pluginstore.Plugin{
 				{JSONData: plugins.JSONData{ID: "plugin-1", Info: plugins.Info{Version: "1.0.0"}}, Class: plugins.ClassCore},
@@ -701,11 +740,9 @@ func TestSyncer_syncNamespace(t *testing.T) {
 				}
 			}
 
-			if tt.expectedUnregCalls > 0 {
-				require.Len(t, unregisteredIDs, tt.expectedUnregCalls)
-				if tt.unregisteredIDs != nil {
-					require.ElementsMatch(t, tt.unregisteredIDs, unregisteredIDs)
-				}
+			require.Len(t, unregisteredIDs, tt.expectedUnregCalls)
+			if tt.unregisteredIDs != nil {
+				require.ElementsMatch(t, tt.unregisteredIDs, unregisteredIDs)
 			}
 
 			require.ElementsMatch(t, tt.updatedIDs, updatedIDs)

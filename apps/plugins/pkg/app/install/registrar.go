@@ -303,8 +303,9 @@ func outcomeForError(err error) string {
 const maxSyncNamespacePasses = 5
 
 // SyncNamespace reconciles the namespace's plugin installs from the given
-// source to match desired, unregistering records not in it unless their ID is
-// in retain or they were created at or after since. In-sync records are skipped without a read, and because writes
+// source to match desired. Records not in desired are unregistered unless their
+// ID is in retain or they were created at or after since. A zero since keeps
+// every record. In-sync records are skipped without a read, and because writes
 // fire storage hooks that can rewrite sibling records, passes repeat against a
 // fresh list until one writes nothing.
 func (r *InstallRegistrar) SyncNamespace(ctx context.Context, namespace string, source Source, desired []PluginInstall, retain []string, since time.Time) error {
@@ -349,16 +350,16 @@ func (r *InstallRegistrar) SyncNamespace(ctx context.Context, namespace string, 
 				}
 				continue
 			}
-			if !record.CreationTimestamp.Time.Before(since) {
-				if pass == 0 {
-					r.logger.WithContext(ctx).Debug("Keeping plugin install created after sync start", "requestNamespace", namespace, "pluginId", record.Spec.Id, "createdAt", record.CreationTimestamp.Time, "since", since)
-					metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "retained").Inc()
-				}
-				continue
-			}
 			if r.unregisterIsNoOp(record, source) {
 				if pass == 0 {
 					metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "skipped").Inc()
+				}
+				continue
+			}
+			if !record.CreationTimestamp.Time.Before(since) {
+				if pass == 0 {
+					r.logger.WithContext(ctx).Info("Keeping plugin install created after the startup cutoff", "requestNamespace", namespace, "pluginId", record.Spec.Id, "createdAt", record.CreationTimestamp.Time, "since", since)
+					metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "recent").Inc()
 				}
 				continue
 			}
