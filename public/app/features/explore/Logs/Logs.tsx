@@ -37,7 +37,7 @@ import {
 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { useFlagGrafanaInfiniteScrollTop, useFlagLogsTablePanelNG } from '@grafana/runtime/internal';
+import { useFlagGrafanaLogsInfiniteScrollTop, useFlagLogsTablePanelNG } from '@grafana/runtime/internal';
 import { type DataQuery, DataTopic, type TableSortByFieldState } from '@grafana/schema';
 import {
   Button,
@@ -225,7 +225,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   const toggleLegendRef = useRef<(name: string | undefined, mode: SeriesVisibilityChangeMode) => void>(() => {});
   const [filterLevels, setFilterLevels] = useState<LogLevel[] | undefined>(undefined);
   const enableNewLogsTable = useFlagLogsTablePanelNG();
-  const infiniteScrollTopEnabled = useFlagGrafanaInfiniteScrollTop();
+  const infiniteScrollTopEnabled = useFlagGrafanaLogsInfiniteScrollTop();
 
   const tableHeight = getLogsTableHeight();
   const setWrapperLineWrapStyles = wrapLogMessage || visualisationType === 'table';
