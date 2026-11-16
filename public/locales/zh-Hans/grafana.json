@@ -1570,6 +1570,12 @@
         "view-list": "列表",
         "wildcard-in-text": "搜索文本不能包含 * 或 %。"
       },
+      "sequence-pill": {
+        "label": "",
+        "label-with-interval": "",
+        "tooltip": "",
+        "tooltip-with-interval": ""
+      },
       "shared": {
         "load-more": "加载更多",
         "load-more-error": "加载更多结果失败",
@@ -5302,6 +5308,7 @@
       "change-theme": "更改主题",
       "dark-theme": "深色",
       "dashboard-from-template": "来自模板的数据面板",
+      "experimental": "",
       "light-theme": "浅色",
       "open-saved-queries": "打开已保存的查询",
       "scopes": "范围"
@@ -5760,7 +5767,7 @@
         "hint-layer": "",
         "hint-layer-select": "",
         "hint-not-removable": "",
-        "hint-panel": "点击以对面板发表评论，或拖动以绘制区域",
+        "hint-panel": "",
         "hint-panel-select": "",
         "hint-region": "拖动以绘制区域",
         "hint-remove": "",
@@ -6737,8 +6744,6 @@
         "open-editor": "打开变量编辑器",
         "open-editor-tooltip": "如需更多变量选项，请打开变量编辑器",
         "query-options": {
-          "close": "关闭",
-          "old-modal-title": "查询变量",
           "preview": "预览"
         },
         "remove": "移除",
@@ -10727,6 +10732,8 @@
       "tooltip": {
         "category": "工具提示",
         "description-hover-proximity": "光标必须多么靠近某个点才能触发工具提示，以像素为单位",
+        "description-max-height": "",
+        "description-max-width": "",
         "modeOptions": {
           "label-all": "全部",
           "label-hidden": "隐藏",
@@ -13005,6 +13012,10 @@
       "subtitle": "选择当警报实例触发时如何通知联系人",
       "title": "联络点"
     },
+    "alerting-recording-rules": {
+      "subtitle": "",
+      "title": ""
+    },
     "alerting-silences": {
       "subtitle": "停止来自一个或多个警报规则的通知",
       "title": "静默"
@@ -13851,6 +13862,32 @@
     },
     "units": {
       "clear-tooltip": "清除单位选择"
+    },
+    "var-mapping-checks": {
+      "data-macro": "",
+      "not-allowed": "",
+      "not-found": "",
+      "not-number": "",
+      "not-one-value": "",
+      "out-of-range": "",
+      "resolves": "",
+      "values": ""
+    },
+    "var-mapping-toggle": {
+      "aria-label-picker": "",
+      "fallback-off": "",
+      "fallback-on": "",
+      "group-matching": "",
+      "group-other": "",
+      "hint-boolean": "",
+      "hint-number": "",
+      "hint-option": "",
+      "hint-option-no-fallback": "",
+      "new-variable": "",
+      "option-current": "",
+      "placeholder": "",
+      "use-fixed-value": "",
+      "use-variable": ""
     }
   },
   "org": {
