@@ -1,6 +1,7 @@
 import userEvent from '@testing-library/user-event';
 import { render, screen } from 'test/test-utils';
 
+import { locationService } from '@grafana/runtime';
 import {
   type Repository,
   useGetRepositoryFilesQuery,
@@ -200,7 +201,7 @@ describe('ResourceTreeView', () => {
       expect(screen.queryByText('My Dashboard')).not.toBeInTheDocument();
     });
 
-    it('should filter to the selected resource type', async () => {
+    it('should filter to the selected resource type and keep it in the URL', async () => {
       const { user } = render(<ResourceTreeView repo={repo} />);
 
       await user.click(screen.getByRole('combobox', { name: 'Filter by resource type' }));
@@ -208,6 +209,12 @@ describe('ResourceTreeView', () => {
 
       expect(await screen.findByText('My Dashboard')).toBeInTheDocument();
       expect(screen.queryByText('My Widget')).not.toBeInTheDocument();
+      expect(locationService.getSearchObject()).toEqual({ resource: 'dashboards' });
+
+      await user.click(screen.getByRole('button', { name: 'Remove Dashboards' }));
+
+      expect(await screen.findByText('My Widget')).toBeInTheDocument();
+      expect(locationService.getSearchObject()).toEqual({});
     });
   });
 });
