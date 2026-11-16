@@ -92,8 +92,8 @@ type FolderAPIBuilder struct {
 	contentsDeleter FolderContentsDeleter
 }
 
-// dashboardClient builds the dashboard dynamic client lazily. Returns nil when no config provider is
-// set, in which case cascade delete skips dashboard cleanup.
+// dashboardClient returns the dashboard client through lazyDashboardAppClient. A nil client makes
+// cascade delete skip dashboard cleanup.
 func (b *FolderAPIBuilder) dashboardClient(ctx context.Context) (*dynamic.NamespaceableResourceInterface, error) {
 	return b.lazyDashboardAppClient(ctx, &b.dashboardSvcMu, &b.dashboardSvc, dashv1.DashboardResourceInfo.GroupVersionResource())
 }
