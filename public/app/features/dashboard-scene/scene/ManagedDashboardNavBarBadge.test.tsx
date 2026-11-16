@@ -77,6 +77,31 @@ describe('ManagedDashboardNavBarBadge', () => {
     });
   });
 
+  it('shows the lock on a read-only repository for a user who could otherwise edit', async () => {
+    mockRepositories([{ name: 'repo-main', title: 'Main Repo', target: 'folder', type: 'github', workflows: [] }]);
+
+    const dashboard = buildDashboard(ManagerKind.Repo, 'repo-main');
+    jest.spyOn(dashboard, 'canEditDashboard').mockReturnValue(true);
+    const { user } = render(<ManagedDashboardNavBarBadge dashboard={dashboard} />);
+
+    await user.hover(await screen.findByTestId('icon-exchange-alt-lock'));
+
+    expect(await screen.findByText('Read only, Managed by: Repository Main Repo')).toBeInTheDocument();
+  });
+
+  it('hides the lock from a user who cannot edit the dashboard anyway', async () => {
+    mockRepositories([{ name: 'repo-main', title: 'Main Repo', target: 'folder', type: 'github', workflows: [] }]);
+
+    const dashboard = buildDashboard(ManagerKind.Repo, 'repo-main');
+    jest.spyOn(dashboard, 'canEditDashboard').mockReturnValue(false);
+    const { user } = render(<ManagedDashboardNavBarBadge dashboard={dashboard} />);
+
+    await user.hover(await screen.findByTestId('icon-exchange-alt'));
+
+    expect(await screen.findByText('Managed by: Repository Main Repo')).toBeInTheDocument();
+    expect(screen.queryByTestId('icon-exchange-alt-lock')).not.toBeInTheDocument();
+  });
+
   it('renders a non-repository managed badge without repository lookup', async () => {
     const dashboard = buildDashboard(ManagerKind.Terraform, undefined);
     const { user } = render(<ManagedDashboardNavBarBadge dashboard={dashboard} />);

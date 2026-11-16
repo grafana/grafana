@@ -198,7 +198,7 @@ describe('RepositoryListItem', () => {
       render(<RepositoryListItem repository={terraformRepo()} />);
 
       expectSettingsUnreachable();
-      expect(screen.getByTestId('icon-exchange-alt')).toBeInTheDocument();
+      expect(screen.getByTestId('icon-exchange-alt-lock')).toBeInTheDocument();
     });
 
     it('names the owning plugin in the badge tooltip, not the repository', async () => {
@@ -208,9 +208,9 @@ describe('RepositoryListItem', () => {
       });
       const { user } = render(<RepositoryListItem repository={repo} />);
 
-      await user.hover(screen.getByTestId('icon-exchange-alt'));
+      await user.hover(screen.getByTestId('icon-exchange-alt-lock'));
 
-      expect(await screen.findByText('Managed by: Plugin grafana-slo-app')).toBeInTheDocument();
+      expect(await screen.findByText('Read only, Managed by: Plugin grafana-slo-app')).toBeInTheDocument();
     });
 
     it('explains why Settings is unavailable on hover', async () => {
@@ -228,7 +228,7 @@ describe('RepositoryListItem', () => {
       expect(screen.queryByTestId('icon-exchange-alt')).not.toBeInTheDocument();
     });
 
-    it('keeps Settings reachable when the manager allows edits', () => {
+    it('keeps Settings reachable and drops the lock when the manager allows edits', () => {
       const repo = managedRepo({
         [AnnoKeyManagerKind]: ManagerKind.Terraform,
         [AnnoKeyManagerIdentity]: 'terraform',
@@ -238,6 +238,7 @@ describe('RepositoryListItem', () => {
       render(<RepositoryListItem repository={repo} />);
 
       expectSettingsReachable();
+      expect(screen.getByTestId('icon-exchange-alt')).toBeInTheDocument();
     });
 
     // A repository declared by another repository (e.g. the bootstrap one) is configured in that
@@ -249,8 +250,7 @@ describe('RepositoryListItem', () => {
       render(<RepositoryListItem repository={repo} />);
 
       expectSettingsUnreachable();
-      expect(screen.getByText('Read only')).toBeInTheDocument();
-      expect(screen.getByTestId('icon-exchange-alt')).toBeInTheDocument();
+      expect(screen.getByTestId('icon-exchange-alt-lock')).toBeInTheDocument();
     });
 
     it('badges the file-provisioned bootstrap repository read-only', () => {
@@ -261,7 +261,7 @@ describe('RepositoryListItem', () => {
 
       render(<RepositoryListItem repository={repo} />);
 
-      expect(screen.getByText('Read only')).toBeInTheDocument();
+      expect(screen.getByTestId('icon-exchange-alt-lock')).toBeInTheDocument();
     });
 
     it('names the Grafana configuration as the manager of a file-provisioned repository', async () => {
@@ -272,9 +272,9 @@ describe('RepositoryListItem', () => {
       const { user } = render(<RepositoryListItem repository={repo} />);
 
       expectSettingsUnreachable();
-      await user.hover(screen.getByTestId('icon-exchange-alt'));
+      await user.hover(screen.getByTestId('icon-exchange-alt-lock'));
 
-      expect(await screen.findByText('Managed by: Grafana configuration')).toBeInTheDocument();
+      expect(await screen.findByText('Read only, Managed by: Grafana configuration')).toBeInTheDocument();
     });
   });
 });
