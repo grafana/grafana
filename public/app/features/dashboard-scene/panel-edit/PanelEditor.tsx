@@ -245,8 +245,9 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
    * Subscribe to state changes and check if the save model has changed
    */
   private _setupChangeDetection() {
+    const panel = this.state.panelRef.resolve();
     const performSaveModelDiff = () => {
-      this.setState({ isDirty: this.hasUnsavedChanges() });
+      this.setState({ isDirty: !deepEqual(this._originalSaveModel, vizPanelToPanel(panel)) });
     };
 
     const performSaveModelDiffDebounced = this.debounceSaveModelDiff
@@ -261,11 +262,6 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
     // Subscribe to state changes on the parent (layout item) so we do not miss state changes on the layout item
     this._subs.add(this._layoutItem.subscribeToEvent(SceneObjectStateChangedEvent, handleStateChange));
-  }
-
-  /** Destructive admission checks cannot wait for the debounced UI dirty state. */
-  public hasUnsavedChanges(): boolean {
-    return !deepEqual(this._originalSaveModel, vizPanelToPanel(this.getPanel()));
   }
 
   public getPanel(): VizPanel {
