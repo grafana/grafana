@@ -33,7 +33,10 @@ import { QueryCard } from '../Sidebar/Cards/QueryCard';
 import { ds1SettingsMock } from '../testUtils';
 
 import { QueryCoauthoringCard } from './QueryCoauthoringCard';
+import { requestCoauthoringEntry } from './queryCoauthoringApi';
 import {
+  isQueryCoauthoringAPI2,
+  isQueryCoauthoringSession2,
   isQueryCoauthoringAPI,
   isQueryCoauthoringSession,
   type QueryCoauthoringEditorHandle,
@@ -704,4 +707,134 @@ it('starts a fresh session owner for a new edit of the same panel after disposin
   expect(next.getState().sessionId).not.toBe(first.getState().sessionId);
   expect(next.getState().queries).toEqual([original[0], { ...original[1], expression: '2' }]);
   expect(await first.undo({})).toEqual({ status: 'closed' });
+});
+
+function api2() {
+  act(() =>
+    setTestFlags({
+      [FlagKeys.QueryeditorCoauthoringUi]: true,
+      [FlagKeys.GrafanaVisualDesignRefresh]: true,
+      [FlagKeys.GrafanaExtensionSidebarFloating]: true,
+    })
+  );
+  config.bootData.settings.pluginRestrictedAPIsAllowList = {
+    queryCoauthoring: ['grafana-assistant-app'],
+    queryCoauthoringV2: ['grafana-assistant-app'],
+  };
+  const apis: RestrictedGrafanaApisWithQueryCoauthoring = getRestrictedGrafanaApisAtLoad('grafana-assistant-app');
+  if (!isQueryCoauthoringAPI2(apis.queryCoauthoringV2)) {
+    throw new Error('Missing API2');
+  }
+  return apis.queryCoauthoringV2;
+}
+
+it('pins entry text/ranges to a single-use entryId and keeps API1 served in parallel', async () => {
+  setup(false);
+  const next = api2();
+  const entry = jest.fn();
+  act(() => unlisten.push(next.onEnterRequested(entry)));
+  expect(api().version).toBe(1);
+  await waitFor(() => expect(next.canEnter(target)).toEqual({ ok: true }));
+  const request = { target, ranges: [{ from: 0, to: 2 }], intent: 'explain_or_modify' as const, health: {} };
+  act(() => requestCoauthoringEntry(request, 'highlight'));
+  await waitFor(() => expect(entry).toHaveBeenCalledTimes(1));
+  const first = entry.mock.calls[0][0];
+  expect(first).toMatchObject({
+    target,
+    ranges: request.ranges,
+    baseline: {
+      refId: 'B',
+      status: 'ready',
+      text: '$A + 1',
+      revision: 0,
+      ranges: request.ranges,
+    },
+  });
+  act(() => requestCoauthoringEntry(request, 'highlight'));
+  await waitFor(() => expect(entry).toHaveBeenCalledTimes(2));
+  const second = entry.mock.calls[1][0];
+  expect(second.entryId).not.toBe(first.entryId);
+  await expect(next.enter(target, { entryId: first.entryId })).rejects.toThrow('expired');
+  let handle: unknown;
+  await act(async () => {
+    handle = await next.enter(target, { entryId: second.entryId });
+  });
+  if (!isQueryCoauthoringSession2(handle)) {
+    throw new Error('Expected Session2');
+  }
+  expect(handle.getState().sessionId).toBe(second.entryId);
+  expect(await handle.getContext({ baseRevision: 0 })).toMatchObject({
+    status: 'ready',
+    entry: { text: '$A + 1', matchesCurrentText: true },
+  });
+  await expect(next.enter(target, { entryId: second.entryId })).rejects.toThrow('expired');
+  expect(handle.signal.aborted).toBe(false);
+  const checked = handle;
+  act(() => checked.exit());
+});
+
+it('does not deliver an obsolete rapid click and preserves a retained session across detach and Resume', async () => {
+  const { hide, show } = setup(false);
+  const next = api2();
+  const entry = jest.fn();
+  const legacyEntry = jest.fn();
+  const resume = jest.fn();
+  act(() => {
+    unlisten.push(next.onEnterRequested(entry), api().onEnterRequested(legacyEntry), next.onResumeRequested(resume));
+  });
+  await waitFor(() => expect(next.canEnter(target)).toEqual({ ok: true }));
+  act(() => {
+    fireEvent.click(screen.getByText('Shortcut'));
+    fireEvent.click(screen.getByText('Shortcut'));
+  });
+  await waitFor(() => expect(entry).toHaveBeenCalledTimes(1));
+  expect(legacyEntry).toHaveBeenCalledTimes(0);
+  expect(entry.mock.calls[0][0].ranges).toEqual([]);
+  let handle: unknown;
+  await act(async () => {
+    handle = await next.enter(entry.mock.calls[0][0].target, { entryId: entry.mock.calls[0][0].entryId });
+  });
+  if (!isQueryCoauthoringSession2(handle)) {
+    throw new Error('Expected Session2');
+  }
+  act(() => hide());
+  expect(handle.signal.aborted).toBe(false);
+  act(() => show());
+  fireEvent.click(await screen.findByRole('button', { name: 'Resume' }));
+  expect(resume).toHaveBeenCalledWith({ sessionId: handle.getState().sessionId });
+  const checked = handle;
+  act(() => checked.exit());
+  expect(await handle.closed).toBe('exit');
+});
+
+it('shuts down Session2 when floating capability is removed and restores legacy fallback on unsubscribe', async () => {
+  setup(false);
+  const next = api2();
+  const entry = jest.fn();
+  let stop = () => {};
+  act(() => {
+    stop = next.onEnterRequested(entry);
+    unlisten.push(stop);
+  });
+  await waitFor(() => expect(next.canEnter(target)).toEqual({ ok: true }));
+  act(() => fireEvent.click(screen.getByText('Shortcut')));
+  await waitFor(() => expect(entry).toHaveBeenCalledTimes(1));
+  let handle: unknown;
+  await act(async () => {
+    handle = await next.enter(entry.mock.calls[0][0].target, { entryId: entry.mock.calls[0][0].entryId });
+  });
+  if (!isQueryCoauthoringSession2(handle)) {
+    throw new Error('Expected Session2');
+  }
+  act(() =>
+    setTestFlags({
+      [FlagKeys.QueryeditorCoauthoringUi]: true,
+      [FlagKeys.GrafanaVisualDesignRefresh]: true,
+      [FlagKeys.GrafanaExtensionSidebarFloating]: false,
+    })
+  );
+  expect(await handle.closed).toBe('flag_off');
+  act(() => stop());
+  expect(screen.getByLabelText('V1 registration')).toHaveTextContent('v1');
+  expect(next.getAvailability()).toEqual({ eligible: false });
 });

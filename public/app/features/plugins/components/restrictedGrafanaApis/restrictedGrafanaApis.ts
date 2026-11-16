@@ -5,6 +5,7 @@ import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   isQueryCoauthoringEnabled,
   queryCoauthoringApi,
+  queryCoauthoringApiV2,
 } from 'app/features/dashboard-scene/panel-edit/PanelEditNext/QueryEditor/coauthoring/queryCoauthoringApi';
 import { type RestrictedGrafanaApisWithQueryCoauthoring } from 'app/features/dashboard-scene/panel-edit/PanelEditNext/QueryEditor/coauthoring/queryCoauthoringContracts';
 import { alertingAlertRuleFormSchemaApi } from 'app/features/plugins/components/restrictedGrafanaApis/alerting/alertRuleFormSchema';
@@ -38,6 +39,7 @@ export function getRestrictedGrafanaApis({
 }): RestrictedGrafanaApisWithQueryCoauthoring {
   return {
     ...sharedApis,
+    queryCoauthoringV2: queryCoauthoringApiV2,
     ...(coauthoringEnabled ? { queryCoauthoring: queryCoauthoringApi } : {}),
     ...(dashboardMutationAPI ? { dashboardMutationAPI } : {}),
     ...(composerEnabled ? { composer: composerApi } : {}),

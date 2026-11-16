@@ -1,4 +1,4 @@
-import { isEqual } from 'lodash';
+import { findLastIndex, isEqual } from 'lodash';
 
 import { reportInteraction } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
@@ -30,6 +30,7 @@ import { getDashboardSceneFor, getDefaultVizPanel, getLayoutForObject } from '..
 
 import { ElementEditPane } from './ElementEditPane';
 import {
+  CoauthoringQueriesAcceptedEvent,
   ConditionalRenderingChangedEvent,
   type DashboardActionMeta,
   DashboardBatchEditActionEndEvent,
@@ -56,6 +57,7 @@ interface ActiveBatch {
   source: SceneObject;
   description?: string;
   actions: DashboardEditActionEventPayload[];
+  invalidated?: boolean;
 }
 
 export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> implements DashboardSidebarLike {
@@ -180,6 +182,31 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     );
 
     this._subs.add(
+      dashboard.subscribeToEvent(CoauthoringQueriesAcceptedEvent, () => {
+        // A snapshot and the older closures tied to its discarded tree cannot cross this query commit.
+        const batches = [...this._outerBatches, ...(this._activeBatch ? [this._activeBatch] : [])];
+        const openSnapshot = batches.some((batch) => batch.actions.some((action) => action.replacesDashboardState));
+        this.setState({
+          undoStack: openSnapshot
+            ? []
+            : this.state.undoStack.slice(
+                findLastIndex(this.state.undoStack, (action) => action.replacesDashboardState === true) + 1
+              ),
+          redoStack: openSnapshot
+            ? []
+            : this.state.redoStack.slice(
+                findLastIndex(this.state.redoStack, (action) => action.replacesDashboardState === true) + 1
+              ),
+        });
+        if (openSnapshot) {
+          batches.forEach((batch) => {
+            batch.invalidated = true;
+          });
+        }
+      })
+    );
+
+    this._subs.add(
       dashboard.subscribeToEvent(StateCommittedEvent, ({ payload }) => {
         this.handleStateCommitted(payload);
       })
@@ -266,12 +293,13 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     const batch = this._activeBatch;
     this._activeBatch = this._outerBatches.pop();
 
-    if (!batch || batch.actions.length === 0) {
+    if (!batch || batch.invalidated || batch.actions.length === 0) {
       return;
     }
 
     const action: DashboardEditActionEventPayload = {
       source: batch.source,
+      ...(batch.actions.some((action) => action.replacesDashboardState) ? { replacesDashboardState: true } : {}),
       meta: batch.meta,
       description: batch.description,
       perform: () => {

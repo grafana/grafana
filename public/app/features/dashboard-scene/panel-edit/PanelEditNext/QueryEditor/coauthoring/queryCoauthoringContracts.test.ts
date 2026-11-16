@@ -1,4 +1,6 @@
 import {
+  isQueryCoauthoringAPI2,
+  isQueryCoauthoringSession2,
   isQueryCoauthoringEditorHost,
   type QueryCoauthoringEditorHost,
   isQueryCoauthoringEditorHandle,
@@ -184,4 +186,63 @@ describe('isQueryCoauthoringSession', () => {
       expect(isQueryCoauthoringSession(value)).toBe(false);
     }
   );
+});
+
+it('checks parallel API and session versions without invoking capability or session methods', () => {
+  const controller = new AbortController();
+  const api = {
+    version: 2,
+    getAvailability: jest.fn(),
+    subscribeAvailability: jest.fn(),
+    onEnterRequested: jest.fn(),
+    onResumeRequested: jest.fn(),
+    canEnter: jest.fn(),
+    enter: jest.fn(),
+  };
+  const session = {
+    version: 2,
+    signal: controller.signal,
+    closed: Promise.resolve('exit'),
+    getState: jest.fn(),
+    getContext: jest.fn(),
+    subscribe: jest.fn(),
+    stageProposal: jest.fn(),
+    preview: jest.fn(),
+    accept: jest.fn(),
+    undo: jest.fn(),
+    select: jest.fn(),
+    exit: jest.fn(),
+  };
+  expect(isQueryCoauthoringAPI2(api)).toBe(true);
+  expect(isQueryCoauthoringSession2(session)).toBe(true);
+  expect(isQueryCoauthoringAPI(api)).toBe(false);
+  expect(isQueryCoauthoringSession(session)).toBe(false);
+  for (const member of [
+    'getAvailability',
+    'subscribeAvailability',
+    'onEnterRequested',
+    'onResumeRequested',
+    'canEnter',
+    'enter',
+  ]) {
+    expect(isQueryCoauthoringAPI2({ ...api, [member]: undefined })).toBe(false);
+    expect(isQueryCoauthoringAPI2({ ...api, [member]: true })).toBe(false);
+  }
+  for (const member of [
+    'getContext',
+    'getState',
+    'subscribe',
+    'stageProposal',
+    'preview',
+    'accept',
+    'undo',
+    'select',
+    'exit',
+  ]) {
+    expect(isQueryCoauthoringSession2({ ...session, [member]: undefined })).toBe(false);
+  }
+  expect(isQueryCoauthoringAPI2({ ...api, version: 3 })).toBe(false);
+  expect(isQueryCoauthoringSession2({ ...session, version: 3 })).toBe(false);
+  expect(api.getAvailability).toHaveBeenCalledTimes(0);
+  expect(session.getContext).toHaveBeenCalledTimes(0);
 });

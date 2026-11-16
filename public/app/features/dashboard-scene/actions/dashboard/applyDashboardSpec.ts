@@ -73,6 +73,7 @@ export function applyDashboardSpec({ scene, spec, description, scope, actor }: A
   let performed = false;
 
   edit({
+    replacesDashboardState: true,
     meta: { actionId: 'dashboard.editSchema', scope, ...(actor ? { actor } : {}) },
     source: scene,
     description,

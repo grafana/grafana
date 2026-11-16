@@ -21,6 +21,8 @@ export interface DashboardActionMeta {
 
 export interface DashboardEditActionEventPayload {
   meta: DashboardActionMeta;
+  /** Full-scene snapshots cannot cross a later query commit outside this history. */
+  replacesDashboardState?: boolean;
   removedObject?: SceneObject;
   addedObject?: SceneObject;
   movedObject?: SceneObject;
@@ -85,4 +87,9 @@ export class ConditionalRenderingChangedEvent extends BusEventWithPayload<SceneO
 }
 export class RepeatsUpdatedEvent extends BusEventWithPayload<SceneObject> {
   static type = 'repeats-updated';
+}
+
+/** A session accepted canonical queries without recording a dashboard undo action. */
+export class CoauthoringQueriesAcceptedEvent extends BusEventBase {
+  static type = 'coauthoring-queries-accepted';
 }

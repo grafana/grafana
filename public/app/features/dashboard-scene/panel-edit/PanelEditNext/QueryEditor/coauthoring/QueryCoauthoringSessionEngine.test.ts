@@ -11,7 +11,7 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { setRunRequest } from '@grafana/runtime';
-import { SceneQueryRunner, SceneTimeRange, VizPanel } from '@grafana/scenes';
+import { ConstantVariable, SceneVariableSet, SceneQueryRunner, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { getMockDataSource } from 'app/features/query/state/mocks/mockDataSource';
 
 import { PanelDataPaneNext } from '../../PanelDataPaneNext';
@@ -28,6 +28,7 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => ({ get: mockGetDataSource }),
   getDataSourceInstance: (...args: unknown[]) => mockGetDataSource(...args),
+  getDataSourceInstanceSettings: async () => undefined,
 }));
 
 interface TextQuery extends DataQuery {
@@ -649,7 +650,7 @@ it('honors already-aborted and pending AbortSignals without changing canonical q
         await new Promise<void>((resolve) => {
           release = resolve;
         });
-        return language.describe(query, {});
+        return language.describe(query, { signal: new AbortController().signal });
       },
     }),
   });
@@ -905,4 +906,466 @@ it('retains latest canonical health for unchanged queries and leaves a newly add
   canonical.setState({ queries: [...canonical.state.queries, { refId: 'C' }] });
   expect(session.getState().health).toEqual({ A: 'error', B: 'ok', C: 'unknown' });
   session.exit();
+});
+
+function setupV2(ranges: Array<{ from: number; to: number }> = []) {
+  const fixture = setup();
+  fixture.datasource.queryCoauthoring = () => ({ ...language, getQuerySupport: () => ({ editable: true }) });
+  const engine = QueryCoauthoringSessionEngine.getOrCreate(fixture.panel);
+  const session = engine.asVersion2(fixture.session, {
+    refId: 'A',
+    revision: 0,
+    contextGeneration: engine.getContextGeneration(),
+    ranges,
+    status: 'ready',
+    text: 'up',
+  });
+  const stage = (refId = 'B', text = 'sum(up)') =>
+    session.stageProposal([{ changes: [{ refId, text }] }], {
+      baseRevision: session.getState().revision,
+      baseContextGeneration: session.getState().contextGeneration,
+    });
+  return { ...fixture, session, engine, stage };
+}
+
+it('reads inherited datasource context on demand with panel scope and authoritative editability', async () => {
+  const { session } = setupV2();
+  const result = await session.getContext({ baseRevision: 0 });
+  expect(result).toMatchObject({
+    status: 'ready',
+    revision: 0,
+    contextGeneration: 0,
+    queries: [
+      {
+        refId: 'A',
+        dependencies: [],
+        editability: { kind: 'editable' },
+        description: { status: 'ready', value: { text: 'up' } },
+      },
+      {
+        refId: 'B',
+        dependencies: [],
+        editability: { kind: 'editable' },
+        description: { status: 'ready', value: { text: 'rate(requests[5m])' } },
+      },
+    ],
+    entry: { text: 'up', matchesCurrentText: true },
+  });
+  expect(mockGetDataSource).toHaveBeenCalledWith(
+    { uid: 'prom' },
+    expect.objectContaining({ __sceneObject: expect.anything() })
+  );
+});
+
+it.each([
+  ['false', () => ({ editable: false }), 'rejected', 'read_only'],
+  ['absent', undefined, 'rejected', 'unknown_editability'],
+  ['nonfunction', true, 'failed', 'support_check_failed'],
+  [
+    'throws',
+    () => {
+      throw new Error('support');
+    },
+    'failed',
+    'support_check_failed',
+  ],
+  ['null', () => null, 'failed', 'support_check_failed'],
+  ['array', () => [], 'failed', 'support_check_failed'],
+  ['missing editable', () => ({}), 'failed', 'support_check_failed'],
+  ['nonboolean', () => ({ editable: 'true' }), 'failed', 'support_check_failed'],
+])(
+  'keeps descriptions for %s support and refuses staging without prepare',
+  async (_name, getQuerySupport, status, kind) => {
+    const { session, datasource, stage } = setupV2();
+    const prepare = jest.fn(language.prepare);
+    datasource.queryCoauthoring = () =>
+      ({ ...language, getQuerySupport, prepare }) as QueryCoauthoringLanguage<TextQuery>;
+    expect(await session.getContext({ baseRevision: 0 })).toMatchObject({
+      status: 'ready',
+      queries: [
+        { refId: 'A', description: { status: 'ready' } },
+        { refId: 'B', description: { status: 'ready' } },
+      ],
+    });
+    expect(await stage()).toEqual([{ status, issue: { kind, refId: 'B' } }]);
+    expect(prepare).toHaveBeenCalledTimes(0);
+  }
+);
+
+it.each([
+  ['missing language', undefined, 'unsupported', 'missing_language'],
+  ['unknown version', { version: 44 }, 'unsupported', 'unsupported_language_version'],
+  ['malformed language', { version: 1 }, 'failed', 'language_resolution_failed'],
+  ['missing version', {}, 'failed', 'language_resolution_failed'],
+])('identifies the later query for %s', async (_name, adapter, status, kind) => {
+  const { datasource, stage } = setupV2();
+  datasource.queryCoauthoring = () => adapter as QueryCoauthoringLanguage<TextQuery>;
+  expect(await stage()).toEqual([{ status, issue: { kind, refId: 'B' } }]);
+});
+
+it('separates invalid text, unchanged text and operational preparation failure with exact refId', async () => {
+  const { stage, datasource } = setupV2();
+  expect(await stage('B', 'invalid')).toEqual([{ status: 'invalid', issue: { kind: 'invalid_text', refId: 'B' } }]);
+  expect(await stage('B', original[1].expr)).toEqual([{ status: 'unchanged' }]);
+  datasource.queryCoauthoring = () => ({
+    ...language,
+    getQuerySupport: () => ({ editable: true }),
+    prepare: () => {
+      throw new Error('failed');
+    },
+  });
+  expect(await stage()).toEqual([{ status: 'stale' }]);
+  expect(await stage()).toEqual([{ status: 'failed', issue: { kind: 'preparation_failed', refId: 'B' } }]);
+});
+
+it('stages a full typed query and retains private preview/accept/undo behavior', async () => {
+  const { session, stage, canonical, finish, requests } = setupV2();
+  const [result] = await stage('A', 'sum(up)');
+  expect(result.status).toBe('staged');
+  if (result.status !== 'staged') {
+    throw new Error('Expected staged');
+  }
+  expect(session.preview(result.id)).toEqual({ ok: true });
+  await waitFor(() => expect(requests).toHaveLength(1));
+  finish(0, 5);
+  expect(await session.accept(result.id, { baseRevision: 0 })).toEqual({ status: 'applied', revision: 1 });
+  expect(canonical.state.queries[0]).toEqual({ refId: 'A', expr: 'sum(up)', legendFormat: 'requests' });
+  expect(await session.undo({})).toEqual({ status: 'applied', revision: 2 });
+  expect(canonical.state.queries).toEqual(original);
+});
+
+it('uses resolver generations without fake query edits and refuses obsolete staging', async () => {
+  const { session, timeRange } = setupV2();
+  const before = session.getState();
+  timeRange.setState({ from: '2026-11-02T00:00:00Z', to: '2026-11-02T01:00:00Z' });
+  expect(session.getState()).toMatchObject({
+    revision: before.revision,
+    contextGeneration: before.contextGeneration + 1,
+  });
+  expect(
+    await session.stageProposal([{ changes: [{ refId: 'A', text: 'sum(up)' }] }], {
+      baseRevision: before.revision,
+      baseContextGeneration: before.contextGeneration,
+    })
+  ).toEqual([{ status: 'stale' }]);
+});
+
+it('fences late descriptions and preparation when resolver context changes', async () => {
+  const { session, datasource, timeRange, stage } = setupV2();
+  let resolve!: (value: Awaited<ReturnType<typeof language.describe>>) => void;
+  const prepare = jest.fn(language.prepare);
+  datasource.queryCoauthoring = () => ({
+    ...language,
+    getQuerySupport: () => ({ editable: true }),
+    prepare,
+    describe: () =>
+      new Promise((done) => {
+        resolve = done;
+      }),
+  });
+  const reading = session.getContext({ baseRevision: 0 });
+  await waitFor(() => expect(typeof resolve).toBe('function'));
+  timeRange.setState({ from: '2026-11-03T00:00:00Z', to: '2026-11-03T01:00:00Z' });
+  resolve({ text: 'up', language: { id: 'promql', displayName: 'PromQL' } });
+  // The next query must not keep obsolete work alive.
+  datasource.queryCoauthoring = () => ({ ...language, getQuerySupport: () => ({ editable: true }) });
+  expect(await reading).toMatchObject({ status: 'stale', currentRevision: 0 });
+  const staging = stage();
+  expect((await staging)[0].status).toBe('staged');
+  expect(prepare).toHaveBeenCalledTimes(0);
+});
+
+it('aborts pending context promptly and treats Exit as terminal', async () => {
+  const { session, datasource } = setupV2();
+  datasource.queryCoauthoring = () => ({ ...language, describe: () => new Promise(() => {}) });
+  const controller = new AbortController();
+  const read = session.getContext({ baseRevision: 0, signal: controller.signal });
+  controller.abort();
+  expect(await read).toEqual({ status: 'aborted' });
+  session.exit();
+  expect(await session.getContext({ baseRevision: 0 })).toEqual({ status: 'closed' });
+  expect(
+    await session.stageProposal([{ changes: [{ refId: 'B', text: 'up' }] }], {
+      baseRevision: 0,
+      baseContextGeneration: session.getState().contextGeneration,
+    })
+  ).toEqual([{ status: 'closed' }]);
+});
+
+it('retains a selected entry baseline and rejects verified mismatch without broadening its ranges', async () => {
+  const { session, canonical, stage } = setupV2([{ from: 0, to: 2 }]);
+  canonical.setState({ queries: [{ ...original[0], expr: 'new_text' }, original[1]] });
+  expect(await session.getContext({ baseRevision: 1 })).toMatchObject({
+    status: 'ready',
+    entry: { text: 'up', revision: 0, ranges: [{ from: 0, to: 2 }], matchesCurrentText: false },
+  });
+  expect(await stage('A')).toEqual([{ status: 'rejected', issue: { kind: 'entry_ranges_changed', refId: 'A' } }]);
+});
+
+it('reports unscoped canonical errors at panel scope and direct expression dependencies', () => {
+  const { session, canonical, data } = setupV2();
+  canonical.setState({
+    queries: [
+      original[0],
+      {
+        refId: 'B',
+        datasource: { uid: '__expr__', type: '__expr__' },
+        type: 'math',
+        expression: '$A + 1',
+      } as DataQuery,
+    ],
+    data: data(1, { series: [], error: { message: 'transport unavailable' }, errors: undefined }),
+  });
+  expect(session.getState()).toMatchObject({
+    dependencies: { A: [], B: ['A'] },
+    health: { A: 'unknown', B: 'unknown' },
+    problems: [{ scope: 'panel', kind: 'error', message: 'transport unavailable' }],
+  });
+});
+
+it.each(['context', 'stage'] as const)(
+  'fences earlier datasource replacement while a later %s description is pending',
+  async (operation) => {
+    const { session, datasource, canonical, stage } = setupV2();
+    canonical.setState({ queries: original.map((query) => ({ ...query, datasource: { uid: query.refId } })) });
+    let currentA = datasource;
+    const later = Object.assign(getMockDataSource(), { queryCoauthoring: datasource.queryCoauthoring });
+    mockGetDataSource.mockImplementation(async (ref) => (ref.uid === 'A' ? currentA : later));
+    let release!: (value: Awaited<ReturnType<typeof language.describe>>) => void;
+    datasource.queryCoauthoring = () => ({
+      ...language,
+      getQuerySupport: () => ({ editable: true }),
+      describe: (query) =>
+        query.refId === 'B'
+          ? new Promise((resolve) => {
+              release = resolve;
+            })
+          : language.describe(query, { signal: new AbortController().signal }),
+    });
+    later.queryCoauthoring = datasource.queryCoauthoring;
+    const pending =
+      operation === 'context'
+        ? session.getContext({ baseRevision: session.getState().revision })
+        : session.stageProposal(
+            [
+              {
+                changes: [
+                  { refId: 'A', text: 'sum(up)' },
+                  { refId: 'B', text: 'sum(requests)' },
+                ],
+              },
+            ],
+            { baseRevision: session.getState().revision, baseContextGeneration: session.getState().contextGeneration }
+          );
+    await waitFor(() => expect(typeof release).toBe('function'));
+    const replacement = Object.assign(getMockDataSource(), {
+      queryCoauthoring: () => ({ ...language, getQuerySupport: () => ({ editable: true }) }),
+    });
+    currentA = replacement;
+    release({ text: 'rate(requests[5m])', language: { id: 'promql', displayName: 'PromQL' } });
+    expect(await pending).toMatchObject(operation === 'context' ? { status: 'stale' } : [{ status: 'stale' }]);
+    expect(session.getState().proposal).toBeNull();
+    later.queryCoauthoring = replacement.queryCoauthoring;
+    expect((await stage())[0].status).toBe('staged');
+  }
+);
+
+it('reports superseded stage work as aborted instead of spending a stale repair', async () => {
+  const { session, datasource, stage } = setupV2();
+  const describe = jest.fn(language.describe).mockImplementationOnce(() => new Promise(() => {}));
+  datasource.queryCoauthoring = () => ({ ...language, getQuerySupport: () => ({ editable: true }), describe });
+  const first = stage();
+  await waitFor(() => expect(describe).toHaveBeenCalledTimes(1));
+  expect((await stage())[0].status).toBe('staged');
+  expect(await first).toEqual([{ status: 'aborted' }]);
+  expect(session.getState().proposal?.[0]).toMatchObject({ diffs: [{ refId: 'B', proposed: 'sum(up)' }] });
+});
+
+it.each([
+  ['different refId', (query: TextQuery) => ({ status: 'ready', query: { ...query, refId: 'Other' }, changes: [] })],
+  [
+    'different datasource',
+    (query: TextQuery) => ({ status: 'ready', query: { ...query, datasource: { uid: 'other' } }, changes: [] }),
+  ],
+  [
+    'malformed text changes',
+    (query: TextQuery) => ({ status: 'ready', query: { ...query, expr: 'sum(up)' }, changes: [{}] }),
+  ],
+  ['unknown rejection', () => ({ status: 'rejected', reason: 'offline' })],
+])('treats adapter-produced %s as preparation failure on the requested query', async (_name, prepare) => {
+  const { datasource, stage } = setupV2();
+  datasource.queryCoauthoring = () =>
+    ({ ...language, getQuerySupport: () => ({ editable: true }), prepare }) as QueryCoauthoringLanguage<TextQuery>;
+  expect(await stage('B')).toEqual([{ status: 'failed', issue: { kind: 'preparation_failed', refId: 'B' } }]);
+});
+
+it('keeps the exact later rejected refId after an earlier change prepared successfully', async () => {
+  const { session, datasource } = setupV2();
+  datasource.queryCoauthoring = () => ({
+    ...language,
+    getQuerySupport: (query) => ({ editable: query.refId === 'A' }),
+  });
+  expect(
+    await session.stageProposal(
+      [
+        {
+          changes: [
+            { refId: 'A', text: 'sum(up)' },
+            { refId: 'B', text: 'sum(requests)' },
+          ],
+        },
+      ],
+      {
+        baseRevision: 0,
+        baseContextGeneration: session.getState().contextGeneration,
+      }
+    )
+  ).toEqual([{ status: 'rejected', issue: { kind: 'read_only', refId: 'B' } }]);
+  expect(session.getState().proposal).toEqual([]);
+});
+
+it.each([
+  { status: 'unavailable' as const, reason: 'missing_language' as const, result: 'unsupported' },
+  { status: 'failed' as const, reason: 'description_failed' as const, result: 'failed' },
+])('retains a $status ranged baseline cause without inventing a text mismatch', async ({ status, reason, result }) => {
+  const { panel, session: legacy, datasource } = setup();
+  datasource.queryCoauthoring = () => ({ ...language, getQuerySupport: () => ({ editable: true }) });
+  const engine = QueryCoauthoringSessionEngine.getOrCreate(panel);
+  const baseline = {
+    refId: 'A',
+    revision: 0,
+    contextGeneration: 0,
+    ranges: [{ from: 0, to: 2 }],
+    ...(status === 'unavailable'
+      ? { status, reason: 'missing_language' as const }
+      : { status, reason: 'description_failed' as const }),
+  };
+  const session = engine.asVersion2(legacy, baseline);
+  expect(await session.getContext({ baseRevision: 0 })).toMatchObject({
+    status: 'ready',
+    entry: { status, reason, matchesCurrentText: 'unknown' },
+  });
+  expect(
+    await session.stageProposal([{ changes: [{ refId: 'A', text: 'sum(up)' }] }], {
+      baseRevision: 0,
+      baseContextGeneration: session.getState().contextGeneration,
+    })
+  ).toEqual([{ status: result, issue: { kind: reason, refId: 'A' } }]);
+});
+
+it('fences panel-scoped variable changes and notifies context subscribers without editing queries', async () => {
+  const { panel, session, canonical } = setupV2();
+  const variable = new ConstantVariable({ name: 'source', value: 'prom' });
+  panel.setState({ $variables: new SceneVariableSet({ variables: [variable] }) });
+  canonical.setState({ datasource: { uid: '$source' } });
+  const stop = variable.activate();
+  const snapshots: number[] = [];
+  const unsubscribe = session.subscribe((state) => snapshots.push(state.contextGeneration));
+  try {
+    const before = session.getState();
+    expect(await session.getContext({ baseRevision: before.revision })).toMatchObject({
+      status: 'ready',
+      contextGeneration: before.contextGeneration,
+    });
+    expect(mockGetDataSource).toHaveBeenCalledWith(
+      { uid: '$source' },
+      expect.objectContaining({ __sceneObject: expect.anything() })
+    );
+    variable.setState({ value: 'other' });
+    expect(session.getState()).toMatchObject({
+      revision: before.revision,
+      contextGeneration: before.contextGeneration + 1,
+      queries: original,
+    });
+    expect(snapshots).toContain(before.contextGeneration + 1);
+    expect(
+      await session.stageProposal([{ changes: [{ refId: 'B', text: 'sum(up)' }] }], {
+        baseRevision: before.revision,
+        baseContextGeneration: before.contextGeneration,
+      })
+    ).toEqual([{ status: 'stale' }]);
+  } finally {
+    unsubscribe();
+    stop();
+  }
+});
+
+it.each(['before', 'during'] as const)(
+  'fences unchanged upstream resolver context changed %s staging a different query',
+  async (when) => {
+    const { canonical, session, datasource } = setupV2();
+    canonical.setState({ queries: original.map((query) => ({ ...query, datasource: { uid: query.refId } })) });
+    let currentA = datasource;
+    let release!: (value: Awaited<ReturnType<typeof language.describe>>) => void;
+    let pending = false;
+    const prepare = jest.fn(language.prepare);
+    const later = Object.assign(getMockDataSource(), {
+      queryCoauthoring: () => ({
+        ...language,
+        getQuerySupport: () => ({ editable: true }),
+        prepare,
+        describe: (query: TextQuery, options: { signal: AbortSignal }) =>
+          pending
+            ? new Promise<Awaited<ReturnType<typeof language.describe>>>((resolve) => {
+                release = resolve;
+              })
+            : language.describe(query, options),
+      }),
+    });
+    mockGetDataSource.mockImplementation(async (ref) => (ref.uid === 'A' ? currentA : later));
+    const context = await session.getContext({ baseRevision: 1 });
+    expect(context.status).toBe('ready');
+    if (context.status !== 'ready') {
+      throw new Error('Expected ready');
+    }
+    const replacement = Object.assign(getMockDataSource(), { queryCoauthoring: datasource.queryCoauthoring });
+    if (when === 'before') {
+      currentA = replacement;
+    } else {
+      pending = true;
+    }
+    const staging = session.stageProposal([{ changes: [{ refId: 'B', text: 'sum(requests)' }] }], {
+      baseRevision: 1,
+      baseContextGeneration: context.contextGeneration,
+    });
+    if (when === 'during') {
+      await waitFor(() => expect(typeof release).toBe('function'));
+      currentA = replacement;
+      pending = false;
+      release({ text: original[1].expr, language: { id: 'promql', displayName: 'PromQL' } });
+    }
+    expect(await staging).toEqual([{ status: 'stale' }]);
+    expect(session.getState()).toMatchObject({ revision: 1, queries: canonical.state.queries });
+    expect(await session.getContext({ baseRevision: 1 })).toMatchObject({ status: 'ready' });
+  }
+);
+
+it('advances resolver generation across supported, missing and restored language outcomes', async () => {
+  const { session, datasource } = setupV2();
+  const supported = datasource.queryCoauthoring();
+  let adapter: unknown = supported;
+  datasource.queryCoauthoring = () => adapter as QueryCoauthoringLanguage<TextQuery>;
+  const before = await session.getContext({ baseRevision: 0 });
+  expect(before.status).toBe('ready');
+  const generation = session.getState().contextGeneration;
+  adapter = undefined;
+  expect(await session.getContext({ baseRevision: 0 })).toMatchObject({
+    status: 'stale',
+    currentContextGeneration: generation + 1,
+  });
+  expect(await session.getContext({ baseRevision: 0 })).toMatchObject({
+    status: 'ready',
+    queries: expect.arrayContaining([
+      expect.objectContaining({ refId: 'A', editability: { kind: 'unsupported', reason: 'missing_language' } }),
+    ]),
+  });
+  adapter = supported;
+  expect(await session.getContext({ baseRevision: 0 })).toMatchObject({
+    status: 'stale',
+    currentContextGeneration: generation + 2,
+  });
+  expect(await session.getContext({ baseRevision: 0 })).toMatchObject({
+    status: 'ready',
+    queries: expect.arrayContaining([expect.objectContaining({ refId: 'A', editability: { kind: 'editable' } })]),
+  });
 });

@@ -206,3 +206,43 @@ describe('restricted query coauthoring API', () => {
     expect(isQueryCoauthoringAPI(explicitlyAllowed.queryCoauthoring)).toBe(true);
   });
 });
+
+it('discovers coauthoring availability before any UI, panel, session or entry listener exists', () => {
+  jest.replaceProperty(config.bootData, 'settings', {
+    ...config.bootData.settings,
+    pluginRestrictedAPIsAllowList: { queryCoauthoringV2: ['grafana-assistant-app'] },
+  });
+  setTestFlags({ 'queryeditor.coauthoringUi': false });
+  const api = (getRestrictedGrafanaApisAtLoad('grafana-assistant-app') as RestrictedGrafanaApisWithQueryCoauthoring)
+    .queryCoauthoringV2!;
+  const values: boolean[] = [];
+  const stop = api.subscribeAvailability(({ eligible }) => values.push(eligible));
+  expect(api.getAvailability()).toEqual({ eligible: false });
+  act(() =>
+    setTestFlags({
+      'queryeditor.coauthoringUi': true,
+      'grafana.visualDesignRefresh': true,
+      'grafana.extensionSidebarFloating': true,
+    })
+  );
+  expect(api.getAvailability()).toEqual({ eligible: true });
+  act(() =>
+    setTestFlags({
+      'queryeditor.coauthoringUi': true,
+      'grafana.visualDesignRefresh': true,
+      'grafana.extensionSidebarFloating': false,
+    })
+  );
+  act(() =>
+    setTestFlags({
+      'queryeditor.coauthoringUi': true,
+      'grafana.visualDesignRefresh': true,
+      'grafana.extensionSidebarFloating': true,
+    })
+  );
+  expect(values).toEqual([false, true, false, true]);
+  expect(api.canEnter({ panelId: 1, refId: 'A' })).toEqual({ ok: false, reason: 'not_in_panel_edit' });
+  stop();
+  setTestFlags({});
+  jest.restoreAllMocks();
+});

@@ -161,6 +161,7 @@ export type QueryEditorPropsWithCoauthoring<TProps> = TProps & {
 
 export type RestrictedGrafanaApisWithQueryCoauthoring = RestrictedGrafanaApisContextType & {
   queryCoauthoring?: QueryCoauthoringAPI;
+  queryCoauthoringV2?: QueryCoauthoringAPI2;
 };
 
 export function isQueryCoauthoringAPI(value: unknown): value is QueryCoauthoringAPI {
@@ -200,9 +201,13 @@ export function isQueryCoauthoringEditorHandle(value: unknown): value is QueryCo
 }
 
 export function isQueryCoauthoringSession(value: unknown): value is QueryCoauthoringSession {
+  return hasSessionMethods(value, 1);
+}
+
+function hasSessionMethods(value: unknown, version: 1 | 2): value is Record<string, unknown> {
   return (
     isRecord(value) &&
-    value.version === 1 &&
+    value.version === version &&
     isRecord(value.signal) &&
     typeof value.signal.aborted === 'boolean' &&
     typeof value.signal.addEventListener === 'function' &&
@@ -219,5 +224,121 @@ export function isQueryCoauthoringSession(value: unknown): value is QueryCoautho
     typeof value.undo === 'function' &&
     typeof value.select === 'function' &&
     typeof value.exit === 'function'
+  );
+}
+
+export type QueryCoauthoringFailure =
+  | 'datasource_resolution_failed'
+  | 'language_resolution_failed'
+  | 'support_check_failed'
+  | 'description_failed'
+  | 'preparation_failed';
+
+export type QueryCoauthoringUnsupported = 'missing_language' | 'unsupported_language_version';
+
+export type QueryCoauthoringDescriptionResult =
+  | { status: 'ready'; value: QueryCoauthoringLanguageDescription }
+  | { status: 'unavailable'; reason: QueryCoauthoringUnsupported }
+  | { status: 'failed'; reason: QueryCoauthoringFailure };
+
+export type QueryCoauthoringEditability =
+  | { kind: 'editable' | 'read_only' }
+  | { kind: 'unknown'; reason: 'missing_query_support' | QueryCoauthoringFailure }
+  | { kind: 'unsupported'; reason: QueryCoauthoringUnsupported };
+
+export interface QueryCoauthoringQueryContext {
+  refId: string;
+  name?: string;
+  dependencies: string[];
+  editability: QueryCoauthoringEditability;
+  description: QueryCoauthoringDescriptionResult;
+}
+
+export type QueryCoauthoringEntryBaseline = {
+  refId: string;
+  revision: number;
+  contextGeneration: number;
+  ranges: QueryCoauthoringRange[];
+} & (
+  | { status: 'ready'; text: string }
+  | { status: 'unavailable'; reason: QueryCoauthoringUnsupported }
+  | { status: 'failed'; reason: QueryCoauthoringFailure }
+);
+
+export interface QueryCoauthoringEntryRequest2 extends QueryCoauthoringEntryRequest {
+  entryId: string;
+  baseline: QueryCoauthoringEntryBaseline;
+}
+
+export type QueryCoauthoringProblem =
+  | { scope: 'query'; refId: string; kind: 'error' | 'no-data'; message?: string }
+  | { scope: 'panel'; kind: 'error'; message?: string };
+
+export interface QueryCoauthoringState2 extends QueryCoauthoringState {
+  contextGeneration: number;
+  dependencies: Record<string, string[]>;
+  problems: QueryCoauthoringProblem[];
+}
+
+export type QueryCoauthoringContextResult =
+  | {
+      status: 'ready';
+      sessionId: string;
+      revision: number;
+      contextGeneration: number;
+      queries: QueryCoauthoringQueryContext[];
+      entry: QueryCoauthoringEntryBaseline & { matchesCurrentText: boolean | 'unknown' };
+    }
+  | { status: 'stale'; currentRevision: number; currentContextGeneration: number }
+  | { status: 'aborted' | 'closed' };
+
+export type QueryCoauthoringStageResult2 =
+  | { status: 'staged'; id: string; diffs: QueryCoauthoringDiff[] }
+  | { status: 'unchanged' | 'stale' | 'aborted' | 'closed' }
+  | { status: 'invalid'; issue: { kind: 'invalid_text'; refId: string } | { kind: 'invalid_change'; refId?: string } }
+  | { status: 'unsupported'; issue: { kind: QueryCoauthoringUnsupported; refId: string } }
+  | { status: 'rejected'; issue: { kind: 'read_only' | 'unknown_editability' | 'entry_ranges_changed'; refId: string } }
+  | { status: 'failed'; issue: { kind: QueryCoauthoringFailure; refId: string } };
+
+export interface QueryCoauthoringSession2
+  extends Omit<QueryCoauthoringSession, 'version' | 'getState' | 'subscribe' | 'stageProposal'> {
+  readonly version: 2;
+  getState(): QueryCoauthoringState2;
+  subscribe(listener: (state: QueryCoauthoringState2) => void): () => void;
+  getContext(options: { baseRevision: number; signal?: AbortSignal }): Promise<QueryCoauthoringContextResult>;
+  stageProposal(
+    proposal: QueryCoauthoringOption[],
+    options: {
+      baseRevision: number;
+      baseContextGeneration: number;
+      signal?: AbortSignal;
+    }
+  ): Promise<QueryCoauthoringStageResult2[]>;
+}
+
+export interface QueryCoauthoringAPI2 extends Omit<QueryCoauthoringAPI, 'version' | 'onEnterRequested' | 'enter'> {
+  readonly version: 2;
+  getAvailability(): { eligible: boolean };
+  subscribeAvailability(listener: (value: { eligible: boolean }) => void): () => void;
+  onEnterRequested(listener: (request: QueryCoauthoringEntryRequest2) => void): () => void;
+  enter(target: QueryCoauthoringTarget, options: { entryId: string }): Promise<unknown>;
+}
+
+export function isQueryCoauthoringAPI2(value: unknown): value is QueryCoauthoringAPI2 {
+  return (
+    isRecord(value) &&
+    value.version === 2 &&
+    typeof value.getAvailability === 'function' &&
+    typeof value.subscribeAvailability === 'function' &&
+    typeof value.onEnterRequested === 'function' &&
+    typeof value.onResumeRequested === 'function' &&
+    typeof value.canEnter === 'function' &&
+    typeof value.enter === 'function'
+  );
+}
+
+export function isQueryCoauthoringSession2(value: unknown): value is QueryCoauthoringSession2 {
+  return (
+    isRecord(value) && value.version === 2 && hasSessionMethods(value, 2) && typeof value.getContext === 'function'
   );
 }
