@@ -137,6 +137,7 @@ export interface TreeItem {
   level: number;
   children: TreeItem[];
   resourceName?: string;
+  resource?: string;
   hash?: string;
   status?: SyncStatus;
   hasFile?: boolean;

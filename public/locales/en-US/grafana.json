@@ -15590,6 +15590,8 @@
       "header-title": "Title",
       "header-type": "Type",
       "missing-folder-metadata": "Missing folder metadata file",
+      "resource-filter-aria-label": "Filter by resource type",
+      "resource-filter-placeholder": "Filter by resource type",
       "search-placeholder": "Search by path or title",
       "source": "Source",
       "status-filter-aria-label": "Filter by status",

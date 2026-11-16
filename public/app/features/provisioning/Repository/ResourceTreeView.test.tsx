@@ -182,4 +182,32 @@ describe('ResourceTreeView', () => {
       expect(screen.queryByText('Pending Dashboard')).not.toBeInTheDocument();
     });
   });
+
+  describe('resource filter', () => {
+    const resources = [
+      { path: 'folder/dash.json', hash: 'aaa', name: 'dash', title: 'My Dashboard', resource: 'dashboards' },
+      { path: 'folder/widget.json', hash: 'bbb', name: 'widget', title: 'My Widget', resource: 'widgets' },
+    ];
+
+    beforeEach(() => {
+      setupQueries([], resources);
+    });
+
+    it('should filter to the resource type in the URL', async () => {
+      render(<ResourceTreeView repo={repo} />, { historyOptions: { initialEntries: ['/?resource=widgets'] } });
+
+      expect(await screen.findByText('My Widget')).toBeInTheDocument();
+      expect(screen.queryByText('My Dashboard')).not.toBeInTheDocument();
+    });
+
+    it('should filter to the selected resource type', async () => {
+      const { user } = render(<ResourceTreeView repo={repo} />);
+
+      await user.click(screen.getByRole('combobox', { name: 'Filter by resource type' }));
+      await user.keyboard('{Enter}'); // index 0: Dashboards
+
+      expect(await screen.findByText('My Dashboard')).toBeInTheDocument();
+      expect(screen.queryByText('My Widget')).not.toBeInTheDocument();
+    });
+  });
 });

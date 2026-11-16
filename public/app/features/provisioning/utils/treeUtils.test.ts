@@ -4,6 +4,7 @@ import { type TreeItem } from '../types';
 
 import {
   buildTree,
+  filterByResources,
   filterByStatusCategories,
   filterTree,
   flattenTree,
@@ -1363,5 +1364,41 @@ describe('filterByStatusCategories', () => {
     ];
 
     expect(filterByStatusCategories(tree, ['warning'])).toHaveLength(1);
+  });
+});
+
+describe('filterByResources', () => {
+  const tree: TreeItem[] = [
+    {
+      path: 'folder',
+      title: 'Folder',
+      type: 'Folder',
+      resource: 'folders',
+      level: 0,
+      children: [
+        { path: 'folder/a.json', title: 'a', type: 'Dashboard', resource: 'dashboards', level: 0, children: [] },
+        { path: 'folder/b.json', title: 'b', type: 'File', resource: 'widgets', level: 0, children: [] },
+      ],
+    },
+    { path: 'c.json', title: 'c', type: 'File', level: 0, children: [] },
+  ];
+
+  it('should return all items when no resources are selected', () => {
+    expect(filterByResources(tree, [])).toEqual(tree);
+  });
+
+  it('should keep matching items and their ancestor folders, including kinds outside the registry', () => {
+    const result = filterByResources(tree, ['widgets']);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].path).toBe('folder');
+    expect(result[0].children.map((child) => child.path)).toEqual(['folder/b.json']);
+  });
+
+  it('should keep a folder that matches itself without its non-matching children', () => {
+    const result = filterByResources(tree, ['folders']);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].children).toHaveLength(0);
   });
 });

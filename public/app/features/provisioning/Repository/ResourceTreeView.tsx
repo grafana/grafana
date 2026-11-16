@@ -24,12 +24,14 @@ import {
   useGetRepositoryFilesQuery,
   useGetRepositoryResourcesQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
+import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 import { type FlatTreeItem, type TreeItem } from '../types';
 import { getRepoFileUrl } from '../utils/git';
-import { getKindInfoByItemType } from '../utils/resourceKinds';
+import { getKindInfoByItemType, getKindInfoByResource } from '../utils/resourceKinds';
 import {
   buildTree,
+  filterByResources,
   filterByStatusCategories,
   filterTree,
   flattenTree,
@@ -62,6 +64,9 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusCategory[]>([]);
   const statusFilterLabelId = useId();
+  const [queryParams, updateQueryParams] = useQueryParams();
+  const resourceFilter = useMemo(() => [queryParams['resource'] ?? []].flat().map(String), [queryParams]);
+  const resourceFilterLabelId = useId();
   // Folder paths that are currently unfolded. Empty by default so the tree starts fully folded.
   const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set());
 
@@ -76,6 +81,14 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
     []
   );
 
+  const resourceFilterOptions: Array<ComboboxOption<string>> = useMemo(() => {
+    const resources = new Set(resourcesQuery.data?.items?.map((item) => item.resource));
+    return Array.from(resources, (value) => ({
+      label: getKindInfoByResource(value)?.pluralLabel() ?? value,
+      value,
+    }));
+  }, [resourcesQuery.data?.items]);
+
   const tree = useMemo(() => {
     const files = filesQuery.data?.items ?? [];
     const resources = resourcesQuery.data?.items ?? [];
@@ -86,13 +99,14 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
     // Filter by status before search: status filtering relies on the aggregate folder statuses
     // computed by buildTree, which filterTree would leave stale after pruning hidden children.
     const statusFiltered = statusFilter.length > 0 ? filterByStatusCategories(built, statusFilter) : built;
+    const resourceFiltered = filterByResources(statusFiltered, resourceFilter);
 
-    return searchQuery ? filterTree(statusFiltered, searchQuery) : statusFiltered;
-  }, [filesQuery.data?.items, resourcesQuery.data?.items, searchQuery, statusFilter]);
+    return searchQuery ? filterTree(resourceFiltered, searchQuery) : resourceFiltered;
+  }, [filesQuery.data?.items, resourcesQuery.data?.items, searchQuery, statusFilter, resourceFilter]);
 
   // A search or a status filter narrows the tree, so ignore the folded state while either is
   // active to keep every matching item visible instead of hidden inside a collapsed folder.
-  const isFiltering = !!searchQuery || statusFilter.length > 0;
+  const isFiltering = !!searchQuery || statusFilter.length > 0 || resourceFilter.length > 0;
   const flatItems = useMemo(
     () => flattenTree(tree, isFiltering ? undefined : expandedPaths),
     [tree, expandedPaths, isFiltering]
@@ -292,6 +306,19 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
           width={30}
           placeholder={t('provisioning.resource-tree.status-filter-placeholder', 'Filter by status')}
           aria-labelledby={statusFilterLabelId}
+        />
+        <span id={resourceFilterLabelId} className="sr-only">
+          {t('provisioning.resource-tree.resource-filter-aria-label', 'Filter by resource type')}
+        </span>
+        <MultiCombobox
+          prefixIcon="filter"
+          options={resourceFilterOptions}
+          value={resourceFilter}
+          onChange={(options) => updateQueryParams({ resource: options.map((option) => option.value) }, true)}
+          isClearable
+          width={30}
+          placeholder={t('provisioning.resource-tree.resource-filter-placeholder', 'Filter by resource type')}
+          aria-labelledby={resourceFilterLabelId}
         />
       </Stack>
       <InteractiveTable

@@ -130,6 +130,7 @@ export function buildTree(mergedItems: MergedItem[]): TreeItem[] {
       level: 0,
       children: [],
       resourceName: item.resource?.name,
+      resource: item.resource?.resource,
       hash: item.file?.hash ?? item.resource?.hash,
       status: showStatus ? getStatus(item.file?.hash, resourceHash) : undefined,
       hasFile: !!item.file,
@@ -278,11 +279,26 @@ export function filterByStatusCategories(items: TreeItem[], categories: StatusCa
   }
 
   const selected = new Set(categories);
-  const matches = (node: TreeItem): boolean => {
+  return filterNodes(items, (node) => {
     const category = getStatusCategory(node);
     return category !== undefined && selected.has(category);
-  };
+  });
+}
 
+/**
+ * Filter tree to items whose plural resource name (e.g. `dashboards`) is in `resources`, keeping
+ * ancestor folders. An empty `resources` list disables the filter (returns everything).
+ */
+export function filterByResources(items: TreeItem[], resources: string[]): TreeItem[] {
+  if (resources.length === 0) {
+    return items;
+  }
+
+  const selected = new Set(resources);
+  return filterNodes(items, (node) => node.resource !== undefined && selected.has(node.resource));
+}
+
+function filterNodes(items: TreeItem[], matches: (node: TreeItem) => boolean): TreeItem[] {
   const filterNode = (node: TreeItem): TreeItem | null => {
     if (node.type === 'Folder' && node.children.length > 0) {
       const filteredChildren = node.children.map(filterNode).filter((n): n is TreeItem => n !== null);
