@@ -44,6 +44,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/versionpolicy"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardpreferences"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardpreferences/dashboardpreferencestest"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
@@ -472,12 +473,6 @@ func TestUpdateUsersAPIGroup_ReadOnly(t *testing.T) {
 	}
 }
 
-type noopUserPreferencesCleaner struct{}
-
-func (noopUserPreferencesCleaner) DeleteUserPreferences(context.Context, string, string) error {
-	return nil
-}
-
 func TestNewUserDeleteCascade(t *testing.T) {
 	authInfos := struct {
 		rest.Storage
@@ -496,9 +491,9 @@ func TestNewUserDeleteCascade(t *testing.T) {
 	}{
 		{name: "nothing to cascade to"},
 		{name: "auth infos only", authInfoStorage: authInfos, wantCascade: true},
-		{name: "preferences only", preferences: noopUserPreferencesCleaner{}, wantCascade: true},
+		{name: "preferences only", preferences: &dashboardpreferencestest.FakeUserCleaner{}, wantCascade: true},
 		{name: "a storage that can't list and delete auth infos, and no preferences", authInfoStorage: notAuthInfos},
-		{name: "read-only API", authInfoStorage: authInfos, preferences: noopUserPreferencesCleaner{}, readOnly: true},
+		{name: "read-only API", authInfoStorage: authInfos, preferences: &dashboardpreferencestest.FakeUserCleaner{}, readOnly: true},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			got := newUserDeleteCascade(userStore, tt.authInfoStorage, tt.preferences, tt.readOnly)

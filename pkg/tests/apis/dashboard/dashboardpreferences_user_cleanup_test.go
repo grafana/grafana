@@ -8,13 +8,13 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardpreferences"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -173,18 +173,7 @@ func TestIntegrationDashboardPreferencesUserCleanupKubernetesUsers(t *testing.T)
 				name := dashv2beta1.DashboardPreferencesUserName(helper.Org1.Editor.Identity.GetIdentifier())
 
 				err := dashboardPreferencesClient(helper, helper.Org1.Editor).Resource.Delete(ctx, name, metav1.DeleteOptions{})
-				require.True(t, apierrors.IsNotFound(err), "expected NotFound, got %v", err)
-
-				var status apierrors.APIStatus
-				require.ErrorAs(t, err, &status)
-				details := status.Status().Details
-				require.NotNil(t, details)
-				require.Equal(t, "dashboard.grafana.app", details.Group)
-				require.Equal(t, "dashboardpreferences", details.Kind)
-				require.Equal(t, name, details.Name)
-				for _, cause := range details.Causes {
-					require.NotEqual(t, metav1.CauseTypeUnexpectedServerResponse, cause.Type)
-				}
+				require.True(t, dashboardpreferences.IsNotFound(err, name), "expected the cleaner to read this as a missing object, got %v", err)
 			})
 		})
 	}
