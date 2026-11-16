@@ -2067,6 +2067,21 @@
     },
     {
       "metadata": {
+        "name": "datasources.mtOAuthPassthroughFrontend",
+        "resourceVersion": "1794849655110",
+        "creationTimestamp": "2026-11-16T17:20:55Z"
+      },
+      "spec": {
+        "description": "Send data sources with Forward OAuth Identity to the app platform APIs",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "datasources.querier.newName",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-09-09T08:20:47Z"
