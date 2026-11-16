@@ -104,12 +104,6 @@ func (l *ResourceListerFromProvisioningAPI) page(ctx context.Context, namespace,
 	return list, nil
 }
 
-// Stats implements ResourceLister. This reader answers for one repository at a time; the
-// namespace-wide counts are a different route, with no caller outside the API server that serves it.
-func (l *ResourceListerFromProvisioningAPI) Stats(context.Context, string) (*provisioning.ResourceStats, error) {
-	return nil, fmt.Errorf("[provisioning] resource_lister %q does not read namespace-wide stats", ListerAPIs)
-}
-
 // RepositoryStats implements ResourceLister, reading the counts for one repository. The
 // subresource answers for the repository named in the path, so there is no list of managers to
 // pick an entry out of.

@@ -47,7 +47,6 @@ describe('ScopesDashboardsService', () => {
     setMegaMenuFlag(false);
     const fetchScopeNavigationsMock = jest.fn().mockResolvedValue([]);
     mockApiClient = {
-      fetchDashboards: jest.fn(),
       fetchScopeNavigations: fetchScopeNavigationsMock,
     } as unknown as jest.Mocked<ScopesApiClient>;
 
@@ -278,7 +277,7 @@ describe('ScopesDashboardsService', () => {
       await testService.fetchDashboards(['scope1']);
 
       // Clear scopes, e.g. the user removes the scope selection entirely. fetchDashboards' early
-      // return for an empty forScopeNames wipes dashboards/folders but must also wipe
+      // return for an empty forScopeNames wipes folders but must also wipe
       // scopeNavigations - otherwise the stale entry for /d/dashboard1 below still matches and
       // onLocationChange reaches into the now-empty folders map.
       await testService.fetchDashboards([]);
@@ -732,8 +731,6 @@ describe('ScopesDashboardsService', () => {
   describe('setNavigationScope', () => {
     beforeEach(() => {
       (locationService.getLocation as jest.Mock).mockReturnValue({ pathname: '/' } as Location);
-      // Reset mocks but keep the mock functions
-      mockApiClient.fetchDashboards.mockClear();
       // Note: fetchScopeNavigations mock is set up in top-level beforeEach
       // Individual tests will override it with their own mockResolvedValue calls
     });

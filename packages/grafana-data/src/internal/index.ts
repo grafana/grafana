@@ -13,8 +13,11 @@
 export {
   actionsOverrideProcessor,
   getVarMappingKind,
+  getVarMappingOptions,
   hasVarMappingVariableReference,
+  interpolateVarMapping,
   isInVarMappingRange,
+  resolveVarMappingText,
   isVarMappingExpressionInput,
   type VarMappingKind,
 } from '../field/overrides/processors';

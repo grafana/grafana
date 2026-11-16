@@ -79,13 +79,19 @@ type pluginContextProvider interface {
 
 func ProvideService(cfg *setting.Cfg, pluginClient plugins.Client, pCtxProvider *plugincontext.Provider,
 	features featuremgmt.FeatureToggles, registerer prometheus.Registerer, tracer tracing.Tracer, builder dsquerierclient.QSDatasourceClientBuilder) *Service {
+	return NewServiceWithMetrics(cfg, pluginClient, pCtxProvider, features, metrics.NewSSEMetrics(registerer), tracer, builder)
+}
+
+// NewServiceWithMetrics returns a Service that records to m, so callers that build a Service per request can share one registered set of metrics.
+func NewServiceWithMetrics(cfg *setting.Cfg, pluginClient plugins.Client, pCtxProvider *plugincontext.Provider,
+	features featuremgmt.FeatureToggles, m *metrics.ExprMetrics, tracer tracing.Tracer, builder dsquerierclient.QSDatasourceClientBuilder) *Service {
 	return &Service{
 		cfg:           cfg,
 		dataService:   pluginClient,
 		pCtxProvider:  pCtxProvider,
 		features:      features,
 		tracer:        tracer,
-		metrics:       metrics.NewSSEMetrics(registerer),
+		metrics:       m,
 		pluginsClient: pluginClient,
 		converter: &ResultConverter{
 			Features: features,

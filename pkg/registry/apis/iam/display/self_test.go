@@ -344,7 +344,7 @@ func TestDisplayHandler_handleSelf(t *testing.T) {
 		})
 	}
 
-	t.Run("unresolved access policy returns identity details with 200", func(t *testing.T) {
+	t.Run("wildcard namespace access policy skips display resolvers", func(t *testing.T) {
 		caller := &identity.StaticRequester{
 			Type: authlib.TypeAccessPolicy, UserUID: "example-app", Name: "example-app", Namespace: "*",
 			AuthenticatedBy: "extendedjwt",
@@ -354,7 +354,7 @@ func TestDisplayHandler_handleSelf(t *testing.T) {
 		NewDisplayHandler(resolver).handleSelf(rec, selfRequest(t, caller))
 
 		require.Equal(t, http.StatusOK, rec.Code)
-		require.Equal(t, []string{"access-policy:example-app"}, resolver.gotKeys)
+		require.Nil(t, resolver.gotKeys, "resolvers need a concrete stack or org and must not be called for namespace *")
 		var got iam.CurrentUserInfo
 		require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &got))
 		require.Equal(t, iam.IdentityRef{Type: authlib.TypeAccessPolicy, Name: "example-app"}, got.Identity)
