@@ -24,8 +24,8 @@ const DEFAULT_TIME_RANGE = { from: 'now-30m', to: 'now' };
 const APP_KEYS: AppKey[] = ['metrics', 'logs', 'traces', 'profiles', 'sql'];
 
 // The page starts proactive: hints first, then Grafana Assistant works out what is wrong, then the scoped insights.
-// The hint the user investigated stays with the insights; a scope picked by hand has none. Unlike the prototype,
-// every scope is queried from the lab data sources first, so a loading phase sits between picking and showing it.
+// The hint the user investigated stays with the insights; a scope picked by hand has none. Every scope is queried
+// from the chosen data sources first, so a loading phase sits between picking and showing it.
 type Phase =
   | { kind: 'hints' }
   | { kind: 'loading'; scope: Scope }

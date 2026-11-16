@@ -11,7 +11,7 @@ import { loadOverview } from './loadScenario';
 
 type State = { kind: 'loading' } | { kind: 'ready' } | { kind: 'error'; message: string };
 
-// Loads the overview from the chosen data sources, then renders the copy of the prototype page.
+// Loads the overview from the chosen data sources, then renders the page.
 export function RealDataDrilldownPage() {
   const [state, setState] = useState<State>({ kind: 'loading' });
   const hasNav = useNavModel('drilldown').node.id !== 'not-found';

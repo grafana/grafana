@@ -1,5 +1,5 @@
-// Live replacement for mockScenario.ts. The copied components import the same names, and the page fills these
-// bindings from the selected data sources before it renders them.
+// The components import these names, and the page fills these bindings from the selected data sources before it
+// renders them.
 
 import { type Signal } from '../dataSources';
 

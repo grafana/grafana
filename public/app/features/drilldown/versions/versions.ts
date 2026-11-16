@@ -16,28 +16,18 @@ export interface DrilldownVersion {
   views: DrilldownView[];
 }
 
-const NadineVersion = lazy(() => import(/* webpackChunkName: "DrilldownPage"*/ '../DrilldownPage'));
-
 const NadineRealDataVersion = lazy(
   () => import(/* webpackChunkName: "DrilldownRealData"*/ '../realdata/RealDataDrilldownPage')
 );
 
-// Versions kept in the code but not shown as tabs.
-const HIDDEN_VERSION_IDS = ['nadine'];
-
 // Each version is one tab on /drilldown. Add a version by adding an entry here; the first entry is the default.
 export function getDrilldownVersions(): DrilldownVersion[] {
   const home = t('drilldown-versions.views.home', 'Home');
-  return getAllVersions(home).filter((version) => !HIDDEN_VERSION_IDS.includes(version.id));
+  return getAllVersions(home);
 }
 
 function getAllVersions(home: string): DrilldownVersion[] {
   return [
-    {
-      id: 'nadine',
-      label: t('drilldown-versions.tabs.nadine', "Nadine's prototype"),
-      views: [{ id: 'home', label: home, component: NadineVersion }],
-    },
     {
       id: 'nadine-real',
       label: t('drilldown-versions.tabs.nadine-real', "Nadine's design"),
