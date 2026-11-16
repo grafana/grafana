@@ -3,8 +3,10 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -16,6 +18,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -41,8 +44,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
-	pref "github.com/grafana/grafana/pkg/services/preference"
-	"github.com/grafana/grafana/pkg/services/preference/preftest"
+	"github.com/grafana/grafana/pkg/services/preference/prefapi"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
@@ -59,17 +61,18 @@ func TestGetHomeDashboard(t *testing.T) {
 	httpReq, err := http.NewRequest(http.MethodGet, "", nil)
 	require.NoError(t, err)
 	httpReq.Header.Add("Content-Type", "application/json")
-	req := &contextmodel.ReqContext{SignedInUser: &user.SignedInUser{}, Context: &web.Context{Req: httpReq}}
+	req := &contextmodel.ReqContext{SignedInUser: &user.SignedInUser{}, IsSignedIn: true, Context: &web.Context{Req: httpReq}}
 	cfg := setting.NewCfg()
 	cfg.StaticRootPath = "../../public/"
-	prefService := preftest.NewPreferenceServiceFake()
+	prefClient := prefapi.NewMockK8sClient(t)
+	prefClient.EXPECT().GetMerged(mock.Anything).Return(&preferences.PreferencesSpec{}, nil)
 	dashboardVersionService := dashvertest.NewDashboardVersionServiceFake()
 
 	hs := &HTTPServer{
 		Cfg:                     cfg,
 		pluginStore:             &pluginstore.FakePluginStore{},
 		SQLStore:                dbtest.NewFakeDB(),
-		preferenceService:       prefService,
+		preferenceK8sHandler:    prefapi.NewK8sHandler(prefClient, dashboards.NewFakeDashboardService(t), preferences.PreferencesSpec{}),
 		dashboardVersionService: dashboardVersionService,
 		log:                     log.New("test-logger"),
 		tracer:                  tracing.InitializeTracerForTest(),
@@ -149,28 +152,20 @@ func TestGetHomeDashboard(t *testing.T) {
 		"canAdmin":  false,
 	}
 
+	t.Run("empty default_home_dashboard_path returns not found", func(t *testing.T) {
+		hs.Cfg.DefaultHomeDashboardPath = ""
+
+		res := hs.GetHomeDashboard(req)
+		nr, ok := res.(*response.NormalResponse)
+		require.True(t, ok, "should return *NormalResponse")
+		require.Equal(t, http.StatusNotFound, nr.Status())
+	})
+
 	tests := []struct {
 		name             string
 		defaultSetting   string
 		expectedResponse func(t *testing.T) []byte
 	}{
-		{
-			name:           "using default config",
-			defaultSetting: "",
-			expectedResponse: func(t *testing.T) []byte {
-				t.Helper()
-				b, err := os.ReadFile("../../public/dashboards/home.json")
-				require.NoError(t, err)
-				j, err := simplejson.NewJson(b)
-				require.NoError(t, err)
-				wrapper := dtos.DashboardFullWithMeta{}
-				wrapper.Meta.FolderTitle = "General"
-				wrapper.Dashboard = j
-				out, err := json.Marshal(wrapper)
-				require.NoError(t, err)
-				return out
-			},
-		},
 		{
 			name:           "custom path with classic dashboard",
 			defaultSetting: "../../public/dashboards/default.json",
@@ -195,9 +190,7 @@ func TestGetHomeDashboard(t *testing.T) {
 				t.Helper()
 				// Copy so we don't mutate the shared doc.
 				resp := map[string]any{}
-				for k, v := range k8sV1Doc {
-					resp[k] = v
-				}
+				maps.Copy(resp, k8sV1Doc)
 				resp["access"] = readOnlyAccess
 				out, err := json.Marshal(resp)
 				require.NoError(t, err)
@@ -210,9 +203,7 @@ func TestGetHomeDashboard(t *testing.T) {
 			expectedResponse: func(t *testing.T) []byte {
 				t.Helper()
 				resp := map[string]any{}
-				for k, v := range k8sV2Doc {
-					resp[k] = v
-				}
+				maps.Copy(resp, k8sV2Doc)
 				resp["access"] = readOnlyAccess
 				out, err := json.Marshal(resp)
 				require.NoError(t, err)
@@ -239,7 +230,6 @@ func TestGetHomeDashboard(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			hs.Cfg.DefaultHomeDashboardPath = tc.defaultSetting
-			prefService.ExpectedPreference = &pref.Preference{}
 
 			expectedBytes := tc.expectedResponse(t)
 
@@ -502,6 +492,46 @@ func TestHTTPServer_GetDashboardVersions_AccessControl(t *testing.T) {
 
 		require.NoError(t, res.Body.Close())
 	})
+}
+
+func TestHTTPServer_DashboardVersions_Errors(t *testing.T) {
+	tests := []struct {
+		name           string
+		path           string
+		serviceErr     error
+		expectedStatus int
+	}{
+		{"get: version not found returns 404", "/api/dashboards/uid/1/versions/740", dashboards.ErrDashboardNotFound, http.StatusNotFound},
+		{"get: unexpected error returns 500", "/api/dashboards/uid/1/versions/740", errors.New("boom"), http.StatusInternalServerError},
+		{"list: not found returns 404", "/api/dashboards/uid/1/versions", dashboards.ErrDashboardNotFound, http.StatusNotFound},
+		{"list: unexpected error returns 500", "/api/dashboards/uid/1/versions", errors.New("boom"), http.StatusInternalServerError},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			server := SetupAPITestServer(t, func(hs *HTTPServer) {
+				dash := dashboards.NewDashboard("some dash")
+				dash.ID = 1
+				dash.UID = "1"
+
+				dashSvc := dashboards.NewFakeDashboardService(t)
+				dashSvc.On("GetDashboard", mock.Anything, mock.Anything).Return(dash, nil).Maybe()
+				hs.DashboardService = dashSvc
+
+				hs.Cfg = setting.NewCfg()
+				hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
+				hs.dashboardVersionService = &dashvertest.FakeDashboardVersionService{ExpectedError: tt.serviceErr}
+			})
+
+			permissions := []accesscontrol.Permission{
+				{Action: dashboards.ActionDashboardsWrite, Scope: "dashboards:uid:1"},
+			}
+			res, err := server.Send(webtest.RequestWithSignedInUser(server.NewGetRequest(tt.path), userWithPermissions(1, permissions)))
+			require.NoError(t, err)
+			assert.Equal(t, tt.expectedStatus, res.StatusCode)
+			require.NoError(t, res.Body.Close())
+		})
+	}
 }
 
 func TestIntegrationDashboardAPIEndpoint(t *testing.T) {

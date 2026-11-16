@@ -159,7 +159,7 @@ Enable or disable the reporting feature. When disabled, no reports are generated
 
 ### rendering_timeout
 
-Timeout for the following reporting rendering requests: generating PDFs, generating embedded dashboard images for report emails, and generating attached CSV files. Default is 10 seconds (`10s`).
+Timeout for the following reporting rendering requests: generating PDFs, generating embedded dashboard images for report emails, and generating attached CSV files. Default is 30 seconds (`30s`).
 
 ### concurrent_render_limit
 
@@ -236,6 +236,10 @@ Set to false to only log requests with 2xx, 3xx, 401, 403, 500 responses.
 ### max_response_size_bytes
 
 Maximum response body (in bytes) to be recorded. May help reducing the memory footprint caused by auditing.
+
+### `snapshot_timeout`
+
+Grafana uses `snapshot_timeout` as a cooperative deadline when resolving resource names before serving a request that may delete resources. Grafana currently uses this setting for `DELETE /api/admin/users/{id}`. Because the backing store must honor context cancellation, the value isn't a strict upper bound on request latency. Use a duration such as `500ms` or `2s`. If you configure zero or a negative duration, Grafana logs a warning and uses the default of `500ms`.
 
 ## [auditing.logs.file]
 
@@ -548,6 +552,12 @@ Disabling the maximum is not recommended in production environments.
 {{< /admonition >}}
 
 ## [caching.redis]
+
+Use these settings to configure Redis as the query caching backend.
+
+{{< admonition type="note" >}}
+Redis Sentinel isn't supported for query caching. Use a standalone Redis instance with `url`, or a Redis Cluster with `cluster`.
+{{< /admonition >}}
 
 ### url
 

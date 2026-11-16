@@ -18,7 +18,8 @@ import {
   type VizPanel,
 } from '@grafana/scenes';
 import { type LibraryPanel } from '@grafana/schema';
-import { Alert, Button, CodeEditor, Field, Select, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Field, Select, useStyles2 } from '@grafana/ui';
+import { CodeMirrorEditor } from '@grafana/ui/unstable';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { getPanelDataFrames } from 'app/features/dashboard/components/HelpWizard/utils';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -35,13 +36,10 @@ import { buildGridItemForPanel } from '../serialization/transformSaveModelToScen
 import { gridItemToPanel, vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { vizPanelToSchemaV2 } from '../serialization/transformSceneToSaveModelSchemaV2';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
-import {
-  getDashboardSceneFor,
-  getLibraryPanelBehavior,
-  getPanelIdForVizPanel,
-  getQueryRunnerFor,
-  isLibraryPanel,
-} from '../utils/utils';
+import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
+import { mobileEditNotAvailableMessage, useIsMobileEditDeprecated } from '../utils/mobileEditDeprecation';
+import { getDashboardSceneFor, getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
+import { getPanelIdForVizPanel } from '../utils/utils-panels';
 import { isGridLayoutItemKind, isPanelKindV2 } from '../v2schema/validation';
 
 export type ShowContent = 'panel-json' | 'panel-data' | 'data-frames' | 'panel-layout';
@@ -180,8 +178,8 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
       return;
     }
 
-    if (!dashboard.state.isEditing) {
-      dashboard.onEnterEditMode();
+    if (!dashboard.state.isEditing && !dashboard.onEnterEditMode()) {
+      return;
     }
 
     const oldState = gridItem.state;
@@ -238,8 +236,8 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
 
     const vizPanel = buildVizPanel(jsonObj, jsonObj.spec.id);
 
-    if (!dashboard.state.isEditing) {
-      dashboard.onEnterEditMode();
+    if (!dashboard.state.isEditing && !dashboard.onEnterEditMode()) {
+      return;
     }
 
     reportPanelInspectInteraction(InspectTab.JSON, 'apply', {
@@ -263,8 +261,8 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
       return;
     }
 
-    if (!dashboard.state.isEditing) {
-      dashboard.onEnterEditMode();
+    if (!dashboard.state.isEditing && !dashboard.onEnterEditMode()) {
+      return;
     }
 
     panel.parent.setState(newState);
@@ -285,7 +283,7 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
     this.state.onClose();
   }
 
-  public onCodeEditorBlur = (value: string) => {
+  public onJsonTextChange = (value: string) => {
     this.setState({ jsonText: value });
   };
 
@@ -317,6 +315,8 @@ function InspectJsonTabComponent({ model }: SceneComponentProps<InspectJsonTab>)
   const { source: show, jsonText, error } = model.useState();
   const styles = useStyles2(getPanelInspectorStyles2);
   const options = model.getOptions();
+  const isMobileBlocked = useIsMobileEditDeprecated();
+  const isEditable = model.isEditable() && !isMobileBlocked;
 
   return (
     <div className={styles.wrap}>
@@ -330,11 +330,23 @@ function InspectJsonTabComponent({ model }: SceneComponentProps<InspectJsonTab>)
           />
         </Field>
         {model.isEditable() && (
-          <Button className={styles.toolbarItem} onClick={model.onApplyChange}>
+          <Button className={styles.toolbarItem} onClick={model.onApplyChange} disabled={isMobileBlocked}>
             <Trans i18nKey="dashboard-scene.inspect-json-tab.apply">Apply</Trans>
           </Button>
         )}
       </div>
+
+      {isMobileBlocked && model.isEditable() && (
+        <Alert
+          severity="warning"
+          title={t(
+            'dashboard-scene.inspect-json-tab.mobile-edit-unavailable',
+            'Editing is unavailable on small screens'
+          )}
+        >
+          <p>{mobileEditNotAvailableMessage()}</p>
+        </Alert>
+      )}
 
       {error && (
         <Alert severity="error" title={t('dashboard-scene.inspect-json-tab.validation-error', 'Validation error')}>
@@ -345,15 +357,14 @@ function InspectJsonTabComponent({ model }: SceneComponentProps<InspectJsonTab>)
       <div className={styles.content}>
         <AutoSizer disableWidth>
           {({ height }) => (
-            <CodeEditor
-              width="100%"
-              height={height}
+            <CodeMirrorEditor
+              height={`${height}px`}
               language="json"
-              showLineNumbers={true}
-              showMiniMap={jsonText.length > 100}
+              aria-label={t('dashboard.inspect-json.editor-label', 'JSON content')}
               value={jsonText}
-              readOnly={!model.isEditable()}
-              onBlur={model.onCodeEditorBlur}
+              readOnly={!isEditable}
+              onChange={model.onJsonTextChange}
+              onBlur={model.onJsonTextChange}
             />
           )}
         </AutoSizer>

@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 
 import { type GrafanaTheme2, type QueryResultMetaNotice } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Icon, ToolbarButton, Tooltip, useStyles2 } from '@grafana/ui';
 import { getFocusStyles, getMouseFocusStyles } from '@grafana/ui/internal';
 
@@ -16,6 +17,9 @@ export const PanelHeaderNotice = ({ notice, onClick }: Props) => {
   const iconName =
     notice.severity === 'error' || notice.severity === 'warning' ? 'exclamation-triangle' : 'file-landscape-alt';
 
+  // Use the same selector for any variant of notice
+  const testId = selectors.components.Panels.Panel.headerNotice(notice.severity);
+
   if (notice.inspect && onClick) {
     return (
       <ToolbarButton
@@ -25,13 +29,21 @@ export const PanelHeaderNotice = ({ notice, onClick }: Props) => {
         key={notice.severity}
         tooltip={notice.text}
         onClick={(e) => onClick(e, notice.inspect!)}
+        data-testid={testId}
       />
     );
   }
 
   if (notice.link) {
     return (
-      <a className={styles.notice} aria-label={notice.text} href={notice.link} target="_blank" rel="noreferrer">
+      <a
+        className={styles.notice}
+        aria-label={notice.text}
+        href={notice.link}
+        target="_blank"
+        rel="noreferrer"
+        data-testid={testId}
+      >
         <Icon name={iconName} style={{ marginRight: '8px' }} size="md" />
       </a>
     );
@@ -39,7 +51,7 @@ export const PanelHeaderNotice = ({ notice, onClick }: Props) => {
 
   return (
     <Tooltip key={notice.severity} content={notice.text}>
-      <span className={styles.iconTooltip}>
+      <span className={styles.iconTooltip} data-testid={testId}>
         <Icon name={iconName} size="md" />
       </span>
     </Tooltip>

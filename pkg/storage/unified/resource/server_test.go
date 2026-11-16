@@ -5,12 +5,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/bwmarrin/snowflake"
@@ -20,11 +24,21 @@ import (
 	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/attribute"
+	otelcodes "go.opentelemetry.io/otel/codes"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"go.opentelemetry.io/otel/sdk/trace/tracetest"
+	"go.opentelemetry.io/otel/trace"
+	"gocloud.dev/blob/memblob"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
+	"google.golang.org/grpc/test/bufconn"
+	"google.golang.org/protobuf/proto"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	authlib "github.com/grafana/authlib/types"
@@ -34,6 +48,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/storage/unified/resourceclient/resourceutil"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/scheduler"
 )
@@ -120,22 +135,21 @@ func TestSimpleServer(t *testing.T) {
 
 		// should return 404 if not found
 		found, err := server.Read(ctx, &resourcepb.ReadRequest{Key: key})
-		require.NoError(t, err)
-		require.NotNil(t, found.Error)
-		require.Equal(t, int32(http.StatusNotFound), found.Error.Code)
+		foundErr := rpcErrorResult(t, err)
+		require.Nil(t, found)
+		require.NotNil(t, foundErr)
+		require.Equal(t, int32(http.StatusNotFound), foundErr.Code)
 
 		created, err := server.Create(ctx, &resourcepb.CreateRequest{
 			Value: raw,
 			Key:   key,
 		})
 		require.NoError(t, err)
-		require.Nil(t, created.Error)
 		require.True(t, created.ResourceVersion > 0)
 
 		// The key does not include resource version
 		found, err = server.Read(ctx, &resourcepb.ReadRequest{Key: key})
 		require.NoError(t, err)
-		require.Nil(t, found.Error)
 		require.Equal(t, created.ResourceVersion, found.ResourceVersion)
 
 		// Now update the value
@@ -158,8 +172,9 @@ func TestSimpleServer(t *testing.T) {
 			Key:             key,
 			Value:           raw,
 			ResourceVersion: created.ResourceVersion})
-		require.NoError(t, err)
-		require.Equal(t, int32(400), updated.Error.Code) // bad request
+		updatedErr := rpcErrorResult(t, err)
+		require.Nil(t, updated)
+		require.Equal(t, int32(400), updatedErr.Code) // bad request
 
 		// remove the invalid labels
 		obj.SetLabels(nil)
@@ -170,13 +185,11 @@ func TestSimpleServer(t *testing.T) {
 			Value:           raw,
 			ResourceVersion: created.ResourceVersion})
 		require.NoError(t, err)
-		require.Nil(t, updated.Error)
 		require.True(t, updated.ResourceVersion > created.ResourceVersion)
 
 		// We should still get the latest
 		found, err = server.Read(ctx, &resourcepb.ReadRequest{Key: key})
 		require.NoError(t, err)
-		require.Nil(t, found.Error)
 		require.Equal(t, updated.ResourceVersion, found.ResourceVersion)
 
 		all, err = server.List(ctx, &resourcepb.ListRequest{Options: &resourcepb.ListOptions{
@@ -227,10 +240,10 @@ func TestSimpleServer(t *testing.T) {
 		require.True(t, deleted.ResourceVersion > updated.ResourceVersion)
 
 		// We should get not found status when trying to read the latest value
-		found, err = server.Read(ctx, &resourcepb.ReadRequest{Key: key})
-		require.NoError(t, err)
-		require.NotNil(t, found.Error)
-		require.Equal(t, int32(404), found.Error.Code)
+		_, err = server.Read(ctx, &resourcepb.ReadRequest{Key: key})
+		foundErr = rpcErrorResult(t, err)
+		require.NotNil(t, foundErr)
+		require.Equal(t, int32(404), foundErr.Code)
 
 		// And the deleted value should not be in the results
 		all, err = server.List(ctx, &resourcepb.ListRequest{Options: &resourcepb.ListOptions{
@@ -346,8 +359,10 @@ func TestSimpleServer(t *testing.T) {
 			Key:   key,
 		})
 
-		require.NoError(t, err)
-		require.NotNil(t, created)
+		// The name passes key validation; the create then fails only because
+		// it does not match the object's name.
+		require.Nil(t, created)
+		require.ErrorContains(t, err, "key/name do not match")
 
 		// legacy name - also valid
 		key = &resourcepb.ResourceKey{
@@ -362,8 +377,10 @@ func TestSimpleServer(t *testing.T) {
 			Key:   key,
 		})
 
-		require.NoError(t, err)
-		require.NotNil(t, created)
+		// The name passes key validation; the create then fails only because
+		// it does not match the object's name.
+		require.Nil(t, created)
+		require.ErrorContains(t, err, "key/name do not match")
 
 		// legacy name - also valid
 		key = &resourcepb.ResourceKey{
@@ -378,8 +395,10 @@ func TestSimpleServer(t *testing.T) {
 			Key:   key,
 		})
 
-		require.NoError(t, err)
-		require.NotNil(t, created)
+		// The name passes key validation; the create then fails only because
+		// it does not match the object's name.
+		require.Nil(t, created)
+		require.ErrorContains(t, err, "key/name do not match")
 
 		invalidQualifiedNames := []string{
 			"",                                     // empty
@@ -456,7 +475,7 @@ func TestSimpleServer(t *testing.T) {
     	"apiVersion": "playlist.grafana.app/v0alpha1",
 			"kind": "Playlist",
 			"metadata": {
-				"name": "fdgsv37qslr0ga",
+				"name": "occ-check",
 				"namespace": "default",
 				"uid": "xyz",
 				"annotations": {
@@ -481,7 +500,7 @@ func TestSimpleServer(t *testing.T) {
 			Group:     "playlist.grafana.app",
 			Resource:  "rrrr", // can be anything :(
 			Namespace: "default",
-			Name:      "fdgsv37qslr0ga",
+			Name:      "occ-check",
 		}
 
 		created, err := server.Create(ctx, &resourcepb.CreateRequest{
@@ -500,13 +519,13 @@ func TestSimpleServer(t *testing.T) {
 
 		// Second update with stale RV and different bytes should return a conflict.
 		rawV3 := []byte(strings.Replace(string(raw), `"title": "hello"`, `"title": "again"`, 1))
-		rsp, err := server.Update(ctx, &resourcepb.UpdateRequest{
+		_, err = server.Update(ctx, &resourcepb.UpdateRequest{
 			Key:             key,
 			Value:           rawV3,
 			ResourceVersion: created.ResourceVersion})
-		require.NoError(t, err)
-		require.Equal(t, int32(http.StatusConflict), rsp.Error.Code)
-		require.Contains(t, rsp.Error.Message, "requested RV does not match current RV")
+		rspErr := rpcErrorResult(t, err)
+		require.Equal(t, int32(http.StatusConflict), rspErr.Code)
+		require.Contains(t, rspErr.Message, "requested RV does not match current RV")
 	})
 
 	t.Run("playlist update with identical bytes does not increment RV", func(t *testing.T) {
@@ -542,14 +561,12 @@ func TestSimpleServer(t *testing.T) {
 			Key:   key,
 		})
 		require.NoError(t, err)
-		require.Nil(t, created.Error)
 
 		rsp, err := server.Update(ctx, &resourcepb.UpdateRequest{
 			Key:             key,
 			Value:           raw,
 			ResourceVersion: created.ResourceVersion})
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
 		require.Equal(t, created.ResourceVersion, rsp.ResourceVersion, "RV should not change when bytes are identical")
 
 		// The stored resource version should also be unchanged.
@@ -586,12 +603,12 @@ func TestListStoredResources(t *testing.T) {
 	})
 
 	create := func(namespace, name string) {
-		raw := []byte(fmt.Sprintf(`{
+		raw := fmt.Appendf(nil, `{
 			"apiVersion": "playlist.grafana.app/v0alpha1",
 			"kind": "Playlist",
 			"metadata": {"name": %q, "namespace": %q},
 			"spec": {"title": "hello", "interval": "5m"}
-		}`, name, namespace))
+		}`, name, namespace)
 		resp, err := server.Create(ctx, &resourcepb.CreateRequest{
 			Value: raw,
 			Key: &resourcepb.ResourceKey{
@@ -602,7 +619,7 @@ func TestListStoredResources(t *testing.T) {
 			},
 		})
 		require.NoError(t, err)
-		require.Nil(t, resp.Error)
+		require.NotNil(t, resp)
 	}
 
 	// Two objects of the same group/resource in ns1 must be reported once.
@@ -655,23 +672,26 @@ func TestRunInQueue(t *testing.T) {
 			executed <- true
 		}
 
-		err := s.runInQueue(context.Background(), testTenantID, runnable)
+		err := s.runInQueue(context.Background(), testTenantID, "read", runnable)
 		require.NoError(t, err)
 		assert.True(t, <-executed, "runnable should have been executed")
 	})
 
 	t.Run("should time out if a task is sitting in the queue beyond the timeout", func(t *testing.T) {
-		s, _ := newTestServerWithQueue(t, 1, 1)
-		executed := make(chan struct{}, 1)
-		runnable := func(ctx context.Context) {
-			time.Sleep(1 * time.Second)
-			executed <- struct{}{}
-		}
+		synctest.Test(t, func(t *testing.T) {
+			s, _ := newTestServerWithQueue(t, 1, 1)
+			executed := make(chan struct{})
+			runnable := func(ctx context.Context) {
+				<-ctx.Done()
+				close(executed)
+			}
 
-		err := s.runInQueue(context.Background(), testTenantID, runnable)
-		require.Error(t, err)
-		assert.Equal(t, context.DeadlineExceeded, err)
-		<-executed
+			err := s.runInQueue(t.Context(), testTenantID, "read", runnable)
+			require.ErrorIs(t, err, errQueueTimeout)
+			require.NotErrorIs(t, err, context.DeadlineExceeded)
+			require.NoError(t, t.Context().Err())
+			<-executed
+		})
 	})
 
 	t.Run("should use cluster-scoped tenant for empty tenantID", func(t *testing.T) {
@@ -682,7 +702,7 @@ func TestRunInQueue(t *testing.T) {
 			executed <- true
 		}
 
-		err := s.runInQueue(context.Background(), "", runnable)
+		err := s.runInQueue(context.Background(), "", "read", runnable)
 		require.NoError(t, err)
 		assert.True(t, <-executed, "runnable should have been executed with cluster-scoped tenantID")
 	})
@@ -712,7 +732,7 @@ func TestRunInQueue(t *testing.T) {
 			executed = true
 		}
 
-		err = s.runInQueue(context.Background(), testTenantID, runnable)
+		err = s.runInQueue(context.Background(), testTenantID, "read", runnable)
 		require.Error(t, err)
 		require.ErrorIs(t, err, scheduler.ErrTenantQueueFull)
 		require.False(t, executed, "runnable should not have been executed")
@@ -761,35 +781,50 @@ func newTestServerWithQueue(t *testing.T, maxSizePerTenant int, numWorkers int) 
 }
 
 func TestArtificialDelayAfterSuccessfulOperation(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 	s := &server{
 		artificialSuccessfulWriteDelay: 1 * time.Millisecond,
 		log:                            log.NewNopLogger(),
 	}
 
-	check := func(t *testing.T, expectedSleep bool, res responseWithErrorResult, err error) {
-		slept := s.sleepAfterSuccessfulWriteOperation(ctx, "test", &resourcepb.ResourceKey{}, res, err)
+	check := func(t *testing.T, expectedSleep bool, err error) {
+		slept := s.sleepAfterSuccessfulWriteOperation(ctx, "test", &resourcepb.ResourceKey{}, err)
 		require.Equal(t, expectedSleep, slept)
 	}
 
-	// Successful responses should sleep
-	check(t, true, nil, nil)
+	// Successful operations should sleep
+	check(t, true, nil)
 
-	check(t, true, (responseWithErrorResult)((*resourcepb.CreateResponse)(nil)), nil)
-	check(t, true, &resourcepb.CreateResponse{}, nil)
+	// Failed operations should return without sleeping
+	check(t, false, errors.New("some error"))
+	check(t, false, GRPCStatusError(AsErrorResult(errors.New("some error"))))
+}
 
-	check(t, true, (responseWithErrorResult)((*resourcepb.UpdateResponse)(nil)), nil)
-	check(t, true, &resourcepb.UpdateResponse{}, nil)
+type fakeResourceIndexClient struct {
+	resourcepb.ResourceIndexClient
+	statsResponse *resourcepb.ResourceStatsResponse
+	statsError    error
+	statsRequests []*resourcepb.ResourceStatsRequest
+}
 
-	check(t, true, (responseWithErrorResult)((*resourcepb.DeleteResponse)(nil)), nil)
-	check(t, true, &resourcepb.DeleteResponse{}, nil)
+type quotaLogRecorder struct {
+	log.Logger
+	messages []string
+}
 
-	// Failed responses should return without sleeping
-	check(t, false, nil, errors.New("some error"))
-	check(t, false, &resourcepb.CreateResponse{Error: AsErrorResult(errors.New("some error"))}, nil)
-	check(t, false, &resourcepb.UpdateResponse{Error: AsErrorResult(errors.New("some error"))}, nil)
-	check(t, false, &resourcepb.DeleteResponse{Error: AsErrorResult(errors.New("some error"))}, nil)
+func (l *quotaLogRecorder) FromContext(context.Context) log.Logger { return l }
+
+func (l *quotaLogRecorder) Info(message string, _ ...any) {
+	l.messages = append(l.messages, message)
+}
+
+func newFakeResourceIndexClient() *fakeResourceIndexClient {
+	return &fakeResourceIndexClient{}
+}
+
+func (f *fakeResourceIndexClient) GetStats(_ context.Context, req *resourcepb.ResourceStatsRequest, _ ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
+	f.statsRequests = append(f.statsRequests, req)
+	return f.statsResponse, f.statsError
 }
 
 func TestGetQuotaUsage(t *testing.T) {
@@ -801,17 +836,17 @@ func TestGetQuotaUsage(t *testing.T) {
 			log:              log.NewNopLogger(),
 		}
 
-		resp, err := s.GetQuotaUsage(ctx, &resourcepb.QuotaUsageRequest{
+		_, err := s.GetQuotaUsage(ctx, &resourcepb.QuotaUsageRequest{
 			Key: &resourcepb.ResourceKey{
 				Namespace: "stacks-123",
 				Group:     "dashboard.grafana.app",
 				Resource:  "dashboards",
 			},
 		})
-		require.NoError(t, err)
-		require.NotNil(t, resp.Error)
-		assert.Equal(t, int32(http.StatusNotImplemented), resp.Error.Code)
-		assert.Equal(t, "overrides service not configured on resource server", resp.Error.Message)
+		respErr := rpcErrorResult(t, err)
+		require.NotNil(t, respErr)
+		assert.Equal(t, int32(http.StatusNotImplemented), respErr.Code)
+		assert.Equal(t, "overrides service not configured on resource server", respErr.Message)
 	})
 
 	t.Run("returns usage and limit successfully", func(t *testing.T) {
@@ -858,12 +893,11 @@ func TestGetQuotaUsage(t *testing.T) {
 			},
 		})
 		require.NoError(t, err)
-		require.Nil(t, resp.Error)
 		assert.Equal(t, int64(42), resp.Usage)
 		assert.Equal(t, int64(500), resp.Limit)
 	})
 
-	t.Run("surfaces stats response error on the response", func(t *testing.T) {
+	t.Run("surfaces returned stats error", func(t *testing.T) {
 		tmpFile := filepath.Join(t.TempDir(), "overrides.yaml")
 		content := `overrides:
   "123":
@@ -879,9 +913,7 @@ func TestGetQuotaUsage(t *testing.T) {
 		require.NoError(t, err)
 
 		searchClient := newFakeResourceIndexClient()
-		searchClient.statsResponse = &resourcepb.ResourceStatsResponse{
-			Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "stats blew up"},
-		}
+		searchClient.statsError = GRPCStatusError(&resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "stats blew up"})
 
 		s, err := NewResourceServer(ResourceServerOptions{
 			Backend:          &mockStorageBackend{},
@@ -893,17 +925,17 @@ func TestGetQuotaUsage(t *testing.T) {
 			_ = s.Stop(ctx)
 		})
 
-		resp, err := s.GetQuotaUsage(ctx, &resourcepb.QuotaUsageRequest{
+		_, err = s.GetQuotaUsage(ctx, &resourcepb.QuotaUsageRequest{
 			Key: &resourcepb.ResourceKey{
 				Namespace: "stacks-123",
 				Group:     "dashboard.grafana.app",
 				Resource:  "dashboards",
 			},
 		})
-		require.NoError(t, err)
-		require.NotNil(t, resp.Error)
-		assert.Equal(t, int32(http.StatusInternalServerError), resp.Error.Code)
-		assert.Equal(t, "stats blew up", resp.Error.Message)
+		respErr := rpcErrorResult(t, err)
+		require.NotNil(t, respErr)
+		assert.Equal(t, int32(http.StatusInternalServerError), respErr.Code)
+		assert.Equal(t, "stats blew up", respErr.Message)
 	})
 }
 
@@ -912,18 +944,22 @@ func TestCheckQuotas(t *testing.T) {
 		name              string
 		limit             int
 		enforcedResources map[string]bool
+		loggedResources   map[string]bool
+		expectStats       int
 		expectError       bool
 	}{
 		{
 			name:              "enforced resource returns error if quota exceeded",
 			limit:             1,
 			enforcedResources: map[string]bool{"grafana.dashboard.app/dashboards": true},
+			expectStats:       1,
 			expectError:       true,
 		},
 		{
 			name:              "enforced resource returns nil if within quota",
 			limit:             2,
 			enforcedResources: map[string]bool{"grafana.dashboard.app/dashboards": true},
+			expectStats:       1,
 			expectError:       false,
 		},
 		{
@@ -937,6 +973,44 @@ func TestCheckQuotas(t *testing.T) {
 			limit:             1,
 			enforcedResources: nil,
 			expectError:       false,
+		},
+		{
+			name:            "log-only resource counts and logs without enforcement",
+			limit:           1,
+			loggedResources: map[string]bool{"grafana.dashboard.app/dashboards": true},
+			expectStats:     1,
+		},
+		{
+			name:            "log-only resource within quota counts without logging an exceeded quota",
+			limit:           2,
+			loggedResources: map[string]bool{"grafana.dashboard.app/dashboards": true},
+			expectStats:     1,
+		},
+		{
+			name:              "enforced and logged resource counts once and enforces",
+			limit:             1,
+			enforcedResources: map[string]bool{"grafana.dashboard.app/dashboards": true},
+			loggedResources:   map[string]bool{"grafana.dashboard.app/dashboards": true},
+			expectStats:       1,
+			expectError:       true,
+		},
+		{
+			name:              "zero quota is still enforced",
+			limit:             0,
+			enforcedResources: map[string]bool{"grafana.dashboard.app/dashboards": true},
+			expectStats:       1,
+			expectError:       true,
+		},
+		{
+			name:              "false entries do not request counts",
+			limit:             1,
+			enforcedResources: map[string]bool{"grafana.dashboard.app/dashboards": false},
+			loggedResources:   map[string]bool{"grafana.dashboard.app/dashboards": false},
+		},
+		{
+			name:            "same resource name in another group is not selected",
+			limit:           1,
+			loggedResources: map[string]bool{"other.group/dashboards": true},
 		},
 	}
 
@@ -978,14 +1052,26 @@ func TestCheckQuotas(t *testing.T) {
 				Backend:          &mockStorageBackend{},
 				SearchClient:     searchClient,
 				OverridesService: overridesService,
-				QuotasConfig:     QuotasConfig{EnforcedResources: tt.enforcedResources},
+				QuotasConfig:     QuotasConfig{EnforcedResources: tt.enforcedResources, LoggedResources: tt.loggedResources},
 			})
 			require.NoError(t, err)
 			t.Cleanup(func() {
 				_ = server.Stop(ctx)
 			})
 
+			logger := &quotaLogRecorder{Logger: log.NewNopLogger()}
+			server.log = logger
 			err = server.checkQuota(ctx, nsr)
+			require.Len(t, searchClient.statsRequests, tt.expectStats)
+			if tt.expectStats > 0 {
+				require.Equal(t, nsr.Namespace, searchClient.statsRequests[0].Namespace)
+				require.Equal(t, []string{nsr.GroupResource()}, searchClient.statsRequests[0].Kinds)
+			}
+			if tt.expectStats > 0 && tt.limit <= 1 {
+				require.Equal(t, []string{"Quota exceeded on create"}, logger.messages)
+			} else {
+				require.Empty(t, logger.messages)
+			}
 			if tt.expectError {
 				require.Error(t, err)
 				return
@@ -994,52 +1080,150 @@ func TestCheckQuotas(t *testing.T) {
 		})
 	}
 
-	t.Run("stats response error fails open (no quota error returned)", func(t *testing.T) {
-		ctx := t.Context()
+	for _, transportError := range []bool{false, true} {
+		t.Run(fmt.Sprintf("stats error fails open (transport=%v)", transportError), func(t *testing.T) {
+			ctx := t.Context()
 
-		overridesFile := filepath.Join(t.TempDir(), "overrides.yaml")
-		overrides := `overrides:
+			overridesFile := filepath.Join(t.TempDir(), "overrides.yaml")
+			overrides := `overrides:
   "123":
     quotas:
       grafana.dashboard.app/dashboards:
         limit: 1
 `
-		require.NoError(t, os.WriteFile(overridesFile, []byte(overrides), 0644))
+			require.NoError(t, os.WriteFile(overridesFile, []byte(overrides), 0644))
 
-		tcr := tracing.NewNoopTracerService()
-		overridesService, err := NewOverridesService(ctx, log.NewNopLogger(), prometheus.NewRegistry(), tcr.Tracer, ReloadOptions{
-			FilePath: overridesFile,
+			tcr := tracing.NewNoopTracerService()
+			overridesService, err := NewOverridesService(ctx, log.NewNopLogger(), prometheus.NewRegistry(), tcr.Tracer, ReloadOptions{
+				FilePath: overridesFile,
+			})
+			require.NoError(t, err)
+
+			nsr := NamespacedResource{
+				Namespace: "stacks-123",
+				Group:     "grafana.dashboard.app",
+				Resource:  "dashboards",
+			}
+
+			searchClient := newFakeResourceIndexClient()
+			searchClient.statsError = GRPCStatusError(&resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "stats blew up"})
+
+			if transportError {
+				searchClient.statsResponse = nil
+				searchClient.statsError = status.Error(codes.Unavailable, "stats unavailable")
+			}
+
+			metrics := ProvideStorageMetrics(prometheus.NewRegistry())
+			server, err := NewResourceServer(ResourceServerOptions{
+				Backend:          &mockStorageBackend{},
+				SearchClient:     searchClient,
+				OverridesService: overridesService,
+				StorageMetrics:   metrics,
+				QuotasConfig:     QuotasConfig{EnforcedResources: map[string]bool{"grafana.dashboard.app/dashboards": true}},
+			})
+			require.NoError(t, err)
+			t.Cleanup(func() {
+				_ = server.Stop(ctx)
+			})
+
+			require.NoError(t, server.checkQuota(ctx, nsr))
+			require.Equal(t, float64(1), testutil.ToFloat64(
+				metrics.DegradedOperations.WithLabelValues("check_quota", "stats_error", nsr.Group, nsr.Resource)))
+			require.Len(t, searchClient.statsRequests, 1)
 		})
-		require.NoError(t, err)
+	}
+}
 
-		nsr := NamespacedResource{
-			Namespace: "stacks-123",
-			Group:     "grafana.dashboard.app",
-			Resource:  "dashboards",
-		}
-
-		searchClient := newFakeResourceIndexClient()
-		searchClient.statsResponse = &resourcepb.ResourceStatsResponse{
-			Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "stats blew up"},
-		}
-
-		metrics := ProvideStorageMetrics(prometheus.NewRegistry())
-		server, err := NewResourceServer(ResourceServerOptions{
-			Backend:          &mockStorageBackend{},
-			SearchClient:     searchClient,
-			OverridesService: overridesService,
-			StorageMetrics:   metrics,
-			QuotasConfig:     QuotasConfig{EnforcedResources: map[string]bool{"grafana.dashboard.app/dashboards": true}},
+func TestCheckQuotaSkipsUnselectedKindsBeforeLookup(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		config QuotasConfig
+		key    NamespacedResource
+	}{
+		{
+			name:   "plugin kind not selected",
+			config: QuotasConfig{EnforcedResources: map[string]bool{"dashboard.grafana.app/dashboards": true}},
+			key:    NamespacedResource{Namespace: "stacks-123", Group: "plugins.grafana.app", Resource: "plugins"},
+		},
+		{
+			name: "no kinds selected",
+			key:  NamespacedResource{Namespace: "stacks-123", Group: "plugins.grafana.app", Resource: "plugins"},
+		},
+		{
+			name:   "namespace missing even for selected kind",
+			config: QuotasConfig{LoggedResources: map[string]bool{"plugins.grafana.app/plugins": true}},
+			key:    NamespacedResource{Group: "plugins.grafana.app", Resource: "plugins"},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			// An uninitialized overrides service would fail if the lookup were reached.
+			s := &server{quotasConfig: tc.config, overridesService: &OverridesService{}}
+			require.NoError(t, s.checkQuota(t.Context(), tc.key))
 		})
-		require.NoError(t, err)
-		t.Cleanup(func() {
-			_ = server.Stop(ctx)
-		})
+	}
+}
 
-		require.NoError(t, server.checkQuota(ctx, nsr))
-		require.Equal(t, float64(1), testutil.ToFloat64(
-			metrics.DegradedOperations.WithLabelValues("check_quota", "stats_error", nsr.Group, nsr.Resource)))
-	})
+func TestQuotaSelectionOnCreate(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		config    QuotasConfig
+		wantStats int
+		wantCode  int32
+	}{
+		{
+			name:   "ignored plugin create is stored without stats",
+			config: QuotasConfig{EnforcedResources: map[string]bool{"dashboard.grafana.app/dashboards": true}},
+		},
+		{
+			name:      "log-only plugin create is stored despite zero quota",
+			config:    QuotasConfig{LoggedResources: map[string]bool{"plugins.grafana.app/plugins": true}},
+			wantStats: 1,
+		},
+		{
+			name:      "enforced plugin create is rejected at zero quota",
+			config:    QuotasConfig{EnforcedResources: map[string]bool{"plugins.grafana.app/plugins": true}},
+			wantStats: 1,
+			wantCode:  http.StatusForbidden,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := identity.WithServiceIdentityForSingleNamespaceContext(t.Context(), "stacks-123")
+			db, err := badger.Open(badger.DefaultOptions("").WithInMemory(true).WithLogger(nil))
+			require.NoError(t, err)
+			t.Cleanup(func() { require.NoError(t, db.Close()) })
+			backend, err := NewKVStorageBackend(KVBackendOptions{KvStore: NewBadgerKV(db)})
+			require.NoError(t, err)
+			file := filepath.Join(t.TempDir(), "overrides.yaml")
+			require.NoError(t, os.WriteFile(file, []byte("overrides:\n  \"123\":\n    quotas:\n      plugins.grafana.app/plugins:\n        limit: 0\n"), 0o600))
+			overrides, err := NewOverridesService(ctx, log.NewNopLogger(), prometheus.NewRegistry(), tracing.NewNoopTracerService(), ReloadOptions{FilePath: file})
+			require.NoError(t, err)
+			stats := newFakeResourceIndexClient()
+			stats.statsResponse = &resourcepb.ResourceStatsResponse{Stats: []*resourcepb.ResourceStatsResponse_Stats{{Group: "plugins.grafana.app", Resource: "plugins"}}}
+			s, err := NewResourceServer(ResourceServerOptions{Backend: backend, SearchClient: stats, OverridesService: overrides, QuotasConfig: tc.config})
+			require.NoError(t, err)
+			t.Cleanup(func() { require.NoError(t, s.Stop(context.WithoutCancel(ctx))) })
+			key := &resourcepb.ResourceKey{Namespace: "stacks-123", Group: "plugins.grafana.app", Resource: "plugins", Name: "test-plugin"}
+			response, err := s.Create(ctx, &resourcepb.CreateRequest{
+				Key:   key,
+				Value: []byte(`{"apiVersion":"plugins.grafana.app/v0alpha1","kind":"Plugin","metadata":{"name":"test-plugin","namespace":"stacks-123"},"spec":{"id":"test-plugin"}}`),
+			})
+			if tc.wantCode != 0 {
+				require.Nil(t, response)
+				require.Equal(t, tc.wantCode, rpcErrorResult(t, err).GetCode())
+			} else {
+				require.NoError(t, err)
+			}
+			require.Len(t, stats.statsRequests, tc.wantStats)
+			read, err := s.Read(ctx, &resourcepb.ReadRequest{Key: key})
+			if tc.wantCode != 0 {
+				require.Nil(t, read)
+				require.Equal(t, int32(http.StatusNotFound), rpcErrorResult(t, err).GetCode())
+			} else {
+				require.NoError(t, err)
+				require.NotEmpty(t, read.Value)
+			}
+		})
+	}
 }
 
 func TestNewResourceServer_RequiresStatsSourceWhenQuotasEnabled(t *testing.T) {
@@ -1126,7 +1310,7 @@ func TestShouldEnforce(t *testing.T) {
 	}
 }
 
-func Test_resourceVersionTime(t *testing.T) {
+func Test_ResourceVersionTime(t *testing.T) {
 	// Reference time: 2026-01-15 12:00:00 UTC
 	refTime := time.Date(2026, 1, 15, 12, 0, 0, 0, time.UTC)
 
@@ -1175,7 +1359,7 @@ func Test_resourceVersionTime(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := resourceVersionTime(tt.rv)
+			got := ResourceVersionTime(tt.rv)
 			diff := got.Sub(tt.wantClose).Abs()
 			require.Less(t, diff, time.Second,
 				"expected time close to %v, got %v (diff %v)", tt.wantClose, got, diff)
@@ -1342,8 +1526,9 @@ func TestGracefulShutdown(t *testing.T) {
 // mockWatchServer implements resourcepb.ResourceStore_WatchServer for testing.
 type mockWatchServer struct {
 	grpc.ServerStream
-	ctx    context.Context
-	events chan *resourcepb.WatchEvent
+	ctx       context.Context
+	events    chan *resourcepb.WatchEvent
+	sendDelay time.Duration
 }
 
 func newMockWatchServer(ctx context.Context) *mockWatchServer {
@@ -1354,6 +1539,13 @@ func newMockWatchServer(ctx context.Context) *mockWatchServer {
 }
 
 func (m *mockWatchServer) Send(evt *resourcepb.WatchEvent) error {
+	if m.sendDelay > 0 {
+		select {
+		case <-m.ctx.Done():
+			return m.ctx.Err()
+		case <-time.After(m.sendDelay):
+		}
+	}
 	select {
 	case <-m.ctx.Done():
 		return m.ctx.Err()
@@ -1368,30 +1560,6 @@ func (m *mockWatchServer) SendHeader(metadata.MD) error { return nil }
 func (m *mockWatchServer) SetTrailer(metadata.MD)       {}
 func (m *mockWatchServer) SendMsg(any) error            { return nil }
 func (m *mockWatchServer) RecvMsg(any) error            { return nil }
-
-// mockDailyStatsServer implements resourcepb.ResourceStats_GetResourceDailyStatsServer
-// for testing, collecting everything sent by the server.
-type mockDailyStatsServer struct {
-	grpc.ServerStream
-	ctx  context.Context
-	days []*resourcepb.DailyStat
-}
-
-func newMockDailyStatsServer(ctx context.Context) *mockDailyStatsServer {
-	return &mockDailyStatsServer{ctx: ctx}
-}
-
-func (m *mockDailyStatsServer) Send(d *resourcepb.DailyStat) error {
-	m.days = append(m.days, d)
-	return nil
-}
-
-func (m *mockDailyStatsServer) Context() context.Context     { return m.ctx }
-func (m *mockDailyStatsServer) SetHeader(metadata.MD) error  { return nil }
-func (m *mockDailyStatsServer) SendHeader(metadata.MD) error { return nil }
-func (m *mockDailyStatsServer) SetTrailer(metadata.MD)       {}
-func (m *mockDailyStatsServer) SendMsg(any) error            { return nil }
-func (m *mockDailyStatsServer) RecvMsg(any) error            { return nil }
 
 const (
 	watchTestGroup     = "playlist.grafana.app"
@@ -1411,9 +1579,16 @@ func newWatchTestUser() *identity.StaticRequester {
 }
 
 type watchTestServerOpts struct {
+	EventSubscriber   EventSubscriber
+	EventPublisher    EventPublisher
 	BookmarkFrequency time.Duration
 	StorageMetrics    *StorageMetrics
 	AccessClient      authlib.AccessClient
+	NatsWatchMaxAge   time.Duration
+	// WrapKV wraps the backing store, e.g. to stall reads.
+	WrapKV func(KV) KV
+	// NotifierBufferSize overrides the notifier's buffer; zero keeps the default.
+	NotifierBufferSize int
 }
 
 func newWatchTestServer(t *testing.T, opts watchTestServerOpts) *server {
@@ -1424,17 +1599,29 @@ func newWatchTestServer(t *testing.T, opts watchTestServerOpts) *server {
 	require.NoError(t, err)
 	t.Cleanup(func() { require.NoError(t, db.Close()) })
 
+	var kvStore KV = NewBadgerKV(db)
+	if opts.WrapKV != nil {
+		kvStore = opts.WrapKV(kvStore)
+	}
+	watchExpiry := NewWatchExpiry()
 	store, err := NewKVStorageBackend(KVBackendOptions{
-		KvStore:      NewBadgerKV(db),
-		WatchOptions: WatchOptions{SettleDelay: 1 * time.Millisecond},
+		KvStore:            kvStore,
+		EventSubscriber:    opts.EventSubscriber,
+		EventPublisher:     opts.EventPublisher,
+		EnableNatsNotifier: opts.EventSubscriber != nil,
+		WatchInvalidator:   watchExpiry,
+		WatchOptions:       WatchOptions{SettleDelay: 1 * time.Millisecond, BufferSize: opts.NotifierBufferSize},
 	})
 	require.NoError(t, err)
 
 	srv, err := NewResourceServer(ResourceServerOptions{
-		Backend:           store,
-		BookmarkFrequency: opts.BookmarkFrequency,
-		StorageMetrics:    opts.StorageMetrics,
-		AccessClient:      opts.AccessClient,
+		Backend:              store,
+		WatchExpiry:          watchExpiry,
+		BookmarkFrequency:    opts.BookmarkFrequency,
+		SeededWatchesEnabled: true,
+		StorageMetrics:       opts.StorageMetrics,
+		AccessClient:         opts.AccessClient,
+		NatsWatchMaxAge:      opts.NatsWatchMaxAge,
 	})
 	require.NoError(t, err)
 	t.Cleanup(func() {
@@ -1472,14 +1659,8 @@ func createTestPlaylist(ctx context.Context, srv *server) error {
 		Namespace: watchTestNamespace,
 		Name:      name,
 	}
-	created, err := srv.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: value})
-	if err != nil {
-		return err
-	}
-	if created.Error != nil {
-		return fmt.Errorf("creating playlist %q: %v", name, created.Error)
-	}
-	return nil
+	_, err := srv.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: value})
+	return err
 }
 
 func TestPeriodicBookmarks(t *testing.T) {
@@ -1623,6 +1804,552 @@ func TestPeriodicBookmarks(t *testing.T) {
 	})
 }
 
+type bookmarkWatchServer struct {
+	*mockWatchServer
+	beforeSend func(*resourcepb.WatchEvent) error
+}
+
+func (s *bookmarkWatchServer) Send(event *resourcepb.WatchEvent) error {
+	if s.beforeSend != nil {
+		if err := s.beforeSend(event); err != nil {
+			return err
+		}
+	}
+	return s.mockWatchServer.Send(event)
+}
+
+// startBookmarkWatch uses the real broadcaster with controlled events and sends.
+// Call it inside synctest so ticker assertions do not depend on scheduling delays.
+func startBookmarkWatch(t *testing.T, req *resourcepb.WatchRequest, configure func(*server, *bookmarkWatchServer)) (chan<- *WrittenEvent, *bookmarkWatchServer, <-chan error) {
+	t.Helper()
+	ctx, cancel := context.WithCancel(authlib.WithAuthInfo(t.Context(), newWatchTestUser()))
+	events := make(chan *WrittenEvent, 10)
+	stream := &bookmarkWatchServer{mockWatchServer: newMockWatchServer(ctx)}
+	srv, err := NewUninitializedResourceServer(ResourceServerOptions{
+		Backend:           &UnimplementedStorageBackend{},
+		BookmarkFrequency: time.Second,
+	})
+	require.NoError(t, err)
+	srv.log = log.NewNopLogger()
+	srv.broadcaster = NewBroadcaster(ctx, events, newBroadcasterMetrics(prometheus.NewRegistry()), nil)
+	if configure != nil {
+		configure(srv, stream)
+	}
+	done := make(chan error, 1)
+	go func() { done <- srv.Watch(req, stream) }()
+	t.Cleanup(func() {
+		cancel()
+		srv.cancel()
+
+		// Finish watch cancellation before checking that the watch goroutine returned.
+		synctest.Wait()
+
+		select {
+		case err := <-done:
+			assert.NoError(t, err)
+		default: // An error-path test already consumed the result.
+		}
+	})
+
+	// Start the watch and its bookmark timer before returning control to the test.
+	synctest.Wait()
+
+	return events, stream, done
+}
+
+func bookmarkWatchRequest() *resourcepb.WatchRequest {
+	return &resourcepb.WatchRequest{
+		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+			Group: watchTestGroup, Resource: watchTestResource, Namespace: watchTestNamespace, Name: "playlist",
+		}},
+		Since:               100,
+		AllowWatchBookmarks: true,
+	}
+}
+
+func bookmarkWrittenEvent(rv int64) *WrittenEvent {
+	return &WrittenEvent{
+		Key:             bookmarkWatchRequest().Options.Key,
+		Type:            resourcepb.WatchEvent_ADDED,
+		ResourceVersion: rv,
+		Value:           []byte(`{"metadata":{"name":"playlist"}}`),
+	}
+}
+
+func requireBookmarkEvent(t *testing.T, stream *bookmarkWatchServer, eventType resourcepb.WatchEvent_Type, rv int64) {
+	t.Helper()
+
+	// Finish pending watch delivery before reading the expected event or bookmark.
+	synctest.Wait()
+
+	require.NotEmpty(t, stream.events, "expected %s at RV %d", eventType, rv)
+	event := <-stream.events
+	require.Equal(t, eventType, event.Type)
+	require.Equal(t, rv, event.Resource.Version)
+}
+
+func advanceBookmarkClock() time.Time {
+	// synctest's clock starts before the Snowflake epoch.
+	time.Sleep(time.Until(time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)))
+	return time.Now()
+}
+
+func TestWatchPreviousReadError(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		events, stream, done := startBookmarkWatch(t, bookmarkWatchRequest(), func(srv *server, _ *bookmarkWatchServer) {
+			srv.backend = &internalReadBackend{failure: &resourcepb.ErrorResult{
+				Code: http.StatusInternalServerError, Message: "previous version read failed",
+			}}
+		})
+		event := bookmarkWrittenEvent(200)
+		event.Type = resourcepb.WatchEvent_MODIFIED
+		event.PreviousRV = 150
+		events <- event
+
+		// Process the failed previous-version read before checking that the watch remains open.
+		synctest.Wait()
+
+		require.Empty(t, done, "watch should remain open after the previous version read fails")
+		require.Len(t, stream.events, 1)
+		got := <-stream.events
+		require.Equal(t, event.Type, got.Type)
+		require.Equal(t, event.ResourceVersion, got.Resource.Version)
+		require.Equal(t, event.Value, got.Resource.Value)
+		require.Nil(t, got.Previous)
+	})
+}
+
+func TestWatchDeleteRetainsPreviousJobRevisionAfterPruning(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx := t.Context()
+	ns := NamespacedResource{
+		Namespace: "test-namespace",
+		Group:     "provisioning.grafana.app",
+		Resource:  "jobs",
+	}
+	const name = "test-job"
+
+	previousRV, previous := addTestObject(t, backend, ctx, ns, name, "before-delete")
+	deletedRV := deleteTestObject(t, backend, ctx, previous, previousRV, ns, name)
+	recreatedRV, recreated := addTestObject(t, backend, ctx, ns, name, "recreated")
+	_ = updateTestObject(t, backend, ctx, recreated, recreatedRV, ns, name, "updated")
+
+	require.NoError(t, backend.pruneEvents(ctx, PruningKey{
+		Namespace: ns.Namespace,
+		Group:     ns.Group,
+		Resource:  ns.Resource,
+		Name:      name,
+	}))
+
+	synctest.Test(t, func(t *testing.T) {
+		key := &resourcepb.ResourceKey{
+			Namespace: ns.Namespace,
+			Group:     ns.Group,
+			Resource:  ns.Resource,
+			Name:      name,
+		}
+		events, stream, done := startBookmarkWatch(t, &resourcepb.WatchRequest{
+			Options: &resourcepb.ListOptions{Key: key},
+			Since:   previousRV,
+		}, func(srv *server, _ *bookmarkWatchServer) {
+			srv.backend = backend
+		})
+
+		events <- &WrittenEvent{
+			Key:             key,
+			Type:            resourcepb.WatchEvent_DELETED,
+			ResourceVersion: deletedRV,
+			PreviousRV:      previousRV,
+			Value:           objectToJSONBytes(t, previous),
+		}
+
+		// Finish the previous-version lookup and its error handling before checking watch shutdown.
+		synctest.Wait()
+
+		select {
+		case err := <-done:
+			require.NoError(t, err)
+		case event := <-stream.events:
+			require.Equal(t, resourcepb.WatchEvent_DELETED, event.Type)
+			require.Equal(t, deletedRV, event.Resource.Version)
+			require.Empty(t, event.Resource.Value)
+			require.NotNil(t, event.Previous)
+			require.Equal(t, previousRV, event.Previous.Version)
+		default:
+			t.Fatal("watch did not emit the delete event")
+		}
+	})
+}
+
+func TestIncrementalBookmarksProgressLag(t *testing.T) {
+	for _, backend := range []string{"legacy_sql", "kv"} {
+		t.Run(backend, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				now := advanceBookmarkClock()
+				rvAt := func(at time.Time) int64 {
+					if backend == "kv" {
+						return snowflakeFromTime(at)
+					}
+					return at.UnixMicro()
+				}
+				req := bookmarkWatchRequest()
+				req.Since = rvAt(now.Add(-30 * time.Second))
+				events, stream, _ := startBookmarkWatch(t, req, func(srv *server, _ *bookmarkWatchServer) {
+					if backend == "kv" {
+						srv.backend = &kvStorageBackend{}
+					}
+					srv.bookmarkFrequency = 10 * time.Second
+				})
+				filteredEvent := func(rv int64) *WrittenEvent {
+					event := bookmarkWrittenEvent(rv)
+					if backend == "kv" {
+						event.Key.Group = "other.grafana.app"
+					} else {
+						event.Key.Namespace = "other"
+					}
+					return event
+				}
+
+				time.Sleep(10 * time.Second)
+
+				// Finish the bookmark tick before verifying that elapsed time alone establishes no progress.
+				synctest.Wait()
+
+				require.Empty(t, stream.events, "the clock alone must not establish progress")
+
+				events <- filteredEvent(rvAt(time.Now()) + 1)
+
+				// Consume the filtered write before testing the bookmark's lag window.
+				synctest.Wait()
+
+				time.Sleep(20 * time.Second)
+
+				// Finish the lagged bookmark tick before checking that it cannot precede Since.
+				synctest.Wait()
+
+				require.Empty(t, stream.events, "lagged progress must not precede Since")
+				time.Sleep(10 * time.Second)
+				requireBookmarkEvent(t, stream, resourcepb.WatchEvent_BOOKMARK, rvAt(time.Now().Add(-time.Minute)))
+
+				// Continuous filtered traffic advances the safe cutoff rather than
+				// postponing all progress until the newest event is a minute old.
+				for range 2 {
+					events <- filteredEvent(rvAt(time.Now()) + 1)
+
+					// Consume each filtered write before advancing the next bookmark interval.
+					synctest.Wait()
+
+					time.Sleep(10 * time.Second)
+					requireBookmarkEvent(t, stream, resourcepb.WatchEvent_BOOKMARK, rvAt(time.Now().Add(-time.Minute)))
+				}
+			})
+		})
+	}
+}
+
+func TestIncrementalBookmarksLagDoesNotDelayObjects(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		now := advanceBookmarkClock()
+		req := bookmarkWatchRequest()
+		req.Since = snowflakeFromTime(now.Add(-2 * time.Minute))
+		events, stream, _ := startBookmarkWatch(t, req, func(srv *server, _ *bookmarkWatchServer) {
+			srv.backend = &kvStorageBackend{}
+			srv.bookmarkFrequency = 10 * time.Second
+		})
+
+		objectRV := snowflakeFromTime(now)
+		events <- bookmarkWrittenEvent(objectRV)
+		requireBookmarkEvent(t, stream, resourcepb.WatchEvent_ADDED, objectRV)
+
+		filtered := bookmarkWrittenEvent(objectRV + 1)
+		filtered.Key.Name = "other"
+		events <- filtered
+
+		// Consume the filtered write before checking that it cannot move progress past the delivered object.
+		synctest.Wait()
+
+		time.Sleep(10 * time.Second)
+		requireBookmarkEvent(t, stream, resourcepb.WatchEvent_BOOKMARK, objectRV)
+
+		// A lower matching RV remains deliverable but cannot regress the bookmark.
+		olderRV := snowflakeFromTime(now.Add(-10 * time.Second))
+		events <- bookmarkWrittenEvent(olderRV)
+		requireBookmarkEvent(t, stream, resourcepb.WatchEvent_ADDED, olderRV)
+		time.Sleep(10 * time.Second)
+
+		// Finish the next bookmark tick before checking that an older event cannot repeat progress.
+		synctest.Wait()
+
+		require.Empty(t, stream.events)
+	})
+}
+
+func TestIncrementalBookmarksLaggedResume(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		now := advanceBookmarkClock()
+		req := bookmarkWatchRequest()
+		req.Since = snowflakeFromTime(now.Add(-2 * time.Minute))
+		configure := func(srv *server, _ *bookmarkWatchServer) {
+			srv.backend = &kvStorageBackend{}
+			srv.bookmarkFrequency = 10 * time.Second
+		}
+		events, stream, done := startBookmarkWatch(t, req, configure)
+		foreign := bookmarkWrittenEvent(snowflakeFromTime(now))
+		foreign.Key.Resource = "other"
+		events <- foreign
+
+		// Process the foreign collection's write before measuring progress for the watched collection.
+		synctest.Wait()
+
+		time.Sleep(10 * time.Second)
+		resumeRV := snowflakeFromTime(time.Now().Add(-time.Minute))
+		requireBookmarkEvent(t, stream, resourcepb.WatchEvent_BOOKMARK, resumeRV)
+		close(events)
+
+		// Finish watch shutdown after its input closes before checking its returned error.
+		synctest.Wait()
+
+		require.NoError(t, <-done)
+
+		// The lagged bookmark leaves a late lower-RV notification eligible.
+		req = bookmarkWatchRequest()
+		req.Since = resumeRV
+		events, stream, _ = startBookmarkWatch(t, req, configure)
+		lateRV := snowflakeFromTime(now.Add(-5 * time.Second))
+		require.Greater(t, lateRV, resumeRV)
+		require.Less(t, lateRV, foreign.ResourceVersion)
+		events <- bookmarkWrittenEvent(lateRV)
+		requireBookmarkEvent(t, stream, resourcepb.WatchEvent_ADDED, lateRV)
+	})
+}
+
+func TestIncrementalBookmarksFilteredProgress(t *testing.T) {
+	tests := []struct {
+		name      string
+		kv        bool
+		configure func(*server)
+		filter    func(*WrittenEvent)
+	}{
+		{
+			name: "legacy SQL namespace filter",
+			filter: func(event *WrittenEvent) {
+				event.Key.Namespace = "other"
+			},
+		},
+		{
+			name: "KV foreign collection",
+			kv:   true,
+			filter: func(event *WrittenEvent) {
+				event.Key.Resource = "other"
+			},
+		},
+		{
+			name: "authorization filter",
+			kv:   true,
+			configure: func(srv *server) {
+				srv.access = &callbackAccessClient{fn: func(authlib.CheckRequest, string) (authlib.CheckResponse, error) {
+					return deny()
+				}}
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				events, stream, _ := startBookmarkWatch(t, bookmarkWatchRequest(), func(srv *server, _ *bookmarkWatchServer) {
+					if tt.kv {
+						srv.backend = &kvStorageBackend{}
+					}
+					if tt.configure != nil {
+						tt.configure(srv)
+					}
+				})
+				event := bookmarkWrittenEvent(101)
+				if tt.filter != nil {
+					tt.filter(event)
+				}
+				events <- event
+
+				// Process the filtered object before checking that only its progress can produce a bookmark.
+				synctest.Wait()
+
+				require.Empty(t, stream.events, "filtered objects must not be sent")
+				time.Sleep(time.Second)
+				requireBookmarkEvent(t, stream, resourcepb.WatchEvent_BOOKMARK, 101)
+				time.Sleep(2 * time.Second)
+
+				// Finish later bookmark ticks before checking that unchanged progress is not repeated.
+				synctest.Wait()
+
+				require.Empty(t, stream.events, "unchanged progress must not repeat")
+			})
+		})
+	}
+}
+
+func TestIncrementalBookmarksLegacySQLCollectionOrdering(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		events, stream, _ := startBookmarkWatch(t, bookmarkWatchRequest(), nil)
+		foreign := bookmarkWrittenEvent(300)
+		foreign.Key.Resource = "other"
+		events <- foreign
+
+		// Consume the foreign collection's event before checking SQL watch progress.
+		synctest.Wait()
+
+		time.Sleep(2 * time.Second)
+
+		// Finish bookmark ticks before verifying that another collection cannot establish progress.
+		synctest.Wait()
+
+		require.Empty(t, stream.events, "other collections cannot establish SQL progress")
+
+		events <- bookmarkWrittenEvent(110)
+		requireBookmarkEvent(t, stream, resourcepb.WatchEvent_ADDED, 110)
+		time.Sleep(time.Second)
+		requireBookmarkEvent(t, stream, resourcepb.WatchEvent_BOOKMARK, 110)
+
+		// Bookmark progress is not a new live-delivery cutoff.
+		events <- bookmarkWrittenEvent(105)
+		requireBookmarkEvent(t, stream, resourcepb.WatchEvent_ADDED, 105)
+		time.Sleep(time.Second)
+
+		// Finish the bookmark tick before checking that progress cannot regress.
+		synctest.Wait()
+
+		require.Empty(t, stream.events, "bookmarks must not regress")
+	})
+}
+
+func TestIncrementalBookmarksWaitForSuccessfulSend(t *testing.T) {
+	for _, fail := range []bool{false, true} {
+		t.Run(fmt.Sprintf("send failure=%t", fail), func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				entered, release := make(chan struct{}), make(chan struct{})
+				sendErr := errors.New("send failed")
+				events, stream, done := startBookmarkWatch(t, bookmarkWatchRequest(), func(srv *server, stream *bookmarkWatchServer) {
+					srv.backend = &kvStorageBackend{}
+					stream.beforeSend = func(event *resourcepb.WatchEvent) error {
+						if event.Type == resourcepb.WatchEvent_ADDED {
+							close(entered)
+							select {
+							case <-release:
+							case <-stream.Context().Done():
+								return stream.Context().Err()
+							}
+							if fail {
+								return sendErr
+							}
+						}
+						return nil
+					}
+				})
+				events <- bookmarkWrittenEvent(101)
+
+				// Enter the blocked Send before supplying the next pending event.
+				synctest.Wait()
+
+				select {
+				case <-entered:
+				default:
+					t.Fatal("matching send was not reached")
+				}
+				pending := bookmarkWrittenEvent(102)
+				pending.Key.Resource = "other"
+				events <- pending
+				time.Sleep(2 * time.Second)
+
+				// Finish bookmark ticks while Send is blocked before checking that pending events are not covered.
+				synctest.Wait()
+
+				require.Empty(t, stream.events, "blocked events must not be covered")
+
+				close(release)
+
+				// Finish the released Send and its error handling before inspecting the watch result.
+				synctest.Wait()
+
+				if fail {
+					require.ErrorIs(t, <-done, sendErr)
+					require.Empty(t, stream.events)
+					return
+				}
+
+				requireBookmarkEvent(t, stream, resourcepb.WatchEvent_ADDED, 101)
+
+				// Finish the pending bookmark after the delivered object before reading it.
+				synctest.Wait()
+
+				require.NotEmpty(t, stream.events)
+				bookmark := <-stream.events
+				require.Equal(t, resourcepb.WatchEvent_BOOKMARK, bookmark.Type)
+				if bookmark.Resource.Version == 101 {
+					time.Sleep(time.Second)
+					requireBookmarkEvent(t, stream, resourcepb.WatchEvent_BOOKMARK, 102)
+				} else {
+					require.Equal(t, int64(102), bookmark.Resource.Version)
+				}
+			})
+		})
+	}
+}
+
+type bookmarkKVListBackend struct {
+	KVBackend
+	list func(func(ListIterator) error) (int64, error)
+}
+
+func (b *bookmarkKVListBackend) ListIterator(_ context.Context, _ *resourcepb.ListRequest, callback func(ListIterator) error) (int64, error) {
+	return b.list(callback)
+}
+
+func TestIncrementalBookmarksInitialBackfill(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		initialRV := snowflakeFromTime(advanceBookmarkClock())
+		req := bookmarkWatchRequest()
+		req.SendInitialEvents = true
+		req.Options.Key.Name = ""
+		req.Options.Key.Namespace = ""
+		listed, release := make(chan struct{}), make(chan struct{})
+		events, stream, _ := startBookmarkWatch(t, req, func(srv *server, stream *bookmarkWatchServer) {
+			srv.backend = &bookmarkKVListBackend{list: func(callback func(ListIterator) error) (int64, error) {
+				if err := callback(&docListIterator{values: [][]byte{[]byte(`{"initial":1}`), []byte(`{"initial":2}`)}}); err != nil {
+					return 0, err
+				}
+				close(listed)
+				select {
+				case <-release:
+				case <-stream.Context().Done():
+					return 0, stream.Context().Err()
+				}
+				return initialRV, nil
+			}}
+		})
+		<-listed
+		requireBookmarkEvent(t, stream, resourcepb.WatchEvent_ADDED, 1)
+		requireBookmarkEvent(t, stream, resourcepb.WatchEvent_ADDED, 2)
+
+		events <- bookmarkWrittenEvent(initialRV + 1)
+
+		// Consume the live write while the initial-list bookmark is still blocked.
+		synctest.Wait()
+
+		time.Sleep(2 * time.Second)
+
+		// Finish bookmark ticks before checking that live delivery is held behind the initial list.
+		synctest.Wait()
+
+		require.Empty(t, stream.events, "live events must wait for backfill")
+
+		close(release)
+		requireBookmarkEvent(t, stream, resourcepb.WatchEvent_BOOKMARK, initialRV)
+		requireBookmarkEvent(t, stream, resourcepb.WatchEvent_ADDED, initialRV+1)
+		time.Sleep(time.Second)
+		requireBookmarkEvent(t, stream, resourcepb.WatchEvent_BOOKMARK, initialRV+1)
+	})
+}
+
 // stubWatchServer is a ResourceStore_WatchServer mock whose Send returns a
 // caller-supplied error. It is used to exercise Watch's error handling without
 // relying on races between the watch context and concrete Send failures.
@@ -1640,14 +2367,9 @@ func (s *stubWatchServer) SetTrailer(metadata.MD)            {}
 func (s *stubWatchServer) SendMsg(any) error                 { return nil }
 func (s *stubWatchServer) RecvMsg(any) error                 { return nil }
 
-// TestWatchContextCancellation pins down how Watch translates errors that
-// surface during context cancellation. The watch loop has an explicit
-// `case <-ctx.Done(): return nil` branch, but `select` is nondeterministic, so
-// when the context is canceled we may instead run a Send/Read that returns
-// the context error. Watch must treat that as a clean shutdown, while still
-// surfacing unrelated errors and context errors that did not originate from
-// our own context.
-func TestWatchContextCancellation(t *testing.T) {
+// TestWatchTerminationErrors pins down which errors Watch treats as a clean
+// shutdown and which errors it propagates.
+func TestWatchTerminationErrors(t *testing.T) {
 	testUser := newWatchTestUser()
 
 	watchReq := &resourcepb.WatchRequest{
@@ -1691,6 +2413,17 @@ func TestWatchContextCancellation(t *testing.T) {
 		require.ErrorIs(t, err, sentinel)
 	})
 
+	t.Run("returns nil when the watch transport is unavailable", func(t *testing.T) {
+		srv := setup(t)
+		ctx := authlib.WithAuthInfo(t.Context(), testUser)
+		bookmarkReq := proto.Clone(watchReq).(*resourcepb.WatchRequest)
+		bookmarkReq.Options.Key.Name = "missing"
+		bookmarkReq.AllowWatchBookmarks = true
+
+		stub := &stubWatchServer{ctx: ctx, sendErr: status.Error(codes.Unavailable, "transport is closing")}
+		require.NoError(t, srv.Watch(bookmarkReq, stub))
+	})
+
 	t.Run("propagates context errors that did not come from our own context", func(t *testing.T) {
 		srv := setup(t)
 		// Own context is alive; a Send returning context.Canceled here must
@@ -1701,6 +2434,109 @@ func TestWatchContextCancellation(t *testing.T) {
 		err := srv.Watch(watchReq, stub)
 		require.ErrorIs(t, err, context.Canceled)
 	})
+}
+
+func TestWatchExpiryGeneration(t *testing.T) {
+	expiry := NewWatchExpiry()
+	first := expiry.WatchInvalidation()
+	second := expiry.WatchInvalidation()
+	require.Equal(t, first, second)
+
+	expiry.Invalidate()
+
+	for _, generation := range []<-chan struct{}{first, second} {
+		select {
+		case <-generation:
+		default:
+			t.Fatal("old generation is still active")
+		}
+	}
+	select {
+	case <-expiry.WatchInvalidation():
+		t.Fatal("new generation is already expired")
+	default:
+	}
+}
+
+func TestWatchMaxAgeExpiry(t *testing.T) {
+	testUser := newWatchTestUser()
+
+	watchReq := &resourcepb.WatchRequest{
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{
+				Group:    watchTestGroup,
+				Resource: watchTestResource,
+			},
+		},
+	}
+
+	t.Run("expires the stream with a typed 410/Expired status", func(t *testing.T) {
+		srv := newWatchTestServer(t, watchTestServerOpts{NatsWatchMaxAge: 20 * time.Millisecond})
+		ctx := authlib.WithAuthInfo(t.Context(), testUser)
+		mock := newMockWatchServer(ctx)
+
+		errCh := make(chan error, 1)
+		go func() { errCh <- srv.Watch(watchReq, mock) }()
+
+		select {
+		case err := <-errCh:
+			require.Error(t, err)
+			require.True(t, IsResourceVersionExpired(err), "expected a 410/Expired error, got: %v", err)
+		case <-time.After(5 * time.Second):
+			t.Fatal("watch did not expire within the max age")
+		}
+	})
+
+	t.Run("does not expire when max age is unset", func(t *testing.T) {
+		srv := newWatchTestServer(t, watchTestServerOpts{})
+		ctx, cancel := context.WithCancel(authlib.WithAuthInfo(t.Context(), testUser))
+		defer cancel()
+		mock := newMockWatchServer(ctx)
+
+		errCh := make(chan error, 1)
+		go func() { errCh <- srv.Watch(watchReq, mock) }()
+
+		select {
+		case err := <-errCh:
+			t.Fatalf("watch returned unexpectedly: %v", err)
+		case <-time.After(200 * time.Millisecond):
+		}
+		cancel()
+		require.NoError(t, <-errCh)
+	})
+}
+
+func TestNextWatchMaxAgeExpiry(t *testing.T) {
+	maxAge := 15 * time.Minute
+	now := time.Unix(1_700_000_000, 123)
+	for _, phase := range []time.Duration{0, time.Nanosecond, 7 * time.Minute, maxAge - time.Nanosecond} {
+		d := nextWatchMaxAgeExpiry(now, maxAge, phase)
+		require.Greater(t, d, time.Duration(0))
+		require.LessOrEqual(t, d, maxAge)
+		require.Equal(t, phase, time.Duration(now.Add(d).UnixNano())%maxAge, "expiry must land on the phase")
+	}
+
+	// A watch started exactly at its boundary, e.g. right after being expired,
+	// waits a full period.
+	boundary := time.Unix(0, int64(3*maxAge+7*time.Minute))
+	require.Equal(t, maxAge, nextWatchMaxAgeExpiry(boundary, maxAge, 7*time.Minute))
+}
+
+func TestWatchMaxAgePhase(t *testing.T) {
+	maxAge := 15 * time.Minute
+	key := &resourcepb.ResourceKey{Group: watchTestGroup, Resource: watchTestResource, Namespace: "ns"}
+	user := newWatchTestUser()
+
+	base := watchMaxAgePhase(user, key, maxAge)
+	require.GreaterOrEqual(t, base, time.Duration(0))
+	require.Less(t, base, maxAge)
+	require.Equal(t, base, watchMaxAgePhase(user, key, maxAge))
+
+	other := newWatchTestUser()
+	other.UserUID = "u456"
+	require.NotEqual(t, base, watchMaxAgePhase(other, key, maxAge))
+	otherNS := &resourcepb.ResourceKey{Group: key.Group, Resource: key.Resource, Namespace: "other"}
+	require.NotEqual(t, base, watchMaxAgePhase(user, otherNS, maxAge))
 }
 
 // TestWatchEventMetricsWithSinceRV makes sure that we don't emit watch delay metrics when replaying
@@ -1716,6 +2552,12 @@ func TestWatchEventMetricsWithSinceRV(t *testing.T) {
 	ctx, cancel := context.WithCancel(authlib.WithAuthInfo(t.Context(), testUser))
 	defer cancel()
 
+	require.NoError(t, srv.watchStartup.broadcaster.waitReady(ctx))
+	since, err := srv.backend.ListIterator(ctx, &resourcepb.ListRequest{Options: &resourcepb.ListOptions{
+		Key: &resourcepb.ResourceKey{Group: watchTestGroup, Resource: watchTestResource},
+	}}, func(ListIterator) error { return nil })
+	require.NoError(t, err)
+
 	// Create two resources before the watch starts. The broadcaster will absorb
 	// these events into its replay cache and hand them to any future subscriber.
 	require.NoError(t, createTestPlaylist(ctx, srv))
@@ -1725,15 +2567,18 @@ func TestWatchEventMetricsWithSinceRV(t *testing.T) {
 	// populated by the time we subscribe.
 	requireMetricEventually(t, metrics.Broadcaster.EventsReceivedTotal.WithLabelValues(watchTestResource), 2)
 
-	// Start a watch with a tiny Since RV.
+	// Resume from the LIST taken before both writes. Delay each Send so the
+	// component metrics can prove that transport scheduling time is separated
+	// from the upstream commit-to-send-start latency.
 	mock := newMockWatchServer(ctx)
+	mock.sendDelay = 20 * time.Millisecond
 	var eg errgroup.Group
 	eg.Go(func() error {
 		return srv.Watch(&resourcepb.WatchRequest{
 			Options: &resourcepb.ListOptions{
 				Key: &resourcepb.ResourceKey{Group: watchTestGroup, Resource: watchTestResource},
 			},
-			Since: 42,
+			Since: since,
 		}, mock)
 	})
 
@@ -1766,12 +2611,175 @@ func TestWatchEventMetricsWithSinceRV(t *testing.T) {
 	// observing them inflates the histogram with the time elapsed since they
 	// were originally written, not the actual reaction time of this watcher.
 	// Only the post-subscription event should be counted.
-	obs, err := metrics.WatchEventLatency.GetMetricWithLabelValues(watchTestResource)
+	readHistogram := func(observer prometheus.Observer) *dto.Histogram {
+		t.Helper()
+		m := &dto.Metric{}
+		require.NoError(t, observer.(prometheus.Metric).Write(m))
+		return m.Histogram
+	}
+	watchLatency, err := metrics.WatchEventLatency.GetMetricWithLabelValues(watchTestGroup, watchTestResource)
 	require.NoError(t, err)
-	m := &dto.Metric{}
-	require.NoError(t, obs.(prometheus.Metric).Write(m))
-	require.Equal(t, uint64(1), m.Histogram.GetSampleCount(),
-		"WatchEventLatency should only observe events that arrived after the subscription started")
+	readyLatency, err := metrics.WatchEventReadyLatency.GetMetricWithLabelValues(watchTestGroup, watchTestResource, watchEventPhaseLive)
+	require.NoError(t, err)
+	sendDuration, err := metrics.WatchEventSendDuration.GetMetricWithLabelValues(watchTestGroup, watchTestResource)
+	require.NoError(t, err)
+
+	total := readHistogram(watchLatency)
+	ready := readHistogram(readyLatency)
+	send := readHistogram(sendDuration)
+	for name, histogram := range map[string]*dto.Histogram{"total": total, "ready": ready, "send": send} {
+		require.Equal(t, uint64(1), histogram.GetSampleCount(),
+			"%s metric should only observe events that arrived after the subscription started", name)
+	}
+	assert.GreaterOrEqual(t, send.GetSampleSum(), 15*time.Millisecond.Seconds(),
+		"send duration must capture transport scheduling time")
+	assert.InDelta(t, total.GetSampleSum(), ready.GetSampleSum()+send.GetSampleSum(), 0.01,
+		"total watch latency should comprise upstream ready latency plus send duration")
+}
+
+type initialListBackend struct {
+	StorageBackend
+	names []string
+	rv    int64
+}
+
+func (b *initialListBackend) ListIterator(_ context.Context, _ *resourcepb.ListRequest, cb func(ListIterator) error) (int64, error) {
+	return b.rv, cb(&namedListIterator{names: b.names, rv: b.rv})
+}
+
+func requireReadyPhaseCounts(t *testing.T, metrics *StorageMetrics, initialList, live uint64) {
+	t.Helper()
+	for phase, want := range map[string]uint64{watchEventPhaseInitialList: initialList, watchEventPhaseLive: live} {
+		observer, err := metrics.WatchEventReadyLatency.GetMetricWithLabelValues(watchTestGroup, watchTestResource, phase)
+		require.NoError(t, err)
+		m := &dto.Metric{}
+		require.NoError(t, observer.(prometheus.Metric).Write(m))
+		assert.Equal(t, want, m.GetHistogram().GetSampleCount(), "phase %s", phase)
+	}
+}
+
+// TestWatchEventMetricsPhaseIncludesInitialBookmark checks that a write made while the
+// initial-events bookmark is being sent is labeled phase=initial_list, and a later one live.
+func TestWatchEventMetricsPhaseIncludesInitialBookmark(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		listedAt := advanceBookmarkClock()
+		req := bookmarkWatchRequest()
+		req.Since = 0
+		req.SendInitialEvents = true
+		var metrics *StorageMetrics
+		var wroteAt time.Time
+		events, _, _ := startBookmarkWatch(t, req, func(srv *server, stream *bookmarkWatchServer) {
+			metrics = srv.storageMetrics
+			srv.backend = &initialListBackend{names: []string{"a", "b"}, rv: snowflakeFromTime(listedAt)}
+			stream.beforeSend = func(evt *resourcepb.WatchEvent) error {
+				if evt.Type == resourcepb.WatchEvent_BOOKMARK && wroteAt.IsZero() {
+					time.Sleep(time.Second)
+					wroteAt = time.Now()
+					time.Sleep(time.Second)
+				}
+				return nil
+			}
+		})
+		// Let the blocked bookmark send finish.
+		time.Sleep(3 * time.Second)
+
+		// Finish the released initial-list bookmark before inspecting its write timestamp.
+		synctest.Wait()
+
+		require.False(t, wroteAt.IsZero())
+
+		events <- bookmarkWrittenEvent(snowflakeFromTime(wroteAt))
+		events <- bookmarkWrittenEvent(snowflakeFromTime(time.Now()))
+
+		// Process the writes on both sides of readiness before comparing their metric phases.
+		synctest.Wait()
+
+		requireReadyPhaseCounts(t, metrics, 1, 1)
+	})
+}
+
+// TestWatchEventMetricsPhaseWithStorageBackend checks phase=initial_list end to end, with a
+// real write landing during a real initial list.
+func TestWatchEventMetricsPhaseWithStorageBackend(t *testing.T) {
+	const initialItems = 3
+
+	reg := prometheus.NewPedanticRegistry()
+	metrics := ProvideStorageMetrics(reg)
+	srv := newWatchTestServer(t, watchTestServerOpts{StorageMetrics: metrics})
+
+	ctx, cancel := context.WithCancel(authlib.WithAuthInfo(t.Context(), newWatchTestUser()))
+	defer cancel()
+
+	require.NoError(t, srv.watchStartup.broadcaster.waitReady(ctx))
+	for range initialItems {
+		require.NoError(t, createTestPlaylist(ctx, srv))
+	}
+	requireMetricEventually(t, metrics.Broadcaster.EventsReceivedTotal.WithLabelValues(watchTestResource), initialItems)
+
+	wroteDuringList := false
+	stream := &bookmarkWatchServer{mockWatchServer: newMockWatchServer(ctx)}
+	stream.beforeSend = func(evt *resourcepb.WatchEvent) error {
+		// The first ADDED send is an initial-list item, so the list has already captured its RV.
+		if evt.Type == resourcepb.WatchEvent_ADDED && !wroteDuringList {
+			wroteDuringList = true
+			assert.NoError(t, createTestPlaylist(ctx, srv))
+		}
+		return nil
+	}
+	var eg errgroup.Group
+	eg.Go(func() error {
+		return srv.Watch(&resourcepb.WatchRequest{
+			Options: &resourcepb.ListOptions{
+				Key: &resourcepb.ResourceKey{Group: watchTestGroup, Resource: watchTestResource},
+			},
+			SendInitialEvents: true,
+		}, stream)
+	})
+
+	received := 0
+	timeout := time.After(10 * time.Second)
+	for received < initialItems+1 {
+		select {
+		case evt := <-stream.events:
+			if evt.Type == resourcepb.WatchEvent_ADDED {
+				received++
+			}
+		case <-timeout:
+			t.Fatalf("timed out waiting for events: got %d, want %d", received, initialItems+1)
+		}
+	}
+
+	cancel()
+	require.NoError(t, eg.Wait())
+	require.True(t, wroteDuringList)
+	requireReadyPhaseCounts(t, metrics, 1, 0)
+}
+
+func TestWatchEventMetricsDropClockSkewedSample(t *testing.T) {
+	metrics := ProvideStorageMetrics(prometheus.NewPedanticRegistry())
+	sendStartedAt := time.Now()
+
+	// The resource version timestamp is ahead of send start, but the delayed send
+	// ends after it. Recording total and send while dropping ready would give the three
+	// histograms different event populations.
+	metrics.observeWatchEvent(
+		watchTestGroup,
+		watchTestResource,
+		watchEventPhaseLive,
+		sendStartedAt.Add(5*time.Millisecond),
+		sendStartedAt,
+		sendStartedAt.Add(10*time.Millisecond),
+	)
+
+	for name, observer := range map[string]prometheus.Observer{
+		"total": metrics.WatchEventLatency.WithLabelValues(watchTestGroup, watchTestResource),
+		"ready": metrics.WatchEventReadyLatency.WithLabelValues(watchTestGroup, watchTestResource, watchEventPhaseLive),
+		"send":  metrics.WatchEventSendDuration.WithLabelValues(watchTestGroup, watchTestResource),
+	} {
+		metric := &dto.Metric{}
+		require.NoError(t, observer.(prometheus.Metric).Write(metric))
+		assert.Zero(t, metric.GetHistogram().GetSampleCount(), "%s must drop the clock-skewed event", name)
+	}
 }
 
 // TestWatchInitialEventsRespectsItemChecker tests that checker is used for
@@ -1816,7 +2824,7 @@ func TestWatchInitialEventsRespectsItemChecker(t *testing.T) {
 			Value: value,
 		})
 		require.NoError(t, err)
-		require.Nil(t, created.Error, "creating seed resource %q", item.name)
+		require.NotNil(t, created, "creating seed resource %q", item.name)
 	}
 
 	mock := newMockWatchServer(ctx)
@@ -1969,7 +2977,7 @@ func TestNewEventPermissionChecks(t *testing.T) {
 		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) { return allow() }
 		created, err := srv.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: value})
 		require.NoError(t, err)
-		require.Nil(t, created.Error)
+		require.Positive(t, created.ResourceVersion)
 		return srv
 	}
 
@@ -1979,16 +2987,16 @@ func TestNewEventPermissionChecks(t *testing.T) {
 
 		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) { return deny() }
 
-		latest, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: key})
-		require.NoError(t, err)
-		rsp, err := srv.Update(ctx, &resourcepb.UpdateRequest{
+		_, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: key})
+		require.Equal(t, codes.PermissionDenied, status.Code(err), "reads are denied too, so no resource version is known")
+		_, err = srv.Update(ctx, &resourcepb.UpdateRequest{
 			Key:             key,
 			Value:           makeValue(""),
-			ResourceVersion: latest.ResourceVersion,
+			ResourceVersion: 0,
 		})
-		require.NoError(t, err)
-		require.NotNil(t, rsp.Error)
-		require.Equal(t, int32(http.StatusForbidden), rsp.Error.Code)
+		rspErr := rpcErrorResult(t, err)
+		require.NotNil(t, rspErr)
+		require.Equal(t, int32(http.StatusForbidden), rspErr.Code)
 	})
 
 	t.Run("regular update is allowed when user has update permission", func(t *testing.T) {
@@ -2005,7 +3013,7 @@ func TestNewEventPermissionChecks(t *testing.T) {
 			ResourceVersion: latest.ResourceVersion,
 		})
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
+		require.NotNil(t, rsp)
 	})
 
 	t.Run("create is denied when user lacks create permission", func(t *testing.T) {
@@ -2014,10 +3022,10 @@ func TestNewEventPermissionChecks(t *testing.T) {
 		}
 		srv := newServer(t, ac)
 
-		rsp, err := srv.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: makeValue("")})
-		require.NoError(t, err)
-		require.NotNil(t, rsp.Error)
-		require.Equal(t, int32(http.StatusForbidden), rsp.Error.Code)
+		_, err := srv.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: makeValue("")})
+		rspErr := rpcErrorResult(t, err)
+		require.NotNil(t, rspErr)
+		require.Equal(t, int32(http.StatusForbidden), rspErr.Code)
 	})
 
 	t.Run("folder move is denied when user cannot update in source folder", func(t *testing.T) {
@@ -2034,15 +3042,15 @@ func TestNewEventPermissionChecks(t *testing.T) {
 
 		latest, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: key})
 		require.NoError(t, err)
-		rsp, err := srv.Update(ctx, &resourcepb.UpdateRequest{
+		_, err = srv.Update(ctx, &resourcepb.UpdateRequest{
 			Key:             key,
 			Value:           makeValue(folderB), // move to folder-b
 			ResourceVersion: latest.ResourceVersion,
 		})
-		require.NoError(t, err)
-		require.NotNil(t, rsp.Error)
-		require.Equal(t, int32(http.StatusForbidden), rsp.Error.Code)
-		require.Contains(t, rsp.Error.Message, "not allowed to update resource in the source folder")
+		rspErr := rpcErrorResult(t, err)
+		require.NotNil(t, rspErr)
+		require.Equal(t, int32(http.StatusForbidden), rspErr.Code)
+		require.Contains(t, rspErr.Message, "not allowed to update resource in the source folder")
 	})
 
 	t.Run("folder move is denied when user cannot create in destination folder", func(t *testing.T) {
@@ -2059,15 +3067,15 @@ func TestNewEventPermissionChecks(t *testing.T) {
 
 		latest, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: key})
 		require.NoError(t, err)
-		rsp, err := srv.Update(ctx, &resourcepb.UpdateRequest{
+		_, err = srv.Update(ctx, &resourcepb.UpdateRequest{
 			Key:             key,
 			Value:           makeValue(folderB),
 			ResourceVersion: latest.ResourceVersion,
 		})
-		require.NoError(t, err)
-		require.NotNil(t, rsp.Error)
-		require.Equal(t, int32(http.StatusForbidden), rsp.Error.Code)
-		require.Contains(t, rsp.Error.Message, "not allowed to create resource in the destination folder")
+		rspErr := rpcErrorResult(t, err)
+		require.NotNil(t, rspErr)
+		require.Equal(t, int32(http.StatusForbidden), rspErr.Code)
+		require.Contains(t, rspErr.Message, "not allowed to create resource in the destination folder")
 	})
 
 	t.Run("folder move is allowed when user has permission on both folders", func(t *testing.T) {
@@ -2084,7 +3092,7 @@ func TestNewEventPermissionChecks(t *testing.T) {
 			ResourceVersion: latest.ResourceVersion,
 		})
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
+		require.NotNil(t, rsp)
 	})
 
 	t.Run("read is denied when user lacks get permission", func(t *testing.T) {
@@ -2093,10 +3101,10 @@ func TestNewEventPermissionChecks(t *testing.T) {
 
 		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) { return deny() }
 
-		rsp, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: key})
-		require.NoError(t, err)
-		require.NotNil(t, rsp.Error)
-		require.Equal(t, int32(http.StatusForbidden), rsp.Error.Code)
+		_, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: key})
+		rspErr := rpcErrorResult(t, err)
+		require.NotNil(t, rspErr)
+		require.Equal(t, int32(http.StatusForbidden), rspErr.Code)
 	})
 
 	t.Run("read is allowed when user has get permission", func(t *testing.T) {
@@ -2107,7 +3115,6 @@ func TestNewEventPermissionChecks(t *testing.T) {
 
 		rsp, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: key})
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
 		require.NotNil(t, rsp.Value)
 	})
 
@@ -2125,7 +3132,7 @@ func TestNewEventPermissionChecks(t *testing.T) {
 
 		rsp, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: key})
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
+		require.NotNil(t, rsp)
 		require.Equal(t, folderA, capturedFolder)
 	})
 
@@ -2137,9 +3144,9 @@ func TestNewEventPermissionChecks(t *testing.T) {
 			return authlib.CheckResponse{}, errors.New("authz service unavailable")
 		}
 
-		rsp, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: key})
-		require.NoError(t, err)
-		require.NotNil(t, rsp.Error)
+		_, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: key})
+		rspErr := rpcErrorResult(t, err)
+		require.NotNil(t, rspErr)
 	})
 
 	t.Run("delete is denied when user lacks delete permission", func(t *testing.T) {
@@ -2148,12 +3155,12 @@ func TestNewEventPermissionChecks(t *testing.T) {
 
 		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) { return deny() }
 
-		latest, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: key})
-		require.NoError(t, err)
-		rsp, err := srv.Delete(ctx, &resourcepb.DeleteRequest{Key: key, ResourceVersion: latest.ResourceVersion})
-		require.NoError(t, err)
-		require.NotNil(t, rsp.Error)
-		require.Equal(t, int32(http.StatusForbidden), rsp.Error.Code)
+		_, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: key})
+		require.Equal(t, codes.PermissionDenied, status.Code(err), "reads are denied too, so no resource version is known")
+		_, err = srv.Delete(ctx, &resourcepb.DeleteRequest{Key: key, ResourceVersion: 0})
+		rspErr := rpcErrorResult(t, err)
+		require.NotNil(t, rspErr)
+		require.Equal(t, int32(http.StatusForbidden), rspErr.Code)
 	})
 
 	t.Run("delete is allowed when user has delete permission", func(t *testing.T) {
@@ -2166,7 +3173,7 @@ func TestNewEventPermissionChecks(t *testing.T) {
 		require.NoError(t, err)
 		rsp, err := srv.Delete(ctx, &resourcepb.DeleteRequest{Key: key, ResourceVersion: latest.ResourceVersion})
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
+		require.NotNil(t, rsp)
 	})
 
 	t.Run("delete passes the resource folder to the access check", func(t *testing.T) {
@@ -2185,238 +3192,8 @@ func TestNewEventPermissionChecks(t *testing.T) {
 		require.NoError(t, err)
 		rsp, err := srv.Delete(ctx, &resourcepb.DeleteRequest{Key: key, ResourceVersion: latest.ResourceVersion})
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
+		require.NotNil(t, rsp)
 		require.Equal(t, folderA, capturedFolder)
-	})
-}
-
-// TestStatsAccessChecks covers the authorization behavior of the usage-stats
-// RPCs: reads must be equivalent to reading the object (folder-aware authz),
-// while ingest only requires an authenticated caller.
-func TestStatsAccessChecks(t *testing.T) {
-	user := &identity.StaticRequester{
-		Type:      authlib.TypeUser,
-		Login:     "testuser",
-		UserID:    123,
-		UserUID:   "u123",
-		OrgRole:   identity.RoleEditor,
-		Namespace: "default",
-	}
-	ctx := authlib.WithAuthInfo(context.Background(), user)
-
-	const (
-		group     = "playlist.grafana.app"
-		resource  = "playlists"
-		namespace = "default"
-		name      = "test-resource"
-		folderA   = "folder-a"
-	)
-
-	value := []byte(`{"apiVersion":"playlist.grafana.app/v0alpha1","kind":"Playlist","metadata":{"name":"` + name + `","uid":"test-uid","namespace":"` + namespace + `","annotations":{"grafana.app/folder":"` + folderA + `"}},"spec":{"title":"t","interval":"5m","items":[]}}`)
-
-	key := &resourcepb.ResourceKey{Group: group, Resource: resource, Namespace: namespace, Name: name}
-
-	// newStatsServer builds a stats-enabled server backed by an in-memory KV
-	// store (leases are required by the ingester) and seeds one resource in
-	// folderA using an always-allow client before switching to ac.
-	newStatsServer := func(t *testing.T, ac *callbackAccessClient) *server {
-		t.Helper()
-		db, err := badger.Open(badger.DefaultOptions("").WithInMemory(true).WithLogger(nil))
-		require.NoError(t, err)
-		t.Cleanup(func() { _ = db.Close() })
-
-		kv := NewBadgerKV(db)
-		store, err := NewKVStorageBackend(KVBackendOptions{KvStore: kv, EnableKVLeases: true, Holder: "test"})
-		require.NoError(t, err)
-
-		srv, err := NewResourceServer(ResourceServerOptions{
-			Backend:           store,
-			AccessClient:      ac,
-			UsageStatsEnabled: true,
-		})
-		require.NoError(t, err)
-		t.Cleanup(func() {
-			stopCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-			defer cancel()
-			_ = srv.Stop(stopCtx)
-		})
-
-		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) { return allow() }
-		created, err := srv.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: value})
-		require.NoError(t, err)
-		require.Nil(t, created.Error)
-		return srv
-	}
-
-	t.Run("GetResourceDailyStats passes the resolved folder to the access check", func(t *testing.T) {
-		ac := &callbackAccessClient{}
-		srv := newStatsServer(t, ac)
-
-		var capturedReq authlib.CheckRequest
-		var capturedFolder string
-		ac.fn = func(req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
-			capturedReq, capturedFolder = req, folder
-			return allow()
-		}
-
-		err := srv.GetResourceDailyStats(&resourcepb.GetResourceDailyStatsRequest{Key: key}, newMockDailyStatsServer(ctx))
-		require.NoError(t, err)
-		require.Equal(t, utils.VerbGet, capturedReq.Verb)
-		require.Equal(t, name, capturedReq.Name)
-		require.Equal(t, folderA, capturedFolder, "read must resolve the object folder, not pass an empty one")
-	})
-
-	t.Run("GetResourceDailyStats is denied when the user cannot read the object", func(t *testing.T) {
-		ac := &callbackAccessClient{}
-		srv := newStatsServer(t, ac)
-
-		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) { return deny() }
-
-		err := srv.GetResourceDailyStats(&resourcepb.GetResourceDailyStatsRequest{Key: key}, newMockDailyStatsServer(ctx))
-		require.Equal(t, codes.PermissionDenied, status.Code(err))
-	})
-
-	t.Run("RecordEvent does not perform an object-level access check", func(t *testing.T) {
-		ac := &callbackAccessClient{}
-		srv := newStatsServer(t, ac)
-
-		// Even a deny-all access client must not block ingest: the path only
-		// requires an authenticated caller.
-		accessCalled := false
-		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) {
-			accessCalled = true
-			return deny()
-		}
-
-		_, err := srv.RecordEvent(ctx, &resourcepb.RecordEventRequest{
-			Key:    key,
-			Events: []*resourcepb.ResourceEvent{{Metric: "views", Value: 1}},
-		})
-		require.NoError(t, err)
-		require.False(t, accessCalled, "ingest must not call the access client")
-	})
-
-	t.Run("RecordEvent requires an authenticated caller", func(t *testing.T) {
-		ac := &callbackAccessClient{}
-		srv := newStatsServer(t, ac)
-
-		_, err := srv.RecordEvent(context.Background(), &resourcepb.RecordEventRequest{
-			Key:    key,
-			Events: []*resourcepb.ResourceEvent{{Metric: "views", Value: 1}},
-		})
-		require.Equal(t, codes.Unauthenticated, status.Code(err))
-	})
-}
-
-func TestGetResourceDailyStats(t *testing.T) {
-	user := &identity.StaticRequester{
-		Type:      authlib.TypeUser,
-		Login:     "testuser",
-		UserID:    123,
-		UserUID:   "u123",
-		OrgRole:   identity.RoleEditor,
-		Namespace: "default",
-	}
-	ctx := authlib.WithAuthInfo(context.Background(), user)
-
-	const (
-		group     = "dashboard.grafana.app"
-		resource  = "dashboards"
-		namespace = "default"
-		name      = "test-dashboard"
-		folderA   = "folder-a"
-	)
-
-	value := []byte(`{"apiVersion":"dashboard.grafana.app/v1beta1","kind":"Dashboard","metadata":{"name":"` + name + `","uid":"test-uid","namespace":"` + namespace + `","annotations":{"grafana.app/folder":"` + folderA + `"}},"spec":{"title":"t"}}`)
-
-	key := &resourcepb.ResourceKey{Group: group, Resource: resource, Namespace: namespace, Name: name}
-
-	newStatsServer := func(t *testing.T, ac *callbackAccessClient, enabled bool) *server {
-		t.Helper()
-		db, err := badger.Open(badger.DefaultOptions("").WithInMemory(true).WithLogger(nil))
-		require.NoError(t, err)
-		t.Cleanup(func() { _ = db.Close() })
-
-		kv := NewBadgerKV(db)
-		store, err := NewKVStorageBackend(KVBackendOptions{KvStore: kv, EnableKVLeases: true, Holder: "test"})
-		require.NoError(t, err)
-
-		srv, err := NewResourceServer(ResourceServerOptions{
-			Backend:           store,
-			AccessClient:      ac,
-			UsageStatsEnabled: enabled,
-		})
-		require.NoError(t, err)
-		t.Cleanup(func() {
-			stopCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-			defer cancel()
-			_ = srv.Stop(stopCtx)
-		})
-
-		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) { return allow() }
-		created, err := srv.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: value})
-		require.NoError(t, err)
-		require.Nil(t, created.Error)
-		return srv
-	}
-
-	t.Run("returns the recorded daily stats", func(t *testing.T) {
-		ac := &callbackAccessClient{}
-		srv := newStatsServer(t, ac, true)
-		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) { return allow() }
-
-		_, err := srv.RecordEvent(ctx, &resourcepb.RecordEventRequest{
-			Key:    key,
-			Events: []*resourcepb.ResourceEvent{{Metric: "views", Value: 3}, {Metric: "queries", Value: 1}},
-		})
-		require.NoError(t, err)
-
-		// Buffered events only surface after a flush to the KV store.
-		require.NoError(t, srv.statsIngester.Flush(ctx))
-
-		stream := newMockDailyStatsServer(ctx)
-		err = srv.GetResourceDailyStats(&resourcepb.GetResourceDailyStatsRequest{Key: key}, stream)
-		require.NoError(t, err)
-		require.Len(t, stream.days, 1)
-		require.Equal(t, uint64(3), stream.days[0].Metrics["views"])
-		require.Equal(t, uint64(1), stream.days[0].Metrics["queries"])
-	})
-
-	t.Run("returns no days when nothing has been recorded", func(t *testing.T) {
-		ac := &callbackAccessClient{}
-		srv := newStatsServer(t, ac, true)
-		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) { return allow() }
-
-		stream := newMockDailyStatsServer(ctx)
-		err := srv.GetResourceDailyStats(&resourcepb.GetResourceDailyStatsRequest{Key: key}, stream)
-		require.NoError(t, err)
-		require.Empty(t, stream.days)
-	})
-
-	t.Run("is unimplemented when usage stats are disabled", func(t *testing.T) {
-		ac := &callbackAccessClient{}
-		srv := newStatsServer(t, ac, false)
-
-		err := srv.GetResourceDailyStats(&resourcepb.GetResourceDailyStatsRequest{Key: key}, newMockDailyStatsServer(ctx))
-		require.Equal(t, codes.Unimplemented, status.Code(err))
-	})
-
-	t.Run("requires an authenticated caller", func(t *testing.T) {
-		ac := &callbackAccessClient{}
-		srv := newStatsServer(t, ac, true)
-
-		err := srv.GetResourceDailyStats(&resourcepb.GetResourceDailyStatsRequest{Key: key}, newMockDailyStatsServer(context.Background()))
-		require.Equal(t, codes.Unauthenticated, status.Code(err))
-	})
-
-	t.Run("rejects an invalid request key", func(t *testing.T) {
-		ac := &callbackAccessClient{}
-		srv := newStatsServer(t, ac, true)
-
-		err := srv.GetResourceDailyStats(&resourcepb.GetResourceDailyStatsRequest{
-			Key: &resourcepb.ResourceKey{Namespace: namespace, Resource: resource, Name: name},
-		}, newMockDailyStatsServer(ctx))
-		require.Equal(t, codes.InvalidArgument, status.Code(err))
 	})
 }
 
@@ -2492,7 +3269,7 @@ func TestFolderDeletePermissionChecks(t *testing.T) {
 		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) { return allow() }
 		created, err := srv.Create(ctx, &resourcepb.CreateRequest{Key: folderKey, Value: value})
 		require.NoError(t, err)
-		require.Nil(t, created.Error)
+		require.Positive(t, created.ResourceVersion)
 		return srv
 	}
 
@@ -2502,12 +3279,12 @@ func TestFolderDeletePermissionChecks(t *testing.T) {
 
 		ac.fn = func(_ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) { return deny() }
 
-		latest, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: folderKey})
-		require.NoError(t, err)
-		rsp, err := srv.Delete(ctx, &resourcepb.DeleteRequest{Key: folderKey, ResourceVersion: latest.ResourceVersion})
-		require.NoError(t, err)
-		require.NotNil(t, rsp.Error)
-		require.Equal(t, int32(http.StatusForbidden), rsp.Error.Code)
+		_, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: folderKey})
+		require.Equal(t, codes.PermissionDenied, status.Code(err), "reads are denied too, so no resource version is known")
+		_, err = srv.Delete(ctx, &resourcepb.DeleteRequest{Key: folderKey, ResourceVersion: 0})
+		rspErr := rpcErrorResult(t, err)
+		require.NotNil(t, rspErr)
+		require.Equal(t, int32(http.StatusForbidden), rspErr.Code)
 	})
 
 	t.Run("folder delete is allowed when user has delete permission", func(t *testing.T) {
@@ -2520,7 +3297,7 @@ func TestFolderDeletePermissionChecks(t *testing.T) {
 		require.NoError(t, err)
 		rsp, err := srv.Delete(ctx, &resourcepb.DeleteRequest{Key: folderKey, ResourceVersion: latest.ResourceVersion})
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
+		require.NotNil(t, rsp)
 	})
 
 	t.Run("folder delete access check receives parent folder uid, not the folder being deleted", func(t *testing.T) {
@@ -2541,7 +3318,7 @@ func TestFolderDeletePermissionChecks(t *testing.T) {
 		require.NoError(t, err)
 		rsp, err := srv.Delete(ctx, &resourcepb.DeleteRequest{Key: folderKey, ResourceVersion: latest.ResourceVersion})
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
+		require.NotNil(t, rsp)
 
 		require.Equal(t, "delete", capturedReq.Verb)
 		require.Equal(t, folderGroup, capturedReq.Group)
@@ -2558,6 +3335,7 @@ func TestFolderDeletePermissionChecks(t *testing.T) {
 // assert that the authz gate short-circuits or delegates.
 type stubBlobSupport struct {
 	putReached bool
+	getReached bool
 }
 
 func (s *stubBlobSupport) SupportsSignedURLs() bool { return false }
@@ -2568,6 +3346,7 @@ func (s *stubBlobSupport) PutResourceBlob(_ context.Context, _ *resourcepb.PutBl
 }
 
 func (s *stubBlobSupport) GetResourceBlob(_ context.Context, _ *resourcepb.ResourceKey, _ *utils.BlobInfo, _ bool) (*resourcepb.GetBlobResponse, error) {
+	s.getReached = true
 	return &resourcepb.GetBlobResponse{}, nil
 }
 
@@ -2652,22 +3431,89 @@ func TestPutBlobPermissionChecks(t *testing.T) {
 		ac.fn = func(authlib.CheckRequest, string) (authlib.CheckResponse, error) { return allow() }
 		rsp, err := srv.Create(ctxWithUser, &resourcepb.CreateRequest{Key: key, Value: value})
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
+		require.NotNil(t, rsp)
 	}
 
 	t.Run("rejects when no user in context", func(t *testing.T) {
 		srv, _, blob := newBlobAuthzTestServer(t, nil)
-		rsp, err := srv.PutBlob(context.Background(), &resourcepb.PutBlobRequest{Resource: key})
-		require.NoError(t, err)
-		require.Equal(t, int32(http.StatusUnauthorized), rsp.Error.Code)
+		_, err := srv.PutBlob(context.Background(), &resourcepb.PutBlobRequest{Resource: key})
+		rspErr := rpcErrorResult(t, err)
+		require.Equal(t, int32(http.StatusUnauthorized), rspErr.Code)
 		require.False(t, blob.putReached)
 	})
 
-	t.Run("returns 404 when parent resource does not exist", func(t *testing.T) {
-		srv, _, blob := newBlobAuthzTestServer(t, nil)
+	t.Run("checks create permission when parent resource does not exist", func(t *testing.T) {
+		srv, ac, blob := newBlobAuthzTestServer(t, nil)
+
+		var capturedReq authlib.CheckRequest
+		var capturedFolder string
+		ac.fn = func(req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+			capturedReq, capturedFolder = req, folder
+			return allow()
+		}
+
 		rsp, err := srv.PutBlob(ctxWithUser, &resourcepb.PutBlobRequest{Resource: key})
 		require.NoError(t, err)
-		require.Equal(t, int32(http.StatusNotFound), rsp.Error.Code)
+		require.NotNil(t, rsp)
+		require.True(t, blob.putReached)
+		require.Equal(t, utils.VerbCreate, capturedReq.Verb)
+		require.Empty(t, capturedReq.Name)
+		require.Empty(t, capturedFolder)
+	})
+
+	folderOnlyCreate := func(allowed string) func(authlib.CheckRequest, string) (authlib.CheckResponse, error) {
+		return func(req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+			if req.Verb == utils.VerbCreate && folder == allowed {
+				return allow()
+			}
+			return deny()
+		}
+	}
+
+	t.Run("checks create permission in the requested folder when parent resource does not exist", func(t *testing.T) {
+		srv, ac, blob := newBlobAuthzTestServer(t, nil)
+		ac.fn = folderOnlyCreate("folder-x")
+
+		rsp, err := srv.PutBlob(ctxWithUser, &resourcepb.PutBlobRequest{Resource: key, Folder: "folder-x"})
+		require.NoError(t, err)
+		require.NotNil(t, rsp)
+		require.True(t, blob.putReached)
+	})
+
+	t.Run("rejects with 403 when create is only allowed in a folder the request does not name", func(t *testing.T) {
+		srv, ac, blob := newBlobAuthzTestServer(t, nil)
+		ac.fn = folderOnlyCreate("folder-x")
+
+		_, err := srv.PutBlob(ctxWithUser, &resourcepb.PutBlobRequest{Resource: key})
+		rspErr := rpcErrorResult(t, err)
+		require.Equal(t, int32(http.StatusForbidden), rspErr.Code)
+		require.False(t, blob.putReached)
+	})
+
+	t.Run("ignores the requested folder when parent resource exists", func(t *testing.T) {
+		srv, ac, blob := newBlobAuthzTestServer(t, nil)
+		seedParent(t, srv, ac)
+
+		var capturedFolder string
+		ac.fn = func(_ authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+			capturedFolder = folder
+			return allow()
+		}
+
+		rsp, err := srv.PutBlob(ctxWithUser, &resourcepb.PutBlobRequest{Resource: key, Folder: "folder-x"})
+		require.NoError(t, err)
+		require.NotNil(t, rsp)
+		require.True(t, blob.putReached)
+		require.Equal(t, "", capturedFolder)
+	})
+
+	t.Run("rejects with 403 when access.Check denies create for a missing parent", func(t *testing.T) {
+		srv, ac, blob := newBlobAuthzTestServer(t, nil)
+		ac.fn = func(authlib.CheckRequest, string) (authlib.CheckResponse, error) { return deny() }
+
+		_, err := srv.PutBlob(ctxWithUser, &resourcepb.PutBlobRequest{Resource: key})
+		rspErr := rpcErrorResult(t, err)
+		require.Equal(t, int32(http.StatusForbidden), rspErr.Code)
 		require.False(t, blob.putReached)
 	})
 
@@ -2676,9 +3522,9 @@ func TestPutBlobPermissionChecks(t *testing.T) {
 		seedParent(t, srv, ac)
 		ac.fn = func(authlib.CheckRequest, string) (authlib.CheckResponse, error) { return deny() }
 
-		rsp, err := srv.PutBlob(ctxWithUser, &resourcepb.PutBlobRequest{Resource: key})
-		require.NoError(t, err)
-		require.Equal(t, int32(http.StatusForbidden), rsp.Error.Code)
+		_, err := srv.PutBlob(ctxWithUser, &resourcepb.PutBlobRequest{Resource: key})
+		rspErr := rpcErrorResult(t, err)
+		require.Equal(t, int32(http.StatusForbidden), rspErr.Code)
 		require.False(t, blob.putReached)
 	})
 
@@ -2689,9 +3535,9 @@ func TestPutBlobPermissionChecks(t *testing.T) {
 			return authlib.CheckResponse{}, errors.New("authz backend unavailable")
 		}
 
-		rsp, err := srv.PutBlob(ctxWithUser, &resourcepb.PutBlobRequest{Resource: key})
-		require.NoError(t, err)
-		require.NotNil(t, rsp.Error)
+		_, err := srv.PutBlob(ctxWithUser, &resourcepb.PutBlobRequest{Resource: key})
+		rspErr := rpcErrorResult(t, err)
+		require.NotNil(t, rspErr)
 		require.False(t, blob.putReached)
 	})
 
@@ -2708,7 +3554,7 @@ func TestPutBlobPermissionChecks(t *testing.T) {
 
 		rsp, err := srv.PutBlob(ctxWithUser, &resourcepb.PutBlobRequest{Resource: key})
 		require.NoError(t, err)
-		require.Nil(t, rsp.Error)
+		require.NotNil(t, rsp)
 		require.True(t, blob.putReached)
 		require.Equal(t, utils.VerbUpdate, capturedReq.Verb)
 		require.Equal(t, group, capturedReq.Group)
@@ -2724,10 +3570,10 @@ func TestPutBlobPermissionChecks(t *testing.T) {
 			return &errorOnReadResourceBackend{StorageBackend: real, readErr: backendErr}
 		})
 
-		rsp, err := srv.PutBlob(ctxWithUser, &resourcepb.PutBlobRequest{Resource: key})
-		require.NoError(t, err)
-		require.Equal(t, backendErr.Code, rsp.Error.Code, "must surface the backend error code, not collapse to 404")
-		require.Equal(t, backendErr.Message, rsp.Error.Message)
+		_, err := srv.PutBlob(ctxWithUser, &resourcepb.PutBlobRequest{Resource: key})
+		rspErr := rpcErrorResult(t, err)
+		require.Equal(t, backendErr.Code, rspErr.Code, "must surface the backend error code, not collapse to 404")
+		require.Equal(t, backendErr.Message, rspErr.Message)
 		require.False(t, blob.putReached)
 	})
 }
@@ -2772,22 +3618,22 @@ func TestDelegatedRPCsNamespaceGate(t *testing.T) {
 		invoke func(ctx context.Context, srv *server, ns string) *resourcepb.ErrorResult
 	}{
 		{"GetBlob", func(ctx context.Context, srv *server, ns string) *resourcepb.ErrorResult {
-			rsp, _ := srv.GetBlob(ctx, &resourcepb.GetBlobRequest{
+			_, err := srv.GetBlob(ctx, &resourcepb.GetBlobRequest{
 				Resource: &resourcepb.ResourceKey{Namespace: ns, Group: "g", Resource: "r", Name: "n"},
 			})
-			return rsp.Error
+			return resourceutil.ErrorResultFromGRPCDetails(err)
 		}},
 		{"ListManagedObjects", func(ctx context.Context, srv *server, ns string) *resourcepb.ErrorResult {
-			rsp, _ := srv.ListManagedObjects(ctx, &resourcepb.ListManagedObjectsRequest{Namespace: ns})
-			return rsp.Error
+			_, err := srv.ListManagedObjects(ctx, &resourcepb.ListManagedObjectsRequest{Namespace: ns})
+			return resourceutil.ErrorResultFromGRPCDetails(err)
 		}},
 		{"CountManagedObjects", func(ctx context.Context, srv *server, ns string) *resourcepb.ErrorResult {
-			rsp, _ := srv.CountManagedObjects(ctx, &resourcepb.CountManagedObjectsRequest{Namespace: ns})
-			return rsp.Error
+			_, err := srv.CountManagedObjects(ctx, &resourcepb.CountManagedObjectsRequest{Namespace: ns})
+			return resourceutil.ErrorResultFromGRPCDetails(err)
 		}},
 		{"RebuildIndexes", func(ctx context.Context, srv *server, ns string) *resourcepb.ErrorResult {
-			rsp, _ := srv.RebuildIndexes(ctx, &resourcepb.RebuildIndexesRequest{Namespace: ns})
-			return rsp.Error
+			_, err := srv.RebuildIndexes(ctx, &resourcepb.RebuildIndexesRequest{Namespace: ns})
+			return resourceutil.ErrorResultFromGRPCDetails(err)
 		}},
 	}
 	scenarios := []struct {
@@ -2813,9 +3659,178 @@ func TestDelegatedRPCsNamespaceGate(t *testing.T) {
 
 func TestGetBlob_RejectsMissingResourceKey(t *testing.T) {
 	srv, _, _ := newBlobAuthzTestServer(t, nil)
-	rsp, err := srv.GetBlob(ctxWithUserInNs("org-1"), &resourcepb.GetBlobRequest{Uid: "blob-uid"})
-	require.NoError(t, err)
-	require.Equal(t, int32(http.StatusBadRequest), rsp.Error.Code)
+	_, err := srv.GetBlob(ctxWithUserInNs("org-1"), &resourcepb.GetBlobRequest{Uid: "blob-uid"})
+	rspErr := rpcErrorResult(t, err)
+	require.Equal(t, int32(http.StatusBadRequest), rspErr.Code)
+}
+
+func TestGetBlobReferenceChecks(t *testing.T) {
+	const namespace = "default"
+	key := &resourcepb.ResourceKey{Group: "playlist.grafana.app", Resource: "playlists", Namespace: namespace, Name: "test-resource"}
+	ctx := ctxWithUserInNs(namespace)
+	playlist := func(blobs string) []byte {
+		return []byte(`{"apiVersion":"playlist.grafana.app/v0alpha1","kind":"Playlist","metadata":{"name":"test-resource","namespace":"default"},"spec":{"title":"t","interval":"5m","items":[]}` + blobs + `}`)
+	}
+	create := func(t *testing.T, srv *server, blobs string) int64 {
+		t.Helper()
+		rsp, err := srv.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: playlist(blobs)})
+		require.NoError(t, err)
+		return rsp.ResourceVersion
+	}
+	type getBlobResult struct {
+		Value       []byte
+		ContentType string
+		Error       *resourcepb.ErrorResult
+	}
+	getBlob := func(t *testing.T, srv *server, req *resourcepb.GetBlobRequest) getBlobResult {
+		t.Helper()
+		rsp, err := srv.GetBlob(ctx, req)
+		if err != nil {
+			require.Nil(t, rsp)
+			return getBlobResult{Error: rpcErrorResult(t, err)}
+		}
+		return getBlobResult{Value: rsp.Value, ContentType: rsp.ContentType}
+	}
+
+	t.Run("rejects a request without a resource name", func(t *testing.T) {
+		srv, _, blob := newBlobAuthzTestServer(t, nil)
+		noName := &resourcepb.ResourceKey{Group: key.Group, Resource: key.Resource, Namespace: namespace}
+		rsp := getBlob(t, srv, &resourcepb.GetBlobRequest{Resource: noName, Uid: "blob-a"})
+		require.Equal(t, int32(http.StatusBadRequest), rsp.Error.Code)
+		require.False(t, blob.getReached)
+	})
+
+	t.Run("returns a blob the resource references", func(t *testing.T) {
+		srv, _, blob := newBlobAuthzTestServer(t, nil)
+		create(t, srv, `,"blobs":{"dashboard":{"uid":"blob-a","size":2,"contentType":"application/json"}}`)
+		rsp := getBlob(t, srv, &resourcepb.GetBlobRequest{Resource: key, Uid: "blob-a"})
+		require.Nil(t, rsp.Error)
+		require.True(t, blob.getReached)
+	})
+
+	t.Run("reads a referenced blob from object storage using its content type", func(t *testing.T) {
+		srv, _, _ := newBlobAuthzTestServer(t, nil)
+		bucket := memblob.OpenBucket(nil)
+		t.Cleanup(func() { require.NoError(t, bucket.Close()) })
+		blob, err := NewCDKBlobSupport(ctx, CDKBlobSupportOptions{Bucket: bucket})
+		require.NoError(t, err)
+		srv.blob = blob
+
+		value := []byte(`{"title":"test"}`)
+		put, err := blob.PutResourceBlob(ctx, &resourcepb.PutBlobRequest{
+			Resource: key, Method: resourcepb.PutBlobRequest_GRPC,
+			ContentType: "application/json; charset=utf-8", Value: value,
+		})
+		require.NoError(t, err)
+		create(t, srv, fmt.Sprintf(`,"blobs":{"dashboard":{"uid":%q,"contentType":"application/json; charset=utf-8"}}`, put.Uid))
+
+		rsp := getBlob(t, srv, &resourcepb.GetBlobRequest{Resource: key, Uid: put.Uid, MustProxyBytes: true})
+		require.Nil(t, rsp.Error)
+		require.Equal(t, value, rsp.Value)
+		require.Equal(t, "application/json; charset=utf-8", rsp.ContentType)
+	})
+
+	t.Run("rejects a blob the resource does not reference", func(t *testing.T) {
+		srv, _, blob := newBlobAuthzTestServer(t, nil)
+		create(t, srv, `,"blobs":{"dashboard":{"uid":"blob-a"}}`)
+		rsp := getBlob(t, srv, &resourcepb.GetBlobRequest{Resource: key, Uid: "blob-b"})
+		require.Equal(t, int32(http.StatusNotFound), rsp.Error.Code)
+		require.False(t, blob.getReached)
+	})
+
+	t.Run("allows any blob when the resource has no blobs field", func(t *testing.T) {
+		srv, _, blob := newBlobAuthzTestServer(t, nil)
+		create(t, srv, "")
+		rsp := getBlob(t, srv, &resourcepb.GetBlobRequest{Resource: key, Uid: "blob-b"})
+		require.Nil(t, rsp.Error)
+		require.True(t, blob.getReached)
+	})
+
+	t.Run("rejects any blob when the resource has an empty blobs field", func(t *testing.T) {
+		srv, _, blob := newBlobAuthzTestServer(t, nil)
+		create(t, srv, `,"blobs":{}`)
+		rsp := getBlob(t, srv, &resourcepb.GetBlobRequest{Resource: key, Uid: "blob-b"})
+		require.Equal(t, int32(http.StatusNotFound), rsp.Error.Code)
+		require.False(t, blob.getReached)
+	})
+
+	t.Run("rejects a detached blob once the last reference is removed", func(t *testing.T) {
+		srv, _, blob := newBlobAuthzTestServer(t, nil)
+		rv := create(t, srv, `,"blobs":{"dashboard":{"uid":"blob-a"}}`)
+		updated, err := srv.Update(ctx, &resourcepb.UpdateRequest{Key: key, Value: playlist(`,"blobs":{}`), ResourceVersion: rv})
+		require.NoError(t, err)
+		require.Greater(t, updated.ResourceVersion, rv)
+
+		rsp := getBlob(t, srv, &resourcepb.GetBlobRequest{Resource: key, Uid: "blob-a"})
+		require.Equal(t, int32(http.StatusNotFound), rsp.Error.Code)
+		require.False(t, blob.getReached)
+
+		rsp = getBlob(t, srv, &resourcepb.GetBlobRequest{Resource: key, Uid: "blob-a", ResourceVersion: rv})
+		require.Nil(t, rsp.Error)
+		require.True(t, blob.getReached)
+	})
+
+	t.Run("returns a blob referenced by the requested older version", func(t *testing.T) {
+		srv, _, blob := newBlobAuthzTestServer(t, nil)
+		rv := create(t, srv, `,"blobs":{"dashboard":{"uid":"blob-a"}}`)
+		updated, err := srv.Update(ctx, &resourcepb.UpdateRequest{Key: key, Value: playlist(`,"blobs":{"dashboard":{"uid":"blob-b"}}`), ResourceVersion: rv})
+		require.NoError(t, err)
+		require.Greater(t, updated.ResourceVersion, rv)
+
+		rsp := getBlob(t, srv, &resourcepb.GetBlobRequest{Resource: key, Uid: "blob-a"})
+		require.Equal(t, int32(http.StatusNotFound), rsp.Error.Code)
+
+		rsp = getBlob(t, srv, &resourcepb.GetBlobRequest{Resource: key, Uid: "blob-a", ResourceVersion: rv})
+		require.Nil(t, rsp.Error)
+		require.True(t, blob.getReached)
+	})
+
+	withAnnotation := func(blobs string) []byte {
+		return []byte(`{"apiVersion":"playlist.grafana.app/v0alpha1","kind":"Playlist","metadata":{"name":"test-resource","namespace":"default","annotations":{"` + utils.AnnoKeyBlob + `":"legacy-blob; size=2"}},"spec":{"title":"t","interval":"5m","items":[]}` + blobs + `}`)
+	}
+	createWithAnnotation := func(t *testing.T, srv *server, blobs string) {
+		t.Helper()
+		rsp, err := srv.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: withAnnotation(blobs)})
+		require.NoError(t, err)
+		require.Positive(t, rsp.ResourceVersion)
+	}
+
+	t.Run("returns the annotation blob by uid when the resource also has a blobs field", func(t *testing.T) {
+		srv, _, blob := newBlobAuthzTestServer(t, nil)
+		createWithAnnotation(t, srv, `,"blobs":{"dashboard":{"uid":"blob-a"}}`)
+		rsp := getBlob(t, srv, &resourcepb.GetBlobRequest{Resource: key, Uid: "legacy-blob"})
+		require.Nil(t, rsp.Error)
+		require.True(t, blob.getReached)
+	})
+
+	t.Run("rejects an unreferenced blob when the resource has an annotation and a blobs field", func(t *testing.T) {
+		srv, _, blob := newBlobAuthzTestServer(t, nil)
+		createWithAnnotation(t, srv, `,"blobs":{"dashboard":{"uid":"blob-a"}}`)
+		rsp := getBlob(t, srv, &resourcepb.GetBlobRequest{Resource: key, Uid: "blob-b"})
+		require.Equal(t, int32(http.StatusNotFound), rsp.Error.Code)
+		require.False(t, blob.getReached)
+	})
+
+	t.Run("returns only the annotation blob when the resource has an empty blobs field", func(t *testing.T) {
+		srv, _, blob := newBlobAuthzTestServer(t, nil)
+		createWithAnnotation(t, srv, `,"blobs":{}`)
+
+		rsp := getBlob(t, srv, &resourcepb.GetBlobRequest{Resource: key, Uid: "blob-b"})
+		require.Equal(t, int32(http.StatusNotFound), rsp.Error.Code)
+		require.False(t, blob.getReached)
+
+		rsp = getBlob(t, srv, &resourcepb.GetBlobRequest{Resource: key, Uid: "legacy-blob"})
+		require.Nil(t, rsp.Error)
+		require.True(t, blob.getReached)
+	})
+
+	t.Run("allows any blob when the resource only has the annotation", func(t *testing.T) {
+		srv, _, blob := newBlobAuthzTestServer(t, nil)
+		createWithAnnotation(t, srv, "")
+		rsp := getBlob(t, srv, &resourcepb.GetBlobRequest{Resource: key, Uid: "older-legacy-blob"})
+		require.Nil(t, rsp.Error)
+		require.True(t, blob.getReached)
+	})
 }
 
 func TestClassifyAuthError(t *testing.T) {
@@ -2838,4 +3853,1352 @@ func TestClassifyAuthError(t *testing.T) {
 			require.Equal(t, tt.want, classifyAuthError(tt.err))
 		})
 	}
+}
+
+// Admin identity, so per-item authz never filters anything out: paging is what is
+// under test here, not authorization.
+func newKeysOnlyTestServer(t *testing.T, authorizeBeforeFetch bool) (*server, context.Context) {
+	t.Helper()
+	return newKeysOnlyTestServerWithMaxPageBytes(t, 0, authorizeBeforeFetch)
+}
+
+func newKeysOnlyTestServerWithMaxPageBytes(t *testing.T, maxPageBytes int, authorizeBeforeFetch bool) (*server, context.Context) {
+	t.Helper()
+
+	db, err := badger.Open(badger.DefaultOptions("").WithInMemory(true).WithLogger(nil))
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, db.Close()) })
+
+	store, err := NewKVStorageBackend(KVBackendOptions{KvStore: NewBadgerKV(db)})
+	require.NoError(t, err)
+
+	srv, err := NewResourceServer(ResourceServerOptions{
+		Backend:                     store,
+		MaxPageSizeBytes:            maxPageBytes,
+		AuthorizeBeforeFetchEnabled: authorizeBeforeFetch,
+	})
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		_ = srv.Stop(ctx)
+	})
+
+	ctx := authlib.WithAuthInfo(context.Background(), &identity.StaticRequester{
+		Type:           authlib.TypeUser,
+		Login:          "testuser",
+		UserID:         123,
+		UserUID:        "u123",
+		Namespace:      "*",
+		OrgRole:        identity.RoleAdmin,
+		IsGrafanaAdmin: true,
+	})
+
+	return srv, ctx
+}
+
+func TestServerListKeysFetchesAtMostOneValueBatchAfterAuthorization(t *testing.T) {
+	kvStore := &countingKV{KV: setupBadgerKV(t)}
+	backend := setupTestStorageBackend(t, withKV(kvStore))
+	ctx := authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{
+		Type:      authlib.TypeUser,
+		UserID:    123,
+		UserUID:   "u123",
+		Namespace: appsNamespace.Namespace,
+	})
+
+	for i := range dataBatchSize + 10 {
+		seedResource(t, backend, ctx, fmt.Sprintf("resource-%03d", i), "")
+	}
+
+	// server with the feature toggle disabled
+	disabledSrv, err := NewUninitializedResourceServer(ResourceServerOptions{
+		Backend:          backend,
+		MaxPageSizeBytes: 1,
+	})
+	require.NoError(t, err)
+	t.Cleanup(disabledSrv.cancel)
+
+	tripsBefore, readsBefore := kvStore.stats()
+	disabledRsp, err := disabledSrv.List(ctx, appsCollectionRequest(false))
+	require.NoError(t, err)
+	require.Len(t, disabledRsp.Items, 1)
+	tripsAfter, readsAfter := kvStore.stats()
+	require.Equal(t, 2, tripsAfter-tripsBefore)
+	require.Equal(t, dataBatchSize+10, readsAfter-readsBefore)
+
+	// server with the feature toggle enabled
+	srv, err := NewUninitializedResourceServer(ResourceServerOptions{
+		Backend:                     backend,
+		AuthorizeBeforeFetchEnabled: true,
+		MaxPageSizeBytes:            1,
+	})
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		stopCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		_ = srv.Stop(stopCtx)
+	})
+
+	tripsBefore, readsBefore = kvStore.stats()
+	rsp, err := srv.List(ctx, appsCollectionRequest(false))
+	require.NoError(t, err)
+	require.Len(t, rsp.Items, 1)
+	require.NotEmpty(t, rsp.NextPageToken)
+
+	tripsAfter, readsAfter = kvStore.stats()
+	require.Equal(t, 1, tripsAfter-tripsBefore)
+	require.Equal(t, dataBatchSize, readsAfter-readsBefore)
+
+	limited := appsCollectionRequest(false)
+	limited.Limit = 1
+	tripsBefore, readsBefore = kvStore.stats()
+	rsp, err = srv.List(ctx, limited)
+	require.NoError(t, err)
+	require.Len(t, rsp.Items, 1)
+	require.NotEmpty(t, rsp.NextPageToken)
+	tripsAfter, readsAfter = kvStore.stats()
+	require.Equal(t, 1, tripsAfter-tripsBefore)
+	require.Equal(t, 1, readsAfter-readsBefore)
+
+	access := newNamespaceRecordingAccessClient()
+	for i := range dataBatchSize + 10 {
+		access.denied[fmt.Sprintf("resource-%03d", i)] = true
+	}
+	deniedSrv, err := NewUninitializedResourceServer(ResourceServerOptions{
+		Backend:                     backend,
+		AccessClient:                access,
+		AuthorizeBeforeFetchEnabled: true,
+	})
+	require.NoError(t, err)
+	t.Cleanup(deniedSrv.cancel)
+	tripsBefore, readsBefore = kvStore.stats()
+	rsp, err = deniedSrv.List(ctx, appsCollectionRequest(false))
+	require.NoError(t, err)
+	require.Empty(t, rsp.Items)
+	tripsAfter, readsAfter = kvStore.stats()
+	require.Equal(t, 0, tripsAfter-tripsBefore)
+	require.Equal(t, 0, readsAfter-readsBefore)
+}
+
+func TestServerListRecordsInstrumentationPath(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx := authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{
+		Type:      authlib.TypeUser,
+		UserID:    123,
+		UserUID:   "u123",
+		Namespace: appsNamespace.Namespace,
+	})
+	ctx, state := withRequestMetricsState(ctx)
+	seedResource(t, backend, ctx, "resource-000", "")
+
+	srv, err := NewUninitializedResourceServer(ResourceServerOptions{
+		Backend:                     backend,
+		AuthorizeBeforeFetchEnabled: true,
+	})
+	require.NoError(t, err)
+	t.Cleanup(srv.cancel)
+
+	rsp, err := srv.List(ctx, appsCollectionRequest(false))
+	require.NoError(t, err)
+	require.Len(t, rsp.Items, 1)
+	require.Equal(t, listPathStoreAuthorizeFirst, state.listPath)
+}
+
+func TestServerAuthorizeBeforeFetchKeysOnly(t *testing.T) {
+	srv, ctx := newKeysOnlyTestServer(t, true)
+	seedPlaylist(t, srv, ctx, "default", "aaa")
+	seedPlaylist(t, srv, ctx, "default", "bbb")
+
+	rsp, err := srv.List(ctx, &resourcepb.ListRequest{
+		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+			Group: "playlist.grafana.app", Resource: "playlists", Namespace: "default",
+		}},
+		KeysOnly: true,
+	})
+	require.NoError(t, err)
+	require.Len(t, rsp.Items, 2)
+	require.Equal(t, []string{"aaa", "bbb"}, []string{rsp.Items[0].Name, rsp.Items[1].Name})
+	for _, item := range rsp.Items {
+		require.Equal(t, "default", item.Namespace)
+		require.Empty(t, item.Value)
+	}
+}
+
+func TestServerAuthorizeBeforeFetchValues(t *testing.T) {
+	srv, ctx := newKeysOnlyTestServer(t, true)
+	seedPlaylist(t, srv, ctx, "default", "aaa")
+	seedPlaylist(t, srv, ctx, "default", "bbb")
+
+	rsp, err := srv.List(ctx, &resourcepb.ListRequest{
+		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+			Group: "playlist.grafana.app", Resource: "playlists", Namespace: "default",
+		}},
+	})
+	require.NoError(t, err)
+	require.Len(t, rsp.Items, 2)
+
+	names := make([]string, 0, len(rsp.Items))
+	for _, item := range rsp.Items {
+		require.NotEmpty(t, item.Value)
+		require.Empty(t, item.Name)
+		obj := &unstructured.Unstructured{}
+		require.NoError(t, obj.UnmarshalJSON(item.Value))
+		names = append(names, obj.GetName())
+	}
+	require.Equal(t, []string{"aaa", "bbb"}, names)
+}
+
+func TestServerListKeysOnly(t *testing.T) {
+	const (
+		group    = "playlist.grafana.app"
+		resource = "playlists"
+		ns       = "default"
+	)
+
+	newKey := func(name string) *resourcepb.ResourceKey {
+		return &resourcepb.ResourceKey{Group: group, Resource: resource, Namespace: ns, Name: name}
+	}
+
+	rawPlaylist := func(t *testing.T, name, folder string) []byte {
+		t.Helper()
+		meta := map[string]any{"name": name, "namespace": ns}
+		if folder != "" {
+			meta["annotations"] = map[string]any{utils.AnnoKeyFolder: folder}
+		}
+		raw, err := json.Marshal(map[string]any{
+			"apiVersion": group + "/v0alpha1",
+			"kind":       "Playlist",
+			"metadata":   meta,
+			"spec":       map[string]any{"title": name, "interval": "5m"},
+		})
+		require.NoError(t, err)
+		return raw
+	}
+
+	seed := func(t *testing.T, srv *server, ctx context.Context, items map[string]string) {
+		t.Helper()
+		for _, name := range slices.Sorted(maps.Keys(items)) {
+			created, err := srv.Create(ctx, &resourcepb.CreateRequest{
+				Key:   newKey(name),
+				Value: rawPlaylist(t, name, items[name]),
+			})
+			require.NoError(t, err)
+			require.NotNil(t, created)
+		}
+	}
+
+	// An empty namespace preserves the existing cluster-wide keys-only behavior.
+	collectionKey := &resourcepb.ResourceKey{Group: group, Resource: resource}
+
+	t.Run("returns identity and folder with no object bodies", func(t *testing.T) {
+		srv, ctx := newKeysOnlyTestServer(t, false)
+		seed(t, srv, ctx, map[string]string{
+			"aaa": "folder-a",
+			"bbb": "",
+			"ccc": "folder-b",
+		})
+
+		rsp, err := srv.List(ctx, &resourcepb.ListRequest{
+			Options:  &resourcepb.ListOptions{Key: collectionKey},
+			KeysOnly: true,
+		})
+		require.NoError(t, err)
+		require.Len(t, rsp.Items, 3)
+		require.Greater(t, rsp.ResourceVersion, int64(0))
+
+		names := make([]string, len(rsp.Items))
+		folders := make([]string, len(rsp.Items))
+		for i, item := range rsp.Items {
+			names[i] = item.Name
+			folders[i] = item.Folder
+			require.Empty(t, item.Value, "keys-only items must not carry a value")
+			require.Equal(t, ns, item.Namespace)
+			require.Greater(t, item.ResourceVersion, int64(0))
+		}
+		require.Equal(t, []string{"aaa", "bbb", "ccc"}, names)
+		require.Equal(t, []string{"folder-a", "", "folder-b"}, folders)
+
+		// Without keys_only: values, and no identity fields.
+		full, err := srv.List(ctx, &resourcepb.ListRequest{
+			Options: &resourcepb.ListOptions{Key: collectionKey},
+		})
+		require.NoError(t, err)
+		require.Len(t, full.Items, 3)
+		for _, item := range full.Items {
+			require.NotEmpty(t, item.Value)
+			require.Empty(t, item.Name)
+		}
+	})
+
+	// The cross-namespace scan must report each item's namespace, and paging must
+	// carry that namespace through the continue token.
+	t.Run("lists across namespaces", func(t *testing.T) {
+		srv, ctx := newKeysOnlyTestServer(t, false)
+		seedIn := func(itemNS, name string) {
+			t.Helper()
+			raw, err := json.Marshal(map[string]any{
+				"apiVersion": group + "/v0alpha1",
+				"kind":       "Playlist",
+				"metadata":   map[string]any{"name": name, "namespace": itemNS},
+				"spec":       map[string]any{"title": name},
+			})
+			require.NoError(t, err)
+			created, err := srv.Create(ctx, &resourcepb.CreateRequest{
+				Key:   &resourcepb.ResourceKey{Group: group, Resource: resource, Namespace: itemNS, Name: name},
+				Value: raw,
+			})
+			require.NoError(t, err)
+			require.NotNil(t, created)
+		}
+		seedIn("ns-one", "aaa")
+		seedIn("ns-two", "bbb")
+		seedIn("ns-two", "ccc")
+
+		clusterKey := &resourcepb.ResourceKey{Group: group, Resource: resource}
+
+		rsp, err := srv.List(ctx, &resourcepb.ListRequest{
+			Options:  &resourcepb.ListOptions{Key: clusterKey},
+			KeysOnly: true,
+		})
+		require.NoError(t, err)
+
+		got := map[string]string{}
+		for _, item := range rsp.Items {
+			got[item.Name] = item.Namespace
+			require.Empty(t, item.Value)
+		}
+		require.Equal(t, map[string]string{"aaa": "ns-one", "bbb": "ns-two", "ccc": "ns-two"}, got)
+
+		// Paged, the continue token has to carry the namespace or the second page
+		// restarts in the wrong one.
+		paged := map[string]string{}
+		token := ""
+		for range 3 {
+			page, err := srv.List(ctx, &resourcepb.ListRequest{
+				Options:       &resourcepb.ListOptions{Key: clusterKey},
+				KeysOnly:      true,
+				Limit:         1,
+				NextPageToken: token,
+			})
+			require.NoError(t, err)
+			require.Len(t, page.Items, 1)
+			paged[page.Items[0].Name] = page.Items[0].Namespace
+			token = page.NextPageToken
+			if token == "" {
+				break
+			}
+		}
+		require.Equal(t, got, paged, "paging must reach every namespace")
+	})
+
+	t.Run("honors limit and pins the snapshot RV across pages", func(t *testing.T) {
+		srv, ctx := newKeysOnlyTestServer(t, false)
+		seed(t, srv, ctx, map[string]string{
+			"aaa": "", "bbb": "", "ccc": "", "ddd": "", "eee": "",
+		})
+
+		var names []string
+		var pageRVs []int64
+		token := ""
+		for range 5 {
+			rsp, err := srv.List(ctx, &resourcepb.ListRequest{
+				Options:       &resourcepb.ListOptions{Key: collectionKey},
+				KeysOnly:      true,
+				Limit:         2,
+				NextPageToken: token,
+			})
+			require.NoError(t, err)
+			require.LessOrEqual(t, len(rsp.Items), 2)
+
+			for _, item := range rsp.Items {
+				names = append(names, item.Name)
+			}
+			pageRVs = append(pageRVs, rsp.ResourceVersion)
+
+			token = rsp.NextPageToken
+			if token == "" {
+				break
+			}
+		}
+
+		require.Equal(t, []string{"aaa", "bbb", "ccc", "ddd", "eee"}, names)
+		require.Len(t, pageRVs, 3)
+		for _, rv := range pageRVs[1:] {
+			require.Equal(t, pageRVs[0], rv, "every page must report the snapshot RV of the first")
+		}
+	})
+
+	t.Run("namespaced pagination remains pinned during mutations", func(t *testing.T) {
+		srv, ctx := newKeysOnlyTestServer(t, false)
+		seed(t, srv, ctx, map[string]string{
+			"aaa": "", "bbb": "", "ccc": "folder-old", "eee": "",
+		})
+		namespacedKey := &resourcepb.ResourceKey{Group: group, Resource: resource, Namespace: ns}
+
+		initial, err := srv.List(ctx, &resourcepb.ListRequest{
+			Options:  &resourcepb.ListOptions{Key: namespacedKey},
+			KeysOnly: true,
+		})
+		require.NoError(t, err)
+		initialRVs := map[string]int64{}
+		for _, item := range initial.Items {
+			initialRVs[item.Name] = item.ResourceVersion
+		}
+
+		first, err := srv.List(ctx, &resourcepb.ListRequest{
+			Options:  &resourcepb.ListOptions{Key: namespacedKey},
+			KeysOnly: true,
+			Limit:    2,
+		})
+		require.NoError(t, err)
+		require.Len(t, first.Items, 2)
+		require.Equal(t, []string{"aaa", "bbb"}, []string{first.Items[0].Name, first.Items[1].Name})
+		require.NotEmpty(t, first.NextPageToken)
+		firstToken, err := GetContinueToken(first.NextPageToken)
+		require.NoError(t, err)
+		require.Equal(t, ns, firstToken.Namespace)
+		require.True(t, firstToken.KeysOnly)
+		require.False(t, firstToken.ClusterWide)
+
+		updated, err := srv.Update(ctx, &resourcepb.UpdateRequest{
+			Key:             newKey("ccc"),
+			ResourceVersion: initialRVs["ccc"],
+			Value:           rawPlaylist(t, "ccc", "folder-new"),
+		})
+		require.NoError(t, err)
+		require.Greater(t, updated.ResourceVersion, initialRVs["ccc"])
+		deleted, err := srv.Delete(ctx, &resourcepb.DeleteRequest{
+			Key: newKey("eee"), ResourceVersion: initialRVs["eee"],
+		})
+		require.NoError(t, err)
+		require.Greater(t, deleted.ResourceVersion, initialRVs["eee"])
+		seed(t, srv, ctx, map[string]string{"ddd": ""})
+
+		second, err := srv.List(ctx, &resourcepb.ListRequest{
+			Options:       &resourcepb.ListOptions{Key: namespacedKey},
+			KeysOnly:      true,
+			Limit:         2,
+			NextPageToken: first.NextPageToken,
+		})
+		require.NoError(t, err)
+		require.Len(t, second.Items, 2)
+		require.Equal(t, first.ResourceVersion, second.ResourceVersion)
+		require.Equal(t, []string{"ccc", "eee"}, []string{second.Items[0].Name, second.Items[1].Name})
+		require.Equal(t, initialRVs["ccc"], second.Items[0].ResourceVersion)
+		require.Equal(t, "folder-old", second.Items[0].Folder)
+		require.Empty(t, second.NextPageToken)
+	})
+
+	// Selector handling lives in its own test; this covers the sources.
+	t.Run("refuses sources that need the object", func(t *testing.T) {
+		for name, source := range map[string]resourcepb.ListRequest_Source{
+			"history": resourcepb.ListRequest_HISTORY,
+			"trash":   resourcepb.ListRequest_TRASH,
+		} {
+			t.Run(name, func(t *testing.T) {
+				srv, ctx := newKeysOnlyTestServer(t, false)
+				seed(t, srv, ctx, map[string]string{"aaa": ""})
+
+				rsp, err := srv.List(ctx, &resourcepb.ListRequest{
+					Options:  &resourcepb.ListOptions{Key: collectionKey},
+					KeysOnly: true,
+					Source:   source,
+				})
+				rspErr := rpcErrorResult(t, err)
+				require.NotNil(t, rspErr, "keys_only must be refused, not silently served")
+				require.Equal(t, int32(http.StatusBadRequest), rspErr.Code)
+				require.Nil(t, rsp)
+			})
+		}
+	})
+
+	t.Run("clamps an oversized limit", func(t *testing.T) {
+		srv, ctx := newKeysOnlyTestServer(t, false)
+		seed(t, srv, ctx, map[string]string{"aaa": "", "bbb": ""})
+
+		req := &resourcepb.ListRequest{
+			Options:  &resourcepb.ListOptions{Key: collectionKey},
+			KeysOnly: true,
+			Limit:    maxKeysPageSize + 1_000_000,
+		}
+		rsp, err := srv.List(ctx, req)
+		require.NoError(t, err)
+		require.Len(t, rsp.Items, 2)
+		require.Equal(t, int64(maxKeysPageSize), req.Limit, "the limit must be clamped, not honored")
+	})
+}
+
+// Records the namespace each BatchCheck batch was scoped to, which is the thing
+// under test.
+type namespaceRecordingAccessClient struct {
+	mu         sync.Mutex
+	namespaces []string
+	items      map[string]string // name -> namespace seen on the check
+	denied     map[string]bool
+}
+
+func newNamespaceRecordingAccessClient() *namespaceRecordingAccessClient {
+	return &namespaceRecordingAccessClient{items: map[string]string{}, denied: map[string]bool{}}
+}
+
+func (c *namespaceRecordingAccessClient) Check(_ context.Context, _ authlib.AuthInfo, _ authlib.CheckRequest, _ string) (authlib.CheckResponse, error) {
+	return authlib.CheckResponse{Allowed: true}, nil
+}
+
+func (c *namespaceRecordingAccessClient) Compile(_ context.Context, _ authlib.AuthInfo, _ authlib.ListRequest) (authlib.ItemChecker, authlib.Zookie, error) {
+	return func(_, _ string) bool { return true }, authlib.NoopZookie{}, nil
+}
+
+func (c *namespaceRecordingAccessClient) BatchCheck(_ context.Context, _ authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+	c.mu.Lock()
+	c.namespaces = append(c.namespaces, req.Namespace)
+	results := make(map[string]authlib.BatchCheckResult, len(req.Checks))
+	for _, item := range req.Checks {
+		c.items[item.Name] = req.Namespace
+		results[item.CorrelationID] = authlib.BatchCheckResult{Allowed: !c.denied[item.Name]}
+	}
+	c.mu.Unlock()
+	return authlib.BatchCheckResponse{Results: results}, nil
+}
+
+func (c *namespaceRecordingAccessClient) seen() ([]string, map[string]string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return slices.Clone(c.namespaces), maps.Clone(c.items)
+}
+
+// Returns a wildcard-scoped context for seeding alongside the caller's, so a
+// narrowly-scoped identity under test is not also what writes the fixtures.
+func newRecordingTestServer(t *testing.T, ac authlib.AccessClient, identityNamespace string) (srv *server, ctx, seedCtx context.Context) {
+	t.Helper()
+
+	db, err := badger.Open(badger.DefaultOptions("").WithInMemory(true).WithLogger(nil))
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, db.Close()) })
+
+	store, err := NewKVStorageBackend(KVBackendOptions{KvStore: NewBadgerKV(db)})
+	require.NoError(t, err)
+
+	srv, err = NewResourceServer(ResourceServerOptions{Backend: store, AccessClient: ac, AuthorizeBeforeFetchEnabled: true})
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		stopCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		_ = srv.Stop(stopCtx)
+	})
+
+	authCtx := func(ns string) context.Context {
+		return authlib.WithAuthInfo(context.Background(), &identity.StaticRequester{
+			Type: authlib.TypeAccessPolicy, Name: "svc", UserUID: "svc",
+			Namespace: ns, OrgRole: identity.RoleAdmin, IsGrafanaAdmin: true,
+		})
+	}
+	return srv, authCtx(identityNamespace), authCtx("*")
+}
+
+// A cross-namespace keys-only list checks items under their own namespace. Only
+// a wildcard identity can read across namespaces: for anyone else the first
+// foreign namespace batch fails NamespaceMatches and stops the list.
+func TestCrossNamespaceKeysListRequiresWildcardIdentity(t *testing.T) {
+	const (
+		group    = "playlist.grafana.app"
+		resource = "playlists"
+	)
+
+	for name, tc := range map[string]struct {
+		identityNamespace string
+		requestNamespace  string
+		wantNamespaces    []string
+		wantErr           string
+	}{
+		"wildcard identity reads every namespace": {
+			identityNamespace: "*",
+			requestNamespace:  "",
+			wantNamespaces:    []string{"stacks-123", "stacks-456"},
+		},
+		"tenant-scoped identity cannot read across namespaces": {
+			identityNamespace: "stacks-123",
+			requestNamespace:  "",
+			wantErr:           "namespace mismatch",
+		},
+		"single-tenant service account cannot either": {
+			identityNamespace: "default",
+			requestNamespace:  "",
+			wantErr:           "namespace mismatch",
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			ac := NewAuthzLimitedClient(newNamespaceRecordingAccessClient(), AuthzOptions{Registry: prometheus.NewRegistry()})
+			srv, ctx, seedCtx := newRecordingTestServer(t, ac, tc.identityNamespace)
+			seedPlaylist(t, srv, seedCtx, "stacks-123", "aaa")
+			seedPlaylist(t, srv, seedCtx, "stacks-456", "bbb")
+
+			rsp, err := srv.List(ctx, &resourcepb.ListRequest{
+				Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+					Group: group, Resource: resource, Namespace: tc.requestNamespace,
+				}},
+				KeysOnly: true,
+			})
+
+			if tc.wantErr != "" {
+				require.Nil(t, rsp, "the list must not succeed")
+				assert.Contains(t, rpcErrorResult(t, err).Message, tc.wantErr)
+				return
+			}
+
+			require.NoError(t, err)
+			got := make([]string, 0, len(rsp.Items))
+			for _, item := range rsp.Items {
+				got = append(got, item.Namespace)
+			}
+			assert.ElementsMatch(t, tc.wantNamespaces, got)
+		})
+	}
+}
+
+// The substitution above is confined to keys_only. Every other list path reaches
+// the same empty namespace on a cross-namespace request and must keep checking
+// under it, so this PR changes no existing authorization behavior.
+func TestOnlyKeysListSubstitutesTheItemNamespace(t *testing.T) {
+	const (
+		group    = "dashboard.grafana.app" // allowlisted, so checks reach the client
+		resource = "dashboards"
+	)
+
+	for name, tc := range map[string]struct {
+		keysOnly         bool
+		requestNamespace string
+		wantBatches      []string
+	}{
+		"keys-only cross-namespace list batches per item namespace": {
+			keysOnly:    true,
+			wantBatches: []string{"ns-one", "ns-two"},
+		},
+		"normal cross-namespace list still batches under the empty namespace": {
+			wantBatches: []string{""},
+		},
+		"normal namespaced list uses the request key": {
+			requestNamespace: "ns-one",
+			wantBatches:      []string{"ns-one"},
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			inner := newNamespaceRecordingAccessClient()
+			ac := NewAuthzLimitedClient(inner, AuthzOptions{Registry: prometheus.NewRegistry()})
+			srv, ctx, seedCtx := newRecordingTestServer(t, ac, "*")
+			seedPlaylistIn(t, srv, seedCtx, group, resource, "ns-one", "aaa")
+			seedPlaylistIn(t, srv, seedCtx, group, resource, "ns-two", "bbb")
+
+			rsp, err := srv.List(ctx, &resourcepb.ListRequest{
+				Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+					Group: group, Resource: resource, Namespace: tc.requestNamespace,
+				}},
+				KeysOnly: tc.keysOnly,
+			})
+			require.NoError(t, err)
+			require.NotNil(t, rsp)
+
+			batches, _ := inner.seen()
+			assert.ElementsMatch(t, tc.wantBatches, slices.Compact(batches))
+		})
+	}
+}
+
+func seedPlaylist(t *testing.T, srv *server, ctx context.Context, ns, name string) {
+	t.Helper()
+	seedPlaylistIn(t, srv, ctx, "playlist.grafana.app", "playlists", ns, name)
+}
+
+func seedPlaylistIn(t *testing.T, srv *server, ctx context.Context, group, resource, ns, name string) {
+	t.Helper()
+	raw, err := json.Marshal(map[string]any{
+		"apiVersion": group + "/v0alpha1",
+		"kind":       "Playlist",
+		"metadata":   map[string]any{"name": name, "namespace": ns},
+		"spec":       map[string]any{"title": name},
+	})
+	require.NoError(t, err)
+	created, err := srv.Create(ctx, &resourcepb.CreateRequest{
+		Key:   &resourcepb.ResourceKey{Group: group, Resource: resource, Namespace: ns, Name: name},
+		Value: raw,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, created)
+}
+
+// Every selector is refused for keys_only, including the ones filterSelectors
+// discards before the request reaches the storage scan.
+//
+// On the normal path dropping them is safe: the proto documents label and field
+// matching as best-effort, and the client re-applies the full selector to the
+// decoded object. A keys-only response has no object, so nobody can re-filter --
+// accepting any of these would silently return every key as if it matched.
+func TestServerListKeysOnly_RefusesEverySelector(t *testing.T) {
+	const (
+		group    = "playlist.grafana.app"
+		resource = "playlists"
+		ns       = "default"
+	)
+
+	// Keep these cluster-wide while verifying selector rejection remains unchanged.
+	field := func(key, op string, values ...string) *resourcepb.ListOptions {
+		return &resourcepb.ListOptions{
+			Key:    &resourcepb.ResourceKey{Group: group, Resource: resource},
+			Fields: []*resourcepb.Requirement{{Key: key, Operator: op, Values: values}},
+		}
+	}
+	label := func(key, op string, values ...string) *resourcepb.ListOptions {
+		return &resourcepb.ListOptions{
+			Key:    &resourcepb.ResourceKey{Group: group, Resource: resource},
+			Labels: []*resourcepb.Requirement{{Key: key, Operator: op, Values: values}},
+		}
+	}
+
+	for name, opts := range map[string]*resourcepb.ListOptions{
+		// Survive filterSelectors.
+		"field equality": field("metadata.name", "=", "aaa"),
+		"label equality": label("team", "=", "a"),
+		// Dropped by filterSelectors, so a check placed after it would never see them.
+		"field inequality": field("metadata.name", "!=", "aaa"),
+		"label inequality": label("team", "!=", "a"),
+		"label exists":     label("team", "exists"),
+		"label not exists": label("team", "!"),
+		// metadata.namespace is dropped whatever its value, so it would narrow the
+		// scan silently.
+		"namespace selector":       field("metadata.namespace", "=", ns),
+		"empty namespace selector": field("metadata.namespace", "=", ""),
+	} {
+		t.Run(name, func(t *testing.T) {
+			srv, ctx := newKeysOnlyTestServer(t, false)
+			created, err := srv.Create(ctx, &resourcepb.CreateRequest{
+				Key: &resourcepb.ResourceKey{Group: group, Resource: resource, Namespace: ns, Name: "aaa"},
+				Value: []byte(`{"apiVersion":"` + group + `/v0alpha1","kind":"Playlist",` +
+					`"metadata":{"name":"aaa","namespace":"` + ns + `"},"spec":{"title":"aaa"}}`),
+			})
+			require.NoError(t, err)
+			require.NotNil(t, created)
+
+			rsp, err := srv.List(ctx, &resourcepb.ListRequest{Options: opts, KeysOnly: true})
+			rspErr := rpcErrorResult(t, err)
+			require.NotNil(t, rspErr, "must be refused, not served as if the selector matched")
+			require.Equal(t, int32(http.StatusBadRequest), rspErr.Code)
+			// Named, so these cannot start passing because some other validation
+			// began rejecting the request first.
+			require.Contains(t, rspErr.Message, "selectors")
+			require.Nil(t, rsp)
+		})
+	}
+}
+
+func TestServerListKeysOnly_NamespacedRequest(t *testing.T) {
+	const (
+		group    = "dashboard.grafana.app"
+		resource = "dashboards"
+	)
+
+	inner := newNamespaceRecordingAccessClient()
+	ac := NewAuthzLimitedClient(inner, AuthzOptions{Registry: prometheus.NewRegistry()})
+	srv, ctx, seedCtx := newRecordingTestServer(t, ac, "ns-one")
+	seedPlaylistIn(t, srv, seedCtx, group, resource, "ns-one", "aaa")
+	seedPlaylistIn(t, srv, seedCtx, group, resource, "ns-one", "bbb")
+	seedPlaylistIn(t, srv, seedCtx, group, resource, "ns-two", "aaa")
+	seedPlaylistIn(t, srv, seedCtx, group, resource, "ns-two", "ccc")
+
+	list := func(namespace string) *resourcepb.ListResponse {
+		t.Helper()
+		rsp, err := srv.List(ctx, &resourcepb.ListRequest{
+			Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+				Group: group, Resource: resource, Namespace: namespace,
+			}},
+			KeysOnly: true,
+		})
+		require.NoError(t, err)
+		return rsp
+	}
+
+	rsp := list("ns-one")
+	require.Len(t, rsp.Items, 2)
+	require.Equal(t, []string{"aaa", "bbb"}, []string{rsp.Items[0].Name, rsp.Items[1].Name})
+	for _, item := range rsp.Items {
+		require.Equal(t, "ns-one", item.Namespace)
+		require.Empty(t, item.Value)
+	}
+	batches, items := inner.seen()
+	require.Equal(t, []string{"ns-one"}, slices.Compact(batches))
+	require.Equal(t, map[string]string{"aaa": "ns-one", "bbb": "ns-one"}, items)
+
+	_, err := srv.List(ctx, &resourcepb.ListRequest{
+		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+			Group: group, Resource: resource, Namespace: "ns-one",
+		}},
+		KeysOnly: true,
+		NextPageToken: ContinueToken{
+			Namespace: "ns-two", KeysOnly: true, Name: "aaa", ResourceVersion: rsp.ResourceVersion,
+		}.String(),
+	})
+	wrongScopeErr := rpcErrorResult(t, err)
+	require.NotNil(t, wrongScopeErr)
+	require.Equal(t, int32(http.StatusBadRequest), wrongScopeErr.Code)
+	require.Contains(t, wrongScopeErr.Message, "list scope does not match")
+
+	_, err = srv.List(ctx, &resourcepb.ListRequest{
+		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+			Group: group, Resource: resource, Namespace: "ns-one",
+		}},
+		KeysOnly: true,
+		NextPageToken: ContinueToken{
+			KeysOnly: true, Name: "bbb", ResourceVersion: rsp.ResourceVersion,
+		}.String(),
+	})
+	missingScopeErr := rpcErrorResult(t, err)
+	require.NotNil(t, missingScopeErr)
+	require.Equal(t, int32(http.StatusBadRequest), missingScopeErr.Code)
+	require.Contains(t, missingScopeErr.Message, "list scope does not match")
+
+	for _, namespace := range []string{"ns-empty", "ns-two"} {
+		t.Run("rejects unauthorized namespace "+namespace, func(t *testing.T) {
+			foreign, err := srv.List(ctx, &resourcepb.ListRequest{
+				Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+					Group: group, Resource: resource, Namespace: namespace,
+				}},
+				KeysOnly: true,
+			})
+			require.Nil(t, foreign)
+			requireRPCError(t, err, &resourcepb.ErrorResult{Message: "namespace mismatch", Code: http.StatusForbidden})
+		})
+	}
+}
+
+func TestServerListKeysOnly_NamespacedAuthorizationAcrossPages(t *testing.T) {
+	const (
+		group    = "dashboard.grafana.app"
+		resource = "dashboards"
+		ns       = "ns-one"
+	)
+
+	inner := newNamespaceRecordingAccessClient()
+	inner.denied["bbb"] = true
+	inner.denied["ddd"] = true
+	ac := NewAuthzLimitedClient(inner, AuthzOptions{Registry: prometheus.NewRegistry()})
+	srv, ctx, seedCtx := newRecordingTestServer(t, ac, ns)
+	for _, name := range []string{"aaa", "bbb", "ccc", "ddd", "eee"} {
+		seedPlaylistIn(t, srv, seedCtx, group, resource, ns, name)
+	}
+	seedPlaylistIn(t, srv, seedCtx, group, resource, "ns-two", "foreign")
+
+	var names []string
+	token := ""
+	for range 3 {
+		rsp, err := srv.List(ctx, &resourcepb.ListRequest{
+			Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+				Group: group, Resource: resource, Namespace: ns,
+			}},
+			KeysOnly:      true,
+			Limit:         2,
+			NextPageToken: token,
+		})
+		require.NoError(t, err)
+		for _, item := range rsp.Items {
+			names = append(names, item.Name)
+			require.Equal(t, ns, item.Namespace)
+		}
+		token = rsp.NextPageToken
+		if token == "" {
+			break
+		}
+	}
+	require.Equal(t, []string{"aaa", "ccc", "eee"}, names)
+}
+
+// The proto documents that a list is bounded by response payload size as well as
+// by limit. A keys page carries no value, but the identities still cost bytes, so
+// the budget has to count them or a large page can blow past it.
+func TestServerListKeysOnly_BytesBudgetAppliesToIdentity(t *testing.T) {
+	const (
+		group    = "playlist.grafana.app"
+		resource = "playlists"
+		ns       = "default"
+	)
+
+	// Long names, the way a real tenant can have them: this is what makes the
+	// identity bytes big enough to matter.
+	longName := strings.Repeat("n", 200)
+
+	srv, ctx := newKeysOnlyTestServerWithMaxPageBytes(t, 4096, false)
+	for i := range 50 {
+		name := fmt.Sprintf("%s-%03d", longName, i)
+		created, err := srv.Create(ctx, &resourcepb.CreateRequest{
+			Key: &resourcepb.ResourceKey{Group: group, Resource: resource, Namespace: ns, Name: name},
+			Value: []byte(`{"apiVersion":"` + group + `/v0alpha1","kind":"Playlist",` +
+				`"metadata":{"name":"` + name + `","namespace":"` + ns + `"},"spec":{"title":"t"}}`),
+		})
+		require.NoError(t, err)
+		require.NotNil(t, created)
+	}
+
+	rsp, err := srv.List(ctx, &resourcepb.ListRequest{
+		Options:  &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Group: group, Resource: resource, Namespace: ns}},
+		KeysOnly: true,
+		Limit:    50,
+	})
+	require.NoError(t, err)
+
+	size := proto.Size(rsp)
+	require.Less(t, size, 4096*2,
+		"a keys page must respect maxPageSizeBytes; got %d bytes for %d items", size, len(rsp.Items))
+	require.NotEmpty(t, rsp.NextPageToken, "a truncated page must hand back a continue token")
+	require.Less(t, len(rsp.Items), 50, "the byte budget must have truncated the page")
+}
+
+func TestResourceServerQOSTenantIsolation(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		q := scheduler.NewQueue(&scheduler.QueueOptions{MaxConcurrentPerTenant: 4})
+		startQOSTestService(t, q)
+		worker, err := scheduler.NewScheduler(q, &scheduler.Config{NumWorkers: 32})
+		require.NoError(t, err)
+		startQOSTestService(t, worker)
+		access := &callbackAccessClient{}
+		// Badger's background goroutines cannot operate on channels created inside this bubble.
+		srv := &server{
+			backend:     &fakeBackend{},
+			access:      access,
+			log:         log.NewNopLogger(),
+			queue:       q,
+			queueConfig: QueueConfig{Timeout: 5 * time.Second},
+		}
+		ctxFor := func(namespace string) context.Context {
+			return authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{
+				Type: authlib.TypeUser, UserID: 123, UserUID: "u123", OrgRole: identity.RoleEditor, Namespace: namespace,
+			})
+		}
+
+		started := make(chan struct{}, 5)
+		release := make(chan struct{})
+		unblock := sync.OnceFunc(func() { close(release) })
+		t.Cleanup(unblock)
+		access.fn = func(req authlib.CheckRequest, _ string) (authlib.CheckResponse, error) {
+			if req.Namespace == "slow" {
+				started <- struct{}{}
+				<-release
+			}
+			return authlib.CheckResponse{Allowed: true}, nil
+		}
+		type result struct {
+			rsp *resourcepb.ReadResponse
+			err error
+		}
+		read := func(namespace string) result {
+			rsp, err := srv.Read(ctxFor(namespace), &resourcepb.ReadRequest{Key: &resourcepb.ResourceKey{
+				Namespace: namespace, Group: "playlist.grafana.app", Resource: "playlists", Name: "test-playlist",
+			}})
+			return result{rsp: rsp, err: err}
+		}
+		assertRead := func(r result) {
+			t.Helper()
+			require.NoError(t, r.err)
+			require.NotNil(t, r.rsp)
+			require.NotEmpty(t, r.rsp.Value)
+		}
+		slowResults := make(chan result, 5)
+		for range 5 {
+			go func() { slowResults <- read("slow") }()
+		}
+		for range 4 {
+			awaitQOSTestResult(t, started)
+		}
+
+		// Finish queue admission while execution remains blocked.
+		synctest.Wait()
+
+		require.Equal(t, 1, q.Len())
+		assertRead(read("healthy"))
+		require.Equal(t, 1, q.Len())
+		require.Empty(t, started, "fifth authorization must stay queued")
+		unblock()
+		for range 5 {
+			assertRead(awaitQOSTestResult(t, slowResults))
+		}
+	})
+}
+
+func TestResourceServerQOSTimeoutStatus(t *testing.T) {
+	for _, mode := range []string{"enqueue", "queued", "executing", "inline"} {
+		t.Run(mode, func(t *testing.T) {
+			for _, tc := range []struct {
+				name     string
+				httpCode int32
+				grpcCode codes.Code
+			}{
+				{"server timeout", http.StatusInternalServerError, codes.Internal},
+				{"caller deadline", http.StatusGatewayTimeout, codes.DeadlineExceeded},
+				{"caller cancellation", 499, codes.Canceled},
+			} {
+				t.Run(tc.name, func(t *testing.T) {
+					synctest.Test(t, func(t *testing.T) {
+						access := &callbackAccessClient{}
+						srv := &server{
+							backend:     &internalReadBackend{},
+							access:      access,
+							log:         log.NewNopLogger(),
+							queueConfig: QueueConfig{Timeout: time.Second, MinBackoff: time.Second, MaxBackoff: time.Second, MaxRetries: 10},
+						}
+						ctx := authlib.WithAuthInfo(t.Context(), newWatchTestUser())
+						key := &resourcepb.ResourceKey{Group: watchTestGroup, Resource: watchTestResource, Namespace: watchTestNamespace, Name: "timeout-test"}
+						if mode == "inline" {
+							srv.queue = scheduler.NewNoopQueue()
+						} else {
+							q := scheduler.NewQueue(&scheduler.QueueOptions{MaxSizePerTenant: 1})
+							startQOSTestService(t, q)
+							srv.queue = q
+							if mode == "enqueue" {
+								require.NoError(t, q.Enqueue(t.Context(), watchTestNamespace, func() { t.Error("queued work ran") }))
+							}
+							if mode == "executing" {
+								worker, err := scheduler.NewScheduler(q, &scheduler.Config{NumWorkers: 1})
+								require.NoError(t, err)
+								startQOSTestService(t, worker)
+							}
+						}
+
+						release := make(chan struct{})
+						unblock := sync.OnceFunc(func() { close(release) })
+						t.Cleanup(unblock)
+						started := make(chan struct{}, 1)
+						access.fn = func(authlib.CheckRequest, string) (authlib.CheckResponse, error) {
+							started <- struct{}{}
+							<-release
+							return authlib.CheckResponse{Allowed: true}, nil
+						}
+						callerCtx, cancel := context.WithCancel(ctx)
+						defer cancel()
+						if tc.name == "caller deadline" {
+							var deadlineCancel context.CancelFunc
+							callerCtx, deadlineCancel = context.WithTimeout(callerCtx, 100*time.Millisecond)
+							defer deadlineCancel()
+						}
+						type result struct {
+							rsp *resourcepb.ReadResponse
+							err error
+						}
+						results := make(chan result, 1)
+						go func() {
+							rsp, err := srv.Read(callerCtx, &resourcepb.ReadRequest{Key: key})
+							results <- result{rsp, err}
+						}()
+						synctest.Wait()
+						if mode == "executing" || mode == "inline" {
+							require.Len(t, started, 1)
+						} else {
+							require.Empty(t, started)
+						}
+						if tc.name == "caller cancellation" {
+							cancel()
+						}
+
+						// Keep execution blocked until the server budget has expired too.
+						time.Sleep(2 * time.Second)
+						if tc.name == "server timeout" {
+							require.NoError(t, callerCtx.Err())
+							_, hasDeadline := callerCtx.Deadline()
+							require.False(t, hasDeadline)
+						}
+						unblock()
+						r := awaitQOSTestResult(t, results)
+						require.Nil(t, r.rsp)
+						require.Equal(t, tc.grpcCode, status.Code(r.err))
+						require.Equal(t, tc.httpCode, rpcErrorResult(t, r.err).Code)
+						synctest.Wait()
+					})
+				})
+			}
+		})
+	}
+}
+
+func TestResourceServerQOSQueueWaitSpan(t *testing.T) {
+	t.Run("ends before execution", func(t *testing.T) {
+		recorder := newQOSTestSpanRecorder(t)
+		srv, _ := newTestServerWithQueue(t, 10, 2)
+		ctx, parent := tracer.Start(t.Context(), "request")
+		defer parent.End()
+		var spans []sdktrace.ReadOnlySpan
+		var executionSpanContext trace.SpanContext
+		require.NoError(t, srv.runInQueue(ctx, "stack-a", "read", func(ctx context.Context) {
+			spans = recorder.Ended()
+			executionSpanContext = trace.SpanContextFromContext(ctx)
+		}))
+		require.Len(t, spans, 1)
+		require.Equal(t, "resource.server.runInQueue", spans[0].Name())
+		require.Equal(t, parent.SpanContext(), spans[0].Parent())
+		require.Equal(t, parent.SpanContext(), executionSpanContext)
+		require.Contains(t, spans[0].Attributes(), attribute.String("operation", "read"))
+		require.Contains(t, spans[0].Attributes(), attribute.String("stack", "stack-a"))
+	})
+	t.Run("cluster-scoped waits use the queue tenant", func(t *testing.T) {
+		recorder := newQOSTestSpanRecorder(t)
+		srv, _ := newTestServerWithQueue(t, 10, 2)
+		require.NoError(t, srv.runInQueue(t.Context(), "", "read", func(context.Context) {}))
+		spans := recorder.Ended()
+		require.Len(t, spans, 1)
+		require.Contains(t, spans[0].Attributes(), attribute.String("stack", "cs"))
+	})
+	t.Run("ends on queued cancellation", func(t *testing.T) {
+		synctest.Test(t, func(t *testing.T) {
+			recorder := newQOSTestSpanRecorder(t)
+			q := scheduler.NewQueue(&scheduler.QueueOptions{})
+			startQOSTestService(t, q)
+			srv := &server{queue: q, queueConfig: QueueConfig{Timeout: time.Minute}}
+			ctx, cancel := context.WithCancel(t.Context())
+			defer cancel()
+			result := make(chan error, 1)
+			go func() {
+				result <- srv.runInQueue(ctx, "stack-a", "read", func(context.Context) { t.Error("canceled work ran") })
+			}()
+
+			// Finish queue admission while execution remains blocked.
+			synctest.Wait()
+
+			require.Equal(t, 1, q.Len())
+			cancel()
+			require.ErrorIs(t, awaitQOSTestResult(t, result), context.Canceled)
+			spans := recorder.Ended()
+			require.Len(t, spans, 1)
+			require.Equal(t, otelcodes.Error, spans[0].Status().Code)
+			require.Len(t, spans[0].Events(), 1)
+			require.Equal(t, "exception", spans[0].Events()[0].Name)
+
+			// Let the queued cancellation callback release its queue slot.
+			synctest.Wait()
+
+			require.Zero(t, q.Len())
+		})
+	})
+	t.Run("execution cancellation leaves the completed wait successful", func(t *testing.T) {
+		recorder := newQOSTestSpanRecorder(t)
+		srv, _ := newTestServerWithQueue(t, 10, 2)
+		srv.queueConfig.Timeout = time.Minute
+		ctx, cancel := context.WithCancel(t.Context())
+		defer cancel()
+		started := make(chan struct{})
+		release := make(chan struct{})
+		unblock := sync.OnceFunc(func() { close(release) })
+		t.Cleanup(unblock)
+		finished := make(chan struct{})
+		result := make(chan error, 1)
+		go func() {
+			result <- srv.runInQueue(ctx, "stack-a", "read", func(context.Context) {
+				close(started)
+				<-release
+				close(finished)
+			})
+		}()
+		awaitQOSTestResult(t, started)
+		cancel()
+		require.ErrorIs(t, awaitQOSTestResult(t, result), context.Canceled)
+		spans := recorder.Ended()
+		require.Len(t, spans, 1)
+		require.Equal(t, otelcodes.Unset, spans[0].Status().Code)
+		require.Empty(t, spans[0].Events())
+		unblock()
+		awaitQOSTestResult(t, finished)
+	})
+	t.Run("enqueue failure ends the wait with an error", func(t *testing.T) {
+		recorder := newQOSTestSpanRecorder(t)
+		srv := &server{
+			queue:       scheduler.NewQueue(&scheduler.QueueOptions{}),
+			queueConfig: QueueConfig{Timeout: time.Minute, MaxRetries: 1},
+			log:         log.NewNopLogger(),
+		}
+		err := srv.runInQueue(t.Context(), "stack-a", "read", func(context.Context) { t.Error("rejected work ran") })
+		require.ErrorIs(t, err, scheduler.ErrQueueClosed)
+		spans := recorder.Ended()
+		require.Len(t, spans, 1)
+		require.Equal(t, otelcodes.Error, spans[0].Status().Code)
+		require.Len(t, spans[0].Events(), 1)
+	})
+}
+
+func startQOSTestService(t *testing.T, service services.Service) {
+	t.Helper()
+	require.NoError(t, services.StartAndAwaitRunning(t.Context(), service))
+	t.Cleanup(func() { require.NoError(t, services.StopAndAwaitTerminated(context.Background(), service)) })
+}
+
+func awaitQOSTestResult[T any](t *testing.T, ch <-chan T) T {
+	t.Helper()
+	select {
+	case result := <-ch:
+		return result
+	case <-time.After(5 * time.Second):
+		t.Fatal("timed out waiting for QoS test result")
+		var zero T
+		return zero
+	}
+}
+
+func newQOSTestSpanRecorder(t *testing.T) *tracetest.SpanRecorder {
+	t.Helper()
+	recorder := tracetest.NewSpanRecorder()
+	provider := sdktrace.NewTracerProvider(sdktrace.WithSpanProcessor(recorder))
+	original := tracer
+	tracer = provider.Tracer("qos-test")
+	t.Cleanup(func() {
+		tracer = original
+		require.NoError(t, provider.Shutdown(context.Background()))
+	})
+	return recorder
+}
+
+func TestQueueRPCError(t *testing.T) {
+	err := queueRPCError(fmt.Errorf("enqueue: %w", scheduler.ErrTenantQueueFull))
+	requireRPCError(t, err, NewTooManyRequestsError("tenant queue is full, please try again later"))
+	require.Equal(t, codes.ResourceExhausted, status.Code(err))
+
+	other := errors.New("timeout")
+	requireRPCError(t, queueRPCError(other), &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "timeout"})
+
+	for _, tc := range []struct {
+		err  error
+		want codes.Code
+	}{
+		{context.Canceled, codes.Canceled},
+		{context.DeadlineExceeded, codes.DeadlineExceeded},
+	} {
+		t.Run(tc.want.String(), func(t *testing.T) {
+			queueErr := fmt.Errorf("failed to enqueue for tenant stacks-13: %w", tc.err)
+			require.Equal(t, tc.want, status.Code(queueRPCError(queueErr)))
+		})
+	}
+}
+
+// Servers return native status errors without any conversion interceptor, both
+// to direct Go callers and over a real gRPC transport.
+func TestServerReturnsStatusErrorsWithoutConversion(t *testing.T) {
+	srv, err := NewResourceServer(ResourceServerOptions{Backend: &missingReadBackend{}})
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, srv.Stop(context.Background())) })
+	key := &resourcepb.ResourceKey{Namespace: "default", Group: "example.grafana.app", Resource: "widgets", Name: "missing"}
+	want := &resourcepb.ErrorResult{Code: http.StatusNotFound, Message: "missing"}
+	ctx, _ := identity.WithServiceIdentity(t.Context(), 1)
+
+	t.Run("direct call", func(t *testing.T) {
+		rsp, err := srv.Read(ctx, &resourcepb.ReadRequest{Key: key})
+		require.Nil(t, rsp)
+		requireRPCError(t, err, want)
+	})
+
+	t.Run("remote gRPC", func(t *testing.T) {
+		listener := bufconn.Listen(1 << 20)
+		grpcServer := grpc.NewServer(grpc.UnaryInterceptor(func(ctx context.Context, req any, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
+			return handler(authlib.WithAuthInfo(ctx, &identity.StaticRequester{Type: authlib.TypeUser, UserID: 1, UserUID: "u1", Namespace: "default"}), req)
+		}))
+		resourcepb.RegisterResourceStoreServer(grpcServer, srv)
+		go func() { _ = grpcServer.Serve(listener) }()
+		t.Cleanup(grpcServer.Stop)
+		conn, err := grpc.NewClient("passthrough:///bufnet",
+			grpc.WithContextDialer(func(context.Context, string) (net.Conn, error) { return listener.Dial() }),
+			grpc.WithTransportCredentials(insecure.NewCredentials()))
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = conn.Close() })
+
+		rsp, err := resourcepb.NewResourceStoreClient(conn).Read(t.Context(), &resourcepb.ReadRequest{Key: key})
+		require.Nil(t, rsp)
+		requireRPCError(t, err, want)
+		var apiStatus apierrors.APIStatus
+		require.ErrorAs(t, StatusErrorFromGRPC(err), &apiStatus)
+		require.Equal(t, int32(http.StatusNotFound), apiStatus.Status().Code)
+	})
+}
+
+// resultBlob is a blob backend that returns fixed results from both calls.
+type resultBlob struct {
+	stubBlobSupport
+	putRsp *resourcepb.PutBlobResponse
+	getRsp *resourcepb.GetBlobResponse
+	err    error
+}
+
+func (b *resultBlob) PutResourceBlob(context.Context, *resourcepb.PutBlobRequest) (*resourcepb.PutBlobResponse, error) {
+	return b.putRsp, b.err
+}
+
+func (b *resultBlob) GetResourceBlob(context.Context, *resourcepb.ResourceKey, *utils.BlobInfo, bool) (*resourcepb.GetBlobResponse, error) {
+	return b.getRsp, b.err
+}
+
+func TestBlobRPCsReturnBackendFailures(t *testing.T) {
+	const namespace = "default"
+	ctx := ctxWithUserInNs(namespace)
+	missing := &resourcepb.ResourceKey{Group: "playlist.grafana.app", Resource: "playlists", Namespace: namespace, Name: "missing"}
+	existing := &resourcepb.ResourceKey{Group: "playlist.grafana.app", Resource: "playlists", Namespace: namespace, Name: "existing"}
+	newServer := func(t *testing.T, blob BlobSupport) *server {
+		t.Helper()
+		srv, _, _ := newBlobAuthzTestServer(t, nil)
+		// GetBlob only reaches the backend for an existing resource.
+		created, err := srv.Create(ctx, &resourcepb.CreateRequest{Key: existing, Value: []byte(`{"apiVersion":"playlist.grafana.app/v0alpha1","kind":"Playlist","metadata":{"name":"existing","namespace":"default"},"spec":{"title":"t","interval":"5m","items":[]}}`)})
+		require.NoError(t, err)
+		require.NotNil(t, created)
+		srv.blob = blob
+		return srv
+	}
+	noResponse := &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "blob backend returned no response"}
+	statusFailure := &resourcepb.ErrorResult{Code: http.StatusBadRequest, Message: "empty content"}
+
+	for _, tc := range []struct {
+		name string
+		err  error
+		want *resourcepb.ErrorResult
+	}{
+		{"status error keeps code and details", GRPCStatusError(statusFailure), statusFailure},
+		{"plain error becomes internal", errors.New("disk failed"), &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "disk failed"}},
+		{"nil response becomes internal", nil, noResponse},
+	} {
+		t.Run("PutBlob/"+tc.name, func(t *testing.T) {
+			srv := newServer(t, &resultBlob{err: tc.err})
+			rsp, err := srv.PutBlob(ctx, &resourcepb.PutBlobRequest{Resource: missing})
+			require.Nil(t, rsp)
+			requireRPCError(t, err, tc.want)
+		})
+		t.Run("GetBlob/"+tc.name, func(t *testing.T) {
+			srv := newServer(t, &resultBlob{err: tc.err})
+			rsp, err := srv.GetBlob(ctx, &resourcepb.GetBlobRequest{Resource: existing, Uid: "blob-a"})
+			require.Nil(t, rsp)
+			requireRPCError(t, err, tc.want)
+		})
+	}
+
+	t.Run("PutBlob/returns the backend response", func(t *testing.T) {
+		want := &resourcepb.PutBlobResponse{Uid: "blob-a", Size: 2, MimeType: "application/json"}
+		rsp, err := newServer(t, &resultBlob{putRsp: want}).PutBlob(ctx, &resourcepb.PutBlobRequest{Resource: missing})
+		require.NoError(t, err)
+		require.True(t, proto.Equal(want, rsp))
+	})
+	t.Run("GetBlob/returns the backend response", func(t *testing.T) {
+		want := &resourcepb.GetBlobResponse{Value: []byte("{}"), ContentType: "application/json"}
+		rsp, err := newServer(t, &resultBlob{getRsp: want}).GetBlob(ctx, &resourcepb.GetBlobRequest{Resource: existing, Uid: "blob-a"})
+		require.NoError(t, err)
+		require.True(t, proto.Equal(want, rsp))
+	})
+}
+
+func TestGetStatsPassesThroughClientResult(t *testing.T) {
+	want := &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "stats failed"}
+	stats := newFakeResourceIndexClient()
+	stats.statsError = GRPCStatusError(want)
+	srv, err := NewResourceServer(ResourceServerOptions{Backend: &missingReadBackend{}, SearchClient: stats})
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, srv.Stop(context.Background())) })
+	ctx, _ := identity.WithServiceIdentity(t.Context(), 1)
+
+	rsp, err := srv.GetStats(ctx, &resourcepb.ResourceStatsRequest{Namespace: "default"})
+	require.Nil(t, rsp)
+	requireRPCError(t, err, want)
+
+	require.Same(t, stats.statsError, err)
+
+	stats.statsResponse, stats.statsError = &resourcepb.ResourceStatsResponse{}, nil
+	rsp, err = srv.GetStats(ctx, &resourcepb.ResourceStatsRequest{Namespace: "default"})
+	require.NoError(t, err)
+	require.Same(t, stats.statsResponse, rsp)
 }

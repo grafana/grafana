@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
-import { Draggable } from '@hello-pangea/dnd';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useContext, useEffect, useRef } from 'react';
 import * as React from 'react';
 
 import {
@@ -12,14 +11,18 @@ import {
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { useStyles2, Icon, Select, ColorPicker, IconButton, Input, Button, Stack } from '@grafana/ui';
+import { useDragAndDrop } from '@grafana/ui/internal';
+import { FieldConfigExpressionsContext } from 'app/core/components/OptionsUI/fieldConfigExpressions';
+import { SuggestionsInput } from 'app/core/components/SuggestionsInput/SuggestionsInput';
+import { getVariableSuggestions } from 'app/core/components/SuggestionsInput/getVariableSuggestions';
 
 import { ResourcePickerSize, ResourceFolderName, MediaType } from '../../types';
 import { ResourcePicker } from '../ResourcePicker';
 
 export interface ValueMappingEditRowModel {
   type: MappingType;
-  from?: number | null;
-  to?: number | null;
+  from?: number | string | null;
+  to?: number | string | null;
   pattern?: string;
   key?: string;
   isNew?: boolean;
@@ -38,9 +41,11 @@ interface Props {
 }
 
 export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDuplicate, showIconPicker }: Props) {
+  const { Draggable } = useDragAndDrop();
   const { key, result, id } = mapping;
   const styles = useStyles2(getStyles);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const fieldConfigExpressions = useContext(FieldConfigExpressionsContext);
 
   const update = useCallback(
     (fn: (item: ValueMappingEditRowModel) => void) => {
@@ -96,20 +101,24 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
   };
 
   const onChangeText = (event: React.FormEvent<HTMLInputElement>) => {
+    setText(event.currentTarget.value);
+  };
+
+  const setText = (text: string) => {
     update((mapping) => {
-      mapping.result.text = event.currentTarget.value;
+      mapping.result.text = text;
     });
   };
 
   const onChangeFrom = (event: React.FormEvent<HTMLInputElement>) => {
     update((mapping) => {
-      mapping.from = parseFloat(event.currentTarget.value);
+      mapping.from = event.currentTarget.value;
     });
   };
 
   const onChangeTo = (event: React.FormEvent<HTMLInputElement>) => {
     update((mapping) => {
-      mapping.to = parseFloat(event.currentTarget.value);
+      mapping.to = event.currentTarget.value;
     });
   };
 
@@ -181,17 +190,20 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
     },
   ];
 
+  const dragHandleLabel = t('dimensions.value-mapping-edit-row.drag-handle-label', 'Reorder value mapping row');
+
+  const displayTextPlaceholder = t(
+    'dimensions.value-mapping-edit-row.placeholder-optional-display-text',
+    'Optional display text'
+  );
+
   return (
     <Draggable key={id} draggableId={id} index={index}>
       {(provided) => (
         <tr className={styles.dragRow} ref={provided.innerRef} {...provided.draggableProps}>
           <td>
-            <div className={styles.dragHandle} {...provided.dragHandleProps}>
-              <Icon
-                name="draggabledots"
-                size="lg"
-                title={t('dimensions.value-mapping-edit-row.drag-handle-label', 'Reorder value mapping row')}
-              />
+            <div className={styles.dragHandle} {...provided.dragHandleProps} aria-label={dragHandleLabel}>
+              <Icon name="draggabledots" size="lg" title={dragHandleLabel} />
             </div>
           </td>
           <td className={styles.typeColumn}>{mapping.type}</td>
@@ -211,13 +223,15 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
             {mapping.type === MappingType.RangeToText && (
               <div className={styles.rangeInputWrapper}>
                 <Input
-                  type="number"
+                  type="text"
+                  inputMode="decimal"
                   value={mapping.from ?? ''}
                   placeholder={t('dimensions.value-mapping-edit-row.placeholder-from', 'From')}
                   onChange={onChangeFrom}
                 />
                 <Input
-                  type="number"
+                  type="text"
+                  inputMode="decimal"
                   value={mapping.to ?? ''}
                   placeholder={t('dimensions.value-mapping-edit-row.placeholder-to', 'To')}
                   onChange={onChangeTo}
@@ -244,15 +258,27 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
             )}
           </td>
           <td>
-            <Input
-              type="text"
-              value={result.text ?? ''}
-              onChange={onChangeText}
-              placeholder={t(
-                'dimensions.value-mapping-edit-row.placeholder-optional-display-text',
-                'Optional display text'
-              )}
-            />
+            {fieldConfigExpressions ? (
+              // Suggests dashboard variables, which the display text can reference (e.g. $myVar)
+              <SuggestionsInput
+                value={result.text ?? ''}
+                suggestions={getVariableSuggestions()}
+                onInputChange={setText}
+                onChange={(text) => {
+                  if (text !== (result.text ?? '')) {
+                    setText(text);
+                  }
+                }}
+                placeholder={displayTextPlaceholder}
+              />
+            ) : (
+              <Input
+                type="text"
+                value={result.text ?? ''}
+                onChange={onChangeText}
+                placeholder={displayTextPlaceholder}
+              />
+            )}
           </td>
           <td className={styles.textAlignCenter}>
             {result.color && (

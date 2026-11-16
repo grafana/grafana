@@ -2,14 +2,20 @@ import { useCallback, useMemo, useRef } from 'react';
 
 import { t } from '@grafana/i18n';
 import { usePanelPluginMetas } from '@grafana/runtime/internal';
-import { type VizPanel } from '@grafana/scenes';
+import { type SceneObject, type VizPanel } from '@grafana/scenes';
 import { type AnnotationPanelFilter } from '@grafana/schema';
 import { Checkbox, Combobox, type ComboboxOption, Field, Input, MultiCombobox, Stack } from '@grafana/ui';
 import { ColorValueEditor } from 'app/core/components/OptionsUI/color';
 
-import { useEditPaneInputAutoFocus } from '../../scene/layouts-shared/utils';
+import { DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
+import { useSidebarInputAutoFocus } from '../../scene/layouts-shared/utils';
+import { type DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
+import { isRowItem, isTabItem } from '../../scene/types/LayoutItemTypeGuards';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
-import { getDashboardSceneFor, getPanelIdForVizPanel } from '../../utils/utils';
+import { getTopPlacementLabel } from '../../utils/getTopPlacementLabel';
+import { getDashboardSceneFor } from '../../utils/utils';
+import { getPanelIdForVizPanel } from '../../utils/utils-panels';
+import { getDefaultTopPlacementLabel } from '../variables/utils';
 
 import { type AnnotationLayer } from './AnnotationEditableElement';
 import { annotationEditActions } from './actions';
@@ -17,10 +23,10 @@ import { annotationEditActions } from './actions';
 export function AnnotationNameInput({ layer, autoFocus }: { layer: AnnotationLayer; autoFocus: boolean }) {
   const { name } = layer.useState();
   const oldName = useRef(name);
-  const inputRef = useEditPaneInputAutoFocus({ autoFocus });
+  const inputRef = useSidebarInputAutoFocus({ autoFocus });
 
   return (
-    <Field label={t('dashboard.edit-pane.annotation.name', 'Name')} noMargin>
+    <Field label={t('dashboard.sidebar.annotation.name', 'Name')} noMargin>
       <Input
         ref={inputRef}
         value={name}
@@ -55,9 +61,9 @@ export function AnnotationEnabledCheckbox({ layer }: { layer: AnnotationLayer })
 
   return (
     <Field
-      label={t('dashboard.edit-pane.annotation.enabled', 'Enabled')}
+      label={t('dashboard.sidebar.annotation.enabled', 'Enabled')}
       description={t(
-        'dashboard.edit-pane.annotation.enabled-description',
+        'dashboard.sidebar.annotation.enabled-description',
         'When enabled the annotation query is issued every dashboard refresh'
       )}
       noMargin
@@ -85,11 +91,8 @@ export function AnnotationColorPicker({ layer }: { layer: AnnotationLayer }) {
 
   return (
     <Field
-      label={t('dashboard.edit-pane.annotation.color', 'Color')}
-      description={t(
-        'dashboard.edit-pane.annotation.color-description',
-        'Color to use for the annotation event markers'
-      )}
+      label={t('dashboard.sidebar.annotation.color', 'Color')}
+      description={t('dashboard.sidebar.annotation.color-description', 'Color to use for the annotation event markers')}
       noMargin
     >
       <Stack>
@@ -100,23 +103,27 @@ export function AnnotationColorPicker({ layer }: { layer: AnnotationLayer }) {
 }
 
 enum AnnotationControlsDisplay {
-  Hidden,
-  AboveDashboard,
+  Visible,
   InControlsMenu,
+  Hidden,
 }
 
 export function AnnotationControlsDisplayPicker({ layer }: { layer: AnnotationLayer }) {
   const { isHidden, placement } = layer.useState();
+  const sectionOwner = dashboardSceneGraph.findSectionOwner(layer);
+  const topPlacementLabel = sectionOwner ? getTopPlacementLabel(sectionOwner) : undefined;
+  const resolvedTopPlacementLabel = topPlacementLabel ?? getDefaultTopPlacementLabel();
+  const hideControlsMenuOption = Boolean(sectionOwner);
 
   const onChange = useCallback(
     (option: ComboboxOption<AnnotationControlsDisplay>) => {
-      const newIsHidden = option.value === AnnotationControlsDisplay.Hidden;
-      const newPlacement = option.value === AnnotationControlsDisplay.InControlsMenu ? 'inControlsMenu' : undefined;
-
       annotationEditActions.changeAnnotationControlsDisplay({
         source: layer,
         oldValue: { isHidden: Boolean(isHidden), placement },
-        newValue: { isHidden: newIsHidden, placement: newPlacement },
+        newValue: {
+          isHidden: option.value === AnnotationControlsDisplay.Hidden,
+          placement: option.value === AnnotationControlsDisplay.InControlsMenu ? 'inControlsMenu' : undefined,
+        },
       });
     },
     [isHidden, layer, placement]
@@ -125,41 +132,43 @@ export function AnnotationControlsDisplayPicker({ layer }: { layer: AnnotationLa
   const options = useMemo(
     () => [
       {
-        value: AnnotationControlsDisplay.AboveDashboard,
-        label: t('dashboard.edit-pane.annotation.display-options.above-dashboard', 'Above dashboard'),
+        value: AnnotationControlsDisplay.Visible,
+        label: resolvedTopPlacementLabel,
       },
-      {
-        value: AnnotationControlsDisplay.InControlsMenu,
-        label: t('dashboard.edit-pane.annotation.display-options.controls-menu', 'Controls menu'),
-        description: t(
-          'dashboard.edit-pane.annotation.display-options.controls-menu-description',
-          'Can be accessed when the controls menu is open'
-        ),
-      },
+      ...(!hideControlsMenuOption
+        ? [
+            {
+              value: AnnotationControlsDisplay.InControlsMenu,
+              label: t('dashboard.sidebar.annotation.display-options.controls-menu', 'Controls menu'),
+              description: t(
+                'dashboard.sidebar.annotation.display-options.controls-menu-description',
+                'Visible when the controls menu is open'
+              ),
+            },
+          ]
+        : []),
       {
         value: AnnotationControlsDisplay.Hidden,
-        label: t('dashboard.edit-pane.annotation.display-options.hidden', 'Hidden'),
-        description: t(
-          'dashboard.edit-pane.annotation.display-options.hidden-description',
-          'Hides the toggle for turning this annotation on or off'
-        ),
+        label: t('dashboard.sidebar.annotation.display-options.hidden', 'Hidden'),
+        description: t('dashboard.sidebar.annotation.display-options.hidden-description', 'Only visible in edit mode'),
       },
     ],
-    []
+    [hideControlsMenuOption, resolvedTopPlacementLabel]
   );
 
   const currentValue = useMemo(() => {
     if (isHidden) {
       return AnnotationControlsDisplay.Hidden;
     }
-    if (placement === 'inControlsMenu') {
+    // Sections have no controls menu and render such layers in the section controls
+    if (placement === 'inControlsMenu' && !hideControlsMenuOption) {
       return AnnotationControlsDisplay.InControlsMenu;
     }
-    return AnnotationControlsDisplay.AboveDashboard;
-  }, [isHidden, placement]);
+    return AnnotationControlsDisplay.Visible;
+  }, [hideControlsMenuOption, isHidden, placement]);
 
   return (
-    <Field label={t('dashboard.edit-pane.annotation.display', 'Show annotation controls in')} noMargin>
+    <Field label={t('dashboard.sidebar.annotation.display', 'Show annotation controls in')} noMargin>
       <Combobox options={options} value={currentValue} onChange={onChange} width="auto" minWidth={100} />
     </Field>
   );
@@ -182,7 +191,7 @@ export function AnnotationPanelFilterPicker({ layer }: { layer: AnnotationLayer 
   } = useAnnotationPanelFilterPicker(layer);
 
   return (
-    <Field label={t('dashboard.edit-pane.annotation.show-in', 'Show in')} noMargin>
+    <Field label={t('dashboard.sidebar.annotation.show-in', 'Show in')} noMargin>
       <Stack direction="column" gap={1}>
         <Combobox
           // hack to force re-render when undoing to "All panels" (value=0)
@@ -199,12 +208,28 @@ export function AnnotationPanelFilterPicker({ layer }: { layer: AnnotationLayer 
             value={selectedPanels}
             onChange={onSelectedPanelsChange}
             isClearable={true}
-            placeholder={t('dashboard.edit-pane.annotation.choose-panels', 'Choose panels')}
+            placeholder={t('dashboard.sidebar.annotation.choose-panels', 'Choose panels')}
           />
         )}
       </Stack>
     </Field>
   );
+}
+
+export function getAnnotationShowInPanels(layer: AnnotationLayer): VizPanel[] {
+  const dataLayerSet = layer.parent;
+  if (dataLayerSet instanceof DashboardDataLayerSet) {
+    const section = dataLayerSet.parent;
+    if (section && (isRowItem(section) || isTabItem(section)) && hasLayout(section)) {
+      return section.getLayout().getVizPanels();
+    }
+  }
+
+  return dashboardSceneGraph.getVizPanels(getDashboardSceneFor(layer));
+}
+
+function hasLayout(section: SceneObject): section is SceneObject & { getLayout(): DashboardLayoutManager } {
+  return 'getLayout' in section && typeof section.getLayout === 'function';
 }
 
 const collator = Intl.Collator();
@@ -219,7 +244,7 @@ function useSelectablePanelOptions(layer: AnnotationLayer): Array<ComboboxOption
 
     let panels: VizPanel[];
     try {
-      panels = dashboardSceneGraph.getVizPanels(getDashboardSceneFor(layer));
+      panels = getAnnotationShowInPanels(layer);
     } catch {
       panels = [];
     }
@@ -244,26 +269,26 @@ function useAnnotationPanelFilterPicker(layer: AnnotationLayer) {
   const panelFilterOptions = useMemo(
     () => [
       {
-        label: t('dashboard.edit-pane.annotation.panel-filter.all-panels', 'All panels'),
+        label: t('dashboard.sidebar.annotation.panel-filter.all-panels', 'All panels'),
         value: PanelFilterType.AllPanels,
         description: t(
-          'dashboard.edit-pane.annotation.panel-filter.all-panels-description',
+          'dashboard.sidebar.annotation.panel-filter.all-panels-description',
           'Send the annotation data to all panels that support annotations'
         ),
       },
       {
-        label: t('dashboard.edit-pane.annotation.panel-filter.selected-panels', 'Selected panels'),
+        label: t('dashboard.sidebar.annotation.panel-filter.selected-panels', 'Selected panels'),
         value: PanelFilterType.IncludePanels,
         description: t(
-          'dashboard.edit-pane.annotation.panel-filter.selected-panels-description',
+          'dashboard.sidebar.annotation.panel-filter.selected-panels-description',
           'Send the annotations to the explicitly listed panels'
         ),
       },
       {
-        label: t('dashboard.edit-pane.annotation.panel-filter.all-panels-except', 'All panels except'),
+        label: t('dashboard.sidebar.annotation.panel-filter.all-panels-except', 'All panels except'),
         value: PanelFilterType.ExcludePanels,
         description: t(
-          'dashboard.edit-pane.annotation.panel-filter.all-panels-except-description',
+          'dashboard.sidebar.annotation.panel-filter.all-panels-except-description',
           'Do not send annotation data to the following panels'
         ),
       },

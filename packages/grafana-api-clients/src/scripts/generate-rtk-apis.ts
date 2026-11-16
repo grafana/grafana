@@ -9,18 +9,41 @@ const basePath = path.resolve(__dirname, '../../../..');
 // Include some types that are used inside the @rtk-query/codegen-openapi package
 // but not exported
 declare const operationKeys: readonly ['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace'];
-type OperationDefinition = {
+export type OperationDefinition = {
   path: string;
   verb: (typeof operationKeys)[number];
   pathItem: OpenAPIV3.PathItemObject;
   operation: OpenAPIV3.OperationObject;
 };
-type EndpointMatcher = string[] | ((operationName: string, operationDefinition: OperationDefinition) => boolean);
+export type EndpointMatcher = string[] | ((operationName: string, operationDefinition: OperationDefinition) => boolean);
 
 const defaultHooksOptions = {
   queries: true,
   lazyQueries: true,
   mutations: true,
+};
+
+// Generic search routes are generated only when a frontend consumer opts in.
+// The older group-root dashboard search routes remain included.
+const perResourceSearch = /^\/[^/]+\/(search(?:\/hybrid)?|trash)$/;
+
+// The GMA-only rule list pages page through folders and rules, and look up rule sequence membership, with
+// these searches. The per-resource ones are the only ones with a frontend caller today, so they are allowlisted
+// past the exclusion above rather than lifting it entirely.
+const allowedPerResourceSearchPaths = [
+  '/folders/search',
+  '/rulesequences/search',
+  '/searchAlertRules',
+  '/searchRecordingRules',
+];
+
+export const withoutPerResourceSearch = (filterEndpoints?: EndpointMatcher): EndpointMatcher => {
+  if (Array.isArray(filterEndpoints)) {
+    return filterEndpoints;
+  }
+  return (name, operation) =>
+    (!perResourceSearch.test(operation.path) || allowedPerResourceSearchPaths.includes(operation.path)) &&
+    (filterEndpoints ? filterEndpoints(name, operation) : true);
 };
 
 /**
@@ -32,12 +55,41 @@ const createAPIConfig = (app: string, version: string, filterEndpoints?: Endpoin
     [filePath]: {
       schemaFile: path.join(basePath, `packages/grafana-openapi/src/apis/${app}.grafana.app-${version}.json`),
       apiFile: `../clients/rtkq/${app}/${version}/baseAPI.ts`,
-      filterEndpoints,
+      filterEndpoints: withoutPerResourceSearch(filterEndpoints),
       tag: true,
       hooks: defaultHooksOptions,
       ...additional,
     },
   };
+};
+
+/**
+ * Includes the hybrid search endpoint in the generated APIs, in contrast to createAPIConfig which filters them out.
+ */
+const createAPIConfigWithSearch = (app: string, version: string) =>
+  createAPIConfig(app, version, undefined, {
+    // Disable the default search-route filter.
+    filterEndpoints: undefined,
+    // Generic search and trash use POSTs to read resources, which by default would be considered a mutation by RTK,
+    // so we have to make this override.
+    endpointOverrides: [
+      {
+        pattern: (_name: string, operation: OperationDefinition) =>
+          operation.verb === 'post' && perResourceSearch.test(operation.path),
+        type: 'query',
+      },
+    ],
+  });
+
+// An allowlisted search reads resources through a POST, which RTK would otherwise treat as a mutation.
+const allowedSearchAsQuery = {
+  endpointOverrides: [
+    {
+      pattern: (_name: string, operation: OperationDefinition) =>
+        operation.verb === 'post' && allowedPerResourceSearchPaths.includes(operation.path),
+      type: 'query' as const,
+    },
+  ],
 };
 
 const config: ConfigFile = {
@@ -104,19 +156,13 @@ const config: ConfigFile = {
       apiFile: '../clients/rtkq/preferences/team/baseAPI.ts',
       filterEndpoints: ['getTeamPreferences', 'updateTeamPreferences', 'patchTeamPreferences'],
     },
-    '../clients/rtkq/user/endpoints.gen.ts': {
-      schemaFile: path.join(basePath, 'public/openapi3.json'),
-      hooks: defaultHooksOptions,
-      apiFile: '../clients/rtkq/user/baseAPI.ts',
-      filterEndpoints: ['starDashboardByUid', 'unstarDashboardByUid'],
-    },
     ...createAPIConfig('advisor', 'v0alpha1'),
     ...createAPIConfig('correlations', 'v0alpha1'),
-    ...createAPIConfig('dashboard', 'v0alpha1'),
+    ...createAPIConfigWithSearch('dashboard', 'v0alpha1'),
     ...createAPIConfig('dashboard', 'v1beta1'),
     ...createAPIConfig('dashboard', 'v2beta1'),
     ...createAPIConfig('dashboard', 'v2'),
-    ...createAPIConfig('folder', 'v1beta1'),
+    ...createAPIConfig('folder', 'v1beta1', undefined, allowedSearchAsQuery),
     ...createAPIConfig('iam', 'v0alpha1'),
     ...createAPIConfig('playlist', 'v1'),
     ...createAPIConfig('collections', 'v1alpha1'),
@@ -125,12 +171,14 @@ const config: ConfigFile = {
     ...createAPIConfig('shorturl', 'v1beta1'),
     ...createAPIConfig('notifications.alerting', 'v0alpha1'),
     ...createAPIConfig('notifications.alerting', 'v1beta1'),
-    ...createAPIConfig('rules.alerting', 'v0alpha1'),
+    ...createAPIConfig('rules.alerting', 'v0alpha1', undefined, allowedSearchAsQuery),
     ...createAPIConfig('historian.alerting', 'v0alpha1'),
     ...createAPIConfig('logsdrilldown', 'v1beta1'),
     ...createAPIConfig('logsdrilldown', 'v1alpha1'),
     ...createAPIConfig('quotas', 'v0alpha1'),
     ...createAPIConfig('plugins', 'v0alpha1'),
+    ...createAPIConfig('preferences', 'v1'),
+    ...createAPIConfig('rules.alerting', 'v1beta1', undefined, allowedSearchAsQuery),
     // GENERATED:API_CLIENT — used by the API client generator
   },
 };

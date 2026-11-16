@@ -404,6 +404,7 @@ export type DashboardQueryOptionsSpec = {
   timeCompare?: string;
   timeFrom?: string;
   timeShift?: string;
+  timeTo?: string;
 };
 export type DashboardMatcherConfig = {
   /** The matcher id. This is used to find the matcher implementation from registry. */
@@ -420,6 +421,8 @@ export type DashboardTransformationSpec = {
   filter?: DashboardMatcherConfig;
   /** Options to be passed to the transformer Valid options depend on the transformer id */
   options: object;
+  /** Unique identifier of the instance of the transformer */
+  refId?: string;
   /** Where to pull DataFrames from as input to transformation */
   topic?: string;
 };
@@ -549,6 +552,8 @@ export type DashboardThreshold = {
   color: string;
   /** Value null means -Infinity */
   value: number;
+  /** Optional dashboard-variable expression (e.g. `$myVar`) resolved at render time; `value` is the numeric fallback when the expression cannot be resolved to a single finite number. */
+  valueExpr?: string;
 };
 export type DashboardThresholdsConfig = {
   mode: string;
@@ -595,6 +600,10 @@ export type DashboardFieldConfig = {
   thresholds?: DashboardThresholdsConfig;
   /** Unit a field should use. The unit you select is applied to all fields except time. You can use the units ID available in Grafana or a custom unit. Available units in Grafana: https://github.com/grafana/grafana/blob/main/packages/grafana-data/src/valueFormats/categories.ts As custom unit, you can use the following formats: `suffix:<suffix>` for custom unit that should go after value. `prefix:<prefix>` for custom unit that should go before value. `time:<format>` For custom date time formats type for example `time:YYYY-MM-DD`. `si:<base scale><unit characters>` for custom SI units. For example: `si: mF`. This one is a bit more advanced as you can specify both a unit and the source data scale. So if your source data is represented as milli (thousands of) something prefix the unit with that SI scale character. `count:<unit>` for a custom count unit. `currency:<unit>` for custom a currency unit. */
   unit?: string;
+  /** Maps field-config property ids (e.g. `min`, `unit` or `custom.lineWidth`) to a dashboard-variable expression resolved at render time. The property's own value is the fallback when the expression doesn't resolve to a valid value for that property. */
+  varMappings?: {
+    [key: string]: string;
+  };
   /** True if data source can write a value to the path. Auth/authz are supported separately */
   writeable?: boolean;
 };
@@ -629,9 +638,12 @@ export type DashboardVizConfigKind = {
 };
 export type DashboardPanelSpec = {
   data: DashboardQueryGroupKind;
-  description: string;
+  /** Shown in a info icon tooltip next to panel title */
+  description?: string;
   id: number;
   links: DashboardDataLink[];
+  /** Shown in a sub header below the title. */
+  subtitle?: string;
   title: string;
   transparent?: boolean;
   vizConfig: DashboardVizConfigKind;
@@ -693,6 +705,7 @@ export type DashboardAutoGridRepeatOptions = {
 export type DashboardAutoGridLayoutItemSpec = {
   conditionalRendering?: DashboardConditionalRenderingGroupKind;
   element: DashboardElementReference;
+  fitContent?: boolean;
   repeat?: DashboardAutoGridRepeatOptions;
 };
 export type DashboardAutoGridLayoutItemKind = {
@@ -703,8 +716,14 @@ export type DashboardAutoGridLayoutSpec = {
   columnWidth?: number;
   columnWidthMode: string;
   fillScreen?: boolean;
+  fitContent?: boolean;
   items: DashboardAutoGridLayoutItemKind[];
+  matchRowHeights?: boolean;
   maxColumnCount?: number;
+  maxHeight?: number;
+  maxHeightMode?: string;
+  minHeight?: number;
+  minHeightMode?: string;
   rowHeight?: number;
   rowHeightMode: string;
 };
@@ -978,6 +997,7 @@ export type DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOr
     TextVariableKind?: DashboardTextVariableKind;
   };
 export type DashboardTabsLayoutTabSpec = {
+  annotations?: DashboardAnnotationQueryKind[];
   conditionalRendering?: DashboardConditionalRenderingGroupKind;
   layout: DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind;
   repeat?: DashboardTabRepeatOptions;
@@ -1006,6 +1026,7 @@ export type DashboardRowRepeatOptions = {
   value: string;
 };
 export type DashboardRowsLayoutRowSpec = {
+  annotations?: DashboardAnnotationQueryKind[];
   collapse?: boolean;
   conditionalRendering?: DashboardConditionalRenderingGroupKind;
   fillScreen?: boolean;

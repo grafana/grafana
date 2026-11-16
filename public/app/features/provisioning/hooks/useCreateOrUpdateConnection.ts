@@ -13,11 +13,13 @@ export function useCreateOrUpdateConnection(name?: string) {
   const [update, updateRequest] = useReplaceConnectionMutation();
 
   const updateOrCreate = useCallback(
-    async (data: ConnectionSpec, privateKey?: string) => {
+    async (data: ConnectionSpec, privateKey?: string, clientSecret?: string) => {
       // API expects base64-encoded private key
       const secure: ConnectionSecure | undefined = privateKey?.length
         ? { privateKey: { create: btoa(privateKey) } }
-        : undefined;
+        : clientSecret?.length
+          ? { clientSecret: { create: clientSecret } }
+          : undefined;
 
       const connection: Connection = {
         metadata: name ? { name } : { generateName: 'c' },

@@ -1,13 +1,13 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import { memo, useRef } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { IconButton, ScrollContainer, useStyles2 } from '@grafana/ui';
+import { ScrollContainer, useStyles2 } from '@grafana/ui';
 
 import { SegmentedToggle, type SegmentedToggleProps } from '../../SegmentedToggle';
-import { QueryEditorType, type SidebarSize } from '../../constants';
-import { trackSidebarViewChange, trackStackedViewToggle } from '../../tracking';
+import { QueryEditorType, SidebarSize } from '../../constants';
+import { trackSidebarViewChange } from '../../tracking';
 import { useAlertingContext, useQueryEditorUIContext } from '../QueryEditorContext';
 import { getSelectedStackedItem } from '../StackedEditor/utils';
 import { EMPTY_ALERT } from '../types';
@@ -24,19 +24,11 @@ interface SidebarProps {
 }
 
 export const Sidebar = memo(function Sidebar({ sidebarSize, setSidebarSize }: SidebarProps) {
-  const styles = useStyles2(getStyles);
-  const {
-    setSelectedAlert,
-    cardType,
-    pendingExpression,
-    pendingTransformation,
-    stackedMode,
-    selectedQuery,
-    selectedTransformation,
-  } = useQueryEditorUIContext();
+  const { setSelectedAlert, cardType, selectedQuery, selectedTransformation } = useQueryEditorUIContext();
   const { alertRules, loading } = useAlertingContext();
+  const styles = useStyles2(getStyles, sidebarSize);
 
-  const contentRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement | null>(null);
 
   const selectedCardId = getSelectedStackedItem(selectedQuery, selectedTransformation)?.id ?? null;
   useScrollSelectedCardIntoView(contentRef, selectedCardId);
@@ -44,16 +36,6 @@ export const Sidebar = memo(function Sidebar({ sidebarSize, setSidebarSize }: Si
   const handleViewChange = (view: QueryEditorType) => {
     trackSidebarViewChange(view);
     setSelectedAlert(view === QueryEditorType.Alert ? (alertRules[0] ?? EMPTY_ALERT) : null);
-  };
-
-  const handleStackedModeToggle = () => {
-    if (stackedMode.enabled) {
-      trackStackedViewToggle('exit');
-      stackedMode.exit();
-    } else {
-      trackStackedViewToggle('enter');
-      stackedMode.enter();
-    }
   };
 
   const toggleValue = cardType === QueryEditorType.Alert ? QueryEditorType.Alert : QueryEditorType.Query;
@@ -71,11 +53,6 @@ export const Sidebar = memo(function Sidebar({ sidebarSize, setSidebarSize }: Si
     { value: QueryEditorType.Alert, label: alertsLabel, icon: 'bell' },
   ];
 
-  const showStackedModeAction = cardType !== QueryEditorType.Alert && !pendingExpression && !pendingTransformation;
-  const stackedModeLabel = stackedMode.enabled
-    ? t('query-editor-next.sidebar.exit-stacked-view', 'Exit stacked view')
-    : t('query-editor-next.sidebar.enter-stacked-view', 'Enter stacked view');
-
   return (
     <div className={styles.container}>
       <SidebarHeaderActions
@@ -83,20 +60,6 @@ export const Sidebar = memo(function Sidebar({ sidebarSize, setSidebarSize }: Si
         setSidebarSize={setSidebarSize}
         // The alerts label is the only width-affecting content that changes at runtime.
         contentKey={alertsLabel}
-        trailing={
-          showStackedModeAction ? (
-            <IconButton
-              name="layer-group"
-              size="sm"
-              variant="secondary"
-              className={cx({ [styles.stackedModeActionButtonActive]: stackedMode.enabled })}
-              onClick={handleStackedModeToggle}
-              aria-label={stackedModeLabel}
-              aria-pressed={stackedMode.enabled}
-              tooltip={stackedModeLabel}
-            />
-          ) : undefined
-        }
       >
         {(compact) => (
           <SegmentedToggle
@@ -124,7 +87,9 @@ export const Sidebar = memo(function Sidebar({ sidebarSize, setSidebarSize }: Si
   );
 });
 
-function getStyles(theme: GrafanaTheme2) {
+function getStyles(theme: GrafanaTheme2, sidebarSize: SidebarSize) {
+  const isFull = sidebarSize === SidebarSize.Full;
+
   return {
     container: css({
       height: '100%',
@@ -133,18 +98,17 @@ function getStyles(theme: GrafanaTheme2) {
       border: `1px solid ${theme.colors.border.weak}`,
       borderRadius: theme.shape.radius.default,
       background: theme.colors.background.primary,
+      // Flush to the bottom in both layouts, and flush left in full-height mode.
+      borderBottomLeftRadius: 'unset',
+      borderBottomRightRadius: 'unset',
+      ...(isFull && {
+        borderTopLeftRadius: 'unset',
+      }),
     }),
     content: css({
       background: theme.colors.background.primary,
       paddingLeft: theme.spacing(1),
       paddingRight: theme.spacing(1),
-    }),
-    stackedModeActionButtonActive: css({
-      color: theme.colors.primary.text,
-      '&::before, &:hover::before': {
-        backgroundColor: theme.colors.primary.transparent,
-        opacity: 1,
-      },
     }),
   };
 }

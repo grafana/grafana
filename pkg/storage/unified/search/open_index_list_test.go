@@ -24,9 +24,9 @@ func TestOpenIndexListWriteAndLoad(t *testing.T) {
 	first := resource.NamespacedResource{Namespace: "ns-a", Group: "group-a", Resource: "resource-a"}
 	second := resource.NamespacedResource{Namespace: "ns-b", Group: "group-b", Resource: "resource-b"}
 
-	_, err = backend.BuildIndex(context.Background(), second, 2, "test", indexTestDocs(second, 2, 100), nil, false, time.Time{}, 0)
+	_, err = backend.BuildIndex(context.Background(), second, 2, "test", indexTestDocs(second, 2, 100), nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
-	_, err = backend.BuildIndex(context.Background(), first, 3, "test", indexTestDocs(first, 3, 200), nil, false, time.Time{}, 0)
+	_, err = backend.BuildIndex(context.Background(), first, 3, "test", indexTestDocs(first, 3, 200), nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	require.NoError(t, err)
 
 	now := time.Now().UTC()
@@ -38,6 +38,37 @@ func TestOpenIndexListWriteAndLoad(t *testing.T) {
 		{NamespacedResource: first, Count: 3},
 		{NamespacedResource: second, Count: 2},
 	}, stats)
+}
+
+// A global index keeps its last search across a restart, so it is closed as
+// idle once the timeout has passed since that search, not since the restart.
+func TestOpenIndexListKeepsWhenAGlobalIndexWasLastSearched(t *testing.T) {
+	root := t.TempDir()
+	global := resource.GlobalSearchKey("ns")
+	searched := time.Now().Add(-2 * time.Hour).Truncate(time.Millisecond)
+	before, err := NewBleveBackend(BleveOptions{Root: root, FileThreshold: 10}, nil)
+	require.NoError(t, err)
+	_, err = before.BuildIndex(t.Context(), global, 2, "test", indexTestDocs(global, 2, 100), nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
+	require.NoError(t, err)
+	before.peekCachedIndex(global).lastSearchedAt.Store(searched.UnixMilli())
+	require.NoError(t, before.WriteOpenIndexStats(time.Now()))
+	before.Stop()
+
+	after, err := NewBleveBackend(BleveOptions{Root: root, FileThreshold: 10, GlobalIndexIdleTimeout: 3 * time.Hour}, nil)
+	require.NoError(t, err)
+	t.Cleanup(after.Stop)
+	stats, err := after.LoadOpenIndexStats(time.Now(), time.Hour)
+	require.NoError(t, err)
+	require.Len(t, stats, 1)
+	require.True(t, searched.Equal(stats[0].LastSearchedAt), "got %s", stats[0].LastSearchedAt)
+
+	_, err = after.BuildIndex(t.Context(), global, 2, "init", indexTestDocs(global, 2, 100), nil, false, time.Time{}, 0,
+		resource.BuildIndexOptions{LastSearchedAt: stats[0].LastSearchedAt})
+	require.NoError(t, err)
+	after.runEvictExpiredOrUnownedIndexes(searched.Add(3*time.Hour - time.Minute))
+	require.NotNil(t, after.PeekIndex(global))
+	after.runEvictExpiredOrUnownedIndexes(searched.Add(3*time.Hour + time.Minute))
+	require.Nil(t, after.PeekIndex(global))
 }
 
 func TestOpenIndexListWriteRemovesOpenIndexListWhenNoIndexes(t *testing.T) {

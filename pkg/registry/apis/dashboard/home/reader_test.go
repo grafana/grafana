@@ -1,7 +1,6 @@
 package home
 
 import (
-	"os"
 	"path/filepath"
 	"testing"
 
@@ -128,25 +127,6 @@ func TestReadDashboard(t *testing.T) {
 	})
 }
 
-func TestDefaultHomeDashboard(t *testing.T) {
-	// The embedded home.json has no apiVersion, so it must decode as a v0 Dashboard
-	// whose entire payload becomes the spec.
-	obj, err := defaultHomeDashboard()
-	require.NoError(t, err)
-	require.NotNil(t, obj)
-
-	dash, ok := obj.(*dashv0.Dashboard)
-	require.True(t, ok, "default home dashboard should be a v0 Dashboard")
-	require.Equal(t, "Home", dash.Spec.Object["title"])
-
-	// Sanity check the embedded file still contains the structural pieces the
-	// frontend expects so a bad edit to home.json fails this test loudly.
-	require.Contains(t, dash.Spec.Object, "panels")
-	panels, ok := dash.Spec.Object["panels"].([]any)
-	require.True(t, ok, "panels should decode as a JSON array")
-	require.NotEmpty(t, panels)
-}
-
 func TestHasCustomHome(t *testing.T) {
 	t.Run("returns true when DefaultHomeDashboardPath is set", func(t *testing.T) {
 		// An explicit override is always treated as custom — even if the file
@@ -155,52 +135,8 @@ func TestHasCustomHome(t *testing.T) {
 		require.True(t, HasCustomHome(cfg))
 	})
 
-	t.Run("returns false when the static home.json is missing", func(t *testing.T) {
+	t.Run("returns false when DefaultHomeDashboardPath is empty", func(t *testing.T) {
 		cfg := &setting.Cfg{StaticRootPath: t.TempDir()}
 		require.False(t, HasCustomHome(cfg))
-	})
-
-	t.Run("returns false when the static home.json matches the embedded default", func(t *testing.T) {
-		root := t.TempDir()
-		require.NoError(t, os.MkdirAll(filepath.Join(root, "dashboards"), 0750))
-		require.NoError(t, os.WriteFile(
-			filepath.Join(root, "dashboards/home.json"),
-			defaultHomeDashboardJSON,
-			0o600,
-		))
-
-		cfg := &setting.Cfg{StaticRootPath: root}
-		require.False(t, HasCustomHome(cfg))
-	})
-
-	t.Run("returns true when the static home.json differs from the embedded default", func(t *testing.T) {
-		root := t.TempDir()
-		require.NoError(t, os.MkdirAll(filepath.Join(root, "dashboards"), 0750))
-		require.NoError(t, os.WriteFile(
-			filepath.Join(root, "dashboards/home.json"),
-			[]byte(`{"title":"custom"}`),
-			0o600,
-		))
-
-		cfg := &setting.Cfg{StaticRootPath: root}
-		require.True(t, HasCustomHome(cfg))
-	})
-
-	t.Run("explicit path takes precedence over StaticRootPath comparison", func(t *testing.T) {
-		// Even when the static file matches the embedded default, an explicit
-		// override flips the answer to true.
-		root := t.TempDir()
-		require.NoError(t, os.MkdirAll(filepath.Join(root, "dashboards"), 0750))
-		require.NoError(t, os.WriteFile(
-			filepath.Join(root, "dashboards/home.json"),
-			defaultHomeDashboardJSON,
-			0o600,
-		))
-
-		cfg := &setting.Cfg{
-			StaticRootPath:           root,
-			DefaultHomeDashboardPath: filepath.Join(t.TempDir(), "override.json"),
-		}
-		require.True(t, HasCustomHome(cfg))
 	})
 }

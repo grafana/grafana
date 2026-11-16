@@ -1,10 +1,9 @@
-import { css } from '@emotion/css';
 import { useCallback, useId, useMemo } from 'react';
 
-import { FieldType, type GrafanaTheme2, type SelectableValue, type StandardEditorProps } from '@grafana/data';
+import { FieldType, type SelectableValue, type StandardEditorProps } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { ScalarDimensionMode, type ScalarDimensionConfig } from '@grafana/schema';
-import { InlineField, InlineFieldRow, RadioButtonGroup, Combobox, useStyles2 } from '@grafana/ui';
+import { InlineField, InlineFieldRow, RadioButtonGroup, Combobox } from '@grafana/ui';
 import { useFieldDisplayNames, useMatcherSelectOptions } from '@grafana/ui/internal';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 
@@ -51,8 +50,6 @@ export const ScalarDimensionEditor = ({ value, context, onChange, item }: Props)
     firstItem: fixedValueOption,
     fieldType: FieldType.number,
   });
-
-  const styles = useStyles2(getStyles);
 
   const onSelectChange = useCallback(
     (selection: SelectableValue<string>) => {
@@ -102,45 +99,37 @@ export const ScalarDimensionEditor = ({ value, context, onChange, item }: Props)
   const selectedOption = isFixed ? fixedValueOption : selectOptions.find((v) => v.value === fieldName);
   return (
     <>
-      <div>
+      <InlineFieldRow>
+        <InlineField label={t('dimensions.scalar-dimension-editor.label-limit', 'Limit')} labelWidth={8} grow={true}>
+          <RadioButtonGroup value={mode} options={scalarOptions} onChange={onModeChange} fullWidth />
+        </InlineField>
+      </InlineFieldRow>
+      <InlineFieldRow>
+        <InlineField label={t('dimensions.scalar-dimension-editor.label-field', 'Field')} labelWidth={8} grow={true}>
+          <Combobox
+            value={selectedOption}
+            options={selectOptions}
+            onChange={onSelectChange}
+            noOptionsMessage={t(
+              'dimensions.scalar-dimension-editor.noOptionsMessage-no-fields-found',
+              'No fields found'
+            )}
+          />
+        </InlineField>
+      </InlineFieldRow>
+      {isFixed && (
         <InlineFieldRow>
-          <InlineField label={t('dimensions.scalar-dimension-editor.label-limit', 'Limit')} labelWidth={8} grow={true}>
-            <RadioButtonGroup value={mode} options={scalarOptions} onChange={onModeChange} fullWidth />
+          <InlineField label={t('dimensions.scalar-dimension-editor.label-value', 'Value')} labelWidth={8} grow={true}>
+            <NumberInput
+              id={valueInputId}
+              value={val?.fixed ?? DEFAULT_VALUE}
+              onChange={onValueChange}
+              max={settings?.max}
+              min={settings?.min}
+            />
           </InlineField>
         </InlineFieldRow>
-        <Combobox
-          aria-label={t('dimensions.scalar-dimension-editor.label', 'Scalar')}
-          value={selectedOption}
-          options={selectOptions}
-          onChange={onSelectChange}
-          noOptionsMessage={t('dimensions.scalar-dimension-editor.noOptionsMessage-no-fields-found', 'No fields found')}
-        />
-      </div>
-      <div className={styles.range}>
-        {isFixed && (
-          <InlineFieldRow>
-            <InlineField
-              label={t('dimensions.scalar-dimension-editor.label-value', 'Value')}
-              labelWidth={8}
-              grow={true}
-            >
-              <NumberInput
-                id={valueInputId}
-                value={val?.fixed ?? DEFAULT_VALUE}
-                onChange={onValueChange}
-                max={settings?.max}
-                min={settings?.min}
-              />
-            </InlineField>
-          </InlineFieldRow>
-        )}
-      </div>
+      )}
     </>
   );
 };
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  range: css({
-    paddingTop: theme.spacing(1),
-  }),
-});

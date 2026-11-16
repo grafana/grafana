@@ -1,0 +1,903 @@
+import { isEqual } from 'lodash';
+
+import { reportInteraction } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+import {
+  NewSceneObjectAddedEvent,
+  sceneGraph,
+  type SceneObject,
+  SceneObjectBase,
+  SceneObjectRemovedEvent,
+  StateCommittedEvent,
+  type StateCommittedPayload,
+} from '@grafana/scenes';
+import { type ElementSelectionContextItem, type ElementSelectionOnSelectOptions } from '@grafana/ui';
+import { getLayoutType } from 'app/features/dashboard/utils/tracking';
+import { isDashboardReviewing, isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
+
+import { getPendingChangesHistory, type PendingChangesHistory } from '../lifecycle/pendingChangePreview';
+import {
+  pendingChangesRecorded,
+  pendingChangesSuperseded,
+  recordPendingChange,
+} from '../lifecycle/pendingChangesHistory';
+import { dashboardModesEnabled, getDashboardMode } from '../scene/dashboardModes';
+import { dashboardViewChanged } from '../scene/dashboardViewRegistry';
+import { TabItem } from '../scene/layout-tabs/TabItem';
+import { getRepeatCloneSourceKey, getRepeatSourceObject } from '../utils/clone';
+import { DashboardInteractions } from '../utils/interactions';
+import { getDashboardSceneFor, getDefaultVizPanel, getLayoutForObject } from '../utils/utils';
+
+import { ElementEditPane } from './ElementEditPane';
+import {
+  ConditionalRenderingChangedEvent,
+  type DashboardActionMeta,
+  DashboardBatchEditActionEndEvent,
+  type DashboardBatchEditActionEventPayload,
+  DashboardBatchEditActionStartEvent,
+  DashboardEditActionEvent,
+  type DashboardEditActionEventPayload,
+  DashboardStateChangedEvent,
+  NewObjectAddedToCanvasEvent,
+  ObjectRemovedFromCanvasEvent,
+  ObjectsReorderedOnCanvasEvent,
+  PaneClosedEvent,
+  type PaneCloseReason,
+  RepeatsUpdatedEvent,
+} from './events';
+import { DashboardOutline } from './outline/DashboardOutline';
+import { type DashboardSidebarLike, type DashboardSidebarPane, type DashboardSidebarState } from './types';
+
+export const MAX_UNDO_ACTIONS = 100;
+
+/** Edit actions being collected into one undo entry, see startBatchAction/endBatchAction. */
+interface ActiveBatch {
+  meta: DashboardActionMeta;
+  source: SceneObject;
+  description?: string;
+  actions: DashboardEditActionEventPayload[];
+}
+
+export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> implements DashboardSidebarLike {
+  public constructor(state?: Partial<DashboardSidebarState>) {
+    super({
+      selectionContext: {
+        enabled: false,
+        selected: [],
+        onSelect: (item, options) => this.selectElement(item, options),
+        onClear: () => this.clearSelection(),
+      },
+      isNewElement: false,
+      undoStack: [],
+      redoStack: [],
+      outlinePane: state?.outlinePane ?? new DashboardOutline({}),
+    });
+
+    this.addActivationHandler(this.onActivate.bind(this));
+  }
+
+  private panelEditAction?: DashboardEditActionEvent;
+  private _paneRequest?: AbortController;
+
+  public beginPaneRequest(): AbortSignal {
+    this.cancelPaneRequest();
+    const controller = new AbortController();
+    this._paneRequest = controller;
+    this.setState({ isLoading: true });
+    if (!this.isActive) {
+      this.cancelPaneRequest();
+    }
+
+    return controller.signal;
+  }
+
+  public async runPaneRequest(load: (signal: AbortSignal) => Promise<void>) {
+    const signal = this.beginPaneRequest();
+    try {
+      if (!signal.aborted) {
+        await load(signal);
+      }
+    } finally {
+      // An older load must not clear the indicator for a newer selection.
+      if (this._paneRequest?.signal === signal) {
+        this.cancelPaneRequest();
+      }
+    }
+  }
+
+  public cancelPaneRequest() {
+    const request = this._paneRequest;
+    this._paneRequest = undefined;
+    request?.abort();
+    if (this.state.isLoading) {
+      this.setState({ isLoading: false });
+    }
+  }
+
+  /** Set while a batch of edit actions is being collected, see startBatchAction/endBatchAction. */
+  private _activeBatch?: ActiveBatch;
+
+  /**
+   * Batches a newer one started inside, innermost last: a batch started while another collects, such as
+   * a multi-panel delete during an Assistant batch, joins it as one of its edits instead of replacing it.
+   */
+  private _outerBatches: ActiveBatch[] = [];
+
+  /** A step through the pending changes history, from when it's asked for until the page shows it. */
+  private _historyStep?: Promise<void>;
+
+  private _batchSizes = new WeakMap<DashboardEditActionEventPayload, number>();
+
+  public setPanelEditAction(editAction: DashboardEditActionEvent) {
+    if (this.isActive) {
+      this.performPanelEditAction(editAction);
+      return;
+    }
+
+    this.panelEditAction = editAction;
+  }
+
+  public recordCompletedEdit(action: DashboardEditActionEventPayload) {
+    this.handleEditAction(action, true);
+  }
+
+  public clone(withState: Partial<DashboardSidebarState>): this {
+    // Pending requests and edit history belong to the live sidebar, not its snapshots.
+    return super.clone({ ...withState, redoStack: [], undoStack: [], isLoading: false });
+  }
+
+  /**
+   * Drops all undo/redo entries. Use when the dashboard state changed outside the edit action pipeline,
+   * since the recorded closures would otherwise replay over (and silently revert) that change.
+   */
+  public clearHistory() {
+    if (this.state.undoStack.length === 0 && this.state.redoStack.length === 0) {
+      return;
+    }
+
+    this.setState({ undoStack: [], redoStack: [] });
+  }
+
+  private onActivate() {
+    const dashboard = getDashboardSceneFor(this);
+
+    this._subs.add(
+      dashboard.subscribeToState((state, previous) => {
+        if (dashboardViewChanged(state, previous)) {
+          this.cancelPaneRequest();
+        }
+      })
+    );
+
+    if (isFullDashboardEditing(dashboard.state)) {
+      this.enableSelection();
+    }
+
+    this._subs.add(
+      dashboard.subscribeToEvent(DashboardEditActionEvent, ({ payload }) => {
+        this.handleEditAction(payload);
+      })
+    );
+
+    this._subs.add(
+      dashboard.subscribeToEvent(StateCommittedEvent, ({ payload }) => {
+        this.handleStateCommitted(payload);
+      })
+    );
+
+    this._subs.add(
+      dashboard.subscribeToEvent(DashboardBatchEditActionStartEvent, ({ payload }) => {
+        this.startBatchAction(payload);
+      })
+    );
+
+    this._subs.add(
+      dashboard.subscribeToEvent(DashboardBatchEditActionEndEvent, () => {
+        this.endBatchAction();
+      })
+    );
+
+    this._subs.add(
+      dashboard.subscribeToEvent(NewObjectAddedToCanvasEvent, ({ payload }) => {
+        this.newObjectAddedToCanvas(payload);
+      })
+    );
+
+    this._subs.add(
+      dashboard.subscribeToEvent(ObjectRemovedFromCanvasEvent, ({ payload }) => {
+        this.clearSelection();
+      })
+    );
+
+    this._subs.add(
+      dashboard.subscribeToEvent(ObjectsReorderedOnCanvasEvent, ({ payload }) => {
+        this.forceRender();
+      })
+    );
+
+    this._subs.add(
+      dashboard.subscribeToEvent(ConditionalRenderingChangedEvent, ({ payload }) => {
+        this.forceRender();
+      })
+    );
+
+    this._subs.add(
+      dashboard.subscribeToEvent(RepeatsUpdatedEvent, () => {
+        this.forceRender();
+      })
+    );
+
+    if (this.panelEditAction) {
+      this.performPanelEditAction(this.panelEditAction);
+      this.panelEditAction = undefined;
+    }
+
+    return () => {
+      if (this.state.selectionContext.selected.length) {
+        this.clearSelection(true);
+      }
+      this.disableSelection();
+    };
+  }
+
+  private performPanelEditAction(action: DashboardEditActionEvent) {
+    // Some layout items are not yet active when leaving panel edit, let's wait for them to activate
+    if (!action.payload.source.isActive) {
+      trySwitchingToSourceTab(action.payload.source);
+      setTimeout(() => this.performPanelEditAction(action));
+      return;
+    }
+
+    action.payload.source.publishEvent(action, true);
+  }
+
+  private startBatchAction({ source, description, meta }: DashboardBatchEditActionEventPayload) {
+    if (this.state.redoStack.length > 0) {
+      this.setState({ redoStack: [] });
+    }
+
+    if (this._activeBatch) {
+      this._outerBatches.push(this._activeBatch);
+    }
+    this._activeBatch = { source, description, meta, actions: [] };
+  }
+
+  private endBatchAction() {
+    const batch = this._activeBatch;
+    this._activeBatch = this._outerBatches.pop();
+
+    if (!batch || batch.actions.length === 0) {
+      return;
+    }
+
+    const action: DashboardEditActionEventPayload = {
+      source: batch.source,
+      meta: batch.meta,
+      description: batch.description,
+      perform: () => {
+        batch.actions.forEach((childAction) => this.performAction(childAction));
+      },
+      undo: () => {
+        [...batch.actions].reverse().forEach((childAction) => this.undoSingleAction(childAction));
+      },
+    };
+
+    if (this._activeBatch) {
+      this._activeBatch.actions.push(action);
+      return;
+    }
+
+    const history = this.pendingChangesHistory();
+    if (history) {
+      this.recordToPendingChanges(history, action);
+      return;
+    }
+
+    this._batchSizes.set(action, batch.actions.length);
+    this.setState({ undoStack: this.pushToUndoStack(action) });
+  }
+
+  /**
+   * Handles all edit actions
+   * Adds to undo history and selects new object
+   */
+  private handleEditAction(action: DashboardEditActionEventPayload, skipPerform = false) {
+    if (!getDashboardSceneFor(this).prepareEditAction(action.meta)) {
+      return;
+    }
+    if (skipPerform) {
+      getDashboardSceneFor(this).recordEditMutation();
+    }
+    if (this._activeBatch) {
+      this._activeBatch.actions.push(action);
+      if (!skipPerform) {
+        this.performAction(action);
+      }
+      getDashboardSceneFor(this).recordEditAction(action.meta.actionId);
+      return;
+    }
+    const history = this.pendingChangesHistory();
+    if (history) {
+      if (!skipPerform) {
+        this.performAction(action);
+      }
+      getDashboardSceneFor(this).recordEditAction(action.meta.actionId);
+      this.recordToPendingChanges(history, action);
+      return;
+    }
+
+    // Clear redo stack when user performs a new action
+    // Otherwise things can get into very broken states
+    if (this.state.redoStack.length > 0) {
+      this.setState({ redoStack: [] });
+    }
+
+    if (!skipPerform) {
+      this.performAction(action);
+    }
+    getDashboardSceneFor(this).recordEditAction(action.meta.actionId);
+
+    this.setState({ undoStack: this.pushToUndoStack(action) });
+  }
+
+  /**
+   * Any SceneObject can perform state changes inside the object (e.g., drag and drop or resize).
+   * To make such changes undoable SceneObject can provide a closure to revert and replay
+   * the change. Since the change already happens inside SceneObject we skip perform and just add
+   * the action to the stack.
+   * @private
+   */
+  private handleStateCommitted(payload: StateCommittedPayload) {
+    this.handleEditAction(
+      {
+        source: payload.source,
+        meta: { actionId: 'panel.moveOrResize' },
+        description: payload.description,
+        perform: payload.replay,
+        undo: payload.revert,
+      },
+      true
+    );
+    payload.source.publishEvent(new DashboardStateChangedEvent({ source: payload.source }), true);
+  }
+
+  /**
+   * Only the oldest entries are dropped, and a batch only as a whole: each entry's closures reference the
+   * objects left behind by the entries before it, so removing one from the middle would leave the later
+   * ones acting on detached objects. The newest entry is always kept, even a batch larger than the limit,
+   * so the change just made can be undone.
+   */
+  private pushToUndoStack(action: DashboardEditActionEventPayload): DashboardEditActionEventPayload[] {
+    const undoStack = [...this.state.undoStack, action];
+    const sizeOf = (entry: DashboardEditActionEventPayload) => this._batchSizes.get(entry) ?? 1;
+
+    let total = undoStack.reduce((sum, entry) => sum + sizeOf(entry), 0);
+    let start = 0;
+    while (total > MAX_UNDO_ACTIONS && start < undoStack.length - 1) {
+      total -= sizeOf(undoStack[start]);
+      start++;
+    }
+
+    return undoStack.slice(start);
+  }
+
+  /**
+   * Records a performed edit in the pending changes history. What it changed is taken from its own
+   * undo and redo, as Undo and Redo replay it: inputs apply their value as it's typed and send the
+   * edit only once done, so the scene before the edit is what its undo leaves.
+   */
+  private recordToPendingChanges(history: PendingChangesHistory, action: DashboardEditActionEventPayload) {
+    const scene = getDashboardSceneFor(this);
+    action.undo();
+    const before = scene.getSaveModel();
+    action.perform();
+    recordPendingChange(scene, history, action.description, before);
+  }
+
+  /**
+   * Steps from what the plugin last recorded, since an edit still on its way would land after the step,
+   * and one step at a time: each restores a revision and reloads the page, so clicks made meanwhile are
+   * dropped rather than racing it.
+   */
+  private stepPendingChangesHistory(step: () => Promise<void>) {
+    if (this._historyStep) {
+      return;
+    }
+    const scene = getDashboardSceneFor(this);
+    this._historyStep = pendingChangesRecorded(scene)
+      // Not from pending changes the page never loaded: the plugin's history moved on past what it shows.
+      .then(() => (pendingChangesSuperseded(scene) ? undefined : step()))
+      // The plugin reports a failed step itself.
+      .catch(() => {})
+      .finally(() => {
+        this._historyStep = undefined;
+      });
+  }
+
+  /**
+   * On pending changes whose plugin keeps their history, edits are steps in it instead of this
+   * sidebar's undo stack, so Undo and Redo step through the plugin's changes too.
+   */
+  public pendingChangesHistory(): PendingChangesHistory | undefined {
+    return getPendingChangesHistory(getDashboardSceneFor(this).state);
+  }
+
+  /**
+   * Removes last action from undo stack and adds it to redo stack.
+   */
+  public undoAction() {
+    if (dashboardModesEnabled() && getDashboardMode(getDashboardSceneFor(this).state) !== 'edit') {
+      return;
+    }
+    const history = this.pendingChangesHistory();
+    if (history) {
+      this.stepPendingChangesHistory(() => history.undo());
+      return;
+    }
+    this.undoLastAction();
+  }
+
+  /**
+   * Undoes the newest entry in any dashboard mode. For callers that have already established the entry is
+   * theirs to undo, such as Assistant edits made while the dashboard is in the agent presentation.
+   * `trigger` names a caller other than the dashboard's own controls in the reported interaction.
+   */
+  public undoLastAction(trigger?: string) {
+    // How far back the user has already stepped through history before this undo
+    const redoDepth = this.state.redoStack.length;
+    const undoStack = this.state.undoStack.slice();
+    const action = undoStack.pop();
+    if (!action) {
+      return;
+    }
+
+    this.undoSingleAction(action);
+
+    this.setState({ undoStack, redoStack: [...this.state.redoStack, action] });
+    reportInteraction('grafana_dashboard_undo', {
+      actionId: action.meta.actionId,
+      scope: action.meta.scope,
+      redoDepth,
+      ...(trigger ? { trigger } : {}),
+    });
+  }
+
+  private undoSingleAction(action: DashboardEditActionEventPayload) {
+    getDashboardSceneFor(this).trackEditMutation(() => action.undo());
+    action.source.publishEvent(new DashboardStateChangedEvent({ source: action.source }), true);
+
+    if (action.addedObject) {
+      this.clearSelection();
+    }
+
+    if (action.movedObject && action.selectOnMove !== false) {
+      this.selectObject(action.movedObject, { force: true });
+    }
+
+    if (action.removedObject) {
+      this.newObjectAddedToCanvas(action.removedObject);
+    }
+  }
+
+  /**
+   * Some edit actions also require clearing selection or selecting new objects
+   */
+  private performAction(action: DashboardEditActionEventPayload) {
+    getDashboardSceneFor(this).trackEditMutation(() => action.perform());
+    action.source.publishEvent(new DashboardStateChangedEvent({ source: action.source }), true);
+
+    if (action.addedObject) {
+      this.newObjectAddedToCanvas(action.addedObject);
+    }
+
+    if (action.movedObject && action.selectOnMove !== false) {
+      this.selectObject(action.movedObject, { force: true });
+    }
+
+    // If action removed an object and not added a new one we need to update selection
+    if (action.removedObject && !action.addedObject) {
+      // But only if removed object is currently selected
+      if (action.removedObject === this.getSelectedObject()) {
+        this.fixSelectionOfRemovedObject();
+      }
+    }
+  }
+
+  /**
+   * Removes last action from redo stack and adds it to undo stack.
+   */
+  public redoAction() {
+    if (dashboardModesEnabled() && getDashboardMode(getDashboardSceneFor(this).state) !== 'edit') {
+      return;
+    }
+    const history = this.pendingChangesHistory();
+    if (history) {
+      this.stepPendingChangesHistory(() => history.redo());
+      return;
+    }
+    this.redoLastAction();
+  }
+
+  /** The redo counterpart of `undoLastAction`: redoes the newest undone entry in any dashboard mode. */
+  public redoLastAction(trigger?: string) {
+    const redoDepth = this.state.redoStack.length;
+    const redoStack = this.state.redoStack.slice();
+    const action = redoStack.pop();
+    if (!action) {
+      return;
+    }
+
+    this.performAction(action);
+
+    this.setState({ redoStack, undoStack: this.pushToUndoStack(action) });
+    reportInteraction('grafana_dashboard_redo', {
+      actionId: action.meta.actionId,
+      scope: action.meta.scope,
+      redoDepth,
+      ...(trigger ? { trigger } : {}),
+    });
+  }
+
+  public enableSelection() {
+    if (isDashboardReviewing(getDashboardSceneFor(this).state)) {
+      return;
+    }
+    if (this.state.selectionContext.enabled) {
+      return;
+    }
+
+    this.setState({ selectionContext: { ...this.state.selectionContext, enabled: true } });
+  }
+
+  public disableSelection() {
+    this.cancelPaneRequest();
+    if (!this.state.selectionContext.enabled) {
+      return;
+    }
+
+    this.setState({
+      selectionContext: { ...this.state.selectionContext, selected: [], enabled: false },
+      openPane: undefined,
+    });
+  }
+
+  private selectElement(element: ElementSelectionContextItem, options: ElementSelectionOnSelectOptions) {
+    let obj = sceneGraph.findByKey(this, element.id);
+    if (!obj) {
+      console.warn('Cannot find element by key="%s"!', element.id);
+      return;
+    }
+
+    const sourceKey = getRepeatCloneSourceKey(obj);
+    if (sourceKey) {
+      obj = sceneGraph.findByKey(this, sourceKey);
+      if (!obj) {
+        console.warn('Cannot find element by source key="%s"!', sourceKey);
+        return;
+      }
+    }
+
+    this.selectObject(obj, options);
+  }
+
+  public openElementSettings(obj: SceneObject) {
+    // Resolve by state path first so an element nested in a repeat clone maps to its own source,
+    // then by key for clones the path walk doesn't cover (e.g. repeated panels).
+    const resolved = getRepeatSourceObject(obj);
+    const sourceKey = getRepeatCloneSourceKey(resolved);
+    const source = sourceKey ? sceneGraph.findByKey(this, sourceKey) : resolved;
+    if (!source) {
+      return;
+    }
+
+    this.cancelPaneRequest();
+    // Reselecting a newly added element would clear the state that requests autofocus.
+    if (this.state.selectionContext.selected.length !== 1 || this.getSelectedObject() !== source) {
+      this.selectObject(source, { force: true });
+    }
+    if (this.state.openPane?.getId() !== 'element') {
+      this.openPane(new ElementEditPane({}));
+    }
+  }
+
+  public selectObject(obj: SceneObject, { multi, force }: ElementSelectionOnSelectOptions = {}) {
+    this.cancelPaneRequest();
+    if (isDashboardReviewing(getDashboardSceneFor(this).state)) {
+      return;
+    }
+    const id = obj.state.key!;
+    const hasItem = this.state.selectionContext.selected.find((i) => i.id === id);
+
+    const sidebarExplicitOpen = getFeatureFlagClient().getBooleanValue(
+      FlagKeys.GrafanaDashboardSidebarExplicitOpen,
+      false
+    );
+
+    // Special logic for tabs only select tab of open pane is not already open or tab is already active.
+    // With explicit open, a canvas click doesn't open the pane, so inactive tabs must stay selectable.
+    if (!sidebarExplicitOpen && !force && !this.state.openPane && obj instanceof TabItem && !obj.isCurrentTab()) {
+      return;
+    }
+
+    let selectedDisconnectedObject: SceneObject | undefined;
+    if (obj.getRoot() !== this.getRoot() || obj.parent === this) {
+      selectedDisconnectedObject = obj;
+    }
+
+    // Keep the selection when opening element settings from a closed sidebar or another pane.
+    if ((!sidebarExplicitOpen || this.state.openPane) && this.state.openPane?.getId() !== 'element') {
+      force = true;
+    }
+
+    if (multi) {
+      if (hasItem) {
+        // Remove item unless force is true
+        if (!force) {
+          this.updateSelection(
+            this.state.selectionContext.selected.filter((i) => i.id !== id),
+            selectedDisconnectedObject
+          );
+        }
+      } else {
+        this.updateSelection([...this.state.selectionContext.selected, { id }], selectedDisconnectedObject);
+      }
+    } else {
+      if (hasItem && !force) {
+        this.updateSelection([], selectedDisconnectedObject);
+      } else {
+        this.updateSelection([{ id }], selectedDisconnectedObject);
+      }
+    }
+  }
+
+  public fixSelectionOfRemovedObject() {
+    if (this.state.previousState) {
+      this.goBackToPrevious();
+    } else {
+      this.clearSelection(true);
+    }
+  }
+
+  public goBackToPrevious() {
+    this.cancelPaneRequest();
+    if (isDashboardReviewing(getDashboardSceneFor(this).state) || !this.state.previousState) {
+      return;
+    }
+
+    this.setState({
+      selectionContext: this.state.previousState.selectionContext,
+      openPane: this.state.previousState.openPane,
+      selectedDisconnectedObject: this.state.previousState.selectedDisconnectedObject,
+      previousState: this.state.previousState.previousState,
+    });
+
+    if (this.state.openPane?.getId() === 'element' && this.state.selectionContext.selected.length === 1) {
+      const selectedObj = this.getSelectedObject();
+      if (selectedObj) {
+        void import(/* webpackChunkName: "dashboard-edit-actions" */ '../actions/utils/getEditableElementFor').then(
+          ({ getEditableElementFor }) => {
+            const element = getEditableElementFor(selectedObj);
+            element?.scrollIntoView?.();
+          }
+        );
+      }
+    }
+  }
+
+  private updateSelection(selected: ElementSelectionContextItem[], selectedDisconnectedObject?: SceneObject) {
+    // onBlur events are not fired on unmount and some sidebar inputs have important onBlur events
+    // This make sure they fire before unmounting
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+
+    const sidebarExplicitOpen = getFeatureFlagClient().getBooleanValue(
+      FlagKeys.GrafanaDashboardSidebarExplicitOpen,
+      false
+    );
+    const shouldOpenPane = selected.length > 0 && (!sidebarExplicitOpen || Boolean(this.state.openPane));
+
+    const newState: DashboardSidebarState = {
+      ...this.state,
+      selectionContext: { ...this.state.selectionContext, selected },
+      openPane: shouldOpenPane ? new ElementEditPane({}) : undefined,
+      isNewElement: false,
+      selectedDisconnectedObject,
+    };
+
+    this.setState({
+      ...newState,
+      previousState: selected.length ? getStateForPaneHistory(this.state, newState) : undefined,
+    });
+  }
+
+  /**
+   * Look-up selected object by key. If key is not provided, will return object based on current selection.
+   * @param key of the object
+   * @returns
+   */
+  public getSelectedObject(key?: string): SceneObject | undefined {
+    if (key) {
+      // Not using findByKey here as it requires try catch in case object is not found
+      return sceneGraph.findObject(this, (obj) => obj.state.key === key) ?? undefined;
+    }
+
+    if (this.state.selectedDisconnectedObject) {
+      return this.state.selectedDisconnectedObject;
+    }
+
+    if (this.state.selectionContext.selected.length === 0) {
+      return undefined;
+    }
+
+    // Not using findByKey here as it requires try catch in case object is not found
+    return (
+      sceneGraph.findObject(this, (obj) => obj.state.key === this.state.selectionContext.selected[0].id) ?? undefined
+    );
+  }
+
+  /**
+   * @param force If force = true it will clear selection even when docked
+   * @returns
+   */
+  public clearSelection(force = false) {
+    this.cancelPaneRequest();
+    if (!this.state.selectionContext.selected.length) {
+      return;
+    }
+
+    // If we are docked then clearing selection should select dashboard itself
+    // Unless the user explicitly closes pane
+    if (this.state.isDocked && !force) {
+      const dashboard = getDashboardSceneFor(this);
+      if (this.getSelectedObject() !== dashboard) {
+        this.selectObject(dashboard);
+      }
+      return;
+    }
+
+    this.updateSelection([]);
+  }
+
+  public openPane(openPane: DashboardSidebarPane) {
+    this.cancelPaneRequest();
+    if (
+      isDashboardReviewing(getDashboardSceneFor(this).state) &&
+      ['add', 'element', 'code', 'cross-dashboard-variables'].includes(openPane.getId())
+    ) {
+      return;
+    }
+    if (this.state.openPane?.getId() === openPane.getId()) {
+      this.setState({ openPane: undefined });
+      return;
+    }
+
+    this.setState({ openPane, previousState: getStateForPaneHistory(this.state) });
+
+    // UrlSyncManager subscribes to this and syncs url state with pane state
+    this.publishEvent(new NewSceneObjectAddedEvent(openPane), true);
+  }
+
+  public closePane(reason: PaneCloseReason = 'programmatic') {
+    this.cancelPaneRequest();
+    if (this.state.selectionContext.selected.length) {
+      this.clearSelection(true);
+    }
+
+    if (this.state.openPane) {
+      const openPane = this.state.openPane;
+      this.setState({ openPane: undefined });
+
+      // UrlSyncManager subscribes to this and removes the pane url state from url
+      this.publishEvent(new SceneObjectRemovedEvent(openPane), true);
+      this.publishEvent(new PaneClosedEvent({ pane: openPane, reason }));
+    }
+  }
+
+  /**
+   * This should be called when state of the DashboardScene got swapped
+   * and selected element or code pane needs to be refreshed. In case the change
+   * in DashboardScene means the element no longer exists - the sidebar is closed
+   */
+  public refreshAfterRebuild() {
+    const { openPane, selectionContext, selectedDisconnectedObject } = this.state;
+    if (openPane?.getId() === 'code') {
+      this.setState({
+        // force remount: we cannot call new DashboardCodePane({}) to ensure DashboardCodePane can be lazy loaded
+        openPane: openPane.clone({ key: undefined }),
+        selectionContext: { ...selectionContext, selected: [] },
+        selectedDisconnectedObject: undefined,
+        isNewElement: false,
+        previousState: undefined,
+      });
+    } else if (
+      openPane?.getId() === 'element' &&
+      !selectedDisconnectedObject &&
+      selectionContext.selected.length > 0 &&
+      selectionContext.selected.every(({ id }) => this.getSelectedObject(id))
+    ) {
+      this.setState({
+        openPane: new ElementEditPane({}),
+        selectionContext: { ...selectionContext, selected: [...selectionContext.selected] },
+        isNewElement: false,
+        previousState: undefined,
+      });
+    } else {
+      this.setState({ previousState: undefined });
+      this.closePane();
+    }
+  }
+
+  private newObjectAddedToCanvas(obj: SceneObject) {
+    if (isDashboardReviewing(getDashboardSceneFor(this).state)) {
+      return;
+    }
+    this.selectObject(obj, { force: true });
+    this.setState({ isNewElement: true });
+  }
+
+  public async addNewPanel(target: SceneObject | undefined) {
+    const panel = await getDefaultVizPanel();
+    const dashboard = getDashboardSceneFor(this);
+
+    if (target) {
+      const layout = getLayoutForObject(target) ?? dashboard;
+      layout.addPanel(panel);
+    } else {
+      dashboard.addPanel(panel);
+    }
+
+    DashboardInteractions.trackAddPanelClick('sidebar', getLayoutType(target));
+  }
+
+  public pastePanel(target: SceneObject | undefined) {
+    const dashboard = getDashboardSceneFor(this);
+
+    if (target) {
+      const layout = getLayoutForObject(target) ?? dashboard;
+      layout.pastePanel();
+    } else {
+      dashboard.pastePanel();
+    }
+  }
+}
+
+function trySwitchingToSourceTab(source: SceneObject) {
+  if (source.parent === undefined) {
+    return;
+  }
+
+  if (source.parent instanceof TabItem) {
+    const tab = source.parent;
+    const tabsLayout = source.parent.getParentLayout();
+    if (tabsLayout.state.currentTabSlug !== tab.getSlug()) {
+      tabsLayout.switchToTab(tab);
+    }
+  } else {
+    trySwitchingToSourceTab(source.parent);
+  }
+}
+
+function getStateForPaneHistory(
+  currentState: DashboardSidebarState | undefined,
+  newState?: DashboardSidebarState
+): DashboardSidebarState | undefined {
+  if (!currentState || !currentState.openPane) {
+    return undefined;
+  }
+
+  if (currentState.openPane?.excludeFromHistory) {
+    return getStateForPaneHistory(currentState.previousState!, newState);
+  }
+
+  // If newState is same dont create an duplcate history entry
+  if (
+    newState &&
+    newState.openPane?.getId() === currentState.openPane?.getId() &&
+    isEqual(newState.selectionContext.selected, currentState.selectionContext.selected)
+  ) {
+    return getStateForPaneHistory(currentState.previousState, newState);
+  }
+
+  return currentState;
+}

@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/stretchr/testify/assert"
@@ -16,6 +17,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -1279,28 +1281,22 @@ func TestEvaluate(t *testing.T) {
 
 func TestEvaluateRaw(t *testing.T) {
 	t.Run("should timeout if request takes too long", func(t *testing.T) {
-		unexpectedResponse := &backend.QueryDataResponse{}
-
-		e := conditionEvaluator{
-			pipeline: nil,
-			expressionService: &fakeExpressionService{
-				hook: func(ctx context.Context, now time.Time, pipeline expr.DataPipeline) (*backend.QueryDataResponse, error) {
-					ts := time.Now()
-					for time.Since(ts) <= 10*time.Second {
-						if ctx.Err() != nil {
-							return nil, ctx.Err()
-						}
-						time.Sleep(10 * time.Millisecond)
-					}
-					return unexpectedResponse, nil
+		synctest.Test(t, func(t *testing.T) {
+			e := conditionEvaluator{
+				pipeline: nil,
+				expressionService: &fakeExpressionService{
+					hook: func(ctx context.Context, now time.Time, pipeline expr.DataPipeline) (*backend.QueryDataResponse, error) {
+						<-ctx.Done()
+						return nil, ctx.Err()
+					},
 				},
-			},
-			condition:   models.Condition{},
-			evalTimeout: 10 * time.Millisecond,
-		}
+				condition:   models.Condition{},
+				evalTimeout: 10 * time.Millisecond,
+			}
 
-		_, err := e.EvaluateRaw(context.Background(), time.Now())
-		require.ErrorIs(t, err, context.DeadlineExceeded)
+			_, err := e.EvaluateRaw(context.Background(), time.Now())
+			require.ErrorIs(t, err, context.DeadlineExceeded)
+		})
 	})
 }
 
@@ -1710,6 +1706,11 @@ func TestSanitizeHeaderValue(t *testing.T) {
 			input:    strings.Repeat("a", 100) + "\r\n" + strings.Repeat("b", 100),
 			expected: strings.Repeat("a", 100) + strings.Repeat("b", 28),
 		},
+		{
+			name:     "truncation does not split a multi-byte rune at the boundary",
+			input:    strings.Repeat("a", 127) + "é", // 'é' is 2 bytes, so byte 128 would land mid-rune
+			expected: strings.Repeat("a", 127),
+		},
 	}
 
 	for _, tt := range tests {
@@ -1718,3 +1719,41 @@ func TestSanitizeHeaderValue(t *testing.T) {
 		})
 	}
 }
+
+func TestFindConditionError(t *testing.T) {
+	t.Run("follows the dependency chain to the root error", func(t *testing.T) {
+		rootErr := errors.New("root")
+		resp := &backend.QueryDataResponse{Responses: backend.Responses{
+			"A": {Error: rootErr},
+			"B": {Error: expr.MakeDependencyError("B", "A")},
+		}}
+		require.Equal(t, rootErr, FindConditionError(resp, "B"))
+	})
+
+	t.Run("returns the condition error when the payload has no depRefId", func(t *testing.T) {
+		depErr := expr.DependencyError.Build(errutil.TemplateData{})
+		resp := &backend.QueryDataResponse{Responses: backend.Responses{"B": {Error: depErr}}}
+		require.NotPanics(t, func() {
+			require.ErrorIs(t, FindConditionError(resp, "B"), expr.DependencyError)
+		})
+	})
+
+	t.Run("returns the condition error when the dependency is not in the responses", func(t *testing.T) {
+		depErr := expr.MakeDependencyError("B", "A")
+		resp := &backend.QueryDataResponse{Responses: backend.Responses{"B": {Error: depErr}}}
+		require.Equal(t, depErr, FindConditionError(resp, "B"))
+	})
+
+	t.Run("returns the condition error when it cannot be unwrapped to an errutil.Error", func(t *testing.T) {
+		depErr := fakeDependencyError{}
+		resp := &backend.QueryDataResponse{Responses: backend.Responses{"B": {Error: depErr}}}
+		require.Equal(t, depErr, FindConditionError(resp, "B"))
+	})
+}
+
+// fakeDependencyError matches expr.DependencyError via errors.Is without being an errutil.Error.
+type fakeDependencyError struct{}
+
+func (fakeDependencyError) Error() string { return "fake dependency error" }
+
+func (fakeDependencyError) Is(target error) bool { return target == expr.DependencyError }

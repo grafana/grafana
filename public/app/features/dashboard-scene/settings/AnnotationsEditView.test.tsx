@@ -1,5 +1,7 @@
+import { cleanup } from '@testing-library/react';
 import { map, of } from 'rxjs';
 import { MockDataSourceApi } from 'test/mocks/datasource_srv';
+import { render, userEvent, waitFor } from 'test/test-utils';
 
 import {
   type AnnotationQuery,
@@ -11,8 +13,11 @@ import {
   LoadingState,
   type PanelData,
 } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
 import { SceneTimeRange, type dataLayers } from '@grafana/scenes';
 import { type DataSourceRef } from '@grafana/schema';
+import { testWithFlags } from '@grafana/test-utils/unstable';
 
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardDataLayerSet, NEW_ANNOTATION_NAME } from '../scene/DashboardDataLayerSet';
@@ -20,7 +25,9 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { activateFullSceneTree } from '../utils/test-utils';
 
-import { AnnotationsEditView, MoveDirection } from './AnnotationsEditView';
+import { AnnotationsEditView } from './AnnotationsEditView';
+import { AnnotationsEditViewRenderer } from './AnnotationsEditViewRenderer';
+import { MoveDirection } from './annotations/MoveDirection';
 
 const runRequestMock = jest.fn().mockImplementation((ds: DataSourceApi, request: DataQueryRequest) => {
   const result: PanelData = {
@@ -91,8 +98,16 @@ jest.mock('@grafana/runtime', () => ({
     ...jest.requireActual('@grafana/runtime').config,
     publicDashboardAccessToken: 'ac123',
   },
+  getDataSourceInstanceSettings: jest.fn(async (ref: DataSourceRef | string | null) => {
+    if (!ref) {
+      return noAnnotationsDsInstanceSettings;
+    }
+    if (getDataSourceUID(ref) === '-- Grafana --') {
+      return grafanaDsInstanceSettings;
+    }
+    return { uid: 'ds1' };
+  }),
 }));
-
 describe('AnnotationsEditView', () => {
   describe('Dashboard annotations state', () => {
     let annotationsView: AnnotationsEditView;
@@ -107,27 +122,27 @@ describe('AnnotationsEditView', () => {
       expect(annotationsView.getUrlKey()).toBe('annotations');
     });
 
-    it('should return undefined when datasource does not support annotations', () => {
-      const ds = annotationsView.getDataSourceRefForAnnotation();
+    it('should return undefined when datasource does not support annotations', async () => {
+      const ds = await annotationsView.getDataSourceRefForAnnotation();
       expect(ds).toBe(undefined);
       expect(console.error).toHaveBeenCalledWith('Default datasource does not support annotations');
     });
 
-    it('should add a new annotation and group it with the other annotations', () => {
+    it('should add a new annotation and group it with the other annotations', async () => {
       const dataLayers = dashboardSceneGraph.getDataLayers(annotationsView.getDashboard());
 
       expect(dataLayers?.state.annotationLayers.length).toBe(1);
-      annotationsView.onNew();
+      await annotationsView.onNew();
 
       expect(dataLayers?.state.annotationLayers.length).toBe(2);
       expect(dataLayers?.state.annotationLayers[1].state.name).toBe(NEW_ANNOTATION_NAME);
       expect(dataLayers?.state.annotationLayers[1].isActive).toBe(true);
     });
 
-    it('should move an annotation up one position', () => {
+    it('should move an annotation up one position', async () => {
       const dataLayers = dashboardSceneGraph.getDataLayers(annotationsView.getDashboard());
 
-      annotationsView.onNew();
+      await annotationsView.onNew();
 
       expect(dataLayers?.state.annotationLayers.length).toBe(2);
       expect(dataLayers?.state.annotationLayers[0].state.name).toBe('test');
@@ -138,10 +153,10 @@ describe('AnnotationsEditView', () => {
       expect(dataLayers?.state.annotationLayers[0].state.name).toBe(NEW_ANNOTATION_NAME);
     });
 
-    it('should move an annotation down one position', () => {
+    it('should move an annotation down one position', async () => {
       const dataLayers = dashboardSceneGraph.getDataLayers(annotationsView.getDashboard());
 
-      annotationsView.onNew();
+      await annotationsView.onNew();
 
       expect(dataLayers?.state.annotationLayers.length).toBe(2);
       expect(dataLayers?.state.annotationLayers[0].state.name).toBe('test');
@@ -232,3 +247,54 @@ async function buildTestScene() {
 
   return { dashboard, annotationsView };
 }
+
+function renderSidebarRedirect() {
+  const view = new AnnotationsEditView({});
+  const dashboard = new DashboardScene({
+    isEditing: true,
+    editview: view,
+    $data: new DashboardDataLayerSet({ annotationLayers: [] }),
+  });
+  const user = userEvent.setup();
+  const result = render(<AnnotationsEditViewRenderer model={view} />);
+  const elements = {
+    takeMeThere: () => result.getByRole('button', { name: 'Take me there' }),
+  };
+
+  return {
+    ...result,
+    dashboard,
+    user,
+    elements,
+    actions: {
+      async goToSidebar() {
+        await user.click(elements.takeMeThere());
+      },
+    },
+  };
+}
+
+describe.each([true, false])('AnnotationsEditView with explicit sidebar opening %s', (explicitOpen) => {
+  afterEach(cleanup);
+
+  testWithFlags({
+    dashboardNewLayouts: true,
+    [FlagKeys.GrafanaDashboardSettingsRedesign]: true,
+    [FlagKeys.GrafanaDashboardSidebarExplicitOpen]: explicitOpen,
+  });
+
+  it('when clicking Take me there with the sidebar closed, opens dashboard settings at annotations', async () => {
+    const { dashboard, actions } = renderSidebarRedirect();
+    const sidebar = dashboard.state.sidebar;
+    expect(sidebar.state.openPane).toBeUndefined();
+
+    await actions.goToSidebar();
+
+    await waitFor(() => expect(sidebar.state.openPane?.getId()).toBe('element'));
+    expect(sidebar.getSelectedObject()).toBe(dashboard);
+    expect(locationService.getSearchObject()).toMatchObject({
+      showCategory: 'dashboard-annotations',
+      highlightCategory: 'dashboard-annotations',
+    });
+  });
+});

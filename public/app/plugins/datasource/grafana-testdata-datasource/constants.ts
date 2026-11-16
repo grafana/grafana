@@ -1,4 +1,10 @@
-import { type CSVWave, type PulseWaveQuery, type TestDataDataQuery, TestDataQueryType } from './dataquery';
+import {
+  type CSVWave,
+  type ExemplarLabel,
+  type PulseWaveQuery,
+  type TestDataDataQuery,
+  TestDataQueryType,
+} from './dataquery';
 
 export const defaultPulseQuery: PulseWaveQuery = {
   timeStep: 60,
@@ -12,6 +18,13 @@ export const defaultCSVWaveQuery: CSVWave[] = [
   {
     timeStep: 60,
     valuesCSV: '0,0,2,2,1,1',
+  },
+];
+
+export const defaultExemplarLabels: ExemplarLabel[] = [
+  {
+    name: 'traceID',
+    length: 16,
   },
 ];
 

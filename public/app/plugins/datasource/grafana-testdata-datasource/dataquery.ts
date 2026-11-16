@@ -38,14 +38,17 @@ export enum TestDataQueryType {
   VariablesQuery = 'variables-query',
   ErrorWithSource = 'error_with_source',
   ErrorsAndNotices = 'errors_and_notices',
+  Exemplars = 'exemplars',
 }
+
+export type StreamingQueryType = 'signal' | 'logs' | 'fetch' | 'traces' | 'watch';
 
 export interface StreamingQuery {
   bands?: number;
   noise: number;
   speed: number;
   spread: number;
-  type: 'signal' | 'logs' | 'fetch' | 'traces' | 'watch';
+  type: StreamingQueryType;
   url?: string;
 }
 
@@ -88,6 +91,18 @@ export interface CSVWave {
   valuesCSV?: string;
 }
 
+export interface ExemplarLabel {
+  name?: string;
+  /**
+   * Number of characters in each generated value (defaults to 16)
+   */
+  length?: number;
+  /**
+   * Optional data link URL; supports ${__value.raw}
+   */
+  link?: string;
+}
+
 /**
  * TODO: Should this live here given it's not used in the dataquery?
  */
@@ -99,6 +114,10 @@ export interface Scenario {
   stringInput: string;
 }
 
+export type TestDataErrorType = 'server_panic' | 'frontend_exception' | 'frontend_observable';
+
+export type TestDataErrorSource = 'plugin' | 'downstream';
+
 export interface TestDataDataQuery extends common.DataQuery {
   alias?: string;
   channel?: string;
@@ -109,11 +128,13 @@ export interface TestDataDataQuery extends common.DataQuery {
    * Drop percentage (the chance we will lose a point 0-100)
    */
   dropPercent?: number;
-  errorType?: 'server_panic' | 'frontend_exception' | 'frontend_observable';
+  errorType?: TestDataErrorType;
   flamegraphDiff?: boolean;
   labels?: string;
   levelColumn?: boolean;
   lines?: number;
+  min?: number;
+  max?: number;
   nodes?: NodesQuery;
   points?: Array<Array<string | number>>;
   pulseWave?: PulseWaveQuery;
@@ -125,10 +146,12 @@ export interface TestDataDataQuery extends common.DataQuery {
   stream?: StreamingQuery;
   stringInput?: string;
   usa?: USAQuery;
-  errorSource?: 'plugin' | 'downstream';
+  errorSource?: TestDataErrorSource;
   errorProbability?: number;
   errorMessage?: string;
   errorStatusCode?: number;
   queryDelay?: string;
   queryDelayVariability?: number;
+  exemplarCount?: number;
+  exemplarLabels?: ExemplarLabel[];
 }

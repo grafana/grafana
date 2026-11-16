@@ -33,7 +33,7 @@ const (
 	// KVRemoteIndexStore stores per-file snapshot data.
 	IndexSnapshotDataSection = kv.SearchSnapshotDataSection
 
-	// defaultKVLockTTL matches BucketRemoteIndexStore's default lock TTL.
+	// defaultKVLockTTL matches DefaultSnapshotLockTTL.
 	defaultKVLockTTL = 3 * time.Minute
 
 	// defaultKVReleaseTimeout bounds the lease release call when the caller
@@ -177,8 +177,8 @@ func NewKVRemoteIndexStore(cfg KVRemoteIndexStoreConfig) (*KVRemoteIndexStore, e
 }
 
 // kvResourceSubPath returns the per-resource path used as a prefix in both
-// snapshot KV sections. Unlike the bucket store's resourceSubPath (which
-// applies cleanFileSegment for filesystem safety), this version preserves
+// snapshot KV sections. Unlike resourceSubPath (which applies
+// cleanFileSegment for filesystem safety), this version preserves
 // the input verbatim so namespaces, resources, and groups round-trip
 // exactly through listing. Inputs are guarded by validateNsResource at the
 // public boundary, which delegates to the apimachinery validators.
@@ -608,6 +608,9 @@ func (s *KVRemoteIndexStore) DeleteIndex(ctx context.Context, nsResource resourc
 // build version. The lease is automatically renewed in the background while
 // it is held; if renewal fails (e.g. another holder takes over), Lost() is
 // signaled and Release() returns ErrLeaseLost.
+//
+// If another replica already holds the lease, the returned error matches
+// errLockHeld.
 func (s *KVRemoteIndexStore) LockBuildIndex(ctx context.Context, nsResource resource.NamespacedResource, buildVersion string) (IndexStoreLock, error) {
 	if err := validateNsResource(nsResource); err != nil {
 		return nil, err
@@ -621,6 +624,9 @@ func (s *KVRemoteIndexStore) LockBuildIndex(ctx context.Context, nsResource reso
 // LockNamespaceForCleanup acquires the cleanup lease for the given namespace.
 // Uses a distinct key from LockBuildIndex so cleanup never blocks an in-flight
 // upload for any resource in the namespace.
+//
+// If another replica already holds the lease, the returned error matches
+// errLockHeld.
 func (s *KVRemoteIndexStore) LockNamespaceForCleanup(ctx context.Context, namespace string) (IndexStoreLock, error) {
 	if err := validateNamespace(namespace); err != nil {
 		return nil, err
@@ -655,6 +661,12 @@ func (s *KVRemoteIndexStore) acquireLock(ctx context.Context, name string, opts 
 
 	l, err := s.leaseMgr.Acquire(ctx, name, lease.WithTTL(ttl), lease.WithAutoRenew())
 	if err != nil {
+		// Callers match errLockHeld to decide whether to keep waiting for the
+		// leader. Translated rather than wrapped so the lease sentinel stays an
+		// implementation detail of this store.
+		if errors.Is(err, lease.ErrLeaseAlreadyHeld) {
+			return nil, fmt.Errorf("acquiring lease %q: %w: %v", name, errLockHeld, err)
+		}
 		return nil, fmt.Errorf("acquiring lease %q: %w", name, err)
 	}
 	return &kvIndexStoreLock{

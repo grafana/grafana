@@ -30,7 +30,7 @@ export interface AxisProps {
   ticks?: Axis.Ticks;
   filter?: Axis.Filter;
   space?: Axis.Space;
-  formatValue?: (v: any, decimals?: DecimalCount) => string;
+  formatValue?: (v: number, decimals?: DecimalCount) => string;
   incrs?: Axis.Incrs;
   splits?: Axis.Splits;
   values?: Axis.Values;
@@ -54,6 +54,11 @@ const X_TICK_SPACING_NORMAL = 40;
 const X_TICK_VALUE_GAP = 18;
 
 const labelPad = 8;
+
+/** @internal */
+export function getGridColor(theme: GrafanaTheme2) {
+  return theme.isDark ? 'rgba(240, 250, 255, 0.09)' : 'rgba(0, 10, 23, 0.09)';
+}
 
 export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
   merge(props: AxisProps) {
@@ -94,7 +99,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
 
     const font = `${UPLOT_AXIS_FONT_SIZE}px ${theme.typography.fontFamily}`;
 
-    const gridColor = theme.isDark ? 'rgba(240, 250, 255, 0.09)' : 'rgba(0, 10, 23, 0.09)';
+    const gridColor = getGridColor(theme);
 
     // TODO: this is pretty flimsy now that scaleKey is composed from multiple parts :/
     if (isBooleanUnit(scaleKey)) {
@@ -105,7 +110,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       filter = (u, splits) => splits.map((v) => (Number.isInteger(v) ? v : null));
     }
 
-    let config: Axis = {
+    let config: Axis & { timeZone?: TimeZone | undefined } = {
       scale: scaleKey,
       show,
       stroke: color ?? theme.colors.text.primary,
@@ -179,7 +184,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
     }
 
     // store timezone
-    (config as any).timeZone = timeZone;
+    config.timeZone = timeZone;
 
     return config;
   }
@@ -232,7 +237,7 @@ function calculateSpace(
   scaleMin: number,
   scaleMax: number,
   plotDim: number,
-  formatValue?: (value: unknown) => string
+  formatValue?: (value: number) => string
 ): number {
   const axis = self.axes[axisIdx];
   const scale = self.scales[axis.scale!];

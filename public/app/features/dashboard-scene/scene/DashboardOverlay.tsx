@@ -1,0 +1,46 @@
+import { css } from '@emotion/css';
+
+import { type GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n';
+import { Drawer, useStyles2 } from '@grafana/ui';
+
+import { DashboardLoadingBar } from './DashboardLoadingBar';
+import { type DashboardScene } from './DashboardScene';
+
+export function DashboardOverlay({
+  dashboard,
+  onDismissLoading,
+}: {
+  dashboard: DashboardScene;
+  onDismissLoading?: () => void;
+}) {
+  const { overlay, loadingView } = dashboard.useState();
+  const styles = useStyles2(getStyles);
+
+  if (loadingView === 'overlay') {
+    return (
+      <Drawer
+        title={t('dashboard.loading.drawer-title', 'Loading…')}
+        onClose={() => {
+          dashboard.closeModal();
+          onDismissLoading?.();
+        }}
+      >
+        <div className={styles.loading}>
+          <DashboardLoadingBar label={t('dashboard.loading.drawer', 'Loading drawer')} />
+        </div>
+      </Drawer>
+    );
+  }
+
+  return overlay ? <overlay.Component model={overlay} /> : null;
+}
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    loading: css({
+      // Cancel Drawer body padding so the indicator meets the header divider and both edges.
+      margin: theme.spacing(-(theme.components.drawer?.padding ?? 2)),
+    }),
+  };
+}

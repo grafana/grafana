@@ -1,42 +1,216 @@
-import { type EventProperty } from '@grafana/runtime/unstable';
+import { type EventProperty, type EventVariants } from '@grafana/runtime/unstable';
+import { type PageHistoryKind } from 'app/core/services/pageHistory/types';
+import { type RecentActivityFilter } from 'app/features/home/DashboardTabs/useRecentActivity';
 
 export interface TabChanged extends EventProperty {
   /** Tab the user switched to. */
   tab: string;
 }
 
+export interface RecommendationsShown extends EventProperty {
+  /** Stable ids of the recommendations shown to the user. */
+  recommendation_ids: string[];
+  /**
+   * Matrix base-row id driving the current card selection;
+   * values are the BaseRow union in solutionsMatrix.ts.
+   */
+  starting_state: string;
+  /**
+   * Stable id of the solution that was selected when the recommendations were shown;
+   * absent when no solution is selected.
+   */
+  solution?: string;
+}
+
 export interface ClearHistoryClicked extends EventProperty {
   /** Number of dashboards in history before clearing. */
   dashboard_count: number;
+  /** Number of entries of any kind in history before clearing. */
+  total_count: number;
 }
 
-export interface CtaClicked extends EventProperty {
-  /** Which homepage widget fired the CTA. */
-  surface: 'alerts_card' | 'incidents_card' | 'recent_tab' | 'recommendations' | 'existing_solution' | 'no_data_card';
-  /** What the user asked for. Which values are valid depends on the surface (not compiler-enforced). */
-  action:
-    | 'alert_detail'
-    | 'create_rule'
-    | 'view_all_alerts'
-    | 'view_all_rules'
-    | 'incident_detail'
-    | 'declare_incident'
-    | 'view_all_incidents'
-    | 'create_dashboard'
-    | 'browse_dashboards'
-    | 'enable'
-    | 'open_solution'
-    | 'view_alerts'
-    | 'switch_solution'
-    | 'connect_data_source';
+/** Counts cover the whole history, not the rows left after the kind filter; `filter` says which rows were on screen. */
+export interface RecentActivityShown extends EventProperty {
+  /** Entries of any kind in history when the tab was displayed. */
+  total_count: number;
+  /** Dashboards in history. */
+  dashboard_count: number;
+  /** Grafana Pages in history. */
+  page_count: number;
+  /** Explore sessions in history. */
+  explore_count: number;
+  /** Alerting pages in history. */
+  alerting_count: number;
+  /** App plugin pages in history. */
+  app_count: number;
+  /** Kind filter in effect, or `all`: only rows of that kind were shown. */
+  filter: RecentActivityFilter;
+}
+
+export interface RecentActivityFilterChanged extends EventProperty {
+  /** Kind the user chose to show, or `all`. */
+  filter: RecentActivityFilter;
+}
+
+export interface SolutionFilterChanged extends EventProperty {
+  /** Stable id of the solution whose card scope changed. */
+  solution: string;
+  /** Whether the user saved a scope or cleared it. */
+  change: 'saved' | 'cleared';
   /**
-   * Where on the widget the control lives. 'list' | 'empty_state' | 'footer' apply to the
-   * alerts/incidents cards and the recent tab; 'card' | 'pill' apply to recommendations and
-   * the no-data card; the existing-solution card uses 'card'.
+   * Comma-separated names of the scope dimensions set after the change, in the solution's own terms;
+   * empty when cleared. Names only: the values are customer data and are never reported.
    */
-  placement: 'list' | 'empty_state' | 'footer' | 'card' | 'pill';
-  /** Stable id of the recommendation whose Enable CTA was clicked (surface 'recommendations' only). */
-  recommendation_id?: string;
-  /** Stable id of the solution whose control was clicked (surfaces 'existing_solution' and 'no_data_card' only). */
+  customized: string;
+}
+
+interface CtaClickedBase extends EventProperty {
+  /** Which homepage widget fired the CTA. */
+  surface: string;
+  /** What the user asked for. */
+  action: string;
+  /** Where on the widget the control lives. */
+  placement: string;
+  /** Stable id of the solution whose control was clicked. */
   solution?: string;
 }
+
+export type CtaClicked = EventVariants<
+  CtaClickedBase,
+  | ({
+      surface: 'alerts_card';
+    } & (
+      | {
+          action: 'alert_detail';
+          placement: 'list';
+        }
+      | {
+          action: 'create_rule';
+          placement: 'empty_state' | 'footer';
+        }
+      | {
+          action: 'view_all_alerts' | 'view_all_rules';
+          placement: 'footer';
+        }
+    ))
+  | ({
+      surface: 'incidents_card';
+    } & (
+      | {
+          action: 'incident_detail';
+          placement: 'list';
+        }
+      | {
+          action: 'declare_incident';
+          placement: 'empty_state' | 'footer';
+        }
+      | {
+          action: 'view_all_incidents';
+          placement: 'footer';
+        }
+    ))
+  | ({
+      surface: 'oncall_card';
+    } & (
+      | {
+          action: 'my_shift_detail' | 'team_schedule_detail';
+          placement: 'list';
+        }
+      | {
+          action: 'view_schedules';
+          placement: 'footer';
+        }
+    ))
+  | ({
+      surface: 'news_card';
+    } & (
+      | {
+          action: 'news_detail';
+          placement: 'list';
+        }
+      | {
+          action: 'read_more_news';
+          placement: 'footer';
+        }
+    ))
+  | ({
+      surface: 'recent_tab';
+    } & (
+      | {
+          action: 'open_page';
+          placement: 'list';
+          /** Kind of page the row restores. Never the page itself: hrefs carry customer data. */
+          page_kind: PageHistoryKind;
+          /** 0-based row index as displayed, so clicks on the top row can be told from deeper ones. */
+          position: number;
+          /** Kind filter in effect: under a kind, `page_kind` is forced and `position` counts within that kind. */
+          filter: RecentActivityFilter;
+        }
+      | {
+          action: 'create_dashboard' | 'browse_dashboards';
+          placement: 'empty_state';
+        }
+    ))
+  | {
+      surface: 'recommendations';
+      action: 'enable' | 'setup' | 'learn_more';
+      placement: 'card' | 'pill';
+      /** Stable id of the recommendation whose Enable CTA was clicked. */
+      recommendation_id: string;
+      /**
+       * Matrix base-row id driving the current card selection;
+       * values are the BaseRow union in solutionsMatrix.ts.
+       */
+      starting_state: string;
+      solution?: string;
+    }
+  | {
+      surface: 'existing_solution';
+      action: 'switch_solution' | 'view_alerts' | 'open_solution';
+      placement: 'card';
+      solution: string;
+    }
+  | ({
+      surface: 'no_data_card';
+    } & (
+      | {
+          action: 'open_solution';
+          placement: 'pill';
+          solution: string;
+        }
+      | {
+          action: 'connect_data_source';
+          placement: 'card';
+        }
+    ))
+  | ({
+      surface: 'overview';
+    } & (
+      | {
+          action: 'change_overview_filter';
+          placement: 'menu';
+          solution: string;
+        }
+      | {
+          action: 'open_guide';
+          placement: 'card';
+          solution: string;
+        }
+      | {
+          action: 'open_solution_filter';
+          placement: 'card';
+          solution: string;
+        }
+      | {
+          action: 'open_solution' | 'view_alerts' | 'enable' | 'setup' | 'learn_more';
+          placement: 'card';
+          solution: string;
+        }
+    ))
+  | ({
+      surface: 'header';
+    } & {
+      action: 'view_alerts' | 'view_incidents';
+      placement: 'pill';
+    })
+>;

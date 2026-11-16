@@ -11,8 +11,15 @@ import {
   fieldMatchers,
   type FieldConfigSource,
   type DataFrame,
+  type StandardEditorContext,
   FieldType,
 } from '@grafana/data';
+import {
+  getVarMappingKind,
+  isVarMappingExpressionInput,
+  isVarMappingProp,
+  wrapVarMappingPropId,
+} from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { type MatcherScope } from '@grafana/schema';
 import {
@@ -25,6 +32,8 @@ import {
   ValuePicker,
   useFieldMatchersOptions,
 } from '@grafana/ui';
+import { getVarMappingToggleKind } from 'app/core/components/OptionsUI/varMappingToggle';
+import { type VarMappingVariableSource } from 'app/core/components/OptionsUI/varMappingVariables';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
 import { DynamicConfigValueEditor } from './DynamicConfigValueEditor';
@@ -53,7 +62,11 @@ export function getFieldOverrideCategories(
   registry: FieldConfigOptionsRegistry,
   data: DataFrame[],
   searchQuery: string,
-  onFieldConfigsChange: (config: FieldConfigSource) => void
+  onFieldConfigsChange: (config: FieldConfigSource) => void,
+  // Panel options, so an override editor can render against them
+  options?: Record<string, unknown>,
+  varMappingsEnabled = false,
+  varMappingVariables?: VarMappingVariableSource
 ): OptionsPaneCategoryDescriptor[] {
   const categories: OptionsPaneCategoryDescriptor[] = [];
   const currentFieldConfig = fieldConfig;
@@ -97,8 +110,10 @@ export function getFieldOverrideCategories(
   for (let idx = 0; idx < currentFieldConfig.overrides.length; idx++) {
     const override = currentFieldConfig.overrides[idx];
     const overrideData = getFramesForMatcherScope(data, override.matcher.scope);
-    const context = {
+    const context: StandardEditorContext<unknown, unknown> = {
       data: overrideData,
+      options,
+      fieldConfig: currentFieldConfig,
       getSuggestions: (scope?: VariableSuggestionsScope) => getDataLinksVariableSuggestions(overrideData, scope),
       isOverride: true,
     };
@@ -178,7 +193,7 @@ export function getFieldOverrideCategories(
 
     const configPropertiesOptions = registry.selectOptions(
       undefined,
-      (item) => !item.hideFromOverrides,
+      (item) => !item.hideFromOverrides && item.showIfOverride?.(context) !== false,
       (item) => {
         let label = item.name;
         if (item.category) {
@@ -279,27 +294,52 @@ export function getFieldOverrideCategories(
      */
     for (let propIdx = 0; propIdx < override.properties.length; propIdx++) {
       const property = override.properties[propIdx];
+
+      // varMappings.<id> entries are edited through the row of the property they map.
+      if (isVarMappingProp(property)) {
+        continue;
+      }
+
       const registryItemForProperty = registry.getIfExists(property.id);
 
       if (!registryItemForProperty) {
         continue;
       }
 
-      const onPropertyChange = (value: DynamicConfigValue) => {
-        onOverrideChange(idx, {
-          ...override,
-          properties: override.properties.map((prop, i) => {
-            if (i === propIdx) {
-              return { ...prop, value: value };
-            }
+      const varMappingId = wrapVarMappingPropId(property.id);
+      const varMappingKind = varMappingsEnabled ? getVarMappingKind(registryItemForProperty) : undefined;
+      const varMappingExpr = varMappingKind ? override.properties.find((p) => p.id === varMappingId)?.value : undefined;
+      const expression = typeof varMappingExpr === 'string' ? varMappingExpr : undefined;
+      // The stored value stays as the fallback while an expression is shown. Toggle editors get the
+      // stored value and the expression separately.
+      const displayValue = getVarMappingToggleKind(registryItemForProperty, varMappingKind)
+        ? property.value
+        : (expression ?? property.value);
 
-            return prop;
-          }),
-        });
+      const onPropertyChange = (value: unknown) => {
+        if (varMappingKind && isVarMappingExpressionInput(varMappingKind, value)) {
+          const varMappingEntry: DynamicConfigValue = { id: varMappingId, value };
+          const properties = override.properties.some((p) => p.id === varMappingId)
+            ? override.properties.map((p) => (p.id === varMappingId ? varMappingEntry : p))
+            : [...override.properties, varMappingEntry];
+          onOverrideChange(idx, { ...override, properties });
+          return;
+        }
+
+        // Writing a plain value also drops the expression, so the plain value takes effect. With the
+        // flag off this is the only way to get rid of an expression saved with the flag on.
+        const properties = override.properties
+          .map((prop, i) => (i === propIdx ? { ...prop, value } : prop))
+          .filter((p) => p.id !== varMappingId);
+
+        onOverrideChange(idx, { ...override, properties });
       };
 
       const onPropertyRemove = () => {
-        onOverrideChange(idx, { ...override, properties: override.properties.filter((_, i) => i !== propIdx) });
+        onOverrideChange(idx, {
+          ...override,
+          properties: override.properties.filter((p, i) => i !== propIdx && p.id !== varMappingId),
+        });
       };
 
       const htmlId = `${overrideId}-property-${property.id}`;
@@ -318,10 +358,13 @@ export function getFieldOverrideCategories(
                 isSystemOverride={isSystemOverride}
                 onChange={onPropertyChange}
                 onRemove={onPropertyRemove}
-                property={property}
+                property={{ ...property, value: displayValue }}
                 registry={registry}
                 context={context}
                 searchQuery={searchQuery}
+                varMappingKind={varMappingKind}
+                varMappingExpression={expression}
+                varMappingVariables={varMappingVariables}
               />
             );
           },

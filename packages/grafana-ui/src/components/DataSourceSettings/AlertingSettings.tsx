@@ -34,7 +34,7 @@ export function AlertingSettings<T extends AlertingConfig>({ options, onOptionsC
                 disabled={options.readOnly}
                 tooltip={t(
                   'grafana-ui.data-source-settings.alerting-settings-tooltip',
-                  'Manage alert rules for this data source. To manage other alerting resources, add an Alertmanager data source.'
+                  "Manage alert rules for this data source. They're shown in Grafana Alerting, or in the Prometheus Alerting app when that's in use. To manage other alerting resources, add an Alertmanager data source."
                 )}
               >
                 <InlineSwitch

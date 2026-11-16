@@ -12,6 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { StrictMode } from 'react';
+
+import { reportInteraction } from '@grafana/runtime';
 
 import traceGenerator from '../demo/trace-generators';
 import transformTraceData from '../model/transform-trace-data';
@@ -22,6 +26,11 @@ import SpanTreeOffset from './SpanTreeOffset';
 import VirtualizedTraceView, { type VirtualizedTraceViewProps } from './VirtualizedTraceView';
 
 jest.mock('./SpanTreeOffset');
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
+}));
 
 const trace = transformTraceData(traceGenerator.trace({ numberOfSpans: 2 }))!;
 
@@ -94,5 +103,116 @@ describe('<VirtualizedTraceViewImpl>', () => {
         name: /Scroll to top/i,
       })
     ).toBeInTheDocument();
+  });
+
+  it('reports the summary span count when scrolling to top', async () => {
+    (reportInteraction as jest.Mock).mockClear();
+    const summaryTrace = {
+      ...trace,
+      spans: trace.spans.map((span) => ({
+        ...span,
+        aggregation: { isSummary: true, isPreservedOutlier: false, spanCount: 2 },
+      })),
+    };
+    render(<VirtualizedTraceView {...{ ...props, trace: summaryTrace }} />);
+
+    await userEvent.click(screen.getByRole('button', { name: /Scroll to top/i }));
+
+    expect(reportInteraction).toHaveBeenCalledWith(
+      'grafana_traces_trace_view_scroll_to_top_clicked',
+      expect.objectContaining({ numSpans: summaryTrace.spans.length, numSummarySpans: summaryTrace.spans.length })
+    );
+  });
+
+  describe('scrolling to the span focused by search', () => {
+    function setupScrollTracking() {
+      const scrollElement = document.createElement('div');
+      const scrollTo = jest.fn();
+      scrollElement.scrollTo = scrollTo;
+
+      const scrollProps = {
+        ...props,
+        trace,
+        scrollElement,
+        headerHeight: 0,
+      };
+
+      return { scrollTo, scrollProps, spanID: trace.spans[1].spanID };
+    }
+
+    it('scrolls when a span is focused', () => {
+      const { scrollTo, scrollProps, spanID } = setupScrollTracking();
+      const { rerender } = render(<VirtualizedTraceView {...scrollProps} />);
+      expect(scrollTo).not.toHaveBeenCalled();
+
+      rerender(<VirtualizedTraceView {...scrollProps} focusedSpanForSearch={{ spanID }} />);
+
+      expect(scrollTo).toHaveBeenCalledTimes(1);
+    });
+
+    it('scrolls again when the already focused span is focused a second time', () => {
+      const { scrollTo, scrollProps, spanID } = setupScrollTracking();
+      const { rerender } = render(<VirtualizedTraceView {...scrollProps} />);
+      rerender(<VirtualizedTraceView {...scrollProps} focusedSpanForSearch={{ spanID }} />);
+
+      // A repeat "Go to span" click keeps the same span id but passes a new object.
+      rerender(<VirtualizedTraceView {...scrollProps} focusedSpanForSearch={{ spanID }} />);
+
+      expect(scrollTo).toHaveBeenCalledTimes(2);
+    });
+
+    it('does not scroll when an unrelated prop changes', () => {
+      const { scrollTo, scrollProps, spanID } = setupScrollTracking();
+      const { rerender } = render(<VirtualizedTraceView {...scrollProps} />);
+      const focusedSpanForSearch = { spanID };
+      rerender(<VirtualizedTraceView {...scrollProps} focusedSpanForSearch={focusedSpanForSearch} />);
+
+      rerender(
+        <VirtualizedTraceView {...scrollProps} focusedSpanForSearch={focusedSpanForSearch} spanNameColumnWidth={0.6} />
+      );
+
+      expect(scrollTo).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not scroll on mount when a span is already focused by search', () => {
+      const { scrollTo, scrollProps, spanID } = setupScrollTracking();
+      render(<VirtualizedTraceView {...scrollProps} focusedSpanForSearch={{ spanID }} />);
+
+      expect(scrollTo).not.toHaveBeenCalled();
+    });
+  });
+
+  it('retries the initial scroll with the settled header height on the first update, in StrictMode', () => {
+    const scrollElement = document.createElement('div');
+    const scrollTo = jest.fn();
+    scrollElement.scrollTo = scrollTo;
+    const scrollProps = { ...props, trace, scrollElement, focusedSpanId: trace.spans[0].spanID };
+
+    const { rerender } = render(<VirtualizedTraceView {...scrollProps} headerHeight={100} />, { wrapper: StrictMode });
+    rerender(<VirtualizedTraceView {...scrollProps} headerHeight={50} />);
+
+    const [initialTop, retriedTop] = [scrollTo.mock.calls[0][0].top, scrollTo.mock.lastCall[0].top];
+    expect(retriedTop - initialTop).toBe(50);
+  });
+
+  it('keeps passing the same visibleSpanIds array when rows rebuild without changing the visible spans', () => {
+    const { rerender } = render(<VirtualizedTraceView {...props} trace={trace} findMatchesIDs={new Set()} />);
+    const initialVisibleSpanIds = jest.mocked(SpanTreeOffset).mock.lastCall?.[0].visibleSpanIds;
+
+    rerender(<VirtualizedTraceView {...props} trace={trace} findMatchesIDs={new Set([trace.spans[0].spanID])} />);
+
+    expect(jest.mocked(SpanTreeOffset).mock.lastCall?.[0].visibleSpanIds).toBe(initialVisibleSpanIds);
+  });
+
+  it('does not throw or report when scrolling to top with no trace', async () => {
+    (reportInteraction as jest.Mock).mockClear();
+    render(<VirtualizedTraceView {...{ ...props, trace: null as unknown as Trace }} />);
+
+    await userEvent.click(screen.getByRole('button', { name: /Scroll to top/i }));
+
+    expect(reportInteraction).not.toHaveBeenCalledWith(
+      'grafana_traces_trace_view_scroll_to_top_clicked',
+      expect.anything()
+    );
   });
 });

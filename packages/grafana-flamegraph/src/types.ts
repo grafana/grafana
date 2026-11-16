@@ -1,3 +1,5 @@
+import { type DisplayValue } from '@grafana/data';
+
 import { type LevelItem } from './FlameGraph/dataTransform';
 
 export type ClickedItemData = {
@@ -11,12 +13,6 @@ export enum SampleUnit {
   Bytes = 'bytes',
   Short = 'short',
   Nanoseconds = 'ns',
-}
-
-export enum SelectedView {
-  TopTable = 'topTable',
-  FlameGraph = 'flameGraph',
-  Both = 'both',
 }
 
 export enum ViewMode {
@@ -48,3 +44,29 @@ export enum ColorSchemeDiff {
 }
 
 export type TextAlign = 'left' | 'right';
+
+export interface ProfileTooltipData {
+  percentValue: number;
+  percentSelf: number;
+  unitTitle: string;
+  unitValue: string;
+  unitSelf: string;
+  samples: string;
+}
+
+export interface ProfileTooltipDataOptions {
+  displayValue: DisplayValue;
+  displaySelf: DisplayValue;
+  unitTitle: string;
+  totalTicks: number;
+}
+
+export interface ProfileValueDataOptions {
+  displayValue: DisplayValue;
+  totalTicks: number;
+}
+
+export interface ProfileValueData {
+  unitValue: string;
+  percentage: number;
+}

@@ -1,4 +1,12 @@
-﻿import { FloatingArrow, arrow, autoUpdate, offset, useFloating, useTransitionStyles } from '@floating-ui/react';
+﻿import {
+  FloatingArrow,
+  arrow,
+  autoUpdate,
+  offset,
+  useFloating,
+  useMergeRefs,
+  useTransitionStyles,
+} from '@floating-ui/react';
 import { useLayoutEffect, useRef } from 'react';
 import * as React from 'react';
 
@@ -18,6 +26,7 @@ interface Props extends Omit<React.HTMLAttributes<HTMLDivElement>, 'content'> {
   renderArrow?: boolean;
   hidePopper?: () => void;
   style?: React.CSSProperties;
+  elementRef?: React.Ref<HTMLDivElement>;
 }
 
 export function Popover({
@@ -30,6 +39,7 @@ export function Popover({
   renderArrow,
   hidePopper,
   style: styleOverrides,
+  elementRef,
   ...rest
 }: Props) {
   const theme = useTheme2();
@@ -57,6 +67,8 @@ export function Popover({
     strategy: 'fixed',
   });
 
+  const floatingRef = useMergeRefs([refs.setFloating, elementRef]);
+
   useLayoutEffect(() => {
     refs.setReference(referenceElement);
   }, [referenceElement, refs]);
@@ -71,7 +83,7 @@ export function Popover({
   return show ? (
     <Portal>
       <div
-        ref={refs.setFloating}
+        ref={floatingRef}
         style={{
           ...floatingStyles,
           ...placementStyles,

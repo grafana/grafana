@@ -17,9 +17,11 @@ export const defaultOperatorState = (): OperatorState => ({
 	state: "success",
 });
 
-// status is where state and status information which may be used or updated by the operator or back-end should be placed
-// If you do not have any such information, you do not need to include this field,
-// however, as mentioned above, certain fields will be added by the kind system regardless.
+/**
+ * status is where state and status information which may be used or updated by the operator or back-end should be placed
+ * If you do not have any such information, you do not need to include this field,
+ * however, as mentioned above, certain fields will be added by the kind system regardless.
+ */
 export interface Status {
 	lastObservedGeneration: number;
 	// operatorStates is a map of operator ID to operator state evaluations.

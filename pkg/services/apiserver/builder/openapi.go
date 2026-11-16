@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"maps"
 	"net/http"
+	"slices"
 	"strings"
 	"sync"
 
@@ -63,12 +64,61 @@ func GetOpenAPIDefinitions(builders []APIGroupBuilder, additionalGetters ...open
 	}
 }
 
+// addRoutePaths publishes a group version's custom routes in the spec, so a
+// served endpoint is discoverable rather than only documented in code.
+func addRoutePaths(openAPISpec *spec3.OpenAPI, gv schema.GroupVersion, routes *APIRoutes) {
+	for _, route := range routes.Root {
+		openAPISpec.Paths.Paths["/apis/"+gv.String()+"/"+route.Path] = &spec3.Path{
+			PathProps: *route.Spec,
+		}
+		addRouteSchemas(openAPISpec, route)
+	}
+	for _, route := range routes.Namespace {
+		openAPISpec.Paths.Paths["/apis/"+gv.String()+"/namespaces/{namespace}/"+route.Path] = &spec3.Path{
+			PathProps: *route.Spec,
+		}
+		addRouteSchemas(openAPISpec, route)
+	}
+}
+
+// addRouteSchemas publishes the components a route's spec references. An
+// unresolved $ref renders as an empty model rather than erroring.
+func addRouteSchemas(openAPISpec *spec3.OpenAPI, route APIRouteHandler) {
+	if len(route.Schemas) == 0 {
+		return
+	}
+	if openAPISpec.Components == nil {
+		openAPISpec.Components = &spec3.Components{}
+	}
+	if openAPISpec.Components.Schemas == nil {
+		openAPISpec.Components.Schemas = map[string]*spec.Schema{}
+	}
+	for name, schema := range route.Schemas {
+		// First writer wins: routes in a group version share these types, and a
+		// kind's own definitions must not be clobbered.
+		if _, exists := openAPISpec.Components.Schemas[name]; exists {
+			continue
+		}
+		openAPISpec.Components.Schemas[name] = &schema
+	}
+}
+
 func addBuilderRoutes(
 	targetGroupVersion schema.GroupVersion,
 	openAPISpec *spec3.OpenAPI,
 	apiGroupBuilders []APIGroupBuilder,
 	apiResourceConfig *serverstorage.ResourceConfig,
+	extra []GroupVersionRoutes,
 ) (*spec3.OpenAPI, error) {
+	// Before the builders, because a builder that post-processes the spec returns
+	// from the loop below without visiting the rest.
+	for _, e := range extra {
+		if e.Routes == nil || e.GroupVersion != targetGroupVersion {
+			continue
+		}
+		addRoutePaths(openAPISpec, e.GroupVersion, e.Routes)
+	}
+
 	for _, apiGroupBuilder := range apiGroupBuilders {
 		// Optionally include raw http handlers for all builders
 		for _, gv := range GetGroupVersions(apiGroupBuilder) {
@@ -79,17 +129,7 @@ func addBuilderRoutes(
 			if ok && provider != nil {
 				routes := provider.GetAPIRoutes(gv)
 				if routes != nil {
-					for _, route := range routes.Root {
-						openAPISpec.Paths.Paths["/apis/"+gv.String()+"/"+route.Path] = &spec3.Path{
-							PathProps: *route.Spec,
-						}
-					}
-
-					for _, route := range routes.Namespace {
-						openAPISpec.Paths.Paths["/apis/"+gv.String()+"/namespaces/{namespace}/"+route.Path] = &spec3.Path{
-							PathProps: *route.Spec,
-						}
-					}
+					addRoutePaths(openAPISpec, gv, routes)
 				}
 			}
 			// Support direct manipulation of API results
@@ -134,15 +174,24 @@ func isAllRoute(prefix, path string, paths map[string]*spec3.Path) bool {
 
 // Modify the OpenAPI spec to include the additional routes.
 // nolint:gocyclo
-func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder, gvs []schema.GroupVersion, apiResourceConfig *serverstorage.ResourceConfig) func(*spec3.OpenAPI) (*spec3.OpenAPI, error) {
+func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder, gvs []schema.GroupVersion, apiResourceConfig *serverstorage.ResourceConfig, extra []GroupVersionRoutes) func(*spec3.OpenAPI) (*spec3.OpenAPI, error) {
+	// A group version served only through caller-supplied routes has no builder, so
+	// it is not in gvs, and its spec has no discovery path. Its routes still need
+	// their full spec, rather than the bare one the WebService alone produces.
+	targets := slices.Clone(gvs)
+	for _, e := range extra {
+		if !slices.Contains(targets, e.GroupVersion) {
+			targets = append(targets, e.GroupVersion)
+		}
+	}
 	return func(s *spec3.OpenAPI) (*spec3.OpenAPI, error) {
 		if s.Paths == nil {
 			return s, nil
 		}
 
-		for _, gv := range gvs {
+		for _, gv := range targets {
 			prefix := "/apis/" + gv.String() + "/"
-			if s.Paths.Paths[prefix] != nil {
+			if hasPathUnder(s.Paths.Paths, prefix) {
 				copy := spec3.OpenAPI{
 					Version: s.Version,
 					Info: &spec.Info{
@@ -267,7 +316,7 @@ func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder, gvs []s
 						}
 					}
 				}
-				result, err := addBuilderRoutes(gv, &copy, builders, apiResourceConfig)
+				result, err := addBuilderRoutes(gv, &copy, builders, apiResourceConfig, extra)
 				if err != nil {
 					return nil, err
 				}
@@ -305,6 +354,15 @@ func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder, gvs []s
 		}
 		return s, nil
 	}
+}
+
+func hasPathUnder(paths map[string]*spec3.Path, prefix string) bool {
+	for path := range paths {
+		if strings.HasPrefix(path, prefix) {
+			return true
+		}
+	}
+	return false
 }
 
 // GetPathOperations returns the set of non-nil operations defined on a path

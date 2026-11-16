@@ -1,4 +1,4 @@
-import { type PreferencesSpec } from '@grafana/api-clients/rtkq/preferences/v1alpha1';
+import { type PreferencesSpec } from '@grafana/api-clients/rtkq/preferences/v1';
 
 import { wellFormedTree } from './folders';
 

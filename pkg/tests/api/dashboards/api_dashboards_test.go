@@ -2,6 +2,7 @@ package dashboards
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -12,19 +13,23 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/server"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -37,6 +42,34 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationDashboardServiceValidation(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationDashboardServiceValidation)
+}
+
+func TestIntegrationDashboardQuota(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationDashboardQuota)
+}
+
+func TestIntegrationUpdatingProvisionionedDashboards(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationUpdatingProvisionionedDashboards)
+}
+
+func TestIntegrationCreate(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationCreate)
+}
+
+func TestIntegrationPreserveSchemaVersion(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationPreserveSchemaVersion)
+}
+
+func TestIntegrationImportDashboardWithLibraryPanels(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationImportDashboardWithLibraryPanels)
+}
+
+func TestIntegrationDashboardServicePermissions(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationDashboardServicePermissions)
+}
+
+func testIntegrationDashboardServiceValidation(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	unifiedConfig := make(map[string]setting.UnifiedStorageConfig)
@@ -75,6 +108,40 @@ func TestIntegrationDashboardServiceValidation(t *testing.T) {
 	savedFolder := createFolder(t, grafanaListedAddr, "Saved folder")
 	savedDashInFolder := createDashboard(t, grafanaListedAddr, "Saved dash in folder", savedFolder.ID, savedFolder.UID) // nolint:staticcheck
 	savedDashInGeneralFolder := createDashboard(t, grafanaListedAddr, "Saved dashboard in general folder", 0, "")
+
+	t.Run("searches dashboards and folders with field-value results", func(t *testing.T) {
+		require.EventuallyWithT(t, func(collect *assert.CollectT) {
+			u := fmt.Sprintf("http://admin:admin@%s/api/search?query=Saved", grafanaListedAddr)
+			resp, err := http.Get(u) // nolint:gosec
+			if !assert.NoError(collect, err) {
+				return
+			}
+			defer resp.Body.Close() // nolint:errcheck
+			if !assert.Equal(collect, http.StatusOK, resp.StatusCode) {
+				return
+			}
+
+			var results model.HitList
+			if !assert.NoError(collect, json.NewDecoder(resp.Body).Decode(&results)) {
+				return
+			}
+			byUID := make(map[string]*model.Hit, len(results))
+			for _, hit := range results {
+				byUID[hit.UID] = hit
+			}
+			if assert.Contains(collect, byUID, savedFolder.UID) {
+				assert.Equal(collect, model.DashHitFolder, byUID[savedFolder.UID].Type)
+				assert.NotZero(collect, byUID[savedFolder.UID].ID)
+			}
+			if assert.Contains(collect, byUID, savedDashInFolder.UID) {
+				assert.Equal(collect, savedFolder.UID, byUID[savedDashInFolder.UID].FolderUID)
+				assert.NotZero(collect, byUID[savedDashInFolder.UID].ID)
+			}
+			if assert.Contains(collect, byUID, savedDashInGeneralFolder.UID) {
+				assert.NotZero(collect, byUID[savedDashInGeneralFolder.UID].ID)
+			}
+		}, 10*time.Second, 25*time.Millisecond)
+	})
 
 	t.Run("When saving a dashboard with non-existing id in org A", func(t *testing.T) {
 		resp, err := postDashboard(t, grafanaListedAddr, "admin", "admin", map[string]interface{}{
@@ -318,7 +385,7 @@ func TestIntegrationDashboardServiceValidation(t *testing.T) {
 	})
 }
 
-func TestIntegrationDashboardQuota(t *testing.T) {
+func testIntegrationDashboardQuota(t *testing.T) {
 	// enable quota and set low dashboard quota
 	// Setup Grafana and its Database
 	dashboardQuota := int64(1)
@@ -381,7 +448,7 @@ func TestIntegrationDashboardQuota(t *testing.T) {
 	})
 }
 
-func TestIntegrationUpdatingProvisionionedDashboards(t *testing.T) {
+func testIntegrationUpdatingProvisionionedDashboards(t *testing.T) {
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableAnonymous: true,
@@ -389,7 +456,7 @@ func TestIntegrationUpdatingProvisionionedDashboards(t *testing.T) {
 
 	provDashboardsDir := filepath.Join(dir, "conf", "provisioning", "dashboards")
 	provDashboardsCfg := filepath.Join(provDashboardsDir, "dev.yaml")
-	blob := []byte(fmt.Sprintf(`
+	blob := fmt.Appendf(nil, `
 apiVersion: 1
 
 providers:
@@ -397,7 +464,7 @@ providers:
   type: file
   allowUiUpdates: false
   options:
-   path: %s`, provDashboardsDir))
+   path: %s`, provDashboardsDir)
 	err := os.WriteFile(provDashboardsCfg, blob, 0644)
 	require.NoError(t, err)
 	input, err := os.ReadFile(filepath.Join("./home.json"))
@@ -534,7 +601,7 @@ providers:
 	})
 }
 
-func TestIntegrationCreate(t *testing.T) {
+func testIntegrationCreate(t *testing.T) {
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableAnonymous: true,
@@ -686,7 +753,7 @@ func createFolder(t *testing.T, grafanaListedAddr string, title string) *dtos.Fo
 	return f
 }
 
-func TestIntegrationPreserveSchemaVersion(t *testing.T) {
+func testIntegrationPreserveSchemaVersion(t *testing.T) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableAnonymous: true,
 	})
@@ -776,7 +843,7 @@ func TestIntegrationPreserveSchemaVersion(t *testing.T) {
 	}
 }
 
-func TestIntegrationImportDashboardWithLibraryPanels(t *testing.T) {
+func testIntegrationImportDashboardWithLibraryPanels(t *testing.T) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableAnonymous: true,
 	})
@@ -1029,7 +1096,7 @@ func postDashboard(t *testing.T, grafanaListedAddr, user, password string, paylo
 	return http.Post(u, "application/json", bytes.NewBuffer(payloadBytes)) // nolint:gosec
 }
 
-func TestIntegrationDashboardServicePermissions(t *testing.T) {
+func testIntegrationDashboardServicePermissions(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -1169,6 +1236,48 @@ func TestIntegrationDashboardServicePermissions(t *testing.T) {
 		assert.Equal(t, http.StatusOK, resp.StatusCode)
 		err = resp.Body.Close()
 		require.NoError(t, err)
+	})
+
+	t.Run("move requires source write and destination create", func(t *testing.T) {
+		const movedDashboardTitle = "Moved dashboard"
+
+		for _, toRoot := range []bool{false, true} {
+			t.Run(fmt.Sprintf("to root=%t", toRoot), func(t *testing.T) {
+				cases := dashboardMovePermissionCases()
+
+				for i, tc := range cases {
+					t.Run(tc.name, func(t *testing.T) {
+						sourceFolder, destinationFolder := "", otherSavedFolder.UID
+						if toRoot {
+							sourceFolder, destinationFolder = savedFolder.UID, ""
+						}
+						originalTitle := fmt.Sprintf("Move permission %t %d", toRoot, i)
+						dashboard := createDashboard(t, grafanaListedAddr, originalTitle, 0, sourceFolder)
+						login := fmt.Sprintf("dashboard-move-%t-%d", toRoot, i)
+						createDashboardMoveUser(t, env, login, dashboard.UID, destinationFolder, tc)
+
+						payload := map[string]interface{}{
+							"dashboard": map[string]interface{}{
+								"uid":   dashboard.UID,
+								"title": movedDashboardTitle,
+							},
+							"folderUid": destinationFolder,
+							"overwrite": true,
+						}
+						response, err := postDashboard(t, grafanaListedAddr, login, login, payload)
+						require.NoError(t, err)
+						require.NoError(t, response.Body.Close())
+						require.Equal(t, tc.wantStatus, response.StatusCode)
+
+						expectedFolder, expectedTitle := sourceFolder, originalTitle
+						if tc.wantStatus == http.StatusOK {
+							expectedFolder, expectedTitle = destinationFolder, movedDashboardTitle
+						}
+						requireDashboardLocationAndTitle(t, grafanaListedAddr, dashboard.UID, expectedFolder, expectedTitle)
+					})
+				}
+			})
+		}
 	})
 
 	t.Run("RBAC tests", func(t *testing.T) {
@@ -1392,4 +1501,116 @@ func TestIntegrationDashboardServicePermissions(t *testing.T) {
 			require.NoError(t, err)
 		})
 	})
+}
+
+type dashboardMovePermissionCase struct {
+	name              string
+	writeSource       bool
+	createDestination bool
+	wrongDestination  bool
+	wantStatus        int
+}
+
+func dashboardMovePermissionCases() []dashboardMovePermissionCase {
+	return []dashboardMovePermissionCase{
+		{name: "neither", wantStatus: http.StatusForbidden},
+		{
+			name:        "source write only",
+			writeSource: true,
+			wantStatus:  http.StatusForbidden,
+		},
+		{
+			name:              "destination create only",
+			createDestination: true,
+			wantStatus:        http.StatusForbidden,
+		},
+		{
+			name:              "both",
+			writeSource:       true,
+			createDestination: true,
+			wantStatus:        http.StatusOK,
+		},
+		{
+			name:              "create on a different destination",
+			writeSource:       true,
+			createDestination: true,
+			wrongDestination:  true,
+			wantStatus:        http.StatusForbidden,
+		},
+	}
+}
+
+func requireDashboardLocationAndTitle(t *testing.T, addr, uid, wantFolderUID, wantTitle string) {
+	t.Helper()
+
+	url := fmt.Sprintf("http://admin:admin@%s/api/dashboards/uid/%s", addr, uid)
+	stored, err := http.Get(url) // nolint:gosec
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		require.NoError(t, stored.Body.Close())
+	})
+	require.Equal(t, http.StatusOK, stored.StatusCode)
+
+	var result struct {
+		Meta struct {
+			FolderUID string `json:"folderUid"`
+		} `json:"meta"`
+		Dashboard struct {
+			Title string `json:"title"`
+		} `json:"dashboard"`
+	}
+	require.NoError(t, json.NewDecoder(stored.Body).Decode(&result))
+	require.Equal(t, wantFolderUID, result.Meta.FolderUID)
+	require.Equal(t, wantTitle, result.Dashboard.Title)
+}
+
+func createDashboardMoveUser(
+	t *testing.T, env *server.TestEnv, login, dashboardUID, destinationUID string, tc dashboardMovePermissionCase,
+) {
+	t.Helper()
+
+	orgID := env.Cfg.DefaultOrgID()
+	userID := tests.CreateUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleNone),
+		Login:          login,
+		Password:       user.Password(login),
+		OrgID:          orgID,
+	})
+	grants := []resourcepermissions.SetResourcePermissionCommand{
+		{
+			Actions:           []string{folder.ActionFoldersRead},
+			Resource:          folder.ScopeFoldersRoot,
+			ResourceAttribute: "uid",
+			ResourceID:        "*",
+		},
+	}
+	if tc.writeSource {
+		grants = append(grants, resourcepermissions.SetResourcePermissionCommand{
+			Actions:           []string{dashboards.ActionDashboardsRead, dashboards.ActionDashboardsWrite},
+			Resource:          dashboards.ScopeDashboardsRoot,
+			ResourceAttribute: "uid",
+			ResourceID:        dashboardUID,
+		})
+	}
+	if tc.createDestination {
+		scopeUID := destinationUID
+		if scopeUID == "" {
+			scopeUID = folder.GeneralFolderUID
+		}
+		if tc.wrongDestination {
+			scopeUID = "another-destination"
+		}
+		grants = append(grants, resourcepermissions.SetResourcePermissionCommand{
+			Actions:           []string{dashboards.ActionDashboardsCreate},
+			Resource:          folder.ScopeFoldersRoot,
+			ResourceAttribute: "uid",
+			ResourceID:        scopeUID,
+		})
+	}
+
+	store := resourcepermissions.NewStore(env.Cfg, env.SQLStore, featuremgmt.WithFeatures())
+	for _, grant := range grants {
+		_, err := store.SetUserResourcePermission(context.Background(), orgID, accesscontrol.User{ID: userID}, grant, nil)
+		require.NoError(t, err)
+	}
 }

@@ -1,7 +1,7 @@
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useMemo, useRef } from 'react';
 
 import { intervalToAbbreviatedDurationString, type TraceKeyValuePair } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { Badge, Box, Card, InteractiveTable, Spinner, Stack, Text } from '@grafana/ui';
 import { getErrorMessage } from 'app/api/clients/provisioning/utils/httpUtils';
@@ -49,7 +49,7 @@ function formatJobDuration(job: Job): string | null {
   return intervalToAbbreviatedDurationString(interval, true);
 }
 
-const getJobColumns = (showAuthor: boolean) => [
+const getJobColumns = () => [
   {
     id: 'jobId',
     header: t('provisioning.recent-jobs.column-job-id', 'Job ID'),
@@ -71,29 +71,25 @@ const getJobColumns = (showAuthor: boolean) => [
     header: t('provisioning.recent-jobs.column-action', 'Action'),
     cell: ({ row: { original: job } }: JobCell) => job.spec?.action,
   },
-  ...(showAuthor
-    ? [
-        {
-          id: 'author',
-          header: t('provisioning.recent-jobs.column-author', 'Author'),
-          cell: ({ row: { original: job } }: JobCell) => {
-            const annotations = job.metadata?.annotations;
-            return annotations?.[AnnoKeyProvisioningAuthor] || annotations?.[AnnoKeyProvisioningAuthorEmail];
-          },
-        },
-        {
-          id: 'origin',
-          header: t('provisioning.recent-jobs.column-origin', 'Origin'),
-          cell: ({ row: { original: job } }: JobCell) => {
-            const origin = job.metadata?.annotations?.[AnnoKeyProvisioningAuthorOrigin];
-            if (!origin) {
-              return t('provisioning.recent-jobs.origin-unknown', 'Unknown');
-            }
-            return originLabel(origin);
-          },
-        },
-      ]
-    : []),
+  {
+    id: 'author',
+    header: t('provisioning.recent-jobs.column-author', 'Author'),
+    cell: ({ row: { original: job } }: JobCell) => {
+      const annotations = job.metadata?.annotations;
+      return annotations?.[AnnoKeyProvisioningAuthor] || annotations?.[AnnoKeyProvisioningAuthorEmail];
+    },
+  },
+  {
+    id: 'origin',
+    header: t('provisioning.recent-jobs.column-origin', 'Origin'),
+    cell: ({ row: { original: job } }: JobCell) => {
+      const origin = job.metadata?.annotations?.[AnnoKeyProvisioningAuthorOrigin];
+      if (!origin) {
+        return t('provisioning.recent-jobs.origin-unknown', 'Unknown');
+      }
+      return originLabel(origin);
+    },
+  },
   {
     id: 'started',
     header: t('provisioning.recent-jobs.column-started', 'Started'),
@@ -210,8 +206,7 @@ export function RecentJobs({ repo }: Props) {
   const [jobs, activeQuery, historicQuery] = useRepositoryAllJobs({
     repositoryName: repo.metadata?.name ?? 'x',
   });
-  const showAuthor = useBooleanFlagValue('provisioning.userAttribution', false);
-  const jobColumns = useMemo(() => getJobColumns(showAuthor), [showAuthor]);
+  const jobColumns = useMemo(() => getJobColumns(), []);
   const hasLoadedDataRef = useRef(false);
 
   if (activeQuery.data || historicQuery.data) {
@@ -267,7 +262,7 @@ export function RecentJobs({ repo }: Props) {
   };
 
   return (
-    <Card noMargin>
+    <Card noMargin data-testid={selectors.pages.Provisioning.RepositoryOverview.jobsCard}>
       <Card.Heading>
         <Trans i18nKey="provisioning.recent-jobs.jobs">Jobs</Trans>
       </Card.Heading>

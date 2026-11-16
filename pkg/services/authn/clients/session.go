@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
-var _ authn.ContextAwareClient = new(Session)
+var _ authn.ContextAwareClient = (*Session)(nil)
 
 func ProvideSession(cfgProvider configprovider.ConfigProvider, sessionService auth.UserTokenService,
 	authInfoService login.AuthInfoService, tracer trace.Tracer) *Session {
@@ -91,7 +91,7 @@ func (s *Session) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 	return ident, nil
 }
 
-func (s *Session) IsEnabled() bool {
+func (s *Session) IsEnabled(context.Context) bool {
 	return true
 }
 

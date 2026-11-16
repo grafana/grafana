@@ -1,4 +1,10 @@
-import { dateTimeFormat, dateTimeFormatTimeAgo, dateTimeFormatWithAbbrevation, timeZoneAbbrevation } from './formatter';
+import {
+  dateTimeFormat,
+  dateTimeFormatTimeAgo,
+  dateTimeFormatTimeAgoShort,
+  dateTimeFormatWithAbbrevation,
+  timeZoneAbbrevation,
+} from './formatter';
 
 describe('dateTimeFormat', () => {
   describe('when no time zone have been set', () => {
@@ -104,6 +110,34 @@ describe('dateTimeFormatTimeAgo', () => {
   });
 });
 
+describe('dateTimeFormatTimeAgoShort', () => {
+  const now = 1587126975779;
+  const ago = (ms: number) => dateTimeFormatTimeAgoShort(now - ms, { now });
+
+  it.each([
+    [400, '0s ago'],
+    [5_000, '5s ago'],
+    [11 * 60_000, '11m ago'],
+    // Half a unit stays in the smaller unit instead of rounding up to one of the next.
+    [30 * 60_000, '30m ago'],
+    [15 * 86_400_000, '15d ago'],
+    [183 * 86_400_000, '6mo ago'],
+    // Rounds before picking the unit, so 59.6 minutes is an hour, not 60m.
+    [59.6 * 60_000, '1h ago'],
+    [2 * 3_600_000, '2h ago'],
+    [3 * 86_400_000, '3d ago'],
+    [45 * 86_400_000, '2mo ago'],
+    [2 * 365 * 86_400_000, '2y ago'],
+    [-5 * 60_000, 'in 5m'],
+  ])('formats a difference of %i ms as %s', (ms, expected) => {
+    expect(ago(ms)).toBe(expected);
+  });
+
+  it('returns Invalid date for invalid input', () => {
+    expect(dateTimeFormatTimeAgoShort(new Date(NaN), { now })).toBe('Invalid date');
+  });
+});
+
 describe('dateTimeFormatWithAbbreviation', () => {
   it('should return the correct format with zone abbreviation', () => {
     const options = { timeZone: 'Europe/Stockholm' };
@@ -131,5 +165,12 @@ describe('timeZoneAbbrevation', () => {
   it('should return the correct abbreviation', () => {
     const options = { timeZone: 'Europe/Bucharest' };
     expect(timeZoneAbbrevation(1587126975779, options)).toBe('EEST');
+  });
+  it('should return UTC for the utc time zone (like moment-timezone)', () => {
+    expect(timeZoneAbbrevation(1587126975779, { timeZone: 'utc' })).toBe('UTC');
+  });
+  it('should return an empty string for zone names that do not resolve to an IANA zone (like moment)', () => {
+    expect(timeZoneAbbrevation(1587126975779, { timeZone: 'browser' })).toBe('');
+    expect(timeZoneAbbrevation(1587126975779, { timeZone: 'not/a-zone' })).toBe('');
   });
 });

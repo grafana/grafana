@@ -6,11 +6,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"github.com/grafana/grafana/pkg/storage/legacysql/legacywatch"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -20,14 +21,22 @@ type Service struct {
 	log   log.Logger
 }
 
-func ProvideService(db db.DB, cfg *setting.Cfg, quotaService quota.Service) (org.Service, error) {
+func ProvideService(sql legacysql.LegacyDatabaseProvider, cfg *setting.Cfg, quotaService quota.Service) (org.Service, error) {
+	return ProvideServiceWithWatch(sql, cfg, quotaService, nil)
+}
+
+// ProvideServiceWithWatch is ProvideService that also announces org membership
+// changes on the legacy watch subjects, since the IAM User resource is a
+// membership. It is separate so wire sets without the NATS bus, such as the
+// CLI's, can keep using ProvideService.
+func ProvideServiceWithWatch(sql legacysql.LegacyDatabaseProvider, cfg *setting.Cfg, quotaService quota.Service, watch *legacywatch.Publisher) (org.Service, error) {
 	log := log.New("org service")
 	s := &Service{
 		store: &sqlStore{
-			db:      db,
-			dialect: db.GetDialect(),
-			log:     log,
-			cfg:     cfg,
+			sql:   sql,
+			log:   log,
+			cfg:   cfg,
+			watch: watch,
 		},
 		cfg: cfg,
 		log: log,
@@ -239,8 +248,4 @@ func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
 	// orgs per user
 	limits.Set(userTag, cfg.Quota.User.Org)
 	return limits, nil
-}
-
-func (s *Service) RegisterDelete(query string) {
-	s.store.RegisterDelete(query)
 }

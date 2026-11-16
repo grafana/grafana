@@ -6,12 +6,11 @@ import {
   useGetDashboardByUidQuery,
   useGetLibraryElementByUidQuery,
 } from '@grafana/api-clients/internal/rtkq/legacy/migrate-to-cloud';
-import { type DataSourceInstanceSettings } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { useDataSourceInstanceListItem } from '@grafana/runtime';
 import { type CellProps, Stack, Text, Icon, useStyles2 } from '@grafana/ui';
 import { getSvgSize } from '@grafana/ui/internal';
-import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
+import { useGetCombinedFolderQuery } from 'app/api/clients/folder/v1beta1/hooks';
 
 import { type LocalPlugin } from '../../plugins/admin/types';
 
@@ -50,9 +49,13 @@ function ResourceInfo({ data }: { data: ResourceTableItem }) {
 
 function DatasourceInfo({ data }: { data: ResourceTableItem }) {
   const datasourceUID = data.refId;
-  const datasource = useDatasource(datasourceUID);
+  const { isLoading, item } = useDataSourceInstanceListItem(datasourceUID);
 
-  if (!datasource) {
+  if (isLoading) {
+    return <InfoSkeleton />;
+  }
+
+  if (!item) {
     return (
       <>
         <Text>
@@ -69,8 +72,8 @@ function DatasourceInfo({ data }: { data: ResourceTableItem }) {
 
   return (
     <>
-      <span>{datasource.name}</span>
-      <Text color="secondary">{datasource.type}</Text>
+      <span>{item.name}</span>
+      <Text color="secondary">{item.type}</Text>
     </>
   );
 }
@@ -124,7 +127,7 @@ function FolderInfo({ data }: { data: ResourceTableItem }) {
   const folderUID = data.refId;
   const skipApiCall = !!data.name && !!data.parentName;
 
-  const { data: folderData, isLoading, isError } = useGetFolderQueryFacade(skipApiCall ? undefined : folderUID);
+  const { data: folderData, isLoading, isError } = useGetCombinedFolderQuery(skipApiCall ? undefined : folderUID);
 
   const folderName = data.name || folderData?.title;
   const folderParentName = data.parentName || folderData?.parents?.[folderData.parents.length - 1]?.title;
@@ -217,23 +220,37 @@ function BasicResourceInfo({ data }: { data: ResourceTableItem }) {
 
 function ResourceIcon({ resource }: { resource: ResourceTableItem }) {
   const styles = useStyles2(getIconStyles);
-  const datasource = useDatasource(resource.type === 'DATASOURCE' ? resource.refId : undefined);
   const pluginLogo = usePluginLogo(resource.type === 'PLUGIN' ? resource.plugin : undefined);
 
-  // Handle special cases for icons.
-  if (resource.type === 'DATASOURCE' && datasource?.meta?.info?.logos?.small) {
-    return <img className={styles.icon} src={datasource.meta.info.logos.small} alt="" />;
-  } else if (resource.type === 'PLUGIN' && pluginLogo) {
+  // Handle special cases for icons. The data source lookup lives in its own component so it only
+  // runs for data source resources.
+  if (resource.type === 'DATASOURCE') {
+    return <DatasourceIcon uid={resource.refId} />;
+  }
+
+  if (resource.type === 'PLUGIN' && pluginLogo) {
     return <img className={styles.icon} src={pluginLogo} alt="" />;
-  } else {
-    // Generic icons for all other resource types.
-    const iconName = iconNameForResource(resource.type);
-    if (iconName) {
-      return <Icon size="xl" name={iconName} />;
-    }
+  }
+
+  // Generic icons for all other resource types.
+  const iconName = iconNameForResource(resource.type);
+  if (iconName) {
+    return <Icon size="xl" name={iconName} />;
   }
 
   return undefined;
+}
+
+function DatasourceIcon({ uid }: { uid: string }) {
+  const styles = useStyles2(getIconStyles);
+  const { item } = useDataSourceInstanceListItem(uid);
+  const logo = item?.meta?.info?.logos?.small;
+
+  if (logo) {
+    return <img className={styles.icon} src={logo} alt="" />;
+  }
+
+  return <Icon size="xl" name="database" />;
 }
 
 function getIconStyles() {
@@ -244,20 +261,6 @@ function getIconStyles() {
       height: getSvgSize('xl'),
     }),
   };
-}
-
-function useDatasource(datasourceUID: string | undefined): DataSourceInstanceSettings | undefined {
-  const datasource = useMemo(() => {
-    if (!datasourceUID) {
-      return undefined;
-    }
-
-    return (
-      config.datasources[datasourceUID] || Object.values(config.datasources).find((ds) => ds.uid === datasourceUID)
-    );
-  }, [datasourceUID]);
-
-  return datasource;
 }
 
 function usePluginLogo(plugin: LocalPlugin | undefined): string | undefined {

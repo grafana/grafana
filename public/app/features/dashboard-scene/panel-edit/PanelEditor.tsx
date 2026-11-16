@@ -20,20 +20,31 @@ import {
   type VizPanel,
 } from '@grafana/scenes';
 import { type Panel } from '@grafana/schema';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
 import { saveLibPanel } from 'app/features/library-panels/state/api';
 import { vizSuggestionsTracker } from 'app/features/panel/components/VizTypePicker/interactions';
+import { createDefaultQuery } from 'app/features/query/state/queryDefaults';
 
-import { DashboardEditActionEvent } from '../edit-pane/events';
-import { EDIT_PANE_COLLAPSED_KEY } from '../edit-pane/shared';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { type LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
+import {
+  type AdHocTransformationsByPanelKey,
+  collectAdHocTransformations,
+  restoreAdHocTransformations,
+} from '../scene/panel-actions/adHocTransformations';
 import { type DashboardLayoutItem, isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
-import { getDashboardSceneFor, getLibraryPanelBehavior, getPanelIdForVizPanel } from '../utils/utils';
+import { DashboardEditActionEvent } from '../sidebar/events';
+import { SIDEBAR_COLLAPSED_KEY } from '../sidebar/shared';
+import { clearDefaultQuery } from '../utils/clearDefaultQuery';
+import { findVizPanelByKey } from '../utils/findVizPanel';
+import { getEmptyQueryRunnerState } from '../utils/queryRunnerState';
+import { getDashboardSceneFor, getLibraryPanelBehavior } from '../utils/utils';
+import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
 import { DataProviderSharer } from './PanelDataPane/DataProviderSharer';
 import { type PanelDataPane } from './PanelDataPane/PanelDataPane';
@@ -73,10 +84,10 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   };
 
   private _layoutItemState?: SceneObjectState;
+  private _layoutItemAdHocTransformations?: AdHocTransformationsByPanelKey;
   private _layoutItem: DashboardLayoutItem;
   private _originalSaveModel!: Panel;
   private _changesHaveBeenMade = false;
-  private _tableViewPanelActivationAdded = false;
 
   public constructor(state: PanelEditorState) {
     super(state);
@@ -99,14 +110,22 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
     // Clear any panel selection when entering panel edit mode.
     // Need to clear selection here since selection is activated when panel edit mode is entered through the panel actions menu. This causes sidebar panel editor to be open when exiting panel edit mode
-    dashboard.state.editPane.clearSelection();
+    dashboard.state.sidebar.clearSelection();
 
     if (panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID) {
-      const isPaneCollapsed = sessionStorage.getItem(EDIT_PANE_COLLAPSED_KEY) === 'true';
+      const isPaneCollapsed = sessionStorage.getItem(SIDEBAR_COLLAPSED_KEY) === 'true';
       if (isPaneCollapsed) {
         panel.changePluginType('timeseries');
       }
     }
+
+    // Splitter layout and table view changes remount the preview; keep its event subscriptions alive.
+    this._subs.add(this._layoutItem.activate());
+    this._subs.add(panel.activate());
+
+    // An already-active provider may be owned by panel notices rather than the panel.
+    let deactivateData = panel.state.$data?.activate();
+    this._subs.add(() => deactivateData?.());
 
     this._subs.add(
       this._layoutItem.subscribeToEvent(DashboardEditActionEvent, ({ payload }) => {
@@ -118,11 +137,19 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     // Listen for panel plugin changes
     this._subs.add(
       panel.subscribeToState((n, p) => {
+        if (n.$data !== p.$data) {
+          deactivateData?.();
+          deactivateData = n.$data?.activate();
+        }
         if (n.pluginId !== p.pluginId) {
           this.waitForPlugin();
         }
       })
     );
+
+    if (!this.state.isInitializing) {
+      this._setupChangeDetection();
+    }
 
     this.waitForPlugin();
 
@@ -138,34 +165,48 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       return;
     }
 
+    const panel = this.state.panelRef.resolve();
+    if (findVizPanelByKey(getDashboardSceneFor(this), panel.state.key) !== panel) {
+      // Our tree was replaced wholesale (APPLY_SPEC and the json/code editors rebuild the scene),
+      // so there is nothing to commit onto: the edit action below would be sourced from a layout
+      // item that never activates again, and the sidebar retries an inactive source forever.
+      return;
+    }
+
     const layoutItem = this._layoutItem;
     const changedState = layoutItem.state;
+    const changedAdHocTransformations = collectAdHocTransformations(layoutItem);
     const originalState = this._layoutItemState!;
+    const originalAdHocTransformations = this._layoutItemAdHocTransformations;
 
     // Temp fix for old edit mode
-    if (this._layoutItem instanceof DashboardGridItem && !config.featureToggles.dashboardNewLayouts) {
+    if (this._layoutItem instanceof DashboardGridItem && !isDashboardNewLayoutsEnabled()) {
       this._layoutItem.handleEditChange();
       return;
     }
 
     const editAction = new DashboardEditActionEvent({
+      meta: { actionId: 'panel.edit' },
       description: t('dashboard.edit-actions.panel-edit', 'Panel changes'),
       source: this._layoutItem,
       perform: () => {
         // Because panel edit makes changes directly to layout item & panel
         // we only need to do this in case we want to re-perform after undo
         if (layoutItem.state !== changedState) {
-          layoutItem.setState(changedState);
+          setLayoutItemState(layoutItem, changedState, changedAdHocTransformations);
         }
       },
-      undo: () => layoutItem!.setState(originalState),
+      undo: () => setLayoutItemState(layoutItem, originalState, originalAdHocTransformations),
     });
 
     // sadly we cannot publish this event directly here as the main dashboard edit / undo system
-    // is not active while panel edit is active so we have to let the edit pane (which owns undo/redo)
+    // is not active while panel edit is active so we have to let the sidebar (which owns undo/redo)
     // publish this event when it activates
     const dashboard = getDashboardSceneFor(this);
-    dashboard.state.editPane.setPanelEditAction(editAction);
+    if (this.state.isDirty) {
+      dashboard.recordEditMutation();
+    }
+    dashboard.state.sidebar.setPanelEditAction(editAction);
   }
 
   public waitForPlugin(retry = 0) {
@@ -189,6 +230,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
     this._originalSaveModel = vizPanelToPanel(panel);
     this._layoutItemState = sceneUtils.cloneSceneObjectState(this._layoutItem.state);
+    this._layoutItemAdHocTransformations = collectAdHocTransformations(this._layoutItem);
   }
 
   /**
@@ -271,6 +313,10 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     }
 
     if (!skipDataQuery) {
+      if (plugin.meta.skipDefaultQuery && this.state.isNewPanel && this.state.isInitializing) {
+        clearDefaultQuery(panel);
+      }
+
       if (!this.state.dataPane) {
         const dataPane = createPanelDataPane(this.getPanel(), this.state.useQueryExperienceNext);
         this.setState({ dataPane });
@@ -289,7 +335,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
               datasource: {
                 uid: ds,
               },
-              queries: [{ refId: 'A' }],
+              ...(plugin.meta.skipDefaultQuery ? getEmptyQueryRunnerState() : { queries: [createDefaultQuery()] }),
             }),
             transformations: [],
           }),
@@ -329,7 +375,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       dashboard.removePanel(panel);
     } else {
       // Revert any layout element changes
-      this._layoutItem!.setState(this._layoutItemState!);
+      setLayoutItemState(this._layoutItem, this._layoutItemState!, this._layoutItemAdHocTransformations);
     }
 
     locationService.partial({ editPanel: null });
@@ -392,13 +438,6 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       return;
     }
 
-    // In order to maintain panel active state when switching to table view call activate here so that the panel is never deactivated
-    // This is to make sure panel state subscriptions remain activate from the queries pane
-    if (!this._tableViewPanelActivationAdded) {
-      this._subs.add(panel.activate());
-      this._tableViewPanelActivationAdded = true;
-    }
-
     this.setState({
       tableView: PanelBuilders.table()
         .setTitle('')
@@ -427,6 +466,16 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     // This is to notify UrlSyncManager that a new object has been added to scene that requires url sync
     this.publishEvent(new NewSceneObjectAddedEvent(dataPane), true);
   };
+}
+
+function setLayoutItemState(
+  layoutItem: DashboardLayoutItem,
+  state: SceneObjectState,
+  baseline?: AdHocTransformationsByPanelKey
+) {
+  const adHocTransformations = collectAdHocTransformations(layoutItem);
+  layoutItem.setState(state);
+  restoreAdHocTransformations(layoutItem, adHocTransformations, baseline);
 }
 
 export function buildPanelEditScene(panel: VizPanel, isNewPanel = false): PanelEditor {

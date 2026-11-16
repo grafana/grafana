@@ -4,34 +4,50 @@ import { config } from '../../config';
 import { getFeatureFlagClient } from '../../internal/openFeature';
 import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 
-import { FALLBACK_TO_BOOTDATA_WARNING } from './constants';
-import { logPluginMetaDebug, logPluginMetaWarning } from './logging';
+import { FALLBACK_TO_BOOTDATA_ERROR_WARNING, FALLBACK_TO_BOOTDATA_WARNING, META_FAILED_ERROR } from './constants';
+import { logPluginMetaDebug, logPluginMetaError, logPluginMetaWarning } from './logging';
 import { getAppPluginMapper } from './mappers/mappers';
-import { initPluginMetas } from './plugins';
+import { getPluginMetasUrl, initPluginMetas } from './plugins';
 import type { AppPluginMetas, PluginMetasResponse } from './types';
 
 let apps: AppPluginMetas = {};
+// Tracked separately from whether `apps` holds anything: an instance with no app
+// plugins is a legitimately empty cache.
+let didInit = false;
 
 function initialized(): boolean {
-  return Boolean(Object.keys(apps).length);
+  return didInit;
 }
 
 function setApps(input: AppPluginMetas) {
   apps = input;
+  didInit = true;
 }
 
-function setMetas(metas: PluginMetasResponse) {
-  if (!metas.items.length) {
-    // something failed while trying to fetch plugin meta
-    // fallback to config.panels from bootdata
+async function setMetas(metas: PluginMetasResponse | null): Promise<void> {
+  if (
+    !metas?.items.length &&
+    !getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsDisableMTPluginsFallback, false)
+  ) {
+    // null means plugin meta failed to load, empty items means the API had nothing
+    const message = metas ? FALLBACK_TO_BOOTDATA_WARNING : FALLBACK_TO_BOOTDATA_ERROR_WARNING;
     // eslint-disable-next-line @grafana/no-config-apps
     setApps(config.apps);
-    logPluginMetaWarning(FALLBACK_TO_BOOTDATA_WARNING, { pluginType: PluginType.app });
+    logPluginMetaWarning(message, { pluginType: PluginType.app, requestUrl: await getPluginMetasUrl() });
     return;
+  }
+
+  if (!metas) {
+    logPluginMetaError(META_FAILED_ERROR, new Error(META_FAILED_ERROR), {
+      pluginType: PluginType.app,
+      requestUrl: await getPluginMetasUrl(),
+    });
+    throw new Error(META_FAILED_ERROR);
   }
 
   const mapper = getAppPluginMapper();
   setApps(mapper(metas));
+  logPluginMetaDebug('PluginMeta: initializing app plugins cache with meta values', {});
 }
 
 async function initAppPluginMetas(): Promise<void> {
@@ -43,13 +59,30 @@ async function initAppPluginMetas(): Promise<void> {
   }
 
   const metas = await initPluginMetas();
-  setMetas(metas);
-  logPluginMetaDebug('PluginMeta: initializing app plugins cache with meta values', {});
+  await setMetas(metas);
 }
 
 export async function getAppPluginMetas(): Promise<AppPluginConfig[]> {
   if (!initialized()) {
     await initAppPluginMetas();
+  }
+
+  return Object.values(structuredClone(apps));
+}
+
+/**
+ * Get the installed app plugins.
+ * This is a synchronous function that should only be used as an escape hatch in cases where the caller is guaranteed to be called after the app plugins have been initialized.
+ * In other cases, getAppPluginMetas() should be used instead to ensure the app plugins have been initialized before accessing them.
+ * Logs and returns what it has when the cache was never filled, like getPanelPluginMetasMapSync.
+ * @returns the installed app plugins
+ */
+export function getAppPluginMetasSync(): AppPluginConfig[] {
+  if (!initialized()) {
+    logPluginMetaError(
+      'PluginMeta: getAppPluginMetasSync() was called before the app plugins cache was initialized',
+      new Error('App plugin metas not initialized')
+    );
   }
 
   return Object.values(structuredClone(apps));
@@ -90,4 +123,14 @@ export function setAppPluginMetas(override: AppPluginMetas): void {
   }
 
   setApps(structuredClone(override));
+}
+
+/** Empties the cache, so the next read fetches again. Tests only. */
+export function clearAppPluginMetas(): void {
+  if (process.env.NODE_ENV !== 'test') {
+    throw new Error('clearAppPluginMetas() function can only be called from tests.');
+  }
+
+  apps = {};
+  didInit = false;
 }

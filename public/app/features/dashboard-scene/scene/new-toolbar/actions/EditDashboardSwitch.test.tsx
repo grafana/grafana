@@ -5,7 +5,7 @@ import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { SceneGridLayout, SceneTimeRange, VizPanel } from '@grafana/scenes';
-import { mockLocalStorage } from 'app/features/alerting/unified/mocks';
+import { mockLocalStorage } from 'app/features/alerting/unified/testSetup/mockLocalStorage';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { activateFullSceneTree } from 'app/features/dashboard-scene/utils/test-utils';
 
@@ -18,6 +18,9 @@ import { EditDashboardSwitch } from './EditDashboardSwitch';
 jest.mock('app/features/dashboard-scene/utils/interactions', () => ({
   DashboardInteractions: {
     editSessionStarted: jest.fn(),
+    editPeriodStarted: jest.fn(),
+    editPeriodEnded: jest.fn(),
+    editActorFirstChange: jest.fn(),
     editButtonClicked: jest.fn(),
     exitEditButtonClicked: jest.fn(),
   },
@@ -56,21 +59,21 @@ describe('EditDashboardSwitch', () => {
   });
 
   describe('edit dashboard switch tracking', () => {
-    it('should call DashboardInteractions.editButtonClicked with outlineExpanded:true if grafana.dashboard.edit-pane.outline.collapsed is undefined', async () => {
+    it('should call DashboardInteractions.editButtonClicked with outlineExpanded:true if grafana.dashboard.sidebar.outline.collapsed is undefined', async () => {
       render(<EditDashboardSwitch dashboard={buildTestScene()} />);
       await userEvent.click(await screen.findByTestId(selectors.components.NavToolbar.editDashboard.editButton));
       expect(DashboardInteractions.editButtonClicked).toHaveBeenCalledWith({ outlineExpanded: true });
     });
 
-    it('should call DashboardInteractions.editButtonClicked with outlineExpanded:true if grafana.dashboard.edit-pane.outline.collapsed is false', async () => {
-      localStorageMock.setItem('grafana.dashboard.edit-pane.outline.collapsed', 'false');
+    it('should call DashboardInteractions.editButtonClicked with outlineExpanded:true if grafana.dashboard.sidebar.outline.collapsed is false', async () => {
+      localStorageMock.setItem('grafana.dashboard.sidebar.outline.collapsed', 'false');
       render(<EditDashboardSwitch dashboard={buildTestScene()} />);
       await userEvent.click(await screen.findByTestId(selectors.components.NavToolbar.editDashboard.editButton));
       expect(DashboardInteractions.editButtonClicked).toHaveBeenCalledWith({ outlineExpanded: true });
     });
 
-    it('should call DashboardInteractions.editButtonClicked with outlineExpanded:false if grafana.dashboard.edit-pane.outline.collapsed is true', async () => {
-      localStorageMock.setItem('grafana.dashboard.edit-pane.outline.collapsed', 'true');
+    it('should call DashboardInteractions.editButtonClicked with outlineExpanded:false if grafana.dashboard.sidebar.outline.collapsed is true', async () => {
+      localStorageMock.setItem('grafana.dashboard.sidebar.outline.collapsed', 'true');
       render(<EditDashboardSwitch dashboard={buildTestScene()} />);
       await userEvent.click(await screen.findByTestId(selectors.components.NavToolbar.editDashboard.editButton));
       expect(DashboardInteractions.editButtonClicked).toHaveBeenCalledWith({ outlineExpanded: false });

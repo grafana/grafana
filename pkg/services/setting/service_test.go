@@ -5,9 +5,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"maps"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"testing/synctest"
@@ -21,8 +24,10 @@ import (
 	"go.opentelemetry.io/otel/propagation"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/client-go/util/flowcontrol"
+	"k8s.io/client-go/util/retry"
 )
 
 func TestRemoteSettingService_ListAsIni(t *testing.T) {
@@ -219,7 +224,7 @@ func TestRemoteSettingService_List(t *testing.T) {
 
 		require.Error(t, err)
 		assert.Nil(t, result)
-		assert.Contains(t, err.Error(), "could not find the requested resource")
+		assert.Contains(t, err.Error(), "not found")
 	})
 
 	t.Run("should handle 500 internal server error", func(t *testing.T) {
@@ -247,7 +252,8 @@ func TestRemoteSettingService_List(t *testing.T) {
 
 		require.Error(t, err)
 		assert.Nil(t, result)
-		assert.Contains(t, err.Error(), "error on the server")
+		// Now decodes the server's Status message instead of a generic one.
+		assert.Contains(t, err.Error(), "database connection failed")
 	})
 
 	t.Run("should handle connection errors", func(t *testing.T) {
@@ -263,6 +269,95 @@ func TestRemoteSettingService_List(t *testing.T) {
 		require.Error(t, err)
 		assert.Nil(t, result)
 		assert.Contains(t, err.Error(), "connection refused")
+	})
+
+	t.Run("should retry when the connection is reset before the response", func(t *testing.T) {
+		server, attempts := newFlakyServer(t, 1, resetConnection)
+		defer server.Close()
+
+		client := newTestClient(t, server.URL, 500)
+		ctx := request.WithNamespace(context.Background(), "test-namespace")
+
+		result, err := client.List(ctx, metav1.LabelSelector{})
+
+		require.NoError(t, err)
+		require.Len(t, result, 1)
+		assert.Equal(t, int32(2), attempts.Load())
+	})
+
+	t.Run("should retry when the connection drops during the body read", func(t *testing.T) {
+		server, attempts := newFlakyServer(t, 1, truncateBody)
+		defer server.Close()
+
+		client := newTestClient(t, server.URL, 500)
+		ctx := request.WithNamespace(context.Background(), "test-namespace")
+
+		result, err := client.List(ctx, metav1.LabelSelector{})
+
+		require.NoError(t, err)
+		require.Len(t, result, 1)
+		assert.Equal(t, int32(2), attempts.Load())
+	})
+
+	t.Run("should retry when the connection is refused", func(t *testing.T) {
+		server := newTestServer(t, []Setting{{Section: "server", Key: "port", Value: "3000"}}, "")
+		defer server.Close()
+		closedServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+		closedAddr := closedServer.Listener.Addr().String()
+		closedServer.Close()
+
+		var attempts atomic.Int32
+		client, err := New(Config{
+			URL:      server.URL,
+			CacheTTL: -1,
+			WrapTransport: func(rt http.RoundTripper) http.RoundTripper {
+				return roundTripperFunc(func(req *http.Request) (*http.Response, error) {
+					if attempts.Add(1) == 1 {
+						req = req.Clone(req.Context())
+						req.URL.Host = closedAddr
+					}
+					return rt.RoundTrip(req)
+				})
+			},
+		})
+		require.NoError(t, err)
+		ctx := request.WithNamespace(context.Background(), "test-namespace")
+
+		result, err := client.List(ctx, metav1.LabelSelector{})
+
+		require.NoError(t, err)
+		require.Len(t, result, 1)
+		assert.Equal(t, int32(2), attempts.Load())
+	})
+
+	t.Run("should give up after repeated connection resets", func(t *testing.T) {
+		server, attempts := newFlakyServer(t, 100, resetConnection)
+		defer server.Close()
+
+		client := newTestClient(t, server.URL, 500)
+		ctx := request.WithNamespace(context.Background(), "test-namespace")
+
+		result, err := client.List(ctx, metav1.LabelSelector{})
+
+		require.Error(t, err)
+		assert.Nil(t, result)
+		assert.Equal(t, int32(retry.DefaultBackoff.Steps), attempts.Load())
+	})
+
+	t.Run("should not retry invalid response bodies", func(t *testing.T) {
+		server, attempts := newFlakyServer(t, 100, func(t *testing.T, w http.ResponseWriter) {
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"items":"x"}`))
+		})
+		defer server.Close()
+
+		client := newTestClient(t, server.URL, 500)
+		ctx := request.WithNamespace(context.Background(), "test-namespace")
+
+		_, err := client.List(ctx, metav1.LabelSelector{})
+
+		require.Error(t, err)
+		assert.Equal(t, int32(1), attempts.Load())
 	})
 
 	t.Run("should set user-agent header on requests", func(t *testing.T) {
@@ -419,10 +514,175 @@ func TestRemoteSettingService_List(t *testing.T) {
 	})
 }
 
+func TestListWithFieldSelector(t *testing.T) {
+	var requests atomic.Int32
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "source=us", r.URL.Query().Get("labelSelector"))
+		assert.Equal(t, "metadata.namespace=test-namespace", r.URL.Query().Get("fieldSelector"))
+		assert.Equal(t, "1", r.URL.Query().Get("limit"))
+		w.Header().Set("Content-Type", "application/json")
+		if requests.Add(1) == 1 {
+			assert.Empty(t, r.URL.Query().Get("continue"))
+			_, _ = w.Write([]byte(generateSettingsJSON([]Setting{{Section: "auditing", Key: "enabled", Value: "true"}}, "next")))
+		} else {
+			assert.Equal(t, "next", r.URL.Query().Get("continue"))
+			_, _ = w.Write([]byte(generateSettingsJSON([]Setting{{Section: "auditing", Key: "api_groups_allowlist", Value: "core"}}, "")))
+		}
+	}))
+	t.Cleanup(server.Close)
+	client := newTestClient(t, server.URL, 1)
+	ctx := request.WithNamespace(t.Context(), "test-namespace")
+	result, err := client.ListAsIniWithFieldSelector(ctx, metav1.LabelSelector{MatchLabels: map[string]string{"source": "us"}}, fields.OneTermEqualSelector("metadata.namespace", "test-namespace"))
+	require.NoError(t, err)
+	require.Equal(t, "true", result.Section("auditing").Key("enabled").String())
+	require.Equal(t, "core", result.Section("auditing").Key("api_groups_allowlist").String())
+	require.Equal(t, int32(2), requests.Load())
+}
+
+func TestFieldSelectorCache(t *testing.T) {
+	var requests atomic.Int32
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests.Add(1)
+		settings := []Setting{{Section: "auditing", Key: "enabled", Value: "true"}}
+		switch r.URL.Query().Get("fieldSelector") {
+		case "":
+			settings = append(settings, Setting{Section: "auditing.logs.loki", Key: "url", Value: "loki:3100"})
+		case "metadata.name=auditing--enabled":
+		case "metadata.name=missing":
+			settings = nil
+		default:
+			t.Errorf("unexpected field selector: %s", r.URL.Query().Get("fieldSelector"))
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(generateSettingsJSON(settings, "")))
+	}))
+	t.Cleanup(server.Close)
+	client := newTestClientWithCache(t, server.URL, 500, time.Hour)
+	ctx := request.WithNamespace(t.Context(), "test-namespace")
+	selector := metav1.LabelSelector{MatchLabels: map[string]string{"source": "us"}}
+	enabled := fields.OneTermEqualSelector("metadata.name", "auditing--enabled")
+	missing := fields.OneTermEqualSelector("metadata.name", "missing")
+
+	for range 2 {
+		result, err := client.ListWithFieldSelector(ctx, selector, enabled)
+		require.NoError(t, err)
+		require.Len(t, result, 1)
+		result, err = client.List(ctx, selector)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		result, err = client.ListWithFieldSelector(ctx, selector, missing)
+		require.NoError(t, err)
+		require.Empty(t, result)
+	}
+	require.Equal(t, int32(3), requests.Load())
+
+	result, err := client.ListAsIniWithFieldSelector(ctx, selector, enabled)
+	require.NoError(t, err)
+	require.True(t, result.Section("auditing").Key("enabled").MustBool())
+	for _, fieldSelector := range []fields.Selector{nil, fields.Everything()} {
+		result, err := client.ListWithFieldSelector(ctx, selector, fieldSelector)
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+	}
+	require.Equal(t, int32(3), requests.Load())
+
+	_, err = client.ListWithFieldSelector(ctx, metav1.LabelSelector{}, enabled)
+	require.NoError(t, err)
+	_, err = client.ListWithFieldSelector(request.WithNamespace(t.Context(), "another-namespace"), selector, enabled)
+	require.NoError(t, err)
+	require.Equal(t, int32(5), requests.Load())
+}
+
+func TestFieldSelectorErrorsAreNotCached(t *testing.T) {
+	for _, code := range []int{http.StatusForbidden, http.StatusInternalServerError} {
+		t.Run(http.StatusText(code), func(t *testing.T) {
+			var requests atomic.Int32
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if requests.Add(1) == 1 {
+					w.WriteHeader(code)
+					return
+				}
+				w.Header().Set("Content-Type", "application/json")
+				_, _ = w.Write([]byte(generateSettingsJSON([]Setting{{Section: "auditing", Key: "enabled", Value: "true"}}, "")))
+			}))
+			t.Cleanup(server.Close)
+			client := newTestClientWithCache(t, server.URL, 500, time.Hour)
+			ctx := request.WithNamespace(t.Context(), "test-namespace")
+			selector := fields.OneTermEqualSelector("metadata.name", "auditing--enabled")
+			_, err := client.ListWithFieldSelector(ctx, metav1.LabelSelector{}, selector)
+			require.Error(t, err)
+			result, err := client.ListWithFieldSelector(ctx, metav1.LabelSelector{}, selector)
+			require.NoError(t, err)
+			require.Len(t, result, 1)
+			require.Equal(t, int32(2), requests.Load())
+		})
+	}
+}
+
+func TestFieldSelectorConcurrentFetches(t *testing.T) {
+	entered := make(chan string, 2)
+	release := make(chan struct{})
+	unblock := sync.OnceFunc(func() { close(release) })
+	var requests atomic.Int32
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests.Add(1)
+		selector := r.URL.Query().Get("fieldSelector")
+		select {
+		case entered <- selector:
+		default:
+		}
+		<-release
+		section := "auditing"
+		if selector == "metadata.name=analytics--enabled" {
+			section = "analytics"
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(generateSettingsJSON([]Setting{{Section: section, Key: "enabled", Value: "true"}}, "")))
+	}))
+	t.Cleanup(server.Close)
+	t.Cleanup(unblock)
+	client := newTestClientWithCache(t, server.URL, 500, time.Hour)
+	ctx := request.WithNamespace(t.Context(), "test-namespace")
+	type result struct {
+		section  string
+		settings []*Setting
+		err      error
+	}
+	results := make(chan result, 20)
+	var wg sync.WaitGroup
+	for _, section := range []string{"auditing", "analytics"} {
+		for range 10 {
+			wg.Go(func() {
+				settings, err := client.ListWithFieldSelector(ctx, metav1.LabelSelector{}, fields.OneTermEqualSelector("metadata.name", section+"--enabled"))
+				results <- result{section: section, settings: settings, err: err}
+			})
+		}
+	}
+	seen := map[string]bool{}
+	for range 2 {
+		select {
+		case selector := <-entered:
+			seen[selector] = true
+		case <-time.After(5 * time.Second):
+			t.Fatal("different field selectors should fetch independently")
+		}
+	}
+	require.Len(t, seen, 2)
+	unblock()
+	wg.Wait()
+	close(results)
+	for result := range results {
+		require.NoError(t, result.err)
+		require.Len(t, result.settings, 1)
+		require.Equal(t, result.section, result.settings[0].Section)
+	}
+	require.Equal(t, int32(2), requests.Load())
+}
+
 func TestParseSettingList(t *testing.T) {
 	t.Run("should parse valid settings list", func(t *testing.T) {
 		jsonData := `{
-			"apiVersion": "setting.grafana.app/v1beta1",
+			"apiVersion": "setting.grafana.app/v1",
 			"kind": "SettingList",
 			"metadata": {"continue": ""},
 			"items": [
@@ -443,7 +703,7 @@ func TestParseSettingList(t *testing.T) {
 
 	t.Run("should parse continue token", func(t *testing.T) {
 		jsonData := `{
-			"apiVersion": "setting.grafana.app/v1beta1",
+			"apiVersion": "setting.grafana.app/v1",
 			"kind": "SettingList",
 			"metadata": {"continue": "next-page-token"},
 			"items": []
@@ -457,7 +717,7 @@ func TestParseSettingList(t *testing.T) {
 
 	t.Run("should handle empty items", func(t *testing.T) {
 		jsonData := `{
-			"apiVersion": "setting.grafana.app/v1beta1",
+			"apiVersion": "setting.grafana.app/v1",
 			"kind": "SettingList",
 			"metadata": {},
 			"items": []
@@ -471,7 +731,7 @@ func TestParseSettingList(t *testing.T) {
 
 	t.Run("should parse labels from metadata", func(t *testing.T) {
 		jsonData := `{
-			"apiVersion": "setting.grafana.app/v1beta1",
+			"apiVersion": "setting.grafana.app/v1",
 			"kind": "SettingList",
 			"metadata": {"continue": ""},
 			"items": [
@@ -510,7 +770,7 @@ func TestParseSettingList(t *testing.T) {
 
 	t.Run("should handle items without labels", func(t *testing.T) {
 		jsonData := `{
-			"apiVersion": "setting.grafana.app/v1beta1",
+			"apiVersion": "setting.grafana.app/v1",
 			"kind": "SettingList",
 			"metadata": {"continue": ""},
 			"items": [
@@ -877,7 +1137,49 @@ func newTestServer(t *testing.T, settings []Setting, continueToken string) *http
 	}))
 }
 
-func newTestClient(t *testing.T, serverURL string, pageSize int64) Service {
+// newFlakyServer calls fail for the first failures requests, then serves one setting.
+func newFlakyServer(t *testing.T, failures int32, fail func(*testing.T, http.ResponseWriter)) (*httptest.Server, *atomic.Int32) {
+	t.Helper()
+	var attempts atomic.Int32
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if attempts.Add(1) <= failures {
+			fail(t, w)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(generateSettingsJSON([]Setting{{Section: "server", Key: "port", Value: "3000"}}, "")))
+	}))
+	return server, &attempts
+}
+
+type roundTripperFunc func(*http.Request) (*http.Response, error)
+
+func (f roundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) { return f(req) }
+
+func hijack(t *testing.T, w http.ResponseWriter) *net.TCPConn {
+	t.Helper()
+	conn, _, err := http.NewResponseController(w).Hijack()
+	require.NoError(t, err)
+	tcpConn, ok := conn.(*net.TCPConn)
+	require.True(t, ok)
+	return tcpConn
+}
+
+// resetConnection sends a TCP RST instead of a response.
+func resetConnection(t *testing.T, w http.ResponseWriter) {
+	conn := hijack(t, w)
+	_ = conn.SetLinger(0)
+	_ = conn.Close()
+}
+
+// truncateBody sends headers and part of the body, then closes the connection.
+func truncateBody(t *testing.T, w http.ResponseWriter) {
+	conn := hijack(t, w)
+	_, _ = conn.Write([]byte("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: 1000\r\n\r\n{\"items\":["))
+	_ = conn.Close()
+}
+
+func newTestClient(t *testing.T, serverURL string, pageSize int64) FieldSelectorService {
 	t.Helper()
 	config := Config{
 		URL:           serverURL,
@@ -890,7 +1192,7 @@ func newTestClient(t *testing.T, serverURL string, pageSize int64) Service {
 	return client
 }
 
-func newTestClientWithCache(t *testing.T, serverURL string, pageSize int64, cacheTTL time.Duration) Service {
+func newTestClientWithCache(t *testing.T, serverURL string, pageSize int64, cacheTTL time.Duration) FieldSelectorService {
 	t.Helper()
 	config := Config{
 		URL:           serverURL,
@@ -905,7 +1207,7 @@ func newTestClientWithCache(t *testing.T, serverURL string, pageSize int64, cach
 
 func generateSettingsJSON(settings []Setting, continueToken string) string {
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf(`{"apiVersion":"setting.grafana.app/v1beta1","kind":"SettingList","metadata":{"continue":"%s"},"items":[`, continueToken))
+	sb.WriteString(fmt.Sprintf(`{"apiVersion":"setting.grafana.app/v1","kind":"SettingList","metadata":{"continue":"%s"},"items":[`, continueToken))
 
 	for i, s := range settings {
 		if i > 0 {
@@ -913,12 +1215,10 @@ func generateSettingsJSON(settings []Setting, continueToken string) string {
 		}
 		// Generate labels - always include section/key, merge with any custom labels
 		labels := map[string]string{"section": s.Section, "key": s.Key}
-		for k, v := range s.Labels {
-			labels[k] = v
-		}
+		maps.Copy(labels, s.Labels)
 		labelsJSON, _ := json.Marshal(labels)
 		sb.WriteString(fmt.Sprintf(
-			`{"apiVersion":"setting.grafana.app/v1beta1","kind":"Setting","metadata":{"name":"%s--%s","namespace":"test-namespace","labels":%s},"spec":{"section":"%s","key":"%s","value":"%s"}}`,
+			`{"apiVersion":"setting.grafana.app/v1","kind":"Setting","metadata":{"name":"%s--%s","namespace":"test-namespace","labels":%s},"spec":{"section":"%s","key":"%s","value":"%s"}}`,
 			s.Section, s.Key, labelsJSON, s.Section, s.Key, s.Value,
 		))
 	}
@@ -1003,18 +1303,18 @@ func BenchmarkParseSettingList_SinglePage(b *testing.B) {
 // generateSettingListJSON generates a K8s-style SettingList JSON response for benchmarks
 func generateSettingListJSON(totalSettings, numSections int) string {
 	var sb strings.Builder
-	sb.WriteString(`{"apiVersion":"setting.grafana.app/v1beta1","kind":"SettingList","metadata":{"continue":""},"items":[`)
+	sb.WriteString(`{"apiVersion":"setting.grafana.app/v1","kind":"SettingList","metadata":{"continue":""},"items":[`)
 
 	settingsPerSection := totalSettings / numSections
 	first := true
-	for section := 0; section < numSections; section++ {
-		for key := 0; key < settingsPerSection; key++ {
+	for section := range numSections {
+		for key := range settingsPerSection {
 			if !first {
 				sb.WriteString(",")
 			}
 			first = false
 			sb.WriteString(fmt.Sprintf(
-				`{"apiVersion":"setting.grafana.app/v1beta1","kind":"Setting","metadata":{"name":"section-%03d--key-%03d","namespace":"bench-ns","labels":{"section":"section-%03d","key":"key-%03d"}},"spec":{"section":"section-%03d","key":"key-%03d","value":"value-for-section-%d-key-%d"}}`,
+				`{"apiVersion":"setting.grafana.app/v1","kind":"Setting","metadata":{"name":"section-%03d--key-%03d","namespace":"bench-ns","labels":{"section":"section-%03d","key":"key-%03d"}},"spec":{"section":"section-%03d","key":"key-%03d","value":"value-for-section-%d-key-%d"}}`,
 				section, key, section, key, section, key, section, key,
 			))
 		}

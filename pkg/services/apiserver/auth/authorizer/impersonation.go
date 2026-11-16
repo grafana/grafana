@@ -21,3 +21,13 @@ func (auth impersonationAuthorizer) Authorize(ctx context.Context, a authorizer.
 	}
 	return authorizer.DecisionNoOpinion, "", nil
 }
+
+// ConditionsAwareAuthorize implements authorizer.Authorizer.
+func (auth impersonationAuthorizer) ConditionsAwareAuthorize(ctx context.Context, a authorizer.Attributes) authorizer.ConditionsAwareDecision {
+	return authorizer.ConditionsAwareDecisionFromParts(auth.Authorize(ctx, a))
+}
+
+// EvaluateConditions implements authorizer.Authorizer.
+func (auth impersonationAuthorizer) EvaluateConditions(_ context.Context, _ authorizer.ConditionsAwareDecision, _ authorizer.ConditionsData) (authorizer.Decision, string, error) {
+	return authorizer.DecisionDeny, "", authorizer.ErrorConditionEvaluationNotSupported
+}

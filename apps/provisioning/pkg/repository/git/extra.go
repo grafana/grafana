@@ -14,12 +14,18 @@ type extra struct {
 	decrypter repository.Decrypter
 	// allowInsecure permits http:// URLs together with a token (cleartext credentials); local/dev only.
 	allowInsecure bool
+	metrics       *repository.OperationMetrics
+	clientMetrics *ClientMetrics
+	userAgent     string
 }
 
-func Extra(decrypter repository.Decrypter, allowInsecure bool) repository.Extra {
+func Extra(decrypter repository.Decrypter, allowInsecure bool, metrics *repository.OperationMetrics, clientMetrics *ClientMetrics, userAgent string) repository.Extra {
 	return &extra{
 		decrypter:     decrypter,
 		allowInsecure: allowInsecure,
+		metrics:       metrics,
+		clientMetrics: clientMetrics,
+		userAgent:     userAgent,
 	}
 }
 
@@ -54,10 +60,11 @@ func (e *extra) Build(ctx context.Context, r *provisioning.Repository) (reposito
 		SigningMethod:    SigningMethodFromSpec(r),
 		SMIMECertificate: SMIMECertificateFromSpec(r),
 		SkipGitSuffix:    true,
-	})
+		UserAgent:        e.userAgent,
+	}, e.metrics, e.clientMetrics)
 }
 
-func (e *extra) Mutate(ctx context.Context, obj runtime.Object) error {
+func (e *extra) Mutate(ctx context.Context, obj runtime.Object, oldObj runtime.Object) error {
 	return Mutate(ctx, obj)
 }
 

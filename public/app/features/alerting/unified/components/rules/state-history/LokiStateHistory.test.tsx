@@ -94,6 +94,33 @@ const ui = {
 };
 
 describe('LokiStateHistory', () => {
+  it('advances both time bounds when polling history', async () => {
+    const now = jest.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-01-29T12:00:00Z'));
+    const requests: Array<{ ruleUID: string | null; from: string | null; to: string | null }> = [];
+    server.use(
+      http.get('/api/v1/rules/history', ({ request }) => {
+        const params = new URL(request.url).searchParams;
+        requests.push({ ruleUID: params.get('ruleUID'), from: params.get('from'), to: params.get('to') });
+        // Advance the clock without slowing down the real polling interval.
+        now.mockReturnValue(Date.parse('2026-01-29T12:00:10Z'));
+        return HttpResponse.json<DataFrameJSON>({ data: { values: [] }, schema: { fields: [] } });
+      })
+    );
+
+    try {
+      render(<LokiStateHistory ruleUID="ABC123" pollingInterval={50} />);
+
+      await waitFor(() =>
+        expect(requests.slice(0, 2)).toEqual([
+          { ruleUID: 'ABC123', from: '1767096000', to: '1769688000' },
+          { ruleUID: 'ABC123', from: '1767096010', to: '1769688010' },
+        ])
+      );
+    } finally {
+      now.mockRestore();
+    }
+  });
+
   it('should render history records', async () => {
     render(<LokiStateHistory ruleUID="ABC123" />);
 

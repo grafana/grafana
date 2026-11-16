@@ -54,6 +54,22 @@ func testLastImportStore(t *testing.T, kv kv.KV, allowDuplicateNamespaceGroupRes
 	require.NoError(t, store.Save(t.Context(), ResourceLastImportTime{NamespacedResource: onsr, LastImportTime: now.Add(1 * time.Minute)}))
 	require.NoError(t, store.Save(t.Context(), ResourceLastImportTime{NamespacedResource: o1nsr, LastImportTime: now.Add(1 * time.Minute)}))
 
+	lastImportTime, err := store.GetLastImportTime(t.Context(), dnsr, maxLastImportTimeAge)
+	require.NoError(t, err)
+	require.Equal(t, now.Add(2*time.Minute), lastImportTime)
+
+	lastImportTime, err = store.GetLastImportTime(t.Context(), pnsr, maxLastImportTimeAge)
+	require.NoError(t, err)
+	require.True(t, lastImportTime.IsZero())
+
+	lastImportTime, err = store.GetLastImportTime(t.Context(), NamespacedResource{
+		Namespace: "namespace",
+		Group:     "unknown",
+		Resource:  "unknown",
+	}, maxLastImportTimeAge)
+	require.NoError(t, err)
+	require.True(t, lastImportTime.IsZero())
+
 	// Keys are returned in byte-wise order of the full composite key, so
 	// "org1~..." precedes "org~...".
 	// SQLKV only stores a single import time per namespace/group/resource.
@@ -93,6 +109,27 @@ func testLastImportStore(t *testing.T, kv kv.KV, allowDuplicateNamespaceGroupRes
 	times, _, err := store.ListLastImportTimes(t.Context(), maxLastImportTimeAge)
 	require.NoError(t, err)
 	require.Equal(t, expectedTimes, times)
+
+	for _, maxAge := range []time.Duration{0, maxLastImportTimeAge} {
+		t.Run(fmt.Sprintf("backend list max age %s", maxAge), func(t *testing.T) {
+			backend := &kvStorageBackend{lastImportStore: store, lastImportTimeMaxAge: maxAge}
+			expected := make(map[NamespacedResource]time.Time, len(expectedTimes)+1)
+			for key, entry := range expectedTimes {
+				expected[key] = entry.LastImportTime
+			}
+			if maxAge == 0 {
+				expected[pnsr] = now.Add(-20 * time.Minute)
+			}
+			times, err := backend.ListResourceLastImportTimes(t.Context())
+			require.NoError(t, err)
+			require.Equal(t, expected, times)
+			for _, key := range []NamespacedResource{dnsr, fnsr, pnsr, onsr, o1nsr} {
+				single, err := backend.GetResourceLastImportTime(t.Context(), key)
+				require.NoError(t, err)
+				require.Equal(t, single, times[key])
+			}
+		})
+	}
 
 	deleted, err := store.CleanupLastImportTimes(t.Context(), maxLastImportTimeAge)
 	require.NoError(t, err)

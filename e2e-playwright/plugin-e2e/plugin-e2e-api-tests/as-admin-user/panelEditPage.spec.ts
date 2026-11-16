@@ -8,7 +8,7 @@ const PANEL_TITLE = 'Table panel E2E test';
 const TABLE_VIZ_NAME = 'Table';
 const TIME_SERIES_VIZ_NAME = 'Time series';
 const STANDARD_OTIONS_CATEGORY = 'Standard options';
-const DISPLAY_NAME_LABEL = 'Display name';
+const UNIT_FIELD_LABEL = 'Standard options Unit';
 const REACT_TABLE_DASHBOARD = { uid: 'U_bZIMRMk' };
 
 test.describe(
@@ -70,11 +70,7 @@ test.describe(
     });
 
     test.describe('edit panel plugin settings', () => {
-      test('change viz to table panel, set panel title and collapse section', async ({
-        panelEditPage,
-        selectors,
-        page,
-      }) => {
+      test('change viz to table panel, set panel title and collapse section', async ({ panelEditPage, selectors }) => {
         await panelEditPage.setVisualization(TABLE_VIZ_NAME);
         await expect(
           panelEditPage.getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.header),
@@ -87,7 +83,7 @@ test.describe(
         ).toBeVisible();
         await panelEditPage.collapseSection(STANDARD_OTIONS_CATEGORY);
         await expect(
-          page.getByText(DISPLAY_NAME_LABEL),
+          panelEditPage.getByGrafanaSelector(selectors.components.PanelEditor.OptionsPane.fieldLabel(UNIT_FIELD_LABEL)),
           formatExpectError('Expected section to be collapsed')
         ).toBeVisible();
       });
@@ -166,11 +162,17 @@ test.describe(
         const showBorder = axisOptions.getSwitch('Show border');
 
         await expect(showBorder).toBeChecked({ checked: false });
-        await showBorder.check();
-        await expect(showBorder).toBeChecked();
+        // Switch.check()/uncheck() force-click stale coordinates if the options pane is still
+        // laying out, so retry until the click lands. Both are no-ops once in the target state.
+        await expect(async () => {
+          await showBorder.check();
+          await expect(showBorder).toBeChecked({ timeout: 1000 });
+        }).toPass();
 
-        await showBorder.uncheck();
-        await expect(showBorder).toBeChecked({ checked: false });
+        await expect(async () => {
+          await showBorder.uncheck();
+          await expect(showBorder).toBeChecked({ checked: false, timeout: 1000 });
+        }).toPass();
       });
 
       test('checking switch', async ({ panelEditPage }) => {
@@ -179,8 +181,10 @@ test.describe(
         const showBorder = axisOptions.getSwitch('Show border');
 
         await expect(showBorder).toBeChecked({ checked: false });
-        await showBorder.check();
-        await expect(showBorder).toBeChecked();
+        await expect(async () => {
+          await showBorder.check();
+          await expect(showBorder).toBeChecked({ timeout: 1000 });
+        }).toPass();
       });
 
       test('re-selecting value in radio button group', async ({ panelEditPage }) => {

@@ -48,15 +48,15 @@ The dashboard settings page allows you to:
 
 To access the dashboard setting page:
 
-1. Click **Edit**.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. In the toolbar, click the **Dashboard options** icon.
-1. In the sidebar, click **Settings**.
+1. In the sidebar, click **View all settings**.
 
 ## Modify dashboard time settings
 
 Adjust dashboard time settings when you want to change the dashboard timezone, the local browser time, and specify auto-refresh time intervals.
 
-1. On the the **General** tab of the **Settings** page, scroll down to the **Time options** section.
+1. On the **General** tab of the **Settings** page, scroll down to the **Time options** section.
 1. Specify time settings as follows.
    - **Time zone:** Specify the local time zone of the service or system that you are monitoring. This can be helpful when monitoring a system or service that operates across several time zones.
      - **Default:** Grafana uses the default selected time zone for the user profile, team, or organization. If no time zone is specified for the user profile, a team the user is a member of, or the organization, then Grafana uses the local browser time.
@@ -64,18 +64,20 @@ Adjust dashboard time settings when you want to change the dashboard timezone, t
      - Standard [ISO 8601 time zones](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones), including UTC.
    - **Auto refresh:** Customize the options displayed for relative time and the auto-refresh options Entries are comma separated and accept any valid time unit.
    - **Now delay:** Override the `now` time by entering a time delay. Use this option to accommodate known delays in data aggregation to avoid null values.
+   - **Week start:** Choose the day the week starts on.
    - **Hide time picker:** Select this option if you do not want Grafana to display the time picker.
+   - **Refresh live dashboards:** Select this option to continuously update panels when the time range includes the current time.
 
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Exit edit**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 ## Modify graph tooltip behavior
 
 Use this option to control tooltip and hover highlight behavior across graph panels (for example, time series).
 
-1. On the the **General** tab of the **Settings** page, scroll down to the **Panel options** section.
+1. On the **General** tab of the **Settings** page, scroll down to the **Panel options** section.
 1. Choose from the following options to control the tooltip and hover highlight behavior across graph panels:
    - **Default** - Tooltip and hover highlight behavior isn't shared across panels.
    - **Shared crosshair** - When you hover the cursor over one graph panel in the dashboard, the crosshair is also displayed on all other graph panels in the dashboard.
@@ -84,7 +86,7 @@ Use this option to control tooltip and hover highlight behavior across graph pan
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Exit edit**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 ## Add tags
 
@@ -94,7 +96,7 @@ Tags can be up to 50 characters long, including spaces.
 
 To add tags to a dashboard, follow these steps:
 
-1. On the the **General** tab of the **Settings** page, scroll down to the **Tags** section.
+1. On the **General** tab of the **Settings** page, scroll down to the **Tags** section.
 1. In the field, enter a new or existing tag.
 
    If you're entering an existing tag, make sure that you spell it the same way or a new tag is created.
@@ -103,7 +105,7 @@ To add tags to a dashboard, follow these steps:
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Exit edit**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 When you're on the **Dashboards** page, any tags you've entered show up under the **Tags** column.
 
@@ -124,7 +126,7 @@ For more information, refer to [Add variables](https://grafana.com/docs/grafana/
 Dashboard links enable you to place links to other dashboards and web sites directly below the dashboard header. Links provide for quick navigation to other, related dashboards and content.
 
 1. On the **Settings** page, click the **Links** tab.
-1. Click **+ New link**.
+1. Click **New link**.
 1. Enter title for the link.
 1. In the **Type** drop-down, select **Dashboards** or **Link**.
 1. Set the rest of the link options.
@@ -134,7 +136,7 @@ Dashboard links enable you to place links to other dashboards and web sites dire
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Exit edit**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 ## View dashboard JSON model
 

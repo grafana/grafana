@@ -59,7 +59,10 @@ type DataSourceStats struct {
 	Type  string
 }
 
-type GetSystemStatsQuery struct{}
+type GetSystemStatsQuery struct {
+	// Total metrics do not use this count, which requires an extra search per org.
+	SkipProvisionedDashboardCount bool
+}
 
 type GetDataSourceStatsQuery struct{}
 

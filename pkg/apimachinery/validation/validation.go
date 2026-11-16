@@ -2,8 +2,12 @@ package validation
 
 import (
 	"regexp"
+	"slices"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/util/validation"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 // maxGroupLength is set conservatively below the DB column size of 190 (chosen to
@@ -55,6 +59,24 @@ func IsValidGrafanaName(name string) []string {
 	// In standard k8s, it must not start with a number
 	// however that would force us to update many many many existing resources
 	// so we will be slightly more lenient than standard k8s
+	return nil
+}
+
+// reservedNames would collide with the subresource paths mounted next to an
+// object, for example .../folders/trash.
+var reservedNames = []string{"search", "trash", "history", "query", utils.ListKeysPathSegment}
+
+// IsReservedName checks if the name is one a new resource may not be saved under.
+//
+// Kept out of IsValidGrafanaName because that also validates the keys of stored
+// data as it is read. Some resources were saved under these names before they
+// were reserved, and they have to stay readable so they can be moved or deleted.
+func IsReservedName(name string) []string {
+	if slices.ContainsFunc(reservedNames, func(reserved string) bool {
+		return strings.EqualFold(name, reserved)
+	}) {
+		return []string{"name is reserved"}
+	}
 	return nil
 }
 

@@ -5,9 +5,10 @@ import { type DataTransformerConfig, type GrafanaTheme2, type PanelData } from '
 import { t } from '@grafana/i18n';
 import { DataTopic } from '@grafana/schema';
 import { Combobox, Field, Stack, useStyles2 } from '@grafana/ui';
-import { FrameMultiSelectionEditor } from 'app/plugins/panel/geomap/editor/FrameSelectionEditor';
+import { FrameMultiSelectionEditor } from 'app/features/dashboard/components/TransformationsEditor/FrameSelectionEditor';
 
 import { usePreviousTransformationOutput } from './hooks/usePreviousTransformationOutput';
+import { framesForTopic } from './hooks/useTransformedFrames';
 import { type Transformation } from './types';
 
 interface TransformationFilterEditorProps {
@@ -35,7 +36,7 @@ export function TransformationFilterEditor({
   const prevOutput = usePreviousTransformationOutput({
     selectedTransformation: transformation,
     transformations,
-    queryData: queryData?.series ?? [],
+    queryData: framesForTopic(queryData, transformation),
     queryTargets: queryData?.request?.targets,
   });
 

@@ -1,8 +1,16 @@
 import { of } from 'rxjs';
+import { makeDataSourceSettings } from 'test/helpers/makeDataSourceSettings';
+import {
+  type DataSourceFallbackWatcher,
+  seedDataSources,
+  watchDataSourceFallbacks,
+} from 'test/helpers/seedDataSources';
+import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 
 import { type DataQueryRequest, type DataSourceApi, LoadingState } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
 import {
   AdHocFiltersVariable,
   GroupByVariable,
@@ -12,6 +20,7 @@ import {
   VizPanel,
   type VizPanelState,
 } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { activateFullSceneTree } from '../utils/test-utils';
 
@@ -32,12 +41,6 @@ jest.mock('@grafana/runtime', () => ({
   getRunRequest: () => (ds: DataSourceApi, request: DataQueryRequest) => {
     return runRequestMock(ds, request);
   },
-  getDataSourceSrv: () => ({
-    get: jest.fn().mockResolvedValue({
-      getRef: () => ({ uid: 'ds-1', type: 'test' }),
-    }),
-    getInstanceSettings: jest.fn().mockResolvedValue({ uid: 'ds-1', type: 'test' }),
-  }),
   getPluginImportUtils: () => ({
     getPanelPluginFromCache: jest.fn(() => undefined),
   }),
@@ -48,7 +51,30 @@ setPluginImportUtils({
   getPanelPluginFromCache: () => undefined,
 });
 
+let dataSourceFallbacks: DataSourceFallbackWatcher;
+
+beforeEach(() => {
+  dataSourceFallbacks = watchDataSourceFallbacks();
+});
+
+afterEach(() => {
+  dataSourceFallbacks.expectNoFallbacks(['instance', 'settings', 'list']);
+});
+
 describe('VizPanelSubHeader', () => {
+  // The query runner and variables resolve every uid the tests swap in, so all of them must exist.
+  beforeEach(() => {
+    const dataSources = ['ds-1', 'ds-2', 'other-ds'].map((uid) => {
+      const settings = makeDataSourceSettings(uid, uid, 'test', { isDefault: uid === 'ds-1' });
+      return { settings, api: new MockDataSourceApi(settings) };
+    });
+    seedDataSources(dataSources, { legacySrv: 'mock' });
+  });
+
+  afterEach(() => {
+    setTestFlags();
+  });
+
   it('renders when the drilldown variables apply to the panel', async () => {
     const { subHeader } = await buildScene();
 
@@ -127,6 +153,8 @@ interface BuildSceneOptions {
 }
 
 async function buildScene(options?: BuildSceneOptions) {
+  setTestFlags({ [FlagKeys.PerPanelNonApplicableDrilldowns]: true });
+
   const subHeader = new VizPanelSubHeader({});
 
   const queryRunner = new SceneQueryRunner({

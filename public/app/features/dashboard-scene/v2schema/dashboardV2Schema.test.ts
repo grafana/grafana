@@ -63,7 +63,6 @@ describe('dashboardV2SpecSchema', () => {
           spec: {
             id: 1,
             title: 'P',
-            description: '',
             links: [],
             data: {
               kind: 'QueryGroup',
@@ -116,6 +115,43 @@ describe('dashboardV2SpecSchema', () => {
     expect(panel.spec.vizConfig.spec.fieldConfig.defaults).toEqual({ custom: { x: 1 } });
   });
 
+  it('keeps both ends of a panel queryOptions time override (timeFrom and timeTo)', () => {
+    const spec = minimalSpec({
+      elements: {
+        'panel-1': {
+          kind: 'Panel',
+          spec: {
+            id: 1,
+            title: 'P',
+            links: [],
+            data: {
+              kind: 'QueryGroup',
+              spec: { queries: [], transformations: [], queryOptions: { timeFrom: 'now-6h', timeTo: 'now' } },
+            },
+            vizConfig: {
+              kind: 'VizConfig',
+              group: 'timeseries',
+              version: '',
+              spec: { options: {}, fieldConfig: { defaults: {}, overrides: [] } },
+            },
+          },
+        },
+      },
+    });
+
+    const result = dashboardV2SpecSchema.safeParse(spec);
+    expect(result.success).toBe(true);
+    if (!result.success) {
+      return;
+    }
+    const panel = result.data.elements['panel-1'];
+    expect(panel.kind).toBe('Panel');
+    if (panel.kind !== 'Panel') {
+      return;
+    }
+    expect(panel.spec.data.spec.queryOptions).toMatchObject({ timeFrom: 'now-6h', timeTo: 'now' });
+  });
+
   it('validates a deeply nested recursive layout (rows -> tabs -> grid)', () => {
     const spec = minimalSpec({
       layout: {
@@ -145,13 +181,11 @@ describe('dashboardV2SpecSchema', () => {
   it('tolerates Go-marshaled null arrays (nil slices) and normalizes them to []', () => {
     const result = dashboardV2SpecSchema.safeParse(
       minimalSpec({
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- exercising the null-array serialization shape
-        tags: null as any,
+        tags: null,
         variables: [
           {
             kind: 'CustomVariable',
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- exercising the null-array serialization shape
-            spec: { name: 'v', query: 'a,b', options: null as any },
+            spec: { name: 'v', query: 'a,b', options: null },
           },
         ],
       })
@@ -177,7 +211,6 @@ describe('dashboardV2SpecSchema', () => {
           spec: {
             id: 1,
             title: 'P',
-            description: '',
             links: [],
             data: { kind: 'QueryGroup', spec: { queries: [], transformations: [], queryOptions: {} } },
             vizConfig: {
@@ -250,7 +283,6 @@ describe('dashboardV2SpecSchema', () => {
             spec: {
               id: 1,
               title: 'P',
-              description: '',
               links: [],
               // vizConfig intentionally omits `version`.
               vizConfig: {

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"maps"
 	"mime"
 	"net/http"
 	"net/url"
@@ -67,8 +68,16 @@ func (rs *RenderingService) generateImageRendererURL(renderType RenderType, opts
 		return nil, err
 	}
 
+	callbackPath, err := url.Parse(opts.Path)
+	if err != nil {
+		return nil, err
+	}
+	callbackQuery := callbackPath.Query()
+	callbackQuery.Set("orgId", strconv.FormatInt(opts.OrgID, 10))
+	callbackPath.RawQuery = callbackQuery.Encode()
+
 	queryParams := imageRendererURL.Query()
-	url := rs.getGrafanaCallbackURL(opts.Path)
+	url := rs.getGrafanaCallbackURL(callbackPath.String())
 	queryParams.Add("url", url)
 	queryParams.Add("renderKey", renderKey)
 	queryParams.Add("domain", rs.domain)
@@ -148,9 +157,7 @@ func (rs *RenderingService) doRequest(ctx context.Context, u *url.URL, headers m
 	req.Header.Set(authTokenHeader, rs.Cfg.RendererAuthToken)
 	req.Header.Set(rateLimiterHeader, rs.domain)
 	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", rs.Cfg.BuildVersion))
-	for k, v := range headers {
-		req.Header[k] = v
-	}
+	maps.Copy(req.Header, headers)
 
 	logger.Debug("calling remote rendering service", "url", u)
 
@@ -158,8 +165,7 @@ func (rs *RenderingService) doRequest(ctx context.Context, u *url.URL, headers m
 	resp, err := rs.netClient.Do(req)
 	if err != nil {
 		logger.Error("Failed to send request to remote rendering service", "error", err)
-		var urlErr *url.Error
-		if errors.As(err, &urlErr) {
+		if urlErr, ok := errors.AsType[*url.Error](err); ok {
 			if urlErr.Timeout() {
 				return nil, ErrServerTimeout
 			}
@@ -221,7 +227,7 @@ func (rs *RenderingService) writeResponseToFile(ctx context.Context, resp *http.
 func (rs *RenderingService) getRemotePluginVersionWithRetry(callback func(string, error)) {
 	go func() {
 		var err error
-		for try := uint(0); try < remoteVersionFetchRetries; try++ {
+		for try := range remoteVersionFetchRetries {
 			version, err := rs.getRemotePluginVersion()
 			if err == nil {
 				callback(version, err)

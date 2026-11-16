@@ -16,6 +16,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { createTheme } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 
 import traceGenerator from '../demo/trace-generators';
 import transformTraceData from '../model/transform-trace-data';
@@ -86,5 +87,27 @@ describe('<TraceTimelineViewer>', () => {
 
     await userEvent.click(collapseAll);
     expect(props.collapseAll).toHaveBeenCalled();
+  });
+
+  it('reports the summary span count with expand/collapse interactions', async () => {
+    (reportInteraction as jest.Mock).mockClear();
+    // The default generator draws a random span count and can return a single span,
+    // which makes a hardcoded summary count of 2 fail. Pin the size so two of the
+    // three spans are summaries and the third stays a normal span.
+    const sizedTrace = transformTraceData(traceGenerator.trace({ numberOfSpans: 3 }))!;
+    const summaryTrace = {
+      ...sizedTrace,
+      spans: sizedTrace.spans.map((span, index) =>
+        index < 2 ? { ...span, aggregation: { isSummary: true, isPreservedOutlier: false, spanCount: 2 } } : span
+      ),
+    };
+    render(<TraceTimelineViewer {...({ ...props, trace: summaryTrace } as unknown as TProps)} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Expand all' }));
+
+    expect(reportInteraction).toHaveBeenCalledWith(
+      'grafana_traces_traceID_expand_collapse_clicked',
+      expect.objectContaining({ type: 'expandAll', numSummarySpans: 2 })
+    );
   });
 });

@@ -55,7 +55,7 @@ composableKinds: PanelCfg: {
 					showZoom?: bool
 					// let the mouse wheel zoom
 					mouseWheelZoom?: bool
-					// Lower right
+					// Show attribution of layer sources that do not require it (lower right)
 					showAttribution?: bool
 					// Scale options
 					showScale?: bool

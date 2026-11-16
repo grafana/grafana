@@ -18,10 +18,10 @@
       "scripts/circle-release-next-packages.sh",
       "scripts/ci-frontend-metrics.sh",
       "scripts/grunt/**/*",
-      "scripts/webpack/**/*",
+      "scripts/rspack/**/*",
       "package.json",
       "tsconfig.json",
-      "lerna.json",
+      "nx.json",
       ".prettierrc.js",
       ".eslintrc",
       "**/*.mdx"
@@ -40,6 +40,27 @@
     ],
     "action": "updateLabel",
     "addLabel": "area/backend"
+  },
+  {
+    "type": "changedfiles",
+    "matches": [
+      "pkg/services/ssosettings/**/*",
+      "pkg/services/auth/**/*",
+      "pkg/services/authn/**/*",
+      "pkg/services/ldap/**/*",
+      "pkg/services/login/**/*",
+      "pkg/services/loginattempt/**/*",
+      "pkg/services/oauthtoken/**/*",
+      "pkg/services/serviceaccounts/**/*",
+      "pkg/services/signingkeys/**/*",
+      "pkg/services/scimutil/**/*",
+      "pkg/login/**/*",
+      "public/app/features/auth-config/**/*",
+      "conf/ldap.toml",
+      "conf/ldap_multiple.toml"
+    ],
+    "action": "updateLabel",
+    "addLabel": "area/auth"
   },
   {
     "type": "changedfiles",
@@ -74,65 +95,11 @@
   {
     "type": "changedfiles",
     "matches": [
-      "public/app/plugins/datasource/azuremonitor/**/*",
-      "pkg/tsdb/azuremonitor/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "datasource/Azure"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
-      "public/app/plugins/datasource/cloudwatch/**/*",
-      "pkg/tsdb/cloudwatch/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "datasource/CloudWatch"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
       "public/app/plugins/datasource/graphite/**/*",
       "pkg/tsdb/graphite/**/*"
     ],
     "action": "updateLabel",
     "addLabel": "datasource/Graphite"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
-      "public/app/plugins/datasource/influxdb/**/*",
-      "pkg/tsdb/influx/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "datasource/InfluxDB"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
-      "public/app/plugins/datasource/loki/**/*",
-      "pkg/tsdb/loki/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "datasource/Loki"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
-      "public/app/plugins/datasource/mysql/**/*",
-      "pkg/tsdb/mysql/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "datasource/MySQL"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
-      "public/app/plugins/datasource/prometheus/**/*",
-      "pkg/tsdb/prometheus/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "datasource/Prometheus"
   },
   {
     "type": "changedfiles",
@@ -189,16 +156,6 @@
     ],
     "action": "updateLabel",
     "addLabel": "area/panel/geomap"
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
-      "public/app/plugins/panel/graph/**/*",
-      "/packages/grafana-ui/src/components/Graph/**/*",
-      "/packages/grafana-ui/src/components/GraphNG/**/*"
-    ],
-    "action": "updateLabel",
-    "addLabel": "area/panel/graph"
   },
   {
     "type": "changedfiles",
@@ -320,17 +277,6 @@
   {
     "type": "changedfiles",
     "matches": [
-      "public/app/plugins/datasource/azuremonitor/**/*",
-      "pkg/tsdb/azuremonitor/**/*"
-    ],
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/190"
-    }
-  },
-  {
-    "type": "changedfiles",
-    "matches": [
       "public/app/plugins/datasource/graphite/**/*",
       "pkg/tsdb/graphite/**/*"
     ],
@@ -340,14 +286,11 @@
     }
   },
   {
-    "type": "changedfiles",
-    "matches": [
-      "public/app/plugins/datasource/influxdb/**/*",
-      "pkg/tsdb/influx/**/*"
-    ],
+    "type": "label",
+    "name": "area/auth",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/190"
+      "url": "https://github.com/orgs/grafana/projects/660"
     }
   },
   {

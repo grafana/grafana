@@ -7,7 +7,7 @@ import { areEqual, FixedSizeGrid as Grid } from 'react-window';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { useStyles2 } from '@grafana/ui';
-import { SanitizedSVG } from 'app/core/components/SVG/SanitizedSVG';
+import { SanitizedSVG } from '@grafana/ui/unstable';
 
 import { type ResourceItem } from './FolderPickerTab';
 
@@ -110,7 +110,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     paddingTop: '6px',
     ':hover': {
       borderColor: theme.colors.action.hover,
-      boxShadow: theme.shadows.z2,
+      boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z1 : theme.shadows.z2,
     },
   }),
   selected: css({

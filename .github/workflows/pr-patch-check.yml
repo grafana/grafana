@@ -44,9 +44,10 @@ jobs:
     steps:
       - name: Get GitHub App token
         id: get-github-app-token
-        uses: grafana/shared-workflows/actions/create-github-app-token@259ba21cb3ff07724f331e26d926d655d24b317b # create-github-app-token/v0.2.3
+        uses: grafana/shared-workflows/actions/create-github-app-token@46f48da11e78ebdba7a8747ae456b11062fac83e # create-github-app-token/v0.3.1
         with:
           github_app: grafana-releases-oss
+
       - name: "Dispatch job"
         uses: actions/github-script@v8
         with:
@@ -69,6 +70,7 @@ jobs:
                   triggering_github_handle: SENDER
                 }
             })
+
       - name: "Wait for success"
         # Only run metadata reads (status/conclusion) — never fetch logs or artifacts,
         # since the security-patch-actions workflow output must not be exposed.
@@ -109,6 +111,7 @@ jobs:
                 );
                 if (matchingRun) {
                   runId = matchingRun.id;
+                  console.log(`Dispatched workflow run: ${matchingRun.html_url}`);
                 } else {
                   await sleep(pollIntervalMs);
                   continue;

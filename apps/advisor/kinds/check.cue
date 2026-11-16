@@ -4,6 +4,11 @@ checkv0alpha1: {
 	kind:   "Check"
 	plural: "checks"
 	scope:  "Namespaced"
+
+	// Off until the advisor squad asks for it: nothing searches checks today.
+	search: {
+		endpoint: false
+	}
 	validation: {
 		operations: [
 			"CREATE",
@@ -20,6 +25,9 @@ checkv0alpha1: {
 			url: string
 			// Human readable error message
 			message: string
+			// i18n key for the message (e.g. "advisor.link.fix-me"), so the
+			// frontend can translate without deriving the key from the text
+			messageKey?: string
 		}
 		#ReportFailure: {
 			// Severity of the failure

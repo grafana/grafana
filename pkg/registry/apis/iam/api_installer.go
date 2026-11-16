@@ -2,16 +2,23 @@ package iam
 
 import (
 	"context"
+	"fmt"
+	"net/http"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/apiserver/pkg/server"
+	k8scommon "k8s.io/kube-openapi/pkg/common"
+	"k8s.io/kube-openapi/pkg/spec3"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/noopstorage"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
 // ApiInstaller is a generic interface for installing API resources.
@@ -58,7 +65,21 @@ type RoleBindingApiInstaller ApiInstaller[*iamv0.RoleBinding]
 type GlobalRoleApiInstaller ApiInstaller[*iamv0.GlobalRole]
 
 // TeamLBACApiInstaller provides TeamLBACRule-specific API registration and validation.
-type TeamLBACApiInstaller ApiInstaller[*iamv0.TeamLBACRule]
+type TeamLBACApiInstaller interface {
+	ApiInstaller[*iamv0.TeamLBACRule]
+
+	// GetRulesForSubjectGetter returns the mode-aware storage used internally by
+	// the for-subject subresource. It intentionally excludes the datasource CRUD
+	// authorization wrapper because the subresource has its own service-only
+	// authorization contract.
+	GetRulesForSubjectGetter() rest.Getter
+
+	// GetTeamLBACUsageRoutes returns the TeamLBAC usage route, denying access when unavailable.
+	GetTeamLBACUsageRoutes(defs map[string]k8scommon.OpenAPIDefinition) *builder.APIRoutes
+
+	// GetTeamLBACUsageAuthorizer returns the usage route authorizer, denying access when unavailable.
+	GetTeamLBACUsageAuthorizer() authorizer.Authorizer
+}
 
 // ExternalGroupMappingApiInstaller provides ExternalGroupMapping-specific API registration and validation.
 type ExternalGroupMappingApiInstaller ApiInstaller[*iamv0.ExternalGroupMapping]
@@ -77,6 +98,38 @@ func (n *NoopApiInstaller[T]) GetAuthorizer() authorizer.Authorizer {
 func (n *NoopApiInstaller[T]) RegisterStorage(apiGroupInfo *server.APIGroupInfo, opts *builder.APIGroupOptions, storage map[string]rest.Storage) error {
 	storage[n.ResourceInfo.StoragePath()] = &noopstorage.NoopREST{ResourceInfo: n.ResourceInfo}
 	return nil
+}
+
+func (n *NoopApiInstaller[T]) GetRulesForSubjectGetter() rest.Getter {
+	return &noopstorage.NoopREST{ResourceInfo: n.ResourceInfo}
+}
+
+func (n *NoopApiInstaller[T]) GetTeamLBACUsageRoutes(defs map[string]k8scommon.OpenAPIDefinition) *builder.APIRoutes {
+	// Keep the discoverable API contract consistent across editions even though
+	// OSS cannot serve usage data.
+	response := defs[iamv0.GetTeamLBACUsageResponse{}.OpenAPIModelName()].Schema
+	return &builder.APIRoutes{Namespace: []builder.APIRouteHandler{{
+		Path: "teamlbacusage",
+		Spec: &spec3.PathProps{Get: &spec3.Operation{OperationProps: spec3.OperationProps{
+			Tags:        []string{"TeamLBACRule"},
+			Description: "Service-only aggregate counts of stored TeamLBAC rules",
+			Parameters: []*spec3.Parameter{{ParameterProps: spec3.ParameterProps{
+				Name: "namespace", In: "path", Required: true, Schema: spec.StringProperty(),
+			}}},
+			Responses: &spec3.Responses{ResponsesProps: spec3.ResponsesProps{StatusCodeResponses: map[int]*spec3.Response{
+				200: {ResponseProps: spec3.ResponseProps{Content: map[string]*spec3.MediaType{
+					"application/json": {MediaTypeProps: spec3.MediaTypeProps{Schema: &response}},
+				}}},
+			}}},
+		}}},
+		Handler: func(w http.ResponseWriter, r *http.Request) {
+			errhttp.Write(r.Context(), apierrors.NewForbidden(iamv0.TeamLBACRuleInfo.GroupResource(), "", fmt.Errorf("functionality not available")), w)
+		},
+	}}}
+}
+
+func (n *NoopApiInstaller[T]) GetTeamLBACUsageAuthorizer() authorizer.Authorizer {
+	return n.GetAuthorizer()
 }
 
 func (n *NoopApiInstaller[T]) ValidateOnCreate(ctx context.Context, obj T) error {

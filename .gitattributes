@@ -5,6 +5,7 @@
 *_gen.csv linguist-generated
 *_gen.json linguist-generated
 **/openapi_snapshots/*.json linguist-generated
+packages/grafana-openapi/src/apis/*.json linguist-generated
 apps/**/pkg/apis/*_manifest.go linguist-generated
 public/openapi3.json linguist-generated
 public/api-merged.json linguist-generated

@@ -2,13 +2,13 @@ package authn
 
 import (
 	"fmt"
+	"slices"
 	"strconv"
 	"time"
 
-	"golang.org/x/oauth2"
-
 	"github.com/grafana/authlib/authn"
 	claims "github.com/grafana/authlib/types"
+	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/models/usertoken"
@@ -68,6 +68,9 @@ type Identity struct {
 	SAMLSession *login.SAMLSession
 	// SessionToken is the session token used to authenticate the entity.
 	SessionToken *usertoken.UserToken
+	// ServiceAccountTokenID and ServiceAccountTokenName identify the service account token used to authenticate the entity, if any.
+	ServiceAccountTokenID   int64
+	ServiceAccountTokenName string
 	// ClientParams are hints for the auth service on how to handle the identity.
 	// Set by the authenticating client.
 	ClientParams ClientParams
@@ -282,12 +285,7 @@ func (i *Identity) HasUniqueId() bool {
 }
 
 func (i *Identity) IsAuthenticatedBy(providers ...string) bool {
-	for _, p := range providers {
-		if i.AuthenticatedBy == p {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(providers, i.AuthenticatedBy)
 }
 
 func (i *Identity) IsNil() bool {
@@ -311,7 +309,7 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		IsAnonymous:       i.IsIdentityType(claims.TypeAnonymous),
 		IsDisabled:        i.IsDisabled,
 		LastSeenAt:        i.LastSeenAt,
-		TeamIDs:           i.TeamIDs,
+		TeamIDs:           i.TeamIDs, //nolint:staticcheck // Preserve legacy field compatibility.
 		TeamUIDs:          i.Groups,
 		ExternalGroups:    i.ExternalGroups,
 		Permissions:       i.Permissions,
@@ -330,6 +328,8 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		u.UserID = id
 		u.UserUID = i.UID
 		u.IsServiceAccount = i.IsIdentityType(claims.TypeServiceAccount)
+		u.ServiceAccountTokenID = i.ServiceAccountTokenID
+		u.ServiceAccountTokenName = i.ServiceAccountTokenName
 	}
 
 	return u

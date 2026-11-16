@@ -3,6 +3,8 @@ package annotation
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 	"testing"
@@ -13,9 +15,10 @@ import (
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 )
@@ -101,9 +104,17 @@ func TestSearchHandler(t *testing.T) {
 			expectedNames: []string{"a-1", "a-2", "a-4"},
 		},
 		{
-			name: "Filter by multiple scopes without matchAny (AND - default)",
+			name: "Filter by multiple scopes without matchAny (OR - default)",
 			queryParams: url.Values{
 				"scope": []string{"scope1", "scope2"},
+			},
+			expectedNames: []string{"a-1", "a-2", "a-4"},
+		},
+		{
+			name: "Filter by multiple scopes with matchAny=false (AND)",
+			queryParams: url.Values{
+				"scope":          []string{"scope1", "scope2"},
+				"scopesMatchAny": []string{"false"},
 			},
 			expectedNames: []string{"a-4"},
 		},
@@ -116,11 +127,20 @@ func TestSearchHandler(t *testing.T) {
 			expectedNames: []string{"a-1", "a-4"},
 		},
 		{
-			name: "Filter by tags (OR) and scopes (AND)",
+			name: "Filter by tags (OR) and scopes (OR by default)",
 			queryParams: url.Values{
 				"tag":          []string{"tag1", "tag2"},
 				"tagsMatchAny": []string{"true"},
 				"scope":        []string{"scope1", "scope2"},
+			},
+			expectedNames: []string{"a-1", "a-2", "a-4"},
+		},
+		{
+			name: "Filter by tags (AND by default) and scopes (AND)",
+			queryParams: url.Values{
+				"tag":            []string{"tag1", "tag2"},
+				"scope":          []string{"scope1", "scope2"},
+				"scopesMatchAny": []string{"false"},
 			},
 			expectedNames: []string{"a-4"},
 		},
@@ -133,7 +153,7 @@ func TestSearchHandler(t *testing.T) {
 			expectedNames: []string{"a-1", "a-4"},
 		},
 		{
-			name: "Invalid scopesMatchAny value (should be ignored, defaults to false)",
+			name: "Invalid scopesMatchAny value (should be ignored, defaults to true)",
 			queryParams: url.Values{
 				"scope":          []string{"scope1"},
 				"scopesMatchAny": []string{"not-valid"},
@@ -176,7 +196,7 @@ func TestSearchHandler(t *testing.T) {
 			for _, name := range tt.deleteFirst {
 				require.NoError(t, store.Delete(ctx, metav1.NamespaceDefault, name))
 			}
-			handler := newSearchHandler(store, accessClient, dashClient, tracing.InitializeTracerForTest(), ProvideMetrics(nil), log.NewNopLogger())
+			handler := newSearchHandler(store, testTracer, accessClient, dashClient, ProvideMetrics(nil), log.NewNopLogger())
 
 			u := &url.URL{
 				Scheme:   "http",
@@ -217,6 +237,51 @@ func TestSearchHandler(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestSearchHandler_Errors(t *testing.T) {
+	ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), metav1.NamespaceDefault)
+	allowAll := &fakeAccessClient{fn: func(_ authtypes.BatchCheckItem) bool { return true }}
+	search := func(t *testing.T, store Store, metrics *Metrics) (*mockResponseWriter, error) {
+		t.Helper()
+		handler := withAPIStatusErrorResponse(newSearchHandler(store, testTracer, allowAll, newFakeFolderResolver(nil), metrics, log.NewNopLogger()))
+		writer := &mockResponseWriter{header: make(http.Header), body: &bytes.Buffer{}}
+		err := handler(ctx, writer, &app.CustomRouteRequest{
+			ResourceIdentifier: resource.FullIdentifier{Namespace: metav1.NamespaceDefault},
+			URL:                &url.URL{},
+		})
+		return writer, err
+	}
+
+	t.Run("invalid continue token is a 400", func(t *testing.T) {
+		writer, err := search(t, &errStore{err: errInvalidContinueToken}, ProvideMetrics(nil))
+
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusBadRequest, writer.code)
+		var status metav1.Status
+		require.NoError(t, json.Unmarshal(writer.body.Bytes(), &status))
+		assert.Equal(t, "invalid annotation input: invalid continue token", status.Message)
+	})
+
+	t.Run("store failure is a generic 500", func(t *testing.T) {
+		writer, err := search(t, &errStore{err: errors.New("failed to query annotations: ERROR: connection reset")}, ProvideMetrics(nil))
+
+		assert.True(t, isGenericInternal(err), "got %v", err)
+		assert.Zero(t, writer.code)
+	})
+
+	t.Run("wrapped dependency 4xx is a generic 500 recorded as an error", func(t *testing.T) {
+		reg := prometheus.NewRegistry()
+		wrapped := fmt.Errorf("resolve folder: %w", apierrors.NewForbidden(annotationGR, "dash", errors.New("denied")))
+		writer, err := search(t, &errStore{err: wrapped}, ProvideMetrics(reg))
+
+		assert.True(t, isGenericInternal(err), "got %v", err)
+		assert.Zero(t, writer.code)
+		assert.Equal(t, uint64(1), histogramSampleCount(t, reg, "grafana_annotations_request_duration_seconds", map[string]string{
+			"operation": "search",
+			"status":    "error",
+		}))
+	})
 }
 
 // mockResponseWriter implements app.CustomRouteResponseWriter for testing

@@ -2,6 +2,7 @@ package setting
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -113,5 +114,48 @@ experimentals = enable-check-optimizations
 `))
 		require.NoError(t, err)
 		assert.Equal(t, []string{"weighted_graph_check"}, cfg.ZanzanaServer.OpenFgaServerSettings.Experimentals)
+	})
+}
+
+func TestReadZanzanaSettings_ClientKeepalive(t *testing.T) {
+	t.Run("defaults to 6m", func(t *testing.T) {
+		cfg, err := NewCfgFromBytes(nil)
+		require.NoError(t, err)
+		assert.Equal(t, 6*time.Minute, cfg.ZanzanaClient.KeepaliveTime)
+	})
+
+	t.Run("reads keepalive time from config", func(t *testing.T) {
+		cfg, err := NewCfgFromBytes([]byte(`
+[zanzana.client]
+grpc_client_keepalive_time = 30s
+`))
+		require.NoError(t, err)
+		assert.Equal(t, 30*time.Second, cfg.ZanzanaClient.KeepaliveTime)
+	})
+
+	t.Run("zero disables keepalive", func(t *testing.T) {
+		cfg, err := NewCfgFromBytes([]byte(`
+[zanzana.client]
+grpc_client_keepalive_time = 0
+`))
+		require.NoError(t, err)
+		assert.Equal(t, time.Duration(0), cfg.ZanzanaClient.KeepaliveTime)
+	})
+}
+
+func TestReadZanzanaSettings_ClientCallTimeout(t *testing.T) {
+	t.Run("defaults to 30s", func(t *testing.T) {
+		cfg, err := NewCfgFromBytes(nil)
+		require.NoError(t, err)
+		assert.Equal(t, 30*time.Second, cfg.ZanzanaClient.CallTimeout)
+	})
+
+	t.Run("reads timeout from config", func(t *testing.T) {
+		cfg, err := NewCfgFromBytes([]byte(`
+[zanzana.client]
+grpc_client_timeout = 10s
+`))
+		require.NoError(t, err)
+		assert.Equal(t, 10*time.Second, cfg.ZanzanaClient.CallTimeout)
 	})
 }

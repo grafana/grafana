@@ -14,6 +14,7 @@ import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, type TableCellProps } from '.
 
 interface CellActionProps extends TableCellProps {
   previewMode: TableCellInspectorMode;
+  showFilters?: boolean;
 }
 
 interface CommonButtonProps {

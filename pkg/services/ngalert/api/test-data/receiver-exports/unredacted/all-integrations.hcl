@@ -207,6 +207,7 @@ resource "grafana_contact_point" "contact_point_2b661702215368fe" {
   }
 
   telegram {
+    api_url                  = "http://localhost:8081/telegram"
     token                    = "test-token"
     chat_id                  = "12345678"
     message_thread_id        = "13579"
@@ -285,17 +286,22 @@ resource "grafana_contact_point" "contact_point_2b661702215368fe" {
         }
       }
     }
+
+    payload {
+      template = ""
+    }
   }
 
   wecom {
-    url      = "test-url"
-    secret   = "test-secret"
-    agent_id = "test-agent_id"
-    corp_id  = "test-corp_id"
-    message  = "test-message"
-    title    = "test-title"
-    msg_type = "markdown"
-    to_user  = "test-touser"
+    endpoint_url = "http://localhost/test-endpointUrl"
+    url          = "test-url"
+    secret       = "test-secret"
+    agent_id     = "test-agent_id"
+    corp_id      = "test-corp_id"
+    message      = "test-message"
+    title        = "test-title"
+    msg_type     = "markdown"
+    to_user      = "test-touser"
   }
 
   webex {

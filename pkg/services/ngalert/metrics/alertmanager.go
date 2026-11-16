@@ -3,6 +3,7 @@ package metrics
 import (
 	"fmt"
 
+	"github.com/grafana/alerting/logging"
 	"github.com/grafana/grafana/pkg/infra/log"
 
 	"github.com/prometheus/alertmanager/api/metrics"
@@ -20,7 +21,7 @@ func NewAlertmanagerMetrics(r prometheus.Registerer, l log.Logger) *Alertmanager
 	other := prometheus.WrapRegistererWithPrefix(fmt.Sprintf("%s_%s_", Namespace, Subsystem), r)
 	return &Alertmanager{
 		Registerer:                r,
-		Alerts:                    metrics.NewAlerts(other, l),
+		Alerts:                    metrics.NewAlerts(other, logging.NewSlogLogger(l)),
 		AlertmanagerConfigMetrics: NewAlertmanagerConfigMetrics(r, l),
 	}
 }

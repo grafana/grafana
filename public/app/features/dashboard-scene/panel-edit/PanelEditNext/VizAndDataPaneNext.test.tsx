@@ -1,7 +1,10 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { createRef } from 'react';
 
 import { VizPanel } from '@grafana/scenes';
 
+import { type DashboardScene } from '../../scene/DashboardScene';
 import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
 import { type PanelDataPane } from '../PanelDataPane/PanelDataPane';
 import { buildPanelEditScene } from '../PanelEditor';
@@ -9,7 +12,7 @@ import { buildPanelEditScene } from '../PanelEditor';
 import { PanelDataPaneNext } from './PanelDataPaneNext';
 import { VizAndDataPaneNext } from './VizAndDataPaneNext';
 import { SidebarSize } from './constants';
-import { useVizAndDataPaneLayout } from './hooks';
+import { useQueryEditorBanner, useVizAndDataPaneLayout } from './hooks';
 
 jest.mock('./hooks', () => ({
   useVizAndDataPaneLayout: jest.fn(),
@@ -39,26 +42,69 @@ jest.mock('./PanelDataPaneNext', () => ({
   },
 }));
 
-const MockPanelComponent = () => <div data-testid="panel-viz" />;
+type VizAndDataPaneLayout = ReturnType<typeof useVizAndDataPaneLayout>;
+type Splitter = VizAndDataPaneLayout['vizDataSplitter'];
 
-function buildMockLayout(dataPane?: PanelDataPane | PanelDataPaneNext) {
+// Scene objects expose `Component` via a read-only getter, so a sentinel-rendering stub needs a
+// boundary cast. Scoping it here keeps the rest of the layout fully type-checked.
+function mockSceneRenderer<T>(testId: string): T {
+  const Component = () => <div data-testid={testId} />;
+  return { Component } as unknown as T;
+}
+
+function mockSplitter(collapsed = false, ariaOrientation: 'horizontal' | 'vertical' = 'horizontal'): Splitter {
+  return {
+    containerProps: { ref: createRef<HTMLDivElement>(), className: '' },
+    primaryProps: { ref: createRef<HTMLDivElement>(), className: '', style: {}, id: 'primary-pane' },
+    secondaryProps: { ref: createRef<HTMLDivElement>(), className: '', style: {} },
+    splitterProps: {
+      onPointerUp: jest.fn(),
+      onPointerDown: jest.fn(),
+      onPointerMove: jest.fn(),
+      onKeyDown: jest.fn(),
+      onKeyUp: jest.fn(),
+      onDoubleClick: jest.fn(),
+      onBlur: jest.fn(),
+      ref: createRef<HTMLDivElement>(),
+      style: {},
+      role: 'separator',
+      'aria-orientation': ariaOrientation,
+      'aria-valuemin': 0,
+      'aria-valuemax': 100,
+      'aria-valuenow': 50,
+      'aria-controls': 'primary-pane',
+      'aria-label': 'Pane resize widget',
+      tabIndex: 0,
+      className: '',
+    },
+    splitterState: { collapsed },
+    onToggleCollapse: jest.fn(),
+  };
+}
+
+/** True when `first` precedes `second` in document order. */
+function precedes(first: Element, second: Element) {
+  return Boolean(first.compareDocumentPosition(second) & Node.DOCUMENT_POSITION_FOLLOWING);
+}
+
+function buildMockLayout(
+  dataPane?: PanelDataPane | PanelDataPaneNext,
+  sidebarSize: SidebarSize = SidebarSize.Mini,
+  collapsed: { vizData?: boolean; sidebar?: boolean } = {}
+) {
   return {
     scene: {
-      panel: { Component: MockPanelComponent },
-      tableView: { Component: MockPanelComponent },
-      controls: null,
+      panel: mockSceneRenderer<VizPanel>('panel-viz'),
+      tableView: undefined,
       dataPane,
-      dashboard: {},
+      dashboard: mockSceneRenderer<DashboardScene>('dashboard'),
     },
-    layout: {
-      sidebarSize: SidebarSize.Mini,
-      setSidebarSize: jest.fn(),
-      isScrollingLayout: false,
-      gridStyles: {},
-      sidebarResizeHandle: { ref: jest.fn(), className: '' },
-      vizResizeHandle: { ref: jest.fn(), className: '' },
-    },
-  } as unknown as ReturnType<typeof useVizAndDataPaneLayout>;
+    sidebarSize,
+    setSidebarSize: jest.fn(),
+    isScrollingLayout: false,
+    vizDataSplitter: mockSplitter(collapsed.vizData),
+    sidebarSplitter: mockSplitter(collapsed.sidebar, 'vertical'),
+  } satisfies VizAndDataPaneLayout;
 }
 
 const panel = new VizPanel({ key: 'panel-1', pluginId: 'text' });
@@ -85,6 +131,15 @@ describe('VizAndDataPaneNext', () => {
       render(<VizAndDataPaneNext model={panelEditor} />);
       expect(screen.queryByTestId('data-pane-content')).not.toBeInTheDocument();
     });
+
+    // No splitter runs in this layout, so nothing supplies a flex size. Without one the pane
+    // collapses to its content height — which for a scene panel is zero, leaving a blank editor.
+    it('lets the viz pane grow to fill the editor', () => {
+      render(<VizAndDataPaneNext model={panelEditor} />);
+
+      const vizPane = screen.getByTestId('panel-viz').parentElement?.parentElement;
+      expect(vizPane).toHaveStyle({ flexGrow: '1' });
+    });
   });
 
   describe('when panel has a PanelDataPaneNext', () => {
@@ -103,24 +158,91 @@ describe('VizAndDataPaneNext', () => {
       render(<VizAndDataPaneNext model={panelEditor} />);
       expect(screen.getByTestId('data-pane-content')).toBeInTheDocument();
     });
+
+    it('renders the query editor banner when enabled', () => {
+      jest.mocked(useQueryEditorBanner).mockReturnValue({ showBanner: true, dismissBanner: jest.fn() });
+
+      render(<VizAndDataPaneNext model={panelEditor} />);
+
+      expect(screen.getByTestId('query-editor-banner')).toBeInTheDocument();
+    });
   });
 
-  describe('when panel has controls', () => {
-    it('renders the controls', () => {
-      const MockControls = { Component: () => <div data-testid="panel-controls" /> };
-      const base = buildMockLayout(undefined);
-      jest.mocked(useVizAndDataPaneLayout).mockReturnValue({
-        ...base,
-        scene: { ...base.scene, controls: MockControls as unknown as typeof base.scene.controls },
-      });
+  /**
+   * Mini and Full nest the two splitters in opposite orders, which is what makes the toggle remount
+   * them and forces sizes to be held outside the splitter. Document order is the cheapest thing that
+   * actually distinguishes the two topologies: Mini stacks the sidebar under the viz, Full puts it
+   * alongside.
+   */
+  describe('sidebar topology', () => {
+    function renderWithSize(sidebarSize: SidebarSize) {
+      const mockDataPane = Object.create(PanelDataPaneNext.prototype);
+      mockDataPane.Component = () => <div data-testid="data-pane-content" />;
+      jest.mocked(useVizAndDataPaneLayout).mockReturnValue(buildMockLayout(mockDataPane, sidebarSize));
+
       render(<VizAndDataPaneNext model={panelEditor} />);
-      expect(screen.getByTestId('panel-controls')).toBeInTheDocument();
+
+      return { viz: screen.getByTestId('panel-viz'), sidebar: screen.getByTestId('query-editor-sidebar') };
+    }
+
+    it('puts the sidebar after the viz in Mini, nested in the bottom pane', () => {
+      const { viz, sidebar } = renderWithSize(SidebarSize.Mini);
+
+      expect(precedes(viz, sidebar)).toBe(true);
     });
 
-    it('does not render controls when absent', () => {
-      jest.mocked(useVizAndDataPaneLayout).mockReturnValue(buildMockLayout(undefined));
+    it('puts the full-height sidebar before the viz in Full', () => {
+      const { viz, sidebar } = renderWithSize(SidebarSize.Full);
+
+      expect(precedes(sidebar, viz)).toBe(true);
+    });
+  });
+
+  // Fully collapsing either pane is the point of moving to snapping splitters, so the affordance that
+  // gets it back has to render and be wired up.
+  describe('collapsed panes', () => {
+    function renderCollapsed(collapsed: { vizData?: boolean; sidebar?: boolean }) {
+      const mockDataPane = Object.create(PanelDataPaneNext.prototype);
+      mockDataPane.Component = () => <div data-testid="data-pane-content" />;
+      const layout = buildMockLayout(mockDataPane, SidebarSize.Mini, collapsed);
+      jest.mocked(useVizAndDataPaneLayout).mockReturnValue(layout);
+
       render(<VizAndDataPaneNext model={panelEditor} />);
-      expect(screen.queryByTestId('panel-controls')).not.toBeInTheDocument();
+
+      return layout;
+    }
+
+    it('swaps the collapsed sidebar for an expand button', async () => {
+      const layout = renderCollapsed({ sidebar: true });
+
+      expect(screen.queryByTestId('query-editor-sidebar')).not.toBeInTheDocument();
+      const expand = screen.getByRole('button', { name: 'Open sidebar' });
+
+      await userEvent.click(expand);
+
+      expect(layout.sidebarSplitter.onToggleCollapse).toHaveBeenCalled();
+    });
+
+    it('swaps the collapsed query pane for an expand button', async () => {
+      const layout = renderCollapsed({ vizData: true });
+
+      // The whole bottom pane goes, sidebar and data pane together.
+      expect(screen.queryByTestId('data-pane-content')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('query-editor-sidebar')).not.toBeInTheDocument();
+      const expand = screen.getByRole('button', { name: 'Open query pane' });
+
+      await userEvent.click(expand);
+
+      expect(layout.vizDataSplitter.onToggleCollapse).toHaveBeenCalled();
+    });
+
+    // The banner sits inside the bottom pane, so a collapsed query pane must hide it too.
+    it('hides the banner while the query pane is collapsed', () => {
+      jest.mocked(useQueryEditorBanner).mockReturnValue({ showBanner: true, dismissBanner: jest.fn() });
+
+      renderCollapsed({ vizData: true });
+
+      expect(screen.queryByTestId('query-editor-banner')).not.toBeInTheDocument();
     });
   });
 });

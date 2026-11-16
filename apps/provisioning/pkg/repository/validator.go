@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -101,6 +102,7 @@ func (v *RepositoryValidator) Validate(ctx context.Context, cfg *provisioning.Re
 	}
 
 	list = append(list, validateWorkflowOptions(cfg)...)
+	list = append(list, validateCommitOptions(cfg)...)
 
 	for _, w := range cfg.Spec.Workflows {
 		switch w {
@@ -115,7 +117,9 @@ func (v *RepositoryValidator) Validate(ctx context.Context, cfg *provisioning.Re
 	}
 
 	// Validating the presence of finalizers in resources not marked for deletion.
-	if cfg.DeletionTimestamp != nil || cfg.DeletionTimestamp.IsZero() {
+	// DeletionTimestamp.IsZero() is nil-safe (pointer receiver) and true exactly
+	// when the resource is not being deleted.
+	if cfg.DeletionTimestamp.IsZero() {
 		if len(cfg.Finalizers) == 0 {
 			list = append(list,
 				field.Invalid(
@@ -228,6 +232,44 @@ func validateWorkflowOptions(cfg *provisioning.Repository) field.ErrorList {
 	return list
 }
 
+// validateCommitOptions keeps the two ways of setting a commit identity apart: the
+// signer identity only applies to signed commits, and the author override only
+// applies when commits are not signed.
+func validateCommitOptions(cfg *provisioning.Repository) field.ErrorList {
+	commit := cfg.Spec.Commit
+	if commit == nil {
+		return nil
+	}
+
+	path := field.NewPath("spec", "commit")
+	var list field.ErrorList
+
+	if commit.SigningMethod == "" {
+		const detail = "signer identity requires a signing method; use authorName/authorEmail to set the commit author without signing"
+		if commit.SignerName != "" {
+			list = append(list, field.Invalid(path.Child("signerName"), commit.SignerName, detail))
+		}
+		if commit.SignerEmail != "" {
+			list = append(list, field.Invalid(path.Child("signerEmail"), commit.SignerEmail, detail))
+		}
+		if commit.SignerIsAuthor {
+			list = append(list, field.Invalid(path.Child("signerIsAuthor"), commit.SignerIsAuthor, detail))
+		}
+
+		return list
+	}
+
+	const detail = "author override is not allowed when commit signing is enabled; use signerName/signerEmail with signerIsAuthor instead"
+	if commit.AuthorName != "" {
+		list = append(list, field.Invalid(path.Child("authorName"), commit.AuthorName, detail))
+	}
+	if commit.AuthorEmail != "" {
+		list = append(list, field.Invalid(path.Child("authorEmail"), commit.AuthorEmail, detail))
+	}
+
+	return list
+}
+
 func (v *RepositoryValidator) validateDashboardPreviews(cfg *provisioning.Repository) field.ErrorList {
 	if v.allowImageRendering {
 		return nil
@@ -314,6 +356,10 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 		return nil
 	}
 
+	if a.GetSubresource() != "" && !provisioningadmission.SpecAndSecureChanged(a) {
+		return nil // pure status patch: spec/secure untouched, nothing to (re)validate
+	}
+
 	obj := a.GetObject()
 	if obj == nil {
 		return nil
@@ -383,15 +429,39 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 		return invalidRepositoryError(a.GetName(), list)
 	}
 
-	// Run validators
-	for _, validator := range v.validators {
-		list = append(list, validator.Validate(ctx, r)...)
-		if len(list) > 0 {
-			return invalidRepositoryError(a.GetName(), list)
+	// Switching the sync off introduces no content to authorize, and a repository whose path
+	// or URL has stopped being permitted must still be able to turn its own sync off.
+	if !isSyncDisableOnly(a, r) {
+		for _, validator := range v.validators {
+			list = append(list, validator.Validate(ctx, r)...)
+			if len(list) > 0 {
+				return invalidRepositoryError(a.GetName(), list)
+			}
 		}
 	}
 
 	return nil
+}
+
+// isSyncDisableOnly reports whether this update only turns off a running sync. Finalizers and
+// secure values count as changes too: both carry rules the validators enforce.
+func isSyncDisableOnly(a admission.Attributes, r *provisioning.Repository) bool {
+	if a.GetOperation() != admission.Update {
+		return false
+	}
+	old, ok := a.GetOldObject().(*provisioning.Repository)
+	if !ok || !old.Spec.Sync.Enabled || r.Spec.Sync.Enabled {
+		return false
+	}
+
+	// The interval is excluded because the mutator clamps it to min_sync_interval before this
+	// runs, so raising that setting would make every disable look like a second change.
+	want := old.DeepCopy()
+	want.Spec.Sync.Enabled = false
+	want.Spec.Sync.IntervalSeconds = r.Spec.Sync.IntervalSeconds
+	return apiequality.Semantic.DeepEqual(&r.Spec, &want.Spec) &&
+		apiequality.Semantic.DeepEqual(&r.Secure, &want.Secure) &&
+		slices.Equal(r.Finalizers, want.Finalizers)
 }
 
 func invalidRepositoryError(name string, list field.ErrorList) error {

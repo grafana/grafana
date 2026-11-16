@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
-import { DragDropContext, Draggable, Droppable, type DropResult } from '@hello-pangea/dnd';
+import { type DropResult } from '@hello-pangea/dnd';
 import { type ReactNode } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, useTheme2 } from '@grafana/ui';
+import { useDragAndDrop } from '@grafana/ui/internal';
 
 import { SIDEBAR_CARD_HEIGHT, SIDEBAR_CARD_INDENT, SIDEBAR_CARD_SPACING } from '../../../constants';
 
@@ -28,6 +29,7 @@ export function DraggableList<T>({
   onDragEnd,
   isDragDisabled = false,
 }: DraggableListProps<T>) {
+  const { DragDropContext, Draggable, Droppable } = useDragAndDrop();
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
 
@@ -65,6 +67,9 @@ export function DraggableList<T>({
                       ref={dragProvided.innerRef}
                       {...dragProvided.draggableProps}
                       {...dragProvided.dragHandleProps}
+                      // The rendered card is the interactive control; a button role here would nest it inside another button.
+                      role={undefined}
+                      aria-describedby={undefined}
                       tabIndex={-1}
                       className={styles.draggableItem}
                       data-is-dragging={dragSnapshot.isDragging || undefined}

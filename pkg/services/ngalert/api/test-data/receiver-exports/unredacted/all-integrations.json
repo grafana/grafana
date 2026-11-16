@@ -633,6 +633,7 @@
      "uid": "telegram-uid",
      "type": "telegram",
      "settings": {
+      "api_url": "http://localhost:8081/telegram",
       "bottoken": "test-token",
       "chatid": "12345678",
       "disable_notifications": true,
@@ -670,7 +671,8 @@
       "message": "test-message",
       "message_thread_id": "13579",
       "parse_mode": "html",
-      "protect_content": true
+      "protect_content": true,
+      "send_message_as_caption": true
      },
      "disableResolveMessage": false
     },
@@ -800,6 +802,7 @@
      "type": "webhook",
      "settings": {
       "authorization_scheme": "basic",
+      "headers": null,
       "hmacConfig": {
        "header": "X-Grafana-Alerting-Signature",
        "secret": "test-hmac-secret",
@@ -838,6 +841,10 @@
       "maxAlerts": "2",
       "message": "test-message",
       "password": "test-pass",
+      "payload": {
+       "template": "",
+       "vars": null
+      },
       "title": "test-title",
       "tlsConfig": {
        "caCertificate": "-----BEGIN CERTIFICATE-----\nMIGrMF+gAwIBAgIBATAFBgMrZXAwADAeFw0yNDExMTYxMDI4MzNaFw0yNTExMTYx\nMDI4MzNaMAAwKjAFBgMrZXADIQCf30GvRnHbs9gukA3DLXDK6W5JVgYw6mERU/60\n2M8+rjAFBgMrZXADQQCGmeaRp/AcjeqmJrF5Yh4d7aqsMSqVZvfGNDc0ppXyUgS3\nWMQ1+3T+/pkhU612HR0vFd3vyFhmB4yqFoNV8RML\n-----END CERTIFICATE-----",

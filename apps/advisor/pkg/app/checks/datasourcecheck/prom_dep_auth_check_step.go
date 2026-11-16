@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
+	"github.com/grafana/grafana/apps/advisor/pkg/translations"
 	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
@@ -15,15 +16,15 @@ type promDepAuthStep struct {
 }
 
 func (s *promDepAuthStep) Title() string {
-	return "Prometheus deprecated authentication check"
+	return translations.StepTitle(CheckID, PromDepAuthStepID)
 }
 
 func (s *promDepAuthStep) Description() string {
-	return "Checks if Prometheus data sources are using deprecated authentication methods (Azure auth and SigV4)"
+	return translations.StepDescription(CheckID, PromDepAuthStepID)
 }
 
 func (s *promDepAuthStep) Resolution() string {
-	return fmt.Sprintf("Make sure that 'Azure Monitor Managed Service for Prometheus' and/or 'Amazon Managed Service for Prometheus' plugins are installed. If the data source is provisioned, edit data source type in the provisioning file to use '%s' or '%s'.", datasources.DS_AMAZON_PROMETHEUS, datasources.DS_AZURE_PROMETHEUS)
+	return translations.StepResolution(CheckID, PromDepAuthStepID)
 }
 
 func (s *promDepAuthStep) ID() string {
@@ -81,11 +82,8 @@ func (s *promDepAuthStep) checkUsingAWSAuth(ctx context.Context, dataSource *dat
 		}
 
 		errorLinks = append(errorLinks,
-			advisor.CheckErrorLink{
-				Message: "View SigV4 docs",
-				Url:     "https://grafana.com/docs/grafana-cloud/connect-externally-hosted/data-sources/prometheus/configure/aws-authentication/",
-			})
-		pluginLink := s.linkDataSource(ctx, datasources.DS_AMAZON_PROMETHEUS, "Amazon Managed Service for Prometheus")
+			checks.NewErrorLink("view-sigv4-docs", "https://grafana.com/docs/grafana-cloud/connect-externally-hosted/data-sources/prometheus/configure/aws-authentication/"))
+		pluginLink := s.linkDataSource(ctx, datasources.DS_AMAZON_PROMETHEUS, "install-amazon-managed-service-for-prometheus")
 		if pluginLink != nil {
 			errorLinks = append(errorLinks, *pluginLink)
 		}
@@ -105,11 +103,8 @@ func (s *promDepAuthStep) checkUsingAzureAuth(ctx context.Context, dataSource *d
 			errorLinks = append(errorLinks, *readOnlyLink)
 		}
 		errorLinks = append(errorLinks,
-			advisor.CheckErrorLink{
-				Message: "View Azure auth docs",
-				Url:     "https://grafana.com/docs/grafana-cloud/connect-externally-hosted/data-sources/prometheus/configure/azure-authentication/",
-			})
-		pluginLink := s.linkDataSource(ctx, datasources.DS_AZURE_PROMETHEUS, "Azure Monitor Managed Service for Prometheus")
+			checks.NewErrorLink("view-azure-auth-docs", "https://grafana.com/docs/grafana-cloud/connect-externally-hosted/data-sources/prometheus/configure/azure-authentication/"))
+		pluginLink := s.linkDataSource(ctx, datasources.DS_AZURE_PROMETHEUS, "install-azure-monitor-managed-service-for-prometheus")
 		if pluginLink != nil {
 			errorLinks = append(errorLinks, *pluginLink)
 		}
@@ -123,25 +118,21 @@ func checkReadOnly(dataSource *datasources.DataSource) *advisor.CheckErrorLink {
 			// Disabled or not a valid boolean
 			return nil
 		}
-		return &advisor.CheckErrorLink{
-			Message: "Change provisioning file",
-			Url:     "https://grafana.com/docs/grafana/latest/administration/provisioning/#data-sources",
-		}
+		link := checks.NewErrorLink("change-provisioning-file", "https://grafana.com/docs/grafana/latest/administration/provisioning/#data-sources")
+		return &link
 	}
 	return nil
 }
 
-func (s *promDepAuthStep) linkDataSource(ctx context.Context, pluginType string, pluginName string) *advisor.CheckErrorLink {
+func (s *promDepAuthStep) linkDataSource(ctx context.Context, pluginType string, slug string) *advisor.CheckErrorLink {
 	canBeInstalled, err := s.canBeInstalled(ctx, pluginType)
 	if err != nil {
 		return nil
 	}
 	if canBeInstalled {
 		// Plugin is available in the repo
-		return &advisor.CheckErrorLink{
-			Message: fmt.Sprintf("Install %s", pluginName),
-			Url:     fmt.Sprintf("/plugins/%s", pluginType),
-		}
+		link := checks.NewErrorLink(slug, fmt.Sprintf("/plugins/%s", pluginType))
+		return &link
 	}
 	return nil
 }

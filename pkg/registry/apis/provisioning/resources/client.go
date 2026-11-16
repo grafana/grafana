@@ -3,14 +3,17 @@ package resources
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"strings"
 	"sync"
 
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/rest"
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	iam "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
@@ -68,6 +71,9 @@ type SupportedResource struct {
 	schema.GroupKind
 	// Capabilities is the set of declared capabilities (see Capability* constants).
 	Capabilities sets.Set[string]
+	// Collection is the group an expanded member's objects are stored under, empty for a
+	// resource that serves its own group. The managed-object index reports a member under it.
+	Collection string
 }
 
 // IsActive reports whether the resource is acted on by the pipeline (the default).
@@ -83,11 +89,13 @@ func (r SupportedResource) IsFolderScoped() bool { return r.Capabilities.Has(Cap
 //
 //	<group>/<Kind>[:cap[:cap...]]
 //
-// Group and kind are split on the last "/" (groups contain dots and may be multi-segment).
-// Capabilities are ":"-separated and must be in KnownCapabilities. Parsing is strict and
-// fails fast at startup: each entry must be "<group>/<Kind>" with a non-empty, dotted group
-// and non-empty kind; capabilities must be known and not repeated; and a resource ID must
-// not appear twice. Whitespace is trimmed and empty entries are skipped.
+// Group and kind are split on the last "/" (groups contain dots and may be multi-segment). The
+// group may name a collection of served groups with a wildcard, optionally qualified
+// with the group those are stored under: "*.datasource.grafana.app", "grafana-*@plugins.grafana.app".
+// Capabilities are ":"-separated and must be in KnownCapabilities.
+// Parsing is strict and fails fast at startup: each entry must be "<group>/<Kind>" with a
+// non-empty, dotted group and non-empty kind; capabilities must be known and not repeated; and a
+// resource ID must not appear twice. Whitespace is trimmed and empty entries are skipped.
 func ParseSupportedResources(entries []string) ([]SupportedResource, error) {
 	out := make([]SupportedResource, 0, len(entries))
 	seen := sets.New[schema.GroupKind]()
@@ -104,8 +112,8 @@ func ParseSupportedResources(entries []string) ([]SupportedResource, error) {
 			return nil, fmt.Errorf("invalid provisioning resource %q: expected <group>/<Kind>", entry)
 		}
 		group, kind := id[:slash], id[slash+1:]
-		if !strings.Contains(group, ".") {
-			return nil, fmt.Errorf("invalid provisioning resource %q: group %q must contain a dot", entry, group)
+		if err := validateGroup(entry, group); err != nil {
+			return nil, err
 		}
 
 		gk := schema.GroupKind{Group: group, Kind: kind}
@@ -129,6 +137,32 @@ func ParseSupportedResources(entries []string) ([]SupportedResource, error) {
 		out = append(out, SupportedResource{GroupKind: gk, Capabilities: caps})
 	}
 	return out, nil
+}
+
+// validateGroup checks a configured group, which may name a collection. A collection whose
+// literal part is not a dotted group must name the group its members are stored under.
+func validateGroup(entry, group string) error {
+	pattern, collection, qualified := strings.Cut(group, provisioningresources.CollectionSeparator)
+	// Only the first wildcard is matched against, so a second one is a literal that nothing
+	// serves: the collection would silently expand to no members.
+	if strings.Count(pattern, provisioningresources.CollectionWildcard) > 1 {
+		return fmt.Errorf("invalid provisioning resource %q: collection %q names more than one wildcard", entry, pattern)
+	}
+	switch {
+	case qualified && !provisioningresources.IsCollection(pattern):
+		return fmt.Errorf("invalid provisioning resource %q: only a wildcard group names a collection", entry)
+	case qualified:
+		group = collection
+	case provisioningresources.IsCollection(pattern) && !provisioningresources.IsDottedCollection(pattern):
+		return fmt.Errorf("invalid provisioning resource %q: wildcard group %q must name the collection its members are stored in, e.g. %s@plugins.grafana.app",
+			entry, pattern, pattern)
+	default:
+		group = provisioningresources.CollectionGroup(pattern)
+	}
+	if !strings.Contains(group, ".") {
+		return fmt.Errorf("invalid provisioning resource %q: group %q must contain a dot", entry, group)
+	}
+	return nil
 }
 
 // supportsFolderAnnotation reports whether gvk is a supported, folder-scoped resource that
@@ -163,8 +197,42 @@ type ClientFactory interface {
 
 type clientFactory struct {
 	clientsProvider clientsProvider
-	// supportedResources is the merged base + registered set, computed once.
-	supportedResources []SupportedResource
+	// configuredResources may still name collections rather than served groups.
+	configuredResources []SupportedResource
+	// storageGroup is the group this factory's API server holds, empty for a single server that
+	// holds everything. It decides which collections are expanded here.
+	storageGroup string
+	// expanded caches the result of resolving collections through discovery.
+	expandMu sync.Mutex
+	expanded []SupportedResource
+}
+
+// holds reports whether this factory's API server stores a collection, and so expands it. A
+// factory without a storage group is the only server there is, and holds everything.
+func (f *clientFactory) holds(collection string) bool {
+	return f.storageGroup == "" || f.storageGroup == collection
+}
+
+// supportedResources resolves the configured set to served groups, caching the first success: a
+// group that starts being served later needs a restart, as installing the plugin does. A failure
+// is not cached — a cancelled or timed-out discovery would otherwise break provisioning until
+// restart — and the lock makes concurrent callers retry one at a time.
+func (f *clientFactory) supportedResources(ctx context.Context) ([]SupportedResource, error) {
+	f.expandMu.Lock()
+	defer f.expandMu.Unlock()
+	if f.expanded != nil {
+		return f.expanded, nil
+	}
+	// Expansion sees the disabled declarations too: a member declared on its own and disabled is
+	// excluded even when an active collection covers it. Discovery sees only the active ones, so
+	// a failure in a collection nobody acts on cannot fail the expansion.
+	active := activeResources(f.configuredResources)
+	expanded, err := expandCollections(ctx, discoveryKinds(f.clientsProvider, active, f.holds), f.configuredResources, f.holds)
+	if err != nil {
+		return nil, err
+	}
+	f.expanded = activeResources(expanded)
+	return f.expanded, nil
 }
 
 // TODO: Rename to NamespacedClients
@@ -212,6 +280,17 @@ func (p *singleAPIClients) onlyOnce(ctx context.Context) error {
 			return
 		}
 
+		// Wrap the transport with otelhttp so outbound requests carry W3C trace
+		// context. Without this the operator's writes to the apiserver (resource
+		// creates, folder ensures, job status updates) are leaf spans with no
+		// children — the apiserver has no incoming traceparent to continue the
+		// trace. The gRPC search path already propagates via its own interceptor.
+		// Copy first: GetRestConfig returns a shared config used by other clients.
+		restConfig = rest.CopyConfig(restConfig)
+		restConfig.Wrap(func(rt http.RoundTripper) http.RoundTripper {
+			return otelhttp.NewTransport(rt)
+		})
+
 		p.dynamic, e = dynamic.NewForConfig(restConfig)
 		if e != nil {
 			p.initErr = fmt.Errorf("create dynamic client: %w", e)
@@ -250,22 +329,30 @@ func (p *singleAPIClients) GetClientsForResource(ctx context.Context, _ schema.G
 // static SupportedProvisioningResources base set.
 func NewClientFactory(configProvider apiserver.RestConfigProvider, supported ...SupportedResource) ClientFactory {
 	return &clientFactory{
-		clientsProvider:    newSingleAPIClients(configProvider),
-		supportedResources: activeResources(defaultSupportedResources(supported)),
+		clientsProvider:     newSingleAPIClients(configProvider),
+		configuredResources: defaultSupportedResources(supported),
 	}
 }
 
 // NewClientFactoryForMultipleAPIServers creates a ClientFactory for multiple API servers.
 // The supported set behaves as described on NewClientFactory.
+//
+// Every server resolves the whole configured set, so precedence between a collection and a member
+// declared on its own is resolved the same way wherever it is resolved. Only the server that holds
+// a collection expands it: its members reach the merged set from there, and a server that holds no
+// collection asks discovery nothing, so its outage cannot fail the clients for other groups.
 func NewClientFactoryForMultipleAPIServers(configProviders map[string]apiserver.RestConfigProvider, supported ...SupportedResource) ClientFactory {
+	configured := defaultSupportedResources(supported)
 	clientFactories := make(map[string]ClientFactory)
-
 	for api, configProvider := range configProviders {
-		clientFactory := NewClientFactory(configProvider, supported...)
-		clientFactories[api] = clientFactory
+		clientFactories[api] = &clientFactory{
+			clientsProvider:     newSingleAPIClients(configProvider),
+			configuredResources: configured,
+			storageGroup:        api,
+		}
 	}
 
-	return &multiClientFactory{clientFactories: clientFactories, supportedResources: activeResources(defaultSupportedResources(supported))}
+	return &multiClientFactory{clientFactories: clientFactories, collections: collectionPatterns(configured)}
 }
 
 // activeResources returns only the active resources. Disabled resources are declared (and
@@ -290,12 +377,35 @@ func defaultSupportedResources(supported []SupportedResource) []SupportedResourc
 
 type multiClientFactory struct {
 	clientFactories map[string]ClientFactory
-	// supportedResources is the merged base + registered set, computed once.
-	supportedResources []SupportedResource
+	// collections are the configured patterns, resolving a member group onto the API server
+	// registered for its collection.
+	collections []string
+}
+
+// collectionPatterns returns the configured groups that name a collection.
+func collectionPatterns(configured []SupportedResource) []string {
+	out := make([]string, 0, len(configured))
+	for _, r := range collectionResources(configured) {
+		out = append(out, r.Group)
+	}
+	return out
+}
+
+// collectionResources returns the configured entries whose group names a collection.
+func collectionResources(configured []SupportedResource) []SupportedResource {
+	out := make([]SupportedResource, 0, len(configured))
+	for _, r := range configured {
+		if provisioningresources.IsCollection(r.Group) {
+			out = append(out, r)
+		}
+	}
+	return out
 }
 
 func (m *multiClientFactory) Clients(ctx context.Context, namespace string) (ResourceClients, error) {
 	clients := make(map[string]ResourceClients)
+	seen := sets.New[schema.GroupKind]()
+	var supported []SupportedResource
 	for group, clientFactory := range m.clientFactories {
 		c, err := clientFactory.Clients(ctx, namespace)
 		if err != nil {
@@ -303,6 +413,13 @@ func (m *multiClientFactory) Clients(ctx context.Context, namespace string) (Res
 		}
 
 		clients[group] = c
+		// A collection is expanded by whichever server actually serves its members.
+		for _, r := range c.SupportedResources() {
+			if !seen.Has(r.GroupKind) {
+				seen.Insert(r.GroupKind)
+				supported = append(supported, r)
+			}
+		}
 	}
 	if len(clients) == 0 {
 		return nil, fmt.Errorf("no client factories available")
@@ -311,15 +428,20 @@ func (m *multiClientFactory) Clients(ctx context.Context, namespace string) (Res
 	return &multiResourceClients{
 		namespace:                 namespace,
 		resourceClientsByAPIGroup: clients,
-		supportedResources:        m.supportedResources,
+		supportedResources:        supported,
+		collections:               m.collections,
 	}, nil
 }
 
 func (f *clientFactory) Clients(ctx context.Context, namespace string) (ResourceClients, error) {
+	supported, err := f.supportedResources(ctx)
+	if err != nil {
+		return nil, err
+	}
 	return &resourceClients{
 		namespace:          namespace,
 		clientsProvider:    f.clientsProvider,
-		supportedResources: f.supportedResources,
+		supportedResources: supported,
 		byKind:             make(map[schema.GroupVersionKind]*clientInfo),
 		byResource:         make(map[schema.GroupVersionResource]*clientInfo),
 	}, nil
@@ -363,7 +485,7 @@ func (c *resourceClients) ForKind(ctx context.Context, gvk schema.GroupVersionKi
 	var versionless schema.GroupVersionKind
 	if gvk.Version == "" {
 		versionless = gvk
-		gvr, gvk, err = discovery.GetPreferredVersionForKind(schema.GroupKind{
+		gvr, gvk, err = discovery.GetPreferredVersionForKind(ctx, schema.GroupKind{
 			Group: gvk.Group,
 			Kind:  gvk.Kind,
 		})
@@ -377,7 +499,7 @@ func (c *resourceClients) ForKind(ctx context.Context, gvk schema.GroupVersionKi
 			return info.client, info.gvr, nil
 		}
 	} else {
-		gvr, err = discovery.GetResourceForKind(gvk)
+		gvr, err = discovery.GetResourceForKind(ctx, gvk)
 		if err != nil {
 			return nil, schema.GroupVersionResource{}, err
 		}
@@ -417,7 +539,7 @@ func (c *resourceClients) ForResource(ctx context.Context, gvr schema.GroupVersi
 	var versionless schema.GroupVersionResource
 	if gvr.Version == "" {
 		versionless = gvr
-		gvr, gvk, err = discovery.GetPreferredVesion(schema.GroupResource{
+		gvr, gvk, err = discovery.GetPreferredVersion(ctx, schema.GroupResource{
 			Group:    gvr.Group,
 			Resource: gvr.Resource,
 		})
@@ -468,6 +590,8 @@ type multiResourceClients struct {
 	mutex                     sync.Mutex
 	resourceClientsByAPIGroup map[string]ResourceClients
 	supportedResources        []SupportedResource
+	// collections are the configured collections a member group is resolved through.
+	collections []string
 }
 
 // ForKind returns a client for a kind.
@@ -477,7 +601,7 @@ func (c *multiResourceClients) ForKind(ctx context.Context, gvk schema.GroupVers
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
-	resourceClients, ok := c.resourceClientsByAPIGroup[gvk.Group]
+	resourceClients, ok := c.clientsFor(gvk.Group)
 	if !ok {
 		return nil, schema.GroupVersionResource{}, fmt.Errorf("no clients provider for group %s", gvk.Group)
 	}
@@ -492,7 +616,7 @@ func (c *multiResourceClients) ForResource(ctx context.Context, gvr schema.Group
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
-	resourceClients, ok := c.resourceClientsByAPIGroup[gvr.Group]
+	resourceClients, ok := c.clientsFor(gvr.Group)
 	if !ok {
 		return nil, schema.GroupVersionKind{}, fmt.Errorf("no clients provider for group %s", gvr.Group)
 	}
@@ -511,6 +635,23 @@ func (c *multiResourceClients) User(ctx context.Context) (dynamic.ResourceInterf
 
 func (c *multiResourceClients) SupportedResources() []SupportedResource {
 	return c.supportedResources
+}
+
+// clientsFor resolves the API server serving a group, falling back to the one registered for its
+// collection: members are served together and cannot be enumerated up front.
+func (c *multiResourceClients) clientsFor(group string) (ResourceClients, bool) {
+	if clients, ok := c.resourceClientsByAPIGroup[group]; ok {
+		return clients, true
+	}
+	for _, pattern := range c.collections {
+		if !provisioningresources.CoversGroup(pattern, group) {
+			continue
+		}
+		if clients, ok := c.resourceClientsByAPIGroup[provisioningresources.CollectionGroup(pattern)]; ok {
+			return clients, true
+		}
+	}
+	return nil, false
 }
 
 // ForEach applies the function to each resource returned from the list operation
@@ -539,4 +680,135 @@ func ForEach(ctx context.Context, client dynamic.ResourceInterface, fn func(item
 	}
 
 	return nil
+}
+
+// nonProvisionableGroups are served groups a collection never expands to: the built-in data sources
+// hold no stored instances, so they would add an empty export list and inert settings rows.
+var nonProvisionableGroups = sets.New(
+	"grafana.datasource.grafana.app",
+	"mixed.datasource.grafana.app",
+	"dashboard.datasource.grafana.app",
+)
+
+// expandCollections turns each configured collection into one entry per API group that serves
+// the kind inside it; an entry naming a served group passes through. Discovery is the source
+// rather than the installed plugin list: a plugin can be installed without its group being served,
+// and it is the served group a client has to address.
+func expandCollections(ctx context.Context, listKinds groupKindLister, configured []SupportedResource, holds func(collection string) bool) ([]SupportedResource, error) {
+	var served []schema.GroupKind
+	var listed bool
+	// A collection may cover a group that is also declared on its own, or that another collection
+	// covers. The same group and kind twice would be listed twice, and full sync deletes the
+	// duplicate as an orphan at the same path. An explicit declaration wins, disabled included.
+	emitted := sets.New[schema.GroupKind]()
+	for _, r := range configured {
+		if !provisioningresources.IsCollection(r.Group) {
+			emitted.Insert(r.GroupKind)
+		}
+	}
+
+	out := make([]SupportedResource, 0, len(configured))
+	for _, r := range configured {
+		if !provisioningresources.IsCollection(r.Group) {
+			// Stored under the collection that holds it, however it was declared: the index
+			// counts it there, and the export quota is checked against those counts.
+			r.Collection = storingCollection(configured, r.GroupKind)
+			out = append(out, r)
+			continue
+		}
+		// A collection nobody acts on is not expanded: its members would be filtered out of the
+		// result anyway, and asking discovery for them lets an inert declaration fail the clients
+		// every active resource needs. Only a failure inside an active collection is relevant,
+		// and a provider or non-ErrGroupDiscoveryFailed error is not filtered at all.
+		//
+		// A collection another server holds is skipped for the same reason: that server expands
+		// it, and its members reach the merged set from there.
+		if !r.IsActive() || !holds(provisioningresources.CollectionGroup(r.Group)) {
+			continue
+		}
+		if !listed {
+			var err error
+			if served, err = listKinds(ctx); err != nil {
+				return nil, err
+			}
+			listed = true
+		}
+		collection := provisioningresources.CollectionGroup(r.Group)
+		for _, gk := range served {
+			if gk.Kind != r.Kind || !provisioningresources.CoversGroup(r.Group, gk.Group) || nonProvisionableGroups.Has(gk.Group) {
+				continue
+			}
+			if emitted.Has(gk) {
+				continue
+			}
+			emitted.Insert(gk)
+			out = append(out, SupportedResource{GroupKind: gk, Capabilities: r.Capabilities, Collection: collection})
+		}
+	}
+	return out, nil
+}
+
+// storingCollection returns the group a declared resource is stored under, when a configured
+// collection covers it, and empty when none does.
+func storingCollection(configured []SupportedResource, gk schema.GroupKind) string {
+	for _, r := range configured {
+		if provisioningresources.IsCollection(r.Group) && r.Kind == gk.Kind &&
+			provisioningresources.CoversGroup(r.Group, gk.Group) {
+			return provisioningresources.CollectionGroup(r.Group)
+		}
+	}
+	return ""
+}
+
+// groupKindLister lists the group/kind pairs a server serves.
+type groupKindLister func(ctx context.Context) ([]schema.GroupKind, error)
+
+// discoveryKinds lists every kind the server serves. A discovery failure outside the configured
+// collections is tolerated; one inside is not, since a member would silently go missing.
+func discoveryKinds(provider clientsProvider, configured []SupportedResource, holds func(collection string) bool) groupKindLister {
+	// Only a collection expanded here can hide a member. A group declared on its own passes
+	// through and resolves (or fails) when a client for it is taken, and a collection another
+	// server holds is that server's to report on.
+	relevant := func(group string) bool {
+		for _, r := range configured {
+			if provisioningresources.IsCollection(r.Group) &&
+				provisioningresources.CoversGroup(r.Group, group) &&
+				holds(provisioningresources.CollectionGroup(r.Group)) {
+				return true
+			}
+		}
+		return false
+	}
+
+	return func(ctx context.Context) ([]schema.GroupKind, error) {
+		_, discoveryClient, err := provider.GetClientsForKind(ctx, schema.GroupVersionKind{})
+		if err != nil {
+			return nil, fmt.Errorf("get discovery client for collection expansion: %w", err)
+		}
+		lists, err := discoveryClient.PreferredResources(ctx, relevant)
+		if err != nil {
+			return nil, fmt.Errorf("list served resources for collection expansion: %w", err)
+		}
+
+		seen := sets.New[schema.GroupKind]()
+		out := make([]schema.GroupKind, 0, len(lists))
+		for _, list := range lists {
+			gv, err := schema.ParseGroupVersion(list.GroupVersion)
+			if err != nil {
+				continue
+			}
+			for _, served := range list.APIResources {
+				// Subresources carry their parent's kind; only the resource itself is addressable.
+				if strings.Contains(served.Name, "/") {
+					continue
+				}
+				gk := schema.GroupKind{Group: gv.Group, Kind: served.Kind}
+				if !seen.Has(gk) {
+					seen.Insert(gk)
+					out = append(out, gk)
+				}
+			}
+		}
+		return out, nil
+	}
 }

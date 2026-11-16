@@ -846,6 +846,117 @@ func TestValidateJob(t *testing.T) {
 			},
 		},
 		{
+			name: "push action with a member of a configured collection",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionPush,
+					Repository: "test-repo",
+					Push: &provisioning.ExportJobOptions{
+						Resources: []provisioning.ResourceRef{
+							{Name: "ds-1", Kind: "DataSource", Group: "prometheus.datasource.grafana.app"},
+						},
+					},
+				},
+			},
+			supportedResources: []provisioning.SupportedResource{
+				{Group: "*.datasource.grafana.app", Kind: "DataSource"},
+			},
+			wantErr: false,
+		},
+		{
+			name: "push action omitting the group of a configured collection",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionPush,
+					Repository: "test-repo",
+					Push: &provisioning.ExportJobOptions{
+						Resources: []provisioning.ResourceRef{{Name: "ds-1", Kind: "DataSource"}},
+					},
+				},
+			},
+			supportedResources: []provisioning.SupportedResource{
+				{Group: "*.datasource.grafana.app", Kind: "DataSource"},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.push.resources[0].group")
+				require.Contains(t, err.Error(), "served by several groups")
+			},
+		},
+		{
+			// Filtering the disabled declaration first left the active collection covering it.
+			name: "push action with a member declared on its own and disabled",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionPush,
+					Repository: "test-repo",
+					Push: &provisioning.ExportJobOptions{
+						Resources: []provisioning.ResourceRef{
+							{Name: "ds-1", Kind: "DataSource", Group: "prometheus.datasource.grafana.app"},
+						},
+					},
+				},
+			},
+			supportedResources: []provisioning.SupportedResource{
+				{Group: "prometheus.datasource.grafana.app", Kind: "DataSource", Disabled: true},
+				{Group: "*.datasource.grafana.app", Kind: "DataSource"},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.push.resources[0].group")
+				require.Contains(t, err.Error(), "prometheus.datasource.grafana.app")
+			},
+		},
+		{
+			// Breaking on the concrete declaration accepted an empty group, which no client in
+			// the operator can route and which picks an arbitrary member in-process.
+			name: "push action omitting the group when a collection also declares the kind",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionPush,
+					Repository: "test-repo",
+					Push: &provisioning.ExportJobOptions{
+						Resources: []provisioning.ResourceRef{{Name: "ds-1", Kind: "DataSource"}},
+					},
+				},
+			},
+			supportedResources: []provisioning.SupportedResource{
+				{Group: "prometheus.datasource.grafana.app", Kind: "DataSource"},
+				{Group: "*.datasource.grafana.app", Kind: "DataSource"},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.push.resources[0].group")
+				require.Contains(t, err.Error(), "served by several groups")
+			},
+		},
+		{
+			name: "push action naming the collection group itself",
+			job: &provisioning.Job{
+				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Spec: provisioning.JobSpec{
+					Action:     provisioning.JobActionPush,
+					Repository: "test-repo",
+					Push: &provisioning.ExportJobOptions{
+						Resources: []provisioning.ResourceRef{
+							{Name: "ds-1", Kind: "DataSource", Group: "datasource.grafana.app"},
+						},
+					},
+				},
+			},
+			supportedResources: []provisioning.SupportedResource{
+				{Group: "*.datasource.grafana.app", Kind: "DataSource"},
+			},
+			wantErr: true,
+			validateError: func(t *testing.T, err error) {
+				require.Contains(t, err.Error(), "spec.push.resources[0].group")
+			},
+		},
+		{
 			name: "migrate action with wrong group for configured kind",
 			job: &provisioning.Job{
 				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
@@ -1493,6 +1604,15 @@ func TestValidateAuthor(t *testing.T) {
 			annotations: map[string]string{AnnoAuthor: "grot", AnnoAuthorID: "123", AnnoAuthorOrigin: "github"},
 		},
 		{
+			name: "create by a user whose token carries the provisioning audience",
+			ctx: identity.WithRequester(t.Context(), fakeProvisioningAuthInfo{
+				StaticRequester: requester,
+				audience:        []string{"provisioning.grafana.app"},
+			}),
+			operation:   admission.Create,
+			annotations: annotations,
+		},
+		{
 			name:            "create with mismatched id",
 			ctx:             userCtx,
 			operation:       admission.Create,
@@ -1528,13 +1648,7 @@ func TestValidateAuthor(t *testing.T) {
 			ctx:             t.Context(),
 			operation:       admission.Create,
 			annotations:     map[string]string{AnnoAuthorOrigin: "github"},
-			wantErrContains: AnnoAuthorOrigin + " must be Unknown",
-		},
-		{
-			name:        "create with only an origin and no requester is allowed",
-			ctx:         t.Context(),
-			operation:   admission.Create,
-			annotations: map[string]string{AnnoAuthorOrigin: "Unknown"},
+			wantErrContains: AnnoAuthorOrigin + " may not be set",
 		},
 		{
 			name:           "update with unchanged annotations",

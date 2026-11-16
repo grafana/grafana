@@ -16,6 +16,10 @@ set -euo pipefail
 : "${ARCH:?ARCH is required}"
 : "${GO:=go}"
 
+# Keep macOS tar from adding AppleDouble (._*) entries; extracting those on
+# Linux plants extra files inside plugin dirs, breaking signature validation.
+export COPYFILE_DISABLE=1
+
 REPO_ROOT="$(pwd)"
 # Match pkg/build/daggerbuild/packages.FileName: arm variants use arch labels like arm-6, arm-7.
 ARCH_LABEL="${ARCH}"
@@ -27,6 +31,9 @@ STAGING="${REPO_ROOT}/dist/.tar-staging"
 ROOT="grafana-${BUILD_VERSION}"
 DIR="${STAGING}/${ROOT}"
 
+# The frontend is built once, independently of the target OS/architecture.
+# Never package source public/ or silently rebuild a missing frontend.
+FRONTEND="${REPO_ROOT}/dist/frontend"
 echo "build tar.gz: ${FILENAME}"
 
 if [[ ! -d "${REPO_ROOT}/conf" ]]; then
@@ -47,6 +54,8 @@ mkdir -p "${DIR}/data"
 if [[ -d "${REPO_ROOT}/data/plugins-bundled" ]]; then
   cp -a "${REPO_ROOT}/data/plugins-bundled" "${DIR}/data/"
   find "${DIR}/data/plugins-bundled" -type d -name node_modules -print0 2>/dev/null | xargs -0 rm -rf || true
+  # Drop the local make cache stamp so it doesn't ship in packages
+  rm -f "${DIR}/data/plugins-bundled/".platform-*.stamp
 else
   mkdir -p "${DIR}/data/plugins-bundled"
 fi
@@ -64,8 +73,7 @@ cp "bin/${OS}/${ARCH}/"* "${DIR}/bin/"
 # Bundled plugins are in 'data/plugins-bundled' now.
 mkdir -p "${DIR}/plugins-bundled"
 
-cp -r public "${DIR}/public"
-find "${DIR}/public" -type d -name node_modules -print0 | xargs -0 rm -rf 2>/dev/null || true
+cp -a "${FRONTEND}" "${DIR}/public"
 
 mkdir -p dist
 (cd "${STAGING}" && tar -czf "${REPO_ROOT}/dist/${FILENAME}" "${ROOT}")

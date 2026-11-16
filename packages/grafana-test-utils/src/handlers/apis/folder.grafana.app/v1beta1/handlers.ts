@@ -4,6 +4,7 @@ import { HttpResponse, http, type HttpResponseResolver } from 'msw';
 import type {
   DescendantCounts,
   Folder,
+  FolderAccessInfo,
   FolderInfoList,
   FolderList,
   OwnerReference,
@@ -31,31 +32,76 @@ const specialCaseOwnerRef: OwnerReference[] = [
   },
 ];
 
-const folderToAppPlatform = (folder: (typeof mockTree)[number]['item'], id?: number, namespace?: string): Folder => {
-  return {
-    ...baseResponse,
+export interface FolderResourceInput {
+  uid: string;
+  title: string;
+  namespace?: string;
+  /** Becomes the `grafana.app/deprecatedInternalID` label */
+  id?: number;
+  /** Becomes the `grafana.app/folder` annotation */
+  parentUid?: string;
+  managedBy?: string;
+  managerId?: string;
+  createdBy?: string;
+  updatedBy?: string;
+  created?: string;
+  updated?: string;
+  generation?: number;
+  ownerReferences?: OwnerReference[];
+}
 
-    metadata: {
-      name: folder.uid,
-      namespace: namespace ?? 'default',
-      uid: folder.uid,
-      creationTimestamp: '2023-01-01T00:00:00Z',
-      annotations: {
-        // TODO: Generalise annotations in fixture data
-        'grafana.app/createdBy': 'user:1',
-        'grafana.app/updatedBy': 'user:2',
-        'grafana.app/managedBy': ('managedBy' in folder ? folder.managedBy : 'user') ?? 'user',
-        'grafana.app/updatedTimestamp': '2024-01-01T00:00:00Z',
-        ...(folder.kind === 'folder' && folder.parentUID ? { 'grafana.app/folder': folder.parentUID } : {}),
-      },
-      labels: {
-        'grafana.app/deprecatedInternalID': String(id ?? '123'),
-      },
-      ...(folder.uid === folderA.item.uid ? { ownerReferences: specialCaseOwnerRef } : {}),
+/** Builds a `folder.grafana.app/v1beta1` Folder resource the way the API serializes one. */
+export const buildFolderResource = ({
+  uid,
+  title,
+  namespace = 'default',
+  id = 123,
+  parentUid,
+  managedBy,
+  managerId,
+  createdBy,
+  updatedBy,
+  created = '2023-01-01T00:00:00Z',
+  updated = '2024-01-01T00:00:00Z',
+  generation,
+  ownerReferences,
+}: FolderResourceInput): Folder => ({
+  ...baseResponse,
+  metadata: {
+    name: uid,
+    namespace,
+    uid,
+    creationTimestamp: created,
+    ...(generation !== undefined ? { generation } : {}),
+    annotations: {
+      ...(createdBy ? { 'grafana.app/createdBy': createdBy } : {}),
+      ...(updatedBy ? { 'grafana.app/updatedBy': updatedBy } : {}),
+      ...(managedBy ? { 'grafana.app/managedBy': managedBy } : {}),
+      ...(managerId ? { 'grafana.app/managerId': managerId } : {}),
+      'grafana.app/updatedTimestamp': updated,
+      ...(parentUid ? { 'grafana.app/folder': parentUid } : {}),
     },
-    spec: { title: folder.title!, description: '' },
-  };
-};
+    labels: {
+      'grafana.app/deprecatedInternalID': String(id),
+    },
+    ...(ownerReferences ? { ownerReferences } : {}),
+  },
+  spec: { title, description: '' },
+});
+
+const folderToAppPlatform = (folder: (typeof mockTree)[number]['item'], id?: number, namespace?: string): Folder =>
+  buildFolderResource({
+    uid: folder.uid,
+    title: folder.title!,
+    namespace,
+    id,
+    parentUid: folder.kind === 'folder' ? folder.parentUID : undefined,
+    // TODO: Generalise annotations in fixture data
+    managedBy: ('managedBy' in folder ? folder.managedBy : 'user') ?? 'user',
+    createdBy: 'user:1',
+    updatedBy: 'user:2',
+    ownerReferences: folder.uid === folderA.item.uid ? specialCaseOwnerRef : undefined,
+  });
 
 export const BASE = '/apis/folder.grafana.app/v1beta1/namespaces/:namespace';
 export const FOLDERS = `${BASE}/folders`;
@@ -78,6 +124,55 @@ const getFolderHandler = () =>
 
     return HttpResponse.json(appPlatformFolder);
   });
+
+const fullAccess: FolderAccessInfo = {
+  ...baseResponse,
+  kind: 'FolderAccessInfo',
+  canAdmin: true,
+  canDelete: true,
+  canEdit: true,
+  canSave: true,
+  accessControl: {
+    'dashboards.permissions:write': true,
+    'dashboards:create': true,
+    'folders:write': true,
+  },
+};
+
+// The "shared with me" folder is a virtual aggregation view with nothing to act
+// on, so the backend reports no access for it.
+const noAccess: FolderAccessInfo = {
+  ...baseResponse,
+  kind: 'FolderAccessInfo',
+  canAdmin: false,
+  canDelete: false,
+  canEdit: false,
+  canSave: false,
+};
+
+const getFolderAccessHandler = () =>
+  http.get<{ folderUid: string; namespace: string }>(
+    '/apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/:folderUid/access',
+    ({ params }) => {
+      const { folderUid } = params;
+
+      // Virtual folders have no stored resource: the root folder resolves real
+      // access against the "general" scope, while "shared with me" has none.
+      if (folderUid === 'general') {
+        return HttpResponse.json(fullAccess);
+      }
+      if (folderUid === 'sharedwithme') {
+        return HttpResponse.json(noAccess);
+      }
+
+      const folder = mockTree.find(({ item }) => item.uid === folderUid);
+      if (!folder) {
+        return HttpResponse.json(folderNotFoundError, { status: 404 });
+      }
+
+      return HttpResponse.json(fullAccess);
+    }
+  );
 
 const getFolderParentsHandler = () =>
   http.get<{ folderUid: string; namespace: string }>(`${FOLDER_BY_NAME}/parents`, ({ params }) => {
@@ -308,7 +403,7 @@ export const customCreateFolderHandler = (resolver: HttpResponseResolver) => htt
 const customFolderCountsHandler = (resolver: HttpResponseResolver) =>
   http.get('/apis/folder.grafana.app/:version/namespaces/:namespace/folders/:folderUid/counts', resolver);
 
-export const mockFolderCountsHandler = (panels: number, rules: number) =>
+export const mockFolderCountsHandler = (panels: number, rules: number, recordingRules = 0, variables = 0) =>
   customFolderCountsHandler(() =>
     HttpResponse.json({
       kind: 'DescendantCounts',
@@ -316,6 +411,8 @@ export const mockFolderCountsHandler = (panels: number, rules: number) =>
       counts: [
         { group: 'sql-fallback', resource: 'library_elements', count: panels },
         { group: 'sql-fallback', resource: 'alertrules', count: rules },
+        { group: 'sql-fallback', resource: 'recordingrules', count: recordingRules },
+        { group: 'dashboard.grafana.app', resource: 'variables', count: variables },
       ],
     })
   );
@@ -326,6 +423,7 @@ export const mockFolderCountsErrorHandler = (status = 500) =>
 export default [
   getFolderListHandler(),
   getFolderHandler(),
+  getFolderAccessHandler(),
   getFolderParentsHandler(),
   createFolderHandler(),
   replaceFolderHandler(),

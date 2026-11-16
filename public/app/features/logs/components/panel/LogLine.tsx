@@ -117,6 +117,7 @@ const LogLineComponent = memo(
       dedupStrategy,
       fontSize,
       hasLogsWithErrors,
+      hasLogsWithErrorAttributes,
       hasSampledLogs,
       showLevel,
       showUniqueLabels,
@@ -128,6 +129,9 @@ const LogLineComponent = memo(
       wrapLogMessage && log.collapsed !== undefined ? log.collapsed : undefined
     );
     const logLineRef = useRef<HTMLDivElement | null>(null);
+    // TODO remove when react-use is fixed
+    // see https://github.com/streamich/react-use/issues/2612
+    // @ts-expect-error
     const intersection = useIntersection(logLineRef, {});
     const pinned = useLogIsPinned(log);
     const permalinked = useLogIsPermalinked(log);
@@ -146,9 +150,9 @@ const LogLineComponent = memo(
       const calculatedHeight = typeof height === 'number' ? height : undefined;
       const actualHeight = getLogLineDOMHeight(logLineRef.current, calculatedHeight);
       if (actualHeight) {
-        onOverflow(index, log.uid, actualHeight);
+        onOverflow(index, log.uniqueKey, actualHeight);
       }
-    }, [height, index, intersection?.isIntersecting, log.uid, onOverflow]);
+    }, [height, index, intersection?.isIntersecting, log.uniqueKey, onOverflow]);
 
     useLayoutEffect(() => {
       handleLogLineResize();
@@ -183,7 +187,7 @@ const LogLineComponent = memo(
       } else {
         setCollapsed(log.collapsed ?? undefined);
       }
-    }, [log.uid, log.collapsed, wrapLogMessage]);
+    }, [log.uniqueKey, log.collapsed, wrapLogMessage]);
 
     const handleMouseOver = useCallback(() => onLogLineHover?.(log), [log, onLogLineHover]);
 
@@ -191,7 +195,7 @@ const LogLineComponent = memo(
       const newState = !collapsed;
       log.setCollapsedState(newState);
       setCollapsed(newState);
-      onOverflow?.(index, log.uid);
+      onOverflow?.(index, log.uniqueKey);
     }, [collapsed, index, log, onOverflow]);
 
     const handleClick = useCallback(
@@ -230,7 +234,7 @@ const LogLineComponent = memo(
                     errorMessage: log.errorMessage,
                   })}
                   placement="right"
-                  theme="error"
+                  theme="info"
                 >
                   <Icon
                     className={styles.logIconError}
@@ -240,6 +244,11 @@ const LogLineComponent = memo(
                   />
                 </Tooltip>
               )}
+            </div>
+          )}
+          {hasLogsWithErrorAttributes && (
+            <div className={`${styles.hasError}`}>
+              {log.hasErrorAttributes && <LogLineErrorAttributeIcon log={log} styles={styles} />}
             </div>
           )}
           {hasSampledLogs && (
@@ -317,6 +326,28 @@ const LogLineComponent = memo(
   }
 );
 LogLineComponent.displayName = 'LogLineComponent';
+
+function LogLineErrorAttributeIcon({ log, styles }: { log: LogListModel; styles: LogLineStyles }) {
+  const copy = useMemo(
+    () =>
+      log.hasStacktrace
+        ? {
+            content: t('logs.log-line.tooltip-stacktrace', 'This log line contains a stack trace.'),
+            label: t('logs.log-line.has-stacktrace', 'Has a stack trace'),
+          }
+        : {
+            content: t('logs.log-line.tooltip-error-fields', 'This log line contains error-related fields.'),
+            label: t('logs.log-line.has-error-fields', 'Has error fields'),
+          },
+    [log.hasStacktrace]
+  );
+
+  return (
+    <Tooltip content={copy.content} placement="right" theme="info">
+      <Icon className={styles.logIconErrorFields} name="exclamation-circle" aria-label={copy.label} size="xs" />
+    </Tooltip>
+  );
+}
 
 export type LogLineTimestampResolution = 'ms' | 'ns';
 
@@ -535,23 +566,26 @@ export const getStyles = (
   }
 
   const colors = {
-    critical: '#B877D9',
+    critical: theme.visualization.getColorByName('purple'),
     error: theme.colors.error.text,
-    warning: '#FBAD37',
-    debug: '#6E9FFF',
+    warning: theme.colors.warning.text,
+    // dimgray fails WCAG AA contrast on dark backgrounds, so use a lighter gray in dark theme
+    debug: theme.isDark ? '#9e9e9e' : theme.visualization.getColorByName('dimgray'),
     trace: '#6ed0e0',
-    info: '#6E9FFF',
+    info: theme.visualization.getColorByName('blue'),
     metadata: theme.colors.text.secondary,
     default: colorDefault,
     parsedField: theme.colors.text.secondary,
     logLineBody: maxContrast,
   };
 
-  const hoverColor = tinycolor(theme.colors.background.canvas).darken(11).toRgbString();
-  const pinnedColor = tinycolor(theme.colors.info.transparent).setAlpha(0.25).toString();
-  const detailsColor = tinycolor(theme.colors.background.canvas)
-    .darken(theme.isDark ? 2 : 5)
-    .toRgbString();
+  const hoverColor = theme.isDark
+    ? tinycolor(theme.colors.background.canvas).lighten(11).toRgbString()
+    : tinycolor(theme.colors.background.canvas).darken(11).toRgbString();
+  const pinnedColor = tinycolor(theme.colors.info.background).setAlpha(0.25).toString();
+  const detailsColor = theme.isDark
+    ? tinycolor(theme.colors.background.canvas).lighten(11).toRgbString()
+    : tinycolor(theme.colors.background.canvas).darken(5).toRgbString();
 
   return {
     logLine: css({
@@ -640,7 +674,7 @@ export const getStyles = (
     }),
     currentLog: css({
       background: hoverColor,
-      fontWeight: theme.typography.fontWeightBold,
+      fontWeight: theme.flags.visualDesignRefresh ? theme.typography.fontWeightMedium : theme.typography.fontWeightBold,
       '& .log-line-menu': {
         background: hoverColor,
       },
@@ -700,6 +734,9 @@ export const getStyles = (
     }),
     logIconError: css({
       color: theme.colors.warning.main,
+    }),
+    logIconErrorFields: css({
+      color: colors.error,
     }),
     logIconInfo: css({
       color: theme.colors.info.main,

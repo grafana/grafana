@@ -50,7 +50,7 @@ func batchInsertTestPermissions(cnt int, sqlStore db.DB, actionPrefix string) er
 func TestIntegrationMigrateRemoveDeprecatedPermissions(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	logger := log.New("accesscontrol.migrator.test")
 
 	// Test 1: Basic functionality - remove deprecated permissions
@@ -91,7 +91,7 @@ func TestIntegrationMigrateRemoveDeprecatedPermissions(t *testing.T) {
 func TestIntegrationMigrateRemoveDeprecatedPermissionsEmptyDB(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	logger := log.New("accesscontrol.migrator.test")
 
 	// Run migration on empty database
@@ -110,7 +110,7 @@ func TestIntegrationMigrateRemoveDeprecatedPermissionsEmptyDB(t *testing.T) {
 func TestIntegrationMigrateRemoveDeprecatedPermissionsBatchProcessing(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	logger := log.New("accesscontrol.migrator.test")
 
 	// Set small batch size for testing
@@ -154,7 +154,7 @@ func TestIntegrationMigrateRemoveDeprecatedPermissionsBatchProcessing(t *testing
 func TestIntegrationMigrateRemoveDeprecatedPermissionsNoDeprecated(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	logger := log.New("accesscontrol.migrator.test")
 
 	// Insert only non-deprecated permissions
@@ -190,7 +190,7 @@ func TestIntegrationMigrateRemoveDeprecatedPermissionsNoDeprecated(t *testing.T)
 func TestIntegrationMigrateRemoveDeprecatedPermissionsMixedPatterns(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	sqlStore := db.InitTestDB(t)
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	logger := log.New("accesscontrol.migrator.test")
 
 	// Insert deprecated permissions

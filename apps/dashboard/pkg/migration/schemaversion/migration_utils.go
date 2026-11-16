@@ -20,6 +20,16 @@ func GetStringValue(m map[string]interface{}, key string, defaultValue ...string
 	return ""
 }
 
+func GetStringValueOrNil(m map[string]interface{}, key string) *string {
+	if value, ok := m[key]; ok {
+		if s, ok := value.(string); ok {
+			return &s
+		}
+	}
+
+	return nil
+}
+
 // GetBoolValue safely extracts a boolean value from a map, returning false if not found or not a boolean
 func GetBoolValue(m map[string]interface{}, key string) bool {
 	if value, ok := m[key]; ok {
@@ -91,6 +101,32 @@ func ConvertToInt(value interface{}) (int, bool) {
 		return int(v), true
 	default:
 		return 0, false
+	}
+}
+
+// IsTruthy reports whether value is truthy using the same rules as JavaScript,
+// so migrations that mirror the frontend treat 0, "", false and null/absent
+// values as falsy while any other value (including objects and arrays) is truthy.
+func IsTruthy(value interface{}) bool {
+	switch v := value.(type) {
+	case nil:
+		return false
+	case bool:
+		return v
+	case string:
+		return v != ""
+	case float64:
+		return v != 0
+	case float32:
+		return v != 0
+	case int:
+		return v != 0
+	case int64:
+		return v != 0
+	case int32:
+		return v != 0
+	default:
+		return true
 	}
 }
 

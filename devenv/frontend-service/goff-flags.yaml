@@ -56,9 +56,16 @@ frontendService.reducedBootDataAPI:
 grafana.frontendLegacyAPIHandling:
   variations:
     off: 'off'
-    alert: 'alert'
+    log: 'log'
     block: 'block'
   defaultRule:
     variation: off
   metadata:
     public: "true"
+
+frontend.disableGrafanaLive:
+  variations:
+    enabled: true
+    disabled: false
+  defaultRule:
+    variation: disabled

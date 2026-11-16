@@ -1,9 +1,9 @@
 import { HttpResponse } from 'msw';
-import { act, render, screen, testWithFeatureToggles, userEvent, waitFor, within } from 'test/test-utils';
+import { act, render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
 import { type NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { reportInteraction, setBackendSrv } from '@grafana/runtime';
+import { config, reportInteraction, setBackendSrv } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import {
   customGetUserPreferencesHandler,
@@ -22,6 +22,7 @@ import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { MegaMenu } from './MegaMenu';
 import { customisableNavTree, nestedNavTree } from './__mocks__/fixtures';
 import { HIDDEN_ITEMS_STORAGE_KEY, SECTION_ORDER_STORAGE_KEY } from './hooks';
+import { HIDDEN_NAV_ITEMS } from './utils';
 
 // The org switcher fetches user orgs on mount when signed in, which is irrelevant here.
 jest.mock('../OrganizationSwitcher/OrganizationSwitcher', () => ({
@@ -52,7 +53,7 @@ const STARRED_DASHBOARD = {
 const setupSearcher = (items = [STARRED_DASHBOARD]) => {
   const search = jest.fn(({ name }: { name: string[] }) => {
     const rows = items.filter((d) => name.includes(d.uid));
-    return Promise.resolve({ view: { length: rows.length, get: (i: number) => rows[i] } });
+    return Promise.resolve({ view: { length: rows.length, get: (i: number) => rows[i], toArray: () => rows } });
   });
   jest.mocked(getGrafanaSearcher).mockReturnValue({ search } as unknown as ReturnType<typeof getGrafanaSearcher>);
 };
@@ -140,6 +141,71 @@ describe('MegaMenu', () => {
 
     expect(await screen.findByRole('link', { name: 'Section name' })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Home' })).not.toBeInTheDocument();
+  });
+
+  describe('information architecture refresh exclusions', () => {
+    let originalAppSubUrl: string;
+
+    beforeEach(() => {
+      originalAppSubUrl = config.appSubUrl;
+      HIDDEN_NAV_ITEMS.add('child2');
+      HIDDEN_NAV_ITEMS.add('dashboards/playlists');
+    });
+
+    afterEach(() => {
+      config.appSubUrl = originalAppSubUrl;
+      HIDDEN_NAV_ITEMS.delete('child2');
+      HIDDEN_NAV_ITEMS.delete('dashboards/playlists');
+    });
+
+    it.each(['', '/grafana'])(
+      'hides plugin URL keys while preserving ID keys under subpath "%s"',
+      async (appSubUrl) => {
+        config.appSubUrl = appSubUrl;
+        setTestFlags({ 'grafana.navigationInfoArchRefresh': true });
+        const { user } = renderMegaMenu({
+          navBarTree: [
+            {
+              id: 'plugin-page-grafana-adaptive-metrics-app',
+              text: 'Adaptive Metrics',
+              url: `${appSubUrl}/a/grafana-adaptive-metrics-app/overview`,
+              children: [
+                { text: 'Configuration', url: `${appSubUrl}/a/grafana-adaptive-metrics-app/configuration` },
+                { id: 'dashboards/playlists', text: 'Playlists', url: `${appSubUrl}/playlists` },
+                { text: 'Customizations', url: `${appSubUrl}/a/grafana-adaptive-metrics-app/customizations` },
+              ],
+            },
+            { id: 'home', text: 'Home', url: `${appSubUrl}/` },
+          ],
+        });
+
+        await user.click(await screen.findByRole('button', { name: 'Expand section: Adaptive Metrics' }));
+
+        expect(screen.getByRole('link', { name: 'Customizations' })).toBeInTheDocument();
+        expect(screen.queryByRole('link', { name: 'Configuration' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('link', { name: 'Playlists' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('link', { name: 'Home' })).not.toBeInTheDocument();
+      }
+    );
+
+    it.each([false, true])(
+      'applies hard-coded exclusions only when the refresh flag is enabled: %s',
+      async (enabled) => {
+        setTestFlags({ 'grafana.navigationInfoArchRefresh': enabled });
+        const { user } = renderMegaMenu({ navBarTree: nestedNavTree });
+
+        await user.click(await screen.findByRole('button', { name: 'Expand section: Section name' }));
+        await user.click(screen.getByRole('button', { name: 'Expand section: Child1' }));
+
+        expect(screen.getByRole('link', { name: 'Grandchild1' })).toBeInTheDocument();
+        if (enabled) {
+          expect(screen.queryByRole('link', { name: 'Child2' })).not.toBeInTheDocument();
+        } else {
+          expect(screen.getByRole('link', { name: 'Child2' })).toBeInTheDocument();
+        }
+        expect(screen.queryByRole('link', { name: 'Home' })).not.toBeInTheDocument();
+      }
+    );
   });
 
   describe('customisation', () => {
@@ -284,12 +350,12 @@ describe('MegaMenu', () => {
     });
 
     describe('pinning', () => {
-      const pinnedRegion = () => within(screen.getByRole('list', { name: 'Pinned' }));
+      const pinnedRegion = () => within(screen.getByRole('list', { name: 'Pinned items' }));
 
       it('shows a pinned child as a breadcrumb in the grey box, and keeps it in the nav', async () => {
         const { user } = renderMegaMenu({ bookmarkUrls: ['/playlists'] });
 
-        await screen.findByRole('list', { name: 'Pinned' });
+        await screen.findByRole('list', { name: 'Pinned items' });
         // The box shows the breadcrumb "Dashboards › Playlists" as a single link with an ancestor crumb.
         expect(pinnedRegion().getByRole('link', { name: /Playlists/ })).toBeInTheDocument();
         expect(pinnedRegion().getByText('Dashboards')).toBeInTheDocument();
@@ -305,7 +371,7 @@ describe('MegaMenu', () => {
         renderMegaMenu();
 
         await screen.findByRole('link', { name: 'Explore' });
-        expect(screen.queryByRole('list', { name: 'Pinned' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('list', { name: 'Pinned items' })).not.toBeInTheDocument();
       });
 
       it('pins a child from the nav into the box, staged and persisted on Done', async () => {
@@ -319,7 +385,7 @@ describe('MegaMenu', () => {
         await user.click(pin!);
 
         expect(
-          within(await screen.findByRole('list', { name: 'Pinned' })).getByRole('link', { name: /Playlists/ })
+          within(await screen.findByRole('list', { name: 'Pinned items' })).getByRole('link', { name: /Playlists/ })
         ).toBeInTheDocument();
 
         await user.click(screen.getByRole('button', { name: 'Done' }));
@@ -360,7 +426,7 @@ describe('MegaMenu', () => {
 
         await waitFor(() => expect(mockUserPreferences.navbar?.bookmarkUrls).toEqual(['/dashboards']));
         // Shows in the box as a single breadcrumb quick-link…
-        const pinned = within(await screen.findByRole('list', { name: 'Pinned' }));
+        const pinned = within(await screen.findByRole('list', { name: 'Pinned items' }));
         expect(pinned.getByRole('link', { name: 'Dashboards' })).toBeInTheDocument();
         // …and still appears in the nav below (pinning duplicates, it doesn't move).
         expect(screen.getAllByRole('link', { name: 'Dashboards' }).length).toBeGreaterThanOrEqual(2);
@@ -390,7 +456,7 @@ describe('MegaMenu', () => {
 
         await waitFor(() => expect(mockUserPreferences.navbar?.bookmarkUrls).toEqual(['/dashboards?starred']));
         // The box expands the pin into one breadcrumb line per starred dashboard ("Starred › <name>").
-        const pinned = within(await screen.findByRole('list', { name: 'Pinned' }));
+        const pinned = within(await screen.findByRole('list', { name: 'Pinned items' }));
         expect(await pinned.findByRole('link', { name: new RegExp(STARRED_DASHBOARD.name) })).toBeInTheDocument();
         expect(pinned.getByText('Starred')).toBeInTheDocument();
       });
@@ -427,7 +493,7 @@ describe('MegaMenu', () => {
         await user.click(screen.getByRole('button', { name: 'Done' }));
 
         await waitFor(() => expect(mockUserPreferences.navbar?.bookmarkUrls).toEqual([]));
-        await waitFor(() => expect(screen.queryByRole('list', { name: 'Pinned' })).not.toBeInTheDocument());
+        await waitFor(() => expect(screen.queryByRole('list', { name: 'Pinned items' })).not.toBeInTheDocument());
       });
 
       it('keeps the collapsible Bookmarks section when the flag is off, skipping orphaned urls', async () => {
@@ -471,7 +537,7 @@ describe('MegaMenu', () => {
       it('offers the unpin control only while editing', async () => {
         const { user } = renderMegaMenu({ bookmarkUrls: ['/playlists'] });
 
-        await screen.findByRole('list', { name: 'Pinned' });
+        await screen.findByRole('list', { name: 'Pinned items' });
         // Outside edit mode the box is read-only — no unpin control.
         const before = screen.getAllByRole('button', { hidden: true }).map((b) => b.getAttribute('aria-label'));
         expect(before).not.toContain('Unpin Playlists');
@@ -494,14 +560,14 @@ describe('MegaMenu', () => {
         const { user } = renderMegaMenu({ hiddenItemIds: ['explore'], bookmarkUrls: ['/playlists'] });
 
         await user.click(await screen.findByRole('button', { name: 'Customise navigation' }));
-        expect(screen.getByRole('list', { name: 'Pinned' })).toBeInTheDocument();
+        expect(screen.getByRole('list', { name: 'Pinned items' })).toBeInTheDocument();
 
         await user.click(
           await screen.findByRole('button', { name: 'Reset navigation - show all items, unpin all and reset order' })
         );
         // Staged, not saved — the box clears in the preview but the stored pins are untouched
         expect(mockUserPreferences.navbar?.bookmarkUrls).toEqual(['/playlists']);
-        expect(screen.queryByRole('list', { name: 'Pinned' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('list', { name: 'Pinned items' })).not.toBeInTheDocument();
 
         await user.click(screen.getByRole('button', { name: 'Done' }));
         expect(getStoredHiddenItems()).toEqual([]);
@@ -576,44 +642,96 @@ describe('MegaMenu', () => {
     });
   });
 
-  describe('when starredFolders is enabled', () => {
-    testWithFeatureToggles({ enable: ['starsFromAPIServer', 'foldersAppPlatformAPI'] });
-
-    // Flag cleanup is handled by the outer afterEach (act-wrapped, since setTestFlags fires
-    // OpenFeature events into the still-mounted menu).
+  describe('empty Starred and Bookmarks sections', () => {
     beforeEach(() => {
-      setTestFlags({ 'grafana.starredFolders': true });
+      setTestFlags({ 'grafana.navigationInfoArchRefresh': true });
+      contextSrv.isSignedIn = true;
+      contextSrv.user.isSignedIn = true;
     });
 
-    it('renders a starred folder and a same-named starred dashboard as two distinct, per-kind-iconed rows', async () => {
-      const dashUid = dashbdE.item.uid;
-      const folderUid = folderB.item.uid;
-      // A folder and a dashboard that share a display name — only the icon tells them apart.
-      setMockStarredDashboards([dashUid]);
-      setMockStarredFolders([folderUid]);
-      setupSearcher([
-        { uid: dashUid, name: 'Shared Name', url: `/d/${dashUid}`, kind: 'dashboard' },
-        { uid: folderUid, name: 'Shared Name', url: `/dashboards/f/${folderUid}`, kind: 'folder' },
-      ]);
+    afterEach(() => {
+      contextSrv.isSignedIn = false;
+      contextSrv.user.isSignedIn = false;
+    });
 
-      const { user } = renderMegaMenu();
+    it('keeps both empty sections when the refresh flag is off', async () => {
+      setTestFlags({ 'grafana.navigationInfoArchRefresh': false });
+      setMockStarredDashboards([]);
+      renderMegaMenu();
 
-      await user.click(await screen.findByRole('button', { name: 'Expand section: Starred' }));
+      expect(await screen.findByRole('link', { name: 'Bookmarks' })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'Starred' })).toBeInTheDocument();
+    });
 
-      // The real sync replaces the placeholder Starred child with both starred items.
-      const starredSection = () => within(screen.getByRole('link', { name: 'Starred' }).closest('li')!);
-      await waitFor(() => {
-        expect(starredSection().getAllByRole('link', { name: 'Shared Name' })).toHaveLength(2);
+    it('hides both sections when nothing is starred or bookmarked', async () => {
+      setMockStarredDashboards([]);
+      renderMegaMenu();
+
+      expect(await screen.findByRole('link', { name: 'Explore' })).toBeInTheDocument();
+      await waitFor(() => expect(screen.queryByRole('link', { name: 'Starred' })).not.toBeInTheDocument());
+      expect(screen.queryByRole('link', { name: 'Bookmarks' })).not.toBeInTheDocument();
+    });
+
+    it('shows Starred when something is starred', async () => {
+      renderMegaMenu();
+
+      expect(await screen.findByRole('button', { name: 'Expand section: Starred' })).toBeInTheDocument();
+    });
+
+    it('keeps Starred visible with its error state when the starred fetch fails', async () => {
+      jest.mocked(getGrafanaSearcher).mockReturnValue({
+        search: jest.fn(() => Promise.reject(new Error('boom'))),
+      } as unknown as ReturnType<typeof getGrafanaSearcher>);
+      const { user } = renderMegaMenu({
+        navBarTree: customisableNavTree.map((item) => (item.id === 'starred' ? { ...item, children: [] } : item)),
       });
 
-      // Same name, but the per-kind icons make the two rows distinguishable.
-      expect(starredSection().getByTestId('icon-apps')).toBeInTheDocument();
-      expect(starredSection().getByTestId('icon-folder')).toBeInTheDocument();
-
-      // The icons also expose the kind as an accessible title (which lifts Icon's aria-hidden),
-      // so screen readers don't hear the two rows as identical links.
-      expect(starredSection().getByTitle('Dashboard')).toBe(starredSection().getByTestId('icon-apps'));
-      expect(starredSection().getByTitle('Folder')).toBe(starredSection().getByTestId('icon-folder'));
+      await user.click(await screen.findByRole('button', { name: 'Expand section: Starred' }));
+      expect(await screen.findByText('Failed to load items')).toBeInTheDocument();
     });
+
+    it('shows Bookmarks when a bookmark matches a nav item', async () => {
+      renderMegaMenu({ bookmarkUrls: ['/explore'] });
+
+      expect(await screen.findByRole('button', { name: 'Expand section: Bookmarks' })).toBeInTheDocument();
+    });
+
+    it('hides Bookmarks when the only bookmarks match no nav item', async () => {
+      renderMegaMenu({ bookmarkUrls: ['/orphaned-not-in-nav'] });
+
+      expect(await screen.findByRole('link', { name: 'Explore' })).toBeInTheDocument();
+      await waitFor(() => expect(screen.queryByRole('link', { name: 'Bookmarks' })).not.toBeInTheDocument());
+    });
+  });
+
+  it('renders a starred folder and a same-named starred dashboard as two distinct, per-kind-iconed rows', async () => {
+    const dashUid = dashbdE.item.uid;
+    const folderUid = folderB.item.uid;
+    // A folder and a dashboard that share a display name — only the icon tells them apart.
+    setMockStarredDashboards([dashUid]);
+    setMockStarredFolders([folderUid]);
+    setupSearcher([
+      { uid: dashUid, name: 'Shared Name', url: `/d/${dashUid}`, kind: 'dashboard' },
+      { uid: folderUid, name: 'Shared Name', url: `/dashboards/f/${folderUid}`, kind: 'folder' },
+    ]);
+
+    const { user } = renderMegaMenu();
+
+    await user.click(await screen.findByRole('button', { name: 'Expand section: Starred' }));
+
+    // The real sync replaces the placeholder Starred child with both starred items.
+    const starredSection = () => within(screen.getByRole('link', { name: 'Starred' }).closest('li')!);
+    await waitFor(() => {
+      expect(starredSection().getAllByRole('link', { name: 'Shared Name' })).toHaveLength(2);
+    });
+
+    // Same name, but the per-kind icons make the two rows distinguishable.
+    expect(starredSection().getByTestId('icon-apps')).toBeInTheDocument();
+    expect(starredSection().getByTestId('icon-folder')).toBeInTheDocument();
+
+    // The icons also expose the kind as an accessible title (which lifts Icon's aria-hidden),
+    // so screen readers don't hear the two rows as identical links.
+    expect(starredSection().getByTitle('Dashboard')).toBe(starredSection().getByTestId('icon-apps'));
+    expect(starredSection().getByTitle('Folder')).toBe(starredSection().getByTestId('icon-folder'));
   });
 });

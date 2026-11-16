@@ -51,6 +51,13 @@ export interface UseGenericSavedSearchesResult {
    */
   renameSearch: (id: string, newName: string) => Promise<void>;
   /**
+   * Replace the query of an existing saved search, leaving its name and default status untouched.
+   * Does nothing if no saved search has the given ID.
+   * @param id - The ID of the search to update
+   * @param query - The new query string
+   */
+  updateSearch: (id: string, query: string) => Promise<void>;
+  /**
    * Delete a saved search by ID.
    * @param id - The ID of the search to delete
    */
@@ -291,6 +298,23 @@ export function useGenericSavedSearches(config: SavedSearchesConfig): UseGeneric
   );
 
   /**
+   * Replace a saved search's query in place.
+   */
+  const updateSearch = useCallback(
+    async (id: string, query: string): Promise<void> => {
+      if (!savedSearches.some((s) => s.id === id)) {
+        return;
+      }
+
+      const newSearches = savedSearches.map((s) => (s.id === id ? { ...s, query } : s));
+
+      await persistSearches(newSearches);
+      setSavedSearches(newSearches);
+    },
+    [savedSearches, persistSearches]
+  );
+
+  /**
    * Delete a saved search by ID.
    */
   const deleteSearch = useCallback(
@@ -334,6 +358,7 @@ export function useGenericSavedSearches(config: SavedSearchesConfig): UseGeneric
     isLoading,
     saveSearch,
     renameSearch,
+    updateSearch,
     deleteSearch,
     setDefaultSearch,
   };

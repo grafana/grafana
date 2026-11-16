@@ -3,7 +3,7 @@ import { render, screen, waitFor } from 'test/test-utils';
 
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { ALERTING_API_SERVER_BASE_URL, getK8sResponse } from 'app/features/alerting/unified/mocks/server/utils';
-import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/constants';
 import { DOCS_URL_INHIBITION_RULES } from 'app/features/alerting/unified/utils/docs';
 
 import { InhibitionRulesAlert } from './InhibitionRulesAlert';
@@ -12,7 +12,7 @@ const server = setupMswServer();
 
 function setInhibitionRulesResponse(items: Array<{ name: string; equal?: string[] }>) {
   const k8sItems = items.map((item) => ({
-    apiVersion: 'notifications.alerting.grafana.app/v0alpha1',
+    apiVersion: 'notifications.alerting.grafana.app/v1beta1',
     kind: 'InhibitionRule',
     metadata: { name: item.name, namespace: 'default' },
     spec: { equal: item.equal ?? ['alertname'] },

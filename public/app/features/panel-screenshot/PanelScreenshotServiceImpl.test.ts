@@ -211,10 +211,9 @@ describe('PanelScreenshotServiceImpl', () => {
   ])('throws when sceneContext is %s', async (_label, badValue) => {
     mountPanelElement(PANEL_PATH_ID);
 
-    await expect(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      service.capture(PANEL_PATH_ID, { sceneContext: badValue as any })
-    ).rejects.toThrow(/sceneContext must be a SceneObject/);
+    await expect(service.capture(PANEL_PATH_ID, { sceneContext: badValue })).rejects.toThrow(
+      /sceneContext must be a SceneObject/
+    );
 
     expect(syncGetPanelPluginMock).not.toHaveBeenCalled();
     expect(htmlToImageToBlobMock).not.toHaveBeenCalled();

@@ -271,7 +271,7 @@ func TestClampLabelSet(t *testing.T) {
 				require.Equal(t, "X", result.Labels.Get("alertname"))
 			})
 
-			clamped := am.manager.metrics.clampedStrings
+			clamped := am.manager.metrics.truncatedStrings
 			require.Equal(t, float64(1), testutil.ToFloat64(clamped.WithLabelValues("annotation", "value_truncated")))
 			require.Equal(t, float64(1), testutil.ToFloat64(clamped.WithLabelValues("annotation", "name_dropped")))
 			require.Equal(t, float64(1), testutil.ToFloat64(clamped.WithLabelValues("label", "value_truncated")))

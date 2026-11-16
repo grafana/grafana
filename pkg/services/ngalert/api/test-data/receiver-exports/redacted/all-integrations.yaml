@@ -747,6 +747,7 @@ contactPoints:
         - uid: telegram-uid
           type: telegram
           settings:
+            api_url: http://localhost:8081/telegram
             bottoken: '[REDACTED]'
             chatid: "12345678"
             disable_notifications: true
@@ -800,6 +801,7 @@ contactPoints:
             message_thread_id: "13579"
             parse_mode: html
             protect_content: true
+            send_message_as_caption: true
           disableResolveMessage: true
         - uid: threema-uid
           type: threema
@@ -962,6 +964,7 @@ contactPoints:
           type: webhook
           settings:
             authorization_scheme: basic
+            headers: null
             hmacConfig:
                 header: X-Grafana-Alerting-Signature
                 secret: '[REDACTED]'
@@ -992,6 +995,9 @@ contactPoints:
             maxAlerts: "2"
             message: test-message
             password: '[REDACTED]'
+            payload:
+                template: ""
+                vars: null
             title: test-title
             tlsConfig:
                 caCertificate: '[REDACTED]'

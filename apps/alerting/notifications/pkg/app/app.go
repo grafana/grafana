@@ -31,6 +31,7 @@ func New(cfg app.Config) (app.App, error) {
 		Name:       "alerting.notification",
 		KubeConfig: cfg.KubeConfig,
 		Converters: map[schema.GroupKind]simple.Converter{
+			{Group: apiGroup, Kind: v1beta1.ConfigKind().Kind()}:         converter,
 			{Group: apiGroup, Kind: v1beta1.ReceiverKind().Kind()}:       converter,
 			{Group: apiGroup, Kind: v1beta1.RoutingTreeKind().Kind()}:    converter,
 			{Group: apiGroup, Kind: v1beta1.TemplateGroupKind().Kind()}:  converter,
@@ -62,6 +63,10 @@ func New(cfg app.Config) (app.App, error) {
 			{Kind: v0alpha1.RoutingTreeKind()},
 			{Kind: v0alpha1.TemplateGroupKind()},
 			{Kind: v0alpha1.TimeIntervalKind()},
+			{
+				Kind:      v1beta1.ConfigKind(),
+				Validator: newConfigValidator(customCfg),
+			},
 			{Kind: v1beta1.InhibitionRuleKind()},
 			{
 				Kind: v1beta1.ReceiverKind(),

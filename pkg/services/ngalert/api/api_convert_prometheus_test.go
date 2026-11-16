@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.yaml.in/yaml/v3"
 
+	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -31,7 +32,7 @@ import (
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/merge"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -42,6 +43,116 @@ import (
 const (
 	existingDSUID = "test-ds"
 )
+
+func TestRouteConvertPrometheusPostRuleGroups_ExternalRulerSyncGate(t *testing.T) {
+	group := apimodels.PrometheusRuleGroup{
+		Name:  "g",
+		Rules: []apimodels.PrometheusRule{{Alert: "A", Expr: "up == 0"}},
+	}
+
+	const managedFolderUID = "managed-folder"
+
+	// postToFolder issues an import whose working folder is folderUID (via the
+	// folder header), so the folder-scoped gate can be exercised per case.
+	postToFolder := func(srv *ConvertPrometheusSrv, folderUID string) response.Response {
+		rc := createRequestCtx()
+		rc.Req.Header.Set(folderUIDHeader, folderUID)
+		return srv.RouteConvertPrometheusPostRuleGroup(rc, "test", group)
+	}
+
+	t.Run("allows when ruler sync is not configured", func(t *testing.T) {
+		srv, _, _ := createConvertPrometheusSrv(t, withRulerSync(fakeRulerSyncChecker{
+			configured:     false,
+			managedFolders: map[string]bool{managedFolderUID: true},
+		}))
+		resp := postToFolder(srv, managedFolderUID)
+		require.Equal(t, http.StatusAccepted, resp.Status())
+	})
+
+	t.Run("allows when configured but import targets a non-managed folder", func(t *testing.T) {
+		srv, _, _ := createConvertPrometheusSrv(t, withRulerSync(fakeRulerSyncChecker{
+			configured:     true,
+			managedFolders: map[string]bool{managedFolderUID: true},
+		}))
+		resp := postToFolder(srv, "some-other-folder")
+		require.Equal(t, http.StatusAccepted, resp.Status())
+	})
+
+	t.Run("rejects with 409 when configured and import targets the managed folder", func(t *testing.T) {
+		srv, _, _ := createConvertPrometheusSrv(t, withRulerSync(fakeRulerSyncChecker{
+			configured:     true,
+			managedFolders: map[string]bool{managedFolderUID: true},
+		}))
+		resp := postToFolder(srv, managedFolderUID)
+		require.Equal(t, http.StatusConflict, resp.Status())
+		require.Contains(t, string(resp.Body()), "external ruler sync")
+	})
+}
+
+func TestRouteConvertPrometheusDelete_ExternalRulerSyncGate(t *testing.T) {
+	const managedFolderUID = "managed-folder"
+	sync := withRulerSync(fakeRulerSyncChecker{
+		configured:     true,
+		managedFolders: map[string]bool{managedFolderUID: true},
+	})
+
+	t.Run("DeleteNamespace rejects with 409 in the managed folder", func(t *testing.T) {
+		srv, _, _ := createConvertPrometheusSrv(t, sync)
+		rc := createRequestCtx()
+		rc.Req.Header.Set(folderUIDHeader, managedFolderUID)
+		resp := srv.RouteConvertPrometheusDeleteNamespace(rc, "test-ns")
+		require.Equal(t, http.StatusConflict, resp.Status())
+		require.Contains(t, string(resp.Body()), "external ruler sync")
+	})
+
+	t.Run("DeleteRuleGroup rejects with 409 in the managed folder", func(t *testing.T) {
+		srv, _, _ := createConvertPrometheusSrv(t, sync)
+		rc := createRequestCtx()
+		rc.Req.Header.Set(folderUIDHeader, managedFolderUID)
+		resp := srv.RouteConvertPrometheusDeleteRuleGroup(rc, "test-ns", "test-group")
+		require.Equal(t, http.StatusConflict, resp.Status())
+		require.Contains(t, string(resp.Body()), "external ruler sync")
+	})
+}
+
+func TestRouteConvertPrometheus_ExternalRulerSyncGate_ResolvedFolder(t *testing.T) {
+	group := apimodels.PrometheusRuleGroup{
+		Name:  "g",
+		Rules: []apimodels.PrometheusRule{{Alert: "A", Expr: "up == 0"}},
+	}
+	// A namespace set to the sync root's own title, imported/deleted with no folder
+	// header, resolves straight to the top-level managed folder — the gate must catch
+	// that even though the working (root) folder isn't itself managed.
+	const syncRootTitle = "[Alerting] External Ruler Sync (test-ds)"
+	const managedUID = "sync-root-uid"
+
+	setup := func(t *testing.T) *ConvertPrometheusSrv {
+		srv, _, ruleStore := createConvertPrometheusSrv(t, withRulerSync(fakeRulerSyncChecker{
+			configured:     true,
+			managedFolders: map[string]bool{managedUID: true},
+		}))
+		ruleStore.Folders[1] = append(ruleStore.Folders[1], &folder.Folder{
+			UID:       managedUID,
+			Title:     syncRootTitle,
+			ParentUID: folder.LegacyRootFolderUID, //nolint:staticcheck
+		})
+		return srv
+	}
+
+	t.Run("POST resolving to the managed folder by namespace title is rejected", func(t *testing.T) {
+		srv := setup(t)
+		resp := srv.RouteConvertPrometheusPostRuleGroup(createRequestCtx(), syncRootTitle, group)
+		require.Equal(t, http.StatusConflict, resp.Status())
+		require.Contains(t, string(resp.Body()), "external ruler sync")
+	})
+
+	t.Run("DELETE resolving to the managed folder by namespace title is rejected", func(t *testing.T) {
+		srv := setup(t)
+		resp := srv.RouteConvertPrometheusDeleteNamespace(createRequestCtx(), syncRootTitle)
+		require.Equal(t, http.StatusConflict, resp.Status())
+		require.Contains(t, string(resp.Body()), "external ruler sync")
+	})
+}
 
 func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 	simpleGroup := apimodels.PrometheusRuleGroup{
@@ -238,7 +349,7 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 		acFake := &acfakes.FakeRuleService{}
 		srv, _, _ := createConvertPrometheusSrv(t, withFakeAccessControlRuleService(acFake))
 
-		acFake.AuthorizeRuleChangesFunc = func(context.Context, identity.Requester, *store.GroupDelta) error {
+		acFake.AuthorizeRuleChangesFunc = func(context.Context, identity.Requester, *rulestore.GroupDelta) error {
 			return datasources.ErrDataSourceAccessDenied
 		}
 
@@ -446,6 +557,105 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 				require.Contains(t, string(response.Body()), tc.expectedError)
 			})
 		}
+	})
+
+	t.Run("exec err state header", func(t *testing.T) {
+		errStatesByTitle := func(t *testing.T, ruleStore *fakes.RuleStore) map[string]models.ExecutionErrorState {
+			t.Helper()
+			rules, err := ruleStore.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{OrgID: 1})
+			require.NoError(t, err)
+			result := make(map[string]models.ExecutionErrorState, len(rules))
+			for _, r := range rules {
+				result[r.Title] = r.ExecErrState
+			}
+			return result
+		}
+
+		t.Run("without the header alert rules keep OK", func(t *testing.T) {
+			srv, _, ruleStore := createConvertPrometheusSrv(t)
+			rc := createRequestCtx()
+
+			response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
+			require.Equal(t, http.StatusAccepted, response.Status())
+
+			states := errStatesByTitle(t, ruleStore)
+			require.Equal(t, models.OkErrState, states["TestAlert"])
+		})
+
+		for _, state := range []models.ExecutionErrorState{models.OkErrState, models.AlertingErrState, models.ErrorErrState, models.KeepLastErrState} {
+			t.Run("sets "+string(state)+" on alert rules and not on recording rules", func(t *testing.T) {
+				srv, _, ruleStore := createConvertPrometheusSrv(t)
+				rc := createRequestCtx()
+				rc.Req.Header.Set(execErrStateHeader, string(state))
+
+				response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
+				require.Equal(t, http.StatusAccepted, response.Status())
+
+				states := errStatesByTitle(t, ruleStore)
+				require.Equal(t, state, states["TestAlert"])
+				require.Equal(t, models.OkErrState, states["recorded-metric"])
+			})
+		}
+
+		t.Run("applies to every alert rule of a multi-group request", func(t *testing.T) {
+			srv, _, ruleStore := createConvertPrometheusSrv(t)
+			rc := createRequestCtx()
+			rc.Req.Header.Set(execErrStateHeader, string(models.KeepLastErrState))
+
+			second := simpleGroup
+			second.Name = "Second Group"
+			second.Rules = []apimodels.PrometheusRule{{Alert: "SecondAlert", Expr: "up == 1"}}
+
+			response := srv.RouteConvertPrometheusPostRuleGroups(rc, map[string][]apimodels.PrometheusRuleGroup{"test": {simpleGroup, second}})
+			require.Equal(t, http.StatusAccepted, response.Status())
+
+			states := errStatesByTitle(t, ruleStore)
+			require.Equal(t, models.KeepLastErrState, states["TestAlert"])
+			require.Equal(t, models.KeepLastErrState, states["SecondAlert"])
+		})
+
+		t.Run("re-import with a different value updates the stored rule", func(t *testing.T) {
+			srv, _, ruleStore := createConvertPrometheusSrv(t)
+
+			rc := createRequestCtx()
+			response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
+			require.Equal(t, http.StatusAccepted, response.Status())
+			require.Equal(t, models.OkErrState, errStatesByTitle(t, ruleStore)["TestAlert"])
+
+			rc = createRequestCtx()
+			rc.Req.Header.Set(execErrStateHeader, string(models.KeepLastErrState))
+			response = srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
+			require.Equal(t, http.StatusAccepted, response.Status())
+
+			var updated *models.AlertRule
+			for _, op := range ruleStore.RecordedOps {
+				if updates, ok := op.([]models.UpdateRule); ok {
+					for _, u := range updates {
+						if u.New.Title == "TestAlert" {
+							require.Equal(t, models.OkErrState, u.Existing.ExecErrState)
+							updated = &u.New
+						}
+					}
+				}
+			}
+			require.NotNil(t, updated, "the alert rule should be updated by the second import")
+			require.Equal(t, models.KeepLastErrState, updated.ExecErrState)
+		})
+
+		t.Run("invalid values return 400 and store nothing", func(t *testing.T) {
+			for _, value := range []string{"keeplast", "KEEPLAST", "Normal", "NoData"} {
+				t.Run(value, func(t *testing.T) {
+					srv, _, ruleStore := createConvertPrometheusSrv(t)
+					rc := createRequestCtx()
+					rc.Req.Header.Set(execErrStateHeader, value)
+
+					response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
+					require.Equal(t, http.StatusBadRequest, response.Status())
+					require.Contains(t, string(response.Body()), "Invalid value for header X-Grafana-Alerting-Exec-Err-State")
+					require.Empty(t, errStatesByTitle(t, ruleStore))
+				})
+			}
+		})
 	})
 
 	t.Run("with empty rule group name should return 400", func(t *testing.T) {
@@ -1728,6 +1938,7 @@ type convertPrometheusSrvOptions struct {
 	featureToggles               featuremgmt.FeatureToggles
 	alertmanager                 Alertmanager
 	folderService                folder.Service
+	rulerSync                    externalRulerSyncChecker
 }
 
 type convertPrometheusSrvOptionsFunc func(*convertPrometheusSrvOptions)
@@ -1762,6 +1973,29 @@ func withAlertmanager(am Alertmanager) convertPrometheusSrvOptionsFunc {
 	}
 }
 
+func withRulerSync(checker externalRulerSyncChecker) convertPrometheusSrvOptionsFunc {
+	return func(opts *convertPrometheusSrvOptions) {
+		opts.rulerSync = checker
+	}
+}
+
+type fakeRulerSyncChecker struct {
+	configured     bool
+	err            error
+	managedFolders map[string]bool
+}
+
+func (f fakeRulerSyncChecker) IsConfiguredForOrg(context.Context, int64) (bool, error) {
+	return f.configured, f.err
+}
+
+func (f fakeRulerSyncChecker) IsManagedFolder(_ context.Context, _ int64, folderUID string) (bool, error) {
+	if f.err != nil {
+		return false, f.err
+	}
+	return f.managedFolders[folderUID], nil
+}
+
 func withFolderService(f folder.Service) convertPrometheusSrvOptionsFunc {
 	return func(opts *convertPrometheusSrvOptions) {
 		opts.folderService = f
@@ -1780,6 +2014,7 @@ func createConvertPrometheusSrv(t *testing.T, opts ...convertPrometheusSrvOption
 		fakeAccessControlRuleService: &acfakes.FakeRuleService{},
 		quotaChecker:                 quotas,
 		folderService:                foldertest.NewFakeService(),
+		rulerSync:                    fakeRulerSyncChecker{},
 	}
 
 	for _, opt := range opts {
@@ -1809,6 +2044,7 @@ func createConvertPrometheusSrv(t *testing.T, opts ...convertPrometheusSrvOption
 		log.New("test"),
 		&provisioning.NotificationSettingsValidatorProviderFake{},
 		options.fakeAccessControlRuleService,
+		provisioning.NoopRuleMutationValidator{},
 	)
 
 	cfg := &setting.UnifiedAlertingSettings{
@@ -1818,7 +2054,7 @@ func createConvertPrometheusSrv(t *testing.T, opts ...convertPrometheusSrvOption
 		},
 	}
 
-	srv := NewConvertPrometheusSrv(cfg, log.NewNopLogger(), ruleStore, dsCache, alertRuleService, options.featureToggles, options.alertmanager, nil)
+	srv := NewConvertPrometheusSrv(cfg, log.NewNopLogger(), ruleStore, dsCache, alertRuleService, options.featureToggles, options.alertmanager, nil, options.rulerSync)
 
 	return srv, dsCache, ruleStore
 }
@@ -1994,6 +2230,26 @@ func TestRouteConvertPrometheusPostAlertmanagerConfig(t *testing.T) {
 
 	ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
 	srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
+
+	for _, tc := range []struct {
+		name   string
+		header string
+	}{
+		{name: "import"},
+		{name: "dry run", header: dryRunHeader},
+		{name: "promote", header: promoteHeader},
+	} {
+		t.Run("rejects unknown fields on "+tc.name, func(t *testing.T) {
+			rc := createRequestCtx()
+			if tc.header != "" {
+				rc.Req.Header.Set(tc.header, "true")
+			}
+			response := srv.RouteConvertPrometheusPostAlertmanagerConfig(rc, apimodels.AlertmanagerUserConfig{
+				AlertmanagerConfig: "route: {receiver: default}\nreceivers:\n  - name: default\n    foo_configs: [{}]",
+			})
+			require.Equal(t, http.StatusBadRequest, response.Status())
+		})
+	}
 
 	t.Run("should parse headers and call SaveAndApplyExtraConfiguration", func(t *testing.T) {
 		mockAM.On("SaveAndApplyExtraConfiguration", mock.Anything, int64(1), mock.Anything, mock.Anything, mock.MatchedBy(func(extraConfig v1.ExtraConfiguration) bool {
@@ -2203,6 +2459,7 @@ func TestRouteConvertPrometheusPostAlertmanagerConfig(t *testing.T) {
 
 		rc := createRequestCtx()
 		rc.Req.Header.Set(configIdentifierHeader, identifier)
+		rc.Req.Header.Set(configForceReplaceHeader, "true")
 
 		amCfg := apimodels.AlertmanagerUserConfig{
 			AlertmanagerConfig: `{"route":{"receiver":"default"},"receivers":[{"name":"default"}]}`,
@@ -2624,4 +2881,55 @@ func TestRouteConvertPrometheusPromoteAlertmanagerConfig(t *testing.T) {
 
 		require.Equal(t, http.StatusNotImplemented, response.Status())
 	})
+}
+
+func TestGrafanaNamespacesToPrometheus(t *testing.T) {
+	// mimirtool does not support nested folders, so the exported namespace is the
+	// leaf folder title parsed from the (escaped) folder fullpath. Escaped separators
+	// within a title must be unescaped and must not be treated as path separators
+	// (filepath.Base would mishandle these, especially on Windows where "\" splits).
+	tests := []struct {
+		name           string
+		folderFullpath string
+		wantNamespace  string
+	}{
+		{
+			name:           "single folder",
+			folderFullpath: "production",
+			wantNamespace:  "production",
+		},
+		{
+			name:           "nested folder uses the leaf title",
+			folderFullpath: "grafana/some folder/production",
+			wantNamespace:  "production",
+		},
+		{
+			// leaf folder titled "team/prod" (slash escaped as "\/" in the fullpath)
+			name:           "leaf title containing a slash is preserved",
+			folderFullpath: `grafana/team\/prod`,
+			wantNamespace:  "team/prod",
+		},
+		{
+			// leaf folder titled "team\ops" (backslash escaped as "\\" in the fullpath)
+			name:           "leaf title containing a backslash is preserved",
+			folderFullpath: `grafana/team\\ops`,
+			wantNamespace:  `team\ops`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			groups := []models.AlertRuleGroupWithFolderFullpath{
+				{
+					AlertRuleGroup: &models.AlertRuleGroup{Title: "group-1"},
+					FolderFullpath: tt.folderFullpath,
+				},
+			}
+
+			result, err := grafanaNamespacesToPrometheus(groups)
+			require.NoError(t, err)
+			require.Len(t, result, 1)
+			require.Contains(t, result, tt.wantNamespace)
+		})
+	}
 }

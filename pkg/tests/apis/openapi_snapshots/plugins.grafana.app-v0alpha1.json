@@ -1747,6 +1747,22 @@
               },
               "additionalProperties": false
             }
+          },
+          "skills": {
+            "description": "Bundled Markdown skills keyed by plugin-local slug.",
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "required": [
+                "path"
+              ],
+              "properties": {
+                "path": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
+            }
           }
         },
         "additionalProperties": false
@@ -2059,6 +2075,10 @@
             }
           },
           "skipDataQuery": {
+            "type": "boolean"
+          },
+          "skipDefaultQuery": {
+            "description": "@alpha Suppress automatic starter queries without disabling explicit queries.",
             "type": "boolean"
           },
           "state": {

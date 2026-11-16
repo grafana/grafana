@@ -58,11 +58,11 @@ export const CursorView = ({ eventBus }: Props) => {
     );
   }
 
-  const { type, payload, origin } = event;
+  const { type, payload, origin }: typeof event & { origin?: EventBus & { path?: string[] } } = event;
   return (
     <CustomScrollbar autoHeightMin="100%" autoHeightMax="100%">
       {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
-      <h3>event.origin: {(origin as any)?.path}</h3>
+      <h3>event.origin: {origin?.path}</h3>
       {/* eslint-disable-next-line @grafana/i18n/no-untranslated-strings */}
       <span>event.type: {type}</span>
       {Boolean(payload) && (

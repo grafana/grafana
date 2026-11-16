@@ -3,6 +3,7 @@ import { type FC } from 'react';
 import { Controller, type DeepMap, type FieldError, useFormContext } from 'react-hook-form';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import {
   Checkbox,
@@ -90,21 +91,7 @@ export const OptionField: FC<Props> = ({
 
   const labelText = option.element !== 'checkbox' && option.element !== 'radio' ? option.label : undefined;
 
-  const label = shouldShowProtectedIndicator ? (
-    <Stack direction="row" alignItems="center" gap={0.5}>
-      <Tooltip
-        content={t(
-          'alerting.receivers.protected.field.description',
-          'This field is protected and can only be edited by users with elevated permissions'
-        )}
-      >
-        <Icon size="sm" name="lock" data-testid="lock-icon" />
-      </Tooltip>
-      {labelText}
-    </Stack>
-  ) : (
-    labelText
-  );
+  const label = shouldShowProtectedIndicator ? <ProtectedFieldLabel label={labelText} /> : labelText;
 
   return (
     <Field
@@ -112,7 +99,7 @@ export const OptionField: FC<Props> = ({
       description={option.description || undefined}
       invalid={!!error}
       error={error?.message}
-      data-testid={`${pathPrefix}${option.propertyName}`}
+      data-testid={selectors.pages.Alerting.ContactPointForm.settingsField(`${pathPrefix}${option.propertyName}`)}
     >
       <OptionInput
         id={`${pathPrefix}${option.propertyName}`}
@@ -134,6 +121,22 @@ export interface ConfiguredSecureFieldProps {
   id: string;
   readOnly: boolean;
   onReset: () => void;
+}
+
+export function ProtectedFieldLabel({ label }: { label?: string }) {
+  return (
+    <Stack direction="row" alignItems="center" gap={0.5}>
+      <Tooltip
+        content={t(
+          'alerting.receivers.protected.field.description',
+          'This field is protected and can only be edited by users with elevated permissions'
+        )}
+      >
+        <Icon size="sm" name="lock" data-testid="lock-icon" />
+      </Tooltip>
+      {label}
+    </Stack>
+  );
 }
 
 export function ConfiguredSecretInput({ id, readOnly, onReset }: ConfiguredSecureFieldProps) {

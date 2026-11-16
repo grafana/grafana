@@ -12,6 +12,10 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/trace/noop"
+	"pgregory.net/rapid"
+
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher"
@@ -20,9 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/storage/secret/encryption"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
-	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/otel/trace/noop"
-	"pgregory.net/rapid"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 func TestEncryptedValueStoreImpl(t *testing.T) {
@@ -244,7 +246,10 @@ func TestEncryptedValueStoreImpl(t *testing.T) {
 	})
 }
 
-func TestEncryptedValueStoreUpdateBulk(t *testing.T) {
+// TestIntegrationEncryptedValueStoreUpdateBulk runs on every database: the
+// bulk update is a dialect-sensitive statement.
+func TestIntegrationEncryptedValueStoreUpdateBulk(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	t.Parallel()
 
 	t.Run("bulk update across multiple namespaces leaves all retrievable and decryptable", func(t *testing.T) {
@@ -357,7 +362,7 @@ func TestEncryptedValueStoreUpdateBulk(t *testing.T) {
 		for i := 1; i <= 5; i++ {
 			ev, err := sut.EncryptedValueStorage.Create(ctx, ns, fmt.Sprintf("name-%d", i), int64(i), contracts.EncryptedPayload{
 				DataKeyID:     "key",
-				EncryptedData: []byte(fmt.Sprintf("data-%d", i)),
+				EncryptedData: fmt.Appendf(nil, "data-%d", i),
 			})
 			require.NoError(t, err)
 			created = append(created, ev)
@@ -368,29 +373,34 @@ func TestEncryptedValueStoreUpdateBulk(t *testing.T) {
 		storeWithCount, err := encryption.ProvideEncryptedValueStorage(countingDB, noop.NewTracerProvider().Tracer("test"))
 		require.NoError(t, err)
 
-		updates := make([]contracts.BulkUpdateRow, len(created))
-		for i, ev := range created {
-			updates[i] = contracts.BulkUpdateRow{
-				Name:    ev.Name,
-				Version: ev.Version,
-				Payload: contracts.EncryptedPayload{DataKeyID: ev.DataKeyID, EncryptedData: ev.EncryptedData},
+		// Each call writes new data: MySQL test connections count changed rows,
+		// not matched ones, so rewriting the same values would affect none.
+		updatesFor := func(call int) []contracts.BulkUpdateRow {
+			updates := make([]contracts.BulkUpdateRow, len(created))
+			for i, ev := range created {
+				updates[i] = contracts.BulkUpdateRow{
+					Name:    ev.Name,
+					Version: ev.Version,
+					Payload: contracts.EncryptedPayload{DataKeyID: ev.DataKeyID, EncryptedData: fmt.Appendf(nil, "data-%d-call-%d", i, call)},
+				}
 			}
+			return updates
 		}
 
 		// Chunk size 2 => ceil(5/2) = 3 Exec calls
-		err = storeWithCount.UpdateBulk(ctx, ns, updates, 2)
+		err = storeWithCount.UpdateBulk(ctx, ns, updatesFor(1), 2)
 		require.NoError(t, err)
 		require.Equal(t, 3, countingDB.execCount, "expected 3 ExecContext calls for 5 rows with chunk size 2")
 
 		// Chunk size 5 => 1 Exec call
 		countingDB.execCount = 0
-		err = storeWithCount.UpdateBulk(ctx, ns, updates, 5)
+		err = storeWithCount.UpdateBulk(ctx, ns, updatesFor(2), 5)
 		require.NoError(t, err)
 		require.Equal(t, 1, countingDB.execCount, "expected 1 ExecContext call for 5 rows with chunk size 5")
 
 		// Chunk size 10 => 1 Exec call (single chunk)
 		countingDB.execCount = 0
-		err = storeWithCount.UpdateBulk(ctx, ns, updates, 10)
+		err = storeWithCount.UpdateBulk(ctx, ns, updatesFor(3), 10)
 		require.NoError(t, err)
 		require.Equal(t, 1, countingDB.execCount, "expected 1 ExecContext call when chunk size larger than batch")
 	})

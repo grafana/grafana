@@ -1,5 +1,6 @@
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
+import { config } from '../../config';
 import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 import { type BackendSrv, setBackendSrv } from '../backendSrv';
 import { getLogger, setLogger } from '../logging/registry';
@@ -8,6 +9,7 @@ import {
   getListedPanelPluginIds,
   getListedPanelPluginMetas,
   getPanelPluginMeta,
+  getPanelPluginMetaSync,
   getPanelPluginMetas,
   getPanelPluginMetasMap,
   getPanelPluginMetasMapSync,
@@ -51,6 +53,13 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
       setPanelPluginMetas({});
       jest.resetAllMocks();
       initPluginMetasMock.mockResolvedValue({ items: [v0alpha1Response.items[0]] });
+      setLogger('grafana/runtime.plugins.meta', {
+        logDebug: jest.fn(),
+        logError: jest.fn(),
+        logInfo: jest.fn(),
+        logMeasurement: jest.fn(),
+        logWarning: jest.fn(),
+      });
     });
 
     it('getPanelPluginMetas should call initPluginMetas and return correct result', async () => {
@@ -74,29 +83,29 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
       expect(initPluginMetasMock).toHaveBeenCalledTimes(1);
     });
 
-    it('getPanelPluginMetasMapSync should return empty map', () => {
+    it('getPanelPluginMetasMapSync should return empty map and report an error', () => {
       const panels = getPanelPluginMetasMapSync();
+
+      const logError = jest.mocked(getLogger('grafana/runtime.plugins.meta').logError);
 
       expect(panels).toEqual({});
       expect(initPluginMetasMock).not.toHaveBeenCalled();
+      expect(logError).toHaveBeenCalledTimes(1);
+      expect(logError.mock.calls[0][0].message).toBe(
+        'PluginMeta: getPanelPluginMetasMapSync() was called before the panel plugins map was initialized'
+      );
     });
 
-    describe('when process is under development', () => {
-      let originalNodeEnv = process.env.NODE_ENV;
-      beforeEach(() => {
-        process.env.NODE_ENV = 'development';
-      });
+    it('getPanelPluginMetaSync should return null and report an error', () => {
+      const result = getPanelPluginMetaSync('alertlist');
+      const logError = jest.mocked(getLogger('grafana/runtime.plugins.meta').logError);
 
-      afterEach(() => {
-        process.env.NODE_ENV = originalNodeEnv;
-      });
-
-      it('getPanelPluginMetasMapSync should throw', () => {
-        expect(() => getPanelPluginMetasMapSync()).toThrow(
-          new Error('getPanelPluginMetasMapSync() was called before panel plugins map was initialized!')
-        );
-        expect(initPluginMetasMock).not.toHaveBeenCalled();
-      });
+      expect(result).toBeNull();
+      expect(initPluginMetasMock).not.toHaveBeenCalled();
+      expect(logError).toHaveBeenCalledTimes(1);
+      expect(logError.mock.calls[0][0].message).toBe(
+        'PluginMeta: getPanelPluginMetaSync() was called before the panel plugins map was initialized'
+      );
     });
 
     it('getPanelPluginMeta should call initPluginMetas and return correct result', async () => {
@@ -168,7 +177,7 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
         expect(getLogger('grafana/runtime.plugins.meta').logWarning).toHaveBeenCalledTimes(1);
         expect(getLogger('grafana/runtime.plugins.meta').logWarning).toHaveBeenCalledWith(
           'PluginMeta: plugin meta yielded an empty result so Grafana is falling back to bootdata',
-          { pluginType: 'panel' }
+          { pluginType: 'panel', requestUrl: 'apis/plugins.grafana.app/v0alpha1/namespaces/default/metas' }
         );
       });
 
@@ -180,7 +189,52 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
           expect(getLogger('grafana/runtime.plugins.meta').logWarning).toHaveBeenCalledTimes(1);
           expect(getLogger('grafana/runtime.plugins.meta').logWarning).toHaveBeenCalledWith(
             'PluginMeta: plugin meta yielded an empty result so Grafana is falling back to bootdata',
-            { pluginType: 'panel' }
+            { pluginType: 'panel', requestUrl: 'apis/plugins.grafana.app/v0alpha1/namespaces/default/metas' }
+          );
+        }
+      );
+    });
+
+    describe('and initPluginMetas or refetchPluginMetas returns null because plugin metas failed to load', () => {
+      beforeEach(() => {
+        jest.resetAllMocks();
+        // can't use mockLogger here because that would cause a circular dependency between @grafana/runtime and @grafana/test-utils
+        setLogger('grafana/runtime.plugins.meta', {
+          logDebug: jest.fn(),
+          logError: jest.fn(),
+          logInfo: jest.fn(),
+          logMeasurement: jest.fn(),
+          logWarning: jest.fn(),
+        });
+        initPluginMetasMock.mockResolvedValue(null);
+        refetchPluginMetasMock.mockResolvedValue(null);
+      });
+
+      it.each([
+        { func: getPanelPluginMetas },
+        { func: getListedPanelPluginMetas },
+        { func: getPanelPluginMetasMap },
+        { func: getListedPanelPluginIds },
+        { func: refetchPanelPluginMetas },
+      ])(`when func:$func is called then an error warning should be logged`, async ({ func }) => {
+        await func();
+
+        expect(getLogger('grafana/runtime.plugins.meta').logWarning).toHaveBeenCalledTimes(1);
+        expect(getLogger('grafana/runtime.plugins.meta').logWarning).toHaveBeenCalledWith(
+          'PluginMeta: plugin meta failed to load so Grafana is falling back to bootdata',
+          { pluginType: 'panel', requestUrl: 'apis/plugins.grafana.app/v0alpha1/namespaces/default/metas' }
+        );
+      });
+
+      it.each([{ func: getPanelPluginMeta }, { func: isPanelPluginInstalled }, { func: getPanelPluginVersion }])(
+        `when func:$func is called then an error warning should be logged`,
+        async ({ func }) => {
+          await func('');
+
+          expect(getLogger('grafana/runtime.plugins.meta').logWarning).toHaveBeenCalledTimes(1);
+          expect(getLogger('grafana/runtime.plugins.meta').logWarning).toHaveBeenCalledWith(
+            'PluginMeta: plugin meta failed to load so Grafana is falling back to bootdata',
+            { pluginType: 'panel', requestUrl: 'apis/plugins.grafana.app/v0alpha1/namespaces/default/metas' }
           );
         }
       );
@@ -226,22 +280,11 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
       expect(initPluginMetasMock).not.toHaveBeenCalled();
     });
 
-    describe('when process is under development', () => {
-      let originalNodeEnv = process.env.NODE_ENV;
-      beforeEach(() => {
-        process.env.NODE_ENV = 'development';
-      });
+    it('getPanelPluginMetaSync should return correct result', () => {
+      const result = getPanelPluginMetaSync('grafana-test-panel');
 
-      afterEach(() => {
-        process.env.NODE_ENV = originalNodeEnv;
-      });
-
-      it('getPanelPluginMetasMapSync should not throw', () => {
-        const panels = getPanelPluginMetasMapSync();
-
-        expect(panels).toEqual({ 'grafana-test-panel': panel });
-        expect(initPluginMetasMock).not.toHaveBeenCalled();
-      });
+      expect(result).toEqual(panel);
+      expect(initPluginMetasMock).not.toHaveBeenCalled();
     });
 
     it('getPanelPluginMeta should not call initPluginMetas and return correct result', async () => {
@@ -415,6 +458,35 @@ describe('when plugins.useMTPlugins flag is disabled', () => {
       expect(panels).toEqual({});
       expect(initPluginMetasMock).not.toHaveBeenCalled();
     });
+
+    /* eslint-disable @grafana/no-config-panels -- boot data is the input under test here */
+    describe('and bootdata carries panels', () => {
+      const originalConfigPanels = config.panels;
+
+      beforeEach(() => {
+        config.panels = { 'grafana-test-panel': panel };
+        setLogger('grafana/runtime.plugins.meta', {
+          logDebug: jest.fn(),
+          logError: jest.fn(),
+          logInfo: jest.fn(),
+          logMeasurement: jest.fn(),
+          logWarning: jest.fn(),
+        });
+      });
+
+      afterEach(() => {
+        config.panels = originalConfigPanels;
+      });
+
+      it('getPanelPluginMetasMapSync should seed from bootdata without reporting an error', () => {
+        const panels = getPanelPluginMetasMapSync();
+
+        expect(panels).toEqual({ 'grafana-test-panel': panel });
+        expect(initPluginMetasMock).not.toHaveBeenCalled();
+        expect(getLogger('grafana/runtime.plugins.meta').logError).not.toHaveBeenCalled();
+      });
+    });
+    /* eslint-enable @grafana/no-config-panels */
 
     it('getPanelPluginMeta should not call initPluginMetas and return correct result', async () => {
       const result = await getPanelPluginMeta('grafana-test-panel');
@@ -665,6 +737,17 @@ describe('immutability', () => {
     expect(panels['grafana-test-panel'].info.links).toHaveLength(0);
   });
 
+  it('getPanelPluginMetaSync should return a deep clone', () => {
+    const mutatedPanel = getPanelPluginMetaSync('grafana-test-panel')!;
+
+    mutatedPanel.info.author.name = '';
+    mutatedPanel.info.links.push({ name: '', url: '' });
+
+    const result = getPanelPluginMetaSync('grafana-test-panel')!;
+    expect(result.info.author.name).toEqual('Grafana');
+    expect(result.info.links).toEqual([]);
+  });
+
   it('getPanelPluginMeta should return a deep clone', async () => {
     const mutatedApp = await getPanelPluginMeta('grafana-test-panel');
 
@@ -688,5 +771,20 @@ describe('immutability', () => {
     expect(result).toBeDefined();
     expect(result!.info.author.name).toEqual('Grafana');
     expect(result!.info.links).toHaveLength(0);
+  });
+});
+
+describe('Text query capabilities', () => {
+  afterEach(() => {
+    setTestFlags({});
+    setPanelPluginMetas({});
+  });
+
+  it.each([true, false])('only opts Text v2 into empty queries (v2=%s)', (enabled) => {
+    setTestFlags({ 'grafana.newTextPanel': enabled });
+    setPanelPluginMetas({ text: { ...panel, id: 'text', skipDataQuery: true } });
+    const meta = getPanelPluginMetasMapSync().text;
+    expect(meta.skipDataQuery).toBe(!enabled);
+    expect(meta.skipDefaultQuery).toBe(enabled ? true : undefined);
   });
 });

@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"net/http"
-	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -15,6 +15,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	authlib "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	sdkproxy "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
@@ -28,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/awsexternalid"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -63,6 +65,7 @@ type Service struct {
 	pluginClient              plugins.Client
 	basePluginContextProvider plugincontext.BasePluginContextProvider
 	retriever                 DataSourceRetriever
+	permissionsDeleter        datasources.PermissionsDeleter
 
 	ptc proxyTransportCache
 }
@@ -84,6 +87,7 @@ func ProvideService(
 	quotaService quota.Service, pluginStore pluginstore.Store, pluginClient plugins.Client,
 	basePluginContextProvider plugincontext.BasePluginContextProvider,
 	retriever DataSourceRetriever,
+	permissionsDeleter datasources.PermissionsDeleter,
 ) (*Service, error) {
 	dslogger := log.New("datasources")
 	store := &SqlStore{db: db, logger: dslogger, features: features}
@@ -104,6 +108,7 @@ func ProvideService(
 		pluginClient:              pluginClient,
 		basePluginContextProvider: basePluginContextProvider,
 		retriever:                 retriever,
+		permissionsDeleter:        permissionsDeleter,
 	}
 
 	ac.RegisterScopeAttributeResolver(NewNameScopeResolver(store))
@@ -150,7 +155,7 @@ func NewNameScopeResolver(db DataSourceRetriever) (string, accesscontrol.ScopeAt
 			return nil, accesscontrol.ErrInvalidScope
 		}
 
-		query := datasources.GetDataSourceQuery{Name: dsName, OrgID: orgID}
+		query := datasources.GetDataSourceQuery{Name: dsName, OrgID: orgID} //nolint:staticcheck // Preserve legacy field compatibility.
 		dataSource, err := db.GetDataSource(ctx, &query)
 		if err != nil {
 			return nil, err
@@ -179,7 +184,7 @@ func NewIDScopeResolver(db DataSourceRetriever) (string, accesscontrol.ScopeAttr
 			return nil, accesscontrol.ErrInvalidScope
 		}
 
-		query := datasources.GetDataSourceQuery{ID: dsID, OrgID: orgID}
+		query := datasources.GetDataSourceQuery{ID: dsID, OrgID: orgID} //nolint:staticcheck // Preserve legacy field compatibility.
 		dataSource, err := db.GetDataSource(ctx, &query)
 		if err != nil {
 			return nil, err
@@ -279,26 +284,8 @@ func (s *Service) ListConnections(ctx context.Context, query queryV0.DataSourceC
 			return nil, err
 		}
 		if ds != nil {
-			// If both name+plugin exist, we need to verify the type
-			if query.Plugin != "" && ds.Type != query.Plugin {
-				p, _ := s.pluginStore.Plugin(ctx, ds.Type)
-				if !(slices.Contains(p.AliasIDs, query.Plugin)) {
-					return result, nil
-				}
-			}
 			dss = []*datasources.DataSource{ds} // will check authz before returning
 		}
-	} else if query.Plugin != "" {
-		q := &datasources.GetDataSourcesByTypeQuery{
-			OrgID: ns.OrgID,
-			Type:  query.Plugin,
-		}
-		p, found := s.pluginStore.Plugin(ctx, query.Plugin)
-		if !found {
-			return nil, fmt.Errorf("plugin %s not found", query.Plugin)
-		}
-		q.AliasIDs = p.AliasIDs
-		dss, err = s.SQLStore.GetDataSourcesByType(ctx, q) // Authz NOT applied
 	} else {
 		dss, err = s.GetDataSources(ctx, &datasources.GetDataSourcesQuery{
 			OrgID:           ns.OrgID,
@@ -327,12 +314,19 @@ func (s *Service) ListConnections(ctx context.Context, query queryV0.DataSourceC
 }
 
 func (s *Service) asConnection(ds *datasources.DataSource) (*queryV0.DataSourceConnection, error) {
+	var labels map[string]string
+	if ds.IsDefault {
+		labels = map[string]string{
+			"default": "true",
+		}
+	}
+
 	return &queryV0.DataSourceConnection{
-		Title:      ds.Name,
-		APIGroup:   fmt.Sprintf("%s.datasource.grafana.app", ds.Type),
-		APIVersion: "v0alpha1", // TODO, get this from the plugin
-		Name:       ds.UID,
-		Plugin:     ds.Type,
+		Title:    ds.Name,
+		APIGroup: fmt.Sprintf("%s.datasource.grafana.app", ds.Type),
+		Name:     ds.UID,
+		Plugin:   ds.Type,
+		Labels:   labels,
 	}, nil
 }
 
@@ -596,8 +590,13 @@ func getAvailableName(dsType string, dataSources []*datasources.DataSource) stri
 	return name
 }
 
+// ProvideNilPermissionsDeleter is the default wiring: no deleter, so the SQL permission cleanup runs.
+func ProvideNilPermissionsDeleter() datasources.PermissionsDeleter {
+	return nil
+}
+
 func (s *Service) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteDataSourceCommand) error {
-	return s.db.InTransaction(ctx, func(ctx context.Context) error {
+	err := s.db.InTransaction(ctx, func(ctx context.Context) error {
 		cmd.UpdateSecretFn = func() error {
 			return s.SecretsStore.Del(ctx, cmd.OrgID, cmd.Name, kvstore.DataSourceSecretType)
 		}
@@ -606,8 +605,23 @@ func (s *Service) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteD
 			return err
 		}
 
+		if s.permissionsDeleter != nil {
+			return nil
+		}
 		return s.permissionsService.DeleteResourcePermissions(ctx, cmd.OrgID, cmd.UID)
 	})
+	if err != nil || s.permissionsDeleter == nil {
+		return err
+	}
+
+	// No caller wraps DeleteDataSource in an outer transaction, so the deletion has committed here and the
+	// cleanup must not be canceled with the request.
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), datasources.PermissionsDeleteTimeout)
+	defer cancel()
+	if err := s.permissionsDeleter.DeletePermissions(ctx, request.GetNamespaceMapper(s.cfg)(cmd.OrgID), cmd.UID); err != nil {
+		s.logger.Error("Failed to delete datasource permissions", "error", err)
+	}
+	return nil
 }
 
 func (s *Service) decryptSecureJsonDataFn(ctx context.Context) func(ds *datasources.DataSource) (map[string]string, error) {
@@ -623,7 +637,7 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 		var err error
 
 		query := &datasources.GetDataSourceQuery{
-			ID:    cmd.ID,
+			ID:    cmd.ID, //nolint:staticcheck // Preserve legacy field compatibility.
 			UID:   cmd.UID,
 			OrgID: cmd.OrgID,
 		}
@@ -698,7 +712,7 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 
 		if cmd.Name != "" && cmd.Name != dataSource.Name {
 			query := &datasources.GetDataSourceQuery{
-				Name:  cmd.Name,
+				Name:  cmd.Name, //nolint:staticcheck // Preserve legacy field compatibility.
 				OrgID: cmd.OrgID,
 			}
 			exist, err := s.SQLStore.GetDataSource(ctx, query)
@@ -869,9 +883,7 @@ func (s *Service) httpClientOptions(ctx context.Context, ds *datasources.DataSou
 		opts.CustomOptions = ds.JsonDataMap()
 		// allow the plugin sdk to get the json data in JSONDataFromHTTPClientOptions
 		deepJsonDataCopy := make(map[string]any, len(opts.CustomOptions))
-		for k, v := range opts.CustomOptions {
-			deepJsonDataCopy[k] = v
-		}
+		maps.Copy(deepJsonDataCopy, opts.CustomOptions)
 		opts.CustomOptions["grafanaData"] = deepJsonDataCopy
 	}
 	if ds.BasicAuth {
@@ -904,9 +916,9 @@ func (s *Service) httpClientOptions(ctx context.Context, ds *datasources.DataSou
 			},
 			Timeouts: &sdkproxy.DefaultTimeoutOptions,
 			ClientCfg: &sdkproxy.ClientCfg{
-				ClientCert:    s.cfg.SecureSocksDSProxy.ClientCertFilePath,
-				ClientKey:     s.cfg.SecureSocksDSProxy.ClientKeyFilePath,
-				RootCAs:       s.cfg.SecureSocksDSProxy.RootCAFilePaths,
+				ClientCert:    s.cfg.SecureSocksDSProxy.ClientCertFilePath, //nolint:staticcheck // Continue supporting certificate paths from the proxy configuration.
+				ClientKey:     s.cfg.SecureSocksDSProxy.ClientKeyFilePath,  //nolint:staticcheck // Continue supporting certificate paths from the proxy configuration.
+				RootCAs:       s.cfg.SecureSocksDSProxy.RootCAFilePaths,    //nolint:staticcheck // Continue supporting certificate paths from the proxy configuration.
 				ClientCertVal: s.cfg.SecureSocksDSProxy.ClientCert,
 				ClientKeyVal:  s.cfg.SecureSocksDSProxy.ClientKey,
 				RootCAsVals:   s.cfg.SecureSocksDSProxy.RootCAs,

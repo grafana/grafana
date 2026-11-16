@@ -15,12 +15,12 @@ labels:
 menuTitle: Template variables
 title: OpenTSDB template variables
 weight: 300
-last_reviewed: 2026-01-28
+review_date: 2026-08-11
 ---
 
 # OpenTSDB template variables
 
-Instead of hard-coding server, application, and sensor names in your metric queries, you can use template variables. Variables appear as drop-down menus at the top of the dashboard, making it easy to change the data being displayed without editing queries.
+Instead of hard-coding server, application, and sensor names in your metric queries, you can use template variables. Variables appear as drop-down menus at the top of the dashboard, so you can change the data being displayed without editing queries.
 
 For an introduction to template variables, refer to the [Variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/variables/) documentation.
 
@@ -46,7 +46,8 @@ The `tag_names` and `tag_values` functions use the OpenTSDB lookup API, which re
 
 To create a query variable:
 
-1. Navigate to the dashboard you want to update and click **Edit**.
+1. Navigate to the dashboard you want to update.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Click the **Add new element** icon (blue plus sign).
 1. Click **Variable**.
 1. Select **Query** as the variable type.
@@ -62,7 +63,7 @@ To create a query variable:
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Exit edit**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 ### Query variable examples
 
@@ -186,7 +187,7 @@ Variables can be used in these query editor fields:
 
 ## Multi-value variables
 
-When you enable **Multi-value** for a variable, users can select multiple values simultaneously. The OpenTSDB data source handles multi-value variables using pipe (`|`) separation, which is compatible with OpenTSDB's literal_or filter type.
+When you enable **Multi-value** for a variable, users can select multiple values simultaneously. The OpenTSDB data source handles multi-value variables using pipe (`|`) separation, which is compatible with OpenTSDB's `literal_or` filter type.
 
 ### Configure multi-value variables
 

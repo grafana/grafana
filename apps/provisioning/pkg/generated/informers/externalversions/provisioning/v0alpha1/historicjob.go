@@ -20,11 +20,39 @@ import (
 )
 
 // HistoricJobInformer provides access to a shared informer and lister for
-// HistoricJobs.
+// HistoricJobs. Prefer using the type-safe variant (see [TypedHistoricJobInformer]).
 type HistoricJobInformer interface {
 	Informer() cache.SharedIndexInformer
 	Lister() provisioningv0alpha1.HistoricJobLister
 }
+
+// TypedHistoricJobInformer provides access to a shared informer and lister for
+// HistoricJobs, including the type-safe TypedInformer variant.
+// It is a superset of HistoricJobInformer.
+type TypedHistoricJobInformer interface {
+	Informer() cache.SharedIndexInformer
+	TypedInformer() HistoricJobIndexInformer
+	Lister() provisioningv0alpha1.HistoricJobLister
+}
+
+// HistoricJobIndexInformer is a wrapper around the underlying [cache.SharedIndexInformer]
+// with type-safe variants of several methods.
+type HistoricJobIndexInformer cache.TypedSharedIndexInformer[*apisprovisioningv0alpha1.HistoricJob]
+
+// HistoricJobHandlerFuncs is a specialization of [cache.TypedResourceEventHandlerFuncs] for HistoricJob.
+type HistoricJobHandlerFuncs = cache.TypedResourceEventHandlerFuncs[*apisprovisioningv0alpha1.HistoricJob]
+
+// HistoricJobDetailedHandlerFuncs is a specialization of [cache.TypedResourceEventHandlerDetailedFuncs] for HistoricJob.
+type HistoricJobDetailedHandlerFuncs = cache.TypedResourceEventHandlerDetailedFuncs[*apisprovisioningv0alpha1.HistoricJob]
+
+// HistoricJobFilteringHandler is a specialization of [cache.TypedFilteringResourceEventHandler] for HistoricJob.
+type HistoricJobFilteringHandler = cache.TypedFilteringResourceEventHandler[*apisprovisioningv0alpha1.HistoricJob]
+
+// HistoricJobIndexers is a specialization of [cache.TypedIndexers] for HistoricJob.
+type HistoricJobIndexers = cache.TypedIndexers[*apisprovisioningv0alpha1.HistoricJob]
+
+// DeletedHistoricJob is a specialization of [cache.DeletedObject] for HistoricJob.
+type DeletedHistoricJob = cache.DeletedObject[*apisprovisioningv0alpha1.HistoricJob]
 
 type historicJobInformer struct {
 	factory          internalinterfaces.SharedInformerFactory
@@ -35,25 +63,49 @@ type historicJobInformer struct {
 // NewHistoricJobInformer constructs a new informer for HistoricJob type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
+// If you really need an independent one, prefer using the type-safe variant (see [NewTypedHistoricJobInformer]).
 func NewHistoricJobInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
 	return NewHistoricJobInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: indexers})
+}
+
+// NewTypedHistoricJobInformer constructs a new informer for HistoricJob type.
+// Always prefer using an informer factory to get a shared informer instead of getting an independent
+// one. This reduces memory footprint and number of connections to the server.
+func NewTypedHistoricJobInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers HistoricJobIndexers) HistoricJobIndexInformer {
+	return NewTypedHistoricJobInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: cache.TypedIndexersToIndexers(indexers)})
 }
 
 // NewFilteredHistoricJobInformer constructs a new informer for HistoricJob type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
+// If you really need an independent one, prefer using the type-safe variant (see [NewTypedFilteredHistoricJobInformer]).
 func NewFilteredHistoricJobInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
-	return NewHistoricJobInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: indexers, TweakListOptions: tweakListOptions})
+	return NewTypedHistoricJobInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: indexers, TweakListOptions: tweakListOptions})
+}
+
+// NewTypedFilteredHistoricJobInformer constructs a new informer for HistoricJob type.
+// Always prefer using an informer factory to get a shared informer instead of getting an independent
+// one. This reduces memory footprint and number of connections to the server.
+func NewTypedFilteredHistoricJobInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers HistoricJobIndexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) HistoricJobIndexInformer {
+	return NewTypedHistoricJobInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: cache.TypedIndexersToIndexers(indexers), TweakListOptions: tweakListOptions})
 }
 
 // NewHistoricJobInformerWithOptions constructs a new informer for HistoricJob type with additional options.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
+// If you really need an independent one, prefer using the type-safe variant (see [NewTypedHistoricJobInformerWithOptions]).
 func NewHistoricJobInformerWithOptions(client versioned.Interface, namespace string, options internalinterfaces.InformerOptions) cache.SharedIndexInformer {
+	return NewTypedHistoricJobInformerWithOptions(client, namespace, options)
+}
+
+// NewTypedHistoricJobInformerWithOptions constructs a new informer for HistoricJob type with additional options.
+// Always prefer using an informer factory to get a shared informer instead of getting an independent
+// one. This reduces memory footprint and number of connections to the server.
+func NewTypedHistoricJobInformerWithOptions(client versioned.Interface, namespace string, options internalinterfaces.InformerOptions) HistoricJobIndexInformer {
 	gvr := schema.GroupVersionResource{Group: "provisioning.grafana.app", Version: "v0alpha1", Resource: "historicjobs"}
 	identifier := options.InformerName.WithResource(gvr)
 	tweakListOptions := options.TweakListOptions
-	return cache.NewSharedIndexInformerWithOptions(
+	return cache.NewTypedSharedIndexInformer[*apisprovisioningv0alpha1.HistoricJob](cache.NewSharedIndexInformerWithOptions(
 		cache.ToListWatcherWithWatchListSemantics(&cache.ListWatch{
 			ListFunc: func(opts v1.ListOptions) (runtime.Object, error) {
 				if tweakListOptions != nil {
@@ -86,17 +138,57 @@ func NewHistoricJobInformerWithOptions(client versioned.Interface, namespace str
 			Indexers:     options.Indexers,
 			Identifier:   identifier,
 		},
-	)
+	))
 }
 
 func (f *historicJobInformer) defaultInformer(client versioned.Interface, resyncPeriod time.Duration) cache.SharedIndexInformer {
-	return NewHistoricJobInformerWithOptions(client, f.namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, InformerName: f.factory.InformerName(), TweakListOptions: f.tweakListOptions})
+	return NewTypedHistoricJobInformerWithOptions(client, f.namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, InformerName: f.factory.InformerName(), TweakListOptions: f.tweakListOptions})
 }
 
 func (f *historicJobInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&apisprovisioningv0alpha1.HistoricJob{}, f.defaultInformer)
+	return f.TypedInformer()
+}
+
+func (f *historicJobInformer) TypedInformer() HistoricJobIndexInformer {
+	return cache.NewTypedSharedIndexInformer[*apisprovisioningv0alpha1.HistoricJob](f.factory.InformerFor(&apisprovisioningv0alpha1.HistoricJob{}, f.defaultInformer))
 }
 
 func (f *historicJobInformer) Lister() provisioningv0alpha1.HistoricJobLister {
 	return provisioningv0alpha1.NewHistoricJobLister(f.Informer().GetIndexer())
+}
+
+// ToTypedHistoricJobInformer converts an untyped informer into a TypedHistoricJobInformer.
+//
+// WARNING: this conversion is only safe if the informer handles objects of type
+// *HistoricJob. If that is not the case, calling type-safe methods of the returned
+// TypedHistoricJobInformer leads to runtime panics. A safer alternative is to pass
+// around a TypedHistoricJobInformer instances that was obtained from a
+// SharedInformerFactory.
+func ToTypedHistoricJobInformer(informer HistoricJobInformer) TypedHistoricJobInformer {
+	if informer, ok := informer.(TypedHistoricJobInformer); ok {
+		return informer
+	}
+	return &historicJobTypedInformerAdapter{informer}
+}
+
+type historicJobTypedInformerAdapter struct {
+	HistoricJobInformer
+}
+
+func (a *historicJobTypedInformerAdapter) TypedInformer() HistoricJobIndexInformer {
+	return cache.NewTypedSharedIndexInformer[*apisprovisioningv0alpha1.HistoricJob](a.Informer())
+}
+
+// ToHistoricJobIndexInformer converts an untyped informer into a HistoricJobIndexInformer.
+//
+// WARNING: this conversion is only safe if the informer handles objects of type
+// *HistoricJob. If that is not the case, calling type-safe methods of the returned
+// HistoricJobIndexInformer leads to runtime panics. A safer alternative is to pass
+// around a HistoricJobIndexInformer instances that was obtained from a
+// SharedInformerFactory.
+func ToHistoricJobIndexInformer(informer cache.SharedIndexInformer) HistoricJobIndexInformer {
+	if informer, ok := informer.(HistoricJobIndexInformer); ok {
+		return informer
+	}
+	return cache.NewTypedSharedIndexInformer[*apisprovisioningv0alpha1.HistoricJob](informer)
 }

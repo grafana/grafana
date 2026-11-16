@@ -11,10 +11,13 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
+	"github.com/grafana/grafana/pkg/infra/metricsservice"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/infra/tracingsetting"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/authz"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/server/reconciler"
 	zStore "github.com/grafana/grafana/pkg/services/authz/zanzana/store"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/hooks"
@@ -30,7 +33,7 @@ import (
 
 var ossBaseCLISet = wire.NewSet(
 	NewModuleRunner,
-	metrics.WireSet,
+	metricsservice.WireSet,
 	featuremgmt.ProvideManagerService,
 	featuremgmt.ProvideToggles,
 	hooks.ProvideService,
@@ -42,22 +45,36 @@ var ossBaseCLISet = wire.NewSet(
 var moduleServerSet = wire.NewSet(
 	NewModule,
 	ossBaseCLISet,
-	tracing.ProvideTracingConfig,
+	tracingsetting.ProvideTracingConfig,
 	tracing.ProvideService,
 	wire.Bind(new(tracing.Tracer), new(*tracing.TracingService)),
 	resource.ProvideStorageMetrics,
 	resource.ProvideIndexMetrics,
 	resource.ProvideVectorMetrics,
 	ProvideNoopModuleRegisterer,
-	sql.ProvideStorageBackend,
-	sql.ProvideExperimentalKV,
+	sql.ProvideModuleServerKV,
 	zStore.ProvideDefaultStoreProvider,
 	authz.ProvideReconcileCRDs,
+	authz.ProvideDeferredZanzanaReconcilerState,
 )
 
 var dashboardStatsSet = wire.NewSet(
 	builders.ProvideDashboardStats,
 	wire.Bind(new(builders.DashboardStats), new(*builders.OssDashboardStats)),
+)
+
+// zanzanaReconcilerStateSet builds the reconciler's state store from its own
+// SQL store, so the zanzana-server target gets one without the base module
+// graph — and therefore every other module target — opening a database.
+var zanzanaReconcilerStateSet = wire.NewSet(
+	migrations.ProvideOSSMigrations,
+	wire.Bind(new(registry.DatabaseMigrator), new(*migrations.OSSMigrations)),
+	bus.ProvideBus,
+	wire.Bind(new(bus.Bus), new(*bus.InProcBus)),
+	sqlstore.ProvideService,
+	wire.Bind(new(db.DB), new(*sqlstore.SQLStore)),
+	kvstore.ProvideService,
+	authz.ProvideZanzanaReconcilerState,
 )
 
 var searchSupportSet = wire.NewSet(
@@ -76,6 +93,14 @@ var searchSupportSet = wire.NewSet(
 func InitializeModuleServer(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*ModuleServer, error) {
 	wire.Build(moduleServerSet)
 	return &ModuleServer{}, nil
+}
+
+// InitializeZanzanaReconcilerState builds the MT reconciler's state store for
+// the zanzana-server target, which runs without the SQL store the full server
+// graph provides.
+func InitializeZanzanaReconcilerState(cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer tracing.Tracer) (reconciler.StateStore, error) {
+	wire.Build(zanzanaReconcilerStateSet)
+	return nil, nil
 }
 
 // InitializeSearchSupport builds the document builders together with the

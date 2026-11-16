@@ -1,31 +1,48 @@
 import { css } from '@emotion/css';
 import { useMemo, useState } from 'react';
-import { useLocation, useParams } from 'react-router-dom-v5-compat';
+import { useLocation, useParams, useSearchParams } from 'react-router-dom-v5-compat';
 
-import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
+import { type GrafanaTheme2, locationUtil, type NavModelItem } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { useFlagGlobalDashboardVariables } from '@grafana/runtime/internal';
+import { useFlagGrafanaDashboardGlobalVariables } from '@grafana/runtime/internal';
 import { Alert, Button, ConfirmModal, EmptyState, Stack, Text, useStyles2 } from '@grafana/ui';
 import { type Variable } from 'app/api/clients/dashboard/v2beta1';
+import { useGetCombinedFolderQuery } from 'app/api/clients/folder/v1beta1/hooks';
 import { extractErrorMessage } from 'app/api/utils';
 import { Page } from 'app/core/components/Page/Page';
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
 import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
+import { NavID } from 'app/core/navtree/constants';
 import { notifyApp } from 'app/core/reducers/appNotification';
+import { contextSrv } from 'app/core/services/context_srv';
+import { useDashboardsPageNav } from 'app/features/browse-dashboards/hooks/useDashboardsPageNav';
+import { buildNavModel, getVariablesTabID } from 'app/features/folders/state/navModel';
 import { dispatch } from 'app/store/store';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { VariableEditorView } from './VariableEditorView';
 import {
   bulkDeleteVariables,
   bulkMoveVariables,
   type BulkOperationResult,
+  useFolderCanEdit,
   useFolderTitles,
   useListAllVariablesQuery,
 } from './api';
 import { MoveVariablesModal } from './components/MoveVariablesModal';
 import { VariablesTable } from './components/VariablesTable';
-import { buildVariablesTree, getVariableFolderUid, getVariableSpecName } from './utils';
+import {
+  getSharedVariablesEntryPoint,
+  SharedVariablesEntryPoint,
+} from './enterprise-components/SharedVariablesEntryPointExtension';
+import {
+  buildVariablesTree,
+  canManageGlobalVariables,
+  canManageVariableScope,
+  getVariableFolderUid,
+  getVariableSpecName,
+} from './utils';
 
 const LIST_URL = '/dashboards/variables';
 
@@ -33,7 +50,8 @@ export default function VariablesManagementPage() {
   // The route is registered unconditionally (getAppRoutes is not a React component), so the
   // feature flag is enforced here via the OpenFeature hook. When it is off the variables page
   // is not a real route, so we render the standard not-found page.
-  const globalVariablesEnabled = useFlagGlobalDashboardVariables();
+  const globalVariablesEnabled = useFlagGrafanaDashboardGlobalVariables();
+  const listPageNav = useDashboardsPageNav(NavID.dashboardsVariables);
 
   const styles = useStyles2(getStyles);
   const { name: editName } = useParams<{ name?: string }>();
@@ -45,6 +63,22 @@ export default function VariablesManagementPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [pendingAction, setPendingAction] = useState<'move' | 'delete' | undefined>();
   const [isProcessing, setIsProcessing] = useState(false);
+  // Set when the editor was opened from a folder's Variables tab, so breadcrumbs
+  // and back navigation return there instead of the global list.
+  const [searchParams] = useSearchParams();
+  const originFolderUid = (isNew || editName ? searchParams.get('folderUid') : null) || undefined;
+  const { data: originFolder } = useGetCombinedFolderQuery(originFolderUid);
+  const originFolderNav = useMemo(() => {
+    if (!originFolder || originFolder.uid !== originFolderUid) {
+      return undefined;
+    }
+    const model = buildNavModel(originFolder);
+    const variablesTab = model.children?.find((child) => child.id === getVariablesTabID(originFolder.uid));
+    if (variablesTab) {
+      variablesTab.active = true;
+    }
+    return model;
+  }, [originFolder, originFolderUid]);
 
   const {
     data: variables = [],
@@ -63,6 +97,30 @@ export default function VariablesManagementPage() {
   const tree = useMemo(() => buildVariablesTree(variables, folderTitles), [variables, folderTitles]);
 
   const selectedVariables = variables.filter((v) => v.metadata.name && selected.has(v.metadata.name));
+  const allowGlobalScope = canManageGlobalVariables();
+  const selectedFolderUids = useMemo(
+    () => [...new Set(selectedVariables.map(getVariableFolderUid).filter((uid): uid is string => Boolean(uid)))].sort(),
+    [selectedVariables]
+  );
+  const folderCanEdit = useFolderCanEdit(selectedFolderUids);
+  // Disable Move/Delete when any selected variable is outside scopes the user can manage
+  // (global without Admin, or a folder without CanEdit). Reuses the same folder-access map.
+  const canMutateSelection =
+    selectedVariables.length > 0 &&
+    selectedVariables.every((variable) => {
+      const folderUid = getVariableFolderUid(variable);
+      return canManageVariableScope(
+        folderUid ?? '',
+        folderUid ? folderCanEdit[folderUid] : undefined,
+        allowGlobalScope
+      );
+    });
+
+  const canCreate = contextSrv.hasPermission(AccessControlAction.VariablesCreate);
+  const canWrite = contextSrv.hasPermission(AccessControlAction.VariablesWrite);
+  const canDelete = contextSrv.hasPermission(AccessControlAction.VariablesDelete);
+  // Move is create-then-delete under the hood (see bulkMoveVariables).
+  const canMove = canCreate && canDelete;
 
   const onToggleFolder = (folderUid: string) => {
     setExpandedFolders((prev) => {
@@ -158,6 +216,10 @@ export default function VariablesManagementPage() {
   };
 
   const backToList = () => locationService.push(LIST_URL);
+  const onEditorBack = () =>
+    originFolderNav
+      ? locationService.push(`${locationUtil.stripBaseFromUrl(originFolderNav.url ?? '')}/variables`)
+      : backToList();
   const onEdit = (variable: Variable) => {
     if (variable.metadata.name) {
       locationService.push(`${LIST_URL}/edit/${encodeURIComponent(variable.metadata.name)}`);
@@ -177,12 +239,13 @@ export default function VariablesManagementPage() {
         : editVariable
           ? getVariableSpecName(editVariable)
           : (editName ?? ''),
+      parentItem: originFolderNav,
     };
     // Wait for the list before mounting /new so the default name can skip collisions.
     // If the list failed, still allow create with whatever names we have (may be empty).
     const showNewEditor = isNew && (!isLoading || isError);
     return (
-      <Page navId="dashboards/variables" pageNav={pageNav}>
+      <Page navId={originFolderUid ? NavID.dashboards : NavID.dashboardsVariables} pageNav={pageNav}>
         <Page.Contents isLoading={isNew ? isLoading && !isError : isLoading}>
           {showNewEditor || editVariable ? (
             // Key by route identity so local editor state resets when navigating
@@ -191,17 +254,17 @@ export default function VariablesManagementPage() {
               key={editName ?? 'new'}
               source={editVariable}
               existingNames={existingNames}
-              onBack={backToList}
+              onBack={onEditorBack}
             />
           ) : isNew ? null : isError ? (
             // Don't claim "not found" when the list simply failed to load.
-            <LoadVariablesError error={error} onBack={backToList} />
+            <LoadVariablesError error={error} onBack={onEditorBack} />
           ) : (
             <EmptyState
               variant="not-found"
               message={t('variables-management.editor-nav.not-found', 'Variable not found')}
               button={
-                <Button variant="secondary" onClick={backToList}>
+                <Button variant="secondary" onClick={onEditorBack}>
                   <Trans i18nKey="variables-management.editor-nav.back-to-list">Back to variables</Trans>
                 </Button>
               }
@@ -214,15 +277,23 @@ export default function VariablesManagementPage() {
 
   // An error must never look like "no variables yet" — the CTA would be misleading.
   const isEmpty = !isLoading && !isError && variables.length === 0;
+  const hasSharedVariablesEntryPoint = getSharedVariablesEntryPoint() !== null;
+  const showNewVariable = !isEmpty && canCreate;
 
   return (
     <Page
-      navId="dashboards/variables"
+      navId={NavID.dashboardsVariables}
+      pageNav={listPageNav}
       actions={
-        !isEmpty && (
-          <Button icon="plus" onClick={() => locationService.push(`${LIST_URL}/new`)}>
-            <Trans i18nKey="variables-management.page.new-variable">New variable</Trans>
-          </Button>
+        (hasSharedVariablesEntryPoint || showNewVariable) && (
+          <Stack gap={1}>
+            <SharedVariablesEntryPoint />
+            {showNewVariable && (
+              <Button icon="plus" onClick={() => locationService.push(`${LIST_URL}/new`)}>
+                <Trans i18nKey="variables-management.page.new-variable">New variable</Trans>
+              </Button>
+            )}
+          </Stack>
         )
       }
     >
@@ -231,12 +302,14 @@ export default function VariablesManagementPage() {
           <LoadVariablesError error={error} />
         ) : isEmpty ? (
           <EmptyState
-            variant="call-to-action"
+            variant={canCreate ? 'call-to-action' : 'not-found'}
             message={t('variables-management.page.empty-title', "You haven't created any variables yet")}
             button={
-              <Button icon="plus" size="lg" onClick={() => locationService.push(`${LIST_URL}/new`)}>
-                <Trans i18nKey="variables-management.page.empty-cta">New variable</Trans>
-              </Button>
+              canCreate ? (
+                <Button icon="plus" size="lg" onClick={() => locationService.push(`${LIST_URL}/new`)}>
+                  <Trans i18nKey="variables-management.page.empty-cta">New variable</Trans>
+                </Button>
+              ) : undefined
             }
           >
             <Trans i18nKey="variables-management.page.empty-body">
@@ -245,7 +318,7 @@ export default function VariablesManagementPage() {
           </EmptyState>
         ) : (
           <div className={styles.content}>
-            {selected.size > 0 && (
+            {selected.size > 0 && canDelete && (
               <Stack gap={1} alignItems="center">
                 <Text color="secondary">
                   {t('variables-management.page.selected-count', '', {
@@ -254,10 +327,20 @@ export default function VariablesManagementPage() {
                     defaultValue_other: '{{count}} selected',
                   })}
                 </Text>
-                <Button variant="secondary" onClick={() => setPendingAction('move')} disabled={isProcessing}>
-                  <Trans i18nKey="variables-management.page.move">Move</Trans>
-                </Button>
-                <Button variant="destructive" onClick={() => setPendingAction('delete')} disabled={isProcessing}>
+                {canMove && (
+                  <Button
+                    variant="secondary"
+                    onClick={() => setPendingAction('move')}
+                    disabled={isProcessing || !canMutateSelection}
+                  >
+                    <Trans i18nKey="variables-management.page.move">Move</Trans>
+                  </Button>
+                )}
+                <Button
+                  variant="destructive"
+                  onClick={() => setPendingAction('delete')}
+                  disabled={isProcessing || !canMutateSelection}
+                >
                   <Trans i18nKey="variables-management.page.delete">Delete</Trans>
                 </Button>
               </Stack>
@@ -268,7 +351,8 @@ export default function VariablesManagementPage() {
               onToggleFolder={onToggleFolder}
               selected={selected}
               onSetSelected={onSetSelected}
-              onEdit={onEdit}
+              onEdit={canWrite ? onEdit : undefined}
+              selectable={canDelete}
             />
           </div>
         )}

@@ -7,7 +7,7 @@
  * if converted). Supports panels in both DashboardGridItem and AutoGridItem.
  */
 
-import { type z } from 'zod';
+import * as z from 'zod/mini';
 
 import type { VizPanel } from '@grafana/scenes';
 
@@ -15,7 +15,8 @@ import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayo
 import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { getElements } from '../../serialization/layoutSerializers/utils';
-import { getGridItemKeyForPanelId, getLayoutManagerFor, getVizPanelKeyForPanelId } from '../../utils/utils';
+import { getLayoutManagerFor } from '../../utils/getLayoutManagerFor';
+import { getGridItemKeyForPanelId, getVizPanelKeyForPanelId } from '../../utils/utils-panels';
 
 import { resolveLayoutPath } from './layoutPathResolver';
 import { serializeResultLayoutItem } from './panelSerialization';
@@ -102,7 +103,7 @@ function emitLayoutItemKindWarnings(
 
 export const movePanelCommand: MutationCommand<MovePanelPayload> = {
   name: 'MOVE_PANEL',
-  description: payloads.movePanel.description ?? '',
+  description: z.globalRegistry.get(payloads.movePanel)?.description ?? '',
 
   payloadSchema: payloads.movePanel,
   permission: requiresNewDashboardLayouts,

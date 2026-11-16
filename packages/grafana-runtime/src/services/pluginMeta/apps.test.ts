@@ -1,11 +1,15 @@
+import { type AppPluginConfig } from '@grafana/data';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
+import { config } from '../../config';
 import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 import { getLogger, setLogger } from '../logging/registry';
 
 import {
+  clearAppPluginMetas,
   getAppPluginMeta,
   getAppPluginMetas,
+  getAppPluginMetasSync,
   getAppPluginVersion,
   isAppPluginInstalled,
   setAppPluginMetas,
@@ -31,7 +35,7 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
 
   describe('and apps is not initialized', () => {
     beforeEach(() => {
-      setAppPluginMetas({});
+      clearAppPluginMetas();
       jest.resetAllMocks();
       initPluginMetasMock.mockResolvedValue({ items: [getGrafanaExploretracesApp()!] });
     });
@@ -107,7 +111,7 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
           expect(getLogger('grafana/runtime.plugins.meta').logWarning).toHaveBeenCalledTimes(1);
           expect(getLogger('grafana/runtime.plugins.meta').logWarning).toHaveBeenCalledWith(
             'PluginMeta: plugin meta yielded an empty result so Grafana is falling back to bootdata',
-            { pluginType: 'app' }
+            { pluginType: 'app', requestUrl: 'apis/plugins.grafana.app/v0alpha1/namespaces/default/metas' }
           );
         }
       );
@@ -120,7 +124,84 @@ describe('when plugins.useMTPlugins flag is enabled', () => {
           expect(getLogger('grafana/runtime.plugins.meta').logWarning).toHaveBeenCalledTimes(1);
           expect(getLogger('grafana/runtime.plugins.meta').logWarning).toHaveBeenCalledWith(
             'PluginMeta: plugin meta yielded an empty result so Grafana is falling back to bootdata',
-            { pluginType: 'app' }
+            { pluginType: 'app', requestUrl: 'apis/plugins.grafana.app/v0alpha1/namespaces/default/metas' }
+          );
+        }
+      );
+    });
+
+    // An instance with no app plugins installed: the metas API has nothing and
+    // the bootdata fallback is empty too, so the cache legitimately stays empty.
+    // It still counts as initialized, or every read re-fetches and the
+    // synchronous getter reports a cache that was never filled.
+    describe('and the instance has no app plugins at all', () => {
+      let originalApps: Record<string, AppPluginConfig>;
+
+      beforeEach(() => {
+        jest.resetAllMocks();
+        initPluginMetasMock.mockResolvedValue({ items: [] });
+        // Emptying the bootdata fallback is the whole point of these cases
+        // eslint-disable-next-line @grafana/no-config-apps
+        originalApps = config.apps;
+        // eslint-disable-next-line @grafana/no-config-apps
+        config.apps = {};
+      });
+
+      afterEach(() => {
+        // eslint-disable-next-line @grafana/no-config-apps
+        config.apps = originalApps;
+      });
+
+      it('getAppPluginMetas should return an empty list and not fetch again', async () => {
+        expect(await getAppPluginMetas()).toEqual([]);
+        expect(await getAppPluginMetas()).toEqual([]);
+
+        expect(initPluginMetasMock).toHaveBeenCalledTimes(1);
+      });
+
+      it('getAppPluginMetasSync should return an empty list once the cache is initialized', async () => {
+        await getAppPluginMetas();
+
+        expect(getAppPluginMetasSync()).toEqual([]);
+      });
+    });
+
+    describe('and initPluginMetas returns null because plugin metas failed to load', () => {
+      beforeEach(() => {
+        jest.resetAllMocks();
+        initPluginMetasMock.mockResolvedValue(null);
+        // can't use mockLogger here because that would cause a circular dependency between @grafana/runtime and @grafana/test-utils
+        setLogger('grafana/runtime.plugins.meta', {
+          logDebug: jest.fn(),
+          logError: jest.fn(),
+          logInfo: jest.fn(),
+          logMeasurement: jest.fn(),
+          logWarning: jest.fn(),
+        });
+      });
+
+      it.each([{ func: getAppPluginMetas }])(
+        `when func:$func is called then an error warning should be logged`,
+        async ({ func }) => {
+          await func();
+
+          expect(getLogger('grafana/runtime.plugins.meta').logWarning).toHaveBeenCalledTimes(1);
+          expect(getLogger('grafana/runtime.plugins.meta').logWarning).toHaveBeenCalledWith(
+            'PluginMeta: plugin meta failed to load so Grafana is falling back to bootdata',
+            { pluginType: 'app', requestUrl: 'apis/plugins.grafana.app/v0alpha1/namespaces/default/metas' }
+          );
+        }
+      );
+
+      it.each([{ func: getAppPluginMeta }, { func: isAppPluginInstalled }, { func: getAppPluginVersion }])(
+        `when func:$func is called then an error warning should be logged`,
+        async ({ func }) => {
+          await func('');
+
+          expect(getLogger('grafana/runtime.plugins.meta').logWarning).toHaveBeenCalledTimes(1);
+          expect(getLogger('grafana/runtime.plugins.meta').logWarning).toHaveBeenCalledWith(
+            'PluginMeta: plugin meta failed to load so Grafana is falling back to bootdata',
+            { pluginType: 'app', requestUrl: 'apis/plugins.grafana.app/v0alpha1/namespaces/default/metas' }
           );
         }
       );
@@ -192,7 +273,7 @@ describe('when plugins.useMTPlugins flag is disabled', () => {
 
   describe('and apps is not initialized', () => {
     beforeEach(() => {
-      setAppPluginMetas({});
+      clearAppPluginMetas();
       jest.resetAllMocks();
     });
 

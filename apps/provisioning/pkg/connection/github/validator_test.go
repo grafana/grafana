@@ -35,7 +35,7 @@ func TestValidate(t *testing.T) {
 					Name: "test-conn",
 				},
 				Spec: provisioning.ConnectionSpec{
-					Type: provisioning.GitlabConnectionType,
+					Type: provisioning.GitlabOAuthConnectionType,
 				},
 			},
 		},

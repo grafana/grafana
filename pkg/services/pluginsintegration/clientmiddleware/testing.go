@@ -1,11 +1,13 @@
 package clientmiddleware
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/handlertest"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -30,3 +32,15 @@ func WithReqContext(req *http.Request, user *user.SignedInUser) handlertest.Hand
 var nopCallResourceSender = backend.CallResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
 	return nil
 })
+
+// nopChunkedWriter is a backend.ChunkedDataWriter that discards everything written
+// to it, for use in QueryChunkedData middleware tests.
+type nopChunkedWriter struct{}
+
+func (nopChunkedWriter) WriteFrame(_ context.Context, _ string, _ string, _ *data.Frame) error {
+	return nil
+}
+
+func (nopChunkedWriter) WriteError(_ context.Context, _ string, _ backend.Status, _ error) error {
+	return nil
+}

@@ -92,8 +92,7 @@ func schema_pkg_apis_userstorage_v0alpha1_UserStorageList(ref common.ReferenceCa
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(UserStorage{}.OpenAPIModelName()),
+										Ref: ref(UserStorage{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -122,9 +121,8 @@ func schema_pkg_apis_userstorage_v0alpha1_UserStorageSpec(ref common.ReferenceCa
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},

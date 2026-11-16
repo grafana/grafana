@@ -13,6 +13,54 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
+func TestIsManagedByRepository(t *testing.T) {
+	for _, tt := range []struct {
+		name    string
+		manager utils.ManagerProperties
+		want    bool
+	}{
+		{
+			name:    "matching repository",
+			manager: utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "repo-1"},
+			want:    true,
+		},
+		{
+			name:    "matching repository allows edits",
+			manager: utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "repo-1", AllowsEdits: true},
+			want:    true,
+		},
+		{
+			name:    "different repository",
+			manager: utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "repo-2"},
+		},
+		{
+			name:    "different repository allows edits",
+			manager: utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "repo-2", AllowsEdits: true},
+		},
+		{
+			name:    "matching identity with a different manager kind",
+			manager: utils.ManagerProperties{Kind: utils.ManagerKindPlugin, Identity: "repo-1"},
+		},
+		{
+			name:    "different manager kind allows edits",
+			manager: utils.ManagerProperties{Kind: utils.ManagerKindPlugin, Identity: "repo-1", AllowsEdits: true},
+		},
+		{
+			name:    "missing manager kind",
+			manager: utils.ManagerProperties{Identity: "repo-1"},
+		},
+		{
+			name:    "missing manager identity",
+			manager: utils.ManagerProperties{Kind: utils.ManagerKindRepo},
+		},
+		{name: "unmanaged resource"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.want, isManagedByRepository(tt.manager, "repo-1"))
+		})
+	}
+}
+
 func TestCheckResourceOwnership(t *testing.T) {
 	tests := []struct {
 		name              string

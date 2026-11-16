@@ -487,6 +487,42 @@ describe('prepareTimelineLegendItems', () => {
 
     expect(result).toHaveLength(1);
   });
+
+  it.each([
+    { displayMode: LegendDisplayMode.List, expectedItems: 2 },
+    { displayMode: LegendDisplayMode.Hidden, expectedItems: undefined },
+  ])('should return $expectedItems legend items when displayMode is $displayMode', ({ displayMode, expectedItems }) => {
+    const frames = [
+      toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1, 2] },
+          {
+            name: 'value',
+            type: FieldType.number,
+            values: [10, 90],
+            config: {
+              color: { mode: FieldColorModeId.Thresholds },
+              thresholds: {
+                mode: ThresholdsMode.Absolute,
+                steps: [
+                  { value: -Infinity, color: 'green' },
+                  { value: 50, color: 'red' },
+                ],
+              },
+            },
+          },
+        ],
+      }),
+    ];
+
+    const result = prepareTimelineLegendItems(
+      frames,
+      { showLegend: true, displayMode, placement: 'bottom', calcs: [] },
+      theme
+    );
+
+    expect(result?.length).toBe(expectedItems);
+  });
 });
 
 describe('duration', () => {
@@ -638,5 +674,38 @@ describe('prepareTimelineFields with percentage threshold merging', () => {
     expect(mergedField.values[0]).toBe('0%+');
     expect(mergedField.values[1]).toBeNull();
     expect(mergedField.values[2]).toBe('80%+');
+  });
+
+  it('warns when a prepared frame has a null time cell (#130379)', () => {
+    const frames = [
+      toDataFrame({
+        refId: 'A',
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000, null, 3000] },
+          { name: 'value', type: FieldType.string, values: ['ok', 'warn', 'ok'] },
+        ],
+      }),
+    ];
+    const result = prepareTimelineFields(frames, true, timeRange, theme);
+    expect(result.frames).toBeUndefined();
+    expect(result.warn).toEqual(
+      'Query A returned a time field with null values; filter out rows with empty timestamps'
+    );
+  });
+
+  it('uses a generic message when the invalid frame has no refId (#130379)', () => {
+    const frames = [
+      toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000, null, 3000] },
+          { name: 'value', type: FieldType.string, values: ['ok', 'warn', 'ok'] },
+        ],
+      }),
+    ];
+    const result = prepareTimelineFields(frames, true, timeRange, theme);
+    expect(result.frames).toBeUndefined();
+    expect(result.warn).toEqual(
+      'A query returned a time field with null values; filter out rows with empty timestamps'
+    );
   });
 });

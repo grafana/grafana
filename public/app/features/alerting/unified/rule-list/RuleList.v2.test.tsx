@@ -1,9 +1,12 @@
-import { HttpResponse, http } from 'msw';
-import { render, testWithFeatureToggles, waitFor } from 'test/test-utils';
+import { HttpResponse } from 'msw';
+import { act, render, testWithFeatureToggles, waitFor } from 'test/test-utils';
 import { byRole, byTestId } from 'testing-library-selector';
 
 import { OrgRole } from '@grafana/data';
-import { setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
+import { selectors } from '@grafana/e2e-selectors';
+import { setPluginComponentsHook, setPluginLinksHook, setReturnToPreviousHook } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../mockApi';
@@ -12,6 +15,7 @@ import { setGrafanaRuleGroupExportResolver } from '../mocks/server/configure';
 import { alertingFactory } from '../mocks/server/db';
 import { type RulesFilter } from '../search/rulesSearchParser';
 import { setupDataSources } from '../testSetup/datasources';
+import { setupPrometheusAlertingPlugin } from '../testSetup/prometheusAlertingPlugin';
 
 import RuleListPage, { RuleListActions } from './RuleList.v2';
 import { loadDefaultSavedSearch } from './filter/useSavedSearches';
@@ -57,16 +61,22 @@ const ui = {
     grouped: byRole('radio', { name: /grouped/i }),
     list: byRole('radio', { name: /list/i }),
   },
-  searchInput: byTestId('search-query-input'),
+  searchInput: byTestId(selectors.pages.Alerting.searchInput),
 };
 
 setPluginLinksHook(() => ({ links: [], isLoading: false }));
+setReturnToPreviousHook(() => () => {});
 setPluginComponentsHook(() => ({ components: [], isLoading: false }));
 
 grantUserPermissions([AccessControlAction.AlertingRuleExternalRead]);
 testWithFeatureToggles({ enable: ['alertingListViewV2'] });
 
-const server = setupMswServer();
+setupMswServer();
+
+const IMPORT_WIZARD_FLAGS = {
+  [FlagKeys.AlertingMigrationWizardUI]: true,
+  [FlagKeys.AlertingImportAlertmanagerAPI]: true,
+};
 
 alertingFactory.dataSource.build({ name: 'Mimir', uid: 'mimir' });
 alertingFactory.dataSource.build({ name: 'Prometheus', uid: 'prometheus' });
@@ -77,69 +87,69 @@ describe('RuleListPage v2', () => {
 
     // Wait for the lazy-loaded RulesFilterV2 (Suspense) to settle before asserting
     await waitFor(() => expect(ui.searchInput.get()).toBeInTheDocument());
-    expect(ui.groupedView.get()).toBeInTheDocument();
+    expect(await ui.groupedView.find()).toBeInTheDocument();
     expect(ui.filterView.query()).not.toBeInTheDocument();
   });
 
-  it('should show grouped view when invalid view parameter is provided', () => {
+  it('should show grouped view when invalid view parameter is provided', async () => {
     render(<RuleListPage />, {
       historyOptions: {
         initialEntries: ['/?view=invalid'],
       },
     });
 
-    expect(ui.groupedView.get()).toBeInTheDocument();
+    expect(await ui.groupedView.find()).toBeInTheDocument();
     expect(ui.filterView.query()).not.toBeInTheDocument();
   });
 
-  it('should show list view when "view=list" URL parameter is present', () => {
+  it('should show list view when "view=list" URL parameter is present', async () => {
     render(<RuleListPage />, { historyOptions: { initialEntries: ['/?view=list'] } });
 
-    expect(ui.filterView.get()).toBeInTheDocument();
+    expect(await ui.filterView.find()).toBeInTheDocument();
     expect(ui.groupedView.query()).not.toBeInTheDocument();
   });
 
-  it('should show grouped view when only group filter is applied', () => {
+  it('should show grouped view when only group filter is applied', async () => {
     render(<RuleListPage />, { historyOptions: { initialEntries: ['/?search=group:cpu-usage'] } });
 
-    expect(ui.groupedView.get()).toBeInTheDocument();
+    expect(await ui.groupedView.find()).toBeInTheDocument();
     expect(ui.filterView.query()).not.toBeInTheDocument();
   });
 
-  it('should show grouped view when only namespace filter is applied', () => {
+  it('should show grouped view when only namespace filter is applied', async () => {
     render(<RuleListPage />, { historyOptions: { initialEntries: ['/?search=namespace:global'] } });
 
-    expect(ui.groupedView.get()).toBeInTheDocument();
+    expect(await ui.groupedView.find()).toBeInTheDocument();
     expect(ui.filterView.query()).not.toBeInTheDocument();
   });
 
-  it('should show grouped view when both group and namespace filters are applied', () => {
+  it('should show grouped view when both group and namespace filters are applied', async () => {
     render(<RuleListPage />, { historyOptions: { initialEntries: ['/?search=group:cpu-usage namespace:global'] } });
 
-    expect(ui.groupedView.get()).toBeInTheDocument();
+    expect(await ui.groupedView.find()).toBeInTheDocument();
     expect(ui.filterView.query()).not.toBeInTheDocument();
   });
 
-  it('should show list view when group and namespace filters are combined with other filter types', () => {
+  it('should show list view when group and namespace filters are combined with other filter types', async () => {
     render(<RuleListPage />, {
       historyOptions: { initialEntries: ['/?search=group:cpu-usage namespace:global state:firing'] },
     });
 
-    expect(ui.filterView.get()).toBeInTheDocument();
+    expect(await ui.filterView.find()).toBeInTheDocument();
     expect(ui.groupedView.query()).not.toBeInTheDocument();
   });
 
-  it('should show grouped view when view parameter is empty', () => {
+  it('should show grouped view when view parameter is empty', async () => {
     render(<RuleListPage />, { historyOptions: { initialEntries: ['/?view='] } });
 
-    expect(ui.groupedView.get()).toBeInTheDocument();
+    expect(await ui.groupedView.find()).toBeInTheDocument();
     expect(ui.filterView.query()).not.toBeInTheDocument();
   });
 
-  it('should show grouped view when search parameter is empty', () => {
+  it('should show grouped view when search parameter is empty', async () => {
     render(<RuleListPage />, { historyOptions: { initialEntries: ['/?search='] } });
 
-    expect(ui.groupedView.get()).toBeInTheDocument();
+    expect(await ui.groupedView.find()).toBeInTheDocument();
     expect(ui.filterView.query()).not.toBeInTheDocument();
   });
 
@@ -152,33 +162,33 @@ describe('RuleListPage v2', () => {
     { filterType: 'labels', searchQuery: 'label:team=backend' },
     { filterType: 'ruleHealth', searchQuery: 'health:error' },
     { filterType: 'contactPoint', searchQuery: 'contactPoint:slack' },
-  ])('should show list view when %s filter is applied', ({ filterType, searchQuery }) => {
+  ])('should show list view when %s filter is applied', async ({ filterType, searchQuery }) => {
     render(<RuleListPage />, { historyOptions: { initialEntries: [`/?search=${encodeURIComponent(searchQuery)}`] } });
 
-    expect(ui.filterView.get()).toBeInTheDocument();
+    expect(await ui.filterView.find()).toBeInTheDocument();
     expect(ui.groupedView.query()).not.toBeInTheDocument();
   });
 
-  it('should show list view when "view=list" URL parameter is present with group filter', () => {
+  it('should show list view when "view=list" URL parameter is present with group filter', async () => {
     render(<RuleListPage />, { historyOptions: { initialEntries: ['/?view=list&search=group:cpu-usage'] } });
 
-    expect(ui.filterView.get()).toBeInTheDocument();
+    expect(await ui.filterView.find()).toBeInTheDocument();
     expect(ui.groupedView.query()).not.toBeInTheDocument();
   });
 
-  it('should show list view when "view=list" URL parameter is present with namespace filter', () => {
+  it('should show list view when "view=list" URL parameter is present with namespace filter', async () => {
     render(<RuleListPage />, { historyOptions: { initialEntries: ['/?view=list&search=namespace:global'] } });
 
-    expect(ui.filterView.get()).toBeInTheDocument();
+    expect(await ui.filterView.find()).toBeInTheDocument();
     expect(ui.groupedView.query()).not.toBeInTheDocument();
   });
 
-  it('should show list view when "view=list" URL parameter is present with both group and namespace filters', () => {
+  it('should show list view when "view=list" URL parameter is present with both group and namespace filters', async () => {
     render(<RuleListPage />, {
       historyOptions: { initialEntries: ['/?view=list&search=group:cpu-usage namespace:global'] },
     });
 
-    expect(ui.filterView.get()).toBeInTheDocument();
+    expect(await ui.filterView.find()).toBeInTheDocument();
     expect(ui.groupedView.query()).not.toBeInTheDocument();
   });
 });
@@ -193,7 +203,6 @@ describe('RuleListActions', () => {
       newGrafanaRecordingRule: byRole('menuitem', { name: /new grafana recording rule/i }),
       newDataSourceRecordingRule: byRole('menuitem', { name: /new data source recording rule/i }),
       importAlertRules: byRole('menuitem', { name: /import alert rules/i }),
-      importToGma: byRole('menuitem', { name: /import to grafana alerting/i }),
       exportAllGrafanaRules: byRole('menuitem', { name: /export all grafana rules/i }),
     },
     exportDrawer: byRole('dialog', { name: /export/i }),
@@ -209,22 +218,22 @@ describe('RuleListActions', () => {
     { permissions: [AccessControlAction.AlertingRuleCreate] },
     { permissions: [AccessControlAction.AlertingRuleExternalWrite] },
     { permissions: [AccessControlAction.AlertingRuleCreate, AccessControlAction.AlertingRuleExternalWrite] },
-  ])('should show "New alert rule" button when the user has $permissions permissions', ({ permissions }) => {
+  ])('should show "New alert rule" button when the user has $permissions permissions', async ({ permissions }) => {
     grantUserPermissions(permissions);
 
     render(<RuleListActions />);
 
-    expect(ui.newRuleButton.get()).toBeInTheDocument();
+    expect(await ui.newRuleButton.find()).toBeInTheDocument();
     expect(ui.moreButton.get()).toBeInTheDocument();
   });
 
-  it('should not show "New alert rule" button when user has no permissions to create rules', () => {
+  it('should not show "New alert rule" button when user has no permissions to create rules', async () => {
     grantUserPermissions([]);
 
     render(<RuleListActions />);
 
+    expect(await ui.moreButton.find()).toBeInTheDocument();
     expect(ui.newRuleButton.query()).not.toBeInTheDocument();
-    expect(ui.moreButton.get()).toBeInTheDocument();
   });
 
   it('should only show New alert rule for export when the user has view Grafana rules permission', async () => {
@@ -280,10 +289,8 @@ describe('RuleListActions', () => {
     expect(ui.menuOptions.newDataSourceRecordingRule.query(menu)).toBeInTheDocument();
   });
 
-  describe('Import Alert Rules', () => {
-    testWithFeatureToggles({ enable: ['alertingMigrationUI'] });
-
-    it('should show "Import alert rules" option when user has required permissions and feature toggle is enabled', async () => {
+  describe('Import rules', () => {
+    it('should show "Import alert rules" option when user has required permissions', async () => {
       grantUserPermissions([
         AccessControlAction.AlertingRuleRead,
         AccessControlAction.AlertingRuleCreate,
@@ -327,29 +334,40 @@ describe('RuleListActions', () => {
     });
   });
 
-  describe('Import to Grafana Alerting Wizard', () => {
-    testWithFeatureToggles({ enable: ['alertingMigrationWizardUI'] });
-
-    it('should show "Import to Grafana Alerting" option when user is admin with required permissions', async () => {
-      grantUserRole(OrgRole.Admin);
-      grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingNotificationsWrite]);
-
-      const { user } = render(<RuleListActions />);
-      await user.click(ui.moreButton.get());
-      const menu = await ui.moreMenu.find();
-
-      expect(ui.menuOptions.importToGma.query(menu)).toBeInTheDocument();
+  describe('Import wizard flag on', () => {
+    // The reset fires OpenFeature events while components are still mounted, so it needs act.
+    afterEach(async () => {
+      await act(async () => {
+        setTestFlags();
+      });
     });
 
-    it('should not show "Import to Grafana Alerting" option when user is not admin', async () => {
-      grantUserRole(OrgRole.Viewer);
-      grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingNotificationsWrite]);
+    // The wizard lives on the admin-only Settings > Import tab, so the item opens its rules step there.
+    it.each([
+      ['with', IMPORT_WIZARD_FLAGS],
+      ['without', { [FlagKeys.AlertingMigrationWizardUI]: true }],
+    ])('links admins to the rules step of the wizard %s the Alertmanager import API', async (_, flags) => {
+      setTestFlags(flags);
+      grantUserRole(OrgRole.Admin);
+      grantUserPermissions([AccessControlAction.AlertingRuleCreate, AccessControlAction.AlertingProvisioningSetStatus]);
 
       const { user } = render(<RuleListActions />);
       await user.click(ui.moreButton.get());
       const menu = await ui.moreMenu.find();
 
-      expect(ui.menuOptions.importToGma.query(menu)).not.toBeInTheDocument();
+      expect(ui.menuOptions.importAlertRules.get(menu)).toHaveAttribute('href', '/alerting/admin/import?step=rules');
+    });
+
+    it('does not offer rule import to non-admins, who cannot open the Import tab', async () => {
+      setTestFlags(IMPORT_WIZARD_FLAGS);
+      grantUserRole(OrgRole.Editor);
+      grantUserPermissions([AccessControlAction.AlertingRuleCreate, AccessControlAction.AlertingProvisioningSetStatus]);
+
+      const { user } = render(<RuleListActions />);
+      await user.click(ui.moreButton.get());
+      const menu = await ui.moreMenu.find();
+
+      expect(ui.menuOptions.importAlertRules.query(menu)).not.toBeInTheDocument();
     });
   });
 
@@ -440,140 +458,6 @@ describe('RuleListActions', () => {
       expect(ui.menuOptions.newDataSourceRecordingRule.query(menu)).toBeInTheDocument();
     });
   });
-
-  describe('Auto-sync Mimir Alertmanager — disables import menu items', () => {
-    testWithFeatureToggles({
-      enable: ['alerting.syncExternalAlertmanager', 'alertingMigrationUI', 'alertingMigrationWizardUI'],
-    });
-
-    function mockAdminConfig(uid?: string) {
-      server.use(
-        http.get('/api/v1/ngalert/admin_config', () =>
-          HttpResponse.json({ alertmanagersChoice: 'internal', ...(uid ? { external_alertmanager_uid: uid } : {}) })
-        )
-      );
-    }
-
-    async function findDisabledItem(menu: HTMLElement, role: 'importAlertRules' | 'importToGma') {
-      // The menu item renders the disabled reason in its `description` slot, so the accessible
-      // name expands beyond the original label — match via a name regex that ignores the suffix.
-      return await byRole('menuitem', {
-        name: role === 'importAlertRules' ? /import alert rules/i : /import to grafana alerting/i,
-      }).find(menu);
-    }
-
-    it('disables "Import alert rules" with a reason when sync is configured for the org', async () => {
-      grantUserRole(OrgRole.Admin);
-      grantUserPermissions([
-        AccessControlAction.AlertingRuleRead,
-        AccessControlAction.AlertingRuleCreate,
-        AccessControlAction.AlertingProvisioningSetStatus,
-      ]);
-      mockAdminConfig('mimir-uid');
-
-      const { user } = render(<RuleListActions />);
-      await user.click(ui.moreButton.get());
-      const menu = await ui.moreMenu.find();
-
-      const item = await findDisabledItem(menu, 'importAlertRules');
-      expect(item).toHaveAttribute('aria-disabled', 'true');
-      expect(item).not.toHaveAttribute('href');
-      expect(item).toHaveTextContent(/auto-sync/i);
-    });
-
-    it('disables "Import to Grafana Alerting" with a reason when sync is configured for the org', async () => {
-      grantUserRole(OrgRole.Admin);
-      grantUserPermissions([AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingNotificationsWrite]);
-      mockAdminConfig('mimir-uid');
-
-      const { user } = render(<RuleListActions />);
-      await user.click(ui.moreButton.get());
-      const menu = await ui.moreMenu.find();
-
-      const item = await findDisabledItem(menu, 'importToGma');
-      expect(item).toHaveAttribute('aria-disabled', 'true');
-      expect(item).not.toHaveAttribute('href');
-      expect(item).toHaveTextContent(/auto-sync/i);
-    });
-
-    it('leaves import items enabled when sync is not configured', async () => {
-      grantUserRole(OrgRole.Admin);
-      grantUserPermissions([
-        AccessControlAction.AlertingRuleRead,
-        AccessControlAction.AlertingRuleCreate,
-        AccessControlAction.AlertingProvisioningSetStatus,
-        AccessControlAction.AlertingNotificationsWrite,
-      ]);
-      mockAdminConfig();
-
-      const { user } = render(<RuleListActions />);
-      await user.click(ui.moreButton.get());
-      const menu = await ui.moreMenu.find();
-
-      const importItem = ui.menuOptions.importAlertRules.get(menu);
-      const wizardItem = ui.menuOptions.importToGma.get(menu);
-      expect(importItem).toHaveAttribute('href', '/alerting/import-datasource-managed-rules');
-      expect(importItem).not.toHaveAttribute('aria-disabled', 'true');
-      expect(wizardItem).toHaveAttribute('href', '/alerting/import-to-gma');
-      expect(wizardItem).not.toHaveAttribute('aria-disabled', 'true');
-    });
-  });
-
-  describe('alertingDisableDMAinUI feature toggle', () => {
-    testWithFeatureToggles({ enable: ['alertingListViewV2', 'alertingDisableDMAinUI'] });
-
-    beforeEach(() => {
-      // Set up data source with manageAlerts enabled to ensure the option would be shown
-      // if not for the feature toggle
-      setupDataSources(
-        mockDataSource({
-          name: 'Prometheus-enabled',
-          uid: 'prometheus-enabled',
-          type: 'prometheus',
-          jsonData: { manageAlerts: true },
-        })
-      );
-    });
-
-    it('should not show "New Data source recording rule" option when alertingDisableDMAinUI is enabled', async () => {
-      grantUserPermissions([AccessControlAction.AlertingRuleExternalWrite]);
-
-      const { user } = render(<RuleListActions />);
-
-      await user.click(ui.moreButton.get());
-      const menu = await ui.moreMenu.find();
-
-      expect(ui.menuOptions.newDataSourceRecordingRule.query(menu)).not.toBeInTheDocument();
-    });
-
-    it('should not show "New alert rule" button when user only has DMA permissions and alertingDisableDMAinUI is enabled', async () => {
-      grantUserPermissions([AccessControlAction.AlertingRuleExternalWrite]);
-
-      render(<RuleListActions />);
-
-      expect(ui.newRuleButton.query()).not.toBeInTheDocument();
-    });
-
-    it('should show "New alert rule" button when user has Grafana rule permissions even with alertingDisableDMAinUI enabled', async () => {
-      grantUserPermissions([AccessControlAction.AlertingRuleCreate]);
-
-      render(<RuleListActions />);
-
-      expect(ui.newRuleButton.get()).toBeInTheDocument();
-    });
-
-    it('should show "New Grafana recording rule" but not "New Data source recording rule" when alertingDisableDMAinUI is enabled', async () => {
-      grantUserPermissions([AccessControlAction.AlertingRuleCreate, AccessControlAction.AlertingRuleExternalWrite]);
-
-      const { user } = render(<RuleListActions />);
-
-      await user.click(ui.moreButton.get());
-      const menu = await ui.moreMenu.find();
-
-      expect(ui.menuOptions.newGrafanaRecordingRule.query(menu)).toBeInTheDocument();
-      expect(ui.menuOptions.newDataSourceRecordingRule.query(menu)).not.toBeInTheDocument();
-    });
-  });
 });
 
 describe('RuleListPage v2 - View switching', () => {
@@ -582,14 +466,14 @@ describe('RuleListPage v2 - View switching', () => {
     const { user } = render(<RuleListPage />, {
       historyOptions: { initialEntries: ['/?view=list&search=group:cpu-usage namespace:global'] },
     });
-    expect(ui.filterView.get()).toBeInTheDocument();
+    expect(await ui.filterView.find()).toBeInTheDocument();
 
     // Click the "Grouped" view button
     const groupedButton = await ui.modeSelector.grouped.find();
     await user.click(groupedButton);
 
     // Should preserve both filters and switch to grouped view
-    expect(ui.groupedView.get()).toBeInTheDocument();
+    expect(await ui.groupedView.find()).toBeInTheDocument();
     expect(ui.filterView.query()).not.toBeInTheDocument();
 
     // Verify filters are preserved
@@ -604,14 +488,14 @@ describe('RuleListPage v2 - View switching', () => {
         initialEntries: ['/?view=list&search=group:cpu-usage namespace:global state:firing rule:"test"'],
       },
     });
-    expect(ui.filterView.get()).toBeInTheDocument();
+    expect(await ui.filterView.find()).toBeInTheDocument();
 
     // Click the "Grouped" view button
     const groupedButton = await ui.modeSelector.grouped.find();
     await user.click(groupedButton);
 
     // Should clear all filters because other filters are present
-    expect(ui.groupedView.get()).toBeInTheDocument();
+    expect(await ui.groupedView.find()).toBeInTheDocument();
     expect(ui.filterView.query()).not.toBeInTheDocument();
 
     // Verify all filters are cleared
@@ -700,5 +584,63 @@ describe('RuleListPage v2 - Default search auto-apply', () => {
     });
 
     expect(ui.searchInput.get()).toHaveValue('');
+  });
+});
+
+describe('RuleListActions with the Prometheus Alerting plugin', () => {
+  setupPrometheusAlertingPlugin();
+
+  const ui = {
+    newRuleButton: byRole('link', { name: /^new alert rule$/i }),
+    moreButton: byRole('button', { name: /more/i }),
+    moreMenu: byRole('menu'),
+    menuOptions: {
+      newGrafanaRecordingRule: byRole('menuitem', { name: /new grafana recording rule/i }),
+      newDataSourceRecordingRule: byRole('menuitem', { name: /new data source recording rule/i }),
+    },
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    grantUserRole(OrgRole.Viewer);
+    setupDataSources(
+      mockDataSource({
+        name: 'Prometheus-enabled',
+        uid: 'prometheus-enabled',
+        type: 'prometheus',
+        jsonData: { manageAlerts: true },
+      })
+    );
+  });
+
+  it('stops offering to create a data source recording rule', async () => {
+    grantUserPermissions([AccessControlAction.AlertingRuleCreate, AccessControlAction.AlertingRuleExternalWrite]);
+
+    const { user } = render(<RuleListActions />);
+
+    await user.click(await ui.moreButton.find());
+    const menu = await ui.moreMenu.find();
+
+    expect(ui.menuOptions.newGrafanaRecordingRule.query(menu)).toBeInTheDocument();
+    expect(ui.menuOptions.newDataSourceRecordingRule.query(menu)).not.toBeInTheDocument();
+  });
+
+  it('hides "New alert rule" from someone who could only ever create a data source managed one', async () => {
+    grantUserPermissions([AccessControlAction.AlertingRuleExternalWrite]);
+
+    render(<RuleListActions />);
+
+    expect(await ui.moreButton.find()).toBeInTheDocument();
+    // The plugin check settles a render after the actions first appear, so the button is briefly
+    // there before it goes.
+    await waitFor(() => expect(ui.newRuleButton.query()).not.toBeInTheDocument());
+  });
+
+  it('still offers "New alert rule" to someone who can create Grafana managed rules', async () => {
+    grantUserPermissions([AccessControlAction.AlertingRuleCreate]);
+
+    render(<RuleListActions />);
+
+    expect(await ui.newRuleButton.find()).toBeInTheDocument();
   });
 });

@@ -6,7 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/licensing"
 )
 
-var _ licensing.Licensing = new(FakeLicensing)
+var _ licensing.Licensing = (*FakeLicensing)(nil)
 
 func NewFakeLicensing() *FakeLicensing {
 	return &FakeLicensing{&mock.Mock{}}
@@ -14,6 +14,11 @@ func NewFakeLicensing() *FakeLicensing {
 
 type FakeLicensing struct {
 	*mock.Mock
+}
+
+func (f *FakeLicensing) HasValidLicense() bool {
+	mockedArgs := f.Called()
+	return mockedArgs.Bool(0)
 }
 
 func (f *FakeLicensing) Expiry() int64 {

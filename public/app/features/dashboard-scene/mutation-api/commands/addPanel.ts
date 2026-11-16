@@ -6,7 +6,7 @@
  * to match the target layout (warning emitted if converted).
  */
 
-import { type z } from 'zod';
+import * as z from 'zod/mini';
 
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
@@ -14,7 +14,7 @@ import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayo
 import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
 import { buildVizPanel, getElements } from '../../serialization/layoutSerializers/utils';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
-import { getVizPanelKeyForPanelId } from '../../utils/utils';
+import { getVizPanelKeyForPanelId } from '../../utils/utils-panels';
 
 import { resolveLayoutPath } from './layoutPathResolver';
 import { serializeResultLayoutItem } from './panelSerialization';
@@ -27,7 +27,7 @@ export type AddPanelPayload = z.infer<typeof addPanelPayloadSchema>;
 
 export const addPanelCommand: MutationCommand<AddPanelPayload> = {
   name: 'ADD_PANEL',
-  description: payloads.addPanel.description ?? '',
+  description: z.globalRegistry.get(payloads.addPanel)?.description ?? '',
 
   payloadSchema: payloads.addPanel,
   permission: requiresEdit,

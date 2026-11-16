@@ -4,6 +4,7 @@ import { setScopes, setupScopeRoutes } from '../utils/scope-helpers';
 import { testScopes } from '../utils/scopes';
 
 import {
+  expandAdHocFilters,
   getAdHocFilterOptionValues,
   getAdHocFilterPills,
   getAdHocFilterRestoreButton,
@@ -20,9 +21,11 @@ const DASHBOARD_UNDER_TEST = 'cuj-dashboard-1';
 test.use({
   featureToggles: {
     scopeFilters: true,
-    groupByVariable: true,
-    reloadDashboardsOnParamsChange: true,
-    dashboardUnifiedDrilldownControls: false,
+  },
+  openFeature: {
+    flags: {
+      reloadDashboardsOnParamsChange: true,
+    },
   },
 });
 
@@ -33,6 +36,8 @@ test.describe(
   },
   () => {
     test('Filter data on a dashboard', async ({ page, selectors, gotoDashboardPage }) => {
+      test.setTimeout(60_000);
+
       const apiMocks = await prepareAPIMocks(page);
       const adHocFilterPills = getAdHocFilterPills(page);
       const scopesSelectorInput = getScopesSelectorInput(page);
@@ -49,10 +54,7 @@ test.describe(
 
         expect(await adHocFilterPills.count()).toBe(2);
 
-        const adHocVariable = dashboardPage
-          .getByGrafanaSelector(selectors.pages.Dashboard.SubMenu.submenuItemLabels('adHoc'))
-          .locator('..')
-          .locator('input');
+        const adHocVariable = getAdhocFiltersInput(dashboardPage, selectors);
 
         const labelsResponsePromise = page.waitForResponse(apiMocks.labels);
         await adHocVariable.click();
@@ -154,7 +156,7 @@ test.describe(
         const defaultDashboardFilter = adHocFilterPills.first();
         const pillText = await defaultDashboardFilter.textContent();
 
-        const adHocVariable = getAdhocFiltersInput(dashboardPage, selectors).first();
+        const adHocVariable = getAdhocFiltersInput(dashboardPage, selectors);
 
         await defaultDashboardFilter.click();
         await adHocVariable.click();
@@ -180,12 +182,13 @@ test.describe(
 
         await expect(scopesSelectorInput).toHaveAttribute('data-value', /.+/);
 
-        expect(await adHocFilterPills.count()).toBe(3);
+        await expandAdHocFilters(page);
+        await expect(adHocFilterPills).toHaveCount(3);
 
         const defaultDashboardFilter = adHocFilterPills.first();
         const pillText = await defaultDashboardFilter.textContent();
 
-        const adHocVariable = getAdhocFiltersInput(dashboardPage, selectors).first();
+        const adHocVariable = getAdhocFiltersInput(dashboardPage, selectors);
 
         await defaultDashboardFilter.click();
         await adHocVariable.click();

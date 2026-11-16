@@ -22,10 +22,27 @@ v0alpha1: {
 		teamlbacrulev0alpha1,
 		serviceaccountv0alpha1,
 		externalGroupMappingv0alpha1,
+		authInfov0alpha1,
 	]
 
 	routes: {
 		namespaced: {
+			"/teamlbacusage": {
+				"GET": {
+					name: "getTeamLBACUsage"
+					response: {
+						counts: {[string]: {
+							datasources: int64
+							teams:       int64
+							filters:     int64
+						}}
+					}
+					responseMetadata: {
+						typeMeta:   false
+						objectMeta: false
+					}
+				}
+			}
 			"/searchUsers": {
 				"GET": {
 					name: "getSearchUsers"
@@ -56,6 +73,7 @@ v0alpha1: {
 					request: {
 						query: {
 							query?:  string
+							member?: string
 							limit?:  int64 | 50
 							offset?: int64 | 0
 							page?:   int64 | 1

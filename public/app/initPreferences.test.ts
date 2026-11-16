@@ -3,7 +3,7 @@ import { setupServer } from 'msw/node';
 
 import { fetchMergedPreferences, initPreferences } from './initPreferences';
 
-const PREFERENCES_URL = '*/apis/preferences.grafana.app/v1alpha1/namespaces/:ns/preferences/merged';
+const PREFERENCES_URL = '*/apis/preferences.grafana.app/v1/namespaces/:ns/preferences/merged';
 
 // Default 500 so any test that forgets to register its own handler fails loudly
 // with a self-describing body, instead of silently returning stale defaults.

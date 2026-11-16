@@ -1,4 +1,7 @@
+import { useEffect } from 'react';
+
 import { type DataSourceApi } from '@grafana/data';
+import { getPanelDataStatusItems } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import {
   type SceneComponentProps,
@@ -8,6 +11,8 @@ import {
   type SceneObjectRef,
   type VizPanel,
 } from '@grafana/scenes';
+import { PanelContextProvider } from '@grafana/ui';
+import { usePanelStatusSnapshot } from '@grafana/ui/unstable';
 import { InspectTab } from 'app/features/inspector/types';
 
 import { StandardErrorsAndNoticesInspector } from './StandardErrorsAndNoticesInspector';
@@ -28,22 +33,35 @@ export class InspectErrorsAndNoticesTab extends SceneObjectBase<InspectErrorsAnd
     return InspectTab.ErrorsAndNotices;
   }
 
-  static Component = ({ model }: SceneComponentProps<InspectErrorsAndNoticesTab>) => {
-    const { panelRef, dataSource } = model.state;
-    const data = sceneGraph.getData(panelRef.resolve());
+  static Component = InspectErrorsAndNoticesTabRenderer;
+}
 
-    if (!data.state.data) {
-      return null;
-    }
+function InspectErrorsAndNoticesTabRenderer({ model }: SceneComponentProps<InspectErrorsAndNoticesTab>) {
+  const { panelRef, dataSource } = model.useState();
+  const panel = panelRef.resolve();
+  const context = panel.getPanelContext();
+  const { activateNotices } = context;
+  useEffect(() => activateNotices?.(), [activateNotices]);
+  const snapshot = usePanelStatusSnapshot(context.notices);
+  const { data: panelData } = sceneGraph.getData(panel).useState();
+  const errors = panelData?.errors ?? (panelData?.error ? [panelData.error] : []);
 
-    const panelData = data.state.data;
-    const errors = panelData.errors ?? (panelData.error ? [panelData.error] : []);
-
-    const CustomInspector = dataSource?.components?.ErrorsAndNoticesInspector;
-    if (CustomInspector) {
-      return <CustomInspector datasource={dataSource} data={panelData.series} errors={errors} />;
-    }
-
-    return <StandardErrorsAndNoticesInspector data={panelData.series} errors={errors} />;
-  };
+  const CustomInspector = dataSource?.components?.ErrorsAndNoticesInspector;
+  if (CustomInspector) {
+    return panelData ? <CustomInspector datasource={dataSource} data={panelData.series} errors={errors} /> : null;
+  }
+  const statusItems = snapshot.hostInitialized
+    ? snapshot.items
+    : [...getPanelDataStatusItems(panelData, panel.state._pluginLoadError), ...snapshot.items];
+  if (context.notices || panel.state._pluginLoadError) {
+    return (
+      <PanelContextProvider value={context}>
+        <StandardErrorsAndNoticesInspector statusItems={statusItems} />
+      </PanelContextProvider>
+    );
+  }
+  if (!panelData) {
+    return null;
+  }
+  return <StandardErrorsAndNoticesInspector data={panelData.series} errors={errors} />;
 }

@@ -3,6 +3,7 @@ import { type DataFrameType } from './dataFrameTypes';
 import { type ApplyFieldOverrideOptions } from './fieldOverrides';
 import { type PanelPluginDataSupport } from './panel';
 import { type DataTopic } from './query';
+import { type TimeCompareMeta } from './timeCompare';
 import { type DataTransformerConfig } from './transformations';
 
 export type KeyValue<T = any> = Record<string, T>;
@@ -92,10 +93,7 @@ export interface QueryResultMeta {
   pathSeparator?: string;
 
   /** A time shift metadata indicating a result of comparison */
-  timeCompare?: {
-    diffMs: number;
-    isTimeShiftQuery: boolean;
-  };
+  timeCompare?: TimeCompareMeta;
 
   /**
    * Legacy data source specific, should be moved to custom

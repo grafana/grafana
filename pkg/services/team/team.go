@@ -22,8 +22,9 @@ type Service interface {
 	IsTeamMember(ctx context.Context, orgId int64, teamId int64, userId int64) (bool, error)
 	RemoveUsersMemberships(tx context.Context, userID int64) error
 	GetUserTeamMemberships(ctx context.Context, orgID, userID int64, external bool, bypassCache bool) ([]*TeamMemberDTO, error)
+	// GetUserTeamMembershipsByUID is uncached and never falls back from the k8s path to legacy SQL.
+	GetUserTeamMembershipsByUID(ctx context.Context, query *GetUserTeamMembershipsByUIDQuery) ([]UserTeamMembership, error)
 	GetTeamMembers(ctx context.Context, query *GetTeamMembersQuery) ([]*TeamMemberDTO, error)
-	RegisterDelete(query string)
 }
 
 func UIDToIDHandler(teamService Service) func(ctx context.Context, orgID int64, resourceID string) (string, error) {

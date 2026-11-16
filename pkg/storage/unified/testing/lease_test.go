@@ -14,9 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-func TestIntegrationLeaseBadger(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
+func TestLeaseBadger(t *testing.T) {
 	opts := badger.DefaultOptions("").WithInMemory(true).WithLogger(nil)
 	bdb, err := badger.Open(opts)
 	require.NoError(t, err)
@@ -29,7 +27,7 @@ func TestIntegrationLeaseSQLKV(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 	t.Cleanup(db.CleanupTestDB)
 
-	dbstore := db.InitTestDB(t)
+	dbstore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
 	require.NoError(t, err)
 	dbConn, err := eDB.Init(context.Background())

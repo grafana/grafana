@@ -168,6 +168,9 @@ func jsonDataToMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.MetaJSOND
 	if jsonData.SkipDataQuery {
 		meta.SkipDataQuery = &jsonData.SkipDataQuery
 	}
+	if jsonData.Type == plugins.TypePanel && jsonData.SkipDefaultQuery {
+		meta.SkipDefaultQuery = &jsonData.SkipDefaultQuery
+	}
 	if jsonData.Streaming {
 		meta.Streaming = &jsonData.Streaming
 	}
@@ -768,6 +771,10 @@ type grafanaComPluginManifest struct {
 // grafanaComChildPluginVersionToMetaSpec converts a child plugin version to a MetaSpec.
 // It inherits most information from the parent plugin.
 func grafanaComChildPluginVersionToMetaSpec(logger logging.Logger, child grafanaComChildPluginVersion, parent grafanaComPluginVersionMeta) (pluginsv0alpha1.MetaSpec, error) {
+	if parent.CDNURL == "" {
+		return pluginsv0alpha1.MetaSpec{}, fmt.Errorf("grafana.com response for parent of plugin %s: %w", child.Slug, ErrMissingCDNURL)
+	}
+
 	cdnURL, err := url.JoinPath(parent.CDNURL, child.Path)
 	if err != nil {
 		return pluginsv0alpha1.MetaSpec{}, fmt.Errorf("failed to build CDN URL for child plugin %s: %w", child.Slug, err)
@@ -870,6 +877,10 @@ func grafanaComPluginVersionMetaToMetaSpec(logger logging.Logger, gcomMeta grafa
 		}
 
 		metaSpec.Signature = signature
+	}
+
+	if gcomMeta.CDNURL == "" {
+		return pluginsv0alpha1.MetaSpec{}, fmt.Errorf("grafana.com response for plugin %s: %w", gcomMeta.PluginSlug, ErrMissingCDNURL)
 	}
 
 	moduleURL, err := url.JoinPath(gcomMeta.CDNURL, "module.js")

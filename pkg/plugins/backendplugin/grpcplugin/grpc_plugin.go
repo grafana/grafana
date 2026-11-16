@@ -5,24 +5,32 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/hashicorp/go-plugin"
 	"go.opentelemetry.io/otel/trace"
 
+	v3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
+	appgrpcplugin "github.com/grafana/grafana-app-sdk/plugin/grpcplugin"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	localv3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
 type grpcPlugin struct {
 	descriptor     PluginDescriptor
-	clientFactory  func() (*plugin.Client, error)
+	clientFactory  func() (*plugin.Client, string, error)
 	client         *plugin.Client
 	pluginClient   *ClientV2
+	clientV3       v3.Client
 	logger         log.Logger
 	mutex          sync.RWMutex
 	decommissioned bool
 	state          pluginState
+
+	// accessPolicyToken is the local access policy token passed to the
+	// current process, revoked when the process stops or is replaced.
+	accessPolicyToken string
 }
 
 type pluginState int
@@ -46,12 +54,15 @@ func newGrpcPlugin(descriptor PluginDescriptor, logger log.Logger, tracer trace.
 	return &grpcPlugin{
 		descriptor: descriptor,
 		logger:     logger,
-		clientFactory: func() (*plugin.Client, error) {
-			clientConfig, err := newClientConfig(descriptor, env(), logger, tracer)
+		clientFactory: func() (*plugin.Client, string, error) {
+			processEnv := env()
+			accessPolicyToken := localv3.LocalAccessPolicyTokenFromEnv(processEnv)
+			clientConfig, err := newClientConfig(descriptor, processEnv, logger, tracer)
 			if err != nil {
-				return nil, err
+				// Start revokes the token of a failed start.
+				return nil, accessPolicyToken, err
 			}
-			return plugin.NewClient(clientConfig), nil
+			return plugin.NewClient(clientConfig), accessPolicyToken, nil
 		},
 		state: pluginStateNotStarted,
 	}, nil
@@ -70,9 +81,27 @@ func (p *grpcPlugin) Start(_ context.Context) error {
 	defer p.mutex.Unlock()
 
 	p.state = pluginStateStartInit
+	// A failed start must not leave a half-started process running, keep its
+	// client, or keep a working access policy token. go-plugin never marks a
+	// client exited when the process fails to launch, so with the client kept,
+	// Exited would stay false and the plugin would never be restarted.
+	defer func() {
+		if p.state == pluginStateStartFail {
+			if p.client != nil {
+				p.client.Kill()
+			}
+			p.client = nil
+			p.pluginClient = nil
+			p.clientV3 = nil
+			p.revokeAccessPolicyToken()
+		}
+	}()
+
+	// A restart replaces the process, so the previous one's token must stop working.
+	p.revokeAccessPolicyToken()
 
 	var err error
-	p.client, err = p.clientFactory()
+	p.client, p.accessPolicyToken, err = p.clientFactory()
 	if err != nil {
 		p.state = pluginStateStartFail
 		return err
@@ -98,8 +127,29 @@ func (p *grpcPlugin) Start(_ context.Context) error {
 		return errors.New("no compatible plugin implementation found")
 	}
 
+	p.clientV3 = loadClientV3(rpcClient)
+
 	p.state = pluginStateStartSuccess
 	return nil
+}
+
+// loadClientV3 returns the plugin's v3 transport client. Consumers add caller
+// authentication with v3.WithAuthentication.
+func loadClientV3(rpcClient plugin.ClientProtocol) v3.Client {
+	client, err := appgrpcplugin.NewClientV3(rpcClient, appgrpcplugin.ClientV3Options{})
+	if err != nil {
+		// Plugins that predate v3 do not dispense these services, which is the
+		// common case for now, so a failure here is not worth surfacing.
+		return nil
+	}
+	return client
+}
+
+// revokeAccessPolicyToken revokes the access policy token passed to the current
+// process. Callers hold p.mutex.
+func (p *grpcPlugin) revokeAccessPolicyToken() {
+	localv3.RevokeLocalAccessPolicyToken(p.accessPolicyToken)
+	p.accessPolicyToken = ""
 }
 
 func (p *grpcPlugin) Stop(_ context.Context) error {
@@ -109,6 +159,8 @@ func (p *grpcPlugin) Stop(_ context.Context) error {
 	if p.client != nil {
 		p.client.Kill()
 	}
+	// The process's access policy token must not outlive it.
+	p.revokeAccessPolicyToken()
 	p.state = pluginStateStopped
 	return nil
 }
@@ -145,31 +197,41 @@ func (p *grpcPlugin) Target() backendplugin.Target {
 	return backendplugin.TargetLocal
 }
 
+// ClientV3 implements [backendplugin.PluginV3].
+func (p *grpcPlugin) ClientV3(ctx context.Context) (v3.Client, bool) {
+	p.mutex.RLock()
+	defer p.mutex.RUnlock()
+	if p.client != nil && !p.client.Exited() && p.clientV3 != nil {
+		return p.clientV3, true
+	}
+	p.logClientState(ctx)
+	return nil, false
+}
+
 func (p *grpcPlugin) getPluginClient(ctx context.Context) (*ClientV2, bool) {
 	p.mutex.RLock()
 	defer p.mutex.RUnlock()
 	if p.client != nil && !p.client.Exited() && p.pluginClient != nil {
 		return p.pluginClient, true
 	}
+	p.logClientState(ctx)
+	return nil, false
+}
 
+func (p *grpcPlugin) logClientState(ctx context.Context) {
 	logger := p.Logger().FromContext(ctx)
-	if p.state == pluginStateNotStarted {
+	switch p.state {
+	case pluginStateStartSuccess:
+		logger.Debug("Plugin client started, but does not have a client")
+	case pluginStateNotStarted:
 		logger.Debug("Plugin client has not been started yet")
-	}
-
-	if p.state == pluginStateStartInit {
+	case pluginStateStartInit:
 		logger.Debug("Plugin client is starting")
-	}
-
-	if p.state == pluginStateStartFail {
+	case pluginStateStartFail:
 		logger.Debug("Plugin client failed to start")
-	}
-
-	if p.state == pluginStateStopped {
+	case pluginStateStopped:
 		logger.Debug("Plugin client has stopped")
 	}
-
-	return nil, false
 }
 
 func (p *grpcPlugin) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {

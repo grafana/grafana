@@ -116,6 +116,19 @@ func TestOAuthTokenMiddleware(t *testing.T) {
 			require.Equal(t, "id-token", cdt.QueryDataReq.Headers[backend.OAuthIdentityIDTokenHeaderName])
 		})
 
+		t.Run("Should forward OAuth Identity when calling QueryChunkedData", func(t *testing.T) {
+			err = cdt.MiddlewareHandler.QueryChunkedData(req.Context(), &backend.QueryChunkedDataRequest{
+				PluginContext: pluginCtx,
+				Headers:       map[string]string{otherHeader: "test"},
+			}, nopChunkedWriter{})
+			require.NoError(t, err)
+			require.NotNil(t, cdt.QueryChunkedDataReq)
+			require.Len(t, cdt.QueryChunkedDataReq.Headers, 3)
+			require.Equal(t, "test", cdt.QueryChunkedDataReq.Headers[otherHeader])
+			require.Equal(t, "Bearer access-token", cdt.QueryChunkedDataReq.Headers[backend.OAuthIdentityTokenHeaderName])
+			require.Equal(t, "id-token", cdt.QueryChunkedDataReq.Headers[backend.OAuthIdentityIDTokenHeaderName])
+		})
+
 		t.Run("Should forward OAuth Identity when calling CallResource", func(t *testing.T) {
 			err = cdt.MiddlewareHandler.CallResource(req.Context(), &backend.CallResourceRequest{
 				PluginContext: pluginCtx,
@@ -142,6 +155,50 @@ func TestOAuthTokenMiddleware(t *testing.T) {
 			require.Equal(t, "test", cdt.CheckHealthReq.Headers[otherHeader])
 			require.Equal(t, "Bearer access-token", cdt.CheckHealthReq.Headers[backend.OAuthIdentityTokenHeaderName])
 			require.Equal(t, "id-token", cdt.CheckHealthReq.Headers[backend.OAuthIdentityIDTokenHeaderName])
+		})
+
+		t.Run("Should forward OAuth Identity with nil QueryData headers", func(t *testing.T) {
+			require.NotPanics(t, func() {
+				_, err := cdt.MiddlewareHandler.QueryData(req.Context(), &backend.QueryDataRequest{PluginContext: pluginCtx})
+				require.NoError(t, err)
+			})
+			require.Equal(t, map[string]string{
+				backend.OAuthIdentityTokenHeaderName:   "Bearer access-token",
+				backend.OAuthIdentityIDTokenHeaderName: "id-token",
+			}, cdt.QueryDataReq.Headers)
+		})
+
+		t.Run("Should forward OAuth Identity with nil QueryChunkedData headers", func(t *testing.T) {
+			require.NotPanics(t, func() {
+				err := cdt.MiddlewareHandler.QueryChunkedData(req.Context(), &backend.QueryChunkedDataRequest{PluginContext: pluginCtx}, nopChunkedWriter{})
+				require.NoError(t, err)
+			})
+			require.Equal(t, map[string]string{
+				backend.OAuthIdentityTokenHeaderName:   "Bearer access-token",
+				backend.OAuthIdentityIDTokenHeaderName: "id-token",
+			}, cdt.QueryChunkedDataReq.Headers)
+		})
+
+		t.Run("Should forward OAuth Identity with nil CallResource headers", func(t *testing.T) {
+			require.NotPanics(t, func() {
+				err := cdt.MiddlewareHandler.CallResource(req.Context(), &backend.CallResourceRequest{PluginContext: pluginCtx}, nopCallResourceSender)
+				require.NoError(t, err)
+			})
+			require.Equal(t, map[string][]string{
+				backend.OAuthIdentityTokenHeaderName:   {"Bearer access-token"},
+				backend.OAuthIdentityIDTokenHeaderName: {"id-token"},
+			}, cdt.CallResourceReq.Headers)
+		})
+
+		t.Run("Should forward OAuth Identity with nil CheckHealth headers", func(t *testing.T) {
+			require.NotPanics(t, func() {
+				_, err := cdt.MiddlewareHandler.CheckHealth(req.Context(), &backend.CheckHealthRequest{PluginContext: pluginCtx})
+				require.NoError(t, err)
+			})
+			require.Equal(t, map[string]string{
+				backend.OAuthIdentityTokenHeaderName:   "Bearer access-token",
+				backend.OAuthIdentityIDTokenHeaderName: "id-token",
+			}, cdt.CheckHealthReq.Headers)
 		})
 	})
 }

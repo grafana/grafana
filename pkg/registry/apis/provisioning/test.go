@@ -19,6 +19,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 )
 
@@ -139,6 +140,7 @@ func (s *testConnector) Connect(ctx context.Context, name string, _ runtime.Obje
 							))
 							return
 						}
+						repository.InvalidateConnectionTokenOnURLChange(&cfg, oldCfg)
 						repository.CopySecureValues(&cfg, oldCfg)
 
 						// Copying previous finalizers
@@ -158,6 +160,7 @@ func (s *testConnector) Connect(ctx context.Context, name string, _ runtime.Obje
 				if len(cfg.GetFinalizers()) == 0 {
 					cfg.SetFinalizers([]string{
 						repository.RemoveOrphanResourcesFinalizer,
+						repository.RemovePendingJobsFinalizer,
 						repository.CleanFinalizer,
 					})
 				}
@@ -231,11 +234,7 @@ func (s *testConnector) Connect(ctx context.Context, name string, _ runtime.Obje
 						return
 					}
 
-					cfg.Secure.Token.Create = token.Token
-					// HACK: currently, Repository validator does not allow for Connection and token
-					// to be declared together in a new / temporary Repository.
-					// We are therefore removing it in such cases.
-					cfg.Spec.Connection = nil
+					cfg.Secure.Token = common.InlineSecureValue{Create: token.Token}
 				}
 
 				// Create a temporary repository
@@ -244,6 +243,11 @@ func (s *testConnector) Connect(ctx context.Context, name string, _ runtime.Obje
 					responder.Error(err)
 					return
 				}
+				// HACK: currently, Repository validator does not allow for Connection and token
+				// to be declared together in a new / temporary Repository. We remove the
+				// connection only after Build so provider extras still see it (e.g. bitbucket
+				// derives the git token user from it).
+				cfg.Spec.Connection = nil
 				repo = tmp
 			}
 		}

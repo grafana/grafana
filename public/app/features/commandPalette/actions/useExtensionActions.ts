@@ -23,7 +23,9 @@ export default function useExtensionActions(): CommandPaletteAction[] {
       priority: EXTENSIONS_PRIORITY,
       id: link.id,
       name: link.title,
-      perform: () => link.onClick && link.onClick(),
+      // Only set perform when there is an onClick: an action with perform has its URL navigation blocked,
+      // so path-only links would otherwise do nothing when selected.
+      perform: link.onClick ? () => link.onClick?.() : undefined,
       url: link.path,
     }));
   }, [links]);

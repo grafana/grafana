@@ -1,6 +1,6 @@
-import { config } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec, type Status } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { type Resource } from 'app/features/apiserver/types';
 import { type DashboardDataDTO } from 'app/types/dashboard';
 
@@ -136,17 +136,17 @@ describe('conversion status helpers', () => {
 });
 
 describe('getDashboardsApiVersion', () => {
-  beforeEach(() => {
-    config.featureToggles = {};
+  afterEach(() => {
+    setTestFlags({});
   });
 
   it.each([
-    [{}, undefined, 'unified'],
+    [{ dashboardNewLayouts: false }, undefined, 'unified'],
     [{}, 'v1', 'v1'],
     [{}, 'v2', 'v2'],
     [{ dashboardNewLayouts: true }, undefined, 'v2'],
   ])('with toggles %j and responseFormat %s returns %s', (toggles, responseFormat, expected) => {
-    config.featureToggles = toggles;
+    setTestFlags(toggles);
     expect(getDashboardsApiVersion(responseFormat as 'v1' | 'v2' | undefined)).toBe(expected);
   });
 });

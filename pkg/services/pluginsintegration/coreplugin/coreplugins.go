@@ -17,27 +17,15 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
 	"github.com/grafana/grafana/pkg/plugins/log"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 	testdatasource "github.com/grafana/grafana/pkg/tsdb/grafana-testdata-datasource"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
-	"github.com/grafana/grafana/pkg/tsdb/influxdb"
-	"github.com/grafana/grafana/pkg/tsdb/loki"
-	"github.com/grafana/grafana/pkg/tsdb/mysql"
-	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 )
 
 const (
-	CloudWatch    = "cloudwatch"
-	AzureMonitor  = "grafana-azure-monitor-datasource"
 	Graphite      = "graphite"
-	InfluxDB      = "influxdb"
-	Loki          = "loki"
-	Prometheus    = "prometheus"
 	TestData      = "grafana-testdata-datasource"
 	TestDataAlias = "testdata"
-	MySQL         = "mysql"
 	Grafana       = "grafana"
 )
 
@@ -78,23 +66,14 @@ func ProvideCoreProvider(coreRegistry *Registry) plugins.BackendFactoryProvider 
 	return provider.New(coreRegistry.BackendFactoryProvider(), provider.DefaultProvider)
 }
 
-func ProvideCoreRegistry(tracer trace.Tracer, am *azuremonitor.Service, cw *cloudwatch.Service,
-	grap *graphite.Service, idb *influxdb.Service, lk *loki.Service,
-	pr *prometheus.Service, td *testdatasource.Service, my *mysql.Service,
-	graf *grafanads.Service) *Registry {
+func ProvideCoreRegistry(tracer trace.Tracer, grap *graphite.Service, td *testdatasource.Service, graf *grafanads.Service) *Registry {
 	// Non-optimal global solution to replace plugin SDK default tracer for core plugins.
 	sdktracing.InitDefaultTracer(tracer)
 
 	return NewRegistry(map[string]backendplugin.PluginFactoryFunc{
-		CloudWatch:   asBackendPlugin(cw),
-		AzureMonitor: asBackendPlugin(am),
-		Graphite:     asBackendPlugin(grap),
-		InfluxDB:     asBackendPlugin(idb),
-		Loki:         asBackendPlugin(lk),
-		Prometheus:   asBackendPlugin(pr),
-		TestData:     asBackendPlugin(td),
-		MySQL:        asBackendPlugin(my),
-		Grafana:      asBackendPlugin(graf),
+		Graphite: asBackendPlugin(grap),
+		TestData: asBackendPlugin(td),
+		Grafana:  asBackendPlugin(graf),
 	})
 }
 
@@ -194,20 +173,8 @@ func NewPlugin(pluginID string, httpClientProvider *httpclient.Provider, tracer 
 		jsonData.ID = TestData
 		jsonData.AliasIDs = append(jsonData.AliasIDs, TestDataAlias)
 		svc = testdatasource.ProvideService()
-	case CloudWatch:
-		svc = cloudwatch.ProvideService()
-	case AzureMonitor:
-		svc = azuremonitor.ProvideService(httpClientProvider)
 	case Graphite:
 		svc = graphite.ProvideService(httpClientProvider, tracer)
-	case InfluxDB:
-		svc = influxdb.ProvideService(httpClientProvider)
-	case Loki:
-		svc = loki.ProvideService(httpClientProvider, tracer)
-	case Prometheus:
-		svc = prometheus.ProvideService(httpClientProvider)
-	case MySQL:
-		svc = mysql.ProvideService()
 	default:
 		return nil, ErrCorePluginNotFound
 	}

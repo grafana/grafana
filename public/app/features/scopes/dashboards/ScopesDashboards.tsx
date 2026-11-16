@@ -22,13 +22,12 @@ export function ScopesDashboards() {
     scopeServices?.scopesDashboardsService.state
   );
 
-  if (!scopeServices || !scopes || !scopes.state.enabled || !scopes.state.drawerOpened || scopes.state.readOnly) {
+  if (!scopeServices || !scopes || !scopes.state.enabled || !scopes.state.drawerOpened) {
     return null;
   }
 
   const { scopesDashboardsService } = scopeServices;
-  const { loading, forScopeNames, dashboards, scopeNavigations, searchQuery, filteredFolders } =
-    scopesDashboardsService.state;
+  const { loading, forScopeNames, scopeNavigations, searchQuery, filteredFolders } = scopesDashboardsService.state;
   const { changeSearchQuery, updateFolder, clearSearchQuery } = scopesDashboardsService;
 
   if (!loading) {
@@ -42,7 +41,7 @@ export function ScopesDashboards() {
           </div>
         </div>
       );
-    } else if (dashboards.length === 0 && scopeNavigations.length === 0) {
+    } else if (scopeNavigations.length === 0) {
       return (
         <div className={styles.container} data-testid="scopes-dashboards-container">
           <div className={styles.noResultsContainer} data-testid="scopes-dashboards-notFoundForScope">
@@ -92,18 +91,29 @@ export function ScopesDashboards() {
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   return {
-    container: css({
-      backgroundColor: theme.colors.background.canvas,
-      borderRight: `1px solid ${theme.colors.border.weak}`,
-      display: 'flex',
-      flexDirection: 'column',
-      height: '100%',
-      gap: theme.spacing(1),
-      padding: theme.spacing(0, 2),
-      margin: theme.spacing(2, 0),
-      width: theme.spacing(37.5),
-    }),
+    container: css(
+      {
+        backgroundColor: theme.colors.background.canvas,
+        borderRight: `1px solid ${theme.colors.border.weak}`,
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+        gap: theme.spacing(1),
+        padding: theme.spacing(0, 2),
+        margin: theme.spacing(2, 0),
+        width: theme.spacing(37.5),
+      },
+      visualRefreshEnabled && {
+        backgroundColor: theme.colors.background.page,
+        border: `1px solid ${theme.colors.border.weak}`,
+        borderRadius: theme.shape.radius.lg,
+        padding: theme.spacing(2),
+        margin: 0,
+        width: theme.spacing(39.5),
+      }
+    ),
     noResultsContainer: css({
       alignItems: 'center',
       display: 'flex',

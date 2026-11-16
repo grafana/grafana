@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Field, IconButton, Input, useStyles2 } from '@grafana/ui';
 
@@ -26,6 +27,7 @@ export function FieldSearch({ collapse, onChange, value }: Props) {
         <Input
           value={value}
           type="text"
+          data-testid={selectors.components.Logs.fieldsSidebar.searchInput}
           placeholder={t('logs.field-selector.placeholder-search-fields-by-name', 'Search fields by name')}
           onChange={onChange}
           suffix={

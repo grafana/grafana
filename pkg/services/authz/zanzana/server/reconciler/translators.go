@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/roleeffective"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
+	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 )
 
 // TranslateFolderToTuples converts a Folder CRD to parent relationship tuples.
@@ -33,7 +34,7 @@ func TranslateFolderToTuples(obj *unstructured.Unstructured) ([]*openfgav1.Tuple
 	parentFolder := accessor.GetFolder()
 
 	// No parent means this is a root-level folder
-	if parentFolder == "" {
+	if foldermodel.IsRootFolderUID(parentFolder) {
 		return nil, nil
 	}
 
@@ -55,8 +56,11 @@ func TranslateRoleToTuples(
 
 	var effective []roleeffective.ActionScope
 	if globalRolePerms != nil {
-		getter := func(roleName string) ([]roleeffective.ActionScope, error) {
-			perms := globalRolePerms[roleName]
+		getter := func(ref iamv0.RolespecRoleRef) ([]roleeffective.ActionScope, error) {
+			if ref.Kind != "GlobalRole" {
+				return nil, fmt.Errorf("role %q ref kind %q is unsupported: expected GlobalRole", role.Name, ref.Kind)
+			}
+			perms := globalRolePerms[ref.Name]
 			out := make([]roleeffective.ActionScope, 0, len(perms))
 			for _, p := range perms {
 				out = append(out, roleeffective.ActionScope{Action: p.Action, Scope: p.Scope})

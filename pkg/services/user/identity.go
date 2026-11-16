@@ -2,6 +2,7 @@ package user
 
 import (
 	"fmt"
+	"slices"
 	"strconv"
 	"time"
 
@@ -53,6 +54,10 @@ type SignedInUser struct {
 	// IDToken is a signed token representing the identity that can be forwarded to plugins and external services.
 	IDToken       string                                   `json:"-" xorm:"-"`
 	IDTokenClaims *authnlib.Claims[authnlib.IDTokenClaims] `json:"-" xorm:"-"`
+
+	// ServiceAccountTokenID and ServiceAccountTokenName identify the service account token used to authenticate, if any.
+	ServiceAccountTokenID   int64  `json:"-" xorm:"-"`
+	ServiceAccountTokenName string `json:"-" xorm:"-"`
 
 	// When other settings are not deterministic, this value is used
 	FallbackType claims.IdentityType
@@ -315,12 +320,7 @@ func (u *SignedInUser) GetAuthenticatedBy() string {
 }
 
 func (u *SignedInUser) IsAuthenticatedBy(providers ...string) bool {
-	for _, p := range providers {
-		if u.AuthenticatedBy == p {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(providers, u.AuthenticatedBy)
 }
 
 // FIXME: remove this method once all services are using an interface

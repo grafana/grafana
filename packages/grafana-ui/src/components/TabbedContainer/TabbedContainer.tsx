@@ -3,6 +3,7 @@ import { useState } from 'react';
 import * as React from 'react';
 
 import { type SelectableValue, type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { IconButton } from '../../components/IconButton/IconButton';
 import { Tab } from '../../components/Tabs/Tab';
@@ -49,7 +50,13 @@ export function TabbedContainer({ tabs, defaultTab, closeIconTooltip, onClose, t
           />
         ))}
         <Box grow={1} display="flex" justifyContent="flex-end" paddingRight={1}>
-          <IconButton size="lg" onClick={onClose} name="times" tooltip={closeIconTooltip ?? 'Close'} />
+          <IconButton
+            size="lg"
+            onClick={onClose}
+            name="times"
+            tooltip={closeIconTooltip ?? 'Close'}
+            data-testid={selectors.components.TabbedContainer.closeButton}
+          />
         </Box>
       </TabsBar>
       <ScrollContainer>

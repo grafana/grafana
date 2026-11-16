@@ -73,6 +73,8 @@ type WebhookEvent struct {
 	PRURL        string
 	SourceRef    string
 	Hash         string
+	IsFork       *bool
+	ForkURL      string
 	Message      string
 	Sender       string
 	SenderID     string

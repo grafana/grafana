@@ -3,6 +3,7 @@ package connection
 import (
 	"context"
 	"fmt"
+	"net"
 	"testing"
 	"time"
 
@@ -17,6 +18,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
+	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
@@ -25,6 +27,10 @@ func newValidatorTestAttributes(obj, old runtime.Object, op admission.Operation)
 }
 
 func newValidatorTestAttributesWithDryRun(obj, old runtime.Object, op admission.Operation, dryRun bool) admission.Attributes {
+	return newValidatorTestAttributesWithSubresource(obj, old, op, dryRun, "")
+}
+
+func newValidatorTestAttributesWithSubresource(obj, old runtime.Object, op admission.Operation, dryRun bool, subresource string) admission.Attributes {
 	name := "test"
 	if obj != nil {
 		if conn, ok := obj.(*provisioning.Connection); ok {
@@ -38,7 +44,7 @@ func newValidatorTestAttributesWithDryRun(obj, old runtime.Object, op admission.
 		"default",
 		name,
 		provisioning.ConnectionResourceInfo.GroupVersionResource(),
-		"",
+		subresource,
 		op,
 		nil,
 		dryRun,
@@ -48,7 +54,7 @@ func newValidatorTestAttributesWithDryRun(obj, old runtime.Object, op admission.
 
 func TestNewAdmissionValidator(t *testing.T) {
 	factory := NewMockFactory(t)
-	v := NewAdmissionValidator(factory)
+	v := NewAdmissionValidator(factory, nil)
 	require.NotNil(t, v)
 	assert.Equal(t, factory, v.factory)
 }
@@ -282,7 +288,7 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 				}
 			}
 
-			v := NewAdmissionValidator(factory)
+			v := NewAdmissionValidator(factory, nil)
 			attr := newValidatorTestAttributes(tt.obj, tt.old, tt.operation)
 
 			err := v.Validate(context.Background(), attr, nil)
@@ -311,11 +317,156 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 	}
 }
 
+func TestAdmissionValidator_Validate_SkipsSubresourcePatches(t *testing.T) {
+	factory := NewMockFactory(t)
+	// No EXPECT() set up for Validate: the mock will fail the test if it's called,
+	// confirming structural/runtime validation never runs for status patches.
+
+	// Missing title would normally fail factory-backed structural validation,
+	// but since old carries the exact same spec/secure, this is a pure status patch.
+	conn := &provisioning.Connection{
+		ObjectMeta: metav1.ObjectMeta{Name: "test"},
+		Spec:       provisioning.ConnectionSpec{Type: provisioning.GithubConnectionType},
+	}
+	old := conn.DeepCopy()
+
+	v := NewAdmissionValidator(factory, nil)
+	attr := newValidatorTestAttributesWithSubresource(conn, old, admission.Update, false, "status")
+
+	require.NoError(t, v.Validate(context.Background(), attr, nil))
+}
+
+func TestAdmissionValidator_Validate_RunsForBundledSpecChange(t *testing.T) {
+	old := &provisioning.Connection{
+		ObjectMeta: metav1.ObjectMeta{Name: "test"},
+		Spec:       provisioning.ConnectionSpec{Title: "Test Connection", Type: provisioning.GithubConnectionType},
+	}
+	// Bundled onto a /status request: spec.title is cleared, which
+	// factory-backed structural validation rejects.
+	conn := old.DeepCopy()
+	conn.Spec.Title = ""
+
+	factory := NewMockFactory(t)
+	factory.EXPECT().Validate(mock.Anything, conn).Return(field.ErrorList{
+		field.Required(field.NewPath("spec", "title"), "title is required"),
+	}).Once()
+
+	v := NewAdmissionValidator(factory, nil)
+	attr := newValidatorTestAttributesWithSubresource(conn, old, admission.Update, false, "status")
+
+	err := v.Validate(context.Background(), attr, nil)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "title is required")
+}
+
+func TestAdmissionValidator_Validate_PrivateEndpoints(t *testing.T) {
+	allowlist, err := repository.NewAllowlist([]string{"ghes.allowed.example.com"})
+	require.NoError(t, err)
+	urlValidator := repository.NewURLValidator(allowlist, func(_ context.Context, host string) ([]net.IPAddr, error) {
+		if host == "ghes.internal.example.com" || host == "ghes.allowed.example.com" {
+			return []net.IPAddr{{IP: net.ParseIP("10.0.0.1")}}, nil
+		}
+		return []net.IPAddr{{IP: net.ParseIP("140.82.112.3")}}, nil
+	})
+
+	tests := []struct {
+		name      string
+		spec      provisioning.ConnectionSpec
+		wantField string
+	}{
+		{
+			name: "public github enterprise server",
+			spec: provisioning.ConnectionSpec{
+				Type:             provisioning.GithubEnterpriseConnectionType,
+				URL:              "https://ghes.example.com/settings/installations/1",
+				GitHubEnterprise: &provisioning.GitHubEnterpriseConnectionConfig{ServerURL: "https://ghes.example.com"},
+			},
+		},
+		{
+			name: "allowlisted private github enterprise server",
+			spec: provisioning.ConnectionSpec{
+				Type:             provisioning.GithubEnterpriseConnectionType,
+				GitHubEnterprise: &provisioning.GitHubEnterpriseConnectionConfig{ServerURL: "https://ghes.allowed.example.com"},
+			},
+		},
+		{
+			name: "loopback github enterprise server",
+			spec: provisioning.ConnectionSpec{
+				Type:             provisioning.GithubEnterpriseConnectionType,
+				GitHubEnterprise: &provisioning.GitHubEnterpriseConnectionConfig{ServerURL: "http://127.0.0.1:3000"},
+			},
+			wantField: "spec.githubEnterprise.serverUrl",
+		},
+		{
+			name: "spec url resolving to a private address",
+			spec: provisioning.ConnectionSpec{
+				Type: provisioning.GitlabOAuthConnectionType,
+				URL:  "https://ghes.internal.example.com",
+			},
+			wantField: "spec.url",
+		},
+		{
+			name: "link-local github enterprise oauth server",
+			spec: provisioning.ConnectionSpec{
+				Type:                  provisioning.GithubEnterpriseOAuthConnectionType,
+				GitHubEnterpriseOAuth: &provisioning.GitHubEnterpriseOAuthConnectionConfig{ServerURL: "http://169.254.169.254"},
+			},
+			wantField: "spec.githubEnterpriseOAuth.serverUrl",
+		},
+		{
+			name: "private git oauth token url",
+			spec: provisioning.ConnectionSpec{
+				Type: provisioning.GitOAuthConnectionType,
+				GitOAuth: &provisioning.GitOAuthConnectionConfig{
+					AuthURL:  "https://git.example.com/oauth/authorize",
+					TokenURL: "https://10.0.0.5/oauth/token",
+				},
+			},
+			wantField: "spec.gitOAuth.tokenURL",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			factory := NewMockFactory(t)
+			factory.EXPECT().Validate(mock.Anything, mock.Anything).Return(nil)
+
+			conn := &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test"},
+				Spec:       tt.spec,
+			}
+			err := NewAdmissionValidator(factory, urlValidator).Validate(context.Background(), newValidatorTestAttributes(conn, nil, admission.Create), nil)
+
+			if tt.wantField == "" {
+				require.NoError(t, err)
+				return
+			}
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), tt.wantField)
+		})
+	}
+
+	t.Run("no url validator configured", func(t *testing.T) {
+		factory := NewMockFactory(t)
+		factory.EXPECT().Validate(mock.Anything, mock.Anything).Return(nil)
+
+		conn := &provisioning.Connection{
+			ObjectMeta: metav1.ObjectMeta{Name: "test"},
+			Spec: provisioning.ConnectionSpec{
+				Type:             provisioning.GithubEnterpriseConnectionType,
+				GitHubEnterprise: &provisioning.GitHubEnterpriseConnectionConfig{ServerURL: "http://127.0.0.1:3000"},
+			},
+		}
+		err := NewAdmissionValidator(factory, nil).Validate(context.Background(), newValidatorTestAttributes(conn, nil, admission.Create), nil)
+		require.NoError(t, err)
+	})
+}
+
 func TestAdmissionValidator_CopiesSecureValuesOnUpdate(t *testing.T) {
 	factory := NewMockFactory(t)
 	factory.EXPECT().Validate(mock.Anything, mock.Anything).Return(field.ErrorList{}).Maybe()
 
-	v := NewAdmissionValidator(factory)
+	v := NewAdmissionValidator(factory, nil)
 
 	oldConn := &provisioning.Connection{
 		ObjectMeta: metav1.ObjectMeta{Name: "test"},
@@ -358,11 +509,35 @@ func TestAdmissionValidator_Validate_DryRun(t *testing.T) {
 		dryRun          bool
 		factoryErrors   field.ErrorList
 		buildError      error
+		oauthConnection bool
 		testResults     *provisioning.TestResults
 		testError       error
 		wantErr         bool
 		wantErrContains string
 	}{
+		{
+			name: "dryRun skips runtime test for OAuth connection with a token",
+			obj: &provisioning.Connection{
+				ObjectMeta: metav1.ObjectMeta{Name: "test"},
+				Spec: provisioning.ConnectionSpec{
+					Title: "Test Connection",
+					Type:  provisioning.GitlabOAuthConnectionType,
+					OAuth: &provisioning.ConnectionOAuthConfig{
+						ClientID: "client-123",
+					},
+				},
+				Secure: provisioning.ConnectionSecure{
+					Token: common.InlineSecureValue{
+						Create: common.NewSecretValue("test-token"),
+					},
+				},
+			},
+			operation:       admission.Create,
+			dryRun:          true,
+			factoryErrors:   field.ErrorList{},
+			oauthConnection: true,
+			wantErr:         false,
+		},
 		{
 			name: "dryRun with valid connection passes runtime validation",
 			obj: &provisioning.Connection{
@@ -568,6 +743,12 @@ func TestAdmissionValidator_Validate_DryRun(t *testing.T) {
 					if conn.DeletionTimestamp == nil {
 						if tt.buildError != nil {
 							factory.EXPECT().Build(mock.Anything, mock.Anything).Return(nil, tt.buildError).Once()
+						} else if tt.oauthConnection {
+							oauthConn := struct {
+								*MockConnection
+								*MockOAuthConnection
+							}{NewMockConnection(t), NewMockOAuthConnection(t)}
+							factory.EXPECT().Build(mock.Anything, mock.Anything).Return(oauthConn, nil).Once()
 						} else {
 							factory.EXPECT().Build(mock.Anything, mock.Anything).Return(mockConnection, nil).Once()
 							if tt.testError != nil {
@@ -580,7 +761,7 @@ func TestAdmissionValidator_Validate_DryRun(t *testing.T) {
 				}
 			}
 
-			v := NewAdmissionValidator(factory)
+			v := NewAdmissionValidator(factory, nil)
 			attr := newValidatorTestAttributesWithDryRun(tt.obj, nil, tt.operation, tt.dryRun)
 
 			err := v.Validate(context.Background(), attr, nil)

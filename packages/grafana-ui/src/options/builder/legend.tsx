@@ -84,7 +84,6 @@ export function addLegendOptions<T extends OptionsWithLegend>(
       name: t('grafana-ui.builder.legend.name-overflow', 'Overflow'),
       category,
       description: '',
-      defaultValue: 'ellipsis',
       settings: {
         options: [
           { value: 'ellipsis', label: t('grafana-ui.builder.legend.overflow-options.label-ellipsis', 'Ellipsis') },

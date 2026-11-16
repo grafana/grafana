@@ -1,0 +1,356 @@
+import { act, cleanup, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { render } from 'test/test-utils';
+
+import { getPanelPlugin } from '@grafana/data/test';
+import { selectors } from '@grafana/e2e-selectors';
+import { setPluginImportUtils, setPluginLinksHook } from '@grafana/runtime';
+import { SceneGridLayout, SceneTimeRange, SceneVariableSet, VizPanel, VizPanelMenu } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/feature-flags';
+
+import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
+import { DashboardScene } from '../scene/DashboardScene';
+import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
+import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+import { isFullDashboardEditing } from '../scene/types/dashboard';
+import { DashboardInteractions } from '../utils/interactions';
+import { activateFullSceneTree, createDeferred } from '../utils/test-utils';
+
+import { DashboardSidebarSplitter } from './DashboardSidebarSplitter';
+
+let mockPanelPlugin = getPanelPlugin({});
+
+setPluginImportUtils({
+  importPanelPlugin: (id: string) => Promise.resolve(mockPanelPlugin),
+  getPanelPluginFromCache: (id: string) => undefined,
+});
+
+setPluginLinksHook(() => ({ links: [], isLoading: false }));
+
+jest.mock('app/core/hooks/useMediaQueryMinWidth', () => ({
+  useMediaQueryMinWidth: () => true,
+}));
+
+jest.mock('../utils/interactions');
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  useChromeHeaderHeight: jest.fn().mockReturnValue(80),
+}));
+
+jest.mock('@grafana/assistant', () => ({
+  useAssistant: jest.fn().mockReturnValue({
+    isAvailable: false,
+    isLoading: false,
+    openAssistant: jest.fn(),
+    closeAssistant: jest.fn(),
+    toggleAssistant: jest.fn(),
+  }),
+}));
+
+jest.mock('app/core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider', () => ({
+  useExtensionSidebarContext: jest.fn().mockReturnValue({
+    isOpen: false,
+    dockedComponentId: undefined,
+    setDockedComponentId: jest.fn(),
+    availableComponents: new Map(),
+    extensionSidebarWidth: 400,
+    setExtensionSidebarWidth: jest.fn(),
+  }),
+}));
+
+export function buildTestScene() {
+  const testScene = new DashboardScene({
+    $variables: new SceneVariableSet({ variables: [] }),
+    $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+    $data: new DashboardDataLayerSet({ annotationLayers: [] }),
+    isEditing: true,
+    body: new DefaultGridLayoutManager({
+      grid: new SceneGridLayout({
+        children: [new DashboardGridItem({ body: new VizPanel({ key: 'panel-1', pluginId: 'text' }) })],
+      }),
+    }),
+  });
+  return testScene;
+}
+
+afterEach(() => setTestFlags({}));
+
+describe('DashboardSidebarRenderer', () => {
+  beforeEach(() => {
+    setTestFlags({ dashboardNewLayouts: true });
+    // Sidebar state is persisted to localStorage — clear between tests so each test
+    // starts with the default visibility/dock state.
+    window.localStorage.clear();
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+    window.localStorage.clear();
+    cleanup();
+    setTestFlags({});
+  });
+
+  it('Should render sidebar', async () => {
+    const scene = buildTestScene();
+
+    act(() => activateFullSceneTree(scene));
+
+    render(<DashboardSidebarSplitter dashboard={scene} />);
+
+    expect(await screen.findByTestId(selectors.pages.Dashboard.Sidebar.outlineButton)).toBeInTheDocument();
+  });
+
+  it('does not render a cross-dashboard variables toolbar button', async () => {
+    const scene = buildTestScene();
+
+    act(() => activateFullSceneTree(scene));
+    render(<DashboardSidebarSplitter dashboard={scene} isEditing />);
+
+    expect(await screen.findByTestId(selectors.pages.Dashboard.Sidebar.outlineButton)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Cross-dashboard' })).not.toBeInTheDocument();
+  });
+
+  it('opens a cancellable loading pane and keeps it closed after the request settles', async () => {
+    const scene = buildTestScene();
+    const sidebar = scene.state.sidebar;
+    const pending = createDeferred<void>();
+    act(() => activateFullSceneTree(scene));
+    const { user } = render(<DashboardSidebarSplitter dashboard={scene} isEditing />);
+    let opening!: Promise<void>;
+    act(() => {
+      opening = sidebar.runPaneRequest(() => pending.promise);
+    });
+
+    expect(await screen.findByRole('status', { name: 'Loading sidebar' })).toBeVisible();
+    await user.click(screen.getByTestId(selectors.components.Sidebar.closePane));
+    expect(screen.queryByRole('status', { name: 'Loading sidebar' })).not.toBeInTheDocument();
+    await act(async () => {
+      pending.resolve();
+      await opening;
+    });
+    expect(screen.queryByTestId(selectors.components.Sidebar.closePane)).not.toBeInTheDocument();
+    await user.click(screen.getByTestId(selectors.pages.Dashboard.Sidebar.outlineButton));
+    expect(await screen.findByTestId(selectors.components.Sidebar.headerTitle)).toHaveTextContent('Content outline');
+  });
+
+  it('opens the add pane when the Add button is clicked', async () => {
+    const user = userEvent.setup();
+    const scene = buildTestScene();
+
+    act(() => activateFullSceneTree(scene));
+    render(<DashboardSidebarSplitter dashboard={scene} isEditing />);
+
+    await user.click(await screen.findByTestId(selectors.pages.Dashboard.Sidebar.addButton));
+
+    await waitFor(() => expect(scene.state.sidebar.state.openPane?.getId()).toBe('add'));
+  });
+
+  describe('returning from Viewing', () => {
+    beforeEach(() => setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true }));
+    afterEach(() => {
+      cleanup();
+      setTestFlags({});
+    });
+
+    it('restores the docked dashboard options pane after switching back to Editing', async () => {
+      const scene = buildTestScene();
+      scene.setState({ uid: 'saved-dashboard', meta: { canEdit: true, canSave: true } });
+      act(() => activateFullSceneTree(scene));
+      function SidebarWithMode() {
+        const state = scene.useState();
+        return <DashboardSidebarSplitter dashboard={scene} isEditing={isFullDashboardEditing(state)} />;
+      }
+      const user = userEvent.setup();
+      render(<SidebarWithMode />);
+      await user.click(screen.getByTestId(selectors.pages.Dashboard.Sidebar.optionsButton));
+      expect(await screen.findByTestId(selectors.components.Sidebar.dockToggle)).toBeInTheDocument();
+      expect(scene.state.sidebar.getSelectedObject()).toBe(scene);
+      expect(scene.state.sidebar.state.isDocked).toBe(true);
+
+      act(() => scene.setDashboardMode('view'));
+      expect(screen.queryByTestId(selectors.components.Sidebar.dockToggle)).not.toBeInTheDocument();
+      act(() => scene.setDashboardMode('edit'));
+
+      expect(await screen.findByTestId(selectors.components.Sidebar.dockToggle)).toBeInTheDocument();
+      expect(scene.state.sidebar.getSelectedObject()).toBe(scene);
+      expect(scene.state.sidebar.state.openPane?.getId()).toBe('element');
+      expect(scene.state.sidebar.state.isDocked).toBe(true);
+    });
+  });
+
+  it('Should sync sidebar docked state with sidebar state', async () => {
+    const scene = buildTestScene();
+
+    act(() => activateFullSceneTree(scene));
+
+    render(<DashboardSidebarSplitter dashboard={scene} isEditing />);
+
+    act(() => screen.getByLabelText('Outline').click());
+
+    expect(await screen.findByTestId(selectors.components.Sidebar.dockToggle)).toBeInTheDocument();
+
+    // With defaultToDocked: true when editing, sidebar starts docked
+    expect(scene.state.sidebar.state.isDocked).toBe(true);
+
+    // Clicking dock toggle should undock the sidebar
+    act(() => screen.getByTestId(selectors.components.Sidebar.dockToggle).click());
+
+    expect(scene.state.sidebar.state.isDocked).toBe(false);
+  });
+
+  describe('outline interactions tracking', () => {
+    it('should call DashboardInteractions.outlineClicked when clicking on dashboard outline', async () => {
+      const user = userEvent.setup();
+      const scene = buildTestScene();
+
+      act(() => activateFullSceneTree(scene));
+
+      render(<DashboardSidebarSplitter dashboard={scene} isEditing />);
+      const outlineButton = screen.getByTestId(selectors.pages.Dashboard.Sidebar.outlineButton);
+      await user.click(outlineButton);
+      expect(DashboardInteractions.dashboardOutlineClicked).toHaveBeenCalled();
+    });
+  });
+
+  it('keeps the viewing sidebar but drops editing actions when switching to Viewing with an active edit session', async () => {
+    setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+    const scene = buildTestScene();
+    scene.setState({ uid: 'saved-dashboard', mode: 'edit', meta: { canEdit: true, canSave: true } });
+    act(() => activateFullSceneTree(scene));
+    function SidebarWithMode() {
+      const state = scene.useState();
+      return <DashboardSidebarSplitter dashboard={scene} isEditing={isFullDashboardEditing(state)} />;
+    }
+    render(<SidebarWithMode />);
+    expect(await screen.findByTestId(selectors.pages.Dashboard.Sidebar.addButton)).toBeInTheDocument();
+
+    act(() => scene.setDashboardMode('view'));
+    expect(scene.state.isEditing).toBe(true);
+    expect(screen.getByTestId(selectors.pages.Dashboard.Sidebar.outlineButton)).toBeInTheDocument();
+    expect(screen.queryByTestId(selectors.pages.Dashboard.Sidebar.addButton)).not.toBeInTheDocument();
+  });
+
+  describe('View panel controls', () => {
+    afterEach(() => {
+      mockPanelPlugin = getPanelPlugin({});
+    });
+
+    it('shows the button once the viewed panel is added, e.g. as a repeat clone after the first render', async () => {
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.viewPanelPane': true, 'grafana.panelActionsPopover': true });
+      mockPanelPlugin = getPanelPlugin({ id: 'text' }).setViewPanelOptions({
+        quickToggles: { optionProperties: ['legend.showLegend'], fieldConfigProperties: [] },
+      });
+      const scene = buildTestScene();
+      scene.setState({ isEditing: false, viewPanel: 'panel-2' });
+      act(() => activateFullSceneTree(scene));
+
+      render(<DashboardSidebarSplitter dashboard={scene} />);
+
+      expect(await screen.findByTestId(selectors.pages.Dashboard.Sidebar.outlineButton)).toBeInTheDocument();
+      expect(screen.queryByTestId(selectors.pages.Dashboard.Sidebar.viewPanelControls)).not.toBeInTheDocument();
+
+      const panel = new VizPanel({ key: 'panel-2', pluginId: 'text' });
+      const grid = (scene.state.body as DefaultGridLayoutManager).state.grid;
+      act(() => {
+        grid.setState({ children: [...grid.state.children, new DashboardGridItem({ body: panel })] });
+        activateFullSceneTree(panel);
+      });
+
+      expect(await screen.findByTestId(selectors.pages.Dashboard.Sidebar.viewPanelControls)).toBeInTheDocument();
+    });
+
+    function renderViewedPanelWithoutPaneContent({ isEmbedded }: { isEmbedded: boolean }) {
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.viewPanelPane': true, 'grafana.panelActionsPopover': true });
+      const scene = buildTestScene();
+      const panel = new VizPanel({ key: 'panel-2', pluginId: 'text', menu: new VizPanelMenu({}) });
+      const grid = (scene.state.body as DefaultGridLayoutManager).state.grid;
+      grid.setState({ children: [...grid.state.children, new DashboardGridItem({ body: panel })] });
+      scene.setState({ isEditing: false, viewPanel: 'panel-2', meta: { isEmbedded } });
+      act(() => activateFullSceneTree(scene));
+
+      render(<DashboardSidebarSplitter dashboard={scene} />);
+    }
+
+    it('hides the button for a panel whose pane would be empty', async () => {
+      renderViewedPanelWithoutPaneContent({ isEmbedded: false });
+
+      expect(await screen.findByTestId(selectors.pages.Dashboard.Sidebar.outlineButton)).toBeInTheDocument();
+      expect(screen.queryByTestId(selectors.pages.Dashboard.Sidebar.viewPanelControls)).not.toBeInTheDocument();
+    });
+
+    it('shows the button on an embedded dashboard, where the pane holds Back to dashboard', async () => {
+      renderViewedPanelWithoutPaneContent({ isEmbedded: true });
+
+      expect(await screen.findByTestId(selectors.pages.Dashboard.Sidebar.viewPanelControls)).toBeInTheDocument();
+    });
+  });
+
+  describe('hide button', () => {
+    it('renders the hide button in view mode', async () => {
+      const scene = buildTestScene();
+      scene.setState({ isEditing: false });
+      act(() => activateFullSceneTree(scene));
+
+      render(<DashboardSidebarSplitter dashboard={scene} />);
+
+      const hideButton = await screen.findByTestId(selectors.components.Sidebar.showHideToggle);
+      expect(hideButton).toBeInTheDocument();
+    });
+
+    it('renders the hide button in edit mode', async () => {
+      const scene = buildTestScene();
+      act(() => activateFullSceneTree(scene));
+
+      render(<DashboardSidebarSplitter dashboard={scene} isEditing />);
+
+      const hideButton = await screen.findByTestId(selectors.components.Sidebar.showHideToggle);
+      expect(hideButton).toBeInTheDocument();
+    });
+
+    it('hides the sidebar and clears any open pane on click', async () => {
+      const user = userEvent.setup();
+      const scene = buildTestScene();
+      act(() => activateFullSceneTree(scene));
+
+      render(<DashboardSidebarSplitter dashboard={scene} isEditing />);
+
+      // Open the outline pane first
+      await user.click(screen.getByTestId(selectors.pages.Dashboard.Sidebar.outlineButton));
+      expect(scene.state.sidebar.state.openPane).toBeDefined();
+
+      // Click hide
+      await user.click(screen.getByTestId(selectors.components.Sidebar.showHideToggle));
+
+      // Pane should be cleared
+      expect(scene.state.sidebar.state.openPane).toBeUndefined();
+      // The sidebar container should no longer be rendered (only the show toggle remains)
+      expect(screen.queryByTestId(selectors.components.Sidebar.container)).not.toBeInTheDocument();
+    });
+
+    it('temporarily shows the sidebar undocked when selecting a panel while hidden', async () => {
+      const user = userEvent.setup();
+      const scene = buildTestScene();
+      act(() => activateFullSceneTree(scene));
+
+      render(<DashboardSidebarSplitter dashboard={scene} isEditing />);
+
+      // Hide the sidebar
+      await user.click(screen.getByTestId(selectors.components.Sidebar.showHideToggle));
+      expect(screen.queryByTestId(selectors.components.Sidebar.container)).not.toBeInTheDocument();
+
+      // Select the panel programmatically (clicking a panel in real UX)
+      const panel = scene.state.body.getVizPanels()[0];
+      await act(async () => scene.state.sidebar.selectObject(panel));
+
+      // Sidebar pops up — effective isDocked is false during temp-show
+      expect(screen.getByTestId(selectors.components.Sidebar.container)).toBeInTheDocument();
+      expect(scene.state.sidebar.state.isDocked).toBe(false);
+
+      // De-selecting closes the pane and re-hides the sidebar
+      act(() => scene.state.sidebar.clearSelection(true));
+
+      expect(screen.queryByTestId(selectors.components.Sidebar.container)).not.toBeInTheDocument();
+    });
+  });
+});

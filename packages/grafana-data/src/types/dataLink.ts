@@ -107,6 +107,7 @@ export interface LinkModel<T = any> {
    */
   interpolatedParams?: {
     query?: DataQuery;
+    alternativeQueries?: DataQuery[];
     timeRange?: TimeRange;
   };
 }

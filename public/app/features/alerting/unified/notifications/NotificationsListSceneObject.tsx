@@ -12,7 +12,6 @@ import {
 } from '@grafana/api-clients/rtkq/historian.alerting/v0alpha1';
 import { type GrafanaTheme2, type TimeRange, dateTimeFormat } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
   CustomVariable,
@@ -41,6 +40,7 @@ import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
 import { AlertEnrichments } from '../components/AlertEnrichments';
 import { CollapseToggle } from '../components/CollapseToggle';
 import { StateTag } from '../components/StateTag';
+import { isNotificationHistoryEnabled } from '../featureToggles';
 import { useNotificationAlerts } from '../hooks/useNotificationAlerts';
 import { usePagination } from '../hooks/usePagination';
 import { prometheusExpressionBuilder } from '../triage/scene/expressionBuilder';
@@ -213,9 +213,7 @@ function ListHeader() {
           <Trans i18nKey="alerting.notifications-scene.header.contact-point">Contact point</Trans>
         </Text>
       </div>
-      {config.featureToggles.alertingNotificationHistoryDetail && (
-        <div className={styles.viewCol}>{/* View link column */}</div>
-      )}
+      {isNotificationHistoryEnabled() && <div className={styles.viewCol}>{/* View link column */}</div>}
     </div>
   );
 }
@@ -287,7 +285,7 @@ function NotificationRow({ record, onLabelClick }: NotificationRowProps) {
             </Stack>
           </Tooltip>
         </div>
-        {config.featureToggles.alertingNotificationHistoryDetail && (
+        {isNotificationHistoryEnabled() && (
           <div className={styles.viewCol}>
             <LinkButton
               href={createRelativeUrl(

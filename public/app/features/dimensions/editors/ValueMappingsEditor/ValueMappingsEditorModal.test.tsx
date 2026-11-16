@@ -1,13 +1,18 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
 import { MappingType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { FieldConfigExpressionsContext } from 'app/core/components/OptionsUI/fieldConfigExpressions';
 
 import { ValueMappingsEditorModal, type Props } from './ValueMappingsEditorModal';
 
-const setup = (spy?: jest.Mock, propOverrides?: Partial<Props>) => {
+jest.mock('app/core/components/SuggestionsInput/getVariableSuggestions', () => ({
+  getVariableSuggestions: () => [{ value: 'env', label: 'env', origin: 'template' }],
+}));
+
+const setup = async (spy?: jest.Mock, propOverrides?: Partial<Props>, { fieldConfigExpressions = false } = {}) => {
   const props: Props = {
     onClose: jest.fn(),
     onChange: (mappings) => {
@@ -41,18 +46,35 @@ const setup = (spy?: jest.Mock, propOverrides?: Partial<Props>) => {
 
   Object.assign(props, propOverrides);
 
-  render(<ValueMappingsEditorModal {...props} />);
+  const view = render(
+    <FieldConfigExpressionsContext.Provider value={fieldConfigExpressions}>
+      <ValueMappingsEditorModal {...props} />
+    </FieldConfigExpressionsContext.Provider>
+  );
+  await screen.findAllByTestId('remove-value-mapping');
+  return view;
 };
 
 describe('ValueMappingsEditorModal', () => {
-  it('should render component', () => {
-    setup();
+  it('renders the existing value and range mappings with drag handles', async () => {
+    const { baseElement } = await setup();
+
+    await waitFor(() => {
+      expect(baseElement.querySelectorAll('[data-rfd-drag-handle-draggable-id]')).toHaveLength(2);
+    });
+
+    expect(screen.getByPlaceholderText('Exact value to match')).toHaveValue('20');
+    expect(screen.getByPlaceholderText('From')).toHaveValue('21');
+    expect(screen.getByPlaceholderText('To')).toHaveValue('30');
+    const displayTextInputs = screen.getAllByPlaceholderText('Optional display text');
+    expect(displayTextInputs[0]).toHaveValue('Ok');
+    expect(displayTextInputs[1]).toHaveValue('Meh');
   });
 
   describe('On remove mapping', () => {
     it('Should remove mapping at index 0', async () => {
       const onChangeSpy = jest.fn();
-      setup(onChangeSpy);
+      await setup(onChangeSpy);
 
       await userEvent.click(screen.getAllByTestId('remove-value-mapping')[0]);
       await userEvent.click(screen.getByText('Update'));
@@ -76,7 +98,7 @@ describe('ValueMappingsEditorModal', () => {
   describe('When adding and updating value map', () => {
     it('should be 3', async () => {
       const onChangeSpy = jest.fn();
-      setup(onChangeSpy);
+      await setup(onChangeSpy);
 
       await userEvent.click(screen.getByTestId(selectors.components.ValuePicker.button('Add a new mapping')));
       const selectComponent = await screen.findByTestId(selectors.components.ValuePicker.select('Add a new mapping'));
@@ -123,7 +145,7 @@ describe('ValueMappingsEditorModal', () => {
   describe('When adding and updating range map', () => {
     it('should add new range map', async () => {
       const onChangeSpy = jest.fn();
-      setup(onChangeSpy, { value: [] });
+      await setup(onChangeSpy, { value: [] });
       await userEvent.click(screen.getAllByTestId('remove-value-mapping')[0]);
 
       await userEvent.click(screen.getByTestId(selectors.components.ValuePicker.button('Add a new mapping')));
@@ -155,12 +177,59 @@ describe('ValueMappingsEditorModal', () => {
         },
       ]);
     });
+
+    it('should allow editing negative bounds on existing range mapping', async () => {
+      const onChangeSpy = jest.fn();
+      await setup(onChangeSpy, {
+        value: [
+          {
+            type: MappingType.RangeToText,
+            options: {
+              from: -1,
+              to: 10,
+              result: {
+                text: 'Negative range',
+                index: 0,
+              },
+            },
+          },
+        ],
+      });
+
+      const fromInput = screen.getByPlaceholderText('From');
+      const toInput = screen.getByPlaceholderText('To');
+
+      expect(fromInput).toHaveValue('-1');
+      expect(toInput).toHaveValue('10');
+
+      await userEvent.clear(fromInput);
+      await userEvent.type(fromInput, '-5');
+
+      await userEvent.clear(toInput);
+      await userEvent.type(toInput, '-2');
+
+      await userEvent.click(screen.getByText('Update'));
+
+      expect(onChangeSpy).toHaveBeenCalledWith([
+        {
+          type: MappingType.RangeToText,
+          options: {
+            from: -5,
+            to: -2,
+            result: {
+              text: 'Negative range',
+              index: 0,
+            },
+          },
+        },
+      ]);
+    });
   });
 
   describe('When adding and updating regex map', () => {
     it('should add new regex map', async () => {
       const onChangeSpy = jest.fn();
-      setup(onChangeSpy, { value: [] });
+      await setup(onChangeSpy, { value: [] });
       await userEvent.click(screen.getAllByTestId('remove-value-mapping')[0]);
 
       await userEvent.click(screen.getByTestId(selectors.components.ValuePicker.button('Add a new mapping')));
@@ -187,6 +256,33 @@ describe('ValueMappingsEditorModal', () => {
           },
         },
       ]);
+    });
+  });
+
+  describe('in a panel editor that stores expressions', () => {
+    it('suggests dashboard variables for the display text', async () => {
+      const onChangeSpy = jest.fn();
+      await setup(onChangeSpy, undefined, { fieldConfigExpressions: true });
+
+      const [displayText] = screen.getAllByPlaceholderText('Optional display text');
+      await userEvent.clear(displayText);
+      await userEvent.type(displayText, 'Env $');
+      await userEvent.click(await screen.findByText('env'));
+      await userEvent.click(screen.getByText('Update'));
+
+      expect(onChangeSpy).toHaveBeenCalledWith([
+        { type: MappingType.ValueToText, options: { '20': { text: 'Env ${env}', index: 0 } } },
+        { type: MappingType.RangeToText, options: { from: 21, to: 30, result: { text: 'Meh', index: 1 } } },
+      ]);
+    });
+
+    it('keeps the plain text input without expressions', async () => {
+      await setup();
+
+      const [displayText] = screen.getAllByPlaceholderText('Optional display text');
+      await userEvent.type(displayText, '$');
+
+      expect(screen.queryByText('env')).not.toBeInTheDocument();
     });
   });
 });

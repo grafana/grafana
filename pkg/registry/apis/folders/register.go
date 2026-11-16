@@ -3,12 +3,12 @@ package folders
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 	"sync"
 
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/admission"
@@ -24,14 +24,16 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	sdkres "github.com/grafana/grafana-app-sdk/resource"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	dashV2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	foldersv1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission/rpclient"
 	"github.com/grafana/grafana/pkg/registry/fieldselectors"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
@@ -59,30 +61,27 @@ type FolderAPIBuilder struct {
 	parents              parentsGetter
 	searcher             resourcepb.ResourceIndexClient
 	maxNestedFolderDepth int
+	deleteChecks         *deleteCheckMetrics
+	countMetrics         *countMetrics
 
 	// Flags
 	useZanzana          bool // features.IsEnabledGlobally(featuremgmt.FlagZanzana)
 	permissionsOnCreate bool // cfg.RBAC.PermissionsOnCreation("folder")
 
-	// Legacy services -- these will not exist in the MT environment
-	resourcePermissionsSvc *dynamic.NamespaceableResourceInterface
-	// Do not access directly: use `resourcePermissionsClient(ctx)`. In embedded mode this is
-	// built lazily from restConfigProvider and is nil until the first call.
+	// The legacy folder permission service is used while the RP API feature is off.
+	resourcePermissions  *rpclient.Client
 	folderPermissionsSvc accesscontrol.FolderPermissionsService // TODO: Remove this once kubernetesAuthzResourcePermissionApis is removed and the frontend is calling /apis directly to create root level folders
-
-	// Embedded mode builds resourcePermissionsSvc lazily from restConfigProvider; MT injects
-	// resourcePermissionsSvc directly and leaves restConfigProvider nil.
-	restConfigProvider       apiserver.RestConfigProvider
-	resourcePermissionsSvcMu sync.Mutex
 
 	// Dashboard client for cascade delete, built lazily from cascadeConfigProvider; access via
 	// dashboardClient(ctx). Set independently of the authz flag so cleanup works whenever cascade is on.
 	cascadeConfigProvider apiserver.RestConfigProvider
 	dashboardSvc          *dynamic.NamespaceableResourceInterface
 	dashboardSvcMu        sync.Mutex
-
+	variableSvc           *dynamic.NamespaceableResourceInterface
+	variableSvcMu         sync.Mutex
 	// contentsDeleter removes alert rules and library elements contained in a folder during cascade
-	// delete. Nil in MT (NewAPIService), where that cleanup is handled elsewhere.
+	// delete. Always set by RegisterAPIService (embedded); set by NewAPIService (standalone) only
+	// when the deployment opts into that cleanup.
 	contentsDeleter FolderContentsDeleter
 }
 
@@ -113,8 +112,34 @@ func (b *FolderAPIBuilder) dashboardClient(ctx context.Context) (*dynamic.Namesp
 	return b.dashboardSvc, nil
 }
 
+func (b *FolderAPIBuilder) variableClient(ctx context.Context) (*dynamic.NamespaceableResourceInterface, error) {
+	if b.cascadeConfigProvider == nil {
+		return b.variableSvc, nil
+	}
+
+	b.variableSvcMu.Lock()
+	defer b.variableSvcMu.Unlock()
+
+	if b.variableSvc != nil {
+		return b.variableSvc, nil
+	}
+
+	cfg, err := b.cascadeConfigProvider.GetRestConfig(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("get rest config: %w", err)
+	}
+	dyn, err := dynamic.NewForConfig(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("create dynamic client: %w", err)
+	}
+	client := dyn.Resource(dashV2beta1.VariableResourceInfo.GroupVersionResource())
+	b.variableSvc = &client
+	return b.variableSvc, nil
+}
+
 func RegisterAPIService(cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
+	iamFeatures iamapi.Features,
 	apiregistration builder.APIRegistrar,
 	folderPermissionsSvc accesscontrol.FolderPermissionsService,
 	accessClient authlib.AccessClient,
@@ -132,12 +157,16 @@ func RegisterAPIService(cfg *setting.Cfg,
 		permissionStore:      NewZanzanaPermissionStore(zanzanaClient),
 		maxNestedFolderDepth: cfg.MaxNestedFolderDepth,
 		contentsDeleter:      contentsDeleter,
+		deleteChecks:         newDeleteCheckMetrics(registerer, true), // the monolith always joins legacy storage
+		countMetrics:         newCountMetrics(registerer, true),
 	}
 
 	// With the flag on, use the App Platform permission path and leave the legacy folderPermissionsSvc
 	// unwired (so its folderStorage wrapper isn't installed); otherwise keep the legacy path.
-	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis) { //nolint:staticcheck
-		builder.restConfigProvider = restConfigProvider
+	if iamFeatures.ResourcePermissionsAPI {
+		if restConfigProvider != nil {
+			builder.resourcePermissions = rpclient.New(rpclient.FromRestConfig(restConfigProvider), foldersv1.FolderResourceInfo.GroupVersionResource().GroupResource())
+		}
 	} else {
 		builder.folderPermissionsSvc = folderPermissionsSvc
 	}
@@ -149,16 +178,35 @@ func RegisterAPIService(cfg *setting.Cfg,
 	return builder
 }
 
-func NewAPIService(ac authlib.AccessClient, searcher resource.ResourceClient, features featuremgmt.FeatureToggles, zanzanaClient zanzana.Client, resourcePermissionsSvc *dynamic.NamespaceableResourceInterface, dashboardSvc *dynamic.NamespaceableResourceInterface, maxNestedFolderDepth int) *FolderAPIBuilder {
-	return &FolderAPIBuilder{
-		accessClient:           ac,
-		searcher:               searcher,
-		permissionStore:        NewZanzanaPermissionStore(zanzanaClient),
-		resourcePermissionsSvc: resourcePermissionsSvc,
-		dashboardSvc:           dashboardSvc, // injected so cascade delete can remove dashboards in MT
-		maxNestedFolderDepth:   maxNestedFolderDepth,
-		useZanzana:             features.IsEnabledGlobally(featuremgmt.FlagZanzana), //nolint:staticcheck
+func NewAPIService(ac authlib.AccessClient, searcher resource.ResourceClient, features featuremgmt.FeatureToggles, zanzanaClient zanzana.Client, resourcePermissions *rpclient.Client, dashboardSvc *dynamic.NamespaceableResourceInterface, variableSvc *dynamic.NamespaceableResourceInterface, maxNestedFolderDepth int, contentsDeleter FolderContentsDeleter, opts ...APIServiceOption) *FolderAPIBuilder {
+	b := &FolderAPIBuilder{
+		accessClient:         ac,
+		searcher:             searcher,
+		permissionStore:      NewZanzanaPermissionStore(zanzanaClient),
+		dashboardSvc:         dashboardSvc, // injected so cascade delete can remove dashboards in MT
+		variableSvc:          variableSvc,  // injected so cascade delete can remove variables in MT
+		maxNestedFolderDepth: maxNestedFolderDepth,
+		contentsDeleter:      contentsDeleter,                                     // injected so cascade delete can remove alert rules and library panels in standalone mode
+		useZanzana:           features.IsEnabledGlobally(featuremgmt.FlagZanzana), //nolint:staticcheck
+		resourcePermissions:  resourcePermissions,
 	}
+	for _, opt := range opts {
+		opt(b)
+	}
+	return b
+}
+
+// APIServiceOption configures NewAPIService.
+type APIServiceOption func(*FolderAPIBuilder)
+
+// WithDeleteCheckMetrics exports the delete-check counter on reg.
+func WithDeleteCheckMetrics(reg prometheus.Registerer, legacyJoinEnabled bool) APIServiceOption {
+	return func(b *FolderAPIBuilder) { b.deleteChecks = newDeleteCheckMetrics(reg, legacyJoinEnabled) }
+}
+
+// WithCountMetrics exports the folder count counter on reg.
+func WithCountMetrics(reg prometheus.Registerer, legacyJoinEnabled bool) APIServiceOption {
+	return func(b *FolderAPIBuilder) { b.countMetrics = newCountMetrics(reg, legacyJoinEnabled) }
 }
 
 func (b *FolderAPIBuilder) GetGroupVersions() []schema.GroupVersion {
@@ -233,7 +281,11 @@ func (b *FolderAPIBuilder) storageForVersion(
 	selectableFieldsOpts := grafanaregistry.SelectableFieldsOptions{
 		GetAttrs: fieldselectors.BuildGetAttrsFn(folderKind),
 	}
-	unified, err := grafanaregistry.NewRegistryStoreWithSelectableFields(opts.Scheme, folders, opts.OptsGetter, selectableFieldsOpts)
+	// Scoped to this version, so the GVK it persists under is the one being
+	// installed rather than whichever registration the scheme reports first
+	// (v1 and v1beta1 share one Go type).
+	optsGetter := opts.StorageOptsGetterFor(folders, b.folderStorageOpts())
+	unified, err := grafanaregistry.NewRegistryStoreWithSelectableFields(opts.Scheme, folders, optsGetter, selectableFieldsOpts)
 	if err != nil {
 		return err
 	}
@@ -253,19 +305,22 @@ func (b *FolderAPIBuilder) storageForVersion(
 
 	// Cascade delete wrapper -- always wired (both ST and MT). Recursively deletes a folder's
 	// subtree on delete; a no-op delegate unless kubernetesFolderCascadeDelete is enabled.
-	b.storage = newCascadeDeleteStorage(b.storage, b.searcher, b.dashboardClient, b.contentsDeleter, b.accessClient)
+	b.storage = newCascadeDeleteStorage(b.storage, b.searcher, b.dashboardClient, b.variableClient, b.contentsDeleter, b.accessClient)
 
 	storage := map[string]rest.Storage{}
 	storage[folders.StoragePath()] = b.storage
+	// Status writes go straight to the unified store: the ST and cascade wrappers only override
+	// Create/Delete, and the status strategy keeps spec and metadata intact.
+	storage[folders.StoragePath("status")] = grafanaregistry.NewStatusREST(unified, newFolderStatusStrategy(opts.Scheme, folders.GroupVersion()))
 
-	b.parents = newParentsGetter(b.storage, b.maxNestedFolderDepth) // used for validation
+	b.parents = newParentsGetter(b.storage) // used for validation
 	storage[folders.StoragePath("parents")] = &subParentsREST{
 		getter:  b.storage,
 		parents: b.parents,
 	}
 	storage[folders.StoragePath("counts")] = &subCountREST{
 		getter:   b.storage,
-		searcher: b.searcher,
+		searcher: b.countMetrics.wrap(b.searcher, countCallerEndpoint),
 	}
 	storage[folders.StoragePath("access")] = &subAccessREST{
 		getter:       b.storage,
@@ -282,17 +337,20 @@ func (b *FolderAPIBuilder) storageForVersion(
 	return nil
 }
 
-func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
-	opts.StorageOptsRegister(foldersv1.FolderResourceInfo.GroupResource(), apistore.StorageOptions{
-		// Preserve apiVersion/kind from the client on write. Without Scheme, apistore.encode
-		// uses the global LegacyCodec and converts to a single preferred external version.
-		Scheme:               opts.Scheme,
+// folderStorageOpts are the unified storage options every folder version shares.
+// storageForVersion pairs them with the GVK of the version it installs, which is
+// what preserves the client's apiVersion/kind on write: without it apistore.encode
+// falls back to the global LegacyCodec and converts to a single preferred version.
+func (b *FolderAPIBuilder) folderStorageOpts() apistore.StorageOptions {
+	return apistore.StorageOptions{
 		Index:                b.searcher,
 		EnableFolderSupport:  true,
 		DeprecatedInternalID: apistore.DeprecatedID_Required,
 		Permissions:          b.setDefaultFolderPermissions,
-	})
+	}
+}
 
+func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	// v1
 	if err := b.storageForVersion(
 		apiGroupInfo,
@@ -316,23 +374,15 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 	return nil
 }
 
-var defaultPermissions = []map[string]any{
-	{
-		"kind": "BasicRole",
-		"name": "Editor",
-		"verb": "edit",
-	},
-	{
-		"kind": "BasicRole",
-		"name": "Viewer",
-		"verb": "view",
-	},
+var defaultPermissions = []iamv0alpha1.ResourcePermissionspecPermission{
+	{Kind: iamv0alpha1.ResourcePermissionSpecPermissionKindBasicRole, Name: "Editor", Verb: "edit"},
+	{Kind: iamv0alpha1.ResourcePermissionSpecPermissionKindBasicRole, Name: "Viewer", Verb: "view"},
 }
 
 // buildDefaultFolderPermissions returns the default folder permissions with the creator granted
 // admin (in addition to the default basic-role permissions). Non-user/service-account identities
 // (anonymous, render service, etc.) get only the default permission set.
-func buildDefaultFolderPermissions(id authlib.AuthInfo) []map[string]any {
+func buildDefaultFolderPermissions(id authlib.AuthInfo) []iamv0alpha1.ResourcePermissionspecPermission {
 	var creatorKind string
 	switch id.GetIdentityType() {
 	case authlib.TypeUser:
@@ -348,51 +398,17 @@ func buildDefaultFolderPermissions(id authlib.AuthInfo) []map[string]any {
 		return defaultPermissions
 	}
 
-	permissions := make([]map[string]any, 0, len(defaultPermissions)+1)
-	permissions = append(permissions, map[string]any{
-		"kind": creatorKind,
-		"name": id.GetIdentifier(),
-		"verb": "admin",
+	permissions := make([]iamv0alpha1.ResourcePermissionspecPermission, 0, len(defaultPermissions)+1)
+	permissions = append(permissions, iamv0alpha1.ResourcePermissionspecPermission{
+		Kind: iamv0alpha1.ResourcePermissionSpecPermissionKind(creatorKind),
+		Name: id.GetIdentifier(),
+		Verb: "admin",
 	})
 	return append(permissions, defaultPermissions...)
 }
 
-// resourcePermissionsClient returns the ResourcePermission dynamic client, building it lazily from
-// restConfigProvider in embedded mode. Returns nil when no client is configured (e.g. flag off).
-func (b *FolderAPIBuilder) resourcePermissionsClient(ctx context.Context) (*dynamic.NamespaceableResourceInterface, error) {
-	// MT: injected directly, never mutated, restConfigProvider nil.
-	if b.restConfigProvider == nil {
-		return b.resourcePermissionsSvc, nil
-	}
-
-	// Embedded: build lazily (loopback config isn't ready at registration). The mutex avoids a
-	// data race; failures aren't cached so a transient error doesn't poison later creates.
-	b.resourcePermissionsSvcMu.Lock()
-	defer b.resourcePermissionsSvcMu.Unlock()
-
-	if b.resourcePermissionsSvc != nil {
-		return b.resourcePermissionsSvc, nil
-	}
-
-	cfg, err := b.restConfigProvider.GetRestConfig(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("get rest config: %w", err)
-	}
-	dyn, err := dynamic.NewForConfig(cfg)
-	if err != nil {
-		return nil, fmt.Errorf("create dynamic client: %w", err)
-	}
-	client := dyn.Resource(iamv0alpha1.ResourcePermissionInfo.GroupVersionResource())
-	b.resourcePermissionsSvc = &client
-	return b.resourcePermissionsSvc, nil
-}
-
 func (b *FolderAPIBuilder) setDefaultFolderPermissions(ctx context.Context, key *resourcepb.ResourceKey, id authlib.AuthInfo, obj utils.GrafanaMetaAccessor) error {
-	resourcePermissionsSvc, err := b.resourcePermissionsClient(ctx)
-	if err != nil {
-		return err
-	}
-	if resourcePermissionsSvc == nil {
+	if b.resourcePermissions == nil {
 		return nil
 	}
 
@@ -404,68 +420,11 @@ func (b *FolderAPIBuilder) setDefaultFolderPermissions(ctx context.Context, key 
 	log := logging.FromContext(ctx)
 	log.Debug("setting default folder permissions", "uid", obj.GetName(), "namespace", obj.GetNamespace())
 
-	// Setting the default permissions is a system operation triggered by the creation of the
-	// folder, not an action the requester performs directly. The creator does not yet have
-	// permission to manage permissions on the brand-new folder, so we use a service identity to
-	// write them through the ResourcePermission API.
-	nsInfo, err := authlib.ParseNamespace(obj.GetNamespace())
-	if err != nil {
-		return fmt.Errorf("parse namespace: %w", err)
-	}
-	ctx = identity.WithServiceIdentityContext(ctx, nsInfo.OrgID)
-
-	// The creator gets admin on their folder, in addition to the default basic-role permissions.
-	// Anonymous and other non-user identities don't get an explicit grant.
 	permissions := buildDefaultFolderPermissions(id)
-
-	client := (*resourcePermissionsSvc).Namespace(obj.GetNamespace())
-	name := fmt.Sprintf("%s-%s-%s", foldersv1.FolderResourceInfo.GroupVersionResource().Group, foldersv1.FolderResourceInfo.GroupVersionResource().Resource, obj.GetName())
-
-	// the resource permission will likely already exist with admin can admin, so we will need to update it
-	if _, err := client.Get(ctx, name, metav1.GetOptions{}); err == nil {
-		_, err := client.Update(ctx, &unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"metadata": map[string]any{
-					"name":      name,
-					"namespace": obj.GetNamespace(),
-				},
-				"spec": map[string]any{
-					"resource": map[string]any{
-						"apiGroup": foldersv1.FolderResourceInfo.GroupVersionResource().Group,
-						"resource": foldersv1.FolderResourceInfo.GroupVersionResource().Resource,
-						"name":     obj.GetName(),
-					},
-					"permissions": permissions,
-				},
-			},
-		}, metav1.UpdateOptions{})
-		if err != nil {
-			logger.Error("failed to update root permissions", "error", err)
-			return fmt.Errorf("update root permissions: %w", err)
-		}
-
-		return nil
-	}
-
-	_, err = client.Create(ctx, &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"metadata": map[string]any{
-				"name":      name,
-				"namespace": obj.GetNamespace(),
-			},
-			"spec": map[string]any{
-				"resource": map[string]any{
-					"apiGroup": foldersv1.FolderResourceInfo.GroupVersionResource().Group,
-					"resource": foldersv1.FolderResourceInfo.GroupVersionResource().Resource,
-					"name":     obj.GetName(),
-				},
-				"permissions": permissions,
-			},
-		},
-	}, metav1.CreateOptions{})
+	err := b.resourcePermissions.SetDefault(ctx, obj.GetNamespace(), obj.GetName(), permissions)
 	if err != nil {
-		logger.Error("failed to create root permissions", "error", err)
-		return fmt.Errorf("create root permissions: %w", err)
+		logger.Error("failed to set root permissions", "error", err)
+		return fmt.Errorf("set root permissions: %w", err)
 	}
 
 	return nil
@@ -491,6 +450,15 @@ func (b *FolderAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions 
 
 func (b *FolderAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
 	oas.Info.Description = "Grafana folders"
+
+	// status is server-written; clients creating or replacing a folder never send it.
+	if oas.Components != nil {
+		if s, ok := oas.Components.Schemas[foldersv1.OpenAPIPrefix+"Folder"]; ok && s != nil {
+			// Copy first: v1 and v1beta1 share the generated definitions, so editing in place
+			// would corrupt the other version's required list.
+			s.Required = slices.DeleteFunc(slices.Clone(s.Required), func(f string) bool { return f == "status" })
+		}
+	}
 	return oas, nil
 }
 
@@ -508,6 +476,15 @@ func (b *FolderAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, _
 			return fmt.Errorf("obj is not folders.Folder")
 		}
 		f.Spec.Title = strings.Trim(f.Spec.Title, " ")
+		if verb == admission.Create {
+			applyCascadeDeleteFinalizerOnCreate(f, folderAsyncCascadeDeleteEnabled(ctx))
+			return nil
+		}
+		old, ok := a.GetOldObject().(*foldersv1.Folder)
+		if !ok {
+			return fmt.Errorf("old obj is not folders.Folder")
+		}
+		preserveCascadeDeleteFinalizerOnUpdate(f, old)
 		return nil
 	}
 	return nil
@@ -541,10 +518,10 @@ func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes,
 		if err := validateOwnerReferencesOnManagedFolder(f, nil); err != nil {
 			return err
 		}
-		return validateOnCreate(ctx, f, b.parents, b.maxNestedFolderDepth)
+		return validateOnCreate(ctx, f, newCreateParentsGetter(b.storage), b.maxNestedFolderDepth, a.IsDryRun())
 	case admission.Delete:
 		deleteOptions, _ := a.GetOperationOptions().(*metav1.DeleteOptions)
-		return validateOnDelete(ctx, f, b.searcher, deleteOptions, kubernetesFolderCascadeDeleteEnabled(ctx))
+		return validateOnDelete(ctx, f, b.countMetrics.wrap(b.searcher, countCallerDeleteCheck), deleteOptions, kubernetesFolderCascadeDeleteEnabled(ctx), b.deleteChecks.withDryRun(a.IsDryRun()))
 	case admission.Update:
 		old, ok := a.GetOldObject().(*foldersv1.Folder)
 		if !ok {

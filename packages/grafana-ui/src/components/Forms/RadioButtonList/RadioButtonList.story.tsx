@@ -1,4 +1,4 @@
-import { type Meta, type StoryFn } from '@storybook/react-webpack5';
+import { type Meta, type StoryFn } from '@storybook/react';
 import { useState } from 'react';
 import * as React from 'react';
 
@@ -127,14 +127,14 @@ DisabledList.args = {
   disabled: true,
 };
 
-export const Dots: StoryFn = () => {
-  const Wrapper = ({ title, children }: React.PropsWithChildren<{ title: string }>) => (
-    <div style={{ marginBottom: 20 }}>
-      <h5>{title}</h5>
-      {children}
-    </div>
-  );
+const Wrapper = ({ title, children }: React.PropsWithChildren<{ title: string }>) => (
+  <div style={{ marginBottom: 20 }}>
+    <h5>{title}</h5>
+    {children}
+  </div>
+);
 
+export const Dots: StoryFn = () => {
   return (
     <div>
       <Wrapper title="Default">

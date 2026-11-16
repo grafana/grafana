@@ -2,6 +2,7 @@ import { config } from '../../config';
 import { getFeatureFlagClient } from '../../internal/openFeature';
 import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 import { getCachedPromise } from '../../utils/getCachedPromise';
+import { assertPluginIdFormat, getApiVersion } from '../pluginUtils';
 
 import { logPluginMetaError } from './logging';
 import type { PluginMetasResponse } from './types';
@@ -9,8 +10,8 @@ import { type Meta } from './types/meta/meta_object_gen';
 import { type Plugin } from './types/plugin/plugin_object_gen';
 import { defaultSpec } from './types/plugin/types.spec.gen';
 
-function getApiVersion(): string {
-  return 'v0alpha1';
+export async function getPluginMetasUrl(): Promise<string> {
+  return `apis/plugins.grafana.app/${await getApiVersion()}/namespaces/${config.namespace}/metas`;
 }
 
 async function loadPluginMetas(): Promise<PluginMetasResponse> {
@@ -19,10 +20,12 @@ async function loadPluginMetas(): Promise<PluginMetasResponse> {
     return result;
   }
 
-  const metas = await fetch(`apis/plugins.grafana.app/${getApiVersion()}/namespaces/${config.namespace}/metas`);
+  const requestUrl = await getPluginMetasUrl();
+  const metas = await fetch(requestUrl);
   if (!metas.ok) {
     const error = new Error(`Failed to load plugin metas ${metas.status}:${metas.statusText}`);
     logPluginMetaError('PluginMeta: failed to load plugin metas', error, {
+      requestUrl,
       status: String(metas.status),
       statusText: metas.statusText,
     });
@@ -34,21 +37,24 @@ async function loadPluginMetas(): Promise<PluginMetasResponse> {
 }
 
 export async function installPluginMeta(pluginId: string, version: string): Promise<void> {
+  assertPluginIdFormat(pluginId);
+
   if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false)) {
     return;
   }
 
+  const apiVersion = await getApiVersion();
   const spec = { ...defaultSpec(), id: pluginId, version };
   const metadata = { name: pluginId, namespace: config.namespace };
   const data: Plugin = {
-    apiVersion: `plugins.grafana.app/${getApiVersion()}`,
+    apiVersion: `plugins.grafana.app/${apiVersion}`,
     kind: 'Plugin',
     metadata,
     spec,
     status: {},
   };
 
-  const result = await fetch(`apis/plugins.grafana.app/${getApiVersion()}/namespaces/${config.namespace}/plugins`, {
+  const result = await fetch(`apis/plugins.grafana.app/${apiVersion}/namespaces/${config.namespace}/plugins`, {
     method: 'POST',
     body: JSON.stringify(data),
     headers: { 'content-type': 'application/json' },
@@ -66,12 +72,14 @@ export async function installPluginMeta(pluginId: string, version: string): Prom
 }
 
 export async function uninstallPluginMeta(pluginId: string): Promise<void> {
+  assertPluginIdFormat(pluginId);
+
   if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false)) {
     return;
   }
 
   const result = await fetch(
-    `apis/plugins.grafana.app/${getApiVersion()}/namespaces/${config.namespace}/plugins/${pluginId}`,
+    `apis/plugins.grafana.app/${await getApiVersion()}/namespaces/${config.namespace}/plugins/${pluginId}`,
     {
       method: 'DELETE',
     }
@@ -88,13 +96,13 @@ export async function uninstallPluginMeta(pluginId: string): Promise<void> {
   }
 }
 
-export function initPluginMetas(): Promise<PluginMetasResponse> {
-  return getCachedPromise(loadPluginMetas, { defaultValue: { items: [] } });
+export function initPluginMetas(): Promise<PluginMetasResponse | null> {
+  return getCachedPromise<PluginMetasResponse | null>(loadPluginMetas, { defaultValue: null });
 }
 
-export function refetchPluginMetas(): Promise<PluginMetasResponse> {
-  return getCachedPromise(loadPluginMetas, {
-    defaultValue: { items: [] },
+export function refetchPluginMetas(): Promise<PluginMetasResponse | null> {
+  return getCachedPromise<PluginMetasResponse | null>(loadPluginMetas, {
+    defaultValue: null,
     invalidate: true,
   });
 }
@@ -105,7 +113,7 @@ export async function getPluginMetaFromCache(pluginId: string): Promise<Meta | n
   }
 
   const metas = await initPluginMetas();
-  const meta = metas.items.find((i) => i.spec.pluginJson.id === pluginId);
+  const meta = metas?.items.find((i) => i.spec.pluginJson.id === pluginId);
   return meta ? structuredClone(meta) : null;
 }
 
@@ -115,6 +123,6 @@ export async function refetchPluginMeta(pluginId: string): Promise<Meta | null> 
   }
 
   const metas = await refetchPluginMetas();
-  const meta = metas.items.find((i) => i.spec.pluginJson.id === pluginId);
+  const meta = metas?.items.find((i) => i.spec.pluginJson.id === pluginId);
   return meta ? structuredClone(meta) : null;
 }

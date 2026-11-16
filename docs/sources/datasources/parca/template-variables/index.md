@@ -9,16 +9,19 @@ keywords:
   - profiling
 labels:
   products:
-    - cloud
     - enterprise
     - oss
 menuTitle: Template variables
 title: Parca template variables
 weight: 400
-review_date: 2026-04-10
+review_date: 2026-10-08
 ---
 
 # Parca template variables
+
+{{< admonition type="warning" >}}
+This plugin is deprecated and will only receive critical security updates. Support will end on January 2, 2027.
+{{< /admonition >}}
 
 Instead of hard-coding label values in your profiling queries, you can use template variables to create dynamic, reusable dashboards. Variables appear as drop-down menus at the top of the dashboard, making it easy to switch between services, instances, or environments without editing queries.
 
@@ -54,7 +57,8 @@ The Parca query editor's label selector field supports template variable interpo
 
 Create a custom variable to switch between services in your profiling dashboard.
 
-1. Navigate to the dashboard you want to update and click **Edit**.
+1. Navigate to the dashboard you want to update.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Click the **Add new element** icon (blue plus sign).
 1. Click **Variable**.
 1. Select **Custom** as the variable type.
@@ -66,7 +70,7 @@ Create a custom variable to switch between services in your profiling dashboard.
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Exit edit**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 In your Parca query's label selector, reference the variable:
 
@@ -93,7 +97,8 @@ In your Parca query's label selector, reference both variables:
 
 Create a text box variable for free-form label filtering.
 
-1. Navigate to the dashboard you want to update and click **Edit**.
+1. Navigate to the dashboard you want to update.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Click the **Add new element** icon (blue plus sign).
 1. Click **Variable**.
 1. Select **Textbox** as the variable type.
@@ -102,7 +107,7 @@ Create a text box variable for free-form label filtering.
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Exit edit**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 In your Parca query's label selector, reference the variable:
 

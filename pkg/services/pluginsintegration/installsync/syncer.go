@@ -2,18 +2,25 @@ package installsync
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"net"
+	"net/http"
 	"slices"
 	"strings"
 	"time"
 
+	"github.com/grafana/dskit/backoff"
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana-app-sdk/logging"
-	"github.com/grafana/grafana-app-sdk/resource"
+	errorsK8s "k8s.io/apimachinery/pkg/api/errors"
 
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
 	"github.com/grafana/grafana/apps/plugins/pkg/app/install"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/configprovider"
+	infraserverlock "github.com/grafana/grafana/pkg/infra/serverlock"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
@@ -24,12 +31,23 @@ import (
 )
 
 const (
-	ServiceName          = "plugins.installsync"
+	ServiceName          = install.PluginStoreSyncServiceIdentity
 	syncerLockActionName = "plugin-install-api-sync"
 )
 
 var (
 	lockTimeout = 10 * time.Minute
+
+	// defaultBackoffConfig controls retries between failed Sync attempts.
+	// Retries are infinite: Sync only ever runs once at process startup, so
+	// there is no other trigger to resync a stack whose sync failed (e.g.
+	// because the API server was throttling requests during a fleet-wide
+	// restart) until the process restarts.
+	defaultBackoffConfig = backoff.Config{
+		MinBackoff: 5 * time.Second,
+		MaxBackoff: 5 * time.Minute,
+		MaxRetries: 0,
+	}
 )
 
 // Syncer is the interface for syncing plugin installations to the Kubernetes-style API.
@@ -47,13 +65,14 @@ type ServerLock interface {
 type syncer struct {
 	services.NamedService
 	featureToggles      featuremgmt.FeatureToggles
-	clientGenerator     resource.ClientGenerator
 	installRegistrar    *install.InstallRegistrar
 	orgService          org.Service
 	namespaceMapper     request.NamespaceMapper
 	serverLock          ServerLock
 	restConfigProvider  apiserver.RestConfigProvider
 	pluginsStoreService pluginstore.Store
+	pluginErrors        plugins.ErrorResolver
+	backoffConfig       backoff.Config
 }
 
 var _ Syncer = (*syncer)(nil)
@@ -64,16 +83,15 @@ var _ services.NamedService = (*syncer)(nil)
 // newSyncer creates a new syncer with the provided dependencies.
 func newSyncer(
 	featureToggles featuremgmt.FeatureToggles,
-	clientGenerator resource.ClientGenerator,
 	installRegistrar *install.InstallRegistrar,
 	orgService org.Service,
 	namespaceMapper request.NamespaceMapper,
 	serverLock ServerLock,
 	restConfigProvider apiserver.RestConfigProvider,
 	pluginsStoreService pluginstore.Store,
+	pluginErrors plugins.ErrorResolver,
 ) *syncer {
 	s := syncer{
-		clientGenerator:     clientGenerator,
 		featureToggles:      featureToggles,
 		installRegistrar:    installRegistrar,
 		orgService:          orgService,
@@ -81,6 +99,8 @@ func newSyncer(
 		serverLock:          serverLock,
 		restConfigProvider:  restConfigProvider,
 		pluginsStoreService: pluginsStoreService,
+		pluginErrors:        pluginErrors,
+		backoffConfig:       defaultBackoffConfig,
 	}
 	s.NamedService = services.NewBasicService(nil, s.running, nil).WithName(ServiceName)
 	return &s
@@ -89,12 +109,13 @@ func newSyncer(
 // ProvideSyncer creates a new Syncer for syncing plugin installations to the API.
 func ProvideSyncer(
 	featureToggles featuremgmt.FeatureToggles,
-	clientGenerator resource.ClientGenerator,
+	clientGenerator ClientGenerator,
 	orgService org.Service,
 	cfgProvider configprovider.ConfigProvider,
 	serverLock ServerLock,
 	restConfigProvider apiserver.RestConfigProvider,
 	pluginsStoreService pluginstore.Store,
+	pluginErrors plugins.ErrorResolver,
 ) (Syncer, error) {
 	cfg, err := cfgProvider.Get(context.Background())
 	if err != nil {
@@ -105,13 +126,13 @@ func ProvideSyncer(
 
 	return newSyncer(
 		featureToggles,
-		clientGenerator,
 		installRegistrar,
 		orgService,
 		namespaceMapper,
 		serverLock,
 		restConfigProvider,
 		pluginsStoreService,
+		pluginErrors,
 	), nil
 }
 
@@ -144,11 +165,101 @@ func (s *syncer) running(ctx context.Context) error {
 		ctxLog.Warn("Failed to wait for plugin API availability, skipping plugin sync", "error", err)
 	}
 
-	if err := s.Sync(ctx, install.SourcePluginStore, s.pluginsStoreService.Plugins(ctx)); err != nil {
-		ctxLog.Warn("Failed to sync plugins", "error", err)
-	}
+	s.syncWithRetry(ctx, func(ctx context.Context) error {
+		return s.Sync(ctx, install.SourcePluginStore, s.pluginsStoreService.Plugins(ctx))
+	})
 	<-ctx.Done()
 	return nil
+}
+
+// syncWithRetry calls attempt, retrying with backoff on failure until it
+// succeeds, fails with a non-retryable error, or ctx is done. A single failed
+// attempt (e.g. the API server throttling requests during a fleet-wide
+// restart) must not strand this stack's plugin state until the process
+// restarts, since Sync only ever runs once at startup otherwise.
+func (s *syncer) syncWithRetry(ctx context.Context, attempt func(ctx context.Context) error) {
+	ctxLog := logging.FromContext(ctx)
+	bo := backoff.New(ctx, s.backoffConfig)
+	for {
+		err := attempt(ctx)
+		if err == nil {
+			return
+		}
+		if isServerLockExistsError(err) {
+			ctxLog.Debug("Another instance is running plugin sync, skipping this instance")
+			return
+		}
+		if !isRetryableSyncError(err) {
+			ctxLog.Error("Plugin sync failed with a non-retryable error, giving up", "error", err)
+			return
+		}
+		if !bo.Ongoing() {
+			ctxLog.Warn("Giving up on plugin sync", "error", err, "attempts", bo.NumRetries()+1)
+			return
+		}
+		ctxLog.Warn("Failed to sync plugins, retrying", "error", err, "attempt", bo.NumRetries()+1)
+		bo.Wait()
+	}
+}
+
+func isServerLockExistsError(err error) bool {
+	_, ok := errors.AsType[*infraserverlock.ServerLockExistsError](err)
+	return ok
+}
+
+type joinedError interface {
+	error
+	Unwrap() []error
+}
+
+type apiStatusError interface {
+	error
+	errorsK8s.APIStatus
+}
+
+// isRetryableSyncError reports whether err is a known transient failure.
+// Unknown errors are not retried because retries are otherwise infinite.
+func isRetryableSyncError(err error) bool {
+	if err == nil || errors.Is(err, context.Canceled) {
+		return false
+	}
+	// Reconciliation already made the maximum safe number of passes. Never
+	// restart that write loop, even when another namespace had a transient
+	// failure in the same attempt.
+	if errors.Is(err, install.ErrSyncDidNotConverge) {
+		return false
+	}
+
+	// Kubernetes predicates select the first APIStatus in an error tree. Walk
+	// joined namespace errors individually so their order cannot change whether
+	// a transient failure is retried.
+	if joined, ok := errors.AsType[joinedError](err); ok {
+		return slices.ContainsFunc(joined.Unwrap(), isRetryableSyncError)
+	}
+
+	// Some app-sdk errors both expose their own Kubernetes status and unwrap
+	// to a lower-level transport error. Preserve the status classification
+	// before classifying an error from their transport error chain.
+	if apiStatus, ok := errors.AsType[apiStatusError](err); ok {
+		return isRetryableKubernetesError(apiStatus)
+	}
+
+	if netErr, ok := errors.AsType[net.Error](err); ok && netErr.Timeout() {
+		return true
+	}
+	if _, ok := errors.AsType[*net.OpError](err); ok {
+		return true
+	}
+
+	return false
+}
+
+func isRetryableKubernetesError(err apiStatusError) bool {
+	return errorsK8s.IsTooManyRequests(err) ||
+		errorsK8s.IsServiceUnavailable(err) ||
+		errorsK8s.IsServerTimeout(err) ||
+		errorsK8s.IsTimeout(err) ||
+		err.Status().Code == http.StatusBadGateway
 }
 
 func (s *syncer) Sync(ctx context.Context, source install.Source, installedPlugins []pluginstore.Plugin) error {
@@ -177,58 +288,48 @@ func (s *syncer) syncAllNamespaces(ctx context.Context, source install.Source, i
 		return err
 	}
 
+	// a namespace failure must not strand the ones after it: the sync runs
+	// once per process, so skipped namespaces stay stale until restart
+	var errs []error
 	for _, org := range orgs {
 		namespace := s.namespaceMapper(org.ID)
 		nsCtx := identity.WithServiceIdentityForSingleNamespaceContext(ctx, namespace)
 		if err := s.syncNamespace(nsCtx, namespace, source, installedPlugins); err != nil {
-			return err
+			errs = append(errs, fmt.Errorf("sync namespace %q: %w", namespace, err))
 		}
 	}
 
-	return nil
+	return errors.Join(errs...)
 }
 
 func (s *syncer) syncNamespace(ctx context.Context, namespace string, source install.Source, installedPlugins []pluginstore.Plugin) error {
-	client, err := s.installRegistrar.GetClient()
-	if err != nil {
-		return err
-	}
-
-	apiPlugins, err := client.ListAll(ctx, namespace, resource.ListOptions{})
-	if err != nil {
-		return err
-	}
-
 	primaryPlugins := filterPrimaryPlugins(installedPlugins)
-	installedMap := make(map[string]struct{}, len(primaryPlugins))
+	desired := make([]install.PluginInstall, 0, len(primaryPlugins))
 	for _, p := range primaryPlugins {
-		installedMap[p.ID] = struct{}{}
-	}
-
-	// unregister plugins that are not installed
-	for _, apiPlugin := range apiPlugins.Items {
-		if _, exists := installedMap[apiPlugin.Spec.Id]; !exists {
-			err := s.installRegistrar.Unregister(ctx, namespace, apiPlugin.Spec.Id, source)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	// register plugins that are installed
-	for _, p := range primaryPlugins {
-		err := s.installRegistrar.Register(ctx, namespace, &install.PluginInstall{
+		desired = append(desired, install.PluginInstall{
 			ID:           p.ID,
 			Version:      p.Info.Version,
 			Source:       source,
 			Dependencies: pluginDependencyIDs(p),
 		})
-		if err != nil {
-			return err
-		}
 	}
+	return s.installRegistrar.SyncNamespace(ctx, namespace, source, desired, s.failedPluginIDs(ctx))
+}
 
-	return nil
+// failedPluginIDs returns the plugins that are installed but failed to load.
+// They are missing from the plugin store for this process only, so their
+// install records must not be removed: deleting a record uninstalls the plugin
+// from the stack.
+func (s *syncer) failedPluginIDs(ctx context.Context) []string {
+	if s.pluginErrors == nil {
+		return nil
+	}
+	errs := s.pluginErrors.PluginErrors(ctx)
+	ids := make([]string, 0, len(errs))
+	for _, e := range errs {
+		ids = append(ids, e.PluginID)
+	}
+	return ids
 }
 
 func pluginDependencyIDs(p pluginstore.Plugin) []string {

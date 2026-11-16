@@ -20,6 +20,7 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/schedule/ticker"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
+	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -40,14 +41,11 @@ type AlertsSender interface {
 	Send(ctx context.Context, key ngmodels.AlertRuleKey, alerts definitions.PostableAlerts)
 }
 
-// RulesStore is a store that provides alert rules for scheduling
-type RulesStore interface {
-	GetAlertRulesKeysForScheduling(ctx context.Context) ([]ngmodels.AlertRuleKeyWithVersion, error)
-	GetAlertRulesForScheduling(ctx context.Context, query *ngmodels.GetAlertRulesForSchedulingQuery) error
-}
-
 type RecordingWriter interface {
 	WriteDatasource(ctx context.Context, dsUID string, name string, t time.Time, frames data.Frames, orgID int64, extraLabels map[string]string) error
+	// WriteStale ends series written with WriteDatasource. A label set is the full set
+	// of labels that was written, without the metric name.
+	WriteStale(ctx context.Context, dsUID string, name string, t time.Time, orgID int64, labelSets []map[string]string) error
 }
 
 // AlertRuleStopReasonProvider is an interface for determining the reason why an alert rule was stopped.
@@ -86,7 +84,7 @@ type schedule struct {
 
 	evaluatorFactory eval.EvaluatorFactory
 
-	ruleStore         RulesStore
+	ruleStore         rulestore.SchedulableRuleReader
 	ruleSequenceStore RuleSequenceStore
 
 	stateManager *state.Manager
@@ -131,7 +129,7 @@ type SchedulerCfg struct {
 	AppURL                 *url.URL
 	JitterEvaluations      JitterStrategy
 	EvaluatorFactory       eval.EvaluatorFactory
-	RuleStore              RulesStore
+	RuleStore              rulestore.SchedulableRuleReader
 	RuleSequenceStore      RuleSequenceStore
 	Metrics                *metrics.Scheduler
 	AlertSender            AlertsSender
@@ -448,7 +446,7 @@ func (sch *schedule) runJobFn(next readyToRunItem, prev ...readyToRunItem) func(
 		if dropped != nil {
 			sch.log.Warn("Tick dropped because alert rule evaluation is too slow", append(key.LogContext(), "time", next.scheduledAt, "droppedTick", dropped.scheduledAt)...)
 			orgID := fmt.Sprint(key.OrgID)
-			sch.metrics.EvaluationMissed.WithLabelValues(orgID, next.rule.Title).Inc()
+			sch.metrics.EvaluationMissed.WithLabelValues(orgID, next.rule.Title, "slow_evaluation").Inc()
 		}
 	}
 }

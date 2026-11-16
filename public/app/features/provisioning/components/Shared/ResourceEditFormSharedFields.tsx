@@ -2,6 +2,7 @@ import { skipToken } from '@reduxjs/toolkit/query/react';
 import { memo, useCallback } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Combobox, Field, Input, TextArea } from '@grafana/ui';
 import {
@@ -10,7 +11,7 @@ import {
   useLazyGetRepositoryFilesWithPathQuery,
 } from 'app/api/clients/provisioning/v0alpha1';
 import { BranchValidationError } from 'app/features/provisioning/Shared/BranchValidationError';
-import { validateBranchName } from 'app/features/provisioning/utils/git';
+import { stripSlashes, validateBranchName } from 'app/features/provisioning/utils/git';
 import { isGitProvider } from 'app/features/provisioning/utils/repositoryTypes';
 
 import { useBranchDropdownOptions } from '../../hooks/useBranchDropdownOptions';
@@ -19,6 +20,7 @@ import { useLastBranch } from '../../hooks/useLastBranch';
 import { usePRBranch } from '../../hooks/usePRBranch';
 import { type BaseProvisionedFormData } from '../../types/form';
 import { type ResourceKindKey } from '../../utils/resourceKinds';
+import { isKnownRef } from '../../utils/workflow';
 import { joinPath, splitPath } from '../utils/path';
 
 type SharedFieldName = 'path' | 'comment';
@@ -112,10 +114,16 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
     });
 
     const showFolderFilename = (isNew || allowPathEdit) && resourceType === 'dashboard';
+    const configuredRepoPath = isGitProvider(repository?.type) ? stripSlashes(repository?.path ?? '') : undefined;
+
+    // A new branch only exists after the save creates it; until the selected branch is a known
+    // remote ref, list folders from the configured branch instead of requesting an unborn ref
+    // (which 404s).
+    const selectedBranchExists = isKnownRef(branchData, selectedBranch);
 
     const { options: folderOptions, loading: isFoldersLoading } = useGetRepositoryFolders({
       repositoryName: showFolderFilename ? repository?.name : undefined,
-      ref: selectedBranch || undefined,
+      ref: selectedBranchExists ? selectedBranch : undefined,
     });
 
     const pathText =
@@ -135,7 +143,10 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
         {repository?.type && isGitProvider(repository.type) && !readOnly && (
           <>
             <Field
-              disabled={canOnlyPushToConfiguredBranch || lockBranch}
+              // Do not disable for lockBranch: `Field` clones `disabled` onto the input, and
+              // react-hook-form drops disabled fields from the submitted values, which would strip
+              // the enforced template branch from `ref`. The Input below stays read-only instead.
+              disabled={canOnlyPushToConfiguredBranch}
               htmlFor="provisioned-ref"
               noMargin
               label={t('provisioned-resource-form.save-or-delete-resource-shared-fields.label-branch', 'Branch')}
@@ -157,18 +168,29 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
               }
               invalid={Boolean(errors.ref || branchError)}
               error={
-                errors.ref ? (
-                  <BranchValidationError />
-                ) : branchError ? (
-                  t('provisioning.config-form.error-fetch-branches', 'Failed to fetch branches')
-                ) : undefined
+                errors.ref
+                  ? errors.ref.message || <BranchValidationError />
+                  : branchError
+                    ? t('provisioning.config-form.error-fetch-branches', 'Failed to fetch branches')
+                    : undefined
               }
             >
               <Controller
                 name="ref"
                 control={control}
                 rules={{
-                  validate: validateBranchName,
+                  validate: {
+                    name: validateBranchName,
+                    // The configured branch stays listed for context when pushes to it are disabled, and
+                    // a typed name can still match it; the backend would reject that commit with a 403.
+                    target: (value) =>
+                      canPushToConfiguredBranch ||
+                      value !== repository?.branch ||
+                      t(
+                        'provisioned-resource-form.save-or-delete-resource-shared-fields.error-configured-branch-disabled',
+                        'Pushing to the configured branch is disabled for this repository'
+                      ),
+                  },
                   // When the branch changes, re-run path validation: a file may exist on one
                   // branch but not another, so the previous result is stale on the new ref.
                   deps: shouldValidatePath ? ['path'] : undefined,
@@ -183,11 +205,7 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
                         {...field}
                         invalid={!!errors.ref}
                         id="provisioned-ref"
-                        onChange={(option) => {
-                          const selectedBranch = option ? option.value : '';
-                          onChange(selectedBranch);
-                          setValue('workflow', selectedBranch === repository.branch ? 'write' : 'branch');
-                        }}
+                        onChange={(option) => onChange(option ? option.value : '')}
                         placeholder={t(
                           'provisioned-resource-form.save-or-delete-resource-shared-fields.placeholder-branch',
                           'Select or enter branch name'
@@ -227,10 +245,18 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
                       'provisioned-resource-form.save-or-delete-resource-shared-fields.label-repository-folder',
                       'Repository folder'
                     )}
-                    description={t(
-                      'provisioned-resource-form.save-or-delete-resource-shared-fields.description-folder',
-                      'Folder inside the repository. Leave empty for the repository root.'
-                    )}
+                    description={
+                      configuredRepoPath
+                        ? t(
+                            'provisioned-resource-form.save-or-delete-resource-shared-fields.description-folder-with-path',
+                            'Folder inside the repository. Leave empty for the configured repository path ({{path}}).',
+                            { path: configuredRepoPath, interpolation: { escapeValue: false } }
+                          )
+                        : t(
+                            'provisioned-resource-form.save-or-delete-resource-shared-fields.description-folder',
+                            'Folder inside the repository. Leave empty for the repository root.'
+                          )
+                    }
                   >
                     <Combobox
                       id="folder-path"
@@ -310,6 +336,7 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
             {lockComment ? (
               <TextArea
                 id="provisioned-resource-form-comment"
+                data-testid={selectors.components.ProvisionedResourceForm.commentInput}
                 value={commitMessage ?? ''}
                 readOnly
                 disabled={readOnly}
@@ -318,6 +345,7 @@ export const ResourceEditFormSharedFields = memo<DashboardEditFormSharedFieldsPr
             ) : (
               <TextArea
                 id="provisioned-resource-form-comment"
+                data-testid={selectors.components.ProvisionedResourceForm.commentInput}
                 {...register('comment')}
                 disabled={readOnly}
                 placeholder={t(

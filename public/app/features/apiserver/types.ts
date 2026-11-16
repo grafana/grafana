@@ -10,6 +10,8 @@
 
 import { type Observable } from 'rxjs';
 
+import { type BackendSrvRequest, type FetchError, isFetchError } from '@grafana/runtime';
+
 /** The object type and version */
 interface TypeMeta<K = string> {
   apiVersion: string;
@@ -50,6 +52,8 @@ export enum ManagerKind {
   Terraform = 'terraform',
   Kubectl = 'kubectl',
   Plugin = 'plugin',
+  /** Configured by a file the instance was started with, e.g. [provisioning] bootstrap_path */
+  FileProvisioning = 'file-provisioning',
   /** @deprecated shim/migration path for legacy file provisioning */
   ClassicFP = 'classic-file-provisioning',
 }
@@ -92,6 +96,14 @@ export const AnnoKeyEmbedded = 'grafana.app/embedded';
 /** Not intended to be used in production, we will be removing this in short-term future */
 export const AnnoReloadOnParamsChange = 'grafana.app/reloadOnParamsChange';
 
+/**
+ * JSON annotation selecting which cross-dashboard (global/folder) variables to inject.
+ * Value shape: `{"global":"all"|"none"|string[],"folder":"all"|"none"|string[]}`.
+ * Absent or invalid JSON → inject none (not opted in). `"all"` in a scope auto-includes new vars;
+ * a name array does not. Empty array is `"none"`. Both scopes `"none"` → omit this key.
+ */
+export const AnnoKeyUseCrossDashboardVariables = 'grafana.app/useCrossDashboardVariables';
+
 // labels
 export const DeprecatedInternalId = 'grafana.app/deprecatedInternalID';
 
@@ -130,6 +142,8 @@ type GrafanaClientAnnotations = {
   // TODO: This should be provided by the API
   // This is the dashboard ID for the Gcom API. This set when a dashboard is created through importing a dashboard from Grafana.com.
   [AnnoKeyDashboardGnetId]?: string;
+
+  [AnnoKeyUseCrossDashboardVariables]?: string;
 };
 
 // Labels
@@ -173,42 +187,6 @@ export interface ResourceList<T, S = object, K = string> extends TypeMeta {
   metadata: ListMeta;
   items: Array<Resource<T, S, K>>;
 }
-
-/** Kubernetes Table column definition (meta.k8s.io/v1) */
-interface TableColumnDefinition {
-  name: string;
-  type: string;
-  format?: string;
-  description?: string;
-  priority?: number;
-}
-
-/** Minimal metadata returned in Table row objects */
-interface PartialObjectMetadata {
-  metadata: ObjectMeta;
-}
-
-/** A single row in a Kubernetes Table response */
-export interface TableRow<T = PartialObjectMetadata> {
-  cells: unknown[];
-  object: T;
-}
-
-/** Kubernetes Table response (meta.k8s.io/v1) */
-export interface TableResponse<T = PartialObjectMetadata> extends TypeMeta {
-  metadata: ListMeta;
-  columnDefinitions: TableColumnDefinition[];
-  rows: Array<TableRow<T>>;
-}
-
-/** Empty Kubernetes Table response, used as a no-op / fallback return value. */
-export const EMPTY_TABLE_RESPONSE: TableResponse = {
-  apiVersion: 'meta.k8s.io/v1',
-  kind: 'Table',
-  metadata: { resourceVersion: '0' },
-  columnDefinitions: [],
-  rows: [],
-};
 
 export type ListOptionsLabelSelector =
   | string
@@ -272,9 +250,30 @@ export interface WatchOptions {
   fieldSelector?: ListOptionsFieldSelector;
 }
 
+// A single field-level explanation attached to a MetaStatus, as produced by
+// apierrors.NewInvalid on the backend.
+export interface MetaStatusCause {
+  message?: string;
+  field?: string;
+  reason?: string;
+}
+
+interface MetaStatusDetails {
+  uid?: string;
+  name?: string;
+  group?: string;
+  kind?: string;
+  retryAfterSeconds?: number;
+  causes?: MetaStatusCause[];
+}
+
 export interface MetaStatus {
   // Status of the operation. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
   status: 'Success' | 'Failure';
+
+  kind?: 'Status';
+
+  apiVersion?: string;
 
   // A human-readable description of the status of this operation.
   message: string;
@@ -286,7 +285,13 @@ export interface MetaStatus {
   reason?: string;
 
   // Extended data associated with the reason
-  details?: object;
+  details?: MetaStatusDetails;
+}
+
+// Failed writes to an apiserver reject with a FetchError whose body is a Status object. The
+// discriminator lives in `data.reason`, not `data.status` (which is always 'Failure').
+export function isApiMachineryError(error: unknown): error is FetchError<MetaStatus> {
+  return isFetchError(error) && error.data?.kind === 'Status' && error.data?.status === 'Failure';
 }
 
 export interface ResourceEvent<T = object, S = object, K = string> {
@@ -299,14 +304,27 @@ export type ResourceClientWriteParams = {
   fieldValidation?: 'Ignore' | 'Warn' | 'Strict';
 };
 
+/**
+ * Request level options, as opposed to query parameters. Callers that render the failure in their
+ * own UI pass `showErrorAlert: false` to suppress the global error toast.
+ */
+export type ResourceClientRequestOptions = Pick<BackendSrvRequest, 'showErrorAlert'>;
+
 export interface ResourceClient<T = object, S = object, K = string> {
   get(name: string, params?: Record<string, unknown>): Promise<Resource<T, S, K>>;
-  create(obj: ResourceForCreate<T, K>, params?: ResourceClientWriteParams): Promise<Resource<T, S, K>>;
-  update(obj: ResourceForCreate<T, K>, params?: ResourceClientWriteParams): Promise<Resource<T, S, K>>;
+  create(
+    obj: ResourceForCreate<T, K>,
+    params?: ResourceClientWriteParams,
+    requestOptions?: ResourceClientRequestOptions
+  ): Promise<Resource<T, S, K>>;
+  update(
+    obj: ResourceForCreate<T, K>,
+    params?: ResourceClientWriteParams,
+    requestOptions?: ResourceClientRequestOptions
+  ): Promise<Resource<T, S, K>>;
   delete(name: string, showSuccessAlert?: boolean): Promise<MetaStatus>;
   list(opts?: ListOptions): Promise<ResourceList<T, S, K>>;
   subresource<S>(name: string, path: string, params?: Record<string, unknown>): Promise<S>;
-  listAsTable(opts?: ListOptions): Promise<TableResponse>;
   watch(opts?: WatchOptions): Observable<ResourceEvent<T, S, K>>;
 }
 

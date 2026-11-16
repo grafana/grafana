@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
+	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	deletepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/delete"
@@ -28,8 +29,11 @@ import (
 )
 
 type driverConfig struct {
-	concurrentDrivers    int
-	maxJobTimeout        time.Duration
+	concurrentDrivers int
+	maxJobTimeout     time.Duration
+	// jobInterval is the jobs informer's resync cadence; the driver uses it as
+	// the post-claim cooldown so failed-run recovery tracks the configured
+	// pickup interval.
 	jobInterval          time.Duration
 	leaseRenewalInterval time.Duration
 	maxSyncWorkers       int
@@ -45,7 +49,6 @@ func buildDriver(
 	dc driverConfig,
 	jobStore jobs.Store,
 	jobHistoryWriter jobs.HistoryWriter,
-	notifications chan struct{},
 ) (*jobs.ConcurrentJobDriver, error) {
 	workers, metrics, err := buildWorkers(cfg, controllerCfg, registry, tracer, dc.maxSyncWorkers)
 	if err != nil {
@@ -67,7 +70,7 @@ func buildDriver(
 		provisioningClient.ProvisioningV0alpha1(),
 	)
 	// This is basically our own JobQueue system
-	return jobs.NewConcurrentJobDriver(
+	driver, err := jobs.NewConcurrentJobDriver(
 		dc.concurrentDrivers,
 		dc.maxJobTimeout,
 		dc.jobInterval,
@@ -75,21 +78,19 @@ func buildDriver(
 		jobStore,
 		repoGetter,
 		jobHistoryWriter,
-		notifications,
 		registry,
 		metrics,
+		nats.Enabled(controllerCfg.natsSubscriber),
 		workers...,
 	)
+	if err != nil {
+		return nil, err
+	}
+	driver.SetTracer(tracer)
+	return driver, nil
 }
 
 func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry prometheus.Registerer, tracer tracing.Tracer, maxSyncWorkers int) ([]jobs.Worker, *jobs.JobMetrics, error) {
-	featureManager, err := featuremgmt.ProvideManagerService(cfg)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to provide feature manager: %w", err)
-	}
-	features := featuremgmt.ProvideToggles(featureManager)
-	exportEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningExport)                 //nolint:staticcheck
-	folderMetadataEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata) //nolint:staticcheck
 	// Evaluated per job via OpenFeature so the flag behaves consistently with the
 	// API server (see performanceEnabled in the provisioning apiserver package).
 	perfTestingEnabled := func(ctx context.Context) bool {
@@ -100,20 +101,19 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to get clients: %w", err)
 	}
-	parsers := resources.NewParserFactory(clients, folderMetadataEnabled)
+	parsers := resources.NewParserFactory(clients)
 
-	unified, err := controllerCfg.UnifiedStorageClient()
+	resourceLister, err := controllerCfg.ResourceLister()
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to get unified storage client: %w", err)
+		return nil, nil, err
 	}
-	resourceLister := resources.NewResourceLister(unified)
 
 	provisioningClient, err := controllerCfg.ProvisioningClient()
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create provisioning client: %w", err)
 	}
 
-	repositoryResources := resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister, folderMetadataEnabled)
+	repositoryResources := resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister)
 	statusPatcher := controller.NewRepositoryStatusPatcher(provisioningClient.ProvisioningV0alpha1())
 
 	urlProvider, err := controllerCfg.URLProvider()
@@ -123,7 +123,7 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 
 	metrics := jobs.RegisterJobMetrics(registry)
 
-	syncer := jobsync.NewSyncer(jobsync.Compare, jobsync.FullSync, jobsync.IncrementalSync, tracer, maxSyncWorkers, metrics, folderMetadataEnabled, cfg.ProvisioningSyncResourceTimeout)
+	syncer := jobsync.NewSyncer(jobsync.Compare, jobsync.FullSync, jobsync.IncrementalSync, tracer, maxSyncWorkers, metrics, cfg.ProvisioningSyncResourceTimeout)
 	syncWorker := jobsync.NewSyncWorker(
 		clients,
 		repositoryResources,
@@ -142,11 +142,9 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 	exportWorker := export.NewExportWorker(
 		clients,
 		repositoryResources,
-		resourceLister,
 		export.ExportAllWithNewUIDs,
 		stageIfPossible,
 		metrics,
-		exportEnabled,
 	)
 
 	// Migration export preserves original names so the takeover
@@ -154,11 +152,9 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 	migrateExportWorker := export.NewExportWorker(
 		clients,
 		repositoryResources,
-		resourceLister,
 		export.ExportAll,
 		stageIfPossible,
 		metrics,
-		exportEnabled,
 	)
 	cleaner := migrate.NewNamespaceCleaner(clients)
 	unifiedStorageMigrator := migrate.NewUnifiedStorageMigrator(
@@ -166,7 +162,7 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 		migrateExportWorker,
 		syncWorker,
 	)
-	migrationWorker := migrate.NewMigrationWorkerFromUnified(unifiedStorageMigrator, exportEnabled)
+	migrationWorker := migrate.NewMigrationWorkerFromUnified(unifiedStorageMigrator)
 
 	// Delete
 	deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible, repositoryResources, metrics)
@@ -188,11 +184,9 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 
 	// PullRequest
 	renderer := pullrequest.NewNoOpRenderer()
-	evaluator := pullrequest.NewEvaluator(renderer, parsers, pullrequest.URLProvider{
-		Internal: urlProvider,
-		Public:   urlProvider,
-	}, registry)
-	commenter := pullrequest.NewCommenter(false)
+	urls := pullrequest.URLProvider{Internal: urlProvider, Public: urlProvider}
+	evaluator := pullrequest.NewEvaluator(renderer, parsers, urls, registry)
+	commenter := pullrequest.NewCommenter(false, urls)
 	prWorker := pullrequest.NewPullRequestWorker(evaluator, commenter, registry)
 
 	workers := []jobs.Worker{

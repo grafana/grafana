@@ -77,11 +77,7 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, id *authn.Ident
 
 	ctxLogger := s.log.FromContext(ctx).New("userID", userID)
 
-	cacheKey := fmt.Sprintf("token-check-%s", id.GetID())
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if s.features.IsEnabledGlobally(featuremgmt.FlagImprovedExternalSessionHandling) {
-		cacheKey = fmt.Sprintf("token-check-%s-%d", id.GetID(), id.SessionToken.Id)
-	}
+	cacheKey := fmt.Sprintf("token-check-%s-%d", id.GetID(), id.SessionToken.Id)
 
 	if _, ok := s.cache.Get(cacheKey); ok {
 		ctxLogger.Debug("Expiration check has been cached, no need to refresh")

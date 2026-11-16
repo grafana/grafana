@@ -15,10 +15,11 @@ type FakeServiceAccountService struct {
 	ExpectedServiceAccount                 *serviceaccounts.ServiceAccountDTO
 	ExpectedServiceAccountID               int64
 	ExpectedServiceAccountProfile          *serviceaccounts.ServiceAccountProfileDTO
+	ExpectedServiceAccountProfiles         []*serviceaccounts.ServiceAccountProfileDTO
 	ExpectedServiceAccountTokens           []apikey.APIKey
 }
 
-var _ serviceaccounts.Service = new(FakeServiceAccountService)
+var _ serviceaccounts.Service = (*FakeServiceAccountService)(nil)
 
 func (f *FakeServiceAccountService) AddServiceAccountToken(ctx context.Context, id int64, cmd *serviceaccounts.AddServiceAccountTokenCommand) (*apikey.APIKey, error) {
 	return f.ExpectedAPIKey, f.ExpectedErr
@@ -38,6 +39,10 @@ func (f *FakeServiceAccountService) EnableServiceAccount(ctx context.Context, or
 
 func (f *FakeServiceAccountService) RetrieveServiceAccount(ctx context.Context, query *serviceaccounts.GetServiceAccountQuery) (*serviceaccounts.ServiceAccountProfileDTO, error) {
 	return f.ExpectedServiceAccountProfile, f.ExpectedErr
+}
+
+func (f *FakeServiceAccountService) RetrieveServiceAccountsByUIDs(ctx context.Context, orgID int64, uids []string) ([]*serviceaccounts.ServiceAccountProfileDTO, error) {
+	return f.ExpectedServiceAccountProfiles, f.ExpectedErr
 }
 
 func (f *FakeServiceAccountService) RetrieveServiceAccountIdByName(ctx context.Context, orgID int64, name string) (int64, error) {

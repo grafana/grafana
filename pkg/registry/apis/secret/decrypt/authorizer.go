@@ -2,6 +2,7 @@ package decrypt
 
 import (
 	"context"
+	"slices"
 	"strings"
 
 	"go.opentelemetry.io/otel/attribute"
@@ -87,10 +88,8 @@ func (a *decryptAuthorizer) Authorize(
 	}
 
 	// Check whether the service identity is allowed to decrypt this secure value.
-	for _, decrypter := range secureValueDecrypters {
-		if decrypter == serviceIdentity {
-			return serviceIdentity, true, ""
-		}
+	if slices.Contains(secureValueDecrypters, serviceIdentity) {
+		return serviceIdentity, true, ""
 	}
 
 	// finally check if the owner matches any hardcoded service identities

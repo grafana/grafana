@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
-import { Controller, useFormContext } from 'react-hook-form';
+import { Controller, useFormContext, useWatch } from 'react-hook-form';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Field, Label, Stack } from '@grafana/ui';
 import { ProvisioningAwareFolderPicker } from 'app/features/provisioning/components/Shared/ProvisioningAwareFolderPicker';
@@ -12,18 +13,18 @@ export function FolderSelector() {
   const {
     formState: { errors },
     setValue,
-    watch,
+    control,
   } = useFormContext<RuleFormValues>();
 
   const resetGroup = useCallback(() => {
     setValue('group', '');
   }, [setValue]);
 
-  const folder = watch('folder');
+  const folder = useWatch({ control, name: 'folder' });
 
   const handleFolderCreation = (folder: Folder) => {
     resetGroup();
-    setValue('folder', folder);
+    setValue('folder', folder, { shouldValidate: true });
   };
 
   return (
@@ -42,13 +43,15 @@ export function FolderSelector() {
             </Label>
           }
           error={errors.folder?.message}
-          data-testid="folder-picker"
+          invalid={!!errors.folder?.message}
+          data-testid={selectors.components.AlertRules.folderPicker}
         >
-          <Stack direction="row" alignItems="center">
-            <Controller
-              render={({ field: { ref, ...field } }) => (
+          <Controller
+            render={({ field: { ref, ...field } }) => (
+              <Stack direction="row" alignItems="center">
                 <div style={{ width: 420 }}>
                   <ProvisioningAwareFolderPicker
+                    triggerRef={ref}
                     permission="view"
                     showRootFolder={false}
                     repositoryName={undefined}
@@ -57,7 +60,7 @@ export function FolderSelector() {
                     value={folder?.uid}
                     onChange={(uid, title) => {
                       if (uid && title) {
-                        setValue('folder', { title, uid });
+                        setValue('folder', { title, uid }, { shouldValidate: true });
                       } else {
                         setValue('folder', undefined);
                       }
@@ -66,17 +69,17 @@ export function FolderSelector() {
                     }}
                   />
                 </div>
-              )}
-              name="folder"
-              rules={{
-                required: {
-                  value: true,
-                  message: t('alerting.folder-selector.message.select-a-folder', 'Select a folder'),
-                },
-              }}
-            />
-            <CreateNewFolder onCreate={handleFolderCreation} />
-          </Stack>
+                <CreateNewFolder onCreate={handleFolderCreation} />
+              </Stack>
+            )}
+            name="folder"
+            rules={{
+              required: {
+                value: true,
+                message: t('alerting.folder-selector.message.folder-required', 'Folder is required'),
+              },
+            }}
+          />
         </Field>
       }
     </Stack>

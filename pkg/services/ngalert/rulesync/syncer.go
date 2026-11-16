@@ -1,0 +1,717 @@
+package rulesync
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"runtime/debug"
+	"strconv"
+	"sync"
+	"time"
+
+	"github.com/grafana/grafana-app-sdk/resource"
+
+	alertingrulesv0alpha1 "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/datasourceproxy"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/prom"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/setting"
+)
+
+// rootFolderTitle is the title of the dedicated folder the syncer lands imported
+// namespaces under, isolating them from user-managed folders. One folder per
+// ruler datasource UID so distinct rulers never collide. Once its UID is
+// recorded, the title no longer identifies the folder.
+func rootFolderTitle(dsUID string) string {
+	return fmt.Sprintf("[Alerting] External Ruler Sync (%s)", dsUID)
+}
+
+const versionMessage = "external ruler sync"
+
+// defaultRulerSyncPollInterval is the effective poll interval when
+// spec.externalRulerSync.pollInterval is unset, and unconditionally on the ini
+// path (which has no spec to read a per-org value from).
+const defaultRulerSyncPollInterval = 5 * time.Minute
+
+// baselineCheckInterval drives Run's ticker; it is not the sync cadence
+// itself (each org's own pollInterval is), just how often the loop notices an
+// org has become due. Not operator-configurable: AdminConfigPollInterval is
+// really AlertsRouter's own unrelated setting, so reusing it here would tie
+// this syncer to a different feature's knob for no reason. dueForSync keeps
+// checking a not-yet-due org free (no apiserver call), so a short, fixed
+// baseline is cheap.
+//
+// This shared-ticker-plus-due-check is pragmatic, not the ideal design: a real
+// per-org timer would fire exactly on interval, without re-checking every org
+// every baseline tick. Flag it so a future reader doesn't mistake this for the
+// final word.
+const baselineCheckInterval = 10 * time.Second
+
+// maxConcurrentOrgSyncs bounds syncAllOrgs' fan-out, so a large all-due
+// fleet can't flood the apiserver and outbound network in one burst.
+const maxConcurrentOrgSyncs = 8
+
+// convertedPrometheusManager marks the rules the syncer owns. Mirrors the manager
+// the convert API assigns to converted-Prometheus imports.
+var convertedPrometheusManager = utils.ManagerProperties{Kind: utils.ManagerKindClassicConvertedPrometheus} //nolint:staticcheck
+
+// ruleService is the subset of provisioning.AlertRuleService the syncer needs.
+type ruleService interface {
+	ReplaceRuleGroups(ctx context.Context, user identity.Requester, groups []*models.AlertRuleGroup, manager utils.ManagerProperties, versionMessage string) error
+	DeleteRuleGroups(ctx context.Context, user identity.Requester, manager utils.ManagerProperties, filterOpts *provisioning.FilterOptions) error
+	GetAlertGroupsWithFolderFullpath(ctx context.Context, user identity.Requester, filterOpts *provisioning.FilterOptions) ([]models.AlertRuleGroupWithFolderFullpath, error)
+}
+
+// namespaceStore creates/looks up the folders the imported rules live in.
+type namespaceStore interface {
+	GetOrCreateNamespaceByTitle(ctx context.Context, title string, orgID int64, user identity.Requester, parentUID string) (*folder.FolderReference, bool, error)
+	GetOrCreateNamespaceByUID(ctx context.Context, uid, title string, orgID int64, user identity.Requester, parentUID string) (*folder.FolderReference, bool, error)
+	GetNamespaceByTitle(ctx context.Context, title string, orgID int64, user identity.Requester, parentUID string) (*folder.FolderReference, error)
+	GetNamespaceByUID(ctx context.Context, uid string, orgID int64, user identity.Requester) (*folder.Folder, error)
+	GetNamespaceChildren(ctx context.Context, uid string, orgID int64, user identity.Requester) ([]*folder.FolderReference, error)
+}
+
+// rulerFetcher fetches the upstream ruler config. Satisfied by *RulerFetcher.
+type rulerFetcher interface {
+	Fetch(ctx context.Context, ds *datasources.DataSource) (RulerConfig, uint64, error)
+}
+
+type datasourceGetter interface {
+	GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error)
+}
+
+type orgStore interface {
+	FetchOrgIds(ctx context.Context) ([]int64, error)
+}
+
+// orgSyncState is one org's in-memory sync cache: hash is the last applied
+// upstream hash (valid only when hashSet, since 0 is a legal hash), and
+// lastAttemptAt/pollInterval are dueForSync's due-check bookkeeping.
+type orgSyncState struct {
+	hash    uint64
+	hashSet bool
+	// rootFolderUID is the root folder resolved for rootFolderDS. The ini path
+	// has no Config status, so this is its only record.
+	rootFolderUID string
+	rootFolderDS  string
+	lastAttemptAt time.Time
+	pollInterval  time.Duration
+}
+
+// ExternalRulerSyncer mirrors alert rules from a configured external Mimir
+// ruler datasource into Grafana as converted-Prometheus rules. It is the rule
+// analogue of ExternalAMSyncer. The loop driver (Run) is intentionally thin so
+// the same SyncOrg core could later be hosted by an app runner instead.
+type ExternalRulerSyncer struct {
+	settings *setting.UnifiedAlertingSettings
+	logger   log.Logger
+	metrics  *Metrics
+
+	datasources    datasourceGetter
+	fetcher        rulerFetcher
+	ruleService    ruleService
+	namespaceStore namespaceStore
+	orgStore       orgStore
+	// folderPermissions restricts the sync folder to admin-only modification.
+	folderPermissions accesscontrol.FolderPermissionsService
+
+	// stateMu guards state, the syncer's only per-org in-memory cache: the
+	// last-applied upstream hash plus dueForSync's due-check bookkeeping (last
+	// attempt time and resolved poll interval). No entry yet means an org is
+	// always due, so a new org isn't stuck waiting out
+	// defaultRulerSyncPollInterval before its first sync.
+	stateMu sync.RWMutex
+	state   map[int64]*orgSyncState
+
+	// cfgStore is required; NewExternalRulerSyncer's callers always pass a
+	// real one. See cfgStore for why its client is built lazily rather than
+	// at construction time.
+	cfgStore cfgAccessor
+}
+
+// NewExternalRulerSyncer constructs an ExternalRulerSyncer. The ruler config GET
+// is routed through the datasource proxy service (transport, auth and egress
+// validation are handled there). The operator-level external_ruler_uid ini
+// setting is always the enable signal for itself; per-org sync driven by the
+// rules Config resource's spec.externalRulerSync.datasourceUid needs no
+// separate flag either — an org Admin setting that field is itself the
+// enable signal, the same way the ini setting is for the operator.
+func NewExternalRulerSyncer(
+	settings *setting.UnifiedAlertingSettings,
+	logger log.Logger,
+	m *Metrics,
+	datasourceService datasources.DataSourceService,
+	proxy *datasourceproxy.DataSourceProxyService,
+	ruleSvc ruleService,
+	namespaceStore namespaceStore,
+	orgStore orgStore,
+	folderPermissions accesscontrol.FolderPermissionsService,
+	clientGenerator resource.ClientGenerator,
+	namespaceMapper request.NamespaceMapper,
+) *ExternalRulerSyncer {
+	return &ExternalRulerSyncer{
+		settings:          settings,
+		logger:            logger,
+		metrics:           m,
+		datasources:       datasourceService,
+		fetcher:           NewRulerFetcher(proxy, logger),
+		ruleService:       ruleSvc,
+		namespaceStore:    namespaceStore,
+		orgStore:          orgStore,
+		folderPermissions: folderPermissions,
+		state:             make(map[int64]*orgSyncState),
+		cfgStore:          newCfgStore(clientGenerator, namespaceMapper, logger),
+	}
+}
+
+// resolvedRulerSync is the effective external-ruler-sync configuration for one
+// org, after applying the ini override. A zero value (uid == "") means sync
+// isn't configured for the org.
+type resolvedRulerSync struct {
+	uid    string // datasource to sync rules from
+	origin externalSyncOrigin
+	// persistedHash is the last-applied upstream hash from Config status, read
+	// back on the API path only. The ini path relies on the in-memory cache
+	// alone; its own version-churn gap from that is a known, separate,
+	// already-shipped limitation, not addressed here.
+	persistedHash string
+	// rootFolderUID is the recorded root folder (Config status on the API path,
+	// in-memory state on the ini path). Empty until a sync records it.
+	rootFolderUID string
+	// pollInterval is this org's effective sync cadence: spec.pollInterval when
+	// set on the API path, defaultRulerSyncPollInterval otherwise (including
+	// unconditionally on the ini path). See dueForSync.
+	pollInterval time.Duration
+}
+
+// resolveExternalRulerConfig computes the effective sync config for the org.
+// The operator-level ExternalRulerUID ini setting takes precedence over the
+// per-org value. The per-org value is read from the rules Config k8s resource;
+// if its client can't be constructed the sync fails for this tick rather than
+// falling back to anything.
+func (s *ExternalRulerSyncer) resolveExternalRulerConfig(ctx context.Context, orgID int64) (resolvedRulerSync, error) {
+	if iniUID := s.settings.ExternalRulerUID; iniUID != "" {
+		return resolvedRulerSync{uid: iniUID, origin: originIni, rootFolderUID: s.stateRootFolderUID(orgID, iniUID), pollInterval: defaultRulerSyncPollInterval}, nil
+	}
+
+	// cfgStore.Get returns (nil, nil) when the Config resource doesn't exist
+	// yet; every extraction helper below treats a nil Config the same as an
+	// unset field, so the not-found and found cases need no separate branch.
+	cfg, err := s.cfgStore.Get(ctx, orgID)
+	if err != nil {
+		return resolvedRulerSync{}, err
+	}
+	return resolvedRulerSync{
+		uid:           externalRulerSyncDatasourceUIDFromConfig(cfg),
+		origin:        originAPI,
+		persistedHash: externalRulerSyncLastAppliedHashFromConfig(cfg),
+		rootFolderUID: externalRulerSyncRootFolderUIDFromStatus(statusOf(cfg), externalRulerSyncDatasourceUIDFromConfig(cfg)),
+		pollInterval:  externalRulerSyncPollIntervalFromConfig(cfg),
+	}, nil
+}
+
+func statusOf(c *alertingrulesv0alpha1.Config) *alertingrulesv0alpha1.ConfigStatus {
+	if c == nil {
+		return nil
+	}
+	return &c.Status
+}
+
+// stateRootFolderUID returns the in-memory root folder UID if it was resolved
+// for dsUID.
+func (s *ExternalRulerSyncer) stateRootFolderUID(orgID int64, dsUID string) string {
+	s.stateMu.RLock()
+	defer s.stateMu.RUnlock()
+	if st, ok := s.state[orgID]; ok && st.rootFolderDS == dsUID {
+		return st.rootFolderUID
+	}
+	return ""
+}
+
+// writeStatus upserts the org's Config.status using compute(prev). Best-effort
+// (failures are logged) -- see cfgStore.UpdateStatus for the write mechanics.
+func (s *ExternalRulerSyncer) writeStatus(ctx context.Context, orgID int64, compute func(prev *alertingrulesv0alpha1.ConfigStatus) alertingrulesv0alpha1.ConfigStatus) {
+	if err := s.cfgStore.UpdateStatus(ctx, orgID, compute); err != nil {
+		s.logger.Warn("Failed to write Config status", "org_id", orgID, "error", err)
+	}
+}
+
+// recordSyncResult writes the latest sync outcome (nil = success) onto the
+// org's Config.status. appliedHash, on success, is persisted so a later
+// restart or replica can skip an unchanged re-apply.
+func (s *ExternalRulerSyncer) recordSyncResult(ctx context.Context, orgID int64, uid string, origin externalSyncOrigin, syncErr error, appliedHash, rootFolderUID string) {
+	now := time.Now()
+	s.writeStatus(ctx, orgID, func(prev *alertingrulesv0alpha1.ConfigStatus) alertingrulesv0alpha1.ConfigStatus {
+		return computeSyncStatus(prev, uid, origin, syncErr, now, appliedHash, rootFolderUID)
+	})
+}
+
+func (s *ExternalRulerSyncer) recordUnchanged(ctx context.Context, orgID int64, uid string, origin externalSyncOrigin, appliedHash string) {
+	now := time.Now()
+	s.writeStatus(ctx, orgID, func(prev *alertingrulesv0alpha1.ConfigStatus) alertingrulesv0alpha1.ConfigStatus {
+		return computeUnchangedStatus(prev, uid, origin, now, appliedHash)
+	})
+}
+
+// recordNotConfigured records Synced=Unknown/NotConfigured for the org, seeding
+// the singleton if absent (writeStatus creates on missing). Best-effort. Called
+// only when the API path is reachable (flag on) but no datasourceUid is set —
+// an install that never touches the API path never gets a Config resource
+// created for it.
+func (s *ExternalRulerSyncer) recordNotConfigured(ctx context.Context, orgID int64) {
+	now := time.Now()
+	s.writeStatus(ctx, orgID, func(prev *alertingrulesv0alpha1.ConfigStatus) alertingrulesv0alpha1.ConfigStatus {
+		return computeNotConfiguredStatus(prev, now)
+	})
+}
+
+// Run checks all orgs at baselineCheckInterval until ctx is cancelled. Always
+// starts the ticker: sync can be enabled either operator-wide via the
+// external_ruler_uid ini setting or per-org via the rules Config resource,
+// and only a per-org tick can tell which — see resolveExternalRulerConfig.
+// Each org's real sync cadence is its own resolved pollInterval; dueForSync
+// makes checking an org that isn't due yet a cheap in-memory no-op.
+func (s *ExternalRulerSyncer) Run(ctx context.Context) error {
+	s.logger.Info("Starting external ruler syncer", "check_interval", baselineCheckInterval)
+	ticker := time.NewTicker(baselineCheckInterval)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-ticker.C:
+			s.syncAllOrgs(ctx)
+		}
+	}
+}
+
+// syncAllOrgs runs SyncOrg for every due org, up to maxConcurrentOrgSyncs at
+// once. Each goroutine shares ctx itself, never a derived one, so one org
+// failing or running long can't abort or block any other.
+func (s *ExternalRulerSyncer) syncAllOrgs(ctx context.Context) {
+	orgIDs, err := s.orgStore.FetchOrgIds(ctx)
+	if err != nil {
+		s.logger.Error("Failed to fetch org IDs for external ruler sync", "error", err)
+		return
+	}
+
+	sem := make(chan struct{}, maxConcurrentOrgSyncs)
+	var wg sync.WaitGroup
+	for _, orgID := range orgIDs {
+		if ctx.Err() != nil {
+			break
+		}
+		if _, disabled := s.settings.DisabledOrgs[orgID]; disabled {
+			continue
+		}
+		// dueForSync lives here, not inside SyncOrg: SyncOrg is "do the sync now"
+		// (callers, including tests and a possible future app-runner host, decide
+		// when that's warranted), while this loop is "notice which orgs are due".
+		if !s.dueForSync(orgID) {
+			continue
+		}
+		sem <- struct{}{}
+		wg.Add(1)
+		go func(orgID int64) {
+			defer wg.Done()
+			defer func() { <-sem }()
+			s.SyncOrg(ctx, orgID)
+		}(orgID)
+	}
+	wg.Wait()
+}
+
+// dueForSync reports whether orgID's poll interval has elapsed since its
+// last attempt (always true if never attempted). Called from syncAllOrgs, so
+// Run's baseline ticker can skip resolveExternalRulerConfig's apiserver call
+// for orgs not yet due, without a per-org goroutine or timer.
+func (s *ExternalRulerSyncer) dueForSync(orgID int64) bool {
+	s.stateMu.RLock()
+	defer s.stateMu.RUnlock()
+	st, ok := s.state[orgID]
+	if !ok {
+		return true
+	}
+	interval := st.pollInterval
+	if interval <= 0 {
+		interval = defaultRulerSyncPollInterval
+	}
+	return time.Since(st.lastAttemptAt) >= interval
+}
+
+// recordAttempt caches orgID's last-attempt time and interval for dueForSync.
+// Called after a successful resolve only, so a transient apiserver hiccup is
+// retried on the next tick rather than throttled by a stale interval.
+func (s *ExternalRulerSyncer) recordAttempt(orgID int64, interval time.Duration) {
+	s.stateMu.Lock()
+	defer s.stateMu.Unlock()
+	st := s.orgState(orgID)
+	st.lastAttemptAt = time.Now()
+	st.pollInterval = interval
+}
+
+// orgState returns orgID's state entry, creating it if absent. Callers must
+// hold stateMu for writing; orgState itself doesn't lock.
+func (s *ExternalRulerSyncer) orgState(orgID int64) *orgSyncState {
+	st, ok := s.state[orgID]
+	if !ok {
+		st = &orgSyncState{}
+		s.state[orgID] = st
+	}
+	return st
+}
+
+// IsConfiguredForOrg reports whether external ruler sync is configured for the
+// given org — i.e. resolveExternalRulerConfig (ini override or the rules
+// Config resource) resolves a non-empty datasource UID. Used by the convert
+// API to reject manual rule imports while sync owns the org's rules.
+func (s *ExternalRulerSyncer) IsConfiguredForOrg(ctx context.Context, orgID int64) (bool, error) {
+	rc, err := s.resolveExternalRulerConfig(ctx, orgID)
+	if err != nil {
+		return false, err
+	}
+	return rc.uid != "", nil
+}
+
+// IsManagedFolder reports whether folderUID is the sync root folder or one of its
+// namespace subfolders, so the convert API blocks imports only into those. With
+// no UID recorded yet, it looks the root up read-only by its current title.
+func (s *ExternalRulerSyncer) IsManagedFolder(ctx context.Context, orgID int64, folderUID string) (bool, error) {
+	rc, err := s.resolveExternalRulerConfig(ctx, orgID)
+	if err != nil {
+		return false, err
+	}
+	if rc.uid == "" {
+		return false, nil
+	}
+	svcCtx, user := identity.WithServiceIdentity(ctx, orgID)
+	var root *folder.FolderReference
+	if rc.rootFolderUID != "" {
+		f, err := s.namespaceStore.GetNamespaceByUID(svcCtx, rc.rootFolderUID, orgID, user)
+		if err != nil {
+			if errors.Is(err, folder.ErrAccessDenied) {
+				return false, nil
+			}
+			return false, fmt.Errorf("look up sync root folder: %w", err)
+		}
+		root = f.ToFolderReference()
+	} else {
+		root, err = s.namespaceStore.GetNamespaceByTitle(svcCtx, rootFolderTitle(rc.uid), orgID, user, "")
+		if err != nil {
+			if errors.Is(err, dashboards.ErrFolderNotFound) {
+				return false, nil
+			}
+			return false, fmt.Errorf("look up sync root folder: %w", err)
+		}
+	}
+	if folderUID == root.UID {
+		return true, nil
+	}
+	// Namespaces are the only subfolders and never nest, so direct children suffice.
+	children, err := s.namespaceStore.GetNamespaceChildren(svcCtx, root.UID, orgID, user)
+	if err != nil {
+		return false, fmt.Errorf("list sync folder children: %w", err)
+	}
+	for _, child := range children {
+		if child.UID == folderUID {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+// SyncOrg runs one sync tick for a single org. It never returns an error;
+// failures are logged and counted so a bad org can't break the others.
+func (s *ExternalRulerSyncer) SyncOrg(ctx context.Context, orgID int64) {
+	orgIDStr := strconv.FormatInt(orgID, 10)
+	// Declared here, not at its resolve call below, so the panic-recover
+	// closure can read its uid/origin for the status write. Zero-valued until
+	// resolveExternalRulerConfig actually runs, so a panic that happens before
+	// or during that resolve still gets a real (if less specific) failure
+	// record instead of nothing.
+	var rc resolvedRulerSync
+	// A panic in a per-org tick (conversion, datasource proxy, upstream response)
+	// must not crash the background syncer goroutine and the process; recover
+	// and record it like any other per-org failure. recordFailure both
+	// increments the failure metric and writes status, so this is the only
+	// place that needs to do either.
+	defer func() {
+		if r := recover(); r != nil {
+			s.logger.Error("External ruler sync panicked", "org_id", orgID, "panic", r, "stack", string(debug.Stack()))
+			s.recordFailure(ctx, orgID, orgIDStr, rc.uid, rc.origin, &SyncError{Reason: ReasonPanic, Cause: fmt.Errorf("panic: %v", r)})
+		}
+	}()
+
+	var err error
+	rc, err = s.resolveExternalRulerConfig(ctx, orgID)
+	if err != nil {
+		s.logger.Warn("Failed to resolve external ruler config", "org_id", orgID, "error", err)
+		return
+	}
+	s.recordAttempt(orgID, rc.pollInterval)
+	if rc.uid == "" {
+		if rc.origin == originAPI {
+			// The API path is reachable and the Config resource was checked, but no
+			// datasourceUid is set: seed/report NotConfigured so the singleton
+			// exists without a manual create. An install that never reaches the API
+			// path (no ini override, no per-org datasourceUid set) gets no Config
+			// resource and no status write at all.
+			s.recordNotConfigured(ctx, orgID)
+		}
+		return
+	}
+
+	svcCtx, svcUser := identity.WithServiceIdentity(ctx, orgID)
+
+	start := time.Now()
+	defer func() { s.metrics.SyncDuration.WithLabelValues(orgIDStr).Observe(time.Since(start).Seconds()) }()
+
+	ds, err := s.datasources.GetDataSource(svcCtx, &datasources.GetDataSourceQuery{UID: rc.uid, OrgID: orgID})
+	if err != nil {
+		s.recordFailure(ctx, orgID, orgIDStr, rc.uid, rc.origin, &SyncError{Reason: ReasonDatasourceLookup, Cause: err})
+		return
+	}
+	// Cheap pre-check before paying for a network fetch: catches wrong
+	// datasource type / vanilla Prometheus without a round trip. The
+	// admission-time checker runs the same check on write for the API path,
+	// but the operator-set ini datasource is never admission-checked, so
+	// this is the only gate for it.
+	if err := IsRulerCandidate(ds); err != nil {
+		s.recordFailure(ctx, orgID, orgIDStr, rc.uid, rc.origin, &SyncError{Reason: ReasonNotARuler, Cause: err})
+		return
+	}
+
+	cfg, hash, err := s.fetcher.Fetch(svcCtx, ds)
+	if err != nil {
+		reason := ReasonRulerFetch
+		if errors.Is(err, ErrNotARuler) {
+			reason = ReasonNotARuler
+		}
+		s.recordFailure(ctx, orgID, orgIDStr, rc.uid, rc.origin, &SyncError{Reason: reason, Cause: err})
+		return
+	}
+	s.metrics.SyncTotal.WithLabelValues(orgIDStr).Inc()
+
+	// Skip if the upstream is unchanged since the last successful apply. The
+	// persisted hash (from Config status, API path only) survives restarts and
+	// multiple replicas; the in-memory map is the fast path and the fallback
+	// when a persisted hash isn't available.
+	hashStr := strconv.FormatUint(hash, 10)
+	s.stateMu.RLock()
+	st, has := s.state[orgID]
+	unchanged := (rc.persistedHash != "" && rc.persistedHash == hashStr) || (has && st.hashSet && st.hash == hash)
+	s.stateMu.RUnlock()
+	if unchanged {
+		// The rules go with their folder, so only skip while the recorded folder
+		// exists. With none recorded yet, the apply below finds or creates it.
+		exists, lookupErr := s.rootFolderExists(svcCtx, orgID, rc.rootFolderUID)
+		if lookupErr != nil {
+			s.recordFailure(ctx, orgID, orgIDStr, rc.uid, rc.origin, &SyncError{Reason: ReasonSave, Cause: lookupErr})
+			return
+		}
+		if exists {
+			s.logger.Debug("External ruler config unchanged since last sync", "org_id", orgID)
+			s.recordUnchanged(ctx, orgID, rc.uid, rc.origin, hashStr)
+			return
+		}
+	}
+
+	rootUID, applyErr := s.apply(svcCtx, svcUser, orgID, ds, cfg, rc.rootFolderUID)
+	if applyErr != nil {
+		s.recordFailure(ctx, orgID, orgIDStr, rc.uid, rc.origin, applyErr)
+		return
+	}
+
+	s.stateMu.Lock()
+	st = s.orgState(orgID)
+	st.hash, st.hashSet = hash, true
+	st.rootFolderUID, st.rootFolderDS = rootUID, rc.uid
+	s.stateMu.Unlock()
+	s.metrics.SyncHash.WithLabelValues(orgIDStr).Set(float64(hash & mask53))
+	s.logger.Debug("External ruler sync applied", "org_id", orgID, "namespaces", len(cfg))
+	s.recordSyncResult(ctx, orgID, rc.uid, rc.origin, nil, hashStr, rootUID)
+}
+
+type groupKey struct {
+	folderUID string
+	group     string
+}
+
+// apply converts the fetched ruler config into Grafana rule groups, persists
+// them, and prunes previously-synced groups that vanished upstream. Returns a
+// classified *SyncError on failure.
+func (s *ExternalRulerSyncer) apply(ctx context.Context, user identity.Requester, orgID int64, ds *datasources.DataSource, cfg RulerConfig, recordedRootUID string) (string, *SyncError) {
+	root, created, err := s.resolveRootFolder(ctx, user, orgID, ds.UID, recordedRootUID)
+	if err != nil {
+		return "", &SyncError{Reason: ReasonSave, Cause: fmt.Errorf("resolve root folder: %w", err)}
+	}
+	if created {
+		s.restrictFolderToAdmins(ctx, orgID, root.UID)
+	}
+
+	groups := make([]*models.AlertRuleGroup, 0)
+	desired := make(map[groupKey]struct{})
+	for namespace, promGroups := range cfg {
+		nsFolder, _, err := s.namespaceStore.GetOrCreateNamespaceByTitle(ctx, namespace, orgID, user, root.UID)
+		if err != nil {
+			return "", &SyncError{Reason: ReasonSave, Cause: fmt.Errorf("get-or-create namespace folder %q: %w", namespace, err)}
+		}
+		for _, promGroup := range promGroups {
+			// ds is passed as both query and recording-rules target: this sync has
+			// no separate configurable target datasource.
+			group, err := prom.ConvertRuleGroup(s.settings, ds, ds, orgID, nsFolder.UID, promGroup, prom.Options{
+				KeepOriginalRuleDefinition: true,
+			})
+			if err != nil {
+				// Best-effort: skip a group we can't convert (e.g. it has recording
+				// rules but recording rules are disabled) rather than aborting the whole
+				// org — one bad group must not block the rest.
+				s.logger.Warn("Skipping external ruler group that failed to convert", "org_id", orgID, "namespace", namespace, "group", promGroup.Name, "error", err)
+				continue
+			}
+			groups = append(groups, group)
+			desired[groupKey{folderUID: nsFolder.UID, group: group.Title}] = struct{}{}
+		}
+	}
+
+	if err := s.ruleService.ReplaceRuleGroups(ctx, user, groups, convertedPrometheusManager, versionMessage); err != nil {
+		return "", &SyncError{Reason: ReasonSave, Cause: err}
+	}
+
+	orgIDStr := strconv.FormatInt(orgID, 10)
+	ruleCount := 0
+	for _, g := range groups {
+		ruleCount += len(g.Rules)
+	}
+	s.metrics.SyncGroups.WithLabelValues(orgIDStr).Set(float64(len(groups)))
+	s.metrics.SyncRules.WithLabelValues(orgIDStr).Set(float64(ruleCount))
+
+	if err := s.prune(ctx, user, orgID, root.UID, desired); err != nil {
+		return "", &SyncError{Reason: ReasonPrune, Cause: err}
+	}
+	return root.UID, nil
+}
+
+// rootFolderExists counts only folder.ErrAccessDenied as missing: the store
+// reports "no such folder" that way, and the service identity is never denied a
+// real one. Other errors are returned, so a blip does not recreate the folder.
+func (s *ExternalRulerSyncer) rootFolderExists(ctx context.Context, orgID int64, uid string) (bool, error) {
+	if uid == "" {
+		return false, nil
+	}
+	_, user := identity.WithServiceIdentity(ctx, orgID)
+	_, err := s.namespaceStore.GetNamespaceByUID(ctx, uid, orgID, user)
+	if err == nil {
+		return true, nil
+	}
+	if errors.Is(err, folder.ErrAccessDenied) {
+		return false, nil
+	}
+	return false, fmt.Errorf("look up sync root folder %q: %w", uid, err)
+}
+
+// resolveRootFolder finds the root by its recorded UID, so a rename changes
+// nothing. A deleted folder is recreated under the same UID to keep the rule UIDs
+// stable. created reports a new folder, which still needs admin-only permissions.
+func (s *ExternalRulerSyncer) resolveRootFolder(ctx context.Context, user identity.Requester, orgID int64, dsUID, recordedUID string) (*folder.FolderReference, bool, error) {
+	if recordedUID == "" {
+		root, created, err := s.namespaceStore.GetOrCreateNamespaceByTitle(ctx, rootFolderTitle(dsUID), orgID, user, "")
+		if err != nil {
+			return nil, false, fmt.Errorf("get-or-create root folder: %w", err)
+		}
+		return root, created, nil
+	}
+	root, created, err := s.namespaceStore.GetOrCreateNamespaceByUID(ctx, recordedUID, rootFolderTitle(dsUID), orgID, user, "")
+	if err != nil {
+		return nil, false, err
+	}
+	if created {
+		s.logger.Info("Recreated the external ruler sync root folder, which no longer existed", "org_id", orgID, "folder_uid", root.UID)
+	}
+	return root, created, nil
+}
+
+// restrictFolderToAdmins locks a freshly-created sync folder to admin-only
+// modification: editors and viewers get view-only, so operators can see the
+// synced rules but not change what the sync owns. Admins keep full access, the
+// sync itself runs as a service identity so it is unaffected, and namespace
+// subfolders inherit these permissions. Best-effort: a permissions failure is
+// logged, not fatal, so it never blocks the rule sync.
+func (s *ExternalRulerSyncer) restrictFolderToAdmins(ctx context.Context, orgID int64, folderUID string) {
+	if _, err := s.folderPermissions.SetPermissions(ctx, orgID, folderUID,
+		accesscontrol.SetResourcePermissionCommand{BuiltinRole: string(org.RoleEditor), Permission: "View"},
+		accesscontrol.SetResourcePermissionCommand{BuiltinRole: string(org.RoleViewer), Permission: "View"},
+	); err != nil {
+		s.logger.Warn("Failed to restrict external ruler sync folder to admin-only access", "org_id", orgID, "folder_uid", folderUID, "error", err)
+	}
+}
+
+// prune deletes converted-Prometheus rule groups that live under the sync's
+// dedicated folder subtree (the root folder and its namespace subfolders) but
+// that are no longer present upstream. Scoping the store queries to those
+// folders ensures we never enumerate or delete converted rules that live in
+// user-managed folders.
+func (s *ExternalRulerSyncer) prune(ctx context.Context, user identity.Requester, orgID int64, rootUID string, desired map[groupKey]struct{}) error {
+	children, err := s.namespaceStore.GetNamespaceChildren(ctx, rootUID, orgID, user)
+	if err != nil {
+		return fmt.Errorf("list sync folder children: %w", err)
+	}
+	nsUIDs := make([]string, 0, len(children)+1)
+	nsUIDs = append(nsUIDs, rootUID)
+	for _, child := range children {
+		nsUIDs = append(nsUIDs, child.UID)
+	}
+
+	existing, err := s.ruleService.GetAlertGroupsWithFolderFullpath(ctx, user, &provisioning.FilterOptions{
+		NamespaceUIDs:               nsUIDs,
+		HasPrometheusRuleDefinition: new(true),
+	})
+	if err != nil {
+		return fmt.Errorf("list converted rule groups: %w", err)
+	}
+
+	for _, g := range existing {
+		if g.AlertRuleGroup == nil || len(g.Rules) == 0 {
+			continue
+		}
+		if _, ok := desired[groupKey{folderUID: g.FolderUID, group: g.Title}]; ok {
+			continue // still present upstream
+		}
+		if err := s.ruleService.DeleteRuleGroups(ctx, user, convertedPrometheusManager, &provisioning.FilterOptions{
+			NamespaceUIDs:               []string{g.FolderUID},
+			RuleGroups:                  []string{g.Title},
+			HasPrometheusRuleDefinition: new(true),
+		}); err != nil {
+			return fmt.Errorf("delete stale rule group %q in folder %q: %w", g.Title, g.FolderUID, err)
+		}
+		s.logger.Info("Pruned external ruler rule group no longer present upstream", "folder_uid", g.FolderUID, "group", g.Title)
+	}
+	// TODO: delete a namespace subfolder (and the root) once it has no rules
+	// left, instead of leaving it empty. Deferred until we track a durable owner
+	// marker on the folder, so we can be sure it is ours and truly empty (no
+	// user-created dashboards or rules) before deleting.
+	return nil
+}
+
+// recordFailure logs a classified failure, increments the failures metric, and
+// folds the outcome into the org's Config.status.
+func (s *ExternalRulerSyncer) recordFailure(ctx context.Context, orgID int64, orgIDStr string, uid string, origin externalSyncOrigin, syncErr *SyncError) {
+	s.logger.Warn("External ruler sync failed", "org_id", orgID, "reason", syncErr.Reason.Label(), "error", syncErr)
+	s.metrics.SyncFailures.WithLabelValues(orgIDStr, syncErr.Reason.Label()).Inc()
+	if syncErr.Reason.InvalidatesDedup() {
+		s.stateMu.Lock()
+		s.orgState(orgID).hashSet = false
+		s.stateMu.Unlock()
+	}
+	s.recordSyncResult(ctx, orgID, uid, origin, syncErr, "", "")
+}

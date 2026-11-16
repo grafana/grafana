@@ -1,4 +1,6 @@
+import { getContrastRatio } from './colorManipulator';
 import { createTheme } from './createTheme';
+import { getThemeById } from './registry';
 
 describe('createTheme', () => {
   it('create custom theme', () => {
@@ -49,4 +51,17 @@ describe('createTheme', () => {
 
     expect(theme.components.tag.colors).toEqual([{ background: '#fff', text: '#000' }]);
   });
+
+  it.each(['visual_refresh_dark', 'visual_refresh_light'])(
+    'meets code editor contrast requirements for %s',
+    (themeId) => {
+      const theme = getThemeById(themeId);
+
+      for (const background of [theme.components.input.background, theme.colors.background.secondary]) {
+        for (const color of Object.values(theme.components.codeEditor)) {
+          expect(getContrastRatio(color, background)).toBeGreaterThanOrEqual(4.5);
+        }
+      }
+    }
+  );
 });

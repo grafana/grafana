@@ -1,8 +1,8 @@
 import { css, cx } from '@emotion/css';
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useMemo } from 'react';
 
 import { textUtil, type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
 import {
   Box,
@@ -29,6 +29,7 @@ import { formatTimestamp } from '../utils/time';
 
 import { RepositoryHealthCard } from './RepositoryHealthCard';
 import { RepositoryPullStatusCard } from './RepositoryPullStatusCard';
+import { RepositoryStatusAlert } from './RepositoryStatusAlert';
 
 type StatCell<T extends keyof ResourceCount = keyof ResourceCount> = CellProps<ResourceCount, ResourceCount[T]>;
 
@@ -42,7 +43,6 @@ function getColumnCount(hasWebhook: boolean): { xxlColumn: 5 | 4; lgColumn: 3 | 
 export function RepositoryOverview({ repo }: { repo: Repository }) {
   const styles = useStyles2(getStyles);
   const repoName = repo.metadata?.name ?? '';
-  const showFolderMetadataCheck = useBooleanFlagValue('provisioningFolderMetadata', false);
 
   const status = repo.status;
   const { conditions, quota } = status ?? {};
@@ -98,12 +98,17 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
   return (
     <Box padding={2}>
       <Stack direction="column" gap={2}>
-        {showFolderMetadataCheck && hasMissingFolderMetadata(conditions) && (
+        <RepositoryStatusAlert repository={repo} />
+        {hasMissingFolderMetadata(conditions) && (
           <MissingFolderMetadataBanner repositoryName={repoName} variant="repo" />
         )}
         <Grid columns={{ xs: 1, sm: 2, lg: lgColumn, xxl: xxlColumn }} gap={2} alignItems={'flex-start'}>
           <div className={styles.cardContainer}>
-            <Card noMargin className={styles.card}>
+            <Card
+              noMargin
+              className={styles.card}
+              data-testid={selectors.pages.Provisioning.RepositoryOverview.resourcesCard}
+            >
               <Card.Heading>
                 <Trans i18nKey="provisioning.repository-overview.resources">Resources</Trans>
               </Card.Heading>
@@ -133,7 +138,11 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
           {/* Webhook */}
           {status?.webhook && (
             <div className={styles.cardContainer}>
-              <Card noMargin className={styles.card}>
+              <Card
+                noMargin
+                className={styles.card}
+                data-testid={selectors.pages.Provisioning.RepositoryOverview.webhookCard}
+              >
                 <Card.Heading>
                   <Trans i18nKey="provisioning.repository-overview.webhook">Webhook</Trans>
                 </Card.Heading>

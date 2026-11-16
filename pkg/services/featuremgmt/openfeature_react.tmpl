@@ -14,6 +14,9 @@ With some modifications to fit our preferences:
  */
 
 import {
+{{- if .Flagset.HasObject }}
+  type JsonValue,
+{{- end }}
   type ReactFlagEvaluationOptions,
   useFlag,
 } from "@openfeature/react-sdk";

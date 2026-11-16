@@ -4,14 +4,21 @@ import {
   applyNullInsertThreshold,
   // colorManipulator,
   type DataFrame,
+  type Field,
   type FieldConfig,
   type FieldSparkline,
   FieldType,
+  formattedValueToString,
+  getDisplayProcessor,
   getFieldColorModeForField,
+  getFieldSeriesColor,
+  getScaleCalculator,
   type GrafanaTheme2,
   guessDecimals,
   isLikelyAscendingVector,
   nullToValue,
+  reduceField,
+  ReducerID,
   roundDecimals,
   sortDataFrame,
 } from '@grafana/data';
@@ -27,6 +34,14 @@ import {
 } from '@grafana/schema';
 
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
+
+import { type SparklineHoverEvent } from './Sparkline';
+
+/** Internal: public `SparklineHoverEvent` plus cursor viewport coords for positioning the tooltip. */
+export interface SparklineHoverInfo extends SparklineHoverEvent {
+  left: number;
+  top: number;
+}
 
 /** @internal
  * Given a sparkline config returns a DataFrame ready to be turned into Plot data set
@@ -123,6 +138,18 @@ const defaultConfig: GraphFieldConfig = {
   pointSize: 0,
 };
 
+// getFieldSeriesColor's default `last` reducer returns a trailing null, which it scores as 0,
+// so a series ending in a gap would get the bottom scheme color. Use the last real value instead.
+function getSeriesColor(field: Field, theme: GrafanaTheme2): string {
+  const seriesBy = field.config.color?.seriesBy ?? ReducerID.last;
+  if (!getFieldColorModeForField(field).isByValue || seriesBy !== ReducerID.last) {
+    return getFieldSeriesColor(field, theme).color;
+  }
+
+  const { lastNotNull } = reduceField({ field, reducers: [ReducerID.lastNotNull] });
+  return getScaleCalculator(field, theme)(lastNotNull ?? 0).color;
+}
+
 export const prepareSeries = (
   sparkline: FieldSparkline,
   _theme: GrafanaTheme2,
@@ -170,19 +197,42 @@ export const prepareConfig = (
   sparkline: FieldSparkline,
   dataFrame: DataFrame,
   theme: GrafanaTheme2,
-  showHighlights?: boolean
+  showHighlights?: boolean,
+  enableHover?: boolean,
+  onHover?: (hover: SparklineHoverInfo | null) => void
 ): UPlotConfigBuilder => {
   const builder = new UPlotConfigBuilder();
   const rangePad = HIGHLIGHT_IDX_POINT_SIZE / 2;
-
-  builder.setCursor({
-    show: false,
-    x: false, // no crosshairs
-    y: false,
-  });
+  // uPlot series/data index of the single y series (0 is the x field).
+  let yFieldIndex = -1;
 
   // X is the first field in the aligned frame
   const xField = dataFrame.fields[0];
+
+  if (enableHover) {
+    // Crosshair + focused point at the hovered index, no drag/zoom. focus.prox Infinity keeps
+    // the single series focused so hover works across the full width.
+    const yField = dataFrame.fields.find((f) => f !== xField && f.type === FieldType.number);
+    // Paint the cursor point a solid series color. uPlot's default cursor-point color fn reads
+    // the builder's `frames`, which Sparkline never populates, so it would throw on gradient
+    // series (e.g. TableNG's default hue). A solid color sidesteps that.
+    const pointColor = yField ? getSeriesColor(yField, theme) : theme.colors.text.primary;
+    builder.setCursor({
+      show: true,
+      x: true,
+      y: false,
+      drag: { x: false, y: false, setScale: false },
+      focus: { prox: Infinity },
+      points: { size: HIGHLIGHT_IDX_POINT_SIZE, stroke: pointColor, fill: pointColor },
+    });
+  } else {
+    builder.setCursor({
+      show: false,
+      x: false,
+      y: false,
+    });
+  }
+
   builder.addScale({
     scaleKey: 'x',
     orientation: ScaleOrientation.Horizontal,
@@ -220,6 +270,7 @@ export const prepareConfig = (
     }
 
     const scaleKey = config.unit || '__fixed';
+    yFieldIndex = i;
     builder.addScale({
       scaleKey,
       orientation: ScaleOrientation.Vertical,
@@ -235,7 +286,6 @@ export const prepareConfig = (
     });
 
     const colorMode = getFieldColorModeForField(field);
-    const seriesColor = colorMode.getCalculator(field, theme)(0, 0);
 
     const hasHighlightIndex = showHighlights && typeof sparkline.highlightIndex === 'number';
     if (hasHighlightIndex) {
@@ -254,7 +304,9 @@ export const prepareConfig = (
       colorMode,
       thresholds: config.thresholds,
       drawStyle: customConfig.drawStyle!,
-      lineColor: customConfig.lineColor ?? seriesColor,
+      // By-value schemes need a representative value; calculating at (0, 0) always yields the
+      // first scheme color, e.g. red for Red-Yellow-Green or the panel background for Reds.
+      lineColor: customConfig.lineColor ?? getSeriesColor(field, theme),
       lineWidth: customConfig.lineWidth,
       lineInterpolation: customConfig.lineInterpolation,
       showPoints: pointsMode,
@@ -265,6 +317,66 @@ export const prepareConfig = (
       lineStyle: customConfig.lineStyle,
       gradientMode: customConfig.gradientMode,
       spanNulls: customConfig.spanNulls,
+    });
+  }
+
+  if (enableHover && onHover && yFieldIndex >= 0) {
+    const seriesIdx = yFieldIndex;
+    const yField = dataFrame.fields[seriesIdx];
+    const display = yField.display ?? getDisplayProcessor({ field: yField, theme });
+    // Emit only on index change; emit null once when leaving a hovered point.
+    let prevIdx: number | null | undefined;
+    let pending: Omit<SparklineHoverInfo, 'display'> | undefined;
+    let animationFrame: number | undefined;
+
+    const clearHover = () => {
+      if (animationFrame !== undefined) {
+        cancelAnimationFrame(animationFrame);
+        animationFrame = undefined;
+      }
+      pending = undefined;
+      if (typeof prevIdx === 'number') {
+        prevIdx = null;
+        onHover(null);
+      }
+    };
+
+    builder.addHook('destroy', clearHover);
+
+    builder.addHook('setCursor', (u) => {
+      const idx = u.cursor.idxs?.[seriesIdx] ?? null;
+      const value = idx != null ? u.data[seriesIdx]?.[idx] : null;
+
+      if (idx == null || value == null || !Number.isFinite(value)) {
+        clearHover();
+        return;
+      }
+
+      if (idx === prevIdx) {
+        // Returning to the emitted point also supersedes a different queued point.
+        pending = undefined;
+        return;
+      }
+
+      pending = {
+        index: idx,
+        value,
+        left: u.rect.left + (u.cursor.left ?? 0),
+        top: u.rect.top + (u.cursor.top ?? 0),
+      };
+      if (animationFrame !== undefined) {
+        return;
+      }
+
+      animationFrame = requestAnimationFrame(() => {
+        animationFrame = undefined;
+        const hover = pending;
+        pending = undefined;
+        if (hover && hover.index !== prevIdx) {
+          prevIdx = hover.index;
+          onHover({ ...hover, display: formattedValueToString(display(hover.value)) });
+        }
+      });
     });
   }
 

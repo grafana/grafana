@@ -3,6 +3,7 @@ package libraryelements
 import (
 	"bytes"
 	"errors"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -141,11 +142,8 @@ func parseFolderFilter(query model.SearchLibraryElementsQuery) FolderFilter {
 		folderUIDs = strings.Split(query.FolderFilterUIDs, ",")
 		result.folderUIDs = folderUIDs
 
-		for _, folderUID := range folderUIDs {
-			if isUIDGeneralFolder(folderUID) {
-				result.includeGeneralFolder = true
-				break
-			}
+		if slices.ContainsFunc(folderUIDs, isUIDGeneralFolder) {
+			result.includeGeneralFolder = true
 		}
 	}
 

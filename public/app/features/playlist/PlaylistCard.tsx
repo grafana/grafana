@@ -5,7 +5,6 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Button, Card, LinkButton, ModalsController, Stack, useStyles2 } from '@grafana/ui';
 import { attachSkeleton, type SkeletonComponent } from '@grafana/ui/unstable';
-import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
 import { ManagedBadge } from 'app/features/provisioning/components/ManagedBadge';
 import {
   getManagerIdentity,
@@ -17,7 +16,7 @@ import {
 import { type Playlist } from '../../api/clients/playlist/v1';
 
 import { ShareModal } from './ShareModal';
-import { canWritePlaylists } from './utils';
+import { useCanWritePlaylists } from './utils';
 
 interface Props {
   setStartPlaylist: (playlistItem: Playlist) => void;
@@ -26,6 +25,7 @@ interface Props {
 }
 
 const PlaylistCardComponent = ({ playlist, setStartPlaylist, setPlaylistToDelete }: Props) => {
+  const canWrite = useCanWritePlaylists();
   return (
     <Card noMargin>
       <Card.Heading>
@@ -42,43 +42,71 @@ const PlaylistCardComponent = ({ playlist, setStartPlaylist, setPlaylistToDelete
         </Stack>
       </Card.Heading>
       <Card.Actions>
-        <Button variant="secondary" icon="play" onClick={() => setStartPlaylist(playlist)}>
-          <Trans i18nKey="playlist-page.card.start">Start playlist</Trans>
+        <Button
+          variant="accent"
+          icon="play"
+          onClick={() => setStartPlaylist(playlist)}
+          fill="outline"
+          size="sm"
+          aria-label={t('playlist-page.card.start-label', 'Start playlist {{ name }} ', { name: playlist.spec?.title })}
+        >
+          <Trans i18nKey="playlist-page.card.start">Start</Trans>
         </Button>
-        {canWritePlaylists() && (
-          <LinkButton key="edit" variant="secondary" href={`/playlists/edit/${playlist.metadata?.name}`} icon="cog">
-            <Trans i18nKey="playlist-page.card.edit">Edit playlist</Trans>
-          </LinkButton>
-        )}
-        {canWritePlaylists() && (
-          <Button disabled={false} onClick={() => setPlaylistToDelete(playlist)} icon="trash-alt" variant="destructive">
-            <Trans i18nKey="playlist-page.card.delete">Delete playlist</Trans>
-          </Button>
-        )}
-      </Card.Actions>
-      <Card.SecondaryActions>
         <ModalsController key="button-share">
           {({ showModal, hideModal }) => (
-            <DashNavButton
-              tooltip={t('playlist-page.card.tooltip', 'Share playlist')}
+            <Button
+              tooltip={t('playlist-page.card.tooltip', 'Share')}
               icon="share-alt"
-              iconSize="lg"
+              variant="secondary"
+              size="sm"
+              aria-label={t('playlist-page.card.share-label', 'Share playlist {{ name }} ', {
+                name: playlist.spec?.title,
+              })}
               onClick={() => {
                 showModal(ShareModal, {
                   playlistUid: playlist.metadata?.name ?? '',
                   onDismiss: hideModal,
                 });
               }}
-            />
+            >
+              <Trans i18nKey="playlist-page.card.share">Share</Trans>
+            </Button>
           )}
         </ModalsController>
-      </Card.SecondaryActions>
+        {canWrite && (
+          <LinkButton
+            key="edit"
+            variant="secondary"
+            href={`/playlists/edit/${playlist.metadata?.name}`}
+            icon="cog"
+            size="sm"
+            aria-label={t('playlist-page.card.edit-label', 'Edit playlist {{ name }} ', { name: playlist.spec?.title })}
+          >
+            <Trans i18nKey="playlist-page.card.edit">Edit</Trans>
+          </LinkButton>
+        )}
+        {canWrite && (
+          <Button
+            disabled={false}
+            onClick={() => setPlaylistToDelete(playlist)}
+            icon="trash-alt"
+            variant="secondary"
+            size="sm"
+            aria-label={t('playlist-page.card.delete-label', 'Delete playlist {{ name }} ', {
+              name: playlist.spec?.title,
+            })}
+          >
+            <Trans i18nKey="playlist-page.card.delete">Delete</Trans>
+          </Button>
+        )}
+      </Card.Actions>
     </Card>
   );
 };
 
 const PlaylistCardSkeleton: SkeletonComponent = ({ rootProps }) => {
   const skeletonStyles = useStyles2(getSkeletonStyles);
+  const canWrite = useCanWritePlaylists();
   return (
     <Card noMargin {...rootProps}>
       <Card.Heading>
@@ -87,7 +115,7 @@ const PlaylistCardSkeleton: SkeletonComponent = ({ rootProps }) => {
       <Card.Actions>
         <Stack direction="row" wrap="wrap">
           <Skeleton containerClassName={skeletonStyles.button} width={142} height={32} />
-          {canWritePlaylists() && (
+          {canWrite && (
             <>
               <Skeleton containerClassName={skeletonStyles.button} width={135} height={32} />
               <Skeleton containerClassName={skeletonStyles.button} width={153} height={32} />

@@ -88,15 +88,15 @@ func (hs *HTTPServer) getUserUserProfile(c *contextmodel.ReqContext, userID int6
 		userProfile.IsExternal = true
 		for _, authModule := range userProfile.AuthModules {
 			userProfile.AuthLabels = append(userProfile.AuthLabels, login.GetAuthProviderLabel(authModule))
-			userProfile.IsExternallySynced = userProfile.IsExternallySynced || hs.isExternallySynced(hs.Cfg, authModule)
-			userProfile.IsGrafanaAdminExternallySynced = userProfile.IsGrafanaAdminExternallySynced || hs.isGrafanaAdminExternallySynced(hs.Cfg, authModule)
+			userProfile.IsExternallySynced = userProfile.IsExternallySynced || hs.isExternallySynced(c.Req.Context(), hs.Cfg, authModule)
+			userProfile.IsGrafanaAdminExternallySynced = userProfile.IsGrafanaAdminExternallySynced || hs.isGrafanaAdminExternallySynced(c.Req.Context(), hs.Cfg, authModule)
 		}
 	} else if authInfo, err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &login.GetAuthInfoQuery{UserId: userID}); err == nil {
 		// Legacy fallback: extract auth info from the user_auth table.
 		userProfile.AuthLabels = append(userProfile.AuthLabels, login.GetAuthProviderLabel(authInfo.AuthModule))
 		userProfile.IsExternal = true
-		userProfile.IsExternallySynced = hs.isExternallySynced(hs.Cfg, authInfo.AuthModule)
-		userProfile.IsGrafanaAdminExternallySynced = hs.isGrafanaAdminExternallySynced(hs.Cfg, authInfo.AuthModule)
+		userProfile.IsExternallySynced = hs.isExternallySynced(c.Req.Context(), hs.Cfg, authInfo.AuthModule)
+		userProfile.IsGrafanaAdminExternallySynced = hs.isGrafanaAdminExternallySynced(c.Req.Context(), hs.Cfg, authInfo.AuthModule)
 	}
 
 	userProfile.AccessControl = getAccessControlMetadata(c, "global.users:id:", strconv.FormatInt(userID, 10))
@@ -184,6 +184,7 @@ func (hs *HTTPServer) UpdateSignedInUser(c *contextmodel.ReqContext) response.Re
 	}
 
 	cmd.UserID = userID
+	cmd.UID = c.UserUID
 	return hs.handleUpdateUser(c.Req.Context(), cmd)
 }
 
@@ -288,6 +289,9 @@ func (hs *HTTPServer) handleUpdateUser(ctx context.Context, cmd user.UpdateUserC
 	if err := hs.userService.Update(ctx, &cmd); err != nil {
 		if errors.Is(err, user.ErrCaseInsensitive) {
 			return response.Error(http.StatusConflict, "Update would result in user login conflict", err)
+		}
+		if errors.Is(err, user.ErrUserAlreadyExists) {
+			return response.Error(http.StatusConflict, "Login or email is already in use", err)
 		}
 		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to update user", err)
 	}
@@ -508,7 +512,7 @@ func (hs *HTTPServer) UserSetUsingOrg(c *contextmodel.ReqContext) response.Respo
 		return response.Error(http.StatusUnauthorized, "Not a valid organization", nil)
 	}
 
-	if err := hs.userService.Update(c.Req.Context(), &user.UpdateUserCommand{UserID: userID, OrgID: &orgID}); err != nil {
+	if err := hs.userService.Update(c.Req.Context(), &user.UpdateUserCommand{UserID: userID, UID: c.UserUID, OrgID: &orgID}); err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to change active organization", err)
 	}
 
@@ -578,7 +582,7 @@ func (hs *HTTPServer) ChangeUserPassword(c *contextmodel.ReqContext) response.Re
 		return response
 	}
 
-	if err := hs.userService.Update(c.Req.Context(), &user.UpdateUserCommand{UserID: userID, Password: &form.NewPassword, OldPassword: &form.OldPassword}); err != nil {
+	if err := hs.userService.Update(c.Req.Context(), &user.UpdateUserCommand{UserID: userID, UID: c.UserUID, Password: &form.NewPassword, OldPassword: &form.OldPassword}); err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to change user password", err)
 	}
 

@@ -2,6 +2,9 @@ package service
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"maps"
 	"sync"
 	"time"
 
@@ -10,6 +13,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/secrets"
 )
+
+// maxJSONDataBytes is the MySQL TEXT size of plugin_setting.json_data and secure_json_data, used as the limit on all databases.
+// Grafana's MySQL connection is not in strict mode, so a longer value is silently truncated and the row
+// can no longer be read.
+const maxJSONDataBytes = 65535
 
 func ProvideService(db db.DB,
 	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
@@ -89,6 +97,10 @@ func (s *Service) GetPluginSettingByPluginID(ctx context.Context, args *pluginse
 }
 
 func (s *Service) UpdatePluginSetting(ctx context.Context, args *pluginsettings.UpdateArgs) error {
+	if err := validateStoredSize("jsonData", args.JSONData); err != nil {
+		return err
+	}
+
 	encryptedSecureJsonData, err := s.secretsService.EncryptJsonData(ctx, args.SecureJSONData, secrets.WithoutScope())
 	if err != nil {
 		return err
@@ -200,12 +212,17 @@ func (s *Service) updatePluginSetting(ctx context.Context, cmd *pluginsettings.U
 				Enabled:  cmd.Enabled,
 			})
 
+			if err := validateStoredSize("secureJsonData", pluginSetting.SecureJsonData); err != nil {
+				return err
+			}
+
 			_, err = sess.Insert(&pluginSetting)
 			return err
 		}
 
-		for key, encryptedData := range cmd.EncryptedSecureJsonData {
-			pluginSetting.SecureJsonData[key] = encryptedData
+		maps.Copy(pluginSetting.SecureJsonData, cmd.EncryptedSecureJsonData)
+		if err := validateStoredSize("secureJsonData", pluginSetting.SecureJsonData); err != nil {
+			return err
 		}
 
 		// add state change event on commit success
@@ -233,4 +250,15 @@ func (s *Service) updatePluginSettingVersion(ctx context.Context, cmd *pluginset
 		_, err := sess.Exec("UPDATE plugin_setting SET plugin_version=? WHERE org_id=? AND plugin_id=?", cmd.PluginVersion, cmd.OrgId, cmd.PluginId)
 		return err
 	})
+}
+
+func validateStoredSize(field string, data any) error {
+	encoded, err := json.Marshal(data)
+	if err != nil {
+		return fmt.Errorf("failed to encode plugin settings: %w", err)
+	}
+	if len(encoded) > maxJSONDataBytes {
+		return pluginsettings.NewDataTooLargeError(field, len(encoded), maxJSONDataBytes)
+	}
+	return nil
 }

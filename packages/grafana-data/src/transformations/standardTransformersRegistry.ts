@@ -43,6 +43,15 @@ export interface TransformerRegistryItem<TOptions = any> extends RegistryItem {
    */
   isApplicableDescription?: string | ((data: DataFrame[]) => string);
 
+  /**
+   * True when the transformer generates a dynamic refId for its output frame(s).
+   * Hoisted from DataTransformerInfo so the editor can show the dynamic refId
+   * without resolving the async transformation.
+   *
+   * A function when it depends on configuration — see {@link DataTransformerInfo.usesDynamicRefId}.
+   */
+  usesDynamicRefId?: boolean | ((options: TOptions) => boolean);
+
   /** Markdown with more detailed description and help */
   help?: string;
 
@@ -70,6 +79,18 @@ export interface TransformerRegistryItem<TOptions = any> extends RegistryItem {
    * Image representing the transformer, for light themes
    */
   imageLight: string;
+}
+
+/**
+ * Resolves {@link TransformerRegistryItem.usesDynamicRefId} against the transformation's current
+ * options, so callers do not have to care whether it is declared as a flag or a predicate.
+ */
+export function transformerUsesDynamicRefId<TOptions>(
+  item: TransformerRegistryItem<TOptions>,
+  options: TOptions
+): boolean {
+  const { usesDynamicRefId } = item;
+  return typeof usesDynamicRefId === 'function' ? usesDynamicRefId(options) : usesDynamicRefId === true;
 }
 
 export enum TransformerCategory {

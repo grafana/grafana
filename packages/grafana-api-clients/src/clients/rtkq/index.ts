@@ -19,10 +19,12 @@ import { generatedAPI as playlistAPIv1 } from './playlist/v1';
 import { generatedAPI as pluginsAPIv0alpha1 } from './plugins/v0alpha1';
 import { generatedAPI as orgPreferencesAPI } from './preferences/org';
 import { generatedAPI as teamPreferencesAPI } from './preferences/team';
+import { generatedAPI as preferencesAPIv1 } from './preferences/v1';
 import { generatedAPI as preferencesAPIv1alpha1 } from './preferences/v1alpha1';
 import { generatedAPI as provisioningAPIv0alpha1 } from './provisioning/v0alpha1';
 import { generatedAPI as quotasAPIv0alpha1 } from './quotas/v0alpha1';
 import { generatedAPI as rulesAlertingAPIv0alpha1 } from './rules.alerting/v0alpha1';
+import { generatedAPI as rulesAlertingAPIv1beta1 } from './rules.alerting/v1beta1';
 import { generatedAPI as shortURLAPIv1beta1 } from './shorturl/v1beta1';
 // GENERATED:IMPORT
 
@@ -51,6 +53,8 @@ export const allMiddleware = [
   dashboardAPIv2.middleware,
   dashboardAPIv2beta1.middleware,
   pluginsAPIv0alpha1.middleware,
+  preferencesAPIv1.middleware,
+  rulesAlertingAPIv1beta1.middleware,
   // GENERATED:MIDDLEWARE
 ] as const;
 
@@ -79,6 +83,8 @@ export const allReducers = {
   [dashboardAPIv2.reducerPath]: dashboardAPIv2.reducer,
   [dashboardAPIv2beta1.reducerPath]: dashboardAPIv2beta1.reducer,
   [pluginsAPIv0alpha1.reducerPath]: pluginsAPIv0alpha1.reducer,
+  [preferencesAPIv1.reducerPath]: preferencesAPIv1.reducer,
+  [rulesAlertingAPIv1beta1.reducerPath]: rulesAlertingAPIv1beta1.reducer,
   // GENERATED:REDUCER
 };
 

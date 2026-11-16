@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { type SVGProps } from 'react';
 import SVG from 'react-inlinesvg';
 
@@ -11,13 +11,13 @@ import grotCTASvg from './grot-cta.svg';
 export interface Props {
   width?: SVGProps<SVGElement>['width'];
   height?: SVGProps<SVGElement>['height'];
+  className?: SVGProps<SVGElement>['className'];
 }
 
-export const GrotCTA = ({ width = 'auto', height }: Props) => {
+export const GrotCTA = ({ width = 'auto', height, className }: Props) => {
   const styles = useStyles2(getStyles);
 
-  // @ts-expect-error react-inlinesvg@4.3.0 return type includes bigint, which isn't in @types/react@18's ReactNode. Remove when we update @types/react.
-  return <SVG src={grotCTASvg} className={styles.svg} height={height} width={width} />;
+  return <SVG src={grotCTASvg} className={cx(styles.svg, className)} height={height} width={width} />;
 };
 
 GrotCTA.displayName = 'GrotCTA';

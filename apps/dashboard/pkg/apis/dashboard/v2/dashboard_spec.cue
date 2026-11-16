@@ -153,6 +153,8 @@ DataTopic: "series" | "annotations" | "alertStates" @cog(kind="enum",memberNames
 // Using transformations you can: rename fields, join time series data, perform mathematical operations across queries,
 // use the output of one transformation as the input to another transformation, etc.
 TransformationSpec: {
+	// Unique identifier of the instance of the transformer
+	refId?: string
 	// Disabled transformations are skipped
 	disabled?: bool
 	// Optional frame matcher. When missing it will be applied to all results
@@ -263,6 +265,11 @@ FieldConfig: {
 	// How null values should be handled when calculating field stats
 	// "null" - Include null values, "connected" - Ignore nulls, "null as zero" - Treat nulls as zero
 	nullValueMode?: NullValueMode
+
+	// Maps field-config property ids (e.g. `min`, `unit` or `custom.lineWidth`) to a dashboard-variable
+	// expression resolved at render time. The property's own value is the fallback when the expression
+	// doesn't resolve to a valid value for that property.
+	varMappings?: {[string]: string}
 }
 
 // How null values should be handled
@@ -289,7 +296,9 @@ MatcherConfig: {
 Threshold: {
 	// Value null means -Infinity
 	value: number | null
-	color: string
+	// Optional dashboard-variable expression (e.g. `$myVar`) resolved at render time; `value` is the numeric fallback when the expression cannot be resolved to a single finite number.
+	valueExpr?: string
+	color:      string
 }
 
 ThresholdsMode: "absolute" | "percentage"
@@ -505,6 +514,7 @@ AnnotationQueryKind: {
 
 QueryOptionsSpec: {
 	timeFrom?:         string
+	timeTo?:           string
 	maxDataPoints?:    int
 	timeShift?:        string
 	queryCachingTTL?:  int
@@ -659,6 +669,7 @@ RowsLayoutRowSpec: {
 	repeat?:               RowRepeatOptions
 	layout:                GridLayoutKind | AutoGridLayoutKind | TabsLayoutKind | RowsLayoutKind
 	variables?: [...VariableKind]
+	annotations?: [...AnnotationQueryKind]
 }
 
 AutoGridLayoutKind: {
@@ -667,12 +678,18 @@ AutoGridLayoutKind: {
 }
 
 AutoGridLayoutSpec: {
-	maxColumnCount?: number | *3
-	columnWidthMode: "narrow" | *"standard" | "wide" | "custom"
-	columnWidth?:    number
-	rowHeightMode:   "short" | *"standard" | "tall" | "custom"
-	rowHeight?:      number
-	fillScreen?:     bool | *false
+	maxColumnCount?:  number | *3
+	columnWidthMode:  "narrow" | *"standard" | "wide" | "custom"
+	columnWidth?:     number
+	rowHeightMode:    "short" | *"standard" | "tall" | "custom"
+	rowHeight?:       number
+	fillScreen?:      bool | *false
+	fitContent?:      bool | *false
+	minHeightMode?:   "none" | "short" | "standard" | "tall" | "custom"
+	minHeight?:       number
+	maxHeightMode?:   "unlimited" | "short" | "standard" | "tall" | "custom"
+	maxHeight?:       number
+	matchRowHeights?: bool | *true
 	items: [...AutoGridLayoutItemKind]
 }
 
@@ -685,6 +702,7 @@ AutoGridLayoutItemSpec: {
 	element:               ElementReference
 	repeat?:               AutoGridRepeatOptions
 	conditionalRendering?: ConditionalRenderingGroupKind
+	fitContent?:           bool
 }
 
 TabsLayoutKind: {
@@ -707,12 +725,16 @@ TabsLayoutTabSpec: {
 	conditionalRendering?: ConditionalRenderingGroupKind
 	repeat?:               TabRepeatOptions
 	variables?: [...VariableKind]
+	annotations?: [...AnnotationQueryKind]
 }
 
 PanelSpec: {
-	id:          number
-	title:       string
-	description: string
+	id:    number
+	title: string
+	// Shown in a info icon tooltip next to panel title
+	description?: string
+	// Shown in a sub header below the title.
+	subtitle?: string
 	links: [...DataLink]
 	data:         QueryGroupKind
 	vizConfig:    VizConfigKind

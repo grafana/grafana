@@ -174,3 +174,54 @@ Enable JavaScript in your browser. Running Grafana without JavaScript enabled in
 - Firefox
 - Safari
 - Microsoft Edge
+
+## Frequently asked questions
+
+{{< qa-list >}}
+{{< qa question="What operating systems does Grafana support?" >}}
+Grafana supports Debian and Ubuntu, RHEL and Fedora, SUSE and openSUSE, macOS, and Windows.
+You can also run Grafana in a container with Docker or deploy it on Kubernetes with the Grafana Helm chart.
+Installing Grafana on other operating systems is possible but is neither recommended nor supported.
+For platform-specific steps, refer to the installation guide for your operating system.
+{{< /qa >}}
+{{< qa question="What are the hardware recommendations to run Grafana?" >}}
+At a minimum, Grafana needs 512 MB of memory and 1 CPU core, but that's a floor for evaluation rather than a production target.
+Actual requirements are driven by four factors: concurrent users, the number of alert rules and how often they evaluate, the number and type of data sources, and your panel count and dashboard refresh intervals.
+The documentation groups workloads into Small, Medium, and Large tiers with a hardware baseline for each.
+For example, a small deployment starts at 2 cores and 2–4 GB of memory, while a large deployment runs multiple load-balanced instances at 8–16+ cores and 16–32+ GB of memory each.
+This guidance covers the Grafana server process only.
+It doesn't account for your data sources, because metric, log, and trace backends such as Grafana Mimir, Grafana Loki, and Grafana Tempo have their own capacity requirements.
+Treat the tiers as starting points and validate them with a load test that reflects your real dashboards before you commit to production hardware.
+For more information, refer to Sizing your deployment.
+{{< /qa >}}
+{{< qa question="What resources do I need to run Grafana?" >}}
+To run Grafana, you need four things:
+
+- A supported operating system.
+- Hardware that meets or exceeds the minimum requirements.
+- A supported database.
+- A supported browser.
+
+Beyond that, plan for the components that scale with your workload:
+
+- An external MySQL or PostgreSQL database for anything past a small evaluation instance.
+- A separate host or container for image rendering.
+  Each renderer worker uses approximately 1 GB of memory.
+- Either sticky sessions or a shared Redis session store if you run more than one Grafana instance for high availability.
+
+Remember that your data sources are sized separately from Grafana itself.
+{{< /qa >}}
+{{< qa question="What databases does Grafana support?" >}}
+Grafana stores its own configuration data — users, data sources, dashboards, and so on — in a database, and supports the following:
+
+- SQLite 3.
+- MySQL 8.0 or later.
+- PostgreSQL 12 or later.
+
+New installations use an embedded SQLite database by default, stored in the Grafana installation directory.
+SQLite works well for local development and small evaluation instances but isn't recommended for production, and high availability requires MySQL or PostgreSQL.
+Grafana supports the database versions that are officially supported upstream at the time a given Grafana version is released, so support for a database version might be dropped when the corresponding Grafana version goes out of support.
+Migrating between databases is a customer-managed operation that falls outside the scope of Grafana Support, so choose your backend before you scale up.
+This is separate from the data sources that Grafana queries for visualization, which are covered in the data sources documentation.
+{{< /qa >}}
+{{< /qa-list >}}

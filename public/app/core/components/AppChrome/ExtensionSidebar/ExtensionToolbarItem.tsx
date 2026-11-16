@@ -1,14 +1,12 @@
 import { type ExtensionInfo } from '@grafana/data';
+import { useFlagAssistantFullscreenWorkspace } from '@grafana/runtime/internal';
 import { Dropdown, Menu } from '@grafana/ui';
 
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
 
-import {
-  getComponentIdFromComponentMeta,
-  getComponentMetaFromComponentId,
-  useExtensionSidebarContext,
-} from './ExtensionSidebarProvider';
+import { useExtensionSidebarContext } from './ExtensionSidebarProvider';
 import { ExtensionToolbarItemButton } from './ExtensionToolbarItemButton';
+import { getComponentIdFromComponentMeta, getComponentMetaFromComponentId } from './extensionSidebarUtils';
 
 type ComponentWithPluginId = ExtensionInfo & { pluginId: string };
 
@@ -20,7 +18,15 @@ const compactAllowedComponents = ['grafana-assistant-app', 'grafana-assistant-on
 const interactiveLearningPluginIds = ['grafana-pathfinder-app', 'grafana-grafanadocsplugin-app'];
 
 export function ExtensionToolbarItem({ compact }: Props) {
-  const { availableComponents, dockedComponentId, setDockedComponentId } = useExtensionSidebarContext();
+  const {
+    availableComponents,
+    dockedComponentId: openComponentId,
+    setDockedComponentId,
+    floatingHidden,
+  } = useExtensionSidebarContext();
+  // Held hidden, the sidebar reads as closed here, so its button opens (shows) it instead of closing it unseen.
+  const dockedComponentId = floatingHidden ? undefined : openComponentId;
+  const fullscreenWorkspaceEnabled = useFlagAssistantFullscreenWorkspace();
 
   // Don't render the toolbar if the only available plugins are interactive learning plugins.
   // They're opened by the interactive learning menu.
@@ -37,6 +43,11 @@ export function ExtensionToolbarItem({ compact }: Props) {
     // Don't render any button for the interactive learning plugins.
     // They're opened by the interactive learning button.
     if (interactiveLearningPluginIds.includes(pluginId)) {
+      return null;
+    }
+    // Fullscreen workspace renders its own Chat/Workspace buttons (`AssistantToolbarButtons`
+    // in `SingleTopBar`) instead of the generic extension-sidebar button for this plugin
+    if (fullscreenWorkspaceEnabled && pluginId === 'grafana-assistant-app') {
       return null;
     }
 
@@ -94,20 +105,26 @@ export function ExtensionToolbarItem({ compact }: Props) {
     );
   };
 
+  // Don't render the toolbar (or its separators) if nothing actually renders a button
+  const buttons = Array.from(availableComponents.entries())
+    .map(([pluginId, { addedComponents }]: [string, { addedComponents: ExtensionInfo[] }]) =>
+      renderPluginButton(
+        pluginId,
+        addedComponents.map((c: ExtensionInfo) => ({ ...c, pluginId }))
+      )
+    )
+    .filter(Boolean);
+
+  if (buttons.length === 0) {
+    return null;
+  }
+
   return (
     <>
       {/* renders a single `ExtensionToolbarItemButton` for each plugin; if a plugin has multiple components, it renders them inside a `Dropdown` */}
-      {Array.from(availableComponents.entries())
-        .map(([pluginId, { addedComponents }]: [string, { addedComponents: ExtensionInfo[] }]) =>
-          renderPluginButton(
-            pluginId,
-            addedComponents.map((c: ExtensionInfo) => ({ ...c, pluginId }))
-          )
-        )
-        .filter(Boolean)
-        .flatMap((button, index, arr) =>
-          index < arr.length - 1 ? [button, <NavToolbarSeparator key={`sep-${index}`} />] : [button]
-        )}
+      {buttons.flatMap((button, index, arr) =>
+        index < arr.length - 1 ? [button, <NavToolbarSeparator key={`sep-${index}`} />] : [button]
+      )}
       <NavToolbarSeparator />
     </>
   );

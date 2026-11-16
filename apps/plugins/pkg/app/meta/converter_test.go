@@ -180,6 +180,7 @@ func TestJsonDataToMetaJSONData(t *testing.T) {
 			MultiValueFilterOperators: true,
 			Preload:                   true,
 			SkipDataQuery:             true,
+			SkipDefaultQuery:          true,
 			Streaming:                 true,
 			Tracing:                   true,
 		}
@@ -196,8 +197,23 @@ func TestJsonDataToMetaJSONData(t *testing.T) {
 		assert.True(t, *meta.MultiValueFilterOperators)
 		assert.True(t, *meta.Preload)
 		assert.True(t, *meta.SkipDataQuery)
+		assert.Nil(t, meta.SkipDefaultQuery)
 		assert.True(t, *meta.Streaming)
 		assert.True(t, *meta.Tracing)
+	})
+
+	t.Run("copies skipDefaultQuery only for panels", func(t *testing.T) {
+		for _, pluginType := range []plugins.Type{plugins.TypePanel, plugins.TypeDataSource, plugins.TypeApp, plugins.TypeRenderer} {
+			for _, enabled := range []bool{false, true} {
+				meta := jsonDataToMetaJSONData(plugins.JSONData{Type: pluginType, SkipDefaultQuery: enabled})
+				if pluginType == plugins.TypePanel && enabled {
+					require.NotNil(t, meta.SkipDefaultQuery)
+					assert.True(t, *meta.SkipDefaultQuery)
+				} else {
+					assert.Nil(t, meta.SkipDefaultQuery)
+				}
+			}
+		}
 	})
 
 	t.Run("omits optional fields when empty", func(t *testing.T) {
@@ -591,6 +607,22 @@ func TestGrafanaComChildPluginVersionToMetaSpec(t *testing.T) {
 		// Child plugin.json has no version, so it inherits the parent's version.
 		assert.Equal(t, "1.0.0", meta.PluginJson.Info.Version)
 	})
+
+	t.Run("errors when parent cdnUrl is empty", func(t *testing.T) {
+		parent := grafanaComPluginVersionMeta{
+			PluginSlug: "parent-plugin",
+			Version:    "1.0.0",
+		}
+		child := grafanaComChildPluginVersion{
+			Slug: "child-plugin",
+			Path: "child-plugin",
+			JSON: grafanaComPluginVersionMetaJSON{MetaJSONData: pluginsv0alpha1.MetaJSONData{Id: "child-plugin"}},
+		}
+
+		_, err := grafanaComChildPluginVersionToMetaSpec(&logging.NoOpLogger{}, child, parent)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "cdnUrl")
+	})
 }
 
 func TestGrafanaComPluginVersionMetaToMetaSpec(t *testing.T) {
@@ -624,6 +656,13 @@ func TestGrafanaComPluginVersionMetaToMetaSpec(t *testing.T) {
 		assert.Equal(t, "sha256-3q2+7w==", *meta.Module.Hash)
 		assert.Equal(t, "https://cdn.grafana.com/plugins/test-plugin/1.0.0", meta.BaseURL)
 		assert.Equal(t, []string{"child1", "child2"}, meta.Children)
+	})
+
+	t.Run("errors when cdnUrl is empty", func(t *testing.T) {
+		gcomMeta := grafanaComPluginVersionMeta{}
+		_, err := grafanaComPluginVersionMetaToMetaSpec(&logging.NoOpLogger{}, gcomMeta, "")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "cdnUrl")
 	})
 
 	t.Run("falls back to gcom version when plugin.json version is empty", func(t *testing.T) {

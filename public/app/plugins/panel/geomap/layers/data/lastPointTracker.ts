@@ -1,10 +1,9 @@
 import Feature from 'ol/Feature';
-import type OpenLayersMap from 'ol/Map';
-import * as layer from 'ol/layer';
-import * as source from 'ol/source';
-import * as style from 'ol/style';
+import LayerVector from 'ol/layer/Vector';
+import SourceVector from 'ol/source/Vector';
+import { Style, Icon } from 'ol/style';
 
-import { type MapLayerRegistryItem, type MapLayerOptions, type PanelData, type GrafanaTheme2, PluginState, type EventBus } from '@grafana/data';
+import { type MapLayerRegistryItem, type PanelData, PluginState } from '@grafana/data';
 import { getGeometryField, getLocationMatchers } from 'app/features/geo/utils/location';
 
 export interface LastPointConfig {
@@ -29,23 +28,23 @@ export const lastPointTracker: MapLayerRegistryItem<LastPointConfig> = {
    * @param options
    * @param theme
    */
-  create: async (map: OpenLayersMap, options: MapLayerOptions<LastPointConfig>, eventBus: EventBus, theme: GrafanaTheme2) => {
+  create: async (_map, options) => {
     const point = new Feature({});
     const config = { ...defaultOptions, ...options.config };
 
     point.setStyle(
-      new style.Style({
-        image: new style.Icon({
+      new Style({
+        image: new Icon({
           src: config.icon,
         }),
       })
     );
 
-    const vectorSource = new source.Vector({
+    const vectorSource = new SourceVector({
       features: [point],
     });
 
-    const vectorLayer = new layer.Vector({
+    const vectorLayer = new LayerVector({
       source: vectorSource,
     });
 

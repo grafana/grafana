@@ -78,12 +78,13 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
             event.preventDefault();
           }
 
+          const query = interpolatedParams?.query ?? interpolatedQuery;
           onClickFn({
-            datasourceUid: internalLink.datasourceUid,
-            queries: [interpolatedQuery],
+            datasourceUid: query?.datasource?.uid ?? internalLink.datasourceUid,
+            queries: query ? [query] : [],
             panelsState: interpolatedPanelsState,
             correlationHelperData: interpolatedCorrelationData,
-            range,
+            range: interpolatedParams?.timeRange ?? range,
           });
         }
       : undefined,

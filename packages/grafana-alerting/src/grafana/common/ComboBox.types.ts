@@ -14,6 +14,11 @@ interface NotClearableProps<T> {
 
 type ComboboxClearableProps<T> = NotClearableProps<T> | ClearableProps<T>;
 
+// This mirrors Combobox's own width props on purpose. The Omit below runs over a union,
+// which TypeScript collapses into a single object type, so without re-stating these here
+// you could pass width="auto" with no minWidth and get no error.
+// Only the single Combobox is built from this type, and it reads minWidth/maxWidth only
+// when width is "auto" - hence never on the other branch.
 type AutoSizeConditionals =
   | {
       width: 'auto';

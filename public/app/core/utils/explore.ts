@@ -24,7 +24,7 @@ import {
   urlUtil,
   generateUUID,
 } from '@grafana/data';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { getDataSourceInstance } from '@grafana/runtime';
 import { RefreshPicker } from '@grafana/ui';
 import { ExpressionDatasourceUID } from 'app/features/expressions/types';
 import { type QueryOptions, type QueryTransaction } from 'app/types/explore';
@@ -309,16 +309,3 @@ export function getIntervals(range: TimeRange, lowLimit?: string, resolution?: n
 
   return rangeUtil.calculateInterval(range, resolution, lowLimit);
 }
-
-export const copyStringToClipboard = (string: string) => {
-  if (navigator.clipboard && window.isSecureContext) {
-    navigator.clipboard.writeText(string);
-  } else {
-    const el = document.createElement('textarea');
-    el.value = string;
-    document.body.appendChild(el);
-    el.select();
-    document.execCommand('copy');
-    document.body.removeChild(el);
-  }
-};

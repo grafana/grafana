@@ -1,12 +1,11 @@
 import { act, type ComponentProps, useEffect, useState } from 'react';
 import type AutoSizer from 'react-virtualized-auto-sizer';
-import { render as testRender, screen, waitFor } from 'test/test-utils';
+import { render as testRender, screen } from 'test/test-utils';
 
 import { store } from '@grafana/data';
 import { setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { EMPTY_TABLE_RESPONSE, type ListMeta, type TableResponse } from 'app/features/apiserver/types';
 import { type SearchState, SearchLayout } from 'app/features/search/types';
 
 import { deletedDashboardsCache } from '../search/service/deletedDashboardsCache';
@@ -20,8 +19,10 @@ setupMockServer();
 
 jest.mock('./api/useRecentlyDeletedStateManager');
 jest.mock('../search/service/deletedDashboardsCache', () => ({
+  DELETED_DASHBOARDS_LIMIT: jest.requireActual('../search/service/deletedDashboardsCache').DELETED_DASHBOARDS_LIMIT,
   deletedDashboardsCache: {
-    getAsTable: jest.fn(),
+    isTrashUnavailable: jest.fn().mockReturnValue(false),
+    isTrashTruncated: jest.fn().mockReturnValue(false),
   },
 }));
 
@@ -35,22 +36,13 @@ jest.mock('react-virtualized-auto-sizer', () => ({
 const mockUseRecentlyDeletedStateManager = useRecentlyDeletedStateManager as jest.MockedFunction<
   typeof useRecentlyDeletedStateManager
 >;
-const mockGetAsTable = deletedDashboardsCache.getAsTable as jest.MockedFunction<
-  typeof deletedDashboardsCache.getAsTable
+const mockIsTrashTruncated = deletedDashboardsCache.isTrashTruncated as jest.MockedFunction<
+  typeof deletedDashboardsCache.isTrashTruncated
 >;
 
-function buildTable(count: number, metadata: Partial<ListMeta> = {}): TableResponse {
-  return {
-    ...EMPTY_TABLE_RESPONSE,
-    metadata: { resourceVersion: '0', ...metadata },
-    rows: Array.from({ length: count }, (_, i) => ({
-      cells: [],
-      object: {
-        metadata: { name: `d-${i}`, resourceVersion: '0', creationTimestamp: '2024-01-01T00:00:00Z' },
-      },
-    })),
-  };
-}
+const mockIsTrashUnavailable = deletedDashboardsCache.isTrashUnavailable as jest.MockedFunction<
+  typeof deletedDashboardsCache.isTrashUnavailable
+>;
 
 function buildSearchResult(seed: number) {
   return { totalRows: 0, __seed: seed } as unknown as NonNullable<SearchState['result']>;
@@ -105,12 +97,12 @@ function render() {
   });
 }
 
-const atLimitAlert = { name: /deleted dashboards limit reached/i };
+const atLimitAlert = { name: /showing at most 1000 deleted dashboards/i };
 
 describe('RecentlyDeletedPage banner integration', () => {
   beforeEach(() => {
     store.delete(DISMISS_STORAGE_KEY);
-    mockGetAsTable.mockReset();
+    mockIsTrashTruncated.mockReturnValue(false);
     currentSearchState = defaultSearchState();
     stateSubscribers.clear();
 
@@ -131,33 +123,55 @@ describe('RecentlyDeletedPage banner integration', () => {
     jest.clearAllMocks();
   });
 
-  it('renders the at_limit banner when the cache reports an overage', async () => {
-    mockGetAsTable.mockResolvedValue(buildTable(1000, { continue: 'next' }));
+  it('renders the at_limit banner when the cache reports truncation', async () => {
+    mockIsTrashTruncated.mockReturnValue(true);
 
     render();
 
-    expect(await screen.findByRole('alert', atLimitAlert)).toBeInTheDocument();
+    expect(await screen.findByRole('status', atLimitAlert)).toBeInTheDocument();
   });
 
-  it('updates the banner when searchState.result changes (post-mutation reactivity)', async () => {
-    mockGetAsTable.mockResolvedValue(buildTable(500));
-
+  // The banner reads the cache during render, so this is what keeps it current: a finished
+  // search re-renders the page, and with it the banner.
+  it('updates the banner when a search finishes, e.g. after a delete or restore', async () => {
     render();
+    expect(screen.queryByRole('status', atLimitAlert)).not.toBeInTheDocument();
 
-    await waitFor(() => {
-      expect(mockGetAsTable).toHaveBeenCalledTimes(1);
-    });
-    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
-
-    // Simulate the state manager finishing a new search after a delete/restore
-    // mutation: cache was invalidated, now repopulated with 1000 items, and
-    // `setState({ result, loading: false })` hands callers a fresh reference.
-    mockGetAsTable.mockResolvedValue(buildTable(1000));
+    mockIsTrashTruncated.mockReturnValue(true);
     await act(async () => {
       publishSearchState(defaultSearchState(buildSearchResult(2)));
     });
 
-    expect(await screen.findByRole('alert', atLimitAlert)).toBeInTheDocument();
-    expect(mockGetAsTable).toHaveBeenCalledTimes(2);
+    expect(await screen.findByRole('status', atLimitAlert)).toBeInTheDocument();
+  });
+});
+
+describe('RecentlyDeletedPage when trash is unavailable', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    mockIsTrashUnavailable.mockReturnValue(false);
+  });
+
+  it('replaces the empty state, so the page does not also claim nothing was deleted', async () => {
+    mockIsTrashUnavailable.mockReturnValue(true);
+    publishSearchState(defaultSearchState(buildSearchResult(1)));
+
+    render();
+
+    expect(await screen.findByRole('alert', { name: /recently deleted is unavailable/i })).toBeInTheDocument();
+    expect(screen.queryByText(/haven't deleted any dashboards/i)).not.toBeInTheDocument();
+  });
+
+  it('shows the normal empty state when trash is available', async () => {
+    mockIsTrashUnavailable.mockReturnValue(false);
+    publishSearchState(defaultSearchState(buildSearchResult(2)));
+
+    render();
+
+    expect(await screen.findByText(/haven't deleted any dashboards/i)).toBeInTheDocument();
+    expect(screen.queryByRole('alert', { name: /recently deleted is unavailable/i })).not.toBeInTheDocument();
   });
 });

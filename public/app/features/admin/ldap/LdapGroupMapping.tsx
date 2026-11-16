@@ -21,14 +21,17 @@ export const GroupMappingComponent = ({ groupMappingIndex, onRemove }: GroupMapp
   return (
     <Box borderColor="strong" borderStyle="solid" padding={2} marginBottom={2}>
       <Field
-        htmlFor="group-dn"
+        htmlFor={`group-dn-${groupMappingIndex}`}
         label={t('ldap-drawer.group-mapping.group-dn.label', 'Group DN')}
         description={t(
           'ldap-drawer.group-mapping.group-dn.description',
           'The name of the key used to extract the ID token from the returned OAuth2 token.'
         )}
       >
-        <Input id="group-dn" {...register(`settings.config.servers.0.group_mappings.${groupMappingIndex}.group_dn`)} />
+        <Input
+          id={`group-dn-${groupMappingIndex}`}
+          {...register(`settings.config.servers.0.group_mappings.${groupMappingIndex}.group_dn`)}
+        />
       </Field>
       <Field label={t('ldap-drawer.group-mapping.org-role.label', 'Org role *')}>
         <RadioButtonGroup
@@ -39,7 +42,7 @@ export const GroupMappingComponent = ({ groupMappingIndex, onRemove }: GroupMapp
         />
       </Field>
       <Field
-        htmlFor="org-id"
+        htmlFor={`org-id-${groupMappingIndex}`}
         label={t('ldap-drawer.group-mapping.org-id.label', 'Org ID')}
         description={t(
           'ldap-drawer.group-mapping.org-id.description',
@@ -47,14 +50,14 @@ export const GroupMappingComponent = ({ groupMappingIndex, onRemove }: GroupMapp
         )}
       >
         <Input
-          id="org-id"
+          id={`org-id-${groupMappingIndex}`}
           type="number"
           {...register(`settings.config.servers.0.group_mappings.${groupMappingIndex}.org_id`, { valueAsNumber: true })}
         />
       </Field>
       {contextSrv.isGrafanaAdmin && (
         <Field
-          htmlFor="grafana-admin"
+          htmlFor={`grafana-admin-${groupMappingIndex}`}
           label={t('ldap-drawer.group-mapping.grafana-admin.label', 'Grafana Admin')}
           description={t(
             'ldap-drawer.group-mapping.grafana-admin.description',
@@ -62,7 +65,7 @@ export const GroupMappingComponent = ({ groupMappingIndex, onRemove }: GroupMapp
           )}
         >
           <Switch
-            id="grafana-admin"
+            id={`grafana-admin-${groupMappingIndex}`}
             {...register(`settings.config.servers.0.group_mappings.${groupMappingIndex}.grafana_admin`)}
           />
         </Field>

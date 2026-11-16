@@ -269,8 +269,6 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       createdBy: this.state.createdBy,
       location: this.state.folderUid, // This will scope all results to the prefix
       sort: this.state.sort,
-      explain: this.state.explain,
-      withAllowedActions: this.state.explain, // allowedActions are currently not used for anything on the UI and added only in `explain` mode
       starred: this.state.starred,
       deleted: this.state.deleted,
     };

@@ -1630,6 +1630,7 @@ export const grafanaAlertNotifiers: Record<GrafanaNotifierType, NotifierDTO> = {
         validationRule: '',
         secure: false,
         dependsOn: '',
+        protected: true,
       },
       {
         element: 'select',

@@ -22,6 +22,64 @@ func (_m *MockQueue) EXPECT() *MockQueue_Expecter {
 	return &MockQueue_Expecter{mock: &_m.Mock}
 }
 
+// CleanupQueue provides a mock function with given fields: ctx, namespace, repository
+func (_m *MockQueue) CleanupQueue(ctx context.Context, namespace string, repository string) (int, error) {
+	ret := _m.Called(ctx, namespace, repository)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CleanupQueue")
+	}
+
+	var r0 int
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (int, error)); ok {
+		return rf(ctx, namespace, repository)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) int); ok {
+		r0 = rf(ctx, namespace, repository)
+	} else {
+		r0 = ret.Get(0).(int)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, namespace, repository)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockQueue_CleanupQueue_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CleanupQueue'
+type MockQueue_CleanupQueue_Call struct {
+	*mock.Call
+}
+
+// CleanupQueue is a helper method to define mock.On call
+//   - ctx context.Context
+//   - namespace string
+//   - repository string
+func (_e *MockQueue_Expecter) CleanupQueue(ctx interface{}, namespace interface{}, repository interface{}) *MockQueue_CleanupQueue_Call {
+	return &MockQueue_CleanupQueue_Call{Call: _e.mock.On("CleanupQueue", ctx, namespace, repository)}
+}
+
+func (_c *MockQueue_CleanupQueue_Call) Run(run func(ctx context.Context, namespace string, repository string)) *MockQueue_CleanupQueue_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(string))
+	})
+	return _c
+}
+
+func (_c *MockQueue_CleanupQueue_Call) Return(_a0 int, _a1 error) *MockQueue_CleanupQueue_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockQueue_CleanupQueue_Call) RunAndReturn(run func(context.Context, string, string) (int, error)) *MockQueue_CleanupQueue_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Insert provides a mock function with given fields: ctx, namespace, spec
 func (_m *MockQueue) Insert(ctx context.Context, namespace string, spec v0alpha1.JobSpec) (*v0alpha1.Job, error) {
 	ret := _m.Called(ctx, namespace, spec)

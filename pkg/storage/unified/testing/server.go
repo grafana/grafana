@@ -25,12 +25,14 @@ func RunStorageServerTest(t *testing.T, newBackend NewBackendFunc) {
 
 // func runTestIntegrationBackendHappyPath(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
 func runTestResourcePermissionScenarios(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
-	// Test user
+	// Test user. Carries the namespace its resources live in, because an identity
+	// with none matches nothing and is refused in production.
 	testUser := &identity.StaticRequester{
 		Type:           types.TypeUser,
 		Login:          "testuser",
 		UserID:         123,
 		UserUID:        "u123",
+		Namespace:      nsPrefix + "-ns1",
 		OrgRole:        identity.RoleAdmin,
 		IsGrafanaAdmin: true,
 	}
@@ -175,14 +177,12 @@ func runTestResourcePermissionScenarios(t *testing.T, backend resource.StorageBa
 					Value: []byte(resourceJSON),
 					Key:   key,
 				})
-				require.NoError(t, err)
-
 				if tc.expectSuccess {
-					require.Nil(t, created.Error)
+					require.NoError(t, err)
 					require.True(t, created.ResourceVersion > 0)
 				} else {
-					require.NotNil(t, created.Error)
-					require.Equal(t, tc.expectedError, created.Error.Code)
+					require.Nil(t, created)
+					require.Equal(t, tc.expectedError, requireRPCErrorResult(t, err).Code)
 				}
 
 				require.Len(t, checksPerformed, tc.expectedChecks)
@@ -215,7 +215,6 @@ func runTestResourcePermissionScenarios(t *testing.T, backend resource.StorageBa
 					Key:   key,
 				})
 				require.NoError(t, err)
-				require.Nil(t, created.Error)
 
 				// Now try the update/move with the configured permissions
 				targetResourceJSON := fmt.Sprintf(`{
@@ -242,14 +241,12 @@ func runTestResourcePermissionScenarios(t *testing.T, backend resource.StorageBa
 					Value:           []byte(targetResourceJSON),
 					ResourceVersion: created.ResourceVersion,
 				})
-				require.NoError(t, err)
-
 				if tc.expectSuccess {
-					require.Nil(t, updated.Error)
+					require.NoError(t, err)
 					require.True(t, updated.ResourceVersion > created.ResourceVersion)
 				} else {
-					require.NotNil(t, updated.Error)
-					require.Equal(t, tc.expectedError, updated.Error.Code)
+					require.Nil(t, updated)
+					require.Equal(t, tc.expectedError, requireRPCErrorResult(t, err).Code)
 				}
 
 				require.Len(t, checksPerformed, tc.expectedChecks)
@@ -274,12 +271,18 @@ func runTestResourcePermissionScenarios(t *testing.T, backend resource.StorageBa
 
 // runTestListTrashAccessControl tests the access control logic for ListTrash
 func runTestListTrashAccessControl(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
+	// The namespace the resources below live in. Both users carry it: an identity
+	// with no namespace matches nothing, not even another empty one, so it would be
+	// refused everywhere in production.
+	namespace := nsPrefix + "-trash-test"
+
 	// Create two different users
 	testUserA := &identity.StaticRequester{
 		Type:           types.TypeUser,
 		Login:          "testuserA",
 		UserID:         123,
 		UserUID:        "u123",
+		Namespace:      namespace,
 		OrgRole:        identity.RoleAdmin,
 		IsGrafanaAdmin: true, // admin user
 	}
@@ -289,6 +292,7 @@ func runTestListTrashAccessControl(t *testing.T, backend resource.StorageBackend
 		Login:          "testuserB",
 		UserID:         456,
 		UserUID:        "u456",
+		Namespace:      namespace,
 		OrgRole:        identity.RoleEditor,
 		IsGrafanaAdmin: false, // non-admin user
 	}
@@ -340,7 +344,7 @@ func runTestListTrashAccessControl(t *testing.T, backend resource.StorageBackend
 	key := &resourcepb.ResourceKey{
 		Group:     "playlist.grafana.app",
 		Resource:  "playlists",
-		Namespace: nsPrefix + "-trash-test",
+		Namespace: namespace,
 		Name:      "trash-test-playlist",
 	}
 
@@ -350,7 +354,6 @@ func runTestListTrashAccessControl(t *testing.T, backend resource.StorageBackend
 		Key:   key,
 	})
 	require.NoError(t, err)
-	require.Nil(t, created.Error)
 
 	// Delete the resource with user A
 	deleted, err := server.Delete(ctxA, &resourcepb.DeleteRequest{
@@ -372,7 +375,6 @@ func runTestListTrashAccessControl(t *testing.T, backend resource.StorageBackend
 		},
 	})
 	require.NoError(t, err)
-	require.Nil(t, trashList.Error)
 	require.Len(t, trashList.Items, 1, "Admin user should see the deleted resource in trash")
 
 	// Test 2: Non-admin user (user B) who didn't delete the resource should NOT see it in trash
@@ -388,14 +390,13 @@ func runTestListTrashAccessControl(t *testing.T, backend resource.StorageBackend
 		},
 	})
 	require.NoError(t, err)
-	require.Nil(t, trashListB.Error)
 	require.Len(t, trashListB.Items, 0, "Non-admin user who didn't delete the resource should not see it in trash")
 
 	// Test 3: Create and delete another resource with user B
 	keyB := &resourcepb.ResourceKey{
 		Group:     "playlist.grafana.app",
 		Resource:  "playlists",
-		Namespace: nsPrefix + "-trash-test",
+		Namespace: namespace,
 		Name:      "trash-test-playlist-b",
 	}
 
@@ -430,7 +431,6 @@ func runTestListTrashAccessControl(t *testing.T, backend resource.StorageBackend
 		Key:   keyB,
 	})
 	require.NoError(t, err)
-	require.Nil(t, createdB.Error)
 
 	// Delete the resource with user B
 	deletedB, err := server.Delete(ctxB, &resourcepb.DeleteRequest{
@@ -452,7 +452,6 @@ func runTestListTrashAccessControl(t *testing.T, backend resource.StorageBackend
 		},
 	})
 	require.NoError(t, err)
-	require.Nil(t, trashListB2.Error)
 	require.Len(t, trashListB2.Items, 1, "User should see their own deleted resource in trash")
 
 	// Test 5: Admin user should see both deleted resources
@@ -467,7 +466,6 @@ func runTestListTrashAccessControl(t *testing.T, backend resource.StorageBackend
 		},
 	})
 	require.NoError(t, err)
-	require.Nil(t, trashListA2.Error)
 	require.Len(t, trashListA2.Items, 2, "Admin user should see all deleted resources in trash")
 
 	// Test 6: Verify the trash items have the correct metadata
@@ -498,6 +496,11 @@ type mockAccessClient struct {
 }
 
 func (m *mockAccessClient) Check(ctx context.Context, user types.AuthInfo, req types.CheckRequest, folder string) (types.CheckResponse, error) {
+	// The real client refuses a caller from another namespace before checking
+	// anything, so a fixture whose user has none would pass here and fail there.
+	if !types.NamespaceMatches(user.GetNamespace(), req.Namespace) {
+		return types.CheckResponse{}, types.ErrNamespaceMismatch
+	}
 	if m.checkFn != nil {
 		m.checkFn(req, folder)
 	}

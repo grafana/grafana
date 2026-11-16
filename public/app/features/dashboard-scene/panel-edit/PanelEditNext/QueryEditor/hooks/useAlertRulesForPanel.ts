@@ -5,8 +5,9 @@ import { type VizPanel } from '@grafana/scenes';
 import { usePanelCombinedRules } from 'app/features/alerting/unified/hooks/usePanelCombinedRules';
 import { type AlertingRule, type CombinedRule } from 'app/types/unified-alerting';
 
-import { promAlertStateToAlertState } from '../../../../scene/AlertStatesDataLayer';
-import { getDashboardSceneFor, getPanelIdForVizPanel } from '../../../../utils/utils';
+import { promAlertStateToAlertState } from '../../../../scene/loadPanelAlertStateCandidates';
+import { getDashboardSceneFor } from '../../../../utils/utils';
+import { getPanelIdForVizPanel } from '../../../../utils/utils-panels';
 import { type PanelDataPaneNext } from '../../PanelDataPaneNext';
 import { type AlertingState } from '../QueryEditorContext';
 import { type AlertRule } from '../types';

@@ -1,5 +1,5 @@
 import { t, Trans } from '@grafana/i18n';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
 import { type CommonBannerProps } from 'app/features/provisioning/components/Dashboards/DashboardPreviewBanner';
 import { PreviewBannerViewPR } from 'app/features/provisioning/components/Shared/PreviewBannerViewPR';
@@ -8,9 +8,10 @@ import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequ
 import { PROVISIONING_URL } from '../../constants';
 
 export function ProvisionedFolderPreviewBanner({ queryParams }: CommonBannerProps) {
+  const provisioningEnabled = config.provisioningEnabled;
   const { prURL, newPrURL, repoURL, resourcePushedTo } = usePullRequestParam();
 
-  if ('kiosk' in queryParams) {
+  if (!provisioningEnabled || 'kiosk' in queryParams) {
     return null;
   }
 

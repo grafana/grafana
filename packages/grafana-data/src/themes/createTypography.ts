@@ -1,7 +1,7 @@
 // Code based on Material UI
 // The MIT License (MIT)
 // Copyright (c) 2014 Call-Em-All
-import { z } from 'zod';
+import * as z from 'zod/mini';
 
 import { type ThemeColors } from './createColors';
 
@@ -41,20 +41,47 @@ export interface ThemeTypographyVariant {
   letterSpacing?: string;
 }
 
+// sizes are in px, matching the defaults passed to buildVariant
+const ThemeTypographyVariantInputSchema = z.partial(
+  z.object({
+    fontFamily: z.string(),
+    fontWeight: z.number().check(z.positive()),
+    fontSize: z.number().check(z.positive()),
+    lineHeight: z.number().check(z.positive()),
+    letterSpacing: z.number(),
+  })
+);
+
 export const ThemeTypographyInputSchema = z.object({
-  fontFamily: z.string().optional(),
-  fontFamilyMonospace: z.string().optional(),
-  fontSize: z.number().positive().optional(),
-  fontWeightLight: z.number().positive().optional(),
-  fontWeightRegular: z.number().positive().optional(),
-  fontWeightMedium: z.number().positive().optional(),
-  fontWeightBold: z.number().positive().optional(),
+  fontFamily: z.optional(z.string()),
+  fontFamilyMonospace: z.optional(z.string()),
+  fontSize: z.optional(z.number().check(z.positive())),
+  fontWeightLight: z.optional(z.number().check(z.positive())),
+  fontWeightRegular: z.optional(z.number().check(z.positive())),
+  fontWeightMedium: z.optional(z.number().check(z.positive())),
+  fontWeightBold: z.optional(z.number().check(z.positive())),
   // what's the font-size on the html element.
   // 16px is the default font-size used by browsers.
-  htmlFontSize: z.number().positive().optional(),
+  htmlFontSize: z.optional(z.number().check(z.positive())),
+  xxl: z.optional(ThemeTypographyVariantInputSchema),
+  xl: z.optional(ThemeTypographyVariantInputSchema),
+  lg: z.optional(ThemeTypographyVariantInputSchema),
+  md: z.optional(ThemeTypographyVariantInputSchema),
+  base: z.optional(ThemeTypographyVariantInputSchema),
+  sm: z.optional(ThemeTypographyVariantInputSchema),
+  code: z.optional(ThemeTypographyVariantInputSchema),
+  h1: z.optional(ThemeTypographyVariantInputSchema),
+  h2: z.optional(ThemeTypographyVariantInputSchema),
+  h3: z.optional(ThemeTypographyVariantInputSchema),
+  h4: z.optional(ThemeTypographyVariantInputSchema),
+  h5: z.optional(ThemeTypographyVariantInputSchema),
+  h6: z.optional(ThemeTypographyVariantInputSchema),
+  body: z.optional(ThemeTypographyVariantInputSchema),
+  bodySmall: z.optional(ThemeTypographyVariantInputSchema),
 });
 
 export type ThemeTypographyInput = z.infer<typeof ThemeTypographyInputSchema>;
+type ThemeTypographyVariantInput = z.infer<typeof ThemeTypographyVariantInputSchema>;
 
 const defaultFontFamily = "'Inter', 'Helvetica', 'Arial', sans-serif";
 const defaultFontFamilyMonospace = "'Roboto Mono', monospace";
@@ -87,37 +114,51 @@ export function createTypography(colors: ThemeColors, typographyInput: ThemeTypo
   const coef = fontSize / 14;
   const pxToRem = (size: number) => `${(size / htmlFontSize) * coef}rem`;
   const buildVariant = (
-    fontWeight: number,
-    size: number,
-    lineHeight: number,
-    letterSpacing: number,
-    casing?: object
+    overrides: ThemeTypographyVariantInput | undefined,
+    fontFamilyArg: string,
+    fontWeightArg: number,
+    fontSizeArg: number,
+    lineHeightArg: number,
+    letterSpacingArg: number
   ): ThemeTypographyVariant => {
-    if (lineHeight % 2 !== 0 || size % 2 !== 0) {
+    const fontFamily = overrides?.fontFamily ?? fontFamilyArg;
+    const fontWeight = overrides?.fontWeight ?? fontWeightArg;
+    const fontSize = overrides?.fontSize ?? fontSizeArg;
+    const lineHeight = overrides?.lineHeight ?? lineHeightArg;
+    const letterSpacing = overrides?.letterSpacing ?? letterSpacingArg;
+
+    if (lineHeight % 2 !== 0 || fontSize % 2 !== 0) {
       throw new Error('Font size and line height should be integer multiples of 2 to prevent issues with alignment');
     }
 
     return {
       fontFamily,
       fontWeight,
-      fontSize: pxToRem(size),
-      lineHeight: lineHeight / size,
-      ...(fontFamily === defaultFontFamily ? { letterSpacing: `${round(letterSpacing / size)}em` } : {}),
-      ...casing,
+      fontSize: pxToRem(fontSize),
+      lineHeight: lineHeight / fontSize,
+      letterSpacing: `${round(letterSpacing / fontSize)}em`,
     };
   };
 
   // All our fonts/line heights should be integer multiples of 2 to prevent issues with alignment
-  const variants = {
-    h1: buildVariant(fontWeightRegular, 28, 32, -0.25),
-    h2: buildVariant(fontWeightRegular, 24, 28, 0),
-    h3: buildVariant(fontWeightRegular, 22, 24, 0),
-    h4: buildVariant(fontWeightRegular, 18, 22, 0.25),
-    h5: buildVariant(fontWeightRegular, 16, 22, 0),
-    h6: buildVariant(fontWeightMedium, 14, 22, 0.15),
-    body: buildVariant(fontWeightRegular, fontSize, 22, 0.15),
-    bodySmall: buildVariant(fontWeightRegular, 12, 18, 0.15),
-    code: { ...buildVariant(fontWeightRegular, 14, 16, 0.15), fontFamily: fontFamilyMonospace },
+  const variants: ThemeTypographyVariantTypes = {
+    xxl: buildVariant(typographyInput.xxl, fontFamily, fontWeightRegular, 28, 32, -0.25),
+    xl: buildVariant(typographyInput.xl, fontFamily, fontWeightRegular, 24, 28, 0),
+    lg: buildVariant(typographyInput.lg, fontFamily, fontWeightRegular, 22, 24, 0),
+    md: buildVariant(typographyInput.md, fontFamily, fontWeightRegular, 18, 22, 0.25),
+    base: buildVariant(typographyInput.base, fontFamily, fontWeightRegular, fontSize, 22, 0.15),
+    sm: buildVariant(typographyInput.sm, fontFamily, fontWeightRegular, 12, 18, 0.15),
+    code: buildVariant(typographyInput.code, fontFamilyMonospace, fontWeightRegular, 14, 16, 0.15),
+
+    // Deprecated variants
+    h1: buildVariant(typographyInput.h1, fontFamily, fontWeightRegular, 28, 32, -0.25),
+    h2: buildVariant(typographyInput.h2, fontFamily, fontWeightRegular, 24, 28, 0),
+    h3: buildVariant(typographyInput.h3, fontFamily, fontWeightRegular, 22, 24, 0),
+    h4: buildVariant(typographyInput.h4, fontFamily, fontWeightRegular, 18, 22, 0.25),
+    h5: buildVariant(typographyInput.h5, fontFamily, fontWeightRegular, 16, 22, 0),
+    h6: buildVariant(typographyInput.h6, fontFamily, fontWeightMedium, 14, 22, 0.15),
+    body: buildVariant(typographyInput.body, fontFamily, fontWeightRegular, fontSize, 22, 0.15),
+    bodySmall: buildVariant(typographyInput.bodySmall, fontFamily, fontWeightRegular, 12, 18, 0.15),
   };
 
   const size = {
@@ -148,13 +189,28 @@ function round(value: number) {
 }
 
 export interface ThemeTypographyVariantTypes {
-  h1: ThemeTypographyVariant;
-  h2: ThemeTypographyVariant;
-  h3: ThemeTypographyVariant;
-  h4: ThemeTypographyVariant;
-  h5: ThemeTypographyVariant;
-  h6: ThemeTypographyVariant;
-  body: ThemeTypographyVariant;
-  bodySmall: ThemeTypographyVariant;
+  xxl: ThemeTypographyVariant;
+  xl: ThemeTypographyVariant;
+  lg: ThemeTypographyVariant;
+  md: ThemeTypographyVariant;
+  base: ThemeTypographyVariant;
+  sm: ThemeTypographyVariant;
   code: ThemeTypographyVariant;
+
+  /** @deprecated use `xxl` instead */
+  h1: ThemeTypographyVariant;
+  /** @deprecated use `xl` instead */
+  h2: ThemeTypographyVariant;
+  /** @deprecated use `lg` instead */
+  h3: ThemeTypographyVariant;
+  /** @deprecated use `md` instead */
+  h4: ThemeTypographyVariant;
+  /** @deprecated use `base` instead */
+  h5: ThemeTypographyVariant;
+  /** @deprecated use `sm` instead */
+  h6: ThemeTypographyVariant;
+  /** @deprecated use `base` instead */
+  body: ThemeTypographyVariant;
+  /** @deprecated use `sm` instead */
+  bodySmall: ThemeTypographyVariant;
 }

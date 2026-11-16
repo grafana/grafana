@@ -23,16 +23,12 @@ type ErrorOptions struct {
 	logger   log.Logger
 }
 
-// Write writes an error to the provided [http.ResponseWriter] with the
-// appropriate HTTP status and JSON payload from [errutil.Error].
-// Write also logs the provided error to either the "request-errors"
-// logger, or the logger provided as a functional option using
-// [WithLogger].
-// When passing errors that are not [errors.As] compatible with
-// [errutil.Error], [ErrNonGrafanaError] will be used to create a
-// generic 500 Internal Server Error payload by default, this is
-// overrideable by providing [WithFallback] for a custom fallback
-// error.
+// Write writes the HTTP status and public JSON payload from an [errutil.Error],
+// or the Kubernetes status from an [apierrors.APIStatus]. Both may be wrapped.
+// Errors that match neither type use [ErrNonGrafanaError] to produce a generic
+// 500 response, unless a custom fallback is provided with [WithFallback].
+// Grafana errors, including fallbacks, are logged using the default logger or
+// the logger supplied with [WithLogger].
 func Write(ctx context.Context, err error, w http.ResponseWriter, opts ...func(ErrorOptions) ErrorOptions) int {
 	opt := ErrorOptions{}
 	for _, o := range opts {
@@ -41,10 +37,9 @@ func Write(ctx context.Context, err error, w http.ResponseWriter, opts ...func(E
 
 	var gErr errutil.Error
 	if !errors.As(err, &gErr) {
-		// Write k8s response if this is a k8s error
-		k8s, ok := err.(apierrors.APIStatus)
-		if ok {
-			status := k8s.Status()
+		var apiStatus apierrors.APIStatus
+		if errors.As(err, &apiStatus) {
+			status := apiStatus.Status()
 			w.Header().Add("Content-Type", "application/json")
 			w.WriteHeader(int(status.Code))
 			_ = json.NewEncoder(w).Encode(status)
@@ -77,8 +72,8 @@ func Write(ctx context.Context, err error, w http.ResponseWriter, opts ...func(E
 	return pub.StatusCode
 }
 
-// WithFallback sets the default error returned to the user if the error
-// sent to [Write] is not an [errutil.Error].
+// WithFallback sets the error returned when [Write] cannot find an
+// [errutil.Error] or [apierrors.APIStatus] in the error chain.
 func WithFallback(opt ErrorOptions, fallback errutil.Error) ErrorOptions {
 	opt.fallback = &fallback
 	return opt

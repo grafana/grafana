@@ -5,26 +5,24 @@ import { ToolbarButtonRow, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
+import { useIsMobileEditDeprecated } from '../../utils/mobileEditDeprecation';
 import { dynamicDashNavActions } from '../../utils/registerDynamicDashNavAction';
-import { isLibraryPanel } from '../../utils/utils';
 import { type DashboardScene } from '../DashboardScene';
+import { getDashboardMode } from '../dashboardModes';
 
 import { BackToDashboardButton } from './actions/BackToDashboardButton';
-import { DiscardLibraryPanelButton } from './actions/DiscardLibraryPanelButton';
-import { DiscardPanelButton } from './actions/DiscardPanelButton';
 import { MakeDashboardEditableButton } from './actions/MakeDashboardEditableButton';
 import { PlayListNextButton } from './actions/PlayListNextButton';
 import { PlayListPreviousButton } from './actions/PlayListPreviousButton';
 import { PlayListStopButton } from './actions/PlayListStopButton';
 import { SaveDashboard } from './actions/SaveDashboard';
-import { SaveLibraryPanelButton } from './actions/SaveLibraryPanelButton';
-import { UnlinkLibraryPanelButton } from './actions/UnlinkLibraryPanelButton';
 import { getDynamicActions, renderActionElements } from './utils';
 
 export const Actions = ({ dashboard }: { dashboard: DashboardScene }) => {
-  const { editPanel, editable, editview, isEditing, meta, viewPanel } = dashboard.useState();
+  const { editPanel, editable, editview, isEditing, meta, mode, viewPanel } = dashboard.useState();
   const { isPlaying } = playlistSrv.useState();
   const styles = useStyles2(getStyles);
+  const isMobileEditDeprecated = useIsMobileEditDeprecated();
 
   const isEditable = Boolean(editable);
   const canSave = Boolean(meta.canSave);
@@ -32,12 +30,10 @@ export const Actions = ({ dashboard }: { dashboard: DashboardScene }) => {
   const hasEditView = Boolean(editview);
   const isEditingPanel = Boolean(editPanel);
   const isViewingPanel = Boolean(viewPanel);
-  const isEditingLibraryPanel = isEditingPanel && isLibraryPanel(editPanel!.state.panelRef.resolve());
   const isShowingDashboard = !hasEditView && !isViewingPanel && !isEditingPanel;
   const canSaveInFolder = contextSrv.hasEditPermissionInFolders;
   const canEditDashboard = dashboard.canEditDashboard();
 
-  const showPanelButtons = isEditingPanel && !hasEditView && !isViewingPanel;
   const showPlayButtons = isPlaying && isShowingDashboard && !isEditingDashboard;
 
   return (
@@ -66,46 +62,26 @@ export const Actions = ({ dashboard }: { dashboard: DashboardScene }) => {
             condition: showPlayButtons,
           },
           {
+            // The panel-edit actions (back/discard/library) live in the dashboard controls row, so
+            // this toolbar button only handles the dashboard settings (edit view) and view-panel cases.
             key: 'back-to-dashboard-button',
             component: BackToDashboardButton,
             group: 'panel',
-            condition: hasEditView || ((isViewingPanel || isEditingPanel) && !isEditingLibraryPanel),
-          },
-          {
-            key: 'discard-panel-button',
-            component: DiscardPanelButton,
-            group: 'panel',
-            condition: showPanelButtons && !isEditingLibraryPanel,
-          },
-          {
-            key: 'discard-library-panel-button',
-            component: DiscardLibraryPanelButton,
-            group: 'panel',
-            condition: showPanelButtons && isEditingLibraryPanel,
-          },
-          {
-            key: 'unlink-library-panel-button',
-            component: UnlinkLibraryPanelButton,
-            group: 'panel',
-            condition: showPanelButtons && isEditingLibraryPanel,
-          },
-          {
-            key: 'save-library-panel-button',
-            component: SaveLibraryPanelButton,
-            group: 'panel',
-            condition: showPanelButtons && isEditingLibraryPanel,
+            condition: hasEditView || isViewingPanel,
           },
           {
             key: 'save-dashboard',
             component: SaveDashboard,
             group: 'panel',
-            condition: isEditingDashboard && !isEditingLibraryPanel && (canSave || canSaveInFolder),
+            condition:
+              isEditingDashboard && getDashboardMode({ mode, isEditing }) !== 'view' && (canSave || canSaveInFolder),
           },
           {
             key: 'make-dashboard-editable-button',
             component: MakeDashboardEditableButton,
             group: 'save-edit',
-            condition: !isEditing && canEditDashboard && !isViewingPanel && !isEditable && !isPlaying,
+            condition:
+              !isEditing && canEditDashboard && !isViewingPanel && !isEditable && !isPlaying && !isMobileEditDeprecated,
           },
         ],
         dashboard

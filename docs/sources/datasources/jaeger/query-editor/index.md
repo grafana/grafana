@@ -16,7 +16,7 @@ labels:
 menuTitle: Query editor
 title: Jaeger query editor
 weight: 200
-review_date: 2026-03-03
+review_date: 2026-08-11
 ---
 
 # Jaeger query editor
@@ -149,7 +149,7 @@ The JSON file must follow the Jaeger trace format with a `data` array containing
 }
 ```
 
-## Query data via gRPC endpoint (public preview)
+## Query data via gRPC endpoint (experimental)
 
 Jaeger offers an alternative method for querying data that uses their gRPC service over HTTP. For detailed information about the API and setup requirements, refer to the [Jaeger API documentation](https://www.jaegertracing.io/docs/2.12/architecture/apis/#query-json-over-http).
 
@@ -159,7 +159,7 @@ The following queries are supported through the gRPC endpoint:
 - Operation search
 - Trace ID search
 
-To enable gRPC querying for Jaeger within Grafana, enable the `jaegerEnableGrpcEndpoint` feature flag. Grafana Cloud customers should contact support to request access and provide feedback on this feature.
+To enable gRPC querying for Jaeger within Grafana, enable the `jaegerEnableGrpcEndpoint` feature flag. This feature is experimental. Grafana Cloud customers should contact support to request access and provide feedback on this feature.
 
 ## Use template variables
 

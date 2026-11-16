@@ -1,5 +1,6 @@
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
+import { useDashboardRepositoryView } from '../../hooks/useDashboardRepositoryView';
 import { RepoViewStatus } from '../../hooks/useGetResourceRepositoryView';
 import { useProvisionedDashboardData } from '../../hooks/useProvisionedDashboardData';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
@@ -16,16 +17,9 @@ export interface Props {
  * Drawer component for deleting a git provisioned dashboard.
  */
 export function DeleteProvisionedDashboardDrawer({ dashboard, onDismiss }: Props) {
-  const {
-    defaultValues,
-    loadedFromRef,
-    readOnly,
-    canPushToConfiguredBranch,
-    isNew,
-    repository,
-    repoDataStatus,
-    error,
-  } = useProvisionedDashboardData(dashboard);
+  const view = useDashboardRepositoryView(dashboard);
+  const { defaultValues, readOnly, canPushToConfiguredBranch, isNew, repository, repoDataStatus, error } =
+    useProvisionedDashboardData(dashboard, view);
 
   return (
     <ProvisionedFormGate
@@ -37,7 +31,6 @@ export function DeleteProvisionedDashboardDrawer({ dashboard, onDismiss }: Props
       <DeleteProvisionedDashboardForm
         dashboard={dashboard}
         defaultValues={defaultValues!}
-        loadedFromRef={loadedFromRef}
         readOnly={readOnly}
         repository={repository}
         isNew={isNew}

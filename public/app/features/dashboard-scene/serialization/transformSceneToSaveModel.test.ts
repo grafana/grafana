@@ -41,7 +41,7 @@ import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 import { NEW_LINK } from '../settings/links/utils';
 import { activateFullSceneTree, buildPanelRepeaterScene } from '../utils/test-utils';
-import { getVizPanelKeyForPanelId } from '../utils/utils';
+import { getVizPanelKeyForPanelId } from '../utils/utils-panels';
 
 import { GRAFANA_DATASOURCE_REF } from './const';
 import dashboard_to_load1 from './testfiles/dashboard_to_load1.json';
@@ -127,19 +127,23 @@ const runRequestMock = jest.fn().mockImplementation((ds: DataSourceApi, request:
   );
 });
 
+const mockDataSource = {
+  getRef: () => ({ type: 'mock-ds', uid: 'mock-uid' }),
+  variables: {
+    getType: () => VariableSupportType.Standard,
+    toDataQuery: (q: StandardVariableQuery) => q,
+  },
+};
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => ({
-    get: () => ({
-      getRef: () => ({ type: 'mock-ds', uid: 'mock-uid' }),
-      variables: {
-        getType: () => VariableSupportType.Standard,
-        toDataQuery: (q: StandardVariableQuery) => q,
-      },
-    }),
+    get: () => mockDataSource,
     // mock getInstanceSettings()
     getInstanceSettings: jest.fn(),
   }),
+  // Scenes resolves data sources through the async API, which would otherwise look every ref up in an empty registry.
+  getDataSourceInstance: jest.fn(async () => mockDataSource),
   getRunRequest: () => (ds: DataSourceApi, request: DataQueryRequest) => {
     return runRequestMock(ds, request);
   },

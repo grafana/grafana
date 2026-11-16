@@ -53,8 +53,7 @@ function getScaledDimensionForField(
     };
   }
 
-  const get = (i: number) => {
-    const value = field.values[i];
+  const scaleValue = (value: number) => {
     let percent = 0;
     if (value !== -Infinity) {
       percent = (value - info.min!) / info.delta;
@@ -68,8 +67,9 @@ function getScaledDimensionForField(
   };
 
   return {
-    get,
-    value: () => get(getLastNotNullFieldValue(field)),
+    get: (i: number) => scaleValue(field.values[i]),
+    // value() scales the last non-null field value, not an index into it
+    value: () => scaleValue(getLastNotNullFieldValue(field)),
     field,
   };
 }

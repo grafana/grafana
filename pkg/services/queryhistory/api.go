@@ -212,7 +212,6 @@ type SearchQueriesParams struct {
 	// List of data source UIDs to search for
 	// in:query
 	// required: false
-	// type: array
 	// collectionFormat: multi
 	DatasourceUid []string `json:"datasourceUid"`
 	// Text inside query or comments that is searched for

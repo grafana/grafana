@@ -19,7 +19,7 @@ const (
 	renderCookieName = "renderKey"
 )
 
-var _ authn.ContextAwareClient = new(Render)
+var _ authn.ContextAwareClient = (*Render)(nil)
 
 func ProvideRender(renderService rendering.Service) *Render {
 	return &Render{renderService}
@@ -35,9 +35,13 @@ func (c *Render) Name() string {
 
 func (c *Render) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
 	key := getRenderKey(r)
-	renderUsr, ok := c.renderService.GetRenderUser(ctx, key)
+	renderUsr, ok := c.renderService.GetRenderUser(ctx, key, r.OrgID)
 	if !ok {
-		return nil, errInvalidRenderKey.Errorf("found no render user for key: %s", key)
+		url := ""
+		if r.HTTPRequest != nil && r.HTTPRequest.URL != nil {
+			url = " for url: " + r.HTTPRequest.URL.String()
+		}
+		return nil, errInvalidRenderKey.Errorf("found no render user for key in org %d%v", r.OrgID, url)
 	}
 
 	if renderUsr.UserID <= 0 {
@@ -66,7 +70,7 @@ func (c *Render) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 	}, nil
 }
 
-func (c *Render) IsEnabled() bool {
+func (c *Render) IsEnabled(context.Context) bool {
 	return true
 }
 

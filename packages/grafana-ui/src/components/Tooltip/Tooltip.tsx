@@ -10,7 +10,17 @@ import {
   useInteractions,
   safePolygon,
 } from '@floating-ui/react';
-import { forwardRef, cloneElement, isValidElement, useCallback, useId, useRef, useState, type JSX } from 'react';
+import {
+  forwardRef,
+  cloneElement,
+  isValidElement,
+  useCallback,
+  useId,
+  useRef,
+  useState,
+  type FocusEvent,
+  type JSX,
+} from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -52,6 +62,7 @@ export const Tooltip = forwardRef<HTMLElement, TooltipProps>(
       ...getPositioningMiddleware(floatingUIPlacement),
       arrow({
         element: arrowRef,
+        padding: 12,
       }),
     ];
 
@@ -72,6 +83,13 @@ export const Tooltip = forwardRef<HTMLElement, TooltipProps>(
     const dismiss = useDismiss(context);
 
     const { getReferenceProps, getFloatingProps } = useInteractions([dismiss, hover, focus]);
+
+    // closes the tooltip when focus moves to a floating-ui focus guard. useFocus above ignores it
+    const closeOnFocusGuardBlur = (event: FocusEvent<HTMLElement>) => {
+      if (event.relatedTarget instanceof Element && event.relatedTarget.hasAttribute('data-floating-ui-focus-guard')) {
+        setControlledVisible(false);
+      }
+    };
 
     const contentIsFunction = typeof content === 'function';
 
@@ -101,22 +119,32 @@ export const Tooltip = forwardRef<HTMLElement, TooltipProps>(
           ref: handleRef,
           tabIndex: 0, // tooltip trigger should be keyboard focusable
           'aria-describedby': !childHasMatchingAriaLabel && isOpen ? tooltipId : undefined,
-          ...getReferenceProps(),
+          ...getReferenceProps({ onBlur: closeOnFocusGuardBlur }),
         })}
         {isOpen && (
           <Portal>
-            <div ref={refs.setFloating} style={floatingStyles} {...getFloatingProps()}>
-              <FloatingArrow className={style.arrow} ref={arrowRef} context={context} />
-              <div
-                data-testid={selectors.components.Tooltip.container}
-                id={tooltipId}
-                role="tooltip"
-                className={style.container}
-              >
-                {typeof content === 'string' && content}
-                {isValidElement(content) && cloneElement(content)}
-                {contentIsFunction && content({})}
-              </div>
+            <div
+              ref={refs.setFloating}
+              style={floatingStyles}
+              data-testid={selectors.components.Tooltip.container}
+              id={tooltipId}
+              role="tooltip"
+              className={style.container}
+              {...getFloatingProps()}
+            >
+              <FloatingArrow
+                strokeWidth={0.3}
+                stroke={style.borderColor}
+                width={8}
+                height={4}
+                tipRadius={2}
+                className={style.arrow}
+                ref={arrowRef}
+                context={context}
+              />
+              {typeof content === 'string' && content}
+              {isValidElement(content) && cloneElement(content)}
+              {contentIsFunction && content({})}
             </div>
           </Portal>
         )}
@@ -128,17 +156,18 @@ export const Tooltip = forwardRef<HTMLElement, TooltipProps>(
 Tooltip.displayName = 'Tooltip';
 
 const getStyles = (theme: GrafanaTheme2) => {
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   const info = buildTooltipTheme(
     theme,
     theme.components.tooltip.background,
-    theme.components.tooltip.background,
+    theme.components.tooltip.borderColor,
     theme.components.tooltip.text,
     { topBottom: 0.5, rightLeft: 1 }
   );
   const error = buildTooltipTheme(
     theme,
-    theme.colors.error.main,
-    theme.colors.error.main,
+    theme.colors.error[visualRefreshEnabled ? 'background' : 'main'],
+    theme.colors.error[visualRefreshEnabled ? 'border' : 'main'],
     theme.colors.error.contrastText,
     { topBottom: 0.5, rightLeft: 1 }
   );

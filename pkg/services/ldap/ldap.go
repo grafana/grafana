@@ -108,7 +108,7 @@ func (server *Server) Dial() error {
 
 	timeout := time.Duration(server.Config.Timeout) * time.Second
 
-	for _, host := range strings.Split(server.Config.Host, " ") {
+	for host := range strings.SplitSeq(server.Config.Host, " ") {
 		// Remove any square brackets enclosing IPv6 addresses, a format we support for backwards compatibility
 		host = strings.TrimSuffix(strings.TrimPrefix(host, "["), "]")
 		address := net.JoinHostPort(host, strconv.Itoa(server.Config.Port))
@@ -446,17 +446,17 @@ func (server *Server) getSearchRequest(
 		server.Config.GroupSearchFilterUserAttribute,
 	)
 
-	search := ""
+	var search strings.Builder
 	for _, login := range logins {
 		query := strings.ReplaceAll(
 			server.Config.SearchFilter,
 			"%s", ldap.EscapeFilter(login),
 		)
 
-		search += query
+		search.WriteString(query)
 	}
 
-	filter := fmt.Sprintf("(|%s)", search)
+	filter := fmt.Sprintf("(|%s)", search.String())
 
 	searchRequest := &ldap.SearchRequest{
 		BaseDN:       base,

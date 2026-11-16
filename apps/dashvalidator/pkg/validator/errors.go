@@ -159,8 +159,7 @@ func IsValidationError(err error) bool {
 
 // GetValidationError extracts a ValidationError from an error chain
 func GetValidationError(err error) *ValidationError {
-	var validationErr *ValidationError
-	if errors.As(err, &validationErr) {
+	if validationErr, ok := errors.AsType[*ValidationError](err); ok {
 		return validationErr
 	}
 	return nil

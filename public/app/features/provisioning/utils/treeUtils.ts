@@ -261,8 +261,8 @@ export function filterTree(items: TreeItem[], searchQuery: string): TreeItem[] {
  */
 export type StatusCategory = 'warning' | 'pending' | 'synced';
 
-export function getStatusCategory(node: TreeItem, includeWarnings: boolean): StatusCategory | undefined {
-  if (includeWarnings && node.missingFolderMetadata) {
+export function getStatusCategory(node: TreeItem): StatusCategory | undefined {
+  if (node.missingFolderMetadata) {
     return 'warning';
   }
   return node.status;
@@ -271,20 +271,15 @@ export function getStatusCategory(node: TreeItem, includeWarnings: boolean): Sta
 /**
  * Filter tree to items whose status is in `categories`, keeping ancestor folders so the
  * hierarchy stays intact. An empty `categories` list disables the filter (returns everything).
- * `includeWarnings` controls whether the folder-metadata warning is treated as its own category.
  */
-export function filterByStatusCategories(
-  items: TreeItem[],
-  categories: StatusCategory[],
-  includeWarnings = false
-): TreeItem[] {
+export function filterByStatusCategories(items: TreeItem[], categories: StatusCategory[]): TreeItem[] {
   if (categories.length === 0) {
     return items;
   }
 
   const selected = new Set(categories);
   const matches = (node: TreeItem): boolean => {
-    const category = getStatusCategory(node, includeWarnings);
+    const category = getStatusCategory(node);
     return category !== undefined && selected.has(category);
   };
 

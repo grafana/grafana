@@ -14,6 +14,7 @@ import {
   type ValueLinkConfig,
   type ActionModel,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import {
   CloseButton,
   Portal,
@@ -50,7 +51,7 @@ export const CanvasTooltip = ({ scene }: Props) => {
 
   const ref = createRef<HTMLElement>();
   const { overlayProps } = useOverlay({ onClose: onClose, isDismissable: true }, ref);
-  const { dialogProps } = useDialog({}, ref);
+  const { dialogProps } = useDialog({ 'aria-label': t('canvas.tooltip.dialog-label', 'Element tooltip') }, ref);
 
   const element = scene.tooltipPayload?.element;
   if (!element) {
@@ -104,7 +105,6 @@ export const CanvasTooltip = ({ scene }: Props) => {
   }
 
   const actions: Array<ActionModel<Field>> = [];
-  const actionLookup = new Set<string>();
 
   const elementHasActions = (element.options.actions?.length ?? 0) > 0;
   const frames = scene.data?.series;
@@ -134,13 +134,7 @@ export const CanvasTooltip = ({ scene }: Props) => {
       'canvas'
     );
 
-    actionsModel.forEach((action) => {
-      const key = `${action.title}/${Math.random()}`;
-      if (!actionLookup.has(key)) {
-        actions.push(action);
-        actionLookup.add(key);
-      }
-    });
+    actions.push(...actionsModel);
   }
 
   return (
@@ -185,6 +179,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     fontSize: theme.typography.bodySmall.fontSize,
   }),
   pinned: css({
-    boxShadow: theme.shadows.z3,
+    boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
   }),
 });

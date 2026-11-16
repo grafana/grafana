@@ -4,13 +4,15 @@ import { type CSSProperties, type ReactNode, useEffect, useRef, useState } from 
 import * as React from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { TimeCompareColorMode } from '@grafana/schema';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { InlineToast } from '../InlineToast/InlineToast';
 import { Tooltip } from '../Tooltip/Tooltip';
 
 import { ColorIndicatorPosition, VizTooltipColorIndicator } from './VizTooltipColorIndicator';
-import { VizTooltipColorPlacement, type VizTooltipItem } from './types';
+import { useVizTooltipSize } from './VizTooltipContext';
+import { VizTooltipColorPlacement, type VizTooltipDelta, type VizTooltipItem, type VizTooltipSize } from './types';
 
 interface VizTooltipRowProps extends Omit<VizTooltipItem, 'value'> {
   /** The formatted value to display. Widened from `VizTooltipItem.value` to also accept numbers, null, and ReactNode. */
@@ -57,21 +59,43 @@ export const VizTooltipRow = ({
   lineStyle,
   showValueScroll,
   isHiddenFromViz,
+  delta,
 }: VizTooltipRowProps) => {
-  const styles = useStyles2(getStyles, justify, marginRight);
+  const size = useVizTooltipSize();
+  const styles = useStyles2(getStyles, justify, marginRight, size);
 
-  const innerValueScrollStyle: CSSProperties = showValueScroll
-    ? {
-        maxHeight: 55,
-        whiteSpace: 'wrap',
-        wordBreak: 'break-word',
-        overflowY: 'auto',
-      }
-    : {
-        whiteSpace: 'pre-line',
-        wordBreak: 'break-word',
-        lineHeight: 1.2,
-      };
+  const deltaDisplay = delta == null ? null : `(${delta.numeric > 0 ? '+' : ''}${delta.text})`;
+
+  // Same as value takes the series color, which is only known here as a prop, so it cannot come
+  // from a theme-derived class like the other modes.
+  const deltaTakesValueColor = delta?.colorMode === TimeCompareColorMode.SameAsValue;
+
+  const deltaNode =
+    delta == null ? null : (
+      <span
+        className={deltaTakesValueColor ? undefined : getDeltaClass(delta, styles)}
+        style={deltaTakesValueColor ? { color } : undefined}
+      >{` ${deltaDisplay}`}</span>
+    );
+
+  // the delta is a separate node for coloring, but copying the value should keep both values
+  const copyText = deltaDisplay == null ? value : `${value} ${deltaDisplay}`;
+
+  // A narrow tooltip wraps the value to its full height rather than boxing it into a fixed-height
+  // scroll area, so the fixed-height scroll is only used in the default (`auto`) layout.
+  const innerValueScrollStyle: CSSProperties =
+    showValueScroll && size !== 'narrow'
+      ? {
+          maxHeight: 55,
+          whiteSpace: 'wrap',
+          wordBreak: 'break-word',
+          overflowY: 'auto',
+        }
+      : {
+          whiteSpace: 'pre-line',
+          wordBreak: 'break-word',
+          lineHeight: 1.2,
+        };
 
   const [showLabelTooltip, setShowLabelTooltip] = useState(false);
 
@@ -162,7 +186,7 @@ export const VizTooltipRow = ({
           ) : (
             <>
               <Tooltip content={label} interactive={false} show={showLabelTooltip}>
-                <>
+                <div className={styles.labelTooltipTarget}>
                   {showCopySuccess && copiedText?.label && (
                     <InlineToast placement="top" referenceElement={labelRef.current}>
                       {SUCCESSFULLY_COPIED_TEXT}
@@ -178,7 +202,7 @@ export const VizTooltipRow = ({
                   >
                     {label}
                   </div>
-                </>
+                </div>
               </Tooltip>
             </>
           )}
@@ -198,6 +222,7 @@ export const VizTooltipRow = ({
         {!isPinned ? (
           <div className={styles.value} style={innerValueScrollStyle}>
             {value}
+            {deltaNode}
           </div>
         ) : (
           <>
@@ -210,10 +235,11 @@ export const VizTooltipRow = ({
             <div
               className={clsx(styles.value, CAN_COPY ? styles.copy : '')}
               style={innerValueScrollStyle}
-              onClick={() => copyToClipboard(value ? value.toString() : '', LabelValueTypes.value)}
+              onClick={() => copyToClipboard(copyText ? copyText.toString() : '', LabelValueTypes.value)}
               ref={valueRef}
             >
               {value}
+              {deltaNode}
             </div>
           </>
         )}
@@ -231,19 +257,37 @@ export const VizTooltipRow = ({
   );
 };
 
-const getStyles = (theme: GrafanaTheme2, justify = 'start', marginRight?: string) => ({
+/**
+ * Standard treats an increase as favorable, inverted flips that. A delta of zero is left in the
+ * default text color since it reads as neither an increase nor a decrease. Same as value never
+ * reaches here — its color comes from the row's series color instead of the theme.
+ */
+const getDeltaClass = (delta: VizTooltipDelta, styles: ReturnType<typeof getStyles>) => {
+  if (delta.numeric === 0 || Number.isNaN(delta.numeric)) {
+    return undefined;
+  }
+
+  const isIncrease = delta.numeric > 0;
+  const isFavorable = delta.colorMode === TimeCompareColorMode.Inverted ? !isIncrease : isIncrease;
+
+  return isFavorable ? styles.deltaFavorable : styles.deltaUnfavorable;
+};
+
+const getStyles = (theme: GrafanaTheme2, justify = 'start', marginRight?: string, size: VizTooltipSize = 'auto') => ({
   contentWrapper: css({
     display: 'flex',
     maxWidth: '100%',
-    alignItems: 'start',
+    alignItems: size === 'narrow' ? 'center' : 'start',
     justifyContent: justify,
     columnGap: theme.spacing(0.75),
   }),
   label: css({ display: 'inline' }),
   value: css({
     fontWeight: 500,
+    fontVariantNumeric: theme.flags.tabularNums ? 'tabular-nums' : undefined,
     textOverflow: 'ellipsis',
     overflow: 'hidden',
+    ...(size === 'narrow' && { textAlign: 'right' }),
   }),
   colorWrapper: css({
     alignSelf: 'center',
@@ -251,21 +295,40 @@ const getStyles = (theme: GrafanaTheme2, justify = 'start', marginRight?: string
   }),
   labelWrapper: css({
     flexGrow: 1,
+    flexShrink: 1,
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     color: theme.colors.text.secondary,
     fontWeight: 400,
+    ...(size === 'narrow' && {
+      maxWidth: '75%',
+      overflow: 'visible',
+      overflowWrap: 'break-word',
+    }),
+  }),
+  // block wrapper between labelWrapper and the inline label, so it must carry the ellipsis itself
+  labelTooltipTarget: css({
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
   }),
   valueWrapper: css({
     display: 'flex',
     alignItems: 'center',
-    flexShrink: 0,
+    flexShrink: size === 'narrow' ? 1 : 0,
+    minWidth: size === 'narrow' ? '25%' : undefined,
+    justifyContent: size === 'narrow' ? 'flex-end' : undefined,
     alignSelf: 'center',
     marginRight,
   }),
   activeSeries: css({
     fontWeight: theme.typography.fontWeightBold,
     color: theme.colors.text.maxContrast,
+  }),
+  deltaFavorable: css({
+    color: theme.colors.success.text,
+  }),
+  deltaUnfavorable: css({
+    color: theme.colors.error.text,
   }),
   copy: css({
     cursor: 'pointer',

@@ -93,8 +93,8 @@ function getSelectors() {
     teamsRow: () => within(teamsTable()).getByRole('row', { name: /team one team.one@test\.com 2000/i }),
     orgsTable,
     orgsEditorRow: () => within(orgsTable()).getByRole('row', { name: /main editor current/i }),
-    orgsViewerRow: () => within(orgsTable()).getByRole('row', { name: /second viewer select organisation/i }),
-    orgsAdminRow: () => within(orgsTable()).getByRole('row', { name: /third admin select organisation/i }),
+    orgsViewerRow: () => within(orgsTable()).getByRole('row', { name: /second viewer select organization/i }),
+    orgsAdminRow: () => within(orgsTable()).getByRole('row', { name: /third admin select organization/i }),
     sessionsTable,
     sessionsRow: () =>
       within(sessionsTable()).getByRole('row', {
@@ -209,18 +209,19 @@ describe('UserProfileEditPage', () => {
       expect(saveProfile()).toBeInTheDocument();
     });
 
-    it('should show shared preferences', async () => {
+    it('should show Preferences as a level-two heading in its group', async () => {
       await getTestContext();
 
-      // SharedPreferences itself is tested, so here just make sure it's being rendered
-      expect(screen.getByLabelText('Home Dashboard')).toBeInTheDocument();
+      const preferences = await screen.findByRole('group', { name: 'Preferences' });
+      expect(within(preferences).getByRole('heading', { name: 'Preferences', level: 2 })).toBeInTheDocument();
     });
 
     describe('and teams are loading', () => {
-      it('should show teams loading placeholder', async () => {
+      it('should show teams loading placeholder without a Teams heading', async () => {
         await getTestContext({ teamsAreLoading: true });
 
         expect(screen.getByText(/loading teams\.\.\./i)).toBeInTheDocument();
+        expect(screen.queryByRole('heading', { name: 'Teams', level: 2 })).not.toBeInTheDocument();
       });
     });
 
@@ -229,9 +230,18 @@ describe('UserProfileEditPage', () => {
         await getTestContext();
 
         const { teamsTable, teamsRow } = getSelectors();
-        expect(screen.getByRole('heading', { name: /teams/i })).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: /teams/i, level: 2 })).toBeInTheDocument();
         expect(teamsTable()).toBeInTheDocument();
         expect(teamsRow()).toBeInTheDocument();
+      });
+    });
+
+    describe('and no teams are loaded', () => {
+      it('should not show a Teams heading', async () => {
+        await getTestContext({ teams: [] });
+
+        expect(screen.getByRole('heading', { name: 'Preferences', level: 2 })).toBeInTheDocument();
+        expect(screen.queryByRole('heading', { name: 'Teams', level: 2 })).not.toBeInTheDocument();
       });
     });
 
@@ -298,7 +308,7 @@ describe('UserProfileEditPage', () => {
         const { props } = await getTestContext();
         const orgsAdminSelectButton = () =>
           within(getSelectors().orgsAdminRow()).getByRole('button', {
-            name: /select organisation/i,
+            name: /select organization/i,
           });
 
         await userEvent.click(orgsAdminSelectButton());

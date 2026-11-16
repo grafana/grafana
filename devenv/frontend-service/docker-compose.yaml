@@ -76,7 +76,7 @@ services:
       GF_LOG_FRONTEND_ENABLED: true
 
   goff:
-    image: gofeatureflag/go-feature-flag:latest
+    image: gofeatureflag/go-feature-flag:latest@sha256:75df054abc2f03d51ad542a1eebe557a350c4fa45a09d79314647fcc9f690529
     command: /go-feature-flag --config /config/config.yaml
     # ports are set dynamically in the Tiltfile (derived from PORT)
     configs:
@@ -97,7 +97,7 @@ services:
       - 'alloy.logs=true'
 
   alloy:
-    image: grafana/alloy:v1.11.3@sha256:8c7256f412feb9f5f48f9f6f9394dc97ca887f63dea9304f347970ecc1787669
+    image: grafana/alloy:v1.22.0@sha256:9acc2529bc1edb7f5b2bd801dd8334ebc80c158e3a9e5526ecd7c9a273d43189
     volumes:
       - ./configs/alloy:/alloy-config
       - /var/run/docker.sock:/var/run/docker.sock # To scrape Docker container logs
@@ -114,7 +114,7 @@ services:
       - 'alloy.logs=true'
 
   prometheus:
-    image: prom/prometheus:v3.7.3@sha256:49214755b6153f90a597adcbff0252cc61069f8ab69ce8411285cd4a560e8038
+    image: prom/prometheus:v3.16.0@sha256:e04987641b57704f408e31f6373ba4138ecf27cb4a165d24aabb6c38fddd0f06
     volumes:
       - prometheus-data:/prometheus
     command:
@@ -126,7 +126,7 @@ services:
       - 'alloy.logs=true'
 
   loki:
-    image: grafana/loki:3.5.7@sha256:0eaee7bf39cc83aaef46914fb58f287d4f4c4be6ec96b86c2ed55719a75e49c8
+    image: grafana/loki:3.7.9@sha256:0db216b630ae1f348a1584c67f3cead8b4c1fc839169a39501db664744158e28
     volumes:
       - loki-data:/loki
     command: -config.file=/etc/loki/local-config.yaml
@@ -134,7 +134,7 @@ services:
       - 'alloy.logs=true'
 
   tempo-init:
-    image: busybox:1.37.0@sha256:e3652a00a2fabd16ce889f0aa32c38eec347b997e73bd09e69c962ec7f8732ee
+    image: busybox:1.38.0@sha256:fd7dc98638c8e305f4dc34e979f1c0fdfdcaeb0fbf8fcff77ae834b6da3d7e6e
     user: root
     entrypoint:
       - 'chown'
@@ -157,7 +157,7 @@ services:
         condition: service_completed_successfully
 
   maildev:
-    image: maildev/maildev:2.2.1@sha256:180ef51f65eefebb0e7122d8308813c1fd7bff164bc440ce5a3c2feee167a810
+    image: maildev/maildev:3.0.0@sha256:6e09695961f4aef9016a390ad391314a078220216601b15a35d389a7df2a3855
     ports:
       - '1080:1080'
 

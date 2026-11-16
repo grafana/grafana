@@ -119,4 +119,40 @@ describe('AccordionCategorizedKeyValues', () => {
     expect(screen.getByTestId('attribute-category-other')).toBeInTheDocument();
     expect(screen.getByText('Other')).toBeInTheDocument();
   });
+
+  it('shows an empty-state message and keeps the section visible when there are no attributes', () => {
+    const onToggle = jest.fn();
+
+    render(
+      <AccordionCategorizedKeyValues
+        data={[]}
+        sectionType="resource"
+        isOpen={false}
+        label="Resource attributes"
+        onToggle={onToggle}
+      />
+    );
+
+    expect(screen.getByText('Resource attributes')).toBeInTheDocument();
+    expect(screen.getByText('No attributes')).toBeInTheDocument();
+    expect(screen.queryByRole('switch', { name: /Resource attributes/ })).not.toBeInTheDocument();
+  });
+
+  it('does not call onToggle when the empty header is clicked', async () => {
+    const onToggle = jest.fn();
+
+    render(
+      <AccordionCategorizedKeyValues
+        data={[]}
+        sectionType="span"
+        isOpen={false}
+        label="Span attributes"
+        onToggle={onToggle}
+      />
+    );
+
+    await userEvent.click(screen.getByTestId('AccordionCategorizedKeyValues--header'));
+
+    expect(onToggle).not.toHaveBeenCalled();
+  });
 });
