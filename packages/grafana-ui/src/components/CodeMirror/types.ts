@@ -211,3 +211,9 @@ export interface CodeMirrorEditorProps {
    */
   loadingFallback?: ReactNode;
 }
+
+/**
+ * Props for `CustomCodeEditor`, exported only from `@grafana/ui/internal`. Unlike
+ * the public editor's props, these will keep raw CodeMirror extensions.
+ */
+export type CustomCodeEditorProps = CodeMirrorEditorProps;

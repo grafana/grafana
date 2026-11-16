@@ -130,5 +130,5 @@ export { BrandingContext, useBranding, type BrandingContextValue } from '../comp
 export { DRAWER_INSIDE_ATTRIBUTE } from '../components/Drawer/Drawer';
 
 // Core-only: the CodeMirror editor for core features that pass raw CodeMirror extensions.
-export { CodeMirrorEditor as CustomCodeEditor } from '../components/CodeMirror/CodeEditorLazy';
-export type { CodeMirrorEditorProps as CustomCodeEditorProps } from '../components/CodeMirror/types';
+export { CustomCodeEditor } from '../components/CodeMirror/CodeEditorLazy';
+export type { CustomCodeEditorProps } from '../components/CodeMirror/types';

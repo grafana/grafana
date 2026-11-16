@@ -10,7 +10,7 @@ import { faro } from '@grafana/faro-web-sdk';
 
 import { mockThemeContext } from '../../themes/ThemeContext';
 
-import { CodeEditor } from './CodeEditor';
+import { CodeEditor, CustomCodeEditor } from './CodeEditor';
 import { loadLanguageExtension } from './languageLoader';
 import { createCodeEditorTheme } from './theme';
 
@@ -308,5 +308,15 @@ describe('CodeMirror CodeEditor', () => {
         }),
       })
     );
+  });
+});
+
+describe('CodeMirror CustomCodeEditor', () => {
+  it('passes raw extensions through to CodeMirror', () => {
+    const extension = EditorState.languageData.of(() => []);
+
+    render(<CustomCodeEditor value="" onChange={jest.fn()} extensions={[extension]} />);
+
+    expect(getExtensions()).toContain(extension);
   });
 });
