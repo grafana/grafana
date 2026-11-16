@@ -77,7 +77,7 @@ jobs:
           fi
       - name: Upload artifacts
         if: steps.coalesce.outputs.has-artifacts == 'true'
-        uses: grafana/shared-workflows/actions/push-to-gcs@main
+        uses: grafana/shared-workflows/actions/push-to-gcs@502d69db0bef73585dd1baa7885be827229ef084
         with:
           bucket: ${{ inputs.bucket }}
           environment: ${{ inputs.environment }}
@@ -86,3 +86,4 @@ jobs:
           bucket_path: ${{ inputs.bucket-path }}
           service_account: ${{ inputs.service-account }}
           gzip: false
+          use_gcloud: true
