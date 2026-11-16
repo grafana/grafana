@@ -3,7 +3,6 @@ import { cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 
-import { createTheme, type GrafanaTheme2, ThemeContext } from '@grafana/data';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { BarGaugeDisplayMode, BarGaugeValueMode, TableCellDisplayMode, type TableCellOptions } from '@grafana/schema';
 import { mockComboboxRect } from '@grafana/test-utils';
@@ -15,7 +14,7 @@ mockComboboxRect();
 
 // Render the editor the way the panel framework does — controlled, feeding each
 // onChange value back in as the next value — so type switches actually take effect.
-function setup(initial: TableCellOptions = { type: TableCellDisplayMode.Auto }, theme: GrafanaTheme2 = createTheme()) {
+function setup(initial: TableCellOptions = { type: TableCellDisplayMode.Auto }) {
   const onChange = jest.fn();
   function Wrapper() {
     const [value, setValue] = useState<TableCellOptions>(initial);
@@ -30,11 +29,9 @@ function setup(initial: TableCellOptions = { type: TableCellDisplayMode.Auto }, 
     );
   }
   render(
-    <ThemeContext.Provider value={theme}>
-      <OpenFeatureProvider client={getTestFeatureFlagClient()}>
-        <Wrapper />
-      </OpenFeatureProvider>
-    </ThemeContext.Provider>
+    <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+      <Wrapper />
+    </OpenFeatureProvider>
   );
   return { onChange };
 }
@@ -93,13 +90,6 @@ describe('TableCellOptionEditor', () => {
   ])('renders the sub-editor for %o', (cellOptions, controlLabel) => {
     setup(cellOptions);
     expect(screen.getByText(controlLabel)).toBeInTheDocument();
-  });
-
-  it.each([true, false])('shows the pill color mode only with the visual refresh=%s', (visualDesignRefresh) => {
-    const theme = createTheme();
-    theme.flags.visualDesignRefresh = visualDesignRefresh;
-    setup({ type: TableCellDisplayMode.Pill }, theme);
-    expect(screen.queryByText('Pill color mode') !== null).toBe(visualDesignRefresh);
   });
 
   it('renders no sub-editor for cell types without extra options', () => {

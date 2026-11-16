@@ -317,7 +317,6 @@ export interface PillCellProps {
   field: Field;
   rowIdx: number;
   getTextColorForBackground: (color: string) => string;
-  cellOptions?: TableCellOptions;
 }
 
 export interface TableWarning {

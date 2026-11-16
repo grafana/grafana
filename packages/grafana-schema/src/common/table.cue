@@ -11,10 +11,6 @@ TableCellDisplayMode: "auto" | "color-text" | "color-background" | "color-backgr
 // or a gradient.
 TableCellBackgroundDisplayMode: "basic" | "gradient" @cuetsy(kind="enum",memberNames="Basic|Gradient")
 
-// How a "Pill" cell turns the field's color into the pill colors. Auto adjusts
-// the color for readability, Background uses it as the pill background as-is.
-TablePillColorMode: "auto" | "background" @cuetsy(kind="enum",memberNames="Auto|Background")
-
 // Sort by field state
 TableSortByFieldState: {
 	// Sets the display name of the field to sort by
@@ -80,8 +76,7 @@ TableColoredBackgroundCellOptions: {
 } @cuetsy(kind="interface")
 
 TablePillCellOptions: {
-	type:       TableCellDisplayMode & "pill"
-	colorMode?: TablePillColorMode
+	type: TableCellDisplayMode & "pill"
 } @cuetsy(kind="interface")
 
 TableMarkdownCellOptions: {

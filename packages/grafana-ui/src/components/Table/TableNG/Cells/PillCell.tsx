@@ -16,7 +16,7 @@ import {
   isNumeric,
   formattedValueToString,
 } from '@grafana/data';
-import { FieldColorModeId, TableCellDisplayMode, TablePillColorMode } from '@grafana/schema';
+import { FieldColorModeId } from '@grafana/schema';
 
 import { getTagColor, getTagColorsFromName } from '../../../../utils/tags';
 import { Tag } from '../../../Tags/Tag';
@@ -24,11 +24,10 @@ import { getActiveCellSelector, isTableCellStylesKeyEqual } from '../styles';
 import { type PillCellProps, type TableCellStyles } from '../types';
 import { inferPills } from '../utils';
 
-export function PillCell({ rowIdx, field, theme, getTextColorForBackground, cellOptions }: PillCellProps) {
+export function PillCell({ rowIdx, field, theme, getTextColorForBackground }: PillCellProps) {
   const value = field.values[rowIdx];
-  const colorMode = cellOptions?.type === TableCellDisplayMode.Pill ? cellOptions.colorMode : undefined;
   const resolveColor = useMemo(
-    () => createPillColorResolver(field, theme, getTextColorForBackground, colorMode),
+    () => createPillColorResolver(field, theme, getTextColorForBackground),
     // Field overrides can mutate config without changing field identity.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
@@ -44,7 +43,6 @@ export function PillCell({ rowIdx, field, theme, getTextColorForBackground, cell
       field.state?.range?.max,
       theme,
       getTextColorForBackground,
-      colorMode,
     ]
   );
   const pills: Pill[] = useMemo(() => {
@@ -103,12 +101,11 @@ const TRANSPARENT = 'rgba(0,0,0,0)';
 function createPillColorResolver(
   field: Field,
   theme: GrafanaTheme2,
-  getTextColorForBackground: (color: string) => string,
-  colorMode?: TablePillColorMode
+  getTextColorForBackground: (color: string) => string
 ): (rawValue: unknown, display: DisplayValue, value: string) => { background: string; text: string } {
   const cfg = field.config;
   const onBackground = (background: string) =>
-    theme.flags.visualDesignRefresh && colorMode !== TablePillColorMode.Background
+    theme.flags.visualDesignRefresh
       ? getTagColor(background, theme)
       : { background, text: getTextColorForBackground(background) };
   const mode = cfg.color && getFieldColorModeForField(field);
