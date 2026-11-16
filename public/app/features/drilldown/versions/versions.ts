@@ -75,7 +75,7 @@ const ReadinessDiagnoseVersion = lazy(
 );
 
 // Versions kept in the code but not shown as tabs.
-const HIDDEN_VERSION_IDS = ['nadine', 'readiness', 'wide-narrow'];
+const HIDDEN_VERSION_IDS = ['nadine', 'otel-first', 'readiness', 'wide-narrow'];
 
 // Each version is one tab on /drilldown. Add a version by adding an entry here; the first entry is the default.
 export function getDrilldownVersions(): DrilldownVersion[] {

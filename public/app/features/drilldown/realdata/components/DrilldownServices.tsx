@@ -79,6 +79,8 @@ export function DrilldownServices({ onPick }: Props) {
 function ServiceCard({ service, onClick }: { service: ServiceSummary; onClick: () => void }) {
   const styles = useStyles2(getStyles);
   const degraded = service.health === 'degraded';
+  // A service the knowledge graph lists can have no span metrics, and then its numbers are not measured.
+  const measured = service.p95 !== 'n/a' || service.errorRate !== 'n/a';
 
   return (
     <button type="button" className={styles.card} onClick={onClick}>
@@ -93,14 +95,34 @@ function ServiceCard({ service, onClick }: { service: ServiceSummary; onClick: (
           }
         />
       </span>
+      {service.entity && (
+        <Text variant="bodySmall" color="secondary">
+          {[service.entity.env, service.entity.namespace, service.entity.serviceType].filter(Boolean).join(' · ')}
+        </Text>
+      )}
       <span className={styles.stats}>
-        <Stat label={t('drilldown-real.services.p95', 'p95')} value={service.p95} alert={degraded} />
-        <Stat label={t('drilldown-real.services.errors', 'Errors')} value={service.errorRate} alert={degraded} />
+        {service.entity && (
+          <Stat
+            label={t('drilldown-real.services.insights', 'Insights')}
+            value={String(service.entity.insights)}
+            alert={degraded}
+          />
+        )}
+        {measured && (
+          <>
+            <Stat label={t('drilldown-real.services.p95', 'p95')} value={service.p95} alert={degraded} />
+            <Stat label={t('drilldown-real.services.errors', 'Errors')} value={service.errorRate} alert={degraded} />
+          </>
+        )}
       </span>
-      <TrendSparkline values={service.trend} color={degraded ? 'red' : 'green'} height={28} max={TREND_MAX} />
-      <Text variant="bodySmall" color="secondary">
-        {t('drilldown-real.services.last-deploy', 'Version {{deploy}}', { deploy: service.lastDeploy })}
-      </Text>
+      {measured && (
+        <>
+          <TrendSparkline values={service.trend} color={degraded ? 'red' : 'green'} height={28} max={TREND_MAX} />
+          <Text variant="bodySmall" color="secondary">
+            {t('drilldown-real.services.last-deploy', 'Version {{deploy}}', { deploy: service.lastDeploy })}
+          </Text>
+        </>
+      )}
     </button>
   );
 }

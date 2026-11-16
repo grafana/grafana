@@ -5,6 +5,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Badge, Button, Combobox, Stack, Text, useStyles2 } from '@grafana/ui';
 
+import { assistantContext } from '../assistantContext';
 import { DETECTED_SCOPE, type Scope, SCOPE_VALUES } from '../liveScenario';
 
 import { AssistantIcon } from './AssistantIcon';
@@ -35,6 +36,7 @@ export function DrilldownScopeSummary({ scope, detected, onChangeScope, onReset 
         service: scope.value,
         cause: DETECTED_SCOPE.likelyCause,
       }),
+      context: assistantContext(scope),
       autoSend: true,
     });
 

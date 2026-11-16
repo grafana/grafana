@@ -1,13 +1,12 @@
 import { getBackendSrv } from '@grafana/runtime';
 
-// The three OTel lab data sources, created in this Grafana with these UIDs.
-export const METRICS_UID = 'otel-lab-metrics';
-export const LOGS_UID = 'otel-lab-logs';
-export const TRACES_UID = 'otel-lab-traces';
+import { type Signal, requireDataSource } from '../dataSources';
 
 type Params = Record<string, string | number>;
 
-function get<T>(uid: string, path: string, params?: Params): Promise<T> {
+// Each call resolves the data source the user chose for its signal, so a change in the URL applies to the next query.
+async function get<T>(signal: Signal, path: string, params?: Params): Promise<T> {
+  const uid = await requireDataSource(signal);
   return getBackendSrv().get<T>(`/api/datasources/proxy/uid/${uid}/${path}`, params, undefined, {
     showErrorAlert: false,
   });
@@ -41,12 +40,12 @@ export interface RangeSeries {
 const toNumber = (raw: string) => Number(raw);
 
 export async function promInstant(query: string, time: number): Promise<InstantSample[]> {
-  const response = await get<PromResponse<PromInstantRow>>(METRICS_UID, 'api/v1/query', { query, time });
+  const response = await get<PromResponse<PromInstantRow>>('metrics', 'api/v1/query', { query, time });
   return response.data.result.map((row) => ({ metric: row.metric, value: toNumber(row.value[1]) }));
 }
 
 export async function promRange(query: string, start: number, end: number, step: number): Promise<RangeSeries[]> {
-  const response = await get<PromResponse<PromRangeRow>>(METRICS_UID, 'api/v1/query_range', {
+  const response = await get<PromResponse<PromRangeRow>>('metrics', 'api/v1/query_range', {
     query,
     start,
     end,
@@ -75,7 +74,7 @@ export interface LogEntry {
 }
 
 export async function lokiLogs(query: string, startSec: number, endSec: number, limit: number): Promise<LogEntry[]> {
-  const response = await get<LokiResponse<LokiStream>>(LOGS_UID, 'loki/api/v1/query_range', {
+  const response = await get<LokiResponse<LokiStream>>('logs', 'loki/api/v1/query_range', {
     query,
     start: startSec * 1e9,
     end: endSec * 1e9,
@@ -88,17 +87,17 @@ export async function lokiLogs(query: string, startSec: number, endSec: number, 
 }
 
 export async function lokiCount(query: string, time: number): Promise<number> {
-  const response = await get<LokiResponse<PromInstantRow>>(LOGS_UID, 'loki/api/v1/query', { query, time });
+  const response = await get<LokiResponse<PromInstantRow>>('logs', 'loki/api/v1/query', { query, time });
   return response.data.result.reduce((sum, row) => sum + toNumber(row.value[1]), 0);
 }
 
 export async function lokiInstant(query: string, time: number): Promise<InstantSample[]> {
-  const response = await get<LokiResponse<PromInstantRow>>(LOGS_UID, 'loki/api/v1/query', { query, time });
+  const response = await get<LokiResponse<PromInstantRow>>('logs', 'loki/api/v1/query', { query, time });
   return response.data.result.map((row) => ({ metric: row.metric, value: toNumber(row.value[1]) }));
 }
 
 export async function lokiCountRange(query: string, start: number, end: number, step: number): Promise<number[]> {
-  const response = await get<LokiResponse<PromRangeRow>>(LOGS_UID, 'loki/api/v1/query_range', {
+  const response = await get<LokiResponse<PromRangeRow>>('logs', 'loki/api/v1/query_range', {
     query,
     start: start * 1e9,
     end: end * 1e9,
@@ -109,7 +108,7 @@ export async function lokiCountRange(query: string, start: number, end: number, 
 }
 
 export async function lokiLabelValues(label: string, startSec: number, endSec: number): Promise<string[]> {
-  const response = await get<{ data: string[] }>(LOGS_UID, `loki/api/v1/label/${label}/values`, {
+  const response = await get<{ data: string[] }>('logs', `loki/api/v1/label/${label}/values`, {
     start: startSec * 1e9,
     end: endSec * 1e9,
   });
@@ -124,7 +123,7 @@ export interface TempoSearchHit {
 }
 
 export async function tempoSearch(q: string, startSec: number, endSec: number, limit: number) {
-  const response = await get<{ traces?: TempoSearchHit[] }>(TRACES_UID, 'api/search', {
+  const response = await get<{ traces?: TempoSearchHit[] }>('traces', 'api/search', {
     q,
     start: startSec,
     end: endSec,
@@ -134,7 +133,7 @@ export async function tempoSearch(q: string, startSec: number, endSec: number, l
 }
 
 export async function tempoTagValues(tag: string, startSec: number, endSec: number): Promise<string[]> {
-  const response = await get<{ tagValues?: Array<{ value: string }> }>(TRACES_UID, `api/v2/search/tag/${tag}/values`, {
+  const response = await get<{ tagValues?: Array<{ value: string }> }>('traces', `api/v2/search/tag/${tag}/values`, {
     start: startSec,
     end: endSec,
   });
@@ -162,7 +161,7 @@ export interface OtlpBatch {
 }
 
 export async function tempoTrace(traceId: string): Promise<OtlpBatch[]> {
-  const response = await get<{ batches?: OtlpBatch[] }>(TRACES_UID, `api/traces/${traceId}`);
+  const response = await get<{ batches?: OtlpBatch[] }>('traces', `api/traces/${traceId}`);
   return response.batches ?? [];
 }
 
@@ -194,7 +193,7 @@ export async function lokiStreamLogs(
   endSec: number,
   limit: number
 ): Promise<StreamLog[]> {
-  const response = await get<LokiResponse<LokiStream>>(LOGS_UID, 'loki/api/v1/query_range', {
+  const response = await get<LokiResponse<LokiStream>>('logs', 'loki/api/v1/query_range', {
     query,
     start: startSec * 1e9,
     end: endSec * 1e9,

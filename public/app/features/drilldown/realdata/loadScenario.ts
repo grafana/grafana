@@ -1,5 +1,8 @@
 import { t } from '@grafana/i18n';
 
+import { type Signal, getUrlDataSource } from '../dataSources';
+
+import { type EntitySearch, type KgEntity, searchEntities } from './kgEntities';
 import {
   type InstantSample,
   type LogEntry,
@@ -21,6 +24,7 @@ import {
   type Hint,
   type InsightSummary,
   type LogLevel,
+  type Note,
   type Overview,
   type Scope,
   type ScopeData,
@@ -29,6 +33,7 @@ import {
   type SpanColor,
   type TraceSpan,
   type TraceView,
+  ENTITIES,
 } from './liveScenario';
 
 const CALLS = 'traces_span_metrics_calls_total';
@@ -99,10 +104,62 @@ function toLevel(raw: string): LogLevel {
   return 'info';
 }
 
+const read = (value: unknown, key: string): unknown =>
+  typeof value === 'object' && value !== null ? Reflect.get(value, key) : undefined;
+const text = (value: unknown) => (typeof value === 'string' && value ? value : undefined);
+
+// A failed request carries its reason in the response body, which a data source proxy sends as text or as a message.
+function describeError(error: unknown): string {
+  const status = read(error, 'status');
+  return (
+    text(read(error, 'data')) ??
+    text(read(read(error, 'data'), 'message')) ??
+    text(read(error, 'message')) ??
+    text(read(error, 'statusText')) ??
+    (typeof status === 'number' ? `HTTP ${status}` : String(error))
+  );
+}
+
+// A source that fails leaves its part of the overview empty and is named in the notes, so one unreachable data
+// source does not hide what the others measured.
+async function attempt<T>(notes: Note[], source: Signal, query: Promise<T>, fallback: T): Promise<T> {
+  try {
+    return await query;
+  } catch (error) {
+    const message = describeError(error);
+    if (!notes.some((note) => note.source === source && note.message === message)) {
+      notes.push({ source, message });
+    }
+    return fallback;
+  }
+}
+
+const NO_ENTITIES: EntitySearch = { entities: [], complete: true };
+
+// Assertion names such as INBOUND::span_errors::ErrorRatioBreach carry the kind of problem in their last parts.
+function hintFromEntity(entity: KgEntity): Hint {
+  const slow = entity.insights.some((name) => /latency|slow|duration/i.test(name));
+  const where = [entity.env, entity.namespace].filter(Boolean).join(' · ');
+  return {
+    id: `kg-${entity.id}`,
+    severity: slow ? 'slow' : 'errors',
+    title: t('drilldown-real.data.kg-hint-title', '{{name}} has {{total}} active insights', {
+      name: entity.name,
+      total: entity.insights.length,
+    }),
+    description: [entity.insights[0]?.split('::').slice(-2).join(' '), where].filter(Boolean).join(' · '),
+    scope: { type: 'service', value: entity.name },
+    investigable: true,
+    trendLabel: t('drilldown-real.data.kg-hint-trend', '{{name}} insights', { name: entity.name }),
+    trend: [1, 1],
+  };
+}
+
 export async function loadOverview(): Promise<Overview> {
   const end = nowSec();
   const start = end - OVERVIEW_WINDOW_S;
   const byService = ', service_name';
+  const notes: Note[] = [];
 
   const [
     p95Now,
@@ -115,24 +172,63 @@ export async function loadOverview(): Promise<Overview> {
     newVersions,
     logServices,
     traceServices,
+    entitySearch,
   ] = await Promise.all([
-    promInstant(p95(SERVER, byService), end),
-    promInstant(p95(SERVER, byService), start),
-    promInstant(
-      `sum by (service_name) (rate(${CALLS}{${SERVER},${ERROR}}[5m])) / sum by (service_name) (rate(${CALLS}{${SERVER}}[5m]))`,
-      end
+    attempt(notes, 'metrics', promInstant(p95(SERVER, byService), end), []),
+    attempt(notes, 'metrics', promInstant(p95(SERVER, byService), start), []),
+    attempt(
+      notes,
+      'metrics',
+      promInstant(
+        `sum by (service_name) (rate(${CALLS}{${SERVER},${ERROR}}[5m])) / sum by (service_name) (rate(${CALLS}{${SERVER}}[5m]))`,
+        end
+      ),
+      []
     ),
-    promInstant(`sum by (service_name, service_namespace, service_version) (rate(${CALLS}{${SERVER}}[5m]))`, end),
-    promRange(p95(SERVER, byService), start, end, 90),
-    promInstant(`count by (service_name) (rate(${CALLS}[5m]))`, end),
-    promInstant(`count by (service_namespace) (${CALLS})`, end),
-    promInstant(
-      `count by (service_name, service_version) (rate(${CALLS}{${SERVER}}[5m])) unless count by (service_name, service_version) (rate(${CALLS}{${SERVER}}[5m] offset 30m))`,
-      end
+    attempt(
+      notes,
+      'metrics',
+      promInstant(`sum by (service_name, service_namespace, service_version) (rate(${CALLS}{${SERVER}}[5m]))`, end),
+      []
     ),
-    lokiLabelValues('service_name', start, end),
-    tempoTagValues('resource.service.name', start, end),
+    attempt(notes, 'metrics', promRange(p95(SERVER, byService), start, end, 90), []),
+    attempt(notes, 'metrics', promInstant(`count by (service_name) (rate(${CALLS}[5m]))`, end), []),
+    attempt(notes, 'metrics', promInstant(`count by (service_namespace) (${CALLS})`, end), []),
+    attempt(
+      notes,
+      'metrics',
+      promInstant(
+        `count by (service_name, service_version) (rate(${CALLS}{${SERVER}}[5m])) unless count by (service_name, service_version) (rate(${CALLS}{${SERVER}}[5m] offset 30m))`,
+        end
+      ),
+      []
+    ),
+    attempt(notes, 'logs', lokiLabelValues('service_name', start, end), []),
+    attempt(notes, 'traces', tempoTagValues('resource.service.name', start, end), []),
+    attempt(notes, 'knowledgegraph', searchEntities('Service', start * 1000, end * 1000), NO_ENTITIES),
   ]);
+
+  // A data source that answers but holds no span metrics measured nothing, which is different from measuring zero.
+  if (traffic.length === 0 && !notes.some((note) => note.source === 'metrics')) {
+    notes.push({
+      source: 'metrics',
+      message: t('drilldown-real.data.no-span-metrics', 'No {{metric}} series in the last {{minutes}} minutes', {
+        metric: CALLS,
+        minutes: OVERVIEW_WINDOW_S / 60,
+      }),
+    });
+  }
+  if (!entitySearch.complete) {
+    notes.push({
+      source: 'knowledgegraph',
+      message: t(
+        'drilldown-real.data.kg-partial',
+        'Showing the first {{total}} Service entities. The knowledge graph holds more.',
+        { total: entitySearch.entities.length }
+      ),
+    });
+  }
+  const entities = entitySearch.entities;
 
   const nowMap = bySeries(p95Now);
   const prevMap = bySeries(p95Prev);
@@ -157,19 +253,38 @@ export async function loadOverview(): Promise<Overview> {
   const isFailing = (name: string) => (errorMap.get(name) ?? 0) >= ERROR_RATE_LIMIT;
   const trendOf = (name: string) => relative(rangeMap.get(name)?.values ?? []);
 
-  const services: ServiceSummary[] = ranked.slice(0, MAX_SERVICES).map((name) => {
+  const summaryOf = (name: string): ServiceSummary => {
     const degraded = isSlow(name) || isFailing(name);
     const latency = nowMap.get(name);
+    const errorRate = errorMap.get(name);
     const version = busiest.get(name)?.version;
     return {
       name,
       health: degraded ? 'degraded' : 'healthy',
       p95: finite(latency) ? formatMs(latency) : 'n/a',
-      errorRate: `${((errorMap.get(name) ?? 0) * 100).toFixed(1)}%`,
+      errorRate: finite(errorRate) ? `${(errorRate * 100).toFixed(1)}%` : 'n/a',
       trend: trendOf(name),
       lastDeploy: version ? `v${version}` : 'unknown',
     };
-  });
+  };
+  const needsAttention = (entity: KgEntity) => entity.severity === 'critical' || entity.severity === 'warning';
+  // The knowledge graph lists the services and says which need attention. Span metrics add numbers where they match.
+  const services: ServiceSummary[] =
+    entities.length > 0
+      ? entities.slice(0, MAX_SERVICES).map((entity) => {
+          const summary = summaryOf(entity.name);
+          return {
+            ...summary,
+            health: needsAttention(entity) ? 'degraded' : summary.health,
+            entity: {
+              env: entity.env,
+              namespace: entity.namespace,
+              serviceType: entity.serviceType,
+              insights: entity.insights.length,
+            },
+          };
+        })
+      : ranked.slice(0, MAX_SERVICES).map(summaryOf);
 
   const hints: Hint[] = [];
   for (const name of ranked) {
@@ -200,6 +315,11 @@ export async function loadOverview(): Promise<Overview> {
       });
     }
   }
+  for (const entity of entities) {
+    if (needsAttention(entity) && !hints.some((hint) => hint.scope.value === entity.name)) {
+      hints.push(hintFromEntity(entity));
+    }
+  }
   const flagged = new Set(hints.map((hint) => hint.scope.value));
   for (const sample of newVersions) {
     const name = sample.metric.service_name;
@@ -225,18 +345,21 @@ export async function loadOverview(): Promise<Overview> {
     const absent = universe.filter((name) => !present.includes(name));
     return absent.length > 2 ? [...absent.slice(0, 2), `${absent.length - 2} more`] : absent;
   };
-  const coverage = (app: AppKey, question: string, present: string[]): SignalCoverage => ({
+  const coverage = (app: AppKey, source: Signal, question: string, present: string[]): SignalCoverage => ({
     app,
     question,
     covered: universe.filter((name) => present.includes(name)).length,
     total: universe.length,
     unit: 'services',
     missing: missingOf(present),
+    notMeasured: notes.some((note) => note.source === source),
   });
+  const profilesSelected = Boolean(getUrlDataSource('profiles'));
+  const sqlSelected = Boolean(getUrlDataSource('sql'));
   const signals: SignalCoverage[] = [
-    coverage('metrics', 'What changed, without PromQL', metricNames),
-    coverage('logs', 'Patterns and errors, without LogQL', logServices),
-    coverage('traces', 'Where requests slow down', traceServices),
+    coverage('metrics', 'metrics', 'What changed, without PromQL', metricNames),
+    coverage('logs', 'logs', 'Patterns and errors, without LogQL', logServices),
+    coverage('traces', 'traces', 'Where requests slow down', traceServices),
     {
       app: 'profiles',
       question: 'Which code uses CPU and memory',
@@ -244,7 +367,9 @@ export async function loadOverview(): Promise<Overview> {
       total: universe.length,
       unit: 'services',
       missing: [],
-      noSource: true,
+      noSource: !profilesSelected,
+      // A profiles data source is chosen, but nothing asks it which services it holds yet.
+      notMeasured: profilesSelected,
     },
     {
       app: 'sql',
@@ -253,7 +378,9 @@ export async function loadOverview(): Promise<Overview> {
       total: 0,
       unit: 'databases',
       missing: [],
-      noSource: true,
+      noSource: !sqlSelected,
+      // A SQL data source is chosen, but nothing asks it which databases the services use yet.
+      notMeasured: sqlSelected,
     },
   ];
 
@@ -263,14 +390,23 @@ export async function loadOverview(): Promise<Overview> {
   return {
     hints: hints.slice(0, MAX_HINTS),
     scopeValues: {
-      service: ranked,
-      environment: [],
-      namespace: namespaces.map((s) => s.metric.service_namespace).filter(Boolean),
+      service: [...new Set([...ranked, ...entities.map((entity) => entity.name)])],
+      environment: [...new Set(entities.flatMap((entity) => (entity.env ? [entity.env] : [])))].sort(),
+      namespace: [
+        ...new Set([
+          ...namespaces.map((s) => s.metric.service_namespace),
+          ...entities.flatMap((entity) => (entity.namespace ? [entity.namespace] : [])),
+        ]),
+      ]
+        .filter(Boolean)
+        .sort(),
     },
     trendMax,
     services,
     signals,
-    exampleService: hints[0]?.scope.value ?? ranked[0] ?? 'a service',
+    exampleService: hints[0]?.scope.value ?? ranked[0] ?? entities[0]?.name ?? 'a service',
+    notes,
+    entities,
   };
 }
 
@@ -307,7 +443,8 @@ export async function loadScope(scope: Scope, fromSec: number, toSec: number): P
   const spanSel = `${sel.prom},${NO_STREAMS}`;
   const sparkStep = Math.max(15, Math.round(duration / 20));
   const durationStep = Math.max(15, Math.round(duration / 35));
-  const errorLogs = `{${sel.loki}, detected_level="error"}`;
+  // A pipeline filter matches detected_level whether the Loki stores it as an indexed label or as structured metadata.
+  const errorLogs = `{${sel.loki}} | detected_level="error" `;
 
   const [
     p95Now,
@@ -374,12 +511,16 @@ export async function loadScope(scope: Scope, fromSec: number, toSec: number): P
   const minutes = Math.round(duration / 60);
 
   const spanValue = topSpan[0]?.value;
+  const profilesSelected = Boolean(getUrlDataSource('profiles'));
+  const sqlSelected = Boolean(getUrlDataSource('sql'));
   const insights: InsightSummary[] = [
     {
       app: 'metrics',
       label: t('drilldown-real.data.p95-latency', 'p95 latency'),
       value: finite(latency) ? formatMs(latency) : 'n/a',
-      change: percentChange(latency, latencyBefore),
+      change: finite(latency)
+        ? percentChange(latency, latencyBefore)
+        : t('drilldown-real.data.not-measured-metrics', 'Not measured: no span metrics for this scope'),
       trend: relative(series[0]?.values ?? []),
     },
     {
@@ -393,25 +534,36 @@ export async function loadScope(scope: Scope, fromSec: number, toSec: number): P
     {
       app: 'traces',
       label: t('drilldown-real.data.slowest-span', 'Slowest span'),
-      value: slowestSpan || t('drilldown-real.data.no-spans', 'no spans'),
+      value: slowestSpan || t('drilldown-real.data.no-spans', 'n/a'),
       change: finite(spanValue)
         ? `p95 ${formatMs(spanValue)}, ${percentChange(spanValue, spanBefore[0]?.value)}`
-        : 'no spans in this range',
+        : t('drilldown-real.data.not-measured-spans', 'Not measured: no span metrics for this scope'),
       trend: relative(spanSeries[0]?.values ?? []),
     },
     {
       app: 'profiles',
       label: t('drilldown-real.data.top-function', 'Top function'),
-      value: t('drilldown-real.data.no-source', 'No data source'),
-      change: t('drilldown-real.data.connect-pyroscope', 'Connect a Pyroscope data source to see CPU and memory'),
+      value: profilesSelected
+        ? t('drilldown-real.data.not-measured', 'Not measured')
+        : t('drilldown-real.data.no-source', 'No data source'),
+      change: profilesSelected
+        ? t(
+            'drilldown-real.data.profiles-not-queried',
+            'A profiles data source is selected, but nothing queries it yet'
+          )
+        : t('drilldown-real.data.connect-pyroscope', 'Connect a Pyroscope data source to see CPU and memory'),
       trend: [],
       tone: 'neutral',
     },
     {
       app: 'sql',
       label: t('drilldown-real.data.failed-orders', 'Failed orders'),
-      value: t('drilldown-real.data.no-source', 'No data source'),
-      change: t('drilldown-real.data.connect-sql', 'Connect a SQL data source to see business impact'),
+      value: sqlSelected
+        ? t('drilldown-real.data.not-measured', 'Not measured')
+        : t('drilldown-real.data.no-source', 'No data source'),
+      change: sqlSelected
+        ? t('drilldown-real.data.sql-not-queried', 'A SQL data source is selected, but nothing queries it yet')
+        : t('drilldown-real.data.connect-sql', 'Connect a SQL data source to see business impact'),
       trend: [],
       tone: 'neutral',
     },
@@ -425,7 +577,12 @@ export async function loadScope(scope: Scope, fromSec: number, toSec: number): P
     { app: 'logs', finding: `${errorsNow} error logs in the last ${minutes} minutes` },
     { app: 'traces', finding: slowestSpan ? `${slowestSpan} is the slowest span` : 'No spans in this range' },
     { app: 'profiles', finding: 'No profiles data source connected' },
-    { app: 'sql', finding: 'No SQL data source connected' },
+    {
+      app: 'sql',
+      finding: sqlSelected
+        ? 'A SQL data source is selected, but nothing queries it yet'
+        : 'No SQL data source connected',
+    },
   ];
 
   const errorText =
@@ -434,8 +591,14 @@ export async function loadScope(scope: Scope, fromSec: number, toSec: number): P
     finite(latency) && finite(latencyBefore) && latencyBefore > 0
       ? `p95 latency is ${formatMs(latency)}, ${percentChange(latency, latencyBefore)}. `
       : '';
+  const entity = scope.type === 'service' ? ENTITIES.find((candidate) => candidate.name === scope.value) : undefined;
+  const graphText = entity?.insights.length
+    ? t('drilldown-real.data.kg-cause', 'The knowledge graph reports {{insights}}. ', {
+        insights: entity.insights.join(', '),
+      })
+    : '';
   const likelyCause =
-    `${errorText}${slowText}${slowestSpan ? `The slowest span is ${slowestSpan}.` : ''}`.trim() ||
+    `${graphText}${errorText}${slowText}${slowestSpan ? `The slowest span is ${slowestSpan}.` : ''}`.trim() ||
     'No change found in this range.';
 
   return {
@@ -461,9 +624,22 @@ export async function loadScope(scope: Scope, fromSec: number, toSec: number): P
         ? `Dashed line: version ${deploy.version} first seen · route ${route}`
         : `p95 latency of ${route || 'the slowest route'} over the range. No version change in this range.`,
       where: trace.spans.length > 0 ? `Slowest recent request: ${trace.summary}` : 'No trace found in this range.',
-      why: 'No profiles or SQL data source is connected, so this group has no data.',
+      why: whyEmpty(profilesSelected, sqlSelected),
     },
   };
+}
+
+// Nothing queries profiles or SQL yet, so the Why group is empty. For each of the two, it says whether no data source
+// is connected or one is chosen that no query reads.
+function whyEmpty(profilesSelected: boolean, sqlSelected: boolean): string {
+  const unconnected = [...(profilesSelected ? [] : ['profiles']), ...(sqlSelected ? [] : ['SQL'])];
+  const unqueried = [...(profilesSelected ? ['profiles'] : []), ...(sqlSelected ? ['SQL'] : [])];
+  const reasons = [
+    unconnected.length > 0 ? `no ${unconnected.join(' or ')} data source is connected` : '',
+    unqueried.length > 0 ? `nothing queries the selected ${unqueried.join(' or ')} data source yet` : '',
+  ].filter(Boolean);
+  const sentence = `${reasons.join(', and ')}, so this group has no data.`;
+  return sentence.charAt(0).toUpperCase() + sentence.slice(1);
 }
 
 function pickLogLines(entries: LogEntry[]) {

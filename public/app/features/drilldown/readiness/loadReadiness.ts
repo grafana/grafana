@@ -1,6 +1,7 @@
 import { t } from '@grafana/i18n';
 
-import { TRACES_UID, datasourceJson, lokiLabelValues, lokiLogs, promInstant, tempoTagValues } from '../realdata/labApi';
+import { requireDataSource } from '../dataSources';
+import { datasourceJson, lokiLabelValues, lokiLogs, promInstant, tempoTagValues } from '../realdata/labApi';
 
 const CALLS = 'traces_span_metrics_calls_total';
 const WINDOW_S = 3600;
@@ -93,7 +94,8 @@ export async function runChecks(service: ReadinessService): Promise<Check[]> {
     labelCount('span_name'),
     labelCount('status_code'),
     lokiLogs(`{service_name="${name}"} |~ "(?i)trace_?id"`, start, end, 1).catch(() => undefined),
-    datasourceJson(TRACES_UID)
+    requireDataSource('traces')
+      .then(datasourceJson)
       .then(async (tempo) => {
         const uid = tempo.jsonData?.tracesToLogsV2?.datasourceUid ?? tempo.jsonData?.tracesToLogs?.datasourceUid;
         if (!uid) {

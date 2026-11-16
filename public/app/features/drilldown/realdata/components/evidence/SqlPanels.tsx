@@ -4,10 +4,17 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type Column, InteractiveTable, LinkButton, PanelChrome, useStyles2 } from '@grafana/ui';
 
+import { getUrlDataSource } from '../../../dataSources';
 import { FAILED_ORDERS, SLOW_QUERIES } from '../../liveScenario';
 
 type FailedOrder = (typeof FAILED_ORDERS)[number];
 type SlowQuery = (typeof SLOW_QUERIES)[number];
+
+// Nothing queries a SQL data source yet, so the panels are empty either way. The text says whether one is chosen.
+const emptyText = (noSource: string) =>
+  getUrlDataSource('sql')
+    ? t('drilldown-real.evidence.sql-not-queried', 'A SQL data source is selected, but nothing queries it yet.')
+    : noSource;
 
 export function FailedOrdersPanel() {
   const styles = useStyles2(getStyles);
@@ -26,7 +33,7 @@ export function FailedOrdersPanel() {
   return (
     <PanelChrome title={t('drilldown-real.evidence.failed-orders', 'Failed orders')}>
       {FAILED_ORDERS.length === 0 ? (
-        <span>{t('drilldown-real.evidence.no-sql', 'No SQL data source connected.')}</span>
+        <span>{emptyText(t('drilldown-real.evidence.no-sql', 'No SQL data source connected.'))}</span>
       ) : (
         <InteractiveTable
           className={styles.table}
@@ -67,7 +74,7 @@ export function SlowQueriesPanel({ dbUrl }: SlowQueriesPanelProps) {
       }
     >
       {SLOW_QUERIES.length === 0 ? (
-        <span>{t('drilldown-real.evidence.no-sql-queries', 'No SQL data source connected.')}</span>
+        <span>{emptyText(t('drilldown-real.evidence.no-sql-queries', 'No SQL data source connected.'))}</span>
       ) : (
         <InteractiveTable
           className={styles.table}

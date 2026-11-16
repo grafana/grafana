@@ -11,7 +11,7 @@ import { loadOverview } from './loadScenario';
 
 type State = { kind: 'loading' } | { kind: 'ready' } | { kind: 'error'; message: string };
 
-// Loads the overview from the OTel lab data sources, then renders the copy of the prototype page.
+// Loads the overview from the chosen data sources, then renders the copy of the prototype page.
 export function RealDataDrilldownPage() {
   const [state, setState] = useState<State>({ kind: 'loading' });
   const hasNav = useNavModel('drilldown').node.id !== 'not-found';
@@ -43,12 +43,12 @@ export function RealDataDrilldownPage() {
     <Page navId={hasNav ? 'drilldown' : undefined} navModel={hasNav ? undefined : getFallbackNavModel()}>
       <Page.Contents>
         {state.kind === 'loading' && (
-          <LoadingPlaceholder text={t('drilldown-real.overview-loading', 'Querying the OTel lab data sources')} />
+          <LoadingPlaceholder text={t('drilldown-real.overview-loading', 'Querying the selected data sources')} />
         )}
         {state.kind === 'error' && (
           <Alert
             severity="error"
-            title={t('drilldown-real.overview-error', 'Could not query the OTel lab data sources')}
+            title={t('drilldown-real.overview-error', 'Could not query the selected data sources')}
           >
             {state.message}
           </Alert>

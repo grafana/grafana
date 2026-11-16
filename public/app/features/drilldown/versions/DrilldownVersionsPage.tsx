@@ -5,13 +5,16 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { Dropdown, Icon, LoadingPlaceholder, Menu, Tab, TabsBar, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
+import { DataSourceBar, dataSourcesKey, useFilledDataSources } from '../DataSourceBar';
+
 import { type DrilldownVersion, getDrilldownVersions } from './versions';
 
 // The tab bar sits in a plain container instead of a second Page, because every version renders its own Page
-// with its own header and scroll container.
+// with its own header and scroll container. With one version left, the bar has nothing to switch, so it is not shown.
 export function DrilldownVersionsPage() {
   const styles = useStyles2(getStyles);
   const [queryParams, updateQueryParams] = useQueryParams();
+  const dataSourcesFilled = useFilledDataSources();
 
   const versions = getDrilldownVersions();
   const active = versions.find((version) => version.id === queryParams.version) ?? versions[0];
@@ -24,46 +27,49 @@ export function DrilldownVersionsPage() {
 
   return (
     <div className={styles.container}>
-      <TabsBar className={styles.tabs}>
-        {versions.map((version) =>
-          version.views.length > 1 ? (
-            <Dropdown
-              key={version.id}
-              placement="bottom-start"
-              overlay={
-                <Menu>
-                  {version.views.map((view) => (
-                    <Menu.Item
-                      key={view.id}
-                      label={view.label}
-                      active={version.id === active.id && view.id === activeView.id}
-                      onClick={() => open(version, view.id)}
-                    />
-                  ))}
-                </Menu>
-              }
-            >
-              <GroupTab
-                label={
-                  version.id === active.id && activeView.id !== version.views[0].id
-                    ? `${version.label}: ${activeView.label}`
-                    : version.label
+      <DataSourceBar />
+      {versions.length > 1 && (
+        <TabsBar className={styles.tabs}>
+          {versions.map((version) =>
+            version.views.length > 1 ? (
+              <Dropdown
+                key={version.id}
+                placement="bottom-start"
+                overlay={
+                  <Menu>
+                    {version.views.map((view) => (
+                      <Menu.Item
+                        key={view.id}
+                        label={view.label}
+                        active={version.id === active.id && view.id === activeView.id}
+                        onClick={() => open(version, view.id)}
+                      />
+                    ))}
+                  </Menu>
                 }
+              >
+                <GroupTab
+                  label={
+                    version.id === active.id && activeView.id !== version.views[0].id
+                      ? `${version.label}: ${activeView.label}`
+                      : version.label
+                  }
+                  active={version.id === active.id}
+                />
+              </Dropdown>
+            ) : (
+              <Tab
+                key={version.id}
+                label={version.label}
                 active={version.id === active.id}
+                onChangeTab={() => open(version, version.views[0].id)}
               />
-            </Dropdown>
-          ) : (
-            <Tab
-              key={version.id}
-              label={version.label}
-              active={version.id === active.id}
-              onChangeTab={() => open(version, version.views[0].id)}
-            />
-          )
-        )}
-      </TabsBar>
+            )
+          )}
+        </TabsBar>
+      )}
       <Suspense fallback={<LoadingPlaceholder text="" />}>
-        <ActiveView key={`${active.id}-${activeView.id}`} />
+        {dataSourcesFilled && <ActiveView key={`${active.id}-${activeView.id}-${dataSourcesKey(queryParams)}`} />}
       </Suspense>
     </div>
   );

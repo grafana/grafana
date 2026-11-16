@@ -35,13 +35,15 @@ export function DrilldownSignals({ appUrls }: Props) {
 
 function SignalTile({ signal, name, url }: { signal: SignalCoverage; name: string; url?: string }) {
   const styles = useStyles2(getStyles);
-  const complete = signal.missing.length === 0 && !signal.noSource;
+  const complete = signal.missing.length === 0 && !signal.noSource && !signal.notMeasured;
   const counts = { covered: signal.covered, total: signal.total };
   const coverage = signal.noSource
     ? t('drilldown-real.signals.no-source', 'No data source connected')
-    : signal.unit === 'databases'
-      ? t('drilldown-real.signals.coverage-databases', '{{covered}} of {{total}} databases', counts)
-      : t('drilldown-real.signals.coverage-services', '{{covered}} of {{total}} services', counts);
+    : signal.notMeasured
+      ? t('drilldown-real.signals.not-measured', 'Not measured')
+      : signal.unit === 'databases'
+        ? t('drilldown-real.signals.coverage-databases', '{{covered}} of {{total}} databases', counts)
+        : t('drilldown-real.signals.coverage-services', '{{covered}} of {{total}} services', counts);
 
   return (
     <div className={styles.tile}>
@@ -62,7 +64,7 @@ function SignalTile({ signal, name, url }: { signal: SignalCoverage; name: strin
           {coverage}
         </Text>
       </Stack>
-      {!complete && url && (
+      {!complete && !signal.notMeasured && url && (
         <LinkButton
           href={url}
           size="sm"

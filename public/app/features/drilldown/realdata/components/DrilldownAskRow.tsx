@@ -6,13 +6,19 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Input, useStyles2 } from '@grafana/ui';
 
-import { EXAMPLE_SERVICE } from '../liveScenario';
+import { assistantContext } from '../assistantContext';
+import { EXAMPLE_SERVICE, type Scope } from '../liveScenario';
 
 import { AssistantIcon } from './AssistantIcon';
 
+interface Props {
+  // The scope the page is showing, so the question reaches Grafana Assistant with that service's context.
+  scope?: Scope;
+}
+
 // The input is the only control on this row: scopes are picked from the hints, "Your services",
 // or the scope chip once one is set.
-export function DrilldownAskRow() {
+export function DrilldownAskRow({ scope }: Props) {
   const styles = useStyles2(getStyles);
   const { isAvailable, openAssistant } = useAssistant();
   const [question, setQuestion] = useState('');
@@ -21,7 +27,12 @@ export function DrilldownAskRow() {
     if (!isAvailable || !openAssistant || !question.trim()) {
       return;
     }
-    openAssistant({ origin: 'grafana/drilldown-home', prompt: question, autoSend: true });
+    openAssistant({
+      origin: 'grafana/drilldown-home',
+      prompt: question,
+      context: assistantContext(scope),
+      autoSend: true,
+    });
     setQuestion('');
   };
 

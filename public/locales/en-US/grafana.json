@@ -8681,6 +8681,14 @@
       "update": "Update"
     }
   },
+  "drilldown-datasources": {
+    "knowledgegraph": "Knowledge graph",
+    "logs": "Logs",
+    "metrics": "Metrics",
+    "profiles": "Profiles",
+    "sql": "SQL",
+    "traces": "Traces"
+  },
   "drilldown-otel": {
     "changes": {
       "deploy": "Deploy",
@@ -9027,11 +9035,21 @@
       "connect-sql": "Connect a SQL data source to see business impact",
       "error-logs": "Error logs",
       "failed-orders": "Failed orders",
+      "kg-cause": "The knowledge graph reports {{insights}}. ",
+      "kg-hint-title": "{{name}} has {{total}} active insights",
+      "kg-hint-trend": "{{name}} insights",
+      "kg-partial": "Showing the first {{total}} Service entities. The knowledge graph holds more.",
       "no-change": "No change in latency or errors so far",
       "no-source": "No data source",
-      "no-spans": "no spans",
+      "no-span-metrics": "No {{metric}} series in the last {{minutes}} minutes",
+      "no-spans": "n/a",
+      "not-measured": "Not measured",
+      "not-measured-metrics": "Not measured: no span metrics for this scope",
+      "not-measured-spans": "Not measured: no span metrics for this scope",
       "p95-latency": "p95 latency",
+      "profiles-not-queried": "A profiles data source is selected, but nothing queries it yet",
       "slowest-span": "Slowest span",
+      "sql-not-queried": "A SQL data source is selected, but nothing queries it yet",
       "top-function": "Top function"
     },
     "detection": {
@@ -9059,6 +9077,7 @@
       "request-duration": "Request duration by route",
       "slow-queries": "Slowest queries",
       "slow-request": "Slow request: {{name}}",
+      "sql-not-queried": "A SQL data source is selected, but nothing queries it yet.",
       "status": "status",
       "time": "time",
       "title": "Evidence",
@@ -9067,12 +9086,13 @@
     },
     "hints": {
       "empty": "All quiet: no regressions in the last 30 minutes.",
+      "empty-partial": "Nothing detected by the data sources that could be measured. Some were not measured, see the notice above.",
       "investigate": "Investigate",
       "no-action": "No action needed",
       "severity-deploy": "Deploy",
       "severity-errors": "Errors",
       "severity-slow": "Slow",
-      "sources": "From span metrics: error rate, p95 latency and new versions",
+      "sources": "From span metrics and knowledge graph insights",
       "title": "Detected in the last 30 minutes"
     },
     "insights": {
@@ -9080,12 +9100,15 @@
       "open-signal": "Open {{app}}: {{label}} {{value}}",
       "title": "Insights"
     },
-    "load-error": "Could not query the OTel lab data sources",
+    "load-error": "Could not query the selected data sources",
     "loading": {
       "title": "Grafana Assistant is checking {{service}}"
     },
-    "overview-error": "Could not query the OTel lab data sources",
-    "overview-loading": "Querying the OTel lab data sources",
+    "notes": {
+      "title": "Not measured"
+    },
+    "overview-error": "Could not query the selected data sources",
+    "overview-loading": "Querying the selected data sources",
     "scope": {
       "ask-for-fix": "Ask Assistant for a fix",
       "attribute-label": "{{attribute}} =",
@@ -9103,6 +9126,7 @@
       "degraded": "Degraded",
       "errors": "Errors",
       "healthy": "Healthy",
+      "insights": "Insights",
       "last-deploy": "Version {{deploy}}",
       "p95": "p95",
       "scope-environment": "Environment",
@@ -9118,6 +9142,7 @@
       "coverage-databases": "{{covered}} of {{total}} databases",
       "coverage-services": "{{covered}} of {{total}} services",
       "no-source": "No data source connected",
+      "not-measured": "Not measured",
       "setup": "Set up for {{services}}",
       "title": "Explore by signal"
     },

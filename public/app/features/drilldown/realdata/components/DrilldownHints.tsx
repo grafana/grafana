@@ -4,7 +4,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Badge, type BadgeColor, Button, Stack, Text, useStyles2 } from '@grafana/ui';
 
-import { type Hint, type HintSeverity, HINTS, TREND_MAX } from '../liveScenario';
+import { type Hint, type HintSeverity, HINTS, NOTES, TREND_MAX } from '../liveScenario';
 
 import { AssistantIcon } from './AssistantIcon';
 import { TrendSparkline, type TrendColor } from './TrendSparkline';
@@ -29,13 +29,18 @@ export function DrilldownHints({ hints = HINTS, onInvestigate }: Props) {
           {t('drilldown-real.hints.title', 'Detected in the last 30 minutes')}
         </Text>
         <Text variant="bodySmall" color="secondary">
-          {t('drilldown-real.hints.sources', 'From span metrics: error rate, p95 latency and new versions')}
+          {t('drilldown-real.hints.sources', 'From span metrics and knowledge graph insights')}
         </Text>
       </Stack>
       {hints.length === 0 && (
         <div className={styles.empty}>
           <Text color="secondary">
-            {t('drilldown-real.hints.empty', 'All quiet: no regressions in the last 30 minutes.')}
+            {NOTES.length === 0
+              ? t('drilldown-real.hints.empty', 'All quiet: no regressions in the last 30 minutes.')
+              : t(
+                  'drilldown-real.hints.empty-partial',
+                  'Nothing detected by the data sources that could be measured. Some were not measured, see the notice above.'
+                )}
           </Text>
         </div>
       )}

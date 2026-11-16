@@ -1,5 +1,9 @@
 // Live replacement for mockScenario.ts. The copied components import the same names, and the page fills these
-// bindings from the OTel lab data sources before it renders them.
+// bindings from the selected data sources before it renders them.
+
+import { type Signal } from '../dataSources';
+
+import { type KgEntity } from './kgEntities';
 
 export type AppKey = 'metrics' | 'logs' | 'traces' | 'profiles' | 'sql';
 
@@ -30,6 +34,14 @@ export interface ServiceSummary {
   errorRate: string;
   trend: number[];
   lastDeploy: string;
+  // Set when the service comes from the knowledge graph, which knows where it runs and how many insights it carries.
+  entity?: { env?: string; namespace?: string; serviceType?: string; insights: number };
+}
+
+// A data source that could not be measured, with why. It is reported instead of shown as a zero.
+export interface Note {
+  source: Signal;
+  message: string;
 }
 
 export interface SignalCoverage {
@@ -41,6 +53,8 @@ export interface SignalCoverage {
   missing: string[];
   // True when no data source of this signal exists, so there is nothing to count.
   noSource?: boolean;
+  // True when the data source exists but was not measured, so the counts mean nothing.
+  notMeasured?: boolean;
 }
 
 export interface InsightSummary {
@@ -102,6 +116,8 @@ export interface Overview {
   services: ServiceSummary[];
   signals: SignalCoverage[];
   exampleService: string;
+  notes: Note[];
+  entities: KgEntity[];
 }
 
 export interface ScopeData {
@@ -124,6 +140,9 @@ export let TREND_MAX = 2;
 export let YOUR_SERVICES: ServiceSummary[] = [];
 export let SIGNALS: SignalCoverage[] = [];
 export let EXAMPLE_SERVICE = 'a service';
+export let NOTES: Note[] = [];
+// The knowledge graph entities the overview listed, which the scope step reads their insights from.
+export let ENTITIES: KgEntity[] = [];
 
 export let DETECTION_STEPS: Array<{ app: AppKey; finding: string }> = [];
 export let DETECTED_SCOPE: DetectedScope = { namespace: '', since: '', likelyCause: '' };
@@ -138,7 +157,7 @@ export let LOG_LINES: Array<{ time: string; level: LogLevel; message: string }> 
 export let TRACE: TraceView = { name: '', durationMs: 0, axisTicks: [], summary: '', spans: [], slowThresholdMs: 0 };
 export let EVIDENCE_TEXT: EvidenceText = { impact: '', requestCaption: '', where: '', why: '' };
 
-// No profiles or SQL data source exists in the lab, so these stay empty and their panels say so.
+// Nothing queries a profiles or SQL data source yet, so these stay empty and their panels say so.
 export const FLAME_GRAPH: FlameGraphView = { levels: [], path: [] };
 export const FAILED_ORDERS: Array<{ orderId: string; amount: string; status: string; time: string }> = [];
 export const SLOW_QUERIES: Array<{ query: string; p95: string }> = [];
@@ -150,6 +169,8 @@ export function setOverview(overview: Overview) {
   YOUR_SERVICES = overview.services;
   SIGNALS = overview.signals;
   EXAMPLE_SERVICE = overview.exampleService;
+  NOTES = overview.notes;
+  ENTITIES = overview.entities;
 }
 
 export function setScopeData(data: ScopeData) {

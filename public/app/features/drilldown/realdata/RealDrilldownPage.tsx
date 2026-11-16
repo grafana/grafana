@@ -16,7 +16,8 @@ import { DrilldownScopeSummary } from './components/DrilldownScopeSummary';
 import { DrilldownServices } from './components/DrilldownServices';
 import { DrilldownSignals } from './components/DrilldownSignals';
 import { DrilldownTimeControls } from './components/DrilldownTimeControls';
-import { type AppKey, type Hint, type Scope, setScopeData } from './liveScenario';
+import { NotMeasuredNotice } from './components/NotMeasuredNotice';
+import { type AppKey, type Hint, NOTES, type Scope, setScopeData } from './liveScenario';
 import { loadScope } from './loadScenario';
 
 const DEFAULT_TIME_RANGE = { from: 'now-30m', to: 'now' };
@@ -90,11 +91,16 @@ export function RealDrilldownPage() {
   };
 
   return (
-    <Page navId={hasNav ? 'drilldown' : undefined} navModel={hasNav ? undefined : getFallbackNavModel()}>
+    <Page
+      navId={hasNav ? 'drilldown' : undefined}
+      navModel={hasNav ? undefined : getFallbackNavModel()}
+      // What could not be measured sits in the header as an icon, so it takes no room from the page.
+      actions={phase.kind === 'hints' ? <NotMeasuredNotice notes={NOTES} /> : undefined}
+    >
       <Page.Contents>
         {loadError && (
           <Box paddingBottom={2}>
-            <Alert severity="error" title={t('drilldown-real.load-error', 'Could not query the OTel lab data sources')}>
+            <Alert severity="error" title={t('drilldown-real.load-error', 'Could not query the selected data sources')}>
               {loadError}
             </Alert>
           </Box>
@@ -124,7 +130,7 @@ export function RealDrilldownPage() {
         {/* On the entry page the input follows the detected hints, and the detection step has none. Once
             Grafana Assistant has found a likely cause, its action button replaces the input, so only a
             scope picked by hand keeps it here. */}
-        {phase.kind === 'insights' && !phase.hint && <DrilldownAskRow />}
+        {phase.kind === 'insights' && !phase.hint && <DrilldownAskRow scope={phase.scope} />}
         {phase.kind === 'hints' && (
           <>
             <DrilldownHints onInvestigate={(hint) => openScope(hint.scope, hint)} />
