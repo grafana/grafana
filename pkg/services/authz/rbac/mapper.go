@@ -774,6 +774,11 @@ func NewMapperRegistry() MapperRegistry {
 				verbMapping: map[string]string{
 					utils.VerbCreate: "datasources:query",
 				},
+				// Every datasource permission level carries datasources:query, so managed
+				// grants stored only as action sets must still authorize the subresources.
+				actionSetMapping: map[string][]string{
+					utils.VerbCreate: {"datasources:query", "datasources:edit", "datasources:admin"},
+				},
 				folderSupport:   false,
 				skipScopeOnVerb: nil,
 			},
