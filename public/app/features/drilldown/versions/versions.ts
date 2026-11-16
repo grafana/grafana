@@ -22,33 +22,8 @@ const NadineRealDataVersion = lazy(
   () => import(/* webpackChunkName: "DrilldownRealData"*/ '../realdata/RealDataDrilldownPage')
 );
 
-const OtelFirstVersion = lazy(
-  () => import(/* webpackChunkName: "DrilldownOtelFirst"*/ '../otelfirst/OtelFirstHomePage')
-);
-
-const OtelFirstScopeVersion = lazy(async () => {
-  const { OtelFirstScopeView } = await import(
-    /* webpackChunkName: "DrilldownOtelFirstViews"*/ '../otelfirst/OtelFirstViews'
-  );
-  return { default: OtelFirstScopeView };
-});
-
-const OtelFirstMappingVersion = lazy(async () => {
-  const { OtelFirstMappingView } = await import(
-    /* webpackChunkName: "DrilldownOtelFirstViews"*/ '../otelfirst/OtelFirstViews'
-  );
-  return { default: OtelFirstMappingView };
-});
-
-const OtelFirstTraceVersion = lazy(async () => {
-  const { OtelFirstTraceView } = await import(
-    /* webpackChunkName: "DrilldownOtelFirstTrace"*/ '../otelfirst/OtelFirstTrace'
-  );
-  return { default: OtelFirstTraceView };
-});
-
 // Versions kept in the code but not shown as tabs.
-const HIDDEN_VERSION_IDS = ['nadine', 'otel-first'];
+const HIDDEN_VERSION_IDS = ['nadine'];
 
 // Each version is one tab on /drilldown. Add a version by adding an entry here; the first entry is the default.
 export function getDrilldownVersions(): DrilldownVersion[] {
@@ -67,28 +42,6 @@ function getAllVersions(home: string): DrilldownVersion[] {
       id: 'nadine-real',
       label: t('drilldown-versions.tabs.nadine-real', "Nadine's design"),
       views: [{ id: 'home', label: home, component: NadineRealDataVersion }],
-    },
-    {
-      id: 'otel-first',
-      label: t('drilldown-versions.tabs.otel-first', 'OTel first'),
-      views: [
-        { id: 'home', label: home, component: OtelFirstVersion },
-        {
-          id: 'scope',
-          label: t('drilldown-versions.views.otel-first-scope', 'Service scope'),
-          component: OtelFirstScopeVersion,
-        },
-        {
-          id: 'mapping',
-          label: t('drilldown-versions.views.otel-first-mapping', 'Attribute mapping'),
-          component: OtelFirstMappingVersion,
-        },
-        {
-          id: 'trace',
-          label: t('drilldown-versions.views.otel-first-trace', 'One trace end to end'),
-          component: OtelFirstTraceVersion,
-        },
-      ],
     },
   ];
 }

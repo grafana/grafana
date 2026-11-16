@@ -8689,143 +8689,6 @@
     "sql": "SQL",
     "traces": "Traces"
   },
-  "drilldown-otel": {
-    "changes": {
-      "deploy": "Deploy",
-      "errors": "Errors",
-      "investigate": "Investigate",
-      "mapping": "Attribute mapping",
-      "quiet": "All quiet: no regressions in the last 30 minutes.",
-      "slow": "Slow",
-      "subtitle": "From span metrics, grouped by service",
-      "title": "Changed in the last 30 minutes"
-    },
-    "coverage": {
-      "complete": "All services report",
-      "logs": "Logs",
-      "logs-detail": "services with logs",
-      "metrics": "Metrics",
-      "metrics-detail": "services with span metrics",
-      "no-logs": "{{services}} with no logs",
-      "no-metrics": "{{services}} with no span metrics",
-      "no-namespace": "{{services}} without service.namespace",
-      "no-pyroscope": "No Pyroscope data source",
-      "no-spans": "{{services}} with no spans",
-      "open": "Open",
-      "profiles": "Profiles",
-      "profiles-detail": "sources",
-      "title": "Signal coverage",
-      "traces": "Traces",
-      "traces-detail": "services with spans"
-    },
-    "drawer": {
-      "attribute": "Attribute",
-      "cancel": "Cancel",
-      "confirm": "Promote",
-      "confirm-body": "This changes log indexing for the whole organization. Existing queries keep working. New log volume can raise cardinality and cost.",
-      "confirm-note": "This prototype shows the confirmation step and does not change Loki.",
-      "confirm-title": "Confirm: promote {{attribute}}",
-      "error": "Could not read the attribute mapping",
-      "gap-metadata": "Stored as structured metadata. Filters on this attribute need a stream selector until it is promoted to an index label.",
-      "gap-missing": "No log line for this service carries the attribute. Set it as a resource attribute in the SDK or the Collector.",
-      "gap-title": "{{attribute}} in Logs",
-      "index": "index label",
-      "loading": "Checking {{service}} in each signal",
-      "metadata": "structured metadata",
-      "missing": "not reported",
-      "na": "n/a",
-      "ok": "ok",
-      "promote": "Promote to index label...",
-      "subtitle": "Attribute names follow OpenTelemetry semantic conventions. Each backend spells them its own way.",
-      "title": "How this maps to each signal"
-    },
-    "error": "Could not query the OTel lab data sources",
-    "intro": "Start from a service. Every signal opens with the same scope.",
-    "loading": "Querying the OTel lab data sources",
-    "scope": {
-      "back": "Back to overview",
-      "changed": "What changed against the previous 30 minutes",
-      "compare": "Errors compared with the rest",
-      "compare-empty": "No errors in this window to compare.",
-      "compare-subtitle": "Attribute values ranked by their share of errors against their share of all spans",
-      "error": "Could not query the OTel lab data sources",
-      "loading": "Reading the four signals for {{service}}",
-      "logs-change": "{{before}} lines per minute to {{now}}",
-      "logs-detail": "lines per minute",
-      "mapping": "How this maps to each signal",
-      "metrics-change": "error rate {{before}} to {{now}}, p95 {{p95Before}} to {{p95Now}}",
-      "metrics-detail": "error rate, p95 {{p95}}",
-      "no-data": "no data",
-      "no-errors": "no error spans in this window",
-      "no-logs": "no log stream for this service",
-      "no-profiles": "No profiles data source",
-      "no-source": "no data source",
-      "not-reported": "not reported",
-      "open": "Open {{app}} Drilldown",
-      "points": "{{points}} pts",
-      "profiles-detail": "Profiles Drilldown reads only service_name. Connect a Pyroscope data source to see CPU and memory for this service.",
-      "subtitle": "The same attributes drive every signal below",
-      "title": "Scope",
-      "traces-change": "{{span}} holds {{share}}% of errors",
-      "traces-detail": "error traces in the last 30 minutes"
-    },
-    "signals": {
-      "logs": "Logs",
-      "metrics": "Metrics",
-      "no-namespace": "no namespace",
-      "none": "none",
-      "profiles": "Profiles",
-      "traces": "Traces"
-    },
-    "table": {
-      "change": "Last change",
-      "degraded": "Errors",
-      "health": "Health",
-      "healthy": "Healthy",
-      "investigate": "Investigate",
-      "mapping": "Attribute mapping",
-      "no-namespace": "service.namespace not set",
-      "service": "Service",
-      "signals": "Signals and attribute state",
-      "slow": "Slow",
-      "subtitle": "Ranked by change, then by name",
-      "title": "Services",
-      "unknown": "unknown",
-      "version": "Version"
-    },
-    "trace": {
-      "copy": "Copy trace ID",
-      "error": "Could not read the trace",
-      "loading": "Finding a trace for {{service}}",
-      "logs-empty": "No log lines in this scope. Try another scope.",
-      "logs-error": "Could not read the logs",
-      "logs-loading": "Reading logs",
-      "logs-subtitle": "Lines from every service in the trace",
-      "logs-title": "Logs for this trace",
-      "more": "Showing {{shown}} of {{total}} spans. Services in this trace: {{services}}.",
-      "none": "No trace found",
-      "none-body": "Tempo has no trace for {{service}} in the last 30 minutes.",
-      "open-logs": "Open in Logs Drilldown",
-      "open-metrics": "Open metrics for {{service}}",
-      "open-traces": "Open in Traces Drilldown",
-      "scope-both": "Resource and Trace",
-      "scope-note": "Trace is the default. Resource adds the service's logs within 30 minutes of the span. Span shows lines for the selected span.",
-      "scope-resource": "Resource",
-      "scope-span": "Span",
-      "scope-trace": "Trace",
-      "step-compare": "2 Compare errors with the rest",
-      "step-logs": "4 Logs of the trace",
-      "step-symptom": "1 Symptom",
-      "step-trace": "3 Failing trace",
-      "subtitle-failing": "Errored spans first. {{errors}} of {{spans}} spans errored.",
-      "subtitle-ok": "No error trace for this service in the last 30 minutes. Showing its newest trace. Spans in start order.",
-      "title": "Trace",
-      "warn-only": "Show only WARN and above"
-    },
-    "view": {
-      "service": "Service"
-    }
-  },
   "drilldown-page": {
     "apps": {
       "logs": "Logs",
@@ -9058,14 +8921,10 @@
   "drilldown-versions": {
     "tabs": {
       "nadine": "Nadine's prototype",
-      "nadine-real": "Nadine's design",
-      "otel-first": "OTel first"
+      "nadine-real": "Nadine's design"
     },
     "views": {
-      "home": "Home",
-      "otel-first-mapping": "Attribute mapping",
-      "otel-first-scope": "Service scope",
-      "otel-first-trace": "One trace end to end"
+      "home": "Home"
     }
   },
   "embed": {
