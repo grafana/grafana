@@ -38,6 +38,10 @@ describe('userStarsFieldSelector', () => {
 });
 
 describe('canUseStars', () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   it('is true for a signed-in user with a uid', () => {
     expect(canUseStars()).toBe(true);
   });
@@ -48,6 +52,7 @@ describe('canUseStars', () => {
   });
 
   it('is false for a signed-in identity without a uid', () => {
+    expect(contextSrv.isSignedIn).toBe(true);
     jest.replaceProperty(contextSrv.user, 'uid', '');
     expect(canUseStars()).toBe(false);
   });

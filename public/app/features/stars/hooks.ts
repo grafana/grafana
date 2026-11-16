@@ -3,6 +3,7 @@ import { useCallback, useMemo } from 'react';
 
 import { useAddStarMutation, useRemoveStarMutation, useListStarsQuery } from 'app/api/clients/collections/v1alpha1';
 import { contextSrv } from 'app/core/services/context_srv';
+import { type DashboardQueryResult } from 'app/features/search/service/types';
 import { useDispatch } from 'app/types/store';
 
 import { refetchStarred, useSearchStarredQuery } from './api';
@@ -65,6 +66,9 @@ export const useStarredItems = (group: string, kind: string) => {
   };
 };
 
+/** The settled rows of a user without a stars resource; one array, so views keyed on the rows keep their memos */
+const NO_STARRED_ROWS: DashboardQueryResult[] = [];
+
 /**
  * The user's starred items of every kind Grafana shows, as search rows that follow the star set. The set is RTK
  * cache every star toggle invalidates and the search is keyed by it, so a toggle anywhere re-searches while the
@@ -78,7 +82,8 @@ export const useStarredSearch = ({
   skip,
   refetchOnMountOrArgChange,
 }: { skip?: boolean; refetchOnMountOrArgChange?: boolean } = {}) => {
-  const stars = useListStarsQuery(skip || !canUseStars() ? skipToken : { fieldSelector: userStarsFieldSelector() });
+  const canStar = canUseStars();
+  const stars = useListStarsQuery(skip || !canStar ? skipToken : { fieldSelector: userStarsFieldSelector() });
 
   // Keyed by search kind, names sorted, so the cache key is the set and not the order the API listed it in
   const args = useMemo(() => {
@@ -95,7 +100,8 @@ export const useStarredSearch = ({
   const refetch = useCallback(() => dispatch(refetchStarred()), [dispatch]);
 
   return {
-    rows: search.data,
+    // A user without a stars resource has nothing starred: settled and empty, not waiting on a request never made
+    rows: !skip && !canStar ? NO_STARRED_ROWS : search.data,
     // Until the first rows land; a changed star set keeps the previous rows up while it loads.
     loading: stars.isLoading || search.isLoading,
     error: stars.isError || search.isError,
