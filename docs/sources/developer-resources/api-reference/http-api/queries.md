@@ -32,8 +32,6 @@ The legacy [Query history API](https://grafana.com/docs/grafana/<GRAFANA_VERSION
 
 Use this API to manage [saved queries](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#saved-queries), also known as the query library. A saved query stores one or more data source queries with a title, description, and tags, so you and your team can reuse them in Explore and dashboards.
 
-All paths use the `queries.grafana.app` group and the `v1` version. Replace `{namespace}` with your namespace. To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
-
 ## Before you begin
 
 Saved queries are only available in Grafana Enterprise and Grafana Cloud.
@@ -53,13 +51,17 @@ By default, the Viewer basic role includes `fixed:queries:reader`, and the Edito
 
 The following table lists the main endpoints. The Swagger documentation also includes endpoints to search saved queries, delete a collection of saved queries, apply partial updates with `PATCH`, and render a saved query with its template variables replaced.
 
-| Method | Summary                                       | URI                                                                  |
-| ------ | --------------------------------------------- | -------------------------------------------------------------------- |
-| GET    | [List saved queries](#list-saved-queries)     | `/apis/queries.grafana.app/v1/namespaces/{namespace}/queries`        |
-| GET    | [Get a saved query](#get-a-saved-query)       | `/apis/queries.grafana.app/v1/namespaces/{namespace}/queries/{name}` |
-| POST   | [Create a saved query](#create-a-saved-query) | `/apis/queries.grafana.app/v1/namespaces/{namespace}/queries`        |
-| PUT    | [Update a saved query](#update-a-saved-query) | `/apis/queries.grafana.app/v1/namespaces/{namespace}/queries/{name}` |
-| DELETE | [Delete a saved query](#delete-a-saved-query) | `/apis/queries.grafana.app/v1/namespaces/{namespace}/queries/{name}` |
+**Base path:** `/apis/queries.grafana.app/v1/namespaces/{namespace}/`
+
+Replace `{namespace}` with your namespace. To learn which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+
+| Method | Summary                                       | Path             |
+| ------ | --------------------------------------------- | ---------------- |
+| GET    | [List saved queries](#list-saved-queries)     | `queries`        |
+| GET    | [Get a saved query](#get-a-saved-query)       | `queries/{name}` |
+| POST   | [Create a saved query](#create-a-saved-query) | `queries`        |
+| PUT    | [Update a saved query](#update-a-saved-query) | `queries/{name}` |
+| DELETE | [Delete a saved query](#delete-a-saved-query) | `queries/{name}` |
 
 ## List saved queries
 

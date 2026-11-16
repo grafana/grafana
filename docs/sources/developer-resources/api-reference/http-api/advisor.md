@@ -47,33 +47,38 @@ Before you begin, ensure you have the following:
 Reading checks to build alerts is the only supported public use case. The other endpoints are used internally by Grafana Advisor.
 {{< /admonition >}}
 
+To describe the resources that the Advisor API provides, send a `GET` request to `/apis/advisor.grafana.app/v0alpha1/`.
+
 These are the available endpoints:
 
-| Method | Summary                            | URI                                                                                  |
-| ------ | ---------------------------------- | ------------------------------------------------------------------------------------ |
-| GET    | Describe the available resources   | `/apis/advisor.grafana.app/v0alpha1/`                                                |
-| GET    | [List checks](#list-checks)        | `/apis/advisor.grafana.app/v0alpha1/namespaces/{namespace}/checks`                   |
-| POST   | Create a check                     | `/apis/advisor.grafana.app/v0alpha1/namespaces/{namespace}/checks`                   |
-| DELETE | Delete a collection of checks      | `/apis/advisor.grafana.app/v0alpha1/namespaces/{namespace}/checks`                   |
-| GET    | Get a check                        | `/apis/advisor.grafana.app/v0alpha1/namespaces/{namespace}/checks/{name}`            |
-| PUT    | Replace a check                    | `/apis/advisor.grafana.app/v0alpha1/namespaces/{namespace}/checks/{name}`            |
-| PATCH  | Update a check                     | `/apis/advisor.grafana.app/v0alpha1/namespaces/{namespace}/checks/{name}`            |
-| DELETE | Delete a check                     | `/apis/advisor.grafana.app/v0alpha1/namespaces/{namespace}/checks/{name}`            |
-| GET    | Get the status of a check          | `/apis/advisor.grafana.app/v0alpha1/namespaces/{namespace}/checks/{name}/status`     |
-| PUT    | Replace the status of a check      | `/apis/advisor.grafana.app/v0alpha1/namespaces/{namespace}/checks/{name}/status`     |
-| PATCH  | Update the status of a check       | `/apis/advisor.grafana.app/v0alpha1/namespaces/{namespace}/checks/{name}/status`     |
-| GET    | List check types                   | `/apis/advisor.grafana.app/v0alpha1/namespaces/{namespace}/checktypes`               |
-| POST   | Create a check type                | `/apis/advisor.grafana.app/v0alpha1/namespaces/{namespace}/checktypes`               |
-| DELETE | Delete a collection of check types | `/apis/advisor.grafana.app/v0alpha1/namespaces/{namespace}/checktypes`               |
-| GET    | Get a check type                   | `/apis/advisor.grafana.app/v0alpha1/namespaces/{namespace}/checktypes/{name}`        |
-| PUT    | Replace a check type               | `/apis/advisor.grafana.app/v0alpha1/namespaces/{namespace}/checktypes/{name}`        |
-| PATCH  | Update a check type                | `/apis/advisor.grafana.app/v0alpha1/namespaces/{namespace}/checktypes/{name}`        |
-| DELETE | Delete a check type                | `/apis/advisor.grafana.app/v0alpha1/namespaces/{namespace}/checktypes/{name}`        |
-| GET    | Get the status of a check type     | `/apis/advisor.grafana.app/v0alpha1/namespaces/{namespace}/checktypes/{name}/status` |
-| PUT    | Replace the status of a check type | `/apis/advisor.grafana.app/v0alpha1/namespaces/{namespace}/checktypes/{name}/status` |
-| PATCH  | Update the status of a check type  | `/apis/advisor.grafana.app/v0alpha1/namespaces/{namespace}/checktypes/{name}/status` |
-| POST   | Register check types               | `/apis/advisor.grafana.app/v0alpha1/namespaces/{namespace}/register`                 |
-| GET    | Get translations                   | `/apis/advisor.grafana.app/v0alpha1/namespaces/{namespace}/translations`             |
+**Base path:** `/apis/advisor.grafana.app/v0alpha1/namespaces/{namespace}/`
+
+Replace `{namespace}` with your namespace. To learn which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+
+| Method | Summary                            | Path                       |
+| ------ | ---------------------------------- | -------------------------- |
+| GET    | [List checks](#list-checks)        | `checks`                   |
+| POST   | Create a check                     | `checks`                   |
+| DELETE | Delete a collection of checks      | `checks`                   |
+| GET    | Get a check                        | `checks/{name}`            |
+| PUT    | Replace a check                    | `checks/{name}`            |
+| PATCH  | Update a check                     | `checks/{name}`            |
+| DELETE | Delete a check                     | `checks/{name}`            |
+| GET    | Get the status of a check          | `checks/{name}/status`     |
+| PUT    | Replace the status of a check      | `checks/{name}/status`     |
+| PATCH  | Update the status of a check       | `checks/{name}/status`     |
+| GET    | List check types                   | `checktypes`               |
+| POST   | Create a check type                | `checktypes`               |
+| DELETE | Delete a collection of check types | `checktypes`               |
+| GET    | Get a check type                   | `checktypes/{name}`        |
+| PUT    | Replace a check type               | `checktypes/{name}`        |
+| PATCH  | Update a check type                | `checktypes/{name}`        |
+| DELETE | Delete a check type                | `checktypes/{name}`        |
+| GET    | Get the status of a check type     | `checktypes/{name}/status` |
+| PUT    | Replace the status of a check type | `checktypes/{name}/status` |
+| PATCH  | Update the status of a check type  | `checktypes/{name}/status` |
+| POST   | Register check types               | `register`                 |
+| GET    | Get translations                   | `translations`             |
 
 ## List checks
 

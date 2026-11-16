@@ -39,16 +39,20 @@ The Collections API, `/apis/collections.grafana.app/*`, is designed to group Gra
 
 These are the available endpoints:
 
-| Method | Summary                                 | URI                                                                                                     | Replaced endpoint                             |
-| ------ | --------------------------------------- | ------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
-| PUT    | [Star a resource](#star-a-resource)     | `/apis/collections.grafana.app/v1alpha1/namespaces/{namespace}/stars/{name}/update/{group}/{kind}/{id}` | /api/user/stars/dashboard/uid/{dashboard_uid} |
-| DELETE | [Unstar a resource](#unstar-a-resource) | `/apis/collections.grafana.app/v1alpha1/namespaces/{namespace}/stars/{name}/update/{group}/{kind}/{id}` | /api/user/stars/dashboard/uid/{dashboard_uid} |
-| GET    | [List stars](#list-stars)               | `/apis/collections.grafana.app/v1alpha1/namespaces/{namespace}/stars`                                   |                                               |
-| GET    | [Get stars](#get-stars)                 | `/apis/collections.grafana.app/v1alpha1/namespaces/{namespace}/stars/{name}`                            |                                               |
-| POST   | [Create stars](#create-stars)           | `/apis/collections.grafana.app/v1alpha1/namespaces/{namespace}/stars`                                   |                                               |
-| PUT    | [Replace stars](#replace-stars)         | `/apis/collections.grafana.app/v1alpha1/namespaces/{namespace}/stars/{name}`                            |                                               |
-| PATCH  | [Patch stars](#patch-stars)             | `/apis/collections.grafana.app/v1alpha1/namespaces/{namespace}/stars/{name}`                            |                                               |
-| DELETE | [Delete stars](#delete-stars)           | `/apis/collections.grafana.app/v1alpha1/namespaces/{namespace}/stars/{name}`                            |                                               |
+**Base path:** `/apis/collections.grafana.app/v1alpha1/namespaces/{namespace}/`
+
+Replace `{namespace}` with your namespace. To learn which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+
+| Method | Summary                                 | Path                                      | Replaced endpoint                             |
+| ------ | --------------------------------------- | ----------------------------------------- | --------------------------------------------- |
+| PUT    | [Star a resource](#star-a-resource)     | `stars/{name}/update/{group}/{kind}/{id}` | /api/user/stars/dashboard/uid/{dashboard_uid} |
+| DELETE | [Unstar a resource](#unstar-a-resource) | `stars/{name}/update/{group}/{kind}/{id}` | /api/user/stars/dashboard/uid/{dashboard_uid} |
+| GET    | [List stars](#list-stars)               | `stars`                                   |                                               |
+| GET    | [Get stars](#get-stars)                 | `stars/{name}`                            |                                               |
+| POST   | [Create stars](#create-stars)           | `stars`                                   |                                               |
+| PUT    | [Replace stars](#replace-stars)         | `stars/{name}`                            |                                               |
+| PATCH  | [Patch stars](#patch-stars)             | `stars/{name}`                            |                                               |
+| DELETE | [Delete stars](#delete-stars)           | `stars/{name}`                            |                                               |
 
 ## Star a resource
 

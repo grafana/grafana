@@ -34,13 +34,17 @@ This API complies with the new Grafana API structure. To learn more refer to doc
 
 These are the available endpoints:
 
-| Method | Summary                                 | URI                                                                     |
-| ------ | --------------------------------------- | ----------------------------------------------------------------------- |
-| GET    | [List Playlists](#list-playlists)       | `/apis/playlist.grafana.app/v1/namespaces/{namespace}/playlists`        |
-| GET    | [Get a Playlist](#get-a-playlist)       | `/apis/playlist.grafana.app/v1/namespaces/{namespace}/playlists/{name}` |
-| POST   | [Create a Playlist](#create-a-playlist) | `/apis/playlist.grafana.app/v1/namespaces/{namespace}/playlists`        |
-| PUT    | [Update a Playlist](#update-a-playlist) | `/apis/playlist.grafana.app/v1/namespaces/{namespace}/playlists/{name}` |
-| DELETE | [Delete a Playlist](#delete-a-playlist) | `/apis/playlist.grafana.app/v1/namespaces/{namespace}/playlists/{name}` |
+**Base path:** `/apis/playlist.grafana.app/v1/namespaces/{namespace}/`
+
+Replace `{namespace}` with your namespace. To learn which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+
+| Method | Summary                                 | Path               |
+| ------ | --------------------------------------- | ------------------ |
+| GET    | [List Playlists](#list-playlists)       | `playlists`        |
+| GET    | [Get a Playlist](#get-a-playlist)       | `playlists/{name}` |
+| POST   | [Create a Playlist](#create-a-playlist) | `playlists`        |
+| PUT    | [Update a Playlist](#update-a-playlist) | `playlists/{name}` |
+| DELETE | [Delete a Playlist](#delete-a-playlist) | `playlists/{name}` |
 
 ## List Playlists
 

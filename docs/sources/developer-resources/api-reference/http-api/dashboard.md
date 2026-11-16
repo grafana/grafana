@@ -69,14 +69,18 @@ If you're running Grafana Enterprise, you'll need to have specific permissions f
 
 These are the available endpoints:
 
-| Method | Summary                                                               | URI                                                                          |
-| ------ | --------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| POST   | [Create Dashboard](#create-dashboard)                                 | `/apis/dashboard.grafana.app/v1/namespaces/{namespace}/dashboards`           |
-| PUT    | [Update Dashboard](#update-dashboard)                                 | `/apis/dashboard.grafana.app/v1/namespaces/{namespace}/dashboards/{uid}`     |
-| GET    | [Get Dashboard](#get-dashboard)                                       | `/apis/dashboard.grafana.app/v1/namespaces/{namespace}/dashboards/{uid}`     |
-| GET    | [Get Dashboard (DTO format)](#retrieve-additional-access-information) | `/apis/dashboard.grafana.app/v1/namespaces/{namespace}/dashboards/{uid}/dto` |
-| GET    | [List Dashboards](#list-dashboards)                                   | `/apis/dashboard.grafana.app/v1/namespaces/{namespace}/dashboards`           |
-| DELETE | [Delete Dashboard](#delete-dashboard)                                 | `/apis/dashboard.grafana.app/v1/namespaces/{namespace}/dashboards/{uid}`     |
+**Base path:** `/apis/dashboard.grafana.app/v1/namespaces/{namespace}/`
+
+Replace `{namespace}` with your namespace. To learn which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+
+| Method | Summary                                                               | Path                   |
+| ------ | --------------------------------------------------------------------- | ---------------------- |
+| POST   | [Create Dashboard](#create-dashboard)                                 | `dashboards`           |
+| PUT    | [Update Dashboard](#update-dashboard)                                 | `dashboards/{uid}`     |
+| GET    | [Get Dashboard](#get-dashboard)                                       | `dashboards/{uid}`     |
+| GET    | [Get Dashboard (DTO format)](#retrieve-additional-access-information) | `dashboards/{uid}/dto` |
+| GET    | [List Dashboards](#list-dashboards)                                   | `dashboards`           |
+| DELETE | [Delete Dashboard](#delete-dashboard)                                 | `dashboards/{uid}`     |
 
 ## Create Dashboard
 

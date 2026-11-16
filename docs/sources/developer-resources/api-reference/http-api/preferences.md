@@ -31,8 +31,6 @@ The legacy [Preferences API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/
 
 Use this API to read and change user, team, and organization preferences, such as the theme, timezone, home dashboard, and language.
 
-All paths use the `preferences.grafana.app` group and the `v1` version. Replace `{namespace}` with your namespace. To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
-
 ## Requirements
 
 Access depends on who owns the preferences, not on role-based access control actions:
@@ -49,15 +47,19 @@ Organization administrators can't read or change the preferences of other users.
 
 The following table lists the main endpoints. The Swagger documentation also includes the parameters for watching changes.
 
-| Method | Summary                                           | URI                                                                          |
-| ------ | ------------------------------------------------- | ---------------------------------------------------------------------------- |
-| GET    | [Get merged preferences](#get-merged-preferences) | `/apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences/merged` |
-| GET    | [List preferences](#list-preferences)             | `/apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences`        |
-| GET    | [Get preferences](#get-preferences)               | `/apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences/{name}` |
-| POST   | [Create preferences](#create-preferences)         | `/apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences`        |
-| PUT    | [Update preferences](#update-preferences)         | `/apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences/{name}` |
-| PATCH  | [Patch preferences](#patch-preferences)           | `/apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences/{name}` |
-| DELETE | [Delete preferences](#delete-preferences)         | `/apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences/{name}` |
+**Base path:** `/apis/preferences.grafana.app/v1/namespaces/{namespace}/`
+
+Replace `{namespace}` with your namespace. To learn which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+
+| Method | Summary                                           | Path                 |
+| ------ | ------------------------------------------------- | -------------------- |
+| GET    | [Get merged preferences](#get-merged-preferences) | `preferences/merged` |
+| GET    | [List preferences](#list-preferences)             | `preferences`        |
+| GET    | [Get preferences](#get-preferences)               | `preferences/{name}` |
+| POST   | [Create preferences](#create-preferences)         | `preferences`        |
+| PUT    | [Update preferences](#update-preferences)         | `preferences/{name}` |
+| PATCH  | [Patch preferences](#patch-preferences)           | `preferences/{name}` |
+| DELETE | [Delete preferences](#delete-preferences)         | `preferences/{name}` |
 
 ## Preference names and precedence
 

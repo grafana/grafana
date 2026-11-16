@@ -47,13 +47,17 @@ If you're running Grafana Enterprise, you'll need to have specific permissions f
 
 ## Endpoints
 
-| Method | Summary                                   | URI                                                                |
-| ------ | ----------------------------------------- | ------------------------------------------------------------------ |
-| GET    | [Get all folders](#get-all-folders)       | `/apis/folder.grafana.app/v1/namespaces/{namespace}/folders`       |
-| GET    | [Get folder by `uid`](#get-folder-by-uid) | `/apis/folder.grafana.app/v1/namespaces/{namespace}/folders/{uid}` |
-| POST   | [Create folder](#create-folder)           | `/apis/folder.grafana.app/v1/namespaces/{namespace}/folders`       |
-| PUT    | [Update folder](#update-folder)           | `/apis/folder.grafana.app/v1/namespaces/{namespace}/folders/{uid}` |
-| DELETE | [Delete folder](#delete-folder)           | `/apis/folder.grafana.app/v1/namespaces/{namespace}/folders/{uid}` |
+**Base path:** `/apis/folder.grafana.app/v1/namespaces/{namespace}/`
+
+Replace `{namespace}` with your namespace. To learn which namespace to use, refer to the [API overview](ref:apis).
+
+| Method | Summary                                   | Path            |
+| ------ | ----------------------------------------- | --------------- |
+| GET    | [Get all folders](#get-all-folders)       | `folders`       |
+| GET    | [Get folder by `uid`](#get-folder-by-uid) | `folders/{uid}` |
+| POST   | [Create folder](#create-folder)           | `folders`       |
+| PUT    | [Update folder](#update-folder)           | `folders/{uid}` |
+| DELETE | [Delete folder](#delete-folder)           | `folders/{uid}` |
 
 ## Get all folders
 

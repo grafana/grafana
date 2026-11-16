@@ -34,8 +34,6 @@ This API is in `beta`, so it might change in future releases.
 
 Use this API to create shortened URLs. A short URL represents a longer URL containing complex query parameters in a smaller and simpler format.
 
-All paths use the `shorturl.grafana.app` group and the `v1beta1` version. Replace `{namespace}` with your namespace. To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
-
 ## Requirements
 
 Short URLs don't use role-based access control actions. Access depends on the organization role of the user or service account that sends the request:
@@ -51,14 +49,18 @@ Listing is restricted to admins because it exposes every short URL in the organi
 
 The following table lists the main endpoints. The Swagger documentation also includes endpoints to search short URLs, delete a collection of short URLs, apply partial updates with `PATCH`, and read or update the `status` subresource.
 
-| Method | Summary                                     | URI                                                                               |
-| ------ | ------------------------------------------- | --------------------------------------------------------------------------------- |
-| GET    | [List short URLs](#list-short-urls)         | `/apis/shorturl.grafana.app/v1beta1/namespaces/{namespace}/shorturls`             |
-| GET    | [Get a short URL](#get-a-short-url)         | `/apis/shorturl.grafana.app/v1beta1/namespaces/{namespace}/shorturls/{name}`      |
-| GET    | [Resolve a short URL](#resolve-a-short-url) | `/apis/shorturl.grafana.app/v1beta1/namespaces/{namespace}/shorturls/{name}/goto` |
-| POST   | [Create a short URL](#create-a-short-url)   | `/apis/shorturl.grafana.app/v1beta1/namespaces/{namespace}/shorturls`             |
-| PUT    | [Update a short URL](#update-a-short-url)   | `/apis/shorturl.grafana.app/v1beta1/namespaces/{namespace}/shorturls/{name}`      |
-| DELETE | [Delete a short URL](#delete-a-short-url)   | `/apis/shorturl.grafana.app/v1beta1/namespaces/{namespace}/shorturls/{name}`      |
+**Base path:** `/apis/shorturl.grafana.app/v1beta1/namespaces/{namespace}/`
+
+Replace `{namespace}` with your namespace. To learn which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+
+| Method | Summary                                     | Path                    |
+| ------ | ------------------------------------------- | ----------------------- |
+| GET    | [List short URLs](#list-short-urls)         | `shorturls`             |
+| GET    | [Get a short URL](#get-a-short-url)         | `shorturls/{name}`      |
+| GET    | [Resolve a short URL](#resolve-a-short-url) | `shorturls/{name}/goto` |
+| POST   | [Create a short URL](#create-a-short-url)   | `shorturls`             |
+| PUT    | [Update a short URL](#update-a-short-url)   | `shorturls/{name}`      |
+| DELETE | [Delete a short URL](#delete-a-short-url)   | `shorturls/{name}`      |
 
 ## List short URLs
 

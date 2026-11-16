@@ -29,8 +29,6 @@ This API is in `beta`, so it might change in future releases.
 
 Use this API to manage [alert enrichment](https://grafana.com/docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/alert-enrichment/) in Grafana Cloud. An `AlertEnrichment` resource runs one or more enrichment steps when an alert fires and attaches additional context—such as data source query results, annotations, AI-generated explanations, or investigation links—before the alert notification is delivered.
 
-All paths use the `alertenrichment.grafana.app` group and the `v1beta1` version. Replace `{namespace}` with your stack namespace (`stacks-<STACK_ID>`). To learn more about namespaces in Grafana Cloud, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/#grafana-cloud).
-
 ## Before you begin
 
 Before you begin, ensure you have the following:
@@ -76,14 +74,18 @@ An `AlertEnrichment` resource contains the following fields in `metadata` and `s
 
 The following table lists the main endpoints for `AlertEnrichment` resources. The Swagger specification also includes `DELETE` on the collection endpoint and watch query parameters.
 
-| Method | Summary                                                             | URI                                                                                         |
-| ------ | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| GET    | [List alert enrichment resources](#list-alert-enrichment-resources) | `/apis/alertenrichment.grafana.app/v1beta1/namespaces/{namespace}/alert-enrichments`        |
-| GET    | [Get an alert enrichment](#get-an-alert-enrichment)                 | `/apis/alertenrichment.grafana.app/v1beta1/namespaces/{namespace}/alert-enrichments/{name}` |
-| POST   | [Create an alert enrichment](#create-an-alert-enrichment)           | `/apis/alertenrichment.grafana.app/v1beta1/namespaces/{namespace}/alert-enrichments`        |
-| PUT    | [Update an alert enrichment](#update-an-alert-enrichment)           | `/apis/alertenrichment.grafana.app/v1beta1/namespaces/{namespace}/alert-enrichments/{name}` |
-| PATCH  | [Patch an alert enrichment](#patch-an-alert-enrichment)             | `/apis/alertenrichment.grafana.app/v1beta1/namespaces/{namespace}/alert-enrichments/{name}` |
-| DELETE | [Delete an alert enrichment](#delete-an-alert-enrichment)           | `/apis/alertenrichment.grafana.app/v1beta1/namespaces/{namespace}/alert-enrichments/{name}` |
+**Base path:** `/apis/alertenrichment.grafana.app/v1beta1/namespaces/{namespace}/`
+
+Replace `{namespace}` with your stack namespace, in the format `stacks-<STACK_ID>`. To learn more about namespaces in Grafana Cloud, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/#grafana-cloud).
+
+| Method | Summary                                                             | Path                       |
+| ------ | ------------------------------------------------------------------- | -------------------------- |
+| GET    | [List alert enrichment resources](#list-alert-enrichment-resources) | `alert-enrichments`        |
+| GET    | [Get an alert enrichment](#get-an-alert-enrichment)                 | `alert-enrichments/{name}` |
+| POST   | [Create an alert enrichment](#create-an-alert-enrichment)           | `alert-enrichments`        |
+| PUT    | [Update an alert enrichment](#update-an-alert-enrichment)           | `alert-enrichments/{name}` |
+| PATCH  | [Patch an alert enrichment](#patch-an-alert-enrichment)             | `alert-enrichments/{name}` |
+| DELETE | [Delete an alert enrichment](#delete-an-alert-enrichment)           | `alert-enrichments/{name}` |
 
 #### List alert enrichment resources
 

@@ -32,8 +32,6 @@ This API is in `beta`, so it might change in future releases.
 
 Use this API to manage [notebooks](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/notebooks/). A notebook combines text, code, and visualization panels in a single document, so you can investigate a problem, explain what you found, and share the supporting data with your team.
 
-All paths use the `dashboard.grafana.app` group and the `v2beta1` version. Replace `{namespace}` with your namespace. To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
-
 ## Before you begin
 
 **This API is in beta (`v2beta1`) and might change**. For more details about versioning, refer to [New API versioning](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis#version).
@@ -59,13 +57,17 @@ By default, Viewers can read all notebooks in the organization, and Editors can 
 
 The following table lists the main endpoints. The Swagger documentation also includes endpoints to apply partial updates with `PATCH`, delete a collection of notebooks, search notebooks, and list notebook keys.
 
-| Method | Summary                                 | URI                                                                           |
-| ------ | --------------------------------------- | ----------------------------------------------------------------------------- |
-| GET    | [List notebooks](#list-notebooks)       | `/apis/dashboard.grafana.app/v2beta1/namespaces/{namespace}/notebooks`        |
-| GET    | [Get a notebook](#get-a-notebook)       | `/apis/dashboard.grafana.app/v2beta1/namespaces/{namespace}/notebooks/{name}` |
-| POST   | [Create a notebook](#create-a-notebook) | `/apis/dashboard.grafana.app/v2beta1/namespaces/{namespace}/notebooks`        |
-| PUT    | [Update a notebook](#update-a-notebook) | `/apis/dashboard.grafana.app/v2beta1/namespaces/{namespace}/notebooks/{name}` |
-| DELETE | [Delete a notebook](#delete-a-notebook) | `/apis/dashboard.grafana.app/v2beta1/namespaces/{namespace}/notebooks/{name}` |
+**Base path:** `/apis/dashboard.grafana.app/v2beta1/namespaces/{namespace}/`
+
+Replace `{namespace}` with your namespace. To learn which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+
+| Method | Summary                                 | Path               |
+| ------ | --------------------------------------- | ------------------ |
+| GET    | [List notebooks](#list-notebooks)       | `notebooks`        |
+| GET    | [Get a notebook](#get-a-notebook)       | `notebooks/{name}` |
+| POST   | [Create a notebook](#create-a-notebook) | `notebooks`        |
+| PUT    | [Update a notebook](#update-a-notebook) | `notebooks/{name}` |
+| DELETE | [Delete a notebook](#delete-a-notebook) | `notebooks/{name}` |
 
 ## Notebook structure
 

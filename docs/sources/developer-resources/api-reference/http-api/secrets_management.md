@@ -53,13 +53,17 @@ If you're running Grafana Enterprise, you'll need to have specific permissions f
 
 These are the available endpoints:
 
-| Method | Summary                                         | URI                                                                           |
-| ------ | ----------------------------------------------- | ----------------------------------------------------------------------------- |
-| POST   | [Create a secure value](#create-a-secure-value) | `/apis/secret.grafana.app/v1beta1/namespaces/{namespace}/securevalues`        |
-| GET    | [List secure values](#list-secure-values)       | `/apis/secret.grafana.app/v1beta1/namespaces/{namespace}/securevalues`        |
-| GET    | [Get a secure value](#get-a-secure-value)       | `/apis/secret.grafana.app/v1beta1/namespaces/{namespace}/securevalues/{name}` |
-| PUT    | [Update a secure value](#update-a-secure-value) | `/apis/secret.grafana.app/v1beta1/namespaces/{namespace}/securevalues/{name}` |
-| DELETE | [Delete a secure value](#delete-a-secure-value) | `/apis/secret.grafana.app/v1beta1/namespaces/{namespace}/securevalues/{name}` |
+**Base path:** `/apis/secret.grafana.app/v1beta1/namespaces/{namespace}/`
+
+Replace `{namespace}` with your namespace. To learn which namespace to use, refer to the [API overview](ref:api-overview).
+
+| Method | Summary                                         | Path                  |
+| ------ | ----------------------------------------------- | --------------------- |
+| POST   | [Create a secure value](#create-a-secure-value) | `securevalues`        |
+| GET    | [List secure values](#list-secure-values)       | `securevalues`        |
+| GET    | [Get a secure value](#get-a-secure-value)       | `securevalues/{name}` |
+| PUT    | [Update a secure value](#update-a-secure-value) | `securevalues/{name}` |
+| DELETE | [Delete a secure value](#delete-a-secure-value) | `securevalues/{name}` |
 
 ## Decrypters
 

@@ -39,10 +39,14 @@ The new Grafana APIs track version history for resources. You can retrieve the h
 
 These are the available endpoints:
 
-| Method | Summary                                                     | URI                                                                                                                                       |
-| ------ | ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| GET    | [List resource history](#list-resource-history)             | `/apis/{group}/{version}/namespaces/{namespace}/{resource}?labelSelector=grafana.app/get-history=true&fieldSelector=metadata.name=<NAME>` |
-| GET    | [Retrieve a specific version](#retrieve-a-specific-version) | `/apis/{group}/{version}/namespaces/{namespace}/{resource}/{name}?resourceVersion=<RESOURCE_VERSION>`                                     |
+**Base path:** `/apis/{group}/{version}/namespaces/{namespace}/`
+
+Replace `{group}` with the API group of the resource, for example `dashboard.grafana.app`, and `{version}` with the API version of the resource, for example `v1`. Replace `{namespace}` with your namespace. To learn which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+
+| Method | Summary                                                     | Path                                                                                       |
+| ------ | ----------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| GET    | [List resource history](#list-resource-history)             | `{resource}?labelSelector=grafana.app/get-history=true&fieldSelector=metadata.name=<NAME>` |
+| GET    | [Retrieve a specific version](#retrieve-a-specific-version) | `{resource}/{name}?resourceVersion=<RESOURCE_VERSION>`                                     |
 
 ## List resource history
 

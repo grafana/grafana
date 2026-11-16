@@ -43,8 +43,6 @@ Availability depends on where you run Grafana:
 - **Grafana Cloud:** The API is rolling out gradually and might not be available on your stack yet.
 - **Self-managed Grafana:** The API is disabled by default. To enable it, set `enabled = true` in the [`[annotations.app_platform]`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#annotationsapp_platform) section of the Grafana configuration.
 
-All paths use the `annotation.grafana.app` group and the `v0alpha1` version. Replace `{namespace}` with your namespace. To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
-
 **Alert annotations aren't available in this API yet**
 
 ## Requirements
@@ -69,17 +67,21 @@ Listing tags requires `annotations:read` with an organization scope.
 
 These are the available endpoints:
 
-| Method | Summary                                                                             | URI                                                                               |
-| ------ | ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| GET    | [List annotations](#list-annotations)                                               | `/apis/annotation.grafana.app/v0alpha1/namespaces/{namespace}/annotations`        |
-| GET    | [Search annotations](#search-annotations)                                           | `/apis/annotation.grafana.app/v0alpha1/namespaces/{namespace}/search`             |
-| GET    | [Find annotation tags](#find-annotation-tags)                                       | `/apis/annotation.grafana.app/v0alpha1/namespaces/{namespace}/tags`               |
-| GET    | [Get an annotation](#get-an-annotation)                                             | `/apis/annotation.grafana.app/v0alpha1/namespaces/{namespace}/annotations/{name}` |
-| POST   | [Create an annotation](#create-an-annotation)                                       | `/apis/annotation.grafana.app/v0alpha1/namespaces/{namespace}/annotations`        |
-| POST   | [Create an annotation in Graphite format](#create-an-annotation-in-graphite-format) | `/apis/annotation.grafana.app/v0alpha1/namespaces/{namespace}/graphite`           |
-| PUT    | [Update an annotation](#update-an-annotation)                                       | `/apis/annotation.grafana.app/v0alpha1/namespaces/{namespace}/annotations/{name}` |
-| PATCH  | [Patch an annotation](#patch-an-annotation)                                         | `/apis/annotation.grafana.app/v0alpha1/namespaces/{namespace}/annotations/{name}` |
-| DELETE | [Delete an annotation](#delete-an-annotation)                                       | `/apis/annotation.grafana.app/v0alpha1/namespaces/{namespace}/annotations/{name}` |
+**Base path:** `/apis/annotation.grafana.app/v0alpha1/namespaces/{namespace}/`
+
+Replace `{namespace}` with your namespace. To learn which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+
+| Method | Summary                                                                             | Path                 |
+| ------ | ----------------------------------------------------------------------------------- | -------------------- |
+| GET    | [List annotations](#list-annotations)                                               | `annotations`        |
+| GET    | [Search annotations](#search-annotations)                                           | `search`             |
+| GET    | [Find annotation tags](#find-annotation-tags)                                       | `tags`               |
+| GET    | [Get an annotation](#get-an-annotation)                                             | `annotations/{name}` |
+| POST   | [Create an annotation](#create-an-annotation)                                       | `annotations`        |
+| POST   | [Create an annotation in Graphite format](#create-an-annotation-in-graphite-format) | `graphite`           |
+| PUT    | [Update an annotation](#update-an-annotation)                                       | `annotations/{name}` |
+| PATCH  | [Patch an annotation](#patch-an-annotation)                                         | `annotations/{name}` |
+| DELETE | [Delete an annotation](#delete-an-annotation)                                       | `annotations/{name}` |
 
 ## The annotation resource
 
