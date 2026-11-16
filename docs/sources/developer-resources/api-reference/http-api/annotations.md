@@ -47,7 +47,12 @@ Availability depends on where you run Grafana:
 
 ## Requirements
 
-If you're running Grafana Enterprise or Grafana Cloud, you need the `annotations` action for the operation, such as `annotations:read` or `annotations:create`, with a scope that matches the annotation type. For the full list of actions and scopes, refer to [Role-based access control permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/).
+If you're running Grafana Enterprise or Grafana Cloud, you need the `annotations` action for the operation, such as `annotations:read` or `annotations:create`, with a scope that matches the annotation type:
+
+- **Organization annotations** (no `dashboardUID`): `annotations:*`, `annotations:type:*`, or `annotations:type:organization`.
+- **Dashboard annotations**: `dashboards:*` or `dashboards:uid:<DASHBOARD_UID>`, or the equivalent `folders:*` or `folders:uid:<FOLDER_UID>` scope for the folder that contains the dashboard.
+
+Listing tags requires `annotations:read` with an organization scope. For the full list of actions and scopes, refer to [Role-based access control permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/).
 
 ## Endpoints
 

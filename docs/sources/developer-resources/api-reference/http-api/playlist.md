@@ -32,7 +32,7 @@ This API complies with the new Grafana API structure. To learn more refer to doc
 
 ## Requirements
 
-By default, users with the Viewer role can read playlists, and users with the Editor or Admin role can also create, update, and delete them. For more information, refer to [Organization roles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/#organization-roles).
+By default, users with the Viewer role can read playlists, and users with the Editor or Admin role can also create, update, and delete them. Users with the None role can also read playlists. If the `playlistsRBAC` feature toggle is turned on, access uses the `playlists:read` and `playlists:write` actions instead. For the related fixed roles, refer to [RBAC role definitions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions/). For more information about the default access, refer to [Organization roles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/#organization-roles).
 
 ## Endpoints
 

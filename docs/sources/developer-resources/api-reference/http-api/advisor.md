@@ -34,14 +34,9 @@ The `/apis/advisor.grafana.app/*` API exposes the results of [Grafana Advisor](h
 
 Advisor stores each run as a `Check` resource. The check's `status.report` field contains the number of analyzed items and the list of failures. You can [read these checks](#list-checks) to [create an alert based on Grafana Advisor results](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/grafana-advisor/advisor-create-alert/). The rest of the endpoints are for internal use.
 
-## Before you begin
-
-Before you begin, ensure you have the following:
-
-- **Grafana Advisor enabled:** Advisor has generated at least one report. Refer to [Grafana Advisor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/grafana-advisor/) to generate your first report.
-- **A service account token with the Admin role:** Use it to authenticate your requests. Refer to [HTTP API authentication](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/authentication).
-
 ## Requirements
+
+To use the API you need **a service account token** to authenticate your requests. Refer to [HTTP API authentication](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/authentication).
 
 By default, only users with the Admin role can use the Advisor API. For more information, refer to [Organization roles](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/#organization-roles).
 
