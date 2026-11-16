@@ -181,8 +181,9 @@ const FlameGraphHeader = (props: Props) => {
 };
 
 export const alignOptions: Array<SelectableValue<TextAlign>> = [
-  { value: 'left', description: 'Align text left', icon: 'align-left' },
-  { value: 'right', description: 'Align text right', icon: 'align-right' },
+  { value: 'left', description: 'Align text left', icon: 'align-left', ariaLabel: 'Align text left' },
+  { value: 'right', description: 'Align text right', icon: 'align-right', ariaLabel: 'Align text right' },
+  { value: 'name', label: 'Name', description: 'Show function name', ariaLabel: 'Show function name' },
 ];
 
 const viewModeOptions: Array<SelectableValue<ViewMode>> = [

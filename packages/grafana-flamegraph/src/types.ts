@@ -43,7 +43,8 @@ export enum ColorSchemeDiff {
   DiffColorBlind = 'diffColorBlind',
 }
 
-export type TextAlign = 'left' | 'right';
+// 'name' shows the function, without the import path.
+export type TextAlign = 'left' | 'right' | 'name';
 
 export interface ProfileTooltipData {
   percentValue: number;

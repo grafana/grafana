@@ -76,12 +76,35 @@ describe('FlameGraph', () => {
   });
 
   it('should render correctly', async () => {
-    setup();
+    setup({ textAlign: 'name' });
 
     const canvas = screen.getByTestId('flameGraph') as HTMLCanvasElement;
     const ctx = canvas!.getContext('2d');
     const calls = ctx!.__getDrawCalls();
     expect(calls).toMatchSnapshot();
+  });
+
+  it('offers function names as a third alignment option', () => {
+    const onTextAlignChange = jest.fn();
+    setup({ textAlign: 'name', onTextAlignChange });
+
+    expect(screen.getByRole('radio', { name: 'Show function name' })).toBeChecked();
+
+    fireEvent.click(screen.getByRole('radio', { name: 'Align text left' }));
+
+    expect(onTextAlignChange).toHaveBeenCalledWith('left');
+  });
+
+  it('draws the full symbol when text is aligned left', () => {
+    setup({ textAlign: 'left' });
+
+    const canvas = screen.getByTestId('flameGraph') as HTMLCanvasElement;
+    const texts = canvas
+      .getContext('2d')!
+      .__getDrawCalls()
+      .flatMap((call) => (call.type === 'fillText' ? [call.props.text] : []));
+
+    expect(texts).toContain('github.com/weaveworks/common/middleware.Instrument.Wrap.func1 (5.51 Bil)');
   });
 
   it('should render metadata', async () => {

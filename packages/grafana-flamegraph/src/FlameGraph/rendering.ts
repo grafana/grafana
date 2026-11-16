@@ -208,7 +208,7 @@ function useRenderFunc(
             finalLabel,
             item,
             width,
-            textAlign === 'left' ? x + (GROUP_STRIP_MARGIN_LEFT + GROUP_TEXT_OFFSET) * dpr : x,
+            textAlign === 'right' ? x : x + (GROUP_STRIP_MARGIN_LEFT + GROUP_TEXT_OFFSET) * dpr,
             y,
             textAlign,
             dpr
@@ -447,7 +447,7 @@ function useSetupCanvas(
 }
 
 // Renders a text inside the node rectangle. It allows setting alignment of the text left or right which takes effect
-// when text is too long to fit in the rectangle.
+// when text is too long to fit in the rectangle. Name uses the same layout as left, without the import path.
 function renderLabel(
   ctx: CanvasRenderingContext2D,
   data: FlameGraphDataContainer,
@@ -465,6 +465,9 @@ function renderLabel(
 
   const displayValue = data.valueDisplayProcessor(item.value);
   const unit = displayValue.suffix ? displayValue.text + displayValue.suffix : displayValue.text;
+  if (textAlign === 'name') {
+    label = functionName(label);
+  }
 
   // We only measure name here instead of full label because of how we deal with the units and aligning later.
   const measure = ctx.measureText(label);
@@ -476,7 +479,7 @@ function renderLabel(
   // We use the desired alignment only if there is not enough space for the text, otherwise we keep left alignment as
   // that will already show full text.
   if (measure.width > spaceForTextInRect) {
-    ctx.textAlign = textAlign;
+    ctx.textAlign = textAlign === 'right' ? 'right' : 'left';
     // If aligned to the right we don't want to take the space with the unit label as the assumption is user wants to
     // mainly see the name. This also reflects how pyro/flamegraph works.
     if (textAlign === 'right') {
@@ -499,4 +502,13 @@ function renderLabel(
  */
 export function getBarX(offset: number, totalTicks: number, rangeMin: number, pixelsPerTick: number) {
   return (offset - totalTicks * rangeMin) * pixelsPerTick;
+}
+
+const collapsedPrefix = /^\(\d+\) /;
+const importPath = /^(?:[\w.-]+\/)+/;
+
+// Drops the import path. A collapsed-frame count stays in front.
+export function functionName(label: string): string {
+  const prefix = label.match(collapsedPrefix)?.[0] ?? '';
+  return prefix + label.slice(prefix.length).replace(importPath, '');
 }
