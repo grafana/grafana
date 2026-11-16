@@ -42,7 +42,7 @@ jobs:
         uses: ./.github/actions/setup-node
 
       - name: Install frontend dependencies
-        uses: ./.github/actions/yarn-install
+        uses: ./.github/actions/install-frontend-deps
 
       - name: Lint docs
         run: pnpm run prettier:checkDocs

@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"slices"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -60,10 +61,11 @@ func TestSearchDistributorConvertsOwnErrors(t *testing.T) {
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = conn.Close() })
 
-	_, err = resourcepb.NewResourceIndexClient(conn).RebuildIndexes(t.Context(), &resourcepb.RebuildIndexesRequest{
+	resp, err := resourcepb.NewResourceIndexClient(conn).RebuildIndexes(t.Context(), &resourcepb.RebuildIndexesRequest{
 		Namespace: "default", Keys: []*resourcepb.ResourceKey{{Namespace: "other"}},
 	})
 	want := NewBadRequestError("key namespace does not match request namespace")
+	require.Nil(t, resp)
 	require.Equal(t, codes.InvalidArgument, status.Code(err))
 	details := status.Convert(err).Details()
 	require.Len(t, details, 1)
@@ -299,16 +301,11 @@ func (s *failoverTestState) record(id string) error {
 	return s.errFn(n, id)
 }
 
-// embeddedTestError makes the fake client return the error inside the response.
-type embeddedTestError struct{ res *resourcepb.ErrorResult }
-
-func (e embeddedTestError) Error() string { return e.res.Message }
+// errNilResponse makes the fake client return neither a response nor an error.
+var errNilResponse = errors.New("nil response")
 
 func (c *failoverTestClient) Search(context.Context, *resourcepb.ResourceSearchRequest, ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
 	if err := c.state.record(c.id); err != nil {
-		if e, ok := errors.AsType[embeddedTestError](err); ok {
-			return &resourcepb.ResourceSearchResponse{Error: e.res}, nil
-		}
 		return nil, err
 	}
 	return &resourcepb.ResourceSearchResponse{TotalHits: 1}, nil
@@ -316,6 +313,9 @@ func (c *failoverTestClient) Search(context.Context, *resourcepb.ResourceSearchR
 
 func (c *failoverTestClient) RebuildIndexes(context.Context, *resourcepb.RebuildIndexesRequest, ...grpc.CallOption) (*resourcepb.RebuildIndexesResponse, error) {
 	if err := c.state.record(c.id); err != nil {
+		if errors.Is(err, errNilResponse) {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return &resourcepb.RebuildIndexesResponse{RebuildCount: 1}, nil
@@ -346,9 +346,11 @@ func TestDistributorSearchFailover(t *testing.T) {
 	unavailable := status.Error(codes.Unavailable, "connection refused")
 	exhausted := status.Error(codes.ResourceExhausted, "too many requests")
 	invalid := status.Error(codes.InvalidArgument, "bad request")
-	embeddedUnavailable := embeddedTestError{NewServiceUnavailableError("index not ready")}
-	embeddedExhausted := embeddedTestError{NewTooManyRequestsError("queue full")}
-	embeddedInternal := embeddedTestError{&resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "failed"}}
+	notFound := status.Error(codes.NotFound, "not found")
+	detailedUnavailable := GRPCStatusError(NewServiceUnavailableError("index not ready"))
+	detailedExhausted := GRPCStatusError(NewTooManyRequestsError("queue full"))
+	detailedNotFound := GRPCStatusError(NewNotFoundError(&resourcepb.ResourceKey{Namespace: "stacks-1", Name: "missing"}))
+	detailedInternal := GRPCStatusError(&resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "failed"})
 
 	tests := []struct {
 		name              string
@@ -365,10 +367,12 @@ func TestDistributorSearchFailover(t *testing.T) {
 		{name: "both replicas fail, first succeeds on retry", replicationFactor: 2, errs: []error{unavailable, unavailable}, wantCalls: 3},
 		{name: "all attempts fail", replicationFactor: 2, errs: []error{unavailable, unavailable, unavailable}, wantCalls: 3, wantCode: http.StatusServiceUnavailable},
 		{name: "non-retryable error", replicationFactor: 2, errs: []error{invalid}, wantCalls: 1, wantCode: http.StatusBadRequest},
-		{name: "first replica embedded unavailable", replicationFactor: 2, errs: []error{embeddedUnavailable}, wantCalls: 2},
-		{name: "embedded rate limited, not retried", replicationFactor: 2, errs: []error{embeddedExhausted}, wantCalls: 1, wantCode: http.StatusTooManyRequests},
-		{name: "all attempts fail with embedded error", replicationFactor: 2, errs: []error{embeddedUnavailable, embeddedUnavailable, embeddedUnavailable}, wantCalls: 3, wantCode: http.StatusServiceUnavailable},
-		{name: "embedded non-retryable error", replicationFactor: 2, errs: []error{embeddedInternal}, wantCalls: 1, wantCode: http.StatusInternalServerError},
+		{name: "not found, not retried", replicationFactor: 2, errs: []error{notFound}, wantCalls: 1, wantCode: http.StatusNotFound},
+		{name: "first replica unavailable with details", replicationFactor: 2, errs: []error{detailedUnavailable}, wantCalls: 2},
+		{name: "rate limited with details, not retried", replicationFactor: 2, errs: []error{detailedExhausted}, wantCalls: 1, wantCode: http.StatusTooManyRequests},
+		{name: "not found with details, not retried", replicationFactor: 2, errs: []error{detailedNotFound}, wantCalls: 1, wantCode: http.StatusNotFound},
+		{name: "all attempts fail with details", replicationFactor: 2, errs: []error{detailedUnavailable, detailedUnavailable, detailedUnavailable}, wantCalls: 3, wantCode: http.StatusServiceUnavailable},
+		{name: "non-retryable error with details", replicationFactor: 2, errs: []error{detailedInternal}, wantCalls: 1, wantCode: http.StatusInternalServerError},
 		{name: "single replica retried", replicationFactor: 1, errs: []error{unavailable, unavailable}, wantCalls: 3},
 		{name: "every replica tried before retrying", replicationFactor: 4, errs: []error{unavailable, unavailable, unavailable}, wantCalls: 4},
 		{name: "four replicas all fail", replicationFactor: 4, errs: []error{unavailable, unavailable, unavailable, unavailable, unavailable}, wantCalls: 5, wantCode: http.StatusServiceUnavailable},
@@ -388,8 +392,7 @@ func TestDistributorSearchFailover(t *testing.T) {
 				Options:      &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: "stacks-1"}},
 				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 			})
-			code, _ := callFailure(resp, err)
-			require.Equal(t, tt.wantCode, code)
+			require.Equal(t, tt.wantCode, AsErrorResult(err).GetCode())
 			if tt.wantCode == 0 {
 				require.Equal(t, int64(1), resp.TotalHits)
 			}
@@ -403,6 +406,52 @@ func TestDistributorSearchFailover(t *testing.T) {
 			require.Len(t, slices.Compact(slices.Sorted(slices.Values(calls))), min(len(calls), tt.replicationFactor))
 		})
 	}
+}
+
+func TestDistributorSearchRetriesClientPoolError(t *testing.T) {
+	state := &failoverTestState{}
+	ds := newFailoverTestDistributor(t, 2, state)
+	var failedID atomic.Value
+	ds.clientPool = ringclient.NewPool(RingName, ringclient.PoolConfig{}, nil,
+		ringclient.PoolInstFunc(func(inst ring.InstanceDesc) (ringclient.PoolClient, error) {
+			if failedID.CompareAndSwap(nil, inst.Id) {
+				return nil, errors.New("dial failed")
+			}
+			return &RingClient{Client: &failoverTestClient{id: inst.Id, state: state}}, nil
+		}), nil, gokitlog.NewNopLogger())
+
+	resp, err := ds.Search(t.Context(), &resourcepb.ResourceSearchRequest{
+		Options:      &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: "stacks-1"}},
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+	})
+	require.NoError(t, err)
+	require.Equal(t, int64(1), resp.TotalHits)
+	require.Len(t, state.calls, 1)
+	require.NotEqual(t, failedID.Load(), state.calls[0], "fails over to the other replica")
+}
+
+func TestDistributorSearchPassesStatusThrough(t *testing.T) {
+	want := &resourcepb.ErrorResult{
+		Code:    http.StatusForbidden,
+		Reason:  "Forbidden",
+		Message: "not allowed",
+		Details: &resourcepb.ErrorDetails{Group: "dashboard.grafana.app", Kind: "dashboards", Name: "a"},
+	}
+	remote := GRPCStatusError(want)
+	state := &failoverTestState{errFn: func(int, string) error { return remote }}
+	ds := newFailoverTestDistributor(t, 2, state)
+
+	resp, err := ds.Search(t.Context(), &resourcepb.ResourceSearchRequest{
+		Options:      &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: "stacks-1"}},
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+	})
+	require.Nil(t, resp)
+	require.Equal(t, codes.PermissionDenied, status.Code(err))
+	require.Equal(t, "not allowed", status.Convert(err).Message())
+	details := status.Convert(err).Details()
+	require.Len(t, details, 1)
+	require.True(t, proto.Equal(want, details[0].(*resourcepb.ErrorResult)))
+	require.Len(t, state.calls, 1)
 }
 
 func TestDistributorSearchReportsCancellation(t *testing.T) {
@@ -435,12 +484,65 @@ func TestDistributorRebuildIndexesRetriesSameInstance(t *testing.T) {
 
 	resp, err := ds.RebuildIndexes(t.Context(), &resourcepb.RebuildIndexesRequest{Namespace: "stacks-1"})
 	require.NoError(t, err)
-	require.Nil(t, resp.Error)
 	require.True(t, resp.ContactedAllInstances)
 	require.Equal(t, int64(3), resp.RebuildCount)
 
 	slices.Sort(state.calls)
 	require.Equal(t, []string{"instance-a", "instance-a", "instance-b", "instance-c"}, state.calls)
+}
+
+func TestDistributorRebuildIndexesAggregatesStatusError(t *testing.T) {
+	state := &failoverTestState{errFn: func(_ int, id string) error {
+		if id == "instance-b" {
+			return status.Error(codes.InvalidArgument, "bad keys")
+		}
+		return nil
+	}}
+	ds := newFailoverTestDistributor(t, 1, state)
+
+	resp, err := ds.RebuildIndexes(t.Context(), &resourcepb.RebuildIndexesRequest{Namespace: "stacks-1"})
+	require.Nil(t, resp, "partial results are not returned with the error")
+	require.Equal(t, codes.InvalidArgument, status.Code(err))
+	details := status.Convert(err).Details()
+	require.Len(t, details, 1)
+	res, ok := details[0].(*resourcepb.ErrorResult)
+	require.True(t, ok)
+	require.Equal(t, int32(http.StatusBadRequest), res.Code)
+	require.Contains(t, res.Message, "bad keys")
+}
+
+func TestDistributorRebuildIndexesCancellationDoesNotHideFailure(t *testing.T) {
+	state := &failoverTestState{errFn: func(_ int, id string) error {
+		switch id {
+		case "instance-a":
+			return status.Error(codes.Canceled, "canceled")
+		case "instance-b":
+			return errors.New("storage failed")
+		}
+		return nil
+	}}
+	ds := newFailoverTestDistributor(t, 1, state)
+
+	resp, err := ds.RebuildIndexes(t.Context(), &resourcepb.RebuildIndexesRequest{Namespace: "stacks-1"})
+	require.Nil(t, resp)
+	require.Equal(t, codes.Internal, status.Code(err))
+	require.ErrorContains(t, err, "storage failed")
+}
+
+func TestDistributorRebuildIndexesNilResponse(t *testing.T) {
+	state := &failoverTestState{errFn: func(_ int, id string) error {
+		if id == "instance-b" {
+			return errNilResponse
+		}
+		return nil
+	}}
+	ds := newFailoverTestDistributor(t, 1, state)
+
+	resp, err := ds.RebuildIndexes(t.Context(), &resourcepb.RebuildIndexesRequest{Namespace: "stacks-1"})
+	require.Nil(t, resp)
+	require.Equal(t, codes.Internal, status.Code(err))
+	require.ErrorContains(t, err, "instance-b")
+	require.Len(t, state.calls, 3, "a nil response is not retried")
 }
 
 func requireSearchReplicaSetIDs(t *testing.T, testRing *ring.Ring, extendReplicaSet bool, expectedIDs []string) {

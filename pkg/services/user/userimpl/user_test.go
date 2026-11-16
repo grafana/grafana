@@ -559,6 +559,11 @@ func (f *ctxCapturingUserService) GetByID(ctx context.Context, _ *user.GetUserBy
 	return &user.User{}, nil
 }
 
+func (f *ctxCapturingUserService) Update(ctx context.Context, _ *user.UpdateUserCommand) error {
+	f.gotCtx = ctx
+	return nil
+}
+
 func (f *ctxCapturingUserService) GetSignedInUser(ctx context.Context, _ *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
 	f.gotCtx = ctx
 	return &user.SignedInUser{}, nil
@@ -630,6 +635,44 @@ func TestService_GetByID_SelfReadElevatesToServiceIdentity(t *testing.T) {
 		_, err := s.GetByID(ctx, &user.GetUserByIDQuery{ID: 99})
 		require.NoError(t, err)
 		require.False(t, identity.IsServiceIdentity(k8s.gotCtx))
+	})
+}
+
+func TestService_Update_SelfUpdateElevatesToServiceIdentity(t *testing.T) {
+	enableK8sUsersRedirect(t)
+
+	const selfUID = "u-self"
+	const selfID int64 = 5
+	caller := &identity.StaticRequester{Type: claims.TypeUser, UserUID: selfUID, UserID: selfID, OrgID: 2}
+
+	t.Run("updating self by UID runs as the service identity", func(t *testing.T) {
+		k8s := &ctxCapturingUserService{}
+		s := newWrapperServiceForTest(k8s, &usertest.FakeUserService{})
+
+		ctx := identity.WithRequester(context.Background(), caller)
+		require.NoError(t, s.Update(ctx, &user.UpdateUserCommand{UserID: selfID, UID: selfUID}))
+		require.True(t, identity.IsServiceIdentity(k8s.gotCtx))
+	})
+
+	t.Run("updating self by internal ID only is elevated", func(t *testing.T) {
+		k8s := &ctxCapturingUserService{}
+		s := newWrapperServiceForTest(k8s, &usertest.FakeUserService{})
+
+		ctx := identity.WithRequester(context.Background(), caller)
+		require.NoError(t, s.Update(ctx, &user.UpdateUserCommand{UserID: selfID}))
+		require.True(t, identity.IsServiceIdentity(k8s.gotCtx))
+	})
+
+	t.Run("updating another user keeps the caller identity", func(t *testing.T) {
+		k8s := &ctxCapturingUserService{}
+		s := newWrapperServiceForTest(k8s, &usertest.FakeUserService{})
+
+		ctx := identity.WithRequester(context.Background(), caller)
+		require.NoError(t, s.Update(ctx, &user.UpdateUserCommand{UserID: 99}))
+		require.False(t, identity.IsServiceIdentity(k8s.gotCtx))
+		got, err := identity.GetRequester(k8s.gotCtx)
+		require.NoError(t, err)
+		require.Equal(t, selfUID, got.GetRawIdentifier())
 	})
 }
 

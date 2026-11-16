@@ -557,6 +557,23 @@ describe('picking', () => {
     await expect(exited).resolves.toBeNull();
   });
 
+  it('keeps picking while working, and reports a turn running whether paused or working', async () => {
+    const scene = setup();
+    const session = enter(scene);
+
+    const pick = session.pickElement(live());
+    session.setWorking(true);
+    expect(session.getOverlayState().picking).toBe(true);
+    expect(session.assistantWorking).toBe(true);
+    session.completePick(null);
+    await expect(pick).resolves.toBeNull();
+
+    session.setWorking(false);
+    expect(session.assistantWorking).toBe(false);
+    session.setPaused(true);
+    expect(session.assistantWorking).toBe(true);
+  });
+
   it('keeps the highlight target for the overlay', () => {
     const scene = setup();
     const session = enter(scene);

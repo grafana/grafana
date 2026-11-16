@@ -10,29 +10,30 @@
 //
 // # Error handling
 //
-// Unified storage calls can report failure through a response-embedded ErrorResult
-// or a transport error. Choose the helper based on what the caller does next:
+// Unary gRPC calls, including NewLocalResourceClient, report failures through err.
+// Structured errors carry ErrorResult status details. Migrated direct Go calls
+// also report failures through err. Handle err before accessing the response;
+// do not add legacy Error checks to status-only paths.
 //
-//   - Writing an HTTP response (e.g. with errhttp.Write or responder.Error)
-//     or returning an error to the apiserver (including REST storage methods and
-//     validation hooks): use [StatusErrorFromResponse] so the final response has
-//     the intended HTTP status. Return it unwrapped on the apiserver path so it
-//     can recognize APIStatus. errhttp.Write supports wrapped errors via errors.As.
-//     If the RPC has no Error field, or you only have the returned error, use
-//     [StatusErrorFromGRPC](err) instead of StatusErrorFromResponse(nil, err).
-//   - Returning to another Go caller outside that response boundary: use
-//     [ErrorFromResponse] to resolve the two failure signals into one error.
-//     It gives the transport error precedence and
-//     leaves it intact, preserving the gRPC status, errors.Is/As chain, and
-//     cancellation semantics; otherwise it converts the response-embedded error.
-//   - Only classifying an error (for example, conflict, not-found, or status code):
-//     inspect [AsErrorResult](err) or use [IsConflict](err). Do not replace the
-//     original error with a converted error just to classify it.
+//   - HTTP/apiserver boundaries: use [StatusErrorFromGRPC](err) to preserve HTTP
+//     status. Return it unwrapped to the apiserver for APIStatus recognition;
+//     errhttp.Write supports wrapping via errors.As.
+//   - Other Go callers: preserve err, including its gRPC status, errors.Is/As
+//     chain, and cancellation semantics. This includes legacy pkg/api/response
+//     handlers until their writer supports APIStatus.
+//   - Classification only: use [AsErrorResult](err) or [IsConflict](err);
+//     keep the original error.
 //
-// Legacy pkg/api/response handlers count as returning to another Go caller until
-// their response writer understands APIStatus; use ErrorFromResponse there.
+// # Exceptions
 //
-// StatusError converts an ErrorResult to a Kubernetes status error, but does not
-// resolve a transport error alongside it. Prefer the response helpers above when
-// handling the outcome of a storage call.
+// BulkProcess now returns failures as terminal status errors, but remote servers
+// predating that change can still return BulkResponse.Error. The migration client
+// intentionally retains [ErrorFromResponse] to handle both forms until the Bulk
+// status rollout is confirmed. Do not remove this compatibility fallback based
+// only on the server code having merged. Check err before accessing a potentially
+// nil response. Always check a stream's terminal receive error; successful sends
+// do not imply success.
+//
+// Still handle per-item errors (BackendReadResponse.Error, bulk rejections).
+// [StatusError] converts only an ErrorResult, not an accompanying returned error.
 package resource

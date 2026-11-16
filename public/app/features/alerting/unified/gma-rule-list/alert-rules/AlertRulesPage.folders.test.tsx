@@ -77,7 +77,7 @@ describe('AlertRulesPage Folders mode', () => {
     expect(screen.getByRole('radio', { name: 'Folders' })).toBeChecked();
     expect(backend.folderSearches).toEqual([
       expect.objectContaining({
-        labelSelector: { matchLabels: { 'alerting.grafana.app/has-rules': 'true' } },
+        labelSelector: { matchLabels: { 'alerting.grafana.app/has-alert-rules': 'true' } },
         sort: [{ field: 'title', direction: 'asc' }],
         limit: 40,
       }),

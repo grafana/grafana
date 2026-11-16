@@ -1,13 +1,14 @@
 import V2DashWithRowRepeats from '../dashboards/V2DashWithRowRepeats.json';
 
-import { test, expect } from './fixtures';
+import { expect, test } from './fixtures';
 import {
   expectDashboardChangesToContain,
-  expectRepeatedTabTitlesToBe,
   expectRepeatedRowTitlesToBe,
+  expectNoUnsavedChanges,
+  expectRepeatedTabTitlesToBe,
   flows,
-  moveRow,
   getRowBox,
+  moveRow,
 } from './helpers';
 
 const REPEAT_TITLE_BASE = 'Row - ';
@@ -17,12 +18,12 @@ const getEditedName = (base: string) => `edited ${base}`;
 const getRepeatedPanelTitle = (row: number, panel: number) => `repeated-row-${row}-repeated-panel-${panel}`;
 
 test.use({
-  featureToggles: {
-    dashboardNewLayouts: true,
+  // the Undo/Redo toolbar buttons are gated by an OpenFeature flag, not a feature toggle
+  openFeature: {
+    flags: {
+      dashboardUndoRedo: true,
+    },
   },
-});
-
-test.use({
   viewport: { width: 1920, height: 1080 },
 });
 
@@ -142,7 +143,7 @@ test.describe(
       selectors,
       page,
       controls,
-      sidebar,
+      panelEditor,
       panels,
       rows,
       canvas,
@@ -159,9 +160,9 @@ test.describe(
       await panels.getHeader('single panel row 1').hover();
       await page.keyboard.press('e');
 
-      await expect(canvas.getContainer()).toBeHidden(); // verifying that panel editor loaded
+      await expect(panelEditor.getContainer()).toBeVisible();
 
-      await sidebar.panelOptions.setTitle(editedSinglePanelName('$c4'));
+      await panelEditor.options.setTitle(editedSinglePanelName('$c4'));
 
       // playwright too fast, verifying JSON diff that changes landed
       await expectDashboardChangesToContain(dashboardPage, page, selectors, editedSinglePanelName('$c4'));
@@ -377,6 +378,8 @@ test.describe(
     test.use({ contextOptions: { bypassCSP: true } });
 
     test('moves repeated rows', async ({ dashboardPage, selectors, page, controls, rows }) => {
+      // drag, undo/redo, then save and reload
+      test.slow();
       // collapse rows so it's easier to move them without simulating scrolling
       // clone to avoid mutating V2DashWithRowRepeats, which is shared with the other tests in this file
       const dashboardWithCollapsedRows = structuredClone(V2DashWithRowRepeats);
@@ -391,8 +394,11 @@ test.describe(
         { checkPanelsVisible: false }
       );
       const singleRowTitle = 'single row';
+      const repeatedTitles = REPEAT_OPTIONS.map((option) => `${REPEAT_TITLE_BASE}${option}`);
+      const initialOrder = [...repeatedTitles, singleRowTitle];
 
       await controls.enterEditMode();
+      await expect(rows.getTitles()).toHaveText(initialOrder);
       await moveRow(page, dashboardPage, rows, selectors, `${REPEAT_TITLE_BASE}1`, singleRowTitle);
 
       // The row order is only updated after the drop animation finishes (onDragEnd),
@@ -409,6 +415,15 @@ test.describe(
       await expect(
         dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.saveButton)
       ).toHaveAttribute('data-testactive');
+
+      const movedOrder = [singleRowTitle, ...repeatedTitles];
+      await expect(rows.getTitles()).toHaveText(movedOrder);
+
+      await controls.undo();
+      await expect(rows.getTitles()).toHaveText(initialOrder);
+      await controls.redo();
+      await expect(rows.getTitles()).toHaveText(movedOrder);
+
       await flows.dashboards.saveDashboard(page, controls);
 
       const singleRowBox = await getRowBox(dashboardPage, selectors, singleRowTitle);
@@ -417,6 +432,10 @@ test.describe(
         const repeatedRow = await getRowBox(dashboardPage, selectors, `${REPEAT_TITLE_BASE}${i}`);
         expect(singleRowBox?.y).toBeLessThan(repeatedRow?.y || 0);
       }
+      await expect(rows.getTitles()).toHaveText(movedOrder);
+
+      await controls.enterEditMode();
+      await expectNoUnsavedChanges(controls);
     });
   }
 );

@@ -3,7 +3,6 @@ package resource
 import (
 	"context"
 	"fmt"
-	"iter"
 	"regexp"
 	"strconv"
 	"strings"
@@ -18,7 +17,7 @@ import (
 
 func saveTestBlob(t *testing.T, store kv.KV, uid string) string {
 	t.Helper()
-	key := kv.BlobKey{Group: "g", Resource: "r", Namespace: "ns", Name: "n", UID: uid}.String()
+	key := kv.BlobKey{Group: "group", Resource: "resource", Namespace: "namespace", Name: "name", UID: uid}.String()
 	w, err := store.Save(t.Context(), kv.BlobDataSection, key)
 	require.NoError(t, err)
 	_, err = w.Write(append(kv.EncodeBlobValueHeader("text/plain"), "x"...))
@@ -85,20 +84,6 @@ func FuzzUUIDV7Time(f *testing.F) {
 	})
 }
 
-type uidAgeGCStore struct {
-	key     string
-	deleted []string
-}
-
-func (s *uidAgeGCStore) Keys(context.Context, string, kv.ListOptions) iter.Seq2[string, error] {
-	return func(yield func(string, error) bool) { yield(s.key, nil) }
-}
-
-func (s *uidAgeGCStore) Delete(_ context.Context, section, key string) error {
-	s.deleted = append(s.deleted, section+":"+key)
-	return nil
-}
-
 func TestBlobGCUIDAgeSafety(t *testing.T) {
 	now := time.UnixMilli(0x0123456789ab)
 	grace := time.Hour
@@ -117,13 +102,22 @@ func TestBlobGCUIDAgeSafety(t *testing.T) {
 		{name: "beyond grace", uid: uidAt(now.Add(-grace - time.Millisecond)), count: 1},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			store := &uidAgeGCStore{key: kv.BlobKey{Group: "g", Resource: "r", Namespace: "ns", Name: "n", UID: tc.uid}.String()}
+			store := setupBadgerKV(t)
+			key := saveTestBlob(t, store, tc.uid)
 			gc := NewBlobGarbageCollector(store, 10, 0)
 			count, err := gc.Collect(t.Context(), now, grace, false, func(context.Context, kv.BlobKey) (bool, error) { return false, nil })
 			require.NoError(t, err)
 			require.Equal(t, tc.count, count)
 			require.Equal(t, tc.skipped, gc.SkippedWithoutAge())
-			require.Len(t, store.deleted, tc.count)
+			reader, err := store.Get(t.Context(), kv.BlobDataSection, key)
+			if tc.count > 0 {
+				require.ErrorIs(t, err, kv.ErrNotFound)
+			} else {
+				require.NoError(t, err)
+				value, err := kv.ReadAllAndClose(reader)
+				require.NoError(t, err)
+				require.Equal(t, append(kv.EncodeBlobValueHeader("text/plain"), "x"...), value)
+			}
 		})
 	}
 }

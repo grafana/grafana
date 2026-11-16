@@ -1,19 +1,12 @@
-import { configureStore } from '@reduxjs/toolkit';
-import { http, HttpResponse } from 'msw';
-import { type Store } from 'redux';
-
 import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { config, setBackendSrv } from '@grafana/runtime';
-import { getCustomSearchHandler, apiFoldersHandlers, starsRoute } from '@grafana/test-utils/handlers';
+import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import { setTestFlags } from '@grafana/test-utils/unstable';
-import { collectionsAPIv1alpha1 } from 'app/api/clients/collections/v1alpha1';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { STARRED_FOLDERS_UID, TEAM_FOLDERS_UID } from 'app/features/search/constants';
-import { setStore } from 'app/store/store';
 
-import { listDashboards, listFolders, listStarredFolders } from './services';
+import { listDashboards, listFolders } from './services';
 
 jest.mock('app/core/services/context_srv', () => {
   const contextSrvModule = jest.requireActual('app/core/services/context_srv');
@@ -75,56 +68,10 @@ describe('browse-dashboards services', () => {
     beforeEach(() => {
       jest.clearAllMocks();
       mockContextSrv.hasPermission = jest.fn().mockReturnValue(true);
-      setTestFlags({ foldersAppPlatformAPI: false });
       config.sharedWithMeFolderUID = 'sharedwithme';
     });
 
-    afterEach(() => {
-      setTestFlags({});
-    });
-
-    describe('old API (foldersAppPlatformAPI = false)', () => {
-      beforeEach(() => {
-        setTestFlags({ foldersAppPlatformAPI: false });
-      });
-
-      it('returns folders in correct format', async () => {
-        const result = await listFolders(undefined, 'Parent Title', 1, PAGE_SIZE);
-
-        expect(result).toHaveLength(2);
-        expect(result[0]).toMatchObject({
-          kind: 'folder',
-          uid: expect.any(String),
-          title: expect.any(String),
-          parentTitle: 'Parent Title',
-          parentUID: undefined,
-          managedBy: undefined,
-        });
-      });
-
-      it('handles pagination correctly', async () => {
-        const result1 = await listFolders(undefined, undefined, 1, 4);
-        const result2 = await listFolders(undefined, undefined, 2, 2);
-
-        expect(result1).toHaveLength(4);
-        expect(result2).toHaveLength(2);
-        expect(result1[2]).toMatchObject(result2[0]);
-        expect(result1[3]).toMatchObject(result2[1]);
-      });
-
-      it('does not add shared with me folder (handled by backend)', async () => {
-        const result = await listFolders(undefined, undefined, 1, 1);
-
-        expect(result).toHaveLength(1);
-        expect(result.find((f) => f.uid === 'sharedwithme')).toBeUndefined();
-      });
-    });
-
-    describe('new API (foldersAppPlatformAPI = true)', () => {
-      beforeEach(() => {
-        setTestFlags({ foldersAppPlatformAPI: true });
-      });
-
+    describe('app-platform API', () => {
       it('returns the correct folders for the requested page', async () => {
         server.use(getCustomSearchHandler(allHits));
         const result = await listFolders('parent-uid', 'Parent Title', 1, 1);
@@ -209,10 +156,7 @@ describe('browse-dashboards services', () => {
     describe('URL generation', () => {
       it('sets URL to undefined for shared with me folder', async () => {
         server.use(
-          apiFoldersHandlers.minimalCustomFoldersHandler([
-            { uid: 'sharedwithme', title: 'Shared with me' },
-            { uid: 'regular-folder', title: 'Regular folder' },
-          ])
+          getCustomSearchHandler([{ resource: 'folders', name: 'regular-folder', title: 'Regular folder', field: {} }])
         );
         const result = await listFolders();
 
@@ -222,73 +166,6 @@ describe('browse-dashboards services', () => {
         expect(sharedFolder?.url).toBeUndefined();
         expect(regularFolder?.url).toBeDefined();
       });
-    });
-  });
-
-  describe('listStarredFolders', () => {
-    const starsResponse = (resources: Array<{ group: string; kind: string; names: string[] }>) => ({
-      kind: 'StarsList',
-      apiVersion: 'collections.grafana.app/v1alpha1',
-      metadata: { resourceVersion: '1' },
-      items: [
-        {
-          metadata: { name: 'user-u000000001', namespace: 'default', resourceVersion: '1' },
-          spec: { resource: resources },
-        },
-      ],
-    });
-
-    const starredFolderHits: DashboardHit[] = [
-      { resource: 'folders', name: 'fa', title: 'Folder A', field: {} },
-      { resource: 'folders', name: 'fb', title: 'Folder B', field: {} },
-    ];
-
-    beforeEach(() => {
-      // listStarredFolders reads stars via an RTK Query dispatch on the global store, so wire one up.
-      const store = configureStore({
-        reducer: { [collectionsAPIv1alpha1.reducerPath]: collectionsAPIv1alpha1.reducer },
-        middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(collectionsAPIv1alpha1.middleware),
-      });
-      setStore(store as unknown as Store);
-    });
-
-    it('resolves starred folders to prefixed view items under the virtual root', async () => {
-      server.use(
-        http.get(starsRoute, () =>
-          HttpResponse.json(
-            starsResponse([
-              { group: 'dashboard.grafana.app', kind: 'Dashboard', names: ['dash-1'] },
-              { group: 'folder.grafana.app', kind: 'Folder', names: ['fa', 'fb'] },
-            ])
-          )
-        ),
-        getCustomSearchHandler(starredFolderHits)
-      );
-
-      const result = await listStarredFolders();
-
-      expect(result).toHaveLength(2);
-      expect(result[0]).toMatchObject({
-        kind: 'folder',
-        uid: 'starred_folders/fa',
-        title: 'Folder A',
-        parentUID: 'starred_folders',
-      });
-      expect(result[0].url).toContain('/dashboards/f/fa/');
-      expect(result[1]).toMatchObject({ uid: 'starred_folders/fb', title: 'Folder B', parentUID: 'starred_folders' });
-    });
-
-    it('returns an empty array when there is no starred folder resource', async () => {
-      server.use(
-        http.get(starsRoute, () =>
-          HttpResponse.json(starsResponse([{ group: 'dashboard.grafana.app', kind: 'Dashboard', names: ['dash-1'] }]))
-        ),
-        getCustomSearchHandler(starredFolderHits)
-      );
-
-      const result = await listStarredFolders();
-
-      expect(result).toEqual([]);
     });
   });
 });

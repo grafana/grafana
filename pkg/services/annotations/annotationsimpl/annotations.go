@@ -8,7 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationsimpl/loki"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	alertingStore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
+	alertingrules "github.com/grafana/grafana/pkg/services/ngalert/rules"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -41,14 +41,14 @@ func ProvideService(
 	features featuremgmt.FeatureToggles,
 	tagService tag.Service,
 	tracer tracing.Tracer,
-	ruleStore alertingStore.Store,
+	ruleService alertingrules.RuleService,
 	dashSvc dashboards.DashboardService,
 	reg prometheus.Registerer,
 ) *RepositoryImpl {
 	l := log.New("annotations")
 	l.Debug("Initializing annotations service")
 
-	xormStore := NewXormStore(cfg, log.New("annotations.sql"), db, tagService, ruleStore, reg)
+	xormStore := NewXormStore(cfg, log.New("annotations.sql"), db, tagService, ruleService, reg)
 	write := xormStore
 
 	var read ReadStore

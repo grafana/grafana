@@ -4,7 +4,7 @@ import { createFetchResponse } from 'test/helpers/createFetchResponse';
 
 import { configureStore } from 'app/store/configureStore';
 
-import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../utils/constants';
 
 import { PrometheusAPIFilters, alertRuleApi } from './alertRuleApi';
 import { GRAFANA_RULER_CONFIG } from './featureDiscoveryApi';

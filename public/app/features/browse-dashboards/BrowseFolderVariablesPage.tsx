@@ -4,7 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom-v5-compat';
 import { locationUtil } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Alert, Button, Stack, Text } from '@grafana/ui';
-import { useGetFolderQueryFacade, useUpdateFolder } from 'app/api/clients/folder/v1beta1/hooks';
+import { useGetCombinedFolderQuery, useUpdateFolder } from 'app/api/clients/folder/v1beta1/hooks';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -21,7 +21,7 @@ const VARIABLE_EDIT_URL = '/dashboards/variables/edit/';
 export function BrowseFolderVariablesPage() {
   const { uid: folderUID = '' } = useParams();
   const navigate = useNavigate();
-  const { data: folderDTO, isLoading: isFolderLoading } = useGetFolderQueryFacade(folderUID);
+  const { data: folderDTO, isLoading: isFolderLoading } = useGetCombinedFolderQuery(folderUID);
   const [saveFolder] = useUpdateFolder();
   const navModel = useNavModel(folderDTO, 'variables');
 

@@ -249,7 +249,7 @@ var knownIndexFeatures = []IndexFeature{
 // index built before deleted documents were kept maps the trash fields but holds nothing
 // in them, and a file-based index is reused across an upgrade, so trash would stay
 // unavailable until some unrelated change triggered a rebuild.
-var requiredIndexFeatures = slices.Concat(TrashIndexFeatures(), []IndexFeature{IndexFeatureHoldsDeletedDocuments})
+var requiredIndexFeatures = slices.Concat(TrashIndexFeatures(), []IndexFeature{IndexFeatureHoldsDeletedDocuments, IndexFeatureStoredFacets})
 
 // CurrentIndexFeatures returns the features sorted, so declaration order cannot
 // change what an index records.
@@ -258,14 +258,8 @@ func CurrentIndexFeatures() []IndexFeature {
 }
 
 // RequiredIndexFeatures returns the features an index must have to be used.
-// postRankAuthz adds the features only that path depends on, so deployments
-// serving facets from bleve itself are not rebuilt for it.
-func RequiredIndexFeatures(postRankAuthz bool) []IndexFeature {
-	features := requiredIndexFeatures
-	if postRankAuthz {
-		features = append(slices.Clone(features), IndexFeatureStoredFacets)
-	}
-	return slices.Sorted(slices.Values(features))
+func RequiredIndexFeatures() []IndexFeature {
+	return slices.Sorted(slices.Values(requiredIndexFeatures))
 }
 
 // MissingIndexFeatures returns the required features the index does not have.
@@ -682,7 +676,7 @@ func newSearchServer(opts SearchOptions, storage StorageBackend, vectorBackend v
 		searchFields:              searchFields,
 		hybridSearchConfig:        opts.HybridSearchConfig,
 		globalCoverage:            opts.GlobalSearchCoverage,
-		requiredFeatures:          RequiredIndexFeatures(opts.PostRankAuthzEnabled),
+		requiredFeatures:          RequiredIndexFeatures(),
 		injectFailuresPercent:     opts.InjectFailuresPercent,
 		globalIndexEnabled:        opts.GlobalIndexEnabled,
 		globalIndexStartupBuild:   opts.GlobalIndexStartupBuild,
@@ -747,6 +741,9 @@ func combineRebuildRequests(a, b rebuildRequest) (c rebuildRequest, ok bool) {
 		}
 	}
 	ret.reconcile = a.reconcile || b.reconcile
+	// One rebuild serves every merged request, so it reads as a migration if any
+	// of them waits for it as one.
+	ret.migrationRead = a.migrationRead || b.migrationRead
 
 	// Using higher "last import time" is stricter condition, and causes more indexes to be rebuilt.
 	if a.lastImportTime.IsZero() || (!b.lastImportTime.IsZero() && b.lastImportTime.After(a.lastImportTime)) {
@@ -788,15 +785,12 @@ func (s *searchServer) ListManagedObjects(ctx context.Context, req *resourcepb.L
 	}
 
 	if req.NextPageToken != "" {
-		return &resourcepb.ListManagedObjectsResponse{
-			Error: NewBadRequestError("multiple pages not yet supported"),
-		}, nil
+		return nil, GRPCStatusError(NewBadRequestError("multiple pages not yet supported"))
 	}
 
 	rsp := &resourcepb.ListManagedObjectsResponse{}
 	if req.Namespace == "" {
-		rsp.Error = NewBadRequestError("missing namespace")
-		return rsp, nil
+		return nil, GRPCStatusError(NewBadRequestError("missing namespace"))
 	}
 	nsr := NamespacedResource{
 		Namespace: req.Namespace,
@@ -805,8 +799,7 @@ func (s *searchServer) ListManagedObjects(ctx context.Context, req *resourcepb.L
 	// managed-object index. Discovery avoids the cost of counting via stats.
 	stored, err := s.storage.ListStoredResources(ctx, nsr)
 	if err != nil {
-		rsp.Error = AsErrorResult(err)
-		return rsp, nil
+		return nil, rpcErrorFrom(err)
 	}
 
 	stats := NewSearchStats("ListManagedObjects")
@@ -819,21 +812,18 @@ func (s *searchServer) ListManagedObjects(ctx context.Context, req *resourcepb.L
 			Resource:  info.Resource,
 		}, "listManagedObjects")
 		if err != nil {
-			rsp.Error = AsErrorResult(err)
-			return rsp, nil
+			return nil, rpcErrorFrom(err)
 		}
 
 		kind, err := idx.ListManagedObjects(ctx, req, stats)
 		if err != nil {
-			rsp.Error = AsErrorResult(err)
-			return rsp, nil
+			return nil, rpcErrorFrom(err)
 		}
 		if kind.NextPageToken != "" {
-			rsp.Error = &resourcepb.ErrorResult{
+			return nil, GRPCStatusError(&resourcepb.ErrorResult{
 				Code:    http.StatusNotImplemented,
 				Message: "Multiple pages are not yet supported",
-			}
-			return rsp, nil
+			})
 		}
 		rsp.Items = append(rsp.Items, kind.Items...)
 	}
@@ -888,8 +878,7 @@ func (s *searchServer) CountManagedObjects(ctx context.Context, req *resourcepb.
 
 	rsp := &resourcepb.CountManagedObjectsResponse{}
 	if req.Namespace == "" {
-		rsp.Error = NewBadRequestError("missing namespace")
-		return rsp, nil
+		return nil, GRPCStatusError(NewBadRequestError("missing namespace"))
 	}
 	nsr := NamespacedResource{
 		Namespace: req.Namespace,
@@ -898,8 +887,7 @@ func (s *searchServer) CountManagedObjects(ctx context.Context, req *resourcepb.
 	// managed objects from each index. Discovery avoids the cost of counting via stats.
 	stored, err := s.storage.ListStoredResources(ctx, nsr)
 	if err != nil {
-		rsp.Error = AsErrorResult(err)
-		return rsp, nil
+		return nil, rpcErrorFrom(err)
 	}
 
 	for _, info := range stored {
@@ -909,23 +897,22 @@ func (s *searchServer) CountManagedObjects(ctx context.Context, req *resourcepb.
 			Resource:  info.Resource,
 		}, "countManagedObjects")
 		if err != nil {
-			rsp.Error = AsErrorResult(err)
-			return rsp, nil
+			return nil, rpcErrorFrom(err)
 		}
 
 		counts, err := idx.CountManagedObjects(ctx, stats)
 		if err != nil {
-			rsp.Error = AsErrorResult(err)
-			return rsp, nil
+			return nil, rpcErrorFrom(err)
 		}
-		if req.Id == "" {
-			rsp.Items = append(rsp.Items, counts...)
-		} else {
-			for _, k := range counts {
-				if k.Id == req.Id {
-					rsp.Items = append(rsp.Items, k)
-				}
+		for _, k := range counts {
+			// An id is only meaningful inside a kind, so both must match when both are set.
+			if req.Kind != "" && k.Kind != req.Kind {
+				continue
 			}
+			if req.Id != "" && k.Id != req.Id {
+				continue
+			}
+			rsp.Items = append(rsp.Items, k)
 		}
 	}
 
@@ -969,21 +956,15 @@ func (s *searchServer) searchWithIndex(ctx context.Context, req *resourcepb.Reso
 	}
 
 	if req.Options.Key.Namespace == "" || req.Options.Key.Group == "" || req.Options.Key.Resource == "" {
-		return &resourcepb.ResourceSearchResponse{
-			Error: NewBadRequestError("missing namespace, group or resource"),
-		}, nil
+		return nil, GRPCStatusError(NewBadRequestError("missing namespace, group or resource"))
 	}
 
 	if req.Limit < 0 {
-		return &resourcepb.ResourceSearchResponse{
-			Error: NewBadRequestError("limit cannot be negative"),
-		}, nil
+		return nil, GRPCStatusError(NewBadRequestError("limit cannot be negative"))
 	}
 
 	if req.Offset < 0 {
-		return &resourcepb.ResourceSearchResponse{
-			Error: NewBadRequestError("offset cannot be negative"),
-		}, nil
+		return nil, GRPCStatusError(NewBadRequestError("offset cannot be negative"))
 	}
 
 	// Trash authorizes each hit against one index's group and resource, so hits
@@ -991,13 +972,11 @@ func (s *searchServer) searchWithIndex(ctx context.Context, req *resourcepb.Reso
 	// Refused here rather than further in because resolving a federated index below
 	// can build one.
 	if req.IsDeleted && len(req.Federated) > 0 {
-		return &resourcepb.ResourceSearchResponse{
-			Error: NewBadRequestError("searching deleted resources does not support federated queries"),
-		}, nil
+		return nil, GRPCStatusError(NewBadRequestError("searching deleted resources does not support federated queries"))
 	}
 
 	if err := ValidateAccessVerbs(req); err != nil {
-		return &resourcepb.ResourceSearchResponse{Error: err}, nil
+		return nil, GRPCStatusError(err)
 	}
 
 	for _, field := range req.Options.Fields {
@@ -1005,10 +984,10 @@ func (s *searchServer) searchWithIndex(ctx context.Context, req *resourcepb.Reso
 			continue
 		}
 		if req.IsDeleted {
-			return &resourcepb.ResourceSearchResponse{Error: NewBadRequestError("searching deleted resources does not support " + SEARCH_FIELD_FOLDER_TREE)}, nil
+			return nil, GRPCStatusError(NewBadRequestError("searching deleted resources does not support " + SEARCH_FIELD_FOLDER_TREE))
 		}
 		if err := ValidateFolderTreeRequirement(field); err != nil {
-			return &resourcepb.ResourceSearchResponse{Error: err}, nil
+			return nil, GRPCStatusError(err)
 		}
 	}
 
@@ -1024,7 +1003,7 @@ func (s *searchServer) searchWithIndex(ctx context.Context, req *resourcepb.Reso
 		return s.searchGlobal(ctx, span, stats, req, nsr, prepare)
 	}
 	if _, _, err := s.checkSearchServicePermissions(ctx, req, []NamespacedResource{nsr}); err != nil {
-		return permissionErrorResponse(span, err), nil
+		return nil, permissionError(span, err)
 	}
 	return s.searchIndex(ctx, stats, req, nsr, prepare)
 }
@@ -1057,20 +1036,18 @@ func (s *searchServer) searchGlobal(ctx context.Context, span trace.Span, stats 
 	// Unavailable rather than failed: the API that serves this search is enabled
 	// separately, and may be on before this server builds the index.
 	if !s.globalIndexEnabled {
-		return &resourcepb.ResourceSearchResponse{
-			Error: NewServiceUnavailableError("the global search index is not enabled (global_search_index_enabled)"),
-		}, nil
+		return nil, GRPCStatusError(NewServiceUnavailableError("the global search index is not enabled (global_search_index_enabled)"))
 	}
 	// Read once, so the types checked are the types searched, and the kinds
 	// reported are theirs, even if the coverage changes meanwhile.
 	types, kinds := s.globalCoverage.Snapshot()
 	searched, skipped, err := s.checkSearchServicePermissions(ctx, req, globalSources(nsr.Namespace, types))
 	if err != nil {
-		return permissionErrorResponse(span, err), nil
+		return nil, permissionError(span, err)
 	}
 	// A filter on no types would match every type.
 	if len(searched) == 0 {
-		return permissionErrorResponse(span, errors.New("the global search covers no types")), nil
+		return nil, permissionError(span, errors.New("the global search covers no types"))
 	}
 	// Named rather than the skipped ones left out, so the index also hides a
 	// type it still holds documents of after the coverage dropped it. Cloned so
@@ -1093,19 +1070,17 @@ func (s *searchServer) searchGlobal(ctx context.Context, span trace.Span, stats 
 	return rsp, err
 }
 
-func permissionErrorResponse(span trace.Span, err error) *resourcepb.ResourceSearchResponse {
+func permissionError(span trace.Span, err error) error {
 	span.SetStatus(otelcodes.Error, err.Error())
 	span.RecordError(err)
-	return &resourcepb.ResourceSearchResponse{Error: AsErrorResult(err)}
+	return rpcErrorFrom(err)
 }
 
 // searchIndex searches the index for nsr, with the indexes req federates.
 func (s *searchServer) searchIndex(ctx context.Context, stats *SearchStats, req *resourcepb.ResourceSearchRequest, nsr NamespacedResource, prepare func(ResourceIndex)) (*resourcepb.ResourceSearchResponse, error) {
 	idx, err := s.getOrCreateIndex(ctx, stats, nsr, "search")
 	if err != nil {
-		return &resourcepb.ResourceSearchResponse{
-			Error: AsErrorResult(err),
-		}, nil
+		return nil, rpcErrorFrom(err)
 	}
 
 	indexes := &SearchIndexes{Federated: make([]ResourceIndex, len(req.Federated))}
@@ -1114,9 +1089,7 @@ func (s *searchServer) searchIndex(ctx context.Context, stats *SearchStats, req 
 		key := NamespacedResource{Namespace: nsr.Namespace, Group: f.Group, Resource: f.Resource}
 		indexes.Federated[i], err = s.getOrCreateIndex(ctx, stats, key, "federatedSearch")
 		if err != nil {
-			return &resourcepb.ResourceSearchResponse{
-				Error: AsErrorResult(err),
-			}, nil
+			return nil, rpcErrorFrom(err)
 		}
 		if key == folderKey {
 			indexes.Folders = indexes.Federated[i]
@@ -1131,7 +1104,7 @@ func (s *searchServer) searchIndex(ctx context.Context, stats *SearchStats, req 
 	}) {
 		indexes.Folders, err = s.getOrCreateIndex(ctx, stats, folderKey, "recursiveSearch")
 		if err != nil {
-			return &resourcepb.ResourceSearchResponse{Error: AsErrorResult(err)}, nil
+			return nil, rpcErrorFrom(err)
 		}
 	}
 	return idx.Search(ctx, s.access, req, indexes, stats)
@@ -1166,8 +1139,6 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		code := codes.OK
 		if retErr != nil {
 			code = status.Code(retErr)
-		} else if resp != nil {
-			code = grpcCodeFromErrorResult(resp.Error)
 		}
 		metricutil.ObserveWithExemplar(ctx,
 			s.vectorMetrics.SearchDuration.WithLabelValues(group, resource, code.String()),
@@ -1179,12 +1150,12 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		return nil, status.Error(codes.Unimplemented, "vector search not configured")
 	}
 
-	if errResp := validateVectorSearchRequest(req); errResp != nil {
-		return errResp, nil
+	if errRes := validateVectorSearchRequest(req); errRes != nil {
+		return nil, GRPCStatusError(errRes)
 	}
 
 	if errRes := requireUserNamespace(ctx, req.Key.Namespace); errRes != nil {
-		return &resourcepb.VectorSearchResponse{Error: errRes}, nil
+		return nil, GRPCStatusError(errRes)
 	}
 	user, _ := types.AuthInfoFrom(ctx)
 	if err := s.checkAllowedReadService(user, req.Key.Group, req.Key.Resource); err != nil {
@@ -1218,7 +1189,7 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 		return nil, s.grpcStatusError(ctx, "vector search: resolve collection", err)
 	}
 	if !collAllowed {
-		return &resourcepb.VectorSearchResponse{Error: NewNotFoundError(req.Key)}, nil
+		return nil, GRPCStatusError(NewNotFoundError(req.Key))
 	}
 
 	dense, err := s.embedVectorSearchQuery(ctx, req.Key.Namespace, req.Query)
@@ -1269,26 +1240,20 @@ func (s *searchServer) VectorSearch(ctx context.Context, req *resourcepb.VectorS
 	return resp, nil
 }
 
-// validateVectorSearchRequest returns a non-nil response with a
-// BadRequestError when the request fails validation; nil means valid.
+// validateVectorSearchRequest returns a BadRequest error result when the
+// request fails validation; nil means valid.
 // Pulled out of VectorSearch to keep that function under the cyclomatic
 // complexity threshold.
-func validateVectorSearchRequest(req *resourcepb.VectorSearchRequest) *resourcepb.VectorSearchResponse {
+func validateVectorSearchRequest(req *resourcepb.VectorSearchRequest) *resourcepb.ErrorResult {
 	if req.Key == nil || req.Key.Namespace == "" || req.Key.Group == "" || req.Key.Resource == "" {
-		return &resourcepb.VectorSearchResponse{
-			Error: NewBadRequestError("missing namespace, group or resource"),
-		}
+		return NewBadRequestError("missing namespace, group or resource")
 	}
 	if strings.TrimSpace(req.Query) == "" {
-		return &resourcepb.VectorSearchResponse{
-			Error: NewBadRequestError("query must not be empty"),
-		}
+		return NewBadRequestError("query must not be empty")
 	}
 	// TODO decide on appropriate max query length. Using 1k for now.
 	if len(req.Query) > 1000 {
-		return &resourcepb.VectorSearchResponse{
-			Error: NewBadRequestError("query exceeds maximum length of 1000 bytes"),
-		}
+		return NewBadRequestError("query exceeds maximum length of 1000 bytes")
 	}
 	return nil
 }
@@ -1325,12 +1290,15 @@ func (s *searchServer) embedVectorSearchQuery(ctx context.Context, namespace, qu
 	// Embed the query as a retrieval *query* (different task hint than
 	// the retrieval *document* hint used at index time — providers tune
 	// projections per side of the retrieval pair).
-	out, err := s.embedder.EmbedText(ctx, embedder.EmbedTextInput{
+	input := embedder.EmbedTextInput{
 		Texts:     []string{query},
 		Tenant:    namespace,
 		Normalize: s.embedder.ShouldNormalize(),
 		Task:      embedder.TaskRetrievalQuery,
-	})
+	}
+	embedStart := hybridPhaseStart(ctx)
+	out, err := s.embedder.EmbedText(ctx, input)
+	observeHybridPhase(ctx, "embedding", embedStart, err)
 	if err != nil {
 		// Client disconnects/timeouts must map to Canceled/DeadlineExceeded
 		// per the gRPC spec — reporting Internal here trips error SLOs.
@@ -1356,7 +1324,9 @@ func (s *searchServer) lookupCachedQueryEmbedding(ctx context.Context, namespace
 	if s.queryCache == nil {
 		return nil, false
 	}
+	getStart := hybridPhaseStart(ctx)
 	emb, hit, err := s.queryCache.Get(ctx, namespace, s.embedder.Model, queryHash)
+	observeHybridPhase(ctx, "database", getStart, err)
 	if err != nil {
 		s.log.Warn("vector search: cache lookup failed, falling through", "err", err)
 		return nil, false
@@ -1380,16 +1350,25 @@ func (s *searchServer) storeCachedQueryEmbedding(ctx context.Context, namespace,
 	if s.queryCache == nil || s.queryCacheMaxPerTenant <= 0 {
 		return
 	}
-	if n, err := s.queryCache.Count(ctx, namespace); err == nil && int(n) >= s.queryCacheMaxPerTenant {
+	countStart := hybridPhaseStart(ctx)
+	n, countErr := s.queryCache.Count(ctx, namespace)
+	observeHybridPhase(ctx, "database", countStart, countErr)
+	if countErr == nil && int(n) >= s.queryCacheMaxPerTenant {
 		target := int(float64(s.queryCacheMaxPerTenant) * vectorQueryCacheEvictTargetFraction)
 		evictN := int(n) - target
-		if deleted, err := s.queryCache.EvictOldest(ctx, namespace, evictN); err != nil {
+		evictStart := hybridPhaseStart(ctx)
+		deleted, err := s.queryCache.EvictOldest(ctx, namespace, evictN)
+		observeHybridPhase(ctx, "database", evictStart, err)
+		if err != nil {
 			s.log.Warn("vector search: cache evict failed", "err", err)
 		} else if deleted > 0 {
 			s.vectorMetrics.QueryCacheEvictionsTotal.Add(float64(deleted))
 		}
 	}
-	if err := s.queryCache.Put(ctx, namespace, s.embedder.Model, queryHash, dense); err != nil {
+	putStart := hybridPhaseStart(ctx)
+	err := s.queryCache.Put(ctx, namespace, s.embedder.Model, queryHash, dense)
+	observeHybridPhase(ctx, "database", putStart, err)
+	if err != nil {
 		s.log.Warn("vector search: cache put failed", "err", err)
 	}
 }
@@ -1492,9 +1471,7 @@ func (s *searchServer) GetStats(ctx context.Context, req *resourcepb.ResourceSta
 	}
 
 	if req.Namespace == "" {
-		return &resourcepb.ResourceStatsResponse{
-			Error: NewBadRequestError("missing namespace"),
-		}, nil
+		return nil, GRPCStatusError(NewBadRequestError("missing namespace"))
 	}
 
 	stats := NewSearchStats("GetStats")
@@ -1514,13 +1491,11 @@ func (s *searchServer) GetStats(ctx context.Context, req *resourcepb.ResourceSta
 				Resource:  parts[1],
 			}, "getStats")
 			if err != nil {
-				rsp.Error = AsErrorResult(err)
-				return rsp, nil
+				return nil, rpcErrorFrom(err)
 			}
 			count, err := sumDocCount(ctx, index, folderSet, stats)
 			if err != nil {
-				rsp.Error = AsErrorResult(err)
-				return rsp, nil
+				return nil, rpcErrorFrom(err)
 			}
 			rsp.Stats[i] = &resourcepb.ResourceStatsResponse_Stats{
 				Group:    parts[0],
@@ -1536,9 +1511,7 @@ func (s *searchServer) GetStats(ctx context.Context, req *resourcepb.ResourceSta
 	}
 	resourceStats, err := s.storage.GetResourceStats(ctx, nsr, 0)
 	if err != nil {
-		return &resourcepb.ResourceStatsResponse{
-			Error: AsErrorResult(err),
-		}, nil
+		return nil, rpcErrorFrom(err)
 	}
 	rsp.Stats = make([]*resourcepb.ResourceStatsResponse_Stats, len(resourceStats))
 
@@ -1561,13 +1534,11 @@ func (s *searchServer) GetStats(ctx context.Context, req *resourcepb.ResourceSta
 			Resource:  stat.Resource,
 		}, "getStats")
 		if err != nil {
-			rsp.Error = AsErrorResult(err)
-			return rsp, nil
+			return nil, rpcErrorFrom(err)
 		}
 		count, err := sumDocCount(ctx, index, folderSet, stats)
 		if err != nil {
-			rsp.Error = AsErrorResult(err)
-			return rsp, nil
+			return nil, rpcErrorFrom(err)
 		}
 		rsp.Stats[i] = &resourcepb.ResourceStatsResponse_Stats{
 			Group:    stat.Group,
@@ -1627,9 +1598,7 @@ func (s *searchServer) RebuildIndexes(ctx context.Context, req *resourcepb.Rebui
 	filterKeys := make([]NamespacedResource, 0, len(req.Keys))
 	for _, key := range req.Keys {
 		if req.Namespace != key.Namespace {
-			return &resourcepb.RebuildIndexesResponse{
-				Error: NewBadRequestError("key namespace does not match request namespace"),
-			}, nil
+			return nil, GRPCStatusError(NewBadRequestError("key namespace does not match request namespace"))
 		}
 		filterKeys = append(filterKeys, NamespacedResource{
 			Namespace: key.Namespace,
@@ -1640,17 +1609,15 @@ func (s *searchServer) RebuildIndexes(ctx context.Context, req *resourcepb.Rebui
 
 	importTimes, err := s.getLastImportTimes(ctx, filterKeys)
 	if err != nil {
-		return &resourcepb.RebuildIndexesResponse{
-			Error: AsErrorResult(err),
-		}, nil
+		return nil, rpcErrorFrom(err)
 	}
 
-	completeChs := s.findIndexesToRebuild(importTimes, filterKeys, time.Now(), false)
+	completeChs := s.findIndexesToRebuild(ctx, importTimes, filterKeys, time.Now(), false)
 	// A global index is never imported itself; its covered types are, and only
 	// those are rebuilt.
 	syncChs, err := s.queueTypeSyncs(ctx, filterKeys, nil)
 	if err != nil {
-		return &resourcepb.RebuildIndexesResponse{Error: AsErrorResult(err)}, nil
+		return nil, rpcErrorFrom(err)
 	}
 	completeChs = append(completeChs, syncChs...)
 	rebuildCount := len(completeChs)
@@ -1678,10 +1645,7 @@ func (s *searchServer) RebuildIndexes(ctx context.Context, req *resourcepb.Rebui
 			continue
 		}
 		if lastImportTime := importTimes[key]; !lastImportTime.IsZero() && !bi.BuildTime.After(lastImportTime) {
-			return &resourcepb.RebuildIndexesResponse{
-				RebuildCount: int64(rebuildCount),
-				Error:        AsErrorResult(fmt.Errorf("index for %s was not built after last import (%s)", key, lastImportTime)),
-			}, nil
+			return nil, rpcErrorFrom(fmt.Errorf("index for %s was not built after last import (%s)", key, lastImportTime))
 		}
 		if !bi.BuildTime.IsZero() {
 			buildTimes = append(buildTimes, &resourcepb.RebuildIndexesResponse_IndexBuildTime{
@@ -2004,7 +1968,7 @@ func (s *searchServer) scanForIndexesToRebuild(ctx context.Context, checkFullReb
 		importTimes = make(map[NamespacedResource]time.Time)
 	}
 	if checkFullRebuilds {
-		s.findIndexesToRebuild(importTimes, keys, time.Now(), true)
+		s.findIndexesToRebuild(ctx, importTimes, keys, time.Now(), true)
 	}
 	if _, err := s.queueTypeSyncs(ctx, keys, importTimes); err != nil {
 		s.log.Warn("failed to check which resource types of global search indexes are out of date", "error", err)
@@ -2078,9 +2042,12 @@ func jitterForKey(key NamespacedResource, maxAge time.Duration) time.Duration {
 	return time.Duration(h.Sum64() % jitterRange)
 }
 
-func (s *searchServer) findIndexesToRebuild(lastImportTimes map[NamespacedResource]time.Time, filterKeys []NamespacedResource, now time.Time, applyJitter bool) []chan struct{} {
+// findIndexesToRebuild queues a rebuild of each index that needs one. The rebuilds run as
+// migration reads when ctx is a migration read.
+func (s *searchServer) findIndexesToRebuild(ctx context.Context, lastImportTimes map[NamespacedResource]time.Time, filterKeys []NamespacedResource, now time.Time, applyJitter bool) []chan struct{} {
 	// Check all open indexes and see if any of them need to be rebuilt.
 	// This is done periodically to make sure that the indexes are up to date.
+	migrationRead := MigrationReadFromContext(ctx)
 
 	var keys []NamespacedResource
 	if filterKeys != nil {
@@ -2122,6 +2089,7 @@ func (s *searchServer) findIndexesToRebuild(lastImportTimes map[NamespacedResour
 			completeCh := make(chan struct{})
 			completeChs = append(completeChs, completeCh)
 			rebuildReq := newRebuildRequest(key, minBuildTime, lastImportTime, s.minBuildVersion, sfields, expectedSearchFieldsHash, completeCh)
+			rebuildReq.migrationRead = migrationRead
 			s.rebuildQueue.Add(rebuildReq)
 
 			s.indexMetrics.RebuildQueueLength.Set(float64(s.rebuildQueue.Len()))
@@ -2163,6 +2131,12 @@ func (s *searchServer) runIndexRebuilder(ctx context.Context) {
 func (s *searchServer) rebuildIndex(ctx context.Context, req rebuildRequest) {
 	ctx, span := tracer.Start(ctx, "resource.searchServer.rebuildIndex")
 	defer span.End()
+
+	// The worker's context is the server's, so a migration waiting for this rebuild only reaches
+	// storage through the request.
+	if req.migrationRead {
+		ctx = ContextWithMigrationRead(ctx)
+	}
 
 	l := s.log.New("namespace", req.Namespace, "group", req.Group, "resource", req.Resource)
 
@@ -2380,6 +2354,10 @@ type rebuildRequest struct {
 	// reconcile, for a global index, compares it with storage and repairs what
 	// differs, unless a full rebuild is due anyway.
 	reconcile bool
+
+	// migrationRead runs the rebuild's storage reads as a migration read, for a
+	// migration that waits for it.
+	migrationRead bool
 
 	completeChannels []chan<- struct{} // signal rebuild index is complete
 }
@@ -3427,7 +3405,7 @@ func (b *testDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb
 			val = v.(string)
 		}
 	}
-	return &IndexableDocument{
+	doc := &IndexableDocument{
 		Key: &resourcepb.ResourceKey{
 			Namespace: key.Namespace,
 			Group:     key.Group,
@@ -3440,7 +3418,13 @@ func (b *testDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb
 			"title": title,
 			"value": val,
 		},
-	}, nil
+	}
+	if meta, err := utils.MetaAccessor(&u); err == nil {
+		if manager, ok := meta.GetManagerProperties(); ok {
+			doc.Manager = &manager
+		}
+	}
+	return doc, nil
 }
 
 // TestDocumentBuilderSupplier implements DocumentBuilderSupplier for testing

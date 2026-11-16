@@ -72,9 +72,9 @@ var (
 		prometheus.CounterOpts{
 			Namespace: namespace,
 			Name:      "meta_fetch_errors_total",
-			Help:      "Total number of metadata fetch errors by provider and error type.",
+			Help:      "Total number of metadata fetch errors by provider, error type and originating service identity.",
 		},
-		[]string{"provider", "error_type"},
+		[]string{"provider", "error_type", "origin_caller"}, // origin_caller: innermost service identity of the request, or "unknown"
 	)
 
 	// Meta request metrics

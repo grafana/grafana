@@ -8,6 +8,7 @@ package extensions
 import (
 	_ "github.com/DATA-DOG/go-sqlmock"
 	_ "github.com/alicebob/miniredis/v2"
+	_ "github.com/fullstorydev/grpchan/inprocgrpc"
 	_ "github.com/go-kit/log"
 	_ "github.com/google/go-github/v82/github"
 	_ "github.com/grafana/authlib/authz/proto/v1"
@@ -48,7 +49,6 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/ssosettings/strategies"
 	_ "github.com/grafana/grafana/pkg/services/team/teamtest"
 	_ "github.com/grafana/grafana/pkg/services/user/usertest"
-	_ "github.com/grafana/grafana/pkg/storage/dbproxy/api/dbproxy/v1"
 	_ "github.com/grafana/grafana/pkg/storage/unified/resource/kv/test"
 	_ "github.com/grafana/grafana/pkg/storage/unified/resource/lease"
 	_ "github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"

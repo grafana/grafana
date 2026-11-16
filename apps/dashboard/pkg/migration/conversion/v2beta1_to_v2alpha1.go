@@ -359,6 +359,7 @@ func convertFieldConfig_V2beta1_to_V2alpha1(in *dashv2beta1.DashboardFieldConfig
 		Links:             in.Links,
 		NoValue:           in.NoValue,
 		Custom:            in.Custom,
+		VarMappings:       in.VarMappings,
 	}
 
 	// Convert thresholds

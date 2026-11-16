@@ -25,6 +25,6 @@ jobs:
         uses: ./.github/actions/setup-node
 
       - name: Install frontend dependencies
-        uses: ./.github/actions/yarn-install
+        uses: ./.github/actions/install-frontend-deps
 
       - uses: ./.github/actions/bundle-schema-types
