@@ -18,6 +18,6 @@ const localManifestPollInterval = time.Minute
 // manifests the router publishes, through discovery. The router fills the set
 // on its first reconcile, which runs after storage is built, so the initial poll
 // usually finds nothing; the watcher retries quickly until it lists a set.
-func NewLocalManifestWatcher(discovery ManifestLister, reg prometheus.Registerer, onChange func([]*app.ManifestData), logger log.Logger) *ManifestWatcher {
+func NewLocalManifestWatcher(discovery ManifestDiscovery, reg prometheus.Registerer, onChange func([]*app.ManifestData), logger log.Logger) *ManifestWatcher {
 	return newManifestWatcher([]manifestSource{discoveryManifestSource(discovery)}, localManifestPollInterval, onChange, logger, reg)
 }

@@ -178,7 +178,7 @@ func dynamicManifestSource(name string, client dynamic.Interface, gvr schema.Gro
 
 // discoveryManifestSource lists the manifests the router publishes, read
 // in-process.
-func discoveryManifestSource(discovery ManifestLister) manifestSource {
+func discoveryManifestSource(discovery ManifestDiscovery) manifestSource {
 	return manifestSource{name: manifestSourceDiscovery, list: func(ctx context.Context) ([]listedManifest, error) {
 		list, err := discovery.ListManifests(ctx)
 		if err != nil {
