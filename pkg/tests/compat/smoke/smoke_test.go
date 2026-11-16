@@ -3,6 +3,7 @@
 package smoke
 
 import (
+	"bytes"
 	"cmp"
 	"context"
 	"encoding/json"
@@ -19,13 +20,13 @@ import (
 
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/stretchr/testify/require"
+	"go.yaml.in/yaml/v3"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
-	"sigs.k8s.io/yaml"
 
 	"github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/tests/apis"
@@ -419,12 +420,12 @@ func newObject(t *testing.T, h *apis.K8sTestHelper, gr schema.GroupResource, res
 // skipFile is skip.yaml. Every map is keyed by "<resource>.<group>"; the values are
 // reasons, except in FeatureFlags, where they are the flag the resource needs.
 type skipFile struct {
-	FeatureFlags        map[string]string `json:"feature_flags"`
-	All                 map[string]string `json:"all"`
-	OSS                 map[string]string `json:"oss"`
-	Enterprise          map[string]string `json:"enterprise"`
-	LegacyStorage       map[string]string `json:"legacy_storage"`
-	StaleWritesAccepted map[string]string `json:"stale_writes_accepted"`
+	FeatureFlags        map[string]string `yaml:"feature_flags"`
+	All                 map[string]string `yaml:"all"`
+	OSS                 map[string]string `yaml:"oss"`
+	Enterprise          map[string]string `yaml:"enterprise"`
+	LegacyStorage       map[string]string `yaml:"legacy_storage"`
+	StaleWritesAccepted map[string]string `yaml:"stale_writes_accepted"`
 }
 
 func readSkipFile(t *testing.T) skipFile {
@@ -432,7 +433,9 @@ func readSkipFile(t *testing.T) skipFile {
 	raw, err := os.ReadFile("skip.yaml")
 	require.NoError(t, err)
 	var f skipFile
-	require.NoError(t, yaml.UnmarshalStrict(raw, &f))
+	dec := yaml.NewDecoder(bytes.NewReader(raw))
+	dec.KnownFields(true)
+	require.NoError(t, dec.Decode(&f))
 	return f
 }
 
