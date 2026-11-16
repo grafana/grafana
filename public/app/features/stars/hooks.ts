@@ -7,7 +7,7 @@ import { useDispatch } from 'app/types/store';
 
 import { refetchStarred, useSearchStarredQuery } from './api';
 import { STARRED_KINDS } from './kinds';
-import { findStarredNames, userStarsFieldSelector } from './utils';
+import { canUseStars, findStarredNames, userStarsFieldSelector } from './utils';
 
 /** Star or unstar the item with this id. Every starred view follows the `Stars` cache the mutation invalidates. */
 export const useStarItem = (group: string, kind: string) => {
@@ -33,11 +33,17 @@ export const useStarItem = (group: string, kind: string) => {
  * Get starred items from the app platform API
  */
 export const useStarredItems = (group: string, kind: string) => {
-  const response = useListStarsQuery({ fieldSelector: userStarsFieldSelector() });
+  const canStar = canUseStars();
+  const response = useListStarsQuery(canStar ? { fieldSelector: userStarsFieldSelector() } : skipToken);
 
   // Keyed on the response data, not the response: a refetch that returns the same stars keeps the same array.
   const { data, isLoading, isUninitialized } = response;
   const starredItems = useMemo(() => {
+    // A user without a stars resource has nothing starred
+    if (!canStar) {
+      return [];
+    }
+
     // If query hasn't been initiated yet or is still loading, return undefined to show loading state
     if (isUninitialized || isLoading) {
       return undefined;
@@ -49,7 +55,7 @@ export const useStarredItems = (group: string, kind: string) => {
     }
 
     return findStarredNames(data, group, kind);
-  }, [data, isLoading, isUninitialized, group, kind]);
+  }, [canStar, data, isLoading, isUninitialized, group, kind]);
 
   return {
     ...response,
@@ -63,16 +69,16 @@ export const useStarredItems = (group: string, kind: string) => {
  * The user's starred items of every kind Grafana shows, as search rows that follow the star set. The set is RTK
  * cache every star toggle invalidates and the search is keyed by it, so a toggle anywhere re-searches while the
  * previous rows stay up. Every caller shares one cache entry per star set; a view cuts the rows it shows after
- * sorting them. `skip` leaves both requests unmade for a view that does not render stars;
- * `refetchOnMountOrArgChange` searches again on each mount, for a view that must not show rows renamed or
- * deleted from another tab. `refetch` re-runs both requests; it is stable, so a view can call it from an effect on
- * its own refresh schedule.
+ * sorting them. `skip` leaves both requests unmade for a view that does not render stars, and a user without a
+ * stars resource never makes them; `refetchOnMountOrArgChange` searches again on each mount, for a view that must
+ * not show rows renamed or deleted from another tab. `refetch` re-runs both requests; it is stable, so a view can
+ * call it from an effect on its own refresh schedule.
  */
 export const useStarredSearch = ({
   skip,
   refetchOnMountOrArgChange,
 }: { skip?: boolean; refetchOnMountOrArgChange?: boolean } = {}) => {
-  const stars = useListStarsQuery(skip ? skipToken : { fieldSelector: userStarsFieldSelector() });
+  const stars = useListStarsQuery(skip || !canUseStars() ? skipToken : { fieldSelector: userStarsFieldSelector() });
 
   // Keyed by search kind, names sorted, so the cache key is the set and not the order the API listed it in
   const args = useMemo(() => {

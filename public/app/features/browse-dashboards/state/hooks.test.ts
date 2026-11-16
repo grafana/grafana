@@ -1,4 +1,5 @@
 import { http, HttpResponse } from 'msw';
+import { testWithStarsUser } from 'test/helpers/testWithStarsUser';
 import { getWrapper, renderHook, waitFor } from 'test/test-utils';
 
 import { setBackendSrv } from '@grafana/runtime';
@@ -43,6 +44,8 @@ function renderBrowseHook<T>(hook: () => T, browseDashboards: BrowseDashboardsSt
 }
 
 const rowsOf = (tree: DashboardsTreeItem[]) => tree.map(({ item, level }) => `${level}:${item.kind}:${item.uid}`);
+
+testWithStarsUser();
 
 describe('browse-dashboards state hooks', () => {
   const folderUID = 'abc-123';

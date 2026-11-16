@@ -1,9 +1,10 @@
 import { type StarsList } from 'app/api/clients/collections/v1alpha1';
+import { contextSrv } from 'app/core/services/context_srv';
 
-import { findStarredNames, userStarsFieldSelector } from './utils';
+import { canUseStars, findStarredNames, userStarsFieldSelector } from './utils';
 
 jest.mock('app/core/services/context_srv', () => ({
-  contextSrv: { user: { uid: 'u123' } },
+  contextSrv: { isSignedIn: true, user: { uid: 'u123' } },
 }));
 
 const starsList = (resources: Array<{ group: string; kind: string; names: string[] }>): StarsList =>
@@ -33,5 +34,21 @@ describe('findStarredNames', () => {
 describe('userStarsFieldSelector', () => {
   it('builds the field selector from the current user uid', () => {
     expect(userStarsFieldSelector()).toBe('metadata.name=user-u123');
+  });
+});
+
+describe('canUseStars', () => {
+  it('is true for a signed-in user with a uid', () => {
+    expect(canUseStars()).toBe(true);
+  });
+
+  it('is false for an anonymous user', () => {
+    jest.replaceProperty(contextSrv, 'isSignedIn', false);
+    expect(canUseStars()).toBe(false);
+  });
+
+  it('is false for a signed-in identity without a uid', () => {
+    jest.replaceProperty(contextSrv.user, 'uid', '');
+    expect(canUseStars()).toBe(false);
   });
 });
