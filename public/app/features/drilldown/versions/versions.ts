@@ -47,16 +47,8 @@ const OtelFirstTraceVersion = lazy(async () => {
   return { default: OtelFirstTraceView };
 });
 
-const ReadinessHomeVersion = lazy(
-  () => import(/* webpackChunkName: "DrilldownReadinessHome"*/ '../readiness/ReadinessHomePage')
-);
-
-const ReadinessDiagnoseVersion = lazy(
-  () => import(/* webpackChunkName: "DrilldownReadiness"*/ '../readiness/ReadinessDiagnosePage')
-);
-
 // Versions kept in the code but not shown as tabs.
-const HIDDEN_VERSION_IDS = ['nadine', 'otel-first', 'readiness'];
+const HIDDEN_VERSION_IDS = ['nadine', 'otel-first'];
 
 // Each version is one tab on /drilldown. Add a version by adding an entry here; the first entry is the default.
 export function getDrilldownVersions(): DrilldownVersion[] {
@@ -95,18 +87,6 @@ function getAllVersions(home: string): DrilldownVersion[] {
           id: 'trace',
           label: t('drilldown-versions.views.otel-first-trace', 'One trace end to end'),
           component: OtelFirstTraceVersion,
-        },
-      ],
-    },
-    {
-      id: 'readiness',
-      label: t('drilldown-versions.tabs.readiness', 'Readiness'),
-      views: [
-        { id: 'home', label: home, component: ReadinessHomeVersion },
-        {
-          id: 'diagnose',
-          label: t('drilldown-versions.views.readiness-diagnose', 'Diagnose'),
-          component: ReadinessDiagnoseVersion,
         },
       ],
     },

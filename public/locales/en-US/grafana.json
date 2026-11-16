@@ -8921,103 +8921,6 @@
       "about": "About Drilldown"
     }
   },
-  "drilldown-readiness": {
-    "attention": {
-      "none": "No issues found.",
-      "subtitle": "Issues grouped by what to change",
-      "title": "Needs attention"
-    },
-    "back": "Back to readiness",
-    "check": {
-      "metric-labels": "Attributes reach metrics as labels",
-      "name-match": "The name matches across signals",
-      "namespace": "service.namespace is present",
-      "sampling": "Sampling can hide traces",
-      "service-name": "service.name is set",
-      "trace-id": "Trace ID field matches the log field",
-      "trace-to-logs": "Trace to log datasource mapping resolves"
-    },
-    "checks-error": "Could not run the checks",
-    "error": "Could not query the OTel lab data sources",
-    "fix": {
-      "collector": "In the collector",
-      "collector-intro": "Add a resource processor to the collector pipeline",
-      "collector-note": "Applies to everything the collector forwards, so add the processor to the pipelines for this service only.",
-      "confirm-body": "This changes indexing for the whole organization. Existing queries keep working. New volume can raise cardinality and cost. Needs an admin.",
-      "confirm-title": "Promote at ingestion",
-      "copy": "Copy",
-      "promote": "Promote at ingestion",
-      "promote-button": "Promote",
-      "promote-note": "This prototype shows the step and does not change the backend.",
-      "recheck": "After the change, run the checks again from the Diagnose view.",
-      "sdk": "In the SDK",
-      "sdk-intro": "Add to the service's environment",
-      "sdk-note": "Applies after the service restarts. New telemetry carries the namespace. Existing data keeps its old labels.",
-      "subtitle": "Choose where to set it for {{service}}. The first option changes only this service.",
-      "title": "Set service.namespace"
-    },
-    "fix-button": "Fix",
-    "home": {
-      "intro": "Check that your services can be investigated across signals, then drill in."
-    },
-    "intro": "Run the checks support runs by hand and name the first one that fails.",
-    "issue": {
-      "identity": "Identity",
-      "identity-text": "{{service}} has no service name. The SDK default replaced service.name.",
-      "names": "Names across signals",
-      "names-text": "{{services}} have span metrics and no logs under that name.",
-      "namespace": "Namespace",
-      "namespace-text": "{{services}} send no service.namespace.",
-      "promotion": "Promotion",
-      "promotion-text": "Logs have no environment label. deployment.environment.name is not indexed."
-    },
-    "loading": "Reading the services in each signal",
-    "rerun": "Run checks again",
-    "result": {
-      "no-logs": "No logs under this name.",
-      "no-metrics": "No span metrics under this name.",
-      "no-namespace": "No namespace.",
-      "no-traces": "No traces under this name.",
-      "ready": "Ready for cross-signal investigation",
-      "unnamed": "No service name."
-    },
-    "running": "Running the checks",
-    "service": "Service",
-    "services": {
-      "diagnose": "Diagnose",
-      "logs": "Logs",
-      "metrics": "Metrics",
-      "no-namespace": "no namespace",
-      "none": "none",
-      "ok": "ok",
-      "only-gaps": "Show only gaps",
-      "open": "Open",
-      "result": "Check result",
-      "service": "Service",
-      "subtitle": "Services with a gap come first",
-      "title": "Services",
-      "traces": "Traces"
-    },
-    "status": {
-      "check": "check",
-      "fail": "fail",
-      "info": "info",
-      "not-run": "not run",
-      "pass": "pass"
-    },
-    "strip": {
-      "logs-only": "Logs only",
-      "logs-only-note": "No span metrics under this name",
-      "metrics-only": "Metrics only",
-      "metrics-only-note": "No logs under this name",
-      "no-namespace": "No namespace",
-      "no-namespace-note": "Same name can collide",
-      "ready": "Ready",
-      "ready-note": "Cross-signal links possible",
-      "title": "Readiness summary"
-    },
-    "summary": "{{need}} of {{total}} checks need a change"
-  },
   "drilldown-real": {
     "apps": {
       "logs": "Logs",
@@ -9156,15 +9059,13 @@
     "tabs": {
       "nadine": "Nadine's prototype",
       "nadine-real": "Nadine's design",
-      "otel-first": "OTel first",
-      "readiness": "Readiness"
+      "otel-first": "OTel first"
     },
     "views": {
       "home": "Home",
       "otel-first-mapping": "Attribute mapping",
       "otel-first-scope": "Service scope",
-      "otel-first-trace": "One trace end to end",
-      "readiness-diagnose": "Diagnose"
+      "otel-first-trace": "One trace end to end"
     }
   },
   "embed": {
