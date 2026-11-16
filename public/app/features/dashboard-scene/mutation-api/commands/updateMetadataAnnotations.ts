@@ -8,7 +8,7 @@
  * Add further keys here (schema + persist) rather than a new command per annotation.
  */
 
-import type * as z from 'zod';
+import * as z from 'zod/mini';
 
 import { AnnoKeyUseCrossDashboardVariables } from 'app/features/apiserver/types';
 
@@ -31,7 +31,7 @@ const CLEARED_SELECTION = { global: 'none' as const, folder: 'none' as const };
 
 export const updateMetadataAnnotationsCommand: MutationCommand<UpdateMetadataAnnotationsPayload> = {
   name: 'UPDATE_METADATA_ANNOTATIONS',
-  description: payloads.updateMetadataAnnotations.description ?? '',
+  description: z.globalRegistry.get(payloads.updateMetadataAnnotations)?.description ?? '',
 
   payloadSchema: updateMetadataAnnotationsPayloadSchema,
   // Permission stays tied to the only allowlisted key. Split per-key when more are added.

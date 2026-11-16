@@ -8,6 +8,7 @@ import { Box, Dropdown, EmptyState, LinkButton, Menu, Stack, useStyles2 } from '
 import { AlertingPageWrapper } from '../../components/AlertingPageWrapper';
 import MoreButton from '../../components/MoreButton';
 import { AlertingAction, useAlertingAbility } from '../../hooks/useAbilities';
+import { useAlertRulesNav } from '../../navigation/useAlertRulesNav';
 import { grafanaRulesNav } from '../../utils/navigation';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { RuleListModeToggle } from '../rule-search/RuleListModeToggle';
@@ -28,12 +29,12 @@ function AlertRulesPage() {
 
   useTrackRuleListPageView('alert', mode);
 
+  const { navId, pageNav } = useAlertRulesNav();
   const headerHeight = useChromeHeaderHeight() ?? 0;
   const styles = useStyles2(getStyles, headerHeight);
 
   return (
-    // The heading comes from the navId, so it also drives breadcrumbs and nav highlighting.
-    <AlertingPageWrapper navId="alert-rules" actions={<AlertRulesPageHeader />}>
+    <AlertingPageWrapper navId={navId} pageNav={pageNav} actions={<AlertRulesPageHeader />}>
       <Box paddingTop={2}>
         <Stack direction="column" gap={2}>
           <div className={styles.searchRow}>

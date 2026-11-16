@@ -19,7 +19,7 @@ title: Secrets Management HTTP API
 refs:
   api-overview:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/
+      destination: /docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/developer-resources/api-reference/http-api/apis/
   rbac-permissions:
@@ -44,10 +44,6 @@ This API is in `beta`, so it might change in future releases.
 {{< /admonition >}}
 
 The Grafana Secrets Management API allows you to manage secrets that are used by other services and applications within your Grafana instance.
-
-{{< admonition type="caution" >}}
-The API is currently in [public preview](https://grafana.com/docs/release-life-cycle/#public-preview) and might be subject to changes.
-{{< /admonition >}}
 
 ## Requirements
 

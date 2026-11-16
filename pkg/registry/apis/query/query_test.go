@@ -13,6 +13,8 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
 
 	claims "github.com/grafana/authlib/types"
@@ -22,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	queryapi "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/expr/metrics"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/query/clientapi"
@@ -67,6 +70,7 @@ func TestQueryAPI(t *testing.T) {
 		expectedStatus int
 		testdataFile   string
 		stubbedFrame   *data.Frame
+		hasExpression  bool
 	}{
 		{
 			name: "single prometheus query",
@@ -123,6 +127,7 @@ func TestQueryAPI(t *testing.T) {
 				"to": "now"
 			}`,
 			testdataFile:   "prometheus_with_sse.json",
+			hasExpression:  true,
 			expectedStatus: http.StatusOK,
 			stubbedFrame: data.NewFrame("",
 				data.NewField("Value", nil, []float64{7.0}),
@@ -158,6 +163,7 @@ func TestQueryAPI(t *testing.T) {
 				"to": "now"
 			}`,
 			testdataFile:   "prometheus_with_sql_expression.json",
+			hasExpression:  true,
 			expectedStatus: http.StatusOK,
 			stubbedFrame: data.NewFrame("",
 				data.NewField("Time", nil, []time.Time{time.Unix(1704067200, 0)}),
@@ -168,7 +174,9 @@ func TestQueryAPI(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			reg := prometheus.NewRegistry()
 			builder := &QueryAPIBuilder{
+				metrics: metrics.NewQueryServiceExpressionsMetrics(reg),
 				converter: &expr.ResultConverter{
 					Features: featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions),
 					Tracer:   tracing.InitializeTracerForTest(),
@@ -201,6 +209,14 @@ func TestQueryAPI(t *testing.T) {
 			}()
 
 			require.Equal(t, tc.expectedStatus, result.StatusCode, "Should return expected status code")
+
+			wantSeries := 0
+			if tc.hasExpression {
+				wantSeries = 1
+			}
+			gotSeries, gatherErr := testutil.GatherAndCount(reg, "grafana_queryservice_expressions_queries_duration_milliseconds")
+			require.NoError(t, gatherErr)
+			require.Equal(t, wantSeries, gotSeries, "expression durations should be recorded in the builder's registered metrics")
 
 			// Verify the response is the expected type
 			qdr := &queryapi.QueryDataResponse{}

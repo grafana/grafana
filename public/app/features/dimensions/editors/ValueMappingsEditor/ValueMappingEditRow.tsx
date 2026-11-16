@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useContext, useEffect, useRef } from 'react';
 import * as React from 'react';
 
 import {
@@ -12,6 +12,9 @@ import {
 import { Trans, t } from '@grafana/i18n';
 import { useStyles2, Icon, Select, ColorPicker, IconButton, Input, Button, Stack } from '@grafana/ui';
 import { useDragAndDrop } from '@grafana/ui/internal';
+import { FieldConfigExpressionsContext } from 'app/core/components/OptionsUI/fieldConfigExpressions';
+import { SuggestionsInput } from 'app/core/components/SuggestionsInput/SuggestionsInput';
+import { getVariableSuggestions } from 'app/core/components/SuggestionsInput/getVariableSuggestions';
 
 import { ResourcePickerSize, ResourceFolderName, MediaType } from '../../types';
 import { ResourcePicker } from '../ResourcePicker';
@@ -42,6 +45,7 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
   const { key, result, id } = mapping;
   const styles = useStyles2(getStyles);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const fieldConfigExpressions = useContext(FieldConfigExpressionsContext);
 
   const update = useCallback(
     (fn: (item: ValueMappingEditRowModel) => void) => {
@@ -97,8 +101,12 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
   };
 
   const onChangeText = (event: React.FormEvent<HTMLInputElement>) => {
+    setText(event.currentTarget.value);
+  };
+
+  const setText = (text: string) => {
     update((mapping) => {
-      mapping.result.text = event.currentTarget.value;
+      mapping.result.text = text;
     });
   };
 
@@ -184,6 +192,11 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
 
   const dragHandleLabel = t('dimensions.value-mapping-edit-row.drag-handle-label', 'Reorder value mapping row');
 
+  const displayTextPlaceholder = t(
+    'dimensions.value-mapping-edit-row.placeholder-optional-display-text',
+    'Optional display text'
+  );
+
   return (
     <Draggable key={id} draggableId={id} index={index}>
       {(provided) => (
@@ -245,15 +258,27 @@ export function ValueMappingEditRow({ mapping, index, onChange, onRemove, onDupl
             )}
           </td>
           <td>
-            <Input
-              type="text"
-              value={result.text ?? ''}
-              onChange={onChangeText}
-              placeholder={t(
-                'dimensions.value-mapping-edit-row.placeholder-optional-display-text',
-                'Optional display text'
-              )}
-            />
+            {fieldConfigExpressions ? (
+              // Suggests dashboard variables, which the display text can reference (e.g. $myVar)
+              <SuggestionsInput
+                value={result.text ?? ''}
+                suggestions={getVariableSuggestions()}
+                onInputChange={setText}
+                onChange={(text) => {
+                  if (text !== (result.text ?? '')) {
+                    setText(text);
+                  }
+                }}
+                placeholder={displayTextPlaceholder}
+              />
+            ) : (
+              <Input
+                type="text"
+                value={result.text ?? ''}
+                onChange={onChangeText}
+                placeholder={displayTextPlaceholder}
+              />
+            )}
           </td>
           <td className={styles.textAlignCenter}>
             {result.color && (

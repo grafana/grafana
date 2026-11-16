@@ -72,8 +72,8 @@ var appManifestData = app.ManifestData{
 					Scope:      "Namespaced",
 					Conversion: false,
 					Search: &app.ManifestVersionKindSearch{
-						Hybrid: func(b bool) *bool { return &b }(true),
-						Global: func(b bool) *bool { return &b }(true),
+						Hybrid: new(true),
+						Global: new(true),
 					},
 					Schema: &versionSchemaDashboardv0alpha1,
 					SearchFields: []app.ManifestVersionKindSearchField{
@@ -217,10 +217,10 @@ var appManifestData = app.ManifestData{
 					Scope:      "Namespaced",
 					Conversion: false,
 					Storage: &app.ManifestVersionKindStorage{
-						ListKeys: func(b bool) *bool { return &b }(false),
+						ListKeys: new(false),
 					},
 					Search: &app.ManifestVersionKindSearch{
-						Endpoint: func(b bool) *bool { return &b }(false),
+						Endpoint: new(false),
 					},
 					Schema: &versionSchemaSnapshotv0alpha1,
 				},
@@ -238,8 +238,8 @@ var appManifestData = app.ManifestData{
 					Scope:      "Namespaced",
 					Conversion: false,
 					Search: &app.ManifestVersionKindSearch{
-						Hybrid: func(b bool) *bool { return &b }(true),
-						Global: func(b bool) *bool { return &b }(true),
+						Hybrid: new(true),
+						Global: new(true),
 					},
 					Schema: &versionSchemaDashboardv1,
 					SearchFields: []app.ManifestVersionKindSearchField{
@@ -389,8 +389,8 @@ var appManifestData = app.ManifestData{
 					Scope:      "Namespaced",
 					Conversion: false,
 					Search: &app.ManifestVersionKindSearch{
-						Hybrid: func(b bool) *bool { return &b }(true),
-						Global: func(b bool) *bool { return &b }(true),
+						Hybrid: new(true),
+						Global: new(true),
 					},
 					Schema: &versionSchemaDashboardv1beta1,
 					SearchFields: []app.ManifestVersionKindSearchField{
@@ -540,8 +540,8 @@ var appManifestData = app.ManifestData{
 					Scope:      "Namespaced",
 					Conversion: false,
 					Search: &app.ManifestVersionKindSearch{
-						Hybrid: func(b bool) *bool { return &b }(true),
-						Global: func(b bool) *bool { return &b }(true),
+						Hybrid: new(true),
+						Global: new(true),
 					},
 					Schema: &versionSchemaDashboardv2,
 					SearchFields: []app.ManifestVersionKindSearchField{
@@ -691,8 +691,8 @@ var appManifestData = app.ManifestData{
 					Scope:      "Namespaced",
 					Conversion: false,
 					Search: &app.ManifestVersionKindSearch{
-						Hybrid: func(b bool) *bool { return &b }(true),
-						Global: func(b bool) *bool { return &b }(true),
+						Hybrid: new(true),
+						Global: new(true),
 					},
 					Schema: &versionSchemaDashboardv2alpha1,
 					SearchFields: []app.ManifestVersionKindSearchField{
@@ -842,8 +842,8 @@ var appManifestData = app.ManifestData{
 					Scope:      "Namespaced",
 					Conversion: false,
 					Search: &app.ManifestVersionKindSearch{
-						Hybrid: func(b bool) *bool { return &b }(true),
-						Global: func(b bool) *bool { return &b }(true),
+						Hybrid: new(true),
+						Global: new(true),
 					},
 					Schema: &versionSchemaDashboardv2beta1,
 					SearchFields: []app.ManifestVersionKindSearchField{
@@ -1013,7 +1013,7 @@ var appManifestData = app.ManifestData{
 					Scope:      "Namespaced",
 					Conversion: false,
 					Search: &app.ManifestVersionKindSearch{
-						Global: func(b bool) *bool { return &b }(true),
+						Global: new(true),
 					},
 					Admission: &app.AdmissionCapabilities{
 						Validation: &app.ValidationCapability{
@@ -1035,14 +1035,15 @@ var appManifestData = app.ManifestData{
 				{
 					Kind:       "DashboardPreferences",
 					Plural:     "DashboardPreferences",
+					Resource:   "dashboardpreferences",
 					Scope:      "Namespaced",
 					Conversion: false,
 					Storage: &app.ManifestVersionKindStorage{
-						ListKeys: func(b bool) *bool { return &b }(false),
+						ListKeys: new(false),
 					},
 					Search: &app.ManifestVersionKindSearch{
-						Endpoint: func(b bool) *bool { return &b }(false),
-						Trash:    func(b bool) *bool { return &b }(false),
+						Endpoint: new(false),
+						Trash:    new(false),
 					},
 					Admission: &app.AdmissionCapabilities{
 						Validation: &app.ValidationCapability{
