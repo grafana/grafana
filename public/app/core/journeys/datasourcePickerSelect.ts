@@ -1,6 +1,6 @@
 import { locationService, onInteraction, registerJourneyTriggers, onJourneyInstance } from '@grafana/runtime';
 
-import { collectUnsubs, str } from './utils';
+import { abandonOnRouteChange, collectUnsubs, str } from './utils';
 
 /**
  * Journey: datasource_picker_select
@@ -12,7 +12,8 @@ import { collectUnsubs, str } from './utils';
  * data sources.
  *
  * Start triggers:
- *   - dashboards_dspicker_clicked (item=open_dspicker) — user opens the picker dropdown
+ *   - dashboards_dspicker_opened — user opens the picker dropdown (click, typing or arrow keys). Each open
+ *     starts a fresh journey; a still-active one is canceled through the registry's cancelOnRestart.
  *
  * Steps (duration):
  *   - list_render — from opening the dropdown until the list is rendered (dashboards_dspicker_list_rendered)
@@ -27,13 +28,16 @@ import { collectUnsubs, str } from './utils';
  *   - success: dashboards_dspickermodal_clicked item=select_ds — selected in the advanced modal
  *   - success: dashboards_dspicker_current_reselected — the already selected data source was picked again (changed=false)
  *   - discarded: dashboards_dspicker_dismissed — dropdown closed without a selection (click outside, Escape, Tab out)
+ *   - abandoned: dashboards_dspicker_dismissed (reason=unmount) — picker unmounted while open
+ *   - abandoned: route pathname changes (e.g. navigating away while the advanced modal is open)
  *   - discarded: dashboards_dspickermodal_clicked item=dismiss — advanced modal closed without a selection
  *   - abandoned: dashboards_dspickermodal_clicked item=config_new_ds — user left to configure a new data source
  *   - timeout: 5 min
  *
  * Silent interactions added by this journey (all in DataSourcePicker.tsx):
- *   - dashboards_dspicker_list_rendered — emitted once when the dropdown list has mounted
- *   - dashboards_dspicker_dismissed — emitted when the user closes the dropdown without selecting
+ *   - dashboards_dspicker_opened — emitted once per open of the dropdown
+ *   - dashboards_dspicker_list_rendered — emitted once when the dropdown list has rendered
+ *   - dashboards_dspicker_dismissed — emitted when the dropdown closes or unmounts without a selection
  *   - dashboards_dspicker_current_reselected — emitted when the current data source is picked again
  */
 
@@ -66,19 +70,14 @@ export function getPickerSurface(pathname: string, search: string): string {
 }
 
 registerJourneyTriggers('datasource_picker_select', (tracker) => {
-  return onInteraction(PICKER_EVENT, (props) => {
-    if (props.item !== 'open_dspicker') {
-      return;
-    }
-    if (!tracker.getActiveJourney('datasource_picker_select')) {
-      const { pathname, search } = locationService.getLocation();
-      tracker.startJourney('datasource_picker_select', {
-        attributes: {
-          surface: getPickerSurface(pathname, search),
-          totalConfigured: str(props.total_configured),
-        },
-      });
-    }
+  return onInteraction('dashboards_dspicker_opened', (props) => {
+    const { pathname, search } = locationService.getLocation();
+    tracker.startJourney('datasource_picker_select', {
+      attributes: {
+        surface: getPickerSurface(pathname, search),
+        totalConfigured: str(props.total_configured),
+      },
+    });
   });
 });
 
@@ -86,6 +85,8 @@ onJourneyInstance('datasource_picker_select', (handle) => {
   const { add, cleanup } = collectUnsubs();
 
   const listRender = handle.startStep('list_render');
+  const startPathname = locationService.getLocation().pathname;
+  add(abandonOnRouteChange(handle, (pathname) => pathname === startPathname));
   // A selection in the advanced modal is reported by both the modal and the picker it was opened from.
   let selectedIn = 'dropdown';
 
@@ -131,8 +132,12 @@ onJourneyInstance('datasource_picker_select', (handle) => {
   );
 
   add(
-    onInteraction('dashboards_dspicker_dismissed', () => {
-      handle.end('discarded');
+    onInteraction('dashboards_dspicker_dismissed', (props) => {
+      if (props.reason === 'unmount') {
+        handle.end('abandoned', { reason: 'unmount' });
+      } else {
+        handle.end('discarded');
+      }
     })
   );
 

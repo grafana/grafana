@@ -60,7 +60,7 @@ describe('datasourcePickerSelect journey wiring', () => {
   }
 
   function openPicker() {
-    simulateInteraction('dashboards_dspicker_clicked', { item: 'open_dspicker', total_configured: 10000 });
+    simulateInteraction('dashboards_dspicker_opened', { total_configured: 10000 });
   }
 
   it('starts the journey with surface and data source count when the picker opens', () => {
@@ -78,19 +78,23 @@ describe('datasourcePickerSelect journey wiring', () => {
   it('does not start on other picker interactions', () => {
     loadWiring();
 
+    simulateInteraction('dashboards_dspicker_clicked', { item: 'open_dspicker', total_configured: 10000 });
     simulateInteraction('dashboards_dspicker_clicked', { item: 'search', query: 'prom' });
     simulateInteraction('dashboards_dspicker_clicked', { item: 'select_ds', ds_type: 'prometheus' });
 
     expect(mockTracker.startJourney).not.toHaveBeenCalled();
   });
 
-  it('does not start a second journey while one is active', () => {
+  // A journey left active (e.g. a picker that never reported an end) must not swallow later opens;
+  // the registry's cancelOnRestart cancels the old instance.
+  it('starts a fresh journey on every open, even while one is active', () => {
     mockTracker.getActiveJourney.mockReturnValue(mockHandle);
     loadWiring();
 
     openPicker();
+    openPicker();
 
-    expect(mockTracker.startJourney).not.toHaveBeenCalled();
+    expect(mockTracker.startJourney).toHaveBeenCalledTimes(2);
   });
 
   it('measures list_render from open until the list has rendered', () => {
@@ -158,6 +162,43 @@ describe('datasourcePickerSelect journey wiring', () => {
     simulateInteraction('dashboards_dspicker_dismissed');
 
     expect(mockHandle.end).toHaveBeenCalledWith('discarded');
+  });
+
+  it('ends as abandoned when the picker unmounts while open', () => {
+    loadWiring();
+    openPicker();
+
+    simulateInteraction('dashboards_dspicker_dismissed', { reason: 'unmount' });
+
+    expect(mockHandle.end).toHaveBeenCalledWith('abandoned', { reason: 'unmount' });
+  });
+
+  it('ends as abandoned when the route changes', () => {
+    loadWiring();
+    openPicker();
+
+    locationService.push('/d/abc/my-dashboard');
+
+    expect(mockHandle.end).toHaveBeenCalledWith('abandoned', { abandonedAt: '/d/abc/my-dashboard' });
+  });
+
+  it('does not end when only query params change', () => {
+    loadWiring();
+    openPicker();
+
+    locationService.partial({ left: '{}' });
+
+    expect(mockHandle.end).not.toHaveBeenCalled();
+  });
+
+  it('ends with success when a data source is selected in the advanced modal', () => {
+    loadWiring();
+    openPicker();
+
+    simulateInteraction('dashboards_dspicker_clicked', { item: 'open_advanced_ds_picker' });
+    simulateInteraction('dashboards_dspickermodal_clicked', { item: 'select_ds', ds_type: 'tempo', src: 'ds_picker' });
+
+    expect(mockHandle.end).toHaveBeenCalledWith('success', { dsType: 'tempo', changed: 'true', selectedIn: 'modal' });
   });
 
   it('ends as discarded when the advanced modal is dismissed', () => {

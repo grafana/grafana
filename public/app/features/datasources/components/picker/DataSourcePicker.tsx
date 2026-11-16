@@ -174,11 +174,39 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
     markerElement?.focus();
   }, [setOpen, markerElement]);
 
-  // Separate from onClose, which also runs on selection and when handing off to the advanced modal.
-  const onDismiss = useCallback(() => {
-    onClose();
-    reportInteraction('dashboards_dspicker_dismissed', {}, { silent: true });
-  }, [onClose]);
+  // One open/close cycle of the dropdown, for the datasource_picker_select CUJ. Closing without an
+  // `endedBy` reason is a dismissal, whichever path closed it.
+  const openCycleRef = useRef<{ endedBy?: 'select' | 'advanced' } | null>(null);
+
+  const closeWith = useCallback(
+    (endedBy: 'select' | 'advanced') => {
+      if (openCycleRef.current) {
+        openCycleRef.current.endedBy = endedBy;
+      }
+      onClose();
+    },
+    [onClose]
+  );
+
+  useEffect(() => {
+    const cycle = openCycleRef.current;
+    if (!isOpen && cycle) {
+      openCycleRef.current = null;
+      if (!cycle.endedBy) {
+        reportInteraction('dashboards_dspicker_dismissed', {}, { silent: true });
+      }
+    }
+  }, [isOpen]);
+
+  useEffect(
+    () => () => {
+      const cycle = openCycleRef.current;
+      if (cycle && !cycle.endedBy) {
+        reportInteraction('dashboards_dspicker_dismissed', { reason: 'unmount' }, { silent: true });
+      }
+    },
+    []
+  );
 
   // Like Combobox, the clear control renders next to the dropdown indicator instead of replacing it
   const suffix = (
@@ -201,7 +229,7 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
 
   const { overlayProps, underlayProps } = useOverlay(
     {
-      onClose: onDismiss,
+      onClose: onClose,
       isDismissable: true,
       isOpen,
       shouldCloseOnInteractOutside: (element) => {
@@ -218,6 +246,10 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
   );
 
   function openDropdown() {
+    if (!openCycleRef.current) {
+      openCycleRef.current = {};
+      reportInteraction('dashboards_dspicker_opened', { total_configured: dataSources.length }, { silent: true });
+    }
     setOpen(true);
     markerElement?.focus();
   }
@@ -230,7 +262,7 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
     }
     // From the input, if we navigate back, it closes the dropdown
     if (keyEvent.key === 'Tab' && keyEvent.shiftKey && isOpen) {
-      onDismiss();
+      onClose();
     }
     onKeyDown(keyEvent);
   }
@@ -242,7 +274,7 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
       markerElement?.focus();
       // When navigating forward, the dropdown closes and the element next to the input element is focused.
     } else {
-      onDismiss();
+      onClose();
     }
   }
 
@@ -259,7 +291,7 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
             keyEvent.preventDefault();
             break;
           case 'Escape':
-            onDismiss();
+            onClose();
             keyEvent.preventDefault();
             break;
         }
@@ -331,7 +363,7 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
               filterTerm={filterTerm}
               keyboardEvents={keyboardEvents}
               onChange={(ds: DataSourceInstanceSettings, defaultQueries?: DataQuery[] | GrafanaQuery[]) => {
-                onClose();
+                closeWith('select');
                 if (ds.uid !== currentValue?.uid) {
                   onChange(ds, defaultQueries);
                   reportInteraction(INTERACTION_EVENT_NAME, {
@@ -345,8 +377,7 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
                   reportInteraction('dashboards_dspicker_current_reselected', { ds_type: ds.type }, { silent: true });
                 }
               }}
-              onClose={onClose}
-              onDismiss={onDismiss}
+              onClose={() => closeWith('advanced')}
               onNavigateOutsiteFooter={onNavigateOutsiteFooter}
               dataSources={dataSources}
               favoriteDataSources={favoriteDataSources}
@@ -384,8 +415,8 @@ interface PickerContentProps extends DataSourcePickerProps {
   keyboardEvents: Observable<React.KeyboardEvent>;
   style: React.CSSProperties;
   filterTerm?: string;
+  /** Closes the dropdown to hand off to the advanced modal */
   onClose: () => void;
-  onDismiss: () => void;
   footerRef: (element: HTMLElement | null) => void;
   onNavigateOutsiteFooter: (e: React.KeyboardEvent<HTMLButtonElement>) => void;
   dataSources: Array<DataSourceInstanceSettings<DataSourceJsonData>>;
@@ -407,13 +438,6 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
 
   const styles = useStyles2(getStylesPickerContent);
 
-  // Runs once the list has been filtered, sorted and committed, so it marks when the list became
-  // usable. This is the slow part on instances with 10k+ data sources.
-  useEffect(() => {
-    reportInteraction('dashboards_dspicker_list_rendered', { total_listed: dataSources.length }, { silent: true });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   return (
     <div style={props.style} ref={ref} className={styles.container}>
       <ScrollContainer showScrollIndicators ref={scrollRef}>
@@ -433,6 +457,9 @@ const PickerContent = React.forwardRef<HTMLDivElement, PickerContentProps>((prop
           }
           dataSources={dataSources}
           scrollRef={scrollRef}
+          onRendered={(listedCount) =>
+            reportInteraction('dashboards_dspicker_list_rendered', { total_listed: listedCount }, { silent: true })
+          }
         ></DataSourceList>
       </ScrollContainer>
       <FocusScope>

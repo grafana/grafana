@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { useEffect } from 'react';
 import * as React from 'react';
 import { type Observable } from 'rxjs';
 
@@ -57,6 +58,8 @@ export interface DataSourceListProps {
   listboxId?: string;
   /** Reports the DOM id of the keyboard-highlighted option, for aria-activedescendant on the input */
   onActiveItemChange?: (id: string | undefined) => void;
+  /** Called once after the first render, with the number of data sources the list shows */
+  onRendered?: (listedCount: number) => void;
 }
 
 export function DataSourceList(props: DataSourceListProps) {
@@ -72,10 +75,17 @@ export function DataSourceList(props: DataSourceListProps) {
     listboxId,
     onActiveItemChange,
     scrollRef,
+    onRendered,
   } = props;
 
   const [recentlyUsedDataSources, pushRecentlyUsedDataSource] = useRecentlyUsedDataSources();
   const sortedDataSources = useSortedDataSources(props, current, recentlyUsedDataSources, favoriteDataSources);
+
+  // Runs once the list has been filtered, sorted and committed: the slow part with 10k+ data sources.
+  useEffect(() => {
+    onRendered?.(sortedDataSources.length);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const searchStatusMessage =
     sortedDataSources.length === 0

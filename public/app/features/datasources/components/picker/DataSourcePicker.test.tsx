@@ -420,12 +420,32 @@ describe('DataSourcePicker', () => {
       return mockReportInteraction.mock.calls.filter(([event, , options]) => event === name && options?.silent);
     }
 
-    it('reports when the list has rendered after opening', async () => {
+    it('reports one open, then the list render, when clicked open', async () => {
       await setupOpenDropdown(user, { onChange: jest.fn() });
 
       await screen.findByText(mockDS1.name, { selector: 'span' });
+      const journeyEvents = mockReportInteraction.mock.calls
+        .filter(([, , options]) => options?.silent)
+        .map(([event]) => event);
+      expect(journeyEvents).toEqual(['dashboards_dspicker_opened', 'dashboards_dspicker_list_rendered']);
+      expect(silentCalls('dashboards_dspicker_opened')[0][1]).toEqual({ total_configured: mockDSList.length });
+    });
+
+    it('reports an open when opened with the keyboard', async () => {
+      render(<DataSourcePicker onChange={jest.fn()} />);
+      await user.tab();
+      await user.keyboard('[ArrowDown]');
+
+      await screen.findByText(mockDS1.name, { selector: 'span' });
+      expect(silentCalls('dashboards_dspicker_opened')).toHaveLength(1);
+    });
+
+    it('reports the number of listed data sources, not the number configured', async () => {
+      await setupOpenDropdown(user, { onChange: jest.fn(), filter: (ds) => ds.uid === mockDS2.uid });
+
+      await screen.findByText(mockDS2.name, { selector: 'span' });
       expect(silentCalls('dashboards_dspicker_list_rendered')).toEqual([
-        ['dashboards_dspicker_list_rendered', { total_listed: mockDSList.length }, { silent: true }],
+        ['dashboards_dspicker_list_rendered', { total_listed: 1 }, { silent: true }],
       ]);
     });
 
@@ -434,7 +454,43 @@ describe('DataSourcePicker', () => {
 
       await user.keyboard('[Escape]');
 
-      expect(silentCalls('dashboards_dspicker_dismissed')).toHaveLength(1);
+      expect(silentCalls('dashboards_dspicker_dismissed')).toEqual([
+        ['dashboards_dspicker_dismissed', {}, { silent: true }],
+      ]);
+    });
+
+    it('does not report a dismissal when Escape is pressed on a closed picker', async () => {
+      render(<DataSourcePicker onChange={jest.fn()} />);
+      await user.tab();
+      await user.keyboard('[Escape]');
+
+      expect(silentCalls('dashboards_dspicker_dismissed')).toHaveLength(0);
+    });
+
+    it('reports a dismissal with reason unmount when unmounted while open', async () => {
+      const { unmount } = render(<DataSourcePicker onChange={jest.fn()} />);
+      await user.click(screen.getByRole('combobox'));
+      await screen.findByText(mockDS1.name, { selector: 'span' });
+
+      unmount();
+
+      expect(silentCalls('dashboards_dspicker_dismissed')).toEqual([
+        ['dashboards_dspicker_dismissed', { reason: 'unmount' }, { silent: true }],
+      ]);
+    });
+
+    it('does not report a dismissal when handing off to the advanced modal', async () => {
+      render(
+        <ModalsProvider>
+          <DataSourcePicker onChange={jest.fn()} current={mockDS1.name} />
+          <ModalRoot />
+        </ModalsProvider>
+      );
+      await user.click(await screen.findByRole('combobox'));
+      await user.click(await screen.findByText('Open advanced data source picker'));
+
+      expect(await screen.findByText('Select data source')).toBeInTheDocument();
+      expect(silentCalls('dashboards_dspicker_dismissed')).toHaveLength(0);
     });
 
     it('does not report a dismissal when a data source is selected', async () => {
