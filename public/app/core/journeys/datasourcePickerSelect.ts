@@ -28,6 +28,9 @@ import { abandonOnRouteChange, collectUnsubs, str } from './utils';
  * Events (point-in-time):
  *   - search — user typed a search term (dashboards_dspicker_clicked item=search, debounced; a pending one is sent
  *     before the open ends)
+ *   - search — user searched in the advanced modal (dashboards_dspickermodal_clicked item=search)
+ *   - config_new_ds — user opened a new tab from an empty search result to configure a data source
+ *     (item=config_new_ds_empty_state, in the dropdown or the modal); the picker stays open
  *   - open_advanced — user switched to the advanced picker modal (dashboards_dspicker_clicked item=open_advanced_ds_picker)
  *
  * End conditions:
@@ -40,8 +43,8 @@ import { abandonOnRouteChange, collectUnsubs, str } from './utils';
  *   - abandoned: dashboards_dspicker_dismissed (reason=unmount) — picker unmounted while open
  *   - abandoned: route pathname changes (e.g. navigating away while the advanced modal is open)
  *   - discarded: dashboards_dspickermodal_clicked item=dismiss — advanced modal closed without a selection
- *   - abandoned: dashboards_dspicker_clicked / dashboards_dspickermodal_clicked item=config_new_ds or
- *     config_new_ds_empty_state — user left to configure a new data source
+ *   - abandoned: dashboards_dspickermodal_clicked item=config_new_ds — user closed the advanced modal to configure
+ *     a new data source
  *   - timeout: 5 min
  *
  * Silent interactions added by this journey (all reported from DataSourcePicker.tsx; each carries the
@@ -56,7 +59,6 @@ import { abandonOnRouteChange, collectUnsubs, str } from './utils';
 
 const PICKER_EVENT = 'dashboards_dspicker_clicked';
 const MODAL_EVENT = 'dashboards_dspickermodal_clicked';
-const CONFIG_NEW_DS_ITEMS = new Set(['config_new_ds', 'config_new_ds_empty_state']);
 
 // The trigger sets this right before startJourney, which runs the instance callback synchronously.
 // That holds because the trigger and instance are registered together in this module, so the registry
@@ -177,20 +179,30 @@ onJourneyInstance('datasource_picker_select', (handle) => {
         case 'select_ds':
           end('success', { dsType: str(props.ds_type), changed: 'true', selectedIn });
           break;
-        default:
-          if (CONFIG_NEW_DS_ITEMS.has(str(props.item))) {
-            end('abandoned', { reason: 'config_new_ds' });
-          }
+        // The empty-state link opens a new tab and leaves the dropdown open, so the user may still select
+        case 'config_new_ds_empty_state':
+          handle.recordEvent('config_new_ds');
+          break;
       }
     })
   );
 
   add(
     onInteraction(MODAL_EVENT, (props) => {
-      if (props.item === 'dismiss') {
-        end('discarded');
-      } else if (CONFIG_NEW_DS_ITEMS.has(str(props.item))) {
-        end('abandoned', { reason: 'config_new_ds' });
+      switch (props.item) {
+        case 'search':
+          handle.recordEvent('search');
+          break;
+        case 'dismiss':
+          end('discarded');
+          break;
+        // This button also closes the modal; the empty-state link leaves it open
+        case 'config_new_ds':
+          end('abandoned', { reason: 'config_new_ds' });
+          break;
+        case 'config_new_ds_empty_state':
+          handle.recordEvent('config_new_ds');
+          break;
       }
     })
   );

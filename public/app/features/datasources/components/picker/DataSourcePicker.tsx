@@ -193,7 +193,7 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
     (interaction?: string, properties: Record<string, unknown> = {}) => {
       // A pending search belongs to this cycle, so send it before the cycle ends
       debouncedTrackSearch.flush();
-      const cycleId = cycleIdRef.current ?? modalCycleIdRef.current;
+      const cycleId = cycleIdRef.current;
       cycleIdRef.current = null;
       modalCycleIdRef.current = null;
       if (cycleId && interaction) {
@@ -390,7 +390,7 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
               onChange={(ds: DataSourceInstanceSettings, defaultQueries?: DataQuery[] | GrafanaQuery[]) => {
                 if (ds.uid !== currentValue?.uid) {
                   closeHandedOff();
-                  onChange(ds, defaultQueries);
+                  // Reported before onChange so the journey still ends if onChange throws or navigates
                   reportInteraction(INTERACTION_EVENT_NAME, {
                     item: INTERACTION_ITEM.SELECT_DS,
                     ds_type: ds.type,
@@ -398,7 +398,10 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
                       ? favoriteDataSources.isFavoriteDatasource(ds.uid)
                       : undefined,
                   });
+                  onChange(ds, defaultQueries);
                 } else {
+                  // A selection in the advanced modal comes back here after the dropdown handed off its cycle
+                  cycleIdRef.current ??= modalCycleIdRef.current;
                   endCycle('dashboards_dspicker_current_reselected', { ds_type: ds.type });
                   closeDropdown();
                 }

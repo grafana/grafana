@@ -303,13 +303,26 @@ describe('datasourcePickerSelect journey wiring', () => {
     expect(mockHandle.end).toHaveBeenCalledWith('abandoned', { reason: 'config_new_ds' });
   });
 
-  it('ends as abandoned when the user leaves from the dropdown empty state to configure a new data source', () => {
+  it.each([
+    ['dashboards_dspicker_clicked', 'the dropdown'],
+    ['dashboards_dspickermodal_clicked', 'the modal'],
+  ])('records an event without ending when the empty-state link is used in %s (%s)', (event) => {
     loadWiring();
     openPicker();
 
-    simulateInteraction('dashboards_dspicker_clicked', { item: 'config_new_ds_empty_state' });
+    simulateInteraction(event, { item: 'config_new_ds_empty_state' });
 
-    expect(mockHandle.end).toHaveBeenCalledWith('abandoned', { reason: 'config_new_ds' });
+    expect(mockHandle.recordEvent).toHaveBeenCalledWith('config_new_ds');
+    expect(mockHandle.end).not.toHaveBeenCalled();
+  });
+
+  it('records search events in the advanced modal', () => {
+    loadWiring();
+    openPicker();
+
+    simulateInteraction('dashboards_dspickermodal_clicked', { item: 'search', src: 'ds_picker' });
+
+    expect(mockHandle.recordEvent).toHaveBeenCalledWith('search');
   });
 
   it('ignores unrelated picker interactions', () => {

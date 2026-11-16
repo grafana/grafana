@@ -596,6 +596,38 @@ describe('DataSourcePicker', () => {
       );
     });
 
+    it('does not report anything for Escape on a closed picker after the advanced modal was dismissed', async () => {
+      render(
+        <ModalsProvider>
+          <DataSourcePicker onChange={jest.fn()} current={mockDS1.name} />
+          <ModalRoot />
+        </ModalsProvider>
+      );
+      await user.click(await screen.findByRole('combobox'));
+      await user.click(await screen.findByText('Open advanced data source picker'));
+      await user.keyboard('[Escape]');
+      await waitFor(() => expect(screen.queryByRole('dialog', { name: 'Select data source' })).not.toBeInTheDocument());
+
+      act(() => screen.getByRole('combobox').focus());
+      await user.keyboard('[Escape]');
+
+      expect(silentCalls('dashboards_dspicker_dismissed')).toHaveLength(0);
+    });
+
+    it('reports the selection before calling onChange', async () => {
+      const onChange = jest.fn(() => {
+        expect(mockReportInteraction).toHaveBeenCalledWith(
+          'dashboards_dspicker_clicked',
+          expect.objectContaining({ item: 'select_ds' })
+        );
+      });
+      await setupOpenDropdown(user, { onChange });
+
+      await user.click(await screen.findByText(mockDS2.name, { selector: 'span' }));
+
+      expect(onChange).toHaveBeenCalled();
+    });
+
     it('does not report a dismissal when a data source is selected', async () => {
       await setupOpenDropdown(user, { onChange: jest.fn() });
 
