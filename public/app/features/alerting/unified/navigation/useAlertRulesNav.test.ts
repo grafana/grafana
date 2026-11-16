@@ -1,9 +1,9 @@
 import { renderHook } from '@testing-library/react';
-import { getWrapper } from 'test/test-utils';
+import { getWrapper, testWithFeatureToggles } from 'test/test-utils';
 
 import { config } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { testWithFlags } from '@grafana/test-utils/unstable';
 import { configureStore } from 'app/store/configureStore';
 
 import { addAlertRulesTab } from './extensions';
@@ -174,14 +174,8 @@ describe('useAlertRulesNav', () => {
       return renderHook(hook, { wrapper });
     }
 
-    beforeEach(() => {
-      config.featureToggles = { ...originalFeatureToggles, alertingNavigationV2: false };
-      setTestFlags({ [FlagKeys.AlertingGmaOnlyListView]: true });
-    });
-
-    afterEach(() => {
-      setTestFlags();
-    });
+    testWithFeatureToggles({ disable: ['alertingNavigationV2'] });
+    testWithFlags({ [FlagKeys.AlertingGmaOnlyListView]: true });
 
     it('should not show a tab bar when no extension tabs are registered', () => {
       const { result } = renderNavHook(useAlertRulesNav, '/alerting/rules/alert');
