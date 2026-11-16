@@ -6219,8 +6219,7 @@
       }
     },
     "get-var-mapping-option-overrides": {
-      "defaults": "This option takes its value from a dashboard variable",
-      "rule": "An override rule sets this option from a dashboard variable"
+      "uses-variables": "This option uses variables"
     },
     "inspect": {
       "data-tab": "Data",
