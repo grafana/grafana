@@ -6,13 +6,16 @@ import (
 	"net/http"
 	"regexp"
 	"strconv"
+	"time"
 
 	"github.com/grafana/grafana/pkg/api/datasource/validation"
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/datasourceproxy/proxymetrics"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
@@ -42,6 +45,7 @@ func ProvideService(dataSourceCache datasources.CacheService, datasourceReqValid
 		tracer:                     tracer,
 		secretsService:             secretsService,
 		features:                   features,
+		metrics:                    proxymetrics.ForVariant(proxymetrics.VariantLegacy),
 	}
 }
 
@@ -56,6 +60,34 @@ type DataSourceProxyService struct {
 	tracer                     tracing.Tracer
 	secretsService             secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	features                   featuremgmt.FeatureToggles
+	metrics                    *proxymetrics.Metrics
+}
+
+// proxyObservation records one proxied request when it finishes, whichever way it ends.
+type proxyObservation struct {
+	metrics  *proxymetrics.Metrics
+	c        *contextmodel.ReqContext
+	start    time.Time
+	pluginID string
+}
+
+func (p *DataSourceProxyService) observe(c *contextmodel.ReqContext) *proxyObservation {
+	return &proxyObservation{metrics: p.metrics, c: c, start: time.Now()}
+}
+
+func (o *proxyObservation) finish() {
+	if o.metrics == nil || o.c.Resp == nil {
+		return
+	}
+	status := o.c.Resp.Status()
+	o.metrics.Observe(proxymetrics.Observation{
+		PluginID: o.pluginID,
+		Method:   o.c.Req.Method,
+		Path:     getProxyPath(o.c),
+		Status:   status,
+		Source:   proxymetrics.ClassifySource(status, requestmeta.GetRequestMetaData(o.c.Req.Context()).StatusSource),
+		Duration: time.Since(o.start),
+	})
 }
 
 func (p *DataSourceProxyService) ProxyDataSourceRequest(c *contextmodel.ReqContext) {
@@ -69,6 +101,8 @@ func (p *DataSourceProxyService) ProxyDataSourceRequest(c *contextmodel.ReqConte
 
 func (p *DataSourceProxyService) ProxyDatasourceRequestWithUID(c *contextmodel.ReqContext, dsUID string) {
 	c.TimeRequest(metrics.MDataSourceProxyReqTimer)
+	obs := p.observe(c)
+	defer obs.finish()
 
 	if dsUID == "" { // if datasource UID is not provided, fetch it from the uid path parameter
 		dsUID = web.Params(c.Req)[":uid"]
@@ -84,18 +118,20 @@ func (p *DataSourceProxyService) ProxyDatasourceRequestWithUID(c *contextmodel.R
 		toAPIError(c, err)
 		return
 	}
-	p.proxyDatasourceRequest(c, ds)
+	p.proxyDatasourceRequest(c, ds, obs)
 }
 
 func (p *DataSourceProxyService) ProxyDatasourceRequestWithID(c *contextmodel.ReqContext, dsID int64) {
 	c.TimeRequest(metrics.MDataSourceProxyReqTimer)
+	obs := p.observe(c)
+	defer obs.finish()
 
 	ds, err := p.DataSourceCache.GetDatasource(c.Req.Context(), dsID, c.SignedInUser, c.SkipDSCache)
 	if err != nil {
 		toAPIError(c, err)
 		return
 	}
-	p.proxyDatasourceRequest(c, ds)
+	p.proxyDatasourceRequest(c, ds, obs)
 }
 
 func toAPIError(c *contextmodel.ReqContext, err error) {
@@ -110,7 +146,8 @@ func toAPIError(c *contextmodel.ReqContext, err error) {
 	c.JsonApiErr(http.StatusInternalServerError, "Unable to load datasource meta data", err)
 }
 
-func (p *DataSourceProxyService) proxyDatasourceRequest(c *contextmodel.ReqContext, ds *datasources.DataSource) {
+func (p *DataSourceProxyService) proxyDatasourceRequest(c *contextmodel.ReqContext, ds *datasources.DataSource, obs *proxyObservation) {
+	obs.pluginID = ds.Type
 	err := p.DataSourceRequestValidator.Validate(ds.URL, ds.JsonDataMap(), c.Req)
 	if err != nil {
 		c.JsonApiErr(http.StatusForbidden, "Access denied", err)
