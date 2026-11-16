@@ -39,7 +39,7 @@ func TestStatusLabel(t *testing.T) {
 		{"context.Canceled", context.Canceled, "canceled"},
 		{"wrapped context.Canceled", fmt.Errorf("db: %w", context.Canceled), "canceled"},
 		{"grpc Canceled", status.Error(codes.Canceled, "context canceled"), "canceled"},
-		{"499 status error", canceledStatusError(), "canceled"},
+		{"errutil 499", errCanceled.Errorf("%w", context.Canceled), "canceled"},
 		{"generic", errors.New("boom"), "error"},
 		{"wrapped generic", fmt.Errorf("layer: %w", errors.New("boom")), "error"},
 	}

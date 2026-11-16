@@ -136,17 +136,15 @@ func TestToAPIError(t *testing.T) {
 			{"context.Canceled", context.Canceled},
 			{"wrapped context.Canceled", fmt.Errorf("db: %w", context.Canceled)},
 			{"grpc Canceled", status.Error(codes.Canceled, "context canceled")},
-			{"499 status error", canceledStatusError()},
+			{"499 status error", &apierrors.StatusError{ErrStatus: metav1.Status{
+				Status: metav1.StatusFailure, Code: 499, Reason: "ClientClosedRequest"}}},
 		}
 		for _, tc := range cases {
 			t.Run(tc.name, func(t *testing.T) {
 				out := toAPIError(tc.err, "obj")
 				requireStatusCode(t, out, 499)
-				// The body must carry a message; http.StatusText has no entry for 499.
-				var statusErr *apierrors.StatusError
-				require.ErrorAs(t, out, &statusErr)
-				assert.Equal(t, "Request canceled", statusErr.ErrStatus.Message)
-				assert.Equal(t, metav1.StatusReason("ClientClosedRequest"), statusErr.ErrStatus.Reason)
+				// The cause is kept, so logs and traces still say what was canceled.
+				assert.ErrorIs(t, out, tc.err)
 			})
 		}
 	})

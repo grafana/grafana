@@ -444,30 +444,32 @@ func TestAuthzClientClosedRequest(t *testing.T) {
 		{"grpc unavailable stays 500", ctx, status.Error(codes.Unavailable, "down"), 500},
 		{"plain error stays 500", ctx, errors.New("boom"), 500},
 	}
+	// Authz returns plain wrapped errors; toAPIError assigns the status, as it does for
+	// every error reaching the adapter and the custom routes.
 	for _, tt := range tests {
 		t.Run("batch check "+tt.name, func(t *testing.T) {
 			client := &fakeAccessClient{err: tt.err}
 			_, err := canAccessAnnotations(tt.ctx, testTracer, client, newFakeFolderResolver(map[string]string{dashUID: "f"}), ns, items, utils.VerbList)
-			requireStatusCode(t, err, tt.wantCode)
+			requireStatusCode(t, toAPIError(err, ""), tt.wantCode)
 		})
 		t.Run("org check "+tt.name, func(t *testing.T) {
 			client := &fakeAccessClient{err: tt.err}
 			err := authorizeReadOrganizationAnnotations(identity.WithServiceIdentityContext(tt.ctx, 1), client, ns)
-			requireStatusCode(t, err, tt.wantCode)
+			requireStatusCode(t, toAPIError(err, ""), tt.wantCode)
 		})
 		t.Run("folder resolve "+tt.name, func(t *testing.T) {
 			resolver := newFakeFolderResolver(nil)
 			resolver.err = tt.err
 			client := &fakeAccessClient{fn: func(authtypes.BatchCheckItem) bool { return true }}
 			_, err := canAccessAnnotations(tt.ctx, testTracer, client, resolver, ns, items, utils.VerbList)
-			requireStatusCode(t, err, tt.wantCode)
+			requireStatusCode(t, toAPIError(err, ""), tt.wantCode)
 		})
 	}
 }
 
 func requireStatusCode(t *testing.T, err error, want int32) {
 	t.Helper()
-	var statusErr *apierrors.StatusError
-	require.ErrorAs(t, err, &statusErr)
-	assert.Equal(t, want, statusErr.ErrStatus.Code)
+	var apiStatus apierrors.APIStatus
+	require.ErrorAs(t, err, &apiStatus)
+	assert.Equal(t, want, apiStatus.Status().Code)
 }

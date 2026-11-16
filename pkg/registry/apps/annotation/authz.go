@@ -35,15 +35,6 @@ func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 	})
 }
 
-// authzError maps a failed access check to the status the caller should see: a
-// cancellation is the caller's own doing, anything else is a dependency failure.
-func authzError(err error, op string) error {
-	if isCanceledErr(err) {
-		return canceledStatusError()
-	}
-	return apierrors.NewInternalError(fmt.Errorf("%s: %w", op, err))
-}
-
 // canAccessAnnotation checks that the caller has permission to perform verb on anno,
 // using the legacy annotation authorization model (dashboard-scoped or org-scoped).
 func canAccessAnnotation(ctx context.Context, tracer trace.Tracer, accessClient authtypes.AccessClient, folderResolver DashboardFolderResolver, namespace string, anno *annotationV0.Annotation, verb string) (bool, error) {
@@ -76,7 +67,7 @@ func canAccessAnnotations(ctx context.Context, tracer trace.Tracer, accessClient
 
 	folderByDash, err := resolveDashboardFolders(ctx, tracer, folderResolver, namespace, items)
 	if err != nil {
-		return nil, authzError(err, "resolve dashboard folders")
+		return nil, fmt.Errorf("resolve dashboard folders: %w", err)
 	}
 
 	checks := make([]authtypes.BatchCheckItem, 0, len(items))
@@ -120,7 +111,7 @@ func canAccessAnnotations(ctx context.Context, tracer trace.Tracer, accessClient
 			Checks:    checks[start:end],
 		})
 		if err != nil {
-			return nil, authzError(err, "batch authz check failed")
+			return nil, fmt.Errorf("batch authz check failed: %w", err)
 		}
 		for id, result := range res.Results {
 			allowedByID[id] = result.Allowed
@@ -178,7 +169,7 @@ func authorizeReadOrganizationAnnotations(ctx context.Context, accessClient auth
 		Verb:      utils.VerbList,
 	}, "") // organization-scoped annotations have no parent folder
 	if err != nil {
-		return authzError(err, "annotation authz check failed")
+		return fmt.Errorf("annotation authz check failed: %w", err)
 	}
 	if !resp.Allowed {
 		return apierrors.NewForbidden(annotationGR, "tags", fmt.Errorf("requires the annotations:read permission with the organization scope"))
