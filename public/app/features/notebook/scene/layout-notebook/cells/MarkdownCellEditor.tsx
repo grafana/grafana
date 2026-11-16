@@ -75,6 +75,7 @@ export function MarkdownCellEditor({
 
   const onSubmitRef = useRef(onSubmit);
   onSubmitRef.current = onSubmit;
+  const hasOnSubmit = Boolean(onSubmit);
   const enterExt = useMemo(() => {
     const bindings: KeyBinding[] = [
       {
@@ -114,7 +115,7 @@ export function MarkdownCellEditor({
       },
     ];
 
-    if (onSubmit) {
+    if (hasOnSubmit) {
       bindings.push({
         key: 'Enter',
         run: (view) => {
@@ -148,20 +149,19 @@ export function MarkdownCellEditor({
     }
 
     return [Prec.highest(keymap.of(bindings))];
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- the ref is always current; only whether onSubmit exists at all should rebuild this
-  }, [Boolean(onSubmit)]);
+  }, [hasOnSubmit]);
 
   // Same ref-backed pattern as onSubmitRef above: onNavigate's identity changes every render, but
   // whether this cell has the behavior at all doesn't.
   const onNavigateRef = useRef(onNavigate);
   onNavigateRef.current = onNavigate;
+  const hasOnNavigate = Boolean(onNavigate);
   const navigateExt = useMemo(() => {
-    if (!onNavigate) {
+    if (!hasOnNavigate) {
       return [];
     }
     return navigationKeymap((direction) => onNavigateRef.current?.(direction));
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- the ref is always current; only whether onNavigate exists at all should rebuild this
-  }, [Boolean(onNavigate)]);
+  }, [hasOnNavigate]);
 
   if (content.kind !== 'Markdown') {
     return null;

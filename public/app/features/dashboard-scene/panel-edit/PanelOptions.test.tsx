@@ -5,11 +5,13 @@ import { render } from 'test/test-utils';
 import { standardEditorsRegistry, standardFieldConfigEditorRegistry, ThresholdsMode } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
-import { VizPanel } from '@grafana/scenes';
+import { CustomVariable, sceneGraph, SceneVariableSet, VizPanel } from '@grafana/scenes';
+import { mockComboboxRect } from '@grafana/test-utils';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { overrideRuleTooltipDescription } from 'app/features/dashboard/components/PanelEditor/state/getOptionOverrides';
+import { defaultGraphConfig, getGraphFieldConfig } from 'app/plugins/panel/timeseries/config';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
@@ -64,10 +66,13 @@ const plugin = getPanelPlugin({
   },
 });
 
+// The real timeseries field config, so its radios and switches run through the real registry
+const timeseriesPlugin = getPanelPlugin({ id: 'timeseries' }).useFieldConfig(getGraphFieldConfig(defaultGraphConfig));
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getPluginImportUtils: () => ({
-    getPanelPluginFromCache: jest.fn().mockReturnValue(plugin),
+    getPanelPluginFromCache: jest.fn((id: string) => (id === 'timeseries' ? timeseriesPlugin : plugin)),
   }),
 }));
 
@@ -77,7 +82,16 @@ function placeInDashboard(panel: VizPanel, serializerVersion?: 'v1' | 'v2') {
     new DashboardGridItem({ body: panel });
     return;
   }
-  new DashboardScene({ body: DefaultGridLayoutManager.fromVizPanels([panel]) }, serializerVersion);
+  return new DashboardScene(
+    {
+      // The same names the mocked suggestions give editors rendered without a dashboard
+      $variables: new SceneVariableSet({
+        variables: [new CustomVariable({ name: 't', query: '1' }), new CustomVariable({ name: 'other', query: '2' })],
+      }),
+      body: DefaultGridLayoutManager.fromVizPanels([panel]),
+    },
+    serializerVersion
+  );
 }
 
 // Needed when the panel is not part of an DashboardScene
@@ -388,6 +402,210 @@ describe('PanelOptions', () => {
         expect(panel.state.fieldConfig.defaults.varMappings).toEqual({ min: '${other}' });
         expect(getMinInput()).toHaveValue('${other}');
       });
+    });
+  });
+
+  describe('select, radio, switch and slider expressions', () => {
+    beforeEach(() => {
+      window.localStorage.clear();
+      mockComboboxRect();
+    });
+
+    const setupTimeseries = (fieldConfig: VizPanel['state']['fieldConfig'], serializerVersion: 'v1' | 'v2' = 'v2') => {
+      const panel = new VizPanel({ key: 'panel-1', pluginId: 'timeseries', fieldConfig });
+      placeInDashboard(panel, serializerVersion);
+      return setup({ panel });
+    };
+
+    const getDrawStyleField = () => screen.getByTestId(OptionsPaneSelector.fieldLabel('Graph styles Style'));
+    const getOverrideGroup = () =>
+      screen.getByTestId(selectors.components.OptionsGroup.group('panel-options-override-0'));
+
+    it('has no variable buttons with the flag off, and a plain pick drops saved expressions', async () => {
+      const { panel } = await setupTimeseries({
+        defaults: { custom: { drawStyle: 'line' }, varMappings: { 'custom.drawStyle': '$style' } },
+        overrides: [
+          {
+            matcher: { id: 'byName', options: 'SeriesA' },
+            properties: [
+              { id: 'custom.drawStyle', value: 'line' },
+              { id: 'varMappings.custom.drawStyle', value: '$style' },
+            ],
+          },
+        ],
+      });
+
+      expect(screen.queryByRole('button', { name: 'Use variable' })).not.toBeInTheDocument();
+      expect(within(getDrawStyleField()).getByRole('radio', { name: 'Lines' })).toBeChecked();
+
+      await userEvent.click(within(getDrawStyleField()).getByRole('radio', { name: 'Bars' }));
+      await userEvent.click(within(getOverrideGroup()).getByRole('radio', { name: 'Points' }));
+
+      const { defaults, overrides } = panel.state.fieldConfig;
+      expect(defaults).toMatchObject({ custom: { drawStyle: 'bars' } });
+      expect(defaults.varMappings).toBeUndefined();
+      expect(overrides[0].properties).toEqual([{ id: 'custom.drawStyle', value: 'points' }]);
+    });
+
+    describe('with the flag on', () => {
+      beforeEach(() => {
+        setTestFlags({ 'grafana.panelOptionInterpolation': true });
+      });
+
+      afterAll(() => {
+        setTestFlags();
+      });
+
+      it('keeps the plain controls on a v1 dashboard', async () => {
+        await setupTimeseries({ defaults: { custom: { drawStyle: 'line' } }, overrides: [] }, 'v1');
+
+        expect(screen.queryByRole('button', { name: 'Use variable' })).not.toBeInTheDocument();
+      });
+
+      it('writes a picked variable for draw style to defaults.varMappings and removes it with the toggle', async () => {
+        const { panel } = await setupTimeseries({ defaults: { custom: { drawStyle: 'line' } }, overrides: [] });
+
+        await userEvent.click(within(getDrawStyleField()).getByRole('button', { name: 'Use variable' }));
+        await userEvent.click(await screen.findByRole('option', { name: 'other' }));
+
+        expect(panel.state.fieldConfig.defaults.varMappings).toEqual({ 'custom.drawStyle': '${other}' });
+        expect(panel.state.fieldConfig.defaults).toMatchObject({ custom: { drawStyle: 'line' } });
+        expect(within(getDrawStyleField()).getByRole('combobox', { name: 'Variable for Style' })).toHaveValue('other');
+        expect(
+          within(getDrawStyleField()).getByText('Allowed values: line, bars, points. Falls back to: Lines')
+        ).toBeInTheDocument();
+
+        await userEvent.click(within(getDrawStyleField()).getByRole('button', { name: 'Use variable' }));
+
+        expect(panel.state.fieldConfig.defaults.varMappings).toBeUndefined();
+        expect(panel.state.fieldConfig.defaults).toMatchObject({ custom: { drawStyle: 'line' } });
+        expect(within(getDrawStyleField()).getByRole('radio', { name: 'Lines' })).toBeChecked();
+      });
+
+      it('creates a custom variable for draw style in the dashboard and maps it', async () => {
+        const panel = new VizPanel({
+          key: 'panel-1',
+          pluginId: 'timeseries',
+          fieldConfig: { defaults: { custom: { drawStyle: 'bars' } }, overrides: [] },
+        });
+        const dashboard = placeInDashboard(panel, 'v2')!;
+        const getDashboard = jest.spyOn(utils, 'getDashboardSceneFor').mockReturnValue(dashboard);
+        await setup({ panel });
+
+        await userEvent.click(within(getDrawStyleField()).getByRole('button', { name: 'Use variable' }));
+        await userEvent.click(await screen.findByRole('option', { name: /New variable with these values/ }));
+
+        const created = sceneGraph.lookupVariable('drawStyle', panel);
+        expect(created).toBeInstanceOf(CustomVariable);
+        expect(created?.state).toMatchObject({ query: 'Lines : line,Bars : bars,Points : points', value: 'bars' });
+        expect(panel.state.fieldConfig.defaults.varMappings).toEqual({ 'custom.drawStyle': '${drawStyle}' });
+        expect(within(getDrawStyleField()).getByRole('combobox', { name: 'Variable for Style' })).toHaveValue(
+          'drawStyle'
+        );
+
+        getDashboard.mockReturnValue(new DashboardScene({}));
+      });
+
+      it('writes and clears varMappings.custom.drawStyle in an override row', async () => {
+        const { panel } = await setupTimeseries({
+          defaults: { custom: { drawStyle: 'line' } },
+          overrides: [
+            {
+              matcher: { id: 'byName', options: 'SeriesA' },
+              properties: [{ id: 'custom.drawStyle', value: 'bars' }],
+            },
+          ],
+        });
+        const properties = () => panel.state.fieldConfig.overrides[0].properties;
+
+        await userEvent.click(within(getOverrideGroup()).getByRole('button', { name: 'Use variable' }));
+        await userEvent.click(await screen.findByRole('option', { name: 't' }));
+
+        expect(properties()).toEqual([
+          { id: 'custom.drawStyle', value: 'bars' },
+          { id: 'varMappings.custom.drawStyle', value: '${t}' },
+        ]);
+        expect(within(getOverrideGroup()).getByRole('combobox', { name: 'Variable for Style' })).toHaveValue('t');
+
+        await userEvent.click(within(getOverrideGroup()).getByRole('button', { name: 'Use variable' }));
+
+        expect(properties()).toEqual([{ id: 'custom.drawStyle', value: 'bars' }]);
+        expect(within(getOverrideGroup()).getByRole('radio', { name: 'Bars' })).toBeChecked();
+      });
+
+      it('writes a switch expression and drops it with the override property', async () => {
+        const { panel } = await setupTimeseries({
+          defaults: { custom: {} },
+          overrides: [
+            {
+              matcher: { id: 'byName', options: 'SeriesA' },
+              properties: [{ id: 'custom.axisBorderShow', value: true }],
+            },
+          ],
+        });
+        const properties = () => panel.state.fieldConfig.overrides[0].properties;
+
+        await userEvent.click(within(getOverrideGroup()).getByRole('button', { name: 'Use variable' }));
+        await userEvent.click(await screen.findByRole('option', { name: 't' }));
+
+        expect(properties()).toEqual([
+          { id: 'custom.axisBorderShow', value: true },
+          { id: 'varMappings.custom.axisBorderShow', value: '${t}' },
+        ]);
+
+        await userEvent.click(within(getOverrideGroup()).getByRole('button', { name: 'Remove property' }));
+
+        expect(properties()).toEqual([]);
+      });
+
+      it('keeps the line width slider, writes varMappings.custom.lineWidth and restores the slider with the toggle', async () => {
+        const { panel } = await setupTimeseries({ defaults: { custom: { lineWidth: 2 } }, overrides: [] });
+        const getLineWidthField = () => screen.getByTestId(OptionsPaneSelector.fieldLabel('Graph styles Line width'));
+
+        expect(within(getLineWidthField()).getByRole('slider')).toBeInTheDocument();
+
+        await userEvent.click(within(getLineWidthField()).getByRole('button', { name: 'Use variable' }));
+        await userEvent.click(await screen.findByRole('option', { name: 't' }));
+
+        expect(panel.state.fieldConfig.defaults.varMappings).toEqual({ 'custom.lineWidth': '${t}' });
+        expect(panel.state.fieldConfig.defaults).toMatchObject({ custom: { lineWidth: 2 } });
+        expect(within(getLineWidthField()).getByText('Falls back to: 2')).toBeInTheDocument();
+
+        await userEvent.click(within(getLineWidthField()).getByRole('button', { name: 'Use variable' }));
+
+        expect(panel.state.fieldConfig.defaults.varMappings).toBeUndefined();
+        expect(within(getLineWidthField()).getByRole('slider')).toBeInTheDocument();
+      });
+
+      it('keeps a line width slider in an override row', async () => {
+        const { panel } = await setupTimeseries({
+          defaults: { custom: {} },
+          overrides: [
+            {
+              matcher: { id: 'byName', options: 'SeriesA' },
+              properties: [{ id: 'custom.lineWidth', value: 3 }],
+            },
+          ],
+        });
+
+        expect(within(getOverrideGroup()).getByRole('slider')).toBeInTheDocument();
+
+        await userEvent.click(within(getOverrideGroup()).getByRole('button', { name: 'Use variable' }));
+        await userEvent.click(await screen.findByRole('option', { name: 't' }));
+
+        expect(panel.state.fieldConfig.overrides[0].properties).toEqual([
+          { id: 'custom.lineWidth', value: 3 },
+          { id: 'varMappings.custom.lineWidth', value: '${t}' },
+        ]);
+      });
+    });
+
+    it('shows the plain line width slider with the flag off', async () => {
+      await setupTimeseries({ defaults: { custom: { lineWidth: 2 } }, overrides: [] });
+      const lineWidthField = screen.getByTestId(OptionsPaneSelector.fieldLabel('Graph styles Line width'));
+
+      expect(within(lineWidthField).getByRole('slider')).toBeInTheDocument();
+      expect(within(lineWidthField).queryByRole('button', { name: 'Use variable' })).not.toBeInTheDocument();
     });
   });
 

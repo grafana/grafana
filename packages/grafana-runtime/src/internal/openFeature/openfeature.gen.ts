@@ -258,8 +258,6 @@ export const FlagKeys = {
   GrafanaPreserveDashboardLoginTabTitle: "grafana.preserveDashboardLoginTabTitle",
   /** Preserves the navigation section label in the browser tab title after session expiry */
   GrafanaPreserveLoginTabTitle: "grafana.preserveLoginTabTitle",
-  /** Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options */
-  GrafanaQueryVarEditorRedesign: "grafana.queryVarEditorRedesign",
   /** Disables creating new recorded queries while preserving access to existing queries */
   GrafanaRecordedQueriesDisableCreate: "grafana.recordedQueriesDisableCreate",
   /** Enables Saved Dashboard Views: per-dashboard saved variable, filter and time range state */
@@ -322,6 +320,8 @@ export const FlagKeys = {
   PlaylistsRBAC: "playlistsRBAC",
   /** Show insights for plugins in the plugin details page */
   PluginInsights: "pluginInsights",
+  /** Disables the ST fallback for multi-tenant plugin api calls */
+  PluginsDisableMTPluginsFallback: "plugins.disableMTPluginsFallback",
   /** Initializes data source instance settings asynchronously from the API instead of synchronously from boot data */
   PluginsInitDataSourcesAsync: "plugins.initDataSourcesAsync",
   /** Enables plugins setting from new apis */
@@ -1757,17 +1757,6 @@ export const useFlagGrafanaPreserveLoginTabTitle = (options?: ReactFlagEvaluatio
 };
 
 /**
- * Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options
- *
- * **Details:**
- * - flag key: `grafana.queryVarEditorRedesign`
- * - default value: `true`
- */
-export const useFlagGrafanaQueryVarEditorRedesign = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.queryVarEditorRedesign", true, options).value;
-};
-
-/**
  * Disables creating new recorded queries while preserving access to existing queries
  *
  * **Details:**
@@ -2106,6 +2095,17 @@ export const useFlagPlaylistsRBAC = (options?: ReactFlagEvaluationOptions): bool
  */
 export const useFlagPluginInsights = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("pluginInsights", false, options).value;
+};
+
+/**
+ * Disables the ST fallback for multi-tenant plugin api calls
+ *
+ * **Details:**
+ * - flag key: `plugins.disableMTPluginsFallback`
+ * - default value: `false`
+ */
+export const useFlagPluginsDisableMTPluginsFallback = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("plugins.disableMTPluginsFallback", false, options).value;
 };
 
 /**

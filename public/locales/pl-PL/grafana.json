@@ -1597,6 +1597,12 @@
         "view-list": "Lista",
         "wildcard-in-text": "Tekst wyszukiwania nie może zawierać znaków * ani %."
       },
+      "sequence-pill": {
+        "label": "",
+        "label-with-interval": "",
+        "tooltip": "",
+        "tooltip-with-interval": ""
+      },
       "shared": {
         "load-more": "Wczytaj więcej",
         "load-more-error": "Nie udało się wczytać dalszych wyników",
@@ -5449,6 +5455,7 @@
       "change-theme": "Zmień motyw",
       "dark-theme": "Ciemny",
       "dashboard-from-template": "Pulpit z szablonu",
+      "experimental": "",
       "light-theme": "Jasny",
       "open-saved-queries": "Otwórz zapisane zapytania",
       "scopes": "Zakresy"
@@ -5907,7 +5914,7 @@
         "hint-layer": "",
         "hint-layer-select": "",
         "hint-not-removable": "",
-        "hint-panel": "Kliknij, aby dodać komentarz do panelu, lub przeciągnij, aby narysować obszar",
+        "hint-panel": "",
         "hint-panel-select": "",
         "hint-region": "Przeciągnij, aby narysować obszar",
         "hint-remove": "",
@@ -6890,8 +6897,6 @@
         "open-editor": "Otwórz edytor zmiennych",
         "open-editor-tooltip": "Aby uzyskać więcej opcji dotyczących zmiennych, otwórz edytor zmiennych",
         "query-options": {
-          "close": "Zamknij",
-          "old-modal-title": "Zmienna zapytania",
           "preview": "Podgląd"
         },
         "remove": "Usuń",
@@ -10976,6 +10981,8 @@
       "tooltip": {
         "category": "Podpowiedź",
         "description-hover-proximity": "Jak blisko punktu musi znajdować się kursor, aby wyświetlić podpowiedź (w pikselach)",
+        "description-max-height": "",
+        "description-max-width": "",
         "modeOptions": {
           "label-all": "Wszystkie",
           "label-hidden": "Ukryte",
@@ -13320,6 +13327,10 @@
       "subtitle": "Wybierz sposób powiadamiania punktów kontaktowych o wystąpieniu alertu",
       "title": "Punkty kontaktowe"
     },
+    "alerting-recording-rules": {
+      "subtitle": "",
+      "title": ""
+    },
     "alerting-silences": {
       "subtitle": "Zatrzymaj powiadomienia z co najmniej jednej reguły alertu",
       "title": "Wyciszanie"
@@ -14184,6 +14195,32 @@
     },
     "units": {
       "clear-tooltip": "Wyczyść wybór jednostki"
+    },
+    "var-mapping-checks": {
+      "data-macro": "",
+      "not-allowed": "",
+      "not-found": "",
+      "not-number": "",
+      "not-one-value": "",
+      "out-of-range": "",
+      "resolves": "",
+      "values": ""
+    },
+    "var-mapping-toggle": {
+      "aria-label-picker": "",
+      "fallback-off": "",
+      "fallback-on": "",
+      "group-matching": "",
+      "group-other": "",
+      "hint-boolean": "",
+      "hint-number": "",
+      "hint-option": "",
+      "hint-option-no-fallback": "",
+      "new-variable": "",
+      "option-current": "",
+      "placeholder": "",
+      "use-fixed-value": "",
+      "use-variable": ""
     }
   },
   "org": {
