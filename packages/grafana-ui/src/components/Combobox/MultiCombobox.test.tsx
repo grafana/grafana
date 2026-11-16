@@ -170,6 +170,53 @@ describe('MultiCombobox', () => {
     expect(screen.getByTestId('combobox-option-b-checkbox')).toBeChecked();
   });
 
+  it('keeps the menu open when clicking an option checkbox', async () => {
+    const options: Array<ComboboxOption<string>> = [
+      { label: 'Alpha', value: 'a' },
+      { label: 'Beta', value: 'b' },
+    ];
+    const onChange = jest.fn();
+
+    const ControlledMultiCombobox = () => {
+      const [value, setValue] = React.useState<Array<ComboboxOption<string>>>([]);
+
+      return (
+        <MultiCombobox
+          options={options}
+          value={value}
+          onChange={(selectedOptions) => {
+            setValue(selectedOptions);
+            onChange(selectedOptions);
+          }}
+        />
+      );
+    };
+
+    render(<ControlledMultiCombobox />);
+    const input = screen.getByRole('combobox');
+    await user.click(input);
+
+    await user.click(await screen.findByTestId('combobox-option-a-checkbox'));
+
+    expect(onChange).toHaveBeenLastCalledWith([options[0]]);
+    expect(screen.getByRole('listbox')).toBeVisible();
+    expect(screen.getByTestId('combobox-option-a-checkbox')).toBeChecked();
+
+    // The visible checkmark sits on top of the hidden input, so a real click lands on it and goes through the label
+    const checkmarkB = screen.getByTestId('combobox-option-b-checkbox').nextElementSibling!;
+    await user.click(checkmarkB);
+
+    expect(onChange).toHaveBeenLastCalledWith([options[0], options[1]]);
+    expect(screen.getByRole('listbox')).toBeVisible();
+    expect(input).toHaveFocus();
+
+    await user.click(screen.getByTestId('combobox-option-a-checkbox').nextElementSibling!);
+
+    expect(onChange).toHaveBeenLastCalledWith([options[1]]);
+    expect(onChange).toHaveBeenCalledTimes(3);
+    expect(screen.getByRole('listbox')).toBeVisible();
+  });
+
   it('uses default content for the numeric select-all row', async () => {
     const numericOptions: Array<ComboboxOption<number>> = [
       { label: 'One', value: 1 },
