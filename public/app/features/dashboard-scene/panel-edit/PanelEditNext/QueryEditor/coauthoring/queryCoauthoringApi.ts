@@ -4,7 +4,9 @@ import { generateUUID } from '@grafana/data';
 import { faro } from '@grafana/faro-web-sdk';
 import { reportInteraction } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+import { type VizPanel } from '@grafana/scenes';
 
+import { type PanelEditor } from '../../../PanelEditor';
 import { type PanelDataPaneNext } from '../../PanelDataPaneNext';
 
 import {
@@ -16,6 +18,8 @@ import {
 } from './queryCoauthoringContracts';
 
 interface MountedPanel {
+  panel: VizPanel;
+  owner: PanelEditor;
   target: Omit<QueryCoauthoringTarget, 'refId'>;
   pane: PanelDataPaneNext;
   supported: Set<string>;
@@ -27,6 +31,7 @@ const resumeListeners = new Set<(request: { sessionId: string }) => void>();
 const subscribers = new Set<() => void>();
 let mounted: MountedPanel | undefined;
 let session: QueryCoauthoringSession | undefined;
+let sessionPanel: VizPanel | undefined;
 let focus: string | undefined;
 let state: QueryCoauthoringState | undefined;
 let pending:
@@ -67,7 +72,16 @@ export function getCoauthoringSurface(pane?: PanelDataPaneNext) {
   if (pane && mounted?.pane !== pane) {
     return undefined;
   }
-  return mounted ? { ...mounted, session, focus, state } : undefined;
+  if (!mounted || !mounted.owner.isActive) {
+    return undefined;
+  }
+  const ownsSession = mounted.panel === sessionPanel;
+  return {
+    ...mounted,
+    session: ownsSession ? session : undefined,
+    focus: ownsSession ? focus : undefined,
+    state: ownsSession ? state : undefined,
+  };
 }
 function track(event: string, sessionId: string, attributes: Record<string, string> = {}) {
   if (event === 'proposal_staged' || event === 'session_opened') {
@@ -83,31 +97,17 @@ function matches(target: QueryCoauthoringTarget) {
   );
 }
 export function mountCoauthoringPanel(panel: MountedPanel): () => void {
-  if (mounted) {
-    mounted.pane.closeCoauthoringSession('left_panel_edit');
-  }
   mounted = panel;
   publishCoauthoring();
-  const client = getFeatureFlagClient();
-  const onFlags = () => {
-    if (!isQueryCoauthoringEnabled()) {
-      panel.pane.closeCoauthoringSession('flag_off');
-      pending = undefined;
-    }
-    publishCoauthoring();
-  };
-  const events = [ProviderEvents.Ready, ProviderEvents.ConfigurationChanged];
-  events.forEach((event) => client.addHandler(event, onFlags));
   return () => {
-    events.forEach((event) => client.removeHandler(event, onFlags));
     if (mounted === panel) {
-      panel.pane.closeCoauthoringSession(isQueryCoauthoringEnabled() ? 'left_panel_edit' : 'flag_off');
       mounted = undefined;
       pending = undefined;
       publishCoauthoring();
     }
   };
 }
+
 export function requestCoauthoringEntry(
   request: QueryCoauthoringEntryRequest,
   source: 'highlight' | 'query_button' | 'debug'
@@ -115,7 +115,7 @@ export function requestCoauthoringEntry(
   if (!isQueryCoauthoringV2Active() || !queryCoauthoringApi.canEnter(request.target).ok) {
     return;
   }
-  if (session && focus !== request.target.refId) {
+  if (session && sessionPanel === mounted?.panel && focus !== request.target.refId) {
     mounted?.pane.closeCoauthoringSession('replaced');
   }
   const sessionId = generateUUID();
@@ -125,10 +125,11 @@ export function requestCoauthoringEntry(
   enterListeners.forEach((listener) => listener(request));
 }
 export function requestCoauthoringResume() {
-  if (!session || session.signal.aborted || !isQueryCoauthoringV2Active()) {
+  const current = getCoauthoringSurface()?.session;
+  if (!current || current.signal.aborted || !isQueryCoauthoringV2Active()) {
     return;
   }
-  resumeListeners.forEach((listener) => listener({ sessionId: session!.getState().sessionId }));
+  resumeListeners.forEach((listener) => listener({ sessionId: current.getState().sessionId }));
 }
 
 export const queryCoauthoringApi: QueryCoauthoringAPI = {
@@ -159,7 +160,7 @@ export const queryCoauthoringApi: QueryCoauthoringAPI = {
     };
   },
   canEnter(target) {
-    if (!isQueryCoauthoringV2Active() || !matches(target) || !mounted) {
+    if (!isQueryCoauthoringV2Active() || !matches(target) || !mounted?.owner.isActive) {
       return { ok: false, reason: 'not_in_panel_edit' };
     }
     const queries = mounted.pane.getCoauthoringEditorQueries() ?? [];
@@ -175,14 +176,20 @@ export const queryCoauthoringApi: QueryCoauthoringAPI = {
     }
     const request = pending && matches(pending.target) && pending.target.refId === target.refId ? pending : undefined;
     pending = undefined;
-    const next = mounted.pane.startCoauthoringSession(
+    const { pane, panel } = mounted;
+    const next = pane.startCoauthoringSession(
       target.refId,
       request?.ranges,
-      mounted.select,
+      (refId) => {
+        if (mounted?.panel === panel) {
+          mounted.select(refId);
+        }
+      },
       request?.sessionId
     );
     stopSession?.();
     session = next;
+    sessionPanel = panel;
     focus = target.refId;
     let previous: QueryCoauthoringState | undefined;
     stopSession = next.subscribe((snapshot) => {
@@ -202,11 +209,18 @@ export const queryCoauthoringApi: QueryCoauthoringAPI = {
       previous = snapshot;
       publishCoauthoring();
     });
+    const stopSessionFlags = subscribeCoauthoringFlags(() => {
+      if (!isQueryCoauthoringEnabled()) {
+        pane.closeCoauthoringSession('flag_off');
+      }
+    });
     next.signal.addEventListener(
       'abort',
       () => {
+        stopSessionFlags();
         if (session === next) {
           session = undefined;
+          sessionPanel = undefined;
           state = undefined;
           focus = undefined;
           stopSession?.();

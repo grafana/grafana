@@ -59,13 +59,13 @@ After Prometheus and expressions implement the contracts, compare their needs an
 
 ## v2 session engine
 
-`PanelDataPaneNext.startCoauthoringSession` creates a panel-scoped owner and replaces any open session. The internal `QueryCoauthoringSessionEngine` owns the canonical revision and health subscription; a session owns its Original, Proposal, preview runs and one-level Undo. These contracts remain internal and are not exposed through the restricted API yet.
+`PanelDataPaneNext.startCoauthoringSession` uses the engine retained per `VizPanel` and replaces any open session. `PanelEditor` disposes that engine when panel edit ends or the panel data provider changes. Query-pane and React remounts do not own its lifetime. The internal `QueryCoauthoringSessionEngine` owns the canonical revision and health subscription; a session owns its Original, Proposal, preview runs and one-level Undo. These contracts remain internal; the Core Surface exposes the versioned restricted entry point.
 
 - `getCoauthoringEditorQueries` returns the whole previewed Option for the editor surface. Passing an edited proposed row through `updateSelectedQuery` preserves that row as canonical state, stops the preview and leaves the other rows at their canonical Original.
 - Explicit `runQueries` invalidates the Proposal even with unchanged text. Mutations that also run queries advance the revision for the mutation, once.
 - `QueryCoauthoringRuns` retains a separate copy of cached and projected frame values, schedules Options in rank order, and never projects a background run. A time-range change replaces the pass without advancing the revision.
-- Canonical health derives only from canonical results. Projection and restoration carry an identity marker so neither is interpreted as a canonical run.
-- `closeCoauthoringSession` supplies the flag-off and panel-leave reasons; pane deactivation disposes the owner. Removing or renaming the Focus closes the session, while other canonical changes make the Proposal stale.
+- Canonical health derives only from canonical results. Projection and restoration retain data and series identity so Option layer re-emits are not interpreted as canonical runs. Layer updates on Original refresh its snapshot.
+- `closeCoauthoringSession` supplies the flag-off and panel-leave reasons; `PanelEditor` deactivation disposes the owner. Removing or renaming the Focus closes the session, while other canonical changes make the Proposal stale.
 
 The Surface work wires listener gating, selection, row/editor projection, the restricted API, flags, badges and telemetry. It must use the session state subscription to rerender proposed rows and pass the editor selection callback when entering; preview itself never changes the selected query. Closing or moving the Assistant must not call the session's exit operation.
 
@@ -73,10 +73,16 @@ The Surface work wires listener gating, selection, row/editor projection, the re
 
 The restricted `queryCoauthoring` API is declared internally and shared through the existing plugin allow/block lists, including the Assistant allow-list entry. It exists while `queryeditor.coauthoringUi` is enabled. A registered entry listener plus the visual refresh enables v2; without the listener, Core retains the private v1 prop and inline flow. Core does not read Assistant flags or listen to its layout/close events.
 
-`QueryEditorContextWrapper` mounts the panel with `useMountedCoauthoringPanel`. It supplies explicit selection and resolves the per-query language contracts with runtime version guards. The API passes entry ranges and the entry-click session ID to the existing engine. The Surface subscribes to session snapshots to project proposed editor text and row state. Editor handles are version-checked, unsubscribed, and cleared on disposal; optional line marks replace the current Option and clear when its preview ends. Preview never selects a query.
+`QueryEditorContextWrapper` mounts the panel with `useMountedCoauthoringPanel`. It forwards explicit selection to the currently attached editor and resolves the per-query language contracts with runtime version guards. The API passes entry ranges and the entry-click session ID to the existing engine. The Surface subscribes to session snapshots to project proposed editor text and row state. Editor handles are version-checked, unsubscribed, and cleared on disposal; optional line marks replace the current Option and clear when its preview ends. Preview never selects a query.
 
-The pane remains the session owner across row switches and Assistant changes. Its flag subscription closes sessions as `flag_off`; panel departure, Focus removal, explicit Exit and replacement retain the engine's lifecycle rules. Entry and Resume dispatch separate listener requests. Resuming an ended session is impossible.
+The shared engine remains the session owner across row switches, pane remounts and Assistant changes. The React bridge only attaches the current pane and selection callback; it neither closes nor disposes the owner on unmount. Restricted entry checks the actual active `PanelEditor`. A session-scoped flag subscription remains installed while the pane is detached and closes the session as `flag_off`; panel departure, Focus removal, explicit Exit and replacement retain the engine's lifecycle rules. Entry and Resume dispatch separate listener requests. Resuming an ended session is impossible.
 
 Core reports the existing coauthoring interaction names with `sessionId` and no prompt/query text. New session-open and Proposal-staged events connect the `query_coauthoring` journey's entry and first-preview-outcome steps under `panel_edit`. Only the user entry handler starts a Faro user action.
 
 Local integration tests use the restricted API, mounted editor-host seam and real PanelEditNext context wrapper with the existing engine and expressions contract. The test editor is a contract harness, not the deployed Prometheus editor or Assistant. Their hosted integration acceptance remains separate.
+
+## Surface reconciliation with the refined engine
+
+The Surface delivery is based directly on session-engine commit `93b9b0255f7fde39cd9c80e6f72603e14e6192bf` from the still-open prerequisite. It reuses the shared engine lookup, PanelEditor disposal, preview runner helpers, Original restoration, canonical health, hidden-query scoring, and Apply/Run/Undo behavior. The sole engine extension is an optional Core-generated session ID, allowing the entry-click interaction and opened session to share one telemetry identity without publishing a new contract.
+
+Mounted regressions retain the callback-identity coverage and additionally exercise pane detach/remount, replacement-editor selection, detached flag-off, actual PanelEditor departure before React unmount, and a fresh edit of the same panel. Canonical-only cards are checked through preview-layer and Original-layer updates. These local checks use the actual engine and expressions language contract; deployed Assistant and Prometheus acceptance remains separate.

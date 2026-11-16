@@ -421,7 +421,12 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     select?: (refId: string) => void,
     sessionId?: string
   ): QueryCoauthoringSession => {
-    return QueryCoauthoringSessionEngine.getOrCreate(this.state.panelRef.resolve()).enter(refId, ranges, select, sessionId);
+    return QueryCoauthoringSessionEngine.getOrCreate(this.state.panelRef.resolve()).enter(
+      refId,
+      ranges,
+      select,
+      sessionId
+    );
   };
 
   public getCoauthoringHealth = () => {

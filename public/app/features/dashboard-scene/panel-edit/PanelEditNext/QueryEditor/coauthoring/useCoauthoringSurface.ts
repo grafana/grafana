@@ -42,13 +42,15 @@ export function useMountedCoauthoringPanel(
     if (!enabled) {
       return;
     }
-    let dashboardUid: string | undefined;
-    try {
-      dashboardUid = getDashboardSceneFor(panel).state.uid;
-    } catch {
-      /* Standalone panel editors have no dashboard UID. */
+    const dashboard = getDashboardSceneFor(panel);
+    const owner = dashboard.state.editPanel;
+    if (!owner || owner.getPanel() !== panel) {
+      return;
     }
+    const dashboardUid = dashboard.state.uid;
     return mountCoauthoringPanel({
+      panel,
+      owner,
       target: { dashboardUid, panelId: getPanelIdForVizPanel(panel) },
       pane,
       supported: new Set(),

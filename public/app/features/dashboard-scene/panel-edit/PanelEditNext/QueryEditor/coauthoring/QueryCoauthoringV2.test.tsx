@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { of } from 'rxjs';
 
 import { type DataSourceApi, type QueryEditorProps, LoadingState, toDataFrame } from '@grafana/data';
+import { getPanelPlugin } from '@grafana/data/test';
 import { faro } from '@grafana/faro-web-sdk';
 import { config, reportInteraction, setRunRequest } from '@grafana/runtime';
 import { FlagKeys, setExpressionDataSourceInstance } from '@grafana/runtime/internal';
@@ -49,10 +50,15 @@ jest.mock('@grafana/faro-web-sdk', () => ({
 jest.mock('app/features/alerting/unified/hooks/usePanelCombinedRules', () => ({
   usePanelCombinedRules: () => ({ rules: [], loading: false }),
 }));
+const mockPanelPlugin = getPanelPlugin({ id: 'timeseries' }, () => null);
 const mockGetDataSource = jest.fn();
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   reportInteraction: jest.fn(),
+  getPluginImportUtils: () => ({
+    getPanelPluginFromCache: () => mockPanelPlugin,
+    importPanelPlugin: async () => mockPanelPlugin,
+  }),
   getDataSourceInstanceSettings: async () => ds1SettingsMock,
   getDataSourceInstance: (...args: unknown[]) => mockGetDataSource(...args),
   getDataSourceSrv: () => ({ get: mockGetDataSource, getInstanceSettings: () => ds1SettingsMock }),
@@ -112,8 +118,10 @@ const original = [
 ];
 const target = { panelId: 1, refId: 'B' };
 let unlisten: Array<() => void>;
+let cleanupOwners: Array<() => void>;
 beforeEach(() => {
   unlisten = [];
+  cleanupOwners = [];
   showChanges.mockClear();
   jest.mocked(faro.api.startUserAction).mockClear();
   cleanupEditor = jest.fn();
@@ -130,6 +138,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   act(() => unlisten.forEach((stop) => stop()));
+  act(() => cleanupOwners.forEach((stop) => stop()));
   act(() => setTestFlags({}));
   jest.restoreAllMocks();
 });
@@ -139,6 +148,18 @@ function api() {
     throw new Error('Missing v1 API');
   }
   return apis.queryCoauthoring;
+}
+function activatePanelEdit(editor: PanelEditor) {
+  const stop = editor.activate();
+  let active = true;
+  const leave = () => {
+    if (active) {
+      active = false;
+      stop();
+    }
+  };
+  cleanupOwners.push(leave);
+  return leave;
 }
 function setup(listener = true) {
   const datasource = Object.assign(getMockDataSource(), {
@@ -159,17 +180,30 @@ function setup(listener = true) {
     data,
     runQueriesMode: 'manual',
   });
-  const panel = new VizPanel({ key: 'panel-1', $data: canonical, $timeRange: timeRange });
+  const panel = new VizPanel({ key: 'panel-1', pluginId: 'timeseries', $data: canonical, $timeRange: timeRange });
   const pane = new PanelDataPaneNext({ panelRef: panel.getRef() });
+  const gridItem = new DashboardGridItem({ body: panel });
+  const editor = new PanelEditor({ panelRef: panel.getRef(), dataPane: pane, isNewPanel: false });
+  const dashboard = new DashboardScene({
+    body: new DefaultGridLayoutManager({ grid: new SceneGridLayout({ children: [gridItem] }) }),
+    editPanel: editor,
+  });
+  const leavePanelEdit = activatePanelEdit(editor);
   const select = jest.fn();
   const entry = jest.fn();
   if (listener) {
     unlisten.push(api().onEnterRequested(entry));
   }
   setRunRequest((_ds, request) => of({ ...data, request }));
-  function Mounted() {
+  function Mounted({
+    dataPane = pane,
+    onSelect = select,
+  }: {
+    dataPane?: PanelDataPaneNext;
+    onSelect?: (refId: string) => void;
+  }) {
     canonical.useState();
-    useMountedCoauthoringPanel(pane, panel, canonical.state.queries, select);
+    useMountedCoauthoringPanel(dataPane, panel, canonical.state.queries, onSelect);
     return (
       <>
         <QueryEditorPanel
@@ -179,10 +213,10 @@ function setup(listener = true) {
           queryDsLoading={false}
           queries={canonical.state.queries}
           data={canonical.state.data}
-          updateQuery={pane.updateSelectedQuery}
-          addQuery={pane.addQuery}
-          runQueries={pane.runQueries}
-          startQueryPreview={pane.startQueryPreview}
+          updateQuery={dataPane.updateSelectedQuery}
+          addQuery={dataPane.addQuery}
+          runQueries={dataPane.runQueries}
+          startQueryPreview={dataPane.startQueryPreview}
         />
         <QueryCoauthoringCard refId="A" />
         <QueryCoauthoringCard refId="B" />
@@ -194,7 +228,25 @@ function setup(listener = true) {
       <Mounted />
     </OpenFeatureProvider>
   );
-  return { ...view, canonical, pane, select, entry, datasource };
+  return {
+    ...view,
+    canonical,
+    pane,
+    panel,
+    editor,
+    dashboard,
+    leavePanelEdit,
+    select,
+    entry,
+    datasource,
+    hide: () => view.rerender(<OpenFeatureProvider client={getTestFeatureFlagClient()}>{null}</OpenFeatureProvider>),
+    show: (dataPane = pane, onSelect = select) =>
+      view.rerender(
+        <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+          <Mounted dataPane={dataPane} onSelect={onSelect} />
+        </OpenFeatureProvider>
+      ),
+  };
 }
 async function enter() {
   await waitFor(() => expect(api().canEnter(target)).toEqual({ ok: true }));
@@ -318,7 +370,7 @@ it('shows proposed text and row state without optional marks', async () => {
 it.each(['exit', 'replaced', 'left_panel_edit', 'flag_off', 'focus_removed'] as const)(
   'closes once with %s and clears marks',
   async (reason) => {
-    const { canonical, unmount } = setup();
+    const { canonical, unmount, leavePanelEdit } = setup();
     const session = await enter();
     await propose(session);
     const closed = jest.fn();
@@ -331,6 +383,7 @@ it.each(['exit', 'replaced', 'left_panel_edit', 'flag_off', 'focus_removed'] as 
         await api().enter(target);
       }
       if (reason === 'left_panel_edit') {
+        leavePanelEdit();
         unmount();
       }
       if (reason === 'flag_off') {
@@ -461,7 +514,7 @@ it('connects the real PanelEditNext context wrapper to the restricted session an
     datasource: { uid: '__expr__' },
     runQueriesMode: 'manual',
   });
-  const panel = new VizPanel({ key: 'panel-1', $data: canonical, $timeRange: time });
+  const panel = new VizPanel({ key: 'panel-1', pluginId: 'timeseries', $data: canonical, $timeRange: time });
   const pane = new PanelDataPaneNext({ panelRef: panel.getRef(), datasource, dsSettings: ds1SettingsMock });
   const gridItem = new DashboardGridItem({ body: panel });
   const editor = new PanelEditor({ panelRef: panel.getRef(), dataPane: pane, isNewPanel: false });
@@ -470,6 +523,7 @@ it('connects the real PanelEditNext context wrapper to the restricted session an
     body: new DefaultGridLayoutManager({ grid: new SceneGridLayout({ children: [gridItem] }) }),
     editPanel: editor,
   });
+  const leavePanelEdit = activatePanelEdit(editor);
   const request = jest.fn();
   unlisten.push(api().onEnterRequested(request));
   setRunRequest((_ds, request) => of({ state: LoadingState.Done, series: [], timeRange: time.state.value, request }));
@@ -506,6 +560,8 @@ it('connects the real PanelEditNext context wrapper to the restricted session an
   await waitFor(() => expect(screen.getByRole('textbox', { name: 'Query text' })).toHaveValue('2'));
   expect(canonical.state.queries).toEqual(original);
   await act(async () => view.unmount());
+  expect(activeSession.signal.aborted).toBe(false);
+  await act(async () => leavePanelEdit());
   expect(await activeSession.closed).toBe('left_panel_edit');
 });
 
@@ -538,4 +594,114 @@ it('replaces an open session on a new query entry before the Assistant enters th
   fireEvent.click(screen.getByRole('button', { name: 'Explain or modify query A' }));
   expect(await session.closed).toBe('replaced');
   expect(screen.getByRole('textbox', { name: 'Query text' })).toHaveValue('$A + 1');
+});
+
+it('retains the session and preview across pane remounts and forwards selection to the replacement editor', async () => {
+  const fixture = setup();
+  const session = await enter();
+  await propose(session);
+  act(() => fixture.hide());
+  expect(session.signal.aborted).toBe(false);
+  const replacement = new PanelDataPaneNext({ panelRef: fixture.panel.getRef() });
+  const selectReplacement = jest.fn();
+  await act(async () => fixture.show(replacement, selectReplacement));
+  expect(screen.getByRole('button', { name: 'Resume' })).toBeInTheDocument();
+  expect(screen.getByRole('textbox', { name: 'Query text' })).toHaveValue('2');
+  expect(session.getState().revision).toBe(0);
+  act(() => session.select('A'));
+  expect(selectReplacement).toHaveBeenCalledWith('A');
+  expect(fixture.select).not.toHaveBeenCalled();
+});
+
+it('closes on flag-off even while the pane is detached and the Assistant listener is gone', async () => {
+  const fixture = setup();
+  const session = await enter();
+  await propose(session);
+  act(() => fixture.hide());
+  expect(session.signal.aborted).toBe(false);
+  act(() => unlisten.forEach((stop) => stop()));
+  act(() => setTestFlags({ [FlagKeys.QueryeditorCoauthoringUi]: false }));
+  expect(session.signal.aborted).toBe(true);
+  expect(await session.closed).toBe('flag_off');
+});
+
+it('refuses restricted entry after PanelEditor leaves even before its React view detaches', async () => {
+  const fixture = setup();
+  const session = await enter();
+  await act(async () => fixture.leavePanelEdit());
+  expect(await session.closed).toBe('left_panel_edit');
+  expect(api().canEnter(target)).toEqual({ ok: false, reason: 'not_in_panel_edit' });
+  expect(screen.queryByRole('button', { name: 'Resume' })).not.toBeInTheDocument();
+});
+
+it('keeps card health canonical through preview annotations and restores Original layer updates', async () => {
+  const { canonical } = setup();
+  const session = await enter();
+  setRunRequest((_ds, request) =>
+    of({
+      ...canonical.state.data!,
+      state: LoadingState.Error,
+      errors: [{ refId: 'A', message: 'Preview-only error' }],
+      request,
+    })
+  );
+  await propose(session, 'A');
+  expect(session.getState().health).toEqual({ A: 'ok', B: 'ok' });
+  expect(screen.queryByText('Error')).not.toBeInTheDocument();
+  act(() => canonical.setState({ data: { ...canonical.state.data!, annotations: [] } }));
+  expect(session.getState().health).toEqual({ A: 'ok', B: 'ok' });
+  act(() => session.preview('original'));
+  act(() =>
+    canonical.setState({ data: { ...canonical.state.data!, errors: [{ refId: 'A', message: 'Canonical error' }] } })
+  );
+  expect(session.getState().health).toEqual({ A: 'error', B: 'ok' });
+  expect(screen.getAllByText('Error')).toHaveLength(2);
+});
+
+it('retains Apply Undo across explicit Run and pane remount without duplicate operation telemetry', async () => {
+  const fixture = setup();
+  const session = await enter();
+  const option = await propose(session);
+  await act(async () => {
+    expect(await session.accept(option, { baseRevision: 0 })).toEqual({ status: 'applied', revision: 1 });
+  });
+  act(() => fixture.pane.runQueries());
+  expect(session.getState()).toMatchObject({ step: 'apply', revision: 2, canUndo: true, stale: true });
+  act(() => fixture.hide());
+  const replacement = new PanelDataPaneNext({ panelRef: fixture.panel.getRef() });
+  await act(async () => fixture.show(replacement));
+  expect(session.getState().canUndo).toBe(true);
+  await act(async () => {
+    expect(await session.undo({})).toEqual({ status: 'applied', revision: 3 });
+  });
+  expect(fixture.canonical.state.queries).toEqual(original);
+  for (const event of ['session_opened', 'accepted_proposal', 'undone_proposal']) {
+    expect(
+      jest.mocked(reportInteraction).mock.calls.filter(([name]) => name === `grafana_query_coauthoring_${event}`)
+    ).toHaveLength(1);
+  }
+});
+
+it('starts a fresh session owner for a new edit of the same panel after disposing the previous edit', async () => {
+  const fixture = setup();
+  const first = await enter();
+  const option = await propose(first);
+  await act(async () => first.accept(option, { baseRevision: 0 }));
+  await act(async () => {
+    fixture.hide();
+    fixture.leavePanelEdit();
+  });
+  expect(await first.closed).toBe('left_panel_edit');
+  const pane = new PanelDataPaneNext({ panelRef: fixture.panel.getRef() });
+  const owner = new PanelEditor({ panelRef: fixture.panel.getRef(), dataPane: pane, isNewPanel: false });
+  act(() => {
+    fixture.dashboard.setState({ editPanel: owner });
+    activatePanelEdit(owner);
+  });
+  await act(async () => fixture.show(pane));
+  const next = await enter();
+  expect(next.getState()).toMatchObject({ revision: 0, canUndo: false, proposal: null, step: 'review' });
+  expect(next.getState().sessionId).not.toBe(first.getState().sessionId);
+  expect(next.getState().queries).toEqual([original[0], { ...original[1], expression: '2' }]);
+  expect(await first.undo({})).toEqual({ status: 'closed' });
 });
