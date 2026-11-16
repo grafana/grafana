@@ -482,7 +482,8 @@ func TestNewUserDeleteCascade(t *testing.T) {
 		rest.Lister
 		rest.GracefulDeleter
 	}{}
-	userStore := struct{ storewrapper.K8sStorage }{}
+	notAuthInfos := struct{ rest.Storage }{}
+	userStore := &struct{ storewrapper.K8sStorage }{}
 
 	for _, tt := range []struct {
 		name            string
@@ -494,13 +495,19 @@ func TestNewUserDeleteCascade(t *testing.T) {
 		{name: "nothing to cascade to"},
 		{name: "auth infos only", authInfoStorage: authInfos, wantCascade: true},
 		{name: "preferences only", preferences: noopUserPreferencesCleaner{}, wantCascade: true},
+		{name: "a storage that can't list and delete auth infos, and no preferences", authInfoStorage: notAuthInfos},
 		{name: "read-only API", authInfoStorage: authInfos, preferences: noopUserPreferencesCleaner{}, readOnly: true},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			got := newUserDeleteCascade(userStore, tt.authInfoStorage, tt.preferences, tt.readOnly)
 
-			_, isCascade := got.(*user.CascadeDeleter)
+			cascade, isCascade := got.(*user.CascadeDeleter)
 			require.Equal(t, tt.wantCascade, isCascade)
+			if isCascade {
+				require.Same(t, userStore, cascade.K8sStorage)
+			} else {
+				require.Same(t, userStore, got)
+			}
 		})
 	}
 }

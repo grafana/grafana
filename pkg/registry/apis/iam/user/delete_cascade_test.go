@@ -139,7 +139,7 @@ func TestCascadeDeleter_Delete(t *testing.T) {
 	t.Run("skips the cascade on dry run", func(t *testing.T) {
 		var calls []string
 		authInfos := &fakeAuthInfoStorage{calls: &calls, items: []iamv0.AuthInfo{authInfo("ldap-1")}}
-		c := NewCascadeDeleter(&fakeUserStorage{calls: &calls}, authInfos, nil)
+		c := NewCascadeDeleter(&fakeUserStorage{calls: &calls}, authInfos, &fakePreferencesCleaner{calls: &calls})
 
 		_, _, err := c.Delete(ctx, "u1", nil, &metav1.DeleteOptions{DryRun: []string{metav1.DryRunAll}})
 
@@ -187,16 +187,6 @@ func TestCascadeDeleter_Delete(t *testing.T) {
 
 		require.NoError(t, err)
 		assert.Equal(t, []string{"user:u1", "preferences:default/u1"}, calls)
-	})
-
-	t.Run("skips preferences on dry run", func(t *testing.T) {
-		var calls []string
-		c := NewCascadeDeleter(&fakeUserStorage{calls: &calls}, nil, &fakePreferencesCleaner{calls: &calls})
-
-		_, _, err := c.Delete(ctx, "u1", nil, &metav1.DeleteOptions{DryRun: []string{metav1.DryRunAll}})
-
-		require.NoError(t, err)
-		assert.Equal(t, []string{"user:u1"}, calls)
 	})
 
 	t.Run("deletes preferences with nil options", func(t *testing.T) {
