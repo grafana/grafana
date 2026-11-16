@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/convert"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/common"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -396,8 +397,76 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 	return old, false, nil
 }
 
-func (s *legacyStorage) DeleteCollection(_ context.Context, _ rest.ValidateObjectFunc, _ *metav1.DeleteOptions, _ *internalversion.ListOptions) (runtime.Object, error) {
-	// The dual-writer requires this interface even after migration routes
-	// collection deletion to unified storage. Legacy rows use the org SQL sweep.
-	return nil, k8serrors.NewMethodNotSupported(ResourceInfo.GroupResource(), "delete")
+// DeleteCollection deletes the alert rules matched by listOptions in pages of common.DeleteCollectionPageSize. Each page
+// is validated, authorized and deleted in its own transaction, so a page is deleted entirely or not at all. Like the
+// upstream apiserver, a failure stops the call with the pages before it already deleted.
+func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
+	info, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, err
+	}
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if listOptions == nil {
+		listOptions = &internalversion.ListOptions{}
+	}
+	if err := common.ValidateDeleteCollectionRequest(options, listOptions); err != nil {
+		return nil, err
+	}
+
+	opts := listOptions.DeepCopy()
+	// remaining is how many more rules the caller's limit allows; 0 means no limit.
+	remaining := opts.Limit
+	deleted := &v1beta1.AlertRuleList{Items: make([]v1beta1.AlertRule, 0)}
+	for {
+		opts.Limit = common.DeleteCollectionPageSize
+		if remaining > 0 && remaining < opts.Limit {
+			opts.Limit = remaining
+		}
+		items, next, err := common.ListPage(ctx, s.List, opts)
+		if err != nil {
+			return nil, err
+		}
+		rules := make([]*ngmodels.AlertRule, 0, len(items))
+		managers := make(map[string]utils.ManagerProperties, len(items))
+		page := make([]v1beta1.AlertRule, 0, len(items))
+		for _, item := range items {
+			if deleteValidation != nil {
+				if err := deleteValidation(ctx, item); err != nil {
+					return nil, err
+				}
+			}
+			// The items come from our own List, so a conversion failure is a server error, not a bad request.
+			rule, err := convert.Hub[*v1beta1.AlertRule](item)
+			if err != nil {
+				return nil, k8serrors.NewInternalError(fmt.Errorf("failed to convert rule %q: %w", common.ObjectName(item), err))
+			}
+			// Derive manager properties the same way Delete does.
+			domainModel, managerProps, err := convertToDomainModel(info.OrgID, rule)
+			if err != nil {
+				return nil, k8serrors.NewInternalError(fmt.Errorf("failed to convert rule %q: %w", rule.Name, err))
+			}
+			rules = append(rules, domainModel)
+			managers[domainModel.UID] = managerProps
+			page = append(page, *rule)
+		}
+		if err := s.service.DeleteAlertRules(ctx, user, rules, managers); err != nil {
+			return nil, err
+		}
+		deleted.Items = append(deleted.Items, page...)
+
+		if remaining > 0 {
+			remaining -= int64(len(items))
+			if remaining <= 0 {
+				deleted.Continue = next
+				return deleted, nil
+			}
+		}
+		if next == "" {
+			return deleted, nil
+		}
+		opts.Continue = next
+	}
 }
