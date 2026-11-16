@@ -115,12 +115,6 @@ Content-Type: application/json
 }
 ```
 
-### Status codes
-
-- **200:** OK
-- **401:** Unauthorized
-- **403:** Access denied (only organization administrators can list short URLs)
-
 ## Get a short URL
 
 `GET /apis/shorturl.grafana.app/v1beta1/namespaces/{namespace}/shorturls/{name}`
@@ -175,13 +169,6 @@ The response contains the following fields:
 - **metadata.name** – The unique identifier of the short URL.
 - **spec.path** – The path the short URL links to, relative to the Grafana [`root_url`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#root_url).
 - **status.lastSeenAt** – The last time someone used the short URL, in milliseconds since the Unix epoch. The initial value is `0`.
-
-### Status codes
-
-- **200:** Found
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** Short URL not found
 
 ## Resolve a short URL
 
@@ -240,14 +227,6 @@ Content-Type: application/json
   "url": "https://grafana.example.com/d/TxKARsmGz/new-dashboard?orgId=1&from=1599389322894&to=1599410922894"
 }
 ```
-
-### Status codes
-
-- **200:** OK, when `redirect=false`
-- **302:** Found, redirects to the full URL
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** Short URL not found
 
 ## Create a short URL
 
@@ -321,14 +300,6 @@ Content-Type: application/json
 
 To share the short URL, use `<GRAFANA_URL>/goto/<NAME>?orgId=<ORG_ID>`, where `<NAME>` is the `metadata.name` from the response.
 
-### Status codes
-
-- **201:** Created
-- **400:** Errors (invalid JSON, missing or invalid fields)
-- **401:** Unauthorized
-- **403:** Access denied, or the path is invalid
-- **409:** Conflict (a short URL with the same name already exists)
-
 ## Update a short URL
 
 `PUT /apis/shorturl.grafana.app/v1beta1/namespaces/{namespace}/shorturls/{name}`
@@ -391,16 +362,6 @@ Content-Type: application/json
 }
 ```
 
-### Status codes
-
-- **200:** Updated
-- **201:** Created, if the short URL doesn't exist and Grafana uses unified storage for short URLs
-- **400:** Errors (invalid JSON, missing or invalid fields)
-- **401:** Unauthorized
-- **403:** Access denied (only organization administrators can update short URLs), or the path is invalid
-- **404:** Short URL not found, if Grafana uses legacy storage for short URLs
-- **409:** Conflict (the short URL changed or was deleted since you read it)
-
 ## Delete a short URL
 
 `DELETE /apis/shorturl.grafana.app/v1beta1/namespaces/{namespace}/shorturls/{name}`
@@ -450,12 +411,28 @@ Content-Type: application/json
 }
 ```
 
-### Status codes
+## Status codes
 
-- **200:** Deleted
-- **401:** Unauthorized
-- **403:** Access denied (only organization administrators can delete short URLs)
-- **404:** Short URL not found
+The endpoints on this page return the following status codes:
+
+| Code  | Meaning                                                                                         | Returned by                                                                                                     |
+| ----- | ----------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `200` | OK.                                                                                             | [List](#list-short-urls), [Get](#get-a-short-url), [Update](#update-a-short-url), [Delete](#delete-a-short-url) |
+| `200` | OK, when `redirect=false`.                                                                      | [Resolve](#resolve-a-short-url)                                                                                 |
+| `201` | Created.                                                                                        | [Create](#create-a-short-url)                                                                                   |
+| `201` | Created, if the short URL doesn't exist and Grafana uses unified storage for short URLs.        | [Update](#update-a-short-url)                                                                                   |
+| `302` | Found, redirects to the full URL.                                                               | [Resolve](#resolve-a-short-url)                                                                                 |
+| `400` | Bad request (invalid JSON, missing or invalid fields).                                          | [Create](#create-a-short-url), [Update](#update-a-short-url)                                                    |
+| `401` | Unauthorized.                                                                                   | All endpoints                                                                                                   |
+| `403` | Access denied (only organization administrators can list short URLs).                           | [List](#list-short-urls)                                                                                        |
+| `403` | Access denied.                                                                                  | [Get](#get-a-short-url), [Resolve](#resolve-a-short-url)                                                        |
+| `403` | Access denied, or the path is invalid.                                                          | [Create](#create-a-short-url)                                                                                   |
+| `403` | Access denied (only organization administrators can update short URLs), or the path is invalid. | [Update](#update-a-short-url)                                                                                   |
+| `403` | Access denied (only organization administrators can delete short URLs).                         | [Delete](#delete-a-short-url)                                                                                   |
+| `404` | Short URL not found.                                                                            | [Get](#get-a-short-url), [Resolve](#resolve-a-short-url), [Delete](#delete-a-short-url)                         |
+| `404` | Short URL not found, if Grafana uses legacy storage for short URLs.                             | [Update](#update-a-short-url)                                                                                   |
+| `409` | Conflict (a short URL with the same name already exists).                                       | [Create](#create-a-short-url)                                                                                   |
+| `409` | Conflict (the short URL changed or was deleted since you read it).                              | [Update](#update-a-short-url)                                                                                   |
 
 ## Migrate from the legacy Short URL API
 

@@ -200,11 +200,15 @@ Each entry in `status.report.failures` contains the following fields:
 - **`itemID`:** The ID of the affected item, for example a data source UID.
 - **`links`:** Links to pages where you can fix the issue. Each link contains a `url`, a `message`, and an optional `messageKey` with the translation key of the message.
 
-### Status codes
+## Status codes
 
-- **200:** OK
-- **401:** Unauthorized
-- **403:** Access denied, for example if the namespace doesn't belong to your organization
+The endpoints on this page return the following status codes:
+
+| Code  | Meaning                                                                          | Returned by          |
+| ----- | -------------------------------------------------------------------------------- | -------------------- |
+| `200` | OK.                                                                              | [List](#list-checks) |
+| `401` | Unauthorized.                                                                    | [List](#list-checks) |
+| `403` | Access denied, for example if the namespace doesn't belong to your organization. | [List](#list-checks) |
 
 ## Related resources
 

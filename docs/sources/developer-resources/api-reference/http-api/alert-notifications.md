@@ -108,12 +108,6 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 The response returns `200 OK` with a `ReceiverList` object containing `Receiver` items in `items`.
 
-##### Status codes
-
-- **200:** `OK`
-- **401:** Unauthorized
-- **403:** Access denied
-
 #### Get a receiver
 
 `GET /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/receivers/{name}`
@@ -138,13 +132,6 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ##### Example response
 
 The response returns `200 OK` with the `Receiver` object shown in [Create a receiver](#create-a-receiver).
-
-##### Status codes
-
-- **200:** Found
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** Receiver not found
 
 #### Create a receiver
 
@@ -226,15 +213,6 @@ Content-Type: application/json
 }
 ```
 
-##### Status codes
-
-- **201:** Created
-- **400:** Bad request (invalid JSON, invalid resource name, or invalid integration settings)
-- **401:** Unauthorized
-- **403:** Access denied (missing RBAC permission or provenance permission)
-- **409:** Conflict (a receiver with the same `metadata.name` or `spec.title` already exists)
-- **422:** Schema validation error
-
 #### Update a receiver
 
 `PUT /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/receivers/{name}`
@@ -285,16 +263,6 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 The response returns `200 OK` with the updated `Receiver` object and a new `metadata.resourceVersion`.
 
-##### Status codes
-
-- **200:** Updated
-- **400:** Bad request (invalid JSON or invalid integration settings)
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** Receiver not found
-- **409:** Conflict (`metadata.resourceVersion` mismatch)
-- **422:** Schema validation error
-
 #### Delete a receiver
 
 `DELETE /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/receivers/{name}`
@@ -319,14 +287,6 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ##### Example response
 
 The response returns `200 OK` with the deleted `Receiver` object (or a `Status` object).
-
-##### Status codes
-
-- **200:** Deleted
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** Receiver not found
-- **409:** Conflict (the receiver is still referenced by a notification policy or alert rule)
 
 #### Test a receiver integration
 
@@ -383,14 +343,6 @@ Content-Type: application/json
 }
 ```
 
-##### Status codes
-
-- **200:** `OK` (check `status` in the response body for delivery `success` or `failure`)
-- **400:** Bad request (invalid integration configuration)
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** Receiver not found
-
 #### List integration type schemas
 
 `GET /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/integrationtypeschemas`
@@ -414,12 +366,6 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ##### Example response
 
 The response returns `200 OK` with an `items` array containing schema definitions for each integration type.
-
-##### Status codes
-
-- **200:** `OK`
-- **401:** Unauthorized
-- **403:** Access denied
 
 ### Details
 
@@ -473,12 +419,6 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 The response returns `200 OK` with a `RoutingTreeList` object containing `RoutingTree` items in `items`.
 
-##### Status codes
-
-- **200:** `OK`
-- **401:** Unauthorized
-- **403:** Access denied
-
 #### Get a routing tree
 
 `GET /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/routingtrees/{name}`
@@ -501,13 +441,6 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ##### Example response
 
 The response returns `200 OK` with the `RoutingTree` object.
-
-##### Status codes
-
-- **200:** Found
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** Routing tree not found
 
 #### Create a named routing tree
 
@@ -546,15 +479,6 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ##### Example response
 
 The response returns `201 Created` with the created `RoutingTree` object.
-
-##### Status codes
-
-- **201:** Created
-- **400:** Bad request (invalid JSON, reserved name, or invalid route configuration)
-- **401:** Unauthorized
-- **403:** Access denied
-- **409:** Conflict (a routing tree with the same `metadata.name` already exists)
-- **422:** Schema validation error
 
 #### Update a routing tree
 
@@ -613,16 +537,6 @@ Replace `<RESOURCE_VERSION>` with the `metadata.resourceVersion` from `GET .../r
 
 On success, Grafana returns `200 OK` with the updated `RoutingTree` object.
 
-##### Status codes
-
-- **200:** Updated
-- **400:** Bad request (invalid JSON or invalid route configuration)
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** Routing tree not found
-- **409:** Conflict (`metadata.resourceVersion` mismatch)
-- **422:** Schema validation error
-
 #### Delete a routing tree
 
 `DELETE /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/routingtrees/{name}`
@@ -645,14 +559,6 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ##### Example response
 
 The response returns `200 OK` with the deleted (or reset) `RoutingTree` object.
-
-##### Status codes
-
-- **200:** Deleted (or reset, for `user-defined`)
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** Routing tree not found
-- **409:** Conflict (the named routing tree is still referenced by an alert rule)
 
 ### Details
 
@@ -706,12 +612,6 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 The response returns `200 OK` with a `TemplateGroupList` object containing `TemplateGroup` items in `items`.
 
-##### Status codes
-
-- **200:** `OK`
-- **401:** Unauthorized
-- **403:** Access denied
-
 #### Get a template group
 
 `GET /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/templategroups/{name}`
@@ -734,13 +634,6 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ##### Example response
 
 The response returns `200 OK` with the `TemplateGroup` object.
-
-##### Status codes
-
-- **200:** Found
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** Template group not found
 
 #### Create a template group
 
@@ -777,15 +670,6 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ##### Example response
 
 The response returns `201 Created` with the created `TemplateGroup` object.
-
-##### Status codes
-
-- **201:** Created
-- **400:** Bad request (invalid JSON or invalid Go template syntax)
-- **401:** Unauthorized
-- **403:** Access denied
-- **409:** Conflict (a template group with the same `metadata.name` already exists)
-- **422:** Schema validation error
 
 #### Update a template group
 
@@ -825,16 +709,6 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 The response returns `200 OK` with the updated `TemplateGroup` object.
 
-##### Status codes
-
-- **200:** Updated
-- **400:** Bad request (invalid JSON or invalid Go template syntax)
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** Template group not found
-- **409:** Conflict (`metadata.resourceVersion` mismatch)
-- **422:** Schema validation error
-
 #### Delete a template group
 
 `DELETE /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/templategroups/{name}`
@@ -857,13 +731,6 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ##### Example response
 
 The response returns `200 OK` with the deleted `TemplateGroup` object (or a `Status` object).
-
-##### Status codes
-
-- **200:** Deleted
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** Template group not found
 
 ### Details
 
@@ -916,12 +783,6 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 The response returns `200 OK` with a `TimeIntervalList` object containing `TimeInterval` items in `items`.
 
-##### Status codes
-
-- **200:** `OK`
-- **401:** Unauthorized
-- **403:** Access denied
-
 #### Get a time interval
 
 `GET /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/timeintervals/{name}`
@@ -944,13 +805,6 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ##### Example response
 
 The response returns `200 OK` with the `TimeInterval` object.
-
-##### Status codes
-
-- **200:** Found
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** Time interval not found
 
 #### Create a time interval
 
@@ -991,15 +845,6 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ##### Example response
 
 The response returns `201 Created` with the created `TimeInterval` object.
-
-##### Status codes
-
-- **201:** Created
-- **400:** Bad request (invalid JSON or invalid schedule syntax)
-- **401:** Unauthorized
-- **403:** Access denied
-- **409:** Conflict (a time interval with the same `metadata.name` or `spec.name` already exists)
-- **422:** Schema validation error
 
 #### Update a time interval
 
@@ -1043,16 +888,6 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 The response returns `200 OK` with the updated `TimeInterval` object.
 
-##### Status codes
-
-- **200:** Updated
-- **400:** Bad request (invalid JSON or invalid schedule syntax)
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** Time interval not found
-- **409:** Conflict (`metadata.resourceVersion` mismatch)
-- **422:** Schema validation error
-
 #### Delete a time interval
 
 `DELETE /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/timeintervals/{name}`
@@ -1075,14 +910,6 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ##### Example response
 
 The response returns `200 OK` with the deleted `TimeInterval` object (or a `Status` object).
-
-##### Status codes
-
-- **200:** Deleted
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** Time interval not found
-- **409:** Conflict (the time interval is still referenced by a routing tree or alert rule)
 
 ### Details
 
@@ -1136,12 +963,6 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 The response returns `200 OK` with an `InhibitionRuleList` object containing `InhibitionRule` items in `items`.
 
-##### Status codes
-
-- **200:** `OK`
-- **401:** Unauthorized
-- **403:** Access denied
-
 #### Get an inhibition rule
 
 `GET /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/inhibitionrules/{name}`
@@ -1164,13 +985,6 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ##### Example response
 
 The response returns `200 OK` with the `InhibitionRule` object.
-
-##### Status codes
-
-- **200:** Found
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** Inhibition rule not found
 
 #### Create an inhibition rule
 
@@ -1216,15 +1030,6 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ##### Example response
 
 The response returns `201 Created` with the created `InhibitionRule` object and its generated `metadata.name`.
-
-##### Status codes
-
-- **201:** Created
-- **400:** Bad request (invalid JSON or invalid matcher syntax)
-- **401:** Unauthorized
-- **403:** Access denied
-- **409:** Conflict (an inhibition rule with the same `metadata.name` already exists)
-- **422:** Schema validation error
 
 #### Update an inhibition rule
 
@@ -1276,16 +1081,6 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 The response returns `200 OK` with the updated `InhibitionRule` object.
 
-##### Status codes
-
-- **200:** Updated
-- **400:** Bad request (invalid JSON or invalid matcher syntax)
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** Inhibition rule not found
-- **409:** Conflict (`metadata.resourceVersion` mismatch)
-- **422:** Schema validation error
-
 #### Delete an inhibition rule
 
 `DELETE /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/inhibitionrules/{name}`
@@ -1308,13 +1103,6 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ##### Example response
 
 The response returns `200 OK` with the deleted `InhibitionRule` object (or a `Status` object).
-
-##### Status codes
-
-- **200:** Deleted
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** Inhibition rule not found
 
 ### Details
 
@@ -1365,13 +1153,6 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 The response returns `200 OK` with the `Config` singleton object.
 
-##### Status codes
-
-- **200:** Found
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** Singleton configuration not yet initialized
-
 #### Update external Alertmanager sync configuration
 
 `PUT /apis/notifications.alerting.grafana.app/v1beta1/namespaces/{namespace}/configs/default`
@@ -1409,18 +1190,116 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 The response returns `200 OK` with the updated `Config` singleton object.
 
-##### Status codes
-
-- **200:** Updated
-- **400:** Bad request (feature toggle disabled, operator `grafana.ini` override set, or ineligible data source)
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** Data source or configuration not found
-- **409:** Conflict (`metadata.resourceVersion` mismatch)
-
 ### Details
 
 Updating `spec.externalAlertmanagerSync.datasourceUid` requires the `alertingSyncExternalAlertmanager` feature toggle to be enabled and the `unified_alerting.external_alertmanager_uid` setting in `grafana.ini` to be unset (when set in `grafana.ini`, the operator override takes precedence and API writes are rejected).
+
+## Status codes
+
+The following sections list the status codes that the endpoints on this page return, by resource.
+
+### Receivers (contact points)
+
+The endpoints for receivers return the following status codes:
+
+| Code  | Meaning                                                                             | Returned by                                                                                                                                                                                                                  |
+| ----- | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `200` | OK.                                                                                 | [List receivers](#list-receivers), [Get](#get-a-receiver), [Update](#update-a-receiver), [Delete](#delete-a-receiver), [List integration type schemas](#list-integration-type-schemas)                                       |
+| `200` | OK (check `status` in the response body for delivery `success` or `failure`).       | [Test](#test-a-receiver-integration)                                                                                                                                                                                         |
+| `201` | Created.                                                                            | [Create](#create-a-receiver)                                                                                                                                                                                                 |
+| `400` | Bad request (invalid JSON, invalid resource name, or invalid integration settings). | [Create](#create-a-receiver)                                                                                                                                                                                                 |
+| `400` | Bad request (invalid JSON or invalid integration settings).                         | [Update](#update-a-receiver)                                                                                                                                                                                                 |
+| `400` | Bad request (invalid integration configuration).                                    | [Test](#test-a-receiver-integration)                                                                                                                                                                                         |
+| `401` | Unauthorized.                                                                       | All endpoints                                                                                                                                                                                                                |
+| `403` | Access denied.                                                                      | [List receivers](#list-receivers), [Get](#get-a-receiver), [Update](#update-a-receiver), [Delete](#delete-a-receiver), [Test](#test-a-receiver-integration), [List integration type schemas](#list-integration-type-schemas) |
+| `403` | Access denied (missing RBAC permission or provenance permission).                   | [Create](#create-a-receiver)                                                                                                                                                                                                 |
+| `404` | Receiver not found.                                                                 | [Get](#get-a-receiver), [Update](#update-a-receiver), [Delete](#delete-a-receiver), [Test](#test-a-receiver-integration)                                                                                                     |
+| `409` | Conflict (a receiver with the same `metadata.name` or `spec.title` already exists). | [Create](#create-a-receiver)                                                                                                                                                                                                 |
+| `409` | Conflict (`metadata.resourceVersion` doesn't match the stored version).             | [Update](#update-a-receiver)                                                                                                                                                                                                 |
+| `409` | Conflict (the receiver is still referenced by a notification policy or alert rule). | [Delete](#delete-a-receiver)                                                                                                                                                                                                 |
+| `422` | Schema validation error.                                                            | [Create](#create-a-receiver), [Update](#update-a-receiver)                                                                                                                                                                   |
+
+### Routing trees (notification policies)
+
+The endpoints for routing trees return the following status codes:
+
+| Code  | Meaning                                                                    | Returned by                                                                                    |
+| ----- | -------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `200` | OK.                                                                        | [List](#list-routing-trees), [Get](#get-a-routing-tree), [Update](#update-a-routing-tree)      |
+| `200` | Deleted (or reset, for `user-defined`).                                    | [Delete](#delete-a-routing-tree)                                                               |
+| `201` | Created.                                                                   | [Create](#create-a-named-routing-tree)                                                         |
+| `400` | Bad request (invalid JSON, reserved name, or invalid route configuration). | [Create](#create-a-named-routing-tree)                                                         |
+| `400` | Bad request (invalid JSON or invalid route configuration).                 | [Update](#update-a-routing-tree)                                                               |
+| `401` | Unauthorized.                                                              | All endpoints                                                                                  |
+| `403` | Access denied.                                                             | All endpoints                                                                                  |
+| `404` | Routing tree not found.                                                    | [Get](#get-a-routing-tree), [Update](#update-a-routing-tree), [Delete](#delete-a-routing-tree) |
+| `409` | Conflict (a routing tree with the same `metadata.name` already exists).    | [Create](#create-a-named-routing-tree)                                                         |
+| `409` | Conflict (`metadata.resourceVersion` doesn't match the stored version).    | [Update](#update-a-routing-tree)                                                               |
+| `409` | Conflict (the named routing tree is still referenced by an alert rule).    | [Delete](#delete-a-routing-tree)                                                               |
+| `422` | Schema validation error.                                                   | [Create](#create-a-named-routing-tree), [Update](#update-a-routing-tree)                       |
+
+### Template groups
+
+The endpoints for template groups return the following status codes:
+
+| Code  | Meaning                                                                   | Returned by                                                                                                                         |
+| ----- | ------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `200` | OK.                                                                       | [List](#list-template-groups), [Get](#get-a-template-group), [Update](#update-a-template-group), [Delete](#delete-a-template-group) |
+| `201` | Created.                                                                  | [Create](#create-a-template-group)                                                                                                  |
+| `400` | Bad request (invalid JSON or invalid Go template syntax).                 | [Create](#create-a-template-group), [Update](#update-a-template-group)                                                              |
+| `401` | Unauthorized.                                                             | All endpoints                                                                                                                       |
+| `403` | Access denied.                                                            | All endpoints                                                                                                                       |
+| `404` | Template group not found.                                                 | [Get](#get-a-template-group), [Update](#update-a-template-group), [Delete](#delete-a-template-group)                                |
+| `409` | Conflict (a template group with the same `metadata.name` already exists). | [Create](#create-a-template-group)                                                                                                  |
+| `409` | Conflict (`metadata.resourceVersion` doesn't match the stored version).   | [Update](#update-a-template-group)                                                                                                  |
+| `422` | Schema validation error.                                                  | [Create](#create-a-template-group), [Update](#update-a-template-group)                                                              |
+
+### Time intervals (mute timings)
+
+The endpoints for time intervals return the following status codes:
+
+| Code  | Meaning                                                                                 | Returned by                                                                                                                     |
+| ----- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `200` | OK.                                                                                     | [List](#list-time-intervals), [Get](#get-a-time-interval), [Update](#update-a-time-interval), [Delete](#delete-a-time-interval) |
+| `201` | Created.                                                                                | [Create](#create-a-time-interval)                                                                                               |
+| `400` | Bad request (invalid JSON or invalid schedule syntax).                                  | [Create](#create-a-time-interval), [Update](#update-a-time-interval)                                                            |
+| `401` | Unauthorized.                                                                           | All endpoints                                                                                                                   |
+| `403` | Access denied.                                                                          | All endpoints                                                                                                                   |
+| `404` | Time interval not found.                                                                | [Get](#get-a-time-interval), [Update](#update-a-time-interval), [Delete](#delete-a-time-interval)                               |
+| `409` | Conflict (a time interval with the same `metadata.name` or `spec.name` already exists). | [Create](#create-a-time-interval)                                                                                               |
+| `409` | Conflict (`metadata.resourceVersion` doesn't match the stored version).                 | [Update](#update-a-time-interval)                                                                                               |
+| `409` | Conflict (the time interval is still referenced by a routing tree or alert rule).       | [Delete](#delete-a-time-interval)                                                                                               |
+| `422` | Schema validation error.                                                                | [Create](#create-a-time-interval), [Update](#update-a-time-interval)                                                            |
+
+### Inhibition rules
+
+The endpoints for inhibition rules return the following status codes:
+
+| Code  | Meaning                                                                     | Returned by                                                                                                                                |
+| ----- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `200` | OK.                                                                         | [List](#list-inhibition-rules), [Get](#get-an-inhibition-rule), [Update](#update-an-inhibition-rule), [Delete](#delete-an-inhibition-rule) |
+| `201` | Created.                                                                    | [Create](#create-an-inhibition-rule)                                                                                                       |
+| `400` | Bad request (invalid JSON or invalid matcher syntax).                       | [Create](#create-an-inhibition-rule), [Update](#update-an-inhibition-rule)                                                                 |
+| `401` | Unauthorized.                                                               | All endpoints                                                                                                                              |
+| `403` | Access denied.                                                              | All endpoints                                                                                                                              |
+| `404` | Inhibition rule not found.                                                  | [Get](#get-an-inhibition-rule), [Update](#update-an-inhibition-rule), [Delete](#delete-an-inhibition-rule)                                 |
+| `409` | Conflict (an inhibition rule with the same `metadata.name` already exists). | [Create](#create-an-inhibition-rule)                                                                                                       |
+| `409` | Conflict (`metadata.resourceVersion` doesn't match the stored version).     | [Update](#update-an-inhibition-rule)                                                                                                       |
+| `422` | Schema validation error.                                                    | [Create](#create-an-inhibition-rule), [Update](#update-an-inhibition-rule)                                                                 |
+
+### Alertmanager sync configuration
+
+The endpoints for Alertmanager sync configuration return the following status codes:
+
+| Code  | Meaning                                                                                                | Returned by                                                |
+| ----- | ------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------- |
+| `200` | OK.                                                                                                    | All endpoints                                              |
+| `400` | Bad request (feature toggle disabled, operator `grafana.ini` override set, or ineligible data source). | [Update](#update-external-alertmanager-sync-configuration) |
+| `401` | Unauthorized.                                                                                          | All endpoints                                              |
+| `403` | Access denied.                                                                                         | All endpoints                                              |
+| `404` | Singleton configuration not yet initialized.                                                           | [Get](#get-external-alertmanager-sync-configuration)       |
+| `404` | Data source or configuration not found.                                                                | [Update](#update-external-alertmanager-sync-configuration) |
+| `409` | Conflict (`metadata.resourceVersion` doesn't match the stored version).                                | [Update](#update-external-alertmanager-sync-configuration) |
 
 ## Migrate from the legacy Alerting Provisioning API
 

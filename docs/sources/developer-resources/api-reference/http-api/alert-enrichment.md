@@ -175,12 +175,6 @@ Content-Type: application/json
 }
 ```
 
-##### Status codes
-
-- **200:** `OK`
-- **401:** Unauthorized
-- **403:** Access denied
-
 #### Get an alert enrichment
 
 `GET /apis/alertenrichment.grafana.app/v1beta1/namespaces/{namespace}/alert-enrichments/{name}`
@@ -205,13 +199,6 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ##### Example response
 
 The response returns `200 OK` with the `AlertEnrichment` object shown in [List alert enrichment resources](#list-alert-enrichment-resources).
-
-##### Status codes
-
-- **200:** Found
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** Alert enrichment not found
 
 #### Create an alert enrichment
 
@@ -320,15 +307,6 @@ Content-Type: application/json
 }
 ```
 
-##### Status codes
-
-- **201:** Created
-- **400:** Bad request (invalid JSON or invalid matcher or duration syntax)
-- **401:** Unauthorized
-- **403:** Access denied
-- **409:** Conflict (an alert enrichment with the same `metadata.name` already exists)
-- **422:** Schema validation error
-
 #### Update an alert enrichment
 
 `PUT /apis/alertenrichment.grafana.app/v1beta1/namespaces/{namespace}/alert-enrichments/{name}`
@@ -392,16 +370,6 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 The response returns `200 OK` with the updated `AlertEnrichment` resource and an incremented `metadata.resourceVersion`.
 
-##### Status codes
-
-- **200:** Updated
-- **400:** Bad request (invalid JSON)
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** Alert enrichment not found
-- **409:** Conflict (`metadata.resourceVersion` doesn't match the stored version)
-- **422:** Schema validation error
-
 #### Patch an alert enrichment
 
 `PATCH /apis/alertenrichment.grafana.app/v1beta1/namespaces/{namespace}/alert-enrichments/{name}`
@@ -433,16 +401,6 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ##### Example response
 
 The response returns `200 OK` with the updated `AlertEnrichment` resource.
-
-##### Status codes
-
-- **200:** Updated
-- **400:** Bad request (invalid JSON or patch)
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** Alert enrichment not found
-- **409:** Conflict (`metadata.resourceVersion` doesn't match the stored version)
-- **422:** Schema validation error
 
 #### Delete an alert enrichment
 
@@ -482,16 +440,27 @@ Content-Type: application/json
 }
 ```
 
-##### Status codes
-
-- **200:** Deleted
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** Alert enrichment not found
-
 ### Details
 
 When `spec.alertRuleUids` is omitted or empty, the enrichment applies globally across alerts matching `labelMatchers`, `annotationMatchers`, and `receivers`. When `spec.alertRuleUids` lists one or more alert rule UIDs, the enrichment runs only for those rules. Refer to [Requirements](#requirements) for how global and per-rule scoping affects access.
+
+## Status codes
+
+The endpoints on this page return the following status codes:
+
+| Code  | Meaning                                                                      | Returned by                                                                                                                                                                                  |
+| ----- | ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `200` | OK.                                                                          | [List](#list-alert-enrichment-resources), [Get](#get-an-alert-enrichment), [Update](#update-an-alert-enrichment), [Patch](#patch-an-alert-enrichment), [Delete](#delete-an-alert-enrichment) |
+| `201` | Created.                                                                     | [Create](#create-an-alert-enrichment)                                                                                                                                                        |
+| `400` | Bad request (invalid JSON or invalid matcher or duration syntax).            | [Create](#create-an-alert-enrichment)                                                                                                                                                        |
+| `400` | Bad request (invalid JSON).                                                  | [Update](#update-an-alert-enrichment)                                                                                                                                                        |
+| `400` | Bad request (invalid JSON or patch).                                         | [Patch](#patch-an-alert-enrichment)                                                                                                                                                          |
+| `401` | Unauthorized.                                                                | All endpoints                                                                                                                                                                                |
+| `403` | Access denied.                                                               | All endpoints                                                                                                                                                                                |
+| `404` | Alert enrichment not found.                                                  | [Get](#get-an-alert-enrichment), [Update](#update-an-alert-enrichment), [Patch](#patch-an-alert-enrichment), [Delete](#delete-an-alert-enrichment)                                           |
+| `409` | Conflict (an alert enrichment with the same `metadata.name` already exists). | [Create](#create-an-alert-enrichment)                                                                                                                                                        |
+| `409` | Conflict (`metadata.resourceVersion` doesn't match the stored version).      | [Update](#update-an-alert-enrichment), [Patch](#patch-an-alert-enrichment)                                                                                                                   |
+| `422` | Schema validation error.                                                     | [Create](#create-an-alert-enrichment), [Update](#update-an-alert-enrichment), [Patch](#patch-an-alert-enrichment)                                                                            |
 
 ## Related resources
 

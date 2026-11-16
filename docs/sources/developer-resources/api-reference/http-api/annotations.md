@@ -172,12 +172,6 @@ Content-Type: application/json
 }
 ```
 
-### Status codes
-
-- **200:** OK
-- **401:** Unauthorized
-- **403:** Access denied
-
 ## Search annotations
 
 `GET /apis/annotation.grafana.app/v0alpha1/namespaces/{namespace}/search`
@@ -250,12 +244,6 @@ Content-Type: application/json
 
 If `metadata.continue` is empty or missing, there are no more results. Otherwise, pass its value as the `continue` parameter to get the next page.
 
-### Status codes
-
-- **200:** OK
-- **401:** Unauthorized
-- **403:** Access denied
-
 ## Find annotation tags
 
 `GET /apis/annotation.grafana.app/v0alpha1/namespaces/{namespace}/tags`
@@ -298,12 +286,6 @@ Content-Type: application/json
   ]
 }
 ```
-
-### Status codes
-
-- **200:** OK
-- **401:** Unauthorized
-- **403:** Access denied
 
 ## Get an annotation
 
@@ -354,14 +336,6 @@ Content-Type: application/json
   }
 }
 ```
-
-### Status codes
-
-- **200:** Found
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** The annotation doesn't exist, or you don't have access to it
-- **410:** The annotation was deleted
 
 ## Create an annotation
 
@@ -428,14 +402,6 @@ Content-Type: application/json
 }
 ```
 
-### Status codes
-
-- **201:** Created
-- **400:** The request is invalid. For example, `time` is missing, `timeEnd` is before `time`, or neither `metadata.name` nor `metadata.generateName` is set
-- **401:** Unauthorized
-- **403:** Access denied
-- **409:** Conflict (an annotation with the same `metadata.name` already exists)
-
 ## Create an annotation in Graphite format
 
 `POST /apis/annotation.grafana.app/v0alpha1/namespaces/{namespace}/graphite`
@@ -500,13 +466,6 @@ Content-Type: application/json
   }
 }
 ```
-
-### Status codes
-
-- **200:** OK
-- **400:** The request is invalid. For example, `what` is empty, `tags` has an invalid format, or `when` is more than one week in the future
-- **401:** Unauthorized
-- **403:** Access denied
 
 ## Update an annotation
 
@@ -576,15 +535,6 @@ Content-Type: application/json
 }
 ```
 
-### Status codes
-
-- **200:** Updated
-- **400:** The request is invalid. For example, `time` is missing, `timeEnd` is before `time`, or an immutable field was changed
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** The annotation doesn't exist
-- **410:** The annotation was deleted
-
 ## Patch an annotation
 
 `PATCH /apis/annotation.grafana.app/v0alpha1/namespaces/{namespace}/annotations/{name}`
@@ -643,15 +593,6 @@ Content-Type: application/json
 }
 ```
 
-### Status codes
-
-- **200:** Updated
-- **400:** The request is invalid. For example, the patch isn't valid JSON or changes an immutable field
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** The annotation doesn't exist
-- **410:** The annotation was deleted
-
 ## Delete an annotation
 
 `DELETE /apis/annotation.grafana.app/v0alpha1/namespaces/{namespace}/annotations/{name}`
@@ -690,12 +631,25 @@ Content-Type: application/json
 }
 ```
 
-### Status codes
+## Status codes
 
-- **200:** Deleted
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** The annotation doesn't exist, or you don't have read access to it
+The endpoints on this page return the following status codes:
+
+| Code  | Meaning                                                                                                                                            | Returned by                                                                                                                                                                                                                                                                                              |
+| ----- | -------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `200` | OK.                                                                                                                                                | [List](#list-annotations), [Search](#search-annotations), [Find](#find-annotation-tags), [Get](#get-an-annotation), [Create an annotation in Graphite format](#create-an-annotation-in-graphite-format), [Update](#update-an-annotation), [Patch](#patch-an-annotation), [Delete](#delete-an-annotation) |
+| `201` | Created.                                                                                                                                           | [Create an annotation](#create-an-annotation)                                                                                                                                                                                                                                                            |
+| `400` | The request is invalid. For example, `time` is missing, `timeEnd` is before `time`, or neither `metadata.name` nor `metadata.generateName` is set. | [Create an annotation](#create-an-annotation)                                                                                                                                                                                                                                                            |
+| `400` | The request is invalid. For example, `what` is empty, `tags` has an invalid format, or `when` is more than one week in the future.                 | [Create an annotation in Graphite format](#create-an-annotation-in-graphite-format)                                                                                                                                                                                                                      |
+| `400` | The request is invalid. For example, `time` is missing, `timeEnd` is before `time`, or an immutable field was changed.                             | [Update](#update-an-annotation)                                                                                                                                                                                                                                                                          |
+| `400` | The request is invalid. For example, the patch isn't valid JSON or changes an immutable field.                                                     | [Patch](#patch-an-annotation)                                                                                                                                                                                                                                                                            |
+| `401` | Unauthorized.                                                                                                                                      | All endpoints                                                                                                                                                                                                                                                                                            |
+| `403` | Access denied.                                                                                                                                     | All endpoints                                                                                                                                                                                                                                                                                            |
+| `404` | The annotation doesn't exist, or you don't have access to it.                                                                                      | [Get](#get-an-annotation)                                                                                                                                                                                                                                                                                |
+| `404` | The annotation doesn't exist.                                                                                                                      | [Update](#update-an-annotation), [Patch](#patch-an-annotation)                                                                                                                                                                                                                                           |
+| `404` | The annotation doesn't exist, or you don't have read access to it.                                                                                 | [Delete](#delete-an-annotation)                                                                                                                                                                                                                                                                          |
+| `409` | Conflict (an annotation with the same `metadata.name` already exists).                                                                             | [Create an annotation](#create-an-annotation)                                                                                                                                                                                                                                                            |
+| `410` | The annotation was deleted.                                                                                                                        | [Get](#get-an-annotation), [Update](#update-an-annotation), [Patch](#patch-an-annotation)                                                                                                                                                                                                                |
 
 ## Migrate from the legacy Annotations API
 

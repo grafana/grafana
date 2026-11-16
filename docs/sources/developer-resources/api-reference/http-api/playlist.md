@@ -111,12 +111,6 @@ Content-Type: application/json
 }
 ```
 
-### Status codes
-
-- **200:** OK
-- **401:** Unauthorized
-- **403:** Access denied
-
 ## Get a Playlist
 
 `GET /apis/playlist.grafana.app/v1/namespaces/{namespace}/playlists/{name}`
@@ -171,13 +165,6 @@ Content-Type: application/json
   }
 }
 ```
-
-### Status codes
-
-- **200:** Found
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** Playlist not found
 
 ## Create a Playlist
 
@@ -255,14 +242,6 @@ Content-Type: application/json
   }
 }
 ```
-
-### Status codes
-
-- **201:** Created
-- **400:** Errors (invalid JSON)
-- **401:** Unauthorized
-- **403:** Access denied
-- **409:** Conflict (a playlist with the same `metadata.name` already exists)
 
 ## Update a Playlist
 
@@ -352,16 +331,6 @@ Content-Type: application/json
 }
 ```
 
-### Status codes
-
-- **200:** Updated
-- **400:** Errors (invalid JSON)
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** Playlist not found
-- **409:** Conflict (the playlist changed since you read it)
-- **422:** Invalid playlist, for example because `metadata.resourceVersion` is missing
-
 ## Delete a Playlist
 
 `DELETE /apis/playlist.grafana.app/v1/namespaces/{namespace}/playlists/{name}`
@@ -400,13 +369,6 @@ Content-Type: application/json
 }
 ```
 
-### Status codes
-
-- **200:** Deleted
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** Playlist not found
-
 ## Playlist Item Types
 
 Playlist items support three types:
@@ -414,3 +376,19 @@ Playlist items support three types:
 - `dashboard_by_uid`: Include a specific dashboard by its UID
 - `dashboard_by_tag`: Include all dashboards with a specific tag
 - `dashboard_by_id`: (Deprecated) Include a dashboard by internal ID
+
+## Status codes
+
+The endpoints on this page return the following status codes:
+
+| Code  | Meaning                                                                      | Returned by                                                                                                 |
+| ----- | ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `200` | OK.                                                                          | [List](#list-playlists), [Get](#get-a-playlist), [Update](#update-a-playlist), [Delete](#delete-a-playlist) |
+| `201` | Created.                                                                     | [Create](#create-a-playlist)                                                                                |
+| `400` | Bad request (invalid JSON).                                                  | [Create](#create-a-playlist), [Update](#update-a-playlist)                                                  |
+| `401` | Unauthorized.                                                                | All endpoints                                                                                               |
+| `403` | Access denied.                                                               | All endpoints                                                                                               |
+| `404` | Playlist not found.                                                          | [Get](#get-a-playlist), [Update](#update-a-playlist), [Delete](#delete-a-playlist)                          |
+| `409` | Conflict (a playlist with the same `metadata.name` already exists).          | [Create](#create-a-playlist)                                                                                |
+| `409` | Conflict (the playlist changed since you read it).                           | [Update](#update-a-playlist)                                                                                |
+| `422` | Invalid playlist, for example because `metadata.resourceVersion` is missing. | [Update](#update-a-playlist)                                                                                |

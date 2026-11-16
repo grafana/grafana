@@ -139,12 +139,6 @@ Content-Type: application/json
 
 The `preferences.grafana.app/source` annotation lists the preferences objects that were combined, from highest to lowest precedence. The `resourceVersion` changes when any of them changes.
 
-### Status codes
-
-- **200:** OK
-- **401:** Unauthorized
-- **403:** Access denied
-
 ## List preferences
 
 `GET /apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences`
@@ -218,12 +212,6 @@ Content-Type: application/json
 }
 ```
 
-### Status codes
-
-- **200:** OK
-- **401:** Unauthorized
-- **403:** Access denied
-
 ## Get preferences
 
 `GET /apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences/{name}`
@@ -270,13 +258,6 @@ Content-Type: application/json
   }
 }
 ```
-
-### Status codes
-
-- **200:** Found
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** No preferences are saved for this owner
 
 ## Create preferences
 
@@ -340,15 +321,6 @@ Content-Type: application/json
 }
 ```
 
-### Status codes
-
-- **201:** Created
-- **400:** Errors (invalid JSON)
-- **401:** Unauthorized
-- **403:** Access denied. User and service account requests can't create preferences with `POST` because the path doesn't include `{name}`; use [Update preferences](#update-preferences) or [Patch preferences](#patch-preferences) instead.
-- **409:** Conflict (preferences already exist for this owner)
-- **422:** Invalid preferences, for example an unknown theme or timezone, or a `homeURL` value
-
 ## Update preferences
 
 `PUT /apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences/{name}`
@@ -397,16 +369,6 @@ The response contains the updated preferences.
 
 The response contains the updated preferences. For an example, refer to the response in [Get preferences](#get-preferences).
 
-### Status codes
-
-- **200:** Updated
-- **201:** Created
-- **400:** Errors (invalid JSON)
-- **401:** Unauthorized
-- **403:** Access denied
-- **409:** Conflict (the preferences changed since you read them)
-- **422:** Invalid preferences, for example an unknown theme or timezone, or a `homeURL` value
-
 ## Patch preferences
 
 `PATCH /apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences/{name}`
@@ -441,16 +403,6 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 The response contains the updated preferences. For an example, refer to the response in [Get preferences](#get-preferences).
 
-### Status codes
-
-- **200:** Updated
-- **201:** Created
-- **400:** Errors (invalid JSON)
-- **401:** Unauthorized
-- **403:** Access denied
-- **409:** Conflict (the preferences changed since you read them)
-- **422:** Invalid preferences, for example an unknown theme or timezone, or a `homeURL` value
-
 ## Delete preferences
 
 `DELETE /apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences/{name}`
@@ -478,12 +430,22 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 The response contains a `Status` object that confirms the deletion.
 
-### Status codes
+## Status codes
 
-- **200:** Deleted
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** No preferences are saved for this owner
+The endpoints on this page return the following status codes:
+
+| Code  | Meaning                                                                                                                                                                                                                            | Returned by                                                                                                                                                                                                  |
+| ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `200` | OK.                                                                                                                                                                                                                                | [Get merged preferences](#get-merged-preferences), [List](#list-preferences), [Get preferences](#get-preferences), [Update](#update-preferences), [Patch](#patch-preferences), [Delete](#delete-preferences) |
+| `201` | Created.                                                                                                                                                                                                                           | [Create](#create-preferences), [Update](#update-preferences), [Patch](#patch-preferences)                                                                                                                    |
+| `400` | Bad request (invalid JSON).                                                                                                                                                                                                        | [Create](#create-preferences), [Update](#update-preferences), [Patch](#patch-preferences)                                                                                                                    |
+| `401` | Unauthorized.                                                                                                                                                                                                                      | All endpoints                                                                                                                                                                                                |
+| `403` | Access denied.                                                                                                                                                                                                                     | [Get merged preferences](#get-merged-preferences), [List](#list-preferences), [Get preferences](#get-preferences), [Update](#update-preferences), [Patch](#patch-preferences), [Delete](#delete-preferences) |
+| `403` | Access denied. User and service account requests can't create preferences with `POST` because the path doesn't include `{name}`; use [Update preferences](#update-preferences) or [Patch preferences](#patch-preferences) instead. | [Create](#create-preferences)                                                                                                                                                                                |
+| `404` | No preferences are saved for this owner.                                                                                                                                                                                           | [Get preferences](#get-preferences), [Delete](#delete-preferences)                                                                                                                                           |
+| `409` | Conflict (preferences already exist for this owner).                                                                                                                                                                               | [Create](#create-preferences)                                                                                                                                                                                |
+| `409` | Conflict (the preferences changed since you read them).                                                                                                                                                                            | [Update](#update-preferences), [Patch](#patch-preferences)                                                                                                                                                   |
+| `422` | Invalid preferences, for example an unknown theme or timezone, or a `homeURL` value.                                                                                                                                               | [Create](#create-preferences), [Update](#update-preferences), [Patch](#patch-preferences)                                                                                                                    |
 
 ## Migrate from the legacy Preferences API
 

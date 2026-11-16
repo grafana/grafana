@@ -93,13 +93,6 @@ Content-Type: application/json
 }
 ```
 
-### Status codes
-
-- **200:** OK
-- **400:** Bad request (the path doesn't end with `{group}/{kind}/{id}`)
-- **401:** Unauthorized
-- **403:** Access denied (the `Stars` resource belongs to another user, and you aren't an organization administrator)
-
 ## Unstar a resource
 
 `DELETE /apis/collections.grafana.app/v1alpha1/namespaces/{namespace}/stars/{name}/update/{group}/{kind}/{id}`
@@ -134,14 +127,6 @@ Content-Type: application/json
   "code": 200
 }
 ```
-
-### Status codes
-
-- **200:** OK
-- **204:** No content (the user's `Stars` resource doesn't exist)
-- **400:** Bad request (the path doesn't end with `{group}/{kind}/{id}`)
-- **401:** Unauthorized
-- **403:** Access denied (the `Stars` resource belongs to another user, and you aren't an organization administrator)
 
 Refer to [Star a resource](#star-a-resource) for more details.
 
@@ -214,12 +199,6 @@ Content-Type: application/json
 }
 ```
 
-### Status codes
-
-- **200:** OK
-- **401:** Unauthorized
-- **403:** Access denied
-
 ## Get stars
 
 `GET /apis/collections.grafana.app/v1alpha1/namespaces/{namespace}/stars/{name}`
@@ -269,13 +248,6 @@ Content-Type: application/json
   }
 }
 ```
-
-### Status codes
-
-- **200:** Found
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** Stars resource not found
 
 ## Create stars
 
@@ -347,14 +319,6 @@ Content-Type: application/json
 }
 ```
 
-### Status codes
-
-- **201:** Created
-- **400:** Errors (invalid JSON, missing or invalid fields)
-- **401:** Unauthorized
-- **403:** Access denied (only organization administrators can create `Stars` resources with `POST`; other users can use [Star a resource](#star-a-resource) or [Replace stars](#replace-stars))
-- **409:** Conflict (a `Stars` resource with the same name already exists). If Grafana uses legacy storage for stars, it replaces the existing resource and returns `201` instead.
-
 ## Replace stars
 
 `PUT /apis/collections.grafana.app/v1alpha1/namespaces/{namespace}/stars/{name}`
@@ -407,16 +371,6 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 The response contains the updated `Stars` resource. For an example, refer to the response in [Get stars](#get-stars).
 
-### Status codes
-
-- **200:** Updated
-- **201:** Created, if the `Stars` resource doesn't exist and Grafana uses unified storage for stars
-- **400:** Errors (invalid JSON, missing or invalid fields)
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** Stars resource not found, if Grafana uses legacy storage for stars
-- **409:** Conflict (the `Stars` resource changed since you read it)
-
 ## Patch stars
 
 `PATCH /apis/collections.grafana.app/v1alpha1/namespaces/{namespace}/stars/{name}`
@@ -454,15 +408,6 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ### Example response
 
 The response contains the updated `Stars` resource. For an example, refer to the response in [Get stars](#get-stars).
-
-### Status codes
-
-- **200:** Updated
-- **400:** Errors (invalid JSON or patch)
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** Stars resource not found
-- **409:** Conflict (the `Stars` resource changed since you read it)
 
 ## Delete stars
 
@@ -506,12 +451,28 @@ Content-Type: application/json
 }
 ```
 
-### Status codes
+## Status codes
 
-- **200:** Deleted
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** Stars resource not found, if Grafana uses unified storage for stars. Legacy storage returns `200` if the resource doesn't exist.
+The endpoints on this page return the following status codes:
+
+| Code  | Meaning                                                                                                                                                                                | Returned by                                                                                                                                                               |
+| ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `200` | OK.                                                                                                                                                                                    | [Star](#star-a-resource), [Unstar](#unstar-a-resource), [List](#list-stars), [Get](#get-stars), [Replace](#replace-stars), [Patch](#patch-stars), [Delete](#delete-stars) |
+| `201` | Created.                                                                                                                                                                               | [Create](#create-stars)                                                                                                                                                   |
+| `201` | Created, if the `Stars` resource doesn't exist and Grafana uses unified storage for stars.                                                                                             | [Replace](#replace-stars)                                                                                                                                                 |
+| `204` | No content (the user's `Stars` resource doesn't exist).                                                                                                                                | [Unstar](#unstar-a-resource)                                                                                                                                              |
+| `400` | Bad request (the path doesn't end with `{group}/{kind}/{id}`).                                                                                                                         | [Star](#star-a-resource), [Unstar](#unstar-a-resource)                                                                                                                    |
+| `400` | Bad request (invalid JSON, missing or invalid fields).                                                                                                                                 | [Create](#create-stars), [Replace](#replace-stars)                                                                                                                        |
+| `400` | Bad request (invalid JSON or patch).                                                                                                                                                   | [Patch](#patch-stars)                                                                                                                                                     |
+| `401` | Unauthorized.                                                                                                                                                                          | All endpoints                                                                                                                                                             |
+| `403` | Access denied (the `Stars` resource belongs to another user, and you aren't an organization administrator).                                                                            | [Star](#star-a-resource), [Unstar](#unstar-a-resource)                                                                                                                    |
+| `403` | Access denied.                                                                                                                                                                         | [List](#list-stars), [Get](#get-stars), [Replace](#replace-stars), [Patch](#patch-stars), [Delete](#delete-stars)                                                         |
+| `403` | Access denied (only organization administrators can create `Stars` resources with `POST`; other users can use [Star a resource](#star-a-resource) or [Replace stars](#replace-stars)). | [Create](#create-stars)                                                                                                                                                   |
+| `404` | Stars resource not found.                                                                                                                                                              | [Get](#get-stars), [Patch](#patch-stars)                                                                                                                                  |
+| `404` | Stars resource not found, if Grafana uses legacy storage for stars.                                                                                                                    | [Replace](#replace-stars)                                                                                                                                                 |
+| `404` | Stars resource not found, if Grafana uses unified storage for stars. Legacy storage returns `200` if the resource doesn't exist.                                                       | [Delete](#delete-stars)                                                                                                                                                   |
+| `409` | Conflict (a `Stars` resource with the same name already exists). If Grafana uses legacy storage for stars, it replaces the existing resource and returns `201` instead.                | [Create](#create-stars)                                                                                                                                                   |
+| `409` | Conflict (the `Stars` resource changed since you read it).                                                                                                                             | [Replace](#replace-stars), [Patch](#patch-stars)                                                                                                                          |
 
 ## Migration steps
 

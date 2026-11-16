@@ -159,13 +159,6 @@ Each item in the `items` array represents a historical version of the resource. 
 - **`metadata.annotations.grafana.app/message`**: An optional commit message set during the update. You can set this annotation when [updating a resource](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/dashboard/#update-dashboard).
 - **`spec`**: The full resource spec as it existed at that version.
 
-### Status codes
-
-- **200:** OK
-- **400:** Bad request (missing `fieldSelector`, invalid `labelSelector`)
-- **401:** Unauthorized
-- **403:** Access denied
-
 ## Pagination
 
 You can paginate through history using `limit` and `continue`, the same way you paginate a standard List request.
@@ -213,13 +206,18 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 This returns the complete resource as it existed at that version. For an example of a dashboard response, refer to [Get Dashboard](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/dashboard/#get-dashboard).
 
-### Status codes
+## Status codes
 
-- **200:** OK
-- **400:** The resource version is newer than the latest version
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** Resource or version not found
+The endpoints on this page return the following status codes:
+
+| Code  | Meaning                                                         | Returned by                              |
+| ----- | --------------------------------------------------------------- | ---------------------------------------- |
+| `200` | OK.                                                             | All endpoints                            |
+| `400` | Bad request (missing `fieldSelector`, invalid `labelSelector`). | [List](#list-resource-history)           |
+| `400` | The resource version is newer than the latest version.          | [Retrieve](#retrieve-a-specific-version) |
+| `401` | Unauthorized.                                                   | All endpoints                            |
+| `403` | Access denied.                                                  | All endpoints                            |
+| `404` | Resource or version not found.                                  | [Retrieve](#retrieve-a-specific-version) |
 
 ## Migrate from the legacy Dashboard Versions API
 

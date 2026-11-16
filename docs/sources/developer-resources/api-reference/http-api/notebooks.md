@@ -139,12 +139,6 @@ Content-Type: application/json
 }
 ```
 
-### Status codes
-
-- **200:** OK
-- **401:** Unauthorized
-- **403:** Access denied, or notebooks aren't enabled
-
 ## Get a notebook
 
 `GET /apis/dashboard.grafana.app/v2beta1/namespaces/{namespace}/notebooks/{name}`
@@ -171,13 +165,6 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ### Example response
 
 The response contains the full notebook. For an example, refer to the response in [Create a notebook](#create-a-notebook).
-
-### Status codes
-
-- **200:** Found
-- **401:** Unauthorized
-- **403:** Access denied, or notebooks aren't enabled
-- **404:** Not found
 
 ## Create a notebook
 
@@ -343,15 +330,6 @@ Content-Type: application/json
 }
 ```
 
-### Status codes
-
-- **201:** Created
-- **400:** Errors (invalid JSON)
-- **401:** Unauthorized
-- **403:** Access denied, or notebooks aren't enabled
-- **409:** Conflict (a notebook with the same `metadata.name` already exists)
-- **422:** Invalid notebook, for example because it sets the `grafana.app/folder` annotation or has invalid cell IDs
-
 ## Update a notebook
 
 `PUT /apis/dashboard.grafana.app/v2beta1/namespaces/{namespace}/notebooks/{name}`
@@ -400,16 +378,6 @@ The response contains the updated notebook.
 
 The response contains the updated notebook. For an example, refer to the response in [Create a notebook](#create-a-notebook).
 
-### Status codes
-
-- **200:** Updated
-- **201:** Created, if the notebook doesn't exist
-- **400:** Errors (invalid JSON)
-- **401:** Unauthorized
-- **403:** Access denied, or notebooks aren't enabled
-- **409:** Conflict (the notebook changed since you read it)
-- **422:** Invalid notebook, for example because it sets the `grafana.app/folder` annotation or has invalid cell IDs
-
 ## Delete a notebook
 
 `DELETE /apis/dashboard.grafana.app/v2beta1/namespaces/{namespace}/notebooks/{name}`
@@ -455,9 +423,19 @@ Content-Type: application/json
 }
 ```
 
-### Status codes
+## Status codes
 
-- **200:** Deleted
-- **401:** Unauthorized
-- **403:** Access denied, or notebooks aren't enabled
-- **404:** Not found
+The endpoints on this page return the following status codes:
+
+| Code  | Meaning                                                                                                    | Returned by                                                                                                 |
+| ----- | ---------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `200` | OK.                                                                                                        | [List](#list-notebooks), [Get](#get-a-notebook), [Update](#update-a-notebook), [Delete](#delete-a-notebook) |
+| `201` | Created.                                                                                                   | [Create](#create-a-notebook)                                                                                |
+| `201` | Created, if the notebook doesn't exist.                                                                    | [Update](#update-a-notebook)                                                                                |
+| `400` | Bad request (invalid JSON).                                                                                | [Create](#create-a-notebook), [Update](#update-a-notebook)                                                  |
+| `401` | Unauthorized.                                                                                              | All endpoints                                                                                               |
+| `403` | Access denied, or notebooks aren't enabled.                                                                | All endpoints                                                                                               |
+| `404` | Not found.                                                                                                 | [Get](#get-a-notebook), [Delete](#delete-a-notebook)                                                        |
+| `409` | Conflict (a notebook with the same `metadata.name` already exists).                                        | [Create](#create-a-notebook)                                                                                |
+| `409` | Conflict (the notebook changed since you read it).                                                         | [Update](#update-a-notebook)                                                                                |
+| `422` | Invalid notebook, for example because it sets the `grafana.app/folder` annotation or has invalid cell IDs. | [Create](#create-a-notebook), [Update](#update-a-notebook)                                                  |

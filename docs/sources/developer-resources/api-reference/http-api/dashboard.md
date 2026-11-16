@@ -530,16 +530,6 @@ Content-Length: 485
   "status": {}
 ```
 
-### Status codes
-
-- **201:** Created
-- **400:** Errors (invalid JSON, missing or invalid fields)
-- **401:** Unauthorized
-- **403:** Access denied, for example because you can't access the folder or the dashboard quota is reached
-- **404:** The folder doesn't exist
-- **409:** Conflict (a dashboard with the same `uid` already exists)
-- **422:** The dashboard doesn't match the schema
-
 ## Update Dashboard
 
 `PUT /apis/dashboard.grafana.app/v1/namespaces/{namespace}/dashboards/{uid}`
@@ -633,17 +623,6 @@ Content-Length: 485
 }
 ```
 
-### Status codes
-
-- **200:** OK
-- **201:** Created, if the dashboard doesn't exist
-- **400:** Errors (invalid JSON, missing or invalid fields)
-- **401:** Unauthorized
-- **403:** Access denied, for example because you can't access the folder
-- **404:** The folder doesn't exist
-- **409:** Conflict (the dashboard changed since you read it)
-- **422:** The dashboard doesn't match the schema
-
 ## Get Dashboard
 
 `GET /apis/dashboard.grafana.app/v1/namespaces/{namespace}/dashboards/{uid}`
@@ -710,13 +689,6 @@ Content-Length: 485
 }
 ```
 
-### Status codes
-
-- **200:** OK
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** Not found
-
 ### Retrieve additional access information
 
 `GET /apis/dashboard.grafana.app/v1/namespaces/{namespace}/dashboards/{uid}/dto`
@@ -742,13 +714,6 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 #### Example response
 
 The `GET` response includes an additional `access` section with data such as if it's a public dashboard, or the dashboard permissions (admin, editor) of the user who made the request. For the rest of the response, refer to the response in [Get Dashboard](#get-dashboard).
-
-#### Status codes
-
-- **200:** Found
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** Not found
 
 ## List Dashboards
 
@@ -887,12 +852,6 @@ Content-Type: application/json; charset=UTF-8
 
 Continue making requests with the updated `continue` token until you receive a response without a `continue` field in the metadata, indicating you've reached the last page.
 
-### Status codes
-
-- **200:** OK
-- **401:** Unauthorized
-- **403:** Access denied
-
 ## List dashboard history
 
 You can retrieve the full version history of a dashboard using the List endpoint with specific query parameters. For details and examples, refer to [Resource history HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/resource-history/).
@@ -952,13 +911,6 @@ Content-Length: 78
   }
 }
 ```
-
-### Status codes
-
-- **200:** OK
-- **401:** Unauthorized
-- **403:** Access denied
-- **404:** Not found
 
 ## Use the v2 schema
 
@@ -1130,16 +1082,6 @@ Content-Type: application/json; charset=UTF-8
 }
 ```
 
-#### Status codes
-
-- **201:** Created
-- **400:** Errors (invalid JSON, missing or invalid fields)
-- **401:** Unauthorized
-- **403:** Access denied, for example because you can't access the folder or the dashboard quota is reached
-- **404:** The folder doesn't exist
-- **409:** Conflict (a dashboard with the same `uid` already exists)
-- **422:** The dashboard doesn't match the schema
-
 ### Read a dashboard saved in a different schema
 
 When you read a dashboard with a version that doesn't match the schema it was saved in, Grafana converts it. For example, you can read a dashboard saved with `v1` through the `v2` endpoint.
@@ -1172,3 +1114,23 @@ The `status.conversion` object contains the following fields:
 - **failed** – Whether the conversion failed. If `true`, the `spec` in the response isn't valid. Read the dashboard again with the version in `storedVersion`.
 - **storedVersion** – The version the dashboard was saved with. Reading the dashboard with this version always succeeds.
 - **error** – The conversion error message.
+
+## Status codes
+
+The endpoints on this page return the following status codes:
+
+| Code  | Meaning                                                                                           | Returned by                                                                                                                                                    |
+| ----- | ------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `200` | OK.                                                                                               | [Update](#update-dashboard), [Get](#get-dashboard), [Retrieve](#retrieve-additional-access-information), [List](#list-dashboards), [Delete](#delete-dashboard) |
+| `201` | Created.                                                                                          | [Create Dashboard](#create-dashboard), [Create a dashboard with the v2 schema](#create-a-dashboard-with-the-v2-schema)                                         |
+| `201` | Created, if the dashboard doesn't exist.                                                          | [Update](#update-dashboard)                                                                                                                                    |
+| `400` | Bad request (invalid JSON, missing or invalid fields).                                            | [Create Dashboard](#create-dashboard), [Update](#update-dashboard), [Create a dashboard with the v2 schema](#create-a-dashboard-with-the-v2-schema)            |
+| `401` | Unauthorized.                                                                                     | All endpoints                                                                                                                                                  |
+| `403` | Access denied, for example because you can't access the folder or the dashboard quota is reached. | [Create Dashboard](#create-dashboard), [Create a dashboard with the v2 schema](#create-a-dashboard-with-the-v2-schema)                                         |
+| `403` | Access denied, for example because you can't access the folder.                                   | [Update](#update-dashboard)                                                                                                                                    |
+| `403` | Access denied.                                                                                    | [Get](#get-dashboard), [Retrieve](#retrieve-additional-access-information), [List](#list-dashboards), [Delete](#delete-dashboard)                              |
+| `404` | The folder doesn't exist.                                                                         | [Create Dashboard](#create-dashboard), [Update](#update-dashboard), [Create a dashboard with the v2 schema](#create-a-dashboard-with-the-v2-schema)            |
+| `404` | Not found.                                                                                        | [Get](#get-dashboard), [Retrieve](#retrieve-additional-access-information), [Delete](#delete-dashboard)                                                        |
+| `409` | Conflict (a dashboard with the same `uid` already exists).                                        | [Create Dashboard](#create-dashboard), [Create a dashboard with the v2 schema](#create-a-dashboard-with-the-v2-schema)                                         |
+| `409` | Conflict (the dashboard changed since you read it).                                               | [Update](#update-dashboard)                                                                                                                                    |
+| `422` | The dashboard doesn't match the schema.                                                           | [Create Dashboard](#create-dashboard), [Update](#update-dashboard), [Create a dashboard with the v2 schema](#create-a-dashboard-with-the-v2-schema)            |
