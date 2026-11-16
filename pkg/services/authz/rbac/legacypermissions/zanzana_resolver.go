@@ -250,11 +250,7 @@ func (r *ZanzanaPermissionResolver) listPermissions(ctx context.Context, namespa
 	case "users", "teams", "serviceaccounts":
 		formatScope = ""
 	}
-	scopeResource := resource
-	if group == "secret.grafana.app" && resource == "securevalues" {
-		scopeResource = "secret.securevalues"
-	}
-	permissions := (legacyscopes.Formatter{}).Permissions(scopeResource, action, formatScope, resp)
+	permissions := (legacyscopes.Formatter{}).Permissions(resource, action, formatScope, resp)
 	return legacyscopes.WithAliases(ctx, namespace, scope, r.scopeResolver, permissions)
 }
 
