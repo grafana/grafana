@@ -2,6 +2,7 @@ package folders
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -12,6 +13,7 @@ import (
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardpreferences"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -117,7 +119,8 @@ func (b *FolderAPIBuilder) afterDelete(obj runtime.Object, options *metav1.Delet
 }
 
 // deleteDashboardPreferencesAfterDelete deletes the folder tier of a deleted folder. No-op for a
-// dry-run delete or when no client is configured; logs and returns on any error.
+// dry-run delete or when no client is configured. A failure is logged, at Warn when the dashboard API
+// doesn't serve dashboard preferences and at Error otherwise.
 func (b *FolderAPIBuilder) deleteDashboardPreferencesAfterDelete(namespace, folderUID string, options *metav1.DeleteOptions) {
 	if options != nil && dryrun.IsDryRun(options.DryRun) {
 		return
@@ -135,7 +138,10 @@ func (b *FolderAPIBuilder) deleteDashboardPreferencesAfterDelete(namespace, fold
 	if client == nil {
 		return
 	}
-	if err := deleteFolderDashboardPreferences(ctx, *client, namespace, folderUID, metav1.DeleteOptions{}); err != nil {
+	switch err := dashboardpreferences.DeleteFolderPreferences(ctx, *client, namespace, folderUID, metav1.DeleteOptions{}); {
+	case errors.Is(err, dashboardpreferences.ErrNotServed):
+		log.Warn("failed to delete folder dashboard preferences", "namespace", namespace, "folder", folderUID, "error", err)
+	case err != nil:
 		log.Error("failed to delete folder dashboard preferences", "namespace", namespace, "folder", folderUID, "error", err)
 	}
 }

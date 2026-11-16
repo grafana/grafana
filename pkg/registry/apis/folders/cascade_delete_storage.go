@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardpreferences"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -395,7 +396,14 @@ func (s *cascadeDeleteStorage) deleteDashboardPreferencesOfFolder(ctx context.Co
 		// No dashboard preferences apiserver client configured; nothing to clean up here.
 		return nil
 	}
-	return deleteFolderDashboardPreferences(ctx, *svc, namespace, folderUID, *cascadeDeleteOptions(options))
+	err = dashboardpreferences.DeleteFolderPreferences(ctx, *svc, namespace, folderUID, *cascadeDeleteOptions(options))
+	if errors.Is(err, dashboardpreferences.ErrNotServed) {
+		// Failing the cascade wouldn't help: a dashboard API that doesn't serve dashboard preferences
+		// can't delete them on a retry either.
+		logging.FromContext(ctx).Warn("failed to delete folder dashboard preferences", "namespace", namespace, "folder", folderUID, "error", err)
+		return nil
+	}
+	return err
 }
 
 func (s *cascadeDeleteStorage) variablesInFolder(ctx context.Context, namespace, folderUID string) ([]string, error) {

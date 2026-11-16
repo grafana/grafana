@@ -1,9 +1,11 @@
 package folders
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"testing"
 
@@ -26,6 +28,7 @@ import (
 	k8stesting "k8s.io/client-go/testing"
 
 	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/logging"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
@@ -1012,9 +1015,37 @@ func TestCascadeDelete_DashboardPreferencesDeleteErrorAborts(t *testing.T) {
 	})
 
 	_, _, err := s.Delete(ctxWithNamespace(), "root", nil, forceDelete())
-	require.ErrorContains(t, err, `delete dashboard preferences "folder-root"`)
+	require.ErrorContains(t, err, "delete folder-root in namespace default")
+	require.True(t, apierrors.IsInternalError(err), "want the delete's own error, got %v", err)
 	require.Empty(t, store.deleted, "folder must not be deleted when its dashboard preferences delete fails")
 	require.Contains(t, store.existing, "root")
+}
+
+func TestCascadeDelete_DashboardPreferencesNotServedIsLoggedAndContinues(t *testing.T) {
+	setKubernetesFolderCascadeDeleteToggle(t, true)
+
+	store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{"root": newFolder("root")}}
+	s, dyn := newDashboardPreferencesCascade(t, store, &fakeCascadeSearcher{})
+	dyn.PrependReactor("delete", "dashboardpreferences", func(k8stesting.Action) (bool, runtime.Object, error) {
+		return true, nil, apierrors.NewGenericServerResponse(http.StatusNotFound, http.MethodDelete, prefsGVR.GroupResource(), "folder-root", "404 page not found", 0, true)
+	})
+	var logs bytes.Buffer
+	ctx := logging.Context(ctxWithNamespace(), logging.NewSLogLogger(slog.NewJSONHandler(&logs, nil)))
+
+	_, _, err := s.Delete(ctx, "root", nil, forceDelete())
+	require.NoError(t, err)
+	require.Len(t, dyn.Actions(), 1)
+	require.Equal(t, []string{"root"}, store.deleted)
+
+	var warnings []map[string]any
+	for _, record := range logRecords(t, &logs) {
+		if record["msg"] == "failed to delete folder dashboard preferences" {
+			warnings = append(warnings, record)
+		}
+	}
+	require.Len(t, warnings, 1)
+	require.Equal(t, "WARN", warnings[0]["level"])
+	require.Equal(t, "root", warnings[0]["folder"])
 }
 
 func TestCascadeDelete_PropagatesDeleteOptionsToDashboardPreferences(t *testing.T) {

@@ -9,12 +9,28 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
 
+	authlib "github.com/grafana/authlib/types"
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 )
 
 // ErrNotServed is wrapped by a delete that got a 404 which doesn't name the object, as a server that
 // doesn't serve dashboardpreferences answers. A stored object may remain.
 var ErrNotServed = errors.New("the server does not serve dashboardpreferences")
+
+var errNamespaceUnknown = errors.New("not an org or stack namespace")
+
+// validateNamespace returns an error unless namespace names an org or a stack.
+func validateNamespace(namespace string) error {
+	info, err := authlib.ParseNamespace(namespace)
+	// ParseNamespace returns no org, and no error, for a namespace it doesn't recognise.
+	if err == nil && info.OrgID < 1 {
+		err = errNamespaceUnknown
+	}
+	if err != nil {
+		return fmt.Errorf("invalid namespace %q: %w", namespace, err)
+	}
+	return nil
+}
 
 // IsNotFound reports whether err says that the DashboardPreferences object name doesn't exist. Only a
 // NotFound whose Status details name that object counts, so a 404 without a Status body, such as one

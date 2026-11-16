@@ -86,6 +86,17 @@ func logRecords(t *testing.T, logs *bytes.Buffer) []map[string]any {
 	return records
 }
 
+// captureDefaultLog sends the app SDK's default logger, which afterDelete logs to, to the returned
+// buffer until the test ends.
+func captureDefaultLog(t *testing.T) *bytes.Buffer {
+	t.Helper()
+	var logs bytes.Buffer
+	previous := logging.DefaultLogger
+	logging.DefaultLogger = logging.NewSLogLogger(slog.NewJSONHandler(&logs, nil))
+	t.Cleanup(func() { logging.DefaultLogger = previous })
+	return &logs
+}
+
 // recordingPreferencesClient records each delete, including its ctx, and returns err. With block
 // set, a delete waits for its ctx to end.
 type recordingPreferencesClient struct {
@@ -113,95 +124,6 @@ func (c *recordingPreferencesClient) Delete(ctx context.Context, name string, op
 		return ctx.Err()
 	}
 	return c.err
-}
-
-func TestDeleteFolderDashboardPreferences(t *testing.T) {
-	tests := []struct {
-		name          string
-		seed          []string
-		deleteErr     error
-		namespace     string
-		wantErr       string
-		wantErrIs     func(error) bool
-		wantGone      []string
-		wantStored    []string
-		wantWarn      bool
-		wantNoActions bool
-	}{
-		{
-			name:       "deletes the folder's tier and keeps other tiers",
-			seed:       []string{"folder-f1", "folder-f2"},
-			namespace:  "org-7",
-			wantGone:   []string{"folder-f1"},
-			wantStored: []string{"folder-f2"},
-		},
-		{
-			name:      "a missing tier counts as deleted",
-			namespace: "org-7",
-		},
-		{
-			name: "a route-level not found counts as deleted and warns",
-			deleteErr: apierrors.NewGenericServerResponse(http.StatusNotFound, "DELETE", prefsGVR.GroupResource(),
-				"folder-f1", "404 page not found", 0, true),
-			namespace: "org-7",
-			wantWarn:  true,
-		},
-		{
-			name:      "any other error is returned",
-			seed:      []string{"folder-f1"},
-			deleteErr: apierrors.NewForbidden(prefsGVR.GroupResource(), "folder-f1", errors.New("denied")),
-			namespace: "org-7",
-			wantErr:   `delete dashboard preferences "folder-f1"`,
-			wantErrIs: apierrors.IsForbidden,
-		},
-		{
-			name:          "an unparsable namespace sends nothing",
-			namespace:     "org-x",
-			wantErr:       "parse namespace",
-			wantNoActions: true,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			dyn := newDashboardPreferencesFake()
-			seedDashboardPreferences(t, dyn, tt.namespace, tt.seed...)
-			if tt.deleteErr != nil {
-				dyn.PrependReactor("delete", "dashboardpreferences", func(k8stesting.Action) (bool, runtime.Object, error) {
-					return true, nil, tt.deleteErr
-				})
-			}
-			var logs bytes.Buffer
-			logCtx := logging.Context(context.Background(), logging.NewSLogLogger(slog.NewJSONHandler(&logs, nil)))
-
-			err := deleteFolderDashboardPreferences(logCtx, dyn.Resource(prefsGVR), tt.namespace, "f1", metav1.DeleteOptions{})
-
-			if tt.wantErr == "" {
-				require.NoError(t, err)
-			} else {
-				require.ErrorContains(t, err, tt.wantErr)
-			}
-			if tt.wantErrIs != nil {
-				require.True(t, tt.wantErrIs(err), "unexpected error type: %v", err)
-			}
-			if tt.wantNoActions {
-				require.Empty(t, dyn.Actions())
-			}
-			for _, name := range tt.wantGone {
-				requireDashboardPreferencesGone(t, dyn, tt.namespace, name)
-			}
-			for _, name := range tt.wantStored {
-				requireDashboardPreferencesStored(t, dyn, tt.namespace, name)
-			}
-			if !tt.wantWarn {
-				require.Empty(t, logs.String())
-				return
-			}
-			records := logRecords(t, &logs)
-			require.Len(t, records, 1)
-			require.Equal(t, "WARN", records[0]["level"])
-			require.Equal(t, "folder-f1", records[0]["name"])
-		})
-	}
 }
 
 func TestFolderAfterDelete_DashboardPreferences(t *testing.T) {
@@ -288,7 +210,7 @@ func TestFolderAfterDelete_DashboardPreferences(t *testing.T) {
 		requireResourcePermissionGone(t, rp, rpName)
 	})
 
-	t.Run("deletes as the service identity of the folder's org", func(t *testing.T) {
+	t.Run("deletes as the service identity limited to the folder's namespace", func(t *testing.T) {
 		c := &recordingPreferencesClient{}
 		var ri dynamic.NamespaceableResourceInterface = c
 		b := &FolderAPIBuilder{dashboardPreferencesSvc: &ri}
@@ -302,10 +224,43 @@ func TestFolderAfterDelete_DashboardPreferences(t *testing.T) {
 		require.True(t, identity.IsServiceIdentity(ctx))
 		requester, err := identity.GetRequester(ctx)
 		require.NoError(t, err)
-		require.Equal(t, int64(7), requester.GetOrgID())
+		require.Equal(t, "org-7", requester.GetNamespace())
 		_, hasDeadline := ctx.Deadline()
 		require.True(t, hasDeadline)
 	})
+
+	for _, tc := range []struct {
+		name      string
+		deleteErr error
+		wantLevel string
+	}{
+		{
+			name:      "a dashboard API that doesn't serve dashboard preferences is logged at Warn",
+			deleteErr: apierrors.NewGenericServerResponse(http.StatusNotFound, http.MethodDelete, prefsGVR.GroupResource(), "folder-f1", "404 page not found", 0, true),
+			wantLevel: "WARN",
+		},
+		{
+			name:      "any other failure is logged at Error",
+			deleteErr: apierrors.NewInternalError(errors.New("boom")),
+			wantLevel: "ERROR",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			logs := captureDefaultLog(t)
+			c := &recordingPreferencesClient{err: tc.deleteErr}
+			var ri dynamic.NamespaceableResourceInterface = c
+			b := &FolderAPIBuilder{dashboardPreferencesSvc: &ri}
+
+			b.afterDelete(deletedFolderObj("org-7", "f1"), &metav1.DeleteOptions{})
+
+			require.Equal(t, []string{"folder-f1"}, c.names)
+			records := logRecords(t, logs)
+			require.Len(t, records, 1)
+			require.Equal(t, tc.wantLevel, records[0]["level"])
+			require.Equal(t, "failed to delete folder dashboard preferences", records[0]["msg"])
+			require.Equal(t, "f1", records[0]["folder"])
+		})
+	}
 }
 
 func TestFolderAfterDelete_DashboardPreferencesTimeout(t *testing.T) {

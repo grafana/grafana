@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log/slog"
 	"slices"
 	"strings"
@@ -12,6 +13,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/client-go/dynamic"
 
 	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	dashboardv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
@@ -40,17 +42,19 @@ var (
 )
 
 type Service struct {
-	cfg                           *setting.Cfg
-	unifiedStore                  folder.Store
-	log                           *slog.Logger
-	features                      featuremgmt.FeatureToggles
-	accessControl                 accesscontrol.AccessControl
-	k8sclient                     client.K8sHandler
-	maxNestedFolderDepth          int
-	dashboardK8sClient            client.K8sHandler
-	publicDashboardService        publicdashboards.ServiceWrapper
-	variableK8sClient             client.K8sHandler
-	dashboardPreferencesK8sClient client.K8sHandler
+	cfg                    *setting.Cfg
+	unifiedStore           folder.Store
+	log                    *slog.Logger
+	features               featuremgmt.FeatureToggles
+	accessControl          accesscontrol.AccessControl
+	k8sclient              client.K8sHandler
+	maxNestedFolderDepth   int
+	dashboardK8sClient     client.K8sHandler
+	publicDashboardService publicdashboards.ServiceWrapper
+	variableK8sClient      client.K8sHandler
+
+	// dashboardPreferencesClient returns the client Delete removes folder dashboard preferences with.
+	dashboardPreferencesClient func(ctx context.Context) (dynamic.NamespaceableResourceInterface, error)
 
 	mutex    sync.RWMutex
 	registry map[string]folder.RegistryService
@@ -117,14 +121,17 @@ func ProvideService(
 	)
 	srv.variableK8sClient = variableHandler
 
-	dashboardPreferencesHandler := client.NewK8sHandler(
-		request.GetNamespaceMapper(cfg),
-		dashboardv2beta1.DashboardPreferencesResourceInfo.GroupVersionResource(),
-		restConfig.GetRestConfig,
-		userService,
-		resourceClient,
-	)
-	srv.dashboardPreferencesK8sClient = dashboardPreferencesHandler
+	srv.dashboardPreferencesClient = func(ctx context.Context) (dynamic.NamespaceableResourceInterface, error) {
+		restCfg, err := restConfig.GetRestConfig(ctx)
+		if err != nil {
+			return nil, err
+		}
+		dyn, err := dynamic.NewForConfig(restCfg)
+		if err != nil {
+			return nil, fmt.Errorf("create dynamic client: %w", err)
+		}
+		return dyn.Resource(dashboardv2beta1.DashboardPreferencesResourceInfo.GroupVersionResource()), nil
+	}
 
 	return srv
 }
