@@ -8,10 +8,10 @@ import { LoadingPlaceholder } from '../LoadingPlaceholder/LoadingPlaceholder';
 import { type CodeMirrorEditorProps, type CustomCodeEditorProps } from './types';
 
 const loadEditors = () => import(/* webpackChunkName: "react-codemirror-editor" */ './CodeEditor');
-const CodeEditor = lazy(() => loadEditors().then((module) => ({ default: module.CodeEditor })));
-const CustomCodeEditorImplementation = lazy(() =>
-  loadEditors().then((module) => ({ default: module.CustomCodeEditor }))
-);
+
+const LazyCodeEditor = lazy(() => loadEditors().then((module) => ({ default: module.CodeEditor })));
+
+const LazyCustomCodeEditor = lazy(() => loadEditors().then((module) => ({ default: module.CustomCodeEditor })));
 
 function LazyEditor({ loadingFallback, children }: { loadingFallback?: ReactNode; children: ReactNode }) {
   return (
@@ -36,7 +36,7 @@ function LazyEditor({ loadingFallback, children }: { loadingFallback?: ReactNode
 export function CodeMirrorEditor(props: CodeMirrorEditorProps) {
   return (
     <LazyEditor loadingFallback={props.loadingFallback}>
-      <CodeEditor {...props} />
+      <LazyCodeEditor {...props} />
     </LazyEditor>
   );
 }
@@ -44,7 +44,7 @@ export function CodeMirrorEditor(props: CodeMirrorEditorProps) {
 export function CustomCodeEditor({ loadingFallback, ...props }: CustomCodeEditorProps) {
   return (
     <LazyEditor loadingFallback={loadingFallback}>
-      <CustomCodeEditorImplementation {...props} />
+      <LazyCustomCodeEditor {...props} />
     </LazyEditor>
   );
 }
