@@ -59,7 +59,7 @@ import { usePanelContext, useQueryEditorUIContext } from './PanelEditNext/QueryE
 import { QueryEditorContextWrapper } from './PanelEditNext/QueryEditor/QueryEditorContextWrapper';
 import { TransformationEditorRenderer } from './PanelEditNext/QueryEditor/TransformationEditorRenderer';
 import { QUERY_EDITOR_V2_PREFERENCE_KEY } from './PanelEditNext/constants';
-import { getLocalStorageWithTTL, setLocalStorageWithTTL } from './PanelEditNext/localStorageWithTTL';
+import { getQueryEditorNextPreference, setQueryEditorNextPreference } from './PanelEditNext/queryEditorPreference';
 import { PanelEditPanelWrapper } from './PanelEditPanelWrapper';
 import { buildPanelEditScene } from './PanelEditor';
 
@@ -294,7 +294,7 @@ describe('PanelEditor', () => {
     ({ useNext, noticesFirst }) => {
       beforeEach(() => {
         setTestFlags({ queryEditorNext: useNext });
-        setLocalStorageWithTTL(QUERY_EDITOR_V2_PREFERENCE_KEY, useNext);
+        setQueryEditorNextPreference(useNext);
       });
 
       afterEach(() => {
@@ -712,14 +712,21 @@ describe('PanelEditor', () => {
       });
 
       it('should use v2 when stored preference is true', async () => {
-        setLocalStorageWithTTL(QUERY_EDITOR_V2_PREFERENCE_KEY, true);
+        setQueryEditorNextPreference(true);
         const { panelEditor } = await setup({ pluginSkipDataQuery: false });
 
         expect(panelEditor.state.dataPane).toBeInstanceOf(PanelDataPaneNext);
       });
 
       it('should use v1 when stored preference is false (user downgraded)', async () => {
-        setLocalStorageWithTTL(QUERY_EDITOR_V2_PREFERENCE_KEY, false);
+        setQueryEditorNextPreference(false);
+        const { panelEditor } = await setup({ pluginSkipDataQuery: false });
+
+        expect(panelEditor.state.dataPane).toBeInstanceOf(PanelDataPane);
+      });
+
+      it('should keep v1 when the user downgraded more than a week ago', async () => {
+        store.setObject(QUERY_EDITOR_V2_PREFERENCE_KEY, { value: false, timestamp: 0 });
         const { panelEditor } = await setup({ pluginSkipDataQuery: false });
 
         expect(panelEditor.state.dataPane).toBeInstanceOf(PanelDataPane);
@@ -729,10 +736,10 @@ describe('PanelEditor', () => {
         const { panelEditor } = await setup({ pluginSkipDataQuery: false });
 
         panelEditor.onToggleQueryEditorVersion(); // v2 -> v1
-        expect(getLocalStorageWithTTL<boolean>(QUERY_EDITOR_V2_PREFERENCE_KEY)).toBe(false);
+        expect(getQueryEditorNextPreference()).toBe(false);
 
         panelEditor.onToggleQueryEditorVersion(); // v1 -> v2
-        expect(getLocalStorageWithTTL<boolean>(QUERY_EDITOR_V2_PREFERENCE_KEY)).toBe(true);
+        expect(getQueryEditorNextPreference()).toBe(true);
       });
     });
 
@@ -752,7 +759,7 @@ describe('PanelEditor', () => {
       });
 
       it('should ignore a stored v2 preference and use the v1 query editor experience', async () => {
-        setLocalStorageWithTTL(QUERY_EDITOR_V2_PREFERENCE_KEY, true);
+        setQueryEditorNextPreference(true);
 
         const { panelEditor } = await setup({ pluginSkipDataQuery: false });
 
