@@ -23,6 +23,8 @@ export interface AppChromeState {
   breadcrumbActions?: React.ReactNode;
   megaMenuOpen: boolean;
   megaMenuDocked: boolean;
+  /** The undocked mega menu is open only while the pointer rests on its toggle or on the menu itself. */
+  megaMenuPeek?: boolean;
   kioskMode: KioskMode | null;
   fullscreenWorkspace?: boolean;
   layout: PageLayoutType;
@@ -34,6 +36,10 @@ export interface AppChromeState {
 
 export const DOCKED_LOCAL_STORAGE_KEY = 'grafana.navigation.docked';
 const DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY = 'grafana.navigation.open';
+/** Long enough that a pointer passing over the toggle on its way elsewhere does not open the menu. */
+export const MEGA_MENU_PEEK_OPEN_DELAY = 150;
+/** Long enough to cross the gap between the toggle and the menu below it. */
+export const MEGA_MENU_PEEK_CLOSE_DELAY = 300;
 
 /**
  * Nav held before a page sets its own: at startup and between a route change and the new page's first
@@ -61,6 +67,8 @@ export class AppChromeService {
       store.getBool(DOCKED_LOCAL_STORAGE_KEY, Boolean(window.innerWidth >= config.theme2.breakpoints.values.xl))
   );
   private fullscreenWorkspaceUnlisten?: () => void;
+  private megaMenuPeekTimer?: ReturnType<typeof setTimeout>;
+  private megaMenuPeekHeldOff = false;
 
   private sessionStorageData = window.sessionStorage.getItem('returnToPrevious');
   private returnToPreviousData = this.sessionStorageData ? JSON.parse(this.sessionStorageData) : undefined;
@@ -170,6 +178,7 @@ export class AppChromeService {
   }
 
   public setMegaMenuOpen = (newOpenState: boolean, updatePersistedState = true) => {
+    this.clearMegaMenuPeekTimer();
     const { megaMenuDocked } = this.state.getValue();
     if (megaMenuDocked && updatePersistedState) {
       store.set(DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY, newOpenState);
@@ -179,18 +188,66 @@ export class AppChromeService {
     });
     this.update({
       megaMenuOpen: newOpenState,
+      megaMenuPeek: false,
     });
   };
 
   public setMegaMenuDocked = (newDockedState: boolean, updatePersistedState = true) => {
+    this.clearMegaMenuPeekTimer();
     if (updatePersistedState) {
       store.set(DOCKED_LOCAL_STORAGE_KEY, newDockedState);
     }
     reportInteraction('grafana_mega_menu_docked', { state: newDockedState });
     this.update({
       megaMenuDocked: newDockedState,
+      megaMenuPeek: false,
     });
   };
+
+  /**
+   * Opens the mega menu undocked once the pointer rests on its toggle. It stays open while the pointer is over the
+   * toggle or the menu, and closes once it leaves both. Opening or docking the menu any other way ends the peek.
+   */
+  public startMegaMenuPeek = () => {
+    this.clearMegaMenuPeekTimer();
+    if (this.megaMenuPeekHeldOff || this.state.getValue().megaMenuOpen) {
+      return;
+    }
+    this.megaMenuPeekTimer = setTimeout(() => {
+      // A docked menu the user closed opens undocked too: a peek never moves the page. The stored choice is kept.
+      this.update({ megaMenuOpen: true, megaMenuDocked: false, megaMenuPeek: true });
+    }, MEGA_MENU_PEEK_OPEN_DELAY);
+  };
+
+  /**
+   * Once the pointer closes the docked menu with its toggle, the top bar toggle that appears under it does not open the
+   * menu again until the pointer has left it.
+   */
+  public holdOffMegaMenuPeek = () => {
+    this.megaMenuPeekHeldOff = true;
+  };
+
+  /** Keeps a peeking menu open while the pointer is over it. */
+  public holdMegaMenuPeek = () => {
+    this.clearMegaMenuPeekTimer();
+  };
+
+  /** Closes a peeking menu shortly after the pointer leaves, so the pointer can cross from the toggle to the menu. */
+  public endMegaMenuPeek = () => {
+    this.clearMegaMenuPeekTimer();
+    this.megaMenuPeekHeldOff = false;
+    if (!this.state.getValue().megaMenuPeek) {
+      return;
+    }
+    this.megaMenuPeekTimer = setTimeout(() => {
+      this.update({ megaMenuOpen: false, megaMenuPeek: false });
+    }, MEGA_MENU_PEEK_CLOSE_DELAY);
+  };
+
+  private clearMegaMenuPeekTimer() {
+    clearTimeout(this.megaMenuPeekTimer);
+    this.megaMenuPeekTimer = undefined;
+  }
 
   public onToggleKioskMode = () => {
     const nextMode = this.getNextKioskMode();

@@ -108,16 +108,12 @@ export function AssistantToolbarButtons() {
         >
           {t('navigation.fullscreen-workspace.workspace', 'Workspace')}
         </ToolbarButton>
-        <NavToolbarSeparator className={styles.separator} />
       </>
     )
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  separator: css({
-    marginRight: theme.spacing(1),
-  }),
   button: css({
     color: theme.colors.text.primary,
     fontWeight: theme.typography.fontWeightRegular,

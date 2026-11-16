@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 import { type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -11,7 +11,7 @@ import { ShowModalReactEvent } from '../../../../types/events';
 import { appEvents } from '../../../app_events';
 import { getFooterLinks } from '../../Footer/Footer';
 
-import { DOCK_MENU_BUTTON_ID, MEGA_MENU_HEADER_TOGGLE_ID } from './MegaMenuHeader';
+import { DOCKED_MENU_TOGGLE_ID, MEGA_MENU_HEADER_TOGGLE_ID } from './MegaMenuHeader';
 import { getNavExperimentPayload } from './navExperiment';
 
 const emitOpenShortcutsModal = async () => {
@@ -438,23 +438,42 @@ export function reorderSections(
  * helper to manage focus when opening/closing and docking/undocking the mega menu
  * @param isOpen whether the mega menu is open
  * @param isDocked whether mega menu is docked
+ * @param isPeek whether the pointer opened the mega menu, by resting on its toggle
  */
-export function useMegaMenuFocusHelper(isOpen: boolean, isDocked: boolean) {
+export function useMegaMenuFocusHelper(isOpen: boolean, isDocked: boolean, isPeek = false) {
+  // Opening the menu by pointing at its toggle, and closing it by moving away, leave focus where it is.
+  const wasPeek = useRef(isPeek);
+  const openedOrClosedByPeek = isPeek || wasPeek.current;
+  useEffect(() => {
+    wasPeek.current = isPeek;
+  });
+
   // manage focus when opening/closing
   useEffect(() => {
+    if (openedOrClosedByPeek) {
+      return;
+    }
     if (isOpen) {
       document.getElementById(MEGA_MENU_HEADER_TOGGLE_ID)?.focus();
     } else {
       document.getElementById(MEGA_MENU_TOGGLE_ID)?.focus();
     }
+    // Only an open or close moves focus.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   // manage focus when docking/undocking
   useEffect(() => {
+    // A peek opens a docked menu the user closed undocked.
+    if (isPeek) {
+      return;
+    }
     if (isDocked) {
-      document.getElementById(DOCK_MENU_BUTTON_ID)?.focus();
+      document.getElementById(DOCKED_MENU_TOGGLE_ID)?.focus();
     } else {
       document.getElementById(MEGA_MENU_TOGGLE_ID)?.focus();
     }
+    // Only docking or undocking moves focus.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDocked]);
 }
