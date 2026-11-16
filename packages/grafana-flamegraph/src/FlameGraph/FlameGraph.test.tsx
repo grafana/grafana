@@ -43,7 +43,9 @@ describe('FlameGraph', () => {
         setRangeMax={setRangeMax}
         onItemFocused={onItemFocused}
         textAlign={'left'}
+        symbolLabel={'full'}
         onTextAlignChange={jest.fn()}
+        onSymbolLabelChange={jest.fn()}
         onSandwich={onSandwich}
         onFocusPillClick={onFocusPillClick}
         onSandwichPillClick={onSandwichPillClick}
@@ -76,7 +78,7 @@ describe('FlameGraph', () => {
   });
 
   it('should render correctly', async () => {
-    setup({ textAlign: 'name' });
+    setup({ symbolLabel: 'name' });
 
     const canvas = screen.getByTestId('flameGraph') as HTMLCanvasElement;
     const ctx = canvas!.getContext('2d');
@@ -84,27 +86,42 @@ describe('FlameGraph', () => {
     expect(calls).toMatchSnapshot();
   });
 
-  it('offers function names as a third alignment option', () => {
+  it('keeps function names independent of alignment', () => {
     const onTextAlignChange = jest.fn();
-    setup({ textAlign: 'name', onTextAlignChange });
+    const onSymbolLabelChange = jest.fn();
+    setup({ textAlign: 'right', symbolLabel: 'name', onTextAlignChange, onSymbolLabelChange });
 
+    expect(screen.getByRole('radio', { name: 'Align text right' })).toBeChecked();
     expect(screen.getByRole('radio', { name: 'Show function name' })).toBeChecked();
 
     fireEvent.click(screen.getByRole('radio', { name: 'Align text left' }));
-
     expect(onTextAlignChange).toHaveBeenCalledWith('left');
+    expect(onSymbolLabelChange).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole('radio', { name: 'Show full symbol' }));
+    expect(onSymbolLabelChange).toHaveBeenCalledWith('full');
   });
 
-  it('draws the full symbol when text is aligned left', () => {
-    setup({ textAlign: 'left' });
-
+  function drawnTexts() {
     const canvas = screen.getByTestId('flameGraph') as HTMLCanvasElement;
-    const texts = canvas
+    return canvas
       .getContext('2d')!
       .__getDrawCalls()
       .flatMap((call) => (call.type === 'fillText' ? [call.props.text] : []));
+  }
 
-    expect(texts).toContain('github.com/weaveworks/common/middleware.Instrument.Wrap.func1 (5.51 Bil)');
+  it('draws the full symbol when the import path is shown', () => {
+    setup({ textAlign: 'right', symbolLabel: 'full' });
+
+    expect(drawnTexts()).toContain('github.com/weaveworks/common/middleware.Instrument.Wrap.func1 (5.51 Bil)');
+  });
+
+  it('draws the function name without the import path when text is right aligned', () => {
+    setup({ textAlign: 'right', symbolLabel: 'name' });
+
+    const texts = drawnTexts();
+    expect(texts).toContain('middleware.Instrument.Wrap.func1 (5.51 Bil)');
+    expect(texts).not.toContain('github.com/weaveworks/common/middleware.Instrument.Wrap.func1 (5.51 Bil)');
   });
 
   it('should render metadata', async () => {
