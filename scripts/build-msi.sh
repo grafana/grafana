@@ -108,28 +108,9 @@ docker run --rm \
     mkdir -p /src/wix3
     unzip -q /tmp/wix.zip -d /src/wix3
 
-    # Extract grafana tar.gz, excluding files with paths too long for WiX
+    # The prebuilt tarball contains only deployable frontend files.
     mkdir -p /src/grafana
-    tar -xzf /tmp/grafana.tar.gz -C /src/grafana --strip-components=1 \
-      --exclude="*/public/app/plugins/datasource/grafana-azure-monitor-datasource/app_insights/app_insights_querystring_builder.test.ts" \
-      --exclude="*/public/app/plugins/datasource/grafana-azure-monitor-datasource/app_insights/app_insights_querystring_builder.ts" \
-      --exclude="*/public/app/plugins/datasource/grafana-azure-monitor-datasource/azure_log_analytics/azure_log_analytics_datasource.test.ts" \
-      --exclude="*/public/app/plugins/datasource/grafana-azure-monitor-datasource/azure_log_analytics/azure_log_analytics_datasource.ts" \
-      --exclude="*/public/app/plugins/datasource/grafana-azure-monitor-datasource/azure_monitor/azure_monitor_datasource.test.ts" \
-      --exclude="*/public/app/plugins/datasource/grafana-azure-monitor-datasource/azure_monitor/azure_monitor_datasource.ts" \
-      --exclude="*/public/app/plugins/datasource/grafana-azure-monitor-datasource/app_insights/app_insights_datasource.ts" \
-      --exclude="*/public/app/plugins/datasource/grafana-azure-monitor-datasource/app_insights/app_insights_datasource.test.ts" \
-      --exclude="*/public/app/plugins/datasource/grafana-azure-monitor-datasource/insights_analytics/insights_analytics_datasource.ts" \
-      --exclude="*/public/app/plugins/datasource/grafana-azure-monitor-datasource/azure_monitor/azure_monitor_filter_builder.test.ts" \
-      --exclude="*/public/app/plugins/datasource/grafana-azure-monitor-datasource/azure_monitor/azure_monitor_filter_builder.ts" \
-      --exclude="*/public/app/plugins/datasource/grafana-azure-monitor-datasource/components/AnalyticsConfig.test.tsx" \
-      --exclude="*/public/app/plugins/datasource/grafana-azure-monitor-datasource/components/AzureCredentialsForm.test.tsx" \
-      --exclude="*/public/app/plugins/datasource/grafana-azure-monitor-datasource/components/InsightsConfig.test.tsx" \
-      --exclude="*/public/app/plugins/datasource/grafana-azure-monitor-datasource/components/__snapshots__/AnalyticsConfig.test.tsx.snap" \
-      --exclude="*/public/app/plugins/datasource/grafana-azure-monitor-datasource/components/__snapshots__/AzureCredentialsForm.test.tsx.snap" \
-      --exclude="*/public/app/plugins/datasource/grafana-azure-monitor-datasource/components/__snapshots__/InsightsConfig.test.tsx.snap" \
-      --exclude="*/public/app/plugins/datasource/grafana-azure-monitor-datasource/components/__snapshots__/ConfigEditor.test.tsx.snap" \
-      --exclude="*/storybook"
+    tar -xzf /tmp/grafana.tar.gz -C /src/grafana --strip-components=1
 
     # Copy resources and generated WXS files into the working directory
     cp -r /src/resources/* /src/

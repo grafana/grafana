@@ -133,7 +133,7 @@ func (s *folderStorage) Create(ctx context.Context,
 
 	// TODO: once the feature flag kubernetesAuthzResourcePermissionApis is removed AND the frontend is calling
 	// /apis directly (to set AnnoKeyGrantPermissions on root level folders), the below should be removed
-	// and we should instead initialize resourcePermissionsSvc in the RegisterAPIService function
+	// and we should instead initialize the ResourcePermission client in RegisterAPIService
 	// and rely on StorageOptions.Permissions.
 	err = s.setDefaultFolderPermissions(ctx, info.OrgID, user, p.Name, parentUid)
 	if err != nil {

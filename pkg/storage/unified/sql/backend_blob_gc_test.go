@@ -63,12 +63,11 @@ func TestIntegrationBlobGarbageCollection(t *testing.T) {
 	key := &resourcepb.ResourceKey{Group: "group", Resource: "resource", Namespace: "namespace", Name: "snap"}
 	response, err := b.PutResourceBlob(ctx, &resourcepb.PutBlobRequest{Resource: key, ContentType: "application/json", Value: []byte(`{}`)})
 	require.NoError(t, err)
-	require.Nil(t, response.Error)
 	require.Equal(t, byte('7'), response.Uid[14], "uid %q must be a UUIDv7", response.Uid)
 	for i := 1; i < blobCount; i++ {
 		response, err := b.PutResourceBlob(ctx, &resourcepb.PutBlobRequest{Resource: key, ContentType: "application/json", Value: []byte(`{}`)})
 		require.NoError(t, err)
-		require.Nil(t, response.Error)
+		require.NotEmpty(t, response.Uid)
 	}
 	_, err = test.WriteEvent(ctx, storage, key.Name, resourcepb.WatchEvent_ADDED)
 	require.NoError(t, err)

@@ -2290,7 +2290,7 @@ func TestIntegrationProvisioning_RepositoryUnhealthyWithValidationErrors(t *test
 
 		assert.Equal(t, metav1.CauseTypeFieldValueInvalid, tokenError.Type, "Type must be FieldValueInvalid")
 		assert.Equal(t, "secure.token", tokenError.Field, "Field must be secure.token")
-		assert.Equal(t, "not authorized", tokenError.Detail, "Detail must be 'not authorized'")
+		assert.Equal(t, "authentication failed: the Git server returned HTTP 401 Unauthorized", tokenError.Detail, "Detail must name the 401 the Git server returned")
 		assert.Empty(t, tokenError.Origin, "Origin must be empty")
 
 		t.Logf("Verified token fieldError: Type=%s, Field=%s, Detail=%s, Origin=%s",
@@ -2361,7 +2361,7 @@ func TestIntegrationProvisioning_RepositoryUnhealthyWithValidationErrors(t *test
 		// Verify all fields explicitly - authorization check fails first before URL check
 		assert.Equal(t, metav1.CauseTypeFieldValueInvalid, tokenError.Type, "Type must be FieldValueInvalid")
 		assert.Equal(t, "secure.token", tokenError.Field, "Field must be secure.token")
-		assert.Equal(t, "not authorized", tokenError.Detail, "Detail must be 'not authorized'")
+		assert.Equal(t, "authentication failed: the Git server returned HTTP 401 Unauthorized", tokenError.Detail, "Detail must name the 401 the Git server returned")
 		assert.Empty(t, tokenError.Origin, "Origin must be empty")
 
 		t.Logf("Verified token fieldError: Type=%s, Field=%s, Detail=%s, Origin=%s",

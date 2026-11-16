@@ -257,19 +257,11 @@ func TestGlobalDocumentBuilderBlobErrors(t *testing.T) {
 			wantErr: context.Canceled,
 		},
 		{
-			name: "response error",
-			blob: &globalDocumentBlob{response: &resourcepb.GetBlobResponse{
-				Error: &resourcepb.ErrorResult{Code: http.StatusServiceUnavailable, Message: "blob unavailable"},
-			}},
-			wantError: "blob unavailable",
-		},
-		{
-			name: "transport error takes precedence",
+			name: "status error",
 			blob: &globalDocumentBlob{
-				response: &resourcepb.GetBlobResponse{Error: &resourcepb.ErrorResult{Message: "blob unavailable"}},
-				err:      context.Canceled,
+				err: GRPCStatusError(&resourcepb.ErrorResult{Code: http.StatusServiceUnavailable, Message: "blob unavailable"}),
 			},
-			wantErr: context.Canceled,
+			wantError: "blob unavailable",
 		},
 		{
 			name: "invalid JSON",
@@ -384,7 +376,7 @@ func TestGlobalSearchKindsServeGenericReads(t *testing.T) {
 }
 
 func testGlobalKind(name, plural string, global *bool) app.ManifestVersionKind {
-	k := app.ManifestVersionKind{Kind: name, Plural: plural, Scope: namespacedScope}
+	k := app.ManifestVersionKind{Kind: name, Plural: plural, Resource: strings.ToLower(plural), Scope: namespacedScope}
 	if global != nil {
 		k.Search = &app.ManifestVersionKindSearch{Global: global}
 	}
@@ -406,7 +398,7 @@ func TestGlobalSearchCoverageOf(t *testing.T) {
 	got := globalSearchCoverageOf([]*app.ManifestData{
 		nil,
 		{Group: "b.grafana.app", Versions: []app.ManifestVersion{
-			{Name: "v1", Kinds: []app.ManifestVersionKind{testGlobalKind("Widget", "", &yes), testGlobalKind("Gadget", "Gadgets", &no), clusterScoped}},
+			{Name: "v1", Kinds: []app.ManifestVersionKind{testGlobalKind("Widget", "Widgets", &yes), testGlobalKind("Gadget", "Gadgets", &no), clusterScoped}},
 		}},
 		{Group: "a.grafana.app", Versions: []app.ManifestVersion{
 			{Name: "v1", Kinds: []app.ManifestVersionKind{testGlobalKind("Thing", "Things", nil), testGlobalKind("Secret", "Secrets", &yes)}},
@@ -416,7 +408,7 @@ func TestGlobalSearchCoverageOf(t *testing.T) {
 	assert.Equal(t, []schema.GroupResource{
 		{Group: "a.grafana.app", Resource: "things"},
 		{Group: "b.grafana.app", Resource: "widgets"},
-	}, got.types, "sorted; opted in on one version is enough; the plural defaults to the kind plus s; "+
+	}, got.types, "sorted; opted in on one version is enough; "+
 		"a kind without search or list-keys on any version, or not namespaced, is left out")
 	assert.Equal(t, map[schema.GroupResource]string{
 		{Group: "a.grafana.app", Resource: "things"}:  "Thing",
@@ -453,8 +445,8 @@ func TestGlobalSearchCoverageOfNamesRenamedKinds(t *testing.T) {
 
 func TestManifestKindsInclude(t *testing.T) {
 	m := &app.ManifestData{Group: "a.grafana.app", PreferredVersion: "v2", Versions: []app.ManifestVersion{
-		{Name: "v1", Kinds: []app.ManifestVersionKind{{Kind: "Widget", Plural: "widgets"}}},
-		{Name: "v2", Kinds: []app.ManifestVersionKind{{Kind: "Gadget", Plural: "widgets"}}},
+		{Name: "v1", Kinds: []app.ManifestVersionKind{{Kind: "Widget", Plural: "widgets", Resource: "widgets"}}},
+		{Name: "v2", Kinds: []app.ManifestVersionKind{{Kind: "Gadget", Plural: "widgets", Resource: "widgets"}}},
 	}}
 	onlyV1 := func(v app.ManifestVersion, _ app.ManifestVersionKind) bool { return v.Name == "v1" }
 	assert.Equal(t, map[schema.GroupResource]schema.GroupVersionKind{

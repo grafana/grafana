@@ -12,7 +12,7 @@ import {
   FieldType,
 } from '@grafana/data';
 import { FlagKeys } from '@grafana/runtime/internal';
-import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
+import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/feature-flags';
 import { type PanelContext, PanelContextProvider } from '@grafana/ui';
 
 import {
@@ -260,7 +260,16 @@ describe('useAdHocColumnState', () => {
   });
 
   it('writes frame-scoped column changes using the latest transformations without losing other transformations', () => {
-    const frames = [makeFrame({ refId: 'A' }), makeFrame({ refId: 'B' })];
+    const frames = [
+      makeFrame({ refId: 'A' }),
+      makeFrame({
+        refId: 'B',
+        fields: [
+          { name: 'value', type: FieldType.number, config: {}, values: [1] },
+          { name: 'other', type: FieldType.number, config: {}, values: [2] },
+        ],
+      }),
+    ];
     const context = contextWithSource(frames);
     const api = context.adHocTransformations!;
     const { result } = renderHook(() => useAdHocColumnState(frames, 1, true), {
@@ -278,14 +287,14 @@ describe('useAdHocColumnState', () => {
       latest = next;
     });
 
-    act(() => result.current?.onColumnOrderChange(['value']));
+    act(() => result.current?.onColumnOrderChange(['other', 'value']));
     expect(set).toHaveBeenLastCalledWith('grafana:table-view', [
       otherFrame,
       unrelated,
       {
         id: 'organize',
         filter: { id: 'byRefId', options: 'B' },
-        options: { indexByName: { value: 0 }, excludeByName: {}, renameByName: {} },
+        options: { indexByName: { other: 0, value: 1 }, excludeByName: {}, renameByName: {} },
       },
     ]);
 
@@ -296,7 +305,7 @@ describe('useAdHocColumnState', () => {
       {
         id: 'organize',
         filter: { id: 'byRefId', options: 'B' },
-        options: { indexByName: { value: 0 }, excludeByName: { value: true }, renameByName: {} },
+        options: { indexByName: { other: 0, value: 1 }, excludeByName: { value: true }, renameByName: {} },
       },
     ]);
   });
@@ -483,6 +492,8 @@ describe('useCommonTableProps', () => {
       jsonSyntaxHighlightingEnabled: false,
       rangeFiltersEnabled: false,
       zebraStriping: false,
+      showRowNumbers: false,
+      showRowNumberToggle: false,
     });
   });
 
@@ -532,6 +543,28 @@ describe('useCommonTableProps', () => {
     });
 
     expect(result.current.zebraStriping).toBe(true);
+  });
+
+  it('keeps row numbers disabled by default, even when both flags are enabled', () => {
+    setTestFlags({ [FlagKeys.TableRefresh]: true, [FlagKeys.TableRefreshNewFeatures]: true });
+    const { result } = renderHook(() => useCommonTableProps(options, fieldConfig), {
+      wrapper: FeatureFlagsProvider,
+    });
+    expect(result.current.showRowNumbers).toBe(false);
+  });
+
+  it.each([
+    [false, false, false],
+    [true, false, false],
+    [false, true, false],
+    [true, true, true],
+  ])('gates saved row numbering with table.refresh=%s and new features=%s', (refresh, newFeatures, enabled) => {
+    setTestFlags({ [FlagKeys.TableRefresh]: refresh, [FlagKeys.TableRefreshNewFeatures]: newFeatures });
+    const { result } = renderHook(() => useCommonTableProps({ ...options, showRowNumbers: true }, fieldConfig), {
+      wrapper: FeatureFlagsProvider,
+    });
+    expect(result.current.showRowNumbers).toBe(enabled);
+    expect(result.current.showRowNumberToggle).toBe(enabled);
   });
 
   it('passes pageSize through when the pagination-page-size flag is on', () => {

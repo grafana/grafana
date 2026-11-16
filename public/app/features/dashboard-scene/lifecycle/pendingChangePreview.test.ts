@@ -15,6 +15,7 @@ import {
   previewedDashboardUid,
   setHighlightingChanges,
   showOriginal,
+  stopPreviewingPendingChanges,
   withoutPendingChangesPreview,
 } from './pendingChangePreview';
 
@@ -203,6 +204,28 @@ describe('a new dashboard proposed as pending changes', () => {
     expect(withoutPendingChangesPreview('?pendingChanges=chat-1&orgId=1')).toBe('?orgId=1');
     expect(withoutPendingChangesPreview('?pendingChanges=chat-1&pendingChangesView=original')).toBe('');
     expect(withoutPendingChangesPreview('?pendingChanges=chat-1')).toBe('');
+  });
+});
+
+describe('closing pending changes that were applied or discarded', () => {
+  afterEach(() => locationService.push('/'));
+
+  // Else the page would still name them, and another conversation's pending changes wouldn't open on it.
+  it('takes them out of the page URL', () => {
+    locationService.push('/d/abc?orgId=1&pendingChanges=chat-1&pendingChangesView=original');
+
+    expect(stopPreviewingPendingChanges()).toBe(true);
+
+    expect(locationService.getLocation().pathname).toBe('/d/abc');
+    expect(locationService.getSearchObject()).toEqual({ orgId: '1' });
+  });
+
+  it('leaves a URL that names none as it is', () => {
+    locationService.push('/d/abc?orgId=1');
+
+    expect(stopPreviewingPendingChanges()).toBe(false);
+
+    expect(locationService.getSearchObject()).toEqual({ orgId: '1' });
   });
 });
 

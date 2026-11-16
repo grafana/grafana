@@ -31,6 +31,8 @@ const (
 	folderGroup    = "folder.grafana.app"
 	folderResource = "folders"
 
+	annotationGroup = "annotation.grafana.app"
+
 	teamGroup    = "iam.grafana.app"
 	teamResource = "teams"
 

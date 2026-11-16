@@ -250,6 +250,19 @@ func TestUnifiedStorageQueries(t *testing.T) {
 				},
 			},
 
+			sqlResourceHistoryBatchRead: {
+				{
+					Name: "several versions",
+					Data: &sqlResourceHistoryBatchReadRequest{
+						SQLTemplate:      mocks.NewTestingSQLTemplate(),
+						Group:            "group",
+						Resource:         "res",
+						ResourceVersions: []int64{1234, 1235, 1240},
+						Response:         new(historyPollResponse),
+					},
+				},
+			},
+
 			rvmanager.SqlResourceUpdateRV: {
 				{
 					Name: "single path",

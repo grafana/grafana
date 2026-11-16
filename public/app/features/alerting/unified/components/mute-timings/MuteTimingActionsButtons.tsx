@@ -5,7 +5,7 @@ import { useExportMuteTimingsDrawer } from 'app/features/alerting/unified/compon
 import { isGranted, isProvisioned, isSupported } from '../../hooks/abilities/abilityUtils';
 import { useTimeIntervalAbility } from '../../hooks/abilities/alertmanager/useTimeIntervalAbility';
 import { TimeIntervalAction } from '../../hooks/abilities/types';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/constants';
 import { makeTimeIntervalResourceLink } from '../../utils/misc';
 import { isDisabled } from '../../utils/mute-timings';
 

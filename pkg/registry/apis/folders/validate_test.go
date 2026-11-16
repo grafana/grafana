@@ -1131,6 +1131,52 @@ func TestValidateDelete(t *testing.T) {
 			},
 		},
 	}, {
+		name: "unified library panels are ignored while legacy reports library_elements",
+		folder: &folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "nnn",
+			},
+		},
+		searcher: &mockSearchClient{
+			stats: &resourcepb.ResourceStatsResponse{
+				Stats: []*resourcepb.ResourceStatsResponse_Stats{
+					{Group: "dashboard.grafana.app", Resource: "librarypanels", Count: 7},
+					{Group: "sql-fallback", Resource: "library_elements", Count: 0},
+				},
+			},
+		},
+	}, {
+		name: "legacy library elements still block the delete",
+		folder: &folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "nnn",
+			},
+		},
+		searcher: &mockSearchClient{
+			stats: &resourcepb.ResourceStatsResponse{
+				Stats: []*resourcepb.ResourceStatsResponse_Stats{
+					{Group: "dashboard.grafana.app", Resource: "librarypanels", Count: 5},
+					{Group: "sql-fallback", Resource: "library_elements", Count: 3},
+				},
+			},
+		},
+		expectedErr: "folder is not empty, contains 3 library_elements",
+	}, {
+		name: "unified library panels block the delete when legacy reports nothing",
+		folder: &folders.Folder{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "nnn",
+			},
+		},
+		searcher: &mockSearchClient{
+			stats: &resourcepb.ResourceStatsResponse{
+				Stats: []*resourcepb.ResourceStatsResponse_Stats{
+					{Group: "dashboard.grafana.app", Resource: "librarypanels", Count: 2},
+				},
+			},
+		},
+		expectedErr: "folder is not empty, contains 2 librarypanels",
+	}, {
 		name: "stats error - nil response without error",
 		folder: &folders.Folder{
 			ObjectMeta: metav1.ObjectMeta{
@@ -1463,7 +1509,7 @@ func TestValidateDelete(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := validateOnDelete(context.Background(), tt.folder, tt.searcher, tt.deleteOptions, tt.cascadeDeleteEnabled)
+			err := validateOnDelete(context.Background(), tt.folder, tt.searcher, tt.deleteOptions, tt.cascadeDeleteEnabled, nil)
 
 			if tt.expectedErr == "" {
 				require.NoError(t, err)
@@ -1480,7 +1526,7 @@ func TestValidateDeleteCountFailureIsSanitized500(t *testing.T) {
 	original := errors.New("pq: permission denied for table alert_rule")
 	err := validateOnDelete(ctx, &folders.Folder{ObjectMeta: metav1.ObjectMeta{Name: "nnn"}}, &mockSearchClient{
 		statsErr: &federated.CountError{Resources: []string{"alertrules"}, Err: original},
-	}, nil, false)
+	}, nil, false, nil)
 
 	var apiStatus apierrors.APIStatus
 	require.ErrorAs(t, err, &apiStatus)

@@ -9,7 +9,10 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/storage/unified/migrations"
@@ -105,6 +108,10 @@ func TestBlobProducerNegotiation(t *testing.T) {
 
 func TestMigrationBulkCompletionErrors(t *testing.T) {
 	transportErr := errors.New("transport failed")
+	publication := &resourcepb.ErrorResult{Code: 500, Message: "publication failed"}
+	publicationStatus, err := status.New(codes.Internal, publication.Message).WithDetails(publication)
+	require.NoError(t, err)
+	publicationStatusErr := publicationStatus.Err()
 	for _, tc := range []struct {
 		name     string
 		response *resourcepb.BulkResponse
@@ -113,8 +120,10 @@ func TestMigrationBulkCompletionErrors(t *testing.T) {
 	}{
 		{name: "success", response: &resourcepb.BulkResponse{}},
 		{name: "transport", err: transportErr, wantErr: "transport failed"},
-		{name: "embedded", response: &resourcepb.BulkResponse{Error: &resourcepb.ErrorResult{Code: 500, Message: "publication failed"}}, wantErr: "publication failed"},
-		{name: "transport takes precedence", response: &resourcepb.BulkResponse{Error: &resourcepb.ErrorResult{Code: 500, Message: "publication failed"}}, err: transportErr, wantErr: "transport failed"},
+		{name: "embedded", response: &resourcepb.BulkResponse{Error: publication}, wantErr: "publication failed"},
+		{name: "transport takes precedence", response: &resourcepb.BulkResponse{Error: publication}, err: transportErr, wantErr: "transport failed"},
+		{name: "status error", err: publicationStatusErr, wantErr: "publication failed"},
+		{name: "status error with partial response", response: &resourcepb.BulkResponse{Processed: 1}, err: publicationStatusErr, wantErr: "publication failed"},
 		{name: "missing completion", wantErr: "no completion response"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -136,6 +145,9 @@ func TestMigrationBulkCompletionErrors(t *testing.T) {
 			}
 			if tc.err != nil {
 				require.ErrorIs(t, err, tc.err)
+			}
+			if errors.Is(tc.err, publicationStatusErr) {
+				require.True(t, proto.Equal(publication, resource.AsErrorResult(err)), "status details must be preserved")
 			}
 		})
 	}

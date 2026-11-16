@@ -76,8 +76,9 @@ function badgeMount(panel: Element, classes: { inline: string; corner: string; c
 
 /**
  * Marks the panels pending changes add or edit, in the view `getRoot` returns: a badge beside each
- * one's title, which the caller renders into the returned mounts, and the other panels dimmed. Decorates the rendered panels by their scene key instead of changing scene state, so
- * marking never makes the dashboard dirty.
+ * one's title, which the caller renders into the returned mounts, and the other panels dimmed. Marks
+ * nothing when the changes add or edit no panel. Decorates the rendered panels by their scene key
+ * instead of changing scene state, so marking never makes the dashboard dirty.
  */
 export function useChangeHighlights(
   dashboard: DashboardScene,
@@ -89,11 +90,13 @@ export function useChangeHighlights(
 
   useEffect(() => {
     const root = getRoot();
-    if (!changes || changes.length === 0 || !root) {
+    // Dimming points at the changed panels. With none to point at, such as a layout, variable or
+    // settings change, or a removed panel, it would only grey out the whole dashboard.
+    const panels = changedPanels(changes ?? []);
+    if (panels.size === 0 || !root) {
       setTargets([]);
       return;
     }
-    const panels = changedPanels(changes);
     const classes = {
       inline: css({ display: 'inline-flex', marginLeft: theme.spacing(1) }),
       corner: css({

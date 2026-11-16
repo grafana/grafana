@@ -73,11 +73,13 @@ metaV0Alpha1: {
 	// +listType=atomic
 	routes?: [...#Route]
 	skipDataQuery?: bool
-	state?:         "alpha" | "beta" | "stable" | "deprecated"
-	streaming?:     bool
-	suggestions?:   bool
-	tracing?:       bool
-	iam?:           #IAM
+	// @alpha Suppress automatic starter queries without disabling explicit queries.
+	skipDefaultQuery?: bool
+	state?:            "alpha" | "beta" | "stable" | "deprecated"
+	streaming?:        bool
+	suggestions?:      bool
+	tracing?:          bool
+	iam?:              #IAM
 	// +listType=atomic
 	roles?: [...#Role]
 	extensions?: #Extensions
@@ -236,6 +238,10 @@ metaV0Alpha1: {
 }
 
 #Extensions: {
+	// Bundled Markdown skills keyed by plugin-local slug.
+	skills?: [string]: {
+		path: string
+	}
 	// +listType=atomic
 	addedComponents?: [...{
 		// +listType=set

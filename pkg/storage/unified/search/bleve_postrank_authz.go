@@ -24,10 +24,10 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-// PostRankAuthzConfig tunes the post-filter authorization path: bleve ranks
-// without the in-searcher authz wrapper, a bounded window of hits is fetched,
+// PostRankAuthzConfig tunes the post-filter authorization path: Bleve ranks,
+// a bounded window of hits is fetched,
 // and authorization runs app-side in rank order, paging via SearchAfter until
-// the page is filled or the candidate budget is hit.
+// the page is filled or matches are exhausted. Counting can stop at the budget.
 type PostRankAuthzConfig struct {
 	// OverFetchFactor multiplies the requested limit to size the first bleve
 	// window. Subsequent windows grow geometrically (see growWindow).
@@ -37,11 +37,8 @@ type PostRankAuthzConfig struct {
 	// post-rank path loads all stored fields per hit) while letting sparse
 	// scans cover ground in fewer searches.
 	MaxWindow int
-	// MaxCandidates is the page-fill candidate budget: the scan stops after
-	// authorizing this many ranked hits. Bounds work for low authorized
-	// fractions. Trade-off: authorized docs sorting beyond the budget yield a
-	// short/empty page for sparse-access users (the in-searcher path is the
-	// exact alternative).
+	// MaxCandidates limits count-only scans and counting beyond a full trash
+	// page. It never shortens a result page.
 	MaxCandidates int
 	// FacetSampleSize is the candidate budget when aggregating facets. Facet
 	// counts reflect a sample of up to this many ranked hits, not the full
@@ -282,13 +279,13 @@ func (p *postRankPage) full() bool {
 }
 
 // add takes an authorized hit while the page has room. Once the page is full,
-// or when asked to, it validates what was added and returns how many hits it
-// dropped, which the hits still to come can replace.
-func (p *postRankPage) add(ctx context.Context, info docInfo, validate bool) (int, error) {
+// it validates what was added and returns how many hits it dropped, which the
+// hits still to come can replace.
+func (p *postRankPage) add(ctx context.Context, info docInfo) (int, error) {
 	if !p.full() {
 		p.hits = append(p.hits, info)
 	}
-	if !p.full() && !validate {
+	if !p.full() {
 		return 0, nil
 	}
 	return p.validate(ctx)
@@ -424,8 +421,7 @@ func batchCheckItem(info docInfo) authz.BatchCheckItem {
 }
 
 // parseHitDocInfo extracts the authorization fields from an already-ranked hit.
-// Unlike batchAuthzSearcher.parseDocInfo (which reads doc values mid-search),
-// the hit here already has its ID and stored fields populated by bleve. The doc
+// The hit already has its ID and stored fields populated by bleve. The doc
 // id is <namespace>/<group>/<resourceType>/<name>; the resourceType segment
 // distinguishes dashboards from folders in a federated alias and keys the verb.
 func parseHitDocInfo(doc *search.DocumentMatch, resources map[string]string) (docInfo, bool) {
@@ -462,11 +458,10 @@ func parseHitDocInfo(doc *search.DocumentMatch, resources map[string]string) (do
 
 // runPostFilterAuthz implements postFilter mode: bleve ranks without the authz
 // wrapper, the runner fetches bounded windows (paging via SearchAfter),
-// authorizes hits in rank order, and stops once the page is filled (page-fill
-// queries) or the candidate budget is hit. Count-only queries (Limit == 0, no
-// facets) have no page and stop only on exhaustion or the budget. TotalHits is
-// the exact authorized
-// count when the scan exhausts the index from the top (small sets, no incoming
+// authorizes hits in rank order, and fills the page or exhausts the matches.
+// Count-only queries and trash counting beyond a full page can stop at the
+// candidate budget. TotalHits is the exact authorized count when the scan
+// exhausts the index from the top (small sets, no incoming
 // cursor), else the unfiltered match count (page filled early / cap hit /
 // cursor pages — fast over exact). Facets are aggregated app-side over an
 // authorized sample that always starts at the top of the full query. index may
@@ -543,15 +538,13 @@ func (b *bleveIndex) runPostFilterAuthz(
 	reverseSort := applySearchBefore(req, firstReq)
 
 	// Windows read what authorization needs from doc values, and only the hits
-	// that make the page get their stored fields loaded, as on the in-searcher
-	// path. Most window hits never reach a page.
+	// that make the page get their stored fields loaded. Most window hits never
+	// reach a page.
 	windowReq := *firstReq
 	windowReq.Fields = nil
-	// Page-fill scans keep going past MaxCandidates until the page has a row, so
-	// sparse users don't get an empty first page just because the first
-	// authorized hit sorted beyond the budget. Count-only scans have no page, so
-	// the budget applies on its own.
-	budgetSpent := func() bool { return candidates >= maxCandidates && (countOnly || page.validated > 0) }
+	// Existing callers treat a short page as exhaustion. Only count-only scans
+	// and counting beyond a full page may stop at the budget.
+	budgetSpent := func() bool { return candidates >= maxCandidates && (countOnly || page.full()) }
 windows:
 	for window := 0; ; window++ {
 		res, err := searchInContext(ctx, index, &windowReq)
@@ -595,10 +588,7 @@ windows:
 			if authorized <= int64(offset) {
 				continue
 			}
-			// The rest of the scan refills whatever validation drops. Past the
-			// budget each hit is validated as it comes, as the first to survive
-			// ends the scan.
-			dropped, err := page.add(ctx, info, candidates >= maxCandidates)
+			dropped, err := page.add(ctx, info)
 			if err != nil {
 				return nil, err
 			}
@@ -607,14 +597,6 @@ windows:
 			if !countEveryHit && page.full() {
 				break windows
 			}
-		}
-		// Candidate budget exhausted. Only rows that survive validation count.
-		if candidates >= maxCandidates {
-			dropped, err := page.validate(ctx)
-			if err != nil {
-				return nil, err
-			}
-			authorized -= int64(dropped)
 		}
 		if budgetSpent() {
 			// A budget that covered every match leaves nothing unseen, so the
@@ -1073,6 +1055,7 @@ func (b *bleveIndex) addRowAccess(ctx context.Context, access authlib.AccessClie
 			Namespace: c.row.Key.Namespace,
 		}
 	}
+	ctx = withUserToReportTo(ctx, checks)
 	checkAll := func(checks []accessCheck) error {
 		allowed := make(map[accessCheck]bool, len(checks))
 		for c, err := range authz.FilterAuthorized(ctx, access, slices.Values(checks), check, authz.WithTracer(tracer), authz.WithSizeHint(len(checks))) {
@@ -1107,6 +1090,38 @@ func (b *bleveIndex) addRowAccess(ctx context.Context, access authlib.AccessClie
 			logger.Warn("Failed to check access to search results", "check", group, "error", err)
 		}
 	}
+}
+
+// userToReportTo is the user a search reports access to. The service checks are
+// for a service acting on a user's behalf: whether it may do the verb for the
+// user. The search only tells the user what they may do, so the user is given
+// the delegated permissions the checks need, and authz checks the user. The
+// calling service still had to be allowed to read each type to get the results.
+type userToReportTo struct {
+	authlib.AuthInfo
+	permissions []string
+}
+
+func (u userToReportTo) GetTokenDelegatedPermissions() []string {
+	return u.permissions
+}
+
+// withUserToReportTo puts the caller in ctx as a user to report to. A service
+// acting for itself is still checked on its own permissions, which delegated
+// permissions do not change.
+func withUserToReportTo(ctx context.Context, checks []accessCheck) context.Context {
+	user, ok := authlib.AuthInfoFrom(ctx)
+	if !ok {
+		return ctx
+	}
+	var permissions []string
+	for _, c := range checks {
+		permission := c.row.Key.Group + "/" + c.row.Key.Resource + ":" + c.verb
+		if !slices.Contains(permissions, permission) {
+			permissions = append(permissions, permission)
+		}
+	}
+	return authlib.WithAuthInfo(ctx, userToReportTo{AuthInfo: user, permissions: permissions})
 }
 
 // recordAccess sets each check's answer on its row: allowed when allowed is nil.

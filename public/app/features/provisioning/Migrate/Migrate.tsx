@@ -46,7 +46,7 @@ export function Migrate() {
     isError: isFoldersError,
     failedKinds,
     refetch: refetchFolders,
-  } = useMigrationData(contentKinds);
+  } = useMigrationData(contentKinds, availableResources);
   const [repos] = useRepositoryList({ watch: true });
   const [drawerScope, setDrawerScope] = useState<DrawerScope | null>(null);
   const [selectedFolderUids, setSelectedFolderUids] = useState<Set<string>>(new Set());

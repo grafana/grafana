@@ -1,4 +1,4 @@
-import type * as z from 'zod';
+import * as z from 'zod/mini';
 
 import { endBatch, startBatch } from '../../actions/utils/batch';
 import { type DashboardEditActionEventPayload } from '../../sidebar/events';
@@ -11,7 +11,7 @@ let lastBatchId = 0;
 
 export const startBatchCommand: MutationCommand<z.infer<typeof payloads.startBatch>> = {
   name: 'START_BATCH',
-  description: payloads.startBatch.description ?? '',
+  description: z.globalRegistry.get(payloads.startBatch)?.description ?? '',
   payloadSchema: payloads.startBatch,
   permission: requiresEdit,
   readOnly: false,
@@ -30,7 +30,7 @@ export const startBatchCommand: MutationCommand<z.infer<typeof payloads.startBat
 
 export const endBatchCommand: MutationCommand<z.infer<typeof payloads.endBatch>> = {
   name: 'END_BATCH',
-  description: payloads.endBatch.description ?? '',
+  description: z.globalRegistry.get(payloads.endBatch)?.description ?? '',
   payloadSchema: payloads.endBatch,
   permission: requiresEdit,
   readOnly: false,
@@ -50,7 +50,7 @@ function describeAction(action: DashboardEditActionEventPayload | undefined) {
 
 export const getLastActionCommand: MutationCommand<z.infer<typeof payloads.getLastAction>> = {
   name: 'GET_LAST_ACTION',
-  description: payloads.getLastAction.description ?? '',
+  description: z.globalRegistry.get(payloads.getLastAction)?.description ?? '',
   payloadSchema: payloads.getLastAction,
   permission: readOnly,
   readOnly: true,
@@ -74,7 +74,7 @@ function batchMismatch(action: DashboardEditActionEventPayload | undefined, expe
 
 export const undoCommand: MutationCommand<z.infer<typeof payloads.undo>> = {
   name: 'UNDO',
-  description: payloads.undo.description ?? '',
+  description: z.globalRegistry.get(payloads.undo)?.description ?? '',
   payloadSchema: payloads.undo,
   permission: requiresEdit,
   readOnly: false,
@@ -102,7 +102,7 @@ export const undoCommand: MutationCommand<z.infer<typeof payloads.undo>> = {
 
 export const redoCommand: MutationCommand<z.infer<typeof payloads.redo>> = {
   name: 'REDO',
-  description: payloads.redo.description ?? '',
+  description: z.globalRegistry.get(payloads.redo)?.description ?? '',
   payloadSchema: payloads.redo,
   permission: requiresEdit,
   readOnly: false,

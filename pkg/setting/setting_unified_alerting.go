@@ -193,7 +193,7 @@ type UnifiedAlertingSettings struct {
 	ExternalRulerUID string
 
 	// FolderLabelFullSyncInterval is how often the folder label syncer walks every folder to correct
-	// any drift in the has-rules label, on top of the pass it makes at startup.
+	// any drift in the folder rule labels, on top of the pass it makes at startup.
 	// Configured via the [unified_alerting] ini key "folder_label_full_sync_interval" or the
 	// GF_UNIFIED_ALERTING_FOLDER_LABEL_FULL_SYNC_INTERVAL environment variable.
 	FolderLabelFullSyncInterval time.Duration
@@ -239,6 +239,9 @@ type UnifiedAlertingPrometheusConversionSettings struct {
 	RuleQueryOffset time.Duration
 	// DefaultDatasourceUID is the default datasource UID to use when converting Prometheus rules if not specified via header
 	DefaultDatasourceUID string
+	// MaxRequestBodyBytes is the maximum allowed request body size in bytes for Prometheus conversion API POST endpoints.
+	// 0 means no limit.
+	MaxRequestBodyBytes int64
 }
 
 type UnifiedAlertingLokiSettings struct {
@@ -621,6 +624,10 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfg.PrometheusConversion = UnifiedAlertingPrometheusConversionSettings{
 		RuleQueryOffset:      prometheusConversion.Key("rule_query_offset").MustDuration(time.Minute),
 		DefaultDatasourceUID: prometheusConversion.Key("default_datasource_uid").MustString(""),
+		MaxRequestBodyBytes:  prometheusConversion.Key("max_request_body_bytes").MustInt64(52428800),
+	}
+	if uaCfg.PrometheusConversion.MaxRequestBodyBytes < 0 {
+		return fmt.Errorf("setting 'max_request_body_bytes' is invalid, only 0 or a positive integer are allowed")
 	}
 
 	rr := iniFile.Section("recording_rules")

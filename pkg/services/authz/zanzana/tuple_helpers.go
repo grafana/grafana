@@ -136,6 +136,9 @@ const (
 	scopeIdentifierWildcard = "*"
 )
 
+// Scope fragment for the organization-wide annotations resource.
+const scopeIdentifierAnnotationsOrganization = "organization"
+
 // TupleStringWithoutCondition returns the string representation of a tuple without its condition.
 // This is useful for deduplicating tuples that have the same user, relation, and object
 // but different conditions that need to be merged.
@@ -223,6 +226,25 @@ func ConvertRolePermissionsToTuples(roleUID string, permissions []RolePermission
 					}
 					tupleMap[tuple.String()] = tuple
 				}
+				continue
+			}
+		}
+
+		if strings.HasPrefix(perm.Action, "annotations:") && (perm.Kind == common.KindAnnotations || perm.Kind == scopeIdentifierWildcard) {
+			switch perm.Identifier {
+			case scopeIdentifierAnnotationsOrganization:
+				// The organization-wide annotations resource maps onto the whole group_resource.
+				perm.Identifier = scopeIdentifierWildcard
+			case scopeIdentifierWildcard:
+				// Like legacy RBAC, a wildcard annotation scope covers every annotation type (org and dashboard-scoped)
+				for _, kind := range []string{common.KindAnnotations, common.KindDashboards} {
+					translated, _ := TranslateToResourceTuples(subject, perm.Action, kind, scopeIdentifierWildcard)
+					for _, t := range translated {
+						tupleMap[t.String()] = t
+					}
+				}
+				continue
+			default:
 				continue
 			}
 		}
@@ -591,12 +613,14 @@ func resourcePermissionToTuples(resource *authzextv1.Resource, permission *authz
 	}
 
 	tuples := []*openfgav1.TupleKey{newResourcePermissionTuple(subject, relation, resource, "")}
-	if relation == RelationSetEdit || relation == RelationSetAdmin {
-		switch resource.GetGroup() + "/" + resource.GetResource() {
-		case "folder.grafana.app/folders":
+	switch resource.GetGroup() + "/" + resource.GetResource() {
+	case "folder.grafana.app/folders":
+		if relation == RelationSetEdit || relation == RelationSetAdmin {
 			tuples = append(tuples, newResourcePermissionTuple(subject, RelationCreate, resource, ""))
-		case "dashboard.grafana.app/dashboards":
-			tuples = append(tuples, newResourcePermissionTuple(subject, RelationCreate, resource, "annotations"))
+		}
+	case "dashboard.grafana.app/dashboards":
+		for _, annotationRelation := range common.DashboardAnnotationRelations(relation, false) {
+			tuples = append(tuples, newResourcePermissionTuple(subject, annotationRelation, resource, "annotations"))
 		}
 	}
 	return tuples, nil

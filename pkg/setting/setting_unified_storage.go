@@ -3,6 +3,7 @@ package setting
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"os"
 	"slices"
 	"strings"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/util/osutil"
+	"gopkg.in/ini.v1"
 )
 
 func (cfg *Cfg) readVectorAllowedReadServices() error {
@@ -232,6 +234,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.MigrationParquetBuffer = section.Key("migration_parquet_buffer").MustBool(false)
 	cfg.MigrationChunkedWrites = section.Key("migration_chunked_writes").MustBool(false)
 	cfg.MigrationChunkMaxBytes = section.Key("migration_chunk_max_bytes").MustInt64(256 * 1024 * 1024)
+	cfg.MigrationStatementTimeout = postgresStatementTimeout(section.Key("migration_statement_timeout").MustDuration(0))
 	cfg.DisableLegacyTableRename = section.Key("disable_legacy_table_rename").MustBool(false)
 	cfg.RenameWaitDeadline = section.Key("rename_wait_deadline").MustDuration(time.Minute)
 	cfg.UnifiedStorageAuthzExemptionEnabled = section.Key("authz_exemption_enabled").MustBool(false)
@@ -244,7 +247,6 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 		cfg.SearchInjectFailuresPercent = 100
 	}
 	cfg.EnableSearch = section.Key("enable_search").MustBool(true)
-	cfg.SearchPostRankAuthz = section.Key("search_post_rank_authz").MustBool(false)
 	// Zero values keep the search.PostRankAuthzConfig.effective() defaults.
 	cfg.SearchPostRankAuthzOverFetchFactor = section.Key("search_post_rank_authz_over_fetch_factor").MustInt(0)
 	cfg.SearchPostRankAuthzMaxWindow = section.Key("search_post_rank_authz_max_window").MustInt(0)
@@ -346,8 +348,9 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.EventRetentionPeriod = section.Key("event_retention_period").MustDuration(1 * time.Hour)
 	cfg.EventPruningInterval = section.Key("event_pruning_interval").MustDuration(5 * time.Minute)
 	cfg.SearchLookback = section.Key("search_lookback").MustDuration(1 * time.Second)
-	cfg.NotifierSettleDelay = section.Key("notifier_settle_delay").MustDuration(3 * time.Second)
-	cfg.SeededWatchesEnabled = section.Key("seeded_watches_enabled").MustBool(false)
+	// Unset leaves each notifier its own default: 100ms for legacy SQL watches
+	// fed from NATS, 3s otherwise.
+	cfg.NotifierSettleDelay = section.Key("notifier_settle_delay").MustDuration(0)
 	cfg.FastLatestKeyLookupEnabled = section.Key("fast_latest_key_lookup_enabled").MustBool(false)
 	cfg.ResourceVersionBatchTransactionTimeout = section.Key("resource_version_batch_transaction_timeout").MustDuration(5 * time.Second)
 	cfg.ResourceVersionMaxWait = section.Key("resource_version_max_wait").MustDuration(time.Second)
@@ -357,6 +360,14 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 
 	// use sqlkv (resource/sqlkv) instead of the sql backend (sql/backend) as the StorageServer
 	cfg.EnableSQLKVBackend = section.Key("enable_sqlkv_backend").MustBool(false)
+	// Seeding needs the global write order only the KV backend has. It defaults
+	// on only with the NATS notifier, the combination Grafana Cloud runs.
+	cfg.explicitWatchSettings.seededWatches = explicitlySet(section, "seeded_watches_enabled")
+	cfg.SeededWatchesEnabled = section.Key("seeded_watches_enabled").
+		MustBool(cfg.localStorageBackend() == localStorageBackendKV && cfg.NATSNotifierActive())
+	for _, ignored := range cfg.ignoredWatchSettings() {
+		cfg.Logger.Warn("Watch setting has no effect", "setting", ignored.setting, "reason", ignored.reason)
+	}
 	cfg.KeyPathReconciliationEnabled = section.Key("key_path_reconciliation_enabled").MustBool(true)
 	// TTL for per-resource write leases; 0 uses the backend default (10s).
 	cfg.KVLeaseTTL = section.Key("kv_lease_ttl").MustDuration(0)
@@ -446,6 +457,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.RerankVertexModel = rerankSection.Key("vertex_model").MustString("semantic-ranker-fast-004")
 	cfg.RerankBedrockRegion = rerankSection.Key("bedrock_region").MustString("us-east-1")
 	cfg.RerankBedrockModel = rerankSection.Key("bedrock_model").MustString("cohere.rerank-v3-5:0")
+	cfg.RerankHedgeDelay = rerankSection.Key("hedge_delay").MustDuration(500 * time.Millisecond)
 }
 
 func (cfg *Cfg) ValidateSharedVectorConfig() error {
@@ -567,6 +579,101 @@ func (cfg *Cfg) UnifiedStorageType() string {
 	return defaultStorageType
 }
 
+// localStorageBackend is the storage backend this process runs for unified storage.
+type localStorageBackend int
+
+const (
+	// localStorageBackendNone: unified-grpc talks to a storage server that runs
+	// elsewhere and reads its own settings.
+	localStorageBackendNone localStorageBackend = iota
+	// localStorageBackendFile is the badger file store, which takes no NATS options.
+	localStorageBackendFile
+	// localStorageBackendSQL is the legacy SQL backend.
+	localStorageBackendSQL
+	// localStorageBackendKV is the KV backend, over SQL or over gRPC.
+	localStorageBackendKV
+)
+
+// localStorageBackend mirrors how the storage backend is picked from storage_type
+// and enable_sqlkv_backend.
+func (cfg *Cfg) localStorageBackend() localStorageBackend {
+	switch cfg.UnifiedStorageType() {
+	case "unified-grpc":
+		return localStorageBackendNone
+	case "file":
+		return localStorageBackendFile
+	case "unified-kv-grpc":
+		return localStorageBackendKV
+	}
+	if cfg.EnableSQLKVBackend {
+		return localStorageBackendKV
+	}
+	return localStorageBackendSQL
+}
+
+// NATSNotifierActive reports whether the local storage backend feeds watches
+// from the NATS bus rather than polling the database.
+func (cfg *Cfg) NATSNotifierActive() bool {
+	if !cfg.NATS.Enabled || !cfg.NATS.Notifier {
+		return false
+	}
+	switch cfg.localStorageBackend() {
+	case localStorageBackendSQL, localStorageBackendKV:
+		return true
+	default:
+		return false
+	}
+}
+
+type explicitWatchSettings struct {
+	notifier            bool
+	notifierWatchMaxAge bool
+	seededWatches       bool
+}
+
+type ignoredWatchSetting struct {
+	setting string
+	reason  string
+}
+
+// ignoredWatchSettings lists the watch settings that are set explicitly but
+// that the local storage backend does not use, so a misconfiguration shows up
+// at startup instead of as watches that quietly behave differently. Defaults
+// never show up here: they already follow the backend.
+func (cfg *Cfg) ignoredWatchSettings() []ignoredWatchSetting {
+	backend := cfg.localStorageBackend()
+	if backend == localStorageBackendNone {
+		return nil
+	}
+	natsActive := cfg.NATSNotifierActive()
+	notifierReason := "the NATS notifier is off"
+	switch {
+	case !cfg.NATS.Enabled:
+		notifierReason = "NATS is disabled"
+	case backend == localStorageBackendFile:
+		notifierReason = "the file storage backend does not use NATS"
+	}
+
+	explicit := cfg.explicitWatchSettings
+	var ignored []ignoredWatchSetting
+	if explicit.notifier && cfg.NATS.Notifier && !natsActive {
+		ignored = append(ignored, ignoredWatchSetting{setting: "[nats] notifier", reason: notifierReason})
+	}
+	if explicit.notifierWatchMaxAge && cfg.NATS.NotifierWatchMaxAge > 0 && !natsActive {
+		ignored = append(ignored, ignoredWatchSetting{setting: "[nats] notifier_watch_max_age", reason: notifierReason})
+	}
+	if explicit.seededWatches && cfg.SeededWatchesEnabled && backend == localStorageBackendSQL {
+		ignored = append(ignored, ignoredWatchSetting{setting: "[unified_storage] seeded_watches_enabled", reason: "the legacy SQL backend cannot seed watches"})
+	}
+	return ignored
+}
+
+// explicitlySet reports whether key has a value: conf/defaults.ini ships some
+// keys empty so that their defaults can depend on other settings.
+func explicitlySet(section *ini.Section, key string) bool {
+	return section.HasKey(key) && strings.TrimSpace(section.Key(key).String()) != ""
+}
+
 // UnifiedStorageConfig returns the UnifiedStorageConfig for a resource.
 func (cfg *Cfg) UnifiedStorageConfig(resource string) UnifiedStorageConfig {
 	if cfg.UnifiedStorage == nil {
@@ -584,4 +691,14 @@ func (cfg *Cfg) EnableMode5(resource string) {
 	config.DualWriterMode = rest.Mode5
 	config.EnableMigration = true
 	cfg.UnifiedStorage[resource] = config
+}
+
+// postgresStatementTimeout keeps a positive timeout within what Postgres accepts: whole milliseconds up
+// to 2147483647. A larger value fails the SET at migration startup, and a sub-millisecond one would
+// become 0, which disables the timeout.
+func postgresStatementTimeout(d time.Duration) time.Duration {
+	if d <= 0 {
+		return 0
+	}
+	return min(max(d, time.Millisecond), math.MaxInt32*time.Millisecond)
 }

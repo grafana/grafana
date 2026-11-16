@@ -35,19 +35,19 @@ describe('<LinkEditActions />', () => {
     jest.clearAllMocks();
   });
 
-  test('renders link Settings, Duplicate, and Delete controls', () => {
+  test('renders link Links settings, Duplicate, and Delete controls', () => {
     renderLinkEditActions();
 
-    expect(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Links settings' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Duplicate' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
   });
 
-  describe('when the user clicks on Settings', () => {
+  describe('when the user clicks on Links settings', () => {
     test('calls onClickEdit', () => {
       const { onClickEdit } = renderLinkEditActions();
 
-      fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Links settings' }));
 
       expect(onClickEdit).toHaveBeenCalledTimes(1);
     });

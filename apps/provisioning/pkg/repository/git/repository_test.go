@@ -137,7 +137,7 @@ func TestNewRepository_SendsUserAgent(t *testing.T) {
 			require.NoError(t, err)
 
 			ok, err := gitRepo.(*gitRepository).client.CanRead(t.Context())
-			require.NoError(t, err)
+			require.ErrorIs(t, err, client.ErrUnauthorized)
 			require.False(t, ok)
 
 			mu.Lock()
@@ -175,6 +175,56 @@ func TestExtra_BuildUsesUserAgent(t *testing.T) {
 func TestUserAgent(t *testing.T) {
 	require.Equal(t, "grafana-provisioning/13.4.0", UserAgent("13.4.0"))
 	require.Equal(t, "grafana-provisioning", UserAgent(""))
+}
+
+func TestGitRepository_Test_ReportsGitServerStatus(t *testing.T) {
+	tests := []struct {
+		status     int
+		wantCode   int
+		wantField  string
+		wantDetail string
+	}{
+		{
+			status:     http.StatusUnauthorized,
+			wantCode:   http.StatusUnauthorized,
+			wantField:  "secure.token",
+			wantDetail: "authentication failed: the Git server returned HTTP 401 Unauthorized",
+		},
+		{
+			// github.com answered every request from nanogit's default User-Agent this way,
+			// while the token was valid.
+			status:     http.StatusForbidden,
+			wantCode:   http.StatusForbidden,
+			wantField:  "secure.token",
+			wantDetail: "permission denied: the Git server returned HTTP 403 Forbidden",
+		},
+		{
+			status:     http.StatusNotFound,
+			wantCode:   http.StatusNotFound,
+			wantField:  "spec.git.url",
+			wantDetail: "repository not found",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(http.StatusText(tt.status), func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(tt.status)
+			}))
+			t.Cleanup(server.Close)
+
+			config := &provisioning.Repository{Spec: provisioning.RepositorySpec{Type: provisioning.GitRepositoryType}}
+			gitRepo, err := NewRepository(t.Context(), config, RepositoryConfig{URL: server.URL + "/owner/repo", Branch: "main"}, nil, nil)
+			require.NoError(t, err)
+
+			results, err := gitRepo.Test(t.Context())
+			require.NoError(t, err)
+			require.False(t, results.Success)
+			require.Equal(t, tt.wantCode, results.Code)
+			require.Len(t, results.Errors, 1)
+			require.Equal(t, tt.wantField, results.Errors[0].Field)
+			require.Equal(t, tt.wantDetail, results.Errors[0].Detail)
+		})
+	}
 }
 
 func TestCreateSignature(t *testing.T) {
@@ -385,6 +435,28 @@ func TestGitRepository_Test(t *testing.T) {
 					},
 				},
 				Code: http.StatusUnauthorized,
+			},
+			wantError: nil,
+		},
+		{
+			name: "failure - repository not found (HTTP 404) from CanRead",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.CanReadReturns(false, client.NewRepositoryNotFoundError("GET", "info/refs", nil))
+				mockClient.RepoExistsReturns(false, nil)
+			},
+			gitConfig: RepositoryConfig{
+				Branch: "main",
+			},
+			wantResults: &provisioning.TestResults{
+				Success: false,
+				Errors: []provisioning.ErrorDetails{
+					{
+						Type:   metav1.CauseTypeFieldValueInvalid,
+						Field:  field.NewPath("spec", "test_type", "url").String(),
+						Detail: "repository not found",
+					},
+				},
+				Code: http.StatusNotFound,
 			},
 			wantError: nil,
 		},
@@ -631,7 +703,7 @@ func TestGitRepository_Test(t *testing.T) {
 					{
 						Type:   metav1.CauseTypeFieldValueInvalid,
 						Field:  field.NewPath("secure", "token").String(),
-						Detail: "authentication failed",
+						Detail: "authentication failed: the Git server returned HTTP 401 Unauthorized",
 					},
 				},
 				Code: http.StatusUnauthorized,
@@ -653,7 +725,7 @@ func TestGitRepository_Test(t *testing.T) {
 					{
 						Type:   metav1.CauseTypeFieldValueInvalid,
 						Field:  field.NewPath("secure", "token").String(),
-						Detail: "permission denied",
+						Detail: "permission denied: the Git server returned HTTP 403 Forbidden",
 					},
 				},
 				Code: http.StatusForbidden,
@@ -699,7 +771,7 @@ func TestGitRepository_Test(t *testing.T) {
 					{
 						Type:   metav1.CauseTypeFieldValueInvalid,
 						Field:  field.NewPath("secure", "token").String(),
-						Detail: "authentication failed",
+						Detail: "authentication failed: the Git server returned HTTP 401 Unauthorized",
 					},
 				},
 				Code: http.StatusUnauthorized,
@@ -722,7 +794,7 @@ func TestGitRepository_Test(t *testing.T) {
 					{
 						Type:   metav1.CauseTypeFieldValueInvalid,
 						Field:  field.NewPath("secure", "token").String(),
-						Detail: "permission denied",
+						Detail: "permission denied: the Git server returned HTTP 403 Forbidden",
 					},
 				},
 				Code: http.StatusForbidden,
@@ -850,7 +922,7 @@ func TestGitRepository_Test(t *testing.T) {
 					{
 						Type:   metav1.CauseTypeFieldValueInvalid,
 						Field:  field.NewPath("secure", "token").String(),
-						Detail: "permission denied",
+						Detail: "permission denied: the Git server returned HTTP 403 Forbidden",
 					},
 				},
 				Code: http.StatusForbidden,
@@ -2465,6 +2537,10 @@ func TestNewGitRepository(t *testing.T) {
 				} else {
 					require.Empty(t, gitRepo.(*gitRepository).writerOptions)
 				}
+				// The hardcoded per-file content cap is always seeded into the
+				// post-read size check so oversized blobs are rejected even if
+				// WithMaxFileSize is never called explicitly.
+				require.Equal(t, int64(maxFileContentBytes), gitRepo.(*gitRepository).maxBytes.Load())
 			}
 		})
 	}

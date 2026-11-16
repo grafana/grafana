@@ -53,6 +53,17 @@ func (f *fakeZanzanaClient) List(context.Context, *authzv1.ListRequest) (*authzv
 	return f.listResp, f.listErr
 }
 
+func (f *fakeZanzanaClient) GetUserPermissions(context.Context, authlib.AuthInfo, authlib.GetUserPermissionsRequest) (authlib.GetUserPermissionsResponse, error) {
+	if f.listErr != nil {
+		return authlib.GetUserPermissionsResponse{}, f.listErr
+	}
+	result := authlib.GetUserPermissionsResponse{}
+	for _, uid := range f.listResp.GetItems() {
+		result.Permissions = append(result.Permissions, authlib.Permission{Action: "dashboards:read", Scope: "dashboards:uid:" + uid})
+	}
+	return result, nil
+}
+
 func (f *fakeZanzanaClient) Read(context.Context, *authzextv1.ReadRequest) (*authzextv1.ReadResponse, error) {
 	return nil, nil
 }
@@ -71,21 +82,21 @@ func (f *fakeZanzanaClient) Query(context.Context, *authzextv1.QueryRequest) (*a
 
 type countingZanzanaClient struct {
 	fakeZanzanaClient
-	mu        sync.Mutex
-	listCalls int
+	mu              sync.Mutex
+	permissionCalls int
 }
 
-func (c *countingZanzanaClient) List(ctx context.Context, req *authzv1.ListRequest) (*authzv1.ListResponse, error) {
+func (c *countingZanzanaClient) GetUserPermissions(ctx context.Context, id authlib.AuthInfo, req authlib.GetUserPermissionsRequest) (authlib.GetUserPermissionsResponse, error) {
 	c.mu.Lock()
-	c.listCalls++
+	c.permissionCalls++
 	c.mu.Unlock()
-	return c.fakeZanzanaClient.List(ctx, req)
+	return c.fakeZanzanaClient.GetUserPermissions(ctx, id, req)
 }
 
-func (c *countingZanzanaClient) ListCallCount() int {
+func (c *countingZanzanaClient) PermissionsCallCount() int {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	return c.listCalls
+	return c.permissionCalls
 }
 
 func sortPermissions(perms []accesscontrol.Permission) {
@@ -236,19 +247,19 @@ func TestZanzanaPermissionResolver_MergeCurrentUser(t *testing.T) {
 
 	t.Run("nil resolver returns legacy unchanged", func(t *testing.T) {
 		var r *ZanzanaPermissionResolver
-		got := r.MergeCurrentUser(context.Background(), &user.SignedInUser{}, legacy, log.New("test"))
+		got := r.MergeCurrentUser(context.Background(), &user.SignedInUser{}, legacy, log.New("test"), false)
 		require.Equal(t, legacy, got)
 	})
 
 	t.Run("zanzana failure returns legacy only", func(t *testing.T) {
 		r := NewZanzanaPermissionResolver(&fakeZanzanaClient{listErr: errors.New("zanzana unavailable")}, &usertest.FakeUserService{}, nil, false)
-		got := r.MergeCurrentUser(context.Background(), &user.SignedInUser{OrgID: 1, UserID: 1, UserUID: "user_test_uid"}, legacy, log.New("test"))
+		got := r.MergeCurrentUser(context.Background(), &user.SignedInUser{OrgID: 1, UserID: 1, UserUID: "user_test_uid"}, legacy, log.New("test"), false)
 		require.Equal(t, legacy, got)
 	})
 
 	t.Run("success unions zanzana permissions", func(t *testing.T) {
 		r := NewZanzanaPermissionResolver(&fakeZanzanaClient{listResp: &authzv1.ListResponse{Items: []string{"zanzana-dash"}}}, &usertest.FakeUserService{}, nil, false)
-		got := r.MergeCurrentUser(context.Background(), &user.SignedInUser{OrgID: 1, UserID: 1, UserUID: "user_test_uid"}, legacy, log.New("test"))
+		got := r.MergeCurrentUser(context.Background(), &user.SignedInUser{OrgID: 1, UserID: 1, UserUID: "user_test_uid"}, legacy, log.New("test"), false)
 		require.Contains(t, got, accesscontrol.Permission{Action: "dashboards:read", Scope: "dashboards:uid:legacy"})
 		require.Contains(t, got, accesscontrol.Permission{Action: "dashboards:read", Scope: "dashboards:uid:zanzana-dash"})
 	})
@@ -336,12 +347,12 @@ func TestService_GetUserPermissions_CachesZanzanaPermissions(t *testing.T) {
 
 	_, err := svc.GetUserPermissions(context.Background(), siu, accesscontrol.Options{})
 	require.NoError(t, err)
-	firstCalls := zClient.ListCallCount()
-	require.NotZero(t, firstCalls, "first resolve should call Zanzana List")
+	firstCalls := zClient.PermissionsCallCount()
+	require.NotZero(t, firstCalls, "first resolve should call Zanzana GetUserPermissions")
 
 	_, err = svc.GetUserPermissions(context.Background(), siu, accesscontrol.Options{})
 	require.NoError(t, err)
-	require.Equal(t, firstCalls, zClient.ListCallCount(), "cached second call should not re-resolve Zanzana permissions")
+	require.Equal(t, firstCalls, zClient.PermissionsCallCount(), "cached second call should not re-resolve Zanzana permissions")
 }
 
 func TestService_GetUserPermissions_ReloadCacheBypassesZanzanaCache(t *testing.T) {
@@ -356,11 +367,11 @@ func TestService_GetUserPermissions_ReloadCacheBypassesZanzanaCache(t *testing.T
 
 	_, err := svc.GetUserPermissions(context.Background(), siu, accesscontrol.Options{})
 	require.NoError(t, err)
-	firstCalls := zClient.ListCallCount()
+	firstCalls := zClient.PermissionsCallCount()
 
 	_, err = svc.GetUserPermissions(context.Background(), siu, accesscontrol.Options{ReloadCache: true})
 	require.NoError(t, err)
-	require.Greater(t, zClient.ListCallCount(), firstCalls, "ReloadCache should bypass Zanzana cache")
+	require.Greater(t, zClient.PermissionsCallCount(), firstCalls, "ReloadCache should bypass Zanzana cache")
 }
 
 func TestService_GetUserPermissions_SkipZanzanaCacheDoesNotReadOrWriteCache(t *testing.T) {
@@ -402,13 +413,13 @@ func TestService_GetUserPermissions_ClearUserPermissionCacheBypassesZanzanaCache
 
 	_, err := svc.GetUserPermissions(context.Background(), siu, accesscontrol.Options{})
 	require.NoError(t, err)
-	firstCalls := zClient.ListCallCount()
+	firstCalls := zClient.PermissionsCallCount()
 
 	svc.ClearUserPermissionCache(siu)
 
 	_, err = svc.GetUserPermissions(context.Background(), siu, accesscontrol.Options{})
 	require.NoError(t, err)
-	require.Greater(t, zClient.ListCallCount(), firstCalls, "ClearUserPermissionCache should invalidate Zanzana cache")
+	require.Greater(t, zClient.PermissionsCallCount(), firstCalls, "ClearUserPermissionCache should invalidate Zanzana cache")
 }
 
 func TestService_GetUserPermissions_DoesNotCacheZanzanaWhenPermissionCacheDisabled(t *testing.T) {
@@ -423,12 +434,12 @@ func TestService_GetUserPermissions_DoesNotCacheZanzanaWhenPermissionCacheDisabl
 
 	_, err := svc.GetUserPermissions(context.Background(), siu, accesscontrol.Options{})
 	require.NoError(t, err)
-	firstCalls := zClient.ListCallCount()
+	firstCalls := zClient.PermissionsCallCount()
 	require.NotZero(t, firstCalls)
 
 	_, err = svc.GetUserPermissions(context.Background(), siu, accesscontrol.Options{})
 	require.NoError(t, err)
-	require.Greater(t, zClient.ListCallCount(), firstCalls, "PermissionCache disabled should resolve Zanzana on every call")
+	require.Greater(t, zClient.PermissionsCallCount(), firstCalls, "PermissionCache disabled should resolve Zanzana on every call")
 }
 
 func TestService_SearchUsersPermissions_MergesLegacyAndZanzana(t *testing.T) {
@@ -562,5 +573,68 @@ func TestIntegrationGetUserPermissions_UsesLegacyWhenZanzanaFails(t *testing.T) 
 				}
 			})
 		}
+	}
+}
+
+type principalCacheRequestClient struct {
+	fakeZanzanaClient
+	skipCache bool
+}
+
+func (c *principalCacheRequestClient) GetUserPermissions(_ context.Context, _ authlib.AuthInfo, req authlib.GetUserPermissionsRequest) (authlib.GetUserPermissionsResponse, error) {
+	c.skipCache = req.SkipCache
+	return authlib.GetUserPermissionsResponse{}, nil
+}
+func TestService_GetUserPermissions_ForwardsExplicitReloadToPrincipalCache(t *testing.T) {
+	for _, options := range []accesscontrol.Options{{}, {SkipZanzanaCache: true}, {ReloadCache: true}, {ReloadCache: true, SkipZanzanaCache: true}} {
+		t.Run(fmt.Sprintf("reload=%t/contextual=%t", options.ReloadCache, options.SkipZanzanaCache), func(t *testing.T) {
+			client := &principalCacheRequestClient{}
+			svc := setupServiceWithPermissionCache(t, &actest.FakeStore{}, client, &usertest.FakeUserService{}, true)
+			_, err := svc.GetUserPermissions(t.Context(), testSignedInUser(), options)
+			require.NoError(t, err)
+			require.Equal(t, options.ReloadCache, client.skipCache, "contextual-team isolation must not disable reusable principal caches")
+		})
+	}
+}
+
+type contextualPermissionClient struct {
+	fakeZanzanaClient
+	calls int
+}
+
+func (c *contextualPermissionClient) GetUserPermissions(_ context.Context, caller authlib.AuthInfo, req authlib.GetUserPermissionsRequest) (authlib.GetUserPermissionsResponse, error) {
+	c.calls++
+	result := authlib.GetUserPermissionsResponse{}
+	for _, team := range caller.GetGroups() {
+		result.Permissions = append(result.Permissions, authlib.Permission{Action: "dashboards:write", Scope: "folders:uid:" + team})
+	}
+	if req.SkipCache {
+		return result, errors.New("ordinary contextual requests must reuse principal caches")
+	}
+	return result, nil
+}
+
+func TestService_GetUserPermissions_ComposesCurrentExternalGroups(t *testing.T) {
+	client := &contextualPermissionClient{}
+	svc := setupServiceWithPermissionCache(t, &actest.FakeStore{}, client, &usertest.FakeUserService{}, true)
+	svc.cfg.IDUseExternalGroupsForGroupsClaim = true
+	svc.zanzanaResolver = NewZanzanaPermissionResolver(client, &usertest.FakeUserService{}, nil, true)
+	requester := testSignedInUser()
+	for i, teams := range [][]string{{"team-a"}, {"team-b"}, nil, {"team-a"}} {
+		requester.ExternalGroups = teams
+		got, err := svc.GetUserPermissions(t.Context(), requester, accesscontrol.Options{})
+		require.NoError(t, err)
+		var writes []string
+		for _, permission := range got {
+			if permission.Action == "dashboards:write" {
+				writes = append(writes, permission.Scope)
+			}
+		}
+		var want []string
+		for _, team := range teams {
+			want = append(want, "folders:uid:"+team)
+		}
+		require.ElementsMatch(t, want, writes)
+		require.Equal(t, i+1, client.calls)
 	}
 }

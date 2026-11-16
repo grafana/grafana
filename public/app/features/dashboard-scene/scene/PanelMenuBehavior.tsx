@@ -41,7 +41,7 @@ import { openShareDrawer } from '../sharing/ShareDrawer/openShareDrawer';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
 import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
 import { DashboardInteractions } from '../utils/interactions';
-import { isMobileEditDeprecated } from '../utils/mobileEditDeprecation';
+import { isEditEntryBlocked, isMobileEditDeprecated } from '../utils/mobileEditDeprecation';
 import { getPanelStyleConfig } from '../utils/panelStyleConfigs';
 import { getEditPanelUrl, tryGetExploreUrlForPanel } from '../utils/urlBuilders';
 import { getDashboardSceneFor, isLibraryPanel } from '../utils/utils';
@@ -50,6 +50,7 @@ import { getPanelIdForVizPanel } from '../utils/utils-panels';
 import { DashboardScene } from './DashboardScene';
 import { VizPanelLinks, type VizPanelLinksMenu } from './PanelLinks';
 import { UnlinkLibraryPanelModal } from './UnlinkLibraryPanelModal';
+import { VizPanelHeaderActions } from './VizPanelHeaderActions';
 import { canManuallyEditDashboard, dashboardModesEnabled, isViewingDashboard } from './dashboardModes';
 import { PanelTimeRangeDrawer } from './panel-timerange/PanelTimeRangeDrawer';
 
@@ -79,7 +80,15 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
     }
 
     const isEditingPanel = Boolean(dashboard.state.editPanel);
-    if (!isEditingPanel) {
+    // These panels are rendered with the panel actions popover, so actions it offers are left out of the menu.
+    const hasActionsPopover =
+      getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaPanelActionsPopover, false) &&
+      !isEditingPanel &&
+      !dashboard.state.panelSearch &&
+      !dashboard.state.panelsPerRow;
+    const isEditing = isFullDashboardEditing(dashboard.state);
+
+    if (!isEditingPanel && !hasActionsPopover) {
       items.push({
         text: t('panel.header-menu.view', `View`),
         iconClassName: 'eye',
@@ -100,7 +109,8 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       dashboard.state.editable &&
       !isReadOnlyRepeat &&
       !isEditingPanel &&
-      !isMobileEditDeprecated()
+      !hasActionsPopover &&
+      !isEditEntryBlocked(dashboard)
     ) {
       // We could check isEditing here but I kind of think this should always be in the menu,
       // and going into panel edit should make the dashboard go into edit mode is it's not already
@@ -184,7 +194,20 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       },
     });
 
-    if (isFullDashboardEditing(dashboard.state) && !isReadOnlyRepeat && !isEditingPanel) {
+    // With the panel actions popover, group by moves from the panel header into the menu.
+    const headerActions = panel.state.headerActions;
+    if (hasActionsPopover && headerActions instanceof VizPanelHeaderActions && headerActions.canGroupBy()) {
+      items.push({
+        text: t('panel.header-menu.group-by', 'Group by…'),
+        iconClassName: 'layer-group',
+        onClick: () => headerActions.openGroupByPicker(),
+      });
+    }
+
+    // In edit mode the popover offers Duplicate and Remove, except on repeated panels.
+    const popoverHasLayoutActions = hasActionsPopover && isFullDashboardEditing(dashboard.state) && !isReadOnlyRepeat;
+
+    if (isFullDashboardEditing(dashboard.state) && !isReadOnlyRepeat && !isEditingPanel && !popoverHasLayoutActions) {
       moreSubMenu.push({
         text: t('panel.header-menu.duplicate', `Duplicate`),
         iconClassName: 'file-copy-alt',
@@ -198,7 +221,11 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
 
     if (!isEditingPanel && !isMobileEditDeprecated()) {
       moreSubMenu.push({
-        text: t('panel.header-menu.copy', `Copy`),
+        // Copying a repeated panel copies its source panel together with the repeat options.
+        text:
+          hasActionsPopover && isReadOnlyRepeat
+            ? t('panel.header-menu.copy-repeated-panel', 'Copy repeated panel')
+            : t('panel.header-menu.copy', `Copy`),
         iconClassName: 'copy',
         onClick: () => {
           DashboardInteractions.panelActionClicked('copy', getPanelIdForVizPanel(panel), 'panel');
@@ -302,7 +329,8 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       });
     }
 
-    if (exploreMenuItem) {
+    // The popover only offers Explore in view mode.
+    if (exploreMenuItem && !(hasActionsPopover && !isEditing)) {
       items.push(exploreMenuItem);
     }
 
@@ -412,7 +440,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       });
     }
 
-    if (isFullDashboardEditing(dashboard.state) && !isReadOnlyRepeat && !isEditingPanel) {
+    if (isFullDashboardEditing(dashboard.state) && !isReadOnlyRepeat && !isEditingPanel && !popoverHasLayoutActions) {
       items.push({
         text: '',
         type: 'divider',
