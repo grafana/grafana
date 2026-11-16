@@ -322,25 +322,26 @@ User adds a panel from Explore to a dashboard via the "Add to dashboard" form.
 
 **File:** `public/app/core/journeys/datasourcePickerSelect.ts`
 
-User opens the data source picker dropdown and selects a data source. The same `DataSourcePicker` is used in Explore, the panel query editor, query/ad hoc/group by variable editors, annotation editors and alerting, so the journey records a `surface` attribute derived from the URL. Data source variables use a plain type select, not the picker, so they are not covered.
+User opens the data source picker dropdown and selects a data source. The same `DataSourcePicker` is used in Explore, the panel query editor, query/ad hoc/group by variable editors, annotation editors and alerting, so the journey records a `surface` attribute. It comes from the URL, or from the picker's `journeySurface` prop where the URL can't tell (variable and annotation editors, including the dashboard edit pane). Data source variables use a plain type select, not the picker, so they are not covered.
 
-| Event           | Trigger                                                        | Action                                                                                  |
-| --------------- | -------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| Start           | `dashboards_dspicker_opened`                                   | Dropdown opened by click, typing or arrow keys; records `surface` and `totalConfigured` |
-| Step (duration) | `dashboards_dspicker_list_rendered`                            | Ends the `list_render` step that starts when the dropdown opens                         |
-| Event           | `dashboards_dspicker_clicked` (`item=search`)                  | `search` event                                                                          |
-| Event           | `dashboards_dspicker_clicked` (`item=open_advanced_ds_picker`) | `open_advanced` event; later selection is tagged `selectedIn=modal`                     |
-| End (success)   | `dashboards_dspicker_clicked` (`item=select_ds`)               | A different data source was selected (`changed=true`)                                   |
-| End (success)   | `dashboards_dspicker_current_reselected`                       | The current data source was picked again (`changed=false`)                              |
-| End (discarded) | `dashboards_dspicker_dismissed`                                | Dropdown closed without a selection                                                     |
-| End (discarded) | `dashboards_dspickermodal_clicked` (`item=dismiss`)            | Advanced modal closed without a selection                                               |
-| End (abandoned) | `dashboards_dspicker_dismissed` (`reason=unmount`)             | Picker unmounted while open                                                             |
-| End (abandoned) | Route pathname change                                          | User navigated away                                                                     |
-| End (abandoned) | `dashboards_dspickermodal_clicked` (`item=config_new_ds`)      | User left to configure a new data source                                                |
+| Event           | Trigger                                                        | Action                                                                                                       |
+| --------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Start           | `dashboards_dspicker_opened`                                   | Dropdown opened by click, typing or arrow keys; records `surface`                                            |
+| Step (duration) | `dashboards_dspicker_list_rendered`                            | Ends the `list_render` step once the list's rows are painted; then sets `totalConfigured` (all data sources) |
+| Event           | `dashboards_dspicker_clicked` (`item=search`)                  | `search` event                                                                                               |
+| Event           | `dashboards_dspicker_clicked` (`item=open_advanced_ds_picker`) | `open_advanced` event; later selection is tagged `selectedIn=modal`                                          |
+| End (success)   | `dashboards_dspicker_clicked` (`item=select_ds`)               | A different data source was selected (`changed=true`)                                                        |
+| End (success)   | `dashboards_dspicker_current_reselected`                       | The current data source was picked again (`changed=false`)                                                   |
+| End (success)   | `dashboards_dspicker_cleared`                                  | The data source was cleared while the dropdown was open (`cleared=true`)                                     |
+| End (discarded) | `dashboards_dspicker_dismissed`                                | Dropdown closed without a selection                                                                          |
+| End (discarded) | `dashboards_dspickermodal_clicked` (`item=dismiss`)            | Advanced modal closed without a selection                                                                    |
+| End (abandoned) | `dashboards_dspicker_dismissed` (`reason=unmount`)             | Picker unmounted while open                                                                                  |
+| End (abandoned) | Route pathname change                                          | User navigated away                                                                                          |
+| End (abandoned) | `dashboards_dspickermodal_clicked` (`item=config_new_ds`)      | User left to configure a new data source                                                                     |
 
-**Silent interactions added by this journey:** `dashboards_dspicker_opened`, `dashboards_dspicker_list_rendered`, `dashboards_dspicker_dismissed` and `dashboards_dspicker_current_reselected`, all emitted by `DataSourcePicker.tsx`.
+**Silent interactions added by this journey:** `dashboards_dspicker_opened`, `dashboards_dspicker_dismissed`, `dashboards_dspicker_current_reselected` and `dashboards_dspicker_cleared` (emitted by `DataSourcePicker.tsx`), and `dashboards_dspicker_list_rendered` (emitted by `DataSourceList.tsx`).
 
-**Key behavior:** The `list_render` step is the time from opening the dropdown until the list has been filtered, sorted and committed. It is the main signal for instances with very many data sources. Every open starts a fresh journey, and `cancelOnRestart` cancels any instance still active. The journey nests under `panel_edit` or `dashboard_edit` when either is active.
+**Key behavior:** The `list_render` step is the time from opening the dropdown until the list has been filtered, sorted and its visible rows painted (two animation frames after mount, so the virtualizer has rendered the rows). It is the main signal for instances with very many data sources. Every open starts a fresh journey, and `cancelOnRestart` cancels any instance still active. The journey nests under `panel_edit` or `dashboard_edit` when either is active.
 
 ## Adding a New Journey
 

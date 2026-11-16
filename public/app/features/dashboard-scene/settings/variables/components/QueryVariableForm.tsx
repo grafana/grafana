@@ -134,7 +134,13 @@ export function QueryVariableEditorForm({
           label={t('dashboard-scene.query-variable-editor-form.label-data-source', 'Data source')}
           htmlFor="data-source-picker"
         >
-          <DataSourcePicker current={datasourceRef} onChange={datasourceChangeHandler} variables={true} width={30} />
+          <DataSourcePicker
+            journeySurface="variable_editor"
+            current={datasourceRef}
+            onChange={datasourceChangeHandler}
+            variables={true}
+            width={30}
+          />
         </Field>
 
         {datasource && VariableQueryEditor && (

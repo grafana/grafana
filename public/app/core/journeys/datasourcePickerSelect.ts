@@ -1,4 +1,10 @@
-import { locationService, onInteraction, registerJourneyTriggers, onJourneyInstance } from '@grafana/runtime';
+import {
+  getDataSourceInstanceList,
+  locationService,
+  onInteraction,
+  registerJourneyTriggers,
+  onJourneyInstance,
+} from '@grafana/runtime';
 
 import { abandonOnRouteChange, collectUnsubs, str } from './utils';
 
@@ -7,7 +13,8 @@ import { abandonOnRouteChange, collectUnsubs, str } from './utils';
  *
  * User opens the data source picker dropdown and selects a data source. The same picker is used
  * in Explore, the panel query editor, query/ad hoc/group by variable editors, annotation editors
- * and other places, so the journey carries a `surface` attribute derived from the current URL.
+ * and other places, so the journey carries a `surface` attribute. It comes from the URL, or from the
+ * picker's `journeySurface` prop where the URL can't tell (e.g. variable editors in the edit pane).
  * Built to measure how long the picker takes to become usable on instances with many (10k+)
  * data sources.
  *
@@ -16,7 +23,7 @@ import { abandonOnRouteChange, collectUnsubs, str } from './utils';
  *     starts a fresh journey; a still-active one is canceled through the registry's cancelOnRestart.
  *
  * Steps (duration):
- *   - list_render — from opening the dropdown until the list is rendered (dashboards_dspicker_list_rendered)
+ *   - list_render — from opening the dropdown until the list's rows are painted (dashboards_dspicker_list_rendered)
  *
  * Events (point-in-time):
  *   - search — user typed a search term (dashboards_dspicker_clicked item=search, debounced)
@@ -24,8 +31,8 @@ import { abandonOnRouteChange, collectUnsubs, str } from './utils';
  *
  * End conditions:
  *   - success: dashboards_dspicker_clicked item=select_ds — a different data source was selected
- *     (the picker also reports this for selections made in the advanced modal it opened)
- *   - success: dashboards_dspickermodal_clicked item=select_ds — selected in the advanced modal
+ *     (the picker also reports this for selections made in the advanced modal it opened, before the modal does)
+ *   - success: dashboards_dspicker_cleared — the data source was cleared while the dropdown was open (cleared=true)
  *   - success: dashboards_dspicker_current_reselected — the already selected data source was picked again (changed=false)
  *   - discarded: dashboards_dspicker_dismissed — dropdown closed without a selection (click outside, Escape, Tab out)
  *   - abandoned: dashboards_dspicker_dismissed (reason=unmount) — picker unmounted while open
@@ -36,9 +43,10 @@ import { abandonOnRouteChange, collectUnsubs, str } from './utils';
  *
  * Silent interactions added by this journey (all in DataSourcePicker.tsx):
  *   - dashboards_dspicker_opened — emitted once per open of the dropdown
- *   - dashboards_dspicker_list_rendered — emitted once when the dropdown list has rendered
+ *   - dashboards_dspicker_list_rendered — emitted once when the dropdown list's rows have been painted (DataSourceList.tsx)
  *   - dashboards_dspicker_dismissed — emitted when the dropdown closes or unmounts without a selection
  *   - dashboards_dspicker_current_reselected — emitted when the current data source is picked again
+ *   - dashboards_dspicker_cleared — emitted when the data source is cleared while the dropdown is open
  */
 
 const PICKER_EVENT = 'dashboards_dspicker_clicked';
@@ -74,8 +82,8 @@ registerJourneyTriggers('datasource_picker_select', (tracker) => {
     const { pathname, search } = locationService.getLocation();
     tracker.startJourney('datasource_picker_select', {
       attributes: {
-        surface: getPickerSurface(pathname, search),
-        totalConfigured: str(props.total_configured),
+        // Pickers set `surface` only where the URL can't tell, e.g. variable editors in the edit pane
+        surface: str(props.surface) || getPickerSurface(pathname, search),
       },
     });
   });
@@ -93,6 +101,11 @@ onJourneyInstance('datasource_picker_select', (handle) => {
   add(
     onInteraction('dashboards_dspicker_list_rendered', (props) => {
       listRender.end({ totalListed: str(props.total_listed) });
+      // Counted after list_render ends so the lookup doesn't add to the measured time. This is every
+      // configured data source, not only those the picker's filters allow.
+      getDataSourceInstanceList({ all: true })
+        .then((list) => handle.setAttributes({ totalConfigured: String(list.length) }))
+        .catch(() => {});
     })
   );
 
@@ -115,9 +128,7 @@ onJourneyInstance('datasource_picker_select', (handle) => {
 
   add(
     onInteraction(MODAL_EVENT, (props) => {
-      if (props.item === 'select_ds') {
-        handle.end('success', { dsType: str(props.ds_type), changed: 'true', selectedIn: 'modal' });
-      } else if (props.item === 'dismiss') {
+      if (props.item === 'dismiss') {
         handle.end('discarded');
       } else if (props.item === 'config_new_ds') {
         handle.end('abandoned', { reason: 'config_new_ds' });
@@ -128,6 +139,12 @@ onJourneyInstance('datasource_picker_select', (handle) => {
   add(
     onInteraction('dashboards_dspicker_current_reselected', (props) => {
       handle.end('success', { dsType: str(props.ds_type), changed: 'false', selectedIn });
+    })
+  );
+
+  add(
+    onInteraction('dashboards_dspicker_cleared', () => {
+      handle.end('success', { changed: 'true', cleared: 'true', selectedIn });
     })
   );
 

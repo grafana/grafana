@@ -189,7 +189,13 @@ export function Editor({ variable }: EditorProps) {
         htmlFor="data-source-picker"
         noMargin
       >
-        <DataSourcePicker current={datasourceRef} onChange={onDataSourceChange} variables={true} width={30} />
+        <DataSourcePicker
+          journeySurface="variable_editor"
+          current={datasourceRef}
+          onChange={onDataSourceChange}
+          variables={true}
+          width={30}
+        />
       </Field>
 
       {selectedDatasource && VariableQueryEditor && (

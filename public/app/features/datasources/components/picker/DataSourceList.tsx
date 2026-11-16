@@ -81,9 +81,22 @@ export function DataSourceList(props: DataSourceListProps) {
   const [recentlyUsedDataSources, pushRecentlyUsedDataSource] = useRecentlyUsedDataSources();
   const sortedDataSources = useSortedDataSources(props, current, recentlyUsedDataSources, favoriteDataSources);
 
-  // Runs once the list has been filtered, sorted and committed: the slow part with 10k+ data sources.
+  // Reports after the list's rows are on screen, which is the slow part with 10k+ data sources. The
+  // virtualizer only measures the scroll container and renders the visible rows after the first
+  // commit, so wait two frames: the second callback runs after those rows have been painted.
   useEffect(() => {
-    onRendered?.(sortedDataSources.length);
+    if (!onRendered) {
+      return;
+    }
+    const listedCount = sortedDataSources.length;
+    let innerFrame = 0;
+    const outerFrame = requestAnimationFrame(() => {
+      innerFrame = requestAnimationFrame(() => onRendered(listedCount));
+    });
+    return () => {
+      cancelAnimationFrame(outerFrame);
+      cancelAnimationFrame(innerFrame);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

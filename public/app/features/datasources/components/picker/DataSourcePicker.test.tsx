@@ -1,4 +1,4 @@
-import { act, findByText, render, screen } from '@testing-library/react';
+import { act, findByText, render, screen, waitFor } from '@testing-library/react';
 import userEvent, { type UserEvent } from '@testing-library/user-event';
 
 import {
@@ -423,12 +423,64 @@ describe('DataSourcePicker', () => {
     it('reports one open, then the list render, when clicked open', async () => {
       await setupOpenDropdown(user, { onChange: jest.fn() });
 
-      await screen.findByText(mockDS1.name, { selector: 'span' });
+      await waitFor(() => expect(silentCalls('dashboards_dspicker_list_rendered')).toHaveLength(1));
       const journeyEvents = mockReportInteraction.mock.calls
         .filter(([, , options]) => options?.silent)
         .map(([event]) => event);
       expect(journeyEvents).toEqual(['dashboards_dspicker_opened', 'dashboards_dspicker_list_rendered']);
-      expect(silentCalls('dashboards_dspicker_opened')[0][1]).toEqual({ total_configured: mockDSList.length });
+      expect(silentCalls('dashboards_dspicker_opened')[0][1]).toEqual({ surface: '' });
+    });
+
+    it('reports the journey surface when the caller sets one', async () => {
+      await setupOpenDropdown(user, { onChange: jest.fn(), journeySurface: 'variable_editor' });
+
+      expect(silentCalls('dashboards_dspicker_opened')[0][1]).toEqual(
+        expect.objectContaining({ surface: 'variable_editor' })
+      );
+    });
+
+    it('reports the list render only after the next animation frames', async () => {
+      const frames: FrameRequestCallback[] = [];
+      const rafSpy = jest.spyOn(window, 'requestAnimationFrame').mockImplementation((cb) => {
+        frames.push(cb);
+        return frames.length;
+      });
+      try {
+        await setupOpenDropdown(user, { onChange: jest.fn() });
+        await screen.findByText(mockDS1.name, { selector: 'span' });
+        expect(silentCalls('dashboards_dspicker_list_rendered')).toHaveLength(0);
+
+        act(() => {
+          while (frames.length > 0) {
+            frames.shift()!(performance.now());
+          }
+        });
+
+        expect(silentCalls('dashboards_dspicker_list_rendered')).toHaveLength(1);
+      } finally {
+        rafSpy.mockRestore();
+      }
+    });
+
+    it('keeps the dropdown open without a dismissal when the trigger icon is clicked', async () => {
+      await setupOpenDropdown(user, { onChange: jest.fn() });
+
+      await user.click(screen.getByTestId('icon-search'));
+
+      expect(screen.getByRole('combobox')).toHaveAttribute('aria-expanded', 'true');
+      expect(silentCalls('dashboards_dspicker_dismissed')).toHaveLength(0);
+      expect(silentCalls('dashboards_dspicker_opened')).toHaveLength(1);
+    });
+
+    it('reports a clear instead of a dismissal when cleared while open', async () => {
+      const onClear = jest.fn();
+      await setupOpenDropdown(user, { onChange: jest.fn(), current: mockDS1.name, onClear });
+
+      await user.click(screen.getByRole('button', { name: 'Clear data source' }));
+
+      expect(onClear).toHaveBeenCalled();
+      expect(silentCalls('dashboards_dspicker_cleared')).toHaveLength(1);
+      expect(silentCalls('dashboards_dspicker_dismissed')).toHaveLength(0);
     });
 
     it('reports an open when opened with the keyboard', async () => {
@@ -443,7 +495,7 @@ describe('DataSourcePicker', () => {
     it('reports the number of listed data sources, not the number configured', async () => {
       await setupOpenDropdown(user, { onChange: jest.fn(), filter: (ds) => ds.uid === mockDS2.uid });
 
-      await screen.findByText(mockDS2.name, { selector: 'span' });
+      await waitFor(() => expect(silentCalls('dashboards_dspicker_list_rendered')).toHaveLength(1));
       expect(silentCalls('dashboards_dspicker_list_rendered')).toEqual([
         ['dashboards_dspicker_list_rendered', { total_listed: 1 }, { silent: true }],
       ]);

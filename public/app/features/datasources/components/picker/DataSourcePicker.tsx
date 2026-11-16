@@ -61,6 +61,11 @@ export interface DataSourcePickerProps {
   onClear?: () => void;
   /** When provided, used to resolve variable expressions (e.g. section-level datasource variables) */
   scopedVars?: ScopedVars;
+  /**
+   * Where the picker is rendered, for the datasource_picker_select CUJ. Only needed where the URL
+   * doesn't identify the surface (e.g. the dashboard edit pane); otherwise it is derived from the URL.
+   */
+  journeySurface?: 'variable_editor' | 'annotation_editor';
 
   // DS filters
   tracing?: boolean;
@@ -89,6 +94,7 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
     invalid = false,
     isLoading = false,
     onClear,
+    journeySurface,
     ...restProps
   } = props;
 
@@ -100,6 +106,7 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
   const [activeItemId, setActiveItemId] = useState<string>();
   const { onKeyDown, keyboardEvents } = useKeyNavigationListener();
   const ref = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLDivElement>(null);
   const debouncedTrackSearch = useMemo(
     () =>
       debounce((q) => {
@@ -174,25 +181,23 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
     markerElement?.focus();
   }, [setOpen, markerElement]);
 
-  // One open/close cycle of the dropdown, for the datasource_picker_select CUJ. Closing without an
-  // `endedBy` reason is a dismissal, whichever path closed it.
-  const openCycleRef = useRef<{ endedBy?: 'select' | 'advanced' } | null>(null);
+  // One open/close cycle of the dropdown, for the datasource_picker_select CUJ. `handedOff` is set
+  // once the user made a choice (selected, cleared or switched to the advanced modal); closing
+  // before that is a dismissal, whichever path closed it.
+  const openCycleRef = useRef<{ handedOff: boolean } | null>(null);
 
-  const closeWith = useCallback(
-    (endedBy: 'select' | 'advanced') => {
-      if (openCycleRef.current) {
-        openCycleRef.current.endedBy = endedBy;
-      }
-      onClose();
-    },
-    [onClose]
-  );
+  const closeHandedOff = useCallback(() => {
+    if (openCycleRef.current) {
+      openCycleRef.current.handedOff = true;
+    }
+    onClose();
+  }, [onClose]);
 
   useEffect(() => {
     const cycle = openCycleRef.current;
     if (!isOpen && cycle) {
       openCycleRef.current = null;
-      if (!cycle.endedBy) {
+      if (!cycle.handedOff) {
         reportInteraction('dashboards_dspicker_dismissed', {}, { silent: true });
       }
     }
@@ -201,7 +206,7 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
   useEffect(
     () => () => {
       const cycle = openCycleRef.current;
-      if (cycle && !cycle.endedBy) {
+      if (cycle && !cycle.handedOff) {
         reportInteraction('dashboards_dspicker_dismissed', { reason: 'unmount' }, { silent: true });
       }
     },
@@ -218,7 +223,10 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
           onClick={(e) => {
             // Don't let the click bubble up to the trigger, which would open the dropdown
             e.stopPropagation();
-            onClose();
+            if (openCycleRef.current) {
+              reportInteraction('dashboards_dspicker_cleared', {}, { silent: true });
+            }
+            closeHandedOff();
             onClear();
           }}
         />
@@ -232,8 +240,10 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
       onClose: onClose,
       isDismissable: true,
       isOpen,
+      // The whole trigger (input, logo, chevron, clear button) counts as inside, so clicking it while
+      // open doesn't close and immediately reopen the dropdown.
       shouldCloseOnInteractOutside: (element) => {
-        return markerElement ? !markerElement.isSameNode(element) : false;
+        return triggerRef.current ? !triggerRef.current.contains(element) : false;
       },
     },
     ref
@@ -247,8 +257,8 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
 
   function openDropdown() {
     if (!openCycleRef.current) {
-      openCycleRef.current = {};
-      reportInteraction('dashboards_dspicker_opened', { total_configured: dataSources.length }, { silent: true });
+      openCycleRef.current = { handedOff: false };
+      reportInteraction('dashboards_dspicker_opened', { surface: journeySurface ?? '' }, { silent: true });
     }
     setOpen(true);
     markerElement?.focus();
@@ -305,6 +315,7 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
       {/* This clickable div is just extending the clickable area on the input element to include the prefix and suffix. */}
       {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
       <div
+        ref={triggerRef}
         className={styles.trigger}
         onClick={() => {
           openDropdown();
@@ -363,7 +374,7 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
               filterTerm={filterTerm}
               keyboardEvents={keyboardEvents}
               onChange={(ds: DataSourceInstanceSettings, defaultQueries?: DataQuery[] | GrafanaQuery[]) => {
-                closeWith('select');
+                closeHandedOff();
                 if (ds.uid !== currentValue?.uid) {
                   onChange(ds, defaultQueries);
                   reportInteraction(INTERACTION_EVENT_NAME, {
@@ -377,7 +388,7 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
                   reportInteraction('dashboards_dspicker_current_reselected', { ds_type: ds.type }, { silent: true });
                 }
               }}
-              onClose={() => closeWith('advanced')}
+              onClose={closeHandedOff}
               onNavigateOutsiteFooter={onNavigateOutsiteFooter}
               dataSources={dataSources}
               favoriteDataSources={favoriteDataSources}

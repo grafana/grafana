@@ -1,3 +1,5 @@
+import { waitFor } from '@testing-library/react';
+
 import { type JourneyHandle, type JourneyTracker, locationService, type StepHandle } from '@grafana/runtime';
 
 import type { JourneyRegistryImpl } from '../services/journey/JourneyRegistryImpl';
@@ -12,10 +14,12 @@ import {
 } from './__test-utils__/journeyTestHarness';
 import { getPickerSurface } from './datasourcePickerSelect';
 
+const mockGetDataSourceInstanceList = jest.fn();
 jest.mock('@grafana/runtime', () => {
   const actual = jest.requireActual('@grafana/runtime');
   return {
     ...actual,
+    getDataSourceInstanceList: (...args: unknown[]) => mockGetDataSourceInstanceList(...args),
     onInteraction: (name: string, callback: (properties: Record<string, unknown>) => void) => {
       let set = interactionCallbacks.get(name);
       if (!set) {
@@ -40,6 +44,7 @@ describe('datasourcePickerSelect journey wiring', () => {
   let registry: JourneyRegistryImpl;
 
   beforeEach(() => {
+    mockGetDataSourceInstanceList.mockResolvedValue([]);
     mockHandle = createMockHandle('datasource_picker_select');
     mockStep = createMockStepHandle();
     mockHandle.startStep.mockReturnValue(mockStep);
@@ -60,10 +65,10 @@ describe('datasourcePickerSelect journey wiring', () => {
   }
 
   function openPicker() {
-    simulateInteraction('dashboards_dspicker_opened', { total_configured: 10000 });
+    simulateInteraction('dashboards_dspicker_opened', {});
   }
 
-  it('starts the journey with surface and data source count when the picker opens', () => {
+  it('starts the journey with the surface when the picker opens', () => {
     loadWiring();
 
     openPicker();
@@ -71,7 +76,7 @@ describe('datasourcePickerSelect journey wiring', () => {
     expect(mockTracker.startJourney).toHaveBeenCalledTimes(1);
     expect(mockTracker.startJourney).toHaveBeenCalledWith(
       'datasource_picker_select',
-      expect.objectContaining({ attributes: { surface: 'explore', totalConfigured: '10000' } })
+      expect.objectContaining({ attributes: { surface: 'explore' } })
     );
   });
 
@@ -107,6 +112,17 @@ describe('datasourcePickerSelect journey wiring', () => {
     simulateInteraction('dashboards_dspicker_list_rendered', { total_listed: 9876 });
 
     expect(mockStep.end).toHaveBeenCalledWith({ totalListed: '9876' });
+  });
+
+  it('records every configured data source once the list has rendered', async () => {
+    mockGetDataSourceInstanceList.mockResolvedValue(new Array(10000).fill({}));
+    loadWiring();
+    openPicker();
+
+    simulateInteraction('dashboards_dspicker_list_rendered', { total_listed: 20 });
+
+    expect(mockGetDataSourceInstanceList).toHaveBeenCalledWith({ all: true });
+    await waitFor(() => expect(mockHandle.setAttributes).toHaveBeenCalledWith({ totalConfigured: '10000' }));
   });
 
   it('records search events', () => {
@@ -191,14 +207,29 @@ describe('datasourcePickerSelect journey wiring', () => {
     expect(mockHandle.end).not.toHaveBeenCalled();
   });
 
-  it('ends with success when a data source is selected in the advanced modal', () => {
+  it('ends with success and cleared=true when the data source is cleared', () => {
     loadWiring();
     openPicker();
 
-    simulateInteraction('dashboards_dspicker_clicked', { item: 'open_advanced_ds_picker' });
-    simulateInteraction('dashboards_dspickermodal_clicked', { item: 'select_ds', ds_type: 'tempo', src: 'ds_picker' });
+    simulateInteraction('dashboards_dspicker_cleared');
 
-    expect(mockHandle.end).toHaveBeenCalledWith('success', { dsType: 'tempo', changed: 'true', selectedIn: 'modal' });
+    expect(mockHandle.end).toHaveBeenCalledWith('success', {
+      changed: 'true',
+      cleared: 'true',
+      selectedIn: 'dropdown',
+    });
+  });
+
+  it('uses the surface reported by the picker over the URL', () => {
+    locationService.push('/d/abc/my-dashboard');
+    loadWiring();
+
+    simulateInteraction('dashboards_dspicker_opened', { surface: 'variable_editor' });
+
+    expect(mockTracker.startJourney).toHaveBeenCalledWith(
+      'datasource_picker_select',
+      expect.objectContaining({ attributes: { surface: 'variable_editor' } })
+    );
   });
 
   it('ends as discarded when the advanced modal is dismissed', () => {
