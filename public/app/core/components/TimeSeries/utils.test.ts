@@ -1,3 +1,5 @@
+import uPlot from 'uplot';
+
 import {
   createDataFrame,
   createTheme,
@@ -706,5 +708,32 @@ describe('show values', () => {
 
   it('draws no values for a series hidden through the legend', () => {
     expect(drawValues([true, false])).toEqual(['1', '2', '3', '2']);
+  });
+});
+
+describe('IEC unit y-axis ticks', () => {
+  it('draws ticks when byte values need a tick increment above 2 ** 52', async () => {
+    const values = [23e15, 23e15, 23e15];
+    const frame = createDataFrame({
+      fields: [
+        { name: 'Time', type: FieldType.time, config: {}, values: [1000, 2000, 3000] },
+        { name: 'Value', type: FieldType.number, config: { unit: 'bytes' }, values },
+      ],
+    });
+    const config = buildBuilder(frame).getConfig();
+    const yAxisValues = jest.fn((_u: uPlot, splits: number[]) => splits.map(String));
+    config.axes![1].values = yAxisValues;
+
+    const u = new uPlot(
+      { ...config, width: 600, height: 300 },
+      [[1000, 2000, 3000], values],
+      document.createElement('div')
+    );
+    // uPlot draws on a microtask after construction
+    await Promise.resolve();
+    u.destroy();
+
+    expect(yAxisValues).toHaveBeenCalled();
+    expect(yAxisValues.mock.calls[0][1].length).toBeGreaterThan(1);
   });
 });
