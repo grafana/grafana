@@ -32,6 +32,7 @@ import { FullscreenWorkspaceShell } from './FullscreenWorkspace/FullscreenWorksp
 import { useFullscreenWorkspace } from './FullscreenWorkspace/useFullscreenWorkspace';
 import { MegaMenu, MENU_WIDTH } from './MegaMenu/MegaMenu';
 import { useMegaMenuFocusHelper } from './MegaMenu/utils';
+import { PageAreaEndsAboveDockContext } from './PageAreaEnd';
 import { ReturnToPrevious } from './ReturnToPrevious/ReturnToPrevious';
 import { SingleTopBar } from './TopBar/SingleTopBar';
 import { getChromeHeaderLevelHeight, useChromeHeaderLevels } from './TopBar/useChromeHeaderHeight';
@@ -149,6 +150,13 @@ export function AppChrome({ children }: Props) {
     chrome.setKioskModeFromUrl(queryParams.kiosk);
   }, [chrome, search]);
 
+  // Wherever the page renders (in <main>, or portaled for the fullscreen workspace), it learns whether the sidebar is
+  // docked below it, where the page keeps its card's bottom edge in view.
+  const pageEndsAboveDock = !state.chromeless && !isSmallScreen && isExtensionSidebarDockedBottom;
+  const pageChildren = (
+    <PageAreaEndsAboveDockContext.Provider value={pageEndsAboveDock}>{children}</PageAreaEndsAboveDockContext.Provider>
+  );
+
   const fullscreenWorkspaceChrome = (
     <div id={floatingUtils.BOUNDARY_ELEMENT_ID}>
       <FullscreenWorkspaceShell workspaceHostRef={setWorkspaceHost} />
@@ -242,7 +250,7 @@ export function AppChrome({ children }: Props) {
             tabIndex={-1}
             ref={fullscreenWorkspaceFeatureFlagEnabled ? portalHostRef : undefined}
           >
-            {!fullscreenWorkspaceFeatureFlagEnabled && children}
+            {!fullscreenWorkspaceFeatureFlagEnabled && pageChildren}
           </main>
           {!state.chromeless &&
             isExtensionSidebarOpen &&
@@ -344,7 +352,7 @@ export function AppChrome({ children }: Props) {
   return (
     <>
       {fullscreenWorkspaceActive ? fullscreenWorkspaceChrome : defaultChrome}
-      {portalTargetRef.current && createPortal(children, portalTargetRef.current)}
+      {portalTargetRef.current && createPortal(pageChildren, portalTargetRef.current)}
     </>
   );
 }

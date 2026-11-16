@@ -157,8 +157,8 @@ function previewBox(
     return { top, left: left + gap, width: width - gap, height: height - gap, borderTopLeftRadius: 0 };
   }
   if (side === 'bottom') {
-    // The gap is at the window's right edge and bottom, as the docked strip leaves it.
-    return { top, left, width: width - gap, height: height - gap };
+    // Inset on both sides and at the bottom, as the docked strip is, in line with the page's card above it.
+    return { top, left: left + gap, width: width - 2 * gap, height: height - gap };
   }
   // Flush with the window's top-right corner, so that corner is square.
   return { top, left, width: width - gap, height: height - gap, borderTopRightRadius: 0 };
@@ -207,7 +207,8 @@ const getStyles = (theme: GrafanaTheme2) => {
         marginLeft: theme.spacing(0.5),
       }
     ),
-    // Docked at the bottom, the border faces the page above.
+    // Docked at the bottom, the border faces the page above. With the visual refresh it is inset as the page's card
+    // is, so their left and right edges line up.
     sidebarWrapperDockedBottom: css(
       {
         borderLeft: 'none',
@@ -215,6 +216,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
       visualRefreshEnabled && {
         border: `1px solid ${theme.colors.border.weak}`,
+        marginLeft: theme.spacing(0.5),
+        width: `calc(100% - ${theme.spacing(1)})`,
       }
     ),
     // The extension draws the floating surface itself; core adds no background, border or shadow.

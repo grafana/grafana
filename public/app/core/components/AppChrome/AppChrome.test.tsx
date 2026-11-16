@@ -1032,6 +1032,26 @@ describe('AppChrome', () => {
         expect(stylesFor(container)).toContain('left: 0px');
       });
 
+      it("scrolls the page inside its card, so the card's bottom edge stays in view above the sidebar", async () => {
+        await act(async () => {
+          setTestFlags({ 'grafana.visualDesignRefresh': true });
+        });
+        mockUseMediaQueryMinWidth.mockReturnValue(true);
+        mockUseExtensionSidebarContext.mockReturnValue(dockedBottomContext);
+        const { rerender } = setup(<Page navId="child1">Children</Page>);
+        await screen.findByTestId('ext-sidebar-stub');
+        const card = screen.getByTestId('page-children').firstElementChild!;
+
+        expect(stylesFor(card)).toContain('overflow: auto');
+        expect(stylesFor(card)).toContain('min-height: 0');
+
+        // Docked on the right, the page area reaches the window's bottom, and the page grows as before.
+        mockUseExtensionSidebarContext.mockReturnValue(openSidebarContext);
+        rerender();
+        expect(stylesFor(card)).not.toContain('overflow');
+        expect(stylesFor(card)).not.toContain('min-height');
+      });
+
       it('is a full-width overlay on small screens, which takes nothing from the page', async () => {
         mockUseMediaQueryMinWidth.mockReturnValue(false);
         mockUseExtensionSidebarContext.mockReturnValue(dockedBottomContext);
