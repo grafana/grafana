@@ -223,7 +223,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 					ds, err := ss.AddDataSource(context.Background(), &add)
 					require.NoError(t, err)
 
-					for _, step := range []struct {
+					for i, step := range []struct {
 						username string
 						set      bool
 						want     string
@@ -235,6 +235,8 @@ func TestIntegrationDataAccess(t *testing.T) {
 						{set: true},
 					} {
 						cmd := defaultUpdateDatasourceCommand
+						// Change another field so MySQL does not treat username-preservation steps as no-op updates.
+						cmd.URL += "/" + strconv.Itoa(i)
 						cmd.ID = ds.ID
 						cmd.UID = ds.UID
 						cmd.BasicAuth = true
