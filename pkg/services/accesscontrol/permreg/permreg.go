@@ -107,6 +107,7 @@ func newPermissionRegistry() *permissionRegistry {
 		"inhibition-rules":               "inhibition-rules:uid:",
 		"secret.securevalues":            "secret.securevalues:uid:",
 		"secret.keepers":                 "secret.keepers:uid:",
+		"alertrulequality":               "alertrulequality:policies:",
 		accesscontrol.AlertingRoutesKind: accesscontrol.AlertingRoutesKind + ":uid:",
 		accesscontrol.AlertingAlertmanagerImportsKind: accesscontrol.AlertingAlertmanagerImportsKind + ":uid:",
 		accesscontrol.AlertingConfigResource:          accesscontrol.AlertingConfigResource + ":uid:",

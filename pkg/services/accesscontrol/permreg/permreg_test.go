@@ -236,6 +236,16 @@ func Test_permissionRegistry_Notebooks(t *testing.T) {
 	}
 }
 
+// Guards the alertrulequality kind registration: the alert rule quality writer role declares
+// alertrulequality:policies:-scoped permissions, and without the kindScopePrefix entry
+// RegisterPermission fails and the role is never registered.
+func Test_permissionRegistry_AlertRuleQuality(t *testing.T) {
+	pr := newPermissionRegistry()
+
+	require.NoError(t, pr.RegisterPermission("alert.rules.quality:write", "alertrulequality:policies:org"))
+	require.NoError(t, pr.IsPermissionValid("alert.rules.quality:write", "alertrulequality:policies:org"))
+}
+
 func Test_permissionRegistry_GetScopePrefixes(t *testing.T) {
 	pr := newPermissionRegistry()
 	err := pr.RegisterPermission("folders:read", "folders:uid:")
