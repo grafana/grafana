@@ -1399,6 +1399,35 @@ describe('DashboardSidebar', () => {
     });
   });
 
+  describe('Opening settings for elements in repeated clones', () => {
+    it('opens the source row settings for a row inside a repeated tab clone', () => {
+      const layoutManager = new TabsLayoutManager({
+        tabs: [
+          new TabItem({
+            key: 'tab-1',
+            title: 'Tab $env',
+            repeatByVariable: 'env',
+            layout: new RowsLayoutManager({ rows: [new RowItem({ title: 'Row' })] }),
+          }),
+        ],
+      });
+      const { sidebar, variables } = buildTestSceneWithRepeat(layoutManager);
+      const [sourceTab] = layoutManager.state.tabs;
+      const sourceRow = (sourceTab.state.layout as RowsLayoutManager).state.rows[0];
+
+      performTabRepeats(variables[0], sourceTab, false);
+      const clonedTab = sourceTab.state.repeatedTabs!.find((t) => t.state.repeatSourceKey)!;
+      const clonedRow = (clonedTab.state.layout as RowsLayoutManager).state.rows[0];
+      expect(clonedRow).not.toBe(sourceRow);
+
+      sidebar.openElementSettings(clonedRow);
+
+      expect(sidebar.getSelectedObject()).toBeInstanceOf(RowItem);
+      expect(sidebar.getSelectedObject()?.state.key).toBe(sourceRow.state.key);
+      expect(sidebar.state.openPane?.getId()).toBe('element');
+    });
+  });
+
   describe('addNewPanel', () => {
     it('adds panel to the correct tab layout when target is first tab', async () => {
       const { tab1, tab2, sidebar } = setupWithTwoTabs();

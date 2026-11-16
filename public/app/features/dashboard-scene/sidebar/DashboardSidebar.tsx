@@ -24,7 +24,7 @@ import {
 import { dashboardModesEnabled, getDashboardMode } from '../scene/dashboardModes';
 import { dashboardViewChanged } from '../scene/dashboardViewRegistry';
 import { TabItem } from '../scene/layout-tabs/TabItem';
-import { getRepeatCloneSourceKey } from '../utils/clone';
+import { getRepeatCloneSourceKey, getRepeatSourceObject } from '../utils/clone';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor, getDefaultVizPanel, getLayoutForObject } from '../utils/utils';
 
@@ -576,8 +576,11 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
   }
 
   public openElementSettings(obj: SceneObject) {
-    const sourceKey = getRepeatCloneSourceKey(obj);
-    const source = sourceKey ? sceneGraph.findByKey(this, sourceKey) : obj;
+    // Resolve by state path first so an element nested in a repeat clone maps to its own source,
+    // then by key for clones the path walk doesn't cover (e.g. repeated panels).
+    const resolved = getRepeatSourceObject(obj);
+    const sourceKey = getRepeatCloneSourceKey(resolved);
+    const source = sourceKey ? sceneGraph.findByKey(this, sourceKey) : resolved;
     if (!source) {
       return;
     }

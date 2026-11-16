@@ -21,7 +21,6 @@ import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types
 import { duplicateVariable } from '../actions/variable/duplicateVariable';
 import { removeVariable } from '../actions/variable/removeVariable';
 import { isVariableEditable } from '../settings/variables/utils';
-import { getRepeatSourceObject } from '../utils/clone';
 import { getPredefinedOrigin } from '../utils/predefinedVariables';
 import { getPredefinedDependentNames, removeOptedInPredefinedVariable } from '../utils/removeOptedInPredefinedVariable';
 import { filterSectionRepeatLocalVariables } from '../variables/utils';
@@ -94,7 +93,7 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditing, isEdit
 
   const onClickEditVariable = useCallback(() => {
     const dashboard = sceneGraph.getAncestor(variable, DashboardScene);
-    dashboard.state.sidebar.openElementSettings(getRepeatSourceObject(variable));
+    dashboard.state.sidebar.openElementSettings(variable);
   }, [variable]);
 
   const [isEditorOpen, setIsEditorOpen] = useState(false);
