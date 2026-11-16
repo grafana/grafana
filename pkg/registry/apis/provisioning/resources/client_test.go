@@ -69,10 +69,10 @@ func TestMultiClientFactory_Fallback(t *testing.T) {
 	clients, err := factory.Clients(context.Background(), "default")
 	require.NoError(t, err)
 
-	_, _, err = clients.ForKind(context.Background(), widget.GroupKind.WithVersion("v1"))
+	_, _, err = clients.ForKind(context.Background(), widget.WithVersion("v1"))
 	require.ErrorContains(t, err, "rest config will not be available")
 
-	_, _, err = clients.ForKind(context.Background(), unreachable.GroupKind.WithVersion("v1"))
+	_, _, err = clients.ForKind(context.Background(), unreachable.WithVersion("v1"))
 	require.ErrorContains(t, err, "no clients provider for group unreachable.ext.grafana.app")
 }
 
