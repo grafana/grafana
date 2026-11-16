@@ -627,22 +627,38 @@ func (b *pgvectorBackend) Search(ctx context.Context, namespace, model, resource
 
 	req.UIDValues, req.FolderValues, req.MetadataFilterGroups = searchFilterPredicates(filters)
 
-	rows, err := dbutil.Query(ctx, b.db, sqlVectorCollectionSearch, req)
-	if err != nil {
-		return nil, err
-	}
-
-	results = make([]VectorSearchResult, len(rows))
-	for i, row := range rows {
-		results[i] = VectorSearchResult{
-			UID:         row.UID,
-			Title:       row.Title,
-			Subresource: row.Subresource,
-			Content:     row.Content,
-			Score:       row.Score,
-			Folder:      row.Folder,
-			Metadata:    row.Metadata,
+	budget := min(1000, max(40, limit))
+	err = b.db.WithTx(ctx, nil, func(ctx context.Context, tx db.Tx) error {
+		var effectiveBudget string
+		// Preserve a higher session budget while keeping this search's increase local to the transaction.
+		err := tx.QueryRowContext(ctx, `SELECT set_config('hnsw.ef_search',
+			GREATEST($1, COALESCE(NULLIF(current_setting('hnsw.ef_search', true), '')::int, 40))::text,
+			true)`, budget).Scan(&effectiveBudget)
+		if err != nil {
+			return fmt.Errorf("set HNSW search budget: %w", err)
 		}
+		span.SetAttributes(attribute.String("hnsw_ef_search", effectiveBudget))
+
+		rows, err := dbutil.Query(ctx, tx, sqlVectorCollectionSearch, req)
+		if err != nil {
+			return fmt.Errorf("query vectors: %w", err)
+		}
+		results = make([]VectorSearchResult, len(rows))
+		for i, row := range rows {
+			results[i] = VectorSearchResult{
+				UID:         row.UID,
+				Title:       row.Title,
+				Subresource: row.Subresource,
+				Content:     row.Content,
+				Score:       row.Score,
+				Folder:      row.Folder,
+				Metadata:    row.Metadata,
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("search vectors: %w", err)
 	}
 	return results, nil
 }

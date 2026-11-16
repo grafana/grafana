@@ -1544,11 +1544,6 @@ type GrafanaOption func(opts *testinfra.GrafanaOpts)
 // Useful for debugging a test in development.
 //
 
-// WithoutProvisioningFolderMetadata disables the FlagProvisioningFolderMetadata feature toggle.
-func WithoutProvisioningFolderMetadata(opts *testinfra.GrafanaOpts) {
-	opts.DisableFeatureToggles = append(opts.DisableFeatureToggles, featuremgmt.FlagProvisioningFolderMetadata)
-}
-
 func WithRepositoryTypes(types []string) GrafanaOption {
 	return func(opts *testinfra.GrafanaOpts) {
 		opts.ProvisioningRepositoryTypes = types
@@ -1659,6 +1654,15 @@ func WithNATSReListOnly(resync time.Duration) GrafanaOption {
 		// informer resyncs on its own interval, so pin both to resync.
 		opts.ProvisioningControllerResyncInterval = resync
 		opts.ProvisioningJobPollInterval = resync
+	}
+}
+
+// WithResourceLister sets [provisioning] resource_lister, selecting where the managed-resource
+// list and the repository stats are read from. Off by default, so a test keeps the shipped
+// "search" reader unless it says otherwise.
+func WithResourceLister(mode string) GrafanaOption {
+	return func(opts *testinfra.GrafanaOpts) {
+		opts.ProvisioningResourceLister = mode
 	}
 }
 

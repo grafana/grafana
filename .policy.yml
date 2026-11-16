@@ -12,7 +12,6 @@ policy:
             - Workflow .github/workflows/backend-code-checks.yml succeeded or skipped
             - Workflow .github/workflows/backend-unit-tests.yml succeeded or skipped
             - Workflow .github/workflows/build-go-matrix.yml succeeded or skipped
-            - Workflow .github/workflows/check-frontend-test-coverage.yml succeeded or skipped
             - Workflow .github/workflows/codeowners-validator.yml succeeded or skipped
             - Workflow .github/workflows/deploy-pr-preview.yml succeeded or skipped
             - Workflow .github/workflows/deploy-storybook-preview.yml succeeded or skipped
@@ -135,29 +134,6 @@ approval_rules:
             - success
           workflows:
             - .github/workflows/build-go-matrix.yml
-  - name: Workflow .github/workflows/check-frontend-test-coverage.yml succeeded or skipped
-    if:
-      changed_files:
-        paths:
-          - ^(?:(?:[^/]*(?:/|$))*)(?:[^/]*)\.js$
-          - ^(?:(?:[^/]*(?:/|$))*)(?:[^/]*)\.jsx$
-          - ^(?:(?:[^/]*(?:/|$))*)(?:[^/]*)\.ts$
-          - ^(?:(?:[^/]*(?:/|$))*)(?:[^/]*)\.tsx$
-          - ^package\.json$
-          - ^\.github\/CODEOWNERS$
-      file_not_deleted:
-        paths:
-          - ^\.github\/workflows\/check-frontend-test-coverage\.yml$
-      targets_branch:
-        pattern: (^main$)
-    requires:
-      conditions:
-        has_workflow_result:
-          conclusions:
-            - skipped
-            - success
-          workflows:
-            - .github/workflows/check-frontend-test-coverage.yml
   - name: Workflow .github/workflows/codeowners-validator.yml succeeded or skipped
     if:
       file_not_deleted:

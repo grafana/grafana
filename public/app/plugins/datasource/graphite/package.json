@@ -16,7 +16,7 @@
     "react-use": "17.6.1",
     "redux": "5.0.1",
     "rxjs": "7.8.2",
-    "semver": "7.8.5"
+    "semver": "7.8.6"
   },
   "devDependencies": {
     "@grafana/plugin-configs": "workspace:*",

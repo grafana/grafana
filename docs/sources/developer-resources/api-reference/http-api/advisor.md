@@ -20,7 +20,9 @@ weight: 100
 # Advisor HTTP API
 
 {{< admonition type="note" >}}
-This API complies with the new Grafana API structure. To learn more refer to documentation about the [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis).
+Available in Grafana 12.0 and later.
+
+This API complies with the new Grafana API structure. To learn more refer to documentation about the [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 
 **This document may not contain the latest version of the API. For the most up-to-date list of available endpoints, refer to [advisor.grafana.app/v0alpha1](https://play.grafana.org/swagger?api=advisor.grafana.app-v0alpha1) in Swagger.**
 
@@ -73,29 +75,25 @@ These are the available endpoints:
 | POST   | Register check types               | `/apis/advisor.grafana.app/v0alpha1/namespaces/{namespace}/register`                 |
 | GET    | Get translations                   | `/apis/advisor.grafana.app/v0alpha1/namespaces/{namespace}/translations`             |
 
-### Path parameters
-
-Parameters include:
-
-- `{namespace}`: The namespace of your Grafana instance or organization.
-  - In Grafana Cloud: `stacks-<STACK_ID>`. For example, `stacks-123456`.
-  - In Grafana OSS and Enterprise: `default` for organization 1, or `org-<ORG_ID>` for other organizations.
-
-  To learn more about namespaces, refer to [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/#namespace-namespace).
-
 ## List checks
 
 `GET /apis/advisor.grafana.app/v0alpha1/namespaces/{namespace}/checks`
 
 Lists the checks that Advisor has run in the specified namespace, including their results. Advisor creates a new check every time it runs, so the response contains several checks for each check type. To get the current state, use the most recent check of each type.
 
-You can use the following optional query parameters:
+**Path parameters**:
 
-- **`labelSelector`:** Filters checks by label. For example, `advisor.grafana.app/type=datasource` returns only data source checks.
-- **`limit`:** Sets the maximum number of checks to return per page.
-- **`continue`:** Sets the token from the `metadata.continue` field of a previous response to fetch the next page.
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 
-**Example request**:
+**Query parameters**:
+
+- **`labelSelector`** (optional): Filters checks by label. For example, `advisor.grafana.app/type=datasource` returns only data source checks.
+- **`limit`** (optional): Sets the maximum number of checks to return per page.
+- **`continue`** (optional): Sets the token from the `metadata.continue` field of a previous response to fetch the next page.
+
+### Example request
+
+The following example shows a request to list checks:
 
 ```http
 GET /apis/advisor.grafana.app/v0alpha1/namespaces/default/checks HTTP/1.1
@@ -105,7 +103,9 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 Replace _`<SERVICE_ACCOUNT_TOKEN>`_ with your service account token.
 
-**Example response**:
+### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200 OK
@@ -200,8 +200,7 @@ Each entry in `status.report.failures` contains the following fields:
 
 - **200:** OK
 - **401:** Unauthorized
-- **403:** Access denied
-- **404:** Not found, for example if the namespace doesn't exist or Advisor isn't available
+- **403:** Access denied, for example if the namespace doesn't belong to your organization
 
 ## Related resources
 

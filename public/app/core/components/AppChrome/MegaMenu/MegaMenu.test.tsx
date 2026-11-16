@@ -642,6 +642,68 @@ describe('MegaMenu', () => {
     });
   });
 
+  describe('empty Starred and Bookmarks sections', () => {
+    beforeEach(() => {
+      setTestFlags({ 'grafana.navigationInfoArchRefresh': true });
+      contextSrv.isSignedIn = true;
+      contextSrv.user.isSignedIn = true;
+    });
+
+    afterEach(() => {
+      contextSrv.isSignedIn = false;
+      contextSrv.user.isSignedIn = false;
+    });
+
+    it('keeps both empty sections when the refresh flag is off', async () => {
+      setTestFlags({ 'grafana.navigationInfoArchRefresh': false });
+      setMockStarredDashboards([]);
+      renderMegaMenu();
+
+      expect(await screen.findByRole('link', { name: 'Bookmarks' })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'Starred' })).toBeInTheDocument();
+    });
+
+    it('hides both sections when nothing is starred or bookmarked', async () => {
+      setMockStarredDashboards([]);
+      renderMegaMenu();
+
+      expect(await screen.findByRole('link', { name: 'Explore' })).toBeInTheDocument();
+      await waitFor(() => expect(screen.queryByRole('link', { name: 'Starred' })).not.toBeInTheDocument());
+      expect(screen.queryByRole('link', { name: 'Bookmarks' })).not.toBeInTheDocument();
+    });
+
+    it('shows Starred when something is starred', async () => {
+      renderMegaMenu();
+
+      expect(await screen.findByRole('button', { name: 'Expand section: Starred' })).toBeInTheDocument();
+    });
+
+    it('keeps Starred visible with its error state when the starred fetch fails', async () => {
+      jest.mocked(getGrafanaSearcher).mockReturnValue({
+        search: jest.fn(() => Promise.reject(new Error('boom'))),
+      } as unknown as ReturnType<typeof getGrafanaSearcher>);
+      const { user } = renderMegaMenu({
+        navBarTree: customisableNavTree.map((item) => (item.id === 'starred' ? { ...item, children: [] } : item)),
+      });
+
+      await user.click(await screen.findByRole('button', { name: 'Expand section: Starred' }));
+      expect(await screen.findByText('Failed to load items')).toBeInTheDocument();
+    });
+
+    it('shows Bookmarks when a bookmark matches a nav item', async () => {
+      renderMegaMenu({ bookmarkUrls: ['/explore'] });
+
+      expect(await screen.findByRole('button', { name: 'Expand section: Bookmarks' })).toBeInTheDocument();
+    });
+
+    it('hides Bookmarks when the only bookmarks match no nav item', async () => {
+      renderMegaMenu({ bookmarkUrls: ['/orphaned-not-in-nav'] });
+
+      expect(await screen.findByRole('link', { name: 'Explore' })).toBeInTheDocument();
+      await waitFor(() => expect(screen.queryByRole('link', { name: 'Bookmarks' })).not.toBeInTheDocument());
+    });
+  });
+
   it('renders a starred folder and a same-named starred dashboard as two distinct, per-kind-iconed rows', async () => {
     const dashUid = dashbdE.item.uid;
     const folderUid = folderB.item.uid;

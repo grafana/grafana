@@ -904,14 +904,15 @@ func (s *searchServer) CountManagedObjects(ctx context.Context, req *resourcepb.
 		if err != nil {
 			return nil, rpcErrorFrom(err)
 		}
-		if req.Id == "" {
-			rsp.Items = append(rsp.Items, counts...)
-		} else {
-			for _, k := range counts {
-				if k.Id == req.Id {
-					rsp.Items = append(rsp.Items, k)
-				}
+		for _, k := range counts {
+			// An id is only meaningful inside a kind, so both must match when both are set.
+			if req.Kind != "" && k.Kind != req.Kind {
+				continue
 			}
+			if req.Id != "" && k.Id != req.Id {
+				continue
+			}
+			rsp.Items = append(rsp.Items, k)
 		}
 	}
 
@@ -3404,7 +3405,7 @@ func (b *testDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb
 			val = v.(string)
 		}
 	}
-	return &IndexableDocument{
+	doc := &IndexableDocument{
 		Key: &resourcepb.ResourceKey{
 			Namespace: key.Namespace,
 			Group:     key.Group,
@@ -3417,7 +3418,13 @@ func (b *testDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb
 			"title": title,
 			"value": val,
 		},
-	}, nil
+	}
+	if meta, err := utils.MetaAccessor(&u); err == nil {
+		if manager, ok := meta.GetManagerProperties(); ok {
+			doc.Manager = &manager
+		}
+	}
+	return doc, nil
 }
 
 // TestDocumentBuilderSupplier implements DocumentBuilderSupplier for testing
