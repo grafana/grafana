@@ -3,9 +3,10 @@ import { render, screen, userEvent, waitFor } from 'test/test-utils';
 
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import server from '@grafana/test-utils/server';
+import { AccessControlAction } from 'app/types/accessControl';
 
-import { useAlertingAbility } from '../../hooks/useAbilities';
 import { setupMswServer } from '../../mockApi';
+import { grantPermissionsHelper } from '../../test/test-utils';
 import { ruleItem } from '../mocks/factories';
 import { failFirstCall, mockFolderParents, mockRuleSearch, ruleSearchUrl } from '../mocks/handlers';
 import { setupRuleListBackend } from '../mocks/ruleListBackend';
@@ -21,12 +22,6 @@ jest.mock('@grafana/runtime', () => {
   });
 });
 
-jest.mock('../../hooks/useAbilities', () => ({
-  ...jest.requireActual('../../hooks/useAbilities'),
-  useAlertingAbility: jest.fn(),
-}));
-const mockUseAlertingAbility = jest.mocked(useAlertingAbility);
-
 const reportInteractionMock = jest.mocked(reportInteraction);
 
 setupMswServer();
@@ -40,7 +35,7 @@ describe('RecordingRulesPage', () => {
   beforeEach(() => {
     reportInteractionMock.mockClear();
     mockFolderParents({ 'folder-1': 'Team Metrics', 'folder-2': 'Infra' });
-    mockUseAlertingAbility.mockReturnValue([true, true]);
+    grantPermissionsHelper([AccessControlAction.AlertingRuleCreate]);
   });
 
   it('lists the Recording rules in the order the search returns them, each with its folder path', async () => {
@@ -359,7 +354,7 @@ describe('RecordingRulesPage header', () => {
   });
 
   it('shows New recording rule button when user has create permission and recording rules are enabled', async () => {
-    mockUseAlertingAbility.mockReturnValue([true, true]);
+    grantPermissionsHelper([AccessControlAction.AlertingRuleCreate]);
     config.unifiedAlerting.recordingRulesEnabled = true;
     renderInListMode();
 
@@ -370,7 +365,7 @@ describe('RecordingRulesPage header', () => {
   });
 
   it('hides New recording rule button when user lacks create permission', async () => {
-    mockUseAlertingAbility.mockReturnValue([true, false]);
+    grantPermissionsHelper([]);
     config.unifiedAlerting.recordingRulesEnabled = true;
     renderInListMode();
 
@@ -379,7 +374,7 @@ describe('RecordingRulesPage header', () => {
   });
 
   it('hides New recording rule button when recording rules are disabled', async () => {
-    mockUseAlertingAbility.mockReturnValue([true, true]);
+    grantPermissionsHelper([AccessControlAction.AlertingRuleCreate]);
     config.unifiedAlerting.recordingRulesEnabled = false;
     renderInListMode();
 
