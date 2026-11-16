@@ -109,6 +109,15 @@ type Resource struct {
 	Kind string
 	// Versions served for the resource, the group's preferred version first.
 	Versions []string
+	// Subresources served per version, e.g. "status" or "children".
+	Subresources map[string][]string
+}
+
+// Serves reports whether the server serves the subresource in the version. Tests use it
+// to skip subresources the other version does not have yet, so only routes both
+// versions serve are held to the compatibility contract.
+func (r Resource) Serves(version, subresource string) bool {
+	return slices.Contains(r.Subresources[version], subresource)
 }
 
 var crudVerbs = []string{"create", "get", "list", "update", "delete"}
@@ -126,6 +135,7 @@ func Served(t *testing.T, h *apis.K8sTestHelper) map[schema.GroupResource]Resour
 	}
 
 	out := map[schema.GroupResource]Resource{}
+	subresources := map[schema.GroupResource]map[string][]string{}
 	for _, g := range groups {
 		if !strings.HasSuffix(g.Name, ".grafana.app") {
 			continue
@@ -140,7 +150,15 @@ func Served(t *testing.T, h *apis.K8sTestHelper) map[schema.GroupResource]Resour
 		}
 		for _, v := range versions {
 			for _, r := range byGV[v.GroupVersion] {
-				if strings.Contains(r.Name, "/") || !r.Namespaced || !hasVerbs(r.Verbs, crudVerbs) {
+				if parent, sub, ok := strings.Cut(r.Name, "/"); ok {
+					gr := schema.GroupResource{Group: g.Name, Resource: parent}
+					if subresources[gr] == nil {
+						subresources[gr] = map[string][]string{}
+					}
+					subresources[gr][v.Version] = append(subresources[gr][v.Version], sub)
+					continue
+				}
+				if !r.Namespaced || !hasVerbs(r.Verbs, crudVerbs) {
 					continue
 				}
 				gr := schema.GroupResource{Group: g.Name, Resource: r.Name}
@@ -150,6 +168,10 @@ func Served(t *testing.T, h *apis.K8sTestHelper) map[schema.GroupResource]Resour
 				out[gr] = res
 			}
 		}
+	}
+	for gr, res := range out {
+		res.Subresources = subresources[gr]
+		out[gr] = res
 	}
 	return out
 }
