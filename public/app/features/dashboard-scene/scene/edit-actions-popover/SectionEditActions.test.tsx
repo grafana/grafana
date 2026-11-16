@@ -12,15 +12,20 @@ import { TabItem } from '../layout-tabs/TabItem';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 
 import { WAIT_FOR_MOUSE_REST_DURATION_MS } from './EditActionsPopover';
-import { TabEditActionsWrapper } from './TabEditActions';
+import { SectionEditActionsWrapper } from './SectionEditActions';
 
-function renderTabEditActions(tab = new TabItem({ title: 'Overview' })) {
+type Kind = 'row' | 'tab';
+
+function renderSectionEditActions(
+  kind: Kind,
+  item = kind === 'row' ? new RowItem({ title: 'Overview' }) : new TabItem({ title: 'Overview' })
+) {
   const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
   const result = render(
     <ElementSelectionContext.Provider value={{ enabled: true, selected: [], onSelect: jest.fn(), onClear: jest.fn() }}>
-      <TabEditActionsWrapper tab={tab}>
+      <SectionEditActionsWrapper kind={kind} item={item}>
         <button>Overview</button>
-      </TabEditActionsWrapper>
+      </SectionEditActionsWrapper>
     </ElementSelectionContext.Provider>
   );
 
@@ -36,18 +41,20 @@ function renderTabEditActions(tab = new TabItem({ title: 'Overview' })) {
         });
       },
       clickSettings() {
-        fireEvent.click(result.getByRole('button', { name: 'Tab settings' }));
+        fireEvent.click(result.getByRole('button', { name: kind === 'row' ? 'Row settings' : 'Tab settings' }));
       },
     },
   };
 }
 
-describe.each([
-  { enabled: false, supportsHover: true },
-  { enabled: true, supportsHover: true },
-  { enabled: false, supportsHover: false },
-  { enabled: true, supportsHover: false },
-])('<TabEditActionsWrapper />: flag $enabled, hover $supportsHover', ({ enabled, supportsHover }) => {
+describe.each(
+  (['row', 'tab'] as const).flatMap((kind) => [
+    { kind, enabled: false, supportsHover: true },
+    { kind, enabled: true, supportsHover: true },
+    { kind, enabled: false, supportsHover: false },
+    { kind, enabled: true, supportsHover: false },
+  ])
+)('<SectionEditActionsWrapper /> $kind: flag $enabled, hover $supportsHover', ({ kind, enabled, supportsHover }) => {
   beforeEach(() => {
     setTestFlags({ 'grafana.dashboardSidebarExplicitOpen': enabled });
     jest.useFakeTimers();
@@ -70,8 +77,8 @@ describe.each([
     jest.useRealTimers();
   });
 
-  test(`when hovering a tab in edit mode, its popover is ${enabled ? 'shown' : 'hidden'}`, async () => {
-    const { elements, actions } = renderTabEditActions();
+  test(`when hovering a ${kind} in edit mode, its popover is ${enabled ? 'shown' : 'hidden'}`, async () => {
+    const { elements, actions } = renderSectionEditActions(kind);
 
     await actions.hoverAndRest();
 
@@ -83,7 +90,7 @@ describe.each([
   });
 });
 
-describe('<TabEditActionsWrapper /> settings', () => {
+describe('<SectionEditActionsWrapper /> settings', () => {
   beforeEach(() => {
     setTestFlags({ 'grafana.dashboardSidebarExplicitOpen': true });
     jest.useFakeTimers();
@@ -94,6 +101,25 @@ describe('<TabEditActionsWrapper /> settings', () => {
     setTestFlags({});
     jest.restoreAllMocks();
     jest.useRealTimers();
+  });
+
+  test('when the user clicks Row settings on a row inside a repeated tab, settings open for the source row', async () => {
+    const sourceRow = new RowItem({ key: 'row-1', title: 'Overview' });
+    const clonedRow = new RowItem({ key: 'row-1-clone', title: 'Overview' });
+    const sourceTab = new TabItem({ key: 'tab-1', layout: new RowsLayoutManager({ rows: [sourceRow] }) });
+    const clonedTab = new TabItem({
+      key: 'tab-1-clone',
+      repeatSourceKey: 'tab-1',
+      layout: new RowsLayoutManager({ rows: [clonedRow] }),
+    });
+    sourceTab.setState({ repeatedTabs: [clonedTab] });
+    const scene = new DashboardScene({ isEditing: true, body: new TabsLayoutManager({ tabs: [sourceTab] }) });
+    const { actions } = renderSectionEditActions('row', clonedRow);
+
+    await actions.hoverAndRest();
+    actions.clickSettings();
+
+    expect(scene.state.sidebar.getSelectedObject()?.state.key).toBe('row-1');
   });
 
   test('when the user clicks Tab settings on a tab inside a repeated row, settings open for the source tab', async () => {
@@ -107,7 +133,7 @@ describe('<TabEditActionsWrapper /> settings', () => {
     });
     sourceRow.setState({ repeatedRows: [clonedRow] });
     const scene = new DashboardScene({ isEditing: true, body: new RowsLayoutManager({ rows: [sourceRow] }) });
-    const { actions } = renderTabEditActions(clonedTab);
+    const { actions } = renderSectionEditActions('tab', clonedTab);
 
     await actions.hoverAndRest();
     actions.clickSettings();

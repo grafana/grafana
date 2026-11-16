@@ -16,7 +16,7 @@ import { useSoloPanelContext } from '../../solo/SoloPanelContext';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { getDashboardSceneFor, interpolateSectionTitle, useDashboardState } from '../../utils/utils';
 import { SectionControlsRow } from '../SectionAnnotationControls';
-import { TabEditActionsWrapper } from '../edit-actions-popover/TabEditActions';
+import { SectionEditActionsWrapper } from '../edit-actions-popover/SectionEditActions';
 import { LayoutModeIndicator } from '../layouts-shared/LayoutModeIndicator';
 import { mapIdToGridLayoutType } from '../layouts-shared/utils';
 import { DASHBOARD_DROP_TARGET_KEY_ATTR } from '../types/DashboardDropTarget';
@@ -85,7 +85,7 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
   return (
     <Draggable key={key!} draggableId={key!} index={myIndex} isDragDisabled={!isDraggable}>
       {(dragProvided, dragSnapshot) => (
-        <TabEditActionsWrapper tab={model} disabled={dragSnapshot.isDragging}>
+        <SectionEditActionsWrapper kind="tab" item={model} disabled={dragSnapshot.isDragging}>
           <div
             ref={(ref) => {
               dragProvided.innerRef(ref);
@@ -161,7 +161,7 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
               {...titleCollisionProps}
             />
           </div>
-        </TabEditActionsWrapper>
+        </SectionEditActionsWrapper>
       )}
     </Draggable>
   );

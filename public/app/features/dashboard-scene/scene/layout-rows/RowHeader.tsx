@@ -9,7 +9,7 @@ import { clearButtonStyles, ClipboardButton, Icon, Tooltip, useElementSelection,
 import { toggleRowCollapse } from '../../actions/layout/toggleRowCollapse';
 import { useDashboardState, useInterpolatedTitle } from '../../utils/utils';
 import { DashboardScene } from '../DashboardScene';
-import { RowEditActionsWrapper } from '../edit-actions-popover/RowEditActions';
+import { SectionEditActionsWrapper } from '../edit-actions-popover/SectionEditActions';
 import { LayoutModeIndicator } from '../layouts-shared/LayoutModeIndicator';
 import { mapIdToGridLayoutType } from '../layouts-shared/utils';
 import { isFullDashboardEditing } from '../types/dashboard';
@@ -73,7 +73,7 @@ export function RowHeader({
   );
 
   return (
-    <RowEditActionsWrapper row={model} disabled={isDragging}>
+    <SectionEditActionsWrapper kind="row" item={model} disabled={isDragging}>
       <div
         className={cx(styles.rowHeader, 'dashboard-row-header')}
         onMouseEnter={isSelectable ? onHeaderEnter : undefined}
@@ -120,7 +120,7 @@ export function RowHeader({
         {isEditing && layoutType && <LayoutModeIndicator layoutType={layoutType} className="layout-indicator" />}
         {isDraggable && <Icon name="draggabledots" className="dashboard-row-header-drag-handle" />}
       </div>
-    </RowEditActionsWrapper>
+    </SectionEditActionsWrapper>
   );
 }
 
