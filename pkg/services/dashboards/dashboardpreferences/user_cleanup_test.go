@@ -27,7 +27,6 @@ func (f roundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
 	return f(req)
 }
 
-// fakeResponse is what the fake API server answers a request with.
 type fakeResponse struct {
 	code        int
 	contentType string
@@ -36,9 +35,8 @@ type fakeResponse struct {
 
 var statusSuccess = fakeResponse{http.StatusOK, "application/json", `{"kind":"Status","apiVersion":"v1","status":"Success"}`}
 
-// newTestCleaner returns a cleaner whose requests are answered by serve, and the "METHOD path" of each request it sends.
-// The rest config must be asked for with a context that ignores the caller's cancellation and has a deadline, and every
-// request must carry Grafana's service identity, limited to namespace.
+// Every test that uses newTestCleaner also checks that the rest config is asked for with a context that has a deadline
+// and ignores the caller's cancellation, and that each request carries Grafana's service identity, limited to namespace.
 func newTestCleaner(t *testing.T, namespace string, serve func(*http.Request) (fakeResponse, error)) (UserCleaner, *[]string) {
 	t.Helper()
 	var requests []string
@@ -103,7 +101,8 @@ func TestUserCleaner_DeleteUserPreferences(t *testing.T) {
 					`"details":{"group":"dashboard.grafana.app","kind":"dashboardpreferences","name":"user-u2"}}`},
 			wantRequest: []string{"DELETE /apis/dashboard.grafana.app/v2beta1/namespaces/default/dashboardpreferences/user-u1"},
 			wantErr: func(t *testing.T, err error) {
-				require.Error(t, err)
+				require.ErrorIs(t, err, ErrNotServed)
+				require.ErrorContains(t, err, "delete user-u1 in namespace default")
 			},
 		},
 		{
@@ -113,7 +112,8 @@ func TestUserCleaner_DeleteUserPreferences(t *testing.T) {
 			response:    fakeResponse{http.StatusNotFound, "text/plain", "404 page not found"},
 			wantRequest: []string{"DELETE /apis/dashboard.grafana.app/v2beta1/namespaces/default/dashboardpreferences/user-u1"},
 			wantErr: func(t *testing.T, err error) {
-				require.Error(t, err)
+				require.ErrorIs(t, err, ErrNotServed)
+				require.ErrorContains(t, err, "delete user-u1 in namespace default")
 			},
 		},
 		{
@@ -124,8 +124,8 @@ func TestUserCleaner_DeleteUserPreferences(t *testing.T) {
 				`{"kind":"Status","apiVersion":"v1","status":"Failure","reason":"Forbidden","code":403,"message":"access denied"}`},
 			wantRequest: []string{"DELETE /apis/dashboard.grafana.app/v2beta1/namespaces/default/dashboardpreferences/user-u1"},
 			wantErr: func(t *testing.T, err error) {
-				require.Error(t, err)
 				require.True(t, apierrors.IsForbidden(err), "want a Forbidden error, got %v", err)
+				require.ErrorContains(t, err, "delete user-u1 in namespace default")
 			},
 		},
 		{
@@ -211,7 +211,6 @@ func TestUserCleaner_BoundsTheDelete(t *testing.T) {
 	})
 }
 
-// recordingCleaner records "<namespace>/<userUID>" for each delete, and fails the delete in failOn.
 type recordingCleaner struct {
 	failOn string
 	calls  []string

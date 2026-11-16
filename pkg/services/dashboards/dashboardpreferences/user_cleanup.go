@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
@@ -33,7 +32,8 @@ var (
 // UserCleaner deletes a user's user-tier DashboardPreferences object.
 type UserCleaner interface {
 	// DeleteUserPreferences deletes user-<userUID> in namespace as Grafana's service identity.
-	// A missing object is not an error.
+	// A missing object is not an error. A server that doesn't serve dashboardpreferences returns an
+	// error that wraps ErrNotServed.
 	DeleteUserPreferences(ctx context.Context, namespace, userUID string) error
 }
 
@@ -75,36 +75,7 @@ func (c *userCleaner) DeleteUserPreferences(ctx context.Context, namespace, user
 		return fmt.Errorf("create dynamic client: %w", err)
 	}
 
-	err = client.Resource(dashv2beta1.DashboardPreferencesResourceInfo.GroupVersionResource()).
-		Namespace(namespace).
-		Delete(ctx, name, metav1.DeleteOptions{})
-	if err == nil || isObjectNotFound(err, name) {
-		return nil
-	}
-	return fmt.Errorf("delete %s in namespace %s: %w", name, namespace, err)
-}
-
-// isObjectNotFound reports whether err says that the named object doesn't exist. A 404 from a route
-// that isn't served also reads as NotFound, so only a Status response that names the object counts.
-func isObjectNotFound(err error, name string) bool {
-	if !apierrors.IsNotFound(err) {
-		return false
-	}
-	var status apierrors.APIStatus
-	if !errors.As(err, &status) {
-		return false
-	}
-	details := status.Status().Details
-	gr := dashv2beta1.DashboardPreferencesResourceInfo.GroupResource()
-	if details == nil || details.Group != gr.Group || details.Kind != gr.Resource || details.Name != name {
-		return false
-	}
-	for _, cause := range details.Causes {
-		if cause.Type == metav1.CauseTypeUnexpectedServerResponse {
-			return false
-		}
-	}
-	return true
+	return deleteByName(ctx, client.Resource(dashv2beta1.DashboardPreferencesResourceInfo.GroupVersionResource()), namespace, name, metav1.DeleteOptions{})
 }
 
 // UserLeftNamespace deletes user-<userUID> in namespace. A failure is logged at Warn, never returned.
