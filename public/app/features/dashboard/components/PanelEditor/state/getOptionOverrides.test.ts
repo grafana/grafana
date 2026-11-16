@@ -52,6 +52,17 @@ describe('getVarMappingOptionOverrides', () => {
       ]);
     });
 
+    it('does not mark a text when an override sets a variable on another option', () => {
+      const fieldConfig: FieldConfigSource = {
+        defaults: {},
+        overrides: [
+          { matcher: { id: 'byName', options: 'A' }, properties: [{ id: 'custom.axisLabel', value: '$host' }] },
+        ],
+      };
+
+      expect(getVarMappingOptionOverrides(textOption('displayName'), fieldConfig)).toEqual([]);
+    });
+
     it('does not mark plain text, a lone $ or an option that does not interpolate', () => {
       const fieldConfig: FieldConfigSource = {
         defaults: { displayName: 'Costs in $', noValue: '$host' },
