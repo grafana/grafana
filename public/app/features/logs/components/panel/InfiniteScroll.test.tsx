@@ -46,7 +46,8 @@ function setup(
   logs: LogListModel[],
   order: LogsSortOrder,
   infiniteScrollMode: InfiniteScrollMode = 'interval',
-  { element, events } = getMockElement(startPosition)
+  { element, events } = getMockElement(startPosition),
+  infiniteScrollTop = true
 ) {
   function scrollTo(position: number, timeStamp?: number) {
     element.scrollTop = position;
@@ -88,6 +89,7 @@ function setup(
       scrollElement={element as unknown as HTMLDivElement}
       loadMore={loadMoreMock}
       infiniteScrollMode={infiniteScrollMode}
+      infiniteScrollTop={infiniteScrollTop}
     >
       {({ getItemKey, itemCount, itemData, onItemsRendered, Log }) => (
         <VariableSizeList
@@ -294,6 +296,67 @@ describe('InfiniteScroll', () => {
           }
 
           expect(loadMoreMock).toHaveBeenCalledTimes(1);
+        });
+      });
+
+      describe('Scrolling to the top', () => {
+        test('Does not request more logs when the top direction is disabled', async () => {
+          const loadMoreMock = jest.fn();
+          const { wheel } = setup(loadMoreMock, 0, logs, order, 'interval', getMockElement(0), false);
+
+          expect(await screen.findByText('log line 1')).toBeInTheDocument();
+
+          wheel(-5, 1);
+          wheel(-5, 600);
+
+          expect(loadMoreMock).not.toHaveBeenCalled();
+          expect(screen.queryByTestId('Spinner')).not.toBeInTheDocument();
+        });
+
+        test('Requests more logs in the top direction', async () => {
+          const loadMoreMock = jest.fn();
+          const { wheel } = setup(loadMoreMock, 0, logs, order);
+
+          expect(await screen.findByText('log line 1')).toBeInTheDocument();
+
+          wheel(-5, 1);
+          wheel(-5, 600);
+
+          expect(loadMoreMock).toHaveBeenCalledTimes(1);
+          expect(loadMoreMock).toHaveBeenCalledWith(expect.anything(), ScrollDirection.Top);
+        });
+
+        test('Shows the loading message for the direction of the request', async () => {
+          const loadMoreMock = jest.fn();
+          const { wheel } = setup(loadMoreMock, 0, logs, order);
+
+          expect(await screen.findByText('log line 1')).toBeInTheDocument();
+
+          wheel(-5, 1);
+          wheel(-5, 600);
+
+          // Scrolling to the top loads newer logs in descending order, and older logs in ascending order.
+          expect(
+            await screen.findByText(
+              order === LogsSortOrder.Descending ? 'Loading newer logs...' : 'Loading older logs...'
+            )
+          ).toBeInTheDocument();
+          expect(await screen.findByTestId('Spinner')).toBeInTheDocument();
+        });
+
+        test('Shows the end of the range when there are no more logs in the top direction', async () => {
+          // Visible range matches the current range
+          const logs = createLogs(absoluteRange.from, absoluteRange.to);
+          const loadMoreMock = jest.fn();
+          const { wheel } = setup(loadMoreMock, 0, logs, order);
+
+          expect(await screen.findByText('log line 1')).toBeInTheDocument();
+
+          wheel(-5, 1);
+          wheel(-5, 600);
+
+          expect(loadMoreMock).not.toHaveBeenCalled();
+          expect(await screen.findByText('End of the selected time range.')).toBeInTheDocument();
         });
       });
 

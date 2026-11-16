@@ -35,6 +35,7 @@ import { type LogLineVirtualization } from './virtualization';
 // The data every LogLine needs
 interface LogData {
   displayedFields: string[];
+  firstLogOfPage: string[];
   handleOverflow: (index: number, id: string, height?: number) => void;
   infiniteLoaderState: InfiniteLoaderState;
   lastLogOfPage: string[];
@@ -63,6 +64,8 @@ export interface Props {
   displayedFields: string[];
   handleOverflow: (index: number, id: string, height?: number) => void;
   infiniteScrollMode: InfiniteScrollMode;
+  /** Allows loading more logs when scrolling to the top of the list. Always enabled in unlimited mode. */
+  infiniteScrollTop?: boolean;
   loadingState?: LoadingState;
   loadMore?: LoadMoreLogsType;
   logs: LogListModel[];
@@ -88,6 +91,7 @@ export const InfiniteScroll = ({
   displayedFields,
   handleOverflow,
   infiniteScrollMode,
+  infiniteScrollTop = false,
   loadingState,
   loadMore,
   logs,
@@ -102,6 +106,7 @@ export const InfiniteScroll = ({
   wrapLogMessage,
 }: Props) => {
   const [infiniteLoaderState, setInfiniteLoaderState] = useState<InfiniteLoaderState>('idle');
+  const [loadDirection, setLoadDirection] = useState<ScrollDirection>(ScrollDirection.Bottom);
   const [autoScroll, setAutoScroll] = useState(false);
   const prevLogs = usePrevious(logs);
   const prevSortOrder = usePrevious(sortOrder);
@@ -109,12 +114,14 @@ export const InfiniteScroll = ({
   const lastEvent = useRef<Event | WheelEvent | null>(null);
   const countRef = useRef(0);
   const lastLogOfPage = useRef<string[]>([]);
+  const firstLogOfPage = useRef<string[]>([]);
   const styles = useStyles2(getStyles, virtualization, displayedFields);
   const resetStateTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const scrollToLogLineRef = useRef<LogListModel | undefined>(undefined);
   const noScrollRef = useRef<undefined | boolean>(undefined);
   const loadMoreCountRef = useRef<number | null>(null);
   const settledRef = useRef(false);
+  const topScrollEnabled = infiniteScrollTop || infiniteScrollMode === 'unlimited';
   // The request backing a load-more is in flight while its state is Loading or Streaming.
   const requestInFlight = loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming;
   const prevInFlight = usePrevious(requestInFlight);
@@ -126,6 +133,8 @@ export const InfiniteScroll = ({
     // instead of latching end-of-range.
     if (isFreshQuery) {
       lastLogOfPage.current = [];
+      firstLogOfPage.current = [];
+      scrollToLogLineRef.current = undefined;
       setAutoScroll(true);
       if (infiniteLoaderState !== 'idle') {
         setInfiniteLoaderState('idle');
@@ -143,6 +152,7 @@ export const InfiniteScroll = ({
       if (loadingState === LoadingState.Error) {
         settledRef.current = false;
         loadMoreCountRef.current = null;
+        scrollToLogLineRef.current = undefined;
         setInfiniteLoaderState('idle');
         return;
       }
@@ -190,15 +200,18 @@ export const InfiniteScroll = ({
         scrollDirection === ScrollDirection.Bottom
           ? canScrollBottom(visibleRange, timeRange, timeZone, sortOrder)
           : canScrollTop(visibleRange, timeRange, timeZone, sortOrder);
+      setLoadDirection(scrollDirection);
       if (!newRange && infiniteScrollMode === 'interval') {
         setInfiniteLoaderState('out-of-bounds');
         return;
       }
       if (scrollDirection === ScrollDirection.Bottom) {
+        scrollToLogLineRef.current = undefined;
         lastLogOfPage.current.push(logs[logs.length - 1].uid);
       } else {
+        // New logs are prepended, keep the current first line in view and mark it as the start of the previous page.
         scrollToLogLineRef.current = logs[0];
-        lastLogOfPage.current.push(logs[0].uid);
+        firstLogOfPage.current.push(logs[0].uid);
       }
       // Snapshot the row count so the completion effect can tell whether new rows arrived.
       loadMoreCountRef.current = logs.length;
@@ -232,7 +245,13 @@ export const InfiniteScroll = ({
       lastEvent.current = event;
       lastScroll.current = scrollElement.scrollTop;
       if (infiniteLoaderState !== 'pre-scroll-bottom' && infiniteLoaderState !== 'pre-scroll-top') {
-        if (infiniteScrollMode === 'unlimited' && scrollDirection === ScrollDirection.Top) {
+        const topEndOfRange = infiniteLoaderState === 'out-of-bounds' && loadDirection === ScrollDirection.Top;
+        if (
+          topScrollEnabled &&
+          scrollDirection === ScrollDirection.Top &&
+          infiniteLoaderState !== 'loading' &&
+          !topEndOfRange
+        ) {
           setInfiniteLoaderState('pre-scroll-top');
           resetStateTimeout.current = setTimeout(() => {
             setInfiniteLoaderState((state) => (state === 'pre-scroll-top' ? 'idle' : state));
@@ -241,9 +260,13 @@ export const InfiniteScroll = ({
         }
         return;
       }
-      if (scrollDirection !== ScrollDirection.NoScroll) {
-        onLoadMore(scrollDirection);
+      if (scrollDirection === ScrollDirection.NoScroll) {
+        return;
       }
+      if (scrollDirection === ScrollDirection.Top && !topScrollEnabled) {
+        return;
+      }
+      onLoadMore(scrollDirection);
     }
 
     scrollElement.addEventListener('scroll', handleScroll);
@@ -253,7 +276,7 @@ export const InfiniteScroll = ({
       scrollElement.removeEventListener('scroll', handleScroll);
       scrollElement.removeEventListener('wheel', handleScroll);
     };
-  }, [infiniteLoaderState, infiniteScrollMode, loadMore, logs.length, onLoadMore, scrollElement]);
+  }, [infiniteLoaderState, loadDirection, loadMore, logs.length, onLoadMore, scrollElement, topScrollEnabled]);
 
   useEffect(() => {
     return () => {
@@ -277,6 +300,7 @@ export const InfiniteScroll = ({
   const itemData = useMemo<LogData>(
     () => ({
       displayedFields,
+      firstLogOfPage: isFreshQuery ? [] : firstLogOfPage.current,
       handleOverflow,
       infiniteLoaderState,
       lastLogOfPage: isFreshQuery ? [] : lastLogOfPage.current,
@@ -321,7 +345,12 @@ export const InfiniteScroll = ({
         setInfiniteLoaderState('idle');
         return;
       }
-      if (infiniteLoaderState === 'loading' || infiniteLoaderState === 'out-of-bounds') {
+      if (infiniteLoaderState === 'loading') {
+        return;
+      }
+      // The end of the range at the top overlays the first line, so it is dismissed once the user scrolls away.
+      const topEndOfRange = infiniteLoaderState === 'out-of-bounds' && loadDirection === ScrollDirection.Top;
+      if (infiniteLoaderState === 'out-of-bounds' && !(topEndOfRange && props.visibleStartIndex > 0)) {
         return;
       }
       const lastLogIndex = logs.length - 1;
@@ -332,19 +361,33 @@ export const InfiniteScroll = ({
         setInfiniteLoaderState('idle');
       }
     },
-    [infiniteLoaderState, logs, scrollElement]
+    [infiniteLoaderState, loadDirection, logs, scrollElement]
   );
 
   const getItemKey = useCallback((index: number) => (logs[index] ? logs[index].uniqueKey : index.toString()), [logs]);
 
-  const itemCount = logs.length && loadMore && infiniteLoaderState !== 'idle' ? logs.length + 1 : logs.length;
+  // Messages related to the bottom direction are rendered as an extra line at the end of the list.
+  const showBottomMessage =
+    infiniteLoaderState === 'pre-scroll-bottom' ||
+    ((infiniteLoaderState === 'loading' || infiniteLoaderState === 'out-of-bounds') &&
+      loadDirection === ScrollDirection.Bottom);
+  const itemCount = logs.length && loadMore && showBottomMessage ? logs.length + 1 : logs.length;
+
+  const showTopMessage =
+    infiniteLoaderState === 'pre-scroll-top' ||
+    ((infiniteLoaderState === 'loading' || infiniteLoaderState === 'out-of-bounds') &&
+      loadDirection === ScrollDirection.Top);
 
   return (
     <>
-      {infiniteLoaderState === 'pre-scroll-top' && (
+      {showTopMessage && (
         <div className={styles.loadMoreTopContainer}>
-          <LogLineMessage style={{}} styles={styles} onClick={loadMoreTop}>
-            {t('logs.infinite-scroll.load-more', 'Scroll to load more')}
+          <LogLineMessage
+            style={{}}
+            styles={styles}
+            onClick={infiniteLoaderState === 'pre-scroll-top' ? loadMoreTop : undefined}
+          >
+            {getMessageFromInfiniteLoaderState(infiniteLoaderState, sortOrder, ScrollDirection.Top)}
           </LogLineMessage>
         </div>
       )}
@@ -353,20 +396,26 @@ export const InfiniteScroll = ({
   );
 };
 
-function getMessageFromInfiniteLoaderState(state: InfiniteLoaderState, order: LogsSortOrder) {
+function getMessageFromInfiniteLoaderState(
+  state: InfiniteLoaderState,
+  order: LogsSortOrder,
+  direction: ScrollDirection = ScrollDirection.Bottom
+) {
   switch (state) {
     case 'out-of-bounds':
       return t('logs.infinite-scroll.end-of-range', 'End of the selected time range.');
     case 'loading':
+      // Scrolling to the bottom loads older logs in descending order, and newer logs in ascending order. Top is the opposite.
       return (
         <>
-          {order === LogsSortOrder.Ascending
+          {(direction === ScrollDirection.Bottom) === (order === LogsSortOrder.Ascending)
             ? t('logs.infinite-scroll.load-newer', 'Loading newer logs...')
             : t('logs.infinite-scroll.load-older', 'Loading older logs...')}{' '}
           <Spinner inline />
         </>
       );
     case 'pre-scroll-bottom':
+    case 'pre-scroll-top':
       return t('logs.infinite-scroll.load-more', 'Scroll to load more');
     default:
       return null;
@@ -376,6 +425,7 @@ function getMessageFromInfiniteLoaderState(state: InfiniteLoaderState, order: Lo
 const Log = memo(({ index, style, data }: ListChildComponentProps<LogData>) => {
   const {
     displayedFields,
+    firstLogOfPage,
     handleOverflow,
     infiniteLoaderState,
     lastLogOfPage,
@@ -414,7 +464,7 @@ const Log = memo(({ index, style, data }: ListChildComponentProps<LogData>) => {
       styles={styles}
       timeRange={timeRange}
       timeZone={timeZone}
-      variant={getLogLineVariant(logs, index, lastLogOfPage)}
+      variant={getLogLineVariant(logs, index, lastLogOfPage, firstLogOfPage)}
       virtualization={virtualization}
       wrapLogMessage={wrapLogMessage}
       onOverflow={handleOverflow}
@@ -423,7 +473,11 @@ const Log = memo(({ index, style, data }: ListChildComponentProps<LogData>) => {
 });
 Log.displayName = 'InfiniteScrollLog';
 
-function getLogLineVariant(logs: LogListModel[], index: number, lastLogOfPage: string[]) {
+function getLogLineVariant(logs: LogListModel[], index: number, lastLogOfPage: string[], firstLogOfPage: string[]) {
+  if (logs[index] && firstLogOfPage.includes(logs[index].uid)) {
+    // First log of a page loaded from the top
+    return 'infinite-scroll';
+  }
   if (!lastLogOfPage.length || !logs[index - 1]) {
     return undefined;
   }
