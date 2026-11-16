@@ -984,7 +984,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 		return nil, err
 	}
 	contentsCleaner := cleaner.ProvideFolderContentsDeleter(rulesService, libraryPanelService)
-	folderAPIBuilder := folders.RegisterAPIService(cfg, featureToggles, features, apiserverService, folderPermissionsService, accessClient, registerer, v5, zanzanaClient, eventualRestConfigProvider, contentsCleaner)
+	folderAPIBuilder := folders.RegisterAPIService(cfg, featureToggles, features, apiserverService, folderPermissionsService, acimplService, accessClient, registerer, v5, zanzanaClient, eventualRestConfigProvider, contentsCleaner)
 	userPermissionsClient := authz.ProvideAuthZUserPermissionsClient(authZClients)
 	roleApiInstaller := iam.ProvideNoopRoleApiInstaller()
 	globalRoleApiInstaller := inmemory.ProvideInMemoryGlobalRoleApiInstaller(acimplService)
@@ -1786,7 +1786,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	contentsCleaner := cleaner.ProvideFolderContentsDeleter(rulesService, libraryPanelService)
-	folderAPIBuilder := folders.RegisterAPIService(cfg, featureToggles, features, apiserverService, folderPermissionsService, accessClient, registerer, v5, zanzanaClient, eventualRestConfigProvider, contentsCleaner)
+	folderAPIBuilder := folders.RegisterAPIService(cfg, featureToggles, features, apiserverService, folderPermissionsService, acimplService, accessClient, registerer, v5, zanzanaClient, eventualRestConfigProvider, contentsCleaner)
 	userPermissionsClient := authz.ProvideAuthZUserPermissionsClient(authZClients)
 	roleApiInstaller := iam.ProvideNoopRoleApiInstaller()
 	globalRoleApiInstaller := inmemory.ProvideInMemoryGlobalRoleApiInstaller(acimplService)

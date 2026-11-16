@@ -71,6 +71,7 @@ type FolderAPIBuilder struct {
 	// The legacy folder permission service is used while the RP API feature is off.
 	resourcePermissions  *rpclient.Client
 	folderPermissionsSvc accesscontrol.FolderPermissionsService // TODO: Remove this once kubernetesAuthzResourcePermissionApis is removed and the frontend is calling /apis directly to create root level folders
+	acService            accesscontrol.Service                  // refreshes the creator's permissions after the legacy default permissions are written
 
 	// Dashboard client for cascade delete, built lazily from cascadeConfigProvider; access via
 	// dashboardClient(ctx). Set independently of the authz flag so cleanup works whenever cascade is on.
@@ -142,6 +143,7 @@ func RegisterAPIService(cfg *setting.Cfg,
 	iamFeatures iamapi.Features,
 	apiregistration builder.APIRegistrar,
 	folderPermissionsSvc accesscontrol.FolderPermissionsService,
+	acService accesscontrol.Service,
 	accessClient authlib.AccessClient,
 	registerer prometheus.Registerer,
 	unified resource.ResourceClient,
@@ -169,6 +171,7 @@ func RegisterAPIService(cfg *setting.Cfg,
 		}
 	} else {
 		builder.folderPermissionsSvc = folderPermissionsSvc
+		builder.acService = acService
 	}
 
 	// Cascade dashboard cleanup needs an apiserver client regardless of the authz flag above.
@@ -298,6 +301,7 @@ func (b *FolderAPIBuilder) storageForVersion(
 			resourceInfo:         folders,
 			tableConverter:       folders.TableConverter(),
 			folderPermissionsSvc: b.folderPermissionsSvc,
+			acService:            b.acService,
 			permissionsOnCreate:  b.permissionsOnCreate,
 			store:                unified,
 		}

@@ -205,3 +205,56 @@ func TestSetDefaultPermissionsWhenCreatingFolder(t *testing.T) {
 		})
 	}
 }
+
+func TestFolderStorageCreateRefreshesCreatorPermissions(t *testing.T) {
+	newStorage := func(t *testing.T, permErr error, acService accesscontrol.Service) folderStorage {
+		folderPermService := acmock.NewMockedPermissionsService()
+		folderPermService.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, permErr)
+
+		store := grafanarest.NewMockStorage(t)
+		store.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&folders.Folder{}, nil)
+
+		return folderStorage{
+			folderPermissionsSvc: folderPermService,
+			acService:            acService,
+			store:                store,
+			permissionsOnCreate:  true,
+		}
+	}
+	creators := map[string]*user.SignedInUser{
+		"user":            {UserID: 1, OrgID: 2},
+		"service account": {UserID: 3, OrgID: 2, IsServiceAccount: true},
+	}
+
+	for name, creator := range creators {
+		t.Run("reloads permissions for "+name+" creator", func(t *testing.T) {
+			acService := acmock.New()
+			var reloaded []accesscontrol.Options
+			acService.GetUserPermissionsFunc = func(_ context.Context, u identity.Requester, opts accesscontrol.Options) ([]accesscontrol.Permission, error) {
+				require.Equal(t, creator.GetCacheKey(), u.GetCacheKey())
+				reloaded = append(reloaded, opts)
+				return nil, nil
+			}
+			fs := newStorage(t, nil, acService)
+
+			ctx := identity.WithRequester(request.WithNamespace(context.Background(), "org-2"), creator)
+			_, err := fs.Create(ctx, &folders.Folder{}, nil, &metav1.CreateOptions{})
+			require.NoError(t, err)
+
+			require.Equal(t, []accesscontrol.Options{{ReloadCache: true}}, reloaded)
+		})
+	}
+
+	t.Run("does not reload permissions when setting default permissions fails", func(t *testing.T) {
+		acService := acmock.New()
+		acService.GetUserPermissionsFunc = func(context.Context, identity.Requester, accesscontrol.Options) ([]accesscontrol.Permission, error) {
+			t.Fatal("permissions must not be reloaded after a failed permission write")
+			return nil, nil
+		}
+		fs := newStorage(t, errors.New("write failed"), acService)
+
+		ctx := identity.WithRequester(request.WithNamespace(context.Background(), "org-2"), creators["user"])
+		_, err := fs.Create(ctx, &folders.Folder{}, nil, &metav1.CreateOptions{})
+		require.Error(t, err)
+	})
+}
