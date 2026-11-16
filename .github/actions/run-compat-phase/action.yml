@@ -39,6 +39,8 @@ runs:
         # go test -c names each binary after its package directory under pkg/tests/compat.
         for bin in "$BINARIES"/*.test; do
           pkg="$(basename "$bin" .test)"
+          # The harness package itself only has unit tests and no directory of its own to run in.
+          if [ "$pkg" = compat ]; then continue; fi
           echo "=== $pkg"
           (cd "$CHECKOUT/pkg/tests/compat/$pkg" && "$bin" -test.count=1 -test.timeout=20m -test.run "^${TEST}\$") 2>&1 | tee -a "$LOG" || rc=1
         done

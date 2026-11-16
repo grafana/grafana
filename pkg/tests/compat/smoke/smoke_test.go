@@ -65,6 +65,7 @@ const (
 
 // TestCompatSetup creates one object per resource.
 func TestCompatSetup(t *testing.T) {
+	reportPhaseOwners(t)
 	dir := compat.Dir(t)
 	h := compat.NewHelper(t)
 	f := readSkipFile(t)
@@ -72,12 +73,17 @@ func TestCompatSetup(t *testing.T) {
 	served := compat.Served(t, h)
 	ctx := context.Background()
 
-	for _, entry := range unservedSkipEntries(f, served, extensions.IsEnterprise) {
-		t.Errorf("skip.yaml lists %s, but this build does not serve it; remove the entry", entry)
+	// Not a subtest, so a run filtered to one resource still validates skip.yaml.
+	if unserved := unservedSkipEntries(f, served, extensions.IsEnterprise); len(unserved) > 0 {
+		compat.ReportOwnersNow(t, compat.PackagePath(t))
+		for _, entry := range unserved {
+			t.Errorf("skip.yaml lists %s, but this build does not serve it; remove the entry", entry)
+		}
 	}
 
 	for gr, flag := range stale {
 		t.Run("stale-skip/"+gr.String(), func(t *testing.T) {
+			reportOwners(t, gr)
 			t.Fatalf("the %s feature flag is on in this build, so remove %s from feature_flags in skip.yaml to test it", flag, gr)
 		})
 	}
@@ -89,6 +95,7 @@ func TestCompatSetup(t *testing.T) {
 			continue
 		}
 		t.Run(gr.String(), func(t *testing.T) {
+			reportOwners(t, gr)
 			obj := newObject(t, h, gr, served[gr])
 			gv, err := schema.ParseGroupVersion(obj.GetAPIVersion())
 			require.NoError(t, err)
@@ -110,6 +117,7 @@ func TestCompatSetup(t *testing.T) {
 // TestCompatUpdate runs on the other version: it reads every object, rewrites it with
 // an update and a patch, and checks that stale writes are rejected.
 func TestCompatUpdate(t *testing.T) {
+	reportPhaseOwners(t)
 	dir := compat.Dir(t)
 	entries := readManifest(t, dir)
 	h := compat.NewHelper(t)
@@ -121,6 +129,7 @@ func TestCompatUpdate(t *testing.T) {
 	for i, e := range entries {
 		gr := e.gr()
 		t.Run(gr.String(), func(t *testing.T) {
+			reportOwners(t, gr)
 			res := servedOrSkip(t, served, skips, e)
 			vc := newVersionCheck(t, gr, f)
 			readEverywhere(t, h, e, res, vc)
@@ -182,6 +191,7 @@ func TestCompatUpdate(t *testing.T) {
 // every object: the spec must read back exactly as it was written. Then it deletes
 // everything and checks the objects are gone.
 func TestCompatVerify(t *testing.T) {
+	reportPhaseOwners(t)
 	dir := compat.Dir(t)
 	entries := readManifest(t, dir)
 	h := compat.NewHelper(t)
@@ -193,6 +203,7 @@ func TestCompatVerify(t *testing.T) {
 	for _, e := range entries {
 		gr := e.gr()
 		t.Run(gr.String(), func(t *testing.T) {
+			reportOwners(t, gr)
 			res := servedOrSkip(t, served, skips, e)
 			vc := newVersionCheck(t, gr, f)
 			readEverywhere(t, h, e, res, vc)
@@ -220,6 +231,7 @@ func TestCompatVerify(t *testing.T) {
 	for _, e := range slices.Backward(entries) {
 		gr := e.gr()
 		t.Run("delete/"+gr.String(), func(t *testing.T) {
+			reportOwners(t, gr)
 			res := servedOrSkip(t, served, skips, e)
 			client := resourceClient(h, gr, res.Versions[0])
 			require.NoError(t, client.Delete(ctx, e.Name, metav1.DeleteOptions{}), "delete%s", hint(e, res))
@@ -477,7 +489,11 @@ func writeManifest(t *testing.T, dir string, entries []written) {
 	t.Helper()
 	raw, err := json.MarshalIndent(entries, "", "  ")
 	require.NoError(t, err)
-	require.NoError(t, os.WriteFile(manifestPath(dir), raw, 0o600))
+	if err := os.WriteFile(manifestPath(dir), raw, 0o600); err != nil {
+		// The phase runs this outside any subtest, so a filtered run still writes the manifest.
+		compat.ReportOwnersNow(t, compat.PackagePath(t))
+		t.Fatalf("write the manifest: %v", err)
+	}
 }
 
 func readManifest(t *testing.T, dir string) []written {
@@ -515,6 +531,24 @@ func newObject(t *testing.T, h *apis.K8sTestHelper, gr schema.GroupResource, res
 	obj.SetKind(res.Kind)
 	obj.SetName(name)
 	return obj
+}
+
+// reportPhaseOwners sends a failure outside any resource, like a stale skip.yaml entry
+// or a missing manifest, to the owners of this package.
+func reportPhaseOwners(t *testing.T) {
+	t.Helper()
+	compat.ReportOwners(t, compat.PackagePath(t))
+}
+
+// reportOwners sends a failure to the owners of the group's fixtures when they have a
+// CODEOWNERS entry, else to the owners of the app (apps/<app> for <x>.<app>.grafana.app),
+// else to the owners of this package.
+func reportOwners(t *testing.T, gr schema.GroupResource) {
+	t.Helper()
+	pkg := compat.PackagePath(t)
+	group := strings.TrimSuffix(gr.Group, ".grafana.app")
+	app := group[strings.LastIndex(group, ".")+1:]
+	compat.ReportOwners(t, pkg+"/testdata/"+gr.Group, "apps/"+app, pkg)
 }
 
 // skipFile is skip.yaml. Every map is keyed by "<resource>.<group>"; the values are
