@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"reflect"
+	"sync"
 	"testing"
 
 	badger "github.com/dgraph-io/badger/v4"
@@ -23,6 +24,7 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	"github.com/grafana/authlib/authn"
 	authlib "github.com/grafana/authlib/types"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -546,6 +548,47 @@ func TestNewAPIService_WiresUserPreferencesCleanup(t *testing.T) {
 
 		require.Nil(t, b.userPreferences)
 	})
+}
+
+type recordingTokenExchanger struct {
+	mu       sync.Mutex
+	requests []authn.TokenExchangeRequest
+}
+
+func (e *recordingTokenExchanger) Exchange(_ context.Context, req authn.TokenExchangeRequest) (*authn.TokenExchangeResponse, error) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	e.requests = append(e.requests, req)
+	return &authn.TokenExchangeResponse{Token: "token-for-" + req.Namespace}, nil
+}
+
+func TestNewRemoteUserPreferencesCleaner_ExchangesATokenForEachNamespace(t *testing.T) {
+	var mu sync.Mutex
+	var received []string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		received = append(received, r.Method+" "+r.URL.Path+" "+r.Header.Get("X-Access-Token"))
+		mu.Unlock()
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = io.WriteString(w, `{"kind":"Status","apiVersion":"v1","status":"Success"}`)
+	}))
+	t.Cleanup(server.Close)
+	exchanger := &recordingTokenExchanger{}
+	cleaner := newRemoteUserPreferencesCleaner(map[schema.GroupResource]iamauthorizer.DialConfig{
+		{Group: "dashboard.grafana.app", Resource: "dashboards"}: {Host: server.URL, Audience: "dashboard.grafana.app"},
+	}, exchanger)
+
+	require.NoError(t, cleaner.DeleteUserPreferences(t.Context(), "stacks-1", "u1"))
+	require.NoError(t, cleaner.DeleteUserPreferences(t.Context(), "stacks-2", "u1"))
+
+	require.Equal(t, []authn.TokenExchangeRequest{
+		{Namespace: "stacks-1", Audiences: []string{"dashboard.grafana.app"}},
+		{Namespace: "stacks-2", Audiences: []string{"dashboard.grafana.app"}},
+	}, exchanger.requests)
+	require.Equal(t, []string{
+		"DELETE /apis/dashboard.grafana.app/v2beta1/namespaces/stacks-1/dashboardpreferences/user-u1 Bearer token-for-stacks-1",
+		"DELETE /apis/dashboard.grafana.app/v2beta1/namespaces/stacks-2/dashboardpreferences/user-u1 Bearer token-for-stacks-2",
+	}, received)
 }
 
 func TestInstallSchema_ResourcePermissionsGate(t *testing.T) {

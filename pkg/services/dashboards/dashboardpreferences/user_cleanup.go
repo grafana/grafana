@@ -40,17 +40,20 @@ type UserCleaner interface {
 }
 
 type userCleaner struct {
-	restConfig func(context.Context) (*rest.Config, error)
+	restConfig func(ctx context.Context, namespace string) (*rest.Config, error)
 }
 
-// NewUserCleaner returns a UserCleaner whose client is built from restConfig on each call.
-func NewUserCleaner(restConfig func(context.Context) (*rest.Config, error)) UserCleaner {
+// NewUserCleaner returns a UserCleaner whose client is built on each call, from restConfig for the
+// namespace it deletes in.
+func NewUserCleaner(restConfig func(ctx context.Context, namespace string) (*rest.Config, error)) UserCleaner {
 	return &userCleaner{restConfig: restConfig}
 }
 
 // ProvideUserCleaner is the Wire provider: the loopback config of Grafana's API server.
 func ProvideUserCleaner(restConfig apiserver.RestConfigProvider) UserCleaner {
-	return NewUserCleaner(restConfig.GetRestConfig)
+	return NewUserCleaner(func(ctx context.Context, _ string) (*rest.Config, error) {
+		return restConfig.GetRestConfig(ctx)
+	})
 }
 
 func (c *userCleaner) DeleteUserPreferences(ctx context.Context, namespace, userUID string) error {
@@ -76,7 +79,7 @@ func (c *userCleaner) DeleteUserPreferences(ctx context.Context, namespace, user
 	defer cancel()
 	ctx = identity.WithServiceIdentityForSingleNamespaceContext(ctx, namespace)
 
-	cfg, err := c.restConfig(ctx)
+	cfg, err := c.restConfig(ctx, namespace)
 	if err != nil {
 		return fmt.Errorf("get rest config: %w", err)
 	}

@@ -17,6 +17,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
+	clientrest "k8s.io/client-go/rest"
 	common "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
@@ -31,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/apiserver/readonly"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/clientauth"
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -846,15 +848,23 @@ func newUserDeleteCascade(userStore storewrapper.K8sStorage, authInfoStorage res
 
 // newRemoteUserPreferencesCleaner returns nil without a dial config for {dashboard.grafana.app, dashboards}.
 func newRemoteUserPreferencesCleaner(dialConfigs map[schema.GroupResource]iamauthorizer.DialConfig, tokenExchanger authn.TokenExchanger) dashboardpreferences.UserCleaner {
-	gr := schema.GroupResource{Group: dashboardv1.GROUP, Resource: dashboardv1.DASHBOARD_RESOURCE}
-	cfg, ok := dialConfigs[gr]
+	// One API server serves the whole dashboard.grafana.app group, so the dashboards dial config
+	// also reaches dashboardpreferences.
+	cfg, ok := dialConfigs[schema.GroupResource{Group: dashboardv1.GROUP, Resource: dashboardv1.DASHBOARD_RESOURCE}]
 	if !ok {
 		return nil
 	}
-	// One API server serves the whole dashboard.grafana.app group, so the dashboards dial config
-	// also reaches dashboardpreferences.
-	configProvider := iamauthorizer.NewRemoteConfigProvider(map[schema.GroupResource]iamauthorizer.DialConfig{gr: cfg}, tokenExchanger)[gr]
-	return dashboardpreferences.NewUserCleaner(configProvider)
+	return dashboardpreferences.NewUserCleaner(func(_ context.Context, namespace string) (*clientrest.Config, error) {
+		return &clientrest.Config{
+			Host: cfg.Host,
+			// Each delete is in one namespace, so its token is exchanged for that namespace.
+			WrapTransport: clientauth.NewStaticTokenExchangeTransportWrapper(tokenExchanger, cfg.Audience, namespace),
+			TLSClientConfig: clientrest.TLSClientConfig{
+				Insecure: cfg.Insecure,
+				CAFile:   cfg.CAFile,
+			},
+		}, nil
+	})
 }
 
 // useStatusDualWriter returns true when the user resource is in Mode 0-3 (legacy is still

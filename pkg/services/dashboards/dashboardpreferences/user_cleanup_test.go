@@ -35,8 +35,9 @@ type fakeResponse struct {
 
 var statusSuccess = fakeResponse{http.StatusOK, "application/json", `{"kind":"Status","apiVersion":"v1","status":"Success"}`}
 
-// Every test that uses newTestCleaner also checks that the rest config is asked for with a context that has a deadline
-// and ignores the caller's cancellation, and that each request carries Grafana's service identity, limited to namespace.
+// Every test that uses newTestCleaner also checks that the rest config is asked for namespace, with a context that has a
+// deadline and ignores the caller's cancellation, and that each request carries Grafana's service identity, limited to
+// namespace.
 func newTestCleaner(t *testing.T, namespace string, serve func(*http.Request) (fakeResponse, error)) (UserCleaner, *[]string) {
 	t.Helper()
 	var requests []string
@@ -58,7 +59,8 @@ func newTestCleaner(t *testing.T, namespace string, serve func(*http.Request) (f
 			Request:    req,
 		}, nil
 	})
-	cleaner := NewUserCleaner(func(ctx context.Context) (*rest.Config, error) {
+	cleaner := NewUserCleaner(func(ctx context.Context, gotNamespace string) (*rest.Config, error) {
+		assert.Equal(t, namespace, gotNamespace, "the rest config must be for the namespace the delete is in")
 		assert.NoError(t, ctx.Err(), "the wait for the rest config must not end with the caller's context")
 		_, bounded := ctx.Deadline()
 		assert.True(t, bounded, "the wait for the rest config must be bounded")
@@ -183,7 +185,7 @@ func TestUserCleaner_DeleteUserPreferences(t *testing.T) {
 }
 
 func TestUserCleaner_RestConfigError(t *testing.T) {
-	cleaner := NewUserCleaner(func(context.Context) (*rest.Config, error) {
+	cleaner := NewUserCleaner(func(context.Context, string) (*rest.Config, error) {
 		return nil, errors.New("API server unavailable")
 	})
 
