@@ -119,7 +119,7 @@ export function AppChrome({ children }: Props) {
   const isSmallScreen = !useMediaQueryMinWidth('sm');
 
   useResponsiveDockedMegaMenu(chrome);
-  useMegaMenuFocusHelper(state.megaMenuOpen, state.megaMenuDocked);
+  useMegaMenuFocusHelper(state.megaMenuOpen, state.megaMenuDocked, state.megaMenuPeek);
 
   const contentClass = cx({
     [styles.content]: true,
@@ -205,7 +205,6 @@ export function AppChrome({ children }: Props) {
               sectionNav={state.sectionNav.node}
               pageNav={state.pageNav}
               onToggleMegaMenu={handleMegaMenu}
-              onToggleKioskMode={chrome.onToggleKioskMode}
               actions={state.actions}
               breadcrumbActions={state.breadcrumbActions}
               scopes={scopes}

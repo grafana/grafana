@@ -56,7 +56,7 @@ export const flows = {
 
         await page.getByTestId(selectors.components.ImportDashboardForm.submit).click();
 
-        const undockMenuButton = page.locator('[aria-label="Undock menu"]');
+        const undockMenuButton = page.locator('[aria-label="Close menu"]');
         const undockMenuVisible = await undockMenuButton.isVisible();
         if (undockMenuVisible) {
           await undockMenuButton.click();

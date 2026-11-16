@@ -13521,6 +13521,7 @@
       "tv-alert": "Press ESC to exit kiosk mode"
     },
     "megamenu": {
+      "click-to-dock": "Click to dock",
       "close": "Close menu",
       "customise": "Customise navigation",
       "customise-cancel": "Cancel",
@@ -13528,13 +13529,12 @@
       "customise-reset": "Reset navigation - show all items, unpin all and reset order",
       "customise-saving": "Saving…",
       "dialog-label": "Navigation",
-      "dock": "Dock menu",
       "header-title": "Navigation",
       "list-label": "Navigation",
       "open": "Main menu",
       "pin-error": "Failed to update pinned menu items",
       "pinned-list-label": "Pinned items",
-      "undock": "Undock menu"
+      "section-resize": "Resize navigation"
     },
     "megamenu-item": {
       "children-error": "Failed to load items",

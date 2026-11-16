@@ -54,7 +54,6 @@ import {
   subscribeToExtensionSidebarPresentation,
 } from '../ExtensionSidebar/extensionSidebarLayout';
 import { getComponentIdFromComponentMeta } from '../ExtensionSidebar/extensionSidebarUtils';
-import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
 
 const ASSISTANT_PLUGIN_ID = 'grafana-assistant-app';
 const ASSISTANT_ICON_GRADIENT_ID = 'grafana-assistant-icon-gradient';
@@ -323,7 +322,6 @@ export function AssistantToolbarButtons() {
           tooltip={canChangeLayout ? undefined : label}
         />
       </span>
-      <NavToolbarSeparator className={styles.separator} />
       {menuOpen && (
         // FloatingPortal keeps the menu in the tab order right after the button. Rendered where Grafana renders its
         // overlays, so the tooltips its preset tiles open there stack above it.
@@ -661,9 +659,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
       fill: `url(#${ASSISTANT_ICON_GRADIENT_ID})`,
       stroke: `url(#${ASSISTANT_ICON_GRADIENT_ID})`,
     },
-  }),
-  separator: css({
-    marginRight: theme.spacing(1),
   }),
   menu: css({
     zIndex: theme.zIndex.portal,

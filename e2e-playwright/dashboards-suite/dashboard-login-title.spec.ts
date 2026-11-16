@@ -86,7 +86,12 @@ test.describe('Dashboard names after session expiry', { tag: ['@dashboards'] }, 
     await expect(page).toHaveTitle(new RegExp(dashboards[0].title));
     await secondTab.reload();
     await expect(secondTab).toHaveTitle(new RegExp(dashboards[1].title));
-    await page.getByRole('button', { name: /profile/i }).click();
+    // The profile menu sits at the bottom of the main menu, which this viewport may not have docked open.
+    const profileButton = page.getByRole('button', { name: /profile/i });
+    if (!(await profileButton.isVisible())) {
+      await page.getByRole('button', { name: 'Main menu' }).click();
+    }
+    await profileButton.click();
     await page.getByRole('menuitem', { name: /sign out/i }).click();
     await expect(page.getByTestId(selectors.pages.Login.username)).toBeVisible();
     await expect(page).toHaveTitle('Grafana');
