@@ -3,6 +3,8 @@ package graphite
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
+	"math"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -127,6 +129,31 @@ func TestFloat_UnmarshalJSON(t *testing.T) {
 			input:       []byte(`"123.456"`),
 			expectError: true,
 		},
+		{
+			name:     "leading whitespace",
+			input:    []byte(" 1.5"),
+			expected: FloatFrom(1.5),
+		},
+		{
+			name:     "trailing whitespace",
+			input:    []byte("1.5 \n"),
+			expected: FloatFrom(1.5),
+		},
+		{
+			name:     "null with whitespace",
+			input:    []byte(" null "),
+			expected: NewFloat(0, false),
+		},
+		{
+			name:        "overflow",
+			input:       []byte("1e400"),
+			expectError: true,
+		},
+		{
+			name:        "NaN",
+			input:       []byte("NaN"),
+			expectError: true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -140,6 +167,87 @@ func TestFloat_UnmarshalJSON(t *testing.T) {
 				assert.Equal(t, tt.expected, result)
 			}
 		})
+	}
+}
+
+func TestFloat_UnmarshalJSONRenderResponse(t *testing.T) {
+	tests := []struct {
+		name        string
+		value       string
+		expected    Float
+		expectError bool
+	}{
+		{name: "integer", value: "42", expected: FloatFrom(42)},
+		{name: "decimal", value: "123.456", expected: FloatFrom(123.456)},
+		{name: "negative", value: "-42.5", expected: FloatFrom(-42.5)},
+		{name: "zero", value: "0", expected: FloatFrom(0)},
+		{name: "negative zero", value: "-0", expected: FloatFrom(math.Copysign(0, -1))},
+		{name: "exponent", value: "1.5e3", expected: FloatFrom(1500)},
+		{name: "negative exponent", value: "1E-2", expected: FloatFrom(0.01)},
+		{name: "signed upper-case exponent", value: "-2.5E+10", expected: FloatFrom(-2.5e10)},
+		{name: "largest float64", value: "1.7976931348623157e308", expected: FloatFrom(math.MaxFloat64)},
+		{name: "smallest float64", value: "5e-324", expected: FloatFrom(math.SmallestNonzeroFloat64)},
+		{name: "integer above 2^53 rounds", value: "9007199254740993", expected: FloatFrom(9007199254740992)},
+		{name: "integer above int64", value: "12345678901234567890123", expected: FloatFrom(1.2345678901234568e22)},
+		{name: "underflow rounds to zero", value: "1e-400", expected: FloatFrom(0)},
+		{name: "overflow", value: "1e400", expectError: true},
+		{name: "negative overflow", value: "-1e400", expectError: true},
+		{name: "whitespace around value", value: " \n\t1.5\r\n ", expected: FloatFrom(1.5)},
+		{name: "null", value: "null", expected: NewFloat(0, false)},
+		{name: "null with whitespace", value: " null ", expected: NewFloat(0, false)},
+		{name: "sql.NullFloat64 object", value: `{"Float64": 42.5, "Valid": true}`, expected: FloatFrom(42.5)},
+		{name: "NaN string", value: `"NaN"`, expectError: true},
+		{name: "Infinity string", value: `"Infinity"`, expectError: true},
+		{name: "-Infinity string", value: `"-Infinity"`, expectError: true},
+		{name: "numeric string", value: `"1.5"`, expectError: true},
+		{name: "bare NaN", value: "NaN", expectError: true},
+		{name: "bare Infinity", value: "Infinity", expectError: true},
+		{name: "bare -Infinity", value: "-Infinity", expectError: true},
+		{name: "leading zero", value: "01", expectError: true},
+		{name: "trailing decimal point", value: "1.", expectError: true},
+		{name: "boolean", value: "true", expectError: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			body := `[{"target":"a","datapoints":[[` + tt.value + `,1700000000]]}]`
+			var series []TargetResponseDTO
+			err := json.Unmarshal([]byte(body), &series)
+			if tt.expectError {
+				assert.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			point := series[0].DataPoints[0]
+			assert.Equal(t, tt.expected, point[0])
+			assert.Equal(t, math.Float64bits(tt.expected.Float64), math.Float64bits(point[0].Float64))
+			assert.Equal(t, FloatFrom(1700000000), point[1])
+		})
+	}
+}
+
+func BenchmarkUnmarshalRenderResponse(b *testing.B) {
+	series := make([]TargetResponseDTO, 100)
+	for s := range series {
+		target := fmt.Sprintf("servers.web%03d.cpu.usage", s)
+		points := make(DataTimeSeriesPoints, 1000)
+		for p := range points {
+			value := FloatFrom(float64(s*len(points)+p) * 1.0137 / 7)
+			if (s+p)%10 == 0 {
+				value = NewFloat(0, false)
+			}
+			points[p] = DataTimePoint{value, FloatFrom(float64(1700000000 + 60*p))}
+		}
+		series[s] = TargetResponseDTO{Target: target, DataPoints: points, Tags: map[string]any{"name": target}}
+	}
+	body, err := json.Marshal(series)
+	require.NoError(b, err)
+
+	b.SetBytes(int64(len(body)))
+	b.ReportAllocs()
+	for b.Loop() {
+		var got []TargetResponseDTO
+		require.NoError(b, json.Unmarshal(body, &got))
 	}
 }
 
