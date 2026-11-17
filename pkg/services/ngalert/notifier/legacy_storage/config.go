@@ -128,9 +128,10 @@ func (a alertmanagerConfigStoreImpl) Save(ctx context.Context, revision *ConfigR
 }
 
 // validateConfigSize fails open when limits are unavailable, so a remote Alertmanager outage does not block writes.
-// Writes that do not grow the configuration are always allowed so that oversized tenants can shrink it.
+// Writes that do not grow the configuration return before the limits lookup, so shrinking writes never
+// wait on the remote Alertmanager while a transaction is open.
 func (a alertmanagerConfigStoreImpl) validateConfigSize(ctx context.Context, newSize, storedSize int) error {
-	if a.limits == nil {
+	if a.limits == nil || newSize <= storedSize {
 		return nil
 	}
 	limits, err := a.limits.GetLimits(ctx)
@@ -141,9 +142,6 @@ func (a alertmanagerConfigStoreImpl) validateConfigSize(ctx context.Context, new
 		return nil
 	}
 	if limits == nil || limits.Config == nil || limits.Config.MaxGrafanaConfigSizeBytes <= 0 {
-		return nil
-	}
-	if newSize <= storedSize {
 		return nil
 	}
 	threshold := limits.Config.MaxGrafanaConfigSizeBytes * configSizeThresholdPercent / 100
