@@ -6,7 +6,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';
-import { BaseCodeMirrorEditor } from '../CodeMirror/BaseCodeEditor';
+import { BaseCodeEditor } from '../CodeMirror/BaseCodeEditor';
 import { type CodeMirrorBasicSetup, type CodeMirrorEditorTheme, type CodeMirrorExtension } from '../CodeMirror/types';
 
 import { type QueryInputProps } from './QueryInput';
@@ -119,7 +119,7 @@ export const QueryInputImplementation = memo(function QueryInputImplementation({
   );
 
   return (
-    <BaseCodeMirrorEditor
+    <BaseCodeEditor
       value={value}
       onChange={onChange}
       theme={editorTheme}

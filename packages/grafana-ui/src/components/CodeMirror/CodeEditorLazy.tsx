@@ -5,19 +5,15 @@ import { t } from '@grafana/i18n';
 import { ErrorBoundaryAlert } from '../ErrorBoundary/ErrorBoundary';
 import { LoadingPlaceholder } from '../LoadingPlaceholder/LoadingPlaceholder';
 
-import {
-  type BaseCodeMirrorEditorProps,
-  type CodeMirrorEditorProps,
-  type InternalCodeMirrorEditorProps,
-} from './types';
+import { type BaseCodeEditorProps, type CodeMirrorEditorProps, type InternalCodeMirrorEditorProps } from './types';
 
-const LazyBaseCodeMirrorEditor = lazy(() =>
+const LazyBaseCodeEditor = lazy(() =>
   import(/* webpackChunkName: "react-codemirror-editor" */ './BaseCodeEditor').then((module) => ({
-    default: module.BaseCodeMirrorEditor,
+    default: module.BaseCodeEditor,
   }))
 );
 
-function LazyEditor({ loadingFallback, ...props }: BaseCodeMirrorEditorProps & { loadingFallback?: ReactNode }) {
+function LazyEditor({ loadingFallback, ...props }: BaseCodeEditorProps & { loadingFallback?: ReactNode }) {
   return (
     <ErrorBoundaryAlert
       boundaryName="CodeMirrorEditorLazy"
@@ -31,7 +27,7 @@ function LazyEditor({ loadingFallback, ...props }: BaseCodeMirrorEditorProps & {
           )
         }
       >
-        <LazyBaseCodeMirrorEditor {...props} />
+        <LazyBaseCodeEditor {...props} />
       </Suspense>
     </ErrorBoundaryAlert>
   );

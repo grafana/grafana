@@ -10,7 +10,7 @@ import { faro } from '@grafana/faro-web-sdk';
 
 import { mockThemeContext } from '../../themes/ThemeContext';
 
-import { BaseCodeMirrorEditor } from './BaseCodeEditor';
+import { BaseCodeEditor } from './BaseCodeEditor';
 import { loadLanguageExtension } from './languageLoader';
 import { createCodeEditorTheme } from './theme';
 
@@ -80,7 +80,7 @@ const getContentAttributes = () =>
     extensions: getExtensions() as never[],
   }).facet(EditorView.contentAttributes);
 
-describe('BaseCodeMirrorEditor', () => {
+describe('BaseCodeEditor', () => {
   beforeEach(() => {
     capturedProps = undefined;
     autocompletionMock.mockClear();
@@ -97,7 +97,7 @@ describe('BaseCodeMirrorEditor', () => {
     const customSourceB = jest.fn();
 
     render(
-      <BaseCodeMirrorEditor
+      <BaseCodeEditor
         value=""
         onChange={jest.fn()}
         completionSources={[customSourceA, customSourceB]}
@@ -116,7 +116,7 @@ describe('BaseCodeMirrorEditor', () => {
     const customSourceB = jest.fn();
 
     render(
-      <BaseCodeMirrorEditor
+      <BaseCodeEditor
         value=""
         onChange={jest.fn()}
         completionSources={[customSourceA, customSourceB]}
@@ -134,7 +134,7 @@ describe('BaseCodeMirrorEditor', () => {
     const existingSource = jest.fn();
 
     render(
-      <BaseCodeMirrorEditor
+      <BaseCodeEditor
         value=""
         onChange={jest.fn()}
         extensions={[EditorState.languageData.of(() => [{ autocomplete: existingSource }])]}
@@ -146,7 +146,7 @@ describe('BaseCodeMirrorEditor', () => {
   });
 
   it('binds Tab to accept completions before the default indent behavior', () => {
-    render(<BaseCodeMirrorEditor value="" onChange={jest.fn()} />);
+    render(<BaseCodeEditor value="" onChange={jest.fn()} />);
 
     const tabBinding = getKeyBindings().find((binding) => binding.key === 'Tab');
 
@@ -154,15 +154,13 @@ describe('BaseCodeMirrorEditor', () => {
   });
 
   it('leaves Space unbound by default, so a space cannot open the popup as an explicit request', () => {
-    render(<BaseCodeMirrorEditor value="a sentence" onChange={jest.fn()} completionSources={[jest.fn()]} />);
+    render(<BaseCodeEditor value="a sentence" onChange={jest.fn()} completionSources={[jest.fn()]} />);
 
     expect(getKeyBindings().find((binding) => binding.key === 'Space')).toBeUndefined();
   });
 
   it('binds Space to insert a space and start completions when completeOnSpace is set', () => {
-    render(
-      <BaseCodeMirrorEditor value="SELECT" onChange={jest.fn()} completionSources={[jest.fn()]} completeOnSpace />
-    );
+    render(<BaseCodeEditor value="SELECT" onChange={jest.fn()} completionSources={[jest.fn()]} completeOnSpace />);
 
     const spaceBinding = getKeyBindings().find((binding) => binding.key === 'Space');
     const replaceSelection = jest.fn(() => ({ changes: { from: 6, insert: ' ' } }));
@@ -183,12 +181,7 @@ describe('BaseCodeMirrorEditor', () => {
 
   it('adds accessibility attributes to the editor content when provided', () => {
     render(
-      <BaseCodeMirrorEditor
-        value=""
-        onChange={jest.fn()}
-        aria-label="Code editor"
-        aria-labelledby="code-editor-label"
-      />
+      <BaseCodeEditor value="" onChange={jest.fn()} aria-label="Code editor" aria-labelledby="code-editor-label" />
     );
 
     expect(getContentAttributes()).toEqual(
@@ -197,7 +190,7 @@ describe('BaseCodeMirrorEditor', () => {
   });
 
   it('does not attach a blur handler when onBlur is not provided', () => {
-    render(<BaseCodeMirrorEditor value="" onChange={jest.fn()} />);
+    render(<BaseCodeEditor value="" onChange={jest.fn()} />);
 
     expect(capturedProps?.onBlur).toBeUndefined();
   });
@@ -208,7 +201,7 @@ describe('BaseCodeMirrorEditor', () => {
     const onSave = jest.fn();
     const nextOnSave = jest.fn();
     const onKeyDown = jest.fn();
-    const { rerender } = render(<BaseCodeMirrorEditor value="initial" onChange={onChange} />);
+    const { rerender } = render(<BaseCodeEditor value="initial" onChange={onChange} />);
     const view = new EditorView({
       state: EditorState.create({ doc: 'SELECT 1', extensions: getExtensions() as never[] }),
       parent: document.body,
@@ -220,7 +213,7 @@ describe('BaseCodeMirrorEditor', () => {
       await user.keyboard('{Control>}s{/Control}');
       expect(onKeyDown).toHaveBeenLastCalledWith(expect.objectContaining({ key: 's', defaultPrevented: true }));
 
-      rerender(<BaseCodeMirrorEditor value="initial" onChange={onChange} onSave={onSave} />);
+      rerender(<BaseCodeEditor value="initial" onChange={onChange} onSave={onSave} />);
       await user.keyboard('{Control>}s{/Control}');
       expect(onSave.mock.calls).toEqual([['SELECT 1']]);
 
@@ -229,11 +222,11 @@ describe('BaseCodeMirrorEditor', () => {
       expect(onSave.mock.calls).toEqual([['SELECT 1']]);
 
       view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: 'SELECT 2' } });
-      rerender(<BaseCodeMirrorEditor value="initial" onChange={onChange} onSave={nextOnSave} />);
+      rerender(<BaseCodeEditor value="initial" onChange={onChange} onSave={nextOnSave} />);
       await user.keyboard('{Control>}s{/Control}');
       expect(nextOnSave.mock.calls).toEqual([['SELECT 2']]);
 
-      rerender(<BaseCodeMirrorEditor value="initial" onChange={onChange} />);
+      rerender(<BaseCodeEditor value="initial" onChange={onChange} />);
       await user.keyboard('{Control>}s{/Control}');
       expect(onKeyDown).toHaveBeenLastCalledWith(expect.objectContaining({ key: 's', defaultPrevented: true }));
       expect(onSave.mock.calls).toEqual([['SELECT 1']]);
@@ -244,19 +237,19 @@ describe('BaseCodeMirrorEditor', () => {
   });
 
   it('defaults to the Grafana theme when no theme prop is provided', () => {
-    render(<BaseCodeMirrorEditor value="" onChange={jest.fn()} />);
+    render(<BaseCodeEditor value="" onChange={jest.fn()} />);
 
     expect(createCodeEditorThemeMock).toHaveBeenCalledTimes(1);
     expect(capturedProps?.theme).toBe(createCodeEditorThemeMock.mock.results[0].value);
   });
 
   it('regenerates the default editor theme when the Grafana theme changes', () => {
-    const { rerender } = render(<BaseCodeMirrorEditor value="" onChange={jest.fn()} />);
+    const { rerender } = render(<BaseCodeEditor value="" onChange={jest.fn()} />);
     const initialTheme = createCodeEditorThemeMock.mock.calls[0][0] as GrafanaTheme2;
     const nextTheme = createTheme({ colors: { mode: initialTheme.isDark ? 'light' : 'dark' } });
     const restoreThemeContext = mockThemeContext(nextTheme);
 
-    rerender(<BaseCodeMirrorEditor value="" onChange={jest.fn()} />);
+    rerender(<BaseCodeEditor value="" onChange={jest.fn()} />);
 
     expect(createCodeEditorThemeMock).toHaveBeenLastCalledWith(nextTheme);
     expect(capturedProps?.theme).toBe(createCodeEditorThemeMock.mock.results.at(-1)?.value);
@@ -267,7 +260,7 @@ describe('BaseCodeMirrorEditor', () => {
   it('passes a provided theme through to CodeMirror, replacing the default Grafana theme', () => {
     const customTheme = EditorView.theme({ '&': { backgroundColor: 'rgb(7, 7, 7)' } });
 
-    render(<BaseCodeMirrorEditor value="" onChange={jest.fn()} theme={customTheme} />);
+    render(<BaseCodeEditor value="" onChange={jest.fn()} theme={customTheme} />);
 
     expect(capturedProps?.theme).toBe(customTheme);
   });
@@ -275,7 +268,7 @@ describe('BaseCodeMirrorEditor', () => {
   it('forwards basicSetup to CodeMirror so consumers can disable default features', () => {
     const basicSetup = { lineNumbers: false, foldGutter: false } as const;
 
-    render(<BaseCodeMirrorEditor value="" onChange={jest.fn()} basicSetup={basicSetup} />);
+    render(<BaseCodeEditor value="" onChange={jest.fn()} basicSetup={basicSetup} />);
 
     expect((capturedProps as { basicSetup?: unknown } | undefined)?.basicSetup).toBe(basicSetup);
   });
@@ -284,7 +277,7 @@ describe('BaseCodeMirrorEditor', () => {
     const languageExtension = EditorState.languageData.of(() => [{ autocomplete: jest.fn() }]);
     loadLanguageExtensionMock.mockResolvedValue(languageExtension);
 
-    render(<BaseCodeMirrorEditor value="" onChange={jest.fn()} language="sql" />);
+    render(<BaseCodeEditor value="" onChange={jest.fn()} language="sql" />);
 
     await waitFor(() => expect(loadLanguageExtensionMock).toHaveBeenCalledWith('sql', { sqlDialect: undefined }));
     await waitFor(() => expect(getExtensions()).toContain(languageExtension));
@@ -294,7 +287,7 @@ describe('BaseCodeMirrorEditor', () => {
     const languageExtension = EditorState.languageData.of(() => [{ autocomplete: jest.fn() }]);
     loadLanguageExtensionMock.mockResolvedValue(languageExtension);
 
-    render(<BaseCodeMirrorEditor value="" onChange={jest.fn()} language="sql" sqlDialect="mySql" />);
+    render(<BaseCodeEditor value="" onChange={jest.fn()} language="sql" sqlDialect="mySql" />);
 
     await waitFor(() => expect(loadLanguageExtensionMock).toHaveBeenCalledWith('sql', { sqlDialect: 'mySql' }));
   });
@@ -303,7 +296,7 @@ describe('BaseCodeMirrorEditor', () => {
     const error = new Error('Failed to import SQL support');
     loadLanguageExtensionMock.mockRejectedValue(error);
 
-    render(<BaseCodeMirrorEditor value="" onChange={jest.fn()} language="sql" />);
+    render(<BaseCodeEditor value="" onChange={jest.fn()} language="sql" />);
 
     expect(await screen.findByText('Syntax highlighting failed to load')).toBeInTheDocument();
     expect(screen.getByText('The editor will continue without language-specific features.')).toBeInTheDocument();
@@ -320,11 +313,11 @@ describe('BaseCodeMirrorEditor', () => {
   });
 });
 
-describe('BaseCodeMirrorEditor with raw extensions', () => {
+describe('BaseCodeEditor with raw extensions', () => {
   it('passes raw extensions through to CodeMirror', () => {
     const extension = EditorState.languageData.of(() => []);
 
-    render(<BaseCodeMirrorEditor value="" onChange={jest.fn()} extensions={[extension]} />);
+    render(<BaseCodeEditor value="" onChange={jest.fn()} extensions={[extension]} />);
 
     expect(getExtensions()).toContain(extension);
   });

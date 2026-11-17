@@ -1,10 +1,10 @@
 import CodeMirror from '@uiw/react-codemirror';
 import { memo } from 'react';
 
-import { type BaseCodeMirrorEditorProps } from './types';
+import { type BaseCodeEditorProps } from './types';
 import { useCodeMirrorSetup } from './useCodeMirrorSetup';
 
-export const BaseCodeMirrorEditor = memo(function BaseCodeMirrorEditor(props: BaseCodeMirrorEditorProps) {
+export const BaseCodeEditor = memo(function BaseCodeEditor(props: BaseCodeEditorProps) {
   const { ref, props: editorProps, languageAlert } = useCodeMirrorSetup(props);
 
   return (
