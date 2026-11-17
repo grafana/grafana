@@ -197,16 +197,16 @@
     "tag": {
       "colors": [
         { "background": "palette.red950", "text": "palette.red300" },
-        { "background": "palette.orange950", "text": "palette.orange300" },
+        { "background": "palette.orange950", "text": "palette.orange200" },
         { "background": "palette.amber950", "text": "palette.amber300" },
-        { "background": "palette.lime950", "text": "palette.lime300" },
-        { "background": "palette.sage950", "text": "palette.sage300" },
-        { "background": "palette.teal950", "text": "palette.teal300" },
-        { "background": "palette.sky950", "text": "palette.sky300" },
+        { "background": "palette.lime950", "text": "palette.lime200" },
+        { "background": "palette.sage950", "text": "palette.sage200" },
+        { "background": "palette.teal950", "text": "palette.teal200" },
+        { "background": "palette.sky950", "text": "palette.sky200" },
         { "background": "palette.blue950", "text": "palette.blue300" },
-        { "background": "palette.violet950", "text": "palette.violet300" },
-        { "background": "palette.lavender950", "text": "palette.lavender300" },
-        { "background": "palette.rose950", "text": "palette.rose300" }
+        { "background": "palette.violet950", "text": "palette.violet200" },
+        { "background": "palette.lavender950", "text": "palette.lavender200" },
+        { "background": "palette.rose950", "text": "palette.rose200" }
       ]
     },
     "textHighlight": {
