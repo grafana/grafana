@@ -2,9 +2,8 @@ package datasource
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"strconv"
-	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -112,16 +111,30 @@ func (q *scopedDatasourceProvider) CreateDataSource(ctx context.Context, ds *dat
 	if err != nil {
 		return nil, err
 	}
-	userID, err := strconv.ParseInt(strings.TrimPrefix(user.GetID(), "user:"), 10, 64)
+	cmd.UserID, err = legacyUserID(user)
 	if err != nil {
 		return nil, err
 	}
-	cmd.UserID = userID
 	out, err := q.dsService.AddDataSource(ctx, cmd)
 	if err != nil {
 		return nil, err
 	}
 	return q.converter.AsDataSource(out)
+}
+
+// legacyUserID is the numeric user id the legacy row records as the creator. Provisioning runs as an
+// access policy, which has no such id -- nor does any other non-user identity -- so those record
+// none, the way classic file provisioning does, rather than failing the write.
+func legacyUserID(user identity.Requester) (int64, error) {
+	userID, err := identity.UserIdentifier(user.GetID())
+	switch {
+	case err == nil:
+		return userID, nil
+	case errors.Is(err, identity.ErrNotIntIdentifier), errors.Is(err, identity.ErrIdentifierNotInitialized):
+		return 0, nil
+	default:
+		return 0, err
+	}
 }
 
 // UpdateDataSource implements PluginDatasourceProvider.

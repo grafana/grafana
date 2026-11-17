@@ -2,10 +2,17 @@ import { of, throwError } from 'rxjs';
 
 import { type DataSourceInstanceSettings, type DataSourceSettings } from '@grafana/data';
 import { config, type BackendSrvRequest, type FetchError, type FetchResponse } from '@grafana/runtime';
-import { FlagKeys, getFeatureFlagClient, setDataSourceInstanceSettings } from '@grafana/runtime/internal';
+import {
+  fetchConnections,
+  FlagKeys,
+  getDatasourcePluginMetas,
+  getFeatureFlagClient,
+  setDataSourceInstanceSettings,
+} from '@grafana/runtime/internal';
 import { type BackendSrv, getBackendSrv } from 'app/core/services/backend_srv';
 
 import {
+  getDataSources,
   getDataSourceByUid,
   createDataSourceWithK8sAPI,
   deleteDataSource,
@@ -24,6 +31,8 @@ jest.mock('@grafana/runtime', () => ({
 jest.mock('@grafana/runtime/internal', () => ({
   ...jest.requireActual('@grafana/runtime/internal'),
   getFeatureFlagClient: jest.fn(),
+  fetchConnections: jest.fn(),
+  getDatasourcePluginMetas: jest.fn(),
 }));
 
 const mockGetFeatureFlagClient = jest.mocked(getFeatureFlagClient);
@@ -455,5 +464,79 @@ describe('Datasources / API', () => {
       expect(nonDefault.metadata.labels).toEqual({ 'grafana.app/deprecatedInternalID': '42' });
       expect(nonDefault.spec).not.toHaveProperty('isDefault');
     });
+  });
+});
+
+// The legacy list reads the data_source table, so it cannot see a data source that lives only in
+// unified storage, nor one whose plugin is gone. Connections is the only list across every group.
+describe('getDataSources', () => {
+  const connection = {
+    title: 'Prom',
+    name: 'prom-uid',
+    group: 'prometheus.datasource.grafana.app',
+    plugin: 'prometheus',
+    url: 'http://prom:9090',
+    labels: { default: 'true', 'grafana.app/deprecatedInternalID': '7' },
+    annotations: { 'grafana.app/managedBy': 'repo' },
+  };
+  const meta = {
+    id: 'prometheus',
+    name: 'Prometheus',
+    info: { logos: { small: 'prom.svg' } },
+  } as unknown as Awaited<ReturnType<typeof getDatasourcePluginMetas>>[number];
+
+  const get = jest.fn();
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockGetFeatureFlagClient.mockReturnValue({ getBooleanValue: getBooleanValueFn } as unknown as ReturnType<
+      typeof getFeatureFlagClient
+    >);
+    get.mockReset().mockResolvedValue([]);
+    // Reset, not clear: earlier tests queue mockReturnValueOnce values that would be consumed here.
+    jest
+      .mocked(getBackendSrv)
+      .mockReset()
+      .mockReturnValue({ get } as unknown as BackendSrv);
+    jest.mocked(fetchConnections).mockResolvedValue({ items: [connection] });
+    jest.mocked(getDatasourcePluginMetas).mockResolvedValue([meta]);
+  });
+
+  it('reads the legacy list while the CRUD APIs do not serve the page', async () => {
+    stubCRUDApisEnabled(false);
+
+    await getDataSources();
+
+    expect(get).toHaveBeenCalledWith('/api/datasources');
+    expect(fetchConnections).not.toHaveBeenCalled();
+  });
+
+  it('maps connections joined with the plugin meta', async () => {
+    stubCRUDApisEnabled(true);
+
+    const [found] = await getDataSources();
+
+    expect(get).not.toHaveBeenCalled();
+    expect(found).toMatchObject({
+      uid: 'prom-uid',
+      name: 'Prom',
+      type: 'prometheus',
+      typeName: 'Prometheus',
+      typeLogoUrl: 'prom.svg',
+      url: 'http://prom:9090',
+      isDefault: true,
+      id: 7,
+    });
+  });
+
+  // Dropping it would hide a data source from the page that exists to administer it.
+  it('keeps a connection whose plugin has no meta', async () => {
+    stubCRUDApisEnabled(true);
+    jest.mocked(getDatasourcePluginMetas).mockResolvedValue([]);
+
+    const [found] = await getDataSources();
+
+    expect(found.type).toBe('prometheus');
+    expect(found.typeName).toBe('prometheus');
   });
 });

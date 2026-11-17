@@ -81,3 +81,42 @@ describe('useDataSourceInfo', () => {
     expect(screen.getByText('Success')).toBeInTheDocument();
   });
 });
+
+describe('useDataSourceInfo provisioning', () => {
+  it('omits the "Managed by" item for an unmanaged data source', () => {
+    const { result } = renderHook(() =>
+      useDataSourceInfo({
+        dataSourcePluginName: 'Prometheus',
+        alertingSupported: true,
+        managedResource: { metadata: { annotations: {} } },
+      })
+    );
+
+    expect(result.current.map((item) => item.label)).not.toContain('Managed by');
+  });
+
+  it('shows a "Managed by" badge for a repository-managed data source', async () => {
+    const { result } = renderHook(() =>
+      useDataSourceInfo({
+        dataSourcePluginName: 'Prometheus',
+        alertingSupported: true,
+        managedResource: {
+          metadata: {
+            annotations: {
+              'grafana.app/managedBy': 'repo',
+              'grafana.app/managerId': 'test-repo',
+              'grafana.app/sourcePath': 'datasources/prom.json',
+            },
+          },
+        },
+      })
+    );
+
+    const item = result.current.find((item) => item.label === 'Managed by');
+    expect(item).toBeDefined();
+    const { user } = render(<>{item?.value}</>);
+
+    await user.hover(screen.getByTestId('icon-exchange-alt'));
+    expect(await screen.findByText('Managed by: Repository test-repo')).toBeInTheDocument();
+  });
+});

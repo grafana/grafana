@@ -10,7 +10,11 @@ export interface DataSourceConnection {
   group: string;
   /** The plugin type as stored on the data source. Can be an alias of the plugin id. */
   plugin?: string;
+  /** The configured URL, when the data source has one. */
+  url?: string;
   labels?: Record<string, string>;
+  /** Carries the manager annotations, so a caller can tell a provisioned data source apart. */
+  annotations?: Record<string, string>;
 }
 
 export interface DataSourceConnectionList {

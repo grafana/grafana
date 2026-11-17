@@ -801,6 +801,12 @@ export interface DataSourceSettings<T extends DataSourceJsonData = DataSourceJso
   withCredentials: boolean;
   version?: number;
   apiVersion?: string;
+  /**
+   * Annotations of the stored Kubernetes object, when the list was read from an API group. Says
+   * which system manages the data source; absent when read from the legacy endpoint, which has no
+   * column for them.
+   */
+  annotations?: Record<string, string>;
 }
 
 /**

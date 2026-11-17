@@ -326,6 +326,7 @@ func (s *Service) asConnection(ds *datasources.DataSource) (*queryV0.DataSourceC
 		APIGroup: fmt.Sprintf("%s.datasource.grafana.app", ds.Type),
 		Name:     ds.UID,
 		Plugin:   ds.Type,
+		URL:      ds.URL,
 		Labels:   labels,
 	}, nil
 }
