@@ -4,7 +4,8 @@ import * as React from 'react';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 import { AbstractButton } from '../AbstractButton/AbstractButton';
-import { type ButtonProps, getButtonStyles } from '../Button/Button';
+import { type ButtonProps } from '../Button/Button';
+import { getButtonStyles } from '../Button/StyledButton.styles';
 
 export type ButtonLinkProps = ButtonProps & Omit<AnchorHTMLAttributes<HTMLAnchorElement>, 'aria-label'>;
 

@@ -8,7 +8,7 @@ import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 import { type IconName, type IconSize, type IconType } from '../../types/icon';
 import { type ComponentSize } from '../../types/size';
 import { IconRenderer } from '../AbstractButton/AbstractButton';
-import { getActiveButtonStyles } from '../Button/Button';
+import { getActiveButtonStyles } from '../Button/StyledButton.styles';
 import { getSvgSize } from '../Icon/utils';
 import { Tooltip } from '../Tooltip/Tooltip';
 import { type PopoverContent, type TooltipPlacement } from '../Tooltip/types';
