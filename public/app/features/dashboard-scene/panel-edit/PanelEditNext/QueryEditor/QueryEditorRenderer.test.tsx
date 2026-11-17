@@ -642,3 +642,60 @@ describe('Coauthoring availability decisions', () => {
     expect(reportInteraction).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('QueryEditorRenderer query edit reporting', () => {
+  function EditingQueryEditor({ query, onChange }: { query: DataQuery; onChange: (query: DataQuery) => void }) {
+    return (
+      <>
+        <button onClick={() => onChange({ ...query, queryType: 'edited' })}>Edit query</button>
+        <button onClick={() => onChange({ ...query })}>Echo query</button>
+      </>
+    );
+  }
+
+  const editingDsData = {
+    datasource: new MockDataSourceApi({ QueryEditor: EditingQueryEditor }),
+    dsSettings: ds1SettingsMock,
+  };
+
+  function renderEditing() {
+    const onQueryEdited = jest.fn();
+    const updateSelectedQuery = jest.fn();
+    renderWithQueryEditorProvider(<QueryEditorRenderer />, {
+      queries: [queryA],
+      selectedQuery: queryA,
+      uiStateOverrides: { selectedQueryDsData: editingDsData },
+      actionsOverrides: { onQueryEdited, updateSelectedQuery },
+    });
+    return { onQueryEdited, updateSelectedQuery };
+  }
+
+  beforeEach(() => {
+    setTestFlags({ [FlagKeys.QueryeditorCoauthoringUi]: false });
+  });
+
+  afterAll(() => {
+    setTestFlags({});
+  });
+
+  it('reports an edit from the data source query editor', () => {
+    const { onQueryEdited, updateSelectedQuery } = renderEditing();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit query' }));
+
+    expect(updateSelectedQuery).toHaveBeenCalledWith(
+      { refId: 'A', legendFormat: 'series-a', queryType: 'edited' },
+      'A'
+    );
+    expect(onQueryEdited).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not report an editor that sends back the query it was given', () => {
+    const { onQueryEdited, updateSelectedQuery } = renderEditing();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Echo query' }));
+
+    expect(updateSelectedQuery).toHaveBeenCalledTimes(1);
+    expect(onQueryEdited).not.toHaveBeenCalled();
+  });
+});

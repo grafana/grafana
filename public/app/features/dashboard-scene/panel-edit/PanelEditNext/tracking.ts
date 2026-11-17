@@ -1,5 +1,6 @@
 import { debounce } from 'lodash';
 
+import { CoreApp } from '@grafana/data';
 import { faro } from '@grafana/faro-web-sdk';
 import { getAppEvents, reportInteraction } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
@@ -12,6 +13,31 @@ import { QueryEditorType } from './constants';
  * have an established v1 event.  Discriminated by `action` + `item_type`.
  */
 const EVENT_PANEL_EDIT_NEXT = 'grafana_panel_edit_next_interaction';
+
+export type QueryEditorVersion = 'classic' | 'next';
+
+/**
+ * For events both query editors send. `editor` says which one sent it (default: next).
+ * The classic editor's components also run in Explore, alerting and notebooks. There they pass `silent`, so
+ * journeys still see the event but analytics don't count it as a panel edit.
+ */
+export interface QueryEditorTrackingOptions {
+  editor?: QueryEditorVersion;
+  silent?: boolean;
+}
+
+export function isPanelEditorApp(app?: CoreApp): boolean {
+  // The classic query editor defaults to the panel editor when no app is given.
+  return (app ?? CoreApp.PanelEditor) === CoreApp.PanelEditor;
+}
+
+function reportQueryEditorInteraction(properties: Record<string, unknown>, options: QueryEditorTrackingOptions = {}) {
+  reportInteraction(
+    EVENT_PANEL_EDIT_NEXT,
+    { ...properties, editor: options.editor ?? 'next' },
+    options.silent ? { silent: true } : undefined
+  );
+}
 
 export const trackTransformationSearch = debounce((query: string) => {
   if (query) {
@@ -34,17 +60,9 @@ export type AddCardSource = 'section_header' | 'inline' | 'empty_state' | 'legac
 export function trackAddQuery(
   querySource: 'saved_query' | 'new_query',
   cardSource: AddCardSource,
-  options?: { silent?: boolean }
+  options?: QueryEditorTrackingOptions
 ) {
-  reportInteraction(
-    EVENT_PANEL_EDIT_NEXT,
-    {
-      action: 'add_query',
-      source: querySource,
-      card_source: cardSource,
-    },
-    options
-  );
+  reportQueryEditorInteraction({ action: 'add_query', source: querySource, card_source: cardSource }, options);
 }
 
 export function trackOpenSavedQueryPicker(source: AddCardSource) {
@@ -78,17 +96,9 @@ export function trackCardAction(
   action: 'delete' | 'toggle_hide' | 'duplicate',
   itemType: QueryEditorType,
   source: CardActionSource,
-  options?: { silent?: boolean }
+  options?: QueryEditorTrackingOptions
 ) {
-  reportInteraction(
-    EVENT_PANEL_EDIT_NEXT,
-    {
-      action,
-      item_type: itemType,
-      source,
-    },
-    options
-  );
+  reportQueryEditorInteraction({ action, item_type: itemType, source }, options);
 }
 
 export function trackTransformationToolAction(
@@ -114,15 +124,8 @@ export function trackQueryMenuAction(
   });
 }
 
-export function trackReorder(itemType: 'query' | 'transformation', options?: { silent?: boolean }) {
-  reportInteraction(
-    EVENT_PANEL_EDIT_NEXT,
-    {
-      action: 'reorder',
-      item_type: itemType,
-    },
-    options
-  );
+export function trackReorder(itemType: 'query' | 'transformation', options?: QueryEditorTrackingOptions) {
+  reportQueryEditorInteraction({ action: 'reorder', item_type: itemType }, options);
 }
 
 export function trackEditorVersionToggle(direction: 'upgrade' | 'downgrade') {
@@ -154,15 +157,8 @@ export function trackSidebarSizeToggle(direction: 'expand' | 'collapse') {
   });
 }
 
-export function trackSidebarViewChange(view: string, options?: { silent?: boolean }) {
-  reportInteraction(
-    EVENT_PANEL_EDIT_NEXT,
-    {
-      action: 'change_sidebar_view',
-      view,
-    },
-    options
-  );
+export function trackSidebarViewChange(view: string, options?: QueryEditorTrackingOptions) {
+  reportQueryEditorInteraction({ action: 'change_sidebar_view', view }, options);
 }
 
 export function trackStackedViewToggle(direction: 'enter' | 'exit') {
@@ -172,15 +168,8 @@ export function trackStackedViewToggle(direction: 'enter' | 'exit') {
   });
 }
 
-export function trackQueryOptionsToggle(open: boolean, options?: { silent?: boolean }) {
-  reportInteraction(
-    EVENT_PANEL_EDIT_NEXT,
-    {
-      action: 'toggle_query_options',
-      open,
-    },
-    options
-  );
+export function trackQueryOptionsToggle(open: boolean, options?: QueryEditorTrackingOptions) {
+  reportQueryEditorInteraction({ action: 'toggle_query_options', open }, options);
 }
 
 export function trackMultiSelectToggle(direction: 'enter' | 'exit') {

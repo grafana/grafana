@@ -76,10 +76,14 @@ interface PanelEditSummary {
   panel_id: number;
   is_new_panel: boolean;
   is_library_panel: boolean;
+  // Bursts of query edits made in either query editor; see recordQueryEdit.
+  query_change_count: number;
   query_editor: 'classic' | 'next';
   // Same key every dashboards_* interaction carries, so these events split by layout the same way.
   isDynamicDashboard: boolean;
 }
+
+const QUERY_EDIT_BURST_MS = 2000;
 
 export interface PanelEditorState extends SceneObjectState {
   isNewPanel: boolean;
@@ -117,6 +121,8 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   private _changeBaseline!: PanelEditSnapshot;
   private _savedInEditor = false;
   private _discardSummary?: PanelEditSummary;
+  private _queryChangeCount = 0;
+  private _lastQueryEditAt = -Infinity;
 
   public constructor(state: PanelEditorState) {
     super(state);
@@ -152,6 +158,8 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     // Each activation is a separate visit for the close event.
     this._discardSummary = undefined;
     this._savedInEditor = false;
+    this._queryChangeCount = 0;
+    this._lastQueryEditAt = -Infinity;
     this.resetChangeBaseline();
 
     // Splitter layout and table view changes remount the preview; keep its event subscriptions alive.
@@ -220,6 +228,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       panel_id: getPanelIdForVizPanel(panel),
       is_new_panel: this.state.isNewPanel,
       is_library_panel: getLibraryPanelBehavior(panel) !== undefined,
+      query_change_count: this._queryChangeCount,
       query_editor: this.state.useQueryExperienceNext ? 'next' : 'classic',
       isDynamicDashboard: isDashboardNewLayoutsEnabled(),
     };
@@ -449,6 +458,17 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
     locationService.partial({ editPanel: null });
   };
+
+  /**
+   * Called when a query editor changes a query. Editors report every keystroke, so edits less than
+   * QUERY_EDIT_BURST_MS apart count once: the count says how often someone went back to a query.
+   */
+  public recordQueryEdit(now = Date.now()) {
+    if (now - this._lastQueryEditAt > QUERY_EDIT_BURST_MS) {
+      this._queryChangeCount++;
+    }
+    this._lastQueryEditAt = now;
+  }
 
   public dashboardSaved() {
     this._savedInEditor = true;

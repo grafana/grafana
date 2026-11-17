@@ -1,3 +1,4 @@
+import { CoreApp } from '@grafana/data';
 import { faro } from '@grafana/faro-web-sdk';
 import { reportInteraction } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
@@ -7,7 +8,9 @@ import { QueryEditorType } from './constants';
 import {
   type CardActionSource,
   trackEditorVersionToggle,
+  isPanelEditorApp,
   trackQueryMenuAction,
+  trackReorder,
   trackTransformationToolAction,
 } from './tracking';
 
@@ -77,5 +80,42 @@ describe.each([
     track();
 
     expect(mockReportInteraction.mock.calls[0][1]).not.toHaveProperty('source');
+  });
+});
+
+describe('events both query editors send', () => {
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('reports the next editor by default', () => {
+    trackReorder('query');
+
+    expect(mockReportInteraction).toHaveBeenCalledWith(
+      'grafana_panel_edit_next_interaction',
+      { action: 'reorder', item_type: 'query', editor: 'next' },
+      undefined
+    );
+  });
+
+  it('reports the classic editor, silently when asked', () => {
+    trackReorder('query', { editor: 'classic', silent: true });
+
+    expect(mockReportInteraction).toHaveBeenCalledWith(
+      'grafana_panel_edit_next_interaction',
+      { action: 'reorder', item_type: 'query', editor: 'classic' },
+      { silent: true }
+    );
+  });
+});
+
+describe('isPanelEditorApp', () => {
+  it.each([
+    { app: undefined, expected: true },
+    { app: CoreApp.PanelEditor, expected: true },
+    { app: CoreApp.Explore, expected: false },
+    { app: CoreApp.UnifiedAlerting, expected: false },
+  ])('returns $expected for $app', ({ app, expected }) => {
+    expect(isPanelEditorApp(app)).toBe(expected);
   });
 });
