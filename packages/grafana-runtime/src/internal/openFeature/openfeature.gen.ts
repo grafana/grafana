@@ -174,6 +174,8 @@ export const FlagKeys = {
   GlobalDashboardVariables: "globalDashboardVariables",
   /** Allow admins to make announcement banners dismissible by users */
   GrafanaAnnouncementBannerDismissible: "grafana.announcementBannerDismissible",
+  /** Lets Grafana Assistant show a conversation's canvas as tabs above the page */
+  GrafanaAssistantPageCanvas: "grafana.assistantPageCanvas",
   /** Shows dashboard tags in the command palette */
   GrafanaCmdkDashboardTags: "grafana.cmdkDashboardTags",
   /** Uses the hybrid (lexical + semantic) search endpoint as the dashboard search backend in the command palette */
@@ -1298,6 +1300,17 @@ export const useFlagGlobalDashboardVariables = (options?: ReactFlagEvaluationOpt
  */
 export const useFlagGrafanaAnnouncementBannerDismissible = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.announcementBannerDismissible", true, options).value;
+};
+
+/**
+ * Lets Grafana Assistant show a conversation's canvas as tabs above the page
+ *
+ * **Details:**
+ * - flag key: `grafana.assistantPageCanvas`
+ * - default value: `false`
+ */
+export const useFlagGrafanaAssistantPageCanvas = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.assistantPageCanvas", false, options).value;
 };
 
 /**

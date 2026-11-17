@@ -199,6 +199,7 @@ declare module "@openfeature/core" {
     | "grafana.extensionSidebarFloating"
     | "grafana.extensionSidebarPlacements"
     | "grafana.megaMenuPeekAndDock"
+    | "grafana.assistantPageCanvas"
     | "grafana.otelLogDetails"
     | "grafana.announcementBannerDismissible"
     | "datasources.gatewayAuditPolicy"

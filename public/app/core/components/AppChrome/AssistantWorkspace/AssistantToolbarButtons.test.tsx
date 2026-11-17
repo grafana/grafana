@@ -15,6 +15,7 @@ import { getComponentIdFromComponentMeta } from 'app/core/components/AppChrome/E
 import { AssistantToolbarButtons } from './AssistantToolbarButtons';
 
 const FULLSCREEN_WORKSPACE_FLAG = 'assistant.fullscreenWorkspace';
+const PAGE_CANVAS_FLAG = 'grafana.assistantPageCanvas';
 const ASSISTANT_PLUGIN_ID = 'grafana-assistant-app';
 
 jest.mock('@grafana/data', () => ({
@@ -157,6 +158,28 @@ describe('AssistantToolbarButtons', () => {
     expect(pill).toHaveAttribute('aria-expanded', 'false');
     expect(screen.getByText('Chat')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Workspace' })).toBeInTheDocument();
+  });
+
+  it('shows the Chat pill without a Workspace button while the page canvas is on', async () => {
+    await act(async () => {
+      setTestFlags({ [FULLSCREEN_WORKSPACE_FLAG]: true, [PAGE_CANVAS_FLAG]: true });
+    });
+
+    renderButtons();
+
+    expect(screen.getByTestId('extension-toolbar-button-open')).toHaveAttribute('aria-label', 'Open Grafana Assistant');
+    expect(screen.getByText('Chat')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Workspace' })).not.toBeInTheDocument();
+  });
+
+  it('keeps Exit Workspace on the workspace while the page canvas is on', async () => {
+    await act(async () => {
+      setTestFlags({ [FULLSCREEN_WORKSPACE_FLAG]: true, [PAGE_CANVAS_FLAG]: true });
+    });
+
+    renderButtons('/a/grafana-assistant-app/workspace');
+
+    expect(screen.getByRole('button', { name: 'Exit Workspace' })).toBeInTheDocument();
   });
 
   it('toggles the docked component when the Chat pill is clicked', () => {
