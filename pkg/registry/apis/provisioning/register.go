@@ -358,6 +358,7 @@ func createJobHistoryConfigFromSettings(cfg *setting.Cfg) *JobHistoryConfig {
 // RegisterAPIService returns an API builder, from [NewAPIBuilder]. It is called by Wire.
 // This function happily uses services core to Grafana, and does not need to be multi-tenancy-compatible.
 func RegisterAPIService(
+	ctx context.Context,
 	// It is OK to use setting.Cfg here -- this is only used when running single tenant with a full setup
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
@@ -394,7 +395,7 @@ func RegisterAPIService(
 	}
 	supportedResources := resources.NewSupportedResourceProvider(configured)
 	manifestWatcher := resource.NewLocalManifestWatcher(manifests, nil, supportedResources.Update, cfg.Logger)
-	if err := manifestWatcher.StartAsync(context.Background()); err != nil {
+	if err := manifestWatcher.StartAsync(ctx); err != nil {
 		return nil, fmt.Errorf("failed to start manifest watcher: %w", err)
 	}
 
