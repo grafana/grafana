@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"slices"
 	"strings"
 	"sync"
 
@@ -205,6 +206,8 @@ type clientFactory struct {
 	// expanded caches the result of resolving collections through discovery.
 	expandMu sync.Mutex
 	expanded []SupportedResource
+	// set adds the kinds that arrive after startup, when the factory has one.
+	set *SupportedResourceSet
 }
 
 // holds reports whether this factory's API server stores a collection, and so expands it. A
@@ -327,11 +330,35 @@ func (p *singleAPIClients) GetClientsForResource(ctx context.Context, _ schema.G
 // resources that can be managed from the UI; the ResourceClients it produces expose only
 // the enabled subset via SupportedResources(). When none is provided it falls back to the
 // static SupportedProvisioningResources base set.
-func NewClientFactory(configProvider apiserver.RestConfigProvider, supported ...SupportedResource) ClientFactory {
+func NewClientFactory(configProvider apiserver.RestConfigProvider, supported ...ClientFactoryOption) ClientFactory {
+	o := newClientFactoryOptions(supported)
 	return &clientFactory{
 		clientsProvider:     newSingleAPIClients(configProvider),
-		configuredResources: defaultSupportedResources(supported),
+		configuredResources: o.configured,
+		set:                 o.set,
 	}
+}
+
+// ClientFactoryOption gives a ClientFactory its supported resources: SupportedResource values
+// for a fixed list, or a *SupportedResourceSet for a set that a source can update.
+type ClientFactoryOption interface {
+	apply(*clientFactoryOptions)
+}
+
+type clientFactoryOptions struct {
+	configured []SupportedResource
+	set        *SupportedResourceSet
+}
+
+func (r SupportedResource) apply(o *clientFactoryOptions) { o.configured = append(o.configured, r) }
+
+func newClientFactoryOptions(opts []ClientFactoryOption) clientFactoryOptions {
+	var o clientFactoryOptions
+	for _, opt := range opts {
+		opt.apply(&o)
+	}
+	o.configured = defaultSupportedResources(o.configured)
+	return o
 }
 
 // NewClientFactoryForMultipleAPIServers creates a ClientFactory for multiple API servers.
@@ -341,18 +368,19 @@ func NewClientFactory(configProvider apiserver.RestConfigProvider, supported ...
 // declared on its own is resolved the same way wherever it is resolved. Only the server that holds
 // a collection expands it: its members reach the merged set from there, and a server that holds no
 // collection asks discovery nothing, so its outage cannot fail the clients for other groups.
-func NewClientFactoryForMultipleAPIServers(configProviders map[string]apiserver.RestConfigProvider, supported ...SupportedResource) ClientFactory {
-	configured := defaultSupportedResources(supported)
+func NewClientFactoryForMultipleAPIServers(configProviders map[string]apiserver.RestConfigProvider, supported ...ClientFactoryOption) ClientFactory {
+	o := newClientFactoryOptions(supported)
 	clientFactories := make(map[string]ClientFactory)
 	for api, configProvider := range configProviders {
 		clientFactories[api] = &clientFactory{
 			clientsProvider:     newSingleAPIClients(configProvider),
-			configuredResources: configured,
+			configuredResources: o.configured,
 			storageGroup:        api,
+			set:                 o.set,
 		}
 	}
 
-	return &multiClientFactory{clientFactories: clientFactories, collections: collectionPatterns(configured)}
+	return &multiClientFactory{clientFactories: clientFactories, collections: collectionPatterns(o.configured)}
 }
 
 // activeResources returns only the active resources. Disabled resources are declared (and
@@ -444,7 +472,7 @@ func (f *clientFactory) Clients(ctx context.Context, namespace string) (Resource
 	return &resourceClients{
 		namespace:          namespace,
 		clientsProvider:    f.clientsProvider,
-		supportedResources: supported,
+		supportedResources: append(slices.Clip(supported), f.set.addedKinds()...),
 		byKind:             make(map[schema.GroupVersionKind]*clientInfo),
 		byResource:         make(map[schema.GroupVersionResource]*clientInfo),
 	}, nil

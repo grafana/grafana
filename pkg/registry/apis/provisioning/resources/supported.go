@@ -1,7 +1,6 @@
 package resources
 
 import (
-	"context"
 	"slices"
 	"sync/atomic"
 
@@ -22,11 +21,11 @@ func NewSupportedResourceSet(configured []SupportedResource) *SupportedResourceS
 
 // Latest returns the set at the time of the call.
 func (s *SupportedResourceSet) Latest() []SupportedResource {
-	added := s.added.Load()
-	if added == nil || len(*added) == 0 {
+	added := s.addedKinds()
+	if len(added) == 0 {
 		return s.configured
 	}
-	return append(slices.Clip(defaultSupportedResources(s.configured)), *added...)
+	return append(slices.Clip(defaultSupportedResources(s.configured)), added...)
 }
 
 // Update replaces the kinds that the source added. A configured resource, or a configured
@@ -47,32 +46,11 @@ func (s *SupportedResourceSet) Update(kinds []SupportedResource) {
 	s.added.Store(&added)
 }
 
-// Clients wraps factory so that its clients also support the added kinds. The factory does not
-// run discovery again, so an update cannot break the clients of the configured resources.
-func (s *SupportedResourceSet) Clients(factory ClientFactory) ClientFactory {
-	return &supportedSetClientFactory{ClientFactory: factory, set: s}
-}
+func (s *SupportedResourceSet) apply(o *clientFactoryOptions) { o.configured, o.set = s.configured, s }
 
-type supportedSetClientFactory struct {
-	ClientFactory
-	set *SupportedResourceSet
-}
-
-func (f *supportedSetClientFactory) Clients(ctx context.Context, namespace string) (ResourceClients, error) {
-	clients, err := f.ClientFactory.Clients(ctx, namespace)
-	if err != nil {
-		return nil, err
+func (s *SupportedResourceSet) addedKinds() []SupportedResource {
+	if s == nil || s.added.Load() == nil {
+		return nil
 	}
-	supported := clients.SupportedResources()
-	if added := f.set.added.Load(); added != nil {
-		supported = append(slices.Clip(supported), *added...)
-	}
-	return &supportedSetClients{ResourceClients: clients, supported: supported}, nil
+	return *s.added.Load()
 }
-
-type supportedSetClients struct {
-	ResourceClients
-	supported []SupportedResource
-}
-
-func (c *supportedSetClients) SupportedResources() []SupportedResource { return c.supported }

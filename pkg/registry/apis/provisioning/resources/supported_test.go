@@ -64,7 +64,7 @@ func TestSupportedResourceSet(t *testing.T) {
 
 	t.Run("adds the kinds to the clients of a factory", func(t *testing.T) {
 		set := NewSupportedResourceSet([]SupportedResource{folder})
-		factory := set.Clients(NewClientFactory(nil, folder))
+		factory := NewClientFactory(nil, set)
 
 		set.Update([]SupportedResource{widget})
 

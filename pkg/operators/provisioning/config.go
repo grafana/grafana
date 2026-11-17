@@ -372,7 +372,7 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create manifest watcher: %w", err)
 	}
-	clients := supported.Clients(resources.NewClientFactoryForMultipleAPIServers(configProviders, supportedResources...))
+	clients := resources.NewClientFactoryForMultipleAPIServers(configProviders, supported)
 	c.clients = clients
 	c.manifestWatcher = manifestWatcher
 	return clients, nil

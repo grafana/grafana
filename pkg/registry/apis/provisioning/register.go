@@ -242,9 +242,8 @@ func NewAPIBuilder(
 	if newStandaloneClientFactoryFunc != nil {
 		clients = newStandaloneClientFactoryFunc(configProvider)
 	} else {
-		clients = resources.NewClientFactory(configProvider, supportedResources.Latest()...)
+		clients = resources.NewClientFactory(configProvider, supportedResources)
 	}
-	clients = supportedResources.Clients(clients)
 	if gv.Version == "" {
 		return nil, fmt.Errorf("invalid provisioning group/version")
 	}
