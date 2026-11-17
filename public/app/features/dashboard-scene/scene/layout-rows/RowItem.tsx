@@ -20,7 +20,7 @@ import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { edit } from '../../actions/utils/edit';
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
-import { type SceneQuestion } from '../../questions/types';
+import { type ScenePrompt } from '../../prompts/types';
 import { serializeRow } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
 import { getElements } from '../../serialization/layoutSerializers/utils';
 import { SectionFiltersSet } from '../../settings/variables/SectionFiltersSet';
@@ -57,8 +57,8 @@ export interface RowItemState extends SceneObjectState {
   isDropTarget?: boolean;
   conditionalRendering?: ConditionalRenderingGroup;
   repeatByVariable?: string;
-  /** Questions viewers can ask about the panels in this row, offered by plugins in the row's controls */
-  questions?: SceneQuestion[];
+  /** Prompts viewers can run on the panels in this row, offered by plugins in the row's controls */
+  prompts?: ScenePrompt[];
   repeatedRows?: RowItem[];
   /** Marks object as a repeated object and a key pointer to source object */
   repeatSourceKey?: string;

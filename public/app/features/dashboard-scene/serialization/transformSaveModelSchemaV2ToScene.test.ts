@@ -311,14 +311,14 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     });
   });
 
-  it('loads the questions saved on the dashboard', () => {
-    const questions = [{ text: 'What stands out on this dashboard?' }];
+  it('loads the prompts saved on the dashboard', () => {
+    const prompts = [{ text: 'What stands out on this dashboard?' }];
     const scene = transformSaveModelSchemaV2ToScene({
       ...defaultDashboard,
-      spec: { ...defaultDashboard.spec, questions },
+      spec: { ...defaultDashboard.spec, prompts },
     });
 
-    expect(scene.state.questions).toEqual(questions);
+    expect(scene.state.prompts).toEqual(prompts);
   });
 
   it('should set panel ds if it is mixed DS', () => {

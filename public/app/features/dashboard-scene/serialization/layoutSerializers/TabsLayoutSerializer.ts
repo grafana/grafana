@@ -4,7 +4,7 @@ import { type Spec as DashboardV2Spec, type TabsLayoutTabKind } from '@grafana/s
 import { TabItem } from '../../scene/layout-tabs/TabItem';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
 import { type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
-import { deserializeQuestions, serializeQuestions } from '../questionsSerializer';
+import { deserializePrompts, serializePrompts } from '../promptsSerializer';
 
 import { layoutDeserializerRegistry } from './layoutSerializerRegistry';
 import { deserializeSectionAnnotations, serializeSectionAnnotations } from './sectionAnnotations';
@@ -70,9 +70,9 @@ export function serializeTab(tab: TabItem, isSnapshot?: boolean): TabsLayoutTabK
     tabKind.spec.annotations = sectionAnnotations;
   }
 
-  const questions = serializeQuestions(tab, tab.state.questions);
-  if (questions) {
-    tabKind.spec.questions = questions;
+  const prompts = serializePrompts(tab, tab.state.prompts);
+  if (prompts) {
+    tabKind.spec.prompts = prompts;
   }
 
   const conditionalRenderingRootGroup = tab.state.conditionalRendering?.serialize();
@@ -119,7 +119,7 @@ export function deserializeTab(
       .get(layout.kind)
       .deserialize(layout, elements, preload, panelIdGenerator, isSnapshot),
     repeatByVariable: tab.spec.repeat?.value,
-    questions: deserializeQuestions(tab.spec.questions, elements),
+    prompts: deserializePrompts(tab.spec.prompts, elements),
     conditionalRendering: getConditionalRendering(tab),
   });
 }

@@ -8,16 +8,16 @@ import {
   type PluginExtensionDashboardControlsPanel,
 } from '@grafana/data';
 import { usePluginComponents } from '@grafana/runtime';
-import { useFlagGrafanaDashboardQuestions } from '@grafana/runtime/internal';
+import { useFlagGrafanaDashboardPrompts } from '@grafana/runtime/internal';
 import { sceneGraph, type SceneObject, SceneVariableValueChangedEvent } from '@grafana/scenes';
 import { useElementSelection, useStyles2 } from '@grafana/ui';
 
-import { getSourcePanels, type SourcePanel } from '../questions/sourcePanels';
-import { type SceneQuestion } from '../questions/types';
-import { getQuestionLabel, getQuestionSelectionId } from '../questions/utils';
+import { getSourcePanels, type SourcePanel } from '../prompts/sourcePanels';
+import { type ScenePrompt } from '../prompts/types';
+import { getPromptLabel, getPromptSelectionId } from '../prompts/utils';
 import { V2DashboardSerializer } from '../serialization/DashboardSceneSerializer';
-import { questionActions } from '../sidebar/questions/actions';
-import { type QuestionsOwnerKind } from '../sidebar/questions/types';
+import { promptActions } from '../sidebar/prompts/actions';
+import { type PromptsOwnerKind } from '../sidebar/prompts/types';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
 import { getDashboardSceneFor, useDashboardState } from '../utils/utils';
 import { getVizPanelKeyForPanelId } from '../utils/utils-panels';
@@ -25,14 +25,14 @@ import { getVizPanelKeyForPanelId } from '../utils/utils-panels';
 import { type DashboardScene } from './DashboardScene';
 import { isViewingDashboard } from './dashboardModes';
 import { EditActionsPopover } from './edit-actions-popover/EditActionsPopover';
-import { QuestionEditActions } from './edit-actions-popover/QuestionEditActions';
+import { PromptEditActions } from './edit-actions-popover/PromptEditActions';
 import { RowItem } from './layout-rows/RowItem';
 import { TabItem } from './layout-tabs/TabItem';
 import { type DashboardSceneState, isFullDashboardEditing } from './types/dashboard';
 
 const COMPONENTS_LIMIT_PER_PLUGIN = 1;
 
-/** The dashboard, row, or tab whose saved questions the controls ask. */
+/** The dashboard, row, or tab whose saved prompts the controls run. */
 type ControlsOwner = DashboardScene | RowItem | TabItem;
 
 type Props =
@@ -47,62 +47,62 @@ type Props =
       dashboard?: never;
     };
 
-/** A saved question that viewers can ask, with its position in the saved list. */
-interface AskableQuestion {
-  question: SceneQuestion;
+/** A saved prompt that viewers can run, with its position in the saved list. */
+interface AskablePrompt {
+  prompt: ScenePrompt;
   index: number;
 }
 
 /**
  * Renders the components that plugins add to the `DashboardControls` extension point. They render in the dashboard
- * controls bar and above the panels of a row or tab. Each component receives the questions saved on that dashboard,
+ * controls bar and above the panels of a row or tab. Each component receives the prompts saved on that dashboard,
  * row, or tab, with the panels to answer them from.
  *
- * While the dashboard is edited, each question renders as its own control, rendered by the plugin with only that
- * question, which editors can select, duplicate, and delete like a link. Asking it there keeps it selected, so editors
- * can change it and ask again.
+ * While the dashboard is edited, each prompt renders as its own control, rendered by the plugin with only that
+ * prompt, which editors can select, duplicate, and delete like a link. Running it there keeps it selected, so editors
+ * can change it and run it again.
  *
- * Renders nothing when `grafana.dashboardQuestions` is off, when no saved question has text (a question just added
+ * Renders nothing when `grafana.dashboardPrompts` is off, when no saved prompt has text (a prompt just added
  * in the editor has none yet), or while the dashboard is neither viewed nor edited (see `getControlsMode`).
  *
  * Also renders nothing on a repeated row or tab after the first, or inside one. Repeat clones' panels have no stable
- * keys, so they're never passed on, and a later repeat's questions would be answered from the first repeat's panels.
+ * keys, so they're never passed on, and a later repeat's prompts would be answered from the first repeat's panels.
  */
 export function DashboardControlsExtensionPoint(props: Props) {
   const owner = props.section ?? props.dashboard;
-  const enabled = useFlagGrafanaDashboardQuestions();
-  const { questions } = owner.useState();
+  const enabled = useFlagGrafanaDashboardPrompts();
+  const { prompts } = owner.useState();
   const dashboardState = useDashboardState(owner);
 
   const mode = getControlsMode(dashboardState);
 
-  if (!enabled || !mode || (mode === 'edit' && !savesQuestions(owner)) || isRepeatCloneOrChildOf(owner)) {
+  if (!enabled || !mode || (mode === 'edit' && !savesPrompts(owner)) || isRepeatCloneOrChildOf(owner)) {
     return null;
   }
 
-  const askable = getAskableQuestions(questions);
+  const askable = getAskablePrompts(prompts);
   return askable.length ? (
-    <ControlsComponents owner={owner} questions={askable} inBar={!props.section} isEditing={mode === 'edit'} />
+    <ControlsComponents owner={owner} prompts={askable} inBar={!props.section} isEditing={mode === 'edit'} />
   ) : null;
 }
 
-/** Saved JSON isn't validated, so a question whose text isn't a string with content is left out. */
-function getAskableQuestions(questions: SceneQuestion[] | undefined): AskableQuestion[] {
-  return (questions ?? []).flatMap((question, index) =>
-    typeof question?.text === 'string' && question.text.trim() !== '' ? [{ question, index }] : []
+/** Saved JSON isn't validated, so a prompt whose text isn't a string with content is left out. */
+function getAskablePrompts(prompts: ScenePrompt[] | undefined): AskablePrompt[] {
+  return (prompts ?? []).flatMap((prompt, index) =>
+    typeof prompt?.text === 'string' && prompt.text.trim() !== '' ? [{ prompt, index }] : []
   );
 }
 
 interface ControlsComponentsProps {
   owner: ControlsOwner;
-  questions: AskableQuestion[];
+  prompts: AskablePrompt[];
   /** In the dashboard controls bar. A row or tab lays its controls out in `SectionControlsRow` instead. */
   inBar: boolean;
-  /** Renders one control per question, for editors to select and ask. */
+  /** Renders one control per prompt, for editors to select and run. */
   isEditing: boolean;
 }
 
-function ControlsComponents({ owner, questions, inBar, isEditing }: ControlsComponentsProps) {
+function ControlsComponents({ owner, prompts, inBar, isEditing }: ControlsComponentsProps) {
   const styles = useStyles2(getStyles);
   const { components, isLoading } = useDashboardControlsComponents();
   useRerenderOnVariableChange(owner);
@@ -113,23 +113,23 @@ function ControlsComponents({ owner, questions, inBar, isEditing }: ControlsComp
 
   const context = getControlsContext(
     owner,
-    questions.map(({ question }) => question)
+    prompts.map(({ prompt }) => prompt)
   );
 
   return (
     <div
       className={cx(styles.container, inBar && styles.inBar)}
-      // While the dashboard is edited, keeps a click on a question from clearing the selection, so a question asked
+      // While the dashboard is edited, keeps a click on a prompt from clearing the selection, so a prompt run
       // while it is edited stays open in the sidebar.
       {...(isEditing && { onPointerDown: stopPropagation, onPointerUp: stopPropagation })}
     >
       {isEditing
-        ? context.questions.map((question, i) => (
-            <EditableQuestion key={questions[i].index} owner={owner} saved={questions[i]}>
+        ? context.prompts.map((prompt, i) => (
+            <EditablePrompt key={prompts[i].index} owner={owner} saved={prompts[i]}>
               {components.map((Component) => (
-                <Component key={Component.meta.id} {...context} questions={[question]} />
+                <Component key={Component.meta.id} {...context} prompts={[prompt]} />
               ))}
-            </EditableQuestion>
+            </EditablePrompt>
           ))
         : components.map((Component) => <Component key={Component.meta.id} {...context} />)}
     </div>
@@ -139,43 +139,42 @@ function ControlsComponents({ owner, questions, inBar, isEditing }: ControlsComp
 const stopPropagation = (event: PointerEvent) => event.stopPropagation();
 
 // The edit pane loads on first use, like the add flows in AddControlsButton.
-const loadQuestionEdit = () =>
-  import(/* webpackChunkName: "dashboard-add-controls" */ '../sidebar/questions/QuestionEdit');
+const loadPromptEdit = () => import(/* webpackChunkName: "dashboard-add-controls" */ '../sidebar/prompts/PromptEdit');
 
-/** A question's control while the dashboard is edited: selectable, with the actions links and variables have. */
-function EditableQuestion({
+/** A prompt's control while the dashboard is edited: selectable, with the actions links and variables have. */
+function EditablePrompt({
   owner,
-  saved: { question, index },
+  saved: { prompt, index },
   children,
 }: {
   owner: ControlsOwner;
-  saved: AskableQuestion;
+  saved: AskablePrompt;
   children: ReactNode;
 }) {
   const styles = useStyles2(getStyles);
   const ownerKind = getOwnerKind(owner);
-  const { isSelected, isSelectable } = useElementSelection(getQuestionSelectionId(owner, ownerKind, index));
+  const { isSelected, isSelectable } = useElementSelection(getPromptSelectionId(owner, ownerKind, index));
   const { sidebar } = getDashboardSceneFor(owner).state;
 
   const onEdit = () =>
     sidebar.runPaneRequest(async (signal) => {
-      const { openEditQuestionPane } = await loadQuestionEdit();
+      const { openEditPromptPane } = await loadPromptEdit();
       if (!signal.aborted) {
-        openEditQuestionPane(owner, ownerKind, index);
+        openEditPromptPane(owner, ownerKind, index);
       }
     });
 
   const onDuplicate = () =>
     sidebar.runPaneRequest(async (signal) => {
-      const { duplicateQuestion } = await loadQuestionEdit();
+      const { duplicatePrompt } = await loadPromptEdit();
       if (!signal.aborted) {
-        duplicateQuestion(owner, ownerKind, index);
+        duplicatePrompt(owner, ownerKind, index);
       }
     });
 
   const onDelete = () => {
-    questionActions.remove({ owner, index });
-    // The sidebar would show whichever question moved into this one's place.
+    promptActions.remove({ owner, index });
+    // The sidebar would show whichever prompt moved into this one's place.
     if (isSelected) {
       sidebar.selectObject(owner);
     }
@@ -184,8 +183,8 @@ function EditableQuestion({
   return (
     <EditActionsPopover
       content={
-        <QuestionEditActions
-          name={getQuestionLabel(question)}
+        <PromptEditActions
+          name={getPromptLabel(prompt)}
           onClickEdit={onEdit}
           onClickDuplicate={onDuplicate}
           onClickDelete={onDelete}
@@ -194,7 +193,7 @@ function EditableQuestion({
     >
       <div
         className={cx(
-          styles.question,
+          styles.prompt,
           isSelected && 'dashboard-selected-element',
           isSelectable && !isSelected && 'dashboard-selectable-element'
         )}
@@ -216,7 +215,7 @@ function useRerenderOnVariableChange(owner: ControlsOwner) {
 }
 
 /**
- * How the controls show: as viewers see them, or one control per question while the dashboard is edited. Undefined
+ * How the controls show: as viewers see them, or one control per prompt while the dashboard is edited. Undefined
  * while a panel is edited, or a plan is previewed with placeholder panels that have no queries.
  */
 function getControlsMode(state: DashboardSceneState): 'view' | 'edit' | undefined {
@@ -229,15 +228,15 @@ function getControlsMode(state: DashboardSceneState): 'view' | 'edit' | undefine
   return isFullDashboardEditing(state) ? 'edit' : undefined;
 }
 
-function getOwnerKind(owner: ControlsOwner): QuestionsOwnerKind {
+function getOwnerKind(owner: ControlsOwner): PromptsOwnerKind {
   if (owner instanceof RowItem) {
     return 'row';
   }
   return owner instanceof TabItem ? 'tab' : 'dashboard';
 }
 
-/** Whether the dashboard saves questions: a v1 save drops them, and turns rows and tabs into v1 rows. */
-function savesQuestions(object: SceneObject): boolean {
+/** Whether the dashboard saves prompts: a v1 save drops them, and turns rows and tabs into v1 rows. */
+function savesPrompts(object: SceneObject): boolean {
   return getDashboardSceneFor(object).serializer instanceof V2DashboardSerializer;
 }
 
@@ -249,47 +248,47 @@ function useDashboardControlsComponents() {
 }
 
 /**
- * Whether editors can save questions: `grafana.dashboardQuestions` is on and a plugin adds a control
+ * Whether editors can save prompts: `grafana.dashboardPrompts` is on and a plugin adds a control
  * that offers them.
  */
-export function useQuestionsEnabled(): boolean {
-  const enabled = useFlagGrafanaDashboardQuestions();
+export function usePromptsEnabled(): boolean {
+  const enabled = useFlagGrafanaDashboardPrompts();
   const { components } = useDashboardControlsComponents();
   return enabled && components.length > 0;
 }
 
-/** Whether editors can add and change questions on the dashboard `object` is on (see `useQuestionsEnabled`). */
-export function useCanEditQuestions(object: SceneObject): boolean {
-  return useQuestionsEnabled() && savesQuestions(object);
+/** Whether editors can add and change prompts on the dashboard `object` is on (see `usePromptsEnabled`). */
+export function useCanEditPrompts(object: SceneObject): boolean {
+  return usePromptsEnabled() && savesPrompts(object);
 }
 
 function toControlsPanel({ key, title, panel }: SourcePanel): PluginExtensionDashboardControlsPanel {
   return { key, title: sceneGraph.interpolate(panel, title) };
 }
 
-function getControlsContext(owner: ControlsOwner, saved: SceneQuestion[]): PluginExtensionDashboardControlsContext {
+function getControlsContext(owner: ControlsOwner, saved: ScenePrompt[]): PluginExtensionDashboardControlsContext {
   const dashboard = getDashboardSceneFor(owner);
   const sources = getSourcePanels(dashboard);
   const isSection = owner instanceof RowItem || owner instanceof TabItem;
-  // What a question without picked panels is answered from.
+  // What a prompt without picked panels is answered from.
   const panels = (
     isSection ? sources.filter((source) => source.sections.some(({ object }) => object === owner)) : sources
   ).map(toControlsPanel);
   const byKey = new Map(sources.map((source) => [source.key, source]));
-  const questions = saved.map((question) => {
-    // Panels removed since they were picked are left out. With none left, the question is answered from `panels`.
-    const sources = Array.isArray(question.sources) ? question.sources : [];
+  const prompts = saved.map((prompt) => {
+    // Panels removed since they were picked are left out. With none left, the prompt is answered from `panels`.
+    const sources = Array.isArray(prompt.sources) ? prompt.sources : [];
     const picked = sources.flatMap(({ panelId }) => {
       const source = byKey.get(getVizPanelKeyForPanelId(panelId));
       return source ? [toControlsPanel(source)] : [];
     });
     return {
-      text: question.text,
-      title: typeof question.title === 'string' ? question.title.trim() || undefined : undefined,
+      text: prompt.text,
+      title: typeof prompt.title === 'string' ? prompt.title.trim() || undefined : undefined,
       panels: picked.length ? picked : undefined,
     };
   });
-  const shared = { dashboard: { uid: dashboard.state.uid ?? '', title: dashboard.state.title }, panels, questions };
+  const shared = { dashboard: { uid: dashboard.state.uid ?? '', title: dashboard.state.title }, panels, prompts };
 
   if (!isSection) {
     return { scope: 'dashboard', ...shared };
@@ -313,7 +312,7 @@ function getStyles(theme: GrafanaTheme2) {
       marginBottom: theme.spacing(1),
       marginRight: theme.spacing(1),
     }),
-    question: css({
+    prompt: css({
       display: 'inline-flex',
       alignItems: 'center',
       // A plugin renders nothing where it can't ask, such as when its assistant isn't available.

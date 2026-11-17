@@ -83,7 +83,7 @@ import { migrateGroupByVariablesV2 } from './groupByMigration';
 import { layoutDeserializerRegistry } from './layoutSerializers/layoutSerializerRegistry';
 import { annotationQueryKindToLayer } from './layoutSerializers/sectionAnnotations';
 import { getDataSourceForQuery, getRuntimeVariableDataSource } from './layoutSerializers/utils';
-import { deserializeQuestions } from './questionsSerializer';
+import { deserializePrompts } from './promptsSerializer';
 import { buildSceneTimeRange } from './shared/timeSettings';
 import { registerPanelInteractionsReporter } from './transformSaveModelToScene';
 import {
@@ -219,7 +219,7 @@ export function transformSaveModelSchemaV2ToScene(
       description: dashboard.description,
       editable: dashboard.editable,
       preload: dashboard.preload,
-      questions: deserializeQuestions(dashboard.questions, dashboard.elements),
+      prompts: deserializePrompts(dashboard.prompts, dashboard.elements),
       isDirty: false,
       links: [...(options?.defaultLinks ?? []), ...dashboard.links],
       meta,

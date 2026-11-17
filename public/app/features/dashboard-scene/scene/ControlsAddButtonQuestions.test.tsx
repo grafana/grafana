@@ -7,7 +7,7 @@ import { usePluginComponents } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { createComponentWithMeta } from 'app/features/plugins/extensions/usePluginComponents';
 
-import { QuestionEdit } from '../sidebar/questions/QuestionEdit';
+import { PromptEdit } from '../sidebar/prompts/PromptEdit';
 
 import { AddControlsButton } from './ControlsAddButton';
 import { DashboardScene } from './DashboardScene';
@@ -34,32 +34,32 @@ describe('AddControlsButton', () => {
     });
   });
 
-  it('adds a question to the dashboard and opens it', async () => {
-    setTestFlags({ 'grafana.dashboardQuestions': true });
+  it('adds a prompt to the dashboard and opens it', async () => {
+    setTestFlags({ 'grafana.dashboardPrompts': true });
     const dashboard = renderAddButton('v2');
 
     await userEvent.click(screen.getByTestId(selectors.components.ControlsAddButton.triggerButton));
-    await userEvent.click(screen.getByRole('menuitem', { name: 'Question' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Prompt' }));
 
     await waitFor(() => {
-      expect(dashboard.state.questions).toEqual([{ text: '' }]);
+      expect(dashboard.state.prompts).toEqual([{ text: '' }]);
     });
     const selected = dashboard.state.sidebar.getSelectedObject();
-    expect(selected instanceof QuestionEdit && selected.state.questionIndex).toBe(0);
+    expect(selected instanceof PromptEdit && selected.state.promptIndex).toBe(0);
   });
 
   it.each<[string, boolean, 'v1' | 'v2']>([
-    ['grafana.dashboardQuestions is off', false, 'v2'],
-    // A v1 save drops the questions.
+    ['grafana.dashboardPrompts is off', false, 'v2'],
+    // A v1 save drops the prompts.
     ['the dashboard saves as v1', true, 'v1'],
-  ])('offers no questions while %s', async (_, questionsEnabled, serializerVersion) => {
-    setTestFlags({ 'grafana.dashboardQuestions': questionsEnabled });
+  ])('offers no prompts while %s', async (_, promptsEnabled, serializerVersion) => {
+    setTestFlags({ 'grafana.dashboardPrompts': promptsEnabled });
     renderAddButton(serializerVersion);
 
     await userEvent.click(screen.getByTestId(selectors.components.ControlsAddButton.triggerButton));
 
     expect(await screen.findByRole('menuitem', { name: 'Link' })).toBeInTheDocument();
-    expect(screen.queryByRole('menuitem', { name: 'Question' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: 'Prompt' })).not.toBeInTheDocument();
   });
 });
 

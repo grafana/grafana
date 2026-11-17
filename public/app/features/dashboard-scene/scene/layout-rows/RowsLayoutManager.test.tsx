@@ -777,7 +777,7 @@ describe('RowsLayoutManager', () => {
   });
 });
 
-describe('duplicateRow with questions', () => {
+describe('duplicateRow with prompts', () => {
   function gridOf(...panelIds: number[]) {
     return new DefaultGridLayoutManager({
       grid: new SceneGridLayout({
@@ -788,10 +788,10 @@ describe('duplicateRow with questions', () => {
     });
   }
 
-  it("points the copy's questions at the copied panels, and keeps the ones picked outside the row", () => {
+  it("points the copy's prompts at the copied panels, and keeps the ones picked outside the row", () => {
     const errors = new RowItem({
       title: 'Errors',
-      questions: [
+      prompts: [
         { text: 'Why did errors rise?', sources: [{ panelId: 1 }, { panelId: 3 }] },
         { text: 'What stands out?' },
       ],
@@ -808,10 +808,10 @@ describe('duplicateRow with questions', () => {
         .getVizPanels()
         .map((panel) => panel.state.key)
     ).toEqual(['panel-4', 'panel-5']);
-    expect(copy.state.questions).toEqual([
+    expect(copy.state.prompts).toEqual([
       { text: 'Why did errors rise?', sources: [{ panelId: 4 }, { panelId: 3 }] },
       { text: 'What stands out?' },
     ]);
-    expect(errors.state.questions?.[0].sources).toEqual([{ panelId: 1 }, { panelId: 3 }]);
+    expect(errors.state.prompts?.[0].sources).toEqual([{ panelId: 1 }, { panelId: 3 }]);
   });
 });

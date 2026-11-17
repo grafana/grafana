@@ -2,7 +2,7 @@ import { CustomVariable, SceneGridLayout, SceneVariableSet } from '@grafana/scen
 import {
   type Spec as DashboardV2Spec,
   type RowsLayoutSpec,
-  type Question,
+  type Prompt,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 import { DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
@@ -573,33 +573,33 @@ function sectionAnnotation(name: string) {
   };
 }
 
-describe('questions', () => {
-  const rowWith = (questions?: Question[]): DashboardV2Spec['layout'] => ({
+describe('prompts', () => {
+  const rowWith = (prompts?: Prompt[]): DashboardV2Spec['layout'] => ({
     kind: 'RowsLayout',
     spec: {
       rows: [
         {
           kind: 'RowsLayoutRow',
-          spec: { title: 'Row 1', questions, layout: { kind: 'GridLayout', spec: { items: [] } } },
+          spec: { title: 'Row 1', prompts, layout: { kind: 'GridLayout', spec: { items: [] } } },
         },
       ],
     },
   });
 
-  it('keeps the questions saved on a row through a load and a save', () => {
-    const questions = [{ text: 'Why did errors rise?' }, { text: 'Is p95 latency getting worse?' }];
+  it('keeps the prompts saved on a row through a load and a save', () => {
+    const prompts = [{ text: 'Why did errors rise?' }, { text: 'Is p95 latency getting worse?' }];
 
-    const manager = deserializeRowsLayout(rowWith(questions), {}, false);
-    expect(manager.state.rows[0].state.questions).toEqual(questions);
+    const manager = deserializeRowsLayout(rowWith(prompts), {}, false);
+    expect(manager.state.rows[0].state.prompts).toEqual(prompts);
 
     const serialized = serializeRowsLayout(manager).spec as RowsLayoutSpec;
-    expect(serialized.rows[0].spec.questions).toEqual(questions);
+    expect(serialized.rows[0].spec.prompts).toEqual(prompts);
   });
 
-  it('leaves the key out when a row has no questions', () => {
+  it('leaves the key out when a row has no prompts', () => {
     const manager = deserializeRowsLayout(rowWith([]), {}, false);
 
     const serialized = serializeRowsLayout(manager).spec as RowsLayoutSpec;
-    expect(serialized.rows[0].spec).not.toHaveProperty('questions');
+    expect(serialized.rows[0].spec).not.toHaveProperty('prompts');
   });
 });

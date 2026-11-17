@@ -18,7 +18,7 @@ import { isDashboardReviewing, isFullDashboardEditing } from 'app/features/dashb
 import { addElement } from '../../actions/element/addElement';
 import { removeElement } from '../../actions/element/removeElement';
 import { edit } from '../../actions/utils/edit';
-import { remapQuestionSources } from '../../questions/questionSources';
+import { remapPromptSources } from '../../prompts/promptSources';
 import { serializeRowsLayout } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
 import { dashboardSceneGraph, type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../../utils/utils';
@@ -166,7 +166,7 @@ export class RowsLayoutManager
 
   public duplicateRow(row: RowItem) {
     const newRow = row.duplicate();
-    remapQuestionSources(row, newRow, { keepOutside: true });
+    remapPromptSources(row, newRow, { keepOutside: true });
     this.addNewRow(newRow);
   }
 

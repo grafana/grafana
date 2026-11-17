@@ -368,13 +368,13 @@ describe('getRowFromClipboard', () => {
     };
   }
 
-  it('points the pasted questions at the pasted panels, and drops panels picked outside the row', () => {
+  it('points the pasted prompts at the pasted panels, and drops panels picked outside the row', () => {
     const row: RowsLayoutRowKind = {
       kind: 'RowsLayoutRow',
       spec: {
         title: 'Errors',
         // "panel-9" sits outside the copied row, and may name another panel on the dashboard pasted into.
-        questions: [
+        prompts: [
           {
             text: 'Why did errors rise?',
             sources: [
@@ -419,6 +419,6 @@ describe('getRowFromClipboard', () => {
         .getVizPanels()
         .map((panel) => panel.state.key)
     ).toEqual(['panel-4', 'panel-5']);
-    expect(pasted.state.questions).toEqual([{ text: 'Why did errors rise?', sources: [{ panelId: 5 }] }]);
+    expect(pasted.state.prompts).toEqual([{ text: 'Why did errors rise?', sources: [{ panelId: 5 }] }]);
   });
 });

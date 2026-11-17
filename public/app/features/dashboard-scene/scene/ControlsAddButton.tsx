@@ -10,7 +10,7 @@ import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types
 
 import { DashboardInteractions } from '../utils/interactions';
 
-import { useCanEditQuestions } from './DashboardControlsExtensionPoint';
+import { useCanEditPrompts } from './DashboardControlsExtensionPoint';
 import { DashboardDataLayerSet } from './DashboardDataLayerSet';
 import { type DashboardScene } from './DashboardScene';
 
@@ -19,7 +19,7 @@ export function AddControlsButton({ dashboard }: { dashboard: DashboardScene }) 
   const dashboardState = dashboard.useState();
   const { editview, editPanel, viewPanel } = dashboardState;
   const isEditing = isFullDashboardEditing(dashboardState);
-  const canAddQuestion = useCanEditQuestions(dashboard);
+  const canAddPrompt = useCanEditPrompts(dashboard);
 
   // The add flows are edit-only, so their implementations (variable type pane,
   // filter form, annotation actions, link pane) load on first use.
@@ -81,15 +81,15 @@ export function AddControlsButton({ dashboard }: { dashboard: DashboardScene }) 
     });
   }, [dashboard]);
 
-  const handleAddQuestion = useCallback(async () => {
+  const handleAddPrompt = useCallback(async () => {
     await dashboard.state.sidebar.runPaneRequest(async (signal) => {
-      const { openAddQuestionPane } = await import(
-        /* webpackChunkName: "dashboard-add-controls" */ '../sidebar/questions/QuestionEdit'
+      const { openAddPromptPane } = await import(
+        /* webpackChunkName: "dashboard-add-controls" */ '../sidebar/prompts/PromptEdit'
       );
       if (signal.aborted) {
         return;
       }
-      openAddQuestionPane(dashboard, 'dashboard');
+      openAddPromptPane(dashboard, 'dashboard');
     });
   }, [dashboard]);
 
@@ -120,11 +120,11 @@ export function AddControlsButton({ dashboard }: { dashboard: DashboardScene }) 
         onClick={handleAddAnnotationQuery}
       />
       <Menu.Item icon="link" label={t('dashboard.sidebar.add.link.label', 'Link')} onClick={handleAddLink} />
-      {canAddQuestion && (
+      {canAddPrompt && (
         <Menu.Item
           icon="ai-sparkle"
-          label={t('dashboard.sidebar.add.question.label', 'Question')}
-          onClick={handleAddQuestion}
+          label={t('dashboard.sidebar.add.prompt.label', 'Prompt')}
+          onClick={handleAddPrompt}
         />
       )}
     </Menu>

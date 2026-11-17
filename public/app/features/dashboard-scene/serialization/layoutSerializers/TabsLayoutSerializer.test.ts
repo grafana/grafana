@@ -1,7 +1,7 @@
 import { SceneVariableSet } from '@grafana/scenes';
 import {
   type Spec as DashboardV2Spec,
-  type Question,
+  type Prompt,
   type TabsLayoutSpec,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
@@ -247,33 +247,33 @@ function sectionAnnotation(name: string) {
   };
 }
 
-describe('questions', () => {
-  const tabWith = (questions?: Question[]): DashboardV2Spec['layout'] => ({
+describe('prompts', () => {
+  const tabWith = (prompts?: Prompt[]): DashboardV2Spec['layout'] => ({
     kind: 'TabsLayout',
     spec: {
       tabs: [
         {
           kind: 'TabsLayoutTab',
-          spec: { title: 'Tab 1', questions, layout: { kind: 'GridLayout', spec: { items: [] } } },
+          spec: { title: 'Tab 1', prompts, layout: { kind: 'GridLayout', spec: { items: [] } } },
         },
       ],
     },
   });
 
-  it('keeps the questions saved on a tab through a load and a save', () => {
-    const questions = [{ text: 'Which services keep restarting?' }];
+  it('keeps the prompts saved on a tab through a load and a save', () => {
+    const prompts = [{ text: 'Which services keep restarting?' }];
 
-    const manager = deserializeTabsLayout(tabWith(questions), {}, false);
-    expect(manager.state.tabs[0].state.questions).toEqual(questions);
+    const manager = deserializeTabsLayout(tabWith(prompts), {}, false);
+    expect(manager.state.tabs[0].state.prompts).toEqual(prompts);
 
     const serialized = serializeTabsLayout(manager).spec as TabsLayoutSpec;
-    expect(serialized.tabs[0].spec.questions).toEqual(questions);
+    expect(serialized.tabs[0].spec.prompts).toEqual(prompts);
   });
 
-  it('leaves the key out when a tab has no questions', () => {
+  it('leaves the key out when a tab has no prompts', () => {
     const manager = deserializeTabsLayout(tabWith(undefined), {}, false);
 
     const serialized = serializeTabsLayout(manager).spec as TabsLayoutSpec;
-    expect(serialized.tabs[0].spec).not.toHaveProperty('questions');
+    expect(serialized.tabs[0].spec).not.toHaveProperty('prompts');
   });
 });

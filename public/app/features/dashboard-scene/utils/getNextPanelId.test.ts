@@ -23,9 +23,9 @@ describe('getNextPanelId', () => {
     expect(id).toBe(1);
   });
 
-  it('does not reuse the ID of a removed panel that a question still picks', () => {
+  it('does not reuse the ID of a removed panel that a prompt still picks', () => {
     const scene = buildTestScene();
-    scene.setState({ questions: [{ text: 'Why did latency rise?', sources: [{ panelId: 2 }] }] });
+    scene.setState({ prompts: [{ text: 'Why did latency rise?', sources: [{ panelId: 2 }] }] });
 
     const grid = scene.state.body as DefaultGridLayoutManager;
     grid.state.grid.setState({ children: [grid.state.grid.state.children[0]] });
@@ -35,7 +35,7 @@ describe('getNextPanelId', () => {
 
   it('ignores picked panel IDs that are not IDs', () => {
     const scene = buildTestScene();
-    scene.setState({ questions: [{ text: 'Why did latency rise?', sources: [{ panelId: Number.NaN }] }] });
+    scene.setState({ prompts: [{ text: 'Why did latency rise?', sources: [{ panelId: Number.NaN }] }] });
 
     expect(getNextPanelId(scene)).toBe(3);
   });

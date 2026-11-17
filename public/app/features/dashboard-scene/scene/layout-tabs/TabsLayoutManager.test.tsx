@@ -981,18 +981,18 @@ function assertSelectedTab(
   expect(manager.getCurrentTab()?.state.title).toBe(title);
 }
 
-describe('duplicateTab with questions', () => {
-  it('points the questions on the copy, and on the rows inside it, at the copied panels', () => {
+describe('duplicateTab with prompts', () => {
+  it('points the prompts on the copy, and on the rows inside it, at the copied panels', () => {
     const panel = (id: number) =>
       new DashboardGridItem({ body: new VizPanel({ key: `panel-${id}`, pluginId: 'table' }) });
     const errors = new RowItem({
       title: 'Errors',
-      questions: [{ text: 'Why did errors rise?', sources: [{ panelId: 2 }] }],
+      prompts: [{ text: 'Why did errors rise?', sources: [{ panelId: 2 }] }],
       layout: new DefaultGridLayoutManager({ grid: new SceneGridLayout({ children: [panel(2)] }) }),
     });
     const overview = new TabItem({
       title: 'Overview',
-      questions: [{ text: 'What stands out?', sources: [{ panelId: 1 }, { panelId: 2 }] }],
+      prompts: [{ text: 'What stands out?', sources: [{ panelId: 1 }, { panelId: 2 }] }],
       layout: new RowsLayoutManager({
         rows: [
           new RowItem({
@@ -1018,8 +1018,8 @@ describe('duplicateTab with questions', () => {
         .getVizPanels()
         .map((p) => p.state.key)
     ).toEqual(['panel-3', 'panel-4']);
-    expect(copy.state.questions?.[0].sources).toEqual([{ panelId: 3 }, { panelId: 4 }]);
-    expect(copiedRows.state.rows[1].state.questions?.[0].sources).toEqual([{ panelId: 4 }]);
-    expect(errors.state.questions?.[0].sources).toEqual([{ panelId: 2 }]);
+    expect(copy.state.prompts?.[0].sources).toEqual([{ panelId: 3 }, { panelId: 4 }]);
+    expect(copiedRows.state.rows[1].state.prompts?.[0].sources).toEqual([{ panelId: 4 }]);
+    expect(errors.state.prompts?.[0].sources).toEqual([{ panelId: 2 }]);
   });
 });
