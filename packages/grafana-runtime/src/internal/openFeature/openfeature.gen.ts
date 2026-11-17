@@ -228,6 +228,8 @@ export const FlagKeys = {
   GrafanaKubernetesAnnotationsClient: "grafana.kubernetesAnnotationsClient",
   /** Enables log level inference from log line contents when level is not defined as a field or a label */
   GrafanaLogLevelInference: "grafana.logLevelInference",
+  /** Opens the mega menu over the page while the pointer rests on its toggle, and docks it when the toggle is clicked on wide screens. The toggle in the docked menu's header closes it, in place of the footer's dock button */
+  GrafanaMegaMenuPeekAndDock: "grafana.megaMenuPeekAndDock",
   /** Disables dashboard edit mode (manual and assistant-driven) on mobile/small-screen viewports */
   GrafanaMobileEditDeprecation: "grafana.mobileEditDeprecation",
   /** Enables multi-tenant fallback behavior */
@@ -1595,6 +1597,17 @@ export const useFlagGrafanaKubernetesAnnotationsClient = (options?: ReactFlagEva
  */
 export const useFlagGrafanaLogLevelInference = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.logLevelInference", false, options).value;
+};
+
+/**
+ * Opens the mega menu over the page while the pointer rests on its toggle, and docks it when the toggle is clicked on wide screens. The toggle in the docked menu's header closes it, in place of the footer's dock button
+ *
+ * **Details:**
+ * - flag key: `grafana.megaMenuPeekAndDock`
+ * - default value: `false`
+ */
+export const useFlagGrafanaMegaMenuPeekAndDock = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.megaMenuPeekAndDock", false, options).value;
 };
 
 /**

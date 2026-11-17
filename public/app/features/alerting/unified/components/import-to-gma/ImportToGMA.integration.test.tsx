@@ -74,6 +74,7 @@ const alertmanagerYaml = () =>
 describe('ImportToGMA wizard — real steps', () => {
   it('imports YAML notifications and data source rules, sending what the steps collected', async () => {
     const dryRunNames: Array<string | null> = [];
+    const dryRunSources: Array<string | null> = [];
     let notificationsRequest: Request | undefined;
     let rulesRequest: Request | undefined;
     let rulesBody: unknown;
@@ -81,6 +82,7 @@ describe('ImportToGMA wizard — real steps', () => {
       http.post(CONVERT_URL, ({ request }) => {
         if (request.headers.get(DRY_RUN_HEADER) === 'true') {
           dryRunNames.push(request.headers.get('X-Grafana-Alerting-Config-Identifier'));
+          dryRunSources.push(request.headers.get('X-Grafana-Alerting-Import-Source'));
         } else {
           notificationsRequest = request.clone();
         }
@@ -126,6 +128,11 @@ describe('ImportToGMA wizard — real steps', () => {
     await waitFor(() => expect(rulesRequest).toBeDefined());
     expect(dryRunNames).toContain('imported-tree');
     expect(notificationsRequest?.headers.get('X-Grafana-Alerting-Config-Identifier')).toBe('imported-tree');
+    // Every call the wizard makes says it comes from the wizard, so Grafana can count it as such.
+    expect(dryRunSources.length).toBeGreaterThan(0);
+    expect(new Set(dryRunSources)).toEqual(new Set(['wizard']));
+    expect(notificationsRequest?.headers.get('X-Grafana-Alerting-Import-Source')).toBe('wizard');
+    expect(rulesRequest?.headers.get('X-Grafana-Alerting-Import-Source')).toBe('wizard');
     expect(rulesBody).toEqual({ 'ns-a': [expect.objectContaining({ name: 'group-a' })] });
     const rulesHeaders = rulesRequest!.headers;
     expect(rulesHeaders.get('X-Grafana-Alerting-Datasource-UID')).toBe('prometheus-uid');

@@ -10,6 +10,7 @@ import { Trans } from '@grafana/i18n';
 import { locationSearchToObject, locationService, useScopes } from '@grafana/runtime';
 import {
   useFlagGrafanaAssistantPageCanvas,
+  useFlagGrafanaMegaMenuPeekAndDock,
   useFlagGrafanaScopesDashboardsMegaMenu,
   useFlagGrafanaVisualDesignRefresh,
 } from '@grafana/runtime/internal';
@@ -54,6 +55,7 @@ export function AppChrome({ children }: Props) {
   const { chrome } = useGrafana();
   const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const scopesMegaMenuEnabled = useFlagGrafanaScopesDashboardsMegaMenu();
+  const megaMenuPeekAndDock = useFlagGrafanaMegaMenuPeekAndDock();
   const {
     isOpen: isExtensionSidebarOpen,
     extensionSidebarWidth,
@@ -106,7 +108,7 @@ export function AppChrome({ children }: Props) {
   const { height: windowHeight } = useWindowSize();
 
   useResponsiveDockedMegaMenu(chrome);
-  useMegaMenuFocusHelper(state.megaMenuOpen, state.megaMenuDocked);
+  useMegaMenuFocusHelper(state.megaMenuOpen, state.megaMenuDocked, state.megaMenuPeek);
 
   const contentClass = cx({
     [styles.content]: true,
@@ -319,7 +321,9 @@ export function AppChrome({ children }: Props) {
             ))}
         </div>
       </div>
-      {!state.chromeless && !state.megaMenuDocked && <AppChromeMenu />}
+      {/* A peek opens a closed docked menu over the page. The overlay stays mounted while docked, so the menu opens in it
+          as it does from undocked, and its dialog does not take focus on mount. */}
+      {!state.chromeless && (megaMenuPeekAndDock || !state.megaMenuDocked) && <AppChromeMenu />}
       {!state.chromeless && (
         <Suspense fallback={null}>
           <CommandPalette />

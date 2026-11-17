@@ -2958,12 +2958,15 @@
     {
       "metadata": {
         "name": "grafana.customDashboardTemplates",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-06-24T18:36:50Z"
+        "resourceVersion": "1794931415420",
+        "creationTimestamp": "2026-06-24T18:36:50Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-17 16:03:35.420811 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables custom dashboard templates for enterprise",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/sharing-squad",
         "expression": "false"
       }
@@ -3366,6 +3369,23 @@
         "codeowner": "@grafana/observability-logs",
         "frontend": true,
         "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.megaMenuPeekAndDock",
+        "resourceVersion": "1794924578516",
+        "creationTimestamp": "2026-11-17T10:20:15Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-17 14:09:38.516633 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Opens the mega menu over the page while the pointer rests on its toggle, and docks it when the toggle is clicked on wide screens. The toggle in the docked menu's header closes it, in place of the footer's dock button",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "frontend": true,
         "expression": "false"
       }
     },
