@@ -130,6 +130,16 @@ describe('mergeFilesAndResources', () => {
     expect(result[0].path).toBe('dashboards/my-dashboard.json');
   });
 
+  it('should merge a folder resource whose path has a trailing slash into the folder inferred from files', () => {
+    const files = [{ path: 'dashboards/_folder.json', hash: 'meta' }];
+    const folder = { ...mockFolderResource, path: 'dashboards/' };
+
+    const result = mergeFilesAndResources(files, [folder]);
+
+    expect(result.map((r) => r.path).sort()).toEqual(['dashboards', 'dashboards/_folder.json']);
+    expect(result.find((r) => r.path === 'dashboards')?.resource).toBe(folder);
+  });
+
   it('should keep the root folder resource with empty path', () => {
     const rootFolder = { ...mockFolderResource, path: '' };
 
@@ -333,6 +343,16 @@ describe('buildTree', () => {
     expect(result[0].title).toBe('apple.json');
     expect(result[1].title).toBe('mango.json');
     expect(result[2].title).toBe('zebra.json');
+  });
+
+  it('should type a directory inferred from file paths as a folder even with a dot in its name', () => {
+    const merged = mergeFilesAndResources([{ path: 'team.v2/dash.json', hash: 'h1' }], []);
+
+    const result = buildTree(merged);
+
+    expect(result[0].path).toBe('team.v2');
+    expect(result[0].type).toBe('Folder');
+    expect(result[0].status).toBe('pending');
   });
 
   it('should treat a nested item as a root when its parent folder is absent', () => {
@@ -1473,6 +1493,16 @@ describe('filterByStatusAndResources', () => {
 
   it('should return all items when no filter is selected', () => {
     expect(filterByStatusAndResources(tree, [], [])).toEqual(tree);
+  });
+
+  it('should keep matches under an inferred directory with a dot in its name', () => {
+    const path = 'team.v2/dash.json';
+    const merged = mergeFilesAndResources([{ path, hash: 'h1' }], [{ ...mockResource, path, hash: 'h1' }]);
+
+    const result = filterByStatusAndResources(buildTree(merged), [], ['dashboards']);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].children.map((child) => child.path)).toEqual([path]);
   });
 
   it('should drop an ancestor folder when no item matches both filters', () => {

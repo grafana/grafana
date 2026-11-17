@@ -43,14 +43,15 @@ export function mergeFilesAndResources(files: unknown[], resources: ResourceList
 
   // Merge resources
   for (const resource of resources) {
-    if (!resource.path && resource.resource !== 'folders') {
+    const path = resource.path.replace(/\/+$/, '');
+    if (!path && resource.resource !== 'folders') {
       continue;
     }
-    const existing = merged.get(resource.path);
+    const existing = merged.get(path);
     if (existing) {
       existing.resource = resource;
     } else {
-      merged.set(resource.path, { path: resource.path, resource });
+      merged.set(path, { path, resource });
     }
   }
 
@@ -113,7 +114,7 @@ export function buildTree(mergedItems: MergedItem[]): TreeItem[] {
 
   // Create all nodes (files, dashboards, folders)
   for (const item of mergedItems) {
-    const type = getItemType(item.path, item.resource);
+    const type = !item.resource && item.file?.hash === '' ? 'Folder' : getItemType(item.path, item.resource);
     const isFolderMetadata = isFolderMetadataPath(item.path);
     // Show sync status for any provisioned resource kind (Folder, Dashboard, Playlist, ...) or for
     // unsynced .json files that haven't been turned into a resource yet. `type` is only 'File' for
