@@ -2561,7 +2561,7 @@ func (b *bleveIndex) search(
 	stats.AddRequestConversionTime(time.Since(conversionStarts))
 
 	if postRank {
-		return b.runPostFilterAuthz(ctx, access, rowAccess, req, index, searchrequest, selectFields, fieldValueSchema, stats, response, trashAuthz)
+		return b.runPostFilterAuthz(ctx, access, rowAccess, req, index, searchrequest, fieldValueSchema, stats, response, trashAuthz)
 	}
 
 	res, err := searchInContext(ctx, index, searchrequest)
@@ -2579,10 +2579,11 @@ func (b *bleveIndex) search(
 	stats.AddReturnedDocuments(len(res.Hits))
 
 	resultsConversionStart := time.Now()
-	if err := b.setSearchResults(response, fieldValueSchema, res.Hits, searchrequest.Sort); err != nil {
+	hits := toQueryHits(res.Hits, searchrequest.Sort)
+	if err := setSearchResults(b.logger, response, fieldValueSchema, hits); err != nil {
 		return nil, err
 	}
-	b.addRowAccess(ctx, rowAccess, req.AccessVerbs, response, res.Hits)
+	addRowAccess(ctx, b.logger, rowAccess, req.AccessVerbs, response, hits)
 
 	// parse the facet fields
 	for k, v := range res.Facets {
@@ -4658,19 +4659,6 @@ func newResponseFacet(v *search.FacetResult) *resourcepb.ResourceSearchResponse_
 		}
 	}
 	return f
-}
-
-// docInfo holds document information for authorization
-type docInfo struct {
-	doc          *search.DocumentMatch
-	namespace    string
-	group        string
-	resourceType string
-	name         string
-	folder       string
-	verb         string
-	// Only read on the trash path.
-	deletedBy string
 }
 
 // firstTermSeparator returns the first configured separator found in v.

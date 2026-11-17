@@ -8,18 +8,20 @@ import { useEffect, useState, type ReactNode, type RefObject } from 'react';
 import { type GrafanaTheme2, type IconName } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { floatingUtils, Portal, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
-import { toggleOrderedList, toggleSurround } from 'app/plugins/panel/text/v2/editor/editorCommands';
+import { toggleOrderedList } from 'app/plugins/panel/text/v2/editor/editorCommands';
 
 import {
   BOLD_NODE,
   enclosingListKind,
   findEnclosingMarkNode,
+  inlineMarkRange,
   INLINE_CODE_NODE,
   ITALIC_NODE,
   LINK_NODE,
   STRIKETHROUGH_NODE,
   toggleChecklist,
   toggleBulletedList,
+  toggleSurroundInline,
 } from './markdownLivePreview';
 
 export const MARKDOWN_FORMAT_TOOLBAR_TEST_ID = 'notebook-markdown-format-toolbar';
@@ -44,35 +46,35 @@ function actions(): FormatAction[] {
       tooltip: t('notebook.cell.markdown.tooltip-bold', 'Bold'),
       label: <strong>{t('notebook.cell.markdown.format-bold', 'B')}</strong>,
       isActive: (tree, pos) => Boolean(findEnclosingMarkNode(tree, pos, [BOLD_NODE])),
-      run: (view) => toggleSurround(view, '**'),
+      run: (view) => toggleSurroundInline(view, '**'),
     },
     {
       key: 'italic',
       tooltip: t('notebook.cell.markdown.tooltip-italic', 'Italic'),
       label: <em>{t('notebook.cell.markdown.format-italic', 'I')}</em>,
       isActive: (tree, pos) => Boolean(findEnclosingMarkNode(tree, pos, [ITALIC_NODE])),
-      run: (view) => toggleSurround(view, '*'),
+      run: (view) => toggleSurroundInline(view, '*'),
     },
     {
       key: 'strikethrough',
       tooltip: t('notebook.cell.markdown.tooltip-strikethrough', 'Strikethrough'),
       label: <s>{t('notebook.cell.markdown.format-strikethrough', 'S')}</s>,
       isActive: (tree, pos) => Boolean(findEnclosingMarkNode(tree, pos, [STRIKETHROUGH_NODE])),
-      run: (view) => toggleSurround(view, '~~'),
+      run: (view) => toggleSurroundInline(view, '~~'),
     },
     {
       key: 'code',
       tooltip: t('notebook.cell.markdown.tooltip-code', 'Code'),
       icon: 'brackets-curly',
       isActive: (tree, pos) => Boolean(findEnclosingMarkNode(tree, pos, [INLINE_CODE_NODE])),
-      run: (view) => toggleSurround(view, '`'),
+      run: (view) => toggleSurroundInline(view, '`'),
     },
     {
       key: 'link',
       tooltip: t('notebook.cell.markdown.tooltip-link', 'Link'),
       icon: 'link',
       isActive: (tree, pos) => Boolean(findEnclosingMarkNode(tree, pos, [LINK_NODE])),
-      run: (view) => toggleSurround(view, '[', '](https://)'),
+      run: (view) => toggleSurroundInline(view, '[', '](https://)'),
     },
     {
       key: 'bulleted-list',
@@ -177,7 +179,7 @@ export function MarkdownFormatToolbar({ editorContainerRef }: Props) {
   }
 
   const tree = syntaxTree(view.state);
-  const pos = view.state.selection.main.from;
+  const pos = inlineMarkRange(view.state)?.from ?? view.state.selection.main.from;
 
   const runAction = (action: FormatAction) => {
     action.run(view);

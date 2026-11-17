@@ -2423,7 +2423,7 @@ export type NotebookElementReference = {
 export type NotebookNotebookLayoutItemSpec = {
   collapsed?: boolean;
   element: NotebookElementReference;
-  /** Assigned by the server on create or update and never changed by clients (a UUID v4). Comments anchor to this rather than to the element name. */
+  /** Optional. The server assigns one on create or update when the item has none, and keeps one the client sends, which must be a UUID v4 that no other item in the notebook has. */
   id?: string;
   source: string;
 };
@@ -2467,6 +2467,7 @@ export type NotebookTimeSettingsSpec = {
 };
 export type NotebookSpec = {
   description?: string;
+  /** The key is the element ID. It identifies the cell: comments and other references anchor to it */
   elements: {
     [key: string]: NotebookCellKindOrV2PanelKindOrLibraryPanelKind;
   };
