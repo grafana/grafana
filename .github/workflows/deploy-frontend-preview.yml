@@ -4,6 +4,9 @@ name: Deploy frontend preview
 # request and uploads it to the preview assets bucket, to use with the new
 # frontend PR preview feature
 #
+# PRs with backend changes still deploy, but the status comment warns that the
+# preview may not work correctly.
+#
 # NOTE: the `/deploy-to-fs` command is temporary, while we test this
 # mechanism. The plan is to later fold it into `/deploy-to-hg`: that command
 # will deploy a frontend preview for frontend-only PRs, and an ephemeral
@@ -42,6 +45,7 @@ jobs:
       should-deploy: ${{ steps.check.outputs.should-deploy }}
       pr-number: ${{ steps.pr.outputs.number }}
       head-sha: ${{ steps.check.outputs.head-sha }}
+      has-backend-changes: ${{ steps.check.outputs.has-backend-changes }}
     steps:
       # Checkout the default branch (not the PR merge ref) so the local
       # actions used by this job always run trusted code
@@ -103,6 +107,8 @@ jobs:
             ### Frontend preview
 
             ⏳ The preview build for commit ${{ needs.check.outputs.head-sha }} is in progress.
+
+            ${{ needs.check.outputs.has-backend-changes == 'true' && '⚠️ **Warning:** this PR contains backend changes. The preview only swaps the frontend assets of an existing instance, so it may not work correctly.' || '' }}
 
   build:
     name: Build frontend
@@ -242,6 +248,8 @@ jobs:
 
             - Each new push to this PR builds and deploys the preview again automatically.
             - Share the above link for others to preview it in their browsers too.
+
+            ${{ needs.check.outputs.has-backend-changes == 'true' && '⚠️ **Warning:** this PR contains backend changes. The preview only swaps the frontend assets of an existing instance, so it may not work correctly.' || '' }}
 
   comment-failure:
     name: Comment that the deploy failed
