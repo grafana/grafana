@@ -72,6 +72,8 @@ export interface LocationInfo {
   kind: string;
   name: string;
   url: string;
+  /** UID of the parent folder. Unset for root-level folders and virtual locations. */
+  parentUID?: string;
 }
 
 export interface SearchResultMeta {
@@ -102,6 +104,8 @@ export interface GrafanaSearcher {
   sortPlaceholder?: string;
   getLocationInfo: () => Promise<Record<string, LocationInfo>>;
   reloadLocationInfo: () => Promise<Record<string, LocationInfo>>;
+  /** Folder index (UID to title and parent UID) used to build the full path of a folder */
+  getFolderPaths: () => Promise<Record<string, LocationInfo>>;
 
   /** Gets the default sort used for the Folder view */
   getFolderViewSort: () => string;

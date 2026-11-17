@@ -45,6 +45,22 @@ describe('Unified Storage Searcher', () => {
     expect(folderRequest).toHaveBeenCalledTimes(2);
   });
 
+  it('records the parent of each folder in the folder paths, leaving root-level folders without one', async () => {
+    server.use(
+      getCustomSearchHandler([
+        { name: 'top', title: 'Top', resource: 'folders' },
+        { name: 'general-child', title: 'General child', resource: 'folders', folder: 'general' },
+        { name: 'nested', title: 'Nested', resource: 'folders', folder: 'top' },
+      ])
+    );
+
+    const folderPaths = await new UnifiedSearcher().getFolderPaths();
+
+    expect(folderPaths.top.parentUID).toBeUndefined();
+    expect(folderPaths['general-child'].parentUID).toBeUndefined();
+    expect(folderPaths.nested.parentUID).toBe('top');
+  });
+
   it('should perform search with basic query', async () => {
     const query: SearchQuery = {
       query: '*',

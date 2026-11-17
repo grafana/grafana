@@ -8,6 +8,7 @@ import server, { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures, setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { ManagerKind } from 'app/features/apiserver/types';
+import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { resolveStarredFolders } from 'app/features/stars/folders';
 import { useStarredItems } from 'app/features/stars/hooks';
 
@@ -611,6 +612,44 @@ describe('NestedFolderPicker', () => {
       await user.click(await screen.findByRole('button', { name: 'Select folder' }));
 
       await waitFor(() => expect(resolveStarredFoldersMock).toHaveBeenCalledWith(['starred-folder-1'], 'edit'));
+    });
+  });
+
+  describe('full path in search results', () => {
+    beforeEach(async () => {
+      server.use(
+        getCustomSearchHandler([
+          { resource: 'folders', name: 'path-public', title: 'Public' },
+          { resource: 'folders', name: 'path-org', title: 'Org', folder: 'path-public' },
+          { resource: 'folders', name: 'path-team', title: 'Team A', folder: 'path-org' },
+        ])
+      );
+      // The searcher is shared between tests and caches the folder index
+      await getGrafanaSearcher().reloadLocationInfo();
+    });
+
+    afterEach(async () => {
+      await act(async () => {
+        setTestFlags();
+      });
+    });
+
+    it('shows every ancestor of a result when the flag is on', async () => {
+      setTestFlags({ 'grafana.folderPickerSearchFullPath': true });
+      const { user } = render(<NestedFolderPicker onChange={mockOnChange} />);
+      await user.click(await screen.findByRole('button', { name: 'Select folder' }));
+      fireEvent.change(screen.getByPlaceholderText('Search folders'), { target: { value: 'Team' } });
+
+      expect(await screen.findByText('/Public/Org')).toBeInTheDocument();
+    });
+
+    it('shows only the immediate parent when the flag is off', async () => {
+      const { user } = render(<NestedFolderPicker onChange={mockOnChange} />);
+      await user.click(await screen.findByRole('button', { name: 'Select folder' }));
+      fireEvent.change(screen.getByPlaceholderText('Search folders'), { target: { value: 'Team' } });
+
+      expect(await screen.findByText('/Org')).toBeInTheDocument();
+      expect(screen.queryByText('/Public/Org')).not.toBeInTheDocument();
     });
   });
 

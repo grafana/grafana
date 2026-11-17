@@ -38,6 +38,8 @@ export interface NestedFolderListProps {
   teamFolderOwnersByUid?: Record<string, { name: string; avatarUrl?: string }>;
   /** Whether the listed folders are editable by the user; gates the read-only badge on each row. */
   canEdit?: boolean;
+  /** Show the full folder path, rather than only the immediate parent, on search result rows. */
+  showFullPath?: boolean;
 }
 
 export function NestedFolderList({
@@ -53,6 +55,7 @@ export function NestedFolderList({
   emptyFolders,
   teamFolderOwnersByUid,
   canEdit,
+  showFullPath,
 }: NestedFolderListProps) {
   const infiniteLoaderRef = useRef<InfiniteLoader>(null);
   const styles = useStyles2(getStyles);
@@ -69,6 +72,7 @@ export function NestedFolderList({
       emptyFolders,
       teamFolderOwnersByUid,
       canEdit,
+      showFullPath,
     }),
     [
       items,
@@ -81,6 +85,7 @@ export function NestedFolderList({
       emptyFolders,
       teamFolderOwnersByUid,
       canEdit,
+      showFullPath,
     ]
   );
 
@@ -153,6 +158,7 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
     emptyFolders,
     teamFolderOwnersByUid,
     canEdit,
+    showFullPath,
   } = data;
   const { item, isOpen, level, parentUID, disabled, readOnly } = items[index];
   const rowRef = useRef<HTMLDivElement>(null);
@@ -283,7 +289,7 @@ function Row({ index, style: virtualStyles, data }: RowProps) {
             </Text>
           </div>
         )}
-        {isSearchItem && <FolderParent item={items[index]} />}
+        {isSearchItem && <FolderParent item={items[index]} showFullPath={showFullPath} />}
       </div>
     </div>
   );

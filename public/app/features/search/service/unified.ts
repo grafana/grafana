@@ -111,6 +111,10 @@ export class UnifiedSearcher implements GrafanaSearcher {
     return this.locationInfo;
   }
 
+  getFolderPaths() {
+    return this.locationInfo;
+  }
+
   reloadLocationInfo() {
     this.locationInfo = loadLocationInfo();
     return this.locationInfo;
@@ -503,6 +507,7 @@ async function loadLocationInfo(): Promise<Record<string, LocationInfo>> {
           name: hit.title,
           kind: 'folder',
           url: toURL('folders', hit.name, hit.title),
+          parentUID: isRootFolderUID(hit.folder) ? undefined : hit.folder,
         };
       }
       return locationInfo;
