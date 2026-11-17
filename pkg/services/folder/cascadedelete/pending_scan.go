@@ -89,6 +89,8 @@ func (c *Controller) reconcilePending(ctx context.Context, key string) error {
 	}
 	f, err := c.folders.Get(ctx, namespace, entry.Spec.FolderName)
 	if apierrors.IsNotFound(err) || (err == nil && string(f.UID) != entry.Spec.FolderUID) {
+		// Observation is best effort: a crash or conditional cleanup retry may lose or duplicate a sample.
+		c.pendingMetrics.completed(entry)
 		err = c.pending.Remove(ctx, entry)
 		if apierrors.IsNotFound(err) {
 			return nil
@@ -120,6 +122,10 @@ func (c *Controller) capturePending(ctx context.Context, f *foldersv1.Folder) er
 	return withPendingCaptureBudget(ctx, func(ctx context.Context) error {
 		entry, err := c.pending.Get(ctx, f.Namespace, pending.PendingDeletionName(f.Name, string(f.UID)))
 		if apierrors.IsNotFound(err) {
+			if c.pendingMetrics != nil {
+				c.pendingMetrics.missing.Inc()
+			}
+			logging.FromContext(ctx).Error("Terminating folder has no pending deletion entry", "namespace", f.Namespace, "folder", f.Name)
 			return nil
 		}
 		if err != nil {
