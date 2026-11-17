@@ -33,11 +33,11 @@ export function EditorScrollbar({
 }) {
   const styles = useStyles2(getStyles);
   const track = useRef<HTMLDivElement>(null);
-  const thumb = useRef<HTMLDivElement>(null);
   const dragStart = useRef<{ pointer: number; position: number } | null>(null);
   const [pointerFocused, setPointerFocused] = useState(false);
   const vertical = orientation === 'vertical';
   const { max, thumbSize, travel } = getScrollbarGeometry(size, contentSize);
+  const scrollPosition = Math.max(0, Math.min(max, position));
   const setPosition = (position: number) => {
     scroller.scrollTo({ [vertical ? 'top' : 'left']: Math.max(0, Math.min(max, position)) });
   };
@@ -68,13 +68,11 @@ export function EditorScrollbar({
         const rect = event.currentTarget.getBoundingClientRect();
         const offset = vertical ? event.clientY - rect.top : event.clientX - rect.left;
         setPosition(((offset - thumbSize / 2) / Math.max(1, travel)) * max);
-        thumb.current?.focus();
       }}
     >
       {children}
       {max > 0 && size > 0 && (
         <div
-          ref={thumb}
           className={styles.thumb}
           role="scrollbar"
           tabIndex={0}
@@ -88,11 +86,12 @@ export function EditorScrollbar({
           aria-controls={scroller.id}
           aria-valuemin={0}
           aria-valuemax={max}
-          aria-valuenow={Math.max(0, Math.min(max, position))}
+          aria-valuenow={scrollPosition}
+          aria-valuetext={`${Math.round((scrollPosition / max) * 100)}%`}
           style={
             vertical
-              ? { top: (position / max) * travel, height: thumbSize }
-              : { left: (position / max) * travel, width: thumbSize }
+              ? { top: (scrollPosition / max) * travel, height: thumbSize }
+              : { left: (scrollPosition / max) * travel, width: thumbSize }
           }
           onPointerDown={(event) => {
             if (event.button !== 0) {
@@ -100,7 +99,6 @@ export function EditorScrollbar({
             }
             setPointerFocused(true);
             event.preventDefault();
-            event.currentTarget.focus();
             event.currentTarget.setPointerCapture(event.pointerId);
             dragStart.current = {
               pointer: vertical ? event.clientY : event.clientX,
@@ -170,6 +168,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     '&:focus-visible:not([data-pointer-focus])': {
       outline: `1px solid ${theme.colors.text.secondary}`,
       outlineOffset: -1,
+    },
+    '@media (forced-colors: active)': {
+      '&, &:hover, &:active': { background: 'CanvasText' },
     },
   }),
 });

@@ -116,8 +116,14 @@ export function OverviewRuler({ editor }: { editor: OverviewRulerState }) {
         },
         write: (bounds) => {
           if (active) {
-            scroller.classList.toggle('cm-overview-ruler-horizontal', bounds.scrollWidth > bounds.width);
-            setBounds(bounds);
+            const horizontal = bounds.scrollWidth > bounds.width;
+            if (scroller.classList.contains('cm-overview-ruler-horizontal') !== horizontal) {
+              scroller.classList.toggle('cm-overview-ruler-horizontal', horizontal);
+              // Reserving horizontal scrollbar space changes the viewport height.
+              measure();
+            } else {
+              setBounds(bounds);
+            }
           }
         },
       });
