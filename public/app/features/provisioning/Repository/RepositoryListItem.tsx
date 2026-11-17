@@ -87,7 +87,10 @@ export function RepositoryListItem({ repository }: Props) {
           <StatusBadge repo={repository} />
           {isReadOnlyRepo && (
             <ReadOnlyBadge
-              tooltip={t('provisioning.config-form.description-read-only', "Resources can't be modified through Grafana.")}
+              tooltip={t(
+                'provisioning.config-form.description-read-only',
+                "Resources can't be modified through Grafana."
+              )}
             />
           )}
           {isManagedRepo && (

@@ -157,7 +157,10 @@ function RepoManagedBadge({ name, isReadOnly, repositoryName, sourcePath }: Repo
           </Menu>
         }
       >
-        <IconButton name="ellipsis-v" aria-label={t('provisioning.managed-badge.actions', 'Managed resource actions')} />
+        <IconButton
+          name="ellipsis-v"
+          aria-label={t('provisioning.managed-badge.actions', 'Managed resource actions')}
+        />
       </Dropdown>
     </Stack>
   );
