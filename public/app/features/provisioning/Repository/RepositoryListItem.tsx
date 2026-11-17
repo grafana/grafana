@@ -5,8 +5,9 @@ import { type GrafanaTheme2, dateTimeFormatTimeAgo } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Badge, Button, Card, LinkButton, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { Button, Card, LinkButton, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
+import { ReadOnlyBadge } from 'app/core/components/ReadOnlyBadge/ReadOnlyBadge';
 
 import { RepoIcon } from '../Shared/RepoIcon';
 import { StatusBadge } from '../Shared/StatusBadge';
@@ -23,7 +24,7 @@ import {
 } from '../utils/managedResource';
 import { getIsReadOnlyWorkflows, getRepositoryResourcesUrl } from '../utils/repository';
 import { getKindInfoByStat } from '../utils/resourceKinds';
-import { getManagedReadOnlyTooltip, getPullOnlyTooltipText } from '../utils/tooltip';
+import { getManagedReadOnlyTooltip } from '../utils/tooltip';
 
 import { SyncRepository } from './SyncRepository';
 
@@ -85,10 +86,8 @@ export function RepositoryListItem({ repository }: Props) {
           {spec?.title && <Text variant="h3">{spec.title}</Text>}
           <StatusBadge repo={repository} />
           {isReadOnlyRepo && (
-            <Badge
-              color="darkgrey"
-              text={t('provisioning.read-only-badge.pull-only', 'Pull only')}
-              tooltip={getPullOnlyTooltipText({ isLocal: spec?.type === 'local' })}
+            <ReadOnlyBadge
+              tooltip={t('provisioning.config-form.description-read-only', "Resources can't be modified through Grafana.")}
             />
           )}
           {isManagedRepo && (
