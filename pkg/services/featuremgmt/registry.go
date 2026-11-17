@@ -3421,6 +3421,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "grafana.extensionSidebarPlacements",
+			Description: "Lets Grafana Assistant dock the extension sidebar on the left or at the bottom, or pop it up, from the Chat button's menu, its shortcuts and its own layout menu. Needs grafana.extensionSidebarFloating",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "grafana.megaMenuPeekAndDock",
 			Description: "Opens the mega menu over the page while the pointer rests on its toggle, and docks it when the toggle is clicked on wide screens. The toggle in the docked menu's header closes it, in place of the footer's dock button",
 			Stage:       FeatureStageExperimental,

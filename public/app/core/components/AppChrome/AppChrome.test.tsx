@@ -100,9 +100,12 @@ const closedSidebarContext: ExtensionSidebarContextType = {
   availableComponents: new Map(),
   extensionSidebarWidth: 300,
   setExtensionSidebarWidth: jest.fn(),
+  extensionSidebarHeight: 320,
+  setExtensionSidebarHeight: jest.fn(),
   floatingExtensionSidebarWidth: 480,
   setFloatingExtensionSidebarWidth: jest.fn(),
   presentation: 'docked',
+  dockSide: 'right',
   floatingHidden: false,
 };
 
@@ -926,6 +929,163 @@ describe('AppChrome', () => {
       mockUseExtensionSidebarContext.mockReturnValue({ ...openSidebarContext, presentation: 'floating' });
       rerender();
       expect(container).toHaveAttribute(DRAWER_INSIDE_ATTRIBUTE);
+    });
+
+    describe('docked on the left', () => {
+      const dockedLeftContext: ExtensionSidebarContextType = { ...openSidebarContext, dockSide: 'left' };
+
+      it('sits between the docked nav and the page, below the header, resized from its right edge', async () => {
+        mockUseMediaQueryMinWidth.mockReturnValue(true); // forces the mega menu docked + open
+        mockUseExtensionSidebarContext.mockReturnValue(dockedLeftContext);
+        setup(<Page navId="child1">Children</Page>);
+        const container = (await screen.findByTestId('ext-sidebar-stub')).parentElement!;
+        const mainContent = document.getElementById('pageContent')!;
+
+        const sidebarStyles = stylesFor(container);
+        expect(sidebarStyles).toContain('left: 320px');
+        expect(sidebarStyles).toContain('right: auto');
+        // Below the whole header, one 48px level on this page.
+        expect(sidebarStyles).toContain('top: 48px');
+        // The page starts past the nav and the sidebar, and keeps its full width.
+        const pageStyles = stylesFor(mainContent);
+        expect(pageStyles).toContain('padding-left: calc(320px + 300px)');
+        expect(pageStyles).not.toContain('max-width');
+        // Only the edge that faces the page resizes it.
+        expect(container.querySelector('[style*="right: -7px"]')).toBeInTheDocument();
+        expect(container.querySelector('[style*="left: -7px"]')).not.toBeInTheDocument();
+        expect(container.style.minWidth).toBe('360px');
+      });
+
+      it('starts at the window edge when the nav is not docked', async () => {
+        mockUseMediaQueryMinWidth.mockReturnValue(true);
+        mockUseExtensionSidebarContext.mockReturnValue(dockedLeftContext);
+        const { context, rerender } = setup(<Page navId="child1">Children</Page>);
+        const container = (await screen.findByTestId('ext-sidebar-stub')).parentElement!;
+
+        act(() => context.chrome.setMegaMenuOpen(false));
+        rerender();
+
+        expect(stylesFor(container)).toContain('left: 0px');
+        expect(stylesFor(document.getElementById('pageContent')!)).toContain('padding-left: calc(0px + 300px)');
+      });
+
+      it('is a full-width overlay on small screens, which takes nothing from the page', async () => {
+        mockUseMediaQueryMinWidth.mockReturnValue(false);
+        mockUseExtensionSidebarContext.mockReturnValue(dockedLeftContext);
+        setup(<Page navId="child1">Children</Page>);
+
+        await screen.findByTestId('ext-sidebar-stub');
+        expect(screen.getByTestId(EXTENSION_SIDEBAR_FLOATING_TESTID)).toBeInTheDocument();
+        expect(stylesFor(document.getElementById('pageContent')!)).not.toContain('300px');
+      });
+
+      it('moves between the sides and floating without remounting the extension', async () => {
+        mockUseMediaQueryMinWidth.mockReturnValue(true);
+        mockSidebarLifecycle.mounts = 0;
+        mockSidebarLifecycle.unmounts = 0;
+        const { rerender } = setup(<Page navId="child1">Children</Page>);
+        const stub = await screen.findByTestId('ext-sidebar-stub');
+
+        for (const next of [
+          { presentation: 'floating' as const },
+          { dockSide: 'left' as const },
+          { dockSide: 'bottom' as const },
+          {},
+        ]) {
+          mockUseExtensionSidebarContext.mockReturnValue({ ...openSidebarContext, ...next });
+          rerender();
+          expect(screen.getByTestId('ext-sidebar-stub')).toBe(stub);
+        }
+        expect(mockSidebarLifecycle).toEqual({ mounts: 1, unmounts: 0 });
+      });
+    });
+
+    describe('docked at the bottom', () => {
+      const dockedBottomContext: ExtensionSidebarContextType = { ...openSidebarContext, dockSide: 'bottom' };
+
+      it('sits below the page from the docked nav to the right edge, resized from its top edge', async () => {
+        mockUseMediaQueryMinWidth.mockReturnValue(true); // forces the mega menu docked + open
+        mockUseExtensionSidebarContext.mockReturnValue(dockedBottomContext);
+        setup(<Page navId="child1">Children</Page>);
+        const container = (await screen.findByTestId('ext-sidebar-stub')).parentElement!;
+
+        const sidebarStyles = stylesFor(container);
+        expect(sidebarStyles).toContain('left: 320px');
+        expect(sidebarStyles).toContain('right: 0');
+        expect(sidebarStyles).toContain('top: auto');
+        expect(container.style.height).toBe('320px');
+        expect(container.style.width).toBe('auto');
+        // The page ends where the sidebar starts, and keeps its width.
+        const pageStyles = stylesFor(document.getElementById('pageContent')!);
+        expect(pageStyles).toContain('max-height: calc(100% - 320px)');
+        expect(pageStyles).not.toContain('max-width');
+        expect(pageStyles).not.toContain('300px');
+        // Only the edge that faces the page resizes it, within bounds on its height alone.
+        expect(container.querySelector('[style*="top: -7px"]')).toBeInTheDocument();
+        expect(container.querySelector('[style*="left: -7px"]')).not.toBeInTheDocument();
+        expect(container.style.minHeight).toBe('240px');
+        expect(container.style.minWidth).toBe('');
+        expect(container.style.maxWidth).toBe('');
+      });
+
+      it('starts at the window edge when the nav is not docked', async () => {
+        mockUseMediaQueryMinWidth.mockReturnValue(true);
+        mockUseExtensionSidebarContext.mockReturnValue(dockedBottomContext);
+        const { context, rerender } = setup(<Page navId="child1">Children</Page>);
+        const container = (await screen.findByTestId('ext-sidebar-stub')).parentElement!;
+
+        act(() => context.chrome.setMegaMenuOpen(false));
+        rerender();
+
+        expect(stylesFor(container)).toContain('left: 0px');
+      });
+
+      it("scrolls the page inside its card, so the card's bottom edge stays in view above the sidebar", async () => {
+        await act(async () => {
+          setTestFlags({ 'grafana.visualDesignRefresh': true });
+        });
+        mockUseMediaQueryMinWidth.mockReturnValue(true);
+        mockUseExtensionSidebarContext.mockReturnValue(dockedBottomContext);
+        const { rerender } = setup(<Page navId="child1">Children</Page>);
+        await screen.findByTestId('ext-sidebar-stub');
+        const card = screen.getByTestId('page-children').firstElementChild!;
+
+        expect(stylesFor(card)).toContain('overflow: auto');
+        expect(stylesFor(card)).toContain('min-height: 0');
+
+        // Docked on the right, the page area reaches the window's bottom, and the page grows as before.
+        mockUseExtensionSidebarContext.mockReturnValue(openSidebarContext);
+        rerender();
+        expect(stylesFor(card)).not.toContain('overflow');
+        expect(stylesFor(card)).not.toContain('min-height');
+      });
+
+      it('is a full-width overlay on small screens, which takes nothing from the page', async () => {
+        mockUseMediaQueryMinWidth.mockReturnValue(false);
+        mockUseExtensionSidebarContext.mockReturnValue(dockedBottomContext);
+        setup(<Page navId="child1">Children</Page>);
+
+        await screen.findByTestId('ext-sidebar-stub');
+        expect(screen.getByTestId(EXTENSION_SIDEBAR_FLOATING_TESTID)).toBeInTheDocument();
+        expect(stylesFor(document.getElementById('pageContent')!)).not.toContain('max-height');
+      });
+
+      it('keeps the Return to previous button above it', async () => {
+        mockUseMediaQueryMinWidth.mockReturnValue(true);
+        mockUseExtensionSidebarContext.mockReturnValue(dockedBottomContext);
+        const { context, rerender } = setup(<Page navId="child1">Children</Page>);
+        await screen.findByTestId('ext-sidebar-stub');
+        act(() => context.chrome.setReturnToPrevious({ title: 'Dashboards', href: '/dashboards' }));
+        const returnToPrevious = () => screen.getByTestId(selectors.components.ReturnToPrevious.buttonGroup);
+
+        // 32px above the 320px tall dock.
+        expect(stylesFor(returnToPrevious())).toContain('bottom: calc(32px + 320px)');
+
+        // Docked on the right, the window's bottom edge is the page's.
+        mockUseExtensionSidebarContext.mockReturnValue(openSidebarContext);
+        rerender();
+        expect(stylesFor(returnToPrevious())).toContain('bottom: 32px');
+      });
     });
 
     it('renders the sidebar docked, not floating, on larger screens', async () => {

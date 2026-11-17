@@ -3184,6 +3184,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.extensionSidebarPlacements",
+        "resourceVersion": "1794908123209",
+        "creationTimestamp": "2026-11-17T09:35:23Z"
+      },
+      "spec": {
+        "description": "Lets Grafana Assistant dock the extension sidebar on the left or at the bottom, or pop it up, from the Chat button's menu, its shortcuts and its own layout menu. Needs grafana.extensionSidebarFloating",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.filterablePanels",
         "resourceVersion": "1792678966723",
         "creationTimestamp": "2026-07-21T15:31:42Z",
