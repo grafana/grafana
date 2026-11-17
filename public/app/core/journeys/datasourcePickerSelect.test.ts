@@ -111,7 +111,28 @@ describe('datasourcePickerSelect journey wiring', () => {
 
     simulateInteraction('dashboards_dspicker_list_rendered', { total_listed: 9876 });
 
-    expect(mockStep.end).toHaveBeenCalledWith({ totalListed: '9876' });
+    expect(mockStep.end).toHaveBeenCalledWith({ totalListed: '9876', filtered: 'false' });
+  });
+
+  it('marks list_render as filtered when the picker was opened by typing', () => {
+    loadWiring();
+    openPicker();
+
+    simulateInteraction('dashboards_dspicker_list_rendered', { total_listed: 3, searched: true, cycle_id: 'c1' });
+
+    expect(mockStep.end).toHaveBeenCalledWith({ totalListed: '3', filtered: 'true' });
+  });
+
+  it('ignores events from an advanced modal the picker did not open', () => {
+    loadWiring();
+    openPicker();
+
+    simulateInteraction('dashboards_dspickermodal_clicked', { item: 'dismiss', src: 'query_group' });
+    simulateInteraction('dashboards_dspickermodal_clicked', { item: 'config_new_ds', src: 'query_group' });
+    simulateInteraction('dashboards_dspickermodal_clicked', { item: 'search', src: 'query_group' });
+
+    expect(mockHandle.end).not.toHaveBeenCalled();
+    expect(mockHandle.recordEvent).not.toHaveBeenCalled();
   });
 
   it('records every configured data source once the list has rendered', async () => {
@@ -310,7 +331,7 @@ describe('datasourcePickerSelect journey wiring', () => {
     loadWiring();
     openPicker();
 
-    simulateInteraction(event, { item: 'config_new_ds_empty_state' });
+    simulateInteraction(event, { item: 'config_new_ds_empty_state', src: 'ds_picker' });
 
     expect(mockHandle.recordEvent).toHaveBeenCalledWith('config_new_ds');
     expect(mockHandle.end).not.toHaveBeenCalled();

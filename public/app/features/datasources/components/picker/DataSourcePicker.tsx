@@ -3,7 +3,7 @@ import { autoUpdate, offset, size, useFloating } from '@floating-ui/react';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
-import { debounce } from 'lodash';
+import { debounce, uniqueId } from 'lodash';
 import { useCallback, useEffect, useId, useRef, useState, useMemo } from 'react';
 import * as React from 'react';
 import { type Observable } from 'rxjs';
@@ -265,7 +265,8 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
 
   function openDropdown() {
     if (!cycleIdRef.current) {
-      const cycleId = nextCycleId();
+      // Module-wide rather than useId(), which is only unique within one React root
+      const cycleId = uniqueId('dspicker-');
       cycleIdRef.current = cycleId;
       modalCycleIdRef.current = null;
       reportInteraction(
@@ -407,11 +408,11 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
                 }
               }}
               onClose={handOffToModal}
-              onListRendered={(listedCount) => {
+              onListRendered={(listedCount, searched) => {
                 if (cycleIdRef.current) {
                   reportInteraction(
                     'dashboards_dspicker_list_rendered',
-                    { total_listed: listedCount, cycle_id: cycleIdRef.current },
+                    { total_listed: listedCount, searched, cycle_id: cycleIdRef.current },
                     { silent: true }
                   );
                 }
@@ -449,20 +450,13 @@ function getStylesDropdown(theme: GrafanaTheme2, props: DataSourcePickerProps) {
   };
 }
 
-// Module-wide rather than useId(), which is only unique within one React root
-let cycleCounter = 0;
-function nextCycleId() {
-  cycleCounter += 1;
-  return `dspicker-${cycleCounter}`;
-}
-
 interface PickerContentProps extends DataSourcePickerProps {
   keyboardEvents: Observable<React.KeyboardEvent>;
   style: React.CSSProperties;
   filterTerm?: string;
   /** Closes the dropdown to hand off to the advanced modal */
   onClose: () => void;
-  onListRendered: (listedCount: number) => void;
+  onListRendered: (listedCount: number, searched: boolean) => void;
   footerRef: (element: HTMLElement | null) => void;
   onNavigateOutsiteFooter: (e: React.KeyboardEvent<HTMLButtonElement>) => void;
   dataSources: Array<DataSourceInstanceSettings<DataSourceJsonData>>;

@@ -496,6 +496,17 @@ describe('DataSourcePicker', () => {
       expect(silentCalls('dashboards_dspicker_dismissed')).toHaveLength(0);
     });
 
+    it('reports the list render as searched when the picker is opened by typing', async () => {
+      render(<DataSourcePicker onChange={jest.fn()} />);
+      await user.tab();
+      await user.keyboard('mock');
+
+      await waitFor(() => expect(silentCalls('dashboards_dspicker_list_rendered')).toHaveLength(1));
+      expect(silentCalls('dashboards_dspicker_list_rendered')[0][1]).toEqual(
+        expect.objectContaining({ searched: true })
+      );
+    });
+
     it('reports an open when opened with the keyboard', async () => {
       render(<DataSourcePicker onChange={jest.fn()} />);
       await user.tab();
@@ -510,7 +521,11 @@ describe('DataSourcePicker', () => {
 
       await waitFor(() => expect(silentCalls('dashboards_dspicker_list_rendered')).toHaveLength(1));
       expect(silentCalls('dashboards_dspicker_list_rendered')).toEqual([
-        ['dashboards_dspicker_list_rendered', { total_listed: 1, cycle_id: expect.any(String) }, { silent: true }],
+        [
+          'dashboards_dspicker_list_rendered',
+          { total_listed: 1, searched: false, cycle_id: expect.any(String) },
+          { silent: true },
+        ],
       ]);
     });
 

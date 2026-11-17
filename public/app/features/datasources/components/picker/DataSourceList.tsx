@@ -59,7 +59,8 @@ export interface DataSourceListProps {
   /** Reports the DOM id of the keyboard-highlighted option, for aria-activedescendant on the input */
   onActiveItemChange?: (id: string | undefined) => void;
   /** Called once after the first render, with the number of data sources the list shows */
-  onRendered?: (listedCount: number) => void;
+  /** Called once the list's rows are painted, with the count and whether a search term was already applied */
+  onRendered?: (listedCount: number, searched: boolean) => void;
 }
 
 export function DataSourceList(props: DataSourceListProps) {
@@ -89,9 +90,10 @@ export function DataSourceList(props: DataSourceListProps) {
       return;
     }
     const listedCount = sortedDataSources.length;
+    const searched = Boolean(props.searchTerm);
     let innerFrame = 0;
     const outerFrame = requestAnimationFrame(() => {
-      innerFrame = requestAnimationFrame(() => onRendered(listedCount));
+      innerFrame = requestAnimationFrame(() => onRendered(listedCount, searched));
     });
     return () => {
       cancelAnimationFrame(outerFrame);

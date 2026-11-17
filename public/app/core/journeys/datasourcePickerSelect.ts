@@ -23,7 +23,8 @@ import { abandonOnRouteChange, collectUnsubs, str } from './utils';
  *     starts a fresh journey; a still-active one is canceled through the registry's cancelOnRestart.
  *
  * Steps (duration):
- *   - list_render — from opening the dropdown until the list's rows are painted (dashboards_dspicker_list_rendered)
+ *   - list_render — from opening the dropdown until the list's rows are painted (dashboards_dspicker_list_rendered);
+ *     filtered=true when opened by typing, so the list was already narrowed by a search term
  *
  * Events (point-in-time):
  *   - search — user typed a search term (dashboards_dspicker_clicked item=search, debounced; a pending one is sent
@@ -157,7 +158,8 @@ onJourneyInstance('datasource_picker_select', (handle) => {
 
   add(
     onCycleInteraction('dashboards_dspicker_list_rendered', (props) => {
-      listRender.end({ totalListed: str(props.total_listed) });
+      // Opening by typing mounts an already filtered list, so it doesn't measure rendering the full list
+      listRender.end({ totalListed: str(props.total_listed), filtered: props.searched ? 'true' : 'false' });
       // Counted after list_render ends so the lookup doesn't add to the measured time. This is every
       // configured data source, not only those the picker's filters allow.
       getTotalConfigured()
@@ -189,6 +191,10 @@ onJourneyInstance('datasource_picker_select', (handle) => {
 
   add(
     onInteraction(MODAL_EVENT, (props) => {
+      // The modal is also opened on its own (e.g. from the query editor); only the picker's counts here
+      if (props.src !== 'ds_picker') {
+        return;
+      }
       switch (props.item) {
         case 'search':
           handle.recordEvent('search');
