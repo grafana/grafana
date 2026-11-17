@@ -33,7 +33,7 @@ func ownerFor(t *testing.T, group, resource string) *ownerFromName {
 	for _, version := range manifest.Versions {
 		for _, kind := range version.Kinds {
 			if strings.EqualFold(kind.Plural, resource) {
-				return ownerFromKind(kind)
+				return ownerFromKind("", kind)
 			}
 		}
 	}
@@ -186,4 +186,21 @@ func namespaceUserTeamOwner() *ownerFromName {
 		},
 		nonUserNamespaceOnly: true,
 	}
+}
+
+// Only the preferences kind limits an identity that is not a user to the
+// namespace's object: it is what keeps an anonymous merged read from folding in
+// every user's preferences.
+func TestOwnerFromKindNonUserNamespaceOnly(t *testing.T) {
+	kind := func(name string) app.ManifestVersionKind {
+		return app.ManifestVersionKind{
+			Resource: name,
+			NamingStrategy: &app.ManifestKindNamingStrategy{
+				Mode:  app.NamingStrategyModeOwner,
+				Owner: &app.ManifestKindNamingStrategyOwner{Owners: []resource.Owner{resource.NamespaceResourceOwner}},
+			},
+		}
+	}
+	require.True(t, ownerFromKind("preferences.grafana.app", kind("preferences")).nonUserNamespaceOnly)
+	require.False(t, ownerFromKind("collections.grafana.app", kind("stars")).nonUserNamespaceOnly)
 }
