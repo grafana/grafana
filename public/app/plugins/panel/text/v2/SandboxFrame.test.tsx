@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { StrictMode } from 'react';
 
 import { SandboxFrame, type SandboxFrameProps, WATCHDOG_TIMEOUT_MS } from './SandboxFrame';
@@ -636,7 +636,7 @@ it('fails closed on a forbidden shell policy and preserves TrustedHTML branding 
   }
 });
 
-it.each([true, false])('creates frames only after font preparation finishes (font available: %s)', async (ok) => {
+it.each([true, false])('renders before fonts finish (font available: %s)', async (ok) => {
   jest.useRealTimers();
   const originalFetch = global.fetch;
   const originalTimeout = AbortSignal.timeout;
@@ -659,15 +659,21 @@ it.each([true, false])('creates frames only after font preparation finishes (fon
   try {
     const { rerender } = render(<TextSandbox html="<p>Initial</p>" />);
     await act(async () => {});
-    expect(runtime).not.toHaveBeenCalled();
-    expect(screen.queryByTitle('Text panel content')).not.toBeInTheDocument();
+    const fallback = screen.getByTitle<HTMLIFrameElement>('Text panel content');
+    expect(runtime).toHaveBeenCalledTimes(1);
+    const fallbackMessage = jest.spyOn(fallback.contentWindow!, 'postMessage').mockImplementation(() => {});
+    notify(fallback, 'ready');
+    expect(fallbackMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ html: '<p>Initial</p>', globalCss: expect.not.stringContaining('@font-face') }),
+      '*'
+    );
     rerender(<TextSandbox html="<p>Latest</p>" />);
     await act(async () => {
       finish({ ok, blob: async () => new Blob(['font'], { type: 'font/woff2' }) });
     });
-    const element = await screen.findByTitle<HTMLIFrameElement>('Text panel content');
-    await act(async () => {});
-    expect(runtime).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(runtime).toHaveBeenCalledTimes(2));
+    const element = screen.getByTitle<HTMLIFrameElement>('Text panel content');
+    expect(element).not.toBe(fallback);
     const postMessage = jest.spyOn(element.contentWindow!, 'postMessage').mockImplementation(() => {});
     notify(element, 'ready');
     expect(postMessage).toHaveBeenCalledWith(
@@ -679,7 +685,7 @@ it.each([true, false])('creates frames only after font preparation finishes (fon
     );
     rerender(<TextSandbox html="<p>Latest</p>" minHeight={200} />);
     expect(screen.getByTitle('Text panel content')).toBe(element);
-    expect(runtime).toHaveBeenCalledTimes(1);
+    expect(runtime).toHaveBeenCalledTimes(2);
   } finally {
     style.remove();
     global.fetch = originalFetch;

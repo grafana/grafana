@@ -81,6 +81,8 @@ Text documents receive shared typography, element, code, Markdown, accessibility
 
 Font faces are still collected from the application's global styles so configured fonts remain available, and their existing network policy and inlining rules are unchanged. The Text stylesheet is compiled into a detached CSSStyleSheet through Emotion and serialized from CSSOM, matching the browser's handling of unsupported selectors and invalid declarations without applying styles in the parent document.
 
+Content renders with fallback fonts while shared font preparation runs. Applying the prepared stylesheet recreates the frame; this extra initialization avoids withholding content during slow font downloads.
+
 ## Consent
 
 The frame reports CSP violations for the directives in `RESOURCE_DIRECTIVES`. `TextSandbox` groups them by origin and passes them to `sandboxConsent.ts`, which feeds the dashboard banner and the review modal.

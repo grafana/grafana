@@ -43,14 +43,14 @@ export function TextSandbox({ html, hasData = true, testId, className, minHeight
   useLayoutEffect(() => {
     let disposed = false;
     const css = getSandboxCss(theme);
+    // Render with fallback fonts immediately; slow font downloads must not hold content back.
+    setGlobalCss(css.replace(/@font-face\s*\{[^}]*\}/g, ''));
     if (css.includes('@font-face')) {
       void inlineSandboxFonts(css, fontRoot).then((css) => {
         if (!disposed) {
           setGlobalCss(css);
         }
       });
-    } else {
-      setGlobalCss(css);
     }
     return () => {
       disposed = true;
@@ -74,7 +74,6 @@ export function TextSandbox({ html, hasData = true, testId, className, minHeight
   return (
     <div className={className} data-testid={testId}>
       <div ref={host} style={{ position: 'relative' }}>
-        {/* Wait for fonts so initialization creates only one frame document. */}
         {globalCss !== undefined && (
           <SandboxFrame
             html={sanitizedHtml}
