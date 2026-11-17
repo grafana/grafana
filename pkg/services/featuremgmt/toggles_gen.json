@@ -3087,15 +3087,17 @@
     {
       "metadata": {
         "name": "grafana.dashboardsAutoHeightPanels",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-08-19T13:59:18Z"
+        "resourceVersion": "1794928602679",
+        "creationTimestamp": "2026-08-19T13:59:18Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-17 15:16:42.679897 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the auto-height feature for dashboard panels",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
-        "hideFromDocs": true,
         "expression": "false"
       }
     },
