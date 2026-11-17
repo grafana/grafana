@@ -224,9 +224,9 @@ func (r *Reconciler) Reconcile(ctx context.Context, f *foldersv1.Folder) (Result
 		}
 	}
 
-	if !listFailed {
-		status.Remaining = &remaining
-	}
+	// With a kind unlisted this counts only the kinds that listed, which is a lower bound; a stale
+	// count from an earlier pass would be no truer, and the failed state says it cannot be trusted.
+	status.Remaining = &remaining
 	status.State = foldersv1.FolderCascadeDeleteStatusStateInProgress
 	status.Errors = nil
 	if len(failures) > 0 {
@@ -239,7 +239,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, f *foldersv1.Folder) (Result
 		}
 		slices.Sort(msgs)
 		status.Errors = msgs[:min(len(msgs), maxStatusErrors)]
-		logger.Warn("Folder cascade delete pass had failures", "failed", len(failures), "remaining", remaining)
+		logger.Warn("Folder cascade delete pass had failures", "failed", len(failures), "remaining", remaining, "partialList", listFailed)
 	}
 	writeErr := r.writeStatus(ctx, f, prior, status)
 	switch {
