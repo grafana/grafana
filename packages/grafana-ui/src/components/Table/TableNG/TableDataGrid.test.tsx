@@ -4,8 +4,18 @@ import { createRef } from 'react';
 import { colorManipulator, createTheme, getThemeById, ThemeContext } from '@grafana/data';
 import { type DataGridHandle, Row, Cell } from '@grafana/react-data-grid';
 
+import { TableCellInspectorMode } from '../TableCellInspector';
+
 import { TableDataGrid, type TableDataGridProps } from './TableDataGrid';
 import { FIRST_COLUMN_CLASS, LAST_COLUMN_CLASS } from './constants';
+
+jest.mock('../../CodeMirror/CodeEditorLazy', () => ({
+  CodeMirrorEditor: ({ value }: { value: string }) => <div data-testid="code-mirror-editor">{value}</div>,
+}));
+
+jest.mock('../../Monaco/CodeEditor', () => ({
+  CodeEditor: ({ value }: { value: string }) => <div data-testid="monaco-code-editor">{value}</div>,
+}));
 
 // jsdom does not compute pseudo-element styles; read the matching Emotion rules in cascade order.
 function shadowStyle(element: HTMLElement | null, edge: 'before' | 'after', property: string) {
@@ -25,7 +35,7 @@ function shadowStyle(element: HTMLElement | null, edge: 'before' | 'after', prop
       }
     }
   }
-  return value;
+  return value.replace(/var\((--[\w-]+)\)/g, (_, name: string) => element?.style.getPropertyValue(name) ?? '');
 }
 
 function makeProps(overrides: Partial<TableDataGridProps> = {}): TableDataGridProps {
@@ -119,6 +129,26 @@ describe('TableDataGrid', () => {
   });
 
   describe('table.refresh', () => {
+    it.each([
+      { tableRefreshEnabled: true, editor: 'code-mirror-editor', other: 'monaco-code-editor' },
+      { tableRefreshEnabled: false, editor: 'monaco-code-editor', other: 'code-mirror-editor' },
+    ])(
+      'inspects code cells in $editor with table.refresh=$tableRefreshEnabled',
+      ({ tableRefreshEnabled, editor, other }) => {
+        render(
+          <TableDataGrid
+            {...makeProps({
+              tableRefreshEnabled,
+              inspectCell: { value: '{"a":1}', mode: TableCellInspectorMode.code },
+            })}
+          />
+        );
+
+        expect(screen.getByTestId(editor)).toHaveTextContent('{"a":1}');
+        expect(screen.queryByTestId(other)).not.toBeInTheDocument();
+      }
+    );
+
     it('clips the grid inside the rounded frame', () => {
       const radius = createTheme().shape.radius.default;
       const { unmount } = render(<TableDataGrid {...makeProps({ tableRefreshEnabled: true })} />);

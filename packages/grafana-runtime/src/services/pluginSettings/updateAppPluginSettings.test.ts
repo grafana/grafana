@@ -7,12 +7,12 @@ import { type BackendSrv, setBackendSrv } from '../backendSrv';
 import { setLogger, initializeLoggersRegistry } from '../logging/registry';
 import { getPluginMetaFromCache, refetchPluginMeta } from '../pluginMeta/plugins';
 import { clockPanelMetaOnPrem, myOrgTestAppMeta, v0alpha1Response } from '../pluginMeta/test-fixtures/v0alpha1Response';
+import { getCacheKey } from '../pluginUtils';
 
 import { legacyMyOrgTestAppSettings } from './test-fixtures/legacy.settings';
 import { clockPanelOnPremPluginMeta, myOrgTestAppSettings, testdataPluginMeta } from './test-fixtures/v0alpha1Response';
 import { type Settings as v0alpha1Settings } from './types';
 import { updateAppPluginSettings } from './updateAppPluginSettings';
-import { getCacheKey } from './utils';
 
 jest.mock('../pluginMeta/plugins', () => ({
   ...jest.requireActual('../pluginMeta/plugins'),
@@ -244,6 +244,15 @@ describe('settings', () => {
           { validatePath: true }
         );
       });
+
+      it('should reject invalid plugin IDs without making a request', async () => {
+        await expect(updateAppPluginSettings('text/secret?x=', { enabled: true })).rejects.toThrow(
+          'Invalid plugin ID \"text/secret?x=\"'
+        );
+
+        expect(backendSrv.get).not.toHaveBeenCalled();
+        expect(getPluginMetaFromCacheMock).not.toHaveBeenCalled();
+      });
     });
   });
 
@@ -290,6 +299,15 @@ describe('settings', () => {
           showErrorAlert: false,
           validatePath: true,
         });
+      });
+
+      it('should reject invalid plugin IDs without making a request', async () => {
+        await expect(updateAppPluginSettings('text/secret?x=', { enabled: true })).rejects.toThrow(
+          'Invalid plugin ID \"text/secret?x=\"'
+        );
+
+        expect(backendSrv.get).not.toHaveBeenCalled();
+        expect(getPluginMetaFromCacheMock).not.toHaveBeenCalled();
       });
     });
   });

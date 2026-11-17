@@ -50,9 +50,9 @@ func WatchMetadataFor(gr schema.GroupResource) (WatchMetadataSpec, bool) {
 	return spec, ok
 }
 
-// newWatchMetadata returns the notification metadata for a write of the given
+// NewWatchMetadata returns the notification metadata for a write of the given
 // resource, or nil when no spec is registered for it.
-func newWatchMetadata(gr schema.GroupResource, obj utils.GrafanaMetaAccessor) *resourcepb.NotificationMetadata {
+func NewWatchMetadata(gr schema.GroupResource, obj utils.GrafanaMetaAccessor) *resourcepb.NotificationMetadata {
 	spec, ok := WatchMetadataFor(gr)
 	if !ok {
 		return nil

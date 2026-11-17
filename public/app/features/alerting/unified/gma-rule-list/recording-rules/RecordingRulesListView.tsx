@@ -4,15 +4,15 @@ import { EmptyState, Stack } from '@grafana/ui';
 import { ResultCount } from '../rule-row/ResultCount';
 import { RuleListSkeleton } from '../rule-row/RuleListSkeleton';
 import { RuleRowList } from '../rule-row/RuleRowList';
-import { type RuleSearchFilter } from '../rule-search/ruleSearchFilter';
 import { InlineRequestError } from '../shared/InlineRequestError';
 import { LoadMoreFooter } from '../shared/LoadMoreFooter';
 
 import { RecordingRuleListEntry } from './RecordingRuleListEntry';
+import { type RecordingRuleFilter } from './recordingRuleFilters';
 import { useRecordingRuleSearch } from './recordingRuleSearch';
 
 interface ListViewProps {
-  filter: RuleSearchFilter;
+  filter: RecordingRuleFilter;
 }
 
 export function RecordingRulesListView({ filter }: ListViewProps) {
@@ -52,7 +52,7 @@ export function RecordingRulesListView({ filter }: ListViewProps) {
       <ResultCount kind="recording" total={total} />
       <RuleRowList>
         {items.map((searchHit) => (
-          <RecordingRuleListEntry key={searchHit.uid} searchHit={searchHit} />
+          <RecordingRuleListEntry key={searchHit.uid} searchHit={searchHit} showFolderPath />
         ))}
       </RuleRowList>
       <LoadMoreFooter

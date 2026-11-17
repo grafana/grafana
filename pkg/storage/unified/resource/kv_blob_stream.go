@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/fullstorydev/grpchan/inprocgrpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -24,6 +25,17 @@ func (s *kvBlobSupport) PutResourceBlobStream(ctx context.Context, req *resource
 	store, ok := s.kv.(*kv.SqlKV)
 	if !ok {
 		return s.putKVBlobStream(ctx, req, reader)
+	}
+	// SQLite imports must share the resource writer's transaction; committing
+	// staging writes separately invalidates the caller's existing read snapshot.
+	tx := TransactionFromContext(ctx)
+	if tx == nil {
+		if clientCtx := inprocgrpc.ClientContext(ctx); clientCtx != nil {
+			tx = TransactionFromContext(clientCtx)
+		}
+	}
+	if tx != nil {
+		ctx = kv.ContextWithDBTX(ctx, tx)
 	}
 	info := &utils.BlobInfo{UID: NewBlobUID()}
 	info.SetContentType(req.ContentType)

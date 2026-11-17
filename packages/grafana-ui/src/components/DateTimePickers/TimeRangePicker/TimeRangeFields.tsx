@@ -19,6 +19,7 @@ interface RangeField {
   error?: string;
   placeholder?: string;
   testId?: string;
+  fieldTestId?: string;
 }
 
 interface Props {
@@ -54,7 +55,12 @@ export function TimeRangeFields({ from, to, inputWidth, onSubmit, fieldSuffix, c
         { field: to, label: t('time-picker.range-content.to-input', 'To'), id: toId },
       ].map(({ field, label, id }) => (
         <Stack key={id} gap={0}>
-          <Field label={field.label ?? label} invalid={!!field.error} error={field.error}>
+          <Field
+            label={field.label ?? label}
+            invalid={!!field.error}
+            error={field.error}
+            data-testid={field.fieldTestId}
+          >
             <Input
               id={id}
               autoComplete="off"

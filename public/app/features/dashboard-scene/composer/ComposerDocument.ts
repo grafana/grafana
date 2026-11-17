@@ -31,8 +31,11 @@ export interface ComposerDocument<Spec, Session = unknown> {
   readonly elementKeyAttribute: string;
   /** Whether `exit` resolves with a save outcome. Dashboards never save, so theirs returns nothing. */
   readonly reportsSave: boolean;
-  /** The pick hint shown over a pickable element. */
-  elementHint(): string;
+  /**
+   * The pick hint shown over a pickable element, for what a drag does: draw a region, or select the
+   * elements it covers.
+   */
+  elementHint(drag: 'region' | 'elements'): string;
 
   /** Puts the scene in its Composer state for `session`. False when the scene refuses. */
   attach(session: Session): boolean;
@@ -42,6 +45,10 @@ export interface ComposerDocument<Spec, Session = unknown> {
   isEnabled(): boolean;
   /** Takes the scene out of its Composer state. The scene then closes the session. */
   detach(): void;
+  /** Whether a write may land now. Absent: always, while the session is open. */
+  canWrite?(): boolean;
+  /** Fires when `canWrite` changes. Returns the unsubscribe. */
+  onCanWriteChange?(listener: (canWrite: boolean) => void): () => void;
   /** Runs once the session has closed, whoever closed it. */
   finish(): Promise<ComposerExitResult>;
   retrySave?(): Promise<ComposerExitResult>;

@@ -1,5 +1,6 @@
 import { type VizPanel, type SceneObject, type SceneObjectState } from '@grafana/scenes';
-import { type DashboardLink } from '@grafana/schema';
+import { type Dashboard, type DashboardLink } from '@grafana/schema';
+import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { type ScopeMeta } from 'app/features/dashboard/state/DashboardModel';
 import { type DashboardMeta } from 'app/types/dashboard';
 
@@ -8,7 +9,13 @@ import { type DashboardEditView } from '../../settings/utils';
 import { type DashboardSidebarLike } from '../../sidebar/types';
 import { type DashboardControls } from '../DashboardControls';
 import { type DashboardLayoutOrchestrator } from '../DashboardLayoutOrchestrator';
-import { dashboardModesEnabled, getDashboardMode, type DashboardMode } from '../dashboardModes';
+import {
+  dashboardModesEnabled,
+  dashboardPlanEditingEnabled,
+  getDashboardMode,
+  type DashboardMode,
+} from '../dashboardModes';
+import { type EditablePlan } from '../dashboardPlan';
 
 import { type AnyDashboardLayoutManager, type DashboardLayoutManager } from './DashboardLayoutManager';
 import { type LayoutParent } from './LayoutParent';
@@ -89,11 +96,26 @@ export interface DashboardSceneState extends SceneObjectState, DashboardViewStat
    * toolbar shows only the plan banner (Build/Dismiss) in place of the normal actions.
    */
   planning?: DashboardPlanningState;
+  /**
+   * In `composer` mode: whether Composer is over Editing (it writes, inside the edit session) or over
+   * Viewing (it only asks, and there is nothing to save). Unset outside Composer.
+   */
+  composerEditing?: boolean;
 }
 
 export function isFullDashboardEditing(state: Pick<DashboardSceneState, 'mode' | 'isEditing'>): boolean {
   const mode = getDashboardMode(state);
   return Boolean(state.isEditing && mode !== 'composer' && (!dashboardModesEnabled() || mode === 'edit'));
+}
+
+/** A plan preview stays in view mode, but its layout can still be arranged by hand. */
+export function isArrangingPlan(state: Pick<DashboardSceneState, 'planning'>): boolean {
+  return state.planning?.phase === 'preview' && dashboardPlanEditingEnabled();
+}
+
+/** Whether rows, tabs and panels can be dragged, and panels resized. */
+export function canArrangeLayout(state: Pick<DashboardSceneState, 'mode' | 'isEditing' | 'planning'>): boolean {
+  return isFullDashboardEditing(state) || isArrangingPlan(state);
 }
 
 export function isDashboardReviewing(state: Pick<DashboardSceneState, 'mode' | 'isEditing'>): boolean {
@@ -115,6 +137,11 @@ export interface DashboardPlanPreviewState extends DashboardPlanningBase {
   onBuild: () => void;
   /** Discard the plan and remove its scaffolded panels. */
   onDismiss: () => void;
+  /**
+   * With plan editing on, the preview owns the plan: arranging the layout by hand changes it here,
+   * and Build makes the dashboard from it.
+   */
+  editable?: EditablePlan;
 }
 
 /**
@@ -138,6 +165,10 @@ export interface DashboardSceneLike extends SceneObject<DashboardSceneState>, La
   copyPanel(vizPanel: VizPanel): void;
 
   getDefaultLayout(): DashboardLayoutManager | undefined;
+
+  getInitialSaveModel(): Dashboard | DashboardV2Spec | undefined;
+
+  isLibraryPanel(vizPanel: VizPanel): boolean;
 }
 
 export function isDashboardSceneLike(obj: unknown): obj is DashboardSceneLike {

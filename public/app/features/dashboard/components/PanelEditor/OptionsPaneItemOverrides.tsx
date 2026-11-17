@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { Tooltip, useStyles2 } from '@grafana/ui';
+import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { type OptionPaneItemOverrideInfo } from './types';
 
@@ -17,7 +17,11 @@ export function OptionsPaneItemOverrides({ overrides }: Props) {
       {overrides.map((override, index) => (
         <Tooltip content={override.tooltip} key={index.toString()} placement="top">
           <div>
-            <div aria-hidden="true" className={styles[override.type]} />
+            {override.type === 'variable' ? (
+              <Icon name="gf-variable" size="xs" aria-hidden="true" className={styles.variable} />
+            ) : (
+              <div aria-hidden="true" className={styles[override.type]} />
+            )}
             <span className="sr-only">{override.description}</span>
           </div>
         </Tooltip>
@@ -48,6 +52,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       ...common,
       position: 'relative',
       backgroundColor: theme.colors.warning.main,
+    }),
+    variable: css({
+      marginLeft: theme.spacing(1),
+      color: theme.colors.primary.text,
     }),
   };
 };

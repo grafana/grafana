@@ -39,7 +39,6 @@ type BleveIndexMetrics struct {
 	IndexDiskCleanupRuns        *prometheus.CounterVec
 	IndexDiskCleanupDirsDeleted *prometheus.CounterVec
 
-	SearchResultFormats             *prometheus.CounterVec
 	SearchServicePermissionFailures *prometheus.CounterVec
 
 	BuildPhaseSeconds *prometheus.CounterVec
@@ -94,12 +93,12 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 		}, labels)
 	}
 	m := &BleveIndexMetrics{
-		SearchAuthDuration: histogram("grafana_index_server_search_auth_execution_duration_seconds", "Search execution duration after request validation, including authorization, ranking and response conversion, by actual auth mode (pre_rank, post_rank, none), query type and outcome. Count is executed searches, not incoming RPCs.", "mode", "query_type", "outcome"),
+		SearchAuthDuration: histogram("grafana_index_server_search_auth_execution_duration_seconds", "Search execution duration after request validation, including authorization, ranking and response conversion, by actual auth mode (post_rank, none), query type and outcome. Count is executed searches, not incoming RPCs.", "mode", "query_type", "outcome"),
 		SearchAuthReturned: histogram("grafana_index_server_search_auth_returned_documents", "Documents returned per successful executed search.", "mode", "query_type"),
 		SearchAuthChecks:   histogram("grafana_index_server_search_auth_checks", "Check items submitted through Check and BatchCheck per executed search, including failed calls. Excludes Compile and is not a network RPC count.", "mode", "query_type"),
 		SearchAuthEvents: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "grafana_index_server_search_auth_events_total",
-			Help: "Search auth events: cursor_fallback selects PreRank instead of PostRank; candidate_budget and facet_budget indicate a PostRank scan stopped at its scan limit, without guaranteeing that more matches remain.",
+			Help: "Search auth events: candidate_budget and facet_budget indicate a PostRank scan stopped at its scan limit, without guaranteeing that more matches remain.",
 		}, []string{"reason"}),
 		IndexSize: promauto.With(reg).NewGauge(prometheus.GaugeOpts{
 			Name: "grafana_index_server_index_size_bytes",
@@ -119,8 +118,8 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 		}, []string{}),
 		OpenIndexes: promauto.With(reg).NewGaugeVec(prometheus.GaugeOpts{
 			Name: "grafana_index_server_open_indexes",
-			Help: "Number of open indexes per storage type. An open index corresponds to single resource group.",
-		}, []string{"index_storage"}), // index_storage is either "file" or "memory"
+			Help: "Number of open indexes by storage type and kind. Global indexes use kind=\"global\".",
+		}, []string{"index_storage", "kind"}), // index_storage is either "file" or "memory"
 		IndexBuilds: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "grafana_index_server_index_build_total",
 			Help: "Number of times index build was attempted due to specific reason",
@@ -237,19 +236,8 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 			Name: "grafana_index_server_search_service_permission_failures_total",
 			Help: "Search preflight checks where the service token lacks a required direct or delegated permission, regardless of RBAC exemption. With exempt=\"false\", a search of one type was rejected, and a global search left the type out.",
 		}, []string{"group", "resource", "verb", "mode", "exempt"}),
-		SearchResultFormats: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
-			Name: "grafana_index_server_search_result_format_total",
-			Help: "Number of search responses by result format.",
-		}, []string{"format"}),
 	}
 
-	// Always-on label series. Snapshot-specific series are initialised separately
-	// in InitSnapshotMetrics so they don't appear on instances where the feature
-	// is disabled — see InitSnapshotMetrics for rationale.
-	m.OpenIndexes.WithLabelValues("file").Set(0)
-	m.OpenIndexes.WithLabelValues("memory").Set(0)
-	m.SearchResultFormats.WithLabelValues("resource_table").Add(0)
-	m.SearchResultFormats.WithLabelValues("field_values").Add(0)
 	return m
 }
 

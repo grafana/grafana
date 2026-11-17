@@ -90,12 +90,12 @@ func TestEmbeddingEnrollmentGatesQueries(t *testing.T) {
 						require.Equal(t, codes.NotFound, status.Code(err))
 					}
 				} else {
-					resp, err := s.VectorSearch(authedCtx(), &resourcepb.VectorSearchRequest{Key: validKey(), Query: "text"})
-					require.NoError(t, err)
+					_, err := s.VectorSearch(authedCtx(), &resourcepb.VectorSearchRequest{Key: validKey(), Query: "text"})
 					if tc.allowed {
-						require.Nil(t, resp.Error)
+						require.NoError(t, err)
 					} else {
-						require.EqualValues(t, http.StatusNotFound, resp.Error.Code)
+						require.Equal(t, codes.NotFound, status.Code(err))
+						require.EqualValues(t, http.StatusNotFound, rpcErrorResult(t, err).Code)
 					}
 				}
 				if tc.allowed {
@@ -117,15 +117,15 @@ func TestEmbeddingEnrollmentRefreshesForQueries(t *testing.T) {
 	s.embeddingBuilders = embeddingBuilderProvider{has: func(group, resource string) bool {
 		return available && group == "g" && resource == "r"
 	}}
-	_, allowed, err := s.resolveAllowedCollection(t.Context(), "g", "r")
+	_, allowed, err := s.resolveAllowedCollection(t.Context(), "ns", "g", "r")
 	require.NoError(t, err)
 	require.True(t, allowed)
 	available = false
-	_, allowed, err = s.resolveAllowedCollection(t.Context(), "g", "r")
+	_, allowed, err = s.resolveAllowedCollection(t.Context(), "ns", "g", "r")
 	require.NoError(t, err)
 	require.False(t, allowed)
 	available = true
-	_, allowed, err = s.resolveAllowedCollection(t.Context(), "g", "r")
+	_, allowed, err = s.resolveAllowedCollection(t.Context(), "ns", "g", "r")
 	require.NoError(t, err)
 	require.True(t, allowed)
 }

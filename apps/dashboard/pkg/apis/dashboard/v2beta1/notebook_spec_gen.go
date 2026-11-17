@@ -636,6 +636,10 @@ type NotebookFieldConfig struct {
 	// How null values should be handled when calculating field stats
 	// "null" - Include null values, "connected" - Ignore nulls, "null as zero" - Treat nulls as zero
 	NullValueMode *NotebookNullValueMode `json:"nullValueMode,omitempty"`
+	// Maps field-config property ids (e.g. `min`, `unit` or `custom.lineWidth`) to a dashboard-variable
+	// expression resolved at render time. The property's own value is the fallback when the expression
+	// doesn't resolve to a valid value for that property.
+	VarMappings map[string]string `json:"varMappings,omitempty"`
 }
 
 // NewNotebookFieldConfig creates a new NotebookFieldConfig object.
@@ -1227,9 +1231,13 @@ func (NotebookNotebookLayoutItemKind) OpenAPIModelName() string {
 
 // One ordered item in a notebook layout. `element` references either a CellKind
 // (markdown/code content) or a V2PanelKind in the notebook's elements map. `source`
-// records who authored the cell; `collapsed` hides the body in the UI.
+// records who authored the cell; `collapsed` hides the body in the UI. `id` identifies the cell
+// itself, as opposed to the element name, which clients choose and can reuse.
 // +k8s:openapi-gen=true
 type NotebookNotebookLayoutItemSpec struct {
+	// Assigned by the server on create or update and never changed by clients (a UUID v4).
+	// Comments anchor to this rather than to the element name.
+	Id        *string                              `json:"id,omitempty"`
 	Element   NotebookElementReference             `json:"element"`
 	Source    NotebookNotebookLayoutItemSpecSource `json:"source"`
 	Collapsed *bool                                `json:"collapsed,omitempty"`

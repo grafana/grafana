@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
 	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
@@ -43,6 +42,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngalertmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngalertprovisioning "github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	ngrulesvc "github.com/grafana/grafana/pkg/services/ngalert/rules"
 	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	ngprovenance "github.com/grafana/grafana/pkg/services/ngalert/store/provenance"
 	ngrules "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
@@ -50,8 +50,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
@@ -568,7 +566,7 @@ func getQuotaBySrvTargetScope(t *testing.T, quotaService quota.Service, srv quot
 	return quota.QuotaDTO{}, err
 }
 
-func setupEnv(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, b bus.Bus, quotaService quota.Service) {
+func setupEnv(t *testing.T, sqlStore *sqlstore.SQLStore, cfg *setting.Cfg, b bus.Bus, quotaService quota.Service) {
 	cfgProvider, err := configprovider.ProvideService(cfg)
 	require.NoError(t, err)
 	tracer := tracing.InitializeTracerForTest()
@@ -623,8 +621,7 @@ func setupEnv(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, b bus.Bus, quotaSe
 	secretsStore := secretskvs.NewSQLSecretsKVStore(sqlStore, secretsService, log.New("test.logger"))
 	dsRetriever := dsservice.ProvideDataSourceRetriever(sqlStore, featuremgmt.WithFeatures())
 	_, err = dsservice.ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(),
-		quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{}, plugincontext.
-			ProvideBaseService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()), dsRetriever)
+		quotaService, &pluginstore.FakePluginStore{}, dsRetriever, nil)
 	require.NoError(t, err)
 	m := metrics.NewNGAlert(prometheus.NewRegistry())
 
@@ -633,11 +630,13 @@ func setupEnv(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, b bus.Bus, quotaSe
 	provenanceStore := ngprovenance.ProvideProvenanceStore(featuremgmt.WithFeatures(), sqlStore)
 	ruleStore, err := ngrules.ProvideRuleStore(cfg, featuremgmt.WithFeatures(), sqlStore, &foldertest.FakeService{}, ac, provenanceStore)
 	require.NoError(t, err)
+	ruleService, err := ngrulesvc.ProvideService(ruleStore, &foldertest.FakeService{})
+	require.NoError(t, err)
 	cfg.UnifiedAlerting.InitializationTimeout = 30 * time.Second
 	_, err = ngalert.ProvideService(
 		cfg, featuremgmt.WithFeatures(), nil, nil, routing.NewRouteRegister(), sqlStore, ngalertfakes.NewFakeKVStore(t), nil, nil, ngalertprovisioning.NoopRuleMutationValidator{}, quotaService,
 		secretsService, nil, m, &foldertest.FakeService{}, &acmock.Mock{}, &dashboards.FakeDashboardService{}, nil, b, &acmock.Mock{},
-		annotationstest.NewFakeAnnotationsRepo(), &pluginstore.FakePluginStore{}, tracer, alertingStore, ruleStore, provenanceStore, httpclient.NewProvider(), nil, ngalertfakes.NewFakeReceiverPermissionsService(), ngalertfakes.NewFakeRoutePermissionsService(), ngalertfakes.NewFakeFolderPermissionsService(), usertest.NewUserServiceFake(), orgtest.NewOrgServiceFake(),
+		annotationstest.NewFakeAnnotationsRepo(), &pluginstore.FakePluginStore{}, tracer, alertingStore, ruleService, ruleStore, provenanceStore, httpclient.NewProvider(), nil, ngalertfakes.NewFakeReceiverPermissionsService(), ngalertfakes.NewFakeRoutePermissionsService(), ngalertfakes.NewFakeFolderPermissionsService(), usertest.NewUserServiceFake(), orgtest.NewOrgServiceFake(),
 		nil, // clientGenerator
 		nil, // cfgProvider
 	)

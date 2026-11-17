@@ -8,8 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	blevesearch "github.com/blevesearch/bleve/v2/search"
-
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -63,16 +62,16 @@ func fieldValueDefinitions(provider resource.SearchFieldsProvider, group, kindRe
 	return fields, allFields
 }
 
-func (b *bleveIndex) setSearchResults(
+func setSearchResults(
+	logger log.Logger,
 	response *resourcepb.ResourceSearchResponse,
 	fieldValueSchema *fieldValueResultSchema,
-	hits blevesearch.DocumentMatchCollection,
-	sort blevesearch.SortOrder,
+	hits []*queryHit,
 ) error {
 	if fieldValueSchema == nil {
 		return fmt.Errorf("missing field-value result schema")
 	}
-	fields, rows, err := b.hitsToFieldValues(fieldValueSchema, hits, sort)
+	fields, rows, err := hitsToFieldValues(logger, fieldValueSchema, hits)
 	if err != nil {
 		return err
 	}
@@ -146,23 +145,23 @@ func (b *bleveIndex) resolveFieldValueSchema(selectFields []string) (*fieldValue
 	return schema, nil
 }
 
-func (b *bleveIndex) hitsToFieldValues(
+func hitsToFieldValues(
+	logger log.Logger,
 	schema *fieldValueResultSchema,
-	hits blevesearch.DocumentMatchCollection,
-	sort blevesearch.SortOrder,
+	hits []*queryHit,
 ) ([]*resourcepb.ResourceSearchField, []*resourcepb.ResourceSearchRow, error) {
 	rows := make([]*resourcepb.ResourceSearchRow, len(hits))
 	for rowIndex, match := range hits {
 		row := &resourcepb.ResourceSearchRow{
 			Key:        &resourcepb.ResourceKey{},
-			SortFields: hitSortFields(match, sort),
+			SortFields: match.Cursor,
 			Values:     make([]*resourcepb.ResourceSearchValue, 0, len(schema.definitions)),
 		}
 		if err := resource.ReadSearchID(row.Key, match.ID); err != nil {
 			return nil, nil, err
 		}
 		if schema.includeResourceVersion {
-			row.ResourceVersion = b.hitResourceVersion(match)
+			row.ResourceVersion = hitResourceVersion(logger, match)
 		}
 		if schema.includeScore {
 			row.Score = new(match.Score)
@@ -173,8 +172,8 @@ func (b *bleveIndex) hitsToFieldValues(
 				if definition.Name != resource.SEARCH_FIELD_LEGACY_ID {
 					return nil, nil, fmt.Errorf("row %d field %q: %w", rowIndex, definition.Name, err)
 				}
-				// Table results ignore legacy ID conversion errors, so keep that compatibility.
-				b.logger.Debug("ignoring malformed legacy ID in search result", "resource", match.ID, "error", err)
+				// A malformed legacy ID must not fail an otherwise valid search.
+				logger.Debug("ignoring malformed legacy ID in search result", "resource", match.ID, "error", err)
 			}
 			if !ok || value == nil {
 				continue
@@ -213,25 +212,25 @@ func fieldValueType(fieldType resource.SearchFieldType) (resourcepb.ResourceSear
 //
 // Returns 0 when the value is absent, which is the case for every document in an
 // index built before the field existed.
-func (b *bleveIndex) hitResourceVersion(match *blevesearch.DocumentMatch) int64 {
+func hitResourceVersion(logger log.Logger, match *queryHit) int64 {
 	value, ok := match.Fields[resource.SEARCH_FIELD_RV_STRING]
 	if !ok || value == nil {
 		return 0
 	}
 	text, ok := value.(string)
 	if !ok {
-		b.logger.Debug("ignoring non-string resource version in search result", "resource", match.ID, "type", fmt.Sprintf("%T", value))
+		logger.Debug("ignoring non-string resource version in search result", "resource", match.ID, "type", fmt.Sprintf("%T", value))
 		return 0
 	}
 	rv, err := strconv.ParseInt(text, 10, 64)
 	if err != nil {
-		b.logger.Debug("ignoring invalid resource version in search result", "resource", match.ID, "value", text, "error", err)
+		logger.Debug("ignoring invalid resource version in search result", "resource", match.ID, "value", text, "error", err)
 		return 0
 	}
 	return rv
 }
 
-func searchHitFieldValue(match *blevesearch.DocumentMatch, name string) (any, bool, error) {
+func searchHitFieldValue(match *queryHit, name string) (any, bool, error) {
 	if name == resource.SEARCH_FIELD_LEGACY_ID {
 		return searchHitLegacyID(match)
 	}
@@ -245,7 +244,7 @@ func searchHitFieldValue(match *blevesearch.DocumentMatch, name string) (any, bo
 
 // Dashboard callers still use the numeric legacy ID while the index stores
 // its source label as a string.
-func searchHitLegacyID(match *blevesearch.DocumentMatch) (any, bool, error) {
+func searchHitLegacyID(match *queryHit) (any, bool, error) {
 	value, ok := match.Fields[resource.SEARCH_FIELD_LABELS+"."+resource.SEARCH_FIELD_LEGACY_ID]
 	if !ok || value == nil {
 		return nil, false, nil

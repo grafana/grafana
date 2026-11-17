@@ -217,26 +217,16 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 
 	finalCtx, finalSpan := r.tracer.Start(ctx, "provisioning.sync.update_final_status")
 
-	// Only add stats patch if stats are not nil
-	stats, err := repositoryResources.Stats(finalCtx)
-	var repoStats []provisioning.ResourceCount
-	switch {
-	case err != nil:
+	repoStats, err := repositoryResources.Stats(finalCtx)
+	if err != nil {
 		logger.Error("unable to read stats", "error", err)
 		finalSpan.SetAttributes(attribute.String("stats.error", err.Error()))
-	case stats == nil:
-		logger.Error("stats are nil")
-		finalSpan.SetAttributes(attribute.Bool("stats.nil", true))
-	case len(stats.Managed) == 1:
-		repoStats = stats.Managed[0].Stats
+	} else {
 		patchOperations = append(patchOperations, map[string]interface{}{
 			"op":    "replace",
 			"path":  "/status/stats",
 			"value": repoStats,
 		})
-	default:
-		logger.Warn("unexpected number of managed stats", "count", len(stats.Managed))
-		finalSpan.SetAttributes(attribute.Int("stats.unexpected_count", len(stats.Managed)))
 	}
 
 	// Update conditions based on sync outcome and quota evaluation.
@@ -266,10 +256,8 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	return syncError
 }
 
-// completeFailedSync finalizes the job progress after a failure that happens once the repository
-// has already been marked as 'working', and writes the terminal state back to the repository.
-// Without this writeback the repository would report 'working' forever: sync jobs are singletons
-// per repository and failed syncs are not re-enqueued.
+// completeFailedSync writes the terminal state back after a failure past the 'working' mark.
+// Without it the repository reports 'working' forever: failed syncs are not re-enqueued.
 func (r *SyncWorker) completeFailedSync(ctx context.Context, cfg *provisioning.Repository, job provisioning.Job, progress jobs.JobProgressRecorder, lastRef string, syncErr error) {
 	jobStatus := progress.Complete(ctx, syncErr)
 	syncStatus := jobStatus.ToSyncStatus(job.Name)

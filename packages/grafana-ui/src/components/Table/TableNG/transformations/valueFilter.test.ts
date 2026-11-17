@@ -100,3 +100,44 @@ it('matches displayed time values in the panel timezone', () => {
   expect(predicate.options.timeZone).toBe(timeZone);
   expect(tableViewIndices(source, config as FilterByValueConfig[])).toEqual([0]);
 });
+
+describe('createValuePredicate element matching', () => {
+  it('opts into element matching for array fields', () => {
+    const field = toDataFrame({
+      fields: [{ name: 'Actors', type: FieldType.other, values: [['a', 'b'], ['c']] }],
+    }).fields[0];
+    const predicate = createValuePredicate(field, ['b']);
+    expect(predicate.options.matchElements).toBe(true);
+  });
+
+  it('opts into element matching for pill-cell string fields', () => {
+    const field = toDataFrame({
+      fields: [
+        {
+          name: 'Actors',
+          values: ['a, b'],
+          config: { custom: { cellOptions: { type: 'pill' } } },
+        },
+      ],
+    }).fields[0];
+    const predicate = createValuePredicate(field, ['b']);
+    expect(predicate.options.matchElements).toBe(true);
+  });
+
+  it('leaves whole-value matching for scalar fields', () => {
+    const field = toDataFrame({ fields: [{ name: 'Status', values: ['a, b'] }] }).fields[0];
+    const predicate = createValuePredicate(field, ['a, b']);
+    expect(predicate.options.matchElements).toBeUndefined();
+  });
+
+  it('filters array rows by element through the table transformation', () => {
+    const source = toDataFrame({
+      fields: [{ name: 'Actors', type: FieldType.other, values: [['a', 'b'], ['c'], ['b', 'd']] }],
+    });
+    const field = source.fields[0];
+    field.display = getDisplayProcessor({ field, theme: createTheme() });
+    const predicate = createValuePredicate(field, ['b']);
+    const config = writeTableFilter([], predicate, { source, field, frameKey: 'actors', frameIndex: 0 });
+    expect(tableViewIndices(source, config as FilterByValueConfig[])).toEqual([0, 2]);
+  });
+});

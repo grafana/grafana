@@ -131,10 +131,11 @@ describe('presentation', () => {
     resetExtensionSidebarPresentationForTests();
   });
 
-  it('floats a docked sidebar for the session, with the floating flag off, and docks it again on exit', async () => {
+  it('keeps an open docked sidebar docked, from the picker too', async () => {
     mountDashboard();
+    requestComposerEnter(DASHBOARD);
     const session = await composerApi.enter(DASHBOARD);
-    expect(sidebarPresentation()).toBe('floating');
+    expect(sidebarPresentation()).toBe('docked');
 
     session.exit();
 

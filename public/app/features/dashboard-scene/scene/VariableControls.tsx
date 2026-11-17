@@ -22,7 +22,7 @@ import { duplicateVariable } from '../actions/variable/duplicateVariable';
 import { removeVariable } from '../actions/variable/removeVariable';
 import { isVariableEditable } from '../settings/variables/utils';
 import { getPredefinedOrigin } from '../utils/predefinedVariables';
-import { removeOptedInPredefinedVariable } from '../utils/removeOptedInPredefinedVariable';
+import { getPredefinedDependentNames, removeOptedInPredefinedVariable } from '../utils/removeOptedInPredefinedVariable';
 import { filterSectionRepeatLocalVariables } from '../variables/utils';
 
 import { DashboardScene } from './DashboardScene';
@@ -93,7 +93,7 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditing, isEdit
 
   const onClickEditVariable = useCallback(() => {
     const dashboard = sceneGraph.getAncestor(variable, DashboardScene);
-    dashboard.state.sidebar.selectObject(variable);
+    dashboard.state.sidebar.openElementSettings(variable);
   }, [variable]);
 
   const [isEditorOpen, setIsEditorOpen] = useState(false);
@@ -117,11 +117,20 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditing, isEdit
     void removeOptedInPredefinedVariable(variable);
   }, [variable]);
 
+  const { variables: siblingVariables } = sceneGraph.getVariables(variable).useState();
+  const requiredBy = useMemo(
+    () => (predefinedOrigin ? getPredefinedDependentNames(variable) : []),
+    // siblingVariables: dependents change when the injected set does.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [variable, predefinedOrigin, siblingVariables]
+  );
+
   const editActions = useMemo(
     () => (
       <VariableEditActions
         variable={variable}
         removeOnly={Boolean(predefinedOrigin)}
+        requiredBy={requiredBy}
         onClickEdit={onClickEditVariable}
         onClickEditQuery={onClickEditVariableQuery}
         onClickDuplicate={onClickDuplicateVariable}
@@ -131,6 +140,7 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditing, isEdit
     [
       variable,
       predefinedOrigin,
+      requiredBy,
       onClickDeleteVariable,
       onClickDuplicateVariable,
       onClickEditVariableQuery,
@@ -163,7 +173,11 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditing, isEdit
     return (
       <>
         {editorModal}
-        <EditActionsPopover disabled={!isVariableEditable(variable) && !predefinedOrigin} content={editActions}>
+        <EditActionsPopover
+          keyboardAccessible
+          disabled={!isVariableEditable(variable) && !predefinedOrigin}
+          content={editActions}
+        >
           <div
             className={cx(
               styles.switchMenuContainer,
@@ -194,7 +208,11 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditing, isEdit
     return (
       <>
         {editorModal}
-        <EditActionsPopover disabled={!isVariableEditable(variable) && !predefinedOrigin} content={editActions}>
+        <EditActionsPopover
+          keyboardAccessible
+          disabled={!isVariableEditable(variable) && !predefinedOrigin}
+          content={editActions}
+        >
           <div
             className={cx(
               styles.verticalContainer,
@@ -222,7 +240,11 @@ export function VariableValueSelectWrapper({ variable, inMenu, isEditing, isEdit
   return (
     <>
       {editorModal}
-      <EditActionsPopover disabled={!isVariableEditable(variable) && !predefinedOrigin} content={editActions}>
+      <EditActionsPopover
+        keyboardAccessible
+        disabled={!isVariableEditable(variable) && !predefinedOrigin}
+        content={editActions}
+      >
         <div
           className={cx(
             styles.container,
@@ -295,13 +317,7 @@ export function SectionVariableControls({ variableSet }: { variableSet: SceneVar
   }
 
   return (
-    // Prevent row selection on click (see RowItemRenderer onPointerUp)
-    // eslint-disable-next-line jsx-a11y/no-static-element-interactions
-    <div
-      className={styles.sectionVariables}
-      onPointerDown={(e) => e.stopPropagation()}
-      onPointerUp={(e) => e.stopPropagation()}
-    >
+    <div className={styles.sectionVariables}>
       {visibleVariables.map((variable) => (
         <VariableValueSelectWrapper key={variable.state.key} variable={variable} />
       ))}
@@ -309,13 +325,10 @@ export function SectionVariableControls({ variableSet }: { variableSet: SceneVar
   );
 }
 
-const getSectionVariableStyles = (theme: GrafanaTheme2) => ({
+const getSectionVariableStyles = (_theme: GrafanaTheme2) => ({
+  // Join the section controls row so variables and annotations share one wrapping line.
   sectionVariables: css({
-    display: 'flex',
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: theme.spacing(1),
-    marginBottom: theme.spacing(1),
+    display: 'contents',
   }),
 });
 

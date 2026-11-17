@@ -3,7 +3,6 @@ package rbac
 import (
 	"fmt"
 	"slices"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/datasourcek8s"
@@ -148,6 +147,22 @@ func newResourceTranslation(resource string, attribute string, folderSupport boo
 		folderSupport:   folderSupport,
 		skipScopeOnVerb: skipScopeOnVerb,
 	}
+}
+
+func newSecureValueTranslation() translation {
+	t := newResourceTranslation("secret.securevalues", "uid", false, nil)
+	t.actionSetMapping = map[string][]string{
+		utils.VerbGet:              {"secret.securevalues:view", "secret.securevalues:edit", "secret.securevalues:admin"},
+		utils.VerbList:             {"secret.securevalues:view", "secret.securevalues:edit", "secret.securevalues:admin"},
+		utils.VerbWatch:            {"secret.securevalues:view", "secret.securevalues:edit", "secret.securevalues:admin"},
+		utils.VerbUpdate:           {"secret.securevalues:edit", "secret.securevalues:admin"},
+		utils.VerbPatch:            {"secret.securevalues:edit", "secret.securevalues:admin"},
+		utils.VerbDelete:           {"secret.securevalues:edit", "secret.securevalues:admin"},
+		utils.VerbDeleteCollection: {"secret.securevalues:edit", "secret.securevalues:admin"},
+		utils.VerbGetPermissions:   {"secret.securevalues:admin"},
+		utils.VerbSetPermissions:   {"secret.securevalues:admin"},
+	}
+	return t
 }
 
 // newDashboardTranslation creates a translation for dashboards and also maps the actions to action sets
@@ -687,17 +702,6 @@ func NewMapperRegistry() MapperRegistry {
 			},
 		},
 		"iam.grafana.app": {
-			"permissions": translation{
-				resource:  "permissions",
-				attribute: "type",
-				verbMapping: map[string]string{
-					utils.VerbCreate: "roles:write",
-					utils.VerbUpdate: "roles:write",
-					utils.VerbPatch:  "roles:write",
-				},
-				folderSupport: false,
-				skipWildcard:  true,
-			},
 			// Users is a special case. We translate user permissions from id to uid based.
 			"users": translation{
 				resource:  "users",
@@ -774,7 +778,7 @@ func NewMapperRegistry() MapperRegistry {
 			"stats":        newResourceTranslation("provisioning.stats", "", false, skipScopeOnAllVerbs),
 		},
 		"secret.grafana.app": {
-			"securevalues": newResourceTranslation("secret.securevalues", "uid", false, nil),
+			"securevalues": newSecureValueTranslation(),
 			"keepers":      newResourceTranslation("secret.keepers", "uid", false, nil),
 		},
 		"datasource.grafana.app": {
@@ -842,34 +846,8 @@ func NewMapperRegistry() MapperRegistry {
 	return mapper
 }
 
-// newPermissionsDelegationTranslation maps a delegation check to the RBAC
-// action being delegated. It mirrors the static permissions entry, except the
-// action comes from the request rather than a fixed verb mapping, so holding
-// a permissions:type:* scope on one action cannot authorize delegating another.
-func newPermissionsDelegationTranslation(action string) Mapping {
-	return &translation{
-		resource:  "permissions",
-		attribute: "type",
-		verbMapping: map[string]string{
-			utils.VerbCreate: action,
-			utils.VerbUpdate: action,
-			utils.VerbPatch:  action,
-		},
-		folderSupport: false,
-		skipWildcard:  true,
-	}
-}
-
 func (m mapper) Get(group, resource, subresource string) (Mapping, bool) {
 	group, resource, subresource = datasourcek8s.AuthorizationResource(group, resource, subresource)
-	// Delegation checks name the RBAC action being delegated as the subresource
-	// of the permissions pseudo-resource. The actions are open-ended, so the
-	// translation is built from the request instead of the static table. Only
-	// action-shaped values (containing a colon) are captured, so a real
-	// subresource of a future permissions resource falls through untouched.
-	if group == "iam.grafana.app" && resource == "permissions" && strings.Contains(subresource, ":") {
-		return newPermissionsDelegationTranslation(subresource), true
-	}
 
 	resources, ok := m[group]
 	if !ok {

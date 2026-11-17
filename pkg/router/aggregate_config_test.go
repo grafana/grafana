@@ -129,13 +129,12 @@ func TestParseAggregateTargets_Auth(t *testing.T) {
 
 func TestParseAggregateTargets_GroupPatterns(t *testing.T) {
 	for name, tc := range map[string]struct {
-		values  map[string]string
-		want    []string
-		wantErr string
+		values map[string]string
+		want   []string
 	}{
-		"group_patterns":         {values: map[string]string{"group_patterns": "*.ext.grafana.app"}, want: []string{"*.ext.grafana.app"}},
-		"deprecated group_regex": {values: map[string]string{"group_regex": "*.ext.grafana.app"}, want: []string{"*.ext.grafana.app"}},
-		"both":                   {values: map[string]string{"group_patterns": "*.a", "group_regex": "*.b"}, wantErr: "router.aggregate.custom: set group_patterns or group_regex, not both"},
+		"group_patterns":            {values: map[string]string{"group_patterns": "*.ext.grafana.app"}, want: []string{"*.ext.grafana.app"}},
+		"deprecated group_regex":    {values: map[string]string{"group_regex": "*.ext.grafana.app"}, want: []string{"*.ext.grafana.app"}},
+		"both, group_patterns wins": {values: map[string]string{"group_patterns": "*.a", "group_regex": "*.b"}, want: []string{"*.a"}},
 	} {
 		t.Run(name, func(t *testing.T) {
 			cfg := setting.NewCfg()
@@ -143,10 +142,6 @@ func TestParseAggregateTargets_GroupPatterns(t *testing.T) {
 			tc.values["discovery_auth"] = "none"
 			addAggregateSection(t, cfg, "custom", tc.values)
 			targets, err := parseAggregateTargets(cfg)
-			if tc.wantErr != "" {
-				require.EqualError(t, err, tc.wantErr)
-				return
-			}
 			require.NoError(t, err)
 			require.Len(t, targets, 1)
 			require.Equal(t, tc.want, targets[0].GroupPatterns)

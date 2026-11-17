@@ -1,34 +1,41 @@
 import { isEqual } from 'lodash';
 
 import { reportInteraction } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   NewSceneObjectAddedEvent,
+  sceneGraph,
   type SceneObject,
   SceneObjectBase,
   SceneObjectRemovedEvent,
-  sceneGraph,
   StateCommittedEvent,
   type StateCommittedPayload,
 } from '@grafana/scenes';
 import { type ElementSelectionContextItem, type ElementSelectionOnSelectOptions } from '@grafana/ui';
 import { getLayoutType } from 'app/features/dashboard/utils/tracking';
-import { isFullDashboardEditing, isDashboardReviewing } from 'app/features/dashboard-scene/scene/types/dashboard';
+import { isDashboardReviewing, isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
 
+import { getPendingChangesHistory, type PendingChangesHistory } from '../lifecycle/pendingChangePreview';
+import {
+  pendingChangesRecorded,
+  pendingChangesSuperseded,
+  recordPendingChange,
+} from '../lifecycle/pendingChangesHistory';
 import { dashboardModesEnabled, getDashboardMode } from '../scene/dashboardModes';
 import { dashboardViewChanged } from '../scene/dashboardViewRegistry';
 import { TabItem } from '../scene/layout-tabs/TabItem';
-import { getRepeatCloneSourceKey } from '../utils/clone';
+import { getRepeatCloneSourceKey, getRepeatSourceObject } from '../utils/clone';
 import { DashboardInteractions } from '../utils/interactions';
-import { getDefaultVizPanel, getLayoutForObject, getDashboardSceneFor } from '../utils/utils';
+import { getDashboardSceneFor, getDefaultVizPanel, getLayoutForObject } from '../utils/utils';
 
 import { ElementEditPane } from './ElementEditPane';
 import {
   ConditionalRenderingChangedEvent,
-  type DashboardBatchEditActionEventPayload,
+  type DashboardActionMeta,
   DashboardBatchEditActionEndEvent,
+  type DashboardBatchEditActionEventPayload,
   DashboardBatchEditActionStartEvent,
   DashboardEditActionEvent,
-  type DashboardActionMeta,
   type DashboardEditActionEventPayload,
   DashboardStateChangedEvent,
   NewObjectAddedToCanvasEvent,
@@ -39,9 +46,17 @@ import {
   RepeatsUpdatedEvent,
 } from './events';
 import { DashboardOutline } from './outline/DashboardOutline';
-import { type DashboardSidebarPane, type DashboardSidebarLike, type DashboardSidebarState } from './types';
+import { type DashboardSidebarLike, type DashboardSidebarPane, type DashboardSidebarState } from './types';
 
 export const MAX_UNDO_ACTIONS = 100;
+
+/** Edit actions being collected into one undo entry, see startBatchAction/endBatchAction. */
+interface ActiveBatch {
+  meta: DashboardActionMeta;
+  source: SceneObject;
+  description?: string;
+  actions: DashboardEditActionEventPayload[];
+}
 
 export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> implements DashboardSidebarLike {
   public constructor(state?: Partial<DashboardSidebarState>) {
@@ -100,16 +115,25 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
   }
 
   /** Set while a batch of edit actions is being collected, see startBatchAction/endBatchAction. */
-  private _activeBatch?: {
-    meta: DashboardActionMeta;
-    source: SceneObject;
-    description?: string;
-    actions: DashboardEditActionEventPayload[];
-  };
+  private _activeBatch?: ActiveBatch;
+
+  /**
+   * Batches a newer one started inside, innermost last: a batch started while another collects, such as
+   * a multi-panel delete during an Assistant batch, joins it as one of its edits instead of replacing it.
+   */
+  private _outerBatches: ActiveBatch[] = [];
+
+  /** A step through the pending changes history, from when it's asked for until the page shows it. */
+  private _historyStep?: Promise<void>;
 
   private _batchSizes = new WeakMap<DashboardEditActionEventPayload, number>();
 
   public setPanelEditAction(editAction: DashboardEditActionEvent) {
+    if (this.isActive) {
+      this.performPanelEditAction(editAction);
+      return;
+    }
+
     this.panelEditAction = editAction;
   }
 
@@ -232,12 +256,15 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
       this.setState({ redoStack: [] });
     }
 
+    if (this._activeBatch) {
+      this._outerBatches.push(this._activeBatch);
+    }
     this._activeBatch = { source, description, meta, actions: [] };
   }
 
   private endBatchAction() {
     const batch = this._activeBatch;
-    this._activeBatch = undefined;
+    this._activeBatch = this._outerBatches.pop();
 
     if (!batch || batch.actions.length === 0) {
       return;
@@ -255,6 +282,17 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
       },
     };
 
+    if (this._activeBatch) {
+      this._activeBatch.actions.push(action);
+      return;
+    }
+
+    const history = this.pendingChangesHistory();
+    if (history) {
+      this.recordToPendingChanges(history, action);
+      return;
+    }
+
     this._batchSizes.set(action, batch.actions.length);
     this.setState({ undoStack: this.pushToUndoStack(action) });
   }
@@ -264,7 +302,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
    * Adds to undo history and selects new object
    */
   private handleEditAction(action: DashboardEditActionEventPayload, skipPerform = false) {
-    if (!getDashboardSceneFor(this).prepareEditAction()) {
+    if (!getDashboardSceneFor(this).prepareEditAction(action.meta)) {
       return;
     }
     if (skipPerform) {
@@ -275,8 +313,19 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
       if (!skipPerform) {
         this.performAction(action);
       }
+      getDashboardSceneFor(this).recordEditAction(action.meta.actionId);
       return;
     }
+    const history = this.pendingChangesHistory();
+    if (history) {
+      if (!skipPerform) {
+        this.performAction(action);
+      }
+      getDashboardSceneFor(this).recordEditAction(action.meta.actionId);
+      this.recordToPendingChanges(history, action);
+      return;
+    }
+
     // Clear redo stack when user performs a new action
     // Otherwise things can get into very broken states
     if (this.state.redoStack.length > 0) {
@@ -286,6 +335,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     if (!skipPerform) {
       this.performAction(action);
     }
+    getDashboardSceneFor(this).recordEditAction(action.meta.actionId);
 
     this.setState({ undoStack: this.pushToUndoStack(action) });
   }
@@ -332,12 +382,77 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
   }
 
   /**
+   * Records a performed edit in the pending changes history. What it changed is taken from its own
+   * undo and redo, as Undo and Redo replay it: inputs apply their value as it's typed and send the
+   * edit only once done, so the scene before the edit is what its undo leaves.
+   */
+  private recordToPendingChanges(history: PendingChangesHistory, action: DashboardEditActionEventPayload) {
+    const scene = getDashboardSceneFor(this);
+    action.undo();
+    const before = scene.getSaveModel();
+    action.perform();
+    recordPendingChange(scene, history, action.description, before);
+  }
+
+  /**
+   * Steps from what the plugin last recorded, since an edit still on its way would land after the step,
+   * and one step at a time: each restores a revision and reloads the page, so clicks made meanwhile are
+   * dropped rather than racing it.
+   */
+  private stepPendingChangesHistory(step: () => Promise<void>) {
+    if (this._historyStep) {
+      return;
+    }
+    const scene = getDashboardSceneFor(this);
+    this._historyStep = pendingChangesRecorded(scene)
+      // Not from pending changes the page never loaded: the plugin's history moved on past what it shows.
+      .then(() => (pendingChangesSuperseded(scene) ? undefined : step()))
+      // The plugin reports a failed step itself.
+      .catch(() => {})
+      .finally(() => {
+        this._historyStep = undefined;
+      });
+  }
+
+  /**
+   * On pending changes whose plugin keeps their history, edits are steps in it instead of this
+   * sidebar's undo stack, so Undo and Redo step through the plugin's changes too.
+   */
+  public pendingChangesHistory(): PendingChangesHistory | undefined {
+    return getPendingChangesHistory(getDashboardSceneFor(this).state);
+  }
+
+  /** Whether Undo and Redo step through the pending changes' history while the Assistant edits them. */
+  public stepsPendingChangesHistory(): boolean {
+    const state = getDashboardSceneFor(this).state;
+    return Boolean(state.isEditing && getDashboardMode(state) === 'agent' && this.pendingChangesHistory());
+  }
+
+  /**
    * Removes last action from undo stack and adds it to redo stack.
    */
   public undoAction() {
-    if (dashboardModesEnabled() && getDashboardMode(getDashboardSceneFor(this).state) !== 'edit') {
+    if (
+      dashboardModesEnabled() &&
+      getDashboardMode(getDashboardSceneFor(this).state) !== 'edit' &&
+      !this.stepsPendingChangesHistory()
+    ) {
       return;
     }
+    const history = this.pendingChangesHistory();
+    if (history) {
+      this.stepPendingChangesHistory(() => history.undo());
+      return;
+    }
+    this.undoLastAction();
+  }
+
+  /**
+   * Undoes the newest entry in any dashboard mode. For callers that have already established the entry is
+   * theirs to undo, such as Assistant edits made while the dashboard is in the agent presentation.
+   * `trigger` names a caller other than the dashboard's own controls in the reported interaction.
+   */
+  public undoLastAction(trigger?: string) {
     // How far back the user has already stepped through history before this undo
     const redoDepth = this.state.redoStack.length;
     const undoStack = this.state.undoStack.slice();
@@ -353,6 +468,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
       actionId: action.meta.actionId,
       scope: action.meta.scope,
       redoDepth,
+      ...(trigger ? { trigger } : {}),
     });
   }
 
@@ -401,9 +517,23 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
    * Removes last action from redo stack and adds it to undo stack.
    */
   public redoAction() {
-    if (dashboardModesEnabled() && getDashboardMode(getDashboardSceneFor(this).state) !== 'edit') {
+    if (
+      dashboardModesEnabled() &&
+      getDashboardMode(getDashboardSceneFor(this).state) !== 'edit' &&
+      !this.stepsPendingChangesHistory()
+    ) {
       return;
     }
+    const history = this.pendingChangesHistory();
+    if (history) {
+      this.stepPendingChangesHistory(() => history.redo());
+      return;
+    }
+    this.redoLastAction();
+  }
+
+  /** The redo counterpart of `undoLastAction`: redoes the newest undone entry in any dashboard mode. */
+  public redoLastAction(trigger?: string) {
     const redoDepth = this.state.redoStack.length;
     const redoStack = this.state.redoStack.slice();
     const action = redoStack.pop();
@@ -418,6 +548,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
       actionId: action.meta.actionId,
       scope: action.meta.scope,
       redoDepth,
+      ...(trigger ? { trigger } : {}),
     });
   }
 
@@ -463,6 +594,26 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     this.selectObject(obj, options);
   }
 
+  public openElementSettings(obj: SceneObject) {
+    // Resolve by state path first so an element nested in a repeat clone maps to its own source,
+    // then by key for clones the path walk doesn't cover (e.g. repeated panels).
+    const resolved = getRepeatSourceObject(obj);
+    const sourceKey = getRepeatCloneSourceKey(resolved);
+    const source = sourceKey ? sceneGraph.findByKey(this, sourceKey) : resolved;
+    if (!source) {
+      return;
+    }
+
+    this.cancelPaneRequest();
+    // Reselecting a newly added element would clear the state that requests autofocus.
+    if (this.state.selectionContext.selected.length !== 1 || this.getSelectedObject() !== source) {
+      this.selectObject(source, { force: true });
+    }
+    if (this.state.openPane?.getId() !== 'element') {
+      this.openPane(new ElementEditPane({}));
+    }
+  }
+
   public selectObject(obj: SceneObject, { multi, force }: ElementSelectionOnSelectOptions = {}) {
     this.cancelPaneRequest();
     if (isDashboardReviewing(getDashboardSceneFor(this).state)) {
@@ -471,8 +622,14 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     const id = obj.state.key!;
     const hasItem = this.state.selectionContext.selected.find((i) => i.id === id);
 
-    // Special logic for tabs only select tab of open pane is not already open or tab is already active
-    if (!force && !this.state.openPane && obj instanceof TabItem && !obj.isCurrentTab()) {
+    const sidebarExplicitOpen = getFeatureFlagClient().getBooleanValue(
+      FlagKeys.GrafanaDashboardSidebarExplicitOpen,
+      false
+    );
+
+    // Special logic for tabs only select tab of open pane is not already open or tab is already active.
+    // With explicit open, a canvas click doesn't open the pane, so inactive tabs must stay selectable.
+    if (!sidebarExplicitOpen && !force && !this.state.openPane && obj instanceof TabItem && !obj.isCurrentTab()) {
       return;
     }
 
@@ -481,8 +638,8 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
       selectedDisconnectedObject = obj;
     }
 
-    // If current open pane is not showing selected element, then we should maintain selection (force = true) which disables selection toggling
-    if (this.state.openPane?.getId() !== 'element') {
+    // Keep the selection when opening element settings from a closed sidebar or another pane.
+    if ((!sidebarExplicitOpen || this.state.openPane) && this.state.openPane?.getId() !== 'element') {
       force = true;
     }
 
@@ -548,10 +705,16 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
       document.activeElement.blur();
     }
 
+    const sidebarExplicitOpen = getFeatureFlagClient().getBooleanValue(
+      FlagKeys.GrafanaDashboardSidebarExplicitOpen,
+      false
+    );
+    const shouldOpenPane = selected.length > 0 && (!sidebarExplicitOpen || Boolean(this.state.openPane));
+
     const newState: DashboardSidebarState = {
       ...this.state,
       selectionContext: { ...this.state.selectionContext, selected },
-      openPane: selected.length ? new ElementEditPane({}) : undefined,
+      openPane: shouldOpenPane ? new ElementEditPane({}) : undefined,
       isNewElement: false,
       selectedDisconnectedObject,
     };

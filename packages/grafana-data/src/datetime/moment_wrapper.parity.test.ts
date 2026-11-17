@@ -1,28 +1,10 @@
-import type * as MomentWrapper from './moment_wrapper';
+import * as wrapper from './moment_wrapper';
 
 describe('Luxon-backed DateTime wrapper', () => {
-  const flagName = '__grafanaUseLuxon';
-  let originalDescriptor: PropertyDescriptor | undefined;
-  let originalLocale: string;
-  let wrapper: typeof MomentWrapper;
-
-  beforeAll(async () => {
-    originalDescriptor = Object.getOwnPropertyDescriptor(window, flagName);
-    Object.defineProperty(window, flagName, { configurable: true, value: true });
-    wrapper = await import('./moment_wrapper');
-    originalLocale = wrapper.getLocale();
-  });
+  const originalLocale = wrapper.getLocale();
 
   afterEach(() => {
     wrapper.setLocale(originalLocale);
-  });
-
-  afterAll(() => {
-    if (originalDescriptor) {
-      Object.defineProperty(window, flagName, originalDescriptor);
-    } else {
-      Reflect.deleteProperty(window, flagName);
-    }
   });
 
   it('subtracts shorthand through the public DateTime API without replacing the instance', () => {

@@ -67,6 +67,33 @@ describe('MarkdownCell', () => {
     expect(screen.queryByLabelText('Markdown')).not.toBeInTheDocument();
   });
 
+  it.each([
+    { name: 'a paragraph', prefix: '' },
+    { name: 'a list item', prefix: '- ' },
+  ])('allows long inline code in $name to wrap, including unbroken identifiers', async ({ prefix }) => {
+    const identifier = 'notebook_record_fingerprint_'.repeat(12);
+    const markdown: CellContentKind = { kind: 'Markdown', spec: { text: `${prefix}\`${identifier}\`` } };
+    render(<MarkdownCell content={markdown} isEditing={false} onChange={jest.fn()} />);
+
+    expect(await screen.findByText(identifier, { selector: 'code' })).toHaveStyle({
+      whiteSpace: 'normal',
+      overflowWrap: 'anywhere',
+    });
+  });
+
+  it('keeps fenced code whitespace intact and its container scrollable', async () => {
+    const markdown: CellContentKind = {
+      kind: 'Markdown',
+      spec: { text: '```\nfirst   column\n    indented line\n```' },
+    };
+    render(<MarkdownCell content={markdown} isEditing={false} onChange={jest.fn()} />);
+
+    const code = await screen.findByText(/first.*column/, { selector: 'pre code' });
+    expect(code.textContent).toBe('first   column\n    indented line\n');
+    expect(code.parentElement).toHaveStyle({ overflow: 'auto' });
+    expect(code).not.toHaveStyle({ whiteSpace: 'normal' });
+  });
+
   it('offers an editor once the notebook is being edited, instead of the static render', async () => {
     render(<MarkdownCell content={content} isEditing={true} onChange={jest.fn()} />);
 

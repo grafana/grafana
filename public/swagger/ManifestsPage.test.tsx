@@ -64,7 +64,7 @@ const dashboardOpenAPI = {
 
 // Only dashboards has a router status, so iam shows none
 const routerStatus = {
-  groups: [{ group: 'dashboard.grafana.app', health: 'degraded', source: 'core_url', key: 'dash-key' }],
+  groups: [{ group: 'dashboard.grafana.app', health: 'degraded', source: 'core', key: 'dash-key' }],
 };
 
 function mockManifests(items: AppManifest[]) {
@@ -99,10 +99,7 @@ it('summarizes each manifest from its preferred version', async () => {
   expect(dash.getByText('v0alpha1')).toHaveStyle({ textDecoration: 'line-through' });
   expect(dash.getAllByRole('cell').map((c) => c.textContent)).toEqual(expect.arrayContaining(['2', '2', '1']));
   expect(await dash.findByText('degraded')).toBeInTheDocument();
-  expect(dash.getByText('core_url').closest('a')).toHaveAttribute(
-    'href',
-    'swagger?router=status&tab=groups&source=core_url'
-  );
+  expect(dash.getByText('core').closest('a')).toHaveAttribute('href', 'swagger?router=status&tab=groups&source=core');
   for (const cap of ['validation', 'conversion', 'hybrid search']) {
     expect(dash.getByText(cap)).toBeInTheDocument();
   }
@@ -112,7 +109,7 @@ it('summarizes each manifest from its preferred version', async () => {
 
   // Without a preferred version, the last version is preferred
   const user = within(rowFor('iam.grafana.app'));
-  expect(user.queryByText('core_url')).not.toBeInTheDocument();
+  expect(user.queryByText('core')).not.toBeInTheDocument();
   expect(user.getByText('API docs')).toHaveAttribute('href', 'swagger?api=iam.grafana.app-v0alpha1');
 });
 

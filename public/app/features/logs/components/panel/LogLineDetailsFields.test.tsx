@@ -50,17 +50,27 @@ describe('LogLineDetailsFields', () => {
     expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
   });
 
-  it('hides the top pagination controls, but not the bottom ones, once on a short last page', async () => {
-    renderFields(createFields(120)); // 50 per page -> pages of 50, 50, 20 (short last page)
+  it('spreads items evenly across pages instead of leaving a short last page', async () => {
+    // FIELDS_PAGE_SIZE (50) sets the number of pages (ceil(120/50) = 3), but the 120 items are then
+    // spread evenly across those 3 pages (40/40/40), not filled to 50/50/20.
+    renderFields(createFields(120));
 
-    // Not on the last page yet: both the top and bottom pagination controls render.
+    expect(screen.getByText('field_0')).toBeInTheDocument();
+    expect(screen.getByText('field_39')).toBeInTheDocument();
+    expect(screen.queryByText('field_40')).not.toBeInTheDocument();
     expect(screen.getAllByRole('navigation')).toHaveLength(2);
 
     await userEvent.click(screen.getAllByLabelText('next page')[0]); // page 2 of 3
-    await userEvent.click(screen.getAllByLabelText('next page')[0]); // page 3 of 3 (last, short)
 
-    expect(screen.getByText('field_100')).toBeInTheDocument();
-    expect(screen.getAllByRole('navigation')).toHaveLength(1);
+    expect(screen.getByText('field_40')).toBeInTheDocument();
+    expect(screen.getByText('field_79')).toBeInTheDocument();
+
+    await userEvent.click(screen.getAllByLabelText('next page')[0]); // page 3 of 3 (last)
+
+    expect(screen.getByText('field_80')).toBeInTheDocument();
+    expect(screen.getByText('field_119')).toBeInTheDocument();
+    // Both pagination controls stay, including on the last page.
+    expect(screen.getAllByRole('navigation')).toHaveLength(2);
   });
 
   it('keeps both pagination controls when the last page is a full page', async () => {
@@ -69,8 +79,6 @@ describe('LogLineDetailsFields', () => {
     await userEvent.click(screen.getAllByLabelText('next page')[0]); // page 2 of 2 (last, full)
 
     expect(screen.getByText('field_99')).toBeInTheDocument();
-    // The last page is just as long as any other, so there's still something to skip past -
-    // the top control stays so the user doesn't have to scroll past all of it to navigate.
     expect(screen.getAllByRole('navigation')).toHaveLength(2);
   });
 });

@@ -16,11 +16,12 @@ import (
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/convert"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/common"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	"github.com/grafana/grafana/pkg/services/ngalert/rules/legacy"
 )
 
 var validNotificationSettingsTypes = []string{
@@ -64,22 +65,8 @@ var (
 	_ rest.CollectionDeleter = (*legacyStorage)(nil)
 )
 
-// toAPIError classifies errors from the alert rule service into the matching apierrors status.
-func toAPIError(name string, err error) error {
-	switch {
-	case errors.Is(err, ngmodels.ErrAlertRuleFailedValidation):
-		return k8serrors.NewBadRequest(err.Error())
-	case errors.Is(err, ngmodels.ErrQuotaReached):
-		return k8serrors.NewForbidden(ResourceInfo.GroupResource(), name, err)
-	case errors.Is(err, ngmodels.ErrAlertRuleNotFound):
-		return k8serrors.NewNotFound(ResourceInfo.GroupResource(), name)
-	default:
-		return err
-	}
-}
-
 type legacyStorage struct {
-	service        provisioning.AlertRuleService
+	service        legacy.LegacyRuleService
 	namespacer     request.NamespaceMapper
 	tableConverter rest.TableConvertor
 }
@@ -162,13 +149,13 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 	}
 
 	var (
-		titleFilter            provisioning.ListRuleStringFilter
-		pausedFilter           provisioning.ListRuleBoolFilter
-		dashboardFilter        provisioning.ListRuleStringFilter
-		panelIDFilter          provisioning.ListRuleStringFilter
-		notificationTypeFilter provisioning.ListRuleStringFilter
-		receiverFilter         provisioning.ListRuleStringFilter
-		routingTreeFilter      provisioning.ListRuleStringFilter
+		titleFilter            legacy.ListRuleStringFilter
+		pausedFilter           legacy.ListRuleBoolFilter
+		dashboardFilter        legacy.ListRuleStringFilter
+		panelIDFilter          legacy.ListRuleStringFilter
+		notificationTypeFilter legacy.ListRuleStringFilter
+		receiverFilter         legacy.ListRuleStringFilter
+		routingTreeFilter      legacy.ListRuleStringFilter
 	)
 	if opts.FieldSelector != nil && !opts.FieldSelector.Empty() {
 		for _, r := range opts.FieldSelector.Requirements() {
@@ -217,7 +204,7 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 		}
 	}
 
-	rules, managerPropsMap, continueToken, err := s.service.ListAlertRules(ctx, user, provisioning.ListAlertRulesOptions{
+	rules, managerPropsMap, continueToken, err := s.service.ListAlertRules(ctx, user, legacy.ListAlertRulesOptions{
 		RuleType:               ngmodels.RuleTypeFilterAlerting,
 		Limit:                  opts.Limit,
 		ContinueToken:          opts.Continue,
@@ -295,64 +282,18 @@ func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, createVa
 
 	created, err := s.service.CreateAlertRule(ctx, user, *domainModel, managerProps)
 	if err != nil {
-		return nil, toAPIError(p.GetName(), err)
+		return nil, common.ToAPIError(ResourceInfo.GroupResource(), p.GetName(), err)
 	}
 
 	return convertToK8sResource(info.OrgID, &created, managerProps, s.namespacer)
 }
 
-func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
-	info, err := request.NamespaceInfoFrom(ctx, true)
-	if err != nil {
-		return nil, false, err
-	}
-
-	user, err := identity.GetRequester(ctx)
-	if err != nil {
-		return nil, false, err
-	}
-
-	old, err := s.Get(ctx, name, nil)
-	if err != nil {
-		return old, false, err
-	}
-
-	obj, err := objInfo.UpdatedObject(ctx, old)
-	if err != nil {
-		return old, false, err
-	}
-	if updateValidation != nil {
-		if err := updateValidation(ctx, obj, old); err != nil {
-			return nil, false, err
-		}
-	}
-
-	new, err := convert.Hub[*v1beta1.AlertRule](obj)
-	if err != nil {
-		return nil, false, k8serrors.NewBadRequest("expected valid alert rule object")
-	}
-
-	domainModel, managerProps, err := convertToDomainModel(info.OrgID, new)
-	if err != nil {
-		return old, false, err
-	}
-
-	_, err = s.service.UpdateAlertRule(ctx, user, *domainModel, managerProps)
-	if err != nil {
-		return nil, false, toAPIError(name, err)
-	}
-
-	updated, managerProps, err := s.service.GetAlertRule(ctx, user, name)
-	if err != nil {
-		return nil, false, err
-	}
-
-	rule, err := convertToK8sResource(info.OrgID, &updated, managerProps, s.namespacer)
-	if err != nil {
-		return nil, false, err
-	}
-
-	return rule, false, nil
+func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, _ rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, _ bool, _ *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	return common.LegacyRuleUpdate(
+		ctx, name, objInfo, updateValidation,
+		&s.service, s.namespacer, ResourceInfo, s.Get,
+		convertToDomainModel, convertToK8sResource,
+	)
 }
 
 func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, opts *metav1.DeleteOptions) (runtime.Object, bool, error) {
@@ -396,8 +337,76 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 	return old, false, nil
 }
 
-func (s *legacyStorage) DeleteCollection(_ context.Context, _ rest.ValidateObjectFunc, _ *metav1.DeleteOptions, _ *internalversion.ListOptions) (runtime.Object, error) {
-	// The dual-writer requires this interface even after migration routes
-	// collection deletion to unified storage. Legacy rows use the org SQL sweep.
-	return nil, k8serrors.NewMethodNotSupported(ResourceInfo.GroupResource(), "delete")
+// DeleteCollection deletes the alert rules matched by listOptions in pages of common.DeleteCollectionPageSize. Each page
+// is validated, authorized and deleted in its own transaction, so a page is deleted entirely or not at all. Like the
+// upstream apiserver, a failure stops the call with the pages before it already deleted.
+func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
+	info, err := request.NamespaceInfoFrom(ctx, true)
+	if err != nil {
+		return nil, err
+	}
+	user, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if listOptions == nil {
+		listOptions = &internalversion.ListOptions{}
+	}
+	if err := common.ValidateDeleteCollectionRequest(options, listOptions); err != nil {
+		return nil, err
+	}
+
+	opts := listOptions.DeepCopy()
+	// remaining is how many more rules the caller's limit allows; 0 means no limit.
+	remaining := opts.Limit
+	deleted := &v1beta1.AlertRuleList{Items: make([]v1beta1.AlertRule, 0)}
+	for {
+		opts.Limit = common.DeleteCollectionPageSize
+		if remaining > 0 && remaining < opts.Limit {
+			opts.Limit = remaining
+		}
+		items, next, err := common.ListPage(ctx, s.List, opts)
+		if err != nil {
+			return nil, err
+		}
+		rules := make([]*ngmodels.AlertRule, 0, len(items))
+		managers := make(map[string]utils.ManagerProperties, len(items))
+		page := make([]v1beta1.AlertRule, 0, len(items))
+		for _, item := range items {
+			if deleteValidation != nil {
+				if err := deleteValidation(ctx, item); err != nil {
+					return nil, err
+				}
+			}
+			// The items come from our own List, so a conversion failure is a server error, not a bad request.
+			rule, err := convert.Hub[*v1beta1.AlertRule](item)
+			if err != nil {
+				return nil, k8serrors.NewInternalError(fmt.Errorf("failed to convert rule %q: %w", common.ObjectName(item), err))
+			}
+			// Derive manager properties the same way Delete does.
+			domainModel, managerProps, err := convertToDomainModel(info.OrgID, rule)
+			if err != nil {
+				return nil, k8serrors.NewInternalError(fmt.Errorf("failed to convert rule %q: %w", rule.Name, err))
+			}
+			rules = append(rules, domainModel)
+			managers[domainModel.UID] = managerProps
+			page = append(page, *rule)
+		}
+		if err := s.service.DeleteAlertRules(ctx, user, rules, managers); err != nil {
+			return nil, err
+		}
+		deleted.Items = append(deleted.Items, page...)
+
+		if remaining > 0 {
+			remaining -= int64(len(items))
+			if remaining <= 0 {
+				deleted.Continue = next
+				return deleted, nil
+			}
+		}
+		if next == "" {
+			return deleted, nil
+		}
+		opts.Continue = next
+	}
 }

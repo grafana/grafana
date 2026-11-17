@@ -46,7 +46,7 @@ export function Migrate() {
     isError: isFoldersError,
     failedKinds,
     refetch: refetchFolders,
-  } = useMigrationData(contentKinds);
+  } = useMigrationData(contentKinds, availableResources);
   const [repos] = useRepositoryList({ watch: true });
   const [drawerScope, setDrawerScope] = useState<DrawerScope | null>(null);
   const [selectedFolderUids, setSelectedFolderUids] = useState<Set<string>>(new Set());
@@ -203,7 +203,7 @@ export function Migrate() {
             selectedResourceKeys={selectedResourceKeys}
             onToggleResource={(key) => setSelectedResourceKeys((prev) => toggle(prev, key))}
             onSetResourcesSelected={setResourcesSelected}
-            selectedCount={selection.items}
+            selectedCount={selection.resources.length}
             allSelected={migrateAllUnmanaged}
             onSetFoldersSelected={setFoldersSelected}
             // Selecting everything runs the legacy "migrate all unmanaged" job
