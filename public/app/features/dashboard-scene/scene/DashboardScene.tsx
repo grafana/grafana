@@ -1664,6 +1664,18 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       return;
     }
 
+    // Changes to pending changes are measured from what their plugin recorded: as Exit edit does, an
+    // edit not recorded yet is recorded first, and the drawer shows it once that lands.
+    const history = getPendingChangesHistory(this.state);
+    if (
+      history &&
+      !saveAsCopy &&
+      this.recordsToPendingChanges() &&
+      (this.hasUnrecordedEdits() || hasUnrecordedPendingChange(this))
+    ) {
+      void recordPendingChange(this, history, t('dashboard-scene.lifecycle.edited-dashboard', 'Edit dashboard'));
+    }
+
     const overlay = this.state.overlay;
     if (showDiff && overlay) {
       const { SaveDashboardDrawer } = await import(

@@ -22,7 +22,7 @@ import {
   getScenePendingChangePreview,
   loadPendingChangePreview,
 } from './pendingChangePreview';
-import { recordPendingChange } from './pendingChangesHistory';
+import { pendingChangesRecorded, recordPendingChange } from './pendingChangesHistory';
 import { setPendingChangesPageClose, takeEditingOnNextLoad } from './pendingChangesPageReload';
 import {
   discardScenePendingChanges,
@@ -179,6 +179,28 @@ describe('opening pending changes on the page', () => {
     expect(Object.keys(changes.diffs)).toEqual(['elements']);
     expect(changes.diffs.elements.map((diff) => diff.path.at(-1)).sort()).toEqual(['content', 'title']);
     expect(Object.keys(changes.initialSaveModel)).toEqual(Object.keys(changes.changedSaveModel));
+  });
+
+  it('records an edit not recorded yet as the save drawer opens, so its changes include it', async () => {
+    let recorded: DashboardV2Spec | undefined;
+    const pending = pendingChanges();
+    pending.history = {
+      ...pending.history!,
+      record: jest.fn(async ({ proposed }) => {
+        recorded = proposed;
+        return { recorded: true };
+      }),
+      getState: () => ({ proposed: recorded }),
+    };
+    const scene = await openOnPage(pending);
+    // The description is the same in the saved version and the pending changes: only this edit changes it.
+    scene.setState({ description: 'Edited by hand', isDirty: true });
+
+    void scene.openSaveDrawer({});
+    await pendingChangesRecorded(scene);
+
+    expect(pending.history.record).toHaveBeenCalledTimes(1);
+    expect(Object.keys(getPendingChangesDiff(scene)!.diffs)).toContain('description');
   });
 
   it('leaves them read-only when their plugin keeps no history to record edits in', async () => {
