@@ -67,7 +67,6 @@ When you assign a user a basic organization role (Viewer, Editor, or Admin), the
 | **Kubernetes Monitoring**        | Read all                                | Read all                                                    | Admin access                                  |
 | **Labels**                       | Read labels                             | + Create, edit, delete labels                               | + Full write access                           |
 | **Machine Learning**             | Read forecasting, outliers, sift        | + Write forecasting, outliers, sift                         | + Full write access                           |
-| **OnCall**                       | Read all                                | + Write alert groups, schedules, maintenance, user settings | + Write integrations, escalation chains, etc. |
 | **Private Data Connect**         | —                                       | —                                                           | Full access                                   |
 | **Session Replay**               | View session recordings                 | View session recordings                                     | View session recordings                       |
 | **SLO**                          | Read SLOs                               | Create, edit, delete SLOs                                   | + Modify org preferences                      |
