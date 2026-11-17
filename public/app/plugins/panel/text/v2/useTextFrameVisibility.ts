@@ -3,27 +3,28 @@ import { useLayoutEffect, useState, type RefObject } from 'react';
 const PREFETCH_MARGIN = '1000px';
 const DISPOSE_DELAY_MS = 5000;
 const MOUNT_BATCH_SIZE = 4;
-const MOUNT_INTERVAL_MS = 16;
 
 const listeners = new Map<Element, (visible: boolean) => void>();
 const pending = new Set<() => void>();
 let observer: IntersectionObserver | undefined;
-let mountTimer: number | undefined;
+let mountAnimationFrame: number | undefined;
 
 function scheduleMount(callback: () => void) {
   pending.add(callback);
-  mountTimer ??= window.setTimeout(mountBatch, MOUNT_INTERVAL_MS);
+  mountAnimationFrame ??= window.requestAnimationFrame(mountBatch);
   return () => {
     pending.delete(callback);
     if (pending.size === 0) {
-      clearTimeout(mountTimer);
-      mountTimer = undefined;
+      if (mountAnimationFrame !== undefined) {
+        window.cancelAnimationFrame(mountAnimationFrame);
+      }
+      mountAnimationFrame = undefined;
     }
   };
 }
 
 function mountBatch() {
-  mountTimer = undefined;
+  mountAnimationFrame = undefined;
   let count = 0;
   for (const callback of pending) {
     pending.delete(callback);
@@ -33,7 +34,7 @@ function mountBatch() {
     }
   }
   if (pending.size > 0) {
-    mountTimer = window.setTimeout(mountBatch, MOUNT_INTERVAL_MS);
+    mountAnimationFrame = window.requestAnimationFrame(mountBatch);
   }
 }
 

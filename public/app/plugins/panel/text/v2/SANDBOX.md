@@ -77,7 +77,7 @@ Browser CSP events do not carry render revisions. A delayed violation from a rem
 
 ## Offscreen frames
 
-Fixed-height dashboard Text panels defer stateless content until it approaches the viewport. A shared observer uses a 1,000px prefetch margin, and initialization runs in batches of four every 16ms. Frames outside that region for five seconds are removed, retaining a height placeholder; returning panels render their latest content in a fresh document with the current policy.
+Fixed-height dashboard Text panels defer stateless content until it approaches the viewport. A shared observer uses a 1,000px prefetch margin, and initialization admits up to four mounts per animation-frame callback in the parent document. Background tabs can pause this queue until they become visible. Frames outside that region for five seconds are removed, retaining a height placeholder; returning panels render their latest content in a fresh document with the current policy.
 
 Focused frames remain mounted. Stateful markup (including embeds, media, forms, editable content, and scripts), unsanitized legacy content, fit-content panels, editor previews, panel viewers, and image-renderer captures do not use this lifecycle. Browsers without IntersectionObserver render immediately. Consent reports are cleared when a frame is removed and collected again when it returns.
 

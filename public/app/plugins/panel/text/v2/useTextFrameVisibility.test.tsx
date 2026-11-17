@@ -7,6 +7,13 @@ let intersect: IntersectionObserverCallback;
 const observe = jest.fn();
 const unobserve = jest.fn();
 const disconnect = jest.fn();
+const animationFrames = new Map<number, FrameRequestCallback>();
+
+function nextAnimationFrame() {
+  const callbacks = Array.from(animationFrames.values());
+  animationFrames.clear();
+  act(() => callbacks.forEach((callback) => callback(performance.now())));
+}
 
 function Panel({ enabled = true }: { enabled?: boolean }) {
   const host = useRef<HTMLDivElement>(null);
@@ -29,6 +36,16 @@ function visibility(visible: boolean, elements = screen.getAllByTestId('host')) 
 
 beforeEach(() => {
   jest.useFakeTimers();
+  animationFrames.clear();
+  let nextId = 0;
+  jest.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+    const id = nextId++;
+    animationFrames.set(id, callback);
+    return id;
+  });
+  jest.spyOn(window, 'cancelAnimationFrame').mockImplementation((id) => {
+    animationFrames.delete(id);
+  });
   jest.spyOn(window, 'IntersectionObserver').mockImplementation((callback) => {
     intersect = callback;
     return {
@@ -50,7 +67,7 @@ afterEach(() => {
   jest.useRealTimers();
 });
 
-it('shares one observer and mounts four nearby frames per task', () => {
+it('shares one observer and mounts four nearby frames per animation frame', () => {
   render(
     <>
       {Array.from({ length: 10 }, (_, index) => (
@@ -66,22 +83,27 @@ it('shares one observer and mounts four nearby frames per task', () => {
   });
   expect(screen.queryAllByTitle('Live frame')).toHaveLength(0);
   visibility(true);
-  act(() => jest.advanceTimersByTime(16));
+  act(() => jest.advanceTimersByTime(100));
+  expect(screen.queryAllByTitle('Live frame')).toHaveLength(0);
+  expect(animationFrames.size).toBe(1);
+  nextAnimationFrame();
   expect(screen.getAllByTitle('Live frame')).toHaveLength(4);
-  act(() => jest.advanceTimersByTime(16));
+  nextAnimationFrame();
   expect(screen.getAllByTitle('Live frame')).toHaveLength(8);
-  act(() => jest.advanceTimersByTime(16));
+  nextAnimationFrame();
   expect(screen.getAllByTitle('Live frame')).toHaveLength(10);
+  expect(animationFrames.size).toBe(0);
 });
 
 it('cancels queued mounts on departure and disposes only after a sustained absence', () => {
   const { unmount } = render(<Panel />);
   visibility(true);
   visibility(false);
-  act(() => jest.advanceTimersByTime(16));
+  expect(animationFrames.size).toBe(0);
+  nextAnimationFrame();
   expect(screen.queryByTitle('Live frame')).not.toBeInTheDocument();
   visibility(true);
-  act(() => jest.advanceTimersByTime(16));
+  nextAnimationFrame();
   const frame = screen.getByTitle('Live frame');
   visibility(false);
   act(() => jest.advanceTimersByTime(4999));
@@ -93,18 +115,19 @@ it('cancels queued mounts on departure and disposes only after a sustained absen
   act(() => jest.advanceTimersByTime(5000));
   expect(frame).not.toBeInTheDocument();
   visibility(true);
-  act(() => jest.advanceTimersByTime(16));
+  nextAnimationFrame();
   expect(screen.getByTitle('Live frame')).not.toBe(frame);
   unmount();
   expect(unobserve).toHaveBeenCalledTimes(1);
   expect(disconnect).toHaveBeenCalledTimes(1);
   expect(jest.getTimerCount()).toBe(0);
+  expect(animationFrames.size).toBe(0);
 });
 
 it('keeps a focused frame alive until focus leaves', () => {
   render(<Panel />);
   visibility(true);
-  act(() => jest.advanceTimersByTime(16));
+  nextAnimationFrame();
   const frame = screen.getByTitle('Live frame');
   frame.focus();
   visibility(false);
@@ -122,6 +145,7 @@ it('renders immediately when disabled or unsupported, and cleans up pending moun
   expect(screen.getByTitle('Live frame')).toBeInTheDocument();
   expect(disconnect).toHaveBeenCalledTimes(1);
   expect(jest.getTimerCount()).toBe(0);
+  expect(animationFrames.size).toBe(0);
   view.unmount();
   const original = window.IntersectionObserver;
   Object.defineProperty(window, 'IntersectionObserver', { configurable: true, value: undefined });
