@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
-import { lazy, Suspense, useEffect, useMemo, useState, type Ref } from 'react';
-import { useDebounce, useMeasure } from 'react-use';
+import { lazy, memo, Suspense, useEffect, useMemo, useState, type Ref } from 'react';
+import { useDebounce } from 'react-use';
 
 import {
   CoreApp,
@@ -45,6 +45,7 @@ import { getEditorLayoutStyles } from './editor/editorLayout';
 import { DEFAULT_VIEW_MODE, type ViewMode } from './editor/viewMode';
 import { usePagination } from './pagination';
 import { catchTemplateError, renderContent, type RenderedContent, type RowWindow } from './renderContent';
+import { useTextPanelHeight } from './useTextPanelHeight';
 import { useThemedReplaceVariables } from './useThemedReplaceVariables';
 import { EMPTY_CONTENT, getCurrentFrameIndex, getInterpolateFormat, isTextNewFeaturesEnabled } from './utils';
 import { getTextVariableSuggestions } from './variableSuggestions';
@@ -81,7 +82,10 @@ export function TextNGPanel(props: Props) {
   const replaceVariables = useThemedReplaceVariables(props.replaceVariables);
   const isEditing = app === CoreApp.PanelEditor;
   // Repeated copies share `id`. The dashboard gives each copy its own id in the request.
-  const consent = { panelId: data.request?.panelId ?? id, panelTitle: title, dashboardUid: data.request?.dashboardUID };
+  const consent = useMemo(
+    () => ({ panelId: data.request?.panelId ?? id, panelTitle: title, dashboardUid: data.request?.dashboardUID }),
+    [data.request?.panelId, data.request?.dashboardUID, id, title]
+  );
   const content = options.content ?? defaultOptions.content ?? '';
   // Gated here and not only in the options pane: a panel saved while the flag was on
   // still carries its per-row mode, and the pane cannot withhold what is already set.
@@ -353,7 +357,7 @@ interface TextNGViewProps extends ProcessedContent {
   consent?: TextSandboxProps['consent'];
 }
 
-function TextNGView({
+const TextNGView = memo(function TextNGView({
   mode,
   content,
   error,
@@ -366,7 +370,7 @@ function TextNGView({
 }: TextNGViewProps) {
   const styles = useStyles2(getStyles);
   // Measured on the panel's own box, which the frame cannot resize, so the fill cannot feed back.
-  const [fillRef, { height: fillHeight }] = useMeasure<HTMLDivElement>();
+  const [fillRef, fillHeight] = useTextPanelHeight();
 
   if (error) {
     return <Alert severity="error" title={error} data-testid="TextNGPanel-error" />;
@@ -417,7 +421,7 @@ function TextNGView({
       </ScrollContainer>
     </div>
   );
-}
+});
 
 // Only mounted while the lazy editor chunk loads, so the extra processing runs
 // at most once per edit session.

@@ -35,6 +35,7 @@ export function TextSandbox({ html, hasData = true, testId, className, minHeight
   const { dashboardUid, panelId, panelTitle } = consent ?? {};
   const origins = useAllowedOrigins(dashboardUid, panelId);
   const [globalCss, setGlobalCss] = useState<string>();
+  const sanitizedHtml = useMemo(() => (hasData ? textUtil.sanitizeTextPanelContent(html) : html), [html, hasData]);
   const mermaid = useMemo(() => (isTextNewFeaturesEnabled() ? getMermaidConfig(theme) : undefined), [theme]);
   const fontRoot = `${window.__grafana_public_path__ || 'public/'}fonts/`;
 
@@ -75,7 +76,7 @@ export function TextSandbox({ html, hasData = true, testId, className, minHeight
         {/* Wait for fonts so initialization creates only one frame document. */}
         {globalCss !== undefined && (
           <SandboxFrame
-            html={hasData ? textUtil.sanitizeTextPanelContent(html) : html}
+            html={sanitizedHtml}
             globalCss={globalCss}
             policy={hasData ? textSandboxPolicy(origins, fontRoot) : undefined}
             mermaid={mermaid}
