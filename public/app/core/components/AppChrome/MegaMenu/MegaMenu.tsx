@@ -15,14 +15,18 @@ import { ErrorBoundaryAlert, ScrollContainer, Text, useStyles2, Button, IconButt
 import { useDragAndDrop } from '@grafana/ui/internal';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { ScopesDashboardsMegaMenuSection } from 'app/features/scopes/dashboards/ScopesDashboardsMegaMenuSection';
+import { useSelector } from 'app/types/store';
 
 import { MegaMenuCustomiseControls } from './MegaMenuCustomiseControls';
 import { MegaMenuExtensionPoint } from './MegaMenuExtensionPoint';
 import { DOCK_MENU_BUTTON_ID, MegaMenuHeader } from './MegaMenuHeader';
 import { MegaMenuItem } from './MegaMenuItem';
 import { MegaMenuPinnedItem } from './MegaMenuPinnedItem';
+import { MegaMenuProfile } from './MegaMenuProfile';
+import { useMegaMenuSectionExtension } from './MegaMenuSectionExtensionPoint';
 import { MegaMenuSkeleton } from './MegaMenuSkeleton';
 import { useNavCustomization } from './hooks';
+import { useMegaMenuSectionSplitter } from './useMegaMenuSectionSplitter';
 
 export const MENU_WIDTH = '320px';
 
@@ -37,6 +41,8 @@ export const MegaMenu = memo(
     const styles = useStyles2(getStyles, visualRefreshEnabled);
     const { chrome } = useGrafana();
     const state = chrome.useState();
+    // Only a signed-in user has a profile; anonymous users sign in from the top bar.
+    const profileNode = useSelector((store) => store.navIndex['profile']);
     const {
       canCustomise,
       isLoading,
@@ -61,6 +67,12 @@ export const MegaMenu = memo(
       isSaving,
     } = useNavCustomization();
     const { DragDropContext, Draggable, Droppable } = useDragAndDrop(editMode);
+    const pluginSection = useMegaMenuSectionExtension({
+      onNavigate: state.megaMenuDocked ? undefined : onClose,
+    });
+    // Customising the navigation gives it the whole menu.
+    const section = editMode ? null : pluginSection;
+    const { containerProps, navProps, separatorProps, sectionProps } = useMegaMenuSectionSplitter(section !== null);
 
     const peekAndDock = useFlagGrafanaMegaMenuPeekAndDock();
     const showFooter = editMode || (canCustomise && !isLoading) || !peekAndDock;
@@ -253,32 +265,44 @@ export const MegaMenu = memo(
       <div data-testid={selectors.components.NavMenu.Menu} ref={ref} {...restProps}>
         <MegaMenuHeader handleDockedMenu={handleDockedMenu} onClose={onClose} />
         <nav className={cx(styles.content, state.megaMenuDocked && styles.contentDocked)} aria-label={navLabel}>
-          <div className={styles.scrollArea}>
-            <ScrollContainer height="100%" overflowX="hidden" showScrollIndicators={!visualRefreshEnabled}>
+          <div {...containerProps}>
+            <div {...navProps}>
+              <div className={styles.scrollArea}>
+                <ScrollContainer height="100%" overflowX="hidden" showScrollIndicators={!visualRefreshEnabled}>
+                  <>
+                    {isLoading ? (
+                      <ul className={styles.itemList} aria-label={navLabel} aria-busy>
+                        <MegaMenuSkeleton />
+                      </ul>
+                    ) : canCustomise ? (
+                      <>
+                        {renderPinnedBox()}
+                        {renderScopesDashboardsSection()}
+                        {renderSectionList()}
+                      </>
+                    ) : (
+                      <>
+                        {renderScopesDashboardsSection()}
+                        <ul className={styles.itemList} aria-label={navLabel}>
+                          {navItems.map((link) => renderNavItem(link))}
+                        </ul>
+                      </>
+                    )}
+                    <MegaMenuExtensionPoint />
+                  </>
+                </ScrollContainer>
+              </div>
+            </div>
+            {section && (
               <>
-                {isLoading ? (
-                  <ul className={styles.itemList} aria-label={navLabel} aria-busy>
-                    <MegaMenuSkeleton />
-                  </ul>
-                ) : canCustomise ? (
-                  <>
-                    {renderPinnedBox()}
-                    {renderScopesDashboardsSection()}
-                    {renderSectionList()}
-                  </>
-                ) : (
-                  <>
-                    {renderScopesDashboardsSection()}
-                    <ul className={styles.itemList} aria-label={navLabel}>
-                      {navItems.map((link) => renderNavItem(link))}
-                    </ul>
-                  </>
-                )}
-                <MegaMenuExtensionPoint />
+                <div {...separatorProps} className={cx(separatorProps.className, styles.sectionSeparator)} />
+                <div {...sectionProps} data-testid="mega-menu-section">
+                  {section}
+                </div>
               </>
-            </ScrollContainer>
+            )}
           </div>
-          {showFooter && <hr className={styles.dividerLine} />}
+          {(showFooter || profileNode) && <hr className={styles.dividerLine} />}
           {showFooter && (
             <div className={cx(styles.footer, editMode && styles.footerEditMode)}>
               {editMode && (
@@ -311,6 +335,7 @@ export const MegaMenu = memo(
               )}
             </div>
           )}
+          {profileNode && <MegaMenuProfile profileNode={profileNode} />}
         </nav>
       </div>
     );
@@ -335,6 +360,13 @@ const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => {
     scrollArea: css({
       flex: 1,
       minHeight: 0,
+    }),
+    // The divider between the navigation and the plugin section, drawn under the resize handle's hover band. Its
+    // height gives it a wider gap than the footer divider's: this one separates two sections, not a footer.
+    sectionSeparator: css({
+      margin: theme.spacing(0, 1),
+      // A 1px line across the middle of the taller drag target.
+      background: `linear-gradient(${theme.colors.border.weak}, ${theme.colors.border.weak}) center / 100% 1px no-repeat`,
     }),
     itemList: css({
       boxSizing: 'border-box',
@@ -372,14 +404,14 @@ const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => {
     pinnedHeadingLine: css({
       flexGrow: 1,
       height: '1px',
-      background: `linear-gradient(90deg, ${theme.colors.border.weak} 65%, transparent 100%)`,
+      background: theme.colors.border.weak,
     }),
     // Divider separating the pinned box from the rest of the nav, and nav from footer
     dividerLine: css({
       border: 'none',
       flexShrink: 0,
       height: 1,
-      background: `linear-gradient(90deg, transparent 0%, ${theme.colors.border.weak} 20%, ${theme.colors.border.weak} 80%, transparent 100%)`,
+      background: theme.colors.border.weak,
       margin: theme.spacing(1),
     }),
     // Edit-mode footer: the Reset/Cancel/Done controls
