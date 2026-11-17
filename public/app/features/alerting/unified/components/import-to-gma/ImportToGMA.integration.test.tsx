@@ -165,4 +165,44 @@ describe('ImportToGMA wizard — real steps', () => {
     expect(screen.queryByRole('group', { name: /import rules/i })).not.toBeInTheDocument();
     expect(dryRuns).toBe(1);
   });
+
+  it('lists every unknown-field error from a failed dry run and stays on step 1', async () => {
+    let dryRuns = 0;
+    server.use(
+      http.post(CONVERT_URL, () => {
+        dryRuns += 1;
+        return HttpResponse.json(
+          {
+            message: [
+              'yaml: unmarshal errors:',
+              '  line 1: field bogus_route_field not found in type config.plain',
+              '  line 5: field unknown_integration_configs not found in type config.plain',
+            ].join('\n'),
+          },
+          { status: 400 }
+        );
+      })
+    );
+    const { user } = render(<ImportWizardGate />);
+
+    await user.upload(await screen.findByLabelText(/alertmanager config yaml/i), alertmanagerYaml());
+    await user.type(screen.getByPlaceholderText(/prometheus-prod/i), 'imported-tree');
+
+    const alert = await screen.findByRole('alert', undefined, { timeout: 3000 });
+    expect(
+      within(alert)
+        .getAllByRole('listitem')
+        .map((item) => item.textContent)
+    ).toEqual([
+      'line 1: field bogus_route_field not found in type config.plain',
+      'line 5: field unknown_integration_configs not found in type config.plain',
+    ]);
+
+    // Next runs its own dry run; only once that has answered is "still on step 1" a meaningful check.
+    const dryRunsBeforeNext = dryRuns;
+    await user.click(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
+    await waitFor(() => expect(dryRuns).toBeGreaterThan(dryRunsBeforeNext));
+    expect(screen.getByRole('alert')).toBeInTheDocument();
+    expect(screen.queryByRole('group', { name: /import rules/i })).not.toBeInTheDocument();
+  });
 });
