@@ -17,6 +17,7 @@ import {
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { getDefaultDatasource } from 'app/features/dashboard/api/ResponseTransformers';
 
+import { stripBiSelectionStamp } from '../bi/biSelectionStamp';
 import { getIntervalsQueryFromNewIntervalModel } from '../utils/getIntervalsQueryFromNewIntervalModel';
 
 import { type DSReferencesMapping } from './DashboardSceneSerializer';
@@ -263,7 +264,8 @@ export function sceneVariablesSetToSchemaV2Variables(
                 return { key, origin, value, values, valueLabels, keyLabel, operator };
               }
             ),
-            ...validateFiltersOrigin(variable.state.filters),
+            // BI selection ownership is session-only, so its stamp is not saved
+            ...validateFiltersOrigin(variable.state.filters.map(stripBiSelectionStamp)),
           ],
           defaultKeys: variable.state.defaultKeys || [],
           allowCustomValue: variable.state.allowCustomValue ?? true,

@@ -13,6 +13,7 @@ import {
 } from '@grafana/schema';
 import { type VariableOption, type AdHocFilterWithLabels } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
+import { stripBiSelectionStamp } from '../bi/biSelectionStamp';
 import { getIntervalsQueryFromNewIntervalModel } from '../utils/getIntervalsQueryFromNewIntervalModel';
 
 import { normalizeDataSourceRef } from './normalizeDataSourceRef';
@@ -198,7 +199,8 @@ export function sceneVariablesSetToVariables(
               return { key, origin, value, values, valueLabels, keyLabel, operator };
             }
           ),
-          ...validateFiltersOrigin(variable.state.filters),
+          // BI selection ownership is session-only, so its stamp is not saved
+          ...validateFiltersOrigin(variable.state.filters.map(stripBiSelectionStamp)),
         ],
         defaultKeys: variable.state.defaultKeys,
         ...(variable.state.allowCustomValue !== undefined && { allowCustomValue: variable.state.allowCustomValue }),
