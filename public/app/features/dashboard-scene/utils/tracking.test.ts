@@ -340,6 +340,20 @@ describe('dashboard tracking', () => {
         });
       }
     });
+
+    it.each([
+      ['the flag is off', { defaults: { varMappings: { min: '$min' } }, overrides: [] }, false, true],
+      ['the dashboard is not v2', { defaults: { varMappings: { min: '$min' } }, overrides: [] }, true, false],
+      ['no panel uses variables', { defaults: { min: 0 }, overrides: [] }, true, true],
+    ])('does not report when %s', (_, fieldConfig, isFlagOn, isV2) => {
+      setTestFlags({ 'grafana.panelOptionInterpolation': isFlagOn, ...defaultFlags });
+      const scene = buildSceneWithTextPanels([{}], [fieldConfig]);
+      jest.spyOn(scene, 'isV2').mockReturnValue(isV2);
+
+      trackDashboardSceneLoaded(scene, 42);
+
+      expect(reportInteraction).not.toHaveBeenCalledWith('dashboards_panel_option_variable_usage', expect.anything());
+    });
   });
 
   describe('text panel usage tracking', () => {
