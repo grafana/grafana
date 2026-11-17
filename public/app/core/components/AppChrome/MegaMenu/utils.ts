@@ -1,4 +1,6 @@
-import { useEffect, useRef } from 'react';
+import { createFocusManager } from '@react-aria/focus';
+import { useEffect, useEffectEvent } from 'react';
+import { usePrevious } from 'react-use';
 
 import { type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -434,6 +436,17 @@ export function reorderSections(
   return next === ordered ? currentOrder : next;
 }
 
+/** The mega menu over the page, as opposed to the docked one. */
+export const MEGA_MENU_OVERLAY_ID = 'mega-menu-overlay';
+
+/** Moves focus to the first control in the mega menu over the page, where opening it with a click puts focus. */
+export function focusMegaMenuOverlay() {
+  const menu = document.getElementById(MEGA_MENU_OVERLAY_ID);
+  if (menu) {
+    createFocusManager({ current: menu }).focusFirst({ tabbable: true });
+  }
+}
+
 /**
  * helper to manage focus when opening/closing and docking/undocking the mega menu
  * @param isOpen whether the mega menu is open
@@ -442,38 +455,39 @@ export function reorderSections(
  */
 export function useMegaMenuFocusHelper(isOpen: boolean, isDocked: boolean, isPeek = false) {
   // Opening the menu by pointing at its toggle, and closing it by moving away, leave focus where it is.
-  const wasPeek = useRef(isPeek);
-  const openedOrClosedByPeek = isPeek || wasPeek.current;
-  useEffect(() => {
-    wasPeek.current = isPeek;
-  });
+  const wasPeek = usePrevious(isPeek);
+  const openedOrClosedByPeek = isPeek || Boolean(wasPeek);
 
   // manage focus when opening/closing
-  useEffect(() => {
+  const onOpenChange = useEffectEvent((open: boolean) => {
     if (openedOrClosedByPeek) {
       return;
     }
-    if (isOpen) {
+    if (open) {
       document.getElementById(MEGA_MENU_HEADER_TOGGLE_ID)?.focus();
     } else {
       document.getElementById(MEGA_MENU_TOGGLE_ID)?.focus();
     }
-    // Only an open or close moves focus.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen]);
+  });
 
   // manage focus when docking/undocking
-  useEffect(() => {
+  const onDockedChange = useEffectEvent((docked: boolean) => {
     // A peek opens a docked menu the user closed undocked.
     if (isPeek) {
       return;
     }
-    if (isDocked) {
+    if (docked) {
       (document.getElementById(DOCKED_MENU_TOGGLE_ID) ?? document.getElementById(DOCK_MENU_BUTTON_ID))?.focus();
     } else {
       document.getElementById(MEGA_MENU_TOGGLE_ID)?.focus();
     }
-    // Only docking or undocking moves focus.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  });
+
+  // Only an open or a close, and docking or undocking, move focus.
+  useEffect(() => {
+    onOpenChange(isOpen);
+  }, [isOpen]);
+  useEffect(() => {
+    onDockedChange(isDocked);
   }, [isDocked]);
 }

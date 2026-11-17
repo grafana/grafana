@@ -220,11 +220,14 @@ describe('AppChrome', () => {
       }
     };
 
-    const setupWithFakeTimers = () => {
+    const setupWithFakeTimers = (children: ReactNode = 'Children') => {
       jest.useFakeTimers();
       const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
-      return { user, ...setup(<Page navId="child1">Children</Page>) };
+      return { user, ...setup(<Page navId="child1">{children}</Page>) };
     };
+
+    // Long enough for react-aria's focus restore, which waits a frame, and for the dialog's 500ms refocus.
+    const AFTER_FOCUS_TIMERS = 1000;
 
     beforeEach(() => {
       window.localStorage.clear();
@@ -252,6 +255,19 @@ describe('AppChrome', () => {
 
         await user.click(toggle);
         expect(screen.getByRole('dialog', { name: 'Navigation' })).toBeInTheDocument();
+      });
+
+      it('closes the menu on a press outside it, which the page does not get', async () => {
+        enablePointerEvents();
+        const onPageClick = jest.fn();
+        const { user } = setupWithFakeTimers(<button onClick={onPageClick}>Page button</button>);
+        await user.click(await screen.findByRole('button', { name: 'Main menu' }));
+        expect(screen.getByRole('dialog', { name: 'Navigation' })).toBeInTheDocument();
+
+        await user.click(screen.getByRole('button', { name: 'Page button' }));
+
+        expect(screen.queryByRole('dialog', { name: 'Navigation' })).not.toBeInTheDocument();
+        expect(onPageClick).not.toHaveBeenCalled();
       });
 
       it('keeps the footer dock button and the header close button', async () => {
@@ -304,7 +320,87 @@ describe('AppChrome', () => {
         await user.unhover(menu);
         act(() => jest.advanceTimersByTime(MEGA_MENU_PEEK_CLOSE_DELAY));
         expect(screen.queryByRole('dialog', { name: 'Navigation' })).not.toBeInTheDocument();
+        act(() => jest.advanceTimersByTime(AFTER_FOCUS_TIMERS));
         expect(pageContent).toHaveFocus();
+      });
+
+      it('lets a press outside a peeking menu through to the page, and closes the menu', async () => {
+        enablePointerEvents();
+        const onPageClick = jest.fn();
+        const { user } = setupWithFakeTimers(<button onClick={onPageClick}>Page button</button>);
+        await user.hover(await screen.findByRole('button', { name: 'Main menu' }));
+        act(() => jest.advanceTimersByTime(MEGA_MENU_PEEK_OPEN_DELAY));
+        expect(screen.getByRole('dialog', { name: 'Navigation' })).toBeInTheDocument();
+
+        // Before the pointer has been away long enough to close the menu.
+        await user.click(screen.getByRole('button', { name: 'Page button' }));
+
+        expect(onPageClick).toHaveBeenCalledTimes(1);
+        expect(screen.queryByRole('dialog', { name: 'Navigation' })).not.toBeInTheDocument();
+      });
+
+      describe('from a docked menu that is closed', () => {
+        const originalInnerWidth = window.innerWidth;
+        const setInnerWidth = (value: number) =>
+          Object.defineProperty(window, 'innerWidth', { configurable: true, writable: true, value });
+
+        beforeEach(() => {
+          mockUseMediaQueryMinWidth.mockReturnValue(true);
+          // The service docks the menu again only where the window is wide enough, as it does at startup.
+          setInnerWidth(1920);
+        });
+
+        afterEach(() => {
+          setInnerWidth(originalInnerWidth);
+        });
+
+        const setupDockedAndClosed = async () => {
+          const result = setupWithFakeTimers();
+          await screen.findByRole('button', { name: 'Close menu', hidden: true });
+          // As the Assistant workspace does: it closes the docked menu without storing that, to open it on exit.
+          act(() => result.context.chrome.setMegaMenuOpen(false, false));
+          return result;
+        };
+
+        const peek = async (user: ReturnType<typeof userEvent.setup>) => {
+          const toggle = screen.getByRole('button', { name: 'Main menu' });
+          await user.hover(toggle);
+          act(() => jest.advanceTimersByTime(MEGA_MENU_PEEK_OPEN_DELAY));
+          return { toggle, menu: screen.getByRole('dialog', { name: 'Navigation' }) };
+        };
+
+        it('docks the menu again once the peek ends', async () => {
+          const { user, context } = await setupDockedAndClosed();
+          const { toggle } = await peek(user);
+          expect(context.chrome.state.getValue()).toMatchObject({ megaMenuDocked: false, megaMenuOpen: true });
+
+          await user.unhover(toggle);
+          act(() => jest.advanceTimersByTime(MEGA_MENU_PEEK_CLOSE_DELAY));
+
+          expect(context.chrome.state.getValue()).toMatchObject({ megaMenuDocked: true, megaMenuOpen: false });
+        });
+
+        it('docks the menu again once the menu a press kept open closes', async () => {
+          const { user, context } = await setupDockedAndClosed();
+          const { menu } = await peek(user);
+
+          await user.pointer({ keys: '[MouseLeft]', target: menu });
+          await user.keyboard('{Escape}');
+
+          expect(screen.queryByRole('dialog', { name: 'Navigation' })).not.toBeInTheDocument();
+          expect(context.chrome.state.getValue()).toMatchObject({ megaMenuDocked: true, megaMenuOpen: false });
+        });
+
+        it('leaves focus where it was', async () => {
+          const { user } = await setupDockedAndClosed();
+          const pageContent = document.getElementById('pageContent')!;
+          act(() => pageContent.focus());
+
+          await peek(user);
+          act(() => jest.advanceTimersByTime(AFTER_FOCUS_TIMERS));
+
+          expect(pageContent).toHaveFocus();
+        });
       });
 
       it('keeps a peeking menu open once something in it is pressed', async () => {
@@ -333,6 +429,28 @@ describe('AppChrome', () => {
         expect(screen.getByRole('dialog', { name: 'Navigation' })).toBeInTheDocument();
       });
 
+      it('moves focus into a peeking menu a click keeps open, as a click that opens the menu does', async () => {
+        const { user } = setupWithFakeTimers();
+        const toggle = await screen.findByRole('button', { name: 'Main menu' });
+        const focusedInMenu = () => {
+          const menu = screen.getByRole('dialog', { name: 'Navigation' });
+          const focused = document.activeElement;
+          return focused && focused !== menu && menu.contains(focused) ? focused.outerHTML : undefined;
+        };
+        await user.click(toggle);
+        const focusedByClickOpen = focusedInMenu();
+        expect(focusedByClickOpen).toBeDefined();
+        await user.keyboard('{Escape}');
+        await user.unhover(toggle);
+        await user.hover(toggle);
+        act(() => jest.advanceTimersByTime(MEGA_MENU_PEEK_OPEN_DELAY));
+        expect(toggle).toHaveFocus();
+
+        await user.click(toggle);
+
+        expect(focusedInMenu()).toBe(focusedByClickOpen);
+      });
+
       it('docks the menu when the toggle is clicked on wide screens, and the same spot closes it again', async () => {
         mockUseMediaQueryMinWidth.mockReturnValue(true);
         window.localStorage.setItem(DOCKED_LOCAL_STORAGE_KEY, 'false');
@@ -346,7 +464,8 @@ describe('AppChrome', () => {
         // The docked menu is shown with CSS only on wide screens, which jsdom does not apply.
         const close = screen.getByRole('button', { name: 'Close menu', hidden: true });
         expect(close).toHaveFocus();
-        expect(close.compareDocumentPosition(screen.getAllByTestId(homeLogoTestId)[0])).toBe(
+        // It sits after the logo, where the top bar toggle was.
+        expect(screen.getAllByTestId(homeLogoTestId)[0].compareDocumentPosition(close)).toBe(
           Node.DOCUMENT_POSITION_FOLLOWING
         );
         // The header toggle docks and closes the menu, so the footer has no dock button.
@@ -372,9 +491,11 @@ describe('AppChrome', () => {
 
         expect(context.chrome.state.getValue()).toMatchObject({ megaMenuDocked: true, megaMenuOpen: true });
         expect(screen.queryByRole('dialog', { name: 'Navigation' })).not.toBeInTheDocument();
+        act(() => jest.advanceTimersByTime(AFTER_FOCUS_TIMERS));
+        expect(screen.getByRole('button', { name: 'Close menu', hidden: true })).toHaveFocus();
       });
 
-      it('says a click docks the menu while the pointer holds it open, only where it can dock', async () => {
+      it('says a click docks the menu while the pointer is on the toggle, only where it can dock', async () => {
         mockUseMediaQueryMinWidth.mockReturnValue(true);
         window.localStorage.setItem(DOCKED_LOCAL_STORAGE_KEY, 'false');
         const { user } = setupWithFakeTimers();
@@ -382,9 +503,15 @@ describe('AppChrome', () => {
         expect(screen.queryByRole('tooltip', { name: 'Click to dock' })).not.toBeInTheDocument();
 
         await user.hover(toggle);
-        act(() => jest.advanceTimersByTime(MEGA_MENU_PEEK_OPEN_DELAY));
 
         expect(screen.getByRole('tooltip', { name: 'Click to dock' })).toBeInTheDocument();
+
+        // The tooltip follows the pointer as any other does, so it goes once the pointer moves into the menu.
+        act(() => jest.advanceTimersByTime(MEGA_MENU_PEEK_OPEN_DELAY));
+        await user.unhover(toggle);
+        await user.hover(screen.getByRole('dialog', { name: 'Navigation' }));
+
+        expect(screen.queryByRole('tooltip', { name: 'Click to dock' })).not.toBeInTheDocument();
       });
 
       it('offers no docking on narrower screens', async () => {
@@ -413,11 +540,11 @@ describe('AppChrome', () => {
         expect(screen.getByRole('dialog', { name: 'Navigation' })).toBeInTheDocument();
       });
 
-      it('sits before the home logo', async () => {
+      it('sits after the home logo, as with the toggle off', async () => {
         setup(<Page navId="child1">Children</Page>);
         const toggle = await screen.findByRole('button', { name: 'Main menu' });
 
-        expect(toggle.compareDocumentPosition(screen.getByTestId(homeLogoTestId))).toBe(
+        expect(screen.getByTestId(homeLogoTestId).compareDocumentPosition(toggle)).toBe(
           Node.DOCUMENT_POSITION_FOLLOWING
         );
       });

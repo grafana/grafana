@@ -67,6 +67,8 @@ export class AppChromeService {
   );
   private megaMenuPeekTimer?: ReturnType<typeof setTimeout>;
   private megaMenuPeekHeldOff = false;
+  /** Set while a peek, or the menu a press in it kept open, shows a docked menu the user closed over the page. */
+  private megaMenuUndockedByPeek = false;
 
   private sessionStorageData = window.sessionStorage.getItem('returnToPrevious');
   private returnToPreviousData = this.sessionStorageData ? JSON.parse(this.sessionStorageData) : undefined;
@@ -186,11 +188,13 @@ export class AppChromeService {
     this.update({
       megaMenuOpen: newOpenState,
       megaMenuPeek: false,
+      ...(newOpenState ? {} : this.dockedStateAfterPeek()),
     });
   };
 
   public setMegaMenuDocked = (newDockedState: boolean, updatePersistedState = true) => {
     this.clearMegaMenuPeekTimer();
+    this.megaMenuUndockedByPeek = false;
     if (updatePersistedState) {
       store.set(DOCKED_LOCAL_STORAGE_KEY, newDockedState);
     }
@@ -211,7 +215,8 @@ export class AppChromeService {
       return;
     }
     this.megaMenuPeekTimer = setTimeout(() => {
-      // A docked menu the user closed opens undocked too: a peek never moves the page. The stored choice is kept.
+      // A docked menu the user closed opens undocked too: a peek never moves the page. It docks again once it closes.
+      this.megaMenuUndockedByPeek = this.state.getValue().megaMenuDocked;
       this.update({ megaMenuOpen: true, megaMenuDocked: false, megaMenuPeek: true });
     }, MEGA_MENU_PEEK_OPEN_DELAY);
   };
@@ -237,9 +242,19 @@ export class AppChromeService {
       return;
     }
     this.megaMenuPeekTimer = setTimeout(() => {
-      this.update({ megaMenuOpen: false, megaMenuPeek: false });
+      this.update({ megaMenuOpen: false, megaMenuPeek: false, ...this.dockedStateAfterPeek() });
     }, MEGA_MENU_PEEK_CLOSE_DELAY);
   };
+
+  /**
+   * As the menu a peek opened closes, puts back the docked state the peek set aside, so callers that open the docked
+   * menu again still find it docked. Below the width the docked menu needs, as at startup, it stays undocked.
+   */
+  private dockedStateAfterPeek(): Partial<AppChromeState> {
+    const undockedByPeek = this.megaMenuUndockedByPeek;
+    this.megaMenuUndockedByPeek = false;
+    return undockedByPeek && window.innerWidth >= config.theme2.breakpoints.values.xl ? { megaMenuDocked: true } : {};
+  }
 
   private clearMegaMenuPeekTimer() {
     clearTimeout(this.megaMenuPeekTimer);

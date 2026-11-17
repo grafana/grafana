@@ -39,8 +39,9 @@ export function MegaMenuHeader({ handleDockedMenu, onClose }: Props) {
     <div className={styles.header}>
       <Stack alignItems="center" minWidth={0} gap={1}>
         {peekAndDock ? (
-          // The toggle and logo sit where they are in the top bar, so the toggle that docked the menu closes it.
+          // The logo and toggle sit where they are in the top bar, so the toggle that docked the menu closes it.
           <Stack alignItems="center" gap={0.5}>
+            <HomeLogo homeNav={homeNav} />
             <ToolbarButton
               narrow
               id={DOCKED_MENU_TOGGLE_ID}
@@ -55,7 +56,6 @@ export function MegaMenuHeader({ handleDockedMenu, onClose }: Props) {
             >
               <MegaMenuToggleIcon />
             </ToolbarButton>
-            <HomeLogo homeNav={homeNav} />
           </Stack>
         ) : (
           state.megaMenuDocked && <HomeLogo homeNav={homeNav} onClick={state.megaMenuDocked ? undefined : onClose} />
