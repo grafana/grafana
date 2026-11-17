@@ -10877,6 +10877,8 @@
       "clear-button": "Clear selection"
     },
     "code-mirror": {
+      "copy": "Copy to clipboard",
+      "copy-failed": "Could not copy to clipboard",
       "diff-modified": "Modified",
       "diff-original": "Original",
       "error-label": "CodeMirror editor failed to load",
