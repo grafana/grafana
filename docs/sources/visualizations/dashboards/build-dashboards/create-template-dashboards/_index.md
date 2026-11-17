@@ -122,7 +122,14 @@ Users who open the template now see the updated content.
 
 #### Edit template metadata
 
-To update the template title, description, and tags, follow these steps:
+A custom dashboard template can have the following metadata: title, description, and tags.
+While you must have a template title, you're not required to set template descriptions or tags.
+You can view or update these in the **Template** tab of the dashboard **Settings** page.
+
+These metadata are separate from the title, description, and tags of the underlying dashboard.
+You can find those in the **General** tab of the dashboard settings.
+
+To update the template metadata, follow these steps:
 
 1. Click **Dashboards** in the primary menu.
 1. Click **New** and select **Use template** in the drop-down menu.
@@ -136,12 +143,7 @@ To update the template title, description, and tags, follow these steps:
 
 1. Click the **Dashboard options** icon in the toolbar to open the sidebar.
 1. In the sidebar, click **View all settings**.
-1. In the **Template** tab, update the following, as needed:
-
-   - **Template title**
-   - **Template description**
-   - **Template tags**
-
+1. In the **Template** tab, update the template title, description, and tags, as needed.
 1. Click **Save**.
 
 {{< admonition type="tip" >}}
