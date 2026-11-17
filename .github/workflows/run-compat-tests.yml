@@ -125,9 +125,10 @@ jobs:
         id: setup-go
         uses: ./.github/actions/setup-go
         with:
-          # The shared build cache comes from jobs with other build settings, so restoring it
-          # costs more time than it saves here.
-          cache-build: 'false'
+          # The Enterprise key is filled by the Enterprise test shards, which compile like this
+          # job, so its cache saves minutes. The OSS key mostly holds server builds with other
+          # settings, which are not worth the restore.
+          cache-build: ${{ inputs.edition == 'enterprise' && 'true' || 'false' }}
 
       - name: Summarize the tested versions
         env:
