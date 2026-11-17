@@ -105,7 +105,7 @@ export function resumeRecordingPendingChanges(scene: DashboardScene) {
 }
 
 /** `stored` with what changed from `before` to `after`: what didn't change keeps its stored form. */
-function rebase(stored: unknown, before: unknown, after: unknown): unknown {
+export function rebase(stored: unknown, before: unknown, after: unknown): unknown {
   if (isEqual(before, after)) {
     return stored;
   }

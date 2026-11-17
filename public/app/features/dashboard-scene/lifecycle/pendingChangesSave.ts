@@ -2,6 +2,7 @@ import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { appEvents } from 'app/core/app_events';
+import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 
 import { type DashboardChangeInfo } from '../saving/shared';
@@ -19,6 +20,7 @@ import {
   hasUnrecordedPendingChange,
   pendingChangesRecorded,
   pendingChangesSuperseded,
+  rebase,
   recordPendingChange,
 } from './pendingChangesHistory';
 import { closePendingChangesPage, takeEditingOnNextLoad } from './pendingChangesPageReload';
@@ -59,17 +61,24 @@ export function savesPendingChanges(scene: DashboardScene): boolean {
 }
 
 /**
- * What the dashboard's Save would save: the pending changes as their plugin last recorded them,
- * against the saved version they would replace. Both are as stored, so the defaults the scene fills
- * in don't count; every edit made here is recorded as it is made.
+ * What the dashboard's Save would save, against the saved version it would replace, both in the form
+ * the dashboard writes, as with the flag off. The saved version and the pending changes as stored
+ * can spell a dashboard differently (key order, defaults one leaves out), so the saved version is
+ * what the recorded pending changes change from it, on top of the dashboard's own save model.
  */
 export function getPendingChangesDiff(scene: DashboardScene): DashboardChangeInfo | undefined {
   const preview = getScenePendingChangePreview(scene.state);
   if (!preview?.previewing || !preview.saved || !savesPendingChanges(scene)) {
     return undefined;
   }
-  const initialSaveModel = withoutEmptyValues(preview.saved.spec);
-  const changedSaveModel = withoutEmptyValues(preview.pending.history?.getState().proposed ?? preview.pending.proposed);
+  const saveModel = scene.getSaveModel();
+  if (!isDashboardV2Spec(saveModel)) {
+    return undefined;
+  }
+  const recorded = preview.pending.history?.getState().proposed ?? preview.pending.proposed;
+  const saved = rebase(saveModel, recorded, preview.saved.spec);
+  const initialSaveModel = withoutEmptyValues(isDashboardV2Spec(saved) ? saved : preview.saved.spec);
+  const changedSaveModel = withoutEmptyValues(saveModel);
   const diffs = jsonDiff(initialSaveModel, changedSaveModel);
   const diffCount = Object.values(diffs).reduce((count, diff) => count + diff.length, 0);
   return {

@@ -1,8 +1,13 @@
 import { waitFor } from '@testing-library/react';
 
-import { defaultSpec, type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import {
+  defaultPanelKind,
+  defaultSpec,
+  type Spec as DashboardV2Spec,
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { appEvents } from 'app/core/app_events';
+import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { getPluginExtensionRegistries } from 'app/features/plugins/extensions/registry/setup';
 import { getAppPluginConfigs, getExtensionPointPluginDependencies } from 'app/features/plugins/extensions/utils';
@@ -86,9 +91,9 @@ async function openDraftOnPage(pending: DashboardPendingChanges, newDashboard: D
 }
 
 /** The dashboard page showing `pending` to a dashboard saved at generation 3, as the page loads it. */
-async function openOnPage(pending: DashboardPendingChanges): Promise<DashboardScene> {
+async function openOnPage(pending: DashboardPendingChanges, savedSpec = saved): Promise<DashboardScene> {
   const preview = await loadOnPage(pending);
-  preview!.saved = { spec: saved, generation: 3 };
+  preview!.saved = { spec: savedSpec, generation: 3 };
   const scene = transformSaveModelSchemaV2ToScene({
     kind: 'DashboardWithAccessInfo',
     apiVersion: 'dashboard.grafana.app/v2beta1',
@@ -120,6 +125,60 @@ describe('opening pending changes on the page', () => {
     const changes = getPendingChangesDiff(scene);
     expect(changes?.diffCount).toBe(1);
     expect(Object.keys(changes?.diffs ?? {})).toEqual(['title']);
+  });
+
+  it('measures the changes in the form the dashboard writes, so key order and defaults left out are no change', async () => {
+    const code = { language: 'plaintext', showLineNumbers: false, showMiniMap: false };
+    const textPanel = (title: string, version: string, options: Record<string, unknown>) => ({
+      kind: 'Panel',
+      spec: {
+        ...defaultPanelKind().spec,
+        id: 5,
+        title,
+        vizConfig: {
+          kind: 'VizConfig',
+          group: 'text',
+          version,
+          spec: { options, fieldConfig: { defaults: {}, overrides: [] } },
+        },
+      },
+    });
+    const layout = {
+      kind: 'GridLayout',
+      spec: {
+        items: [
+          {
+            kind: 'GridLayoutItem',
+            spec: { x: 0, y: 0, width: 12, height: 8, element: { kind: 'ElementReference', name: 'p5' } },
+          },
+        ],
+      },
+    };
+    const { title: _, ...rest } = defaultSpec();
+    // As Grafana saved it: keys sorted, with the panel version and the text options it fills in.
+    const savedSpec = sortedDeepCloneWithoutNulls({
+      ...rest,
+      title: 'DOM TEST',
+      elements: { p5: textPanel('666', '13.3.0', { code, content: 'Panel 666', mode: 'markdown' }) },
+      layout,
+    }) as unknown as DashboardV2Spec;
+    // As the Assistant left it: the title first, and the panel it rewrote without them.
+    const proposed = {
+      title: 'DOM TEST',
+      ...rest,
+      elements: { p5: textPanel('5', '', { content: 'Panel 5', mode: 'markdown' }) },
+      layout,
+    } as unknown as DashboardV2Spec;
+    const scene = await openOnPage(pendingChanges({ proposed }), savedSpec);
+    // The panel's plugin loading fills them in again.
+    const [panel] = scene.state.body.getVizPanels();
+    panel.setState({ pluginVersion: '13.3.0', options: { ...panel.state.options, code } });
+
+    const changes = getPendingChangesDiff(scene)!;
+
+    expect(Object.keys(changes.diffs)).toEqual(['elements']);
+    expect(changes.diffs.elements.map((diff) => diff.path.at(-1)).sort()).toEqual(['content', 'title']);
+    expect(Object.keys(changes.initialSaveModel)).toEqual(Object.keys(changes.changedSaveModel));
   });
 
   it('leaves them read-only when their plugin keeps no history to record edits in', async () => {
