@@ -54,7 +54,9 @@ func (c *embeddedTransactionCall) wait() {
 	}
 }
 
-type embeddedClient struct{ legacyclient.LegacyUserPermissionsClient }
+type embeddedClient struct {
+	legacyclient.LegacyUserPermissionsClient
+}
 
 func (c *embeddedClient) LegacyGetUserPermissions(ctx context.Context, caller types.AuthInfo, req legacyclient.LegacyGetUserPermissionsRequest) (legacyclient.LegacyGetUserPermissionsResponse, error) {
 	if sess, ok := ctx.Value(sqlstore.ContextSessionKey{}).(*sqlstore.DBSession); ok && sess != nil {
