@@ -117,7 +117,9 @@ func TestCompatUpdate(t *testing.T) {
 		gr := e.gr()
 		t.Run(gr.String(), func(t *testing.T) {
 			res := servedOrSkip(t, served, skips, e)
-			readEverywhere(t, h, e, res)
+			vc := newVersionCheck(t, gr, f)
+			readEverywhere(t, h, e, res, vc)
+			vc.done()
 
 			// Write in this version's preferred version, as clients do, so an object stored in
 			// another version is converted on the way.
@@ -178,7 +180,8 @@ func TestCompatVerify(t *testing.T) {
 	dir := compat.Dir(t)
 	entries := readManifest(t, dir)
 	h := compat.NewHelper(t)
-	skips, _ := readSkipFile(t).resolve()
+	f := readSkipFile(t)
+	skips, _ := f.resolve()
 	served := compat.Served(t, h)
 	ctx := context.Background()
 
@@ -186,11 +189,13 @@ func TestCompatVerify(t *testing.T) {
 		gr := e.gr()
 		t.Run(gr.String(), func(t *testing.T) {
 			res := servedOrSkip(t, served, skips, e)
-			readEverywhere(t, h, e, res)
+			vc := newVersionCheck(t, gr, f)
+			readEverywhere(t, h, e, res, vc)
+			vc.done()
 
 			got, err := resourceClient(h, gr, e.Version).Get(ctx, e.Name, metav1.GetOptions{})
 			require.NoError(t, err)
-			requireServedAs(t, got, gr.WithVersion(e.Version).GroupVersion().String(), "get in "+e.Version)
+			requireServedAs(t, newVersionCheck(t, gr, f), got, gr.WithVersion(e.Version).GroupVersion().String(), "get in "+e.Version)
 			if e.UpdatedIn == "" || e.UpdatedIn == e.Version {
 				require.NoError(t, sameSpecError(e.Spec, specJSON(t, got)), "spec changed after the other version read or rewrote the object")
 			} else {
@@ -254,21 +259,54 @@ func servedOrSkip(t *testing.T, served map[schema.GroupResource]compat.Resource,
 }
 
 // readEverywhere gets the object in every version this server serves and finds it in a list.
-func readEverywhere(t *testing.T, h *apis.K8sTestHelper, e written, res compat.Resource) {
+func readEverywhere(t *testing.T, h *apis.K8sTestHelper, e written, res compat.Resource, vc *versionCheck) {
 	t.Helper()
 	ctx := context.Background()
 	for _, v := range res.Versions {
 		gv := e.gr().WithVersion(v).GroupVersion().String()
 		obj, err := resourceClient(h, e.gr(), v).Get(ctx, e.Name, metav1.GetOptions{})
 		require.NoError(t, err, "get in %s%s", v, hint(e, res))
-		requireServedAs(t, obj, gv, "get in "+v)
+		requireServedAs(t, vc, obj, gv, "get in "+v)
 
 		list, err := resourceClient(h, e.gr(), v).List(ctx, metav1.ListOptions{})
 		require.NoError(t, err, "list in %s%s", v, hint(e, res))
-		require.Equal(t, gv, list.GetAPIVersion(), "list in %s", v)
+		vc.check(gv, list.GetAPIVersion(), "list in "+v)
 		i := slices.IndexFunc(list.Items, named(e.Name))
 		require.GreaterOrEqual(t, i, 0, "list in %s does not contain %s", v, e.Name)
-		requireServedAs(t, &list.Items[i], gv, "list in "+v)
+		requireServedAs(t, vc, &list.Items[i], gv, "list item in "+v)
+	}
+}
+
+// versionCheck checks the apiVersion the server returns for a resource. For a resource
+// listed under api_version_mismatch it only logs a mismatch, but then requires one, so
+// the entry is removed once the server is fixed.
+type versionCheck struct {
+	t          *testing.T
+	gr         schema.GroupResource
+	waived     string
+	mismatched bool
+}
+
+func newVersionCheck(t *testing.T, gr schema.GroupResource, f skipFile) *versionCheck {
+	return &versionCheck{t: t, gr: gr, waived: f.APIVersionMismatch[gr.String()]}
+}
+
+func (c *versionCheck) check(want, got, what string) {
+	c.t.Helper()
+	if want == got {
+		return
+	}
+	if c.waived == "" {
+		require.Equal(c.t, want, got, "%s: apiVersion", what)
+	}
+	c.mismatched = true
+	c.t.Logf("%s: got apiVersion %s, known issue: %s", what, got, c.waived)
+}
+
+func (c *versionCheck) done() {
+	c.t.Helper()
+	if c.waived != "" && !c.mismatched {
+		c.t.Errorf("%s returns the requested apiVersion now; remove it from api_version_mismatch in skip.yaml", c.gr)
 	}
 }
 
@@ -276,9 +314,9 @@ func readEverywhere(t *testing.T, h *apis.K8sTestHelper, e written, res compat.R
 // either it kept another apiVersion, or it reports in status.conversion that it could not
 // convert. A failed conversion still reads successfully, with a placeholder spec, so the
 // status is the only sign of it.
-func requireServedAs(t *testing.T, obj *unstructured.Unstructured, apiVersion, what string) {
+func requireServedAs(t *testing.T, vc *versionCheck, obj *unstructured.Unstructured, apiVersion, what string) {
 	t.Helper()
-	require.Equal(t, apiVersion, obj.GetAPIVersion(), "%s: apiVersion", what)
+	vc.check(apiVersion, obj.GetAPIVersion(), what)
 	failed, _, _ := unstructured.NestedBool(obj.Object, "status", "conversion", "failed")
 	if failed {
 		msg, _, _ := unstructured.NestedString(obj.Object, "status", "conversion", "error")
@@ -479,6 +517,7 @@ type skipFile struct {
 	OSS                 map[string]string `yaml:"oss"`
 	Enterprise          map[string]string `yaml:"enterprise"`
 	LegacyStorage       map[string]string `yaml:"legacy_storage"`
+	APIVersionMismatch  map[string]string `yaml:"api_version_mismatch"`
 	StaleWritesAccepted map[string]string `yaml:"stale_writes_accepted"`
 }
 

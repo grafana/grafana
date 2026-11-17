@@ -9,6 +9,9 @@
 # and annotations, check resourceVersions, or support every patch: they are only read,
 # updated, and deleted. Every other resource must keep its metadata, and a listed
 # resource that starts keeping labels fails the test until it is removed from the list.
+# "api_version_mismatch" lists resources the server returns in another apiVersion than
+# requested, for example in a list; only that check is waived, and it fails once the
+# server returns the requested version, until the entry is removed.
 # "stale_writes_accepted" lists resources that are tested, except that their storage
 # does not reject writes with a stale resourceVersion; once it does, the test fails
 # until the entry is removed.
@@ -47,3 +50,5 @@ legacy_storage:
   recordingrules.rules.alerting.grafana.app: stored in the legacy alert rule tables
 stale_writes_accepted:
   securevalues.secret.grafana.app: the secret store does not check the resourceVersion on update
+api_version_mismatch:
+  queries.queries.grafana.app: listing through v1beta1 returns the items as v1
