@@ -28,6 +28,7 @@ func ProvideRegistryServiceSink(
 	_ *collections.APIBuilder,
 	_ *provisioning.APIBuilder,
 	_ *secret.DependencyRegisterer,
+	_ *secret.SecretAPIBuilder,
 	_ *provisioning.DependencyRegisterer,
 ) *Service {
 	return &Service{}
