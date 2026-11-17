@@ -110,7 +110,7 @@ function setup(props: DrawerOverrides = {}) {
       resource={mockPlaylist}
       title={mockPlaylist.spec?.title ?? ''}
       action="update"
-      redirectUrl="/playlists"
+      redirectUrl="/redirect-target"
       onDismiss={jest.fn()}
       {...props}
     />
@@ -137,7 +137,7 @@ describe('SaveProvisionedResourceDrawer', () => {
       expect(screen.getByRole('textbox', { name: /comment/i })).toBeInTheDocument();
     });
 
-    it('commits the resource body for the write workflow and navigates to the list', async () => {
+    it('commits the resource body for the write workflow and navigates to the redirect URL', async () => {
       server.use(
         http.put(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
           capturedRequest = { url: new URL(request.url), body: await request.json() };
@@ -162,7 +162,7 @@ describe('SaveProvisionedResourceDrawer', () => {
         spec: { title: 'Test Playlist', interval: '5m', items: [{ type: 'dashboard_by_uid', value: 'abc' }] },
       });
       // Default post-commit navigation goes to the kind's list route.
-      await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/playlists'));
+      await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/redirect-target'));
     });
 
     it('runs a caller-supplied onWriteSuccess instead of the default navigation', async () => {
@@ -201,6 +201,29 @@ describe('SaveProvisionedResourceDrawer', () => {
       await waitFor(() => expect(capturedRequest).not.toBeNull());
       expect(requireCapturedRequest(capturedRequest).url.searchParams.get('ref')).toBeTruthy();
       await waitFor(() => expect(onBranchSuccess).toHaveBeenCalled());
+    });
+
+    it('navigates to the redirect URL with the pull request params for the branch workflow', async () => {
+      mockRepoView({ repository: { ...mockRepository, workflows: ['branch'] } });
+      server.use(
+        http.put(`${BASE}/repositories/:name/files/*`, () =>
+          HttpResponse.json({
+            ref: 'feature-branch',
+            path: 'playlists/test-playlist.json',
+            urls: { newPullRequestURL: 'https://example.com/pr/1' },
+            resource: { upsert: {} },
+          })
+        )
+      );
+
+      const { user } = setup();
+      await user.click(await screen.findByRole('button', { name: /^save$/i }));
+
+      await waitFor(() =>
+        expect(mockNavigate).toHaveBeenCalledWith(
+          expect.stringMatching(/^\/redirect-target\?new_pull_request_url=https%3A%2F%2Fexample\.com%2Fpr%2F1/)
+        )
+      );
     });
 
     it('shows an error alert when the commit fails', async () => {

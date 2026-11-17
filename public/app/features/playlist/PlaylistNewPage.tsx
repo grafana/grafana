@@ -11,7 +11,7 @@ import { useResourceRepositorySelection } from '../provisioning/hooks/useResourc
 import { resourceKindInfos } from '../provisioning/utils/resourceKinds';
 
 import { PlaylistForm } from './PlaylistForm';
-import { getDefaultPlaylist } from './utils';
+import { PLAYLISTS_URL, getDefaultPlaylist } from './utils';
 
 export const PlaylistNewPage = () => {
   const [playlist] = useState<Playlist>(getDefaultPlaylist());
@@ -29,7 +29,7 @@ export const PlaylistNewPage = () => {
     }
 
     await createPlaylist({ playlist });
-    locationService.push('/playlists');
+    locationService.push(PLAYLISTS_URL);
   };
 
   const pageNav: NavModelItem = {
@@ -55,7 +55,7 @@ export const PlaylistNewPage = () => {
           resource={provisionedPlaylist}
           title={provisionedPlaylist.spec?.title ?? ''}
           action="create"
-          redirectUrl="/playlists"
+          redirectUrl={PLAYLISTS_URL}
           repositoryName={selectedRepository}
           onDismiss={() => setProvisionedPlaylist(undefined)}
         />
