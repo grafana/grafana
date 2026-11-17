@@ -33,7 +33,7 @@ function searchInput() {
 }
 
 function group(name: string) {
-  return screen.getByRole('group', { name });
+  return screen.getByRole('radiogroup', { name });
 }
 
 describe('AlertRulesFilterSidebar', () => {
@@ -44,13 +44,13 @@ describe('AlertRulesFilterSidebar', () => {
     expect(within(group('Alert state')).getByRole('radio', { name: 'Firing' })).toBeChecked();
     expect(within(group('Health')).getByRole('radio', { name: 'All' })).toBeChecked();
     expect(within(group('Paused')).getByRole('radio', { name: 'Paused' })).toBeChecked();
-    expect(screen.getByRole('checkbox', { name: 'Hide plugin rules' })).toBeChecked();
+    expect(within(group('Plugin rules')).getByRole('radio', { name: 'Hide' })).toBeChecked();
 
-    const keys = within(group('Labels')).getAllByRole('textbox', { name: 'Label key' });
+    const keys = screen.getAllByRole('textbox', { name: 'Label key' });
     expect(keys).toHaveLength(2);
     expect(keys[0]).toHaveValue('team');
     expect(keys[1]).toHaveValue('env');
-    expect(within(group('Labels')).getByRole('textbox', { name: 'Label value' })).toHaveValue('api');
+    expect(screen.getByRole('textbox', { name: 'Label value' })).toHaveValue('api');
   });
 
   it.each([
@@ -66,7 +66,7 @@ describe('AlertRulesFilterSidebar', () => {
     const { user } = renderPage('cpu state:firing label:team=api');
 
     await user.click(
-      within(await screen.findByRole('group', { name: 'Alert state' })).getByRole('radio', { name: 'Pending' })
+      within(await screen.findByRole('radiogroup', { name: 'Alert state' })).getByRole('radio', { name: 'Pending' })
     );
 
     await waitFor(() => expect(searchParam()).toBe('cpu state:pending label:team=api'));

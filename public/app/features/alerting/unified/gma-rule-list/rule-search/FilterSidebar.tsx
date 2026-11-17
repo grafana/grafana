@@ -2,8 +2,15 @@ import { useId, useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { useDataSourceInstanceList } from '@grafana/runtime';
-import { Box, Button, Field, Input, MultiCombobox, RadioButtonList, Stack } from '@grafana/ui';
+import { Box, Button, Input, MultiCombobox, Stack } from '@grafana/ui';
 import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
+
+import {
+  FieldLabelWithTooltip,
+  SidebarField,
+  ToggleButtonGroup,
+  type ToggleOption,
+} from '../../rule-list/filter/RulesFilterSidebar';
 
 /** The sidebar shell each page fills with its filters. Every filter applies at once, except text, on blur or Enter. */
 export function FilterSidebar({
@@ -16,7 +23,7 @@ export function FilterSidebar({
   children: React.ReactNode;
 }) {
   return (
-    <Box width={32} shrink={0}>
+    <Box width={32} shrink={0} paddingBottom={2}>
       <Stack direction="column" gap={2}>
         <Stack justifyContent="flex-end">
           <Button size="sm" fill="text" onClick={onClear} disabled={!canClear}>
@@ -38,19 +45,19 @@ export function ChoiceFilter<Value extends string>({
 }: {
   label: string;
   value: Value | undefined;
-  options: Array<{ label: string; value: Value }>;
+  options: Array<ToggleOption<Value>>;
   onChange: (value: Value | undefined) => void;
 }) {
-  const name = useId();
+  const labelId = useId();
   return (
-    <Field noMargin label={label} useFieldset>
-      <RadioButtonList<string>
-        name={name}
-        value={value ?? ALL}
-        options={[{ label: t('alerting.gma-rule-list.sidebar.all', 'All'), value: ALL }, ...options]}
-        onChange={(next) => onChange(next === ALL ? undefined : options.find((option) => option.value === next)?.value)}
+    <SidebarField label={label} labelId={labelId}>
+      <ToggleButtonGroup<Value | undefined>
+        aria-labelledby={labelId}
+        value={value}
+        options={[{ label: t('alerting.gma-rule-list.sidebar.all', 'All'), value: undefined }, ...options]}
+        onChange={onChange}
       />
-    </Field>
+    </SidebarField>
   );
 }
 
@@ -81,7 +88,7 @@ export function TextFilter({
   };
 
   return (
-    <Field noMargin label={label} htmlFor={id}>
+    <SidebarField label={label} htmlFor={id}>
       <Input
         id={id}
         value={draft}
@@ -90,7 +97,7 @@ export function TextFilter({
         onBlur={apply}
         onKeyDown={(event) => event.key === 'Enter' && apply()}
       />
-    </Field>
+    </SidebarField>
   );
 }
 
@@ -103,11 +110,14 @@ export function FolderFilter({ folderUids, onChange }: { folderUids: string[]; o
   };
 
   return (
-    <Field
-      noMargin
-      label={t('alerting.gma-rule-list.sidebar.folder', 'Folder')}
-      description={t('alerting.gma-rule-list.sidebar.folder-description', 'Rules directly in this folder')}
-      useFieldset
+    <SidebarField
+      label={
+        <FieldLabelWithTooltip
+          label={t('alerting.gma-rule-list.sidebar.folder', 'Folder')}
+          tooltip={t('alerting.gma-rule-list.sidebar.folder-description', 'Rules directly in this folder')}
+          tooltipTitle={t('alerting.gma-rule-list.sidebar.folder-help', 'Folder filter help')}
+        />
+      }
     >
       <Stack direction="column" gap={1}>
         {[...folderUids, undefined].map((uid, index) => (
@@ -122,7 +132,7 @@ export function FolderFilter({ folderUids, onChange }: { folderUids: string[]; o
           />
         ))}
       </Stack>
-    </Field>
+    </SidebarField>
   );
 }
 
@@ -135,7 +145,7 @@ export function DataSourceFilter({ uids, onChange }: { uids: string[]; onChange:
   const value = uids.map((uid) => options.find((option) => option.value === uid) ?? { label: uid, value: uid });
 
   return (
-    <Field noMargin label={t('alerting.gma-rule-list.sidebar.datasource', 'Query data source')} htmlFor={id}>
+    <SidebarField label={t('alerting.gma-rule-list.sidebar.datasource', 'Query data source')} htmlFor={id}>
       <MultiCombobox<string>
         id={id}
         loading={isLoading}
@@ -144,8 +154,6 @@ export function DataSourceFilter({ uids, onChange }: { uids: string[]; onChange:
         placeholder={t('alerting.gma-rule-list.sidebar.datasource-placeholder', 'Select data sources')}
         onChange={(selected) => onChange(selected.map((option) => option.value))}
       />
-    </Field>
+    </SidebarField>
   );
 }
-
-const ALL = '__all__';

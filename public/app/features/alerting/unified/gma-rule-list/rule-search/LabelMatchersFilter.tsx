@@ -2,7 +2,9 @@ import { isEqual } from 'lodash';
 import { useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
-import { Button, Combobox, Field, IconButton, Input, Stack } from '@grafana/ui';
+import { Button, Combobox, IconButton, Input, Stack } from '@grafana/ui';
+
+import { SidebarField } from '../../rule-list/filter/RulesFilterSidebar';
 
 import { type SearchLabelMatcher } from './sharedRuleFilter';
 
@@ -45,7 +47,7 @@ export function LabelMatchersFilter({
   const applyRows = () => update(rows);
 
   return (
-    <Field noMargin label={t('alerting.gma-rule-list.sidebar.labels', 'Labels')} useFieldset>
+    <SidebarField label={t('alerting.gma-rule-list.sidebar.labels', 'Labels')}>
       <Stack direction="column" gap={1}>
         {rows.map((row, index) => (
           // Rows have no identity of their own, and their inputs hold no state, so the index is a safe key.
@@ -92,7 +94,7 @@ export function LabelMatchersFilter({
           <Trans i18nKey="alerting.gma-rule-list.sidebar.label-add">Add label</Trans>
         </Button>
       </Stack>
-    </Field>
+    </SidebarField>
   );
 }
 
