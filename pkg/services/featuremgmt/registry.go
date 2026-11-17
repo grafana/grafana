@@ -1081,7 +1081,7 @@ var (
 		{
 			Name:        "grafana.customDashboardTemplates",
 			Description: "Enables custom dashboard templates for enterprise",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaSharingSquad,
 			Generate:    Generate{Go: true, React: true},
 			Expression:  "false",
