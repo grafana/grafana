@@ -21,6 +21,11 @@ export function RecordingRuleListEntry({ searchHit, showFolderPath }: RecordingR
   const { data: fullRule, isLoading } = useGetRecordingRuleQuery({ name: searchHit.uid });
   const { sequence } = useRuleSequenceMembership('recording', searchHit.uid);
   const openRuleSequence = useOpenRuleSequence();
+  const openSequence = () => {
+    if (sequence) {
+      openRuleSequence({ sequenceUid: sequence.uid, ruleKind: 'recording', ruleUid: searchHit.uid });
+    }
+  };
 
   let actions = null;
   if (isLoading) {
@@ -35,9 +40,7 @@ export function RecordingRuleListEntry({ searchHit, showFolderPath }: RecordingR
       folderPath={folderPath}
       rule={fullRule}
       sequence={sequence}
-      onSequenceClick={() =>
-        sequence && openRuleSequence({ sequenceUid: sequence.uid, ruleKind: 'recording', ruleUid: searchHit.uid })
-      }
+      onSequenceClick={openSequence}
       actions={actions}
     />
   );

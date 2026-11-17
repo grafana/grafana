@@ -22,6 +22,11 @@ export function AlertRuleListEntry({ searchHit, showFolderPath }: AlertRuleListE
   const { sequence, isLoading: isSequenceLoading } = useRuleSequenceMembership('alert', searchHit.uid);
   const isLoading = isRuleLoading || isSequenceLoading;
   const openRuleSequence = useOpenRuleSequence();
+  const openSequence = () => {
+    if (sequence) {
+      openRuleSequence({ sequenceUid: sequence.uid, ruleKind: 'alert', ruleUid: searchHit.uid });
+    }
+  };
 
   let actions = null;
   if (isLoading) {
@@ -36,9 +41,7 @@ export function AlertRuleListEntry({ searchHit, showFolderPath }: AlertRuleListE
       folderPath={folderPath}
       rule={fullRule}
       sequence={sequence}
-      onSequenceClick={() =>
-        sequence && openRuleSequence({ sequenceUid: sequence.uid, ruleKind: 'alert', ruleUid: searchHit.uid })
-      }
+      onSequenceClick={openSequence}
       actions={actions}
     />
   );

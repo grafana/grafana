@@ -1,27 +1,17 @@
-import { css, cx } from '@emotion/css';
-import { skipToken } from '@reduxjs/toolkit/query';
 import { type ReactNode, createContext, useContext, useId, useState } from 'react';
-import Skeleton from 'react-loading-skeleton';
 
-import {
-  type RuleSequenceRuleRef,
-  useGetAlertRuleQuery,
-  useGetRecordingRuleQuery,
-  useGetRuleSequenceQuery,
-} from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
-import { type GrafanaTheme2 } from '@grafana/data';
+import { type RuleSequenceRuleRef, useGetRuleSequenceQuery } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { t } from '@grafana/i18n';
-import { Badge, Card, Drawer, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { Box, Drawer, Stack, Text } from '@grafana/ui';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
 
-import { grafanaRulesNav } from '../../utils/navigation';
 import { useFolderPath } from '../folder-browsing/folderLookups';
-import { RuleRecordedMetric } from '../recording-rules/RuleRecordedMetric';
 import { FolderPath } from '../rule-row/FolderPath';
-import { RuleLabels } from '../rule-row/RuleLabels';
 import { RuleListSkeleton } from '../rule-row/RuleListSkeleton';
 import { InlineRequestError } from '../shared/InlineRequestError';
 import { type RuleKind } from '../shared/ruleKind';
+
+import { RuleStep } from './RuleSequenceStep';
 
 interface OpenedRuleSequence {
   sequenceUid: string;
@@ -102,8 +92,7 @@ function RuleSequenceDrawerContent({ sequenceUid, ruleKind, ruleUid }: OpenedRul
     return null;
   }
 
-  const recordingRules = sequence.spec.recordingRules;
-  const alertRules = sequence.spec.alertingRules ?? [];
+  const { recordingRules, alertingRules = [] } = sequence.spec;
   const current = { kind: ruleKind, uid: ruleUid };
 
   return (
@@ -118,7 +107,7 @@ function RuleSequenceDrawerContent({ sequenceUid, ruleKind, ruleUid }: OpenedRul
       <SequenceStage
         title={t('alerting.gma-rule-list.sequence-drawer.alert-rules', 'Alert rules')}
         kind="alert"
-        refs={alertRules}
+        refs={alertingRules}
         firstStep={recordingRules.length + 1}
         current={current}
       />
@@ -136,7 +125,6 @@ interface SequenceStageProps {
 
 /** One kind's rules under a heading, numbered on from the previous stage. */
 function SequenceStage({ title, kind, refs, firstStep, current }: SequenceStageProps) {
-  const styles = useStyles2(getStyles);
   const headingId = useId();
 
   if (refs.length === 0) {
@@ -147,7 +135,7 @@ function SequenceStage({ title, kind, refs, firstStep, current }: SequenceStageP
       <Text id={headingId} variant="bodySmall" color="secondary">
         {title}
       </Text>
-      <ol className={styles.steps} aria-labelledby={headingId}>
+      <Box element="ol" display="flex" direction="column" gap={1} margin={0} padding={0} aria-labelledby={headingId}>
         {refs.map(({ name }, index) => (
           <RuleStep
             key={name}
@@ -157,129 +145,7 @@ function SequenceStage({ title, kind, refs, firstStep, current }: SequenceStageP
             isCurrent={kind === current.kind && name === current.uid}
           />
         ))}
-      </ol>
+      </Box>
     </Stack>
   );
 }
-
-interface RuleStepProps {
-  kind: RuleKind;
-  uid: string;
-  step: number;
-  isCurrent: boolean;
-}
-
-/** Loads one member rule; only the query for its kind runs. */
-function RuleStep({ kind, uid, step, isCurrent }: RuleStepProps) {
-  const alert = useGetAlertRuleQuery(kind === 'alert' ? { name: uid } : skipToken);
-  const recording = useGetRecordingRuleQuery(kind === 'recording' ? { name: uid } : skipToken);
-  const { currentData: rule, isLoading, isError } = kind === 'alert' ? alert : recording;
-
-  if (isLoading) {
-    return (
-      <SequenceStep step={step} isCurrent={isCurrent} title={<Skeleton width={160} />} aria-busy>
-        <Skeleton width={96} />
-      </SequenceStep>
-    );
-  }
-  if (isError || !rule) {
-    return (
-      <SequenceStep step={step} isCurrent={isCurrent} title={<Text color="secondary">{uid}</Text>} aria-label={uid}>
-        <Text color="secondary" variant="bodySmall" italic>
-          {t('alerting.gma-rule-list.sequence-drawer.missing-rule', 'Rule not found or not accessible')}
-        </Text>
-      </SequenceStep>
-    );
-  }
-
-  const recordingSpec = recording.currentData?.spec;
-
-  return (
-    <SequenceStep
-      step={step}
-      isCurrent={isCurrent}
-      aria-label={rule.spec.title}
-      title={
-        <TextLink href={grafanaRulesNav.viewLink(uid)} color="primary" inline={false}>
-          {rule.spec.title}
-        </TextLink>
-      }
-    >
-      {recordingSpec && (
-        <RuleRecordedMetric metric={recordingSpec.metric} targetDatasourceUID={recordingSpec.targetDatasourceUID} />
-      )}
-      {rule.spec.labels && <RuleLabels labels={rule.spec.labels} />}
-    </SequenceStep>
-  );
-}
-
-interface SequenceStepProps {
-  step: number;
-  isCurrent: boolean;
-  title: ReactNode;
-  /** The step's details, shown in the card's meta row. */
-  children: ReactNode;
-  'aria-label'?: string;
-  'aria-busy'?: boolean;
-}
-
-/** One rule as a card, numbered by its place in the evaluation order. */
-function SequenceStep({ step, isCurrent, title, children, ...ariaAttributes }: SequenceStepProps) {
-  const styles = useStyles2(getStyles);
-
-  return (
-    <li aria-current={isCurrent || undefined} {...ariaAttributes}>
-      <Card isCompact noMargin className={cx(isCurrent && styles.currentCard)}>
-        <Card.Figure align="center" className={styles.figure}>
-          <span className={cx(styles.number, isCurrent && styles.currentNumber)} aria-hidden>
-            {step}
-          </span>
-        </Card.Figure>
-        <Card.Heading>{title}</Card.Heading>
-        {isCurrent && (
-          <Card.Tags>
-            <Badge color="blue" text={t('alerting.gma-rule-list.sequence-drawer.this-rule', 'This rule')} />
-          </Card.Tags>
-        )}
-        <Card.Meta>{children}</Card.Meta>
-      </Card>
-    </li>
-  );
-}
-
-const getStyles = (theme: GrafanaTheme2) => {
-  const numberSize = theme.spacing(3.5);
-
-  return {
-    steps: css({
-      listStyle: 'none',
-      margin: 0,
-      padding: 0,
-      display: 'flex',
-      flexDirection: 'column',
-      gap: theme.spacing(1),
-    }),
-    figure: css({
-      width: numberSize,
-      marginRight: theme.spacing(1.5),
-    }),
-    number: css({
-      width: numberSize,
-      height: numberSize,
-      borderRadius: theme.shape.radius.circle,
-      border: `1px solid ${theme.colors.border.medium}`,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      fontSize: theme.typography.bodySmall.fontSize,
-      color: theme.colors.text.secondary,
-    }),
-    currentNumber: css({
-      borderColor: theme.colors.primary.main,
-      color: theme.colors.primary.text,
-    }),
-    currentCard: css({
-      border: `1px solid ${theme.colors.primary.border}`,
-    }),
-  };
-};
