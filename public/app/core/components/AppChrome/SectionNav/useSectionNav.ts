@@ -12,14 +12,38 @@ export interface SectionNavModel {
   activeId?: string;
 }
 
+function toPathname(url?: string): string {
+  return url ? locationUtil.stripBaseFromUrl(url).split(/[?#]/)[0] : '';
+}
+
 function isUnderDestination(items: NavModelItem[], pathname: string): boolean {
   return items.some((item) => {
-    if (item.children) {
-      return isUnderDestination(item.children, pathname);
+    const path = toPathname(item.url);
+    if (path.length > 1 && (pathname === path || pathname.startsWith(`${path}/`))) {
+      return true;
     }
-    const path = item.url ? locationUtil.stripBaseFromUrl(item.url).split(/[?#]/)[0] : '';
-    return path.length > 1 && (pathname === path || pathname.startsWith(`${path}/`));
+    return item.children ? isUnderDestination(item.children, pathname) : false;
   });
+}
+
+// The longest destination URL the pathname is at or under. Plugin pages describe themselves to the
+// chrome with ids of their own, so the page's nav item alone does not always find them in the tree
+function findByPathname(items: NavModelItem[], pathname: string): NavModelItem | undefined {
+  let best: { item: NavModelItem; length: number } | undefined;
+  const visit = (nodes: NavModelItem[]) => {
+    for (const node of nodes) {
+      const path = toPathname(node.url);
+      const matches = path.length > 1 && (pathname === path || pathname.startsWith(`${path}/`));
+      if (!node.children && matches && (!best || path.length > best.length)) {
+        best = { item: node, length: path.length };
+      }
+      if (node.children) {
+        visit(node.children);
+      }
+    }
+  };
+  visit(items);
+  return best?.item;
 }
 
 function subscribeToPathname(onChange: () => void) {
@@ -55,8 +79,9 @@ export function useSectionNav(
     }
 
     const destinations = (section.children ?? []).filter((child) => !child.isCreateAction);
-    const active = currentPage ? getActiveItem(destinations, currentPage) : undefined;
-    const isLanding = pathname === section.url || currentPage?.id === sectionId;
+    const active =
+      (currentPage ? getActiveItem(destinations, currentPage) : undefined) ?? findByPathname(destinations, pathname);
+    const isLanding = pathname === toPathname(section.url) || currentPage?.id === sectionId;
     if (!active && !isLanding && !isUnderDestination(destinations, pathname)) {
       return undefined;
     }

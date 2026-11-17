@@ -2,12 +2,12 @@ import { renderHook } from '@testing-library/react';
 import { type PropsWithChildren } from 'react';
 import { getWrapper } from 'test/test-utils';
 
-import { type NavModelItem } from '@grafana/data';
+import { type GrafanaConfig, locationUtil, type NavModelItem } from '@grafana/data';
 import { configureStore } from 'app/store/configureStore';
 
 import { useSectionNav } from './useSectionNav';
 
-const navTree: NavModelItem[] = [
+let navTree: NavModelItem[] = [
   {
     id: 'cfg',
     text: 'Administration',
@@ -59,12 +59,46 @@ describe('useSectionNav', () => {
     expect(render('cfg', { currentPage })).toBeUndefined();
   });
 
-  it('shows from the URL before the page has told the chrome where it is, with nothing marked', () => {
+  it('shows from the URL before the page has told the chrome where it is, marking the destination at that URL', () => {
     const model = render('monitoring', { path: '/monitoring/rules' });
 
     expect(model?.groups).toHaveLength(1);
-    expect(model?.activeId).toBeUndefined();
+    expect(model?.activeId).toBe('rules');
     expect(render('cfg', { path: '/monitoring/rules' })).toBeUndefined();
+  });
+
+  it('shows on a group landing page before the page has told the chrome where it is', () => {
+    const model = render('cfg', { path: '/admin/access' });
+
+    expect(model?.groups.map((group) => group.id)).toEqual(['cfg/access']);
+    expect(model?.activeId).toBeUndefined();
+  });
+
+  it('shows on the section landing page when served from a sub path', () => {
+    locationUtil.initialize({
+      config: { appSubUrl: '/grafana' } as GrafanaConfig,
+      getVariablesUrlParams: jest.fn(),
+      getTimeRangeForUrl: jest.fn(),
+    });
+    const original = navTree;
+    navTree = [{ ...original[1], url: '/grafana/monitoring' }];
+
+    try {
+      expect(render('monitoring', { path: '/monitoring' })).toBeDefined();
+    } finally {
+      navTree = original;
+      locationUtil.initialize({
+        config: { appSubUrl: '' } as GrafanaConfig,
+        getVariablesUrlParams: jest.fn(),
+        getTimeRangeForUrl: jest.fn(),
+      });
+    }
+  });
+
+  it('marks the destination at the URL when the page describes itself with an id of its own', () => {
+    const currentPage = { id: 'plugin-own-id', text: 'Rules', url: '/monitoring/rules/extra' };
+
+    expect(render('monitoring', { currentPage, path: '/monitoring/rules/extra' })?.activeId).toBe('rules');
   });
 
   it('shows on the section landing page', () => {

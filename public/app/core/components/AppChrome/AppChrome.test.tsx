@@ -1317,13 +1317,12 @@ describe('AppChrome', () => {
       expect(nav.queryByRole('link', { current: 'page' })).not.toBeInTheDocument();
     });
 
-    it('shows from the URL before the page has told the chrome where it is, with nothing marked current', async () => {
+    it('shows from the URL before the page has told the chrome where it is, marking the destination at that URL', async () => {
       setup(<div>Not yet a Page</div>, { extraNav: administrationNav, path: '/admin/users' });
 
       const nav = within(await sectionNav());
 
-      expect(nav.getByRole('link', { name: 'Users' })).toBeInTheDocument();
-      expect(nav.queryByRole('link', { current: 'page' })).not.toBeInTheDocument();
+      expect(nav.getByRole('link', { name: 'Users', current: 'page' })).toBeInTheDocument();
     });
 
     it('follows the URL when navigating into Administration', async () => {
