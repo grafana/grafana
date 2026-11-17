@@ -1,6 +1,14 @@
 import { InMemoryProvider, OpenFeature, OpenFeatureProvider } from '@openfeature/react-sdk';
 import { act, fireEvent, render, screen } from '@testing-library/react';
-import { type PropsWithChildren, type ReactElement, StrictMode, useEffect, useRef, useState } from 'react';
+import {
+  type PropsWithChildren,
+  type ReactElement,
+  StrictMode,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 
 import {
   type DataQueryError,
@@ -395,9 +403,11 @@ describe('QueryEditorRenderer', () => {
     function CleanupOnChangeEditor({ query, onChange }: { query: DataQuery; onChange: (q: DataQuery) => void }) {
       const pendingEdit = { ...query, legendFormat: `${getLegendFormat(query)}-edited` };
       const pendingEditRef = useRef(pendingEdit);
-      pendingEditRef.current = pendingEdit;
       const onChangeRef = useRef(onChange);
-      onChangeRef.current = onChange;
+      useLayoutEffect(() => {
+        pendingEditRef.current = pendingEdit;
+        onChangeRef.current = onChange;
+      });
 
       useEffect(() => {
         return () => onChangeRef.current(pendingEditRef.current);

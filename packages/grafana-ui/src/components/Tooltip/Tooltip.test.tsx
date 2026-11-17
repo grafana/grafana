@@ -1,10 +1,37 @@
-﻿import { render, screen } from '@testing-library/react';
+﻿import { FloatingFocusManager, FloatingPortal, useFloating } from '@floating-ui/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { type MutableRefObject } from 'react';
+import { type MutableRefObject, useState } from 'react';
 
 import { TextLink } from '../Link/TextLink';
 
 import { Tooltip } from './Tooltip';
+
+// A small stand-in for a popover, like the dashboard edit actions popover. It renders an element with a Tooltip
+// inside, and a floating panel with a button that is rendered in a portal. Pressing Tab on the Tooltip trigger moves
+// focus to a hidden focus guard that floating-ui adds, and from there into the panel.
+function TriggerWithPortalledSibling() {
+  const [open, setOpen] = useState(true);
+  const { refs, context } = useFloating({ open, onOpenChange: setOpen });
+  const { setReference, setFloating } = refs;
+
+  return (
+    <>
+      <div ref={setReference}>
+        <Tooltip content="Cooltip content">
+          <span>On the page</span>
+        </Tooltip>
+      </div>
+      <FloatingPortal>
+        <FloatingFocusManager context={context} modal={false} initialFocus={-1}>
+          <div ref={setFloating}>
+            <button>Portalled button</button>
+          </div>
+        </FloatingFocusManager>
+      </FloatingPortal>
+    </>
+  );
+}
 
 describe('Tooltip', () => {
   it('renders correctly', () => {
@@ -16,6 +43,18 @@ describe('Tooltip', () => {
       </Tooltip>
     );
     expect(screen.getByText('Link with tooltip')).toBeInTheDocument();
+  });
+
+  it('closes when Tab moves focus from the trigger into portalled floating-ui content', async () => {
+    render(<TriggerWithPortalledSibling />);
+
+    await userEvent.tab();
+    expect(await screen.findByRole('tooltip')).toBeInTheDocument();
+
+    await userEvent.tab();
+    expect(screen.getByRole('button', { name: 'Portalled button' })).toHaveFocus();
+
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
   });
 
   it('forwards the function ref', () => {

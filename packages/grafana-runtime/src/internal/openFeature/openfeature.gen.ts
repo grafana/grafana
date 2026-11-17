@@ -80,7 +80,7 @@ export const FlagKeys = {
   AssistantDashboardPlanning: "assistant.dashboardPlanning",
   /** Enables the template dashboard assistant */
   AssistantFrontendToolsDashboardTemplates: "assistant.frontend.tools.dashboardTemplates",
-  /** Enables the global fullscreen Workspace (Grafana Assistant workspace shell) in the top bar */
+  /** Shows the Grafana Assistant Chat and Workspace buttons in the top bar, and Exit Workspace on the Assistant Workspace page */
   AssistantFullscreenWorkspace: "assistant.fullscreenWorkspace",
   /** Generate a per-datasource external ID for Grafana Assume Role (jsonData.grafanaExternalId). When disabled, new datasources keep using the stack-level external ID. */
   AwsAssumeRolePerDatasourceExternalId: "awsAssumeRolePerDatasourceExternalId",
@@ -180,6 +180,8 @@ export const FlagKeys = {
   GrafanaCmdkDashboardTags: "grafana.cmdkDashboardTags",
   /** Uses the hybrid (lexical + semantic) search endpoint as the dashboard search backend in the command palette */
   GrafanaCmdkHybridSearch: "grafana.cmdkHybridSearch",
+  /** Skips reranking in command palette hybrid dashboard search */
+  GrafanaCmdkHybridSearchSkipRerank: "grafana.cmdkHybridSearchSkipRerank",
   /** Enables using the Config From Query Results transformation's Dynamic Field Name option */
   GrafanaConfigFromQueryDynamicName: "grafana.configFromQueryDynamicName",
   /** Enables custom dashboard templates for enterprise */
@@ -322,6 +324,8 @@ export const FlagKeys = {
   PlaylistsRBAC: "playlistsRBAC",
   /** Show insights for plugins in the plugin details page */
   PluginInsights: "pluginInsights",
+  /** Disables the ST fallback for multi-tenant plugin api calls */
+  PluginsDisableMTPluginsFallback: "plugins.disableMTPluginsFallback",
   /** Initializes data source instance settings asynchronously from the API instead of synchronously from boot data */
   PluginsInitDataSourcesAsync: "plugins.initDataSourcesAsync",
   /** Enables plugins setting from new apis */
@@ -778,7 +782,7 @@ export const useFlagAssistantFrontendToolsDashboardTemplates = (options?: ReactF
 };
 
 /**
- * Enables the global fullscreen Workspace (Grafana Assistant workspace shell) in the top bar
+ * Shows the Grafana Assistant Chat and Workspace buttons in the top bar, and Exit Workspace on the Assistant Workspace page
  *
  * **Details:**
  * - flag key: `assistant.fullscreenWorkspace`
@@ -1325,6 +1329,17 @@ export const useFlagGrafanaCmdkDashboardTags = (options?: ReactFlagEvaluationOpt
  */
 export const useFlagGrafanaCmdkHybridSearch = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.cmdkHybridSearch", false, options).value;
+};
+
+/**
+ * Skips reranking in command palette hybrid dashboard search
+ *
+ * **Details:**
+ * - flag key: `grafana.cmdkHybridSearchSkipRerank`
+ * - default value: `false`
+ */
+export const useFlagGrafanaCmdkHybridSearchSkipRerank = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.cmdkHybridSearchSkipRerank", false, options).value;
 };
 
 /**
@@ -2106,6 +2121,17 @@ export const useFlagPlaylistsRBAC = (options?: ReactFlagEvaluationOptions): bool
  */
 export const useFlagPluginInsights = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("pluginInsights", false, options).value;
+};
+
+/**
+ * Disables the ST fallback for multi-tenant plugin api calls
+ *
+ * **Details:**
+ * - flag key: `plugins.disableMTPluginsFallback`
+ * - default value: `false`
+ */
+export const useFlagPluginsDisableMTPluginsFallback = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("plugins.disableMTPluginsFallback", false, options).value;
 };
 
 /**

@@ -1500,9 +1500,29 @@
         "records": "Enregistre sous",
         "to": "à"
       },
+      "recording-rule-actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "view": ""
+      },
       "recording-rules": {
         "folder-rules-error": "",
         "folders-error": "",
+        "header": {
+          "new-rule": ""
+        },
         "load-more-rules-in-folder": "",
         "loading-folders": "",
         "no-rules": "Aucune règle d’enregistrement trouvée",
@@ -2400,6 +2420,7 @@
       "contact-points": "Points de contact",
       "notification-policies": "Politiques de notification",
       "recently-deleted": "Supprimé récemment",
+      "recording-rules": "",
       "templates": "Modèles",
       "time-intervals": "Intervalles de temps"
     },
@@ -6218,8 +6239,7 @@
       }
     },
     "get-var-mapping-option-overrides": {
-      "defaults": "",
-      "rule": ""
+      "uses-variables": ""
     },
     "inspect": {
       "data-tab": "Données",
@@ -6414,9 +6434,6 @@
       "only-overrides-button-tooltip": "Afficher uniquement les remplacements",
       "placeholder-search-options": "Options de recherche",
       "visualization-button-tooltip": "Options de recherche"
-    },
-    "panel-editor": {
-      "ad-hoc-transformations-disabled": "Les transformations ad hoc sont désactivées en mode Modification"
     },
     "plan-building-overlay": {
       "quip-corners": "Polissage des angles des panneaux…",
@@ -7706,7 +7723,7 @@
       "apply": "Appliquer",
       "apply-body": "Toutes les personnes disposant d’un accès pourront les voir. Vous pouvez restaurer la version précédente depuis l’historique des versions.",
       "apply-failed": "Impossible d’appliquer les modifications. Réessayez ou comparez-les d’abord.",
-      "apply-needs-edit": "L’application des modifications nécessite un accès en écriture à « {{title}} ». Vous pouvez prévisualiser ces modifications, mais vous ne pouvez pas les appliquer.",
+      "apply-needs-save": "",
       "breadcrumb-draft": "Brouillon",
       "breadcrumb-pending-changes": "Modifications en attente",
       "change-added": "Ajouté",
@@ -8005,6 +8022,12 @@
       "confirmText-restore-version": "Oui, restaurer à la version {{version}}",
       "title-restore-version": "Restaurer la version"
     },
+    "row-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-row-settings": ""
+    },
     "sandbox-consent": {
       "allow": "Autoriser",
       "allow-tooltip": "Chargez le contenu des sources sélectionnées dans les panneaux répertoriés jusqu’à ce que vous fermiez cet onglet.",
@@ -8200,6 +8223,12 @@
       "switch-options": "Options de l’interrupteur",
       "value-pair-type": "Type de paire de valeurs",
       "value-pair-type-description": "Choisissez le type de valeurs pour les états de l’interrupteur"
+    },
+    "tab-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-tab-settings": ""
     },
     "text-box-variable": {
       "name-default-value": "Valeur par défaut"
@@ -14429,6 +14458,9 @@
     },
     "empty-state": {
       "message": "Aucune extension trouvée"
+    },
+    "errors": {
+      "app-plugin-metas-error": ""
     },
     "extensions": {
       "extension-error-alert-description": "Consultez la console pour plus de détails sur l’erreur.",
