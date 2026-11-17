@@ -14,38 +14,46 @@ import { RuleListSkeleton } from '../rule-row/RuleListSkeleton';
 
 import { useDeletedAlertRules } from './useDeletedAlertRules';
 
-export function AlertRulesDeletedView() {
-  const { items, hasMore, isLoading, isFetchingMore, error, loadMore, refetch, totalFromApi } = useDeletedAlertRules();
-  const [reviewing, setReviewing] = useState<AlertRule | null>(null);
-  const [restoring, setRestoring] = useState<AlertRule | null>(null);
-
-  useTrackDeletedRulesPageView(totalFromApi);
-
-  // Collect unique updatedBy UIDs to batch-resolve display names
+/** Batch-resolves user UIDs to display names via IAM getDisplayMapping. */
+function useDeletedByNames(rules: AlertRule[]): Record<string, string> {
   const userUids = useMemo(() => {
     const uids = new Set<string>();
-    for (const item of items) {
-      const uid = item.metadata?.annotations?.['grafana.app/updatedBy'];
+    for (const rule of rules) {
+      const uid = rule.metadata?.annotations?.['grafana.app/updatedBy'];
       if (uid) {
         uids.add(uid);
       }
     }
     return Array.from(uids);
-  }, [items]);
+  }, [rules]);
 
-  const { data: displayData } = useGetDisplayMappingQuery(
-    userUids.length > 0 ? { key: userUids.map((uid) => `user:${uid}`) } : skipToken
-  );
+  // The annotation may already be an identity ref ("user:<uid>") or a raw UID.
+  // Normalise to "user:<uid>" for the IAM key without double-prefixing.
+  const iamKeys = userUids.map((uid) => (uid.includes(':') ? uid : `user:${uid}`));
 
-  const userNames = useMemo(() => {
+  const { data } = useGetDisplayMappingQuery(iamKeys.length > 0 ? { key: iamKeys } : skipToken);
+
+  return useMemo(() => {
     const map: Record<string, string> = {};
-    for (const entry of displayData?.display ?? []) {
-      if (entry.identity.name) {
+    for (const entry of data?.display ?? []) {
+      if (entry.identity.type && entry.identity.name) {
+        // Store under both "user:<name>" and raw "<name>" to handle annotations
+        // that may carry either an identity ref or a plain UID.
+        map[`${entry.identity.type}:${entry.identity.name}`] = entry.displayName;
         map[entry.identity.name] = entry.displayName;
       }
     }
     return map;
-  }, [displayData]);
+  }, [data]);
+}
+
+export function AlertRulesDeletedView() {
+  const { items, hasMore, isLoading, isFetchingMore, error, loadMore, refetch, totalFromApi } = useDeletedAlertRules();
+  const [reviewing, setReviewing] = useState<AlertRule | null>(null);
+  const [restoring, setRestoring] = useState<AlertRule | null>(null);
+  const userNames = useDeletedByNames(items);
+
+  useTrackDeletedRulesPageView(totalFromApi);
 
   if (isLoading) {
     return <RuleListSkeleton />;

@@ -31,7 +31,9 @@ describe('ReviewDrawer', () => {
 
   it('shows the resolved folder path', async () => {
     render(<ReviewDrawer rule={makeDeletedRule()} onClose={jest.fn()} />);
-    expect(await screen.findByText('Platform / Infra')).toBeInTheDocument();
+    // FolderPath renders segments as separate spans
+    expect(await screen.findByText('Platform')).toBeInTheDocument();
+    expect(screen.getByText('Infra')).toBeInTheDocument();
   });
 
   it('calls onClose when closed', async () => {
@@ -47,13 +49,14 @@ describe('ReviewDrawer', () => {
     expect(screen.getByRole('code')).toBeInTheDocument();
   });
 
-  it('JSON does not contain access annotations', async () => {
-    const rule = makeDeletedRule();
-    rule.metadata.annotations = { 'grafana.com/access/canWrite': 'true', 'grafana.app/folder': 'f1' };
-    render(<ReviewDrawer rule={rule} onClose={jest.fn()} />);
+  it('JSON shows only the rule spec, not metadata', async () => {
+    render(<ReviewDrawer rule={makeDeletedRule()} onClose={jest.fn()} />);
     await userEvent.click(screen.getByRole('button', { name: /Advanced/i }));
     const json = screen.getByRole('code').textContent ?? '';
-    expect(json).not.toContain('canWrite');
-    expect(json).toContain('grafana.app/folder');
+    // spec fields appear
+    expect(json).toContain('title');
+    // metadata fields do not appear
+    expect(json).not.toContain('deletionTimestamp');
+    expect(json).not.toContain('grafana.app/folder');
   });
 });

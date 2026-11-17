@@ -24,12 +24,14 @@ export function useAlertRulesNav() {
   const extensionTabs = useAlertRulesExtensionTabs();
 
   if (shouldUseGmaOnlyListView()) {
+    const recentlyDeletedUrl = '/alerting/rules/alert/deleted';
     const adminTabs: NavModelItem[] = isAdmin()
       ? [
           {
             id: 'alert-rules-recently-deleted',
             text: t('alerting.navigation.recently-deleted', 'Recently deleted'),
-            url: '/alerting/rules/alert/deleted',
+            url: recentlyDeletedUrl,
+            active: location.pathname === recentlyDeletedUrl,
             parentItem: navIndex['alert-rules'],
           },
         ]

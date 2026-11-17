@@ -6,7 +6,7 @@ import { t } from '@grafana/i18n';
 import { Collapse, Drawer, Stack, Text } from '@grafana/ui';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
 
-import { useFolderPath } from '../folder-browsing/folderLookups';
+import { FolderByUid } from '../folder-browsing/FolderByUid';
 
 interface ReviewDrawerProps {
   rule: AlertRule;
@@ -15,22 +15,11 @@ interface ReviewDrawerProps {
   onJsonOpen?: () => void;
 }
 
-function sanitizeForDisplay(rule: AlertRule): object {
-  const annotations = Object.fromEntries(
-    Object.entries(rule.metadata?.annotations ?? {}).filter(([key]) => !key.startsWith('grafana.com/access/'))
-  );
-  const sanitized = { ...rule, metadata: { ...rule.metadata, annotations, managedFields: undefined } };
-  Reflect.deleteProperty(sanitized, 'status');
-  return sanitized;
-}
-
 export function ReviewDrawer({ rule, deletedByName, onClose, onJsonOpen }: ReviewDrawerProps) {
   const [jsonOpen, setJsonOpen] = useState(false);
   const title = rule.spec?.title ?? '';
   const deletionTime = rule.metadata?.deletionTimestamp;
   const folderUid = rule.metadata?.annotations?.[AnnoKeyFolder];
-  const folderPathSegments = useFolderPath(folderUid);
-  const folderPath = folderPathSegments?.join(' / ');
 
   const handleJsonToggle = (isOpen: boolean) => {
     setJsonOpen(isOpen);
@@ -51,7 +40,7 @@ export function ReviewDrawer({ rule, deletedByName, onClose, onJsonOpen }: Revie
       <Stack direction="column" gap={2}>
         <Stack direction="column" gap={0.5}>
           <Text weight="bold">{title}</Text>
-          {folderPath && <Text color="secondary">{folderPath}</Text>}
+          {folderUid && <FolderByUid folderUid={folderUid} />}
           {deletionTime && (
             <Text color="secondary">
               {t('alerting.recently-deleted.review.deleted-at', 'Deleted {{time}}', {
@@ -76,7 +65,7 @@ export function ReviewDrawer({ rule, deletedByName, onClose, onJsonOpen }: Revie
           onToggle={handleJsonToggle}
         >
           <code style={{ display: 'block', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }} role="code">
-            {JSON.stringify(sanitizeForDisplay(rule), null, 2)}
+            {JSON.stringify(rule.spec, null, 2)}
           </code>
         </Collapse>
       </Stack>

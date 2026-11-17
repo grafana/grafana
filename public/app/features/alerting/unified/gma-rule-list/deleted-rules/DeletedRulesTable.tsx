@@ -3,17 +3,7 @@ import { dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Button, type Column, EmptyState, InteractiveTable, Spinner, Stack } from '@grafana/ui';
 
-import { useFolderPath } from '../folder-browsing/folderLookups';
-
-/** Resolves a folder UID to its full path, e.g. "Team Alerts / Subfolder". */
-function FolderCell({ folderUid }: { folderUid: string }) {
-  const path = useFolderPath(folderUid);
-  // Show nothing while loading — avoids flashing the raw UID
-  if (path === undefined) {
-    return null;
-  }
-  return <>{path.join(' / ') || folderUid}</>;
-}
+import { FolderByUid } from '../folder-browsing/FolderByUid';
 
 interface DeletedRulesTableProps {
   rules: AlertRule[];
@@ -64,7 +54,7 @@ export function DeletedRulesTable({
         if (folderPaths[folderUid]) {
           return <>{folderPaths[folderUid]}</>;
         }
-        return <FolderCell folderUid={folderUid} />;
+        return <FolderByUid folderUid={folderUid} />;
       },
     },
     {

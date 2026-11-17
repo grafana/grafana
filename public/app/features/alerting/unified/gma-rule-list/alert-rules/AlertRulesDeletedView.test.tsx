@@ -8,11 +8,6 @@ jest.mock('@grafana/runtime', () => ({
   reportInteraction: jest.fn(),
 }));
 
-jest.mock('app/api/clients/iam/v0alpha1', () => ({
-  ...jest.requireActual('app/api/clients/iam/v0alpha1'),
-  useGetDisplayMappingQuery: () => ({ data: undefined }),
-}));
-
 import { setupMswServer } from '../../mockApi';
 import { FOLDER_PARENTS_URL, TRASH_RULES_URL, makeDeletedRule, mockTrashRules } from '../mocks/handlers';
 
@@ -22,9 +17,19 @@ setupMswServer();
 
 describe('AlertRulesDeletedView', () => {
   beforeEach(() => {
-    // Stub folder parents for ReviewDrawer's useFolderPath
-    server.use(http.get(FOLDER_PARENTS_URL, () => HttpResponse.json({ items: [] })));
+    server.use(
+      http.get(FOLDER_PARENTS_URL, () => HttpResponse.json({ items: [] })),
+      // Return a known display name so tests can wait for IAM resolution
+      // by asserting on the displayed name before interacting with buttons.
+      http.get(/\/apis\/iam\.grafana\.app\/.*\/display/, () =>
+        HttpResponse.json({
+          display: [{ identity: { type: 'user', name: 'user-uid-123' }, displayName: 'Test Admin', internalId: 1 }],
+          keys: ['user:user-uid-123'],
+        })
+      )
+    );
   });
+
   it('shows loading state initially', async () => {
     let releasePage: () => void = () => {};
     const gate = new Promise<void>((resolve) => {
@@ -57,7 +62,8 @@ describe('AlertRulesDeletedView', () => {
   it('opens Review drawer when Review is clicked', async () => {
     mockTrashRules([makeDeletedRule()]);
     render(<AlertRulesDeletedView />);
-    await screen.findByText('Deleted rule');
+    // Wait for IAM user-name resolution to settle before clicking
+    await screen.findByText('Test Admin');
     await userEvent.click(screen.getByRole('button', { name: /Review/i }));
     expect(await screen.findByRole('dialog')).toBeInTheDocument();
   });
@@ -65,7 +71,7 @@ describe('AlertRulesDeletedView', () => {
   it('opens Restore modal when Restore is clicked', async () => {
     mockTrashRules([makeDeletedRule()]);
     render(<AlertRulesDeletedView />);
-    await screen.findByText('Deleted rule');
+    await screen.findByText('Test Admin');
     await userEvent.click(screen.getByRole('button', { name: /Restore/i }));
     expect(await screen.findByText(/Restore "Deleted rule"/i)).toBeInTheDocument();
   });
