@@ -37,6 +37,7 @@ export {
   usePanelContext,
   PanelContextProvider,
   type PanelContext,
+  type AdHocFilterSelectionUpdate,
   type PanelRuntimeTransformations,
   type AdHocTransformationsState,
   PanelContextRoot,
