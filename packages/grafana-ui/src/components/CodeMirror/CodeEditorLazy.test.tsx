@@ -12,7 +12,7 @@ const mockCodeEditor = jest.fn(({ value }: { value: string }) => {
   return <div data-testid="code-mirror-editor">{value}</div>;
 });
 
-jest.mock('./BaseCodeMirrorEditor', () => ({
+jest.mock('./BaseCodeEditor', () => ({
   __esModule: true,
   BaseCodeMirrorEditor: (props: { value: string }) => mockCodeEditor(props),
 }));

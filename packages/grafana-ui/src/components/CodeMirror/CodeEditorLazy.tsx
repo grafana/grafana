@@ -12,7 +12,7 @@ import {
 } from './types';
 
 const LazyBaseCodeMirrorEditor = lazy(() =>
-  import(/* webpackChunkName: "react-codemirror-editor" */ './BaseCodeMirrorEditor').then((module) => ({
+  import(/* webpackChunkName: "react-codemirror-editor" */ './BaseCodeEditor').then((module) => ({
     default: module.BaseCodeMirrorEditor,
   }))
 );

@@ -6,7 +6,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';
-import { BaseCodeMirrorEditor } from '../CodeMirror/BaseCodeMirrorEditor';
+import { BaseCodeMirrorEditor } from '../CodeMirror/BaseCodeEditor';
 import { type CodeMirrorBasicSetup, type CodeMirrorEditorTheme, type CodeMirrorExtension } from '../CodeMirror/types';
 
 import { type QueryInputProps } from './QueryInput';

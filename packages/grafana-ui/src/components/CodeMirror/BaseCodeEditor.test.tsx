@@ -10,7 +10,7 @@ import { faro } from '@grafana/faro-web-sdk';
 
 import { mockThemeContext } from '../../themes/ThemeContext';
 
-import { BaseCodeMirrorEditor } from './BaseCodeMirrorEditor';
+import { BaseCodeMirrorEditor } from './BaseCodeEditor';
 import { loadLanguageExtension } from './languageLoader';
 import { createCodeEditorTheme } from './theme';
 
