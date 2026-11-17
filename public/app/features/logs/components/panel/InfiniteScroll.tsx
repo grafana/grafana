@@ -64,7 +64,7 @@ export interface Props {
   displayedFields: string[];
   handleOverflow: (index: number, id: string, height?: number) => void;
   infiniteScrollMode: InfiniteScrollMode;
-  /** Allows loading more logs when scrolling to the top of the list. Always enabled in unlimited mode. */
+  // Load more when scrollng in the top direction. Always enabled in unlimited mode
   infiniteScrollTop?: boolean;
   loadingState?: LoadingState;
   loadMore?: LoadMoreLogsType;
