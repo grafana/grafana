@@ -393,7 +393,7 @@ func RegisterAPIService(
 		return nil, fmt.Errorf("invalid [provisioning] resources configuration: %w", err)
 	}
 	supportedResources := resources.NewSupportedResourceProvider(configured)
-	manifestWatcher := resource.NewLocalManifestWatcher(manifests, nil, supportedResources.Update, nil)
+	manifestWatcher := resource.NewLocalManifestWatcher(manifests, nil, supportedResources.Update, cfg.Logger)
 	if err := manifestWatcher.StartAsync(context.Background()); err != nil {
 		return nil, fmt.Errorf("failed to start manifest watcher: %w", err)
 	}

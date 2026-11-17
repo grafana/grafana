@@ -367,6 +367,7 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 		Exchanger:         tokenExchangeClient,
 		TLS:               &tlsConfig,
 		PollInterval:      time.Minute,
+		Log:               c.Settings.Logger,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create manifest watcher: %w", err)
