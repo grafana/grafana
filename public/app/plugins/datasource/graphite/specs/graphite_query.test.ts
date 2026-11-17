@@ -135,6 +135,15 @@ describe('Graphite query model', () => {
       expect(ctx.queryModel.target.target).toBe('sumSeries(devices.air_temperature | scale(2))');
     });
 
+    it('falls back to the text editor instead of dropping text after a pipe chain', () => {
+      ctx.target = { refId: 'A', target: 'devices.air_temperature | scale(2) offset(1)' };
+      ctx.targets = [ctx.target];
+      ctx.queryModel = new GraphiteQuery(ctx.datasource, ctx.target, ctx.templateSrv);
+
+      expect(ctx.queryModel.target.textEditor).toBe(true);
+      expect(ctx.queryModel.target.target).toBe('devices.air_temperature | scale(2) offset(1)');
+    });
+
     it('falls back to the text editor for a metric segment containing a literal pipe', () => {
       ctx.target = { refId: 'A', target: 'devices.air|temperature' };
       ctx.targets = [ctx.target];

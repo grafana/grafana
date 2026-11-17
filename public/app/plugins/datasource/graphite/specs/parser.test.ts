@@ -296,6 +296,13 @@ describe('when parsing', () => {
     expect(rootNode?.type).toBe('error');
   });
 
+  it('errors when tokens remain after a pipe chain', () => {
+    const parser = new Parser('devices.air_temperature | scale(2) offset(1)');
+    const rootNode = parser.getAst();
+
+    expect(rootNode?.type).toBe('error');
+  });
+
   // Pipes are only folded at the top level of an expression. A pipe inside function
   // arguments is not supported, and the resulting parser error is what makes the query
   // editor fall back to the text editor instead of dropping the piped function.

@@ -190,6 +190,12 @@ export class Parser {
       node = funcNode;
     }
 
+    // Piped queries are checked against their rendered AST rather than the original text,
+    // so leftover tokens would be silently dropped instead of failing that check.
+    if (this.hasPipe && this.index < this.tokens.length) {
+      this.errorMark('Unexpected token after piped function');
+    }
+
     return node;
   }
 
