@@ -475,25 +475,37 @@ describe('DataSourcePicker', () => {
       }
     });
 
-    it('keeps the dropdown open without a dismissal when the trigger icon is clicked', async () => {
+    it('closes and reports a dismissal when the trigger icon is clicked while open', async () => {
+      // jsdom has no PointerEvent, so react-aria would fall back to its mouseup test path, where the click
+      // still reaches the trigger and reopens the dropdown. Browsers take the click-capture path, which
+      // stops the click before the trigger sees it.
+      const hadPointerEvent = 'PointerEvent' in window;
+      if (!hadPointerEvent) {
+        Object.defineProperty(window, 'PointerEvent', { value: class extends MouseEvent {}, configurable: true });
+      }
+      try {
+        await setupOpenDropdown(user, { onChange: jest.fn() });
+
+        await user.click(screen.getByTestId('icon-search'));
+
+        expect(screen.getByRole('combobox')).toHaveAttribute('aria-expanded', 'false');
+        expect(silentCalls('dashboards_dspicker_dismissed')).toHaveLength(1);
+        expect(silentCalls('dashboards_dspicker_opened')).toHaveLength(1);
+      } finally {
+        if (!hadPointerEvent) {
+          Reflect.deleteProperty(window, 'PointerEvent');
+        }
+      }
+    });
+
+    it('keeps the dropdown open without a dismissal when the input is clicked while open', async () => {
       await setupOpenDropdown(user, { onChange: jest.fn() });
 
-      await user.click(screen.getByTestId('icon-search'));
+      await user.click(screen.getByRole('combobox'));
 
       expect(screen.getByRole('combobox')).toHaveAttribute('aria-expanded', 'true');
       expect(silentCalls('dashboards_dspicker_dismissed')).toHaveLength(0);
       expect(silentCalls('dashboards_dspicker_opened')).toHaveLength(1);
-    });
-
-    it('reports a clear instead of a dismissal when cleared while open', async () => {
-      const onClear = jest.fn();
-      await setupOpenDropdown(user, { onChange: jest.fn(), current: mockDS1.name, onClear });
-
-      await user.click(screen.getByRole('button', { name: 'Clear data source' }));
-
-      expect(onClear).toHaveBeenCalled();
-      expect(silentCalls('dashboards_dspicker_cleared')).toHaveLength(1);
-      expect(silentCalls('dashboards_dspicker_dismissed')).toHaveLength(0);
     });
 
     it('reports the list render as searched when the picker is opened by typing', async () => {

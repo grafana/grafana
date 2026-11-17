@@ -39,10 +39,10 @@ import { abandonOnRouteChange, collectUnsubs, str } from './utils';
  * End conditions:
  *   - success: dashboards_dspicker_clicked item=select_ds — a different data source was selected
  *     (the picker also reports this for selections made in the advanced modal it opened, before the modal does)
- *   - success: dashboards_dspicker_cleared — the data source was cleared while the dropdown was open (cleared=true)
  *   - success: dashboards_dspicker_current_reselected — the already selected data source was picked again (changed=false),
  *     in the dropdown or in the advanced modal it opened
- *   - discarded: dashboards_dspicker_dismissed — dropdown closed without a selection (click outside, Escape, Tab out)
+ *   - discarded: dashboards_dspicker_dismissed — dropdown closed without a selection (click outside, including the
+ *     picker's logo, chevron or clear button; Escape; Tab out)
  *   - abandoned: dashboards_dspicker_dismissed (reason=unmount) — picker unmounted while open
  *   - abandoned: route pathname changes (e.g. navigating away while the advanced modal is open)
  *   - discarded: dashboards_dspickermodal_clicked item=dismiss — advanced modal closed without a selection
@@ -57,7 +57,6 @@ import { abandonOnRouteChange, collectUnsubs, str } from './utils';
  *     (DataSourceList calls back two animation frames after mounting)
  *   - dashboards_dspicker_dismissed — emitted when the dropdown closes or unmounts without a selection
  *   - dashboards_dspicker_current_reselected — emitted when the current data source is picked again
- *   - dashboards_dspicker_cleared — emitted when the data source is cleared while the dropdown is open
  */
 
 const PICKER_EVENT = 'dashboards_dspicker_clicked';
@@ -219,12 +218,6 @@ onJourneyInstance('datasource_picker_select', (handle) => {
   add(
     onCycleInteraction('dashboards_dspicker_current_reselected', (props) => {
       end('success', { dsType: str(props.ds_type), changed: 'false', selectedIn });
-    })
-  );
-
-  add(
-    onCycleInteraction('dashboards_dspicker_cleared', () => {
-      end('success', { changed: 'true', cleared: 'true', selectedIn });
     })
   );
 

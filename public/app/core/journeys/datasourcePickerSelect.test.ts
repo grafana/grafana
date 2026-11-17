@@ -188,7 +188,6 @@ describe('datasourcePickerSelect journey wiring', () => {
 
     simulateInteraction('dashboards_dspicker_list_rendered', { total_listed: 5, cycle_id: 'other' });
     simulateInteraction('dashboards_dspicker_dismissed', { cycle_id: 'other' });
-    simulateInteraction('dashboards_dspicker_cleared', { cycle_id: 'other' });
     simulateInteraction('dashboards_dspicker_current_reselected', { cycle_id: 'other' });
 
     expect(mockStep.end).not.toHaveBeenCalled();
@@ -279,19 +278,6 @@ describe('datasourcePickerSelect journey wiring', () => {
     locationService.partial({ left: '{}' });
 
     expect(mockHandle.end).not.toHaveBeenCalled();
-  });
-
-  it('ends with success and cleared=true when the data source is cleared', () => {
-    loadWiring();
-    openPicker();
-
-    simulateInteraction('dashboards_dspicker_cleared');
-
-    expect(mockHandle.end).toHaveBeenCalledWith('success', {
-      changed: 'true',
-      cleared: 'true',
-      selectedIn: 'dropdown',
-    });
   });
 
   it('uses the surface reported by the picker over the URL', () => {

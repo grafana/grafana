@@ -106,7 +106,6 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
   const [activeItemId, setActiveItemId] = useState<string>();
   const { onKeyDown, keyboardEvents } = useKeyNavigationListener();
   const ref = useRef<HTMLDivElement>(null);
-  const triggerRef = useRef<HTMLDivElement>(null);
   const debouncedTrackSearch = useMemo(
     () =>
       debounce((q) => {
@@ -233,8 +232,7 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
           onClick={(e) => {
             // Don't let the click bubble up to the trigger, which would open the dropdown
             e.stopPropagation();
-            endCycle('dashboards_dspicker_cleared');
-            closeDropdown();
+            onClose();
             onClear();
           }}
         />
@@ -248,10 +246,8 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
       onClose: onClose,
       isDismissable: true,
       isOpen,
-      // The whole trigger (input, logo, chevron, clear button) counts as inside, so clicking it while
-      // open doesn't close and immediately reopen the dropdown.
       shouldCloseOnInteractOutside: (element) => {
-        return triggerRef.current ? !triggerRef.current.contains(element) : false;
+        return markerElement ? !markerElement.isSameNode(element) : false;
       },
     },
     ref
@@ -330,7 +326,6 @@ export function DataSourcePicker(props: DataSourcePickerProps) {
       {/* This clickable div is just extending the clickable area on the input element to include the prefix and suffix. */}
       {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
       <div
-        ref={triggerRef}
         className={styles.trigger}
         onClick={() => {
           openDropdown();
