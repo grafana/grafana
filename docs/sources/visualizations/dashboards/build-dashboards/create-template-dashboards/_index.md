@@ -64,7 +64,7 @@ To create a dashboard from a template, follow these steps:
 1. Click **Save**.
 1. Enter an optional description of your updates, and click **Save**.
 
-### Create a custom dashboard template
+### Create custom dashboard templates
 
 {{< docs/public-preview product="Custom dashboard templates" >}}
 
@@ -82,7 +82,14 @@ To create a custom dashboard template, follow these steps:
 Now the template is available in the **Custom** tab of the **Start a dashboard from a template** dialog box.
 This is the dialog box that opens when someone selects the **Use template** option to create a dashboard.
 
-### Edit custom dashboard templates
+Refer to the following sections for directions on [editing](#edit-custom-templates) or [deleting](#delete-custom-templates) custom dashboard templates.
+
+### Manage custom dashboard templates
+
+After you create a custom dashboard template, you can edit or delete it at any time.
+The following sections describe how.
+
+#### Edit custom dashboard templates
 
 To make changes to a custom dashboard template, follow these steps:
 
@@ -103,9 +110,11 @@ To make changes to a custom dashboard template, follow these steps:
 1. Click **Save**.
 1. Click the dashboard mode selector and select **Viewing**.
 
-Users who open the template now will see the updated content.
+Users who open the template now see the updated content.
 
-### Delete custom dashboard templates
+#### Delete custom dashboard templates
+
+To delete a custom dashboard template, follow these steps:
 
 1. Click **Dashboards** in the primary menu.
 1. Click **New** and select **Use template** in the drop-down menu.
@@ -116,6 +125,8 @@ Users who open the template now will see the updated content.
 1. Click **Delete**.
 1. Type "Delete" into the provided field.
 1. Click **Delete**.
+
+This action is permanent and you can't recover deleted templates.
 
 ## Suggested dashboards
 
