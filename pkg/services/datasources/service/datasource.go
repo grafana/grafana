@@ -505,12 +505,6 @@ func (s *Service) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteD
 	return nil
 }
 
-func (s *Service) decryptSecureJsonDataFn(ctx context.Context) func(ds *datasources.DataSource) (map[string]string, error) {
-	return func(ds *datasources.DataSource) (map[string]string, error) {
-		return s.DecryptedValues(ctx, ds)
-	}
-}
-
 func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) (*datasources.DataSource, error) {
 	var dataSource *datasources.DataSource
 
