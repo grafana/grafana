@@ -11,6 +11,7 @@ import { type DashboardChangeInfo, SaveButton } from '../saving/shared';
 import { type DashboardScene } from '../scene/DashboardScene';
 
 import { getScenePendingChangePreview, isPendingChangesStale, previewedDashboardUid } from './pendingChangePreview';
+import { pendingChangesSuperseded } from './pendingChangesHistory';
 import { savePendingChanges, showSavedPendingChanges } from './pendingChangesSave';
 
 interface Props {
@@ -39,10 +40,11 @@ export function SavePendingChangesForm({ dashboard, drawer, changeInfo }: Props)
       if (!result.saved) {
         if (result.currentGeneration !== undefined) {
           setStale(true);
-        } else {
+        } else if (pendingChangesSuperseded(dashboard)) {
           // The pending changes changed under an edit: the page shows the newer ones instead.
           dashboard.closeModal();
         }
+        // Otherwise an edit failed to record, as its own error says: Save tries it again.
         return;
       }
       const uid = previewedDashboardUid(dashboard.state);

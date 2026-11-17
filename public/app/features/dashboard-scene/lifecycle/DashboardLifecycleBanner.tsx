@@ -506,7 +506,7 @@ function PendingChangesBanner({
               href={locationService.getLocation().pathname}
               onClick={async (event) => {
                 event.preventDefault();
-                await showOriginal(placement, uid, id, true, reload);
+                await showOriginal(uid, id, true, reload);
               }}
             >
               {t('dashboard-scene.lifecycle.show-original-dashboard', 'Show original dashboard')}
@@ -768,12 +768,7 @@ function PendingChangesHint({
           You’re viewing the saved dashboard. It has pending changes that only you can see.
         </Trans>
       </span>
-      <Button
-        variant="secondary"
-        fill="outline"
-        size="sm"
-        onClick={() => showOriginal(placement, uid, id, false, reload)}
-      >
+      <Button variant="secondary" fill="outline" size="sm" onClick={() => showOriginal(uid, id, false, reload)}>
         <Trans i18nKey="dashboard-scene.lifecycle.preview-changes">Preview changes</Trans>
       </Button>
     </div>

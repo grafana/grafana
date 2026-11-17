@@ -94,39 +94,25 @@ describe('loadPendingChangePreview', () => {
   });
 });
 
-// The page keeps the choice in its URL, so a plugin linking to it can tell what it shows.
 describe('showing the saved dashboard instead of the pending changes', () => {
   afterEach(() => locationService.push('/'));
 
-  it('is the dashboard page URL', async () => {
+  it('is never the page, even from a URL that asked for it before', async () => {
     registerLoaders(async () => pending);
-    locationService.push('/d/abc?pendingChanges=chat-1');
-    const reload = jest.fn(async () => undefined);
+    locationService.push('/d/abc?pendingChanges=chat-1&pendingChangesView=original');
 
-    await showOriginal('page', 'abc', 'chat-1', true, reload);
-    expect(locationService.getSearchObject()).toMatchObject({
-      pendingChanges: 'chat-1',
-      pendingChangesView: 'original',
-    });
-    await expect(loadPendingChangePreview('page', 'abc', 'chat-1')).resolves.toMatchObject({ previewing: false });
-    // The embedded view keeps its own choice.
-    await expect(loadPendingChangePreview('embedded', 'abc', 'chat-1')).resolves.toMatchObject({ previewing: true });
-
-    await showOriginal('page', 'abc', 'chat-1', false, reload);
-    expect(locationService.getSearchObject().pendingChangesView).toBeUndefined();
-    // The page reloads itself when its URL changes.
-    expect(reload).not.toHaveBeenCalled();
+    await expect(loadPendingChangePreview('page', 'abc', 'chat-1')).resolves.toMatchObject({ previewing: true });
   });
 
   it('is remembered for the tab by the embedded view, which reloads itself', async () => {
     registerLoaders(async () => pending);
     const reload = jest.fn(async () => undefined);
 
-    await showOriginal('embedded', 'abc', 'chat-1', true, reload);
+    await showOriginal('abc', 'chat-1', true, reload);
     await expect(loadPendingChangePreview('embedded', 'abc', 'chat-1')).resolves.toMatchObject({ previewing: false });
     await expect(loadPendingChangePreview('page', 'abc', 'chat-1')).resolves.toMatchObject({ previewing: true });
 
-    await showOriginal('embedded', 'abc', 'chat-1', false, reload);
+    await showOriginal('abc', 'chat-1', false, reload);
     expect(reload).toHaveBeenCalledTimes(2);
   });
 });

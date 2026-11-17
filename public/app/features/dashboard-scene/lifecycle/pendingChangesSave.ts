@@ -149,6 +149,9 @@ export async function discardScenePendingChanges(scene: DashboardScene, { keepEd
     return;
   }
   const draft = proposesNewDashboard(preview.pending);
+  // An edit still on its way, such as the one Exit edit records, would reach the plugin after the
+  // discard and bring the pending changes back.
+  await pendingChangesRecorded(scene);
   try {
     await preview.pending.discard();
   } catch {

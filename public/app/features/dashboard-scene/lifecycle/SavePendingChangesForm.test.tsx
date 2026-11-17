@@ -75,7 +75,10 @@ async function loadScene(pending: DashboardPendingChanges, savedGeneration = 3) 
 async function renderForm(pending: DashboardPendingChanges, savedGeneration = 3) {
   const scene = await loadScene(pending, savedGeneration);
   const drawer = new SaveDashboardDrawer({ dashboardRef: scene.getRef() });
-  return render(<SavePendingChangesForm dashboard={scene} drawer={drawer} changeInfo={scene.getDashboardChanges()} />);
+  return {
+    scene,
+    ...render(<SavePendingChangesForm dashboard={scene} drawer={drawer} changeInfo={scene.getDashboardChanges()} />),
+  };
 }
 
 beforeEach(() => {
@@ -149,6 +152,23 @@ it('shows the changes their plugin records while the drawer is open', async () =
   } finally {
     jest.useRealTimers();
   }
+});
+
+it('stays open when an edit fails to record, so Save can try again', async () => {
+  const pending = pendingChanges();
+  pending.history!.record = jest.fn(async () => {
+    throw new Error('offline');
+  });
+  const { user, scene } = await renderForm(pending);
+  const closeModal = jest.spyOn(scene, 'closeModal');
+  scene.setState({ title: 'Edited', isDirty: true });
+
+  await user.click(screen.getByRole('button', { name: 'Save' }));
+
+  expect(await screen.findByRole('button', { name: 'Save' })).toBeEnabled();
+  expect(pending.history!.record).toHaveBeenCalledTimes(1);
+  expect(pending.apply).not.toHaveBeenCalled();
+  expect(closeModal).not.toHaveBeenCalled();
 });
 
 it('shows the conflict when the dashboard moved on while the form was open', async () => {

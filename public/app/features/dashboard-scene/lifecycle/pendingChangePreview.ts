@@ -33,8 +33,8 @@ const PENDING_CHANGES_EXTENSION_POINT = 'grafana/dashboard/pending-changes/v1';
 export const PENDING_CHANGES_QUERY_PARAM = 'pendingChanges';
 
 /**
- * With `original`, the dashboard page shows the saved dashboard instead of the pending changes,
- * with a way back to them. In the URL so a plugin linking to the page can tell which it shows.
+ * With `original`, the dashboard page used to show the saved dashboard instead of the pending
+ * changes. The page always shows them now, and drops this from the URL with the preview.
  */
 export const PENDING_CHANGES_VIEW_QUERY_PARAM = 'pendingChangesView';
 
@@ -130,29 +130,19 @@ function storedViews(storageKey: string): Set<string> {
   }
 }
 
-/** Whether the requester chose to see the saved dashboard instead of these pending changes. */
+/**
+ * Whether the requester chose to see the saved dashboard instead of these pending changes. Only the
+ * embedded view's banner offers that: the page edits them, with Undo and the save form's diff.
+ */
 function isShowingOriginal(view: PendingChangesView, uid: string, id: string): boolean {
-  return view === 'page'
-    ? locationService.getSearchObject()[PENDING_CHANGES_VIEW_QUERY_PARAM] === 'original'
-    : storedViews(ORIGINAL_VIEW_KEY).has(viewKey(uid, id));
+  return view === 'embedded' && storedViews(ORIGINAL_VIEW_KEY).has(viewKey(uid, id));
 }
 
 /**
- * Shows the saved dashboard instead of the pending changes, or the pending changes again. The
- * page changes its URL, which reloads it; the embedded view remembers the choice for the tab and
- * reloads itself (`reload`).
+ * Shows the saved dashboard in the embedded view instead of the pending changes, or the pending
+ * changes again: it remembers the choice for the tab and reloads itself (`reload`).
  */
-export async function showOriginal(
-  view: PendingChangesView,
-  uid: string,
-  id: string,
-  original: boolean,
-  reload: () => Promise<void>
-) {
-  if (view === 'page') {
-    locationService.partial({ [PENDING_CHANGES_VIEW_QUERY_PARAM]: original ? 'original' : null }, true);
-    return;
-  }
+export async function showOriginal(uid: string, id: string, original: boolean, reload: () => Promise<void>) {
   setShowOriginal(uid, id, original);
   await reload();
 }

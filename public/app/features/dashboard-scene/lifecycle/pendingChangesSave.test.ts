@@ -17,6 +17,7 @@ import {
   getScenePendingChangePreview,
   loadPendingChangePreview,
 } from './pendingChangePreview';
+import { recordPendingChange } from './pendingChangesHistory';
 import { setPendingChangesPageClose, takeEditingOnNextLoad } from './pendingChangesPageReload';
 import {
   discardScenePendingChanges,
@@ -150,6 +151,29 @@ describe('discarding pending changes', () => {
     expect(scene.state.isEditing).toBe(false);
     expect(takeEditingOnNextLoad('dash-1')).toBe(false);
     subscription.unsubscribe();
+  });
+
+  it('discards once an edit on its way reached the plugin, so it cannot bring the changes back', async () => {
+    const order: string[] = [];
+    let finishRecording = () => {};
+    const pending = pendingChanges({ discard: jest.fn(async () => void order.push('discard')) });
+    pending.history!.record = jest.fn(() => {
+      order.push('record');
+      return new Promise<{ recorded: boolean }>((resolve) => {
+        finishRecording = () => resolve({ recorded: true });
+      });
+    });
+    const scene = await openOnPage(pending);
+    scene.setState({ title: 'Edited' });
+    void recordPendingChange(scene, pending.history!, 'Edit dashboard');
+
+    const discarded = discardScenePendingChanges(scene);
+    await waitFor(() => expect(pending.history!.record).toHaveBeenCalledTimes(1));
+    expect(pending.discard).not.toHaveBeenCalled();
+
+    finishRecording();
+    await discarded;
+    expect(order).toEqual(['record', 'discard']);
   });
 
   it('opens the saved dashboard for editing after Discard changes, which keeps editing', async () => {
