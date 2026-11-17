@@ -155,8 +155,9 @@ func (s *Storage) allowOrphanedUpdateBypass(ctx context.Context, obj, previous u
 func isManagerRelease(obj, previous utils.GrafanaMetaAccessor) bool {
 	_, managed := obj.GetManagerProperties()
 	_, wasManaged := previous.GetManagerProperties()
+	_, hasManagerAnnotation := obj.GetAnnotations()[utils.AnnoKeyManagerKind]
 
-	return !managed && wasManaged
+	return !managed && wasManaged && !hasManagerAnnotation
 }
 
 // isMarkForDeleteOnly ignores the annotations that prepareObjectForUpdate sets itself. The manager
