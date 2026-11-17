@@ -212,4 +212,6 @@ export interface CodeMirrorEditorProps {
   loadingFallback?: ReactNode;
 }
 
-export type CustomCodeEditorProps = CodeMirrorEditorProps;
+export type BaseCodeMirrorEditorProps = Omit<CodeMirrorEditorProps, 'loadingFallback'>;
+
+export type InternalCodeMirrorEditorProps = CodeMirrorEditorProps;

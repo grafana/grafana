@@ -3,21 +3,21 @@ import { Suspense, lazy, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 import { ErrorBoundaryAlert, LoadingPlaceholder } from '@grafana/ui';
-import { CustomCodeEditor, type CustomCodeEditorProps } from '@grafana/ui/internal';
+import { InternalCodeMirrorEditor, type InternalCodeMirrorEditorProps } from '@grafana/ui/internal';
 
 const TemplateCodeMirror = lazy(async () => {
   const { goTemplate } = await import('./editor/goTemplate');
   const extensions = [goTemplate()];
 
   return {
-    default: function TemplateCodeMirror(props: CustomCodeEditorProps) {
-      return <CustomCodeEditor {...props} extensions={extensions} />;
+    default: function TemplateCodeMirror(props: InternalCodeMirrorEditorProps) {
+      return <InternalCodeMirrorEditor {...props} extensions={extensions} />;
     },
   };
 });
 
 interface TemplateEditorProps
-  extends Pick<CustomCodeEditorProps, 'value' | 'onBlur' | 'readOnly' | 'height' | 'aria-label'> {
+  extends Pick<InternalCodeMirrorEditorProps, 'value' | 'onBlur' | 'readOnly' | 'height' | 'aria-label'> {
   width?: number;
   showLineNumbers?: boolean;
 }

@@ -10,7 +10,7 @@ import { faro } from '@grafana/faro-web-sdk';
 
 import { mockThemeContext } from '../../themes/ThemeContext';
 
-import { CodeEditor, CustomCodeEditor } from './CodeEditor';
+import { BaseCodeMirrorEditor } from './BaseCodeMirrorEditor';
 import { loadLanguageExtension } from './languageLoader';
 import { createCodeEditorTheme } from './theme';
 
@@ -80,7 +80,7 @@ const getContentAttributes = () =>
     extensions: getExtensions() as never[],
   }).facet(EditorView.contentAttributes);
 
-describe('CodeMirror CodeEditor', () => {
+describe('BaseCodeMirrorEditor', () => {
   beforeEach(() => {
     capturedProps = undefined;
     autocompletionMock.mockClear();
@@ -97,7 +97,7 @@ describe('CodeMirror CodeEditor', () => {
     const customSourceB = jest.fn();
 
     render(
-      <CodeEditor
+      <BaseCodeMirrorEditor
         value=""
         onChange={jest.fn()}
         completionSources={[customSourceA, customSourceB]}
@@ -116,7 +116,7 @@ describe('CodeMirror CodeEditor', () => {
     const customSourceB = jest.fn();
 
     render(
-      <CodeEditor
+      <BaseCodeMirrorEditor
         value=""
         onChange={jest.fn()}
         completionSources={[customSourceA, customSourceB]}
@@ -134,7 +134,7 @@ describe('CodeMirror CodeEditor', () => {
     const existingSource = jest.fn();
 
     render(
-      <CodeEditor
+      <BaseCodeMirrorEditor
         value=""
         onChange={jest.fn()}
         extensions={[EditorState.languageData.of(() => [{ autocomplete: existingSource }])]}
@@ -146,7 +146,7 @@ describe('CodeMirror CodeEditor', () => {
   });
 
   it('binds Tab to accept completions before the default indent behavior', () => {
-    render(<CodeEditor value="" onChange={jest.fn()} />);
+    render(<BaseCodeMirrorEditor value="" onChange={jest.fn()} />);
 
     const tabBinding = getKeyBindings().find((binding) => binding.key === 'Tab');
 
@@ -154,13 +154,15 @@ describe('CodeMirror CodeEditor', () => {
   });
 
   it('leaves Space unbound by default, so a space cannot open the popup as an explicit request', () => {
-    render(<CodeEditor value="a sentence" onChange={jest.fn()} completionSources={[jest.fn()]} />);
+    render(<BaseCodeMirrorEditor value="a sentence" onChange={jest.fn()} completionSources={[jest.fn()]} />);
 
     expect(getKeyBindings().find((binding) => binding.key === 'Space')).toBeUndefined();
   });
 
   it('binds Space to insert a space and start completions when completeOnSpace is set', () => {
-    render(<CodeEditor value="SELECT" onChange={jest.fn()} completionSources={[jest.fn()]} completeOnSpace />);
+    render(
+      <BaseCodeMirrorEditor value="SELECT" onChange={jest.fn()} completionSources={[jest.fn()]} completeOnSpace />
+    );
 
     const spaceBinding = getKeyBindings().find((binding) => binding.key === 'Space');
     const replaceSelection = jest.fn(() => ({ changes: { from: 6, insert: ' ' } }));
@@ -180,7 +182,14 @@ describe('CodeMirror CodeEditor', () => {
   });
 
   it('adds accessibility attributes to the editor content when provided', () => {
-    render(<CodeEditor value="" onChange={jest.fn()} aria-label="Code editor" aria-labelledby="code-editor-label" />);
+    render(
+      <BaseCodeMirrorEditor
+        value=""
+        onChange={jest.fn()}
+        aria-label="Code editor"
+        aria-labelledby="code-editor-label"
+      />
+    );
 
     expect(getContentAttributes()).toEqual(
       expect.arrayContaining([{ 'aria-label': 'Code editor', 'aria-labelledby': 'code-editor-label' }])
@@ -188,7 +197,7 @@ describe('CodeMirror CodeEditor', () => {
   });
 
   it('does not attach a blur handler when onBlur is not provided', () => {
-    render(<CodeEditor value="" onChange={jest.fn()} />);
+    render(<BaseCodeMirrorEditor value="" onChange={jest.fn()} />);
 
     expect(capturedProps?.onBlur).toBeUndefined();
   });
@@ -199,7 +208,7 @@ describe('CodeMirror CodeEditor', () => {
     const onSave = jest.fn();
     const nextOnSave = jest.fn();
     const onKeyDown = jest.fn();
-    const { rerender } = render(<CodeEditor value="initial" onChange={onChange} />);
+    const { rerender } = render(<BaseCodeMirrorEditor value="initial" onChange={onChange} />);
     const view = new EditorView({
       state: EditorState.create({ doc: 'SELECT 1', extensions: getExtensions() as never[] }),
       parent: document.body,
@@ -211,7 +220,7 @@ describe('CodeMirror CodeEditor', () => {
       await user.keyboard('{Control>}s{/Control}');
       expect(onKeyDown).toHaveBeenLastCalledWith(expect.objectContaining({ key: 's', defaultPrevented: true }));
 
-      rerender(<CodeEditor value="initial" onChange={onChange} onSave={onSave} />);
+      rerender(<BaseCodeMirrorEditor value="initial" onChange={onChange} onSave={onSave} />);
       await user.keyboard('{Control>}s{/Control}');
       expect(onSave.mock.calls).toEqual([['SELECT 1']]);
 
@@ -220,11 +229,11 @@ describe('CodeMirror CodeEditor', () => {
       expect(onSave.mock.calls).toEqual([['SELECT 1']]);
 
       view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: 'SELECT 2' } });
-      rerender(<CodeEditor value="initial" onChange={onChange} onSave={nextOnSave} />);
+      rerender(<BaseCodeMirrorEditor value="initial" onChange={onChange} onSave={nextOnSave} />);
       await user.keyboard('{Control>}s{/Control}');
       expect(nextOnSave.mock.calls).toEqual([['SELECT 2']]);
 
-      rerender(<CodeEditor value="initial" onChange={onChange} />);
+      rerender(<BaseCodeMirrorEditor value="initial" onChange={onChange} />);
       await user.keyboard('{Control>}s{/Control}');
       expect(onKeyDown).toHaveBeenLastCalledWith(expect.objectContaining({ key: 's', defaultPrevented: true }));
       expect(onSave.mock.calls).toEqual([['SELECT 1']]);
@@ -234,20 +243,20 @@ describe('CodeMirror CodeEditor', () => {
     }
   });
 
-  it('defaults to the Grafana CodeEditor theme when no theme prop is provided', () => {
-    render(<CodeEditor value="" onChange={jest.fn()} />);
+  it('defaults to the Grafana theme when no theme prop is provided', () => {
+    render(<BaseCodeMirrorEditor value="" onChange={jest.fn()} />);
 
     expect(createCodeEditorThemeMock).toHaveBeenCalledTimes(1);
     expect(capturedProps?.theme).toBe(createCodeEditorThemeMock.mock.results[0].value);
   });
 
   it('regenerates the default editor theme when the Grafana theme changes', () => {
-    const { rerender } = render(<CodeEditor value="" onChange={jest.fn()} />);
+    const { rerender } = render(<BaseCodeMirrorEditor value="" onChange={jest.fn()} />);
     const initialTheme = createCodeEditorThemeMock.mock.calls[0][0] as GrafanaTheme2;
     const nextTheme = createTheme({ colors: { mode: initialTheme.isDark ? 'light' : 'dark' } });
     const restoreThemeContext = mockThemeContext(nextTheme);
 
-    rerender(<CodeEditor value="" onChange={jest.fn()} />);
+    rerender(<BaseCodeMirrorEditor value="" onChange={jest.fn()} />);
 
     expect(createCodeEditorThemeMock).toHaveBeenLastCalledWith(nextTheme);
     expect(capturedProps?.theme).toBe(createCodeEditorThemeMock.mock.results.at(-1)?.value);
@@ -258,7 +267,7 @@ describe('CodeMirror CodeEditor', () => {
   it('passes a provided theme through to CodeMirror, replacing the default Grafana theme', () => {
     const customTheme = EditorView.theme({ '&': { backgroundColor: 'rgb(7, 7, 7)' } });
 
-    render(<CodeEditor value="" onChange={jest.fn()} theme={customTheme} />);
+    render(<BaseCodeMirrorEditor value="" onChange={jest.fn()} theme={customTheme} />);
 
     expect(capturedProps?.theme).toBe(customTheme);
   });
@@ -266,7 +275,7 @@ describe('CodeMirror CodeEditor', () => {
   it('forwards basicSetup to CodeMirror so consumers can disable default features', () => {
     const basicSetup = { lineNumbers: false, foldGutter: false } as const;
 
-    render(<CodeEditor value="" onChange={jest.fn()} basicSetup={basicSetup} />);
+    render(<BaseCodeMirrorEditor value="" onChange={jest.fn()} basicSetup={basicSetup} />);
 
     expect((capturedProps as { basicSetup?: unknown } | undefined)?.basicSetup).toBe(basicSetup);
   });
@@ -275,7 +284,7 @@ describe('CodeMirror CodeEditor', () => {
     const languageExtension = EditorState.languageData.of(() => [{ autocomplete: jest.fn() }]);
     loadLanguageExtensionMock.mockResolvedValue(languageExtension);
 
-    render(<CodeEditor value="" onChange={jest.fn()} language="sql" />);
+    render(<BaseCodeMirrorEditor value="" onChange={jest.fn()} language="sql" />);
 
     await waitFor(() => expect(loadLanguageExtensionMock).toHaveBeenCalledWith('sql', { sqlDialect: undefined }));
     await waitFor(() => expect(getExtensions()).toContain(languageExtension));
@@ -285,7 +294,7 @@ describe('CodeMirror CodeEditor', () => {
     const languageExtension = EditorState.languageData.of(() => [{ autocomplete: jest.fn() }]);
     loadLanguageExtensionMock.mockResolvedValue(languageExtension);
 
-    render(<CodeEditor value="" onChange={jest.fn()} language="sql" sqlDialect="mySql" />);
+    render(<BaseCodeMirrorEditor value="" onChange={jest.fn()} language="sql" sqlDialect="mySql" />);
 
     await waitFor(() => expect(loadLanguageExtensionMock).toHaveBeenCalledWith('sql', { sqlDialect: 'mySql' }));
   });
@@ -294,7 +303,7 @@ describe('CodeMirror CodeEditor', () => {
     const error = new Error('Failed to import SQL support');
     loadLanguageExtensionMock.mockRejectedValue(error);
 
-    render(<CodeEditor value="" onChange={jest.fn()} language="sql" />);
+    render(<BaseCodeMirrorEditor value="" onChange={jest.fn()} language="sql" />);
 
     expect(await screen.findByText('Syntax highlighting failed to load')).toBeInTheDocument();
     expect(screen.getByText('The editor will continue without language-specific features.')).toBeInTheDocument();
@@ -311,11 +320,11 @@ describe('CodeMirror CodeEditor', () => {
   });
 });
 
-describe('CodeMirror CustomCodeEditor', () => {
+describe('BaseCodeMirrorEditor with raw extensions', () => {
   it('passes raw extensions through to CodeMirror', () => {
     const extension = EditorState.languageData.of(() => []);
 
-    render(<CustomCodeEditor value="" onChange={jest.fn()} extensions={[extension]} />);
+    render(<BaseCodeMirrorEditor value="" onChange={jest.fn()} extensions={[extension]} />);
 
     expect(getExtensions()).toContain(extension);
   });

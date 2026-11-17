@@ -3,7 +3,7 @@ import { type EditorView, ViewPlugin } from '@codemirror/view';
 import { getJSONSchema, jsonSchema, updateSchema } from 'codemirror-json-schema';
 import { useCallback, useContext, useMemo, useRef, useState } from 'react';
 
-import { CustomCodeEditor } from '@grafana/ui/internal';
+import { InternalCodeMirrorEditor } from '@grafana/ui/internal';
 
 import { NamespaceContext } from './contexts';
 import { schemaAnnotations } from './schemaAnnotations';
@@ -58,7 +58,7 @@ export default function SchemaEditor({ schema, ...props }: Props) {
   }, [schema, annotations]);
 
   return (
-    <CustomCodeEditor
+    <InternalCodeMirrorEditor
       value={draft}
       height="300px"
       extensions={extensions}

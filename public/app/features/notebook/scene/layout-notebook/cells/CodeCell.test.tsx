@@ -5,7 +5,7 @@ import { type CellContentKind } from 'app/features/notebook/types';
 
 import { CodeCell } from './CodeCell';
 
-// The real CustomCodeEditor is a heavy, lazily loaded bundle that does not run in jsdom. A textarea
+// The real InternalCodeMirrorEditor is a heavy, lazily loaded bundle that does not run in jsdom. A textarea
 // carries readOnly into the DOM, so the assertions are on rendered output rather than on props
 // handed to a stub. Only the editor is replaced: the rest of the module is reachable from this
 // test's import tree (attachSkeleton, via the dashboard scene), and a wholesale mock takes it down.
@@ -20,7 +20,7 @@ jest.mock('@grafana/ui/internal', () => {
 
   return {
     ...jest.requireActual('@grafana/ui/internal'),
-    CustomCodeEditor: ({
+    InternalCodeMirrorEditor: ({
       value,
       readOnly,
       basicSetup,

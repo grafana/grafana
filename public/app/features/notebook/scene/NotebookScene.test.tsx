@@ -48,7 +48,7 @@ setPluginImportUtils({
 // would otherwise resolve outside of this file's act() calls.
 jest.mock('@grafana/ui/internal', () => ({
   ...jest.requireActual('@grafana/ui/internal'),
-  CustomCodeEditor: ({
+  InternalCodeMirrorEditor: ({
     value,
     readOnly,
     onChange,

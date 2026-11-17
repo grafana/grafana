@@ -5,15 +5,19 @@ import { t } from '@grafana/i18n';
 import { ErrorBoundaryAlert } from '../ErrorBoundary/ErrorBoundary';
 import { LoadingPlaceholder } from '../LoadingPlaceholder/LoadingPlaceholder';
 
-import { type CodeMirrorEditorProps, type CustomCodeEditorProps } from './types';
+import {
+  type BaseCodeMirrorEditorProps,
+  type CodeMirrorEditorProps,
+  type InternalCodeMirrorEditorProps,
+} from './types';
 
-const loadEditors = () => import(/* webpackChunkName: "react-codemirror-editor" */ './CodeEditor');
+const LazyBaseCodeMirrorEditor = lazy(() =>
+  import(/* webpackChunkName: "react-codemirror-editor" */ './BaseCodeMirrorEditor').then((module) => ({
+    default: module.BaseCodeMirrorEditor,
+  }))
+);
 
-const LazyCodeEditor = lazy(() => loadEditors().then((module) => ({ default: module.CodeEditor })));
-
-const LazyCustomCodeEditor = lazy(() => loadEditors().then((module) => ({ default: module.CustomCodeEditor })));
-
-function LazyEditor({ loadingFallback, children }: { loadingFallback?: ReactNode; children: ReactNode }) {
+function LazyEditor({ loadingFallback, ...props }: BaseCodeMirrorEditorProps & { loadingFallback?: ReactNode }) {
   return (
     <ErrorBoundaryAlert
       boundaryName="CodeMirrorEditorLazy"
@@ -27,24 +31,16 @@ function LazyEditor({ loadingFallback, children }: { loadingFallback?: ReactNode
           )
         }
       >
-        {children}
+        <LazyBaseCodeMirrorEditor {...props} />
       </Suspense>
     </ErrorBoundaryAlert>
   );
 }
 
 export function CodeMirrorEditor(props: CodeMirrorEditorProps) {
-  return (
-    <LazyEditor loadingFallback={props.loadingFallback}>
-      <LazyCodeEditor {...props} />
-    </LazyEditor>
-  );
+  return <LazyEditor {...props} />;
 }
 
-export function CustomCodeEditor({ loadingFallback, ...props }: CustomCodeEditorProps) {
-  return (
-    <LazyEditor loadingFallback={loadingFallback}>
-      <LazyCustomCodeEditor {...props} />
-    </LazyEditor>
-  );
+export function InternalCodeMirrorEditor(props: InternalCodeMirrorEditorProps) {
+  return <LazyEditor {...props} />;
 }

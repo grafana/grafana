@@ -9,7 +9,7 @@ jest.mock('@grafana/ui/internal', () => {
 
   return {
     ...jest.requireActual('@grafana/ui/internal'),
-    CustomCodeEditor: ({
+    InternalCodeMirrorEditor: ({
       value,
       basicSetup,
       extensions,

@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 
-import { CodeMirrorEditor, CustomCodeEditor } from './CodeEditorLazy';
+import { CodeMirrorEditor, InternalCodeMirrorEditor } from './CodeEditorLazy';
 
 let shouldThrowOnRender = false;
 
@@ -12,10 +12,9 @@ const mockCodeEditor = jest.fn(({ value }: { value: string }) => {
   return <div data-testid="code-mirror-editor">{value}</div>;
 });
 
-jest.mock('./CodeEditor', () => ({
+jest.mock('./BaseCodeMirrorEditor', () => ({
   __esModule: true,
-  CodeEditor: (props: { value: string }) => mockCodeEditor(props),
-  CustomCodeEditor: (props: { value: string }) => mockCodeEditor(props),
+  BaseCodeMirrorEditor: (props: { value: string }) => mockCodeEditor(props),
 }));
 
 describe('CodeMirrorEditor lazy wrapper', () => {
@@ -44,13 +43,13 @@ describe('CodeMirrorEditor lazy wrapper', () => {
   });
 });
 
-describe('CustomCodeEditor lazy wrapper', () => {
+describe('InternalCodeMirrorEditor lazy wrapper', () => {
   beforeEach(() => {
     shouldThrowOnRender = false;
   });
 
   it('renders the custom editor implementation', async () => {
-    render(<CustomCodeEditor value="SELECT 1" onChange={jest.fn()} />);
+    render(<InternalCodeMirrorEditor value="SELECT 1" onChange={jest.fn()} />);
 
     expect(await screen.findByTestId('code-mirror-editor')).toHaveTextContent('SELECT 1');
   });
