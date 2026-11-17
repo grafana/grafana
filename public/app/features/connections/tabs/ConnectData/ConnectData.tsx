@@ -29,7 +29,7 @@ import type { CardGridItem } from './CardGrid/CardGrid';
 import { AddNewConnectionLegacy } from './ConnectDataLegacy';
 import { FilterSidebar } from './FilterSidebar/FilterSidebar';
 import { NoAccessModal } from './NoAccessModal/NoAccessModal';
-import { useShowCloudProviderCards } from './components/CloudProviderCards';
+import { useConnectionEntryPoints } from './components/ConnectionEntryPoints';
 import { PluginContentView } from './components/PluginContentView';
 import { FILTER_BY_OPTIONS, GROUP_BY_OPTIONS, TYPE_FILTER_OPTIONS } from './constants';
 import { serializeListFilter, useConnectionFiltersFromQuery } from './hooks/useConnectionFiltersFromQuery';
@@ -212,13 +212,13 @@ function AddNewConnectionWithSidebar() {
   const hasActiveFilters =
     categoryFilter.length > 0 || typeFilter.length > 0 || filterBy !== 'all' || sortBy !== 'nameAsc';
 
-  const showCloudProviderCards = useShowCloudProviderCards(searchTerm);
+  const entryPoints = useConnectionEntryPoints(searchTerm);
   const showNoResults =
     !isLoading &&
     !error &&
     datasourceCardGridItems.length === 0 &&
     appsCardGridItems.length === 0 &&
-    !showCloudProviderCards;
+    !entryPoints.hasVisibleEntryPoints;
 
   return (
     <>
@@ -249,7 +249,7 @@ function AddNewConnectionWithSidebar() {
                 datasourceCardGridItems={datasourceCardGridItems}
                 appsCardGridItems={appsCardGridItems}
                 pluginsByCategory={pluginsByCategory}
-                searchTerm={searchTerm}
+                entryPoints={entryPoints}
                 onClickCardGridItem={onClickCardGridItem}
               />
             )}

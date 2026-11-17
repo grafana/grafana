@@ -1,5 +1,6 @@
 import { render, type RenderResult, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useEffect } from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { PluginType } from '@grafana/data';
@@ -7,12 +8,14 @@ import { locationService } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { mockBoundingClientRect } from '@grafana/test-utils';
 import { setTestFlags } from '@grafana/test-utils/unstable';
+import { TextLink } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getCatalogPluginMock, getPluginsStateMock } from 'app/features/plugins/admin/mocks/mockHelpers';
 import { type CatalogPlugin } from 'app/features/plugins/admin/types';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { AddNewConnection } from './ConnectData';
+import { type ConnectionEntryPointProps } from './components/ConnectionEntryPoints';
 
 jest.mock('app/features/datasources/api');
 
@@ -24,19 +27,15 @@ afterAll(() => {
   setTestFlags({});
 });
 
+const mockUsePluginComponents = jest.fn();
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   useChromeHeaderHeight: jest.fn(),
-}));
-
-const mockUseAppPluginMeta = jest.fn();
-jest.mock('@grafana/runtime/internal', () => ({
-  ...jest.requireActual('@grafana/runtime/internal'),
-  useAppPluginMeta: (...args: unknown[]) => mockUseAppPluginMeta(...args),
+  usePluginComponents: (...args: unknown[]) => mockUsePluginComponents(...args),
 }));
 
 beforeEach(() => {
-  mockUseAppPluginMeta.mockReturnValue({ loading: false, error: undefined, value: undefined });
+  mockUsePluginComponents.mockReturnValue({ isLoading: false, components: [] });
 });
 
 const renderPage = (plugins: CatalogPlugin[] = [], path = '/add-new-connection'): RenderResult => {
@@ -190,68 +189,60 @@ describe('Add new connection', () => {
   });
 });
 
-describe('Cloud provider tiles', () => {
-  const onboardingApp = getCatalogPluginMock({
+describe('Plugin entry points', () => {
+  const entryPointPluginApp = getCatalogPluginMock({
     type: PluginType.app,
-    name: 'Data Source Onboarding',
-    id: 'grafana-dsonboarding-app',
+    name: 'Entry point app',
+    id: 'entry-point-app',
   });
 
-  beforeEach(() => {
-    mockUseAppPluginMeta.mockReturnValue({
-      loading: false,
-      error: undefined,
-      value: { id: 'grafana-dsonboarding-app' },
-    });
-  });
+  // Behaves like a plugin-provided component: renders a card when the search matches its title.
+  const EntryPointComponent = Object.assign(
+    ({ searchTerm, onVisibilityChange }: ConnectionEntryPointProps) => {
+      const matches = 'Plugin entry point'.toLowerCase().includes(searchTerm.toLowerCase());
+      useEffect(() => onVisibilityChange(matches), [matches, onVisibilityChange]);
+      return matches ? <TextLink href="/a/entry-point-app/start">Plugin entry point</TextLink> : null;
+    },
+    { meta: { id: 'entry-point-app/card/v1', pluginId: 'entry-point-app' } }
+  );
 
-  test('shows the AWS, Azure and Google Cloud tiles and hides the generic onboarding card', async () => {
-    renderPage([onboardingApp, mockCatalogAppPlugin]);
+  test('renders components registered on the extension point and hides the plugin generic app card', async () => {
+    mockUsePluginComponents.mockReturnValue({ isLoading: false, components: [EntryPointComponent] });
+    renderPage([entryPointPluginApp, mockCatalogAppPlugin]);
 
-    expect(await screen.findByText('AWS Onboarding')).toBeInTheDocument();
-    expect(screen.getByText('Azure Onboarding')).toBeInTheDocument();
-    expect(screen.getByText('Google Cloud Onboarding')).toBeInTheDocument();
-    expect(screen.queryByText('Data Source Onboarding')).not.toBeInTheDocument();
-  });
-
-  test('links the tiles to the onboarding app pages', async () => {
-    renderPage([onboardingApp]);
-
-    expect(await screen.findByRole('link', { name: /AWS Onboarding/ })).toHaveAttribute(
+    expect(await screen.findByRole('link', { name: 'Plugin entry point' })).toHaveAttribute(
       'href',
-      '/a/grafana-dsonboarding-app/aws'
+      '/a/entry-point-app/start'
     );
-    expect(screen.getByRole('link', { name: /Azure Onboarding/ })).toHaveAttribute(
-      'href',
-      '/a/grafana-dsonboarding-app/azure/services'
+    expect(screen.getByText('Sample app')).toBeInTheDocument();
+    expect(screen.queryByText('Entry point app')).not.toBeInTheDocument();
+    expect(mockUsePluginComponents).toHaveBeenCalledWith(
+      expect.objectContaining({ extensionPointId: 'grafana/connections/entry-points/v1' })
     );
   });
 
-  test.each([
-    ['aws', 'AWS Onboarding', ['Azure Onboarding', 'Google Cloud Onboarding']],
-    ['azure', 'Azure Onboarding', ['AWS Onboarding', 'Google Cloud Onboarding']],
-    ['bigquery', 'Google Cloud Onboarding', ['AWS Onboarding', 'Azure Onboarding']],
-  ])('searching "%s" only shows the matching tile', async (search, shown, hidden) => {
-    // the search results contain no plugins, tiles must not depend on them
-    renderPage([], `/add-new-connection?search=${search}`);
+  test('passes the search term to the component, which does not depend on the search results', async () => {
+    mockUsePluginComponents.mockReturnValue({ isLoading: false, components: [EntryPointComponent] });
+    renderPage([], '/add-new-connection?search=entry');
 
-    expect(await screen.findByText(shown)).toBeInTheDocument();
-    hidden.forEach((name) => expect(screen.queryByText(name)).not.toBeInTheDocument());
+    expect(await screen.findByText('Plugin entry point')).toBeInTheDocument();
+    expect(screen.queryByText('No results matching your query were found')).not.toBeInTheDocument();
   });
 
-  test('hides the tiles when the search matches none of them', async () => {
-    renderPage([mockCatalogAppPlugin], '/add-new-connection?search=sample');
+  test('shows the empty state when the component does not match the search', async () => {
+    mockUsePluginComponents.mockReturnValue({ isLoading: false, components: [EntryPointComponent] });
+    renderPage([], '/add-new-connection?search=nothing-matches-this');
 
-    expect(await screen.findByText('Sample app')).toBeInTheDocument();
-    expect(screen.queryByText('AWS Onboarding')).not.toBeInTheDocument();
+    expect(await screen.findByText('No results matching your query were found')).toBeInTheDocument();
+    expect(screen.queryByText('Plugin entry point')).not.toBeInTheDocument();
   });
 
-  test('does not show the tiles when the onboarding app is not installed', async () => {
-    mockUseAppPluginMeta.mockReturnValue({ loading: false, error: undefined, value: undefined });
-    renderPage([mockCatalogAppPlugin]);
+  test('renders the page normally when no plugin registers an entry point', async () => {
+    renderPage([entryPointPluginApp, mockCatalogAppPlugin]);
 
     expect(await screen.findByText('Sample app')).toBeInTheDocument();
-    expect(screen.queryByText('AWS Onboarding')).not.toBeInTheDocument();
+    expect(screen.getByText('Entry point app')).toBeInTheDocument();
+    expect(screen.queryByText('Plugin entry point')).not.toBeInTheDocument();
   });
 });
 

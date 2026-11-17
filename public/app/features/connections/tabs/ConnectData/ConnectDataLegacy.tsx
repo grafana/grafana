@@ -20,11 +20,7 @@ import { ROUTES } from '../../constants';
 import { CardGrid, type CardGridItem } from './CardGrid/CardGrid';
 import { CategoryHeader } from './CategoryHeader/CategoryHeader';
 import { NoAccessModal } from './NoAccessModal/NoAccessModal';
-import {
-  CloudProviderCards,
-  DS_ONBOARDING_PLUGIN_ID,
-  useShowCloudProviderCards,
-} from './components/CloudProviderCards';
+import { useConnectionEntryPoints } from './components/ConnectionEntryPoints';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   searchContainer: css({
@@ -155,11 +151,16 @@ export function AddNewConnectionLegacy() {
     history.push({ query: { filterBy: value } });
   };
 
-  const hasOnboardingApp = useShowCloudProviderCards(searchTerm);
+  const entryPoints = useConnectionEntryPoints(searchTerm);
 
   const showNoResults = useMemo(
-    () => !isLoading && !error && dataSourcesPlugins.length < 1 && appsPlugins.length < 1 && !hasOnboardingApp,
-    [isLoading, error, dataSourcesPlugins, appsPlugins, hasOnboardingApp]
+    () =>
+      !isLoading &&
+      !error &&
+      dataSourcesPlugins.length < 1 &&
+      appsPlugins.length < 1 &&
+      !entryPoints.hasVisibleEntryPoints,
+    [isLoading, error, dataSourcesPlugins, appsPlugins, entryPoints.hasVisibleEntryPoints]
   );
 
   return (
@@ -248,21 +249,19 @@ export function AddNewConnectionLegacy() {
             )}
 
             {/* Apps Section */}
-            {(appsPlugins.length > 0 || hasOnboardingApp) && (
+            {(appsPlugins.length > 0 || entryPoints.hasVisibleEntryPoints) && (
               <>
                 <div className={styles.spacer} />
                 <CategoryHeader iconName="apps" label={t('connections.connect-data.apps-header', 'Apps')} />
-                {hasOnboardingApp && (
-                  <>
-                    <CloudProviderCards searchTerm={searchTerm} />
-                    <div className={styles.spacer} />
-                  </>
-                )}
-                <CardGrid
-                  items={appsCardGridItems.filter((item) => item.id !== DS_ONBOARDING_PLUGIN_ID)}
-                  onClickItem={onClickCardGridItem}
-                />
               </>
+            )}
+            {entryPoints.element}
+            {entryPoints.hasVisibleEntryPoints && appsPlugins.length > 0 && <div className={styles.spacer} />}
+            {appsPlugins.length > 0 && (
+              <CardGrid
+                items={appsCardGridItems.filter((item) => !entryPoints.pluginIds.has(item.id))}
+                onClickItem={onClickCardGridItem}
+              />
             )}
           </>
         )}
