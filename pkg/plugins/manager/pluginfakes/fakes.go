@@ -72,9 +72,6 @@ type FakePluginClient struct {
 	backend.CheckHealthHandlerFunc
 	backend.QueryDataHandlerFunc
 	backend.CallResourceHandlerFunc
-	backend.MutateAdmissionFunc
-	backend.ValidateAdmissionFunc
-	backend.ConvertObjectsFunc
 	mutex sync.RWMutex
 
 	backendplugin.Plugin
@@ -173,30 +170,6 @@ func (pc *FakePluginClient) PublishStream(_ context.Context, _ *backend.PublishS
 
 func (pc *FakePluginClient) RunStream(_ context.Context, _ *backend.RunStreamRequest, _ *backend.StreamSender) error {
 	return plugins.ErrMethodNotImplemented
-}
-
-func (pc *FakePluginClient) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
-	if pc.ValidateAdmissionFunc != nil {
-		return pc.ValidateAdmissionFunc(ctx, req)
-	}
-
-	return nil, plugins.ErrMethodNotImplemented
-}
-
-func (pc *FakePluginClient) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
-	if pc.MutateAdmissionFunc != nil {
-		return pc.MutateAdmissionFunc(ctx, req)
-	}
-
-	return nil, plugins.ErrMethodNotImplemented
-}
-
-func (pc *FakePluginClient) ConvertObjects(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
-	if pc.ConvertObjectsFunc != nil {
-		return pc.ConvertObjectsFunc(ctx, req)
-	}
-
-	return nil, plugins.ErrMethodNotImplemented
 }
 
 type FakePluginRegistry struct {
