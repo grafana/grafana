@@ -40,6 +40,19 @@ func TestNewDefaultController_AppendsExtraHandlersAfterTheDefaults(t *testing.T)
 	require.Equal(t, []ChildKind{ChildFolder, ChildDashboard, kindTagged}, kinds(extended))
 }
 
+func TestNewDefaultControllerWithOptions_PreservesHandlersAndRecovery(t *testing.T) {
+	pending := NewPendingClient(nil)
+	c := NewDefaultControllerWithOptions(nil, nil, []ControllerOption{WithPendingRecovery(pending)}, KindHandler{Kind: kindTagged})
+	t.Cleanup(c.ShutDown)
+
+	require.Same(t, pending, c.pending)
+	kinds := make([]ChildKind, 0, len(c.reconciler.Handlers))
+	for _, h := range c.reconciler.Handlers {
+		kinds = append(kinds, h.Kind)
+	}
+	require.Equal(t, []ChildKind{ChildFolder, ChildDashboard, kindTagged}, kinds)
+}
+
 func TestReconcile_NoHandlersKeepsTheFolder(t *testing.T) {
 	m := newMemStore()
 	m.addFolder("a", "", foldersv1.CascadeDeleteFinalizer)
