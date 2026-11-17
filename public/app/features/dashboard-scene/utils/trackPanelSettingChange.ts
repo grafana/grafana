@@ -11,6 +11,11 @@ import { getPanelIdForVizPanel } from './utils-panels';
  * Without a source, the surface is inferred: the same option components render in the edit pane and the panel editor.
  */
 export function trackPanelSettingChange(panel: VizPanel, item: PanelSettingItem, source?: PanelSettingSource) {
+  // Without a key there is no panel id to report, and analytics must not break the change being made.
+  if (!panel.state.key) {
+    return;
+  }
+
   DashboardInteractions.panelSettingChanged({
     item,
     source: source ?? (getDashboardSceneFor(panel).state.editPanel ? 'panel_editor' : 'edit_pane'),
