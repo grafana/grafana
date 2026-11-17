@@ -1,8 +1,8 @@
-import { sceneGraph, type SceneObject } from '@grafana/scenes';
+import { sceneGraph, VizPanel, type SceneObject } from '@grafana/scenes';
 
 import { RowItem } from '../scene/layout-rows/RowItem';
 import { TabItem } from '../scene/layout-tabs/TabItem';
-import { isDashboardSceneLike } from '../scene/types/dashboard';
+import { isDashboardSceneLike, type DashboardSceneLike } from '../scene/types/dashboard';
 import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
 import { type SceneQuestion } from './types';
@@ -57,17 +57,52 @@ function remapQuestion(question: SceneQuestion, copiedIds: Map<number, number>, 
 }
 
 /**
- * IDs of the panels the questions on a dashboard and its rows and tabs picked, including panels removed since. A new
- * panel must not reuse one of them, or questions that picked the removed panel would answer from the new one.
+ * Stops the questions on a dashboard and its rows and tabs from picking the panels inside `removed`, and returns a
+ * function that puts them back. A new panel takes the ID of a removed one when that was the highest, and a question
+ * that still picked it would then answer from the new panel.
  */
-export function getPickedPanelIds(root: SceneObject): number[] {
-  const questions = [
-    ...(isDashboardSceneLike(root) ? (root.state.questions ?? []) : []),
-    ...getSections(root).flatMap((section) => section.state.questions ?? []),
-  ];
-  // Saved JSON isn't validated, and a value that isn't an ID would break the next ID.
-  return questions.flatMap((question) =>
-    (question.sources ?? []).flatMap((source) => (Number.isSafeInteger(source.panelId) ? [source.panelId] : []))
+export function dropPickedPanels(root: SceneObject, removed: SceneObject): () => void {
+  const removedIds = new Set(getVizPanels(removed).map(getPanelIdForVizPanel));
+  const restores: Array<() => void> = [];
+
+  if (removedIds.size) {
+    for (const owner of getQuestionOwners(root)) {
+      const { questions } = owner.state;
+      if (questions?.some((question) => question.sources?.some((source) => removedIds.has(source.panelId)))) {
+        owner.setState({ questions: questions.map((question) => dropSources(question, removedIds)) });
+        restores.push(() => owner.setState({ questions }));
+      }
+    }
+  }
+
+  return () => restores.forEach((restore) => restore());
+}
+
+/** Returns a function that puts the questions on a dashboard and its rows and tabs back as they are now. */
+export function snapshotQuestions(root: SceneObject): () => void {
+  const snapshot = getQuestionOwners(root).flatMap((owner) =>
+    owner.state.questions ? [{ owner, questions: owner.state.questions }] : []
+  );
+  return () => snapshot.forEach(({ owner, questions }) => owner.setState({ questions }));
+}
+
+function dropSources(question: SceneQuestion, panelIds: Set<number>): SceneQuestion {
+  if (!question.sources?.some((source) => panelIds.has(source.panelId))) {
+    return question;
+  }
+  const { sources, ...rest } = question;
+  const kept = sources?.filter((source) => !panelIds.has(source.panelId)) ?? [];
+  return kept.length ? { ...rest, sources: kept } : rest;
+}
+
+function getQuestionOwners(root: SceneObject): Array<DashboardSceneLike | RowItem | TabItem> {
+  return [...(isDashboardSceneLike(root) ? [root] : []), ...getSections(root)];
+}
+
+/** `object`, when it is a panel, and the panels inside it. */
+function getVizPanels(object: SceneObject): VizPanel[] {
+  return [object, ...sceneGraph.findAllObjects(object, (child) => child instanceof VizPanel)].filter(
+    (child) => child instanceof VizPanel
   );
 }
 

@@ -25,12 +25,6 @@ jest.mock('../../actions/element/addElement', () => ({
   },
 }));
 
-jest.mock('../../actions/element/removeElement', () => ({
-  removeElement(props: { perform: () => void }) {
-    props.perform();
-  },
-}));
-
 let currentTestScene: unknown;
 
 jest.mock('../../utils/utils', () => {
@@ -793,6 +787,22 @@ describe('Layout mutation commands', () => {
       // Panel moved from Row 1 to Row 2
       expect(body.state.rows[0].state.layout.getVizPanels()).toHaveLength(0);
       expect(body.state.rows[1].state.layout.getVizPanels()).toHaveLength(2);
+    });
+
+    it('keeps the panels that questions pick when it moves them', async () => {
+      const scene = buildRowsSceneWithPanels();
+      const executor = new DashboardMutationClient(scene);
+      const body = scene.state.body as unknown as RowsLayoutManager;
+      body.state.rows[0].setState({ questions: [{ text: 'Why is it slow?', sources: [{ panelId: 1 }] }] });
+
+      const result = await executor.execute({
+        type: 'MOVE_PANEL',
+        payload: { element: { name: 'elem-a' }, toParent: '/rows/1' },
+      });
+
+      expect(result.success).toBe(true);
+      expect(body.state.rows[1].state.layout.getVizPanels().map((panel) => panel.state.key)).toContain('panel-1');
+      expect(body.state.rows[0].state.questions).toEqual([{ text: 'Why is it slow?', sources: [{ panelId: 1 }] }]);
     });
 
     it('preserves panel ids and keeps grid item keys unique when moving panels', async () => {

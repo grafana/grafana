@@ -1,6 +1,7 @@
 import { t } from '@grafana/i18n';
 import { type SceneObject } from '@grafana/scenes';
 
+import { dropPickedPanels } from '../../questions/questionSources';
 import { type DashboardActionMeta } from '../../sidebar/events';
 import { edit } from '../utils/edit';
 import { getElementTypeName } from '../utils/getElementTypeName';
@@ -21,12 +22,23 @@ export function removeElement(props: RemoveElementActionHelperProps) {
     throw new Error('Removed object is not an editable element');
   }
 
+  // Removing a layout can detach `source` from the dashboard, so find the dashboard first.
+  const root = source.getRoot();
+  let restoreQuestions: (() => void) | undefined;
+
   edit({
     meta: props.meta,
     description: t('dashboard.edit-actions.remove', 'Remove {{typeName}}', { typeName }),
     removedObject,
     source,
-    perform,
-    undo,
+    perform: () => {
+      perform();
+      restoreQuestions = dropPickedPanels(root, removedObject);
+    },
+    undo: () => {
+      undo();
+      restoreQuestions?.();
+      restoreQuestions = undefined;
+    },
   });
 }

@@ -1,20 +1,17 @@
 import { VizPanel, sceneGraph, type SceneObject, SceneGridRow } from '@grafana/scenes';
 
-import { getPickedPanelIds } from '../questions/questionSources';
-
 import { getPanelIdForVizPanel } from './utils-panels';
 
 /**
  * Will look for all panels in the entire scene starting from root
- * and find the next free panel id. IDs that questions still pick are not free, even once their panel is removed.
+ * and find the next free panel id
  */
 export function getNextPanelId(scene: SceneObject): number {
-  const root = scene.getRoot();
-  let max = Math.max(0, ...getPickedPanelIds(root));
+  let max = 0;
 
   sceneGraph
     .findAllObjects(
-      root,
+      scene.getRoot(),
       (obj) => (obj instanceof VizPanel || obj instanceof SceneGridRow) && !obj.state.repeatSourceKey
     )
     .forEach((panel) => {

@@ -11,6 +11,7 @@ import * as z from 'zod/mini';
 
 import type { VizPanel } from '@grafana/scenes';
 
+import { snapshotQuestions } from '../../questions/questionSources';
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
@@ -195,6 +196,8 @@ export const movePanelCommand: MutationCommand<MovePanelPayload> = {
       if (!currentLayout.removePanel) {
         throw new Error('Source layout does not support panel removal');
       }
+      // Removing a panel stops questions from picking it, but the moved panel keeps its ID.
+      const restoreQuestions = snapshotQuestions(vizPanel.getRoot());
       currentLayout.removePanel(vizPanel);
 
       // TODO: share id-preserving logic with movePanelsHelper.ts.
@@ -202,6 +205,7 @@ export const movePanelCommand: MutationCommand<MovePanelPayload> = {
 
       panelClone.setState({ key: getVizPanelKeyForPanelId(panelId) });
       panelClone.parent?.setState({ key: getGridItemKeyForPanelId(panelId) });
+      restoreQuestions();
 
       if (effectivePosition) {
         if (isTargetAutoGrid) {
