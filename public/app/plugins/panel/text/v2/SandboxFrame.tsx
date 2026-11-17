@@ -24,6 +24,29 @@ export const WATCHDOG_TIMEOUT_MS = 15_000;
 
 let shellPolicy: Pick<TrustedTypePolicy, 'createHTML'> | undefined;
 
+const frameListeners = new Map<string, (event: MessageEvent) => void>();
+
+function dispatchFrameMessage(event: MessageEvent) {
+  const message = event.data;
+  if (message && typeof message === 'object' && typeof message.channel === 'string') {
+    // The channel only routes the message; the controller still authenticates its source and payload.
+    frameListeners.get(message.channel)?.(event);
+  }
+}
+
+function listenToFrame(channel: string, listener: (event: MessageEvent) => void) {
+  if (frameListeners.size === 0) {
+    window.addEventListener('message', dispatchFrameMessage);
+  }
+  frameListeners.set(channel, listener);
+  return () => {
+    frameListeners.delete(channel);
+    if (frameListeners.size === 0) {
+      window.removeEventListener('message', dispatchFrameMessage);
+    }
+  };
+}
+
 export interface SandboxFrameProps {
   /** Sanitized when protected; legacy HTML respects the administrator's sanitizer setting. */
   html: string;
@@ -175,7 +198,7 @@ function createFrameController({
   // Opaque-origin frames require '*'; commands still target only this document's WindowProxy.
   const targetOrigin = protectedFrame ? '*' : window.location.origin;
   let watchdog = window.setTimeout(fail, WATCHDOG_TIMEOUT_MS);
-  window.addEventListener('message', onMessage);
+  const stopListening = listenToFrame(renderCommand.channel, onMessage);
   void loadSandboxRuntime()
     .then((runtimeSource) => {
       if (disposed) {
@@ -302,7 +325,7 @@ function createFrameController({
   function dispose() {
     disposed = true;
     clearTimeout(watchdog);
-    window.removeEventListener('message', onMessage);
+    stopListening();
   }
 
   return { dispose };

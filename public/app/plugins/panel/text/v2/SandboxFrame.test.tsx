@@ -679,3 +679,53 @@ it.each([true, false])('creates frames only after font preparation finishes (fon
     AbortSignal.timeout = originalTimeout;
   }
 });
+
+it('shares one message listener across frames and removes it after the last frame unmounts', async () => {
+  const add = jest.spyOn(window, 'addEventListener');
+  const remove = jest.spyOn(window, 'removeEventListener');
+  const first = props({ title: 'First' });
+  const second = props({ title: 'Second', policy: undefined });
+  try {
+    const { rerender, unmount } = render(
+      <>
+        <SandboxFrame key="first" {...first} />
+        <SandboxFrame key="second" {...second} />
+      </>
+    );
+    await act(async () => {});
+    const firstFrame = screen.getByTitle<HTMLIFrameElement>('First');
+    const secondFrame = screen.getByTitle<HTMLIFrameElement>('Second');
+    const messageListeners = add.mock.calls.filter(([type]) => type === 'message');
+    expect(messageListeners).toHaveLength(1);
+    const listener = messageListeners[0][1];
+    const firstPost = jest.spyOn(firstFrame.contentWindow!, 'postMessage').mockImplementation(() => {});
+    const secondPost = jest.spyOn(secondFrame.contentWindow!, 'postMessage').mockImplementation(() => {});
+
+    notify(firstFrame, 'ready', {}, { source: secondFrame.contentWindow });
+    expect(firstPost).not.toHaveBeenCalled();
+    notify(firstFrame, 'ready');
+    expect(firstPost).toHaveBeenCalledWith(expect.objectContaining({ type: 'render' }), '*');
+    expect(secondPost).not.toHaveBeenCalled();
+    notify(secondFrame, 'ready');
+    expect(secondPost).toHaveBeenCalledWith(expect.objectContaining({ type: 'render' }), window.location.origin);
+
+    rerender(<SandboxFrame key="second" {...second} />);
+    expect(remove).not.toHaveBeenCalledWith('message', listener);
+    notify(secondFrame, 'rendered');
+    expect(second.onState).toHaveBeenLastCalledWith({ status: 'ready', resources: [] });
+    unmount();
+    expect(remove).toHaveBeenCalledWith('message', listener);
+
+    const remount = render(<SandboxFrame {...first} />);
+    await act(async () => {});
+    expect(add.mock.calls.filter(([type]) => type === 'message')).toHaveLength(2);
+    const freshFrame = screen.getByTitle<HTMLIFrameElement>('First');
+    notify(freshFrame, 'ready');
+    notify(freshFrame, 'rendered');
+    expect(first.onState).toHaveBeenLastCalledWith({ status: 'ready', resources: [] });
+    remount.unmount();
+  } finally {
+    add.mockRestore();
+    remove.mockRestore();
+  }
+});
