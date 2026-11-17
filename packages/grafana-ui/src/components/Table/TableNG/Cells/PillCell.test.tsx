@@ -204,8 +204,8 @@ describe('PillCell', () => {
 
   describe('Visual refresh', () => {
     it.each([
-      ['dark', 'rgb(38, 0, 0)', 'rgb(255, 166, 166)'],
-      ['light', 'rgb(255, 230, 230)', 'rgb(89, 0, 0)'],
+      ['dark', 'rgb(204, 3, 1)', 'rgb(255, 217, 211)'],
+      ['light', 'rgb(255, 115, 97)', 'rgb(116, 1, 0)'],
     ] as const)('renders mapped pills with tonal colors in %s mode', (mode, backgroundColor, color) => {
       const theme = createTheme({ colors: { mode } });
       theme.flags.visualDesignRefresh = true;
