@@ -1,6 +1,6 @@
 # AGENTS.md
 
-<!-- version: 2.1.0 -->
+<!-- version: 2.2.0 -->
 
 This file provides guidance to AI agents when working with code in the Grafana repository.
 
@@ -10,6 +10,7 @@ This file provides guidance to AI agents when working with code in the Grafana r
 - `public/app/features/alerting/unified/AGENTS.md` — Alerting squad patterns
 - `pkg/storage/unified/AGENTS.md` — Unified storage/search compatibility rules (for work under `pkg/storage/unified/`)
 - `public/app/core/journeys/AGENTS.md` — Critical User Journey instrumentation
+- `.github/AGENTS.md` - CI workflow and action rules (for work under `.github/`)
 
 ## Project Overview
 
