@@ -56,6 +56,28 @@ import { getLocalStorageWithTTL, setLocalStorageWithTTL } from './PanelEditNext/
 import { trackEditorVersionToggle } from './PanelEditNext/tracking';
 import { PanelEditorRenderer } from './PanelEditorRenderer';
 import { PanelOptionsPane } from './PanelOptionsPane';
+import { diffPanelEditSnapshots, type PanelEditSnapshot, takePanelEditSnapshot } from './panelEditChanges';
+
+/**
+ * Properties of the panel_edit_closed and panel_edit_discarded interactions.
+ * Every value is a low-cardinality literal: never add titles, queries or option values here.
+ */
+interface PanelEditSummary {
+  changed: boolean;
+  changed_options: boolean;
+  changed_field_config: boolean;
+  changed_overrides: boolean;
+  changed_queries: boolean;
+  changed_transformations: boolean;
+  changed_panel_info: boolean;
+  changed_repeat: boolean;
+  saved_in_editor: boolean;
+  panel_type: string;
+  panel_id: number;
+  is_new_panel: boolean;
+  is_library_panel: boolean;
+  query_editor: 'classic' | 'next';
+}
 
 export interface PanelEditorState extends SceneObjectState {
   isNewPanel: boolean;
@@ -88,6 +110,11 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   private _layoutItem: DashboardLayoutItem;
   private _originalSaveModel!: Panel;
   private _changesHaveBeenMade = false;
+  // Analytics only: the baseline excludes what the editor itself sets up (default query, plugin defaults),
+  // unlike _originalSaveModel, so it can tell which areas the user changed.
+  private _changeBaseline!: PanelEditSnapshot;
+  private _savedInEditor = false;
+  private _discardSummary?: PanelEditSummary;
 
   public constructor(state: PanelEditorState) {
     super(state);
@@ -101,6 +128,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     this._layoutItem = layoutItem;
 
     this.setOriginalState(this.state.panelRef);
+    this.resetChangeBaseline();
     this.addActivationHandler(this._activationHandler.bind(this));
   }
 
@@ -118,6 +146,11 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
         panel.changePluginType('timeseries');
       }
     }
+
+    // Each activation is a separate visit for the close event.
+    this._discardSummary = undefined;
+    this._savedInEditor = false;
+    this.resetChangeBaseline();
 
     // Splitter layout and table view changes remount the preview; keep its event subscriptions alive.
     this._subs.add(this._layoutItem.activate());
@@ -155,7 +188,37 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
     return () => {
       this.commitChanges();
-      reportInteraction('panel_edit_closed', {}, { silent: true });
+      reportInteraction('panel_edit_closed', {
+        ...(this._discardSummary ?? this.getEditSummary()),
+        outcome: this._discardSummary ? 'discarded' : 'kept',
+      });
+    };
+  }
+
+  private resetChangeBaseline() {
+    this._changeBaseline = takePanelEditSnapshot(this.state.panelRef.resolve(), this._layoutItem);
+  }
+
+  private getEditSummary(): PanelEditSummary {
+    const panel = this.getPanel();
+    // Compared with when the visit started, so changes saved from inside the editor still count.
+    const areas = diffPanelEditSnapshots(this._changeBaseline, takePanelEditSnapshot(panel, this._layoutItem));
+
+    return {
+      changed: Object.values(areas).some(Boolean),
+      changed_options: areas.options,
+      changed_field_config: areas.field_config,
+      changed_overrides: areas.overrides,
+      changed_queries: areas.queries,
+      changed_transformations: areas.transformations,
+      changed_panel_info: areas.panel_info,
+      changed_repeat: areas.repeat,
+      saved_in_editor: this._savedInEditor,
+      panel_type: panel.state.pluginId,
+      panel_id: getPanelIdForVizPanel(panel),
+      is_new_panel: this.state.isNewPanel,
+      is_library_panel: getLibraryPanelBehavior(panel) !== undefined,
+      query_editor: this.state.useQueryExperienceNext ? 'next' : 'classic',
     };
   }
 
@@ -273,6 +336,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       this.setOriginalState(this.state.panelRef);
       this._setupChangeDetection();
       this._updateDataPane(plugin);
+      this.resetChangeBaseline();
 
       // Setup options pane
       const optionsPane = new PanelOptionsPane({
@@ -362,7 +426,9 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   }
 
   public onDiscard = () => {
-    reportInteraction('panel_edit_discarded', {}, { silent: true });
+    // Summarize before reverting, while the discarded changes are still on the panel.
+    this._discardSummary = this.getEditSummary();
+    reportInteraction('panel_edit_discarded', { ...this._discardSummary });
     this.setState({ isDirty: false });
 
     const panel = this.state.panelRef.resolve();
@@ -382,6 +448,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   };
 
   public dashboardSaved() {
+    this._savedInEditor = true;
     this.setOriginalState(this.state.panelRef);
     this.setState({ isDirty: false });
 
