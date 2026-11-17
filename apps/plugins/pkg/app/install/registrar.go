@@ -489,6 +489,8 @@ func (r *InstallRegistrar) unregister(ctx context.Context, namespace string, nam
 		metrics.RegistrationOperationsTotal.WithLabelValues("unregister", outcomeForError(err)).Inc()
 		return false, err
 	}
+	createdAt := existing.CreationTimestamp.Time
+	logger.Info("Unregistered plugin install", "createdAt", createdAt, "age", time.Since(createdAt).Round(time.Second))
 	metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "success").Inc()
 	return true, nil
 }
