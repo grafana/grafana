@@ -17,6 +17,12 @@ menuTitle: Manage playlists
 title: Manage playlists
 description: Create and manage dashboard playlists
 weight: 500
+refs:
+  fixed-role-definitions:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/rbac-fixed-basic-role-definitions/#fixed-role-definitions
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/security-and-account-management/authentication-and-permissions/access-control/rbac-fixed-basic-role-definitions/#fixed-role-definitions
 ---
 
 # Manage playlists
@@ -28,7 +34,9 @@ Grafana automatically scales dashboards to any resolution, which makes them perf
 You can access the **Playlist** feature from Grafana's side menu, in the Dashboards submenu.
 
 {{< admonition type="note" >}}
-You must have at least Editor role permissions to create and manage playlists.
+To view and play playlists, you need the `playlists:read` permission. To create, update, and delete playlists, you need the `playlists:write` permission. By default, the Viewer role includes `playlists:read`, and the Editor and Admin roles include both. Refer to [Fixed role definitions](ref:fixed-role-definitions) for the `fixed:playlists:reader` and `fixed:playlists:writer` roles.
+
+To play a playlist, you also need `dashboards:read` on the dashboards in it. Without it, the playlist doesn't show those dashboards.
 {{< /admonition >}}
 
 ## Access, share, and control a playlist
