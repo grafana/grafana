@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/convert"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/common"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
