@@ -5,12 +5,12 @@
  * Through the exports declared in package.json we can import this code in core Grafana and the grafana/runtime
  * package will continue to be able to access all code when it's published to npm as it's private to the package.
  *
- * During the yarn pack lifecycle the exports[./internal] property is deleted from the package.json
+ * During the pnpm pack lifecycle the exports[./internal] property is deleted from the package.json
  * preventing the code from being importable by plugins or other npm packages making it truly "internal".
  *
  */
 
-export { LegacyDataSourcePicker, setDataSourcePicker } from '../components/DataSourcePicker';
+export { setDataSourcePicker } from '../components/DataSourcePicker';
 export { setPanelDataErrorView } from '../components/PanelDataErrorView';
 export { setPanelRenderer } from '../components/PanelRenderer';
 export { type PageInfoItem, setPluginPage } from '../components/PluginPage';
@@ -27,6 +27,11 @@ export {
   setGetObservablePluginLinks,
   type GetObservablePluginLinks,
 } from '../services/pluginExtensions/getObservablePluginLinks';
+export {
+  setGetObservablePluginFunctions,
+  type GetObservablePluginFunctions,
+  type GetObservablePluginFunctionsOptions,
+} from '../services/pluginExtensions/getObservablePluginFunctions';
 
 export { UserStorage, useUserStorage } from '../utils/userStorage';
 
@@ -50,6 +55,7 @@ export {
   getDatasourcePluginMetas,
   setDatasourcePluginMetas,
   refetchDatasourcePluginMetas,
+  syncDatasourcePluginMetas,
   getPluginIdFromDatasourceInstanceType,
 } from '../services/pluginMeta/datasources';
 export {
@@ -75,6 +81,7 @@ export { type JourneyStartOptions, setJourneyTracker, setJourneyRegistry } from 
 export {
   getListedPanelPluginMetas,
   getPanelPluginMeta,
+  getPanelPluginMetaSync,
   getPanelPluginMetas,
   getPanelPluginMetasMap,
   getPanelPluginMetasMapSync,
@@ -82,6 +89,7 @@ export {
   refetchPanelPluginMetas,
 } from '../services/pluginMeta/panels';
 export { installPluginMeta, uninstallPluginMeta } from '../services/pluginMeta/plugins';
+export { refetchPluginMetasAfterPluginChange } from '../services/pluginMeta/pluginChange';
 export { logPluginMetaError, logPluginMetaWarning } from '../services/pluginMeta/logging';
 export { refetchPluginSettings } from '../services/pluginSettings/refetchPluginSettings';
 export { invalidatePluginSettingsCache } from '../services/pluginSettings/invalidatePluginSettingsCache';
@@ -91,8 +99,9 @@ export {
   setDataSourceInstanceSettings,
   syncDataSourceInstanceSettings,
 } from '../services/dataSource/settings';
-export { setDataSourcePluginImporter } from '../services/dataSource/dataSource';
-export { getRuntimePlugin } from '../services/dataSource/pluginCache';
+export { loadDataSourceInstanceFromSettings, setDataSourcePluginImporter } from '../services/dataSource/dataSource';
+export { DataSourcePluginImportError } from '../services/dataSource/errors';
+export { clearPluginCache, getCachedPlugin, getRuntimePlugin } from '../services/dataSource/pluginCache';
 // Exported so test helpers can assert a suite never resolved through the legacy fallback.
 // Delete along with the fallbacks themselves once `DataSourceSrv` is gone.
 export {
@@ -101,3 +110,5 @@ export {
   FALLBACK_TO_LEGACY_SETTINGS_WARNING,
 } from '../services/dataSource/constants';
 export { setExpressionDataSourceInstance } from '../services/dataSource/expressionDs';
+export { isSignedInOrAnonymous } from '../services/user';
+export { assertPluginIdFormat } from '../services/pluginUtils';

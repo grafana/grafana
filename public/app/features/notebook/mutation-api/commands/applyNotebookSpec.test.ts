@@ -294,15 +294,15 @@ describe('APPLY_NOTEBOOK_SPEC', () => {
   });
 
   it('keeps auto-refresh running after the rebuild swaps the refresh picker', async () => {
-    // With the time controls hidden nothing renders the picker, so NotebookScene activates it itself.
-    const scene = notebookScene(notebookSpec({ hideTimepicker: true, autoRefresh: '30s' }));
+    // Nothing here renders the picker, so NotebookScene activates it itself.
+    const scene = notebookScene(notebookSpec({ autoRefresh: '30s' }));
     const before = scene.state.refreshPicker;
     expect(before.isActive).toBe(true);
 
     const client = new NotebookMutationClient(scene);
     await client.execute({
       type: 'APPLY_NOTEBOOK_SPEC',
-      payload: { spec: notebookSpec({ hideTimepicker: true, autoRefresh: '1m' }) },
+      payload: { spec: notebookSpec({ autoRefresh: '1m' }) },
     });
 
     expect(scene.state.refreshPicker).not.toBe(before);

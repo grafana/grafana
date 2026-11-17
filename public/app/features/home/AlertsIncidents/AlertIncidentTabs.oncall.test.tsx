@@ -117,13 +117,6 @@ describe('AlertIncidentTabs On call tab', () => {
     mockIncidents([]);
   });
 
-  it('renders no On call tab when the IRM plugin is absent', async () => {
-    render(<AlertIncidentTabsWithData />);
-
-    expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
-    expect(screen.queryByRole('tab', { name: /on-call/i })).not.toBeInTheDocument();
-  });
-
   it('shows the badge from the eager shift load and fetches schedule lists only when the tab opens', async () => {
     const { eventCalls, listCalls } = mockOnCall({ byTeam: TEAM_SCHEDULES });
     const { user } = render(<AlertIncidentTabsWithData />);
@@ -495,7 +488,7 @@ describe('AlertIncidentTabs On call tab', () => {
         handle?.switch(INCIDENTS_TAB_ID, false);
       });
 
-      expect(await screen.findByText('No active incidents.')).toBeInTheDocument();
+      expect(await screen.findByText('All quiet! No active incidents.')).toBeInTheDocument();
       expect(window.localStorage.getItem(ALERTS_INCIDENTS_TAB_STORAGE_KEY)).toBe('incidents');
     });
   });

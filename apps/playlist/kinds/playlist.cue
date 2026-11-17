@@ -23,6 +23,9 @@ playlistv1: {
 	scope:        "Namespaced"
 	folderScoped: false
 	conversion:   true
+	search: {
+		global: true
+	}
 	validation: {
 		operations: [
 			"CREATE",

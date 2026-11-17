@@ -5,15 +5,19 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/simple"
-	v1 "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	v1 "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/config"
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/convert"
 )
 
 func NewMutator(cfg config.RuntimeConfig) *simple.Mutator {
 	return &simple.Mutator{
 		MutateFunc: func(ctx context.Context, req *app.AdmissionRequest) (*app.MutatingResponse, error) {
-			r, ok := req.Object.(*v1.RecordingRule)
-			if !ok || r == nil {
+			r, err := convert.Hub[*v1.RecordingRule](req.Object)
+			if err != nil {
+				return nil, err
+			}
+			if r == nil {
 				return nil, nil
 			}
 
@@ -31,7 +35,11 @@ func NewMutator(cfg config.RuntimeConfig) *simple.Mutator {
 			if err := r.Spec.ClampDurations(); err != nil {
 				return nil, err
 			}
-			return &app.MutatingResponse{UpdatedObject: r}, nil
+			out, err := convert.Like(r, req.Object)
+			if err != nil {
+				return nil, err
+			}
+			return &app.MutatingResponse{UpdatedObject: out}, nil
 		},
 	}
 }

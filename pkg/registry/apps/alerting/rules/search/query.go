@@ -9,11 +9,11 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
 	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 	"github.com/grafana/grafana/pkg/expr"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	"github.com/grafana/grafana/pkg/services/ngalert/rules/legacy"
 	"github.com/grafana/grafana/pkg/storage/unified/search/regex"
 )
 
@@ -119,7 +119,7 @@ func extractFilters(req *Query) filters {
 	}
 	// Only the controlled group metadata label is selectable on the legacy store.
 	for _, r := range req.GroupFilters {
-		if r.Key != model.GroupLabelKey {
+		if r.Key != v1beta1.GroupLabelKey {
 			continue
 		}
 		if r.Operator == metav1.LabelSelectorOpNotIn {
@@ -306,20 +306,20 @@ func isQueryDatasource(uid string) bool {
 	return uid != "" && expr.NodeTypeFromDatasourceUID(uid) == expr.TypeDatasourceNode
 }
 
-func includeFilter(values []string) provisioning.ListRuleStringFilter {
+func includeFilter(values []string) legacy.ListRuleStringFilter {
 	if len(values) == 0 {
-		return provisioning.ListRuleStringFilter{}
+		return legacy.ListRuleStringFilter{}
 	}
-	return provisioning.ListRuleStringFilter{Include: values}
+	return legacy.ListRuleStringFilter{Include: values}
 }
 
-func stringFilter(value string) provisioning.ListRuleStringFilter {
+func stringFilter(value string) legacy.ListRuleStringFilter {
 	if value == "" {
-		return provisioning.ListRuleStringFilter{}
+		return legacy.ListRuleStringFilter{}
 	}
-	return provisioning.ListRuleStringFilter{Include: []string{value}}
+	return legacy.ListRuleStringFilter{Include: []string{value}}
 }
 
-func listStringFilter(f listFilter) provisioning.ListRuleStringFilter {
-	return provisioning.ListRuleStringFilter{Include: f.include, Exclude: f.exclude}
+func listStringFilter(f listFilter) legacy.ListRuleStringFilter {
+	return legacy.ListRuleStringFilter{Include: f.include, Exclude: f.exclude}
 }

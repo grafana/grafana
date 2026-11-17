@@ -68,11 +68,16 @@ export const changeDatasource = createAsyncThunk(
 
     const queries = getState().explore.panes[exploreId]!.queries;
 
-    const correlations = await getCorrelationsFromStorage(dispatch, queries, instance.uid);
-    dispatch(saveCorrelationsAction({ exploreId: exploreId, correlations: correlations.correlations || [] }));
-
     if (options?.importQueries) {
       await dispatch(importQueries(exploreId, queries, currentDataSourceInstance, instance));
+    }
+
+    try {
+      const currentQueries = getState().explore.panes[exploreId]!.queries;
+      const correlations = await getCorrelationsFromStorage(dispatch, currentQueries, instance.uid);
+      dispatch(saveCorrelationsAction({ exploreId: exploreId, correlations: correlations?.correlations || [] }));
+    } catch {
+      dispatch(saveCorrelationsAction({ exploreId: exploreId, correlations: [] }));
     }
 
     if (getState().explore.panes[exploreId]!.isLive) {

@@ -8,7 +8,6 @@ import (
 	"io"
 	"iter"
 	"math/rand"
-	"regexp"
 	"time"
 
 	badger "github.com/dgraph-io/badger/v4"
@@ -32,6 +31,34 @@ var ErrRetryable = errors.New("retryable error")
 type KeyValue struct {
 	Key   string
 	Value io.ReadCloser
+}
+
+// bytesValue is a value the KV already holds in memory and owns, such as a
+// freshly scanned row, so ReadAllAndClose can hand its bytes out uncopied.
+type bytesValue struct {
+	bytes.Buffer
+}
+
+// NewBytesValue returns a reader whose bytes ReadAllAndClose hands out without
+// copying, so b must not be used or modified afterwards.
+func NewBytesValue(b []byte) io.ReadCloser {
+	return &bytesValue{Buffer: *bytes.NewBuffer(b)}
+}
+
+func (*bytesValue) Close() error { return nil }
+
+// ReadAllAndClose reads r to the end and closes it, returning both errors.
+// The returned bytes belong to the caller and stay valid after r is closed.
+func ReadAllAndClose(r io.ReadCloser) ([]byte, error) {
+	if v, ok := r.(*bytesValue); ok {
+		// Values this package owns skip the copy io.ReadAll would make. Detach
+		// the buffer so later use of r cannot touch the returned bytes.
+		data := v.Bytes()
+		v.Buffer = bytes.Buffer{}
+		return data, r.Close()
+	}
+	data, err := io.ReadAll(r)
+	return data, errors.Join(err, r.Close())
 }
 
 type SortOrder int
@@ -181,7 +208,7 @@ func (k *badgerKV) Get(ctx context.Context, section string, key string) (io.Read
 		return nil, err
 	}
 
-	return io.NopCloser(bytes.NewReader(value)), nil
+	return NewBytesValue(value), nil
 }
 
 func (k *badgerKV) BatchGet(ctx context.Context, section string, keys []string) iter.Seq2[KeyValue, error] {
@@ -234,7 +261,7 @@ func (k *badgerKV) BatchGet(ctx context.Context, section string, keys []string) 
 
 			kv := KeyValue{
 				Key:   key,
-				Value: io.NopCloser(bytes.NewReader(value)),
+				Value: NewBytesValue(value),
 			}
 
 			if !yield(kv, nil) {
@@ -434,18 +461,27 @@ func PrefixRangeEnd(prefix string) string {
 	return string(end)
 }
 
-var (
-	// validKeyRegex validates keys used in the unified storage
-	// Keys can contain alphanumeric characters (both upper and lowercase), ':', '-', '.', '/', and '~'
-	// Any combination of these characters is allowed as long as the key is not empty
-	validKeyRegex = regexp.MustCompile(`^[a-zA-Z0-9.:/~_-]+$`)
-)
+// validKeyChars marks the bytes allowed in unified storage keys: ASCII
+// letters, digits, '.', ':', '/', '~', '_' and '-'. A lookup table instead of
+// a regexp because KV clients run IsValidKey on every key a Keys() scan returns.
+var validKeyChars = func() (t [256]bool) {
+	for _, c := range []byte("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.:/~_-") {
+		t[c] = true
+	}
+	return t
+}()
 
+// IsValidKey reports whether key is non-empty and contains only validKeyChars.
 func IsValidKey(key string) bool {
 	if key == "" {
 		return false
 	}
-	return validKeyRegex.MatchString(key)
+	for i := 0; i < len(key); i++ {
+		if !validKeyChars[key[i]] {
+			return false
+		}
+	}
+	return true
 }
 
 func (k *badgerKV) BatchDelete(ctx context.Context, section string, keys []string) error {

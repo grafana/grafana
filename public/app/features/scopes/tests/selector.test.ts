@@ -1,6 +1,9 @@
-import { config, locationService, setBackendSrv } from '@grafana/runtime';
+import { type DataSourceFallbackWatcher, watchDataSourceFallbacks } from 'test/helpers/seedDataSources';
+
+import { locationService, setBackendSrv } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
 import { setupMockServer } from '@grafana/test-utils/server';
-import { MOCK_SCOPES } from '@grafana/test-utils/unstable';
+import { MOCK_SCOPES, testWithFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { getDashboardScenePageStateManager } from '../../dashboard-scene/pages/DashboardScenePageStateManager';
@@ -28,7 +31,6 @@ import {
   expectResultApplicationsGrafanaSelected,
   expectScopesSelectorValue,
 } from './utils/assertions';
-import { getDatasource, getInstanceSettings } from './utils/mocks';
 import { renderDashboard, resetScenes } from './utils/render';
 import { getListOfScopes } from './utils/selectors';
 
@@ -36,22 +38,28 @@ jest.mock('@grafana/runtime', () => ({
   __esModule: true,
   ...jest.requireActual('@grafana/runtime'),
   useChromeHeaderHeight: jest.fn(),
-  getDataSourceSrv: () => ({ get: getDatasource, getInstanceSettings }),
   usePluginLinks: jest.fn().mockReturnValue({ links: [] }),
 }));
 
 setBackendSrv(backendSrv);
 setupMockServer();
 
+let dataSourceFallbacks: DataSourceFallbackWatcher;
+
+beforeEach(() => {
+  dataSourceFallbacks = watchDataSourceFallbacks();
+});
+
+afterEach(() => {
+  dataSourceFallbacks.expectNoFallbacks(['instance', 'settings', 'list']);
+});
+
 describe('Selector', () => {
   let fetchSelectedScopesSpy: jest.SpyInstance;
   let dashboardReloadSpy: jest.SpyInstance;
   let scopesService: ScopesService;
 
-  beforeAll(() => {
-    config.featureToggles.scopeFilters = true;
-    config.featureToggles.groupByVariable = true;
-  });
+  testWithFlags({ [FlagKeys.ScopeFilters]: true });
 
   beforeEach(async () => {
     const result = await renderDashboard();

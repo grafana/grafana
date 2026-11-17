@@ -4,10 +4,12 @@ package v0alpha1
 
 // +k8s:openapi-gen=true
 type GetUserTeamsUserTeam struct {
-	User       string `json:"user"`
-	Team       string `json:"team"`
-	Permission string `json:"permission"`
-	External   bool   `json:"external"`
+	User string `json:"user"`
+	Team string `json:"team"`
+	// Deprecated numeric team ID, when available, for legacy references.
+	TeamInternalId *int64 `json:"teamInternalId,omitempty"`
+	Permission     string `json:"permission"`
+	External       bool   `json:"external"`
 }
 
 // NewGetUserTeamsUserTeam creates a new GetUserTeamsUserTeam object.

@@ -34,6 +34,15 @@ describe('breadcrumb utils', () => {
       ]);
     });
 
+    it('keeps the highlight text of a page', () => {
+      const sectionNav: NavModelItem = { text: 'Dashboards', url: '/dashboards' };
+      const pageNav: NavModelItem = { text: 'My draft', url: '/d/abc', highlightText: 'Draft' };
+      expect(buildBreadcrumbs(sectionNav, pageNav)).toEqual([
+        { text: 'Dashboards', href: '/dashboards' },
+        { text: 'My draft', href: '/d/abc', highlightText: 'Draft' },
+      ]);
+    });
+
     it('includes breadcrumbs for any parents in the section nav', () => {
       const sectionNav: NavModelItem = {
         text: 'My section',

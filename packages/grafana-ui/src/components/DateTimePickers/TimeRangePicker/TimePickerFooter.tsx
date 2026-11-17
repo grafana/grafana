@@ -29,13 +29,9 @@ interface Props {
 }
 
 export const TimePickerFooter = (props: Props) => {
-  const {
-    timeZone,
-    fiscalYearStartMonth,
-    timestamp = Date.now(),
-    onChangeTimeZone,
-    onChangeFiscalYearStartMonth,
-  } = props;
+  const { timeZone, fiscalYearStartMonth, onChangeTimeZone, onChangeFiscalYearStartMonth } = props;
+  const [now] = useState(Date.now);
+  const timestamp = props.timestamp ?? now;
   const [isEditing, setEditing] = useState(false);
   const [editMode, setEditMode] = useState('tz');
 

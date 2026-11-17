@@ -179,16 +179,17 @@ func globalSearchCoverageOf(sources ...[]*app.ManifestData) globalSearchTypes {
 			if m == nil {
 				continue
 			}
+			names := ManifestKinds(m, nil)
 			kinds := map[schema.GroupResource]string{}
 			excluded := map[schema.GroupResource]bool{}
 			for _, version := range m.Versions {
 				for _, kind := range version.Kinds {
-					gr := schema.GroupResource{Group: m.Group, Resource: ManifestResourceName(kind)}
+					gr := schema.GroupResource{Group: m.Group, Resource: kind.Resource}
 					if decided[gr] {
 						continue
 					}
 					if kind.InGlobalSearchIndex() {
-						kinds[gr] = kind.Kind
+						kinds[gr] = names[gr].Kind
 					}
 					if !kind.HasSearchEndpoint() || !kind.HasListKeysEndpoint() || kind.Scope != namespacedScope {
 						excluded[gr] = true
@@ -246,7 +247,7 @@ func (b *globalDocumentBuilder) BuildDocument(ctx context.Context, key *resource
 			return nil, fmt.Errorf("blob support is not configured")
 		}
 		rsp, err := b.blob.GetResourceBlob(ctx, key, info, true)
-		if err := ErrorFromResponse(rsp.GetError(), err); err != nil {
+		if err != nil {
 			return nil, fmt.Errorf("error reading blob: %w", err)
 		}
 		var content struct {
@@ -302,15 +303,9 @@ func globalSources(namespace string, types []schema.GroupResource) []NamespacedR
 }
 
 // GlobalSearchFieldDefinitions returns the searchable fields of a
-// namespace-wide index. It starts from the standard set, because such an index
-// holds nothing resource-specific, and differs in two ways:
-//
-//   - The resource type of each document is filterable, so a query can pick out
-//     one type from an index holding several.
-//   - created and updated are filterable and sortable, so results of different
-//     types can be ordered by time. The per-resource indexes cannot have this
-//     yet: indexing those fields changes the index-affecting hash and would
-//     rebuild every index in the deployment.
+// namespace-wide index: the standard set, because such an index holds nothing
+// resource-specific, plus the resource type of each document, so a query can
+// pick out one type from an index holding several.
 func GlobalSearchFieldDefinitions() []SearchFieldDefinition {
 	standard := StandardSearchFieldDefinitions()
 	out := make([]SearchFieldDefinition, 0, len(standard)+1)
@@ -322,13 +317,7 @@ func GlobalSearchFieldDefinitions() []SearchFieldDefinition {
 		Capabilities: []SearchCapability{SearchCapabilityFilter, SearchCapabilityFacet},
 		Description:  "Resource type of the document, as {group}/{resource}.",
 	})
-	for _, def := range standard {
-		if def.Name == SEARCH_FIELD_CREATED || def.Name == SEARCH_FIELD_UPDATED {
-			def.Capabilities = append(slices.Clone(def.Capabilities), SearchCapabilityFilter, SearchCapabilitySort)
-		}
-		out = append(out, def)
-	}
-	return out
+	return append(out, standard...)
 }
 
 // IndexFieldDefinitions returns the field sets an index declares beyond its own
@@ -350,7 +339,8 @@ func IndexFieldDefinitions(group, resource string) (standard, deleted []SearchFi
 // the same index.
 //
 // openIndexes is every open index, per-resource and global, as the rebuild scan
-// lists them; only the global ones have types to sync.
+// lists them; only the global ones have types to sync. The syncs run as
+// migration reads when ctx is a migration read.
 func (s *searchServer) queueTypeSyncs(ctx context.Context, openIndexes []NamespacedResource, lastImportTimes map[NamespacedResource]time.Time) ([]chan struct{}, error) {
 	var completeChs []chan struct{}
 	var errs []error
@@ -379,6 +369,7 @@ func (s *searchServer) queueTypeSyncs(ctx context.Context, openIndexes []Namespa
 		s.rebuildQueue.Add(rebuildRequest{
 			NamespacedResource: key,
 			staleTypes:         types,
+			migrationRead:      MigrationReadFromContext(ctx),
 			completeChannels:   []chan<- struct{}{completeCh},
 		})
 		s.indexMetrics.RebuildQueueLength.Set(float64(s.rebuildQueue.Len()))

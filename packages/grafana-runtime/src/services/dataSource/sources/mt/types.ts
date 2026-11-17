@@ -8,8 +8,6 @@ export interface DataSourceConnection {
   name: string;
   /** The API group of the per-uid resource, e.g. `prometheus.datasource.grafana.app`. */
   group: string;
-  /** The version the API group serves, e.g. `v0alpha1`. */
-  version: string;
   /** The plugin type as stored on the data source. Can be an alias of the plugin id. */
   plugin?: string;
   labels?: Record<string, string>;

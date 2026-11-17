@@ -10,7 +10,11 @@ import {
 } from '../serialization/DashboardSceneSerializer';
 
 import { type GlobalVariablesMode, type PredefinedVariableScope } from './crossDashboardVariablesSelection';
-import { type DashboardEditSessionTracking, type DashboardModeTrigger } from './dashboardModeTracking';
+import {
+  type DashboardEditPeriodOutcome,
+  type DashboardEditSessionTracking,
+  type DashboardModeTrigger,
+} from './dashboardModeTracking';
 
 let isScenesContextSet = false;
 
@@ -169,15 +173,15 @@ export const DashboardInteractions = {
     reportDashboardInteraction('variable_value_changed', properties);
   },
 
-  // dashboards_global_variables_loaded
+  // dashboards_predefined_variables_loaded
   // after global/folder variables are resolved for a V2 dashboard load
-  globalVariablesLoaded: (properties: {
+  predefinedVariablesLoaded: (properties: {
     global_count: number;
     folder_count: number;
     total_count: number;
     mode?: GlobalVariablesMode;
   }) => {
-    reportDashboardInteraction('global_variables_loaded', properties);
+    reportDashboardInteraction('predefined_variables_loaded', properties);
   },
 
   // dashboards_predefined_variable_toggled
@@ -208,9 +212,12 @@ export const DashboardInteractions = {
       | 'duplicate'
       | 'delete'
       | 'view'
+      | 'restore'
+      | 'explore'
+      | 'more_actions'
       | 'use_library_panel',
     id: number,
-    source: 'panel' | 'edit_pane' | 'edit_popover' | 'keyboard',
+    source: 'panel' | 'edit_pane' | 'edit_popover' | 'actions_popover' | 'keyboard',
     panelType?: string
   ) {
     reportDashboardInteraction('panel_action_clicked', { item, id, source, panelType });
@@ -249,6 +256,13 @@ export const DashboardInteractions = {
   },
   trackDeleteDashboardElement(elementType: string, source: 'edit_pane' | 'edit_popover') {
     reportDashboardInteraction('edit_action_clicked', { item: `remove_${elementType.toLowerCase()}`, source });
+  },
+  trackDashboardSectionAction(
+    action: 'settings' | 'copy' | 'duplicate',
+    elementType: 'row' | 'tab',
+    source: 'edit_pane' | 'edit_popover'
+  ) {
+    reportDashboardInteraction('edit_action_clicked', { item: `${action}_${elementType}`, source });
   },
   panelLinkClicked: (properties?: Record<string, unknown>) => {
     reportDashboardInteraction('panelheader_datalink_clicked', properties);
@@ -406,7 +420,7 @@ export const DashboardInteractions = {
   editPeriodEnded: (
     properties: Partial<DashboardEditSessionTracking> & {
       edit_session_id: string;
-      outcome: 'saved' | 'saved_as_copy' | 'discarded';
+      outcome: DashboardEditPeriodOutcome;
       has_unsaved_changes?: boolean;
     }
   ) => {
@@ -441,8 +455,8 @@ export const DashboardInteractions = {
     reportDashboardInteraction('mode_changed', properties);
   },
 
-  // click "Take me there" button from the dashboard settings for annotations, variables or the JSON model
-  takeMeToSidebarClicked: (properties: { item: 'annotations' | 'variables' | 'json-model' }) => {
+  // click "Take me there" button from the dashboard settings for annotations, variables, links or the JSON model
+  takeMeToSidebarClicked: (properties: { item: 'annotations' | 'variables' | 'links' | 'json-model' }) => {
     reportDashboardInteraction('take_me_to_sidebar_clicked', properties);
   },
 
@@ -468,6 +482,22 @@ export const DashboardInteractions = {
 
   setVisualOption: (properties?: { ui: 'panel-edit' | 'view-panel'; option: string; value: string }) => {
     reportDashboardInteraction('set_visualization_option', properties);
+  },
+
+  // Panels with options set from a variable, with grafana.panelOptionInterpolation
+  panelOptionVariableUsage: (properties: {
+    trigger: 'load' | 'save';
+    panel_count: number;
+    field_config_count: number;
+    threshold_count: number;
+    value_mapping_count: number;
+    dashboard_uid?: string;
+  }) => {
+    reportDashboardInteraction('panel_option_variable_usage', properties);
+  },
+
+  panelOptionVariableCreated: (properties: { type: 'custom' | 'switch' }) => {
+    reportDashboardInteraction('panel_option_variable_created', properties);
   },
 
   // tracks attempts to resize a panel that is managed by auto layout

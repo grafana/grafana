@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/authinfotest"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -1038,6 +1039,174 @@ func TestGetOrgUsersForCurrentOrg_KubernetesUsersRedirect(t *testing.T) {
 		assert.Equal(t, int64(42), got[0].UserID)
 		assert.Equal(t, "other", got[1].Login)
 	})
+}
+
+type lookupUserService struct {
+	usertest.FakeUserService
+	search func(context.Context, *user.SearchUsersQuery) (*user.SearchUserQueryResult, error)
+}
+
+func (s *lookupUserService) Search(ctx context.Context, query *user.SearchUsersQuery) (*user.SearchUserQueryResult, error) {
+	return s.search(ctx, query)
+}
+
+func TestGetOrgUsersForCurrentOrgLookup_KubernetesUsersRedirect(t *testing.T) {
+	for _, tt := range []struct {
+		name            string
+		enforce         bool
+		admin           bool
+		login           string
+		limit           int
+		wantSearchLimit int
+		wantLogins      []string
+	}{
+		{name: "unlicensed lookup uses service identity and hides other hidden users", login: "caller", limit: 10, wantSearchLimit: 12, wantLogins: []string{"visible"}},
+		{name: "licensed lookup keeps caller identity", enforce: true, login: "caller", limit: 10, wantSearchLimit: 10, wantLogins: []string{"visible"}},
+		{name: "hidden callers can see themselves", login: "hidden-self", limit: 10, wantSearchLimit: 12, wantLogins: []string{"hidden-self", "visible"}},
+		{name: "server admins can see hidden users", admin: true, login: "caller", limit: 10, wantSearchLimit: 10, wantLogins: []string{"hidden-self", "hidden-other", "visible"}},
+		{name: "limited lookup fills page after hidden users", login: "caller", limit: 1, wantSearchLimit: 3, wantLogins: []string{"visible"}},
+		{name: "limited hidden caller is trimmed", login: "hidden-self", limit: 1, wantSearchLimit: 3, wantLogins: []string{"hidden-self"}},
+		{name: "limited admin includes hidden users", admin: true, login: "caller", limit: 1, wantSearchLimit: 1, wantLogins: []string{"hidden-self"}},
+		{name: "zero limit uses one default search page", login: "caller", wantSearchLimit: 0, wantLogins: []string{"visible"}},
+		{name: "negative limit uses one default search page", login: "caller", limit: -1, wantSearchLimit: -1, wantLogins: []string{"visible"}},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			setupOpenFeatureFlag(t, featuremgmt.FlagKubernetesUsersRedirect, true)
+			cfg := setting.NewCfg()
+			cfg.RBAC.SingleOrganization = true
+			cfg.HiddenUsers = map[string]struct{}{"hidden-self": {}, "hidden-other": {}}
+			license := licensingtest.NewFakeLicensing()
+			license.On("FeatureEnabled", "accesscontrol.enforcement").Return(tt.enforce).Once()
+			t.Cleanup(func() { license.AssertExpectations(t) })
+			caller := &user.SignedInUser{OrgID: 1, UserID: 42, Login: tt.login, IsGrafanaAdmin: tt.admin, Namespace: "org-1"}
+			called := false
+			svc := &lookupUserService{search: func(ctx context.Context, query *user.SearchUsersQuery) (*user.SearchUserQueryResult, error) {
+				called = true
+				require.Equal(t, !tt.enforce, identity.IsServiceIdentity(ctx))
+				requester, err := identity.GetRequester(ctx)
+				require.NoError(t, err)
+				require.Equal(t, caller.OrgID, requester.GetOrgID())
+				require.Equal(t, caller.Namespace, requester.GetNamespace())
+				if tt.enforce {
+					require.Same(t, caller, requester)
+				}
+				require.Same(t, caller, query.SignedInUser)
+				require.Equal(t, caller.OrgID, query.OrgID)
+				require.Equal(t, "lookup", query.Query)
+				require.Equal(t, tt.wantSearchLimit, query.Limit)
+				users := []*user.UserSearchHitDTO{
+					{ID: 42, UID: "self", Login: "hidden-self"},
+					{ID: 43, UID: "other", Login: "hidden-other"},
+					{ID: 44, UID: "visible", Login: "visible"},
+				}
+				if query.Limit > 0 && query.Limit < len(users) {
+					users = users[:query.Limit]
+				}
+				return &user.SearchUserQueryResult{Users: users, TotalCount: 3}, nil
+			}}
+			hs := &HTTPServer{Cfg: cfg, License: license, userService: svc}
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/org/users/lookup?query=lookup&limit=%d", tt.limit), nil)
+			req = req.WithContext(identity.WithRequester(req.Context(), caller))
+			ctx := &contextmodel.ReqContext{Context: &web.Context{Req: req}, SignedInUser: caller}
+			resp := hs.GetOrgUsersForCurrentOrgLookup(ctx)
+			require.True(t, called)
+			normalResp, ok := resp.(*response.NormalResponse)
+			require.True(t, ok)
+			require.Equal(t, http.StatusOK, normalResp.Status())
+			var got []dtos.UserLookupDTO
+			require.NoError(t, json.Unmarshal(normalResp.Body(), &got))
+			logins := make([]string, 0, len(got))
+			for _, u := range got {
+				logins = append(logins, u.Login)
+			}
+			require.ElementsMatch(t, tt.wantLogins, logins)
+		})
+	}
+}
+
+func TestGetOrgUsersForCurrentOrgLookup_KubernetesUsersRedirect_Pagination(t *testing.T) {
+	for _, tt := range []struct {
+		name        string
+		limit       int
+		userCount   int
+		hiddenCount int
+		failPage    int
+		enforce     bool
+		wantCount   int
+		wantCalls   int
+	}{
+		{name: "oversized limit is capped", limit: 5000, userCount: 6000, wantCount: 1000, wantCalls: 1},
+		{name: "oversized limit with hidden users is capped", limit: 5000, userCount: 6000, hiddenCount: 2, wantCount: 1000, wantCalls: 2},
+		{name: "licensed lookup uses a single page", limit: 1000, userCount: 1002, hiddenCount: 2, enforce: true, wantCount: 998, wantCalls: 1},
+		{name: "licensed lookup ignores totals that include filtered users", limit: 1000, userCount: 2000, hiddenCount: 1000, enforce: true, wantCalls: 1},
+		{name: "maximum limit with hidden users", limit: 1000, userCount: 1002, hiddenCount: 2, wantCount: 1000, wantCalls: 2},
+		{name: "near maximum trims second page", limit: 999, userCount: 1010, hiddenCount: 2, wantCount: 999, wantCalls: 2},
+		{name: "short final page", limit: 1000, userCount: 1001, hiddenCount: 2, wantCount: 999, wantCalls: 2},
+		{name: "full final page stops at total count", limit: 1000, userCount: 1000, hiddenCount: 2, wantCount: 998, wantCalls: 1},
+		{name: "full visible page needs no more requests", limit: 1000, userCount: 1010, wantCount: 1000, wantCalls: 1},
+		{name: "entire first page hidden", limit: 1000, userCount: 2000, hiddenCount: 1000, wantCount: 1000, wantCalls: 2},
+		{name: "empty directory", limit: 1000, wantCalls: 1},
+		{name: "second page error", limit: 1000, userCount: 1002, hiddenCount: 2, failPage: 2, wantCalls: 2},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			setupOpenFeatureFlag(t, featuremgmt.FlagKubernetesUsersRedirect, true)
+			cfg := setting.NewCfg()
+			cfg.RBAC.SingleOrganization = true
+			cfg.HiddenUsers = make(map[string]struct{})
+			users := searchHits(tt.userCount, 1)
+			for _, u := range users[:tt.hiddenCount] {
+				cfg.HiddenUsers[u.Login] = struct{}{}
+			}
+			license := licensingtest.NewFakeLicensing()
+			license.On("FeatureEnabled", "accesscontrol.enforcement").Return(tt.enforce).Once()
+			t.Cleanup(func() { license.AssertExpectations(t) })
+			caller := &user.SignedInUser{OrgID: 1, Login: "caller", Namespace: "org-1"}
+			calls := 0
+			svc := &lookupUserService{search: func(ctx context.Context, query *user.SearchUsersQuery) (*user.SearchUserQueryResult, error) {
+				calls++
+				require.LessOrEqual(t, calls, tt.wantCalls)
+				require.Equal(t, calls, query.Page)
+				require.Equal(t, 1000, query.Limit)
+				require.Equal(t, !tt.enforce, identity.IsServiceIdentity(ctx))
+				if query.Page == tt.failPage {
+					return nil, errors.New("search failed")
+				}
+				start := (query.Page - 1) * query.Limit
+				end := min(start+query.Limit, len(users))
+				pageUsers := users[start:end]
+				// Searches as the caller can filter users after paging while still counting them.
+				if tt.enforce {
+					visible := make([]*user.UserSearchHitDTO, 0, len(pageUsers))
+					for _, u := range pageUsers {
+						if _, hidden := cfg.HiddenUsers[u.Login]; !hidden {
+							visible = append(visible, u)
+						}
+					}
+					pageUsers = visible
+				}
+				return &user.SearchUserQueryResult{Users: pageUsers, TotalCount: int64(len(users))}, nil
+			}}
+			hs := &HTTPServer{Cfg: cfg, License: license, userService: svc}
+			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/org/users/lookup?limit=%d", tt.limit), nil)
+			req = req.WithContext(identity.WithRequester(req.Context(), caller))
+			ctx := &contextmodel.ReqContext{Context: &web.Context{Req: req}, SignedInUser: caller}
+			resp := hs.GetOrgUsersForCurrentOrgLookup(ctx)
+			require.Equal(t, tt.wantCalls, calls)
+			if tt.failPage > 0 {
+				require.Equal(t, http.StatusInternalServerError, resp.Status())
+				return
+			}
+			require.Equal(t, http.StatusOK, resp.Status())
+			normalResp, ok := resp.(*response.NormalResponse)
+			require.True(t, ok)
+			var got []dtos.UserLookupDTO
+			require.NoError(t, json.Unmarshal(normalResp.Body(), &got))
+			require.Len(t, got, tt.wantCount)
+			for i, u := range got {
+				require.Equal(t, users[tt.hiddenCount+i].Login, u.Login)
+			}
+		})
+	}
 }
 
 func TestUpdateOrgUserForCurrentOrg_KubernetesUsersRedirect(t *testing.T) {

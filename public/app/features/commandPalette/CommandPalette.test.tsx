@@ -1,19 +1,14 @@
-import { KBarPortal, KBarProvider } from 'kbar';
+import { KBarPortal, KBarProvider, useKBar } from 'kbar';
 import { HttpResponse, http } from 'msw';
-import { act, render, screen, userEvent } from 'test/test-utils';
+import { act, render, screen, userEvent, waitFor } from 'test/test-utils';
 
 import { OpenAssistantButton, useAssistant } from '@grafana/assistant';
 import { PluginExtensionTypes } from '@grafana/data';
 import { reportInteraction, setBackendSrv, setPluginLinksHook } from '@grafana/runtime';
-import {
-  setGetObservablePluginLinks,
-  useFlagDashboardVectorSearch,
-  useFlagGrafanaCmdkHybridSearch,
-  useFlagGrafanaVectorSearchCmdk,
-} from '@grafana/runtime/internal';
-import { getVectorSearchHandler } from '@grafana/test-utils/handlers';
+import { setGetObservablePluginLinks } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/feature-flags';
 import { setupMockServer } from '@grafana/test-utils/server';
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { PortalContainer } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -41,13 +36,6 @@ jest.mock('@grafana/assistant', () => ({
   ...jest.requireActual('@grafana/assistant'),
   useAssistant: jest.fn(),
   OpenAssistantButton: jest.fn().mockImplementation(({ title, onClick }) => <button onClick={onClick}>{title}</button>),
-}));
-
-jest.mock('@grafana/runtime/internal', () => ({
-  ...jest.requireActual('@grafana/runtime/internal'),
-  useFlagDashboardVectorSearch: jest.fn(),
-  useFlagGrafanaVectorSearchCmdk: jest.fn(),
-  useFlagGrafanaCmdkHybridSearch: jest.fn(),
 }));
 
 jest.mock('kbar', () => ({
@@ -78,6 +66,20 @@ const setup = () => {
   );
 };
 
+// Window listeners run after the palette's own click handling, so this reads whether the palette cancelled the
+// link's navigation, then cancels it itself because jsdom can't navigate.
+const isNavigationCancelledOnClick = async (element: Element) => {
+  let cancelled: boolean | undefined;
+  const recordAndCancel = (event: MouseEvent) => {
+    cancelled = event.defaultPrevented;
+    event.preventDefault();
+  };
+  window.addEventListener('click', recordAndCancel);
+  await userEvent.click(element);
+  window.removeEventListener('click', recordAndCancel);
+  return cancelled;
+};
+
 const triggerEmptyState = async () => {
   const user = userEvent.setup();
   // Type a nonsense query to trigger the empty state naturally, rather than relying on
@@ -88,21 +90,42 @@ const triggerEmptyState = async () => {
 
 describe('CommandPalette', () => {
   beforeEach(() => {
-    setTestFlags({ 'dashboard.notebooks': false });
+    setTestFlags({ 'dashboard.notebooks': false, 'grafana.cmdkHybridSearch': false });
     jest.mocked(KBarPortal).mockImplementation(({ children }) => <div>{children}</div>);
     setPluginLinksHook(() => ({
       links: [],
       isLoading: false,
     }));
 
-    // Deep search is gated on both vector-search toggles; default them on so most
-    // tests exercise the deep column, overridden where needed. Hybrid search
-    // supersedes (and disables) the deep column, so default it off
-    (useFlagDashboardVectorSearch as jest.Mock).mockReturnValue(true);
-    (useFlagGrafanaVectorSearchCmdk as jest.Mock).mockReturnValue(true);
-    (useFlagGrafanaCmdkHybridSearch as jest.Mock).mockReturnValue(false);
     (useAssistant as jest.Mock).mockReturnValue({ isLoading: false, isAvailable: true });
     (reportInteraction as jest.Mock).mockClear();
+  });
+
+  it('mounts the palette in the shared overlay container when opened', async () => {
+    jest
+      .mocked(KBarPortal)
+      .mockImplementation(jest.requireActual<{ KBarPortal: typeof KBarPortal }>('kbar').KBarPortal);
+
+    function OpenPalette() {
+      const { query } = useKBar();
+      return <button onClick={() => query.toggle()}>Open command palette</button>;
+    }
+
+    const { user } = render(
+      <>
+        <PortalContainer />
+        <KBarProvider>
+          <OpenPalette />
+          <CommandPalette />
+        </KBarProvider>
+      </>
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Open command palette' }));
+
+    const input = await screen.findByRole('combobox');
+    const overlayContainer = document.getElementById('grafana-portal-container');
+    expect(overlayContainer).toContainElement(input);
   });
 
   it('reevaluates extension links each time the palette opens', async () => {
@@ -167,6 +190,54 @@ describe('CommandPalette', () => {
     expect(await screen.findByText('Dynamic extension action')).toBeInTheDocument();
   });
 
+  it('lets a path-only extension link navigate to its path when selected', async () => {
+    setPluginLinksHook(() => ({
+      links: [
+        {
+          id: 'test-plugin/path-only-link',
+          type: PluginExtensionTypes.link as const,
+          title: 'Path-only extension link',
+          description: 'Has a path and no onClick',
+          pluginId: 'test-plugin',
+          path: '/a/test-plugin/page',
+        },
+      ],
+      isLoading: false,
+    }));
+    setup();
+
+    await userEvent.type(screen.getByPlaceholderText('Search or jump to...'), 'Path-only extension link');
+    const row = (await screen.findByText('Path-only extension link')).closest('a');
+
+    expect(row).toHaveAttribute('href', '/a/test-plugin/page');
+    expect(await isNavigationCancelledOnClick(row!)).toBe(false);
+  });
+
+  it('calls onClick instead of navigating when an extension link has one', async () => {
+    const onClick = jest.fn();
+    setPluginLinksHook(() => ({
+      links: [
+        {
+          id: 'test-plugin/onclick-link',
+          type: PluginExtensionTypes.link as const,
+          title: 'Click handler extension link',
+          description: 'Has both a path and an onClick',
+          pluginId: 'test-plugin',
+          path: '/a/test-plugin/page',
+          onClick,
+        },
+      ],
+      isLoading: false,
+    }));
+    setup();
+
+    await userEvent.type(screen.getByPlaceholderText('Search or jump to...'), 'Click handler extension link');
+    const row = (await screen.findByText('Click handler extension link')).closest('a');
+
+    expect(await isNavigationCancelledOnClick(row!)).toBe(true);
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
   describe('notebook results', () => {
     // contextSrv.user is a mutable singleton, so these are restored even when an assertion throws —
     // otherwise a failure here leaks a signed-in user with notebooks:read into every later test.
@@ -213,14 +284,12 @@ describe('CommandPalette', () => {
     setup();
     await triggerEmptyState();
 
-    // The empty state now waits for the deep search fetch (500ms debounce) to settle
     expect(await screen.findByText('No results found', {}, { timeout: 3000 })).toBeInTheDocument();
     // Check if AI Assistant button is rendered with correct props
     expect(screen.getByRole('button', { name: 'Search with Grafana Assistant' })).toBeInTheDocument();
   });
 
   it('should render empty state without AI Assistant button when assistant is not available', async () => {
-    // The assistant button is independent of deep search — it stays gated on assistant availability
     (useAssistant as jest.Mock).mockReturnValue({ isLoading: false, isAvailable: false });
     setup();
     await triggerEmptyState();
@@ -231,271 +300,9 @@ describe('CommandPalette', () => {
     expect(screen.queryByRole('button', { name: 'Search with Grafana Assistant' })).not.toBeInTheDocument();
   });
 
-  describe('deep search column', () => {
-    afterEach(() => {
-      server.events.removeAllListeners();
-    });
-
-    it('shows grouped deep search results when the feature toggle is enabled', async () => {
-      server.use(
-        getVectorSearchHandler([
-          { name: 'dash-1', title: 'API latency', snippet: 'p99 latency by region', score: 0.1 },
-          { name: 'dash-1', title: 'API latency', snippet: 'p50 latency', score: 0.2 },
-        ])
-      );
-
-      setup();
-      const user = userEvent.setup();
-      await user.type(screen.getByPlaceholderText('Search or jump to...'), 'latency');
-
-      expect(await screen.findByText('Dashboards deep search')).toBeInTheDocument();
-      // Deep search debounces for 500ms, so allow extra time for results
-      expect(await screen.findByText('API latency', {}, { timeout: 3000 })).toBeInTheDocument();
-      expect(screen.getByText('p99 latency by region')).toBeInTheDocument();
-      expect(screen.getByRole('link', { name: /API latency/ })).toHaveAttribute('href', '/d/dash-1');
-    });
-
-    it('renders dashboard tags from the snippet as pills', async () => {
-      server.use(
-        getVectorSearchHandler([
-          {
-            name: 'dash-1',
-            title: 'API latency',
-            snippet: 'p99 latency by region\nTags: infra, prod',
-            score: 0.1,
-          },
-        ])
-      );
-
-      setup();
-      const user = userEvent.setup();
-      await user.type(screen.getByPlaceholderText('Search or jump to...'), 'latency');
-
-      expect(await screen.findByText('API latency', {}, { timeout: 3000 })).toBeInTheDocument();
-      // Tags surface as pills, not as raw "Tags:" text in the snippet
-      expect(screen.getByText('infra')).toBeInTheDocument();
-      expect(screen.getByText('prod')).toBeInTheDocument();
-      expect(screen.queryByText(/Tags:/)).not.toBeInTheDocument();
-    });
-
-    it('caps visible snippets and shows a "more matched panels" line', async () => {
-      server.use(
-        getVectorSearchHandler([
-          // Equal scores so all five survive the cutoff; only MAX_SNIPPETS_PER_DASHBOARD (3) show
-          { name: 'dash-1', title: 'API latency', snippet: 'panel one', score: 0.1 },
-          { name: 'dash-1', title: 'API latency', snippet: 'panel two', score: 0.1 },
-          { name: 'dash-1', title: 'API latency', snippet: 'panel three', score: 0.1 },
-          { name: 'dash-1', title: 'API latency', snippet: 'panel four', score: 0.1 },
-          { name: 'dash-1', title: 'API latency', snippet: 'panel five', score: 0.1 },
-        ])
-      );
-
-      setup();
-      const user = userEvent.setup();
-      await user.type(screen.getByPlaceholderText('Search or jump to...'), 'latency');
-
-      expect(await screen.findByText('panel one', {}, { timeout: 3000 })).toBeInTheDocument();
-      expect(screen.getByText('panel three')).toBeInTheDocument();
-      // The 4th and 5th collapse into the count
-      expect(screen.queryByText('panel four')).not.toBeInTheDocument();
-      expect(screen.getByText('2 more matched panels')).toBeInTheDocument();
-    });
-
-    it('hides the empty state when only deep search has results', async () => {
-      server.use(
-        getVectorSearchHandler([{ name: 'dash-1', title: 'API latency', snippet: 'p99 latency', score: 0.1 }])
-      );
-
-      setup();
-      const user = userEvent.setup();
-      // A query that matches no keyword results but returns deep search hits
-      await user.type(screen.getByPlaceholderText('Search or jump to...'), 'zzznomatch');
-
-      expect(await screen.findByText('API latency', {}, { timeout: 3000 })).toBeInTheDocument();
-      expect(screen.queryByText('No results found')).not.toBeInTheDocument();
-    });
-
-    it('supports keyboard navigation into and out of the deep search column', async () => {
-      server.use(
-        getVectorSearchHandler([
-          // Equal scores so both dashboards survive the average filter
-          { name: 'dash-1', title: 'API latency', snippet: 'p99 latency', score: 0.1 },
-          { name: 'dash-2', title: 'Checkout', snippet: 'checkout errors', score: 0.1 },
-        ])
-      );
-
-      setup();
-      const user = userEvent.setup();
-      const input = screen.getByPlaceholderText('Search or jump to...');
-      // No keyword results match this query, so the deep column is the only pane
-      await user.type(input, 'latency');
-      await screen.findByText('API latency', {}, { timeout: 3000 });
-
-      // Arrow down from the input moves focus into the results
-      await user.keyboard('{ArrowDown}');
-      expect(screen.getByRole('link', { name: /API latency/ })).toHaveFocus();
-
-      // Down/Up move between cards
-      await user.keyboard('{ArrowDown}');
-      expect(screen.getByRole('link', { name: /Checkout/ })).toHaveFocus();
-      await user.keyboard('{ArrowUp}');
-      expect(screen.getByRole('link', { name: /API latency/ })).toHaveFocus();
-
-      // Up past the first item returns focus to the input
-      await user.keyboard('{ArrowUp}');
-      expect(input).toHaveFocus();
-    });
-
-    it('supports Ctrl+N / Ctrl+P as down / up (legacy kbar shortcuts)', async () => {
-      server.use(
-        getVectorSearchHandler([
-          { name: 'dash-1', title: 'API latency', snippet: 'p99 latency', score: 0.1 },
-          { name: 'dash-2', title: 'Checkout', snippet: 'checkout errors', score: 0.1 },
-        ])
-      );
-
-      setup();
-      const user = userEvent.setup();
-      const input = screen.getByPlaceholderText('Search or jump to...');
-      await user.type(input, 'latency');
-      await screen.findByText('API latency', {}, { timeout: 3000 });
-
-      // Ctrl+N from the input moves focus into the results, like ArrowDown
-      await user.keyboard('{Control>}n{/Control}');
-      expect(screen.getByRole('link', { name: /API latency/ })).toHaveFocus();
-
-      // Ctrl+N moves down, Ctrl+P moves back up
-      await user.keyboard('{Control>}n{/Control}');
-      expect(screen.getByRole('link', { name: /Checkout/ })).toHaveFocus();
-      await user.keyboard('{Control>}p{/Control}');
-      expect(screen.getByRole('link', { name: /API latency/ })).toHaveFocus();
-
-      // Ctrl+P past the first item returns focus to the input
-      await user.keyboard('{Control>}p{/Control}');
-      expect(input).toHaveFocus();
-    });
-
-    it('moves focus between the keyword and deep search panes', async () => {
-      server.use(
-        getVectorSearchHandler([{ name: 'dash-1', title: 'Dark dashboards', snippet: 'dark mode panels', score: 0.1 }])
-      );
-
-      setup();
-      const user = userEvent.setup();
-      const input = screen.getByPlaceholderText('Search or jump to...');
-      // "dark" matches the static change-theme action, so the keyword pane has results
-      await user.type(input, 'dark');
-      await screen.findByText('Dark dashboards', {}, { timeout: 3000 });
-
-      // Arrow down from the input lands on the keyword list
-      await user.keyboard('{ArrowDown}');
-      const keywordList = screen.getByTestId('command-palette-keyword-results');
-      expect(keywordList).toHaveFocus();
-
-      // Left from the leftmost pane is a no-op — focus must NOT fall back to
-      // the input (kbar's focus guard would otherwise steal it)
-      await user.keyboard('{ArrowLeft}');
-      expect(keywordList).toHaveFocus();
-
-      // Right moves to the deep search pane, left moves back
-      await user.keyboard('{ArrowRight}');
-      expect(screen.getByRole('link', { name: /Dark dashboards/ })).toHaveFocus();
-      // Right from the rightmost pane is a no-op as well
-      await user.keyboard('{ArrowRight}');
-      expect(screen.getByRole('link', { name: /Dark dashboards/ })).toHaveFocus();
-      await user.keyboard('{ArrowLeft}');
-      expect(keywordList).toHaveFocus();
-
-      // Up past the first keyword item returns focus to the input
-      await user.keyboard('{ArrowUp}');
-      expect(input).toHaveFocus();
-    });
-
-    it('escape in the results returns focus to the input without closing the palette', async () => {
-      server.use(
-        getVectorSearchHandler([{ name: 'dash-1', title: 'API latency', snippet: 'p99 latency', score: 0.1 }])
-      );
-
-      setup();
-      const user = userEvent.setup();
-      const input = screen.getByPlaceholderText('Search or jump to...');
-      await user.type(input, 'latency');
-      await screen.findByText('API latency', {}, { timeout: 3000 });
-
-      await user.keyboard('{ArrowDown}');
-      expect(screen.getByRole('link', { name: /API latency/ })).toHaveFocus();
-
-      await user.keyboard('{Escape}');
-      expect(input).toHaveFocus();
-      // The palette is still open
-      expect(screen.getByPlaceholderText('Search or jump to...')).toBeInTheDocument();
-    });
-
-    it.each([
-      ['dashboardVectorSearch off', () => (useFlagDashboardVectorSearch as jest.Mock).mockReturnValue(false)],
-      ['vectorSearchCmdk off', () => (useFlagGrafanaVectorSearchCmdk as jest.Mock).mockReturnValue(false)],
-      ['cmdkHybridSearch on', () => (useFlagGrafanaCmdkHybridSearch as jest.Mock).mockReturnValue(true)],
-    ])('does not render the deep search column when %s', async (_label, disableFlag) => {
-      disableFlag();
-      let deepSearchCalled = false;
-      server.events.on('request:start', ({ request }) => {
-        if (request.url.includes('/search/vector')) {
-          deepSearchCalled = true;
-        }
-      });
-
-      setup();
-      const user = userEvent.setup();
-      await user.type(screen.getByPlaceholderText('Search or jump to...'), 'latency');
-
-      expect(screen.queryByText('Dashboards deep search')).not.toBeInTheDocument();
-      // Outwait the 500ms deep search debounce to prove no request fires
-      await act(async () => {
-        await new Promise((resolve) => setTimeout(resolve, 600));
-      });
-      expect(deepSearchCalled).toBe(false);
-      expect(screen.queryByText('Dashboards deep search')).not.toBeInTheDocument();
-    });
-  });
-
   describe('command_palette_action_selected analytics', () => {
     afterEach(() => {
       server.events.removeAllListeners();
-    });
-
-    it('reports deep-search context when a deep search result is clicked', async () => {
-      // The deep card is a real <a href>, so clicking it makes jsdom log an
-      // (unimplemented) navigation error — suppress it; we only care about the report
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-      server.use(
-        getVectorSearchHandler([
-          { name: 'dash-1', title: 'API latency', snippet: 'panel one', score: 0.1 },
-          { name: 'dash-2', title: 'Checkout', snippet: 'panel two', score: 0.1 },
-        ])
-      );
-
-      setup();
-      const user = userEvent.setup();
-      await user.type(screen.getByPlaceholderText('Search or jump to...'), 'latency');
-
-      const link = await screen.findByRole('link', { name: /API latency/ }, { timeout: 3000 });
-      await user.click(link);
-
-      expect(reportInteraction).toHaveBeenCalledWith(
-        'command_palette_action_selected',
-        expect.objectContaining({
-          actionName: 'API latency',
-          index: 0,
-          section: 'deep-search',
-          isDeepSearchAction: true,
-          isDeepSearchEnabled: true,
-          isDeepSearchLoaded: true,
-          deepSearchItemsCount: 2,
-          itemsCount: expect.any(Number),
-          target: '/d/dash-1',
-        })
-      );
-      consoleErrorSpy.mockRestore();
     });
 
     it('reports the destination url as target when a navigational keyword result is clicked', async () => {
@@ -528,26 +335,24 @@ describe('CommandPalette', () => {
         expect.objectContaining({
           actionId: 'test/latency-dashboard',
           section: 'dashboards',
-          isDeepSearchAction: false,
           target: '/d/abc123',
         })
       );
       consoleErrorSpy.mockRestore();
     });
 
-    it('reports a non-deep-search selection when a keyword result is selected', async () => {
-      server.use(getVectorSearchHandler([{ name: 'dash-1', title: 'API latency', snippet: 'panel one', score: 0.1 }]));
-
+    it('reports the section and item count when a keyword result is selected', async () => {
       setup();
       const user = userEvent.setup();
       // "dark" matches the static change-theme action (a command, not a link, so no navigation)
       await user.type(screen.getByPlaceholderText('Search or jump to...'), 'dark');
-      await user.click(await screen.findByRole('option', { name: /^Preferences: Change theme/ }, { timeout: 3000 }));
+      // Wait for the theme results to settle so the click doesn't land on a row that is about to be replaced
+      await screen.findByRole('option', { name: /^Change theme.*Dark$/ }, { timeout: 3000 });
+      await user.click(await screen.findByRole('option', { name: /^Preferences: Change theme/ }));
 
       expect(reportInteraction).toHaveBeenCalledWith(
         'command_palette_action_selected',
         expect.objectContaining({
-          isDeepSearchAction: false,
           index: expect.any(Number),
           // Stable slug, not the translated section header ("Preferences")
           section: 'preferences',
@@ -560,6 +365,10 @@ describe('CommandPalette', () => {
   });
 
   describe('ask assistant', () => {
+    beforeEach(() => {
+      setTestFlags({ 'grafana.cmdkHybridSearch': true });
+    });
+
     it('opens the assistant with the search query on Shift+Enter', async () => {
       const openAssistant = jest.fn();
       (useAssistant as jest.Mock).mockReturnValue({ isLoading: false, isAvailable: true, openAssistant });
@@ -619,9 +428,8 @@ describe('CommandPalette', () => {
       expect(openAssistant).not.toHaveBeenCalled();
     });
 
-    it('does not show the pill or react to Shift+Enter when deep search is disabled', async () => {
-      // Either flag off → deepSearchEnabled is false → the pill and shortcut are gated off too
-      (useFlagGrafanaVectorSearchCmdk as jest.Mock).mockReturnValue(false);
+    it('does not show the pill or react to Shift+Enter when hybrid search is disabled', async () => {
+      setTestFlags({ 'grafana.cmdkHybridSearch': false });
       const openAssistant = jest.fn();
       (useAssistant as jest.Mock).mockReturnValue({ isLoading: false, isAvailable: true, openAssistant });
 
@@ -635,85 +443,72 @@ describe('CommandPalette', () => {
     });
   });
 
-  describe('command_palette_deep_search_results_shown analytics', () => {
-    afterEach(() => {
-      server.events.removeAllListeners();
-    });
-
-    it('reports once when deep search results settle, with deep-search context', async () => {
-      server.use(
-        getVectorSearchHandler([
-          { name: 'dash-1', title: 'API latency', snippet: 'panel one', score: 0.1 },
-          { name: 'dash-2', title: 'Checkout', snippet: 'panel two', score: 0.1 },
-        ])
-      );
-
-      setup();
-      const user = userEvent.setup();
-      await user.type(screen.getByPlaceholderText('Search or jump to...'), 'latency');
-
-      // Wait for the settled deep search render (500ms debounce)
-      await screen.findByText('API latency', {}, { timeout: 3000 });
-
-      expect(reportInteraction).toHaveBeenCalledWith('command_palette_deep_search_results_shown', {
-        isDeepSearchEnabled: true,
-        isDeepSearchLoaded: true,
-        deepSearchItemsCount: 2,
-        queryLength: 7,
-      });
-
-      // One event per settled result set, not one per keystroke
-      const shownCalls = (reportInteraction as jest.Mock).mock.calls.filter(
-        ([event]) => event === 'command_palette_deep_search_results_shown'
-      );
-      expect(shownCalls).toHaveLength(1);
-    });
-
-    it('does not report when deep search is disabled', async () => {
-      (useFlagGrafanaVectorSearchCmdk as jest.Mock).mockReturnValue(false);
-
-      setup();
-      const user = userEvent.setup();
-      await user.type(screen.getByPlaceholderText('Search or jump to...'), 'latency');
-
-      // Outwait the deep search debounce to prove nothing settles/reports
-      await act(async () => {
-        await new Promise((resolve) => setTimeout(resolve, 600));
-      });
-
-      expect(reportInteraction).not.toHaveBeenCalledWith(
-        'command_palette_deep_search_results_shown',
-        expect.anything(),
-        expect.anything()
-      );
-    });
-  });
-
   describe('keyboard model', () => {
-    it('uses the legacy model (auto-selects an item) when deep search is disabled', async () => {
-      // Either flag off → deepSearchEnabled is false → legacy keyboard handling
-      (useFlagGrafanaVectorSearchCmdk as jest.Mock).mockReturnValue(false);
+    it.each([false, true])(
+      'selects and activates items with hybrid search enabled: %s',
+      async (hybridSearchEnabled) => {
+        setTestFlags({ 'grafana.cmdkHybridSearch': hybridSearchEnabled });
+        const performFirstAction = jest.fn();
+        const performSecondAction = jest.fn();
+        render(
+          <KBarProvider
+            actions={[
+              { id: 'keyboard-first', name: 'zzkeyboard first', perform: performFirstAction },
+              { id: 'keyboard-second', name: 'zzkeyboard second', perform: performSecondAction },
+            ]}
+          >
+            <CommandPalette />
+          </KBarProvider>
+        );
+        const user = userEvent.setup();
+        const input = screen.getByPlaceholderText('Search or jump to...');
+        await user.type(input, 'zzkeyboard');
+        // Dashboard search results arriving later reset the selection to the first item
+        await waitFor(() => expect(screen.queryByRole('status', { name: 'Loading bar' })).not.toBeInTheDocument());
+        const firstOption = await screen.findByRole('option', { name: 'zzkeyboard first' });
+        const secondOption = screen.getByRole('option', { name: 'zzkeyboard second' });
 
-      setup();
+        expect(firstOption).toHaveAttribute('aria-selected', 'true');
+        expect(input).toHaveAttribute('aria-activedescendant', firstOption.id);
+
+        await user.keyboard('{ArrowDown}');
+        expect(secondOption).toHaveAttribute('aria-selected', 'true');
+        await user.keyboard('{ArrowUp}');
+        expect(firstOption).toHaveAttribute('aria-selected', 'true');
+
+        await user.keyboard('{Control>}n{/Control}');
+        expect(secondOption).toHaveAttribute('aria-selected', 'true');
+        await user.keyboard('{Control>}p{/Control}');
+        expect(firstOption).toHaveAttribute('aria-selected', 'true');
+
+        await user.keyboard('{Enter}');
+        expect(performFirstAction).toHaveBeenCalledTimes(1);
+        expect(performSecondAction).not.toHaveBeenCalled();
+      }
+    );
+
+    it('does not activate the highlighted item on Shift+Enter', async () => {
+      // Shift+Enter is reserved for the Ask Assistant shortcut; with it disabled the key must be a no-op
+      // instead of activating whatever row the (throttled) result list currently highlights.
+      setTestFlags({ 'grafana.cmdkHybridSearch': false });
+      const performAction = jest.fn();
+      render(
+        <KBarProvider actions={[{ id: 'shift-enter', name: 'zzshift', perform: performAction }]}>
+          <CommandPalette />
+        </KBarProvider>
+      );
       const user = userEvent.setup();
       const input = screen.getByPlaceholderText('Search or jump to...');
-      await user.type(input, 'dark');
-      await screen.findAllByRole('option', {}, { timeout: 3000 });
+      await user.type(input, 'zzshift');
+      await waitFor(() => expect(screen.queryByRole('status', { name: 'Loading bar' })).not.toBeInTheDocument());
+      const option = await screen.findByRole('option', { name: 'zzshift' });
+      expect(option).toHaveAttribute('aria-selected', 'true');
 
-      // Legacy behavior: an item is preselected, so the input points at it
-      expect(input).toHaveAttribute('aria-activedescendant');
-    });
+      await user.keyboard('{Shift>}{Enter}{/Shift}');
+      expect(performAction).not.toHaveBeenCalled();
 
-    it('uses the new model (nothing preselected) when deep search is enabled', async () => {
-      // Both flags default to true in beforeEach → new keyboard handling
-      setup();
-      const user = userEvent.setup();
-      const input = screen.getByPlaceholderText('Search or jump to...');
-      await user.type(input, 'dark');
-      await screen.findAllByRole('option', {}, { timeout: 3000 });
-
-      // New behavior: focus starts in the input, nothing is highlighted
-      expect(input).not.toHaveAttribute('aria-activedescendant');
+      await user.keyboard('{Enter}');
+      expect(performAction).toHaveBeenCalledTimes(1);
     });
   });
 });

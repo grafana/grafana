@@ -36,7 +36,6 @@ describe('hasNothingToResume', () => {
     '/alerting/list?orgId=1',
     '/alerting/list?search=',
     '/a/grafana-irm-app/incidents',
-    '/a/grafana-assistant-app/pages',
     // The menu link's own state, however the params are ordered or padded.
     '/a/grafana-irm-app/settings/usage?tab=daily',
     '/a/grafana-irm-app/settings/usage?orgId=2&tab=daily',

@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/stretchr/testify/assert"
@@ -1280,28 +1281,22 @@ func TestEvaluate(t *testing.T) {
 
 func TestEvaluateRaw(t *testing.T) {
 	t.Run("should timeout if request takes too long", func(t *testing.T) {
-		unexpectedResponse := &backend.QueryDataResponse{}
-
-		e := conditionEvaluator{
-			pipeline: nil,
-			expressionService: &fakeExpressionService{
-				hook: func(ctx context.Context, now time.Time, pipeline expr.DataPipeline) (*backend.QueryDataResponse, error) {
-					ts := time.Now()
-					for time.Since(ts) <= 10*time.Second {
-						if ctx.Err() != nil {
-							return nil, ctx.Err()
-						}
-						time.Sleep(10 * time.Millisecond)
-					}
-					return unexpectedResponse, nil
+		synctest.Test(t, func(t *testing.T) {
+			e := conditionEvaluator{
+				pipeline: nil,
+				expressionService: &fakeExpressionService{
+					hook: func(ctx context.Context, now time.Time, pipeline expr.DataPipeline) (*backend.QueryDataResponse, error) {
+						<-ctx.Done()
+						return nil, ctx.Err()
+					},
 				},
-			},
-			condition:   models.Condition{},
-			evalTimeout: 10 * time.Millisecond,
-		}
+				condition:   models.Condition{},
+				evalTimeout: 10 * time.Millisecond,
+			}
 
-		_, err := e.EvaluateRaw(context.Background(), time.Now())
-		require.ErrorIs(t, err, context.DeadlineExceeded)
+			_, err := e.EvaluateRaw(context.Background(), time.Now())
+			require.ErrorIs(t, err, context.DeadlineExceeded)
+		})
 	})
 }
 

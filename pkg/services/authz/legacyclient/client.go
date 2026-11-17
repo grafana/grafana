@@ -38,8 +38,8 @@ func WithLegacyTracerClientOption(tracer trace.Tracer) LegacyClientOption {
 	return func(c *LegacyClient) { c.tracer = tracer }
 }
 
-// NewLegacyClient constructs a client for a dedicated embedded legacy service.
-// Do not reuse a remote Check/List connection for this service.
+// LegacyCheck uses the RBAC connection. LegacyGetUserPermissions requires the
+// dedicated embedded service; the RBAC server does not implement enumeration.
 func NewLegacyClient(cc grpc.ClientConnInterface, opts ...LegacyClientOption) *LegacyClient {
 	client := &LegacyClient{clientV1: authzv1.NewLegacyAuthzServiceClient(cc), tracer: noop.Tracer{}}
 	for _, opt := range opts {

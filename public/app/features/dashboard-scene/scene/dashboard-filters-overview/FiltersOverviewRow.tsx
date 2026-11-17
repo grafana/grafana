@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 import { memo, useMemo, useState } from 'react';
 
 import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import {
   Checkbox,
@@ -151,7 +152,7 @@ export const FilterRow = memo(
     }, [isRestorable, keyValue, onRestore, styles.indicators, styles.restoreButton]);
 
     return (
-      <div className={styles.row}>
+      <div className={styles.row} data-testid={selectors.components.DashboardFiltersOverview.row}>
         {/* Label cell */}
         <div className={styles.labelCell}>
           <Tooltip content={label}>

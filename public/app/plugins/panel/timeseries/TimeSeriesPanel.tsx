@@ -1,3 +1,4 @@
+import memoizeOne from 'memoize-one';
 import { useCallback, useMemo, useState } from 'react';
 
 import {
@@ -34,6 +35,8 @@ import { getXAnnotationFrames } from './plugins/utils';
 import { getPrepareTimeseriesSuggestion } from './suggestions';
 import { getComparisonFieldPairs, getTimezones, prepareGraphableFields } from './utils';
 
+const noAnnotations: DataFrame[] = [];
+
 interface TimeSeriesPanelProps extends PanelProps<Options> {}
 
 export const TimeSeriesPanel = ({
@@ -58,8 +61,10 @@ export const TimeSeriesPanel = ({
     canExecuteActions,
     getFiltersBasedOnGrouping,
     onAddAdHocFilters,
+    openExemplar,
   } = usePanelContext();
   const theme = useTheme2();
+  const getVisibleExemplarLabels = useMemo(() => memoizeOne(getVisibleLabels), []);
 
   const { dataLinkPostProcessor } = useDataLinksContext();
 
@@ -241,16 +246,15 @@ export const TimeSeriesPanel = ({
                   setNewRange={setNewAnnotationRange}
                 />
                 <OutsideRangePlugin config={uplotConfig} onChangeTimeRange={onChangeTimeRange} />
-                {data.annotations && (
-                  <ExemplarsPlugin
-                    visibleSeries={getVisibleLabels(uplotConfig, frames)}
-                    config={uplotConfig}
-                    exemplars={data.annotations}
-                    timeZone={timeZone}
-                    maxHeight={options.tooltip.maxHeight}
-                    maxWidth={options.tooltip.maxWidth}
-                  />
-                )}
+                <ExemplarsPlugin
+                  openExemplar={openExemplar}
+                  visibleSeries={getVisibleExemplarLabels(uplotConfig, frames)}
+                  config={uplotConfig}
+                  exemplars={data.annotations ?? noAnnotations}
+                  timeZone={timeZone}
+                  maxHeight={options.tooltip.maxHeight}
+                  maxWidth={options.tooltip.maxWidth}
+                />
               </>
             )}
           </>

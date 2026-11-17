@@ -12,6 +12,69 @@ import {
 import { FilterByValueTransformerEditor } from './FilterByValueTransformerEditor';
 
 describe('FilterByValueTransformerEditor', () => {
+  it('displays the saved inSet matcher and values without changing the filter', () => {
+    const onChange = jest.fn();
+    const input: DataFrame[] = [
+      { fields: [{ name: 'Value', type: FieldType.number, config: {}, values: [1, 2, 3] }], length: 3 },
+    ];
+    const options: FilterByValueTransformerOptions = {
+      type: FilterByValueType.include,
+      match: FilterByValueMatch.all,
+      filters: [{ fieldName: 'Value', config: { id: ValueMatcherID.inSet, options: { values: [1, 2] } } }],
+    };
+
+    render(<FilterByValueTransformerEditor input={input} options={options} onChange={onChange} />);
+
+    expect(screen.getByText('Is in set: 1, 2')).toBeInTheDocument();
+    expect(screen.queryByText('Is null')).not.toBeInTheDocument();
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('allows replacing a saved inSet matcher with an editable matcher', async () => {
+    const onChange = jest.fn<void, [FilterByValueTransformerOptions]>();
+    const input: DataFrame[] = [
+      { fields: [{ name: 'Value', type: FieldType.number, config: {}, values: [1, 2, 3] }], length: 3 },
+    ];
+    const options: FilterByValueTransformerOptions = {
+      type: FilterByValueType.include,
+      match: FilterByValueMatch.all,
+      filters: [{ fieldName: 'Value', config: { id: ValueMatcherID.inSet, options: { values: [1, 2] } } }],
+    };
+    const { rerender } = render(<FilterByValueTransformerEditor input={input} options={options} onChange={onChange} />);
+
+    await selectOptionInTest(screen.getByRole('combobox', { name: 'Match' }), 'Is null');
+
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange).toHaveBeenLastCalledWith({
+      ...options,
+      filters: [{ fieldName: 'Value', config: { id: ValueMatcherID.isNull, options: {} } }],
+    });
+    const [updatedOptions] = onChange.mock.calls[0];
+    rerender(<FilterByValueTransformerEditor input={input} options={updatedOptions} onChange={onChange} />);
+    expect(screen.getByText('Is null')).toBeInTheDocument();
+    expect(screen.queryByText('Is in set: 1, 2')).not.toBeInTheDocument();
+  });
+
+  it.each([{}, { values: null }, { values: 'invalid' }])(
+    'displays saved inSet options %j with an empty summary without changing the filter',
+    (savedOptions) => {
+      const onChange = jest.fn();
+      const input: DataFrame[] = [
+        { fields: [{ name: 'Value', type: FieldType.number, config: {}, values: [1] }], length: 1 },
+      ];
+      const options: FilterByValueTransformerOptions = {
+        type: FilterByValueType.include,
+        match: FilterByValueMatch.all,
+        filters: [{ fieldName: 'Value', config: { id: ValueMatcherID.inSet, options: savedOptions } }],
+      };
+
+      render(<FilterByValueTransformerEditor input={input} options={options} onChange={onChange} />);
+
+      expect(screen.getByText('Is in set:')).toBeInTheDocument();
+      expect(onChange).not.toHaveBeenCalled();
+    }
+  );
+
   it('filters the newly selected field instead of the saved raw field identity', async () => {
     const onChange = jest.fn<void, [FilterByValueTransformerOptions]>();
     const input: DataFrame[] = [

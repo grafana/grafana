@@ -1,14 +1,3 @@
-import jquery from 'jquery';
-import 'vendor/flot/jquery.flot';
-import 'vendor/flot/jquery.flot.selection';
-import 'vendor/flot/jquery.flot.time';
-import 'vendor/flot/jquery.flot.stack';
-import 'vendor/flot/jquery.flot.stackpercent';
-import 'vendor/flot/jquery.flot.fillbelow';
-import 'vendor/flot/jquery.flot.crosshair';
-import 'vendor/flot/jquery.flot.dashes';
-import 'vendor/flot/jquery.flot.gauge';
-
 import { AppPlugin, DataSourceApi, DataSourcePlugin, PanelPlugin, dateMath } from '@grafana/data';
 import TableModel from 'app/core/TableModel';
 import { appEvents } from 'app/core/app_events';
@@ -22,6 +11,8 @@ import * as flatten from 'app/core/utils/flatten';
 import kbn from 'app/core/utils/kbn';
 import * as ticks from 'app/core/utils/ticks';
 
+const loadJqueryWithFlot = () => import('./jqueryWithFlot');
+
 const jQueryFlotDeps = [
   'jquery.flot.crosshair',
   'jquery.flot.events',
@@ -33,7 +24,7 @@ const jQueryFlotDeps = [
   'jquery.flot.stackpercent',
   'jquery.flot.time',
   'jquery.flot',
-].reduce((acc, flotDep) => ({ ...acc, [flotDep]: { fakeDep: 1 } }), {});
+].reduce((acc, flotDep) => ({ ...acc, [flotDep]: () => loadJqueryWithFlot().then(() => ({ fakeDep: 1 })) }), {});
 
 export const sharedDependenciesMap = {
   '@emotion/css': () => import('@emotion/css'),
@@ -88,10 +79,7 @@ export const sharedDependenciesMap = {
   emotion: () => import('@emotion/css'),
   // bundling grafana-ui in plugins requires sharing i18next state
   i18next: () => import('@grafana/i18n/internal').then((module) => module.getI18nInstance()),
-  jquery: {
-    default: jquery,
-    __useDefault: true,
-  },
+  jquery: () => loadJqueryWithFlot().then((module) => ({ default: module.default, __useDefault: true })),
   ...jQueryFlotDeps,
   // add move to lodash for backward compatabilty with plugins
   lodash: () => import('lodash').then((module) => ({ ...module, move: arrayMove, __useDefault: true })),

@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/keysroutes"
 	"github.com/grafana/grafana/pkg/services/apiserver/searchroutes"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/baasbridge" //nolint:staticcheck // deprecated shim; remove with it
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
@@ -302,7 +303,7 @@ func (b *manifestBuilder) keysRoutes(gv schema.GroupVersion) *builder.APIRoutes 
 func (b *manifestBuilder) routeHandler(gv schema.GroupVersion, route manifestroutes.Route) http.HandlerFunc {
 	path, resource := route.Path, ""
 	if route.Kind != nil {
-		path, resource = route.Subresource, strings.ToLower(route.Kind.Plural)
+		path, resource = route.Subresource, route.Kind.Resource
 	}
 	forward := httpadapter.HandlerFunc(b.clientV3)
 	checks := routeChecks(gv, route, resource)
@@ -364,6 +365,9 @@ func (b *manifestBuilder) routeHandler(gv schema.GroupVersion, route manifestrou
 				_ = errhttp.Write(ctx, err, w)
 				return
 			}
+			// Only an operator behind baasbridge is told; it is then not sent the
+			// caller's access token.
+			ctx = baasbridge.WithDeclaredAccessChecked(ctx) //nolint:staticcheck
 		}
 
 		if resource != "" {

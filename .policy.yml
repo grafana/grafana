@@ -12,7 +12,6 @@ policy:
             - Workflow .github/workflows/backend-code-checks.yml succeeded or skipped
             - Workflow .github/workflows/backend-unit-tests.yml succeeded or skipped
             - Workflow .github/workflows/build-go-matrix.yml succeeded or skipped
-            - Workflow .github/workflows/check-frontend-test-coverage.yml succeeded or skipped
             - Workflow .github/workflows/codeowners-validator.yml succeeded or skipped
             - Workflow .github/workflows/deploy-pr-preview.yml succeeded or skipped
             - Workflow .github/workflows/deploy-storybook-preview.yml succeeded or skipped
@@ -40,7 +39,6 @@ policy:
             - Workflow .github/workflows/pr-patch-check.yml succeeded or skipped
             - Workflow .github/workflows/pr-reembed-version-approval.yml succeeded or skipped
             - Workflow .github/workflows/pr-resource-search-result-format.yml succeeded or skipped
-            - Workflow .github/workflows/pr-test-docker.yml succeeded or skipped
             - Workflow .github/workflows/pr-test-integration-pgvector.yml succeeded or skipped
             - Workflow .github/workflows/pr-test-integration.yml succeeded or skipped
             - Workflow .github/workflows/pr-unified-storage-compatibility.yml succeeded or skipped
@@ -112,7 +110,7 @@ approval_rules:
           - ^(?:(?:[^/]*(?:/|$))*)go\.sum$
           - ^(?:(?:[^/]*(?:/|$))*)go\.work$
           - ^(?:(?:[^/]*(?:/|$))*)go\.work\.sum$
-          - ^(?:[^/]*)\.go$
+          - ^.*\.go$
           - ^pkg\/(?:(?:[^/]*(?:/|$))*)$
           - ^apps\/(?:(?:[^/]*(?:/|$))*)$
           - ^Makefile$
@@ -136,29 +134,6 @@ approval_rules:
             - success
           workflows:
             - .github/workflows/build-go-matrix.yml
-  - name: Workflow .github/workflows/check-frontend-test-coverage.yml succeeded or skipped
-    if:
-      changed_files:
-        paths:
-          - ^(?:(?:[^/]*(?:/|$))*)(?:[^/]*)\.js$
-          - ^(?:(?:[^/]*(?:/|$))*)(?:[^/]*)\.jsx$
-          - ^(?:(?:[^/]*(?:/|$))*)(?:[^/]*)\.ts$
-          - ^(?:(?:[^/]*(?:/|$))*)(?:[^/]*)\.tsx$
-          - ^package\.json$
-          - ^\.github\/CODEOWNERS$
-      file_not_deleted:
-        paths:
-          - ^\.github\/workflows\/check-frontend-test-coverage\.yml$
-      targets_branch:
-        pattern: (^main$)
-    requires:
-      conditions:
-        has_workflow_result:
-          conclusions:
-            - skipped
-            - success
-          workflows:
-            - .github/workflows/check-frontend-test-coverage.yml
   - name: Workflow .github/workflows/codeowners-validator.yml succeeded or skipped
     if:
       file_not_deleted:
@@ -415,7 +390,7 @@ approval_rules:
           - ^go\.work\.sum$
           - ^(?:(?:[^/]*(?:/|$))*)go\.mod$
           - ^(?:(?:[^/]*(?:/|$))*)go\.sum$
-          - ^(?:[^/]*)\.go$
+          - ^.*\.go$
       file_not_deleted:
         paths:
           - ^\.github\/workflows\/pr-bot-update-go-workspace\.yml$
@@ -626,49 +601,6 @@ approval_rules:
             - success
           workflows:
             - .github/workflows/pr-resource-search-result-format.yml
-  - name: Workflow .github/workflows/pr-test-docker.yml succeeded or skipped
-    if:
-      changed_files:
-        paths:
-          - ^Makefile$
-          - ^Dockerfile$
-          - ^public\/(?:(?:[^/]*(?:/|$))*)$
-          - ^packages\/(?:(?:[^/]*(?:/|$))*)$
-          - ^apps\/(?:(?:[^/]*(?:/|$))*)$
-          - ^(?:(?:[^/]*(?:/|$))*)go\.mod$
-          - ^(?:(?:[^/]*(?:/|$))*)go\.sum$
-          - ^(?:(?:[^/]*(?:/|$))*)go\.work$
-          - ^(?:(?:[^/]*(?:/|$))*)go\.work\.sum$
-          - ^(?:(?:[^/]*(?:/|$))*)package\.json$
-          - ^(?:(?:[^/]*(?:/|$))*)nx\.json$
-          - ^(?:(?:[^/]*(?:/|$))*)project\.json$
-          - ^(?:(?:[^/]*(?:/|$))*)yarn\.lock$
-          - ^conf\/(?:(?:[^/]*(?:/|$))*)$
-          - ^\.yarnrc\.yml$
-          - ^\.yarn\/(?:(?:[^/]*(?:/|$))*)$
-          - ^tsconfig\.json$
-          - ^(?:[^/]*)\.js$
-          - ^(?:[^/]*)\.ts$
-          - ^(?:[^/]*)\.config\.ts$
-          - ^scripts\/(?:(?:[^/]*(?:/|$))*)$
-          - ^emails\/(?:(?:[^/]*(?:/|$))*)$
-          - ^\.citools\/(?:(?:[^/]*(?:/|$))*)$
-          - ^kinds\/(?:(?:[^/]*(?:/|$))*)$
-          - ^embed\.go$
-          - ^packaging\/docker\/(?:(?:[^/]*(?:/|$))*)$
-          - ^\.github\/workflows\/pr-test-docker\.yml$
-          - ^\.github\/workflows\/build-docker-variants\.yml$
-      file_not_deleted:
-        paths:
-          - ^\.github\/workflows\/pr-test-docker\.yml$
-    requires:
-      conditions:
-        has_workflow_result:
-          conclusions:
-            - skipped
-            - success
-          workflows:
-            - .github/workflows/pr-test-docker.yml
   - name: Workflow .github/workflows/pr-test-integration-pgvector.yml succeeded or skipped
     if:
       changed_files:
@@ -704,7 +636,7 @@ approval_rules:
           - ^(?:(?:[^/]*(?:/|$))*)go\.sum$
           - ^(?:(?:[^/]*(?:/|$))*)go\.work$
           - ^(?:(?:[^/]*(?:/|$))*)go\.work\.sum$
-          - ^(?:[^/]*)\.go$
+          - ^.*\.go$
           - ^pkg\/(?:(?:[^/]*(?:/|$))*)$
           - ^apps\/(?:(?:[^/]*(?:/|$))*)$
           - ^scripts\/ci\/backend-tests\/(?:(?:[^/]*(?:/|$))*)$
@@ -745,6 +677,7 @@ approval_rules:
           - ^pkg\/registry\/apps\/annotation\/proto\/(?:(?:[^/]*(?:/|$))*)$
           - ^pkg\/storage\/unified\/proto\/(?:(?:[^/]*(?:/|$))*)$
           - ^pkg\/storage\/unified\/resourcepb\/(?:(?:[^/]*(?:/|$))*)$
+          - ^pkg\/storage\/dbproxy\/(?:(?:[^/]*(?:/|$))*)$
           - ^\.github\/workflows\/proto-breaking-changes\.yml$
       file_not_deleted:
         paths:
@@ -852,12 +785,12 @@ approval_rules:
       Policy-bot can be overridden in emergency situations.
       **Only use this when absolutely neccesary, as it allows PRs with unfinished/unvalidated CI jobs to be merged.**
       Note that a reason is required, IE: `policy-bot disable: We need to deploy this fix to resolve [this ongoing incident with policy-bot](...).`
-    options:
-      methods:
-        comment_patterns:
-          - (?s)policy[- ]bot:? (?:approve|disable)d?(?::?(?<reason>.*))
-        github_review: false
     requires:
       count: 1
       permissions:
         - write
+    options:
+      methods:
+        comment_patterns:
+          - "(?s)policy[- ]bot:? (?:approve|disable)d?(?::?(?<reason>.*))"
+        github_review: false

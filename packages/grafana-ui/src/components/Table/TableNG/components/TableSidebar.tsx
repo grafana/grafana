@@ -132,6 +132,7 @@ export function TableSidebar({
                     draggable
                     aria-label={t('grafana-ui.table.reorder-column-label', 'Reorder {{columnName}}', {
                       columnName: displayName,
+                      interpolation: { escapeValue: false },
                     })}
                     onDragStart={(ev) => {
                       ev.dataTransfer.effectAllowed = 'move';
@@ -163,8 +164,14 @@ export function TableSidebar({
                     disabled={isLastVisible}
                     aria-label={
                       isVisible
-                        ? t('grafana-ui.table.hide-column-label', 'Hide {{columnName}}', { columnName: displayName })
-                        : t('grafana-ui.table.show-column-label', 'Show {{columnName}}', { columnName: displayName })
+                        ? t('grafana-ui.table.hide-column-label', 'Hide {{columnName}}', {
+                            columnName: displayName,
+                            interpolation: { escapeValue: false },
+                          })
+                        : t('grafana-ui.table.show-column-label', 'Show {{columnName}}', {
+                            columnName: displayName,
+                            interpolation: { escapeValue: false },
+                          })
                     }
                     onChange={(ev) => onToggleColumn(displayName, ev.currentTarget.checked)}
                   />

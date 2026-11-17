@@ -3,6 +3,7 @@ package state
 import (
 	"context"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/benbjohnson/clock"
@@ -15,62 +16,69 @@ import (
 
 func TestAsyncRuleStatePersister_Async(t *testing.T) {
 	t.Run("should save on tick", func(t *testing.T) {
-		mockClock := clock.NewMock()
-		store := &FakeInstanceStore{}
-		logger := log.New("async.rule.test")
+		synctest.Test(t, func(t *testing.T) {
+			realClock := clock.New()
+			store := &FakeInstanceStore{}
+			logger := log.New("async.rule.test")
 
-		persister := NewAsyncRuleStatePersister(logger, mockClock, 1*time.Second, ManagerCfg{
-			InstanceStore: store,
+			persister := NewAsyncRuleStatePersister(logger, realClock, 1*time.Second, ManagerCfg{
+				InstanceStore: store,
+			})
+
+			ctx := t.Context()
+
+			cache := newCache()
+
+			go persister.Async(ctx, cache)
+
+			cache.set(&State{
+				OrgID:        1,
+				State:        eval.Alerting,
+				AlertRuleUID: "1",
+			})
+
+			// Let Async create its ticker before advancing to the first persistence tick.
+			synctest.Wait()
+
+			require.Empty(t, store.RecordedOps())
+
+			// Complete the first periodic save before inspecting the recorded operation.
+			synctest.Sleep(time.Second)
+
+			require.Len(t, store.RecordedOps(), 1)
 		})
-
-		ctx := t.Context()
-
-		cache := newCache()
-
-		go persister.Async(ctx, cache)
-
-		cache.set(&State{
-			OrgID:        1,
-			State:        eval.Alerting,
-			AlertRuleUID: "1",
-		})
-
-		// Wait for the goroutine to start and create the ticker, then advance the clock.
-		// The mock clock's ticker won't fire until time is advanced after it's created.
-		require.Eventually(t, func() bool {
-			mockClock.Add(1 * time.Second)
-			return len(store.RecordedOps()) == 1
-		}, time.Second*5, 10*time.Millisecond)
 	})
 
 	t.Run("should save on context done", func(t *testing.T) {
-		mockClock := clock.NewMock()
-		store := &FakeInstanceStore{}
-		logger := log.New("async.rule.test")
+		synctest.Test(t, func(t *testing.T) {
+			realClock := clock.New()
+			store := &FakeInstanceStore{}
+			logger := log.New("async.rule.test")
 
-		persister := NewAsyncRuleStatePersister(logger, mockClock, 1*time.Second, ManagerCfg{
-			InstanceStore: store,
+			persister := NewAsyncRuleStatePersister(logger, realClock, 1*time.Second, ManagerCfg{
+				InstanceStore: store,
+			})
+
+			ctx, cancel := context.WithCancel(context.Background())
+
+			cache := newCache()
+
+			go persister.Async(ctx, cache)
+
+			cache.set(&State{
+				OrgID:        1,
+				State:        eval.Alerting,
+				AlertRuleUID: "1",
+			})
+
+			// Now we cancel the context
+			cancel()
+
+			// Finish the cancellation flush before inspecting persistence.
+			synctest.Wait()
+
+			require.Len(t, store.RecordedOps(), 1)
 		})
-
-		ctx, cancel := context.WithCancel(context.Background())
-
-		cache := newCache()
-
-		go persister.Async(ctx, cache)
-
-		cache.set(&State{
-			OrgID:        1,
-			State:        eval.Alerting,
-			AlertRuleUID: "1",
-		})
-
-		// Now we cancel the context
-		cancel()
-
-		// Check if the context cancellation was handled correctly
-		require.Eventually(t, func() bool {
-			return len(store.RecordedOps()) == 1
-		}, time.Second*5, time.Second)
 	})
 }
 

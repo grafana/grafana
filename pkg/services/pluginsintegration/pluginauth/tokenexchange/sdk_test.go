@@ -35,8 +35,8 @@ import (
 func TestSDKLocalTokenRoundTrip(t *testing.T) {
 	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagApppluginsLoadAppManifest)
 	for _, name := range []string{
-		v3.EnvVarSigningKeys, v3.EnvVarSigningKeysURL,
-		"API_ACCESS_BEARER_TOKEN", "API_ACCESS_CA_FILE", "API_ACCESS_INSECURE_TLS",
+		appplugin.EnvVarGrafanaJWKS, appplugin.EnvVarGrafanaJWKSURL,
+		appplugin.EnvVarAPIAccessBearerToken, appplugin.EnvVarAPIAccessCAFile, appplugin.EnvVarAPIAccessInsecureTLS, //nolint:gosec,staticcheck // SA1019: includes a deprecated variable name; names, not credentials
 	} {
 		t.Setenv(name, "")
 	}
@@ -82,9 +82,9 @@ func TestSDKLocalTokenRoundTrip(t *testing.T) {
 				})
 			}))
 			defer api.Close()
-			t.Setenv("API_ACCESS_ROUTER_URL", api.URL)
-			t.Setenv("API_ACCESS_TOKEN_EXCHANGE_URL", signer.URL)
-			t.Setenv("API_ACCESS_CAP_TOKEN", capToken)
+			t.Setenv(appplugin.EnvVarAPIAccessRouterURL, api.URL)
+			t.Setenv(appplugin.EnvVarAPIAccessTokenExchangeURL, signer.URL)
+			t.Setenv(appplugin.EnvVarAPIAccessCAPToken, capToken)
 			kubeConfig, err := appplugin.BuildKubeConfig(*testManifest)
 			require.NoError(t, err)
 			client, err := rest.HTTPClientFor(kubeConfig)

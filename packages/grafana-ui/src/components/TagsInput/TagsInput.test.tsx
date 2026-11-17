@@ -46,4 +46,27 @@ describe('TagsInput', () => {
 
     expect(onChange).toHaveBeenCalledWith([longTag]);
   });
+
+  it('trims whitespace from a new tag', async () => {
+    const user = userEvent.setup();
+    const onChange = jest.fn();
+    render(<TagsInput onChange={onChange} tags={['foo']} />);
+
+    await user.type(screen.getByRole('textbox'), '  bar  ');
+    await user.keyboard('{Enter}');
+
+    expect(onChange).toHaveBeenCalledWith(['foo', 'bar']);
+  });
+
+  it('does NOT add a whitespace-only tag', async () => {
+    const user = userEvent.setup();
+    const onChange = jest.fn();
+    render(<TagsInput onChange={onChange} tags={[]} />);
+
+    await user.type(screen.getByRole('textbox'), '   ');
+    await user.keyboard('{Enter}');
+
+    expect(onChange).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'Add' })).toBeDisabled();
+  });
 });

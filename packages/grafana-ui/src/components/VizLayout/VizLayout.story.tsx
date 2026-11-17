@@ -1,5 +1,4 @@
 import { type Meta, type StoryFn } from '@storybook/react';
-import { useEffect, useState } from 'react';
 
 import { VizLayout } from './VizLayout';
 
@@ -26,10 +25,7 @@ const createArray = (legendItems: number) => {
 };
 
 export const BottomLegend: StoryFn = ({ height, width, legendItems }) => {
-  const [items, setItems] = useState(createArray(legendItems));
-  useEffect(() => {
-    setItems(createArray(legendItems));
-  }, [legendItems]);
+  const items = createArray(legendItems);
 
   const legend = (
     <VizLayout.Legend placement="bottom" maxHeight="30%">
@@ -59,10 +55,7 @@ BottomLegend.args = {
 };
 
 export const RightLegend: StoryFn = ({ height, width, legendItems, legendWidth }) => {
-  const [items, setItems] = useState(createArray(legendItems));
-  useEffect(() => {
-    setItems(createArray(legendItems));
-  }, [legendItems]);
+  const items = createArray(legendItems);
 
   const legend = (
     <VizLayout.Legend placement="right" maxWidth="50%">

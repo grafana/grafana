@@ -28,7 +28,7 @@ export interface QueryEditorCoauthoringContextV1 {
   metadata: QueryEditorCoauthoringMetadataV1[];
 }
 
-export interface QueryEditorCoauthoringChangeV1 {
+interface QueryEditorCoauthoringChangeV1 {
   id: string;
   original: string;
   proposed: string;

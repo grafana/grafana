@@ -61,6 +61,8 @@ In Grafana, custom notification templates (`{{define "<NAME>"}}`) are created wi
 
 Your notification template name (`{{define "<NAME>"}}`) must be unique. You cannot have two templates with the same name in the same notification template group or in different notification template groups. Therefore, avoid using names already defined as default templates, such as: `__subject`, `__text_values_list`, `__text_alert_list`, `default.title` and `default.message`.
 
+In Grafana Cloud, you can create up to 30 notification templates by default. Template changes can take 1 to 2 minutes to take effect while a background job synchronizes them with storage.
+
 To create a notification template in Grafana, complete the following steps.
 
 1. Click **Alerts & IRM** -> **Contact points**.
