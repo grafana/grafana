@@ -23,11 +23,15 @@ You can also create custom dashboard templates for your organization.
 
 {{< docs/public-preview product="Dashboard templates" >}}
 
-Grafana provides a variety of pre-built dashboard templates that you can use to quickly set up visualizations for your data. These dashboards use sample data, which you can replace with your own data, making it easier to get started with monitoring and analysis.
+Grafana provides a variety of pre-built dashboard templates that you can use to quickly set up visualizations for your data.
+These dashboards use sample data, which you can replace with your own data, making it easier to get started with monitoring and analysis.
 
-The templates provide standardized dashboard layouts designed to help you answer engineering or business questions consistently. For instance, the DORA template allows all teams within an organization to measure delivery performance using a widely adopted industry framework.
+The templates provide standardized dashboard layouts designed to help you answer engineering or business questions consistently.
+For instance, the DORA template allows all teams within an organization to measure delivery performance using a widely adopted industry framework.
 
-{{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-templates-2-v13.0.png" max-width="750px" alt="Selection of dashboard templates" >}}
+{{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-templates-v13.4.png" max-width="750px" alt="Selection of dashboard templates" >}}
+
+You can also create custom dashboard templates, giving users in your organization a consistent starting point for new dashboards.
 
 ### Create dashboards from templates
 
