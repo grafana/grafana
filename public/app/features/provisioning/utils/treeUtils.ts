@@ -43,7 +43,7 @@ export function mergeFilesAndResources(files: unknown[], resources: ResourceList
 
   // Merge resources
   for (const resource of resources) {
-    if (!resource.path) {
+    if (!resource.path && resource.resource !== 'folders') {
       continue;
     }
     const existing = merged.get(resource.path);
@@ -132,7 +132,7 @@ export function buildTree(mergedItems: MergedItem[]): TreeItem[] {
       resourceName: item.resource?.name,
       resource: item.resource?.resource,
       hash: item.file?.hash ?? item.resource?.hash,
-      status: showStatus ? getStatus(item.file?.hash, resourceHash) : undefined,
+      status: !item.path ? 'synced' : showStatus ? getStatus(item.file?.hash, resourceHash) : undefined,
       hasFile: !!item.file,
     });
   }
@@ -141,7 +141,7 @@ export function buildTree(mergedItems: MergedItem[]): TreeItem[] {
   // has a non-empty hash, the metadata was previously synced — its absence means the
   // file was removed from the remote repo, so the folder is pending until the next sync.
   for (const [path, node] of nodeMap) {
-    if (node.type === 'Folder' && node.resourceName) {
+    if (path && node.type === 'Folder' && node.resourceName) {
       const metadataPath = getFolderMetadataPath(path);
       const fileExists = nodeMap.has(metadataPath);
       node.missingFolderMetadata = !fileExists;
@@ -151,19 +151,29 @@ export function buildTree(mergedItems: MergedItem[]): TreeItem[] {
     }
   }
 
+  for (const [path, node] of nodeMap) {
+    if (!isFolderMetadataPath(path)) {
+      continue;
+    }
+    nodeMap.delete(path);
+    const parent = path.includes('/') ? nodeMap.get(path.substring(0, path.lastIndexOf('/'))) : undefined;
+    if (parent) {
+      parent.metadataPath = path;
+      parent.hasFile = true;
+      if (node.status === 'pending') {
+        parent.status = 'pending';
+      }
+    }
+  }
+
   // Build parent-child relationships
   for (const [path, node] of nodeMap) {
-    const lastSlashIndex = path.lastIndexOf('/');
-    if (lastSlashIndex === -1) {
-      roots.push(node);
+    const parentPath = path.substring(0, Math.max(path.lastIndexOf('/'), 0));
+    const parent = path ? (nodeMap.get(parentPath) ?? nodeMap.get('')) : undefined;
+    if (parent) {
+      parent.children.push(node);
     } else {
-      const parentPath = path.substring(0, lastSlashIndex);
-      const parent = nodeMap.get(parentPath);
-      if (parent) {
-        parent.children.push(node);
-      } else {
-        roots.push(node);
-      }
+      roots.push(node);
     }
   }
 
@@ -274,15 +284,7 @@ export function getStatusCategory(node: TreeItem): StatusCategory | undefined {
  * hierarchy stays intact. An empty `categories` list disables the filter (returns everything).
  */
 export function filterByStatusCategories(items: TreeItem[], categories: StatusCategory[]): TreeItem[] {
-  if (categories.length === 0) {
-    return items;
-  }
-
-  const selected = new Set(categories);
-  return filterNodes(items, (node) => {
-    const category = getStatusCategory(node);
-    return category !== undefined && selected.has(category);
-  });
+  return filterByStatusAndResources(items, categories, []);
 }
 
 /**
@@ -290,12 +292,27 @@ export function filterByStatusCategories(items: TreeItem[], categories: StatusCa
  * ancestor folders. An empty `resources` list disables the filter (returns everything).
  */
 export function filterByResources(items: TreeItem[], resources: string[]): TreeItem[] {
-  if (resources.length === 0) {
+  return filterByStatusAndResources(items, [], resources);
+}
+
+export function filterByStatusAndResources(
+  items: TreeItem[],
+  categories: StatusCategory[],
+  resources: string[]
+): TreeItem[] {
+  if (categories.length === 0 && resources.length === 0) {
     return items;
   }
 
-  const selected = new Set(resources);
-  return filterNodes(items, (node) => node.resource !== undefined && selected.has(node.resource));
+  const selectedCategories = new Set(categories);
+  const selectedResources = new Set(resources);
+  return filterNodes(items, (node) => {
+    const category = getStatusCategory(node);
+    const matchesStatus = selectedCategories.size === 0 || (category !== undefined && selectedCategories.has(category));
+    const matchesResource =
+      selectedResources.size === 0 || (node.resource !== undefined && selectedResources.has(node.resource));
+    return matchesStatus && matchesResource;
+  });
 }
 
 function filterNodes(items: TreeItem[], matches: (node: TreeItem) => boolean): TreeItem[] {

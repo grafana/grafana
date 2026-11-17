@@ -27,12 +27,11 @@ import {
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 import { type FlatTreeItem, type TreeItem } from '../types';
-import { getRepoFileUrl } from '../utils/git';
+import { getRepoFileUrl, getRepoHrefForProvider } from '../utils/git';
 import { getKindInfoByItemType, getKindInfoByResource } from '../utils/resourceKinds';
 import {
   buildTree,
-  filterByResources,
-  filterByStatusCategories,
+  filterByStatusAndResources,
   filterTree,
   flattenTree,
   getIconName,
@@ -67,8 +66,8 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
   const [queryParams, updateQueryParams] = useQueryParams();
   const resourceFilter = useMemo(() => [queryParams['resource'] ?? []].flat().map(String), [queryParams]);
   const resourceFilterLabelId = useId();
-  // Folder paths that are currently unfolded. Empty by default so the tree starts fully folded.
-  const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set());
+  // Folder paths that are currently unfolded. Only the repository root (empty path) starts unfolded.
+  const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set(['']));
 
   const isLoading = filesQuery.isLoading || resourcesQuery.isLoading;
 
@@ -98,10 +97,9 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
 
     // Filter by status before search: status filtering relies on the aggregate folder statuses
     // computed by buildTree, which filterTree would leave stale after pruning hidden children.
-    const statusFiltered = statusFilter.length > 0 ? filterByStatusCategories(built, statusFilter) : built;
-    const resourceFiltered = filterByResources(statusFiltered, resourceFilter);
+    const filtered = filterByStatusAndResources(built, statusFilter, resourceFilter);
 
-    return searchQuery ? filterTree(resourceFiltered, searchQuery) : resourceFiltered;
+    return searchQuery ? filterTree(filtered, searchQuery) : filtered;
   }, [filesQuery.data?.items, resourcesQuery.data?.items, searchQuery, statusFilter, resourceFilter]);
 
   // A search or a status filter narrows the tree, so ignore the folded state while either is
@@ -235,7 +233,10 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
 
           const viewLink = getGrafanaLink(item);
           let sourceLink: string | undefined = undefined;
-          if (item.hasFile && repo.spec?.type) {
+          if (!item.path) {
+            const repoHref = getRepoHrefForProvider(repo.spec);
+            sourceLink = repoHref ? textUtil.sanitizeUrl(repoHref) : undefined;
+          } else if (item.hasFile && repo.spec?.type) {
             const spec = repo.spec;
             const config = spec.github || spec.githubEnterprise || spec.gitlab || spec.bitbucket;
             if (config) {
@@ -243,7 +244,7 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
                 repoType: spec.type,
                 url: config.url,
                 branch: config.branch,
-                filePath: item.path,
+                filePath: item.metadataPath ?? item.path,
                 pathPrefix: config.path,
               });
               sourceLink = rawSourceLink ? textUtil.sanitizeUrl(rawSourceLink) : undefined;

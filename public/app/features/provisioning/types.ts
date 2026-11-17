@@ -142,6 +142,7 @@ export interface TreeItem {
   status?: SyncStatus;
   hasFile?: boolean;
   missingFolderMetadata?: boolean;
+  metadataPath?: string;
 }
 
 export interface FlatTreeItem {
