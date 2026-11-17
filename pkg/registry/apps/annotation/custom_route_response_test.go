@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"testing"
 
@@ -22,7 +21,7 @@ func TestWithAPIStatusErrorResponse(t *testing.T) {
 	t.Run("writes 4xx API status response", func(t *testing.T) {
 		forbidden := apierrors.NewForbidden(annotationGR, "graphite", errors.New("denied"))
 		handler := withAPIStatusErrorResponse(func(context.Context, app.CustomRouteResponseWriter, *app.CustomRouteRequest) error {
-			return fmt.Errorf("wrapped: %w", forbidden)
+			return forbidden
 		})
 		writer := &mockResponseWriter{header: make(http.Header), body: &bytes.Buffer{}}
 
@@ -38,7 +37,7 @@ func TestWithAPIStatusErrorResponse(t *testing.T) {
 		assert.Equal(t, metav1.StatusReasonForbidden, status.Reason)
 	})
 
-	t.Run("passes through non API status errors", func(t *testing.T) {
+	t.Run("returns non API status errors as generic internal errors", func(t *testing.T) {
 		boom := errors.New("boom")
 		handler := withAPIStatusErrorResponse(func(context.Context, app.CustomRouteResponseWriter, *app.CustomRouteRequest) error {
 			return boom
@@ -48,11 +47,12 @@ func TestWithAPIStatusErrorResponse(t *testing.T) {
 		err := handler(t.Context(), writer, request)
 
 		require.ErrorIs(t, err, boom)
+		assert.True(t, isGenericInternal(err), "got %v", err)
 		assert.Zero(t, writer.code)
 		assert.Empty(t, writer.body.String())
 	})
 
-	t.Run("passes through API status errors outside 4xx", func(t *testing.T) {
+	t.Run("returns API status errors outside 4xx as generic internal errors", func(t *testing.T) {
 		internal := apierrors.NewInternalError(errors.New("database unavailable"))
 		handler := withAPIStatusErrorResponse(func(context.Context, app.CustomRouteResponseWriter, *app.CustomRouteRequest) error {
 			return internal
@@ -62,6 +62,7 @@ func TestWithAPIStatusErrorResponse(t *testing.T) {
 		err := handler(t.Context(), writer, request)
 
 		require.ErrorIs(t, err, internal)
+		assert.True(t, isGenericInternal(err), "got %v", err)
 		assert.Zero(t, writer.code)
 		assert.Empty(t, writer.body.String())
 	})

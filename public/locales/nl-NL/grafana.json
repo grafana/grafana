@@ -1500,9 +1500,29 @@
         "records": "Records",
         "to": "tot"
       },
+      "recording-rule-actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "view": ""
+      },
       "recording-rules": {
         "folder-rules-error": "",
         "folders-error": "",
+        "header": {
+          "new-rule": ""
+        },
         "load-more-rules-in-folder": "",
         "loading-folders": "",
         "no-rules": "Geen opnameregels gevonden",
@@ -1578,6 +1598,12 @@
         "view-folders": "Mappen",
         "view-list": "Lijst",
         "wildcard-in-text": "Zoektekst mag geen * of % bevatten."
+      },
+      "sequence-pill": {
+        "label": "",
+        "label-with-interval": "",
+        "tooltip": "",
+        "tooltip-with-interval": ""
       },
       "shared": {
         "load-more": "Meer laden",
@@ -2394,6 +2420,7 @@
       "contact-points": "Contactpunten",
       "notification-policies": "Meldingsbeleid",
       "recently-deleted": "Onlangs verwijderd",
+      "recording-rules": "",
       "templates": "Sjablonen",
       "time-intervals": "Tijdsintervallen"
     },
@@ -5351,6 +5378,7 @@
       "change-theme": "Thema wijzigen",
       "dark-theme": "Donker",
       "dashboard-from-template": "Dashboard van sjabloon",
+      "experimental": "",
       "light-theme": "Licht",
       "open-saved-queries": "Opgeslagen query's openen",
       "scopes": "Bereik"
@@ -5809,7 +5837,7 @@
         "hint-layer": "",
         "hint-layer-select": "",
         "hint-not-removable": "",
-        "hint-panel": "Klik om een opmerking te plaatsen bij een paneel, of sleep om een gebied te tekenen",
+        "hint-panel": "",
         "hint-panel-select": "",
         "hint-region": "Slepen om een gebied te tekenen",
         "hint-remove": "",
@@ -6211,8 +6239,7 @@
       }
     },
     "get-var-mapping-option-overrides": {
-      "defaults": "",
-      "rule": ""
+      "uses-variables": ""
     },
     "inspect": {
       "data-tab": "Gegevens",
@@ -6407,9 +6434,6 @@
       "only-overrides-button-tooltip": "Alleen overschrijvingen weergeven",
       "placeholder-search-options": "Zoekopties",
       "visualization-button-tooltip": "Zoekopties"
-    },
-    "panel-editor": {
-      "ad-hoc-transformations-disabled": "Ad-hoctransformaties zijn uitgeschakeld in bewerkingsmodus"
     },
     "plan-building-overlay": {
       "quip-corners": "De hoekjes van de panelen worden opgepoetst...",
@@ -6788,8 +6812,6 @@
         "open-editor": "Open variabelebewerker",
         "open-editor-tooltip": "Open de variabelebewerker voor meer opties voor variabelen",
         "query-options": {
-          "close": "Sluiten",
-          "old-modal-title": "Queryvariabele",
           "preview": "Voorbeeld"
         },
         "remove": "Verwijderen",
@@ -7701,7 +7723,7 @@
       "apply": "Toepassen",
       "apply-body": "Iedereen met toegang zal ze zien. Je kunt de vorige versie herstellen vanuit de versiegeschiedenis.",
       "apply-failed": "Kan de wijzigingen niet toepassen. Probeer het opnieuw of vergelijk ze eerst.",
-      "apply-needs-edit": "Voor het toepassen is bewerkingstoegang tot ‘{{title}}’ nodig. Je kunt een voorbeeld van deze wijzigingen bekijken, maar ze niet toepassen.",
+      "apply-needs-save": "",
       "breadcrumb-draft": "Concept",
       "breadcrumb-pending-changes": "Openstaande wijzigingen",
       "change-added": "Toegevoegd",
@@ -8000,6 +8022,12 @@
       "confirmText-restore-version": "Herstellen naar versie {{version}}",
       "title-restore-version": "Versie herstellen"
     },
+    "row-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-row-settings": ""
+    },
     "sandbox-consent": {
       "allow": "Toestaan",
       "allow-tooltip": "Laad inhoud van de geselecteerde bronnen in de vermelde panelen, totdat je dit tabblad sluit.",
@@ -8195,6 +8223,12 @@
       "switch-options": "Schakelopties",
       "value-pair-type": "Type waardenpaar",
       "value-pair-type-description": "Kies het type waarden voor de schakelaarstatussen"
+    },
+    "tab-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-tab-settings": ""
     },
     "text-box-variable": {
       "name-default-value": "Standaardwaarde"
@@ -10810,6 +10844,8 @@
       "tooltip": {
         "category": "Tooltip",
         "description-hover-proximity": "Hoe dicht de cursor bij een punt moet zijn om de tooltip te activeren, in pixels",
+        "description-max-height": "",
+        "description-max-width": "",
         "modeOptions": {
           "label-all": "Alle",
           "label-hidden": "Verborgen",
@@ -13110,6 +13146,10 @@
       "subtitle": "Kies hoe je je contactpunten op de hoogte wilt stellen wanneer een waarschuwingsinstantie afgaat",
       "title": "Contactpunten"
     },
+    "alerting-recording-rules": {
+      "subtitle": "",
+      "title": ""
+    },
     "alerting-silences": {
       "subtitle": "Stop meldingen van een of meer waarschuwingsregels",
       "title": "Stiltes"
@@ -13962,6 +14002,32 @@
     },
     "units": {
       "clear-tooltip": "Eenheidsselectie wissen"
+    },
+    "var-mapping-checks": {
+      "data-macro": "",
+      "not-allowed": "",
+      "not-found": "",
+      "not-number": "",
+      "not-one-value": "",
+      "out-of-range": "",
+      "resolves": "",
+      "values": ""
+    },
+    "var-mapping-toggle": {
+      "aria-label-picker": "",
+      "fallback-off": "",
+      "fallback-on": "",
+      "group-matching": "",
+      "group-other": "",
+      "hint-boolean": "",
+      "hint-number": "",
+      "hint-option": "",
+      "hint-option-no-fallback": "",
+      "new-variable": "",
+      "option-current": "",
+      "placeholder": "",
+      "use-fixed-value": "",
+      "use-variable": ""
     }
   },
   "org": {
@@ -14392,6 +14458,9 @@
     },
     "empty-state": {
       "message": "Geen plug-ins gevonden"
+    },
+    "errors": {
+      "app-plugin-metas-error": ""
     },
     "extensions": {
       "extension-error-alert-description": "Controleer de console voor meer informatie over de fout.",

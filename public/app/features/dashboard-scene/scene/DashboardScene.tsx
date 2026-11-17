@@ -113,6 +113,7 @@ import { DashboardSidebar } from '../sidebar/DashboardSidebar';
 import { type DashboardActionMeta, DashboardStateChangedEvent } from '../sidebar/events';
 import { type DashboardSidebarState } from '../sidebar/types';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
+import { resolveAdHocMultiValueOperators } from '../utils/applySupportsMultiValueOperators';
 import { clearDefaultQuery } from '../utils/clearDefaultQuery';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
 import {
@@ -175,6 +176,11 @@ import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { addNewRowTo } from './layouts-shared/addNew';
 import { clearClipboard } from './layouts-shared/paste';
+import {
+  type AdHocTransformationsByPanelKey,
+  collectAdHocTransformations,
+  restoreAdHocTransformations,
+} from './panel-actions/adHocTransformations';
 import { promotePanelAdHocChanges } from './panel-actions/promote/promotePanelAdHocChanges';
 import { PromotePanelAdHocChangesEvent } from './panel-actions/promote/utils';
 import { getUpdatedHoverHeader } from './panel-timerange/utils';
@@ -255,6 +261,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
    * State before editing started
    */
   private _initialState?: DashboardSceneState;
+  private _initialAdHocTransformations?: AdHocTransformationsByPanelKey;
   /**
    * Url state before editing started
    */
@@ -837,6 +844,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       // transient: the build's first write enters edit mode while it is still up, and discarding
       // must not bring it back with nothing left to end it.
       this._initialState = sceneUtils.cloneSceneObjectState(this.state, { isDirty: false, planning: undefined });
+      this._initialAdHocTransformations = collectAdHocTransformations(this);
       this._initialUrlState = locationService.getLocation();
 
       this.setState({
@@ -1254,6 +1262,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       isDirty: false,
       overlay: undefined,
     });
+    this._initialAdHocTransformations = collectAdHocTransformations(this);
     this._initialUrlState = locationService.getLocation();
     // Detect edits made during the save before its redirect can leave the dashboard.
     this.setState({ isDirty: hasActualSaveChanges(this), overlay: undefined });
@@ -1367,9 +1376,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
 
     if (restoreInitialState) {
+      const adHocTransformations = collectAdHocTransformations(this);
       // Restore initial state and disable editing
       const { loadingView, ...initialState } = this._initialState ?? {};
       this.setState({ ...initialState, isEditing: false, mode: undefined, composerEditing: undefined });
+      restoreAdHocTransformations(this, adHocTransformations, this._initialAdHocTransformations);
+      // The baseline can be taken before a lookup started on the live tree resolves.
+      resolveAdHocMultiValueOperators(this);
       this.restoreSerializerAnnotationsFromInitialState();
       appEvents.publish(new DashboardDiscardedEvent());
       DashboardInteractions.dashboardEditDiscarded();
@@ -1424,6 +1437,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       return;
     }
     this._initialState = sceneUtils.cloneSceneObjectState(this.state, { isDirty: false, planning: undefined });
+    this._initialAdHocTransformations = collectAdHocTransformations(this);
     this._initialUrlState = locationService.getLocation();
   }
 
@@ -1448,6 +1462,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     this.deactivateSidebar();
 
     const { mode } = this.state;
+    const adHocTransformations = collectAdHocTransformations(this);
     const { loadingView, ...restoredState } = sceneUtils.cloneSceneObjectState(this._initialState!, {
       isDirty: false,
     });
@@ -1467,8 +1482,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       editview: undefined,
       overlay: undefined,
     });
+    restoreAdHocTransformations(this, adHocTransformations, this._initialAdHocTransformations);
 
     this.applyDashboardMode();
+    resolveAdHocMultiValueOperators(this);
 
     // We stay in edit mode, so re-activate the swapped-in pane to keep programmatic mutations working.
     if (hadProgrammaticSidebar) {
@@ -1552,6 +1569,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     newState.version = versionRsp.version;
 
     this.setState(newState);
+    resolveAdHocMultiValueOperators(this);
     this.exitEditMode({ skipConfirm: true, restoreInitialState: false });
 
     return true;
