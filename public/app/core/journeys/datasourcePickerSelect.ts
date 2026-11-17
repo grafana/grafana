@@ -137,19 +137,12 @@ onJourneyInstance('datasource_picker_select', (handle) => {
       }
     });
 
-  // Attributes can't be set once the journey has ended, so the count also goes on the end attributes
-  // when it's already known. It may still be loading when the user selects quickly on the first open.
-  const end = (outcome: Parameters<typeof handle.end>[0], attributes: Record<string, string> = {}) => {
-    const all =
-      totalConfiguredCount === undefined
-        ? attributes
-        : { ...attributes, totalConfigured: String(totalConfiguredCount) };
-    if (Object.keys(all).length > 0) {
-      handle.end(outcome, all);
-    } else {
-      handle.end(outcome);
-    }
-  };
+  // Set while the journey is active so every outcome carries it, including route-change abandonment.
+  // On the first open of a session it's only set once the count has loaded after list_render, so a
+  // journey that ends before then has no count.
+  if (totalConfiguredCount !== undefined) {
+    handle.setAttributes({ totalConfigured: String(totalConfiguredCount) });
+  }
 
   const listRender = handle.startStep('list_render');
   const startPathname = locationService.getLocation().pathname;
@@ -180,7 +173,7 @@ onJourneyInstance('datasource_picker_select', (handle) => {
           handle.recordEvent('open_advanced');
           break;
         case 'select_ds':
-          end('success', { dsType: str(props.ds_type), changed: 'true', selectedIn });
+          handle.end('success', { dsType: str(props.ds_type), changed: 'true', selectedIn });
           break;
         // The empty-state link opens a new tab and leaves the dropdown open, so the user may still select.
         // A long stay in the new tab ends the journey as abandoned through the tracker's hidden-tab rule.
@@ -202,11 +195,11 @@ onJourneyInstance('datasource_picker_select', (handle) => {
           handle.recordEvent('search');
           break;
         case 'dismiss':
-          end('discarded');
+          handle.end('discarded');
           break;
         // This button also closes the modal; the empty-state link leaves it open
         case 'config_new_ds':
-          end('abandoned', { reason: 'config_new_ds' });
+          handle.end('abandoned', { reason: 'config_new_ds' });
           break;
         case 'config_new_ds_empty_state':
           handle.recordEvent('config_new_ds');
@@ -217,16 +210,16 @@ onJourneyInstance('datasource_picker_select', (handle) => {
 
   add(
     onCycleInteraction('dashboards_dspicker_current_reselected', (props) => {
-      end('success', { dsType: str(props.ds_type), changed: 'false', selectedIn });
+      handle.end('success', { dsType: str(props.ds_type), changed: 'false', selectedIn });
     })
   );
 
   add(
     onCycleInteraction('dashboards_dspicker_dismissed', (props) => {
       if (props.reason === 'unmount') {
-        end('abandoned', { reason: 'unmount' });
+        handle.end('abandoned', { reason: 'unmount' });
       } else {
-        end('discarded');
+        handle.end('discarded');
       }
     })
   );

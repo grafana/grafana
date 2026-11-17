@@ -159,17 +159,25 @@ describe('datasourcePickerSelect journey wiring', () => {
     expect(mockGetDataSourceInstanceList).toHaveBeenCalledTimes(1);
   });
 
-  it('adds the configured count to the end attributes once it is known', async () => {
+  it('sets the configured count when a later journey starts, so a route change abandon carries it', async () => {
     mockGetDataSourceInstanceList.mockResolvedValue(new Array(10000).fill({}));
     loadWiring();
     openPicker();
     simulateInteraction('dashboards_dspicker_list_rendered', { total_listed: 20, cycle_id: 'c1' });
-    await waitFor(() => expect(mockHandle.setAttributes).toHaveBeenCalled());
+    await waitFor(() => expect(mockHandle.setAttributes).toHaveBeenCalledTimes(1));
 
+    const laterHandle = createMockHandle('datasource_picker_select');
+    laterHandle.startStep.mockReturnValue(createMockStepHandle());
+    mockTracker.startJourney.mockReturnValue(laterHandle);
     openPicker();
-    simulateInteraction('dashboards_dspicker_dismissed', { cycle_id: 'c1' });
 
-    expect(mockHandle.end).toHaveBeenCalledWith('discarded', { totalConfigured: '10000' });
+    expect(laterHandle.setAttributes).toHaveBeenCalledWith({ totalConfigured: '10000' });
+    const setOrder = laterHandle.setAttributes.mock.invocationCallOrder[0];
+
+    locationService.push('/d/abc/my-dashboard');
+
+    expect(laterHandle.end).toHaveBeenCalledWith('abandoned', { abandonedAt: '/d/abc/my-dashboard' });
+    expect(setOrder).toBeLessThan(laterHandle.end.mock.invocationCallOrder[0]);
   });
 
   it('ends with success and changed=false when the current data source is picked again in the modal', () => {
