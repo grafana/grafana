@@ -19,7 +19,8 @@ function setup() {
   return createOverrideChangeReporter(panel);
 }
 
-const fromPanel = { source: 'edit_pane', panel_type: 'timeseries', panel_id: 5 };
+// No panel editor is open in these tests, so the source must come from the reporter, not the dashboard.
+const fromPanel = { source: 'panel_editor', panel_type: 'timeseries', panel_id: 5 };
 
 describe('createOverrideChangeReporter', () => {
   let panelSettingChanged: jest.SpyInstance;
@@ -91,5 +92,17 @@ describe('createOverrideChangeReporter', () => {
       matcher_id: 'byRegexp',
       ...fromPanel,
     });
+  });
+
+  it('sends a pending edit before an add or remove that follows it', () => {
+    const reporter = setup();
+
+    reporter.report({ item: 'change_override_property', overrideIndex: 0, matcherId: 'byName', propertyId: 'min' });
+    reporter.report({ item: 'remove_override_property', overrideIndex: 0, matcherId: 'byName', propertyId: 'min' });
+
+    expect(panelSettingChanged.mock.calls.map(([properties]) => properties.item)).toEqual([
+      'change_override_property',
+      'remove_override_property',
+    ]);
   });
 });
