@@ -16,6 +16,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"gopkg.in/ini.v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/rest"
 
@@ -155,6 +158,55 @@ func TestProvisioningRESTClientCarriesTheExchangedToken(t *testing.T) {
 	assert.Equal(t, "Bearer exchanged-access-token", gotAuth,
 		"the REST client must send the exchanged token, as the clientset's transport does")
 	assert.Equal(t, "/apis/provisioning.grafana.app/v0alpha1/connections/list-keys", gotPath)
+}
+
+// The aggregated server is the router: it publishes the app manifests, and it serves each group
+// that has no server URL. Both requests carry a token for the provisioning audience.
+func TestClientsServeManifestKindsFromTheAggregatedServer(t *testing.T) {
+	router := newStubRouter(t)
+	cfg := newClientsConfig(t, newStubSigner(t).URL, map[string]string{"aggregated_server_url": router.URL})
+
+	factory, err := cfg.Clients()
+	require.NoError(t, err)
+	require.NoError(t, services.StartAndAwaitRunning(t.Context(), cfg.manifestWatcher))
+	t.Cleanup(cfg.manifestWatcher.StopAsync)
+
+	clients, err := factory.Clients(t.Context(), "default")
+	require.NoError(t, err)
+	widget := schema.GroupVersionKind{Group: stubRouterGroup, Version: "v1", Kind: "Widget"}
+	require.Contains(t, clients.SupportedResources(), resources.SupportedResource{GroupKind: widget.GroupKind(), Capabilities: sets.New(resources.CapabilityFolder)})
+
+	client, _, err := clients.ForKind(t.Context(), widget)
+	require.NoError(t, err)
+	_, err = client.List(t.Context(), metav1.ListOptions{})
+	require.NoError(t, err)
+
+	token := "Bearer token-for-" + apisprovisioning.GROUP
+	require.Equal(t, token, router.accessToken("/apis/discovery/v1alpha2/manifests"))
+	require.Equal(t, token, router.accessToken("/apis/"+stubRouterGroup+"/v1/namespaces/default/widgets"))
+}
+
+func TestClientsWithoutAnAggregatedServer(t *testing.T) {
+	t.Run("serves the configured resources and watches no manifests", func(t *testing.T) {
+		cfg := newClientsConfig(t, newStubSigner(t).URL, nil)
+
+		factory, err := cfg.Clients()
+		require.NoError(t, err)
+		require.NoError(t, services.StartAndAwaitRunning(t.Context(), cfg.manifestWatcher))
+		t.Cleanup(cfg.manifestWatcher.StopAsync)
+
+		clients, err := factory.Clients(t.Context(), "default")
+		require.NoError(t, err)
+		require.Equal(t, []schema.GroupKind{resources.FolderKind.GroupKind(), resources.DashboardKind.GroupKind()}, groupKinds(clients.SupportedResources()))
+	})
+
+	t.Run("fails for a configured resource that has no server", func(t *testing.T) {
+		cfg := newClientsConfig(t, newStubSigner(t).URL, nil)
+		cfg.Settings.ProvisioningResources = append(cfg.Settings.ProvisioningResources, "playlist.grafana.app/Playlist")
+
+		_, err := cfg.Clients()
+		require.ErrorContains(t, err, "aggregated_server_url is required")
+	})
 }
 
 func TestControllersOwnNATSSubscriber(t *testing.T) {

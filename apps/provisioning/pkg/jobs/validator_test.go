@@ -1370,6 +1370,30 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 	}
 }
 
+// The supported resources can change while the process runs, so the validator reads them on
+// each validation.
+func TestAdmissionValidator_ReadsTheSupportedResourcesOnEachValidation(t *testing.T) {
+	var supported []provisioning.SupportedResource
+	v := NewAdmissionValidator(func() []provisioning.SupportedResource { return supported }, nil)
+	job := &provisioning.Job{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+		Spec: provisioning.JobSpec{
+			Action:     provisioning.JobActionPush,
+			Repository: "test-repo",
+			Push: &provisioning.ExportJobOptions{
+				Resources: []provisioning.ResourceRef{{Name: "widget-1", Kind: "Widget", Group: "example.ext.grafana.app"}},
+			},
+		},
+	}
+
+	supported = []provisioning.SupportedResource{{Group: "dashboard.grafana.app", Kind: "Dashboard"}}
+	err := v.Validate(context.Background(), newAdmissionTestAttributes(job, admission.Create), nil)
+	require.ErrorContains(t, err, "kind is not supported for export")
+
+	supported = append(supported, provisioning.SupportedResource{Group: "example.ext.grafana.app", Kind: "Widget"})
+	require.NoError(t, v.Validate(context.Background(), newAdmissionTestAttributes(job, admission.Create), nil))
+}
+
 func newAdmissionTestAttributes(obj runtime.Object, op admission.Operation) admission.Attributes {
 	return admission.NewAttributesRecord(
 		obj,

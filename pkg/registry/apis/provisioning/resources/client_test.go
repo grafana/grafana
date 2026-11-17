@@ -20,7 +20,6 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 
-	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 )
@@ -628,22 +627,6 @@ func TestSupportedResourceProvider(t *testing.T) {
 	widget := SupportedResource{GroupKind: schema.GroupKind{Group: "example.ext.grafana.app", Kind: "Widget"}, Capabilities: sets.New(CapabilityFolder)}
 	gadget := SupportedResource{GroupKind: schema.GroupKind{Group: "example.ext.grafana.app", Kind: "Gadget"}, Capabilities: sets.New[string]()}
 
-	// manifests returns one app manifest that opts each resource in to provisioning.
-	manifests := func(resources ...SupportedResource) []*app.ManifestData {
-		enabled := true
-		version := app.ManifestVersion{Name: "v1", Served: true}
-		for _, r := range resources {
-			folderScoped := r.Capabilities.Has(CapabilityFolder)
-			version.Kinds = append(version.Kinds, app.ManifestVersionKind{
-				Kind:         r.Kind,
-				Scope:        "Namespaced",
-				FolderScoped: &folderScoped,
-				Extensions:   &app.ManifestVersionKindExtensions{Provisioning: &app.ManifestVersionKindProvisioning{Enabled: &enabled}},
-			})
-		}
-		return []*app.ManifestData{{Group: widget.Group, Versions: []app.ManifestVersion{version}}}
-	}
-
 	t.Run("returns the configured set before an update", func(t *testing.T) {
 		require.Equal(t, []SupportedResource{folder}, NewSupportedResourceProvider([]SupportedResource{folder}).Get())
 	})
@@ -651,7 +634,7 @@ func TestSupportedResourceProvider(t *testing.T) {
 	t.Run("adds the kinds of an update, one time each", func(t *testing.T) {
 		set := NewSupportedResourceProvider([]SupportedResource{folder})
 
-		set.Update(manifests(widget, gadget, widget))
+		set.Update(testManifests(widget, gadget, widget))
 
 		require.Equal(t, []SupportedResource{folder, widget, gadget}, set.Get())
 	})
@@ -659,8 +642,8 @@ func TestSupportedResourceProvider(t *testing.T) {
 	t.Run("follows the updates", func(t *testing.T) {
 		set := NewSupportedResourceProvider([]SupportedResource{folder})
 
-		set.Update(manifests(widget, gadget))
-		set.Update(manifests(widget))
+		set.Update(testManifests(widget, gadget))
+		set.Update(testManifests(widget))
 
 		require.Equal(t, []SupportedResource{folder, widget}, set.Get())
 	})
@@ -669,7 +652,7 @@ func TestSupportedResourceProvider(t *testing.T) {
 		configured := SupportedResource{GroupKind: widget.GroupKind, Capabilities: sets.New(CapabilityDisabled)}
 		set := NewSupportedResourceProvider([]SupportedResource{configured})
 
-		set.Update(manifests(widget))
+		set.Update(testManifests(widget))
 
 		require.Equal(t, []SupportedResource{configured}, set.Get())
 	})
@@ -678,7 +661,7 @@ func TestSupportedResourceProvider(t *testing.T) {
 		collection := SupportedResource{GroupKind: schema.GroupKind{Group: "*.ext.grafana.app", Kind: "Widget"}, Capabilities: sets.New(CapabilityDisabled)}
 		set := NewSupportedResourceProvider([]SupportedResource{collection})
 
-		set.Update(manifests(widget))
+		set.Update(testManifests(widget))
 
 		require.Equal(t, []SupportedResource{collection}, set.Get())
 	})
@@ -686,7 +669,7 @@ func TestSupportedResourceProvider(t *testing.T) {
 	t.Run("keeps the default set when none is configured", func(t *testing.T) {
 		set := NewSupportedResourceProvider(nil)
 
-		set.Update(manifests(widget))
+		set.Update(testManifests(widget))
 
 		require.Equal(t, slices.Concat(SupportedProvisioningResources, []SupportedResource{widget}), set.Get())
 	})
@@ -695,10 +678,43 @@ func TestSupportedResourceProvider(t *testing.T) {
 		set := NewSupportedResourceProvider([]SupportedResource{folder})
 		factory := NewClientFactory(nil, set)
 
-		set.Update(manifests(widget))
+		set.Update(testManifests(widget))
 
 		clients, err := factory.Clients(context.Background(), "default")
 		require.NoError(t, err)
 		require.Equal(t, []SupportedResource{folder, widget}, clients.SupportedResources())
+	})
+}
+
+func TestWithPinnedKinds(t *testing.T) {
+	folder := SupportedResource{GroupKind: schema.GroupKind{Group: "folder.grafana.app", Kind: "Folder"}, Capabilities: sets.New(CapabilityFolder)}
+	widget := SupportedResource{GroupKind: schema.GroupKind{Group: testManifestGroup, Kind: "Widget"}, Capabilities: sets.New(CapabilityFolder)}
+	gadget := SupportedResource{GroupKind: schema.GroupKind{Group: testManifestGroup, Kind: "Gadget"}, Capabilities: sets.New[string]()}
+
+	provider := NewSupportedResourceProvider([]SupportedResource{folder})
+	factory := NewClientFactory(nil, provider)
+	supported := func(ctx context.Context) []SupportedResource {
+		clients, err := factory.Clients(ctx, "default")
+		require.NoError(t, err)
+		return clients.SupportedResources()
+	}
+
+	provider.Update(testManifests(widget))
+	pinned := WithPinnedKinds(context.Background())
+	require.Equal(t, []SupportedResource{folder, widget}, supported(pinned))
+
+	provider.Update(testManifests(widget, gadget))
+
+	t.Run("keeps the kinds of the first Clients call", func(t *testing.T) {
+		require.Equal(t, []SupportedResource{folder, widget}, supported(pinned))
+	})
+
+	t.Run("keeps them in a context that derives from the pinned one", func(t *testing.T) {
+		derived := WithTakeoverAllowlist(pinned, NewTakeoverAllowlist(nil))
+		require.Equal(t, []SupportedResource{folder, widget}, supported(derived))
+	})
+
+	t.Run("does not change a context without a pin", func(t *testing.T) {
+		require.Equal(t, []SupportedResource{folder, widget, gadget}, supported(context.Background()))
 	})
 }

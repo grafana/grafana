@@ -10,6 +10,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana-app-sdk/app"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -919,4 +920,58 @@ func TestUnifiedStorageMigrator_SelectiveResources(t *testing.T) {
 		require.Error(t, err)
 		require.ErrorContains(t, err, "Instance repositories should only migrate all resources")
 	})
+}
+
+// A kind that a manifest adds after the export has no copy in the repository, so the cleanup
+// must not see it.
+func TestUnifiedStorageMigrator_CleanupSeesTheKindsOfTheExport(t *testing.T) {
+	provider := resources.NewSupportedResourceProvider(nil)
+	factory := resources.NewClientFactory(nil, provider)
+	supported := func(ctx context.Context) []resources.SupportedResource {
+		clients, err := factory.Clients(ctx, "test-ns")
+		require.NoError(t, err)
+		return clients.SupportedResources()
+	}
+	enabled := true
+	widgetManifest := []*app.ManifestData{{Group: "example.ext.grafana.app", Versions: []app.ManifestVersion{{
+		Name: "v1", Served: true,
+		Kinds: []app.ManifestVersionKind{{
+			Kind: "Widget", Scope: "Namespaced",
+			Extensions: &app.ManifestVersionKindExtensions{Provisioning: &app.ManifestVersionKindProvisioning{Enabled: &enabled}},
+		}},
+	}}}}
+
+	exportWorker := jobs.NewMockWorker(t)
+	pr := jobs.NewMockJobProgressRecorder(t)
+	repo := repository.NewMockRepository(t)
+	nc := NewMockNamespaceCleaner(t)
+
+	repo.On("Config").Return(&provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "test-ns"},
+		Spec: provisioning.RepositorySpec{
+			Type: provisioning.GitRepositoryType,
+			Git:  &provisioning.GitRepositoryConfig{Branch: "main"},
+			Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeInstance},
+		},
+	})
+	pr.On("SetMessage", mock.Anything, mock.Anything).Return()
+	pr.On("StrictMaxErrors", 1).Return()
+
+	var exported, cleaned []resources.SupportedResource
+	exportWorker.On("Process", mock.Anything, repo, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+		exported = supported(args.Get(0).(context.Context))
+		provider.Update(widgetManifest)
+	}).Return(nil)
+	nc.On("Clean", mock.Anything, "test-ns", pr).Run(func(args mock.Arguments) {
+		cleaned = supported(args.Get(0).(context.Context))
+	}).Return(nil)
+
+	migrator := NewUnifiedStorageMigrator(nc, exportWorker, jobs.NewMockWorker(t))
+	err := migrator.Migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{
+		Migrate: &provisioning.MigrateJobOptions{Branch: "feature-x"},
+	}}, pr)
+	require.NoError(t, err)
+
+	require.Equal(t, exported, cleaned)
+	require.Len(t, provider.Get(), len(exported)+1, "the provider did get the new kind")
 }

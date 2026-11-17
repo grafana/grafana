@@ -3,6 +3,7 @@ package resources
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/grafana/grafana-app-sdk/app"
 	appmanifestv1alpha2 "github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha2"
 )
 
@@ -31,4 +32,20 @@ func testManifestKind(kind string, provisionable bool, folderScoped bool) appman
 			Provisioning: &appmanifestv1alpha2.AppManifestManifestVersionKindProvisioning{Enabled: &provisionable},
 		},
 	}
+}
+
+// testManifests returns one app manifest that opts each resource in to provisioning.
+func testManifests(resources ...SupportedResource) []*app.ManifestData {
+	enabled := true
+	version := app.ManifestVersion{Name: "v1", Served: true}
+	for _, r := range resources {
+		folderScoped := r.Capabilities.Has(CapabilityFolder)
+		version.Kinds = append(version.Kinds, app.ManifestVersionKind{
+			Kind:         r.Kind,
+			Scope:        "Namespaced",
+			FolderScoped: &folderScoped,
+			Extensions:   &app.ManifestVersionKindExtensions{Provisioning: &app.ManifestVersionKindProvisioning{Enabled: &enabled}},
+		})
+	}
+	return []*app.ManifestData{{Group: testManifestGroup, Versions: []app.ManifestVersion{version}}}
 }
