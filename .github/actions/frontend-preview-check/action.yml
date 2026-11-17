@@ -71,10 +71,9 @@ runs:
               echo "Backend change found: ${file}"
               has_backend_changes=true
               ;;
-          esac
-          case "$file" in
-            pkg/*) ;;
-            *) backend_only=false ;;
+            *)
+              backend_only=false
+              ;;
           esac
         done <<< "$files"
 
