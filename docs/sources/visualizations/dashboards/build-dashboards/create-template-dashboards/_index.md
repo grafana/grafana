@@ -82,7 +82,7 @@ To create a custom dashboard template, follow these steps:
 Now the template is available in the **Custom** tab of the **Start a dashboard from a template** dialog box.
 This is the dialog box that opens when someone selects the **Use template** option to create a dashboard.
 
-Refer to the following sections for directions on [editing](#edit-custom-templates) or [deleting](#delete-custom-templates) custom dashboard templates.
+Refer to the following sections for directions on [editing](#edit-custom-dashboard-templates) or [deleting](#delete-custom-dashboard-templates) custom dashboard templates.
 
 ### Manage custom dashboard templates
 
