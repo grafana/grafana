@@ -9,7 +9,7 @@ import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { Alert } from '../Alert/Alert';
-import { clearButtonStyles } from '../Button/Button';
+import { clearButtonStyles } from '../Button/Button.styles';
 import { IconButton } from '../IconButton/IconButton';
 
 // Define the image item interface

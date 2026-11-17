@@ -10,7 +10,7 @@ import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';
 import { type ComponentSize } from '../../types/size';
 import { trimFileName } from '../../utils/file';
-import { getButtonStyles } from '../Button/Button';
+import { getButtonStyles } from '../Button/Button.styles';
 import { Icon } from '../Icon/Icon';
 
 export interface Props {

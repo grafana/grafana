@@ -30,7 +30,7 @@ import {
 
 import { type Themeable2 } from '../../types/theme';
 import { calculateFontSize, measureText } from '../../utils/measureText';
-import { clearButtonStyles } from '../Button/Button';
+import { clearButtonStyles } from '../Button/Button.styles';
 import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDisplay';
 
 const MIN_VALUE_HEIGHT = 18;

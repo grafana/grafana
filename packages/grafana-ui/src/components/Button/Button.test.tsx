@@ -4,7 +4,8 @@ import type { JSX } from 'react';
 
 import { createTheme, getThemeById } from '@grafana/data';
 
-import { Button, getPropertiesForVariant } from './Button';
+import { Button } from './Button';
+import { getPropertiesForVariant } from './Button.styles';
 
 const setup = (jsx: JSX.Element) => {
   return {
