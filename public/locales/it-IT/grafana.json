@@ -1500,9 +1500,29 @@
         "records": "",
         "to": ""
       },
+      "recording-rule-actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "view": ""
+      },
       "recording-rules": {
         "folder-rules-error": "",
         "folders-error": "",
+        "header": {
+          "new-rule": ""
+        },
         "load-more-rules-in-folder": "",
         "loading-folders": "",
         "no-rules": "",
@@ -2400,6 +2420,7 @@
       "contact-points": "Punti di contatto",
       "notification-policies": "Criteri di notifica",
       "recently-deleted": "Eliminati di recente",
+      "recording-rules": "",
       "templates": "Modelli",
       "time-intervals": "Intervalli di tempo"
     },
@@ -6218,8 +6239,7 @@
       }
     },
     "get-var-mapping-option-overrides": {
-      "defaults": "",
-      "rule": ""
+      "uses-variables": ""
     },
     "inspect": {
       "data-tab": "Data",
@@ -6414,9 +6434,6 @@
       "only-overrides-button-tooltip": "Mostra solo sovrascritture",
       "placeholder-search-options": "Opzioni di ricerca",
       "visualization-button-tooltip": "Opzioni di ricerca"
-    },
-    "panel-editor": {
-      "ad-hoc-transformations-disabled": ""
     },
     "plan-building-overlay": {
       "quip-corners": "",
@@ -7706,7 +7723,7 @@
       "apply": "",
       "apply-body": "",
       "apply-failed": "",
-      "apply-needs-edit": "",
+      "apply-needs-save": "",
       "breadcrumb-draft": "",
       "breadcrumb-pending-changes": "",
       "change-added": "",
@@ -8005,6 +8022,12 @@
       "confirmText-restore-version": "Sì, ripristina alla versione {{version}}",
       "title-restore-version": "Ripristina versione"
     },
+    "row-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-row-settings": ""
+    },
     "sandbox-consent": {
       "allow": "",
       "allow-tooltip": "",
@@ -8200,6 +8223,12 @@
       "switch-options": "Opzioni del commutatore",
       "value-pair-type": "Tipo di coppia di valori",
       "value-pair-type-description": "Scegli il tipo di valori per gli stati del commutatore"
+    },
+    "tab-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-tab-settings": ""
     },
     "text-box-variable": {
       "name-default-value": "Valore predefinito"
@@ -14429,6 +14458,9 @@
     },
     "empty-state": {
       "message": "Nessun plug-in trovato"
+    },
+    "errors": {
+      "app-plugin-metas-error": ""
     },
     "extensions": {
       "extension-error-alert-description": "Controlla la console per maggiori dettagli sull'errore.",

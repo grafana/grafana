@@ -1493,9 +1493,29 @@
         "records": "Rekaman",
         "to": "ke"
       },
+      "recording-rule-actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "view": ""
+      },
       "recording-rules": {
         "folder-rules-error": "",
         "folders-error": "",
+        "header": {
+          "new-rule": ""
+        },
         "load-more-rules-in-folder": "",
         "loading-folders": "",
         "no-rules": "Tidak ada aturan perekaman yang ditemukan",
@@ -2384,6 +2404,7 @@
       "contact-points": "Titik kontak",
       "notification-policies": "Kebijakan notifikasi",
       "recently-deleted": "Baru dihapus",
+      "recording-rules": "",
       "templates": "Templat",
       "time-intervals": "Interval waktu"
     },
@@ -6169,8 +6190,7 @@
       }
     },
     "get-var-mapping-option-overrides": {
-      "defaults": "",
-      "rule": ""
+      "uses-variables": ""
     },
     "inspect": {
       "data-tab": "Data",
@@ -6364,9 +6384,6 @@
       "only-overrides-button-tooltip": "Tampilkan penimpaan saja",
       "placeholder-search-options": "Opsi pencarian",
       "visualization-button-tooltip": "Opsi pencarian"
-    },
-    "panel-editor": {
-      "ad-hoc-transformations-disabled": "Transformasi ad hoc dinonaktifkan dalam mode edit"
     },
     "plan-building-overlay": {
       "quip-corners": "Memoles sudut-sudut panel…",
@@ -7652,7 +7669,7 @@
       "apply": "Terapkan",
       "apply-body": "Semua orang yang memiliki akses akan melihatnya. Anda dapat memulihkan versi sebelumnya dari riwayat versi.",
       "apply-failed": "Tidak dapat menerapkan perubahan. Coba lagi, atau bandingkan terlebih dahulu.",
-      "apply-needs-edit": "Untuk menerapkan, diperlukan akses edit ke “{{title}}”. Anda dapat melihat pratinjau perubahan ini, tetapi tidak dapat menerapkannya.",
+      "apply-needs-save": "",
       "breadcrumb-draft": "Draf",
       "breadcrumb-pending-changes": "Perubahan berstatus menunggu",
       "change-added": "Ditambahkan",
@@ -7949,6 +7966,12 @@
       "confirmText-restore-version": "Ya, pulihkan ke versi {{version}}",
       "title-restore-version": "Pulihkan versi"
     },
+    "row-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-row-settings": ""
+    },
     "sandbox-consent": {
       "allow": "Izinkan",
       "allow-tooltip": "Muat konten dari sumber yang dipilih di panel yang tercantum, hingga Anda menutup tab ini.",
@@ -8136,6 +8159,12 @@
       "switch-options": "Opsi sakelar",
       "value-pair-type": "Jenis pasangan nilai",
       "value-pair-type-description": "Pilih jenis nilai untuk status sakelar"
+    },
+    "tab-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-tab-settings": ""
     },
     "text-box-variable": {
       "name-default-value": "Nilai default"
@@ -14318,6 +14347,9 @@
     },
     "empty-state": {
       "message": "Tidak ada plugin yang ditemukan"
+    },
+    "errors": {
+      "app-plugin-metas-error": ""
     },
     "extensions": {
       "extension-error-alert-description": "Periksa konsol untuk detail selengkapnya tentang kesalahan.",

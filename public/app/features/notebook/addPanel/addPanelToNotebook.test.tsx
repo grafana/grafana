@@ -128,7 +128,7 @@ describe('addToExistingNotebook', () => {
     );
 
     expect(added).toEqual({ uid: 'nb1', title: 'Checkout error spike' });
-    expect(Object.keys(captured.body!.spec!.elements)).toEqual(['p95-latency']);
+    expect(Object.keys(captured.body!.spec!.elements)).toEqual([expect.stringMatching(/^p95-latency-[a-z0-9]{6}$/)]);
     expect(captured.body!.spec!.layout.spec.cells).toHaveLength(1);
     // Everything the notebook already had survives the round trip.
     expect(captured.body!.spec!.tags).toEqual(['incident']);
@@ -321,7 +321,7 @@ describe('createNotebookWithContent', () => {
     expect(added).toEqual({ uid: 'nb2', title: 'Checkout latency investigation' });
     expect(captured.body!.spec).toMatchObject({ title: 'Checkout latency investigation', tags: [] });
     expect(captured.body!.spec).not.toHaveProperty('description');
-    expect(Object.keys(captured.body!.spec!.elements)).toEqual(['p95-latency']);
+    expect(Object.keys(captured.body!.spec!.elements)).toEqual([expect.stringMatching(/^p95-latency-[a-z0-9]{6}$/)]);
   });
 
   it('attributes the panel to the source given', async () => {

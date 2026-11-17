@@ -80,7 +80,7 @@ export const FlagKeys = {
   AssistantDashboardPlanning: "assistant.dashboardPlanning",
   /** Enables the template dashboard assistant */
   AssistantFrontendToolsDashboardTemplates: "assistant.frontend.tools.dashboardTemplates",
-  /** Enables the global fullscreen Workspace (Grafana Assistant workspace shell) in the top bar */
+  /** Shows the Grafana Assistant Chat and Workspace buttons in the top bar, and Exit Workspace on the Assistant Workspace page */
   AssistantFullscreenWorkspace: "assistant.fullscreenWorkspace",
   /** Generate a per-datasource external ID for Grafana Assume Role (jsonData.grafanaExternalId). When disabled, new datasources keep using the stack-level external ID. */
   AwsAssumeRolePerDatasourceExternalId: "awsAssumeRolePerDatasourceExternalId",
@@ -214,6 +214,8 @@ export const FlagKeys = {
   GrafanaExploreMetricsSidebar: "grafana.exploreMetricsSidebar",
   /** Lets Grafana Assistant float the extension sidebar over the page instead of docking it */
   GrafanaExtensionSidebarFloating: "grafana.extensionSidebarFloating",
+  /** Lets Grafana Assistant dock the extension sidebar on the left or at the bottom, or pop it up, from the Chat button's menu, its shortcuts and its own layout menu. Needs grafana.extensionSidebarFloating */
+  GrafanaExtensionSidebarPlacements: "grafana.extensionSidebarPlacements",
   /** Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels */
   GrafanaFilterablePanels: "grafana.filterablePanels",
   /** Shows folders the user cannot edit as read only in the folder picker, instead of hiding them */
@@ -224,6 +226,8 @@ export const FlagKeys = {
   GrafanaKubernetesAnnotationsClient: "grafana.kubernetesAnnotationsClient",
   /** Enables log level inference from log line contents when level is not defined as a field or a label */
   GrafanaLogLevelInference: "grafana.logLevelInference",
+  /** Opens the mega menu over the page while the pointer rests on its toggle, and docks it when the toggle is clicked on wide screens. The toggle in the docked menu's header closes it, in place of the footer's dock button */
+  GrafanaMegaMenuPeekAndDock: "grafana.megaMenuPeekAndDock",
   /** Disables dashboard edit mode (manual and assistant-driven) on mobile/small-screen viewports */
   GrafanaMobileEditDeprecation: "grafana.mobileEditDeprecation",
   /** Enables multi-tenant fallback behavior */
@@ -780,7 +784,7 @@ export const useFlagAssistantFrontendToolsDashboardTemplates = (options?: ReactF
 };
 
 /**
- * Enables the global fullscreen Workspace (Grafana Assistant workspace shell) in the top bar
+ * Shows the Grafana Assistant Chat and Workspace buttons in the top bar, and Exit Workspace on the Assistant Workspace page
  *
  * **Details:**
  * - flag key: `assistant.fullscreenWorkspace`
@@ -1517,6 +1521,17 @@ export const useFlagGrafanaExtensionSidebarFloating = (options?: ReactFlagEvalua
 };
 
 /**
+ * Lets Grafana Assistant dock the extension sidebar on the left or at the bottom, or pop it up, from the Chat button's menu, its shortcuts and its own layout menu. Needs grafana.extensionSidebarFloating
+ *
+ * **Details:**
+ * - flag key: `grafana.extensionSidebarPlacements`
+ * - default value: `false`
+ */
+export const useFlagGrafanaExtensionSidebarPlacements = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.extensionSidebarPlacements", false, options).value;
+};
+
+/**
  * Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels
  *
  * **Details:**
@@ -1569,6 +1584,17 @@ export const useFlagGrafanaKubernetesAnnotationsClient = (options?: ReactFlagEva
  */
 export const useFlagGrafanaLogLevelInference = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.logLevelInference", false, options).value;
+};
+
+/**
+ * Opens the mega menu over the page while the pointer rests on its toggle, and docks it when the toggle is clicked on wide screens. The toggle in the docked menu's header closes it, in place of the footer's dock button
+ *
+ * **Details:**
+ * - flag key: `grafana.megaMenuPeekAndDock`
+ * - default value: `false`
+ */
+export const useFlagGrafanaMegaMenuPeekAndDock = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.megaMenuPeekAndDock", false, options).value;
 };
 
 /**
