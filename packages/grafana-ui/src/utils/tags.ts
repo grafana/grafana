@@ -50,6 +50,21 @@ function getTonalTagColors(color: string, theme?: GrafanaTheme2) {
   base.setAlpha(1);
   const isDark = theme?.isDark ?? true;
   const source = rgbToOklch(base.toRgb());
+  const themeDirection = isDark ? -1 : 1;
+  // Bright colors can stay closer to their source with dark text, and dark colors with light text,
+  // regardless of theme mode. Prefer the theme direction only when both shifts are equal.
+  const preferred = findTonalPair(source, themeDirection);
+  const alternate = findTonalPair(source, -themeDirection);
+  const pair =
+    alternate.meetsContrast && (!preferred.meetsContrast || alternate.delta < preferred.delta) ? alternate : preferred;
+
+  return {
+    background: tinycolor(pair.background).toRgbString(),
+    text: tinycolor(pair.text).toRgbString(),
+  };
+}
+
+function findTonalPair(source: OklchColor, direction: number) {
   let lowerDelta = 0;
   let upperDelta = 4;
 
@@ -57,7 +72,7 @@ function getTonalTagColors(color: string, theme?: GrafanaTheme2) {
   // perceptual-distance cost that weights background fidelity three times more heavily.
   for (let index = 0; index < 12; index++) {
     const delta = (lowerDelta + upperDelta) / 2;
-    const pair = getOklchPair(source, delta, isDark);
+    const pair = getOklchPair(source, delta, direction);
     if (tinycolor.readability(pair.background, pair.text) >= 4.5) {
       upperDelta = delta;
     } else {
@@ -65,10 +80,11 @@ function getTonalTagColors(color: string, theme?: GrafanaTheme2) {
     }
   }
 
-  const pair = getOklchPair(source, upperDelta, isDark);
+  const pair = getOklchPair(source, upperDelta, direction);
   return {
-    background: tinycolor(pair.background).toRgbString(),
-    text: tinycolor(pair.text).toRgbString(),
+    ...pair,
+    delta: upperDelta,
+    meetsContrast: tinycolor.readability(pair.background, pair.text) >= 4.5,
   };
 }
 
@@ -84,8 +100,7 @@ interface RgbColor {
   b: number;
 }
 
-function getOklchPair(source: OklchColor, delta: number, isDark: boolean) {
-  const direction = isDark ? -1 : 1;
+function getOklchPair(source: OklchColor, delta: number, direction: number) {
   return {
     background: oklchToRgb({ ...source, l: clamp(source.l + direction * delta * 0.25) }),
     text: oklchToRgb({ ...source, l: clamp(source.l - direction * delta * 0.75) }),
