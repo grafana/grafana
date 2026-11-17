@@ -2,9 +2,6 @@
 title: Grafana Advisor
 description: Grafana Advisor documentation now lives with the Advisor plugin
 weight: 700
-aliases:
-  - /docs/grafana/<GRAFANA_VERSION>/administration/grafana-advisor/advisor-cli/
-  - /docs/grafana/<GRAFANA_VERSION>/administration/grafana-advisor/advisor-create-alert/
 labels:
   products:
     - oss
