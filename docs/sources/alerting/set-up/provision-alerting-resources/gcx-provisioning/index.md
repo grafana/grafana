@@ -19,13 +19,11 @@ weight: 400
 
 # Use gcx to manage alerting resources
 
-[gcx](/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/gcx/) is a command-line tool (CLI) for you and coding agents to manage Grafana resources. You can use it to save alerting resources to files, keep them in version control, and push them to the same or another Grafana instance.
+[gcx](/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/gcx/) is a command-line interface (CLI) that you and coding agents can use to manage Grafana resources. It provides two ways to manage alerting resources:
 
-`gcx` provides two ways to manage alerting resources:
+- [`gcx alert`](#manage-resources-with-gcx-alert) commands to inspect and manage alerting resources, such as contact points, notification policies, and templates. Use them, from the CLI or with a coding agent, to check the state of your alert rules, review alert instances and history, make one-off changes, and manage resources that `gcx resources` doesn't support, such as contact points.
 
-- [`gcx resources`](#manage-resources-with-gcx-resources) to export and provision alerting resources as manifest files. Provisioned alert rules and recording rules cannot be edited in the Grafana UI.
-
-- [`gcx alert` commands](#manage-resources-with-gcx-alert) to export and manage alerting resources. These resources are editable in the Grafana UI by default.
+- [`gcx resources`](#manage-resources-with-gcx-resources) commands to export and provision alerting resources as manifest files. Use them to keep alert rules in version control, review changes before you apply them, and apply the same alert rules to other Grafana instances. Provisioned alert rules and recording rules cannot be edited in the Grafana UI.
 
 ## Before you begin
 
@@ -39,9 +37,128 @@ weight: 400
    gcx config view
    ```
 
+## Manage resources with `gcx alert`
+
+Use `gcx alert` to inspect and manage alerting resources. Each resource type has its own commands.
+
+| Resource                                                                                                                         | Purpose                                                         | Operations                                            |
+| -------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- | ----------------------------------------------------- |
+| [contact-points](/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/gcx/cli-reference/#gcx-alert-contact-points)               | Manage contact points                                           | `list`, `get`, `create`, `update`, `delete`, `export` |
+| [groups](/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/gcx/cli-reference/#gcx-alert-groups)                               | Inspect Grafana-managed alert rule groups (read-only)           | `list`, `get`, `status`                               |
+| [instances](/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/gcx/cli-reference/#gcx-alert-instances)                         | List alert instances (read-only)                                | `list`                                                |
+| [mute-timings](/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/gcx/cli-reference/#gcx-alert-mute-timings)                   | Manage mute timings                                             | `list`, `get`, `create`, `update`, `delete`, `export` |
+| [notification-history](/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/gcx/cli-reference/#gcx-alert-notification-history)   | Inspect delivered alert notifications (read-only)               | `list`, `list-alerts`                                 |
+| [notification-policies](/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/gcx/cli-reference/#gcx-alert-notification-policies) | Manage the notification policy tree                             | `get`, `set`, `reset`, `export`                       |
+| [routing-trees](/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/gcx/cli-reference/#gcx-alert-routing-trees)                 | Manage notification routing trees, including the default tree   | `list`, `get`, `create`, `update`, `delete`           |
+| [ruler](/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/gcx/cli-reference/#gcx-alert-ruler)                                 | Manage data source-managed (Mimir and Loki) rules               | `groups`, `namespaces`                                |
+| [rules](/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/gcx/cli-reference/#gcx-alert-rules)                                 | Inspect Grafana-managed alert rule state and health (read-only) | `list`, `get`                                         |
+| [state-history](/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/gcx/cli-reference/#gcx-alert-state-history)                 | Query alert rule state transitions (read-only)                  | `list`                                                |
+| [template-groups](/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/gcx/cli-reference/#gcx-alert-template-groups)             | Manage native notification template groups                      | `list`, `get`, `create`, `update`, `delete`           |
+| [templates](/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/gcx/cli-reference/#gcx-alert-templates)                         | Manage notification templates                                   | `list`, `get`, `upsert`, `delete`                     |
+| [time-intervals](/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/gcx/cli-reference/#gcx-alert-time-intervals)               | Manage notification time intervals                              | `list`, `get`, `create`, `update`, `delete`           |
+
+{{< admonition type="note" >}}
+The `gcx alert` commands are in active development.
+
+Run `gcx alert --help` or `gcx alert <RESOURCE> --help` to see what your version supports.
+{{< /admonition >}}
+
+{{< admonition type="caution" >}}
+Contact points can contain credentials.
+
+Grafana exports secure fields as `[REDACTED]`, so exported files don't contain secrets. Replace these placeholders with the required values before provisioning.
+{{< /admonition >}}
+
+### Manage resources using CRUD operations
+
+Use the operations available for each resource type to create, read, update, or delete resources. The following examples use contact points:
+
+- [**Create**](/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/gcx/cli-reference/#gcx-alert-contact-points-create) a contact point from a file. For example, save the following definition as `contact-point.yaml`:
+
+  ```yaml
+  name: team-webhook
+  type: webhook
+  settings:
+    url: https://example.com/alerts
+  ```
+
+  Then create the contact point:
+
+  ```bash
+  gcx alert contact-points create --filename contact-point.yaml
+  ```
+
+- [**List**](/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/gcx/cli-reference/#gcx-alert-contact-points-list) contact points to verify that the new one exists:
+
+  ```bash
+  gcx alert contact-points list
+  ```
+
+  This command returns the contact points with their UID, name, type, and provenance state.
+
+  ```
+  ┌──────────────────┬─────────────────┬──────────┬─────────────┐
+  │ UID              │ NAME            │ TYPE     │ PROVENANCE  │
+  ├────-─────────────┼──────-──────────┼──────────┼─────────────┤
+  │ dg40y30b347wgb   │ team-webhook    | webhook  │             │
+  └──────-───────────┴─────────────────┴──────────┴─────────────┘
+  ```
+
+- [**Get**](/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/gcx/cli-reference/#gcx-alert-contact-points-get) an existing contact point and save it to a file for editing. Use `-o` (`--output`) to choose the output format, `json` or `yaml`:
+
+  ```bash
+  gcx alert contact-points get <UID> -o yaml > contact-point.yaml
+  ```
+
+- [**Update**](/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/gcx/cli-reference/#gcx-alert-contact-points-update) a contact point. Edit the file and run `update` with the contact point `UID`:
+
+  ```bash
+  gcx alert contact-points update <UID> --filename contact-point.yaml
+  ```
+
+- [**Delete**](/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/gcx/cli-reference/#gcx-alert-contact-points-delete) a contact point by its `UID`:
+
+  ```bash
+  gcx alert contact-points delete <UID>
+  ```
+
+  `gcx` asks for confirmation before it deletes the contact point. To skip the prompt, add `--force`.
+
+Some operations replace or update existing data:
+
+- [`gcx alert notification-policies set`](/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/gcx/cli-reference/#gcx-alert-notification-policies-set) replaces the entire notification policy tree. Export the current tree before you run it.
+- [`gcx alert templates upsert`](/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/gcx/cli-reference/#gcx-alert-templates-upsert) creates a template or updates it if a template with the same name exists.
+
+### Export resources for provisioning
+
+Use `export` to save existing resources in the Grafana provisioning format:
+
+```bash
+gcx alert contact-points export --format yaml > contact-points.yaml
+```
+
+Use the `yaml` format with [file provisioning](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/file-provisioning/) or `hcl` with [Terraform](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/terraform-provisioning/).
+
+### Disable updates in the Grafana UI
+
+By default, resources written by `gcx alert` are editable in the Grafana UI.
+
+To prevent UI updates so that a resource can only be changed through provisioning, set `--allow-ui-updates=false`:
+
+```bash
+gcx alert contact-points create --filename contact-point.yaml --allow-ui-updates=false
+```
+
+The `allow-ui-updates` flag is available on the following commands:
+
+- `gcx alert contact-points create` and `update`
+- `gcx alert mute-timings create` and `update`
+- `gcx alert templates upsert`
+- `gcx alert notification-policies set`
+
 ## Manage resources with `gcx resources`
 
-Use `gcx resources` to export and provision alerting resources.
+Use `gcx resources` to export and provision alerting resources as manifest files that you can store in version control.
 
 Use `pull` to export existing alert rules to a local directory:
 
@@ -132,122 +249,3 @@ Before pushing alert rules to a new Grafana instance, check the following requir
    ```
 
    If the push fails with this error, remove the `grafana.com/group` and `grafana.com/group-index` labels from the alert rule files and push again.
-
-## Manage resources with `gcx alert`
-
-Use `gcx alert` to inspect and manage alerting resources. Each resource type has its own commands.
-
-| Resource                                                                                                                         | Purpose                                                         | Operations                                            |
-| -------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- | ----------------------------------------------------- |
-| [contact-points](/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/gcx/cli-reference/#gcx-alert-contact-points)               | Manage contact points                                           | `list`, `get`, `create`, `update`, `delete`, `export` |
-| [groups](/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/gcx/cli-reference/#gcx-alert-groups)                               | Inspect Grafana-managed alert rule groups (read-only)           | `list`, `get`, `status`                               |
-| [instances](/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/gcx/cli-reference/#gcx-alert-instances)                         | List alert instances (read-only)                                | `list`                                                |
-| [mute-timings](/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/gcx/cli-reference/#gcx-alert-mute-timings)                   | Manage mute timings                                             | `list`, `get`, `create`, `update`, `delete`, `export` |
-| [notification-history](/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/gcx/cli-reference/#gcx-alert-notification-history)   | Inspect delivered alert notifications (read-only)               | `list`, `list-alerts`                                 |
-| [notification-policies](/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/gcx/cli-reference/#gcx-alert-notification-policies) | Manage the notification policy tree                             | `get`, `set`, `reset`, `export`                       |
-| [routing-trees](/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/gcx/cli-reference/#gcx-alert-routing-trees)                 | Manage notification routing trees, including the default tree   | `list`, `get`, `create`, `update`, `delete`           |
-| [ruler](/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/gcx/cli-reference/#gcx-alert-ruler)                                 | Manage data source-managed (Mimir and Loki) rules               | `groups`, `namespaces`                                |
-| [rules](/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/gcx/cli-reference/#gcx-alert-rules)                                 | Inspect Grafana-managed alert rule state and health (read-only) | `list`, `get`                                         |
-| [state-history](/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/gcx/cli-reference/#gcx-alert-state-history)                 | Query alert rule state transitions (read-only)                  | `list`                                                |
-| [template-groups](/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/gcx/cli-reference/#gcx-alert-template-groups)             | Manage native notification template groups                      | `list`, `get`, `create`, `update`, `delete`           |
-| [templates](/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/gcx/cli-reference/#gcx-alert-templates)                         | Manage notification templates                                   | `list`, `get`, `upsert`, `delete`                     |
-| [time-intervals](/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/gcx/cli-reference/#gcx-alert-time-intervals)               | Manage notification time intervals                              | `list`, `get`, `create`, `update`, `delete`           |
-
-{{< admonition type="note" >}}
-The `gcx alert` commands are in active development.
-
-Run `gcx alert --help` or `gcx alert <RESOURCE> --help` to see what your version supports.
-{{< /admonition >}}
-
-### Export resources for provisioning
-
-Use `export` to save existing resources in the Grafana provisioning format. Choose `yaml`, `json`, or `hcl`:
-
-```bash
-gcx alert contact-points export --format yaml > contact-points.yaml
-```
-
-Use the `yaml` output with [file provisioning](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/file-provisioning/). Use the `hcl` output with [Terraform](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/provision-alerting-resources/terraform-provisioning/).
-
-{{< admonition type="caution" >}}
-Contact points can contain credentials.
-
-Grafana exports secure fields as `[REDACTED]`, so exported files don't contain secrets. Replace these placeholders with the required values before provisioning.
-{{< /admonition >}}
-
-### Manage resources using CRUD operations
-
-Use the operations available for each resource type to create, read, update, or delete resources. The following examples use contact points:
-
-- [**Create**](/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/gcx/cli-reference/#gcx-alert-contact-points-create) a contact point from a file. For example, save the following definition as `contact-point.yaml`:
-
-  ```yaml
-  name: team-webhook
-  type: webhook
-  settings:
-    url: https://example.com/alerts
-  ```
-
-  Then create the contact point:
-
-  ```bash
-  gcx alert contact-points create --filename contact-point.yaml
-  ```
-
-- [**List**](/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/gcx/cli-reference/#gcx-alert-contact-points-list) contact points to verify that the new one exists:
-
-  ```bash
-  gcx alert contact-points list
-  ```
-
-  This command returns the contact points with their UID, name, type, and provenance state.
-
-  ```
-  ┌──────────────────┬─────────────────┬──────────┬─────────────┐
-  │ UID              │ NAME            │ TYPE     │ PROVENANCE  │
-  ├────-─────────────┼──────-──────────┼──────────┼─────────────┤
-  │ dg40y30b347wgb   │ team-webhook    | webhook  │             │
-  └──────-───────────┴─────────────────┴──────────┴─────────────┘
-  ```
-
-- [**Get**](/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/gcx/cli-reference/#gcx-alert-contact-points-get) an existing contact point and save it to a file for editing. Use `-o` (`--output`) to choose the output format, `json` or `yaml`:
-
-  ```bash
-  gcx alert contact-points get <UID> -o yaml > contact-point.yaml
-  ```
-
-- [**Update**](/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/gcx/cli-reference/#gcx-alert-contact-points-update) a contact point. Edit the file and run `update` with the contact point `UID`:
-
-  ```bash
-  gcx alert contact-points update <UID> --filename contact-point.yaml
-  ```
-
-- [**Delete**](/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/gcx/cli-reference/#gcx-alert-contact-points-delete) a contact point by its `UID`:
-
-  ```bash
-  gcx alert contact-points delete <UID>
-  ```
-
-  `gcx` asks for confirmation before it deletes the contact point. To skip the prompt, add `--force`.
-
-Some operations replace or update existing data:
-
-- [`gcx alert notification-policies set`](/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/gcx/cli-reference/#gcx-alert-notification-policies-set) replaces the entire notification policy tree. Export the current tree before you run it.
-- [`gcx alert templates upsert`](/docs/grafana/<GRAFANA_VERSION>/ai-tools/grafana-cli/gcx/cli-reference/#gcx-alert-templates-upsert) creates a template or updates it if a template with the same name exists.
-
-### Disable updates in the Grafana UI
-
-By default, resources written by `gcx alert` are editable in the Grafana UI. Alert rules and recording rules provisioned with `gcx resources push` cannot be edited in the UI.
-
-To prevent UI updates so that a resource can only be changed through provisioning, set `--allow-ui-updates=false`:
-
-```bash
-gcx alert contact-points create --filename contact-point.yaml --allow-ui-updates=false
-```
-
-The `allow-ui-updates` flag is available on the following commands:
-
-- `gcx alert contact-points create` and `update`
-- `gcx alert mute-timings create` and `update`
-- `gcx alert templates upsert`
-- `gcx alert notification-policies set`
