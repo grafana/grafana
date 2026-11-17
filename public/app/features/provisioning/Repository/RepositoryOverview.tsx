@@ -21,7 +21,6 @@ import { type Repository, type ResourceCount } from 'app/api/clients/provisionin
 import { RecentJobs } from '../Job/RecentJobs';
 import { QuotaLimitNote } from '../Shared/QuotaLimitNote';
 import { MissingFolderMetadataBanner } from '../components/Folders/MissingFolderMetadataBanner';
-import { PROVISIONING_URL } from '../constants';
 import { hasMissingFolderMetadata } from '../utils/folderMetadata';
 import { isQuotaReachedOrExceeded } from '../utils/quota';
 import { getRepositoryResourcesUrl } from '../utils/repository';
@@ -123,11 +122,6 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
                   </Box>
                 )}
               </Card.Description>
-              <Card.Actions className={styles.actions}>
-                <LinkButton fill="outline" href={`${PROVISIONING_URL}/${repoName}?tab=resources`}>
-                  <Trans i18nKey="provisioning.repository-overview.view-resources">View resources</Trans>
-                </LinkButton>
-              </Card.Actions>
             </Card>
           </div>
 
