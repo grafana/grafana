@@ -34,7 +34,10 @@ To test a published build instead, set `GRAFANA_IMAGE`, for example `GRAFANA_IMA
 
 ## Generate certificates
 
+Run this and the following commands from this directory:
+
 ```bash
+cd devenv/docker/ha-test-nats
 ./certs/gen-certs.sh
 ```
 
