@@ -9,7 +9,7 @@ import { RedirectToUrlKey } from 'app/core/services/context_srv';
 import { getLoginSectionTitle, rememberLoginSectionTitle } from 'app/core/services/loginSectionTitle';
 import { createComponentWithMeta, usePluginComponents } from 'app/features/plugins/extensions/usePluginComponents';
 
-import { ProfileButton } from './ProfileButton';
+import { MegaMenuProfile } from './MegaMenuProfile';
 
 jest.mock('app/features/plugins/extensions/usePluginComponents', () => ({
   ...jest.requireActual('app/features/plugins/extensions/usePluginComponents'),
@@ -23,7 +23,7 @@ jest.mock('app/plugins/panel/news/feed', () => ({
   loadFeed: jest.fn().mockResolvedValue({ items: [] }),
 }));
 
-describe('ProfileButton', () => {
+describe('MegaMenuProfile', () => {
   const usePluginComponentsMock = jest.mocked(usePluginComponents);
   const setupGuideMenuComponent = createComponentWithMeta(
     {
@@ -50,7 +50,6 @@ describe('ProfileButton', () => {
       url: '/profile',
       children: [],
     },
-    onToggleKioskMode: jest.fn(),
   };
   const originalNewsFeedEnabled = config.newsFeedEnabled;
   const originalDisableSignoutMenu = config.auth.disableSignoutMenu;
@@ -80,7 +79,7 @@ describe('ProfileButton', () => {
       rememberLoginSectionTitle({ id: 'dashboards/browse', text: 'Secret dashboard' }, '/d/abc/test');
       sessionStorage.setItem(RedirectToUrlKey, encodeURIComponent('/d/abc/test'));
       expect(getLoginSectionTitle()).toBe('Dashboards');
-      render(<ProfileButton {...defaultProps} />);
+      render(<MegaMenuProfile {...defaultProps} />);
       await user.click(screen.getByRole('button', { name: /profile/i }));
       const signOut = await screen.findByRole('menuitem', { name: /sign out/i });
       signOut.addEventListener('click', (event) => event.preventDefault());
@@ -95,7 +94,7 @@ describe('ProfileButton', () => {
   it('should not render the sign out divider when the sign out menu is disabled', async () => {
     config.auth.disableSignoutMenu = true;
 
-    render(<ProfileButton {...defaultProps} />);
+    render(<MegaMenuProfile {...defaultProps} />);
 
     await user.click(screen.getByRole('button', { name: /profile/i }));
 
@@ -106,7 +105,7 @@ describe('ProfileButton', () => {
   });
 
   it('should return focus to the profile button when the news feed drawer is closed', async () => {
-    render(<ProfileButton {...defaultProps} />);
+    render(<MegaMenuProfile {...defaultProps} />);
 
     const profileButton = screen.getByRole('button', { name: /profile/i });
 
@@ -129,7 +128,7 @@ describe('ProfileButton', () => {
   it('should render a setupguide profile menu extension component', async () => {
     usePluginComponentsMock.mockReturnValue({ isLoading: false, components: [setupGuideMenuComponent] });
 
-    render(<ProfileButton {...defaultProps} />);
+    render(<MegaMenuProfile {...defaultProps} />);
 
     await user.click(screen.getByRole('button', { name: /profile/i }));
     expect(await screen.findByText('setupguide-profile-menu-extension')).toBeInTheDocument();
@@ -138,7 +137,7 @@ describe('ProfileButton', () => {
   it('should not render non-setupguide profile menu extension components', async () => {
     usePluginComponentsMock.mockReturnValue({ isLoading: false, components: [otherPluginMenuComponent] });
 
-    render(<ProfileButton {...defaultProps} />);
+    render(<MegaMenuProfile {...defaultProps} />);
 
     await user.click(screen.getByRole('button', { name: /profile/i }));
     expect(screen.queryByText('other-profile-menu-extension')).not.toBeInTheDocument();
