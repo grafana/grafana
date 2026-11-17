@@ -112,7 +112,7 @@ type APIBuilder struct {
 	useExclusivelyAccessCheckerForAuthz bool
 
 	allowedTargets      []provisioning.SyncTargetType
-	supportedResources  resources.SupportedResourcesFunc
+	supportedResources  resources.LatestSupportedResources
 	manifestWatcher     services.Service
 	allowImageRendering bool
 	minSyncInterval     time.Duration
@@ -225,7 +225,7 @@ func NewAPIBuilder(
 	extraWorkers []jobs.Worker,
 	jobHistoryConfig *JobHistoryConfig,
 	allowedTargets []provisioning.SyncTargetType,
-	supportedResources resources.SupportedResourcesFunc,
+	supportedResources resources.LatestSupportedResources,
 	manifestWatcher services.Service,
 	restConfigGetter func(context.Context) (*clientrest.Config, error),
 	allowImageRendering bool,

@@ -16,17 +16,18 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-// SupportedResourcesFunc returns the resources that provisioning supports at the time of the call.
-type SupportedResourcesFunc func() []SupportedResource
+// LatestSupportedResources returns the resources that provisioning supports at the time of the
+// call. The result can differ between calls.
+type LatestSupportedResources func() []SupportedResource
 
-func StaticSupportedResources(supported ...SupportedResource) SupportedResourcesFunc {
+func StaticSupportedResources(supported ...SupportedResource) LatestSupportedResources {
 	return func() []SupportedResource { return supported }
 }
 
 // ManifestSupportedResources returns supported plus each kind that a published app manifest
 // opts in to provisioning, and the callback that a resource.ManifestWatcher calls with the
 // manifests. Entries in supported take precedence over the manifests.
-func ManifestSupportedResources(supported []SupportedResource) (SupportedResourcesFunc, func([]*app.ManifestData)) {
+func ManifestSupportedResources(supported []SupportedResource) (LatestSupportedResources, func([]*app.ManifestData)) {
 	var merged atomic.Pointer[[]SupportedResource]
 	merged.Store(&supported)
 	return func() []SupportedResource { return *merged.Load() }, func(manifests []*app.ManifestData) {
@@ -37,7 +38,7 @@ func ManifestSupportedResources(supported []SupportedResource) (SupportedResourc
 
 // RemoteManifestSupportedResources is ManifestSupportedResources with the service that watches
 // the manifests the router publishes at cfg.DiscoveryURL. Without a URL, the set is supported.
-func RemoteManifestSupportedResources(supported []SupportedResource, cfg resource.ManifestWatcherConfig) (SupportedResourcesFunc, services.Service, error) {
+func RemoteManifestSupportedResources(supported []SupportedResource, cfg resource.ManifestWatcherConfig) (LatestSupportedResources, services.Service, error) {
 	if cfg.DiscoveryURL == "" {
 		return StaticSupportedResources(supported...), services.NewIdleService(nil, nil), nil
 	}
