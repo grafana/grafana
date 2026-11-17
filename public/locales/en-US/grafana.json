@@ -4810,7 +4810,9 @@
       "starred-folders": "Starred folders",
       "team-folders": "Team folders",
       "team-folders-error-title": "Error loading team folders",
-      "unknown-error": "Unknown error"
+      "unknown-error": "Unknown error",
+      "unknown-folder": "[Unknown folder]",
+      "unknown-folder-tooltip": "You may not have access to one or more of the parent folders."
     },
     "folder-variables": {
       "empty": "No folder-scoped variables in this folder yet.",

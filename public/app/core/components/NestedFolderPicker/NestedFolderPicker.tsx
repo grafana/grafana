@@ -8,7 +8,10 @@ import { type SearchDashboardsAndFoldersApiArg } from '@grafana/api-clients/rtkq
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { useFlagGrafanaFolderPickerFolderEditAccess } from '@grafana/runtime/internal';
+import {
+  useFlagGrafanaFolderPickerFolderEditAccess,
+  useFlagGrafanaFolderPickerSearchFullPath,
+} from '@grafana/runtime/internal';
 import { Alert, floatingUtils, Icon, Input, LoadingBar, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useGetCombinedFolderQuery } from 'app/api/clients/folder/v1beta1/hooks';
 import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
@@ -106,6 +109,7 @@ export function NestedFolderPicker({
   const getSelectedFolderResult = useGetCombinedFolderQuery(value);
 
   const isFolderEditAccessEnabled = useFlagGrafanaFolderPickerFolderEditAccess();
+  const showFullPath = useFlagGrafanaFolderPickerSearchFullPath();
   const permission = permissionProp === 'create' && !isFolderEditAccessEnabled ? 'edit' : permissionProp;
 
   // user might not have access to the folder, but they have access to the dashboard
@@ -422,6 +426,7 @@ export function NestedFolderPicker({
           emptyFolders={emptyFolders}
           teamFolderOwnersByUid={teamFolderOwnersByUid}
           canEdit={permission !== 'view'}
+          showFullPath={showFullPath}
         />
       </fieldset>
     </>
