@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/dskit/services"
 	natsserver "github.com/nats-io/nats-server/v2/server"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
@@ -197,7 +196,6 @@ func TestControllersOwnNATSSubscriber(t *testing.T) {
 				cfg.tracer = tracing.NewNoopTracerService()
 				cfg.provisioningClient = provisioningClient
 				cfg.clients = resources.NewMockClientFactory(t)
-				cfg.manifestWatcher = services.NewIdleService(nil, nil)
 				// Empty resource lists must not access unified storage.
 				cfg.unified = &struct{ resources.ResourceStore }{}
 				cfg.repositoryFactory, err = repository.ProvideFactory(nil, nil, cfg.tracer)

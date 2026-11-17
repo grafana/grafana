@@ -25,10 +25,9 @@ import (
 func TestSetResourceListerMode(t *testing.T) {
 	newBuilder := func() *APIBuilder {
 		return &APIBuilder{
-			unified:            resource.NewMockResourceClient(t),
-			clients:            resources.NewMockClientFactory(t),
-			features:           featuremgmt.WithFeatures(),
-			supportedResources: resources.NewSupportedResourceProvider(nil),
+			unified:  resource.NewMockResourceClient(t),
+			clients:  resources.NewMockClientFactory(t),
+			features: featuremgmt.WithFeatures(),
 		}
 	}
 
