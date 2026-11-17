@@ -107,12 +107,19 @@ function rgbToOklch(rgb: tinycolor.ColorFormats.RGBA): OklchColor {
 }
 
 function oklchToRgb(color: OklchColor): RgbColor {
+  if (color.l === 0 || color.l === 1) {
+    const channel = color.l * 255;
+    return { r: channel, g: channel, b: channel };
+  }
+
   let lowerChroma = 0;
   let upperChroma = color.c;
   let rgb = oklchToUnclampedRgb(color);
 
   // Keep hue and lightness stable; reduce chroma only when requested color falls outside sRGB.
   if (!isInGamut(rgb)) {
+    // The finite search may find no in-gamut candidate, so start with a neutral fallback.
+    rgb = oklchToUnclampedRgb({ ...color, c: 0 });
     for (let index = 0; index < 8; index++) {
       const chroma = (lowerChroma + upperChroma) / 2;
       const candidate = oklchToUnclampedRgb({ ...color, c: chroma });
