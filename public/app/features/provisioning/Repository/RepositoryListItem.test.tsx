@@ -140,19 +140,13 @@ describe('RepositoryListItem', () => {
     });
   });
 
-  // On a repository card the badge is about the repository itself, not about a resource it
-  // provisions, so it says what Grafana does with it rather than telling the reader to go to
-  // the page they are already on.
-  it('marks a repository without a write workflow as pull only', async () => {
+  it('marks a repository without a workflow as read only and explains it on hover', async () => {
     const repo = createMockRepository({ spec: { ...createMockRepository().spec!, workflows: [] } });
     const { user } = render(<RepositoryListItem repository={repo} />);
 
-    expect(screen.getByText('Pull only')).toBeInTheDocument();
-    expect(screen.queryByText('Read only')).not.toBeInTheDocument();
+    await user.hover(screen.getByText('Read only'));
 
-    await user.hover(screen.getByText('Pull only'));
-
-    expect(await screen.findByText(/Grafana only reads from this repository/)).toBeInTheDocument();
+    expect(await screen.findByText("Resources can't be modified through Grafana.")).toBeInTheDocument();
   });
 
   describe('export', () => {
