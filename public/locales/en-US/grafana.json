@@ -8980,9 +8980,11 @@
     }
   },
   "drilldown-datasources": {
+    "button": "Data sources",
     "knowledgegraph": "Knowledge graph",
     "logs": "Logs",
     "metrics": "Metrics",
+    "modal-title": "Data sources",
     "profiles": "Profiles",
     "sql": "SQL",
     "traces": "Traces"
