@@ -55,8 +55,7 @@ const flatTreeSelector = createSelector(
 function useStarredFoldersCollection(): DashboardViewItemCollection | undefined {
   const { rows, error } = useStarredSearch();
   return useMemo(() => {
-    // A star set that can't be read (an anonymous user's 403s) has no rows coming, so the root shows empty rather
-    // than loading forever
+    // A star set that can't be read has no rows coming, so the root shows empty rather than loading forever
     if (!rows && !error) {
       return undefined;
     }
