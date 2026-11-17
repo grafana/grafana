@@ -38,7 +38,18 @@ function mountBatch() {
   }
 }
 
-/** Dashboard-only opt-in: callers keep fit-content, capture, and stateful content mounted. */
+/**
+ * Controls whether a dashboard Text iframe should be mounted, reducing initialization bursts and
+ * the number of live documents retained as the user scrolls through dashboards with many panels.
+ *
+ * A shared observer queues mounts within 1,000px of the viewport, admitting up to four per parent
+ * animation-frame callback. Frames outside that region for five seconds can unmount, unless focused.
+ * Returning panels mount fresh documents; iframe-local state is not preserved across disposal.
+ *
+ * Callers must keep the observed host mounted with a height placeholder and opt out for fit-content,
+ * capture, editor, and stateful content that must survive scrolling. Disabled or unsupported observers
+ * return true so content renders immediately. Background tabs may pause the animation-frame queue.
+ */
 export function useTextFrameVisibility(host: RefObject<HTMLDivElement | null>, enabled: boolean) {
   const supported = typeof IntersectionObserver !== 'undefined';
   const [mounted, setMounted] = useState(!enabled || !supported);
