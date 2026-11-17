@@ -49,7 +49,7 @@ jobs:
     uses: ./.github/workflows/run-compat-tests.yml
     with:
       edition: oss
-      old_ref: ${{ inputs.old_ref || '' }}
+      old_ref: ${{ inputs.old_ref || '9d11774c2d2a9465efb6769ae1e9d66e403939f0' }}
 
   enterprise:
     # Same condition as the Enterprise jobs in pr-test-integration.yml (fork PRs cannot get a
