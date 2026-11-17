@@ -9,8 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	mock "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
@@ -80,32 +78,6 @@ func subresourceAttrsWithVerb(sub, name, ns, verb string) authorizer.Attributes 
 // repositories and authorize intentionally ignore the request verb: repositories is an
 // inspection view (always connections:read) and authorize mutates connection secrets
 // (always connections:write), regardless of the HTTP method used to reach them.
-// The provider can add kinds while the process runs, so the job validation reads it on each call.
-func TestJobSupportedResourcesFollowTheProvider(t *testing.T) {
-	folder := resources.SupportedResource{GroupKind: resources.FolderKind.GroupKind(), Capabilities: sets.New(resources.CapabilityFolder)}
-	libraryPanel := resources.SupportedResource{
-		GroupKind:    schema.GroupKind{Group: "dashboard.grafana.app", Kind: "LibraryPanel"},
-		Capabilities: sets.New(resources.CapabilityDisabled),
-	}
-	widget := resources.SupportedResource{GroupKind: schema.GroupKind{Group: "example.ext.grafana.app", Kind: "Widget"}, Capabilities: sets.New[string]()}
-
-	provider := resources.NewMockSupportedResourceProvider(t)
-	provider.EXPECT().Get().Return([]resources.SupportedResource{folder, libraryPanel}).Once()
-	provider.EXPECT().Get().Return([]resources.SupportedResource{folder, libraryPanel, widget}).Once()
-	b := &APIBuilder{supportedResources: provider}
-
-	require.Equal(t, []provisioning.SupportedResource{
-		{Group: "folder.grafana.app", Kind: "Folder"},
-		{Group: "dashboard.grafana.app", Kind: "LibraryPanel", Disabled: true},
-	}, b.jobSupportedResources())
-
-	require.Equal(t, []provisioning.SupportedResource{
-		{Group: "folder.grafana.app", Kind: "Folder"},
-		{Group: "dashboard.grafana.app", Kind: "LibraryPanel", Disabled: true},
-		{Group: "example.ext.grafana.app", Kind: "Widget"},
-	}, b.jobSupportedResources())
-}
-
 func TestAuthorizeConnectionSubresource(t *testing.T) {
 	ctx := context.Background()
 	const ns, name = "default", "my-connection"

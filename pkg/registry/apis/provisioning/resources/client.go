@@ -390,8 +390,6 @@ func defaultSupportedResources(supported []SupportedResource) []SupportedResourc
 
 // SupportedResourceProvider gives the resources that provisioning supports: the configured ones,
 // plus the kinds that the app manifests add while the process runs.
-//
-//go:generate mockery --name SupportedResourceProvider --structname MockSupportedResourceProvider --inpackage --filename supported_resource_provider_mock.go --with-expecter
 type SupportedResourceProvider interface {
 	// Get returns the supported resources at the time of the call.
 	Get() []SupportedResource

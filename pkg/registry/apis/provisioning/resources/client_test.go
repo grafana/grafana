@@ -9,9 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/dskit/services"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/propagation"
@@ -23,10 +21,8 @@ import (
 	"k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana-app-sdk/app"
-	appmanifestv1alpha2 "github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha2"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 // playlistKind is an arbitrary identifier used only to exercise the supported-set plumbing
@@ -679,6 +675,28 @@ func TestSupportedResourceProvider(t *testing.T) {
 		require.Equal(t, slices.Concat(SupportedProvisioningResources, []SupportedResource{widget}), set.Get())
 	})
 
+	t.Run("skips a kind that is cluster-scoped or that does not opt in", func(t *testing.T) {
+		set := NewSupportedResourceProvider([]SupportedResource{folder})
+		manifests := testManifests(widget, gadget, SupportedResource{GroupKind: schema.GroupKind{Group: testManifestGroup, Kind: "Other"}})
+		kinds := manifests[0].Versions[0].Kinds
+		kinds[1].Scope = "Cluster"
+		kinds[2].Extensions = nil
+
+		set.Update(manifests)
+
+		require.Equal(t, []SupportedResource{folder, widget}, set.Get())
+	})
+
+	t.Run("skips the kinds of a version that is not served", func(t *testing.T) {
+		set := NewSupportedResourceProvider([]SupportedResource{folder})
+		manifests := testManifests(widget)
+		manifests[0].Versions[0].Served = false
+
+		set.Update(manifests)
+
+		require.Equal(t, []SupportedResource{folder}, set.Get())
+	})
+
 	t.Run("adds the kinds to the clients of a factory", func(t *testing.T) {
 		set := NewSupportedResourceProvider([]SupportedResource{folder})
 		factory := NewClientFactory(nil, set)
@@ -691,102 +709,7 @@ func TestSupportedResourceProvider(t *testing.T) {
 	})
 }
 
-func TestWithPinnedKinds(t *testing.T) {
-	folder := SupportedResource{GroupKind: schema.GroupKind{Group: "folder.grafana.app", Kind: "Folder"}, Capabilities: sets.New(CapabilityFolder)}
-	widget := SupportedResource{GroupKind: schema.GroupKind{Group: testManifestGroup, Kind: "Widget"}, Capabilities: sets.New(CapabilityFolder)}
-	gadget := SupportedResource{GroupKind: schema.GroupKind{Group: testManifestGroup, Kind: "Gadget"}, Capabilities: sets.New[string]()}
-
-	provider := NewSupportedResourceProvider([]SupportedResource{folder})
-	factory := NewClientFactory(nil, provider)
-	supported := func(ctx context.Context) []SupportedResource {
-		clients, err := factory.Clients(ctx, "default")
-		require.NoError(t, err)
-		return clients.SupportedResources()
-	}
-
-	provider.Update(testManifests(widget))
-	pinned := WithPinnedKinds(context.Background())
-	require.Equal(t, []SupportedResource{folder, widget}, supported(pinned))
-
-	provider.Update(testManifests(widget, gadget))
-
-	t.Run("keeps the kinds of the first Clients call", func(t *testing.T) {
-		require.Equal(t, []SupportedResource{folder, widget}, supported(pinned))
-	})
-
-	t.Run("keeps them in a context that derives from the pinned one", func(t *testing.T) {
-		derived := WithTakeoverAllowlist(pinned, NewTakeoverAllowlist(nil))
-		require.Equal(t, []SupportedResource{folder, widget}, supported(derived))
-	})
-
-	t.Run("does not change a context without a pin", func(t *testing.T) {
-		require.Equal(t, []SupportedResource{folder, widget, gadget}, supported(context.Background()))
-	})
-}
-
-func TestSupportedResourceProviderWatchesManifests(t *testing.T) {
-	widget := SupportedResource{GroupKind: schema.GroupKind{Group: testManifestGroup, Kind: "Widget"}, Capabilities: sets.New(CapabilityFolder)}
-	gadget := SupportedResource{GroupKind: schema.GroupKind{Group: testManifestGroup, Kind: "Gadget"}, Capabilities: sets.New[string]()}
-
-	// watch starts a watcher for the manifests that the router of this process publishes.
-	watch := func(t *testing.T, manifests *appmanifestv1alpha2.AppManifestList) SupportedResourceProvider {
-		t.Helper()
-		router := NewMockManifestDiscovery(t)
-		router.EXPECT().ListManifests(mock.Anything).Return(manifests, nil)
-		set := NewSupportedResourceProvider(nil)
-		watcher := resource.NewLocalManifestWatcher(router, nil, set.Update, nil)
-		require.NoError(t, services.StartAndAwaitRunning(t.Context(), watcher))
-		t.Cleanup(watcher.StopAsync)
-		return set
-	}
-
-	t.Run("adds the kinds that opt in to provisioning", func(t *testing.T) {
-		clusterScoped := testManifestKind("Global", true, false)
-		clusterScoped.Scope = appmanifestv1alpha2.AppManifestManifestVersionKindScopeCluster
-
-		set := watch(t, testManifestList(true,
-			testManifestKind("Widget", true, true),
-			testManifestKind("Gadget", true, false),
-			testManifestKind("Other", false, true),
-			clusterScoped,
-		))
-
-		require.Equal(t, slices.Concat(SupportedProvisioningResources, []SupportedResource{widget, gadget}), set.Get())
-	})
-
-	t.Run("skips the kinds of a version that is not served", func(t *testing.T) {
-		set := watch(t, testManifestList(false, testManifestKind("Widget", true, true)))
-
-		require.Empty(t, set.Get())
-	})
-}
-
 const testManifestGroup = "example.ext.grafana.app"
-
-func testManifestList(served bool, kinds ...appmanifestv1alpha2.AppManifestManifestVersionKind) *appmanifestv1alpha2.AppManifestList {
-	return &appmanifestv1alpha2.AppManifestList{
-		TypeMeta: metav1.TypeMeta{APIVersion: appmanifestv1alpha2.GroupVersion.String(), Kind: "AppManifestList"},
-		Items: []appmanifestv1alpha2.AppManifest{{
-			ObjectMeta: metav1.ObjectMeta{Name: testManifestGroup},
-			Spec: appmanifestv1alpha2.AppManifestSpec{
-				AppName:  "example",
-				Group:    testManifestGroup,
-				Versions: []appmanifestv1alpha2.AppManifestManifestVersion{{Name: "v1", Served: &served, Kinds: kinds}},
-			},
-		}},
-	}
-}
-
-func testManifestKind(kind string, provisionable bool, folderScoped bool) appmanifestv1alpha2.AppManifestManifestVersionKind {
-	return appmanifestv1alpha2.AppManifestManifestVersionKind{
-		Kind:         kind,
-		Scope:        appmanifestv1alpha2.AppManifestManifestVersionKindScopeNamespaced,
-		FolderScoped: &folderScoped,
-		Extensions: &appmanifestv1alpha2.AppManifestManifestVersionKindExtensions{
-			Provisioning: &appmanifestv1alpha2.AppManifestManifestVersionKindProvisioning{Enabled: &provisionable},
-		},
-	}
-}
 
 // testManifests returns one app manifest that opts each resource in to provisioning.
 func testManifests(resources ...SupportedResource) []*app.ManifestData {

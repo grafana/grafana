@@ -1,11 +1,14 @@
 package manifestkinds
 
 import (
+	"encoding/json"
+	"os"
 	"path/filepath"
 	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
@@ -28,8 +31,8 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-// runGrafana starts Grafana with the test app plugin installed. The manifest of the plugin
-// (testdata/app-sdk-manifest.json) opts the Thing kind in to provisioning, and not the Widget kind.
+// runGrafana starts Grafana with the test app plugin installed. The manifest of the plugin opts
+// the Thing kind in to provisioning, and not the Widget kind.
 func runGrafana(t *testing.T) *common.ProvisioningTestHelper {
 	t.Helper()
 	return common.RunGrafana(t, func(opts *testinfra.GrafanaOpts) {
@@ -46,7 +49,7 @@ func runGrafana(t *testing.T) *common.ProvisioningTestHelper {
 		repoRoot := filepath.Join(filepath.Dir(thisFile), "..", "..", "..", "..", "..")
 		pluginDir := filepath.Join(dir, "plugins", testAppID)
 		require.NoError(t, grafanafs.CopyRecursive(filepath.Join(repoRoot, "pkg", "plugins", "manager", "testdata", testAppID), pluginDir))
-		require.NoError(t, grafanafs.CopyFile(filepath.Join(filepath.Dir(thisFile), "testdata", "app-sdk-manifest.json"), filepath.Join(pluginDir, "app-sdk-manifest.json")))
+		writeManifest(t, filepath.Join(repoRoot, "pkg", "tests", "apis", "appplugin", "testdata", "app-sdk-manifest.json"), filepath.Join(pluginDir, "app-sdk-manifest.json"))
 		opts.Dir, opts.DirPath = dir, cfgPath
 	})
 }
@@ -58,4 +61,27 @@ func thingsClient(t *testing.T, helper *common.ProvisioningTestHelper) dynamic.R
 		Namespace: "default",
 		GVR:       schema.GroupVersionResource{Group: testAppGroup, Version: "v1", Resource: "things"},
 	}).Resource
+}
+
+// writeManifest copies the app manifest of the test app, with provisioning enabled for the Thing kind.
+func writeManifest(t *testing.T, src, dst string) {
+	t.Helper()
+	raw, err := os.ReadFile(src) //nolint:gosec
+	require.NoError(t, err)
+	var manifest map[string]any
+	require.NoError(t, json.Unmarshal(raw, &manifest))
+	versions, _, _ := unstructured.NestedSlice(manifest, "spec", "versions")
+	for _, version := range versions {
+		kinds, _, _ := unstructured.NestedSlice(version.(map[string]any), "kinds")
+		for _, kind := range kinds {
+			if kind.(map[string]any)["kind"] == "Thing" {
+				kind.(map[string]any)["extensions"] = map[string]any{"provisioning": map[string]any{"enabled": true}}
+			}
+		}
+		version.(map[string]any)["kinds"] = kinds
+	}
+	require.NoError(t, unstructured.SetNestedSlice(manifest, versions, "spec", "versions"))
+	raw, err = json.Marshal(manifest)
+	require.NoError(t, err)
+	require.NoError(t, os.WriteFile(dst, raw, 0o600))
 }
