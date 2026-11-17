@@ -48,10 +48,12 @@ import { setupPanelNotices } from '../scene/setupPanelNotices';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { findVizPanelByKey } from '../utils/findVizPanel';
 import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
+import { DashboardInteractions } from '../utils/interactions';
 import { activateFullSceneTree } from '../utils/test-utils';
 import { getLibraryPanelBehavior } from '../utils/utils';
 
 import { PanelDataPane } from './PanelDataPane/PanelDataPane';
+import { PanelDataQueriesTab } from './PanelDataPane/PanelDataQueriesTab';
 import { PanelDataTransformationsTab } from './PanelDataPane/PanelDataTransformationsTab';
 import { PanelDataPaneNext } from './PanelEditNext/PanelDataPaneNext';
 import { usePanelContext, useQueryEditorUIContext } from './PanelEditNext/QueryEditor/QueryEditorContext';
@@ -519,6 +521,65 @@ describe('PanelEditor', () => {
       // Change back to already saved state
       panel.setState({ title: 'changed title' });
       expect(panelEditor.state.isDirty).toBe(false);
+    });
+  });
+
+  describe('Reporting query option changes', () => {
+    let panelSettingChanged: jest.SpyInstance;
+
+    beforeEach(() => {
+      panelSettingChanged = jest.spyOn(DashboardInteractions, 'panelSettingChanged').mockImplementation();
+    });
+
+    afterEach(() => {
+      panelSettingChanged.mockRestore();
+      setTestFlags({});
+    });
+
+    it('reports a query option changed in the classic query editor', async () => {
+      const { panelEditor } = await setup();
+      const { dataPane } = panelEditor.state;
+      const queriesTab =
+        dataPane instanceof PanelDataPane
+          ? dataPane.state.tabs.find((tab) => tab instanceof PanelDataQueriesTab)
+          : undefined;
+      if (!(queriesTab instanceof PanelDataQueriesTab)) {
+        throw new Error('Expected the classic queries tab');
+      }
+
+      queriesTab.onQueryOptionsChange({ ...queriesTab.buildQueryOptions(), maxDataPoints: 100 });
+
+      expect(panelSettingChanged).toHaveBeenCalledTimes(1);
+      expect(panelSettingChanged).toHaveBeenCalledWith({
+        item: 'change_query_option',
+        source: 'panel_editor',
+        panel_type: 'text',
+        panel_id: 1,
+        option: 'max_data_points',
+        editor: 'classic',
+      });
+    });
+
+    it('reports a query option changed in the next query editor', async () => {
+      store.delete(QUERY_EDITOR_V2_PREFERENCE_KEY);
+      setTestFlags({ queryEditorNext: true });
+      const { panelEditor } = await setup();
+      const { dataPane } = panelEditor.state;
+      if (!(dataPane instanceof PanelDataPaneNext)) {
+        throw new Error('Expected the next data pane');
+      }
+
+      dataPane.onQueryOptionsChange({
+        queries: [],
+        dataSource: { uid: 'ds1' },
+        maxDataPoints: 500,
+        timeRange: { from: '1h' },
+      });
+
+      expect(panelSettingChanged).toHaveBeenCalledTimes(1);
+      expect(panelSettingChanged).toHaveBeenCalledWith(
+        expect.objectContaining({ item: 'change_query_option', option: 'relative_time', editor: 'next' })
+      );
     });
   });
 

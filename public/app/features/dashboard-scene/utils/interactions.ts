@@ -266,12 +266,14 @@ export const DashboardInteractions = {
     reportDashboardInteraction('edit_action_clicked', { item: `${action}_${elementType}`, source });
   },
   // A panel setting was changed. Never add the setting's value here: titles, descriptions and links are typed by users.
-  panelSettingChanged(properties: {
-    item: PanelSettingItem;
-    source: PanelSettingSource;
-    panel_type: string;
-    panel_id: number;
-  }) {
+  panelSettingChanged(
+    properties: {
+      item: PanelSettingItem;
+      source: PanelSettingSource;
+      panel_type: string;
+      panel_id: number;
+    } & PanelSettingDetails
+  ) {
     reportDashboardInteraction('edit_action_clicked', properties);
   },
   panelLinkClicked: (properties?: Record<string, unknown>) => {
@@ -537,7 +539,34 @@ export type PanelSettingItem =
   | 'add_panel_link'
   | 'remove_panel_link'
   | 'edit_panel_link'
-  | 'reorder_panel_links';
+  | 'reorder_panel_links'
+  | 'add_override'
+  | 'remove_override'
+  | 'change_override_matcher'
+  | 'add_override_property'
+  | 'change_override_property'
+  | 'remove_override_property'
+  | 'change_query_option';
+
+/**
+ * Ids that say which part of a setting changed. All come from code (matcher and option registries, query option
+ * names), never from what a user typed.
+ */
+export type PanelSettingDetails = {
+  matcher_id?: string;
+  property_id?: string;
+  option?: QueryOptionName;
+  editor?: 'classic' | 'next';
+};
+
+export type QueryOptionName =
+  | 'max_data_points'
+  | 'min_interval'
+  | 'cache_timeout'
+  | 'query_caching_ttl'
+  | 'relative_time'
+  | 'time_shift'
+  | 'hide_time_info';
 
 // genai: a title generated with the AI button in the panel editor.
 export type PanelSettingSource = 'edit_pane' | 'panel_editor' | 'outline' | 'genai';

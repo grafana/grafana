@@ -67,6 +67,14 @@ describe('trackPanelSettingChange', () => {
     expect(panelSettingChanged).toHaveBeenCalledWith(expect.objectContaining({ source: 'outline' }));
   });
 
+  it('does not report, or throw, for a panel without a key', () => {
+    const panel = new VizPanel({ title: 'CPU', pluginId: 'timeseries' });
+    panel.setState({ key: undefined });
+
+    expect(() => trackPanelSettingChange(panel, 'change_query_option', 'panel_editor')).not.toThrow();
+    expect(panelSettingChanged).not.toHaveBeenCalled();
+  });
+
   it('sends the change as dashboards_edit_action_clicked without the setting value', () => {
     const { panel } = setup();
 

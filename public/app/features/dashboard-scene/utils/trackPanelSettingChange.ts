@@ -2,7 +2,12 @@ import { isEqual } from 'lodash';
 
 import { type VizPanel } from '@grafana/scenes';
 
-import { DashboardInteractions, type PanelSettingItem, type PanelSettingSource } from './interactions';
+import {
+  DashboardInteractions,
+  type PanelSettingDetails,
+  type PanelSettingItem,
+  type PanelSettingSource,
+} from './interactions';
 import { getDashboardSceneFor } from './utils';
 import { getPanelIdForVizPanel } from './utils-panels';
 
@@ -10,12 +15,23 @@ import { getPanelIdForVizPanel } from './utils-panels';
  * Reports a committed panel setting change. Call it only when the value really changed.
  * Without a source, the surface is inferred: the same option components render in the edit pane and the panel editor.
  */
-export function trackPanelSettingChange(panel: VizPanel, item: PanelSettingItem, source?: PanelSettingSource) {
+export function trackPanelSettingChange(
+  panel: VizPanel,
+  item: PanelSettingItem,
+  source?: PanelSettingSource,
+  details: PanelSettingDetails = {}
+) {
+  // Without a key there is no panel id to report, and analytics must not break the change being made.
+  if (!panel.state.key) {
+    return;
+  }
+
   DashboardInteractions.panelSettingChanged({
     item,
     source: source ?? (getDashboardSceneFor(panel).state.editPanel ? 'panel_editor' : 'edit_pane'),
     panel_type: panel.state.pluginId,
     panel_id: getPanelIdForVizPanel(panel),
+    ...details,
   });
 }
 
