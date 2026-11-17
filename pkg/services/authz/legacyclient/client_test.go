@@ -100,7 +100,6 @@ func TestClient_LegacyGetUserPermissionsStreamFailures(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 			}
-			require.Empty(t, got.Permissions)
 			require.Nil(t, got.Permissions)
 		})
 	}
