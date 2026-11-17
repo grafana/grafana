@@ -155,7 +155,10 @@ function useFrameRuntime({
       },
       onStatus: (status) =>
         setSandboxState((current) => (current.status === status ? current : { ...current, status })),
-      onResize: setDimensions,
+      onResize: (incoming) =>
+        setDimensions((current) =>
+          current.height === incoming.height && current.contentHeight === incoming.contentHeight ? current : incoming
+        ),
       onBlocked: (incoming) =>
         setSandboxState((current) => {
           const resources = mergeResources(current.resources, incoming);

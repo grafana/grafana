@@ -97,6 +97,37 @@ describe('sandbox runtime', () => {
     expect(postMessage.mock.calls.some(([value]) => value.type === 'blocked')).toBe(false);
   });
 
+  test('reports only changed dimensions while preserving content-only changes and shrinking', async () => {
+    initialize();
+    message();
+    await flush();
+    postMessage.mockClear();
+    measure([], {} as ResizeObserver);
+    expect(postMessage).not.toHaveBeenCalled();
+
+    const content = document.querySelector<HTMLElement>('.markdown-html')!;
+    const bounds = jest.spyOn(content, 'getBoundingClientRect').mockReturnValue({ height: 42.5 } as DOMRect);
+    const child = content.firstElementChild!;
+    Object.defineProperty(child, 'offsetHeight', { configurable: true, value: 30 });
+    measure([], {} as ResizeObserver);
+    bounds.mockReturnValue({ height: 42.8 } as DOMRect);
+    measure([], {} as ResizeObserver);
+    Object.defineProperty(child, 'offsetHeight', { configurable: true, value: 20 });
+    measure([], {} as ResizeObserver);
+    bounds.mockReturnValue({ height: 25 } as DOMRect);
+    measure([], {} as ResizeObserver);
+    content.replaceChildren();
+    bounds.mockReturnValue({ height: 0 } as DOMRect);
+    measure([], {} as ResizeObserver);
+    measure([], {} as ResizeObserver);
+    expect(postMessage.mock.calls.map(([notification]) => notification)).toEqual([
+      { protocol: TEXT_FRAME_PROTOCOL, channel: command.channel, type: 'resize', height: 43, contentHeight: 30 },
+      { protocol: TEXT_FRAME_PROTOCOL, channel: command.channel, type: 'resize', height: 43, contentHeight: 20 },
+      { protocol: TEXT_FRAME_PROTOCOL, channel: command.channel, type: 'resize', height: 25, contentHeight: 20 },
+      { protocol: TEXT_FRAME_PROTOCOL, channel: command.channel, type: 'resize', height: 1, contentHeight: 0 },
+    ]);
+  });
+
   test('waits for an enforced probe violation before accepting protected HTML', async () => {
     initialize(policy);
     expect(document.querySelector('img')).toHaveAttribute('src', CSP_CHECK_URL);

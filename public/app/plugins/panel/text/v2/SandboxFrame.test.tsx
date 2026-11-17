@@ -729,3 +729,21 @@ it('shares one message listener across frames and removes it after the last fram
     remove.mockRestore();
   }
 });
+
+it('notifies height consumers only when frame dimensions change', async () => {
+  const options = props();
+  render(<SandboxFrame {...options} />);
+  const element = await frame();
+  notify(element, 'ready');
+  notify(element, 'resize', { height: 180, contentHeight: 160 });
+  notify(element, 'resize', { height: 180, contentHeight: 160 });
+  expect(options.onHeight).toHaveBeenCalledTimes(1);
+  expect(options.onHeight).toHaveBeenLastCalledWith(180, 160);
+  notify(element, 'resize', { height: 180, contentHeight: 140 });
+  expect(options.onHeight).toHaveBeenCalledTimes(2);
+  expect(options.onHeight).toHaveBeenLastCalledWith(180, 140);
+  notify(element, 'resize', { height: 150, contentHeight: 140 });
+  expect(options.onHeight).toHaveBeenCalledTimes(3);
+  expect(options.onHeight).toHaveBeenLastCalledWith(150, 140);
+  expect(element.style.height).toBe('150px');
+});

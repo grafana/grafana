@@ -44,6 +44,7 @@ let verificationTimer = 0;
 let readyTimer = 0;
 let observer: ResizeObserver | undefined;
 let content: HTMLDivElement | undefined;
+let lastDimensions: { height: number; contentHeight: number } | undefined;
 let receiveMermaid: ((source: string) => void) | undefined;
 const resources: Array<{
   directive: string;
@@ -163,7 +164,12 @@ function measure() {
     first instanceof HTMLElement && last instanceof HTMLElement
       ? last.offsetTop + last.offsetHeight - first.offsetTop
       : 0;
-  send({ type: 'resize', height: Math.max(1, Math.ceil(content.getBoundingClientRect().height)), contentHeight });
+  const height = Math.max(1, Math.ceil(content.getBoundingClientRect().height));
+  if (lastDimensions?.height === height && lastDimensions.contentHeight === contentHeight) {
+    return;
+  }
+  lastDimensions = { height, contentHeight };
+  send({ type: 'resize', height, contentHeight });
 }
 
 async function renderDiagrams(command: RenderCommand, container: HTMLElement) {
