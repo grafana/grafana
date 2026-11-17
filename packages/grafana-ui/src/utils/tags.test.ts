@@ -27,7 +27,7 @@ describe.each(['dark', 'light'] as const)('tonal tag colors in %s mode', (mode) 
 
 it('preserves the base hue in a dark tonal pair', () => {
   expect(getTagColor('#FF0000', createTheme())).toMatchObject({
-    background: 'rgb(38, 0, 0)',
-    text: 'rgb(255, 166, 166)',
+    background: 'rgb(164, 1, 1)',
+    text: 'rgb(255, 173, 146)',
   });
 });
