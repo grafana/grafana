@@ -5,7 +5,8 @@ name: Deploy frontend preview
 # frontend PR preview feature
 #
 # PRs with backend changes still deploy, but the status comment warns that the
-# preview may not work correctly.
+# preview may not work correctly. Backend-only PRs are not deployed; the bot
+# comments instead.
 #
 # NOTE: the `/deploy-to-fs` command is temporary, while we test this
 # mechanism. The plan is to later fold it into `/deploy-to-hg`: that command
@@ -46,6 +47,7 @@ jobs:
       pr-number: ${{ steps.pr.outputs.number }}
       head-sha: ${{ steps.check.outputs.head-sha }}
       has-backend-changes: ${{ steps.check.outputs.has-backend-changes }}
+      backend-only: ${{ steps.check.outputs.backend-only }}
     steps:
       # Checkout the default branch (not the PR merge ref) so the local
       # actions used by this job always run trusted code
@@ -88,6 +90,25 @@ jobs:
         run: |
           gh api "repos/${REPO}/issues/${PR_NUMBER}/labels" -f "labels[]=deploy-frontend-preview"
           gh api "repos/${REPO}/issues/comments/${COMMENT_ID}/reactions" -f content=rocket
+
+  comment-backend-only:
+    name: Comment that the PR is backend-only
+    needs: check
+    if: github.event_name == 'issue_comment' && needs.check.outputs.backend-only == 'true'
+    runs-on: ubuntu-arm64-small
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Comment that there is nothing to preview
+        uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
+        with:
+          header: frontend-preview
+          number: ${{ needs.check.outputs.pr-number }}
+          GITHUB_TOKEN: ${{ github.token }}
+          message: |
+            ### Frontend preview
+
+            ℹ️ This PR only contains backend changes, so there is no frontend to preview and nothing was deployed.
 
   comment-building:
     name: Comment that the build started
