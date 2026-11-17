@@ -79,8 +79,11 @@ To create a custom dashboard template, follow these steps:
 
 1. Create or navigate to a dashboard that you want to use as a template.
 1. When you're satisfied with the dashboard, click **Save > Save as template**.
-1. Enter a unique name for the template.
-1. (Optional) Enter a description for the template.
+1. Enter a unique title for the template.
+
+   This name is separate from the dashboard title.
+
+1. (Optional) Enter a description and set tags for the template.
 1. Click **Save**.
 
 Now the template is available in the **Custom** tab of the **Start a dashboard from a template** dialog box.
@@ -91,6 +94,7 @@ Refer to the following sections for directions on [editing](#edit-custom-dashboa
 ### Manage custom dashboard templates
 
 After you create a custom dashboard template, you can edit or delete it at any time.
+You can also update its title, description, and tags.
 The following sections describe how.
 
 #### Edit custom dashboard templates
@@ -115,6 +119,34 @@ To make changes to a custom dashboard template, follow these steps:
 1. Click the dashboard mode selector and select **Viewing**.
 
 Users who open the template now see the updated content.
+
+#### Edit template metadata
+
+To update the template title, description, and tags, follow these steps:
+
+1. Click **Dashboards** in the primary menu.
+1. Click **New** and select **Use template** in the drop-down menu.
+
+   The **Start a dashboard from a template** dialog box opens.
+
+1. In the top-right corner of the template you want to manage, click the actions menu.
+1. Click **Edit**.
+
+   The dashboard template opens in edit mode, displaying a banner indicating that this is a template.
+
+1. Click the **Dashboard options** icon in the toolbar to open the sidebar.
+1. In the sidebar, click **View all settings**.
+1. In the **Template** tab, update the following, as needed:
+
+   - **Template title**
+   - **Template description**
+   - **Template tags**
+
+1. Click **Save**.
+
+{{< admonition type="tip" >}}
+You can also delete a template from the **Template** tab using steps 4-6 of the following directions.
+{{< /admonition >}}
 
 #### Delete custom dashboard templates
 
