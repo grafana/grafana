@@ -1078,6 +1078,68 @@ describe('TableNG', () => {
       expect(screen.getByText('30')).toBeInTheDocument();
     });
 
+    describe('expandAllRows across data updates', () => {
+      const makeExpandAllFrame = (keys: string[]): DataFrame =>
+        withFieldOverrides(
+          toDataFrame({
+            name: 'ExpandAll',
+            length: keys.length,
+            meta: { custom: { expandAllRows: true } },
+            fields: [
+              { name: 'Label', type: FieldType.string, values: keys.map((k) => `Row ${k}`), config: {} },
+              {
+                name: '__nestedFrames',
+                type: FieldType.nestedFrames,
+                values: keys.map((k) => [
+                  {
+                    meta: { custom: { stableRowKey: k, noHeader: true } },
+                    length: 1,
+                    fields: [{ name: 'Info', type: FieldType.string, values: [`nested-${k}`], config: {} }],
+                  },
+                ]),
+                config: {},
+              },
+            ],
+          })
+        );
+
+      it('expands a row that a later result adds', () => {
+        const { rerender } = render(<TableNG data={makeExpandAllFrame(['A', 'B'])} width={800} height={600} />);
+        expect(screen.getByText('nested-A')).toBeInTheDocument();
+        expect(screen.getByText('nested-B')).toBeInTheDocument();
+
+        rerender(<TableNG data={makeExpandAllFrame(['A', 'B', 'C'])} width={800} height={600} />);
+
+        expect(screen.getByText('nested-A')).toBeInTheDocument();
+        expect(screen.getByText('nested-B')).toBeInTheDocument();
+        expect(screen.getByText('nested-C')).toBeInTheDocument();
+      });
+
+      it('keeps a row the user collapsed closed when a later result adds a row', async () => {
+        const { rerender } = render(<TableNG data={makeExpandAllFrame(['A', 'B'])} width={800} height={600} />);
+
+        await user.click(screen.getAllByRole('button', { name: 'Collapse row' })[0]);
+        expect(screen.queryByText('nested-A')).not.toBeInTheDocument();
+
+        rerender(<TableNG data={makeExpandAllFrame(['A', 'B', 'C'])} width={800} height={600} />);
+
+        expect(screen.queryByText('nested-A')).not.toBeInTheDocument();
+        expect(screen.getByText('nested-B')).toBeInTheDocument();
+        expect(screen.getByText('nested-C')).toBeInTheDocument();
+      });
+
+      it('keeps a row the user collapsed closed when it leaves the result and returns', async () => {
+        const { rerender } = render(<TableNG data={makeExpandAllFrame(['A', 'B'])} width={800} height={600} />);
+
+        await user.click(screen.getAllByRole('button', { name: 'Collapse row' })[0]);
+        rerender(<TableNG data={makeExpandAllFrame(['B'])} width={800} height={600} />);
+        rerender(<TableNG data={makeExpandAllFrame(['A', 'B'])} width={800} height={600} />);
+
+        expect(screen.queryByText('nested-A')).not.toBeInTheDocument();
+        expect(screen.getByText('nested-B')).toBeInTheDocument();
+      });
+    });
+
     it('preserves expanded state by stable key when row order changes on re-render', async () => {
       const makeStableFrame = (order: Array<'key-A' | 'key-B'>): DataFrame => {
         const nestedA = {

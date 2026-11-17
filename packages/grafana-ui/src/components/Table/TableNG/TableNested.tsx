@@ -224,13 +224,22 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     [getCellActions]
   );
 
-  const [expandedRows, setExpandedRows] = useState<Set<string>>(() => {
-    if (data.meta?.custom?.expandAllRows) {
-      const nestedField = data.fields.find((f) => f.type === FieldType.nestedFrames);
-      return new Set(Array.from({ length: data.length }, (_, i) => getStableRowKey(i, nestedField?.values?.[i]?.[0])));
-    }
-    return new Set();
-  });
+  const expandAllRows = Boolean(data.meta?.custom?.expandAllRows);
+  const expandAllRowKeys = useMemo(
+    () => (expandAllRows ? nestedData.map((frame, i) => getStableRowKey(i, frame)) : []),
+    [expandAllRows, nestedData]
+  );
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(() => new Set(expandAllRowKeys));
+  const [seenExpandAllRowKeys, setSeenExpandAllRowKeys] = useState<Set<string>>(() => new Set(expandAllRowKeys));
+  const addedRowKeys = useMemo(
+    () => expandAllRowKeys.filter((key) => !seenExpandAllRowKeys.has(key)),
+    [expandAllRowKeys, seenExpandAllRowKeys]
+  );
+  // Only rows no earlier result contained expand, so a refresh keeps the rows the user collapsed closed.
+  if (addedRowKeys.length > 0) {
+    setSeenExpandAllRowKeys(new Set([...seenExpandAllRowKeys, ...addedRowKeys]));
+    setExpandedRows(new Set([...expandedRows, ...addedRowKeys]));
+  }
 
   const gridRef = useRef<DataGridHandle>(null);
   const scrollbarWidth = useScrollbarWidth(gridRef, height);
