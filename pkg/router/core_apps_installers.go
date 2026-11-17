@@ -23,6 +23,8 @@ import (
 
 	collectionsmanifest "github.com/grafana/grafana/apps/collections/pkg/apis/manifestdata"
 	collectionsapp "github.com/grafana/grafana/apps/collections/pkg/app"
+	preferencesmanifest "github.com/grafana/grafana/apps/preferences/pkg/apis/manifestdata"
+	preferencesapp "github.com/grafana/grafana/apps/preferences/pkg/app"
 	"github.com/grafana/grafana/pkg/apiserver/appsdk"
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/plugins/definition"
@@ -39,20 +41,8 @@ func registerCoreAPIs() bool {
 	return openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagRouterRegisterCoreAPIs, false, openfeature.TransactionContext(ctx))
 }
 
-// newCollectionsInstaller is the installer of the collections app. It is not
-// among the wired installers, because the embedded API server serves the group
-// from its own builder, so the router adds it here.
-func newCollectionsInstaller() (appsdk.AppInstaller, error) {
-	provider := simple.NewAppProvider(collectionsmanifest.LocalManifest(), nil, collectionsapp.New)
-	appConfig := app.Config{
-		KubeConfig:   rest.Config{}, // replaced when the installer initializes the app
-		ManifestData: *collectionsmanifest.LocalManifest().ManifestData,
-	}
-	return appsdk.NewDefaultAppInstaller(provider, appConfig, collectionsmanifest.NewGoTypeAssociator())
-}
-
 // coreAppsFromInstallers builds a core app for each installer, and for the
-// collections app, which has none of its own. They call Grafana's API like an
+// apps in directInstallers. They call Grafana's API like an
 // external app plugin does: through the local token exchange, as the caller. An
 // installer that cannot be served is skipped with a warning, so one bad app
 // does not leave the others unserved.
@@ -63,12 +53,7 @@ func coreAppsFromInstallers(installers []appsdk.AppInstaller, pluginAuth *plugin
 
 	log := logging.DefaultLogger
 
-	// TEMPORARY: hardcode the collections app installer
-	if collections, err := newCollectionsInstaller(); err != nil {
-		log.Warn("router: skipping the collections app", "err", err)
-	} else {
-		installers = append([]appsdk.AppInstaller{collections}, installers...)
-	}
+	installers = append(directInstallers(), installers...)
 
 	apps := make([]CoreApp, 0, len(installers))
 	for _, installer := range installers {
@@ -83,6 +68,46 @@ func coreAppsFromInstallers(installers []appsdk.AppInstaller, pluginAuth *plugin
 		apps = append(apps, coreApp)
 	}
 	return apps, nil
+}
+
+// directInstallers are the installers of the apps the embedded API server has
+// no installer for: it serves their groups from its own builders, so the router
+// adds them here. An app that cannot be installed is skipped with a warning.
+func directInstallers() []appsdk.AppInstaller {
+	log := logging.DefaultLogger
+	installers := []appsdk.AppInstaller{}
+
+	collectionsManifest := collectionsmanifest.LocalManifest()
+	collections, err := appsdk.NewDefaultAppInstaller(
+		simple.NewAppProvider(collectionsManifest, nil, collectionsapp.New),
+		app.Config{
+			KubeConfig:   rest.Config{}, // replaced when the installer initializes the app
+			ManifestData: *collectionsManifest.ManifestData,
+		},
+		collectionsmanifest.NewGoTypeAssociator(),
+	)
+	if err != nil {
+		log.Warn("router: skipping the collections app", "err", err)
+	} else {
+		installers = append(installers, collections)
+	}
+
+	preferencesManifest := preferencesmanifest.LocalManifest()
+	preferences, err := appsdk.NewDefaultAppInstaller(
+		simple.NewAppProvider(preferencesManifest, nil, preferencesapp.New),
+		app.Config{
+			KubeConfig:   rest.Config{}, // replaced when the installer initializes the app
+			ManifestData: *preferencesManifest.ManifestData,
+		},
+		preferencesmanifest.NewGoTypeAssociator(),
+	)
+	if err != nil {
+		log.Warn("router: skipping the preferences app", "err", err)
+	} else {
+		installers = append(installers, preferences)
+	}
+
+	return installers
 }
 
 // coreAppPluginID names the identity a core app is called with, from its API
