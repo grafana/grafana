@@ -260,9 +260,9 @@ and `fixedNames` in the app manifest:
 - A custom route for a name with no stored object is still sent to the app,
   with the name alone, when the route operation declares `allowMissingParent`.
 
-`grafana.routeCoreApps` (with `grafana.useRouterMiddleware`)
+`router.registerCoreAPIs` (with `grafana.useRouterMiddleware`)
 serves `collections.grafana.app` from the `apps/collections` app, run in this
-process, and stops the embedded API server registering it. The app authenticates
+process, ahead of the embedded API server. The app authenticates
 through the same local token exchange as a plugin process (see above), so its
 calls to Grafana act as the caller. Grafana must sign plugin tokens itself for
 this.

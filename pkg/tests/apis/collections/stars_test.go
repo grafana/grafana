@@ -47,7 +47,7 @@ func TestIntegrationStars(t *testing.T) {
 		if routed {
 			flags = append(flags,
 				featuremgmt.FlagGrafanaUseRouterMiddleware,
-				featuremgmt.FlagGrafanaRouteCoreApps,
+				featuremgmt.FlagRouterRegisterCoreAPIs,
 				featuremgmt.FlagApppluginsLoadAppManifest,
 			)
 		}

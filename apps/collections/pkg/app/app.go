@@ -4,11 +4,25 @@ import (
 	"context"
 	"fmt"
 
+	"k8s.io/client-go/rest"
+
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/k8s"
 	"github.com/grafana/grafana-app-sdk/simple"
 	"github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1"
+	"github.com/grafana/grafana/apps/collections/pkg/apis/manifestdata"
+	"github.com/grafana/grafana/pkg/apiserver/appsdk"
 )
+
+// NewInstaller used to register with the router
+func NewInstaller() (appsdk.AppInstaller, error) {
+	provider := simple.NewAppProvider(manifestdata.LocalManifest(), nil, New)
+	appConfig := app.Config{
+		KubeConfig:   rest.Config{}, // replaced when the installer initializes the app
+		ManifestData: *manifestdata.LocalManifest().ManifestData,
+	}
+	return appsdk.NewDefaultAppInstaller(provider, appConfig, manifestdata.NewGoTypeAssociator())
+}
 
 // New builds the collections app. Its kube client is made the way an external
 // app's is, so the update route acts as the caller through the request context.

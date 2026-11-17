@@ -13,12 +13,16 @@ import (
 	"k8s.io/client-go/rest"
 
 	"github.com/grafana/authlib/authn"
+
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/k8s"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/plugin"
 	"github.com/grafana/grafana-app-sdk/plugin/appadapter"
+	"github.com/grafana/grafana-app-sdk/simple"
 
+	collectionsmanifest "github.com/grafana/grafana/apps/collections/pkg/apis/manifestdata"
+	collectionsapp "github.com/grafana/grafana/apps/collections/pkg/app"
 	"github.com/grafana/grafana/pkg/apiserver/appsdk"
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/plugins/definition"
@@ -35,18 +39,37 @@ func registerCoreAPIs() bool {
 	return openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagRouterRegisterCoreAPIs, false, openfeature.TransactionContext(ctx))
 }
 
-// coreAppsFromInstallers builds a core app for each installer. They call
-// Grafana's API like an external app plugin does: through the local token
-// exchange, as the caller. An installer that cannot be served is skipped
-// with a warning, so one bad app does not leave the others unserved.
-func coreAppsFromInstallers(installers []appsdk.AppInstaller, pluginAuth *pluginauth.Config) ([]CoreApp, error) {
-	if len(installers) == 0 {
-		return nil, nil
+// newCollectionsInstaller is the installer of the collections app. It is not
+// among the wired installers, because the embedded API server serves the group
+// from its own builder, so the router adds it here.
+func newCollectionsInstaller() (appsdk.AppInstaller, error) {
+	provider := simple.NewAppProvider(collectionsmanifest.LocalManifest(), nil, collectionsapp.New)
+	appConfig := app.Config{
+		KubeConfig:   rest.Config{}, // replaced when the installer initializes the app
+		ManifestData: *collectionsmanifest.LocalManifest().ManifestData,
 	}
+	return appsdk.NewDefaultAppInstaller(provider, appConfig, collectionsmanifest.NewGoTypeAssociator())
+}
+
+// coreAppsFromInstallers builds a core app for each installer, and for the
+// collections app, which has none of its own. They call Grafana's API like an
+// external app plugin does: through the local token exchange, as the caller. An
+// installer that cannot be served is skipped with a warning, so one bad app
+// does not leave the others unserved.
+func coreAppsFromInstallers(installers []appsdk.AppInstaller, pluginAuth *pluginauth.Config) ([]CoreApp, error) {
 	if !pluginAuth.LocalTokens() || pluginAuth.LocalAPIURL() == "" {
 		return nil, fmt.Errorf("%s needs Grafana to sign plugin tokens itself, and a local API URL to reach", featuremgmt.FlagRouterRegisterCoreAPIs)
 	}
+
 	log := logging.DefaultLogger
+
+	// TEMPORARY: hardcode the collections app installer
+	if collections, err := newCollectionsInstaller(); err != nil {
+		log.Warn("router: skipping the collections app", "err", err)
+	} else {
+		installers = append([]appsdk.AppInstaller{collections}, installers...)
+	}
+
 	apps := make([]CoreApp, 0, len(installers))
 	for _, installer := range installers {
 		if installer == nil || installer.ManifestData() == nil {

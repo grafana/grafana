@@ -43,10 +43,6 @@ const (
 	// register the wired-in core APIs with the router
 	FlagRouterRegisterCoreAPIs = "router.registerCoreAPIs"
 
-	// FlagGrafanaRouteCoreApps
-	// implement preferences and collections as app plugins
-	FlagGrafanaRouteCoreApps = "grafana.routeCoreApps"
-
 	// FlagGrafanaUseRouterMiddleware
 	// intercept /apis/... and /openapi/v3/... requests in middleware.
 	FlagGrafanaUseRouterMiddleware = "grafana.useRouterMiddleware"
