@@ -2,8 +2,6 @@ package datasource
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -11,9 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/config"
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
 	dsV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/web"
@@ -73,7 +69,7 @@ func (r *queryConvertREST) convertQueryDataRequest(ctx context.Context, req *htt
 	}
 
 	ds := dqr.Queries[0].Datasource
-	pluginCtx, err := r.contextProvider.PluginContextForDataSource(ctx, &backend.DataSourceInstanceSettings{
+	_, err = r.contextProvider.PluginContextForDataSource(ctx, &backend.DataSourceInstanceSettings{
 		Type:       ds.Type,
 		UID:        ds.UID,
 		APIVersion: ds.APIVersion,
@@ -82,34 +78,9 @@ func (r *queryConvertREST) convertQueryDataRequest(ctx context.Context, req *htt
 		return nil, err
 	}
 
-	ctx = config.WithGrafanaConfig(ctx, pluginCtx.GrafanaConfig)
-	raw, err := json.Marshal(dqr)
-	if err != nil {
-		return nil, fmt.Errorf("marshal: %w", err)
-	}
-	convertRequest := &pluginv3.ConvertObjectsRequest_builder{
-		Objects: [][]byte{raw},
-	}
-	// NOOP passthough for now!!!
-	convertResponse := pluginv3.ConvertObjectsResponse_builder{
-		Converted: []*pluginv3.ConvertObjectsResponse_Object{
-			pluginv3.ConvertObjectsResponse_Object_builder{
-				Raw: convertRequest.Objects[0],
-			}.Build(),
-		},
-	}.Build()
-
-	qr := &dsV0.QueryDataRequest{}
-	for _, obj := range convertResponse.GetConverted() {
-		q := &data.DataQuery{}
-		err = json.Unmarshal(obj.GetRaw(), q)
-		if err != nil {
-			return nil, fmt.Errorf("unmarshal: %w", err)
-		}
-		qr.Queries = append(qr.Queries, *q)
-	}
-
-	return qr, nil
+	// NOOP passthrough for now: the plugin client no longer exposes conversion.
+	// TODO: call the v3 conversion client and unmarshal each converted object.
+	return &dsV0.QueryDataRequest{Queries: dqr.Queries}, nil
 }
 
 func (r *queryConvertREST) Connect(ctx context.Context, name string, _ runtime.Object, responder rest.Responder) (http.Handler, error) {
