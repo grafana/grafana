@@ -52,7 +52,7 @@ const TagComponent = forwardRef<HTMLElement, Props>(
     const classes = cx(
       styles.wrapper,
       {
-        [styles.hover]: onClick !== undefined && !disabled,
+        [styles.hover]: onClick !== undefined && !disabled && !onRemove,
         [styles.disabled]: disabled,
         [styles.removable]: Boolean(onRemove),
       },
@@ -71,7 +71,7 @@ const TagComponent = forwardRef<HTMLElement, Props>(
           {onClick ? (
             <button
               type="button"
-              className={styles.labelButton}
+              className={cx(styles.labelButton, { [styles.hover]: !disabled })}
               onClick={onTagClick}
               disabled={disabled}
               aria-label={ariaLabel}
@@ -103,7 +103,7 @@ const TagComponent = forwardRef<HTMLElement, Props>(
     }
 
     return onClick ? (
-      <button {...rest} disabled={disabled} className={classes} onClick={onTagClick} ref={rootRef}>
+      <button {...rest} type="button" disabled={disabled} className={classes} onClick={onTagClick} ref={rootRef}>
         {icon && <Icon name={icon} />}
         {name}
       </button>

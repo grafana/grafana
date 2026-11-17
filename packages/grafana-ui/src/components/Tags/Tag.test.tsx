@@ -236,6 +236,16 @@ describe('Tag', () => {
     expect(tag).toBeInTheDocument();
   });
 
+  it('renders a clickable tag as a non-submit button inside a form', () => {
+    render(
+      <form>
+        <Tag name="service" onClick={jest.fn()} />
+      </form>
+    );
+
+    expect(screen.getByRole('button', { name: 'service' })).toHaveProperty('type', 'button');
+  });
+
   it('should not render as button when onClick is not provided', () => {
     render(<Tag name="test-tag" />);
 

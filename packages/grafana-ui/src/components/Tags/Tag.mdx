@@ -81,9 +81,10 @@ On a static tag, it applies disabled styling and `aria-disabled`.
 
 ## States
 
-Tags use the active theme's colors and styling. An enabled tag with a label action dims as a whole on hover,
-including when hovering its close button. A remove-only tag does not dim on hover, and the close button has no
-hover background. Keyboard focus remains visible on each action.
+Tags use the active theme's colors and styling. On a removable tag, hovering an enabled label action dims only
+the label; hovering the close button does not dim the label or tag background. A clickable tag without removal
+still dims as a whole on hover. A remove-only tag does not dim on hover, and the close button has no hover
+background. Keyboard focus remains visible on each action.
 
 <Canvas of={TagStories.States} />
 
