@@ -281,7 +281,7 @@
     "@grafana/lezer-logql": "^0.4.1",
     "@grafana/llm": "1.0.9",
     "@grafana/o11y-ds-frontend": "workspace:*",
-    "@grafana/plugin-ui": "^0.17.3",
+    "@grafana/plugin-ui": "^0.18.0",
     "@grafana/prometheus": "13.2.3",
     "@grafana/runtime": "workspace:*",
     "@grafana/scenes": "9.2.2",
