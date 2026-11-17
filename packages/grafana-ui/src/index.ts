@@ -263,13 +263,8 @@ export { RangeSlider } from './components/Slider/RangeSlider';
 export { Form } from './components/Forms/Form';
 export { sharedInputStyle } from './components/Forms/commonStyles';
 export { InputControl } from './components/InputControl';
-export {
-  Button,
-  LinkButton,
-  type ButtonVariant,
-  type ButtonProps,
-  clearButtonStyles,
-} from './components/Button/Button';
+export { Button, type ButtonVariant, type ButtonProps, clearButtonStyles } from './components/Button/Button';
+export { LinkButton } from './components/LinkButton/LinkButton';
 export { ButtonGroup } from './components/Button/ButtonGroup';
 export { InlineButton, type InlineButtonProps } from './components/Button/InlineButton';
 export { ToolbarButton } from './components/ToolbarButton/ToolbarButton';
