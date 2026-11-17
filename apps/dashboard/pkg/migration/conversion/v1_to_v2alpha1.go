@@ -2712,6 +2712,11 @@ func buildFieldColor(colorMap map[string]interface{}) *dashv2alpha1.DashboardFie
 		fieldColor.SeriesBy = &sb
 	}
 
+	// reverse (optional)
+	if reverse, ok := colorMap["reverse"].(bool); ok {
+		fieldColor.Reverse = &reverse
+	}
+
 	return &fieldColor
 }
 

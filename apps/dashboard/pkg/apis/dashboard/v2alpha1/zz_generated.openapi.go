@@ -2110,6 +2110,13 @@ func schema_pkg_apis_dashboard_v2alpha1_DashboardFieldColor(ref common.Reference
 							Format:      "",
 						},
 					},
+					"reverse": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Reverse the order of the colors in a by value color scheme.",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 				},
 				Required: []string{"mode"},
 			},
