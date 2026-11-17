@@ -314,6 +314,77 @@ func (s *secureValueMetadataStorage) Read(ctx context.Context, namespace xkube.N
 	return secureValueKub, nil
 }
 
+func (s *secureValueMetadataStorage) ReadMany(ctx context.Context, namespace xkube.Namespace, names []string) (map[string]*secretv1beta1.SecureValue, error) {
+	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.ReadMany", trace.WithAttributes(
+		attribute.StringSlice("names", names),
+		attribute.String("namespace", namespace.String()),
+	))
+	defer span.End()
+
+	values := make(map[string]*secretv1beta1.SecureValue, len(names))
+	if len(names) == 0 {
+		return values, nil
+	}
+
+	requested := make(map[string]struct{}, len(names))
+	uniqueNames := make([]string, 0, len(names))
+	for _, name := range names {
+		if _, ok := requested[name]; ok {
+			continue
+		}
+		requested[name] = struct{}{}
+		uniqueNames = append(uniqueNames, name)
+	}
+	req := readManySecureValues{
+		SQLTemplate: sqltemplate.New(s.dialect),
+		Namespace:   namespace.String(),
+		Names:       uniqueNames,
+	}
+
+	query, err := sqltemplate.Execute(sqlSecureValueReadMany, req)
+	if err != nil {
+		return nil, fmt.Errorf("execute template %q: %w", sqlSecureValueReadMany.Name(), err)
+	}
+
+	rows, err := s.db.QueryContext(ctx, query, req.GetArgs()...)
+	if err != nil {
+		return nil, fmt.Errorf("reading rows: %w", err)
+	}
+	defer func() { _ = rows.Close() }()
+
+	for rows.Next() {
+		var row secureValueDB
+
+		if err := rows.Scan(
+			&row.GUID, &row.Name, &row.Namespace,
+			&row.Annotations, &row.Labels,
+			&row.Created, &row.CreatedBy,
+			&row.Updated, &row.UpdatedBy,
+			&row.Description, &row.Keeper, &row.Decrypters, &row.Ref, &row.ExternalID, &row.Active, &row.Version,
+			&row.OwnerReferenceAPIGroup, &row.OwnerReferenceAPIVersion, &row.OwnerReferenceKind, &row.OwnerReferenceName,
+		); err != nil {
+			return nil, fmt.Errorf("failed to scan secure value row: %w", err)
+		}
+
+		if _, ok := requested[row.Name]; !ok || row.Namespace != namespace.String() {
+			return nil, fmt.Errorf("bug: expected to read secure values %+v from namespace %+v, but got a different row", names, namespace)
+		}
+
+		value, err := row.toKubernetes()
+		if err != nil {
+			return nil, fmt.Errorf("convert to kubernetes object: %w", err)
+		}
+
+		values[value.Name] = value
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("read rows error: %w", err)
+	}
+
+	return values, nil
+}
+
 func (s *secureValueMetadataStorage) List(ctx context.Context, namespace xkube.Namespace) (svList []secretv1beta1.SecureValue, listErr error) {
 	start := s.clock.Now()
 	ctx, span := s.tracer.Start(ctx, "SecureValueMetadataStorage.List", trace.WithAttributes(

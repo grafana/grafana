@@ -6,9 +6,11 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/puzpuzpuz/xsync/v4"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -19,6 +21,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
+	decryptcontracts "github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/storage/secret/metadata/metrics"
@@ -57,7 +60,11 @@ type decryptStorage struct {
 }
 
 // Decrypt decrypts a secure value from the keeper.
-func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace, name string) (_ secretv1beta1.ExposedSecureValue, decryptErr error) {
+func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace, name string) (secretv1beta1.ExposedSecureValue, error) {
+	return s.decryptOne(ctx, namespace, name, nil)
+}
+
+func (s *decryptStorage) decryptOne(ctx context.Context, namespace xkube.Namespace, name string, sv *secretv1beta1.SecureValue) (_ secretv1beta1.ExposedSecureValue, decryptErr error) {
 	ctx, span := s.tracer.Start(ctx, "DecryptStorage.Decrypt", trace.WithAttributes(
 		attribute.String("namespace", namespace.String()),
 		attribute.String("name", name),
@@ -125,13 +132,19 @@ func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace,
 	// The auth token will not necessarily have the permission to read the secure value metadata,
 	// but we still need to do it to inspect the `decrypters` field, hence the actual `authorize`
 	// function call happens after this.
-	sv, err := s.secureValueMetadataStorage.Read(ctx, namespace, name, contracts.ReadOpts{})
-	if err != nil {
-		if errors.Is(err, context.Canceled) {
-			return "", fmt.Errorf("operation canceled while reading secure value metadata storage: %v (%w)", err, context.Canceled)
-		}
+	if sv == nil {
+		var err error
+		sv, err = s.secureValueMetadataStorage.Read(ctx, namespace, name, contracts.ReadOpts{})
+		if err != nil {
+			if errors.Is(err, context.Canceled) {
+				return "", fmt.Errorf("operation canceled while reading secure value metadata storage: %v (%w)", err, context.Canceled)
+			}
 
-		return "", fmt.Errorf("failed to read secure value metadata storage: %v (%w)", err, contracts.ErrDecryptNotFound)
+			return "", fmt.Errorf("failed to read secure value metadata storage: %v (%w)", err, contracts.ErrDecryptNotFound)
+		}
+		if sv == nil {
+			return "", fmt.Errorf("bug: sv should not be nil: %v %v", name, namespace)
+		}
 	}
 
 	decrypterIdentity, authorized, reason := s.decryptAuthorizer.Authorize(ctx, namespace, name, sv.Spec.Decrypters, sv.OwnerReferences)
@@ -176,4 +189,61 @@ func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace,
 	}
 
 	return exposedValue, nil
+}
+
+func (s *decryptStorage) DecryptMany(ctx context.Context, namespace xkube.Namespace, names []string) (contracts.DecryptManyResult, error) {
+	ctx, span := s.tracer.Start(ctx, "DecryptStorage.DecryptMany", trace.WithAttributes(
+		attribute.String("namespace", namespace.String()),
+		attribute.StringSlice("names", names),
+	))
+	defer span.End()
+
+	// Basic authn check before reading a secure value metadata, it is here on purpose.
+	if _, ok := claims.AuthInfoFrom(ctx); !ok {
+		return nil, fmt.Errorf("no auth info in context (%w)", contracts.ErrDecryptNotAuthorized)
+	}
+
+	// The auth token will not necessarily have the permission to read the secure value metadata,
+	// but we still need to do it to inspect the `decrypters` field, hence the actual `authorize`
+	// function call happens after this.
+	values, readErr := s.secureValueMetadataStorage.ReadMany(ctx, namespace, names)
+	if readErr != nil {
+		if errors.Is(readErr, context.Canceled) {
+			return nil, context.Canceled
+		}
+
+		return nil, contracts.ErrDecryptNotFound
+	}
+
+	exposed := xsync.NewMap[string, decryptcontracts.DecryptResult](xsync.WithPresize(len(names)))
+	seen := make(map[string]struct{}, len(names))
+
+	var group sync.WaitGroup
+	for _, name := range names {
+		if _, found := seen[name]; found {
+			continue
+		}
+		seen[name] = struct{}{}
+
+		sv, found := values[name]
+		if !found {
+			// not in storage, immediately return not found.
+			exposed.Store(name, decryptcontracts.NewDecryptResultErr(contracts.ErrDecryptNotFound))
+			continue
+		}
+
+		group.Go(func() {
+			value, err := s.decryptOne(ctx, namespace, name, sv)
+			if err != nil {
+				exposed.Store(name, decryptcontracts.NewDecryptResultErr(err))
+				return
+			}
+
+			exposed.Store(name, decryptcontracts.NewDecryptResultValue(&value))
+		})
+	}
+
+	group.Wait()
+
+	return exposed, nil
 }

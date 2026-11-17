@@ -680,6 +680,53 @@ func (s *kvSecureValueMetadataStorage) Read(ctx context.Context, namespace xkube
 	return value.toKubernetes()
 }
 
+func (s *kvSecureValueMetadataStorage) ReadMany(ctx context.Context, namespace xkube.Namespace, names []string) (map[string]*v1beta1.SecureValue, error) {
+	ctx, span := s.tracer.Start(ctx, "KVSecureValueMetadataStorage.ReadMany", trace.WithAttributes(
+		attribute.StringSlice("names", names),
+		attribute.String("namespace", namespace.String()),
+	))
+	defer span.End()
+
+	values := make(map[string]*v1beta1.SecureValue, len(names))
+	if len(names) == 0 {
+		return values, nil
+	}
+
+	requested := make(map[string]struct{}, len(names))
+	keys := make([]string, 0, len(names))
+	for _, name := range names {
+		if _, ok := requested[name]; ok {
+			continue
+		}
+		requested[name] = struct{}{}
+		keys = append(keys, makeActiveSecretKey(namespace.String(), name))
+	}
+
+	for entry, err := range s.kv.BatchGet(ctx, kvSectionSecureValues, keys) {
+		if err != nil {
+			return nil, fmt.Errorf("reading secure values from kv store: %w", err)
+		}
+
+		value, err := parse[secureValueKV](entry.Value)
+		if err != nil {
+			return nil, fmt.Errorf("parsing secure value: %w", err)
+		}
+
+		if _, ok := requested[value.Name]; !ok || value.Namespace != namespace.String() || entry.Key != makeActiveSecretKey(namespace.String(), value.Name) {
+			return nil, fmt.Errorf("bug: expected to read secure values %+v from namespace %+v, but got a different row", names, namespace)
+		}
+
+		sv, err := value.toKubernetes()
+		if err != nil {
+			return nil, fmt.Errorf("convert to kubernetes object: %w", err)
+		}
+
+		values[sv.Name] = sv
+	}
+
+	return values, nil
+}
+
 func (s *kvSecureValueMetadataStorage) SetExternalID(ctx context.Context, namespace xkube.Namespace, name string, version int64, externalID contracts.ExternalID) (setExtIDErr error) {
 	start := s.clock.Now()
 	ctx, span := s.tracer.Start(ctx, "KVSecureValueMetadataStorage.SetExternalID", trace.WithAttributes(

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/go-sql-driver/mysql"
@@ -93,16 +94,18 @@ func TestRetryTransientTransaction(t *testing.T) {
 	})
 
 	t.Run("honors context cancellation while waiting", func(t *testing.T) {
-		ctx, cancel := context.WithCancel(t.Context())
-		defer cancel()
-		attempts := 0
-		err := RetryOnTransientTransactionError(ctx, func() error {
-			attempts++
-			time.AfterFunc(time.Millisecond, cancel)
-			return &mysql.MySQLError{Number: 1213}
-		})
+		synctest.Test(t, func(t *testing.T) {
+			ctx, cancel := context.WithCancel(t.Context())
+			defer cancel()
+			attempts := 0
+			err := RetryOnTransientTransactionError(ctx, func() error {
+				attempts++
+				time.AfterFunc(time.Millisecond, cancel)
+				return &mysql.MySQLError{Number: 1213}
+			})
 
-		require.ErrorIs(t, err, context.Canceled)
-		require.Equal(t, 1, attempts)
+			require.ErrorIs(t, err, context.Canceled)
+			require.Equal(t, 1, attempts)
+		})
 	})
 }

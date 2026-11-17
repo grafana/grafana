@@ -46,6 +46,7 @@ type SecureValueIdentifier struct {
 type SecureValueMetadataStorage interface {
 	Create(ctx context.Context, keeper string, sv *secretv1beta1.SecureValue, actorUID string) (*secretv1beta1.SecureValue, error)
 	Read(ctx context.Context, namespace xkube.Namespace, name string, opts ReadOpts) (*secretv1beta1.SecureValue, error)
+	ReadMany(ctx context.Context, namespace xkube.Namespace, names []string) (map[string]*secretv1beta1.SecureValue, error)
 	List(ctx context.Context, namespace xkube.Namespace) ([]secretv1beta1.SecureValue, error)
 	SetVersionToActive(ctx context.Context, namespace xkube.Namespace, name string, version int64, observedVersion int64) error
 	SetVersionToInactive(ctx context.Context, namespace xkube.Namespace, name string, version int64) error
