@@ -3185,6 +3185,21 @@
     },
     {
       "metadata": {
+        "name": "grafana.folderPickerSearchFullPath",
+        "resourceVersion": "1794580155371",
+        "creationTimestamp": "2026-11-13T14:29:15Z"
+      },
+      "spec": {
+        "description": "Shows the full path of each folder in the folder picker search results, instead of only its immediate parent",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.frontendLegacyAPIHandling",
         "resourceVersion": "1789557808090",
         "creationTimestamp": "2026-07-08T09:41:08Z",

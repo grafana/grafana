@@ -3492,6 +3492,15 @@ var (
 			Generate:     Generate{React: true},
 		},
 		{
+			Name:         "grafana.folderPickerSearchFullPath",
+			Description:  "Shows the full path of each folder in the folder picker search results, instead of only its immediate parent",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendNavigation,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
 			Name:        "grafana.panelOptionInterpolation",
 			Description: "Enables setting panel field config options from dashboard variable expressions on v2 dashboards",
 			Stage:       FeatureStageExperimental,
