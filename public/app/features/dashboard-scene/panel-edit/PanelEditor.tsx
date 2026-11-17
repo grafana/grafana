@@ -71,6 +71,7 @@ interface PanelEditSummary {
   changed_transformations: boolean;
   changed_panel_info: boolean;
   changed_repeat: boolean;
+  // The dashboard or the library panel was saved from inside the editor.
   saved_in_editor: boolean;
   panel_type: string;
   panel_id: number;
@@ -488,6 +489,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   };
 
   public onConfirmSaveLibraryPanel = () => {
+    this._savedInEditor = true;
     saveLibPanel(this.state.panelRef.resolve());
     this.setState({ isDirty: false });
     locationService.partial({ editPanel: null });

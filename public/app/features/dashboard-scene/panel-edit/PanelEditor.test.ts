@@ -630,6 +630,25 @@ describe('PanelEditor', () => {
       });
     });
 
+    it('reports saving a library panel from the editor as saved in the editor', async () => {
+      const saveLibPanel = jest.spyOn(libAPI, 'saveLibPanel').mockResolvedValue(undefined);
+      try {
+        const { panelEditor } = await setup();
+
+        panelEditor.onConfirmSaveLibraryPanel();
+        closeEditor();
+
+        expect(saveLibPanel).toHaveBeenCalledTimes(1);
+        expect(reported('panel_edit_closed')[0].properties).toEqual({
+          ...NO_CHANGES,
+          saved_in_editor: true,
+          outcome: 'kept',
+        });
+      } finally {
+        saveLibPanel.mockRestore();
+      }
+    });
+
     it('reports a discarded new panel as a new panel with the discarded outcome', async () => {
       const { panelEditor } = await setup({ isNewPanel: true });
 
