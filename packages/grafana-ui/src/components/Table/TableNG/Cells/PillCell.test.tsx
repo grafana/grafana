@@ -204,8 +204,8 @@ describe('PillCell', () => {
 
   describe('Visual refresh', () => {
     it.each([
-      ['dark', 'rgb(255, 115, 97)', 'rgb(116, 1, 0)'],
-      ['light', 'rgb(255, 115, 97)', 'rgb(116, 1, 0)'],
+      ['dark', 'rgb(255, 0, 0)', 'rgb(55, 0, 0)'],
+      ['light', 'rgb(255, 0, 0)', 'rgb(55, 0, 0)'],
     ] as const)('renders mapped pills with tonal colors in %s mode', (mode, backgroundColor, color) => {
       const theme = createTheme({ colors: { mode } });
       theme.flags.visualDesignRefresh = true;
@@ -264,7 +264,7 @@ describe('PillCell', () => {
       expect(screen.getByText('value1')).toHaveStyle({ backgroundColor: background, color: text });
     });
 
-    it('derives a contrasting tonal pair from a fixed field color', () => {
+    it('keeps a fixed field color as the background and derives contrasting text', () => {
       const mockField = fieldWithValues(['value1']);
       const fixed = {
         ...mockField,
@@ -273,7 +273,7 @@ describe('PillCell', () => {
 
       renderRefreshed(fixed);
       const pill = screen.getByText('value1');
-      expect(pill.style.backgroundColor).not.toBe(
+      expect(pill.style.backgroundColor).toBe(
         tinycolor(refreshTheme.visualization.getColorByName('red')).toRgbString()
       );
       expect(tinycolor.readability(pill.style.backgroundColor, pill.style.color)).toBeGreaterThanOrEqual(4.5);
@@ -289,7 +289,7 @@ describe('PillCell', () => {
       renderRefreshed(classic);
       const palette = fieldColorModeRegistry.get(FieldColorModeId.PaletteClassic).getColors!(refreshTheme);
       const pill = screen.getByText('value1');
-      expect(pill.style.backgroundColor).not.toBe(tinycolor(getColorByStringHash(palette, 'value1')).toRgbString());
+      expect(pill.style.backgroundColor).toBe(tinycolor(getColorByStringHash(palette, 'value1')).toRgbString());
       expect(tinycolor.readability(pill.style.backgroundColor, pill.style.color)).toBeGreaterThanOrEqual(4.5);
     });
   });

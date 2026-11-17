@@ -49,42 +49,41 @@ function getTonalTagColors(color: string, theme?: GrafanaTheme2) {
 
   base.setAlpha(1);
   const isDark = theme?.isDark ?? true;
+  const background = base.toRgb();
   const source = rgbToOklch(base.toRgb());
-  const themeDirection = isDark ? -1 : 1;
-  // Bright colors can stay closer to their source with dark text, and dark colors with light text,
+  const themeDirection = isDark ? 1 : -1;
+  // Keep the configured background exact. Bright colors can use dark text and dark colors light text,
   // regardless of theme mode. Prefer the theme direction only when both shifts are equal.
-  const preferred = findTonalPair(source, themeDirection);
-  const alternate = findTonalPair(source, -themeDirection);
-  const pair =
+  const preferred = findTextColor(source, background, themeDirection);
+  const alternate = findTextColor(source, background, -themeDirection);
+  const text =
     alternate.meetsContrast && (!preferred.meetsContrast || alternate.delta < preferred.delta) ? alternate : preferred;
 
   return {
-    background: tinycolor(pair.background).toRgbString(),
-    text: tinycolor(pair.text).toRgbString(),
+    background: base.toRgbString(),
+    text: tinycolor(text.color).toRgbString(),
   };
 }
 
-function findTonalPair(source: OklchColor, direction: number) {
+function findTextColor(source: OklchColor, background: RgbColor, direction: number) {
   let lowerDelta = 0;
   let upperDelta = 4;
 
-  // Split required tonal distance 1:3 between background and text. This minimizes a squared
-  // perceptual-distance cost that weights background fidelity three times more heavily.
   for (let index = 0; index < 12; index++) {
     const delta = (lowerDelta + upperDelta) / 2;
-    const pair = getOklchPair(source, delta, direction);
-    if (tinycolor.readability(pair.background, pair.text) >= 4.5) {
+    const color = getTextColor(source, delta, direction);
+    if (tinycolor.readability(background, color) >= 4.5) {
       upperDelta = delta;
     } else {
       lowerDelta = delta;
     }
   }
 
-  const pair = getOklchPair(source, upperDelta, direction);
+  const color = getTextColor(source, upperDelta, direction);
   return {
-    ...pair,
+    color,
     delta: upperDelta,
-    meetsContrast: tinycolor.readability(pair.background, pair.text) >= 4.5,
+    meetsContrast: tinycolor.readability(background, color) >= 4.5,
   };
 }
 
@@ -100,11 +99,8 @@ interface RgbColor {
   b: number;
 }
 
-function getOklchPair(source: OklchColor, delta: number, direction: number) {
-  return {
-    background: oklchToRgb({ ...source, l: clamp(source.l + direction * delta * 0.25) }),
-    text: oklchToRgb({ ...source, l: clamp(source.l - direction * delta * 0.75) }),
-  };
+function getTextColor(source: OklchColor, delta: number, direction: number) {
+  return oklchToRgb({ ...source, l: clamp(source.l + direction * delta) });
 }
 
 function rgbToOklch(rgb: tinycolor.ColorFormats.RGBA): OklchColor {
