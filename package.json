@@ -325,7 +325,7 @@
     "codemirror-json-schema": "^0.8.1",
     "combokeys": "^3.0.0",
     "comlink": "4.4.2",
-    "croner": "^9.0.0",
+    "croner": "^11.0.0",
     "d3": "7.9.2",
     "d3-force": "3.0.1",
     "d3-scale": "^4.0.2",
