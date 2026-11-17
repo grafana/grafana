@@ -37,6 +37,18 @@ The IAM resource-permissions API must also be enabled through `[iam] api` or
 default or add legacy `/api/access-control/` routes. Licensed self-hosted
 Enterprise can use the same API when it is explicitly enabled.
 
+Clients can check admission support without attempting a write:
+
+`GET /apis/iam.grafana.app/v0alpha1/namespaces/<namespace>/resourcepermissions/capabilities?apiGroup=secret.grafana.app&resource=securevalues`
+
+The authenticated endpoint returns `{ "enabled": true }` only when the mapper is
+registered and its current license/configuration check passes. It is absent when
+the ResourcePermission API is disabled. Responses are not cached. Missing endpoints,
+false responses, and failed checks should hide new resource-permission controls
+on clients that support older stacks. This reports admission capability, not the
+caller's permission to administer a secret or completion of separate authorization
+service rollouts. Normal IAM authorization still applies to every assignment.
+
 Two fixed roles follow the existing resource-permission conventions:
 
 - `fixed:secret.securevalues.permissions:reader` grants permission reads.

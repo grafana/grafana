@@ -654,3 +654,21 @@ func TestPostProcessOpenAPI_PermissionItems(t *testing.T) {
 	require.NotNil(t, permissions.Items.Schema)
 	require.Equal(t, "#/components/schemas/"+legacyiamv0.OpenAPIPrefix+"UserPermission", permissions.Items.Schema.Ref.String())
 }
+
+func TestGetAPIRoutes_ResourcePermissionCapabilitiesGate(t *testing.T) {
+	for _, enabled := range []bool{false, true} {
+		b := &IdentityAccessManagementAPIBuilder{
+			features: Features{ResourcePermissionsAPI: enabled},
+			display:  display.NewDisplayHandler(),
+			mappers:  resourcepermission.NewMappersRegistry(),
+		}
+		routes := b.GetAPIRoutes(legacyiamv0.SchemeGroupVersion)
+		found := false
+		for _, route := range routes.Namespace {
+			if route.Path == "resourcepermissions/capabilities" {
+				found = true
+			}
+		}
+		require.Equal(t, enabled, found)
+	}
+}

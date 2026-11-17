@@ -1129,6 +1129,10 @@ func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes(gv schema.GroupVersion
 		searchRoutes = append(searchRoutes, b.teamSearchHandler.GetAPIRoutes(defs))
 	}
 
+	if enableResourcePermissionsApi && b.mappers != nil {
+		searchRoutes = append(searchRoutes, b.mappers.CapabilityRoutes())
+	}
+
 	if enableResourcePermissionsApi && b.resourcePermissionsSearchHandler != nil {
 		searchRoutes = append(searchRoutes, b.resourcePermissionsSearchHandler.GetAPIRoutes(defs))
 	}
