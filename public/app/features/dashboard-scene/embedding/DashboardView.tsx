@@ -7,7 +7,7 @@ import { Alert, EmptyState, Spinner, useStyles2 } from '@grafana/ui';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { DashboardRoutes } from 'app/types/dashboard';
 
-import { DashboardLifecycleBanner } from '../lifecycle/DashboardLifecycleBanner';
+import { DashboardLifecycleBanner, type DashboardViewLifecycleActions } from '../lifecycle/DashboardLifecycleBanner';
 import { type DashboardLifecycleAction } from '../lifecycle/pendingChangePreview';
 import { reloadDashboardInPlace, UnifiedDashboardScenePageStateManager } from '../pages/DashboardScenePageStateManager';
 import { DashboardOverlay } from '../scene/DashboardOverlay';
@@ -28,6 +28,13 @@ export interface DashboardViewProps {
   /** Reports a completed action so the host can update its selected dashboard reference. */
   onLifecycleChange?: (action: DashboardLifecycleAction) => void;
   /**
+   * For a host that offers Save and Discard itself, for example in its own toolbar: the view then
+   * shows no banner, and calls this with the actions while it shows pending changes or a draft, and
+   * with undefined once it shows neither. Save opens the dashboard's save form; Discard asks to
+   * confirm. Both still report to onLifecycleChange. Without it, the view's banner offers them.
+   */
+  onLifecycleActions?: (actions: DashboardViewLifecycleActions | undefined) => void;
+  /**
    * Any value the host changes when the dashboard or its pending changes moved on, for example after
    * a write: the view loads them again in place, keeping its tab, scroll position and URL state.
    */
@@ -42,9 +49,10 @@ export interface DashboardViewProps {
 /**
  * EXPOSED COMPONENT (experimental, behind `assistant.dashboard.artifacts`): `grafana/dashboard-view/v1`
  *
- * A saved dashboard rendered outside the dashboard route, with its pending changes
- * banner and lifecycle actions, for a host such as the Grafana Assistant Workspace canvas.
- * Full editing happens on the dashboard page; a draft can be saved in place.
+ * A saved dashboard rendered outside the dashboard route, with its pending changes and their
+ * lifecycle actions (a banner's, or the host's with `onLifecycleActions`), for a host such as the
+ * Grafana Assistant Workspace canvas. Full editing happens on the dashboard page; pending changes and
+ * drafts can be saved in place.
  *
  * Uses its own page state manager rather than the route's singleton, so mounting it
  * never clears or replaces the dashboard the route has open. Treat props and visible
@@ -56,6 +64,7 @@ export function DashboardView({
   onTitleChange,
   pendingChanges,
   onLifecycleChange,
+  onLifecycleActions,
   revision,
   onRevisionShown,
 }: DashboardViewProps) {
@@ -131,6 +140,7 @@ export function DashboardView({
       controlsBackground={controlsBackground}
       reload={reload}
       onLifecycleChange={onLifecycleChange}
+      onLifecycleActions={onLifecycleActions}
     />
   );
 }
@@ -140,11 +150,13 @@ function DashboardViewRenderer({
   controlsBackground,
   reload,
   onLifecycleChange,
+  onLifecycleActions,
 }: {
   model: DashboardScene;
   controlsBackground?: string;
   reload: () => Promise<void>;
   onLifecycleChange?: DashboardViewProps['onLifecycleChange'];
+  onLifecycleActions?: DashboardViewProps['onLifecycleActions'];
 }) {
   const [isActive, setIsActive] = useState(false);
   const [discarded, setDiscarded] = useState(false);
@@ -174,6 +186,7 @@ function DashboardViewRenderer({
         reload={reload}
         onLifecycleChange={onLifecycleChange}
         onDiscardDraft={() => setDiscarded(true)}
+        onLifecycleActions={onLifecycleActions}
       />
       <DashboardOverlay
         dashboard={model}

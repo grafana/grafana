@@ -69,9 +69,11 @@ import {
   pendingChangesIdFromLocation,
   previewedDashboardUid,
   proposesNewDashboard,
+  stopPreviewingPendingChanges,
 } from '../lifecycle/pendingChangePreview';
 import { resumeRecordingPendingChanges } from '../lifecycle/pendingChangesHistory';
-import { setPendingChangesPageReload } from '../lifecycle/pendingChangesPageReload';
+import { setPendingChangesPageClose, setPendingChangesPageReload } from '../lifecycle/pendingChangesPageReload';
+import { openPendingChangesForEditing } from '../lifecycle/pendingChangesSave';
 import { type PanelEditor } from '../panel-edit/PanelEditor';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { buildNewDashboardSaveModel, buildNewDashboardSaveModelV2 } from '../serialization/buildNewDashboardSaveModel';
@@ -495,6 +497,10 @@ abstract class DashboardScenePageStateManagerBase<T>
         Boolean(options.uid)
       ) {
         restoreDashboardStateFromLocalStorage(dashboard);
+      }
+
+      if (options.route === DashboardRoutes.Normal) {
+        openPendingChangesForEditing(dashboard);
       }
 
       this.setState({ dashboard: dashboard, isLoading: false });
@@ -1606,10 +1612,11 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
       }
       // Editable as far as the requester may edit the dashboard itself.
       const editable = Boolean(preview.pending.history) && options.route === DashboardRoutes.Normal;
+      // Copies: building the scene adds defaults to the spec it is given, and Save's changes are
+      // measured between the two as stored.
+      preview.saved = { spec: structuredClone(saved.spec), generation: saved.metadata.generation ?? 0 };
       const previewRsp = {
         ...saved,
-        // A copy: building the scene adds defaults to the spec it is given, and the banner
-        // diffs the pending changes as saved.
         spec: structuredClone(preview.pending.proposed),
         access: editable
           ? { ...saved.access, canDelete: false }
@@ -1816,6 +1823,17 @@ setPendingChangesPageReload(async (uid, editing) => {
     reloaded.onEnterEditMode();
   }
   return false;
+});
+
+// Once pending changes are saved or discarded, the page shows the saved dashboard and a URL without them.
+setPendingChangesPageClose(async (uid) => {
+  const manager = getDashboardScenePageStateManager();
+  // The page loads the dashboard for the new URL: fresh, as reloadDashboardFresh does.
+  manager.clearDashboardCache();
+  manager.removeSceneCache(uid);
+  if (!stopPreviewingPendingChanges()) {
+    await manager.reloadDashboardFresh({ uid, route: DashboardRoutes.Normal });
+  }
 });
 
 /** Each scene's in-place reloads, one at a time, and the latest one asked for. */

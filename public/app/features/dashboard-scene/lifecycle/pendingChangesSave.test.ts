@@ -1,0 +1,166 @@
+import { waitFor } from '@testing-library/react';
+
+import { defaultSpec, type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { setTestFlags } from '@grafana/test-utils/unstable';
+import { appEvents } from 'app/core/app_events';
+import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
+import { getPluginExtensionRegistries } from 'app/features/plugins/extensions/registry/setup';
+import { getAppPluginConfigs, getExtensionPointPluginDependencies } from 'app/features/plugins/extensions/utils';
+import { ShowConfirmModalEvent } from 'app/types/events';
+
+import { type DashboardScene } from '../scene/DashboardScene';
+import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
+
+import {
+  clearPendingChangePreview,
+  type DashboardPendingChanges,
+  getScenePendingChangePreview,
+  loadPendingChangePreview,
+} from './pendingChangePreview';
+import { setPendingChangesPageClose, takeEditingOnNextLoad } from './pendingChangesPageReload';
+import {
+  discardScenePendingChanges,
+  getPendingChangesDiff,
+  openPendingChangesForEditing,
+  savePendingChanges,
+} from './pendingChangesSave';
+
+jest.mock('app/features/plugins/extensions/registry/setup', () => ({ getPluginExtensionRegistries: jest.fn() }));
+jest.mock('app/features/plugins/extensions/utils', () => ({
+  getAppPluginConfigs: jest.fn(async () => []),
+  getExtensionPointPluginDependencies: jest.fn(),
+}));
+jest.mock('app/features/plugins/pluginPreloader', () => ({ preloadPlugins: jest.fn(async () => undefined) }));
+
+// The plugin leaves out the empty description the saved version spells out.
+const saved: DashboardV2Spec = { ...defaultSpec(), title: 'Saved', description: '' };
+const proposed: DashboardV2Spec = { ...defaultSpec(), title: 'Proposed' };
+
+const closePage = jest.fn(async (_uid: string) => undefined);
+setPendingChangesPageClose(closePage);
+
+function pendingChanges(overrides: Partial<DashboardPendingChanges> = {}): DashboardPendingChanges {
+  return {
+    baseGeneration: 3,
+    proposed,
+    apply: jest.fn(async () => ({ applied: true as const })),
+    discard: jest.fn(async () => undefined),
+    history: {
+      record: jest.fn(async () => ({ recorded: true })),
+      undo: jest.fn(),
+      redo: jest.fn(),
+      getState: () => ({}),
+      subscribe: () => () => {},
+    },
+    ...overrides,
+  };
+}
+
+/** The dashboard page showing `pending` to a dashboard saved at generation 3, as the page loads it. */
+async function openOnPage(pending: DashboardPendingChanges): Promise<DashboardScene> {
+  jest.mocked(getExtensionPointPluginDependencies).mockResolvedValue(['grafana-assistant-app']);
+  jest.mocked(getAppPluginConfigs).mockResolvedValue([]);
+  jest.mocked(getPluginExtensionRegistries).mockResolvedValue({
+    addedFunctionsRegistry: {
+      getState: async () => ({ 'grafana/dashboard/pending-changes/v1': [{ fn: async () => pending }] }),
+    },
+  } as unknown as Awaited<ReturnType<typeof getPluginExtensionRegistries>>);
+  const preview = await loadPendingChangePreview('page', 'dash-1', 'chat-1');
+  preview!.saved = { spec: saved, generation: 3 };
+  const scene = transformSaveModelSchemaV2ToScene({
+    kind: 'DashboardWithAccessInfo',
+    apiVersion: 'dashboard.grafana.app/v2beta1',
+    metadata: { name: 'dash-1', generation: 3, resourceVersion: '3', creationTimestamp: '', annotations: {} },
+    access: { canEdit: true, canSave: true, canShare: true, canStar: true, canDelete: false, canAdmin: true },
+    spec: structuredClone(pending.proposed),
+  } as unknown as DashboardWithAccessInfo<DashboardV2Spec>);
+  openPendingChangesForEditing(scene);
+  return scene;
+}
+
+beforeEach(() => {
+  setTestFlags({ 'assistant.dashboard.artifacts': true, dashboardNewLayouts: true });
+  closePage.mockClear();
+});
+
+afterEach(() => {
+  clearPendingChangePreview('dash-1', 'chat-1');
+  takeEditingOnNextLoad('dash-1');
+  setTestFlags({});
+});
+
+describe('opening pending changes on the page', () => {
+  it('opens them in edit mode, as unsaved changes to the saved version', async () => {
+    const scene = await openOnPage(pendingChanges());
+
+    expect(scene.state.isEditing).toBe(true);
+    // The title changed; the description is empty on both sides however each spells it.
+    const changes = getPendingChangesDiff(scene);
+    expect(changes?.diffCount).toBe(1);
+    expect(Object.keys(changes?.diffs ?? {})).toEqual(['title']);
+  });
+
+  it('leaves them read-only when their plugin keeps no history to record edits in', async () => {
+    const scene = await openOnPage(pendingChanges({ history: undefined }));
+
+    expect(scene.state.title).toBe('Proposed');
+    expect(Boolean(scene.state.isEditing)).toBe(false);
+  });
+});
+
+describe('saving pending changes', () => {
+  it('saves them through their plugin with the message for version history, then forgets them', async () => {
+    const pending = pendingChanges();
+    const scene = await openOnPage(pending);
+
+    await expect(savePendingChanges(scene, { force: false, message: 'Tidy up' })).resolves.toEqual({ saved: true });
+
+    expect(pending.apply).toHaveBeenCalledWith({ force: false, message: 'Tidy up' });
+    expect(getScenePendingChangePreview(scene.state)).toBeUndefined();
+  });
+
+  it('reports the version someone else saved since, and keeps the pending changes', async () => {
+    const pending = pendingChanges({ apply: jest.fn(async () => ({ applied: false as const, currentGeneration: 5 })) });
+    const scene = await openOnPage(pending);
+
+    await expect(savePendingChanges(scene, { force: false, message: '' })).resolves.toEqual({
+      saved: false,
+      currentGeneration: 5,
+    });
+    expect(getScenePendingChangePreview(scene.state)?.id).toBe('chat-1');
+  });
+});
+
+describe('discarding pending changes', () => {
+  it('asks to save or discard them on Exit edit, as for edits made by hand, and discards them in their plugin', async () => {
+    const pending = pendingChanges();
+    const scene = await openOnPage(pending);
+    const modals: ShowConfirmModalEvent[] = [];
+    const subscription = appEvents.subscribe(ShowConfirmModalEvent, (event) => modals.push(event));
+
+    scene.exitEditMode({ skipConfirm: false });
+
+    expect(modals.map((modal) => modal.payload.title)).toEqual(['Unsaved changes']);
+    expect(modals[0].payload.altActionText).toBe('Save');
+    expect(scene.state.isEditing).toBe(true);
+
+    modals[0].payload.onConfirm?.();
+    await waitFor(() => expect(closePage).toHaveBeenCalledWith('dash-1'));
+    expect(pending.discard).toHaveBeenCalledTimes(1);
+    expect(scene.state.isEditing).toBe(false);
+    expect(takeEditingOnNextLoad('dash-1')).toBe(false);
+    subscription.unsubscribe();
+  });
+
+  it('opens the saved dashboard for editing after Discard changes, which keeps editing', async () => {
+    const pending = pendingChanges();
+    const scene = await openOnPage(pending);
+
+    await discardScenePendingChanges(scene, { keepEditing: true });
+
+    expect(pending.discard).toHaveBeenCalledTimes(1);
+    expect(getScenePendingChangePreview(scene.state)).toBeUndefined();
+    expect(closePage).toHaveBeenCalledWith('dash-1');
+    expect(takeEditingOnNextLoad('dash-1')).toBe(true);
+  });
+});

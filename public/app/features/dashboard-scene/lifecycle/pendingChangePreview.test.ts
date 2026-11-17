@@ -10,10 +10,8 @@ import {
   getPendingChangePreview,
   getPendingChangesHistory,
   type PendingChangesHistory,
-  isHighlightingChanges,
   loadPendingChangePreview,
   previewedDashboardUid,
-  setHighlightingChanges,
   showOriginal,
   stopPreviewingPendingChanges,
   withoutPendingChangesPreview,
@@ -226,20 +224,5 @@ describe('closing pending changes that were applied or discarded', () => {
     expect(stopPreviewingPendingChanges()).toBe(false);
 
     expect(locationService.getSearchObject()).toEqual({ orgId: '1' });
-  });
-});
-
-describe('highlighting the pending changes', () => {
-  beforeEach(() => window.sessionStorage.clear());
-
-  it('is on by default, keeps being turned off for the tab per dashboard and pending changes, and resets once they are cleared', () => {
-    expect(isHighlightingChanges('dash', 'chat-1')).toBe(true);
-
-    setHighlightingChanges('dash', 'chat-1', false);
-    expect(isHighlightingChanges('dash', 'chat-1')).toBe(false);
-    expect(isHighlightingChanges('dash', 'chat-2')).toBe(true);
-
-    clearPendingChangePreview('dash', 'chat-1');
-    expect(isHighlightingChanges('dash', 'chat-1')).toBe(true);
   });
 });

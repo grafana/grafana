@@ -89,6 +89,7 @@ import {
   recordPendingChange,
   startRecordingPendingChanges,
 } from '../lifecycle/pendingChangesHistory';
+import { discardScenePendingChanges, getPendingChangesDiff } from '../lifecycle/pendingChangesSave';
 import { createMutationClient } from '../mutation-api/clientBridge';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { type DashboardChangeInfo, isNewDashboard } from '../saving/shared';
@@ -894,7 +895,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
     if (mode === 'view' && isNewDashboard(this.state)) {
       if (trigger === 'picker') {
-        this.openSaveDrawer({ onSaveSuccess: () => this.setDashboardMode('view', trigger) });
+        if (this.showsPendingChangesForEditing()) {
+          // A draft is saved or discarded on the way out, as Exit edit does.
+          this.exitEditMode({ skipConfirm: false });
+        } else {
+          this.openSaveDrawer({ onSaveSuccess: () => this.setDashboardMode('view', trigger) });
+        }
       }
       return false;
     }
@@ -908,6 +914,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     // A switch into any other non-view mode is blocked
     if (mode !== 'view' && isMobileEditDeprecated()) {
       notifyMobileEditNotAvailable();
+      return false;
+    }
+    // Viewing would show the pending changes as if they were saved: they are saved or discarded on
+    // the way out, as Exit edit does.
+    if (trigger === 'picker' && previous !== 'view' && mode === 'view' && this.showsPendingChangesForEditing()) {
+      this.exitEditMode({ skipConfirm: false });
       return false;
     }
     if (
@@ -1282,10 +1294,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     // Edits that skipped the edit actions, which record each change, are recorded as one here, and
     // an edit the plugin failed to record is retried. Before exiting: that discards an open panel editor.
     const history = getPendingChangesHistory(this.state);
+    if (history && !restoreInitialState && (this.hasUnrecordedEdits() || hasUnrecordedPendingChange(this))) {
+      void recordPendingChange(this, history, t('dashboard-scene.lifecycle.edited-dashboard', 'Edit dashboard'));
+    }
+    if (!skipConfirm && !restoreInitialState && this.showsPendingChangesForEditing()) {
+      this.confirmLeavingPendingChanges();
+      return;
+    }
     if (history && !restoreInitialState) {
-      if ((this.state.isDirty && hasActualSaveChanges(this)) || hasUnrecordedPendingChange(this)) {
-        void recordPendingChange(this, history, t('dashboard-scene.lifecycle.edited-dashboard', 'Edit dashboard'));
-      }
       this.exitEditModeConfirmed(false);
       return;
     }
@@ -1318,6 +1334,25 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         })
       );
     }
+  }
+
+  /**
+   * Pending changes on the page are unsaved changes: leaving edit mode saves or discards them, as it
+   * would edits made by hand. With nothing left to save, they are discarded without asking.
+   */
+  private confirmLeavingPendingChanges() {
+    if (!isNewDashboard(this.state) && !hasActualSaveChanges(this)) {
+      void discardScenePendingChanges(this);
+      return;
+    }
+    this.showUnsavedChangesDialog(
+      () => {
+        if (this.state.isEditing) {
+          this.exitEditModeConfirmed(false);
+        }
+      },
+      () => void discardScenePendingChanges(this)
+    );
   }
 
   private showUnsavedChangesDialog(onSaveSuccess: () => void, onDiscard: () => void) {
@@ -1402,10 +1437,36 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     this.state.body.editModeChanged?.(false);
   }
 
-  /** Whether edits are recorded in the history of pending changes to a saved dashboard, with no Save. */
+  /**
+   * Whether edits are recorded in the history of pending changes to a saved dashboard: Save saves
+   * them through the plugin that keeps them (see pendingChangesSave.ts).
+   */
   public recordsToPendingChanges(): boolean {
     const preview = getScenePendingChangePreview(this.state);
     return Boolean(getPendingChangesHistory(this.state) && preview && !proposesNewDashboard(preview.pending));
+  }
+
+  /**
+   * Whether the scene changed since its edits to pending changes were last recorded, by an edit that
+   * skipped the edit actions, which record each change.
+   */
+  public hasUnrecordedEdits(): boolean {
+    if (!this.state.isDirty) {
+      return false;
+    }
+    const changes = this.getChangesSinceLoad();
+    return Boolean(changes.diffCount || changes.hasFolderChanges || changes.hasPredefinedVariablesChanges);
+  }
+
+  /** Whether the dashboard page shows pending changes, or a draft, as its unsaved changes. */
+  private showsPendingChangesForEditing(): boolean {
+    const preview = getScenePendingChangePreview(this.state);
+    return Boolean(
+      this.state.isEditing &&
+        !this.state.meta.isEmbedded &&
+        preview?.previewing &&
+        (preview.pending.history || proposesNewDashboard(preview.pending))
+    );
   }
 
   /**
@@ -1449,6 +1510,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   public discardChangesAndKeepEditing() {
     if (!this.canDiscard()) {
       console.error('Trying to discard back to a state that does not exist, initialState undefined');
+      return;
+    }
+
+    // Their plugin discards them, and the saved dashboard opens for editing in their place.
+    if (this.showsPendingChangesForEditing() && this.recordsToPendingChanges()) {
+      void discardScenePendingChanges(this, { keepEditing: true });
       return;
     }
 
@@ -1593,12 +1660,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     showDiff?: boolean;
   }) {
     if (!this.state.isEditing) {
-      return;
-    }
-
-    // Edits to pending changes are recorded as they're made; Apply saves them to the dashboard.
-    // A new dashboard's are saved as the dashboard, here.
-    if (this.recordsToPendingChanges() && !saveAsCopy && !saveAsDashboardTemplate) {
       return;
     }
 
@@ -2494,6 +2555,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   getDashboardChanges(saveTimeRange?: boolean, saveVariables?: boolean, saveRefresh?: boolean): DashboardChangeInfo {
+    // Save saves pending changes as their plugin keeps them: what it would save is measured from the
+    // saved version.
+    return getPendingChangesDiff(this) ?? this.getChangesSinceLoad(saveTimeRange, saveVariables, saveRefresh);
+  }
+
+  /** Changes from the dashboard as loaded, or as its pending changes were last recorded. */
+  private getChangesSinceLoad(saveTimeRange?: boolean, saveVariables?: boolean, saveRefresh?: boolean) {
     const rawJson = this.getRawJsonFromEditor();
     return this.serializer.getDashboardChangesFromScene(this, { saveTimeRange, saveVariables, saveRefresh, rawJson });
   }
