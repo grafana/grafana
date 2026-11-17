@@ -2944,12 +2944,15 @@
     {
       "metadata": {
         "name": "grafana.customDashboardTemplates",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-06-24T18:36:50Z"
+        "resourceVersion": "1794931415420",
+        "creationTimestamp": "2026-06-24T18:36:50Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-17 16:03:35.420811 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables custom dashboard templates for enterprise",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/sharing-squad",
         "expression": "false"
       }
