@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { Button } from '../Button/Button';
@@ -102,6 +102,56 @@ describe('Banner', () => {
       render(<Banner {...defaultProps} title="Test" buttonContent={<span>Go back</span>} onRemove={jest.fn()} />);
       expect(screen.getByRole('button', { name: 'Go back' })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /close alert/i })).not.toBeInTheDocument();
+    });
+
+    it('renders a Button passed as buttonContent directly, with its own click handler', async () => {
+      const user = userEvent.setup();
+      const onClick = jest.fn();
+      const onRemove = jest.fn();
+      render(
+        <>
+          <Banner
+            {...defaultProps}
+            title="Test"
+            onRemove={onRemove}
+            buttonContent={
+              <Button variant="destructive" fill="outline" onClick={onClick}>
+                Dismiss
+              </Button>
+            }
+          />
+          <Button variant="destructive" fill="outline">
+            Reference
+          </Button>
+        </>
+      );
+      const dismiss = screen.getByRole('button', { name: 'Dismiss' });
+      expect(dismiss).toHaveClass(screen.getByRole('button', { name: 'Reference' }).className);
+      expect(within(screen.getByRole('alert')).getAllByRole('button')).toHaveLength(1);
+
+      await user.click(dismiss);
+      expect(onClick).toHaveBeenCalledTimes(1);
+      expect(onRemove).not.toHaveBeenCalled();
+    });
+
+    it('renders a Button passed as buttonContent even without onRemove', () => {
+      render(<Banner {...defaultProps} title="Test" buttonContent={<Button>Dismiss</Button>} />);
+      expect(screen.getByRole('button', { name: 'Dismiss' })).toBeInTheDocument();
+    });
+
+    it('wraps buttonContent that is not a Button in a secondary Button that calls onRemove', async () => {
+      const user = userEvent.setup();
+      const onRemove = jest.fn();
+      render(
+        <>
+          <Banner {...defaultProps} title="Test" onRemove={onRemove} buttonContent={<span>Dismiss</span>} />
+          <Button variant="secondary">Reference</Button>
+        </>
+      );
+      const dismiss = screen.getByRole('button', { name: 'Dismiss' });
+      expect(dismiss).toHaveClass(screen.getByRole('button', { name: 'Reference' }).className);
+      await user.click(dismiss);
+      expect(onRemove).toHaveBeenCalledTimes(1);
     });
 
     it('renders dismiss X icon when only onRemove is set and announces as Close alert', () => {

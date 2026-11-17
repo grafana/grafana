@@ -44,7 +44,10 @@ export interface BannerProps extends HTMLAttributes<HTMLDivElement> {
   children?: ReactNode;
   /** Lifts the banner onto a floating surface with a shadow, for example when it is used as a toast. */
   elevated?: boolean;
-  /** Replaces the X icon with a text dismiss button. Requires `onRemove`. */
+  /**
+   * Replaces the X icon with a text dismiss button. A `Button` is rendered as passed, with its own click handler.
+   * Anything else is wrapped in a secondary `Button` that calls `onRemove`, and requires `onRemove`.
+   */
   buttonContent?: React.ReactNode | string;
   /** Space below the banner, in theme spacing units. Defaults to 2. */
   bottomSpacing?: number;
@@ -101,6 +104,7 @@ export const Banner = React.forwardRef<HTMLDivElement, BannerProps>(
     const ariaLabel = restProps['aria-label'] || title;
 
     const closeLabel = t('grafana-ui.alert.close-button', 'Close alert');
+    const isButtonElement = React.isValidElement(buttonContent) && buttonContent.type === Button;
 
     return (
       <div ref={ref} className={cx(styles.wrapper, className)} role={role} aria-label={ariaLabel} {...restProps}>
@@ -124,11 +128,14 @@ export const Banner = React.forwardRef<HTMLDivElement, BannerProps>(
             </Box>
             <Stack alignItems="center" wrap="wrap">
               {action}
-              {onRemove && buttonContent && (
-                <Button variant="secondary" onClick={onRemove} type="button">
-                  {buttonContent}
-                </Button>
-              )}
+              {isButtonElement
+                ? buttonContent
+                : onRemove &&
+                  buttonContent && (
+                    <Button variant="secondary" onClick={onRemove} type="button">
+                      {buttonContent}
+                    </Button>
+                  )}
             </Stack>
           </Stack>
           {/* If onRemove is specified, giving preference to onRemove */}
