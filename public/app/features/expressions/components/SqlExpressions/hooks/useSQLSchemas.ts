@@ -1,3 +1,4 @@
+import { isEqual } from 'lodash';
 import { useState, useRef, useCallback, useMemo } from 'react';
 import { useDeepCompareEffect } from 'react-use';
 
@@ -36,13 +37,22 @@ export interface SQLSchemasResponse {
 
 interface UseSQLSchemasOptions {
   queries?: DataQuery[];
+  /** The SQL expression's own refId. Its edits don't change source schemas, so they never mark schemas stale. */
+  expressionRefId?: string;
   enabled: boolean;
   timeRange?: TimeRange;
   scopedVars?: ScopedVars;
   filters?: AdHocVariableFilter[];
 }
 
-export function useSQLSchemas({ queries, enabled, timeRange, scopedVars, filters }: UseSQLSchemasOptions) {
+export function useSQLSchemas({
+  queries,
+  expressionRefId,
+  enabled,
+  timeRange,
+  scopedVars,
+  filters,
+}: UseSQLSchemasOptions) {
   const isFeatureEnabled = useMemo(
     () => config.featureToggles.queryService || config.featureToggles.grafanaAPIServerWithExperimentalAPIs || false,
     []
@@ -62,65 +72,64 @@ export function useSQLSchemas({ queries, enabled, timeRange, scopedVars, filters
   const filtersRef = useRef(filters);
   filtersRef.current = filters;
 
-  const fetchSchemas = useCallback(async () => {
-    if (!enabled || !isFeatureEnabled) {
-      return;
+  // The newest request resolves to its schemas, or null on failure. Older requests are superseded:
+  // they skip state updates and resolve to the newest request's result, so no caller sees stale schemas.
+  const latestRequestRef = useRef<Promise<SQLSchemasResponse | null>>(Promise.resolve(null));
+  const requestedQueriesRef = useRef<DataQuery[] | undefined>(undefined);
+
+  const fetchSchemas = useCallback((): Promise<SQLSchemasResponse | null> => {
+    const currentQueries = queriesRef.current;
+    if (!enabled || !isFeatureEnabled || !currentQueries) {
+      return Promise.resolve(null);
     }
 
-    const currentQueries = queriesRef.current;
-    if (!currentQueries) {
-      return;
+    requestedQueriesRef.current = currentQueries;
+    setError(null);
+
+    const nonDashboardQueries = currentQueries.filter((q) => !isDashboardDatasource(q));
+    if (nonDashboardQueries.length === 0) {
+      const emptySchemas = { kind: 'SQLSchemaResponse', apiVersion: 'query.grafana.app/v0alpha1', sqlSchemas: {} };
+      setSchemas(emptySchemas);
+      setLoading(false);
+      latestRequestRef.current = Promise.resolve(emptySchemas);
+      return latestRequestRef.current;
     }
 
     setLoading(true);
-    setError(null);
-
-    try {
-      const nonDashboardQueries = currentQueries.filter((q) => !isDashboardDatasource(q));
-
-      if (nonDashboardQueries.length === 0) {
-        setSchemas({ kind: 'SQLSchemaResponse', apiVersion: 'query.grafana.app/v0alpha1', sqlSchemas: {} });
+    const request: Promise<SQLSchemasResponse | null> = requestSchemas(
+      nonDashboardQueries,
+      timeRange,
+      scopedVarsRef.current,
+      filtersRef.current
+    ).then(
+      (response) => {
+        if (latestRequestRef.current !== request) {
+          return latestRequestRef.current;
+        }
+        setSchemas(response);
         setLoading(false);
-        return;
+        return response;
+      },
+      (err) => {
+        if (latestRequestRef.current !== request) {
+          return latestRequestRef.current;
+        }
+        setError(err instanceof Error ? err : new Error('Failed to fetch SQL schemas'));
+        setLoading(false);
+        return null;
       }
-
-      const defaultDs = await getDataSourceInstanceSettings(null);
-      const resolvedQueries = nonDashboardQueries.map((query) => {
-        if (!query.datasource && defaultDs) {
-          return { ...query, datasource: { uid: defaultDs.uid, type: defaultDs.type } };
-        }
-        return query;
-      });
-
-      // Interpolate dashboard variables in source queries so the schema
-      // request mirrors what the panel execution path actually sends. Without
-      // this, datasources like Prometheus can reject raw `$var` / `$__macro`
-      // syntax and datasources like Loki silently return empty data.
-      const interpolatedQueries = await interpolateSourceQueries(
-        resolvedQueries,
-        scopedVarsRef.current ?? {},
-        filtersRef.current
-      );
-
-      const namespace = getAPINamespace();
-      const currentTimeRange = timeRange || getDefaultTimeRange();
-
-      const response = await getBackendSrv().post<SQLSchemasResponse>(
-        `/apis/query.grafana.app/v0alpha1/namespaces/${namespace}/sqlschemas`,
-        {
-          queries: interpolatedQueries,
-          from: currentTimeRange.from.toISOString(),
-          to: currentTimeRange.to.toISOString(),
-        }
-      );
-
-      setSchemas(response);
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to fetch SQL schemas'));
-    } finally {
-      setLoading(false);
-    }
+    );
+    latestRequestRef.current = request;
+    return request;
   }, [enabled, isFeatureEnabled, timeRange]);
+
+  // `/sqlschemas` executes the source queries, so callers that need current schemas refetch on demand
+  // instead of on every source query edit.
+  const getCurrentSchemas = useCallback((): Promise<SQLSchemasResponse | null> => {
+    const sourceQueries = (qs: DataQuery[] | undefined) => qs?.filter((q) => q.refId !== expressionRefId);
+    const isStale = !isEqual(sourceQueries(queriesRef.current), sourceQueries(requestedQueriesRef.current));
+    return isStale ? fetchSchemas() : latestRequestRef.current;
+  }, [expressionRefId, fetchSchemas]);
 
   // Refetch on mount, when fetchSchemas identity changes (enabled/feature/timeRange),
   // and when scopedVars/filters change by value. Identity-based comparison would
@@ -130,5 +139,38 @@ export function useSQLSchemas({ queries, enabled, timeRange, scopedVars, filters
     fetchSchemas();
   }, [fetchSchemas, scopedVars ?? {}, filters ?? []]);
 
-  return { schemas, loading, error, isFeatureEnabled, refetch: fetchSchemas };
+  return { schemas, loading, error, isFeatureEnabled, refetch: fetchSchemas, getCurrentSchemas };
+}
+
+async function requestSchemas(
+  queries: DataQuery[],
+  timeRange: TimeRange | undefined,
+  scopedVars: ScopedVars | undefined,
+  filters: AdHocVariableFilter[] | undefined
+): Promise<SQLSchemasResponse> {
+  const defaultDs = await getDataSourceInstanceSettings(null);
+  const resolvedQueries = queries.map((query) => {
+    if (!query.datasource && defaultDs) {
+      return { ...query, datasource: { uid: defaultDs.uid, type: defaultDs.type } };
+    }
+    return query;
+  });
+
+  // Interpolate dashboard variables in source queries so the schema
+  // request mirrors what the panel execution path actually sends. Without
+  // this, datasources like Prometheus can reject raw `$var` / `$__macro`
+  // syntax and datasources like Loki silently return empty data.
+  const interpolatedQueries = await interpolateSourceQueries(resolvedQueries, scopedVars ?? {}, filters);
+
+  const namespace = getAPINamespace();
+  const currentTimeRange = timeRange || getDefaultTimeRange();
+
+  return getBackendSrv().post<SQLSchemasResponse>(
+    `/apis/query.grafana.app/v0alpha1/namespaces/${namespace}/sqlschemas`,
+    {
+      queries: interpolatedQueries,
+      from: currentTimeRange.from.toISOString(),
+      to: currentTimeRange.to.toISOString(),
+    }
+  );
 }
