@@ -1,15 +1,20 @@
 import { css } from '@emotion/css';
 
-import { locationUtil, type GrafanaTheme2 } from '@grafana/data';
+import { locationUtil, type GrafanaTheme2, type IconName } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { useAppPluginMeta } from '@grafana/runtime/internal';
-import { Badge, Card, Grid, useStyles2 } from '@grafana/ui';
+import { Badge, Card, Grid, Icon, useStyles2, useTheme2 } from '@grafana/ui';
+import awsDarkSvg from 'img/cloud-providers/aws-dark.svg';
+import awsLightSvg from 'img/cloud-providers/aws-light.svg';
+import azureSvg from 'img/cloud-providers/azure.svg';
 
 export const DS_ONBOARDING_PLUGIN_ID = 'grafana-dsonboarding-app';
 
 interface CloudProvider {
   id: string;
-  logoText: string;
+  // Brand logo when we have one; otherwise falls back to a generic icon.
+  logo?: { light: string; dark: string };
+  icon?: IconName;
   name: string;
   description: string;
   url?: string;
@@ -21,7 +26,7 @@ function getProviders(): CloudProvider[] {
   return [
     {
       id: 'aws',
-      logoText: 'aws',
+      logo: { light: awsLightSvg, dark: awsDarkSvg },
       name: t('connections.cloud-provider-cards.aws.name', 'AWS Onboarding'),
       description: t('connections.cloud-provider-cards.aws.description', 'CloudWatch, Athena, Redshift, and 7 more'),
       url: `/a/${DS_ONBOARDING_PLUGIN_ID}/aws`,
@@ -40,7 +45,7 @@ function getProviders(): CloudProvider[] {
     },
     {
       id: 'azure',
-      logoText: 'Az',
+      logo: { light: azureSvg, dark: azureSvg },
       name: t('connections.cloud-provider-cards.azure.name', 'Azure Onboarding'),
       description: t(
         'connections.cloud-provider-cards.azure.description',
@@ -51,7 +56,7 @@ function getProviders(): CloudProvider[] {
     },
     {
       id: 'gcp',
-      logoText: 'GC',
+      icon: 'google',
       name: t('connections.cloud-provider-cards.gcp.name', 'Google Cloud Onboarding'),
       description: t('connections.cloud-provider-cards.gcp.description', 'BigQuery, Cloud Monitoring, and more'),
       keywords: ['gcp', 'google', 'google cloud', 'bigquery', 'cloud monitoring', 'stackdriver', 'cloud', 'onboard'],
@@ -72,6 +77,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     background: theme.colors.background.secondary,
     color: theme.colors.text.secondary,
     fontWeight: theme.typography.fontWeightBold,
+  }),
+  logoImage: css({
+    width: theme.spacing(3.5),
+    height: theme.spacing(3.5),
+    objectFit: 'contain',
   }),
   heading: css({
     fontSize: theme.typography.h5.fontSize,
@@ -106,6 +116,7 @@ export function useShowCloudProviderCards(searchTerm: string): boolean {
 
 export function CloudProviderCards({ searchTerm = '' }: { searchTerm?: string }) {
   const styles = useStyles2(getStyles);
+  const theme = useTheme2();
   const providers = getProviders().filter((provider) => matchesSearch(provider, searchTerm));
 
   if (providers.length === 0) {
@@ -127,7 +138,15 @@ export function CloudProviderCards({ searchTerm = '' }: { searchTerm?: string })
             <Card.Heading className={styles.heading}>{provider.name}</Card.Heading>
             <Card.Figure>
               <div className={styles.logo} aria-hidden>
-                {provider.logoText}
+                {provider.logo ? (
+                  <img
+                    className={styles.logoImage}
+                    src={theme.isDark ? provider.logo.dark : provider.logo.light}
+                    alt=""
+                  />
+                ) : (
+                  provider.icon && <Icon name={provider.icon} size="xl" />
+                )}
               </div>
             </Card.Figure>
             <Card.Description className={styles.description}>{provider.description}</Card.Description>
