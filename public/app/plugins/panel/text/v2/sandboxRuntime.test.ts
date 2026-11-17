@@ -373,6 +373,65 @@ describe('sandbox runtime', () => {
     expect(document.head.querySelector('style')).not.toHaveTextContent('p{color:red}');
   });
 
+  test.each([undefined, policy])(
+    'updates styles without replacing content or resetting reports (policy: %s)',
+    async (framePolicy) => {
+      initialize(framePolicy);
+      if (framePolicy) {
+        violation(CSP_CHECK_URL);
+        await flush();
+      }
+      const styles = {
+        protocol: TEXT_FRAME_PROTOCOL,
+        channel: command.channel,
+        type: 'styles',
+        revision: 0,
+        styleRevision: 1,
+        globalCss: 'p{color:blue}',
+      };
+      message(styles);
+      expect(document.head.querySelector('style')).toBeNull();
+      message({ ...command, html: '<input value="initial"><p>Content</p>' });
+      await flush();
+      const input = document.querySelector('input')!;
+      input.value = 'edited';
+      if (framePolicy) {
+        violation('https://blocked.test/first.png');
+        await flush();
+      }
+      message(styles, 'https://wrong.test');
+      message(styles, parentOrigin, null);
+      message({ ...styles, revision: 1 });
+      expect(document.head.querySelector('style')).toHaveTextContent('p{color:red}');
+      message(styles);
+      await flush();
+      expect(document.head.querySelector('style')).toHaveTextContent('p{color:blue}');
+      expect(document.querySelector('input')).toBe(input);
+      expect(input.value).toBe('edited');
+      expect(disconnect).not.toHaveBeenCalled();
+      for (const styleRevision of [1, 0, -1, 1.5, Infinity, undefined]) {
+        message({ ...styles, styleRevision, globalCss: 'p{color:green}' });
+      }
+      expect(document.head.querySelector('style')).toHaveTextContent('p{color:blue}');
+      if (framePolicy) {
+        violation('https://blocked.test/second.png');
+        await flush();
+        expectNotification('blocked', {
+          resources: [
+            {
+              directive: 'img-src',
+              origin: 'https://blocked.test',
+              urls: [
+                { url: 'https://blocked.test/first.png', count: 1 },
+                { url: 'https://blocked.test/second.png', count: 1 },
+              ],
+            },
+          ],
+        });
+      }
+    }
+  );
+
   test('cancels pending Mermaid loads and serializes overlapping diagram renders', async () => {
     initialize(policy);
     violation(CSP_CHECK_URL);
@@ -409,6 +468,12 @@ describe('sandbox runtime', () => {
     expect(renderer).toHaveBeenCalledTimes(1);
     const cancelled = renderer.mock.calls[0][2];
     expect(cancelled()).toBe(false);
+    message({ ...command, type: 'styles', revision: 1, styleRevision: 1, globalCss: 'p{color:blue}' });
+    await flush();
+    expect(cancelled()).toBe(false);
+    expect(renderer).toHaveBeenCalledTimes(1);
+    expect(document.head.querySelector('style')).toHaveTextContent('p{color:blue}');
+
     message({ ...command, revision: 2, html: '<p>No diagram</p>' });
     await flush();
     expectNotification('rendered', { revision: 2 });
@@ -425,6 +490,36 @@ describe('sandbox runtime', () => {
     await flush();
     expect(renderer).toHaveBeenCalledTimes(2);
     expectNotification('rendered', { revision: 3 });
+  });
+
+  test('ignores font completion from superseded style updates', async () => {
+    initialize();
+    message();
+    await flush();
+    const content = document.querySelector<HTMLElement>('.markdown-html')!;
+    const bounds = jest.spyOn(content, 'getBoundingClientRect').mockReturnValue({ height: 42 } as DOMRect);
+    const originalReady = document.fonts.ready;
+    let finish!: () => void;
+    Object.defineProperty(document.fonts, 'ready', {
+      configurable: true,
+      value: new Promise<void>((resolve) => {
+        finish = resolve;
+      }),
+    });
+    try {
+      message({ ...command, type: 'styles', styleRevision: 1, globalCss: 'p{color:blue}' });
+      Object.defineProperty(document.fonts, 'ready', { value: Promise.resolve(document.fonts) });
+      message({ ...command, type: 'styles', styleRevision: 2, globalCss: 'p{color:green}' });
+      await flush();
+      expectNotification('resize', { height: 42, contentHeight: 0 });
+      expect(bounds).toHaveBeenCalledTimes(1);
+      finish();
+      await flush();
+      expect(bounds).toHaveBeenCalledTimes(1);
+      expect(document.head.querySelector('style')).toHaveTextContent('p{color:green}');
+    } finally {
+      Object.defineProperty(document.fonts, 'ready', { value: originalReady });
+    }
   });
 
   test('supersedes a render waiting for fonts without reporting stale completion', async () => {

@@ -37,6 +37,16 @@ export interface MermaidCommand {
   source: string;
 }
 
+/** Updates application-owned CSS without replacing panel content or advancing its render revision. */
+export interface StylesCommand {
+  protocol: typeof TEXT_FRAME_PROTOCOL;
+  channel: string;
+  type: 'styles';
+  revision: number;
+  styleRevision: number;
+  globalCss: string;
+}
+
 export type FrameNotification =
   | { type: 'ready'; document: string }
   | { type: 'rendered' | 'error' | 'mermaid-needed' }

@@ -18,9 +18,12 @@ import {
   TEXT_FRAME_PROTOCOL,
   type RenderCommand,
   type MermaidCommand,
+  type StylesCommand,
 } from './sandboxProtocol';
 
 export const WATCHDOG_TIMEOUT_MS = 15_000;
+
+type FullRenderCommand = Omit<RenderCommand, 'revision'> & { globalCss: string };
 
 let shellPolicy: Pick<TrustedTypePolicy, 'createHTML'> | undefined;
 
@@ -75,17 +78,17 @@ export function SandboxFrame(props: SandboxFrameProps) {
     },
     [onState]
   );
-  // Content-only protected updates reuse the document, avoiding runtime startup and CSS/font parsing.
-  // Keep shell and policy changes on the recreation path so document-level configuration cannot go stale.
+  // Content-only protected updates and CSS-only updates avoid restarting the document.
+  // Policy and diagram configuration changes still need a fresh runtime.
   const [documentVersion, setDocumentVersion] = useState({ html, globalCss, policy, mermaid, diagramError, id: 0 });
   const shellChanged =
-    documentVersion.globalCss !== globalCss ||
     documentVersion.policy !== policy ||
     documentVersion.mermaid !== mermaid ||
     documentVersion.diagramError !== diagramError;
-  if (documentVersion.html !== html || shellChanged) {
+  const contentChanged = documentVersion.html !== html;
+  if (contentChanged || documentVersion.globalCss !== globalCss || shellChanged) {
     // Legacy scripts need a fresh realm. Failed documents and blocked stylesheet loads need a fresh attempt too.
-    const recreate = shellChanged || policy === undefined || !canReuse;
+    const recreate = shellChanged || (contentChanged && (policy === undefined || !canReuse));
     setDocumentVersion({ html, globalCss, policy, mermaid, diagramError, id: documentVersion.id + Number(recreate) });
   }
   return <FrameDocument key={documentVersion.id} {...props} onState={reportState} />;
@@ -149,7 +152,7 @@ function useFrameRuntime({
   const protectedFrame = policy !== undefined;
 
   const controllerRef = useRef<ReturnType<typeof createFrameController> | null>(null);
-  const command = useMemo<Omit<RenderCommand, 'revision'>>(
+  const command = useMemo<FullRenderCommand>(
     () => ({ protocol: TEXT_FRAME_PROTOCOL, channel, type: 'render', html, globalCss, mermaid, diagramError }),
     [channel, html, globalCss, mermaid, diagramError]
   );
@@ -197,7 +200,7 @@ interface FrameControllerOptions {
   policy?: string;
   nonce: string;
   protectedFrame: boolean;
-  renderCommand: Omit<RenderCommand, 'revision'>;
+  renderCommand: FullRenderCommand;
   onReset: () => void;
   onStatus: (status: TextSandboxState['status']) => void;
   onResize: (dimensions: { height: number; contentHeight: number }) => void;
@@ -218,6 +221,7 @@ function createFrameController({
   // Protocol guards update synchronously, independently of React's reported state.
   let renderedDocument: string | undefined;
   let revision = 0;
+  let styleRevision = 0;
   let hasFailed = false;
   let mermaidRequested = false;
   let disposed = false;
@@ -359,17 +363,31 @@ function createFrameController({
     stopListening();
   }
 
-  function update(next: Omit<RenderCommand, 'revision'>) {
-    if (
-      next.html === renderCommand.html &&
-      next.globalCss === renderCommand.globalCss &&
-      next.mermaid === renderCommand.mermaid &&
-      next.diagramError === renderCommand.diagramError
-    ) {
+  function update(next: FullRenderCommand) {
+    const contentChanged =
+      next.html !== renderCommand.html ||
+      next.mermaid !== renderCommand.mermaid ||
+      next.diagramError !== renderCommand.diagramError;
+    const cssChanged = next.globalCss !== renderCommand.globalCss;
+    if (!contentChanged && !cssChanged) {
       return;
     }
-    const cssChanged = next.globalCss !== renderCommand.globalCss;
     renderCommand = next;
+    if (!contentChanged) {
+      // Fonts can finish after content or diagrams start rendering. Keep their revision and reports intact.
+      if (renderedDocument !== undefined) {
+        const styles: StylesCommand = {
+          protocol: TEXT_FRAME_PROTOCOL,
+          channel: renderCommand.channel,
+          type: 'styles',
+          revision,
+          styleRevision: ++styleRevision,
+          globalCss: renderCommand.globalCss,
+        };
+        iframe.contentWindow?.postMessage(styles, targetOrigin);
+      }
+      return;
+    }
     revision++;
     hasFailed = false;
     mermaidRequested = false;

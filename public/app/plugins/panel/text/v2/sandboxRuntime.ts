@@ -13,6 +13,7 @@ import {
   type FrameNotification,
   type RenderCommand,
   type MermaidCommand,
+  type StylesCommand,
 } from './sandboxProtocol';
 
 const bootstrap = document.currentScript;
@@ -39,6 +40,7 @@ const scriptPolicy = window.trustedTypes?.createPolicy('grafana-text-panel-runti
 let disposed = false;
 let verified = policy === undefined;
 let revision = -1;
+let styleRevision = -1;
 let style: HTMLStyleElement | undefined;
 let globalCss: string | undefined;
 let diagramWork: Promise<void> = Promise.resolve();
@@ -207,15 +209,29 @@ async function renderDiagrams(command: RenderCommand, container: HTMLElement) {
   await render(command, container, isCancelled);
 }
 
-async function render(command: RenderCommand) {
-  const isCancelled = () => disposed || revision !== command.revision;
+function applyStyles(css: string) {
   if (!style) {
     style = document.createElement('style');
     document.head.append(style);
   }
-  if (command.globalCss !== undefined && globalCss !== command.globalCss) {
-    globalCss = command.globalCss;
-    style.textContent = `${command.globalCss}\nhtml,body{height:auto!important;min-height:0!important;background:transparent!important}body{margin:0;overflow:hidden!important}.markdown-html{display:flow-root}.mermaid-diagram{margin:16px 0}.mermaid-diagram svg{max-width:100%;height:auto}.mermaid-diagram-error{color:var(--text-error,#f2495c);margin-bottom:4px}`;
+  if (globalCss !== css) {
+    style.textContent = `${css}\nhtml,body{height:auto!important;min-height:0!important;background:transparent!important}body{margin:0;overflow:hidden!important}.markdown-html{display:flow-root}.mermaid-diagram{margin:16px 0}.mermaid-diagram svg{max-width:100%;height:auto}.mermaid-diagram-error{color:var(--text-error,#f2495c);margin-bottom:4px}`;
+    globalCss = css;
+  }
+}
+
+async function updateStyles(command: StylesCommand) {
+  applyStyles(command.globalCss);
+  await document.fonts.ready;
+  if (!disposed && revision === command.revision && styleRevision === command.styleRevision) {
+    measure();
+  }
+}
+
+async function render(command: RenderCommand) {
+  const isCancelled = () => disposed || revision !== command.revision;
+  if (command.globalCss !== undefined) {
+    applyStyles(command.globalCss);
   }
   content?.remove();
   content = document.createElement('div');
@@ -255,7 +271,7 @@ async function render(command: RenderCommand) {
   }, 0);
 }
 
-function onMessage(event: MessageEvent<RenderCommand | MermaidCommand>) {
+function onMessage(event: MessageEvent<RenderCommand | MermaidCommand | StylesCommand>) {
   const command = event.data;
   if (
     event.source !== window.parent ||
@@ -266,6 +282,25 @@ function onMessage(event: MessageEvent<RenderCommand | MermaidCommand>) {
     !verified ||
     disposed
   ) {
+    return;
+  }
+  if (command.type === 'styles') {
+    if (
+      !content ||
+      command.revision !== revision ||
+      !Number.isSafeInteger(command.styleRevision) ||
+      command.styleRevision <= styleRevision ||
+      typeof command.globalCss !== 'string'
+    ) {
+      return;
+    }
+    // Style changes must not cancel diagrams, replay scripts, or discard reports for unchanged content.
+    styleRevision = command.styleRevision;
+    void updateStyles(command).catch(() => {
+      if (!disposed && revision === command.revision && styleRevision === command.styleRevision) {
+        send({ type: 'error' });
+      }
+    });
     return;
   }
   if (command.type === 'mermaid-source' && command.revision === revision && typeof command.source === 'string') {

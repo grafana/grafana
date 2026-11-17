@@ -71,9 +71,9 @@ The parent treats every report from the frame as untrusted:
 
 Initial render commands include the shared stylesheet. Content-only updates omit unchanged CSS to avoid repeatedly transporting inlined font data. A fresh document always receives the full stylesheet; omission is only accepted after a stylesheet has been installed, and an explicit empty string clears shared styles.
 
-Protected frames reuse their document for HTML changes while their policy, shared CSS, and diagram configuration remain unchanged. Each update replaces the content container, disconnects its observer, cancels pending completion and violation timers, resets resource reports, and advances the render revision. The shared stylesheet and loaded fonts remain in the document. Mermaid work is serialized because the library uses document-global state; cancelled work cannot update the new content or complete its render.
+Protected frames reuse their document for HTML changes while their policy and diagram configuration remain unchanged. Each update replaces the content container, disconnects its observer, cancels pending completion and violation timers, resets resource reports, and advances the render revision. The shared stylesheet and loaded fonts remain in the document. Mermaid work is serialized because the library uses document-global state; cancelled work cannot update the new content or complete its render.
 
-Policy, shared CSS, and diagram configuration changes still create a new document. A document that reported blocked resources or failed also starts fresh on its next content update, so unchanged stylesheet violations are reported again. Legacy frames without a policy always recreate on content changes: removing their DOM cannot dispose scripts, timers, or listeners they may have installed.
+Policy and diagram configuration changes still create a new document. A document that reported blocked resources or failed also starts fresh on its next content update, so unchanged stylesheet violations are reported again. Legacy frames without a policy always recreate on content changes: removing their DOM cannot dispose scripts, timers, or listeners they may have installed.
 
 Browser CSP events do not carry render revisions. A delayed violation from a removed resource can therefore still appear in the current report; it remains a blocked request and does not grant permission. The revision guard rejects already-posted notifications from earlier renders.
 
@@ -83,7 +83,7 @@ Text documents receive shared typography, element, code, Markdown, accessibility
 
 Font faces are still collected from the application's global styles so configured fonts remain available, and their existing network policy and inlining rules are unchanged. The Text stylesheet is compiled into a detached CSSStyleSheet through Emotion and serialized from CSSOM, matching the browser's handling of unsupported selectors and invalid declarations without applying styles in the parent document.
 
-Content renders with fallback fonts while shared font preparation runs. Applying the prepared stylesheet recreates the frame; this extra initialization avoids withholding content during slow font downloads.
+Content renders with fallback fonts while shared font preparation runs; an already-prepared cache entry is used immediately. Prepared CSS is applied through an authenticated `styles` command without replacing the document or content, including for legacy panels. Style commands retain the content revision and carry a monotonically increasing style revision, so stale font completions cannot measure newer content or styles. They preserve blocked-resource reports, pending Mermaid work, and script/input state. New policies still require new documents; a style command cannot change CSP or sandbox flags.
 
 ## Consent
 

@@ -362,23 +362,31 @@ it('fills the minimum height without reporting it as content height', async () =
   expect(element.style.height).toBe('450px');
 });
 
-it.each(['policy', 'globalCss'] as const)('recreates on %s changes and ignores the old generation', async (field) => {
-  const options = props();
-  const { rerender } = render(<SandboxFrame {...options} />);
-  const previous = await frame();
-  const staleWindow = previous.contentWindow;
-  const staleChannel = new DOMParser().parseFromString(previous.srcdoc, 'text/html').querySelector('script')!.dataset
-    .channel;
-  notify(previous, 'ready');
-  rerender(<SandboxFrame {...options} {...{ [field]: field === 'policy' ? undefined : options[field] + ' ' }} />);
-  const current = await frame();
-  expect(current).not.toBe(previous);
-  notify(current, 'blocked', { resources: [{ directive: 'img-src' }], channel: staleChannel }, { source: staleWindow });
-  expect(current).toBeVisible();
-  notify(current, 'ready');
-  notify(current, 'rendered');
-  expect(options.onState).toHaveBeenLastCalledWith({ status: 'ready', resources: [] });
-});
+it.each([{ policy: undefined }, { mermaid: { securityLevel: 'strict' as const } }, { diagramError: 'Changed error' }])(
+  'recreates on policy or diagram configuration changes: %j',
+  async (change) => {
+    const options = props();
+    const { rerender } = render(<SandboxFrame {...options} />);
+    const previous = await frame();
+    const staleWindow = previous.contentWindow;
+    const staleChannel = new DOMParser().parseFromString(previous.srcdoc, 'text/html').querySelector('script')!.dataset
+      .channel;
+    notify(previous, 'ready');
+    rerender(<SandboxFrame {...options} {...change} />);
+    const current = await frame();
+    expect(current).not.toBe(previous);
+    notify(
+      current,
+      'blocked',
+      { resources: [{ directive: 'img-src' }], channel: staleChannel },
+      { source: staleWindow }
+    );
+    expect(current).toBeVisible();
+    notify(current, 'ready');
+    notify(current, 'rendered');
+    expect(options.onState).toHaveBeenLastCalledWith({ status: 'ready', resources: [] });
+  }
+);
 
 it('fails closed if bootstrap or rendering never completes', async () => {
   const options = props();
@@ -445,7 +453,7 @@ it('discards bootstrap completion for a replaced document', async () => {
   const options = props();
   const { rerender } = render(<SandboxFrame {...options} />);
   const previous = screen.getByTitle<HTMLIFrameElement>('Text content');
-  rerender(<SandboxFrame {...options} globalCss="p{color:red}" />);
+  rerender(<SandboxFrame {...options} policy={undefined} />);
   const current = await frame();
   await act(async () => resolve('stale runtime'));
   expect(current.srcdoc).toContain('/* trusted runtime */');
@@ -671,21 +679,22 @@ it.each([true, false])('renders before fonts finish (font available: %s)', async
     await act(async () => {
       finish({ ok, blob: async () => new Blob(['font'], { type: 'font/woff2' }) });
     });
-    await waitFor(() => expect(runtime).toHaveBeenCalledTimes(2));
-    const element = screen.getByTitle<HTMLIFrameElement>('Text panel content');
-    expect(element).not.toBe(fallback);
-    const postMessage = jest.spyOn(element.contentWindow!, 'postMessage').mockImplementation(() => {});
-    notify(element, 'ready');
-    expect(postMessage).toHaveBeenCalledWith(
-      expect.objectContaining({
-        html: '<p>Latest</p>',
-        globalCss: expect.stringContaining(ok ? 'data:font/woff2;base64,Zm9udA==' : 'local("Arial")'),
-      }),
-      '*'
+    await waitFor(() =>
+      expect(fallbackMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'styles',
+          revision: 1,
+          styleRevision: 1,
+          globalCss: expect.stringContaining(ok ? 'data:font/woff2;base64,Zm9udA==' : 'local("Arial")'),
+        }),
+        '*'
+      )
     );
+    expect(screen.getByTitle('Text panel content')).toBe(fallback);
+    expect(runtime).toHaveBeenCalledTimes(1);
     rerender(<TextSandbox html="<p>Latest</p>" minHeight={200} />);
-    expect(screen.getByTitle('Text panel content')).toBe(element);
-    expect(runtime).toHaveBeenCalledTimes(2);
+    expect(screen.getByTitle('Text panel content')).toBe(fallback);
+    expect(runtime).toHaveBeenCalledTimes(1);
     runtime.mockClear();
     render(<TextSandbox html="<p>Cached fonts</p>" />);
     await act(async () => {});
@@ -798,6 +807,38 @@ it('reuses protected documents for content updates and rejects replies from earl
     expect.objectContaining({ html: '<p>Updated</p>', globalCss: options.globalCss, revision: 2 }),
     '*'
   );
+});
+
+it('preserves blocked reports and pending Mermaid loading when styles change', async () => {
+  let finish!: (source: string) => void;
+  jest.mocked(loadSandboxMermaid).mockReturnValueOnce(
+    new Promise((resolve) => {
+      finish = resolve;
+    })
+  );
+  const options = props({ mermaid: { securityLevel: 'strict' } });
+  const { rerender } = render(<SandboxFrame {...options} />);
+  const element = await frame();
+  const postMessage = jest.spyOn(element.contentWindow!, 'postMessage').mockImplementation(() => {});
+  notify(element, 'ready');
+  notify(element, 'mermaid-needed');
+  const resources = [{ directive: 'img-src', origin: 'https://blocked.test' }];
+  notify(element, 'blocked', { resources });
+  jest.mocked(options.onState).mockClear();
+  rerender(<SandboxFrame {...options} globalCss="p{color:blue}" />);
+  expect(await frame()).toBe(element);
+  expect(postMessage).toHaveBeenLastCalledWith(
+    expect.objectContaining({ type: 'styles', revision: 0, styleRevision: 1, globalCss: 'p{color:blue}' }),
+    '*'
+  );
+  expect(options.onState).not.toHaveBeenCalled();
+  await act(async () => finish('/* Mermaid source */'));
+  expect(postMessage).toHaveBeenLastCalledWith(
+    expect.objectContaining({ type: 'mermaid-source', revision: 0, source: '/* Mermaid source */' }),
+    '*'
+  );
+  notify(element, 'rendered');
+  expect(options.onState).toHaveBeenLastCalledWith({ status: 'ready', resources });
 });
 
 it('sends only the latest content when updated before the CSP handshake', async () => {
