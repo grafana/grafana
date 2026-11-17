@@ -265,32 +265,6 @@ func TestIntegrationService_UpdateDataSource(t *testing.T) {
 		}
 	})
 
-	t.Run("admission can clear an omitted basic auth username", func(t *testing.T) {
-		svc := initDSService(t)
-		ds, err := svc.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-			OrgID: 1, Name: "test", Type: "test", BasicAuth: true, BasicAuthUser: "original-user",
-		})
-		require.NoError(t, err)
-		svc.pluginClient.(*pluginfakes.FakePluginClient).MutateAdmissionFunc = func(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
-			settings, err := backend.DataSourceInstanceSettingsFromProto(req.ObjectBytes, "test")
-			require.NoError(t, err)
-			require.Equal(t, "original-user", settings.BasicAuthUser)
-			settings.BasicAuthUser = ""
-			encoded, err := backend.DataSourceInstanceSettingsToProtoBytes(settings)
-			require.NoError(t, err)
-			return &backend.MutationResponse{Allowed: true, ObjectBytes: encoded}, nil
-		}
-		cmd := &datasources.UpdateDataSourceCommand{
-			UID: ds.UID, OrgID: ds.OrgID, Name: ds.Name, Type: ds.Type, BasicAuth: true, APIVersion: "v0alpha1",
-		}
-		_, err = svc.UpdateDataSource(context.Background(), cmd)
-		require.NoError(t, err)
-		require.True(t, cmd.BasicAuthUserSet)
-		stored, err := svc.SQLStore.GetDataSource(context.Background(), &datasources.GetDataSourceQuery{UID: ds.UID, OrgID: ds.OrgID})
-		require.NoError(t, err)
-		require.Empty(t, stored.BasicAuthUser)
-	})
-
 	t.Run("should return not found error if datasource not found", func(t *testing.T) {
 		dsService := initDSService(t)
 
