@@ -1437,6 +1437,25 @@
       "title-error-saving-receiver": "保存接收器时出错"
     },
     "gma-rule-list": {
+      "actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "manage-enrichments": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "silence": "",
+        "view": ""
+      },
       "alert-rules": {
         "folders-error": "加载文件夹失败",
         "load-more-rules-in-folder": "在 {{title}} 中加载更多规则",
@@ -1456,6 +1475,10 @@
         "count-unavailable": "数量不可用",
         "expand": "展开 {{title}}"
       },
+      "header": {
+        "design-for-provisioning": "",
+        "new-alert-rule": ""
+      },
       "instances": {
         "error": "",
         "firing": "",
@@ -1470,9 +1493,29 @@
         "records": "录制",
         "to": "至"
       },
+      "recording-rule-actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "view": ""
+      },
       "recording-rules": {
         "folder-rules-error": "",
         "folders-error": "",
+        "header": {
+          "new-rule": ""
+        },
         "load-more-rules-in-folder": "",
         "loading-folders": "",
         "no-rules": "未找到录制规则",
@@ -1546,6 +1589,12 @@
         "view-folders": "文件夹",
         "view-list": "列表",
         "wildcard-in-text": "搜索文本不能包含 * 或 %。"
+      },
+      "sequence-pill": {
+        "label": "",
+        "label-with-interval": "",
+        "tooltip": "",
+        "tooltip-with-interval": ""
       },
       "shared": {
         "load-more": "加载更多",
@@ -2355,6 +2404,7 @@
       "contact-points": "联络点",
       "notification-policies": "通知策略",
       "recently-deleted": "最近删除",
+      "recording-rules": "",
       "templates": "模板",
       "time-intervals": "时间间隔"
     },
@@ -5279,6 +5329,7 @@
       "change-theme": "更改主题",
       "dark-theme": "深色",
       "dashboard-from-template": "来自模板的数据面板",
+      "experimental": "",
       "light-theme": "浅色",
       "open-saved-queries": "打开已保存的查询",
       "scopes": "范围"
@@ -5730,11 +5781,21 @@
     },
     "composer": {
       "annotation-pin": "评论{{label}}",
+      "annotation-pin-remove": "",
       "apply-undo-title": "助手编辑器编辑",
       "overlay": {
-        "hint-panel": "点击以对面板发表评论，或拖动以绘制区域",
+        "hint-elements": "",
+        "hint-layer": "",
+        "hint-layer-select": "",
+        "hint-not-removable": "",
+        "hint-panel": "",
+        "hint-panel-select": "",
         "hint-region": "拖动以绘制区域",
-        "hint-variable": ""
+        "hint-remove": "",
+        "hint-screenshot": "",
+        "hint-text": "",
+        "hint-variable": "",
+        "hint-variable-select": ""
       },
       "region": "区域",
       "untitled-panel": "面板 {{panelId}}",
@@ -6022,6 +6083,7 @@
       "import-a-dashboard-header": "导入仪表板",
       "import-dashboard-button": "导入仪表板",
       "layout-default-hint": "所选布局也将用作所有新选项卡和新行的默认布局。您以后可以在“数据面板设置”>“通用”中进行更改。",
+      "mobile-not-available": "",
       "or-start-blank": "或者自行构建",
       "select-layout-header": "选择布局",
       "title": "新建数据面板"
@@ -6126,6 +6188,9 @@
         "title": "标题",
         "transparent-background": "透明背景"
       }
+    },
+    "get-var-mapping-option-overrides": {
+      "uses-variables": ""
     },
     "inspect": {
       "data-tab": "数据",
@@ -6319,9 +6384,6 @@
       "only-overrides-button-tooltip": "仅显示覆盖",
       "placeholder-search-options": "搜索选项",
       "visualization-button-tooltip": "搜索选项"
-    },
-    "panel-editor": {
-      "ad-hoc-transformations-disabled": "临时转换在编辑模式下已禁用"
     },
     "plan-building-overlay": {
       "quip-corners": "正在润饰面板边角…",
@@ -6647,7 +6709,6 @@
           "no-title": "< 无标题 >"
         }
       },
-      "redo": "重做",
       "row": {
         "header": {
           "hide": "隐藏",
@@ -6664,7 +6725,6 @@
         "title": "源",
         "tooltip": "打开原始数据面板"
       },
-      "undo": "撤销",
       "variable": {
         "change-type": "更改类型",
         "change-type-aria-label": "更改变量类型",
@@ -6701,8 +6761,6 @@
         "open-editor": "打开变量编辑器",
         "open-editor-tooltip": "如需更多变量选项，请打开变量编辑器",
         "query-options": {
-          "close": "关闭",
-          "old-modal-title": "查询变量",
           "preview": "预览"
         },
         "remove": "移除",
@@ -6873,6 +6931,8 @@
       "playlist-next": "前往下一个仪表板",
       "playlist-previous": "前往上一个仪表板",
       "playlist-stop": "停止播放列表",
+      "redo": "",
+      "redo-action": "",
       "save-as-template": {
         "label": "另存为模板"
       },
@@ -6891,6 +6951,8 @@
       "star-added": "已添加到星标",
       "star-remove-error": "从星标中移除失败",
       "star-removed": "已从星标中移除",
+      "undo": "",
+      "undo-action": "",
       "unlink-library-panel": "取消链接库面板",
       "unlink-library-panel-short": "取消关联"
     },
@@ -7607,7 +7669,7 @@
       "apply": "应用",
       "apply-body": "所有有访问权限的人都会看到它们。您可以从版本历史记录中还原以前的版本。",
       "apply-failed": "无法应用更改。请重试，或先进行比较。",
-      "apply-needs-edit": "应用更改需要拥有“{{title}}”的编辑权限。您可以预览这些更改，但无法应用它们。",
+      "apply-needs-save": "",
       "breadcrumb-draft": "草稿",
       "breadcrumb-pending-changes": "待处理的更改",
       "change-added": "已添加",
@@ -7711,6 +7773,19 @@
       "aria-label-remove-option": "移除选项",
       "title-drag-and-drop-to-reorder": "拖放以重新排序",
       "tooltip-remove-option": "移除选项"
+    },
+    "panel-actions-popover": {
+      "aria-label": "",
+      "edit": "",
+      "edit-tooltip-disabled": "",
+      "expand": "",
+      "explore": "",
+      "more-actions": "",
+      "remove": "",
+      "remove-confirm": "",
+      "remove-tooltip-disabled": "",
+      "restore-size": "",
+      "settings": ""
     },
     "panel-data-alerting-tab": {
       "tab-label": "警报"
@@ -7890,6 +7965,12 @@
       "body-restore-version": "您确定要将数据面板还原到版本吗 {{version}}？所有未保存的更改都将丢失。",
       "confirmText-restore-version": "是，恢复到版本 {{version}}",
       "title-restore-version": "恢复版本"
+    },
+    "row-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-row-settings": ""
     },
     "sandbox-consent": {
       "allow": "允许",
@@ -8078,6 +8159,12 @@
       "switch-options": "切换选项",
       "value-pair-type": "值对类型",
       "value-pair-type-description": "选择开关状态的值类型"
+    },
+    "tab-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-tab-settings": ""
     },
     "text-box-variable": {
       "name-default-value": "默认值"
@@ -8416,7 +8503,11 @@
   },
   "data-sources": {
     "datasource-add-button": {
-      "label": "添加新数据源"
+      "label": "添加新数据源",
+      "setup-assistant": "",
+      "setup-assistant-description": "",
+      "setup-manually": "",
+      "setup-manually-description": ""
     },
     "empty-state": {
       "message": "未找到数据源"
@@ -8548,6 +8639,7 @@
     },
     "edit-data-source-actions": {
       "add-favorite": "添加到收藏夹",
+      "configure-with-assistant": "",
       "explore-data": "浏览数据",
       "open-in-explore": "在浏览视图中打开",
       "remove-favorite": "从收藏夹中移除"
@@ -9687,6 +9779,9 @@
     "select-aria-label": "文件夹筛选",
     "select-placeholder": "按文件夹筛选"
   },
+  "folder-picker": {
+    "read-only-folder-tooltip": ""
+  },
   "folders": {
     "api": {
       "anonymous-user": "匿名",
@@ -10666,6 +10761,8 @@
       "tooltip": {
         "category": "工具提示",
         "description-hover-proximity": "光标必须多么靠近某个点才能触发工具提示，以像素为单位",
+        "description-max-height": "",
+        "description-max-width": "",
         "modeOptions": {
           "label-all": "全部",
           "label-hidden": "隐藏",
@@ -11168,6 +11265,8 @@
         "unbounded": "无限制"
       },
       "reorder-column-label": "重新排序 {{columnName}}",
+      "row-number": "",
+      "row-number-column": "",
       "show-column-label": "显示 {{columnName}}",
       "sort-by-column": "按列 {{column}} 排序",
       "sort-by-column-ascending": "按列 {{column}} 升序排序",
@@ -12942,6 +13041,10 @@
       "subtitle": "选择当警报实例触发时如何通知联系人",
       "title": "联络点"
     },
+    "alerting-recording-rules": {
+      "subtitle": "",
+      "title": ""
+    },
     "alerting-silences": {
       "subtitle": "停止来自一个或多个警报规则的通知",
       "title": "静默"
@@ -13126,6 +13229,9 @@
     },
     "new-folder": {
       "title": "新建文件夹"
+    },
+    "new-grafana-page": {
+      "title": ""
     },
     "new-notebook": {
       "title": "新笔记本"
@@ -13785,6 +13891,32 @@
     },
     "units": {
       "clear-tooltip": "清除单位选择"
+    },
+    "var-mapping-checks": {
+      "data-macro": "",
+      "not-allowed": "",
+      "not-found": "",
+      "not-number": "",
+      "not-one-value": "",
+      "out-of-range": "",
+      "resolves": "",
+      "values": ""
+    },
+    "var-mapping-toggle": {
+      "aria-label-picker": "",
+      "fallback-off": "",
+      "fallback-on": "",
+      "group-matching": "",
+      "group-other": "",
+      "hint-boolean": "",
+      "hint-number": "",
+      "hint-option": "",
+      "hint-option-no-fallback": "",
+      "new-variable": "",
+      "option-current": "",
+      "placeholder": "",
+      "use-fixed-value": "",
+      "use-variable": ""
     }
   },
   "org": {
@@ -13887,12 +14019,14 @@
     "header-menu": {
       "add-to-notebook": "添加到笔记本",
       "copy": "复制",
+      "copy-repeated-panel": "",
       "copy-styles": "复制样式",
       "download-diagnostics": "下载诊断",
       "duplicate": "复制",
       "edit": "编辑",
       "explore": "探索",
       "get-help": "获得帮助",
+      "group-by": "",
       "hide-legend": "隐藏图例",
       "inspect": "检查",
       "inspect-data": "数据",
@@ -14214,6 +14348,9 @@
     "empty-state": {
       "message": "找不到插件"
     },
+    "errors": {
+      "app-plugin-metas-error": ""
+    },
     "extensions": {
       "extension-error-alert-description": "请检查控制台，了解有关错误的更多详细信息。",
       "extension-error-alert-title": "扩展加载失败：\"{{pluginId}}/{{extensionTitle}}\""
@@ -14448,6 +14585,7 @@
       "description-filename": "数据面板的文件名（.json 或 .yaml）",
       "description-folder": "存储库内的文件夹。对于存储库根目录，请保留为空。",
       "description-folder-path": "",
+      "description-folder-with-path": "",
       "description-inside-repository": "",
       "error-configured-branch-disabled": "已针对此存储库禁用推送到已配置的分支",
       "info-branch-disabled": "推送到已配置分支已禁用",
@@ -14960,6 +15098,7 @@
     },
     "managed-badge": {
       "classic-file-provisioning": "管理者：文件预置",
+      "file-provisioning": "",
       "kubectl": "管理者：Kubectl",
       "manage-repository": "管理存储库",
       "plugin": "管理者：插件 {{id}}",
@@ -15142,6 +15281,8 @@
         }
       }
     },
+    "pull-only-local-tooltip": "",
+    "pull-only-remote-tooltip": "",
     "pull-request-options": {
       "description-enforce-template": "在保存对话框中使用上述模板预填拉取请求标题，并将其设为只读。",
       "description-title-template": "由分支工作流打开的拉取请求标题模板。可用占位符：{{actionVar}}、{{kindVar}}、{{titleVar}}、{{userLoginVar}}。留空以使用提交消息的第一行。",
@@ -15165,7 +15306,7 @@
       "message-resource-onprem_other": "您的实例中的每个存储库最多可拥有 {{count}} 个同步资源。"
     },
     "read-only-badge": {
-      "text": "只读"
+      "pull-only": ""
     },
     "read-only-local-tooltip": "此资源是只读的，并通过文件预置方式进行预置。要进行任何更改，请更新已连接的存储库。要修改设置，请转到“管理”>“预置”>“存储库”。",
     "read-only-remote-tooltip": "此资源是只读的，并通过 Git 进行预置。要进行任何更改，请更新已连接的存储库。要修改设置，请转到“管理”>“预置”>“存储库”。",
@@ -15296,6 +15437,8 @@
       "pure-git-tooltip": "使用 Smart HTTP 协议 v2 连接到任何 Git 存储库。核心同步工作流，不包含特定于提供商的功能（Webhook、拉取请求注释、深层链接）。"
     },
     "resource-kind": {
+      "connection": "",
+      "connections": "",
       "dashboard": "数据面板",
       "dashboards": "数据面板",
       "datasource": "",
@@ -15305,7 +15448,9 @@
       "library-panel": "库面板",
       "library-panels": "库面板",
       "playlist": "播放列表",
-      "playlists": "播放列表"
+      "playlists": "播放列表",
+      "repositories": "",
+      "repository": ""
     },
     "resource-tree": {
       "header-hash": "哈希",
@@ -15994,6 +16139,9 @@
       "show-response": "显示回复"
     },
     "query-editor-not-exported": "数据源插件不导出任何查询编辑器组件"
+  },
+  "read-only-badge": {
+    "text": ""
   },
   "recent-queries": {
     "error-state": {
@@ -17003,6 +17151,7 @@
     "description-min-column-width": "列自动调整大小的最小宽度",
     "description-page-size": "每页行数。为空时，页面大小基于面板高度。",
     "description-show-columns-sidebar": "使用面板打开列管理侧边栏，而不是从列菜单打开",
+    "description-show-row-numbers": "",
     "description-styling-from-field": "包含具有 CSS 属性的 JSON 对象的字段",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "每隔一行交替背景颜色",
@@ -17045,6 +17194,7 @@
     "name-min-column-width": "最小列宽",
     "name-page-size": "页面大小",
     "name-show-columns-sidebar": "显示列侧边栏",
+    "name-show-row-numbers": "",
     "name-show-table-header": "显示表格表头",
     "name-sparkline-show-tooltip": "显示悬停工具提示",
     "name-styling-from-field": "字段中的样式",
@@ -17206,6 +17356,10 @@
     "code-view": {
       "aria-label-code-content": "代码内容"
     },
+    "consent-notice": {
+      "review": "",
+      "text_other": ""
+    },
     "editor": {
       "aria-label-content": "文本内容",
       "aria-label-mode": "文本模式：{{mode}}",
@@ -17255,6 +17409,17 @@
     "sandbox": {
       "diagram-error": "无法渲染图表",
       "title": "文本面板内容"
+    },
+    "suggestions": {
+      "list": "",
+      "no-data": "",
+      "statistic-field": "",
+      "statistic-last": "",
+      "statistic-max": "",
+      "statistic-mean": "",
+      "statistic-min": "",
+      "statistics": "",
+      "summary": ""
     },
     "truncation": {
       "label": "内容已截断",

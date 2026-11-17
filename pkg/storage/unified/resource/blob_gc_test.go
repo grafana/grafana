@@ -71,8 +71,15 @@ func TestBlobGarbageCollector(t *testing.T) {
 			case "restart":
 				gc = NewBlobGarbageCollector(store, 100, 0)
 			}
+			var deleted []kv.BlobKey
+			gc.onDeleted = func(key kv.BlobKey) { deleted = append(deleted, key) }
 			count, err = gc.Collect(t.Context(), now.Add(2*time.Hour), time.Hour, scenario == "dry run", referenced)
 			require.Equal(t, scenario == "read error", err != nil)
+			if scenario == "orphan" || scenario == "restart" {
+				require.Equal(t, []kv.BlobKey{key}, deleted)
+			} else {
+				require.Empty(t, deleted)
+			}
 			expectedCount := 0
 			if scenario == "orphan" || scenario == "dry run" || scenario == "restart" {
 				expectedCount = 1
@@ -126,6 +133,8 @@ func TestBlobGCPagedKeys(t *testing.T) {
 
 func TestKVBlobGCOptInAndDryRun(t *testing.T) {
 	b := setupTestStorageBackend(t)
+	logger := &blobGCShutdownLogger{}
+	b.log = logger
 	b.kv = setupSqlKV(t)
 	b.dataStore = newDataStore(b.kv)
 	key := kv.BlobKey{Group: "group", Resource: "resource", Namespace: "default", Name: "snap", UID: "unreferenced"}
@@ -147,10 +156,13 @@ func TestKVBlobGCOptInAndDryRun(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, reader.Close())
 
+	require.Equal(t, []string{"blob garbage collection finished", "blob garbage collection finished"}, logger.infos)
 	b.garbageCollection.BlobDryRun = false
 	b.collectBlobs(t.Context())
 	_, err = b.kv.Get(t.Context(), kv.BlobDataSection, key.String())
 	require.ErrorIs(t, err, kv.ErrNotFound)
+	require.Equal(t, []string{"blob garbage collection delete succeeded", "blob garbage collection finished"}, logger.infos[2:])
+	require.Equal(t, []any{"uid", key.UID, "group", key.Group, "resource", key.Resource}, logger.infoFields[2])
 }
 
 type blobGCShutdownStore struct {
@@ -179,11 +191,15 @@ func (s blobGCShutdownStore) Delete(context.Context, string, string) error {
 
 type blobGCShutdownLogger struct {
 	logging.NoOpLogger
-	infos  []string
-	errors []string
+	infos      []string
+	infoFields [][]any
+	errors     []string
 }
 
-func (l *blobGCShutdownLogger) Info(msg string, _ ...any)  { l.infos = append(l.infos, msg) }
+func (l *blobGCShutdownLogger) Info(msg string, fields ...any) {
+	l.infos = append(l.infos, msg)
+	l.infoFields = append(l.infoFields, fields)
+}
 func (l *blobGCShutdownLogger) Error(msg string, _ ...any) { l.errors = append(l.errors, msg) }
 
 func TestKVBlobGCShutdown(t *testing.T) {
@@ -295,7 +311,8 @@ func TestKVBlobGCPartialProgress(t *testing.T) {
 			require.Equal(t, float64(1), testutil.ToFloat64(metrics.Runs))
 			require.Equal(t, float64(1), testutil.ToFloat64(metrics.Deleted))
 			require.Equal(t, float64(7), testutil.ToFloat64(metrics.Candidates))
-			require.Empty(t, logger.infos)
+			require.Equal(t, []string{"blob garbage collection delete succeeded"}, logger.infos)
+			require.Equal(t, []any{"uid", "blob", "group", "group", "resource", "resource"}, logger.infoFields[0])
 			if scenario == "cancellation" {
 				require.Zero(t, testutil.ToFloat64(metrics.Errors))
 				require.Empty(t, logger.errors)

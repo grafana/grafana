@@ -16,7 +16,7 @@ import {
 
 import { useAddRuleToRuleGroup } from '../../../hooks/ruleGroup/useUpsertRuleFromRuleGroup';
 import { type RuleFormValues } from '../../../types/rule-form';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../../utils/constants';
 import { stringifyErrorLike } from '../../../utils/misc';
 import { grafanaRuleDtoToFormValues } from '../../../utils/rule-form';
 import { rulerRuleType } from '../../../utils/rules';

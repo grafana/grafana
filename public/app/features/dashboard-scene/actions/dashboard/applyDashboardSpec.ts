@@ -2,7 +2,6 @@ import { isEqual } from 'lodash';
 
 import { locationService } from '@grafana/runtime';
 import {
-  AdHocFiltersVariable,
   NewSceneObjectAddedEvent,
   sceneGraph,
   type SceneObject,
@@ -17,7 +16,7 @@ import { type TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManage
 import { buildDashboardWithAccessInfoFromScene } from '../../serialization/buildDashboardWithAccessInfoFromScene';
 import { transformSaveModelSchemaV2ToScene } from '../../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSceneToSaveModelSchemaV2 } from '../../serialization/transformSceneToSaveModelSchemaV2';
-import { applySupportsMultiValueOperators } from '../../utils/applySupportsMultiValueOperators';
+import { resolveAdHocMultiValueOperators } from '../../utils/applySupportsMultiValueOperators';
 import { edit } from '../utils/edit';
 
 // Minimal structural type for the bits of DashboardSceneUrlSync the rebuild drives, without
@@ -103,9 +102,6 @@ export function applyDashboardSpec({ scene, spec, description, scope, actor }: A
       // Calling editModeChange rehydrates the panel's edit state (for example isDraggable state)
       scene.applyDashboardMode();
 
-      // Ad hoc variables look up whether their data source takes multi-value operators after the build,
-      // and set it on the objects the build made. The swap installed clones of those, so look it up again
-      // on the clones, or the lookups land on the discarded tree.
       resolveAdHocMultiValueOperators(scene);
 
       scene.state.sidebar.refreshAfterRebuild();
@@ -291,12 +287,4 @@ function syncRebuiltChildrenFromUrl(scene: DashboardScene, updates: SceneObjectU
 function isSameUrlValue(a: SceneObjectUrlValue, b: SceneObjectUrlValue) {
   const values = (value: SceneObjectUrlValue) => (value == null ? [] : Array.isArray(value) ? value : [value]);
   return isEqual(values(a), values(b));
-}
-
-function resolveAdHocMultiValueOperators(scene: DashboardScene) {
-  for (const variable of sceneGraph.findAllObjects(scene, (obj) => obj instanceof AdHocFiltersVariable)) {
-    if (variable instanceof AdHocFiltersVariable) {
-      applySupportsMultiValueOperators(variable, variable.state.datasource?.type);
-    }
-  }
 }

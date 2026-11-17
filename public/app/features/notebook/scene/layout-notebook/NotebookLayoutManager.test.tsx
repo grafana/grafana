@@ -39,6 +39,27 @@ import { NotebookScene } from '../NotebookScene';
 // would re-fire this stub's fake focus effect on every keystroke, stealing focus back from whatever
 // cell the reader is actually typing into — useStableExtensions below is what keeps the identity (and
 // so the effect) stable across a re-render that does not actually change what's requested.
+// Minted names are random in production. Most tests here are about layout, not naming, so they get the
+// old counter-style names (`paragraph-1`, `paragraph-2`) to keep their assertions readable; the
+// "element names" describe switches the real implementation back on.
+let useRealElementNames = false;
+jest.mock('../../elementName', () => {
+  const actual = jest.requireActual('../../elementName');
+  return {
+    ...actual,
+    mintElementName: (base: string, isTaken: (name: string) => boolean) => {
+      if (useRealElementNames) {
+        return actual.mintElementName(base, isTaken);
+      }
+      let n = 1;
+      while (isTaken(`${base}-${n}`)) {
+        n++;
+      }
+      return `${base}-${n}`;
+    },
+  };
+});
+
 jest.mock('@grafana/ui/unstable', () => {
   // Required inside the factory, which jest hoists above the imports.
   const { useEffect, useRef } = require('react');
@@ -632,7 +653,33 @@ describe('NotebookLayoutManager', () => {
       await chooseCellAction('Duplicate block', 0);
 
       // Plus the trailing-invariant cell appended after 'b'.
-      expect(cellNames(manager)).toEqual(['a', 'a-copy-1', 'b', 'paragraph-1']);
+      expect(cellNames(manager)).toEqual(['a', 'paragraph-2', 'b', 'paragraph-1']);
+    });
+
+    // A copy is a new cell: sharing the original's id would have the server read two cells as one.
+    it('gives the copy no id, and leaves the original its own', () => {
+      const manager = buildManager(buildNarrativeCells(['a', 'b']), true);
+      manager.state.cells[0].setState({ id: '00000000-0000-4000-8000-000000000001' });
+      attachScene(manager);
+
+      manager.duplicateCell(manager.state.cells[0]);
+
+      expect(manager.state.cells.map((cell) => cell.state.id)).toEqual([
+        '00000000-0000-4000-8000-000000000001',
+        undefined,
+        undefined,
+        undefined,
+      ]);
+    });
+
+    it('gives every cell of a duplicated layout no id, since the copy is a new set of cells', () => {
+      const manager = buildManager(buildNarrativeCells(['a', 'b']), true);
+      manager.state.cells[0].setState({ id: '00000000-0000-4000-8000-000000000001' });
+
+      const copy = manager.duplicate();
+
+      expect(copy.state.cells.map((cell) => cell.state.id)).toEqual([undefined, undefined, undefined]);
+      expect(manager.state.cells[0].state.id).toBe('00000000-0000-4000-8000-000000000001');
     });
 
     // A copy is a new cell: sharing the original's id would have the server read two cells as one.
@@ -798,7 +845,7 @@ describe('NotebookLayoutManager', () => {
       manager.duplicateCell(manager.state.cells[0]);
       manager.duplicateCell(manager.state.cells[0]);
 
-      expect(cellNames(manager)).toEqual(['a', 'a-copy-2', 'a-copy-1']);
+      expect(cellNames(manager)).toEqual(['a', 'paragraph-2', 'paragraph-1']);
     });
 
     // A reused panel-<id> key collides in findVizPanelByKey and in the panelId that feeds query caching.
@@ -2752,5 +2799,70 @@ describe('splitSeed', () => {
       text: '- rest of item two\n- item three',
       caretOffset: 2,
     });
+  });
+});
+
+// Comments anchor to a cell by its element name, so a name must never be handed to a second cell: a
+// counter reissues the one a deleted cell freed, and the deleted cell's comments would follow it.
+describe('NotebookLayoutManager element names', () => {
+  beforeEach(() => {
+    useRealElementNames = true;
+  });
+
+  afterEach(() => {
+    useRealElementNames = false;
+  });
+
+  it('does not reissue the name of a deleted cell', () => {
+    const manager = buildManager(buildNarrativeCells(['a']));
+
+    const first = manager.addCell('heading', 1)!;
+    const deleted = first.state.elementName;
+    manager.removeCell(first);
+    const second = manager.addCell('heading', 1)!;
+
+    expect(second.state.elementName).not.toBe(deleted);
+    expect(second.state.elementName).toMatch(/^heading-[a-z0-9]{6}$/);
+  });
+
+  it('keeps the name of a deleted cell through undo and redo', () => {
+    const manager = buildManager(buildNarrativeCells(['a']));
+    const history = attachHistory(manager);
+    const cell = manager.addCell('heading', 1)!;
+    const name = cell.state.elementName;
+
+    manager.removeCell(cell);
+    expect(cellNames(manager)).toEqual(['a']);
+
+    history.undo();
+    expect(cellNames(manager)).toEqual(['a', name]);
+    expect(manager.state.cells[1]).toBe(cell);
+
+    history.redo();
+    expect(cellNames(manager)).toEqual(['a']);
+
+    history.undo();
+    expect(cellNames(manager)).toEqual(['a', name]);
+  });
+
+  it('names a copy from the block type so copies of copies do not grow the name', () => {
+    const manager = buildManager(buildNarrativeCells(['a']));
+
+    manager.duplicateCell(manager.state.cells[0]);
+    manager.duplicateCell(manager.state.cells[1]);
+
+    expect(cellNames(manager).slice(1)).toEqual([
+      expect.stringMatching(/^paragraph-[a-z0-9]{6}$/),
+      expect.stringMatching(/^paragraph-[a-z0-9]{6}$/),
+    ]);
+    expect(new Set(cellNames(manager)).size).toBe(3);
+  });
+
+  it('leaves the names of existing cells alone', () => {
+    const manager = buildManager(buildNarrativeCells(['heading-2', 'paragraph-1']));
+
+    manager.addCell('code', 2);
+
+    expect(cellNames(manager).slice(0, 2)).toEqual(['heading-2', 'paragraph-1']);
   });
 });

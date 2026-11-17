@@ -28,7 +28,7 @@ func testManifest(group, plural string, revision int, versions map[string][]app.
 		m.Versions = append(m.Versions, app.ManifestVersion{
 			Name: version,
 			Kinds: []app.ManifestVersionKind{{
-				Kind: "Widget", Plural: plural, Embed: &app.ManifestVersionKindEmbed{Fields: fields},
+				Kind: "Widget", Plural: plural, Resource: plural, Embed: &app.ManifestVersionKindEmbed{Fields: fields},
 			}},
 		})
 	}

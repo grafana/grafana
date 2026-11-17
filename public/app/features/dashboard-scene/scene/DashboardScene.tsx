@@ -8,13 +8,12 @@ import {
   type DataQueryRequest,
   type FieldConfig,
   type FieldConfigSource,
-  filterFieldConfigOverrides,
-  isStandardFieldProp,
   locationUtil,
   type NavIndex,
   type NavModelItem,
   store,
 } from '@grafana/data';
+import { clearCustomFieldConfig } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { config, getDataSourceSrv, locationService, RefreshEvent, reportInteraction } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient, getPanelPluginMeta } from '@grafana/runtime/internal';
@@ -59,6 +58,7 @@ import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { type DashboardJson } from 'app/features/manage-dashboards/types';
 import { PROVISIONING_PREVIEW_URL } from 'app/features/provisioning/constants';
 import { type RecoverToNewBranch } from 'app/features/provisioning/types';
+import { createDefaultQuery } from 'app/features/query/state/queryDefaults';
 import { VariablesChanged } from 'app/features/variables/types';
 import { type DashboardDTO, type DashboardMeta, type SaveDashboardResponseDTO } from 'app/types/dashboard';
 import { DashboardDiscardedEvent, ShowConfirmModalEvent } from 'app/types/events';
@@ -89,6 +89,7 @@ import {
   recordPendingChange,
   startRecordingPendingChanges,
 } from '../lifecycle/pendingChangesHistory';
+import { discardScenePendingChanges, getPendingChangesDiff } from '../lifecycle/pendingChangesSave';
 import { createMutationClient } from '../mutation-api/clientBridge';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { type DashboardChangeInfo, isNewDashboard } from '../saving/shared';
@@ -110,9 +111,11 @@ import { gridItemToPanel } from '../serialization/transformSceneToSaveModel';
 import { normalizeTransformation } from '../serialization/transformationCompat';
 import { getDashboardTemplateExtension } from '../settings/enterprise-components/DashboardTemplateExtension';
 import { DashboardSidebar } from '../sidebar/DashboardSidebar';
-import { DashboardStateChangedEvent } from '../sidebar/events';
+import { type DashboardActionMeta, DashboardStateChangedEvent } from '../sidebar/events';
 import { type DashboardSidebarState } from '../sidebar/types';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
+import { resolveAdHocMultiValueOperators } from '../utils/applySupportsMultiValueOperators';
+import { clearDefaultQuery } from '../utils/clearDefaultQuery';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
 import {
   mayInjectAnyPredefinedVariables,
@@ -139,6 +142,7 @@ import {
 import { getPanelStyleConfig, type PanelStyleConfig } from '../utils/panelStyleConfigs';
 import { persistUseCrossDashboardVariables } from '../utils/persistUseCrossDashboardVariables';
 import { fetchPredefinedVariables, isPredefinedOrigin } from '../utils/predefinedVariables';
+import { getEmptyQueryRunnerState } from '../utils/queryRunnerState';
 import {
   getClosestVizPanel,
   getDashboardSceneFor,
@@ -154,6 +158,7 @@ import { DashboardLayoutOrchestrator } from './DashboardLayoutOrchestrator';
 import { DashboardSceneRenderer } from './DashboardSceneRenderer';
 import { DashboardSceneUrlSync } from './DashboardSceneUrlSync';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
+import { UNCONFIGURED_PANEL_PLUGIN_ID } from './UnconfiguredPanel';
 import {
   dashboardComposerEnabled,
   dashboardModesEnabled,
@@ -163,6 +168,7 @@ import {
   isComposerMode,
   type DashboardMode,
 } from './dashboardModes';
+import { giveEmptyPlanTabsAGrid, readPlanLayout } from './dashboardPlan';
 import { dashboardViews, dashboardViewChanged, type DashboardViewRequest } from './dashboardViewRegistry';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
 import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
@@ -171,14 +177,20 @@ import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { addNewRowTo } from './layouts-shared/addNew';
 import { clearClipboard } from './layouts-shared/paste';
+import {
+  type AdHocTransformationsByPanelKey,
+  collectAdHocTransformations,
+  restoreAdHocTransformations,
+} from './panel-actions/adHocTransformations';
 import { promotePanelAdHocChanges } from './panel-actions/promote/promotePanelAdHocChanges';
 import { PromotePanelAdHocChangesEvent } from './panel-actions/promote/utils';
 import { getUpdatedHoverHeader } from './panel-timerange/utils';
 import { takePendingPlanBuild } from './pendingPlanBuild';
-import { DashboardPlanningEvent } from './planningEvents';
+import { DashboardPlanChangedEvent, DashboardPlanningEvent } from './planningEvents';
 import { clearUnsavedDashboardConsent, copyDashboardConsent } from './sandbox-consent/sandboxConsent';
 import { type AnyDashboardLayoutManager, type DashboardLayoutManager } from './types/DashboardLayoutManager';
 import {
+  isArrangingPlan,
   isFullDashboardEditing,
   isDashboardReviewing,
   type DashboardSceneLike,
@@ -188,6 +200,19 @@ import {
 export const PERSISTED_PROPS = ['title', 'description', 'tags', 'editable', 'graphTooltip', 'links', 'meta', 'preload'];
 const PANEL_SEARCH_VAR = 'systemPanelFilterVar';
 const PANELS_PER_ROW_VAR = 'systemDynamicRowSizeVar';
+
+/**
+ * The only edits a plan preview accepts: moving and resizing what the plan already has. Everything
+ * else is refused, so a new edit action stays unavailable during a preview until it is added here.
+ */
+const PLAN_ARRANGE_ACTIONS = new Set<DashboardActionMeta['actionId']>([
+  'panel.move',
+  'panel.moveOrResize',
+  'row.reorder',
+  'row.move',
+  'tab.reorder',
+  'tab.move',
+]);
 
 type PanelStyles = {
   fieldConfig?: { defaults: Partial<FieldConfig> };
@@ -237,6 +262,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
    * State before editing started
    */
   private _initialState?: DashboardSceneState;
+  private _initialAdHocTransformations?: AdHocTransformationsByPanelKey;
   /**
    * Url state before editing started
    */
@@ -377,6 +403,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public recordEditAction(actionId: string) {
+    if (isArrangingPlan(this.state)) {
+      this.syncPlanLayout();
+      return;
+    }
     if (!this.state.isEditing) {
       return;
     }
@@ -385,6 +415,25 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       const counts = this._assistantWrites > 0 ? this._editSession.aiEdits : this._editSession.manualEdits;
       counts.set(actionId, (counts.get(actionId) ?? 0) + 1);
     }
+  }
+
+  /**
+   * Feeds a layout arranged by hand back into the plan the preview owns. Only layout moves reach
+   * here while arranging (see PLAN_ARRANGE_ACTIONS), and only the layout is read back.
+   */
+  private syncPlanLayout() {
+    const { planning } = this.state;
+    if (planning?.phase !== 'preview' || !planning.editable) {
+      return;
+    }
+    giveEmptyPlanTabsAGrid(this.state.body);
+    const plan = readPlanLayout(this.state.body, planning.editable.plan);
+    if (isEqual(plan, planning.editable.plan)) {
+      return;
+    }
+    const revision = planning.editable.revision + 1;
+    this.setState({ planning: { ...planning, editable: { plan, revision } } });
+    appEvents.publish(new DashboardPlanChangedEvent({ planId: planning.planId, revision }));
   }
 
   private serializeForChangeTracking(): string | null {
@@ -432,7 +481,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
   }
 
-  public prepareEditAction() {
+  public prepareEditAction(meta?: DashboardActionMeta) {
+    if (isArrangingPlan(this.state)) {
+      return meta !== undefined && PLAN_ARRANGE_ACTIONS.has(meta.actionId);
+    }
     // In Composer only Assistant writes; one over Viewing switches Composer to Editing first.
     if (isComposerMode(this.state)) {
       return this._assistantWrites > 0 && (isComposerEditing(this.state) || this.startComposerEditingForAssistant());
@@ -619,7 +671,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       // closed) never got a Build or Dismiss decision — report that honestly as 'closed' rather
       // than leaving the caller holding a stale reference to a preview nothing is showing.
       if (this.state.planning) {
-        appEvents.publish(new DashboardPlanningEvent({ planId: this.state.planning.planId, action: 'closed' }));
+        const { planning } = this.state;
+        const editable = planning.phase === 'preview' ? planning.editable : undefined;
+        appEvents.publish(new DashboardPlanningEvent({ planId: planning.planId, action: 'closed', ...editable }));
         // Lifecycle hygiene, not a cache fix: a fresh /dashboard/new always builds an uncached
         // scene with no planning state, so this only matters if that ever changes.
         this.setState({ planning: undefined });
@@ -791,6 +845,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       // transient: the build's first write enters edit mode while it is still up, and discarding
       // must not bring it back with nothing left to end it.
       this._initialState = sceneUtils.cloneSceneObjectState(this.state, { isDirty: false, planning: undefined });
+      this._initialAdHocTransformations = collectAdHocTransformations(this);
       this._initialUrlState = locationService.getLocation();
 
       this.setState({
@@ -840,7 +895,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
     if (mode === 'view' && isNewDashboard(this.state)) {
       if (trigger === 'picker') {
-        this.openSaveDrawer({ onSaveSuccess: () => this.setDashboardMode('view', trigger) });
+        if (this.showsPendingChangesForEditing()) {
+          // A draft is saved or discarded on the way out, as Exit edit does.
+          this.exitEditMode({ skipConfirm: false });
+        } else {
+          this.openSaveDrawer({ onSaveSuccess: () => this.setDashboardMode('view', trigger) });
+        }
       }
       return false;
     }
@@ -854,6 +914,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     // A switch into any other non-view mode is blocked
     if (mode !== 'view' && isMobileEditDeprecated()) {
       notifyMobileEditNotAvailable();
+      return false;
+    }
+    // Viewing would show the pending changes as if they were saved: they are saved or discarded on
+    // the way out, as Exit edit does.
+    if (trigger === 'picker' && previous !== 'view' && mode === 'view' && this.showsPendingChangesForEditing()) {
+      this.exitEditMode({ skipConfirm: false });
       return false;
     }
     if (
@@ -1208,6 +1274,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       isDirty: false,
       overlay: undefined,
     });
+    this._initialAdHocTransformations = collectAdHocTransformations(this);
     this._initialUrlState = locationService.getLocation();
     // Detect edits made during the save before its redirect can leave the dashboard.
     this.setState({ isDirty: hasActualSaveChanges(this), overlay: undefined });
@@ -1227,10 +1294,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     // Edits that skipped the edit actions, which record each change, are recorded as one here, and
     // an edit the plugin failed to record is retried. Before exiting: that discards an open panel editor.
     const history = getPendingChangesHistory(this.state);
+    if (history && !restoreInitialState && (this.hasUnrecordedEdits() || hasUnrecordedPendingChange(this))) {
+      void recordPendingChange(this, history, t('dashboard-scene.lifecycle.edited-dashboard', 'Edit dashboard'));
+    }
+    if (!skipConfirm && !restoreInitialState && this.showsPendingChangesForEditing()) {
+      this.confirmLeavingPendingChanges();
+      return;
+    }
     if (history && !restoreInitialState) {
-      if ((this.state.isDirty && hasActualSaveChanges(this)) || hasUnrecordedPendingChange(this)) {
-        void recordPendingChange(this, history, t('dashboard-scene.lifecycle.edited-dashboard', 'Edit dashboard'));
-      }
       this.exitEditModeConfirmed(false);
       return;
     }
@@ -1263,6 +1334,26 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         })
       );
     }
+  }
+
+  /**
+   * Pending changes on the page are unsaved changes: leaving edit mode saves or discards them, as it
+   * would edits made by hand. With nothing left to save, they are discarded without asking: not while
+   * an edit is still on its way to their plugin, which the recorded changes don't show yet.
+   */
+  private confirmLeavingPendingChanges() {
+    if (!isNewDashboard(this.state) && !hasActualSaveChanges(this) && !hasUnrecordedPendingChange(this)) {
+      void discardScenePendingChanges(this);
+      return;
+    }
+    this.showUnsavedChangesDialog(
+      () => {
+        if (this.state.isEditing) {
+          this.exitEditModeConfirmed(false);
+        }
+      },
+      () => void discardScenePendingChanges(this)
+    );
   }
 
   private showUnsavedChangesDialog(onSaveSuccess: () => void, onDiscard: () => void) {
@@ -1321,9 +1412,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
 
     if (restoreInitialState) {
+      const adHocTransformations = collectAdHocTransformations(this);
       // Restore initial state and disable editing
       const { loadingView, ...initialState } = this._initialState ?? {};
       this.setState({ ...initialState, isEditing: false, mode: undefined, composerEditing: undefined });
+      restoreAdHocTransformations(this, adHocTransformations, this._initialAdHocTransformations);
+      // The baseline can be taken before a lookup started on the live tree resolves.
+      resolveAdHocMultiValueOperators(this);
       this.restoreSerializerAnnotationsFromInitialState();
       appEvents.publish(new DashboardDiscardedEvent());
       DashboardInteractions.dashboardEditDiscarded();
@@ -1343,10 +1438,36 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     this.state.body.editModeChanged?.(false);
   }
 
-  /** Whether edits are recorded in the history of pending changes to a saved dashboard, with no Save. */
+  /**
+   * Whether edits are recorded in the history of pending changes to a saved dashboard: Save saves
+   * them through the plugin that keeps them (see pendingChangesSave.ts).
+   */
   public recordsToPendingChanges(): boolean {
     const preview = getScenePendingChangePreview(this.state);
     return Boolean(getPendingChangesHistory(this.state) && preview && !proposesNewDashboard(preview.pending));
+  }
+
+  /**
+   * Whether the scene changed since its edits to pending changes were last recorded, by an edit that
+   * skipped the edit actions, which record each change.
+   */
+  public hasUnrecordedEdits(): boolean {
+    if (!this.state.isDirty) {
+      return false;
+    }
+    const changes = this.getChangesSinceLoad();
+    return Boolean(changes.diffCount || changes.hasFolderChanges || changes.hasPredefinedVariablesChanges);
+  }
+
+  /** Whether the dashboard page shows pending changes, or a draft, as its unsaved changes. */
+  private showsPendingChangesForEditing(): boolean {
+    const preview = getScenePendingChangePreview(this.state);
+    return Boolean(
+      this.state.isEditing &&
+        !this.state.meta.isEmbedded &&
+        preview?.previewing &&
+        (preview.pending.history || proposesNewDashboard(preview.pending))
+    );
   }
 
   /**
@@ -1358,6 +1479,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       this.serializer.initialSaveModel = sortedDeepCloneWithoutNulls(saveModel);
     }
     this.setState({ isDirty: false });
+  }
+
+  /** Whether the dashboard is saved with the v2 schema */
+  public isV2(): boolean {
+    return this.serializer instanceof V2DashboardSerializer;
   }
 
   public canDiscard() {
@@ -1373,6 +1499,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       return;
     }
     this._initialState = sceneUtils.cloneSceneObjectState(this.state, { isDirty: false, planning: undefined });
+    this._initialAdHocTransformations = collectAdHocTransformations(this);
     this._initialUrlState = locationService.getLocation();
   }
 
@@ -1387,6 +1514,12 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       return;
     }
 
+    // Their plugin discards them, and the saved dashboard opens for editing in their place.
+    if (this.showsPendingChangesForEditing() && this.recordsToPendingChanges()) {
+      void discardScenePendingChanges(this, { keepEditing: true });
+      return;
+    }
+
     this.endEditPeriod('discarded');
 
     // Stop tracking while we reset state.
@@ -1397,6 +1530,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     this.deactivateSidebar();
 
     const { mode } = this.state;
+    const adHocTransformations = collectAdHocTransformations(this);
     const { loadingView, ...restoredState } = sceneUtils.cloneSceneObjectState(this._initialState!, {
       isDirty: false,
     });
@@ -1416,8 +1550,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       editview: undefined,
       overlay: undefined,
     });
+    restoreAdHocTransformations(this, adHocTransformations, this._initialAdHocTransformations);
 
     this.applyDashboardMode();
+    resolveAdHocMultiValueOperators(this);
 
     // We stay in edit mode, so re-activate the swapped-in pane to keep programmatic mutations working.
     if (hadProgrammaticSidebar) {
@@ -1501,6 +1637,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     newState.version = versionRsp.version;
 
     this.setState(newState);
+    resolveAdHocMultiValueOperators(this);
     this.exitEditMode({ skipConfirm: true, restoreInitialState: false });
 
     return true;
@@ -1527,10 +1664,16 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       return;
     }
 
-    // Edits to pending changes are recorded as they're made; Apply saves them to the dashboard.
-    // A new dashboard's are saved as the dashboard, here.
-    if (this.recordsToPendingChanges() && !saveAsCopy && !saveAsDashboardTemplate) {
-      return;
+    // Changes to pending changes are measured from what their plugin recorded: as Exit edit does, an
+    // edit not recorded yet is recorded first, and the drawer shows it once that lands.
+    const history = getPendingChangesHistory(this.state);
+    if (
+      history &&
+      !saveAsCopy &&
+      this.recordsToPendingChanges() &&
+      (this.hasUnrecordedEdits() || hasUnrecordedPendingChange(this))
+    ) {
+      void recordPendingChange(this, history, t('dashboard-scene.lifecycle.edited-dashboard', 'Edit dashboard'));
     }
 
     const overlay = this.state.overlay;
@@ -1892,12 +2035,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     newOptions?: Record<string, unknown>,
     newFieldConfig?: FieldConfigSource
   ) {
-    const { fieldConfig: prevFieldConfig } = panel.state;
+    const { fieldConfig: prevFieldConfig, pluginId: previousPluginId } = panel.state;
 
-    let cleanFieldConfig: FieldConfigSource = {
-      defaults: { ...prevFieldConfig.defaults, custom: {} },
-      overrides: filterFieldConfigOverrides(prevFieldConfig.overrides, isStandardFieldProp),
-    };
+    let cleanFieldConfig: FieldConfigSource = clearCustomFieldConfig(prevFieldConfig);
 
     if (newFieldConfig) {
       cleanFieldConfig = { ...newFieldConfig, overrides: cleanFieldConfig.overrides };
@@ -1916,6 +2056,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     const pluginMeta = await getPanelPluginMeta(newPluginId);
     const skipDataQuery = pluginMeta?.skipDataQuery ?? false;
 
+    if (pluginMeta?.skipDefaultQuery && previousPluginId === UNCONFIGURED_PANEL_PLUGIN_ID) {
+      clearDefaultQuery(panel);
+    }
+
     if (skipDataQuery && panel.state.$data) {
       panel.setState({ $data: undefined });
     }
@@ -1927,7 +2071,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
           $data: new SceneQueryRunner({
             // The query editor needs the datasource type, which config.defaultDatasource does not provide.
             datasource: defaultDs ? { uid: defaultDs.uid, type: defaultDs.type } : undefined,
-            queries: [{ refId: 'A' }],
+            ...(pluginMeta?.skipDefaultQuery ? getEmptyQueryRunnerState() : { queries: [createDefaultQuery()] }),
           }),
           transformations: [],
         }),
@@ -2424,6 +2568,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   getDashboardChanges(saveTimeRange?: boolean, saveVariables?: boolean, saveRefresh?: boolean): DashboardChangeInfo {
+    // Save saves pending changes as their plugin keeps them: what it would save is measured from the
+    // saved version.
+    return getPendingChangesDiff(this) ?? this.getChangesSinceLoad(saveTimeRange, saveVariables, saveRefresh);
+  }
+
+  /** Changes from the dashboard as loaded, or as its pending changes were last recorded. */
+  private getChangesSinceLoad(saveTimeRange?: boolean, saveVariables?: boolean, saveRefresh?: boolean) {
     const rawJson = this.getRawJsonFromEditor();
     return this.serializer.getDashboardChangesFromScene(this, { saveTimeRange, saveVariables, saveRefresh, rawJson });
   }

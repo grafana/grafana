@@ -280,7 +280,7 @@ func TestIntegrationSQLKVCreateGRPCConflictAndAlreadyExists(t *testing.T) {
 
 	// A lease can be held before anything has been persisted. This must
 	// produce a conflict, not a claim that the object already exists.
-	leaseName := key.Group + "/" + key.Resource + "/" + key.Namespace + "/" + key.Name
+	leaseName := "write/" + key.Group + "/" + key.Resource + "/" + key.Namespace + "/" + key.Name
 	manager := backend.LeaseManager()
 	held, err := manager.Acquire(ctx, leaseName)
 	require.NoError(t, err)

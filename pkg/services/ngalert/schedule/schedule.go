@@ -43,6 +43,9 @@ type AlertsSender interface {
 
 type RecordingWriter interface {
 	WriteDatasource(ctx context.Context, dsUID string, name string, t time.Time, frames data.Frames, orgID int64, extraLabels map[string]string) error
+	// WriteStale ends series written with WriteDatasource. A label set is the full set
+	// of labels that was written, without the metric name.
+	WriteStale(ctx context.Context, dsUID string, name string, t time.Time, orgID int64, labelSets []map[string]string) error
 }
 
 // AlertRuleStopReasonProvider is an interface for determining the reason why an alert rule was stopped.
@@ -404,13 +407,16 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 		sch.log.Warn("Unable to obtain folder titles for some rules", "missingFolderUIDToRuleUID", missingFolder)
 	}
 
-	// jitter the start time based on the base interval and total scheduled items
-	var step int64
-	if len(readyToRun) > 0 {
-		step = sch.baseInterval.Nanoseconds() / int64(len(readyToRun))
-	}
-
 	sequences := sch.buildSequences(readyToRun, sch.runJobFn)
+
+	// jitter the start time based on the base interval and the number of sequences.
+	// One timer is scheduled per sequence, not per rule: rules in imported groups are
+	// chained into a single sequence, so dividing by len(readyToRun) squeezes
+	// starts into the first fraction of the interval.
+	var step int64
+	if len(sequences) > 0 {
+		step = sch.baseInterval.Nanoseconds() / int64(len(sequences))
+	}
 	sch.runSequences(sequences, step)
 
 	// Stop old routines for rules that got restarted.

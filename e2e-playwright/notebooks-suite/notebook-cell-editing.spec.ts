@@ -368,7 +368,7 @@ test.describe('Notebook locked time range layout', () => {
       try {
         for (const isEditing of [false, true]) {
           await page.goto(`/notebooks/${uid}${isEditing ? '?edit=true' : ''}`);
-          const frame = page.getByRole('group', { name: 'Visualization block: cell-1' });
+          const frame = page.getByRole('group', { name: 'Visualization block: Locked panel' });
           const label = frame.getByText(range.label, { exact: true });
 
           for (const width of [390, 900, 1280]) {
