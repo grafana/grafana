@@ -21,7 +21,6 @@ export const ManagedDashboardNavBarBadge = ({ dashboard }: { dashboard: Dashboar
     <ManagedBadge
       managerKind={kind}
       name={id}
-      // Only users who could otherwise edit need to know why they can't.
       isReadOnly={isReadOnlyRepo && dashboard.canEditDashboard()}
       repositoryName={id}
       sourcePath={dashboard.getPath()}

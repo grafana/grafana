@@ -21,7 +21,6 @@ interface ManagedBadgeProps {
   name?: string;
   /** Repository-managed resource whose backing repository no longer exists. */
   isOrphaned?: boolean;
-  /** The manager does not allow edits; the badge shows a lock and says so in its tooltip. */
   isReadOnly?: boolean;
   /**
    * Manager identity (`grafana.app/managerId`). When set for a repository-managed resource, a
