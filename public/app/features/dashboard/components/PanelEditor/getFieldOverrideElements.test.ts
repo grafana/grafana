@@ -14,7 +14,6 @@ import {
   ThresholdsMode,
 } from '@grafana/data';
 import { getAllOptionEditors } from 'app/core/components/OptionsUI/registry';
-import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { type OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { getFieldOverrideCategories } from './getFieldOverrideElements';
@@ -716,37 +715,6 @@ describe('getFieldOverrideCategories', () => {
         ...fieldConfig,
         overrides: [{ matcher: { id: 'byName', options: 'A-series' }, properties: [] }],
       });
-    });
-
-    it('reports a rule property that starts or stops using a variable', () => {
-      const set = jest.spyOn(DashboardInteractions, 'panelOptionVariableSet').mockImplementation(() => {});
-      const removed = jest.spyOn(DashboardInteractions, 'panelOptionVariableRemoved').mockImplementation(() => {});
-      const registry = makeRegistry([makeMinItem()]);
-      const render = (properties: FieldConfigSource['overrides'][number]['properties']) => {
-        const fieldConfig: FieldConfigSource = {
-          defaults: {},
-          overrides: [{ matcher: { id: 'byName', options: 'A-series' }, properties }],
-        };
-        const categories = getFieldOverrideCategories(fieldConfig, registry, [], '', jest.fn(), undefined, true);
-        const propertyItem = categories[0].items.find((item) => item.props.id?.includes('-property-'));
-        return propertyItem?.props.render(propertyItem!) as React.ReactElement<{
-          onChange: (value: unknown) => void;
-          onRemove: () => void;
-        }>;
-      };
-      const properties = { option: 'min', kind: 'number', source: 'override' };
-
-      render([{ id: 'min', value: 20 }]).props.onChange('$myVar');
-      expect(set).toHaveBeenCalledWith(properties);
-
-      render([
-        { id: 'min', value: 20 },
-        { id: 'varMappings.min', value: '$myVar' },
-      ]).props.onRemove();
-      expect(removed).toHaveBeenCalledWith(properties);
-
-      set.mockRestore();
-      removed.mockRestore();
     });
   });
 

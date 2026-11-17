@@ -29,7 +29,6 @@ import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/l
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
 import { getOptionOverrides, getVarMappingOptionOverrides } from './state/getOptionOverrides';
-import { reportVarMappingChange } from './state/reportVarMappingChange';
 import { type OptionPaneRenderProps } from './types';
 import { setOptionImmutably, updateDefaultFieldConfigValue, updateDefaultFieldConfigVarMapping } from './utils';
 
@@ -125,7 +124,6 @@ function getDefaultsEditing(
   return {
     // The unit picker already accepts custom text, so it can take an expression as is
     Editor: fieldOption.editor,
-    kind,
     numberExpressions: kind === 'number' && !toggleKind,
     storedValue,
     // Toggle editors show the stored value and the expression separately
@@ -363,7 +361,7 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
     }
 
     const category = getOptionsPaneCategory(fieldOption.category);
-    const { Editor, kind, numberExpressions, storedValue, value, toggle, toFieldConfig } = getDefaultsEditing(
+    const { Editor, numberExpressions, storedValue, value, toggle, toFieldConfig } = getDefaultsEditing(
       fieldOption,
       currentFieldConfig,
       varMappingsEnabled
@@ -392,14 +390,6 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
               props.onFieldConfigChange(newFieldConfig, fieldOption.name, category.props.title);
             } else {
               panel.onFieldConfigChange(newFieldConfig, true);
-            }
-
-            if (kind) {
-              reportVarMappingChange(
-                { option: fieldOption.id, kind, source: 'defaults' },
-                currentFieldConfig.defaults.varMappings?.[fieldOption.id],
-                newFieldConfig.defaults.varMappings?.[fieldOption.id]
-              );
             }
 
             // Record interaction for analytics
