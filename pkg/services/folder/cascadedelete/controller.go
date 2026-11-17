@@ -14,8 +14,6 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/workqueue"
 
-	"github.com/hashicorp/golang-lru/v2/simplelru"
-
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -58,8 +56,7 @@ type Controller struct {
 	pending        PendingStore
 	pendingMetrics *pendingMetrics
 
-	mu             sync.Mutex
-	missingIntents *simplelru.LRU[string, *missingIntentObservation]
+	mu sync.Mutex
 	// seen lets a resync that repeats a folder's last version be dropped without reading it.
 	seen map[string]string
 	// waiting is the terminating folders a resync must retry: nothing names them when a subfolder goes.
@@ -194,11 +191,7 @@ func (c *Controller) trackEvent(key string, obj any, deleted bool) bool {
 	if deleted {
 		delete(c.seen, key)
 		delete(c.waiting, key)
-		c.invalidateMissingLocked(key, "")
 		return false
-	}
-	if acc, err := meta.Accessor(obj); err == nil && acc.GetUID() != "" {
-		c.invalidateMissingLocked(key, string(acc.GetUID()))
 	}
 	rv := resourceVersion(obj)
 	prev, known := c.remember(key, rv)
@@ -222,10 +215,7 @@ func (c *Controller) setWaiting(key string, waiting bool) {
 // ShutDown stops the queue. Run does it when its context ends; a caller that fails before reaching
 // Run needs it so the queue's goroutines do not outlive the controller.
 func (c *Controller) ShutDown() {
-	c.mu.Lock()
-	defer c.mu.Unlock()
 	c.queue.ShutDown()
-	c.missingIntents = nil
 }
 
 // Run processes the queue with the given number of workers until ctx is done.
@@ -288,7 +278,6 @@ func (c *Controller) processNext(ctx context.Context) bool {
 
 	f, err := c.folders.Get(ctx, namespace, name)
 	if apierrors.IsNotFound(err) {
-		c.invalidateMissing(key, "")
 		c.setWaiting(key, false)
 		c.queue.Forget(key)
 		return true
@@ -299,7 +288,6 @@ func (c *Controller) processNext(ctx context.Context) bool {
 		return true
 	}
 
-	c.invalidateMissing(key, string(f.UID))
 	if err := c.capturePending(ctx, f); err != nil {
 		logger.Warn("Folder pending deletion timestamp capture failed", "error", err)
 	}

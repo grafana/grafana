@@ -12,7 +12,6 @@ import (
 type pendingMetrics struct {
 	duration prometheus.Histogram
 	skipped  prometheus.Counter
-	missing  prometheus.Counter
 }
 
 func WithPendingMetrics(reg prometheus.Registerer) ControllerOption {
@@ -25,7 +24,6 @@ func WithPendingMetrics(reg prometheus.Registerer) ControllerOption {
 				Buckets: []float64{1, 10, 30, 60, 300, 600, 1800, 3600, 21600, 86400},
 			}),
 			skipped: factory.NewCounter(prometheus.CounterOpts{Name: "grafana_folder_deletion_duration_skipped_total", Help: "Completed pending folder deletions without a usable captured deletion timestamp."}),
-			missing: factory.NewCounter(prometheus.CounterOpts{Name: "grafana_folder_deletion_pending_missing_total", Help: "Observations of terminating folders without a pending deletion entry, suppressed per incarnation in a bounded process-local cache. Eviction or restart may repeat observations."}),
 		}
 	}
 }

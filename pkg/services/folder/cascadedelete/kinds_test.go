@@ -53,10 +53,9 @@ func TestNewDefaultControllerWithOptions_PreservesHandlersRecoveryAndMetrics(t *
 	count, err := testutil.GatherAndCount(reg,
 		"grafana_folder_deletion_observed_duration_seconds",
 		"grafana_folder_deletion_duration_skipped_total",
-		"grafana_folder_deletion_pending_missing_total",
 	)
 	require.NoError(t, err)
-	require.Equal(t, 3, count)
+	require.Equal(t, 2, count)
 	kinds := make([]ChildKind, 0, len(c.reconciler.Handlers))
 	for _, h := range c.reconciler.Handlers {
 		kinds = append(kinds, h.Kind)

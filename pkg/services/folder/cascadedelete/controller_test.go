@@ -3,7 +3,6 @@ package cascadedelete
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -100,7 +99,7 @@ func TestController_PendingCompletionMetrics(t *testing.T) {
 				require.True(t, apierrors.IsNotFound(err), "timing must not block cleanup")
 				families, err := reg.Gather()
 				require.NoError(t, err)
-				require.Len(t, families, 3)
+				require.Len(t, families, 2)
 				for _, family := range families {
 					require.Len(t, family.Metric, 1)
 					metric := family.Metric[0]
@@ -119,8 +118,6 @@ func TestController_PendingCompletionMetrics(t *testing.T) {
 					case "grafana_folder_deletion_duration_skipped_total":
 						require.Equal(t, "COUNTER", family.GetType().String())
 						require.Equal(t, tc.skipped, metric.GetCounter().GetValue())
-					case "grafana_folder_deletion_pending_missing_total":
-						require.Zero(t, metric.GetCounter().GetValue())
 					default:
 						t.Fatalf("unexpected metric %s", family.GetName())
 					}
@@ -133,6 +130,9 @@ func TestController_PendingCompletionMetrics(t *testing.T) {
 func TestController_PendingMetricsRegistration(t *testing.T) {
 	reg := prometheus.NewPedanticRegistry()
 	WithPendingMetrics(reg)(&Controller{})
+	missing, err := testutil.GatherAndCount(reg, "grafana_folder_deletion_pending_missing_total")
+	require.NoError(t, err)
+	require.Zero(t, missing, "missing-intent observations must not be registered")
 	require.Panics(t, func() { WithPendingMetrics(reg)(&Controller{}) }, "duplicate wiring must not silently reuse collectors")
 	require.NotPanics(t, func() { WithPendingMetrics(prometheus.NewPedanticRegistry())(&Controller{}) })
 	before, err := prometheus.DefaultGatherer.Gather()
@@ -219,7 +219,6 @@ func TestController_PendingMissingDoesNotBlockOrRepair(t *testing.T) {
 		}()
 		c.queue.Add(testNamespace + "/a")
 		synctest.Wait()
-		require.Zero(t, testutil.ToFloat64(c.pendingMetrics.missing), "ordinary events are not missing intents")
 		const missingMessage = "Terminating folder has no pending deletion entry"
 		require.NotContains(t, logs.String(), missingMessage, "ordinary events must not log a missing intent")
 		m.userDelete("a")
@@ -229,19 +228,8 @@ func TestController_PendingMissingDoesNotBlockOrRepair(t *testing.T) {
 		before := len(fake.Actions())
 		c.queue.Add(testNamespace + "/a")
 		synctest.Wait()
-		require.Greater(t, len(fake.Actions()), before, "suppression must not skip pending reads after cascade release")
-		var missingRecords []map[string]any
-		for _, line := range strings.Split(strings.TrimSpace(logs.String()), "\n") {
-			var record map[string]any
-			require.NoError(t, json.Unmarshal([]byte(line), &record))
-			if record["msg"] == missingMessage {
-				missingRecords = append(missingRecords, record)
-			}
-		}
-		require.Len(t, missingRecords, 1)
-		require.Equal(t, "ERROR", missingRecords[0]["level"])
-		require.Equal(t, testNamespace, missingRecords[0]["namespace"])
-		require.Equal(t, "a", missingRecords[0]["folder"])
+		require.Greater(t, len(fake.Actions()), before, "continue checking pending entries after cascade release")
+		require.NotContains(t, logs.String(), missingMessage, "missing intent must not produce an error log")
 		logs.Reset()
 		m.mu.Lock()
 		delete(m.folders, "a")
@@ -253,260 +241,7 @@ func TestController_PendingMissingDoesNotBlockOrRepair(t *testing.T) {
 		page, err := pending.List(context.Background(), "", "")
 		require.NoError(t, err)
 		require.Empty(t, page.Items)
-		require.NoError(t, testutil.GatherAndCompare(reg, strings.NewReader(`# HELP grafana_folder_deletion_pending_missing_total Observations of terminating folders without a pending deletion entry, suppressed per incarnation in a bounded process-local cache. Eviction or restart may repeat observations.
-# TYPE grafana_folder_deletion_pending_missing_total counter
-grafana_folder_deletion_pending_missing_total 1
-`), "grafana_folder_deletion_pending_missing_total"))
 	})
-}
-
-func TestController_PendingMissingIncarnationsAndEviction(t *testing.T) {
-	synctest.Test(t, func(t *testing.T) {
-		m := newMemStore()
-		m.addFolder("a", "", otherFinalizer)
-		m.userDelete("a")
-		fake := newFake()
-		c := NewController(m, nil, nil, WithPendingRecovery(NewPendingClient(fake)), WithPendingMetrics(nil))
-		defer c.ShutDown()
-		require.Nil(t, c.missingIntents, "reporting state must be allocated lazily")
-		var logs bytes.Buffer
-		ctx := logging.Context(t.Context(), logging.NewSLogLogger(slog.NewJSONHandler(&logs, nil)))
-		f := m.get("a")
-		require.NoError(t, c.capturePending(ctx, f))
-		require.NoError(t, c.capturePending(ctx, f))
-		require.Equal(t, float64(1), testutil.ToFloat64(c.pendingMetrics.missing))
-		f.UID = "replacement"
-		require.NoError(t, c.capturePending(ctx, f))
-		require.Equal(t, float64(2), testutil.ToFloat64(c.pendingMetrics.missing))
-		obj := pendingObject(f.Name, string(f.UID))
-		require.NoError(t, fake.Tracker().Create(pendingGVR, obj, f.Namespace))
-		require.NoError(t, c.capturePending(ctx, f))
-		stored, err := fake.Tracker().Get(pendingGVR, f.Namespace, obj.GetName())
-		require.NoError(t, err)
-		_, found, err := unstructured.NestedString(stored.(*unstructured.Unstructured).Object, "spec", "deletionTimestamp")
-		require.NoError(t, err)
-		require.True(t, found, "suppression must not skip capture when an intent appears")
-		f.Namespace = "org-2"
-		require.NoError(t, c.capturePending(ctx, f))
-		require.Equal(t, float64(3), testutil.ToFloat64(c.pendingMetrics.missing), "namespaces must not share suppression")
-		for i := range 1024 {
-			other := f.DeepCopy()
-			other.Name = fmt.Sprintf("other-%d", i)
-			require.NoError(t, c.capturePending(ctx, other))
-		}
-		hot := f.DeepCopy()
-		hot.Name = "other-0"
-		require.NoError(t, c.capturePending(ctx, hot))
-		require.NoError(t, c.capturePending(ctx, f))
-		require.Equal(t, 1024, c.missingIntents.Len())
-		require.True(t, c.missingIntents.Contains("org-2/other-0"), "a repeated observation refreshes recency")
-		require.False(t, c.missingIntents.Contains("org-2/other-1"), "evict the least recently used slot")
-		require.Equal(t, float64(1028), testutil.ToFloat64(c.pendingMetrics.missing), "eviction may allow a repeat observation")
-		require.Equal(t, 1028, strings.Count(logs.String(), "Terminating folder has no pending deletion entry"))
-	})
-}
-
-func TestController_PendingMissingLateResultInvalidation(t *testing.T) {
-	for _, action := range []string{"cancel", "deadline", "delete", "delete and recreate", "not found", "replacement event", "replacement lookup", "shutdown", "eviction"} {
-		t.Run(action, func(t *testing.T) {
-			synctest.Test(t, func(t *testing.T) {
-				m := newMemStore()
-				stamp := metav1.Now()
-				f := &foldersv1.Folder{ObjectMeta: metav1.ObjectMeta{Namespace: testNamespace, Name: "a", UID: "a-uid", DeletionTimestamp: &stamp}}
-				started, release := make(chan struct{}), make(chan struct{})
-				var first sync.Once
-				store := stalledPendingStore{get: func(_ context.Context, _, name string) (*pendingv1alpha1.PendingFolderDeletion, error) {
-					block := false
-					first.Do(func() { block = true })
-					if block {
-						close(started)
-						<-release
-					} else if action == "delete and recreate" {
-						return nil, errors.New("temporary read failure")
-					}
-					return nil, apierrors.NewNotFound(pendingGVR.GroupResource(), name)
-				}}
-				getter := folderGetterFunc(func(ctx context.Context, namespace, name string) (*foldersv1.Folder, error) {
-					if action == "replacement lookup" {
-						replacement := f.DeepCopy()
-						replacement.UID, replacement.DeletionTimestamp = "replacement", nil
-						return replacement, nil
-					}
-					return m.Get(ctx, namespace, name)
-				})
-				c := NewController(getter, newTestReconciler(m, 1), nil, WithPendingRecovery(store), WithPendingMetrics(nil))
-				defer c.ShutDown()
-				var logs bytes.Buffer
-				ctx, cancel := context.WithCancel(logging.Context(t.Context(), logging.NewSLogLogger(slog.NewJSONHandler(&logs, nil))))
-				defer cancel()
-				done := make(chan error, 1)
-				go func() { done <- c.capturePending(ctx, f) }()
-				<-started
-				switch action {
-				case "cancel":
-					cancel()
-					require.ErrorIs(t, <-done, context.Canceled)
-				case "deadline":
-					time.Sleep(pendingCaptureTimeout)
-					require.ErrorIs(t, <-done, context.DeadlineExceeded)
-				case "delete", "delete and recreate":
-					c.Handler().OnDelete(f)
-					if action == "delete and recreate" {
-						require.ErrorContains(t, c.capturePending(ctx, f), "temporary read failure")
-					}
-				case "not found", "replacement lookup":
-					c.queue.Add(testNamespace + "/a")
-					require.True(t, c.processNext(ctx))
-				case "replacement event":
-					replacement := f.DeepCopy()
-					replacement.UID = "replacement"
-					c.Handler().OnUpdate(f, replacement)
-				case "shutdown":
-					c.ShutDown()
-				case "eviction":
-					for i := range 1024 {
-						other := f.DeepCopy()
-						other.Name = fmt.Sprintf("other-%d", i)
-						require.NoError(t, c.capturePending(ctx, other))
-					}
-				}
-				snapshot := func() map[string]missingIntentObservation {
-					c.mu.Lock()
-					defer c.mu.Unlock()
-					state := map[string]missingIntentObservation{}
-					if c.missingIntents != nil {
-						for _, key := range c.missingIntents.Keys() {
-							observation, _ := c.missingIntents.Peek(key)
-							state[key] = *observation
-						}
-					}
-					return state
-				}
-				stateBefore := snapshot()
-				before := testutil.ToFloat64(c.pendingMetrics.missing)
-				logs.Reset()
-				close(release)
-				if action != "cancel" && action != "deadline" {
-					require.NoError(t, <-done)
-				}
-				synctest.Wait()
-				require.Equal(t, stateBefore, snapshot(), "late completion must not mutate or recreate reporting state")
-				require.Equal(t, before, testutil.ToFloat64(c.pendingMetrics.missing), "late result must not report an invalidated or canceled lookup")
-				require.NotContains(t, logs.String(), "Terminating folder has no pending deletion entry")
-				if action == "shutdown" {
-					require.NoError(t, c.capturePending(ctx, f))
-					require.Equal(t, before, testutil.ToFloat64(c.pendingMetrics.missing), "shutdown must prohibit new reporting state")
-					require.Nil(t, c.missingIntents)
-				}
-			})
-		})
-	}
-}
-
-type blockingMissingLogHandler struct {
-	slog.Handler
-	entered chan struct{}
-	release chan struct{}
-	exited  chan struct{}
-}
-
-func (h *blockingMissingLogHandler) Handle(ctx context.Context, record slog.Record) error {
-	if record.Level == slog.LevelError && record.Message == "Terminating folder has no pending deletion entry" {
-		close(h.entered)
-		<-h.release
-		close(h.exited)
-		return nil
-	}
-	return h.Handler.Handle(ctx, record)
-}
-
-func (h *blockingMissingLogHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
-	copy := *h
-	copy.Handler = h.Handler.WithAttrs(attrs)
-	return &copy
-}
-
-func (h *blockingMissingLogHandler) WithGroup(name string) slog.Handler {
-	copy := *h
-	copy.Handler = h.Handler.WithGroup(name)
-	return &copy
-}
-
-func TestController_PendingMissingBlockedLogBudget(t *testing.T) {
-	for _, cancelEarly := range []bool{true, false} {
-		t.Run(fmt.Sprintf("cancel=%t", cancelEarly), func(t *testing.T) {
-			synctest.Test(t, func(t *testing.T) {
-				m := newMemStore()
-				m.addFolder("a", "", foldersv1.CascadeDeleteFinalizer)
-				m.addFolder("unrelated", "")
-				m.userDelete("a")
-				store := stalledPendingStore{get: func(_ context.Context, _, name string) (*pendingv1alpha1.PendingFolderDeletion, error) {
-					time.Sleep(2 * time.Second)
-					return nil, apierrors.NewNotFound(pendingGVR.GroupResource(), name)
-				}}
-				c := NewController(m, newTestReconciler(m, 1), nil, WithPendingRecovery(store), WithPendingMetrics(nil))
-				var logs bytes.Buffer
-				handler := &blockingMissingLogHandler{Handler: slog.NewJSONHandler(&logs, nil), entered: make(chan struct{}), release: make(chan struct{}), exited: make(chan struct{})}
-				ctx, cancel := context.WithCancel(logging.Context(t.Context(), logging.NewSLogLogger(handler)))
-				defer cancel()
-				workerDone, progressDone := make(chan struct{}), make(chan struct{})
-				var captureErr error
-				start := time.Now()
-				go func() {
-					defer close(workerDone)
-					captureErr = c.capturePending(ctx, m.get("a"))
-				}()
-				<-handler.entered
-				var progressed bool
-				progressStarted := c.mu.TryLock()
-				if progressStarted {
-					c.mu.Unlock()
-					go func() {
-						defer close(progressDone)
-						c.Handler().OnAdd(m.get("unrelated"), false)
-						progressed = c.processNext(ctx)
-						c.ShutDown()
-					}()
-				} else {
-					t.Error("missing-error output must not hold the controller mutex")
-					close(progressDone)
-				}
-				defer func() {
-					close(handler.release)
-					<-handler.exited
-					<-workerDone
-					<-progressDone
-					c.ShutDown()
-				}()
-				synctest.Wait()
-				select {
-				case <-progressDone:
-					if progressStarted {
-						require.True(t, progressed, "unrelated work must run while missing-error output is blocked")
-					}
-				default:
-					t.Error("blocked missing-error output held up event handling, unrelated work or shutdown")
-				}
-				if cancelEarly {
-					cancel()
-				} else {
-					time.Sleep(3 * time.Second)
-				}
-				synctest.Wait()
-				select {
-				case <-workerDone:
-					if cancelEarly {
-						require.ErrorIs(t, captureErr, context.Canceled)
-					} else {
-						require.ErrorIs(t, captureErr, context.DeadlineExceeded)
-						require.Equal(t, pendingCaptureTimeout, time.Since(start), "lookup and output must share one total budget")
-					}
-				default:
-					t.Error("capture wait did not return before releasing the blocked logger")
-				}
-			})
-		})
-	}
 }
 
 func TestController_PendingKeepsEntryWhileOtherFinalizerHoldsFolder(t *testing.T) {
