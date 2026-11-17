@@ -130,4 +130,4 @@ export { BrandingContext, useBranding, type BrandingContextValue } from '../comp
 export { DRAWER_INSIDE_ATTRIBUTE } from '../components/Drawer/Drawer';
 
 export { InternalCodeMirrorEditor } from '../components/CodeMirror/CodeEditorLazy';
-export type { InternalCodeMirrorEditorProps } from '../components/CodeMirror/types';
+export type { InternalCodeMirrorEditorProps, CodeMirrorExtension } from '../components/CodeMirror/types';
