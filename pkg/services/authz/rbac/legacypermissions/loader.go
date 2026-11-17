@@ -191,7 +191,7 @@ func (l *Loader) uncached(ctx context.Context, user identity.Requester, p loadSe
 }
 
 func (l *Loader) assemble(ctx context.Context, user identity.Requester, options ac.Options, p loadSettings) ([]ac.Permission, error) {
-	var permissions []ac.Permission
+	var chunks [][]ac.Permission
 	for _, role := range ac.GetOrgRoles(user) {
 		load := func() ([]ac.Permission, error) {
 			q := queryFor(user.GetOrgID(), p)
@@ -218,7 +218,7 @@ func (l *Loader) assemble(ctx context.Context, user identity.Requester, options 
 		if err != nil {
 			return nil, err
 		}
-		permissions = append(permissions, basic...)
+		chunks = append(chunks, basic)
 	}
 	teams, err := l.cachedTeams(ctx, user, options, p)
 	if err != nil {
@@ -248,20 +248,26 @@ func (l *Loader) assemble(ctx context.Context, user identity.Requester, options 
 	}
 	// Detach from cached slices. The exact capacity also prevents a later
 	// Zanzana merge from mutating an assembly shared by concurrent callers.
-	snapshot := make([]ac.Permission, 0, len(permissions)+len(teams)+len(direct))
-	snapshot = append(snapshot, permissions...)
-	snapshot = append(snapshot, teams...)
-	snapshot = append(snapshot, direct...)
+	chunks = append(chunks, teams...)
+	chunks = append(chunks, direct)
+	count := 0
+	for _, chunk := range chunks {
+		count += len(chunk)
+	}
+	snapshot := make([]ac.Permission, 0, count)
+	for _, chunk := range chunks {
+		snapshot = append(snapshot, chunk...)
+	}
 	return snapshot, nil
 }
 
-func (l *Loader) cachedTeams(ctx context.Context, user identity.Requester, options ac.Options, p loadSettings) ([]ac.Permission, error) {
-	var permissions []ac.Permission
+func (l *Loader) cachedTeams(ctx context.Context, user identity.Requester, options ac.Options, p loadSettings) ([][]ac.Permission, error) {
+	var permissions [][]ac.Permission
 	var missing []int64
 	for _, teamID := range user.GetTeams() {
 		if value, ok := l.cache.Get(ac.GetTeamPermissionCacheKey(teamID, user.GetOrgID())); ok && !options.ReloadCache {
 			metrics.MAccessPermissionsCacheUsage.WithLabelValues(ac.CacheHit).Inc()
-			permissions = append(permissions, value.([]ac.Permission)...)
+			permissions = append(permissions, value.([]ac.Permission))
 		} else {
 			missing = append(missing, teamID)
 		}
@@ -284,7 +290,7 @@ func (l *Loader) cachedTeams(ctx context.Context, user identity.Requester, optio
 		if !isPermissionShadow(ctx) {
 			l.cache.Set(ac.GetTeamPermissionCacheKey(teamID, user.GetOrgID()), grants, cacheTTL)
 		}
-		permissions = append(permissions, grants...)
+		permissions = append(permissions, grants)
 	}
 	return permissions, nil
 }
