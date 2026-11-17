@@ -7727,13 +7727,7 @@
       "usage-count_other": "Used on {{count}} dashboards"
     },
     "lifecycle": {
-      "applied": "Applied your changes to {{title}}",
-      "apply": "Apply",
-      "apply-body": "Everyone with access will see them. You can restore the previous version from version history.",
-      "apply-failed": "Couldn't apply the changes. Try again, or compare them first.",
-      "apply-needs-save": "You don’t have permission to save “{{title}}”, so you can preview these changes but not apply them. Ask an admin for permission to save it.",
-      "apply-title_one": "Apply {{count}} change to “{{title}}”?",
-      "apply-title_other": "Apply {{count}} changes to “{{title}}”?",
+      "ask-assistant-to-update": "Ask Assistant to update",
       "breadcrumb-draft": "Draft",
       "breadcrumb-pending-changes": "Pending changes",
       "change-added": "Added",
@@ -7765,7 +7759,6 @@
       "draft-discarded": "Draft discarded",
       "draft-title": "Draft",
       "edited-dashboard": "Edit dashboard",
-      "highlight-changes": "Highlight changes on the dashboard",
       "pending-body": "Previewing pending changes, only you can see them.",
       "pending-body-source": "Previewing pending changes {{source}}, only you can see them.",
       "pending-changes-changed": "These pending changes changed",
@@ -7774,11 +7767,16 @@
       "pending-stale": "Dashboard has been updated since your changes were made",
       "pending-title": "Pending changes",
       "preview-changes": "Preview changes",
-      "rebase": "Rebase",
       "record-pending-change-failed": "Your change could not be saved",
       "save": "Save",
-      "show-original-dashboard": "Show original dashboard",
-      "stop-highlighting-changes": "Stop highlighting changes"
+      "save-failed": "Couldn't save the changes",
+      "save-needs-permission": "You don’t have permission to save “{{title}}”, so you can preview these changes but not save them. Ask an admin for permission to save it.",
+      "save-pending-body": "Everyone with access will see them. You can restore the previous version from version history.",
+      "save-pending-failed": "Couldn't save the changes. Try again, or compare them first.",
+      "save-pending-title_one": "Save {{count}} change to “{{title}}”?",
+      "save-pending-title_other": "Save {{count}} changes to “{{title}}”?",
+      "saved-pending": "Saved your changes to {{title}}",
+      "show-original-dashboard": "Show original dashboard"
     },
     "link-edit-actions": {
       "add-link": "Add link",
