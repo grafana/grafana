@@ -60,13 +60,9 @@ func TestClient_LegacyGetUserPermissionsCompleteSnapshot(t *testing.T) {
 			},
 			ReloadCache: flags.reload, SkipZanzanaCache: flags.skip,
 		}, rpc.request)
-		chunks, err := client.LegacyGetUserPermissionsChunks(t.Context(), caller, req)
-		require.NoError(t, err)
-		require.Len(t, chunks.Chunks, 2)
-		require.Equal(t, 3, chunks.Len())
-		require.Equal(t, got, chunks.Flatten())
+		require.Equal(t, len(got.Permissions), cap(got.Permissions))
 	}
-	require.Equal(t, 8, rpc.calls, "every invocation must reach the transport")
+	require.Equal(t, 4, rpc.calls, "every invocation must reach the transport")
 }
 
 func TestClient_LegacyGetUserPermissionsStreamFailures(t *testing.T) {
@@ -105,14 +101,7 @@ func TestClient_LegacyGetUserPermissionsStreamFailures(t *testing.T) {
 				require.NoError(t, err)
 			}
 			require.Empty(t, got.Permissions)
-			chunks, chunkErr := client.LegacyGetUserPermissionsChunks(t.Context(), legacyCaller("stacks-12", "authz.grafana.app/legacyuserpermissions:get"), legacyRequest())
-			if tc.wantError {
-				require.Error(t, chunkErr)
-			} else {
-				require.NoError(t, chunkErr)
-			}
-			require.Nil(t, chunks.Chunks)
-			require.Zero(t, chunks.Len())
+			require.Nil(t, got.Permissions)
 		})
 	}
 }

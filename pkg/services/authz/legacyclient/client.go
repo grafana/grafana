@@ -53,31 +53,23 @@ func NewLegacyClient(cc grpc.ClientConnInterface, opts ...LegacyClientOption) *L
 // belong to the embedded loader. The caller is a service, not the target user.
 // Client checks do not replace server-side authentication and scope validation.
 func (c *LegacyClient) LegacyGetUserPermissions(ctx context.Context, caller types.AuthInfo, req LegacyGetUserPermissionsRequest) (LegacyGetUserPermissionsResponse, error) {
-	response, err := c.LegacyGetUserPermissionsChunks(ctx, caller, req)
-	if err != nil {
-		return LegacyGetUserPermissionsResponse{}, err
-	}
-	return response.Flatten(), nil
-}
-
-func (c *LegacyClient) LegacyGetUserPermissionsChunks(ctx context.Context, caller types.AuthInfo, req LegacyGetUserPermissionsRequest) (LegacyGetUserPermissionsChunksResponse, error) {
 	ctx, span := c.tracer.Start(ctx, "LegacyClient.LegacyGetUserPermissions")
 	defer span.End()
 	if caller == nil || caller.GetSubject() == "" {
-		return LegacyGetUserPermissionsChunksResponse{}, authzlib.ErrMissingAuthInfo
+		return LegacyGetUserPermissionsResponse{}, authzlib.ErrMissingAuthInfo
 	}
 	permission := authzlib.CheckServicePermissions(caller, "authz.grafana.app", "legacyuserpermissions", "get")
 	if !permission.ServiceCall || !permission.Allowed {
-		return LegacyGetUserPermissionsChunksResponse{}, ErrLegacyUserPermissionsDenied
+		return LegacyGetUserPermissionsResponse{}, ErrLegacyUserPermissionsDenied
 	}
 	if req.GlobalOrg && req.NoOrgMembership {
-		return LegacyGetUserPermissionsChunksResponse{}, fmt.Errorf("%w: global org and no org membership are mutually exclusive", ErrInvalidLegacyUserPermissionsRequest)
+		return LegacyGetUserPermissionsResponse{}, fmt.Errorf("%w: global org and no org membership are mutually exclusive", ErrInvalidLegacyUserPermissionsRequest)
 	}
 	if !types.NamespaceMatches(caller.GetNamespace(), req.Namespace) {
-		return LegacyGetUserPermissionsChunksResponse{}, fmt.Errorf("%w: got %s but expected %s", authzlib.ErrNamespaceMismatch, caller.GetNamespace(), req.Namespace)
+		return LegacyGetUserPermissionsResponse{}, fmt.Errorf("%w: got %s but expected %s", authzlib.ErrNamespaceMismatch, caller.GetNamespace(), req.Namespace)
 	}
 	if err := validateLegacyPermissionNamespace(req.Namespace); err != nil {
-		return LegacyGetUserPermissionsChunksResponse{}, err
+		return LegacyGetUserPermissionsResponse{}, err
 	}
 
 	var internalID *int64
@@ -103,22 +95,33 @@ func (c *LegacyClient) LegacyGetUserPermissionsChunks(ctx context.Context, calle
 	})
 	if err != nil {
 		span.RecordError(err)
-		return LegacyGetUserPermissionsChunksResponse{}, err
+		return LegacyGetUserPermissionsResponse{}, err
 	}
 	// Buffer compact action/scope chunks instead of repeatedly growing the complete result.
 	// Errors still discard the entire snapshot, and protobuf messages can be released after each receive.
 	var chunks [][]types.Permission
+	permissionCount := 0
 	for {
 		chunk, err := stream.Recv()
 		if errors.Is(err, io.EOF) {
-			return LegacyGetUserPermissionsChunksResponse{Chunks: chunks}, nil
+			if len(chunks) == 1 {
+				return LegacyGetUserPermissionsResponse{Permissions: chunks[0]}, nil
+			}
+			var result LegacyGetUserPermissionsResponse
+			if permissionCount != 0 {
+				result.Permissions = make([]types.Permission, 0, permissionCount)
+			}
+			for _, permissions := range chunks {
+				result.Permissions = append(result.Permissions, permissions...)
+			}
+			return result, nil
 		}
 		if err != nil {
 			span.RecordError(err)
-			return LegacyGetUserPermissionsChunksResponse{}, err
+			return LegacyGetUserPermissionsResponse{}, err
 		}
 		if chunk == nil {
-			return LegacyGetUserPermissionsChunksResponse{}, fmt.Errorf("%w: nil chunk", ErrInvalidLegacyUserPermissionsResponse)
+			return LegacyGetUserPermissionsResponse{}, fmt.Errorf("%w: nil chunk", ErrInvalidLegacyUserPermissionsResponse)
 		}
 		if len(chunk.Permissions) == 0 {
 			continue
@@ -126,11 +129,12 @@ func (c *LegacyClient) LegacyGetUserPermissionsChunks(ctx context.Context, calle
 		permissions := make([]types.Permission, len(chunk.Permissions))
 		for i, permission := range chunk.Permissions {
 			if permission == nil {
-				return LegacyGetUserPermissionsChunksResponse{}, fmt.Errorf("%w: nil permission", ErrInvalidLegacyUserPermissionsResponse)
+				return LegacyGetUserPermissionsResponse{}, fmt.Errorf("%w: nil permission", ErrInvalidLegacyUserPermissionsResponse)
 			}
 			permissions[i] = types.Permission{Action: permission.Action, Scope: permission.Scope}
 		}
 		chunks = append(chunks, permissions)
+		permissionCount += len(permissions)
 	}
 }
 

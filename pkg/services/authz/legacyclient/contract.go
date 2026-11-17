@@ -15,7 +15,6 @@ import (
 type Service interface {
 	// caller is the authenticated service identity, distinct from req.Identity.
 	LegacyGetUserPermissions(ctx context.Context, caller types.AuthInfo, req LegacyGetUserPermissionsRequest) (LegacyGetUserPermissionsResponse, error)
-	LegacyGetUserPermissionsChunks(ctx context.Context, caller types.AuthInfo, req LegacyGetUserPermissionsRequest) (LegacyGetUserPermissionsChunksResponse, error)
 }
 
 // LegacyPermissionIdentity contains assertions from trusted Grafana
@@ -70,33 +69,4 @@ type LegacyGetUserPermissionsRequest struct {
 
 type LegacyGetUserPermissionsResponse struct {
 	Permissions []types.Permission
-}
-
-// LegacyGetUserPermissionsChunksResponse contains a complete, validated snapshot.
-// Chunks avoid a full intermediate copy when consumers need another permission type.
-// The client returns no chunks if any receive or validation fails.
-type LegacyGetUserPermissionsChunksResponse struct {
-	Chunks [][]types.Permission
-}
-
-func (r LegacyGetUserPermissionsChunksResponse) Len() int {
-	count := 0
-	for _, chunk := range r.Chunks {
-		count += len(chunk)
-	}
-	return count
-}
-
-func (r LegacyGetUserPermissionsChunksResponse) Flatten() LegacyGetUserPermissionsResponse {
-	if len(r.Chunks) == 1 {
-		return LegacyGetUserPermissionsResponse{Permissions: r.Chunks[0]}
-	}
-	var permissions []types.Permission
-	if count := r.Len(); count != 0 {
-		permissions = make([]types.Permission, 0, count)
-	}
-	for _, chunk := range r.Chunks {
-		permissions = append(permissions, chunk...)
-	}
-	return LegacyGetUserPermissionsResponse{Permissions: permissions}
 }

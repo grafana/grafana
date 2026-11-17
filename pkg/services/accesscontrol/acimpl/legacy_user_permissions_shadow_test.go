@@ -34,14 +34,6 @@ func (c shadowLegacyClient) LegacyGetUserPermissions(ctx context.Context, _ type
 	return c.get(ctx, req)
 }
 
-func (c shadowLegacyClient) LegacyGetUserPermissionsChunks(ctx context.Context, _ types.AuthInfo, req legacyclient.LegacyGetUserPermissionsRequest) (legacyclient.LegacyGetUserPermissionsChunksResponse, error) {
-	response, err := c.get(ctx, req)
-	if err != nil {
-		return legacyclient.LegacyGetUserPermissionsChunksResponse{}, err
-	}
-	return legacyclient.LegacyGetUserPermissionsChunksResponse{Chunks: [][]types.Permission{response.Permissions}}, nil
-}
-
 func shadowRequester() *identity.StaticRequester {
 	return &identity.StaticRequester{Type: types.TypeUser, UserID: 1, UserUID: "user", OrgID: 1, Namespace: types.OrgNamespaceFormatter(1), Groups: []string{"group"}}
 }

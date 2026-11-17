@@ -92,17 +92,13 @@ func loadLegacyUserPermissions(ctx context.Context, client legacyclient.Service,
 	if client == nil {
 		return nil, fmt.Errorf("embedded legacy AuthZ client is not configured")
 	}
-	response, err := client.LegacyGetUserPermissionsChunks(ctx, legacypermissions.LegacyPermissionCaller(req.Namespace), req)
+	response, err := client.LegacyGetUserPermissions(ctx, legacypermissions.LegacyPermissionCaller(req.Namespace), req)
 	if err != nil {
 		return nil, errors.Join(ctx.Err(), err)
 	}
-	permissions := make([]ac.Permission, response.Len())
-	i := 0
-	for _, chunk := range response.Chunks {
-		for _, p := range chunk {
-			permissions[i] = ac.Permission{Action: p.Action, Scope: p.Scope}
-			i++
-		}
+	permissions := make([]ac.Permission, len(response.Permissions))
+	for i, p := range response.Permissions {
+		permissions[i] = ac.Permission{Action: p.Action, Scope: p.Scope}
 	}
 	return permissions, nil
 }

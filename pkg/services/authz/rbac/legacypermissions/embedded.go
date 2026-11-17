@@ -57,20 +57,12 @@ func (c *embeddedTransactionCall) wait() {
 type embeddedClient struct{ legacyclient.Service }
 
 func (c *embeddedClient) LegacyGetUserPermissions(ctx context.Context, caller types.AuthInfo, req legacyclient.LegacyGetUserPermissionsRequest) (legacyclient.LegacyGetUserPermissionsResponse, error) {
-	response, err := c.LegacyGetUserPermissionsChunks(ctx, caller, req)
-	if err != nil {
-		return legacyclient.LegacyGetUserPermissionsResponse{}, err
-	}
-	return response.Flatten(), nil
-}
-
-func (c *embeddedClient) LegacyGetUserPermissionsChunks(ctx context.Context, caller types.AuthInfo, req legacyclient.LegacyGetUserPermissionsRequest) (legacyclient.LegacyGetUserPermissionsChunksResponse, error) {
 	if sess, ok := ctx.Value(sqlstore.ContextSessionKey{}).(*sqlstore.DBSession); ok && sess != nil {
 		call := &embeddedTransactionCall{done: make(chan struct{})}
 		ctx = context.WithValue(ctx, embeddedTransactionCallKey{}, call)
 		defer call.wait()
 	}
-	return c.Service.LegacyGetUserPermissionsChunks(ctx, caller, req)
+	return c.Service.LegacyGetUserPermissions(ctx, caller, req)
 }
 
 type embeddedStream struct {
