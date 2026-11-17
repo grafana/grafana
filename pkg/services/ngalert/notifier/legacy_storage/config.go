@@ -39,8 +39,8 @@ func SerializeAlertmanagerConfig(config v1.AMConfigV1) ([]byte, error) {
 	return json.Marshal(dbModel)
 }
 
-// limitsProvider mirrors provisioning.LimitsProvider; it is redeclared here because provisioning imports this package.
-type limitsProvider interface {
+// LimitsProvider mirrors provisioning.LimitsProvider; it is redeclared here because provisioning imports this package.
+type LimitsProvider interface {
 	GetLimits(ctx context.Context) (*client.TenantLimits, error)
 }
 
@@ -60,7 +60,7 @@ type alertmanagerConfigStoreImpl struct {
 	store    amConfigStore
 	crypto   crypto
 	features featuremgmt.FeatureToggles
-	limits   limitsProvider
+	limits   LimitsProvider
 	logger   log.Logger
 }
 
@@ -69,7 +69,7 @@ func NewAlertmanagerConfigStore(store amConfigStore, crypto crypto, features fea
 }
 
 // WithLimitsProvider returns a copy of the store that rejects configurations exceeding the remote Alertmanager size limit.
-func (a *alertmanagerConfigStoreImpl) WithLimitsProvider(p limitsProvider) *alertmanagerConfigStoreImpl {
+func (a *alertmanagerConfigStoreImpl) WithLimitsProvider(p LimitsProvider) *alertmanagerConfigStoreImpl {
 	c := *a
 	c.limits = p
 	return &c
@@ -115,7 +115,7 @@ func (a alertmanagerConfigStoreImpl) Save(ctx context.Context, revision *ConfigR
 	if err != nil {
 		return err
 	}
-	if err := a.validateConfigSize(ctx, len(serialized), revision.storedSize); err != nil {
+	if err := ValidateConfigSize(ctx, a.limits, a.logger, len(serialized), revision.storedSize); err != nil {
 		return err
 	}
 	return a.store.UpdateAlertmanagerConfiguration(ctx, &models.SaveAlertmanagerConfigurationCmd{
@@ -127,17 +127,18 @@ func (a alertmanagerConfigStoreImpl) Save(ctx context.Context, revision *ConfigR
 	})
 }
 
-// validateConfigSize fails open when limits are unavailable, so a remote Alertmanager outage does not block writes.
+// ValidateConfigSize rejects a configuration that exceeds the remote Alertmanager size limit.
+// It fails open when limits are unavailable, so a remote Alertmanager outage does not block writes.
 // Writes that do not grow the configuration return before the limits lookup, so shrinking writes never
-// wait on the remote Alertmanager while a transaction is open.
-func (a alertmanagerConfigStoreImpl) validateConfigSize(ctx context.Context, newSize, storedSize int) error {
-	if a.limits == nil || newSize <= storedSize {
+// wait on the remote Alertmanager. Callers should run it before opening a database transaction.
+func ValidateConfigSize(ctx context.Context, provider LimitsProvider, logger log.Logger, newSize, storedSize int) error {
+	if provider == nil || newSize <= storedSize {
 		return nil
 	}
-	limits, err := a.limits.GetLimits(ctx)
+	limits, err := provider.GetLimits(ctx)
 	if err != nil {
-		if a.logger != nil {
-			a.logger.Warn("Failed to fetch limits, skipping config size validation", "error", err)
+		if logger != nil {
+			logger.Warn("Failed to fetch limits, skipping config size validation", "error", err)
 		}
 		return nil
 	}
