@@ -58,7 +58,6 @@ export interface DataSourceListProps {
   listboxId?: string;
   /** Reports the DOM id of the keyboard-highlighted option, for aria-activedescendant on the input */
   onActiveItemChange?: (id: string | undefined) => void;
-  /** Called once after the first render, with the number of data sources the list shows */
   /** Called once the list's rows are painted, with the count and whether a search term was already applied */
   onRendered?: (listedCount: number, searched: boolean) => void;
 }

@@ -31,7 +31,9 @@ import { abandonOnRouteChange, collectUnsubs, str } from './utils';
  *     before the open ends)
  *   - search — user searched in the advanced modal (dashboards_dspickermodal_clicked item=search)
  *   - config_new_ds — user opened a new tab from an empty search result to configure a data source
- *     (item=config_new_ds_empty_state, in the dropdown or the modal); the picker stays open
+ *     (item=config_new_ds_empty_state, in the dropdown or the modal). The picker stays open, so a selection made
+ *     right after still ends the journey, but if the new tab stays in front for over 60s the tracker ends it as
+ *     abandoned, like any journey in a hidden tab
  *   - open_advanced — user switched to the advanced picker modal (dashboards_dspicker_clicked item=open_advanced_ds_picker)
  *
  * End conditions:
@@ -181,7 +183,8 @@ onJourneyInstance('datasource_picker_select', (handle) => {
         case 'select_ds':
           end('success', { dsType: str(props.ds_type), changed: 'true', selectedIn });
           break;
-        // The empty-state link opens a new tab and leaves the dropdown open, so the user may still select
+        // The empty-state link opens a new tab and leaves the dropdown open, so the user may still select.
+        // A long stay in the new tab ends the journey as abandoned through the tracker's hidden-tab rule.
         case 'config_new_ds_empty_state':
           handle.recordEvent('config_new_ds');
           break;
