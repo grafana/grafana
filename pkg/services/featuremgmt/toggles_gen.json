@@ -1128,11 +1128,14 @@
     {
       "metadata": {
         "name": "assistant.fullscreenWorkspace",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-07-16T10:13:54Z"
+        "resourceVersion": "1794516179400",
+        "creationTimestamp": "2026-07-16T10:13:54Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-12 20:42:59.400754 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Enables the global fullscreen Workspace (Grafana Assistant workspace shell) in the top bar",
+        "description": "Shows the Grafana Assistant Chat and Workspace buttons in the top bar, and Exit Workspace on the Assistant Workspace page",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-platform",
         "frontend": true,
@@ -2896,6 +2899,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.cmdkHybridSearchSkipRerank",
+        "resourceVersion": "1794828817249",
+        "creationTimestamp": "2026-11-16T11:33:37Z"
+      },
+      "spec": {
+        "description": "Skips reranking in command palette hybrid dashboard search",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.configFromQueryDynamicName",
         "resourceVersion": "1792594531964",
         "creationTimestamp": "2026-09-17T22:29:38Z",
@@ -3159,6 +3176,20 @@
       },
       "spec": {
         "description": "Lets Grafana Assistant float the extension sidebar over the page instead of docking it",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.extensionSidebarPlacements",
+        "resourceVersion": "1794908123209",
+        "creationTimestamp": "2026-11-17T09:35:23Z"
+      },
+      "spec": {
+        "description": "Lets Grafana Assistant dock the extension sidebar on the left or at the bottom, or pop it up, from the Chat button's menu, its shortcuts and its own layout menu. Needs grafana.extensionSidebarFloating",
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,

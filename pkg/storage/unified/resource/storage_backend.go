@@ -821,6 +821,10 @@ func (b *kvStorageBackend) collectBlobs(ctx context.Context) {
 		b.blobGC = NewBlobGarbageCollector(b.kv, b.garbageCollection.BatchSize, b.garbageCollection.BatchWait)
 	}
 	dryRun := b.garbageCollection.DryRun || b.garbageCollection.BlobDryRun
+	b.blobGC.onDeleted = func(key kv.BlobKey) {
+		// Names and namespaces may contain customer data; the blob UID identifies the deletion.
+		b.log.Info("blob garbage collection delete succeeded", "uid", key.UID, "group", key.Group, "resource", key.Resource)
+	}
 	count, err := b.blobGC.Collect(ctx, time.Now(), b.garbageCollection.MaxAge, dryRun, b.blobReferenced)
 	if err != nil && ctx.Err() != nil && resourceutil.OnlyCancellationErrors(err) {
 		b.blobGCMetrics.RecordInterrupted(count, dryRun)
