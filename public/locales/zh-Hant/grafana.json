@@ -1493,9 +1493,29 @@
         "records": "記錄",
         "to": "至"
       },
+      "recording-rule-actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "view": ""
+      },
       "recording-rules": {
         "folder-rules-error": "",
         "folders-error": "",
+        "header": {
+          "new-rule": ""
+        },
         "load-more-rules-in-folder": "",
         "loading-folders": "",
         "no-rules": "找不到錄製規則",
@@ -2384,6 +2404,7 @@
       "contact-points": "聯絡點",
       "notification-policies": "通知政策",
       "recently-deleted": "最近刪除",
+      "recording-rules": "",
       "templates": "範本",
       "time-intervals": "時間間隔"
     },
@@ -6169,8 +6190,7 @@
       }
     },
     "get-var-mapping-option-overrides": {
-      "defaults": "",
-      "rule": ""
+      "uses-variables": ""
     },
     "inspect": {
       "data-tab": "資料",
@@ -6364,9 +6384,6 @@
       "only-overrides-button-tooltip": "僅顯示覆寫",
       "placeholder-search-options": "搜尋選項",
       "visualization-button-tooltip": "搜尋選項"
-    },
-    "panel-editor": {
-      "ad-hoc-transformations-disabled": "在編輯模式下，隨機轉換已停用"
     },
     "plan-building-overlay": {
       "quip-corners": "正在修飾面板的角落…",
@@ -7652,7 +7669,7 @@
       "apply": "套用",
       "apply-body": "所有有存取權限的人員都會看到這些變更。您可以從版本歷史記錄中還原先前的版本。",
       "apply-failed": "無法套用變更。請再試一次，或先進行比較。",
-      "apply-needs-edit": "套用需要「{{title}}」的編輯存取權限。您可以預覽這些變更，但無法套用。",
+      "apply-needs-save": "",
       "breadcrumb-draft": "草稿",
       "breadcrumb-pending-changes": "待定變更",
       "change-added": "已加入",
@@ -7949,6 +7966,12 @@
       "confirmText-restore-version": "是，還原至版本 {{version}}",
       "title-restore-version": "還原版本"
     },
+    "row-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-row-settings": ""
+    },
     "sandbox-consent": {
       "allow": "允許",
       "allow-tooltip": "從所列面板中選取的來源載入內容，直到您關閉此分頁為止。",
@@ -8136,6 +8159,12 @@
       "switch-options": "切換選項",
       "value-pair-type": "值對類型",
       "value-pair-type-description": "選擇開關狀態的值類型"
+    },
+    "tab-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-tab-settings": ""
     },
     "text-box-variable": {
       "name-default-value": "預設值"
@@ -14318,6 +14347,9 @@
     },
     "empty-state": {
       "message": "未找到外掛程式"
+    },
+    "errors": {
+      "app-plugin-metas-error": ""
     },
     "extensions": {
       "extension-error-alert-description": "檢查主控台以了解有關錯誤的更多詳細資訊。",
