@@ -348,7 +348,7 @@ const (
 	FlagDashboardLibrary = "dashboardLibrary"
 
 	// FlagSuggestedDashboards
-	// Displays datasource provisioned and community dashboards in dashboard empty page, only when coming from datasource configuration page
+	// Displays data source provisioned and community dashboards in dashboard empty page, only when coming from data source configuration page
 	FlagSuggestedDashboards = "suggestedDashboards"
 
 	// FlagDashboardValidatorApp
