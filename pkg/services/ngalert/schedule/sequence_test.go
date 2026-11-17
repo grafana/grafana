@@ -6,6 +6,7 @@ import (
 	"slices"
 	"sync"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -342,86 +343,87 @@ func TestProcessTick_ImportedGroupsStartsAreSpreadAcrossTheTick(t *testing.T) {
 		perGroup = 10
 	)
 
-	ctx := context.Background()
-	ruleStore := newFakeRulesStore()
-	sch := setupScheduler(t, ruleStore, nil, prometheus.NewPedanticRegistry(), nil, nil, nil)
-	sch.jitterEvaluations = JitterByGroup
+	synctest.Test(t, func(t *testing.T) {
+		ctx := context.Background()
+		ruleStore := newFakeRulesStore()
+		sch := setupScheduler(t, ruleStore, nil, prometheus.NewPedanticRegistry(), nil, nil, nil)
+		sch.jitterEvaluations = JitterByGroup
 
-	type ruleInfo struct {
-		group string
-		index int
-	}
-	var mu sync.Mutex
-	infoByRule := map[models.AlertRuleKey]ruleInfo{}
-	evalAt := map[models.AlertRuleKey]time.Duration{}
-	var begin time.Time
-	done := make(chan struct{}, groups*perGroup)
-	sch.evalAppliedFunc = func(key models.AlertRuleKey, _ time.Time) {
+		type ruleInfo struct {
+			group string
+			index int
+		}
+		var mu sync.Mutex
+		infoByRule := map[models.AlertRuleKey]ruleInfo{}
+		evalAt := map[models.AlertRuleKey]time.Duration{}
+		begin := time.Now()
+		sch.evalAppliedFunc = func(key models.AlertRuleKey, _ time.Time) {
+			mu.Lock()
+			defer mu.Unlock()
+			evalAt[key] = time.Since(begin)
+		}
+		sch.stopAppliedFunc = func(models.AlertRuleKey) {}
+
+		gen := models.RuleGen
+		for g := 0; g < groups; g++ {
+			for r := 0; r < perGroup; r++ {
+				rule := gen.With(
+					gen.WithOrgID(1),
+					gen.WithNamespaceUID("ns"),
+					gen.WithGroupName(fmt.Sprintf("imported-%d", g)),
+					gen.WithGroupIndex(r+1),
+					gen.WithInterval(sch.baseInterval),
+					gen.WithPrometheusOriginalRuleDefinition("x"),
+				).GenerateRef()
+				infoByRule[rule.GetKey()] = ruleInfo{group: rule.RuleGroup, index: r}
+				ruleStore.PutRule(ctx, rule)
+			}
+		}
+
+		runCtx, cancel := context.WithCancel(ctx)
+		dispatcherGroup, gctx := errgroup.WithContext(runCtx)
+		// Rule routines block until their context is cancelled; synctest requires them to exit
+		// before the bubble does.
+		t.Cleanup(func() {
+			cancel()
+			_ = dispatcherGroup.Wait()
+		})
+		scheduled, _, _ := sch.processTick(gctx, dispatcherGroup, time.Time{}.Add(sch.baseInterval))
+		require.Len(t, scheduled, groups*perGroup)
+
+		// Fake time advances only once every goroutine in the bubble is blocked, so by the time the
+		// sleep returns all timers of the tick have fired and their chains have completed.
+		time.Sleep(2 * sch.baseInterval)
+		synctest.Wait()
+
 		mu.Lock()
 		defer mu.Unlock()
-		evalAt[key] = time.Since(begin)
-		done <- struct{}{}
-	}
-	sch.stopAppliedFunc = func(models.AlertRuleKey) {}
+		require.Len(t, evalAt, groups*perGroup)
 
-	gen := models.RuleGen
-	for g := 0; g < groups; g++ {
-		for r := 0; r < perGroup; r++ {
-			rule := gen.With(
-				gen.WithOrgID(1),
-				gen.WithNamespaceUID("ns"),
-				gen.WithGroupName(fmt.Sprintf("imported-%d", g)),
-				gen.WithGroupIndex(r+1),
-				gen.WithInterval(sch.baseInterval),
-				gen.WithPrometheusOriginalRuleDefinition("x"),
-			).GenerateRef()
-			infoByRule[rule.GetKey()] = ruleInfo{group: rule.RuleGroup, index: r}
-			ruleStore.PutRule(ctx, rule)
+		timesByGroup := map[string][]time.Duration{}
+		for key, info := range infoByRule {
+			if timesByGroup[info.group] == nil {
+				timesByGroup[info.group] = make([]time.Duration, perGroup)
+			}
+			timesByGroup[info.group][info.index] = evalAt[key]
 		}
-	}
+		require.Len(t, timesByGroup, groups)
 
-	dispatcherGroup, gctx := errgroup.WithContext(ctx)
-	begin = time.Now()
-	scheduled, _, _ := sch.processTick(gctx, dispatcherGroup, time.Time{}.Add(sch.baseInterval))
-	require.Len(t, scheduled, groups*perGroup)
-
-	for i := 0; i < groups*perGroup; i++ {
-		select {
-		case <-done:
-		case <-time.After(5 * time.Second):
-			t.Fatalf("timed out waiting for evaluations (%d/%d done)", i, groups*perGroup)
+		starts := make([]time.Duration, 0, groups)
+		for group, times := range timesByGroup {
+			// The rules of an imported group are chained: each starts after the previous one finished.
+			for i := 1; i < len(times); i++ {
+				require.GreaterOrEqual(t, times[i], times[i-1], "rules of group %s are not evaluated in order", group)
+			}
+			starts = append(starts, times[0])
 		}
-	}
+		slices.Sort(starts)
 
-	mu.Lock()
-	defer mu.Unlock()
-
-	// Collect each group's evaluation times in group-index order.
-	timesByGroup := map[string][]time.Duration{}
-	for key, info := range infoByRule {
-		if timesByGroup[info.group] == nil {
-			timesByGroup[info.group] = make([]time.Duration, perGroup)
+		// One timer per sequence, spaced baseInterval/groups apart. Before the fix the step was
+		// baseInterval/(groups*perGroup), so all starts fell within the first fraction of the tick.
+		step := sch.baseInterval / groups
+		for i, start := range starts {
+			require.Equal(t, time.Duration(i)*step, start, "start of sequence %d", i)
 		}
-		timesByGroup[info.group][info.index] = evalAt[key]
-	}
-	require.Len(t, timesByGroup, groups)
-
-	starts := make([]time.Duration, 0, groups)
-	for group, times := range timesByGroup {
-		// The rules of an imported group are chained: each starts after the previous one finished.
-		for i := 1; i < len(times); i++ {
-			require.GreaterOrEqual(t, times[i], times[i-1], "rules of group %s are not evaluated in order", group)
-		}
-		starts = append(starts, times[0])
-	}
-	slices.Sort(starts)
-	t.Logf("%d groups, base interval %v: sequence starts at %v", groups, sch.baseInterval, starts)
-
-	// With 5 sequences and a 1s interval the starts are 200ms apart, the last at 800ms. Before the fix
-	// the step was 1s/50 rules = 20ms, so all starts fell within the first ~80ms. The bounds below are
-	// deliberately loose (lower bounds on gaps/last start) so that a slow machine cannot fail the test.
-	for i := 1; i < len(starts); i++ {
-		require.GreaterOrEqual(t, starts[i]-starts[i-1], 50*time.Millisecond, "sequence starts %d and %d are bunched together", i-1, i)
-	}
-	require.GreaterOrEqual(t, starts[len(starts)-1], 600*time.Millisecond, "sequence starts are bunched at the beginning of the tick")
+	})
 }
