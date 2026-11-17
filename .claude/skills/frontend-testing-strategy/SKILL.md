@@ -5,9 +5,9 @@ description: Write and review meaningful frontend unit, component, and E2E tests
 
 # Frontend testing strategy
 
-Read the repository's `contribute/testing.md` adapter and contributor guide before choosing commands, fixtures,
-or a runner. These principles work with Jest, Vitest, and other runners. Do not introduce a
-new runner just to follow this skill. For visualization behavior, also read the panel companion.
+Use the repository's runner and fixtures already identified for the task. These principles work
+with Jest, Vitest, and other runners. Do not introduce a new runner just to follow this skill.
+For visualization behavior, also read the panel companion. Do not reload guidance already read.
 
 ## Choose meaningful coverage
 

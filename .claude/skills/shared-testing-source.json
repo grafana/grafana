@@ -1,5 +1,5 @@
 {
-  "edition": "2026-11-17.1",
+  "edition": "2026-11-17.1-grafana.1",
   "publication": "pending: standalone public grafana-contribution-skills repository",
   "license": "AGPL-3.0-only",
   "derivedFrom": {
@@ -8,7 +8,9 @@
     "paths": [".claude/skills/frontend-testing-strategy/SKILL.md", ".claude/skills/panel-testing-strategy/SKILL.md"]
   },
   "sha256": {
-    "frontend-testing-strategy/SKILL.md": "2226991925200f27243298d80ee2bfb6d4ba45ee87339b08afa46fdd668fe232",
-    "panel-testing-strategy/SKILL.md": "cfb648481928ba390098ef7f166fc3b1a39b4a55beba4b56da4f2ce9f232bc7b"
-  }
+    "frontend-testing-strategy/SKILL.md": "e93233b5bb124cc66fb2027148d89df0ce3c6c410bc0292974534c6fc9f4a86a",
+    "panel-testing-strategy/SKILL.md": "162836a64d619632ea6cddb163da31aa48dcb34b53b494218c4838eb91082905"
+  },
+  "hashScope": "SHA-256 of the local adapted SKILL.md files, not the original upstream files. No automated drift check consumes these hashes.",
+  "adaptations": "Portable principles extracted and condensed from derivedFrom; repository-specific conventions are routed separately to avoid repeated guide reads."
 }

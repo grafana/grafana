@@ -1,6 +1,6 @@
 # Grafana panel testing conventions
 
-Read the [shared panel strategy](../.claude/skills/panel-testing-strategy/SKILL.md) first.
+Grafana-specific visualization conventions. Read only the section relevant to the task.
 
 ## Step 1 — Set up data with the repo's builders
 
@@ -170,7 +170,6 @@ See also the `add-e2e-selectors` skill, `contribute/style-guides/e2e-playwright.
 
 ## Verify
 
-- `pnpm test <path>` (add `--watchAll=false`) — the new tests pass and actually fail when the
-  asserted value is broken (mutate the expected value once to confirm it's not a no-op).
-- For E2E: `pnpm e2e:playwright <spec>` (it starts its own server).
-- `pnpm typecheck` if selectors or casts were added.
+Use [AGENTS.md, Test](../AGENTS.md#test) and [Testing gotchas](../AGENTS.md#testing-gotchas).
+Confirm the new test fails without the fix and passes with it. Use the type-checking command in
+[Lint & Format](../AGENTS.md#lint--format) when changed types require it.

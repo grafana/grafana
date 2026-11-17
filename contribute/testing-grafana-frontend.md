@@ -1,6 +1,6 @@
 # Grafana frontend testing conventions
 
-Read the [shared strategy](../.claude/skills/frontend-testing-strategy/SKILL.md) first.
+Grafana-specific conventions. Read only the section relevant to the task.
 
 ## Running Playwright E2E tests
 
@@ -13,6 +13,8 @@ Only set `GRAFANA_URL` to use a custom server when the task specifically needs o
 debugging a particular running instance or testing a deployment. State that reason before
 using the override. Setting `GRAFANA_URL` disables the harness-managed server, so the target
 instance must already be running and accessible.
+
+## Mocking and feature flags
 
 To type a mocked function or module, use `jest.mocked(fn)` — never
 `fn as jest.MockedFunction<typeof fn>` (or `as jest.Mocked<…>`). `jest.mocked` is the

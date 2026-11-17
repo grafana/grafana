@@ -16,7 +16,8 @@ This file provides guidance to AI agents when working with code in the Grafana r
 
 Grafana is a monitoring and observability platform. Go backend, TypeScript/React frontend, monorepo with pnpm workspaces (frontend) and Go workspaces (backend).
 
-Read [contribute/testing.md](contribute/testing.md) for shared testing skills and Grafana-specific adapters.
+When writing or reviewing frontend tests, use [contribute/testing.md](contribute/testing.md) to select
+the relevant skill and adapter section. Running existing tests only needs the commands below.
 
 ## Principles
 
