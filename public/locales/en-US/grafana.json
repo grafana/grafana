@@ -15983,15 +15983,17 @@
       "title-data-source-help": "Data source help"
     }
   },
-  "query-coauthoring-v2": {
-    "debug": "Debug query",
-    "edit-query": "Explain or modify query {{refId}}",
-    "error": "Error",
-    "explain-modify": "Explain or modify",
-    "highlight-actions": "Query selection actions",
-    "no-data": "No data",
-    "proposed": "Proposed",
-    "resume": "Resume"
+  "query-coauthoring": {
+    "surface": {
+      "debug": "Debug query",
+      "edit-query": "Explain or modify query {{refId}}",
+      "error": "Error",
+      "explain-modify": "Explain or modify",
+      "highlight-actions": "Query selection actions",
+      "no-data": "No data",
+      "proposed": "Proposed",
+      "resume": "Resume"
+    }
   },
   "query-editor-coauthoring": {
     "accept": "Accept",

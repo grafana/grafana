@@ -48,7 +48,7 @@ export const QueryCard = ({ query }: { query: DataQuery }) => {
   const item = queryToActionItem(query, {
     error: isQueryCoauthoringSurfaceActive()
       ? health.error
-        ? (health.errorMessage ?? t('query-coauthoring-v2.error', 'Error'))
+        ? (health.errorMessage ?? t('query-coauthoring.surface.error', 'Error'))
         : undefined
       : error,
   });
