@@ -41,8 +41,9 @@ permissions: {}
 jobs:
   # Two jobs instead of a matrix, so only the Enterprise job gets id-token: write.
   oss:
-    # Run on `grafana/grafana` pushes, or on pull requests, to prevent double-running on mirrors
-    if: github.event_name != 'push' || github.repository == 'grafana/grafana'
+    # Only for fork PRs, like the OSS jobs in pr-test-integration.yml: everything else runs the
+    # Enterprise job, which builds on top of OSS.
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true
     name: Compatibility (OSS)
     permissions:
       contents: read

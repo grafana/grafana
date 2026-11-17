@@ -16,7 +16,7 @@ CI runs two round trips, each on a fresh database:
 
 In CI, `.github/workflows/pr-test-compat.yml` (with `run-compat-tests.yml`) runs this commit against the newest release of the previous minor, starting with 13.4.
 Until that release exists, it runs this commit against itself.
-It runs once for OSS and once for Enterprise, built with `-tags=enterprise`.
+It runs the Enterprise build (`-tags=enterprise`) for internal pull requests and `main`, and the OSS build for pull requests from forks, which cannot clone grafana-enterprise.
 For Enterprise, this commit pairs with the grafana-enterprise branch of the same name, or main, and the older release pairs with the grafana-enterprise tag of the same name.
 Each version runs the tests it ships with, so a change here reaches the older side only through a release that contains it.
 The job summary lists the commits that were tested and whether the run was really cross-version.
