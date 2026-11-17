@@ -257,6 +257,13 @@ export const DashboardInteractions = {
   trackDeleteDashboardElement(elementType: string, source: 'edit_pane' | 'edit_popover') {
     reportDashboardInteraction('edit_action_clicked', { item: `remove_${elementType.toLowerCase()}`, source });
   },
+  trackDashboardSectionAction(
+    action: 'settings' | 'copy' | 'duplicate',
+    elementType: 'row' | 'tab',
+    source: 'edit_pane' | 'edit_popover'
+  ) {
+    reportDashboardInteraction('edit_action_clicked', { item: `${action}_${elementType}`, source });
+  },
   panelLinkClicked: (properties?: Record<string, unknown>) => {
     reportDashboardInteraction('panelheader_datalink_clicked', properties);
   },

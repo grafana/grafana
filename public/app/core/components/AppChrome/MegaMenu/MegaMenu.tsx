@@ -64,7 +64,7 @@ export const MegaMenu = memo(
     } = useNavCustomization();
     const { DragDropContext, Draggable, Droppable } = useDragAndDrop(editMode);
     const pluginSection = useMegaMenuSectionExtension({
-      onNavigate: state.megaMenuDocked && !state.fullscreenWorkspace ? undefined : onClose,
+      onNavigate: state.megaMenuDocked ? undefined : onClose,
     });
     // Customising the navigation gives it the whole menu.
     const section = editMode ? null : pluginSection;
@@ -95,7 +95,7 @@ export const MegaMenu = memo(
         key={key}
         link={link}
         isPinned={isPinned}
-        onClick={state.megaMenuDocked && !state.fullscreenWorkspace ? undefined : onClose}
+        onClick={state.megaMenuDocked ? undefined : onClose}
         activeItem={activeItem}
         onPin={onPinItem}
         editMode={editMode}
@@ -156,7 +156,7 @@ export const MegaMenu = memo(
           activeItem={activeItem}
           editMode={editMode}
           onUnpin={() => onUnpin(entry.url)}
-          onClick={state.megaMenuDocked && !state.fullscreenWorkspace ? undefined : onClose}
+          onClick={state.megaMenuDocked ? undefined : onClose}
           draggableProvided={draggableProvided}
           disabled={isSaving}
         />
@@ -170,9 +170,7 @@ export const MegaMenu = memo(
     const renderScopesDashboardsSection = () =>
       scopesMegaMenuEnabled && (
         <ErrorBoundaryAlert boundaryName="scopes-dashboards-mega-menu">
-          <ScopesDashboardsMegaMenuSection
-            onNavigate={state.megaMenuDocked && !state.fullscreenWorkspace ? undefined : onClose}
-          />
+          <ScopesDashboardsMegaMenuSection onNavigate={state.megaMenuDocked ? undefined : onClose} />
         </ErrorBoundaryAlert>
       );
 

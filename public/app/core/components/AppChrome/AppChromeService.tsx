@@ -3,7 +3,7 @@ import { BehaviorSubject } from 'rxjs';
 import { AppEvents, type NavModel, type NavModelItem, PageLayoutType, store, type UrlQueryValue } from '@grafana/data';
 import { useObservable } from '@grafana/data/unstable';
 import { t } from '@grafana/i18n';
-import { config, HistoryWrapper, locationService, reportInteraction } from '@grafana/runtime';
+import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { appEvents } from 'app/core/app_events';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -26,7 +26,6 @@ export interface AppChromeState {
   /** The undocked mega menu is open only while the pointer rests on its toggle or on the menu itself. */
   megaMenuPeek?: boolean;
   kioskMode: KioskMode | null;
-  fullscreenWorkspace?: boolean;
   layout: PageLayoutType;
   returnToPrevious?: {
     title: ReturnToPreviousProps['title'];
@@ -66,7 +65,6 @@ export class AppChromeService {
     window.innerWidth >= config.theme2.breakpoints.values.xl &&
       store.getBool(DOCKED_LOCAL_STORAGE_KEY, Boolean(window.innerWidth >= config.theme2.breakpoints.values.xl))
   );
-  private fullscreenWorkspaceUnlisten?: () => void;
   private megaMenuPeekTimer?: ReturnType<typeof setTimeout>;
   private megaMenuPeekHeldOff = false;
 
@@ -79,7 +77,6 @@ export class AppChromeService {
     megaMenuOpen: this.megaMenuDocked && store.getBool(DOCKED_MENU_OPEN_LOCAL_STORAGE_KEY, true),
     megaMenuDocked: this.megaMenuDocked,
     kioskMode: null,
-    fullscreenWorkspace: false,
     layout: PageLayoutType.Canvas,
     returnToPrevious: this.returnToPreviousData,
   });
@@ -257,53 +254,6 @@ export class AppChromeService {
       action: 'toggle',
       mode: nextMode,
     });
-  };
-
-  public setFullscreenWorkspace = ({
-    fullscreenWorkspace,
-    pushHistoryEntry = true,
-  }: {
-    fullscreenWorkspace: boolean;
-    pushHistoryEntry?: boolean;
-  }) => {
-    if (Boolean(this.state.getValue().fullscreenWorkspace) === fullscreenWorkspace) {
-      return;
-    }
-    this.update({ fullscreenWorkspace });
-    this.syncFullscreenWorkspaceHistory(fullscreenWorkspace, pushHistoryEntry);
-    reportInteraction('grafana_fullscreen_workspace', {
-      action: fullscreenWorkspace ? 'enter' : 'exit',
-    });
-  };
-
-  // The fullscreen workspace occupies a single browser-history entry
-  private syncFullscreenWorkspaceHistory(active: boolean, pushHistoryEntry: boolean) {
-    if (!(locationService instanceof HistoryWrapper)) {
-      return;
-    }
-    this.fullscreenWorkspaceUnlisten?.();
-    this.fullscreenWorkspaceUnlisten = undefined;
-
-    if (!active) {
-      locationService.setSingleHistoryEntryMode(false);
-      return;
-    }
-    if (pushHistoryEntry) {
-      // Push before enabling the mode, or the entry Back needs to pop would itself be
-      // collapsed into the current one.
-      locationService.push(locationService.getLocation());
-    }
-    locationService.setSingleHistoryEntryMode(true);
-    // Only listen while active, so navigation costs nothing extra the rest of the session.
-    this.fullscreenWorkspaceUnlisten = locationService.listen((_location, action) => {
-      if (action === 'POP') {
-        this.setFullscreenWorkspace({ fullscreenWorkspace: false });
-      }
-    });
-  }
-
-  public toggleFullscreenWorkspace = () => {
-    this.setFullscreenWorkspace({ fullscreenWorkspace: !this.state.getValue().fullscreenWorkspace });
   };
 
   public exitKioskMode() {
