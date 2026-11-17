@@ -17,6 +17,7 @@ import (
 	"go.yaml.in/yaml/v3"
 
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -2316,6 +2317,46 @@ func TestRouteConvertPrometheusPostAlertmanagerConfig(t *testing.T) {
 		mockAM.AssertExpectations(t)
 	})
 
+	for _, tc := range []struct {
+		name    string
+		header  string
+		dryRun  bool
+		promote bool
+	}{
+		{name: "import"},
+		{name: "dry run", header: dryRunHeader, dryRun: true},
+		{name: "promote", header: promoteHeader, promote: true},
+	} {
+		t.Run("should return conflict for "+tc.name+" when identifier is already used by a managed route", func(t *testing.T) {
+			mockAM := &mockAlertmanager{}
+			mockAM.On("IsExternalAMSyncConfiguredForOrg", mock.Anything, int64(1)).Return(false, nil).Once()
+			conflict := notifier.ErrIdentifierAlreadyExists.Build(errutil.TemplateData{
+				Public: map[string]interface{}{"Identifier": "default"},
+			})
+			mockAM.On("SaveAndApplyExtraConfiguration", mock.Anything, int64(1), mock.Anything, mock.Anything,
+				mock.MatchedBy(func(extraConfig v1.ExtraConfiguration) bool { return extraConfig.Identifier == "default" }),
+				false, tc.dryRun, tc.promote).Return(merge.MergeResult{}, conflict).Once()
+
+			ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
+			srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
+
+			rc := createRequestCtx()
+			rc.Req.Header.Set(configIdentifierHeader, "default")
+			if tc.header != "" {
+				rc.Req.Header.Set(tc.header, "true")
+			}
+			response := srv.RouteConvertPrometheusPostAlertmanagerConfig(rc, apimodels.AlertmanagerUserConfig{
+				AlertmanagerConfig: `{"route":{"receiver":"default"},"receivers":[{"name":"default"}]}`,
+			})
+
+			require.Equal(t, http.StatusConflict, response.Status())
+			require.Contains(t, string(response.Body()), "alerting.notifications.alertmanager.identifierAlreadyExists")
+			require.Contains(t, string(response.Body()), "Identifier [default] is already used by existing managed routes or is reserved for the default routing tree. Import the configuration under a different identifier (for example, with the X-Grafana-Alerting-Config-Identifier header), or rename or delete the conflicting managed route.")
+			require.Contains(t, string(response.Body()), configIdentifierHeader)
+			mockAM.AssertExpectations(t)
+		})
+	}
+
 	t.Run("should call SaveAndApplyExtraConfiguration with replace=true if header is specified", func(t *testing.T) {
 		rc := createRequestCtx()
 		rc.Req.Header.Set(configForceReplaceHeader, "true")
@@ -2873,6 +2914,23 @@ func TestRouteConvertPrometheusPromoteAlertmanagerConfig(t *testing.T) {
 		response := srv.RouteConvertPrometheusPromoteAlertmanagerConfig(rc, identifier)
 
 		require.Equal(t, http.StatusInternalServerError, response.Status())
+		mockAM.AssertExpectations(t)
+	})
+
+	t.Run("should return conflict when identifier is already used by a managed route", func(t *testing.T) {
+		conflict := notifier.ErrIdentifierAlreadyExists.Build(errutil.TemplateData{
+			Public: map[string]interface{}{"Identifier": identifier},
+		})
+		mockAM.On("PromoteExtraConfiguration", mock.Anything, orgID, mock.Anything, mock.Anything, identifier).
+			Return(merge.MergeResult{}, conflict).Once()
+
+		rc := createRequestCtx()
+		response := srv.RouteConvertPrometheusPromoteAlertmanagerConfig(rc, identifier)
+
+		require.Equal(t, http.StatusConflict, response.Status())
+		require.Contains(t, string(response.Body()), "alerting.notifications.alertmanager.identifierAlreadyExists")
+		require.Contains(t, string(response.Body()), "Identifier [test-config] is already used by existing managed routes or is reserved for the default routing tree. Import the configuration under a different identifier (for example, with the X-Grafana-Alerting-Config-Identifier header), or rename or delete the conflicting managed route.")
+		require.Contains(t, string(response.Body()), configIdentifierHeader)
 		mockAM.AssertExpectations(t)
 	})
 

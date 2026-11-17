@@ -62,10 +62,8 @@ var (
 		errutil.WithPublic(msgAlertmanagerExtraConfigManagedManually),
 	)
 
-	ErrIdentifierAlreadyExists = errutil.BadRequest("alerting.notifications.alertmanager.identifierAlreadyExists").MustTemplate("identifier [{{ .Public.Identifier }}] already used by existing managed routes",
-		errutil.WithPublic(
-			"Identifier [{{ .Public.Identifier }}] is already used by existing managed routes. Use another identifier or delete the existing route.",
-		))
+	// ErrIdentifierAlreadyExists aliases merge.ErrIdentifierAlreadyExists so existing notifier callers keep working.
+	ErrIdentifierAlreadyExists = merge.ErrIdentifierAlreadyExists
 
 	ErrAlertmanagerExtraConfigNotFound = errutil.NotFound("alerting.notifications.alertmanager.extraConfigNotFound",
 		errutil.WithPublicMessage("Extra configuration not found"),
