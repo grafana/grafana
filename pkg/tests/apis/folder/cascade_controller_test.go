@@ -142,9 +142,12 @@ func TestIntegrationFolderCascadeControllerEndToEnd(t *testing.T) {
 			deleter = clients
 		}
 		writer := &recordingWriter{FolderWriter: clients, states: map[string][]folders.FolderCascadeDeleteStatusState{}}
+		children := cascadedelete.NewSearchChildLister(helper.GetEnv().ResourceClient)
 		r := &cascadedelete.Reconciler{
-			Children:  cascadedelete.NewSearchChildLister(helper.GetEnv().ResourceClient),
-			Deleter:   deleter,
+			Handlers: []cascadedelete.KindHandler{
+				{Kind: cascadedelete.ChildFolder, Lister: children, Deleter: deleter},
+				{Kind: cascadedelete.ChildDashboard, Lister: children, Deleter: deleter},
+			},
 			Folders:   writer,
 			BatchSize: 2,
 		}
