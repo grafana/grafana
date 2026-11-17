@@ -4,25 +4,19 @@ import {
   EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY,
   getComponentMetaFromComponentId,
 } from 'app/core/components/AppChrome/ExtensionSidebar/extensionSidebarUtils';
-import { isFullscreenWorkspaceActive } from 'app/core/components/AppChrome/FullscreenWorkspace/fullscreenWorkspaceState';
 
 // Active conversation id stored by the assistant app.
 const ACTIVE_ASSISTANT_CHAT_ID_KEY = 'grafana-assistant-active-chat-id';
 
 /**
- * Whether the assistant chat is on screen. Two ways for that to be true, and every entry point
- * needs both: docked in the extension sidebar, or in the fullscreen workspace — where the docked
- * sidebar is closed but the chat is the thing the user is looking at.
+ * Whether the assistant chat is docked in the extension sidebar.
  *
- * Hook-free on purpose, so imperative code can use it: the sidebar half reads the same
- * localStorage key `useExtensionSidebarContext()` mirrors its state from, and the workspace half
- * reads the mirror `useFullscreenWorkspace()` publishes.
+ * Hook-free on purpose, so imperative code can use it: it reads the same localStorage key
+ * `useExtensionSidebarContext()` mirrors its state from.
  */
 function isAssistantVisible(): boolean {
   const dockedComponentId = store.get(EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY);
-  const isDockedInSidebar = getComponentMetaFromComponentId(dockedComponentId ?? '')?.pluginId === ASSISTANT_PLUGIN_ID;
-
-  return isDockedInSidebar || isFullscreenWorkspaceActive();
+  return getComponentMetaFromComponentId(dockedComponentId ?? '')?.pluginId === ASSISTANT_PLUGIN_ID;
 }
 
 /**

@@ -14,9 +14,7 @@ import (
 
 	collections "github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1"
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -31,19 +29,9 @@ func TestIntegrationStars(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	// routed runs the same checks with the router serving stars from the
-	// collections app, which has no dual write: it behaves like Mode5.
-	type variant struct {
-		mode   grafanarest.DualWriterMode
-		routed bool
-	}
-	for _, v := range []variant{
-		{mode: grafanarest.Mode0},
-		{mode: grafanarest.Mode1},
-		{mode: grafanarest.Mode5},
-		{mode: grafanarest.Mode5, routed: true},
-	} {
-		mode, routed := v.mode, v.routed
-		flags := []string{featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs}
+	// collections app.
+	for _, routed := range []bool{false, true} {
+		var flags []string
 		if routed {
 			flags = append(flags,
 				featuremgmt.FlagGrafanaUseRouterMiddleware,
@@ -52,36 +40,15 @@ func TestIntegrationStars(t *testing.T) {
 			)
 		}
 
-		// Provisioning requires dashboards/folders in unified storage (Mode4+).
-		// Disable it for legacy modes to avoid startup failures.
-		provisioning := testinfra.FeatureEnabled
-		if mode < grafanarest.Mode5 {
-			provisioning = testinfra.FeatureDisabled
-		}
-
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			AppModeProduction:    false, // required for experimental APIs
 			DisableAnonymous:     true,
 			LocalPluginAPI:       routed,
 			EnableFeatureToggles: flags,
-			Provisioning:         provisioning,
-			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-				"dashboards.dashboard.grafana.app": {
-					DualWriterMode: mode,
-				},
-				"folders.folder.grafana.app": {
-					DualWriterMode: mode,
-				},
-				"stars.collections.grafana.app": {
-					DualWriterMode: mode,
-				},
-				"collections.collections.grafana.app": {
-					DualWriterMode: mode,
-				},
-			},
+			Provisioning:         testinfra.FeatureEnabled,
 		})
 
-		t.Run(fmt.Sprintf("test stars (mode:%d routed:%t)", mode, routed), func(t *testing.T) {
+		t.Run(fmt.Sprintf("test stars (routed:%t)", routed), func(t *testing.T) {
 			ctx := context.Background()
 			starsClient := helper.GetResourceClient(apis.ResourceClientArgs{
 				User: helper.Org1.Admin,
@@ -284,11 +251,7 @@ func TestIntegrationStars(t *testing.T) {
 				"namespaces", "default",
 				"stars", adminStarName,
 				"update", "servicemodel.ext.grafana.com", "Component", "xxx").Do(ctx)
-			if mode == grafanarest.Mode5 {
-				require.NoError(t, res.Error())
-			} else {
-				require.Error(t, res.Error(), "only dashboard stars are supported until the migration to unified storage is complete")
-			}
+			require.NoError(t, res.Error())
 		})
 	}
 }
