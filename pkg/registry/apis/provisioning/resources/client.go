@@ -207,7 +207,7 @@ type clientFactory struct {
 	expandMu sync.Mutex
 	expanded []SupportedResource
 	// set adds the kinds that arrive after startup, when the factory has one.
-	set *supportedResourceSet
+	set SupportedResourceSet
 }
 
 // holds reports whether this factory's API server stores a collection, and so expands it. A
@@ -330,35 +330,21 @@ func (p *singleAPIClients) GetClientsForResource(ctx context.Context, _ schema.G
 // resources that can be managed from the UI; the ResourceClients it produces expose only
 // the enabled subset via SupportedResources(). When none is provided it falls back to the
 // static SupportedProvisioningResources base set.
-func NewClientFactory(configProvider apiserver.RestConfigProvider, supported ...ClientFactoryOption) ClientFactory {
-	o := newClientFactoryOptions(supported)
+func NewClientFactory(configProvider apiserver.RestConfigProvider, supported ...SupportedResourceSet) ClientFactory {
+	set := supportedSet(supported)
 	return &clientFactory{
 		clientsProvider:     newSingleAPIClients(configProvider),
-		configuredResources: o.configured,
-		set:                 o.set,
+		configuredResources: defaultSupportedResources(set.Configured()),
+		set:                 set,
 	}
 }
 
-// ClientFactoryOption gives a ClientFactory its supported resources: SupportedResource values
-// for a fixed list, or a SupportedResourceSet for a set that a source can update.
-type ClientFactoryOption interface {
-	apply(*clientFactoryOptions)
-}
-
-type clientFactoryOptions struct {
-	configured []SupportedResource
-	set        *supportedResourceSet
-}
-
-func (r SupportedResource) apply(o *clientFactoryOptions) { o.configured = append(o.configured, r) }
-
-func newClientFactoryOptions(opts []ClientFactoryOption) clientFactoryOptions {
-	var o clientFactoryOptions
-	for _, opt := range opts {
-		opt.apply(&o)
+// supportedSet returns the set that a constructor got, or an empty set.
+func supportedSet(supported []SupportedResourceSet) SupportedResourceSet {
+	if len(supported) > 0 {
+		return supported[0]
 	}
-	o.configured = defaultSupportedResources(o.configured)
-	return o
+	return NewSupportedResourceSet(nil)
 }
 
 // NewClientFactoryForMultipleAPIServers creates a ClientFactory for multiple API servers.
@@ -368,19 +354,20 @@ func newClientFactoryOptions(opts []ClientFactoryOption) clientFactoryOptions {
 // declared on its own is resolved the same way wherever it is resolved. Only the server that holds
 // a collection expands it: its members reach the merged set from there, and a server that holds no
 // collection asks discovery nothing, so its outage cannot fail the clients for other groups.
-func NewClientFactoryForMultipleAPIServers(configProviders map[string]apiserver.RestConfigProvider, supported ...ClientFactoryOption) ClientFactory {
-	o := newClientFactoryOptions(supported)
+func NewClientFactoryForMultipleAPIServers(configProviders map[string]apiserver.RestConfigProvider, supported ...SupportedResourceSet) ClientFactory {
+	set := supportedSet(supported)
+	configured := defaultSupportedResources(set.Configured())
 	clientFactories := make(map[string]ClientFactory)
 	for api, configProvider := range configProviders {
 		clientFactories[api] = &clientFactory{
 			clientsProvider:     newSingleAPIClients(configProvider),
-			configuredResources: o.configured,
+			configuredResources: configured,
 			storageGroup:        api,
-			set:                 o.set,
+			set:                 set,
 		}
 	}
 
-	return &multiClientFactory{clientFactories: clientFactories, collections: collectionPatterns(o.configured)}
+	return &multiClientFactory{clientFactories: clientFactories, collections: collectionPatterns(configured)}
 }
 
 // activeResources returns only the active resources. Disabled resources are declared (and
@@ -469,10 +456,13 @@ func (f *clientFactory) Clients(ctx context.Context, namespace string) (Resource
 	if err != nil {
 		return nil, err
 	}
+	if f.set != nil {
+		supported = append(slices.Clip(supported), f.set.Added()...)
+	}
 	return &resourceClients{
 		namespace:          namespace,
 		clientsProvider:    f.clientsProvider,
-		supportedResources: append(slices.Clip(supported), f.set.addedKinds()...),
+		supportedResources: supported,
 		byKind:             make(map[schema.GroupVersionKind]*clientInfo),
 		byResource:         make(map[schema.GroupVersionResource]*clientInfo),
 	}, nil

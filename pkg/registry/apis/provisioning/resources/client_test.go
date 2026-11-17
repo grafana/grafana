@@ -43,7 +43,7 @@ func TestResourceClients_SupportedResources(t *testing.T) {
 		active := SupportedResource{GroupKind: DashboardKind.GroupKind(), Capabilities: sets.New(CapabilityFolder)}
 		disabled := SupportedResource{GroupKind: playlistKind, Capabilities: sets.New(CapabilityDisabled)}
 
-		clients, err := NewClientFactory(nil, active, disabled).Clients(context.Background(), "default")
+		clients, err := NewClientFactory(nil, NewSupportedResourceSet([]SupportedResource{active, disabled})).Clients(context.Background(), "default")
 		require.NoError(t, err)
 
 		// Disabled resources are not acted on, so they are excluded from the active set.

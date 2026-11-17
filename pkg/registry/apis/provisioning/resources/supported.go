@@ -16,7 +16,10 @@ type SupportedResourceSet interface {
 	// Update replaces the kinds that the source added. A configured resource, or a configured
 	// collection that covers a kind, takes precedence over the kind.
 	Update(kinds []SupportedResource)
-	ClientFactoryOption
+	// Configured returns the configured resources. They do not change.
+	Configured() []SupportedResource
+	// Added returns the kinds that the source added.
+	Added() []SupportedResource
 }
 
 func NewSupportedResourceSet(configured []SupportedResource) SupportedResourceSet {
@@ -29,7 +32,7 @@ type supportedResourceSet struct {
 }
 
 func (s *supportedResourceSet) Get() []SupportedResource {
-	added := s.addedKinds()
+	added := s.Added()
 	if len(added) == 0 {
 		return s.configured
 	}
@@ -52,11 +55,11 @@ func (s *supportedResourceSet) Update(kinds []SupportedResource) {
 	s.added.Store(&added)
 }
 
-func (s *supportedResourceSet) apply(o *clientFactoryOptions) { o.configured, o.set = s.configured, s }
+func (s *supportedResourceSet) Configured() []SupportedResource { return s.configured }
 
-func (s *supportedResourceSet) addedKinds() []SupportedResource {
-	if s == nil || s.added.Load() == nil {
-		return nil
+func (s *supportedResourceSet) Added() []SupportedResource {
+	if added := s.added.Load(); added != nil {
+		return *added
 	}
-	return *s.added.Load()
+	return nil
 }
