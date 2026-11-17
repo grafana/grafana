@@ -1,4 +1,4 @@
-export type OptionValueType = 'boolean' | 'number' | 'string' | 'array' | 'object' | 'null' | 'undefined';
+type OptionValueType = 'boolean' | 'number' | 'string' | 'array' | 'object' | 'null' | 'undefined';
 
 export interface ReportableOptionValue {
   value?: string;
