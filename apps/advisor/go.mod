@@ -181,7 +181,7 @@ require (
 	github.com/google/gnostic-models v0.7.1 // indirect
 	github.com/google/go-querystring v1.2.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/grafana/alerting v0.0.0-20261113222548-56ba26dfa050 // indirect
+	github.com/grafana/alerting v0.0.0-20261116162943-0d18d9db54cc // indirect
 	github.com/grafana/authlib v0.0.0-20261108003752-80ed9e737add // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect
 	github.com/grafana/dskit v0.0.0-20260907092321-7585a53bb600 // indirect
