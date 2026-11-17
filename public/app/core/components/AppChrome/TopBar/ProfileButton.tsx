@@ -1,21 +1,14 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
-import { useToggle } from 'react-use';
 
-import { type GrafanaTheme2, type NavModelItem, PluginExtensionPoints } from '@grafana/data';
+import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, renderLimitedComponents } from '@grafana/runtime';
-import { Dropdown, Menu, MenuItem, ToolbarButton, useStyles2 } from '@grafana/ui';
-import { SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
+import { Dropdown, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
-import { clearLoginSectionTitle } from 'app/core/services/loginSectionTitle';
-import { usePluginComponents } from 'app/features/plugins/extensions/usePluginComponents';
 
-import { ThemeSelectorDrawer } from '../../ThemeSelector/ThemeSelectorDrawer';
 import { enrichWithInteractionTracking } from '../MegaMenu/utils';
-import { NewsContainer } from '../News/NewsDrawer';
 
-import { TopNavBarMenu } from './TopNavBarMenu';
+import { useProfileMenu } from './useProfileMenu';
 
 export interface Props {
   profileNode: NavModelItem;
@@ -25,53 +18,11 @@ export interface Props {
 export function ProfileButton({ profileNode, onToggleKioskMode }: Props) {
   const styles = useStyles2(getStyles);
   const node = enrichWithInteractionTracking(cloneDeep(profileNode), false);
-  const [showNewsDrawer, onToggleShowNewsDrawer] = useToggle(false);
-  const [showThemeDrawer, onToggleThemeDrawer] = useToggle(false);
-  const { components } = usePluginComponents({
-    extensionPointId: PluginExtensionPoints.UserProfileMenu,
-  });
+  const { renderMenu, drawers } = useProfileMenu({ profileNode, onToggleKioskMode });
 
   if (!node) {
     return null;
   }
-
-  const renderMenu = () => (
-    <TopNavBarMenu node={profileNode}>
-      <>
-        <MenuItem icon="palette" onClick={onToggleThemeDrawer} label={t('profile.change-theme', 'Change theme')} />
-        <Menu.Item
-          icon="monitor"
-          onClick={onToggleKioskMode}
-          label={t('profile.enable-kiosk-mode', 'Enable kiosk mode')}
-        />
-        {config.newsFeedEnabled && (
-          <MenuItem
-            icon="rss"
-            onClick={onToggleShowNewsDrawer}
-            label={t('navigation.rss-button', 'Latest from the blog')}
-          />
-        )}
-        {renderLimitedComponents({
-          props: {},
-          components,
-          limit: 1,
-          pluginId: SETUPGUIDE_PLUGIN_ID,
-        })}
-        {!config.auth.disableSignoutMenu && (
-          <>
-            <Menu.Divider />
-            <MenuItem
-              url={`${config.appSubUrl}/logout`}
-              onClick={clearLoginSectionTitle}
-              label={t('nav.sign-out.title', 'Sign out')}
-              icon="arrow-from-right"
-              target={'_self'}
-            />
-          </>
-        )}
-      </>
-    </TopNavBarMenu>
-  );
 
   return (
     <>
@@ -83,8 +34,7 @@ export function ProfileButton({ profileNode, onToggleKioskMode }: Props) {
           aria-label={t('navigation.profile.aria-label', 'Profile')}
         />
       </Dropdown>
-      {showNewsDrawer && <NewsContainer onClose={onToggleShowNewsDrawer} />}
-      {showThemeDrawer && <ThemeSelectorDrawer onClose={onToggleThemeDrawer} />}
+      {drawers}
     </>
   );
 }

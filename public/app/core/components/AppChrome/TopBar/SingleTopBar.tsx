@@ -6,14 +6,13 @@ import { Components } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { type ScopesContextValue } from '@grafana/runtime';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
-import { Icon, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { Stack, ToolbarButton, Tooltip, useStyles2 } from '@grafana/ui';
 import { MEGA_MENU_TOGGLE_ID } from 'app/core/constants';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useHomeNav } from 'app/core/hooks/useHomeNav';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import { contextSrv } from 'app/core/services/context_srv';
 import { ScopesSelector } from 'app/features/scopes/selector/ScopesSelector';
-import { useSelector } from 'app/types/store';
 
 import { HomeLogo } from '../../Branding/Branding';
 import { Breadcrumbs } from '../../Breadcrumbs/Breadcrumbs';
@@ -21,12 +20,12 @@ import { buildBreadcrumbs } from '../../Breadcrumbs/utils';
 import { AssistantToolbarButtons } from '../AssistantWorkspace/AssistantToolbarButtons';
 import { ExtensionToolbarItem } from '../ExtensionSidebar/ExtensionToolbarItem';
 import { LazyFeatureControlButton } from '../FeatureControl/LazyFeatureControl';
+import { MegaMenuToggleIcon } from '../MegaMenu/MegaMenuToggleIcon';
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
 import { QuickAdd } from '../QuickAdd/QuickAdd';
 
 import { HelpTopBarButton } from './HelpTopBarButton';
 import { NavRightButton } from './InviteUserButton';
-import { ProfileButton } from './ProfileButton';
 import { SignInLink } from './SignInLink';
 import { SingleTopBarActions } from './SingleTopBarActions';
 import { TopBarExtensionPoint } from './TopBarExtensionPoint';
@@ -37,7 +36,6 @@ interface Props {
   sectionNav: NavModelItem;
   pageNav?: NavModelItem;
   onToggleMegaMenu(): void;
-  onToggleKioskMode(): void;
   actions?: React.ReactNode;
   breadcrumbActions?: React.ReactNode;
   scopes?: ScopesContextValue | undefined;
@@ -46,7 +44,6 @@ interface Props {
 
 export const SingleTopBar = memo(function SingleTopBar({
   onToggleMegaMenu,
-  onToggleKioskMode,
   pageNav,
   sectionNav,
   scopes,
@@ -59,12 +56,25 @@ export const SingleTopBar = memo(function SingleTopBar({
   const state = chrome.useState();
   const menuDockedAndOpen = !state.chromeless && state.megaMenuDocked && state.megaMenuOpen;
   const styles = useStyles2(getStyles, menuDockedAndOpen, visualRefreshEnabled);
-  const profileNode = useSelector((state) => state.navIndex['profile']);
   const homeNav = useHomeNav();
   const breadcrumbs = buildBreadcrumbs(sectionNav, pageNav, homeNav);
   const isSmallScreen = !useMediaQueryMinWidth('sm');
   const isLargeScreen = useMediaQueryMinWidth('lg');
+  // Below this width the docked menu is hidden, so it is never docked.
+  const canDockMenu = useMediaQueryMinWidth('xl');
   const topLevelScopes = !showToolbarLevel && isLargeScreen && scopes?.state.enabled;
+
+  const onMenuToggleClick = () => {
+    if (canDockMenu) {
+      chrome.setMegaMenuDocked(true);
+      chrome.setMegaMenuOpen(true);
+    } else if (chrome.state.getValue().megaMenuPeek) {
+      // The menu the pointer opened stays open once clicked, instead of closing again.
+      chrome.setMegaMenuOpen(true);
+    } else {
+      onToggleMegaMenu();
+    }
+  };
 
   return (
     <>
@@ -72,20 +82,34 @@ export const SingleTopBar = memo(function SingleTopBar({
         <Stack minWidth={0} gap={0.5} alignItems="center" flex={{ xs: 2, lg: 1 }}>
           {!menuDockedAndOpen && (
             <>
-              <HomeLogo homeNav={homeNav} />
-              <ToolbarButton
-                narrow
-                id={MEGA_MENU_TOGGLE_ID}
-                data-testid={Components.NavBar.Toggle.button}
-                onClick={onToggleMegaMenu}
-                tooltip={t('navigation.megamenu.open', 'Main menu')}
-                aria-expanded={state.megaMenuOpen}
-                className={cx(state.megaMenuOpen && styles.menuToggleActive)}
+              {/* Resting the pointer on it opens the menu over the page; a click docks the menu where the screen
+                  is wide enough, and opens it over the page otherwise. While the pointer holds the menu open, a
+                  tooltip beside the button, clear of the menu below, says what the click does. The tooltip puts its
+                  own pointer handlers on the button, so the wrapper listens for the pointer instead. */}
+              <span
+                className={styles.menuToggleHoverArea}
+                onPointerEnter={(event) => event.pointerType === 'mouse' && chrome.startMegaMenuPeek()}
+                onPointerLeave={chrome.endMegaMenuPeek}
               >
-                <Stack gap={0} alignItems="center">
-                  <Icon name="bars" size="xl" />
-                </Stack>
-              </ToolbarButton>
+                <Tooltip
+                  content={t('navigation.megamenu.click-to-dock', 'Click to dock')}
+                  placement="right"
+                  show={canDockMenu && Boolean(state.megaMenuPeek)}
+                >
+                  <ToolbarButton
+                    narrow
+                    id={MEGA_MENU_TOGGLE_ID}
+                    data-testid={Components.NavBar.Toggle.button}
+                    onClick={onMenuToggleClick}
+                    aria-label={t('navigation.megamenu.open', 'Main menu')}
+                    aria-expanded={state.megaMenuOpen}
+                    className={cx(state.megaMenuOpen && styles.menuToggleActive)}
+                  >
+                    <MegaMenuToggleIcon />
+                  </ToolbarButton>
+                </Tooltip>
+              </span>
+              <HomeLogo homeNav={homeNav} />
             </>
           )}
           {topLevelScopes ? <ScopesSelector /> : undefined}
@@ -110,7 +134,6 @@ export const SingleTopBar = memo(function SingleTopBar({
           {!showToolbarLevel && actions}
           <NavRightButton />
           <AssistantToolbarButtons />
-          {profileNode && <ProfileButton profileNode={profileNode} onToggleKioskMode={onToggleKioskMode} />}
           {!contextSrv.user.isSignedIn && <SignInLink />}
         </Stack>
       </div>
@@ -148,6 +171,9 @@ const getStyles = (theme: GrafanaTheme2, menuDockedAndOpen: boolean, visualRefre
     [theme.breakpoints.down('lg')]: {
       display: 'none',
     },
+  }),
+  menuToggleHoverArea: css({
+    display: 'inline-flex',
   }),
   menuToggleActive: css({
     backgroundColor: theme.colors.accent.transparent,
