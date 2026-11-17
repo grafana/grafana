@@ -1,6 +1,11 @@
 {
+  "namedInputs": {
+    "default": ["{projectRoot}/**/*"],
+    "sharedPackageBuild": ["{workspaceRoot}/packages/*.config.parts.ts", "{workspaceRoot}/scripts/tsconfig.base.json"]
+  },
   "targetDefaults": {
     "build": {
+      "inputs": ["default", "sharedPackageBuild"],
       "outputs": ["{projectRoot}/dist"],
       "cache": true
     },

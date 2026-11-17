@@ -54,7 +54,7 @@ func InitializeAPIServerFactory() (standalone.APIServerFactory, error) {
 // InitializeRoutesLoader uses the same configured OSS dependency graph as the
 // app-plugin API registration.
 func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients) (router.RoutesLoader, error) {
-	wire.Build(CLI, wireext.BasicSet, provideRoutesLoaderContext, router.ProvidePluginLoaderDependenciesWithClients, router.ProvideRoutesLoader)
+	wire.Build(CLI, wireext.BasicSet, provideRoutesLoaderContext, router.ProvidePluginLoaderDependenciesWithClients, router.ProvideStandaloneRoutesLoader)
 	return nil, nil
 }
 

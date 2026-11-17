@@ -816,6 +816,44 @@ func TestV2alpha1ToV1BasicFields(t *testing.T) {
 	}
 }
 
+func TestGetPanelDatasourceIgnoresExpressions(t *testing.T) {
+	query := func(uid, kind string) dashv2alpha1.DashboardPanelQueryKind {
+		return dashv2alpha1.DashboardPanelQueryKind{
+			Kind: "PanelQuery",
+			Spec: dashv2alpha1.DashboardPanelQuerySpec{
+				Query:      dashv2alpha1.DashboardDataQueryKind{Kind: kind},
+				Datasource: &dashv2alpha1.DashboardDataSourceRef{Uid: &uid, Type: &kind},
+			},
+		}
+	}
+	esRef := map[string]interface{}{"type": "elasticsearch", "uid": "es-uid"}
+
+	t.Run("expression after a query", func(t *testing.T) {
+		ds := getPanelDatasource([]dashv2alpha1.DashboardPanelQueryKind{
+			query("es-uid", "elasticsearch"),
+			query("__expr__", "__expr__"),
+		})
+		assert.Equal(t, esRef, ds)
+	})
+
+	t.Run("expression before a query", func(t *testing.T) {
+		ds := getPanelDatasource([]dashv2alpha1.DashboardPanelQueryKind{
+			query("__expr__", "__expr__"),
+			query("es-uid", "elasticsearch"),
+		})
+		assert.Equal(t, esRef, ds)
+	})
+
+	t.Run("expression with queries from different datasources", func(t *testing.T) {
+		ds := getPanelDatasource([]dashv2alpha1.DashboardPanelQueryKind{
+			query("es-uid", "elasticsearch"),
+			query("prom-uid", "prometheus"),
+			query("__expr__", "__expr__"),
+		})
+		assert.Equal(t, map[string]interface{}{"type": "mixed", "uid": "-- Mixed --"}, ds)
+	})
+}
+
 // TestV2alpha1ToV1MatcherConfig tests conversion of matcher scope/config (transformation filter and field override)
 func TestV2alpha1ToV1MatcherConfig(t *testing.T) {
 	dsProvider := migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig)

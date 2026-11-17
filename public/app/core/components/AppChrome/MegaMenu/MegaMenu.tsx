@@ -83,7 +83,7 @@ export const MegaMenu = memo(
         key={key}
         link={link}
         isPinned={isPinned}
-        onClick={state.megaMenuDocked && !state.fullscreenWorkspace ? undefined : onClose}
+        onClick={state.megaMenuDocked ? undefined : onClose}
         activeItem={activeItem}
         onPin={onPinItem}
         editMode={editMode}
@@ -144,7 +144,7 @@ export const MegaMenu = memo(
           activeItem={activeItem}
           editMode={editMode}
           onUnpin={() => onUnpin(entry.url)}
-          onClick={state.megaMenuDocked && !state.fullscreenWorkspace ? undefined : onClose}
+          onClick={state.megaMenuDocked ? undefined : onClose}
           draggableProvided={draggableProvided}
           disabled={isSaving}
         />
@@ -158,9 +158,7 @@ export const MegaMenu = memo(
     const renderScopesDashboardsSection = () =>
       scopesMegaMenuEnabled && (
         <ErrorBoundaryAlert boundaryName="scopes-dashboards-mega-menu">
-          <ScopesDashboardsMegaMenuSection
-            onNavigate={state.megaMenuDocked && !state.fullscreenWorkspace ? undefined : onClose}
-          />
+          <ScopesDashboardsMegaMenuSection onNavigate={state.megaMenuDocked ? undefined : onClose} />
         </ErrorBoundaryAlert>
       );
 
@@ -289,7 +287,7 @@ export const MegaMenu = memo(
                 <Trans i18nKey="navigation.megamenu.customise">Customise navigation</Trans>
               </Button>
             )}
-            {!editMode && !state.fullscreenWorkspace && (
+            {!editMode && (
               <IconButton
                 id={DOCK_MENU_BUTTON_ID}
                 className={styles.dockMenuButton}

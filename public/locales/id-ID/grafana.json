@@ -1493,9 +1493,29 @@
         "records": "Rekaman",
         "to": "ke"
       },
+      "recording-rule-actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "view": ""
+      },
       "recording-rules": {
         "folder-rules-error": "",
         "folders-error": "",
+        "header": {
+          "new-rule": ""
+        },
         "load-more-rules-in-folder": "",
         "loading-folders": "",
         "no-rules": "Tidak ada aturan perekaman yang ditemukan",
@@ -1569,6 +1589,12 @@
         "view-folders": "Folder",
         "view-list": "Daftar",
         "wildcard-in-text": "Teks pencarian tidak boleh berisi * atau %."
+      },
+      "sequence-pill": {
+        "label": "",
+        "label-with-interval": "",
+        "tooltip": "",
+        "tooltip-with-interval": ""
       },
       "shared": {
         "load-more": "Muat lainnya",
@@ -2378,6 +2404,7 @@
       "contact-points": "Titik kontak",
       "notification-policies": "Kebijakan notifikasi",
       "recently-deleted": "Baru dihapus",
+      "recording-rules": "",
       "templates": "Templat",
       "time-intervals": "Interval waktu"
     },
@@ -5302,6 +5329,7 @@
       "change-theme": "Ubah tema",
       "dark-theme": "Gelap",
       "dashboard-from-template": "Dasbor dari templat",
+      "experimental": "",
       "light-theme": "Terang",
       "open-saved-queries": "Buka kueri tersimpan",
       "scopes": "Lingkup"
@@ -5756,12 +5784,18 @@
       "annotation-pin-remove": "",
       "apply-undo-title": "Edit Assistant Composer",
       "overlay": {
+        "hint-elements": "",
+        "hint-layer": "",
+        "hint-layer-select": "",
         "hint-not-removable": "",
-        "hint-panel": "Klik untuk memberikan komentar pada panel, atau seret untuk menggambar area",
+        "hint-panel": "",
+        "hint-panel-select": "",
         "hint-region": "Seret untuk menggambar area",
         "hint-remove": "",
+        "hint-screenshot": "",
         "hint-text": "",
-        "hint-variable": ""
+        "hint-variable": "",
+        "hint-variable-select": ""
       },
       "region": "Wilayah",
       "untitled-panel": "Panel {{panelId}}",
@@ -6155,6 +6189,9 @@
         "transparent-background": "Latar belakang transparan"
       }
     },
+    "get-var-mapping-option-overrides": {
+      "uses-variables": ""
+    },
     "inspect": {
       "data-tab": "Data",
       "errors-and-notices-tab": "Kesalahan dan pemberitahuan",
@@ -6347,9 +6384,6 @@
       "only-overrides-button-tooltip": "Tampilkan penimpaan saja",
       "placeholder-search-options": "Opsi pencarian",
       "visualization-button-tooltip": "Opsi pencarian"
-    },
-    "panel-editor": {
-      "ad-hoc-transformations-disabled": "Transformasi ad hoc dinonaktifkan dalam mode edit"
     },
     "plan-building-overlay": {
       "quip-corners": "Memoles sudut-sudut panel…",
@@ -6675,7 +6709,6 @@
           "no-title": "<tanpa judul>"
         }
       },
-      "redo": "Ulangi",
       "row": {
         "header": {
           "hide": "Sembunyikan",
@@ -6692,7 +6725,6 @@
         "title": "Sumber",
         "tooltip": "Buka dasbor asli"
       },
-      "undo": "Batalkan",
       "variable": {
         "change-type": "Ubah jenis",
         "change-type-aria-label": "Ubah jenis variabel",
@@ -6729,8 +6761,6 @@
         "open-editor": "Buka editor variabel",
         "open-editor-tooltip": "Untuk opsi variabel lainnya, buka editor variabel",
         "query-options": {
-          "close": "Tutup",
-          "old-modal-title": "Variabel Kueri",
           "preview": "Pratinjau"
         },
         "remove": "Hapus",
@@ -6901,6 +6931,8 @@
       "playlist-next": "Buka dasbor berikutnya",
       "playlist-previous": "Buka dasbor sebelumnya",
       "playlist-stop": "Hentikan daftar putar",
+      "redo": "",
+      "redo-action": "",
       "save-as-template": {
         "label": "Simpan sebagai templat"
       },
@@ -6919,6 +6951,8 @@
       "star-added": "Ditambahkan ke yang dibintangi",
       "star-remove-error": "Gagal menghapus dari yang dibintangi",
       "star-removed": "Dihapus dari yang dibintangi",
+      "undo": "",
+      "undo-action": "",
       "unlink-library-panel": "Putuskan tautan panel pustaka",
       "unlink-library-panel-short": "Putus tautan"
     },
@@ -7635,7 +7669,7 @@
       "apply": "Terapkan",
       "apply-body": "Semua orang yang memiliki akses akan melihatnya. Anda dapat memulihkan versi sebelumnya dari riwayat versi.",
       "apply-failed": "Tidak dapat menerapkan perubahan. Coba lagi, atau bandingkan terlebih dahulu.",
-      "apply-needs-edit": "Untuk menerapkan, diperlukan akses edit ke “{{title}}”. Anda dapat melihat pratinjau perubahan ini, tetapi tidak dapat menerapkannya.",
+      "apply-needs-save": "",
       "breadcrumb-draft": "Draf",
       "breadcrumb-pending-changes": "Perubahan berstatus menunggu",
       "change-added": "Ditambahkan",
@@ -7739,6 +7773,19 @@
       "aria-label-remove-option": "Hapus opsi",
       "title-drag-and-drop-to-reorder": "Tarik dan lepas untuk menyusun ulang",
       "tooltip-remove-option": "Hapus opsi"
+    },
+    "panel-actions-popover": {
+      "aria-label": "",
+      "edit": "",
+      "edit-tooltip-disabled": "",
+      "expand": "",
+      "explore": "",
+      "more-actions": "",
+      "remove": "",
+      "remove-confirm": "",
+      "remove-tooltip-disabled": "",
+      "restore-size": "",
+      "settings": ""
     },
     "panel-data-alerting-tab": {
       "tab-label": "Peringatan"
@@ -7918,6 +7965,12 @@
       "body-restore-version": "Anda yakin ingin memulihkan dasbor ke versi {{version}}? Semua perubahan yang belum disimpan akan hilang.",
       "confirmText-restore-version": "Ya, pulihkan ke versi {{version}}",
       "title-restore-version": "Pulihkan versi"
+    },
+    "row-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-row-settings": ""
     },
     "sandbox-consent": {
       "allow": "Izinkan",
@@ -8106,6 +8159,12 @@
       "switch-options": "Opsi sakelar",
       "value-pair-type": "Jenis pasangan nilai",
       "value-pair-type-description": "Pilih jenis nilai untuk status sakelar"
+    },
+    "tab-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-tab-settings": ""
     },
     "text-box-variable": {
       "name-default-value": "Nilai default"
@@ -9720,6 +9779,9 @@
     "select-aria-label": "Filter folder",
     "select-placeholder": "Filter berdasarkan folder"
   },
+  "folder-picker": {
+    "read-only-folder-tooltip": ""
+  },
   "folders": {
     "api": {
       "anonymous-user": "Anonim",
@@ -10699,6 +10761,8 @@
       "tooltip": {
         "category": "Tooltip",
         "description-hover-proximity": "Seberapa dekat kursor harus berada ke titik untuk memicu tooltip, dalam piksel",
+        "description-max-height": "",
+        "description-max-width": "",
         "modeOptions": {
           "label-all": "Semua",
           "label-hidden": "Tersembunyi",
@@ -11201,6 +11265,8 @@
         "unbounded": "Tanpa batas"
       },
       "reorder-column-label": "Susun ulang {{columnName}}",
+      "row-number": "",
+      "row-number-column": "",
       "show-column-label": "Tampilkan {{columnName}}",
       "sort-by-column": "Urutkan berdasarkan kolom {{column}}",
       "sort-by-column-ascending": "Urutkan berdasarkan kolom {{column}}, naik",
@@ -12975,6 +13041,10 @@
       "subtitle": "Pilih cara memberi tahu titik kontak Anda saat instans peringatan menyala",
       "title": "Titik kontak"
     },
+    "alerting-recording-rules": {
+      "subtitle": "",
+      "title": ""
+    },
     "alerting-silences": {
       "subtitle": "Hentikan pemberitahuan dari satu atau beberapa aturan peringatan",
       "title": "Kesenyapan"
@@ -13159,6 +13229,9 @@
     },
     "new-folder": {
       "title": "Folder baru"
+    },
+    "new-grafana-page": {
+      "title": ""
     },
     "new-notebook": {
       "title": "Notebook baru"
@@ -13818,6 +13891,32 @@
     },
     "units": {
       "clear-tooltip": "Hapus pemilihan unit"
+    },
+    "var-mapping-checks": {
+      "data-macro": "",
+      "not-allowed": "",
+      "not-found": "",
+      "not-number": "",
+      "not-one-value": "",
+      "out-of-range": "",
+      "resolves": "",
+      "values": ""
+    },
+    "var-mapping-toggle": {
+      "aria-label-picker": "",
+      "fallback-off": "",
+      "fallback-on": "",
+      "group-matching": "",
+      "group-other": "",
+      "hint-boolean": "",
+      "hint-number": "",
+      "hint-option": "",
+      "hint-option-no-fallback": "",
+      "new-variable": "",
+      "option-current": "",
+      "placeholder": "",
+      "use-fixed-value": "",
+      "use-variable": ""
     }
   },
   "org": {
@@ -13920,12 +14019,14 @@
     "header-menu": {
       "add-to-notebook": "Tambahkan ke notebook",
       "copy": "Salin",
+      "copy-repeated-panel": "",
       "copy-styles": "Salin gaya tampilan",
       "download-diagnostics": "Unduh diagnostik",
       "duplicate": "Duplikasikan",
       "edit": "Edit",
       "explore": "Jelajahi",
       "get-help": "Dapatkan bantuan",
+      "group-by": "",
       "hide-legend": "Sembunyikan keterangan",
       "inspect": "Periksa",
       "inspect-data": "Data",
@@ -14246,6 +14347,9 @@
     },
     "empty-state": {
       "message": "Tidak ada plugin yang ditemukan"
+    },
+    "errors": {
+      "app-plugin-metas-error": ""
     },
     "extensions": {
       "extension-error-alert-description": "Periksa konsol untuk detail selengkapnya tentang kesalahan.",
@@ -15202,8 +15306,7 @@
       "message-resource-onprem_other": "Instance Anda dibatasi hingga {{count}} sumber daya yang disinkronkan per repositori."
     },
     "read-only-badge": {
-      "pull-only": "",
-      "text": "Hanya baca"
+      "pull-only": ""
     },
     "read-only-local-tooltip": "Sumber daya ini hanya-baca dan disediakan melalui penyediaan file. Untuk membuat perubahan, perbarui repositori yang terhubung. Untuk mengubah pengaturan, buka Administrasi > Penyediaan > Repositori.",
     "read-only-remote-tooltip": "Sumber daya ini hanya-baca dan disediakan melalui Git. Untuk membuat perubahan, perbarui repositori yang terhubung. Untuk mengubah pengaturan, buka Administrasi > Penyediaan > Repositori.",
@@ -16036,6 +16139,9 @@
       "show-response": "Tampilkan respons"
     },
     "query-editor-not-exported": "Plugin sumber data tidak mengekspor komponen Editor Kueri apa pun"
+  },
+  "read-only-badge": {
+    "text": ""
   },
   "recent-queries": {
     "error-state": {
@@ -17045,6 +17151,7 @@
     "description-min-column-width": "Lebar minimum untuk perubahan ukuran kolom otomatis",
     "description-page-size": "Jumlah baris per halaman. Saat kosong, ukuran halaman didasarkan pada tinggi panel.",
     "description-show-columns-sidebar": "Buka bilah sisi pengelolaan kolom dengan panel, bukan dari menu kolom",
+    "description-show-row-numbers": "",
     "description-styling-from-field": "Bidang yang berisi objek JSON dengan properti CSS",
     "description-tooltip-from-field": "Render sel dari bidang (tersembunyi atau terlihat) dalam tooltip",
     "description-zebra-striping": "Ganti warna latar belakang setiap baris berikutnya",
@@ -17087,6 +17194,7 @@
     "name-min-column-width": "Lebar kolom minimum",
     "name-page-size": "Ukuran halaman",
     "name-show-columns-sidebar": "Tampilkan bilah sisi kolom",
+    "name-show-row-numbers": "",
     "name-show-table-header": "Tampilkan header tabel",
     "name-sparkline-show-tooltip": "Tampilkan tooltip saat kursor diarahkan",
     "name-styling-from-field": "Penataan dari bidang",

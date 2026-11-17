@@ -1,9 +1,10 @@
 import { screen, waitFor } from '@testing-library/react';
 import { type DataSourceFallbackWatcher, watchDataSourceFallbacks } from 'test/helpers/seedDataSources';
 
-import { config, locationService, setBackendSrv } from '@grafana/runtime';
+import { locationService, setBackendSrv } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
 import { setupMockServer } from '@grafana/test-utils/server';
-import { MOCK_SUB_SCOPE_MIMIR_ITEMS } from '@grafana/test-utils/unstable';
+import { MOCK_SUB_SCOPE_MIMIR_ITEMS, testWithFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { type ScopesApiClient } from '../ScopesApiClient';
@@ -72,9 +73,7 @@ describe('Dashboards list', () => {
   let scopesDashboardsService: ScopesDashboardsService;
   let apiClient: ScopesApiClient;
 
-  beforeAll(() => {
-    config.featureToggles.scopeFilters = true;
-  });
+  testWithFlags({ [FlagKeys.ScopeFilters]: true });
 
   beforeEach(async () => {
     const result = await renderDashboard();
@@ -337,10 +336,10 @@ describe('Dashboards list', () => {
           expanded: true,
           folders: {},
           suggestedNavigations: {
-            [dashboardWithoutFolder.spec.dashboard]: {
-              url: '/d/' + dashboardWithoutFolder.spec.dashboard,
-              title: dashboardWithoutFolder.status.dashboardTitle,
-              id: dashboardWithoutFolder.spec.dashboard,
+            [dashboardWithoutFolder.spec.url]: {
+              url: dashboardWithoutFolder.spec.url,
+              title: dashboardWithoutFolder.status.title,
+              id: dashboardWithoutFolder.metadata.name,
             },
           },
         },
@@ -354,10 +353,10 @@ describe('Dashboards list', () => {
           expanded: true,
           folders: {},
           suggestedNavigations: {
-            [dashboardWithRootFolder.spec.dashboard]: {
-              url: '/d/' + dashboardWithRootFolder.spec.dashboard,
-              title: dashboardWithRootFolder.status.dashboardTitle,
-              id: dashboardWithRootFolder.spec.dashboard,
+            [dashboardWithRootFolder.spec.url]: {
+              url: dashboardWithRootFolder.spec.url,
+              title: dashboardWithRootFolder.status.title,
+              id: dashboardWithRootFolder.metadata.name,
             },
           },
         },
@@ -375,15 +374,15 @@ describe('Dashboards list', () => {
               expanded: false,
               folders: {},
               suggestedNavigations: {
-                [dashboardWithOneFolder.spec.dashboard]: {
-                  url: '/d/' + dashboardWithOneFolder.spec.dashboard,
-                  title: dashboardWithOneFolder.status.dashboardTitle,
-                  id: dashboardWithOneFolder.spec.dashboard,
+                [dashboardWithOneFolder.spec.url]: {
+                  url: dashboardWithOneFolder.spec.url,
+                  title: dashboardWithOneFolder.status.title,
+                  id: dashboardWithOneFolder.metadata.name,
                 },
-                [dashboardWithTwoFolders.spec.dashboard]: {
-                  url: '/d/' + dashboardWithTwoFolders.spec.dashboard,
-                  title: dashboardWithTwoFolders.status.dashboardTitle,
-                  id: dashboardWithTwoFolders.spec.dashboard,
+                [dashboardWithTwoFolders.spec.url]: {
+                  url: dashboardWithTwoFolders.spec.url,
+                  title: dashboardWithTwoFolders.status.title,
+                  id: dashboardWithTwoFolders.metadata.name,
                 },
               },
             },
@@ -392,10 +391,10 @@ describe('Dashboards list', () => {
               expanded: false,
               folders: {},
               suggestedNavigations: {
-                [dashboardWithTwoFolders.spec.dashboard]: {
-                  url: '/d/' + dashboardWithTwoFolders.spec.dashboard,
-                  title: dashboardWithTwoFolders.status.dashboardTitle,
-                  id: dashboardWithTwoFolders.spec.dashboard,
+                [dashboardWithTwoFolders.spec.url]: {
+                  url: dashboardWithTwoFolders.spec.url,
+                  title: dashboardWithTwoFolders.status.title,
+                  id: dashboardWithTwoFolders.metadata.name,
                 },
               },
             },
@@ -418,10 +417,10 @@ describe('Dashboards list', () => {
               expanded: false,
               folders: {},
               suggestedNavigations: {
-                [dashboardWithTwoFolders.spec.dashboard]: {
-                  url: '/d/' + dashboardWithTwoFolders.spec.dashboard,
-                  title: dashboardWithTwoFolders.status.dashboardTitle,
-                  id: dashboardWithTwoFolders.spec.dashboard,
+                [dashboardWithTwoFolders.spec.url]: {
+                  url: dashboardWithTwoFolders.spec.url,
+                  title: dashboardWithTwoFolders.status.title,
+                  id: dashboardWithTwoFolders.metadata.name,
                 },
               },
             },
@@ -430,16 +429,39 @@ describe('Dashboards list', () => {
               expanded: false,
               folders: {},
               suggestedNavigations: {
-                [dashboardWithTwoFolders.spec.dashboard]: {
-                  url: '/d/' + dashboardWithTwoFolders.spec.dashboard,
-                  title: dashboardWithTwoFolders.status.dashboardTitle,
-                  id: dashboardWithTwoFolders.spec.dashboard,
+                [dashboardWithTwoFolders.spec.url]: {
+                  url: dashboardWithTwoFolders.spec.url,
+                  title: dashboardWithTwoFolders.status.title,
+                  id: dashboardWithTwoFolders.metadata.name,
                 },
               },
             },
           },
           suggestedNavigations: {},
         },
+      });
+    });
+
+    it('Dedupes navigations by URL, not by name', () => {
+      const first: ScopeNavigation = {
+        metadata: { name: 'first' },
+        spec: { scope: 'a', url: '/d/shared' },
+        status: { title: 'First' },
+      };
+      const sameUrl: ScopeNavigation = {
+        metadata: { name: 'second' },
+        spec: { scope: 'b', url: '/d/shared' },
+        status: { title: 'Second' },
+      };
+      const sameName: ScopeNavigation = {
+        metadata: { name: 'first' },
+        spec: { scope: 'c', url: '/d/other' },
+        status: { title: 'Other' },
+      };
+
+      expect(scopesDashboardsService.groupSuggestedItems([first, sameUrl, sameName])[''].suggestedNavigations).toEqual({
+        '/d/shared': { url: '/d/shared', title: 'First', id: 'first' },
+        '/d/other': { url: '/d/other', title: 'Other', id: 'first' },
       });
     });
 
@@ -457,34 +479,34 @@ describe('Dashboards list', () => {
       ).toEqual({
         '': {
           suggestedNavigations: {
-            [dashboardWithRootFolderAndOtherFolder.spec.dashboard]: {
-              url: '/d/' + dashboardWithRootFolderAndOtherFolder.spec.dashboard,
-              title: dashboardWithRootFolderAndOtherFolder.status.dashboardTitle,
-              id: dashboardWithRootFolderAndOtherFolder.spec.dashboard,
+            [dashboardWithRootFolderAndOtherFolder.spec.url]: {
+              url: dashboardWithRootFolderAndOtherFolder.spec.url,
+              title: dashboardWithRootFolderAndOtherFolder.status.title,
+              id: dashboardWithRootFolderAndOtherFolder.metadata.name,
             },
-            [dashboardWithRootFolder.spec.dashboard]: {
-              url: '/d/' + dashboardWithRootFolder.spec.dashboard,
-              title: dashboardWithRootFolder.status.dashboardTitle,
-              id: dashboardWithRootFolder.spec.dashboard,
+            [dashboardWithRootFolder.spec.url]: {
+              url: dashboardWithRootFolder.spec.url,
+              title: dashboardWithRootFolder.status.title,
+              id: dashboardWithRootFolder.metadata.name,
             },
-            [dashboardWithoutFolder.spec.dashboard]: {
-              url: '/d/' + dashboardWithoutFolder.spec.dashboard,
-              title: dashboardWithoutFolder.status.dashboardTitle,
-              id: dashboardWithoutFolder.spec.dashboard,
+            [dashboardWithoutFolder.spec.url]: {
+              url: dashboardWithoutFolder.spec.url,
+              title: dashboardWithoutFolder.status.title,
+              id: dashboardWithoutFolder.metadata.name,
             },
           },
           folders: {
             'Folder 1': {
               suggestedNavigations: {
-                [dashboardWithOneFolder.spec.dashboard]: {
-                  url: '/d/' + dashboardWithOneFolder.spec.dashboard,
-                  title: dashboardWithOneFolder.status.dashboardTitle,
-                  id: dashboardWithOneFolder.spec.dashboard,
+                [dashboardWithOneFolder.spec.url]: {
+                  url: dashboardWithOneFolder.spec.url,
+                  title: dashboardWithOneFolder.status.title,
+                  id: dashboardWithOneFolder.metadata.name,
                 },
-                [dashboardWithTwoFolders.spec.dashboard]: {
-                  url: '/d/' + dashboardWithTwoFolders.spec.dashboard,
-                  title: dashboardWithTwoFolders.status.dashboardTitle,
-                  id: dashboardWithTwoFolders.spec.dashboard,
+                [dashboardWithTwoFolders.spec.url]: {
+                  url: dashboardWithTwoFolders.spec.url,
+                  title: dashboardWithTwoFolders.status.title,
+                  id: dashboardWithTwoFolders.metadata.name,
                 },
               },
               folders: {},
@@ -493,10 +515,10 @@ describe('Dashboards list', () => {
             },
             'Folder 2': {
               suggestedNavigations: {
-                [dashboardWithTwoFolders.spec.dashboard]: {
-                  url: '/d/' + dashboardWithTwoFolders.spec.dashboard,
-                  title: dashboardWithTwoFolders.status.dashboardTitle,
-                  id: dashboardWithTwoFolders.spec.dashboard,
+                [dashboardWithTwoFolders.spec.url]: {
+                  url: dashboardWithTwoFolders.spec.url,
+                  title: dashboardWithTwoFolders.status.title,
+                  id: dashboardWithTwoFolders.metadata.name,
                 },
               },
               folders: {},
@@ -505,10 +527,10 @@ describe('Dashboards list', () => {
             },
             'Folder 3': {
               suggestedNavigations: {
-                [dashboardWithRootFolderAndOtherFolder.spec.dashboard]: {
-                  url: '/d/' + dashboardWithRootFolderAndOtherFolder.spec.dashboard,
-                  title: dashboardWithRootFolderAndOtherFolder.status.dashboardTitle,
-                  id: dashboardWithRootFolderAndOtherFolder.spec.dashboard,
+                [dashboardWithRootFolderAndOtherFolder.spec.url]: {
+                  url: dashboardWithRootFolderAndOtherFolder.spec.url,
+                  title: dashboardWithRootFolderAndOtherFolder.status.title,
+                  id: dashboardWithRootFolderAndOtherFolder.metadata.name,
                 },
               },
               folders: {},

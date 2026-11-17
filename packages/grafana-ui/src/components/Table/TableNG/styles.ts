@@ -173,8 +173,6 @@ export const getGridStyles = memoize(
 
         blockSize: '100%',
         scrollbarWidth: 'thin',
-        // Keep elastic overscroll from pulling the header away from the fixed frame and sidebar divider.
-        ...(tableRefreshEnabled && { overscrollBehaviorY: 'none' }),
         scrollbarColor: theme.isDark ? '#fff5 #fff1' : '#0005 #0001',
 
         border: 'none',

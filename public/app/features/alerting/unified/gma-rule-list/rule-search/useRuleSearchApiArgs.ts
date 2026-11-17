@@ -57,5 +57,21 @@ export function useRuleSearchApiArgs<Filter extends SharedRuleFilter>(
   };
 }
 
+/** A page search's result with the folder lookup in front of it: the list waits for the lookup, and Retry retries it when it failed. */
+export function withFolderLookup<Result extends { isLoading: boolean; error: unknown; retry: () => void }>(
+  lookup: ReturnType<typeof useRuleSearchApiArgs>,
+  result: Result
+) {
+  return {
+    ...result,
+    noMatchingFolder: lookup.noMatchingFolder,
+    folderLimitReached: lookup.folderLimitReached,
+    // A skipped rule search never loads, so it only counts as loading once there is one to send.
+    isLoading: lookup.isLookingUp || (lookup.apiArgs !== undefined && result.isLoading),
+    error: lookup.lookupError ?? result.error,
+    retry: lookup.lookupError ? lookup.retryLookup : result.retry,
+  };
+}
+
 // The search API returns at most 500 items per request.
 export const FOLDER_NAME_LOOKUP_LIMIT = 500;

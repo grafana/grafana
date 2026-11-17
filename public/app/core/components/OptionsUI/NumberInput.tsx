@@ -52,7 +52,7 @@ function parseInRangeValue(text: string, min?: number, max?: number): number | u
   return parsed;
 }
 
-function getRangeText(min?: number, max?: number) {
+export function getRangeText(min?: number, max?: number) {
   if (min != null && max != null) {
     return t('options-ui.number-input.range-min-max', 'Range: {{min}} to {{max}}', { min, max });
   }
@@ -63,6 +63,13 @@ function getRangeText(min?: number, max?: number) {
     return t('options-ui.number-input.range-max', 'Maximum: {{max}}', { max });
   }
   return undefined;
+}
+
+export function getOutOfRangeText(min?: number, max?: number) {
+  const rangeText = getRangeText(min, max);
+  return rangeText
+    ? t('options-ui.number-input.error-out-of-range', 'Out of range. {{range}}', { range: rangeText })
+    : t('options-ui.number-input.error-out-of-range-generic', 'Out of range');
 }
 
 /**
@@ -201,9 +208,7 @@ export const NumberInput = memo(function NumberInput({
 
   const localDescribedBy = showCorrectionError ? errorId : rangeText ? rangeId : undefined;
   const describedBy = [fieldContext['aria-describedby'], localDescribedBy].filter(Boolean).join(' ') || undefined;
-  const errorMessage = rangeText
-    ? t('options-ui.number-input.error-out-of-range', 'Out of range. {{range}}', { range: rangeText })
-    : t('options-ui.number-input.error-out-of-range-generic', 'Out of range');
+  const errorMessage = getOutOfRangeText(min, max);
 
   return (
     <div>
