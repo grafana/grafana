@@ -24,6 +24,7 @@ import {
 } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { initializeReportRenderReadinessObserver } from 'app/features/dashboard/services/ReportRenderReadinessObserver';
 import { getDashboardSnapshotSrv } from 'app/features/dashboard/services/SnapshotSrv';
+import { sendRenderComplete } from 'app/features/dashboard/services/sendRenderComplete';
 import { setMobileViewport } from 'app/features/dashboard-scene/utils/mobileViewportTestUtils';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { DASHBOARD_FROM_LS_KEY, type DashboardDataDTO, type DashboardDTO, DashboardRoutes } from 'app/types/dashboard';
@@ -101,6 +102,10 @@ jest.mock('app/features/dashboard/api/dashboard_api', () => ({
 
 jest.mock('app/features/dashboard/services/ReportRenderReadinessObserver', () => ({
   initializeReportRenderReadinessObserver: jest.fn(),
+}));
+
+jest.mock('app/features/dashboard/services/sendRenderComplete', () => ({
+  sendRenderComplete: jest.fn(),
 }));
 
 jest.mock('app/features/playlist/PlaylistSrv', () => ({
@@ -335,6 +340,79 @@ describe('DashboardScenePageStateManager v1', () => {
       } finally {
         contextSrv.user.authenticatedBy = originalAuthBy;
       }
+    });
+
+    describe('render completion on load failure', () => {
+      const notFound = {
+        status: 404,
+        statusText: 'Not Found',
+        data: { message: 'Dashboard not found' },
+        config: { method: 'GET', url: 'api/dashboards/uid/missing-dash' },
+        isHandled: true,
+      };
+
+      afterEach(() => {
+        delete window.__grafanaImageRendererMessageChannel;
+      });
+
+      it('reports a failed render once when a render target fails to load', async () => {
+        window.__grafanaImageRendererMessageChannel = jest.fn();
+        setupLoadDashboardMockReject(notFound);
+
+        const loader = new DashboardScenePageStateManager({});
+        await loader.loadDashboard({ uid: 'missing-dash', route: DashboardRoutes.Normal });
+
+        expect(loader.state.loadError?.status).toBe(404);
+        expect(sendRenderComplete).toHaveBeenCalledTimes(1);
+        expect(sendRenderComplete).toHaveBeenCalledWith(false);
+      });
+
+      it('reports a failed render when access is denied on a report route', async () => {
+        setupLoadDashboardMockReject({ ...notFound, status: 403, statusText: 'Forbidden' });
+
+        const loader = new DashboardScenePageStateManager({});
+        await loader.loadDashboard({ uid: 'missing-dash', route: DashboardRoutes.Report });
+
+        expect(loader.state.loadError?.status).toBe(403);
+        expect(sendRenderComplete).toHaveBeenCalledTimes(1);
+        expect(sendRenderComplete).toHaveBeenCalledWith(false);
+      });
+
+      it('does not report a render when the failing page is not a render target', async () => {
+        setupLoadDashboardMockReject(notFound);
+
+        const loader = new DashboardScenePageStateManager({});
+        await loader.loadDashboard({ uid: 'missing-dash', route: DashboardRoutes.Normal });
+
+        expect(loader.state.loadError?.status).toBe(404);
+        expect(sendRenderComplete).not.toHaveBeenCalled();
+      });
+
+      it('does not report a failed render when a render target loads', async () => {
+        window.__grafanaImageRendererMessageChannel = jest.fn();
+        setupLoadDashboardMock(MOCK_DASHBOARD);
+
+        const loader = new DashboardScenePageStateManager({});
+        await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+
+        expect(loader.state.dashboard).toBeDefined();
+        expect(initializeReportRenderReadinessObserver).toHaveBeenCalled();
+        expect(sendRenderComplete).not.toHaveBeenCalledWith(false);
+      });
+
+      it('reports a failed render when a render target snapshot fails to load', async () => {
+        window.__grafanaImageRendererMessageChannel = jest.fn();
+        setDashboardLoaderSrv({
+          loadSnapshot: jest.fn().mockRejectedValue(notFound),
+        } as unknown as DashboardLoaderSrv);
+
+        const loader = new DashboardScenePageStateManager({});
+        await loader.loadSnapshot('missing-snapshot');
+
+        expect(loader.state.loadError).toBeDefined();
+        expect(sendRenderComplete).toHaveBeenCalledTimes(1);
+        expect(sendRenderComplete).toHaveBeenCalledWith(false);
+      });
     });
 
     describe('reloadDashboardsOnParamsChange feature toggle', () => {
@@ -2323,6 +2401,52 @@ describe('UnifiedDashboardScenePageStateManager', () => {
       expect(manager.state.isLoading).toBe(false);
       expect(manager.state.loadError?.status).toBe(404);
       expect(manager.state.loadError?.message).toBe('Dashboard not found');
+    });
+
+    describe('render completion on load failure', () => {
+      afterEach(() => {
+        delete window.__grafanaImageRendererMessageChannel;
+      });
+
+      it('reports a failed render once when the v2 dashboard of a render target is not found', async () => {
+        window.__grafanaImageRendererMessageChannel = jest.fn();
+        setTestFlags({ dashboardNewLayouts: false });
+        setupLoadDashboardMockReject(new DashboardVersionError('v2beta1'));
+
+        const manager = new UnifiedDashboardScenePageStateManager({});
+        manager['v2Manager']['dashboardLoader'] = {
+          loadDashboard: jest.fn().mockRejectedValue({
+            status: 404,
+            statusText: 'Not Found',
+            data: { message: 'Dashboard not found' },
+            config: {
+              method: 'GET',
+              url: 'apis/dashboard.grafana.app/v2/namespaces/default/dashboards/missing-dash/dto',
+            },
+            isHandled: true,
+          }),
+          loadSnapshot: jest.fn(),
+        } as unknown as DashboardLoaderSrvV2;
+
+        await manager.loadDashboard({ uid: 'missing-dash', route: DashboardRoutes.Normal });
+
+        expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManagerV2);
+        expect(manager.state.loadError?.status).toBe(404);
+        expect(sendRenderComplete).toHaveBeenCalledTimes(1);
+        expect(sendRenderComplete).toHaveBeenCalledWith(false);
+      });
+
+      it('does not report a failed render when a render target loads after switching API version', async () => {
+        window.__grafanaImageRendererMessageChannel = jest.fn();
+        setTestFlags({ dashboardNewLayouts: false });
+        setupV1FailureV2Success();
+
+        const manager = new UnifiedDashboardScenePageStateManager({});
+        await manager.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+
+        expect(manager.state.dashboard?.state.uid).toBe('fake-dash');
+        expect(sendRenderComplete).not.toHaveBeenCalled();
+      });
     });
 
     describe('a new dashboard proposed as pending changes', () => {
