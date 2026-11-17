@@ -142,7 +142,7 @@ func TestCompatUpdate(t *testing.T) {
 				stale := updated.DeepCopy()
 				stale.SetResourceVersion(e.ResourceVersion)
 				_, err = client.Update(ctx, stale, metav1.UpdateOptions{})
-				require.False(t, apierrors.IsConflict(err), "%s rejects stale writes now; remove it from stale_writes_accepted in skip.yaml", gr)
+				require.NoError(t, acceptedStaleWriteError(gr, err))
 				t.Logf("skipping stale write checks: %s", reason)
 			} else {
 				// The label is a real change, so the setup version's resourceVersion is stale now.
@@ -292,6 +292,18 @@ func hint(e written, res compat.Resource) string {
 		return ""
 	}
 	return fmt.Sprintf("; stored in %s, which this version does not serve (preferred and max API versions must not go beyond what the oldest running version serves)", e.Version)
+}
+
+// acceptedStaleWriteError checks the result of a stale update on a resource listed under
+// stale_writes_accepted: it must succeed, and a conflict means the entry is no longer needed.
+func acceptedStaleWriteError(gr schema.GroupResource, err error) error {
+	if apierrors.IsConflict(err) {
+		return fmt.Errorf("%s rejects stale writes now; remove it from stale_writes_accepted in skip.yaml", gr)
+	}
+	if err != nil {
+		return fmt.Errorf("stale update of %s, listed under stale_writes_accepted, failed: %w", gr, err)
+	}
+	return nil
 }
 
 // sameSpecError reports whether two specs differ in any value. Numbers stay json.Number,

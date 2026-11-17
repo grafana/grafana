@@ -1,9 +1,12 @@
 package smoke
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 func TestPreservationError(t *testing.T) {
@@ -57,4 +60,11 @@ func TestSameSpecError(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestAcceptedStaleWriteError(t *testing.T) {
+	gr := schema.GroupResource{Group: "secret.grafana.app", Resource: "securevalues"}
+	require.NoError(t, acceptedStaleWriteError(gr, nil), "accepted stale write")
+	require.Error(t, acceptedStaleWriteError(gr, apierrors.NewConflict(gr, "x", errors.New("stale"))), "conflict means the entry is stale")
+	require.Error(t, acceptedStaleWriteError(gr, apierrors.NewInternalError(errors.New("boom"))), "any other error is a failed write")
 }
