@@ -470,7 +470,7 @@ func TestReconcile_ListErrorIsReported(t *testing.T) {
 	require.Equal(t, Result{}, res)
 	st := m.folders["a"].status
 	require.Equal(t, foldersv1.FolderCascadeDeleteStatusStateFailed, st.State)
-	require.Equal(t, []string{"list folders: search unavailable"}, st.Errors)
+	require.Equal(t, []string{"list dashboards: search unavailable", "list folders: search unavailable"}, st.Errors)
 }
 
 type failingLister struct{ err error }
