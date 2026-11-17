@@ -52,15 +52,19 @@ export function useDeletedAlertRules(): UseDeletedAlertRulesResult {
   );
 
   // Handle next page result
-  if (nextPage.isSuccess && !nextPage.isFetching && fetchingNextPage) {
-    const newItems = nextPage.data?.items ?? [];
-    setExtraItems((prev) => [...prev, ...newItems]);
-    const nextToken = nextPage.data?.metadata?.continue;
-    if (!nextToken) {
-      setServerDone(true);
-    } else {
-      setContinueToken(nextToken);
+  if (!nextPage.isFetching && fetchingNextPage) {
+    if (nextPage.isSuccess) {
+      const newItems = nextPage.data?.items ?? [];
+      setExtraItems((prev) => [...prev, ...newItems]);
+      const latestToken = nextPage.data?.metadata?.continue;
+      if (!latestToken) {
+        setServerDone(true);
+      } else {
+        setContinueToken(latestToken);
+      }
     }
+    // Clear fetchingNextPage on both success and error so Load more stays
+    // visible and the user can retry after a failed page fetch.
     setFetchingNextPage(false);
   }
 
@@ -69,17 +73,20 @@ export function useDeletedAlertRules(): UseDeletedAlertRulesResult {
   const firstContinueToken = firstPage.data?.metadata?.continue;
 
   const items = allItems.slice(0, revealed);
-  const hasMore = revealed < allItems.length || (!serverDone && firstContinueToken != null && !fetchingNextPage);
+  // After extra pages are fetched, continueToken holds the latest token; fall
+  // back to firstContinueToken for the very first next-page request.
+  const nextToken = continueToken ?? firstContinueToken;
+  const hasMore = revealed < allItems.length || (!serverDone && nextToken != null && !fetchingNextPage);
 
   const loadMore = useCallback(() => {
     if (revealed < allItems.length) {
       setRevealed((r) => r + PAGE_SIZE);
-    } else if (!serverDone && firstContinueToken && !fetchingNextPage) {
-      setContinueToken(firstContinueToken);
+    } else if (!serverDone && nextToken && !fetchingNextPage) {
+      setContinueToken(nextToken);
       setFetchingNextPage(true);
       setRevealed((r) => r + PAGE_SIZE);
     }
-  }, [revealed, allItems.length, serverDone, firstContinueToken, fetchingNextPage]);
+  }, [revealed, allItems.length, serverDone, nextToken, fetchingNextPage]);
 
   const refetch = useCallback(() => {
     setExtraItems([]);
