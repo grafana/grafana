@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"slices"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/grafana/dskit/services"
@@ -111,11 +112,12 @@ type APIBuilder struct {
 	isPreferredVersion                  bool
 	useExclusivelyAccessCheckerForAuthz bool
 
-	allowedTargets      []provisioning.SyncTargetType
-	supportedResources  resources.SupportedResourceProvider
-	manifestWatcher     services.Service
-	allowImageRendering bool
-	minSyncInterval     time.Duration
+	allowedTargets     []provisioning.SyncTargetType
+	supportedResources resources.SupportedResourceProvider
+	// startManifestWatcher starts the watcher that the API versions share.
+	startManifestWatcher func(context.Context) error
+	allowImageRendering  bool
+	minSyncInterval      time.Duration
 
 	features             featuremgmt.FeatureToggles
 	usageStats           usagestats.Service
@@ -226,7 +228,7 @@ func NewAPIBuilder(
 	jobHistoryConfig *JobHistoryConfig,
 	allowedTargets []provisioning.SyncTargetType,
 	supportedResources resources.SupportedResourceProvider,
-	manifestWatcher services.Service,
+	startManifestWatcher func(context.Context) error,
 	restConfigGetter func(context.Context) (*clientrest.Config, error),
 	allowImageRendering bool,
 	minSyncInterval time.Duration,
@@ -270,7 +272,7 @@ func NewAPIBuilder(
 		connectionFactory:                   connectionFactory,
 		clients:                             clients,
 		supportedResources:                  supportedResources,
-		manifestWatcher:                     manifestWatcher,
+		startManifestWatcher:                startManifestWatcher,
 		parsers:                             parsers,
 		unified:                             unified,
 		access:                              accessChecker,
@@ -359,6 +361,18 @@ func createJobHistoryConfigFromSettings(cfg *setting.Cfg) *JobHistoryConfig {
 	return &JobHistoryConfig{}
 }
 
+// StartOnce returns a function that starts the service on its first call. Each later call
+// does nothing.
+func StartOnce(service services.Service) func(context.Context) error {
+	var started atomic.Bool
+	return func(ctx context.Context) error {
+		if started.Swap(true) {
+			return nil
+		}
+		return service.StartAsync(ctx)
+	}
+}
+
 // RegisterAPIService returns an API builder, from [NewAPIBuilder]. It is called by Wire.
 // This function happily uses services core to Grafana, and does not need to be multi-tenancy-compatible.
 func RegisterAPIService(
@@ -392,12 +406,12 @@ func RegisterAPIService(
 	}
 	allowedTargets := allowedSyncTargets(cfg.ProvisioningAllowedTargets, bootstrapConfig.Enabled())
 
-	supportedResources, err := resources.ParseSupportedResources(cfg.ProvisioningResources)
+	configured, err := resources.ParseSupportedResources(cfg.ProvisioningResources)
 	if err != nil {
 		return nil, fmt.Errorf("invalid [provisioning] resources configuration: %w", err)
 	}
-	supported := resources.NewSupportedResourceProvider(supportedResources)
-	manifestWatcher := resource.NewLocalManifestWatcher(manifests, nil, resources.ManifestKinds(supported), nil)
+	supportedResources := resources.NewSupportedResourceProvider(configured)
+	startManifestWatcher := StartOnce(resource.NewLocalManifestWatcher(manifests, nil, supportedResources.Update, nil))
 
 	jobHistoryConfig := createJobHistoryConfigFromSettings(cfg)
 	maxFileSize := cfg.ProvisioningMaxFileSize
@@ -437,8 +451,8 @@ func RegisterAPIService(
 		extraWorkers,
 		jobHistoryConfig,
 		allowedTargets,
-		supported,
-		manifestWatcher,
+		supportedResources,
+		startManifestWatcher,
 		nil, // restConfigGetter - will use loopback instead
 		cfg.ProvisioningAllowImageRendering,
 		cfg.ProvisioningMinSyncInterval,
@@ -492,8 +506,8 @@ func RegisterAPIService(
 		extraWorkers,
 		jobHistoryConfig,
 		allowedTargets,
-		supported,
-		manifestWatcher,
+		supportedResources,
+		startManifestWatcher,
 		nil, // restConfigGetter
 		cfg.ProvisioningAllowImageRendering,
 		cfg.ProvisioningMinSyncInterval,
@@ -1097,8 +1111,9 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 	hookName := fmt.Sprintf("grafana-provisioning-%s", b.gv.Version)
 	postStartHooks := map[string]genericapiserver.PostStartHookFunc{
 		hookName: func(postStartHookCtx genericapiserver.PostStartHookContext) error {
-			// The API versions share the watcher, and StartAsync only fails when it already started.
-			_ = b.manifestWatcher.StartAsync(postStartHookCtx.Context)
+			if err := b.startManifestWatcher(postStartHookCtx.Context); err != nil {
+				return fmt.Errorf("start manifest watcher: %w", err)
+			}
 			var config *clientrest.Config
 			var err error
 			if b.restConfigGetter == nil {

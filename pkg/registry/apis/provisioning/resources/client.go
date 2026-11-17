@@ -17,6 +17,7 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 
+	"github.com/grafana/grafana-app-sdk/app"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	iam "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	provisioningresources "github.com/grafana/grafana/apps/provisioning/pkg/resources"
@@ -388,16 +389,17 @@ func defaultSupportedResources(supported []SupportedResource) []SupportedResourc
 }
 
 // SupportedResourceProvider gives the resources that provisioning supports: the configured ones,
-// plus the kinds that a source such as the app manifests adds while the process runs.
+// plus the kinds that the app manifests add while the process runs.
 type SupportedResourceProvider interface {
 	// Get returns the supported resources at the time of the call.
 	Get() []SupportedResource
-	// Update replaces the kinds that the source added. A configured resource, or a configured
-	// collection that covers a kind, takes precedence over the kind.
-	Update(kinds []SupportedResource)
+	// Update is the callback of a resource.ManifestWatcher. It replaces the added kinds with each
+	// kind that a published app manifest opts in to provisioning. A configured resource, or a
+	// configured collection that covers a kind, takes precedence over the kind.
+	Update(manifests []*app.ManifestData)
 	// Configured returns the configured resources. They do not change.
 	Configured() []SupportedResource
-	// Added returns the kinds that the source added.
+	// Added returns the kinds that the app manifests added.
 	Added() []SupportedResource
 }
 
@@ -418,18 +420,28 @@ func (s *supportedResourceProvider) Get() []SupportedResource {
 	return append(slices.Clip(defaultSupportedResources(s.configured)), added...)
 }
 
-func (s *supportedResourceProvider) Update(kinds []SupportedResource) {
+func (s *supportedResourceProvider) Update(manifests []*app.ManifestData) {
 	added := []SupportedResource{}
 	seen := sets.New[schema.GroupKind]()
 	for _, r := range defaultSupportedResources(s.configured) {
 		seen.Insert(r.GroupKind)
 	}
-	for _, r := range kinds {
-		if seen.Has(r.GroupKind) || storingCollection(s.configured, r.GroupKind) != "" {
-			continue
+	for _, manifest := range manifests {
+		for _, version := range manifest.Versions {
+			for _, kind := range version.Kinds {
+				gk := schema.GroupKind{Group: manifest.Group, Kind: kind.Kind}
+				if !version.Served || !kind.IsProvisionable() || kind.Scope == "Cluster" ||
+					seen.Has(gk) || storingCollection(s.configured, gk) != "" {
+					continue
+				}
+				caps := sets.New[string]()
+				if kind.FolderScoped == nil || *kind.FolderScoped {
+					caps.Insert(CapabilityFolder)
+				}
+				added = append(added, SupportedResource{GroupKind: gk, Capabilities: caps})
+				seen.Insert(gk)
+			}
 		}
-		added = append(added, r)
-		seen.Insert(r.GroupKind)
 	}
 	s.added.Store(&added)
 }

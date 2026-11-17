@@ -382,7 +382,7 @@ func newManifestWatcher(supported resources.SupportedResourceProvider, cfg resou
 	if cfg.DiscoveryURL == "" {
 		return services.NewIdleService(nil, nil), nil
 	}
-	return resource.NewManifestWatcher(cfg, nil, resources.ManifestKinds(supported))
+	return resource.NewManifestWatcher(cfg, nil, supported.Update)
 }
 
 func (c *ControllerConfig) ProvisioningClient() (*client.Clientset, error) {

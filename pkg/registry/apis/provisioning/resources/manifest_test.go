@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-func TestManifestKinds(t *testing.T) {
+func TestSupportedResourceProviderWatchesManifests(t *testing.T) {
 	widget := SupportedResource{GroupKind: schema.GroupKind{Group: testManifestGroup, Kind: "Widget"}, Capabilities: sets.New(CapabilityFolder)}
 	gadget := SupportedResource{GroupKind: schema.GroupKind{Group: testManifestGroup, Kind: "Gadget"}, Capabilities: sets.New[string]()}
 
@@ -25,7 +25,7 @@ func TestManifestKinds(t *testing.T) {
 		router := NewMockManifestDiscovery(t)
 		router.EXPECT().ListManifests(mock.Anything).Return(manifests, nil)
 		set := NewSupportedResourceProvider(nil)
-		watcher := resource.NewLocalManifestWatcher(router, nil, ManifestKinds(set), nil)
+		watcher := resource.NewLocalManifestWatcher(router, nil, set.Update, nil)
 		require.NoError(t, services.StartAndAwaitRunning(t.Context(), watcher))
 		t.Cleanup(watcher.StopAsync)
 		return set
