@@ -528,8 +528,6 @@ func TestPerKindFieldSets(t *testing.T) {
 	assert.False(t, alert.has(fieldName, resource.SearchCapabilityRetrieve))
 }
 
-// The old-server fixtures share column definitions across kinds, so conflicting
-// declarations would make the fixtures misrepresent one kind's response.
 func TestPerKindSearchFieldsAgreeAcrossKinds(t *testing.T) {
 	provider := resource.NewManifestBackedProvider(rulesmanifest.LocalManifest().ManifestData)
 	fieldsFor := func(gr schema.GroupResource) map[string]resource.SearchFieldDefinition {
@@ -557,28 +555,6 @@ func TestPerKindSearchFieldsAgreeAcrossKinds(t *testing.T) {
 	// Guard the guard: if the kinds stop sharing fields entirely this test would
 	// pass vacuously.
 	require.NotZero(t, shared, "expected the rule kinds to share search fields")
-}
-
-// Missing fixture columns would leave old-server decoding compatibility untested.
-func TestOldServerResultTableFixtureBuiltCleanly(t *testing.T) {
-	require.NoError(t, results.err)
-	require.Empty(t, results.skipped)
-	require.Len(t, results.defs, len(resultColumns))
-	require.Len(t, results.encoders, len(resultColumns))
-}
-
-// Old-server fixtures must use the index's column types to exercise real decoding.
-func TestOldServerResultColumnFixturesAreTyped(t *testing.T) {
-	byName := map[string]*resourcepb.ResourceTableColumnDefinition{}
-	for _, col := range resultColumnDefinitions() {
-		byName[col.Name] = col
-	}
-
-	require.Equal(t, resourcepb.ResourceTableColumnDefinition_BOOLEAN, byName[fieldPaused].Type)
-	require.Equal(t, resourcepb.ResourceTableColumnDefinition_INT64, byName[fieldPanelID].Type)
-	require.True(t, byName[fieldLabels].IsArray, "labels is indexed as flattened terms")
-	require.True(t, byName[fieldDatasourceUIDs].IsArray)
-	require.False(t, byName[fieldAnnotations].IsArray, "annotations is a whole JSON object")
 }
 
 func perKindTitles(rules []*ngmodels.AlertRule) []string {

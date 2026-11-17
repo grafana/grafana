@@ -1,4 +1,4 @@
-import { matchPluginId, store } from '@grafana/data';
+import { type DataSourceApi, matchPluginId, store } from '@grafana/data';
 import { type DataQuery } from '@grafana/schema';
 
 /**
@@ -15,6 +15,17 @@ import { type DataQuery } from '@grafana/schema';
  */
 export function isPrometheusType(type: string | undefined | null): boolean {
   return !!type && matchPluginId('prometheus', { id: type });
+}
+
+/** Whether a pane queries Prometheus: its datasource is one, or, for a Mixed pane, any of its queries uses one. */
+export function isPrometheusPane(
+  datasource: Pick<DataSourceApi, 'meta'> | null | undefined,
+  queries: Array<Pick<DataQuery, 'datasource'>>
+): boolean {
+  if (datasource?.meta.mixed) {
+    return queries.some((q) => isPrometheusType(q.datasource?.type));
+  }
+  return !!datasource && matchPluginId('prometheus', datasource.meta);
 }
 
 const EDITOR_MODE_DEFAULT_STORAGE_KEY = 'PrometheusQueryEditorModeDefault';

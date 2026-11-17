@@ -6,7 +6,8 @@ import (
 	"encoding/json"
 	"testing"
 
-	config "github.com/prometheus/alertmanager/config/common"
+	"github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/alertmanager/config/common"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -18,22 +19,20 @@ import (
 )
 
 func TestReceivers(t *testing.T) {
+	ruid := func(uid v1.ResourceUID, name string) *v1.PostableApiReceiver {
+		return new(v1.NewReceiver(uid, name, []*v1.PostableGrafanaReceiver{}, models.ProvenanceNone))
+	}
 	r := func(name string) *v1.PostableApiReceiver {
-		return new(v1.NewReceiver(name, nil, models.ProvenanceNone))
+		return ruid(v1.ReceiverUID(name), name)
 	}
 
 	identifier := "dupe"
 	suffix := getDedupSuffix(identifier)
 
-	r1 := r("r1")
-	r2 := r("r2")
-	r2s := r("r2" + suffix)
-	r3 := r("r3")
-
 	testCases := []struct {
 		name            string
 		existing        []*v1.PostableApiReceiver
-		incoming        []*v1.PostableApiReceiver
+		incoming        v1.ExtraAlertmanagerConfig
 		expected        map[v1.ResourceUID]v1.PostableApiReceiver
 		expectedRenames map[string]string
 		expectedAdded   []v1.ResourceUID
@@ -41,16 +40,18 @@ func TestReceivers(t *testing.T) {
 		{
 			name: "should append copies of incoming to existing",
 			existing: []*v1.PostableApiReceiver{
-				r2,
+				r("r2"),
 			},
-			incoming: []*v1.PostableApiReceiver{
-				r1,
-				r3,
+			incoming: v1.ExtraAlertmanagerConfig{
+				Receivers: []config.Receiver{
+					{Name: "r1"},
+					{Name: "r3"},
+				},
 			},
 			expected: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
-				r2,
-				r1,
-				r3,
+				r("r2"),
+				r("r1"),
+				r("r3"),
 			}),
 			expectedRenames: map[string]string{},
 			expectedAdded:   []v1.ResourceUID{v1.ReceiverUID("r1"), v1.ReceiverUID("r3")},
@@ -58,13 +59,15 @@ func TestReceivers(t *testing.T) {
 		{
 			name: "should rename incoming if there is existing",
 			existing: []*v1.PostableApiReceiver{
-				r2,
-			},
-			incoming: []*v1.PostableApiReceiver{
 				r("r2"),
 			},
+			incoming: v1.ExtraAlertmanagerConfig{
+				Receivers: []config.Receiver{
+					{Name: "r2"},
+				},
+			},
 			expected: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
-				r2,
+				r("r2"),
 				r("r2" + suffix),
 			}),
 			expectedRenames: map[string]string{
@@ -75,15 +78,17 @@ func TestReceivers(t *testing.T) {
 		{
 			name: "should rename incoming if there is existing after dedup",
 			existing: []*v1.PostableApiReceiver{
-				r2,
-				r2s,
-			},
-			incoming: []*v1.PostableApiReceiver{
 				r("r2"),
+				r("r2" + suffix),
+			},
+			incoming: v1.ExtraAlertmanagerConfig{
+				Receivers: []config.Receiver{
+					{Name: "r2"},
+				},
 			},
 			expected: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
-				r2,
-				r2s,
+				r("r2"),
+				r("r2" + suffix),
 				r("r2" + suffix + "_01"),
 			}),
 			expectedRenames: map[string]string{
@@ -94,16 +99,18 @@ func TestReceivers(t *testing.T) {
 		{
 			name: "should keep names unique across both sets",
 			existing: []*v1.PostableApiReceiver{
-				r2,
-				r2s,
-			},
-			incoming: []*v1.PostableApiReceiver{
 				r("r2"),
-				r("r2" + suffix + "_01"),
+				r("r2" + suffix),
+			},
+			incoming: v1.ExtraAlertmanagerConfig{
+				Receivers: []config.Receiver{
+					{Name: "r2"},
+					{Name: "r2" + suffix + "_01"},
+				},
 			},
 			expected: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
-				r2,
-				r2s,
+				r("r2"),
+				r("r2" + suffix),
 				r("r2" + suffix + "_02"),
 				r("r2" + suffix + "_01"),
 			}),
@@ -112,6 +119,25 @@ func TestReceivers(t *testing.T) {
 			},
 			expectedAdded: []v1.ResourceUID{v1.ReceiverUID("r2" + suffix + "_02"), v1.ReceiverUID("r2" + suffix + "_01")},
 		},
+		{
+			name: "keeps existing static UIDs and generates incoming UIDs",
+			existing: []*v1.PostableApiReceiver{
+				ruid("uid2", "r2"),
+			},
+			incoming: v1.ExtraAlertmanagerConfig{
+				Receivers: []config.Receiver{
+					{Name: "r2"},
+				},
+			},
+			expected: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
+				ruid("uid2", "r2"), // Kept.
+				ruid(v1.ReceiverUID("r2"+suffix), "r2"+suffix), // Generated.
+			}),
+			expectedRenames: map[string]string{
+				"r2": "r2" + suffix,
+			},
+			expectedAdded: []v1.ResourceUID{v1.ReceiverUID("r2" + suffix)},
+		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -119,11 +145,13 @@ func TestReceivers(t *testing.T) {
 			for _, r := range tc.existing {
 				existingNames = append(existingNames, r.Name)
 			}
-			for _, r := range tc.incoming {
+			for _, r := range tc.incoming.Receivers {
 				incomingNames = append(incomingNames, r.Name)
 			}
 
-			actual, actualRenames, actualAdded := Receivers(v1.ReceiversFromSlice(tc.existing), tc.incoming, identifier)
+			incoming, err := tc.incoming.ToGrafanaReceivers()
+			require.NoError(t, err)
+			actual, actualRenames, actualAdded := Receivers(v1.ReceiversFromSlice(tc.existing), incoming, identifier)
 			assert.Equal(t, tc.expected, actual)
 			assert.EqualValues(t, tc.expectedRenames, actualRenames)
 			assert.Equal(t, tc.expectedAdded, actualAdded)
@@ -135,7 +163,7 @@ func TestReceivers(t *testing.T) {
 				}
 				assert.Equal(t, existingNames, names)
 				names = nil
-				for _, r := range tc.incoming {
+				for _, r := range tc.incoming.Receivers {
 					names = append(names, r.Name)
 				}
 				assert.Equal(t, incomingNames, names)
@@ -146,7 +174,7 @@ func TestReceivers(t *testing.T) {
 
 func TestTimeIntervals(t *testing.T) {
 	ti := func(name string) v1.TimeInterval {
-		return v1.NewTimeInterval(name, nil, models.ProvenanceNone)
+		return v1.NewTimeInterval(v1.TimeIntervalUID(name), name, nil, models.ProvenanceNone)
 	}
 	toMap := func(intervals ...v1.TimeInterval) map[v1.ResourceUID]v1.TimeInterval {
 		m := make(map[v1.ResourceUID]v1.TimeInterval, len(intervals))
@@ -321,6 +349,37 @@ func TestTimeIntervals(t *testing.T) {
 	}
 }
 
+func TestTimeIntervals_UIDCollisionWithOrphanedExisting(t *testing.T) {
+	// An existing interval renamed away from "payments" keeps its old, name-derived UID (UID no
+	// longer moves with a rename). An incoming interval still named "payments" has no name
+	// collision to dedup against, so without the occupancy check it would compute the same UID
+	// and silently overwrite the existing entry.
+	orphanedUID := v1.TimeIntervalUID("payments")
+	existing := map[v1.ResourceUID]v1.TimeInterval{
+		orphanedUID: v1.NewTimeInterval(orphanedUID, "payments-platform", nil, models.ProvenanceNone),
+	}
+	incoming := []v1.TimeInterval{
+		v1.NewTimeInterval(v1.TimeIntervalUID("payments"), "payments", nil, models.ProvenanceNone),
+	}
+
+	result, renames, added := TimeIntervals(existing, incoming, "dupe")
+
+	assert.Empty(t, renames, "the name itself didn't collide, so it should not have been renamed")
+	require.Len(t, result, 2)
+
+	// The orphaned existing entry must survive untouched.
+	stillThere, ok := result[orphanedUID]
+	require.True(t, ok)
+	assert.Equal(t, "payments-platform", stillThere.Title)
+
+	// The incoming interval must have been given a different UID instead of colliding.
+	require.Len(t, added, 1)
+	assert.NotEqual(t, orphanedUID, added[0])
+	addedInterval, ok := result[added[0]]
+	require.True(t, ok)
+	assert.Equal(t, "payments", addedInterval.Title)
+}
+
 //go:embed testdata/mimir_no_intervals.yaml
 var fullMimirNoIntervals string
 
@@ -429,7 +488,7 @@ func TestMergeExtraConfig(t *testing.T) {
 			if cfg.Receivers == nil {
 				cfg.Receivers = make(map[v1.ResourceUID]v1.PostableApiReceiver, 1)
 			}
-			r := v1.NewReceiver(name, nil, models.ProvenanceNone)
+			r := v1.NewReceiver(v1.ReceiverUID(name), name, nil, models.ProvenanceNone)
 			cfg.Receivers[r.UID] = r
 		})
 		input := withExtra(t, grafana, fullMimirWithOnlyExtraReceiver)
@@ -634,10 +693,10 @@ func TestMergeInhibitionRules(t *testing.T) {
 	mkMatcher := func(name, value string) *labels.Matcher {
 		return &labels.Matcher{Type: labels.MatchEqual, Name: name, Value: value}
 	}
-	rule := func(srcLabel, tgtLabel string) config.InhibitRule {
-		return config.InhibitRule{
-			SourceMatchers: config.Matchers{mkMatcher("alertname", srcLabel)},
-			TargetMatchers: config.Matchers{mkMatcher("alertname", tgtLabel)},
+	rule := func(srcLabel, tgtLabel string) common.InhibitRule {
+		return common.InhibitRule{
+			SourceMatchers: common.Matchers{mkMatcher("alertname", srcLabel)},
+			TargetMatchers: common.Matchers{mkMatcher("alertname", tgtLabel)},
 		}
 	}
 
@@ -655,7 +714,7 @@ func TestMergeInhibitionRules(t *testing.T) {
 		existing := map[v1.ResourceUID]v1.InhibitionRule{
 			"existing-uid": v1.NewInhibitionRule("existing-uid", nil, nil, nil, models.ProvenanceNone),
 		}
-		result, added, err := MergeInhibitionRules(existing, []config.InhibitRule{rule("src", "tgt")}, "id")
+		result, added, err := MergeInhibitionRules(existing, []common.InhibitRule{rule("src", "tgt")}, "id")
 		require.NoError(t, err)
 		assert.Contains(t, result, v1.ResourceUID("existing-uid"))
 		assert.Len(t, result, 2)
@@ -664,7 +723,7 @@ func TestMergeInhibitionRules(t *testing.T) {
 
 	t.Run("identifier scope matcher is appended last on both source and target", func(t *testing.T) {
 		identifier := "my-scope"
-		result, added, err := MergeInhibitionRules(nil, []config.InhibitRule{rule("critical", "warning")}, identifier)
+		result, added, err := MergeInhibitionRules(nil, []common.InhibitRule{rule("critical", "warning")}, identifier)
 		require.NoError(t, err)
 		require.Len(t, added, 1)
 		ir := result[v1.ResourceUID(added[0])]
@@ -681,7 +740,7 @@ func TestMergeInhibitionRules(t *testing.T) {
 	})
 
 	t.Run("UID is deterministic for the same inputs", func(t *testing.T) {
-		incoming := []config.InhibitRule{rule("src", "tgt")}
+		incoming := []common.InhibitRule{rule("src", "tgt")}
 		result1, added1, err := MergeInhibitionRules(nil, incoming, "id")
 		require.NoError(t, err)
 		result2, added2, err := MergeInhibitionRules(nil, incoming, "id")
@@ -691,7 +750,7 @@ func TestMergeInhibitionRules(t *testing.T) {
 	})
 
 	t.Run("different rules produce different UIDs", func(t *testing.T) {
-		result, added, err := MergeInhibitionRules(nil, []config.InhibitRule{rule("a", "b"), rule("c", "d")}, "id")
+		result, added, err := MergeInhibitionRules(nil, []common.InhibitRule{rule("a", "b"), rule("c", "d")}, "id")
 		require.NoError(t, err)
 		require.Len(t, added, 2)
 		assert.NotEqual(t, added[0], added[1])
@@ -699,7 +758,7 @@ func TestMergeInhibitionRules(t *testing.T) {
 	})
 
 	t.Run("deprecated source_match and target_match fields are folded in", func(t *testing.T) {
-		incoming := []config.InhibitRule{
+		incoming := []common.InhibitRule{
 			{
 				SourceMatch: map[string]string{"alertname": "test"},
 				TargetMatch: map[string]string{"severity": "warning"},
@@ -728,7 +787,7 @@ func TestMergeInhibitionRules(t *testing.T) {
 	t.Run("deprecated match fields produce stable UID regardless of map iteration order", func(t *testing.T) {
 		// Build a rule with multiple deprecated match entries. Map iteration is non-deterministic,
 		// so the test validates that the UID is identical across repeated calls.
-		incoming := []config.InhibitRule{
+		incoming := []common.InhibitRule{
 			{
 				SourceMatch: map[string]string{"alertname": "fire", "severity": "critical", "team": "ops"},
 				TargetMatch: map[string]string{"alertname": "warn", "region": "eu"},

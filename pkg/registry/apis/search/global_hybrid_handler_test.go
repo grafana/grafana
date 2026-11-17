@@ -230,6 +230,44 @@ func TestGlobalHybridSearchUnknownResources(t *testing.T) {
 	}
 }
 
+func TestGlobalHybridSearchDedicatedSharedCollectionNeedsNoResourcePermission(t *testing.T) {
+	shared := searchv0.HybridSearchResource{Group: "docs.example.com", Resource: "documentation"}
+	dashboards := searchv0.HybridSearchResource{Group: "dashboard.grafana.app", Resource: "dashboards"}
+	for _, namespace := range []string{"tenant-a", "tenant-b"} {
+		t.Run(namespace, func(t *testing.T) {
+			client := &fakeHybridIndexClient{response: &resourcepb.HybridSearchResponse{Results: []*resourcepb.HybridSearchResult{
+				{Key: &resourcepb.ResourceKey{Namespace: namespace, Group: shared.Group, Resource: shared.Resource, Name: "getting-started"}, Title: "Getting started", Score: 0.9},
+			}}}
+			checks := 0
+			auth := authorizer.AuthorizerFunc(func(context.Context, authorizer.Attributes) (authorizer.Decision, string, error) {
+				checks++
+				return authorizer.DecisionDeny, "", nil
+			})
+			h := NewHybridHandler(client, noop.NewTracerProvider().Tracer("")).GlobalHybridSearchFor(globalHybridTargets(), nil, auth, nil)
+			q := hybridQuery()
+			q.Resources = []searchv0.HybridSearchResource{shared}
+			w := doHybridRequest(h, hybridBody(t, q), namespace, namespace)
+			require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+			assert.Zero(t, checks)
+			require.NotNil(t, client.request)
+			assert.Equal(t, namespace, client.request.Namespace)
+			assert.Equal(t, []*resourcepb.HybridSearchRequest_Resource{{Group: shared.Group, Resource: shared.Resource}}, client.request.Resources)
+			var response searchv0.HybridSearchResults
+			require.NoError(t, json.Unmarshal(w.Body.Bytes(), &response))
+			require.Len(t, response.Items, 1)
+			assert.Equal(t, searchv0.ResourceRef{Group: shared.Group, Resource: shared.Resource, Name: "getting-started"}, response.Items[0].Resource)
+			assert.Equal(t, 0.9, response.Items[0].Score)
+
+			q.Resources = []searchv0.HybridSearchResource{shared, dashboards}
+			client.request = nil
+			w = doHybridRequest(h, hybridBody(t, q), namespace, namespace)
+			assert.Equal(t, http.StatusForbidden, w.Code, w.Body.String())
+			assert.Equal(t, 1, checks)
+			assert.Nil(t, client.request)
+		})
+	}
+}
+
 func TestGlobalHybridSearchRejectsBeforeRPC(t *testing.T) {
 	for _, tc := range []struct {
 		name       string

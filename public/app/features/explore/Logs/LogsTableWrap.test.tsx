@@ -62,8 +62,8 @@ describe('LogsTableWrap', () => {
 
     await waitFor(() => {
       const rows = screen.getAllByRole('row');
-      // tableFrame has 3 rows + 1 header row
-      expect(rows.length).toBe(4);
+      // tableFrame has 3 rows + 1 header row + 1 footer row
+      expect(rows.length).toBe(5);
     });
   });
 
@@ -73,8 +73,8 @@ describe('LogsTableWrap', () => {
 
     await waitFor(() => {
       const rows = screen.getAllByRole('row');
-      // tableFrame has 3 rows + 1 header row
-      expect(rows.length).toBe(4);
+      // tableFrame has 3 rows + 1 header row + 1 footer row
+      expect(rows.length).toBe(5);
     });
   });
 
@@ -152,7 +152,7 @@ describe('LogsTableWrap', () => {
     const render = setup(initialProps);
     await waitFor(() => {
       const rows = render.getAllByRole('row');
-      expect(rows.length).toBe(4);
+      expect(rows.length).toBe(5);
     });
 
     render.rerender(
@@ -164,7 +164,7 @@ describe('LogsTableWrap', () => {
 
     await waitFor(() => {
       const rows = render.getAllByRole('row');
-      expect(rows.length).toBe(5);
+      expect(rows.length).toBe(6);
     });
   });
 

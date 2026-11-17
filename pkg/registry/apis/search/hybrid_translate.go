@@ -89,12 +89,11 @@ func validateHybridSearchQuery(q *searchv0.HybridSearchQuery, gr schema.GroupRes
 		errs = append(errs, field.Required(field.NewPath("query"), "must not be empty or whitespace"))
 	}
 	if len(q.Query) > 1000 {
-		errs = append(errs, field.Invalid(field.NewPath("query"), q.Query, "must not exceed 1000 bytes"))
+		errs = append(errs, field.TooLong(field.NewPath("query"), q.Query, 1000))
 	}
 	if len(q.SemanticQuery) > 1000 {
-		errs = append(errs, field.Invalid(field.NewPath("semanticQuery"), q.SemanticQuery, "must not exceed 1000 bytes"))
-	}
-	if q.SemanticQuery != "" && strings.TrimSpace(q.SemanticQuery) == "" {
+		errs = append(errs, field.TooLong(field.NewPath("semanticQuery"), q.SemanticQuery, 1000))
+	} else if q.SemanticQuery != "" && strings.TrimSpace(q.SemanticQuery) == "" {
 		errs = append(errs, field.Invalid(field.NewPath("semanticQuery"), q.SemanticQuery, "must not be whitespace"))
 	}
 	if q.Limit < 0 {

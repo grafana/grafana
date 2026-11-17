@@ -8,6 +8,8 @@ import (
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana-app-sdk/plugin"
+
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -88,7 +90,7 @@ func TestClientV3TokenExchanger(t *testing.T) {
 			"a development plugin that skips verification still sees the caller, as before local signing")
 		require.Equal(t, configured, exchangerFor(t, disabled(setting.Dev), "other-app", configured))
 	})
-	for _, key := range []string{v3.EnvVarSigningKeys, v3.EnvVarSigningKeysURL} {
+	for _, key := range []string{plugin.EnvVarGrafanaJWKS, plugin.EnvVarGrafanaJWKSURL} {
 		t.Run("not with "+key+" in the environment", func(t *testing.T) {
 			t.Setenv(key, "from-host")
 			require.Nil(t, exchangerFor(t, dev, "other-app", nil))

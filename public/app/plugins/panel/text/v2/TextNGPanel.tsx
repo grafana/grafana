@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { lazy, Suspense, useEffect, useMemo, useState, type Ref } from 'react';
-import { useDebounce } from 'react-use';
+import { useDebounce, useMeasure } from 'react-use';
 
 import {
   CoreApp,
@@ -10,7 +10,6 @@ import {
   type GrafanaTheme2,
   type PanelProps,
   type InterpolateFunction,
-  VariableSuggestionsScope,
 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import {
@@ -24,7 +23,6 @@ import {
   useTheme2,
 } from '@grafana/ui';
 import config from 'app/core/config';
-import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
 import {
   type CodeOptions,
@@ -41,6 +39,7 @@ import { TextNGFooter } from './TextNGFooter';
 import { TextNGHtmlView } from './TextNGHtmlView';
 import { TextNGTruncationNotice } from './TextNGTruncationNotice';
 import { type TextSandboxProps } from './TextSandbox';
+import { TextSandboxConsentNotice } from './TextSandboxConsentNotice';
 import { type TextNGEditorChange } from './editor/TextNGEditor';
 import { getEditorLayoutStyles } from './editor/editorLayout';
 import { DEFAULT_VIEW_MODE, type ViewMode } from './editor/viewMode';
@@ -48,6 +47,7 @@ import { usePagination } from './pagination';
 import { catchTemplateError, renderContent, type RenderedContent, type RowWindow } from './renderContent';
 import { useThemedReplaceVariables } from './useThemedReplaceVariables';
 import { EMPTY_CONTENT, getCurrentFrameIndex, getInterpolateFormat, isTextNewFeaturesEnabled } from './utils';
+import { getTextVariableSuggestions } from './variableSuggestions';
 
 const TextNGEditor = lazy(() => import('./editor/TextNGEditor').then((m) => ({ default: m.TextNGEditor })));
 
@@ -98,10 +98,9 @@ export function TextNGPanel(props: Props) {
     [newFeatures, frames, currentFrameIndex]
   );
 
-  // Values scope, so the ${__value} macros the renderer resolves are offered.
   const suggestions = useMemo(
-    () => (isEditing ? getDataLinksVariableSuggestions(series, VariableSuggestionsScope.Values) : []),
-    [isEditing, series]
+    () => (isEditing ? getTextVariableSuggestions(series, renderMode) : []),
+    [isEditing, series, renderMode]
   );
 
   const [view, setViewState] = useState<ViewMode>(() => viewModeByPanel.get(eventBus) ?? DEFAULT_VIEW_MODE);
@@ -299,8 +298,17 @@ export function TextNGPanel(props: Props) {
       <TextNGFooter left={frameSelector} center={paginationBar} right={truncationNotice} />
     ) : null;
 
+  // Publishes nothing visible itself; warns through the shared panel status UI
+  // while sandboxed content is blocked pending viewer consent.
+  const consentNotice = <TextSandboxConsentNotice consent={consent} />;
+
   if (!panelFooter) {
-    return panel;
+    return (
+      <>
+        {panel}
+        {consentNotice}
+      </>
+    );
   }
 
   // Fit-content: no fixed-height flex wrapper — the footer sits below the panel
@@ -311,6 +319,7 @@ export function TextNGPanel(props: Props) {
       <Stack direction="column" gap={1}>
         {panel}
         {panelFooter}
+        {consentNotice}
       </Stack>
     );
   }
@@ -321,6 +330,7 @@ export function TextNGPanel(props: Props) {
         {panel}
       </Stack>
       {panelFooter}
+      {consentNotice}
     </Stack>
   );
 }
@@ -355,6 +365,8 @@ function TextNGView({
   consent,
 }: TextNGViewProps) {
   const styles = useStyles2(getStyles);
+  // Measured on the panel's own box, which the frame cannot resize, so the fill cannot feed back.
+  const [fillRef, { height: fillHeight }] = useMeasure<HTMLDivElement>();
 
   if (error) {
     return <Alert severity="error" title={error} data-testid="TextNGPanel-error" />;
@@ -385,6 +397,7 @@ function TextNGView({
     <TextNGHtmlView
       html={content}
       hasData={hasData}
+      minHeight={fitContent ? undefined : fillHeight}
       consent={consent}
       className={cx('markdown-html', fitContent ? styles.markdownHtmlFit : styles.markdownHtml)}
       testId="TextNGPanel-converted-content"
@@ -398,7 +411,7 @@ function TextNGView({
   }
 
   return (
-    <div className={styles.containStrict}>
+    <div className={styles.containStrict} ref={fillRef}>
       <ScrollContainer minHeight="100%" ref={contentRef}>
         {rendered}
       </ScrollContainer>

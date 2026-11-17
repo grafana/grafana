@@ -1,4 +1,4 @@
-import { matchPluginId, store } from '@grafana/data';
+import { type DataSourcePluginMeta, matchPluginId, store } from '@grafana/data';
 import { type DataQuery } from '@grafana/schema';
 
 import {
@@ -7,6 +7,7 @@ import {
   type ExprTextKind,
   getPrometheusEditorMode,
   insertAtSelection,
+  isPrometheusPane,
   isPrometheusType,
 } from './prometheus';
 
@@ -27,6 +28,31 @@ describe('isPrometheusType', () => {
 
   it.each([undefined, null, ''])('returns false for %p', (type) => {
     expect(isPrometheusType(type)).toBe(false);
+  });
+});
+
+describe('isPrometheusPane', () => {
+  const pane = (meta: Partial<DataSourcePluginMeta>) => ({ meta: { id: '', ...meta } as DataSourcePluginMeta });
+  const query = (type: string): DataQuery => ({ refId: 'A', datasource: { type } });
+
+  it.each([
+    { desc: 'a Prometheus pane', datasource: pane({ id: 'prometheus' }), queries: [], expected: true },
+    { desc: 'a Loki pane', datasource: pane({ id: 'loki' }), queries: [query('prometheus')], expected: false },
+    {
+      desc: 'a Mixed pane with a Prometheus query',
+      datasource: pane({ id: 'mixed', mixed: true }),
+      queries: [query('loki'), query('prometheus')],
+      expected: true,
+    },
+    {
+      desc: 'a Mixed pane without one',
+      datasource: pane({ id: 'mixed', mixed: true }),
+      queries: [query('loki')],
+      expected: false,
+    },
+    { desc: 'no datasource', datasource: undefined, queries: [query('prometheus')], expected: false },
+  ])('returns $expected for $desc', ({ datasource, queries, expected }) => {
+    expect(isPrometheusPane(datasource, queries)).toBe(expected);
   });
 });
 

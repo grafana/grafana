@@ -41,7 +41,10 @@ jobs:
               - '.prettierrc*'
               - '.stylelintrc*'
               - 'tsconfig*'
-              - 'yarn.lock'
+              - 'pnpm-lock.yaml'
+              - 'pnpm-workspace.yaml'
+              - '.npmrc'
+              - 'patches/**'
               - 'package.json'
               - '.betterer*'
               - 'jest.config*'
@@ -53,7 +56,6 @@ jobs:
               - '!public/api-merged.json'
               - '!public/openapi3.json'
               # decoupled plugins are deployed via backend
-              - '!public/app/plugins/datasource/azuremonitor/**'
               - '!public/app/plugins/datasource/grafana-testdata-datasource/**'
               - '!public/app/plugins/datasource/graphite/**'
             backend_strict:
@@ -73,7 +75,6 @@ jobs:
               - '!pkg/services/featuremgmt/toggles_gen.go'
               - '!pkg/services/featuremgmt/toggles_gen.json'
               # decoupled plugins are deployed via backend
-              - 'public/app/plugins/datasource/azuremonitor/**'
               - 'public/app/plugins/datasource/grafana-testdata-datasource/**'
               - 'public/app/plugins/datasource/graphite/**'
 

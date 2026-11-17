@@ -5,6 +5,7 @@ import { useLocation } from 'react-router-dom-v5-compat';
 import { type GrafanaTheme2, locationUtil, textUtil } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
+import { getFocusStyles } from '@grafana/ui/internal';
 import { contextSrv } from 'app/core/services/context_srv';
 import { isFrontendService } from 'app/core/utils/isFrontendService';
 
@@ -35,11 +36,23 @@ export function SignInLink() {
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     link: css({
-      paddingLeft: theme.spacing(1),
-      paddingRight: theme.spacing(1),
+      display: 'flex',
+      alignItems: 'center',
+      height: theme.spacing(theme.components.height.md),
+      padding: theme.spacing(0, 1),
+      borderRadius: theme.shape.radius.default,
       whiteSpace: 'nowrap',
+
       '&:hover': {
-        textDecoration: 'underline',
+        background: theme.colors.action.hover,
+      },
+
+      '&:focus-visible': getFocusStyles(theme),
+
+      [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+        transition: theme.transitions.create(['background-color'], {
+          duration: theme.transitions.duration.short,
+        }),
       },
     }),
   };

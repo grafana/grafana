@@ -8,7 +8,7 @@ WIRE_TAGS = "oss"
 include .citools/Variables.mk
 
 GO = go
-GO_VERSION = 1.27.3
+GO_VERSION = 1.27.4
 GO_HOST_OS := $(shell $(GO) env GOHOSTOS)
 GO_HOST_ARCH := $(shell $(GO) env GOHOSTARCH)
 GO_LINT_FILES ?= $(shell ./scripts/go-workspace/golangci-lint-includes.sh)
@@ -87,9 +87,9 @@ deps-js: node_modules ## Install frontend dependencies.
 deps: deps-js ## Install all dependencies.
 
 .PHONY: node_modules
-node_modules: package.json yarn.lock ## Install node modules.
+node_modules: package.json pnpm-lock.yaml ## Install node modules.
 	@echo "install frontend dependencies"
-	YARN_ENABLE_PROGRESS_BARS=false yarn install --immutable
+	pnpm install --frozen-lockfile
 
 ##@ Swagger
 SPEC_TARGET = public/api-spec.json
@@ -170,7 +170,7 @@ openapi3-gen: swagger-gen ## Generates OpenApi 3 specs from the Swagger 2 alread
 .PHONY: generate-openapi
 generate-openapi: openapi3-gen
 	$(GO) test ./pkg/tests/apis || true
-	npm run --prefix packages/grafana-openapi process-specs
+	pnpm --filter @grafana/openapi --fail-if-no-match run process-specs
 
 ##@ Internationalisation
 .PHONY: i18n-extract-enterprise
@@ -181,17 +181,17 @@ i18n-extract-enterprise:
 else
 i18n-extract-enterprise:
 	@echo "Extracting i18n strings for Enterprise"
-	cd public/locales/enterprise && LANG=en_US.UTF-8 npm exec --no -- i18next-cli extract --sync-primary
+	cd public/locales/enterprise && LANG=en_US.UTF-8 pnpm exec i18next-cli extract --sync-primary
 endif
 
 .PHONY: i18n-extract
 i18n-extract: i18n-extract-enterprise
 	@echo "Extracting i18n strings for OSS"
-	LANG=en_US.UTF-8 npm exec --no -- i18next-cli extract --sync-primary
+	LANG=en_US.UTF-8 pnpm exec i18next-cli extract --sync-primary
 	@echo "Extracting i18n strings for packages"
-	LANG=en_US.UTF-8 npm run packages:i18n-extract
+	LANG=en_US.UTF-8 pnpm run packages:i18n-extract
 	@echo "Extracting i18n strings for plugins"
-	LANG=en_US.UTF-8 npm run plugin:i18n-extract
+	LANG=en_US.UTF-8 pnpm run plugin:i18n-extract
 
 ##@ Building
 .PHONY: gen-cue
@@ -353,10 +353,7 @@ build-air: build-go
 .PHONY: build-js
 build-js: ## Build frontend assets.
 	@echo "building frontend"
-	npm run build
-
-public/build:
-	$(MAKE) build-js
+	bash scripts/build-frontend.sh
 
 PLUGIN_ID ?=
 
@@ -414,7 +411,7 @@ build-catalog-plugins-data: data/plugins-bundled ## Download default catalog plu
 .PHONY: build-targz
 build-targz: $(TARGZ_FILE) ## Build a tar.gz package (bin, public, conf, plugins-bundled/, data/plugins-bundled from catalog)
 
-$(TARGZ_FILE): data/plugins-bundled | bin/$(OS)/$(ARCH)/grafana$(if $(filter windows,$(OS)),.exe) public/build
+$(TARGZ_FILE): dist/frontend data/plugins-bundled | bin/$(OS)/$(ARCH)/grafana$(if $(filter windows,$(OS)),.exe)
 	@echo "assembling tar.gz"
 	TARGZ_PACKAGE_NAME="$(TARGZ_PACKAGE_NAME)" \
 	BUILD_VERSION="$(BUILD_VERSION)" \
@@ -527,7 +524,7 @@ run-go: ## Build and run web server immediately.
 
 .PHONY: run-frontend
 run-frontend: deps-js ## Fetch js dependencies and watch frontend for rebuild.
-	npm run start
+	pnpm run start
 
 .PHONY: frontend-service-check
 frontend-service-check:
@@ -609,7 +606,7 @@ test-go-integration-memcached: ## Run integration tests for memcached cache.
 .PHONY: test-js
 test-js: ## Run tests for frontend.
 	@echo "test frontend"
-	npm run test
+	pnpm run test
 
 .PHONY: test
 test: test-go test-js ## Run all tests.
@@ -653,20 +650,20 @@ PLATFORM=linux/amd64
 # default to a production build for frontend
 #
 DOCKER_JS_NODE_ENV_FLAG = production
-DOCKER_JS_YARN_BUILD_FLAG = build
-DOCKER_JS_YARN_INSTALL_FLAG = --immutable
+DOCKER_JS_PNPM_BUILD_FLAG = build
+DOCKER_JS_PNPM_INSTALL_FLAG = --frozen-lockfile
 #
 # if go is in dev mode, also build node in dev mode
 ifneq ($(filter 1 dev,$(GO_BUILD_DEV)),)
   DOCKER_JS_NODE_ENV_FLAG = dev
-  DOCKER_JS_YARN_BUILD_FLAG = dev
-	DOCKER_JS_YARN_INSTALL_FLAG =
+  DOCKER_JS_PNPM_BUILD_FLAG = dev
+	DOCKER_JS_PNPM_INSTALL_FLAG = --no-frozen-lockfile
 endif
 # if NODE_ENV is set in the environment to dev, build frontend in dev mode, and allow go builds to use their default
 ifeq (${NODE_ENV}, dev)
   DOCKER_JS_NODE_ENV_FLAG = dev
-  DOCKER_JS_YARN_BUILD_FLAG = dev
-	DOCKER_JS_YARN_INSTALL_FLAG =
+  DOCKER_JS_PNPM_BUILD_FLAG = dev
+	DOCKER_JS_PNPM_INSTALL_FLAG = --no-frozen-lockfile
 endif
 
 .PHONY: build-docker-full
@@ -676,8 +673,8 @@ build-docker-full: ## Build Docker image for development.
 	--platform $(PLATFORM) \
 	--build-arg NODE_ENV=$(DOCKER_JS_NODE_ENV_FLAG) \
 	--build-arg JS_NODE_ENV=$(DOCKER_JS_NODE_ENV_FLAG) \
-	--build-arg JS_YARN_INSTALL_FLAG=$(DOCKER_JS_YARN_INSTALL_FLAG) \
-	--build-arg JS_YARN_BUILD_FLAG=$(DOCKER_JS_YARN_BUILD_FLAG) \
+	--build-arg JS_PNPM_INSTALL_FLAG=$(DOCKER_JS_PNPM_INSTALL_FLAG) \
+	--build-arg JS_PNPM_BUILD_FLAG=$(DOCKER_JS_PNPM_BUILD_FLAG) \
 	--build-arg GO_BUILD_TAGS=$(GO_BUILD_TAGS) \
 	--build-arg WIRE_TAGS=$(WIRE_TAGS) \
 	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \
@@ -696,8 +693,8 @@ build-docker-full-ubuntu: ## Build Docker image based on Ubuntu for development.
 	--platform $(PLATFORM) \
 	--build-arg NODE_ENV=$(DOCKER_JS_NODE_ENV_FLAG) \
 	--build-arg JS_NODE_ENV=$(DOCKER_JS_NODE_ENV_FLAG) \
-	--build-arg JS_YARN_INSTALL_FLAG=$(DOCKER_JS_YARN_INSTALL_FLAG) \
-	--build-arg JS_YARN_BUILD_FLAG=$(DOCKER_JS_YARN_BUILD_FLAG) \
+	--build-arg JS_PNPM_INSTALL_FLAG=$(DOCKER_JS_PNPM_INSTALL_FLAG) \
+	--build-arg JS_PNPM_BUILD_FLAG=$(DOCKER_JS_PNPM_BUILD_FLAG) \
 	--build-arg GO_BUILD_TAGS=$(GO_BUILD_TAGS) \
 	--build-arg WIRE_TAGS=$(WIRE_TAGS) \
 	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \
@@ -717,8 +714,8 @@ build-docker-full-distroless: ## Build Docker image based on distroless for deve
 	--platform $(PLATFORM) \
 	--build-arg NODE_ENV=$(DOCKER_JS_NODE_ENV_FLAG) \
 	--build-arg JS_NODE_ENV=$(DOCKER_JS_NODE_ENV_FLAG) \
-	--build-arg JS_YARN_INSTALL_FLAG=$(DOCKER_JS_YARN_INSTALL_FLAG) \
-	--build-arg JS_YARN_BUILD_FLAG=$(DOCKER_JS_YARN_BUILD_FLAG) \
+	--build-arg JS_PNPM_INSTALL_FLAG=$(DOCKER_JS_PNPM_INSTALL_FLAG) \
+	--build-arg JS_PNPM_BUILD_FLAG=$(DOCKER_JS_PNPM_BUILD_FLAG) \
 	--build-arg GO_BUILD_TAGS=$(GO_BUILD_TAGS) \
 	--build-arg WIRE_TAGS=$(WIRE_TAGS) \
 	--build-arg COMMIT_SHA=$$(git rev-parse HEAD) \
@@ -787,12 +784,20 @@ protobuf: ## Compile protobuf definitions
 	buf generate pkg/services/authz/proto/v1 --template pkg/services/authz/proto/v1/buf.gen.yaml
 	buf generate pkg/services/ngalert/store/proto/v1 --template pkg/services/ngalert/store/proto/v1/buf.gen.yaml
 	buf generate pkg/registry/apps/annotation/proto --template pkg/registry/apps/annotation/proto/buf.gen.yaml
+	$(MAKE) -C pkg/storage/dbproxy generate
 
 .PHONY: protobuf-breaking
 protobuf-breaking: ## Check protobuf definitions for breaking changes against main
 	bash scripts/protobuf-check.sh
 	buf breaking pkg/registry/apps/annotation/proto --against '.git#branch=main,subdir=pkg/registry/apps/annotation/proto'
 	buf breaking pkg/storage/unified/proto --against '.git#branch=main,subdir=pkg/storage/unified/proto'
+	@if git cat-file -e main:pkg/storage/dbproxy/proto 2>/dev/null; then \
+		base=$$(mktemp -d); trap 'rm -rf "$$base"' EXIT; \
+		git archive main -- pkg/storage/dbproxy/proto | tar -x -C "$$base"; \
+		$(MAKE) -C pkg/storage/dbproxy proto-breaking PROTO_BASE="$$base/pkg/storage/dbproxy/proto"; \
+	else \
+		echo 'Skipping dbproxy breaking comparison: schema is absent from main'; \
+	fi
 
 .PHONY: clean
 clean: ## Clean up intermediate build artifacts.

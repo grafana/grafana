@@ -1,5 +1,6 @@
 import { isEmpty, omit } from 'lodash';
 
+import { isSupportedExternalRulesSourceType } from '@grafana/alerting/internal';
 import { ReducerID, getNextRefId } from '@grafana/data';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { ExpressionDatasourceUID, type ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
@@ -8,7 +9,6 @@ import { type AlertDataQuery, type AlertQuery } from 'app/types/unified-alerting
 
 import { type KVObject, type RuleFormValues, type SimpleCondition } from '../types/rule-form';
 import { defaultAnnotations } from '../utils/constants';
-import { isSupportedExternalRulesSourceType } from '../utils/datasource';
 import { getInstantFromDataQuery } from '../utils/rule-form';
 
 export function setQueryEditorSettings(values: RuleFormValues): RuleFormValues {

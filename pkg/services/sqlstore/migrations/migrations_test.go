@@ -182,6 +182,70 @@ func TestIntegrationMigrationLock(t *testing.T) {
 	})
 }
 
+func TestIntegrationAddColumnMigrationSkipsExistingColumn(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	testDB, err := sqlutil.GetTestDB(sqlutil.GetTestDBType())
+	require.NoError(t, err)
+	t.Cleanup(testDB.Cleanup)
+
+	newEngine := func(t *testing.T, connStr string) *xorm.Engine {
+		x, err := xorm.NewEngine(testDB.DriverName, connStr)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			if err := x.Close(); err != nil {
+				t.Logf("failed to close xorm engine: %v", err)
+			}
+		})
+		return x
+	}
+
+	runAddExistingColumnMigration := func(t *testing.T, x *xorm.Engine) {
+		mg := NewMigrator(x, &setting.Cfg{})
+		mg.AddCreateMigration()
+		mg.AddMigration("add existing_column to test_table", NewAddColumnMigration(Table{Name: "test_table"}, &Column{
+			Name: "existing_column", Type: DB_NVarchar, Length: 10, Nullable: true,
+		}))
+
+		require.NoError(t, mg.Start(false, 0))
+
+		log, err := mg.GetMigrationLog()
+		require.NoError(t, err)
+		require.Contains(t, log, "add existing_column to test_table")
+	}
+
+	t.Run("table in the default schema", func(t *testing.T) {
+		x := newEngine(t, testDB.ConnStr)
+		require.NoError(t, NewDialect(x.DriverName()).CleanDB(x))
+
+		_, err := x.Exec("CREATE TABLE test_table (id INTEGER, existing_column VARCHAR(10))")
+		require.NoError(t, err)
+
+		runAddExistingColumnMigration(t, x)
+	})
+
+	t.Run("table in a later search_path schema", func(t *testing.T) {
+		if testDB.DriverName != Postgres {
+			t.Skip("search_path is Postgres-only")
+		}
+
+		x := newEngine(t, testDB.ConnStr)
+		require.NoError(t, NewDialect(x.DriverName()).CleanDB(x))
+
+		_, err := x.Exec("CREATE SCHEMA empty_first_schema")
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			if _, err := x.Exec("DROP SCHEMA IF EXISTS empty_first_schema CASCADE"); err != nil {
+				t.Logf("failed to drop schema: %v", err)
+			}
+		})
+		_, err = x.Exec("CREATE TABLE public.test_table (id INTEGER, existing_column VARCHAR(10))")
+		require.NoError(t, err)
+
+		runAddExistingColumnMigration(t, newEngine(t, testDB.ConnStr+" search_path=empty_first_schema,public"))
+	})
+}
+
 func TestMigratorLocking(t *testing.T) {
 	dbType := sqlutil.GetTestDBType()
 

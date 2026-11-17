@@ -64,6 +64,24 @@ func buildAPIGroupList(ctx context.Context, backends []Backend) cachedDoc {
 	return cachedDoc{body: body, etag: quoteETag(hashHex(hashInput.String()))}
 }
 
+// publishRootDocs publishes the /apis and /openapi/v3 root documents for
+// backends, for both views without a namespace filter.
+func (r *GrafanaRouter) publishRootDocs(ctx context.Context, backends []Backend) {
+	public := r.visibleBackends(ctx, view{}, backends)
+	groupList, index := buildAPIGroupList(ctx, public), buildOpenAPIV3Index(ctx, public)
+	r.apiGroupList.Store(&groupList)
+	r.openapiIndex.Store(&index)
+	if len(public) == len(backends) {
+		r.internalAPIGroupList.Store(&groupList)
+		r.internalOpenAPIIndex.Store(&index)
+		return
+	}
+	// Access policies see every group when no namespace filter applies.
+	internalList, internalIndex := buildAPIGroupList(ctx, backends), buildOpenAPIV3Index(ctx, backends)
+	r.internalAPIGroupList.Store(&internalList)
+	r.internalOpenAPIIndex.Store(&internalIndex)
+}
+
 // sortedManifestBackends returns backends sorted by group name for
 // deterministic output and a stable hash input.
 func sortedManifestBackends(backends []Backend) []Backend {

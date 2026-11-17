@@ -1,0 +1,201 @@
+syntax = "proto3";
+
+package dbproxy.v1;
+
+import "google/protobuf/duration.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/grafana/grafana/pkg/storage/dbproxy/api/dbproxy/v1;dbproxyv1";
+
+service DatabaseProxyService {
+  // Sends columns first, followed by messages containing rows and/or warnings.
+  // The final gRPC status determines whether the query succeeded.
+  rpc Query(QueryRequest) returns (stream QueryResponse);
+  // Executes one write statement; final gRPC OK confirms success.
+  rpc Exec(ExecRequest) returns (ExecResponse);
+  // One stream owns one transaction and processes one command at a time.
+  rpc Transaction(stream TransactionRequest) returns (stream TransactionResponse);
+}
+
+message QueryRequest {
+  // Stack namespace used for authorization and settings lookups, e.g. stacks-123.
+  string namespace = 1;
+  // Stable caller-defined name for query attribution.
+  string query_name = 2;
+  // One read statement with unqualified database table names and ? placeholders.
+  string sql = 3;
+  // Values in placeholder order.
+  repeated Value parameters = 4;
+}
+
+message QueryResponse {
+  // The first response contains at least one column and only columns.
+  // Columns follow SQL projection order, preserving aliases and duplicate names.
+  repeated Column columns = 1;
+  // Subsequent responses contain rows and/or warnings, with no columns.
+  repeated Row rows = 2;
+  repeated Warning warnings = 3;
+}
+
+message ExecRequest {
+  // Stack namespace used for authorization and settings lookups, e.g. stacks-123.
+  string namespace = 1;
+  // Stable caller-defined name for query attribution.
+  string query_name = 2;
+  // One write statement with unqualified database table names and ? placeholders.
+  string sql = 3;
+  // Values in placeholder order.
+  repeated Value parameters = 4;
+}
+
+message ExecResponse {
+  // UPDATE counts matched rows, including matches with unchanged values.
+  int64 rows_affected = 1;
+  // Generated insert ID, or zero when none is reported.
+  int64 last_insert_id = 2;
+}
+
+message TransactionRequest {
+  // Time budget for this command, allowing a shorter deadline than the transaction.
+  // Must be positive when set; capped by the remaining transaction lifetime.
+  google.protobuf.Duration timeout = 1;
+  // Fields of type google.protobuf.Empty select actions without arguments.
+  oneof command {
+    // Start the transaction; send this as the first command.
+    BeginRequest begin = 2;
+    // Run one read statement and receive schema and row batches.
+    Statement query = 3;
+    // Run one write or savepoint statement.
+    Statement exec = 4;
+    google.protobuf.Empty commit = 5;
+    google.protobuf.Empty rollback = 6;
+  }
+}
+
+message BeginRequest {
+  // Stack namespace used for authorization and settings lookups, e.g. stacks-123.
+  string namespace = 1;
+  // Request a read-only transaction.
+  bool read_only = 2;
+}
+
+message Statement {
+  // Stable caller-defined name for query attribution.
+  string query_name = 1;
+  // One statement with unqualified database table names and ? placeholders.
+  string sql = 2;
+  // Values in placeholder order.
+  repeated Value parameters = 3;
+}
+
+message TransactionResponse {
+  oneof result {
+    // Completes Begin, Query after all data, Commit, or Rollback according to the pending command.
+    google.protobuf.Empty ok = 1;
+    // Schema and row batches for the current query.
+    QueryResponse query = 2;
+    // Completes the current exec command.
+    ExecResponse exec = 3;
+    // Completes a failed command while the transaction remains usable.
+    TransactionCommandError error = 4;
+  }
+}
+
+// Only recoverable SQL errors use this in-stream result; fatal failures end the RPC.
+message TransactionCommandError {
+  // Safe error message for the caller.
+  string message = 1;
+  // Database code and SQLSTATE when available.
+  DatabaseError database_error = 2;
+}
+
+message Column {
+  string name = 1;
+  // Database type name, e.g. BIGINT, VARCHAR, or DATETIME.
+  string database_type_name = 2;
+  // Wire type for non-NULL values.
+  ValueType value_type = 3;
+  // True allows NULL; false requires a non-NULL value. Omit when unknown.
+  optional bool nullable = 4;
+  // Omit when length is unknown.
+  optional int64 length = 5;
+  DecimalSize decimal_size = 6;
+}
+
+message DecimalSize {
+  int64 precision = 1;
+  int64 scale = 2;
+}
+
+enum ValueType {
+  VALUE_TYPE_UNSPECIFIED = 0;
+  VALUE_TYPE_NULL = 1;
+  VALUE_TYPE_INT64 = 2;
+  VALUE_TYPE_UINT64 = 3;
+  VALUE_TYPE_FLOAT64 = 4;
+  VALUE_TYPE_BOOL = 5;
+  VALUE_TYPE_STRING = 6;
+  VALUE_TYPE_BYTES = 7;
+  VALUE_TYPE_TIMESTAMP = 8;
+}
+
+message Value {
+  // Every value must select a kind, including explicit SQL NULL.
+  oneof kind {
+    google.protobuf.NullValue null_value = 1;
+    sint64 int64_value = 2;
+    uint64 uint64_value = 3;
+    double float64_value = 4;
+    bool bool_value = 5;
+    string string_value = 6;
+    // Decimals use their exact base-10 text bytes, preserving precision and scale.
+    bytes bytes_value = 7;
+    // UTC. Encode MySQL zero dates as 0001-01-01T00:00:00Z.
+    google.protobuf.Timestamp timestamp_value = 8;
+  }
+}
+
+message Row {
+  // Exactly one value per schema column, in the same order.
+  repeated Value values = 1;
+}
+
+message Warning {
+  string code = 1;
+  string message = 2;
+}
+
+// Attached to a failed gRPC status using status.WithDetails.
+// Details are optional for transport failures.
+message QueryError {
+  ErrorReason reason = 1;
+  // Populated for errors originating in the database.
+  DatabaseError database_error = 2;
+}
+
+message DatabaseError {
+  string code = 1;
+  // Five-character SQLSTATE, or empty when unavailable.
+  string sql_state = 2;
+}
+
+enum ErrorReason {
+  ERROR_REASON_UNSPECIFIED = 0;
+  ERROR_REASON_INVALID_REQUEST = 1;
+  ERROR_REASON_UNAUTHENTICATED = 2;
+  ERROR_REASON_PERMISSION_DENIED = 3;
+  ERROR_REASON_STACK_NOT_FOUND = 4;
+  ERROR_REASON_STACK_STATE_UNSUPPORTED = 5;
+  ERROR_REASON_QUERY_UNSUPPORTED = 6;
+  ERROR_REASON_ROUTING_UNAVAILABLE = 7;
+  ERROR_REASON_DATABASE_UNAVAILABLE = 8;
+  ERROR_REASON_SQL_ERROR = 9;
+  ERROR_REASON_LIMIT_EXCEEDED = 10;
+  ERROR_REASON_DEADLINE_EXCEEDED = 11;
+  ERROR_REASON_CANCELLED = 12;
+  ERROR_REASON_INTERNAL = 13;
+  // A standalone write or transaction commit may have committed without confirmation.
+  ERROR_REASON_OUTCOME_UNKNOWN = 14;
+}

@@ -2,6 +2,7 @@ import {
   type DataSourceInstanceSettings,
   type DataTransformerConfig,
   getDataSourceRef,
+  LoadingState,
   PluginType,
 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
@@ -50,6 +51,7 @@ const mockQueryRunner = {
     return mockQueryRunnerState;
   },
   setState: jest.fn(),
+  cancelQuery: jest.fn(),
   runQueries: jest.fn(),
   // onActivate subscribes to datasource changes; return an unsubscribable so activation works.
   subscribeToState: jest.fn().mockReturnValue({ unsubscribe: jest.fn() }),
@@ -535,6 +537,14 @@ describe('PanelDataPaneNext', () => {
       name: 'TestData',
       meta: { mixed: false },
     } as unknown as DataSourceInstanceSettings;
+
+    it('runs the first query added to an empty panel', () => {
+      mockQueryRunnerState.queries = [];
+      dataPane.setState({ dsSettings: defaultDsSettings });
+
+      expect(dataPane.addQuery()).toBe('A');
+      expect(mockQueryRunner.runQueries).toHaveBeenCalledTimes(1);
+    });
 
     it('should assign the panel datasource when it is not Mixed', () => {
       mockQueryRunnerState.queries = [{ refId: 'A', datasource: { type: 'prometheus', uid: 'prom-1' } }];
@@ -1123,6 +1133,31 @@ describe('PanelDataPaneNext', () => {
       expect(testDataPane.state.dsError).toBe(primaryError);
     });
 
+    it('should keep the quotes in the settings-not-found message when the default also fails', async () => {
+      mockQueryRunnerState.datasource = { uid: 'deleted-uid', type: 'prometheus' };
+      mockGetDataSourceInstance.mockResolvedValueOnce(promDatasource).mockRejectedValueOnce(new Error('No default'));
+      mockGetInstanceSettings.mockReturnValue(undefined);
+
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+      await callLoadDatasource();
+      consoleErrorSpy.mockRestore();
+
+      expect(testDataPane.state.dsError?.message).toContain(
+        'Datasource settings not found for uid: {"uid":"deleted-uid"'
+      );
+    });
+
+    it('should set a generic dsError when the primary rejects with a non-Error and the default fails', async () => {
+      mockQueryRunnerState.datasource = { uid: 'deleted-uid', type: 'prometheus' };
+      mockGetDataSourceInstance.mockRejectedValue('boom');
+
+      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+      await callLoadDatasource();
+      consoleErrorSpy.mockRestore();
+
+      expect(testDataPane.state.dsError?.message).toBe('Failed to load datasource');
+    });
+
     it('should handle a Mixed panel datasource and reflect meta.mixed in state', async () => {
       mockQueryRunnerState.datasource = { uid: '-- Mixed --', type: 'mixed' };
       const mixedDatasource = { uid: '-- Mixed --', type: 'mixed' };
@@ -1435,7 +1470,7 @@ describe('PanelDataPaneNext', () => {
       await testDataPane.changeDataSource({ uid: 'nonexistent-uid', type: 'unknown' }, 'A');
 
       expect(testDataPane.state.dsError).toBeInstanceOf(Error);
-      expect(testDataPane.state.dsError?.message).toMatch(/nonexistent-uid/);
+      expect(testDataPane.state.dsError?.message).toBe('Datasource not found: nonexistent-uid');
       // queryRunner must not have been touched — the change never went through
       expect(mockQueryRunner.setState).not.toHaveBeenCalled();
       expect(mockQueryRunner.runQueries).not.toHaveBeenCalled();
@@ -1464,12 +1499,15 @@ describe('PanelDataPaneNext', () => {
 
       // First call: look up the new target (loki). Second call: look up the previous query DS (prom).
       // The type mismatch triggers shouldUseDefaultQuery=true, which calls get() — which then rejects.
-      mockGetInstanceSettings.mockReturnValueOnce(lokiSettings).mockReturnValueOnce(promSettings);
+      mockGetInstanceSettings
+        .mockReturnValueOnce({ ...lokiSettings, name: 'Loki & "prod"' })
+        .mockReturnValueOnce(promSettings);
       mockGetDataSourceInstance.mockRejectedValue(new Error('Plugin not found'));
 
       await testDataPane.changeDataSource({ uid: 'loki-uid', type: 'loki' }, 'A');
 
       expect(testDataPane.state.dsError).toBeInstanceOf(Error);
+      expect(testDataPane.state.dsError?.message).toBe('Failed to load datasource: Loki & "prod"');
       expect(mockQueryRunner.setState).not.toHaveBeenCalled();
       expect(mockQueryRunner.runQueries).not.toHaveBeenCalled();
     });
@@ -1502,6 +1540,34 @@ describe('PanelDataPaneNext', () => {
         })
       );
       expect(mockQueryRunner.runQueries).toHaveBeenCalled();
+    });
+
+    it('bulkDeleteQueries marks the runner ready when all queries are removed', () => {
+      mockQueryRunnerState.queries = [{ refId: 'A', datasource: { type: 'prometheus', uid: 'prom-1' } }];
+
+      dataPane.bulkDeleteQueries(['A']);
+
+      expect(mockQueryRunner.cancelQuery).toHaveBeenCalledTimes(1);
+      expect(mockQueryRunner.setState).toHaveBeenCalledWith({
+        queries: [],
+        _hasFetchedData: true,
+        data: expect.objectContaining({ series: [], state: LoadingState.Done }),
+      });
+      expect(mockQueryRunner.runQueries).not.toHaveBeenCalled();
+    });
+
+    it('deleteQuery does not run queries after removing the final query', () => {
+      mockQueryRunnerState.queries = [{ refId: 'A', datasource: { type: 'prometheus', uid: 'prom-1' } }];
+
+      dataPane.deleteQuery('A');
+
+      expect(mockQueryRunner.cancelQuery).toHaveBeenCalledTimes(1);
+      expect(mockQueryRunner.setState).toHaveBeenCalledWith({
+        queries: [],
+        _hasFetchedData: true,
+        data: expect.objectContaining({ series: [], state: LoadingState.Done }),
+      });
+      expect(mockQueryRunner.runQueries).not.toHaveBeenCalled();
     });
 
     it('bulkToggleQueriesHide hides the specified queries', () => {
@@ -1717,6 +1783,20 @@ describe('PanelDataPaneNext', () => {
       await testDataPane.bulkChangeDataSource(['A'], { uid: 'nonexistent', type: 'unknown' });
 
       expect(testDataPane.state.dsError).toBeInstanceOf(Error);
+      expect(testDataPane.state.dsError?.message).toBe('Datasource not found: nonexistent');
+      expect(mockQueryRunner.setState).not.toHaveBeenCalled();
+    });
+
+    it('sets dsError and does not update queries when get() fails for the target datasource', async () => {
+      mockQueryRunnerState.datasource = { uid: 'prom-uid', type: 'prometheus' };
+      mockQueryRunnerState.queries = [{ refId: 'A', datasource: { uid: 'prom-uid', type: 'prometheus' } }];
+
+      mockGetInstanceSettings.mockReturnValue({ ...lokiSettings, name: 'Loki & "prod"' });
+      mockGetDataSourceInstance.mockRejectedValue(new Error('Plugin not found'));
+
+      await testDataPane.bulkChangeDataSource(['A'], { uid: 'loki-uid', type: 'loki' });
+
+      expect(testDataPane.state.dsError?.message).toBe('Failed to load datasource: Loki & "prod"');
       expect(mockQueryRunner.setState).not.toHaveBeenCalled();
     });
 

@@ -1,6 +1,10 @@
 package setting
 
 import (
+	"math"
+	"os"
+	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -8,7 +12,78 @@ import (
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/ini.v1"
 )
+
+func TestRerankHedgeDelayConfig(t *testing.T) {
+	t.Setenv("GF_VECTOR_RERANKER_HEDGE_DELAY", "")
+	for _, tc := range []struct {
+		name, configured string
+		setKey           bool
+		want             time.Duration
+	}{
+		{name: "omitted", want: 500 * time.Millisecond},
+		{name: "empty", setKey: true, want: 500 * time.Millisecond},
+		{name: "malformed", configured: "later", want: 500 * time.Millisecond},
+		{name: "positive", configured: "750ms", want: 750 * time.Millisecond},
+		{name: "zero", configured: "0s"},
+		{name: "negative", configured: "-1s", want: -time.Second},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := NewCfg()
+			if tc.setKey || tc.configured != "" {
+				cfg.Raw.Section("vector_reranker").Key("hedge_delay").SetValue(tc.configured)
+			}
+			cfg.setUnifiedStorageConfig()
+			require.Equal(t, tc.want, cfg.RerankHedgeDelay)
+		})
+	}
+}
+
+func TestRerankHedgeDelayLoadsCustomINI(t *testing.T) {
+	t.Setenv("GF_VECTOR_RERANKER_HEDGE_DELAY", "")
+	path := filepath.Join(t.TempDir(), "custom.ini")
+	require.NoError(t, os.WriteFile(path, []byte("[vector_reranker]\nhedge_delay = 750ms\n"), 0600))
+	cfg := NewCfg()
+	require.NoError(t, cfg.Load(CommandLineArgs{HomePath: "../../", Config: path}))
+	require.Equal(t, 750*time.Millisecond, cfg.RerankHedgeDelay)
+
+	t.Run("environment wins over custom configuration", func(t *testing.T) {
+		t.Setenv("GF_VECTOR_RERANKER_HEDGE_DELAY", "250ms")
+		cfg := NewCfg()
+		require.NoError(t, cfg.Load(CommandLineArgs{HomePath: "../../", Config: path}))
+		require.Equal(t, 250*time.Millisecond, cfg.RerankHedgeDelay)
+	})
+
+	t.Run("command line wins over environment", func(t *testing.T) {
+		t.Setenv("GF_VECTOR_RERANKER_HEDGE_DELAY", "250ms")
+		cfg := NewCfg()
+		require.NoError(t, cfg.Load(CommandLineArgs{
+			HomePath: "../../", Config: path,
+			Args: []string{"cfg:vector_reranker.hedge_delay=900ms"},
+		}))
+		require.Equal(t, 900*time.Millisecond, cfg.RerankHedgeDelay)
+	})
+}
+
+func TestRerankHedgeDelayExpandsEnvironmentValue(t *testing.T) {
+	t.Setenv("GF_VECTOR_RERANKER_HEDGE_DELAY", "")
+	t.Setenv("RERANK_DELAY_VALUE", "850ms")
+	path := filepath.Join(t.TempDir(), "custom.ini")
+	require.NoError(t, os.WriteFile(path, []byte("[vector_reranker]\nhedge_delay = $__env{RERANK_DELAY_VALUE}\n"), 0600))
+	cfg := NewCfg()
+	require.NoError(t, cfg.Load(CommandLineArgs{HomePath: "../../", Config: path}))
+	require.Equal(t, 850*time.Millisecond, cfg.RerankHedgeDelay)
+}
+
+func TestRerankHedgeDelayEnvironmentAddsKeyToExistingSection(t *testing.T) {
+	t.Setenv("GF_VECTOR_RERANKER_HEDGE_DELAY", "750ms")
+	path := filepath.Join(t.TempDir(), "custom.ini")
+	require.NoError(t, os.WriteFile(path, []byte("[vector_reranker]\nprovider = vertex\n"), 0600))
+	cfg := NewCfg()
+	require.NoError(t, cfg.Load(CommandLineArgs{HomePath: "../../", Config: path}))
+	require.Equal(t, 750*time.Millisecond, cfg.RerankHedgeDelay)
+}
 
 func TestUnifiedStorageQuotaResources(t *testing.T) {
 	for _, tc := range []struct {
@@ -44,6 +119,74 @@ func TestUnifiedStorageQuotaResources(t *testing.T) {
 			cfg.setUnifiedStorageConfig()
 			require.Equal(t, tc.wantEnforced, cfg.EnforcedQuotaResources)
 			require.Equal(t, tc.wantLogged, cfg.LoggedQuotaResources)
+		})
+	}
+}
+
+func TestVectorAllowedReadServicesConfig(t *testing.T) {
+	for _, tc := range []struct {
+		name, value string
+		want        map[string][]string
+		invalid     bool
+	}{
+		{name: "unset"},
+		{name: "empty map", value: `{}`, want: map[string][]string{}},
+		{name: "preconfigured collection", value: `{"assistant.inframemories.ext.grafana.app/inframemories":["assistant"]}`, want: map[string][]string{"assistant.inframemories.ext.grafana.app/inframemories": {"assistant"}}},
+		{name: "custom resource name", value: `{"g/custom_resource":["assistant"]}`, want: map[string][]string{"g/custom_resource": {"assistant"}}},
+		{name: "null", value: `null`, invalid: true},
+		{name: "malformed JSON", value: `{"g/r":`, invalid: true},
+		{name: "missing group", value: `{"/r":["assistant"]}`, invalid: true},
+		{name: "extra slash", value: `{"g/r/other":["assistant"]}`, invalid: true},
+		{name: "wildcard", value: `{"g/*":["assistant"]}`, invalid: true},
+		{name: "interior whitespace", value: `{"g/custom resource":["assistant"]}`, invalid: true},
+		{name: "empty services", value: `{"g/r":[]}`, invalid: true},
+		{name: "empty identity", value: `{"g/r":[""]}`, invalid: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if tc.value != "" {
+				t.Setenv("GF_UNIFIED_STORAGE_VECTOR_ALLOWED_READ_SERVICES", tc.value)
+			}
+			cfg := NewCfg()
+			err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+			if tc.invalid {
+				require.ErrorContains(t, err, "vector_allowed_read_services")
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tc.want, cfg.VectorAllowedReadServices)
+		})
+	}
+}
+
+func TestSharedVectorPublisherConfigLoads(t *testing.T) {
+	for _, tc := range []struct {
+		name, value string
+		want        map[string][]string
+		invalid     bool
+	}{
+		{name: "unset"},
+		{name: "empty object", value: `{}`, want: map[string][]string{}},
+		{name: "two collections", value: `{"docs.example.com/articles":["docs-publisher"],"support.example.com/articles":["support-publisher"]}`, want: map[string][]string{"docs.example.com/articles": {"docs-publisher"}, "support.example.com/articles": {"support-publisher"}}},
+		{name: "null", value: `null`, invalid: true},
+		{name: "malformed JSON", value: `{"g/r":`, invalid: true},
+		{name: "wrong type", value: `[]`, invalid: true},
+		{name: "invalid key", value: `{"g/r/other":["publisher"]}`, invalid: true},
+		{name: "empty publisher list", value: `{"g/r":[]}`, invalid: true},
+		{name: "empty publisher", value: `{"g/r":[""]}`, invalid: true},
+		{name: "padded publisher", value: `{"g/r":[" publisher "]}`, invalid: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if tc.value != "" {
+				t.Setenv("GF_UNIFIED_STORAGE_VECTOR_SHARED_EXTERNAL_COLLECTIONS", tc.value)
+			}
+			cfg := NewCfg()
+			err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+			if tc.invalid {
+				require.ErrorContains(t, err, "vector_shared_external_collections")
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tc.want, cfg.VectorSharedExternalCollections)
 		})
 	}
 }
@@ -136,6 +279,72 @@ func TestSeededWatchesEnabled(t *testing.T) {
 	}
 }
 
+func TestSeededWatchesDefault(t *testing.T) {
+	for _, tc := range []struct {
+		name        string
+		storageType string
+		kv          bool
+		nats        bool
+		notifier    bool
+		configured  string
+		want        bool
+	}{
+		{name: "kv with the notifier", kv: true, nats: true, notifier: true, want: true},
+		{name: "kv over grpc with the notifier", storageType: "unified-kv-grpc", nats: true, notifier: true, want: true},
+		{name: "kv with the notifier off", kv: true, nats: true},
+		{name: "kv with nats disabled", kv: true, notifier: true},
+		{name: "legacy sql with the notifier", nats: true, notifier: true},
+		{name: "file with the notifier", storageType: "file", kv: true, nats: true, notifier: true},
+		{name: "remote storage with the notifier", storageType: "unified-grpc", kv: true, nats: true, notifier: true},
+		{name: "explicit off wins on kv with the notifier", kv: true, nats: true, notifier: true, configured: "false"},
+		{name: "explicit on wins on legacy sql", configured: "true", want: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := NewCfg()
+			if tc.storageType != "" {
+				cfg.Raw.Section("grafana-apiserver").Key("storage_type").SetValue(tc.storageType)
+			}
+			section := cfg.Raw.Section("unified_storage")
+			section.Key("enable_sqlkv_backend").SetValue(strconv.FormatBool(tc.kv))
+			// Empty is what conf/defaults.ini ships.
+			section.Key("seeded_watches_enabled").SetValue(tc.configured)
+			cfg.NATS.Enabled = tc.nats
+			cfg.NATS.Notifier = tc.notifier
+
+			cfg.setUnifiedStorageConfig()
+
+			require.Equal(t, tc.want, cfg.SeededWatchesEnabled)
+		})
+	}
+}
+
+func TestKeyPathReconciliationEnabled(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		configured string
+		env        string
+		want       bool
+	}{
+		{name: "default on", want: true},
+		{name: "enabled", configured: "true", want: true},
+		{name: "disabled", configured: "false"},
+		{name: "environment enables", configured: "false", env: "true", want: true},
+		{name: "environment disables", configured: "true", env: "false"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := NewCfg()
+			if tc.configured != "" {
+				cfg.Raw.Section("unified_storage").Key("key_path_reconciliation_enabled").SetValue(tc.configured)
+			}
+			if tc.env != "" {
+				t.Setenv("GF_UNIFIED_STORAGE_KEY_PATH_RECONCILIATION_ENABLED", tc.env)
+			}
+			cfg.setUnifiedStorageConfig()
+			require.Equal(t, tc.want, cfg.KeyPathReconciliationEnabled)
+		})
+	}
+}
+
 func TestFastLatestKeyLookupEnabled(t *testing.T) {
 	for _, tc := range []struct {
 		name       string
@@ -188,16 +397,6 @@ func TestGlobalSearchIndexStartupBuild(t *testing.T) {
 			require.Equal(t, tc.want, cfg.GlobalSearchIndexStartupBuild)
 		})
 	}
-}
-
-func TestUnifiedStorageGRPCErrorResultToStatusDefaultsOff(t *testing.T) {
-	cfg := NewCfg()
-	cfg.setUnifiedStorageConfig()
-	require.False(t, cfg.UnifiedStorageGRPCErrorResultToStatus)
-
-	cfg.Raw.Section("unified_storage").Key("grpc_error_result_to_status").SetValue("true")
-	cfg.setUnifiedStorageConfig()
-	require.True(t, cfg.UnifiedStorageGRPCErrorResultToStatus)
 }
 
 func TestSearchClientForwardAuthEnabled(t *testing.T) {
@@ -385,12 +584,11 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 			assert.NoError(t, err)
 		}
 
-		t.Run("defaults to off with zero tunables", func(t *testing.T) {
+		t.Run("defaults to zero tunables", func(t *testing.T) {
 			cfg := NewCfg()
 			err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
 			assert.NoError(t, err)
 			cfg.setUnifiedStorageConfig()
-			assert.False(t, cfg.SearchPostRankAuthz)
 			assert.Equal(t, 0, cfg.SearchPostRankAuthzOverFetchFactor)
 			assert.Equal(t, 0, cfg.SearchPostRankAuthzMaxWindow)
 			assert.Equal(t, 0, cfg.SearchPostRankAuthzMaxCandidates)
@@ -401,13 +599,11 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 			cfg := NewCfg()
 			err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
 			assert.NoError(t, err)
-			setSectionKey(cfg, "search_post_rank_authz", "true")
 			setSectionKey(cfg, "search_post_rank_authz_over_fetch_factor", "20")
 			setSectionKey(cfg, "search_post_rank_authz_max_window", "5000")
 			setSectionKey(cfg, "search_post_rank_authz_max_candidates", "12345")
 			setSectionKey(cfg, "search_post_rank_authz_facet_sample_size", "8000")
 			cfg.setUnifiedStorageConfig()
-			assert.True(t, cfg.SearchPostRankAuthz)
 			assert.Equal(t, 20, cfg.SearchPostRankAuthzOverFetchFactor)
 			assert.Equal(t, 5000, cfg.SearchPostRankAuthzMaxWindow)
 			assert.Equal(t, 12345, cfg.SearchPostRankAuthzMaxCandidates)
@@ -534,6 +730,30 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 
 		assert.True(t, cfg.MigrationChunkedWrites)
 		assert.Equal(t, int64(134217728), cfg.MigrationChunkMaxBytes)
+	})
+
+	t.Run("migration statement timeout is kept within the Postgres range", func(t *testing.T) {
+		for _, tc := range []struct {
+			value string
+			want  time.Duration
+		}{
+			{"", 0},
+			{"15m", 15 * time.Minute},
+			{"1000h", math.MaxInt32 * time.Millisecond},
+			{"500us", time.Millisecond},
+			{"-5s", 0},
+		} {
+			t.Run(tc.value, func(t *testing.T) {
+				t.Setenv("GF_UNIFIED_STORAGE_MIGRATION_STATEMENT_TIMEOUT", tc.value)
+				cfg := NewCfg()
+				err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+				assert.NoError(t, err)
+
+				cfg.setUnifiedStorageConfig()
+
+				assert.Equal(t, tc.want, cfg.MigrationStatementTimeout)
+			})
+		}
 	})
 
 	t.Run("vector_embedder bedrock config", func(t *testing.T) {
@@ -749,7 +969,6 @@ func TestVectorAllowedCollections(t *testing.T) {
 		assert.Equal(t, []string{"dashboard.grafana.app/dashboards"}, cfg.VectorAllowedInternalCollections)
 		assert.Empty(t, cfg.VectorAllowedExternalCollections)
 		assert.Empty(t, cfg.VectorSharedExternalCollections)
-		assert.Empty(t, cfg.VectorSharedWriteServices)
 	})
 
 	t.Run("explicit lists are parsed as CSV", func(t *testing.T) {
@@ -761,39 +980,39 @@ func TestVectorAllowedCollections(t *testing.T) {
 		assert.NoError(t, err)
 		_, err = section.NewKey("vector_allowed_external_collections", "ext.example.com/my-things")
 		assert.NoError(t, err)
-		_, err = section.NewKey("vector_shared_external_collections", "docs.example.com/articles")
-		assert.NoError(t, err)
-		_, err = section.NewKey("vector_shared_write_services", "publisher")
+		_, err = section.NewKey("vector_shared_external_collections", `{"docs.example.com/articles":["publisher"]}`)
 		assert.NoError(t, err)
 		cfg.setUnifiedStorageConfig()
+		assert.NoError(t, cfg.readVectorSharedExternalCollections())
 
 		assert.Equal(t, []string{"dashboard.grafana.app/dashboards", "folder.grafana.app/folders"}, cfg.VectorAllowedInternalCollections)
 		assert.Equal(t, []string{"ext.example.com/my-things"}, cfg.VectorAllowedExternalCollections)
-		assert.Equal(t, []string{"docs.example.com/articles"}, cfg.VectorSharedExternalCollections)
-		assert.Equal(t, []string{"publisher"}, cfg.VectorSharedWriteServices)
+		assert.Equal(t, map[string][]string{"docs.example.com/articles": {"publisher"}}, cfg.VectorSharedExternalCollections)
 	})
 }
 
 func TestSharedVectorCollectionConfiguration(t *testing.T) {
 	for _, tc := range []struct {
-		name                                   string
-		internal, external, shared, publishers []string
-		wantErr                                string
+		name               string
+		internal, external []string
+		shared             map[string][]string
+		wantErr            string
 	}{
 		{name: "disabled"},
-		{name: "shared publisher", shared: []string{"docs.example.com/articles"}, publishers: []string{"publisher"}},
-		{name: "missing publisher", shared: []string{"docs.example.com/articles"}, wantErr: "publisher"},
-		{name: "blank publisher", shared: []string{"docs.example.com/articles"}, publishers: []string{" "}, wantErr: "publisher"},
-		{name: "external overlap", external: []string{"docs.example.com/articles"}, shared: []string{"docs.example.com/articles"}, publishers: []string{"publisher"}, wantErr: "overlap"},
-		{name: "internal overlap", internal: []string{"docs.example.com/articles"}, shared: []string{"docs.example.com/articles"}, publishers: []string{"publisher"}, wantErr: "overlap"},
+		{name: "two publishers", shared: map[string][]string{"g/r": {"one", "two"}}},
+		{name: "missing publisher", shared: map[string][]string{"g/r": {}}, wantErr: "identity"},
+		{name: "blank publisher", shared: map[string][]string{"g/r": {" "}}, wantErr: "identity"},
+		{name: "invalid key", shared: map[string][]string{"g/r/other": {"one"}}, wantErr: "invalid"},
+		{name: "external overlap", external: []string{"g/r"}, shared: map[string][]string{"g/r": {"one"}}, wantErr: "overlap"},
+		{name: "internal overlap", internal: []string{"g/r"}, shared: map[string][]string{"g/r": {"one"}}, wantErr: "overlap"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			cfg := &Cfg{VectorAllowedInternalCollections: tc.internal, VectorAllowedExternalCollections: tc.external, VectorSharedExternalCollections: tc.shared, VectorSharedWriteServices: tc.publishers}
+			cfg := &Cfg{VectorAllowedInternalCollections: tc.internal, VectorAllowedExternalCollections: tc.external, VectorSharedExternalCollections: tc.shared}
 			err := cfg.ValidateSharedVectorConfig()
 			if tc.wantErr == "" {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 			} else {
-				assert.ErrorContains(t, err, tc.wantErr)
+				require.ErrorContains(t, err, tc.wantErr)
 			}
 		})
 	}
@@ -840,6 +1059,90 @@ func TestQOSMaxConcurrentPerTenant(t *testing.T) {
 			}
 			cfg.setUnifiedStorageConfig()
 			require.Equal(t, tc.want, cfg.QOSMaxConcurrentPerTenant)
+		})
+	}
+}
+
+func TestIgnoredWatchSettings(t *testing.T) {
+	const (
+		sql    = "[unified_storage]\nenable_sqlkv_backend = false\n"
+		kv     = "[unified_storage]\nenable_sqlkv_backend = true\n"
+		file   = "[grafana-apiserver]\nstorage_type = file\n"
+		remote = "[grafana-apiserver]\nstorage_type = unified-grpc\n"
+		// Empty values are what conf/defaults.ini ships.
+		shippedDefaults = "[nats]\nnotifier =\nnotifier_watch_max_age =\n[unified_storage]\nseeded_watches_enabled =\n"
+	)
+	notifierIgnored := func(reason string) ignoredWatchSetting {
+		return ignoredWatchSetting{setting: "[nats] notifier", reason: reason}
+	}
+	maxAgeIgnored := func(reason string) ignoredWatchSetting {
+		return ignoredWatchSetting{setting: "[nats] notifier_watch_max_age", reason: reason}
+	}
+	seededIgnored := ignoredWatchSetting{setting: "[unified_storage] seeded_watches_enabled", reason: "the legacy SQL backend cannot seed watches"}
+
+	for _, tc := range []struct {
+		name string
+		raw  []string
+		want []ignoredWatchSetting
+	}{
+		{name: "defaults with nats disabled", raw: []string{shippedDefaults, sql}},
+		{name: "defaults with nats on legacy sql", raw: []string{shippedDefaults, sql, "[nats]\nenabled = true\n"}},
+		{name: "defaults with nats on kv", raw: []string{shippedDefaults, kv, "[nats]\nenabled = true\n"}},
+		{name: "defaults with nats on file", raw: []string{shippedDefaults, file, "[nats]\nenabled = true\n"}},
+		{name: "notifier on legacy sql", raw: []string{sql, "[nats]\nenabled = true\nnotifier = true\n"}},
+		{
+			name: "notifier with nats disabled",
+			raw:  []string{sql, "[nats]\nnotifier = true\n"},
+			want: []ignoredWatchSetting{notifierIgnored("NATS is disabled")},
+		},
+		{
+			name: "notifier on file",
+			raw:  []string{file, "[nats]\nenabled = true\nnotifier = true\n"},
+			want: []ignoredWatchSetting{notifierIgnored("the file storage backend does not use NATS")},
+		},
+		{name: "notifier off is never ignored", raw: []string{sql, "[nats]\nnotifier = false\n"}},
+		{
+			name: "max age with the notifier off",
+			raw:  []string{kv, "[nats]\nenabled = true\nnotifier = false\nnotifier_watch_max_age = 5m\n"},
+			want: []ignoredWatchSetting{maxAgeIgnored("the NATS notifier is off")},
+		},
+		{
+			name: "max age with nats disabled",
+			raw:  []string{kv, "[nats]\nnotifier_watch_max_age = 5m\n"},
+			want: []ignoredWatchSetting{maxAgeIgnored("NATS is disabled")},
+		},
+		{name: "max age with the notifier on", raw: []string{kv, "[nats]\nenabled = true\nnotifier_watch_max_age = 5m\n"}},
+		{name: "zero max age is never ignored", raw: []string{kv, "[nats]\nnotifier_watch_max_age = 0\n"}},
+		{
+			name: "seeded watches on legacy sql",
+			raw:  []string{sql, "[unified_storage]\nseeded_watches_enabled = true\n"},
+			want: []ignoredWatchSetting{seededIgnored},
+		},
+		{name: "seeded watches on kv without the notifier", raw: []string{kv, "[unified_storage]\nseeded_watches_enabled = true\n"}},
+		{name: "seeded watches off on legacy sql", raw: []string{sql, "[unified_storage]\nseeded_watches_enabled = false\n"}},
+		{
+			name: "everything on legacy sql with nats disabled",
+			raw:  []string{sql, "[nats]\nnotifier = true\nnotifier_watch_max_age = 5m\n[unified_storage]\nseeded_watches_enabled = true\n"},
+			want: []ignoredWatchSetting{notifierIgnored("NATS is disabled"), maxAgeIgnored("NATS is disabled"), seededIgnored},
+		},
+		{
+			name: "remote storage reads its own settings",
+			raw:  []string{remote, "[nats]\nnotifier = true\nnotifier_watch_max_age = 5m\n[unified_storage]\nseeded_watches_enabled = true\n"},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := NewCfg()
+			sources := make([]any, 0, len(tc.raw))
+			for _, raw := range tc.raw {
+				sources = append(sources, []byte(raw))
+			}
+			f, err := ini.Load(sources[0], sources[1:]...)
+			require.NoError(t, err)
+			cfg.Raw = f
+			require.NoError(t, readNATSSettings(cfg))
+			cfg.setUnifiedStorageConfig()
+
+			require.Equal(t, tc.want, cfg.ignoredWatchSettings())
 		})
 	}
 }

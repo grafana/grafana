@@ -23,7 +23,7 @@ import (
 // newTestKVStorageBackend builds just enough of a kvStorageBackend to publish
 // watch notifications.
 func newTestKVStorageBackend(pub EventPublisher) *kvStorageBackend {
-	return &kvStorageBackend{log: &logging.NoOpLogger{}, eventPublisher: pub, metrics: newKVBackendMetrics(nil)}
+	return &kvStorageBackend{log: &logging.NoOpLogger{}, watchPublisher: NewWatchNotificationPublisher(pub, nil, &logging.NoOpLogger{})}
 }
 
 // fakeEventPublisher records what publishWatchNotification hands to the bus.
@@ -138,8 +138,8 @@ func TestPublishWatchNotification(t *testing.T) {
 		require.NoError(t, proto.Unmarshal(pub.payloads[0], &got))
 		assert.Nil(t, got.GetMetadata())
 		assert.Equal(t, event.Name, got.GetName())
-		assert.Equal(t, 1.0, testutil.ToFloat64(backend.metrics.WatchNotificationMetadataDropped.WithLabelValues(event.Group, event.Resource, string(event.Action))))
-		assert.Equal(t, 1.0, testutil.ToFloat64(backend.metrics.WatchNotificationsPublished.WithLabelValues(event.Group, event.Resource, string(event.Action))))
+		assert.Equal(t, 1.0, testutil.ToFloat64(backend.watchPublisher.metrics.MetadataDropped.WithLabelValues(event.Group, event.Resource, string(event.Action))))
+		assert.Equal(t, 1.0, testutil.ToFloat64(backend.watchPublisher.metrics.Published.WithLabelValues(event.Group, event.Resource, string(event.Action))))
 	})
 
 	t.Run("keeps metadata that fits the publisher's max payload", func(t *testing.T) {
@@ -156,30 +156,30 @@ func TestPublishWatchNotification(t *testing.T) {
 	})
 
 	t.Run("falls back to the default limit when the publisher cannot report one", func(t *testing.T) {
-		assert.Equal(t, defaultMaxWatchNotificationBytes, newTestKVStorageBackend(&fakeEventPublisher{enabled: true}).maxWatchNotificationBytes())
-		assert.Equal(t, defaultMaxWatchNotificationBytes, newTestKVStorageBackend(&sizedPublisher{fakeEventPublisher: &fakeEventPublisher{}}).maxWatchNotificationBytes())
+		assert.Equal(t, defaultMaxWatchNotificationBytes, newTestKVStorageBackend(&fakeEventPublisher{enabled: true}).watchPublisher.maxWatchNotificationBytes())
+		assert.Equal(t, defaultMaxWatchNotificationBytes, newTestKVStorageBackend(&sizedPublisher{fakeEventPublisher: &fakeEventPublisher{}}).watchPublisher.maxWatchNotificationBytes())
 	})
 
 	t.Run("counts a successful publish", func(t *testing.T) {
 		pub := &fakeEventPublisher{enabled: true}
 		backend := newTestKVStorageBackend(pub)
-		metrics := backend.metrics
+		metrics := backend.watchPublisher.metrics
 
 		backend.publishWatchNotification(context.Background(), event)
 
-		assert.Equal(t, 1.0, testutil.ToFloat64(metrics.WatchNotificationsPublished.WithLabelValues(event.Group, event.Resource, string(event.Action))))
-		assert.Equal(t, 0.0, testutil.ToFloat64(metrics.WatchNotificationPublishFailures.WithLabelValues(event.Group, event.Resource, string(event.Action))))
+		assert.Equal(t, 1.0, testutil.ToFloat64(metrics.Published.WithLabelValues(event.Group, event.Resource, string(event.Action))))
+		assert.Equal(t, 0.0, testutil.ToFloat64(metrics.PublishFailures.WithLabelValues(event.Group, event.Resource, string(event.Action))))
 	})
 
 	t.Run("counts a failed publish as a failure, not as published", func(t *testing.T) {
 		pub := &fakeEventPublisher{enabled: true, err: errors.New("bus unavailable")}
 		backend := newTestKVStorageBackend(pub)
-		metrics := backend.metrics
+		metrics := backend.watchPublisher.metrics
 
 		backend.publishWatchNotification(context.Background(), event)
 
-		assert.Equal(t, 0.0, testutil.ToFloat64(metrics.WatchNotificationsPublished.WithLabelValues(event.Group, event.Resource, string(event.Action))))
-		assert.Equal(t, 1.0, testutil.ToFloat64(metrics.WatchNotificationPublishFailures.WithLabelValues(event.Group, event.Resource, string(event.Action))))
+		assert.Equal(t, 0.0, testutil.ToFloat64(metrics.Published.WithLabelValues(event.Group, event.Resource, string(event.Action))))
+		assert.Equal(t, 1.0, testutil.ToFloat64(metrics.PublishFailures.WithLabelValues(event.Group, event.Resource, string(event.Action))))
 	})
 
 	t.Run("does nothing when the publisher is disabled", func(t *testing.T) {
@@ -264,12 +264,12 @@ func TestNewWatchMetadata(t *testing.T) {
 	registerTestWatchMetadata(t, registered, testSpec)
 
 	t.Run("a registered resource gets metadata", func(t *testing.T) {
-		assert.Equal(t, map[string]string{"a": "1"}, newWatchMetadata(registered, obj).GetLabels())
+		assert.Equal(t, map[string]string{"a": "1"}, NewWatchMetadata(registered, obj).GetLabels())
 	})
 
 	t.Run("an unregistered resource yields nil", func(t *testing.T) {
 		gr := schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}
-		assert.Nil(t, newWatchMetadata(gr, obj))
+		assert.Nil(t, NewWatchMetadata(gr, obj))
 	})
 }
 

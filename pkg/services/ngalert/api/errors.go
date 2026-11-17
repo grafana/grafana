@@ -31,6 +31,10 @@ func backendTypeDoesNotMatchPayloadTypeError(backendType apimodels.Backend, payl
 }
 
 func errorToResponse(err error) response.Response {
+	var maxBytesError *http.MaxBytesError
+	if errors.As(err, &maxBytesError) {
+		return ErrResp(http.StatusRequestEntityTooLarge, err, "")
+	}
 	if errors.As(err, &errutil.Error{}) {
 		return response.Err(err)
 	}

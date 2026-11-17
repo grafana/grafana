@@ -27,7 +27,7 @@ const (
 	// the ceiling rejects values large enough to re-introduce the OOM risk
 	// these caps exist to mitigate.
 	capMinBytes int64 = 1 << 10 // 1 KiB
-	capMaxBytes int64 = 1 << 30 // 1 GiB
+	capMaxBytes int64 = 5 << 30 // 5 GiB
 )
 
 // loadCaps reads operator-configurable overrides from GF_PLUGIN_* environment

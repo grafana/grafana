@@ -1,4 +1,4 @@
-import { isEmpty } from 'lodash';
+import { isEmpty, noop } from 'lodash';
 import { useEffect, useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 import { useAsync, useToggle } from 'react-use';
@@ -13,19 +13,18 @@ import { Trans, t } from '@grafana/i18n';
 import {
   Alert,
   Box,
-  CodeEditor,
   Collapse,
   Combobox,
   type ComboboxOption,
   Divider,
   Field,
-  FileUpload,
   InlineField,
   InlineSwitch,
   RadioButtonList,
   Stack,
   Text,
 } from '@grafana/ui';
+import { CodeMirrorEditor } from '@grafana/ui/unstable';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { ProvisioningAwareFolderPicker } from 'app/features/provisioning/components/Shared/ProvisioningAwareFolderPicker';
 import { type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
@@ -34,17 +33,18 @@ import { DataSourceType } from '../../../utils/datasource';
 import { stringifyErrorLike } from '../../../utils/misc';
 import { CreateNewFolder } from '../../create-folder/CreateNewFolder';
 import { useGetNameSpacesByDatasourceName, useGetRulerRules } from '../../rule-editor/useAlertRuleSuggestions';
-import { type ImportFormValues } from '../ImportToGMA';
-import { getRulesSourceOptions } from '../Wizard/steps';
+import { getRulesSourceOptions, isAutoSyncSelected } from '../Wizard/steps';
 import { useGetRulesThatMightBeOverwritten } from '../hooks';
+import { type ImportFormValues } from '../types';
 import { filterRulerRulesConfig } from '../useImport';
 import { parseYamlFileToRulerRulesConfigDTO } from '../yamlToRulerConverter';
 
+import { usePredictedAutoSyncIdentifier } from './Step1AlertmanagerResources';
+import { YamlFileDropzone, getYamlFileDescription } from './YamlFileDropzone';
 import { isStep2Valid } from './utils';
 
 interface Step2ContentProps {
   step1Completed: boolean;
-  step1Skipped: boolean;
   /** Whether the user has permission to import rules */
   canImport: boolean;
 }
@@ -58,7 +58,7 @@ const supportedImportTypes: string[] = [DataSourceType.Prometheus, DataSourceTyp
  */
 const EMPTY_RULER_CONFIG: RulerRulesConfigDTO = {};
 
-export function Step2Content({ step1Completed, step1Skipped, canImport }: Step2ContentProps) {
+export function Step2Content({ step1Completed, canImport }: Step2ContentProps) {
   const {
     control,
     register,
@@ -81,6 +81,10 @@ export function Step2Content({ step1Completed, step1Skipped, canImport }: Step2C
     namespace,
     ruleGroup,
     targetFolder,
+    notificationsSource,
+    notificationsDatasourceUID,
+    notificationsDatasourceName,
+    autoSyncNotificationsEnabled,
   ] = watch([
     'rulesSource',
     'rulesDatasourceUID',
@@ -90,7 +94,20 @@ export function Step2Content({ step1Completed, step1Skipped, canImport }: Step2C
     'namespace',
     'ruleGroup',
     'targetFolder',
+    'notificationsSource',
+    'notificationsDatasourceUID',
+    'notificationsDatasourceName',
+    'autoSyncNotificationsEnabled',
   ]);
+
+  // With Auto-sync the tree is named by the sync; policyTreeName is a disabled field that may hold an earlier entry.
+  const autoSyncSelected = isAutoSyncSelected(autoSyncNotificationsEnabled ?? false, notificationsSource);
+  const autoSyncIdentifier = usePredictedAutoSyncIdentifier(
+    autoSyncSelected,
+    notificationsDatasourceUID,
+    notificationsDatasourceName
+  );
+  const createdTreeName = autoSyncSelected ? (autoSyncIdentifier ?? '') : policyTreeName;
 
   // Get namespaces and groups for filtering
   const { namespaceGroups, isLoading: isLoadingNamespaces } = useGetNameSpacesByDatasourceName(
@@ -160,26 +177,17 @@ export function Step2Content({ step1Completed, step1Skipped, canImport }: Step2C
     // Step 1 can create a tree that the API doesn't know about yet. Offer it first, since it's
     // the most relevant option.
     const isUncreatedTree =
-      step1Completed && policyTreeName && !existingTreeOptions.some((option) => option.value === policyTreeName);
+      step1Completed && createdTreeName && !existingTreeOptions.some((option) => option.value === createdTreeName);
 
     if (!isUncreatedTree) {
       return existingTreeOptions;
     }
 
-    return [{ label: policyTreeName, value: policyTreeName }, ...existingTreeOptions];
-  }, [step1Completed, policyTreeName, existingTreeOptions]);
+    return [{ label: createdTreeName, value: createdTreeName }, ...existingTreeOptions];
+  }, [step1Completed, createdTreeName, existingTreeOptions]);
 
   return (
     <Stack direction="column" gap={3}>
-      {step1Skipped && (
-        <Alert severity="info" title={t('alerting.import-to-gma.step2.skipped-step1', 'Step 1 was skipped')}>
-          <Trans i18nKey="alerting.import-to-gma.step2.skipped-step1-desc">
-            You skipped importing Alertmanager resources. You can still import rules and route them using the default
-            Grafana policy or a custom label.
-          </Trans>
-        </Alert>
-      )}
-
       {/* Permission warning */}
       {!canImport && (
         <Alert
@@ -195,19 +203,21 @@ export function Step2Content({ step1Completed, step1Skipped, canImport }: Step2C
 
       {/* Notification Routing Card */}
       <Box backgroundColor="secondary" borderRadius="default" borderColor="weak" borderStyle="solid">
-        <Box display="flex" alignItems="center" justifyContent="space-between" padding={2}>
-          <Text variant="h5" element="h3">
-            {t('alerting.import-to-gma.step2.policy-title', 'Notification Routing')}
-          </Text>
+        <Box padding={2}>
+          <Stack direction="column" gap={0.5}>
+            <Text variant="h5" element="h3">
+              {t('alerting.import-to-gma.step2.policy-title', 'Notification routing')}
+            </Text>
+            <Text color="secondary" variant="bodySmall">
+              <Trans i18nKey="alerting.import-to-gma.step2.policy-desc">
+                Choose how imported alerts should be routed to contact points.
+              </Trans>
+            </Text>
+          </Stack>
         </Box>
         <Divider spacing={0} />
         <Box padding={2}>
-          <Text color="secondary" variant="bodySmall">
-            <Trans i18nKey="alerting.import-to-gma.step2.policy-desc">
-              Choose how imported alerts should be routed to contact points.
-            </Trans>
-          </Text>
-          <Box marginTop={2}>
+          <Box>
             <Field
               label={t('alerting.import-to-gma.step2.policy-tree', 'Policy tree')}
               description={t(
@@ -240,7 +250,7 @@ export function Step2Content({ step1Completed, step1Skipped, canImport }: Step2C
       <Box backgroundColor="secondary" borderRadius="default" borderColor="weak" borderStyle="solid">
         <Box display="flex" alignItems="center" justifyContent="space-between" padding={2}>
           <Text variant="h5" element="h3">
-            {t('alerting.import-to-gma.step2.source-title', 'Import Source')}
+            {t('alerting.import-to-gma.step2.source-title', 'Import source')}
           </Text>
         </Box>
         <Divider spacing={0} />
@@ -286,6 +296,15 @@ export function Step2Content({ step1Completed, step1Skipped, canImport }: Step2C
                           supportedImportTypes.includes(ds.type)
                         }
                         current={field.value}
+                        // Clearing lets the user back out of this step. A recording rules target that was
+                        // only filled in from this data source goes with it.
+                        onClear={() => {
+                          if (getValues('targetDatasourceUID') === field.value) {
+                            setValue('targetDatasourceUID', undefined);
+                          }
+                          onChange(undefined);
+                          setValue('rulesDatasourceName', null);
+                        }}
                         onChange={(ds) => {
                           onChange(ds.uid);
                           setValue('rulesDatasourceName', ds.name);
@@ -365,27 +384,25 @@ export function Step2Content({ step1Completed, step1Skipped, canImport }: Step2C
             {rulesSource === 'yaml' && (
               <Field
                 label={t('alerting.import-to-gma.step2.yaml-file', 'Rules YAML file')}
+                description={getYamlFileDescription()}
                 invalid={!!errors.rulesYamlFile}
                 error={errors.rulesYamlFile?.message}
                 noMargin
               >
                 <Controller
-                  render={({ field: { ref, onChange, value, ...field } }) => (
-                    <FileUpload
-                      {...field}
-                      accept=".yaml,.yml"
-                      onFileUpload={(event) => {
-                        const file = event.currentTarget.files?.[0];
+                  render={({ field: { onChange } }) => (
+                    <YamlFileDropzone
+                      file={rulesYamlFile}
+                      onChange={(file) => {
+                        onChange(file);
+                        // Check a new file right away. Removing it just empties the step, which isn't an error.
                         if (file) {
-                          onChange(file);
                           trigger('rulesYamlFile');
+                        } else {
+                          clearErrors('rulesYamlFile');
                         }
                       }}
-                    >
-                      {rulesYamlFile
-                        ? rulesYamlFile.name
-                        : t('alerting.import-to-gma.step2.upload', 'Upload YAML file')}
-                    </FileUpload>
+                    />
                   )}
                   control={control}
                   name="rulesYamlFile"
@@ -419,7 +436,7 @@ export function Step2Content({ step1Completed, step1Skipped, canImport }: Step2C
       <Box backgroundColor="secondary" borderRadius="default" borderColor="weak" borderStyle="solid">
         <Box display="flex" alignItems="center" justifyContent="space-between" padding={2}>
           <Text variant="h5" element="h3">
-            {t('alerting.import-to-gma.step2.settings-title', 'Additional Settings')}
+            {t('alerting.import-to-gma.step2.settings-title', 'Additional settings')}
           </Text>
         </Box>
         <Divider spacing={0} />
@@ -568,17 +585,13 @@ function OverrideWarning({ rulesThatMightBeOverwritten }: { rulesThatMightBeOver
           isOpen={showDetails}
           onToggle={toggleShowDetails}
         >
-          <CodeEditor
-            width="100%"
-            height={300}
+          <CodeMirrorEditor
+            height="300px"
             language="json"
             value={JSON.stringify(rulesThatMightBeOverwritten, null, 2)}
-            monacoOptions={{
-              minimap: { enabled: false },
-              scrollBeyondLastLine: false,
-              lineNumbers: 'on',
-              readOnly: true,
-            }}
+            onChange={noop}
+            readOnly
+            aria-label={t('alerting.import-to-gma.step2.override-warning-details', 'Rules that might be overwritten')}
           />
         </Collapse>
       </Stack>

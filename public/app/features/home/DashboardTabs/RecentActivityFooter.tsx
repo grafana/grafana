@@ -1,7 +1,7 @@
 import { t, Trans } from '@grafana/i18n';
 import { type ComboboxOption } from '@grafana/ui';
 
-import { CardFooter, FooterAction, FooterFilterCombobox } from '../FooterActions';
+import { FooterAction, FooterFilterCombobox } from '../FooterActions';
 import { clearHistoryClicked, recentActivityFilterChanged } from '../analytics/main';
 
 import { getPageKindMeta } from './recentActivityRows';
@@ -11,12 +11,9 @@ interface Props {
   recent: RecentActivity;
 }
 
-/**
- * The clear action on the right and, when the history holds more than one kind of page, a filter over
- * those kinds on the left.
- */
-export function RecentActivityFooter({ recent }: Props) {
-  const { kinds, counts, total, filter, setFilter, clear } = recent;
+/** Narrows the list to one kind of page. Only worth offering once the history holds more than one kind. */
+export function RecentActivityFilterCombobox({ recent }: Props) {
+  const { kinds, filter, setFilter } = recent;
   const allLabel = t('home.recent-activity-tab.filter-all', 'All');
   // Each kind carries its icon so the closed dropdown shows the picked kind the way its rows do.
   const options: Array<ComboboxOption<RecentActivityFilter>> = [
@@ -27,34 +24,35 @@ export function RecentActivityFooter({ recent }: Props) {
     }),
   ];
 
-  const handleClear = () => {
-    clearHistoryClicked({ dashboard_count: counts.dashboard, total_count: total });
-    clear();
-  };
+  return (
+    <FooterFilterCombobox<RecentActivityFilter>
+      label={filter === 'all' ? allLabel : getPageKindMeta(filter).filterLabel}
+      aria-label={t('home.recent-activity-tab.filter-label', 'Show only')}
+      options={options}
+      value={filter}
+      onChange={(option) => {
+        // Re-selecting the current value is a no-op so nothing re-renders or reports.
+        if (option.value !== filter) {
+          recentActivityFilterChanged({ filter: option.value });
+          setFilter(option.value);
+        }
+      }}
+    />
+  );
+}
+
+/** Clears the whole history, reporting what it held. */
+export function ClearRecentActivityAction({ recent }: Props) {
+  const { counts, total, clear } = recent;
 
   return (
-    <CardFooter
-      filter={
-        kinds.length > 1 && (
-          <FooterFilterCombobox<RecentActivityFilter>
-            label={filter === 'all' ? allLabel : getPageKindMeta(filter).filterLabel}
-            aria-label={t('home.recent-activity-tab.filter-label', 'Show only')}
-            options={options}
-            value={filter}
-            onChange={(option) => {
-              // Re-selecting the current value is a no-op so nothing re-renders or reports.
-              if (option.value !== filter) {
-                recentActivityFilterChanged({ filter: option.value });
-                setFilter(option.value);
-              }
-            }}
-          />
-        )
-      }
+    <FooterAction
+      onClick={() => {
+        clearHistoryClicked({ dashboard_count: counts.dashboard, total_count: total });
+        clear();
+      }}
     >
-      <FooterAction onClick={handleClear}>
-        <Trans i18nKey="home.recent-activity-tab.clear">Clear recent activity</Trans>
-      </FooterAction>
-    </CardFooter>
+      <Trans i18nKey="home.recent-activity-tab.clear">Clear recent activity</Trans>
+    </FooterAction>
   );
 }

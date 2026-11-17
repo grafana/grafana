@@ -1,9 +1,8 @@
 import Skeleton from 'react-loading-skeleton';
 
-import { t } from '@grafana/i18n';
 import { Text } from '@grafana/ui';
 
-import { type RuleKind } from '../shared/ruleKind';
+import { type RuleKind, ruleCountLabel } from '../shared/ruleKind';
 
 export interface ResultTotal {
   count: number;
@@ -26,28 +25,9 @@ export function ResultCount({ kind, total, isLoading = false }: ResultCountProps
     return null;
   }
 
-  const formatted = new Intl.NumberFormat().format(total.count) + (total.isLowerBound ? '+' : '');
-
   return (
     <Text variant="bodySmall" color="secondary" element="p">
-      {resultCountLabel(kind, total.count, formatted)}
+      {ruleCountLabel(kind, total.count, total.isLowerBound)}
     </Text>
   );
-}
-
-function resultCountLabel(kind: RuleKind, count: number, formatted: string): string {
-  if (kind === 'alert') {
-    return t('alerting.gma-rule-list.result-count.alert-rules', '', {
-      count,
-      formatted,
-      defaultValue_one: '{{formatted}} alert rule',
-      defaultValue_other: '{{formatted}} alert rules',
-    });
-  }
-  return t('alerting.gma-rule-list.result-count.recording-rules', '', {
-    count,
-    formatted,
-    defaultValue_one: '{{formatted}} recording rule',
-    defaultValue_other: '{{formatted}} recording rules',
-  });
 }

@@ -44,20 +44,15 @@ func TestGlobalSearchFieldDefinitions(t *testing.T) {
 	}
 }
 
-func TestGlobalSearchFieldDefinitionsLeaveStandardAlone(t *testing.T) {
-	// Indexing created and updated for every kind would change the
-	// index-affecting hash and rebuild every index in the deployment, so the
-	// standard set must not pick up the global capabilities.
-	_ = GlobalSearchFieldDefinitions()
+// The global index adds only the resource type to the standard set, so a field
+// behaves the same in global and per-resource search.
+func TestGlobalSearchFieldDefinitionsAddOnlyTheResourceType(t *testing.T) {
+	global := GlobalSearchFieldDefinitions()
+	require.NotEmpty(t, global)
+	assert.Equal(t, SEARCH_FIELD_GROUP_RESOURCE, global[0].Name)
+	assert.Equal(t, StandardSearchFieldDefinitions(), global[1:])
 
-	standard := StandardSearchFieldDefinitions()
-	for _, name := range []string{SEARCH_FIELD_CREATED, SEARCH_FIELD_UPDATED} {
-		def := fieldByName(t, standard, name)
-		assert.False(t, def.HasCapability(SearchCapabilityFilter), name)
-		assert.False(t, def.HasCapability(SearchCapabilitySort), name)
-	}
-
-	for _, def := range standard {
+	for _, def := range StandardSearchFieldDefinitions() {
 		assert.NotEqual(t, SEARCH_FIELD_GROUP_RESOURCE, def.Name)
 	}
 }
@@ -88,39 +83,6 @@ func TestIndexSources(t *testing.T) {
 		assert.False(t, src.IsGlobal())
 	}
 	assert.Contains(t, sources, dashboards)
-}
-
-func TestGlobalIndexStats(t *testing.T) {
-	stats := []ResourceStats{
-		{NamespacedResource: NamespacedResource{Namespace: "a", Group: "dashboard.grafana.app", Resource: "dashboards"}, Count: 10},
-		{NamespacedResource: NamespacedResource{Namespace: "a", Group: "folder.grafana.app", Resource: "folders"}, Count: 5},
-		{NamespacedResource: NamespacedResource{Namespace: "a", Group: "playlist.grafana.app", Resource: "playlists"}, Count: 100},
-		{NamespacedResource: NamespacedResource{Namespace: "b", Group: "folder.grafana.app", Resource: "folders"}, Count: 2},
-		{NamespacedResource: NamespacedResource{Namespace: "c", Group: "playlist.grafana.app", Resource: "playlists"}, Count: 7},
-	}
-
-	t.Run("nothing is added while the index is switched off", func(t *testing.T) {
-		s := &searchServer{}
-		assert.Empty(t, s.globalIndexStats(stats))
-	})
-
-	t.Run("one index per namespace, sized by the types it covers", func(t *testing.T) {
-		s := &searchServer{globalIndexEnabled: true}
-		// Namespace c holds none of the covered types, so it gets no index. The
-		// playlists in namespace a are not counted.
-		assert.Equal(t, []ResourceStats{
-			{NamespacedResource: GlobalSearchKey("a"), Count: 15},
-			{NamespacedResource: GlobalSearchKey("b"), Count: 2},
-		}, s.globalIndexStats(stats))
-	})
-
-	t.Run("an index already named in the stats is not added twice", func(t *testing.T) {
-		s := &searchServer{globalIndexEnabled: true}
-		withGlobal := append(slices.Clone(stats), ResourceStats{NamespacedResource: GlobalSearchKey("a"), Count: 15})
-		assert.Equal(t, []ResourceStats{
-			{NamespacedResource: GlobalSearchKey("b"), Count: 2},
-		}, s.globalIndexStats(withGlobal))
-	})
 }
 
 func TestGlobalSearchFieldsHash(t *testing.T) {
@@ -295,19 +257,11 @@ func TestGlobalDocumentBuilderBlobErrors(t *testing.T) {
 			wantErr: context.Canceled,
 		},
 		{
-			name: "response error",
-			blob: &globalDocumentBlob{response: &resourcepb.GetBlobResponse{
-				Error: &resourcepb.ErrorResult{Code: http.StatusServiceUnavailable, Message: "blob unavailable"},
-			}},
-			wantError: "blob unavailable",
-		},
-		{
-			name: "transport error takes precedence",
+			name: "status error",
 			blob: &globalDocumentBlob{
-				response: &resourcepb.GetBlobResponse{Error: &resourcepb.ErrorResult{Message: "blob unavailable"}},
-				err:      context.Canceled,
+				err: GRPCStatusError(&resourcepb.ErrorResult{Code: http.StatusServiceUnavailable, Message: "blob unavailable"}),
 			},
-			wantErr: context.Canceled,
+			wantError: "blob unavailable",
 		},
 		{
 			name: "invalid JSON",
@@ -422,7 +376,7 @@ func TestGlobalSearchKindsServeGenericReads(t *testing.T) {
 }
 
 func testGlobalKind(name, plural string, global *bool) app.ManifestVersionKind {
-	k := app.ManifestVersionKind{Kind: name, Plural: plural, Scope: namespacedScope}
+	k := app.ManifestVersionKind{Kind: name, Plural: plural, Resource: strings.ToLower(plural), Scope: namespacedScope}
 	if global != nil {
 		k.Search = &app.ManifestVersionKindSearch{Global: global}
 	}
@@ -444,7 +398,7 @@ func TestGlobalSearchCoverageOf(t *testing.T) {
 	got := globalSearchCoverageOf([]*app.ManifestData{
 		nil,
 		{Group: "b.grafana.app", Versions: []app.ManifestVersion{
-			{Name: "v1", Kinds: []app.ManifestVersionKind{testGlobalKind("Widget", "", &yes), testGlobalKind("Gadget", "Gadgets", &no), clusterScoped}},
+			{Name: "v1", Kinds: []app.ManifestVersionKind{testGlobalKind("Widget", "Widgets", &yes), testGlobalKind("Gadget", "Gadgets", &no), clusterScoped}},
 		}},
 		{Group: "a.grafana.app", Versions: []app.ManifestVersion{
 			{Name: "v1", Kinds: []app.ManifestVersionKind{testGlobalKind("Thing", "Things", nil), testGlobalKind("Secret", "Secrets", &yes)}},
@@ -454,7 +408,7 @@ func TestGlobalSearchCoverageOf(t *testing.T) {
 	assert.Equal(t, []schema.GroupResource{
 		{Group: "a.grafana.app", Resource: "things"},
 		{Group: "b.grafana.app", Resource: "widgets"},
-	}, got.types, "sorted; opted in on one version is enough; the plural defaults to the kind plus s; "+
+	}, got.types, "sorted; opted in on one version is enough; "+
 		"a kind without search or list-keys on any version, or not namespaced, is left out")
 	assert.Equal(t, map[schema.GroupResource]string{
 		{Group: "a.grafana.app", Resource: "things"}:  "Thing",
@@ -491,8 +445,8 @@ func TestGlobalSearchCoverageOfNamesRenamedKinds(t *testing.T) {
 
 func TestManifestKindsInclude(t *testing.T) {
 	m := &app.ManifestData{Group: "a.grafana.app", PreferredVersion: "v2", Versions: []app.ManifestVersion{
-		{Name: "v1", Kinds: []app.ManifestVersionKind{{Kind: "Widget", Plural: "widgets"}}},
-		{Name: "v2", Kinds: []app.ManifestVersionKind{{Kind: "Gadget", Plural: "widgets"}}},
+		{Name: "v1", Kinds: []app.ManifestVersionKind{{Kind: "Widget", Plural: "widgets", Resource: "widgets"}}},
+		{Name: "v2", Kinds: []app.ManifestVersionKind{{Kind: "Gadget", Plural: "widgets", Resource: "widgets"}}},
 	}}
 	onlyV1 := func(v app.ManifestVersion, _ app.ManifestVersionKind) bool { return v.Name == "v1" }
 	assert.Equal(t, map[schema.GroupResource]schema.GroupVersionKind{

@@ -1,0 +1,1080 @@
+{
+  "apiVersion": "dashboard.grafana.app/v2",
+  "kind": "Dashboard",
+  "metadata": {
+    "name": "text-reducer-macros"
+  },
+  "spec": {
+    "annotations": [
+      {
+        "kind": "AnnotationQuery",
+        "spec": {
+          "query": {
+            "kind": "DataQuery",
+            "group": "grafana",
+            "version": "v0",
+            "datasource": {
+              "name": "-- Grafana --"
+            },
+            "spec": {}
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "builtIn": true
+        }
+      }
+    ],
+    "cursorSync": "Off",
+    "editable": true,
+    "elements": {
+      "panel-1": {
+        "kind": "Panel",
+        "spec": {
+          "id": 1,
+          "title": "About reducer macros",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "version": "v0",
+                      "group": "grafana-testdata-datasource",
+                      "datasource": {
+                        "name": "PD8C576611E62080A"
+                      },
+                      "spec": {
+                        "scenarioId": "raw_frame",
+                        "rawFrameContent": "[{\"schema\":{\"fields\":[{\"name\":\"Time\",\"type\":\"time\"},{\"name\":\"CPU\",\"type\":\"number\"},{\"name\":\"Memory usage\",\"type\":\"number\"}]},\"data\":{\"values\":[[1793008800000,1793008860000,1793008920000],[40,75,null],[100,null,120]]}}]"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "13.3.0-local",
+            "spec": {
+              "options": {
+                "code": {
+                  "language": "plaintext",
+                  "showLineNumbers": false,
+                  "showMiniMap": false
+                },
+                "content": "## Reducer macros\n\n`${__data.fields.<field>:reduce:<reducer>}` reduces one field across every row, so it resolves in **Once** mode, where there is no row.\n\nEach field is reduced on its own. With the data below, the last non-null CPU value and the last non-null memory value come from **different rows**.\n\n| Time | CPU | Memory usage |\n| --- | --- | --- |\n| +0 min | 40 | 100 |\n| +1 min | 75 | null |\n| +2 min | null | 120 |\n\nCPU uses unit `percent` with 1 decimal. Memory usage uses unit `bytes`. Both come from field overrides.\n\nEvery other panel lists the macro, what it renders, and what it should render. If **Result** and **Expected** differ, something is broken.\n\nIn edit mode, type `$` in Once mode: field suggestions insert `:reduce:lastNotNull`. Type after `:reduce:` to pick another reducer.\n",
+                "mode": "markdown",
+                "renderMode": "once"
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "CPU"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "percent"
+                      },
+                      {
+                        "id": "decimals",
+                        "value": 1
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Memory usage"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "bytes"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "panel-2": {
+        "kind": "Panel",
+        "spec": {
+          "id": 2,
+          "title": "Independent last non-null values",
+          "description": "The issue's example: each field reads its own last non-null value",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "version": "v0",
+                      "group": "grafana-testdata-datasource",
+                      "datasource": {
+                        "name": "PD8C576611E62080A"
+                      },
+                      "spec": {
+                        "scenarioId": "raw_frame",
+                        "rawFrameContent": "[{\"schema\":{\"fields\":[{\"name\":\"Time\",\"type\":\"time\"},{\"name\":\"CPU\",\"type\":\"number\"},{\"name\":\"Memory usage\",\"type\":\"number\"}]},\"data\":{\"values\":[[1793008800000,1793008860000,1793008920000],[40,75,null],[100,null,120]]}}]"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "13.3.0-local",
+            "spec": {
+              "options": {
+                "code": {
+                  "language": "plaintext",
+                  "showLineNumbers": false,
+                  "showMiniMap": false
+                },
+                "content": "| Macro | Result | Expected |\n| --- | --- | --- |\n| <code>$&#123;__data.fields.CPU:reduce:lastNotNull&#125;</code> | ${__data.fields.CPU:reduce:lastNotNull} | 75.0% |\n| <code>$&#123;__data.fields[\"Memory usage\"]:reduce:lastNotNull&#125;</code> | ${__data.fields[\"Memory usage\"]:reduce:lastNotNull} | 120 B |\n| <code>$&#123;__data.fields.Time:reduce:lastNotNull&#125;</code> | ${__data.fields.Time:reduce:lastNotNull} | the last timestamp, which belongs to neither value |\n",
+                "mode": "markdown",
+                "renderMode": "once"
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "CPU"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "percent"
+                      },
+                      {
+                        "id": "decimals",
+                        "value": 1
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Memory usage"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "bytes"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "panel-3": {
+        "kind": "Panel",
+        "spec": {
+          "id": 3,
+          "title": "Aggregate reducers",
+          "description": "Units and decimals come from field config",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "version": "v0",
+                      "group": "grafana-testdata-datasource",
+                      "datasource": {
+                        "name": "PD8C576611E62080A"
+                      },
+                      "spec": {
+                        "scenarioId": "raw_frame",
+                        "rawFrameContent": "[{\"schema\":{\"fields\":[{\"name\":\"Time\",\"type\":\"time\"},{\"name\":\"CPU\",\"type\":\"number\"},{\"name\":\"Memory usage\",\"type\":\"number\"}]},\"data\":{\"values\":[[1793008800000,1793008860000,1793008920000],[40,75,null],[100,null,120]]}}]"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "13.3.0-local",
+            "spec": {
+              "options": {
+                "code": {
+                  "language": "plaintext",
+                  "showLineNumbers": false,
+                  "showMiniMap": false
+                },
+                "content": "| Macro | Result | Expected |\n| --- | --- | --- |\n| <code>$&#123;__data.fields.CPU:reduce:mean&#125;</code> | ${__data.fields.CPU:reduce:mean} | 57.5% |\n| <code>$&#123;__data.fields.CPU:reduce:min&#125;</code> | ${__data.fields.CPU:reduce:min} | 40.0% |\n| <code>$&#123;__data.fields.CPU:reduce:max&#125;</code> | ${__data.fields.CPU:reduce:max} | 75.0% |\n| <code>$&#123;__data.fields.CPU:reduce:sum&#125;</code> | ${__data.fields.CPU:reduce:sum} | 115.0% |\n| <code>$&#123;__data.fields.CPU:reduce:first&#125;</code> | ${__data.fields.CPU:reduce:first} | 40.0% |\n| <code>$&#123;__data.fields.CPU:reduce:last&#125;</code> | ${__data.fields.CPU:reduce:last} | empty (the last row is null) |\n| <code>$&#123;__data.fields[\"Memory usage\"]:reduce:mean&#125;</code> | ${__data.fields[\"Memory usage\"]:reduce:mean} | 110 B |\n| <code>$&#123;__data.fields[\"Memory usage\"]:reduce:count&#125;</code> | ${__data.fields[\"Memory usage\"]:reduce:count} | 2 (no unit, nulls not counted) |\n",
+                "mode": "markdown",
+                "renderMode": "once"
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "CPU"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "percent"
+                      },
+                      {
+                        "id": "decimals",
+                        "value": 1
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Memory usage"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "bytes"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "panel-4": {
+        "kind": "Panel",
+        "spec": {
+          "id": 4,
+          "title": "Field paths",
+          "description": "Every way of naming a field that row macros accept",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "version": "v0",
+                      "group": "grafana-testdata-datasource",
+                      "datasource": {
+                        "name": "PD8C576611E62080A"
+                      },
+                      "spec": {
+                        "scenarioId": "raw_frame",
+                        "rawFrameContent": "[{\"schema\":{\"fields\":[{\"name\":\"Time\",\"type\":\"time\"},{\"name\":\"CPU\",\"type\":\"number\"},{\"name\":\"Memory usage\",\"type\":\"number\"}]},\"data\":{\"values\":[[1793008800000,1793008860000,1793008920000],[40,75,null],[100,null,120]]}}]"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "13.3.0-local",
+            "spec": {
+              "options": {
+                "code": {
+                  "language": "plaintext",
+                  "showLineNumbers": false,
+                  "showMiniMap": false
+                },
+                "content": "| Macro | Result | Expected |\n| --- | --- | --- |\n| <code>$&#123;__data.fields[1]:reduce:max&#125;</code> | ${__data.fields[1]:reduce:max} | 75.0% |\n| <code>$&#123;__data.fields.CPU.numeric:reduce:mean&#125;</code> | ${__data.fields.CPU.numeric:reduce:mean} | 57.5 |\n| <code>$&#123;__data.fields.CPU.text:reduce:mean&#125;</code> | ${__data.fields.CPU.text:reduce:mean} | 57.5 |\n| <code>$&#123;__data.fields.CPU:reduce:current&#125;</code> | ${__data.fields.CPU:reduce:current} | 75.0% (alias of lastNotNull) |\n| <code>$&#123;__data.fields.CPU:reduce:mean:percentencode&#125;</code> | ${__data.fields.CPU:reduce:mean:percentencode} | 57.5%25 |\n",
+                "mode": "markdown",
+                "renderMode": "once"
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "CPU"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "percent"
+                      },
+                      {
+                        "id": "decimals",
+                        "value": 1
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Memory usage"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "bytes"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "panel-5": {
+        "kind": "Panel",
+        "spec": {
+          "id": 5,
+          "title": "Null and unresolvable",
+          "description": "Unknown reducers stay literal, unknown fields render empty",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "version": "v0",
+                      "group": "grafana-testdata-datasource",
+                      "datasource": {
+                        "name": "PD8C576611E62080A"
+                      },
+                      "spec": {
+                        "scenarioId": "raw_frame",
+                        "rawFrameContent": "[{\"schema\":{\"fields\":[{\"name\":\"Time\",\"type\":\"time\"},{\"name\":\"CPU\",\"type\":\"number\"},{\"name\":\"Memory usage\",\"type\":\"number\"}]},\"data\":{\"values\":[[1793008800000,1793008860000,1793008920000],[40,75,null],[100,null,120]]}}]"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "13.3.0-local",
+            "spec": {
+              "options": {
+                "code": {
+                  "language": "plaintext",
+                  "showLineNumbers": false,
+                  "showMiniMap": false
+                },
+                "content": "| Macro | Result | Expected |\n| --- | --- | --- |\n| <code>$&#123;__data.fields.CPU:reduce:nope&#125;</code> | ${__data.fields.CPU:reduce:nope} | the macro, unchanged |\n| <code>$&#123;__data.fields.CPU:reduce:allValues&#125;</code> | ${__data.fields.CPU:reduce:allValues} | the macro, unchanged (returns an array) |\n| <code>$&#123;__data.fields.nope:reduce:mean&#125;</code> | ${__data.fields.nope:reduce:mean} | empty |\n| <code>$&#123;__data.fields.CPU&#125;</code> | ${__data.fields.CPU} | the macro, unchanged (no row in Once mode) |\n",
+                "mode": "markdown",
+                "renderMode": "once"
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "CPU"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "percent"
+                      },
+                      {
+                        "id": "decimals",
+                        "value": 1
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Memory usage"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "bytes"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "panel-6": {
+        "kind": "Panel",
+        "spec": {
+          "id": 6,
+          "title": "All-null field",
+          "description": "No value comes from field config",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "version": "v0",
+                      "group": "grafana-testdata-datasource",
+                      "datasource": {
+                        "name": "PD8C576611E62080A"
+                      },
+                      "spec": {
+                        "scenarioId": "raw_frame",
+                        "rawFrameContent": "[{\"schema\":{\"fields\":[{\"name\":\"Time\",\"type\":\"time\"},{\"name\":\"value\",\"type\":\"number\"}]},\"data\":{\"values\":[[1793008800000,1793008860000],[null,null]]}}]"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "13.3.0-local",
+            "spec": {
+              "options": {
+                "code": {
+                  "language": "plaintext",
+                  "showLineNumbers": false,
+                  "showMiniMap": false
+                },
+                "content": "The `value` field is null on every row, and **No value** is set to `n/a`.\n\n| Macro | Result | Expected |\n| --- | --- | --- |\n| <code>$&#123;__data.fields.value:reduce:lastNotNull&#125;</code> | ${__data.fields.value:reduce:lastNotNull} | n/a |\n| <code>$&#123;__data.fields.value:reduce:max&#125;</code> | ${__data.fields.value:reduce:max} | n/a |\n| <code>$&#123;__data.fields.value:reduce:count&#125;</code> | ${__data.fields.value:reduce:count} | 0 |\n",
+                "mode": "markdown",
+                "renderMode": "once"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "noValue": "n/a"
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-7": {
+        "kind": "Panel",
+        "spec": {
+          "id": 7,
+          "title": "Per row",
+          "description": "Row macros read each row, reducer macros read every row",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "version": "v0",
+                      "group": "grafana-testdata-datasource",
+                      "datasource": {
+                        "name": "PD8C576611E62080A"
+                      },
+                      "spec": {
+                        "scenarioId": "raw_frame",
+                        "rawFrameContent": "[{\"schema\":{\"fields\":[{\"name\":\"Time\",\"type\":\"time\"},{\"name\":\"CPU\",\"type\":\"number\"},{\"name\":\"Memory usage\",\"type\":\"number\"}]},\"data\":{\"values\":[[1793008800000,1793008860000,1793008920000],[40,75,null],[100,null,120]]}}]"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "13.3.0-local",
+            "spec": {
+              "options": {
+                "code": {
+                  "language": "plaintext",
+                  "showLineNumbers": false,
+                  "showMiniMap": false
+                },
+                "content": "- Row value ${__data.fields.CPU}, max across all rows ${__data.fields.CPU:reduce:max}\n",
+                "mode": "markdown",
+                "renderMode": "perRow"
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "CPU"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "percent"
+                      },
+                      {
+                        "id": "decimals",
+                        "value": 1
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Memory usage"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "bytes"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "panel-8": {
+        "kind": "Panel",
+        "spec": {
+          "id": 8,
+          "title": "Per row expected",
+          "description": "What the per row panel should show",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "version": "v0",
+                      "group": "grafana-testdata-datasource",
+                      "datasource": {
+                        "name": "PD8C576611E62080A"
+                      },
+                      "spec": {
+                        "scenarioId": "raw_frame",
+                        "rawFrameContent": "[{\"schema\":{\"fields\":[{\"name\":\"Time\",\"type\":\"time\"},{\"name\":\"CPU\",\"type\":\"number\"},{\"name\":\"Memory usage\",\"type\":\"number\"}]},\"data\":{\"values\":[[1793008800000,1793008860000,1793008920000],[40,75,null],[100,null,120]]}}]"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "13.3.0-local",
+            "spec": {
+              "options": {
+                "code": {
+                  "language": "plaintext",
+                  "showLineNumbers": false,
+                  "showMiniMap": false
+                },
+                "content": "- Row value 40.0%, max across all rows 75.0%\n- Row value 75.0%, max across all rows 75.0%\n- Row value , max across all rows 75.0%\n\nThe last row has no CPU value, so its row value is empty.\n",
+                "mode": "markdown",
+                "renderMode": "once"
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "CPU"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "percent"
+                      },
+                      {
+                        "id": "decimals",
+                        "value": 1
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Memory usage"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "bytes"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "panel-10": {
+        "kind": "Panel",
+        "spec": {
+          "id": 10,
+          "title": "Units, decimals and no value",
+          "description": "Each field sets Standard options through a field override",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "version": "v0",
+                      "group": "grafana-testdata-datasource",
+                      "datasource": {
+                        "name": "PD8C576611E62080A"
+                      },
+                      "spec": {
+                        "scenarioId": "raw_frame",
+                        "rawFrameContent": "[{\"schema\":{\"fields\":[{\"name\":\"Time\",\"type\":\"time\"},{\"name\":\"Latency\",\"type\":\"number\"},{\"name\":\"Requests\",\"type\":\"number\"},{\"name\":\"Traffic\",\"type\":\"number\"},{\"name\":\"Cost\",\"type\":\"number\"},{\"name\":\"Availability\",\"type\":\"number\"},{\"name\":\"Temperature\",\"type\":\"number\"},{\"name\":\"Errors\",\"type\":\"number\"}]},\"data\":{\"values\":[[1793008800000,1793008860000,1793008920000],[120,850,2400],[12.5,48,31],[1200000000.0,3400000000.0,2100000000.0],[0.5,1.25,2],[0.999,0.995,0.9999],[21.4,23.8,22.6],[null,null,null]]}}]"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "13.3.0-local",
+            "spec": {
+              "options": {
+                "code": {
+                  "language": "plaintext",
+                  "showLineNumbers": false,
+                  "showMiniMap": false
+                },
+                "content": "Service metrics over three rows. Each field sets **Unit**, **Decimals** or **No value** in a field override, and the reduced value is formatted with that field's settings.\n\n| Field | Values | Settings | Macro | Result | Expected |\n| --- | --- | --- | --- | --- | --- |\n| Latency | [120, 850, 2400] | Unit: milliseconds | <code>$&#123;__data.fields.Latency:reduce:min&#125;</code> | ${__data.fields.Latency:reduce:min} | 120 ms |\n| Latency | [120, 850, 2400] | Unit: milliseconds | <code>$&#123;__data.fields.Latency:reduce:max&#125;</code> | ${__data.fields.Latency:reduce:max} | 2.40 s (scaled to seconds) |\n| Latency | [120, 850, 2400] | Unit: milliseconds | <code>$&#123;__data.fields.Latency:reduce:mean&#125;</code> | ${__data.fields.Latency:reduce:mean} | 1.12 s |\n| Latency | [120, 850, 2400] | Unit: milliseconds | <code>$&#123;__data.fields.Latency:reduce:count&#125;</code> | ${__data.fields.Latency:reduce:count} | 3 (a count has no unit) |\n| Requests | [12.5, 48, 31] | Unit: requests/sec | <code>$&#123;__data.fields.Requests:reduce:mean&#125;</code> | ${__data.fields.Requests:reduce:mean} | 30.5 req/s |\n| Traffic | [1.2e9, 3.4e9, 2.1e9] | Unit: bytes (SI), 1 decimal | <code>$&#123;__data.fields.Traffic:reduce:sum&#125;</code> | ${__data.fields.Traffic:reduce:sum} | 6.7 GB |\n| Cost | [0.5, 1.25, 2] | Unit: dollars, 2 decimals | <code>$&#123;__data.fields.Cost:reduce:sum&#125;</code> | ${__data.fields.Cost:reduce:sum} | $3.75 |\n| Availability | [0.999, 0.995, 0.9999] | Unit: percent (0.0-1.0), 2 decimals | <code>$&#123;__data.fields.Availability:reduce:min&#125;</code> | ${__data.fields.Availability:reduce:min} | 99.50% |\n| Temperature | [21.4, 23.8, 22.6] | Unit: Celsius, 0 decimals | <code>$&#123;__data.fields.Temperature:reduce:max&#125;</code> | ${__data.fields.Temperature:reduce:max} | 24 °C |\n| Temperature | [21.4, 23.8, 22.6] | Unit: Celsius, 0 decimals | <code>$&#123;__data.fields.Temperature.numeric:reduce:max&#125;</code> | ${__data.fields.Temperature.numeric:reduce:max} | 23.8 (decimals only change the text) |\n| Errors | [null, null, null] | No value: No errors | <code>$&#123;__data.fields.Errors:reduce:lastNotNull&#125;</code> | ${__data.fields.Errors:reduce:lastNotNull} | No errors |\n",
+                "mode": "markdown",
+                "renderMode": "once"
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Latency"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "ms"
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Requests"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "reqps"
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Traffic"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "decbytes"
+                      },
+                      {
+                        "id": "decimals",
+                        "value": 1
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Cost"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "currencyUSD"
+                      },
+                      {
+                        "id": "decimals",
+                        "value": 2
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Availability"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "percentunit"
+                      },
+                      {
+                        "id": "decimals",
+                        "value": 2
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Temperature"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "celsius"
+                      },
+                      {
+                        "id": "decimals",
+                        "value": 0
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Errors"
+                    },
+                    "properties": [
+                      {
+                        "id": "noValue",
+                        "value": "No errors"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "panel-9": {
+        "kind": "Panel",
+        "spec": {
+          "id": 9,
+          "title": "String values in HTML mode",
+          "description": "Reduced values are escaped and never interpolated again",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "version": "v0",
+                      "group": "grafana-testdata-datasource",
+                      "datasource": {
+                        "name": "PD8C576611E62080A"
+                      },
+                      "spec": {
+                        "scenarioId": "raw_frame",
+                        "rawFrameContent": "[{\"schema\":{\"fields\":[{\"name\":\"markup\",\"type\":\"string\"},{\"name\":\"spaced\",\"type\":\"string\"},{\"name\":\"template\",\"type\":\"string\"}]},\"data\":{\"values\":[[\"<b>bold</b>\"],[\"web 2\"],[\"${__series.name}\"]]}}]"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "text",
+            "version": "13.3.0-local",
+            "spec": {
+              "options": {
+                "code": {
+                  "language": "plaintext",
+                  "showLineNumbers": false,
+                  "showMiniMap": false
+                },
+                "content": "<table>\n<tr><th>Macro</th><th>Result</th><th>Expected</th></tr>\n<tr><td><code>$&#123;__data.fields.markup:reduce:lastNotNull&#125;</code></td><td>${__data.fields.markup:reduce:lastNotNull}</td><td>&lt;b&gt;bold&lt;/b&gt; as text, not bold</td></tr>\n<tr><td><code>$&#123;__data.fields.spaced:reduce:lastNotNull:percentencode&#125;</code></td><td>${__data.fields.spaced:reduce:lastNotNull:percentencode}</td><td>web%202</td></tr>\n<tr><td><code>$&#123;__data.fields.template:reduce:lastNotNull&#125;</code></td><td>${__data.fields.template:reduce:lastNotNull}</td><td>$&#123;__series.name&#125;, not the frame name</td></tr>\n</table>\n",
+                "mode": "html",
+                "renderMode": "once"
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      }
+    },
+    "layout": {
+      "kind": "GridLayout",
+      "spec": {
+        "items": [
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 0,
+              "width": 12,
+              "height": 14,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-1"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 12,
+              "y": 0,
+              "width": 12,
+              "height": 7,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-2"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 12,
+              "y": 7,
+              "width": 12,
+              "height": 7,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-6"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 14,
+              "width": 12,
+              "height": 11,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-3"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 12,
+              "y": 14,
+              "width": 12,
+              "height": 11,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-4"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 25,
+              "width": 12,
+              "height": 9,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-5"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 12,
+              "y": 25,
+              "width": 12,
+              "height": 9,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-9"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 34,
+              "width": 12,
+              "height": 7,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-7"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 12,
+              "y": 34,
+              "width": 12,
+              "height": 7,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-8"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 41,
+              "width": 24,
+              "height": 12,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-10"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "links": [],
+    "liveNow": false,
+    "preload": false,
+    "tags": ["gdev", "panel-tests"],
+    "timeSettings": {
+      "timezone": "utc",
+      "from": "2026-10-26T09:55:00.000Z",
+      "to": "2026-10-26T10:05:00.000Z",
+      "autoRefresh": "",
+      "autoRefreshIntervals": ["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"],
+      "hideTimepicker": false,
+      "fiscalYearStartMonth": 0
+    },
+    "title": "Text panel - reducer macros",
+    "variables": [],
+    "preferences": {
+      "layout": {
+        "kind": "GridLayout",
+        "spec": {
+          "items": []
+        }
+      }
+    }
+  }
+}

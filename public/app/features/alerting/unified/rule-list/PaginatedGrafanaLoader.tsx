@@ -1,5 +1,5 @@
 import { groupBy, isEmpty } from 'lodash';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { Dropdown, Icon, LinkButton, Menu, Stack, TextLink } from '@grafana/ui';
@@ -12,7 +12,7 @@ import { GrafanaRuleGroupExporter } from '../components/export/GrafanaRuleGroupE
 import { FolderActionsButton } from '../components/folder-actions/FolderActionsButton';
 import { GrafanaNoRulesCTA } from '../components/rules/NoRulesCTA';
 import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
-import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../utils/constants';
 import { makeFolderAlertsLink } from '../utils/misc';
 import { groups } from '../utils/navigation';
 import { getPromGroupReadOnlyStatus, isUngroupedRuleGroup } from '../utils/rules';
@@ -79,17 +79,6 @@ function PaginatedGroupsLoader({ groupFilter, namespaceFilter, onLoadingStateCha
   // However, if there are filters, we need to fetch more groups from the API to populate one frontend page
   const apiGroupPageSize = getApiGroupPageSize(needsClientSideFiltering);
 
-  const groupsGenerator = useRef(
-    toIndividualRuleGroups(grafanaGroupsGenerator({ groupLimit: apiGroupPageSize }, backendFilter))
-  );
-
-  useEffect(() => {
-    const currentGenerator = groupsGenerator.current;
-    return () => {
-      currentGenerator.return();
-    };
-  }, []);
-
   const filterFn = useMemo(() => {
     const { frontendFilter } = getGrafanaFilter({
       namespace: namespaceFilter,
@@ -110,7 +99,7 @@ function PaginatedGroupsLoader({ groupFilter, namespaceFilter, onLoadingStateCha
   }, [namespaceFilter, groupFilter]);
 
   const { isLoading, groups, hasMoreGroups, fetchMoreGroups, error } = useLazyLoadPrometheusGroups(
-    groupsGenerator.current,
+    () => toIndividualRuleGroups(grafanaGroupsGenerator({ groupLimit: apiGroupPageSize }, backendFilter)),
     FRONTED_GROUPED_PAGE_SIZE,
     filterFn
   );

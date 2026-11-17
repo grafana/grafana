@@ -39,8 +39,6 @@ type DataSourceConnection struct {
 
 	APIGroup string `json:"group"`
 
-	APIVersion string `json:"version"`
-
 	Plugin string `json:"plugin,omitempty"`
 
 	Labels map[string]string `json:"labels,omitempty"`

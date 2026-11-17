@@ -13,6 +13,7 @@ type SearchBackend interface {
 type SearchQuery struct {
 	Namespace string
 	Query     string
+	Member    string
 	Title     string
 	UIDs      []string
 	TeamIDs   []string

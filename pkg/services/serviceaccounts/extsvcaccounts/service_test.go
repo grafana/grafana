@@ -51,12 +51,14 @@ func setupTestEnv(t *testing.T) *TestEnv {
 		SkvStore: kvstore.NewFakeSecretsKVStore(),
 	}
 	logger := log.New("extsvcaccounts.test")
+	acSvc, initErr := acimpl.ProvideOSSService(
+		cfg, env.AcStore, &resourcepermissions.FakeActionSetSvc{},
+		localcache.New(0, 0), fmgt, tracing.InitializeTracerForTest(), nil,
+		permreg.ProvidePermissionRegistry(), nil, iam.Features{}, nil, nil)
+	require.NoError(t, initErr)
 	env.S = &ExtSvcAccountsService{
-		enabled: true,
-		acSvc: acimpl.ProvideOSSService(
-			cfg, env.AcStore, &resourcepermissions.FakeActionSetSvc{},
-			localcache.New(0, 0), fmgt, tracing.InitializeTracerForTest(), nil,
-			permreg.ProvidePermissionRegistry(), nil, iam.Features{}, nil, nil),
+		enabled:      true,
+		acSvc:        acSvc,
 		defaultOrgID: autoAssignOrgID,
 		logger:       logger,
 		metrics:      newMetrics(nil),

@@ -17,11 +17,8 @@ import { DashboardSavedEvent } from 'app/types/events';
 import { updateDashboardUidLastUsedDatasource } from '../../dashboard/utils/dashboard';
 import { finishSavingNewDashboard, withoutPendingChangesPreview } from '../lifecycle/pendingChangePreview';
 import { type DashboardScene } from '../scene/DashboardScene';
-import { dashboardModesEnabled, getDashboardMode } from '../scene/dashboardModes';
 import { DashboardInteractions } from '../utils/interactions';
 import { trackDashboardSceneCreatedOrSaved } from '../utils/tracking';
-
-import { setDashboardModeAfterSave } from './dashboardModeAfterSave';
 
 export function useSaveDashboard(isCopy = false) {
   const notifyApp = useAppNotification();
@@ -86,7 +83,7 @@ export function useSaveDashboard(isCopy = false) {
         await scene.saveCompleted(saveModel, resultData, options.folderUid, saveAsSource);
 
         if (newDashboardUid) {
-          await finishSavingNewDashboard(newDashboardUid);
+          await finishSavingNewDashboard(newDashboardUid, scene.state.meta.isEmbedded ? 'embedded' : 'page');
         }
 
         if (editSessionTracking.edit_session_id) {
@@ -126,11 +123,11 @@ export function useSaveDashboard(isCopy = false) {
         // A saved proposal is a regular dashboard now, so the page stops previewing it.
         const search = newDashboardUid ? withoutPendingChangesPreview(currentLocation.search) : currentLocation.search;
 
-        if (newUrl !== currentLocation.pathname || search !== currentLocation.search) {
+        if (
+          !scene.state.meta.isEmbedded &&
+          (newUrl !== currentLocation.pathname || search !== currentLocation.search)
+        ) {
           setTimeout(() => {
-            if (dashboardModesEnabled()) {
-              setDashboardModeAfterSave(resultData.uid, getDashboardMode(scene.state));
-            }
             locationService.push({ pathname: newUrl, search });
           });
         }

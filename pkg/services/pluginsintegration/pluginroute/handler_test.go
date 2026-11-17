@@ -275,7 +275,7 @@ func testPlugin() definition.PluginDefinition {
 					}},
 					Kinds: []app.ManifestVersionKind{{
 						Kind:   "TestKind",
-						Plural: "TestKinds",
+						Plural: "TestKinds", Resource: "testkinds",
 						Scope:  "Namespaced",
 						Schema: testSchema(),
 					}},

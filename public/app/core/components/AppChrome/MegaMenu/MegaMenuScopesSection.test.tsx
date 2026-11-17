@@ -38,7 +38,6 @@ const CUSTOMISE_FLAG = 'grafana.customizableMegaMenu';
 interface MockDashboardsServiceState {
   loading: boolean;
   forScopeNames: string[];
-  dashboards: unknown[];
   scopeNavigations: Array<{ title: string; url: string }>;
   searchQuery: string;
   filteredFolders: Record<string, unknown>;
@@ -55,7 +54,6 @@ const makeScopesServices = (
       state: {
         loading: false,
         forScopeNames: ['scope-a'],
-        dashboards: [],
         scopeNavigations: [{ title: 'Suggested dashboard', url: '/d/abc' }],
         searchQuery: '',
         filteredFolders: {
@@ -116,16 +114,6 @@ describe('MegaMenu scopes dashboards section', () => {
   it('is absent when scopes are not enabled, even with the flag on', async () => {
     setTestFlags({ [FLAG]: true });
     mockUseScopes.mockReturnValue({ state: { enabled: false } } as ReturnType<typeof useScopes>);
-    mockUseScopesServices.mockReturnValue(makeScopesServices());
-
-    renderMegaMenu();
-
-    expect(screen.queryByText('Suggested dashboards')).not.toBeInTheDocument();
-  });
-
-  it('is absent when scopes are read-only, even with the flag on and dashboards available', async () => {
-    setTestFlags({ [FLAG]: true });
-    mockUseScopes.mockReturnValue({ state: { enabled: true, readOnly: true } } as ReturnType<typeof useScopes>);
     mockUseScopesServices.mockReturnValue(makeScopesServices());
 
     renderMegaMenu();

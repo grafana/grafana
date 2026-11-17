@@ -14,11 +14,11 @@ export function StPodPendingDots({ itemName }: Props) {
   const styles = useStyles2(getStyles);
 
   const label = itemName
-    ? t('app-chrome.st-loading.pending-dots-aria-label-named', '{{itemName}} is starting up', {
+    ? t('app-chrome.st-loading.pending-dots-aria-label-named', 'Preparing {{itemName}}', {
         itemName,
         interpolation: { escapeValue: false },
       })
-    : t('app-chrome.st-loading.pending-dots-aria-label', 'Page is starting up');
+    : t('app-chrome.st-loading.pending-dots-aria-label', 'Preparing page');
 
   return (
     <svg

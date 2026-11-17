@@ -41,7 +41,7 @@ async function readManifest(manifestPath: string): Promise<BundleManifest> {
   try {
     contents = await readFile(manifestPath, 'utf8');
   } catch (error) {
-    throw new Error(`Could not read ${manifestPath}. Run 'yarn build' first.`, { cause: error });
+    throw new Error(`Could not read ${manifestPath}. Run 'pnpm build' first.`, { cause: error });
   }
 
   return JSON.parse(contents);

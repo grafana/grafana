@@ -12,7 +12,7 @@
 
 import * as ui from '@grafana/schema';
 
-export const pluginVersion = "13.3.0-pre";
+export const pluginVersion = "13.4.0-pre";
 
 /**
  * @deprecated - use common in /packages/grafana-schema/src/common/table.cue instead i.e. `import { TableOptions } from '@grafana/schema';`
@@ -61,6 +61,10 @@ export interface Options {
    */
   showHeader: boolean;
   /**
+   * Whether to show generated row positions. Only applies when `table.refreshNewFeatures` is enabled.
+   */
+  showRowNumbers?: boolean;
+  /**
    * Controls whether the header should show icons for the column types
    */
   showTypeIcons?: boolean;
@@ -80,6 +84,7 @@ export const defaultOptions: Partial<Options> = {
   frameIndex: 0,
   hoverOverflow: true,
   showHeader: true,
+  showRowNumbers: false,
   showTypeIcons: false,
   sortBy: [],
   zebraStriping: false,

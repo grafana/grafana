@@ -1,5 +1,8 @@
 import { render, screen } from 'test/test-utils';
 
+import { setupDataSources } from '../../testSetup/datasources';
+import { mockDataSource } from '../../testSetup/mockDataSource';
+
 import { RecordingRuleRow } from './RecordingRuleRow';
 import { type RecordingRuleSearchHit } from './recordingRuleSearchHit';
 
@@ -7,10 +10,10 @@ function baseHit(overrides: Partial<RecordingRuleSearchHit> = {}): RecordingRule
   return { uid: 'rule-1', title: 'cpu:usage:rate5m', folderUid: 'folder-1', ...overrides };
 }
 
-function renderRow(props: Parameters<typeof RecordingRuleRow>[0]) {
+function renderRow(props: Omit<Parameters<typeof RecordingRuleRow>[0], 'onSequenceClick'>) {
   return render(
     <ul>
-      <RecordingRuleRow {...props} />
+      <RecordingRuleRow {...props} onSequenceClick={jest.fn()} />
     </ul>,
     { historyOptions: { initialEntries: ['/alerting/rules/recording?search=cpu'] } }
   );
@@ -61,15 +64,83 @@ describe('RecordingRuleRow', () => {
     expect(screen.queryByText('remote write failed')).not.toBeInTheDocument();
   });
 
-  it('shows the evaluation interval', () => {
-    renderRow({ searchHit: baseHit({ interval: '1m' }) });
+  it("shows its sequence's interval in place of its own when the rule is in a sequence", () => {
+    renderRow({
+      searchHit: baseHit({ interval: '1m' }),
+      sequence: { uid: 'seq-1', interval: '2m' },
+    });
 
-    expect(screen.getByRole('img', { name: 'Evaluated every 1m' })).toBeInTheDocument();
+    expect(screen.getByText('Rule sequence · 2m')).toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: 'Evaluated every 1m' })).not.toBeInTheDocument();
   });
 
-  it('shows no interval indicator when interval is absent', () => {
+  it('shows the recorded metric and target datasource when the hit has them', () => {
+    setupDataSources(mockDataSource({ uid: 'ds-mimir', name: 'Mimir' }));
+    renderRow({
+      searchHit: baseHit({ metric: 'memory:usage:bytes', targetDatasourceUID: 'ds-mimir' }),
+    });
+
+    expect(screen.getByText('memory:usage:bytes')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Mimir' })).toBeInTheDocument();
+  });
+
+  it('shows no recorded metric when metric or targetDatasourceUID is absent', () => {
     renderRow({ searchHit: baseHit() });
 
-    expect(screen.queryByRole('img', { name: /Evaluated every/ })).not.toBeInTheDocument();
+    expect(screen.queryByText(/Records/)).not.toBeInTheDocument();
+  });
+
+  it('shows queried datasources when the hit has them', () => {
+    setupDataSources(mockDataSource({ uid: 'ds-prom', name: 'Prometheus' }));
+    renderRow({ searchHit: baseHit({ datasourceUIDs: ['ds-prom'] }) });
+
+    expect(screen.getByRole('link', { name: 'Prometheus' })).toBeInTheDocument();
+  });
+
+  it('shows labels when the hit has them', () => {
+    renderRow({ searchHit: baseHit({ labels: { team: 'infra' } }) });
+
+    expect(screen.getByText('1 label')).toBeInTheDocument();
+  });
+
+  it('shows no datasources when the hit has none', () => {
+    renderRow({ searchHit: baseHit() });
+
+    expect(screen.queryByText(/data source/i)).not.toBeInTheDocument();
+  });
+
+  it('shows no labels when the hit has none', () => {
+    renderRow({ searchHit: baseHit() });
+
+    expect(screen.queryByText(/label/)).not.toBeInTheDocument();
+  });
+
+  it('renders a provisioning badge when the full rule has provenance set', () => {
+    const rule = {
+      apiVersion: 'rules.alerting.grafana.app/v0alpha1',
+      kind: 'RecordingRule' as const,
+      metadata: { name: 'rule-1', annotations: { 'grafana.com/provenance': 'terraform' } },
+      spec: {
+        title: 'cpu:usage:rate5m',
+        metric: 'cpu:usage:rate5m',
+        targetDatasourceUID: 'ds',
+        trigger: { interval: '1m' },
+        expressions: {},
+      },
+    };
+    renderRow({ searchHit: baseHit(), rule });
+
+    expect(screen.getByText('Provisioned')).toBeInTheDocument();
+  });
+
+  it('renders no badge when rule is absent', () => {
+    renderRow({ searchHit: baseHit() });
+
+    expect(screen.queryByText('Provisioned')).not.toBeInTheDocument();
+  });
+
+  it('renders actions in the right column when provided', () => {
+    renderRow({ searchHit: baseHit(), actions: <button>More</button> });
+    expect(screen.getByRole('button', { name: 'More' })).toBeInTheDocument();
   });
 });

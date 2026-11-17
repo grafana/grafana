@@ -1,6 +1,8 @@
 import { type SceneObjectState, type SceneObject } from '@grafana/scenes';
 import { type ElementSelectionContextState, type ElementSelectionOnSelectOptions } from '@grafana/ui';
 
+import { type PendingChangesHistory } from '../lifecycle/pendingChangePreview';
+
 import { type DashboardEditActionEvent, type DashboardEditActionEventPayload, type PaneCloseReason } from './events';
 import { type DashboardOutline } from './outline/DashboardOutline';
 
@@ -34,12 +36,16 @@ export interface DashboardSidebarLike extends SceneObject<DashboardSidebarState>
   disableSelection(): void;
   clearSelection(noEvent?: boolean): void;
   selectObject(obj: SceneObject, options?: ElementSelectionOnSelectOptions): void;
+  openElementSettings(obj: SceneObject): void;
   openPane(openPane: DashboardSidebarPane): void;
   closePane(reason?: PaneCloseReason): void;
   refreshAfterRebuild(): void;
   getSelectedObject(key?: string): SceneObject | undefined;
   undoAction(): void;
+  undoLastAction(trigger?: string): void;
   redoAction(): void;
+  redoLastAction(trigger?: string): void;
+  pendingChangesHistory(): PendingChangesHistory | undefined;
   recordCompletedEdit(action: DashboardEditActionEventPayload): void;
   clearHistory(): void;
   goBackToPrevious(): void;
@@ -72,4 +78,9 @@ export enum SidebarCategoryType {
 
   DashboardLinks = 'dashboard-links',
   DashboardAnnotations = 'dashboard-annotations',
+
+  TabSectionAnnotations = 'tab-section-annotations',
+  TabSectionAnnotationsList = 'tab-section-annotations-list',
+  RowSectionAnnotations = 'dash-row-section-annotations',
+  RowSectionAnnotationsList = 'dash-row-section-annotations-list',
 }

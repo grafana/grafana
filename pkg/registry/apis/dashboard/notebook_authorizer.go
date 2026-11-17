@@ -12,10 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/notebooks"
 )
 
-// notebookSearchName is the name the API server parses from the search POST
-// route (notebooks/search). It is a read, not a create.
-const notebookSearchName = "search"
-
 func newNotebookAuthorizer(accessControl ac.AccessControl, fallback authorizer.Authorizer) authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(
 		func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
@@ -44,11 +40,7 @@ func newNotebookAuthorizer(accessControl ac.AccessControl, fallback authorizer.A
 			case "get", "list", "watch":
 				action = notebooks.ActionNotebooksRead
 			case "create":
-				if attr.GetName() == notebookSearchName {
-					action = notebooks.ActionNotebooksRead
-				} else {
-					action = notebooks.ActionNotebooksCreate
-				}
+				action = notebooks.ActionNotebooksCreate
 			case "update", "patch":
 				action = notebooks.ActionNotebooksWrite
 			case "delete", "deletecollection":

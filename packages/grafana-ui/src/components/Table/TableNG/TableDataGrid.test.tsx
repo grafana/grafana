@@ -4,8 +4,18 @@ import { createRef } from 'react';
 import { colorManipulator, createTheme, getThemeById, ThemeContext } from '@grafana/data';
 import { type DataGridHandle, Row, Cell } from '@grafana/react-data-grid';
 
+import { TableCellInspectorMode } from '../TableCellInspector';
+
 import { TableDataGrid, type TableDataGridProps } from './TableDataGrid';
 import { FIRST_COLUMN_CLASS, LAST_COLUMN_CLASS } from './constants';
+
+jest.mock('../../CodeMirror/CodeEditorLazy', () => ({
+  CodeMirrorEditor: ({ value }: { value: string }) => <div data-testid="code-mirror-editor">{value}</div>,
+}));
+
+jest.mock('../../Monaco/CodeEditor', () => ({
+  CodeEditor: ({ value }: { value: string }) => <div data-testid="monaco-code-editor">{value}</div>,
+}));
 
 // jsdom does not compute pseudo-element styles; read the matching Emotion rules in cascade order.
 function shadowStyle(element: HTMLElement | null, edge: 'before' | 'after', property: string) {
@@ -15,6 +25,9 @@ function shadowStyle(element: HTMLElement | null, edge: 'before' | 'after', prop
       if (
         rule instanceof CSSStyleRule &&
         rule.selectorText.split(',').some((selector) => {
+          if (selector.includes('.rdg-header-row') && selector.endsWith(`::${edge}`)) {
+            return element?.matches(selector.slice(0, -`::${edge}`.length));
+          }
           return Array.from(element?.classList ?? []).some((className) => selector.trim() === `.${className}::${edge}`);
         })
       ) {
@@ -22,7 +35,7 @@ function shadowStyle(element: HTMLElement | null, edge: 'before' | 'after', prop
       }
     }
   }
-  return value;
+  return value.replace(/var\((--[\w-]+)\)/g, (_, name: string) => element?.style.getPropertyValue(name) ?? '');
 }
 
 function makeProps(overrides: Partial<TableDataGridProps> = {}): TableDataGridProps {
@@ -116,6 +129,26 @@ describe('TableDataGrid', () => {
   });
 
   describe('table.refresh', () => {
+    it.each([
+      { tableRefreshEnabled: true, editor: 'code-mirror-editor', other: 'monaco-code-editor' },
+      { tableRefreshEnabled: false, editor: 'monaco-code-editor', other: 'code-mirror-editor' },
+    ])(
+      'inspects code cells in $editor with table.refresh=$tableRefreshEnabled',
+      ({ tableRefreshEnabled, editor, other }) => {
+        render(
+          <TableDataGrid
+            {...makeProps({
+              tableRefreshEnabled,
+              inspectCell: { value: '{"a":1}', mode: TableCellInspectorMode.code },
+            })}
+          />
+        );
+
+        expect(screen.getByTestId(editor)).toHaveTextContent('{"a":1}');
+        expect(screen.queryByTestId(other)).not.toBeInTheDocument();
+      }
+    );
+
     it('clips the grid inside the rounded frame', () => {
       const radius = createTheme().shape.radius.default;
       const { unmount } = render(<TableDataGrid {...makeProps({ tableRefreshEnabled: true })} />);
@@ -476,7 +509,7 @@ describe('TableDataGrid', () => {
       expect(onScroll).toHaveBeenCalledTimes(3);
     });
 
-    it('keeps visible shadows colored for the current theme after switching themes', () => {
+    it('matches ScrollContainer shadow colors and sizes after switching themes', () => {
       const props = makeProps({ tableRefreshEnabled: true });
       const { rerender } = render(
         <ThemeContext.Provider value={createTheme({ colors: { mode: 'dark' } })}>
@@ -491,13 +524,15 @@ describe('TableDataGrid', () => {
             <TableDataGrid {...props} />
           </ThemeContext.Provider>
         );
-        const color = mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.08)';
+        const color = mode === 'dark' ? 'rgba(0, 0, 0, 0.25)' : 'rgba(0, 0, 0, 0.08)';
         expect(shadowStyle(grid.parentElement, 'before', 'background')).toBe(
           `linear-gradient(0deg, transparent, ${color})`
         );
         expect(shadowStyle(grid.parentElement, 'after', 'background')).toBe(
           `linear-gradient(180deg, transparent, ${color})`
         );
+        expect(shadowStyle(grid.parentElement, 'before', 'block-size')).toBe('max(5%, 24px)');
+        expect(shadowStyle(grid.parentElement, 'after', 'block-size')).toBe('max(5%, 24px)');
         expect(shadowStyle(grid.parentElement, 'before', 'opacity')).toBe('1');
         expect(shadowStyle(grid.parentElement, 'after', 'opacity')).toBe('1');
       }

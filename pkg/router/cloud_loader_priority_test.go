@@ -75,13 +75,14 @@ func TestCloudLoaderSourcePriority(t *testing.T) {
 	})
 	first := priorityAggregate(priorityBackend("shared", "first-aggregate"), priorityBackend("a-aggregate-only", "aggregate"))
 	second := priorityAggregate(priorityBackend("shared", "second-aggregate"))
-	plugins := testPluginManifestsTarget(sourcePluginsURL, priorityBackend("shared", "plugin"), priorityBackend("p-plugin-only", "plugin"))
-	core := testPluginManifestsTarget(sourceCoreURL, priorityBackend("shared", "core"), priorityBackend("c-core-only", "core"))
+	plugins := testPluginManifestsTarget(sourcePlugins, priorityBackend("shared", "plugin"), priorityBackend("p-plugin-only", "plugin"))
+	core := testPluginManifestsTarget(sourceCore, priorityBackend("shared", "core"), priorityBackend("c-core-only", "core"))
+	bridge := testPluginManifestsTarget(sourceBridge, priorityBackend("shared", "bridge"), priorityBackend("b-bridge-only", "bridge"))
 	pollDiscovery(t, st)
 
-	loadShared := func(aggregates []*aggregateTarget, plugins, core *pluginManifestsTarget) Backend {
+	loadShared := func(aggregates []*aggregateTarget, targets ...*pluginManifestsTarget) Backend {
 		t.Helper()
-		loader, err := newCloudLoader(aggregates, plugins, core, st)
+		loader, err := newCloudLoader(aggregates, targets, st)
 		require.NoError(t, err)
 		backends, err := loader.Load(t.Context())
 		require.NoError(t, err)
@@ -100,12 +101,13 @@ func TestCloudLoaderSourcePriority(t *testing.T) {
 		return shared
 	}
 	aggregates := []*aggregateTarget{first, second}
-	require.Equal(t, "plugin", loadShared(aggregates, plugins, core).Key())
-	require.Equal(t, "core", loadShared(aggregates, nil, core).Key())
-	require.Equal(t, "first-aggregate", loadShared(aggregates, nil, nil).Key())
+	require.Equal(t, "plugin", loadShared(aggregates, plugins, core, bridge).Key())
+	require.Equal(t, "core", loadShared(aggregates, core, bridge).Key())
+	require.Equal(t, "bridge", loadShared(aggregates, bridge).Key())
+	require.Equal(t, "first-aggregate", loadShared(aggregates).Key())
 	aggregates[0] = priorityAggregate(priorityBackend("a-aggregate-only", "aggregate"))
-	require.Equal(t, "second-aggregate", loadShared(aggregates, nil, nil).Key())
-	require.IsType(t, &fallbackBackend{}, loadShared(aggregates[:1], nil, nil))
+	require.Equal(t, "second-aggregate", loadShared(aggregates).Key())
+	require.IsType(t, &fallbackBackend{}, loadShared(aggregates[:1]))
 }
 
 func TestCloudLoaderSingleTenantDiscoveryFailure(t *testing.T) {
@@ -119,7 +121,7 @@ func TestCloudLoaderSingleTenantDiscoveryFailure(t *testing.T) {
 		}
 		return &http.Response{StatusCode: http.StatusOK, Header: make(http.Header), Body: io.NopCloser(strings.NewReader(body))}, nil
 	})
-	loader, err := newCloudLoader(nil, nil, nil, st)
+	loader, err := newCloudLoader(nil, nil, st)
 	require.NoError(t, err)
 	_, err = loader.Load(t.Context())
 	require.ErrorIs(t, err, errFirstPollPending)
@@ -129,7 +131,7 @@ func TestCloudLoaderSingleTenantDiscoveryFailure(t *testing.T) {
 
 	mt := priorityAggregate(priorityBackend("shared", "mt-v1"))
 	stOnly := loader
-	loader, err = newCloudLoader([]*aggregateTarget{mt}, nil, nil, st)
+	loader, err = newCloudLoader([]*aggregateTarget{mt}, nil, st)
 	require.NoError(t, err)
 	backends, err := loader.Load(t.Context())
 	require.NoError(t, err)
@@ -186,7 +188,7 @@ func TestCloudLoaderReportsShadowedGroupsAndSourceStatus(t *testing.T) {
 	aggregate := testAggregateTarget("baas_apiserver")
 	storeBackends(&aggregate.polledSource, shared)
 	aggregate.status.recordSuccess(time.Now())
-	loader, err := newCloudLoader([]*aggregateTarget{aggregate}, nil, nil, st)
+	loader, err := newCloudLoader([]*aggregateTarget{aggregate}, nil, st)
 	require.NoError(t, err)
 
 	pollDiscovery(t, st)
@@ -220,7 +222,7 @@ func TestCloudLoaderWaitsForEverySourcesFirstPoll(t *testing.T) {
 	storeBackends(&polled.polledSource, priorityBackend("polled.ext.grafana.app", "polled"))
 	polled.status.recordSuccess(time.Now())
 	slow := testAggregateTarget("slow")
-	loader, err := newCloudLoader([]*aggregateTarget{polled, slow}, nil, nil, nil)
+	loader, err := newCloudLoader([]*aggregateTarget{polled, slow}, nil, nil)
 	require.NoError(t, err)
 	router := NewGrafanaRouter(loader, nil)
 
