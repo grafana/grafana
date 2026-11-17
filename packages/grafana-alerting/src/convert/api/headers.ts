@@ -1,10 +1,8 @@
 import { type NotificationSettings, toRulerNotificationSettings } from '../notificationSettings';
 
-/** The Grafana screen a request comes from. Grafana counts import calls by it. Leave it out for any other caller. */
-export type ConvertSource = 'wizard' | 'import_settings';
-
 export interface ConvertSourceOption {
-  source?: ConvertSource;
+  /** The Grafana screen a request comes from. Grafana counts import calls by it. Leave it out for any other caller. */
+  source?: 'wizard' | 'import_settings';
 }
 
 /** Options for importing rule groups, sent as `X-Grafana-Alerting-*` headers. */
