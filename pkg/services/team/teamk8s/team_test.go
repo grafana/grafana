@@ -1200,7 +1200,9 @@ func TestTeamK8sService_SearchTeams_LimitAboveSearchCap(t *testing.T) {
 		query         *team.SearchTeamsQuery
 		failOnPage    int
 		shiftOnPage   int
+		ignorePage    bool
 		expectErr     bool
+		expectErrIs   error
 		expectPages   []int
 		expectFirst   int
 		expectTeams   int
@@ -1265,6 +1267,29 @@ func TestTeamK8sService_SearchTeams_LimitAboveSearchCap(t *testing.T) {
 			expectErr:   true,
 			expectPages: []int{1, 2},
 		},
+		{
+			name:        "rejects a page whose offset overflows to a multiple of the cap",
+			totalTeams:  2500,
+			query:       &team.SearchTeamsQuery{OrgID: 1, Limit: 1000000, Page: 2305843008213694},
+			expectErr:   true,
+			expectErrIs: errSearchPageOutOfRange,
+		},
+		{
+			name:        "rejects a page whose offset overflows to an unaligned value",
+			totalTeams:  2500,
+			query:       &team.SearchTeamsQuery{OrgID: 1, Limit: 1 << 62, Page: 3},
+			expectErr:   true,
+			expectErrIs: errSearchPageOutOfRange,
+		},
+		{
+			name:          "stops when a page repeats teams already returned",
+			totalTeams:    5000,
+			query:         &team.SearchTeamsQuery{OrgID: 1, Limit: 1000000, Page: 1},
+			ignorePage:    true,
+			expectPages:   []int{1, 2},
+			expectTeams:   common.MaxListLimit,
+			expectPerPage: 1000000,
+		},
 	}
 
 	for _, tt := range tests {
@@ -1295,6 +1320,9 @@ func TestTeamK8sService_SearchTeams_LimitAboveSearchCap(t *testing.T) {
 					return
 				}
 
+				if tt.ignorePage {
+					page = 1
+				}
 				start := (page - 1) * limit
 				if page == tt.shiftOnPage {
 					// A team deleted between page reads moves the previous page's last team onto this one.
@@ -1324,6 +1352,9 @@ func TestTeamK8sService_SearchTeams_LimitAboveSearchCap(t *testing.T) {
 
 			if tt.expectErr {
 				require.Error(t, err)
+				if tt.expectErrIs != nil {
+					require.ErrorIs(t, err, tt.expectErrIs)
+				}
 				return
 			}
 
