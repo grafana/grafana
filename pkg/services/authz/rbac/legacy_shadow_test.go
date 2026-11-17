@@ -3,6 +3,7 @@ package rbac
 import (
 	"context"
 	"fmt"
+	"slices"
 	"testing"
 
 	"github.com/grafana/authlib/types"
@@ -18,51 +19,74 @@ import (
 )
 
 func TestLegacyCheckShadowDoesNotChangeCaches(t *testing.T) {
-	for _, warm := range []bool{false, true} {
-		t.Run(fmt.Sprintf("warm=%t", warm), func(t *testing.T) {
-			service := NewTestService("checked-user", []accesscontrol.Permission{{Action: "folders:read", Scope: "folders:uid:allowed"}}, nil)
+	for _, tc := range []struct {
+		name      string
+		warmCache bool
+	}{
+		{name: "cold caches remain empty"},
+		{name: "warm caches remain unchanged", warmCache: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			service := NewTestService("checked-user", []accesscontrol.Permission{
+				{Action: "folders:read", Scope: "folders:uid:allowed"},
+			}, nil)
 			ctx := t.Context()
 			idKey := userIdentifierCacheKey("org-12", "checked-user")
 			roleKey := userBasicRoleCacheKey("org-12", "checked-user")
 			teamsKey := userTeamCacheKey("org-12", "checked-user")
-			oldID := store.UserIdentifiers{ID: 99, UID: "checked-user"}
-			oldRole := store.BasicRole{Role: "Admin", IsAdmin: true}
-			oldTeams := []int64{99}
-			if warm {
-				service.idCache.Set(ctx, idKey, oldID)
-				service.basicRoleCache.Set(ctx, roleKey, oldRole)
-				service.userTeamCache.Set(ctx, teamsKey, oldTeams)
+			if tc.warmCache {
+				service.idCache.Set(ctx, idKey, store.UserIdentifiers{ID: 99, UID: "checked-user"})
+				service.basicRoleCache.Set(ctx, roleKey, store.BasicRole{Role: "Admin", IsAdmin: true})
+				service.userTeamCache.Set(ctx, teamsKey, []int64{99})
 			}
+
+			before := snapshotLegacyCheckCaches(ctx, service)
 			client := newEmbeddedLegacyCheckTestClient(service)
 			orgID := int64(12)
+
 			allowed, err := client.LegacyCheck(shadow.WithContext(ctx), legacyclient.LegacyCheckRequest{
-				Namespace: "org-12", Subject: "user:checked-user", RequesterOrgID: &orgID,
-				Evaluator: accesscontrol.EvalPermission("folders:read", "folders:uid:allowed"),
+				Namespace:      "org-12",
+				Subject:        "user:checked-user",
+				RequesterOrgID: &orgID,
+				Evaluator:      accesscontrol.EvalPermission("folders:read", "folders:uid:allowed"),
 			})
+
 			require.NoError(t, err)
 			require.True(t, allowed)
-			id, idFound := service.idCache.Get(ctx, idKey)
-			role, roleFound := service.basicRoleCache.Get(ctx, roleKey)
-			teams, teamsFound := service.userTeamCache.Get(ctx, teamsKey)
-			if warm {
-				require.Equal(t, oldID, id)
-				require.Equal(t, oldRole, role)
-				require.Equal(t, oldTeams, teams)
-			}
-			require.Equal(t, warm, idFound)
-			require.Equal(t, warm, roleFound)
-			require.Equal(t, warm, teamsFound)
-			_, internalIDFound := service.idCache.Get(ctx, userIdentifierCacheKeyById("org-12", "checked-user"))
-			require.False(t, internalIDFound)
+			require.Equal(t, before, snapshotLegacyCheckCaches(ctx, service))
 		})
 	}
+}
+
+type legacyCheckCacheSnapshot struct {
+	id              store.UserIdentifiers
+	idFound         bool
+	internalID      store.UserIdentifiers
+	internalIDFound bool
+	role            store.BasicRole
+	roleFound       bool
+	teams           []int64
+	teamsFound      bool
+}
+
+func snapshotLegacyCheckCaches(ctx context.Context, service *Service) legacyCheckCacheSnapshot {
+	var snapshot legacyCheckCacheSnapshot
+	snapshot.id, snapshot.idFound = service.idCache.Get(ctx, userIdentifierCacheKey("org-12", "checked-user"))
+	snapshot.internalID, snapshot.internalIDFound = service.idCache.Get(ctx, userIdentifierCacheKeyById("org-12", "checked-user"))
+	snapshot.role, snapshot.roleFound = service.basicRoleCache.Get(ctx, userBasicRoleCacheKey("org-12", "checked-user"))
+	snapshot.teams, snapshot.teamsFound = service.userTeamCache.Get(ctx, userTeamCacheKey("org-12", "checked-user"))
+	snapshot.teams = slices.Clone(snapshot.teams)
+	return snapshot
 }
 
 func TestLegacyCheckShadowNestedResolverUsesLocalEvaluation(t *testing.T) {
 	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagAuthzUseLegacyCheck, featuremgmt.FlagAuthzUseLegacyCheckShadow)
 	ac := acimpl.ProvideAccessControlTest()
-	service := NewTestService("checked-user", []accesscontrol.Permission{{Action: "folders:read", Scope: "folders:uid:allowed"}}, nil).
+	service := NewTestService("checked-user", []accesscontrol.Permission{
+		{Action: "folders:read", Scope: "folders:uid:allowed"},
+	}, nil).
 		WithLegacyScopeResolvers(acimpl.ProvideScopeResolverRegistry(ac), types.OrgNamespaceFormatter)
+
 	// A nested RPC would fail because no client is attached. The shadow marker must keep it local.
 	calls := 0
 	ac.RegisterScopeAttributeResolver("test:id:", accesscontrol.ScopeAttributeResolverFunc(func(ctx context.Context, _ int64, _ string) ([]string, error) {
@@ -71,6 +95,7 @@ func TestLegacyCheckShadowNestedResolverUsesLocalEvaluation(t *testing.T) {
 		if err != nil {
 			return nil, err
 		}
+
 		allowed, err := ac.Evaluate(ctx, requester, accesscontrol.EvalPermission("folders:read", "folders:uid:allowed"))
 		if err != nil {
 			return nil, err
@@ -82,10 +107,14 @@ func TestLegacyCheckShadowNestedResolverUsesLocalEvaluation(t *testing.T) {
 	}))
 	client := newEmbeddedLegacyCheckTestClient(service)
 	orgID := int64(12)
+
 	allowed, err := client.LegacyCheck(shadow.WithContext(t.Context()), legacyclient.LegacyCheckRequest{
-		Namespace: "org-12", Subject: "user:checked-user", RequesterOrgID: &orgID,
-		Evaluator: accesscontrol.EvalPermission("folders:read", "test:id:one"),
+		Namespace:      "org-12",
+		Subject:        "user:checked-user",
+		RequesterOrgID: &orgID,
+		Evaluator:      accesscontrol.EvalPermission("folders:read", "test:id:one"),
 	})
+
 	require.NoError(t, err)
 	require.True(t, allowed)
 	require.Equal(t, 1, calls)
@@ -93,17 +122,23 @@ func TestLegacyCheckShadowNestedResolverUsesLocalEvaluation(t *testing.T) {
 
 func TestLegacyCheckShadowContainsResolverPanic(t *testing.T) {
 	ac := acimpl.ProvideAccessControlTest()
-	service := NewTestService("checked-user", []accesscontrol.Permission{{Action: "folders:read", Scope: "folders:uid:allowed"}}, nil).
+	service := NewTestService("checked-user", []accesscontrol.Permission{
+		{Action: "folders:read", Scope: "folders:uid:allowed"},
+	}, nil).
 		WithLegacyScopeResolvers(acimpl.ProvideScopeResolverRegistry(ac), types.OrgNamespaceFormatter)
 	ac.RegisterScopeAttributeResolver("test:id:", accesscontrol.ScopeAttributeResolverFunc(func(context.Context, int64, string) ([]string, error) {
 		panic("resolver failed")
 	}))
 	client := newEmbeddedLegacyCheckTestClient(service)
 	orgID := int64(12)
+
 	allowed, err := client.LegacyCheck(shadow.WithContext(t.Context()), legacyclient.LegacyCheckRequest{
-		Namespace: "org-12", Subject: "user:checked-user", RequesterOrgID: &orgID,
-		Evaluator: accesscontrol.EvalPermission("folders:read", "test:id:one"),
+		Namespace:      "org-12",
+		Subject:        "user:checked-user",
+		RequesterOrgID: &orgID,
+		Evaluator:      accesscontrol.EvalPermission("folders:read", "test:id:one"),
 	})
+
 	require.False(t, allowed)
 	require.ErrorContains(t, err, "legacy check shadow panicked: resolver failed")
 }
