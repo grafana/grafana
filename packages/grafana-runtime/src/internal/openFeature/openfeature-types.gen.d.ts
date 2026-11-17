@@ -198,6 +198,7 @@ declare module "@openfeature/core" {
     | "grafana.pluginExtensionReactElementProps"
     | "grafana.extensionSidebarFloating"
     | "grafana.extensionSidebarPlacements"
+    | "grafana.megaMenuPeekAndDock"
     | "grafana.otelLogDetails"
     | "grafana.announcementBannerDismissible"
     | "datasources.gatewayAuditPolicy"
