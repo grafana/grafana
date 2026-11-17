@@ -380,6 +380,91 @@ func TestPendingDeleteCollectionPagination(t *testing.T) {
 	}
 }
 
+func TestPendingDeleteCollectionInterleavedUpdates(t *testing.T) {
+	for _, tc := range []struct {
+		name              string
+		callerRV          bool
+		updateAfterRecord bool
+		replacement       bool
+		wantConflict      bool
+		wantIntent        bool
+	}{
+		{name: "same UID updated after list", wantIntent: true},
+		{name: "caller RV updated after list", callerRV: true, wantConflict: true},
+		{name: "caller RV updated after recording", callerRV: true, updateAfterRecord: true, wantConflict: true, wantIntent: true},
+		{name: "replacement after list", replacement: true, wantConflict: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := ctxWithNamespace()
+			store := &fakeFolderStorage{existing: map[string]*foldersv1.Folder{
+				"a": {ObjectMeta: metav1.ObjectMeta{Name: "a", UID: "uid-a", ResourceVersion: "1"}},
+			}}
+			update := func() {
+				obj, err := store.Get(ctx, "a", &metav1.GetOptions{})
+				require.NoError(t, err)
+				changed := obj.(*foldersv1.Folder).DeepCopy()
+				changed.ResourceVersion = "2"
+				if tc.replacement {
+					changed.UID = "replacement-uid"
+				}
+				_, _, err = store.Update(ctx, "a", rest.DefaultUpdatedObjectInfo(changed), nil, nil, false, &metav1.UpdateOptions{})
+				require.NoError(t, err)
+			}
+			inner := &pagedFolderStorage{watchableFolderStorage: &watchableFolderStorage{fakeFolderStorage: store}, list: func(options *metainternalversion.ListOptions) (runtime.Object, error) {
+				page, err := store.List(ctx, options)
+				require.NoError(t, err)
+				if !tc.updateAfterRecord {
+					update()
+				}
+				return page, nil
+			}}
+			intent := &fakePendingStorage{}
+			wrapped := &pendingDeleteStorage{Storage: inner, authorize: allowPendingDelete, enabled: func(context.Context) bool { return true }, record: func(ctx context.Context, f *foldersv1.Folder) error {
+				if err := pendingRecorder(intent)(ctx, f); err != nil {
+					return err
+				}
+				if tc.updateAfterRecord {
+					update()
+				}
+				return nil
+			}}
+			options := &metav1.DeleteOptions{}
+			if tc.callerRV {
+				rv := "1"
+				options.Preconditions = &metav1.Preconditions{ResourceVersion: &rv}
+			}
+			originalOptions := options.DeepCopy()
+			_, err := (pendingCollectionDeleter{storage: wrapped, inner: inner}).DeleteCollection(ctx, nil, options, &metainternalversion.ListOptions{Limit: 1})
+			if tc.wantConflict {
+				require.True(t, apierrors.IsConflict(err), "got %v", err)
+				require.Empty(t, store.deleted)
+				obj, getErr := store.Get(ctx, "a", &metav1.GetOptions{})
+				require.NoError(t, getErr)
+				current := obj.(*foldersv1.Folder)
+				require.Equal(t, "2", current.ResourceVersion)
+				uid := apitypes.UID("uid-a")
+				if tc.replacement {
+					uid = "replacement-uid"
+				}
+				require.Equal(t, uid, current.UID)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, []string{"a"}, store.deleted)
+				require.Empty(t, store.existing)
+			}
+			if tc.wantIntent {
+				require.NotNil(t, intent.entry)
+				require.Equal(t, "a-uid-a", intent.entry.Name)
+				require.Equal(t, "a", intent.entry.Spec.FolderName)
+				require.Equal(t, "uid-a", intent.entry.Spec.FolderUID)
+			} else {
+				require.Nil(t, intent.entry)
+			}
+			require.Equal(t, originalOptions, options, "caller preconditions must not be mutated")
+		})
+	}
+}
+
 func TestPendingDeleteOptionalInterfaces(t *testing.T) {
 	plain := &fakeFolderStorage{}
 	optional := &watchableFolderStorage{fakeFolderStorage: plain}

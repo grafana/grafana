@@ -206,8 +206,11 @@ func (s pendingCollectionDeleter) DeleteCollection(ctx context.Context, validati
 			if options != nil {
 				deleteOptions = options.DeepCopy()
 			}
-			uid, rv := f.UID, f.ResourceVersion
-			deleteOptions.Preconditions = &metav1.Preconditions{UID: &uid, ResourceVersion: &rv}
+			if deleteOptions.Preconditions == nil {
+				deleteOptions.Preconditions = &metav1.Preconditions{}
+			}
+			uid := f.UID
+			deleteOptions.Preconditions.UID = &uid
 			_, _, err := s.storage.Delete(ctx, f.Name, validation, deleteOptions)
 			if err != nil && !apierrors.IsNotFound(err) {
 				return nil, err
