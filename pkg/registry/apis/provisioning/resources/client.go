@@ -199,14 +199,15 @@ type ClientFactory interface {
 type clientFactory struct {
 	clientsProvider clientsProvider
 	// configuredResources may still name collections rather than served groups.
-	configuredResources SupportedResourcesFunc
+	configuredResources []SupportedResource
 	// storageGroup is the group this factory's API server holds, empty for a single server that
 	// holds everything. It decides which collections are expanded here.
 	storageGroup string
-	// expanded caches the result of resolving expandedFrom through discovery.
-	expandMu     sync.Mutex
-	expanded     []SupportedResource
-	expandedFrom []SupportedResource
+	// expanded caches the result of resolving collections through discovery.
+	expandMu sync.Mutex
+	expanded []SupportedResource
+	// current returns the supported set with the kinds that arrive after startup.
+	current SupportedResourcesFunc
 }
 
 // holds reports whether this factory's API server stores a collection, and so expands it. A
@@ -220,29 +221,21 @@ func (f *clientFactory) holds(collection string) bool {
 // is not cached — a cancelled or timed-out discovery would otherwise break provisioning until
 // restart — and the lock makes concurrent callers retry one at a time.
 func (f *clientFactory) supportedResources(ctx context.Context) ([]SupportedResource, error) {
-	configured := defaultSupportedResources(f.configuredResources())
 	f.expandMu.Lock()
 	defer f.expandMu.Unlock()
-	if f.expanded != nil && sameResources(f.expandedFrom, configured) {
+	if f.expanded != nil {
 		return f.expanded, nil
 	}
 	// Expansion sees the disabled declarations too: a member declared on its own and disabled is
 	// excluded even when an active collection covers it. Discovery sees only the active ones, so
 	// a failure in a collection nobody acts on cannot fail the expansion.
-	active := activeResources(configured)
-	expanded, err := expandCollections(ctx, discoveryKinds(f.clientsProvider, active, f.holds), configured, f.holds)
+	active := activeResources(f.configuredResources)
+	expanded, err := expandCollections(ctx, discoveryKinds(f.clientsProvider, active, f.holds), f.configuredResources, f.holds)
 	if err != nil {
 		return nil, err
 	}
 	f.expanded = activeResources(expanded)
-	f.expandedFrom = configured
 	return f.expanded, nil
-}
-
-func sameResources(a, b []SupportedResource) bool {
-	return slices.EqualFunc(a, b, func(x, y SupportedResource) bool {
-		return x.GroupKind == y.GroupKind && x.Capabilities.Equal(y.Capabilities)
-	})
 }
 
 // TODO: Rename to NamespacedClients
@@ -341,11 +334,12 @@ func NewClientFactory(configProvider apiserver.RestConfigProvider, supported ...
 	return NewClientFactoryWithResources(configProvider, StaticSupportedResources(supported...))
 }
 
-// NewClientFactoryWithResources is NewClientFactory with a supported set that can change.
+// NewClientFactoryWithResources is NewClientFactory with a supported set that can grow.
 func NewClientFactoryWithResources(configProvider apiserver.RestConfigProvider, supported SupportedResourcesFunc) ClientFactory {
 	return &clientFactory{
 		clientsProvider:     newSingleAPIClients(configProvider),
-		configuredResources: supported,
+		configuredResources: defaultSupportedResources(supported()),
+		current:             supported,
 	}
 }
 
@@ -361,19 +355,21 @@ func NewClientFactoryForMultipleAPIServers(configProviders map[string]apiserver.
 }
 
 // NewClientFactoryForMultipleAPIServersWithResources is NewClientFactoryForMultipleAPIServers
-// with a supported set that can change. The provider under DefaultGroup serves each group
-// that has no provider of its own.
+// with a supported set that can grow. The provider under DefaultGroup serves each group that
+// has no provider of its own.
 func NewClientFactoryForMultipleAPIServersWithResources(configProviders map[string]apiserver.RestConfigProvider, supported SupportedResourcesFunc) ClientFactory {
+	configured := defaultSupportedResources(supported())
 	clientFactories := make(map[string]ClientFactory)
 	for api, configProvider := range configProviders {
 		clientFactories[api] = &clientFactory{
 			clientsProvider:     newSingleAPIClients(configProvider),
-			configuredResources: supported,
+			configuredResources: configured,
 			storageGroup:        api,
+			current:             supported,
 		}
 	}
 
-	return &multiClientFactory{clientFactories: clientFactories, supportedResources: supported}
+	return &multiClientFactory{clientFactories: clientFactories, collections: collectionPatterns(configured)}
 }
 
 // activeResources returns only the active resources. Disabled resources are declared (and
@@ -400,8 +396,10 @@ func defaultSupportedResources(supported []SupportedResource) []SupportedResourc
 const DefaultGroup = ""
 
 type multiClientFactory struct {
-	clientFactories    map[string]ClientFactory
-	supportedResources SupportedResourcesFunc
+	clientFactories map[string]ClientFactory
+	// collections are the configured patterns, resolving a member group onto the API server
+	// registered for its collection.
+	collections []string
 }
 
 // collectionPatterns returns the configured groups that name a collection.
@@ -451,7 +449,7 @@ func (m *multiClientFactory) Clients(ctx context.Context, namespace string) (Res
 		namespace:                 namespace,
 		resourceClientsByAPIGroup: clients,
 		supportedResources:        supported,
-		collections:               collectionPatterns(m.supportedResources()),
+		collections:               m.collections,
 	}, nil
 }
 
@@ -463,10 +461,25 @@ func (f *clientFactory) Clients(ctx context.Context, namespace string) (Resource
 	return &resourceClients{
 		namespace:          namespace,
 		clientsProvider:    f.clientsProvider,
-		supportedResources: supported,
+		supportedResources: f.withCurrent(supported),
 		byKind:             make(map[schema.GroupVersionKind]*clientInfo),
 		byResource:         make(map[schema.GroupVersionResource]*clientInfo),
 	}, nil
+}
+
+// withCurrent adds the active kinds that arrived after the configured set was expanded. The
+// expansion is not done again, so a new kind cannot fail the clients of the configured ones.
+func (f *clientFactory) withCurrent(expanded []SupportedResource) []SupportedResource {
+	if f.current == nil {
+		return expanded
+	}
+	expanded = slices.Clip(expanded)
+	for _, r := range activeResources(f.current()) {
+		if !provisioningresources.IsCollection(r.Group) && !slices.ContainsFunc(expanded, func(e SupportedResource) bool { return e.GroupKind == r.GroupKind }) {
+			expanded = append(expanded, r)
+		}
+	}
+	return expanded
 }
 
 type resourceClients struct {

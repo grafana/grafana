@@ -318,6 +318,11 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 			return nil, fmt.Errorf("aggregated_server_url is required in [operator] section to serve resource %s/%s", r.Group, r.Kind)
 		}
 	}
+	// The aggregated server is the router. It serves each group without a server URL, accepts
+	// the provisioning audience for all of them, and publishes the app manifests.
+	if aggregatedServerURL != "" {
+		apiServerURLs[resources.DefaultGroup] = aggregatedServerURL
+	}
 
 	configProviders := make(map[string]apiserver.RestConfigProvider)
 
@@ -326,7 +331,16 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 		return nil, fmt.Errorf("failed to convert TLS config for transport: %w", err)
 	}
 
-	newConfigProvider := func(url string, audiences ...string) apiserver.RestConfigProvider {
+	for group, url := range apiServerURLs {
+		// Build audiences: always include the group, and add provisioning.GROUP only if different
+		audiences := []string{group}
+		if group != provisioning.GROUP {
+			audiences = append(audiences, provisioning.GROUP)
+		}
+		if group == resources.DefaultGroup {
+			audiences = []string{provisioning.GROUP}
+		}
+
 		config := &rest.Config{
 			APIPath: "/apis",
 			Host:    url,
@@ -343,22 +357,9 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 			},
 			RateLimiter: flowcontrol.NewFakeAlwaysRateLimiter(),
 		}
-		return NewDirectConfigProvider(config)
-	}
-	for group, url := range apiServerURLs {
-		// Build audiences: always include the group, and add provisioning.GROUP only if different
-		audiences := []string{group}
-		if group != provisioning.GROUP {
-			audiences = append(audiences, provisioning.GROUP)
-		}
-		configProviders[group] = newConfigProvider(url, audiences...)
+		configProviders[group] = NewDirectConfigProvider(config)
 	}
 
-	// The aggregated server is the router. It serves each group without a server URL, accepts
-	// the provisioning audience for all of them, and publishes the app manifests.
-	if aggregatedServerURL != "" {
-		configProviders[resources.DefaultGroup] = newConfigProvider(aggregatedServerURL, provisioning.GROUP)
-	}
 	gRPCAuth := c.Settings.SectionWithEnvOverrides("grpc_client_authentication")
 	supported, manifestWatcher, err := resources.RemoteManifestSupportedResources(supportedResources, resource.ManifestWatcherConfig{
 		DiscoveryURL:     aggregatedServerURL,
