@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"sync"
+	"sync/atomic"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -350,5 +352,69 @@ func TestAliasSupport(t *testing.T) {
 		found, exists = i.Plugin(ctx, pluginIdOld, "")
 		require.True(t, exists)
 		require.Equal(t, pluginOld, found)
+	})
+}
+
+func TestInMemory_RemoveAliasedPlugin(t *testing.T) {
+	for _, removeID := range []string{"plugin-new", "plugin-old"} {
+		t.Run("Remove by "+removeID, func(t *testing.T) {
+			i := NewInMemory()
+			ctx := context.Background()
+			require.NoError(t, i.Add(ctx, &plugins.Plugin{JSONData: plugins.JSONData{
+				ID:       "plugin-new",
+				AliasIDs: []string{"plugin-old"},
+			}}))
+
+			require.NoError(t, i.Remove(ctx, removeID, ""))
+
+			_, exists := i.Plugin(ctx, "plugin-new", "")
+			require.False(t, exists)
+			_, exists = i.Plugin(ctx, "plugin-old", "")
+			require.False(t, exists)
+			require.Empty(t, i.Plugins(ctx))
+		})
+	}
+}
+
+func TestInMemory_Concurrent(t *testing.T) {
+	t.Run("Only one concurrent Add of a plugin succeeds", func(t *testing.T) {
+		i := NewInMemory()
+		var added atomic.Int32
+		var wg sync.WaitGroup
+		start := make(chan struct{})
+		for range 50 {
+			wg.Go(func() {
+				<-start
+				if i.Add(context.Background(), &plugins.Plugin{JSONData: plugins.JSONData{ID: pluginID}}) == nil {
+					added.Add(1)
+				}
+			})
+		}
+		close(start)
+		wg.Wait()
+
+		require.Equal(t, int32(1), added.Load())
+		require.Len(t, i.Plugins(context.Background()), 1)
+	})
+
+	t.Run("Only one concurrent Remove of a plugin succeeds", func(t *testing.T) {
+		i := NewInMemory()
+		require.NoError(t, i.Add(context.Background(), &plugins.Plugin{JSONData: plugins.JSONData{ID: pluginID}}))
+		var removed atomic.Int32
+		var wg sync.WaitGroup
+		start := make(chan struct{})
+		for range 50 {
+			wg.Go(func() {
+				<-start
+				if i.Remove(context.Background(), pluginID, "") == nil {
+					removed.Add(1)
+				}
+			})
+		}
+		close(start)
+		wg.Wait()
+
+		require.Equal(t, int32(1), removed.Load())
+		require.Empty(t, i.Plugins(context.Background()))
 	})
 }
