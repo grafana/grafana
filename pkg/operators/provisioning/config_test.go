@@ -189,12 +189,29 @@ func TestClientsServeManifestKindsFromTheAggregatedServer(t *testing.T) {
 	require.Equal(t, token, router.accessToken("/apis/"+stubRouterGroup+"/v1/namespaces/default/widgets"))
 }
 
-func TestClientsFailForAConfiguredResourceWithNoServer(t *testing.T) {
-	cfg := newClientsConfig(t, newStubSigner(t).URL, nil)
-	cfg.Settings.ProvisioningResources = append(cfg.Settings.ProvisioningResources, "playlist.grafana.app/Playlist")
+// Production has no aggregated server yet, so the operators must run with the configured
+// resources only.
+func TestClientsWithoutAnAggregatedServer(t *testing.T) {
+	t.Run("serves the configured resources and watches no manifests", func(t *testing.T) {
+		cfg := newClientsConfig(t, newStubSigner(t).URL, nil)
 
-	_, err := cfg.Clients()
-	require.ErrorContains(t, err, "aggregated_server_url is required")
+		factory, err := cfg.Clients()
+		require.NoError(t, err)
+		require.NoError(t, services.StartAndAwaitRunning(t.Context(), cfg.manifestWatcher))
+		t.Cleanup(cfg.manifestWatcher.StopAsync)
+
+		clients, err := factory.Clients(t.Context(), "default")
+		require.NoError(t, err)
+		require.Len(t, clients.SupportedResources(), len(cfg.Settings.ProvisioningResources))
+	})
+
+	t.Run("fails for a configured resource that has no server", func(t *testing.T) {
+		cfg := newClientsConfig(t, newStubSigner(t).URL, nil)
+		cfg.Settings.ProvisioningResources = append(cfg.Settings.ProvisioningResources, "playlist.grafana.app/Playlist")
+
+		_, err := cfg.Clients()
+		require.ErrorContains(t, err, "aggregated_server_url is required")
+	})
 }
 
 func TestControllersOwnNATSSubscriber(t *testing.T) {
