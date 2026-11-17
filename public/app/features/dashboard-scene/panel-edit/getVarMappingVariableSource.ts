@@ -17,6 +17,7 @@ import {
   type VarMappingVariableValue,
 } from 'app/core/components/OptionsUI/varMappingVariables';
 
+import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor } from '../utils/utils';
 
 /**
@@ -72,6 +73,7 @@ export function getVarMappingVariableSource(panel: VizPanel): VarMappingVariable
         return false;
       }
       set.setState({ variables: [...set.state.variables, createSceneVariable(variable)] });
+      DashboardInteractions.panelOptionVariableCreated({ type: variable.type });
       return true;
     },
   };
