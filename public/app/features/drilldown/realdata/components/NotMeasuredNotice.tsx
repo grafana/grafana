@@ -4,7 +4,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
 
-import { signalLabels } from '../../DataSourceBar';
+import { signalLabels } from '../../dataSources';
 import { type Note } from '../liveScenario';
 
 interface Props {

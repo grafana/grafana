@@ -1,9 +1,21 @@
 import { type DataSourceInstanceListItem } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { getDataSourceInstanceList, getDefaultDataSourceInstanceListItem, locationService } from '@grafana/runtime';
 
 export type Signal = 'metrics' | 'logs' | 'traces' | 'profiles' | 'knowledgegraph' | 'sql';
 
 export const SIGNALS: Signal[] = ['metrics', 'logs', 'traces', 'profiles', 'knowledgegraph', 'sql'];
+
+export function signalLabels(): Record<Signal, string> {
+  return {
+    metrics: t('drilldown-datasources.metrics', 'Metrics'),
+    logs: t('drilldown-datasources.logs', 'Logs'),
+    traces: t('drilldown-datasources.traces', 'Traces'),
+    profiles: t('drilldown-datasources.profiles', 'Profiles'),
+    knowledgegraph: t('drilldown-datasources.knowledgegraph', 'Knowledge graph'),
+    sql: t('drilldown-datasources.sql', 'SQL'),
+  };
+}
 
 // SQL stays on the Home page because it is a Drilldown app, but how it fits the OTel or service story is not settled.
 // Nothing ties a database to a service, so a first load never picks one by name or by default: the user chooses it.

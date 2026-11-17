@@ -48,10 +48,12 @@ export function SpanWaterfallPanel({ tracesUrl }: Props) {
             {t('drilldown-real.evidence.no-trace', 'No trace found in this time range.')}
           </Text>
         )}
-        {TRACE.spans.map((span) => {
+        {/* A trace calls the same operation of a service many times, and the rows never reorder, so the position
+            tells them apart. */}
+        {TRACE.spans.map((span, index) => {
           const isSlow = span.depth > 0 && span.durationMs > TRACE.slowThresholdMs;
           return (
-            <div key={`${span.service}-${span.operation}`} className={styles.row}>
+            <div key={index} className={styles.row}>
               <span className={styles.label} style={{ paddingLeft: span.depth * 12 }}>
                 <Text variant="bodySmall" weight="medium">
                   {span.service}

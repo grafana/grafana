@@ -91,11 +91,6 @@ export async function lokiCount(query: string, time: number): Promise<number> {
   return response.data.result.reduce((sum, row) => sum + toNumber(row.value[1]), 0);
 }
 
-export async function lokiInstant(query: string, time: number): Promise<InstantSample[]> {
-  const response = await get<LokiResponse<PromInstantRow>>('logs', 'loki/api/v1/query', { query, time });
-  return response.data.result.map((row) => ({ metric: row.metric, value: toNumber(row.value[1]) }));
-}
-
 export async function lokiCountRange(query: string, start: number, end: number, step: number): Promise<number[]> {
   const response = await get<LokiResponse<PromRangeRow>>('logs', 'loki/api/v1/query_range', {
     query,
@@ -164,49 +159,4 @@ export interface OtlpBatch {
 export async function tempoTrace(traceId: string): Promise<OtlpBatch[]> {
   const response = await get<{ batches?: OtlpBatch[] }>('traces', `api/traces/${traceId}`);
   return response.batches ?? [];
-}
-
-export interface DatasourceJson {
-  jsonData?: {
-    tracesToLogsV2?: { datasourceUid?: string };
-    tracesToLogs?: { datasourceUid?: string };
-  };
-}
-
-// The data source settings, which hold the trace to logs mapping.
-export function datasourceJson(uid: string): Promise<DatasourceJson> {
-  return getBackendSrv().get<DatasourceJson>(`/api/datasources/uid/${uid}`, undefined, undefined, {
-    showErrorAlert: false,
-  });
-}
-
-export interface StreamLog {
-  timeNs: string;
-  level: string;
-  service: string;
-  line: string;
-}
-
-// Like lokiLogs, and keeps the service each line came from, so lines from many services can share one list.
-export async function lokiStreamLogs(
-  query: string,
-  startSec: number,
-  endSec: number,
-  limit: number
-): Promise<StreamLog[]> {
-  const response = await get<LokiResponse<LokiStream>>('logs', 'loki/api/v1/query_range', {
-    query,
-    start: startSec * 1e9,
-    end: endSec * 1e9,
-    limit,
-    direction: 'backward',
-  });
-  return response.data.result.flatMap((stream) =>
-    stream.values.map(([timeNs, line]) => ({
-      timeNs,
-      level: stream.stream.detected_level ?? '',
-      service: stream.stream.service_name ?? '',
-      line,
-    }))
-  );
 }

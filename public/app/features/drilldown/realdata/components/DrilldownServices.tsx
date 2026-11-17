@@ -64,12 +64,10 @@ export function DrilldownServices({ onPick }: Props) {
         )}
       </Stack>
       <div className={styles.grid}>
-        {YOUR_SERVICES.map((service) => (
-          <ServiceCard
-            key={service.name}
-            service={service}
-            onClick={() => onPick({ type: 'service', value: service.name })}
-          />
+        {/* The knowledge graph lists a service once per environment, so a name repeats. The list never reorders, so
+            the position tells the cards apart. */}
+        {YOUR_SERVICES.map((service, index) => (
+          <ServiceCard key={index} service={service} onClick={() => onPick({ type: 'service', value: service.name })} />
         ))}
       </div>
     </section>

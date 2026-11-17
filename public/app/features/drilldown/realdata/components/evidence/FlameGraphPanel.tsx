@@ -20,8 +20,9 @@ export function FlameGraphPanel() {
         <div className={styles.levels}>
           {FLAME_GRAPH.levels.map((frames, level) => (
             <div key={level} className={styles.level}>
-              {frames.map((frame) => (
-                <Tooltip key={frame.name} content={frame.name}>
+              {/* Frames in a level can share a name, and they never reorder, so the position tells them apart. */}
+              {frames.map((frame, index) => (
+                <Tooltip key={index} content={frame.name}>
                   <div
                     className={styles.frame(frame.color)}
                     style={{ left: `${frame.start * 100}%`, width: `${frame.width * 100}%` }}

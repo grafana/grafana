@@ -5,8 +5,7 @@ import { DataSourcePicker } from '@grafana/runtime';
 import { Button, Field, Modal, Stack } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
-import { signalLabels } from './DataSourceBar';
-import { SIGNALS, SIGNAL_TYPES, type Signal, dataSourceParam } from './dataSources';
+import { SIGNALS, SIGNAL_TYPES, type Signal, dataSourceParam, signalLabels } from './dataSources';
 
 export function DataSourcesButton() {
   const [open, setOpen] = useState(false);
@@ -60,7 +59,6 @@ function DataSourcesModal({ onDismiss }: { onDismiss: () => void }) {
                 type={SIGNAL_TYPES[signal]}
                 current={picked[signal] ?? saved(signal)}
                 noDefault
-                width={40}
                 onChange={(dataSource) => setPicked((previous) => ({ ...previous, [signal]: dataSource.uid }))}
               />
             </Field>
