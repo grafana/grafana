@@ -18,6 +18,7 @@ import {
 } from '../ExtensionSidebar/extensionSidebarUtils';
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
 
+import { AssistantChatButton } from './AssistantChatButton';
 import {
   ASSISTANT_PLUGIN_ID,
   getPageBeforeWorkspace,
@@ -63,16 +64,17 @@ function AssistantIconGradientDefs() {
 }
 
 /**
- * The Grafana Assistant's top-bar buttons. Elsewhere they are a "Chat" pill (the sidebar toggle) and a
- * "Workspace" button that opens the Assistant Workspace page; on that page they are a single "Exit Workspace"
- * button back to the page the user came from. Self-contained like `NavRightButton`/`InviteUserButton`: it decides
- * for itself whether it should render (workspace flag on, not a small screen, and the assistant available).
+ * The Grafana Assistant's top-bar buttons. Elsewhere they are a "Chat" pill (the sidebar toggle, with a menu that
+ * moves the Assistant and arranges the window) and a "Workspace" button that opens the Assistant Workspace page; on
+ * that page they are a single "Exit Workspace" button back to the page the user came from. Self-contained like
+ * `NavRightButton`/`InviteUserButton`: it decides for itself whether it should render (workspace flag on, not a small
+ * screen, and the assistant available).
  */
 export function AssistantToolbarButtons() {
   const styles = useStyles2(getStyles);
   const workspaceEnabled = useFlagAssistantFullscreenWorkspace();
   const isSmallScreen = !useMediaQueryMinWidth('sm');
-  const { availableComponents, dockedComponentId, setDockedComponentId, floatingHidden } = useExtensionSidebarContext();
+  const { availableComponents, dockedComponentId, floatingHidden } = useExtensionSidebarContext();
   // The top bar also renders outside a router, so the location comes from the location service.
   const location = useObservable(locationService.getLocationObservable(), locationService.getLocation());
   const onWorkspace = isAssistantWorkspacePath(location.pathname);
@@ -87,13 +89,12 @@ export function AssistantToolbarButtons() {
   useRememberPageBeforeWorkspace(workspaceEnabled, location, onWorkspace);
   useCollapseMegaMenuOnWorkspace(workspaceEnabled && onWorkspace);
 
-  // The plugin hides its sidebar entry on the workspace, so the assistant can be missing from
-  // `availableComponents` there; the page itself shows the plugin is installed.
-  const shouldRender = workspaceEnabled && !isSmallScreen && (onWorkspace || assistantComponentId !== undefined);
-  if (!shouldRender) {
+  if (!workspaceEnabled || isSmallScreen) {
     return null;
   }
 
+  // The plugin hides its sidebar entry on the workspace, so the assistant can be missing from
+  // `availableComponents` there; the page itself shows the plugin is installed.
   if (onWorkspace) {
     return (
       <>
@@ -114,34 +115,23 @@ export function AssistantToolbarButtons() {
     );
   }
 
+  if (assistantComponentId === undefined) {
+    return null;
+  }
+
   return (
     <>
       <AssistantIconGradientDefs />
-      <ToolbarButton
+      <AssistantChatButton
+        assistantComponentId={assistantComponentId}
+        isOpen={isOpen}
         icon={
           <span className={styles.chatIcon}>
             <Icon name="ai-sparkle" size="lg" />
           </span>
         }
-        onClick={() => setDockedComponentId(isOpen ? undefined : assistantComponentId)}
-        variant={isOpen ? 'active' : 'default'}
         className={cx(styles.button, isOpen && styles.chatButtonActive)}
-        data-testid={`extension-toolbar-button-${isOpen ? 'close' : 'open'}`}
-        aria-expanded={isOpen}
-        aria-pressed={isOpen}
-        aria-label={
-          isOpen
-            ? t('navigation.extension-sidebar.assistant-close', 'Close Grafana Assistant')
-            : t('navigation.extension-sidebar.assistant-open', 'Open Grafana Assistant')
-        }
-        tooltip={
-          isOpen
-            ? t('navigation.extension-sidebar.assistant-close-tooltip', 'Close Chat')
-            : t('navigation.extension-sidebar.assistant-open-tooltip', 'Open Chat')
-        }
-      >
-        {t('navigation.extension-sidebar.assistant-label', 'Chat')}
-      </ToolbarButton>
+      />
       <NavToolbarSeparator />
       <ToolbarButton
         icon={

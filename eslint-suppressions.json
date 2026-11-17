@@ -1058,7 +1058,7 @@
       "count": 5
     },
     "react-hooks/refs": {
-      "count": 3
+      "count": 2
     }
   },
   "public/app/core/components/AppChrome/FeatureControl/FeatureControlFlag.tsx": {
@@ -3645,9 +3645,6 @@
     }
   },
   "public/app/features/serviceaccounts/components/CreateTokenModal.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 4
-    },
     "react-hooks/set-state-in-effect": {
       "count": 1
     }

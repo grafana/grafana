@@ -13,6 +13,7 @@ import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { RuleListModeToggle } from '../rule-search/RuleListModeToggle';
 import { RuleSearchInput } from '../rule-search/RuleSearchInput';
 import { type RuleListMode, useRuleListSearchState } from '../rule-search/useRuleListSearchState';
+import { RuleSequenceDrawerProvider } from '../rule-sequences/RuleSequenceDrawer';
 import { useTrackRuleListPageView } from '../shared/analytics';
 
 import { RecordingRulesFoldersView } from './RecordingRulesFoldersView';
@@ -45,7 +46,9 @@ function RecordingRulesPage() {
               trailing={<RuleListModeToggle mode={mode} onChange={setMode} foldersDisabled={hasNonFolderFilters} />}
             />
           </div>
-          <RecordingRulesBody hasIssues={issues.length > 0} mode={mode} filter={filter} />
+          <RuleSequenceDrawerProvider>
+            <RecordingRulesBody hasIssues={issues.length > 0} mode={mode} filter={filter} />
+          </RuleSequenceDrawerProvider>
         </Stack>
       </Box>
     </AlertingPageWrapper>
