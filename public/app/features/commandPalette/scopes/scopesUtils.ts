@@ -20,10 +20,18 @@ export function useScopeServicesState() {
   const selectedScopes = useStagedScopes();
   const appliedScopes = useAppliedScopes();
   const tree = useScopesTree();
-  const { isAvailable, filterNode, selectScope, resetSelection, searchAllNodes, deselectScope, apply, getScopeNodes } =
-    useScopeActions();
+  const {
+    isScopesServiceAvailable,
+    filterNode,
+    selectScope,
+    resetSelection,
+    searchAllNodes,
+    deselectScope,
+    apply,
+    getScopeNodes,
+  } = useScopeActions();
 
-  if (!isAvailable) {
+  if (!isScopesServiceAvailable) {
     return {
       filterNode: () => Promise.resolve(),
       selectScope: () => {},

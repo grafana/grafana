@@ -74,6 +74,10 @@ export function useScopesSelectorOpened(): boolean {
   return useSelectorState((state) => state.opened);
 }
 
+/**
+ * The name of the node whose children are being loaded, if any. The tree shows a loading skeleton in place of that
+ * node's children until they arrive.
+ */
 export function useLoadingNodeName(): string | undefined {
   return useSelectorState((state) => state.loadingNodeName);
 }

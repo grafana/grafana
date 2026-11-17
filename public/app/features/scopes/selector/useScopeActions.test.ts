@@ -148,13 +148,13 @@ describe('useScopeActions', () => {
       });
     });
 
-    describe('isAvailable', () => {
+    describe('isScopesServiceAvailable', () => {
       it('should be true when there is a selector service, even a partial one', () => {
         useScopesServices.mockReturnValue({ scopesSelectorService: {} });
 
         const { result } = renderHook(() => useScopeActions());
 
-        expect(result.current.isAvailable).toBe(true);
+        expect(result.current.isScopesServiceAvailable).toBe(true);
       });
 
       it.each([
@@ -165,7 +165,7 @@ describe('useScopeActions', () => {
 
         const { result } = renderHook(() => useScopeActions());
 
-        expect(result.current.isAvailable).toBe(false);
+        expect(result.current.isScopesServiceAvailable).toBe(false);
       });
     });
 
@@ -213,6 +213,14 @@ describe('useScopeActions', () => {
 
     it('should not throw from setRedirectEnabled when services are undefined', () => {
       useScopesServices.mockReturnValue(undefined);
+
+      const { result } = renderHook(() => useScopeActions());
+
+      expect(() => result.current.setRedirectEnabled(true)).not.toThrow();
+    });
+
+    it('should not throw from setRedirectEnabled when the selector service does not have the method', () => {
+      useScopesServices.mockReturnValue({ scopesSelectorService: {} });
 
       const { result } = renderHook(() => useScopeActions());
 

@@ -8,11 +8,11 @@ import { useScopeActions } from './useScopeActions';
 export function useScopeNode(scopeNodeId?: string) {
   const [node, setNode] = useState<ScopeNode | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(false);
-  const { isAvailable, getScopeNode } = useScopeActions();
+  const { isScopesServiceAvailable, getScopeNode } = useScopeActions();
 
   useEffect(() => {
     const loadNode = async () => {
-      if (!scopeNodeId || !isAvailable) {
+      if (!scopeNodeId || !isScopesServiceAvailable) {
         setNode(undefined);
         return;
       }
@@ -27,7 +27,7 @@ export function useScopeNode(scopeNodeId?: string) {
       }
     };
     loadNode();
-  }, [scopeNodeId, isAvailable, getScopeNode]);
+  }, [scopeNodeId, isScopesServiceAvailable, getScopeNode]);
 
   return { node, isLoading };
 }

@@ -18,7 +18,8 @@ export interface ChangeScopesOptions {
  * This eliminates the need to drill these action methods through multiple component layers.
  *
  * When the selector service is missing, or only partly provided as in some tests, every action is a harmless no-op.
- * `isAvailable` tells a consumer whether there is a service at all, so it never has to look the service up itself.
+ * `isScopesServiceAvailable` tells a consumer whether there is a service at all, so it never has to look the service
+ * up itself.
  */
 export function useScopeActions() {
   const services = useScopesServices();
@@ -26,7 +27,7 @@ export function useScopeActions() {
 
   return useMemo(
     () => ({
-      isAvailable: Boolean(selector),
+      isScopesServiceAvailable: Boolean(selector),
       selectScope: selector?.selectScope ?? (() => {}),
       deselectScope: selector?.deselectScope ?? (() => {}),
       filterNode: selector?.filterNode ?? (() => {}),
@@ -46,7 +47,7 @@ export function useScopeActions() {
       getScopeNodes: selector?.getScopeNodes ?? (() => Promise.resolve([])),
       // setRedirectEnabled is a prototype method, so it is called through the service at call time to keep `this`
       // and to let a spy installed after mount still see the call.
-      setRedirectEnabled: (enabled: boolean) => selector?.setRedirectEnabled(enabled),
+      setRedirectEnabled: (enabled: boolean) => selector?.setRedirectEnabled?.(enabled),
       // Reads the applied scopes when called, for event handlers that need the value right now. A value captured
       // while rendering could be stale by the time the handler runs.
       getAppliedScopes: (): SelectedScope[] => selector?.state?.appliedScopes ?? [],

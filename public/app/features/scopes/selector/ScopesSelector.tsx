@@ -35,12 +35,13 @@ export const ScopesSelector = () => {
   const tree = useScopesTree();
   const opened = useScopesSelectorOpened();
   const loadingNodeName = useLoadingNodeName();
-  const { isAvailable, open, removeAllScopes, closeAndApply, closeAndReset, changeScopes } = useScopeActions();
+  const { isScopesServiceAvailable, open, removeAllScopes, closeAndApply, closeAndReset, changeScopes } =
+    useScopeActions();
   const recentScopes = useRecentScopes(appliedScopeIds);
 
   // Keyboard shortcut for closing and applying
   useEffect(() => {
-    if (!isAvailable) {
+    if (!isScopesServiceAvailable) {
       return;
     }
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -51,9 +52,9 @@ export const ScopesSelector = () => {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isAvailable, closeAndApply]);
+  }, [isScopesServiceAvailable, closeAndApply]);
 
-  if (!isAvailable || !scopes || !scopes.state.enabled) {
+  if (!isScopesServiceAvailable || !scopes || !scopes.state.enabled) {
     return null;
   }
 

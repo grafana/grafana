@@ -40,7 +40,7 @@ export function ScopesDashboardsTreeFolderItem({
   const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const styles = useStyles2(getStyles, megaMenuStyle, visualRefreshEnabled);
 
-  const { isAvailable: hasScopesSelector, changeScopes } = useScopeActions();
+  const { isScopesServiceAvailable, changeScopes } = useScopeActions();
   const scopesDashboardsService = useScopesServices()?.scopesDashboardsService ?? undefined;
   return (
     <div className={styles.container} role="treeitem" aria-selected={folder.expanded}>
@@ -71,7 +71,7 @@ export function ScopesDashboardsTreeFolderItem({
             onClick={async (e) => {
               e.preventDefault();
               e.stopPropagation();
-              if (folder.subScopeName && hasScopesSelector) {
+              if (folder.subScopeName && isScopesServiceAvailable) {
                 const activeSubScopePath = scopesDashboardsService?.state.navScopePath;
                 // Check if the active scope is a child of the current folder's scope
                 const activeScope = activeSubScopePath?.[activeSubScopePath.length - 1];

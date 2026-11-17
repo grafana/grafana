@@ -12,9 +12,9 @@ export function useRecentScopesActions(): CommandPaletteAction[] {
 
   const appliedScopeIds = useAppliedScopeIds();
   const recentScopes = useRecentScopes(appliedScopeIds);
-  const { isAvailable, changeScopes } = useScopeActions();
+  const { isScopesServiceAvailable, changeScopes } = useScopeActions();
 
-  if (!(scopeFiltersEnabled && isAvailable)) {
+  if (!(scopeFiltersEnabled && isScopesServiceAvailable)) {
     return [];
   }
 
