@@ -3550,6 +3550,15 @@ var (
 			Expression:   "false",
 			HideFromDocs: true,
 		},
+		{
+			Name:         "grafana.logsInfiniteScrollTop",
+			Description:  "Enable infinite scroll for logs when scrolling top",
+			Stage:        FeatureStagePublicPreview,
+			Owner:        grafanaObservabilityLogsSquad,
+			Generate:     Generate{React: true},
+			Expression:   "false",
+			HideFromDocs: true,
+		},
 
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//
