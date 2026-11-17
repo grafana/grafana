@@ -8,6 +8,7 @@ import {
   SessionInstrumentation,
   UserActionInstrumentation,
   ErrorsInstrumentation,
+  FrustrationInstrumentation,
   WebVitalsInstrumentation,
   ViewInstrumentation,
   NavigationInstrumentation,
@@ -133,6 +134,18 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
     expect(end - start).toBeLessThanOrEqual(maxExecutionTime);
   });
 
+  it('registers Grafana Faro as the routing fallback provider', () => {
+    new GrafanaJavascriptAgentBackend(options);
+
+    const instrumentations = initializeFaroMock.mock.calls[0][0].instrumentations;
+    const tracingInstrumentation = instrumentations?.find(
+      (instrumentation) => instrumentation instanceof TracingInstrumentation
+    );
+
+    expect(tracingInstrumentation).toBeDefined();
+    expect(Reflect.get(tracingInstrumentation!, 'options')).toEqual({ mode: 'routing', fallback: true });
+  });
+
   it('correctly set instrumentation based on options', async () => {
     let opts = {
       ...options,
@@ -144,12 +157,13 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
     new GrafanaJavascriptAgentBackend(opts);
 
     let lastInstrumentations = initializeFaroMock.mock.calls.at(-1)?.[0].instrumentations;
-    expect(lastInstrumentations).toHaveLength(6);
+    expect(lastInstrumentations).toHaveLength(7);
     expect(lastInstrumentations).toEqual(
       expect.arrayContaining([
         expect.any(SessionInstrumentation),
         expect.any(UserActionInstrumentation),
         expect.any(ErrorsInstrumentation),
+        expect.any(FrustrationInstrumentation),
         expect.any(WebVitalsInstrumentation),
         expect.any(ViewInstrumentation),
         expect.any(NavigationInstrumentation),
@@ -159,12 +173,13 @@ describe('GrafanaJavascriptAgentEchoBackend', () => {
     opts.tracingInstrumentalizationEnabled = true;
     new GrafanaJavascriptAgentBackend(opts);
     lastInstrumentations = initializeFaroMock.mock.calls.at(-1)?.[0].instrumentations;
-    expect(lastInstrumentations).toHaveLength(7);
+    expect(lastInstrumentations).toHaveLength(8);
     expect(lastInstrumentations).toEqual(
       expect.arrayContaining([
         expect.any(SessionInstrumentation),
         expect.any(UserActionInstrumentation),
         expect.any(ErrorsInstrumentation),
+        expect.any(FrustrationInstrumentation),
         expect.any(WebVitalsInstrumentation),
         expect.any(ViewInstrumentation),
         expect.any(NavigationInstrumentation),
