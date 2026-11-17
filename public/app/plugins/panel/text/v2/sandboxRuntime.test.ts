@@ -7,6 +7,7 @@ const command = {
   protocol: TEXT_FRAME_PROTOCOL,
   channel: 'test-channel',
   type: 'render',
+  revision: 0,
   html: '<p>Visible content</p>',
   globalCss: 'p{color:red}',
   diagramError: 'Diagram failed',
@@ -71,7 +72,13 @@ describe('sandbox runtime', () => {
 
   function expectNotification(type: string, fields = {}) {
     expect(postMessage).toHaveBeenCalledWith(
-      { type, protocol: TEXT_FRAME_PROTOCOL, channel: command.channel, ...fields },
+      {
+        type,
+        protocol: TEXT_FRAME_PROTOCOL,
+        channel: command.channel,
+        ...(type !== 'ready' && { revision: 0 }),
+        ...fields,
+      },
       parentOrigin
     );
   }
@@ -121,10 +128,38 @@ describe('sandbox runtime', () => {
     measure([], {} as ResizeObserver);
     measure([], {} as ResizeObserver);
     expect(postMessage.mock.calls.map(([notification]) => notification)).toEqual([
-      { protocol: TEXT_FRAME_PROTOCOL, channel: command.channel, type: 'resize', height: 43, contentHeight: 30 },
-      { protocol: TEXT_FRAME_PROTOCOL, channel: command.channel, type: 'resize', height: 43, contentHeight: 20 },
-      { protocol: TEXT_FRAME_PROTOCOL, channel: command.channel, type: 'resize', height: 25, contentHeight: 20 },
-      { protocol: TEXT_FRAME_PROTOCOL, channel: command.channel, type: 'resize', height: 1, contentHeight: 0 },
+      {
+        protocol: TEXT_FRAME_PROTOCOL,
+        channel: command.channel,
+        revision: 0,
+        type: 'resize',
+        height: 43,
+        contentHeight: 30,
+      },
+      {
+        protocol: TEXT_FRAME_PROTOCOL,
+        channel: command.channel,
+        revision: 0,
+        type: 'resize',
+        height: 43,
+        contentHeight: 20,
+      },
+      {
+        protocol: TEXT_FRAME_PROTOCOL,
+        channel: command.channel,
+        revision: 0,
+        type: 'resize',
+        height: 25,
+        contentHeight: 20,
+      },
+      {
+        protocol: TEXT_FRAME_PROTOCOL,
+        channel: command.channel,
+        revision: 0,
+        type: 'resize',
+        height: 1,
+        contentHeight: 0,
+      },
     ]);
   });
 
@@ -298,6 +333,106 @@ describe('sandbox runtime', () => {
     expectNotification('rendered');
     window.dispatchEvent(new Event('pagehide'));
     expect(renderer.mock.calls[0][2]()).toBe(true);
+  });
+
+  test('replaces protected content while retaining the stylesheet and resetting measurements', async () => {
+    initialize(policy);
+    violation(CSP_CHECK_URL);
+    await flush();
+    message();
+    await flush();
+    const style = document.head.querySelector('style')!;
+    const text = style.firstChild;
+    const oldContent = document.querySelector('.markdown-html')!;
+    postMessage.mockClear();
+    message({ ...command, revision: 1, html: '<p>Updated content</p>' });
+    message({ ...command, revision: 0, html: '<p>Stale content</p>' });
+    await flush();
+    expect(document.body).toHaveTextContent('Updated content');
+    expect(oldContent.isConnected).toBe(false);
+    expect(document.head.querySelectorAll('style')).toHaveLength(1);
+    expect(style.firstChild).toBe(text);
+    expect(disconnect).toHaveBeenCalledTimes(1);
+    expectNotification('rendered', { revision: 1 });
+    expectNotification('resize', { revision: 1, height: 1, contentHeight: 0 });
+    expect(postMessage.mock.calls.every(([notification]) => notification.revision === 1)).toBe(true);
+  });
+
+  test('cancels pending Mermaid loads and serializes overlapping diagram renders', async () => {
+    initialize(policy);
+    violation(CSP_CHECK_URL);
+    await flush();
+    let finish!: () => void;
+    const renderer = jest
+      .fn()
+      .mockImplementationOnce(
+        () =>
+          new Promise<void>((resolve) => {
+            finish = resolve;
+          })
+      )
+      .mockResolvedValue(undefined);
+    const append = document.head.append.bind(document.head);
+    jest.spyOn(document.head, 'append').mockImplementation((...nodes) => {
+      for (const node of nodes) {
+        if (node instanceof HTMLScriptElement && 'registerMermaid' in node) {
+          (node.registerMermaid as (render: typeof renderer) => void)(renderer);
+        }
+      }
+      append(...nodes);
+    });
+    const diagram = { ...command, html: '<pre class="mermaid">graph LR; A-->B</pre>', mermaid: {} };
+    message(diagram);
+    await flush();
+    message({ ...diagram, revision: 1 });
+    await flush();
+    message({ ...command, type: 'mermaid-source', source: '/* old source */' });
+    await flush();
+    expect(renderer).not.toHaveBeenCalled();
+    message({ ...command, revision: 1, type: 'mermaid-source', source: '/* current source */' });
+    await flush();
+    expect(renderer).toHaveBeenCalledTimes(1);
+    const cancelled = renderer.mock.calls[0][2];
+    expect(cancelled()).toBe(false);
+    message({ ...command, revision: 2, html: '<p>No diagram</p>' });
+    await flush();
+    expectNotification('rendered', { revision: 2 });
+    expect(cancelled()).toBe(true);
+    message({ ...diagram, revision: 3 });
+    await flush();
+    expect(renderer).toHaveBeenCalledTimes(1);
+    postMessage.mockClear();
+    finish();
+    await flush();
+    expectNotification('mermaid-needed', { revision: 3 });
+    expect(postMessage.mock.calls.some(([notification]) => notification.type === 'rendered')).toBe(false);
+    message({ ...command, revision: 3, type: 'mermaid-source', source: '/* new source */' });
+    await flush();
+    expect(renderer).toHaveBeenCalledTimes(2);
+    expectNotification('rendered', { revision: 3 });
+  });
+
+  test('supersedes a render waiting for fonts without reporting stale completion', async () => {
+    initialize(policy);
+    violation(CSP_CHECK_URL);
+    await flush();
+    let finish!: () => void;
+    const originalReady = document.fonts.ready;
+    Object.defineProperty(document.fonts, 'ready', {
+      configurable: true,
+      value: new Promise<FontFaceSet>((resolve) => {
+        finish = () => resolve(document.fonts);
+      }),
+    });
+    message();
+    message({ ...command, revision: 1, html: '<p>Latest</p>' });
+    postMessage.mockClear();
+    finish();
+    await flush();
+    expect(document.body).toHaveTextContent('Latest');
+    expectNotification('rendered', { revision: 1 });
+    expect(postMessage.mock.calls.every(([notification]) => notification.revision === 1)).toBe(true);
+    Object.defineProperty(document.fonts, 'ready', { value: originalReady });
   });
 
   test('unloading cancels pending diagrams, reports, and resize observation', async () => {

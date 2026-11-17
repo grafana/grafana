@@ -1,5 +1,5 @@
 import type { MermaidConfig } from 'mermaid';
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { textUtil } from '@grafana/data';
 
@@ -63,19 +63,29 @@ export interface SandboxFrameProps {
 }
 
 export function SandboxFrame(props: SandboxFrameProps) {
-  const { html, globalCss, policy, mermaid, diagramError } = props;
+  const { html, globalCss, policy, mermaid, diagramError, onState } = props;
+  const [canReuse, setCanReuse] = useState(true);
+  const reportState = useCallback(
+    (state: TextSandboxState | undefined) => {
+      if (state !== undefined) {
+        setCanReuse(state.status !== 'error' && state.resources.length === 0);
+      }
+      onState(state);
+    },
+    [onState]
+  );
   const [documentVersion, setDocumentVersion] = useState({ html, globalCss, policy, mermaid, diagramError, id: 0 });
-  if (
-    documentVersion.html !== html ||
+  const shellChanged =
     documentVersion.globalCss !== globalCss ||
     documentVersion.policy !== policy ||
     documentVersion.mermaid !== mermaid ||
-    documentVersion.diagramError !== diagramError
-  ) {
-    setDocumentVersion({ html, globalCss, policy, mermaid, diagramError, id: documentVersion.id + 1 });
+    documentVersion.diagramError !== diagramError;
+  if (documentVersion.html !== html || shellChanged) {
+    // Legacy scripts need a fresh realm. Failed documents and blocked stylesheet loads need a fresh attempt too.
+    const recreate = shellChanged || policy === undefined || !canReuse;
+    setDocumentVersion({ html, globalCss, policy, mermaid, diagramError, id: documentVersion.id + Number(recreate) });
   }
-  // Fresh documents isolate each render's messages and runtime; an applied CSP also cannot be relaxed in place.
-  return <FrameDocument key={documentVersion.id} {...props} />;
+  return <FrameDocument key={documentVersion.id} {...props} onState={reportState} />;
 }
 
 function FrameDocument(props: SandboxFrameProps) {
@@ -135,6 +145,17 @@ function useFrameRuntime({
   const [nonce] = useState(() => document.querySelector<HTMLScriptElement>('script[nonce]')?.nonce || randomId());
   const protectedFrame = policy !== undefined;
 
+  const controllerRef = useRef<ReturnType<typeof createFrameController> | null>(null);
+  const command = useMemo<Omit<RenderCommand, 'revision'>>(
+    () => ({ protocol: TEXT_FRAME_PROTOCOL, channel, type: 'render', html, globalCss, mermaid, diagramError }),
+    [channel, html, globalCss, mermaid, diagramError]
+  );
+  const latestCommand = useRef(command);
+  useLayoutEffect(() => {
+    latestCommand.current = command;
+    controllerRef.current?.update(command);
+  }, [command]);
+
   useLayoutEffect(() => {
     if (!iframeRef.current) {
       return;
@@ -144,15 +165,8 @@ function useFrameRuntime({
       policy,
       nonce,
       protectedFrame,
-      renderCommand: {
-        protocol: TEXT_FRAME_PROTOCOL,
-        channel,
-        type: 'render',
-        html,
-        globalCss,
-        mermaid,
-        diagramError,
-      },
+      renderCommand: latestCommand.current,
+      onReset: () => setSandboxState({ status: 'loading', resources: [] }),
       onStatus: (status) =>
         setSandboxState((current) => (current.status === status ? current : { ...current, status })),
       onResize: (incoming) =>
@@ -165,8 +179,12 @@ function useFrameRuntime({
           return resources === current.resources ? current : { ...current, resources };
         }),
     });
-    return controller.dispose;
-  }, [channel, diagramError, globalCss, html, mermaid, nonce, policy, protectedFrame]);
+    controllerRef.current = controller;
+    return () => {
+      controllerRef.current = null;
+      controller.dispose();
+    };
+  }, [channel, nonce, policy, protectedFrame]);
 
   return { iframeRef, sandboxState, dimensions, protectedFrame };
 }
@@ -176,7 +194,8 @@ interface FrameControllerOptions {
   policy?: string;
   nonce: string;
   protectedFrame: boolean;
-  renderCommand: RenderCommand;
+  renderCommand: Omit<RenderCommand, 'revision'>;
+  onReset: () => void;
   onStatus: (status: TextSandboxState['status']) => void;
   onResize: (dimensions: { height: number; contentHeight: number }) => void;
   onBlocked: (resources: BlockedResource[]) => void;
@@ -188,12 +207,14 @@ function createFrameController({
   nonce,
   protectedFrame,
   renderCommand,
+  onReset,
   onStatus,
   onResize,
   onBlocked,
 }: FrameControllerOptions) {
   // Protocol guards update synchronously, independently of React's reported state.
   let renderedDocument: string | undefined;
+  let revision = 0;
   let hasFailed = false;
   let mermaidRequested = false;
   let disposed = false;
@@ -231,7 +252,8 @@ function createFrameController({
       event.source !== iframe.contentWindow ||
       event.origin !== expectedOrigin ||
       !isFrameNotification(message) ||
-      message.channel !== renderCommand.channel
+      message.channel !== renderCommand.channel ||
+      (message.type !== 'ready' && message.revision !== revision)
     ) {
       return;
     }
@@ -259,6 +281,8 @@ function createFrameController({
     // Moving an iframe within the DOM reloads its srcdoc. The new document passed its own CSP check, so it is a
     // fresh attempt even if the previous one failed.
     if (renderedDocument !== undefined) {
+      revision++;
+      onReset();
       hasFailed = false;
       mermaidRequested = false;
       clearTimeout(watchdog);
@@ -267,7 +291,7 @@ function createFrameController({
       return;
     }
     renderedDocument = documentId;
-    iframe.contentWindow?.postMessage(renderCommand, targetOrigin);
+    iframe.contentWindow?.postMessage({ ...renderCommand, revision }, targetOrigin);
   }
 
   function loadRequestedMermaid() {
@@ -277,8 +301,8 @@ function createFrameController({
     mermaidRequested = true;
     const target = iframe.contentWindow;
     // A reloaded document requests its own copy; a late result for the previous one must not fail it.
-    const requestedBy = renderedDocument;
-    const isCurrent = () => !disposed && renderedDocument === requestedBy;
+    const requestedBy = revision;
+    const isCurrent = () => !disposed && revision === requestedBy;
     void loadSandboxMermaid()
       .then((source) => {
         if (!isCurrent() || hasFailed || !target || iframe.contentWindow !== target) {
@@ -288,6 +312,7 @@ function createFrameController({
           protocol: TEXT_FRAME_PROTOCOL,
           channel: renderCommand.channel,
           type: 'mermaid-source',
+          revision,
           source,
         };
         target.postMessage(command, targetOrigin);
@@ -331,7 +356,28 @@ function createFrameController({
     stopListening();
   }
 
-  return { dispose };
+  function update(next: Omit<RenderCommand, 'revision'>) {
+    if (
+      next.html === renderCommand.html &&
+      next.globalCss === renderCommand.globalCss &&
+      next.mermaid === renderCommand.mermaid &&
+      next.diagramError === renderCommand.diagramError
+    ) {
+      return;
+    }
+    renderCommand = next;
+    revision++;
+    hasFailed = false;
+    mermaidRequested = false;
+    onReset();
+    clearTimeout(watchdog);
+    watchdog = window.setTimeout(fail, WATCHDOG_TIMEOUT_MS);
+    if (renderedDocument !== undefined) {
+      iframe.contentWindow?.postMessage({ ...renderCommand, revision }, targetOrigin);
+    }
+  }
+
+  return { dispose, update };
 }
 
 function buildFrameShell({

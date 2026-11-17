@@ -29,7 +29,15 @@ async function frame() {
   return screen.getByTitle<HTMLIFrameElement>('Text content');
 }
 
+const notifications = new WeakMap<HTMLIFrameElement, { document: string; revision: number }>();
+
 function notify(frame: HTMLIFrameElement, type: string, extra = {}, envelope = {}) {
+  const current = notifications.get(frame) ?? { document: 'first', revision: 0 };
+  if (type === 'ready' && 'document' in extra && extra.document !== current.document) {
+    current.document = String(extra.document);
+    current.revision++;
+  }
+  notifications.set(frame, current);
   const shell = new DOMParser().parseFromString(frame.srcdoc, 'text/html');
   const channel = shell.querySelector('script')!.dataset.channel;
   fireEvent(
@@ -37,7 +45,14 @@ function notify(frame: HTMLIFrameElement, type: string, extra = {}, envelope = {
     new MessageEvent('message', {
       source: frame.contentWindow,
       origin: frame.hasAttribute('sandbox') ? 'null' : window.location.origin,
-      data: { protocol: TEXT_FRAME_PROTOCOL, channel, type, ...(type === 'ready' && { document: 'first' }), ...extra },
+      data: {
+        protocol: TEXT_FRAME_PROTOCOL,
+        channel,
+        revision: current.revision,
+        type,
+        ...(type === 'ready' && { document: 'first' }),
+        ...extra,
+      },
       ...envelope,
     })
   );
@@ -347,31 +362,23 @@ it('fills the minimum height without reporting it as content height', async () =
   expect(element.style.height).toBe('450px');
 });
 
-it.each(['html', 'policy', 'globalCss'] as const)(
-  'recreates on %s changes and ignores the old generation',
-  async (field) => {
-    const options = props();
-    const { rerender } = render(<SandboxFrame {...options} />);
-    const previous = await frame();
-    const staleWindow = previous.contentWindow;
-    const staleChannel = new DOMParser().parseFromString(previous.srcdoc, 'text/html').querySelector('script')!.dataset
-      .channel;
-    notify(previous, 'ready');
-    rerender(<SandboxFrame {...options} {...{ [field]: field === 'policy' ? undefined : options[field] + ' ' }} />);
-    const current = await frame();
-    expect(current).not.toBe(previous);
-    notify(
-      current,
-      'blocked',
-      { resources: [{ directive: 'img-src' }], channel: staleChannel },
-      { source: staleWindow }
-    );
-    expect(current).toBeVisible();
-    notify(current, 'ready');
-    notify(current, 'rendered');
-    expect(options.onState).toHaveBeenLastCalledWith({ status: 'ready', resources: [] });
-  }
-);
+it.each(['policy', 'globalCss'] as const)('recreates on %s changes and ignores the old generation', async (field) => {
+  const options = props();
+  const { rerender } = render(<SandboxFrame {...options} />);
+  const previous = await frame();
+  const staleWindow = previous.contentWindow;
+  const staleChannel = new DOMParser().parseFromString(previous.srcdoc, 'text/html').querySelector('script')!.dataset
+    .channel;
+  notify(previous, 'ready');
+  rerender(<SandboxFrame {...options} {...{ [field]: field === 'policy' ? undefined : options[field] + ' ' }} />);
+  const current = await frame();
+  expect(current).not.toBe(previous);
+  notify(current, 'blocked', { resources: [{ directive: 'img-src' }], channel: staleChannel }, { source: staleWindow });
+  expect(current).toBeVisible();
+  notify(current, 'ready');
+  notify(current, 'rendered');
+  expect(options.onState).toHaveBeenLastCalledWith({ status: 'ready', resources: [] });
+});
 
 it('fails closed if bootstrap or rendering never completes', async () => {
   const options = props();
@@ -438,7 +445,7 @@ it('discards bootstrap completion for a replaced document', async () => {
   const options = props();
   const { rerender } = render(<SandboxFrame {...options} />);
   const previous = screen.getByTitle<HTMLIFrameElement>('Text content');
-  rerender(<SandboxFrame {...options} html="<p>Updated content</p>" />);
+  rerender(<SandboxFrame {...options} globalCss="p{color:red}" />);
   const current = await frame();
   await act(async () => resolve('stale runtime'));
   expect(current.srcdoc).toContain('/* trusted runtime */');
@@ -538,7 +545,7 @@ it.each(['refresh', 'unmount'] as const)('discards Mermaid loading after %s', as
     unmount();
   }
   await act(async () => resolve('late Mermaid source'));
-  expect(postMessage).not.toHaveBeenCalled();
+  expect(postMessage).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'mermaid-source' }), '*');
 });
 
 it('reports a Mermaid loading error without removing permitted content', async () => {
@@ -609,14 +616,14 @@ it('fails closed on a forbidden shell policy and preserves TrustedHTML branding 
     const errorCount = jest.mocked(options.onState).mock.calls.length;
     act(() => jest.runAllTimers());
     expect(options.onState).toHaveBeenCalledTimes(errorCount);
-    view.rerender(<SandboxFrame {...options} html="<p>Refreshed secret</p>" />);
+    view.rerender(<SandboxFrame {...options} globalCss="p{color:red}" html="<p>Refreshed secret</p>" />);
     await frame();
     expect(createPolicy).toHaveBeenCalledWith('grafana-text-panel-shell', expect.any(Object));
     const shell = createHTML.mock.calls[0][0];
     expect(shell).toContain('trusted runtime');
     expect(shell).not.toContain('Refreshed secret');
     expect(setter).toHaveBeenCalledWith(createHTML.mock.results[0].value);
-    view.rerender(<SandboxFrame {...options} html="<p>Another generation</p>" />);
+    view.rerender(<SandboxFrame {...options} globalCss="p{color:blue}" html="<p>Another generation</p>" />);
     await frame();
     expect(createPolicy).toHaveBeenCalledTimes(2);
   } finally {
@@ -746,4 +753,75 @@ it('notifies height consumers only when frame dimensions change', async () => {
   expect(options.onHeight).toHaveBeenCalledTimes(3);
   expect(options.onHeight).toHaveBeenLastCalledWith(150, 140);
   expect(element.style.height).toBe('150px');
+});
+
+it('reuses protected documents for content updates and rejects replies from earlier renders', async () => {
+  const options = props();
+  const { rerender } = render(<SandboxFrame {...options} />);
+  const element = await frame();
+  const shell = element.srcdoc;
+  const postMessage = jest.spyOn(element.contentWindow!, 'postMessage').mockImplementation(() => {});
+  notify(element, 'ready');
+  notify(element, 'rendered');
+  rerender(<SandboxFrame {...options} html="<p>Updated</p>" />);
+  expect(await frame()).toBe(element);
+  expect(element.srcdoc).toBe(shell);
+  expect(postMessage).toHaveBeenLastCalledWith(
+    expect.objectContaining({ type: 'render', revision: 1, html: '<p>Updated</p>' }),
+    '*'
+  );
+  expect(options.onState).toHaveBeenLastCalledWith({ status: 'loading', resources: [] });
+  for (const revision of [0, undefined, -1, 1.5, Infinity]) {
+    notify(element, 'rendered', { revision });
+    notify(element, 'error', { revision });
+    notify(element, 'resize', { revision, height: 999, contentHeight: 999 });
+    notify(element, 'blocked', { revision, resources: [{ directive: 'img-src' }] });
+  }
+  expect(options.onState).toHaveBeenLastCalledWith({ status: 'loading', resources: [] });
+  expect(options.onHeight).not.toHaveBeenCalled();
+  notify(element, 'rendered', { revision: 1 });
+  notify(element, 'resize', { revision: 1, height: 42, contentHeight: 40 });
+  expect(options.onState).toHaveBeenLastCalledWith({ status: 'ready', resources: [] });
+  expect(options.onHeight).toHaveBeenLastCalledWith(42, 40);
+});
+
+it('sends only the latest content when updated before the CSP handshake', async () => {
+  const options = props();
+  const { rerender } = render(<SandboxFrame {...options} />);
+  const element = await frame();
+  const postMessage = jest.spyOn(element.contentWindow!, 'postMessage').mockImplementation(() => {});
+  rerender(<SandboxFrame {...options} html="<p>Latest</p>" />);
+  expect(await frame()).toBe(element);
+  expect(postMessage).not.toHaveBeenCalled();
+  notify(element, 'ready');
+  expect(postMessage).toHaveBeenCalledTimes(1);
+  expect(postMessage).toHaveBeenLastCalledWith(expect.objectContaining({ html: '<p>Latest</p>', revision: 1 }), '*');
+  act(() => jest.advanceTimersByTime(WATCHDOG_TIMEOUT_MS));
+  expect(options.onState).toHaveBeenLastCalledWith({ status: 'error', resources: [] });
+});
+
+it('recreates legacy documents on content changes to discard script side effects', async () => {
+  const options = props({ policy: undefined });
+  const { rerender } = render(<SandboxFrame {...options} />);
+  const element = await frame();
+  rerender(<SandboxFrame {...options} html="<p>Updated</p>" />);
+  expect(await frame()).not.toBe(element);
+});
+
+it('recreates blocked documents so unchanged stylesheet violations are reported again', async () => {
+  const options = props();
+  const { rerender } = render(<SandboxFrame {...options} />);
+  const element = await frame();
+  notify(element, 'ready');
+  notify(element, 'blocked', { resources: [{ directive: 'font-src', origin: 'https://fonts.test' }] });
+  rerender(<SandboxFrame {...options} html="<p>Updated</p>" />);
+  const updated = await frame();
+  expect(updated).not.toBe(element);
+  expect(options.onState).toHaveBeenLastCalledWith({ status: 'loading', resources: [] });
+  notify(updated, 'ready');
+  notify(updated, 'blocked', { resources: [{ directive: 'font-src', origin: 'https://fonts.test' }] });
+  expect(options.onState).toHaveBeenLastCalledWith({
+    status: 'loading',
+    resources: [{ directive: 'font-src', origin: 'https://fonts.test' }],
+  });
 });

@@ -20,6 +20,7 @@ export function randomId() {
 export interface RenderCommand {
   protocol: typeof TEXT_FRAME_PROTOCOL;
   channel: string;
+  revision: number;
   type: 'render';
   html: string;
   globalCss: string;
@@ -30,6 +31,7 @@ export interface RenderCommand {
 export interface MermaidCommand {
   protocol: typeof TEXT_FRAME_PROTOCOL;
   channel: string;
+  revision: number;
   type: 'mermaid-source';
   source: string;
 }
@@ -42,7 +44,7 @@ export type FrameNotification =
 
 export function isFrameNotification(
   value: unknown
-): value is FrameNotification & { protocol: string; channel: string } {
+): value is FrameNotification & { protocol: string; channel: string; revision?: number } {
   if (
     !value ||
     typeof value !== 'object' ||
@@ -51,6 +53,12 @@ export function isFrameNotification(
     !('channel' in value) ||
     typeof value.channel !== 'string' ||
     !('type' in value)
+  ) {
+    return false;
+  }
+  if (
+    value.type !== 'ready' &&
+    (!('revision' in value) || !Number.isSafeInteger(value.revision) || Number(value.revision) < 0)
   ) {
     return false;
   }

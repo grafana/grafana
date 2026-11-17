@@ -38,7 +38,10 @@ const scriptPolicy = window.trustedTypes?.createPolicy('grafana-text-panel-runti
 
 let disposed = false;
 let verified = policy === undefined;
-let started = false;
+let revision = -1;
+let style: HTMLStyleElement | undefined;
+let globalCss: string | undefined;
+let diagramWork: Promise<void> = Promise.resolve();
 let violationTimer = 0;
 let verificationTimer = 0;
 let readyTimer = 0;
@@ -57,7 +60,10 @@ const check = document.createElement('img');
 
 function send(message: FrameNotification) {
   if (!disposed) {
-    window.parent.postMessage({ ...message, protocol: TEXT_FRAME_PROTOCOL, channel }, parentOrigin);
+    window.parent.postMessage(
+      { ...message, protocol: TEXT_FRAME_PROTOCOL, channel, ...(message.type !== 'ready' && { revision }) },
+      parentOrigin
+    );
   }
 }
 
@@ -173,14 +179,15 @@ function measure() {
 }
 
 async function renderDiagrams(command: RenderCommand, container: HTMLElement) {
-  if (!command.mermaid || !container.querySelector('code.language-mermaid, pre.mermaid') || disposed) {
+  const isCancelled = () => disposed || revision !== command.revision;
+  if (!command.mermaid || !container.querySelector('code.language-mermaid, pre.mermaid') || isCancelled()) {
     return;
   }
   const source = await new Promise<string>((resolve) => {
     receiveMermaid = resolve;
     send({ type: 'mermaid-needed' });
   });
-  if (disposed) {
+  if (isCancelled()) {
     return;
   }
   let render: RenderDiagrams | undefined;
@@ -196,13 +203,20 @@ async function renderDiagrams(command: RenderCommand, container: HTMLElement) {
   if (!render) {
     throw new Error('Text diagram runtime did not initialize');
   }
-  await render(command, container, () => disposed);
+  await render(command, container, isCancelled);
 }
 
 async function render(command: RenderCommand) {
-  const style = document.createElement('style');
-  style.textContent = `${command.globalCss}\nhtml,body{height:auto!important;min-height:0!important;background:transparent!important}body{margin:0;overflow:hidden!important}.markdown-html{display:flow-root}.mermaid-diagram{margin:16px 0}.mermaid-diagram svg{max-width:100%;height:auto}.mermaid-diagram-error{color:var(--text-error,#f2495c);margin-bottom:4px}`;
-  document.head.append(style);
+  const isCancelled = () => disposed || revision !== command.revision;
+  if (!style) {
+    style = document.createElement('style');
+    document.head.append(style);
+  }
+  if (globalCss !== command.globalCss) {
+    globalCss = command.globalCss;
+    style.textContent = `${command.globalCss}\nhtml,body{height:auto!important;min-height:0!important;background:transparent!important}body{margin:0;overflow:hidden!important}.markdown-html{display:flow-root}.mermaid-diagram{margin:16px 0}.mermaid-diagram svg{max-width:100%;height:auto}.mermaid-diagram-error{color:var(--text-error,#f2495c);margin-bottom:4px}`;
+  }
+  content?.remove();
   content = document.createElement('div');
   content.className = 'markdown-html';
   content.setAttribute('data-text-blocks', '');
@@ -215,17 +229,26 @@ async function render(command: RenderCommand) {
   } else {
     content.innerHTML = command.html;
   }
+  const container = content;
   observer = new ResizeObserver(measure);
   observer.observe(content);
   await document.fonts.ready;
-  await renderDiagrams(command, content);
-  if (disposed) {
+  if (isCancelled()) {
+    return;
+  }
+  if (command.mermaid && container.querySelector('code.language-mermaid, pre.mermaid')) {
+    // Mermaid uses document-global state and ids, so let cancelled work finish before starting another diagram.
+    const work = diagramWork.then(() => renderDiagrams(command, container));
+    diagramWork = work.catch(() => {});
+    await work;
+  }
+  if (isCancelled()) {
     return;
   }
   measure();
   // Hidden/offscreen cross-origin frames can suspend animation frames. Yield a task for queued CSP reports instead.
   readyTimer = window.setTimeout(() => {
-    if (!disposed) {
+    if (!isCancelled()) {
       send({ type: 'rendered' });
     }
   }, 0);
@@ -244,21 +267,34 @@ function onMessage(event: MessageEvent<RenderCommand | MermaidCommand>) {
   ) {
     return;
   }
-  if (command.type === 'mermaid-source' && typeof command.source === 'string') {
+  if (command.type === 'mermaid-source' && command.revision === revision && typeof command.source === 'string') {
     receiveMermaid?.(command.source);
     receiveMermaid = undefined;
     return;
   }
   if (
     command.type !== 'render' ||
-    started ||
+    !Number.isSafeInteger(command.revision) ||
+    command.revision <= revision ||
+    (policy === undefined && revision >= 0) ||
     typeof command.html !== 'string' ||
     typeof command.globalCss !== 'string'
   ) {
     return;
   }
-  started = true;
-  void render(command).catch(() => send({ type: 'error' }));
+  revision = command.revision;
+  receiveMermaid?.('');
+  receiveMermaid = undefined;
+  observer?.disconnect();
+  clearTimeout(violationTimer);
+  clearTimeout(readyTimer);
+  resources.length = 0;
+  lastDimensions = undefined;
+  void render(command).catch(() => {
+    if (revision === command.revision) {
+      send({ type: 'error' });
+    }
+  });
 }
 
 function dispose() {
