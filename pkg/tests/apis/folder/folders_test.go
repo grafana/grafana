@@ -58,6 +58,33 @@ var gvr = schema.GroupVersionResource{
 	Resource: "folders",
 }
 
+func TestIntegrationPendingDeletionResource(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		AppModeProduction:              true,
+		PendingDeletionResourceEnabled: true,
+	})
+	disco := helper.NewDiscoveryClient()
+	resources, err := disco.ServerResourcesForGroupVersion("folder.grafana.app/v1alpha1")
+	require.NoError(t, err)
+	require.Len(t, resources.APIResources, 1)
+	require.Equal(t, "pendingfolderdeletions", resources.APIResources[0].Name)
+	require.Equal(t, "PendingFolderDeletion", resources.APIResources[0].Kind)
+	for _, version := range []string{"v1", "v1beta1"} {
+		resources, err := disco.ServerResourcesForGroupVersion("folder.grafana.app/" + version)
+		require.NoError(t, err)
+		require.Len(t, resources.APIResources, 6)
+		for _, resource := range resources.APIResources {
+			require.NotEqual(t, "pendingfolderdeletions", resource.Name)
+		}
+	}
+	client, err := dynamic.NewForConfig(helper.NewAdminRestConfig())
+	require.NoError(t, err)
+	_, err = client.Resource(schema.GroupVersionResource{Group: folders.GROUP, Version: "v1alpha1", Resource: "pendingfolderdeletions"}).Namespace("default").List(context.Background(), metav1.ListOptions{})
+	require.True(t, apierrors.IsForbidden(err), "admin user must not access internal intents: %v", err)
+	apis.VerifyOpenAPISnapshots(t, "../openapi_snapshots", schema.GroupVersion{Group: folders.GROUP, Version: "v1alpha1"}, helper)
+}
+
 func TestIntegrationFoldersApp(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -71,6 +98,8 @@ func TestIntegrationFoldersApp(t *testing.T) {
 			EnableFeatureToggles: []string{},
 		})
 		disco := helper.NewDiscoveryClient()
+		_, err := disco.ServerResourcesForGroupVersion("folder.grafana.app/v1alpha1")
+		require.True(t, apierrors.IsNotFound(err), "default-off alpha discovery: %v", err)
 		resources, err := disco.ServerResourcesForGroupVersion("folder.grafana.app/v1")
 		require.NoError(t, err)
 
@@ -142,13 +171,6 @@ func TestIntegrationFoldersApp(t *testing.T) {
 						"patch",
 						"update"
 					]
-				},
-				{
-					"name": "pendingfolderdeletions",
-					"singularName": "pendingfolderdeletion",
-					"namespaced": true,
-					"kind": "PendingFolderDeletion",
-					"verbs": ["create", "delete", "deletecollection", "get", "list", "patch", "update", "watch"]
 				}
 			]
 		}`, string(v1Disco))

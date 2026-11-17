@@ -5,14 +5,14 @@ import (
 
 	"github.com/grafana/authlib/authz"
 	"github.com/grafana/authlib/types"
-	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	foldersv1alpha1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 )
 
 func pendingDeletionAuthorizer(base authorizer.Authorizer) authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
-		resource := foldersv1.PendingFolderDeletionResourceInfo.GroupResource()
+		resource := foldersv1alpha1.PendingFolderDeletionResourceInfo.GroupResource()
 		if !attr.IsResourceRequest() || attr.GetAPIGroup() != resource.Group || attr.GetResource() != resource.Resource {
 			return base.Authorize(ctx, attr)
 		}

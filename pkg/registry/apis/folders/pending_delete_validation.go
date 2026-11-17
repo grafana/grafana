@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	foldersv1alpha1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1alpha1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/admission"
@@ -14,7 +14,7 @@ func validatePendingDeletion(a admission.Attributes) error {
 	if a.GetOperation() != admission.Create && a.GetOperation() != admission.Update {
 		return nil
 	}
-	p, ok := a.GetObject().(*foldersv1.PendingFolderDeletion)
+	p, ok := a.GetObject().(*foldersv1alpha1.PendingFolderDeletion)
 	if !ok {
 		return fmt.Errorf("expected PendingFolderDeletion")
 	}
@@ -32,7 +32,7 @@ func validatePendingDeletion(a admission.Attributes) error {
 		}
 	}
 	if a.GetOperation() == admission.Update {
-		old, ok := a.GetOldObject().(*foldersv1.PendingFolderDeletion)
+		old, ok := a.GetOldObject().(*foldersv1alpha1.PendingFolderDeletion)
 		if !ok {
 			return fmt.Errorf("expected old PendingFolderDeletion")
 		}
@@ -48,7 +48,7 @@ func validatePendingDeletion(a admission.Attributes) error {
 		}
 	}
 	if len(errs) > 0 {
-		return apierrors.NewInvalid(foldersv1.PendingFolderDeletionResourceInfo.GroupVersionKind().GroupKind(), p.Name, errs)
+		return apierrors.NewInvalid(foldersv1alpha1.PendingFolderDeletionResourceInfo.GroupVersionKind().GroupKind(), p.Name, errs)
 	}
 	return nil
 }

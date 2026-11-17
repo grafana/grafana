@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"testing"
 
+	apiserverbuilder "github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/apiserver/restoptions"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -12,14 +14,18 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/endpoints/request"
+	genericapiserver "k8s.io/apiserver/pkg/server"
+	"k8s.io/apiserver/pkg/storage/storagebackend"
 	dynamicfake "k8s.io/client-go/dynamic/fake"
 
 	"github.com/grafana/authlib/authn"
 	authtypes "github.com/grafana/authlib/types"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	pending "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1alpha1"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -37,9 +43,43 @@ import (
 func TestFolderAPIBuilder_PendingDeletionSchema(t *testing.T) {
 	scheme := runtime.NewScheme()
 	require.NoError(t, (&FolderAPIBuilder{}).InstallSchema(scheme))
+	require.False(t, scheme.Recognizes(schema.GroupVersionKind{Group: "folder.grafana.app", Version: "v1alpha1", Kind: "Folder"}))
+	for _, version := range []string{"v1", "v1beta1"} {
+		require.True(t, scheme.Recognizes(schema.GroupVersionKind{Group: "folder.grafana.app", Version: version, Kind: "Folder"}))
+	}
+	require.Equal(t, "v1", scheme.PrioritizedVersionsForGroup("folder.grafana.app")[0].Version)
 	for _, kind := range []string{"PendingFolderDeletion", "PendingFolderDeletionList"} {
-		_, err := scheme.New(schema.GroupVersionKind{Group: "folder.grafana.app", Version: "v1", Kind: kind})
+		_, err := scheme.New(schema.GroupVersionKind{Group: "folder.grafana.app", Version: "v1alpha1", Kind: kind})
 		require.NoError(t, err)
+		require.False(t, scheme.Recognizes(schema.GroupVersionKind{Group: "folder.grafana.app", Version: "v1", Kind: kind}))
+	}
+}
+
+func TestFolderAPIBuilder_PendingDeletionStorage(t *testing.T) {
+	for _, enabled := range []bool{false, true} {
+		t.Run(fmt.Sprint(enabled), func(t *testing.T) {
+			b := NewAPIService(nil, nil, featuremgmt.WithFeatures(), nil, nil, nil, nil, 4, nil, WithPendingDeletionResourceEnabled(enabled))
+			scheme := runtime.NewScheme()
+			require.NoError(t, b.InstallSchema(scheme))
+			codecs := serializer.NewCodecFactory(scheme)
+			optsGetter, err := restoptions.NewRESTOptionsGetterMemory(storagebackend.Config{Codec: codecs.LegacyCodec(b.GetGroupVersions()...)}, nil)
+			require.NoError(t, err)
+			info := genericapiserver.NewDefaultAPIGroupInfo(folders.GROUP, scheme, metav1.ParameterCodec, codecs)
+			require.NoError(t, b.UpdateAPIGroupInfo(&info, apiserverbuilder.APIGroupOptions{Scheme: scheme, OptsGetter: optsGetter}))
+			if enabled {
+				require.Len(t, info.VersionedResourcesStorageMap, 3)
+				require.Len(t, info.VersionedResourcesStorageMap["v1alpha1"], 1)
+				require.Same(t, b.pendingDeletionStore, info.VersionedResourcesStorageMap["v1alpha1"]["pendingfolderdeletions"])
+				require.NotNil(t, b.pendingDeletionStore)
+			} else {
+				require.Len(t, info.VersionedResourcesStorageMap, 2)
+				require.Nil(t, b.pendingDeletionStore)
+			}
+			for _, version := range []string{"v1", "v1beta1"} {
+				require.Contains(t, info.VersionedResourcesStorageMap[version], "folders")
+				require.NotContains(t, info.VersionedResourcesStorageMap[version], "pendingfolderdeletions")
+			}
+		})
 	}
 }
 
@@ -66,7 +106,7 @@ func TestFolderAPIBuilder_PendingDeletionAuthorization(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			decision, _, _ := (&FolderAPIBuilder{}).GetAuthorizer().Authorize(tc.ctx, authorizer.AttributesRecord{
-				ResourceRequest: true, APIGroup: "folder.grafana.app", Resource: "pendingfolderdeletions", Verb: tc.verb,
+				ResourceRequest: true, APIGroup: "folder.grafana.app", APIVersion: "v1alpha1", Resource: "pendingfolderdeletions", Verb: tc.verb,
 			})
 			require.Equal(t, tc.want, decision)
 		})
@@ -75,28 +115,28 @@ func TestFolderAPIBuilder_PendingDeletionAuthorization(t *testing.T) {
 
 func TestFolderAPIBuilder_PendingDeletionAdmission(t *testing.T) {
 	builder := &FolderAPIBuilder{}
-	valid := &folders.PendingFolderDeletion{ObjectMeta: metav1.ObjectMeta{Name: "pending", Namespace: "default"},
-		Spec: folders.PendingFolderDeletionSpec{FolderName: "reports", FolderUID: "uid-a"}}
+	valid := &pending.PendingFolderDeletion{ObjectMeta: metav1.ObjectMeta{Name: "reports-uid-a", Namespace: "default"},
+		Spec: pending.PendingFolderDeletionSpec{FolderName: "reports", FolderUID: "uid-a"}}
 	timestamp := "2026-11-11T12:00:00Z"
 	captured := valid.DeepCopy()
 	captured.Spec.DeletionTimestamp = &timestamp
 	for _, tc := range []struct {
 		name      string
-		mutate    func(*folders.PendingFolderDeletion)
-		old       *folders.PendingFolderDeletion
+		mutate    func(*pending.PendingFolderDeletion)
+		old       *pending.PendingFolderDeletion
 		wantField string
 	}{
-		{"valid", func(*folders.PendingFolderDeletion) {}, nil, ""},
-		{"missing UID", func(p *folders.PendingFolderDeletion) { p.Spec.FolderUID = "" }, nil, "spec.folderUID"},
-		{"missing name", func(p *folders.PendingFolderDeletion) { p.Spec.FolderName = "" }, nil, "spec.folderName"},
-		{"invalid timestamp", func(p *folders.PendingFolderDeletion) { v := "bad"; p.Spec.DeletionTimestamp = &v }, nil, "spec.deletionTimestamp"},
-		{"changed UID", func(p *folders.PendingFolderDeletion) { p.Spec.FolderUID = "uid-b" }, valid, "spec.folderUID"},
-		{"changed name", func(p *folders.PendingFolderDeletion) { p.Spec.FolderName = "other" }, valid, "spec.folderName"},
-		{"unchanged identity", func(*folders.PendingFolderDeletion) {}, valid, ""},
-		{"capture timestamp once", func(p *folders.PendingFolderDeletion) { p.Spec.DeletionTimestamp = &timestamp }, valid, ""},
-		{"preserve captured timestamp", func(p *folders.PendingFolderDeletion) { p.Spec.DeletionTimestamp = &timestamp }, captured, ""},
-		{"clear captured timestamp", func(*folders.PendingFolderDeletion) {}, captured, "spec.deletionTimestamp"},
-		{"change captured timestamp", func(p *folders.PendingFolderDeletion) { v := "2026-11-11T13:00:00Z"; p.Spec.DeletionTimestamp = &v }, captured, "spec.deletionTimestamp"},
+		{"valid", func(*pending.PendingFolderDeletion) {}, nil, ""},
+		{"missing UID", func(p *pending.PendingFolderDeletion) { p.Spec.FolderUID = "" }, nil, "spec.folderUID"},
+		{"missing name", func(p *pending.PendingFolderDeletion) { p.Spec.FolderName = "" }, nil, "spec.folderName"},
+		{"invalid timestamp", func(p *pending.PendingFolderDeletion) { v := "bad"; p.Spec.DeletionTimestamp = &v }, nil, "spec.deletionTimestamp"},
+		{"changed UID", func(p *pending.PendingFolderDeletion) { p.Spec.FolderUID = "uid-b" }, valid, "spec.folderUID"},
+		{"changed name", func(p *pending.PendingFolderDeletion) { p.Spec.FolderName = "other" }, valid, "spec.folderName"},
+		{"unchanged identity", func(*pending.PendingFolderDeletion) {}, valid, ""},
+		{"capture timestamp once", func(p *pending.PendingFolderDeletion) { p.Spec.DeletionTimestamp = &timestamp }, valid, ""},
+		{"preserve captured timestamp", func(p *pending.PendingFolderDeletion) { p.Spec.DeletionTimestamp = &timestamp }, captured, ""},
+		{"clear captured timestamp", func(*pending.PendingFolderDeletion) {}, captured, "spec.deletionTimestamp"},
+		{"change captured timestamp", func(p *pending.PendingFolderDeletion) { v := "2026-11-11T13:00:00Z"; p.Spec.DeletionTimestamp = &v }, captured, "spec.deletionTimestamp"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			obj := valid.DeepCopy()
@@ -107,8 +147,8 @@ func TestFolderAPIBuilder_PendingDeletionAdmission(t *testing.T) {
 				op = admission.Update
 				old = tc.old
 			}
-			attrs := admission.NewAttributesRecord(obj, old, folders.SchemeGroupVersion.WithKind("PendingFolderDeletion"), "default", "pending",
-				folders.SchemeGroupVersion.WithResource("pendingfolderdeletions"), "", op, nil, false, nil)
+			attrs := admission.NewAttributesRecord(obj, old, pending.SchemeGroupVersion.WithKind("PendingFolderDeletion"), "default", obj.Name,
+				pending.SchemeGroupVersion.WithResource("pendingfolderdeletions"), "", op, nil, false, nil)
 			require.NoError(t, builder.Mutate(context.Background(), attrs, nil))
 			err := builder.Validate(context.Background(), attrs, nil)
 			if tc.wantField != "" {
