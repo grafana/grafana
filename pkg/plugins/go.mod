@@ -12,7 +12,7 @@ require (
 	github.com/grafana/authlib v0.0.0-20261108003752-80ed9e737add
 	github.com/grafana/authlib/types v0.0.0-20261020151310-7a9be4c0c1c3
 	github.com/grafana/grafana-app-sdk v0.63.2
-	github.com/grafana/grafana-plugin-sdk-go v0.299.0
+	github.com/grafana/grafana-plugin-sdk-go v0.300.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260424202308-770920975880
 	github.com/hashicorp/go-hclog v1.6.3
 	github.com/hashicorp/go-plugin v1.8.0

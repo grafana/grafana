@@ -37,7 +37,7 @@ export function RevertConfirmModal({ stagedConfig, onDismiss }: Props) {
 
   const onConfirm = async () => {
     try {
-      await deleteStaged({ identifier: stagedConfig.identifier }).unwrap();
+      await deleteStaged({ identifier: stagedConfig.identifier, source: 'import_settings' }).unwrap();
       notifyApp.success(t('alerting.settings.import.revert.success', 'Staged configuration reverted'));
       onDismiss();
     } catch (err) {
