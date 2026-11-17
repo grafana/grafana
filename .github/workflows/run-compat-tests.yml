@@ -147,14 +147,27 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
           mkdir -p "$COMPAT_DIR/logs"
 
+      # Compile the tests of both versions once, so a build failure shows up as one failed
+      # step instead of failing every phase.
+      - name: Build tests with this commit
+        id: build-newer
+        if: ${{ !cancelled() && steps.setup-go.outcome == 'success' }}
+        run: go test -count=1 -run '^$' ./pkg/tests/compat/...
+
+      - name: Build tests with ${{ steps.old.outputs.ref }}
+        id: build-older
+        if: ${{ !cancelled() && steps.setup-go.outcome == 'success' && steps.old.outputs.ref != '' }}
+        working-directory: ${{ env.OLD_DIR }}
+        run: go test -count=1 -run '^$' ./pkg/tests/compat/...
+
       # Two round trips over a fresh database each. One version sets data up, the other
       # updates it, and the first reads it back:
       # - older, newer, older: an upgrade followed by a rollback
       # - newer, older, newer: a rollback followed by a re-upgrade
-      # Every phase runs even when an earlier one failed, so one red run shows all
-      # breakages; the job still fails.
+      # Every phase runs even when an earlier one failed, as long as both versions built, so
+      # one red run shows all breakages; the job still fails.
       - name: Upgrade then rollback - setup with ${{ steps.old.outputs.ref || 'this commit' }}
-        if: ${{ !cancelled() && steps.setup-go.outcome == 'success' }}
+        if: ${{ !cancelled() && steps.build-newer.outcome == 'success' && steps.build-older.outcome != 'failure' }}
         working-directory: ${{ env.OLD_DIR }}
         env:
           GRAFANA_COMPAT_DIR: ${{ env.COMPAT_DIR }}/upgrade-rollback
@@ -162,14 +175,14 @@ jobs:
         run: go test -count=1 -timeout=20m -run '^TestCompatSetup$' ./pkg/tests/compat/... 2>&1 | tee "$COMPAT_DIR/logs/1-upgrade-rollback-setup.log"
 
       - name: Upgrade then rollback - update with this commit
-        if: ${{ !cancelled() && steps.setup-go.outcome == 'success' }}
+        if: ${{ !cancelled() && steps.build-newer.outcome == 'success' && steps.build-older.outcome != 'failure' }}
         env:
           GRAFANA_COMPAT_DIR: ${{ env.COMPAT_DIR }}/upgrade-rollback
           GRAFANA_COMPAT_ROLE: newer
         run: go test -count=1 -timeout=20m -run '^TestCompatUpdate$' ./pkg/tests/compat/... 2>&1 | tee "$COMPAT_DIR/logs/2-upgrade-rollback-update.log"
 
       - name: Upgrade then rollback - verify with ${{ steps.old.outputs.ref || 'this commit' }}
-        if: ${{ !cancelled() && steps.setup-go.outcome == 'success' }}
+        if: ${{ !cancelled() && steps.build-newer.outcome == 'success' && steps.build-older.outcome != 'failure' }}
         working-directory: ${{ env.OLD_DIR }}
         env:
           GRAFANA_COMPAT_DIR: ${{ env.COMPAT_DIR }}/upgrade-rollback
@@ -177,14 +190,14 @@ jobs:
         run: go test -count=1 -timeout=20m -run '^TestCompatVerify$' ./pkg/tests/compat/... 2>&1 | tee "$COMPAT_DIR/logs/3-upgrade-rollback-verify.log"
 
       - name: Rollback then re-upgrade - setup with this commit
-        if: ${{ !cancelled() && steps.setup-go.outcome == 'success' }}
+        if: ${{ !cancelled() && steps.build-newer.outcome == 'success' && steps.build-older.outcome != 'failure' }}
         env:
           GRAFANA_COMPAT_DIR: ${{ env.COMPAT_DIR }}/rollback-upgrade
           GRAFANA_COMPAT_ROLE: newer
         run: go test -count=1 -timeout=20m -run '^TestCompatSetup$' ./pkg/tests/compat/... 2>&1 | tee "$COMPAT_DIR/logs/4-rollback-upgrade-setup.log"
 
       - name: Rollback then re-upgrade - update with ${{ steps.old.outputs.ref || 'this commit' }}
-        if: ${{ !cancelled() && steps.setup-go.outcome == 'success' }}
+        if: ${{ !cancelled() && steps.build-newer.outcome == 'success' && steps.build-older.outcome != 'failure' }}
         working-directory: ${{ env.OLD_DIR }}
         env:
           GRAFANA_COMPAT_DIR: ${{ env.COMPAT_DIR }}/rollback-upgrade
@@ -192,7 +205,7 @@ jobs:
         run: go test -count=1 -timeout=20m -run '^TestCompatUpdate$' ./pkg/tests/compat/... 2>&1 | tee "$COMPAT_DIR/logs/5-rollback-upgrade-update.log"
 
       - name: Rollback then re-upgrade - verify with this commit
-        if: ${{ !cancelled() && steps.setup-go.outcome == 'success' }}
+        if: ${{ !cancelled() && steps.build-newer.outcome == 'success' && steps.build-older.outcome != 'failure' }}
         env:
           GRAFANA_COMPAT_DIR: ${{ env.COMPAT_DIR }}/rollback-upgrade
           GRAFANA_COMPAT_ROLE: newer
