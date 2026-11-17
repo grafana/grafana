@@ -104,13 +104,10 @@ export function resumeRecordingPendingChanges(scene: DashboardScene) {
   }
 }
 
-/**
- * `stored` with what changed from `before` to `after`: what didn't change keeps its stored form, in
- * `after`'s key order.
- */
+/** `stored` with what changed from `before` to `after`: what didn't change keeps its stored form. */
 function rebase(stored: unknown, before: unknown, after: unknown): unknown {
   if (isEqual(before, after)) {
-    return inKeyOrderOf(after, stored);
+    return stored;
   }
   if (!isRecord(stored) || !isRecord(before) || !isRecord(after)) {
     return after;
@@ -121,27 +118,9 @@ function rebase(stored: unknown, before: unknown, after: unknown): unknown {
       delete result[key];
     } else if (!isEqual(before[key], after[key])) {
       result[key] = rebase(stored[key], before[key], after[key]);
-    } else if (key in result) {
-      result[key] = inKeyOrderOf(after[key], result[key]);
     }
   }
-  return inKeyOrderOf(after, result);
-}
-
-/**
- * `value` with its keys in the order `order` has them, then those only it has. Moving a panel
- * reorders the save model's elements, as the layout shows them, and isEqual ignores key order:
- * without this, the stored elements would keep the order the panels had before.
- */
-function inKeyOrderOf(order: unknown, value: unknown): unknown {
-  if (!isRecord(order) || !isRecord(value)) {
-    return value;
-  }
-  const keys = [
-    ...Object.keys(order).filter((key) => key in value),
-    ...Object.keys(value).filter((key) => !(key in order)),
-  ];
-  return Object.fromEntries(keys.map((key) => [key, value[key]]));
+  return result;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
