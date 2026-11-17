@@ -5,11 +5,12 @@ import { tags } from '@lezer/highlight';
 
 import { colorManipulator, type GrafanaTheme2 } from '@grafana/data';
 
-import { getFocusStyles } from '../../themes/mixins';
+import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 
 export function createCodeEditorTheme(theme: GrafanaTheme2, options?: { transparent?: boolean }): Extension {
   const background = options?.transparent ? 'transparent' : theme.components.input.background;
   const secondary = theme.colors.secondary;
+  const checkbox = theme.components.checkbox;
   const visualRefresh = theme.flags.visualDesignRefresh;
   const selectionState = EditorView.editorAttributes.compute(
     ['selection'],
@@ -97,10 +98,53 @@ export function createCodeEditorTheme(theme: GrafanaTheme2, options?: { transpar
           verticalAlign: 'middle',
           cursor: 'pointer',
         },
+        // Mirrors <Checkbox>, which hides the native input; CodeMirror gives us only the input to style.
         '& input[type=checkbox]': {
+          appearance: 'none',
+          position: 'relative',
+          width: theme.spacing(2),
+          height: theme.spacing(2),
           margin: 0,
-          accentColor: theme.colors.primary.main,
+          borderRadius: theme.shape.radius.sm,
+          background: theme.components.input.background,
+          border: `1px solid ${theme.components.input.borderColor}`,
           cursor: 'pointer',
+          '&:hover': {
+            borderColor: theme.components.input.borderHover,
+          },
+          // Global form styles add a native outline to every focused checkbox, even on mouse focus.
+          '&:focus': getMouseFocusStyles(theme),
+          '&:focus-visible': getFocusStyles(theme),
+          '&:checked': {
+            background: checkbox.activeBackground,
+            borderColor: checkbox.activeBorder,
+            '&:hover': {
+              background: checkbox.activeBackgroundHover,
+              borderColor: checkbox.activeBorderHover,
+            },
+          },
+          '&:checked::after': {
+            content: '""',
+            position: 'absolute',
+            border: `solid ${checkbox.checkmarkColor}`,
+            ...(visualRefresh
+              ? {
+                  left: theme.spacing(0.625),
+                  top: theme.spacing(0.125),
+                  width: theme.spacing(0.5),
+                  height: theme.spacing(1.25),
+                  borderWidth: '0 2px 2px 0',
+                  transform: 'rotate(50deg)',
+                }
+              : {
+                  left: theme.spacing(0.5),
+                  top: 0,
+                  width: theme.spacing(0.75),
+                  height: theme.spacing(1.5),
+                  borderWidth: '0 3px 3px 0',
+                  transform: 'rotate(45deg)',
+                }),
+          },
         },
       },
       '.cm-panel.cm-search [name=close], .cm-dialog-close': {
@@ -158,6 +202,10 @@ export function createCodeEditorTheme(theme: GrafanaTheme2, options?: { transpar
       '.cm-searchMatch.cm-searchMatch-selected': {
         backgroundColor: colorManipulator.alpha(theme.colors.primary.main, 0.45),
         outline: `1px solid ${theme.colors.primary.border}`,
+      },
+      // Moving to a match selects it, so every other match also gets the selection-match outline and the current one gets lost.
+      '.cm-searchMatch .cm-selectionMatch': {
+        outline: 'none',
       },
       '.cm-tooltip': {
         color: theme.colors.text.primary,
