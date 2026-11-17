@@ -661,6 +661,12 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/theme-playground/time-picker',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "TimePickerPlayground"*/ 'app/features/theme-playground/TimePickerPlayground')
+      ),
+    },
+    {
       path: '/dashboard/recently-deleted',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "RecentlyDeletedPage" */ 'app/features/browse-dashboards/RecentlyDeletedPage')
