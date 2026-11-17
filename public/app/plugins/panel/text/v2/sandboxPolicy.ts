@@ -67,16 +67,45 @@ export function textSandboxPolicy(origins: string[], fontRoot: string): string {
     .join('; ');
 }
 
+let globalCssSnapshot: { sheets: CSSStyleSheet[]; lengths: number[]; css: string } | undefined;
+
 export function getGlobalCss(): string {
-  return Array.from(document.styleSheets)
-    .filter((sheet) => sheet.ownerNode instanceof HTMLElement && sheet.ownerNode.dataset.emotion?.includes('global'))
-    .flatMap((sheet) => {
-      try {
-        return Array.from(sheet.cssRules, (rule) => rule.cssText);
-      } catch {
-        // A stylesheet may be inaccessible while being replaced or supplied cross-origin.
-        return [];
+  const sheets = Array.from(document.styleSheets).filter(
+    (sheet) => sheet.ownerNode instanceof HTMLElement && sheet.ownerNode.dataset.emotion?.includes('global')
+  );
+  try {
+    const lengths = sheets.map((sheet) => sheet.cssRules.length);
+    if (
+      globalCssSnapshot &&
+      sheets.length === globalCssSnapshot.sheets.length &&
+      sheets.every(
+        (sheet, index) =>
+          sheet === globalCssSnapshot!.sheets[index] && lengths[index] === globalCssSnapshot!.lengths[index]
+      )
+    ) {
+      return globalCssSnapshot.css;
+    }
+    const css = sheets.flatMap((sheet) => Array.from(sheet.cssRules, (rule) => rule.cssText)).join('\n');
+    const snapshot = { sheets, lengths, css };
+    globalCssSnapshot = snapshot;
+    // Share serialization across a mount batch, without retaining CSS across later CSSOM edits.
+    void Promise.resolve().then(() => {
+      if (globalCssSnapshot === snapshot) {
+        globalCssSnapshot = undefined;
       }
-    })
-    .join('\n');
+    });
+    return css;
+  } catch {
+    globalCssSnapshot = undefined;
+    // A stylesheet may be inaccessible while being replaced or supplied cross-origin.
+    return sheets
+      .flatMap((sheet) => {
+        try {
+          return Array.from(sheet.cssRules, (rule) => rule.cssText);
+        } catch {
+          return [];
+        }
+      })
+      .join('\n');
+  }
 }
