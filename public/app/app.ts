@@ -69,6 +69,7 @@ import getDefaultMonacoLanguages from '../lib/monaco-languages';
 
 import { AppWrapper } from './AppWrapper';
 import { appEvents } from './core/app_events';
+import { applyDocumentLanguage } from './core/internationalization/appLocale';
 import { AppChromeService } from './core/components/AppChrome/AppChromeService';
 import { useChromeHeaderHeight } from './core/components/AppChrome/TopBar/useChromeHeaderHeight';
 import { useHelpNode } from './core/components/AppChrome/TopBar/useHelpNode';
@@ -196,6 +197,7 @@ export class GrafanaApp {
       // Starts with an underscore so it's sorted to the top of the file. Even though it is in a comment the following line is still extracted
       // t('_comment', 'The code is the source of truth for English phrases. They should be updated in the components directly, and additional plurals specified in this file.');
       initI18nPromise.then(async ({ language }) => {
+        applyDocumentLanguage(language ?? DEFAULT_LANGUAGE);
         updateConfig({ language });
 
         // Initialise scenes translations into the Grafana namespace. Must finish before any scenes UI is rendered.

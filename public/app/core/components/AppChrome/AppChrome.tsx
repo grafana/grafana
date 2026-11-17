@@ -146,6 +146,7 @@ export function AppChrome({ children }: Props) {
   // Chromeless routes are without topNav, mega menu, search & command palette
   // We check chromeless twice here instead of having a separate path so {children}
   // doesn't get re-mounted when chromeless goes from true to false.
+  const sidebarResizeEdge = document.documentElement.dir === 'rtl' ? 'right' : 'left';
   const defaultChrome = (
     <div
       id={floatingUtils.BOUNDARY_ELEMENT_ID}
@@ -234,10 +235,10 @@ export function AppChrome({ children }: Props) {
                   [styles.sidebarContainerHidden]: isExtensionSidebarFloatingHidden,
                 })}
                 defaultSize={{ width: extensionSidebarWidth }}
-                enable={isExtensionSidebarFloating ? false : { left: true }}
+                enable={isExtensionSidebarFloating ? false : { [sidebarResizeEdge]: true }}
                 onResize={(_evt, _direction, ref) => setExtensionSidebarWidth(ref.getBoundingClientRect().width)}
-                handleClasses={{ left: dragStyles.dragHandleVertical }}
-                handleStyles={{ left: { left: -7 } }}
+                handleClasses={{ [sidebarResizeEdge]: dragStyles.dragHandleVertical }}
+                handleStyles={{ [sidebarResizeEdge]: { [sidebarResizeEdge]: -7 } }}
                 // Floating has its own, lower minimum; an inline min-width would override `floatingWidth`.
                 minWidth={isExtensionSidebarFloating ? undefined : MIN_EXTENSION_SIDEBAR_WIDTH}
                 maxWidth={MAX_EXTENSION_SIDEBAR_WIDTH}
@@ -323,11 +324,12 @@ const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: num
     }),
     dockedMegaMenu: css({
       background: visualRefreshEnabled ? theme.colors.background.canvas : theme.colors.background.primary,
-      borderRight: visualRefreshEnabled ? undefined : `1px solid ${theme.colors.border.weak}`,
+      borderInlineEnd: visualRefreshEnabled ? undefined : `1px solid ${theme.colors.border.weak}`,
       display: 'none',
       height: '100%',
       position: 'fixed',
       top: 0,
+      insetInlineStart: 0,
       width: MENU_WIDTH,
       zIndex: 2,
 
@@ -343,23 +345,23 @@ const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: num
     }),
     scopesDashboardsContainerDocked: css(
       {
-        left: MENU_WIDTH,
+        insetInlineStart: MENU_WIDTH,
       },
       visualRefreshEnabled && {
-        left: `calc(${MENU_WIDTH} + ${theme.spacing(0.5)})`,
+        insetInlineStart: `calc(${MENU_WIDTH} + ${theme.spacing(0.5)})`,
       }
     ),
     topNav: css({
       display: 'flex',
       position: 'fixed',
       zIndex: theme.zIndex.navbarFixed,
-      left: 0,
-      right: 0,
+      insetInlineStart: 0,
+      insetInlineEnd: 0,
       background: visualRefreshEnabled ? theme.colors.background.canvas : theme.colors.background.primary,
       flexDirection: 'column',
     }),
     topNavMenuDocked: css({
-      left: MENU_WIDTH,
+      insetInlineStart: MENU_WIDTH,
     }),
     panes: css({
       display: 'flex',
@@ -373,10 +375,10 @@ const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: num
       position: 'relative',
     }),
     pageContainerMenuDocked: css({
-      paddingLeft: MENU_WIDTH,
+      paddingInlineStart: MENU_WIDTH,
     }),
     pageContainerMenuDockedScopes: css({
-      paddingLeft: `calc(${MENU_WIDTH} * 2)`,
+      paddingInlineStart: `calc(${MENU_WIDTH} * 2)`,
     }),
     pageContainer: css({
       label: 'page-container',
@@ -394,7 +396,7 @@ const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: num
       top: -1000,
 
       ':focus': {
-        left: theme.spacing(1),
+        insetInlineStart: theme.spacing(1),
         top: theme.spacing(1),
         zIndex: theme.zIndex.portal,
       },
@@ -406,7 +408,7 @@ const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: num
       top: headerHeight,
       bottom: 0,
       zIndex: theme.zIndex.navbarFixed + 1,
-      right: 0,
+      insetInlineEnd: 0,
     }),
     // A panel anchored to the bottom right: content-driven height, no chrome of its own.
     // Its width comes from `getContentSizeStyles`.
@@ -415,9 +417,9 @@ const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: num
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       height: 'auto !important' as 'auto',
       top: 'auto',
-      left: 'auto',
+      insetInlineStart: 'auto',
       // Matches the page's own padding, so the snap points (which reuse this inset) line up with its panes.
-      right: theme.spacing(2),
+      insetInlineEnd: theme.spacing(2),
       bottom: theme.spacing(2),
       background: 'transparent',
       // The sidebar inside can be moved off this box; the box itself must not block the page.

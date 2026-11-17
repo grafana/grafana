@@ -87,19 +87,21 @@ const getStyles = (theme: GrafanaTheme2) => {
       })
     ),
     inputWrapper: baseStyles.inputWrapper,
-    prefix: baseStyles.prefix,
+    prefix: cx(baseStyles.prefix, css({ ':dir(rtl) &': { left: 'auto', right: 0 } })),
     suffix: css([
       baseStyles.suffix,
       {
         display: 'flex',
         gap: theme.spacing(0.5),
+        ':dir(rtl) &': { right: 'auto', left: 0, direction: 'ltr' },
       },
     ]),
     fakeInput: css([
       baseStyles.input,
       {
-        textAlign: 'left',
-        paddingLeft: 28,
+        textAlign: 'start',
+        paddingInlineStart: 28,
+        ':dir(rtl) &': { paddingInlineEnd: theme.spacing(7) },
         color: theme.colors.text.disabled,
 
         // We want the focus styles to appear only when tabbing through, not when clicking the button
