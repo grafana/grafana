@@ -6,7 +6,6 @@ interface Props {
   testId?: string;
   hasData?: boolean;
   minHeight?: number;
-  deferOffscreen?: boolean;
   consent?: TextSandboxProps['consent'];
 }
 

@@ -15,7 +15,6 @@ import { SandboxFrame } from './SandboxFrame';
 import { inlineSandboxFonts } from './sandboxFonts';
 import { textSandboxPolicy, type TextSandboxState } from './sandboxPolicy';
 import { getSandboxCss } from './sandboxStyles';
-import { useTextFrameVisibility } from './useTextFrameVisibility';
 import { isTextNewFeaturesEnabled } from './utils';
 
 export interface TextSandboxProps {
@@ -25,20 +24,11 @@ export interface TextSandboxProps {
   testId?: string;
   className?: string;
   minHeight?: number;
-  deferOffscreen?: boolean;
   /** Reports blocked sources to the consent banner. */
   consent?: { panelId?: number; panelTitle: string; dashboardUid?: string };
 }
 
-export function TextSandbox({
-  html,
-  hasData = true,
-  testId,
-  className,
-  minHeight,
-  consent,
-  deferOffscreen = false,
-}: TextSandboxProps) {
+export function TextSandbox({ html, hasData = true, testId, className, minHeight, consent }: TextSandboxProps) {
   const theme = useTheme2();
   const host = useRef<HTMLDivElement>(null);
   const consentKey = useId();
@@ -46,16 +36,6 @@ export function TextSandbox({
   const origins = useAllowedOrigins(dashboardUid, panelId);
   const [globalCss, setGlobalCss] = useState<string>();
   const sanitizedHtml = useMemo(() => (hasData ? textUtil.sanitizeTextPanelContent(html) : html), [html, hasData]);
-  // Stateful content must survive scrolling; false positives here only forgo the optimization.
-  const stateful = useMemo(
-    () =>
-      /<(?:iframe|video|audio|input|textarea|select|button|form|details|canvas|script|object|embed)\b|\bcontenteditable\b/i.test(
-        sanitizedHtml
-      ),
-    [sanitizedHtml]
-  );
-  const mounted = useTextFrameVisibility(host, deferOffscreen && !stateful);
-  const [lastHeight, setLastHeight] = useState(1);
   const mermaid = useMemo(() => (isTextNewFeaturesEnabled() ? getMermaidConfig(theme) : undefined), [theme]);
   const fontRoot = `${window.__grafana_public_path__ || 'public/'}fonts/`;
 
@@ -75,8 +55,7 @@ export function TextSandbox({
       disposed = true;
     };
   }, [theme, fontRoot]);
-  const onHeight = useCallback((height: number) => {
-    setLastHeight(height);
+  const onHeight = useCallback(() => {
     host.current?.dispatchEvent(new Event('text-content-resized', { bubbles: true }));
   }, []);
   const onState = useCallback(
@@ -93,12 +72,9 @@ export function TextSandbox({
 
   return (
     <div className={className} data-testid={testId}>
-      <div
-        ref={host}
-        style={{ position: 'relative', minHeight: mounted ? undefined : Math.max(lastHeight, minHeight ?? 0) }}
-      >
+      <div ref={host} style={{ position: 'relative' }}>
         {/* Wait for fonts so initialization creates only one frame document. */}
-        {mounted && globalCss !== undefined && (
+        {globalCss !== undefined && (
           <SandboxFrame
             html={sanitizedHtml}
             globalCss={globalCss}

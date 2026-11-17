@@ -30,8 +30,6 @@ import { createData, createProps, renderPanel } from './test-utils';
 
 mockComboboxRect();
 jest.mock('./SandboxFrame');
-// Content tests isolate viewport scheduling; TextSandbox tests cover deferred mounting with the real hook.
-jest.mock('./useTextFrameVisibility', () => ({ useTextFrameVisibility: () => true }));
 
 beforeAll(() => {
   setTestFlags({ [FlagKeys.TextNewFeatures]: true });
