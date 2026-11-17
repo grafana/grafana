@@ -3,6 +3,7 @@ import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import classNames from 'clsx';
 import { Resizable } from 're-resizable';
 import { lazy, type PropsWithChildren, Suspense, useEffect } from 'react';
+import { useWindowSize } from 'react-use';
 
 import { type GrafanaTheme2, store } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
@@ -23,10 +24,16 @@ import { AppChromeMenu } from './AppChromeMenu';
 import { type AppChromeService, DOCKED_LOCAL_STORAGE_KEY } from './AppChromeService';
 import { ExtensionSidebar } from './ExtensionSidebar/ExtensionSidebar';
 import { useExtensionSidebarContext } from './ExtensionSidebar/ExtensionSidebarProvider';
-import { MAX_EXTENSION_SIDEBAR_WIDTH, MIN_EXTENSION_SIDEBAR_WIDTH } from './ExtensionSidebar/constants';
+import {
+  getMaxExtensionSidebarHeight,
+  MAX_EXTENSION_SIDEBAR_WIDTH,
+  MIN_EXTENSION_SIDEBAR_HEIGHT,
+  MIN_EXTENSION_SIDEBAR_WIDTH,
+} from './ExtensionSidebar/constants';
 import { LazyFeatureControlFloating } from './FeatureControl/LazyFeatureControl';
 import { MegaMenu, MENU_WIDTH } from './MegaMenu/MegaMenu';
 import { useMegaMenuFocusHelper } from './MegaMenu/utils';
+import { PageAreaEndsAboveDockContext } from './PageAreaEnd';
 import { PageCanvasFrame } from './PageCanvas/PageCanvasFrame';
 import { PageCanvasJoinContext } from './PageCanvas/PageCanvasJoin';
 import { usePageCanvas } from './PageCanvas/usePageCanvas';
@@ -51,11 +58,18 @@ export function AppChrome({ children }: Props) {
     isOpen: isExtensionSidebarOpen,
     extensionSidebarWidth,
     setExtensionSidebarWidth,
+    extensionSidebarHeight,
+    setExtensionSidebarHeight,
     floatingExtensionSidebarWidth,
     presentation: extensionSidebarPresentation,
+    dockSide: extensionSidebarDockSide,
     floatingHidden: isExtensionSidebarFloatingHidden,
   } = useExtensionSidebarContext();
   const isExtensionSidebarFloating = isExtensionSidebarOpen && extensionSidebarPresentation === 'floating';
+  const isExtensionSidebarDockedLeft =
+    isExtensionSidebarOpen && !isExtensionSidebarFloating && extensionSidebarDockSide === 'left';
+  const isExtensionSidebarDockedBottom =
+    isExtensionSidebarOpen && !isExtensionSidebarFloating && extensionSidebarDockSide === 'bottom';
   // Floating, the sidebar sits above drawers, so an open drawer must not hide it from keyboard and screen reader users.
   const floatingSidebarAttributes = isExtensionSidebarFloating ? { [DRAWER_INSIDE_ATTRIBUTE]: '' } : {};
   const state = chrome.useState();
@@ -72,11 +86,24 @@ export function AppChrome({ children }: Props) {
     !state.chromeless && !scopesMegaMenuEnabled && scopes?.state.enabled && scopes?.state.drawerOpened
   );
 
+  // How far the page content starts from the window's left edge: past the docked nav and the scopes dashboards,
+  // matching `pageContainerMenuDocked*`. A left-docked sidebar sits there.
+  const navOffset = ['0px', MENU_WIDTH, `calc(${MENU_WIDTH} * 2)`][
+    Number(menuDockedAndOpen) + Number(isScopesDashboardsOpen)
+  ];
+
   const headerLevels = useChromeHeaderLevels();
   const styles = useStyles2(getStyles, headerLevels, getChromeHeaderLevelHeight(), visualRefreshEnabled);
-  const contentSizeStyles = useStyles2(getContentSizeStyles, extensionSidebarWidth, floatingExtensionSidebarWidth);
+  const contentSizeStyles = useStyles2(
+    getContentSizeStyles,
+    extensionSidebarWidth,
+    floatingExtensionSidebarWidth,
+    navOffset,
+    extensionSidebarHeight
+  );
   const dragStyles = useStyles2(getDragStyles, 'middle');
   const isSmallScreen = !useMediaQueryMinWidth('sm');
+  const { height: windowHeight } = useWindowSize();
 
   useResponsiveDockedMegaMenu(chrome);
   useMegaMenuFocusHelper(state.megaMenuOpen, state.megaMenuDocked);
@@ -94,14 +121,29 @@ export function AppChrome({ children }: Props) {
     [styles.pageContainerMenuDockedScopes]: menuDockedAndOpen && isScopesDashboardsOpen,
     // Floating takes no width from the page, so the docked width is 0.
     [contentSizeStyles.contentWidth]:
-      !state.chromeless && isExtensionSidebarOpen && !isSmallScreen && !isExtensionSidebarFloating,
+      !state.chromeless &&
+      isExtensionSidebarOpen &&
+      !isSmallScreen &&
+      !isExtensionSidebarFloating &&
+      !isExtensionSidebarDockedLeft &&
+      !isExtensionSidebarDockedBottom,
+    // Docked on the left, the sidebar takes its width from the start of the page, after the nav.
+    [contentSizeStyles.contentDockedLeft]: !state.chromeless && !isSmallScreen && isExtensionSidebarDockedLeft,
+    // Docked at the bottom, it takes its height from the page's bottom instead, so the page ends above it.
+    [contentSizeStyles.contentDockedBottom]: !state.chromeless && !isSmallScreen && isExtensionSidebarDockedBottom,
   });
 
-  // The page learns whether a canvas strip sits on it.
-  const pageChildren = pageCanvasEnabled ? (
-    <PageCanvasJoinContext.Provider value={pageCanvas !== null}>{children}</PageCanvasJoinContext.Provider>
-  ) : (
-    children
+  // The page learns whether a canvas strip sits on it and whether the sidebar is docked below it, where the page keeps
+  // its card's bottom edge in view.
+  const pageEndsAboveDock = !state.chromeless && !isSmallScreen && isExtensionSidebarDockedBottom;
+  const pageChildren = (
+    <PageAreaEndsAboveDockContext.Provider value={pageEndsAboveDock}>
+      {pageCanvasEnabled ? (
+        <PageCanvasJoinContext.Provider value={pageCanvas !== null}>{children}</PageCanvasJoinContext.Provider>
+      ) : (
+        children
+      )}
+    </PageAreaEndsAboveDockContext.Provider>
   );
 
   const renderPage = (covered: boolean) => (
@@ -219,22 +261,57 @@ export function AppChrome({ children }: Props) {
                 <ExtensionSidebar />
               </div>
             ) : (
-              // Docked and floating share this container so the extension never remounts; floating only
-              // restyles it and turns off resizing.
+              // Docked on any edge and floating share this container so the extension never remounts: it stays
+              // after the page in the DOM, so the tab order does not change either. Floating only restyles it and
+              // turns off resizing; docking on the left moves it next to the nav, resized from its right edge, and
+              // docking at the bottom moves it below the page, past the nav, resized from its top edge.
               <Resizable
                 className={cx(styles.sidebarContainer, {
+                  [styles.sidebarContainerDockedLeft]: isExtensionSidebarDockedLeft,
+                  [styles.sidebarContainerDockedBottom]: isExtensionSidebarDockedBottom,
+                  // One class for both: as keys here, two identical ones would overwrite each other.
+                  [contentSizeStyles.sidebarAfterNav]: isExtensionSidebarDockedLeft || isExtensionSidebarDockedBottom,
                   [styles.sidebarContainerFloatingBar]: isExtensionSidebarFloating,
                   [contentSizeStyles.floatingWidth]: isExtensionSidebarFloating,
                   [styles.sidebarContainerHidden]: isExtensionSidebarFloatingHidden,
                 })}
-                defaultSize={{ width: extensionSidebarWidth }}
-                enable={isExtensionSidebarFloating ? false : { left: true }}
-                onResize={(_evt, _direction, ref) => setExtensionSidebarWidth(ref.getBoundingClientRect().width)}
-                handleClasses={{ left: dragStyles.dragHandleVertical }}
-                handleStyles={{ left: { left: -7 } }}
-                // Floating has its own, lower minimum; an inline min-width would override `floatingWidth`.
-                minWidth={isExtensionSidebarFloating ? undefined : MIN_EXTENSION_SIDEBAR_WIDTH}
-                maxWidth={MAX_EXTENSION_SIDEBAR_WIDTH}
+                // Docked at the bottom it spans the page; on a side, the page's full height.
+                size={
+                  isExtensionSidebarDockedBottom
+                    ? { width: 'auto', height: extensionSidebarHeight }
+                    : { width: extensionSidebarWidth, height: 'auto' }
+                }
+                enable={
+                  isExtensionSidebarFloating
+                    ? false
+                    : isExtensionSidebarDockedLeft
+                      ? { right: true }
+                      : isExtensionSidebarDockedBottom
+                        ? { top: true }
+                        : { left: true }
+                }
+                onResize={(_evt, _direction, ref) => {
+                  const { width, height } = ref.getBoundingClientRect();
+                  if (isExtensionSidebarDockedBottom) {
+                    setExtensionSidebarHeight(height);
+                  } else {
+                    setExtensionSidebarWidth(width);
+                  }
+                }}
+                handleClasses={{
+                  left: dragStyles.dragHandleVertical,
+                  right: dragStyles.dragHandleVertical,
+                  top: dragStyles.dragHandleHorizontal,
+                }}
+                handleStyles={{ left: { left: -7 }, right: { right: -7 }, top: { top: -7 } }}
+                // Floating has its own, lower minimum; an inline min-width would override `floatingWidth`. Docked at
+                // the bottom, the width follows the page and only the height is bounded.
+                minWidth={
+                  isExtensionSidebarFloating || isExtensionSidebarDockedBottom ? undefined : MIN_EXTENSION_SIDEBAR_WIDTH
+                }
+                maxWidth={isExtensionSidebarDockedBottom ? undefined : MAX_EXTENSION_SIDEBAR_WIDTH}
+                minHeight={isExtensionSidebarDockedBottom ? MIN_EXTENSION_SIDEBAR_HEIGHT : undefined}
+                maxHeight={isExtensionSidebarDockedBottom ? getMaxExtensionSidebarHeight(windowHeight) : undefined}
                 {...floatingSidebarAttributes}
               >
                 <ExtensionSidebar />
@@ -252,7 +329,12 @@ export function AppChrome({ children }: Props) {
       {!state.chromeless && <LazyFeatureControlFloating />}
       {scopesMegaMenuEnabled && <AutoOpenMegaMenuForScopedContent chrome={chrome} />}
       {shouldShowReturnToPrevious && state.returnToPrevious && (
-        <ReturnToPrevious href={state.returnToPrevious.href} title={state.returnToPrevious.title} />
+        <ReturnToPrevious
+          href={state.returnToPrevious.href}
+          title={state.returnToPrevious.title}
+          // Docked at the bottom, the Assistant takes the window's bottom edge; the button stays above it.
+          bottomInset={pageEndsAboveDock ? extensionSidebarHeight : 0}
+        />
       )}
     </div>
   );
@@ -386,6 +468,16 @@ const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: num
       zIndex: theme.zIndex.navbarFixed + 1,
       right: 0,
     }),
+    // Below the whole header, so the toolbar row keeps its full width; its `left` comes from `getContentSizeStyles`.
+    sidebarContainerDockedLeft: css({
+      top: headerLevels * headerHeight,
+      right: 'auto',
+    }),
+    // Below the page, up to the window's right edge; its `left` comes from `getContentSizeStyles`, its height inline.
+    sidebarContainerDockedBottom: css({
+      top: 'auto',
+      right: 0,
+    }),
     // A panel anchored to the bottom right: content-driven height, no chrome of its own.
     // Its width comes from `getContentSizeStyles`.
     sidebarContainerFloatingBar: css({
@@ -419,10 +511,28 @@ const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: num
   };
 };
 
-const getContentSizeStyles = (theme: GrafanaTheme2, extensionSidebarWidth = 0, floatingExtensionSidebarWidth = 0) => {
+const getContentSizeStyles = (
+  theme: GrafanaTheme2,
+  extensionSidebarWidth = 0,
+  floatingExtensionSidebarWidth = 0,
+  navOffset = '0px',
+  extensionSidebarHeight = 0
+) => {
   return {
     contentWidth: css({
       maxWidth: `calc(100% - ${extensionSidebarWidth}px) !important`,
+    }),
+    // Replaces `pageContainerMenuDocked*`'s padding, which only reserves the nav.
+    contentDockedLeft: css({
+      paddingLeft: `calc(${navOffset} + ${extensionSidebarWidth}px) !important`,
+    }),
+    // Docked on the left or at the bottom, the sidebar starts where the page content does, past the nav.
+    sidebarAfterNav: css({
+      left: navOffset,
+    }),
+    // The page keeps its width and ends where the sidebar starts, rather than scrolling under it.
+    contentDockedBottom: css({
+      maxHeight: `calc(100% - ${extensionSidebarHeight}px) !important`,
     }),
     floatingWidth: css({
       // `Resizable` sets width inline.

@@ -3421,6 +3421,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "grafana.extensionSidebarPlacements",
+			Description: "Lets Grafana Assistant dock the extension sidebar on the left or at the bottom, or pop it up, from the Chat button's menu, its shortcuts and its own layout menu. Needs grafana.extensionSidebarFloating",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "grafana.assistantPageCanvas",
 			Description: "Lets Grafana Assistant show a conversation's canvas as tabs above the page",
 			Stage:       FeatureStageExperimental,

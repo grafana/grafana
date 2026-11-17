@@ -6,6 +6,7 @@ import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
+import { usePageAreaEndsAboveDock } from '../AppChrome/PageAreaEnd';
 import { usePageCanvasJoined } from '../AppChrome/PageCanvas/PageCanvasJoin';
 import NativeScrollbar from '../NativeScrollbar';
 
@@ -36,7 +37,8 @@ export const Page: PageType = ({
 }) => {
   const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const joinedToPageCanvas = usePageCanvasJoined();
-  const styles = useStyles2(getStyles, visualRefreshEnabled, joinedToPageCanvas);
+  const endsAboveDock = usePageAreaEndsAboveDock();
+  const styles = useStyles2(getStyles, visualRefreshEnabled, joinedToPageCanvas, endsAboveDock);
   const navModel = usePageNav(navId, oldNavProp);
   const { chrome } = useGrafana();
 
@@ -108,7 +110,12 @@ export const Page: PageType = ({
 
 Page.Contents = PageContents;
 
-const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean, joinedToPageCanvas: boolean) => {
+const getStyles = (
+  theme: GrafanaTheme2,
+  visualRefreshEnabled: boolean,
+  joinedToPageCanvas: boolean,
+  endsAboveDock: boolean
+) => {
   return {
     wrapper: css(
       {
@@ -130,6 +137,13 @@ const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean, joinedTo
           borderTop: 'none',
           borderTopLeftRadius: 'unset',
           borderTopRightRadius: 'unset',
+        },
+      // Above a docked sidebar the page area ends inside the window. The page scrolls inside its card, so the card's
+      // bottom edge and its gap stay in view.
+      visualRefreshEnabled &&
+        endsAboveDock && {
+          minHeight: 0,
+          overflow: 'auto',
         }
     ),
     wrapperPrimary: css({
