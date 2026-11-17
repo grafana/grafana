@@ -1,14 +1,12 @@
-import { cx } from '@emotion/css';
 import { type ButtonHTMLAttributes } from 'react';
 import * as React from 'react';
 
-import { useTheme2 } from '../../themes/ThemeContext';
 import { type IconName } from '../../types/icon';
 import { type ComponentSize } from '../../types/size';
-import { AbstractButton, type IconElementProps } from '../AbstractButton/AbstractButton';
+import { type IconElementProps } from '../AbstractButton/AbstractButton';
 import { type PopoverContent, type TooltipPlacement } from '../Tooltip/types';
 
-import { getButtonStyles } from './Button.styles';
+import { StyledButton } from './StyledButton';
 
 // TODO: move to a status type shared with Alert's AlertVariant, where 'danger' replaces 'destructive' here and 'error' there.
 export type ButtonVariant = 'primary' | 'secondary' | 'accent' | 'destructive' | 'success' | 'warning' | 'info';
@@ -61,56 +59,8 @@ export type ButtonProps = CommonProps & ButtonHTMLAttributes<HTMLButtonElement>;
  * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-button--docs
  */
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  (
-    {
-      'aria-label': ariaLabel,
-      size = 'md',
-      fill = 'solid',
-      variant = fill === 'text' ? 'accent' : 'primary',
-      icon,
-      fullWidth,
-      children,
-      className,
-      type = 'button',
-      tooltip,
-      disabled,
-      tooltipPlacement,
-      iconPlacement = 'left',
-      onClick,
-      ...otherProps
-    },
-    ref
-  ) => {
-    const theme = useTheme2();
-    const styles = getButtonStyles({
-      theme,
-      size,
-      variant,
-      fill,
-      fullWidth,
-      iconOnly: !children,
-    });
-
-    return (
-      <AbstractButton
-        ref={ref}
-        className={cx(styles.button, { [styles.disabled]: disabled }, className)}
-        icon={icon}
-        iconSize={size}
-        iconPlacement={iconPlacement}
-        iconClassName={styles.icon}
-        contentClassName={styles.content}
-        tooltip={tooltip}
-        tooltipPlacement={tooltipPlacement}
-        disabled={disabled}
-        aria-label={ariaLabel}
-        type={type}
-        onClick={onClick}
-        {...otherProps}
-      >
-        {children}
-      </AbstractButton>
-    );
+  ({ fill = 'solid', variant = fill === 'text' ? 'accent' : 'primary', ...props }, ref) => {
+    return <StyledButton ref={ref} fill={fill} variant={variant} {...props} />;
   }
 );
 
