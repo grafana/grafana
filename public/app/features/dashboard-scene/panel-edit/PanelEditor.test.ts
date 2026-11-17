@@ -540,6 +540,7 @@ describe('PanelEditor', () => {
       is_new_panel: false,
       is_library_panel: false,
       query_editor: 'classic',
+      isDynamicDashboard: true,
     };
 
     const reported = (name: string) =>
@@ -665,6 +666,23 @@ describe('PanelEditor', () => {
         expect(reported('panel_edit_closed')[0].properties).toEqual({
           ...NO_CHANGES,
           query_editor: 'next',
+          outcome: 'kept',
+        });
+      } finally {
+        setTestFlags({});
+      }
+    });
+
+    it('reports a dashboard without dynamic layouts as not dynamic', async () => {
+      setTestFlags({ dashboardNewLayouts: false });
+      try {
+        await setup();
+
+        closeEditor();
+
+        expect(reported('panel_edit_closed')[0].properties).toEqual({
+          ...NO_CHANGES,
+          isDynamicDashboard: false,
           outcome: 'kept',
         });
       } finally {

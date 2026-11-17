@@ -77,6 +77,8 @@ interface PanelEditSummary {
   is_new_panel: boolean;
   is_library_panel: boolean;
   query_editor: 'classic' | 'next';
+  // Same key every dashboards_* interaction carries, so these events split by layout the same way.
+  isDynamicDashboard: boolean;
 }
 
 export interface PanelEditorState extends SceneObjectState {
@@ -219,6 +221,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       is_new_panel: this.state.isNewPanel,
       is_library_panel: getLibraryPanelBehavior(panel) !== undefined,
       query_editor: this.state.useQueryExperienceNext ? 'next' : 'classic',
+      isDynamicDashboard: isDashboardNewLayoutsEnabled(),
     };
   }
 
