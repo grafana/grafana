@@ -21,6 +21,7 @@ import { usePanelContext } from '@grafana/ui';
 import { getSourceFrameIndex, useColumnTransformations } from '@grafana/ui/internal';
 import { getConfig } from 'app/core/config';
 
+import { reportTableColumnInteraction } from './analytics';
 import { TABLE_TRANSFORMATIONS_OWNER } from './constants';
 import { supportsColumnManagement } from './tableCapabilities';
 import { getCellActions } from './utils';
@@ -74,6 +75,7 @@ type CommonTableOptions = Pick<
   | 'disableKeyboardEvents'
   | 'hoverOverflow'
   | 'zebraStriping'
+  | 'showRowNumbers'
 >;
 
 /**
@@ -103,6 +105,8 @@ export function useCommonTableProps(options: CommonTableOptions, fieldConfig: Fi
       disableKeyboardEvents: options.disableKeyboardEvents,
       hoverOverflow: options.hoverOverflow ?? true,
       zebraStriping: refreshNewFeaturesEnabled && options.zebraStriping,
+      showRowNumbers: tableRefreshEnabled && refreshNewFeaturesEnabled && (options.showRowNumbers ?? false),
+      showRowNumberToggle: tableRefreshEnabled && refreshNewFeaturesEnabled,
       disableSanitizeHtml: getConfig().disableSanitizeHtml,
       contentAwareWidthsEnabled,
       tableRefreshEnabled,
@@ -121,6 +125,7 @@ export function useCommonTableProps(options: CommonTableOptions, fieldConfig: Fi
       options.disableKeyboardEvents,
       options.hoverOverflow,
       options.zebraStriping,
+      options.showRowNumbers,
       fieldConfig.defaults.noValue,
       contentAwareWidthsEnabled,
       paginationPageSizeEnabled,
@@ -149,7 +154,14 @@ export function useAdHocColumnState(
   const sourceSeries = configuredSourceSeries ?? api?.getSourceSeries(TABLE_TRANSFORMATIONS_OWNER);
   const sourceIndex = getEligibleColumnSourceIndex(frames, frameIndex, sourceSeries, enabled);
 
-  return useColumnTransformations(sourceIndex, api, TABLE_TRANSFORMATIONS_OWNER, enabled, sourceSeries);
+  return useColumnTransformations(
+    sourceIndex,
+    api,
+    TABLE_TRANSFORMATIONS_OWNER,
+    enabled,
+    sourceSeries,
+    reportTableColumnInteraction
+  );
 }
 
 function getEligibleColumnSourceIndex(

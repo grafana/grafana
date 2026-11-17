@@ -6,7 +6,12 @@ import {
   ThresholdsMode,
 } from '@grafana/data';
 
-import { setOptionImmutably, supportsDataQuery, updateDefaultFieldConfigValue } from './utils';
+import {
+  setOptionImmutably,
+  supportsDataQuery,
+  updateDefaultFieldConfigValue,
+  updateDefaultFieldConfigVarMapping,
+} from './utils';
 
 describe('standardFieldConfigEditorRegistry', () => {
   const dummyConfig: FieldConfig = {
@@ -95,6 +100,67 @@ describe('updateDefaultFieldConfigValue', () => {
       );
     }
   );
+});
+
+describe('updateDefaultFieldConfigVarMapping', () => {
+  it('sets a varMappings entry on an empty defaults object', () => {
+    const config: FieldConfigSource = { defaults: { min: 0 }, overrides: [] };
+    const result = updateDefaultFieldConfigVarMapping(config, 'min', '$myVar');
+
+    expect(result.defaults).toEqual({ min: 0, varMappings: { min: '$myVar' } });
+    // the property's own stored value is untouched - it stays the numeric fallback
+    expect(result.defaults.min).toBe(0);
+  });
+
+  it('adds a second entry alongside an existing varMappings entry for a different id', () => {
+    const config: FieldConfigSource = { defaults: { min: 0, max: 100, varMappings: { min: '$a' } }, overrides: [] };
+    const result = updateDefaultFieldConfigVarMapping(config, 'max', '$b');
+
+    expect(result.defaults.varMappings).toEqual({ min: '$a', max: '$b' });
+  });
+
+  it('overwrites an existing entry for the same id', () => {
+    const config: FieldConfigSource = { defaults: { min: 0, varMappings: { min: '$old' } }, overrides: [] };
+    const result = updateDefaultFieldConfigVarMapping(config, 'min', '$new');
+
+    expect(result.defaults.varMappings).toEqual({ min: '$new' });
+  });
+
+  it('removes the entry (expr: undefined), dropping the whole varMappings key once empty', () => {
+    const config: FieldConfigSource = { defaults: { min: 0, varMappings: { min: '$a' } }, overrides: [] };
+    const result = updateDefaultFieldConfigVarMapping(config, 'min', undefined);
+
+    expect(result.defaults).toEqual({ min: 0 });
+    expect(result.defaults.varMappings).toBeUndefined();
+  });
+
+  it('removing one entry leaves a sibling entry for a different id in place', () => {
+    const config: FieldConfigSource = {
+      defaults: { min: 0, max: 100, varMappings: { min: '$a', max: '$b' } },
+      overrides: [],
+    };
+    const result = updateDefaultFieldConfigVarMapping(config, 'min', undefined);
+
+    expect(result.defaults.varMappings).toEqual({ max: '$b' });
+  });
+
+  it('is a no-op when removing an id that has no entry', () => {
+    const config: FieldConfigSource = { defaults: { min: 0 }, overrides: [] };
+    const result = updateDefaultFieldConfigVarMapping(config, 'min', undefined);
+
+    expect(result).toBe(config);
+  });
+
+  it('does not mutate the input config', () => {
+    const config: FieldConfigSource = { defaults: { min: 0, varMappings: { min: '$a' } }, overrides: [] };
+    const before = JSON.parse(JSON.stringify(config));
+
+    updateDefaultFieldConfigVarMapping(config, 'min', '$new');
+    updateDefaultFieldConfigVarMapping(config, 'max', '$b');
+    updateDefaultFieldConfigVarMapping(config, 'min', undefined);
+
+    expect(config).toEqual(before);
+  });
 });
 
 describe('setOptionImmutably', () => {

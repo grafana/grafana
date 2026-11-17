@@ -23,7 +23,6 @@ declare module "@openfeature/core" {
     | "grafana.recordedQueriesDisableCreate"
     | "awsAssumeRolePerDatasourceExternalId"
     | "grafanaAPIServerWithExperimentalAPIs"
-    | "provisioningFolderMetadata"
     | "provisioningExport"
     | "reportingHeaderSettings"
     | "reportingFooterSettings"
@@ -100,7 +99,6 @@ declare module "@openfeature/core" {
     | "datasourceConnectionsTab"
     | "connectionsFilterSidebar"
     | "alertingJiraIntegration"
-    | "useScopesNavigationEndpoint"
     | "scopeSearchAllLevels"
     | "alertRuleRestore"
     | "alertingMigrationWizardUI"
@@ -130,6 +128,7 @@ declare module "@openfeature/core" {
     | "grafana.dashboardGlobalVariables"
     | "grafana.dashboardVariablesMigration"
     | "grafana.dashboardPreferences"
+    | "grafana.draftDashboards"
     | "smoothingTransformation"
     | "queryWithAssistant"
     | "queryEditorNext"
@@ -160,10 +159,10 @@ declare module "@openfeature/core" {
     | "grafana.visualDesignRefresh"
     | "dashboard.vectorSearch"
     | "grafana.cmdkHybridSearch"
+    | "grafana.cmdkHybridSearchSkipRerank"
     | "grafana.cmdkDashboardTags"
     | "assistant.fullscreenWorkspace"
     | "assistant.dashboard.artifacts"
-    | "grafana.queryVarEditorRedesign"
     | "table.paginationPageSize"
     | "table.autoColumnWidths"
     | "table.refresh"
@@ -180,6 +179,7 @@ declare module "@openfeature/core" {
     | "grafana.onDemandDiagnostics"
     | "assistant.dashboardPlanning"
     | "assistant.dashboardPlanBuildingScreen"
+    | "assistant.dashboardPlanEditing"
     | "grafana.multiTenantNavTree"
     | "grafana.navigationInfoArchRefresh"
     | "grafana.exploreMetricsSidebar"
@@ -197,6 +197,7 @@ declare module "@openfeature/core" {
     | "datasources.gatewayGuardrails"
     | "grafana.pluginExtensionReactElementProps"
     | "grafana.extensionSidebarFloating"
+    | "grafana.extensionSidebarPlacements"
     | "grafana.otelLogDetails"
     | "grafana.announcementBannerDismissible"
     | "datasources.gatewayAuditPolicy"
@@ -205,7 +206,10 @@ declare module "@openfeature/core" {
     | "dashboards.disablePublicDashboards"
     | "grafana.panelActionsPopover"
     | "grafana.dashboardSidebarExplicitOpen"
-    | "grafana.folderPickerFolderEditAccess";
+    | "grafana.folderPickerFolderEditAccess"
+    | "grafana.panelOptionInterpolation"
+    | "datasources.gatewayRateLimits"
+    | "plugins.disableMTPluginsFallback";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey =

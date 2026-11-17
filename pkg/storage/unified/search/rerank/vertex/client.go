@@ -5,10 +5,14 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	discoveryengine "cloud.google.com/go/discoveryengine/apiv1"
 	"cloud.google.com/go/discoveryengine/apiv1/discoveryenginepb"
+	"github.com/googleapis/gax-go/v2"
 	"google.golang.org/api/option"
+
+	"github.com/grafana/grafana/pkg/util/hedge"
 )
 
 // rankClient is the production Client backed by the Discovery Engine
@@ -17,6 +21,40 @@ import (
 type rankClient struct {
 	client        *discoveryengine.RankClient
 	rankingConfig string
+}
+
+type cappedRetryOption struct{ ctx context.Context }
+
+func (o cappedRetryOption) Resolve(settings *gax.CallSettings) {
+	factory := settings.Retry
+	if factory == nil {
+		return
+	}
+	settings.Retry = func() gax.Retryer {
+		underlying := factory()
+		if underlying == nil {
+			return nil
+		}
+		return &cappedRetryer{ctx: o.ctx, underlying: underlying}
+	}
+}
+
+type cappedRetryer struct {
+	ctx        context.Context
+	underlying gax.Retryer
+	retried    bool
+}
+
+func (r *cappedRetryer) Retry(err error) (time.Duration, bool) {
+	hedge.Suppress(r.ctx)
+	if r.retried {
+		return 0, false
+	}
+	delay, ok := r.underlying.Retry(err)
+	if ok {
+		r.retried = true
+	}
+	return delay, ok
 }
 
 // NewClient builds a Client against the Ranking API for the given
@@ -55,6 +93,7 @@ func (c *rankClient) Rank(ctx context.Context, model, query string, texts []stri
 			Content: t,
 		}
 	}
+	// Resolve wraps the SDK's retry factory after its default and configured options.
 	resp, err := c.client.Rank(ctx, &discoveryenginepb.RankRequest{
 		RankingConfig: c.rankingConfig,
 		Model:         model,
@@ -63,7 +102,7 @@ func (c *rankClient) Rank(ctx context.Context, model, query string, texts []stri
 		Records:       records,
 		// We only need ids + scores back, not record payloads.
 		IgnoreRecordDetailsInResponse: true,
-	})
+	}, cappedRetryOption{ctx: ctx})
 	if err != nil {
 		return nil, fmt.Errorf("vertex rerank: rank: %w", err)
 	}

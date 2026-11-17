@@ -63,7 +63,7 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 	// Phase 1: List managed resources
 	progress.SetMessage(ctx, "listing managed resources")
 	listCtx, listSpan := tracing.Start(ctx, "provisioning.releaseresources.list")
-	items, err := w.lister.List(listCtx, namespace, repoName)
+	items, err := w.lister.List(listCtx, namespace, repoName, resources.ListOptions{})
 	listSpan.End()
 	if err != nil {
 		return fmt.Errorf("list managed resources: %w", err)

@@ -14,9 +14,13 @@ import {
   type FieldConfigPropertyItem,
   PanelOptionsEditorBuilder,
 } from '@grafana/data';
+import { getVarMappingKind, isVarMappingExpressionInput } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { type VizPanel } from '@grafana/scenes';
 import { Input } from '@grafana/ui';
+import { VarMappingNumberValueEditor } from 'app/core/components/OptionsUI/number';
+import { getVarMappingToggleKind, VarMappingToggleEditor } from 'app/core/components/OptionsUI/varMappingToggle';
+import { type VarMappingVariableSource } from 'app/core/components/OptionsUI/varMappingVariables';
 import { LibraryVizPanelInfo } from 'app/features/dashboard-scene/panel-edit/LibraryVizPanelInfo';
 import { type LibraryPanelBehavior } from 'app/features/dashboard-scene/scene/LibraryPanelBehavior';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
@@ -24,9 +28,9 @@ import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/l
 
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
-import { getOptionOverrides } from './state/getOptionOverrides';
+import { getOptionOverrides, getVarMappingOptionOverrides } from './state/getOptionOverrides';
 import { type OptionPaneRenderProps } from './types';
-import { setOptionImmutably, updateDefaultFieldConfigValue } from './utils';
+import { setOptionImmutably, updateDefaultFieldConfigValue, updateDefaultFieldConfigVarMapping } from './utils';
 
 type categoryGetter = (categoryNames?: string[]) => OptionsPaneCategoryDescriptor;
 
@@ -92,6 +96,48 @@ export function isFieldConfigOptionVisible(
 
   // showIf is typed `boolean | undefined` and an undefined return has always hidden the option.
   return Boolean(fieldOption.showIf(currentValue, data?.series, data?.annotations, context));
+}
+
+/**
+ * How the defaults editor for a field config option reads its value and writes changes, including
+ * expressions kept in `defaults.varMappings`. The stored value stays as the fallback while an
+ * expression is shown.
+ */
+function getDefaultsEditing(
+  fieldOption: FieldConfigPropertyItem,
+  fieldConfig: FieldConfigSource,
+  varMappingsEnabled: boolean
+) {
+  const defaults = fieldConfig.defaults;
+  const storedValue = fieldOption.isCustom
+    ? defaults.custom
+      ? lodashGet(defaults.custom, fieldOption.path)
+      : undefined
+    : lodashGet(defaults, fieldOption.path);
+  const writeValue = (config: FieldConfigSource, v: unknown) =>
+    updateDefaultFieldConfigValue(config, fieldOption.path, v, fieldOption.isCustom);
+
+  const kind = varMappingsEnabled ? getVarMappingKind(fieldOption) : undefined;
+  const expression = kind ? defaults.varMappings?.[fieldOption.id] : undefined;
+  const toggleKind = getVarMappingToggleKind(fieldOption, kind);
+
+  return {
+    // The unit picker already accepts custom text, so it can take an expression as is
+    Editor: fieldOption.editor,
+    numberExpressions: kind === 'number' && !toggleKind,
+    storedValue,
+    // Toggle editors show the stored value and the expression separately
+    value: toggleKind ? storedValue : (expression ?? storedValue),
+    toggle: toggleKind ? { kind: toggleKind, expression } : undefined,
+    toFieldConfig: (v: unknown) => {
+      if (kind && isVarMappingExpressionInput(kind, v)) {
+        return updateDefaultFieldConfigVarMapping(fieldConfig, fieldOption.id, v);
+      }
+      // Writing a plain value also drops the expression, so the plain value takes effect. With the
+      // flag off this is the only way to get rid of an expression saved with the flag on.
+      return writeValue(updateDefaultFieldConfigVarMapping(fieldConfig, fieldOption.id, undefined), v);
+    },
+  };
 }
 
 export function getVisualizationOptions(props: OptionPaneRenderProps): OptionsPaneCategoryDescriptor[] {
@@ -235,10 +281,22 @@ export interface OptionPaneRenderProps2 {
   reportInteractionUI: 'panel-edit' | 'view-panel';
   onOptionsChange?: (options: Record<string, unknown>, name: string, category: string) => void;
   onFieldConfigChange?: (fieldConfig: FieldConfigSource, name: string, category: string) => void;
+  varMappingsEnabled?: boolean;
+  varMappingVariables?: VarMappingVariableSource;
 }
 
 export function getVisualizationOptions2(props: OptionPaneRenderProps2): OptionsPaneCategoryDescriptor[] {
-  const { plugin, panel, data, eventBus, instanceState, currentOptions, currentFieldConfig } = props;
+  const {
+    plugin,
+    panel,
+    data,
+    eventBus,
+    instanceState,
+    currentOptions,
+    currentFieldConfig,
+    varMappingsEnabled = false,
+    varMappingVariables,
+  } = props;
 
   const categoryIndex: Record<string, OptionsPaneCategoryDescriptor> = {};
   const getOptionsPaneCategory = (categoryNames?: string[]): OptionsPaneCategoryDescriptor => {
@@ -303,17 +361,14 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
     }
 
     const category = getOptionsPaneCategory(fieldOption.category);
-    const Editor = fieldOption.editor;
-    const defaults = currentFieldConfig.defaults;
-
-    const value = fieldOption.isCustom
-      ? defaults.custom
-        ? lodashGet(defaults.custom, fieldOption.path)
-        : undefined
-      : lodashGet(defaults, fieldOption.path);
+    const { Editor, numberExpressions, storedValue, value, toggle, toFieldConfig } = getDefaultsEditing(
+      fieldOption,
+      currentFieldConfig,
+      varMappingsEnabled
+    );
 
     if (fieldOption.getItemsCount) {
-      category.props.itemsCount = fieldOption.getItemsCount(value);
+      category.props.itemsCount = fieldOption.getItemsCount(storedValue);
     }
 
     const htmlId = `${fieldOption.isCustom ? 'custom.' : ''}${fieldOption.path}`;
@@ -324,15 +379,13 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
         id: htmlId,
         useFieldset: fieldOption.useFieldset,
         description: fieldOption.description,
-        overrides: getOptionOverrides(fieldOption, currentFieldConfig, data?.series),
+        overrides: [
+          ...getOptionOverrides(fieldOption, currentFieldConfig, data?.series),
+          ...(varMappingsEnabled ? getVarMappingOptionOverrides(fieldOption, currentFieldConfig) : []),
+        ],
         render: function renderEditor() {
           const onChange = (v: unknown) => {
-            const newFieldConfig = updateDefaultFieldConfigValue(
-              currentFieldConfig,
-              fieldOption.path,
-              v,
-              fieldOption.isCustom
-            );
+            const newFieldConfig = toFieldConfig(v);
             if (props.onFieldConfigChange) {
               props.onFieldConfigChange(newFieldConfig, fieldOption.name, category.props.title);
             } else {
@@ -346,6 +399,35 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
               value: JSON.stringify(value),
             });
           };
+
+          if (numberExpressions) {
+            return (
+              <VarMappingNumberValueEditor
+                value={typeof value === 'number' || typeof value === 'string' ? value : undefined}
+                onChange={onChange}
+                item={fieldOption}
+                context={context}
+                id={htmlId}
+                variables={varMappingVariables}
+              />
+            );
+          }
+
+          if (toggle) {
+            return (
+              <VarMappingToggleEditor
+                editor={Editor}
+                kind={toggle.kind}
+                expression={toggle.expression}
+                variables={varMappingVariables}
+                value={value}
+                onChange={onChange}
+                item={fieldOption}
+                context={context}
+                id={htmlId}
+              />
+            );
+          }
 
           return <Editor value={value} onChange={onChange} item={fieldOption} context={context} id={htmlId} />;
         },
