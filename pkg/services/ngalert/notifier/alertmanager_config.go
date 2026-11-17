@@ -223,7 +223,14 @@ func (moa *MultiOrgAlertmanager) ActivateHistoricalConfiguration(ctx context.Con
 		}
 	}
 
-	if err := moa.saveAndApplyConfig(ctx, orgId, am, cfg); err != nil {
+	storedSize := 0
+	if previousConfig != nil {
+		storedSize = len(previousConfig.AlertmanagerConfiguration)
+	}
+	if err := moa.saveAndApplyConfig(ctx, orgId, am, cfg, storedSize); err != nil {
+		if legacy_storage.ErrAlertmanagerConfigSizeExceeded.Base.Is(err) {
+			return err
+		}
 		moa.logger.Error("Unable to save and apply historical alertmanager configuration", "error", err, "org", orgId, "id", id)
 		return AlertmanagerConfigRejectedError{err}
 	}
@@ -493,7 +500,10 @@ func (moa *MultiOrgAlertmanager) modifyAndApplyExtraConfiguration(
 		return merge.MergeResult{}, fmt.Errorf("failed to encrypt external configurations: %w", err)
 	}
 
-	if err := moa.saveAndApplyConfig(ctx, org, am, cfg); err != nil {
+	if err := moa.saveAndApplyConfig(ctx, org, am, cfg, len(currentCfg.AlertmanagerConfiguration)); err != nil {
+		if legacy_storage.ErrAlertmanagerConfigSizeExceeded.Base.Is(err) {
+			return merge.MergeResult{}, err
+		}
 		moa.logger.Error("Unable to save and apply alertmanager configuration with extra config", "error", err, "org", org)
 		return merge.MergeResult{}, AlertmanagerConfigRejectedError{err}
 	}
@@ -767,14 +777,20 @@ func newSaveAMConfigCmd(cfg string, orgID int64, isDefault bool) *models.SaveAle
 // This should not be generally used but exists to facilitate operations that rely on the legacy blob config:
 // - Create/Update ExtraConfig, whose storage currently piggybacks on the legacy AMConfigDB blob.
 // - Config version history revert, which will eventually need to be replaced with per-resource version history.
-func (moa *MultiOrgAlertmanager) saveAndApplyConfig(ctx context.Context, orgID int64, am Alertmanager, cfg *v1.AMConfigV1) error {
-	moa.alertmanagersMtx.RLock()
-	defer moa.alertmanagersMtx.RUnlock()
-
+//
+// storedSize is the size in bytes of the configuration currently stored, or 0 if unknown. The size limit is checked
+// before taking the lock so a slow limits lookup does not block other writers.
+func (moa *MultiOrgAlertmanager) saveAndApplyConfig(ctx context.Context, orgID int64, am Alertmanager, cfg *v1.AMConfigV1, storedSize int) error {
 	cfgToSave, err := legacy_storage.SerializeAlertmanagerConfig(*cfg)
 	if err != nil {
 		return fmt.Errorf("failed to serialize to the Alertmanager configuration: %w", err)
 	}
+	if err := legacy_storage.ValidateConfigSize(ctx, moa.limitsProvider, moa.logger, len(cfgToSave), storedSize); err != nil {
+		return err
+	}
+
+	moa.alertmanagersMtx.RLock()
+	defer moa.alertmanagersMtx.RUnlock()
 
 	return moa.saveAndApplyCmd(ctx, orgID, am, newSaveAMConfigCmd(string(cfgToSave), orgID, false), ErrorOnInvalidReceivers) // Rollback on error.
 }

@@ -210,7 +210,7 @@ func TestAlertmanagerConfigStoreSaveSizeLimit(t *testing.T) {
 
 	testCases := []struct {
 		name       string
-		provider   limitsProvider
+		provider   LimitsProvider
 		storedSize int
 		expectErr  bool
 	}{

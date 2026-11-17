@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/merge"
+	"github.com/grafana/grafana/pkg/services/ngalert/remote/client"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -971,5 +972,85 @@ receivers:
 		require.NoError(t, mam.DeleteExtraConfiguration(ctx, orgID, signedIn, noopExtraConfigAuthz{}, syncUID))
 		require.NoError(t, save(mam, staged(syncUID, v1.ExtraConfigManagedByAutoSync), false))
 		require.Equal(t, v1.ExtraConfigManagedByAutoSync, storedOwner(t, mam))
+	})
+}
+
+func TestMultiOrgAlertmanager_SaveAndApplyConfig_SizeLimit(t *testing.T) {
+	orgID := int64(1)
+	limitOf := func(maxBytes int) *mockLimitsProvider {
+		return &mockLimitsProvider{limits: &client.TenantLimits{Config: &client.ConfigLimits{MaxGrafanaConfigSizeBytes: maxBytes}}}
+	}
+
+	t.Run("extra configuration import is rejected when it exceeds the limit", func(t *testing.T) {
+		mam := setupMam(t, nil)
+		ctx := context.Background()
+		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
+		mam.limitsProvider = limitOf(100)
+
+		before, err := mam.getLatestConfigs(ctx)
+		require.NoError(t, err)
+
+		extraConfig := v1.ExtraConfiguration{
+			Identifier: "too-large",
+			AlertmanagerConfig: `route:
+  receiver: test-receiver
+receivers:
+  - name: test-receiver`,
+		}
+		_, err = mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, extraConfig, false, false, false)
+		require.Truef(t, legacy_storage.ErrAlertmanagerConfigSizeExceeded.Base.Is(err), "expected size exceeded error, got %v", err)
+
+		after, err := mam.getLatestConfigs(ctx)
+		require.NoError(t, err)
+		require.Equal(t, before[orgID].ID, after[orgID].ID, "a rejected import must not store a new configuration")
+	})
+
+	t.Run("extra configuration import succeeds when the limit is not exceeded", func(t *testing.T) {
+		mam := setupMam(t, nil)
+		ctx := context.Background()
+		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
+		mam.limitsProvider = limitOf(1 << 20)
+
+		extraConfig := v1.ExtraConfiguration{
+			Identifier: "fits",
+			AlertmanagerConfig: `route:
+  receiver: test-receiver
+receivers:
+  - name: test-receiver`,
+		}
+		_, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, extraConfig, false, false, false)
+		require.NoError(t, err)
+	})
+
+	t.Run("historical restore is rejected when it grows the configuration past the limit", func(t *testing.T) {
+		mam := setupMam(t, nil)
+		ctx := context.Background()
+		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
+
+		cfgs, err := mam.getLatestConfigs(ctx)
+		require.NoError(t, err)
+		defaultID := cfgs[orgID].ID
+
+		// Replace the default configuration with a smaller one so that restoring the default grows it.
+		small, err := Load([]byte(`{"alertmanager_config":{"route":{"receiver":"r"},"receivers":[{"name":"r"}]}}`))
+		require.NoError(t, err)
+		require.NoError(t, mam.saveAndApplyConfig(ctx, orgID, mam.alertmanagers[orgID], small, 0))
+
+		mam.limitsProvider = limitOf(100)
+		err = mam.ActivateHistoricalConfiguration(ctx, orgID, defaultID)
+		require.Truef(t, legacy_storage.ErrAlertmanagerConfigSizeExceeded.Base.Is(err), "expected size exceeded error, got %v", err)
+	})
+
+	t.Run("historical restore that does not grow the configuration is allowed", func(t *testing.T) {
+		mam := setupMam(t, nil)
+		ctx := context.Background()
+		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
+
+		cfgs, err := mam.getLatestConfigs(ctx)
+		require.NoError(t, err)
+		defaultID := cfgs[orgID].ID
+
+		mam.limitsProvider = limitOf(100)
+		require.NoError(t, mam.ActivateHistoricalConfiguration(ctx, orgID, defaultID))
 	})
 }

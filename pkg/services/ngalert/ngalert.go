@@ -272,6 +272,12 @@ func (ng *AlertNG) init() error {
 	crypto := notifier.NewCrypto(ng.SecretsService, ng.store, moaLogger)
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	remoteAMEnabled := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemotePrimary)
+
+	// The provider is shared by config size, template and silence limit validation.
+	// Both provisioning.LimitsProvider and notifier.LimitsProvider interfaces have identical
+	// signatures, so NoopLimitsProvider and RemoteLimitsProvider satisfy both via structural typing.
+	limitsProvider := provisioning.NewLimitsProvider(ng.Cfg.UnifiedAlerting.RemoteAlertmanager, remoteAMEnabled, ng.Metrics.GetRemoteAlertmanagerMetrics(), ng.tracer, ng.Log)
+	opts = append(opts, notifier.WithLimitsProvider(limitsProvider))
 	if remoteAMEnabled {
 		m := ng.Metrics.GetRemoteAlertmanagerMetrics()
 		runtimeConfig := remoteClient.RuntimeConfig{
@@ -489,11 +495,6 @@ func (ng *AlertNG) init() error {
 		ng.schedule = schedule.NewScheduler(ng.schedCfg, ng.stateManager)
 		ruleMutator = apiprometheus.NewInMemoryRuleMutator(ng.schedule, ng.stateManager)
 	}
-
-	// The provider is shared by config size, template and silence limit validation.
-	// Both provisioning.LimitsProvider and notifier.LimitsProvider interfaces have identical
-	// signatures, so NoopLimitsProvider and RemoteLimitsProvider satisfy both via structural typing.
-	limitsProvider := provisioning.NewLimitsProvider(ng.Cfg.UnifiedAlerting.RemoteAlertmanager, remoteAMEnabled, ng.Metrics.GetRemoteAlertmanagerMetrics(), ng.tracer, ng.Log)
 
 	configStore := legacy_storage.NewAlertmanagerConfigStore(ng.store, notifier.NewExtraConfigsCrypto(ng.SecretsService), ng.FeatureToggles).WithLimitsProvider(limitsProvider)
 
