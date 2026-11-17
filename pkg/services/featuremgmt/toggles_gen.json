@@ -5,21 +5,6 @@
   "items": [
     {
       "metadata": {
-        "name": "adaptivelogs.enableTimeMachine",
-        "resourceVersion": "1794861557398",
-        "creationTimestamp": "2026-11-16T20:39:17Z",
-        "deletionTimestamp": "2026-11-16T20:54:21Z"
-      },
-      "spec": {
-        "description": "Shows an indicator on log lines retrieved via Adaptive Logs Time Machine",
-        "stage": "experimental",
-        "codeowner": "@grafana/observability-logs",
-        "frontend": true,
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
         "name": "alertEnrichment",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2025-06-06T12:16:07Z"
