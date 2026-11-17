@@ -1,5 +1,5 @@
 import userEvent from '@testing-library/user-event';
-import { render, screen } from 'test/test-utils';
+import { render, screen, within } from 'test/test-utils';
 
 import { locationService } from '@grafana/runtime';
 import {
@@ -215,6 +215,55 @@ describe('ResourceTreeView', () => {
 
       expect(await screen.findByText('My Widget')).toBeInTheDocument();
       expect(locationService.getSearchObject()).toEqual({});
+    });
+  });
+
+  describe('root folder', () => {
+    const files = [
+      { path: 'folder/_folder.json', hash: 'meta' },
+      { path: 'folder/dash.json', hash: 'aaa' },
+    ];
+    const resources = [
+      { path: '', hash: '', name: 'test-repo', title: 'Test Repository', resource: 'folders' },
+      { path: 'folder', hash: 'meta', name: 'folder-uid', title: 'My Folder', resource: 'folders' },
+      { path: 'folder/dash.json', hash: 'aaa', name: 'dash', title: 'My Dashboard', resource: 'dashboards' },
+    ];
+
+    beforeEach(() => {
+      setupQueries(files, resources);
+    });
+
+    it('should start with only the root folder unfolded', async () => {
+      render(<ResourceTreeView repo={repo} />);
+
+      expect(await screen.findByRole('button', { name: 'Test Repository' })).toHaveAttribute('aria-expanded', 'true');
+      expect(screen.getByRole('button', { name: 'My Folder' })).toHaveAttribute('aria-expanded', 'false');
+      expect(screen.queryByText('My Dashboard')).not.toBeInTheDocument();
+    });
+
+    it('should link the root folder Source button to the repository', async () => {
+      render(<ResourceTreeView repo={repo} />);
+
+      const row = await screen.findByRole('row', { name: /Test Repository/ });
+      expect(within(row).getByRole('link', { name: 'Source' })).toHaveAttribute(
+        'href',
+        'https://github.com/org/repo/tree/main'
+      );
+    });
+
+    it('should hide _folder.json and link the folder Source button to it', async () => {
+      const { user } = render(<ResourceTreeView repo={repo} />);
+
+      const row = await screen.findByRole('row', { name: /My Folder/ });
+      expect(within(row).getByRole('link', { name: 'Source' })).toHaveAttribute(
+        'href',
+        'https://github.com/org/repo/blob/main/folder/_folder.json'
+      );
+
+      await user.click(screen.getByRole('button', { name: 'My Folder' }));
+
+      expect(await screen.findByText('My Dashboard')).toBeInTheDocument();
+      expect(screen.queryByText('_folder.json')).not.toBeInTheDocument();
     });
   });
 });
