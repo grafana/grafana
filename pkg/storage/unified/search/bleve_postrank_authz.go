@@ -95,7 +95,7 @@ func (b *bleveQueryBackend) sort(reverse bool) search.SortOrder {
 	return order
 }
 
-func (b *bleveQueryBackend) Search(ctx context.Context, req queryRequest) (*queryResult, error) {
+func (b *bleveQueryBackend) Search(ctx context.Context, req queryRequest) (queryResult, error) {
 	prepared := *b.request
 	prepared.Size = req.Size
 	prepared.Fields = req.Fields
@@ -105,12 +105,12 @@ func (b *bleveQueryBackend) Search(ctx context.Context, req queryRequest) (*quer
 	return b.search(ctx, &prepared)
 }
 
-func (b *bleveQueryBackend) Lookup(ctx context.Context, ids, fields []string, reverse bool) (*queryResult, error) {
+func (b *bleveQueryBackend) Lookup(ctx context.Context, req queryLookupRequest) (queryResult, error) {
 	return b.search(ctx, &bleve.SearchRequest{
-		Query:  b.lookupQuery(ids),
-		Size:   len(ids),
-		Fields: fields,
-		Sort:   b.sort(reverse),
+		Query:  b.lookupQuery(req.IDs),
+		Size:   len(req.IDs),
+		Fields: req.Fields,
+		Sort:   b.sort(req.Reverse),
 		Score:  bleve.ScoreNone,
 	})
 }
@@ -131,7 +131,7 @@ func (b *bleveQueryBackend) lookupQuery(ids []string) query.Query {
 	return bleve.NewConjunctionQuery(b.request.Query, byID)
 }
 
-func (b *bleveQueryBackend) ReadAuthzMetadata(ctx context.Context, ids []string) (*queryMetadata, error) {
+func (b *bleveQueryBackend) ReadAuthzMetadata(ctx context.Context, ids []string) (queryMetadata, error) {
 	// Doc values avoid loading stored fields for candidates that never make a
 	// page. A missing folder sorts before every real folder ID.
 	sortBy := func(field string) *search.SortField {
@@ -144,7 +144,7 @@ func (b *bleveQueryBackend) ReadAuthzMetadata(ctx context.Context, ids []string)
 		Score: bleve.ScoreNone,
 	})
 	if err != nil {
-		return nil, err
+		return queryMetadata{}, err
 	}
 	value := func(sortKey string) string {
 		if sortKey == search.LowTerm {
@@ -156,15 +156,15 @@ func (b *bleveQueryBackend) ReadAuthzMetadata(ctx context.Context, ids []string)
 	for _, hit := range res.Hits {
 		metadata[hit.ID] = authzMetadata{folder: value(hit.Sort[0]), deletedBy: value(hit.Sort[1])}
 	}
-	return &queryMetadata{Values: metadata, Took: res.Took, Cost: res.Cost}, nil
+	return queryMetadata{Values: metadata, Took: res.Took, Cost: res.Cost}, nil
 }
 
-func (b *bleveQueryBackend) search(ctx context.Context, req *bleve.SearchRequest) (*queryResult, error) {
+func (b *bleveQueryBackend) search(ctx context.Context, req *bleve.SearchRequest) (queryResult, error) {
 	res, err := searchInContext(ctx, b.index, req)
 	if err != nil {
-		return nil, err
+		return queryResult{}, err
 	}
-	return &queryResult{
+	return queryResult{
 		Hits:     toQueryHits(res.Hits, req.Sort),
 		Total:    res.Total,
 		MaxScore: res.MaxScore,
@@ -187,7 +187,7 @@ func toQueryHits(hits search.DocumentMatchCollection, order search.SortOrder) []
 		}
 		result[i] = &queryHit{
 			ID: hit.ID, Score: hit.Score, Fields: hit.Fields,
-			Sort: hitSortFields(hit, order), SortKey: key,
+			Cursor: hitSortFields(hit, order), StableSortKey: key,
 		}
 	}
 	return result

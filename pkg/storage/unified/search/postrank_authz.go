@@ -195,7 +195,7 @@ func (p *postRankPage) validate(ctx context.Context) (int, error) {
 	for i, info := range pending {
 		ids[i] = info.doc.ID
 	}
-	res, err := p.backend.Lookup(ctx, ids, p.fields, p.reverse)
+	res, err := p.backend.Lookup(ctx, queryLookupRequest{IDs: ids, Fields: p.fields, Reverse: p.reverse})
 	if err != nil {
 		return 0, err
 	}
@@ -209,7 +209,7 @@ func (p *postRankPage) validate(ctx context.Context) (int, error) {
 	kept := p.hits[:p.validated]
 	for _, info := range pending {
 		hit, ok := loaded[info.doc.ID]
-		if !ok || !slices.Equal(hit.SortKey, info.doc.SortKey) {
+		if !ok || !slices.Equal(hit.StableSortKey, info.doc.StableSortKey) {
 			continue
 		}
 		folder, _ := hit.Fields[resource.SEARCH_FIELD_FOLDER].(string)
@@ -403,7 +403,7 @@ func (s *postRankSearch) run(
 	var candidates int64
 	var authorized int64
 	var exhausted bool
-	var firstRes *queryResult
+	var firstRes queryResult
 	maxCandidates := int64(cfg.MaxCandidates)
 
 	// Walk away from a backward cursor, then return its page in forward order.
@@ -423,7 +423,7 @@ windows:
 			return nil, err
 		}
 		stats.AddSearchTime(res.Took)
-		if firstRes == nil {
+		if window == 0 {
 			firstRes = res
 			stats.AddTotalHits(int(res.Total))
 		}
@@ -486,7 +486,7 @@ windows:
 			break
 		}
 		last := res.Hits[len(res.Hits)-1]
-		cursor := last.Sort
+		cursor := last.Cursor
 		if len(cursor) == 0 {
 			exhausted = true
 			break // no sort values -> cannot build a SearchAfter cursor
@@ -596,14 +596,14 @@ func (s *postRankSearch) aggregateFacetsFromTop(
 	windowReq.Size = cfg.facetWindowSize()
 	windowReq.Fields = s.facetScanFields(facets, trashAuthz != nil)
 
-	var firstRes *queryResult
-	for {
+	var firstRes queryResult
+	for window := 0; ; window++ {
 		res, err := s.backend.Search(ctx, windowReq)
 		if err != nil {
 			return nil, 0, false, err
 		}
 		stats.AddSearchTime(res.Took)
-		if firstRes == nil {
+		if window == 0 {
 			firstRes = res
 		}
 
@@ -642,7 +642,7 @@ func (s *postRankSearch) aggregateFacetsFromTop(
 		if len(res.Hits) < windowReq.Size || len(res.Hits) == 0 {
 			return agg, authorized, true, nil
 		}
-		cursor := res.Hits[len(res.Hits)-1].Sort
+		cursor := res.Hits[len(res.Hits)-1].Cursor
 		if len(cursor) == 0 {
 			return agg, authorized, true, nil
 		}
@@ -657,7 +657,7 @@ func finalizePostFilter(
 	response *resourcepb.ResourceSearchResponse,
 	page []*queryHit,
 	req *resourcepb.ResourceSearchRequest,
-	firstRes *queryResult,
+	firstRes queryResult,
 	authorized int64,
 	exhausted, reverseSort, wantFacets, trash bool,
 	agg *facetAggregator,

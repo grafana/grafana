@@ -154,7 +154,7 @@ func hitsToFieldValues(
 	for rowIndex, match := range hits {
 		row := &resourcepb.ResourceSearchRow{
 			Key:        &resourcepb.ResourceKey{},
-			SortFields: match.Sort,
+			SortFields: match.Cursor,
 			Values:     make([]*resourcepb.ResourceSearchValue, 0, len(schema.definitions)),
 		}
 		if err := resource.ReadSearchID(row.Key, match.ID); err != nil {

@@ -24,13 +24,13 @@ func TestBleveQueryHitCursor(t *testing.T) {
 	}
 	hits := toQueryHits(search.DocumentMatchCollection{match}, order)
 	require.Len(t, hits, 1)
-	require.Equal(t, []string{"1.25", "Title", match.ID}, hits[0].Sort)
-	require.Equal(t, []string{"encoded-title", match.ID}, hits[0].SortKey)
+	require.Equal(t, queryCursor{"1.25", "Title", match.ID}, hits[0].Cursor)
+	require.Equal(t, queryStableSortKey{"encoded-title", match.ID}, hits[0].StableSortKey)
 
 	match.Score = 9
 	updated := toQueryHits(search.DocumentMatchCollection{match}, order)
-	require.Equal(t, hits[0].SortKey, updated[0].SortKey, "a changed score must not invalidate an otherwise unchanged row")
-	require.NotEqual(t, hits[0].Sort, updated[0].Sort)
+	require.Equal(t, hits[0].StableSortKey, updated[0].StableSortKey, "a changed score must not invalidate an otherwise unchanged row")
+	require.NotEqual(t, hits[0].Cursor, updated[0].Cursor)
 }
 
 func TestBleveQueryBackendReverseSort(t *testing.T) {

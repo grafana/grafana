@@ -36,19 +36,19 @@ func (b *memoryQueryBackend) failure(ctx context.Context, operation string) erro
 	return nil
 }
 
-func (b *memoryQueryBackend) Search(ctx context.Context, req queryRequest) (*queryResult, error) {
+func (b *memoryQueryBackend) Search(ctx context.Context, req queryRequest) (queryResult, error) {
 	if err := b.failure(ctx, "search"); err != nil {
-		return nil, err
+		return queryResult{}, err
 	}
 	b.requests = append(b.requests, req)
 	hits := slices.Clone(b.hits)
 	if req.Reverse {
 		slices.Reverse(hits)
 	}
-	result := &queryResult{Total: uint64(len(hits))}
+	result := queryResult{Total: uint64(len(hits))}
 	for _, hit := range hits {
 		if len(req.SearchAfter) > 0 {
-			cmp := slices.Compare(hit.Sort, req.SearchAfter)
+			cmp := slices.Compare(hit.Cursor, req.SearchAfter)
 			if (!req.Reverse && cmp <= 0) || (req.Reverse && cmp >= 0) {
 				continue
 			}
@@ -66,11 +66,11 @@ func (b *memoryQueryBackend) Search(ctx context.Context, req queryRequest) (*que
 	return result, nil
 }
 
-func (b *memoryQueryBackend) ReadAuthzMetadata(ctx context.Context, ids []string) (*queryMetadata, error) {
+func (b *memoryQueryBackend) ReadAuthzMetadata(ctx context.Context, ids []string) (queryMetadata, error) {
 	if err := b.failure(ctx, "metadata"); err != nil {
-		return nil, err
+		return queryMetadata{}, err
 	}
-	result := &queryMetadata{Values: map[string]authzMetadata{}}
+	result := queryMetadata{Values: map[string]authzMetadata{}}
 	for _, hit := range b.hits {
 		if slices.Contains(ids, hit.ID) {
 			folder, _ := hit.Fields[resource.SEARCH_FIELD_FOLDER].(string)
@@ -80,17 +80,17 @@ func (b *memoryQueryBackend) ReadAuthzMetadata(ctx context.Context, ids []string
 	return result, nil
 }
 
-func (b *memoryQueryBackend) Lookup(ctx context.Context, ids, _ []string, _ bool) (*queryResult, error) {
+func (b *memoryQueryBackend) Lookup(ctx context.Context, req queryLookupRequest) (queryResult, error) {
 	if err := b.failure(ctx, "lookup"); err != nil {
-		return nil, err
+		return queryResult{}, err
 	}
 	if b.onLookup != nil {
 		b.onLookup()
 		b.onLookup = nil
 	}
-	result := &queryResult{}
+	result := queryResult{}
 	for _, hit := range b.hits {
-		if slices.Contains(ids, hit.ID) {
+		if slices.Contains(req.IDs, hit.ID) {
 			result.Hits = append(result.Hits, hit)
 		}
 	}
@@ -108,8 +108,8 @@ func newMemoryPostRankSearch(t *testing.T) (context.Context, *postRankSearch, *m
 			folder = "team"
 		}
 		backend.hits = append(backend.hits, &queryHit{
-			ID:   resource.SearchID(&resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: name}),
-			Sort: []string{name}, SortKey: []string{name},
+			ID:     resource.SearchID(&resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: name}),
+			Cursor: queryCursor{name}, StableSortKey: queryStableSortKey{name},
 			Fields: map[string]any{resource.SEARCH_FIELD_FOLDER: folder, resource.SEARCH_FIELD_TAGS: []string{name}},
 		})
 	}
