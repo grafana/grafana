@@ -5,7 +5,7 @@ import { useDispatch } from 'app/types/store';
 import { buildResourceBranchRedirectUrl, type ResourceBranchAction } from '../utils/redirect';
 import { type ResourceKindInfo } from '../utils/resourceKinds';
 
-/** Shape {@link SaveProvisionedResourceDrawer} forwards to `onBranchSuccess`. */
+/** Shape forwarded by {@link SaveProvisionedResourceDrawer}'s `onBranchSuccess` callback. */
 interface BranchSuccessData {
   ref: string;
   urls?: Record<string, string>;
@@ -23,12 +23,13 @@ export interface ProvisionedResourceDrawerHandlers {
    * Write workflow: invalidate the kind's list cache and redirect so the committed change shows up
    * at the destination.
    */
-  onWriteSuccess: () => void;
+  redirectAfterWrite: () => void;
   /**
-   * Branch (PR) workflow: redirects with the pull-request params so the destination surfaces the
-   * PR banner (mirrors the dashboard flow).
+   * Branch (PR) workflow: builds the `onBranchSuccess` handler for the given commit action. It
+   * redirects with the pull-request params so the destination surfaces the PR banner (mirrors the
+   * dashboard flow). `create`/`update`/`delete` differ only by this action.
    */
-  onBranchSuccess: (data: BranchSuccessData) => void;
+  makeOnBranchSuccess: (action: ResourceBranchAction) => (data: BranchSuccessData) => void;
 }
 
 /**
@@ -41,40 +42,41 @@ export interface ProvisionedResourceDrawerHandlers {
  */
 export function useProvisionedResourceDrawerHandlers(
   kind: ResourceKindInfo,
-  redirectUrl: string,
-  action: ResourceBranchAction
+  redirectUrl: string
 ): ProvisionedResourceDrawerHandlers {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const invalidate = () => {
-    const invalidateAction = kind.invalidateListTags?.();
-    if (invalidateAction) {
-      dispatch(invalidateAction);
+    const action = kind.invalidateListTags?.();
+    if (action) {
+      dispatch(action);
     }
   };
 
-  const onWriteSuccess = () => {
+  const redirectAfterWrite = () => {
     invalidate();
     navigate(redirectUrl);
   };
 
-  const onBranchSuccess = ({ ref, urls, repoType, configuredBranch, repoUrl, prTitle }: BranchSuccessData) => {
-    invalidate();
-    navigate(
-      buildResourceBranchRedirectUrl({
-        baseUrl: redirectUrl,
-        paramName: 'new_pull_request_url',
-        paramValue: urls?.newPullRequestURL,
-        repoType,
-        action,
-        prTitle,
-        ref,
-        configuredBranch,
-        repoUrl: urls?.repositoryURL ?? repoUrl,
-      })
-    );
-  };
+  const makeOnBranchSuccess =
+    (action: ResourceBranchAction) =>
+    ({ ref, urls, repoType, configuredBranch, repoUrl, prTitle }: BranchSuccessData) => {
+      invalidate();
+      navigate(
+        buildResourceBranchRedirectUrl({
+          baseUrl: redirectUrl,
+          paramName: 'new_pull_request_url',
+          paramValue: urls?.newPullRequestURL,
+          repoType,
+          action,
+          prTitle,
+          ref,
+          configuredBranch,
+          repoUrl: urls?.repositoryURL ?? repoUrl,
+        })
+      );
+    };
 
-  return { onWriteSuccess, onBranchSuccess };
+  return { redirectAfterWrite, makeOnBranchSuccess };
 }

@@ -14,7 +14,7 @@ import { type Playlist, useDeletePlaylistMutation, useListPlaylistQuery } from '
 
 import { PlaylistPageList } from './PlaylistPageList';
 import { StartModal } from './StartModal';
-import { PLAYLISTS_URL, searchPlaylists, useCanWritePlaylists } from './utils';
+import { searchPlaylists, useCanWritePlaylists } from './utils';
 
 export const PlaylistPage = () => {
   const canWrite = useCanWritePlaylists();
@@ -104,7 +104,7 @@ export const PlaylistPage = () => {
                   resource={playlistToDelete}
                   title={playlistToDelete.spec?.title ?? ''}
                   action="delete"
-                  redirectUrl={PLAYLISTS_URL}
+                  redirectUrl="/playlists"
                   onDismiss={onDismissDelete}
                 />
               ) : (
