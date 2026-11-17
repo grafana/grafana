@@ -49,24 +49,24 @@ DashboardSpec: {
 	// Configured template variables.
 	variables: [...VariableKind] | *[]
 
-	// Questions viewers can ask about the dashboard, offered by plugins in the dashboard controls.
-	questions?: [...Question]
+	// Prompts viewers can run on the dashboard, offered by plugins in the dashboard controls.
+	prompts?: [...Prompt]
 
 	preferences?: Preferences
 }
 
-// A question viewers can ask about a dashboard, row, or tab, offered by plugins in its controls.
-Question: {
-	// The question that is asked. Viewers see it on the dashboard unless it has a title.
+// A prompt viewers can run on a dashboard, row, or tab, offered by plugins in its controls.
+Prompt: {
+	// The prompt that is run. Viewers see it on the dashboard unless it has a title.
 	text: string
-	// A short title viewers see on the dashboard instead of the question. Unset to show the question.
+	// A short title viewers see on the dashboard instead of the prompt. Unset to show the prompt.
 	title?: string
-	// The panels to answer it from. Unset for every panel in the dashboard, row, or tab the question is saved on.
-	sources?: [...QuestionSource]
+	// The panels to answer it from. Unset for every panel in the dashboard, row, or tab the prompt is saved on.
+	sources?: [...PromptSource]
 }
 
-// A panel that a question is answered from.
-QuestionSource: {
+// A panel that a prompt is answered from.
+PromptSource: {
 	// The panel, by its name in dashboard.spec.elements.
 	element: ElementReference
 }
@@ -689,8 +689,8 @@ RowsLayoutRowSpec: {
 	layout:                GridLayoutKind | AutoGridLayoutKind | TabsLayoutKind | RowsLayoutKind
 	variables?: [...VariableKind]
 	annotations?: [...AnnotationQueryKind]
-	// Questions viewers can ask about the panels in this row, offered by plugins in the row's controls.
-	questions?: [...Question]
+	// Prompts viewers can run on the panels in this row, offered by plugins in the row's controls.
+	prompts?: [...Prompt]
 }
 
 AutoGridLayoutKind: {
@@ -747,8 +747,8 @@ TabsLayoutTabSpec: {
 	repeat?:               TabRepeatOptions
 	variables?: [...VariableKind]
 	annotations?: [...AnnotationQueryKind]
-	// Questions viewers can ask about the panels in this tab, offered by plugins in the tab's controls.
-	questions?: [...Question]
+	// Prompts viewers can run on the panels in this tab, offered by plugins in the tab's controls.
+	prompts?: [...Prompt]
 }
 
 PanelSpec: {

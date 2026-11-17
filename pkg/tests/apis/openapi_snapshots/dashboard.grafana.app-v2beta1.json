@@ -5523,6 +5523,49 @@
           }
         }
       },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardPrompt": {
+        "description": "A prompt viewers can run on a dashboard, row, or tab, offered by plugins in its controls.",
+        "type": "object",
+        "required": [
+          "text"
+        ],
+        "properties": {
+          "sources": {
+            "description": "The panels to answer it from. Unset for every panel in the dashboard, row, or tab the prompt is saved on.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardPromptSource"
+            }
+          },
+          "text": {
+            "description": "The prompt that is run. Viewers see it on the dashboard unless it has a title.",
+            "type": "string",
+            "default": ""
+          },
+          "title": {
+            "description": "A short title viewers see on the dashboard instead of the prompt. Unset to show the prompt.",
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardPromptSource": {
+        "description": "A panel that a prompt is answered from.",
+        "type": "object",
+        "required": [
+          "element"
+        ],
+        "properties": {
+          "element": {
+            "description": "The panel, by its name in dashboard.spec.elements.",
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardElementReference"
+              }
+            ]
+          }
+        }
+      },
       "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardQueryGroupKind": {
         "type": "object",
         "required": [
@@ -5770,49 +5813,6 @@
           }
         }
       },
-      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardQuestion": {
-        "description": "A question viewers can ask about a dashboard, row, or tab, offered by plugins in its controls.",
-        "type": "object",
-        "required": [
-          "text"
-        ],
-        "properties": {
-          "sources": {
-            "description": "The panels to answer it from. Unset for every panel in the dashboard, row, or tab the question is saved on.",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardQuestionSource"
-            }
-          },
-          "text": {
-            "description": "The question that is asked. Viewers see it on the dashboard unless it has a title.",
-            "type": "string",
-            "default": ""
-          },
-          "title": {
-            "description": "A short title viewers see on the dashboard instead of the question. Unset to show the question.",
-            "type": "string"
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardQuestionSource": {
-        "description": "A panel that a question is answered from.",
-        "type": "object",
-        "required": [
-          "element"
-        ],
-        "properties": {
-          "element": {
-            "description": "The panel, by its name in dashboard.spec.elements.",
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardElementReference"
-              }
-            ]
-          }
-        }
-      },
       "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardRangeMap": {
         "description": "Maps numerical ranges to a display text and color. For example, if a value is within a certain range, you can configure a range value mapping to display Low or High rather than the number.",
         "type": "object",
@@ -5969,11 +5969,11 @@
           "layout": {
             "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind"
           },
-          "questions": {
-            "description": "Questions viewers can ask about the panels in this row, offered by plugins in the row's controls.",
+          "prompts": {
+            "description": "Prompts viewers can run on the panels in this row, offered by plugins in the row's controls.",
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardQuestion"
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardPrompt"
             }
           },
           "repeat": {
@@ -6063,11 +6063,11 @@
             "type": "boolean",
             "default": false
           },
-          "questions": {
-            "description": "Questions viewers can ask about the dashboard, offered by plugins in the dashboard controls.",
+          "prompts": {
+            "description": "Prompts viewers can run on the dashboard, offered by plugins in the dashboard controls.",
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardQuestion"
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardPrompt"
             }
           },
           "revision": {
@@ -6323,11 +6323,11 @@
           "layout": {
             "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind"
           },
-          "questions": {
-            "description": "Questions viewers can ask about the panels in this tab, offered by plugins in the tab's controls.",
+          "prompts": {
+            "description": "Prompts viewers can run on the panels in this tab, offered by plugins in the tab's controls.",
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardQuestion"
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardPrompt"
             }
           },
           "repeat": {
