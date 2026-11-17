@@ -25,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 	zserver "github.com/grafana/grafana/pkg/services/authz/zanzana/server"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -60,7 +59,7 @@ func TestIntegrationZanzanaMatchesLegacyFolderGrantScopes(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.RBAC.PermissionCache = false
 	cfg.ZanzanaServer.AllowInsecure = true
-	loader := legacypermissions.NewLoader(database, legacypermissions.NewRoleCatalog(), resourcepermissions.NewActionSetService(), localcache.New(0, 0), cfg, featuremgmt.WithFeatures(), &enforcementLicense{enabled: true}, nil)
+	loader := legacypermissions.NewLoader(database, legacypermissions.NewRoleCatalog(), resourcepermissions.NewActionSetService(), localcache.New(0, 0), cfg, &enforcementLicense{enabled: true}, nil)
 	grants := []accesscontrol.Permission{
 		{Action: "folders:read", Scope: "folders:uid:parent"},
 		{Action: "dashboards:read", Scope: "folders:uid:parent"},

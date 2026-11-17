@@ -28,7 +28,7 @@ func TestIntegrationLoaderReadsCurrentConfigAndLicense(t *testing.T) {
 	license := &enforcementLicense{}
 	loader := legacypermissions.NewLoader(sql, legacypermissions.NewRoleCatalog(),
 		resourcepermissions.NewActionSetService(), localcache.New(0, 0),
-		cfg, featuremgmt.WithFeatures(), license, nil)
+		cfg, license, nil)
 	requester := &user.SignedInUser{UserID: 7, OrgID: 1, OrgRole: org.RoleNone}
 	a := ac.Permission{Action: "users:read", Scope: "users:*"}
 	b := ac.Permission{Action: "users:create"}
@@ -56,16 +56,21 @@ func TestIntegrationLoaderReadsCurrentConfigAndLicense(t *testing.T) {
 func TestIntegrationLoaderReadsCurrentFeatureToggle(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 	sql := db.NewTestStore(t)
-	features := featuremgmt.NewMockFeatureToggles(t)
+	require.NoError(t, openfeature.SetProviderAndWait(globalPermissionsFeatureProvider{}))
+	t.Cleanup(func() { require.NoError(t, openfeature.SetProviderAndWait(openfeature.NoopProvider{})) })
 	loader := legacypermissions.NewLoader(sql, legacypermissions.NewRoleCatalog(),
 		resourcepermissions.NewActionSetService(), localcache.New(0, 0),
-		loaderConfig(false), features, &licensing.OSSLicensingService{}, nil)
+		loaderConfig(false), &licensing.OSSLicensingService{}, nil)
 	permission := ac.Permission{Action: "dashboards:read", Scope: "dashboards:uid:one", Kind: "dashboards"}
 	seedGrant(t, sql, "managed:one", 1, 7, permission)
 	requester := &user.SignedInUser{UserID: 7, OrgID: 1, OrgRole: org.RoleNone}
 	for _, enabled := range []bool{false, true, false} {
-		features.EXPECT().IsEnabledGlobally(featuremgmt.FlagExcludeRedundantManagedPermissions).Return(enabled).Once()
-		got, err := loader.GetUserPermissions(context.Background(), requester, ac.Options{})
+		target := "disabled"
+		if enabled {
+			target = "enabled"
+		}
+		ctx := openfeature.WithTransactionContext(t.Context(), openfeature.NewEvaluationContext(target, nil))
+		got, err := loader.GetUserPermissions(ctx, requester, ac.Options{})
 		require.NoError(t, err)
 		want := []ac.Permission{{Action: "folders:read", Scope: "folders:uid:sharedwithme"}}
 		if !enabled {
@@ -75,14 +80,11 @@ func TestIntegrationLoaderReadsCurrentFeatureToggle(t *testing.T) {
 	}
 }
 
-func TestIntegrationGlobalLoaderUsesOpenFeature(t *testing.T) {
+func TestIntegrationLoadersUseOpenFeature(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 	sql := db.NewTestStore(t)
 	actions := resourcepermissions.NewActionSetService()
 	actions.StoreActionSet("dashboards:view", []string{"dashboards:read"})
-	loader := legacypermissions.NewLoader(sql, legacypermissions.NewRoleCatalog(),
-		actions, localcache.New(0, 0), loaderConfig(false),
-		featuremgmt.NewMockFeatureToggles(t), &licensing.OSSLicensingService{}, nil)
 	seedGrant(t, sql, "managed:direct", ac.GlobalOrgID, 7, ac.Permission{
 		Action: "dashboards:read", Scope: "dashboards:uid:direct", Kind: "dashboards",
 	})
@@ -98,16 +100,16 @@ func TestIntegrationGlobalLoaderUsesOpenFeature(t *testing.T) {
 		want     map[string][]string
 	}{
 		{
-			name:     "disabled for request preserves direct grants",
-			target:   "disabled",
-			provider: globalPermissionsFeatureProvider{},
-			want:     map[string][]string{"dashboards:read": {"dashboards:uid:direct", "dashboards:uid:action-set"}},
-		},
-		{
-			name:     "enabled for request keeps only action-set grants",
+			name:     "request enabled filters individual grants",
 			target:   "enabled",
 			provider: globalPermissionsFeatureProvider{},
 			want:     map[string][]string{"dashboards:read": {"dashboards:uid:action-set"}},
+		},
+		{
+			name:     "request disabled preserves individual grants",
+			target:   "disabled",
+			provider: globalPermissionsFeatureProvider{},
+			want:     map[string][]string{"dashboards:read": {"dashboards:uid:direct", "dashboards:uid:action-set"}},
 		},
 		{
 			name:     "missing provider defaults to disabled",
@@ -120,6 +122,12 @@ func TestIntegrationGlobalLoaderUsesOpenFeature(t *testing.T) {
 			require.NoError(t, openfeature.SetProviderAndWait(tc.provider))
 			t.Cleanup(func() { require.NoError(t, openfeature.SetProviderAndWait(openfeature.NoopProvider{})) })
 			ctx := openfeature.WithTransactionContext(t.Context(), openfeature.NewEvaluationContext(tc.target, nil))
+
+			loader := legacypermissions.NewLoader(sql, legacypermissions.NewRoleCatalog(), actions,
+				localcache.New(0, 0), loaderConfig(false), &licensing.OSSLicensingService{}, nil)
+			enumerated, err := loader.GetUserPermissions(ctx, requester, ac.Options{})
+			require.NoError(t, err)
+			require.ElementsMatch(t, tc.want["dashboards:read"], ac.GroupScopesByActionContext(ctx, enumerated)["dashboards:read"])
 
 			got, err := loader.GetGlobalUserPermissions(ctx, requester, []string{"dashboards:read"})
 
