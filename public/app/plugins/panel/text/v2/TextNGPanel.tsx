@@ -357,6 +357,7 @@ interface TextNGViewProps extends ProcessedContent {
   consent?: TextSandboxProps['consent'];
 }
 
+// Panel width changes flow through CSS; avoid rerendering unchanged content on every resize event.
 const TextNGView = memo(function TextNGView({
   mode,
   content,

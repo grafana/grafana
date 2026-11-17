@@ -5,6 +5,7 @@ import { getTextContentStyles } from '@grafana/ui/unstable';
 
 import { getGlobalFontCss } from './sandboxPolicy';
 
+// Compile once per theme across panels; each iframe still has to parse its own copy of the CSS.
 const contentStyles = new WeakMap<GrafanaTheme2, string>();
 
 export function getSandboxCss(theme: GrafanaTheme2): string {
@@ -21,6 +22,7 @@ export function getSandboxCss(theme: GrafanaTheme2): string {
       }
     };
     try {
+      // App-wide styles include unrelated UI rules; copying them multiplies parsing cost across frames.
       emotion.injectGlobal(getTextContentStyles(theme));
       css = Array.from(sheet.cssRules, (rule) => rule.cssText).join('\n');
       contentStyles.set(theme, css);

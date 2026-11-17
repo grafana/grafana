@@ -24,6 +24,7 @@ export const WATCHDOG_TIMEOUT_MS = 15_000;
 
 let shellPolicy: Pick<TrustedTypePolicy, 'createHTML'> | undefined;
 
+// Route once per message instead of invoking every panel's listener for every frame notification.
 const frameListeners = new Map<string, (event: MessageEvent) => void>();
 
 function dispatchFrameMessage(event: MessageEvent) {
@@ -74,6 +75,8 @@ export function SandboxFrame(props: SandboxFrameProps) {
     },
     [onState]
   );
+  // Content-only protected updates reuse the document, avoiding runtime startup and CSS/font parsing.
+  // Keep shell and policy changes on the recreation path so document-level configuration cannot go stale.
   const [documentVersion, setDocumentVersion] = useState({ html, globalCss, policy, mermaid, diagramError, id: 0 });
   const shellChanged =
     documentVersion.globalCss !== globalCss ||

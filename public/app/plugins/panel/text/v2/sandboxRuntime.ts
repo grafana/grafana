@@ -171,6 +171,7 @@ function measure() {
       ? last.offsetTop + last.offsetHeight - first.offsetTop
       : 0;
   const height = Math.max(1, Math.ceil(content.getBoundingClientRect().height));
+  // Width-only observations need no parent message unless wrapping changes a reported height.
   if (lastDimensions?.height === height && lastDimensions.contentHeight === contentHeight) {
     return;
   }

@@ -1,6 +1,7 @@
+// Share in-flight fetches and encoding across panels, including when their stylesheets differ.
 const fonts = new Map<string, Promise<string>>();
 
-// Keep only the latest stylesheet, rather than retaining every theme's inlined font payload.
+// Share stylesheet preparation across panels, retaining only the latest theme's inlined font payload.
 let prepared: { css: string; fontRoot: string; baseURI: string; result: Promise<string> } | undefined;
 
 /** Only application-owned global CSS is accepted here, never panel content. */

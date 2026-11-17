@@ -35,6 +35,7 @@ export function TextSandbox({ html, hasData = true, testId, className, minHeight
   const { dashboardUid, panelId, panelTitle } = consent ?? {};
   const origins = useAllowedOrigins(dashboardUid, panelId);
   const [globalCss, setGlobalCss] = useState<string>();
+  // Height and consent updates must not repeat HTML sanitization when content is unchanged.
   const sanitizedHtml = useMemo(() => (hasData ? textUtil.sanitizeTextPanelContent(html) : html), [html, hasData]);
   const mermaid = useMemo(() => (isTextNewFeaturesEnabled() ? getMermaidConfig(theme) : undefined), [theme]);
   const fontRoot = `${window.__grafana_public_path__ || 'public/'}fonts/`;
