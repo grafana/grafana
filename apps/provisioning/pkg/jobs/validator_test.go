@@ -1373,7 +1373,9 @@ func TestAdmissionValidator_Validate(t *testing.T) {
 // The supported resources can change while the process runs, so the validator reads them on
 // each validation.
 func TestAdmissionValidator_ReadsTheSupportedResourcesOnEachValidation(t *testing.T) {
-	var supported []provisioning.SupportedResource
+	dashboard := provisioning.SupportedResource{Group: "dashboard.grafana.app", Kind: "Dashboard"}
+	widget := provisioning.SupportedResource{Group: "example.ext.grafana.app", Kind: "Widget"}
+	supported := []provisioning.SupportedResource{dashboard}
 	v := NewAdmissionValidator(func() []provisioning.SupportedResource { return supported }, nil)
 	job := &provisioning.Job{
 		ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
@@ -1386,11 +1388,10 @@ func TestAdmissionValidator_ReadsTheSupportedResourcesOnEachValidation(t *testin
 		},
 	}
 
-	supported = []provisioning.SupportedResource{{Group: "dashboard.grafana.app", Kind: "Dashboard"}}
 	err := v.Validate(context.Background(), newAdmissionTestAttributes(job, admission.Create), nil)
 	require.ErrorContains(t, err, "kind is not supported for export")
 
-	supported = append(supported, provisioning.SupportedResource{Group: "example.ext.grafana.app", Kind: "Widget"})
+	supported = []provisioning.SupportedResource{dashboard, widget}
 	require.NoError(t, v.Validate(context.Background(), newAdmissionTestAttributes(job, admission.Create), nil))
 }
 
