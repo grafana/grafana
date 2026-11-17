@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { useChromeHeaderHeight } from '@grafana/runtime';
-import { Box, Dropdown, EmptyState, LinkButton, Menu, Stack, useStyles2 } from '@grafana/ui';
+import { Box, Divider, Dropdown, EmptyState, LinkButton, Menu, Stack, useStyles2 } from '@grafana/ui';
 
 import { AlertingPageWrapper } from '../../components/AlertingPageWrapper';
 import MoreButton from '../../components/MoreButton';
@@ -16,6 +16,7 @@ import { RuleSearchInput } from '../rule-search/RuleSearchInput';
 import { type RuleListMode, useRuleListSearchState } from '../rule-search/useRuleListSearchState';
 import { useTrackRuleListPageView } from '../shared/analytics';
 
+import { AlertRulesFilterSidebar } from './AlertRulesFilterSidebar';
 import { AlertRulesFoldersView } from './AlertRulesFoldersView';
 import { AlertRulesListView } from './AlertRulesListView';
 import { type AlertRuleFilter, alertRuleSearchSchema } from './alertRuleFilters';
@@ -46,7 +47,13 @@ function AlertRulesPage() {
               trailing={<RuleListModeToggle mode={mode} onChange={setMode} foldersDisabled={hasNonFolderFilters} />}
             />
           </div>
-          <AlertRulesBody hasIssues={issues.length > 0} mode={mode} filter={filter} />
+          <Stack direction="row" gap={2}>
+            <AlertRulesFilterSidebar query={query} filter={filter} onApply={applyQuery} />
+            <Divider direction="vertical" spacing={0} />
+            <Box flex={1} minWidth={0}>
+              <AlertRulesBody hasIssues={issues.length > 0} mode={mode} filter={filter} />
+            </Box>
+          </Stack>
         </Stack>
       </Box>
     </AlertingPageWrapper>
