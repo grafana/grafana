@@ -13,7 +13,8 @@ import {
 
 import { SandboxFrame } from './SandboxFrame';
 import { inlineSandboxFonts } from './sandboxFonts';
-import { getGlobalCss, textSandboxPolicy, type TextSandboxState } from './sandboxPolicy';
+import { textSandboxPolicy, type TextSandboxState } from './sandboxPolicy';
+import { getSandboxCss } from './sandboxStyles';
 import { isTextNewFeaturesEnabled } from './utils';
 
 export interface TextSandboxProps {
@@ -39,7 +40,7 @@ export function TextSandbox({ html, hasData = true, testId, className, minHeight
 
   useLayoutEffect(() => {
     let disposed = false;
-    const css = getGlobalCss();
+    const css = getSandboxCss(theme);
     if (css.includes('@font-face')) {
       void inlineSandboxFonts(css, fontRoot).then((css) => {
         if (!disposed) {

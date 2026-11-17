@@ -1,4 +1,4 @@
-import { getGlobalCss, resourceOrigin, textSandboxPolicy } from './sandboxPolicy';
+import { getGlobalFontCss, resourceOrigin, textSandboxPolicy } from './sandboxPolicy';
 
 it('allows only normalized HTTP origins without granting script or connection privileges', () => {
   expect(
@@ -30,27 +30,28 @@ it('removes credentials, paths, query values, and fragments from consent details
   );
 });
 
-it('shares global CSS serialization within a mount batch and reads later CSSOM edits', async () => {
+it('shares font CSS serialization within a mount batch and reads later CSSOM edits', async () => {
   const style = document.createElement('style');
   style.dataset.emotion = 'test-global';
-  style.textContent = 'body { color: red; }';
+  style.textContent = '@font-face { font-style: normal; } body { color: red; }';
   document.head.append(style);
   // JSDOM does not expose CSSStyleSheet.ownerNode.
   Object.defineProperty(style.sheet, 'ownerNode', { value: style });
   const rule = style.sheet!.cssRules[0] as CSSStyleRule;
   const serialize = jest.spyOn(rule.style, 'getPropertyValue');
   try {
-    expect(getGlobalCss()).toContain('body {color: red;}');
-    expect(getGlobalCss()).toContain('body {color: red;}');
+    expect(getGlobalFontCss()).toContain('@font-face {font-style: normal;}');
+    expect(getGlobalFontCss()).toContain('@font-face {font-style: normal;}');
     expect(serialize).toHaveBeenCalledTimes(1);
+    expect(getGlobalFontCss()).not.toContain('body');
     await Promise.resolve();
-    rule.style.setProperty('color', 'blue');
-    expect(getGlobalCss()).toContain('body {color: blue;}');
+    rule.style.setProperty('font-style', 'italic');
+    expect(getGlobalFontCss()).toContain('@font-face {font-style: italic;}');
     expect(serialize).toHaveBeenCalledTimes(2);
-    style.sheet!.insertRule('p { color: green; }', 1);
-    expect(getGlobalCss()).toContain('p {color: green;}');
+    style.sheet!.insertRule('@font-face { font-style: oblique; }', 1);
+    expect(getGlobalFontCss()).toContain('@font-face {font-style: oblique;}');
     style.remove();
-    expect(getGlobalCss()).not.toContain('body {color: blue;}');
+    expect(getGlobalFontCss()).not.toContain('@font-face {font-style: italic;}');
   } finally {
     style.remove();
     serialize.mockRestore();

@@ -67,41 +67,49 @@ export function textSandboxPolicy(origins: string[], fontRoot: string): string {
     .join('; ');
 }
 
-let globalCssSnapshot: { sheets: CSSStyleSheet[]; lengths: number[]; css: string } | undefined;
+let globalFontCssSnapshot: { sheets: CSSStyleSheet[]; lengths: number[]; css: string } | undefined;
 
-export function getGlobalCss(): string {
+export function getGlobalFontCss(): string {
   const sheets = Array.from(document.styleSheets).filter(
     (sheet) => sheet.ownerNode instanceof HTMLElement && sheet.ownerNode.dataset.emotion?.includes('global')
   );
   try {
     const lengths = sheets.map((sheet) => sheet.cssRules.length);
     if (
-      globalCssSnapshot &&
-      sheets.length === globalCssSnapshot.sheets.length &&
+      globalFontCssSnapshot &&
+      sheets.length === globalFontCssSnapshot.sheets.length &&
       sheets.every(
         (sheet, index) =>
-          sheet === globalCssSnapshot!.sheets[index] && lengths[index] === globalCssSnapshot!.lengths[index]
+          sheet === globalFontCssSnapshot!.sheets[index] && lengths[index] === globalFontCssSnapshot!.lengths[index]
       )
     ) {
-      return globalCssSnapshot.css;
+      return globalFontCssSnapshot.css;
     }
-    const css = sheets.flatMap((sheet) => Array.from(sheet.cssRules, (rule) => rule.cssText)).join('\n');
+    const css = sheets
+      .flatMap((sheet) =>
+        Array.from(sheet.cssRules)
+          .filter((rule) => rule.type === CSSRule.FONT_FACE_RULE)
+          .map((rule) => rule.cssText)
+      )
+      .join('\n');
     const snapshot = { sheets, lengths, css };
-    globalCssSnapshot = snapshot;
-    // Share serialization across a mount batch, without retaining CSS across later CSSOM edits.
+    globalFontCssSnapshot = snapshot;
+    // Share serialization across a mount batch, without retaining font CSS across later CSSOM edits.
     void Promise.resolve().then(() => {
-      if (globalCssSnapshot === snapshot) {
-        globalCssSnapshot = undefined;
+      if (globalFontCssSnapshot === snapshot) {
+        globalFontCssSnapshot = undefined;
       }
     });
     return css;
   } catch {
-    globalCssSnapshot = undefined;
+    globalFontCssSnapshot = undefined;
     // A stylesheet may be inaccessible while being replaced or supplied cross-origin.
     return sheets
       .flatMap((sheet) => {
         try {
-          return Array.from(sheet.cssRules, (rule) => rule.cssText);
+          return Array.from(sheet.cssRules)
+            .filter((rule) => rule.type === CSSRule.FONT_FACE_RULE)
+            .map((rule) => rule.cssText);
         } catch {
           return [];
         }
