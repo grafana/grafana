@@ -20,11 +20,10 @@ describe('setFilterValues', () => {
       'cpu health:error  label:team=api',
       'health',
       ['nodata'],
-      'cpu health:nodata  label:team=api',
+      'cpu health:nodata label:team=api',
     ],
-    ['appends a filter the query lacks', 'cpu  high', 'health', ['error'], 'cpu  high health:error'],
+    ['appends a filter the query lacks', 'cpu high', 'health', ['error'], 'cpu high health:error'],
     ['writes into an empty query', '', 'folder', ['f1', 'f2'], 'folder:f1 folder:f2'],
-    ['keeps a trailing space as typed', 'cpu ', 'health', ['error'], 'cpu health:error'],
     [
       'puts all values where the first token was',
       'folder:a cpu folder:b health:ok',
@@ -39,6 +38,14 @@ describe('setFilterValues', () => {
     ['replaces a rejected value', 'health:bogus cpu', 'health', ['ok'], 'health:ok cpu'],
     ['quotes a value with spaces', 'cpu', 'datasource', ['a b'], 'cpu datasource:"a b"'],
     ['skips empty values', 'cpu', 'folder', ['', 'f1'], 'cpu folder:f1'],
+    [
+      'writes other tokens back so they read the same',
+      'label:team="a b"  "high load" health:error',
+      'folder',
+      ['f1'],
+      'label:"team=a b" "high load" health:error folder:f1',
+    ],
+    ['keeps an unclosed quote unclosed', 'health:error label:"team', 'health', [], 'label:"team'],
   ])('%s', (_, query, key, values, expected) => {
     expect(set(query, key, values)).toBe(expected);
   });
@@ -46,7 +53,7 @@ describe('setFilterValues', () => {
   describe('title text', () => {
     it('replaces free text, rule: and unknown keys, keeping filters as typed', () => {
       expect(set('cpu health:error rule:high foo:bar  label:a', 'rule', ['disk full'])).toBe(
-        'disk full health:error  label:a'
+        'disk full health:error label:a'
       );
     });
 

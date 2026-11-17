@@ -4,9 +4,6 @@ export interface RawToken {
   value: string;
   /** False when a quote has no closing quote; it then reads to the end of the input. */
   closed: boolean;
-  /** Where the token sits in the input, key included, so the sidebar can rewrite it in place. */
-  start: number;
-  end: number;
 }
 
 export function tokenize(input: string): RawToken[] {
@@ -19,7 +16,6 @@ export function tokenize(input: string): RawToken[] {
       continue;
     }
 
-    const start = i;
     // A colon with no valid key before it stays in the free-text word, e.g. "1:2:3".
     const key = readKey(input.slice(i));
     if (key !== null) {
@@ -27,7 +23,7 @@ export function tokenize(input: string): RawToken[] {
     }
 
     const { value, closed, next } = readValue(input, i);
-    tokens.push({ key, value, closed, start, end: next });
+    tokens.push({ key, value, closed });
     i = next;
   }
 

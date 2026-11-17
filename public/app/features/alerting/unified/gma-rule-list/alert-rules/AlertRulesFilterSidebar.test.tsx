@@ -62,15 +62,15 @@ describe('AlertRulesFilterSidebar', () => {
     expect(await screen.findByText(shown)).toBeInTheDocument();
   });
 
-  it('rewrites only the changed filter, keeping the rest of the query as typed', async () => {
-    const { user } = renderPage('cpu  state:firing label:team=api');
+  it('rewrites only the changed filter, keeping the rest of the query in order', async () => {
+    const { user } = renderPage('cpu state:firing label:team=api');
 
     await user.click(
       within(await screen.findByRole('group', { name: 'Alert state' })).getByRole('radio', { name: 'Pending' })
     );
 
-    await waitFor(() => expect(searchParam()).toBe('cpu  state:pending label:team=api'));
-    expect(searchInput()).toHaveValue('cpu  state:pending label:team=api');
+    await waitFor(() => expect(searchParam()).toBe('cpu state:pending label:team=api'));
+    expect(searchInput()).toHaveValue('cpu state:pending label:team=api');
   });
 
   it('applies the rule name on blur, replacing only the title text', async () => {
