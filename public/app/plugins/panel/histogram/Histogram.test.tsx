@@ -173,7 +173,6 @@ const defaultOptions: Options = {
 
 const defaultPropsNoFrames: Partial<HistogramProps> = {
   options: defaultOptions,
-  theme,
   legend: defaultLegendOptions,
   width: 400,
   height: 300,

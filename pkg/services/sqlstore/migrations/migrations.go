@@ -193,4 +193,6 @@ func (oss *OSSMigrations) AddMigration(mg *Migrator) {
 	ualert.CollateBinAlertRuleFolderFullpath(mg)
 
 	ualert.ExpandAlertRuleMissingSeriesEvalsToResolve(mg)
+
+	accesscontrol.AddReceiverUIDPermissionsMigration(mg)
 }

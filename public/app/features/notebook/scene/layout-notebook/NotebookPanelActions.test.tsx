@@ -5,6 +5,7 @@ import { act, fireEvent, render, screen, waitFor } from 'test/test-utils';
 import { CoreApp, getDefaultTimeRange, LoadingState, toDataFrame } from '@grafana/data';
 import { getDataSourceInstance } from '@grafana/runtime';
 import { SceneQueryRunner, SceneReactObject, SceneTimeRange, VizPanel } from '@grafana/scenes';
+import { useAddToAssistant } from 'app/core/assistant/useAddToAssistant';
 import { tryGetExploreUrlForPanel } from 'app/features/dashboard-scene/utils/urlBuilders';
 import { getAllSuggestions } from 'app/features/panel/suggestions/getAllSuggestions';
 
@@ -20,6 +21,12 @@ jest.mock('app/features/dashboard-scene/utils/urlBuilders', () => ({
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceInstance: jest.fn(),
+}));
+jest.mock('@grafana/assistant', () => ({
+  createAssistantContextItem: jest.fn((type, params) => ({ type, params })),
+}));
+jest.mock('app/core/assistant/useAddToAssistant', () => ({
+  useAddToAssistant: jest.fn(),
 }));
 jest.mock('app/features/panel/suggestions/getAllSuggestions', () => ({
   getAllSuggestions: jest.fn(),
@@ -55,9 +62,12 @@ function NotebookPanelControls(props: ComponentProps<typeof NotebookPanelActions
 }
 
 const getDefaultQuery = jest.fn();
+const addToAssistant = jest.fn();
 
 describe('NotebookPanelActions', () => {
   beforeEach(() => {
+    addToAssistant.mockReset();
+    jest.mocked(useAddToAssistant).mockReturnValue({ isAvailable: false, addToAssistant });
     getDefaultQuery.mockReset().mockReturnValue({ queryType: 'randomWalk' });
     jest.mocked(tryGetExploreUrlForPanel).mockResolvedValue('/explore?panel=1');
     jest.mocked(getDataSourceInstance).mockImplementation(async (ref) =>
@@ -79,6 +89,50 @@ describe('NotebookPanelActions', () => {
     expect(screen.queryByRole('button', { name: 'Change visualization' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Duplicate block' })).not.toBeInTheDocument();
     expect(tryGetExploreUrlForPanel).toHaveBeenCalledWith(panel, (panel.state.$data as SceneQueryRunner).state.queries);
+  });
+
+  it('hides Edit with Assistant when the assistant is unavailable', async () => {
+    const { cell, panel } = buildPanelCell();
+    render(<NotebookPanelControls cell={cell} panel={panel} isEditing={true} />);
+
+    await screen.findByRole('link', { name: 'Open in Explore' });
+    expect(screen.queryByRole('button', { name: 'Edit with Assistant' })).not.toBeInTheDocument();
+  });
+
+  it('hides Edit with Assistant in view mode', async () => {
+    jest.mocked(useAddToAssistant).mockReturnValue({ isAvailable: true, addToAssistant });
+    const { cell, panel } = buildPanelCell();
+    render(<NotebookPanelControls cell={cell} panel={panel} isEditing={false} />);
+
+    await screen.findByRole('link', { name: 'Open in Explore' });
+    expect(screen.queryByRole('button', { name: 'Edit with Assistant' })).not.toBeInTheDocument();
+  });
+
+  it('attaches the panel to the assistant with Edit with Assistant in edit mode', async () => {
+    jest.mocked(useAddToAssistant).mockReturnValue({ isAvailable: true, addToAssistant });
+    const { cell, panel } = buildPanelCell();
+    const { user } = render(<NotebookPanelControls cell={cell} panel={panel} isEditing={true} />);
+
+    await screen.findByRole('link', { name: 'Open in Explore' });
+    act(() => screen.getByRole('button', { name: 'Edit with Assistant' }).focus());
+    await user.keyboard('{Enter}');
+
+    expect(useAddToAssistant).toHaveBeenCalledWith({ origin: 'grafana/notebook-panel-actions' });
+    expect(addToAssistant).toHaveBeenCalledTimes(1);
+    expect(addToAssistant.mock.calls[0][0]).toEqual([
+      {
+        type: 'structured',
+        params: {
+          data: {
+            name: 'Panel: Latency',
+            elementType: 'panel',
+            panelId: '1',
+            panelKey: 'panel-1',
+            elementName: 'latency',
+          },
+        },
+      },
+    ]);
   });
 
   it('adds the Grafana default query type to the Explore link without changing the panel query', async () => {

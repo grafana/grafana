@@ -44,6 +44,7 @@ function buildMockScene(
     state,
     canEditDashboard: jest.fn(() => editable),
     isPlanning: jest.fn(() => false),
+    recordEditMutation: jest.fn(),
     onEnterEditMode: jest.fn(() => {
       state.isEditing = true;
     }),

@@ -27,7 +27,7 @@ export const LANGUAGES: LanguageDefinition[] = SUPPORTED_LANGUAGES.map((def) => 
 //
 // require.context doesn't work in jest, so we don't even attempt to load enterprise translations...
 if (process.env.NODE_ENV !== 'test') {
-  const extensionRequireContext = require.context('../../', true, /extensions\/locales\/localeExtensions\.ts$/);
+  const extensionRequireContext = require.context('../../extensions', true, /^\.\/locales\/localeExtensions\.ts$/);
   const [localeExtensionsKey] = extensionRequireContext.keys();
   if (localeExtensionsKey) {
     const { LOCALE_EXTENSIONS, ENTERPRISE_I18N_NAMESPACE } = extensionRequireContext(localeExtensionsKey);

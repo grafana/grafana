@@ -73,3 +73,14 @@ func TestGrafanaDashboardGlobalVariablesEnabled(t *testing.T) {
 		require.True(t, grafanaDashboardGlobalVariablesEnabled(context.Background()))
 	})
 }
+
+func TestFolderAsyncCascadeDeleteEnabled(t *testing.T) {
+	t.Run("disabled when toggle off", func(t *testing.T) {
+		setOpenFeatureToggles(t, map[string]bool{featuremgmt.FlagFolderAsyncCascadeDeleteThroughController: false})
+		require.False(t, folderAsyncCascadeDeleteEnabled(context.Background()))
+	})
+	t.Run("enabled when toggle on", func(t *testing.T) {
+		setOpenFeatureToggles(t, map[string]bool{featuremgmt.FlagFolderAsyncCascadeDeleteThroughController: true})
+		require.True(t, folderAsyncCascadeDeleteEnabled(context.Background()))
+	})
+}

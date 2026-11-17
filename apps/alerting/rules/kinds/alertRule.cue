@@ -2,18 +2,28 @@ package kinds
 
 import (
 	"github.com/grafana/grafana/apps/alerting/rules/kinds/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/rules/kinds/v1beta1"
 )
-
-alertRuleKind: {
-	kind:       "AlertRule"
-	pluralName: "AlertRules"
-}
 
 alertRulev0alpha1: alertRuleKind & {
 	schema: {
 		spec:   v0alpha1.#AlertRuleSpec
 		status: v0alpha1.#AlertRuleStatus
 	}
+}
+
+alertRulev1beta1: alertRuleKind & {
+	schema: {
+		spec:   v1beta1.#AlertRuleSpec
+		status: v1beta1.#AlertRuleStatus
+	}
+}
+
+// Shared by every served version: unified search requires the searchFields of
+// all versions of a resource to agree on type, array and capabilities.
+alertRuleKind: {
+	kind:       "AlertRule"
+	pluralName: "AlertRules"
 	validation: {
 		operations: [
 			"CREATE",

@@ -28,6 +28,10 @@ import (
 // whose configuration the external AM sync worker can fetch.
 var syncableAMImplementations = []string{"mimir", "cortex"}
 
+// defaultAMImplementation is what an alertmanager datasource without an "implementation" setting
+// counts as. The datasource editor and the alerting UI both treat a missing value as Mimir.
+const defaultAMImplementation = "mimir"
+
 type ConfigSrv struct {
 	datasourceService    datasources.DataSourceService
 	alertmanagerProvider ExternalAlertmanagerProvider
@@ -67,7 +71,7 @@ func (srv ConfigSrv) RouteGetNGalertConfig(c *contextmodel.ReqContext) response.
 		iniUID = srv.cfg.ExternalAlertmanagerUID
 	}
 
-	cfg, err := srv.store.GetAdminConfiguration(c.GetOrgID())
+	cfg, err := srv.store.GetAdminConfiguration(c.Req.Context(), c.GetOrgID())
 	if err != nil && !errors.Is(err, store.ErrNoAdminConfiguration) {
 		msg := "failed to fetch admin configuration from the database"
 		srv.log.Error(msg, "error", err)
@@ -166,7 +170,7 @@ func (srv ConfigSrv) RoutePostNGalertConfig(c *contextmodel.ReqContext, body api
 		// updates (e.g. AlertmanagersChoice only) don't fail because the previously
 		// stored UID is no longer valid.
 		current := ""
-		currentCfg, err := srv.store.GetAdminConfiguration(c.GetOrgID())
+		currentCfg, err := srv.store.GetAdminConfiguration(ctx, c.GetOrgID())
 		if err != nil && !errors.Is(err, store.ErrNoAdminConfiguration) {
 			return response.Error(http.StatusInternalServerError, "failed to fetch admin configuration", err)
 		}
@@ -189,6 +193,9 @@ func (srv ConfigSrv) RoutePostNGalertConfig(c *contextmodel.ReqContext, body api
 				return response.Error(http.StatusBadRequest, "datasource must be of type alertmanager", nil)
 			}
 			impl := strings.ToLower(ds.JsonData.Get("implementation").MustString(""))
+			if impl == "" {
+				impl = defaultAMImplementation
+			}
 			if !slices.Contains(syncableAMImplementations, impl) {
 				return response.Error(http.StatusBadRequest, fmt.Sprintf(
 					"%q implementation is not supported for sync (must be one of: %s). Use the convert API for manual config import.",
@@ -199,7 +206,7 @@ func (srv ConfigSrv) RoutePostNGalertConfig(c *contextmodel.ReqContext, body api
 		adminConfig.ExternalAlertmanagerUID = body.ExternalAlertmanagerUID
 	}
 
-	if err := srv.store.UpdateAdminConfiguration(store.UpdateAdminConfigurationCmd{
+	if err := srv.store.UpdateAdminConfiguration(ctx, store.UpdateAdminConfigurationCmd{
 		AdminConfiguration: &adminConfig,
 	}); err != nil {
 		msg := "failed to save the admin configuration to the database"
@@ -215,7 +222,7 @@ func (srv ConfigSrv) RouteDeleteNGalertConfig(c *contextmodel.ReqContext) respon
 		return accessForbiddenResp()
 	}
 
-	err := srv.store.DeleteAdminConfiguration(c.GetOrgID())
+	err := srv.store.DeleteAdminConfiguration(c.Req.Context(), c.GetOrgID())
 	if err != nil {
 		srv.log.Error("Unable to delete configuration", "error", err)
 		return ErrResp(http.StatusInternalServerError, err, "")
@@ -249,7 +256,7 @@ func (srv ConfigSrv) externalAlertmanagers(ctx context.Context, orgID int64) ([]
 func (srv ConfigSrv) RouteGetAlertingStatus(c *contextmodel.ReqContext) response.Response {
 	sendsAlertsTo := ngmodels.InternalAlertmanager
 
-	cfg, err := srv.store.GetAdminConfiguration(c.GetOrgID())
+	cfg, err := srv.store.GetAdminConfiguration(c.Req.Context(), c.GetOrgID())
 	if err != nil && !errors.Is(err, store.ErrNoAdminConfiguration) {
 		msg := "failed to fetch configuration from the database"
 		srv.log.Error(msg, "error", err)

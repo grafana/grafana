@@ -5,11 +5,6 @@ import { getMockedDatasourceSrv } from '../utils/mocks';
 
 import { getDataSourceInstanceList } from './getDataSourceInstanceList';
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
-  getDataSourceInstanceList: undefined,
-}));
-
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceInstanceList: undefined,
@@ -41,7 +36,6 @@ describe('getDataSourceInstanceList', () => {
         type: 'loki',
         name: 'Loki',
         meta: {},
-        apiVersion: undefined,
       },
     ]);
   });

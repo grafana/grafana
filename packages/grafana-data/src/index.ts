@@ -446,6 +446,19 @@ export {
   type RangeValueMatcherOptions,
 } from './transformations/matchers/valueMatchers/types';
 export { LayoutModes, type LayoutMode } from './types/layout';
+export type {
+  PanelStatusAction,
+  PanelStatusActions,
+  PanelNotice,
+  PanelStatusItem,
+  PanelStatusActionContext,
+  PanelStatusActionResolver,
+  PanelNoticeSource,
+  PanelStatusActionState,
+  PanelStatusSnapshot,
+  PanelNotices,
+} from './panel/PanelNotices';
+
 export {
   PanelPlugin,
   type PanelOptionsSupplier,
@@ -453,6 +466,9 @@ export {
   type StandardOptionConfig,
   type PanelScreenshotContext,
   type PanelScreenshotHandler,
+  type PanelInteraction,
+  type PanelInteractions,
+  type PanelInteractionPromotionContext,
 } from './panel/PanelPlugin';
 export {
   getPanelOptionsWithDefaults,
@@ -506,6 +522,8 @@ export type {
   GrafanaJavascriptAgentConfig,
   BuildInfo,
   LicenseInfo,
+  NavigationConfig,
+  NavigationPlacement,
   PreinstalledPlugin,
   UnifiedAlertingConfig,
 } from './types/config';

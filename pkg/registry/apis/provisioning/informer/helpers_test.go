@@ -39,6 +39,12 @@ func newFakeSubscriber() *fakeSubscriber {
 
 func (f *fakeSubscriber) Enabled() bool { return true }
 
+func (*fakeSubscriber) Started() <-chan struct{} {
+	ch := make(chan struct{})
+	close(ch)
+	return ch
+}
+
 func (f *fakeSubscriber) Subscribe(_ context.Context, subject string, handler nats.MessageHandler, _ ...nats.SubscribeOption) (nats.Subscription, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()

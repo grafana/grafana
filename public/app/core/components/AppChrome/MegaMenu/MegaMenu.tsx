@@ -6,11 +6,11 @@ import { memo, forwardRef, useId } from 'react';
 import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
-import { ScrollContainer, Text, useStyles2, Button, IconButton } from '@grafana/ui';
+import { useFlagGrafanaScopesDashboardsMegaMenu, useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
+import { ErrorBoundaryAlert, ScrollContainer, Text, useStyles2, Button, IconButton } from '@grafana/ui';
 import { useDragAndDrop } from '@grafana/ui/internal';
 import { useGrafana } from 'app/core/context/GrafanaContext';
-import { useSyncStarredItemsInNav } from 'app/features/stars/hooks';
+import { ScopesDashboardsMegaMenuSection } from 'app/features/scopes/dashboards/ScopesDashboardsMegaMenuSection';
 
 import { MegaMenuCustomiseControls } from './MegaMenuCustomiseControls';
 import { MegaMenuExtensionPoint } from './MegaMenuExtensionPoint';
@@ -29,15 +29,16 @@ export interface Props extends DOMAttributes {
 export const MegaMenu = memo(
   forwardRef<HTMLDivElement, Props>(({ onClose, ...restProps }, ref) => {
     const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
+    const scopesMegaMenuEnabled = useFlagGrafanaScopesDashboardsMegaMenu();
     const styles = useStyles2(getStyles, visualRefreshEnabled);
     const { chrome } = useGrafana();
     const state = chrome.useState();
-    const { isLoading: starredItemsLoading, isError: starredItemsError } = useSyncStarredItemsInNav();
-
     const {
       canCustomise,
       isLoading,
       navItems,
+      starredItemsLoading,
+      starredItemsError,
       pinnedEntries,
       activeItem,
       isPinned,
@@ -82,7 +83,7 @@ export const MegaMenu = memo(
         key={key}
         link={link}
         isPinned={isPinned}
-        onClick={state.megaMenuDocked && !state.fullscreenWorkspace ? undefined : onClose}
+        onClick={state.megaMenuDocked ? undefined : onClose}
         activeItem={activeItem}
         onPin={onPinItem}
         editMode={editMode}
@@ -143,10 +144,22 @@ export const MegaMenu = memo(
           activeItem={activeItem}
           editMode={editMode}
           onUnpin={() => onUnpin(entry.url)}
-          onClick={state.megaMenuDocked && !state.fullscreenWorkspace ? undefined : onClose}
+          onClick={state.megaMenuDocked ? undefined : onClose}
           draggableProvided={draggableProvided}
           disabled={isSaving}
         />
+      );
+
+    // Scoped-dashboards section: rendered in both the canCustomise true/false branches below, since
+    // canCustomise depends on an unrelated flag + sign-in state and shouldn't gate whether a user
+    // with scopes enabled sees their suggested dashboards. Wrapped in its own error boundary so a
+    // render error in the suggested-dashboards tree doesn't take down the whole menu, matching how
+    // the docked drawer it replaces isolates ScopesDashboards in AppChrome.tsx.
+    const renderScopesDashboardsSection = () =>
+      scopesMegaMenuEnabled && (
+        <ErrorBoundaryAlert boundaryName="scopes-dashboards-mega-menu">
+          <ScopesDashboardsMegaMenuSection onNavigate={state.megaMenuDocked ? undefined : onClose} />
+        </ErrorBoundaryAlert>
       );
 
     // Pinned box: a subtle grey box, with a "Pinned" heading, listing each pinned item as a compact
@@ -243,12 +256,16 @@ export const MegaMenu = memo(
                 ) : canCustomise ? (
                   <>
                     {renderPinnedBox()}
+                    {renderScopesDashboardsSection()}
                     {renderSectionList()}
                   </>
                 ) : (
-                  <ul className={styles.itemList} aria-label={navLabel}>
-                    {navItems.map((link) => renderNavItem(link))}
-                  </ul>
+                  <>
+                    {renderScopesDashboardsSection()}
+                    <ul className={styles.itemList} aria-label={navLabel}>
+                      {navItems.map((link) => renderNavItem(link))}
+                    </ul>
+                  </>
                 )}
                 <MegaMenuExtensionPoint />
               </>
@@ -270,7 +287,7 @@ export const MegaMenu = memo(
                 <Trans i18nKey="navigation.megamenu.customise">Customise navigation</Trans>
               </Button>
             )}
-            {!editMode && !state.fullscreenWorkspace && (
+            {!editMode && (
               <IconButton
                 id={DOCK_MENU_BUTTON_ID}
                 className={styles.dockMenuButton}

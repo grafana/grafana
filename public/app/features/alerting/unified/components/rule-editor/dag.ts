@@ -152,7 +152,7 @@ export function parseRefsFromSqlExpression(input: string): string[] {
   }
 
   // Extract tables after JOIN - case insensitive with /i flag
-  const joinRegex = /join\s+([a-zA-Z0-9_."]+)/gi;
+  const joinRegex = /join\s+([a-zA-Z0-9_."`]+)/gi;
 
   for (const match of query.matchAll(joinRegex)) {
     tableMatches.push(cleanTableName(match[1]));
@@ -181,11 +181,11 @@ function parseCteNames(query: string): Set<string> {
   const withClause = withMatch[1];
 
   // Match CTE names - they appear before "AS" keyword followed by opening paren
-  // This handles: cte_name AS (, "quoted_name" AS (
-  const cteNameRegex = /([a-zA-Z0-9_]+|"[^"]+"|'[^']+')\s+as\s*\(/gi;
+  // This handles: cte_name AS (, "quoted_name" AS (, `quoted_name` AS (
+  const cteNameRegex = /([a-zA-Z0-9_]+|"[^"]+"|'[^']+'|`[^`]+`)\s+as\s*\(/gi;
 
   for (const match of withClause.matchAll(cteNameRegex)) {
-    const cteName = match[1].replace(/['"]/g, '').toLowerCase();
+    const cteName = match[1].replace(/['"`]/g, '').toLowerCase();
     cteNames.add(cteName);
   }
 
@@ -194,8 +194,8 @@ function parseCteNames(query: string): Set<string> {
 
 // Helper function to clean table names
 function cleanTableName(tableName: string): string {
-  // Remove quotes and parentheses
-  let name = tableName.replace(/['"()]/g, '');
+  // Remove quotes (including MySQL-style backticks) and parentheses
+  let name = tableName.replace(/['"`()]/g, '');
 
   // Remove alias if present (both "AS alias" and "alias" forms)
   if (name.includes(' as ')) {

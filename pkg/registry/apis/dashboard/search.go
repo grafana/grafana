@@ -54,6 +54,8 @@ type SearchHandler struct {
 	client   resourcepb.ResourceIndexClient
 	tracer   trace.Tracer
 	features featuremgmt.FeatureToggles
+
+	lifecycleExtras DashboardLifecycleExtras
 }
 
 func NewSearchHandler(tracer trace.Tracer, resourceClient resource.ResourceClient, features featuremgmt.FeatureToggles) *SearchHandler {
@@ -97,6 +99,15 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 										Description: "user query string",
 										Required:    false,
 										Schema:      spec.StringProperty(),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "lifecycle",
+										In:          "query",
+										Description: "dashboard lifecycle filter: draft returns only drafts, all returns drafts and published. When empty, drafts are hidden if the namespace hides them by default",
+										Required:    false,
+										Schema:      spec.StringProperty().WithEnum("draft", "all"),
 									},
 								},
 								{
@@ -224,6 +235,15 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 										Name:        "limit",
 										In:          "query",
 										Description: "number of results to return",
+										Required:    false,
+										Schema:      spec.Int64Property(),
+									},
+								},
+								{
+									ParameterProps: spec3.ParameterProps{
+										Name:        "offset",
+										In:          "query",
+										Description: "number of results to skip",
 										Required:    false,
 										Schema:      spec.Int64Property(),
 									},
@@ -606,9 +626,19 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := s.client.Search(ctx, searchRequest)
-	if err := resource.StatusErrorFromResponse(result.GetError(), err); err != nil {
+	hideDrafts := s.lifecycleExtras != nil && s.lifecycleExtras.HideDraftsByDefault(ctx)
+	req, err := draftSearchRequirement(queryParams.Get("lifecycle"), hideDrafts)
+	if err != nil {
 		errhttp.Write(ctx, err, w)
+		return
+	}
+	if req != nil {
+		searchRequest.Options.Labels = append(searchRequest.Options.Labels, req)
+	}
+
+	result, err := s.client.Search(ctx, searchRequest)
+	if err != nil {
+		errhttp.Write(ctx, resource.StatusErrorFromGRPC(err), w)
 		return
 	}
 
@@ -687,10 +717,6 @@ func (s *SearchHandler) DoVectorSearch(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		errhttp.Write(ctx, resource.StatusError(resource.AsErrorResult(err)), w)
-		return
-	}
-	if result.GetError() != nil {
-		errhttp.Write(ctx, resource.StatusError(result.GetError()), w)
 		return
 	}
 
@@ -828,6 +854,7 @@ func hybridSearchResultsToSearchResults(response *resourcepb.HybridSearchRespons
 			Title:    r.GetTitle(),
 			Folder:   r.GetFolder(),
 			Score:    r.GetScore(),
+			Tags:     r.GetTags(),
 			ManagedBy: dashboardv0alpha1.ManagedBy{
 				Kind: utils.ManagerKind(r.GetManagedByKind()),
 				ID:   r.GetManagedById(),
@@ -1209,15 +1236,17 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 	}
 	// get all dashboards user has access to, along with their parent folder uid
 	dashboardResult, err := s.client.Search(ctx, dashboardSearchRequest)
-	if err := resource.StatusErrorFromResponse(dashboardResult.GetError(), err); err != nil {
-		return sharedDashboards, err
+	if err != nil {
+		return sharedDashboards, resource.StatusErrorFromGRPC(err)
 	}
 
 	dashboardResults, err := dashboardsearch.ParseResults(dashboardResult, 0)
 	if err != nil {
 		return sharedDashboards, err
 	}
-	if !searchResponseHasField(dashboardResult, resource.SEARCH_FIELD_FOLDER) {
+	if !slices.ContainsFunc(dashboardResult.GetFields(), func(field *resourcepb.ResourceSearchField) bool {
+		return field.GetName() == resource.SEARCH_FIELD_FOLDER
+	}) {
 		return sharedDashboards, fmt.Errorf("error retrieving folder information")
 	}
 
@@ -1234,8 +1263,8 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 	folderSearchRequest := nameLookupRequest(folderKey, allFolders, requestedPermission)
 	// only folders the user has access to will be returned here
 	foldersResult, err := s.client.Search(ctx, folderSearchRequest)
-	if err := resource.StatusErrorFromResponse(foldersResult.GetError(), err); err != nil {
-		return sharedDashboards, err
+	if err != nil {
+		return sharedDashboards, resource.StatusErrorFromGRPC(err)
 	}
 
 	folderResults, err := dashboardsearch.ParseResults(foldersResult, 0)
@@ -1275,13 +1304,21 @@ func nameLookupRequest(key *resourcepb.ResourceKey, names []string, permission d
 	}
 }
 
-func searchResponseHasField(response *resourcepb.ResourceSearchResponse, name string) bool {
-	if response.GetResultFormat() == resourcepb.ResourceSearchRequest_FIELD_VALUES {
-		return slices.ContainsFunc(response.GetFields(), func(field *resourcepb.ResourceSearchField) bool {
-			return field.GetName() == name
-		})
+// draftSearchRequirement maps the `lifecycle` query param to a label requirement:
+// "draft" returns only drafts, "all" returns everything, and no value hides drafts when hideDrafts is set.
+// Any other value is rejected so a typo cannot silently hide drafts.
+func draftSearchRequirement(lifecycle string, hideDrafts bool) (*resourcepb.Requirement, error) {
+	switch lifecycle {
+	case utils.LifecycleDraft:
+		return &resourcepb.Requirement{Key: utils.LabelKeyLifecycle, Operator: string(selection.Equals), Values: []string{utils.LifecycleDraft}}, nil
+	case "all":
+		return nil, nil
+	case "":
+	default:
+		return nil, apierrors.NewBadRequest(fmt.Sprintf("lifecycle must be %q or %q", utils.LifecycleDraft, "all"))
 	}
-	return slices.ContainsFunc(response.GetResults().GetColumns(), func(field *resourcepb.ResourceTableColumnDefinition) bool {
-		return field.GetName() == name
-	})
+	if !hideDrafts {
+		return nil, nil
+	}
+	return &resourcepb.Requirement{Key: utils.LabelKeyLifecycle, Operator: string(selection.NotIn), Values: []string{utils.LifecycleDraft}}, nil
 }

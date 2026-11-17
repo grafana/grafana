@@ -16,6 +16,7 @@ import { NewDashboardLibraryInteractions } from 'app/features/dashboard/dashgrid
 import { CONTENT_KINDS, SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
 import { useTemplateDashboardsAvailability } from 'app/features/dashboard/dashgrid/DashboardLibrary/hooks/useTemplateDashboardsAvailability';
 import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
+import { useIsMobileEditDeprecated } from 'app/features/dashboard-scene/utils/mobileEditDeprecation';
 import { type RepoType } from 'app/features/provisioning/Wizard/types';
 import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/tooltip';
 import {
@@ -52,6 +53,7 @@ export default function CreateNewButton({
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
   const isCustomDashboardTemplatesEnabled = useFlagGrafanaCustomDashboardTemplates();
   const { isAvailable: renderPreBuiltDashboardAction } = useTemplateDashboardsAvailability();
+  const isMobileEditDeprecated = useIsMobileEditDeprecated();
 
   const theme = useTheme2();
 
@@ -98,19 +100,21 @@ export default function CreateNewButton({
     <Menu>
       {canCreateDashboard && (
         <Menu.Group label={t('browse-dashboards.create-new.dashboard-group', 'Dashboard')}>
-          <Menu.Item
-            label={getNewDashboardPhrase()}
-            icon={ITEM_ICONS['dashboards/new']}
-            iconColor={dashboardIconColor}
-            onClick={() =>
-              reportInteraction('grafana_menu_item_clicked', {
-                url: buildUrl('/dashboard/new', parentFolder?.uid),
-                from: location.pathname,
-              })
-            }
-            url={buildUrl('/dashboard/new', parentFolder?.uid)}
-            testId={selectors.components.CreateNewButton.newDashboardLink}
-          />
+          {!isMobileEditDeprecated && (
+            <Menu.Item
+              label={getNewDashboardPhrase()}
+              icon={ITEM_ICONS['dashboards/new']}
+              iconColor={dashboardIconColor}
+              onClick={() =>
+                reportInteraction('grafana_menu_item_clicked', {
+                  url: buildUrl('/dashboard/new', parentFolder?.uid),
+                  from: location.pathname,
+                })
+              }
+              url={buildUrl('/dashboard/new', parentFolder?.uid)}
+              testId={selectors.components.CreateNewButton.newDashboardLink}
+            />
+          )}
           <Menu.Item
             label={getImportPhrase()}
             icon={ITEM_ICONS['dashboards/import']}
@@ -123,7 +127,7 @@ export default function CreateNewButton({
             }
             url={buildUrl('/dashboard/import', parentFolder?.uid)}
           />
-          {renderPreBuiltDashboardAction && (
+          {renderPreBuiltDashboardAction && !isMobileEditDeprecated && (
             <Menu.Item
               label={getNewTemplateDashboardPhrase()}
               icon={ITEM_ICONS['browse-template-dashboard']}

@@ -203,40 +203,45 @@ func (s *service) CheckQuotaReached(ctx context.Context, targetSrv quota.TargetS
 	if !ok {
 		return false, quota.ErrInvalidTargetSrv
 	}
-	targetUsage, err := usageReporterFunc(ctx, scopeParams)
-	if err != nil {
-		return false, err
+	for _, limit := range targetSrvLimits {
+		if limit == 0 {
+			return true, nil
+		}
 	}
 
+	var targetUsage *quota.Map
 	for t, limit := range targetSrvLimits {
-		switch {
-		case limit < 0:
+		if limit < 0 {
 			continue
-		case limit == 0:
-			return true, nil
-		default:
-			scope, err := t.GetScope()
+		}
+		scope, err := t.GetScope()
+		if err != nil {
+			return false, quota.ErrFailedToGetScope.Errorf("failed to get the scope for target: %s", t)
+		}
+
+		// do not check user quota if the user information is not available (eg no user is signed in)
+		if scope == quota.UserScope && (scopeParams == nil || scopeParams.UserID == 0) {
+			continue
+		}
+
+		// do not check user quota if the org information is not available (eg no user is signed in)
+		if scope == quota.OrgScope && (scopeParams == nil || scopeParams.OrgID == 0) {
+			continue
+		}
+
+		if targetUsage == nil {
+			targetUsage, err = usageReporterFunc(ctx, scopeParams)
 			if err != nil {
-				return false, quota.ErrFailedToGetScope.Errorf("failed to get the scope for target: %s", t)
+				return false, err
 			}
+		}
 
-			// do not check user quota if the user information is not available (eg no user is signed in)
-			if scope == quota.UserScope && (scopeParams == nil || scopeParams.UserID == 0) {
-				continue
-			}
-
-			// do not check user quota if the org information is not available (eg no user is signed in)
-			if scope == quota.OrgScope && (scopeParams == nil || scopeParams.OrgID == 0) {
-				continue
-			}
-
-			u, ok := targetUsage.Get(t)
-			if !ok {
-				return false, quota.ErrUsageFoundForTarget.Errorf("no usage for target:%s", t)
-			}
-			if u >= limit {
-				return true, nil
-			}
+		u, ok := targetUsage.Get(t)
+		if !ok {
+			return false, quota.ErrUsageFoundForTarget.Errorf("no usage for target:%s", t)
+		}
+		if u >= limit {
+			return true, nil
 		}
 	}
 	return false, nil

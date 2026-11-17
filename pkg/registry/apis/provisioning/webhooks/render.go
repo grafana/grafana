@@ -144,7 +144,7 @@ func (c *renderConnector) Connect(
 			MustProxyBytes: true,
 			Uid:            blobID,
 		})
-		if err := resource.StatusErrorFromResponse(rsp.GetError(), err); err != nil {
+		if err := resource.StatusErrorFromGRPC(err); err != nil {
 			logging.FromContext(ctx).Error("Failed to get rendered preview", "namespace", namespace, "repository", name, "blob", blobID, "error", err)
 			responder.Error(err)
 			return

@@ -2,7 +2,7 @@ import { locationUtil, type UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type Dashboard } from '@grafana/schema';
 import { type Status } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { getFolderByUidFacade } from 'app/api/clients/folder/v1beta1/hooks';
+import { getCombinedFolder } from 'app/api/clients/folder/v1beta1/hooks';
 import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
 import {
@@ -19,7 +19,6 @@ import {
   type ResourceClient,
   type ResourceForCreate,
   type ResourceList,
-  type TableResponse,
 } from 'app/features/apiserver/types';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { type DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
@@ -36,7 +35,6 @@ import {
   DashboardVersionError,
   type DashboardWithAccessInfo,
   type ListDashboardHistoryOptions,
-  type ListDeletedDashboardsOptions,
 } from './types';
 import { buildRestorePayload, fetchDeletedDashboard, isV2StoredVersion } from './utils';
 
@@ -207,7 +205,7 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
       // dashboard at the root.
       if (folderAnnotation && !isRootFolderUID(folderAnnotation)) {
         try {
-          const folder = await getFolderByUidFacade(folderAnnotation);
+          const folder = await getCombinedFolder(folderAnnotation);
           result.meta.folderTitle = folder.title;
           result.meta.folderUrl = folder.url;
           result.meta.folderUid = folder.uid;
@@ -305,10 +303,6 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
       message: `Restored from version ${version}`,
       folderUid: currentDashboard.metadata?.annotations?.[AnnoKeyFolder],
     });
-  }
-
-  async listDeletedDashboards(options: ListDeletedDashboardsOptions): Promise<TableResponse> {
-    return this.client.listAsTable({ ...options, labelSelector: 'grafana.app/get-trash=true' });
   }
 
   async getDeletedDashboard(name: string): Promise<Resource<DashboardDataDTO> | undefined> {

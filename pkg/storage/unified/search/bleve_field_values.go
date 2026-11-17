@@ -1,7 +1,6 @@
 package search
 
 import (
-	"context"
 	"fmt"
 	"math"
 	"reflect"
@@ -24,17 +23,6 @@ type fieldValueResultSchema struct {
 	includeResourceVersion bool
 }
 
-func selectedResultFormat(format resourcepb.ResourceSearchRequest_ResultFormat) (resourcepb.ResourceSearchRequest_ResultFormat, error) {
-	switch format {
-	case resourcepb.ResourceSearchRequest_UNSPECIFIED, resourcepb.ResourceSearchRequest_RESOURCE_TABLE:
-		return resourcepb.ResourceSearchRequest_RESOURCE_TABLE, nil
-	case resourcepb.ResourceSearchRequest_FIELD_VALUES:
-		return resourcepb.ResourceSearchRequest_FIELD_VALUES, nil
-	default:
-		return resourcepb.ResourceSearchRequest_UNSPECIFIED, fmt.Errorf("unsupported search result format %d", format)
-	}
-}
-
 // fieldValueDefinitions keeps result types on the same manifest-backed source
 // as indexing. The map resolves explicit request names; the slice preserves the
 // curated field set returned when a request does not select fields.
@@ -54,8 +42,6 @@ func fieldValueDefinitions(provider resource.SearchFieldsProvider, group, kindRe
 		{Name: resource.SEARCH_FIELD_SCORE, Type: resource.SearchFieldTypeDouble},
 		{Name: resource.SEARCH_FIELD_EXPLAIN, Type: resource.SearchFieldTypeUnknown},
 		{Name: resource.SEARCH_FIELD_LEGACY_ID, Type: resource.SearchFieldTypeInt64},
-		{Name: resource.SEARCH_FIELD_MANAGER_KIND, Type: resource.SearchFieldTypeString},
-		{Name: resource.SEARCH_FIELD_MANAGER_ID, Type: resource.SearchFieldTypeString},
 		{Name: resource.SEARCH_FIELD_SOURCE_TIME, Type: resource.SearchFieldTypeInt64},
 		{Name: resource.SEARCH_FIELD_SOURCE_PATH, Type: resource.SearchFieldTypeString},
 		{Name: resource.SEARCH_FIELD_SOURCE_CHECKSUM, Type: resource.SearchFieldTypeString},
@@ -78,23 +64,11 @@ func fieldValueDefinitions(provider resource.SearchFieldsProvider, group, kindRe
 }
 
 func (b *bleveIndex) setSearchResults(
-	ctx context.Context,
 	response *resourcepb.ResourceSearchResponse,
-	selectFields []string,
 	fieldValueSchema *fieldValueResultSchema,
 	hits blevesearch.DocumentMatchCollection,
 	sort blevesearch.SortOrder,
-	explain bool,
 ) error {
-	if response.ResultFormat == resourcepb.ResourceSearchRequest_RESOURCE_TABLE {
-		results, err := b.hitsToTable(ctx, selectFields, hits, sort, explain)
-		if err != nil {
-			return err
-		}
-		response.Results = results
-		return nil
-	}
-
 	if fieldValueSchema == nil {
 		return fmt.Errorf("missing field-value result schema")
 	}
@@ -187,20 +161,19 @@ func (b *bleveIndex) hitsToFieldValues(
 		if err := resource.ReadSearchID(row.Key, match.ID); err != nil {
 			return nil, nil, err
 		}
-		if schema.includeScore {
-			row.Score = new(match.Score)
-		}
 		if schema.includeResourceVersion {
 			row.ResourceVersion = b.hitResourceVersion(match)
 		}
-
+		if schema.includeScore {
+			row.Score = new(match.Score)
+		}
 		for fieldIndex, definition := range schema.definitions {
 			value, ok, err := searchHitFieldValue(match, definition.Name)
 			if err != nil {
 				if definition.Name != resource.SEARCH_FIELD_LEGACY_ID {
 					return nil, nil, fmt.Errorf("row %d field %q: %w", rowIndex, definition.Name, err)
 				}
-				// Table results ignore legacy ID conversion errors, so keep that compatibility.
+				// A malformed legacy ID must not fail an otherwise valid search.
 				b.logger.Debug("ignoring malformed legacy ID in search result", "resource", match.ID, "error", err)
 			}
 			if !ok || value == nil {

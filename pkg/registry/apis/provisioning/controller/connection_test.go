@@ -1556,12 +1556,24 @@ func useFakeConnectionQueueClock(t *testing.T, cc *ConnectionController) *testin
 	t.Helper()
 	cc.queue.ShutDown()
 	clock := testingclock.NewFakeClock(time.Now())
-	cc.queue = workqueue.NewTypedRateLimitingQueueWithConfig(
+	cc.queue = newWorkerQueue(
+		&cc.queueLag,
 		workqueue.DefaultTypedControllerRateLimiter[string](),
-		workqueue.TypedRateLimitingQueueConfig[string]{Clock: clock},
+		workqueue.TypedQueueConfig[string]{Clock: clock},
 	)
 	t.Cleanup(cc.queue.ShutDown)
 	return clock
+}
+
+// The delaying queue's waitingLoop builds its timer relative to the clock's
+// current time, so a Step that lands mid-iteration is lost; keep stepping until
+// the delayed retry is enqueued.
+func stepUntilQueued(t *testing.T, clock *testingclock.FakeClock, cc *ConnectionController) {
+	t.Helper()
+	require.Eventually(t, func() bool {
+		clock.Step(time.Second)
+		return cc.queue.Len() > 0
+	}, 5*time.Second, time.Millisecond, "delayed retry was never enqueued")
 }
 
 func TestConnectionController_DeduplicatesEnqueueBeforeProcessing(t *testing.T) {
@@ -1693,7 +1705,7 @@ func TestConnectionController_RetriesAndClearsState(t *testing.T) {
 					} else {
 						assert.Equal(t, wantTrigger, string(cc.triggers[key]))
 					}
-					clock.Step(time.Second)
+					stepUntilQueued(t, clock, cc)
 				}
 			}
 			assert.Equal(t, len(tt.results), processCount)
@@ -1749,7 +1761,7 @@ func TestConnectionController_DirtyRedeliveryKeepsTrigger(t *testing.T) {
 			require.True(t, cc.processNextWorkItem(t.Context()))
 
 			if apierrors.IsServiceUnavailable(tt.firstError) {
-				clock.Step(time.Second)
+				stepUntilQueued(t, clock, cc)
 				// The dirty delivery consumes the retry budget. The delayed retry
 				// still arrives, but has no informer event to count after success.
 				require.True(t, cc.processNextWorkItem(t.Context()))
@@ -1792,10 +1804,12 @@ func TestConnectionController_RecentlyWrittenTokenReschedulesKey(t *testing.T) {
 		require.True(t, cc.processNextWorkItem(t.Context()))
 		synctest.Wait()
 		require.Zero(t, cc.queue.Len())
+		assert.Zero(t, cc.queueLag.lag())
 
 		time.Sleep(tokenWriteRetryDelay - time.Nanosecond)
 		synctest.Wait()
 		require.Zero(t, cc.queue.Len(), "token retry must wait for the configured delay")
+		assert.Zero(t, cc.queueLag.lag(), "token retry backoff must not count as queue lag")
 		time.Sleep(time.Nanosecond)
 		synctest.Wait()
 		require.Equal(t, 1, cc.queue.Len())

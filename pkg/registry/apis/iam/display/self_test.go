@@ -12,13 +12,17 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	iam "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 type fakeResolver struct {
 	gotKeys []string
+	gotNS   string
 	result  *iam.DisplayList
 	err     error
 }
@@ -62,8 +66,9 @@ func TestCurrentUserRoutes(t *testing.T) {
 	t.Fatal("missing namespaced current-user route")
 }
 
-func (f *fakeResolver) GetDisplayList(_ context.Context, _ authlib.NamespaceInfo, keys []string) (*iam.DisplayList, error) {
+func (f *fakeResolver) GetDisplayList(ctx context.Context, _ authlib.NamespaceInfo, keys []string) (*iam.DisplayList, error) {
 	f.gotKeys = keys
+	f.gotNS = request.NamespaceValue(ctx)
 	if f.err != nil {
 		return nil, f.err
 	}
@@ -148,6 +153,8 @@ func TestDisplayHandler_handleSelf(t *testing.T) {
 		require.Equal(t, http.StatusOK, rec.Code)
 		// The caller identifies itself purely from context, no query input.
 		require.Equal(t, []string{"user:u1"}, resolver.gotKeys)
+		// The cluster-scoped whoami route provides no namespace, so it must be set from the caller.
+		require.Equal(t, "default", resolver.gotNS)
 
 		want.Role = string(identity.RoleEditor)
 		want.Namespace = "default"
@@ -155,6 +162,29 @@ func TestDisplayHandler_handleSelf(t *testing.T) {
 		var got iam.CurrentUserInfo
 		require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &got))
 		require.Equal(t, want, got)
+	})
+
+	t.Run("existing matching namespace in context is kept", func(t *testing.T) {
+		resolver := &fakeResolver{result: &iam.DisplayList{}}
+		req := selfRequest(t, caller)
+		req = req.WithContext(request.WithNamespace(req.Context(), "default"))
+		rec := httptest.NewRecorder()
+
+		NewDisplayHandler(resolver).handleSelf(rec, req)
+
+		require.Equal(t, "default", resolver.gotNS)
+	})
+
+	t.Run("existing mismatched namespace in context is forbidden", func(t *testing.T) {
+		resolver := &fakeResolver{result: &iam.DisplayList{}}
+		req := selfRequest(t, caller)
+		req = req.WithContext(request.WithNamespace(req.Context(), "other"))
+		rec := httptest.NewRecorder()
+
+		NewDisplayHandler(resolver).handleSelf(rec, req)
+
+		require.Equal(t, http.StatusForbidden, rec.Code)
+		require.Nil(t, resolver.gotKeys)
 	})
 
 	t.Run("token identity receives its namespace", func(t *testing.T) {
@@ -314,7 +344,7 @@ func TestDisplayHandler_handleSelf(t *testing.T) {
 		})
 	}
 
-	t.Run("unresolved access policy returns identity details with 200", func(t *testing.T) {
+	t.Run("wildcard namespace access policy skips display resolvers", func(t *testing.T) {
 		caller := &identity.StaticRequester{
 			Type: authlib.TypeAccessPolicy, UserUID: "example-app", Name: "example-app", Namespace: "*",
 			AuthenticatedBy: "extendedjwt",
@@ -324,7 +354,7 @@ func TestDisplayHandler_handleSelf(t *testing.T) {
 		NewDisplayHandler(resolver).handleSelf(rec, selfRequest(t, caller))
 
 		require.Equal(t, http.StatusOK, rec.Code)
-		require.Equal(t, []string{"access-policy:example-app"}, resolver.gotKeys)
+		require.Nil(t, resolver.gotKeys, "resolvers need a concrete stack or org and must not be called for namespace *")
 		var got iam.CurrentUserInfo
 		require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &got))
 		require.Equal(t, iam.IdentityRef{Type: authlib.TypeAccessPolicy, Name: "example-app"}, got.Identity)
@@ -342,4 +372,73 @@ func TestDisplayHandler_handleSelf(t *testing.T) {
 
 		require.Equal(t, http.StatusInternalServerError, rec.Code)
 	})
+}
+
+func TestAccessPolicyDisplayWithoutSearchFallback(t *testing.T) {
+	for _, name := range []string{"service", "381ca354-487e-42e0-bb06-701e4a2c4e2d", "42", "0"} {
+		t.Run(name, func(t *testing.T) {
+			key := "access-policy:" + name
+			store := &fakeLegacyIdentityStore{result: &legacy.ListUserResult{}}
+			search := NewSearchDisplayProvider(resource.NewMockResourceClient(t))
+			handler := NewDisplayHandler(NewLegacyDisplayProvider(store), search)
+			caller := &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "u1", Namespace: "default"}
+			req := httptest.NewRequest(http.MethodGet, "/display?key="+key, nil)
+			req = req.WithContext(authlib.WithAuthInfo(t.Context(), caller))
+			rec := httptest.NewRecorder()
+
+			handler.handleDisplay(rec, req)
+			require.Empty(t, store.gotQuery.UIDs)
+			require.Empty(t, store.gotQuery.IDs)
+			require.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
+			var result iam.DisplayList
+			require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &result))
+			require.Len(t, result.Items, 1)
+			require.Equal(t, iam.IdentityRef{Type: authlib.TypeAccessPolicy, Name: name}, result.Items[0].Identity)
+			require.Equal(t, "Access policy", result.Items[0].DisplayName)
+			require.NotEmpty(t, result.Items[0].AvatarURL)
+			require.Empty(t, unresolvedKeys([]string{key}, result.Items, result.InvalidKeys))
+
+			// Search-only deployments must also resolve these without querying the index.
+			fromSearch, err := search.GetDisplayList(t.Context(), authlib.NamespaceInfo{Value: "default"}, []string{key})
+			require.NoError(t, err)
+			require.Equal(t, result.Items, fromSearch.Items)
+		})
+	}
+}
+
+func TestAccessPolicySelfDisplayName(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		want string
+	}{
+		{name: "Example app", want: "Example app"},
+		{name: "", want: "Access policy"},
+	} {
+		for _, searchOnly := range []bool{false, true} {
+			provider := "legacy"
+			if searchOnly {
+				provider = "search"
+			}
+			t.Run(provider+"/"+tc.want, func(t *testing.T) {
+				search := NewSearchDisplayProvider(resource.NewMockResourceClient(t))
+				handler := NewDisplayHandler(search)
+				if !searchOnly {
+					store := &fakeLegacyIdentityStore{result: &legacy.ListUserResult{}}
+					handler = NewDisplayHandler(NewLegacyDisplayProvider(store), search)
+				}
+				caller := &identity.StaticRequester{
+					Type: authlib.TypeAccessPolicy, UserUID: "policy-id", Name: tc.name, Namespace: "default",
+				}
+				rec := httptest.NewRecorder()
+				handler.handleSelf(rec, selfRequest(t, caller))
+
+				require.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
+				var got iam.CurrentUserInfo
+				require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &got))
+				require.Equal(t, iam.IdentityRef{Type: authlib.TypeAccessPolicy, Name: "policy-id"}, got.Identity)
+				require.Equal(t, tc.want, got.DisplayName)
+				require.NotEmpty(t, got.AvatarURL)
+			})
+		}
+	}
 }

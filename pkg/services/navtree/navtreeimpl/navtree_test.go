@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/services/navtree"
+	"github.com/grafana/grafana/pkg/services/notebooks"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -198,6 +199,55 @@ func TestBuildNotebooksNavLink(t *testing.T) {
 
 		require.Nil(t, newService(true).buildNotebooksNavLink(newReqCtx(false)))
 	})
+
+	for _, testCase := range []struct {
+		name        string
+		permissions []ac.Permission
+		wantSection bool
+		wantCreate  bool
+	}{
+		{
+			name:        "reader has no create action",
+			permissions: []ac.Permission{{Action: notebooks.ActionNotebooksRead}},
+			wantSection: true,
+		},
+		{
+			name:        "creator has a create action",
+			permissions: []ac.Permission{{Action: notebooks.ActionNotebooksRead}, {Action: notebooks.ActionNotebooksCreate}},
+			wantSection: true,
+			wantCreate:  true,
+		},
+		{
+			name:        "create permission alone does not expose the section",
+			permissions: []ac.Permission{{Action: notebooks.ActionNotebooksCreate}},
+		},
+	} {
+		t.Run(testCase.name, func(t *testing.T) {
+			setOpenFeatureFlags(t, map[string]bool{featuremgmt.FlagDashboardNotebooks: true})
+			cfg := setting.NewCfg()
+			cfg.AppSubURL = "/grafana"
+			service := &ServiceImpl{
+				cfg:           cfg,
+				accessControl: accesscontrolmock.New().WithPermissions(testCase.permissions),
+				features:      featuremgmt.WithFeatures(),
+			}
+			link := service.buildNotebooksNavLink(newReqCtx(true))
+			if !testCase.wantSection {
+				require.Nil(t, link)
+				return
+			}
+			require.NotNil(t, link)
+			require.Equal(t, "/grafana/notebooks", link.Url)
+			if !testCase.wantCreate {
+				require.Empty(t, link.Children)
+				return
+			}
+			require.Equal(t, []*navtree.NavLink{{
+				Text: "New notebook", Id: "notebooks/new", Icon: "plus",
+				Url: "/grafana/notebooks/new?edit=true", HideFromTabs: true, IsCreateAction: true,
+			}}, link.Children)
+		})
+	}
 }
 
 func TestBuildAlertNavLinks(t *testing.T) {
@@ -345,8 +395,16 @@ func TestBuildAlertNavLinks_AlertActivity(t *testing.T) {
 			expectedGroups:     true,
 		},
 		{
-			name:               "hidden when state history does not write to prometheus",
+			// Grafana Cloud: a separate ruler service writes the metrics, this Grafana only writes to Loki
+			name:               "shown when a target data source is set with the loki backend",
 			stateHistory:       setting.UnifiedAlertingStateHistorySettings{Enabled: true, Backend: "loki", PrometheusTargetDatasourceUID: "prom-uid"},
+			features:           []any{featuremgmt.FlagAlertingTriage},
+			expectedActivityID: "alert-alerts",
+			expectedGroups:     true,
+		},
+		{
+			name:               "hidden when no target data source is set",
+			stateHistory:       setting.UnifiedAlertingStateHistorySettings{Enabled: true, Backend: "loki"},
 			features:           []any{featuremgmt.FlagAlertingTriage},
 			expectedActivityID: "",
 			expectedGroups:     true,

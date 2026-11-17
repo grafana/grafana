@@ -10,13 +10,11 @@ import {
   type TextBoxVariableModel,
   type TypedVariableModel,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
   CustomVariable,
   DataSourceVariable,
   EmbeddedScene,
-  GroupByVariable,
   QueryVariable,
   SceneFlexLayout,
   SceneVariableSet,
@@ -587,119 +585,31 @@ describe('when creating variables objects', () => {
     });
   });
 
-  describe('when groupByVariable feature toggle is enabled', () => {
-    beforeAll(() => {
-      config.featureToggles.groupByVariable = true;
-    });
+  it('should not migrate groupby variable and throw an error instead', () => {
+    const variable: GroupByVariableModel = {
+      id: 'groupby',
+      global: false,
+      index: 0,
+      state: LoadingState.Done,
+      error: null,
+      name: 'groupby',
+      label: 'GroupBy Label',
+      description: 'GroupBy Description',
+      type: 'groupby',
+      rootStateKey: 'N4XLmH5Vz',
+      datasource: {
+        uid: 'gdev-prometheus',
+        type: 'prometheus',
+      },
+      multi: true,
+      options: [],
+      current: {},
+      query: '',
+      hide: 0,
+      skipUrlSync: false,
+    };
 
-    afterAll(() => {
-      config.featureToggles.groupByVariable = false;
-    });
-
-    it('should migrate groupby variable', () => {
-      const variable: GroupByVariableModel = {
-        id: 'groupby',
-        global: false,
-        index: 0,
-        state: LoadingState.Done,
-        error: null,
-        name: 'groupby',
-        label: 'GroupBy Label',
-        description: 'GroupBy Description',
-        type: 'groupby',
-        rootStateKey: 'N4XLmH5Vz',
-        datasource: {
-          uid: 'gdev-prometheus',
-          type: 'prometheus',
-        },
-        multi: true,
-        allowCustomValue: true,
-        options: [
-          {
-            selected: false,
-            text: 'Foo',
-            value: 'foo',
-          },
-          {
-            selected: false,
-            text: 'Bar',
-            value: 'bar',
-          },
-        ],
-        current: {},
-        query: '',
-        hide: 0,
-        skipUrlSync: false,
-      };
-
-      const migrated = createSceneVariableFromVariableModel(variable) as GroupByVariable;
-      const groupbyVarState = migrated.state;
-
-      expect(migrated).toBeInstanceOf(GroupByVariable);
-      expect(groupbyVarState).toEqual({
-        key: expect.any(String),
-        $behaviors: [migrated.getRecommendations()],
-        description: 'GroupBy Description',
-        applicabilityEnabled: false,
-        hide: 0,
-        defaultOptions: [
-          {
-            selected: false,
-            text: 'Foo',
-            value: 'foo',
-          },
-          {
-            selected: false,
-            text: 'Bar',
-            value: 'bar',
-          },
-        ],
-        isMulti: true,
-        layout: 'horizontal',
-        noValueOnClear: true,
-        label: 'GroupBy Label',
-        name: 'groupby',
-        skipUrlSync: false,
-        type: 'groupby',
-        baseFilters: [],
-        options: [],
-        text: [],
-        value: [],
-        datasource: { uid: 'gdev-prometheus', type: 'prometheus' },
-        applyMode: 'auto',
-        allowCustomValue: true,
-        drilldownRecommendationsEnabled: true,
-      });
-    });
-  });
-
-  describe('when groupByVariable feature toggle is disabled', () => {
-    it('should not migrate groupby variable and throw an error instead', () => {
-      const variable: GroupByVariableModel = {
-        id: 'groupby',
-        global: false,
-        index: 0,
-        state: LoadingState.Done,
-        error: null,
-        name: 'groupby',
-        label: 'GroupBy Label',
-        description: 'GroupBy Description',
-        type: 'groupby',
-        rootStateKey: 'N4XLmH5Vz',
-        datasource: {
-          uid: 'gdev-prometheus',
-          type: 'prometheus',
-        },
-        multi: true,
-        options: [],
-        current: {},
-        query: '',
-        hide: 0,
-        skipUrlSync: false,
-      };
-
-      expect(() => createSceneVariableFromVariableModel(variable)).toThrow('Scenes: Unsupported variable type');
-    });
+    expect(() => createSceneVariableFromVariableModel(variable)).toThrow('Scenes: Unsupported variable type');
   });
 
   describe('when migrating a "switch" variable', () => {

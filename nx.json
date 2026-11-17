@@ -1,6 +1,11 @@
 {
+  "namedInputs": {
+    "default": ["{projectRoot}/**/*"],
+    "sharedPackageBuild": ["{workspaceRoot}/packages/*.config.parts.ts", "{workspaceRoot}/scripts/tsconfig.base.json"]
+  },
   "targetDefaults": {
     "build": {
+      "inputs": ["default", "sharedPackageBuild"],
       "outputs": ["{projectRoot}/dist"],
       "cache": true
     },
@@ -18,10 +23,19 @@
     "groups": {
       "grafana": {
         "projects": [
-          "packages/*",
-          "public/app/plugins/*/*",
-          "e2e-playwright/test-plugins/*",
-          "!@grafana/plugin-compat"
+          "@grafana/alerting",
+          "@grafana/api-clients",
+          "@grafana/data",
+          "@grafana/e2e-selectors",
+          "@grafana/flamegraph",
+          "@grafana/i18n",
+          "@grafana/o11y-ds-frontend",
+          "@grafana/openapi",
+          "@grafana/runtime",
+          "@grafana/schema",
+          "@grafana/sql",
+          "@grafana/ui",
+          "public/app/plugins/*/*"
         ],
         "projectsRelationship": "fixed"
       }

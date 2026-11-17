@@ -27,7 +27,7 @@ type DocumentBuilder interface {
 // Registry of the searchable document fields
 type SearchableDocumentFields interface {
 	Fields() []string
-	Field(name string) *resourcepb.ResourceTableColumnDefinition
+	Field(name string) *SearchFieldDefinition
 }
 
 // Some kinds will require special processing for their namespace
@@ -45,11 +45,8 @@ type DocumentBuilderInfo struct {
 	Namespaced NamespacedDocumentSupplier
 }
 
-// SearchableFieldsFromProvider returns the column-definition view of a kind's
-// custom search fields for the given group and resource, derived from the
-// provider. The provider is the single source of truth; the search backend
-// uses this view for result column metadata and sort-field prefixing. Returns
-// nil when the provider is nil.
+// SearchableFieldsFromProvider returns a kind's field definitions for name
+// resolution. Returns nil when the provider is nil.
 func SearchableFieldsFromProvider(p SearchFieldsProvider, group, resource string) (SearchableDocumentFields, error) {
 	if p == nil {
 		return nil, nil
@@ -58,7 +55,7 @@ func SearchableFieldsFromProvider(p SearchFieldsProvider, group, resource string
 		Group:    group,
 		Resource: resource,
 	})
-	return NewSearchableDocumentFields(SearchFieldDefinitionsToTableColumns(sfds))
+	return NewSearchableDocumentFields(sfds)
 }
 
 type DocumentBuilderSupplier interface {
@@ -313,6 +310,11 @@ func NewIndexableDocument(key *resourcepb.ResourceKey, rv int64, obj utils.Grafa
 	tt, err := obj.GetUpdatedTimestamp()
 	if err == nil && tt != nil {
 		doc.Updated = tt.UnixMilli()
+	} else {
+		// Storage only sets updated on the first change, so an object never edited
+		// would sort last by update time and miss "updated since" filters. The older
+		// dashboard and folder APIs treat it as updated when created; so does search.
+		doc.Updated = doc.Created
 	}
 	for _, owner := range obj.GetOwnerReferences() {
 		gv, err := schema.ParseGroupVersion(owner.APIVersion)
@@ -527,25 +529,21 @@ func getSelectableFieldsFromObject(tmp *unstructured.Unstructured, fields []stri
 
 type searchableDocumentFields struct {
 	names  []string
-	fields map[string]*resourceTableColumn
+	fields map[string]*SearchFieldDefinition
 }
 
 // This requires unique names
-func NewSearchableDocumentFields(columns []*resourcepb.ResourceTableColumnDefinition) (SearchableDocumentFields, error) {
+func NewSearchableDocumentFields(definitions []SearchFieldDefinition) (SearchableDocumentFields, error) {
 	f := &searchableDocumentFields{
-		names:  make([]string, len(columns)),
-		fields: make(map[string]*resourceTableColumn),
+		names:  make([]string, len(definitions)),
+		fields: make(map[string]*SearchFieldDefinition, len(definitions)),
 	}
-	for i, c := range columns {
-		if f.fields[c.Name] != nil {
+	for i, def := range definitions {
+		if f.fields[def.Name] != nil {
 			return nil, fmt.Errorf("duplicate name")
 		}
-		col, err := newResourceTableColumn(c, i)
-		if err != nil {
-			return nil, err
-		}
-		f.names[i] = c.Name
-		f.fields[c.Name] = col
+		f.names[i] = def.Name
+		f.fields[def.Name] = &def
 	}
 	return f, nil
 }
@@ -554,14 +552,8 @@ func (x *searchableDocumentFields) Fields() []string {
 	return x.names
 }
 
-func (x *searchableDocumentFields) Field(name string) *resourcepb.ResourceTableColumnDefinition {
-	name = strings.TrimPrefix(name, SEARCH_FIELD_PREFIX)
-
-	f, ok := x.fields[name]
-	if ok {
-		return f.def
-	}
-	return nil
+func (x *searchableDocumentFields) Field(name string) *SearchFieldDefinition {
+	return x.fields[strings.TrimPrefix(name, SEARCH_FIELD_PREFIX)]
 }
 
 const (
@@ -581,14 +573,12 @@ const (
 	SEARCH_FIELD_LABELS             = "labels" // All labels, not a specific one
 	SEARCH_FIELD_OWNER_REFERENCES   = "ownerReferences"
 	SEARCH_FIELD_FOLDER             = "folder"
-	SEARCH_FIELD_FOLDER_TREE        = "folderTree" // filter only: the named folders and everything below them, global index only
+	SEARCH_FIELD_FOLDER_TREE        = "folderTree" // filter only: the named folders and everything below them
 	SEARCH_FIELD_CREATED            = "created"
 	SEARCH_FIELD_CREATED_BY         = "createdBy"
 	SEARCH_FIELD_UPDATED            = "updated"
 	SEARCH_FIELD_UPDATED_BY         = "updatedBy"
 	SEARCH_FIELD_MANAGED_BY         = "managedBy" // {kind}:{id}
-	SEARCH_FIELD_MANAGER_KIND       = "manager.kind"
-	SEARCH_FIELD_MANAGER_ID         = "manager.id"
 	SEARCH_FIELD_SOURCE_PATH        = "source.path"
 	SEARCH_FIELD_SOURCE_CHECKSUM    = "source.checksum"
 	SEARCH_FIELD_SOURCE_TIME        = "source.timestampMillis"
@@ -616,6 +606,11 @@ const (
 
 	// Internal fixed-width companion to SEARCH_FIELD_DELETED_RV.
 	SEARCH_FIELD_DELETED_RV_SORT = "_deleted_rv_sort"
+
+	// The manager sub-document's fields, named by their path into it.
+	SEARCH_FIELD_MANAGER_KIND        = "manager.kind"
+	SEARCH_FIELD_MANAGER_ID          = "manager.id"
+	SEARCH_FIELD_MANAGER_ALLOW_EDITS = "manager.allowEdits"
 )
 
 // sortableResourceVersion preserves numeric resource-version order when Bleve
@@ -649,149 +644,29 @@ var standardSearchFields SearchableDocumentFields
 
 func StandardSearchFields() SearchableDocumentFields {
 	standardSearchFieldsInit.Do(func() {
-		var err error
-		standardSearchFields, err = NewSearchableDocumentFields([]*resourcepb.ResourceTableColumnDefinition{
-			{
-				Name:        SEARCH_FIELD_ID,
-				Type:        resourcepb.ResourceTableColumnDefinition_STRING,
-				Description: "Unique Identifier. {namespace}/{group}/{resource}/{name}",
-				Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-					NotNull: true,
-				},
-			},
-			{
-				Name:        SEARCH_FIELD_GROUP_RESOURCE,
-				Type:        resourcepb.ResourceTableColumnDefinition_STRING,
-				Description: "The resource kind: {group}/{resource}",
-				Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-					NotNull: true,
-				},
-			},
-			{
-				Name:        SEARCH_FIELD_NAMESPACE,
-				Type:        resourcepb.ResourceTableColumnDefinition_STRING,
-				Description: "Tenant isolation",
-				Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-					NotNull: true,
-				},
-			},
-			{
-				Name:        SEARCH_FIELD_NAME,
-				Type:        resourcepb.ResourceTableColumnDefinition_STRING,
-				Description: "Kubernetes name.  Unique identifier within a namespace+group+resource",
-				Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-					NotNull: true,
-				},
-			},
-			{
-				Name:        SEARCH_FIELD_TITLE,
-				Type:        resourcepb.ResourceTableColumnDefinition_STRING,
-				Description: "Display name for the resource",
-			},
-			{
-				Name:        SEARCH_FIELD_DESCRIPTION,
-				Type:        resourcepb.ResourceTableColumnDefinition_STRING,
-				Description: "An account of the resource.",
-				Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-					FreeText: true,
-				},
-			},
-			{
-				Name:        SEARCH_FIELD_TAGS,
-				Type:        resourcepb.ResourceTableColumnDefinition_STRING,
-				IsArray:     true,
-				Description: "Unique tags",
-				Properties: &resourcepb.ResourceTableColumnDefinition_Properties{
-					Filterable: true,
-				},
-			},
-			{
-				Name:        SEARCH_FIELD_FOLDER,
-				Type:        resourcepb.ResourceTableColumnDefinition_STRING,
-				Description: "Kubernetes name for the folder",
-			},
-			{
-				Name:        SEARCH_FIELD_RV,
-				Type:        resourcepb.ResourceTableColumnDefinition_INT64,
-				Description: "resource version",
-			},
-			{
-				Name:        SEARCH_FIELD_CREATED,
-				Type:        resourcepb.ResourceTableColumnDefinition_INT64,
-				Description: "created timestamp (unix millis)",
-			},
-			{
-				Name:        SEARCH_FIELD_UPDATED,
-				Type:        resourcepb.ResourceTableColumnDefinition_INT64,
-				Description: "updated timestamp (unix millis)",
-			},
-			{
-				Name:        SEARCH_FIELD_CREATED_BY,
-				Type:        resourcepb.ResourceTableColumnDefinition_STRING,
-				Description: "Who created the resource (format: user:<uid>)",
-			},
-			{
-				Name:        SEARCH_FIELD_EXPLAIN,
-				Type:        resourcepb.ResourceTableColumnDefinition_OBJECT,
-				Description: "Explain why this result matches (depends on the engine)",
-			},
-			{
-				Name:        SEARCH_FIELD_SCORE,
-				Type:        resourcepb.ResourceTableColumnDefinition_DOUBLE,
-				Description: "The search score",
-			},
-			{
-				Name:        SEARCH_FIELD_LEGACY_ID,
-				Type:        resourcepb.ResourceTableColumnDefinition_INT64,
-				Description: "Deprecated legacy id of the resource",
-			},
-			{
-				Name:        SEARCH_FIELD_MANAGER_KIND,
-				Type:        resourcepb.ResourceTableColumnDefinition_STRING,
-				Description: "Type of manager, which is responsible for managing the resource",
-			},
-			// TODO: below fields only need to be returned from search, but do not need to be searchable
-			{
-				Name: SEARCH_FIELD_MANAGER_ID,
-				Type: resourcepb.ResourceTableColumnDefinition_STRING,
-			},
-			{
-				Name: SEARCH_FIELD_SOURCE_TIME,
-				Type: resourcepb.ResourceTableColumnDefinition_INT64,
-			},
-			{
-				Name: SEARCH_FIELD_SOURCE_PATH,
-				Type: resourcepb.ResourceTableColumnDefinition_STRING,
-			},
-			{
-				Name: SEARCH_FIELD_SOURCE_CHECKSUM,
-				Type: resourcepb.ResourceTableColumnDefinition_STRING,
-			},
-			{
-				Name:        SEARCH_FIELD_OWNER_REFERENCES,
-				Type:        resourcepb.ResourceTableColumnDefinition_STRING,
-				IsArray:     true,
-				Description: "Owner references in format {Group}/{Kind}/{Name}",
-			},
-			// Trash columns. A response can only carry a column defined here, so
-			// without these /trash could not return them at all (see hitsToTable).
-			{
-				Name:        SEARCH_FIELD_DELETED_BY,
-				Type:        resourcepb.ResourceTableColumnDefinition_STRING,
-				Description: "Who deleted the resource (format: user:<uid>)",
-			},
-			{
-				Name:        SEARCH_FIELD_DELETION_TIME,
-				Type:        resourcepb.ResourceTableColumnDefinition_INT64,
-				Description: "When the resource was deleted (unix millis)",
-			},
-			{
-				Name:        SEARCH_FIELD_DELETED_RV,
-				Type:        resourcepb.ResourceTableColumnDefinition_STRING,
-				Description: "Resource version of the delete",
-			},
-		})
+		definitions := []SearchFieldDefinition{
+			{Name: SEARCH_FIELD_ID, Type: SearchFieldTypeString},
+			{Name: SEARCH_FIELD_GROUP_RESOURCE, Type: SearchFieldTypeString},
+			{Name: SEARCH_FIELD_NAMESPACE, Type: SearchFieldTypeString},
+			{Name: SEARCH_FIELD_NAME, Type: SearchFieldTypeString},
+			{Name: SEARCH_FIELD_RV, Type: SearchFieldTypeInt64},
+			{Name: SEARCH_FIELD_EXPLAIN, Type: SearchFieldTypeUnknown},
+			{Name: SEARCH_FIELD_SCORE, Type: SearchFieldTypeDouble},
+			{Name: SEARCH_FIELD_LEGACY_ID, Type: SearchFieldTypeInt64},
+			{Name: SEARCH_FIELD_SOURCE_TIME, Type: SearchFieldTypeInt64},
+			{Name: SEARCH_FIELD_SOURCE_PATH, Type: SearchFieldTypeString},
+			{Name: SEARCH_FIELD_SOURCE_CHECKSUM, Type: SearchFieldTypeString},
+		}
+		for _, def := range StandardSearchFieldDefinitions() {
+			// Facet-only fields such as managedBy have no stored value to return.
+			if def.HasCapability(SearchCapabilityRetrieve) {
+				definitions = append(definitions, def)
+			}
+		}
+		definitions = append(definitions, TrashSearchFieldDefinitions()...)
 
+		var err error
+		standardSearchFields, err = NewSearchableDocumentFields(definitions)
 		if err != nil {
 			panic("failed to initialize standard search fields")
 		}

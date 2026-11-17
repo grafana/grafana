@@ -15,7 +15,7 @@ import (
 // externalRulerSync.pollInterval to a reasonable range.
 const (
 	minRulerSyncPollInterval = time.Minute
-	maxRulerSyncPollInterval = time.Hour
+	maxRulerSyncPollInterval = 24 * time.Hour
 )
 
 // Config is a per-org singleton, so the only valid name is the well-known
