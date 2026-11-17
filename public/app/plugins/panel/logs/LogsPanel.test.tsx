@@ -226,7 +226,7 @@ describe('Infinite scrolling from the top', () => {
     'passes infiniteScrollTop=$expected when flag=$flag and enableInfiniteScrolling=$enableInfiniteScrolling',
     async ({ flag, enableInfiniteScrolling, expected }) => {
       useFlagMock.mockImplementation((key: string, defaultValue: boolean) => ({
-        value: key === 'grafana.infiniteScrollTop' ? flag : defaultValue,
+        value: key === 'grafana.logsInfiniteScrollTop' ? flag : defaultValue,
       }));
       logListMock.mockClear();
 
