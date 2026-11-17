@@ -308,6 +308,20 @@ func TestIntegration_RecordingSeriesInRuleState(t *testing.T) {
 		require.Len(t, instances, 1)
 	})
 
+	t.Run("a plain full sync drops the stored series of a rule that has instances", func(t *testing.T) {
+		require.NoError(t, seriesStore.FullSyncWithSeries(ctx, nil,
+			map[models.AlertRuleKey][]models.RecordingSeries{alerting.GetKey(): series}, 0, nil))
+
+		require.NoError(t, ng.InstanceStore.FullSync(ctx, []models.AlertInstance{instance(alerting, "h7")}, 0, nil))
+
+		got, err := seriesStore.ListRecordingSeries(ctx, alerting.OrgID)
+		require.NoError(t, err)
+		require.Empty(t, got[alerting.UID])
+		instances, err := ng.InstanceStore.ListAlertInstances(ctx, &models.ListAlertInstancesQuery{RuleOrgID: alerting.OrgID, RuleUID: alerting.UID})
+		require.NoError(t, err)
+		require.Len(t, instances, 1)
+	})
+
 	t.Run("deleting the series keeps the alert instances of the row", func(t *testing.T) {
 		mixed := alerting.GetKeyWithGroup()
 		require.NoError(t, seriesStore.FullSyncWithSeries(ctx,

@@ -164,7 +164,6 @@ func (st ProtoInstanceDBStore) fullSync(ctx context.Context, instances []models.
 
 	type preparedRule struct {
 		ruleKey        models.AlertRuleKeyWithGroup
-		instances      []models.AlertInstance
 		compressedData []byte
 	}
 	preparedRules := make([]preparedRule, 0, len(ruleGroups))
@@ -178,7 +177,6 @@ func (st ProtoInstanceDBStore) fullSync(ctx context.Context, instances []models.
 
 		preparedRules = append(preparedRules, preparedRule{
 			ruleKey:        ruleKey,
-			instances:      ruleInstances,
 			compressedData: compressed,
 		})
 
@@ -202,16 +200,9 @@ func (st ProtoInstanceDBStore) fullSync(ctx context.Context, instances []models.
 			return fmt.Errorf("failed to delete alert_rule_state: %w", err)
 		}
 
-		for i := range preparedRules {
-			prepared := &preparedRules[i]
-			if kept, ok := stored[prepared.ruleKey.AlertRuleKey]; ok {
-				compressed, err := compressRuleState(instancesToProto(prepared.instances), kept)
-				if err != nil {
-					return fmt.Errorf("failed to compress state for rule %s: %w", prepared.ruleKey.UID, err)
-				}
-				prepared.compressedData = compressed
-				delete(stored, prepared.ruleKey.AlertRuleKey)
-			}
+		// A rule with instances is an alert rule now, so its stored series are stale.
+		for _, prepared := range preparedRules {
+			delete(stored, prepared.ruleKey.AlertRuleKey)
 		}
 		for key, kept := range stored {
 			compressed, err := compressRuleState(nil, kept)
