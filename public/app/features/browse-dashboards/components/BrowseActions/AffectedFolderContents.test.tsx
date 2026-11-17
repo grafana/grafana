@@ -1,9 +1,8 @@
-import { HttpResponse } from 'msw';
-import { act, render, screen } from 'test/test-utils';
+import { render, screen } from 'test/test-utils';
 
 import { setBackendSrv } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import { customFolderCountsHandler, getFolderFixtures, setTestFlags } from '@grafana/test-utils/unstable';
+import { folderHandlers, getFolderFixtures } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { AffectedFolderContents } from './AffectedFolderContents';
@@ -24,20 +23,6 @@ const folderASelection = {
 };
 
 describe('AffectedFolderContents', () => {
-  // foldersAppPlatformAPI defaults to on, but the counts handler here is the legacy one.
-  // TODO: add app platform folder fixtures and drop this pin, so these tests cover the API
-  // that production actually uses.
-  beforeEach(() => {
-    setTestFlags({ foldersAppPlatformAPI: false });
-  });
-
-  // The act wrap is needed because resetting fires OpenFeature events into the mounted component.
-  afterEach(async () => {
-    await act(async () => {
-      setTestFlags({});
-    });
-  });
-
   it('always renders the default message', () => {
     render(<AffectedFolderContents selectedItems={emptySelection} defaultMessage={<p>Default body</p>} />);
 
@@ -64,18 +49,7 @@ describe('AffectedFolderContents', () => {
   });
 
   it('renders the empty success alert when the selected folder has no descendants', async () => {
-    server.use(
-      customFolderCountsHandler(() =>
-        HttpResponse.json({
-          folders: 0,
-          dashboards: 0,
-          library_elements: 0,
-          alertrules: 0,
-          recordingrules: 0,
-          variables: 0,
-        })
-      )
-    );
+    server.use(folderHandlers.mockFolderCountsHandler(0, 0, 0, 0));
 
     render(<AffectedFolderContents selectedItems={folderASelection} emptyMessage="Folder is empty" />);
 
@@ -83,18 +57,7 @@ describe('AffectedFolderContents', () => {
   });
 
   it('renders the non-empty warning alert when the selected folder only has recording rules', async () => {
-    server.use(
-      customFolderCountsHandler(() =>
-        HttpResponse.json({
-          folders: 0,
-          dashboards: 0,
-          library_elements: 0,
-          alertrules: 0,
-          recordingrules: 3,
-          variables: 0,
-        })
-      )
-    );
+    server.use(folderHandlers.mockFolderCountsHandler(0, 0, 3, 0));
 
     render(<AffectedFolderContents selectedItems={folderASelection} nonEmptyMessage="Folder has other resources" />);
 
@@ -102,18 +65,7 @@ describe('AffectedFolderContents', () => {
   });
 
   it('renders the non-empty warning alert when the selected folder only has variables', async () => {
-    server.use(
-      customFolderCountsHandler(() =>
-        HttpResponse.json({
-          folders: 0,
-          dashboards: 0,
-          library_elements: 0,
-          alertrules: 0,
-          recordingrules: 0,
-          variables: 3,
-        })
-      )
-    );
+    server.use(folderHandlers.mockFolderCountsHandler(0, 0, 0, 3));
 
     render(<AffectedFolderContents selectedItems={folderASelection} nonEmptyMessage="Folder has other resources" />);
 

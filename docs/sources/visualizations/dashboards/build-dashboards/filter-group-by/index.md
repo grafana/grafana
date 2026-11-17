@@ -129,12 +129,12 @@ To enable this functionality, you need to add an override for every field by whi
 In the override:
 
 - Select a field name.
-- Add the **Standard options > Filter from values** override property.
-- Enable the **Filter from values** switch to allow viewers to update dashboard filters by interacting with the panel.
+- Add the **Standard options > Cross-filter** override property.
+- Enable the **Cross-filter** switch to allow viewers to update dashboard filters by interacting with the panel.
 
 You can also do this programmatically by returning the data frame with the appropriate `filterable` property on the desired fields.
 
-For provisioned dashboards, **Filter from values** uses the JSON property ID `filterable`.
+For provisioned dashboards, **Cross-filter** uses the JSON property ID `filterable`.
 For example, add the following override to the panel's `fieldConfig.overrides` array to enable filtering from the `service` field:
 
 ```json
@@ -180,6 +180,11 @@ To apply cross-filtering, follow these steps:
 If one of the panels in the dashboard using that data source doesn't include that filter value, the panel won't return any data. In this example, the filter pair `_name_ = ALERTS` has been added so the bar chart doesn't return any results:
 
 {{< figure src="/media/docs/grafana/panels-visualizations/screenshot-adhoc-filter-no-data-v12.2.png" max-width="650px" alt="Table, filtered and bar chart returning no results" >}}
+
+From the filter field at the top of the dashboard, you can do the following as needed:
+
+- Change the operator to any of the following: `=~`, `!~`, `<`, `<=`, `>`, `>=`.
+- Delete the filter.
 
 For some visualizations, if your query doesn't include some type of data grouping, you might need to group the data first.
 For more information, refer to [Group from the panel](#group-from-the-panel).

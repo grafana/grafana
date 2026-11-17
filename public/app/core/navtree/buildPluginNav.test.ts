@@ -9,6 +9,7 @@ import * as appNavConfig from './appNavConfig';
 import { buildNavTree } from './buildNavTree';
 import { applyPluginNav } from './buildPluginNav';
 import { NavID, NavWeight } from './constants';
+import { addAppNavConfig, clearRegisteredAppNavConfig } from './registry';
 import {
   appPage as page,
   appPluginConfig as app,
@@ -330,6 +331,55 @@ describe('applyPluginNav', () => {
       expect(childTexts(merged, 'grafana-assistant-app')).not.toContain('Pages');
     });
 
+    it('adds the assistant create action only with the pages create permission', () => {
+      const namespace = config.namespace;
+      config.namespace = 'stacks-123';
+      const assistant = () =>
+        app('grafana-assistant-app', 'Assistant', [
+          page('Home', '/a/grafana-assistant-app'),
+          page('Pages', '/a/grafana-assistant-app/pages'),
+        ]);
+      const pagesId = 'standalone-plugin-page-/a/grafana-assistant-app/pages';
+
+      setup({ permissions: ['plugins.app:access', 'assistant.ext.grafana.app/pages:create'] });
+      const withCreate = findById(merge(assistant()), pagesId);
+      expect(ids(withCreate?.children ?? [])).toEqual(['assistant/pages/new']);
+      // no pluginId, so routes.tsx does not give the pages section every assistant url
+      expect(withCreate?.children?.[0]).toEqual({
+        text: 'New Grafana Page',
+        id: 'assistant/pages/new',
+        icon: 'plus',
+        url: '/a/grafana-assistant-app/pages/new',
+        hideFromTabs: true,
+        isCreateAction: true,
+      });
+
+      setup({ permissions: ['plugins.app:access'] });
+      expect(findById(merge(assistant()), pagesId)?.children ?? []).toEqual([]);
+
+      config.namespace = namespace;
+    });
+
+    it('leaves the assistant create action off a pages include that stays out of the nav', () => {
+      const namespace = config.namespace;
+      config.namespace = 'stacks-123';
+      setup({ permissions: ['plugins.app:access', 'assistant.ext.grafana.app/pages:create'] });
+
+      const merged = merge(
+        app('grafana-assistant-app', 'Assistant', [
+          page('Home', '/a/grafana-assistant-app'),
+          page('Pages', '/a/grafana-assistant-app/pages', { addToNav: false }),
+        ])
+      );
+
+      // the page is still lifted into place, it just has no create action under it
+      const pagesEntry = findById(merged, 'standalone-plugin-page-/a/grafana-assistant-app/pages');
+      expect(pagesEntry).toBeDefined();
+      expect(pagesEntry?.children ?? []).toEqual([]);
+
+      config.namespace = namespace;
+    });
+
     it('drops that app when its page fails the include access check', () => {
       setup({ orgRole: 'Viewer' });
       const merged = merge(
@@ -579,6 +629,55 @@ describe('applyPluginNav', () => {
         'plugin-page-grafana-detect-app',
         'plugin-page-grafana-quaderno-app',
       ]);
+    });
+  });
+
+  describe('registered app nav config', () => {
+    afterEach(() => {
+      clearRegisteredAppNavConfig();
+    });
+
+    it('places a registered app where it names, and prunes the emptied More apps', () => {
+      addAppNavConfig({
+        'some-app': { sectionId: NavID.root, sortWeight: -3280, text: 'Analytics', icon: 'chart-line' },
+      });
+
+      const merged = merge(app('some-app', 'Raw plugin name', [page('Page', '/a/some-app/page')]));
+
+      expect(findById(merged, 'plugin-page-some-app')).toMatchObject({
+        text: 'Analytics',
+        icon: 'chart-line',
+        sortWeight: -3280,
+        isSection: true,
+      });
+      // At the top level, not inside More apps, which then goes with the prune
+      expect(ids(merged)).toContain('plugin-page-some-app');
+      expect(findById(pruneEmptyNavSections(merged), NavID.apps)).toBeUndefined();
+    });
+
+    it('keeps the static table in charge when both tables have the app', () => {
+      addAppNavConfig({ 'grafana-ml-app': { sectionId: NavID.root, text: 'Registered' } });
+
+      const merged = merge(app('grafana-ml-app', 'ML', [page('Page', '/a/grafana-ml-app/page')]));
+
+      expect(findById(merged, 'plugin-page-grafana-ml-app')?.text).toBe('Machine Learning');
+    });
+
+    it('lets an operator override move a registered app', () => {
+      setup({
+        config: { navigation: { appSections: { 'some-app': { sectionId: NavID.cfg, sortWeight: 3 } } } },
+        permissions: ['settings:read'],
+      });
+      addAppNavConfig({ 'some-app': { sectionId: NavID.root, sortWeight: -3280, text: 'Analytics' } });
+
+      const merged = merge(app('some-app', 'Raw plugin name', [page('Page', '/a/some-app/page')]));
+
+      // Placement and weight come from the operator, the label stays registered
+      expect(findById(findById(merged, NavID.cfg)?.children ?? [], 'plugin-page-some-app')).toMatchObject({
+        text: 'Analytics',
+        sortWeight: 3,
+      });
+      expect(ids(merged)).not.toContain('plugin-page-some-app');
     });
   });
 

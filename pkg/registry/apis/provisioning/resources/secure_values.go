@@ -6,6 +6,8 @@ import (
 	"slices"
 	"strings"
 
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
@@ -75,4 +77,46 @@ func secureValueWrites(obj map[string]any) []string {
 	slices.Sort(keys)
 
 	return keys
+}
+
+// keepPlaintextSecureValues copies committed plaintext into updated for the keys the
+// update never mentions; a reference it does carry already provisions the value.
+func keepPlaintextSecureValues(committed, updated *unstructured.Unstructured) {
+	if !sameResourceIdentity(committed, updated) {
+		return
+	}
+
+	previous, ok := committed.Object[secureValuesField].(map[string]any)
+	if !ok {
+		return
+	}
+
+	current, _ := updated.Object[secureValuesField].(map[string]any)
+	for key, value := range previous {
+		secureValue, ok := value.(map[string]any)
+		if !ok {
+			continue
+		}
+		if create, ok := secureValue["create"].(string); !ok || create == "" {
+			continue
+		}
+		if _, mentioned := current[key]; mentioned {
+			continue
+		}
+
+		if current == nil {
+			current = map[string]any{}
+			updated.Object[secureValuesField] = current
+		}
+		current[key] = runtime.DeepCopyJSON(secureValue)
+	}
+}
+
+// sameResourceIdentity reports whether both files describe the same resource (any
+// version): a replacement is authorized on its own, so it must not inherit the secret.
+func sameResourceIdentity(a, b *unstructured.Unstructured) bool {
+	agvk, bgvk := a.GroupVersionKind(), b.GroupVersionKind()
+
+	return a.GetName() != "" && a.GetName() == b.GetName() &&
+		agvk.Group == bgvk.Group && agvk.Kind == bgvk.Kind
 }

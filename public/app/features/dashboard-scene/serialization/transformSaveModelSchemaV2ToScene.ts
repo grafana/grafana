@@ -259,7 +259,6 @@ export function transformSaveModelSchemaV2ToScene(
         refreshPicker: new SceneRefreshPicker({
           refresh: dashboard.timeSettings.autoRefresh,
           intervals: dashboard.timeSettings.autoRefreshIntervals,
-          withText: true,
         }),
         hideTimeControls: dashboard.timeSettings.hideTimepicker,
       }),
@@ -302,7 +301,7 @@ function createVariablesForDashboard(dashboard: DashboardV2Spec, defaultVariable
   }).filter((v) => !localNames.has(v.state.name));
 
   // Explicitly disable scopes for public dashboards
-  if (config.featureToggles.scopeFilters && !config.publicDashboardAccessToken) {
+  if (getFeatureFlagClient().getBooleanValue(FlagKeys.ScopeFilters, false) && !config.publicDashboardAccessToken) {
     variableObjects.push(new ScopesVariable({ enable: true }));
   }
 

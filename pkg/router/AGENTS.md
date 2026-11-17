@@ -79,12 +79,12 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   the embedded server: its requests, discovery and OpenAPI. This is expected, and must keep working.
   Don't reintroduce a filter on which groups the router may serve. Which groups are routed is decided
   by the configured sources.
-- **A plugin backend serves only plugin groups and the routable core groups.** `newPluginBackend`
-  accepts a `*.ext.grafana.app` group or one of the hardcoded `routableCoreGroups`, from any source.
-  Every other core group is refused, so no plugin can claim it. Any plugin may shadow the
-  `routableCoreGroups` on purpose: they are low risk, and nothing serious happens if a plugin
-  misbehaves in them. Don't flag that as a vulnerability. Add a group only if the same holds for
-  it, never one whose data or permissions matter (dashboards, folders, IAM). The local plugin
+- **A plugin backend serves only plugin groups, except from trusted sources.** `newPluginBackend`
+  accepts only a `*.ext.grafana.app` group, so no local plugin, dev target or plugin deployment can
+  claim a core group. `buildPluginBackend(..., trusted=true)` serves any group, and only two callers
+  pass it: the operator-configured `core_url` source (`sourceCore`) and the in-process core apps built
+  from Grafana's own installers (`router.registerCoreAPIs`). Never make another source trusted without
+  the same operator or first-party control. The local plugin
   loader also serves each app plugin's settings API under its plugin ID
   (`newPluginSettingsBackend`): the single `app` resource, always named `instance`. A plugin ID
   must be a DNS label with a hyphen, so it can never name a core or manifest group. The standalone
@@ -440,7 +440,7 @@ These keys are read straight from `cfg.SectionWithEnvOverrides("cloud_router")`.
 | `cap_token`, `token_exchange_url` | Required when any aggregate target without `discovery_auth = none` is set. The CAP token is exchanged per request. |
 | `plugins_url` | Full URL of the plugin-manifests operator's `/plugins` endpoint. Needs no CAP token. |
 | `plugins_group_patterns` | Globs that narrow the plugin groups, with the same semantics as `group_patterns`. The deprecated name `plugins_group_regex` is still read, with a warning; if both are set, the new name wins. |
-| `core_url` | Same format as `plugins_url`, for core APIs served as plugin deployments. Needs no CAP token, and is not filtered by `plugins_group_patterns`. Like any plugin source, it may serve the core groups in `routableCoreGroups`. |
+| `core_url` | Same format as `plugins_url`, for core APIs served as plugin deployments. Needs no CAP token, and is not filtered by `plugins_group_patterns`. Unlike other plugin sources, it is trusted to serve core groups. |
 | `bridge_url` | Same format as `plugins_url`, for bridge deployments. Needs no CAP token. Backend keys are prefixed `bridge:`. |
 | `bridge_group_patterns` | Globs that narrow the bridge groups, with the same semantics as `group_patterns`. |
 | `plugins_ca_file`, `plugins_insecure`, `core_ca_file`, `core_insecure`, `bridge_ca_file`, `bridge_insecure` | TLS settings for polling an `https` `plugins_url`, `core_url` or `bridge_url`, with the same semantics as an aggregate target's `ca_file` and `insecure`. Unset trusts the system CAs. They don't apply to the gRPC connections to the plugin backends; see `[router.backend_grpc]`. |

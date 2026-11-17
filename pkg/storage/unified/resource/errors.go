@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resourceclient/resourceutil"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/util/scheduler"
 )
 
 // Package-level errors.
@@ -79,20 +78,12 @@ func IsConflict(err error) bool {
 	return resourceutil.IsConflict(err)
 }
 
-func ErrorFromResponse(respErr *resourcepb.ErrorResult, err error) error {
-	return resourceutil.ErrorFromResponse(respErr, err)
-}
-
 func AsErrorResult(err error) *resourcepb.ErrorResult {
 	return resourceutil.AsErrorResult(err)
 }
 
 func StatusError(res *resourcepb.ErrorResult) error {
 	return resourceutil.StatusError(res)
-}
-
-func StatusErrorFromResponse(respErr *resourcepb.ErrorResult, err error) error {
-	return resourceutil.StatusErrorFromResponse(respErr, err)
 }
 
 func StatusErrorFromGRPC(err error) error {
@@ -213,13 +204,6 @@ func newRequiredFieldError(
 			},
 		},
 	}
-}
-
-func HandleQueueError[T any](err error, makeResp func(*resourcepb.ErrorResult) *T) (*T, error) {
-	if errors.Is(err, scheduler.ErrTenantQueueFull) {
-		return makeResp(NewTooManyRequestsError("tenant queue is full, please try again later")), nil
-	}
-	return makeResp(AsErrorResult(err)), nil
 }
 
 var (

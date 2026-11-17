@@ -12,7 +12,7 @@ import (
 
 const audience = "single-tenant-db-proxy"
 
-// NewConn creates a lazy connection. The caller owns Close and must provide service-authenticated transport.
+// NewConn creates a lazy connection. The caller supplies transport credentials for the endpoint and owns Close.
 func NewConn(target string, transport credentials.TransportCredentials, exchanger authn.TokenExchanger) (*grpc.ClientConn, error) {
 	if target == "" {
 		return nil, errors.New("proxy target required")

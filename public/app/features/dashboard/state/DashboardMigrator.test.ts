@@ -3,8 +3,8 @@ import { each, map } from 'lodash';
 import { DataLinkBuiltInVars, MappingType, VariableHide } from '@grafana/data';
 import { type FieldConfigSource } from '@grafana/schema';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
-import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
+import { mockDataSource } from 'app/features/alerting/unified/testSetup/mockDataSource';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { DashboardModel } from '../state/DashboardModel';
