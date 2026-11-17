@@ -8,10 +8,8 @@ import (
 	"net/url"
 	"slices"
 	"strings"
-	"sync/atomic"
 	"time"
 
-	"github.com/grafana/dskit/services"
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -112,12 +110,10 @@ type APIBuilder struct {
 	isPreferredVersion                  bool
 	useExclusivelyAccessCheckerForAuthz bool
 
-	allowedTargets     []provisioning.SyncTargetType
-	supportedResources resources.SupportedResourceProvider
-	// startManifestWatcher starts the watcher that the API versions share.
-	startManifestWatcher func(context.Context) error
-	allowImageRendering  bool
-	minSyncInterval      time.Duration
+	allowedTargets      []provisioning.SyncTargetType
+	supportedResources  resources.SupportedResourceProvider
+	allowImageRendering bool
+	minSyncInterval     time.Duration
 
 	features             featuremgmt.FeatureToggles
 	usageStats           usagestats.Service
@@ -228,7 +224,6 @@ func NewAPIBuilder(
 	jobHistoryConfig *JobHistoryConfig,
 	allowedTargets []provisioning.SyncTargetType,
 	supportedResources resources.SupportedResourceProvider,
-	startManifestWatcher func(context.Context) error,
 	restConfigGetter func(context.Context) (*clientrest.Config, error),
 	allowImageRendering bool,
 	minSyncInterval time.Duration,
@@ -272,7 +267,6 @@ func NewAPIBuilder(
 		connectionFactory:                   connectionFactory,
 		clients:                             clients,
 		supportedResources:                  supportedResources,
-		startManifestWatcher:                startManifestWatcher,
 		parsers:                             parsers,
 		unified:                             unified,
 		access:                              accessChecker,
@@ -361,18 +355,6 @@ func createJobHistoryConfigFromSettings(cfg *setting.Cfg) *JobHistoryConfig {
 	return &JobHistoryConfig{}
 }
 
-// StartOnce returns a function that starts the service on its first call. Each later call
-// does nothing.
-func StartOnce(service services.Service) func(context.Context) error {
-	var started atomic.Bool
-	return func(ctx context.Context) error {
-		if started.Swap(true) {
-			return nil
-		}
-		return service.StartAsync(ctx)
-	}
-}
-
 // RegisterAPIService returns an API builder, from [NewAPIBuilder]. It is called by Wire.
 // This function happily uses services core to Grafana, and does not need to be multi-tenancy-compatible.
 func RegisterAPIService(
@@ -411,7 +393,10 @@ func RegisterAPIService(
 		return nil, fmt.Errorf("invalid [provisioning] resources configuration: %w", err)
 	}
 	supportedResources := resources.NewSupportedResourceProvider(configured)
-	startManifestWatcher := StartOnce(resource.NewLocalManifestWatcher(manifests, nil, supportedResources.Update, nil))
+	manifestWatcher := resource.NewLocalManifestWatcher(manifests, nil, supportedResources.Update, nil)
+	if err := manifestWatcher.StartAsync(context.Background()); err != nil {
+		return nil, fmt.Errorf("failed to start manifest watcher: %w", err)
+	}
 
 	jobHistoryConfig := createJobHistoryConfigFromSettings(cfg)
 	maxFileSize := cfg.ProvisioningMaxFileSize
@@ -452,7 +437,6 @@ func RegisterAPIService(
 		jobHistoryConfig,
 		allowedTargets,
 		supportedResources,
-		startManifestWatcher,
 		nil, // restConfigGetter - will use loopback instead
 		cfg.ProvisioningAllowImageRendering,
 		cfg.ProvisioningMinSyncInterval,
@@ -507,7 +491,6 @@ func RegisterAPIService(
 		jobHistoryConfig,
 		allowedTargets,
 		supportedResources,
-		startManifestWatcher,
 		nil, // restConfigGetter
 		cfg.ProvisioningAllowImageRendering,
 		cfg.ProvisioningMinSyncInterval,
@@ -1111,9 +1094,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 	hookName := fmt.Sprintf("grafana-provisioning-%s", b.gv.Version)
 	postStartHooks := map[string]genericapiserver.PostStartHookFunc{
 		hookName: func(postStartHookCtx genericapiserver.PostStartHookContext) error {
-			if err := b.startManifestWatcher(postStartHookCtx.Context); err != nil {
-				return fmt.Errorf("start manifest watcher: %w", err)
-			}
 			var config *clientrest.Config
 			var err error
 			if b.restConfigGetter == nil {
