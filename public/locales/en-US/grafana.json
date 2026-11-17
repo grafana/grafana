@@ -1601,10 +1601,17 @@
         "view-list": "List",
         "wildcard-in-text": "Search text cannot contain * or %."
       },
+      "sequence-drawer": {
+        "alert-rules": "Alert rules",
+        "error": "Failed to load the rule sequence",
+        "interval": "Evaluated every {{interval}}",
+        "missing-rule": "Rule not found or not accessible",
+        "recording-rules": "Recording rules",
+        "this-rule": "This rule",
+        "title": "Rule sequence"
+      },
       "sequence-pill": {
-        "label": "Rule sequence",
         "label-with-interval": "Rule sequence · {{interval}}",
-        "tooltip": "Evaluated as part of a rule sequence",
         "tooltip-with-interval": "Evaluated every {{interval}} by its rule sequence"
       },
       "shared": {
@@ -1825,17 +1832,18 @@
         "autosync-rules-error-title": "Rules Import Failed",
         "autosync-rules-imported-note": "Your selected alert rules were also imported.",
         "autosync-rules-note": "Your selected alert rules will also be imported.",
-        "autosync-success-body": "Auto-sync enabled. Redirecting...",
+        "autosync-success-body": "Auto-sync enabled.",
         "autosync-success-title": "Auto-sync Enabled",
         "autosync-title": "Confirm Auto-sync",
         "body": "Are you sure you want to start the import? This action will create new resources in Grafana Alerting.",
         "confirm": "Start Import",
+        "continue": "Continue",
         "error-body": "Failed to import resources. Check the error details below and try again.",
         "error-details": "Error details",
         "error-title": "Import Failed",
         "importing-body": "Importing resources to Grafana Alerting. Please wait...",
         "importing-title": "Importing...",
-        "success-body": "Resources imported successfully. Redirecting...",
+        "success-body": "Resources imported successfully.",
         "success-title": "Import Successful",
         "title": "Confirm Import"
       },
@@ -13561,12 +13569,14 @@
       "customise-reset": "Reset navigation - show all items, unpin all and reset order",
       "customise-saving": "Saving…",
       "dialog-label": "Navigation",
+      "dock": "Dock menu",
       "header-title": "Navigation",
       "list-label": "Navigation",
       "open": "Main menu",
       "pin-error": "Failed to update pinned menu items",
       "pinned-list-label": "Pinned items",
-      "section-resize": "Resize navigation"
+      "section-resize": "Resize navigation",
+      "undock": "Undock menu"
     },
     "megamenu-item": {
       "children-error": "Failed to load items",
@@ -13799,7 +13809,7 @@
       "submit": "Add to notebook",
       "success": "Panel added to {{title}}",
       "success-cells": "Added to {{title}}",
-      "success-link": "View notebook",
+      "success-open-link": "Open notebook",
       "tag-placeholder": "Filter by tag",
       "target-description": "Choose where to add the panel.",
       "target-existing": "Existing notebook",

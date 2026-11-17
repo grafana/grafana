@@ -6,8 +6,12 @@ import { memo, forwardRef, useId } from 'react';
 import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { useFlagGrafanaScopesDashboardsMegaMenu, useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
-import { ErrorBoundaryAlert, ScrollContainer, Text, useStyles2, Button } from '@grafana/ui';
+import {
+  useFlagGrafanaMegaMenuPeekAndDock,
+  useFlagGrafanaScopesDashboardsMegaMenu,
+  useFlagGrafanaVisualDesignRefresh,
+} from '@grafana/runtime/internal';
+import { ErrorBoundaryAlert, ScrollContainer, Text, useStyles2, Button, IconButton } from '@grafana/ui';
 import { useDragAndDrop } from '@grafana/ui/internal';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { ScopesDashboardsMegaMenuSection } from 'app/features/scopes/dashboards/ScopesDashboardsMegaMenuSection';
@@ -15,7 +19,7 @@ import { useSelector } from 'app/types/store';
 
 import { MegaMenuCustomiseControls } from './MegaMenuCustomiseControls';
 import { MegaMenuExtensionPoint } from './MegaMenuExtensionPoint';
-import { MegaMenuHeader } from './MegaMenuHeader';
+import { DOCK_MENU_BUTTON_ID, MegaMenuHeader } from './MegaMenuHeader';
 import { MegaMenuItem } from './MegaMenuItem';
 import { MegaMenuPinnedItem } from './MegaMenuPinnedItem';
 import { MegaMenuProfile } from './MegaMenuProfile';
@@ -69,6 +73,9 @@ export const MegaMenu = memo(
     // Customising the navigation gives it the whole menu.
     const section = editMode ? null : pluginSection;
     const { containerProps, navProps, separatorProps, sectionProps } = useMegaMenuSectionSplitter(section !== null);
+
+    const peekAndDock = useFlagGrafanaMegaMenuPeekAndDock();
+    const showFooter = editMode || (canCustomise && !isLoading) || !peekAndDock;
 
     const handleDockedMenu = () => {
       chrome.setMegaMenuDocked(!state.megaMenuDocked);
@@ -295,11 +302,10 @@ export const MegaMenu = memo(
               </>
             )}
           </div>
-          {/* The toggle beside the logo docks and closes the menu, so the footer holds customisation and the user. */}
-          {(editMode || (canCustomise && !isLoading) || profileNode) && <hr className={styles.dividerLine} />}
-          {(editMode || (canCustomise && !isLoading)) && (
+          {(showFooter || profileNode) && <hr className={styles.dividerLine} />}
+          {showFooter && (
             <div className={cx(styles.footer, editMode && styles.footerEditMode)}>
-              {editMode ? (
+              {editMode && (
                 <MegaMenuCustomiseControls
                   canReset={canReset}
                   onResetToDefault={onResetToDefault}
@@ -307,10 +313,25 @@ export const MegaMenu = memo(
                   onSaveEdit={onSaveEdit}
                   saving={isSaving}
                 />
-              ) : (
+              )}
+              {!editMode && canCustomise && !isLoading && (
                 <Button variant="secondary" onClick={onEnterEditMode} size="sm" icon="sliders-v-alt">
                   <Trans i18nKey="navigation.megamenu.customise">Customise navigation</Trans>
                 </Button>
+              )}
+              {!editMode && !peekAndDock && (
+                <IconButton
+                  id={DOCK_MENU_BUTTON_ID}
+                  className={styles.dockMenuButton}
+                  tooltip={
+                    state.megaMenuDocked
+                      ? t('navigation.megamenu.undock', 'Undock menu')
+                      : t('navigation.megamenu.dock', 'Dock menu')
+                  }
+                  name="web-section-alt"
+                  onClick={handleDockedMenu}
+                  variant="secondary"
+                />
               )}
             </div>
           )}
@@ -403,6 +424,14 @@ const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => {
     }),
     footerEditMode: css({
       justifyContent: 'center',
+    }),
+    dockMenuButton: css({
+      display: 'none',
+      marginLeft: 'auto',
+
+      [theme.breakpoints.up('xl')]: {
+        display: 'inline-flex',
+      },
     }),
   };
 };
