@@ -2,9 +2,12 @@ package cascadedelete
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/hashicorp/golang-lru/v2/simplelru"
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -20,6 +23,61 @@ const PendingScanPeriod = 5 * time.Minute
 const pendingCaptureTimeout = 5 * time.Second
 const pendingReconcileTimeout = 30 * time.Second
 const pendingScanPageTimeout = 30 * time.Second
+const missingIntentCapacity = 1024
+
+var errPendingEntryMissing = errors.New("pending deletion entry missing")
+
+type missingIntentObservation struct {
+	uid      string
+	reported bool
+}
+
+func (c *Controller) beginMissingObservation(key, uid string) *missingIntentObservation {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.queue.ShuttingDown() {
+		return nil
+	}
+	if c.missingIntents == nil {
+		c.missingIntents, _ = simplelru.NewLRU[string, *missingIntentObservation](missingIntentCapacity, nil)
+	}
+	if current, ok := c.missingIntents.Get(key); ok && current.uid == uid {
+		return current
+	}
+	observation := &missingIntentObservation{uid: uid}
+	c.missingIntents.Add(key, observation)
+	return observation
+}
+
+func (c *Controller) invalidateMissing(key, uid string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.invalidateMissingLocked(key, uid)
+}
+
+func (c *Controller) invalidateMissingLocked(key, uid string) {
+	if c.missingIntents == nil {
+		return
+	}
+	if current, ok := c.missingIntents.Peek(key); ok && (uid == "" || current.uid != uid) {
+		c.missingIntents.Remove(key)
+	}
+}
+
+func (c *Controller) claimMissingObservation(ctx context.Context, f *foldersv1.Folder, observation *missingIntentObservation) bool {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if ctx.Err() != nil || c.queue.ShuttingDown() || observation == nil || c.missingIntents == nil {
+		return false
+	}
+	// A delete, replacement or eviction must invalidate an in-flight lookup, not recreate its slot.
+	current, ok := c.missingIntents.Peek(f.Namespace + "/" + f.Name)
+	if !ok || current != observation || current.reported {
+		return false
+	}
+	current.reported = true
+	return true
+}
 
 type ControllerOption func(*Controller)
 
@@ -88,6 +146,11 @@ func (c *Controller) reconcilePending(ctx context.Context, key string) error {
 		return err
 	}
 	f, err := c.folders.Get(ctx, namespace, entry.Spec.FolderName)
+	if apierrors.IsNotFound(err) {
+		c.invalidateMissing(namespace+"/"+entry.Spec.FolderName, "")
+	} else if err == nil {
+		c.invalidateMissing(namespace+"/"+entry.Spec.FolderName, string(f.UID))
+	}
 	if apierrors.IsNotFound(err) || (err == nil && string(f.UID) != entry.Spec.FolderUID) {
 		// Observation is best effort: a crash or conditional cleanup retry may lose or duplicate a sample.
 		c.pendingMetrics.completed(entry)
@@ -118,15 +181,14 @@ func (c *Controller) capturePending(ctx context.Context, f *foldersv1.Folder) er
 	if c.pending == nil || f.DeletionTimestamp == nil {
 		return nil
 	}
-	// The lookup and write share one budget so optional bookkeeping cannot stall the cascade.
-	return withPendingCaptureBudget(ctx, func(ctx context.Context) error {
+	// Lookup, capture and reporting share one budget, including any blocked logger.
+	ctx, cancel := context.WithTimeout(ctx, pendingCaptureTimeout)
+	defer cancel()
+	observation := c.beginMissingObservation(f.Namespace+"/"+f.Name, string(f.UID))
+	err := withPendingCaptureBudget(ctx, func(ctx context.Context) error {
 		entry, err := c.pending.Get(ctx, f.Namespace, pending.PendingDeletionName(f.Name, string(f.UID)))
 		if apierrors.IsNotFound(err) {
-			if c.pendingMetrics != nil {
-				c.pendingMetrics.missing.Inc()
-			}
-			logging.FromContext(ctx).Error("Terminating folder has no pending deletion entry", "namespace", f.Namespace, "folder", f.Name)
-			return nil
+			return errPendingEntryMissing
 		}
 		if err != nil {
 			return err
@@ -139,6 +201,22 @@ func (c *Controller) capturePending(ctx context.Context, f *foldersv1.Folder) er
 		}
 		return c.pending.Capture(ctx, entry, *f.DeletionTimestamp)
 	})
+	if errors.Is(err, errPendingEntryMissing) {
+		if !c.claimMissingObservation(ctx, f, observation) {
+			return nil
+		}
+		return withPendingCaptureBudget(ctx, func(ctx context.Context) error {
+			if err := ctx.Err(); err != nil {
+				return err
+			}
+			if c.pendingMetrics != nil {
+				c.pendingMetrics.missing.Inc()
+			}
+			logging.FromContext(ctx).Error("Terminating folder has no pending deletion entry", "namespace", f.Namespace, "folder", f.Name)
+			return nil
+		})
+	}
+	return err
 }
 
 func withPendingCaptureBudget(ctx context.Context, capture func(context.Context) error) error {
@@ -149,6 +227,9 @@ func withPendingCaptureBudget(ctx context.Context, capture func(context.Context)
 	go func() { done <- capture(ctx) }()
 	select {
 	case err := <-done:
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
 		return err
 	case <-ctx.Done():
 		return ctx.Err()
