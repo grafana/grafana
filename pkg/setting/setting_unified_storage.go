@@ -99,8 +99,8 @@ var MigratedUnifiedResources = map[string]bool{
 	ShortURLResource:         true,  // Only Mode5!
 	SnapshotResource:         false, // Requires kubernetesSnapshots to be enabled by default
 	LibraryPanelResource:     false, // Explicit migration opt-in; legacy storage remains the default
-	StarsResource:            false,
-	PreferencesResource:      true, // Only Mode5!
+	StarsResource:            true,  // Only Mode5!
+	PreferencesResource:      true,  // Only Mode5!
 	DataSourceResources:      false,
 	QueryCacheConfigResource: false,
 }

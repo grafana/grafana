@@ -10,8 +10,8 @@ github.com/antlr4-go/antlr/v4 v4.13.1 h1:SqQKkuVZ+zWkMMNkjy5FZe5mr5WURWnlpmOuzYW
 github.com/antlr4-go/antlr/v4 v4.13.1/go.mod h1:GKmUxMtwp6ZgGwZSva4eWPC5mS6vUAmOABFgjdkM7Nw=
 github.com/apache/arrow-go/v18 v18.8.0 h1:BLOzbPv7bxMPgXPacAg6HQjnxupYsZzC4tf+FkqPU/M=
 github.com/apache/arrow-go/v18 v18.8.0/go.mod h1:uJCFfCwq0KsxCmsCfQg4ft+LsW+iHYzAXiSDh5ug/8U=
-github.com/apache/thrift v0.24.0 h1:zy31L1a49QTNB2bG1BBfMXol3yJrTH975G3pPubQVLQ=
-github.com/apache/thrift v0.24.0/go.mod h1:zPt6WxgvTOM6hF92y8C+MkEM5LMxZuk4JcQOiU4Esvs=
+github.com/apache/thrift v0.25.0 h1:6LLlvoPjy8Cc/0b5TYRcTR3RZa2W0at3WQRcOkDwVGs=
+github.com/apache/thrift v0.25.0/go.mod h1:4lwyToijD9T70w7GlevFk7FnpY60Wv8I8krMkF6FkAo=
 github.com/beorn7/perks v1.0.1 h1:VlbKKnNfV8bJzeqoa4cOKqO6bYr3WgKZxO8Z16+hsOM=
 github.com/beorn7/perks v1.0.1/go.mod h1:G2ZrVWU2WbWT9wwq4/hrbKbnv/1ERSJQ0ibhJ6rlkpw=
 github.com/bradfitz/gomemcache v0.0.0-20260422231931-4d751bb6e37c h1:6Gpm9YYUEQx2T9zMsYolQhr6sjwwGtFitSA0pQsa7a8=
@@ -144,8 +144,8 @@ github.com/grafana/grafana-app-sdk v0.63.2 h1:wk6G3fF+f0w0Nr+wCJXQIH0f5SRU77+A76
 github.com/grafana/grafana-app-sdk v0.63.2/go.mod h1:UHMJYQbiWDXTS7xrvC/DRA+sJK8o6FrQnI62RhiesKA=
 github.com/grafana/grafana-app-sdk/logging v0.63.2 h1:RTMEv2rsJJDXYCOMeC+7LkvI2DilTXsVlC5m0HkzNkQ=
 github.com/grafana/grafana-app-sdk/logging v0.63.2/go.mod h1:JpkWw7qVQA+XGAT8GJUEDAIgOxssceNpztB7oz7GWJw=
-github.com/grafana/grafana-plugin-sdk-go v0.299.0 h1:bnzZ5M4m0Mfg4Cji0L3gzKN21Mjh0YAXCOFZZO8D4eY=
-github.com/grafana/grafana-plugin-sdk-go v0.299.0/go.mod h1:mITeU2ZM+dZgBBwERdV9QGaTlxEFA4tMY3VsZCby7Hg=
+github.com/grafana/grafana-plugin-sdk-go v0.300.0 h1:NRD3v1zA+b4QHmDQQKm0d9i61Icw/1zp0RC8Trqzx6E=
+github.com/grafana/grafana-plugin-sdk-go v0.300.0/go.mod h1:jn0STRnbD8hy+AKde9EE9QzLyulzq+4BkYc82+3R6KA=
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20261022000032-e40de7898e1c h1:lmBfSnyyr9ZDiqVVbLp8KinSQ/GCqaUytQZ5yj6HBAk=
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20261022000032-e40de7898e1c/go.mod h1:vRF+CToxYgNTTjBNW6U10qWympf2Whe7vo6BtWM1620=
 github.com/grafana/grafana/pkg/infra/log v0.0.0-20261022000032-e40de7898e1c h1:3b0ZZl0zRXxBBk9EGxG3D7pT5oFdefydnCjY97TayGM=

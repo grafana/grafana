@@ -30,8 +30,6 @@ type PluginV2 interface {
 	pluginv2.ResourceClient
 	pluginv2.DiagnosticsClient
 	pluginv2.StreamClient
-	pluginv2.AdmissionControlClient
-	pluginv2.ResourceConversionClient
 }
 
 type ProtoClient interface {
@@ -174,28 +172,4 @@ func (r *protoClient) PublishStream(ctx context.Context, in *pluginv2.PublishStr
 		return nil, errClientNotAvailable
 	}
 	return c.StreamClient.PublishStream(ctx, in, opts...)
-}
-
-func (r *protoClient) ValidateAdmission(ctx context.Context, in *pluginv2.AdmissionRequest, opts ...grpc.CallOption) (*pluginv2.ValidationResponse, error) {
-	c, exists := r.client(ctx)
-	if !exists {
-		return nil, errClientNotAvailable
-	}
-	return c.AdmissionClient.ValidateAdmission(ctx, in, opts...)
-}
-
-func (r *protoClient) MutateAdmission(ctx context.Context, in *pluginv2.AdmissionRequest, opts ...grpc.CallOption) (*pluginv2.MutationResponse, error) {
-	c, exists := r.client(ctx)
-	if !exists {
-		return nil, errClientNotAvailable
-	}
-	return c.AdmissionClient.MutateAdmission(ctx, in, opts...)
-}
-
-func (r *protoClient) ConvertObjects(ctx context.Context, in *pluginv2.ConversionRequest, opts ...grpc.CallOption) (*pluginv2.ConversionResponse, error) {
-	c, exists := r.client(ctx)
-	if !exists {
-		return nil, errClientNotAvailable
-	}
-	return c.ConversionClient.ConvertObjects(ctx, in, opts...)
 }
