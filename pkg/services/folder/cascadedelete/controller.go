@@ -79,11 +79,17 @@ func NewController(folders FolderGetter, r *Reconciler, limiter workqueue.TypedR
 	}
 }
 
-// NewDefaultController assembles the controller every entry point runs, so they cannot drift:
-// children are found through searcher, and deleted and folders written through dyn.
-func NewDefaultController(dyn dynamic.Interface, searcher resourcepb.ResourceIndexClient) *Controller {
+// NewDefaultController assembles the controller every entry point runs, so they cannot drift. It
+// deletes subfolders and dashboards, then whatever the extra handlers cover.
+func NewDefaultController(dyn dynamic.Interface, searcher resourcepb.ResourceIndexClient, extra ...KindHandler) *Controller {
 	clients := NewDynamicClients(dyn)
-	r := &Reconciler{Children: NewSearchChildLister(searcher), Deleter: clients, Folders: clients}
+	children := NewSearchChildLister(searcher)
+	handlers := make([]KindHandler, 0, 2+len(extra))
+	handlers = append(handlers,
+		KindHandler{Kind: ChildFolder, Lister: children, Deleter: clients},
+		KindHandler{Kind: ChildDashboard, Lister: children, Deleter: clients},
+	)
+	r := &Reconciler{Handlers: append(handlers, extra...), Folders: clients}
 	return NewController(clients, r, nil)
 }
 
