@@ -158,7 +158,7 @@ func TestPluginBackendLoad(t *testing.T) {
 		Manifests: []*app.ManifestData{{
 			AppName: "test", Group: "test.ext.grafana.app", PreferredVersion: "v1alpha1",
 			Versions: []app.ManifestVersion{
-				{Name: "v1alpha1", Served: true, Kinds: []app.ManifestVersionKind{{Kind: "Thing", Plural: "things", Scope: "Namespaced"}}},
+				{Name: "v1alpha1", Served: true, Kinds: []app.ManifestVersionKind{{Kind: "Thing", Plural: "things", Resource: "things", Scope: "Namespaced"}}},
 				{Name: "v2alpha1", Served: false},
 			},
 		}},
@@ -255,7 +255,7 @@ func TestPluginBackendHybridSearchConfiguration(t *testing.T) {
 					Versions: []app.ManifestVersion{{
 						Name: "v1alpha1", Served: true,
 						Kinds: []app.ManifestVersionKind{{
-							Kind: "Thing", Plural: "things", Scope: "Namespaced",
+							Kind: "Thing", Plural: "things", Resource: "things", Scope: "Namespaced",
 							Search: &app.ManifestVersionKindSearch{Hybrid: &hybrid},
 						}},
 					}},

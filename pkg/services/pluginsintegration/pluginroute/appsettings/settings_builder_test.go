@@ -22,7 +22,7 @@ func TestBuilderOnlyServesSettings(t *testing.T) {
 	// A manifest's kinds belong to its own group, so the settings builder ignores them.
 	manifest := &app.ManifestData{AppName: "example", Group: "example.ext.grafana.app",
 		Versions: []app.ManifestVersion{{Name: "v1alpha1", Served: true,
-			Kinds: []app.ManifestVersionKind{{Kind: "TestKind", Plural: "testkinds", Scope: "Namespaced"}}}}}
+			Kinds: []app.ManifestVersionKind{{Kind: "TestKind", Plural: "testkinds", Resource: "testkinds", Scope: "Namespaced"}}}}}
 	b, err := NewBuilder(definition.PluginDefinition{
 		JSONData:  plugins.JSONData{ID: "example-app"},
 		Manifests: []*app.ManifestData{manifest},

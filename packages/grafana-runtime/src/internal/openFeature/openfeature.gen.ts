@@ -80,7 +80,7 @@ export const FlagKeys = {
   AssistantDashboardPlanning: "assistant.dashboardPlanning",
   /** Enables the template dashboard assistant */
   AssistantFrontendToolsDashboardTemplates: "assistant.frontend.tools.dashboardTemplates",
-  /** Enables the global fullscreen Workspace (Grafana Assistant workspace shell) in the top bar */
+  /** Shows the Grafana Assistant Chat and Workspace buttons in the top bar, and Exit Workspace on the Assistant Workspace page */
   AssistantFullscreenWorkspace: "assistant.fullscreenWorkspace",
   /** Generate a per-datasource external ID for Grafana Assume Role (jsonData.grafanaExternalId). When disabled, new datasources keep using the stack-level external ID. */
   AwsAssumeRolePerDatasourceExternalId: "awsAssumeRolePerDatasourceExternalId",
@@ -178,6 +178,8 @@ export const FlagKeys = {
   GrafanaCmdkDashboardTags: "grafana.cmdkDashboardTags",
   /** Uses the hybrid (lexical + semantic) search endpoint as the dashboard search backend in the command palette */
   GrafanaCmdkHybridSearch: "grafana.cmdkHybridSearch",
+  /** Skips reranking in command palette hybrid dashboard search */
+  GrafanaCmdkHybridSearchSkipRerank: "grafana.cmdkHybridSearchSkipRerank",
   /** Enables using the Config From Query Results transformation's Dynamic Field Name option */
   GrafanaConfigFromQueryDynamicName: "grafana.configFromQueryDynamicName",
   /** Enables custom dashboard templates for enterprise */
@@ -212,6 +214,8 @@ export const FlagKeys = {
   GrafanaExploreMetricsSidebar: "grafana.exploreMetricsSidebar",
   /** Lets Grafana Assistant float the extension sidebar over the page instead of docking it */
   GrafanaExtensionSidebarFloating: "grafana.extensionSidebarFloating",
+  /** Lets Grafana Assistant dock the extension sidebar on the left or at the bottom, or pop it up, from the Chat button's menu, its shortcuts and its own layout menu. Needs grafana.extensionSidebarFloating */
+  GrafanaExtensionSidebarPlacements: "grafana.extensionSidebarPlacements",
   /** Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels */
   GrafanaFilterablePanels: "grafana.filterablePanels",
   /** Shows folders the user cannot edit as read only in the folder picker, instead of hiding them */
@@ -258,8 +262,6 @@ export const FlagKeys = {
   GrafanaPreserveDashboardLoginTabTitle: "grafana.preserveDashboardLoginTabTitle",
   /** Preserves the navigation section label in the browser tab title after session expiry */
   GrafanaPreserveLoginTabTitle: "grafana.preserveLoginTabTitle",
-  /** Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options */
-  GrafanaQueryVarEditorRedesign: "grafana.queryVarEditorRedesign",
   /** Disables creating new recorded queries while preserving access to existing queries */
   GrafanaRecordedQueriesDisableCreate: "grafana.recordedQueriesDisableCreate",
   /** Enables Saved Dashboard Views: per-dashboard saved variable, filter and time range state */
@@ -322,6 +324,8 @@ export const FlagKeys = {
   PlaylistsRBAC: "playlistsRBAC",
   /** Show insights for plugins in the plugin details page */
   PluginInsights: "pluginInsights",
+  /** Disables the ST fallback for multi-tenant plugin api calls */
+  PluginsDisableMTPluginsFallback: "plugins.disableMTPluginsFallback",
   /** Initializes data source instance settings asynchronously from the API instead of synchronously from boot data */
   PluginsInitDataSourcesAsync: "plugins.initDataSourcesAsync",
   /** Enables plugins setting from new apis */
@@ -778,7 +782,7 @@ export const useFlagAssistantFrontendToolsDashboardTemplates = (options?: ReactF
 };
 
 /**
- * Enables the global fullscreen Workspace (Grafana Assistant workspace shell) in the top bar
+ * Shows the Grafana Assistant Chat and Workspace buttons in the top bar, and Exit Workspace on the Assistant Workspace page
  *
  * **Details:**
  * - flag key: `assistant.fullscreenWorkspace`
@@ -1317,6 +1321,17 @@ export const useFlagGrafanaCmdkHybridSearch = (options?: ReactFlagEvaluationOpti
 };
 
 /**
+ * Skips reranking in command palette hybrid dashboard search
+ *
+ * **Details:**
+ * - flag key: `grafana.cmdkHybridSearchSkipRerank`
+ * - default value: `false`
+ */
+export const useFlagGrafanaCmdkHybridSearchSkipRerank = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.cmdkHybridSearchSkipRerank", false, options).value;
+};
+
+/**
  * Enables using the Config From Query Results transformation's Dynamic Field Name option
  *
  * **Details:**
@@ -1501,6 +1516,17 @@ export const useFlagGrafanaExploreMetricsSidebar = (options?: ReactFlagEvaluatio
  */
 export const useFlagGrafanaExtensionSidebarFloating = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.extensionSidebarFloating", false, options).value;
+};
+
+/**
+ * Lets Grafana Assistant dock the extension sidebar on the left or at the bottom, or pop it up, from the Chat button's menu, its shortcuts and its own layout menu. Needs grafana.extensionSidebarFloating
+ *
+ * **Details:**
+ * - flag key: `grafana.extensionSidebarPlacements`
+ * - default value: `false`
+ */
+export const useFlagGrafanaExtensionSidebarPlacements = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.extensionSidebarPlacements", false, options).value;
 };
 
 /**
@@ -1754,17 +1780,6 @@ export const useFlagGrafanaPreserveDashboardLoginTabTitle = (options?: ReactFlag
  */
 export const useFlagGrafanaPreserveLoginTabTitle = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.preserveLoginTabTitle", false, options).value;
-};
-
-/**
- * Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options
- *
- * **Details:**
- * - flag key: `grafana.queryVarEditorRedesign`
- * - default value: `true`
- */
-export const useFlagGrafanaQueryVarEditorRedesign = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.queryVarEditorRedesign", true, options).value;
 };
 
 /**
@@ -2106,6 +2121,17 @@ export const useFlagPlaylistsRBAC = (options?: ReactFlagEvaluationOptions): bool
  */
 export const useFlagPluginInsights = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("pluginInsights", false, options).value;
+};
+
+/**
+ * Disables the ST fallback for multi-tenant plugin api calls
+ *
+ * **Details:**
+ * - flag key: `plugins.disableMTPluginsFallback`
+ * - default value: `false`
+ */
+export const useFlagPluginsDisableMTPluginsFallback = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("plugins.disableMTPluginsFallback", false, options).value;
 };
 
 /**

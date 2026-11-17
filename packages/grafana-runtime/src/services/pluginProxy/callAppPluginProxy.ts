@@ -91,7 +91,7 @@ export async function callAppPluginProxy<T = unknown>({
     return undefined;
   }
 
-  const resolvedApiVersion = apiVersion ?? getApiVersion();
+  const resolvedApiVersion = apiVersion ?? (await getApiVersion());
   assertApiVersion(resolvedApiVersion);
 
   return callPluginProxy({ pluginId, routePath, apiVersion: resolvedApiVersion, showErrorAlert });

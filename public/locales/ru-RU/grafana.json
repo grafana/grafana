@@ -1514,9 +1514,29 @@
         "records": "Записи",
         "to": "в"
       },
+      "recording-rule-actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "view": ""
+      },
       "recording-rules": {
         "folder-rules-error": "",
         "folders-error": "",
+        "header": {
+          "new-rule": ""
+        },
         "load-more-rules-in-folder": "",
         "loading-folders": "",
         "no-rules": "Правила записи не найдены",
@@ -1596,6 +1616,12 @@
         "view-folders": "Папки",
         "view-list": "Список",
         "wildcard-in-text": "Текст поискового запроса не может содержать * или %."
+      },
+      "sequence-pill": {
+        "label": "",
+        "label-with-interval": "",
+        "tooltip": "",
+        "tooltip-with-interval": ""
       },
       "shared": {
         "load-more": "Загрузить больше",
@@ -2426,6 +2452,7 @@
       "contact-points": "Точки контакта",
       "notification-policies": "Политики уведомлений",
       "recently-deleted": "Последние удаленные",
+      "recording-rules": "",
       "templates": "Шаблоны",
       "time-intervals": "Временные интервалы"
     },
@@ -5449,6 +5476,7 @@
       "change-theme": "Изменить тему",
       "dark-theme": "Темная",
       "dashboard-from-template": "Дашборд из шаблона",
+      "experimental": "",
       "light-theme": "Светлая",
       "open-saved-queries": "Открыть сохраненные запросы",
       "scopes": "Области"
@@ -5907,7 +5935,7 @@
         "hint-layer": "",
         "hint-layer-select": "",
         "hint-not-removable": "",
-        "hint-panel": "Нажмите, чтобы оставить комментарий на панели, или перетащите, чтобы выделить область",
+        "hint-panel": "",
         "hint-panel-select": "",
         "hint-region": "Перетащите, чтобы выделить область",
         "hint-remove": "",
@@ -6308,6 +6336,9 @@
         "transparent-background": "Прозрачный фон"
       }
     },
+    "get-var-mapping-option-overrides": {
+      "uses-variables": ""
+    },
     "inspect": {
       "data-tab": "Данные",
       "errors-and-notices-tab": "Ошибки и уведомления",
@@ -6503,9 +6534,6 @@
       "only-overrides-button-tooltip": "Показывать только переопределения",
       "placeholder-search-options": "Поиск параметров",
       "visualization-button-tooltip": "Поиск параметров"
-    },
-    "panel-editor": {
-      "ad-hoc-transformations-disabled": "Специальные преобразования отключены в режиме редактирования"
     },
     "plan-building-overlay": {
       "quip-corners": "Скругляем углы панели…",
@@ -6886,8 +6914,6 @@
         "open-editor": "Открыть редактор переменных",
         "open-editor-tooltip": "Для получения дополнительных параметров переменных откройте редактор переменных",
         "query-options": {
-          "close": "Закрыть",
-          "old-modal-title": "Переменная запроса",
           "preview": "Предварительный просмотр"
         },
         "remove": "Удалить",
@@ -7805,7 +7831,7 @@
       "apply": "Применить",
       "apply-body": "Их увидят все пользователи с доступом. Вы можете восстановить предыдущую версию из истории версий.",
       "apply-failed": "Не удалось применить изменения. Повторите попытку или сначала сравните их.",
-      "apply-needs-edit": "Для применения изменений требуются права на редактирование «{{title}}». Вы можете просмотреть изменения, но не применить их.",
+      "apply-needs-save": "",
       "breadcrumb-draft": "Черновик",
       "breadcrumb-pending-changes": "Ожидающие изменения",
       "change-added": "Добавлено",
@@ -7912,6 +7938,19 @@
       "aria-label-remove-option": "Удалить параметр",
       "title-drag-and-drop-to-reorder": "Измените порядок путем перетаскивания",
       "tooltip-remove-option": "Удалить параметр"
+    },
+    "panel-actions-popover": {
+      "aria-label": "",
+      "edit": "",
+      "edit-tooltip-disabled": "",
+      "expand": "",
+      "explore": "",
+      "more-actions": "",
+      "remove": "",
+      "remove-confirm": "",
+      "remove-tooltip-disabled": "",
+      "restore-size": "",
+      "settings": ""
     },
     "panel-data-alerting-tab": {
       "tab-label": "Оповещение"
@@ -8094,6 +8133,12 @@
       "body-restore-version": "Действительно восстановить дашборд до версии {{version}}? Все несохраненные изменения будут потеряны.",
       "confirmText-restore-version": "Да, восстановить до версии {{version}}",
       "title-restore-version": "Восстановление версии"
+    },
+    "row-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-row-settings": ""
     },
     "sandbox-consent": {
       "allow": "Разрешить",
@@ -8306,6 +8351,12 @@
       "switch-options": "Варианты переключения",
       "value-pair-type": "Тип пары значений",
       "value-pair-type-description": "Выберите тип значений для состояний переключателя"
+    },
+    "tab-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-tab-settings": ""
     },
     "text-box-variable": {
       "name-default-value": "Значение по умолчанию"
@@ -10959,6 +11010,8 @@
       "tooltip": {
         "category": "Подсказка",
         "description-hover-proximity": "Насколько близко курсор должен быть к точке, чтобы вызвать всплывающую подсказку, в пикселях",
+        "description-max-height": "",
+        "description-max-width": "",
         "modeOptions": {
           "label-all": "Все",
           "label-hidden": "Скрыты",
@@ -13303,6 +13356,10 @@
       "subtitle": "Выбор способов уведомления точек контакта при возникновении оповещения",
       "title": "Точки контакта"
     },
+    "alerting-recording-rules": {
+      "subtitle": "",
+      "title": ""
+    },
     "alerting-silences": {
       "subtitle": "Остановка отправки уведомлений от одного или нескольких правил оповещения",
       "title": "Временные отключения"
@@ -14167,6 +14224,32 @@
     },
     "units": {
       "clear-tooltip": "Очистить выбор единицы"
+    },
+    "var-mapping-checks": {
+      "data-macro": "",
+      "not-allowed": "",
+      "not-found": "",
+      "not-number": "",
+      "not-one-value": "",
+      "out-of-range": "",
+      "resolves": "",
+      "values": ""
+    },
+    "var-mapping-toggle": {
+      "aria-label-picker": "",
+      "fallback-off": "",
+      "fallback-on": "",
+      "group-matching": "",
+      "group-other": "",
+      "hint-boolean": "",
+      "hint-number": "",
+      "hint-option": "",
+      "hint-option-no-fallback": "",
+      "new-variable": "",
+      "option-current": "",
+      "placeholder": "",
+      "use-fixed-value": "",
+      "use-variable": ""
     }
   },
   "org": {
@@ -14269,12 +14352,14 @@
     "header-menu": {
       "add-to-notebook": "Добавить в блокнот",
       "copy": "Копировать",
+      "copy-repeated-panel": "",
       "copy-styles": "Копировать стили",
       "download-diagnostics": "Загрузка диагностики",
       "duplicate": "Дублировать",
       "edit": "Редактировать",
       "explore": "Explore",
       "get-help": "Справка",
+      "group-by": "",
       "hide-legend": "Скрыть условные обозначения",
       "inspect": "Проверить",
       "inspect-data": "Данные",
@@ -14595,6 +14680,9 @@
     },
     "empty-state": {
       "message": "Плагины не найдены"
+    },
+    "errors": {
+      "app-plugin-metas-error": ""
     },
     "extensions": {
       "extension-error-alert-description": "Для получения более подробной информации об ошибке проверьте консоль.",

@@ -58,7 +58,7 @@ func TestBuilderAdmissionDispatch(t *testing.T) {
 	scheme.AddKnownTypeWithName(testAdmissionGVK, &unstructured.Unstructured{})
 	scheme.AddKnownTypeWithName(testAdmissionGVK.GroupVersion().WithKind("TestKindList"), &unstructured.UnstructuredList{})
 	store, err := kindstore.New(testAdmissionGVK, app.ManifestVersionKind{
-		Kind: "TestKind", Plural: "testkinds", Scope: "Namespaced",
+		Kind: "TestKind", Plural: "testkinds", Resource: "testkinds", Scope: "Namespaced",
 		Admission: &app.AdmissionCapabilities{
 			Mutation:   &app.MutationCapability{Operations: []app.AdmissionOperation{app.AdmissionOperationAny}},
 			Validation: &app.ValidationCapability{Operations: []app.AdmissionOperation{app.AdmissionOperationAny}},

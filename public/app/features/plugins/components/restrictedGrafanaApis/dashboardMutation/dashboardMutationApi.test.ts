@@ -1,4 +1,4 @@
-import * as z from 'zod';
+import * as z from 'zod/mini';
 
 import { locationService } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';

@@ -1500,9 +1500,29 @@
         "records": "Datensätze",
         "to": "zum"
       },
+      "recording-rule-actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "view": ""
+      },
       "recording-rules": {
         "folder-rules-error": "",
         "folders-error": "",
+        "header": {
+          "new-rule": ""
+        },
         "load-more-rules-in-folder": "",
         "loading-folders": "",
         "no-rules": "Keine Aufzeichnungsregeln gefunden",
@@ -1578,6 +1598,12 @@
         "view-folders": "Ordner",
         "view-list": "Liste",
         "wildcard-in-text": "Der Suchtext darf nicht * oder % enthalten."
+      },
+      "sequence-pill": {
+        "label": "",
+        "label-with-interval": "",
+        "tooltip": "",
+        "tooltip-with-interval": ""
       },
       "shared": {
         "load-more": "Mehr laden",
@@ -2394,6 +2420,7 @@
       "contact-points": "Kontaktpunkte",
       "notification-policies": "Benachrichtigungsrichtlinien",
       "recently-deleted": "Kürzlich gelöscht",
+      "recording-rules": "",
       "templates": "Vorlagen",
       "time-intervals": "Zeitintervalle"
     },
@@ -5351,6 +5378,7 @@
       "change-theme": "Thema ändern",
       "dark-theme": "Dunkel",
       "dashboard-from-template": "Dashboard aus Vorlage",
+      "experimental": "",
       "light-theme": "Hell",
       "open-saved-queries": "Gespeicherte Abfragen öffnen",
       "scopes": "Bereiche"
@@ -5809,7 +5837,7 @@
         "hint-layer": "",
         "hint-layer-select": "",
         "hint-not-removable": "",
-        "hint-panel": "Klicken Sie, um ein Panel zu kommentieren, oder ziehen Sie, um eine Region zu zeichnen",
+        "hint-panel": "",
         "hint-panel-select": "",
         "hint-region": "Zum Zeichnen einer Region ziehen",
         "hint-remove": "",
@@ -6210,6 +6238,9 @@
         "transparent-background": "Transparenter Hintergrund"
       }
     },
+    "get-var-mapping-option-overrides": {
+      "uses-variables": ""
+    },
     "inspect": {
       "data-tab": "Daten",
       "errors-and-notices-tab": "Fehler und Hinweise",
@@ -6403,9 +6434,6 @@
       "only-overrides-button-tooltip": "Nur Überschreibungen anzeigen",
       "placeholder-search-options": "Suchoptionen",
       "visualization-button-tooltip": "Suchoptionen"
-    },
-    "panel-editor": {
-      "ad-hoc-transformations-disabled": "Ad-hoc-Transformationen sind im Bearbeitungsmodus deaktiviert"
     },
     "plan-building-overlay": {
       "quip-corners": "Die Ecken des Panels werden verfeinert …",
@@ -6784,8 +6812,6 @@
         "open-editor": "Variablen-Editor öffnen",
         "open-editor-tooltip": "Öffnen Sie den Variablen-Editor für weitere Variablenoptionen",
         "query-options": {
-          "close": "Schließen",
-          "old-modal-title": "Abfragevariable",
           "preview": "Vorschau"
         },
         "remove": "Entfernen",
@@ -7697,7 +7723,7 @@
       "apply": "Anwenden",
       "apply-body": "Alle Personen mit Zugriff werden sie sehen. Sie können die vorherige Version aus dem Versionsverlauf wiederherstellen.",
       "apply-failed": "Die Änderungen konnten nicht übernommen werden. Versuchen Sie es erneut oder vergleichen Sie sie zuerst.",
-      "apply-needs-edit": "Zum Übernehmen ist Bearbeitungszugriff auf „{{title}}“ erforderlich. Sie können eine Vorschau dieser Änderungen anzeigen, sie aber nicht übernehmen.",
+      "apply-needs-save": "",
       "breadcrumb-draft": "Entwurf",
       "breadcrumb-pending-changes": "Ausstehende Änderungen",
       "change-added": "Hinzugefügt",
@@ -7802,6 +7828,19 @@
       "aria-label-remove-option": "Option entfernen",
       "title-drag-and-drop-to-reorder": "Zur Neuordnung ziehen und ablegen",
       "tooltip-remove-option": "Option entfernen"
+    },
+    "panel-actions-popover": {
+      "aria-label": "",
+      "edit": "",
+      "edit-tooltip-disabled": "",
+      "expand": "",
+      "explore": "",
+      "more-actions": "",
+      "remove": "",
+      "remove-confirm": "",
+      "remove-tooltip-disabled": "",
+      "restore-size": "",
+      "settings": ""
     },
     "panel-data-alerting-tab": {
       "tab-label": "Warnung"
@@ -7982,6 +8021,12 @@
       "body-restore-version": "Sind Sie sicher, dass Sie das Dashboard auf die Version {{version}} zurücksetzen möchten? Alle nicht gespeicherten Änderungen gehen verloren.",
       "confirmText-restore-version": "Ja, auf Version {{version}} zurücksetzen",
       "title-restore-version": "Version wiederherstellen"
+    },
+    "row-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-row-settings": ""
     },
     "sandbox-consent": {
       "allow": "Erlauben",
@@ -8178,6 +8223,12 @@
       "switch-options": "Switch-Optionen",
       "value-pair-type": "Wertepaartyp",
       "value-pair-type-description": "Wählen Sie den Wertetyp für die Switch-Zustände"
+    },
+    "tab-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-tab-settings": ""
     },
     "text-box-variable": {
       "name-default-value": "Standardwert"
@@ -10793,6 +10844,8 @@
       "tooltip": {
         "category": "Tooltip",
         "description-hover-proximity": "Wie nah der Cursor an einem Punkt sein muss, um den Tooltip auszulösen, in Pixeln",
+        "description-max-height": "",
+        "description-max-width": "",
         "modeOptions": {
           "label-all": "Alles",
           "label-hidden": "Ausgeblendet",
@@ -13093,6 +13146,10 @@
       "subtitle": "Wählen Sie, wie Ihre Kontaktpunkte benachrichtigen werden, wenn eine Warninstanz auslöst",
       "title": "Kontaktpunkte"
     },
+    "alerting-recording-rules": {
+      "subtitle": "",
+      "title": ""
+    },
     "alerting-silences": {
       "subtitle": "Schalte Benachrichtigungen von einer oder mehrerer Warnregeln aus",
       "title": "Stummschalten"
@@ -13945,6 +14002,32 @@
     },
     "units": {
       "clear-tooltip": "Einheitenauswahl löschen"
+    },
+    "var-mapping-checks": {
+      "data-macro": "",
+      "not-allowed": "",
+      "not-found": "",
+      "not-number": "",
+      "not-one-value": "",
+      "out-of-range": "",
+      "resolves": "",
+      "values": ""
+    },
+    "var-mapping-toggle": {
+      "aria-label-picker": "",
+      "fallback-off": "",
+      "fallback-on": "",
+      "group-matching": "",
+      "group-other": "",
+      "hint-boolean": "",
+      "hint-number": "",
+      "hint-option": "",
+      "hint-option-no-fallback": "",
+      "new-variable": "",
+      "option-current": "",
+      "placeholder": "",
+      "use-fixed-value": "",
+      "use-variable": ""
     }
   },
   "org": {
@@ -14047,12 +14130,14 @@
     "header-menu": {
       "add-to-notebook": "Zum Notizbuch hinzufügen",
       "copy": "Kopieren",
+      "copy-repeated-panel": "",
       "copy-styles": "Stile kopieren",
       "download-diagnostics": "Diagnosen herunterladen",
       "duplicate": "Duplikat",
       "edit": "Bearbeiten",
       "explore": "Entdecken",
       "get-help": "Hilfe",
+      "group-by": "",
       "hide-legend": "Legende ausblenden",
       "inspect": "Überprüfen",
       "inspect-data": "Daten",
@@ -14373,6 +14458,9 @@
     },
     "empty-state": {
       "message": "Keine Plugins gefunden"
+    },
+    "errors": {
+      "app-plugin-metas-error": ""
     },
     "extensions": {
       "extension-error-alert-description": "Siehe Konsole für weitere Details zum Fehler.",

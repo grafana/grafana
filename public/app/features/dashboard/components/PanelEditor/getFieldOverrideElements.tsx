@@ -14,7 +14,12 @@ import {
   type StandardEditorContext,
   FieldType,
 } from '@grafana/data';
-import { isVarMappingExpressionInput, isVarMappingProp, wrapVarMappingPropId } from '@grafana/data/internal';
+import {
+  getVarMappingKind,
+  isVarMappingExpressionInput,
+  isVarMappingProp,
+  wrapVarMappingPropId,
+} from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { type MatcherScope } from '@grafana/schema';
 import {
@@ -27,13 +32,14 @@ import {
   ValuePicker,
   useFieldMatchersOptions,
 } from '@grafana/ui';
+import { getVarMappingToggleKind } from 'app/core/components/OptionsUI/varMappingToggle';
+import { type VarMappingVariableSource } from 'app/core/components/OptionsUI/varMappingVariables';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
 import { DynamicConfigValueEditor } from './DynamicConfigValueEditor';
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
 import { OverrideCategoryTitle } from './OverrideCategoryTitle';
-import { getVarMappingEditingKind } from './utils';
 
 const ALLOWED_SCOPES: MatcherScope[] = ['series', 'nested'];
 
@@ -59,7 +65,8 @@ export function getFieldOverrideCategories(
   onFieldConfigsChange: (config: FieldConfigSource) => void,
   // Panel options, so an override editor can render against them
   options?: Record<string, unknown>,
-  varMappingsEnabled = false
+  varMappingsEnabled = false,
+  varMappingVariables?: VarMappingVariableSource
 ): OptionsPaneCategoryDescriptor[] {
   const categories: OptionsPaneCategoryDescriptor[] = [];
   const currentFieldConfig = fieldConfig;
@@ -300,10 +307,14 @@ export function getFieldOverrideCategories(
       }
 
       const varMappingId = wrapVarMappingPropId(property.id);
-      const varMappingKind = varMappingsEnabled ? getVarMappingEditingKind(registryItemForProperty) : undefined;
+      const varMappingKind = varMappingsEnabled ? getVarMappingKind(registryItemForProperty) : undefined;
       const varMappingExpr = varMappingKind ? override.properties.find((p) => p.id === varMappingId)?.value : undefined;
-      // The stored value stays as the fallback while an expression is shown.
-      const displayValue = typeof varMappingExpr === 'string' ? varMappingExpr : property.value;
+      const expression = typeof varMappingExpr === 'string' ? varMappingExpr : undefined;
+      // The stored value stays as the fallback while an expression is shown. Toggle editors get the
+      // stored value and the expression separately.
+      const displayValue = getVarMappingToggleKind(registryItemForProperty, varMappingKind)
+        ? property.value
+        : (expression ?? property.value);
 
       const onPropertyChange = (value: unknown) => {
         if (varMappingKind && isVarMappingExpressionInput(varMappingKind, value)) {
@@ -352,6 +363,8 @@ export function getFieldOverrideCategories(
                 context={context}
                 searchQuery={searchQuery}
                 varMappingKind={varMappingKind}
+                varMappingExpression={expression}
+                varMappingVariables={varMappingVariables}
               />
             );
           },

@@ -487,6 +487,10 @@ const (
 	// Enable the alert quality tab, which surfaces the health of your alert rules and recommends actions to improve them.
 	FlagAlertingRuleQuality = "alerting.ruleQuality"
 
+	// FlagAlertingRuleQualityTeamPolicies
+	// Enable team-scoped alert rule quality policies, one per team, alongside the org policy.
+	FlagAlertingRuleQualityTeamPolicies = "alerting.ruleQualityTeamPolicies"
+
 	// FlagLokiLabelNamesQueryApi
 	// Defaults to using the Loki `/labels` API instead of `/series`
 	FlagLokiLabelNamesQueryApi = "lokiLabelNamesQueryApi"
@@ -506,6 +510,10 @@ const (
 	// FlagDatasourcesTeamHttpHeadersFromAppPlatformMT
 	// Use the IAM TeamLBACRule rules-for-subject API for team HTTP headers in multi-tenant datasource services
 	FlagDatasourcesTeamHttpHeadersFromAppPlatformMT = "datasources.teamHttpHeadersFromAppPlatformMT"
+
+	// FlagDatasourcesRejectProvisionedLBACRules
+	// Reject embedded LBAC rules in data source provisioning files
+	FlagDatasourcesRejectProvisionedLBACRules = "datasources.rejectProvisionedLBACRules"
 
 	// FlagDatasourcesTeamHttpHeadersWriteGuard
 	// Guard embedded Team LBAC rules against external datasource Kubernetes API writes

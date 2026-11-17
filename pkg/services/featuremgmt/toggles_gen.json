@@ -194,6 +194,20 @@
     },
     {
       "metadata": {
+        "name": "alerting.ruleQualityTeamPolicies",
+        "resourceVersion": "1794592743390",
+        "creationTimestamp": "2026-11-13T17:59:03Z"
+      },
+      "spec": {
+        "description": "Enable team-scoped alert rule quality policies, one per team, alongside the org policy.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alerting.ruleReviews",
         "resourceVersion": "1791369430263",
         "creationTimestamp": "2026-10-07T09:54:44Z",
@@ -1114,11 +1128,14 @@
     {
       "metadata": {
         "name": "assistant.fullscreenWorkspace",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-07-16T10:13:54Z"
+        "resourceVersion": "1794516179400",
+        "creationTimestamp": "2026-07-16T10:13:54Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-12 20:42:59.400754 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Enables the global fullscreen Workspace (Grafana Assistant workspace shell) in the top bar",
+        "description": "Shows the Grafana Assistant Chat and Workspace buttons in the top bar, and Exit Workspace on the Assistant Workspace page",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-platform",
         "frontend": true,
@@ -2111,6 +2128,23 @@
     },
     {
       "metadata": {
+        "name": "datasources.rejectProvisionedLBACRules",
+        "resourceVersion": "1794493361123",
+        "creationTimestamp": "2026-11-09T17:32:48Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-12 14:22:41.123827 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Reject embedded LBAC rules in data source provisioning files",
+        "stage": "GA",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
         "name": "datasources.teamHttpHeadersFromAppPlatformMT",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-09-02T23:10:00Z"
@@ -2865,6 +2899,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.cmdkHybridSearchSkipRerank",
+        "resourceVersion": "1794828817249",
+        "creationTimestamp": "2026-11-16T11:33:37Z"
+      },
+      "spec": {
+        "description": "Skips reranking in command palette hybrid dashboard search",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.configFromQueryDynamicName",
         "resourceVersion": "1792594531964",
         "creationTimestamp": "2026-09-17T22:29:38Z",
@@ -3128,6 +3176,20 @@
       },
       "spec": {
         "description": "Lets Grafana Assistant float the extension sidebar over the page instead of docking it",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.extensionSidebarPlacements",
+        "resourceVersion": "1794908123209",
+        "creationTimestamp": "2026-11-17T09:35:23Z"
+      },
+      "spec": {
+        "description": "Lets Grafana Assistant dock the extension sidebar on the left or at the bottom, or pop it up, from the Chat button's menu, its shortcuts and its own layout menu. Needs grafana.extensionSidebarFloating",
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
@@ -3611,7 +3673,8 @@
       "metadata": {
         "name": "grafana.queryVarEditorRedesign",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-07-13T12:52:09Z"
+        "creationTimestamp": "2026-07-13T12:52:09Z",
+        "deletionTimestamp": "2026-11-11T11:47:10Z"
       },
       "spec": {
         "description": "Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options",
@@ -5193,6 +5256,21 @@
     },
     {
       "metadata": {
+        "name": "plugins.disableMTPluginsFallback",
+        "resourceVersion": "1794397485768",
+        "creationTimestamp": "2026-11-11T11:44:45Z"
+      },
+      "spec": {
+        "description": "Disables the ST fallback for multi-tenant plugin api calls",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "plugins.initDataSourcesAsync",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-05-27T09:11:55Z"
@@ -5237,12 +5315,15 @@
     {
       "metadata": {
         "name": "plugins.useMTPlugins",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-05-08T08:32:12Z"
+        "resourceVersion": "1794397485768",
+        "creationTimestamp": "2026-05-08T08:32:12Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-11 11:44:45.768111 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables plugins decoupling from bootdata",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/grafana-catalog",
         "hideFromDocs": true,
         "expression": "false"

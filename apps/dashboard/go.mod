@@ -5,9 +5,9 @@ go 1.27.4
 require (
 	cuelang.org/go v0.17.1
 	github.com/grafana/authlib/types v0.0.0-20261020151310-7a9be4c0c1c3
-	github.com/grafana/grafana-app-sdk v0.63.1
-	github.com/grafana/grafana-app-sdk/logging v0.63.1
-	github.com/grafana/grafana-plugin-sdk-go v0.299.0
+	github.com/grafana/grafana-app-sdk v0.63.2
+	github.com/grafana/grafana-app-sdk/logging v0.63.2
+	github.com/grafana/grafana-plugin-sdk-go v0.300.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260118065639-60cb766a97d6
 	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/prometheus/client_golang v1.25.0
@@ -23,6 +23,7 @@ require (
 require (
 	github.com/andybalholm/brotli v1.2.7 // indirect
 	github.com/apache/arrow-go/v18 v18.8.0 // indirect
+	github.com/apache/thrift v0.25.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
@@ -126,7 +127,7 @@ require (
 	golang.org/x/term v0.48.0 // indirect
 	golang.org/x/text v0.44.0 // indirect
 	golang.org/x/time v0.16.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20261026165753-2ffab32bce7e // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20261104224025-d1e00e9f33ab // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20261104224025-d1e00e9f33ab // indirect
 	google.golang.org/grpc v1.85.0 // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
