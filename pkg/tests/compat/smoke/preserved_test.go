@@ -1,7 +1,6 @@
 package smoke
 
 import (
-	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -25,12 +24,10 @@ func TestPreservationError(t *testing.T) {
 		{"empty list replaced", `{"links":[]}`, `{"links":[{"url":"x"}]}`, false},
 		{"null replaced", `{"x":null}`, `{"x":"set"}`, false},
 		{"nested empty replaced", `{"templating":{"list":[]}}`, `{"templating":{"list":[{"name":"v"}]}}`, false},
+		{"large integer changed", `{"id":9007199254740992}`, `{"id":9007199254740993}`, false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			var want, got any
-			require.NoError(t, json.Unmarshal([]byte(tc.want), &want))
-			require.NoError(t, json.Unmarshal([]byte(tc.got), &got))
-			err := preservationError(want, got, "spec")
+			err := preservationErrorJSON([]byte(tc.want), []byte(tc.got))
 			if tc.ok {
 				require.NoError(t, err)
 			} else {

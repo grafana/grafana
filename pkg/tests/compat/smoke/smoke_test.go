@@ -196,10 +196,7 @@ func TestCompatVerify(t *testing.T) {
 			} else {
 				// Converting to another API version and back may drop empty fields and add
 				// defaults, but must keep every value that was set.
-				var want, have any
-				require.NoError(t, json.Unmarshal(e.Spec, &want))
-				require.NoError(t, json.Unmarshal(specJSON(t, got), &have))
-				require.NoError(t, preservationError(want, have, "spec"))
+				require.NoError(t, preservationErrorJSON(e.Spec, specJSON(t, got)))
 			}
 			if e.Updated {
 				require.Equal(t, "true", got.GetLabels()[touchedLabel], "label from the other version")
@@ -290,6 +287,29 @@ func hint(e written, res compat.Resource) string {
 		return ""
 	}
 	return fmt.Sprintf("; stored in %s, which this version does not serve (preferred and max API versions must not go beyond what the oldest running version serves)", e.Version)
+}
+
+// preservationErrorJSON decodes two specs and reports the first value in want that is
+// missing or different in got; see preservationError. Numbers stay json.Number, so
+// integers beyond float64 precision are still compared exactly.
+func preservationErrorJSON(want, got []byte) error {
+	w, err := decodeJSON(want)
+	if err != nil {
+		return err
+	}
+	g, err := decodeJSON(got)
+	if err != nil {
+		return err
+	}
+	return preservationError(w, g, "spec")
+}
+
+func decodeJSON(raw []byte) (any, error) {
+	dec := json.NewDecoder(bytes.NewReader(raw))
+	dec.UseNumber()
+	var v any
+	err := dec.Decode(&v)
+	return v, err
 }
 
 // preservationError reports the first value in want that is missing or different in got.
