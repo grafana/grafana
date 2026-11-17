@@ -3,9 +3,12 @@ package teamk8s
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -1183,6 +1186,154 @@ func TestTeamK8sService_SearchTeams(t *testing.T) {
 				assert.Equal(t, expected.ID, actual.ID)
 				assert.Equal(t, expected.MemberCount, actual.MemberCount)
 				assert.Equal(t, expected.AccessControl, actual.AccessControl)
+			}
+		})
+	}
+}
+
+func TestTeamK8sService_SearchTeams_LimitAboveSearchCap(t *testing.T) {
+	teamUID := func(i int) string { return fmt.Sprintf("uid-%05d", i) }
+
+	tests := []struct {
+		name          string
+		totalTeams    int
+		query         *team.SearchTeamsQuery
+		failOnPage    int
+		shiftOnPage   int
+		expectErr     bool
+		expectPages   []int
+		expectFirst   int
+		expectTeams   int
+		expectPerPage int
+	}{
+		{
+			name:          "returns all teams in one search when fewer than the cap exist",
+			totalTeams:    3,
+			query:         &team.SearchTeamsQuery{OrgID: 1, Limit: 1000000, Page: 1},
+			expectPages:   []int{1},
+			expectTeams:   3,
+			expectPerPage: 1000000,
+		},
+		{
+			name:          "reads cap-sized pages until a short page",
+			totalTeams:    2500,
+			query:         &team.SearchTeamsQuery{OrgID: 1, Limit: 1000000, Page: 1},
+			expectPages:   []int{1, 2, 3},
+			expectTeams:   2500,
+			expectPerPage: 1000000,
+		},
+		{
+			name:          "stops once the requested page size is filled",
+			totalTeams:    5000,
+			query:         &team.SearchTeamsQuery{OrgID: 1, Limit: 2000, Page: 1},
+			expectPages:   []int{1, 2},
+			expectTeams:   2000,
+			expectPerPage: 2000,
+		},
+		{
+			name:          "skips teams before an offset that is not aligned to the cap",
+			totalTeams:    4000,
+			query:         &team.SearchTeamsQuery{OrgID: 1, Limit: 1500, Page: 2},
+			expectPages:   []int{2, 3},
+			expectFirst:   1500,
+			expectTeams:   1500,
+			expectPerPage: 1500,
+		},
+		{
+			name:          "does not repeat a team that shifts onto the next page",
+			totalTeams:    1500,
+			query:         &team.SearchTeamsQuery{OrgID: 1, Limit: 1000000, Page: 1},
+			shiftOnPage:   2,
+			expectPages:   []int{1, 2},
+			expectTeams:   1500,
+			expectPerPage: 1000000,
+		},
+		{
+			name:        "keeps a single search at the cap",
+			totalTeams:  2500,
+			query:       &team.SearchTeamsQuery{OrgID: 1, Limit: common.MaxListLimit, Page: 1},
+			expectPages: []int{1},
+			expectTeams: common.MaxListLimit,
+			// Searches at or below the cap echo the requested page size as before.
+			expectPerPage: common.MaxListLimit,
+		},
+		{
+			name:        "returns error when a later page fails",
+			totalTeams:  2500,
+			query:       &team.SearchTeamsQuery{OrgID: 1, Limit: 1000000, Page: 1},
+			failOnPage:  2,
+			expectErr:   true,
+			expectPages: []int{1, 2},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var mu sync.Mutex
+			var pages []int
+
+			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
+				require.NoError(t, err)
+				assert.LessOrEqual(t, limit, common.MaxListLimit)
+				page, err := strconv.Atoi(r.URL.Query().Get("page"))
+				require.NoError(t, err)
+
+				mu.Lock()
+				pages = append(pages, page)
+				mu.Unlock()
+
+				w.Header().Set("Content-Type", "application/json")
+				if page == tt.failOnPage {
+					w.WriteHeader(http.StatusInternalServerError)
+					_ = json.NewEncoder(w).Encode(metav1.Status{
+						TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Status"},
+						Status:   metav1.StatusFailure,
+						Message:  "server error",
+						Code:     http.StatusInternalServerError,
+					})
+					return
+				}
+
+				start := (page - 1) * limit
+				if page == tt.shiftOnPage {
+					// A team deleted between page reads moves the previous page's last team onto this one.
+					start--
+				}
+				hits := []iamv0alpha1.GetSearchTeamsTeamHit{}
+				for i := start; i < min(start+limit, tt.totalTeams); i++ {
+					hits = append(hits, iamv0alpha1.GetSearchTeamsTeamHit{Name: teamUID(i), Title: teamUID(i)})
+				}
+				_ = json.NewEncoder(w).Encode(iamv0alpha1.GetSearchTeamsResponse{
+					GetSearchTeamsBody: iamv0alpha1.GetSearchTeamsBody{
+						TotalHits: int64(tt.totalTeams),
+						Hits:      hits,
+					},
+				})
+			}))
+			defer ts.Close()
+
+			provider := &mockDirectRestConfigProvider{restConfig: &clientrest.Config{Host: ts.URL}}
+			svc := NewTeamK8sService(log.NewNopLogger(), setting.NewCfg(), provider, tracing.InitializeTracerForTest())
+
+			result, err := svc.SearchTeams(contextWithReqContext(), tt.query)
+
+			mu.Lock()
+			assert.Equal(t, tt.expectPages, pages)
+			mu.Unlock()
+
+			if tt.expectErr {
+				require.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, int64(tt.totalTeams), result.TotalCount)
+			assert.Equal(t, tt.query.Page, result.Page)
+			assert.Equal(t, tt.expectPerPage, result.PerPage)
+			require.Len(t, result.Teams, tt.expectTeams)
+			for i, actual := range result.Teams {
+				assert.Equal(t, teamUID(tt.expectFirst+i), actual.UID)
 			}
 		})
 	}

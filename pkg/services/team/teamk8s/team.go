@@ -578,7 +578,51 @@ func (s *TeamK8sService) getRESTClient(ctx context.Context) (*rest.RESTClient, e
 }
 
 func (s *TeamK8sService) SearchTeams(ctx context.Context, query *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error) {
-	return s.searchTeams(ctx, query, true)
+	if query.Limit <= common.MaxListLimit {
+		return s.searchTeams(ctx, query, true)
+	}
+
+	// The legacy SQL search had no page size cap, so read cap-sized pages that cover the requested range.
+	// Offset pages can shift when teams change between page reads, so a concurrent change may be missed
+	// until the next call.
+	offset := (max(query.Page, 1) - 1) * query.Limit
+	// Search pages are aligned to the cap, so the first page can start before the requested offset.
+	skip := offset % common.MaxListLimit
+
+	result := team.SearchTeamQueryResult{
+		Teams:   make([]*team.TeamDTO, 0),
+		Page:    query.Page,
+		PerPage: query.Limit,
+	}
+	seen := make(map[string]struct{})
+	for page := offset/common.MaxListLimit + 1; len(result.Teams) < query.Limit; page++ {
+		pageQuery := *query
+		pageQuery.Limit = common.MaxListLimit
+		pageQuery.Page = page
+		pageResult, err := s.searchTeams(ctx, &pageQuery, true)
+		if err != nil {
+			return team.SearchTeamQueryResult{}, err
+		}
+		result.TotalCount = pageResult.TotalCount
+
+		teams := pageResult.Teams[min(skip, len(pageResult.Teams)):]
+		skip = 0
+		for _, t := range teams {
+			if len(result.Teams) == query.Limit {
+				break
+			}
+			if _, ok := seen[t.UID]; !ok {
+				seen[t.UID] = struct{}{}
+				result.Teams = append(result.Teams, t)
+			}
+		}
+		// Stop on a short page, not on TotalCount: member searches can report only the hits seen so far.
+		if len(pageResult.Teams) < common.MaxListLimit {
+			break
+		}
+	}
+
+	return result, nil
 }
 
 // searchTeams can skip member counts because the search handler fetches every hit team to count members.
