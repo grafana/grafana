@@ -4,6 +4,7 @@ import { type Spec as DashboardV2Spec, type RowsLayoutRowKind } from '@grafana/s
 import { RowItem } from '../../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 import { type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
+import { deserializeQuestions, serializeQuestions } from '../questionsSerializer';
 
 import { layoutDeserializerRegistry } from './layoutSerializerRegistry';
 import { deserializeSectionAnnotations, serializeSectionAnnotations } from './sectionAnnotations';
@@ -90,6 +91,11 @@ export function serializeRow(row: RowItem, isSnapshot?: boolean): RowsLayoutRowK
     rowKind.spec.annotations = sectionAnnotations;
   }
 
+  const questions = serializeQuestions(row, row.state.questions);
+  if (questions) {
+    rowKind.spec.questions = questions;
+  }
+
   const conditionalRenderingRootGroup = row.state.conditionalRendering?.serialize();
   // Only serialize the conditional rendering if it has items
   if (conditionalRenderingRootGroup?.spec.items.length) {
@@ -128,6 +134,7 @@ export function deserializeRow(
     hideHeader: row.spec.hideHeader,
     fillScreen: row.spec.fillScreen,
     repeatByVariable: row.spec.repeat?.value,
+    questions: deserializeQuestions(row.spec.questions, elements),
     $variables: deserializeSectionVariables(row.spec.variables),
     $data: deserializeSectionAnnotations(row.spec.annotations, isSnapshot),
     layout: layoutDeserializerRegistry

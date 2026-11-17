@@ -83,4 +83,7 @@ export enum SidebarCategoryType {
   TabSectionAnnotationsList = 'tab-section-annotations-list',
   RowSectionAnnotations = 'dash-row-section-annotations',
   RowSectionAnnotationsList = 'dash-row-section-annotations-list',
+  DashboardQuestions = 'dashboard-questions',
+  RowQuestions = 'dash-row-questions',
+  TabQuestions = 'tab-questions',
 }

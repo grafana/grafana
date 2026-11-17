@@ -3199,6 +3199,49 @@
           }
         }
       },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardQuestion": {
+        "description": "A question viewers can ask about a dashboard, row, or tab, offered by plugins in its controls.",
+        "type": "object",
+        "required": [
+          "text"
+        ],
+        "properties": {
+          "sources": {
+            "description": "The panels to answer it from. Unset for every panel in the dashboard, row, or tab the question is saved on.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardQuestionSource"
+            }
+          },
+          "text": {
+            "description": "The question that is asked. Viewers see it on the dashboard unless it has a title.",
+            "type": "string",
+            "default": ""
+          },
+          "title": {
+            "description": "A short title viewers see on the dashboard instead of the question. Unset to show the question.",
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardQuestionSource": {
+        "description": "A panel that a question is answered from.",
+        "type": "object",
+        "required": [
+          "element"
+        ],
+        "properties": {
+          "element": {
+            "description": "The panel, by its name in dashboard.spec.elements.",
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardElementReference"
+              }
+            ]
+          }
+        }
+      },
       "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardRangeMap": {
         "description": "Maps numerical ranges to a display text and color. For example, if a value is within a certain range, you can configure a range value mapping to display Low or High rather than the number.",
         "type": "object",
@@ -3355,6 +3398,13 @@
           "layout": {
             "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind"
           },
+          "questions": {
+            "description": "Questions viewers can ask about the panels in this row, offered by plugins in the row's controls.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardQuestion"
+            }
+          },
           "repeat": {
             "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardRowRepeatOptions"
           },
@@ -3444,6 +3494,13 @@
             "description": "When set to true, the dashboard will load all panels in the dashboard when it's loaded.",
             "type": "boolean",
             "default": false
+          },
+          "questions": {
+            "description": "Questions viewers can ask about the dashboard, offered by plugins in the dashboard controls.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardQuestion"
+            }
           },
           "revision": {
             "description": "Plugins only. The version of the dashboard installed together with the plugin. This is used to determine if the dashboard should be updated when the plugin is updated.",
@@ -3697,6 +3754,13 @@
           },
           "layout": {
             "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind"
+          },
+          "questions": {
+            "description": "Questions viewers can ask about the panels in this tab, offered by plugins in the tab's controls.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardQuestion"
+            }
           },
           "repeat": {
             "$ref": "#/components/schemas/com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardTabRepeatOptions"
