@@ -214,6 +214,8 @@ export const FlagKeys = {
   GrafanaExploreMetricsSidebar: "grafana.exploreMetricsSidebar",
   /** Lets Grafana Assistant float the extension sidebar over the page instead of docking it */
   GrafanaExtensionSidebarFloating: "grafana.extensionSidebarFloating",
+  /** Lets Grafana Assistant dock the extension sidebar on the left or at the bottom, or pop it up, from the Chat button's menu, its shortcuts and its own layout menu. Needs grafana.extensionSidebarFloating */
+  GrafanaExtensionSidebarPlacements: "grafana.extensionSidebarPlacements",
   /** Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels */
   GrafanaFilterablePanels: "grafana.filterablePanels",
   /** Shows folders the user cannot edit as read only in the folder picker, instead of hiding them */
@@ -1514,6 +1516,17 @@ export const useFlagGrafanaExploreMetricsSidebar = (options?: ReactFlagEvaluatio
  */
 export const useFlagGrafanaExtensionSidebarFloating = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.extensionSidebarFloating", false, options).value;
+};
+
+/**
+ * Lets Grafana Assistant dock the extension sidebar on the left or at the bottom, or pop it up, from the Chat button's menu, its shortcuts and its own layout menu. Needs grafana.extensionSidebarFloating
+ *
+ * **Details:**
+ * - flag key: `grafana.extensionSidebarPlacements`
+ * - default value: `false`
+ */
+export const useFlagGrafanaExtensionSidebarPlacements = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.extensionSidebarPlacements", false, options).value;
 };
 
 /**
