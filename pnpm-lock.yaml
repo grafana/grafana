@@ -434,8 +434,8 @@ importers:
         specifier: 4.4.2
         version: 4.4.2
       croner:
-        specifier: ^9.0.0
-        version: 9.1.0
+        specifier: ^11.0.0
+        version: 11.0.0
       d3:
         specifier: 7.9.2
         version: 7.9.2
@@ -9036,8 +9036,8 @@ packages:
   croact@1.0.4:
     resolution: {integrity: sha512-9GhvyzTY/IVUrMQ2iz/mzgZ8+NcjczmIo/t4FkC1CU0CEcau6v6VsEih4jkTa4ZmRgYTF0qXEZLObCzdDFplpw==}
 
-  croner@9.1.0:
-    resolution: {integrity: sha512-p9nwwR4qyT5W996vBZhdvBCnMhicY5ytZkR4D1Xj0wuTDEiMnjwR57Q3RXYY/s0EpX6Ay3vgIcfaR+ewGHsi+g==}
+  croner@11.0.0:
+    resolution: {integrity: sha512-T17ADjdttrVToyzLpLq9Xb9xzcMwpQ/M3Qs9szhh0MVNTbv6NWQ9OFYa2qlzPYXFMn+uoDlnW1IpIv6cAvFtyA==}
     engines: {node: '>=18.0'}
 
   cross-spawn@7.0.6:
@@ -22402,7 +22402,7 @@ snapshots:
       '@daybrush/utils': 1.13.0
       '@egjs/list-differ': 1.0.0
 
-  croner@9.1.0: {}
+  croner@11.0.0: {}
 
   cross-spawn@7.0.6:
     dependencies:
