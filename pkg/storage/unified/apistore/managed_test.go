@@ -295,6 +295,18 @@ func TestIsManagerRelease(t *testing.T) {
 		require.True(t, isManagerRelease(obj, previous))
 	})
 
+	t.Run("identity dropped but kind left", func(t *testing.T) {
+		obj := managedObject(t, repoManager, "", nil)
+		annotations := obj.GetAnnotations()
+		delete(annotations, utils.AnnoKeyManagerIdentity)
+		obj.SetAnnotations(annotations)
+
+		_, managed := obj.GetManagerProperties()
+		require.False(t, managed)
+		require.Equal(t, string(utils.ManagerKindRepo), annotations[utils.AnnoKeyManagerKind])
+		require.False(t, isManagerRelease(obj, previous))
+	})
+
 	t.Run("still managed", func(t *testing.T) {
 		require.False(t, isManagerRelease(managedObject(t, repoManager, "dashboards/d.json", nil), previous))
 	})
