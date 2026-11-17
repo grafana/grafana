@@ -15,6 +15,7 @@ import { getQueryRunnerFor } from '../../../../utils/getQueryRunnerFor';
 
 import { QueryCoauthoringRuns, type CoauthoringRunOption } from './QueryCoauthoringRuns';
 import { prepareCoauthoringProposal } from './prepareCoauthoringProposal';
+import { copyPanelData } from './previewRunner';
 import {
   type CoauthoringResolverIdentity,
   resolveCoauthoringQuery,
@@ -73,8 +74,9 @@ export class QueryCoauthoringSessionEngine {
     }
     this.runner = runner;
     this.contextInputs = resolverInputs(panel, runner);
-    this.canonicalPanelData = runner.state.data;
-    this.health = deriveQueryHealth(runner.state.queries, runner.state.data);
+    // VizPanel releases previous field arrays when a preview replaces the rendered data.
+    this.canonicalPanelData = runner.state.data && copyPanelData(runner.state.data);
+    this.health = deriveQueryHealth(runner.state.queries, this.canonicalPanelData);
     const subscription = runner.subscribeToState((state, previous) => {
       const changed = !isEqual(state.queries, previous.queries) || !isEqual(state.datasource, previous.datasource);
       if (changed) {
@@ -91,9 +93,9 @@ export class QueryCoauthoringSessionEngine {
         !this.session?.ownsData(state.data) &&
         !isQueryPreviewData(this.panel, state.data)
       ) {
-        this.canonicalPanelData = state.data;
-        this.health = deriveQueryHealth(state.queries, state.data);
-        this.session?.canonicalData(state.data);
+        this.canonicalPanelData = state.data && copyPanelData(state.data);
+        this.health = deriveQueryHealth(state.queries, this.canonicalPanelData);
+        this.session?.canonicalData(this.canonicalPanelData);
       }
       if (changed || state.data !== previous.data) {
         this.session?.publish();
