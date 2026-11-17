@@ -187,7 +187,7 @@ describe('ManagedBadge', () => {
       );
     });
 
-    it('does not set a title attribute on the menu button', async () => {
+    it('marks the menu button as a menu trigger without a title attribute', async () => {
       setPermissions({ isEditor: true });
       mockRepositories([makeRepository()]);
 
@@ -195,6 +195,7 @@ describe('ManagedBadge', () => {
 
       const trigger = await screen.findByRole('button', { name: 'Managed resource actions' });
       expect(trigger).not.toHaveAttribute('title');
+      expect(trigger).toHaveAttribute('aria-haspopup', 'menu');
     });
 
     it('shows the repository administration link for repository managers', async () => {
