@@ -8,6 +8,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
+var _ Notifier = (*InMemory)(nil)
+
 // InMemory is a registry that holds a single active build per plugin (keyed by ID)
 // plus, in a secondary index, up to maxRetainedBuilds superseded builds per plugin
 // keyed by (pluginID, buildHash). See retained_builds.go.
@@ -22,6 +24,9 @@ type InMemory struct {
 	maxRetainedBuilds int
 	buildSeq          uint64
 	mu                sync.RWMutex
+
+	subscribers map[chan struct{}]struct{}
+	subMu       sync.Mutex
 }
 
 func ProvideService() *InMemory {
@@ -77,6 +82,7 @@ func (i *InMemory) Add(_ context.Context, p *plugins.Plugin) error {
 	}
 	i.mu.Unlock()
 
+	i.notify()
 	return nil
 }
 
@@ -100,7 +106,41 @@ func (i *InMemory) Remove(_ context.Context, pluginID, _ string) error {
 	delete(i.activeHash, pluginID)
 	i.mu.Unlock()
 
+	i.notify()
 	return nil
+}
+
+func (i *InMemory) Notify(ctx context.Context) <-chan struct{} {
+	ch := make(chan struct{}, 1)
+
+	i.subMu.Lock()
+	if i.subscribers == nil {
+		i.subscribers = make(map[chan struct{}]struct{})
+	}
+	i.subscribers[ch] = struct{}{}
+	i.subMu.Unlock()
+
+	context.AfterFunc(ctx, func() {
+		i.subMu.Lock()
+		delete(i.subscribers, ch)
+		close(ch)
+		i.subMu.Unlock()
+	})
+
+	return ch
+}
+
+// notify wakes every subscriber without blocking. A subscriber whose channel
+// already holds a value has a wake pending, so it will see this change too.
+func (i *InMemory) notify() {
+	i.subMu.Lock()
+	defer i.subMu.Unlock()
+	for ch := range i.subscribers {
+		select {
+		case ch <- struct{}{}:
+		default:
+		}
+	}
 }
 
 func (i *InMemory) plugin(pluginID string) (*plugins.Plugin, bool) {

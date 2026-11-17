@@ -1500,9 +1500,29 @@
         "records": "Registos",
         "to": "para"
       },
+      "recording-rule-actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "view": ""
+      },
       "recording-rules": {
         "folder-rules-error": "",
         "folders-error": "",
+        "header": {
+          "new-rule": ""
+        },
         "load-more-rules-in-folder": "",
         "loading-folders": "",
         "no-rules": "Nenhuma regra de gravação encontrada",
@@ -1578,6 +1598,12 @@
         "view-folders": "Pastas",
         "view-list": "Lista",
         "wildcard-in-text": "O texto de pesquisa não pode conter * ou %."
+      },
+      "sequence-pill": {
+        "label": "",
+        "label-with-interval": "",
+        "tooltip": "",
+        "tooltip-with-interval": ""
       },
       "shared": {
         "load-more": "Carregar mais",
@@ -2394,6 +2420,7 @@
       "contact-points": "Pontos de contacto",
       "notification-policies": "Políticas de notificação",
       "recently-deleted": "Eliminado recentemente",
+      "recording-rules": "",
       "templates": "Modelos",
       "time-intervals": "Intervalos de tempo"
     },
@@ -5351,6 +5378,7 @@
       "change-theme": "Alterar tema",
       "dark-theme": "Escuro",
       "dashboard-from-template": "Painel de controlo a partir do modelo",
+      "experimental": "",
       "light-theme": "Claro",
       "open-saved-queries": "Abrir consultas guardadas",
       "scopes": "Âmbitos"
@@ -5805,12 +5833,18 @@
       "annotation-pin-remove": "",
       "apply-undo-title": "Edição do Compositor do Assistente",
       "overlay": {
+        "hint-elements": "",
+        "hint-layer": "",
+        "hint-layer-select": "",
         "hint-not-removable": "",
-        "hint-panel": "Clique para comentar num painel ou arraste para desenhar uma região",
+        "hint-panel": "",
+        "hint-panel-select": "",
         "hint-region": "Arrastar para desenhar uma região",
         "hint-remove": "",
+        "hint-screenshot": "",
         "hint-text": "",
-        "hint-variable": ""
+        "hint-variable": "",
+        "hint-variable-select": ""
       },
       "region": "Região",
       "untitled-panel": "Painel {{panelId}}",
@@ -6204,6 +6238,9 @@
         "transparent-background": "Fundo transparente"
       }
     },
+    "get-var-mapping-option-overrides": {
+      "uses-variables": ""
+    },
     "inspect": {
       "data-tab": "Dados",
       "errors-and-notices-tab": "Erros e avisos",
@@ -6397,9 +6434,6 @@
       "only-overrides-button-tooltip": "Mostrar apenas as substituições",
       "placeholder-search-options": "Opções de pesquisa",
       "visualization-button-tooltip": "Opções de pesquisa"
-    },
-    "panel-editor": {
-      "ad-hoc-transformations-disabled": "As transformações ad hoc estão desativadas no modo de edição"
     },
     "plan-building-overlay": {
       "quip-corners": "A polir os cantos do painel…",
@@ -6726,7 +6760,6 @@
           "no-title": "<sem título>"
         }
       },
-      "redo": "Refazer",
       "row": {
         "header": {
           "hide": "Ocultar",
@@ -6743,7 +6776,6 @@
         "title": "Origem",
         "tooltip": "Abrir o painel de controlo original"
       },
-      "undo": "Anular",
       "variable": {
         "change-type": "Alterar tipo",
         "change-type-aria-label": "Alterar tipo de variável",
@@ -6780,8 +6812,6 @@
         "open-editor": "Abrir editor de variáveis",
         "open-editor-tooltip": "Para mais opções de variáveis, abra o editor de variáveis",
         "query-options": {
-          "close": "Fechar",
-          "old-modal-title": "Variável de consulta",
           "preview": "Pré-visualizar"
         },
         "remove": "Remover",
@@ -6952,6 +6982,8 @@
       "playlist-next": "Ir para o próximo painel de controlo",
       "playlist-previous": "Ir para o painel de controlo anterior",
       "playlist-stop": "Parar a lista de reprodução",
+      "redo": "",
+      "redo-action": "",
       "save-as-template": {
         "label": "Guardar como modelo"
       },
@@ -6970,6 +7002,8 @@
       "star-added": "Adicionado aos favoritos",
       "star-remove-error": "Falha ao remover dos favoritos",
       "star-removed": "Removido dos favoritos",
+      "undo": "",
+      "undo-action": "",
       "unlink-library-panel": "Desassociar painel de biblioteca",
       "unlink-library-panel-short": "Desassociar"
     },
@@ -7689,7 +7723,7 @@
       "apply": "Aplicar",
       "apply-body": "Todas as pessoas com acesso vão vê-las. Pode restaurar a versão anterior a partir do histórico de versões.",
       "apply-failed": "Não foi possível aplicar as alterações. Tente novamente ou compare-as primeiro.",
-      "apply-needs-edit": "Para aplicar precisa de acesso de edição a \"{{title}}\". Pode pré-visualizar estas alterações, mas não pode aplicá-las.",
+      "apply-needs-save": "",
       "breadcrumb-draft": "Rascunho",
       "breadcrumb-pending-changes": "Alterações pendentes",
       "change-added": "Adicionado",
@@ -7794,6 +7828,19 @@
       "aria-label-remove-option": "Remover opção",
       "title-drag-and-drop-to-reorder": "Arrastar e largar para reordenar",
       "tooltip-remove-option": "Remover opção"
+    },
+    "panel-actions-popover": {
+      "aria-label": "",
+      "edit": "",
+      "edit-tooltip-disabled": "",
+      "expand": "",
+      "explore": "",
+      "more-actions": "",
+      "remove": "",
+      "remove-confirm": "",
+      "remove-tooltip-disabled": "",
+      "restore-size": "",
+      "settings": ""
     },
     "panel-data-alerting-tab": {
       "tab-label": "Alertar"
@@ -7974,6 +8021,12 @@
       "body-restore-version": "Tem a certeza de que pretende restaurar o painel de controlo para a versão {{version}}? Todas as alterações não guardadas serão perdidas.",
       "confirmText-restore-version": "Sim, restaurar para a versão {{version}}",
       "title-restore-version": "Restaurar versão"
+    },
+    "row-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-row-settings": ""
     },
     "sandbox-consent": {
       "allow": "Permitir",
@@ -8170,6 +8223,12 @@
       "switch-options": "Opções de comutador",
       "value-pair-type": "Tipo de par de valores",
       "value-pair-type-description": "Escolha o tipo de valores para os estados do interruptor"
+    },
+    "tab-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-tab-settings": ""
     },
     "text-box-variable": {
       "name-default-value": "Valor predefinido"
@@ -9792,6 +9851,9 @@
     "select-aria-label": "Filtro de pastas",
     "select-placeholder": "Filtrar por pasta"
   },
+  "folder-picker": {
+    "read-only-folder-tooltip": ""
+  },
   "folders": {
     "api": {
       "anonymous-user": "Anónimo",
@@ -10782,6 +10844,8 @@
       "tooltip": {
         "category": "Descrição",
         "description-hover-proximity": "Qual é a distância a que o cursor deve estar de um ponto para acionar a descrição, em píxeis",
+        "description-max-height": "",
+        "description-max-width": "",
         "modeOptions": {
           "label-all": "Tudo",
           "label-hidden": "Oculto",
@@ -11284,6 +11348,8 @@
         "unbounded": "Sem limite"
       },
       "reorder-column-label": "Reordenar {{columnName}}",
+      "row-number": "",
+      "row-number-column": "",
       "show-column-label": "Mostrar {{columnName}}",
       "sort-by-column": "Ordenar por coluna {{column}}",
       "sort-by-column-ascending": "Ordenar por coluna {{column}}, ascendente",
@@ -13080,6 +13146,10 @@
       "subtitle": "Escolha como notificar os seus pontos de contacto quando uma instância de alerta for acionada",
       "title": "Pontos de contacto"
     },
+    "alerting-recording-rules": {
+      "subtitle": "",
+      "title": ""
+    },
     "alerting-silences": {
       "subtitle": "Parar as notificações de uma ou mais regras de alerta",
       "title": "Silêncio"
@@ -13264,6 +13334,9 @@
     },
     "new-folder": {
       "title": "Nova pasta"
+    },
+    "new-grafana-page": {
+      "title": ""
     },
     "new-notebook": {
       "title": "Novo bloco de notas"
@@ -13929,6 +14002,32 @@
     },
     "units": {
       "clear-tooltip": "Limpar a seleção da unidade"
+    },
+    "var-mapping-checks": {
+      "data-macro": "",
+      "not-allowed": "",
+      "not-found": "",
+      "not-number": "",
+      "not-one-value": "",
+      "out-of-range": "",
+      "resolves": "",
+      "values": ""
+    },
+    "var-mapping-toggle": {
+      "aria-label-picker": "",
+      "fallback-off": "",
+      "fallback-on": "",
+      "group-matching": "",
+      "group-other": "",
+      "hint-boolean": "",
+      "hint-number": "",
+      "hint-option": "",
+      "hint-option-no-fallback": "",
+      "new-variable": "",
+      "option-current": "",
+      "placeholder": "",
+      "use-fixed-value": "",
+      "use-variable": ""
     }
   },
   "org": {
@@ -14031,12 +14130,14 @@
     "header-menu": {
       "add-to-notebook": "Adicionar ao bloco de notas",
       "copy": "Copiar",
+      "copy-repeated-panel": "",
       "copy-styles": "Copiar estilos",
       "download-diagnostics": "Transferir diagnósticos",
       "duplicate": "Duplicar",
       "edit": "Editar",
       "explore": "Explorar",
       "get-help": "Obter ajuda",
+      "group-by": "",
       "hide-legend": "Esconder a legenda",
       "inspect": "Inspecionar",
       "inspect-data": "Dados",
@@ -14357,6 +14458,9 @@
     },
     "empty-state": {
       "message": "Nenhum plugin encontrado"
+    },
+    "errors": {
+      "app-plugin-metas-error": ""
     },
     "extensions": {
       "extension-error-alert-description": "Verifique a consola para obter mais detalhes sobre o erro.",
@@ -15331,8 +15435,7 @@
       "message-resource-onprem_other": "A sua instância está limitada a {{count}} recursos sincronizados por repositório."
     },
     "read-only-badge": {
-      "pull-only": "",
-      "text": "Apenas para leitura"
+      "pull-only": ""
     },
     "read-only-local-tooltip": "Este recurso é só de leitura e aprovisionado através do aprovisionamento de ficheiros. Para fazer quaisquer alterações, atualize o repositório associado. Para modificar as definições, aceda a Administração > Aprovisionamento > Repositórios.",
     "read-only-remote-tooltip": "Este recurso é só de leitura e aprovisionado através do Git. Para fazer quaisquer alterações, atualize o repositório associado. Para modificar as definições, aceda a Administração > Aprovisionamento > Repositórios.",
@@ -16172,6 +16275,9 @@
       "show-response": "Mostrar resposta"
     },
     "query-editor-not-exported": "O plugin de origem de dados não exporta nenhum componente do Editor de Consultas"
+  },
+  "read-only-badge": {
+    "text": ""
   },
   "recent-queries": {
     "error-state": {
@@ -17186,6 +17292,7 @@
     "description-min-column-width": "A largura mínima para o redimensionamento automático da coluna",
     "description-page-size": "Número de linhas por página. Quando vazio, o tamanho da página baseia-se na altura do painel.",
     "description-show-columns-sidebar": "Abrir a barra lateral de gestão de colunas com o painel, em vez de a partir de um menu de coluna",
+    "description-show-row-numbers": "",
     "description-styling-from-field": "Um campo que contém objetos JSON com propriedades CSS",
     "description-tooltip-from-field": "",
     "description-zebra-striping": "Alternar a cor de fundo de uma linha sim, outra não",
@@ -17228,6 +17335,7 @@
     "name-min-column-width": "Largura mínima da coluna",
     "name-page-size": "Tamanho da página",
     "name-show-columns-sidebar": "Mostrar barra lateral de colunas",
+    "name-show-row-numbers": "",
     "name-show-table-header": "Mostrar o cabeçalho da tabela",
     "name-sparkline-show-tooltip": "Mostrar descrição ao passar o rato",
     "name-styling-from-field": "Estilo do campo",

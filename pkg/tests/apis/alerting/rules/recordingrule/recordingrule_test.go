@@ -4,11 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"testing"
 	"time"
 
 	prom_model "github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
@@ -271,6 +273,27 @@ func TestIntegrationCRUD(t *testing.T) {
 
 			provenance := get.GetProvenanceStatus()
 			require.Equal(t, v0alpha1.ProvenanceStatusNone, provenance)
+		})
+
+		t.Run("update returns OK rather than Created", func(t *testing.T) {
+			update := created.DeepCopy()
+			update.Spec.Title += " updated"
+			body, err := json.Marshal(update)
+			require.NoError(t, err)
+			statusCode := 0
+			err = helper.Org1.Admin.RESTClient(t, &v0alpha1.GroupVersion).
+				Put().Namespace("default").Resource("recordingrules").Name(created.Name).
+				Body(body).Do(ctx).StatusCode(&statusCode).Error()
+			require.NoError(t, err)
+			require.Equal(t, http.StatusOK, statusCode)
+		})
+
+		t.Run("create service validation returns BadRequest", func(t *testing.T) {
+			invalid := recordingRule.DeepCopy()
+			invalid.Name = "invalid.rule.uid"
+			_, err := adminClient.Create(ctx, invalid, v1.CreateOptions{})
+			require.True(t, apierrors.IsBadRequest(err), "%v", err)
+			require.ErrorContains(t, err, "cannot create rule with UID")
 		})
 
 		// Cleanup

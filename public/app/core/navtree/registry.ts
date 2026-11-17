@@ -9,6 +9,8 @@ export interface NavEntryExtension {
   /** NavID of the section or subsection to append into, or 'root' for a top-level entry */
   parentId: string;
   entry: NavEntryBuilder;
+  /** Ids to land behind, in preference order; absent appends. See appendIntoSection */
+  after?: string[];
 }
 
 const registeredNavEntries: NavEntryExtension[] = [];

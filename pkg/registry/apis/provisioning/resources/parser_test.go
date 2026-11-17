@@ -380,11 +380,10 @@ spec:
 			Return(&repository.FileInfo{Data: []byte(folderMetadataJSON), Hash: "h1"}, nil)
 
 		p := &parser{
-			repo:                  provisioning.ResourceRepositoryInfo{Type: provisioning.GitHubRepositoryType, Namespace: "xxx", Name: "repo"},
-			clients:               clients,
-			config:                repoConfig,
-			reader:                reader,
-			folderMetadataEnabled: true,
+			repo:    provisioning.ResourceRepositoryInfo{Type: provisioning.GitHubRepositoryType, Namespace: "xxx", Name: "repo"},
+			clients: clients,
+			config:  repoConfig,
+			reader:  reader,
 		}
 
 		parsed, err := p.Parse(context.Background(), &repository.FileInfo{
@@ -405,11 +404,10 @@ spec:
 			Return(&repository.FileInfo{Data: []byte(folderMetadataJSON), Hash: "h1"}, nil)
 
 		p := &parser{
-			repo:                  provisioning.ResourceRepositoryInfo{Type: provisioning.GitHubRepositoryType, Namespace: "xxx", Name: "repo"},
-			clients:               clients,
-			config:                repoConfig,
-			reader:                reader,
-			folderMetadataEnabled: true,
+			repo:    provisioning.ResourceRepositoryInfo{Type: provisioning.GitHubRepositoryType, Namespace: "xxx", Name: "repo"},
+			clients: clients,
+			config:  repoConfig,
+			reader:  reader,
 		}
 
 		parsed, err := p.Parse(context.Background(), &repository.FileInfo{
@@ -431,11 +429,10 @@ spec:
 			Return(nil, repository.ErrFileNotFound)
 
 		p := &parser{
-			repo:                  provisioning.ResourceRepositoryInfo{Type: provisioning.GitHubRepositoryType, Namespace: "xxx", Name: "repo"},
-			clients:               clients,
-			config:                repoConfig,
-			reader:                reader,
-			folderMetadataEnabled: true,
+			repo:    provisioning.ResourceRepositoryInfo{Type: provisioning.GitHubRepositoryType, Namespace: "xxx", Name: "repo"},
+			clients: clients,
+			config:  repoConfig,
+			reader:  reader,
 		}
 
 		parsed, err := p.Parse(context.Background(), &repository.FileInfo{
@@ -455,11 +452,10 @@ spec:
 			Return(nil, repository.ErrFileNotFound)
 
 		p := &parser{
-			repo:                  provisioning.ResourceRepositoryInfo{Type: provisioning.GitHubRepositoryType, Namespace: "xxx", Name: "repo"},
-			clients:               clients,
-			config:                repoConfig,
-			reader:                reader,
-			folderMetadataEnabled: true,
+			repo:    provisioning.ResourceRepositoryInfo{Type: provisioning.GitHubRepositoryType, Namespace: "xxx", Name: "repo"},
+			clients: clients,
+			config:  repoConfig,
+			reader:  reader,
 		}
 
 		parsed, err := p.Parse(context.Background(), &repository.FileInfo{

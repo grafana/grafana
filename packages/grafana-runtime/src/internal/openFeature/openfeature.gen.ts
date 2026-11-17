@@ -74,11 +74,13 @@ export const FlagKeys = {
   AssistantDashboardArtifacts: "assistant.dashboard.artifacts",
   /** Shows a loading screen on the dashboard while the assistant prepares to build an approved dashboard plan */
   AssistantDashboardPlanBuildingScreen: "assistant.dashboardPlanBuildingScreen",
+  /** Lets users rearrange and edit an assistant dashboard plan in its preview before it is built */
+  AssistantDashboardPlanEditing: "assistant.dashboardPlanEditing",
   /** Enables the assistant-powered Generate dashboard prompt and the plan card that approves the dashboard before it is built */
   AssistantDashboardPlanning: "assistant.dashboardPlanning",
   /** Enables the template dashboard assistant */
   AssistantFrontendToolsDashboardTemplates: "assistant.frontend.tools.dashboardTemplates",
-  /** Enables the global fullscreen Workspace (Grafana Assistant workspace shell) in the top bar */
+  /** Shows the Grafana Assistant Chat and Workspace buttons in the top bar, and Exit Workspace on the Assistant Workspace page */
   AssistantFullscreenWorkspace: "assistant.fullscreenWorkspace",
   /** Generate a per-datasource external ID for Grafana Assume Role (jsonData.grafanaExternalId). When disabled, new datasources keep using the stack-level external ID. */
   AwsAssumeRolePerDatasourceExternalId: "awsAssumeRolePerDatasourceExternalId",
@@ -142,6 +144,8 @@ export const FlagKeys = {
   DatasourcesGatewayAuditPolicy: "datasources.gatewayAuditPolicy",
   /** Data source query gateway guardrails */
   DatasourcesGatewayGuardrails: "datasources.gatewayGuardrails",
+  /** Enable support for query gateway rate limits */
+  DatasourcesGatewayRateLimits: "datasources.gatewayRateLimits",
   /** Data source query service, use the new name */
   DatasourcesQuerierNewName: "datasources.querier.newName",
   /** Data source query gateway */
@@ -174,6 +178,8 @@ export const FlagKeys = {
   GrafanaCmdkDashboardTags: "grafana.cmdkDashboardTags",
   /** Uses the hybrid (lexical + semantic) search endpoint as the dashboard search backend in the command palette */
   GrafanaCmdkHybridSearch: "grafana.cmdkHybridSearch",
+  /** Skips reranking in command palette hybrid dashboard search */
+  GrafanaCmdkHybridSearchSkipRerank: "grafana.cmdkHybridSearchSkipRerank",
   /** Enables using the Config From Query Results transformation's Dynamic Field Name option */
   GrafanaConfigFromQueryDynamicName: "grafana.configFromQueryDynamicName",
   /** Enables custom dashboard templates for enterprise */
@@ -208,6 +214,8 @@ export const FlagKeys = {
   GrafanaExploreMetricsSidebar: "grafana.exploreMetricsSidebar",
   /** Lets Grafana Assistant float the extension sidebar over the page instead of docking it */
   GrafanaExtensionSidebarFloating: "grafana.extensionSidebarFloating",
+  /** Lets Grafana Assistant dock the extension sidebar on the left or at the bottom, or pop it up, from the Chat button's menu, its shortcuts and its own layout menu. Needs grafana.extensionSidebarFloating */
+  GrafanaExtensionSidebarPlacements: "grafana.extensionSidebarPlacements",
   /** Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels */
   GrafanaFilterablePanels: "grafana.filterablePanels",
   /** Shows folders the user cannot edit as read only in the folder picker, instead of hiding them */
@@ -254,8 +262,6 @@ export const FlagKeys = {
   GrafanaPreserveDashboardLoginTabTitle: "grafana.preserveDashboardLoginTabTitle",
   /** Preserves the navigation section label in the browser tab title after session expiry */
   GrafanaPreserveLoginTabTitle: "grafana.preserveLoginTabTitle",
-  /** Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options */
-  GrafanaQueryVarEditorRedesign: "grafana.queryVarEditorRedesign",
   /** Disables creating new recorded queries while preserving access to existing queries */
   GrafanaRecordedQueriesDisableCreate: "grafana.recordedQueriesDisableCreate",
   /** Enables Saved Dashboard Views: per-dashboard saved variable, filter and time range state */
@@ -318,6 +324,8 @@ export const FlagKeys = {
   PlaylistsRBAC: "playlistsRBAC",
   /** Show insights for plugins in the plugin details page */
   PluginInsights: "pluginInsights",
+  /** Disables the ST fallback for multi-tenant plugin api calls */
+  PluginsDisableMTPluginsFallback: "plugins.disableMTPluginsFallback",
   /** Initializes data source instance settings asynchronously from the API instead of synchronously from boot data */
   PluginsInitDataSourcesAsync: "plugins.initDataSourcesAsync",
   /** Enables plugins setting from new apis */
@@ -330,8 +338,6 @@ export const FlagKeys = {
   PreserveDashboardStateWhenNavigating: "preserveDashboardStateWhenNavigating",
   /** Enable export functionality for provisioned resources */
   ProvisioningExport: "provisioningExport",
-  /** Allow setting folder metadata for provisioned folders */
-  ProvisioningFolderMetadata: "provisioningFolderMetadata",
   /** Enables public dashboard sharing to be restricted to only allowed emails */
   PublicDashboardsEmailSharing: "publicDashboardsEmailSharing",
   /** Enables next generation query editor experience */
@@ -408,8 +414,6 @@ export const FlagKeys = {
   UnifiedNavbars: "unifiedNavbars",
   /** Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs */
   UseKubernetesShortURLsAPI: "useKubernetesShortURLsAPI",
-  /** Use the scopes navigation endpoint instead of the dashboardbindings endpoint */
-  UseScopesNavigationEndpoint: "useScopesNavigationEndpoint",
   /** Allows authenticated API calls in actions */
   VizActionsAuth: "vizActionsAuth",
 } as const;
@@ -745,6 +749,17 @@ export const useFlagAssistantDashboardPlanBuildingScreen = (options?: ReactFlagE
 };
 
 /**
+ * Lets users rearrange and edit an assistant dashboard plan in its preview before it is built
+ *
+ * **Details:**
+ * - flag key: `assistant.dashboardPlanEditing`
+ * - default value: `false`
+ */
+export const useFlagAssistantDashboardPlanEditing = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("assistant.dashboardPlanEditing", false, options).value;
+};
+
+/**
  * Enables the assistant-powered Generate dashboard prompt and the plan card that approves the dashboard before it is built
  *
  * **Details:**
@@ -767,7 +782,7 @@ export const useFlagAssistantFrontendToolsDashboardTemplates = (options?: ReactF
 };
 
 /**
- * Enables the global fullscreen Workspace (Grafana Assistant workspace shell) in the top bar
+ * Shows the Grafana Assistant Chat and Workspace buttons in the top bar, and Exit Workspace on the Assistant Workspace page
  *
  * **Details:**
  * - flag key: `assistant.fullscreenWorkspace`
@@ -1119,6 +1134,17 @@ export const useFlagDatasourcesGatewayGuardrails = (options?: ReactFlagEvaluatio
 };
 
 /**
+ * Enable support for query gateway rate limits
+ *
+ * **Details:**
+ * - flag key: `datasources.gatewayRateLimits`
+ * - default value: `false`
+ */
+export const useFlagDatasourcesGatewayRateLimits = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("datasources.gatewayRateLimits", false, options).value;
+};
+
+/**
  * Data source query service, use the new name
  *
  * **Details:**
@@ -1292,6 +1318,17 @@ export const useFlagGrafanaCmdkDashboardTags = (options?: ReactFlagEvaluationOpt
  */
 export const useFlagGrafanaCmdkHybridSearch = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.cmdkHybridSearch", false, options).value;
+};
+
+/**
+ * Skips reranking in command palette hybrid dashboard search
+ *
+ * **Details:**
+ * - flag key: `grafana.cmdkHybridSearchSkipRerank`
+ * - default value: `false`
+ */
+export const useFlagGrafanaCmdkHybridSearchSkipRerank = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.cmdkHybridSearchSkipRerank", false, options).value;
 };
 
 /**
@@ -1479,6 +1516,17 @@ export const useFlagGrafanaExploreMetricsSidebar = (options?: ReactFlagEvaluatio
  */
 export const useFlagGrafanaExtensionSidebarFloating = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.extensionSidebarFloating", false, options).value;
+};
+
+/**
+ * Lets Grafana Assistant dock the extension sidebar on the left or at the bottom, or pop it up, from the Chat button's menu, its shortcuts and its own layout menu. Needs grafana.extensionSidebarFloating
+ *
+ * **Details:**
+ * - flag key: `grafana.extensionSidebarPlacements`
+ * - default value: `false`
+ */
+export const useFlagGrafanaExtensionSidebarPlacements = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.extensionSidebarPlacements", false, options).value;
 };
 
 /**
@@ -1735,17 +1783,6 @@ export const useFlagGrafanaPreserveLoginTabTitle = (options?: ReactFlagEvaluatio
 };
 
 /**
- * Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options
- *
- * **Details:**
- * - flag key: `grafana.queryVarEditorRedesign`
- * - default value: `true`
- */
-export const useFlagGrafanaQueryVarEditorRedesign = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.queryVarEditorRedesign", true, options).value;
-};
-
-/**
  * Disables creating new recorded queries while preserving access to existing queries
  *
  * **Details:**
@@ -1860,10 +1897,10 @@ export const useFlagGrafanaViewPanelPane = (options?: ReactFlagEvaluationOptions
  *
  * **Details:**
  * - flag key: `grafana.visualDesignRefresh`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagGrafanaVisualDesignRefresh = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.visualDesignRefresh", false, options).value;
+  return useFlag("grafana.visualDesignRefresh", true, options).value;
 };
 
 /**
@@ -2087,6 +2124,17 @@ export const useFlagPluginInsights = (options?: ReactFlagEvaluationOptions): boo
 };
 
 /**
+ * Disables the ST fallback for multi-tenant plugin api calls
+ *
+ * **Details:**
+ * - flag key: `plugins.disableMTPluginsFallback`
+ * - default value: `false`
+ */
+export const useFlagPluginsDisableMTPluginsFallback = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("plugins.disableMTPluginsFallback", false, options).value;
+};
+
+/**
  * Initializes data source instance settings asynchronously from the API instead of synchronously from boot data
  *
  * **Details:**
@@ -2150,17 +2198,6 @@ export const useFlagPreserveDashboardStateWhenNavigating = (options?: ReactFlagE
  */
 export const useFlagProvisioningExport = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("provisioningExport", false, options).value;
-};
-
-/**
- * Allow setting folder metadata for provisioned folders
- *
- * **Details:**
- * - flag key: `provisioningFolderMetadata`
- * - default value: `true`
- */
-export const useFlagProvisioningFolderMetadata = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("provisioningFolderMetadata", true, options).value;
 };
 
 /**
@@ -2579,17 +2616,6 @@ export const useFlagUnifiedNavbars = (options?: ReactFlagEvaluationOptions): boo
  */
 export const useFlagUseKubernetesShortURLsAPI = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("useKubernetesShortURLsAPI", true, options).value;
-};
-
-/**
- * Use the scopes navigation endpoint instead of the dashboardbindings endpoint
- *
- * **Details:**
- * - flag key: `useScopesNavigationEndpoint`
- * - default value: `false`
- */
-export const useFlagUseScopesNavigationEndpoint = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("useScopesNavigationEndpoint", false, options).value;
 };
 
 /**

@@ -62,7 +62,6 @@ func TestBuildHash_SignedCDNModuleHashUnchanged(t *testing.T) {
 		PluginSettings: config.PluginSettings{
 			pluginID: {"cdn": "true"},
 		},
-		Features: config.Features{SriChecksEnabled: true},
 	}
 	p := newPlugin(
 		pluginID,
@@ -89,7 +88,6 @@ func TestCalculator_BuildHash_FSPlugin(t *testing.T) {
 	const pluginID = "grafana-test-datasource"
 	pCfg := &config.PluginManagementCfg{
 		PluginSettings: config.PluginSettings{},
-		Features:       config.Features{SriChecksEnabled: true},
 	}
 	p := newPlugin(
 		pluginID,
@@ -119,7 +117,6 @@ func TestCalculator_BuildHash_RecomputesAfterBuildReplaced(t *testing.T) {
 	const pluginID = "grafana-test-datasource"
 	pCfg := &config.PluginManagementCfg{
 		PluginSettings: config.PluginSettings{},
-		Features:       config.Features{SriChecksEnabled: true},
 	}
 	p1 := newPlugin(
 		pluginID,
@@ -166,7 +163,6 @@ func TestCalculator_BuildHash_CDNPluginReturnsEmpty(t *testing.T) {
 		PluginSettings: config.PluginSettings{
 			pluginID: {"cdn": "true"},
 		},
-		Features: config.Features{SriChecksEnabled: true},
 	}
 	p := newPlugin(
 		pluginID,

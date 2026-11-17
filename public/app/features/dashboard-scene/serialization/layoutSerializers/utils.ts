@@ -1,5 +1,7 @@
+import { isEqual } from 'lodash';
+
 import { getNextRefId } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, isExpressionReference } from '@grafana/runtime';
 import { getPanelPluginMetasMapSync, type PanelPluginMetas } from '@grafana/runtime/internal';
 import {
   type SceneDataProvider,
@@ -242,13 +244,17 @@ function createPanelDataProvider(
   const pluginMeta = findPanelPluginMeta(panelMetas, panel.vizConfig?.group);
   const skipDefaultQuery = pluginMeta?.skipDefaultQuery ?? false;
 
-  const targets =
+  let targets =
     // Default to an array with an empty data query with a `refId` already assigned
     Array.isArray(panel.data?.spec.queries) && panel.data?.spec.queries.length > 0
       ? panel.data?.spec.queries
       : skipDefaultQuery
         ? []
         : [defaultPanelQueryKind()];
+  if (skipDefaultQuery && targets.length === 1 && isEqual(targets[0], defaultPanelQueryKind())) {
+    targets = [];
+  }
+
   // Skip setting query runner for panels without queries
   if (!targets?.length && !skipDefaultQuery) {
     return undefined;
@@ -328,10 +334,13 @@ export function getPanelDataSource(panel: PanelKind): DataSourceRef | undefined 
       : getRuntimePanelDataSource(query.spec.query)
   );
 
-  const firstDatasource = datasources[0];
+  // Expressions run alongside any datasource, so they don't make a panel mixed
+  const nonExpressionDatasources = datasources.filter((ds) => !isExpressionReference(ds));
+  const hasExpressions = nonExpressionDatasources.length !== datasources.length;
+  const firstDatasource = nonExpressionDatasources[0];
 
   // Check if queries use different datasources
-  const isMixedDatasource = datasources.some(
+  const isMixedDatasource = nonExpressionDatasources.some(
     (ds) => ds?.uid !== firstDatasource?.uid || ds?.type !== firstDatasource?.type
   );
 
@@ -343,6 +352,12 @@ export function getPanelDataSource(panel: PanelKind): DataSourceRef | undefined 
   // See DashboardDatasourceBehaviour.tsx for more details
   if (firstDatasource?.uid === SHARED_DASHBOARD_QUERY) {
     return { type: 'datasource', uid: SHARED_DASHBOARD_QUERY };
+  }
+
+  // An expression query may come first, so the query runner can't rely on the first query's datasource.
+  // It needs the real one to apply ad hoc filters and group by, so set it explicitly
+  if (hasExpressions && firstDatasource?.uid) {
+    return firstDatasource;
   }
 
   // Only return mixed datasource - for non-mixed panels, each query already has its own datasource

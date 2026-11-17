@@ -39,7 +39,6 @@ async function setup(initialUrl: string) {
   jest.spyOn(apiClient, 'fetchScopeNode').mockResolvedValue(undefined);
   jest.spyOn(apiClient, 'fetchMultipleScopeNodes').mockResolvedValue([]);
   jest.spyOn(apiClient, 'fetchNodes').mockResolvedValue([]);
-  jest.spyOn(apiClient, 'fetchDashboards').mockResolvedValue([]);
   jest.spyOn(apiClient, 'fetchScopeNavigations').mockResolvedValue([]);
   jest.spyOn(apiClient, 'fetchDefaultScope').mockResolvedValue(undefined);
 

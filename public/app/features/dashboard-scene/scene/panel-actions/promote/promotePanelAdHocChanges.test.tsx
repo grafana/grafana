@@ -11,10 +11,12 @@ import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
+import { setMobileViewport } from 'app/features/dashboard-scene/utils/mobileViewportTestUtils';
 import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/constants';
 import { plugin as tablePlugin } from 'app/plugins/panel/table/module';
 
 import { changeTitle } from '../../../actions/dashboard/changeTitle';
+import { buildPanelEditScene } from '../../../panel-edit/PanelEditor';
 import { SaveDashboardDrawer } from '../../../saving/SaveDashboardDrawer';
 import { SaveDashboardForm } from '../../../saving/SaveDashboardForm';
 import { dashboardSceneGraph } from '../../../utils/dashboardSceneGraph';
@@ -266,12 +268,11 @@ describe('promotePanelAdHocChanges', () => {
   describe('when edit mode is blocked on mobile', () => {
     beforeEach(() => {
       setTestFlags({ 'grafana.mobileEditDeprecation': true });
-      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
+      setMobileViewport();
     });
 
     afterEach(() => {
       setTestFlags({});
-      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
     });
 
     it('leaves the dashboard and the ad hoc changes untouched without opening the save drawer', async () => {
@@ -295,6 +296,56 @@ describe('promotePanelAdHocChanges', () => {
     await waitFor(() => expect(dashboard.state.overlay).toBeUndefined());
     expect(dashboard.state.isEditing).toBe(true);
     expect(dashboard.state.isDirty).toBe(false);
+  });
+
+  describe('from panel edit', () => {
+    async function buildSceneInPanelEdit() {
+      const scene = await buildScene({ startEditing: true });
+      const editPanel = buildPanelEditScene(scene.panel);
+      act(() => scene.dashboard.setState({ editPanel }));
+      return scene;
+    }
+
+    it('opens the save drawer with the panel editor open on the rebuilt panel', async () => {
+      const { panel, dashboard } = await buildSceneInPanelEdit();
+
+      await requestPromotion(panel);
+
+      await waitFor(() => expect(dashboard.state.overlay).toBeInstanceOf(SaveDashboardDrawer));
+      const [rebuiltPanel] = dashboardSceneGraph.getVizPanels(dashboard);
+      expect(rebuiltPanel === panel).toBe(false);
+      expect(dashboard.state.editPanel?.getPanel() === rebuiltPanel).toBe(true);
+    });
+
+    it('returns to the panel editor with the ad hoc changes when cancelled', async () => {
+      const { panel, dashboard } = await buildSceneInPanelEdit();
+
+      await requestPromotion(panel);
+      await cancelFromDrawer(dashboard);
+
+      expect(dashboard.state.title).toBe('My dashboard');
+      expect(dashboard.state.editPanel?.getPanel() === panel).toBe(true);
+      expect(getAdHocTransformations(dashboard)).toEqual([adHocChange]);
+    });
+  });
+
+  it('does not reapply saved changes as ad hoc changes when a saved promotion is undone and the edit discarded', async () => {
+    promotionHandler.mockImplementation(tablePlugin.panelInteractions!.interactions[0].promotionHandler);
+    const { panel, dashboard } = await buildScene({ startEditing: true });
+
+    await requestPromotion(panel);
+    await saveFromDrawer(dashboard);
+    await waitFor(() => expect(dashboard.state.overlay).toBeUndefined());
+    act(() => dashboard.state.sidebar.undoAction());
+    expect(getAdHocTransformations(dashboard)).toEqual([adHocChange]);
+
+    act(() => dashboard.exitEditMode({ skipConfirm: true, restoreInitialState: true }));
+
+    const [restoredPanel] = dashboardSceneGraph.getVizPanels(dashboard);
+    expect(restoredPanel.state.$data?.state).toMatchObject({
+      transformations: [{ id: 'organize', options: { excludeByName: { hidden: true } } }],
+    });
+    expect(getAdHocTransformations(dashboard)).toEqual([]);
   });
 
   it('takes the promoted changes out and gives them back to the panel as ad hoc changes when cancelled', async () => {

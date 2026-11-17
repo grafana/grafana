@@ -19,42 +19,39 @@ weight: 100
 # Preferences HTTP API
 
 {{< admonition type="note" >}}
+Available in Grafana 13.2 and later.
+
 This API complies with the new Grafana API structure. To learn more refer to documentation about the [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 
-The Preferences API replaces the legacy [Preferences API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/preferences/). Refer to [Migrate from the legacy Preferences API](#migrate-from-the-legacy-preferences-api) to learn how both APIs match.
+The legacy [Preferences API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/api-legacy/preferences/) is still available, and removal will be announced well in advance to avoid disruptions. Refer to [Migrate from the legacy Preferences API](#migrate-from-the-legacy-preferences-api) to learn more about how both APIs match, and how to migrate.
 
 **This document may not contain the latest version of the API. For the most up-to-date list of available endpoints, refer to [preferences.grafana.app/v1](https://play.grafana.org/swagger?api=preferences.grafana.app-v1) in Swagger.**
+
 {{< /admonition >}}
 
 Use this API to read and change user, team, and organization preferences, such as the theme, timezone, home dashboard, and language.
 
-All paths use the `preferences.grafana.app` group and the `v1` version. Replace `:namespace` with your namespace. To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
-
 ## Requirements
 
-Access depends on who owns the preferences, not on role-based access control actions:
-
-| Owner        | Read                                                     | Create, update, and delete             |
-| ------------ | -------------------------------------------------------- | -------------------------------------- |
-| User         | The user                                                 | The user                               |
-| Team         | Team members, and users with permission to read the team | Users with permission to edit the team |
-| Organization | Any user in the organization                             | Users with the Admin organization role |
-
-Organization administrators can't read or change the preferences of other users.
+Access depends on who owns the preferences, not on role-based access control actions. You can read and change your own preferences. Team members can read team preferences, and users who can edit the team can change them. Every user in the organization can read organization preferences, and users with the Admin role can change them. Organization administrators can't read or change the preferences of other users. For more information, refer to [Organization preferences](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/organization-preferences/).
 
 ## Endpoints
 
 The following table lists the main endpoints. The Swagger documentation also includes the parameters for watching changes.
 
-| Method | URI                                                                       | Summary                                           |
-| ------ | ------------------------------------------------------------------------- | ------------------------------------------------- |
-| GET    | /apis/preferences.grafana.app/v1/namespaces/:namespace/preferences/merged | [Get merged preferences](#get-merged-preferences) |
-| GET    | /apis/preferences.grafana.app/v1/namespaces/:namespace/preferences        | [List preferences](#list-preferences)             |
-| GET    | /apis/preferences.grafana.app/v1/namespaces/:namespace/preferences/:name  | [Get preferences](#get-preferences)               |
-| POST   | /apis/preferences.grafana.app/v1/namespaces/:namespace/preferences        | [Create preferences](#create-preferences)         |
-| PUT    | /apis/preferences.grafana.app/v1/namespaces/:namespace/preferences/:name  | [Update preferences](#update-preferences)         |
-| PATCH  | /apis/preferences.grafana.app/v1/namespaces/:namespace/preferences/:name  | [Patch preferences](#patch-preferences)           |
-| DELETE | /apis/preferences.grafana.app/v1/namespaces/:namespace/preferences/:name  | [Delete preferences](#delete-preferences)         |
+**Base path:** `/apis/preferences.grafana.app/v1/namespaces/{namespace}/`
+
+Replace `{namespace}` with your namespace. To learn which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+
+| Method | Summary                                           | Path                 |
+| ------ | ------------------------------------------------- | -------------------- |
+| GET    | [Get merged preferences](#get-merged-preferences) | `preferences/merged` |
+| GET    | [List preferences](#list-preferences)             | `preferences`        |
+| GET    | [Get preferences](#get-preferences)               | `preferences/{name}` |
+| POST   | [Create preferences](#create-preferences)         | `preferences`        |
+| PUT    | [Update preferences](#update-preferences)         | `preferences/{name}` |
+| PATCH  | [Patch preferences](#patch-preferences)           | `preferences/{name}` |
+| DELETE | [Delete preferences](#delete-preferences)         | `preferences/{name}` |
 
 ## Preference names and precedence
 
@@ -62,11 +59,11 @@ Each preferences object belongs to a user, a team, or the whole organization. It
 
 | Owner        | Name              | Example         |
 | ------------ | ----------------- | --------------- |
-| User         | `user-<USER_UID>` | `user-a1b2c3d4` |
-| Team         | `team-<TEAM_UID>` | `team-ef5gh6ij` |
+| User         | `user-{user_uid}` | `user-a1b2c3d4` |
+| Team         | `team-{team_uid}` | `team-ef5gh6ij` |
 | Organization | `namespace`       | `namespace`     |
 
-`<USER_UID>` and `<TEAM_UID>` are UIDs, not numeric IDs or logins. To get your user UID, use the `uid` field returned by `GET /api/user`.
+`{user_uid}` and `{team_uid}` are UIDs, not numeric IDs or logins. To get your user UID, use the `uid` field returned by `GET /api/user`.
 
 When Grafana applies preferences, it uses the first value set for each field, in this order:
 
@@ -92,15 +89,19 @@ The `spec` of a preferences object has the following fields. All fields are opti
 
 ## Get merged preferences
 
-`GET /apis/preferences.grafana.app/v1/namespaces/:namespace/preferences/merged`
+`GET /apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences/merged`
 
 Returns the preferences that apply to you, after combining your user, team, and organization preferences with the configured defaults.
 
-- `namespace`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 
 **Required permissions**: None. The response only includes the preferences that apply to you.
 
-**Example request**:
+### Example request
+
+The following example shows a request to get merged preferences:
 
 ```http
 GET /apis/preferences.grafana.app/v1/namespaces/default/preferences/merged HTTP/1.1
@@ -108,7 +109,9 @@ Accept: application/json
 Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
-**Example response**:
+### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200
@@ -136,18 +139,15 @@ Content-Type: application/json
 
 The `preferences.grafana.app/source` annotation lists the preferences objects that were combined, from highest to lowest precedence. The `resourceVersion` changes when any of them changes.
 
-Status codes:
-
-- **200** – OK
-- **401** – Unauthorized
-
 ## List preferences
 
-`GET /apis/preferences.grafana.app/v1/namespaces/:namespace/preferences`
+`GET /apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences`
 
 Returns the preferences objects that apply to you: your user preferences, the preferences of your first 25 teams, and the organization preferences. Objects that don't exist aren't included. Service accounts only get the organization preferences.
 
-- `namespace`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 
 **Query parameters**:
 
@@ -157,7 +157,9 @@ The API doesn't support pagination with `continue`, or filtering with `labelSele
 
 **Required permissions**: None. The response only includes the preferences you can read.
 
-**Example request**:
+### Example request
+
+The following example shows a request to list preferences:
 
 ```http
 GET /apis/preferences.grafana.app/v1/namespaces/default/preferences HTTP/1.1
@@ -165,7 +167,9 @@ Accept: application/json
 Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
-**Example response**:
+### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200
@@ -208,23 +212,22 @@ Content-Type: application/json
 }
 ```
 
-Status codes:
-
-- **200** – OK
-- **401** – Unauthorized
-
 ## Get preferences
 
-`GET /apis/preferences.grafana.app/v1/namespaces/:namespace/preferences/:name`
+`GET /apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences/{name}`
 
 Returns the preferences object with the given name.
 
-- `namespace`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
-- `name`: `user-<USER_UID>`, `team-<TEAM_UID>`, or `namespace`.
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{name}`: `user-{user_uid}`, `team-{team_uid}`, or `namespace`.
 
 **Required permissions**: Read access for the owner. Refer to [Requirements](#requirements).
 
-**Example request**:
+### Example request
+
+The following example shows a request to get preferences:
 
 ```http
 GET /apis/preferences.grafana.app/v1/namespaces/default/preferences/user-a1b2c3d4 HTTP/1.1
@@ -232,7 +235,9 @@ Accept: application/json
 Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
-**Example response**:
+### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 200
@@ -254,24 +259,21 @@ Content-Type: application/json
 }
 ```
 
-Status codes:
-
-- **200** – Found
-- **401** – Unauthorized
-- **403** – Access denied
-- **404** – No preferences are saved for this owner
-
 ## Create preferences
 
-`POST /apis/preferences.grafana.app/v1/namespaces/:namespace/preferences`
+`POST /apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences`
 
 Creates the preferences for a user, a team, or the organization. You can also use [Update preferences](#update-preferences), which creates the object if it doesn't exist yet.
 
-- `namespace`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+**Path parameters**:
 
-**Required permissions**: Write access for the owner. Refer to [Requirements](#requirements).
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
 
-**Example request**:
+**Required permissions**: Only access-policy tokens with explicit permissions can create preferences with `POST`. User and service account requests return `403`. Use [Update preferences](#update-preferences) or [Patch preferences](#patch-preferences) instead.
+
+### Example request
+
+The following example shows a request to create preferences:
 
 ```http
 POST /apis/preferences.grafana.app/v1/namespaces/default/preferences HTTP/1.1
@@ -292,10 +294,12 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 JSON body schema:
 
-- **metadata.name** – Required. `user-<USER_UID>`, `team-<TEAM_UID>`, or `namespace`.
+- **metadata.name** – Required. `user-{user_uid}`, `team-{team_uid}`, or `namespace`.
 - **spec** – The preferences. For details, refer to [Preferences fields](#preferences-fields).
 
-**Example response**:
+### Example response
+
+The following example shows the response:
 
 ```http
 HTTP/1.1 201
@@ -317,27 +321,22 @@ Content-Type: application/json
 }
 ```
 
-Status codes:
-
-- **201** – Created
-- **400** – Errors (invalid JSON)
-- **401** – Unauthorized
-- **403** – Access denied
-- **409** – Preferences already exist for this owner
-- **422** – Invalid preferences, for example an unknown theme or timezone, or a `homeURL` value
-
 ## Update preferences
 
-`PUT /apis/preferences.grafana.app/v1/namespaces/:namespace/preferences/:name`
+`PUT /apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences/{name}`
 
 Replaces the preferences with the given name. If no preferences exist for the owner yet, Grafana creates them. Fields you omit are cleared, so they fall back to the next level.
 
-- `namespace`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
-- `name`: `user-<USER_UID>`, `team-<TEAM_UID>`, or `namespace`.
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{name}`: `user-{user_uid}`, `team-{team_uid}`, or `namespace`.
 
 **Required permissions**: Write access for the owner. Refer to [Requirements](#requirements).
 
-**Example request**:
+### Example request
+
+The following example shows a request to update preferences:
 
 ```http
 PUT /apis/preferences.grafana.app/v1/namespaces/default/preferences/namespace HTTP/1.1
@@ -366,28 +365,26 @@ JSON body schema:
 
 The response contains the updated preferences.
 
-Status codes:
+### Example response
 
-- **200** – Updated
-- **201** – Created
-- **400** – Errors (invalid JSON)
-- **401** – Unauthorized
-- **403** – Access denied
-- **409** – Conflict, the preferences changed since you read them
-- **422** – Invalid preferences, for example an unknown theme or timezone, or a `homeURL` value
+The response contains the updated preferences. For an example, refer to the response in [Get preferences](#get-preferences).
 
 ## Patch preferences
 
-`PATCH /apis/preferences.grafana.app/v1/namespaces/:namespace/preferences/:name`
+`PATCH /apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences/{name}`
 
 Updates one or more preferences without changing the others. If no preferences exist for the owner yet, Grafana creates them.
 
-- `namespace`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
-- `name`: `user-<USER_UID>`, `team-<TEAM_UID>`, or `namespace`.
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{name}`: `user-{user_uid}`, `team-{team_uid}`, or `namespace`.
 
 **Required permissions**: Write access for the owner. Refer to [Requirements](#requirements).
 
-**Example request**:
+### Example request
+
+The following example shows a request to patch preferences:
 
 ```http
 PATCH /apis/preferences.grafana.app/v1/namespaces/default/preferences/user-a1b2c3d4 HTTP/1.1
@@ -402,28 +399,26 @@ Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 }
 ```
 
-The response contains the updated preferences.
+### Example response
 
-Status codes:
-
-- **200** – Updated
-- **201** – Created
-- **401** – Unauthorized
-- **403** – Access denied
-- **422** – Invalid preferences, for example an unknown theme or timezone, or a `homeURL` value
+The response contains the updated preferences. For an example, refer to the response in [Get preferences](#get-preferences).
 
 ## Delete preferences
 
-`DELETE /apis/preferences.grafana.app/v1/namespaces/:namespace/preferences/:name`
+`DELETE /apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences/{name}`
 
 Deletes the preferences with the given name. After that, every field falls back to the next level.
 
-- `namespace`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
-- `name`: `user-<USER_UID>`, `team-<TEAM_UID>`, or `namespace`.
+**Path parameters**:
+
+- `{namespace}`: To learn more about which namespace to use, refer to the [API overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis/).
+- `{name}`: `user-{user_uid}`, `team-{team_uid}`, or `namespace`.
 
 **Required permissions**: Write access for the owner. Refer to [Requirements](#requirements).
 
-**Example request**:
+### Example request
+
+The following example shows a request to delete preferences:
 
 ```http
 DELETE /apis/preferences.grafana.app/v1/namespaces/default/preferences/user-a1b2c3d4 HTTP/1.1
@@ -431,27 +426,41 @@ Accept: application/json
 Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
-Status codes:
+### Example response
 
-- **200** – Deleted
-- **401** – Unauthorized
-- **403** – Access denied
-- **404** – No preferences are saved for this owner
+The response contains a `Status` object that confirms the deletion.
+
+## Status codes
+
+The endpoints on this page return the following status codes:
+
+| Code  | Meaning                                                                                                                                                                                                                            | Returned by                                                                                                                                                                                                  |
+| ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `200` | OK.                                                                                                                                                                                                                                | [Get merged preferences](#get-merged-preferences), [List](#list-preferences), [Get preferences](#get-preferences), [Update](#update-preferences), [Patch](#patch-preferences), [Delete](#delete-preferences) |
+| `201` | Created.                                                                                                                                                                                                                           | [Create](#create-preferences), [Update](#update-preferences), [Patch](#patch-preferences)                                                                                                                    |
+| `400` | Bad request (invalid JSON).                                                                                                                                                                                                        | [Create](#create-preferences), [Update](#update-preferences), [Patch](#patch-preferences)                                                                                                                    |
+| `401` | Unauthorized.                                                                                                                                                                                                                      | All endpoints                                                                                                                                                                                                |
+| `403` | Access denied.                                                                                                                                                                                                                     | [Get merged preferences](#get-merged-preferences), [List](#list-preferences), [Get preferences](#get-preferences), [Update](#update-preferences), [Patch](#patch-preferences), [Delete](#delete-preferences) |
+| `403` | Access denied. User and service account requests can't create preferences with `POST` because the path doesn't include `{name}`; use [Update preferences](#update-preferences) or [Patch preferences](#patch-preferences) instead. | [Create](#create-preferences)                                                                                                                                                                                |
+| `404` | No preferences are saved for this owner.                                                                                                                                                                                           | [Get preferences](#get-preferences), [Delete](#delete-preferences)                                                                                                                                           |
+| `409` | Conflict (preferences already exist for this owner).                                                                                                                                                                               | [Create](#create-preferences)                                                                                                                                                                                |
+| `409` | Conflict (the preferences changed since you read them).                                                                                                                                                                            | [Update](#update-preferences), [Patch](#patch-preferences)                                                                                                                                                   |
+| `422` | Invalid preferences, for example an unknown theme or timezone, or a `homeURL` value.                                                                                                                                               | [Create](#create-preferences), [Update](#update-preferences), [Patch](#patch-preferences)                                                                                                                    |
 
 ## Migrate from the legacy Preferences API
 
 The legacy API has separate endpoints for the current user, the current organization, and teams. The new API uses one resource, and the name selects the owner:
 
-| Legacy endpoint                      | New endpoint                                                                               |
-| ------------------------------------ | ------------------------------------------------------------------------------------------ |
-| `GET /api/user/preferences`          | `GET /apis/preferences.grafana.app/v1/namespaces/:namespace/preferences/user-<USER_UID>`   |
-| `PUT /api/user/preferences`          | `PUT /apis/preferences.grafana.app/v1/namespaces/:namespace/preferences/user-<USER_UID>`   |
-| `PATCH /api/user/preferences`        | `PATCH /apis/preferences.grafana.app/v1/namespaces/:namespace/preferences/user-<USER_UID>` |
-| `GET /api/org/preferences`           | `GET /apis/preferences.grafana.app/v1/namespaces/:namespace/preferences/namespace`         |
-| `PUT /api/org/preferences`           | `PUT /apis/preferences.grafana.app/v1/namespaces/:namespace/preferences/namespace`         |
-| `PATCH /api/org/preferences`         | `PATCH /apis/preferences.grafana.app/v1/namespaces/:namespace/preferences/namespace`       |
-| `GET /api/teams/:teamId/preferences` | `GET /apis/preferences.grafana.app/v1/namespaces/:namespace/preferences/team-<TEAM_UID>`   |
-| `PUT /api/teams/:teamId/preferences` | `PUT /apis/preferences.grafana.app/v1/namespaces/:namespace/preferences/team-<TEAM_UID>`   |
+| Legacy endpoint                      | New endpoint                                                                                |
+| ------------------------------------ | ------------------------------------------------------------------------------------------- |
+| `GET /api/user/preferences`          | `GET /apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences/user-{user_uid}`   |
+| `PUT /api/user/preferences`          | `PUT /apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences/user-{user_uid}`   |
+| `PATCH /api/user/preferences`        | `PATCH /apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences/user-{user_uid}` |
+| `GET /api/org/preferences`           | `GET /apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences/namespace`         |
+| `PUT /api/org/preferences`           | `PUT /apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences/namespace`         |
+| `PATCH /api/org/preferences`         | `PATCH /apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences/namespace`       |
+| `GET /api/teams/:teamId/preferences` | `GET /apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences/team-{team_uid}`   |
+| `PUT /api/teams/:teamId/preferences` | `PUT /apis/preferences.grafana.app/v1/namespaces/{namespace}/preferences/team-{team_uid}`   |
 
 When you migrate, consider the following differences:
 

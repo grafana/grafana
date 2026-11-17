@@ -75,6 +75,7 @@ type CommonTableOptions = Pick<
   | 'disableKeyboardEvents'
   | 'hoverOverflow'
   | 'zebraStriping'
+  | 'showRowNumbers'
 >;
 
 /**
@@ -104,6 +105,8 @@ export function useCommonTableProps(options: CommonTableOptions, fieldConfig: Fi
       disableKeyboardEvents: options.disableKeyboardEvents,
       hoverOverflow: options.hoverOverflow ?? true,
       zebraStriping: refreshNewFeaturesEnabled && options.zebraStriping,
+      showRowNumbers: tableRefreshEnabled && refreshNewFeaturesEnabled && (options.showRowNumbers ?? false),
+      showRowNumberToggle: tableRefreshEnabled && refreshNewFeaturesEnabled,
       disableSanitizeHtml: getConfig().disableSanitizeHtml,
       contentAwareWidthsEnabled,
       tableRefreshEnabled,
@@ -122,6 +125,7 @@ export function useCommonTableProps(options: CommonTableOptions, fieldConfig: Fi
       options.disableKeyboardEvents,
       options.hoverOverflow,
       options.zebraStriping,
+      options.showRowNumbers,
       fieldConfig.defaults.noValue,
       contentAwareWidthsEnabled,
       paginationPageSizeEnabled,

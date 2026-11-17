@@ -98,6 +98,15 @@ var (
 		[]string{"resource", "verb", "caller"}, // caller: immediate service identity from the access token, or "unknown"
 	)
 
+	MetaResolutionsTotal = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: namespace,
+			Name:      "meta_resolutions_total",
+			Help:      "Total number of successful plugin metadata resolutions by provider and plugin ID, including cache hits",
+		},
+		[]string{"provider", "plugin_id"},
+	)
+
 	MetaResolutionFailuresTotal = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: namespace,
@@ -118,6 +127,7 @@ func MustRegister(registerer prometheus.Registerer) {
 		MetaFetchDurationSeconds,
 		MetaFetchErrorsTotal,
 		MetaRequestsTotal,
+		MetaResolutionsTotal,
 		MetaResolutionFailuresTotal,
 		APIRequestsTotal,
 	}

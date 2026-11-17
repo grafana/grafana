@@ -189,8 +189,9 @@ func TestIntegrationDiscoverySQL(t *testing.T) {
 	require.Empty(t, a.discovery.routes)
 }
 
-// TestIntegrationServerAutoListenAddress checks the cluster port binds every
-// interface only on a database instances on other hosts can share.
+// TestIntegrationServerAutoListenAddress checks an unset listen_address binds
+// the cluster port to every interface on a database instances on other hosts
+// can share, and opens no cluster port on SQLite, which they can't.
 func TestIntegrationServerAutoListenAddress(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -201,15 +202,25 @@ func TestIntegrationServerAutoListenAddress(t *testing.T) {
 	require.NoError(t, s.starting(t.Context()))
 	t.Cleanup(func() { _ = s.stopping(nil) })
 
-	bound := s.server.ClusterAddr().IP
 	switch driver := sqlStore.GetDialect().DriverName(); driver {
 	case migrator.MySQL, migrator.Postgres:
 		require.Equal(t, wildcardListenAddress, s.opts.Cluster.Host)
 		// Go reports a dual-stack wildcard listener as "::".
+		bound := s.server.ClusterAddr().IP
 		require.True(t, bound.IsUnspecified(), "cluster port bound to %s", bound)
 	case migrator.SQLite:
-		require.Equal(t, loopbackListenAddress, s.opts.Cluster.Host)
-		require.True(t, bound.IsLoopback(), "cluster port bound to %s", bound)
+		require.Nil(t, s.server.ClusterAddr(), "a standalone server opened a cluster port")
+		require.Nil(t, s.discovery)
+		require.Empty(t, s.opts.Cluster.Username)
+		_, err := s.creds.read(t.Context(), routeCredentialName(discoveryClusterName))
+		require.Error(t, err, "a standalone server created the route credential")
+
+		// An explicit listen_address still clusters through the SQLite file.
+		now := time.Now()
+		explicit := startSteppedSQLServer(t, sqlStore, &now)
+		require.True(t, explicit.server.ClusterAddr().IP.IsLoopback())
+		require.Equal(t, routeAuthUser, explicit.opts.Cluster.Username)
+		return
 	default:
 		t.Fatalf("unexpected database %q", driver)
 	}
