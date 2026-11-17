@@ -12,7 +12,7 @@ import {
 } from 'app/features/dashboard-scene/scene/sandbox-consent/sandboxConsent';
 
 import { SandboxFrame } from './SandboxFrame';
-import { inlineSandboxFonts } from './sandboxFonts';
+import { getPreparedSandboxFonts, inlineSandboxFonts } from './sandboxFonts';
 import { textSandboxPolicy, type TextSandboxState } from './sandboxPolicy';
 import { getSandboxCss } from './sandboxStyles';
 import { isTextNewFeaturesEnabled } from './utils';
@@ -43,9 +43,10 @@ export function TextSandbox({ html, hasData = true, testId, className, minHeight
   useLayoutEffect(() => {
     let disposed = false;
     const css = getSandboxCss(theme);
+    const preparedCss = getPreparedSandboxFonts(css, fontRoot);
     // Render with fallback fonts immediately; slow font downloads must not hold content back.
-    setGlobalCss(css.replace(/@font-face\s*\{[^}]*\}/g, ''));
-    if (css.includes('@font-face')) {
+    setGlobalCss(preparedCss ?? css.replace(/@font-face\s*\{[^}]*\}/g, ''));
+    if (preparedCss === undefined && css.includes('@font-face')) {
       void inlineSandboxFonts(css, fontRoot).then((css) => {
         if (!disposed) {
           setGlobalCss(css);

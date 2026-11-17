@@ -686,6 +686,10 @@ it.each([true, false])('renders before fonts finish (font available: %s)', async
     rerender(<TextSandbox html="<p>Latest</p>" minHeight={200} />);
     expect(screen.getByTitle('Text panel content')).toBe(element);
     expect(runtime).toHaveBeenCalledTimes(2);
+    runtime.mockClear();
+    render(<TextSandbox html="<p>Cached fonts</p>" />);
+    await act(async () => {});
+    expect(runtime).toHaveBeenCalledTimes(1);
   } finally {
     style.remove();
     global.fetch = originalFetch;

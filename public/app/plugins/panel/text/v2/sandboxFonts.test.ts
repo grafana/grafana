@@ -1,4 +1,4 @@
-import { inlineSandboxFonts } from './sandboxFonts';
+import { getPreparedSandboxFonts, inlineSandboxFonts } from './sandboxFonts';
 
 describe('inlineSandboxFonts', () => {
   const originalFetch = global.fetch;
@@ -30,8 +30,14 @@ describe('inlineSandboxFonts', () => {
   it('shares stylesheet preparation and refreshes it when CSS or the font root changes', async () => {
     const css = '@font-face { src: url("/public/fonts/shared.woff2"); }';
     const first = inlineSandboxFonts(css, '/public/fonts/');
+    expect(getPreparedSandboxFonts(css, '/public/fonts/')).toBeUndefined();
     expect(inlineSandboxFonts(css, '/public/fonts/')).toBe(first);
     expect(await first).toBe('@font-face { src: url("data:font/woff2;base64,Zm9udA=="); }');
+    expect(getPreparedSandboxFonts(css, '/public/fonts/')).toBe(
+      '@font-face { src: url("data:font/woff2;base64,Zm9udA=="); }'
+    );
+    expect(getPreparedSandboxFonts(css, '/different/fonts/')).toBeUndefined();
+    expect(getPreparedSandboxFonts(`${css} p{color:red}`, '/public/fonts/')).toBeUndefined();
     expect(inlineSandboxFonts(css, '/public/fonts/')).toBe(first);
 
     expect(await inlineSandboxFonts(`${css} body { color: red; }`, '/public/fonts/')).toBe(
@@ -39,6 +45,32 @@ describe('inlineSandboxFonts', () => {
     );
     expect(await inlineSandboxFonts(css, '/other/fonts/')).toBe(css);
     expect(fetchFont).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not replace a newer prepared entry when an older font finishes later', async () => {
+    let finish!: (response: { ok: boolean; blob: () => Promise<Blob> }) => void;
+    fetchFont.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        })
+    );
+    const oldCss = '@font-face { src: url("/public/fonts/slow.woff2"); }';
+    const old = inlineSandboxFonts(oldCss, '/public/fonts/');
+    const newCss = 'p{color:blue}';
+    await inlineSandboxFonts(newCss, '/public/fonts/');
+    finish({ ok: true, blob: async () => new Blob(['font']) });
+    await old;
+    expect(getPreparedSandboxFonts(newCss, '/public/fonts/')).toBe(newCss);
+    expect(getPreparedSandboxFonts(oldCss, '/public/fonts/')).toBeUndefined();
+    const base = document.createElement('base');
+    base.href = 'https://different.test/';
+    document.head.append(base);
+    try {
+      expect(getPreparedSandboxFonts(newCss, '/public/fonts/')).toBeUndefined();
+    } finally {
+      base.remove();
+    }
   });
 
   it.each([
