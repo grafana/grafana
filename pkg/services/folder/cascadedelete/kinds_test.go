@@ -32,9 +32,12 @@ func TestNewDefaultController_AppendsExtraHandlersAfterTheDefaults(t *testing.T)
 		}
 		return ks
 	}
-	require.Equal(t, []ChildKind{ChildFolder, ChildDashboard}, kinds(NewDefaultController(nil, nil)))
-	c := NewDefaultController(nil, nil, KindHandler{Kind: kindTagged})
-	require.Equal(t, []ChildKind{ChildFolder, ChildDashboard, kindTagged}, kinds(c))
+	defaults := NewDefaultController(nil, nil)
+	t.Cleanup(defaults.ShutDown)
+	require.Equal(t, []ChildKind{ChildFolder, ChildDashboard}, kinds(defaults))
+	extended := NewDefaultController(nil, nil, KindHandler{Kind: kindTagged})
+	t.Cleanup(extended.ShutDown)
+	require.Equal(t, []ChildKind{ChildFolder, ChildDashboard, kindTagged}, kinds(extended))
 }
 
 func TestReconcile_NoHandlersKeepsTheFolder(t *testing.T) {
