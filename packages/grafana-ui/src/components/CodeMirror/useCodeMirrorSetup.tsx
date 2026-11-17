@@ -28,6 +28,8 @@ export interface CodeMirrorSetup {
   languageAlert: ReactNode;
 }
 
+const noop = () => {};
+
 const getCompletionExtensions = (
   sources: readonly CodeMirrorCompletionSource[] | undefined,
   mode: CodeMirrorCompletionMode,
@@ -129,7 +131,7 @@ export function useCodeMirrorSetup({
   const sources = useShallowStable(completionSources);
   const basicSetup = useShallowStable(basicSetupProp);
   const editorRef = useRef<ReactCodeMirrorRef>(null);
-  const handleChange = useStableCallback(onChange);
+  const handleChange = useStableCallback(onChange ?? noop);
   const handleBlur = useStableCallback(() => {
     const editorView = editorRef.current?.view;
     if (editorView) {

@@ -89,7 +89,6 @@ export function TableCellInspectorDrawer({
             height="500px"
             language="json"
             value={text}
-            onChange={() => {}}
             readOnly
             lineWrapping
             aria-label={t('grafana-ui.table.inspect-drawer-title', 'Inspect value')}
