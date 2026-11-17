@@ -297,12 +297,15 @@ func TestIntegration_RecordingSeriesInRuleState(t *testing.T) {
 		require.Len(t, instances, 1)
 	})
 
-	t.Run("a plain full sync drops the series, as the table is rewritten", func(t *testing.T) {
+	t.Run("a plain full sync keeps the stored series", func(t *testing.T) {
 		require.NoError(t, ng.InstanceStore.FullSync(ctx, []models.AlertInstance{instance(alerting, "h3")}, 0, nil))
 
 		got, err := seriesStore.ListRecordingSeries(ctx, recording.OrgID)
 		require.NoError(t, err)
-		require.Empty(t, got)
+		require.Equal(t, series, got[recording.UID])
+		instances, err := ng.InstanceStore.ListAlertInstances(ctx, &models.ListAlertInstancesQuery{RuleOrgID: alerting.OrgID, RuleUID: alerting.UID})
+		require.NoError(t, err)
+		require.Len(t, instances, 1)
 	})
 
 	t.Run("deleting the series keeps the alert instances of the row", func(t *testing.T) {

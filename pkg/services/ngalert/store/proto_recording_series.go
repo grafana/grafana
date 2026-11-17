@@ -86,6 +86,26 @@ func (st ProtoInstanceDBStore) DeleteRecordingSeriesForRule(ctx context.Context,
 	})
 }
 
+// readStoredSeries returns the series of every row, by rule.
+func readStoredSeries(sess *sqlstore.DBSession) (map[models.AlertRuleKey][]*pb.RecordingSeries, error) {
+	rows := make([]compressedRuleStateRow, 0)
+	if err := sess.SQL("SELECT * FROM alert_rule_state").Find(&rows); err != nil {
+		return nil, fmt.Errorf("failed to query alert_rule_state: %w", err)
+	}
+
+	stored := make(map[models.AlertRuleKey][]*pb.RecordingSeries)
+	for _, row := range rows {
+		ruleState, err := decompressRuleState(row.Data)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decompress state for rule %s: %w", row.RuleUID, err)
+		}
+		if ruleState != nil && len(ruleState.Series) > 0 {
+			stored[models.AlertRuleKey{OrgID: row.OrgID, UID: row.RuleUID}] = ruleState.Series
+		}
+	}
+	return stored, nil
+}
+
 func hasSeries(series map[models.AlertRuleKey][]models.RecordingSeries) bool {
 	for _, set := range series {
 		if len(set) > 0 {
