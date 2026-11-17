@@ -10,17 +10,25 @@ import (
 
 // SupportedResourceSet is the set of resources that provisioning supports: the configured ones,
 // plus the kinds that a source such as the app manifests adds while the process runs.
-type SupportedResourceSet struct {
+type SupportedResourceSet interface {
+	// Get returns the set at the time of the call.
+	Get() []SupportedResource
+	// Update replaces the kinds that the source added. A configured resource, or a configured
+	// collection that covers a kind, takes precedence over the kind.
+	Update(kinds []SupportedResource)
+	ClientFactoryOption
+}
+
+func NewSupportedResourceSet(configured []SupportedResource) SupportedResourceSet {
+	return &supportedResourceSet{configured: configured}
+}
+
+type supportedResourceSet struct {
 	configured []SupportedResource
 	added      atomic.Pointer[[]SupportedResource]
 }
 
-func NewSupportedResourceSet(configured []SupportedResource) *SupportedResourceSet {
-	return &SupportedResourceSet{configured: configured}
-}
-
-// Latest returns the set at the time of the call.
-func (s *SupportedResourceSet) Latest() []SupportedResource {
+func (s *supportedResourceSet) Get() []SupportedResource {
 	added := s.addedKinds()
 	if len(added) == 0 {
 		return s.configured
@@ -28,9 +36,7 @@ func (s *SupportedResourceSet) Latest() []SupportedResource {
 	return append(slices.Clip(defaultSupportedResources(s.configured)), added...)
 }
 
-// Update replaces the kinds that the source added. A configured resource, or a configured
-// collection that covers a kind, takes precedence over the kind.
-func (s *SupportedResourceSet) Update(kinds []SupportedResource) {
+func (s *supportedResourceSet) Update(kinds []SupportedResource) {
 	added := []SupportedResource{}
 	seen := sets.New[schema.GroupKind]()
 	for _, r := range defaultSupportedResources(s.configured) {
@@ -46,9 +52,9 @@ func (s *SupportedResourceSet) Update(kinds []SupportedResource) {
 	s.added.Store(&added)
 }
 
-func (s *SupportedResourceSet) apply(o *clientFactoryOptions) { o.configured, o.set = s.configured, s }
+func (s *supportedResourceSet) apply(o *clientFactoryOptions) { o.configured, o.set = s.configured, s }
 
-func (s *SupportedResourceSet) addedKinds() []SupportedResource {
+func (s *supportedResourceSet) addedKinds() []SupportedResource {
 	if s == nil || s.added.Load() == nil {
 		return nil
 	}

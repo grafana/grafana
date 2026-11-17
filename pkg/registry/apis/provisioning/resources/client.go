@@ -207,7 +207,7 @@ type clientFactory struct {
 	expandMu sync.Mutex
 	expanded []SupportedResource
 	// set adds the kinds that arrive after startup, when the factory has one.
-	set *SupportedResourceSet
+	set *supportedResourceSet
 }
 
 // holds reports whether this factory's API server stores a collection, and so expands it. A
@@ -340,14 +340,14 @@ func NewClientFactory(configProvider apiserver.RestConfigProvider, supported ...
 }
 
 // ClientFactoryOption gives a ClientFactory its supported resources: SupportedResource values
-// for a fixed list, or a *SupportedResourceSet for a set that a source can update.
+// for a fixed list, or a SupportedResourceSet for a set that a source can update.
 type ClientFactoryOption interface {
 	apply(*clientFactoryOptions)
 }
 
 type clientFactoryOptions struct {
 	configured []SupportedResource
-	set        *SupportedResourceSet
+	set        *supportedResourceSet
 }
 
 func (r SupportedResource) apply(o *clientFactoryOptions) { o.configured = append(o.configured, r) }

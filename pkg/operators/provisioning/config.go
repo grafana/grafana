@@ -361,18 +361,28 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 	}
 
 	supported := resources.NewSupportedResourceSet(supportedResources)
-	manifestWatcher, err := resources.WatchManifests(supported, nil, resource.ManifestWatcherConfig{
-		DiscoveryURL: aggregatedServerURL,
-		Exchanger:    tokenExchangeClient,
-		TLS:          &tlsConfig,
+	c.manifestWatcher, err = newManifestWatcher(supported, resource.ManifestWatcherConfig{
+		DiscoveryURL:      aggregatedServerURL,
+		DiscoveryAudience: provisioning.GROUP,
+		Exchanger:         tokenExchangeClient,
+		TLS:               &tlsConfig,
+		PollInterval:      time.Minute,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create manifest watcher: %w", err)
 	}
 	clients := resources.NewClientFactoryForMultipleAPIServers(configProviders, supported)
 	c.clients = clients
-	c.manifestWatcher = manifestWatcher
 	return clients, nil
+}
+
+// newManifestWatcher returns the service that adds to supported the kinds that the app manifests
+// of the router enable. Without a router URL, the service does nothing.
+func newManifestWatcher(supported resources.SupportedResourceSet, cfg resource.ManifestWatcherConfig) (services.Service, error) {
+	if cfg.DiscoveryURL == "" {
+		return services.NewIdleService(nil, nil), nil
+	}
+	return resource.NewManifestWatcher(cfg, nil, resources.ManifestKinds(supported))
 }
 
 func (c *ControllerConfig) ProvisioningClient() (*client.Clientset, error) {

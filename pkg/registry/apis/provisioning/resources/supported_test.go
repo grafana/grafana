@@ -16,7 +16,7 @@ func TestSupportedResourceSet(t *testing.T) {
 	gadget := SupportedResource{GroupKind: schema.GroupKind{Group: "example.ext.grafana.app", Kind: "Gadget"}, Capabilities: sets.New[string]()}
 
 	t.Run("returns the configured set before an update", func(t *testing.T) {
-		require.Equal(t, []SupportedResource{folder}, NewSupportedResourceSet([]SupportedResource{folder}).Latest())
+		require.Equal(t, []SupportedResource{folder}, NewSupportedResourceSet([]SupportedResource{folder}).Get())
 	})
 
 	t.Run("adds the kinds of an update, one time each", func(t *testing.T) {
@@ -24,7 +24,7 @@ func TestSupportedResourceSet(t *testing.T) {
 
 		set.Update([]SupportedResource{widget, gadget, widget})
 
-		require.Equal(t, []SupportedResource{folder, widget, gadget}, set.Latest())
+		require.Equal(t, []SupportedResource{folder, widget, gadget}, set.Get())
 	})
 
 	t.Run("follows the updates", func(t *testing.T) {
@@ -33,7 +33,7 @@ func TestSupportedResourceSet(t *testing.T) {
 		set.Update([]SupportedResource{widget, gadget})
 		set.Update([]SupportedResource{widget})
 
-		require.Equal(t, []SupportedResource{folder, widget}, set.Latest())
+		require.Equal(t, []SupportedResource{folder, widget}, set.Get())
 	})
 
 	t.Run("keeps a configured resource over the same kind of an update", func(t *testing.T) {
@@ -42,7 +42,7 @@ func TestSupportedResourceSet(t *testing.T) {
 
 		set.Update([]SupportedResource{widget})
 
-		require.Equal(t, []SupportedResource{configured}, set.Latest())
+		require.Equal(t, []SupportedResource{configured}, set.Get())
 	})
 
 	t.Run("keeps a configured collection over a kind that it covers", func(t *testing.T) {
@@ -51,7 +51,7 @@ func TestSupportedResourceSet(t *testing.T) {
 
 		set.Update([]SupportedResource{widget})
 
-		require.Equal(t, []SupportedResource{collection}, set.Latest())
+		require.Equal(t, []SupportedResource{collection}, set.Get())
 	})
 
 	t.Run("keeps the default set when none is configured", func(t *testing.T) {
@@ -59,7 +59,7 @@ func TestSupportedResourceSet(t *testing.T) {
 
 		set.Update([]SupportedResource{widget})
 
-		require.Equal(t, slices.Concat(SupportedProvisioningResources, []SupportedResource{widget}), set.Latest())
+		require.Equal(t, slices.Concat(SupportedProvisioningResources, []SupportedResource{widget}), set.Get())
 	})
 
 	t.Run("adds the kinds to the clients of a factory", func(t *testing.T) {
