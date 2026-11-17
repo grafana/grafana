@@ -238,7 +238,7 @@ function PanelActions({
 
   const onSettings = () => {
     report('settings');
-    dashboard.state.sidebar.state.selectionContext.onSelect({ id: panel.state.key! }, { force: true });
+    dashboard.state.sidebar.openElementSettings(panel);
   };
 
   const onRemove = () => {
