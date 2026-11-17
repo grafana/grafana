@@ -144,7 +144,7 @@ export function SavePendingChangesForm({ dashboard, drawer, changeInfo }: Props)
         <Stack alignItems="center">
           {saveButton(false)}
           {cancelButton}
-          {!changeInfo.hasChanges && (
+          {!changeInfo.hasChanges && !unrecorded && (
             <div>
               <Trans i18nKey="dashboard-scene.save-dashboard-form.render-footer.no-changes-to-save">
                 No changes to save

@@ -179,6 +179,7 @@ it('saves an edit not recorded yet, even when the recorded changes match the sav
   const { user } = render(
     <SavePendingChangesForm dashboard={scene} drawer={drawer} changeInfo={scene.getDashboardChanges()} />
   );
+  expect(screen.queryByText('No changes to save')).not.toBeInTheDocument();
 
   await user.click(screen.getByRole('button', { name: 'Save' }));
 
