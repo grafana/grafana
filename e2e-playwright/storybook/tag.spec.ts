@@ -59,6 +59,39 @@ test('removable story updates a polite status after removal and clears it on res
 });
 
 for (const theme of ['light', 'dark', 'visual_refresh_light', 'visual_refresh_dark']) {
+  test(`short removable tag actions have non-overlapping 24px pointer targets in ${theme}`, async ({ page }) => {
+    await page.goto(
+      `/iframe.html?id=information-tag--label-and-remove&viewMode=story&globals=theme:${theme}&args=name:A`
+    );
+    const label = page.getByRole('button', { name: 'A', exact: true });
+    const remove = page.getByRole('button', { name: 'Remove tag: A', exact: true });
+
+    for (const button of [label, remove]) {
+      await button.hover();
+      const target = await button.evaluate((element) => {
+        const rect = element.getBoundingClientRect();
+        const points = [
+          [rect.left + 1, rect.top + rect.height / 2],
+          [rect.right - 1, rect.top + rect.height / 2],
+          [rect.left + rect.width / 2, rect.top + 1],
+          [rect.left + rect.width / 2, rect.bottom - 1],
+        ];
+        return {
+          width: rect.width,
+          height: rect.height,
+          edgesHitButton: points.every(([x, y]) => document.elementFromPoint(x, y)?.closest('button') === element),
+        };
+      });
+      expect(target.width).toBeGreaterThanOrEqual(24);
+      expect(target.height).toBeGreaterThanOrEqual(24);
+      expect(target.edgesHitButton).toBe(true);
+    }
+
+    const labelBox = await label.boundingBox();
+    const removeBox = await remove.boundingBox();
+    expect(labelBox!.x + labelBox!.width).toBeLessThanOrEqual(removeBox!.x);
+  });
+
   test(`removable tag hover feedback stays on the individual action in ${theme}`, async ({ page }) => {
     await page.goto(`/iframe.html?id=information-tag--states&viewMode=story&globals=theme:${theme}`);
     const label = page.getByRole('button', { name: 'Both actions', exact: true });

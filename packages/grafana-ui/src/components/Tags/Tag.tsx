@@ -150,6 +150,9 @@ const getTagStyles = (theme: GrafanaTheme2, name: string, colorIndex?: number, b
     label: css(label),
     labelButton: css({
       ...label,
+      justifyContent: 'center',
+      minWidth: theme.spacing(3),
+      minHeight: theme.spacing(3),
       borderRadius: theme.shape.radius.sm,
       '&:focus-visible': getFocusStyles(theme),
       '&:focus:not(:focus-visible)': getMouseFocusStyles(theme),
@@ -164,7 +167,9 @@ const getTagStyles = (theme: GrafanaTheme2, name: string, colorIndex?: number, b
     remove: css({
       color: text,
       margin: 0,
-      '&:hover::before': {
+      minWidth: theme.spacing(3),
+      minHeight: theme.spacing(3),
+      '&::before': {
         display: 'none',
       },
     }),

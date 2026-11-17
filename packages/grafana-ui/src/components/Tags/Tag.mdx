@@ -66,6 +66,7 @@ activate a parent row or card.
 When both callbacks are present, the label and close controls are native sibling buttons.
 Tab reaches the label first, then the close button. Enter and Space activate the focused button.
 A tag with only `onRemove` has one tab stop, its close button. There is no Delete shortcut.
+On removable tags, the label button and close button each have a minimum 24 by 24 CSS pixel target.
 
 For removable tags, HTML attributes and the forwarded ref apply to the wrapper rather than either button.
 When `onClick` is present, `aria-label` and `aria-labelledby` name the label button instead.
