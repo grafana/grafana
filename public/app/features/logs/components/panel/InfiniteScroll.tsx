@@ -35,7 +35,6 @@ import { type LogLineVirtualization } from './virtualization';
 // The data every LogLine needs
 interface LogData {
   displayedFields: string[];
-  firstLogOfPage: string[];
   handleOverflow: (index: number, id: string, height?: number) => void;
   infiniteLoaderState: InfiniteLoaderState;
   lastLogOfPage: string[];
@@ -114,7 +113,6 @@ export const InfiniteScroll = ({
   const lastEvent = useRef<Event | WheelEvent | null>(null);
   const countRef = useRef(0);
   const lastLogOfPage = useRef<string[]>([]);
-  const firstLogOfPage = useRef<string[]>([]);
   const styles = useStyles2(getStyles, virtualization, displayedFields);
   const resetStateTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const scrollToLogLineRef = useRef<LogListModel | undefined>(undefined);
@@ -133,7 +131,6 @@ export const InfiniteScroll = ({
     // instead of latching end-of-range.
     if (isFreshQuery) {
       lastLogOfPage.current = [];
-      firstLogOfPage.current = [];
       scrollToLogLineRef.current = undefined;
       setAutoScroll(true);
       if (infiniteLoaderState !== 'idle') {
@@ -164,6 +161,11 @@ export const InfiniteScroll = ({
         const outOfBounds = startCount !== null && logs.length === startCount && infiniteScrollMode === 'interval';
         setInfiniteLoaderState(outOfBounds ? 'out-of-bounds' : 'idle');
         if (scrollToLogLineRef.current) {
+          // The new page ends right before the line that was first, which is where the page divider goes.
+          const index = logs.findIndex((log) => log.uid === scrollToLogLineRef.current?.uid);
+          if (index > 0) {
+            lastLogOfPage.current.push(logs[index - 1].uid);
+          }
           setAutoScroll(true);
         }
       }
@@ -209,9 +211,8 @@ export const InfiniteScroll = ({
         scrollToLogLineRef.current = undefined;
         lastLogOfPage.current.push(logs[logs.length - 1].uid);
       } else {
-        // New logs are prepended, keep the current first line in view and mark it as the start of the previous page.
+        // New logs are prepended, keep the current first line in view.
         scrollToLogLineRef.current = logs[0];
-        firstLogOfPage.current.push(logs[0].uid);
       }
       // Snapshot the row count so the completion effect can tell whether new rows arrived.
       loadMoreCountRef.current = logs.length;
@@ -300,7 +301,6 @@ export const InfiniteScroll = ({
   const itemData = useMemo<LogData>(
     () => ({
       displayedFields,
-      firstLogOfPage: isFreshQuery ? [] : firstLogOfPage.current,
       handleOverflow,
       infiniteLoaderState,
       lastLogOfPage: isFreshQuery ? [] : lastLogOfPage.current,
@@ -425,7 +425,6 @@ function getMessageFromInfiniteLoaderState(
 const Log = memo(({ index, style, data }: ListChildComponentProps<LogData>) => {
   const {
     displayedFields,
-    firstLogOfPage,
     handleOverflow,
     infiniteLoaderState,
     lastLogOfPage,
@@ -464,7 +463,7 @@ const Log = memo(({ index, style, data }: ListChildComponentProps<LogData>) => {
       styles={styles}
       timeRange={timeRange}
       timeZone={timeZone}
-      variant={getLogLineVariant(logs, index, lastLogOfPage, firstLogOfPage)}
+      variant={getLogLineVariant(logs, index, lastLogOfPage)}
       virtualization={virtualization}
       wrapLogMessage={wrapLogMessage}
       onOverflow={handleOverflow}
@@ -473,11 +472,7 @@ const Log = memo(({ index, style, data }: ListChildComponentProps<LogData>) => {
 });
 Log.displayName = 'InfiniteScrollLog';
 
-function getLogLineVariant(logs: LogListModel[], index: number, lastLogOfPage: string[], firstLogOfPage: string[]) {
-  if (logs[index] && firstLogOfPage.includes(logs[index].uid)) {
-    // First log of a page loaded from the top
-    return 'infinite-scroll';
-  }
+function getLogLineVariant(logs: LogListModel[], index: number, lastLogOfPage: string[]) {
   if (!lastLogOfPage.length || !logs[index - 1]) {
     return undefined;
   }
