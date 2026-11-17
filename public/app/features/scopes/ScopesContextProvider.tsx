@@ -1,6 +1,7 @@
 import { createContext, type ReactNode, useMemo, useContext, useEffect } from 'react';
 
-import { config, locationService, ScopesContext } from '@grafana/runtime';
+import { locationService, ScopesContext } from '@grafana/runtime';
+import { useFlagScopeFilters } from '@grafana/runtime/internal';
 
 import { ScopesApiClient } from './ScopesApiClient';
 import { ScopesService } from './ScopesService';
@@ -44,6 +45,7 @@ export function defaultScopesServices() {
 }
 
 export const ScopesContextProvider = ({ children, services }: ScopesContextProviderProps) => {
+  const scopeFiltersEnabled = useFlagScopeFilters();
   const memoizedServices = useMemo(() => {
     return services ?? defaultScopesServices();
   }, [services]);
@@ -55,8 +57,8 @@ export const ScopesContextProvider = ({ children, services }: ScopesContextProvi
   }, [memoizedServices]);
 
   return (
-    <ScopesContext.Provider value={config.featureToggles.scopeFilters ? memoizedServices.scopesService : undefined}>
-      <ScopesServicesContext.Provider value={config.featureToggles.scopeFilters ? memoizedServices : undefined}>
+    <ScopesContext.Provider value={scopeFiltersEnabled ? memoizedServices.scopesService : undefined}>
+      <ScopesServicesContext.Provider value={scopeFiltersEnabled ? memoizedServices : undefined}>
         {children}
       </ScopesServicesContext.Provider>
     </ScopesContext.Provider>

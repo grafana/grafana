@@ -613,30 +613,9 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 		return nil, err
 	}
 	datasourcePermissionsService := ossaccesscontrol.ProvideDatasourcePermissionsService(cfg, featureToggles, sqlStore)
-	orgRoleMapper := connectors.ProvideOrgRoleMapper(configProvider, orgService)
-	socialService := socialimpl.ProvideService(ctx, configProvider, featureToggles, usageStats, bundleregistryService, remoteCache, orgRoleMapper, ssosettingsimplService)
-	authinfoimplStore, err := authinfoimpl.ProvideLegacyStore(ctx, legacyDatabaseProvider, secretsService)
-	if err != nil {
-		return nil, err
-	}
-	loginStore := authinfoimpl.ProvideStore(authinfoimplStore, cfg, eventualRestConfigProvider, tracingService)
-	authinfoimplService := authinfoimpl.ProvideService(loginStore, remoteCache, secretsService)
-	userAuthTokenService, err := authimpl.ProvideUserAuthTokenService(ctx, legacyDatabaseProvider, serverLockService, quotaService, secretsService, configProvider, tracingService, featureToggles)
-	if err != nil {
-		return nil, err
-	}
-	oauthtokenService := oauthtoken.ProvideService(socialService, authinfoimplService, configProvider, registerer, serverLockService, tracingService, userAuthTokenService, featureToggles)
-	ossCachingService := caching.ProvideCachingService()
-	cachingServiceClient := caching.ProvideCachingServiceClient(ossCachingService, featureToggles)
-	middlewareHandler, err := pluginsintegration.ProvideClientWithMiddlewares(cfg, inMemory, oauthtokenService, tracingService, cachingServiceClient, featureToggles, registerer)
-	if err != nil {
-		return nil, err
-	}
-	requestConfigProvider := pluginconfig.NewRequestConfigProvider(pluginInstanceCfg, defaultSettingsProvider)
-	baseProvider := plugincontext.ProvideBaseService(cfg, requestConfigProvider)
 	dataSourceRetriever := service6.ProvideDataSourceRetriever(sqlStore, featureToggles)
 	permissionsDeleter := service6.ProvideNilPermissionsDeleter()
-	service13, err := service6.ProvideService(sqlStore, secretsService, secretsKVStore, cfg, featureToggles, accessControl, datasourcePermissionsService, quotaService, pluginstoreService, middlewareHandler, baseProvider, dataSourceRetriever, permissionsDeleter)
+	service13, err := service6.ProvideService(sqlStore, secretsService, secretsKVStore, cfg, featureToggles, accessControl, datasourcePermissionsService, quotaService, pluginstoreService, dataSourceRetriever, permissionsDeleter)
 	if err != nil {
 		return nil, err
 	}
@@ -662,6 +641,25 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	}
 	pluginService := service7.ProvideDashboardPluginService(featureToggles, dashboardServiceImpl)
 	service14 := service8.ProvideService(fileStoreManager, pluginService)
+	orgRoleMapper := connectors.ProvideOrgRoleMapper(configProvider, orgService)
+	socialService := socialimpl.ProvideService(ctx, configProvider, featureToggles, usageStats, bundleregistryService, remoteCache, orgRoleMapper, ssosettingsimplService)
+	authinfoimplStore, err := authinfoimpl.ProvideLegacyStore(ctx, legacyDatabaseProvider, secretsService)
+	if err != nil {
+		return nil, err
+	}
+	loginStore := authinfoimpl.ProvideStore(authinfoimplStore, cfg, eventualRestConfigProvider, tracingService)
+	authinfoimplService := authinfoimpl.ProvideService(loginStore, remoteCache, secretsService)
+	userAuthTokenService, err := authimpl.ProvideUserAuthTokenService(ctx, legacyDatabaseProvider, serverLockService, quotaService, secretsService, configProvider, tracingService, featureToggles)
+	if err != nil {
+		return nil, err
+	}
+	oauthtokenService := oauthtoken.ProvideService(socialService, authinfoimplService, configProvider, registerer, serverLockService, tracingService, userAuthTokenService, featureToggles)
+	ossCachingService := caching.ProvideCachingService()
+	cachingServiceClient := caching.ProvideCachingServiceClient(ossCachingService, featureToggles)
+	middlewareHandler, err := pluginsintegration.ProvideClientWithMiddlewares(cfg, inMemory, oauthtokenService, tracingService, cachingServiceClient, featureToggles, registerer)
+	if err != nil {
+		return nil, err
+	}
 	pluginerrsStore := pluginerrs.ProvideStore(errorRegistry)
 	repoManager, err := repo.ProvideService(pluginManagementCfg)
 	if err != nil {
@@ -725,6 +723,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	dataSourceProxyService := datasourceproxy.ProvideService(cacheServiceImpl, ossDataSourceRequestValidator, pluginstoreService, cfg, httpclientProvider, oauthtokenService, service13, tracingService, secretsService, featureToggles)
 	k8sClients := api2.ProvideK8sClients(cfg, eventualRestConfigProvider)
 	searchService := search2.ProvideService(cfg, sqlStore, k8sClients, dashboardService, folderimplService, featureToggles, sortService)
+	requestConfigProvider := pluginconfig.NewRequestConfigProvider(pluginInstanceCfg, defaultSettingsProvider)
 	plugincontextProvider := plugincontext.ProvideService(cfg, cacheService, pluginstoreService, cacheServiceImpl, service13, service12, requestConfigProvider)
 	dashboardAccessService := service7.ProvideDashboardAccessService(featureToggles, dashboardServiceImpl)
 	grafanaLive, err := live.ProvideService(cfg, routeRegisterImpl, plugincontextProvider, pluginstoreService, middlewareHandler, cacheServiceImpl, usageStats, featureToggles, dashboardAccessService, eventualRestConfigProvider)
@@ -1413,18 +1412,9 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	datasourcePermissionsService := ossaccesscontrol.ProvideDatasourcePermissionsService(cfg, featureToggles, sqlStore)
-	oauthtokentestService := oauthtokentest.ProvideService()
-	ossCachingService := caching.ProvideCachingService()
-	cachingServiceClient := caching.ProvideCachingServiceClient(ossCachingService, featureToggles)
-	middlewareHandler, err := pluginsintegration.ProvideClientWithMiddlewares(cfg, inMemory, oauthtokentestService, tracingService, cachingServiceClient, featureToggles, registerer)
-	if err != nil {
-		return nil, err
-	}
-	requestConfigProvider := pluginconfig.NewRequestConfigProvider(pluginInstanceCfg, defaultSettingsProvider)
-	baseProvider := plugincontext.ProvideBaseService(cfg, requestConfigProvider)
 	dataSourceRetriever := service6.ProvideDataSourceRetriever(sqlStore, featureToggles)
 	permissionsDeleter := service6.ProvideNilPermissionsDeleter()
-	service13, err := service6.ProvideService(sqlStore, secretsService, secretsKVStore, cfg, featureToggles, accessControl, datasourcePermissionsService, quotaService, pluginstoreService, middlewareHandler, baseProvider, dataSourceRetriever, permissionsDeleter)
+	service13, err := service6.ProvideService(sqlStore, secretsService, secretsKVStore, cfg, featureToggles, accessControl, datasourcePermissionsService, quotaService, pluginstoreService, dataSourceRetriever, permissionsDeleter)
 	if err != nil {
 		return nil, err
 	}
@@ -1450,6 +1440,13 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	}
 	pluginService := service7.ProvideDashboardPluginService(featureToggles, dashboardServiceImpl)
 	service14 := service8.ProvideService(fileStoreManager, pluginService)
+	oauthtokentestService := oauthtokentest.ProvideService()
+	ossCachingService := caching.ProvideCachingService()
+	cachingServiceClient := caching.ProvideCachingServiceClient(ossCachingService, featureToggles)
+	middlewareHandler, err := pluginsintegration.ProvideClientWithMiddlewares(cfg, inMemory, oauthtokentestService, tracingService, cachingServiceClient, featureToggles, registerer)
+	if err != nil {
+		return nil, err
+	}
 	pluginerrsStore := pluginerrs.ProvideStore(errorRegistry)
 	repoManager, err := repo.ProvideService(pluginManagementCfg)
 	if err != nil {
@@ -1526,6 +1523,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	dataSourceProxyService := datasourceproxy.ProvideService(cacheServiceImpl, ossDataSourceRequestValidator, pluginstoreService, cfg, httpclientProvider, oauthtokenService, service13, tracingService, secretsService, featureToggles)
 	k8sClients := api2.ProvideK8sClients(cfg, eventualRestConfigProvider)
 	searchService := search2.ProvideService(cfg, sqlStore, k8sClients, dashboardService, folderimplService, featureToggles, sortService)
+	requestConfigProvider := pluginconfig.NewRequestConfigProvider(pluginInstanceCfg, defaultSettingsProvider)
 	plugincontextProvider := plugincontext.ProvideService(cfg, cacheService, pluginstoreService, cacheServiceImpl, service13, service12, requestConfigProvider)
 	dashboardAccessService := service7.ProvideDashboardAccessService(featureToggles, dashboardServiceImpl)
 	grafanaLive, err := live.ProvideService(cfg, routeRegisterImpl, plugincontextProvider, pluginstoreService, middlewareHandler, cacheServiceImpl, usageStats, featureToggles, dashboardAccessService, eventualRestConfigProvider)
@@ -2231,14 +2229,13 @@ func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients
 		return nil, err
 	}
 	datasourcePermissionsService := ossaccesscontrol.ProvideDatasourcePermissionsService(cfg, featureToggles, sqlStore)
-	requestConfigProvider := pluginconfig.NewRequestConfigProvider(pluginInstanceCfg, defaultSettingsProvider)
-	baseProvider := plugincontext.ProvideBaseService(cfg, requestConfigProvider)
 	dataSourceRetriever := service6.ProvideDataSourceRetriever(sqlStore, featureToggles)
 	permissionsDeleter := service6.ProvideNilPermissionsDeleter()
-	service13, err := service6.ProvideService(sqlStore, secretsService, secretsKVStore, cfg, featureToggles, accessControl, datasourcePermissionsService, quotaService, pluginstoreService, middlewareHandler, baseProvider, dataSourceRetriever, permissionsDeleter)
+	service13, err := service6.ProvideService(sqlStore, secretsService, secretsKVStore, cfg, featureToggles, accessControl, datasourcePermissionsService, quotaService, pluginstoreService, dataSourceRetriever, permissionsDeleter)
 	if err != nil {
 		return nil, err
 	}
+	requestConfigProvider := pluginconfig.NewRequestConfigProvider(pluginInstanceCfg, defaultSettingsProvider)
 	plugincontextProvider := plugincontext.ProvideService(cfg, cacheService, pluginstoreService, cacheServiceImpl, service13, service12, requestConfigProvider)
 	databaseDatabase := database2.ProvideDatabase(sqlStore, tracer)
 	encryptedValueStorage, err := encryption.ProvideEncryptedValueStorage(databaseDatabase, tracer)

@@ -65,20 +65,6 @@ var (
 	_ rest.CollectionDeleter = (*legacyStorage)(nil)
 )
 
-// toAPIError classifies errors from the alert rule service into the matching apierrors status.
-func toAPIError(name string, err error) error {
-	switch {
-	case errors.Is(err, ngmodels.ErrAlertRuleFailedValidation):
-		return k8serrors.NewBadRequest(err.Error())
-	case errors.Is(err, ngmodels.ErrQuotaReached):
-		return k8serrors.NewForbidden(ResourceInfo.GroupResource(), name, err)
-	case errors.Is(err, ngmodels.ErrAlertRuleNotFound):
-		return k8serrors.NewNotFound(ResourceInfo.GroupResource(), name)
-	default:
-		return err
-	}
-}
-
 type legacyStorage struct {
 	service        legacy.LegacyRuleService
 	namespacer     request.NamespaceMapper
@@ -296,64 +282,18 @@ func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, createVa
 
 	created, err := s.service.CreateAlertRule(ctx, user, *domainModel, managerProps)
 	if err != nil {
-		return nil, toAPIError(p.GetName(), err)
+		return nil, common.ToAPIError(ResourceInfo.GroupResource(), p.GetName(), err)
 	}
 
 	return convertToK8sResource(info.OrgID, &created, managerProps, s.namespacer)
 }
 
-func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
-	info, err := request.NamespaceInfoFrom(ctx, true)
-	if err != nil {
-		return nil, false, err
-	}
-
-	user, err := identity.GetRequester(ctx)
-	if err != nil {
-		return nil, false, err
-	}
-
-	old, err := s.Get(ctx, name, nil)
-	if err != nil {
-		return old, false, err
-	}
-
-	obj, err := objInfo.UpdatedObject(ctx, old)
-	if err != nil {
-		return old, false, err
-	}
-	if updateValidation != nil {
-		if err := updateValidation(ctx, obj, old); err != nil {
-			return nil, false, err
-		}
-	}
-
-	new, err := convert.Hub[*v1beta1.AlertRule](obj)
-	if err != nil {
-		return nil, false, k8serrors.NewBadRequest("expected valid alert rule object")
-	}
-
-	domainModel, managerProps, err := convertToDomainModel(info.OrgID, new)
-	if err != nil {
-		return old, false, err
-	}
-
-	_, err = s.service.UpdateAlertRule(ctx, user, *domainModel, managerProps)
-	if err != nil {
-		return nil, false, toAPIError(name, err)
-	}
-
-	updated, managerProps, err := s.service.GetAlertRule(ctx, user, name)
-	if err != nil {
-		return nil, false, err
-	}
-
-	rule, err := convertToK8sResource(info.OrgID, &updated, managerProps, s.namespacer)
-	if err != nil {
-		return nil, false, err
-	}
-
-	return rule, false, nil
+func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, _ rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, _ bool, _ *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	return common.LegacyRuleUpdate(
+		ctx, name, objInfo, updateValidation,
+		&s.service, s.namespacer, ResourceInfo, s.Get,
+		convertToDomainModel, convertToK8sResource,
+	)
 }
 
 func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, opts *metav1.DeleteOptions) (runtime.Object, bool, error) {
