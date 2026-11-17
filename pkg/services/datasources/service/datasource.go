@@ -26,13 +26,11 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/awsexternalid"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -50,20 +48,18 @@ var (
 )
 
 type Service struct {
-	SQLStore                  Store
-	SecretsStore              kvstore.SecretsKVStore
-	SecretsService            secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
-	cfg                       *setting.Cfg
-	features                  featuremgmt.FeatureToggles
-	permissionsService        accesscontrol.DatasourcePermissionsService
-	ac                        accesscontrol.AccessControl
-	logger                    log.Logger
-	db                        db.DB
-	pluginStore               pluginstore.Store
-	pluginClient              plugins.Client
-	basePluginContextProvider plugincontext.BasePluginContextProvider
-	retriever                 DataSourceRetriever
-	permissionsDeleter        datasources.PermissionsDeleter
+	SQLStore           Store
+	SecretsStore       kvstore.SecretsKVStore
+	SecretsService     secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
+	cfg                *setting.Cfg
+	features           featuremgmt.FeatureToggles
+	permissionsService accesscontrol.DatasourcePermissionsService
+	ac                 accesscontrol.AccessControl
+	logger             log.Logger
+	db                 db.DB
+	pluginStore        pluginstore.Store
+	retriever          DataSourceRetriever
+	permissionsDeleter datasources.PermissionsDeleter
 
 	ptc proxyTransportCache
 }
@@ -82,8 +78,7 @@ func ProvideService(
 	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	secretsStore kvstore.SecretsKVStore, cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl, datasourcePermissionsService accesscontrol.DatasourcePermissionsService,
-	quotaService quota.Service, pluginStore pluginstore.Store, pluginClient plugins.Client,
-	basePluginContextProvider plugincontext.BasePluginContextProvider,
+	quotaService quota.Service, pluginStore pluginstore.Store,
 	retriever DataSourceRetriever,
 	permissionsDeleter datasources.PermissionsDeleter,
 ) (*Service, error) {
@@ -96,17 +91,15 @@ func ProvideService(
 		ptc: proxyTransportCache{
 			cache: make(map[int64]cachedRoundTripper),
 		},
-		cfg:                       cfg,
-		features:                  features,
-		permissionsService:        datasourcePermissionsService,
-		ac:                        ac,
-		logger:                    dslogger,
-		db:                        db,
-		pluginStore:               pluginStore,
-		pluginClient:              pluginClient,
-		basePluginContextProvider: basePluginContextProvider,
-		retriever:                 retriever,
-		permissionsDeleter:        permissionsDeleter,
+		cfg:                cfg,
+		features:           features,
+		permissionsService: datasourcePermissionsService,
+		ac:                 ac,
+		logger:             dslogger,
+		db:                 db,
+		pluginStore:        pluginStore,
+		retriever:          retriever,
+		permissionsDeleter: permissionsDeleter,
 	}
 
 	ac.RegisterScopeAttributeResolver(NewNameScopeResolver(store))
