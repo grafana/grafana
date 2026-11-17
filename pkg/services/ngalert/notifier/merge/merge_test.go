@@ -534,21 +534,17 @@ func TestMergeExtraConfig(t *testing.T) {
 	t.Run("should fail if identifier conflicts with existing managed route", func(t *testing.T) {
 		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirConfig)
 		input.ManagedRoutes = map[string]*v1.Route{identifier: nil}
-		_, _, err := MergeExtraConfig(t.Context(), &input)
-		require.ErrorIs(t, err, ErrIdentifierAlreadyExists)
+		_, _, err := MergeExtraConfig(context.Background(), &input)
 		require.ErrorContains(t, err, identifier)
 	})
 
-	for _, defaultTreeName := range []string{models.DefaultRoutingTreeName, models.DefaultRoutingTreeNameAlias} {
-		t.Run("should fail if identifier is default routing tree name "+defaultTreeName, func(t *testing.T) {
-			input := withExtra(t, load(t, fullGrafanaConfig), fullMimirConfig, func(e *v1.ExtraConfiguration) {
-				e.Identifier = defaultTreeName
-			})
-			_, _, err := MergeExtraConfig(t.Context(), &input)
-			require.ErrorIs(t, err, ErrIdentifierAlreadyExists)
-			require.ErrorContains(t, err, defaultTreeName)
+	t.Run("should fail if identifier is default routing tree name", func(t *testing.T) {
+		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirConfig, func(e *v1.ExtraConfiguration) {
+			e.Identifier = models.DefaultRoutingTreeName
 		})
-	}
+		_, _, err := MergeExtraConfig(context.Background(), &input)
+		require.ErrorContains(t, err, models.DefaultRoutingTreeName)
+	})
 
 	t.Run("should populate stats with added resource names", func(t *testing.T) {
 		input := withExtra(t, load(t, fullGrafanaConfig), fullMimirConfig)

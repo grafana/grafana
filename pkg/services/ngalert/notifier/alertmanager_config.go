@@ -62,8 +62,10 @@ var (
 		errutil.WithPublic(msgAlertmanagerExtraConfigManagedManually),
 	)
 
-	// ErrIdentifierAlreadyExists aliases merge.ErrIdentifierAlreadyExists so existing notifier callers keep working.
-	ErrIdentifierAlreadyExists = merge.ErrIdentifierAlreadyExists
+	ErrIdentifierAlreadyExists = errutil.BadRequest("alerting.notifications.alertmanager.identifierAlreadyExists").MustTemplate("identifier [{{ .Public.Identifier }}] already used by existing managed routes",
+		errutil.WithPublic(
+			"Identifier [{{ .Public.Identifier }}] is already used by existing managed routes. Use another identifier or delete the existing route.",
+		))
 
 	ErrAlertmanagerExtraConfigNotFound = errutil.NotFound("alerting.notifications.alertmanager.extraConfigNotFound",
 		errutil.WithPublicMessage("Extra configuration not found"),
@@ -443,11 +445,10 @@ func (moa *MultiOrgAlertmanager) modifyAndApplyExtraConfiguration(
 		return merge.MergeResult{}, fmt.Errorf("failed to apply extra configuration: %w", err)
 	}
 
-	if len(cfg.ManagedRoutes) > 0 {
-		for _, c := range cfg.ExtraConfigs {
-			if _, ok := cfg.ManagedRoutes[c.Identifier]; ok {
-				return merge.MergeResult{}, ErrIdentifierAlreadyExists.Build(errutil.TemplateData{Public: map[string]interface{}{"Identifier": c.Identifier}})
-			}
+	for _, c := range cfg.ExtraConfigs {
+		_, managedRouteExists := cfg.ManagedRoutes[c.Identifier]
+		if managedRouteExists || models.IsDefaultRoutingTreeName(c.Identifier) {
+			return merge.MergeResult{}, ErrIdentifierAlreadyExists.Build(errutil.TemplateData{Public: map[string]interface{}{"Identifier": c.Identifier}})
 		}
 	}
 

@@ -363,23 +363,28 @@ receivers:
 		require.ErrorIs(t, err, ErrIdentifierAlreadyExists)
 	})
 
-	t.Run("fail to create extra configuration with a reserved default-tree identifier", func(t *testing.T) {
-		mam := setupMam(t, nil)
-		ctx := t.Context()
-		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
+	for _, identifier := range []string{
+		models.DefaultRoutingTreeName,
+		models.DefaultRoutingTreeNameAlias,
+	} {
+		t.Run("fail to create extra configuration with reserved identifier "+identifier, func(t *testing.T) {
+			mam := setupMam(t, nil)
+			ctx := t.Context()
+			require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 
-		extraConfig := v1.ExtraConfiguration{
-			Identifier: models.DefaultRoutingTreeNameAlias,
-			AlertmanagerConfig: `route:
+			extraConfig := v1.ExtraConfiguration{
+				Identifier: identifier,
+				AlertmanagerConfig: `route:
   receiver: original-receiver
 receivers:
   - name: original-receiver`,
-		}
+			}
 
-		_, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, extraConfig, false, false, false)
-		require.ErrorIs(t, err, ErrIdentifierAlreadyExists)
-		require.ErrorContains(t, err, "cannot merge imported configuration into Grafana")
-	})
+			_, err := mam.SaveAndApplyExtraConfiguration(ctx, orgID, &user.SignedInUser{}, noopExtraConfigAuthz{}, extraConfig, false, false, false)
+			require.ErrorIs(t, err, ErrIdentifierAlreadyExists.Base)
+			require.ErrorContains(t, err, identifier)
+		})
+	}
 }
 
 func TestMultiOrgAlertmanager_DeleteExtraConfiguration(t *testing.T) {

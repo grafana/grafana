@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/alerting/utils/hash"
 	"github.com/prometheus/alertmanager/config/common"
 
-	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/util"
@@ -33,12 +32,6 @@ type RenameResources struct {
 	TimeIntervals map[string]string
 	Templates     map[string]string
 }
-
-// ErrIdentifierAlreadyExists is returned when an import identifier conflicts with a managed route or the default routing tree.
-var ErrIdentifierAlreadyExists = errutil.Conflict("alerting.notifications.alertmanager.identifierAlreadyExists").MustTemplate(
-	"identifier [{{ .Public.Identifier }}] is already used by existing managed routes or reserved for the default routing tree",
-	errutil.WithPublic("Identifier [{{ .Public.Identifier }}] is already used by existing managed routes or is reserved for the default routing tree. Import the configuration under a different identifier (for example, with the X-Grafana-Alerting-Config-Identifier header), or rename or delete the conflicting managed route."),
-)
 
 // MergeResult describes what changed during a merge: which resources were added and which were renamed.
 type MergeResult struct {
@@ -138,9 +131,7 @@ func MergeExtraConfig(_ context.Context, cfg *v1.AMConfigV1) (v1.AMConfigV1, Mer
 	}
 
 	if _, ok := cfg.ManagedRoutes[mimirCfg.Identifier]; ok || models.IsDefaultRoutingTreeName(mimirCfg.Identifier) {
-		return v1.AMConfigV1{}, MergeResult{}, ErrIdentifierAlreadyExists.Build(errutil.TemplateData{
-			Public: map[string]any{"Identifier": mimirCfg.Identifier},
-		})
+		return v1.AMConfigV1{}, MergeResult{}, fmt.Errorf("cannot merge because config %s because it conflicts with existing managed route", mimirCfg.Identifier)
 	}
 
 	importedReceivers, err := mcfg.ToGrafanaReceivers()

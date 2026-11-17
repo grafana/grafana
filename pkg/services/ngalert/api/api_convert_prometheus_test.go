@@ -2256,6 +2256,38 @@ func TestRouteConvertPrometheusPostAlertmanagerConfig(t *testing.T) {
 		})
 	}
 
+	t.Run("returns bad request when the identifier already exists", func(t *testing.T) {
+		const reservedIdentifier = "default"
+
+		mockAM := &mockAlertmanager{}
+		mockAM.On("IsExternalAMSyncConfiguredForOrg", mock.Anything, int64(1)).Return(false, nil).Once()
+		identifierExists := notifier.ErrIdentifierAlreadyExists.Build(errutil.TemplateData{
+			Public: map[string]interface{}{"Identifier": reservedIdentifier},
+		})
+		mockAM.On("SaveAndApplyExtraConfiguration", mock.Anything, int64(1), mock.Anything, mock.Anything,
+			mock.MatchedBy(func(extraConfig v1.ExtraConfiguration) bool { return extraConfig.Identifier == reservedIdentifier }),
+			false, false, false).Return(merge.MergeResult{}, identifierExists).Once()
+
+		srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
+		rc := createRequestCtx()
+		rc.Req = rc.Req.WithContext(t.Context())
+		rc.Req.Header.Set(configIdentifierHeader, reservedIdentifier)
+
+		response := srv.RouteConvertPrometheusPostAlertmanagerConfig(rc, apimodels.AlertmanagerUserConfig{
+			AlertmanagerConfig: `{"route":{"receiver":"default"},"receivers":[{"name":"default"}]}`,
+		})
+
+		require.Equal(t, http.StatusBadRequest, response.Status())
+		var body struct {
+			Message   string `json:"message"`
+			MessageID string `json:"messageId"`
+		}
+		require.NoError(t, json.Unmarshal(response.Body(), &body))
+		require.Equal(t, "Identifier [default] is already used by existing managed routes. Use another identifier or delete the existing route.", body.Message)
+		require.Equal(t, "alerting.notifications.alertmanager.identifierAlreadyExists", body.MessageID)
+		mockAM.AssertExpectations(t)
+	})
+
 	t.Run("should parse headers and call SaveAndApplyExtraConfiguration", func(t *testing.T) {
 		mockAM.On("SaveAndApplyExtraConfiguration", mock.Anything, int64(1), mock.Anything, mock.Anything, mock.MatchedBy(func(extraConfig v1.ExtraConfiguration) bool {
 			return extraConfig.Identifier == identifier &&
@@ -2316,46 +2348,6 @@ func TestRouteConvertPrometheusPostAlertmanagerConfig(t *testing.T) {
 		require.Equal(t, http.StatusAccepted, response.Status())
 		mockAM.AssertExpectations(t)
 	})
-
-	for _, tc := range []struct {
-		name    string
-		header  string
-		dryRun  bool
-		promote bool
-	}{
-		{name: "import"},
-		{name: "dry run", header: dryRunHeader, dryRun: true},
-		{name: "promote", header: promoteHeader, promote: true},
-	} {
-		t.Run("should return conflict for "+tc.name+" when identifier is already used by a managed route", func(t *testing.T) {
-			mockAM := &mockAlertmanager{}
-			mockAM.On("IsExternalAMSyncConfiguredForOrg", mock.Anything, int64(1)).Return(false, nil).Once()
-			conflict := notifier.ErrIdentifierAlreadyExists.Build(errutil.TemplateData{
-				Public: map[string]interface{}{"Identifier": "default"},
-			})
-			mockAM.On("SaveAndApplyExtraConfiguration", mock.Anything, int64(1), mock.Anything, mock.Anything,
-				mock.MatchedBy(func(extraConfig v1.ExtraConfiguration) bool { return extraConfig.Identifier == "default" }),
-				false, tc.dryRun, tc.promote).Return(merge.MergeResult{}, conflict).Once()
-
-			ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
-			srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
-
-			rc := createRequestCtx()
-			rc.Req.Header.Set(configIdentifierHeader, "default")
-			if tc.header != "" {
-				rc.Req.Header.Set(tc.header, "true")
-			}
-			response := srv.RouteConvertPrometheusPostAlertmanagerConfig(rc, apimodels.AlertmanagerUserConfig{
-				AlertmanagerConfig: `{"route":{"receiver":"default"},"receivers":[{"name":"default"}]}`,
-			})
-
-			require.Equal(t, http.StatusConflict, response.Status())
-			require.Contains(t, string(response.Body()), "alerting.notifications.alertmanager.identifierAlreadyExists")
-			require.Contains(t, string(response.Body()), "Identifier [default] is already used by existing managed routes or is reserved for the default routing tree. Import the configuration under a different identifier (for example, with the X-Grafana-Alerting-Config-Identifier header), or rename or delete the conflicting managed route.")
-			require.Contains(t, string(response.Body()), configIdentifierHeader)
-			mockAM.AssertExpectations(t)
-		})
-	}
 
 	t.Run("should call SaveAndApplyExtraConfiguration with replace=true if header is specified", func(t *testing.T) {
 		rc := createRequestCtx()
@@ -2917,20 +2909,27 @@ func TestRouteConvertPrometheusPromoteAlertmanagerConfig(t *testing.T) {
 		mockAM.AssertExpectations(t)
 	})
 
-	t.Run("should return conflict when identifier is already used by a managed route", func(t *testing.T) {
-		conflict := notifier.ErrIdentifierAlreadyExists.Build(errutil.TemplateData{
+	t.Run("should return bad request when the identifier already exists", func(t *testing.T) {
+		mockAM := &mockAlertmanager{}
+		identifierExists := notifier.ErrIdentifierAlreadyExists.Build(errutil.TemplateData{
 			Public: map[string]interface{}{"Identifier": identifier},
 		})
 		mockAM.On("PromoteExtraConfiguration", mock.Anything, orgID, mock.Anything, mock.Anything, identifier).
-			Return(merge.MergeResult{}, conflict).Once()
+			Return(merge.MergeResult{}, identifierExists).Once()
+		srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
 
 		rc := createRequestCtx()
+		rc.Req = rc.Req.WithContext(t.Context())
 		response := srv.RouteConvertPrometheusPromoteAlertmanagerConfig(rc, identifier)
 
-		require.Equal(t, http.StatusConflict, response.Status())
-		require.Contains(t, string(response.Body()), "alerting.notifications.alertmanager.identifierAlreadyExists")
-		require.Contains(t, string(response.Body()), "Identifier [test-config] is already used by existing managed routes or is reserved for the default routing tree. Import the configuration under a different identifier (for example, with the X-Grafana-Alerting-Config-Identifier header), or rename or delete the conflicting managed route.")
-		require.Contains(t, string(response.Body()), configIdentifierHeader)
+		require.Equal(t, http.StatusBadRequest, response.Status())
+		var body struct {
+			Message   string `json:"message"`
+			MessageID string `json:"messageId"`
+		}
+		require.NoError(t, json.Unmarshal(response.Body(), &body))
+		require.Equal(t, "Identifier [test-config] is already used by existing managed routes. Use another identifier or delete the existing route.", body.Message)
+		require.Equal(t, "alerting.notifications.alertmanager.identifierAlreadyExists", body.MessageID)
 		mockAM.AssertExpectations(t)
 	})
 
