@@ -1500,9 +1500,29 @@
         "records": "Datensätze",
         "to": "zum"
       },
+      "recording-rule-actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "view": ""
+      },
       "recording-rules": {
         "folder-rules-error": "",
         "folders-error": "",
+        "header": {
+          "new-rule": ""
+        },
         "load-more-rules-in-folder": "",
         "loading-folders": "",
         "no-rules": "Keine Aufzeichnungsregeln gefunden",
@@ -2400,6 +2420,7 @@
       "contact-points": "Kontaktpunkte",
       "notification-policies": "Benachrichtigungsrichtlinien",
       "recently-deleted": "Kürzlich gelöscht",
+      "recording-rules": "",
       "templates": "Vorlagen",
       "time-intervals": "Zeitintervalle"
     },
@@ -6218,8 +6239,7 @@
       }
     },
     "get-var-mapping-option-overrides": {
-      "defaults": "",
-      "rule": ""
+      "uses-variables": ""
     },
     "inspect": {
       "data-tab": "Daten",
@@ -6414,9 +6434,6 @@
       "only-overrides-button-tooltip": "Nur Überschreibungen anzeigen",
       "placeholder-search-options": "Suchoptionen",
       "visualization-button-tooltip": "Suchoptionen"
-    },
-    "panel-editor": {
-      "ad-hoc-transformations-disabled": "Ad-hoc-Transformationen sind im Bearbeitungsmodus deaktiviert"
     },
     "plan-building-overlay": {
       "quip-corners": "Die Ecken des Panels werden verfeinert …",
@@ -7706,7 +7723,7 @@
       "apply": "Anwenden",
       "apply-body": "Alle Personen mit Zugriff werden sie sehen. Sie können die vorherige Version aus dem Versionsverlauf wiederherstellen.",
       "apply-failed": "Die Änderungen konnten nicht übernommen werden. Versuchen Sie es erneut oder vergleichen Sie sie zuerst.",
-      "apply-needs-edit": "Zum Übernehmen ist Bearbeitungszugriff auf „{{title}}“ erforderlich. Sie können eine Vorschau dieser Änderungen anzeigen, sie aber nicht übernehmen.",
+      "apply-needs-save": "",
       "breadcrumb-draft": "Entwurf",
       "breadcrumb-pending-changes": "Ausstehende Änderungen",
       "change-added": "Hinzugefügt",
@@ -8005,6 +8022,12 @@
       "confirmText-restore-version": "Ja, auf Version {{version}} zurücksetzen",
       "title-restore-version": "Version wiederherstellen"
     },
+    "row-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-row-settings": ""
+    },
     "sandbox-consent": {
       "allow": "Erlauben",
       "allow-tooltip": "Laden Sie Inhalte aus den ausgewählten Quellen in den aufgeführten Panels, bis Sie dieses Tab schließen.",
@@ -8200,6 +8223,12 @@
       "switch-options": "Switch-Optionen",
       "value-pair-type": "Wertepaartyp",
       "value-pair-type-description": "Wählen Sie den Wertetyp für die Switch-Zustände"
+    },
+    "tab-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-tab-settings": ""
     },
     "text-box-variable": {
       "name-default-value": "Standardwert"
@@ -14429,6 +14458,9 @@
     },
     "empty-state": {
       "message": "Keine Plugins gefunden"
+    },
+    "errors": {
+      "app-plugin-metas-error": ""
     },
     "extensions": {
       "extension-error-alert-description": "Siehe Konsole für weitere Details zum Fehler.",
