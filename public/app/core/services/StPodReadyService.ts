@@ -3,7 +3,12 @@ import { BehaviorSubject } from 'rxjs';
 import { useObservable } from '@grafana/data/unstable';
 import { getBackendSrv, isFetchError } from '@grafana/runtime';
 
-import { ST_POD_POLL_INTERVAL_MS, ST_POD_READY_TTL_MS, ST_POD_TIMEOUT_MS } from './stPodReadyConstants';
+import {
+  ST_POD_BUSY_STATUS,
+  ST_POD_POLL_INTERVAL_MS,
+  ST_POD_READY_TTL_MS,
+  ST_POD_TIMEOUT_MS,
+} from './stPodReadyConstants';
 
 export enum StPodStatus {
   Unknown = 'unknown',
@@ -12,8 +17,6 @@ export enum StPodStatus {
   Timeout = 'timeout',
   Error = 'error',
 }
-
-const POD_BUSY_STATUS = 503;
 
 interface PendingResolver {
   promise: Promise<void>;
@@ -142,7 +145,7 @@ export class StPodReadyService {
       if (abort.signal.aborted) {
         return;
       }
-      if (isFetchError(err) && err.status === POD_BUSY_STATUS) {
+      if (isFetchError(err) && err.status === ST_POD_BUSY_STATUS) {
         this.transitionToBusy();
       } else {
         this.transitionToError();
