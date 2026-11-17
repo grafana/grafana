@@ -1,5 +1,36 @@
 import { test, expect } from '@playwright/test';
 
+test('removable tags retain list semantics and focus through removal and reset', async ({ page }) => {
+  await page.goto('/iframe.html?id=information-tag--removable&viewMode=story');
+  const list = page.getByRole('list', { name: 'Tags', exact: true });
+  const items = list.getByRole('listitem');
+  const production = list.getByRole('button', { name: 'Remove tag: Production', exact: true });
+  const europe = list.getByRole('button', { name: 'Remove tag: Europe', exact: true });
+  const frontend = list.getByRole('button', { name: 'Remove tag: Frontend', exact: true });
+  const reset = page.getByRole('button', { name: 'Reset tags', exact: true });
+
+  await expect(items).toHaveText(['Production', 'Europe', 'Frontend']);
+  await europe.focus();
+  await europe.press('Enter');
+  await expect(items).toHaveText(['Production', 'Frontend']);
+  await expect(frontend).toBeFocused();
+
+  await frontend.press('Enter');
+  await expect(items).toHaveText(['Production']);
+  await expect(production).toBeFocused();
+
+  await production.press('Space');
+  await expect(items).toHaveCount(0);
+  await expect(reset).toBeFocused();
+
+  await reset.press('Enter');
+  await expect(items).toHaveText(['Production', 'Europe', 'Frontend']);
+  await production.focus();
+  await production.press('Enter');
+  await expect(items).toHaveText(['Europe', 'Frontend']);
+  await expect(europe).toBeFocused();
+});
+
 for (const theme of ['light', 'dark', 'visual_refresh_light', 'visual_refresh_dark']) {
   test(`removable tag hover feedback stays on the individual action in ${theme}`, async ({ page }) => {
     await page.goto(`/iframe.html?id=information-tag--states&viewMode=story&globals=theme:${theme}`);

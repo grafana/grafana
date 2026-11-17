@@ -1,7 +1,11 @@
+import { css } from '@emotion/css';
 import { type Meta, type StoryFn } from '@storybook/react';
 import { useLayoutEffect, useRef, useState } from 'react';
 import { action } from 'storybook/actions';
 
+import { type GrafanaTheme2 } from '@grafana/data';
+
+import { useStyles2 } from '../../themes/ThemeContext';
 import { Button } from '../Button/Button';
 import { Stack } from '../Layout/Stack/Stack';
 
@@ -33,7 +37,8 @@ const initialTags = ['Production', 'Europe', 'Frontend'];
 
 export const Removable: StoryFn<typeof Tag> = () => {
   const [tags, setTags] = useState(initialTags);
-  const listRef = useRef<HTMLDivElement>(null);
+  const styles = useStyles2(getRemovableStyles);
+  const listRef = useRef<HTMLUListElement>(null);
   const resetRef = useRef<HTMLButtonElement>(null);
   const focusIndex = useRef<number | null>(null);
 
@@ -55,11 +60,14 @@ export const Removable: StoryFn<typeof Tag> = () => {
 
   return (
     <Stack direction="column" alignItems="flex-start">
-      <Stack ref={listRef} wrap="wrap">
+      {/* eslint-disable-next-line jsx-a11y/no-redundant-roles -- Preserve list semantics in Safari when list markers are hidden. */}
+      <ul ref={listRef} className={styles.list} role="list" aria-label="Tags">
         {tags.map((name) => (
-          <Tag key={name} name={name} onRemove={removeTag} />
+          <li key={name}>
+            <Tag name={name} onRemove={removeTag} />
+          </li>
         ))}
-      </Stack>
+      </ul>
       <Button ref={resetRef} variant="secondary" onClick={() => setTags(initialTags)}>
         Reset tags
       </Button>
@@ -95,5 +103,16 @@ export const States: StoryFn<typeof Tag> = () => (
     </Stack>
   </Stack>
 );
+
+const getRemovableStyles = (theme: GrafanaTheme2) => ({
+  list: css({
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: theme.spacing(1),
+    listStyle: 'none',
+    margin: 0,
+    padding: 0,
+  }),
+});
 
 export default meta;
