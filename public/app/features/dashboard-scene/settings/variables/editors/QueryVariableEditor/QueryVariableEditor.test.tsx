@@ -645,7 +645,7 @@ describe('Editor', () => {
         variables: {
           getType: () => VariableSupportType.Custom,
           query: jest.fn(),
-          editor: PrometheusQueryEditor,
+          editor: jest.fn().mockImplementation(PrometheusQueryEditor),
         },
       };
       const serviceMock = jest.mocked(getDataSourceSrv);
