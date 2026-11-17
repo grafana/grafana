@@ -949,6 +949,7 @@ export function ComposerOverlay({
     drag,
     paused,
     capturing,
+    working,
     session,
     isOnDocumentBody,
     isOverControls,
