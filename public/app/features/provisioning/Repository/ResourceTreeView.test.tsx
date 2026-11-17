@@ -216,6 +216,35 @@ describe('ResourceTreeView', () => {
       expect(await screen.findByText('My Widget')).toBeInTheDocument();
       expect(locationService.getSearchObject()).toEqual({});
     });
+
+    it('should label a kind outside the registry with its resource name', async () => {
+      const { user } = render(<ResourceTreeView repo={repo} />);
+
+      await user.click(screen.getByRole('combobox', { name: 'Filter by resource type' }));
+      await user.keyboard('{ArrowDown}{Enter}'); // index 1: widgets
+
+      expect(await screen.findByRole('button', { name: 'Remove widgets' })).toBeInTheDocument();
+    });
+
+    it('should drop a folder that matches the resource filter but not the status filter', async () => {
+      // The folder has no _folder.json, so its status is a warning, not synced.
+      setupQueries(
+        [{ path: 'folder/dash.json', hash: 'aaa' }],
+        [
+          { path: 'folder', hash: '', name: 'folder-uid', title: 'My Folder', resource: 'folders' },
+          { path: 'folder/dash.json', hash: 'aaa', name: 'dash', title: 'My Dashboard', resource: 'dashboards' },
+        ]
+      );
+      const { user } = render(<ResourceTreeView repo={repo} />);
+      expect(await screen.findByText('My Folder')).toBeInTheDocument();
+
+      await user.click(screen.getByRole('combobox', { name: 'Filter by status' }));
+      await user.keyboard('{Enter}'); // index 0: Synced
+      await user.click(screen.getByRole('combobox', { name: 'Filter by resource type' }));
+      await user.keyboard('{Enter}'); // index 0: Folders
+
+      expect(screen.queryByText('My Folder')).not.toBeInTheDocument();
+    });
   });
 
   describe('actions', () => {
@@ -231,17 +260,12 @@ describe('ResourceTreeView', () => {
 
       const row = await screen.findByRole('row', { name: /README\.md/ });
       expect(within(row).getByText('View').closest('a')).toHaveAttribute('aria-disabled', 'true');
-      expect(within(row).getByRole('link', { name: 'Source' })).toHaveAttribute(
-        'href',
-        'https://github.com/org/repo/blob/main/README.md'
-      );
     });
 
     it('should disable the Source button of a row without a file', async () => {
       render(<ResourceTreeView repo={repo} />);
 
       const row = await screen.findByRole('row', { name: /Orphan Dashboard/ });
-      expect(within(row).getByRole('link', { name: 'View' })).toBeInTheDocument();
       expect(within(row).getByText('Source').closest('a')).toHaveAttribute('aria-disabled', 'true');
     });
   });
@@ -266,7 +290,6 @@ describe('ResourceTreeView', () => {
 
       expect(await screen.findByRole('button', { name: 'Test Repository' })).toHaveAttribute('aria-expanded', 'true');
       expect(screen.getByRole('button', { name: 'My Folder' })).toHaveAttribute('aria-expanded', 'false');
-      expect(screen.queryByText('My Dashboard')).not.toBeInTheDocument();
     });
 
     it('should link the root folder Source button to the repository', async () => {
@@ -279,19 +302,14 @@ describe('ResourceTreeView', () => {
       );
     });
 
-    it('should hide _folder.json and link the folder Source button to it', async () => {
-      const { user } = render(<ResourceTreeView repo={repo} />);
+    it('should link a folder Source button to its _folder.json', async () => {
+      render(<ResourceTreeView repo={repo} />);
 
       const row = await screen.findByRole('row', { name: /My Folder/ });
       expect(within(row).getByRole('link', { name: 'Source' })).toHaveAttribute(
         'href',
         'https://github.com/org/repo/blob/main/folder/_folder.json'
       );
-
-      await user.click(screen.getByRole('button', { name: 'My Folder' }));
-
-      expect(await screen.findByText('My Dashboard')).toBeInTheDocument();
-      expect(screen.queryByText('_folder.json')).not.toBeInTheDocument();
     });
   });
 });

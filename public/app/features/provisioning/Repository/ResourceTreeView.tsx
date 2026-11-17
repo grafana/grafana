@@ -102,7 +102,7 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
     return searchQuery ? filterTree(filtered, searchQuery) : filtered;
   }, [filesQuery.data?.items, resourcesQuery.data?.items, searchQuery, statusFilter, resourceFilter]);
 
-  // A search or a status filter narrows the tree, so ignore the folded state while either is
+  // A search or a filter narrows the tree, so ignore the folded state while any is
   // active to keep every matching item visible instead of hidden inside a collapsed folder.
   const isFiltering = !!searchQuery || statusFilter.length > 0 || resourceFilter.length > 0;
   const flatItems = useMemo(
@@ -144,7 +144,7 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
                   name={isExpanded ? 'angle-down' : 'angle-right'}
                   size="sm"
                   onClick={() => handleToggleExpand(item.path)}
-                  // A search or status filter forces every folder open, so the toggle can't
+                  // A search or filter forces every folder open, so the toggle can't
                   // change what's shown.
                   disabled={isFiltering}
                   aria-expanded={isExpanded}
