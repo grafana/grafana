@@ -1,22 +1,14 @@
 import { isEqual } from 'lodash';
 
-import { SceneDataTransformer, type SceneObject, type VizPanel } from '@grafana/scenes';
+import { SceneDataTransformer, type SceneObject, SceneObjectBase, type VizPanel } from '@grafana/scenes';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 
 import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
-import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
 
-export type PanelEditArea =
-  | 'options'
-  | 'field_config'
-  | 'overrides'
-  | 'queries'
-  | 'transformations'
-  | 'panel_info'
-  | 'repeat';
+type PanelEditArea = 'options' | 'field_config' | 'overrides' | 'queries' | 'transformations' | 'panel_info' | 'repeat';
 
 export type PanelEditSnapshot = Partial<Record<PanelEditArea, unknown>>;
 
@@ -58,10 +50,21 @@ export function takePanelEditSnapshot(panel: VizPanel, layoutItem: SceneObject):
       description: panel.state.description,
       subtitle: panel.state.subtitle,
       displayMode: panel.state.displayMode,
-      links: dashboardSceneGraph.getPanelLinks(panel)?.state.rawLinks,
+      links: getPanelLinks(panel),
     },
     repeat: getRepeatState(layoutItem),
   });
+}
+
+// Read here rather than through dashboardSceneGraph or VizPanelLinks: both import back into the panel editor.
+function getPanelLinks(panel: VizPanel): unknown {
+  const titleItems = Array.isArray(panel.state.titleItems) ? panel.state.titleItems : [];
+  for (const item of titleItems) {
+    if (item instanceof SceneObjectBase && 'rawLinks' in item.state) {
+      return item.state.rawLinks;
+    }
+  }
+  return undefined;
 }
 
 function getRepeatState(layoutItem: SceneObject) {
