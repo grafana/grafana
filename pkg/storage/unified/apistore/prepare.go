@@ -172,7 +172,7 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	if v.grantPermissions != "" {
 		obj.SetAnnotation(utils.AnnoKeyGrantPermissions, "") // remove the annotation
 	}
-	if err := identity.CheckManagerOnCreate(info, obj); err != nil {
+	if err := identity.CheckManagerOnCreate(info, obj, s.opts.GrafanaCloudServiceIdentity); err != nil {
 		return v, err
 	}
 	if err := s.ensureRepoManagedByParentFolder(ctx, obj); err != nil {
@@ -346,7 +346,7 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		}
 	}
 
-	if err := identity.CheckManagerOnUpdate(info, obj, previous); err != nil {
+	if err := identity.CheckManagerOnUpdate(info, obj, previous, s.opts.GrafanaCloudServiceIdentity); err != nil {
 		return v, err
 	}
 

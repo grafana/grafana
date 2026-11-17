@@ -130,6 +130,10 @@ type StorageOptions struct {
 	// VersionPolicy rejects a write whose storage version outranks the group's maxAllowedVersion cap.
 	// Shared across resources (set via the RESTOptionsGetter); nil disables enforcement.
 	VersionPolicy *versionpolicy.VersionPolicyRegistry
+
+	// GrafanaCloudServiceIdentity is the serviceIdentity claim allowed to create, update and delete
+	// resources annotated grafana.app/managedBy: grafana-cloud. Empty lets nobody write them.
+	GrafanaCloudServiceIdentity string
 }
 
 // Storage implements storage.Interface and storage resources as JSON files on disk.
@@ -485,7 +489,7 @@ func (s *Storage) Delete(
 		if err != nil {
 			return fmt.Errorf("unable to read object %w", err)
 		}
-		if err = identity.CheckManagerOnDelete(info, meta); err != nil {
+		if err = identity.CheckManagerOnDelete(info, meta, s.opts.GrafanaCloudServiceIdentity); err != nil {
 			_, err = s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_DELETED, key, out, out)
 			return err
 		}

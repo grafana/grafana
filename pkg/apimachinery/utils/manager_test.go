@@ -100,6 +100,7 @@ func TestParseManagerKindString(t *testing.T) {
 		ManagerKindKubectl,
 		ManagerKindPlugin,
 		ManagerKindGrafana,
+		ManagerKindGrafanaCloud,
 		ManagerKindFileProvisioning,
 		ManagerKindClassicFP,                  //nolint:staticcheck
 		ManagerKindClassicAPI,                 //nolint:staticcheck

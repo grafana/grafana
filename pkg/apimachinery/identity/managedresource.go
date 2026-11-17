@@ -15,6 +15,7 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/grafana/authlib/authn"
 	authtypes "github.com/grafana/authlib/types"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -45,7 +46,17 @@ func CheckClassicFPAssignment(auth authtypes.AuthInfo, obj utils.GrafanaMetaAcce
 	}}
 }
 
-func CheckManagerWriteAuthz(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
+// isGrafanaCloudServiceIdentity reports whether auth carries exactly one serviceIdentity claim and
+// it matches grafanaCloudServiceIdentity.
+func isGrafanaCloudServiceIdentity(auth authtypes.AuthInfo, grafanaCloudServiceIdentity string) bool {
+	if auth == nil || grafanaCloudServiceIdentity == "" {
+		return false
+	}
+	ids := auth.GetExtra()[authn.ServiceIdentityKey]
+	return len(ids) == 1 && ids[0] == grafanaCloudServiceIdentity
+}
+
+func CheckManagerWriteAuthz(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor, grafanaCloudServiceIdentity string) error {
 	kind := obj.GetAnnotation(utils.AnnoKeyManagerKind)
 	if kind == "" {
 		return nil
@@ -81,30 +92,42 @@ func CheckManagerWriteAuthz(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccess
 	case utils.ManagerKindGrafana:
 		// Used for global role management.
 		return nil // Let the api admission hooks handle it
+
+	case utils.ManagerKindGrafanaCloud:
+		if isGrafanaCloudServiceIdentity(auth, grafanaCloudServiceIdentity) {
+			return nil
+		}
+
+		return &apierrors.StatusError{ErrStatus: metav1.Status{
+			Status:  metav1.StatusFailure,
+			Code:    http.StatusForbidden,
+			Reason:  metav1.StatusReasonForbidden,
+			Message: "This resource is managed by Grafana Cloud and can not be changed",
+		}}
 	}
 	return nil
 }
 
 // CheckManagerOnDelete refuses deleting a managed resource the caller is not
 // entitled to delete.
-func CheckManagerOnDelete(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
-	return CheckManagerWriteAuthz(auth, obj)
+func CheckManagerOnDelete(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor, grafanaCloudServiceIdentity string) error {
+	return CheckManagerWriteAuthz(auth, obj, grafanaCloudServiceIdentity)
 }
 
 // CheckManagerOnCreate refuses creating a resource with manager annotations the
 // caller may not assign.
-func CheckManagerOnCreate(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
+func CheckManagerOnCreate(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor, grafanaCloudServiceIdentity string) error {
 	if err := CheckClassicFPAssignment(auth, obj); err != nil {
 		return err
 	}
-	return CheckManagerWriteAuthz(auth, obj)
+	return CheckManagerWriteAuthz(auth, obj, grafanaCloudServiceIdentity)
 }
 
 // CheckManagerOnUpdate refuses a spec update that changes the manager in a way the
 // annotations do not allow, or that the caller is not entitled to make. Adding,
 // rewriting and removing a manager are each gated differently, so this needs both
 // the proposed and the stored object.
-func CheckManagerOnUpdate(auth authtypes.AuthInfo, obj, old utils.GrafanaMetaAccessor) error {
+func CheckManagerOnUpdate(auth authtypes.AuthInfo, obj, old utils.GrafanaMetaAccessor, grafanaCloudServiceIdentity string) error {
 	managerNew, hasNew := obj.GetManagerProperties()
 	managerOld, hasOld := old.GetManagerProperties()
 
@@ -114,7 +137,7 @@ func CheckManagerOnUpdate(auth authtypes.AuthInfo, obj, old utils.GrafanaMetaAcc
 
 	// Removing a manager: the caller must be authorized for the *old* manager.
 	if !hasNew && hasOld {
-		if err := CheckManagerWriteAuthz(auth, old); err != nil {
+		if err := CheckManagerWriteAuthz(auth, old, grafanaCloudServiceIdentity); err != nil {
 			// Allow admins to release repo-managed resources. There is no
 			// reconciliation loop that automatically releases orphaned
 			// resources, so admins need the ability to detach manually.
@@ -145,5 +168,5 @@ func CheckManagerOnUpdate(auth authtypes.AuthInfo, obj, old utils.GrafanaMetaAcc
 			return err
 		}
 	}
-	return CheckManagerWriteAuthz(auth, obj)
+	return CheckManagerWriteAuthz(auth, obj, grafanaCloudServiceIdentity)
 }

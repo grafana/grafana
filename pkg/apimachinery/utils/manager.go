@@ -43,6 +43,10 @@ const (
 	ManagerKindPlugin    ManagerKind = "plugin"
 	ManagerKindGrafana   ManagerKind = "grafana"
 
+	// ManagerKindGrafanaCloud marks resources Grafana Cloud provisions.
+	// Only the service identity a store is configured with may create, update or delete them.
+	ManagerKindGrafanaCloud ManagerKind = "grafana-cloud"
+
 	// ManagerKindFileProvisioning marks resources configured by a file the instance was
 	// started with. Unlike ManagerKindClassicFP it is not a migration shim.
 	ManagerKindFileProvisioning ManagerKind = "file-provisioning"
@@ -89,6 +93,8 @@ func ParseManagerKindString(v string) ManagerKind {
 		return ManagerKindPlugin
 	case string(ManagerKindGrafana):
 		return ManagerKindGrafana
+	case string(ManagerKindGrafanaCloud):
+		return ManagerKindGrafanaCloud
 	case string(ManagerKindFileProvisioning):
 		return ManagerKindFileProvisioning
 	case string(ManagerKindClassicFP): // nolint:staticcheck

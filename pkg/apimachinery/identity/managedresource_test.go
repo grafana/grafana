@@ -8,6 +8,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
+	"github.com/grafana/authlib/authn"
 	authtypes "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -96,7 +97,7 @@ func TestCheckWriteAuthz(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := identity.CheckManagerWriteAuthz(tt.auth, managedBy(t, tt.manager))
+			err := identity.CheckManagerWriteAuthz(tt.auth, managedBy(t, tt.manager), "")
 			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 				return
@@ -187,7 +188,7 @@ func TestCheckOnUpdate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := identity.CheckManagerOnUpdate(tt.auth, tt.proposed, tt.old)
+			err := identity.CheckManagerOnUpdate(tt.auth, tt.proposed, tt.old, "")
 			if tt.forbidden {
 				require.Error(t, err)
 				return
@@ -201,13 +202,89 @@ func TestCheckOnCreateAndDelete(t *testing.T) {
 	who := identities(t)
 	repo := managedBy(t, utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "my-repo"})
 
-	require.ErrorIs(t, identity.CheckManagerOnCreate(who.user, repo), identity.ErrResourceIsManagedInRepository)
-	require.ErrorIs(t, identity.CheckManagerOnDelete(who.user, repo), identity.ErrResourceIsManagedInRepository)
-	require.NoError(t, identity.CheckManagerOnCreate(who.provisioner, repo))
-	require.NoError(t, identity.CheckManagerOnDelete(who.provisioner, repo))
+	require.ErrorIs(t, identity.CheckManagerOnCreate(who.user, repo, ""), identity.ErrResourceIsManagedInRepository)
+	require.ErrorIs(t, identity.CheckManagerOnDelete(who.user, repo, ""), identity.ErrResourceIsManagedInRepository)
+	require.NoError(t, identity.CheckManagerOnCreate(who.provisioner, repo, ""))
+	require.NoError(t, identity.CheckManagerOnDelete(who.provisioner, repo, ""))
 
 	// Create additionally gates the classic-file-provisioning assignment.
 	classicFP := managedBy(t, utils.ManagerProperties{Kind: utils.ManagerKindClassicFP}) //nolint:staticcheck
-	require.True(t, apierrors.IsForbidden(identity.CheckManagerOnCreate(who.user, classicFP)))
-	require.NoError(t, identity.CheckManagerOnDelete(who.user, classicFP))
+	require.True(t, apierrors.IsForbidden(identity.CheckManagerOnCreate(who.user, classicFP, "")))
+	require.NoError(t, identity.CheckManagerOnDelete(who.user, classicFP, ""))
+}
+
+type multiServiceIdentity struct {
+	*identity.StaticRequester
+	ids []string
+}
+
+func (m multiServiceIdentity) GetExtra() map[string][]string {
+	return map[string][]string{authn.ServiceIdentityKey: m.ids}
+}
+
+func TestGrafanaCloudManagedResource(t *testing.T) {
+	who := identities(t)
+	accessPolicy := func(serviceIdentity string) authtypes.AuthInfo {
+		return &identity.StaticRequester{
+			Type:    authtypes.TypeAccessPolicy,
+			UserUID: "6f1c2a90-policy",
+			AccessTokenClaims: &authn.Claims[authn.AccessTokenClaims]{
+				Rest: authn.AccessTokenClaims{ServiceIdentity: serviceIdentity},
+			},
+		}
+	}
+	const writer = "cloud-writer"
+	cloudWriter := accessPolicy(writer)
+	otherService := accessPolicy("some-other-service")
+	cloud := func() utils.GrafanaMetaAccessor {
+		return managedBy(t, utils.ManagerProperties{Kind: utils.ManagerKindGrafanaCloud, Identity: "grafanacloud"})
+	}
+
+	for name, auth := range map[string]authtypes.AuthInfo{
+		"user":                      who.user,
+		"org admin":                 who.orgAdmin,
+		"server admin":              who.serverAdmin,
+		"internal service identity": who.service,
+		"provisioning service":      who.provisioner,
+		"another service's token":   otherService,
+		"a near-miss service name":  accessPolicy("cloud-write"),
+		"a token with two service identities": multiServiceIdentity{
+			StaticRequester: &identity.StaticRequester{Type: authtypes.TypeAccessPolicy, UserUID: "6f1c2a90-policy"},
+			ids:             []string{"cloud-writer", "some-other-service"},
+		},
+	} {
+		t.Run(name+" may not write it", func(t *testing.T) {
+			require.True(t, apierrors.IsForbidden(identity.CheckManagerOnCreate(auth, cloud(), writer)), "create")
+			require.True(t, apierrors.IsForbidden(identity.CheckManagerOnUpdate(auth, cloud(), cloud(), writer)), "update")
+			require.True(t, apierrors.IsForbidden(identity.CheckManagerOnUpdate(auth, cloud(), unmanaged(t), writer)), "adopt")
+			require.True(t, apierrors.IsForbidden(identity.CheckManagerOnUpdate(auth, unmanaged(t), cloud(), writer)), "release")
+			require.True(t, apierrors.IsForbidden(identity.CheckManagerOnDelete(auth, cloud(), writer)), "delete")
+		})
+	}
+
+	t.Run("the configured service may write it", func(t *testing.T) {
+		require.NoError(t, identity.CheckManagerOnCreate(cloudWriter, cloud(), writer), "create")
+		require.NoError(t, identity.CheckManagerOnUpdate(cloudWriter, cloud(), cloud(), writer), "update")
+		require.NoError(t, identity.CheckManagerOnUpdate(cloudWriter, cloud(), unmanaged(t), writer), "adopt")
+		require.NoError(t, identity.CheckManagerOnUpdate(cloudWriter, unmanaged(t), cloud(), writer), "release")
+		require.NoError(t, identity.CheckManagerOnDelete(cloudWriter, cloud(), writer), "delete")
+	})
+
+	t.Run("a user may not forge the kind without a manager identity", func(t *testing.T) {
+		forged := managedBy(t, utils.ManagerProperties{})
+		forged.SetAnnotation(utils.AnnoKeyManagerKind, string(utils.ManagerKindGrafanaCloud))
+		require.True(t, apierrors.IsForbidden(identity.CheckManagerOnCreate(who.user, forged, writer)))
+	})
+
+	t.Run("the configured service gets no other manager's rights", func(t *testing.T) {
+		repo := managedBy(t, utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "my-repo"})
+		require.ErrorIs(t, identity.CheckManagerOnCreate(cloudWriter, repo, writer), identity.ErrResourceIsManagedInRepository)
+	})
+
+	t.Run("an empty identity lets nobody write it", func(t *testing.T) {
+		require.True(t, apierrors.IsForbidden(identity.CheckManagerOnCreate(cloudWriter, cloud(), "")), "create")
+		require.True(t, apierrors.IsForbidden(identity.CheckManagerOnUpdate(cloudWriter, cloud(), cloud(), "")), "update")
+		require.True(t, apierrors.IsForbidden(identity.CheckManagerOnDelete(cloudWriter, cloud(), "")), "delete")
+		require.True(t, apierrors.IsForbidden(identity.CheckManagerOnCreate(accessPolicy(""), cloud(), "")), "a token without the claim")
+	})
 }

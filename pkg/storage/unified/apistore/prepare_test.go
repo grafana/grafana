@@ -25,6 +25,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/storage"
 
+	"github.com/grafana/authlib/authn"
 	authlib "github.com/grafana/authlib/types"
 
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
@@ -1471,5 +1472,68 @@ func TestCheckGVK(t *testing.T) {
 		require.NoError(t, json.Unmarshal(raw, out))
 		require.Equal(t, group+"/v2", out.GetAPIVersion())
 		require.Equal(t, "Widget", out.GetKind())
+	})
+}
+
+func TestPrepareObjectGrafanaCloudServiceIdentity(t *testing.T) {
+	node, err := snowflake.NewNode(rand.Int64N(1024))
+	require.NoError(t, err)
+	newStorage := func(serviceIdentity string) *Storage {
+		return &Storage{
+			gr:         dashv1.DashboardResourceInfo.GroupResource(),
+			serializer: &jsonSerializer{},
+			snowflake:  node,
+			store:      storedFolderStore(t, nil),
+			opts: StorageOptions{
+				GVK:                         dashv1.DashboardResourceInfo.GroupVersionKind(),
+				EnableFolderSupport:         true,
+				GrafanaCloudServiceIdentity: serviceIdentity,
+			},
+		}
+	}
+	withServiceIdentity := func(serviceIdentity string) context.Context {
+		return authlib.WithAuthInfo(context.Background(), &identity.StaticRequester{
+			Type:    authlib.TypeAccessPolicy,
+			UserUID: "6f1c2a90-policy",
+			AccessTokenClaims: &authn.Claims[authn.AccessTokenClaims]{
+				Rest: authn.AccessTokenClaims{ServiceIdentity: serviceIdentity},
+			},
+		})
+	}
+	cloudWriter := withServiceIdentity("cloud-writer")
+	user := authlib.WithAuthInfo(context.Background(),
+		&identity.StaticRequester{UserID: 1, UserUID: "user-uid", Type: authlib.TypeUser},
+	)
+	cloudDashboard := func() *dashv1.Dashboard {
+		return &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{
+			Name: "billing",
+			Annotations: map[string]string{
+				utils.AnnoKeyManagerKind:     string(utils.ManagerKindGrafanaCloud),
+				utils.AnnoKeyManagerIdentity: "grafanacloud",
+			},
+		}}
+	}
+	stored := cloudDashboard()
+	stored.ResourceVersion = "1"
+
+	t.Run("the configured identity may create and update", func(t *testing.T) {
+		s := newStorage("cloud-writer")
+		_, err := s.prepareObjectForStorage(cloudWriter, cloudDashboard())
+		require.NoError(t, err)
+		_, err = s.prepareObjectForUpdate(cloudWriter, cloudDashboard(), stored)
+		require.NoError(t, err)
+	})
+
+	t.Run("a user may not create or update", func(t *testing.T) {
+		s := newStorage("cloud-writer")
+		_, err := s.prepareObjectForStorage(user, cloudDashboard())
+		require.True(t, apierrors.IsForbidden(err), "create: %v", err)
+		_, err = s.prepareObjectForUpdate(user, cloudDashboard(), stored)
+		require.True(t, apierrors.IsForbidden(err), "update: %v", err)
+	})
+
+	t.Run("without the option nobody may create", func(t *testing.T) {
+		_, err := newStorage("").prepareObjectForStorage(cloudWriter, cloudDashboard())
+		require.True(t, apierrors.IsForbidden(err), "%v", err)
 	})
 }
