@@ -54,7 +54,7 @@ func (c *embeddedTransactionCall) wait() {
 	}
 }
 
-type embeddedClient struct{ legacyclient.Service }
+type embeddedClient struct{ legacyclient.LegacyUserPermissionsClient }
 
 func (c *embeddedClient) LegacyGetUserPermissions(ctx context.Context, caller types.AuthInfo, req legacyclient.LegacyGetUserPermissionsRequest) (legacyclient.LegacyGetUserPermissionsResponse, error) {
 	if sess, ok := ctx.Value(sqlstore.ContextSessionKey{}).(*sqlstore.DBSession); ok && sess != nil {
@@ -62,7 +62,7 @@ func (c *embeddedClient) LegacyGetUserPermissions(ctx context.Context, caller ty
 		ctx = context.WithValue(ctx, embeddedTransactionCallKey{}, call)
 		defer call.wait()
 	}
-	return c.Service.LegacyGetUserPermissions(ctx, caller, req)
+	return c.LegacyUserPermissionsClient.LegacyGetUserPermissions(ctx, caller, req)
 }
 
 type embeddedStream struct {
@@ -81,7 +81,7 @@ type embeddedServer struct {
 
 // NewEmbeddedClient owns a private in-process channel. The legacy handler is
 // deliberately never registered on a network server or the Check/List channel.
-func NewEmbeddedClient(loader *Loader, cfg *setting.Cfg) legacyclient.Service {
+func NewEmbeddedClient(loader *Loader, cfg *setting.Cfg) legacyclient.LegacyUserPermissionsClient {
 	guard := new(int)
 	server := &embeddedServer{loader: loader, cfg: cfg, guard: guard}
 	channel := (&inprocgrpc.Channel{}).WithServerStreamInterceptor(func(srv any, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
@@ -109,7 +109,7 @@ func NewEmbeddedClient(loader *Loader, cfg *setting.Cfg) legacyclient.Service {
 		return handler(srv, embeddedStream{ServerStream: stream, ctx: ctx})
 	})
 	authzv1.RegisterLegacyAuthzServiceServer(channel, server)
-	return &embeddedClient{Service: legacyclient.NewLegacyClient(channel)}
+	return &embeddedClient{LegacyUserPermissionsClient: legacyclient.NewLegacyClient(channel)}
 }
 
 func (s *embeddedServer) LegacyGetUserPermissions(req *authzv1.LegacyGetUserPermissionsRequest, stream authzv1.LegacyAuthzService_LegacyGetUserPermissionsServer) error {
