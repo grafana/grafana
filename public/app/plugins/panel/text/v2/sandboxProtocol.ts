@@ -23,7 +23,8 @@ export interface RenderCommand {
   revision: number;
   type: 'render';
   html: string;
-  globalCss: string;
+  /** Required for the first render; omitted on updates to retain the document's stylesheet. */
+  globalCss?: string;
   mermaid?: MermaidConfig;
   diagramError: string;
 }

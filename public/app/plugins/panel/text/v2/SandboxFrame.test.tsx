@@ -773,7 +773,7 @@ it('reuses protected documents for content updates and rejects replies from earl
   expect(await frame()).toBe(element);
   expect(element.srcdoc).toBe(shell);
   expect(postMessage).toHaveBeenLastCalledWith(
-    expect.objectContaining({ type: 'render', revision: 1, html: '<p>Updated</p>' }),
+    expect.objectContaining({ type: 'render', revision: 1, html: '<p>Updated</p>', globalCss: undefined }),
     '*'
   );
   expect(options.onState).toHaveBeenLastCalledWith({ status: 'loading', resources: [] });
@@ -789,6 +789,11 @@ it('reuses protected documents for content updates and rejects replies from earl
   notify(element, 'resize', { revision: 1, height: 42, contentHeight: 40 });
   expect(options.onState).toHaveBeenLastCalledWith({ status: 'ready', resources: [] });
   expect(options.onHeight).toHaveBeenLastCalledWith(42, 40);
+  notify(element, 'ready', { document: 'reloaded' });
+  expect(postMessage).toHaveBeenLastCalledWith(
+    expect.objectContaining({ html: '<p>Updated</p>', globalCss: options.globalCss, revision: 2 }),
+    '*'
+  );
 });
 
 it('sends only the latest content when updated before the CSP handshake', async () => {

@@ -345,7 +345,7 @@ describe('sandbox runtime', () => {
     const text = style.firstChild;
     const oldContent = document.querySelector('.markdown-html')!;
     postMessage.mockClear();
-    message({ ...command, revision: 1, html: '<p>Updated content</p>' });
+    message({ ...command, revision: 1, html: '<p>Updated content</p>', globalCss: undefined });
     message({ ...command, revision: 0, html: '<p>Stale content</p>' });
     await flush();
     expect(document.body).toHaveTextContent('Updated content');
@@ -356,6 +356,21 @@ describe('sandbox runtime', () => {
     expectNotification('rendered', { revision: 1 });
     expectNotification('resize', { revision: 1, height: 1, contentHeight: 0 });
     expect(postMessage.mock.calls.every(([notification]) => notification.revision === 1)).toBe(true);
+  });
+
+  test('requires initial CSS but accepts an explicit empty stylesheet on updates', async () => {
+    initialize(policy);
+    violation(CSP_CHECK_URL);
+    await flush();
+    message({ ...command, globalCss: undefined });
+    expect(document.querySelector('.markdown-html')).toBeNull();
+    message();
+    await flush();
+    expect(document.head.querySelector('style')).toHaveTextContent('p{color:red}');
+    message({ ...command, revision: 1, globalCss: '' });
+    await flush();
+    expectNotification('rendered', { revision: 1 });
+    expect(document.head.querySelector('style')).not.toHaveTextContent('p{color:red}');
   });
 
   test('cancels pending Mermaid loads and serializes overlapping diagram renders', async () => {

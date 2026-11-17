@@ -213,7 +213,7 @@ async function render(command: RenderCommand) {
     style = document.createElement('style');
     document.head.append(style);
   }
-  if (globalCss !== command.globalCss) {
+  if (command.globalCss !== undefined && globalCss !== command.globalCss) {
     globalCss = command.globalCss;
     style.textContent = `${command.globalCss}\nhtml,body{height:auto!important;min-height:0!important;background:transparent!important}body{margin:0;overflow:hidden!important}.markdown-html{display:flow-root}.mermaid-diagram{margin:16px 0}.mermaid-diagram svg{max-width:100%;height:auto}.mermaid-diagram-error{color:var(--text-error,#f2495c);margin-bottom:4px}`;
   }
@@ -279,7 +279,7 @@ function onMessage(event: MessageEvent<RenderCommand | MermaidCommand>) {
     command.revision <= revision ||
     (policy === undefined && revision >= 0) ||
     typeof command.html !== 'string' ||
-    typeof command.globalCss !== 'string'
+    (command.globalCss === undefined ? globalCss === undefined : typeof command.globalCss !== 'string')
   ) {
     return;
   }

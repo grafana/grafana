@@ -69,6 +69,8 @@ The parent treats every report from the frame as untrusted:
 
 ## Content updates
 
+Initial render commands include the shared stylesheet. Content-only updates omit unchanged CSS to avoid repeatedly transporting inlined font data. A fresh document always receives the full stylesheet; omission is only accepted after a stylesheet has been installed, and an explicit empty string clears shared styles.
+
 Protected frames reuse their document for HTML changes while their policy, shared CSS, and diagram configuration remain unchanged. Each update replaces the content container, disconnects its observer, cancels pending completion and violation timers, resets resource reports, and advances the render revision. The shared stylesheet and loaded fonts remain in the document. Mermaid work is serialized because the library uses document-global state; cancelled work cannot update the new content or complete its render.
 
 Policy, shared CSS, and diagram configuration changes still create a new document. A document that reported blocked resources or failed also starts fresh on its next content update, so unchanged stylesheet violations are reported again. Legacy frames without a policy always recreate on content changes: removing their DOM cannot dispose scripts, timers, or listeners they may have installed.

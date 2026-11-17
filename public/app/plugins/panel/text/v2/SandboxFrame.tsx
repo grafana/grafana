@@ -368,6 +368,7 @@ function createFrameController({
     ) {
       return;
     }
+    const cssChanged = next.globalCss !== renderCommand.globalCss;
     renderCommand = next;
     revision++;
     hasFailed = false;
@@ -376,7 +377,11 @@ function createFrameController({
     clearTimeout(watchdog);
     watchdog = window.setTimeout(fail, WATCHDOG_TIMEOUT_MS);
     if (renderedDocument !== undefined) {
-      iframe.contentWindow?.postMessage({ ...renderCommand, revision }, targetOrigin);
+      // Inlined fonts make CSS large; retaining the stylesheet must also avoid resending its bytes.
+      iframe.contentWindow?.postMessage(
+        { ...renderCommand, globalCss: cssChanged ? renderCommand.globalCss : undefined, revision },
+        targetOrigin
+      );
     }
   }
 
