@@ -479,7 +479,7 @@ describe('backendSrv', () => {
       });
     });
 
-    describe('when the ST pod is starting and MT fallback is configured', () => {
+    describe('when fallback is configured', () => {
       const loadingMessage = 'Your instance is loading, and will be ready shortly.';
       const showError = (backendSrv: BackendSrv, status: number, message = loadingMessage) =>
         backendSrv.showErrorAlert(
