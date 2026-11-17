@@ -1,7 +1,6 @@
 package extras
 
 import (
-	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -70,8 +69,6 @@ func TestPermittedLocalPaths(t *testing.T) {
 			want:      append(configured, "/etc/grafana/bootstrap"),
 		},
 		{
-			// The resolver cleans the candidate, so a prefix keeping its trailing slash
-			// would never match the repository's own path.
 			name:      "a trailing slash is cleaned off",
 			bootstrap: "/etc/grafana/bootstrap/",
 			want:      append(configured, "/etc/grafana/bootstrap"),
@@ -80,6 +77,22 @@ func TestPermittedLocalPaths(t *testing.T) {
 			name:      "a relative path resolves against the home path",
 			bootstrap: "conf/provisioning/bootstrap",
 			want:      append(configured, "/usr/share/grafana/conf/provisioning/bootstrap"),
+		},
+		{
+			// The empty prefix a cleaned root produces is a prefix of every path.
+			name:      "the filesystem root is not permitted",
+			bootstrap: "/",
+			want:      configured,
+		},
+		{
+			name:      "a traversal is not permitted",
+			bootstrap: "../../../etc",
+			want:      configured,
+		},
+		{
+			name:      "a hidden directory is not permitted",
+			bootstrap: "/etc/.grafana/bootstrap",
+			want:      configured,
 		},
 	}
 
@@ -96,17 +109,27 @@ func TestPermittedLocalPaths(t *testing.T) {
 }
 
 func TestPermittedLocalPathsMatchesTheResolver(t *testing.T) {
-	cfg := &setting.Cfg{
-		HomePath:                  "/usr/share/grafana",
-		ProvisioningBootstrapPath: "/etc/grafana/bootstrap/",
-	}
+	for _, bootstrap := range []string{
+		"/etc/grafana/bootstrap",
+		"/etc/grafana/bootstrap/",
+		"conf/provisioning/bootstrap",
+		"conf/provisioning/bootstrap/",
+	} {
+		t.Run(bootstrap, func(t *testing.T) {
+			cfg := &setting.Cfg{
+				HomePath:                  "/usr/share/grafana",
+				ProvisioningBootstrapPath: bootstrap,
+			}
 
-	resolver := local.LocalFolderResolver{
-		PermittedPrefixes: PermittedLocalPaths(cfg),
-		HomePath:          safepath.Clean(cfg.HomePath),
-	}
+			permitted := PermittedLocalPaths(cfg)
+			resolver := local.LocalFolderResolver{
+				PermittedPrefixes: permitted,
+				HomePath:          safepath.Clean(cfg.HomePath),
+			}
 
-	resolved, err := resolver.LocalPath(cfg.ProvisioningBootstrapPath)
-	require.NoError(t, err, "the bootstrap repository's own path must resolve")
-	assert.Equal(t, filepath.Clean(cfg.ProvisioningBootstrapPath), resolved)
+			resolved, err := resolver.LocalPath(cfg.ProvisioningBootstrapPath)
+			require.NoError(t, err, "the bootstrap repository's own path must resolve")
+			assert.Equal(t, permitted, []string{resolved}, "the permitted prefix must be the resolved path")
+		})
+	}
 }

@@ -71,6 +71,10 @@ const (
 	// promoteHeader if specified, will promote the merge imported configuration into Grafana and save. This is a one-off operation
 	promoteHeader = "X-Grafana-Alerting-Promote"
 
+	// execErrStateHeader is the header that sets the error state of all imported alert rules.
+	// If it is not set, the rules get the converter default.
+	execErrStateHeader = "X-Grafana-Alerting-Exec-Err-State"
+
 	// versionMessageHeader is the header that specifies an optional message for rule versions.
 	versionMessageHeader = "X-Grafana-Alerting-Version-Message"
 )
@@ -494,6 +498,12 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroups(c *context
 		logger.Error("Failed to parse version message header", "error", err)
 		return errorToResponse(err)
 	}
+
+	execErrState, err := parseExecErrStateHeader(c)
+	if err != nil {
+		logger.Error("Failed to parse exec err state header", "error", err)
+		return errorToResponse(err)
+	}
 	// 2. Convert Prometheus Rules to GMA
 	grafanaGroups := make([]*models.AlertRuleGroup, 0, len(promNamespaces))
 	for ns, rgs := range promNamespaces {
@@ -526,6 +536,7 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroups(c *context
 					KeepOriginalRuleDefinition: keepOriginalRuleDefinition,
 					NotificationSettings:       notificationSettings,
 					ExtraLabels:                extraLabels,
+					ExecErrState:               execErrState,
 				},
 			)
 			if err != nil {
@@ -948,6 +959,20 @@ func parseVersionMessageHeader(c *contextmodel.ReqContext) (string, error) {
 		return "", errInvalidHeaderValue(versionMessageHeader, errors.New("must be less than 500 characters"))
 	}
 	return str, nil
+}
+
+// parseExecErrStateHeader returns the error state from the header, or an empty
+// state if the header is not set. Values are matched exactly, as in models.ErrStateFromString.
+func parseExecErrStateHeader(c *contextmodel.ReqContext) (models.ExecutionErrorState, error) {
+	value := strings.TrimSpace(c.Req.Header.Get(execErrStateHeader))
+	if value == "" {
+		return "", nil
+	}
+	state, err := models.ErrStateFromString(value)
+	if err != nil {
+		return "", errInvalidHeaderValue(execErrStateHeader, errors.New("must be one of: OK, Alerting, Error, KeepLast"))
+	}
+	return state, nil
 }
 
 func readConfigIdentifierHeader(c *contextmodel.ReqContext) string {

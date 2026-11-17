@@ -1,8 +1,10 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { useStore } from 'react-redux';
 import { createSelector } from 'reselect';
 
+import { STARRED_FOLDERS_UID } from 'app/features/search/constants';
 import { type DashboardViewItem } from 'app/features/search/types';
+import { useStarredSearch } from 'app/features/stars/hooks';
 import { type StoreState, useDispatch, useSelector } from 'app/types/store';
 
 import { PAGE_SIZE } from '../api/constants';
@@ -10,10 +12,11 @@ import {
   type BrowseDashboardsState,
   type DashboardsTreeItem,
   type DashboardTreeSelection,
+  type DashboardViewItemCollection,
   type DashboardViewItemWithUIItems,
   type UIDashboardViewItem,
 } from '../types';
-import { isVirtualStarredFolder } from '../utils/dashboards';
+import { addStarredFolderPrefix, getFolderURL, isVirtualStarredFolder } from '../utils/dashboards';
 
 import { fetchNextChildrenPage } from './actions';
 import { collectionGeneration, collectionKeyOf, getPaginationPlaceholders } from './utils';
@@ -28,10 +31,54 @@ const flatTreeSelector = createSelector(
   childrenByParentUIDSelector,
   openFoldersSelector,
   (wholeState: StoreState, rootFolderUID: string | undefined) => rootFolderUID,
-  (rootItems, childrenByParentUID, openFolders, folderUID) => {
-    return createFlatTree(folderUID, rootItems, childrenByParentUID, openFolders);
+  (
+    wholeState: StoreState,
+    rootFolderUID: string | undefined,
+    starredFolders: DashboardViewItemCollection | undefined
+  ) => starredFolders,
+  (rootItems, childrenByParentUID, openFolders, folderUID, starredFolders) => {
+    // The slice never holds the Starred folders children; they join the lookup here, so the tree reads them like
+    // any other collection
+    const childrenByUID = starredFolders
+      ? { ...childrenByParentUID, [STARRED_FOLDERS_UID]: starredFolders }
+      : childrenByParentUID;
+    return createFlatTree(folderUID, rootItems, childrenByUID, openFolders);
   }
 );
+
+/**
+ * The virtual "Starred folders" root's children, derived from the starred search every starred view reads. Nothing
+ * is fetched or stored for them: a star toggle, rename or delete changes the shared rows and the tree follows. Open
+ * state and selection stay in the slice under the prefixed uid, as for any folder. Undefined until the first rows
+ * land, which the tree shows like any folder whose first page is in flight.
+ */
+function useStarredFoldersCollection(): DashboardViewItemCollection | undefined {
+  const { rows, error } = useStarredSearch();
+  return useMemo(() => {
+    // A star set that can't be read (an anonymous user's 403s) has no rows coming, so the root shows empty rather
+    // than loading forever
+    if (!rows && !error) {
+      return undefined;
+    }
+    const items = (rows ?? [])
+      .filter((row) => row.kind === 'folder')
+      .map<DashboardViewItem>((row) => ({
+        kind: 'folder',
+        // Prefixed uid for independent tree state; the real uid drives the folder URL
+        uid: addStarredFolderPrefix(row.uid),
+        title: row.name,
+        parentUID: STARRED_FOLDERS_UID,
+        url: getFolderURL(row.uid),
+      }));
+    return {
+      items,
+      lastFetchedKind: 'dashboard',
+      lastFetchedPage: 1,
+      lastKindHasMoreItems: false,
+      isFullyLoaded: true,
+    };
+  }, [rows, error]);
+}
 
 const hasSelectionSelector = createSelector(selectedItemsSelector, (selectedItems) => {
   return Object.values(selectedItems).some((selectedItem) =>
@@ -87,7 +134,8 @@ export function useBrowseLoadingStatus(folderUID: string | undefined): 'pending'
 }
 
 export function useFlatTreeState(folderUID: string | undefined) {
-  return useSelector((state) => flatTreeSelector(state, folderUID));
+  const starredFolders = useStarredFoldersCollection();
+  return useSelector((state) => flatTreeSelector(state, folderUID, starredFolders));
 }
 
 export function useHasSelection() {
@@ -171,8 +219,8 @@ function createFlatTree(
     const mappedChildren = createFlatTree(item.uid, rootCollection, childrenByUID, openFolders, level + 1);
 
     const isOpen = Boolean(openFolders[item.uid]);
-    const emptyFolder = childrenByUID[item.uid]?.items.length === 0;
-    if (isOpen && emptyFolder) {
+    const collection = childrenByUID[item.uid];
+    if (isOpen && collection?.items.length === 0) {
       mappedChildren.push({
         isOpen: false,
         level: level + 1,
@@ -186,6 +234,9 @@ function createFlatTree(
       parentUID,
       level,
       isOpen,
+      // Decided here, where the lookup includes the derived collections, so a row can't think itself loading
+      // once its children are on screen
+      isLoading: isOpen && !collection,
     };
 
     const items = [thisItem, ...mappedChildren];

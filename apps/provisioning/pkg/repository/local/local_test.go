@@ -1851,3 +1851,97 @@ func TestLocalRepositoryUnresolvedRootFailsReadsInsteadOfLookingEmpty(t *testing
 	assert.Empty(t, tree)
 	assert.Contains(t, err.Error(), "matches no permitted prefix")
 }
+
+func TestResolvePath(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		homePath string
+		path     string
+		want     string
+	}{
+		{"absolute path is kept", "/usr/share/grafana", "/etc/grafana/bootstrap", "/etc/grafana/bootstrap"},
+		{"absolute path is cleaned", "/usr/share/grafana", "/etc/grafana/bootstrap/", "/etc/grafana/bootstrap"},
+		{"relative path resolves against the home path", "/usr/share/grafana", "conf/bootstrap/", "/usr/share/grafana/conf/bootstrap"},
+		{"traversal is collapsed against the home path", "/usr/share/grafana", "../../etc/passwd", "/usr/etc/passwd"},
+		{"an unclean home path is cleaned", "/usr/share/grafana/", "conf/bootstrap", "/usr/share/grafana/conf/bootstrap"},
+		{"an empty path is the home path", "/usr/share/grafana", "", "/usr/share/grafana"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.want, ResolvePath(tc.homePath, tc.path))
+		})
+	}
+}
+
+func TestResolvePathMatchesLocalPath(t *testing.T) {
+	const homePath = "/usr/share/grafana"
+
+	for _, p := range []string{
+		"/etc/grafana/bootstrap",
+		"/etc/grafana/bootstrap/",
+		"conf/bootstrap",
+		"conf/bootstrap/",
+		filepath.Join(homePath, "conf", "bootstrap"),
+	} {
+		t.Run(p, func(t *testing.T) {
+			resolved := ResolvePath(homePath, p)
+			r := &LocalFolderResolver{PermittedPrefixes: []string{resolved}, HomePath: homePath}
+
+			got, err := r.LocalPath(p)
+			require.NoError(t, err, "a path permitted by its own resolution must resolve")
+			assert.Equal(t, resolved, got)
+		})
+	}
+}
+
+func TestLocalPathAcceptsSlashSuffixedPermittedPrefix(t *testing.T) {
+	// conf/defaults.ini documents prefixes written with a trailing slash, e.g.
+	// "permitted_provisioning_paths = grafana/ | /etc/grafana/provisioning/", and an absolute
+	// entry keeps it verbatim through setting.makeAbsolute.
+	const prefix = "/srv/grafana/repo/"
+
+	for _, p := range []string{"repo", "repo/", "/srv/grafana/repo", "/srv/grafana/repo/", "repo/nested/"} {
+		t.Run(p, func(t *testing.T) {
+			r := &LocalFolderResolver{PermittedPrefixes: []string{prefix}, HomePath: "/srv/grafana"}
+
+			got, err := r.LocalPath(p)
+			require.NoError(t, err)
+			assert.Equal(t, ResolvePath("/srv/grafana", p), got)
+		})
+	}
+}
+
+func TestLocalPathRejectsSiblingOfPermittedPrefix(t *testing.T) {
+	for _, prefix := range []string{"/srv/grafana/repo", "/srv/grafana/repo/"} {
+		t.Run(prefix, func(t *testing.T) {
+			r := &LocalFolderResolver{PermittedPrefixes: []string{prefix}, HomePath: "/srv/grafana"}
+
+			_, err := r.LocalPath("repo2/")
+			require.Error(t, err, "a sibling sharing a name prefix must not be permitted")
+			assert.Contains(t, err.Error(), "matches no permitted prefix")
+		})
+	}
+}
+
+func TestLocalPathDoesNotDependOnARepositoryHavingBeenBuilt(t *testing.T) {
+	// The prefixes were once cleaned in NewRepository, which mutated the shared resolver and
+	// made admission's answer depend on whether a repository had been built first.
+	const configured = "/srv/grafana/repo/"
+	resolver := &LocalFolderResolver{PermittedPrefixes: []string{configured}, HomePath: "/srv/grafana"}
+
+	before, err := resolver.LocalPath("repo/")
+	require.NoError(t, err)
+
+	NewRepository(&provisioning.Repository{
+		Spec: provisioning.RepositorySpec{
+			Type:  provisioning.LocalRepositoryType,
+			Local: &provisioning.LocalRepositoryConfig{Path: "repo/"},
+		},
+	}, resolver, nil)
+
+	after, err := resolver.LocalPath("repo/")
+	require.NoError(t, err)
+	assert.Equal(t, before, after)
+	// Built fresh from the literal: comparing against the slice the resolver was handed would
+	// compare an in-place mutation against itself.
+	assert.Equal(t, []string{configured}, resolver.PermittedPrefixes, "the resolver's prefixes must not be mutated")
+}

@@ -4,7 +4,7 @@
  * Remove a template variable from the dashboard by name.
  */
 
-import type * as z from 'zod';
+import * as z from 'zod/mini';
 
 import { payloads } from './schemas';
 import { enterEditModeIfNeeded, requiresEdit, type MutationCommand } from './types';
@@ -17,7 +17,7 @@ export type RemoveVariablePayload = z.infer<typeof removeVariablePayloadSchema>;
 
 export const removeVariableCommand: MutationCommand<RemoveVariablePayload> = {
   name: 'REMOVE_VARIABLE',
-  description: payloads.removeVariable.description ?? '',
+  description: z.globalRegistry.get(payloads.removeVariable)?.description ?? '',
 
   payloadSchema: payloads.removeVariable,
   permission: requiresEdit,

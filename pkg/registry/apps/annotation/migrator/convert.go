@@ -39,8 +39,8 @@ func toBackfillRecord(namespace string, a LegacyAnnotation) BackfillRecord {
 		Namespace: namespace,
 		Name:      legacyName(a.ID),
 		Time:      a.Epoch,
-		Text:      a.Text,
-		Tags:      a.Tags,
+		Text:      stripNUL(a.Text),
+		Tags:      stripNULTags(a.Tags),
 		LegacyID:  a.ID,
 	}
 
@@ -83,11 +83,28 @@ func toBackfillRecord(namespace string, a LegacyAnnotation) BackfillRecord {
 // cleanLegacyData returns the legacy data JSON to preserve, or "" if it carries
 // no meaningful payload.
 func cleanLegacyData(data string) string {
-	trimmed := strings.TrimSpace(data)
+	trimmed := strings.TrimSpace(stripNUL(data))
 	switch trimmed {
 	case "", "{}", "[]", "null":
 		return ""
 	default:
 		return trimmed
 	}
+}
+
+// stripNUL removes NUL bytes. MySQL text columns accept them but Postgres
+// rejects them in any text value (SQLSTATE 22021)
+func stripNUL(s string) string {
+	return strings.ReplaceAll(s, "\x00", "")
+}
+
+func stripNULTags(tags []string) []string {
+	if tags == nil {
+		return nil
+	}
+	out := make([]string, len(tags))
+	for i, tag := range tags {
+		out[i] = stripNUL(tag)
+	}
+	return out
 }

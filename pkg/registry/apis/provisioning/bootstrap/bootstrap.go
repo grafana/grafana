@@ -31,20 +31,16 @@ const (
 		"Add repositories, connections, dashboards and folders to that directory to provision them on startup."
 )
 
-// Queue drains a repository's queued jobs; disabling the sync only stops new ones.
-type Queue interface {
-	CleanupQueue(ctx context.Context, namespace, repository string) (int, error)
-}
-
 // Repositories is the subset of the generated repository client this package needs.
 type Repositories interface {
 	Get(ctx context.Context, name string, opts metav1.GetOptions) (*provisioning.Repository, error)
 	Create(ctx context.Context, repo *provisioning.Repository, opts metav1.CreateOptions) (*provisioning.Repository, error)
 	Update(ctx context.Context, repo *provisioning.Repository, opts metav1.UpdateOptions) (*provisioning.Repository, error)
+	Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error
 }
 
 // Config is the bootstrap repository to register. An empty Path still needs reconciling: a
-// repository an earlier run registered must stop reading a directory nothing names anymore.
+// repository an earlier run registered has no source once nothing names its directory.
 type Config struct {
 	// Path is the directory the repository reads, as configured.
 	Path string
@@ -70,14 +66,12 @@ func (c Config) matches(repo *provisioning.Repository) bool {
 		reflect.DeepEqual(repo.Annotations, want.Annotations)
 }
 
-// Reconcile registers the repository and keeps its shape, or stops one an earlier run left
+// Reconcile registers the repository and keeps its shape, or removes one an earlier run left
 // behind when the path is cleared. The configuration can change between boots, so both run.
-func Reconcile(ctx context.Context, repos Repositories, queue Queue, cfg Config) error {
+func Reconcile(ctx context.Context, repos Repositories, cfg Config) error {
 	step := ensure
 	if !cfg.Enabled() {
-		step = func(ctx context.Context, repos Repositories, cfg Config) error {
-			return disable(ctx, repos, queue, cfg)
-		}
+		step = remove
 	}
 
 	var err error
@@ -89,9 +83,9 @@ func Reconcile(ctx context.Context, repos Repositories, queue Queue, cfg Config)
 	return err
 }
 
-// disable keeps the repository and what it provisioned: clearing a setting should not delete
-// an instance's dashboards.
-func disable(ctx context.Context, repos Repositories, queue Queue, cfg Config) error {
+// remove deletes the repository. Deleting it is what clears its job queue and the resources
+// it provisioned: a source the configuration no longer names keeps nothing.
+func remove(ctx context.Context, repos Repositories, _ Config) error {
 	existing, err := repos.Get(ctx, Name, metav1.GetOptions{})
 	switch {
 	case apierrors.IsNotFound(err):
@@ -99,29 +93,19 @@ func disable(ctx context.Context, repos Repositories, queue Queue, cfg Config) e
 	case err != nil:
 		return fmt.Errorf("read bootstrap repository: %w", err)
 	case !owned(existing):
-		return nil // not ours to stop
-	case !existing.Spec.Sync.Enabled:
-		return drain(ctx, queue, cfg)
+		return nil // not ours to remove
+	case !existing.DeletionTimestamp.IsZero():
+		return nil // its finalizers are already running
 	}
 
-	updated := existing.DeepCopy()
-	updated.Spec.Sync.Enabled = false
-	if _, err := repos.Update(ctx, updated, metav1.UpdateOptions{}); err != nil {
-		return fmt.Errorf("disable bootstrap repository: %w", err)
-	}
-
-	// Drain after the write, so the controller cannot schedule another one in between.
-	return drain(ctx, queue, cfg)
-}
-
-// drain clears jobs queued while the sync was still enabled; only scheduling consults
-// sync.enabled, so a pull queued before the disable would still run against a gone directory.
-func drain(ctx context.Context, queue Queue, cfg Config) error {
-	if queue == nil {
-		return nil
-	}
-	if _, err := queue.CleanupQueue(ctx, cfg.Namespace, Name); err != nil {
-		return fmt.Errorf("clear bootstrap repository job queue: %w", err)
+	// Bound to the object we vouched for: a repository created under this name between the
+	// read and here is not ours, and the failed precondition is the conflict we re-read on.
+	// Another replica getting there first is the same outcome.
+	err = repos.Delete(ctx, Name, metav1.DeleteOptions{
+		Preconditions: metav1.NewUIDPreconditions(string(existing.UID)),
+	})
+	if err != nil && !apierrors.IsNotFound(err) {
+		return fmt.Errorf("delete bootstrap repository: %w", err)
 	}
 	return nil
 }

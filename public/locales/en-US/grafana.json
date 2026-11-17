@@ -1502,9 +1502,29 @@
         "records": "Records",
         "to": "to"
       },
+      "recording-rule-actions": {
+        "copy-link": "Copy link",
+        "copy-link-error": "Failed to copy link",
+        "copy-link-success": "Link copied",
+        "delete": "Delete",
+        "delete-confirm-body": "Delete \"{{title}}\"?",
+        "delete-confirm-button": "Delete",
+        "delete-confirm-title": "Delete recording rule",
+        "delete-error": "Failed to delete rule",
+        "duplicate": "Duplicate",
+        "pause": "Pause",
+        "pause-action": "pause",
+        "pause-error": "Failed to {{action}} rule",
+        "resume": "Resume",
+        "resume-action": "resume",
+        "view": "View"
+      },
       "recording-rules": {
         "folder-rules-error": "Failed to load rules",
         "folders-error": "Failed to load folders",
+        "header": {
+          "new-rule": "New recording rule"
+        },
         "load-more-rules-in-folder": "Load more rules in {{title}}",
         "loading-folders": "Loading folders...",
         "no-rules": "No recording rules found",
@@ -1580,6 +1600,12 @@
         "view-folders": "Folders",
         "view-list": "List",
         "wildcard-in-text": "Search text cannot contain * or %."
+      },
+      "sequence-pill": {
+        "label": "Rule sequence",
+        "label-with-interval": "Rule sequence · {{interval}}",
+        "tooltip": "Evaluated as part of a rule sequence",
+        "tooltip-with-interval": "Evaluated every {{interval}} by its rule sequence"
       },
       "shared": {
         "load-more": "Load more",
@@ -2398,6 +2424,7 @@
       "contact-points": "Contact points",
       "notification-policies": "Notification policies",
       "recently-deleted": "Recently deleted",
+      "recording-rules": "Recording rules",
       "templates": "Templates",
       "time-intervals": "Time intervals"
     },
@@ -5386,6 +5413,7 @@
       "change-theme": "Change theme",
       "dark-theme": "Dark",
       "dashboard-from-template": "Dashboard from template",
+      "experimental": "Experimental",
       "light-theme": "Light",
       "open-saved-queries": "Open saved queries",
       "scopes": "Scopes"
@@ -5840,12 +5868,18 @@
       "annotation-pin-remove": "Comment {{label}}, marked for removal",
       "apply-undo-title": "Assistant Composer edit",
       "overlay": {
+        "hint-elements": "Drag to select panels",
+        "hint-layer": "Click to ask about an annotation, or drag to draw a region",
+        "hint-layer-select": "Click to ask about an annotation, or drag to select",
         "hint-not-removable": "Built-in layers can't be removed",
-        "hint-panel": "Click to comment on a panel, or drag to draw a region",
+        "hint-panel": "Click to ask about a panel, or drag to draw a region",
+        "hint-panel-select": "Click to ask about a panel, or drag to select panels",
         "hint-region": "Drag to draw a region",
         "hint-remove": "Click to mark for removal",
-        "hint-text": "Select text to comment on it",
-        "hint-variable": "Click to comment on a variable, or drag to draw a region"
+        "hint-screenshot": "Drag to capture a region",
+        "hint-text": "Select text to ask about it",
+        "hint-variable": "Click to ask about a variable, or drag to draw a region",
+        "hint-variable-select": "Click to ask about a variable, or drag to select"
       },
       "region": "Region",
       "untitled-panel": "Panel {{panelId}}",
@@ -6239,6 +6273,9 @@
         "transparent-background": "Transparent background"
       }
     },
+    "get-var-mapping-option-overrides": {
+      "uses-variables": "This option uses variables"
+    },
     "inspect": {
       "data-tab": "Data",
       "errors-and-notices-tab": "Errors and notices",
@@ -6432,9 +6469,6 @@
       "only-overrides-button-tooltip": "Show only overrides",
       "placeholder-search-options": "Search options",
       "visualization-button-tooltip": "Search options"
-    },
-    "panel-editor": {
-      "ad-hoc-transformations-disabled": "Ad hoc transformations are disabled in edit mode"
     },
     "plan-building-overlay": {
       "quip-corners": "Polishing the panel corners…",
@@ -6761,7 +6795,6 @@
           "no-title": "<no title>"
         }
       },
-      "redo": "Redo",
       "row": {
         "header": {
           "hide": "Hide",
@@ -6778,7 +6811,6 @@
         "title": "Source",
         "tooltip": "Open original dashboard"
       },
-      "undo": "Undo",
       "variable": {
         "change-type": "Change type",
         "change-type-aria-label": "Change variable type",
@@ -6815,8 +6847,6 @@
         "open-editor": "Open variable editor",
         "open-editor-tooltip": "For more variable options open variable editor",
         "query-options": {
-          "close": "Close",
-          "old-modal-title": "Query Variable",
           "preview": "Preview"
         },
         "remove": "Remove",
@@ -6987,6 +7017,8 @@
       "playlist-next": "Go to next dashboard",
       "playlist-previous": "Go to previous dashboard",
       "playlist-stop": "Stop playlist",
+      "redo": "Redo",
+      "redo-action": "Redo: {{action}}",
       "save-as-template": {
         "label": "Save as template"
       },
@@ -7005,6 +7037,8 @@
       "star-added": "Added to starred",
       "star-remove-error": "Failed to remove from starred",
       "star-removed": "Removed from starred",
+      "undo": "Undo",
+      "undo-action": "Undo: {{action}}",
       "unlink-library-panel": "Unlink library panel",
       "unlink-library-panel-short": "Unlink"
     },
@@ -7724,7 +7758,7 @@
       "apply": "Apply",
       "apply-body": "Everyone with access will see them. You can restore the previous version from version history.",
       "apply-failed": "Couldn't apply the changes. Try again, or compare them first.",
-      "apply-needs-edit": "Applying needs edit access to “{{title}}”. You can preview these changes, but not apply them.",
+      "apply-needs-save": "You don’t have permission to save “{{title}}”, so you can preview these changes but not apply them. Ask an admin for permission to save it.",
       "apply-title_one": "Apply {{count}} change to “{{title}}”?",
       "apply-title_other": "Apply {{count}} changes to “{{title}}”?",
       "breadcrumb-draft": "Draft",
@@ -7829,6 +7863,19 @@
       "aria-label-remove-option": "Remove option",
       "title-drag-and-drop-to-reorder": "Drag and drop to reorder",
       "tooltip-remove-option": "Remove option"
+    },
+    "panel-actions-popover": {
+      "aria-label": "Panel actions",
+      "edit": "Edit visualization (e)",
+      "edit-tooltip-disabled": "Repeated panels can't be edited individually",
+      "expand": "Expand (v)",
+      "explore": "Explore (p x)",
+      "more-actions": "More actions",
+      "remove": "Remove (p r)",
+      "remove-confirm": "Remove",
+      "remove-tooltip-disabled": "Repeated panels can't be removed individually",
+      "restore-size": "Restore size (v)",
+      "settings": "Panel settings"
     },
     "panel-data-alerting-tab": {
       "tab-label": "Alert"
@@ -8009,6 +8056,12 @@
       "body-restore-version": "Are you sure you want to restore the dashboard to version {{version}}? All unsaved changes will be lost.",
       "confirmText-restore-version": "Yes, restore to version {{version}}",
       "title-restore-version": "Restore version"
+    },
+    "row-edit-actions": {
+      "copy-disabled": "Repeated rows can't be copied individually",
+      "delete-disabled": "Repeated rows can't be deleted individually",
+      "duplicate-disabled": "Repeated rows can't be duplicated individually",
+      "tooltip-row-settings": "Row settings"
     },
     "sandbox-consent": {
       "allow": "Allow",
@@ -8205,6 +8258,12 @@
       "switch-options": "Switch options",
       "value-pair-type": "Value pair type",
       "value-pair-type-description": "Choose the type of values for the switch states"
+    },
+    "tab-edit-actions": {
+      "copy-disabled": "Repeated tabs can't be copied individually",
+      "delete-disabled": "Repeated tabs can't be deleted individually",
+      "duplicate-disabled": "Repeated tabs can't be duplicated individually",
+      "tooltip-tab-settings": "Tab settings"
     },
     "text-box-variable": {
       "name-default-value": "Default value"
@@ -9827,6 +9886,9 @@
     "select-aria-label": "Folder filter",
     "select-placeholder": "Filter by folder"
   },
+  "folder-picker": {
+    "read-only-folder-tooltip": "You can't create dashboards in this folder"
+  },
   "folders": {
     "api": {
       "anonymous-user": "Anonymous",
@@ -10819,6 +10881,8 @@
       "tooltip": {
         "category": "Tooltip",
         "description-hover-proximity": "How close the cursor must be to a point to trigger the tooltip, in pixels",
+        "description-max-height": "Maximum height of the tooltip, in pixels",
+        "description-max-width": "Maximum width of the tooltip, in pixels",
         "modeOptions": {
           "label-all": "All",
           "label-hidden": "Hidden",
@@ -11321,6 +11385,8 @@
         "unbounded": "No limit"
       },
       "reorder-column-label": "Reorder {{columnName}}",
+      "row-number": "Row number",
+      "row-number-column": "Row number",
       "show-column-label": "Show {{columnName}}",
       "sort-by-column": "Sort by column {{column}}",
       "sort-by-column-ascending": "Sort by column {{column}}, ascending",
@@ -13117,6 +13183,10 @@
       "subtitle": "Choose how to notify your contact points when an alert instance fires",
       "title": "Contact points"
     },
+    "alerting-recording-rules": {
+      "subtitle": "Rules that pre-compute and record values as new time series",
+      "title": "Recording rules"
+    },
     "alerting-silences": {
       "subtitle": "Stop notifications from one or more alerting rules",
       "title": "Silences"
@@ -13301,6 +13371,9 @@
     },
     "new-folder": {
       "title": "New folder"
+    },
+    "new-grafana-page": {
+      "title": "New Grafana Page"
     },
     "new-notebook": {
       "title": "New notebook"
@@ -13966,6 +14039,32 @@
     },
     "units": {
       "clear-tooltip": "Clear unit selection"
+    },
+    "var-mapping-checks": {
+      "data-macro": "Resolves for each field when the panel renders",
+      "not-allowed": "Current value \"{{current}}\" isn't allowed, so the fallback is used",
+      "not-found": "Variable not found, so the fallback is used",
+      "not-number": "Current value \"{{current}}\" isn't a number, so the fallback is used",
+      "not-one-value": "The variable doesn't have exactly one value selected, so the fallback is used",
+      "out-of-range": "Current value {{current}} is out of range, so the fallback is used. {{range}}",
+      "resolves": "Resolves to: {{resolved}}",
+      "values": "These values use the fallback: {{values}}"
+    },
+    "var-mapping-toggle": {
+      "aria-label-picker": "Variable for {{name}}",
+      "fallback-off": "Off",
+      "fallback-on": "On",
+      "group-matching": "Matching values",
+      "group-other": "Other variables",
+      "hint-boolean": "Allowed values: true, false. Falls back to: {{fallback}}",
+      "hint-number": "Falls back to: {{fallback}}",
+      "hint-option": "Allowed values: {{values}}. Falls back to: {{fallback}}",
+      "hint-option-no-fallback": "Allowed values: {{values}}",
+      "new-variable": "New variable with these values",
+      "option-current": "Current: {{current}}",
+      "placeholder": "Choose a variable",
+      "use-fixed-value": "Use a fixed value",
+      "use-variable": "Use variable"
     }
   },
   "org": {
@@ -14068,12 +14167,14 @@
     "header-menu": {
       "add-to-notebook": "Add to notebook",
       "copy": "Copy",
+      "copy-repeated-panel": "Copy repeated panel",
       "copy-styles": "Copy styles",
       "download-diagnostics": "Download diagnostics",
       "duplicate": "Duplicate",
       "edit": "Edit",
       "explore": "Explore",
       "get-help": "Get help",
+      "group-by": "Group by…",
       "hide-legend": "Hide legend",
       "inspect": "Inspect",
       "inspect-data": "Data",
@@ -14394,6 +14495,9 @@
     },
     "empty-state": {
       "message": "No plugins found"
+    },
+    "errors": {
+      "app-plugin-metas-error": "Failed to load app plugin metas"
     },
     "extensions": {
       "extension-error-alert-description": "Check the console for more details on the error.",
@@ -15368,8 +15472,7 @@
       "upgrade-link": "upgrade your account"
     },
     "read-only-badge": {
-      "pull-only": "Pull only",
-      "text": "Read only"
+      "pull-only": "Pull only"
     },
     "read-only-local-tooltip": "This resource is read-only and provisioned through file provisioning. To make any changes, update the connected repository. To modify the settings go to Administration > Provisioning > Repositories.",
     "read-only-remote-tooltip": "This resource is read-only and provisioned through Git. To make any changes, update the connected repository. To modify the settings go to Administration > Provisioning > Repositories.",
@@ -16209,6 +16312,9 @@
       "show-response": "Show response"
     },
     "query-editor-not-exported": "Data source plugin does not export any Query Editor component"
+  },
+  "read-only-badge": {
+    "text": "Read only"
   },
   "recent-queries": {
     "description_one": "Recent queries are queries that you've run in Explore within the past {{count}} day",
@@ -17223,6 +17329,7 @@
     "description-min-column-width": "The minimum width for column auto resizing",
     "description-page-size": "Number of rows per page. When empty, the page size is based on the panel height.",
     "description-show-columns-sidebar": "Open the column management sidebar with the panel, rather than from a column menu",
+    "description-show-row-numbers": "Show the position of each row in the displayed table",
     "description-styling-from-field": "A field containing JSON objects with CSS properties",
     "description-tooltip-from-field": "Render a cell from a field (hidden or visible) in a tooltip",
     "description-zebra-striping": "Alternate the background color of every other row",
@@ -17265,6 +17372,7 @@
     "name-min-column-width": "Minimum column width",
     "name-page-size": "Page size",
     "name-show-columns-sidebar": "Show columns sidebar",
+    "name-show-row-numbers": "Show row numbers",
     "name-show-table-header": "Show table header",
     "name-sparkline-show-tooltip": "Show hover tooltip",
     "name-styling-from-field": "Styling from field",

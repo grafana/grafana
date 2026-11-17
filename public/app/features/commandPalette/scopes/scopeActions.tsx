@@ -3,6 +3,7 @@ import { last } from 'lodash';
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { config } from '@grafana/runtime';
+import { useFlagScopeSearchAllLevels } from '@grafana/runtime/internal';
 
 import { type CommandPaletteAction } from '../types';
 
@@ -140,9 +141,10 @@ function useGlobalScopesSearch(searchQuery: string, parentId?: string | null) {
   const { selectScope, searchAllNodes, getScopeNodes } = useScopeServicesState();
   const [actions, setActions] = useState<CommandPaletteAction[] | undefined>(undefined);
   const searchQueryRef = useRef<string>(undefined);
+  const scopeSearchAllLevelsEnabled = useFlagScopeSearchAllLevels();
 
   useEffect(() => {
-    if ((!parentId || parentId === 'scopes') && searchQuery && config.featureToggles.scopeSearchAllLevels) {
+    if ((!parentId || parentId === 'scopes') && searchQuery && scopeSearchAllLevelsEnabled) {
       // We only search globally if there is no parentId
       searchQueryRef.current = searchQuery;
       searchAllNodes(searchQuery, 10).then((nodes) => {
@@ -175,7 +177,7 @@ function useGlobalScopesSearch(searchQuery: string, parentId?: string | null) {
       searchQueryRef.current = undefined;
       setActions(undefined);
     }
-  }, [searchAllNodes, searchQuery, parentId, selectScope, getScopeNodes]);
+  }, [searchAllNodes, searchQuery, parentId, selectScope, getScopeNodes, scopeSearchAllLevelsEnabled]);
 
   return actions;
 }

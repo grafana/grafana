@@ -2124,6 +2124,14 @@ func convertFieldConfigDefaultsToV1(defaults *dashv2alpha1.DashboardFieldConfig)
 	if defaults.Thresholds != nil {
 		result["thresholds"] = convertThresholdsToV1(defaults.Thresholds)
 	}
+	if len(defaults.VarMappings) > 0 {
+		// Same shape as decoded JSON, which is what the v1 to v2 conversion reads
+		varMappings := make(map[string]interface{}, len(defaults.VarMappings))
+		for id, expr := range defaults.VarMappings {
+			varMappings[id] = expr
+		}
+		result["varMappings"] = varMappings
+	}
 
 	if len(result) == 0 {
 		return nil

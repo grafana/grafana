@@ -212,9 +212,12 @@ export const DashboardInteractions = {
       | 'duplicate'
       | 'delete'
       | 'view'
+      | 'restore'
+      | 'explore'
+      | 'more_actions'
       | 'use_library_panel',
     id: number,
-    source: 'panel' | 'edit_pane' | 'edit_popover' | 'keyboard',
+    source: 'panel' | 'edit_pane' | 'edit_popover' | 'actions_popover' | 'keyboard',
     panelType?: string
   ) {
     reportDashboardInteraction('panel_action_clicked', { item, id, source, panelType });
@@ -253,6 +256,13 @@ export const DashboardInteractions = {
   },
   trackDeleteDashboardElement(elementType: string, source: 'edit_pane' | 'edit_popover') {
     reportDashboardInteraction('edit_action_clicked', { item: `remove_${elementType.toLowerCase()}`, source });
+  },
+  trackDashboardSectionAction(
+    action: 'settings' | 'copy' | 'duplicate',
+    elementType: 'row' | 'tab',
+    source: 'edit_pane' | 'edit_popover'
+  ) {
+    reportDashboardInteraction('edit_action_clicked', { item: `${action}_${elementType}`, source });
   },
   panelLinkClicked: (properties?: Record<string, unknown>) => {
     reportDashboardInteraction('panelheader_datalink_clicked', properties);
