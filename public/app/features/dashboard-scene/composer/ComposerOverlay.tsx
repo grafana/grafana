@@ -111,7 +111,7 @@ export function ComposerOverlay({
 }) {
   const styles = useStyles2(getStyles);
   const overlayState = useSyncExternalStore(session.subscribe, session.getOverlayState);
-  const { picking, pickMode, paused, capturing, annotations, tool, drag } = overlayState;
+  const { picking, pickMode, paused, capturing, working, annotations, tool, drag } = overlayState;
   /** A Select drag picks the elements it covers instead of drawing a region. */
   const dragSelectsElements = tool === 'select' && drag === 'elements';
   const rootRef = useRef<HTMLDivElement>(null);
@@ -483,11 +483,12 @@ export function ComposerOverlay({
   // Position a hint that just appeared before it paints.
   useLayoutEffect(() => positionHint(), [hintCopy, positionHint]);
 
+  // A send from the keyboard moves no pointer, so a turn starting must clear the hint left where it last was.
   useEffect(() => {
-    if (!hintAllowed) {
+    if (!hintAllowed || working) {
       hideHint();
     }
-  }, [hintAllowed, hideHint]);
+  }, [hintAllowed, working, hideHint]);
 
   useEffect(() => () => cancelAnimationFrame(hintFrameRef.current), []);
 
