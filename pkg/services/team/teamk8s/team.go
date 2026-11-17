@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"sort"
 	"strconv"
 	"time"
@@ -26,6 +27,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/localcache"
@@ -51,6 +53,8 @@ const (
 	// apiserver, large enough to keep latency bounded.
 	usersGetParallelism = 8
 )
+
+var errSearchPageOutOfRange = errutil.BadRequest("team.searchPageOutOfRange")
 
 var teamGVR = schema.GroupVersionResource{
 	Group:    iamv0alpha1.APIGroup,
@@ -578,7 +582,59 @@ func (s *TeamK8sService) getRESTClient(ctx context.Context) (*rest.RESTClient, e
 }
 
 func (s *TeamK8sService) SearchTeams(ctx context.Context, query *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error) {
-	return s.searchTeams(ctx, query, true)
+	if query.Limit <= common.MaxListLimit {
+		return s.searchTeams(ctx, query, true)
+	}
+
+	// The legacy SQL search had no page size cap, so read cap-sized pages that cover the requested range.
+	// Offset pages can shift when teams change between page reads, so a concurrent change may be missed
+	// until the next call.
+	requestedPage := max(query.Page, 1)
+	// An overflowing offset would start the loop at a non-positive page, which the search treats as page 1.
+	if requestedPage-1 > math.MaxInt/query.Limit {
+		return team.SearchTeamQueryResult{}, errSearchPageOutOfRange.Errorf("page %d is out of range for perpage %d", query.Page, query.Limit)
+	}
+	offset := (requestedPage - 1) * query.Limit
+	// Search pages are aligned to the cap, so the first page can start before the requested offset.
+	skip := offset % common.MaxListLimit
+
+	result := team.SearchTeamQueryResult{
+		Teams:   make([]*team.TeamDTO, 0),
+		Page:    query.Page,
+		PerPage: query.Limit,
+	}
+	seen := make(map[string]struct{})
+	for page := offset/common.MaxListLimit + 1; len(result.Teams) < query.Limit; page++ {
+		pageQuery := *query
+		pageQuery.Limit = common.MaxListLimit
+		pageQuery.Page = page
+		pageResult, err := s.searchTeams(ctx, &pageQuery, true)
+		if err != nil {
+			return team.SearchTeamQueryResult{}, err
+		}
+		result.TotalCount = pageResult.TotalCount
+
+		teams := pageResult.Teams[min(skip, len(pageResult.Teams)):]
+		skip = 0
+		added := 0
+		for _, t := range teams {
+			if len(result.Teams) == query.Limit {
+				break
+			}
+			if _, ok := seen[t.UID]; !ok {
+				seen[t.UID] = struct{}{}
+				result.Teams = append(result.Teams, t)
+				added++
+			}
+		}
+		// Stop on a short page, not on TotalCount: member searches can report only the hits seen so far.
+		// A page with no new teams means the search is repeating results, so more pages would never fill the request.
+		if len(pageResult.Teams) < common.MaxListLimit || added == 0 {
+			break
+		}
+	}
+
+	return result, nil
 }
 
 // searchTeams can skip member counts because the search handler fetches every hit team to count members.

@@ -361,6 +361,7 @@
 /devenv/docker/compose_volume_section.yml @grafana/grafana-backend-services-squad
 /devenv/docker/debtest/ @bergquist
 /devenv/docker/ha-test-unified-alerting/ @grafana/alerting-squad
+/devenv/docker/ha-test-nats/ @grafana/grafana-search-and-storage
 /devenv/docker/ha_test/ @grafana/grafana-backend-services-squad
 /devenv/docker/loadtest/ @grafana/grafana-backend-services-squad
 /devenv/docker/rpmtest/ @grafana/grafana-operator-experience-squad
