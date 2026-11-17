@@ -31,7 +31,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/auth"
@@ -43,8 +42,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/oauthtoken/oauthtokentest"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -1249,8 +1246,8 @@ func getDatasourceProxiedRequest(t *testing.T, ctx *contextmodel.ReqContext, pro
 	quotaService := quotatest.New(false, nil)
 	dsRetriever := datasourceservice.ProvideDataSourceRetriever(sqlStore, features)
 	dsService, err := datasourceservice.ProvideService(nil, secretsService, secretsStore, cfg, features, acimpl.ProvideAccessControl(features),
-		&actest.FakePermissionsService{}, quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{},
-		plugincontext.ProvideBaseService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()), dsRetriever, nil)
+		&actest.FakePermissionsService{}, quotaService, &pluginstore.FakePluginStore{},
+		dsRetriever, nil)
 	require.NoError(t, err)
 
 	loader, err := NewDataSourceLoader(ds, dsService)
@@ -1380,8 +1377,8 @@ func runDatasourceAuthTest(t *testing.T,
 	var sqlStore db.DB = nil
 	dsRetriever := datasourceservice.ProvideDataSourceRetriever(sqlStore, features)
 	dsService, err := datasourceservice.ProvideService(sqlStore, secretsService, secretsStore, cfg, features, acimpl.ProvideAccessControl(features),
-		&actest.FakePermissionsService{}, quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{},
-		plugincontext.ProvideBaseService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()), dsRetriever, nil)
+		&actest.FakePermissionsService{}, quotaService, &pluginstore.FakePluginStore{},
+		dsRetriever, nil)
 	require.NoError(t, err)
 
 	loader, err := NewDataSourceLoader(test.datasource, dsService)
@@ -1442,8 +1439,8 @@ func setupDSProxyTest(t *testing.T, ctx *contextmodel.ReqContext, ds *datasource
 	var sqlStore db.DB = nil
 	dsRetriever := datasourceservice.ProvideDataSourceRetriever(sqlStore, features)
 	dsService, err := datasourceservice.ProvideService(sqlStore, secretsService, secretsStore, cfg, features, acimpl.ProvideAccessControl(features),
-		&actest.FakePermissionsService{}, quotatest.New(false, nil), &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{},
-		plugincontext.ProvideBaseService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()), dsRetriever, nil)
+		&actest.FakePermissionsService{}, quotatest.New(false, nil), &pluginstore.FakePluginStore{},
+		dsRetriever, nil)
 	require.NoError(t, err)
 
 	tracer := tracing.InitializeTracerForTest()

@@ -93,7 +93,7 @@ func (f *ConvertPrometheusApiHandler) handleRouteConvertPrometheusGetRuleGroup(c
 func (f *ConvertPrometheusApiHandler) handleRouteConvertPrometheusPostRuleGroup(ctx *contextmodel.ReqContext, namespaceTitle string) response.Response {
 	var promGroup apimodels.PrometheusRuleGroup
 	if err := parseJSONOrYAML(ctx, &promGroup, f.svc.cfg.PrometheusConversion.MaxRequestBodyBytes); err != nil {
-		return errorToResponse(err)
+		return f.svc.recordRequest(ctx, operationPostRules, errorToResponse(err))
 	}
 
 	return f.svc.RouteConvertPrometheusPostRuleGroup(ctx, namespaceTitle, promGroup)
@@ -102,7 +102,7 @@ func (f *ConvertPrometheusApiHandler) handleRouteConvertPrometheusPostRuleGroup(
 func (f *ConvertPrometheusApiHandler) handleRouteConvertPrometheusPostRuleGroups(ctx *contextmodel.ReqContext) response.Response {
 	var promNamespaces map[string][]apimodels.PrometheusRuleGroup
 	if err := parseJSONOrYAML(ctx, &promNamespaces, f.svc.cfg.PrometheusConversion.MaxRequestBodyBytes); err != nil {
-		return errorToResponse(err)
+		return f.svc.recordRequest(ctx, operationPostRules, errorToResponse(err))
 	}
 
 	return f.svc.RouteConvertPrometheusPostRuleGroups(ctx, promNamespaces)
@@ -141,7 +141,7 @@ func (f *ConvertPrometheusApiHandler) handleRouteConvertPrometheusCortexPostRule
 func (f *ConvertPrometheusApiHandler) handleRouteConvertPrometheusPostAlertmanagerConfig(ctx *contextmodel.ReqContext) response.Response {
 	var config apimodels.AlertmanagerUserConfig
 	if err := parseJSONOrYAML(ctx, &config, f.svc.cfg.PrometheusConversion.MaxRequestBodyBytes); err != nil {
-		return errorToResponse(err)
+		return f.svc.recordRequest(ctx, operationPostAlertmanager, errorToResponse(err))
 	}
 
 	return f.svc.RouteConvertPrometheusPostAlertmanagerConfig(ctx, config)
