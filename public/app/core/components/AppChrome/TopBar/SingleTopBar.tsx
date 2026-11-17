@@ -5,8 +5,8 @@ import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { type ScopesContextValue } from '@grafana/runtime';
-import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
-import { Icon, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { useFlagGrafanaMegaMenuPeekAndDock, useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
+import { Icon, Stack, ToolbarButton, Tooltip, useStyles2 } from '@grafana/ui';
 import { MEGA_MENU_TOGGLE_ID } from 'app/core/constants';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useHomeNav } from 'app/core/hooks/useHomeNav';
@@ -21,6 +21,7 @@ import { buildBreadcrumbs } from '../../Breadcrumbs/utils';
 import { AssistantToolbarButtons } from '../AssistantWorkspace/AssistantToolbarButtons';
 import { ExtensionToolbarItem } from '../ExtensionSidebar/ExtensionToolbarItem';
 import { LazyFeatureControlButton } from '../FeatureControl/LazyFeatureControl';
+import { MegaMenuToggleIcon } from '../MegaMenu/MegaMenuToggleIcon';
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
 import { QuickAdd } from '../QuickAdd/QuickAdd';
 
@@ -64,30 +65,77 @@ export const SingleTopBar = memo(function SingleTopBar({
   const breadcrumbs = buildBreadcrumbs(sectionNav, pageNav, homeNav);
   const isSmallScreen = !useMediaQueryMinWidth('sm');
   const isLargeScreen = useMediaQueryMinWidth('lg');
+  // Below this width the docked menu is hidden, so it is never docked.
+  const canDockMenu = useMediaQueryMinWidth('xl');
+  const peekAndDock = useFlagGrafanaMegaMenuPeekAndDock();
   const topLevelScopes = !showToolbarLevel && isLargeScreen && scopes?.state.enabled;
+
+  const onMenuToggleClick = () => {
+    if (canDockMenu) {
+      chrome.setMegaMenuDocked(true);
+      chrome.setMegaMenuOpen(true);
+    } else if (chrome.state.getValue().megaMenuPeek) {
+      // The menu the pointer opened stays open once clicked, instead of closing again.
+      chrome.setMegaMenuOpen(true);
+    } else {
+      onToggleMegaMenu();
+    }
+  };
 
   return (
     <>
       <div className={styles.layout}>
         <Stack minWidth={0} gap={0.5} alignItems="center" flex={{ xs: 2, lg: 1 }}>
-          {!menuDockedAndOpen && (
-            <>
-              <HomeLogo homeNav={homeNav} />
-              <ToolbarButton
-                narrow
-                id={MEGA_MENU_TOGGLE_ID}
-                data-testid={Components.NavBar.Toggle.button}
-                onClick={onToggleMegaMenu}
-                tooltip={t('navigation.megamenu.open', 'Main menu')}
-                aria-expanded={state.megaMenuOpen}
-                className={cx(state.megaMenuOpen && styles.menuToggleActive)}
-              >
-                <Stack gap={0} alignItems="center">
-                  <Icon name="bars" size="xl" />
-                </Stack>
-              </ToolbarButton>
-            </>
-          )}
+          {!menuDockedAndOpen &&
+            (peekAndDock ? (
+              <>
+                {/* Resting the pointer on it opens the menu over the page; a click docks the menu where the screen
+                    is wide enough, and opens it over the page otherwise. While the pointer holds the menu open, a
+                    tooltip beside the button, clear of the menu below, says what the click does. The tooltip puts its
+                    own pointer handlers on the button, so the wrapper listens for the pointer instead. */}
+                <span
+                  className={styles.menuToggleHoverArea}
+                  onPointerEnter={(event) => event.pointerType === 'mouse' && chrome.startMegaMenuPeek()}
+                  onPointerLeave={chrome.endMegaMenuPeek}
+                >
+                  <Tooltip
+                    content={t('navigation.megamenu.click-to-dock', 'Click to dock')}
+                    placement="right"
+                    show={canDockMenu && Boolean(state.megaMenuPeek)}
+                  >
+                    <ToolbarButton
+                      narrow
+                      id={MEGA_MENU_TOGGLE_ID}
+                      data-testid={Components.NavBar.Toggle.button}
+                      onClick={onMenuToggleClick}
+                      aria-label={t('navigation.megamenu.open', 'Main menu')}
+                      aria-expanded={state.megaMenuOpen}
+                      className={cx(state.megaMenuOpen && styles.menuToggleActive)}
+                    >
+                      <MegaMenuToggleIcon />
+                    </ToolbarButton>
+                  </Tooltip>
+                </span>
+                <HomeLogo homeNav={homeNav} />
+              </>
+            ) : (
+              <>
+                <HomeLogo homeNav={homeNav} />
+                <ToolbarButton
+                  narrow
+                  id={MEGA_MENU_TOGGLE_ID}
+                  data-testid={Components.NavBar.Toggle.button}
+                  onClick={onToggleMegaMenu}
+                  tooltip={t('navigation.megamenu.open', 'Main menu')}
+                  aria-expanded={state.megaMenuOpen}
+                  className={cx(state.megaMenuOpen && styles.menuToggleActive)}
+                >
+                  <Stack gap={0} alignItems="center">
+                    <Icon name="bars" size="xl" />
+                  </Stack>
+                </ToolbarButton>
+              </>
+            ))}
           {topLevelScopes ? <ScopesSelector /> : undefined}
           <Breadcrumbs breadcrumbs={breadcrumbs} className={styles.breadcrumbsWrapper} />
           {!showToolbarLevel && breadcrumbActions}
@@ -148,6 +196,9 @@ const getStyles = (theme: GrafanaTheme2, menuDockedAndOpen: boolean, visualRefre
     [theme.breakpoints.down('lg')]: {
       display: 'none',
     },
+  }),
+  menuToggleHoverArea: css({
+    display: 'inline-flex',
   }),
   menuToggleActive: css({
     backgroundColor: theme.colors.accent.transparent,

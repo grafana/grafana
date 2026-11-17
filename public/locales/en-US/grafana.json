@@ -13534,6 +13534,7 @@
       "tv-alert": "Press ESC to exit kiosk mode"
     },
     "megamenu": {
+      "click-to-dock": "Click to dock",
       "close": "Close menu",
       "customise": "Customise navigation",
       "customise-cancel": "Cancel",

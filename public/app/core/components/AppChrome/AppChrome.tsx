@@ -67,7 +67,7 @@ export function AppChrome({ children }: Props) {
   const isSmallScreen = !useMediaQueryMinWidth('sm');
 
   useResponsiveDockedMegaMenu(chrome);
-  useMegaMenuFocusHelper(state.megaMenuOpen, state.megaMenuDocked);
+  useMegaMenuFocusHelper(state.megaMenuOpen, state.megaMenuDocked, state.megaMenuPeek);
 
   const contentClass = cx({
     [styles.content]: true,

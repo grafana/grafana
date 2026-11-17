@@ -8,8 +8,9 @@ import CSSTransition from 'react-transition-group/CSSTransition';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
+import { useFlagGrafanaMegaMenuPeekAndDock, useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { useStyles2, useTheme2 } from '@grafana/ui';
+import { MEGA_MENU_TOGGLE_ID } from 'app/core/constants';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
 import { MegaMenu, MENU_WIDTH } from './MegaMenu/MegaMenu';
@@ -20,6 +21,7 @@ interface Props {}
 export function AppChromeMenu({}: Props) {
   const theme = useTheme2();
   const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
+  const peekAndDock = useFlagGrafanaMegaMenuPeekAndDock();
   const { chrome } = useGrafana();
   const state = chrome.useState();
 
@@ -29,7 +31,10 @@ export function AppChromeMenu({}: Props) {
   const animationStyles = useStyles2(getAnimStyles, animationSpeed, visualRefreshEnabled);
 
   const isOpen = state.megaMenuOpen && !state.megaMenuDocked;
+  const isPeek = Boolean(state.megaMenuPeek);
   const onClose = () => chrome.setMegaMenuOpen(false);
+  // Pressing anything in a menu the pointer opened keeps it open, for example while a select inside it is open.
+  const keepOpen = () => isPeek && chrome.setMegaMenuOpen(true);
 
   const { overlayProps, underlayProps } = useOverlay(
     {
@@ -42,7 +47,9 @@ export function AppChromeMenu({}: Props) {
         const isSelectMenu = document
           .querySelector(`[data-testid="${selectors.components.Select.menu}"]`)
           ?.contains(element);
-        return !isSelectMenu;
+        // The toggle decides for itself: closing here would also swallow its click, so it could never dock the menu.
+        const isMenuToggle = peekAndDock && document.getElementById(MEGA_MENU_TOGGLE_ID)?.contains(element);
+        return !isSelectMenu && !isMenuToggle;
       },
     },
     ref
@@ -62,8 +69,18 @@ export function AppChromeMenu({}: Props) {
         >
           <>
             {isOpen && (
-              <FocusScope contain autoFocus restoreFocus>
-                <MegaMenu className={styles.menu} onClose={onClose} ref={ref} {...overlayProps} {...dialogProps} />
+              // A menu the pointer opened leaves focus where it was, so hovering never interrupts typing.
+              <FocusScope contain={!isPeek} autoFocus={!isPeek} restoreFocus>
+                <MegaMenu
+                  className={styles.menu}
+                  onClose={onClose}
+                  ref={ref}
+                  {...overlayProps}
+                  {...dialogProps}
+                  onPointerEnter={chrome.holdMegaMenuPeek}
+                  onPointerLeave={chrome.endMegaMenuPeek}
+                  onPointerDownCapture={keepOpen}
+                />
               </FocusScope>
             )}
           </>
