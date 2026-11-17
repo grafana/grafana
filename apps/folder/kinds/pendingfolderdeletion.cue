@@ -15,7 +15,7 @@ pendingFolderDeletionsV1alpha1: {
 			// Folder metadata.name: the legacy Grafana folder UID, not the display title.
 			folderName: string
 			// Folder Kubernetes metadata.uid identifies this incarnation; appended to folderName with a hyphen for pending metadata.name.
-			folderUID:  string
+			folderUID: string
 			// Captured from the folder's deletionTimestamp to measure actual deletion duration.
 			// The entry's metadata.creationTimestamp records intent before deletion is attempted;
 			// a failed or timed-out request may leave intent without starting deletion.
