@@ -2034,11 +2034,6 @@
       "count": 8
     }
   },
-  "public/app/features/dashboard-scene/scene/layout-default/DashboardGridItemEditor.tsx": {
-    "react-hooks/rules-of-hooks": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/scene/layout-default/DashboardGridItemRenderer.tsx": {
     "react-hooks/refs": {
       "count": 11

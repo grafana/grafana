@@ -10,7 +10,7 @@ import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/Pan
 import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSelect/RepeatRowSelect';
 
 import { edit } from '../../actions/utils/edit';
-import { useConditionalRenderingEditor } from '../../conditional-rendering/hooks/useConditionalRenderingEditor';
+import { getConditionalRenderingEditor } from '../../conditional-rendering/utils/getConditionalRenderingEditor';
 
 import { type DashboardGridItem } from './DashboardGridItem';
 
@@ -55,7 +55,7 @@ export function getDashboardGridItemOptions(gridItem: DashboardGridItem): Option
       })
     );
 
-  const conditionalRenderingCategory = useConditionalRenderingEditor(
+  const conditionalRenderingCategory = getConditionalRenderingEditor(
     undefined,
     <div>
       <Trans i18nKey="dashboard.conditional-rendering.editor.not-supported-for-custom-grid">
