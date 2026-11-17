@@ -171,6 +171,21 @@ it('stays open when an edit fails to record, so Save can try again', async () =>
   expect(closeModal).not.toHaveBeenCalled();
 });
 
+it('saves an edit not recorded yet, even when the recorded changes match the saved version', async () => {
+  const pending = pendingChanges({ proposed: saved });
+  const scene = await loadScene(pending);
+  scene.setState({ title: 'Edited', isDirty: true });
+  const drawer = new SaveDashboardDrawer({ dashboardRef: scene.getRef() });
+  const { user } = render(
+    <SavePendingChangesForm dashboard={scene} drawer={drawer} changeInfo={scene.getDashboardChanges()} />
+  );
+
+  await user.click(screen.getByRole('button', { name: 'Save' }));
+
+  await waitFor(() => expect(pending.apply).toHaveBeenCalledTimes(1));
+  expect(pending.history!.record).toHaveBeenCalledTimes(1);
+});
+
 it('shows the conflict when the dashboard moved on while the form was open', async () => {
   const pending = pendingChanges({ apply: jest.fn(async () => ({ applied: false as const, currentGeneration: 6 })) });
   const { user } = await renderForm(pending);

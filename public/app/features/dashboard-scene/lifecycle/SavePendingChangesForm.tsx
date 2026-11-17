@@ -11,7 +11,7 @@ import { type DashboardChangeInfo, SaveButton } from '../saving/shared';
 import { type DashboardScene } from '../scene/DashboardScene';
 
 import { getScenePendingChangePreview, isPendingChangesStale, previewedDashboardUid } from './pendingChangePreview';
-import { pendingChangesSuperseded } from './pendingChangesHistory';
+import { hasUnrecordedPendingChange, pendingChangesSuperseded } from './pendingChangesHistory';
 import { savePendingChanges, showSavedPendingChanges } from './pendingChangesSave';
 
 interface Props {
@@ -62,9 +62,11 @@ export function SavePendingChangesForm({ dashboard, drawer, changeInfo }: Props)
 
   const messageLength = message.length;
   const messageTooLong = messageLength > MAX_MESSAGE_LENGTH;
+  // An edit not recorded yet isn't in the changes shown, but Save records it first.
+  const unrecorded = dashboard.hasUnrecordedEdits() || hasUnrecordedPendingChange(dashboard);
   const saveButton = (overwrite: boolean) => (
     <SaveButton
-      isValid={(changeInfo.hasChanges || overwrite) && !messageTooLong}
+      isValid={(changeInfo.hasChanges || overwrite || unrecorded) && !messageTooLong}
       isLoading={state.loading}
       onSave={onSave}
       overwrite={overwrite}

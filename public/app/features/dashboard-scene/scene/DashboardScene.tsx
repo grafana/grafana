@@ -1338,10 +1338,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   /**
    * Pending changes on the page are unsaved changes: leaving edit mode saves or discards them, as it
-   * would edits made by hand. With nothing left to save, they are discarded without asking.
+   * would edits made by hand. With nothing left to save, they are discarded without asking: not while
+   * an edit is still on its way to their plugin, which the recorded changes don't show yet.
    */
   private confirmLeavingPendingChanges() {
-    if (!isNewDashboard(this.state) && !hasActualSaveChanges(this)) {
+    if (!isNewDashboard(this.state) && !hasActualSaveChanges(this) && !hasUnrecordedPendingChange(this)) {
       void discardScenePendingChanges(this);
       return;
     }

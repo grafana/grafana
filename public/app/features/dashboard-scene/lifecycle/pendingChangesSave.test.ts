@@ -154,6 +154,21 @@ describe('saving pending changes', () => {
 });
 
 describe('discarding pending changes', () => {
+  it('asks on Exit edit while an edit is on its way, even when the recorded changes match the saved version', async () => {
+    const pending = pendingChanges({ proposed: { ...defaultSpec(), title: 'Saved' } });
+    pending.history!.record = jest.fn(() => new Promise<{ recorded: boolean }>(() => {}));
+    const scene = await openOnPage(pending);
+    const modals: ShowConfirmModalEvent[] = [];
+    const subscription = appEvents.subscribe(ShowConfirmModalEvent, (event) => modals.push(event));
+    scene.setState({ title: 'Edited', isDirty: true });
+
+    scene.exitEditMode({ skipConfirm: false });
+
+    expect(modals.map((modal) => modal.payload.title)).toEqual(['Unsaved changes']);
+    expect(pending.discard).not.toHaveBeenCalled();
+    subscription.unsubscribe();
+  });
+
   it('asks to save or discard them on Exit edit, as for edits made by hand, and discards them in their plugin', async () => {
     const pending = pendingChanges();
     const scene = await openOnPage(pending);
