@@ -35,8 +35,12 @@ import { getModKey } from 'app/core/utils/browser';
 import { useExtensionSidebarContext } from '../ExtensionSidebar/ExtensionSidebarProvider';
 import {
   canFloatExtensionSidebar,
+  canPopOutExtensionSidebar,
   type ExtensionSidebarPlacement,
   getExtensionSidebarPlacement,
+  isExtensionSidebarPoppedOut,
+  popInExtensionSidebar,
+  popOutExtensionSidebar,
   setExtensionSidebarPlacement,
   subscribeToExtensionSidebarPresentation,
 } from '../ExtensionSidebar/extensionSidebarLayout';
@@ -69,10 +73,11 @@ interface PresetDrawing {
 }
 
 /**
- * The digit after ⌘⌥ (Ctrl+Alt elsewhere) that moves the Assistant, in the menu's order. The browser's own ⌘1-9
- * switches tabs, so the shortcuts add ⌥.
+ * The digit after ⌘⌥ (Ctrl+Alt elsewhere) that moves the Assistant, in the menu's order; Pop up follows on 5. The
+ * browser's own ⌘1-9 switches tabs, so the shortcuts add ⌥.
  */
 const LAYOUT_SHORTCUT_DIGITS: Record<AssistantLayout, number> = { left: 1, right: 2, bottom: 3, floating: 4 };
+const POP_UP_SHORTCUT_DIGIT = 5;
 /** The digit after ⌘⌥⇧ that arranges the window, in the order of the tiles. Fixed, so it means the same everywhere. */
 const PRESET_SHORTCUT_DIGITS: Record<ArrangePreset, number> = {
   'with-navigation': 1,
@@ -112,7 +117,7 @@ function readLayoutShortcut(event: globalThis.KeyboardEvent): LayoutShortcut | u
   if (!apple && isTextEntry(event.target)) {
     return undefined;
   }
-  const digit = Number(/^Digit([1-4])$/.exec(event.code)?.[1]);
+  const digit = Number(/^Digit([1-5])$/.exec(event.code)?.[1]);
   return Number.isNaN(digit) ? undefined : { digit, shift: event.shiftKey };
 }
 
@@ -130,8 +135,9 @@ interface Props {
 /**
  * The top bar's Chat button. A click shows or hides the Assistant. While the Assistant can float, which the other
  * layouts need, hovering the button, or pressing Down arrow on it, opens a menu that moves the Assistant to the left,
- * right or bottom of the page, or floats it, and presets that arrange the nav and the Assistant together. Choosing a
- * layout, or a preset that shows the Assistant, shows it if it is hidden.
+ * right or bottom of the page, floats it, or, while the Assistant can, opens it in a new window, and presets that
+ * arrange the nav and the Assistant together. Choosing a layout, or a preset that shows the Assistant, shows it if it
+ * is hidden.
  */
 export function AssistantChatButton({ assistantComponentId, isOpen, icon, className }: Props) {
   const styles = useStyles2(getStyles);
@@ -141,6 +147,8 @@ export function AssistantChatButton({ assistantComponentId, isOpen, icon, classN
   const canDockNavigation = useMediaQueryMinWidth('xl');
   const { setDockedComponentId } = useExtensionSidebarContext();
   const layout = useAssistantLayout();
+  // In its own window the Assistant is in none of the page's layouts; moving it to one brings it back first.
+  const poppedOut = useSyncExternalStore(subscribeToExtensionSidebarPresentation, isExtensionSidebarPoppedOut);
   const canChangeLayout = canFloatExtensionSidebar();
   const [menuOpenedBy, setMenuOpenedBy] = useState<MenuOpenedBy | undefined>(undefined);
   const menuOpen = menuOpenedBy !== undefined;
@@ -177,8 +185,20 @@ export function AssistantChatButton({ assistantComponentId, isOpen, icon, classN
 
   const moveTo = (next: AssistantLayout) => {
     setMenuOpenedBy(undefined);
+    if (poppedOut) {
+      popInExtensionSidebar();
+    }
     setExtensionSidebarPlacement(next);
     show();
+  };
+
+  const openInNewWindow = () => {
+    setMenuOpenedBy(undefined);
+    if (poppedOut) {
+      return;
+    }
+    show();
+    popOutExtensionSidebar();
   };
 
   const arrange = (preset: ArrangePreset) => {
@@ -206,6 +226,13 @@ export function AssistantChatButton({ assistantComponentId, isOpen, icon, classN
         arrange(shortcutPreset.value);
       }
       return shortcutPreset !== undefined;
+    }
+    if (digit === POP_UP_SHORTCUT_DIGIT) {
+      if (!canPopOutExtensionSidebar()) {
+        return false;
+      }
+      openInNewWindow();
+      return true;
     }
     const shortcutLayout = getLayoutOptions().find((option) => LAYOUT_SHORTCUT_DIGITS[option.value] === digit);
     if (shortcutLayout) {
@@ -316,16 +343,28 @@ export function AssistantChatButton({ assistantComponentId, isOpen, icon, classN
                       ariaLabel={option.label}
                       icon={option.icon}
                       role="menuitemradio"
-                      ariaChecked={layout === option.value}
+                      ariaChecked={!poppedOut && layout === option.value}
                       className={cx(
                         styles.item,
                         option.iconTurned && styles.itemIconTurned,
-                        layout === option.value && styles.itemSelected
+                        !poppedOut && layout === option.value && styles.itemSelected
                       )}
                       component={getShortcutHint(LAYOUT_SHORTCUT_DIGITS[option.value])}
                       onClick={() => moveTo(option.value)}
                     />
                   ))}
+                  {(poppedOut || canPopOutExtensionSidebar()) && (
+                    <Menu.Item
+                      label={t('navigation.assistant-toolbar-button.pop-up', 'Pop up')}
+                      ariaLabel={t('navigation.assistant-toolbar-button.pop-up', 'Pop up')}
+                      icon="external-link-alt"
+                      role="menuitemradio"
+                      ariaChecked={poppedOut}
+                      className={cx(styles.item, poppedOut && styles.itemSelected)}
+                      component={getShortcutHint(POP_UP_SHORTCUT_DIGIT)}
+                      onClick={openInNewWindow}
+                    />
+                  )}
                 </Menu.Group>
                 <Menu.Group label={t('navigation.assistant-toolbar-button.arrange-window', 'Arrange window')}>
                   {/* One row of tiles, each drawing its layout, as a window-tiling menu shows its arrangements. */}

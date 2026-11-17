@@ -67,6 +67,29 @@ export interface ExtensionSidebarAPI {
    * onto the page floats it there. Show a handle in the docked sidebar only while this is true.
    */
   canDragToFloat(): boolean;
+  /**
+   * Calls `listener` when the user asks to open the extension in a new window, from the top bar's Assistant menu.
+   * Core opens the sidebar first if it is closed, and calls `listener` during the user's click, so the extension can
+   * open a window then. Core offers the request only while a listener is subscribed, so subscribe only while the
+   * browser can open the window. Returns the unsubscribe.
+   */
+  subscribeToPopOut(listener: () => void): () => void;
+  /**
+   * Tells core the extension shows in a window of its own until the returned function is called, so the top bar's
+   * Assistant menu marks it there. When the user moves the sidebar from that menu, core calls `popIn` first, so the
+   * extension can bring itself back before core moves it.
+   */
+  trackPopOut(popIn: () => void): () => void;
+  /**
+   * Where the extension's sidebar shows, or opens while it is closed: docked on the `left`, `right` or `bottom` edge
+   * of the page, or `floating` over it. The same placement core's top bar menu shows. Only an extension that can float
+   * moves; any other always docks on the right.
+   */
+  getPlacement(): 'left' | 'right' | 'bottom' | 'floating';
+  /** Moves the sidebar there, for every page, as core's top bar menu does. Ignored while `canFloat()` is false. */
+  setPlacement(placement: 'left' | 'right' | 'bottom' | 'floating'): void;
+  /** Calls `listener` whenever the placement may have changed, from any control. Returns the unsubscribe. */
+  subscribeToPlacement(listener: () => void): () => void;
 }
 
 interface RestrictedGrafanaApisContextTypeInternal {

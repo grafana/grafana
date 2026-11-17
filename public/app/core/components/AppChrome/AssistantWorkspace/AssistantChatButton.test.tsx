@@ -14,6 +14,8 @@ import {
   holdFloatingExtensionSidebar,
   isFloatingExtensionSidebarHeld,
   resetExtensionSidebarPresentationForTests,
+  subscribeToExtensionSidebarPopOut,
+  trackExtensionSidebarPopOut,
 } from 'app/core/components/AppChrome/ExtensionSidebar/extensionSidebarLayout';
 
 import { AssistantToolbarButtons } from './AssistantToolbarButtons';
@@ -464,6 +466,71 @@ describe('AssistantChatButton', () => {
     expect(openButton()).toBeInTheDocument();
   });
 
+  describe('Pop up', () => {
+    it('opens the Assistant in a new window while the Assistant can open one, showing it too', async () => {
+      const onPopOut = jest.fn();
+      const unsubscribe = subscribeToExtensionSidebarPopOut(onPopOut);
+      const { user } = renderButtons();
+      const menu = await openMenuWithKeyboard(user, openButton());
+      // The last of the ways to move the Assistant.
+      expect(itemNames(menu, 'Move Assistant')).toEqual(['Left', 'Right', 'Bottom', 'Floating (checked)', 'Pop up']);
+      await user.keyboard('{Escape}');
+
+      await chooseFromMenu(user, openButton(), 'Pop up');
+
+      expect(onPopOut).toHaveBeenCalledTimes(1);
+      expect(closeButton()).toBeInTheDocument();
+      unsubscribe();
+    });
+
+    it('marks Pop up while the Assistant is in its own window, and brings it back to the layout chosen', async () => {
+      const popIn = jest.fn();
+      const stop = trackExtensionSidebarPopOut(popIn);
+      const { user } = renderButtons();
+      const menu = await openMenuWithKeyboard(user, openButton());
+      expect(itemNames(menu, 'Move Assistant')).toEqual(['Left', 'Right', 'Bottom', 'Floating', 'Pop up (checked)']);
+      await user.keyboard('{Escape}');
+
+      await chooseFromMenu(user, openButton(), 'Right');
+
+      expect(popIn).toHaveBeenCalledTimes(1);
+      expect(placementNow()).toEqual({ presentation: 'docked', side: 'right' });
+      act(() => stop());
+    });
+
+    it('brings the Assistant back from its own window with a layout shortcut', async () => {
+      const popIn = jest.fn();
+      const stop = trackExtensionSidebarPopOut(popIn);
+      const { user } = renderButtons();
+
+      await user.keyboard('{Control>}{Alt>}1{/Alt}{/Control}');
+
+      expect(popIn).toHaveBeenCalledTimes(1);
+      expect(placementNow()).toEqual({ presentation: 'docked', side: 'left' });
+      act(() => stop());
+    });
+
+    it('opens the Assistant in a new window with ctrl+alt+5', async () => {
+      const onPopOut = jest.fn();
+      const unsubscribe = subscribeToExtensionSidebarPopOut(onPopOut);
+      const { user } = renderButtons();
+
+      await user.keyboard('{Control>}{Alt>}5{/Alt}{/Control}');
+
+      expect(onPopOut).toHaveBeenCalledTimes(1);
+      expect(closeButton()).toBeInTheDocument();
+      unsubscribe();
+    });
+
+    it('offers no new window while nothing can open one', async () => {
+      const { user } = renderButtons();
+
+      const menu = await openMenuWithKeyboard(user, openButton());
+
+      expect(within(menu).queryByRole('menuitemradio', { name: 'Pop up' })).not.toBeInTheDocument();
+    });
+  });
+
   describe('shortcuts', () => {
     it('moves the Assistant with ctrl+alt and the digit of its layout, showing it', async () => {
       const { user } = renderButtons();
@@ -503,7 +570,7 @@ describe('AssistantChatButton', () => {
           shiftKey,
         });
 
-      // `fireEvent` returns false once a listener prevents the default.
+      // `fireEvent` returns false once a listener prevents the default. Nothing can open a new window here.
       expect(press(5, false)).toBe(true);
       expect(press(4, true)).toBe(true);
       expect(press(2, false)).toBe(false);

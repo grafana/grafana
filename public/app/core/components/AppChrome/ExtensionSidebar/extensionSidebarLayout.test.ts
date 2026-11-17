@@ -5,9 +5,11 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 import {
   canCollapseFloatingExtensionSidebar,
   canFloatExtensionSidebar,
+  canPopOutExtensionSidebar,
   collapseFloatingExtensionSidebar,
   getEffectiveExtensionSidebarPresentation,
   getExtensionSidebarPlacement,
+  getFloatingExtensionSidebarPlacement,
   getRequestedExtensionSidebarDockSide,
   getRequestedExtensionSidebarPresentation,
   holdFloatingExtensionSidebar,
@@ -15,6 +17,7 @@ import {
   isFloatingExtensionSidebarHeld,
   notifyExtensionSidebarClosed,
   onExtensionSidebarClosed,
+  popOutExtensionSidebar,
   releaseFloatingExtensionSidebarHolds,
   resetExtensionSidebarPresentationForTests,
   resolveExtensionSidebarDockSide,
@@ -22,6 +25,7 @@ import {
   setExtensionSidebarFloatingOverride,
   setExtensionSidebarPlacement,
   setExtensionSidebarPresentation,
+  subscribeToExtensionSidebarPopOut,
   subscribeToExtensionSidebarPresentation,
   subscribeToFloatingExtensionSidebarCollapse,
 } from './extensionSidebarLayout';
@@ -246,6 +250,22 @@ describe('extensionSidebarLayout', () => {
     expect(listener).toHaveBeenCalledTimes(1);
   });
 
+  it('offers to open the sidebar in a new window only while someone listens', () => {
+    expect(canPopOutExtensionSidebar()).toBe(false);
+
+    const listener = jest.fn();
+    const unsubscribe = subscribeToExtensionSidebarPopOut(listener);
+    expect(canPopOutExtensionSidebar()).toBe(true);
+
+    popOutExtensionSidebar();
+    expect(listener).toHaveBeenCalledTimes(1);
+
+    unsubscribe();
+    expect(canPopOutExtensionSidebar()).toBe(false);
+    popOutExtensionSidebar();
+    expect(listener).toHaveBeenCalledTimes(1);
+  });
+
   describe('the dock side', () => {
     afterEach(() => {
       jest.restoreAllMocks();
@@ -327,6 +347,7 @@ describe('extensionSidebarLayout', () => {
         setExtensionSidebarPlacement(placement);
 
         expect(getExtensionSidebarPlacement(ASSISTANT)).toBe(placement);
+        expect(getFloatingExtensionSidebarPlacement()).toBe(placement);
       }
     );
 

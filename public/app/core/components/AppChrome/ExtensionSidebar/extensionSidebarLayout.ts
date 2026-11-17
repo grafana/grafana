@@ -215,6 +215,14 @@ export function getExtensionSidebarPlacement(pluginId: string | undefined): Exte
   return resolveExtensionSidebarDockSide(getRequestedExtensionSidebarDockSide(), canFloatExtensionSidebar(), pluginId);
 }
 
+/**
+ * Where the sidebar of an extension that supports floating shows: what the restricted API reports, since only such
+ * an extension has controls that move it. Any other always docks on the right.
+ */
+export function getFloatingExtensionSidebarPlacement(): ExtensionSidebarPlacement {
+  return getExtensionSidebarPlacement(FLOATING_EXTENSION_SIDEBAR_PLUGINS[0]);
+}
+
 /** Moves the sidebar, for every page: floating over the page, or docked on that edge. */
 export function setExtensionSidebarPlacement(placement: ExtensionSidebarPlacement): void {
   if (placement === 'floating') {
@@ -305,6 +313,61 @@ export function collapseFloatingExtensionSidebar(): void {
   reportInteraction('grafana_extension_sidebar_floating_collapsed', { method: 'drag' });
 }
 
+/**
+ * Who opens the sidebar's extension in a window of its own when the user asks to. The extension listens for the
+ * page's lifetime, while its browser can open such a window. Module state for the same reason as the layout.
+ */
+const popOutListeners = new Set<() => void>();
+
+/** Subscribes to requests to open the sidebar's extension in a new window; returns the unsubscribe. */
+export function subscribeToExtensionSidebarPopOut(listener: () => void): () => void {
+  popOutListeners.add(listener);
+  return () => {
+    popOutListeners.delete(listener);
+  };
+}
+
+/** Whether the sidebar's extension can open in a new window: something listens for the request. */
+export function canPopOutExtensionSidebar(): boolean {
+  return popOutListeners.size > 0;
+}
+
+/**
+ * Asks the sidebar's extension to open in a new window. Call it from the user's click, before anything awaits:
+ * the browser opens the window only during the click.
+ */
+export function popOutExtensionSidebar(): void {
+  popOutListeners.forEach((listener) => listener());
+}
+
+/** Brings the sidebar back from its own window, while it shows in one. Module state for the same reason. */
+let popIn: (() => void) | undefined;
+
+/**
+ * Marks the sidebar's extension as shown in a window of its own until the returned function is called. Core's
+ * controls then mark it there, and call `onPopIn` first when the user moves it from them, to bring it back.
+ */
+export function trackExtensionSidebarPopOut(onPopIn: () => void): () => void {
+  popIn = onPopIn;
+  notify();
+  return () => {
+    if (popIn === onPopIn) {
+      popIn = undefined;
+      notify();
+    }
+  };
+}
+
+/** Whether the sidebar's extension shows in a window of its own. For `useSyncExternalStore`, with the layout's. */
+export function isExtensionSidebarPoppedOut(): boolean {
+  return popIn !== undefined;
+}
+
+/** Brings the sidebar's extension back from its own window, if it shows in one, before core moves it. */
+export function popInExtensionSidebar(): void {
+  popIn?.();
+}
+
 /** @internal Resets the layout between tests; `keepStorage` stands for a new page load. */
 export function resetExtensionSidebarPresentationForTests({ keepStorage = false } = {}): void {
   requested = undefined;
@@ -318,5 +381,7 @@ export function resetExtensionSidebarPresentationForTests({ keepStorage = false 
   floatingHolds.clear();
   listeners.clear();
   collapseListeners.clear();
+  popOutListeners.clear();
+  popIn = undefined;
   closeListeners.clear();
 }
