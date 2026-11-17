@@ -65,6 +65,8 @@ export interface TimeSeriesTooltipProps {
   };
   /** When provided, renders an "Add to Assistant" button in the pinned tooltip footer. */
   assistantContext?: AssistantTooltipContext;
+  /** Short help text shown under the header row */
+  headerHint?: string;
 }
 
 export const TimeSeriesTooltip = ({
@@ -85,6 +87,7 @@ export const TimeSeriesTooltip = ({
   filterByGroupedLabels,
   assistantContext,
   timeCompare,
+  headerHint,
 }: TimeSeriesTooltipProps) => {
   const pluginContext = usePluginContext();
 
@@ -168,7 +171,7 @@ export const TimeSeriesTooltip = ({
 
   return (
     <VizTooltipWrapper>
-      {headerItem != null && <VizTooltipHeader item={headerItem} isPinned={isPinned} />}
+      {headerItem != null && <VizTooltipHeader item={headerItem} isPinned={isPinned} hint={headerHint} />}
       <VizTooltipContent
         items={contentItems}
         isPinned={isPinned}
