@@ -24,6 +24,11 @@ import (
 
 const defaultAnnotationsLimit = 100
 
+func annotationsDeprecationHeaders(c *contextmodel.ReqContext) {
+	c.Resp.Header().Set("Warning", `299 - "Deprecated API: use the Grafana App Platform Annotation API instead."`)
+	c.Resp.Header().Set("X-API-Replacement", "/apis/annotation.grafana.app/")
+}
+
 // swagger:route GET /annotations annotations getAnnotations
 //
 // Find Annotations.
