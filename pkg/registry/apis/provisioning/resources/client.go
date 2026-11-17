@@ -455,6 +455,15 @@ func (s *supportedResourceProvider) Added() []SupportedResource {
 	return nil
 }
 
+type pinnedKindsKey struct{}
+
+// WithPinnedKinds returns a context in which each Clients call uses the added kinds of the first
+// call. A job with more than one phase then sees one set: without it, a kind that a manifest adds
+// between an export and a cleanup is deleted and was never exported.
+func WithPinnedKinds(ctx context.Context) context.Context {
+	return context.WithValue(ctx, pinnedKindsKey{}, &atomic.Pointer[[]SupportedResource]{})
+}
+
 // AnyGroup keys the API server that serves each group without a server of its own.
 const AnyGroup = "*"
 
@@ -521,10 +530,15 @@ func (f *clientFactory) Clients(ctx context.Context, namespace string) (Resource
 	if err != nil {
 		return nil, err
 	}
+	added := f.provider.Added()
+	if pinned, ok := ctx.Value(pinnedKindsKey{}).(*atomic.Pointer[[]SupportedResource]); ok {
+		pinned.CompareAndSwap(nil, &added)
+		added = *pinned.Load()
+	}
 	return &resourceClients{
 		namespace:          namespace,
 		clientsProvider:    f.clientsProvider,
-		supportedResources: append(slices.Clip(supported), f.provider.Added()...),
+		supportedResources: append(slices.Clip(supported), added...),
 		byKind:             make(map[schema.GroupVersionKind]*clientInfo),
 		byResource:         make(map[schema.GroupVersionResource]*clientInfo),
 	}, nil
