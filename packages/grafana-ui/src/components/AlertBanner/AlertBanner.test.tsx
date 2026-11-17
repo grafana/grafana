@@ -3,9 +3,7 @@ import userEvent from '@testing-library/user-event';
 
 import { selectors } from '@grafana/e2e-selectors';
 
-import { Button } from '../Button/Button';
-import { LinkButton } from '../LinkButton/LinkButton';
-
+import { AlertActionButton } from './AlertActionButton';
 import { AlertBanner } from './AlertBanner';
 
 describe('AlertBanner', () => {
@@ -49,14 +47,12 @@ describe('AlertBanner', () => {
 
   describe('action prop', () => {
     it.each(['error', 'warning', 'info', 'success'] as const)(
-      'renders a Button action in a %s alert banner as an outline primary button',
+      'renders the action of a %s alert banner as an AlertActionButton',
       (severity) => {
         render(
           <>
-            <AlertBanner title="Test" severity={severity} action={<Button variant="secondary">Action</Button>} />
-            <Button variant="primary" fill="outline">
-              Reference
-            </Button>
+            <AlertBanner title="Test" severity={severity} action={jest.fn()} actionLabel="Action" />
+            <AlertActionButton>Reference</AlertActionButton>
           </>
         );
         expect(screen.getByRole('button', { name: 'Action' })).toHaveClass(
@@ -65,34 +61,18 @@ describe('AlertBanner', () => {
       }
     );
 
-    it('leaves an action that is not a Button unchanged', () => {
-      render(
-        <>
-          <AlertBanner title="Test" severity="warning" action={<LinkButton href="/docs">Read docs</LinkButton>} />
-          <LinkButton href="/reference">Reference</LinkButton>
-        </>
-      );
-      expect(screen.getByRole('link', { name: 'Read docs' })).toHaveClass(
-        screen.getByRole('link', { name: 'Reference' }).className
-      );
-    });
-    it('renders the provided action element', () => {
-      render(
-        <AlertBanner
-          title="Quota exceeded"
-          severity="warning"
-          action={<Button onClick={jest.fn()}>Request increase</Button>}
-        />
-      );
-      expect(screen.getByRole('button', { name: 'Request increase' })).toBeInTheDocument();
+    it('renders no action button when action is not set', () => {
+      render(<AlertBanner title="Quota exceeded" severity="warning" />);
+      expect(screen.queryByRole('button')).not.toBeInTheDocument();
     });
 
-    it('renders both action element and dismiss button when onRemove is also set', () => {
+    it('renders both the action button and the dismiss button when onRemove is also set', () => {
       render(
         <AlertBanner
           title="Quota exceeded"
           severity="warning"
-          action={<Button onClick={jest.fn()}>Request increase</Button>}
+          action={jest.fn()}
+          actionLabel="Request increase"
           onRemove={jest.fn()}
         />
       );
@@ -100,10 +80,10 @@ describe('AlertBanner', () => {
       expect(screen.getByRole('button', { name: /close alert/i })).toBeInTheDocument();
     });
 
-    it('calls the action handler when clicked', async () => {
+    it('calls the action handler when the action button is clicked', async () => {
       const user = userEvent.setup();
       const onAction = jest.fn();
-      render(<AlertBanner title="Test" severity="info" action={<Button onClick={onAction}>Do action</Button>} />);
+      render(<AlertBanner title="Test" severity="info" action={onAction} actionLabel="Do action" />);
       await user.click(screen.getByRole('button', { name: 'Do action' }));
       expect(onAction).toHaveBeenCalledTimes(1);
     });

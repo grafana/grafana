@@ -3,7 +3,6 @@ import { action } from 'storybook/actions';
 
 import { StoryExample } from '../../utils/storybook/StoryExample';
 import { type AlertVariant } from '../Alert/Alert';
-import { Button } from '../Button/Button';
 import { Stack } from '../Layout/Stack/Stack';
 
 import { AlertBanner } from './AlertBanner';
@@ -76,11 +75,8 @@ export const WithActionAndDismiss: StoryFn<typeof AlertBanner> = (args) => {
 WithActionAndDismiss.args = {
   title: 'Quota limit reached',
   severity: 'warning',
-  action: (
-    <Button variant="secondary" onClick={action('Action button clicked')}>
-      Request increase
-    </Button>
-  ),
+  action: action('Action button clicked'),
+  actionLabel: 'Request increase',
   onRemove: action('Dismiss button clicked'),
 };
 
@@ -111,15 +107,7 @@ const ActionOnlyAlertBanner = ({ severity }: { severity: AlertVariant }) => {
   const { title, body, actionLabel } = actionOnlyExamples[severity];
 
   return (
-    <AlertBanner
-      title={title}
-      severity={severity}
-      action={
-        <Button variant="secondary" onClick={action('Action button clicked')}>
-          {actionLabel}
-        </Button>
-      }
-    >
+    <AlertBanner title={title} severity={severity} action={action('Action button clicked')} actionLabel={actionLabel}>
       {body}
     </AlertBanner>
   );
@@ -141,11 +129,8 @@ export const WithActionOnly: StoryFn<typeof AlertBanner> = (args) => {
 WithActionOnly.args = {
   title: 'Cannot copy the rule',
   severity: 'error',
-  action: (
-    <Button variant="secondary" onClick={action('Action button clicked')}>
-      Go back to alert list
-    </Button>
-  ),
+  action: action('Action button clicked'),
+  actionLabel: 'Go back to alert list',
 };
 
 export const WithActionAndRemoveButton: StoryFn<typeof AlertBanner> = (args) => {
@@ -157,11 +142,8 @@ export const WithActionAndRemoveButton: StoryFn<typeof AlertBanner> = (args) => 
 WithActionAndRemoveButton.args = {
   title: 'Multiple actions',
   severity: 'info',
-  action: (
-    <Button variant="primary" onClick={action('Action button clicked')}>
-      View docs
-    </Button>
-  ),
+  action: action('Action button clicked'),
+  actionLabel: 'View docs',
   onRemove: action('Remove button clicked'),
   buttonContent: 'Dismiss',
 };
