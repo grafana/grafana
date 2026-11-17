@@ -1,43 +1,9 @@
-import { useEffect, useState } from 'react';
-
 import { type AlertRule } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { getBackendSrv } from '@grafana/runtime';
 import { Button, type Column, EmptyState, InteractiveTable, Spinner, Stack } from '@grafana/ui';
 
 import { useFolderPath } from '../folder-browsing/folderLookups';
-
-interface GrafanaUser {
-  uid: string;
-  name: string;
-  login: string;
-}
-
-function useUserDisplayName(userUid: string): string {
-  const [name, setName] = useState(userUid);
-  useEffect(() => {
-    if (!userUid) {
-      return;
-    }
-    try {
-      // /api/users/search doesn't support filtering by UID, so fetch the first
-      // page of users and match by uid. Admin-only view, small user counts.
-      getBackendSrv()
-        .get<{ users: GrafanaUser[] }>(`/api/users/search`, { perpage: 100, page: 1 })
-        .then(({ users }) => {
-          const match = users.find((u) => u.uid === userUid);
-          if (match) {
-            setName(match.name || match.login || userUid);
-          }
-        })
-        .catch(() => {}); // silently fall back to raw UID
-    } catch {
-      // backendSrv not available (e.g. in tests without MSW setup)
-    }
-  }, [userUid]);
-  return name;
-}
 
 /** Resolves a folder UID to its full path, e.g. "Team Alerts / Subfolder". */
 function FolderCell({ folderUid }: { folderUid: string }) {
@@ -49,17 +15,11 @@ function FolderCell({ folderUid }: { folderUid: string }) {
   return <>{path.join(' / ') || folderUid}</>;
 }
 
-/** Resolves a user UID to a display name. */
-function UserNameCell({ userId }: { userId: string }) {
-  const name = useUserDisplayName(userId);
-  return <>{name}</>;
-}
-
 interface DeletedRulesTableProps {
   rules: AlertRule[];
-  /** Pre-resolved folder paths: uid → display path string */
+  /** Pre-resolved folder paths: uid → display path string (override for tests) */
   folderPaths: Record<string, string>;
-  /** Pre-resolved user names: uid → display name; fallback to uid */
+  /** Pre-resolved user names from IAM getDisplayMapping: uid → display name */
   userNames: Record<string, string>;
   onReview: (rule: AlertRule) => void;
   onRestore: (rule: AlertRule) => void;
@@ -131,11 +91,7 @@ export function DeletedRulesTable({
         if (!uid) {
           return t('alerting.recently-deleted.unknown', 'Unknown');
         }
-        // Use the override map (useful in tests), or resolve inline via API
-        if (userNames[uid]) {
-          return userNames[uid];
-        }
-        return <UserNameCell userId={uid} />;
+        return userNames[uid] ?? uid;
       },
     },
     {

@@ -4,10 +4,12 @@ import { type AlertRule } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha
 import { dateTimeFormat } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Collapse, Drawer, Stack, Text } from '@grafana/ui';
+import { AnnoKeyFolder } from 'app/features/apiserver/types';
+
+import { useFolderPath } from '../folder-browsing/folderLookups';
 
 interface ReviewDrawerProps {
   rule: AlertRule;
-  folderPath: string;
   deletedByName?: string;
   onClose: () => void;
   onJsonOpen?: () => void;
@@ -22,10 +24,13 @@ function sanitizeForDisplay(rule: AlertRule): object {
   return sanitized;
 }
 
-export function ReviewDrawer({ rule, folderPath, deletedByName, onClose, onJsonOpen }: ReviewDrawerProps) {
+export function ReviewDrawer({ rule, deletedByName, onClose, onJsonOpen }: ReviewDrawerProps) {
   const [jsonOpen, setJsonOpen] = useState(false);
   const title = rule.spec?.title ?? '';
   const deletionTime = rule.metadata?.deletionTimestamp;
+  const folderUid = rule.metadata?.annotations?.[AnnoKeyFolder];
+  const folderPathSegments = useFolderPath(folderUid);
+  const folderPath = folderPathSegments?.join(' / ');
 
   const handleJsonToggle = (isOpen: boolean) => {
     setJsonOpen(isOpen);
@@ -46,7 +51,7 @@ export function ReviewDrawer({ rule, folderPath, deletedByName, onClose, onJsonO
       <Stack direction="column" gap={2}>
         <Stack direction="column" gap={0.5}>
           <Text weight="bold">{title}</Text>
-          <Text color="secondary">{folderPath}</Text>
+          {folderPath && <Text color="secondary">{folderPath}</Text>}
           {deletionTime && (
             <Text color="secondary">
               {t('alerting.recently-deleted.review.deleted-at', 'Deleted {{time}}', {

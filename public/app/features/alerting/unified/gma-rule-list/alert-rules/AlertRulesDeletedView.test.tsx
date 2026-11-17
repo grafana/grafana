@@ -3,8 +3,18 @@ import { render, screen, userEvent } from 'test/test-utils';
 
 import server from '@grafana/test-utils/server';
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
+}));
+
+jest.mock('app/api/clients/iam/v0alpha1', () => ({
+  ...jest.requireActual('app/api/clients/iam/v0alpha1'),
+  useGetDisplayMappingQuery: () => ({ data: undefined }),
+}));
+
 import { setupMswServer } from '../../mockApi';
-import { TRASH_RULES_URL, makeDeletedRule, mockTrashRules } from '../mocks/handlers';
+import { FOLDER_PARENTS_URL, TRASH_RULES_URL, makeDeletedRule, mockTrashRules } from '../mocks/handlers';
 
 import { AlertRulesDeletedView } from './AlertRulesDeletedView';
 
@@ -12,8 +22,8 @@ setupMswServer();
 
 describe('AlertRulesDeletedView', () => {
   beforeEach(() => {
-    // Stub user search used by UserNameCell — not what these tests cover
-    server.use(http.get('/api/users/search', () => HttpResponse.json({ users: [], totalCount: 0 })));
+    // Stub folder parents for ReviewDrawer's useFolderPath
+    server.use(http.get(FOLDER_PARENTS_URL, () => HttpResponse.json({ items: [] })));
   });
   it('shows loading state initially', async () => {
     let releasePage: () => void = () => {};
@@ -27,7 +37,7 @@ describe('AlertRulesDeletedView', () => {
       })
     );
     render(<AlertRulesDeletedView />);
-    expect(screen.getByRole('status')).toBeInTheDocument();
+    expect(screen.getByRole('list', { name: /Loading rules/i })).toBeInTheDocument();
     releasePage();
     expect(await screen.findByText(/No recently deleted/i)).toBeInTheDocument();
   });
@@ -49,7 +59,7 @@ describe('AlertRulesDeletedView', () => {
     render(<AlertRulesDeletedView />);
     await screen.findByText('Deleted rule');
     await userEvent.click(screen.getByRole('button', { name: /Review/i }));
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
   });
 
   it('opens Restore modal when Restore is clicked', async () => {

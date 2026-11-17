@@ -463,8 +463,13 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
     });
     routes.push({
       path: '/alerting/rules/alert/deleted',
-      roles: evaluateAccess([AccessControlAction.AlertingRuleRead]),
-      component: gmaAlertRulesPage,
+      roles: () => ['Admin'],
+      component: importAlertingComponent(
+        () =>
+          import(
+            /* webpackChunkName: "GmaAlertRulesDeletedPage" */ 'app/features/alerting/unified/gma-rule-list/alert-rules/AlertRulesDeletedPage'
+          )
+      ),
     });
     routes.push({
       path: '/alerting/rules/recording',

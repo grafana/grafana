@@ -12,38 +12,45 @@ const server = setupMswServer();
 const CREATE_URL = `/apis/${API_GROUP}/${API_VERSION}/namespaces/default/alertrules`;
 
 describe('sanitizeForRestore', () => {
-  it('removes deletion metadata, resourceVersion and status', () => {
+  it('removes deletionTimestamp, resourceVersion, managedFields and finalizers', () => {
     const rule = makeDeletedRule();
     rule.metadata.deletionTimestamp = '2026-11-10T10:00:00Z';
     rule.metadata.resourceVersion = 'abc123';
-    (rule as AlertRule & { status?: unknown }).status = { health: 'OK' };
 
     const result = sanitizeForRestore(rule);
 
     expect(result.metadata.deletionTimestamp).toBeUndefined();
     expect(result.metadata.resourceVersion).toBeUndefined();
-    expect((result as AlertRule & { status?: unknown }).status).toBeUndefined();
   });
 
-  it('removes access annotations', () => {
+  it('keeps annotations as-is (provenance and ownership left for the backend to handle)', () => {
     const rule = makeDeletedRule();
     rule.metadata.annotations = {
       'grafana.app/folder': 'folder-uid',
-      'grafana.com/access/canWrite': 'true',
-      'grafana.com/access/canDelete': 'true',
       'grafana.com/provenance': 'api',
       'grafana.app/managedBy': 'terraform',
-      'grafana.com/group': 'old-group',
-      'grafana.com/group-index': '0',
     };
 
     const result = sanitizeForRestore(rule);
 
     expect(result.metadata.annotations?.['grafana.app/folder']).toBe('folder-uid');
-    expect(result.metadata.annotations?.['grafana.com/access/canWrite']).toBeUndefined();
-    expect(result.metadata.annotations?.['grafana.com/provenance']).toBeUndefined();
-    expect(result.metadata.annotations?.['grafana.app/managedBy']).toBeUndefined();
-    expect(result.metadata.annotations?.['grafana.com/group']).toBeUndefined();
+    expect(result.metadata.annotations?.['grafana.com/provenance']).toBe('api');
+    expect(result.metadata.annotations?.['grafana.app/managedBy']).toBe('terraform');
+  });
+
+  it('strips grafana.com/group labels that the group-free create API rejects', () => {
+    const rule = makeDeletedRule();
+    rule.metadata.labels = {
+      'grafana.app/folder': 'folder-uid',
+      'grafana.com/group': 'g1',
+      'grafana.com/group-index': '0',
+    };
+
+    const result = sanitizeForRestore(rule);
+
+    expect(result.metadata.labels?.['grafana.app/folder']).toBe('folder-uid');
+    expect(result.metadata.labels?.['grafana.com/group']).toBeUndefined();
+    expect(result.metadata.labels?.['grafana.com/group-index']).toBeUndefined();
   });
 
   it('keeps metadata.name for UID preservation', () => {

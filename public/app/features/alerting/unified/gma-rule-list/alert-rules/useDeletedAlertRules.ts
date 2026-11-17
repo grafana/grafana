@@ -2,8 +2,9 @@ import { skipToken } from '@reduxjs/toolkit/query';
 import { useCallback, useState } from 'react';
 
 import { type AlertRule, useListAlertRuleQuery } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
+import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 
-const PAGE_SIZE = 40;
+const PAGE_SIZE = DEFAULT_PER_PAGE_PAGINATION;
 const TRASH_LABEL_SELECTOR = 'grafana.app/get-trash=true';
 
 export interface UseDeletedAlertRulesResult {

@@ -1,35 +1,21 @@
 import { type AlertRule, useCreateAlertRuleMutation } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
-import { getBackendSrv, isFetchError } from '@grafana/runtime';
+import { isFetchError } from '@grafana/runtime';
 
-const ANNOTATIONS_TO_REMOVE = new Set([
-  'grafana.com/provenance',
-  'grafana.app/managedBy',
-  'grafana.com/group',
-  'grafana.com/group-index',
-]);
+const GROUP_LABELS_TO_REMOVE = new Set(['grafana.com/group', 'grafana.com/group-index']);
 
-const LABELS_TO_REMOVE = new Set(['grafana.com/group', 'grafana.com/group-index']);
-
-/** Strips server metadata and ownership before restoring a trash item. */
+/**
+ * Builds the create payload from a trash item, following the same pattern as
+ * the dashboards restore (keep metadata + spec, clear resourceVersion).
+ * Group labels are stripped because the group-free create API rejects them.
+ */
 export function sanitizeForRestore(rule: AlertRule): AlertRule {
-  const { deletionTimestamp, resourceVersion, managedFields, finalizers, ...cleanMeta } = rule.metadata ?? {};
-
-  const cleanAnnotations = Object.fromEntries(
-    Object.entries(cleanMeta.annotations ?? {}).filter(
-      ([key]) => !key.startsWith('grafana.com/access/') && !ANNOTATIONS_TO_REMOVE.has(key)
-    )
-  );
+  const { resourceVersion, deletionTimestamp, managedFields, finalizers, ...cleanMeta } = rule.metadata ?? {};
 
   const cleanLabels = Object.fromEntries(
-    Object.entries(cleanMeta.labels ?? {}).filter(([key]) => !LABELS_TO_REMOVE.has(key))
+    Object.entries(cleanMeta.labels ?? {}).filter(([key]) => !GROUP_LABELS_TO_REMOVE.has(key))
   );
 
-  const cleanRule = {
-    ...rule,
-    metadata: { ...cleanMeta, annotations: cleanAnnotations, labels: cleanLabels },
-  };
-  Reflect.deleteProperty(cleanRule, 'status');
-  return cleanRule;
+  return { ...rule, metadata: { ...cleanMeta, labels: cleanLabels } };
 }
 
 interface RestoreResult {
@@ -42,7 +28,6 @@ export function useRestoreAlertRule() {
   const [createAlertRule, { isLoading }] = useCreateAlertRuleMutation();
 
   const restore = async (rule: AlertRule): Promise<RestoreResult> => {
-    const guid = rule.metadata?.name ?? '';
     const payload = sanitizeForRestore(rule);
     const result = await createAlertRule({ alertRule: payload });
 
@@ -50,15 +35,6 @@ export function useRestoreAlertRule() {
       const isConflict = isFetchError(result.error) && result.error.status === 409;
       return { success: false, isConflict, error: result.error };
     }
-
-    // The k8s create endpoint does not automatically remove the tombstone, so
-    // we explicitly clean it up via the ruler trash endpoint after success.
-    try {
-      await getBackendSrv().delete(`/api/ruler/grafana/api/v1/trash/rule/guid/${guid}`);
-    } catch {
-      // Best-effort — a failure here just leaves a stale tombstone; the rule is restored.
-    }
-
     return { success: true, isConflict: false };
   };
 

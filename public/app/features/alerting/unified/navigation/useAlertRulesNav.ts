@@ -5,6 +5,7 @@ import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { useSelector } from 'app/types/store';
 
+import { shouldUseGmaOnlyListView } from '../featureToggles';
 import { isAdmin } from '../utils/environment';
 
 import { useAlertRulesExtensionTabs } from './extensions';
@@ -42,13 +43,16 @@ export function useAlertRulesNav() {
     };
   }
 
+  // GMA-only view uses /alerting/rules/alert; legacy uses /alerting/list
+  const alertRulesUrl = shouldUseGmaOnlyListView() ? '/alerting/rules/alert' : '/alerting/list';
+
   // Build tabs based on permissions
   const tabs: NavModelItem[] = [
     {
       id: 'alert-rules-list',
       text: t('alerting.navigation.alert-rules', 'Alert rules'),
-      url: '/alerting/list',
-      active: location.pathname === '/alerting/list',
+      url: alertRulesUrl,
+      active: location.pathname === alertRulesUrl,
       parentItem: alertRulesNav,
     },
     ...extensionTabs,
@@ -56,11 +60,15 @@ export function useAlertRulesNav() {
 
   // Add Recently deleted tab if user has permission
   if (isAdmin()) {
+    // GMA-only view uses a different route than the legacy recently-deleted page
+    const recentlyDeletedUrl = shouldUseGmaOnlyListView()
+      ? '/alerting/rules/alert/deleted'
+      : '/alerting/recently-deleted';
     tabs.push({
       id: 'alert-rules-recently-deleted',
       text: t('alerting.navigation.recently-deleted', 'Recently deleted'),
-      url: '/alerting/recently-deleted',
-      active: location.pathname === '/alerting/recently-deleted',
+      url: recentlyDeletedUrl,
+      active: location.pathname === recentlyDeletedUrl,
       parentItem: alertRulesNav,
     });
   }
