@@ -105,3 +105,19 @@ describe('SQL in a scope', () => {
     expect(evidenceText.why).toBe(why);
   });
 });
+
+describe('the services in the overview', () => {
+  it('leaves out a span metric series that has no service name', async () => {
+    jest.mocked(promInstant).mockResolvedValue([
+      { metric: {}, value: 5 },
+      { metric: { service_name: 'checkout', service_version: '1.2' }, value: 5 },
+    ]);
+
+    const { services, hints, scopeValues, signals } = await loadOverview();
+
+    expect(services.map((service) => service.name)).toEqual(['checkout']);
+    expect(hints.map((hint) => hint.scope.value)).toEqual(['checkout']);
+    expect(scopeValues.service).toEqual(['checkout']);
+    expect(signals.find((signal) => signal.app === 'metrics')).toMatchObject({ covered: 1, total: 1 });
+  });
+});

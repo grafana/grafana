@@ -88,6 +88,11 @@ function bySeries(samples: InstantSample[], label = 'service_name') {
   return new Map(samples.map((s) => [s.metric[label], s.value]));
 }
 
+// A series without a service_name is no service, so it never reaches a card, a hint, a scope choice or a count.
+async function named<T extends { metric: Record<string, string> }>(query: Promise<T[]>): Promise<T[]> {
+  return (await query).filter((row) => Boolean(row.metric.service_name));
+}
+
 function clockTime(timeNs: string) {
   const date = new Date(Number(timeNs.slice(0, -6)));
   return date.toLocaleTimeString([], { hour12: false });
@@ -174,32 +179,38 @@ export async function loadOverview(): Promise<Overview> {
     traceServices,
     entitySearch,
   ] = await Promise.all([
-    attempt(notes, 'metrics', promInstant(p95(SERVER, byService), end), []),
-    attempt(notes, 'metrics', promInstant(p95(SERVER, byService), start), []),
+    attempt(notes, 'metrics', named(promInstant(p95(SERVER, byService), end)), []),
+    attempt(notes, 'metrics', named(promInstant(p95(SERVER, byService), start)), []),
     attempt(
       notes,
       'metrics',
-      promInstant(
-        `sum by (service_name) (rate(${CALLS}{${SERVER},${ERROR}}[5m])) / sum by (service_name) (rate(${CALLS}{${SERVER}}[5m]))`,
-        end
+      named(
+        promInstant(
+          `sum by (service_name) (rate(${CALLS}{${SERVER},${ERROR}}[5m])) / sum by (service_name) (rate(${CALLS}{${SERVER}}[5m]))`,
+          end
+        )
       ),
       []
     ),
     attempt(
       notes,
       'metrics',
-      promInstant(`sum by (service_name, service_namespace, service_version) (rate(${CALLS}{${SERVER}}[5m]))`, end),
+      named(
+        promInstant(`sum by (service_name, service_namespace, service_version) (rate(${CALLS}{${SERVER}}[5m]))`, end)
+      ),
       []
     ),
-    attempt(notes, 'metrics', promRange(p95(SERVER, byService), start, end, 90), []),
-    attempt(notes, 'metrics', promInstant(`count by (service_name) (rate(${CALLS}[5m]))`, end), []),
+    attempt(notes, 'metrics', named(promRange(p95(SERVER, byService), start, end, 90)), []),
+    attempt(notes, 'metrics', named(promInstant(`count by (service_name) (rate(${CALLS}[5m]))`, end)), []),
     attempt(notes, 'metrics', promInstant(`count by (service_namespace) (${CALLS})`, end), []),
     attempt(
       notes,
       'metrics',
-      promInstant(
-        `count by (service_name, service_version) (rate(${CALLS}{${SERVER}}[5m])) unless count by (service_name, service_version) (rate(${CALLS}{${SERVER}}[5m] offset 30m))`,
-        end
+      named(
+        promInstant(
+          `count by (service_name, service_version) (rate(${CALLS}{${SERVER}}[5m])) unless count by (service_name, service_version) (rate(${CALLS}{${SERVER}}[5m] offset 30m))`,
+          end
+        )
       ),
       []
     ),

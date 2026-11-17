@@ -133,11 +133,12 @@ export async function tempoSearch(q: string, startSec: number, endSec: number, l
 }
 
 export async function tempoTagValues(tag: string, startSec: number, endSec: number): Promise<string[]> {
-  const response = await get<{ tagValues?: Array<{ value: string }> }>('traces', `api/v2/search/tag/${tag}/values`, {
+  const response = await get<{ tagValues?: Array<{ value?: string }> }>('traces', `api/v2/search/tag/${tag}/values`, {
     start: startSec,
     end: endSec,
   });
-  return (response.tagValues ?? []).map((entry) => entry.value);
+  // Tempo's JSON leaves the value out of an entry whose value is empty, and an empty name names nothing.
+  return (response.tagValues ?? []).flatMap((entry) => (entry.value ? [entry.value] : []));
 }
 
 interface OtlpAttribute {
