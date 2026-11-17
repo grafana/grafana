@@ -89,7 +89,7 @@ const TagComponent = forwardRef<HTMLElement, Props>(
           <IconButton
             name="times"
             size="lg"
-            aria-label={t('grafana-ui.tags-input.remove', 'Remove tag: {{name}}', { name })}
+            aria-label={t('grafana-ui.tag.remove', 'Remove tag: {{name}}', { name })}
             disabled={disabled}
             className={styles.remove}
             onClick={(event) => {
