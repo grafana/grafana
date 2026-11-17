@@ -278,6 +278,8 @@ describe('AppChrome', () => {
         expect(await screen.findByRole('button', { name: 'Close menu', hidden: true })).toBeInTheDocument();
         // Below the xl breakpoint the dock button is display: none, which leaves it no accessible name in jsdom.
         expect(document.getElementById(DOCK_MENU_BUTTON_ID)).toHaveAttribute('aria-label', 'Undock menu');
+        // The docked header names Grafana beside the logo.
+        expect(screen.getByText('Grafana')).toBeInTheDocument();
       });
     });
 
@@ -470,6 +472,8 @@ describe('AppChrome', () => {
         );
         // The header toggle docks and closes the menu, so the footer has no dock button.
         expect(document.getElementById(DOCK_MENU_BUTTON_ID)).not.toBeInTheDocument();
+        // The logo is enough beside the toggle, so the header has no Grafana title.
+        expect(screen.queryByText('Grafana')).not.toBeInTheDocument();
 
         await user.click(close);
 

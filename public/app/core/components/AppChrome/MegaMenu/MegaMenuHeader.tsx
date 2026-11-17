@@ -60,8 +60,11 @@ export function MegaMenuHeader({ handleDockedMenu, onClose }: Props) {
         ) : (
           state.megaMenuDocked && <HomeLogo homeNav={homeNav} onClick={state.megaMenuDocked ? undefined : onClose} />
         )}
+        {/* With one organization the switcher shows its children; the logo already names Grafana beside the toggle. */}
         <OrganizationSwitcher>
-          {state.megaMenuDocked && <HomeTitle homeNav={homeNav} onClick={state.megaMenuDocked ? undefined : onClose} />}
+          {state.megaMenuDocked && !peekAndDock && (
+            <HomeTitle homeNav={homeNav} onClick={state.megaMenuDocked ? undefined : onClose} />
+          )}
           {!state.megaMenuDocked && (
             <Box paddingLeft={2}>
               <Text color="secondary">
