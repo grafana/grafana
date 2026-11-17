@@ -14,7 +14,6 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/shadow"
 	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
-	"github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -103,7 +102,7 @@ func (s *LegacyUserPermissionsShadow) prepareShadowWork(client legacyclient.Serv
 		},
 		Call: func(ctx context.Context) {
 			if shadowErr == nil {
-				actual, shadowErr = loadLegacyUserPermissions(legacypermissions.WithPermissionShadow(ctx), client, req)
+				actual, shadowErr = loadLegacyUserPermissions(ctx, client, req)
 			}
 		},
 		Compare: func(ctx context.Context) shadow.Outcome {

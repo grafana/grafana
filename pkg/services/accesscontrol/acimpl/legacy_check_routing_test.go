@@ -107,7 +107,7 @@ func TestEvaluateLegacyCheckRouting(t *testing.T) {
 			authzextv1.RegisterLegacyAuthzServiceServer(channel, backend)
 			ac := ProvideAccessControlTest()
 			if !tc.missingClient {
-				ac.SetLegacyCheckClient(legacyclient.NewLegacyClient(channel), false, types.OrgNamespaceFormatter)
+				require.NoError(t, ac.SetLegacyCheckClient(legacyclient.NewLegacyClient(channel), false, types.OrgNamespaceFormatter, nil))
 			}
 			var evaluator accesscontrol.AccessControl = ac
 			if tc.withoutResolvers {

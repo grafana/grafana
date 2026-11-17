@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/shadow"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/legacyscopes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -102,7 +103,7 @@ func (l *Loader) GetUserPermissions(ctx context.Context, user identity.Requester
 	var err error
 	if !cached {
 		permissions, err = l.uncached(ctx, user, settings)
-	} else if settings.enforcementEnabled || options.ReloadCache || isPermissionShadow(ctx) {
+	} else if settings.enforcementEnabled || options.ReloadCache || shadow.IsShadow(ctx) {
 		permissions, err = l.assemble(ctx, user, options, settings)
 	} else {
 		value, loadErr, _ := l.flight.Do(user.GetCacheKey(), func() (any, error) {
@@ -281,7 +282,7 @@ func (l *Loader) cachedTeams(ctx context.Context, user identity.Requester, optio
 	}
 	for teamID, grants := range teams {
 		grants = l.actions.ExpandActionSets(grants)
-		if !isPermissionShadow(ctx) {
+		if !shadow.IsShadow(ctx) {
 			l.cache.Set(ac.GetTeamPermissionCacheKey(teamID, user.GetOrgID()), grants, cacheTTL)
 		}
 		permissions = append(permissions, grants...)
@@ -298,7 +299,7 @@ func (l *Loader) cached(ctx context.Context, key string, options ac.Options, loa
 	}
 	metrics.MAccessPermissionsCacheUsage.WithLabelValues(ac.CacheMiss).Inc()
 	// Shadow misses and refreshes must not populate the authoritative cache or join its writes.
-	if isPermissionShadow(ctx) {
+	if shadow.IsShadow(ctx) {
 		return load()
 	}
 	var fresh []ac.Permission
