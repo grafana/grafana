@@ -11,4 +11,4 @@ export const ST_POD_READY_TTL_MS = 60 * 60 * 1000;
 export const ST_POD_BUSY_STATUS = 503;
 
 /** Message the hosted gateway returns with ST_POD_BUSY_STATUS while the ST pod is still starting. */
-export const ST_POD_LOADING_MESSAGE = 'Your instance is loading, and will be ready shortly';
+export const ST_POD_LOADING_MESSAGE = 'Your instance is loading, and will be ready shortly.';
