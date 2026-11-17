@@ -13,7 +13,6 @@ import { useHomeNav } from 'app/core/hooks/useHomeNav';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import { contextSrv } from 'app/core/services/context_srv';
 import { ScopesSelector } from 'app/features/scopes/selector/ScopesSelector';
-import { useSelector } from 'app/types/store';
 
 import { HomeLogo } from '../../Branding/Branding';
 import { Breadcrumbs } from '../../Breadcrumbs/Breadcrumbs';
@@ -28,7 +27,6 @@ import { QuickAdd } from '../QuickAdd/QuickAdd';
 
 import { HelpTopBarButton } from './HelpTopBarButton';
 import { NavRightButton } from './InviteUserButton';
-import { ProfileButton } from './ProfileButton';
 import { SignInLink } from './SignInLink';
 import { SingleTopBarActions } from './SingleTopBarActions';
 import { TopBarExtensionPoint } from './TopBarExtensionPoint';
@@ -39,7 +37,6 @@ interface Props {
   sectionNav: NavModelItem;
   pageNav?: NavModelItem;
   onToggleMegaMenu(): void;
-  onToggleKioskMode(): void;
   actions?: React.ReactNode;
   breadcrumbActions?: React.ReactNode;
   scopes?: ScopesContextValue | undefined;
@@ -48,7 +45,6 @@ interface Props {
 
 export const SingleTopBar = memo(function SingleTopBar({
   onToggleMegaMenu,
-  onToggleKioskMode,
   pageNav,
   sectionNav,
   scopes,
@@ -61,7 +57,6 @@ export const SingleTopBar = memo(function SingleTopBar({
   const state = chrome.useState();
   const menuDockedAndOpen = !state.chromeless && state.megaMenuDocked && state.megaMenuOpen;
   const styles = useStyles2(getStyles, menuDockedAndOpen, visualRefreshEnabled);
-  const profileNode = useSelector((state) => state.navIndex['profile']);
   const homeNav = useHomeNav();
   const breadcrumbs = buildBreadcrumbs(sectionNav, pageNav, homeNav);
   const isSmallScreen = !useMediaQueryMinWidth('sm');
@@ -153,7 +148,6 @@ export const SingleTopBar = memo(function SingleTopBar({
           {!showToolbarLevel && actions}
           <NavRightButton />
           <AssistantToolbarButtons />
-          {profileNode && <ProfileButton profileNode={profileNode} onToggleKioskMode={onToggleKioskMode} />}
           {!contextSrv.user.isSignedIn && <SignInLink />}
         </Stack>
       </div>

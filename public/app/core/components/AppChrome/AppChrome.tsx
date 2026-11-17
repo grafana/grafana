@@ -163,7 +163,6 @@ export function AppChrome({ children }: Props) {
               sectionNav={state.sectionNav.node}
               pageNav={state.pageNav}
               onToggleMegaMenu={handleMegaMenu}
-              onToggleKioskMode={chrome.onToggleKioskMode}
               actions={state.actions}
               breadcrumbActions={state.breadcrumbActions}
               scopes={scopes}

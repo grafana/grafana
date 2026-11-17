@@ -209,7 +209,7 @@ export async function undockMegaMenu(dashboardPage: DashboardPage, selectors: E2
   await test.step('Undock the mega menu', async () => {
     await dashboardPage
       .getByGrafanaSelector(selectors.components.NavMenu.Menu)
-      .getByRole('button', { name: 'Undock menu' })
+      .getByRole('button', { name: 'Close menu' })
       .click();
   });
 }

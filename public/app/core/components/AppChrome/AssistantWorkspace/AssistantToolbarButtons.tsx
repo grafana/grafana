@@ -110,7 +110,6 @@ export function AssistantToolbarButtons() {
         >
           {t('navigation.assistant-workspace.exit', 'Exit Workspace')}
         </ToolbarButton>
-        <NavToolbarSeparator className={styles.separator} />
       </>
     );
   }
@@ -150,7 +149,6 @@ export function AssistantToolbarButtons() {
       >
         {t('navigation.assistant-workspace.open', 'Workspace')}
       </ToolbarButton>
-      <NavToolbarSeparator className={styles.separator} />
     </>
   );
 }
@@ -216,9 +214,6 @@ function useCollapseMegaMenuOnWorkspace(collapse: boolean) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  separator: css({
-    marginRight: theme.spacing(1),
-  }),
   button: css({
     color: theme.colors.text.primary,
     fontWeight: theme.typography.fontWeightRegular,

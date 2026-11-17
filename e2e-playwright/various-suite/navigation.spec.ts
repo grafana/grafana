@@ -13,7 +13,7 @@ test.describe(
 
     test('should remain un-docked when reloading the page', async ({ page, selectors }) => {
       // Undock the menu
-      const undockButton = page.getByRole('button', { name: 'Undock menu' });
+      const undockButton = page.getByRole('button', { name: 'Close menu' });
       await undockButton.click();
 
       const navMenu = page.getByTestId(selectors.components.NavMenu.Menu);
@@ -26,14 +26,12 @@ test.describe(
 
     test('Can re-dock after undock', async ({ page, selectors }) => {
       // Undock the menu
-      const undockButton = page.getByRole('button', { name: 'Undock menu' });
+      const undockButton = page.getByRole('button', { name: 'Close menu' });
       await undockButton.click();
 
+      // The toggle that replaces it docks the menu
       const openMenuButton = page.getByRole('button', { name: 'Main menu' });
       await openMenuButton.click();
-
-      const dockButton = page.getByRole('button', { name: 'Dock menu' });
-      await dockButton.click();
 
       const navMenu = page.getByTestId(selectors.components.NavMenu.Menu);
       await expect(navMenu).toBeVisible();
@@ -41,12 +39,12 @@ test.describe(
 
     test('should remain in same state when navigating to another page', async ({ page, selectors }) => {
       // Undock the menu
-      const undockButton = page.getByRole('button', { name: 'Undock menu' });
+      const undockButton = page.getByRole('button', { name: 'Close menu' });
       await undockButton.click();
 
-      // Navigate
+      // Navigate from the menu that opens over the page while the pointer rests on the toggle
       const openMenuButton = page.getByRole('button', { name: 'Main menu' });
-      await openMenuButton.click();
+      await openMenuButton.hover();
 
       const administrationLink = page.getByRole('link', { name: 'Administration' });
       await administrationLink.click();
@@ -57,8 +55,6 @@ test.describe(
 
       // Dock the menu
       await openMenuButton.click();
-      const dockButton = page.getByRole('button', { name: 'Dock menu' });
-      await dockButton.click();
 
       // Navigate
       const usersLink = page.getByRole('link', { name: 'Users' });

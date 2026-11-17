@@ -1,39 +1,38 @@
-import { css } from '@emotion/css';
-import { cloneDeep } from 'lodash';
+import { type ReactElement } from 'react';
 import { useToggle } from 'react-use';
 
-import { type GrafanaTheme2, type NavModelItem, PluginExtensionPoints } from '@grafana/data';
+import { type NavModelItem, PluginExtensionPoints } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, renderLimitedComponents } from '@grafana/runtime';
-import { Dropdown, Menu, MenuItem, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { Menu, MenuItem } from '@grafana/ui';
 import { SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
-import { contextSrv } from 'app/core/services/context_srv';
 import { clearLoginSectionTitle } from 'app/core/services/loginSectionTitle';
 import { usePluginComponents } from 'app/features/plugins/extensions/usePluginComponents';
 
 import { ThemeSelectorDrawer } from '../../ThemeSelector/ThemeSelectorDrawer';
-import { enrichWithInteractionTracking } from '../MegaMenu/utils';
 import { NewsContainer } from '../News/NewsDrawer';
 
 import { TopNavBarMenu } from './TopNavBarMenu';
 
-export interface Props {
+interface ProfileMenuOptions {
   profileNode: NavModelItem;
   onToggleKioskMode: () => void;
 }
 
-export function ProfileButton({ profileNode, onToggleKioskMode }: Props) {
-  const styles = useStyles2(getStyles);
-  const node = enrichWithInteractionTracking(cloneDeep(profileNode), false);
+interface ProfileMenu {
+  /** Renders the menu, for a `Dropdown` overlay. */
+  renderMenu: () => ReactElement;
+  /** The theme and news drawers the menu opens. Render them beside the menu's trigger. */
+  drawers: ReactElement;
+}
+
+/** The signed-in user's menu: their profile pages, theme, kiosk mode, news and signing out. */
+export function useProfileMenu({ profileNode, onToggleKioskMode }: ProfileMenuOptions): ProfileMenu {
   const [showNewsDrawer, onToggleShowNewsDrawer] = useToggle(false);
   const [showThemeDrawer, onToggleThemeDrawer] = useToggle(false);
   const { components } = usePluginComponents({
     extensionPointId: PluginExtensionPoints.UserProfileMenu,
   });
-
-  if (!node) {
-    return null;
-  }
 
   const renderMenu = () => (
     <TopNavBarMenu node={profileNode}>
@@ -73,32 +72,12 @@ export function ProfileButton({ profileNode, onToggleKioskMode }: Props) {
     </TopNavBarMenu>
   );
 
-  return (
+  const drawers = (
     <>
-      <Dropdown overlay={renderMenu} placement="bottom-end">
-        <ToolbarButton
-          className={styles.profileButton}
-          imgSrc={contextSrv.user.gravatarUrl}
-          imgAlt="User avatar"
-          aria-label={t('navigation.profile.aria-label', 'Profile')}
-        />
-      </Dropdown>
       {showNewsDrawer && <NewsContainer onClose={onToggleShowNewsDrawer} />}
       {showThemeDrawer && <ThemeSelectorDrawer onClose={onToggleThemeDrawer} />}
     </>
   );
-}
 
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    profileButton: css({
-      padding: theme.spacing(0, 0.5),
-      img: {
-        borderRadius: theme.shape.radius.circle,
-        height: '24px',
-        marginRight: 0,
-        width: '24px',
-      },
-    }),
-  };
-};
+  return { renderMenu, drawers };
+}
