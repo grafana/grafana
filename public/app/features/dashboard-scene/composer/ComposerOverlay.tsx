@@ -436,7 +436,8 @@ export function ComposerOverlay({
     [dragSelectsElements, session, dragRefOf]
   );
 
-  const hintAllowed = pickMode === 'element' && !paused && !capturing;
+  // No hint while Assistant edits: a send from the keyboard moves no pointer, and the edit's scroll would bring it back.
+  const hintAllowed = pickMode === 'element' && !paused && !capturing && !working;
 
   const hideHint = useCallback(() => {
     cancelAnimationFrame(hintFrameRef.current);
@@ -483,12 +484,11 @@ export function ComposerOverlay({
   // Position a hint that just appeared before it paints.
   useLayoutEffect(() => positionHint(), [hintCopy, positionHint]);
 
-  // A send from the keyboard moves no pointer, so a turn starting must clear the hint left where it last was.
   useEffect(() => {
-    if (!hintAllowed || working) {
+    if (!hintAllowed) {
       hideHint();
     }
-  }, [hintAllowed, working, hideHint]);
+  }, [hintAllowed, hideHint]);
 
   useEffect(() => () => cancelAnimationFrame(hintFrameRef.current), []);
 
