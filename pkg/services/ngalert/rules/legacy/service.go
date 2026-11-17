@@ -646,6 +646,58 @@ func (service *LegacyRuleService) DeleteAlertRule(ctx context.Context, user iden
 		OrgID: user.GetOrgID(),
 		UID:   ruleUID,
 	}
+	if err := service.checkDeleteProvenance(ctx, rule, manager); err != nil {
+		return err
+	}
+
+	can, err := service.authz.CanWriteAllRules(ctx, user)
+	if err != nil {
+		return err
+	}
+	found, err := service.authorizeDelete(ctx, user, rule, can)
+	if err != nil {
+		return err
+	}
+	if !found {
+		return nil
+	}
+
+	// The single delete is idempotent, and doesn't error when deleting a group that already doesn't exist.
+	// This is different from deleting groups. We delete the rules directly rather than persisting a delta here to keep the semantics the same.
+	// TODO: Either persist a delta here as a breaking change, or deprecate this endpoint in favor of the group endpoint.
+	return service.deleteRules(ctx, user, rule)
+}
+
+// DeleteAlertRules deletes all the given rules in one transaction. Provenance and authorization are checked for every
+// rule before anything is deleted, so a single failure rejects the whole batch. Rules that no longer exist are skipped.
+// managers maps a rule UID to the manager the caller is acting as. Every UID goes into the store's IN (...) clauses,
+// so callers must keep batches small enough for the database's bound-variable limit (32766 for SQLite).
+func (service *LegacyRuleService) DeleteAlertRules(ctx context.Context, user identity.Requester, rules []*models.AlertRule, managers map[string]utils.ManagerProperties) error {
+	if len(rules) == 0 {
+		return nil
+	}
+	can, err := service.authz.CanWriteAllRules(ctx, user)
+	if err != nil {
+		return err
+	}
+	targets := make([]*models.AlertRule, 0, len(rules))
+	for _, rule := range rules {
+		if err := service.checkDeleteProvenance(ctx, rule, managers[rule.UID]); err != nil {
+			return err
+		}
+		found, err := service.authorizeDelete(ctx, user, rule, can)
+		if err != nil {
+			return err
+		}
+		if found {
+			targets = append(targets, rule)
+		}
+	}
+	return service.deleteRules(ctx, user, targets...)
+}
+
+// checkDeleteProvenance returns an error if the stored manager of the rule does not allow the given manager to delete it.
+func (service *LegacyRuleService) checkDeleteProvenance(ctx context.Context, rule *models.AlertRule, manager utils.ManagerProperties) error {
 	storedManager, err := service.provenanceStore.GetManagerProperties(ctx, rule, rule.OrgID)
 	if err != nil {
 		return err
@@ -659,32 +711,26 @@ func (service *LegacyRuleService) DeleteAlertRule(ctx context.Context, user iden
 			},
 		})
 	}
+	return nil
+}
 
-	can, err := service.authz.CanWriteAllRules(ctx, user)
+// authorizeDelete checks that the user may delete the rule. canWriteAll is the result of authz.CanWriteAllRules.
+// It returns false if the rule no longer exists, so that non-admin users get the same idempotent behaviour as admins.
+func (service *LegacyRuleService) authorizeDelete(ctx context.Context, user identity.Requester, rule *models.AlertRule, canWriteAll bool) (bool, error) {
+	if canWriteAll {
+		return true, nil
+	}
+	delta, err := rulestore.CalculateRuleDelete(ctx, service.ruleStore, rule.GetKey())
 	if err != nil {
-		return err
-	}
-	if !can {
-		delta, err := rulestore.CalculateRuleDelete(ctx, service.ruleStore, rule.GetKey())
-		if err != nil {
-			if errors.Is(err, models.ErrAlertRuleNotFound) {
-				// Rule already gone; return early so non-admin users
-				// get the same idempotent behaviour as admins.
-				return nil
-			}
-			return err
+		if errors.Is(err, models.ErrAlertRuleNotFound) {
+			return false, nil
 		}
-		if err = service.authz.AuthorizeRuleGroupWrite(ctx, user, delta); err != nil {
-			return err
-		}
+		return false, err
 	}
-
-	// The single delete is idempotent, and doesn't error when deleting a group that already doesn't exist.
-	// This is different from deleting groups. We delete the rules directly rather than persisting a delta here to keep the semantics the same.
-	// TODO: Either persist a delta here as a breaking change, or deprecate this endpoint in favor of the group endpoint.
-	return service.xact.InTransaction(ctx, func(ctx context.Context) error {
-		return service.deleteRules(ctx, user, rule)
-	})
+	if err = service.authz.AuthorizeRuleGroupWrite(ctx, user, delta); err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 // checkLimitsTransactionCtx checks whether the current transaction (as identified by the ctx) breaches configured alert rule limits.
@@ -708,7 +754,7 @@ func (service *LegacyRuleService) checkLimitsTransactionCtx(ctx context.Context,
 	return nil
 }
 
-// deleteRules deletes a set of target rules and associated data, while checking for database consistency.
+// deleteRules deletes a set of target rules and associated data in a single transaction, while checking for database consistency.
 func (service *LegacyRuleService) deleteRules(ctx context.Context, user identity.Requester, targets ...*models.AlertRule) error {
 	uids := make([]string, 0, len(targets))
 	for _, tgt := range targets {
@@ -716,16 +762,21 @@ func (service *LegacyRuleService) deleteRules(ctx context.Context, user identity
 			uids = append(uids, tgt.UID)
 		}
 	}
-	if err := service.ruleStore.DeleteAlertRulesByUID(ctx, user.GetOrgID(), models.NewUserUID(user), false, uids...); err != nil {
-		return err
+	if len(uids) == 0 {
+		return nil
 	}
-	for _, uid := range uids {
-		if err := service.provenanceStore.DeleteProvenance(ctx, &models.AlertRule{UID: uid}, user.GetOrgID()); err != nil {
-			// We failed to clean up the record, but this doesn't break things. Log it and move on.
-			service.log.Warn("Failed to delete provenance record for rule: %w", err)
+	return service.xact.InTransaction(ctx, func(ctx context.Context) error {
+		if err := service.ruleStore.DeleteAlertRulesByUID(ctx, user.GetOrgID(), models.NewUserUID(user), false, uids...); err != nil {
+			return err
 		}
-	}
-	return nil
+		for _, uid := range uids {
+			if err := service.provenanceStore.DeleteProvenance(ctx, &models.AlertRule{UID: uid}, user.GetOrgID()); err != nil {
+				// We failed to clean up the record, but this doesn't break things. Log it and move on.
+				service.log.Warn("Failed to delete provenance record for rule", "uid", uid, "error", err)
+			}
+		}
+		return nil
+	})
 }
 
 // ensureNamespace ensures that the rule has a valid namespace UID.

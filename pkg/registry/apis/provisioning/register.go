@@ -136,6 +136,7 @@ type APIBuilder struct {
 	jobHistoryConfig  *JobHistoryConfig
 	jobHistoryLoki    *jobs.LokiJobHistory
 	resourceLister    resources.ResourceLister
+	namespaceStats    resources.NamespaceStatsReader
 	unified           resource.ResourceClient
 	repoFactory       repository.Factory
 	connectionFactory connection.Factory
@@ -304,17 +305,21 @@ func (b *APIBuilder) SetRepoValidatorOptions(opts ...repository.ValidatorOption)
 // from, naming a value of [provisioning] resource_lister. Call it before the API group is built:
 // the repository resources factory captures the lister.
 func (b *APIBuilder) SetResourceListerMode(mode string) error {
-	lister, err := resources.NewResourceListerForMode(mode, b.unified, b.clients, b.supportedResources)
-	if err != nil {
+	// This lister is also what serves /resources, so an apis reader here would call that route to
+	// answer it. The mode applies to callers outside the apiserver, which is why only the index
+	// reader is built here.
+	if err := resources.ValidateListerMode(mode); err != nil {
 		return err
 	}
-	b.setResourceLister(lister)
+	b.setResourceLister(resources.NewResourceLister(b.unified, b.clients, b.supportedResources))
 	return nil
 }
 
-// setResourceLister points the lister and the factory that captures it at the same reader.
-func (b *APIBuilder) setResourceLister(lister resources.ResourceLister) {
+// setResourceLister points the lister, the namespace-wide stats route and the factory that captures
+// the lister at the same reader.
+func (b *APIBuilder) setResourceLister(lister *resources.ResourceListerFromSearch) {
 	b.resourceLister = lister
+	b.namespaceStats = lister
 	b.repositoryResources = resources.NewRepositoryResourcesFactory(b.parsers, b.clients, lister)
 }
 
@@ -1145,7 +1150,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			exportWorker := export.NewExportWorker(
 				b.clients,
 				b.repositoryResources,
-				b.resourceLister,
 				export.ExportAllWithNewUIDs,
 				stageIfPossible,
 				metrics,
@@ -1168,7 +1172,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			migrateExportWorker := export.NewExportWorker(
 				b.clients,
 				b.repositoryResources,
-				b.resourceLister,
 				export.ExportAll,
 				stageIfPossible,
 				metrics,

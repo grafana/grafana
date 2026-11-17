@@ -8,7 +8,7 @@
  */
 
 import { cloneDeep, isArray, mergeWith } from 'lodash';
-import type * as z from 'zod';
+import * as z from 'zod/mini';
 
 import { type AnnotationQueryKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
@@ -40,7 +40,7 @@ function mergeReplacingArrays(
 
 export const updateAnnotationCommand: MutationCommand<UpdateAnnotationPayload> = {
   name: 'UPDATE_ANNOTATION',
-  description: payloads.updateAnnotation.description ?? '',
+  description: z.globalRegistry.get(payloads.updateAnnotation)?.description ?? '',
 
   payloadSchema: payloads.updateAnnotation,
   permission: requiresEdit,

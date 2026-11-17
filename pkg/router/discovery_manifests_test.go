@@ -70,7 +70,7 @@ func testManifestBackends() []Backend {
 			Versions: []app.ManifestVersion{{
 				Name:   "v1",
 				Served: true,
-				Kinds:  []app.ManifestVersionKind{{Kind: "Widget", Plural: "widgets", Scope: "Namespaced"}},
+				Kinds:  []app.ManifestVersionKind{{Kind: "Widget", Plural: "widgets", Resource: "widgets", Scope: "Namespaced"}},
 				OpenAPI: app.ManifestVersionOpenAPI{Paths: map[string]spec3.PathProps{
 					"/namespaces/{namespace}/stats": {Get: &spec3.Operation{OperationProps: spec3.OperationProps{
 						Summary: "Widget stats | totals\nper namespace",
@@ -715,7 +715,7 @@ func versionNames(versions []appmanifestv1alpha2.AppManifestManifestVersion) []s
 // compiled in for its group instead, with only the versions the backend serves.
 func TestBuiltinManifestsFillInForBackendsWithout(t *testing.T) {
 	builtinVersion := func(name string) app.ManifestVersion {
-		return app.ManifestVersion{Name: name, Served: true, Kinds: []app.ManifestVersionKind{{Kind: "Gadget", Plural: "gadgets", Scope: "Cluster"}}}
+		return app.ManifestVersion{Name: name, Served: true, Kinds: []app.ManifestVersionKind{{Kind: "Gadget", Plural: "gadgets", Resource: "gadgets", Scope: "Cluster"}}}
 	}
 	r := NewGrafanaRouter(dummyRoutesLoader{}, nil)
 	r.builtinManifests = manifestsByGroup([]*app.ManifestData{

@@ -142,7 +142,6 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 	exportWorker := export.NewExportWorker(
 		clients,
 		repositoryResources,
-		resourceLister,
 		export.ExportAllWithNewUIDs,
 		stageIfPossible,
 		metrics,
@@ -153,7 +152,6 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 	migrateExportWorker := export.NewExportWorker(
 		clients,
 		repositoryResources,
-		resourceLister,
 		export.ExportAll,
 		stageIfPossible,
 		metrics,

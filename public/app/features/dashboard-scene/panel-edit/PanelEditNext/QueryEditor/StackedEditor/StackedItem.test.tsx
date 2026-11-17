@@ -1,6 +1,7 @@
 import { screen, within } from '@testing-library/react';
 
 import { type DataSourceInstanceSettings, type TransformerRegistryItem } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { type DataQuery } from '@grafana/schema';
 
 import { QueryEditorType } from '../../constants';
@@ -125,6 +126,23 @@ describe('StackedSection header actions', () => {
     expect(getSection('A')).toHaveAccessibleName('Query A, Test DS');
     expect(getSection('B')).toHaveAccessibleName('Query B, Test DS');
     expect(getSection('organize-0')).toHaveAccessibleName('Transformation Organize fields');
+  });
+
+  it('marks query sections with the query row selectors that plugin-e2e looks up by refId', () => {
+    renderSections();
+
+    expect(getSection('A')).toHaveAttribute('data-testid', selectors.components.QueryEditorRows.rows);
+    expect(within(getSection('A')).getByTestId(selectors.components.QueryEditorRow.title('A'))).toBeInTheDocument();
+    expect(within(getSection('B')).getByTestId(selectors.components.QueryEditorRow.title('B'))).toBeInTheDocument();
+    expect(
+      within(getSection('A')).queryByTestId(selectors.components.QueryEditorRow.title('B'))
+    ).not.toBeInTheDocument();
+  });
+
+  it('does not mark transformation sections as query rows', () => {
+    renderSections();
+
+    expect(getSection('organize-0')).not.toHaveAttribute('data-testid');
   });
 
   it('shows data source help only in the current section', () => {

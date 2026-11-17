@@ -99,8 +99,8 @@ var MigratedUnifiedResources = map[string]bool{
 	ShortURLResource:         true,  // Only Mode5!
 	SnapshotResource:         false, // Requires kubernetesSnapshots to be enabled by default
 	LibraryPanelResource:     false, // Explicit migration opt-in; legacy storage remains the default
-	StarsResource:            false,
-	PreferencesResource:      true, // Only Mode5!
+	StarsResource:            true,  // Only Mode5!
+	PreferencesResource:      true,  // Only Mode5!
 	DataSourceResources:      false,
 	QueryCacheConfigResource: false,
 }
@@ -348,7 +348,9 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.EventRetentionPeriod = section.Key("event_retention_period").MustDuration(1 * time.Hour)
 	cfg.EventPruningInterval = section.Key("event_pruning_interval").MustDuration(5 * time.Minute)
 	cfg.SearchLookback = section.Key("search_lookback").MustDuration(1 * time.Second)
-	cfg.NotifierSettleDelay = section.Key("notifier_settle_delay").MustDuration(3 * time.Second)
+	// Unset leaves each notifier its own default: 100ms for legacy SQL watches
+	// fed from NATS, 3s otherwise.
+	cfg.NotifierSettleDelay = section.Key("notifier_settle_delay").MustDuration(0)
 	cfg.FastLatestKeyLookupEnabled = section.Key("fast_latest_key_lookup_enabled").MustBool(false)
 	cfg.ResourceVersionBatchTransactionTimeout = section.Key("resource_version_batch_transaction_timeout").MustDuration(5 * time.Second)
 	cfg.ResourceVersionMaxWait = section.Key("resource_version_max_wait").MustDuration(time.Second)

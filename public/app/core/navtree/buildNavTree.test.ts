@@ -271,6 +271,45 @@ describe('buildNavTree', () => {
       ]);
     });
 
+    describe('GMA-only rule list', () => {
+      const alertingChildren = () => findById(buildNavTree(), NavID.alerting)?.children ?? [];
+      const urlsById = () => Object.fromEntries(alertingChildren().map((item) => [item.id, item.url]));
+
+      it('replaces the rule list with alert and recording rule pages when the flag is on', () => {
+        setup({ permissions: ALERT_RULES_READER, openFeatureFlags: { 'alerting.gmaOnlyListView': true } });
+
+        expect(urlsById()).toEqual({
+          'alert-rules': '/alerting/rules/alert',
+          'recording-rules': '/alerting/rules/recording',
+        });
+      });
+
+      it('keeps the legacy rule list when the flag is off', () => {
+        setup({ permissions: ALERT_RULES_READER });
+
+        expect(urlsById()).toEqual({ 'alert-rules': '/alerting/list' });
+      });
+
+      it('hides the rule pages without Grafana-managed rule read', () => {
+        setup({
+          permissions: [AccessControlAction.AlertingRuleExternalRead, AccessControlAction.AlertingInstanceRead],
+          openFeatureFlags: { 'alerting.gmaOnlyListView': true },
+        });
+
+        expect(ids(alertingChildren())).toEqual(['silences', 'groups']);
+      });
+
+      it('hides recently deleted in legacy navigation when the flag is on', () => {
+        const recentlyDeleted = (openFeatureFlags: Record<string, boolean>) => {
+          setup({ orgRole: 'Admin', openFeatureFlags: { alertingNavigationV2: false, ...openFeatureFlags } });
+          return findById(alertingChildren(), 'alerts/recently-deleted');
+        };
+
+        expect(recentlyDeleted({})).toBeDefined();
+        expect(recentlyDeleted({ 'alerting.gmaOnlyListView': true })).toBeUndefined();
+      });
+    });
+
     it('moves alert groups into alert activity under V2 when state history writes to Prometheus', () => {
       const alertingChildren = (openFeatureFlags: Record<string, boolean>) => {
         setup({

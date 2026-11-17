@@ -65,7 +65,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `lokiAlignedQuerySplitting`                  | Aligns query splitting chunks with UTC midnight                                                                                     | Yes                |
 | `profilesHeatmap`                            | Enables heatmap visualization support for Pyroscope profiles                                                                        | Yes                |
 | `datasources.useNewStackInfoToSettingsCache` | Use the new cache for datasource.StackInfoToSettings, backend flag                                                                  |                    |
-| `grafana.queryVarEditorRedesign`             | Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options                    | Yes                |
 | `grafana.dashboardSettingsRedesign`          | Redesigns dashboard settings page into Advanced Settings in a modal window                                                          | Yes                |
 | `grafana.thresholdsInterpolation`            | Enables using dashboard variables in panel threshold values                                                                         | Yes                |
 | `grafana.dashboardAutoGridDefault`           | Uses auto grid as the default layout for new dashboards                                                                             | Yes                |
@@ -88,6 +87,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `secretsKeeperUI`                  | Enable the Secrets Keeper management UI for configuring external secret storage                                                |
 | `grafana.secretsReferenceValueUI`  | Enable referencing an existing secret in an active keeper when creating a secure value                                         |
 | `dashboardTemplates`               | Enables a flow to get started with a new dashboard from a template                                                             |
+| `grafana.customDashboardTemplates` | Enables custom dashboard templates for enterprise                                                                              |
 | `alertRuleRestore`                 | Enables the alert rule restore feature                                                                                         |
 | `alertingMigrationWizardUI`        | Enables the migration wizard UI to migrate alert rules and notification resources from external sources to Grafana Alerting    |
 | `azureMonitorLogsBuilderEditor`    | Enables the logs builder mode for the Azure Monitor data source                                                                |

@@ -11,6 +11,7 @@ import {
   buildDecorations,
   enclosingListKind,
   findEnclosingMarkNode,
+  inlineMarkRange,
   INLINE_CODE_NODE,
   ITALIC_NODE,
   LINK_NODE,
@@ -20,6 +21,7 @@ import {
   toggleChecklist,
   toggleBulletedList,
   toggleInlineMark,
+  type InlineMarkKind,
   overlapsSelection,
   STRIKETHROUGH_NODE,
   type MarkdownEditorStyles,
@@ -402,7 +404,144 @@ describe('checklists', () => {
   });
 });
 
-describe('toggleInlineMark', () => {
+describe('inline marks on block lines', () => {
+  const views: EditorView[] = [];
+  function createView(doc: string, anchor: number, head: number) {
+    const preview = markdownLivePreview(createTheme());
+    const view = new EditorView({
+      state: EditorState.create({
+        doc,
+        selection: { anchor, head },
+        extensions: [preview.extensions, history()],
+      }),
+      parent: document.body.appendChild(document.createElement('div')),
+    });
+    views.push(view);
+    return view;
+  }
+  const selected = (view: EditorView) => {
+    const { from, to } = view.state.selection.main;
+    return view.state.sliceDoc(from, to);
+  };
+  const lineNodeName = (view: EditorView) => {
+    ensureSyntaxTree(view.state, view.state.doc.length, 5000);
+    return syntaxTree(view.state).topNode.firstChild?.name;
+  };
+
+  afterEach(() => {
+    for (const view of views.splice(0)) {
+      const parent = view.dom.parentElement;
+      view.destroy();
+      parent?.remove();
+    }
+  });
+
+  it.each([1, 2, 3, 4, 5, 6])('bolds a whole h%i without breaking the heading', (level) => {
+    const marker = '#'.repeat(level);
+    const doc = `${marker} Title`;
+    const view = createView(doc, 0, doc.length);
+
+    toggleInlineMark(view, 'bold');
+
+    expect(view.state.doc.toString()).toBe(`${marker} **Title**`);
+    expect(selected(view)).toBe('Title');
+    expect(lineNodeName(view)).toBe(`ATXHeading${level}`);
+  });
+
+  it('ignores the trailing newline of a triple-click selection', () => {
+    const view = createView('## Title\nbody', 0, 9);
+
+    toggleInlineMark(view, 'bold');
+
+    expect(view.state.doc.toString()).toBe('## **Title**\nbody');
+  });
+
+  it('unwraps inline code whose content ends in a space', () => {
+    const view = createView('`value `', 1, 7);
+
+    toggleInlineMark(view, 'code');
+
+    expect(view.state.doc.toString()).toBe('value ');
+  });
+
+  it('keeps the heading across repeated toggles', () => {
+    const view = createView('## Title', 0, 8);
+
+    const docs = [1, 2, 3].map(() => {
+      toggleInlineMark(view, 'bold');
+      expect(lineNodeName(view)).toBe('ATXHeading2');
+      return view.state.doc.toString();
+    });
+
+    expect(docs).toEqual(['## **Title**', '## Title', '## **Title**']);
+  });
+
+  it('unbolds a whole-line selection of a bold heading', () => {
+    const view = createView('## **Title**', 0, 12);
+
+    toggleInlineMark(view, 'bold');
+
+    expect(view.state.doc.toString()).toBe('## Title');
+  });
+
+  it('bolds a selection that already excludes the prefix', () => {
+    const view = createView('## Title', 3, 8);
+
+    toggleInlineMark(view, 'bold');
+
+    expect(view.state.doc.toString()).toBe('## **Title**');
+  });
+
+  it('preserves a backward selection direction', () => {
+    const view = createView('## Title', 8, 0);
+
+    toggleInlineMark(view, 'bold');
+
+    expect(view.state.doc.toString()).toBe('## **Title**');
+    expect(selected(view)).toBe('Title');
+  });
+
+  it.each<[InlineMarkKind, string]>([
+    ['italic', '## *Title*'],
+    ['strikethrough', '## ~~Title~~'],
+    ['code', '## `Title`'],
+  ])('applies %s to a whole heading', (kind, expected) => {
+    const view = createView('## Title', 0, 8);
+
+    toggleInlineMark(view, kind);
+
+    expect(view.state.doc.toString()).toBe(expected);
+  });
+
+  it.each([
+    ['> quote', 7, '> **quote**'],
+    ['- [ ] task', 10, '- [ ] **task**'],
+  ])('keeps the prefix of %s outside the mark', (doc, end, expected) => {
+    const view = createView(doc, 0, end);
+
+    toggleInlineMark(view, 'bold');
+
+    expect(view.state.doc.toString()).toBe(expected);
+  });
+
+  it('wraps the raw selection inside fenced code', () => {
+    const view = createView('```\n# Title\n```', 4, 11);
+
+    toggleInlineMark(view, 'bold');
+
+    expect(view.state.doc.toString()).toBe('```\n**# Title**\n```');
+  });
+
+  it('bolds a whole heading with Mod-b', () => {
+    const view = createView('## Title', 0, 8);
+
+    fireEvent.keyDown(view.contentDOM, { key: 'b', ctrlKey: true });
+
+    expect(view.state.doc.toString()).toBe('## **Title**');
+  });
+});
+
+describe('toggleInlineMark delimiters', () => {
   const views: EditorView[] = [];
   function createView(doc: string, from = 0, to = from) {
     const preview = markdownLivePreview(createTheme());
@@ -548,5 +687,38 @@ describe('toggleInlineMark', () => {
     toggleInlineMark(view, 'code');
 
     expect(view.state.doc.toString()).toBe('foo');
+  });
+});
+
+describe('inlineMarkRange', () => {
+  function stateWith(doc: string, anchor: number, head: number) {
+    const state = EditorState.create({
+      doc,
+      selection: { anchor, head },
+      extensions: [markdownLanguageSupport],
+    });
+    ensureSyntaxTree(state, doc.length, 5000);
+    return state;
+  }
+
+  it('is undefined for an empty selection', () => {
+    expect(inlineMarkRange(stateWith('## Title', 4, 4))).toBeUndefined();
+  });
+
+  it('is undefined when only the block prefix is selected', () => {
+    expect(inlineMarkRange(stateWith('## Title', 0, 3))).toBeUndefined();
+  });
+
+  it('skips the prefix and trailing newline', () => {
+    expect(inlineMarkRange(stateWith('## Title\nbody', 0, 9))).toEqual({ from: 3, to: 8 });
+  });
+
+  it('skips nested prefixes', () => {
+    expect(inlineMarkRange(stateWith('> ## Title', 0, 10))).toEqual({ from: 5, to: 10 });
+    expect(inlineMarkRange(stateWith('> - [ ] task', 0, 12))).toEqual({ from: 8, to: 12 });
+  });
+
+  it('keeps a quote marker that is part of the heading text', () => {
+    expect(inlineMarkRange(stateWith('## > Title', 0, 10))).toEqual({ from: 3, to: 10 });
   });
 });

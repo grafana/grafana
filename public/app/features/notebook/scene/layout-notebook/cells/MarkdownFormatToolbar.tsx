@@ -8,12 +8,13 @@ import { useEffect, useState, type ReactNode, type RefObject } from 'react';
 import { type GrafanaTheme2, type IconName } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { floatingUtils, Portal, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
-import { toggleOrderedList, toggleSurround } from 'app/plugins/panel/text/v2/editor/editorCommands';
+import { toggleOrderedList } from 'app/plugins/panel/text/v2/editor/editorCommands';
 
 import {
   BOLD_NODE,
   enclosingListKind,
   findEnclosingMarkNode,
+  inlineMarkRange,
   INLINE_CODE_NODE,
   ITALIC_NODE,
   LINK_NODE,
@@ -21,6 +22,7 @@ import {
   toggleChecklist,
   toggleBulletedList,
   toggleInlineMark,
+  toggleSurroundInline,
 } from './markdownLivePreview';
 
 export const MARKDOWN_FORMAT_TOOLBAR_TEST_ID = 'notebook-markdown-format-toolbar';
@@ -73,7 +75,7 @@ function actions(): FormatAction[] {
       tooltip: t('notebook.cell.markdown.tooltip-link', 'Link'),
       icon: 'link',
       isActive: (tree, pos) => Boolean(findEnclosingMarkNode(tree, pos, [LINK_NODE])),
-      run: (view) => toggleSurround(view, '[', '](https://)'),
+      run: (view) => toggleSurroundInline(view, '[', '](https://)'),
     },
     {
       key: 'bulleted-list',
@@ -178,7 +180,7 @@ export function MarkdownFormatToolbar({ editorContainerRef }: Props) {
   }
 
   const tree = syntaxTree(view.state);
-  const pos = view.state.selection.main.from;
+  const pos = inlineMarkRange(view.state)?.from ?? view.state.selection.main.from;
 
   const runAction = (action: FormatAction) => {
     action.run(view);
