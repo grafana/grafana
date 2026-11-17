@@ -2,13 +2,17 @@ package api
 
 import (
 	"errors"
+	"io"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/api/response"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/merge"
@@ -180,5 +184,54 @@ func TestConvertRequestsMetric(t *testing.T) {
 		require.Equal(t, 1.0, count(srv, operationPromoteAlertmanager, importSourceImportSettings, resultAccepted))
 		require.Equal(t, 1.0, count(srv, operationPromoteAlertmanager, importSourceImportSettings, resultFailed))
 		require.Equal(t, 1.0, count(srv, operationDeleteAlertmanager, importSourceImportSettings, resultAccepted))
+	})
+}
+
+func TestConvertRequestsMetric_BodyParseFailures(t *testing.T) {
+	ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
+	am := &mockAlertmanager{}
+	am.On("IsExternalAMSyncConfiguredForOrg", mock.Anything, int64(1)).Return(false, nil).Maybe()
+
+	for _, tc := range []struct {
+		name      string
+		operation string
+		call      func(h *ConvertPrometheusApiHandler, rc *contextmodel.ReqContext) response.Response
+	}{
+		{"post rule groups", operationPostRules, (*ConvertPrometheusApiHandler).RouteConvertPrometheusPostRuleGroups},
+		{"post single rule group", operationPostRules, (*ConvertPrometheusApiHandler).RouteConvertPrometheusPostRuleGroup},
+		{"cortex post rule groups", operationPostRules, (*ConvertPrometheusApiHandler).RouteConvertPrometheusCortexPostRuleGroups},
+		{"post alertmanager config", operationPostAlertmanager, (*ConvertPrometheusApiHandler).RouteConvertPrometheusPostAlertmanagerConfig},
+	} {
+		for _, body := range []struct{ name, contentType, payload string }{
+			{"malformed body", "application/json", "{not json"},
+			{"unsupported media type", "text/plain", "x"},
+		} {
+			t.Run(tc.name+" with "+body.name+" counts as failed", func(t *testing.T) {
+				srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(am), withFeatureToggles(ft))
+				rc := createRequestCtx()
+				rc.Req.Header.Set(importSourceHeader, "wizard")
+				rc.Req.Header.Set("Content-Type", body.contentType)
+				rc.Req.Body = io.NopCloser(strings.NewReader(body.payload))
+
+				resp := tc.call(NewConvertPrometheusApi(srv), rc)
+
+				require.GreaterOrEqual(t, resp.Status(), http.StatusBadRequest)
+				require.Equal(t, 1.0, testutil.ToFloat64(srv.requests.WithLabelValues(tc.operation, importSourceWizard, resultFailed)))
+				require.Equal(t, 1, testutil.CollectAndCount(srv.requests))
+			})
+		}
+	}
+
+	t.Run("alertmanager dry run with a malformed body is not counted", func(t *testing.T) {
+		srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(am), withFeatureToggles(ft))
+		rc := createRequestCtx()
+		rc.Req.Header.Set("Content-Type", "application/json")
+		rc.Req.Header.Set(dryRunHeader, "true")
+		rc.Req.Body = io.NopCloser(strings.NewReader("{not json"))
+
+		resp := NewConvertPrometheusApi(srv).RouteConvertPrometheusPostAlertmanagerConfig(rc)
+
+		require.GreaterOrEqual(t, resp.Status(), http.StatusBadRequest)
+		require.Equal(t, 0, testutil.CollectAndCount(srv.requests))
 	})
 }

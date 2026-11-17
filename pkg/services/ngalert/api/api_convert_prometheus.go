@@ -226,6 +226,7 @@ func (srv *ConvertPrometheusSrv) requestLogger(c *contextmodel.ReqContext) log.L
 }
 
 // recordRequest counts one finished import call. Alertmanager dry runs are skipped since they change nothing.
+// Requests rejected before the handler, such as by authorization, are not counted.
 func (srv *ConvertPrometheusSrv) recordRequest(c *contextmodel.ReqContext, operation string, resp response.Response) response.Response {
 	if srv.requests == nil {
 		return resp
