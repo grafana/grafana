@@ -218,6 +218,34 @@ describe('ResourceTreeView', () => {
     });
   });
 
+  describe('actions', () => {
+    beforeEach(() => {
+      setupQueries(
+        [{ path: 'README.md', hash: 'aaa' }],
+        [{ path: 'orphan.json', hash: 'bbb', name: 'orphan', title: 'Orphan Dashboard', resource: 'dashboards' }]
+      );
+    });
+
+    it('should disable the View button of a row without a Grafana resource', async () => {
+      render(<ResourceTreeView repo={repo} />);
+
+      const row = await screen.findByRole('row', { name: /README\.md/ });
+      expect(within(row).getByText('View').closest('a')).toHaveAttribute('aria-disabled', 'true');
+      expect(within(row).getByRole('link', { name: 'Source' })).toHaveAttribute(
+        'href',
+        'https://github.com/org/repo/blob/main/README.md'
+      );
+    });
+
+    it('should disable the Source button of a row without a file', async () => {
+      render(<ResourceTreeView repo={repo} />);
+
+      const row = await screen.findByRole('row', { name: /Orphan Dashboard/ });
+      expect(within(row).getByRole('link', { name: 'View' })).toBeInTheDocument();
+      expect(within(row).getByText('Source').closest('a')).toHaveAttribute('aria-disabled', 'true');
+    });
+  });
+
   describe('root folder', () => {
     const files = [
       { path: 'folder/_folder.json', hash: 'meta' },

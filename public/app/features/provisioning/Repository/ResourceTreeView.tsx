@@ -251,22 +251,14 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
             }
           }
 
-          if (!viewLink && !sourceLink) {
-            return null;
-          }
-
           return (
             <Stack direction="row" gap={1}>
-              {viewLink && (
-                <LinkButton href={viewLink} size="sm" variant="secondary">
-                  <Trans i18nKey="provisioning.resource-tree.view">View</Trans>
-                </LinkButton>
-              )}
-              {sourceLink && (
-                <LinkButton href={sourceLink} size="sm" variant="secondary" target="_blank">
-                  <Trans i18nKey="provisioning.resource-tree.source">Source</Trans>
-                </LinkButton>
-              )}
+              <LinkButton href={viewLink} size="sm" variant="secondary" disabled={!viewLink}>
+                <Trans i18nKey="provisioning.resource-tree.view">View</Trans>
+              </LinkButton>
+              <LinkButton href={sourceLink} size="sm" variant="secondary" target="_blank" disabled={!sourceLink}>
+                <Trans i18nKey="provisioning.resource-tree.source">Source</Trans>
+              </LinkButton>
             </Stack>
           );
         },
