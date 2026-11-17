@@ -5,6 +5,8 @@ import { Alert, LoadingPlaceholder } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { useNavModel } from 'app/core/hooks/useNavModel';
 
+import { renderDrilldownTitle } from '../DataSourcesButton';
+
 import RealDrilldownPage, { getFallbackNavModel } from './RealDrilldownPage';
 import { setOverview } from './liveScenario';
 import { loadOverview } from './loadScenario';
@@ -40,7 +42,11 @@ export function RealDataDrilldownPage() {
   }
 
   return (
-    <Page navId={hasNav ? 'drilldown' : undefined} navModel={hasNav ? undefined : getFallbackNavModel()}>
+    <Page
+      navId={hasNav ? 'drilldown' : undefined}
+      navModel={hasNav ? undefined : getFallbackNavModel()}
+      renderTitle={renderDrilldownTitle}
+    >
       <Page.Contents>
         {state.kind === 'loading' && (
           <LoadingPlaceholder text={t('drilldown-real.overview-loading', 'Querying the selected data sources')} />

@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
-import { DataSourceBar, dataSourcesKey, useFilledDataSources } from './DataSourceBar';
+import { dataSourcesKey, useFilledDataSources } from './DataSourceBar';
 import { RealDataDrilldownPage } from './realdata/RealDataDrilldownPage';
 
 // The page loads once every data source has a choice in the URL, and loads again when a choice changes.
@@ -14,7 +14,6 @@ export function DrilldownHomePage() {
 
   return (
     <div className={styles.container}>
-      <DataSourceBar />
       {dataSourcesFilled && <RealDataDrilldownPage key={dataSourcesKey(queryParams)} />}
     </div>
   );

@@ -6,6 +6,8 @@ import { Alert, Box, Spinner, Stack, Text } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { useNavModel } from 'app/core/hooks/useNavModel';
 
+import { renderDrilldownTitle } from '../DataSourcesButton';
+
 import { AssistantIcon } from './components/AssistantIcon';
 import { DrilldownAskRow } from './components/DrilldownAskRow';
 import { DrilldownDetection } from './components/DrilldownDetection';
@@ -94,6 +96,7 @@ export function RealDrilldownPage() {
     <Page
       navId={hasNav ? 'drilldown' : undefined}
       navModel={hasNav ? undefined : getFallbackNavModel()}
+      renderTitle={renderDrilldownTitle}
       // What could not be measured sits in the header as an icon, so it takes no room from the page.
       actions={phase.kind === 'hints' ? <NotMeasuredNotice notes={NOTES} /> : undefined}
     >
