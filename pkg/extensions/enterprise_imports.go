@@ -160,6 +160,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/apimachinery/validation"
 	_ "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	_ "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
+	_ "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	_ "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 	_ "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
 	_ "github.com/grafana/grafana/pkg/apiserver/appsdk"
