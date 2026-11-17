@@ -18,6 +18,7 @@ import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
+import { DashboardInteractions } from '../utils/interactions';
 import { activateFullSceneTree } from '../utils/test-utils';
 import * as utils from '../utils/utils';
 
@@ -644,5 +645,29 @@ describe('PanelOptions', () => {
     });
 
     expect((panel.state.$behaviors![0] as LibraryPanelBehavior).state.name).toBe('new library panel name');
+  });
+
+  it('reports renaming a library panel only when the name changed', async () => {
+    const track = jest.spyOn(DashboardInteractions, 'panelActionClicked').mockImplementation();
+    const panel = new VizPanel({ key: 'panel-1', pluginId: 'text' });
+    panel.setState({
+      $behaviors: [new LibraryPanelBehavior({ isLoaded: true, uid: 'uid', name: 'libraryPanelName' })],
+    });
+    new DashboardGridItem({ body: panel });
+    const { renderResult } = await setup({ panel });
+    const input = await renderResult.findByTestId('library panel name input');
+
+    await act(async () => {
+      fireEvent.blur(input, { target: { value: 'libraryPanelName' } });
+    });
+    expect(track).not.toHaveBeenCalled();
+
+    await act(async () => {
+      fireEvent.blur(input, { target: { value: 'Customer revenue' } });
+    });
+    expect(track).toHaveBeenCalledTimes(1);
+    // The file's plugin loader resolves every panel to the TestPanel plugin.
+    expect(track).toHaveBeenCalledWith('rename_library_panel', 1, 'panel_editor', 'TestPanel');
+    track.mockRestore();
   });
 });

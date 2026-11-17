@@ -16,7 +16,7 @@ import {
 } from '@grafana/data';
 import { getVarMappingKind, isVarMappingExpressionInput } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
-import { type VizPanel } from '@grafana/scenes';
+import { VizPanel } from '@grafana/scenes';
 import { Input } from '@grafana/ui';
 import { VarMappingNumberValueEditor } from 'app/core/components/OptionsUI/number';
 import { getVarMappingToggleKind, VarMappingToggleEditor } from 'app/core/components/OptionsUI/varMappingToggle';
@@ -253,7 +253,20 @@ export function getLibraryVizPanelOptionsCategory(libraryPanel: LibraryPanelBeha
               id={descriptor.props.id}
               data-testid="library panel name input"
               defaultValue={libraryPanel.state.name}
-              onBlur={(e) => libraryPanel.setState({ name: e.currentTarget.value })}
+              onBlur={(e) => {
+                const name = e.currentTarget.value;
+                const renamed = name !== libraryPanel.state.name;
+                libraryPanel.setState({ name });
+                const panel = libraryPanel.parent;
+                if (renamed && panel instanceof VizPanel) {
+                  DashboardInteractions.panelActionClicked(
+                    'rename_library_panel',
+                    getPanelIdForVizPanel(panel),
+                    'panel_editor',
+                    panel.state.pluginId
+                  );
+                }
+              }}
             />
           );
         },

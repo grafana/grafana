@@ -215,9 +215,14 @@ export const DashboardInteractions = {
       | 'restore'
       | 'explore'
       | 'more_actions'
-      | 'use_library_panel',
+      | 'use_library_panel'
+      | 'save_library_panel'
+      | 'unlink_library_panel'
+      | 'replace_library_panel'
+      | 'new_library_panel'
+      | 'rename_library_panel',
     id: number,
-    source: 'panel' | 'edit_pane' | 'edit_popover' | 'actions_popover' | 'keyboard',
+    source: 'panel' | 'edit_pane' | 'edit_popover' | 'actions_popover' | 'keyboard' | 'panel_editor',
     panelType: string
   ) {
     reportDashboardInteraction('panel_action_clicked', { item, id, source, panelType });
@@ -481,7 +486,8 @@ export const DashboardInteractions = {
   },
 
   setVisualOption: (properties?: {
-    ui: 'panel-edit' | 'view-panel';
+    // text-panel-editor: the Text panel's own editor, which writes its options directly.
+    ui: 'panel-edit' | 'view-panel' | 'text-panel-editor';
     option: string;
     // Only set when the value cannot be free text; see getReportableOptionValue.
     value?: string;

@@ -42,6 +42,7 @@ import { type TextSandboxProps } from './TextSandbox';
 import { TextSandboxConsentNotice } from './TextSandboxConsentNotice';
 import { type TextNGEditorChange } from './editor/TextNGEditor';
 import { getEditorLayoutStyles } from './editor/editorLayout';
+import { useTextEditorChangeReporter } from './editor/useTextEditorChangeReporter';
 import { DEFAULT_VIEW_MODE, type ViewMode } from './editor/viewMode';
 import { usePagination } from './pagination';
 import { catchTemplateError, renderContent, type RenderedContent, type RowWindow } from './renderContent';
@@ -79,6 +80,7 @@ export function TextNGPanel(props: Props) {
   } = props;
   const styles = useStyles2(getStyles);
   const replaceVariables = useThemedReplaceVariables(props.replaceVariables);
+  const reportEditorChange = useTextEditorChangeReporter(id);
   const isEditing = app === CoreApp.PanelEditor;
   // Repeated copies share `id`. The dashboard gives each copy its own id in the request.
   const consent = { panelId: data.request?.panelId ?? id, panelTitle: title, dashboardUid: data.request?.dashboardUID };
@@ -274,7 +276,11 @@ export function TextNGPanel(props: Props) {
         series={series}
         replaceVariables={replaceVariables}
         suggestions={suggestions}
-        onChange={(change) => onOptionsChange(applyEditorChange(options, change))}
+        onChange={(change) => {
+          onOptionsChange(applyEditorChange(options, change));
+          // `options` is still the state before this change, which is what the report compares against.
+          reportEditorChange(options, change);
+        }}
         view={view}
         onViewChange={setView}
         transparent={transparent}
