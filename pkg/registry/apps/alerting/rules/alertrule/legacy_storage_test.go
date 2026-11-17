@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	ngalertac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
@@ -31,6 +32,7 @@ import (
 	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	migrations "github.com/grafana/grafana/pkg/storage/unified/migrations/contract"
 )
@@ -145,7 +147,7 @@ func newTestLegacyStorageWithStores(t *testing.T, validator legacy.RuleMutationV
 		ruleStore, provenanceStore, folderService, &quotas, ruleStore,
 		60, log.NewNopLogger(), nil, fakeRuleAccessControl{}, validator,
 	)
-	return &legacyStorage{service: *svc, namespacer: nsMapperForTest()}, ruleStore, provenanceStore
+	return &legacyStorage{service: *svc, namespacer: request.GetNamespaceMapper(&setting.Cfg{})}, ruleStore, provenanceStore
 }
 
 // TestCreate_QualityPolicyRejection exercises Create end-to-end, asserting the status

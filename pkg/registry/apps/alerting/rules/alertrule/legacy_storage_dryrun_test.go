@@ -16,12 +16,14 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/rules/legacy"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var dryRunAll = []string{metav1.DryRunAll}
@@ -66,7 +68,7 @@ func newDryRunFixture(t *testing.T, quotaReached bool) *dryRunFixture {
 	ctx := genericapirequest.WithNamespace(context.Background(), "default")
 	ctx = identity.WithRequester(ctx, &user.SignedInUser{OrgID: 1, UserUID: "test-user"})
 	return &dryRunFixture{
-		storage:   &legacyStorage{service: *svc, namespacer: nsMapperForTest()},
+		storage:   &legacyStorage{service: *svc, namespacer: request.GetNamespaceMapper(&setting.Cfg{})},
 		ruleStore: ruleStore,
 		validator: validator,
 		ctx:       ctx,

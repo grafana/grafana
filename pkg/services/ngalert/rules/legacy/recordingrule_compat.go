@@ -1,4 +1,4 @@
-package recordingrule
+package legacy
 
 import (
 	"encoding/json"
@@ -20,17 +20,58 @@ import (
 )
 
 var (
-	errInvalidRule = fmt.Errorf("rule is not a recording rule")
+	ErrNotRecordingRule = fmt.Errorf("rule is not a recording rule")
 )
 
-func convertToK8sResource(
+var recordingRuleKind = v1beta1.RecordingRuleKind()
+
+// recordingRuleTypeMeta is the TypeMeta the registry derives for the RecordingRule resource.
+func recordingRuleTypeMeta() metav1.TypeMeta {
+	return metav1.TypeMeta{
+		Kind:       recordingRuleKind.Kind(),
+		APIVersion: recordingRuleKind.Group() + "/" + recordingRuleKind.Version(),
+	}
+}
+
+// OnlyRecordingVersions filters versions to those representing recording rules. Versions of
+// alerting rules share storage but should not surface through the RecordingRule resource.
+func OnlyRecordingVersions(versions []*ngmodels.AlertRuleVersion) []*ngmodels.AlertRuleVersion {
+	out := versions[:0]
+	for _, v := range versions {
+		if v == nil {
+			continue
+		}
+		if v.Type() != ngmodels.RuleTypeRecording {
+			continue
+		}
+		out = append(out, v)
+	}
+	return out
+}
+
+// OnlyRecordingRules filters deleted rules to those representing recording rules.
+func OnlyRecordingRules(rules []*ngmodels.AlertRule) []*ngmodels.AlertRule {
+	out := rules[:0]
+	for _, r := range rules {
+		if r == nil {
+			continue
+		}
+		if r.Type() != ngmodels.RuleTypeRecording {
+			continue
+		}
+		out = append(out, r)
+	}
+	return out
+}
+
+func RecordingRuleToK8s(
 	orgID int64,
 	rule *ngmodels.AlertRule,
 	managerProps utils.ManagerProperties,
 	namespaceMapper request.NamespaceMapper,
 ) (*v1beta1.RecordingRule, error) {
 	if rule.Type() != ngmodels.RuleTypeRecording {
-		return nil, errInvalidRule
+		return nil, ErrNotRecordingRule
 	}
 	interval, err := prom_model.ParseDuration(fmt.Sprintf("%ds", rule.IntervalSeconds))
 	if err != nil {
@@ -39,7 +80,7 @@ func convertToK8sResource(
 	k8sRule := &v1beta1.RecordingRule{
 		// The apiserver converts the object to the requested version, which
 		// starts from the version named here.
-		TypeMeta: ResourceInfo.TypeMeta(),
+		TypeMeta: recordingRuleTypeMeta(),
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            rule.UID,
 			UID:             types.UID(rule.GUID),
@@ -73,7 +114,7 @@ func convertToK8sResource(
 	}
 
 	for _, query := range rule.Data {
-		k8sRule.Spec.Expressions[query.RefID] = convertToK8sExpression(query, rule)
+		k8sRule.Spec.Expressions[query.RefID] = recordingRuleExpressionToK8s(query, rule)
 	}
 
 	meta, err := utils.MetaAccessor(k8sRule)
@@ -121,7 +162,7 @@ func convertToK8sResource(
 	return k8sRule, nil
 }
 
-func convertToK8sExpression(query ngmodels.AlertQuery, rule *ngmodels.AlertRule) v1beta1.RecordingRuleExpression {
+func recordingRuleExpressionToK8s(query ngmodels.AlertQuery, rule *ngmodels.AlertRule) v1beta1.RecordingRuleExpression {
 	expression := v1beta1.RecordingRuleExpression{
 		Model: query.Model,
 	}
@@ -144,7 +185,7 @@ func convertToK8sExpression(query ngmodels.AlertQuery, rule *ngmodels.AlertRule)
 	return expression
 }
 
-func convertToK8sResources(
+func RecordingRulesToK8s(
 	orgID int64,
 	rules []*ngmodels.AlertRule,
 	managerPropsMap map[string]utils.ManagerProperties,
@@ -159,7 +200,7 @@ func convertToK8sResources(
 	}
 	for _, rule := range rules {
 		managerProps := managerPropsMap[rule.UID]
-		k8sRule, err := convertToK8sResource(orgID, rule, managerProps, namespaceMapper)
+		k8sRule, err := RecordingRuleToK8s(orgID, rule, managerProps, namespaceMapper)
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert to k8s resource: %w", err)
 		}
@@ -168,10 +209,10 @@ func convertToK8sResources(
 	return k8sRules, nil
 }
 
-// convertVersionToK8sResource converts an AlertRuleVersion into a k8s RecordingRule resource.
+// recordingRuleVersionToK8s converts an AlertRuleVersion into a k8s RecordingRule resource.
 // The version's revision message is preserved on the message annotation so callers iterating
 // history can display per-revision context the same way the unified storage history list does.
-func convertVersionToK8sResource(
+func recordingRuleVersionToK8s(
 	orgID int64,
 	version *ngmodels.AlertRuleVersion,
 	namespaceMapper request.NamespaceMapper,
@@ -179,7 +220,7 @@ func convertVersionToK8sResource(
 	if version == nil {
 		return nil, fmt.Errorf("nil version")
 	}
-	k8sRule, err := convertToK8sResource(orgID, &version.AlertRule, utils.ManagerProperties{}, namespaceMapper)
+	k8sRule, err := RecordingRuleToK8s(orgID, &version.AlertRule, utils.ManagerProperties{}, namespaceMapper)
 	if err != nil {
 		return nil, err
 	}
@@ -193,18 +234,18 @@ func convertVersionToK8sResource(
 	return k8sRule, nil
 }
 
-// convertVersionsToK8sResources converts a list of AlertRuleVersion into a k8s RecordingRuleList.
+// RecordingRuleVersionsToK8s converts a list of AlertRuleVersion into a k8s RecordingRuleList.
 // The Version on each rule is reflected via ResourceVersion so paginating clients can identify revisions.
-func convertVersionsToK8sResources(
+func RecordingRuleVersionsToK8s(
 	orgID int64,
 	versions []*ngmodels.AlertRuleVersion,
 	namespaceMapper request.NamespaceMapper,
 ) (*v1beta1.RecordingRuleList, error) {
 	out := &v1beta1.RecordingRuleList{Items: make([]v1beta1.RecordingRule, 0, len(versions))}
 	for _, v := range versions {
-		k8sRule, err := convertVersionToK8sResource(orgID, v, namespaceMapper)
+		k8sRule, err := recordingRuleVersionToK8s(orgID, v, namespaceMapper)
 		if err != nil {
-			if errors.Is(err, errInvalidRule) {
+			if errors.Is(err, ErrNotRecordingRule) {
 				continue
 			}
 			return nil, fmt.Errorf("failed to convert version to k8s resource: %w", err)
@@ -214,9 +255,9 @@ func convertVersionsToK8sResources(
 	return out, nil
 }
 
-// convertDeletedToK8sResources converts soft-deleted recording rules into a k8s RecordingRuleList,
+// DeletedRecordingRulesToK8s converts soft-deleted recording rules into a k8s RecordingRuleList,
 // stamping each item with a deletion timestamp.
-func convertDeletedToK8sResources(
+func DeletedRecordingRulesToK8s(
 	orgID int64,
 	rules []*ngmodels.AlertRule,
 	namespaceMapper request.NamespaceMapper,
@@ -228,9 +269,9 @@ func convertDeletedToK8sResources(
 		if copy.UID == "" {
 			copy.UID = copy.GUID
 		}
-		k8sRule, err := convertToK8sResource(orgID, &copy, utils.ManagerProperties{}, namespaceMapper)
+		k8sRule, err := RecordingRuleToK8s(orgID, &copy, utils.ManagerProperties{}, namespaceMapper)
 		if err != nil {
-			if errors.Is(err, errInvalidRule) {
+			if errors.Is(err, ErrNotRecordingRule) {
 				continue
 			}
 			return nil, fmt.Errorf("failed to convert deleted rule to k8s resource: %w", err)
@@ -242,8 +283,8 @@ func convertDeletedToK8sResources(
 	return out, nil
 }
 
-func convertToDomainModel(orgID int64, k8sRule *v1beta1.RecordingRule) (*ngmodels.AlertRule, utils.ManagerProperties, error) {
-	domainRule, err := convertToBaseDomainModel(orgID, k8sRule)
+func RecordingRuleFromK8sForWrite(orgID int64, k8sRule *v1beta1.RecordingRule) (*ngmodels.AlertRule, utils.ManagerProperties, error) {
+	domainRule, err := recordingRuleBaseToModel(orgID, k8sRule)
 	if err != nil {
 		return nil, utils.ManagerProperties{}, fmt.Errorf("failed to convert to domain model: %w", err)
 	}
@@ -276,7 +317,7 @@ func convertToDomainModel(orgID int64, k8sRule *v1beta1.RecordingRule) (*ngmodel
 	return domainRule, ngmodels.ProvenanceToManagerProperties(ngmodels.Provenance(sourceProv)), nil
 }
 
-func convertToBaseDomainModel(orgID int64, k8sRule *v1beta1.RecordingRule) (*ngmodels.AlertRule, error) {
+func recordingRuleBaseToModel(orgID int64, k8sRule *v1beta1.RecordingRule) (*ngmodels.AlertRule, error) {
 	domainRule := &ngmodels.AlertRule{
 		OrgID:    orgID,
 		UID:      k8sRule.Name,
@@ -325,7 +366,7 @@ func convertToBaseDomainModel(orgID int64, k8sRule *v1beta1.RecordingRule) (*ngm
 	slices.Sort(refIDs)
 	for _, refID := range refIDs {
 		expression := k8sRule.Spec.Expressions[refID]
-		domainQuery, err := convertToDomainQuery(expression, refID)
+		domainQuery, err := recordingRuleQueryToModel(expression, refID)
 		if err != nil {
 			return nil, err
 		}
@@ -350,7 +391,7 @@ func convertToBaseDomainModel(orgID int64, k8sRule *v1beta1.RecordingRule) (*ngm
 	return domainRule, nil
 }
 
-func convertToDomainQuery(expression v1beta1.RecordingRuleExpression, refID string) (ngmodels.AlertQuery, error) {
+func recordingRuleQueryToModel(expression v1beta1.RecordingRuleExpression, refID string) (ngmodels.AlertQuery, error) {
 	modelJson, err := json.Marshal(expression.Model)
 	if err != nil {
 		return ngmodels.AlertQuery{}, fmt.Errorf("failed to marshal model: %w", err)

@@ -31,37 +31,6 @@ var validNotificationSettingsTypes = []string{
 	string(ngmodels.NotificationSettingsTypeNamedRoutingTree),
 }
 
-// onlyAlertingVersions filters versions to those representing alerting rules. Versions of
-// recording rules share storage but should not surface through the AlertRule resource.
-func onlyAlertingVersions(versions []*ngmodels.AlertRuleVersion) []*ngmodels.AlertRuleVersion {
-	out := versions[:0]
-	for _, v := range versions {
-		if v == nil {
-			continue
-		}
-		if v.Type() != ngmodels.RuleTypeAlerting {
-			continue
-		}
-		out = append(out, v)
-	}
-	return out
-}
-
-// onlyAlertingRules filters deleted rules to those representing alerting rules.
-func onlyAlertingRules(rules []*ngmodels.AlertRule) []*ngmodels.AlertRule {
-	out := rules[:0]
-	for _, r := range rules {
-		if r == nil {
-			continue
-		}
-		if r.Type() != ngmodels.RuleTypeAlerting {
-			continue
-		}
-		out = append(out, r)
-	}
-	return out
-}
-
 var (
 	_ grafanarest.Storage            = (*legacyStorage)(nil)
 	_ rest.CollectionDeleter         = (*legacyStorage)(nil)
@@ -113,14 +82,14 @@ func (s *legacyStorage) listSpecialMode(ctx context.Context, orgID int64, user i
 			}
 			return nil, true, err
 		}
-		out, err := convertVersionsToK8sResources(orgID, onlyAlertingVersions(versions), s.namespacer)
+		out, err := legacy.AlertRuleVersionsToK8s(orgID, legacy.OnlyAlertingVersions(versions), s.namespacer)
 		return out, true, err
 	case common.ListModeTrash:
 		deleted, err := s.service.GetDeletedAlertRules(ctx, user)
 		if err != nil {
 			return nil, true, err
 		}
-		out, err := convertDeletedToK8sResources(orgID, onlyAlertingRules(deleted), s.namespacer)
+		out, err := legacy.DeletedAlertRulesToK8s(orgID, legacy.OnlyAlertingRules(deleted), s.namespacer)
 		return out, true, err
 	case common.ListModeNormal:
 	}
@@ -224,7 +193,7 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 	if err != nil {
 		return nil, err
 	}
-	return convertToK8sResources(info.OrgID, rules, managerPropsMap, s.namespacer, continueToken)
+	return legacy.AlertRulesToK8s(info.OrgID, rules, managerPropsMap, s.namespacer, continueToken)
 }
 
 func (s *legacyStorage) Get(ctx context.Context, name string, _ *metav1.GetOptions) (runtime.Object, error) {
@@ -245,8 +214,8 @@ func (s *legacyStorage) Get(ctx context.Context, name string, _ *metav1.GetOptio
 		return nil, err
 	}
 
-	obj, err := convertToK8sResource(info.OrgID, &rule, managerProps, s.namespacer)
-	if err != nil && errors.Is(err, errInvalidRule) {
+	obj, err := legacy.AlertRuleToK8s(info.OrgID, &rule, managerProps, s.namespacer)
+	if err != nil && errors.Is(err, legacy.ErrNotAlertingRule) {
 		return nil, k8serrors.NewNotFound(ResourceInfo.GroupResource(), name)
 	}
 	return obj, err
@@ -278,7 +247,7 @@ func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, createVa
 	if p.GenerateName != "" {
 		return nil, fmt.Errorf("generate-name is not supported in legacy storage mode")
 	}
-	domainModel, managerProps, err := convertToDomainModel(info.OrgID, p)
+	domainModel, managerProps, err := legacy.AlertRuleFromK8sForWrite(info.OrgID, p)
 	if err != nil {
 		return nil, err
 	}
@@ -288,14 +257,14 @@ func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, createVa
 		return nil, common.ToAPIError(ResourceInfo.GroupResource(), p.GetName(), err)
 	}
 
-	return convertToK8sResource(info.OrgID, &created, managerProps, s.namespacer)
+	return legacy.AlertRuleToK8s(info.OrgID, &created, managerProps, s.namespacer)
 }
 
 func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, _ rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, _ bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	return common.LegacyRuleUpdate(
 		ctx, name, objInfo, updateValidation, options != nil && dryrun.IsDryRun(options.DryRun),
 		&s.service, s.namespacer, ResourceInfo, s.Get,
-		convertToDomainModel, convertToK8sResource,
+		legacy.AlertRuleFromK8sForWrite, legacy.AlertRuleToK8s,
 	)
 }
 
@@ -303,7 +272,7 @@ func (s *legacyStorage) PrepareDryRunUpdate(ctx context.Context, name string, ob
 	return common.LegacyRulePrepareDryRunUpdate(
 		ctx, name, objInfo,
 		&s.service, s.namespacer, ResourceInfo, s.Get,
-		convertToDomainModel, convertToK8sResource,
+		legacy.AlertRuleFromK8sForWrite, legacy.AlertRuleToK8s,
 	)
 }
 
@@ -335,7 +304,7 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 	// Derive manager properties the same way create/update do, so a resource managed
 	// by a specific manager (e.g. Terraform) is deleted with the matching manager and
 	// not the coarser provenance-derived equivalent.
-	_, managerProps, err := convertToDomainModel(info.OrgID, p)
+	_, managerProps, err := legacy.AlertRuleFromK8sForWrite(info.OrgID, p)
 	if err != nil {
 		return nil, false, err
 	}
@@ -395,7 +364,7 @@ func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation r
 				return nil, k8serrors.NewInternalError(fmt.Errorf("failed to convert rule %q: %w", common.ObjectName(item), err))
 			}
 			// Derive manager properties the same way Delete does.
-			domainModel, managerProps, err := convertToDomainModel(info.OrgID, rule)
+			domainModel, managerProps, err := legacy.AlertRuleFromK8sForWrite(info.OrgID, rule)
 			if err != nil {
 				return nil, k8serrors.NewInternalError(fmt.Errorf("failed to convert rule %q: %w", rule.Name, err))
 			}

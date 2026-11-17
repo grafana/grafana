@@ -26,37 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 )
 
-// onlyRecordingVersions filters versions to those representing recording rules. Versions of
-// alerting rules share storage but should not surface through the RecordingRule resource.
-func onlyRecordingVersions(versions []*ngmodels.AlertRuleVersion) []*ngmodels.AlertRuleVersion {
-	out := versions[:0]
-	for _, v := range versions {
-		if v == nil {
-			continue
-		}
-		if v.Type() != ngmodels.RuleTypeRecording {
-			continue
-		}
-		out = append(out, v)
-	}
-	return out
-}
-
-// onlyRecordingRules filters deleted rules to those representing recording rules.
-func onlyRecordingRules(rules []*ngmodels.AlertRule) []*ngmodels.AlertRule {
-	out := rules[:0]
-	for _, r := range rules {
-		if r == nil {
-			continue
-		}
-		if r.Type() != ngmodels.RuleTypeRecording {
-			continue
-		}
-		out = append(out, r)
-	}
-	return out
-}
-
 var (
 	_ grafanarest.Storage            = (*legacyStorage)(nil)
 	_ dualwrite.DryRunUpdatePreparer = (*legacyStorage)(nil)
@@ -114,13 +83,13 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 			}
 			return nil, err
 		}
-		return convertVersionsToK8sResources(info.OrgID, onlyRecordingVersions(versions), s.namespacer)
+		return legacy.RecordingRuleVersionsToK8s(info.OrgID, legacy.OnlyRecordingVersions(versions), s.namespacer)
 	case common.ListModeTrash:
 		deleted, err := s.service.GetDeletedAlertRules(ctx, user)
 		if err != nil {
 			return nil, err
 		}
-		return convertDeletedToK8sResources(info.OrgID, onlyRecordingRules(deleted), s.namespacer)
+		return legacy.DeletedRecordingRulesToK8s(info.OrgID, legacy.OnlyRecordingRules(deleted), s.namespacer)
 	case common.ListModeNormal:
 		// fall through to the normal list pipeline below.
 	}
@@ -189,7 +158,7 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 	if err != nil {
 		return nil, err
 	}
-	return convertToK8sResources(info.OrgID, rules, managerPropsMap, s.namespacer, continueToken)
+	return legacy.RecordingRulesToK8s(info.OrgID, rules, managerPropsMap, s.namespacer, continueToken)
 }
 
 func (s *legacyStorage) Get(ctx context.Context, name string, _ *metav1.GetOptions) (runtime.Object, error) {
@@ -211,8 +180,8 @@ func (s *legacyStorage) Get(ctx context.Context, name string, _ *metav1.GetOptio
 		return nil, err
 	}
 
-	obj, err := convertToK8sResource(info.OrgID, &rule, managerProps, s.namespacer)
-	if err != nil && errors.Is(err, errInvalidRule) {
+	obj, err := legacy.RecordingRuleToK8s(info.OrgID, &rule, managerProps, s.namespacer)
+	if err != nil && errors.Is(err, legacy.ErrNotRecordingRule) {
 		return nil, k8serrors.NewNotFound(ResourceInfo.GroupResource(), name)
 	}
 	return obj, err
@@ -248,7 +217,7 @@ func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, createVa
 		return nil, k8serrors.NewBadRequest("cannot set group label when creating recording rule")
 	}
 
-	domainModel, managerProps, err := convertToDomainModel(info.OrgID, p)
+	domainModel, managerProps, err := legacy.RecordingRuleFromK8sForWrite(info.OrgID, p)
 	if err != nil {
 		return nil, err
 	}
@@ -258,14 +227,14 @@ func (s *legacyStorage) Create(ctx context.Context, obj runtime.Object, createVa
 		return nil, common.ToAPIError(ResourceInfo.GroupResource(), p.GetName(), err)
 	}
 
-	return convertToK8sResource(info.OrgID, &rule, managerProps, s.namespacer)
+	return legacy.RecordingRuleToK8s(info.OrgID, &rule, managerProps, s.namespacer)
 }
 
 func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, _ rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, _ bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	return common.LegacyRuleUpdate(
 		ctx, name, objInfo, updateValidation, options != nil && dryrun.IsDryRun(options.DryRun),
 		&s.service, s.namespacer, ResourceInfo, s.Get,
-		convertToDomainModel, convertToK8sResource,
+		legacy.RecordingRuleFromK8sForWrite, legacy.RecordingRuleToK8s,
 	)
 }
 
@@ -273,7 +242,7 @@ func (s *legacyStorage) PrepareDryRunUpdate(ctx context.Context, name string, ob
 	return common.LegacyRulePrepareDryRunUpdate(
 		ctx, name, objInfo,
 		&s.service, s.namespacer, ResourceInfo, s.Get,
-		convertToDomainModel, convertToK8sResource,
+		legacy.RecordingRuleFromK8sForWrite, legacy.RecordingRuleToK8s,
 	)
 }
 
@@ -305,7 +274,7 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 	// Derive manager properties the same way create/update do, so a resource managed
 	// by a specific manager (e.g. Terraform) is deleted with the matching manager and
 	// not the coarser provenance-derived equivalent.
-	_, managerProps, err := convertToDomainModel(info.OrgID, p)
+	_, managerProps, err := legacy.RecordingRuleFromK8sForWrite(info.OrgID, p)
 	if err != nil {
 		return nil, false, err
 	}
@@ -365,7 +334,7 @@ func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation r
 				return nil, k8serrors.NewInternalError(fmt.Errorf("failed to convert rule %q: %w", common.ObjectName(item), err))
 			}
 			// Derive manager properties the same way Delete does.
-			domainModel, managerProps, err := convertToDomainModel(info.OrgID, rule)
+			domainModel, managerProps, err := legacy.RecordingRuleFromK8sForWrite(info.OrgID, rule)
 			if err != nil {
 				return nil, k8serrors.NewInternalError(fmt.Errorf("failed to convert rule %q: %w", rule.Name, err))
 			}
