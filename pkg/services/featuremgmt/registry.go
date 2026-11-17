@@ -3576,8 +3576,8 @@ var (
 			HideFromDocs: true,
 		},
 		{
-			Name:         "grafana.dashboardQuestions",
-			Description:  "Lets editors save questions on dashboards, rows, and tabs, which plugins offer to viewers in the dashboard controls",
+			Name:         "grafana.dashboardPrompts",
+			Description:  "Lets editors save prompts on dashboards, rows, and tabs, which plugins offer to viewers in the dashboard controls",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaDashboardsSquad,
 			HideFromDocs: true,

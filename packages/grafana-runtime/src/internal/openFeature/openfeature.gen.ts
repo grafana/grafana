@@ -198,8 +198,8 @@ export const FlagKeys = {
   GrafanaDashboardPreferences: "grafana.dashboardPreferences",
   /** Enables Viewing and Editing modes for dynamic dashboards */
   GrafanaDashboardPreviewMode: "grafana.dashboardPreviewMode",
-  /** Lets editors save questions on dashboards, rows, and tabs, which plugins offer to viewers in the dashboard controls */
-  GrafanaDashboardQuestions: "grafana.dashboardQuestions",
+  /** Lets editors save prompts on dashboards, rows, and tabs, which plugins offer to viewers in the dashboard controls */
+  GrafanaDashboardPrompts: "grafana.dashboardPrompts",
   /** Redesigns dashboard settings page into Advanced Settings in a modal window */
   GrafanaDashboardSettingsRedesign: "grafana.dashboardSettingsRedesign",
   /** In dashboard edit mode, opens the sidebar only through explicit user actions and keeps it closed until explicitly reopened */
@@ -1439,14 +1439,14 @@ export const useFlagGrafanaDashboardPreviewMode = (options?: ReactFlagEvaluation
 };
 
 /**
- * Lets editors save questions on dashboards, rows, and tabs, which plugins offer to viewers in the dashboard controls
+ * Lets editors save prompts on dashboards, rows, and tabs, which plugins offer to viewers in the dashboard controls
  *
  * **Details:**
- * - flag key: `grafana.dashboardQuestions`
+ * - flag key: `grafana.dashboardPrompts`
  * - default value: `false`
  */
-export const useFlagGrafanaDashboardQuestions = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.dashboardQuestions", false, options).value;
+export const useFlagGrafanaDashboardPrompts = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.dashboardPrompts", false, options).value;
 };
 
 /**
