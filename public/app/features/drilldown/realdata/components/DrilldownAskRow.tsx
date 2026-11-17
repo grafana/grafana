@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useAssistant } from '@grafana/assistant';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Input, useStyles2 } from '@grafana/ui';
+import { Button, Input, useStyles2 } from '@grafana/ui';
 
 import { assistantContext } from '../assistantContext';
 import { EXAMPLE_SERVICE, type Scope } from '../liveScenario';
@@ -16,15 +16,17 @@ interface Props {
   scope?: Scope;
 }
 
-// The input is the only control on this row: scopes are picked from the hints, "Your services",
-// or the scope chip once one is set.
 export function DrilldownAskRow({ scope }: Props) {
   const styles = useStyles2(getStyles);
   const { isAvailable, openAssistant } = useAssistant();
   const [question, setQuestion] = useState('');
 
+  if (!isAvailable) {
+    return null;
+  }
+
   const onAsk = () => {
-    if (!isAvailable || !openAssistant || !question.trim()) {
+    if (!openAssistant || !question.trim()) {
       return;
     }
     openAssistant({
@@ -37,9 +39,16 @@ export function DrilldownAskRow({ scope }: Props) {
   };
 
   return (
-    <div className={styles.row}>
+    <form
+      className={styles.row}
+      onSubmit={(event) => {
+        event.preventDefault();
+        onAsk();
+      }}
+    >
+      <AssistantIcon />
       <Input
-        prefix={<AssistantIcon />}
+        className={styles.input}
         placeholder={t(
           'drilldown-real.ask-row.assistant-placeholder',
           'Ask Grafana Assistant, for example: why is {{service}} slow?',
@@ -47,20 +56,24 @@ export function DrilldownAskRow({ scope }: Props) {
         )}
         aria-label={t('drilldown-real.ask-row.assistant-label', 'Ask Grafana Assistant')}
         value={question}
-        disabled={!isAvailable}
         onChange={(event) => setQuestion(event.currentTarget.value)}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter') {
-            onAsk();
-          }
-        }}
       />
-    </div>
+      <Button type="submit" icon="comment-alt" disabled={!openAssistant || !question.trim()}>
+        {t('drilldown-real.ask-row.ask', 'Ask')}
+      </Button>
+    </form>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
   row: css({
+    display: 'flex',
+    alignItems: 'center',
+    gap: theme.spacing(1),
     padding: theme.spacing(3, 0),
+  }),
+  input: css({
+    flex: 1,
+    minWidth: 0,
   }),
 });

@@ -1,6 +1,8 @@
 import { getBackendSrv } from '@grafana/runtime';
 
-import { tempoTagValues } from './labApi';
+import { requireDataSource } from '../dataSources';
+
+import { lokiInstant, tempoTagValues } from './labApi';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -51,4 +53,21 @@ describe('tempoTagValues', () => {
 
     expect(await tempoTagValues('resource.service.name', 0, 1)).toEqual([]);
   });
+});
+
+it('reads labelled log error counts from the selected Loki source', async () => {
+  jest.mocked(requireDataSource).mockResolvedValueOnce('logs-uid');
+  get.mockResolvedValue({
+    data: { result: [{ metric: { service_name: 'checkout' }, value: [1700000000, '12'] }] },
+  });
+
+  const values = await lokiInstant('count_over_time({service_name="checkout"}[30m])', 1700000000);
+
+  expect(get).toHaveBeenCalledWith(
+    '/api/datasources/proxy/uid/logs-uid/loki/api/v1/query',
+    { query: 'count_over_time({service_name="checkout"}[30m])', time: 1700000000 },
+    undefined,
+    { showErrorAlert: false }
+  );
+  expect(values).toEqual([{ metric: { service_name: 'checkout' }, value: 12 }]);
 });

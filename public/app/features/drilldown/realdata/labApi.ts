@@ -91,6 +91,11 @@ export async function lokiCount(query: string, time: number): Promise<number> {
   return response.data.result.reduce((sum, row) => sum + toNumber(row.value[1]), 0);
 }
 
+export async function lokiInstant(query: string, time: number): Promise<InstantSample[]> {
+  const response = await get<LokiResponse<PromInstantRow>>('logs', 'loki/api/v1/query', { query, time });
+  return response.data.result.map((row) => ({ metric: row.metric, value: toNumber(row.value[1]) }));
+}
+
 export async function lokiCountRange(query: string, start: number, end: number, step: number): Promise<number[]> {
   const response = await get<LokiResponse<PromRangeRow>>('logs', 'loki/api/v1/query_range', {
     query,

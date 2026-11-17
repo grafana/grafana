@@ -11,7 +11,6 @@ import { renderDrilldownTitle } from '../DataSourcesButton';
 
 import { AssistantIcon } from './components/AssistantIcon';
 import { DrilldownAskRow } from './components/DrilldownAskRow';
-import { DrilldownDetection } from './components/DrilldownDetection';
 import { DrilldownEvidence } from './components/DrilldownEvidence';
 import { DrilldownHints } from './components/DrilldownHints';
 import { DrilldownInsights } from './components/DrilldownInsights';
@@ -20,22 +19,14 @@ import { DrilldownServices } from './components/DrilldownServices';
 import { DrilldownSignals } from './components/DrilldownSignals';
 import { DrilldownTimeControls } from './components/DrilldownTimeControls';
 import { NotMeasuredNotice } from './components/NotMeasuredNotice';
-import { type AppKey, type Hint, HINTS, NOTES, type Scope, setScopeData } from './liveScenario';
+import { type AppKey, NOTES, type Scope, setScopeData } from './liveScenario';
 import { loadScope } from './loadScenario';
-import { NO_SCOPE_QUERY, hintIdFromQuery, scopeFromQuery, scopeQuery } from './scopeUrl';
+import { NO_SCOPE_QUERY, scopeFromQuery, scopeQuery } from './scopeUrl';
 
 const DEFAULT_TIME_RANGE = { from: 'now-30m', to: 'now' };
 const APP_KEYS: AppKey[] = ['metrics', 'logs', 'traces', 'profiles', 'sql'];
 
-// The page starts proactive: hints first, then Grafana Assistant works out what is wrong, then the scoped insights.
-// The hint the user investigated stays with the insights; a scope picked by hand has none. Every scope is queried
-// from the chosen data sources first, so a loading phase sits between picking and showing it. The URL names the scope
-// and the hint, and the phase follows it, so Back and Forward move between the overview and a scope.
-type Phase =
-  | { kind: 'hints' }
-  | { kind: 'loading'; scope: Scope }
-  | { kind: 'detecting'; hint: Hint }
-  | { kind: 'insights'; scope: Scope; hint?: Hint };
+type Phase = { kind: 'hints' } | { kind: 'loading'; scope: Scope } | { kind: 'insights'; scope: Scope };
 
 export function RealDrilldownPage() {
   const { node } = useNavModel('drilldown');
@@ -48,7 +39,6 @@ export function RealDrilldownPage() {
   const [refreshInterval, setRefreshInterval] = useState('');
   const [queryParams, updateQueryParams] = useQueryParams();
   const urlScope = scopeFromQuery(queryParams);
-  const urlHintId = hintIdFromQuery(queryParams);
   const [phase, setPhase] = useState<Phase>(() =>
     urlScope ? { kind: 'loading', scope: urlScope } : { kind: 'hints' }
   );
@@ -89,8 +79,6 @@ export function RealDrilldownPage() {
     return true;
   }, []);
 
-  // Set by Investigate, so the detection step plays for that click and not when the browser replays the URL.
-  const detectOnLoad = useRef(false);
   const timeRangeRef = useRef(timeRange);
   useEffect(() => {
     timeRangeRef.current = timeRange;
@@ -99,8 +87,6 @@ export function RealDrilldownPage() {
   const scopeType = urlScope?.type;
   const scopeValue = urlScope?.value;
   useEffect(() => {
-    const detect = detectOnLoad.current;
-    detectOnLoad.current = false;
     if (!scopeType || !scopeValue) {
       return;
     }
@@ -111,11 +97,7 @@ export function RealDrilldownPage() {
         if (!applied || cancelled) {
           return;
         }
-        const hint = HINTS.find(
-          (candidate) =>
-            candidate.id === urlHintId && candidate.scope.type === scope.type && candidate.scope.value === scope.value
-        );
-        setPhase(hint && detect ? { kind: 'detecting', hint } : { kind: 'insights', scope, hint });
+        setPhase({ kind: 'insights', scope });
       })
       .catch((error: Error) => {
         if (!cancelled) {
@@ -127,11 +109,10 @@ export function RealDrilldownPage() {
     return () => {
       cancelled = true;
     };
-  }, [scopeType, scopeValue, urlHintId, fetchScope, updateQueryParams]);
+  }, [scopeType, scopeValue, fetchScope, updateQueryParams]);
 
-  const openScope = (scope: Scope, hint?: Hint) => {
-    detectOnLoad.current = Boolean(hint);
-    updateQueryParams(scopeQuery(scope, hint));
+  const openScope = (scope: Scope) => {
+    updateQueryParams(scopeQuery(scope));
   };
 
   const reloadScope = (scope: Scope, range: TimeRange) => {
@@ -139,14 +120,6 @@ export function RealDrilldownPage() {
     fetchScope(scope, range).catch((error: Error) => setLoadError(error.message));
   };
 
-  const detectingHint = phase.kind === 'detecting' ? phase.hint : undefined;
-  const onDetectionDone = useCallback(() => {
-    if (detectingHint) {
-      setPhase({ kind: 'insights', scope: detectingHint.scope, hint: detectingHint });
-    }
-  }, [detectingHint]);
-
-  // A scope the user picks is theirs, so Grafana Assistant's hint and likely cause no longer apply.
   const onPickScope = (scope: Scope) => openScope(scope);
 
   const onChangeTimeRange = (range: TimeRange) => {
@@ -176,31 +149,25 @@ export function RealDrilldownPage() {
           <Stack gap={1} alignItems="center">
             <AssistantIcon />
             <Text weight="medium">
-              {t('drilldown-real.loading.title', 'Grafana Assistant is checking {{service}}', {
+              {t('drilldown-real.loading.telemetry', 'Loading telemetry for {{service}}', {
                 service: phase.scope.value,
               })}
             </Text>
             <Spinner inline />
           </Stack>
         )}
-        {/* What Grafana Assistant found sits above the input; the ways to start sit below it. The
-            Assistant card already restates the hint, so the hint row itself is not repeated here. */}
-        {phase.kind === 'detecting' && <DrilldownDetection hint={phase.hint} onDone={onDetectionDone} />}
         {phase.kind === 'insights' && (
           <DrilldownScopeSummary
             scope={phase.scope}
-            detected={Boolean(phase.hint)}
+            detected={false}
             onChangeScope={onPickScope}
             onReset={() => updateQueryParams(NO_SCOPE_QUERY)}
           />
         )}
-        {/* On the entry page the input follows the detected hints, and the detection step has none. Once
-            Grafana Assistant has found a likely cause, its action button replaces the input, so only a
-            scope picked by hand keeps it here. */}
-        {phase.kind === 'insights' && !phase.hint && <DrilldownAskRow scope={phase.scope} />}
+        {phase.kind === 'insights' && <DrilldownAskRow scope={phase.scope} />}
         {phase.kind === 'hints' && (
           <>
-            <DrilldownHints onInvestigate={(hint) => openScope(hint.scope, hint)} />
+            <DrilldownHints />
             <DrilldownAskRow />
             {/* Extra space below the input separates asking from browsing. */}
             <Box paddingTop={2}>
@@ -212,12 +179,10 @@ export function RealDrilldownPage() {
           </>
         )}
         {phase.kind === 'insights' && (
-          // Without the input in between, the insights keep the same distance from the scope card.
-          <Box paddingTop={phase.hint ? 3 : 0}>
+          <Box>
             <Stack direction="column" gap={3}>
               <DrilldownInsights appUrls={appUrls} />
-              {/* The time range only matters once there is evidence to look at, so the entry page and the
-                detection step leave it out. */}
+              {/* The time range only matters once there is evidence to look at. */}
               <DrilldownEvidence
                 key={dataVersion}
                 appUrls={appUrls}

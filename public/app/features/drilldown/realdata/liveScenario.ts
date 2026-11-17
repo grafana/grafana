@@ -12,9 +12,19 @@ export type ScopeType = 'service' | 'environment' | 'namespace';
 export interface Scope {
   type: ScopeType;
   value: string;
+  env?: string;
+  namespace?: string;
 }
 
 export type HintSeverity = 'slow' | 'errors' | 'deploy';
+
+export interface HintEvidence {
+  signal: Extract<Signal, 'metrics' | 'logs' | 'traces'>;
+  datasourceUid: string;
+  query: string;
+  summary: string;
+  traceIds?: string[];
+}
 
 export interface Hint {
   id: string;
@@ -25,6 +35,8 @@ export interface Hint {
   investigable: boolean;
   trendLabel: string;
   trend: number[];
+  evidence: HintEvidence[];
+  timeRange: { from: number; to: number };
 }
 
 export interface ServiceSummary {
