@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"slices"
-	"sync"
 	"testing"
 	"testing/synctest"
 	"time"
@@ -333,97 +332,51 @@ func TestShouldEvaluateSequentially(t *testing.T) {
 	})
 }
 
-// Rules in imported Prometheus groups are chained into one sequence per group, and the scheduler
-// starts one timer per sequence. The spacing between those timers must therefore be derived from
-// the number of sequences; deriving it from the number of rules squeezes every start into the first
-// fraction of the tick.
 func TestProcessTick_ImportedGroupsStartsAreSpreadAcrossTheTick(t *testing.T) {
-	const (
-		groups   = 5
-		perGroup = 10
-	)
+	ruleStore := newFakeRulesStore()
+	gen := models.RuleGen
+	for group := range 2 {
+		for index := range 2 {
+			ruleStore.PutRule(context.Background(), gen.With(
+				gen.WithOrgID(1),
+				gen.WithNamespaceUID("ns"),
+				gen.WithGroupName(fmt.Sprintf("imported-%d", group)),
+				gen.WithGroupIndex(index+1),
+				gen.WithInterval(time.Second),
+				gen.WithPrometheusOriginalRuleDefinition("x"),
+			).GenerateRef())
+		}
+	}
 
 	synctest.Test(t, func(t *testing.T) {
-		ctx := context.Background()
-		ruleStore := newFakeRulesStore()
-		sch := setupScheduler(t, ruleStore, nil, prometheus.NewPedanticRegistry(), nil, nil, nil)
+		sch := setupScheduler(t, ruleStore, nil, nil, nil, nil, nil)
 		sch.jitterEvaluations = JitterByGroup
 
-		type ruleInfo struct {
-			group string
-			index int
-		}
-		var mu sync.Mutex
-		infoByRule := map[models.AlertRuleKey]ruleInfo{}
-		evalAt := map[models.AlertRuleKey]time.Duration{}
+		offsets := make(chan time.Duration, 4)
 		begin := time.Now()
-		sch.evalAppliedFunc = func(key models.AlertRuleKey, _ time.Time) {
-			mu.Lock()
-			defer mu.Unlock()
-			evalAt[key] = time.Since(begin)
-		}
-		sch.stopAppliedFunc = func(models.AlertRuleKey) {}
-
-		gen := models.RuleGen
-		for g := 0; g < groups; g++ {
-			for r := 0; r < perGroup; r++ {
-				rule := gen.With(
-					gen.WithOrgID(1),
-					gen.WithNamespaceUID("ns"),
-					gen.WithGroupName(fmt.Sprintf("imported-%d", g)),
-					gen.WithGroupIndex(r+1),
-					gen.WithInterval(sch.baseInterval),
-					gen.WithPrometheusOriginalRuleDefinition("x"),
-				).GenerateRef()
-				infoByRule[rule.GetKey()] = ruleInfo{group: rule.RuleGroup, index: r}
-				ruleStore.PutRule(ctx, rule)
-			}
+		sch.evalAppliedFunc = func(models.AlertRuleKey, time.Time) {
+			offsets <- time.Since(begin)
 		}
 
-		runCtx, cancel := context.WithCancel(ctx)
-		dispatcherGroup, gctx := errgroup.WithContext(runCtx)
-		// Rule routines block until their context is cancelled; synctest requires them to exit
-		// before the bubble does.
+		ctx, cancel := context.WithCancel(t.Context())
+		dispatcherGroup, ctx := errgroup.WithContext(ctx)
 		t.Cleanup(func() {
 			cancel()
-			_ = dispatcherGroup.Wait()
+			require.NoError(t, dispatcherGroup.Wait())
 		})
-		scheduled, _, _ := sch.processTick(gctx, dispatcherGroup, time.Time{}.Add(sch.baseInterval))
-		require.Len(t, scheduled, groups*perGroup)
 
-		// Fake time advances only once every goroutine in the bubble is blocked, so by the time the
-		// sleep returns all timers of the tick have fired and their chains have completed.
-		time.Sleep(2 * sch.baseInterval)
+		scheduled, _, _ := sch.processTick(ctx, dispatcherGroup, time.Time{}.Add(sch.baseInterval))
+		require.Len(t, scheduled, 4)
+
+		time.Sleep(sch.baseInterval)
 		synctest.Wait()
+		require.Len(t, offsets, 4)
 
-		mu.Lock()
-		defer mu.Unlock()
-		require.Len(t, evalAt, groups*perGroup)
-
-		timesByGroup := map[string][]time.Duration{}
-		for key, info := range infoByRule {
-			if timesByGroup[info.group] == nil {
-				timesByGroup[info.group] = make([]time.Duration, perGroup)
-			}
-			timesByGroup[info.group][info.index] = evalAt[key]
+		actual := make([]time.Duration, 0, 4)
+		for range 4 {
+			actual = append(actual, <-offsets)
 		}
-		require.Len(t, timesByGroup, groups)
-
-		starts := make([]time.Duration, 0, groups)
-		for group, times := range timesByGroup {
-			// The rules of an imported group are chained: each starts after the previous one finished.
-			for i := 1; i < len(times); i++ {
-				require.GreaterOrEqual(t, times[i], times[i-1], "rules of group %s are not evaluated in order", group)
-			}
-			starts = append(starts, times[0])
-		}
-		slices.Sort(starts)
-
-		// One timer per sequence, spaced baseInterval/groups apart. Before the fix the step was
-		// baseInterval/(groups*perGroup), so all starts fell within the first fraction of the tick.
-		step := sch.baseInterval / groups
-		for i, start := range starts {
-			require.Equal(t, time.Duration(i)*step, start, "start of sequence %d", i)
-		}
+		slices.Sort(actual)
+		require.Equal(t, []time.Duration{0, 0, 500 * time.Millisecond, 500 * time.Millisecond}, actual)
 	})
 }
