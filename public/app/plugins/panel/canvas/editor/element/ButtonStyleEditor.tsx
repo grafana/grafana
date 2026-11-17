@@ -18,10 +18,8 @@ const variantOptions: SelectableValue[] = [
   { label: 'destructive', value: 'destructive' },
 ];
 
-export const ButtonStyleEditor = ({ value, onChange }: Props) => {
-  if (!value) {
-    value = defaultStyleConfig;
-  }
+export const ButtonStyleEditor = ({ value: valueProp, onChange }: Props) => {
+  const value = valueProp || defaultStyleConfig;
 
   const onVariantChange = useCallback(
     (variant: SelectableValue<ButtonVariant>) => {

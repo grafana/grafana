@@ -27,8 +27,7 @@ export const ColorBackgroundCellOptionsEditor = ({
         <RadioButtonGroup<TableCellBackgroundDisplayMode>
           value={cellOptions?.mode ?? TableCellBackgroundDisplayMode.Gradient}
           onChange={(v) => {
-            cellOptions.mode = v;
-            onChange(cellOptions);
+            onChange({ ...cellOptions, mode: v });
           }}
           options={colorBackgroundOpts}
         />
@@ -47,8 +46,7 @@ export const ColorBackgroundCellOptionsEditor = ({
           label={selectors.components.PanelEditor.OptionsPane.fieldLabel(`Apply to entire row`)}
           value={cellOptions.applyToRow}
           onChange={() => {
-            cellOptions.applyToRow = !cellOptions.applyToRow;
-            onChange(cellOptions);
+            onChange({ ...cellOptions, applyToRow: !cellOptions.applyToRow });
           }}
         />
       </Field>

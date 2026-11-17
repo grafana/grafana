@@ -7,12 +7,9 @@ import { IconButton, TimeZonePicker, useStyles2 } from '@grafana/ui';
 
 type Props = StandardEditorProps<string[], unknown, OptionsWithTimezones>;
 
-export const TimezonesEditor = ({ value, onChange }: Props) => {
+export const TimezonesEditor = ({ value: valueProp, onChange }: Props) => {
   const styles = useStyles2(getStyles);
-
-  if (!value || value.length < 1) {
-    value = [''];
-  }
+  const value = !valueProp || valueProp.length < 1 ? [''] : valueProp;
 
   const addTimezone = () => {
     onChange([...value, InternalTimeZones.default]);

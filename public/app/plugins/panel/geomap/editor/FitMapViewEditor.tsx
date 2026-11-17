@@ -35,16 +35,17 @@ const DataScopeOptions: Array<SelectableValue<DataScopeValues>> = ScopeOptions.m
 }));
 
 export const FitMapViewEditor = ({ labelWidth, value, onChange, context }: Props) => {
+  const optionsLayers = context.options?.layers;
   const layers = useMemo(() => {
-    if (context.options?.layers) {
-      return context.options.layers.map((layer) => ({
+    if (optionsLayers) {
+      return optionsLayers.map((layer) => ({
         label: layer.name,
         value: layer.name,
         description: undefined,
       }));
     }
     return [];
-  }, [context.options?.layers]);
+  }, [optionsLayers]);
 
   const onSelectLayer = useCallback(
     (selection: SelectableValue<string>) => {

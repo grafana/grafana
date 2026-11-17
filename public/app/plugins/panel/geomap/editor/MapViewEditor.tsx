@@ -20,15 +20,16 @@ export const MapViewEditor = ({
 }: StandardEditorProps<MapViewConfig, unknown, Options, GeomapInstanceState>) => {
   const labelWidth = 10;
 
+  const viewId = value?.id;
   const views = useMemo(() => {
     const ids: string[] = [];
-    if (value?.id) {
-      ids.push(value.id);
+    if (viewId) {
+      ids.push(viewId);
     } else {
       ids.push(centerPointRegistry.list()[0].id);
     }
     return centerPointRegistry.selectOptions(ids);
-  }, [value?.id]);
+  }, [viewId]);
 
   const onSetCurrentView = useCallback(() => {
     const map = context.instanceState?.map;

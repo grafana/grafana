@@ -11,8 +11,7 @@ export const MarkdownCellOptionsEditor = ({
   onChange,
 }: TableCellEditorProps<TableMarkdownCellOptions>) => {
   const onDynamicHeightChange = (e: FormEvent<HTMLInputElement>) => {
-    cellOptions.dynamicHeight = e.currentTarget.checked;
-    onChange(cellOptions);
+    onChange({ ...cellOptions, dynamicHeight: e.currentTarget.checked });
   };
 
   return (

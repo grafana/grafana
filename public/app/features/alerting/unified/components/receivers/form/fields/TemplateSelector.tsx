@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { type PropsWithChildren, useEffect, useMemo, useState } from 'react';
+import { type PropsWithChildren, useMemo, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { type TemplateGroupTemplateKind } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
@@ -164,12 +164,6 @@ export function TemplateSelector({ onSelect, onClose, option, valueInForm, filte
     },
   ];
 
-  useEffect(() => {
-    if (template?.value?.name) {
-      setCustomTemplateValue(getUseTemplateText(template.value.name));
-    }
-  }, [template]);
-
   function onCustomTemplateChange(customInput: string) {
     setCustomTemplateValue(customInput);
   }
@@ -243,6 +237,9 @@ export function TemplateSelector({ onSelect, onClose, option, valueInForm, filte
                 )}
                 onChange={(value: SelectableValue<Template>, _) => {
                   setTemplate(value);
+                  if (value?.value?.name) {
+                    setCustomTemplateValue(getUseTemplateText(value.value.name));
+                  }
                 }}
                 options={options}
                 width={50}

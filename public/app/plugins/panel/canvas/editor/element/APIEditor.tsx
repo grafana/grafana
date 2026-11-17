@@ -51,12 +51,9 @@ const contentTypeOptions: SelectableValue[] = [
   { label: 'x-www-form-urlencoded', value: 'application/x-www-form-urlencoded' },
 ];
 
-export function APIEditor({ value, context, onChange }: Props) {
+export function APIEditor({ value: valueProp, context, onChange }: Props) {
   const LABEL_WIDTH = 13;
-
-  if (!value) {
-    value = defaultApiConfig;
-  }
+  const value = valueProp || defaultApiConfig;
 
   const onEndpointChange = useCallback(
     (endpoint = '') => {

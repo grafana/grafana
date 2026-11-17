@@ -8,13 +8,11 @@ import { type TableCellEditorProps } from '../TableCellOptionEditor';
 
 export const ImageCellOptionsEditor = ({ cellOptions, onChange }: TableCellEditorProps<TableImageCellOptions>) => {
   const onAltChange = (e: FormEvent<HTMLInputElement>) => {
-    cellOptions.alt = e.currentTarget.value;
-    onChange(cellOptions);
+    onChange({ ...cellOptions, alt: e.currentTarget.value });
   };
 
   const onTitleChange = (e: FormEvent<HTMLInputElement>) => {
-    cellOptions.title = e.currentTarget.value;
-    onChange(cellOptions);
+    onChange({ ...cellOptions, title: e.currentTarget.value });
   };
 
   const altTextInputId = useId();

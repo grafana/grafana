@@ -13,8 +13,7 @@ export const BarGaugeCellOptionsEditor = ({ cellOptions, onChange }: Props) => (
       <RadioButtonGroup<BarGaugeDisplayMode>
         value={cellOptions?.mode ?? BarGaugeDisplayMode.Gradient}
         onChange={(v) => {
-          cellOptions.mode = v;
-          onChange(cellOptions);
+          onChange({ ...cellOptions, mode: v });
         }}
         options={barGaugeOpts}
       />
@@ -23,8 +22,7 @@ export const BarGaugeCellOptionsEditor = ({ cellOptions, onChange }: Props) => (
       <RadioButtonGroup<BarGaugeValueMode>
         value={cellOptions?.valueDisplayMode ?? BarGaugeValueMode.Text}
         onChange={(v) => {
-          cellOptions.valueDisplayMode = v;
-          onChange(cellOptions);
+          onChange({ ...cellOptions, valueDisplayMode: v });
         }}
         options={valueModes}
       />

@@ -1,6 +1,6 @@
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { skipToken } from '@reduxjs/toolkit/query';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 import { useLocalStorage } from 'react-use';
 
@@ -136,9 +136,9 @@ const usePinning = ({
   const pinnedItemsKey = pinnedItems.join('\n');
   const [pinnedUrls, setPinnedUrls] = useState<string[]>(pinnedItems);
   const [draftPinnedUrls, setDraftPinnedUrls] = useState<string[]>(pinnedItems);
-  const lastSyncedPinnedUrls = useRef(pinnedItemsKey);
-  if (lastSyncedPinnedUrls.current !== pinnedItemsKey) {
-    lastSyncedPinnedUrls.current = pinnedItemsKey;
+  const [lastSyncedPinnedUrls, setLastSyncedPinnedUrls] = useState(pinnedItemsKey);
+  if (lastSyncedPinnedUrls !== pinnedItemsKey) {
+    setLastSyncedPinnedUrls(pinnedItemsKey);
     setPinnedUrls(pinnedItems);
     // Don't clobber staged edits while editing — the draft is synced from applied state on enter/cancel.
     if (!editMode) {

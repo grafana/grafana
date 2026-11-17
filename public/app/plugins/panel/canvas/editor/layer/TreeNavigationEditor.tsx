@@ -35,15 +35,10 @@ export const TreeNavigationEditor = ({ item }: StandardEditorProps<unknown, Tree
 
   const selectedBgColor = theme.colors.primary.border;
   const { settings } = item;
-  const selection = useMemo(
-    () => (settings?.selected ? settings.selected.map((v) => v?.getName()) : []),
-    [settings?.selected]
-  );
+  const selected = settings?.selected;
+  const selection = useMemo(() => (selected ? selected.map((v) => v?.getName()) : []), [selected]);
 
-  const selectionByUID = useMemo(
-    () => (settings?.selected ? settings.selected.map((v) => v?.UID) : []),
-    [settings?.selected]
-  );
+  const selectionByUID = useMemo(() => (selected ? selected.map((v) => v?.UID) : []), [selected]);
 
   useEffect(() => {
     setTreeData(getTreeData(item?.settings?.scene.root, selection, selectedBgColor));

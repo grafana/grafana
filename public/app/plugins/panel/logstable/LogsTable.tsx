@@ -162,16 +162,13 @@ export const LogsTable = ({
     [onFieldConfigChange]
   );
 
+  const requestApp = data?.request?.app;
   const supportsPermalink = useCallback(() => {
     return (
       !!options.buildLinkToLogLine ||
-      !(
-        data?.request?.app !== CoreApp.Dashboard &&
-        data?.request?.app !== CoreApp.PanelEditor &&
-        data?.request?.app !== CoreApp.PanelViewer
-      )
+      !(requestApp !== CoreApp.Dashboard && requestApp !== CoreApp.PanelEditor && requestApp !== CoreApp.PanelViewer)
     );
-  }, [data?.request?.app, options.buildLinkToLogLine]);
+  }, [requestApp, options.buildLinkToLogLine]);
 
   const onPermalinkClick: BuildLinkToLogLine = useCallback(
     (logId: string) => {

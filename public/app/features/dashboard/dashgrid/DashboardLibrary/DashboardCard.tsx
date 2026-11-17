@@ -403,35 +403,35 @@ function DeleteTemplateConfirm({ title, isDeleting, onCancel, onConfirm }: Delet
   );
 }
 
-function DetailsTooltipContent({ details }: { details: Details }) {
-  const Section = ({ label, value }: { label: string; value: string }) => {
-    return (
-      <Box display="flex" direction="column" gap={1}>
-        <Text element="p">{label}</Text>
-        <Text element="p" color="secondary">
-          {value}
-        </Text>
-      </Box>
-    );
-  };
+function DetailsSection({ label, value }: { label: string; value: string }) {
+  return (
+    <Box display="flex" direction="column" gap={1}>
+      <Text element="p">{label}</Text>
+      <Text element="p" color="secondary">
+        {value}
+      </Text>
+    </Box>
+  );
+}
 
+function DetailsTooltipContent({ details }: { details: Details }) {
   return (
     <Box display="flex">
       <Box display="flex" direction="column" gap={1} width={{ xs: 'auto', md: 340 }}>
-        <Section label={t('dashboard-library.dashboard-card.details.id', 'ID')} value={details.id} />
-        <Section
+        <DetailsSection label={t('dashboard-library.dashboard-card.details.id', 'ID')} value={details.id} />
+        <DetailsSection
           label={t('dashboard-library.dashboard-card.details.datasource', 'Datasource')}
           value={details.datasource}
         />
-        <Section
+        <DetailsSection
           label={t('dashboard-library.dashboard-card.details.dependencies', 'Dependencies')}
           value={details.dependencies.join(' | ')}
         />
-        <Section
+        <DetailsSection
           label={t('dashboard-library.dashboard-card.details.published-by', 'Published By')}
           value={details.publishedBy}
         />
-        <Section
+        <DetailsSection
           label={t('dashboard-library.dashboard-card.details.last-update', 'Last Update')}
           value={details.lastUpdate}
         />
