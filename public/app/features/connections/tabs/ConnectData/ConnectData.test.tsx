@@ -208,29 +208,29 @@ describe('Cloud provider tiles', () => {
   test('shows the AWS, Azure and Google Cloud tiles and hides the generic onboarding card', async () => {
     renderPage([onboardingApp, mockCatalogAppPlugin]);
 
-    expect(await screen.findByText('AWS data sources')).toBeInTheDocument();
-    expect(screen.getByText('Azure data sources')).toBeInTheDocument();
-    expect(screen.getByText('Google Cloud data sources')).toBeInTheDocument();
+    expect(await screen.findByText('AWS Onboarding')).toBeInTheDocument();
+    expect(screen.getByText('Azure Onboarding')).toBeInTheDocument();
+    expect(screen.getByText('Google Cloud Onboarding')).toBeInTheDocument();
     expect(screen.queryByText('Data Source Onboarding')).not.toBeInTheDocument();
   });
 
   test('links the tiles to the onboarding app pages', async () => {
     renderPage([onboardingApp]);
 
-    expect(await screen.findByRole('link', { name: /AWS data sources/ })).toHaveAttribute(
+    expect(await screen.findByRole('link', { name: /AWS Onboarding/ })).toHaveAttribute(
       'href',
       '/a/grafana-dsonboarding-app/aws'
     );
-    expect(screen.getByRole('link', { name: /Azure data sources/ })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: /Azure Onboarding/ })).toHaveAttribute(
       'href',
       '/a/grafana-dsonboarding-app/azure/services'
     );
   });
 
   test.each([
-    ['aws', 'AWS data sources', ['Azure data sources', 'Google Cloud data sources']],
-    ['azure', 'Azure data sources', ['AWS data sources', 'Google Cloud data sources']],
-    ['bigquery', 'Google Cloud data sources', ['AWS data sources', 'Azure data sources']],
+    ['aws', 'AWS Onboarding', ['Azure Onboarding', 'Google Cloud Onboarding']],
+    ['azure', 'Azure Onboarding', ['AWS Onboarding', 'Google Cloud Onboarding']],
+    ['bigquery', 'Google Cloud Onboarding', ['AWS Onboarding', 'Azure Onboarding']],
   ])('searching "%s" only shows the matching tile', async (search, shown, hidden) => {
     // the search results contain no plugins, tiles must not depend on them
     renderPage([], `/add-new-connection?search=${search}`);
@@ -243,7 +243,7 @@ describe('Cloud provider tiles', () => {
     renderPage([mockCatalogAppPlugin], '/add-new-connection?search=sample');
 
     expect(await screen.findByText('Sample app')).toBeInTheDocument();
-    expect(screen.queryByText('AWS data sources')).not.toBeInTheDocument();
+    expect(screen.queryByText('AWS Onboarding')).not.toBeInTheDocument();
   });
 
   test('does not show the tiles when the onboarding app is not installed', async () => {
@@ -251,7 +251,7 @@ describe('Cloud provider tiles', () => {
     renderPage([mockCatalogAppPlugin]);
 
     expect(await screen.findByText('Sample app')).toBeInTheDocument();
-    expect(screen.queryByText('AWS data sources')).not.toBeInTheDocument();
+    expect(screen.queryByText('AWS Onboarding')).not.toBeInTheDocument();
   });
 });
 

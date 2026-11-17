@@ -5527,16 +5527,16 @@
     "cloud-provider-cards": {
       "aws": {
         "description": "CloudWatch, Athena, Redshift, and 7 more",
-        "name": "AWS data sources"
+        "name": "AWS Onboarding"
       },
       "azure": {
         "description": "Azure Monitor, Data Explorer, and managed Prometheus",
-        "name": "Azure data sources"
+        "name": "Azure Onboarding"
       },
       "coming-soon": "Coming soon",
       "gcp": {
         "description": "BigQuery, Cloud Monitoring, and more",
-        "name": "Google Cloud data sources"
+        "name": "Google Cloud Onboarding"
       }
     },
     "connect-data": {

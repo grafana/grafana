@@ -22,7 +22,7 @@ function getProviders(): CloudProvider[] {
     {
       id: 'aws',
       logoText: 'aws',
-      name: t('connections.cloud-provider-cards.aws.name', 'AWS data sources'),
+      name: t('connections.cloud-provider-cards.aws.name', 'AWS Onboarding'),
       description: t('connections.cloud-provider-cards.aws.description', 'CloudWatch, Athena, Redshift, and 7 more'),
       url: `/a/${DS_ONBOARDING_PLUGIN_ID}/aws`,
       keywords: [
@@ -41,7 +41,7 @@ function getProviders(): CloudProvider[] {
     {
       id: 'azure',
       logoText: 'Az',
-      name: t('connections.cloud-provider-cards.azure.name', 'Azure data sources'),
+      name: t('connections.cloud-provider-cards.azure.name', 'Azure Onboarding'),
       description: t(
         'connections.cloud-provider-cards.azure.description',
         'Azure Monitor, Data Explorer, and managed Prometheus'
@@ -52,7 +52,7 @@ function getProviders(): CloudProvider[] {
     {
       id: 'gcp',
       logoText: 'GC',
-      name: t('connections.cloud-provider-cards.gcp.name', 'Google Cloud data sources'),
+      name: t('connections.cloud-provider-cards.gcp.name', 'Google Cloud Onboarding'),
       description: t('connections.cloud-provider-cards.gcp.description', 'BigQuery, Cloud Monitoring, and more'),
       keywords: ['gcp', 'google', 'google cloud', 'bigquery', 'cloud monitoring', 'stackdriver', 'cloud', 'onboard'],
     },
