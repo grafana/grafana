@@ -33,6 +33,7 @@ jest.mock('./analytics/main', () => ({
   tabChanged: jest.fn(),
   clearHistoryClicked: jest.fn(),
   homepageViewed: jest.fn(),
+  recentActivityShown: jest.fn(),
 }));
 
 jest.mock('./useHomepageSolutions', () => ({

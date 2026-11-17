@@ -26,14 +26,13 @@ export const useMenuFocus = ({
   onClose,
   onKeyDown,
 }: UseMenuFocusProps): UseMenuFocusReturn => {
-  const [focusedItem, setFocusedItem] = useState(isMenuOpen ? 0 : UNFOCUSED);
-  const [prevIsMenuOpen, setPrevIsMenuOpen] = useState(isMenuOpen);
-  if (prevIsMenuOpen !== isMenuOpen) {
-    setPrevIsMenuOpen(isMenuOpen);
+  const [focusedItem, setFocusedItem] = useState(UNFOCUSED);
+
+  useEffect(() => {
     if (isMenuOpen) {
       setFocusedItem(0);
     }
-  }
+  }, [isMenuOpen]);
 
   useEffect(() => {
     const menuItems = localRef?.current?.querySelectorAll<HTMLElement | HTMLButtonElement | HTMLAnchorElement>(

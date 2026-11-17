@@ -591,6 +591,11 @@
       "count": 1
     }
   },
+  "packages/grafana-ui/src/components/Menu/hooks.ts": {
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    }
+  },
   "packages/grafana-ui/src/components/Modal/ModalBase.tsx": {
     "react-hooks/refs": {
       "count": 2
