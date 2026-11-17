@@ -4,9 +4,7 @@ import { type TreeItem } from '../types';
 
 import {
   buildTree,
-  filterByResources,
   filterByStatusAndResources,
-  filterByStatusCategories,
   filterTree,
   flattenTree,
   getIconName,
@@ -1319,7 +1317,7 @@ describe('getStatusCategory', () => {
   });
 });
 
-describe('filterByStatusCategories', () => {
+describe('filterByStatusAndResources by status', () => {
   const sampleTree: TreeItem[] = [
     {
       path: 'dashboards',
@@ -1365,12 +1363,12 @@ describe('filterByStatusCategories', () => {
     },
   ];
 
-  it('should return all items when no categories are selected', () => {
-    expect(filterByStatusCategories(sampleTree, [])).toEqual(sampleTree);
+  it('should return all items when no filter is selected', () => {
+    expect(filterByStatusAndResources(sampleTree, [], [])).toEqual(sampleTree);
   });
 
   it('should keep only pending items and their ancestor folders', () => {
-    const result = filterByStatusCategories(sampleTree, ['pending']);
+    const result = filterByStatusAndResources(sampleTree, ['pending'], []);
 
     expect(result).toHaveLength(1);
     expect(result[0].path).toBe('dashboards');
@@ -1379,7 +1377,7 @@ describe('filterByStatusCategories', () => {
   });
 
   it('should keep only synced items and their ancestor folders', () => {
-    const result = filterByStatusCategories(sampleTree, ['synced']);
+    const result = filterByStatusAndResources(sampleTree, ['synced'], []);
 
     // Both folders have a synced descendant, and the synced 'reports' folder matches itself too.
     expect(result).toHaveLength(2);
@@ -1390,7 +1388,7 @@ describe('filterByStatusCategories', () => {
   });
 
   it('should combine multiple categories', () => {
-    const result = filterByStatusCategories(sampleTree, ['synced', 'pending']);
+    const result = filterByStatusAndResources(sampleTree, ['synced', 'pending'], []);
 
     expect(result).toHaveLength(2);
     expect(result[0].children).toHaveLength(2);
@@ -1408,7 +1406,7 @@ describe('filterByStatusCategories', () => {
       },
     ];
 
-    const result = filterByStatusCategories(tree, ['pending']);
+    const result = filterByStatusAndResources(tree, ['pending'], []);
 
     expect(result).toHaveLength(1);
     expect(result[0].path).toBe('folder');
@@ -1428,11 +1426,11 @@ describe('filterByStatusCategories', () => {
       },
     ];
 
-    expect(filterByStatusCategories(tree, ['warning'])).toHaveLength(1);
+    expect(filterByStatusAndResources(tree, ['warning'], [])).toHaveLength(1);
   });
 });
 
-describe('filterByResources', () => {
+describe('filterByStatusAndResources by resource', () => {
   const tree: TreeItem[] = [
     {
       path: 'folder',
@@ -1448,12 +1446,8 @@ describe('filterByResources', () => {
     { path: 'c.json', title: 'c', type: 'File', level: 0, children: [] },
   ];
 
-  it('should return all items when no resources are selected', () => {
-    expect(filterByResources(tree, [])).toEqual(tree);
-  });
-
   it('should keep matching items and their ancestor folders, including kinds outside the registry', () => {
-    const result = filterByResources(tree, ['widgets']);
+    const result = filterByStatusAndResources(tree, [], ['widgets']);
 
     expect(result).toHaveLength(1);
     expect(result[0].path).toBe('folder');
@@ -1461,14 +1455,14 @@ describe('filterByResources', () => {
   });
 
   it('should keep a folder that matches itself without its non-matching children', () => {
-    const result = filterByResources(tree, ['folders']);
+    const result = filterByStatusAndResources(tree, [], ['folders']);
 
     expect(result).toHaveLength(1);
     expect(result[0].children).toHaveLength(0);
   });
 });
 
-describe('filterByStatusAndResources', () => {
+describe('filterByStatusAndResources by status and resource', () => {
   const tree: TreeItem[] = [
     {
       path: 'folder',
@@ -1490,10 +1484,6 @@ describe('filterByStatusAndResources', () => {
       ],
     },
   ];
-
-  it('should return all items when no filter is selected', () => {
-    expect(filterByStatusAndResources(tree, [], [])).toEqual(tree);
-  });
 
   it('should keep matches under an inferred directory with a dot in its name', () => {
     const path = 'team.v2/dash.json';

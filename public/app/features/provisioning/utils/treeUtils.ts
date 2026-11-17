@@ -160,7 +160,6 @@ export function buildTree(mergedItems: MergedItem[]): TreeItem[] {
     const parent = path.includes('/') ? nodeMap.get(path.substring(0, path.lastIndexOf('/'))) : undefined;
     if (parent) {
       parent.metadataPath = path;
-      parent.hasFile = true;
       if (node.status === 'pending') {
         parent.status = 'pending';
       }
@@ -281,21 +280,10 @@ export function getStatusCategory(node: TreeItem): StatusCategory | undefined {
 }
 
 /**
- * Filter tree to items whose status is in `categories`, keeping ancestor folders so the
- * hierarchy stays intact. An empty `categories` list disables the filter (returns everything).
+ * Filter tree to items whose status is in `categories` and whose plural resource name (e.g.
+ * `dashboards`) is in `resources`, keeping ancestor folders so the hierarchy stays intact. An
+ * empty list disables that filter.
  */
-export function filterByStatusCategories(items: TreeItem[], categories: StatusCategory[]): TreeItem[] {
-  return filterByStatusAndResources(items, categories, []);
-}
-
-/**
- * Filter tree to items whose plural resource name (e.g. `dashboards`) is in `resources`, keeping
- * ancestor folders. An empty `resources` list disables the filter (returns everything).
- */
-export function filterByResources(items: TreeItem[], resources: string[]): TreeItem[] {
-  return filterByStatusAndResources(items, [], resources);
-}
-
 export function filterByStatusAndResources(
   items: TreeItem[],
   categories: StatusCategory[],
@@ -307,16 +295,14 @@ export function filterByStatusAndResources(
 
   const selectedCategories = new Set(categories);
   const selectedResources = new Set(resources);
-  return filterNodes(items, (node) => {
+  const matches = (node: TreeItem): boolean => {
     const category = getStatusCategory(node);
     const matchesStatus = selectedCategories.size === 0 || (category !== undefined && selectedCategories.has(category));
     const matchesResource =
       selectedResources.size === 0 || (node.resource !== undefined && selectedResources.has(node.resource));
     return matchesStatus && matchesResource;
-  });
-}
+  };
 
-function filterNodes(items: TreeItem[], matches: (node: TreeItem) => boolean): TreeItem[] {
   const filterNode = (node: TreeItem): TreeItem | null => {
     if (node.type === 'Folder' && node.children.length > 0) {
       const filteredChildren = node.children.map(filterNode).filter((n): n is TreeItem => n !== null);
