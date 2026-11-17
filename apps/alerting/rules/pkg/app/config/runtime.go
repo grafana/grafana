@@ -11,8 +11,9 @@ import (
 )
 
 type RuleRef struct {
-	UID       string
-	FolderUID string
+	UID         string
+	FolderUID   string
+	IsRecording bool
 }
 
 type RuleSequenceMembership struct {

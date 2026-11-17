@@ -1500,9 +1500,29 @@
         "records": "Enregistre sous",
         "to": "à"
       },
+      "recording-rule-actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "view": ""
+      },
       "recording-rules": {
         "folder-rules-error": "",
         "folders-error": "",
+        "header": {
+          "new-rule": ""
+        },
         "load-more-rules-in-folder": "",
         "loading-folders": "",
         "no-rules": "Aucune règle d’enregistrement trouvée",
@@ -1578,6 +1598,12 @@
         "view-folders": "Dossiers",
         "view-list": "Liste",
         "wildcard-in-text": "Le texte de recherche ne peut pas contenir les caractères * ou %."
+      },
+      "sequence-pill": {
+        "label": "",
+        "label-with-interval": "",
+        "tooltip": "",
+        "tooltip-with-interval": ""
       },
       "shared": {
         "load-more": "Charger plus",
@@ -2394,6 +2420,7 @@
       "contact-points": "Points de contact",
       "notification-policies": "Politiques de notification",
       "recently-deleted": "Supprimé récemment",
+      "recording-rules": "",
       "templates": "Modèles",
       "time-intervals": "Intervalles de temps"
     },
@@ -5351,6 +5378,7 @@
       "change-theme": "Modifier le thème",
       "dark-theme": "Sombre",
       "dashboard-from-template": "Tableau de bord à partir d’un modèle",
+      "experimental": "",
       "light-theme": "Clair",
       "open-saved-queries": "Ouvrez les requêtes enregistrées",
       "scopes": "Portées"
@@ -5809,7 +5837,7 @@
         "hint-layer": "",
         "hint-layer-select": "",
         "hint-not-removable": "",
-        "hint-panel": "Cliquez pour commenter un panneau, ou glissez pour tracer une zone",
+        "hint-panel": "",
         "hint-panel-select": "",
         "hint-region": "Glissez pour tracer une zone",
         "hint-remove": "",
@@ -6211,8 +6239,7 @@
       }
     },
     "get-var-mapping-option-overrides": {
-      "defaults": "",
-      "rule": ""
+      "uses-variables": ""
     },
     "inspect": {
       "data-tab": "Données",
@@ -6407,9 +6434,6 @@
       "only-overrides-button-tooltip": "Afficher uniquement les remplacements",
       "placeholder-search-options": "Options de recherche",
       "visualization-button-tooltip": "Options de recherche"
-    },
-    "panel-editor": {
-      "ad-hoc-transformations-disabled": "Les transformations ad hoc sont désactivées en mode Modification"
     },
     "plan-building-overlay": {
       "quip-corners": "Polissage des angles des panneaux…",
@@ -6788,8 +6812,6 @@
         "open-editor": "Ouvrir l’éditeur de variables",
         "open-editor-tooltip": "Pour accéder à plus d’options, ouvrez l’éditeur de variables",
         "query-options": {
-          "close": "Fermer",
-          "old-modal-title": "Variable de requête",
           "preview": "Aperçu"
         },
         "remove": "Supprimer",
@@ -7701,7 +7723,7 @@
       "apply": "Appliquer",
       "apply-body": "Toutes les personnes disposant d’un accès pourront les voir. Vous pouvez restaurer la version précédente depuis l’historique des versions.",
       "apply-failed": "Impossible d’appliquer les modifications. Réessayez ou comparez-les d’abord.",
-      "apply-needs-edit": "L’application des modifications nécessite un accès en écriture à « {{title}} ». Vous pouvez prévisualiser ces modifications, mais vous ne pouvez pas les appliquer.",
+      "apply-needs-save": "",
       "breadcrumb-draft": "Brouillon",
       "breadcrumb-pending-changes": "Modifications en attente",
       "change-added": "Ajouté",
@@ -8000,6 +8022,12 @@
       "confirmText-restore-version": "Oui, restaurer à la version {{version}}",
       "title-restore-version": "Restaurer la version"
     },
+    "row-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-row-settings": ""
+    },
     "sandbox-consent": {
       "allow": "Autoriser",
       "allow-tooltip": "Chargez le contenu des sources sélectionnées dans les panneaux répertoriés jusqu’à ce que vous fermiez cet onglet.",
@@ -8195,6 +8223,12 @@
       "switch-options": "Options de l’interrupteur",
       "value-pair-type": "Type de paire de valeurs",
       "value-pair-type-description": "Choisissez le type de valeurs pour les états de l’interrupteur"
+    },
+    "tab-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-tab-settings": ""
     },
     "text-box-variable": {
       "name-default-value": "Valeur par défaut"
@@ -10810,6 +10844,8 @@
       "tooltip": {
         "category": "Infobulle",
         "description-hover-proximity": "Distance maximale du curseur par rapport à un point pour afficher l’infobulle (en pixels)",
+        "description-max-height": "",
+        "description-max-width": "",
         "modeOptions": {
           "label-all": "Toutes",
           "label-hidden": "Masquée",
@@ -13110,6 +13146,10 @@
       "subtitle": "Choisissez comment informer vos points de contact quand une instance d'alerte se déclenche",
       "title": "Points de contact"
     },
+    "alerting-recording-rules": {
+      "subtitle": "",
+      "title": ""
+    },
     "alerting-silences": {
       "subtitle": "Arrêter les notifications résultant d'une ou plusieurs règles d'alerte",
       "title": "Silences"
@@ -13962,6 +14002,32 @@
     },
     "units": {
       "clear-tooltip": "Effacer la sélection de l’unité"
+    },
+    "var-mapping-checks": {
+      "data-macro": "",
+      "not-allowed": "",
+      "not-found": "",
+      "not-number": "",
+      "not-one-value": "",
+      "out-of-range": "",
+      "resolves": "",
+      "values": ""
+    },
+    "var-mapping-toggle": {
+      "aria-label-picker": "",
+      "fallback-off": "",
+      "fallback-on": "",
+      "group-matching": "",
+      "group-other": "",
+      "hint-boolean": "",
+      "hint-number": "",
+      "hint-option": "",
+      "hint-option-no-fallback": "",
+      "new-variable": "",
+      "option-current": "",
+      "placeholder": "",
+      "use-fixed-value": "",
+      "use-variable": ""
     }
   },
   "org": {
@@ -14392,6 +14458,9 @@
     },
     "empty-state": {
       "message": "Aucune extension trouvée"
+    },
+    "errors": {
+      "app-plugin-metas-error": ""
     },
     "extensions": {
       "extension-error-alert-description": "Consultez la console pour plus de détails sur l’erreur.",

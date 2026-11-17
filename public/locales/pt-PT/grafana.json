@@ -1500,9 +1500,29 @@
         "records": "Registos",
         "to": "para"
       },
+      "recording-rule-actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "view": ""
+      },
       "recording-rules": {
         "folder-rules-error": "",
         "folders-error": "",
+        "header": {
+          "new-rule": ""
+        },
         "load-more-rules-in-folder": "",
         "loading-folders": "",
         "no-rules": "Nenhuma regra de gravação encontrada",
@@ -1578,6 +1598,12 @@
         "view-folders": "Pastas",
         "view-list": "Lista",
         "wildcard-in-text": "O texto de pesquisa não pode conter * ou %."
+      },
+      "sequence-pill": {
+        "label": "",
+        "label-with-interval": "",
+        "tooltip": "",
+        "tooltip-with-interval": ""
       },
       "shared": {
         "load-more": "Carregar mais",
@@ -2394,6 +2420,7 @@
       "contact-points": "Pontos de contacto",
       "notification-policies": "Políticas de notificação",
       "recently-deleted": "Eliminado recentemente",
+      "recording-rules": "",
       "templates": "Modelos",
       "time-intervals": "Intervalos de tempo"
     },
@@ -5351,6 +5378,7 @@
       "change-theme": "Alterar tema",
       "dark-theme": "Escuro",
       "dashboard-from-template": "Painel de controlo a partir do modelo",
+      "experimental": "",
       "light-theme": "Claro",
       "open-saved-queries": "Abrir consultas guardadas",
       "scopes": "Âmbitos"
@@ -5809,7 +5837,7 @@
         "hint-layer": "",
         "hint-layer-select": "",
         "hint-not-removable": "",
-        "hint-panel": "Clique para comentar num painel ou arraste para desenhar uma região",
+        "hint-panel": "",
         "hint-panel-select": "",
         "hint-region": "Arrastar para desenhar uma região",
         "hint-remove": "",
@@ -6211,8 +6239,7 @@
       }
     },
     "get-var-mapping-option-overrides": {
-      "defaults": "",
-      "rule": ""
+      "uses-variables": ""
     },
     "inspect": {
       "data-tab": "Dados",
@@ -6407,9 +6434,6 @@
       "only-overrides-button-tooltip": "Mostrar apenas as substituições",
       "placeholder-search-options": "Opções de pesquisa",
       "visualization-button-tooltip": "Opções de pesquisa"
-    },
-    "panel-editor": {
-      "ad-hoc-transformations-disabled": "As transformações ad hoc estão desativadas no modo de edição"
     },
     "plan-building-overlay": {
       "quip-corners": "A polir os cantos do painel…",
@@ -6788,8 +6812,6 @@
         "open-editor": "Abrir editor de variáveis",
         "open-editor-tooltip": "Para mais opções de variáveis, abra o editor de variáveis",
         "query-options": {
-          "close": "Fechar",
-          "old-modal-title": "Variável de consulta",
           "preview": "Pré-visualizar"
         },
         "remove": "Remover",
@@ -7701,7 +7723,7 @@
       "apply": "Aplicar",
       "apply-body": "Todas as pessoas com acesso vão vê-las. Pode restaurar a versão anterior a partir do histórico de versões.",
       "apply-failed": "Não foi possível aplicar as alterações. Tente novamente ou compare-as primeiro.",
-      "apply-needs-edit": "Para aplicar precisa de acesso de edição a \"{{title}}\". Pode pré-visualizar estas alterações, mas não pode aplicá-las.",
+      "apply-needs-save": "",
       "breadcrumb-draft": "Rascunho",
       "breadcrumb-pending-changes": "Alterações pendentes",
       "change-added": "Adicionado",
@@ -8000,6 +8022,12 @@
       "confirmText-restore-version": "Sim, restaurar para a versão {{version}}",
       "title-restore-version": "Restaurar versão"
     },
+    "row-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-row-settings": ""
+    },
     "sandbox-consent": {
       "allow": "Permitir",
       "allow-tooltip": "Carregar conteúdo das fontes selecionadas nos painéis listados, até fechar este separador.",
@@ -8195,6 +8223,12 @@
       "switch-options": "Opções de comutador",
       "value-pair-type": "Tipo de par de valores",
       "value-pair-type-description": "Escolha o tipo de valores para os estados do interruptor"
+    },
+    "tab-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-tab-settings": ""
     },
     "text-box-variable": {
       "name-default-value": "Valor predefinido"
@@ -10810,6 +10844,8 @@
       "tooltip": {
         "category": "Descrição",
         "description-hover-proximity": "Qual é a distância a que o cursor deve estar de um ponto para acionar a descrição, em píxeis",
+        "description-max-height": "",
+        "description-max-width": "",
         "modeOptions": {
           "label-all": "Tudo",
           "label-hidden": "Oculto",
@@ -13110,6 +13146,10 @@
       "subtitle": "Escolha como notificar os seus pontos de contacto quando uma instância de alerta for acionada",
       "title": "Pontos de contacto"
     },
+    "alerting-recording-rules": {
+      "subtitle": "",
+      "title": ""
+    },
     "alerting-silences": {
       "subtitle": "Parar as notificações de uma ou mais regras de alerta",
       "title": "Silêncio"
@@ -13962,6 +14002,32 @@
     },
     "units": {
       "clear-tooltip": "Limpar a seleção da unidade"
+    },
+    "var-mapping-checks": {
+      "data-macro": "",
+      "not-allowed": "",
+      "not-found": "",
+      "not-number": "",
+      "not-one-value": "",
+      "out-of-range": "",
+      "resolves": "",
+      "values": ""
+    },
+    "var-mapping-toggle": {
+      "aria-label-picker": "",
+      "fallback-off": "",
+      "fallback-on": "",
+      "group-matching": "",
+      "group-other": "",
+      "hint-boolean": "",
+      "hint-number": "",
+      "hint-option": "",
+      "hint-option-no-fallback": "",
+      "new-variable": "",
+      "option-current": "",
+      "placeholder": "",
+      "use-fixed-value": "",
+      "use-variable": ""
     }
   },
   "org": {
@@ -14392,6 +14458,9 @@
     },
     "empty-state": {
       "message": "Nenhum plugin encontrado"
+    },
+    "errors": {
+      "app-plugin-metas-error": ""
     },
     "extensions": {
       "extension-error-alert-description": "Verifique a consola para obter mais detalhes sobre o erro.",

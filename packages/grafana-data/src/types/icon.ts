@@ -151,6 +151,7 @@ export const availableIconsIndex = {
   'gf-bar-alignment-after': true,
   'gf-bar-alignment-before': true,
   'gf-bar-alignment-center': true,
+  'gf-floating-panel': true,
   'gf-glue': true,
   'gf-grid': true,
   'gf-grotfood': true,

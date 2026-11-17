@@ -1500,9 +1500,29 @@
         "records": "",
         "to": ""
       },
+      "recording-rule-actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "view": ""
+      },
       "recording-rules": {
         "folder-rules-error": "",
         "folders-error": "",
+        "header": {
+          "new-rule": ""
+        },
         "load-more-rules-in-folder": "",
         "loading-folders": "",
         "no-rules": "",
@@ -1578,6 +1598,12 @@
         "view-folders": "",
         "view-list": "",
         "wildcard-in-text": ""
+      },
+      "sequence-pill": {
+        "label": "",
+        "label-with-interval": "",
+        "tooltip": "",
+        "tooltip-with-interval": ""
       },
       "shared": {
         "load-more": "",
@@ -2394,6 +2420,7 @@
       "contact-points": "Punti di contatto",
       "notification-policies": "Criteri di notifica",
       "recently-deleted": "Eliminati di recente",
+      "recording-rules": "",
       "templates": "Modelli",
       "time-intervals": "Intervalli di tempo"
     },
@@ -5351,6 +5378,7 @@
       "change-theme": "Modifica tema ",
       "dark-theme": "Scuro",
       "dashboard-from-template": "Dashboard da modello",
+      "experimental": "",
       "light-theme": "Chiaro",
       "open-saved-queries": "Apri query salvate",
       "scopes": "Ambiti di applicazione"
@@ -6211,8 +6239,7 @@
       }
     },
     "get-var-mapping-option-overrides": {
-      "defaults": "",
-      "rule": ""
+      "uses-variables": ""
     },
     "inspect": {
       "data-tab": "Data",
@@ -6407,9 +6434,6 @@
       "only-overrides-button-tooltip": "Mostra solo sovrascritture",
       "placeholder-search-options": "Opzioni di ricerca",
       "visualization-button-tooltip": "Opzioni di ricerca"
-    },
-    "panel-editor": {
-      "ad-hoc-transformations-disabled": ""
     },
     "plan-building-overlay": {
       "quip-corners": "",
@@ -6788,8 +6812,6 @@
         "open-editor": "Apri l'editor delle variabili",
         "open-editor-tooltip": "Per ulteriori opzioni sulle variabili, apri l'editor delle variabili",
         "query-options": {
-          "close": "Chiudi",
-          "old-modal-title": "Query variabile",
           "preview": "Anteprima"
         },
         "remove": "",
@@ -7701,7 +7723,7 @@
       "apply": "",
       "apply-body": "",
       "apply-failed": "",
-      "apply-needs-edit": "",
+      "apply-needs-save": "",
       "breadcrumb-draft": "",
       "breadcrumb-pending-changes": "",
       "change-added": "",
@@ -8000,6 +8022,12 @@
       "confirmText-restore-version": "Sì, ripristina alla versione {{version}}",
       "title-restore-version": "Ripristina versione"
     },
+    "row-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-row-settings": ""
+    },
     "sandbox-consent": {
       "allow": "",
       "allow-tooltip": "",
@@ -8195,6 +8223,12 @@
       "switch-options": "Opzioni del commutatore",
       "value-pair-type": "Tipo di coppia di valori",
       "value-pair-type-description": "Scegli il tipo di valori per gli stati del commutatore"
+    },
+    "tab-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-tab-settings": ""
     },
     "text-box-variable": {
       "name-default-value": "Valore predefinito"
@@ -10810,6 +10844,8 @@
       "tooltip": {
         "category": "Suggerimento",
         "description-hover-proximity": "Quanto deve essere vicino il cursore a un punto per attivare il suggerimento, in pixel",
+        "description-max-height": "",
+        "description-max-width": "",
         "modeOptions": {
           "label-all": "Tutti",
           "label-hidden": "Nascosto",
@@ -13110,6 +13146,10 @@
       "subtitle": "Scegli come inviare le notifiche ai tuoi punti di contatto quando si attiva un'istanza di avviso",
       "title": "Punti di contatto"
     },
+    "alerting-recording-rules": {
+      "subtitle": "",
+      "title": ""
+    },
     "alerting-silences": {
       "subtitle": "Interrompi le notifiche da una o più regole di avviso",
       "title": "Silenzi"
@@ -13962,6 +14002,32 @@
     },
     "units": {
       "clear-tooltip": "Cancella selezione unità"
+    },
+    "var-mapping-checks": {
+      "data-macro": "",
+      "not-allowed": "",
+      "not-found": "",
+      "not-number": "",
+      "not-one-value": "",
+      "out-of-range": "",
+      "resolves": "",
+      "values": ""
+    },
+    "var-mapping-toggle": {
+      "aria-label-picker": "",
+      "fallback-off": "",
+      "fallback-on": "",
+      "group-matching": "",
+      "group-other": "",
+      "hint-boolean": "",
+      "hint-number": "",
+      "hint-option": "",
+      "hint-option-no-fallback": "",
+      "new-variable": "",
+      "option-current": "",
+      "placeholder": "",
+      "use-fixed-value": "",
+      "use-variable": ""
     }
   },
   "org": {
@@ -14392,6 +14458,9 @@
     },
     "empty-state": {
       "message": "Nessun plug-in trovato"
+    },
+    "errors": {
+      "app-plugin-metas-error": ""
     },
     "extensions": {
       "extension-error-alert-description": "Controlla la console per maggiori dettagli sull'errore.",
