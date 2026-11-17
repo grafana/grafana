@@ -13,7 +13,10 @@ import { useAsync, useLocalStorage } from 'react-use';
 
 import { PluginExtensionPoints, store } from '@grafana/data';
 import { getAppEvents, reportInteraction, usePluginLinks, locationService } from '@grafana/runtime';
-import { useFlagGrafanaExtensionSidebarFloating } from '@grafana/runtime/internal';
+import {
+  useFlagGrafanaExtensionSidebarFloating,
+  useFlagGrafanaExtensionSidebarPlacements,
+} from '@grafana/runtime/internal';
 import { type ExtensionPointPluginMeta } from 'app/features/plugins/extensions/appUtils';
 import { getExtensionPointPluginMeta } from 'app/features/plugins/extensions/utils';
 import { CloseExtensionSidebarEvent, OpenExtensionSidebarEvent, ToggleExtensionSidebarEvent } from 'app/types/events';
@@ -163,6 +166,8 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
   );
   // Turning the flag off docks a sidebar the user floated; the override (Composer) floats it regardless.
   const canFloat = useFlagGrafanaExtensionSidebarFloating();
+  // The left and bottom docks need their own flag on top of floating's.
+  const canPlace = useFlagGrafanaExtensionSidebarPlacements() && canFloat;
   const requestedDockSide = useSyncExternalStore(
     subscribeToExtensionSidebarPresentation,
     getRequestedExtensionSidebarDockSide
@@ -392,7 +397,7 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
         ),
         setFloatingExtensionSidebarWidth,
         presentation,
-        dockSide: resolveExtensionSidebarDockSide(requestedDockSide, canFloat, dockedPluginId),
+        dockSide: resolveExtensionSidebarDockSide(requestedDockSide, canPlace, dockedPluginId),
         floatingHidden,
         props,
       }}

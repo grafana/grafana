@@ -18,6 +18,17 @@ import { extensionSidebarApi } from './extensionSidebarApi';
 
 const FLOATING_FLAG = 'grafana.extensionSidebarFloating';
 
+const PLACEMENTS_FLAG = 'grafana.extensionSidebarPlacements';
+
+/** The members present while placements are on; fails the test where they are absent. */
+function placementApi() {
+  const { getPlacement, setPlacement, subscribeToPlacement, subscribeToPopOut, trackPopOut } = extensionSidebarApi;
+  if (!getPlacement || !setPlacement || !subscribeToPlacement || !subscribeToPopOut || !trackPopOut) {
+    throw new Error('The placement members are absent');
+  }
+  return { getPlacement, setPlacement, subscribeToPlacement, subscribeToPopOut, trackPopOut };
+}
+
 describe('extensionSidebarApi', () => {
   afterEach(() => {
     resetExtensionSidebarPresentationForTests();
@@ -25,7 +36,7 @@ describe('extensionSidebarApi', () => {
   });
 
   describe('with grafana.extensionSidebarFloating on', () => {
-    beforeEach(() => setTestFlags({ [FLOATING_FLAG]: true }));
+    beforeEach(() => setTestFlags({ [FLOATING_FLAG]: true, [PLACEMENTS_FLAG]: true }));
 
     it('can float, also by dragging out of the docked sidebar', () => {
       expect(extensionSidebarApi.canFloat()).toBe(true);
@@ -53,13 +64,13 @@ describe('extensionSidebarApi', () => {
       'moves the sidebar %s and reports it there, telling subscribers',
       (placement) => {
         // Starts away from every placement it is moved to.
-        extensionSidebarApi.setPlacement(placement === 'floating' ? 'left' : 'floating');
+        placementApi().setPlacement(placement === 'floating' ? 'left' : 'floating');
         const listener = jest.fn();
-        const unsubscribe = extensionSidebarApi.subscribeToPlacement(listener);
+        const unsubscribe = placementApi().subscribeToPlacement(listener);
 
-        extensionSidebarApi.setPlacement(placement);
+        placementApi().setPlacement(placement);
 
-        expect(extensionSidebarApi.getPlacement()).toBe(placement);
+        expect(placementApi().getPlacement()).toBe(placement);
         expect(listener).toHaveBeenCalled();
         unsubscribe();
       }
@@ -69,34 +80,42 @@ describe('extensionSidebarApi', () => {
       setExtensionSidebarDockSide('bottom');
       setExtensionSidebarPresentation('docked');
 
-      expect(extensionSidebarApi.getPlacement()).toBe('bottom');
+      expect(placementApi().getPlacement()).toBe('bottom');
     });
 
     it('ignores a value that is not a placement', () => {
-      extensionSidebarApi.setPlacement('left');
+      placementApi().setPlacement('left');
 
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- a plugin calling from untyped code
-      extensionSidebarApi.setPlacement('top' as 'left');
+      placementApi().setPlacement('top' as 'left');
 
-      expect(extensionSidebarApi.getPlacement()).toBe('left');
+      expect(placementApi().getPlacement()).toBe('left');
     });
   });
 
-  it('with grafana.extensionSidebarFloating off, reports the right, where the sidebar docks, and moves it nowhere', () => {
-    extensionSidebarApi.setPlacement('bottom');
+  it.each([
+    ['both flags off', {}],
+    ['only floating on', { [FLOATING_FLAG]: true }],
+    ['only placements on', { [PLACEMENTS_FLAG]: true }],
+  ])('offers no placement or pop-out members with %s, so an extension keeps its own controls', (_case, flags) => {
+    setTestFlags(flags);
 
-    expect(extensionSidebarApi.getPlacement()).toBe('right');
+    expect(extensionSidebarApi.getPlacement).toBeUndefined();
+    expect(extensionSidebarApi.setPlacement).toBeUndefined();
+    expect(extensionSidebarApi.subscribeToPlacement).toBeUndefined();
+    expect(extensionSidebarApi.subscribeToPopOut).toBeUndefined();
+    expect(extensionSidebarApi.trackPopOut).toBeUndefined();
     expect(getRequestedExtensionSidebarDockSide()).toBe('right');
   });
 
   it('stops telling a placement subscriber once it unsubscribes, and ignores one that is not a function', () => {
-    setTestFlags({ [FLOATING_FLAG]: true });
+    setTestFlags({ [FLOATING_FLAG]: true, [PLACEMENTS_FLAG]: true });
     const listener = jest.fn();
-    extensionSidebarApi.subscribeToPlacement(listener)();
+    placementApi().subscribeToPlacement(listener)();
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- a plugin calling from untyped code
-    const unsubscribe = extensionSidebarApi.subscribeToPlacement('listener' as unknown as () => void);
+    const unsubscribe = placementApi().subscribeToPlacement('listener' as unknown as () => void);
 
-    extensionSidebarApi.setPlacement('bottom');
+    placementApi().setPlacement('bottom');
 
     expect(listener).not.toHaveBeenCalled();
     expect(() => unsubscribe()).not.toThrow();
@@ -126,8 +145,9 @@ describe('extensionSidebarApi', () => {
   });
 
   it('tells subscribers when the user asks to open the sidebar in a new window, until they unsubscribe', () => {
+    setTestFlags({ [FLOATING_FLAG]: true, [PLACEMENTS_FLAG]: true });
     const listener = jest.fn();
-    const unsubscribe = extensionSidebarApi.subscribeToPopOut(listener);
+    const unsubscribe = placementApi().subscribeToPopOut(listener);
     expect(canPopOutExtensionSidebar()).toBe(true);
 
     popOutExtensionSidebar();
@@ -138,8 +158,9 @@ describe('extensionSidebarApi', () => {
   });
 
   it('marks the sidebar as in its own window until told otherwise, and asks the extension to bring it back', () => {
+    setTestFlags({ [FLOATING_FLAG]: true, [PLACEMENTS_FLAG]: true });
     const popIn = jest.fn();
-    const stop = extensionSidebarApi.trackPopOut(popIn);
+    const stop = placementApi().trackPopOut(popIn);
     expect(isExtensionSidebarPoppedOut()).toBe(true);
 
     popInExtensionSidebar();
@@ -150,16 +171,18 @@ describe('extensionSidebarApi', () => {
   });
 
   it('ignores a pop-out tracker that is not a function', () => {
+    setTestFlags({ [FLOATING_FLAG]: true, [PLACEMENTS_FLAG]: true });
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- a plugin calling from untyped code
-    const stop = extensionSidebarApi.trackPopOut('popIn' as unknown as () => void);
+    const stop = placementApi().trackPopOut('popIn' as unknown as () => void);
 
     expect(isExtensionSidebarPoppedOut()).toBe(false);
     expect(() => stop()).not.toThrow();
   });
 
   it('ignores a new window subscriber that is not a function', () => {
+    setTestFlags({ [FLOATING_FLAG]: true, [PLACEMENTS_FLAG]: true });
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- a plugin calling from untyped code
-    const unsubscribe = extensionSidebarApi.subscribeToPopOut('listener' as unknown as () => void);
+    const unsubscribe = placementApi().subscribeToPopOut('listener' as unknown as () => void);
 
     expect(canPopOutExtensionSidebar()).toBe(false);
     expect(() => unsubscribe()).not.toThrow();

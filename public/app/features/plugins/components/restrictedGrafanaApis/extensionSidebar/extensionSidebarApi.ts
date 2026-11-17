@@ -1,6 +1,7 @@
 import { type ExtensionSidebarAPI } from '@grafana/data';
 import {
   canFloatExtensionSidebar,
+  canPlaceExtensionSidebar,
   type ExtensionSidebarPlacement,
   getFloatingExtensionSidebarPlacement,
   setExtensionSidebarPlacement,
@@ -32,29 +33,53 @@ export const extensionSidebarApi: ExtensionSidebarAPI = {
     return subscribeToFloatingExtensionSidebarCollapse(listener);
   },
   canDragToFloat: () => canFloatExtensionSidebar(),
-  subscribeToPopOut: (listener) => {
-    if (typeof listener !== 'function') {
-      return () => {};
-    }
-    return subscribeToExtensionSidebarPopOut(listener);
+  // Absent while placements are off, so an extension keeps the controls it shows on a core without them. Read when
+  // the extension reads them, after the flags load.
+  get subscribeToPopOut() {
+    return canPlaceExtensionSidebar() ? subscribeToPopOut : undefined;
   },
-  trackPopOut: (popIn) => {
-    if (typeof popIn !== 'function') {
-      return () => {};
-    }
-    return trackExtensionSidebarPopOut(popIn);
+  get trackPopOut() {
+    return canPlaceExtensionSidebar() ? trackPopOut : undefined;
   },
-  getPlacement: () => getFloatingExtensionSidebarPlacement(),
-  setPlacement: (placement) => {
-    // Plugins call this from untyped code too; every placement but the right needs floating's flag, as core's menu.
-    if (isPlacement(placement) && canFloatExtensionSidebar()) {
-      setExtensionSidebarPlacement(placement);
-    }
+  get getPlacement() {
+    return canPlaceExtensionSidebar() ? getPlacement : undefined;
   },
-  subscribeToPlacement: (listener) => {
-    if (typeof listener !== 'function') {
-      return () => {};
-    }
-    return subscribeToExtensionSidebarPresentation(listener);
+  get setPlacement() {
+    return canPlaceExtensionSidebar() ? setPlacement : undefined;
+  },
+  get subscribeToPlacement() {
+    return canPlaceExtensionSidebar() ? subscribeToPlacement : undefined;
   },
 };
+
+function subscribeToPopOut(listener: () => void): () => void {
+  if (typeof listener !== 'function') {
+    return () => {};
+  }
+  return subscribeToExtensionSidebarPopOut(listener);
+}
+
+function trackPopOut(popIn: () => void): () => void {
+  if (typeof popIn !== 'function') {
+    return () => {};
+  }
+  return trackExtensionSidebarPopOut(popIn);
+}
+
+function getPlacement(): ExtensionSidebarPlacement {
+  return getFloatingExtensionSidebarPlacement();
+}
+
+function setPlacement(placement: ExtensionSidebarPlacement): void {
+  // Plugins call this from untyped code too; anything else is not a placement.
+  if (isPlacement(placement) && canPlaceExtensionSidebar()) {
+    setExtensionSidebarPlacement(placement);
+  }
+}
+
+function subscribeToPlacement(listener: () => void): () => void {
+  if (typeof listener !== 'function') {
+    return () => {};
+  }
+  return subscribeToExtensionSidebarPresentation(listener);
+}

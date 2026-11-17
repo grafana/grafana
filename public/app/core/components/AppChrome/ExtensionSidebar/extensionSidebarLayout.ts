@@ -75,6 +75,17 @@ export function canFloatExtensionSidebar(): boolean {
 }
 
 /**
+ * Whether the user may dock the sidebar on the left or at the bottom, move it from the Chat button's menu, and pop
+ * it up: `grafana.extensionSidebarPlacements`, on top of floating's flag, which the other edges need.
+ */
+export function canPlaceExtensionSidebar(): boolean {
+  return (
+    canFloatExtensionSidebar() &&
+    getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaExtensionSidebarPlacements, false)
+  );
+}
+
+/**
  * Sets the requested layout, for every page. Floating is ignored while `canFloatExtensionSidebar()` is false.
  * Docking also turns the override off: the user's choice wins, and whatever turned it on carries on docked.
  */
@@ -148,8 +159,7 @@ export function getRequestedExtensionSidebarPresentation(): ExtensionSidebarPres
 
 /**
  * Which edge of the page content the docked sidebar sits on. `left` puts it between the nav and the page, and
- * `bottom` below the page, past the nav; only the floating sidebar's drag reaches either, so both are part of
- * `grafana.extensionSidebarFloating`.
+ * `bottom` below the page, past the nav. Both need `canPlaceExtensionSidebar()`.
  */
 export type ExtensionSidebarDockSide = 'left' | 'right' | 'bottom';
 
@@ -174,15 +184,15 @@ export function getRequestedExtensionSidebarDockSide(): ExtensionSidebarDockSide
 }
 
 /**
- * The side `pluginId`'s docked sidebar shows on: the requested one while floating is allowed, for a plugin that
+ * The side `pluginId`'s docked sidebar shows on: the requested one while placements are allowed, for a plugin that
  * supports floating; else the right. Any other plugin has no drag handle to move it back with.
  */
 export function resolveExtensionSidebarDockSide(
   requestedSide: ExtensionSidebarDockSide,
-  canFloat: boolean,
+  canPlace: boolean,
   pluginId: string | undefined
 ): ExtensionSidebarDockSide {
-  return canFloat && supportsFloating(pluginId) ? requestedSide : 'right';
+  return canPlace && supportsFloating(pluginId) ? requestedSide : 'right';
 }
 
 /** Sets the side the sidebar docks on, for every page; the next dock, by drag or by the extension, uses it. */
@@ -212,7 +222,7 @@ export function getExtensionSidebarPlacement(pluginId: string | undefined): Exte
   if (getEffectiveExtensionSidebarPresentation(pluginId) === 'floating') {
     return 'floating';
   }
-  return resolveExtensionSidebarDockSide(getRequestedExtensionSidebarDockSide(), canFloatExtensionSidebar(), pluginId);
+  return resolveExtensionSidebarDockSide(getRequestedExtensionSidebarDockSide(), canPlaceExtensionSidebar(), pluginId);
 }
 
 /**

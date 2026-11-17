@@ -225,7 +225,7 @@ describe('ExtensionSidebar', () => {
       expect(canDockLeft()).toBe(false);
       expect(canDockBottom()).toBe(false);
 
-      setTestFlags({ 'grafana.extensionSidebarFloating': true });
+      setTestFlags({ 'grafana.extensionSidebarFloating': true, 'grafana.extensionSidebarPlacements': true });
       expect(canDockLeft()).toBe(true);
       expect(canDockBottom()).toBe(true);
       setTestFlags({});
@@ -363,7 +363,7 @@ describe('ExtensionSidebar', () => {
     afterEach(() => setTestFlags({}));
 
     it('lets a plugin that can float be dragged out to float', () => {
-      setTestFlags({ 'grafana.extensionSidebarFloating': true });
+      setTestFlags({ 'grafana.extensionSidebarFloating': true, 'grafana.extensionSidebarPlacements': true });
       renderDocked(FloatingCapable);
 
       expect(mockUseDockedDrag.mock.lastCall?.[0]).toBeInstanceOf(HTMLElement);
@@ -396,7 +396,7 @@ describe('ExtensionSidebar', () => {
     });
 
     it.each(['left', 'bottom'] as const)('drags out from the %s it is docked on', (dockSide) => {
-      setTestFlags({ 'grafana.extensionSidebarFloating': true });
+      setTestFlags({ 'grafana.extensionSidebarFloating': true, 'grafana.extensionSidebarPlacements': true });
       renderDocked(FloatingCapable, { dockSide, extensionSidebarHeight: 280 });
 
       expect(mockUseDockedDrag.mock.lastCall?.[0]).toBeInstanceOf(HTMLElement);
@@ -404,7 +404,7 @@ describe('ExtensionSidebar', () => {
     });
 
     it('docks on the other side, at its docked width, when the drag asks it to', () => {
-      setTestFlags({ 'grafana.extensionSidebarFloating': true });
+      setTestFlags({ 'grafana.extensionSidebarFloating': true, 'grafana.extensionSidebarPlacements': true });
       renderDocked(FloatingCapable, { extensionSidebarWidth: 420 });
 
       expect(mockUseDockedDrag.mock.lastCall?.[1]).toMatchObject({ dockWidth: 420 });
@@ -418,14 +418,14 @@ describe('ExtensionSidebar', () => {
       renderDocked(FloatingCapable);
       expect(mockUseDockedDrag.mock.lastCall?.[0]).toBeNull();
 
-      setTestFlags({ 'grafana.extensionSidebarFloating': true });
+      setTestFlags({ 'grafana.extensionSidebarFloating': true, 'grafana.extensionSidebarPlacements': true });
       renderDocked(MockComponent);
       expect(mockUseDockedDrag.mock.lastCall?.[0]).toBeNull();
     });
 
     it('shows the float preview where the drag puts it', () => {
       mockUseDockedDrag.mockReturnValue({ action: 'float', top: 216, left: 60, width: 480, height: 168 });
-      setTestFlags({ 'grafana.extensionSidebarFloating': true });
+      setTestFlags({ 'grafana.extensionSidebarFloating': true, 'grafana.extensionSidebarPlacements': true });
       renderDocked(FloatingCapable);
 
       expect(screen.getByTestId('extension-sidebar-float-preview')).toHaveStyle({

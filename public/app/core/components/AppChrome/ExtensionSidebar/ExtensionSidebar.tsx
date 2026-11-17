@@ -12,6 +12,7 @@ import { FloatingWidthHandle } from './FloatingWidthHandle';
 import {
   canCollapseFloatingExtensionSidebar,
   canFloatExtensionSidebar,
+  canPlaceExtensionSidebar,
   collapseFloatingExtensionSidebar,
   type ExtensionSidebarDockSide,
   type ExtensionSidebarPresentation,
@@ -51,13 +52,13 @@ export function ExtensionSidebar() {
   const pluginId = dockedComponentId ? getComponentMetaFromComponentId(dockedComponentId)?.pluginId : undefined;
   const canDragToFloat =
     !floating && resolveExtensionSidebarPresentation('floating', canFloatExtensionSidebar(), pluginId) === 'floating';
-  // The left and bottom docks are part of floating's flag, as the drag that reaches them is.
+  // The drag reaches the left and bottom docks only while their flag is on.
   const floatingPreview = useFloatingDrag(floating ? wrapper : null, {
     dockWidth: extensionSidebarWidth,
     dockHeight: extensionSidebarHeight,
     onDock: dockExtensionSidebar,
-    canDockLeft: canFloatExtensionSidebar,
-    canDockBottom: canFloatExtensionSidebar,
+    canDockLeft: canPlaceExtensionSidebar,
+    canDockBottom: canPlaceExtensionSidebar,
     canCollapse: canCollapseFloatingExtensionSidebar,
     onCollapse: collapseFloatingExtensionSidebar,
   });

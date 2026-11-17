@@ -5,6 +5,7 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 import {
   canCollapseFloatingExtensionSidebar,
   canFloatExtensionSidebar,
+  canPlaceExtensionSidebar,
   canPopOutExtensionSidebar,
   collapseFloatingExtensionSidebar,
   getEffectiveExtensionSidebarPresentation,
@@ -36,6 +37,8 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 const FLOATING_FLAG = 'grafana.extensionSidebarFloating';
+
+const PLACEMENTS_FLAG = 'grafana.extensionSidebarPlacements';
 const ASSISTANT = 'grafana-assistant-app';
 const PRESENTATION_KEY = 'grafana.navigation.extensionSidebarPresentation';
 const LEGACY_PRESENTATION_KEY = 'grafana.navigation.extensionSidebarPresentationBySurface';
@@ -54,14 +57,14 @@ describe('extensionSidebarLayout', () => {
     setExtensionSidebarPresentation('floating');
     expect(getRequestedExtensionSidebarPresentation()).toBe('docked');
 
-    setTestFlags({ [FLOATING_FLAG]: true });
+    setTestFlags({ [FLOATING_FLAG]: true, [PLACEMENTS_FLAG]: true });
     expect(canFloatExtensionSidebar()).toBe(true);
     setExtensionSidebarPresentation('floating');
     expect(getRequestedExtensionSidebarPresentation()).toBe('floating');
   });
 
   it('docks with the flag off', () => {
-    setTestFlags({ [FLOATING_FLAG]: true });
+    setTestFlags({ [FLOATING_FLAG]: true, [PLACEMENTS_FLAG]: true });
     setExtensionSidebarPresentation('floating');
     setTestFlags({ [FLOATING_FLAG]: false });
 
@@ -75,7 +78,7 @@ describe('extensionSidebarLayout', () => {
   });
 
   it('remembers one layout for every page', () => {
-    setTestFlags({ [FLOATING_FLAG]: true });
+    setTestFlags({ [FLOATING_FLAG]: true, [PLACEMENTS_FLAG]: true });
     setExtensionSidebarPresentation('docked');
     expect(store.get(PRESENTATION_KEY)).toBe('docked');
 
@@ -99,7 +102,7 @@ describe('extensionSidebarLayout', () => {
     });
 
     it('is replaced by the first pick', () => {
-      setTestFlags({ [FLOATING_FLAG]: true });
+      setTestFlags({ [FLOATING_FLAG]: true, [PLACEMENTS_FLAG]: true });
       store.setObject(LEGACY_PRESENTATION_KEY, { dashboardOrNotebook: 'floating', other: 'docked' });
 
       setExtensionSidebarPresentation('docked');
@@ -134,7 +137,7 @@ describe('extensionSidebarLayout', () => {
   });
 
   it('notifies subscribers only when the layout changes', () => {
-    setTestFlags({ [FLOATING_FLAG]: true });
+    setTestFlags({ [FLOATING_FLAG]: true, [PLACEMENTS_FLAG]: true });
     const listener = jest.fn();
     const unsubscribe = subscribeToExtensionSidebarPresentation(listener);
 
@@ -152,7 +155,7 @@ describe('extensionSidebarLayout', () => {
     setExtensionSidebarPresentation('docked');
     // Floating is refused while the flag is off.
     setExtensionSidebarPresentation('floating');
-    setTestFlags({ [FLOATING_FLAG]: true });
+    setTestFlags({ [FLOATING_FLAG]: true, [PLACEMENTS_FLAG]: true });
     setExtensionSidebarPresentation('floating');
     setExtensionSidebarPresentation('floating');
 
@@ -179,7 +182,7 @@ describe('extensionSidebarLayout', () => {
     });
 
     it("brings back the user's layout when turned off", () => {
-      setTestFlags({ [FLOATING_FLAG]: true });
+      setTestFlags({ [FLOATING_FLAG]: true, [PLACEMENTS_FLAG]: true });
       setExtensionSidebarPresentation('floating');
       setExtensionSidebarFloatingOverride(true);
       setExtensionSidebarFloatingOverride(false);
@@ -341,7 +344,7 @@ describe('extensionSidebarLayout', () => {
     it.each(['left', 'right', 'bottom', 'floating'] as const)(
       'moves the sidebar %s in one call, which the Assistant then shows in',
       (placement) => {
-        setTestFlags({ [FLOATING_FLAG]: true });
+        setTestFlags({ [FLOATING_FLAG]: true, [PLACEMENTS_FLAG]: true });
         setExtensionSidebarPlacement(placement === 'floating' ? 'left' : 'floating');
 
         setExtensionSidebarPlacement(placement);
@@ -352,7 +355,7 @@ describe('extensionSidebarLayout', () => {
     );
 
     it('docks on the new side before docking, so it never shows on the other one', () => {
-      setTestFlags({ [FLOATING_FLAG]: true });
+      setTestFlags({ [FLOATING_FLAG]: true, [PLACEMENTS_FLAG]: true });
       setExtensionSidebarPlacement('floating');
       const seen: string[] = [];
       subscribeToExtensionSidebarPresentation(() =>
@@ -365,12 +368,24 @@ describe('extensionSidebarLayout', () => {
     });
 
     it('is the right, docked, for a plugin that cannot float or while the flag is off', () => {
-      setTestFlags({ [FLOATING_FLAG]: true });
+      setTestFlags({ [FLOATING_FLAG]: true, [PLACEMENTS_FLAG]: true });
       setExtensionSidebarPlacement('bottom');
       expect(getExtensionSidebarPlacement('grafana-pathfinder-app')).toBe('right');
 
       setTestFlags({});
       expect(getExtensionSidebarPlacement(ASSISTANT)).toBe('right');
+    });
+
+    it('docks on the right while the placements flag is off, though the sidebar can float', () => {
+      setTestFlags({ [FLOATING_FLAG]: true, [PLACEMENTS_FLAG]: true });
+      setExtensionSidebarPlacement('left');
+
+      setTestFlags({ [FLOATING_FLAG]: true });
+
+      expect(canPlaceExtensionSidebar()).toBe(false);
+      expect(getExtensionSidebarPlacement(ASSISTANT)).toBe('right');
+      setExtensionSidebarPlacement('floating');
+      expect(getExtensionSidebarPlacement(ASSISTANT)).toBe('floating');
     });
   });
 });

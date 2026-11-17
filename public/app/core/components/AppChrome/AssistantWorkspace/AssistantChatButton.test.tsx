@@ -22,6 +22,7 @@ import { AssistantToolbarButtons } from './AssistantToolbarButtons';
 
 const FULLSCREEN_WORKSPACE_FLAG = 'assistant.fullscreenWorkspace';
 const FLOATING_FLAG = 'grafana.extensionSidebarFloating';
+const PLACEMENTS_FLAG = 'grafana.extensionSidebarPlacements';
 const ASSISTANT_PLUGIN_ID = 'grafana-assistant-app';
 
 jest.mock('@grafana/data', () => ({
@@ -179,7 +180,7 @@ describe('AssistantChatButton', () => {
       isLoading: false,
     });
     setAppEvents(new EventBusSrv());
-    await setFlags({ [FULLSCREEN_WORKSPACE_FLAG]: true, [FLOATING_FLAG]: true });
+    await setFlags({ [FULLSCREEN_WORKSPACE_FLAG]: true, [FLOATING_FLAG]: true, [PLACEMENTS_FLAG]: true });
   });
 
   afterEach(async () => {
@@ -620,5 +621,17 @@ describe('AssistantChatButton', () => {
     expect(await screen.findByRole('tooltip')).toHaveTextContent('Open Chat');
     expect(screen.queryByRole('menu')).not.toBeInTheDocument();
     expect(openButton()).not.toHaveAttribute('aria-haspopup');
+  });
+
+  it('offers no layout menu or shortcuts while the placements flag is off, though the sidebar can float', async () => {
+    await setFlags({ [FULLSCREEN_WORKSPACE_FLAG]: true, [FLOATING_FLAG]: true });
+    const { user } = renderButtons();
+
+    await user.hover(openButton());
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('Open Chat');
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+
+    await user.keyboard('{Control>}{Alt>}1{/Alt}{/Control}');
+    expect(placementNow()).toEqual({ presentation: 'floating', side: 'right' });
   });
 });

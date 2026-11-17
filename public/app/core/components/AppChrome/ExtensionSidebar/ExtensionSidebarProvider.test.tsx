@@ -518,6 +518,7 @@ describe('ExtensionSidebarProvider', () => {
 
   describe('presentation', () => {
     const FLOATING_FLAG = 'grafana.extensionSidebarFloating';
+    const PLACEMENTS_FLAG = 'grafana.extensionSidebarPlacements';
     const PresentationComponent = () => (
       <div data-testid="presentation">{useExtensionSidebarContext().presentation}</div>
     );
@@ -550,7 +551,7 @@ describe('ExtensionSidebarProvider', () => {
       };
       const renderOpen = async () => {
         await act(async () => {
-          setTestFlags({ [FLOATING_FLAG]: true });
+          setTestFlags({ [FLOATING_FLAG]: true, [PLACEMENTS_FLAG]: true });
         });
         (store.get as jest.Mock).mockReturnValue(componentId());
         render(
@@ -628,7 +629,7 @@ describe('ExtensionSidebarProvider', () => {
 
     it('starts floating and follows setExtensionSidebarPresentation while floating is allowed', async () => {
       await act(async () => {
-        setTestFlags({ [FLOATING_FLAG]: true });
+        setTestFlags({ [FLOATING_FLAG]: true, [PLACEMENTS_FLAG]: true });
       });
       renderPresentation();
       expect(screen.getByTestId('presentation')).toHaveTextContent('floating');
@@ -649,7 +650,7 @@ describe('ExtensionSidebarProvider', () => {
         ]),
       });
       await act(async () => {
-        setTestFlags({ [FLOATING_FLAG]: true });
+        setTestFlags({ [FLOATING_FLAG]: true, [PLACEMENTS_FLAG]: true });
       });
       renderPresentation(mockPathfinderMeta.pluginId);
 
@@ -719,7 +720,7 @@ describe('ExtensionSidebarProvider', () => {
 
     it('docks a floating sidebar when the flag is turned off', async () => {
       await act(async () => {
-        setTestFlags({ [FLOATING_FLAG]: true });
+        setTestFlags({ [FLOATING_FLAG]: true, [PLACEMENTS_FLAG]: true });
       });
       renderPresentation();
       act(() => setExtensionSidebarPresentation('floating'));
@@ -735,7 +736,7 @@ describe('ExtensionSidebarProvider', () => {
     it('docks on the side the user picked while the sidebar can float, and on the right otherwise', async () => {
       const DockSideComponent = () => <div data-testid="dock-side">{useExtensionSidebarContext().dockSide}</div>;
       await act(async () => {
-        setTestFlags({ [FLOATING_FLAG]: true });
+        setTestFlags({ [FLOATING_FLAG]: true, [PLACEMENTS_FLAG]: true });
       });
       (store.get as jest.Mock).mockReturnValue(
         getComponentIdFromComponentMeta(mockPluginMeta.pluginId, mockComponent.title)

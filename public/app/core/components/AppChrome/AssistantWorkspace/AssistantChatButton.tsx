@@ -34,7 +34,7 @@ import { getModKey } from 'app/core/utils/browser';
 
 import { useExtensionSidebarContext } from '../ExtensionSidebar/ExtensionSidebarProvider';
 import {
-  canFloatExtensionSidebar,
+  canPlaceExtensionSidebar,
   canPopOutExtensionSidebar,
   type ExtensionSidebarPlacement,
   getExtensionSidebarPlacement,
@@ -133,8 +133,8 @@ interface Props {
 }
 
 /**
- * The top bar's Chat button. A click shows or hides the Assistant. While the Assistant can float, which the other
- * layouts need, hovering the button, or pressing Down arrow on it, opens a menu that moves the Assistant to the left,
+ * The top bar's Chat button. A click shows or hides the Assistant. While `grafana.extensionSidebarPlacements` and
+ * floating's flag are on, hovering the button, or pressing Down arrow on it, opens a menu that moves the Assistant to the left,
  * right or bottom of the page, floats it, or, while the Assistant can, opens it in a new window, and presets that
  * arrange the nav and the Assistant together. Choosing a layout, or a preset that shows the Assistant, shows it if it
  * is hidden.
@@ -149,7 +149,7 @@ export function AssistantChatButton({ assistantComponentId, isOpen, icon, classN
   const layout = useAssistantLayout();
   // In its own window the Assistant is in none of the page's layouts; moving it to one brings it back first.
   const poppedOut = useSyncExternalStore(subscribeToExtensionSidebarPresentation, isExtensionSidebarPoppedOut);
-  const canChangeLayout = canFloatExtensionSidebar();
+  const canChangeLayout = canPlaceExtensionSidebar();
   const [menuOpenedBy, setMenuOpenedBy] = useState<MenuOpenedBy | undefined>(undefined);
   const menuOpen = menuOpenedBy !== undefined;
   // The menu's own setter for the item it focuses, so moving along the presets keeps its place in step.
