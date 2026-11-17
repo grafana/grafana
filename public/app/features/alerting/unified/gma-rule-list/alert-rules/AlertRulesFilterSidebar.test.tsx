@@ -110,21 +110,21 @@ describe('AlertRulesFilterSidebar', () => {
     expect(within(group('Health')).getByRole('radio', { name: 'Error' })).toBeChecked();
   });
 
-  it('clears the dashboard and its panel ID together', async () => {
+  it('empties the dashboard and its panel ID when the search input is cleared', async () => {
     const { user } = renderPage('dashboard:dash-1 panelId:4');
     expect(await screen.findByRole('textbox', { name: 'Panel ID' })).toHaveValue('4');
 
-    await user.click(screen.getByRole('button', { name: 'Clear filters' }));
+    await user.click(screen.getByRole('button', { name: 'Clear' }));
 
     await waitFor(() => expect(searchParam()).toBe(''));
     expect(screen.queryByRole('textbox', { name: 'Panel ID' })).not.toBeInTheDocument();
     expect(screen.queryByText(/dash-1/)).not.toBeInTheDocument();
   });
 
-  it('clears every filter and the title text, and stays shown in Folders mode', async () => {
+  it('empties every control when the search input is cleared, and stays shown in Folders mode', async () => {
     const { user } = renderPage('cpu state:firing');
 
-    await user.click(await screen.findByRole('button', { name: 'Clear filters' }));
+    await user.click(await screen.findByRole('button', { name: 'Clear' }));
 
     await waitFor(() => expect(searchParam()).toBe(''));
     expect(searchInput()).toHaveValue('');

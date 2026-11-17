@@ -1616,7 +1616,6 @@
       },
       "sidebar": {
         "all": "All",
-        "clear": "Clear filters",
         "contact-point": "Contact point",
         "contact-point-description": "Rules that route straight to it, not through a notification policy",
         "contact-point-help": "Contact point filter help",

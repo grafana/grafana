@@ -42,7 +42,7 @@ export function AlertRulesFilterSidebar({ query, filter, onApply }: AlertRulesFi
   const apply = (key: AlertFilterKey, values: Array<string | undefined>) => onApply(set(key, values));
 
   return (
-    <FilterSidebar canClear={query.trim().length > 0} onClear={() => onApply('')}>
+    <FilterSidebar>
       <SidebarSection>
         <TextFilter
           label={t('alerting.gma-rule-list.sidebar.rule-name', 'Rule name')}

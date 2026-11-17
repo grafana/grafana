@@ -1,8 +1,8 @@
 import { useId, useState } from 'react';
 
-import { Trans, t } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { useDataSourceInstanceList } from '@grafana/runtime';
-import { Box, Button, Input, MultiCombobox, Stack } from '@grafana/ui';
+import { Box, Input, MultiCombobox, Stack } from '@grafana/ui';
 import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
 
 import {
@@ -12,24 +12,14 @@ import {
   type ToggleOption,
 } from '../../rule-list/filter/RulesFilterSidebar';
 
-/** The sidebar shell each page fills with its filters. Every filter applies at once, except text, on blur or Enter. */
-export function FilterSidebar({
-  canClear,
-  onClear,
-  children,
-}: {
-  canClear: boolean;
-  onClear: () => void;
-  children: React.ReactNode;
-}) {
+/**
+ * The sidebar shell each page fills with its filters. Every filter applies at once, except text, on blur or Enter.
+ * Clearing them all is the search input's Clear button.
+ */
+export function FilterSidebar({ children }: { children: React.ReactNode }) {
   return (
     <Box width={32} shrink={0} paddingBottom={2}>
       <Stack direction="column" gap={2}>
-        <Stack justifyContent="flex-end">
-          <Button size="sm" fill="text" onClick={onClear} disabled={!canClear}>
-            <Trans i18nKey="alerting.gma-rule-list.sidebar.clear">Clear filters</Trans>
-          </Button>
-        </Stack>
         {children}
       </Stack>
     </Box>
