@@ -249,10 +249,7 @@ func (s *server) initSeededWatcher(backend seededWatchBackend) {
 	}
 
 	// Construction stays asynchronous even if NATS has not entered Run yet.
-	b := newBroadcasterWithSizes(s.ctx, out, watchChanSize, defaultOverflowCap, metrics, func(e *WrittenEvent) string {
-		return e.Key.Resource
-	}, &seededCacheConfig[*WrittenEvent]{
-		identity:   writtenEventIdentity,
+	b := newBroadcasterWithSizes(s.ctx, out, watchChanSize, defaultOverflowCap, metrics, writtenEventIdentity, &seededCacheConfig[*WrittenEvent]{
 		initialize: initialize,
 		raised:     raised,
 	})

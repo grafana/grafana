@@ -849,7 +849,7 @@ type server struct {
 	// Background watch task -- this has permissions for everything
 	ctx          context.Context
 	cancel       context.CancelFunc
-	broadcaster  Broadcaster[*WrittenEvent]
+	broadcaster  *broadcaster[*WrittenEvent]
 	watchStartup *watchStartup
 
 	// Graceful shutdown: tracks in-flight write operations so Stop can wait
@@ -2257,12 +2257,7 @@ func (s *server) initWatcher() error {
 		}
 	}()
 
-	s.broadcaster = newBroadcasterWithSizes(s.ctx, out, watchChanSize, defaultOverflowCap, s.storageMetrics.Broadcaster, func(e *WrittenEvent) string {
-		if e == nil || e.Key == nil {
-			return ""
-		}
-		return e.Key.Resource
-	}, &seededCacheConfig[*WrittenEvent]{identity: writtenEventIdentity})
+	s.broadcaster = newBroadcaster(s.ctx, out, s.storageMetrics.Broadcaster, writtenEventIdentity)
 	return nil
 }
 
@@ -2275,8 +2270,7 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 
 	// Capture before setup: invalidations during subscription or snapshot reads must
 	// expire this watch too, even if it has not entered the live loop yet.
-	cached, _ := s.broadcaster.(*broadcaster[*WrittenEvent])
-	waitsForStartup := cached != nil && cached.cache.identity != nil && cached.starting()
+	waitsForStartup := s.broadcaster != nil && s.broadcaster.starting()
 	watchExpiryC := s.watchExpiry.WatchInvalidation()
 
 	// Treat a closed client transport and cancellation of this watch's context
@@ -2330,27 +2324,27 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 		requestedSince = ToSnowflakeRV(requestedSince)
 	}
 	name := fmt.Sprintf("%s/%s/%s", key.Group, key.Resource, key.Namespace)
-	var stream <-chan *WrittenEvent
-	if b := cached; b != nil && b.cache.identity != nil {
-		// Invalidations before capture starts, such as the one when it first
-		// starts, predate the stream a waiting watch subscribes to. Later ones,
-		// even before the cache is ready, still expire it.
-		if waitsForStartup {
-			if err := b.ensureReady(ctx); err != nil {
-				return err
-			}
-			if expiry := s.watchStartup.expiryAtCapture(); expiry != nil {
-				watchExpiryC = expiry
-			}
-		}
-		var resume *watchResume
-		if req.Since > 0 && !req.SendInitialEvents {
-			resume = &watchResume{groupResource: GroupResource{Group: key.Group, Resource: key.Resource}, since: requestedSince, requestedRV: req.Since}
-		}
-		stream, err = b.subscribeWatch(ctx, name, key.Resource, resume)
-	} else {
-		stream, err = s.broadcaster.Subscribe(ctx, name, key.Resource)
+	// The gRPC service can take watches before storage initialization installs it.
+	if s.broadcaster == nil {
+		return status.Error(codes.Unavailable, "watch is not ready yet")
 	}
+	// Invalidations before capture starts, such as the one when it first
+	// starts, predate the stream a waiting watch subscribes to. Later ones,
+	// even before the cache is ready, still expire it.
+	if waitsForStartup {
+		if err := s.broadcaster.ensureReady(ctx); err != nil {
+			return err
+		}
+		if expiry := s.watchStartup.expiryAtCapture(); expiry != nil {
+			watchExpiryC = expiry
+		}
+	}
+	var resume *watchResume
+	if req.Since != 0 && !req.SendInitialEvents {
+		resume = &watchResume{since: requestedSince, requestedRV: req.Since, unchecked: req.Since < 0}
+	}
+	gr := GroupResource{Group: key.Group, Resource: key.Resource}
+	stream, progress, err := s.broadcaster.subscribeWatch(ctx, name, gr, resume)
 	if err != nil {
 		return err
 	}
@@ -2408,14 +2402,16 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 
 		rv, err := s.backend.ListIterator(ctx, listReq, func(ListIterator) error { return nil })
 		if err != nil {
-			// Fallback to the broadcasterʼs view if the backend lookup fails.
-			// This preserves previous behaviour while still eliminating the
-			// common race in the majority of cases.
-			s.log.Warn("watch: failed to fetch current RV from backend, falling back to broadcaster", "err", err)
-			mostRecentRV = s.mostRecentRV.Load()
-		} else {
-			mostRecentRV = rv
+			// The broadcaster's view is no safe start: notifications can be
+			// ahead of writes that commit after the watch starts, which it
+			// would then skip. Let the client retry.
+			if ctx.Err() != nil {
+				return ctx.Err()
+			}
+			s.log.Warn("watch: failed to fetch current RV from backend", "err", err)
+			return status.Error(codes.Unavailable, "watch: current resource version is unavailable")
 		}
+		mostRecentRV = rv
 	} else {
 		// For all other code-paths we either already have an explicit RV or we
 		// will derive it from the initial list below.
@@ -2498,6 +2494,8 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 		defer ticker.Stop()
 		bookmarkC = ticker.C
 	}
+	// consumed counts the events this watch has taken from the stream.
+	var consumed int64
 
 	for {
 		// Prioritize known delivery gaps over buffered live events.
@@ -2515,6 +2513,12 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 			return expired()
 
 		case <-bookmarkC:
+			// KV notifiers settle and order events across collections, but other
+			// collections are not routed to this stream, so take their progress
+			// from the broadcaster. Legacy SQL polls collections separately.
+			if isKVBackend {
+				processedRV = max(processedRV, progress.rv(consumed))
+			}
 			cutoff := time.Now().Add(-filteredBookmarkDelay)
 			cutoffRV := cutoff.UnixMicro()
 			if IsSnowflake(processedRV) {
@@ -2533,12 +2537,8 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 				s.log.Debug("watch events closed")
 				return nil
 			}
+			consumed++
 			if event.ResourceVersion <= since {
-				continue
-			}
-			// KV notifiers settle and order events across collections. Legacy SQL polls
-			// group/resources separately, so other collections cannot establish progress.
-			if !isKVBackend && (event.Key.Group != key.Group || event.Key.Resource != key.Resource) {
 				continue
 			}
 			if matchesQueryKey(key, event.Key) && checker(event.Key.Name, event.Folder) {

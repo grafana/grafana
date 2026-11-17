@@ -510,13 +510,13 @@ func TestUnseededWatchByteEvictionExpiresResume(t *testing.T) {
 				srv := initWatchServerWithSeededWatches(t, backend, false)
 				require.Nil(t, srv.watchStartup)
 				synctest.Wait()
-				b := srv.broadcaster.(*broadcaster[*WrittenEvent])
+				b := srv.broadcaster
 				first, second := bookmarkWrittenEvent(base+1), bookmarkWrittenEvent(base+2)
 				b.cache.maxBytes = first.sizeBytes()
 				events <- first
 				events <- second
 				synctest.Wait()
-				require.Equal(t, 1, b.cache.events.len)
+				require.Equal(t, 1, b.cache.cachedLen())
 
 				ctx, cancel := context.WithCancel(authlib.WithAuthInfo(t.Context(), newWatchTestUser()))
 				defer cancel()
@@ -886,4 +886,246 @@ func (f *heldFloors) isHeld() bool {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	return f.held
+}
+
+func TestKVWatchResumeSurvivesOtherResourceBurst(t *testing.T) {
+	backend := setupTestStorageBackend(t, withChannelNotifier)
+	base := snowflakeFromTime(time.Now().Add(-time.Hour))
+	seen, missed := durableWatchEvent(base), durableWatchEvent(base+1)
+	saveWatchEvent(t, backend, seen)
+	saveWatchEvent(t, backend, missed)
+	srv := initWatchServer(t, backend)
+	require.NoError(t, srv.watchStartup.broadcaster.waitReady(t.Context()))
+
+	ctx, cancel := context.WithTimeout(authlib.WithAuthInfo(t.Context(), newWatchTestUser()), 10*time.Second)
+	defer cancel()
+	// A dashboards watch tells when the broadcaster has processed the burst.
+	dashboardsReq := bookmarkWatchRequest()
+	dashboardsReq.AllowWatchBookmarks = false
+	dashboardsReq.Options.Key = &resourcepb.ResourceKey{Group: "dashboard.grafana.app", Resource: "dashboards", Namespace: watchTestNamespace}
+	// A fixed cursor below the burst, unlike Since 0, does not depend on when
+	// the watch reads the current RV.
+	dashboardsReq.Since = missed.ResourceVersion
+	dashboards := newMockWatchServer(ctx)
+	go func() { _ = srv.Watch(dashboardsReq, dashboards) }()
+	requireMetricEventually(t, srv.storageMetrics.Broadcaster.Subscribers.WithLabelValues("dashboards"), 1)
+
+	const burst = defaultCacheSize + 100
+	var last int64
+	for i := range burst {
+		event := durableWatchEvent(base + 2 + int64(i))
+		event.Group, event.Resource = "dashboard.grafana.app", "dashboards"
+		saveWatchEvent(t, backend, event)
+		backend.notifier.Publish(event)
+		last = event.ResourceVersion
+	}
+	for received := false; !received; {
+		select {
+		case event := <-dashboards.events:
+			received = event.Resource.Version == last
+		case <-ctx.Done():
+			t.Fatal("broadcaster did not process the burst")
+		}
+	}
+
+	req := bookmarkWatchRequest()
+	req.AllowWatchBookmarks = false
+	req.Options.Key.Name = ""
+	req.Since = seen.ResourceVersion
+	stream := newMockWatchServer(ctx)
+	done := make(chan error, 1)
+	go func() { done <- srv.Watch(req, stream) }()
+	select {
+	case event := <-stream.events:
+		require.Equal(t, missed.ResourceVersion, event.Resource.Version)
+	case err := <-done:
+		t.Fatalf("watch ended before replaying the missed playlist event: %v", err)
+	case <-ctx.Done():
+		t.Fatal("missed playlist event was not replayed")
+	}
+	cancel()
+	require.NoError(t, <-done)
+}
+
+func TestKVWatchIdleResourceBookmarksFollowOtherResources(t *testing.T) {
+	for _, seeded := range []bool{false, true} {
+		t.Run(map[bool]string{false: "unseeded", true: "seeded"}[seeded], func(t *testing.T) {
+			backend := setupTestStorageBackend(t, withChannelNotifier)
+			// Old enough that the filtered-progress delay does not cap the bookmark.
+			base := snowflakeFromTime(time.Now().Add(-time.Hour))
+			saveWatchEvent(t, backend, durableWatchEvent(base))
+			srv := initWatchServerWithSeededWatches(t, backend, seeded)
+			if seeded {
+				require.NoError(t, srv.watchStartup.broadcaster.waitReady(t.Context()))
+			}
+
+			ctx, cancel := context.WithTimeout(authlib.WithAuthInfo(t.Context(), newWatchTestUser()), 10*time.Second)
+			defer cancel()
+			req := bookmarkWatchRequest()
+			req.Options.Key.Name = ""
+			req.Since = base
+			stream := newMockWatchServer(ctx)
+			done := make(chan error, 1)
+			go func() { done <- srv.Watch(req, stream) }()
+			requireMetricEventually(t, srv.storageMetrics.Broadcaster.Subscribers.WithLabelValues(watchTestResource), 1)
+
+			dashboard := durableWatchEvent(base + 1)
+			dashboard.Group, dashboard.Resource = "dashboard.grafana.app", "dashboards"
+			saveWatchEvent(t, backend, dashboard)
+			backend.notifier.Publish(dashboard)
+			select {
+			case event := <-stream.events:
+				require.Equal(t, resourcepb.WatchEvent_BOOKMARK, event.Type)
+				require.Equal(t, dashboard.ResourceVersion, event.Resource.Version)
+			case err := <-done:
+				t.Fatalf("watch ended early: %v", err)
+			case <-ctx.Done():
+				t.Fatal("other resources did not advance the idle watch's bookmark")
+			}
+			cancel()
+			require.NoError(t, <-done)
+		})
+	}
+}
+
+// Legacy SQL polls collections independently, so a lower RV can arrive after a
+// higher one. A watch from "now" that falls back to the broadcaster's view must
+// start above every event it will not replay.
+
+type failingListKVWatchBackend struct {
+	unseededKVWatchBackend
+}
+
+func (b *failingListKVWatchBackend) ListIterator(context.Context, *resourcepb.ListRequest, func(ListIterator) error) (int64, error) {
+	return 0, errUnimplemented
+}
+
+// The gRPC service can take watches before storage initialization installs
+// the broadcaster.
+func TestWatchBeforeBroadcasterIsInstalled(t *testing.T) {
+	srv, err := NewUninitializedResourceServer(ResourceServerOptions{Backend: &UnimplementedStorageBackend{}})
+	require.NoError(t, err)
+	ctx := authlib.WithAuthInfo(t.Context(), newWatchTestUser())
+	require.NotPanics(t, func() {
+		err = srv.Watch(&resourcepb.WatchRequest{}, newMockWatchServer(ctx))
+	})
+	require.Equal(t, codes.InvalidArgument, status.Code(err))
+	require.NotPanics(t, func() {
+		err = srv.Watch(bookmarkWatchRequest(), newMockWatchServer(ctx))
+	})
+	require.Equal(t, codes.Unavailable, status.Code(err))
+}
+
+// Negative cursors predate resume floors: such watches still replay every
+// cached event of their collection, as before watches were routed.
+func TestWatchNegativeSinceReplaysCache(t *testing.T) {
+	for _, backendType := range []string{"legacy", "kv"} {
+		t.Run(backendType, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				events := make(chan *WrittenEvent)
+				defer close(events)
+				var backend StorageBackend = &legacyWatchBackend{events: events}
+				if backendType == "kv" {
+					backend = &unseededKVWatchBackend{events: events}
+				}
+				srv := initWatchServerWithSeededWatches(t, backend, false)
+				events <- bookmarkWrittenEvent(100)
+				synctest.Wait()
+
+				ctx, cancel := context.WithCancel(authlib.WithAuthInfo(t.Context(), newWatchTestUser()))
+				defer cancel()
+				req := bookmarkWatchRequest()
+				req.Since = -1
+				req.AllowWatchBookmarks = false
+				stream := newMockWatchServer(ctx)
+				done := make(chan error, 1)
+				go func() { done <- srv.Watch(req, stream) }()
+				synctest.Wait()
+				require.NotEmpty(t, stream.events, "the cached event was not replayed")
+				require.Equal(t, int64(100), (<-stream.events).Resource.Version)
+				cancel()
+				require.NoError(t, <-done)
+			})
+		})
+	}
+}
+
+// Without the current RV there is no safe start for a watch from "now":
+// notification RVs can be ahead of writes that commit later.
+func TestWatchFromNowFailsWithoutCurrentRV(t *testing.T) {
+	for _, backendType := range []string{"legacy", "kv"} {
+		t.Run(backendType, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				events := make(chan *WrittenEvent)
+				defer close(events)
+				var backend StorageBackend = &legacyWatchBackend{events: events}
+				if backendType == "kv" {
+					backend = &failingListKVWatchBackend{unseededKVWatchBackend{events: events}}
+				}
+				srv := initWatchServerWithSeededWatches(t, backend, false)
+				events <- bookmarkWrittenEvent(200)
+				synctest.Wait()
+
+				ctx, cancel := context.WithCancel(authlib.WithAuthInfo(t.Context(), newWatchTestUser()))
+				defer cancel()
+				req := bookmarkWatchRequest()
+				req.Since = 0
+				stream := newMockWatchServer(ctx)
+				done := make(chan error, 1)
+				go func() { done <- srv.Watch(req, stream) }()
+				synctest.Wait()
+				select {
+				case err := <-done:
+					require.Equal(t, codes.Unavailable, status.Code(err), "got %v", err)
+					require.NotContains(t, status.Convert(err).Message(), errUnimplemented.Error(), "backend errors must stay on the server")
+				default:
+					t.Fatal("the watch started without a safe cursor")
+				}
+				require.Empty(t, stream.events)
+			})
+		})
+	}
+}
+
+// A watch only takes cross-collection progress from events the broadcaster
+// received after it subscribed: earlier ones were not replayed to it, so a
+// write in its own collection with a lower RV can still arrive.
+func TestKVWatchBookmarksIgnoreProgressBeforeSubscribing(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		base := snowflakeFromTime(advanceBookmarkClock().Add(-time.Hour))
+		events := make(chan *WrittenEvent)
+		defer close(events)
+		srv := initWatchServerWithSeededWatches(t, &unseededKVWatchBackend{events: events}, false)
+		dashboard := func(rv int64) *WrittenEvent {
+			event := bookmarkWrittenEvent(rv)
+			event.Key = &resourcepb.ResourceKey{Group: "dashboard.grafana.app", Resource: "dashboards", Namespace: watchTestNamespace, Name: "d"}
+			return event
+		}
+		events <- dashboard(base + 200)
+		synctest.Wait()
+
+		ctx, cancel := context.WithCancel(authlib.WithAuthInfo(t.Context(), newWatchTestUser()))
+		defer cancel()
+		req := bookmarkWatchRequest()
+		req.Options.Key.Name = ""
+		req.Since = base
+		stream := newMockWatchServer(ctx)
+		done := make(chan error, 1)
+		go func() { done <- srv.Watch(req, stream) }()
+		synctest.Wait()
+		time.Sleep(2 * time.Second)
+		synctest.Wait()
+		require.Empty(t, stream.events, "progress from before the watch subscribed must not become a bookmark")
+
+		events <- dashboard(base + 300)
+		synctest.Wait()
+		time.Sleep(time.Second)
+		synctest.Wait()
+		require.NotEmpty(t, stream.events)
+		bookmark := <-stream.events
+		require.Equal(t, resourcepb.WatchEvent_BOOKMARK, bookmark.Type)
+		require.Equal(t, base+300, bookmark.Resource.Version)
+		cancel()
+		require.NoError(t, <-done)
+	})
 }
