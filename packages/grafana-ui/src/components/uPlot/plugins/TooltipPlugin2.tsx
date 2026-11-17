@@ -30,6 +30,8 @@ export const enum TooltipHoverMode {
 type GetDataLinksCallback = (seriesIdx: number, dataIdx: number) => LinkModel[];
 type GetAdHocFiltersCallback = (seriesIdx: number, dataIdx: number) => AdHocFilterModel[];
 
+type OnSelectCallback = (seriesIdx: number, dataIdx: number) => void;
+
 interface TooltipPlugin2Props {
   config: UPlotConfigBuilder;
   hoverMode: TooltipHoverMode;
@@ -45,6 +47,11 @@ interface TooltipPlugin2Props {
   onSelectRange?: OnSelectRangeCallback;
   getDataLinks?: GetDataLinksCallback;
   getAdHocFilters?: GetAdHocFiltersCallback;
+
+  /** Called on an Alt-click (Option-click on macOS) on a hovered point; other clicks behave as without it */
+  onSelect?: OnSelectCallback;
+  /** Only Alt-click selection is handled: other clicks do nothing and no tooltip renders. Needs `onSelect` */
+  selectOnly?: boolean;
 
   render: (
     u: uPlot,
@@ -124,6 +131,8 @@ export const TooltipPlugin2 = ({
   syncScope = 'global', // eventsScope
   getDataLinks = getDataLinksFallback,
   getAdHocFilters = getAdHocFiltersFallback,
+  onSelect,
+  selectOnly = false,
 }: TooltipPlugin2Props) => {
   const domRef = useRef<HTMLDivElement>(null);
   const portalRoot = useRef<HTMLElement | null>(null);
@@ -146,6 +155,15 @@ export const TooltipPlugin2 = ({
 
   const getAdHocFiltersRef = useRef(getAdHocFilters);
   getAdHocFiltersRef.current = getAdHocFilters;
+
+  // read by the plot's click handlers, which only run after a commit
+  const onSelectRef = useRef(onSelect);
+  const selectOnlyRef = useRef(selectOnly);
+
+  useLayoutEffect(() => {
+    onSelectRef.current = onSelect;
+    selectOnlyRef.current = selectOnly;
+  });
 
   useLayoutEffect(() => {
     sizeRef.current?.observer.disconnect();
@@ -302,6 +320,18 @@ export const TooltipPlugin2 = ({
       selectedRange = null;
     };
 
+    const handleSelectClick = () => {
+      if (!_isHovering || _isPinned || closestSeriesIdx == null) {
+        return;
+      }
+
+      const dataIdx = seriesIdxs[closestSeriesIdx];
+
+      if (dataIdx != null) {
+        onSelectRef.current?.(closestSeriesIdx, dataIdx);
+      }
+    };
+
     const dismiss = () => {
       let prevIsPinned = _isPinned;
       _isPinned = false;
@@ -377,7 +407,11 @@ export const TooltipPlugin2 = ({
       // this handles pinning, 0-width range selection, and one-click
       u.over.addEventListener('click', (e) => {
         if (e.target === u.over) {
-          if (e.ctrlKey || e.metaKey) {
+          if (e.altKey && onSelectRef.current != null) {
+            handleSelectClick();
+          } else if (selectOnlyRef.current) {
+            return;
+          } else if (e.ctrlKey || e.metaKey) {
             let xVal;
 
             const isXAxisHorizontal = u.scales.x.ori === 0;
@@ -760,6 +794,10 @@ export const TooltipPlugin2 = ({
       size.height = 0;
     }
   }, [isHovering]);
+
+  if (selectOnly) {
+    return null;
+  }
 
   if (plotRef.current && isHovering) {
     return createPortal(
