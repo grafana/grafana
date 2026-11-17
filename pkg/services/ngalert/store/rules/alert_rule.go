@@ -694,6 +694,10 @@ func (st RuleStore) InsertAlertRules(ctx context.Context, user *ngmodels.UserUID
 			}
 		}
 
+		if err := st.deleteTombstonesRestoredBy(ctx, sess, newRules); err != nil {
+			return err
+		}
+
 		if len(keys) > 0 {
 			sess.PublishAfterCommit(&RuleChangeEvent{
 				RuleKeys:   keys,
@@ -702,6 +706,26 @@ func (st RuleStore) InsertAlertRules(ctx context.Context, user *ngmodels.UserUID
 		}
 		return nil
 	})
+}
+
+// deleteTombstonesRestoredBy removes the tombstones that the inserted rules restore. Tombstones keep
+// no rule UID, so the trash identifies them by GUID, and restoring one from the trash creates the
+// rule with that GUID as its UID.
+func (st RuleStore) deleteTombstonesRestoredBy(ctx context.Context, sess *db.Session, inserted []alertRule) error {
+	uidsByOrg := make(map[int64][]string)
+	for _, r := range inserted {
+		uidsByOrg[r.OrgID] = append(uidsByOrg[r.OrgID], r.UID)
+	}
+	for orgID, uids := range uidsByOrg {
+		rows, err := sess.Table(alertRuleVersion{}).Where("rule_org_id = ? AND rule_uid = ''", orgID).In("rule_guid", uids).Delete(alertRuleVersion{})
+		if err != nil {
+			return fmt.Errorf("failed to delete restored rules from trash: %w", err)
+		}
+		if rows > 0 {
+			st.Logger.FromContext(ctx).Debug("Deleted restored rules from trash", "org_id", orgID, "count", rows)
+		}
+	}
+	return nil
 }
 
 // UpdateAlertRules is a handler for updating alert rules.

@@ -4623,6 +4623,70 @@ func TestIntegration_ListDeletedRules(t *testing.T) {
 	})
 }
 
+func TestIntegration_InsertAlertRulesDeletesRestoredTombstones(t *testing.T) {
+	tutil.SkipIntegrationTestInShortMode(t)
+
+	cfg := setting.NewCfg()
+	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{
+		BaseInterval:           1 * time.Second,
+		RuleVersionRecordLimit: -1,
+		DeletedRuleRetention:   10 * time.Hour,
+	}
+	sqlStore := db.NewTestStore(t)
+	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, &fakeBus{})
+	ctx := context.Background()
+
+	const orgID, otherOrgID = int64(1), int64(2)
+	gen := models.RuleGen.With(models.RuleGen.WithIntervalMatching(store.Cfg.BaseInterval))
+
+	deleteRules := func(t *testing.T, orgID int64, n int) []string {
+		t.Helper()
+		result, err := store.InsertAlertRules(ctx, &models.AlertingUserUID, toInsertRules(gen.With(gen.WithOrgID(orgID)).GenerateMany(n)))
+		require.NoError(t, err)
+		guids := make([]string, 0, n)
+		for _, r := range result {
+			require.NoError(t, store.DeleteAlertRulesByUID(ctx, orgID, new(models.UserUID("test")), false, r.UID))
+			guids = append(guids, r.GUID)
+		}
+		return guids
+	}
+	trashGUIDs := func(t *testing.T, orgID int64) []string {
+		t.Helper()
+		list, err := store.ListDeletedRules(ctx, orgID)
+		require.NoError(t, err)
+		out := make([]string, 0, len(list))
+		for _, r := range list {
+			out = append(out, r.GUID)
+		}
+		return out
+	}
+
+	restored := deleteRules(t, orgID, 2)
+	kept := deleteRules(t, orgID, 1)
+	otherOrg := deleteRules(t, otherOrgID, 1)
+
+	// Restore both trashed rules of the first set in one insert, plus one rule that restores nothing.
+	// The other org's tombstone GUID is reused as a UID in orgID to check the delete is org-scoped.
+	toInsert := []models.InsertRule{
+		{AlertRule: gen.With(gen.WithOrgID(orgID), gen.WithUID(restored[0])).Generate()},
+		{AlertRule: gen.With(gen.WithOrgID(orgID), gen.WithUID(restored[1])).Generate()},
+		{AlertRule: gen.With(gen.WithOrgID(orgID), gen.WithUID(otherOrg[0])).Generate()},
+	}
+	result, err := store.InsertAlertRules(ctx, &models.AlertingUserUID, toInsert)
+	require.NoError(t, err)
+
+	assert.ElementsMatch(t, kept, trashGUIDs(t, orgID))
+	assert.ElementsMatch(t, otherOrg, trashGUIDs(t, otherOrgID))
+
+	for i, r := range result {
+		assert.NotEqual(t, toInsert[i].UID, r.GUID, "restored rule gets a fresh GUID")
+		versions, err := store.GetAlertRuleVersions(ctx, orgID, r.GUID)
+		require.NoError(t, err)
+		assert.Len(t, versions, 1, "restored rule should keep its own first version")
+	}
+}
+
 func TestIntegration_CleanUpDeletedAlertRules(t *testing.T) {
 	tutil.SkipIntegrationTestInShortMode(t)
 
