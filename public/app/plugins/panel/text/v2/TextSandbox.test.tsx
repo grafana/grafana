@@ -1,6 +1,7 @@
 import { act, render, screen } from '@testing-library/react';
 
-import { textUtil, toDataFrame } from '@grafana/data';
+import { CoreApp, textUtil, toDataFrame } from '@grafana/data';
+import config from 'app/core/config';
 import { allowOrigins, getBlockedSummary } from 'app/features/dashboard-scene/scene/sandbox-consent/sandboxConsent';
 
 import { TextMode } from '../panelcfg.gen';
@@ -9,13 +10,17 @@ import { SandboxFrame } from './SandboxFrame';
 import { TextNGHtmlView } from './TextNGHtmlView';
 import { TextNGPanel } from './TextNGPanel';
 import { TextSandbox } from './TextSandbox';
-import { createData, createProps } from './test-utils';
+import { createData, createProps, renderPanel } from './test-utils';
 
 jest.mock('./SandboxFrame');
 
 const mount = jest.mocked(SandboxFrame);
 
-beforeEach(() => mount.mockClear());
+const intersectionObserverImplementation = jest.mocked(window.IntersectionObserver).getMockImplementation()!;
+beforeEach(() => {
+  mount.mockClear();
+  jest.mocked(window.IntersectionObserver).mockClear().mockImplementation(intersectionObserverImplementation);
+});
 
 it('passes legacy embeds to the same renderer without a custom CSP', () => {
   render(<TextNGHtmlView html='<iframe title="Legacy embed" src="https://example.com"></iframe>' />);
@@ -151,4 +156,94 @@ it('does not rerender unchanged frame content when panel width changes', () => {
   rerender(<TextNGPanel {...props} width={600} options={{ ...props.options, content: '<p>Updated content</p>' }} />);
   expect(screen.getByText('Updated content')).toBeVisible();
   expect(mount.mock.calls.at(-1)![0].html).toBe('<p>Updated content</p>');
+});
+
+it('retains frame height while suspended and restores the latest content on return', () => {
+  jest.useFakeTimers();
+  let callback: IntersectionObserverCallback;
+  let target: Element;
+  const observer = jest.spyOn(window, 'IntersectionObserver').mockImplementation((notify) => {
+    callback = notify;
+    return {
+      observe: (element) => {
+        target = element;
+      },
+      unobserve: jest.fn(),
+      disconnect: jest.fn(),
+      root: null,
+      rootMargin: '1000px',
+      scrollMargin: '1000px',
+      thresholds: [0],
+      takeRecords: () => [],
+    };
+  });
+  const visibility = (isIntersecting: boolean) =>
+    act(() => callback([{ target, isIntersecting } as IntersectionObserverEntry], {} as IntersectionObserver));
+  try {
+    const view = render(<TextSandbox html="<p>Initial</p>" deferOffscreen minHeight={100} />);
+    expect(mount).not.toHaveBeenCalled();
+    visibility(true);
+    act(() => jest.advanceTimersByTime(16));
+    expect(screen.getByText('Initial')).toBeInTheDocument();
+    act(() => mount.mock.calls.at(-1)![0].onHeight(240, 230));
+    visibility(false);
+    act(() => jest.advanceTimersByTime(5000));
+    expect(screen.queryByText('Initial')).not.toBeInTheDocument();
+    expect(target!).toHaveStyle({ minHeight: '240px' });
+    view.rerender(<TextSandbox html="<p>Latest</p>" deferOffscreen minHeight={100} />);
+    visibility(true);
+    act(() => jest.advanceTimersByTime(16));
+    expect(screen.getByText('Latest')).toBeInTheDocument();
+    expect(target!).not.toHaveStyle({ minHeight: '240px' });
+    view.unmount();
+  } finally {
+    observer.mockRestore();
+    jest.useRealTimers();
+  }
+});
+
+it.each([
+  '<iframe title="Embedded" src="https://example.com"></iframe>',
+  '<video controls></video>',
+  '<input value="State">',
+  '<details open><summary>State</summary></details>',
+  '<div contenteditable="true">State</div>',
+])('keeps stateful content mounted despite opting into visibility management: %s', (html) => {
+  const observer = jest.spyOn(window, 'IntersectionObserver');
+  const { unmount } = render(<TextSandbox html={html} hasData={false} deferOffscreen />);
+  expect(mount).toHaveBeenCalled();
+  expect(observer).not.toHaveBeenCalled();
+  unmount();
+  observer.mockRestore();
+});
+
+it.each([
+  { name: 'dashboard', app: CoreApp.Dashboard, deferred: true },
+  { name: 'panel viewer', app: CoreApp.PanelViewer, deferred: false },
+  { name: 'fit content', app: CoreApp.Dashboard, fitContent: true, deferred: false },
+  { name: 'image capture', app: CoreApp.Dashboard, capture: true, deferred: false },
+  { name: 'unsanitized HTML', app: CoreApp.Dashboard, unsafe: true, deferred: false },
+])('uses visibility management only where supported: $name', ({ app, fitContent, capture, unsafe, deferred }) => {
+  jest.useFakeTimers();
+  const previous = config.disableSanitizeHtml;
+  config.disableSanitizeHtml = Boolean(unsafe);
+  if (capture) {
+    window.__grafanaImageRendererMessageChannel = jest.fn();
+  }
+  try {
+    const view = renderPanel(
+      createProps((value) => value, { fitContent, options: { content: 'Visible content' } }),
+      app
+    );
+    if (deferred) {
+      expect(mount).not.toHaveBeenCalled();
+      act(() => jest.advanceTimersByTime(16));
+    }
+    expect(screen.getByText('Visible content')).toBeInTheDocument();
+    view.unmount();
+  } finally {
+    config.disableSanitizeHtml = previous;
+    delete window.__grafanaImageRendererMessageChannel;
+    jest.useRealTimers();
+  }
 });

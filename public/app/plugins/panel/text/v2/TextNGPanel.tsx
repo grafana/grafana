@@ -23,6 +23,7 @@ import {
   useTheme2,
 } from '@grafana/ui';
 import config from 'app/core/config';
+import { isRenderTarget } from 'app/features/dashboard/services/isRenderTarget';
 
 import {
   type CodeOptions,
@@ -291,6 +292,7 @@ export function TextNGPanel(props: Props) {
       {...processed}
       code={options.code}
       fitContent={fitContentOn}
+      deferOffscreen={app === CoreApp.Dashboard && !fitContent && !isRenderTarget() && !config.disableSanitizeHtml}
       contentRef={contentRef}
       consent={consent}
     />
@@ -352,6 +354,7 @@ interface ProcessedContent extends RenderedContent {
 interface TextNGViewProps extends ProcessedContent {
   code: Options['code'];
   fitContent?: boolean;
+  deferOffscreen?: boolean;
   contentRef?: Ref<HTMLDivElement>;
   transparent?: boolean;
   consent?: TextSandboxProps['consent'];
@@ -363,6 +366,7 @@ const TextNGView = memo(function TextNGView({
   error,
   code,
   fitContent,
+  deferOffscreen,
   contentRef,
   transparent,
   hasData,
@@ -400,6 +404,7 @@ const TextNGView = memo(function TextNGView({
   const rendered = (
     <TextNGHtmlView
       html={content}
+      deferOffscreen={deferOffscreen}
       hasData={hasData}
       minHeight={fitContent ? undefined : fillHeight}
       consent={consent}
