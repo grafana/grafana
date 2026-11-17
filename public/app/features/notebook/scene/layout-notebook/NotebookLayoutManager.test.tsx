@@ -2799,6 +2799,26 @@ describe('NotebookLayoutManager element names', () => {
     expect(second.state.elementName).toMatch(/^heading-[a-z0-9]{6}$/);
   });
 
+  it('keeps the name of a deleted cell through undo and redo', () => {
+    const manager = buildManager(buildNarrativeCells(['a']));
+    const history = attachHistory(manager);
+    const cell = manager.addCell('heading', 1)!;
+    const name = cell.state.elementName;
+
+    manager.removeCell(cell);
+    expect(cellNames(manager)).toEqual(['a']);
+
+    history.undo();
+    expect(cellNames(manager)).toEqual(['a', name]);
+    expect(manager.state.cells[1]).toBe(cell);
+
+    history.redo();
+    expect(cellNames(manager)).toEqual(['a']);
+
+    history.undo();
+    expect(cellNames(manager)).toEqual(['a', name]);
+  });
+
   it('names a copy from the block type so copies of copies do not grow the name', () => {
     const manager = buildManager(buildNarrativeCells(['a']));
 
