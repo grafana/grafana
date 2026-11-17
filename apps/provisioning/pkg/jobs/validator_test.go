@@ -1395,6 +1395,40 @@ func TestAdmissionValidator_ReadsTheSupportedResourcesOnEachValidation(t *testin
 	require.NoError(t, v.Validate(context.Background(), newAdmissionTestAttributes(job, admission.Create), nil))
 }
 
+// The job store claims a job and renews its lease with updates that keep the spec. They must
+// pass after a manifest removes the kind of an accepted job.
+func TestAdmissionValidator_AcceptsAnUpdateThatKeepsTheSpec(t *testing.T) {
+	v := NewAdmissionValidator(func() []provisioning.SupportedResource {
+		return []provisioning.SupportedResource{{Group: "dashboard.grafana.app", Kind: "Dashboard"}}
+	}, nil)
+	accepted := &provisioning.Job{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+		Spec: provisioning.JobSpec{
+			Action:     provisioning.JobActionPush,
+			Repository: "test-repo",
+			Push: &provisioning.ExportJobOptions{
+				Resources: []provisioning.ResourceRef{{Name: "widget-1", Kind: "Widget", Group: "example.ext.grafana.app"}},
+			},
+		},
+	}
+	update := func(job *provisioning.Job) error {
+		return v.Validate(context.Background(), admission.NewAttributesRecord(
+			job, accepted,
+			provisioning.JobResourceInfo.GroupVersionKind(), "default", "test-job",
+			provisioning.JobResourceInfo.GroupVersionResource(), "",
+			admission.Update, nil, false, &user.DefaultInfo{},
+		), nil)
+	}
+
+	claimed := accepted.DeepCopy()
+	claimed.Labels = map[string]string{"claim": "1"}
+	require.NoError(t, update(claimed))
+
+	changed := accepted.DeepCopy()
+	changed.Spec.Push.Resources[0].Name = "widget-2"
+	require.ErrorContains(t, update(changed), "kind is not supported for export")
+}
+
 func newAdmissionTestAttributes(obj runtime.Object, op admission.Operation) admission.Attributes {
 	return admission.NewAttributesRecord(
 		obj,

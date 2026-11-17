@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/admission"
@@ -431,6 +432,12 @@ func (v *AdmissionValidator) Validate(ctx context.Context, a admission.Attribute
 			job.Name,
 			field.ErrorList{field.Forbidden(field.NewPath("spec", "action"), "test jobs require the provisioning.performance feature flag")},
 		)
+	}
+
+	// An update that keeps the spec is a claim, a progress write or a lease renewal. The spec
+	// passed on creation, and the supported kinds can change while the job runs.
+	if old, ok := a.GetOldObject().(*provisioning.Job); ok && a.GetOperation() == admission.Update && apiequality.Semantic.DeepEqual(old.Spec, job.Spec) {
+		return nil
 	}
 
 	return ValidateJob(job, v.supportedResources())
