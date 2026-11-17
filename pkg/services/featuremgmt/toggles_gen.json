@@ -3358,13 +3358,16 @@
     {
       "metadata": {
         "name": "grafana.megaMenuPeekAndDock",
-        "resourceVersion": "1794910815551",
-        "creationTimestamp": "2026-11-17T10:20:15Z"
+        "resourceVersion": "1794924578516",
+        "creationTimestamp": "2026-11-17T10:20:15Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-17 14:09:38.516633 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Opens the mega menu over the page while the pointer rests on its toggle, and docks it when the toggle is clicked on wide screens. The toggle in the docked menu's header closes it, in place of the footer's dock button",
         "stage": "experimental",
-        "codeowner": "@grafana/dashboards-squad",
+        "codeowner": "@grafana/grafana-frontend-navigation",
         "frontend": true,
         "expression": "false"
       }
