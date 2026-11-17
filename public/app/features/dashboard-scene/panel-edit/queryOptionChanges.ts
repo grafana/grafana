@@ -1,34 +1,44 @@
 import { type SceneQueryRunner, type VizPanel } from '@grafana/scenes';
-import { type QueryGroupOptions } from 'app/types/query';
 
 import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 import { type QueryOptionName } from '../utils/interactions';
 import { trackPanelSettingChange } from '../utils/trackPanelSettingChange';
 
-/**
- * The query options a change sets differently from the panel's current state, compared the way both data panes
- * apply them. Must run before the change is applied.
- */
-export function getChangedQueryOptions(
-  panel: VizPanel,
-  queryRunner: SceneQueryRunner,
-  options: QueryGroupOptions
-): QueryOptionName[] {
-  const timeRange = panel.state.$timeRange instanceof PanelTimeRange ? panel.state.$timeRange.state : undefined;
-  const changed: Array<[QueryOptionName, unknown, unknown]> = [
-    ['max_data_points', options.maxDataPoints, queryRunner.state.maxDataPoints],
-    ['min_interval', options.minInterval, queryRunner.state.minInterval],
-    ['cache_timeout', options.cacheTimeout, queryRunner.state.cacheTimeout],
-    ['query_caching_ttl', options.queryCachingTTL, queryRunner.state.queryCachingTTL],
-    ['relative_time', options.timeRange?.from, timeRange?.timeFrom],
-    ['time_shift', options.timeRange?.shift, timeRange?.timeShift],
-    ['hide_time_info', options.timeRange?.hide, timeRange?.hideTimeOverride],
-  ];
+type QueryOptionState = Record<QueryOptionName, unknown>;
 
-  // null, undefined and an empty field all mean "not set".
+/**
+ * The query options as the panel holds them. Read it before and after a change is applied: comparing the two
+ * reports only what was kept, since the data panes drop some values (for example a hide time info setting with
+ * no relative time or time shift to apply it to).
+ */
+export function getQueryOptionState(panel: VizPanel, queryRunner: SceneQueryRunner): QueryOptionState {
+  const timeRange = panel.state.$timeRange instanceof PanelTimeRange ? panel.state.$timeRange.state : undefined;
+
+  return {
+    max_data_points: queryRunner.state.maxDataPoints,
+    min_interval: queryRunner.state.minInterval,
+    cache_timeout: queryRunner.state.cacheTimeout,
+    query_caching_ttl: queryRunner.state.queryCachingTTL,
+    relative_time: timeRange?.timeFrom,
+    time_shift: timeRange?.timeShift,
+    hide_time_info: timeRange?.hideTimeOverride,
+  };
+}
+
+export function getChangedQueryOptions(before: QueryOptionState, after: QueryOptionState): QueryOptionName[] {
+  // null, an empty value and false all mean "not set", for example hide time info on a newly created time range.
   const normalize = (value: unknown) => (value === null || value === '' || value === false ? undefined : value);
 
-  return changed.filter(([, next, current]) => normalize(next) !== normalize(current)).map(([name]) => name);
+  const names: QueryOptionName[] = [
+    'max_data_points',
+    'min_interval',
+    'cache_timeout',
+    'query_caching_ttl',
+    'relative_time',
+    'time_shift',
+    'hide_time_info',
+  ];
+  return names.filter((name) => normalize(before[name]) !== normalize(after[name]));
 }
 
 export function trackQueryOptionChanges(panel: VizPanel, changed: QueryOptionName[], editor: 'classic' | 'next') {

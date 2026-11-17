@@ -1,14 +1,13 @@
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { SceneDataTransformer, SceneQueryRunner, VizPanel } from '@grafana/scenes';
-import { type QueryGroupOptions } from 'app/types/query';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 import { DashboardInteractions } from '../utils/interactions';
 
-import { getChangedQueryOptions, trackQueryOptionChanges } from './queryOptionChanges';
+import { getChangedQueryOptions, getQueryOptionState, trackQueryOptionChanges } from './queryOptionChanges';
 
 setPluginImportUtils({
   importPanelPlugin: () => Promise.resolve(getPanelPlugin({})),
@@ -29,53 +28,74 @@ function setup() {
     $data: new SceneDataTransformer({ transformations: [], $data: queryRunner }),
   });
   new DashboardScene({ isEditing: true, body: DefaultGridLayoutManager.fromVizPanels([panel]) });
-
-  const current: QueryGroupOptions = {
-    queries: [],
-    dataSource: { uid: 'ds1' },
-    maxDataPoints: 500,
-    minInterval: '1m',
-    cacheTimeout: '60',
-    timeRange: { from: '1h' },
-  };
-  return { panel, queryRunner, current };
+  return { panel, queryRunner };
 }
 
-describe('getChangedQueryOptions', () => {
-  it('returns nothing when the options match the panel', () => {
-    const { panel, queryRunner, current } = setup();
+type Fixture = ReturnType<typeof setup>;
 
-    expect(getChangedQueryOptions(panel, queryRunner, current)).toEqual([]);
+describe('getChangedQueryOptions', () => {
+  it('returns nothing when the panel state did not change', () => {
+    const { panel, queryRunner } = setup();
+    const before = getQueryOptionState(panel, queryRunner);
+
+    expect(getChangedQueryOptions(before, getQueryOptionState(panel, queryRunner))).toEqual([]);
   });
 
-  it.each<{ name: string; change: Partial<QueryGroupOptions>; expected: string[] }>([
-    { name: 'max data points', change: { maxDataPoints: 100 }, expected: ['max_data_points'] },
-    { name: 'min interval', change: { minInterval: '5m' }, expected: ['min_interval'] },
-    { name: 'cache timeout', change: { cacheTimeout: '120' }, expected: ['cache_timeout'] },
-    { name: 'query caching TTL', change: { queryCachingTTL: 300 }, expected: ['query_caching_ttl'] },
-    { name: 'relative time', change: { timeRange: { from: '6h' } }, expected: ['relative_time'] },
+  it.each<{ name: string; change: (fixture: Fixture) => void; expected: string[] }>([
+    {
+      name: 'max data points',
+      change: ({ queryRunner }) => queryRunner.setState({ maxDataPoints: 100 }),
+      expected: ['max_data_points'],
+    },
+    {
+      name: 'min interval',
+      change: ({ queryRunner }) => queryRunner.setState({ minInterval: '5m' }),
+      expected: ['min_interval'],
+    },
+    {
+      name: 'cache timeout',
+      change: ({ queryRunner }) => queryRunner.setState({ cacheTimeout: '120' }),
+      expected: ['cache_timeout'],
+    },
+    {
+      name: 'query caching TTL',
+      change: ({ queryRunner }) => queryRunner.setState({ queryCachingTTL: 300 }),
+      expected: ['query_caching_ttl'],
+    },
+    {
+      name: 'relative time',
+      change: ({ panel }) => panel.setState({ $timeRange: new PanelTimeRange({ timeFrom: '6h' }) }),
+      expected: ['relative_time'],
+    },
     {
       name: 'time shift and hide time info',
-      change: { timeRange: { from: '1h', shift: '1d', hide: true } },
+      change: ({ panel }) =>
+        panel.setState({ $timeRange: new PanelTimeRange({ timeFrom: '1h', timeShift: '1d', hideTimeOverride: true }) }),
       expected: ['time_shift', 'hide_time_info'],
     },
+    {
+      name: 'the time range being removed',
+      change: ({ panel }) => panel.setState({ $timeRange: undefined }),
+      expected: ['relative_time'],
+    },
   ])('returns $expected when $name changes', ({ change, expected }) => {
-    const { panel, queryRunner, current } = setup();
+    const fixture = setup();
+    const before = getQueryOptionState(fixture.panel, fixture.queryRunner);
 
-    expect(getChangedQueryOptions(panel, queryRunner, { ...current, ...change })).toEqual(expected);
+    change(fixture);
+
+    expect(getChangedQueryOptions(before, getQueryOptionState(fixture.panel, fixture.queryRunner))).toEqual(expected);
   });
 
-  it('treats a cleared field and an unset option as the same', () => {
-    const { panel, queryRunner, current } = setup();
+  it('treats an unset option and a cleared or false one as the same', () => {
+    const { panel, queryRunner } = setup();
     queryRunner.setState({ minInterval: undefined });
+    const before = getQueryOptionState(panel, queryRunner);
 
-    expect(
-      getChangedQueryOptions(panel, queryRunner, {
-        ...current,
-        minInterval: '',
-        timeRange: { from: '1h', hide: false },
-      })
-    ).toEqual([]);
+    queryRunner.setState({ minInterval: '' });
+    panel.setState({ $timeRange: new PanelTimeRange({ timeFrom: '1h', hideTimeOverride: false }) });
+
+    expect(getChangedQueryOptions(before, getQueryOptionState(panel, queryRunner))).toEqual([]);
   });
 });
 

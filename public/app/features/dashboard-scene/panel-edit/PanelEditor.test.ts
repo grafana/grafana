@@ -560,6 +560,23 @@ describe('PanelEditor', () => {
       });
     });
 
+    it('does not report hide time info that the classic query editor drops for lack of a time range', async () => {
+      const { panelEditor, panel } = await setup();
+      const { dataPane } = panelEditor.state;
+      const queriesTab =
+        dataPane instanceof PanelDataPane
+          ? dataPane.state.tabs.find((tab) => tab instanceof PanelDataQueriesTab)
+          : undefined;
+      if (!(queriesTab instanceof PanelDataQueriesTab)) {
+        throw new Error('Expected the classic queries tab');
+      }
+
+      queriesTab.onQueryOptionsChange({ ...queriesTab.buildQueryOptions(), timeRange: { hide: true } });
+
+      expect(panel.state.$timeRange).toBeUndefined();
+      expect(panelSettingChanged).not.toHaveBeenCalled();
+    });
+
     it('reports a query option changed in the next query editor', async () => {
       store.delete(QUERY_EDITOR_V2_PREFERENCE_KEY);
       setTestFlags({ queryEditorNext: true });
