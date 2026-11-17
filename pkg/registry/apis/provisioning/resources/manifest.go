@@ -18,7 +18,24 @@ import (
 // opts in to provisioning. It reads the manifests from the router of this process, or from the
 // router at cfg.DiscoveryURL. Without either, the service does nothing.
 func WatchManifests(set *SupportedResourceSet, router resource.ManifestDiscovery, cfg resource.ManifestWatcherConfig) (services.Service, error) {
-	onChange := func(manifests []*app.ManifestData) { set.Update(manifestKinds(manifests)) }
+	onChange := func(manifests []*app.ManifestData) {
+		var kinds []SupportedResource
+		for _, manifest := range manifests {
+			for _, version := range manifest.Versions {
+				for _, kind := range version.Kinds {
+					if !version.Served || !kind.IsProvisionable() || kind.Scope == "Cluster" {
+						continue
+					}
+					caps := sets.New[string]()
+					if kind.FolderScoped == nil || *kind.FolderScoped {
+						caps.Insert(CapabilityFolder)
+					}
+					kinds = append(kinds, SupportedResource{GroupKind: schema.GroupKind{Group: manifest.Group, Kind: kind.Kind}, Capabilities: caps})
+				}
+			}
+		}
+		set.Update(kinds)
+	}
 	switch {
 	case router != nil:
 		return resource.NewLocalManifestWatcher(router, nil, onChange, nil), nil
@@ -29,26 +46,4 @@ func WatchManifests(set *SupportedResourceSet, router resource.ManifestDiscovery
 		return resource.NewManifestWatcher(cfg, nil, onChange)
 	}
 	return services.NewIdleService(nil, nil), nil
-}
-
-func manifestKinds(manifests []*app.ManifestData) []SupportedResource {
-	var kinds []SupportedResource
-	for _, data := range manifests {
-		for _, version := range data.Versions {
-			if !version.Served {
-				continue
-			}
-			for _, kind := range version.Kinds {
-				if !kind.IsProvisionable() || kind.Scope == "Cluster" {
-					continue
-				}
-				caps := sets.New[string]()
-				if kind.FolderScoped == nil || *kind.FolderScoped {
-					caps.Insert(CapabilityFolder)
-				}
-				kinds = append(kinds, SupportedResource{GroupKind: schema.GroupKind{Group: data.Group, Kind: kind.Kind}, Capabilities: caps})
-			}
-		}
-	}
-	return kinds
 }
