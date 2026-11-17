@@ -12,9 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/pluginassets/modulehash"
-	"go.opentelemetry.io/otel/trace"
-
-
 )
 
 // BackendClientInit implements an InitializeFunc for initializing a backend plugin process.
