@@ -36,3 +36,25 @@ func TestPreservationError(t *testing.T) {
 		})
 	}
 }
+
+func TestSameSpecError(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		want, got string
+		ok        bool
+	}{
+		{"same", `{"a":1,"b":"x"}`, `{"b":"x","a":1}`, true},
+		{"value changed", `{"a":1}`, `{"a":2}`, false},
+		{"field added", `{"a":1}`, `{"a":1,"b":2}`, false},
+		{"large integer changed", `{"id":9007199254740992}`, `{"id":9007199254740993}`, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			err := sameSpecError([]byte(tc.want), []byte(tc.got))
+			if tc.ok {
+				require.NoError(t, err)
+			} else {
+				require.Error(t, err)
+			}
+		})
+	}
+}

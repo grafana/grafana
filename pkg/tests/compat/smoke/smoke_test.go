@@ -162,7 +162,7 @@ func TestCompatUpdate(t *testing.T) {
 			require.NoError(t, err, "patch%s", hint(e, res))
 			after, err := client.Get(ctx, e.Name, metav1.GetOptions{})
 			require.NoError(t, err)
-			require.JSONEq(t, string(specJSON(t, before)), string(specJSON(t, after)), "a metadata patch changed the spec")
+			require.NoError(t, sameSpecError(specJSON(t, before), specJSON(t, after)), "a metadata patch changed the spec")
 			require.Equal(t, "true", after.GetAnnotations()[patchedAnnotation])
 			require.Equal(t, "true", after.GetLabels()[touchedLabel])
 			entries[i].Updated = true
@@ -190,9 +190,9 @@ func TestCompatVerify(t *testing.T) {
 
 			got, err := resourceClient(h, gr, e.Version).Get(ctx, e.Name, metav1.GetOptions{})
 			require.NoError(t, err)
-			requireConverted(t, got, "get in "+e.Version)
+			requireServedAs(t, got, gr.WithVersion(e.Version).GroupVersion().String(), "get in "+e.Version)
 			if e.UpdatedIn == "" || e.UpdatedIn == e.Version {
-				require.JSONEq(t, string(e.Spec), string(specJSON(t, got)), "spec changed after the other version read or rewrote the object")
+				require.NoError(t, sameSpecError(e.Spec, specJSON(t, got)), "spec changed after the other version read or rewrote the object")
 			} else {
 				// Converting to another API version and back may drop empty fields and add
 				// defaults, but must keep every value that was set.
@@ -258,22 +258,27 @@ func readEverywhere(t *testing.T, h *apis.K8sTestHelper, e written, res compat.R
 	t.Helper()
 	ctx := context.Background()
 	for _, v := range res.Versions {
+		gv := e.gr().WithVersion(v).GroupVersion().String()
 		obj, err := resourceClient(h, e.gr(), v).Get(ctx, e.Name, metav1.GetOptions{})
 		require.NoError(t, err, "get in %s%s", v, hint(e, res))
-		requireConverted(t, obj, "get in "+v)
+		requireServedAs(t, obj, gv, "get in "+v)
+
+		list, err := resourceClient(h, e.gr(), v).List(ctx, metav1.ListOptions{})
+		require.NoError(t, err, "list in %s%s", v, hint(e, res))
+		require.Equal(t, gv, list.GetAPIVersion(), "list in %s", v)
+		i := slices.IndexFunc(list.Items, named(e.Name))
+		require.GreaterOrEqual(t, i, 0, "list in %s does not contain %s", v, e.Name)
+		requireServedAs(t, &list.Items[i], gv, "list in "+v)
 	}
-	list, err := resourceClient(h, e.gr(), res.Versions[0]).List(ctx, metav1.ListOptions{})
-	require.NoError(t, err, "list%s", hint(e, res))
-	i := slices.IndexFunc(list.Items, named(e.Name))
-	require.GreaterOrEqual(t, i, 0, "list does not contain %s", e.Name)
-	requireConverted(t, &list.Items[i], "list in "+res.Versions[0])
 }
 
-// requireConverted fails when the server reports in status.conversion that it could not
-// convert the object to the requested version. The read still succeeds then, with a
-// placeholder spec, so the status is the only sign.
-func requireConverted(t *testing.T, obj *unstructured.Unstructured, what string) {
+// requireServedAs fails when the server did not return the object in the requested version:
+// either it kept another apiVersion, or it reports in status.conversion that it could not
+// convert. A failed conversion still reads successfully, with a placeholder spec, so the
+// status is the only sign of it.
+func requireServedAs(t *testing.T, obj *unstructured.Unstructured, apiVersion, what string) {
 	t.Helper()
+	require.Equal(t, apiVersion, obj.GetAPIVersion(), "%s: apiVersion", what)
 	failed, _, _ := unstructured.NestedBool(obj.Object, "status", "conversion", "failed")
 	if failed {
 		msg, _, _ := unstructured.NestedString(obj.Object, "status", "conversion", "error")
@@ -287,6 +292,23 @@ func hint(e written, res compat.Resource) string {
 		return ""
 	}
 	return fmt.Sprintf("; stored in %s, which this version does not serve (preferred and max API versions must not go beyond what the oldest running version serves)", e.Version)
+}
+
+// sameSpecError reports whether two specs differ in any value. Numbers stay json.Number,
+// so integers beyond float64 precision are still compared exactly.
+func sameSpecError(want, got []byte) error {
+	w, err := decodeJSON(want)
+	if err != nil {
+		return err
+	}
+	g, err := decodeJSON(got)
+	if err != nil {
+		return err
+	}
+	if !reflect.DeepEqual(w, g) {
+		return fmt.Errorf("spec: expected %s, got %s", want, got)
+	}
+	return nil
 }
 
 // preservationErrorJSON decodes two specs and reports the first value in want that is
