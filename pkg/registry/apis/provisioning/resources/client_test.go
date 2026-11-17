@@ -49,21 +49,6 @@ func TestResourceClients_SupportedResources(t *testing.T) {
 		// Disabled resources are not acted on, so they are excluded from the active set.
 		assert.Equal(t, []SupportedResource{active}, clients.SupportedResources())
 	})
-
-	t.Run("adds the kinds that arrive after startup", func(t *testing.T) {
-		active := SupportedResource{GroupKind: dashboardTestGVK.GroupKind(), Capabilities: sets.New[string]()}
-		supported, onManifests := ManifestSupportedResources([]SupportedResource{active})
-		factory := NewClientFactoryWithResources(nil, supported)
-
-		onManifests(testManifests(testManifestKind("Widget", true, false)))
-
-		clients, err := factory.Clients(context.Background(), "default")
-		require.NoError(t, err)
-		assert.Equal(t, []SupportedResource{
-			active,
-			{GroupKind: schema.GroupKind{Group: testManifestGroup, Kind: "Widget"}, Capabilities: sets.New[string]()},
-		}, clients.SupportedResources())
-	})
 }
 
 func TestMultiClientFactory_DefaultGroup(t *testing.T) {

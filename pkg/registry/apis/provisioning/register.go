@@ -112,7 +112,7 @@ type APIBuilder struct {
 	useExclusivelyAccessCheckerForAuthz bool
 
 	allowedTargets      []provisioning.SyncTargetType
-	supportedResources  resources.LatestSupportedResources
+	supportedResources  *resources.SupportedResourceSet
 	manifestWatcher     services.Service
 	allowImageRendering bool
 	minSyncInterval     time.Duration
@@ -225,7 +225,7 @@ func NewAPIBuilder(
 	extraWorkers []jobs.Worker,
 	jobHistoryConfig *JobHistoryConfig,
 	allowedTargets []provisioning.SyncTargetType,
-	supportedResources resources.LatestSupportedResources,
+	supportedResources *resources.SupportedResourceSet,
 	manifestWatcher services.Service,
 	restConfigGetter func(context.Context) (*clientrest.Config, error),
 	allowImageRendering bool,
@@ -242,8 +242,9 @@ func NewAPIBuilder(
 	if newStandaloneClientFactoryFunc != nil {
 		clients = newStandaloneClientFactoryFunc(configProvider)
 	} else {
-		clients = resources.NewClientFactoryWithResources(configProvider, supportedResources)
+		clients = resources.NewClientFactory(configProvider, supportedResources.Latest()...)
 	}
+	clients = supportedResources.Clients(clients)
 	if gv.Version == "" {
 		return nil, fmt.Errorf("invalid provisioning group/version")
 	}
@@ -292,7 +293,7 @@ func NewAPIBuilder(
 		maxJobBodySize: maxJobBodySize,
 	}
 
-	b.setResourceLister(resources.NewResourceLister(unified, clients, supportedResources()))
+	b.setResourceLister(resources.NewResourceLister(unified, clients, supportedResources.Latest()))
 
 	for _, builder := range extraBuilders {
 		b.extras = append(b.extras, builder(b))
@@ -315,7 +316,7 @@ func (b *APIBuilder) SetResourceListerMode(mode string) error {
 	if err := resources.ValidateListerMode(mode); err != nil {
 		return err
 	}
-	b.setResourceLister(resources.NewResourceLister(b.unified, b.clients, b.supportedResources()))
+	b.setResourceLister(resources.NewResourceLister(b.unified, b.clients, b.supportedResources.Latest()))
 	return nil
 }
 
@@ -396,8 +397,11 @@ func RegisterAPIService(
 	if err != nil {
 		return nil, fmt.Errorf("invalid [provisioning] resources configuration: %w", err)
 	}
-	supported, onManifests := resources.ManifestSupportedResources(supportedResources)
-	manifestWatcher := resource.NewLocalManifestWatcher(manifests, nil, onManifests, nil)
+	supported := resources.NewSupportedResourceSet(supportedResources)
+	manifestWatcher, err := resources.WatchManifests(supported, manifests, resource.ManifestWatcherConfig{})
+	if err != nil {
+		return nil, fmt.Errorf("create manifest watcher: %w", err)
+	}
 
 	jobHistoryConfig := createJobHistoryConfigFromSettings(cfg)
 	maxFileSize := cfg.ProvisioningMaxFileSize
@@ -1080,7 +1084,7 @@ func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o adm
 }
 
 func (b *APIBuilder) jobSupportedResources() []provisioning.SupportedResource {
-	supported := b.supportedResources()
+	supported := b.supportedResources.Latest()
 	jobSupportedResources := make([]provisioning.SupportedResource, 0, len(supported))
 	for _, r := range supported {
 		jobSupportedResources = append(jobSupportedResources, provisioning.SupportedResource{

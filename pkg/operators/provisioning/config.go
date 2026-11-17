@@ -361,7 +361,8 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 	}
 
 	gRPCAuth := c.Settings.SectionWithEnvOverrides("grpc_client_authentication")
-	supported, manifestWatcher, err := resources.RemoteManifestSupportedResources(supportedResources, resource.ManifestWatcherConfig{
+	supported := resources.NewSupportedResourceSet(supportedResources)
+	manifestWatcher, err := resources.WatchManifests(supported, nil, resource.ManifestWatcherConfig{
 		DiscoveryURL:     aggregatedServerURL,
 		Token:            gRPCAuth.Key("token").String(),
 		TokenExchangeURL: gRPCAuth.Key("token_exchange_url").String(),
@@ -371,7 +372,7 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create manifest watcher: %w", err)
 	}
-	clients := resources.NewClientFactoryForMultipleAPIServersWithResources(configProviders, supported)
+	clients := supported.Clients(resources.NewClientFactoryForMultipleAPIServers(configProviders, supportedResources...))
 	c.clients = clients
 	c.manifestWatcher = manifestWatcher
 	return clients, nil

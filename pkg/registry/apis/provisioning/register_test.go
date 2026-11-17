@@ -28,7 +28,7 @@ func TestSetResourceListerMode(t *testing.T) {
 			unified:            resource.NewMockResourceClient(t),
 			clients:            resources.NewMockClientFactory(t),
 			features:           featuremgmt.WithFeatures(),
-			supportedResources: resources.StaticSupportedResources(),
+			supportedResources: resources.NewSupportedResourceSet(nil),
 		}
 	}
 

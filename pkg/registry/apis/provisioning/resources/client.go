@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"slices"
 	"strings"
 	"sync"
 
@@ -206,8 +205,6 @@ type clientFactory struct {
 	// expanded caches the result of resolving collections through discovery.
 	expandMu sync.Mutex
 	expanded []SupportedResource
-	// latestResources returns the configured set plus the kinds that arrive after startup.
-	latestResources LatestSupportedResources
 }
 
 // holds reports whether this factory's API server stores a collection, and so expands it. A
@@ -331,15 +328,9 @@ func (p *singleAPIClients) GetClientsForResource(ctx context.Context, _ schema.G
 // the enabled subset via SupportedResources(). When none is provided it falls back to the
 // static SupportedProvisioningResources base set.
 func NewClientFactory(configProvider apiserver.RestConfigProvider, supported ...SupportedResource) ClientFactory {
-	return NewClientFactoryWithResources(configProvider, StaticSupportedResources(supported...))
-}
-
-// NewClientFactoryWithResources is NewClientFactory with a supported set that can grow.
-func NewClientFactoryWithResources(configProvider apiserver.RestConfigProvider, supported LatestSupportedResources) ClientFactory {
 	return &clientFactory{
 		clientsProvider:     newSingleAPIClients(configProvider),
-		configuredResources: defaultSupportedResources(supported()),
-		latestResources:     supported,
+		configuredResources: defaultSupportedResources(supported),
 	}
 }
 
@@ -351,21 +342,13 @@ func NewClientFactoryWithResources(configProvider apiserver.RestConfigProvider, 
 // a collection expands it: its members reach the merged set from there, and a server that holds no
 // collection asks discovery nothing, so its outage cannot fail the clients for other groups.
 func NewClientFactoryForMultipleAPIServers(configProviders map[string]apiserver.RestConfigProvider, supported ...SupportedResource) ClientFactory {
-	return NewClientFactoryForMultipleAPIServersWithResources(configProviders, StaticSupportedResources(supported...))
-}
-
-// NewClientFactoryForMultipleAPIServersWithResources is NewClientFactoryForMultipleAPIServers
-// with a supported set that can grow. The provider under DefaultGroup serves each group that
-// has no provider of its own.
-func NewClientFactoryForMultipleAPIServersWithResources(configProviders map[string]apiserver.RestConfigProvider, supported LatestSupportedResources) ClientFactory {
-	configured := defaultSupportedResources(supported())
+	configured := defaultSupportedResources(supported)
 	clientFactories := make(map[string]ClientFactory)
 	for api, configProvider := range configProviders {
 		clientFactories[api] = &clientFactory{
 			clientsProvider:     newSingleAPIClients(configProvider),
 			configuredResources: configured,
 			storageGroup:        api,
-			latestResources:     supported,
 		}
 	}
 
@@ -461,25 +444,10 @@ func (f *clientFactory) Clients(ctx context.Context, namespace string) (Resource
 	return &resourceClients{
 		namespace:          namespace,
 		clientsProvider:    f.clientsProvider,
-		supportedResources: f.latestSupportedResources(supported),
+		supportedResources: supported,
 		byKind:             make(map[schema.GroupVersionKind]*clientInfo),
 		byResource:         make(map[schema.GroupVersionResource]*clientInfo),
 	}, nil
-}
-
-// latestSupportedResources adds the kinds that arrived after startup to the cached set. It does
-// not run discovery again, so a manifest change cannot break the clients of the configured kinds.
-func (f *clientFactory) latestSupportedResources(expanded []SupportedResource) []SupportedResource {
-	if f.latestResources == nil {
-		return expanded
-	}
-	expanded = slices.Clip(expanded)
-	for _, r := range activeResources(f.latestResources()) {
-		if !provisioningresources.IsCollection(r.Group) && !slices.ContainsFunc(expanded, func(e SupportedResource) bool { return e.GroupKind == r.GroupKind }) {
-			expanded = append(expanded, r)
-		}
-	}
-	return expanded
 }
 
 type resourceClients struct {
