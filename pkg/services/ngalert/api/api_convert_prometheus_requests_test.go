@@ -139,6 +139,19 @@ func TestConvertRequestsMetric(t *testing.T) {
 		require.Equal(t, 1.0, count(srv, operationPostAlertmanager, importSourceOther, resultAccepted))
 	})
 
+	t.Run("alertmanager post with an invalid dry run header is rejected and counts as failed", func(t *testing.T) {
+		srv := newSrv(t, newAM())
+		rc := createRequestCtx()
+		rc.Req.Header.Set(configIdentifierHeader, "cfg")
+		rc.Req.Header.Set(dryRunHeader, "maybe")
+
+		resp := srv.RouteConvertPrometheusPostAlertmanagerConfig(rc, amCfg)
+
+		require.Equal(t, http.StatusBadRequest, resp.Status())
+		require.Equal(t, 1.0, count(srv, operationPostAlertmanager, importSourceOther, resultFailed))
+		require.Equal(t, 1, total(srv))
+	})
+
 	t.Run("alertmanager post rejected while sync is configured counts as failed", func(t *testing.T) {
 		am := &mockAlertmanager{}
 		am.On("IsExternalAMSyncConfiguredForOrg", mock.Anything, int64(1)).Return(true, nil)

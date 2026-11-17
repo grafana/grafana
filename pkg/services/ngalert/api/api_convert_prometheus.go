@@ -230,6 +230,7 @@ func (srv *ConvertPrometheusSrv) recordRequest(c *contextmodel.ReqContext, opera
 	if srv.requests == nil {
 		return resp
 	}
+	// An invalid dry-run header is rejected with a 400 by the handler, so it counts as a failed import here.
 	if dryRun, _ := parseBooleanHeader(c.Req.Header.Get(dryRunHeader), dryRunHeader); dryRun && operation == operationPostAlertmanager {
 		return resp
 	}
