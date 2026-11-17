@@ -1,4 +1,5 @@
 import { type VariableType } from '@grafana/data';
+import { type VarMappingKind } from '@grafana/data/internal';
 import { reportInteraction } from '@grafana/runtime';
 import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 
@@ -17,6 +18,13 @@ import {
 } from './dashboardModeTracking';
 
 let isScenesContextSet = false;
+
+type PanelOptionVariableTrackingInfo = {
+  /** The field config property id, e.g. `custom.lineWidth` */
+  option: string;
+  kind: VarMappingKind;
+  source: 'defaults' | 'override';
+};
 
 type DashboardLibraryTrackingInfo = {
   pluginId?: string;
@@ -482,6 +490,19 @@ export const DashboardInteractions = {
 
   setVisualOption: (properties?: { ui: 'panel-edit' | 'view-panel'; option: string; value: string }) => {
     reportDashboardInteraction('set_visualization_option', properties);
+  },
+
+  // Panel options set from a variable (`varMappings`), only shown with grafana.panelOptionInterpolation
+  panelOptionVariableSet: (properties: PanelOptionVariableTrackingInfo) => {
+    reportDashboardInteraction('panel_option_variable_set', properties);
+  },
+
+  panelOptionVariableRemoved: (properties: PanelOptionVariableTrackingInfo) => {
+    reportDashboardInteraction('panel_option_variable_removed', properties);
+  },
+
+  panelOptionVariableCreated: (properties: { type: 'custom' | 'switch' }) => {
+    reportDashboardInteraction('panel_option_variable_created', properties);
   },
 
   // tracks attempts to resize a panel that is managed by auto layout

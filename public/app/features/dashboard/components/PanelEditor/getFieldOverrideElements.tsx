@@ -40,6 +40,7 @@ import { DynamicConfigValueEditor } from './DynamicConfigValueEditor';
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
 import { OverrideCategoryTitle } from './OverrideCategoryTitle';
+import { reportVarMappingChange } from './state/reportVarMappingChange';
 
 const ALLOWED_SCOPES: MatcherScope[] = ['series', 'nested'];
 
@@ -309,6 +310,15 @@ export function getFieldOverrideCategories(
       const varMappingId = wrapVarMappingPropId(property.id);
       const varMappingKind = varMappingsEnabled ? getVarMappingKind(registryItemForProperty) : undefined;
       const varMappingExpr = varMappingKind ? override.properties.find((p) => p.id === varMappingId)?.value : undefined;
+      const reportChange = (next: unknown) => {
+        if (varMappingKind) {
+          reportVarMappingChange(
+            { option: property.id, kind: varMappingKind, source: 'override' },
+            varMappingExpr,
+            next
+          );
+        }
+      };
       const expression = typeof varMappingExpr === 'string' ? varMappingExpr : undefined;
       // The stored value stays as the fallback while an expression is shown. Toggle editors get the
       // stored value and the expression separately.
@@ -323,6 +333,7 @@ export function getFieldOverrideCategories(
             ? override.properties.map((p) => (p.id === varMappingId ? varMappingEntry : p))
             : [...override.properties, varMappingEntry];
           onOverrideChange(idx, { ...override, properties });
+          reportChange(value);
           return;
         }
 
@@ -333,6 +344,7 @@ export function getFieldOverrideCategories(
           .filter((p) => p.id !== varMappingId);
 
         onOverrideChange(idx, { ...override, properties });
+        reportChange(undefined);
       };
 
       const onPropertyRemove = () => {
@@ -340,6 +352,7 @@ export function getFieldOverrideCategories(
           ...override,
           properties: override.properties.filter((p, i) => i !== propIdx && p.id !== varMappingId),
         });
+        reportChange(undefined);
       };
 
       const htmlId = `${overrideId}-property-${property.id}`;
