@@ -1,0 +1,14 @@
+{
+  "edition": "2026-11-17.1",
+  "publication": "pending: standalone public grafana-contribution-skills repository",
+  "license": "AGPL-3.0-only",
+  "derivedFrom": {
+    "repository": "https://github.com/grafana/grafana",
+    "commit": "532b3c4c6189fdf7c2fd9ba551157e4903d24e7b",
+    "paths": [".claude/skills/frontend-testing-strategy/SKILL.md", ".claude/skills/panel-testing-strategy/SKILL.md"]
+  },
+  "sha256": {
+    "frontend-testing-strategy/SKILL.md": "2226991925200f27243298d80ee2bfb6d4ba45ee87339b08afa46fdd668fe232",
+    "panel-testing-strategy/SKILL.md": "cfb648481928ba390098ef7f166fc3b1a39b4a55beba4b56da4f2ce9f232bc7b"
+  }
+}
