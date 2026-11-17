@@ -25,6 +25,10 @@ const LEGACY_PRESENTATION_LOCAL_STORAGE_KEY = 'grafana.navigation.extensionSideb
  */
 const FLOATING_EXTENSION_SIDEBAR_PLUGINS = ['grafana-assistant-app'];
 
+function supportsFloating(pluginId: string | undefined): boolean {
+  return pluginId !== undefined && FLOATING_EXTENSION_SIDEBAR_PLUGINS.includes(pluginId);
+}
+
 /**
  * Two inputs decide the layout:
  * - the layout the user asked for, the same on every page, through the restricted `extensionSidebar` API.
@@ -121,8 +125,7 @@ export function resolveExtensionSidebarPresentation(
   pluginId: string | undefined,
   floatingOverridden = false
 ): ExtensionSidebarPresentation {
-  const supportsFloating = pluginId !== undefined && FLOATING_EXTENSION_SIDEBAR_PLUGINS.includes(pluginId);
-  return supportsFloating && (floatingOverridden || (canFloat && requestedPresentation === 'floating'))
+  return supportsFloating(pluginId) && (floatingOverridden || (canFloat && requestedPresentation === 'floating'))
     ? 'floating'
     : 'docked';
 }
@@ -141,6 +144,86 @@ export function getEffectiveExtensionSidebarPresentation(pluginId: string | unde
 export function getRequestedExtensionSidebarPresentation(): ExtensionSidebarPresentation {
   requested ??= loadRequested();
   return requested;
+}
+
+/**
+ * Which edge of the page content the docked sidebar sits on. `left` puts it between the nav and the page, and
+ * `bottom` below the page, past the nav; only the floating sidebar's drag reaches either, so both are part of
+ * `grafana.extensionSidebarFloating`.
+ */
+export type ExtensionSidebarDockSide = 'left' | 'right' | 'bottom';
+
+const DOCK_SIDE_LOCAL_STORAGE_KEY = 'grafana.navigation.extensionSidebarDockSide';
+
+let requestedDockSide: ExtensionSidebarDockSide | undefined;
+
+function loadRequestedDockSide(): ExtensionSidebarDockSide {
+  try {
+    const stored = store.get(DOCK_SIDE_LOCAL_STORAGE_KEY);
+    return stored === 'left' || stored === 'bottom' ? stored : 'right';
+  } catch {
+    // Blocked storage throws on access; dock where the sidebar always docked.
+    return 'right';
+  }
+}
+
+/** The side the user last docked the sidebar on, before the feature flag applies. */
+export function getRequestedExtensionSidebarDockSide(): ExtensionSidebarDockSide {
+  requestedDockSide ??= loadRequestedDockSide();
+  return requestedDockSide;
+}
+
+/**
+ * The side `pluginId`'s docked sidebar shows on: the requested one while floating is allowed, for a plugin that
+ * supports floating; else the right. Any other plugin has no drag handle to move it back with.
+ */
+export function resolveExtensionSidebarDockSide(
+  requestedSide: ExtensionSidebarDockSide,
+  canFloat: boolean,
+  pluginId: string | undefined
+): ExtensionSidebarDockSide {
+  return canFloat && supportsFloating(pluginId) ? requestedSide : 'right';
+}
+
+/** Sets the side the sidebar docks on, for every page; the next dock, by drag or by the extension, uses it. */
+export function setExtensionSidebarDockSide(side: ExtensionSidebarDockSide): void {
+  const from = getRequestedExtensionSidebarDockSide();
+  if (side === from) {
+    return;
+  }
+  requestedDockSide = side;
+  try {
+    store.set(DOCK_SIDE_LOCAL_STORAGE_KEY, side);
+  } catch {
+    // Kept for this page load only.
+  }
+  reportInteraction('grafana_extension_sidebar_dock_side_changed', { from, to: side });
+  notify();
+}
+
+/** Where the open sidebar shows: docked on an edge of the page, or floating over it. */
+export type ExtensionSidebarPlacement = ExtensionSidebarDockSide | 'floating';
+
+/**
+ * Where `pluginId`'s sidebar shows, or opens while it is closed. The one place the presentation and the dock side
+ * combine, for core's own controls and the extension's alike.
+ */
+export function getExtensionSidebarPlacement(pluginId: string | undefined): ExtensionSidebarPlacement {
+  if (getEffectiveExtensionSidebarPresentation(pluginId) === 'floating') {
+    return 'floating';
+  }
+  return resolveExtensionSidebarDockSide(getRequestedExtensionSidebarDockSide(), canFloatExtensionSidebar(), pluginId);
+}
+
+/** Moves the sidebar, for every page: floating over the page, or docked on that edge. */
+export function setExtensionSidebarPlacement(placement: ExtensionSidebarPlacement): void {
+  if (placement === 'floating') {
+    setExtensionSidebarPresentation('floating');
+    return;
+  }
+  // The side first, so the sidebar never shows docked on the other one.
+  setExtensionSidebarDockSide(placement);
+  setExtensionSidebarPresentation('docked');
 }
 
 /** For `useSyncExternalStore`. */
@@ -225,10 +308,12 @@ export function collapseFloatingExtensionSidebar(): void {
 /** @internal Resets the layout between tests; `keepStorage` stands for a new page load. */
 export function resetExtensionSidebarPresentationForTests({ keepStorage = false } = {}): void {
   requested = undefined;
+  requestedDockSide = undefined;
   floatingOverride = false;
   if (!keepStorage) {
     store.delete(PRESENTATION_LOCAL_STORAGE_KEY);
     store.delete(LEGACY_PRESENTATION_LOCAL_STORAGE_KEY);
+    store.delete(DOCK_SIDE_LOCAL_STORAGE_KEY);
   }
   floatingHolds.clear();
   listeners.clear();

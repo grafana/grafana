@@ -7,6 +7,8 @@ import {
   canFloatExtensionSidebar,
   collapseFloatingExtensionSidebar,
   getEffectiveExtensionSidebarPresentation,
+  getExtensionSidebarPlacement,
+  getRequestedExtensionSidebarDockSide,
   getRequestedExtensionSidebarPresentation,
   holdFloatingExtensionSidebar,
   isExtensionSidebarFloatingOverridden,
@@ -15,7 +17,10 @@ import {
   onExtensionSidebarClosed,
   releaseFloatingExtensionSidebarHolds,
   resetExtensionSidebarPresentationForTests,
+  resolveExtensionSidebarDockSide,
+  setExtensionSidebarDockSide,
   setExtensionSidebarFloatingOverride,
+  setExtensionSidebarPlacement,
   setExtensionSidebarPresentation,
   subscribeToExtensionSidebarPresentation,
   subscribeToFloatingExtensionSidebarCollapse,
@@ -30,6 +35,7 @@ const FLOATING_FLAG = 'grafana.extensionSidebarFloating';
 const ASSISTANT = 'grafana-assistant-app';
 const PRESENTATION_KEY = 'grafana.navigation.extensionSidebarPresentation';
 const LEGACY_PRESENTATION_KEY = 'grafana.navigation.extensionSidebarPresentationBySurface';
+const DOCK_SIDE_KEY = 'grafana.navigation.extensionSidebarDockSide';
 
 describe('extensionSidebarLayout', () => {
   afterEach(() => {
@@ -238,5 +244,112 @@ describe('extensionSidebarLayout', () => {
     expect(canCollapseFloatingExtensionSidebar()).toBe(false);
     collapseFloatingExtensionSidebar();
     expect(listener).toHaveBeenCalledTimes(1);
+  });
+
+  describe('the dock side', () => {
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    it('is the right by default', () => {
+      expect(getRequestedExtensionSidebarDockSide()).toBe('right');
+    });
+
+    it('is remembered for every page, and reported when it changes', () => {
+      const listener = jest.fn();
+      subscribeToExtensionSidebarPresentation(listener);
+
+      setExtensionSidebarDockSide('left');
+      setExtensionSidebarDockSide('left');
+
+      expect(listener).toHaveBeenCalledTimes(1);
+      expect(store.get(DOCK_SIDE_KEY)).toBe('left');
+      expect(jest.mocked(reportInteraction).mock.calls).toEqual([
+        ['grafana_extension_sidebar_dock_side_changed', { from: 'right', to: 'left' }],
+      ]);
+
+      resetExtensionSidebarPresentationForTests({ keepStorage: true });
+      expect(getRequestedExtensionSidebarDockSide()).toBe('left');
+    });
+
+    it('ignores a stored value that is not a side', () => {
+      store.set(DOCK_SIDE_KEY, 'top');
+      expect(getRequestedExtensionSidebarDockSide()).toBe('right');
+    });
+
+    it('docks on the right when storage is blocked, and keeps a pick for the page load', () => {
+      jest.spyOn(store, 'get').mockImplementation(() => {
+        throw new DOMException('blocked', 'SecurityError');
+      });
+      jest.spyOn(store, 'set').mockImplementation(() => {
+        throw new DOMException('blocked', 'SecurityError');
+      });
+
+      expect(getRequestedExtensionSidebarDockSide()).toBe('right');
+      setExtensionSidebarDockSide('left');
+      expect(getRequestedExtensionSidebarDockSide()).toBe('left');
+    });
+
+    it('applies the left only while the sidebar can float, and only to a plugin that supports floating', () => {
+      expect(resolveExtensionSidebarDockSide('left', true, ASSISTANT)).toBe('left');
+      expect(resolveExtensionSidebarDockSide('left', false, ASSISTANT)).toBe('right');
+      expect(resolveExtensionSidebarDockSide('left', true, 'grafana-pathfinder-app')).toBe('right');
+      expect(resolveExtensionSidebarDockSide('left', true, undefined)).toBe('right');
+      expect(resolveExtensionSidebarDockSide('right', true, ASSISTANT)).toBe('right');
+    });
+
+    it('remembers the bottom for every page, like the sides', () => {
+      setExtensionSidebarDockSide('bottom');
+      expect(store.get(DOCK_SIDE_KEY)).toBe('bottom');
+
+      resetExtensionSidebarPresentationForTests({ keepStorage: true });
+
+      expect(getRequestedExtensionSidebarDockSide()).toBe('bottom');
+    });
+
+    it('applies the bottom only while the sidebar can float, and only to a plugin that supports floating', () => {
+      expect(resolveExtensionSidebarDockSide('bottom', true, ASSISTANT)).toBe('bottom');
+      expect(resolveExtensionSidebarDockSide('bottom', false, ASSISTANT)).toBe('right');
+      expect(resolveExtensionSidebarDockSide('bottom', true, 'grafana-pathfinder-app')).toBe('right');
+      expect(resolveExtensionSidebarDockSide('bottom', true, undefined)).toBe('right');
+    });
+  });
+
+  describe('the placement', () => {
+    afterEach(() => setTestFlags({}));
+
+    it.each(['left', 'right', 'bottom', 'floating'] as const)(
+      'moves the sidebar %s in one call, which the Assistant then shows in',
+      (placement) => {
+        setTestFlags({ [FLOATING_FLAG]: true });
+        setExtensionSidebarPlacement(placement === 'floating' ? 'left' : 'floating');
+
+        setExtensionSidebarPlacement(placement);
+
+        expect(getExtensionSidebarPlacement(ASSISTANT)).toBe(placement);
+      }
+    );
+
+    it('docks on the new side before docking, so it never shows on the other one', () => {
+      setTestFlags({ [FLOATING_FLAG]: true });
+      setExtensionSidebarPlacement('floating');
+      const seen: string[] = [];
+      subscribeToExtensionSidebarPresentation(() =>
+        seen.push(`${getRequestedExtensionSidebarPresentation()} ${getRequestedExtensionSidebarDockSide()}`)
+      );
+
+      setExtensionSidebarPlacement('bottom');
+
+      expect(seen).toEqual(['floating bottom', 'docked bottom']);
+    });
+
+    it('is the right, docked, for a plugin that cannot float or while the flag is off', () => {
+      setTestFlags({ [FLOATING_FLAG]: true });
+      setExtensionSidebarPlacement('bottom');
+      expect(getExtensionSidebarPlacement('grafana-pathfinder-app')).toBe('right');
+
+      setTestFlags({});
+      expect(getExtensionSidebarPlacement(ASSISTANT)).toBe('right');
+    });
   });
 });

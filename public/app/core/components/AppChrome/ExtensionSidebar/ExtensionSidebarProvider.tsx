@@ -19,28 +19,35 @@ import { getExtensionPointPluginMeta } from 'app/features/plugins/extensions/uti
 import { CloseExtensionSidebarEvent, OpenExtensionSidebarEvent, ToggleExtensionSidebarEvent } from 'app/types/events';
 
 import {
+  DEFAULT_EXTENSION_SIDEBAR_HEIGHT,
   DEFAULT_EXTENSION_SIDEBAR_WIDTH,
   DEFAULT_FLOATING_EXTENSION_SIDEBAR_WIDTH,
+  MAX_EXTENSION_SIDEBAR_HEIGHT,
   MAX_EXTENSION_SIDEBAR_WIDTH,
+  MIN_EXTENSION_SIDEBAR_HEIGHT,
   MIN_EXTENSION_SIDEBAR_WIDTH,
   MAX_FLOATING_EXTENSION_SIDEBAR_WIDTH,
   MIN_FLOATING_EXTENSION_SIDEBAR_WIDTH,
 } from './constants';
 import {
+  type ExtensionSidebarDockSide,
   type ExtensionSidebarPresentation,
   getEffectiveExtensionSidebarPresentation,
+  getRequestedExtensionSidebarDockSide,
   getRequestedExtensionSidebarPresentation,
   holdFloatingExtensionSidebar,
   isExtensionSidebarFloatingOverridden,
   isFloatingExtensionSidebarHeld,
   notifyExtensionSidebarClosed,
   releaseFloatingExtensionSidebarHolds,
+  resolveExtensionSidebarDockSide,
   resolveExtensionSidebarPresentation,
   subscribeToExtensionSidebarPresentation,
 } from './extensionSidebarLayout';
 import { EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY, getComponentMetaFromComponentId } from './extensionSidebarUtils';
 
 const EXTENSION_SIDEBAR_WIDTH_LOCAL_STORAGE_KEY = 'grafana.navigation.extensionSidebarWidth';
+const EXTENSION_SIDEBAR_HEIGHT_LOCAL_STORAGE_KEY = 'grafana.navigation.extensionSidebarHeight';
 const FLOATING_EXTENSION_SIDEBAR_WIDTH_LOCAL_STORAGE_KEY = 'grafana.navigation.extensionSidebarFloatingWidth';
 const PERMITTED_EXTENSION_SIDEBAR_PLUGINS = [
   'grafana-assistant-app',
@@ -79,6 +86,14 @@ export type ExtensionSidebarContextType = {
    */
   setExtensionSidebarWidth: (width: number) => void;
   /**
+   * The height of the extension sidebar docked at the bottom, kept apart from the width it docks on a side with.
+   */
+  extensionSidebarHeight: number;
+  /**
+   * Set the height of the extension sidebar docked at the bottom.
+   */
+  setExtensionSidebarHeight: (height: number) => void;
+  /**
    * The width of the floating sidebar, kept apart from the docked width.
    */
   floatingExtensionSidebarWidth: number;
@@ -91,6 +106,10 @@ export type ExtensionSidebarContextType = {
    * extension component stay mounted when this changes.
    */
   presentation: ExtensionSidebarPresentation;
+  /**
+   * Which edge of the page the sidebar docks on. Only applies while `presentation` is `docked`.
+   */
+  dockSide: ExtensionSidebarDockSide;
   /**
    * The open sidebar floats but a page holds it hidden (see `useHoldFloatingExtensionSidebar`): it stays mounted,
    * not shown, and reads as closed to the toolbar, so opening it shows it.
@@ -107,9 +126,12 @@ const ExtensionSidebarContext = createContext<ExtensionSidebarContextType>({
   availableComponents: new Map(),
   extensionSidebarWidth: DEFAULT_EXTENSION_SIDEBAR_WIDTH,
   setExtensionSidebarWidth: () => {},
+  extensionSidebarHeight: DEFAULT_EXTENSION_SIDEBAR_HEIGHT,
+  setExtensionSidebarHeight: () => {},
   floatingExtensionSidebarWidth: DEFAULT_FLOATING_EXTENSION_SIDEBAR_WIDTH,
   setFloatingExtensionSidebarWidth: () => {},
   presentation: 'docked',
+  dockSide: 'right',
   floatingHidden: false,
 });
 
@@ -141,6 +163,10 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
   );
   // Turning the flag off docks a sidebar the user floated; the override (Composer) floats it regardless.
   const canFloat = useFlagGrafanaExtensionSidebarFloating();
+  const requestedDockSide = useSyncExternalStore(
+    subscribeToExtensionSidebarPresentation,
+    getRequestedExtensionSidebarDockSide
+  );
   const floatingHeld = useSyncExternalStore(subscribeToExtensionSidebarPresentation, isFloatingExtensionSidebarHeld);
   const storedDockedPluginId = store.get(EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY);
   const [extensionSidebarWidth, setExtensionSidebarWidth] = useLocalStorage(
@@ -150,6 +176,10 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
   const [floatingExtensionSidebarWidth, setFloatingExtensionSidebarWidth] = useLocalStorage(
     FLOATING_EXTENSION_SIDEBAR_WIDTH_LOCAL_STORAGE_KEY,
     DEFAULT_FLOATING_EXTENSION_SIDEBAR_WIDTH
+  );
+  const [extensionSidebarHeight, setExtensionSidebarHeight] = useLocalStorage(
+    EXTENSION_SIDEBAR_HEIGHT_LOCAL_STORAGE_KEY,
+    DEFAULT_EXTENSION_SIDEBAR_HEIGHT
   );
 
   const [currentPath, setCurrentPath] = useState(locationService.getLocation().pathname);
@@ -211,10 +241,11 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
     }
   }
   const [dockedComponentId, setDockedComponentId] = useState<string | undefined>(defaultDockedComponentId);
+  const dockedPluginId = getComponentMetaFromComponentId(dockedComponentId ?? '')?.pluginId;
   const presentation: ExtensionSidebarPresentation = resolveExtensionSidebarPresentation(
     requestedPresentation,
     canFloat,
-    getComponentMetaFromComponentId(dockedComponentId ?? '')?.pluginId,
+    dockedPluginId,
     floatingOverridden
   );
   const floatingHidden = dockedComponentId !== undefined && presentation === 'floating' && floatingHeld;
@@ -347,6 +378,11 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
           MAX_EXTENSION_SIDEBAR_WIDTH
         ),
         setExtensionSidebarWidth,
+        extensionSidebarHeight: Math.min(
+          Math.max(extensionSidebarHeight ?? DEFAULT_EXTENSION_SIDEBAR_HEIGHT, MIN_EXTENSION_SIDEBAR_HEIGHT),
+          MAX_EXTENSION_SIDEBAR_HEIGHT
+        ),
+        setExtensionSidebarHeight,
         floatingExtensionSidebarWidth: Math.min(
           Math.max(
             floatingExtensionSidebarWidth ?? DEFAULT_FLOATING_EXTENSION_SIDEBAR_WIDTH,
@@ -356,6 +392,7 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
         ),
         setFloatingExtensionSidebarWidth,
         presentation,
+        dockSide: resolveExtensionSidebarDockSide(requestedDockSide, canFloat, dockedPluginId),
         floatingHidden,
         props,
       }}
