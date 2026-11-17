@@ -55,11 +55,20 @@ jobs:
           REPO_URL: ${{ github.server_url }}/${{ github.repository }}
         run: |
           set -euo pipefail
-          # Databases, manifests, and logs of every phase.
-          echo "COMPAT_DIR=$RUNNER_TEMP/compat" >> "$GITHUB_ENV"
+          # Databases, manifests, logs, and test binaries of every phase.
+          {
+            echo "COMPAT_DIR=$RUNNER_TEMP/compat"
+            echo "NEWER_BIN=$RUNNER_TEMP/compat/bin/newer"
+          } >> "$GITHUB_ENV"
+          older() {
+            {
+              echo "OLD_DIR=$GITHUB_WORKSPACE/.compat-old"
+              echo "OLDER_BIN=$RUNNER_TEMP/compat/bin/older"
+            } >> "$GITHUB_ENV"
+          }
           if [ -n "$OLD_REF" ]; then
             echo "ref=$OLD_REF" >> "$GITHUB_OUTPUT"
-            echo "OLD_DIR=.compat-old" >> "$GITHUB_ENV"
+            older
             exit 0
           fi
 
@@ -81,11 +90,14 @@ jobs:
             # new resources that the smoke test cannot create.
             echo "::notice::No ${pattern} release at or after ${MIN_OLD_VERSION} yet, running against this commit only"
             echo "ref=" >> "$GITHUB_OUTPUT"
-            echo "OLD_DIR=." >> "$GITHUB_ENV"
+            {
+              echo "OLD_DIR=$GITHUB_WORKSPACE"
+              echo "OLDER_BIN=$RUNNER_TEMP/compat/bin/newer"
+            } >> "$GITHUB_ENV"
             exit 0
           fi
           echo "ref=$tag" >> "$GITHUB_OUTPUT"
-          echo "OLD_DIR=.compat-old" >> "$GITHUB_ENV"
+          older
 
       - name: Checkout older version
         if: steps.old.outputs.ref != ''
@@ -94,6 +106,25 @@ jobs:
           ref: ${{ steps.old.outputs.ref }}
           path: .compat-old
           persist-credentials: false
+
+      # The older version is a fixed commit, so its test binaries are built once and cached
+      # under its commit. The key also carries the ref, which names the grafana-enterprise
+      # side for the Enterprise build.
+      - name: Key for the tests of ${{ steps.old.outputs.ref }}
+        if: steps.old.outputs.ref != ''
+        id: older-key
+        env:
+          EDITION: ${{ inputs.edition }}
+          OLD_REF: ${{ steps.old.outputs.ref }}
+        run: echo "key=compat-tests-$EDITION-$RUNNER_OS-$RUNNER_ARCH-$(git -C .compat-old rev-parse HEAD)-$OLD_REF" >> "$GITHUB_OUTPUT"
+
+      - name: Restore the tests of ${{ steps.old.outputs.ref }}
+        if: steps.old.outputs.ref != ''
+        id: older-cache
+        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        with:
+          path: ${{ env.OLDER_BIN }}
+          key: ${{ steps.older-key.outputs.key }}
 
       - name: Get GitHub App token
         if: inputs.edition == 'enterprise'
@@ -134,6 +165,7 @@ jobs:
         env:
           EDITION: ${{ inputs.edition }}
           OLD_REF: ${{ steps.old.outputs.ref }}
+          OLDER_CACHE: ${{ steps.older-cache.outputs.cache-hit == 'true' && 'restored from the cache' || '' }}
         run: |
           set -euo pipefail
           sha() { git -C "$1" rev-parse HEAD 2>/dev/null || echo "-"; }
@@ -148,22 +180,30 @@ jobs:
             echo "| Older | \`$(sha "$OLD_DIR")\` ${OLD_REF:+($OLD_REF)} | \`$(sha ../grafana-enterprise-old)\` |"
             echo
             echo "Cross-version: $cross"
+            if [ -n "$OLD_REF" ]; then echo; echo "Tests of the older version: ${OLDER_CACHE:-built}"; fi
             echo
           } >> "$GITHUB_STEP_SUMMARY"
           mkdir -p "$COMPAT_DIR/logs"
 
-      # Compile the tests of both versions once, so a build failure shows up as one failed
-      # step instead of failing every phase.
+      # Compile the test binaries of both versions once; every phase then runs them, so the
+      # phases do not relink, and a build failure shows up as one failed step.
       - name: Build tests with this commit
         id: build-newer
         if: ${{ !cancelled() && steps.setup-go.outcome == 'success' }}
-        run: go test -count=1 -run '^$' ./pkg/tests/compat/...
+        run: go test -c -o "$NEWER_BIN/" ./pkg/tests/compat/...
 
       - name: Build tests with ${{ steps.old.outputs.ref }}
         id: build-older
-        if: ${{ !cancelled() && steps.setup-go.outcome == 'success' && steps.old.outputs.ref != '' }}
+        if: ${{ !cancelled() && steps.setup-go.outcome == 'success' && steps.old.outputs.ref != '' && steps.older-cache.outputs.cache-hit != 'true' }}
         working-directory: ${{ env.OLD_DIR }}
-        run: go test -count=1 -run '^$' ./pkg/tests/compat/...
+        run: go test -c -o "$OLDER_BIN/" ./pkg/tests/compat/...
+
+      - name: Cache the tests of ${{ steps.old.outputs.ref }}
+        if: steps.build-older.outcome == 'success'
+        uses: actions/cache/save@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        with:
+          path: ${{ env.OLDER_BIN }}
+          key: ${{ steps.older-key.outputs.key }}
 
       # Two round trips over a fresh database each. One version sets data up, the other
       # updates it, and the first reads it back:
@@ -173,55 +213,78 @@ jobs:
       # one red run shows all breakages; the job still fails.
       - name: Upgrade then rollback - setup with ${{ steps.old.outputs.ref || 'this commit' }}
         if: ${{ !cancelled() && steps.build-newer.outcome == 'success' && steps.build-older.outcome != 'failure' }}
-        working-directory: ${{ env.OLD_DIR }}
-        env:
-          GRAFANA_COMPAT_DIR: ${{ env.COMPAT_DIR }}/upgrade-rollback
-          GRAFANA_COMPAT_ROLE: older
-        run: go test -count=1 -timeout=20m -run '^TestCompatSetup$' ./pkg/tests/compat/... 2>&1 | tee "$COMPAT_DIR/logs/1-upgrade-rollback-setup.log"
+        uses: ./.github/actions/run-compat-phase
+        with:
+          checkout: ${{ env.OLD_DIR }}
+          binaries: ${{ env.OLDER_BIN }}
+          test: TestCompatSetup
+          role: older
+          data: ${{ env.COMPAT_DIR }}/upgrade-rollback
+          log: ${{ env.COMPAT_DIR }}/logs/1-upgrade-rollback-setup.log
 
       - name: Upgrade then rollback - update with this commit
         if: ${{ !cancelled() && steps.build-newer.outcome == 'success' && steps.build-older.outcome != 'failure' }}
-        env:
-          GRAFANA_COMPAT_DIR: ${{ env.COMPAT_DIR }}/upgrade-rollback
-          GRAFANA_COMPAT_ROLE: newer
-        run: go test -count=1 -timeout=20m -run '^TestCompatUpdate$' ./pkg/tests/compat/... 2>&1 | tee "$COMPAT_DIR/logs/2-upgrade-rollback-update.log"
+        uses: ./.github/actions/run-compat-phase
+        with:
+          checkout: ${{ github.workspace }}
+          binaries: ${{ env.NEWER_BIN }}
+          test: TestCompatUpdate
+          role: newer
+          data: ${{ env.COMPAT_DIR }}/upgrade-rollback
+          log: ${{ env.COMPAT_DIR }}/logs/2-upgrade-rollback-update.log
 
       - name: Upgrade then rollback - verify with ${{ steps.old.outputs.ref || 'this commit' }}
         if: ${{ !cancelled() && steps.build-newer.outcome == 'success' && steps.build-older.outcome != 'failure' }}
-        working-directory: ${{ env.OLD_DIR }}
-        env:
-          GRAFANA_COMPAT_DIR: ${{ env.COMPAT_DIR }}/upgrade-rollback
-          GRAFANA_COMPAT_ROLE: older
-        run: go test -count=1 -timeout=20m -run '^TestCompatVerify$' ./pkg/tests/compat/... 2>&1 | tee "$COMPAT_DIR/logs/3-upgrade-rollback-verify.log"
+        uses: ./.github/actions/run-compat-phase
+        with:
+          checkout: ${{ env.OLD_DIR }}
+          binaries: ${{ env.OLDER_BIN }}
+          test: TestCompatVerify
+          role: older
+          data: ${{ env.COMPAT_DIR }}/upgrade-rollback
+          log: ${{ env.COMPAT_DIR }}/logs/3-upgrade-rollback-verify.log
 
       - name: Rollback then re-upgrade - setup with this commit
         if: ${{ !cancelled() && steps.build-newer.outcome == 'success' && steps.build-older.outcome != 'failure' }}
-        env:
-          GRAFANA_COMPAT_DIR: ${{ env.COMPAT_DIR }}/rollback-upgrade
-          GRAFANA_COMPAT_ROLE: newer
-        run: go test -count=1 -timeout=20m -run '^TestCompatSetup$' ./pkg/tests/compat/... 2>&1 | tee "$COMPAT_DIR/logs/4-rollback-upgrade-setup.log"
+        uses: ./.github/actions/run-compat-phase
+        with:
+          checkout: ${{ github.workspace }}
+          binaries: ${{ env.NEWER_BIN }}
+          test: TestCompatSetup
+          role: newer
+          data: ${{ env.COMPAT_DIR }}/rollback-upgrade
+          log: ${{ env.COMPAT_DIR }}/logs/4-rollback-upgrade-setup.log
 
       - name: Rollback then re-upgrade - update with ${{ steps.old.outputs.ref || 'this commit' }}
         if: ${{ !cancelled() && steps.build-newer.outcome == 'success' && steps.build-older.outcome != 'failure' }}
-        working-directory: ${{ env.OLD_DIR }}
-        env:
-          GRAFANA_COMPAT_DIR: ${{ env.COMPAT_DIR }}/rollback-upgrade
-          GRAFANA_COMPAT_ROLE: older
-        run: go test -count=1 -timeout=20m -run '^TestCompatUpdate$' ./pkg/tests/compat/... 2>&1 | tee "$COMPAT_DIR/logs/5-rollback-upgrade-update.log"
+        uses: ./.github/actions/run-compat-phase
+        with:
+          checkout: ${{ env.OLD_DIR }}
+          binaries: ${{ env.OLDER_BIN }}
+          test: TestCompatUpdate
+          role: older
+          data: ${{ env.COMPAT_DIR }}/rollback-upgrade
+          log: ${{ env.COMPAT_DIR }}/logs/5-rollback-upgrade-update.log
 
       - name: Rollback then re-upgrade - verify with this commit
         if: ${{ !cancelled() && steps.build-newer.outcome == 'success' && steps.build-older.outcome != 'failure' }}
-        env:
-          GRAFANA_COMPAT_DIR: ${{ env.COMPAT_DIR }}/rollback-upgrade
-          GRAFANA_COMPAT_ROLE: newer
-        run: go test -count=1 -timeout=20m -run '^TestCompatVerify$' ./pkg/tests/compat/... 2>&1 | tee "$COMPAT_DIR/logs/6-rollback-upgrade-verify.log"
+        uses: ./.github/actions/run-compat-phase
+        with:
+          checkout: ${{ github.workspace }}
+          binaries: ${{ env.NEWER_BIN }}
+          test: TestCompatVerify
+          role: newer
+          data: ${{ env.COMPAT_DIR }}/rollback-upgrade
+          log: ${{ env.COMPAT_DIR }}/logs/6-rollback-upgrade-verify.log
 
-      # Test logs, the manifests each phase hands to the next, and the SQLite databases.
-      # All data in them is synthetic test data.
+      # Test logs, the manifests each phase hands to the next, and the SQLite databases, but
+      # not the test binaries. All data in them is synthetic test data.
       - name: Upload logs and databases
         if: failure()
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: compat-${{ inputs.edition }}
-          path: ${{ env.COMPAT_DIR }}
+          path: |
+            ${{ env.COMPAT_DIR }}
+            !${{ env.COMPAT_DIR }}/bin
           retention-days: 7

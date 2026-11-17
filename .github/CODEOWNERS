@@ -1397,6 +1397,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/pr-unified-storage-compatibility.yml @grafana/grafana-search-and-storage
 /.github/workflows/pr-test-compat.yml @grafana/grafana-search-and-storage
 /.github/workflows/run-compat-tests.yml @grafana/grafana-search-and-storage
+/.github/actions/run-compat-phase/ @grafana/grafana-search-and-storage
 /.github/workflows/pr-commands.yml @tolzhabayev
 /.github/workflows/pr-external-labelling.yml @Proximyst
 /.github/workflows/pr-patch-check.yml @grafana/grafana-backend-services-squad
