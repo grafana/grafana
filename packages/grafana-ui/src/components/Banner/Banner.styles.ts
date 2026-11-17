@@ -8,11 +8,14 @@ export const getStyles = (
   borderColor: string,
   iconColor: string,
   textColor: string,
+  emphasisColor?: string,
+  dismissIconColor?: string,
   elevated?: boolean,
   bottomSpacing?: number,
   topSpacing?: number
 ) => {
   const visualRefreshEnabled = theme.flags.visualDesignRefresh;
+  const emphasis = emphasisColor ?? `color-mix(in srgb, ${backgroundColor} 94%, ${iconColor} 6%)`;
 
   return {
     wrapper: css({
@@ -51,7 +54,7 @@ export const getStyles = (
         borderRadius: theme.shape.radius.default,
       },
       visualRefreshEnabled && {
-        backgroundColor: `color-mix(in srgb, ${backgroundColor} 94%, ${iconColor} 6%)`,
+        backgroundColor: emphasis,
         padding: theme.spacing(1),
       }
     ),
@@ -84,8 +87,13 @@ export const getStyles = (
       visualRefreshEnabled && {
         button: {
           '&:hover, &:focus': {
-            backgroundColor: `color-mix(in srgb, ${backgroundColor} 94%, ${iconColor} 6%)`,
+            backgroundColor: emphasis,
           },
+        },
+      },
+      dismissIconColor && {
+        button: {
+          color: dismissIconColor,
         },
       }
     ),

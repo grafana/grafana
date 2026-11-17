@@ -83,8 +83,58 @@ WithActionAndDismiss.args = {
   onRemove: action('Dismiss button clicked'),
 };
 
+const actionOnlyExamples: Record<AlertVariant, { title: string; body: string; actionLabel: string }> = {
+  error: {
+    title: 'Cannot copy the rule',
+    body: 'The rule you are trying to copy does not exist.',
+    actionLabel: 'Go back to alert list',
+  },
+  warning: {
+    title: 'Quota almost reached',
+    body: 'You have used 90% of your monthly quota.',
+    actionLabel: 'Request increase',
+  },
+  info: {
+    title: 'New version available',
+    body: 'A newer version of this plugin is available.',
+    actionLabel: 'View changes',
+  },
+  success: {
+    title: 'Rule copied',
+    body: 'The rule was copied to the selected folder.',
+    actionLabel: 'Open rule',
+  },
+};
+
+const ActionOnlyAlert = ({ severity }: { severity: AlertVariant }) => {
+  const { title, body, actionLabel } = actionOnlyExamples[severity];
+
+  return (
+    <Alert
+      title={title}
+      severity={severity}
+      action={
+        <Button variant="secondary" onClick={action('Action button clicked')}>
+          {actionLabel}
+        </Button>
+      }
+    >
+      {body}
+    </Alert>
+  );
+};
+
 export const WithActionOnly: StoryFn<typeof Alert> = (args) => {
-  return <Alert {...args}>The rule you are trying to copy does not exist.</Alert>;
+  return (
+    <Stack direction="column">
+      <Alert {...args}>The rule you are trying to copy does not exist.</Alert>
+      {severities
+        .filter((severity) => severity !== 'error')
+        .map((severity) => (
+          <ActionOnlyAlert severity={severity} key={severity} />
+        ))}
+    </Stack>
+  );
 };
 
 WithActionOnly.args = {

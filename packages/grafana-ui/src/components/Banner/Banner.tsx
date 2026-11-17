@@ -32,6 +32,10 @@ export interface BannerProps extends HTMLAttributes<HTMLDivElement> {
   iconColor: string;
   /** Color of the title and supporting text. */
   textColor: string;
+  /** Fill of the icon tile and the dismiss button's hover state. Defaults to the background mixed with 6% of the icon color. */
+  emphasisColor?: string;
+  /** Color of the dismiss X icon. Defaults to the secondary button color. */
+  dismissIconColor?: string;
   /** Test id applied to the banner's inner container. A `data-testid` passed as an HTML attribute goes on the outer element. */
   dataTestId?: string;
   /** Click handler for the dismiss button. Renders an X icon button, or a text button when `buttonContent` is set. */
@@ -64,6 +68,8 @@ export const Banner = React.forwardRef<HTMLDivElement, BannerProps>(
       borderColor,
       iconColor,
       textColor,
+      emphasisColor,
+      dismissIconColor,
       dataTestId,
       onRemove,
       children,
@@ -86,6 +92,8 @@ export const Banner = React.forwardRef<HTMLDivElement, BannerProps>(
       borderColor,
       iconColor,
       textColor,
+      emphasisColor,
+      dismissIconColor,
       elevated,
       bottomSpacing,
       topSpacing

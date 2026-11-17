@@ -1,11 +1,12 @@
-import { type AriaRole, type HTMLAttributes, type ReactNode } from 'react';
+import { type HTMLAttributes, type ReactNode } from 'react';
 import * as React from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useTheme2 } from '../../themes/ThemeContext';
-import { type IconName } from '../../types/icon';
 import { Banner } from '../Banner/Banner';
+
+import { getIconFromSeverity, rolesBySeverity } from './utils';
 
 export type AlertVariant = 'success' | 'warning' | 'error' | 'info';
 
@@ -49,23 +50,3 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(({ severity = 'erro
 });
 
 Alert.displayName = 'Alert';
-
-const rolesBySeverity: Record<AlertVariant, AriaRole> = {
-  error: 'alert',
-  warning: 'alert',
-  info: 'status',
-  success: 'status',
-};
-
-const getIconFromSeverity = (severity: AlertVariant): IconName => {
-  switch (severity) {
-    case 'error':
-      return 'exclamation-circle';
-    case 'warning':
-      return 'exclamation-triangle';
-    case 'info':
-      return 'info-circle';
-    case 'success':
-      return 'check';
-  }
-};
