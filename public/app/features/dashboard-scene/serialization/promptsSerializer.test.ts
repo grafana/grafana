@@ -9,6 +9,8 @@ import {
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 
+import { getPickedPanelIds } from '../prompts/promptSources';
+import { getPromptLabel } from '../prompts/utils';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 
 import { transformSaveModelSchemaV2ToScene } from './transformSaveModelSchemaV2ToScene';
@@ -51,8 +53,48 @@ describe('prompt sources', () => {
   });
 });
 
+// Nothing checks a spec applied through the mutation API, so a prompt can arrive as something the schema forbids.
+describe('prompts that do not follow the schema', () => {
+  it('load with sources that are not a list left out, so the prompt is answered from every panel', () => {
+    const scene = load(
+      malformed(
+        { text: 'Why did errors rise?', sources: 'errors' },
+        { text: 'What stands out?', sources: { element: source('errors').element } }
+      )
+    );
+
+    expect(scene.state.prompts).toEqual([{ text: 'Why did errors rise?' }, { text: 'What stands out?' }]);
+    expect(getRow(scene).state.prompts).toEqual(scene.state.prompts);
+    // A new panel's ID is chosen from the picked ones, so a prompt that picked none must leave nothing to read.
+    expect(getPickedPanelIds(scene)).toEqual([]);
+  });
+
+  it('load with a title that is not a string left out, so viewers see the prompt', () => {
+    const scene = load(
+      malformed(
+        { text: 'Why did errors rise?', title: 5 },
+        { text: 'What stands out?', title: { text: 'Stands out' } },
+        { text: 'Which endpoints got slower?', title: 'Latency' }
+      )
+    );
+
+    expect(scene.state.prompts).toEqual([
+      { text: 'Why did errors rise?' },
+      { text: 'What stands out?' },
+      { text: 'Which endpoints got slower?', title: 'Latency' },
+    ]);
+    expect(scene.state.prompts?.map(getPromptLabel)).toEqual(['Why did errors rise?', 'What stands out?', 'Latency']);
+  });
+});
+
 function source(name: string): PromptSource {
   return { element: { kind: 'ElementReference', name } };
+}
+
+/** Prompts as JSON that does not follow the schema, which the `Prompt` type can't express. */
+function malformed(...prompts: Array<Record<string, unknown>>): Prompt[] {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the point is a value the type forbids
+  return prompts as unknown as Prompt[];
 }
 
 function panel(id: number, title: string): PanelKind {
