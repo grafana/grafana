@@ -3,6 +3,7 @@ import { useEffect, useReducer } from 'react';
 
 import { SceneObjectStateChangedEvent } from '@grafana/scenes';
 
+import { getPendingChangesHistory } from '../lifecycle/pendingChangePreview';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { DashboardStateChangedEvent } from '../sidebar/events';
 
@@ -25,7 +26,10 @@ export function useDashboardSaveChanges(
       }
     });
     const actionsSubscription = dashboard.subscribeToEvent(DashboardStateChangedEvent, invalidate);
+    // Pending changes compare as their plugin last recorded them, and a recording lands without a scene event.
+    const unsubscribeHistory = getPendingChangesHistory(dashboard.state)?.subscribe(invalidate);
     return () => {
+      unsubscribeHistory?.();
       actionsSubscription.unsubscribe();
       subscription.unsubscribe();
       invalidate.cancel();

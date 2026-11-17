@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from 'test/test-utils';
+import { act, render, renderHook, screen, waitFor } from 'test/test-utils';
 
 import { defaultSpec, type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { setTestFlags } from '@grafana/test-utils/unstable';
@@ -7,6 +7,7 @@ import { getPluginExtensionRegistries } from 'app/features/plugins/extensions/re
 import { getAppPluginConfigs, getExtensionPointPluginDependencies } from 'app/features/plugins/extensions/utils';
 
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
+import { useDashboardSaveChanges } from '../saving/useDashboardSaveChanges';
 import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSaveModelSchemaV2ToScene';
 
 import { SavePendingChangesForm } from './SavePendingChangesForm';
@@ -48,8 +49,8 @@ function pendingChanges(overrides: Partial<DashboardPendingChanges> = {}): Dashb
   };
 }
 
-/** The save form for `pending`, on the page, with the dashboard saved at `savedGeneration` now. */
-async function renderForm(pending: DashboardPendingChanges, savedGeneration = 3) {
+/** The page's scene for `pending`, open for editing, with the dashboard saved at `savedGeneration` now. */
+async function loadScene(pending: DashboardPendingChanges, savedGeneration = 3) {
   jest.mocked(getExtensionPointPluginDependencies).mockResolvedValue(['grafana-assistant-app']);
   jest.mocked(getAppPluginConfigs).mockResolvedValue([]);
   jest.mocked(getPluginExtensionRegistries).mockResolvedValue({
@@ -67,6 +68,12 @@ async function renderForm(pending: DashboardPendingChanges, savedGeneration = 3)
     spec: structuredClone(proposed),
   } as unknown as DashboardWithAccessInfo<DashboardV2Spec>);
   openPendingChangesForEditing(scene);
+  return scene;
+}
+
+/** The save form for `pending`, on the page, with the dashboard saved at `savedGeneration` now. */
+async function renderForm(pending: DashboardPendingChanges, savedGeneration = 3) {
+  const scene = await loadScene(pending, savedGeneration);
   const drawer = new SaveDashboardDrawer({ dashboardRef: scene.getRef() });
   return render(<SavePendingChangesForm dashboard={scene} drawer={drawer} changeInfo={scene.getDashboardChanges()} />);
 }
@@ -110,6 +117,38 @@ it('asks the plugin to bring stale pending changes up to date instead', async ()
 
   expect(pending.update).toHaveBeenCalledTimes(1);
   expect(pending.apply).not.toHaveBeenCalled();
+});
+
+it('shows the changes their plugin records while the drawer is open', async () => {
+  let recorded = saved;
+  let notify = () => {};
+  const pending = pendingChanges();
+  pending.history = {
+    ...pending.history!,
+    getState: () => ({ proposed: recorded }),
+    subscribe: (listener) => {
+      notify = listener;
+      return () => {};
+    },
+  };
+  const scene = await loadScene(pending);
+  jest.useFakeTimers();
+  try {
+    const { result } = renderHook(() => useDashboardSaveChanges(scene));
+    // Entering edit mode still updates the scene: let that settle first.
+    act(() => jest.runAllTimers());
+    expect(result.current.hasChanges).toBe(false);
+
+    recorded = proposed;
+    act(() => {
+      notify();
+      jest.runAllTimers();
+    });
+
+    expect(result.current.hasChanges).toBe(true);
+  } finally {
+    jest.useRealTimers();
+  }
 });
 
 it('shows the conflict when the dashboard moved on while the form was open', async () => {
