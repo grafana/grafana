@@ -148,7 +148,18 @@ WithActionOnly.args = {
 };
 
 export const WithActionAndRemoveButton: StoryFn<typeof Alert> = (args) => {
-  return <Alert {...args}>This alert has both a custom action and a remove button with custom content.</Alert>;
+  return (
+    <Stack direction="column">
+      <Alert {...args}>This alert has both a custom action and a remove button with custom content.</Alert>
+      {severities
+        .filter((severity) => severity !== args.severity)
+        .map((severity) => (
+          <Alert {...args} severity={severity} key={severity}>
+            This alert has both a custom action and a remove button with custom content.
+          </Alert>
+        ))}
+    </Stack>
+  );
 };
 
 WithActionAndRemoveButton.args = {
