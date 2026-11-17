@@ -145,10 +145,10 @@ export function NotebookCellFrame({
   const frameLabel = collapsed
     ? panelTitle
       ? t('notebook.cell.frame.aria-label-collapsed-titled', 'Collapsed block: {{title}}', { title: panelTitle })
-      : t('notebook.cell.frame.aria-label-collapsed', 'Collapsed block')
+      : t('notebook.cell.frame.aria-label-collapsed-untitled', 'Collapsed block')
     : panelTitle
       ? t('notebook.cell.frame.aria-label-panel-titled', 'Visualization block: {{title}}', { title: panelTitle })
-      : t('notebook.cell.frame.aria-label-panel', 'Visualization block');
+      : t('notebook.cell.frame.aria-label-panel-untitled', 'Visualization block');
   const dragHandleLabel = t('notebook.cell.drag-handle', 'Drag to reorder');
 
   const frameRef = useRef<HTMLDivElement>(null);
