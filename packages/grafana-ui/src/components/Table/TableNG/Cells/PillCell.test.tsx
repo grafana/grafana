@@ -3,6 +3,7 @@ import tinycolor from 'tinycolor2';
 
 import {
   type Field,
+  FieldColorModeId,
   FieldType,
   MappingType,
   ThemeContext,
@@ -10,7 +11,6 @@ import {
   fieldColorModeRegistry,
   getColorByStringHash,
 } from '@grafana/data';
-import { FieldColorModeId } from '@grafana/schema';
 
 import { getTextColorForBackground } from '../../../../utils/colors';
 import { getTagColorsFromName } from '../../../../utils/tags';
@@ -50,6 +50,22 @@ describe('PillCell', () => {
         ),
         `<span style="background-color: rgb(63, 43, 91); color: rgb(247, 248, 250);">value1</span>`
       );
+    });
+
+    it.each([
+      ['classic palette', FieldColorModeId.PaletteClassic],
+      ['thresholds', FieldColorModeId.Thresholds],
+    ])('uses theme tag colors for %s', (_, colorMode) => {
+      const mockField = fieldWithValues(['value1']);
+      const field = {
+        ...mockField,
+        config: { ...mockField.config, color: { mode: colorMode } },
+      } satisfies Field;
+      const { background, text } = getTagColorsFromName('value1', theme);
+
+      render(<PillCell getTextColorForBackground={getTextColorForBackground} field={field} rowIdx={0} theme={theme} />);
+
+      expect(screen.getByText('value1')).toHaveStyle({ backgroundColor: background, color: text });
     });
 
     it('empty string', () => {
@@ -279,7 +295,7 @@ describe('PillCell', () => {
       expect(tinycolor.readability(pill.style.backgroundColor, pill.style.color)).toBeGreaterThanOrEqual(4.5);
     });
 
-    it('honours a categorical field palette over the tag colors', () => {
+    it('uses theme tag colors for the classic palette', () => {
       const mockField = fieldWithValues(['value1']);
       const classic = {
         ...mockField,
@@ -287,7 +303,19 @@ describe('PillCell', () => {
       } satisfies Field;
 
       renderRefreshed(classic);
-      const palette = fieldColorModeRegistry.get(FieldColorModeId.PaletteClassic).getColors!(refreshTheme);
+      const { background, text } = getTagColorsFromName('value1', refreshTheme);
+      expect(screen.getByText('value1')).toHaveStyle({ backgroundColor: background, color: text });
+    });
+
+    it('honours other categorical field palettes over the tag colors', () => {
+      const mockField = fieldWithValues(['value1']);
+      const colorblind = {
+        ...mockField,
+        config: { ...mockField.config, color: { mode: FieldColorModeId.PaletteColorblind } },
+      } satisfies Field;
+
+      renderRefreshed(colorblind);
+      const palette = fieldColorModeRegistry.get(FieldColorModeId.PaletteColorblind).getColors!(refreshTheme);
       const pill = screen.getByText('value1');
       expect(pill.style.backgroundColor).toBe(tinycolor(getColorByStringHash(palette, 'value1')).toRgbString());
       expect(tinycolor.readability(pill.style.backgroundColor, pill.style.color)).toBeGreaterThanOrEqual(4.5);

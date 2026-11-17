@@ -97,8 +97,11 @@ function getPillColors(
     return onBackground(theme.visualization.getColorByName(cfg.color.fixedColor ?? FALLBACK_COLOR));
   }
 
-  // Only a mode that carries a categorical palette can color pills. Modes that don't — thresholds,
-  // which every table field gets by default, and the continuous scales — leave the choice to us.
+  if (cfg.color?.mode === FieldColorModeId.PaletteClassic || cfg.color?.mode === FieldColorModeId.Thresholds) {
+    return getTagColorsFromName(value, theme);
+  }
+
+  // Only a mode that carries a categorical palette can color pills. Continuous scales leave the choice to us.
   const mode = cfg.color && fieldColorModeRegistry.get(cfg.color.mode);
   if (typeof mode?.getColors === 'function') {
     return onBackground(getColorByStringHash(mode.getColors(theme), value));
