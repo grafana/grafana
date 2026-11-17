@@ -12,7 +12,23 @@ let navTree: NavModelItem[] = [
     id: 'cfg',
     text: 'Administration',
     url: '/admin',
-    children: [{ id: 'cfg/access', text: 'Users and access', url: '/admin/access', children: [pageItem('users')] }],
+    children: [
+      {
+        id: 'cfg/general',
+        text: 'General',
+        url: '/admin/general',
+        children: [
+          { id: 'plugin-page-advisor', text: 'Advisor', url: '/a/grafana-advisor-app/home' },
+          {
+            id: 'provisioning',
+            text: 'Provisioning',
+            url: '/admin/provisioning',
+            children: [{ id: 'provisioning/repos', text: 'Repositories', url: '/admin/provisioning/repos' }],
+          },
+        ],
+      },
+      { id: 'cfg/access', text: 'Users and access', url: '/admin/access', children: [pageItem('users')] },
+    ],
   },
   {
     id: 'monitoring',
@@ -70,7 +86,7 @@ describe('useSectionNav', () => {
   it('shows on a group landing page before the page has told the chrome where it is', () => {
     const model = render('cfg', { path: '/admin/access' });
 
-    expect(model?.groups.map((group) => group.id)).toEqual(['cfg/access']);
+    expect(model?.groups.map((group) => group.id)).toEqual(['cfg/general', 'cfg/access']);
     expect(model?.activeId).toBeUndefined();
   });
 
@@ -99,6 +115,22 @@ describe('useSectionNav', () => {
     const currentPage = { id: 'plugin-own-id', text: 'Rules', url: '/monitoring/rules/extra' };
 
     expect(render('monitoring', { currentPage, path: '/monitoring/rules/extra' })?.activeId).toBe('rules');
+  });
+
+  it('treats every route of a plugin page as that destination', () => {
+    const path = '/a/grafana-advisor-app/checks';
+    const currentPage = { id: 'checks', text: 'Checks', url: path };
+
+    expect(render('cfg', { path })?.activeId).toBe('plugin-page-advisor');
+    expect(render('cfg', { path, currentPage })?.activeId).toBe('plugin-page-advisor');
+    expect(render('monitoring', { path })).toBeUndefined();
+  });
+
+  it('marks the link a nested page belongs to', () => {
+    const currentPage = { id: 'provisioning/repos', text: 'Repositories', url: '/admin/provisioning/repos' };
+
+    expect(render('cfg', { currentPage, path: currentPage.url })?.activeId).toBe('provisioning');
+    expect(render('cfg', { path: '/admin/provisioning/repos/new' })?.activeId).toBe('provisioning');
   });
 
   it('shows on the section landing page', () => {

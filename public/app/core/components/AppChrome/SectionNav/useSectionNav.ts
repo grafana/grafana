@@ -16,26 +16,36 @@ function toPathname(url?: string): string {
   return url ? locationUtil.stripBaseFromUrl(url).split(/[?#]/)[0] : '';
 }
 
-function isUnderDestination(items: NavModelItem[], pathname: string): boolean {
-  return items.some((item) => {
-    const path = toPathname(item.url);
-    if (path.length > 1 && (pathname === path || pathname.startsWith(`${path}/`))) {
-      return true;
-    }
-    return item.children ? isUnderDestination(item.children, pathname) : false;
-  });
+const PLUGIN_ROOT = /^\/a\/[^/]+/;
+
+// How much of the item's URL the pathname is at or under, or 0. A plugin page's nav item can point
+// at one of its routes (such as /home) while the plugin's other routes are the same destination
+function matchLength(item: NavModelItem, pathname: string): number {
+  const path = toPathname(item.url);
+  const roots = [path, path.match(PLUGIN_ROOT)?.[0] ?? ''];
+  return Math.max(
+    0,
+    ...roots.map((root) =>
+      root.length > 1 && (pathname === root || pathname.startsWith(`${root}/`)) ? root.length : 0
+    )
+  );
 }
 
-// The longest destination URL the pathname is at or under. Plugin pages describe themselves to the
-// chrome with ids of their own, so the page's nav item alone does not always find them in the tree
+function isUnderDestination(items: NavModelItem[], pathname: string): boolean {
+  return items.some(
+    (item) => matchLength(item, pathname) > 0 || (item.children ? isUnderDestination(item.children, pathname) : false)
+  );
+}
+
+// The item with the longest matching URL. Plugin pages describe themselves to the chrome with
+// ids of their own, so the page's nav item alone does not always find them in the tree
 function findByPathname(items: NavModelItem[], pathname: string): NavModelItem | undefined {
   let best: { item: NavModelItem; length: number } | undefined;
   const visit = (nodes: NavModelItem[]) => {
     for (const node of nodes) {
-      const path = toPathname(node.url);
-      const matches = path.length > 1 && (pathname === path || pathname.startsWith(`${path}/`));
-      if (!node.children && matches && (!best || path.length > best.length)) {
-        best = { item: node, length: path.length };
+      const length = matchLength(node, pathname);
+      if (length > (best?.length ?? 0)) {
+        best = { item: node, length };
       }
       if (node.children) {
         visit(node.children);
@@ -44,6 +54,13 @@ function findByPathname(items: NavModelItem[], pathname: string): NavModelItem |
   };
   visit(items);
   return best?.item;
+}
+
+// The link in the panel that an item belongs to: the item itself, or the link it is nested under
+function findLink(groups: NavModelItem[], target: NavModelItem | undefined): NavModelItem | undefined {
+  const contains = (node: NavModelItem): boolean =>
+    node === target || node.id === target?.id || Boolean(node.children?.some(contains));
+  return target ? groups.flatMap((group) => group.children ?? []).find(contains) : undefined;
 }
 
 function subscribeToPathname(onChange: () => void) {
@@ -79,18 +96,17 @@ export function useSectionNav(
     }
 
     const destinations = (section.children ?? []).filter((child) => !child.isCreateAction);
+    const groups = destinations
+      .filter((child) => child.children?.some((grandchild) => !grandchild.isCreateAction))
+      .map((group) => ({ ...group, children: group.children?.filter((child) => !child.isCreateAction) }));
+    const links = groups.flatMap((group) => group.children ?? []);
     const active =
-      (currentPage ? getActiveItem(destinations, currentPage) : undefined) ?? findByPathname(destinations, pathname);
+      (currentPage ? getActiveItem(destinations, currentPage) : undefined) ?? findByPathname(links, pathname);
     const isLanding = pathname === toPathname(section.url) || currentPage?.id === sectionId;
     if (!active && !isLanding && !isUnderDestination(destinations, pathname)) {
       return undefined;
     }
 
-    return {
-      groups: destinations
-        .filter((child) => child.children?.some((grandchild) => !grandchild.isCreateAction))
-        .map((group) => ({ ...group, children: group.children?.filter((child) => !child.isCreateAction) })),
-      activeId: active?.id,
-    };
+    return { groups, activeId: findLink(groups, active)?.id };
   }, [sectionId, enabled, navTree, pathname, currentPage]);
 }
