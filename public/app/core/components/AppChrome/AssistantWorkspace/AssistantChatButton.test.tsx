@@ -213,6 +213,40 @@ describe('AssistantChatButton', () => {
     expect(closeButton()).toHaveAttribute('aria-expanded', 'false');
   });
 
+  it('renders one menu, which the button controls', async () => {
+    const { user } = renderButtons();
+
+    const menu = await openMenuWithKeyboard(user, openButton());
+
+    expect(screen.getAllByRole('menu')).toEqual([menu]);
+    expect(openButton()).toHaveAttribute('aria-controls', menu.id);
+  });
+
+  it.each(['{Tab}', '{Shift>}{Tab}{/Shift}'])(
+    'closes the menu with %s, returning focus to the button',
+    async (keys) => {
+      const { user } = renderButtons();
+      const menu = await openMenuWithKeyboard(user, openButton());
+      await waitFor(() => expect(within(menu).getByRole('menuitemradio', { name: 'Left' })).toHaveFocus());
+
+      await user.keyboard(keys);
+
+      expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+      expect(openButton()).toHaveFocus();
+    }
+  );
+
+  it('opens the menu on the next hover after a keyboard click, which leaves no pointer to come back', async () => {
+    const { user } = renderButtons();
+    openButton().focus();
+
+    await user.keyboard('{Enter}');
+    expect(closeButton()).toBeInTheDocument();
+    await user.hover(closeButton());
+
+    expect(await screen.findByRole('menu', { name: 'Grafana Assistant layout' })).toBeInTheDocument();
+  });
+
   it('shows the floating Assistant a page holds hidden, which it reads as hidden', async () => {
     const { user } = renderButtons();
     await chooseFromMenu(user, openButton(), 'Floating');
@@ -508,6 +542,35 @@ describe('AssistantChatButton', () => {
 
       expect(popIn).toHaveBeenCalledTimes(1);
       expect(placementNow()).toEqual({ presentation: 'docked', side: 'left' });
+      act(() => stop());
+    });
+
+    it('brings the Assistant back from its own window with a preset that shows it, from the menu or a shortcut', async () => {
+      const popIn = jest.fn();
+      const stop = trackExtensionSidebarPopOut(popIn);
+      const { user, chrome } = renderButtons();
+
+      await chooseFromMenu(user, openButton(), 'Page with floating Assistant');
+      expect(popIn).toHaveBeenCalledTimes(1);
+      expect(closeButton()).toBeInTheDocument();
+
+      await user.keyboard('{Control>}{Alt>}{Shift>}1{/Shift}{/Alt}{/Control}');
+      expect(popIn).toHaveBeenCalledTimes(2);
+      expect(navigation(chrome)).toEqual({ docked: true, open: true });
+      act(() => stop());
+    });
+
+    it('closes the Assistant in its own window with Page only, without bringing it back first', async () => {
+      const popIn = jest.fn();
+      const stop = trackExtensionSidebarPopOut(popIn);
+      const { user } = renderButtons();
+      // Its window keeps the sidebar open, so closing the sidebar closes the window too.
+      await user.click(openButton());
+
+      await chooseFromMenu(user, closeButton(), 'Page only');
+
+      expect(popIn).not.toHaveBeenCalled();
+      expect(openButton()).toBeInTheDocument();
       act(() => stop());
     });
 

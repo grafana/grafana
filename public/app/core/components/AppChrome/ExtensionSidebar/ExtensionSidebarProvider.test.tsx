@@ -1,5 +1,5 @@
 import { OpenFeatureProvider } from '@openfeature/react-sdk';
-import { render as rtlRender, screen, act } from '@testing-library/react';
+import { render as rtlRender, screen, act, waitFor } from '@testing-library/react';
 import { type ReactElement, type ReactNode } from 'react';
 import { useAsync } from 'react-use';
 
@@ -514,6 +514,35 @@ describe('ExtensionSidebarProvider', () => {
     expect(unsubscribeMocks[0]).toHaveBeenCalled();
     expect(unsubscribeMocks[1]).toHaveBeenCalled();
     expect(unsubscribeMocks[2]).toHaveBeenCalled();
+  });
+
+  describe('bottom dock height', () => {
+    const originalInnerHeight = window.innerHeight;
+    const HeightComponent = () => <div data-testid="height">{useExtensionSidebarContext().extensionSidebarHeight}</div>;
+    const resizeWindowTo = (height: number) => {
+      Object.defineProperty(window, 'innerHeight', { value: height, configurable: true, writable: true });
+      window.dispatchEvent(new Event('resize'));
+    };
+
+    afterEach(() => {
+      Object.defineProperty(window, 'innerHeight', { value: originalInnerHeight, configurable: true, writable: true });
+      window.localStorage.removeItem('grafana.navigation.extensionSidebarHeight');
+    });
+
+    it('keeps it at most half the window, as the window resizes', async () => {
+      resizeWindowTo(1200);
+      window.localStorage.setItem('grafana.navigation.extensionSidebarHeight', '600');
+      render(
+        <ExtensionSidebarContextProvider>
+          <HeightComponent />
+        </ExtensionSidebarContextProvider>
+      );
+      expect(screen.getByTestId('height')).toHaveTextContent('600');
+
+      act(() => resizeWindowTo(700));
+
+      await waitFor(() => expect(screen.getByTestId('height')).toHaveTextContent('350'));
+    });
   });
 
   describe('presentation', () => {

@@ -681,6 +681,8 @@ describe('dragged from the docked sidebar', () => {
         setIsFloating(true);
       },
       onDock,
+      canDockLeft: () => leftDockable,
+      canDockBottom: () => bottomDockable,
     });
     return (
       <>
@@ -699,6 +701,8 @@ describe('dragged from the docked sidebar', () => {
   beforeEach(() => {
     natural = docked;
     onFloat.mockClear();
+    leftDockable = true;
+    bottomDockable = true;
   });
 
   it('stays put and previews nothing until the pointer is pulled 40px left of where it was grabbed', () => {
@@ -886,6 +890,22 @@ describe('dragged from the docked sidebar', () => {
       expect(onFloat).not.toHaveBeenCalled();
     });
 
+    it('floats at the left and bottom edges while those docks are off', () => {
+      leftDockable = false;
+      bottomDockable = false;
+      render(<Sidebar />);
+
+      fireEvent.pointerDown(handle(), { clientX: 900, clientY: 60, button: 0 });
+      fireEvent.pointerMove(handle(), { clientX: 100, clientY: 300 });
+      expect(preview()).toMatchObject({ action: 'float' });
+      fireEvent.pointerMove(handle(), { clientX: 600, clientY: 760 });
+      expect(preview()).toMatchObject({ action: 'float' });
+      fireEvent.pointerUp(handle(), { clientX: 600, clientY: 760 });
+
+      expect(onDock).not.toHaveBeenCalled();
+      expect(onFloat).toHaveBeenCalledTimes(1);
+    });
+
     it('does not dock on the side it is already docked on', () => {
       render(<Sidebar />);
 
@@ -970,6 +990,17 @@ describe('dragged from the docked sidebar', () => {
       fireEvent.pointerUp(handle(), { clientX: 1010, clientY: 600 });
       expect(onDock).toHaveBeenCalledWith('right');
       expect(onFloat).not.toHaveBeenCalled();
+    });
+
+    it('still docks on the right while the left dock is off', () => {
+      leftDockable = false;
+      render(<Sidebar dockSide="bottom" />);
+
+      fireEvent.pointerDown(handle(), { clientX: 600, clientY: 500, button: 0 });
+      fireEvent.pointerMove(handle(), { clientX: 340, clientY: 300 });
+      expect(preview()).toMatchObject({ action: 'float' });
+      fireEvent.pointerMove(handle(), { clientX: 1010, clientY: 300 });
+      expect(preview()).toMatchObject({ action: 'dock', side: 'right' });
     });
 
     it('does not dock at the bottom it is already docked at', () => {

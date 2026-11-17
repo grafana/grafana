@@ -16,9 +16,11 @@ import {
 import {
   type ComponentType,
   type KeyboardEvent,
+  type MouseEvent,
   type ReactElement,
   useCallback,
   useEffect,
+  useId,
   useRef,
   useState,
   useSyncExternalStore,
@@ -156,6 +158,8 @@ export function AssistantChatButton({ assistantComponentId, isOpen, icon, classN
   const focusMenuItem = useRef<((index: number) => void) | undefined>(undefined);
   // After a click the menu stays shut until the pointer leaves, so it does not cover the Assistant it showed.
   const [hoverPaused, setHoverPaused] = useState(false);
+  // The button controls the menu itself, not the wrapper that positions it.
+  const menuId = useId();
 
   const { refs, floatingStyles, context } = useFloating({
     open: menuOpen,
@@ -208,10 +212,15 @@ export function AssistantChatButton({ assistantComponentId, isOpen, icon, classN
     chrome.setMegaMenuDocked(withNavigation);
     chrome.setMegaMenuOpen(withNavigation);
     if (preset === 'page-only') {
+      // Closed as the Chat button closes it, its own window included. Not popped in first: that tells the extension
+      // the user moved it, so the layout the window floated would stay floating instead of docking again.
       setDockedComponentId(undefined);
       return;
     }
-    // Shown where Move Assistant put it.
+    // Brought back from its own window, as moving it does, and shown where Move Assistant put it.
+    if (poppedOut) {
+      popInExtensionSidebar();
+    }
     show();
   };
   const preset = getArrangePreset(isOpen, megaMenuDocked && megaMenuOpen);
@@ -274,9 +283,12 @@ export function AssistantChatButton({ assistantComponentId, isOpen, icon, classN
   };
 
   // Held hidden by a page reads as hidden, so this shows it; opening releases the page's hold.
-  const onClick = () => {
+  const onClick = (event: MouseEvent<HTMLButtonElement>) => {
     setMenuOpenedBy(undefined);
-    setHoverPaused(true);
+    // Only a pointer click pauses hover: Enter or Space leave no pointer on the button to leave and resume it.
+    if (event.detail > 0) {
+      setHoverPaused(true);
+    }
     setDockedComponentId(isOpen ? undefined : assistantComponentId);
   };
 
@@ -307,7 +319,12 @@ export function AssistantChatButton({ assistantComponentId, isOpen, icon, classN
               ? t('navigation.extension-sidebar.assistant-close-tooltip', 'Close Chat')
               : t('navigation.extension-sidebar.assistant-open-tooltip', 'Open Chat')
         }
-        {...getReferenceProps({ onKeyDown, onClick, onPointerLeave: () => setHoverPaused(false) })}
+        {...getReferenceProps({
+          onKeyDown,
+          onClick,
+          onPointerLeave: () => setHoverPaused(false),
+          'aria-controls': menuOpen ? menuId : undefined,
+        })}
       >
         {t('navigation.extension-sidebar.assistant-label', 'Chat')}
       </ToolbarButton>
@@ -321,12 +338,20 @@ export function AssistantChatButton({ assistantComponentId, isOpen, icon, classN
               ref={setMenuElement}
               className={styles.menu}
               style={floatingStyles}
-              {...getFloatingProps({ onKeyDownCapture: closeOnEscape })}
+              // Only positions the menu inside it, so it takes no role or name of its own: one menu, not two nested.
+              {...getFloatingProps({
+                role: 'presentation',
+                'aria-labelledby': undefined,
+                onKeyDownCapture: closeOnEscape,
+              })}
             >
               <Menu
                 // Down arrow on a hover-opened menu remounts it, so it takes focus as a keyboard-opened one does.
                 key={menuOpenedBy}
+                id={menuId}
                 ariaLabel={t('navigation.assistant-toolbar-button.menu', 'Grafana Assistant layout')}
+                // Tab and Shift+Tab close it, as they close Grafana's other menus, and focus goes back to the button.
+                onClose={() => setMenuOpenedBy(undefined)}
                 onOpen={(focusOnItem) => {
                   focusMenuItem.current = focusOnItem;
                   if (menuOpenedBy === 'hover') {

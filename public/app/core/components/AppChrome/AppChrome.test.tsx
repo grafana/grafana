@@ -843,6 +843,23 @@ describe('AppChrome', () => {
         expect(screen.getByTestId(EXTENSION_SIDEBAR_FLOATING_TESTID)).toBeInTheDocument();
         expect(stylesFor(document.getElementById('pageContent')!)).not.toContain('max-height');
       });
+
+      it('keeps the Return to previous button above it', async () => {
+        mockUseMediaQueryMinWidth.mockReturnValue(true);
+        mockUseExtensionSidebarContext.mockReturnValue(dockedBottomContext);
+        const { context, rerender } = setup(<Page navId="child1">Children</Page>);
+        await screen.findByTestId('ext-sidebar-stub');
+        act(() => context.chrome.setReturnToPrevious({ title: 'Dashboards', href: '/dashboards' }));
+        const returnToPrevious = () => screen.getByTestId(selectors.components.ReturnToPrevious.buttonGroup);
+
+        // 32px above the 320px tall dock.
+        expect(stylesFor(returnToPrevious())).toContain('bottom: calc(32px + 320px)');
+
+        // Docked on the right, the window's bottom edge is the page's.
+        mockUseExtensionSidebarContext.mockReturnValue(openSidebarContext);
+        rerender();
+        expect(stylesFor(returnToPrevious())).toContain('bottom: 32px');
+      });
     });
 
     it('renders the sidebar docked, not floating, on larger screens', async () => {

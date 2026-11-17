@@ -414,6 +414,18 @@ describe('ExtensionSidebar', () => {
       expect(setExtensionSidebarPresentation).toHaveBeenCalledWith('docked');
     });
 
+    it('offers the left and bottom docks only while placements are on', () => {
+      setTestFlags({ 'grafana.extensionSidebarFloating': true });
+      renderDocked(FloatingCapable);
+      const { canDockLeft, canDockBottom } = mockUseDockedDrag.mock.lastCall![1];
+      expect(canDockLeft()).toBe(false);
+      expect(canDockBottom()).toBe(false);
+
+      setTestFlags({ 'grafana.extensionSidebarFloating': true, 'grafana.extensionSidebarPlacements': true });
+      expect(canDockLeft()).toBe(true);
+      expect(canDockBottom()).toBe(true);
+    });
+
     it('offers no drag while the sidebar cannot float, or for a plugin that cannot', () => {
       renderDocked(FloatingCapable);
       expect(mockUseDockedDrag.mock.lastCall?.[0]).toBeNull();

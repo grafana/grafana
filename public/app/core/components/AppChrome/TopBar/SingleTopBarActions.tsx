@@ -29,13 +29,17 @@ export function SingleTopBarActions({ actions, breadcrumbActions, scopes }: Prop
   } = useExtensionSidebarContext();
   const styles = useStyles2(getStyles, extensionSidebarWidth, visualRefreshEnabled);
   const isSmallScreen = !useMediaQueryMinWidth('sm');
-  // Docked on the left, the sidebar starts below the header, so it leaves this row alone.
-  const isDockedLeft = presentation === 'docked' && dockSide === 'left';
+  // Docked on the left, the sidebar starts below the header; at the bottom, below the page. Either way it leaves this
+  // row alone.
+  const leavesRowAlone = presentation === 'docked' && (dockSide === 'left' || dockSide === 'bottom');
 
   return (
     <div
       data-testid={Components.NavToolbar.container}
-      className={cx(styles.actionsBar, isExtensionSidebarOpen && !isSmallScreen && !isDockedLeft && styles.constrained)}
+      className={cx(
+        styles.actionsBar,
+        isExtensionSidebarOpen && !isSmallScreen && !leavesRowAlone && styles.constrained
+      )}
     >
       <Stack alignItems="center" justifyContent="flex-start" flex={1} wrap="nowrap" minWidth={0}>
         {scopes?.state.enabled ? <ScopesSelector /> : undefined}

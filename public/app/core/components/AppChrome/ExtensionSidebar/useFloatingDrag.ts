@@ -105,6 +105,10 @@ interface DockedDragOptions {
   floatingWidth: number;
   onFloat: () => void;
   onDock: (side: ExtensionSidebarDockSide) => void;
+  /** Whether taking the pointer to the left edge docks there; while not, the drag floats the sidebar there. */
+  canDockLeft: () => boolean;
+  /** Whether taking the pointer to the bottom edge docks there; while not, the drag floats the sidebar there. */
+  canDockBottom: () => boolean;
 }
 
 /** How big the docked sidebar is: its width on a side, its height at the bottom. */
@@ -400,16 +404,17 @@ export function useFloatingDrag(
  * letting go then calls `onFloat`, after which the floating container mounts where the preview was, `floatingWidth`
  * wide. Once the pointer reaches another edge of the page content (left, right or bottom), as close as the floating
  * drag docks from, the preview shows the sidebar docked there instead, and letting go calls `onDock` with that edge.
+ * The right edge always docks; the left one only while `canDockLeft`, and the bottom one only while `canDockBottom`.
  * Letting go short of either does nothing. The keyboard path is the extension's own layout control.
  */
 export function useDockedDrag(
   element: HTMLElement | null,
-  { dockSide, dockWidth, dockHeight, floatingWidth, onFloat, onDock }: DockedDragOptions
+  { dockSide, dockWidth, dockHeight, floatingWidth, onFloat, onDock, canDockLeft, canDockBottom }: DockedDragOptions
 ): EdgeActionPreview | null {
   const [preview, setPreview] = useState<EdgeActionPreview | null>(null);
   // The listeners are attached once per element and side, so they read the latest options through a ref.
-  const optionsRef = useRef({ dockWidth, dockHeight, floatingWidth, onFloat, onDock });
-  optionsRef.current = { dockWidth, dockHeight, floatingWidth, onFloat, onDock };
+  const optionsRef = useRef({ dockWidth, dockHeight, floatingWidth, onFloat, onDock, canDockLeft, canDockBottom });
+  optionsRef.current = { dockWidth, dockHeight, floatingWidth, onFloat, onDock, canDockLeft, canDockBottom };
 
   useEffect(() => {
     if (!element) {
@@ -441,7 +446,8 @@ export function useDockedDrag(
       drag.dragging = true;
       element.setAttribute('data-dragging', '');
       const { dockWidth: width, dockHeight: height, floatingWidth: floatWidth } = optionsRef.current;
-      const otherSide = otherDockSideAt(event, dockSide);
+      const { canDockLeft: dockableLeft, canDockBottom: dockableBottom } = optionsRef.current;
+      const otherSide = otherDockSideAt(event, dockSide, { left: dockableLeft(), bottom: dockableBottom() });
       const next = otherSide
         ? dockPreview(otherSide, { width, height }, areaWithSidebar(element))
         : floatPreviewAt(element, event, drag, floatWidth, dockSide);
@@ -538,13 +544,15 @@ function floatPreviewAt(
 }
 
 /**
- * The edge letting go would dock the docked sidebar on: another one than it is docked on, once the pointer is within
- * `EDGE_ACTION_DISTANCE` of that edge of the page content or past it; the nearest, in a corner. On the left, that
- * edge is the content's, past the docked nav; on the right and at the bottom, the page's.
+ * The edge letting go would dock the docked sidebar on: another one than it is docked on, and allowed by `can`, once
+ * the pointer is within `EDGE_ACTION_DISTANCE` of that edge of the page content or past it; the nearest, in a corner.
+ * The right edge is always allowed. On the left, that edge is the content's, past the docked nav; on the right and at
+ * the bottom, the page's.
  */
 function otherDockSideAt(
   pointer: { clientX: number; clientY: number },
-  dockSide: ExtensionSidebarDockSide
+  dockSide: ExtensionSidebarDockSide,
+  can: { left: boolean; bottom: boolean }
 ): ExtensionSidebarDockSide | undefined {
   const page = pageRect();
   const distances: Record<ExtensionSidebarDockSide, number> = {
@@ -552,8 +560,9 @@ function otherDockSideAt(
     right: page.right - pointer.clientX,
     bottom: page.bottom - pointer.clientY,
   };
+  const allowed: Record<ExtensionSidebarDockSide, boolean> = { left: can.left, right: true, bottom: can.bottom };
   const reached = (['left', 'right', 'bottom'] as const).filter(
-    (side) => side !== dockSide && distances[side] < EDGE_ACTION_DISTANCE
+    (side) => side !== dockSide && allowed[side] && distances[side] < EDGE_ACTION_DISTANCE
   );
   return reached.sort((a, b) => distances[a] - distances[b])[0];
 }

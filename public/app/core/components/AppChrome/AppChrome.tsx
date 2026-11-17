@@ -3,6 +3,7 @@ import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import classNames from 'clsx';
 import { Resizable } from 're-resizable';
 import { lazy, type PropsWithChildren, Suspense, useEffect } from 'react';
+import { useWindowSize } from 'react-use';
 
 import { type GrafanaTheme2, store } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
@@ -20,7 +21,7 @@ import { type AppChromeService, DOCKED_LOCAL_STORAGE_KEY } from './AppChromeServ
 import { ExtensionSidebar } from './ExtensionSidebar/ExtensionSidebar';
 import { useExtensionSidebarContext } from './ExtensionSidebar/ExtensionSidebarProvider';
 import {
-  MAX_EXTENSION_SIDEBAR_HEIGHT,
+  getMaxExtensionSidebarHeight,
   MAX_EXTENSION_SIDEBAR_WIDTH,
   MIN_EXTENSION_SIDEBAR_HEIGHT,
   MIN_EXTENSION_SIDEBAR_WIDTH,
@@ -90,6 +91,7 @@ export function AppChrome({ children }: Props) {
   );
   const dragStyles = useStyles2(getDragStyles, 'middle');
   const isSmallScreen = !useMediaQueryMinWidth('sm');
+  const { height: windowHeight } = useWindowSize();
 
   useResponsiveDockedMegaMenu(chrome);
   useMegaMenuFocusHelper(state.megaMenuOpen, state.megaMenuDocked);
@@ -270,7 +272,7 @@ export function AppChrome({ children }: Props) {
                 }
                 maxWidth={isExtensionSidebarDockedBottom ? undefined : MAX_EXTENSION_SIDEBAR_WIDTH}
                 minHeight={isExtensionSidebarDockedBottom ? MIN_EXTENSION_SIDEBAR_HEIGHT : undefined}
-                maxHeight={isExtensionSidebarDockedBottom ? MAX_EXTENSION_SIDEBAR_HEIGHT : undefined}
+                maxHeight={isExtensionSidebarDockedBottom ? getMaxExtensionSidebarHeight(windowHeight) : undefined}
                 {...floatingSidebarAttributes}
               >
                 <ExtensionSidebar />
@@ -288,7 +290,12 @@ export function AppChrome({ children }: Props) {
       {!state.chromeless && <LazyFeatureControlFloating />}
       {scopesMegaMenuEnabled && <AutoOpenMegaMenuForScopedContent chrome={chrome} />}
       {shouldShowReturnToPrevious && state.returnToPrevious && (
-        <ReturnToPrevious href={state.returnToPrevious.href} title={state.returnToPrevious.title} />
+        <ReturnToPrevious
+          href={state.returnToPrevious.href}
+          title={state.returnToPrevious.title}
+          // Docked at the bottom, the Assistant takes the window's bottom edge; the button stays above it.
+          bottomInset={pageEndsAboveDock ? extensionSidebarHeight : 0}
+        />
       )}
     </div>
   );

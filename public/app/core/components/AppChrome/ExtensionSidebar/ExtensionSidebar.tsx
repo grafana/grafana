@@ -62,7 +62,7 @@ export function ExtensionSidebar() {
     canCollapse: canCollapseFloatingExtensionSidebar,
     onCollapse: collapseFloatingExtensionSidebar,
   });
-  // Docking on another edge needs what floating needs.
+  // Docking on another edge needs what floating needs, and the left and bottom docks need their flag too.
   const dockedPreview = useDockedDrag(canDragToFloat ? wrapper : null, {
     dockSide,
     dockWidth: extensionSidebarWidth,
@@ -70,6 +70,8 @@ export function ExtensionSidebar() {
     floatingWidth: floatingExtensionSidebarWidth,
     onFloat: floatExtensionSidebar,
     onDock: dockExtensionSidebar,
+    canDockLeft: canPlaceExtensionSidebar,
+    canDockBottom: canPlaceExtensionSidebar,
   });
   const edgeActionPreview = floatingPreview ?? dockedPreview;
   const { components, isLoading } = usePluginComponents<ExtensionSidebarComponentProps>({

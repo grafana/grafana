@@ -9,7 +9,7 @@ import {
   useRef,
   useSyncExternalStore,
 } from 'react';
-import { useAsync, useLocalStorage } from 'react-use';
+import { useAsync, useLocalStorage, useWindowSize } from 'react-use';
 
 import { PluginExtensionPoints, store } from '@grafana/data';
 import { getAppEvents, reportInteraction, usePluginLinks, locationService } from '@grafana/runtime';
@@ -25,7 +25,7 @@ import {
   DEFAULT_EXTENSION_SIDEBAR_HEIGHT,
   DEFAULT_EXTENSION_SIDEBAR_WIDTH,
   DEFAULT_FLOATING_EXTENSION_SIDEBAR_WIDTH,
-  MAX_EXTENSION_SIDEBAR_HEIGHT,
+  getMaxExtensionSidebarHeight,
   MAX_EXTENSION_SIDEBAR_WIDTH,
   MIN_EXTENSION_SIDEBAR_HEIGHT,
   MIN_EXTENSION_SIDEBAR_WIDTH,
@@ -186,6 +186,8 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
     EXTENSION_SIDEBAR_HEIGHT_LOCAL_STORAGE_KEY,
     DEFAULT_EXTENSION_SIDEBAR_HEIGHT
   );
+  // The bottom dock's limit follows the window, so shrinking it never leaves the page less than half.
+  const { height: windowHeight } = useWindowSize();
 
   const [currentPath, setCurrentPath] = useState(locationService.getLocation().pathname);
 
@@ -385,7 +387,7 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
         setExtensionSidebarWidth,
         extensionSidebarHeight: Math.min(
           Math.max(extensionSidebarHeight ?? DEFAULT_EXTENSION_SIDEBAR_HEIGHT, MIN_EXTENSION_SIDEBAR_HEIGHT),
-          MAX_EXTENSION_SIDEBAR_HEIGHT
+          getMaxExtensionSidebarHeight(windowHeight)
         ),
         setExtensionSidebarHeight,
         floatingExtensionSidebarWidth: Math.min(
