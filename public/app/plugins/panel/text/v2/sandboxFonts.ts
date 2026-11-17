@@ -1,7 +1,20 @@
 const fonts = new Map<string, Promise<string>>();
 
+// Keep only the latest stylesheet, rather than retaining every theme's inlined font payload.
+let prepared: { css: string; fontRoot: string; baseURI: string; result: Promise<string> } | undefined;
+
 /** Only application-owned global CSS is accepted here, never panel content. */
-export async function inlineSandboxFonts(globalCss: string, fontRoot: string): Promise<string> {
+export function inlineSandboxFonts(globalCss: string, fontRoot: string): Promise<string> {
+  const baseURI = document.baseURI;
+  if (prepared?.css === globalCss && prepared.fontRoot === fontRoot && prepared.baseURI === baseURI) {
+    return prepared.result;
+  }
+  const result = prepareFonts(globalCss, fontRoot);
+  prepared = { css: globalCss, fontRoot, baseURI, result };
+  return result;
+}
+
+async function prepareFonts(globalCss: string, fontRoot: string): Promise<string> {
   const root = new URL(fontRoot, document.baseURI);
   const urls = Array.from(globalCss.matchAll(/url\(["']?([^"')]+)["']?\)/g));
   const replacements = await Promise.all(

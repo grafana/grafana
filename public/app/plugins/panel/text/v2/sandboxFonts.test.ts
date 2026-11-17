@@ -27,6 +27,20 @@ describe('inlineSandboxFonts', () => {
     expect(fetchFont).toHaveBeenCalledWith(`${window.location.origin}/public/fonts/test.woff2`, expect.any(Object));
   });
 
+  it('shares stylesheet preparation and refreshes it when CSS or the font root changes', async () => {
+    const css = '@font-face { src: url("/public/fonts/shared.woff2"); }';
+    const first = inlineSandboxFonts(css, '/public/fonts/');
+    expect(inlineSandboxFonts(css, '/public/fonts/')).toBe(first);
+    expect(await first).toBe('@font-face { src: url("data:font/woff2;base64,Zm9udA=="); }');
+    expect(inlineSandboxFonts(css, '/public/fonts/')).toBe(first);
+
+    expect(await inlineSandboxFonts(`${css} body { color: red; }`, '/public/fonts/')).toBe(
+      '@font-face { src: url("data:font/woff2;base64,Zm9udA=="); } body { color: red; }'
+    );
+    expect(await inlineSandboxFonts(css, '/other/fonts/')).toBe(css);
+    expect(fetchFont).toHaveBeenCalledTimes(1);
+  });
+
   it.each([
     'https://external.test/public/fonts/test.woff2',
     '/public/fonts/../private.woff2',

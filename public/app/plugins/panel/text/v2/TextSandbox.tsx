@@ -33,20 +33,21 @@ export function TextSandbox({ html, hasData = true, testId, className, minHeight
   const consentKey = useId();
   const { dashboardUid, panelId, panelTitle } = consent ?? {};
   const origins = useAllowedOrigins(dashboardUid, panelId);
-  const [globalCss, setGlobalCss] = useState('');
+  const [globalCss, setGlobalCss] = useState<string>();
   const mermaid = useMemo(() => (isTextNewFeaturesEnabled() ? getMermaidConfig(theme) : undefined), [theme]);
   const fontRoot = `${window.__grafana_public_path__ || 'public/'}fonts/`;
 
   useLayoutEffect(() => {
     let disposed = false;
     const css = getGlobalCss();
-    setGlobalCss(css.replace(/@font-face\s*\{[^}]*\}/g, ''));
     if (css.includes('@font-face')) {
       void inlineSandboxFonts(css, fontRoot).then((css) => {
         if (!disposed) {
           setGlobalCss(css);
         }
       });
+    } else {
+      setGlobalCss(css);
     }
     return () => {
       disposed = true;
@@ -70,17 +71,20 @@ export function TextSandbox({ html, hasData = true, testId, className, minHeight
   return (
     <div className={className} data-testid={testId}>
       <div ref={host} style={{ position: 'relative' }}>
-        <SandboxFrame
-          html={hasData ? textUtil.sanitizeTextPanelContent(html) : html}
-          globalCss={globalCss}
-          policy={hasData ? textSandboxPolicy(origins, fontRoot) : undefined}
-          mermaid={mermaid}
-          diagramError={t('textng.sandbox.diagram-error', 'Diagram could not be rendered')}
-          title={t('textng.sandbox.title', 'Text panel content')}
-          minHeight={minHeight}
-          onState={onState}
-          onHeight={onHeight}
-        />
+        {/* Wait for fonts so initialization creates only one frame document. */}
+        {globalCss !== undefined && (
+          <SandboxFrame
+            html={hasData ? textUtil.sanitizeTextPanelContent(html) : html}
+            globalCss={globalCss}
+            policy={hasData ? textSandboxPolicy(origins, fontRoot) : undefined}
+            mermaid={mermaid}
+            diagramError={t('textng.sandbox.diagram-error', 'Diagram could not be rendered')}
+            title={t('textng.sandbox.title', 'Text panel content')}
+            minHeight={minHeight}
+            onState={onState}
+            onHeight={onHeight}
+          />
+        )}
       </div>
     </div>
   );

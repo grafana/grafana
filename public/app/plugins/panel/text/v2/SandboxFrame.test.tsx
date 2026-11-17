@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import { StrictMode } from 'react';
 
 import { SandboxFrame, type SandboxFrameProps, WATCHDOG_TIMEOUT_MS } from './SandboxFrame';
+import { TextSandbox } from './TextSandbox';
 import { loadSandboxMermaid, loadSandboxRuntime } from './loadSandboxRuntime';
 import { MAX_BLOCKED_URL_CHARS, textSandboxPolicy } from './sandboxPolicy';
 import { TEXT_FRAME_PROTOCOL } from './sandboxProtocol';
@@ -625,5 +626,56 @@ it('fails closed on a forbidden shell policy and preserves TrustedHTML branding 
     } else {
       Reflect.deleteProperty(window, 'trustedTypes');
     }
+  }
+});
+
+it.each([true, false])('creates frames only after font preparation finishes (font available: %s)', async (ok) => {
+  jest.useRealTimers();
+  const originalFetch = global.fetch;
+  const originalTimeout = AbortSignal.timeout;
+  const style = document.createElement('style');
+  style.dataset.emotion = 'text-global';
+  style.textContent = `@font-face { font-family: Test; src: url("/public/fonts/startup-${ok}.woff2"); }`;
+  document.head.append(style);
+  // JSDOM does not expose CSSStyleSheet.ownerNode.
+  Object.defineProperty(style.sheet, 'ownerNode', { value: style });
+  let finish!: (response: Partial<Response>) => void;
+  global.fetch = jest.fn(
+    () =>
+      new Promise<Response>((resolve) => {
+        finish = (response) => resolve(response as Response);
+      })
+  );
+  AbortSignal.timeout = () => new AbortController().signal;
+  const runtime = jest.mocked(loadSandboxRuntime);
+  runtime.mockClear();
+  try {
+    const { rerender } = render(<TextSandbox html="<p>Initial</p>" />);
+    await act(async () => {});
+    expect(runtime).not.toHaveBeenCalled();
+    expect(screen.queryByTitle('Text panel content')).not.toBeInTheDocument();
+    rerender(<TextSandbox html="<p>Latest</p>" />);
+    await act(async () => {
+      finish({ ok, blob: async () => new Blob(['font'], { type: 'font/woff2' }) });
+    });
+    const element = await screen.findByTitle<HTMLIFrameElement>('Text panel content');
+    await act(async () => {});
+    expect(runtime).toHaveBeenCalledTimes(1);
+    const postMessage = jest.spyOn(element.contentWindow!, 'postMessage').mockImplementation(() => {});
+    notify(element, 'ready');
+    expect(postMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        html: '<p>Latest</p>',
+        globalCss: expect.stringContaining(ok ? 'data:font/woff2;base64,Zm9udA==' : 'local("Arial")'),
+      }),
+      '*'
+    );
+    rerender(<TextSandbox html="<p>Latest</p>" minHeight={200} />);
+    expect(screen.getByTitle('Text panel content')).toBe(element);
+    expect(runtime).toHaveBeenCalledTimes(1);
+  } finally {
+    style.remove();
+    global.fetch = originalFetch;
+    AbortSignal.timeout = originalTimeout;
   }
 });
