@@ -1235,8 +1235,7 @@ func (NotebookNotebookLayoutItemKind) OpenAPIModelName() string {
 // +k8s:openapi-gen=true
 type NotebookNotebookLayoutItemSpec struct {
 	// Optional. The server assigns one on create or update when the item has none, and keeps one
-	// the client sends, which must be a UUID v4 that no other item in the notebook has. Comments do
-	// not anchor to it: they anchor to the element name.
+	// the client sends, which must be a UUID v4 that no other item in the notebook has.
 	Id        *string                              `json:"id,omitempty"`
 	Element   NotebookElementReference             `json:"element"`
 	Source    NotebookNotebookLayoutItemSpecSource `json:"source"`
@@ -1279,10 +1278,7 @@ type NotebookSpec struct {
 	Description  *string                  `json:"description,omitempty"`
 	Tags         []string                 `json:"tags"`
 	TimeSettings NotebookTimeSettingsSpec `json:"timeSettings"`
-	// The key is the element name. It identifies the cell: comments and other references anchor to
-	// it. Clients choose it, so it must be unique within the notebook and should be random (for
-	// example `heading-k3x9qa`). Never reuse the name of a removed element, or what was attached to
-	// the old one attaches to the new one. Renaming an element detaches what was attached to it.
+	// The key is the element ID. It identifies the cell: comments and other references anchor to it
 	Elements map[string]NotebookNotebookElement `json:"elements"`
 	Layout   NotebookNotebookLayoutKind         `json:"layout"`
 }

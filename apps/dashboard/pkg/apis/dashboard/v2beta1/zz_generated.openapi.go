@@ -7268,7 +7268,7 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookNotebookLayoutItemSpec(ref common
 				Properties: map[string]spec.Schema{
 					"id": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Optional. The server assigns one on create or update when the item has none, and keeps one the client sends, which must be a UUID v4 that no other item in the notebook has. Comments do not anchor to it: they anchor to the element name.",
+							Description: "Optional. The server assigns one on create or update when the item has none, and keeps one the client sends, which must be a UUID v4 that no other item in the notebook has.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -7585,7 +7585,7 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookSpec(ref common.ReferenceCallback
 					},
 					"elements": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The key is the element name. It identifies the cell: comments and other references anchor to it. Clients choose it, so it must be unique within the notebook and should be random (for example `heading-k3x9qa`). Never reuse the name of a removed element, or what was attached to the old one attaches to the new one. Renaming an element detaches what was attached to it.",
+							Description: "The key is the element ID. It identifies the cell: comments and other references anchor to it",
 							Type:        []string{"object"},
 							AdditionalProperties: &spec.SchemaOrBool{
 								Allows: true,
