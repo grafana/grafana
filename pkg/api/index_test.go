@@ -1,14 +1,19 @@
 package api
 
 import (
+	"bytes"
 	"errors"
+	"fmt"
+	"html/template"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -17,6 +22,29 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
+
+func TestIndexTemplate_LiveDisabled(t *testing.T) {
+	tmpl, err := template.New("index.html").Delims("[[", "]]").ParseFiles("../../public/views/index.html")
+	require.NoError(t, err)
+
+	for _, disabled := range []bool{false, true} {
+		t.Run(fmt.Sprintf("disabled=%t", disabled), func(t *testing.T) {
+			var output bytes.Buffer
+			err := tmpl.Execute(&output, &dtos.IndexViewData{
+				User:         &dtos.CurrentUser{},
+				Settings:     &dtos.FrontendSettingsDTO{LiveEnabled: true},
+				Assets:       &dtos.EntryPointAssets{},
+				LiveDisabled: disabled,
+			})
+			require.NoError(t, err)
+			if disabled {
+				assert.Contains(t, output.String(), "window.grafanaBootData.settings.liveEnabled = false;")
+			} else {
+				assert.NotContains(t, output.String(), "window.grafanaBootData.settings.liveEnabled = false;")
+			}
+		})
+	}
+}
 
 func TestGetUserOrgCountSingleOrganization(t *testing.T) {
 	cfg := setting.NewCfg()

@@ -98,7 +98,7 @@ export const RestoreModal = ({
           <Space v={1} />
           {/* Field wrapper resets font-size to 14px, preventing cascade from parent Text components */}
           <div className={styles.field}>
-            <FolderPicker onChange={setUserTarget} value={restoreTarget} />
+            <FolderPicker onChange={setUserTarget} value={restoreTarget} permission="create" />
           </div>
         </>
       }

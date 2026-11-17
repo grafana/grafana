@@ -1,7 +1,7 @@
 import { render, screen } from 'test/test-utils';
 
-import { mockDataSource } from '../../mocks';
 import { setupDataSources } from '../../testSetup/datasources';
+import { mockDataSource } from '../../testSetup/mockDataSource';
 
 import { RecordingRuleRow } from './RecordingRuleRow';
 import { type RecordingRuleSearchHit } from './recordingRuleSearchHit';
@@ -64,16 +64,14 @@ describe('RecordingRuleRow', () => {
     expect(screen.queryByText('remote write failed')).not.toBeInTheDocument();
   });
 
-  it('shows the evaluation interval', () => {
-    renderRow({ searchHit: baseHit({ interval: '1m' }) });
+  it("shows its sequence's interval in place of its own when the rule is in a sequence", () => {
+    renderRow({
+      searchHit: baseHit({ interval: '1m' }),
+      sequence: { name: 'seq-1', interval: '2m' },
+    });
 
-    expect(screen.getByRole('img', { name: 'Evaluated every 1m' })).toBeInTheDocument();
-  });
-
-  it('shows no interval indicator when interval is absent', () => {
-    renderRow({ searchHit: baseHit() });
-
-    expect(screen.queryByRole('img', { name: /Evaluated every/ })).not.toBeInTheDocument();
+    expect(screen.getByText('Rule sequence · 2m')).toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: 'Evaluated every 1m' })).not.toBeInTheDocument();
   });
 
   it('shows the recorded metric and target datasource when the hit has them', () => {
@@ -139,5 +137,10 @@ describe('RecordingRuleRow', () => {
     renderRow({ searchHit: baseHit() });
 
     expect(screen.queryByText('Provisioned')).not.toBeInTheDocument();
+  });
+
+  it('renders actions in the right column when provided', () => {
+    renderRow({ searchHit: baseHit(), actions: <button>More</button> });
+    expect(screen.getByRole('button', { name: 'More' })).toBeInTheDocument();
   });
 });

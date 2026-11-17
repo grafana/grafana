@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"math"
 	"net/http"
 	"strings"
 	"time"
@@ -13,6 +14,7 @@ import (
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/dataplane/sdata/numeric"
 	"github.com/m3db/prometheus_remote_client_golang/promremote"
+	promValue "github.com/prometheus/prometheus/model/value"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -345,6 +347,36 @@ func (w PrometheusWriter) Write(ctx context.Context, name string, t time.Time, f
 	}
 
 	l.Debug("Writing metric", "name", name)
+
+	return w.writeSeries(ctx, orgID, series)
+}
+
+// WriteStale writes a stale marker for each label set, as a Prometheus rule group does when
+// a series stops being output. A label set is the full written labels without __name__.
+func (w PrometheusWriter) WriteStale(ctx context.Context, name string, t time.Time, orgID int64, labelSets []map[string]string) error {
+	if len(labelSets) == 0 {
+		return nil
+	}
+
+	series := make([]promremote.TimeSeries, 0, len(labelSets))
+	for _, labels := range labelSets {
+		series = append(series, promremote.TimeSeries{
+			Labels: promremoteLabelsFromPoint(Point{Name: name, Labels: labels}),
+			Datapoint: promremote.Datapoint{
+				Timestamp: t,
+				Value:     math.Float64frombits(promValue.StaleNaN),
+			},
+		})
+	}
+
+	w.logger.FromContext(ctx).Debug("Writing stale markers", "name", name, "series", len(series))
+
+	return w.writeSeries(ctx, orgID, series)
+}
+
+// writeSeries is shared by Write and WriteStale so both use the same batching.
+func (w PrometheusWriter) writeSeries(ctx context.Context, orgID int64, series []promremote.TimeSeries) error {
+	l := w.logger.FromContext(ctx)
 
 	batches := batchTimeSeries(series, w.maxBatchSize)
 	if len(batches) <= 1 {

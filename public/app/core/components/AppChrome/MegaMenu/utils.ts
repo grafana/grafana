@@ -4,7 +4,7 @@ import { type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { MEGA_MENU_TOGGLE_ID } from 'app/core/constants';
-import { ID_PREFIX } from 'app/core/reducers/navBarTree';
+import { DASHBOARDS_TAB_NAV_IDS, STARRED_ID_PREFIX } from 'app/core/navtree/constants';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 
 import { ShowModalReactEvent } from '../../../../types/events';
@@ -171,7 +171,7 @@ function getEditionAndUpdateLinks(): NavModelItem[] {
  * regardless of its dynamic children.
  */
 const isPinnable = (item: NavModelItem): boolean =>
-  Boolean(item.url) && !item.isCreateAction && item.id !== 'home' && !item.id?.startsWith(ID_PREFIX);
+  Boolean(item.url) && !item.isCreateAction && item.id !== 'home' && !item.id?.startsWith(STARRED_ID_PREFIX);
 
 // Children that participate in pinning.
 const pinnableChildren = (item: NavModelItem): NavModelItem[] => (item.children ?? []).filter(isPinnable);
@@ -276,6 +276,9 @@ export const NON_MENU_NAV_IDS = new Set(['profile', 'help', HOME_NAV_ID]);
  * Should be a temporary way to fix the menu sprawl until a more robust solution.
  */
 export const HIDDEN_NAV_ITEMS = new Set<string>([
+  // Shown as tabs on the browse dashboards view instead
+  ...DASHBOARDS_TAB_NAV_IDS,
+
   '/a/grafana-adaptive-metrics-app/configuration',
   '/a/grafana-adaptive-metrics-app/rule-management',
   '/a/grafana-adaptive-metrics-app/segments',
@@ -312,7 +315,7 @@ export const isHideable = (item: NavModelItem): boolean =>
   Boolean(hiddenKey(item)) &&
   !PROTECTED_NAV_IDS.has(item.id ?? '') &&
   !item.isCreateAction &&
-  !item.id?.startsWith(ID_PREFIX);
+  !item.id?.startsWith(STARRED_ID_PREFIX);
 
 // Children that can be hidden — used when "breaking apart" a hidden parent.
 const hideableChildren = (item: NavModelItem): NavModelItem[] => (item.children ?? []).filter(isHideable);
@@ -325,6 +328,26 @@ export function removeHiddenItems(items: NavModelItem[], hidden: Set<string>): N
   return items
     .filter((item) => !hidden.has(hiddenKey(item)))
     .map((item) => (item.children ? { ...item, children: removeHiddenItems(item.children, hidden) } : item));
+}
+
+/**
+ * Drop the Starred and Bookmarks sections when they have no children. Pending sections (still
+ * loading, or failed to load) are kept so their loading or error state stays visible.
+ */
+export function removeEmptySavedSections(
+  items: NavModelItem[],
+  { starredPending, bookmarksPending }: { starredPending: boolean; bookmarksPending: boolean }
+): NavModelItem[] {
+  return items.filter((item) => {
+    const isEmpty = !item.children?.length;
+    if (item.id === 'starred') {
+      return starredPending || !isEmpty;
+    }
+    if (item.id === 'bookmarks') {
+      return bookmarksPending || !isEmpty;
+    }
+    return true;
+  });
 }
 
 /** All descendant keys of an item. */

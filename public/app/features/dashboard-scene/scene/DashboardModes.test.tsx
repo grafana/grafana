@@ -10,6 +10,7 @@ import { handyTestingSchema } from '@grafana/schema/apis/dashboard.grafana.app/v
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
+import { setMobileViewport } from 'app/features/dashboard-scene/utils/mobileViewportTestUtils';
 import {
   createDashboardMutationApi,
   setDashboardMutationClientForTests,
@@ -52,6 +53,7 @@ jest.mock('@grafana/runtime', () => ({
   reportInteraction: jest.fn(),
   // The v2 built-in annotation layer resolves a datasource on activation; never answer.
   getDataSourceSrv: () => ({ get: () => new Promise(() => {}), getInstanceSettings: jest.fn() }),
+  getDataSourceInstance: () => new Promise(() => {}),
 }));
 
 jest.mock('../saving/createDetectChangesWorker', () => ({
@@ -261,6 +263,7 @@ it('disables the mode picker in Viewing on mobile when mobileEditDeprecation is 
     'grafana.dashboardPreviewMode': true,
     'grafana.mobileEditDeprecation': true,
   });
+  setMobileViewport();
   const dashboard = setup();
   render(
     <TestProvider>

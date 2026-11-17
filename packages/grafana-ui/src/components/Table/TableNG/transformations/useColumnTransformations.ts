@@ -1,3 +1,4 @@
+import { isEqual } from 'lodash';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { type DataFrame } from '@grafana/data';
@@ -30,7 +31,8 @@ export function useColumnTransformations(
   api: PanelRuntimeTransformations | undefined,
   owner: string,
   enabled = sourceIndex >= 0,
-  sourceSeries: readonly DataFrame[] | undefined = api?.getSourceSeries(owner)
+  sourceSeries: readonly DataFrame[] | undefined = api?.getSourceSeries(owner),
+  onInteraction?: (action: 'visibility' | 'reorder') => void
 ) {
   const { transformations, update } = useTableTransformations(api, owner);
   useEffect(() => {
@@ -73,18 +75,38 @@ export function useColumnTransformations(
   const onHiddenColumnsChange = useCallback(
     (hidden: ReadonlySet<string>) => {
       if (context) {
-        update((current) => columnTransformations.columnVisibility.write(current, hidden, context));
+        update(
+          (current) => {
+            const next = columnTransformations.columnVisibility.write(current, hidden, context);
+            return isEqual(current, next) ? current : next;
+          },
+          () => onInteraction?.('visibility')
+        );
       }
     },
-    [context, update]
+    [context, update, onInteraction]
   );
   const onColumnOrderChange = useCallback(
     (order: string[]) => {
       if (context) {
-        update((current) => columnTransformations.columnOrder.write(current, order, context));
+        let orderChanged = false;
+        update(
+          (current) => {
+            const before = columnTransformations.columnOrder.read(current, context).columnOrder ?? context.catalog;
+            const next = columnTransformations.columnOrder.write(current, order, context);
+            const after = columnTransformations.columnOrder.read(next, context).columnOrder ?? context.catalog;
+            orderChanged = !isEqual(before, after);
+            return orderChanged ? next : current;
+          },
+          () => {
+            if (orderChanged) {
+              onInteraction?.('reorder');
+            }
+          }
+        );
       }
     },
-    [context, update]
+    [context, update, onInteraction]
   );
 
   return useMemo(() => {
