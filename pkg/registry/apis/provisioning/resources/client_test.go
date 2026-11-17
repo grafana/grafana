@@ -51,29 +51,20 @@ func TestResourceClients_SupportedResources(t *testing.T) {
 	})
 }
 
-func TestMultiClientFactory_Fallback(t *testing.T) {
-	widget := SupportedResource{GroupKind: schema.GroupKind{Group: "example.ext.grafana.app", Kind: "Widget"}, Capabilities: sets.New[string]()}
-	unreachable := SupportedResource{GroupKind: schema.GroupKind{Group: "unreachable.ext.grafana.app", Kind: "Gadget"}, Capabilities: sets.New[string]()}
-	fallback := func(group string) apiserver.RestConfigProvider {
-		if group == unreachable.Group {
-			return nil
-		}
-		return apiserver.WithoutRestConfig
-	}
-	factory := NewClientFactoryForMultipleAPIServersWithResources(
-		map[string]apiserver.RestConfigProvider{DashboardResource.Group: apiserver.WithoutRestConfig},
-		fallback,
-		StaticSupportedResources(widget, unreachable),
-	)
+func TestMultiClientFactory_DefaultGroup(t *testing.T) {
+	widget := schema.GroupVersionKind{Group: "example.ext.grafana.app", Version: "v1", Kind: "Widget"}
+	providers := map[string]apiserver.RestConfigProvider{DashboardResource.Group: apiserver.WithoutRestConfig}
 
-	clients, err := factory.Clients(context.Background(), "default")
+	clients, err := NewClientFactoryForMultipleAPIServers(providers).Clients(context.Background(), "default")
 	require.NoError(t, err)
+	_, _, err = clients.ForKind(context.Background(), widget)
+	require.ErrorContains(t, err, "no clients provider for group example.ext.grafana.app")
 
-	_, _, err = clients.ForKind(context.Background(), widget.WithVersion("v1"))
+	providers[DefaultGroup] = apiserver.WithoutRestConfig
+	clients, err = NewClientFactoryForMultipleAPIServers(providers).Clients(context.Background(), "default")
+	require.NoError(t, err)
+	_, _, err = clients.ForKind(context.Background(), widget)
 	require.ErrorContains(t, err, "rest config will not be available")
-
-	_, _, err = clients.ForKind(context.Background(), unreachable.WithVersion("v1"))
-	require.ErrorContains(t, err, "no clients provider for group unreachable.ext.grafana.app")
 }
 
 func TestSupportedResourceCapabilities(t *testing.T) {

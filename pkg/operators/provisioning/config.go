@@ -317,7 +317,6 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 		if aggregatedServerURL == "" {
 			return nil, fmt.Errorf("aggregated_server_url is required in [operator] section to serve resource %s/%s", r.Group, r.Kind)
 		}
-		apiServerURLs[group] = aggregatedServerURL
 	}
 
 	configProviders := make(map[string]apiserver.RestConfigProvider)
@@ -327,13 +326,7 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 		return nil, fmt.Errorf("failed to convert TLS config for transport: %w", err)
 	}
 
-	newConfigProvider := func(group, url string) apiserver.RestConfigProvider {
-		// Build audiences: always include the group, and add provisioning.GROUP only if different
-		audiences := []string{group}
-		if group != provisioning.GROUP {
-			audiences = append(audiences, provisioning.GROUP)
-		}
-
+	newConfigProvider := func(url string, audiences ...string) apiserver.RestConfigProvider {
 		config := &rest.Config{
 			APIPath: "/apis",
 			Host:    url,
@@ -353,15 +346,19 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 		return NewDirectConfigProvider(config)
 	}
 	for group, url := range apiServerURLs {
-		configProviders[group] = newConfigProvider(group, url)
+		// Build audiences: always include the group, and add provisioning.GROUP only if different
+		audiences := []string{group}
+		if group != provisioning.GROUP {
+			audiences = append(audiences, provisioning.GROUP)
+		}
+		configProviders[group] = newConfigProvider(url, audiences...)
 	}
 
-	var fallback func(group string) apiserver.RestConfigProvider
+	// The aggregated server is the router. It serves each group without a server URL, accepts
+	// the provisioning audience for all of them, and publishes the app manifests.
 	if aggregatedServerURL != "" {
-		fallback = func(group string) apiserver.RestConfigProvider { return newConfigProvider(group, aggregatedServerURL) }
+		configProviders[resources.DefaultGroup] = newConfigProvider(aggregatedServerURL, provisioning.GROUP)
 	}
-
-	// The aggregated server is the router, which also publishes the app manifests.
 	gRPCAuth := c.Settings.SectionWithEnvOverrides("grpc_client_authentication")
 	supported, manifestWatcher, err := resources.RemoteManifestSupportedResources(supportedResources, resource.ManifestWatcherConfig{
 		DiscoveryURL:     aggregatedServerURL,
@@ -373,7 +370,7 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create manifest watcher: %w", err)
 	}
-	clients := resources.NewClientFactoryForMultipleAPIServersWithResources(configProviders, fallback, supported)
+	clients := resources.NewClientFactoryForMultipleAPIServersWithResources(configProviders, supported)
 	c.clients = clients
 	c.manifestWatcher = manifestWatcher
 	return clients, nil

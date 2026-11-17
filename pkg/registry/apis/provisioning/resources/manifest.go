@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/app"
 
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -41,7 +42,7 @@ func RemoteManifestSupportedResources(supported []SupportedResource, cfg resourc
 		return StaticSupportedResources(supported...), services.NewIdleService(nil, nil), nil
 	}
 	fn, onChange := ManifestSupportedResources(supported)
-	cfg.DiscoveryAudience = resource.ManifestDiscoveryGVR.Group
+	cfg.DiscoveryAudience = provisioning.GROUP
 	cfg.PollInterval = time.Minute
 	cfg.Log = log.New("provisioning-manifest-watcher")
 	watcher, err := resource.NewManifestWatcher(cfg, nil, onChange)

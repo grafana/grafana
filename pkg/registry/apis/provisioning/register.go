@@ -959,24 +959,12 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	// Jobs mutator and validator. The mutator attributes each job to the acting
 	// user at creation time and the validator enforces that the recorded author
 	// is immutable.
-	jobSupportedResources := func() []provisioning.SupportedResource {
-		supported := b.supportedResources()
-		out := make([]provisioning.SupportedResource, 0, len(supported))
-		for _, r := range supported {
-			out = append(out, provisioning.SupportedResource{
-				Group:    r.Group,
-				Kind:     r.Kind,
-				Disabled: !r.IsActive(),
-			})
-		}
-		return out
-	}
 	b.admissionHandler.RegisterMutator(provisioning.JobResourceInfo.GetName(), appjobs.NewAdmissionMutator())
 	jobAuthz := appjobs.NewAuthzValidator(NewJobsConnector(b, b, b, nil, b.access, b.clients, performanceEnabled))
 	b.admissionHandler.RegisterValidator(
 		provisioning.JobResourceInfo.GetName(),
 		appadmission.NewCombinedValidator(
-			appjobs.NewAdmissionValidator(jobSupportedResources, performanceEnabled),
+			appjobs.NewAdmissionValidator(b.jobSupportedResources, performanceEnabled),
 			jobAuthz,
 		))
 	b.admissionHandler.RegisterValidator(provisioning.HistoricJobResourceInfo.GetName(), appjobs.NewHistoricJobAdmissionValidator())
@@ -1089,6 +1077,19 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 // Validate delegates to the admission handler for resource-specific validation
 func (b *APIBuilder) Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
 	return b.admissionHandler.Validate(ctx, a, o)
+}
+
+func (b *APIBuilder) jobSupportedResources() []provisioning.SupportedResource {
+	supported := b.supportedResources()
+	jobSupportedResources := make([]provisioning.SupportedResource, 0, len(supported))
+	for _, r := range supported {
+		jobSupportedResources = append(jobSupportedResources, provisioning.SupportedResource{
+			Group:    r.Group,
+			Kind:     r.Kind,
+			Disabled: !r.IsActive(),
+		})
+	}
+	return jobSupportedResources
 }
 
 func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartHookFunc, error) {
