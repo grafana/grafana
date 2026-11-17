@@ -59,6 +59,26 @@ describe('RepositoryOverview', () => {
     expect(screen.getByText('Some folders are missing metadata in this repository.')).toBeInTheDocument();
   });
 
+  it('links each resource kind to the resources tab filtered by that kind', async () => {
+    const repo = createMockRepository(
+      {},
+      {
+        stats: [
+          { group: 'dashboard.grafana.app', resource: 'dashboards', count: 2 },
+          { group: 'example.grafana.app', resource: 'widgets', count: 3 },
+        ],
+      }
+    );
+
+    render(<RepositoryOverview repo={repo} />);
+
+    const links = await screen.findAllByRole('link', { name: 'View' });
+    expect(links.map((link) => link.getAttribute('href'))).toEqual([
+      '/admin/provisioning/test-repo?tab=resources&resource=dashboards',
+      '/admin/provisioning/test-repo?tab=resources&resource=widgets',
+    ]);
+  });
+
   describe('webhook link', () => {
     it('should link to GitHub webhook settings for github repositories', () => {
       const repo = createMockRepository({
