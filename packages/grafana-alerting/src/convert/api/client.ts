@@ -9,6 +9,7 @@ import {
   getConvertAlertmanagerHeaders,
   getConvertRulesFolderHeaders,
   getConvertRulesHeaders,
+  getConvertSourceHeaders,
 } from './headers';
 import {
   type AlertmanagerUserConfig,
@@ -144,16 +145,17 @@ export const convertAPI = createApi({
     }),
 
     /** Deletes an imported Alertmanager config. Grafana's own config is not affected. */
-    deleteAlertmanagerConfig: build.mutation<ConvertPrometheusResponse, Pick<ConvertAlertmanagerOptions, 'identifier'>>(
-      {
-        query: (options) => ({
-          url: ALERTMANAGER_PATH,
-          method: 'DELETE',
-          headers: getConvertAlertmanagerHeaders(options),
-        }),
-        invalidatesTags: [ALERTMANAGER_TAG],
-      }
-    ),
+    deleteAlertmanagerConfig: build.mutation<
+      ConvertPrometheusResponse,
+      Pick<ConvertAlertmanagerOptions, 'identifier' | 'source'>
+    >({
+      query: (options) => ({
+        url: ALERTMANAGER_PATH,
+        method: 'DELETE',
+        headers: getConvertAlertmanagerHeaders(options),
+      }),
+      invalidatesTags: [ALERTMANAGER_TAG],
+    }),
 
     /**
      * Merges an imported Alertmanager config into Grafana's own config for good. Its contact points,
@@ -161,11 +163,12 @@ export const convertAPI = createApi({
      */
     promoteAlertmanagerConfig: build.mutation<
       ConvertAlertmanagerResponse,
-      Pick<ConvertAlertmanagerOptions, 'identifier'>
+      Pick<ConvertAlertmanagerOptions, 'identifier' | 'source'>
     >({
-      query: ({ identifier }) => ({
+      query: ({ identifier, source }) => ({
         url: `${ALERTMANAGER_PATH}/${encodeURIComponent(identifier)}/promote`,
         method: 'POST',
+        headers: getConvertSourceHeaders({ source }),
       }),
       invalidatesTags: [ALERTMANAGER_TAG],
     }),
