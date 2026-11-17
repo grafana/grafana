@@ -1514,9 +1514,29 @@
         "records": "Záznamy",
         "to": "do"
       },
+      "recording-rule-actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "view": ""
+      },
       "recording-rules": {
         "folder-rules-error": "",
         "folders-error": "",
+        "header": {
+          "new-rule": ""
+        },
         "load-more-rules-in-folder": "",
         "loading-folders": "",
         "no-rules": "Nebyla nalezena žádná pravidla záznamu",
@@ -2432,6 +2452,7 @@
       "contact-points": "Kontaktní body",
       "notification-policies": "Zásady oznamování",
       "recently-deleted": "Nedávno odstraněné",
+      "recording-rules": "",
       "templates": "Šablony",
       "time-intervals": "Časové intervaly"
     },
@@ -6316,8 +6337,7 @@
       }
     },
     "get-var-mapping-option-overrides": {
-      "defaults": "",
-      "rule": ""
+      "uses-variables": ""
     },
     "inspect": {
       "data-tab": "Data",
@@ -6514,9 +6534,6 @@
       "only-overrides-button-tooltip": "Zobrazit pouze přepsání",
       "placeholder-search-options": "Možnosti hledání",
       "visualization-button-tooltip": "Možnosti hledání"
-    },
-    "panel-editor": {
-      "ad-hoc-transformations-disabled": "Transformace ad hoc jsou v režimu úprav zakázány"
     },
     "plan-building-overlay": {
       "quip-corners": "Zjemňování rohů panelu…",
@@ -7814,7 +7831,7 @@
       "apply": "Použít",
       "apply-body": "Uvidí je všichni s přístupem. Předchozí verzi můžete obnovit z historie verzí.",
       "apply-failed": "Změny se nepodařilo použít. Zkuste to znovu nebo je nejdřív porovnejte.",
-      "apply-needs-edit": "Pro použití je potřeba přístup k úpravám „{{title}}“. Tyto změny si můžete prohlédnout v náhledu, ale nemůžete je použít.",
+      "apply-needs-save": "",
       "breadcrumb-draft": "Návrh",
       "breadcrumb-pending-changes": "Nevyřízené změny",
       "change-added": "Přidáno",
@@ -8117,6 +8134,12 @@
       "confirmText-restore-version": "Ano, obnovit na verzi {{version}}",
       "title-restore-version": "Obnovit verzi"
     },
+    "row-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-row-settings": ""
+    },
     "sandbox-consent": {
       "allow": "Povolit",
       "allow-tooltip": "Načítat obsah z vybraných zdrojů v uvedených panelech, dokud nezavřete tuto kartu.",
@@ -8328,6 +8351,12 @@
       "switch-options": "Možnosti přepínače",
       "value-pair-type": "Typ páru hodnot",
       "value-pair-type-description": "Vyberte typ hodnot pro stavy přepínače"
+    },
+    "tab-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-tab-settings": ""
     },
     "text-box-variable": {
       "name-default-value": "Výchozí hodnota"
@@ -14651,6 +14680,9 @@
     },
     "empty-state": {
       "message": "Nebyly nalezeny žádné pluginy"
+    },
+    "errors": {
+      "app-plugin-metas-error": ""
     },
     "extensions": {
       "extension-error-alert-description": "Další podrobnosti o chybě najdete v konzole.",

@@ -126,7 +126,7 @@ services:
       - 'alloy.logs=true'
 
   loki:
-    image: grafana/loki:3.7.9@sha256:0db216b630ae1f348a1584c67f3cead8b4c1fc839169a39501db664744158e28
+    image: grafana/loki:3.7.10@sha256:b43c257ccfc925d4a50b8717cac61a3b51df8c48d01847936057e5c4075a24a7
     volumes:
       - loki-data:/loki
     command: -config.file=/etc/loki/local-config.yaml
