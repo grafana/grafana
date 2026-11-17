@@ -586,6 +586,26 @@ describe('AssistantChatButton', () => {
       unsubscribe();
     });
 
+    it('closes the Assistant in its own window when ctrl+alt+5 is pressed again, without bringing it back first', async () => {
+      const popIn = jest.fn();
+      let stop: (() => void) | undefined;
+      // As the Assistant does: asked to pop out, it opens its window and tracks it.
+      const unsubscribe = subscribeToExtensionSidebarPopOut(() => {
+        stop = trackExtensionSidebarPopOut(popIn);
+      });
+      const { user } = renderButtons();
+
+      await user.keyboard('{Control>}{Alt>}5{/Alt}{/Control}');
+      expect(closeButton()).toBeInTheDocument();
+
+      await user.keyboard('{Control>}{Alt>}5{/Alt}{/Control}');
+
+      expect(openButton()).toBeInTheDocument();
+      expect(popIn).not.toHaveBeenCalled();
+      act(() => stop?.());
+      unsubscribe();
+    });
+
     it('offers no new window while nothing can open one', async () => {
       const { user } = renderButtons();
 
@@ -607,6 +627,22 @@ describe('AssistantChatButton', () => {
       await user.keyboard('{Control>}{Alt>}4{/Alt}{/Control}');
 
       expect(getRequestedExtensionSidebarPresentation()).toBe('floating');
+      expect(closeButton()).toBeInTheDocument();
+    });
+
+    it('hides the Assistant when the shortcut of the layout it shows in is pressed again, and shows it there on the next press', async () => {
+      const { user } = renderButtons();
+
+      await user.keyboard('{Control>}{Alt>}1{/Alt}{/Control}');
+      expect(placementNow()).toEqual({ presentation: 'docked', side: 'left' });
+      expect(closeButton()).toBeInTheDocument();
+
+      await user.keyboard('{Control>}{Alt>}1{/Alt}{/Control}');
+      expect(openButton()).toBeInTheDocument();
+
+      await user.keyboard('{Control>}{Alt>}1{/Alt}{/Control}');
+      expect(placementNow()).toEqual({ presentation: 'docked', side: 'left' });
+      expect(closeButton()).toBeInTheDocument();
     });
 
     it('arranges the window with ctrl+alt+shift and the digit of its tile', async () => {
