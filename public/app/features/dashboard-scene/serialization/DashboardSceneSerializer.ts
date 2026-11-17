@@ -48,6 +48,7 @@ export interface DashboardSceneSerializerLike<T, M, I = T, E = T | { error: unkn
       saveTimeRange?: boolean;
       saveVariables?: boolean;
       saveRefresh?: boolean;
+      collapseRows?: boolean;
       rawJson?: Dashboard | DashboardV2Spec;
     }
   ) => DashboardChangeInfo;
@@ -430,6 +431,7 @@ export class V2DashboardSerializer
       saveTimeRange?: boolean;
       saveVariables?: boolean;
       saveRefresh?: boolean;
+      collapseRows?: boolean;
       rawJson?: Dashboard | DashboardV2Spec;
     }
   ) {
@@ -440,7 +442,8 @@ export class V2DashboardSerializer
       changedSaveModel,
       options.saveTimeRange,
       options.saveVariables,
-      options.saveRefresh
+      options.saveRefresh,
+      options.collapseRows
     );
 
     const hasFolderChanges = scene.getInitialState()?.meta.folderUid !== scene.state.meta.folderUid;

@@ -31,6 +31,7 @@ interface SaveDashboardDrawerState extends SceneObjectState {
   saveTimeRange?: boolean;
   saveVariables?: boolean;
   saveRefresh?: boolean;
+  collapseRows?: boolean;
   saveAsCopy?: boolean;
   saveAsDashboardTemplate?: boolean;
   saveDashboardTemplate?: boolean;
@@ -79,6 +80,10 @@ export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerStat
     this.setState({ saveRefresh: !this.state.saveRefresh });
   };
 
+  public onToggleCollapseRows = () => {
+    this.setState({ collapseRows: !this.state.collapseRows });
+  };
+
   static Component = SaveDashboardDrawerComponent;
 }
 
@@ -91,6 +96,7 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
     saveTimeRange,
     saveVariables,
     saveRefresh,
+    collapseRows,
     recoverToNewBranch,
     saveTarget,
   } = model.useState();
@@ -99,7 +105,8 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
     model.state.dashboardRef.resolve(),
     saveTimeRange,
     saveVariables,
-    saveRefresh
+    saveRefresh,
+    collapseRows
   );
 
   const {
