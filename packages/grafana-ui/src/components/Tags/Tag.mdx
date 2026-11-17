@@ -71,7 +71,7 @@ the default wrapper is a generic span and does not support an accessible name.
 ## Disabled
 
 `disabled` disables the supplied label and remove actions. Disabled buttons are skipped in the tab order.
-On a static tag, it applies disabled styling and `aria-disabled`.
+On a static tag without `onClick` or `onRemove`, `disabled` has no effect.
 
 <Canvas of={TagStories.Disabled} />
 

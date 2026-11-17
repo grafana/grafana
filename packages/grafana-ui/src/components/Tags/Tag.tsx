@@ -32,7 +32,7 @@ export interface Props extends Omit<HTMLAttributes<HTMLElement>, 'onClick'> {
   onClick?: OnTagClick;
   /** Show a close button. The consumer owns removing the tag. */
   onRemove?: OnTagClick;
-  /** Disable both label and remove actions. */
+  /** Disable label and remove actions. Has no effect on static tags. */
   disabled?: boolean;
 }
 
@@ -53,7 +53,7 @@ const TagComponent = forwardRef<HTMLElement, Props>(
       styles.wrapper,
       {
         [styles.hover]: onClick !== undefined && !disabled && !onRemove,
-        [styles.disabled]: disabled,
+        [styles.disabled]: disabled && Boolean(onClick || onRemove),
         [styles.removable]: Boolean(onRemove),
       },
       className
@@ -108,7 +108,7 @@ const TagComponent = forwardRef<HTMLElement, Props>(
         {name}
       </button>
     ) : (
-      <span {...rest} aria-disabled={disabled || rest['aria-disabled']} className={classes} ref={rootRef}>
+      <span {...rest} className={classes} ref={rootRef}>
         {icon && <Icon name={icon} />}
         {name}
       </span>
