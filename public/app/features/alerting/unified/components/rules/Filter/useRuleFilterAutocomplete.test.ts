@@ -6,6 +6,7 @@ import { setupDataSources } from 'app/features/alerting/unified/testSetup/dataso
 import { AccessControlAction } from 'app/types/accessControl';
 import { type GrafanaPromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
+import * as dataSourcesForRulesModule from '../../../hooks/useDataSourcesForRules';
 import { setupMswServer } from '../../../mockApi';
 import { grantUserPermissions, mockDataSource } from '../../../mocks';
 import { setGrafanaPromRules, setPrometheusRules } from '../../../mocks/server/configure';
@@ -165,6 +166,44 @@ describe('useNamespaceAndGroupOptions', () => {
       // described by their data source.
       expect(options).toContainEqual({ label: 'folder-a', value: 'folder-a', description: 'Grafana folder' });
       expect(options).toContainEqual({ label: 'big-namespace', value: 'big-namespace', description: 'mimir-capped' });
+    });
+
+    it('leaves out the namespaces of a data source without a url', async () => {
+      setGrafanaPromRules([]);
+      grantUserPermissions([AccessControlAction.AlertingRuleExternalRead]);
+      const withUrl = alertingFactory.dataSource.build({
+        name: 'with-url',
+        uid: 'with-url',
+        jsonData: { manageAlerts: true },
+      });
+      const withoutUrl = alertingFactory.dataSource.build({
+        name: 'without-url',
+        uid: 'without-url',
+        url: '',
+        jsonData: { manageAlerts: true },
+      });
+      setPrometheusRules(withUrl, [{ name: 'g1', file: 'kept-namespace', interval: 60, rules: [] }]);
+      setPrometheusRules(withoutUrl, [{ name: 'g2', file: 'dropped-namespace', interval: 60, rules: [] }]);
+
+      const { result } = renderHook(() => useNamespaceAndGroupOptions(), { wrapper });
+
+      const options = await resolveOptions(() => result.current.namespaceOptions(''));
+
+      expect(options).toEqual([{ label: 'kept-namespace', value: 'kept-namespace', description: 'with-url' }]);
+    });
+
+    it('keeps the Grafana folders when the data source list fails', async () => {
+      setGrafanaPromRules([{ name: 'g1', file: 'folder-a', folderUid: 'a', interval: 60, rules: [] }]);
+      const listSpy = jest
+        .spyOn(dataSourcesForRulesModule, 'getDataSourcesForRules')
+        .mockRejectedValue(new Error('list failed'));
+
+      const { result } = renderHook(() => useNamespaceAndGroupOptions(), { wrapper });
+
+      const options = await resolveOptions(() => result.current.namespaceOptions(''));
+
+      expect(options).toEqual([{ label: 'folder-a', value: 'folder-a', description: 'Grafana folder' }]);
+      listSpy.mockRestore();
     });
 
     it('degrades to external namespaces when the Grafana folder fetch fails', async () => {
