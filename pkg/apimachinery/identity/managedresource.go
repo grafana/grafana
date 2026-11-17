@@ -46,6 +46,26 @@ func CheckClassicFPAssignment(auth authtypes.AuthInfo, obj utils.GrafanaMetaAcce
 	}}
 }
 
+// CheckGrafanaCloudAssignment blocks assigning the grafana-cloud manager.
+// Only the service identity the store is configured with may set it.
+func CheckGrafanaCloudAssignment(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor, grafanaCloudServiceIdentity string) error {
+	kind := utils.ParseManagerKindString(obj.GetAnnotation(utils.AnnoKeyManagerKind))
+	if kind != utils.ManagerKindGrafanaCloud {
+		return nil
+	}
+
+	if isGrafanaCloudServiceIdentity(auth, grafanaCloudServiceIdentity) {
+		return nil
+	}
+
+	return &apierrors.StatusError{ErrStatus: metav1.Status{
+		Status:  metav1.StatusFailure,
+		Code:    http.StatusForbidden,
+		Reason:  metav1.StatusReasonForbidden,
+		Message: "Can not set the grafana-cloud resource manager",
+	}}
+}
+
 // isGrafanaCloudServiceIdentity reports whether auth carries exactly one serviceIdentity claim and
 // it matches grafanaCloudServiceIdentity.
 func isGrafanaCloudServiceIdentity(auth authtypes.AuthInfo, grafanaCloudServiceIdentity string) bool {
@@ -56,7 +76,7 @@ func isGrafanaCloudServiceIdentity(auth authtypes.AuthInfo, grafanaCloudServiceI
 	return len(ids) == 1 && ids[0] == grafanaCloudServiceIdentity
 }
 
-func CheckManagerWriteAuthz(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor, grafanaCloudServiceIdentity string) error {
+func CheckManagerWriteAuthz(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
 	kind := obj.GetAnnotation(utils.AnnoKeyManagerKind)
 	if kind == "" {
 		return nil
@@ -77,7 +97,8 @@ func CheckManagerWriteAuthz(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccess
 		utils.ManagerKindPlugin,
 		utils.ManagerKindClassicFP,                  // nolint:staticcheck
 		utils.ManagerKindClassicAPI,                 // nolint:staticcheck
-		utils.ManagerKindClassicConvertedPrometheus: // nolint:staticcheck
+		utils.ManagerKindClassicConvertedPrometheus, // nolint:staticcheck
+		utils.ManagerKindGrafanaCloud:
 		// ?? what identity do we use for legacy internal requests?
 		return nil // no error
 
@@ -92,26 +113,14 @@ func CheckManagerWriteAuthz(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccess
 	case utils.ManagerKindGrafana:
 		// Used for global role management.
 		return nil // Let the api admission hooks handle it
-
-	case utils.ManagerKindGrafanaCloud:
-		if isGrafanaCloudServiceIdentity(auth, grafanaCloudServiceIdentity) {
-			return nil
-		}
-
-		return &apierrors.StatusError{ErrStatus: metav1.Status{
-			Status:  metav1.StatusFailure,
-			Code:    http.StatusForbidden,
-			Reason:  metav1.StatusReasonForbidden,
-			Message: "This resource is managed by Grafana Cloud and can not be changed",
-		}}
 	}
 	return nil
 }
 
 // CheckManagerOnDelete refuses deleting a managed resource the caller is not
 // entitled to delete.
-func CheckManagerOnDelete(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor, grafanaCloudServiceIdentity string) error {
-	return CheckManagerWriteAuthz(auth, obj, grafanaCloudServiceIdentity)
+func CheckManagerOnDelete(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
+	return CheckManagerWriteAuthz(auth, obj)
 }
 
 // CheckManagerOnCreate refuses creating a resource with manager annotations the
@@ -120,7 +129,12 @@ func CheckManagerOnCreate(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor
 	if err := CheckClassicFPAssignment(auth, obj); err != nil {
 		return err
 	}
-	return CheckManagerWriteAuthz(auth, obj, grafanaCloudServiceIdentity)
+
+	if err := CheckGrafanaCloudAssignment(auth, obj, grafanaCloudServiceIdentity); err != nil {
+		return err
+	}
+
+	return CheckManagerWriteAuthz(auth, obj)
 }
 
 // CheckManagerOnUpdate refuses a spec update that changes the manager in a way the
@@ -137,7 +151,7 @@ func CheckManagerOnUpdate(auth authtypes.AuthInfo, obj, old utils.GrafanaMetaAcc
 
 	// Removing a manager: the caller must be authorized for the *old* manager.
 	if !hasNew && hasOld {
-		if err := CheckManagerWriteAuthz(auth, old, grafanaCloudServiceIdentity); err != nil {
+		if err := CheckManagerWriteAuthz(auth, old); err != nil {
 			// Allow admins to release repo-managed resources. There is no
 			// reconciliation loop that automatically releases orphaned
 			// resources, so admins need the ability to detach manually.
@@ -161,12 +175,18 @@ func CheckManagerOnUpdate(auth authtypes.AuthInfo, obj, old utils.GrafanaMetaAcc
 		return err
 	}
 
-	// Adding a manager or updating flags on the same owner. Gate only a *new* classic-FP
-	// assignment: rewriting one that already carries it must keep working (allowUiUpdates).
+	// Adding a manager or updating flags on the same owner. Gate only a *new* classic-FP or
+	// grafana-cloud assignment: rewriting one that already carries it must keep working (allowUiUpdates).
 	if !hasOld || managerOld.Kind != utils.ManagerKindClassicFP { // nolint:staticcheck
 		if err := CheckClassicFPAssignment(auth, obj); err != nil {
 			return err
 		}
 	}
-	return CheckManagerWriteAuthz(auth, obj, grafanaCloudServiceIdentity)
+	if !hasOld || managerOld.Kind != utils.ManagerKindGrafanaCloud {
+		if err := CheckGrafanaCloudAssignment(auth, obj, grafanaCloudServiceIdentity); err != nil {
+			return err
+		}
+	}
+
+	return CheckManagerWriteAuthz(auth, obj)
 }

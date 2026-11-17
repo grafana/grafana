@@ -945,6 +945,6 @@ func TestClassicFileProvisioningAssignment(t *testing.T) {
 	t.Run("delete of a classic-file-provisioning resource is unchanged", func(t *testing.T) {
 		obj, err := utils.MetaAccessor(classicFP())
 		require.NoError(t, err)
-		require.NoError(t, identity.CheckManagerOnDelete(user, obj, ""))
+		require.NoError(t, identity.CheckManagerOnDelete(user, obj))
 	})
 }

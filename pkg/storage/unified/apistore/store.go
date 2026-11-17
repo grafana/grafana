@@ -131,8 +131,8 @@ type StorageOptions struct {
 	// Shared across resources (set via the RESTOptionsGetter); nil disables enforcement.
 	VersionPolicy *versionpolicy.VersionPolicyRegistry
 
-	// GrafanaCloudServiceIdentity is the serviceIdentity claim allowed to create, update and delete
-	// resources annotated grafana.app/managedBy: grafana-cloud. Empty lets nobody write them.
+	// GrafanaCloudServiceIdentity is the serviceIdentity claim allowed to set
+	// `grafana.app/managedBy: grafana-cloud` on a resource. Empty lets nobody set it.
 	GrafanaCloudServiceIdentity string
 }
 
@@ -489,7 +489,7 @@ func (s *Storage) Delete(
 		if err != nil {
 			return fmt.Errorf("unable to read object %w", err)
 		}
-		if err = identity.CheckManagerOnDelete(info, meta, s.opts.GrafanaCloudServiceIdentity); err != nil {
+		if err = identity.CheckManagerOnDelete(info, meta); err != nil {
 			_, err = s.handleManagedResourceRouting(ctx, err, resourcepb.WatchEvent_DELETED, key, out, out)
 			return err
 		}

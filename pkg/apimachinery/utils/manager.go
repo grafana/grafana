@@ -44,7 +44,7 @@ const (
 	ManagerKindGrafana   ManagerKind = "grafana"
 
 	// ManagerKindGrafanaCloud marks resources Grafana Cloud provisions.
-	// Only the service identity a store is configured with may create, update or delete them.
+	// Only the service identity a store is configured with may assign it.
 	ManagerKindGrafanaCloud ManagerKind = "grafana-cloud"
 
 	// ManagerKindFileProvisioning marks resources configured by a file the instance was
@@ -122,6 +122,11 @@ func (k ManagerKind) IsClassic() bool {
 	}
 }
 
+// hasOptionalIdentity reports whether resources of this kind count as managed without a meaningful manager Identity.
+func (k ManagerKind) hasOptionalIdentity() bool {
+	return k.IsClassic() || k == ManagerKindGrafanaCloud
+}
+
 // terraformUserAgentPattern matches the User-Agent based manager ID format used by Terraform providers.
 // Format: "Terraform/{version} (+https://www.terraform.io) terraform-provider-{name}/{version}"
 // Example: "Terraform/1.5.0 (+https://www.terraform.io) terraform-provider-grafana/v3.0.0"
@@ -169,7 +174,7 @@ func CheckManagerPropertiesOnUpdate(old, proposed ManagerProperties, hasOld, has
 	// Classic shim kinds are exempt: their identity is absent or unstable (e.g. a
 	// file-provisioning reader name, or empty for API/converted-Prometheus origins),
 	// so it is not a user-defined stable ID and must not be treated as immutable.
-	if proposed.Identity == old.Identity || proposed.Kind.IsClassic() {
+	if proposed.Identity == old.Identity || proposed.Kind.hasOptionalIdentity() {
 		return nil
 	}
 

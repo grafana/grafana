@@ -1515,21 +1515,27 @@ func TestPrepareObjectGrafanaCloudServiceIdentity(t *testing.T) {
 	}
 	stored := cloudDashboard()
 	stored.ResourceVersion = "1"
+	unmanagedStored := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "billing", ResourceVersion: "1"}}
 
-	t.Run("the configured identity may create and update", func(t *testing.T) {
+	t.Run("the configured identity may create and adopt", func(t *testing.T) {
 		s := newStorage("cloud-writer")
 		_, err := s.prepareObjectForStorage(cloudWriter, cloudDashboard())
 		require.NoError(t, err)
-		_, err = s.prepareObjectForUpdate(cloudWriter, cloudDashboard(), stored)
+		_, err = s.prepareObjectForUpdate(cloudWriter, cloudDashboard(), unmanagedStored)
 		require.NoError(t, err)
 	})
 
-	t.Run("a user may not create or update", func(t *testing.T) {
+	t.Run("a user may not create or adopt", func(t *testing.T) {
 		s := newStorage("cloud-writer")
 		_, err := s.prepareObjectForStorage(user, cloudDashboard())
 		require.True(t, apierrors.IsForbidden(err), "create: %v", err)
-		_, err = s.prepareObjectForUpdate(user, cloudDashboard(), stored)
-		require.True(t, apierrors.IsForbidden(err), "update: %v", err)
+		_, err = s.prepareObjectForUpdate(user, cloudDashboard(), unmanagedStored)
+		require.True(t, apierrors.IsForbidden(err), "adopt: %v", err)
+	})
+
+	t.Run("a user may update a resource that already carries it", func(t *testing.T) {
+		_, err := newStorage("cloud-writer").prepareObjectForUpdate(user, cloudDashboard(), stored)
+		require.NoError(t, err)
 	})
 
 	t.Run("without the option nobody may create", func(t *testing.T) {
