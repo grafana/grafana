@@ -443,5 +443,23 @@ describe('CodeMirror CodeEditor', () => {
       await waitFor(() => expect(thumb).toHaveStyle({ top: '0px' }));
       expect(horizontal).toHaveStyle({ left: '240px' });
     });
+
+    it('wheels the editor from the track and lets the page scroll once the editor is at its edge', async () => {
+      const { view } = await setup(true);
+      const scroller = view.scrollDOM;
+      mockScrollArea(scroller);
+      scroller.scrollBy = jest.fn((options: number | ScrollToOptions) => {
+        if (typeof options === 'object') {
+          scroller.scrollTop = Math.min(9800, Math.max(0, scroller.scrollTop + (options.top ?? 0)));
+        }
+      }) as typeof scroller.scrollBy;
+      const track = (await screen.findByRole('scrollbar', { name: 'Scroll vertically' })).parentElement!;
+
+      expect(fireEvent.wheel(track, { deltaY: 100 })).toBe(false);
+      expect(scroller.scrollTop).toBe(100);
+
+      scroller.scrollTop = 9800;
+      expect(fireEvent.wheel(track, { deltaY: 100 })).toBe(true);
+    });
   });
 });

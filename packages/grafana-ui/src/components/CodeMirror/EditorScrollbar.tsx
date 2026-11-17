@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { type ReactNode, useLayoutEffect, useRef, useState } from 'react';
+import { type ReactNode, useLayoutEffect, useRef } from 'react';
 
 import { type GrafanaTheme2, colorManipulator } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -34,7 +34,6 @@ export function EditorScrollbar({
   const styles = useStyles2(getStyles);
   const track = useRef<HTMLDivElement>(null);
   const dragStart = useRef<{ pointer: number; position: number } | null>(null);
-  const [pointerFocused, setPointerFocused] = useState(false);
   const vertical = orientation === 'vertical';
   const { max, thumbSize, travel } = getScrollbarGeometry(size, contentSize);
   const scrollPosition = Math.max(0, Math.min(max, position));
@@ -45,9 +44,13 @@ export function EditorScrollbar({
   useLayoutEffect(() => {
     const element = track.current!;
     const onWheel = (event: WheelEvent) => {
-      event.preventDefault();
+      const { scrollTop, scrollLeft } = scroller;
       const scale = event.deltaMode === 1 ? 20 : event.deltaMode === 2 ? scroller.clientHeight : 1;
       scroller.scrollBy({ top: event.deltaY * scale, left: event.deltaX * scale });
+      // Let the wheel chain to the page once the editor is at its edge, like a native scrollbar.
+      if (scroller.scrollTop !== scrollTop || scroller.scrollLeft !== scrollLeft) {
+        event.preventDefault();
+      }
     };
     element.addEventListener('wheel', onWheel, { passive: false });
     return () => element.removeEventListener('wheel', onWheel);
@@ -63,7 +66,6 @@ export function EditorScrollbar({
         if (event.button !== 0 || event.target !== event.currentTarget || max === 0) {
           return;
         }
-        setPointerFocused(true);
         event.preventDefault();
         const rect = event.currentTarget.getBoundingClientRect();
         const offset = vertical ? event.clientY - rect.top : event.clientX - rect.left;
@@ -76,7 +78,6 @@ export function EditorScrollbar({
           className={styles.thumb}
           role="scrollbar"
           tabIndex={0}
-          data-pointer-focus={pointerFocused || undefined}
           aria-label={
             vertical
               ? t('grafana-ui.code-mirror.scroll-vertically', 'Scroll vertically')
@@ -97,7 +98,6 @@ export function EditorScrollbar({
             if (event.button !== 0) {
               return;
             }
-            setPointerFocused(true);
             event.preventDefault();
             event.currentTarget.setPointerCapture(event.pointerId);
             dragStart.current = {
@@ -120,9 +120,7 @@ export function EditorScrollbar({
           onPointerCancel={() => {
             dragStart.current = null;
           }}
-          onBlur={() => setPointerFocused(false)}
           onKeyDown={(event) => {
-            setPointerFocused(false);
             const current = scroller[vertical ? 'scrollTop' : 'scrollLeft'];
             const positions: Record<string, number> = {
               [vertical ? 'ArrowUp' : 'ArrowLeft']: current - 40,
@@ -165,7 +163,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     background: theme.colors.scrollbar,
     outline: 'none',
     '&:hover, &:active': { background: colorManipulator.alpha(theme.colors.scrollbar, 0.5) },
-    '&:focus-visible:not([data-pointer-focus])': {
+    '&:focus-visible': {
       outline: `1px solid ${theme.colors.text.secondary}`,
       outlineOffset: -1,
     },

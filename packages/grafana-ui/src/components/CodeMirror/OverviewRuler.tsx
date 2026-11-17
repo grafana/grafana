@@ -187,5 +187,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     background: theme.colors.error.main,
     transform: 'translateY(-50%)',
     pointerEvents: 'none',
+    '@media (forced-colors: active)': { background: 'Highlight' },
   }),
 });
