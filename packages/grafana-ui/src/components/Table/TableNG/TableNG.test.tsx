@@ -1079,12 +1079,12 @@ describe('TableNG', () => {
     });
 
     describe('expandAllRows across data updates', () => {
-      const makeExpandAllFrame = (keys: string[]): DataFrame =>
+      const makeExpandAllFrame = (keys: string[], expandAllRows = true): DataFrame =>
         withFieldOverrides(
           toDataFrame({
             name: 'ExpandAll',
             length: keys.length,
-            meta: { custom: { expandAllRows: true } },
+            meta: { custom: { expandAllRows } },
             fields: [
               { name: 'Label', type: FieldType.string, values: keys.map((k) => `Row ${k}`), config: {} },
               {
@@ -1137,6 +1137,22 @@ describe('TableNG', () => {
 
         expect(screen.queryByText('nested-A')).not.toBeInTheDocument();
         expect(screen.getByText('nested-B')).toBeInTheDocument();
+      });
+
+      it('applies a changed default to the rows the user has not toggled', async () => {
+        const { rerender } = render(<TableNG data={makeExpandAllFrame(['A', 'B'], false)} width={800} height={600} />);
+
+        await user.click(screen.getAllByRole('button', { name: 'Expand row' })[0]);
+        await user.click(screen.getAllByRole('button', { name: 'Collapse row' })[0]);
+        rerender(<TableNG data={makeExpandAllFrame(['A', 'B'], true)} width={800} height={600} />);
+
+        expect(screen.queryByText('nested-A')).not.toBeInTheDocument();
+        expect(screen.getByText('nested-B')).toBeInTheDocument();
+
+        rerender(<TableNG data={makeExpandAllFrame(['A', 'B'], false)} width={800} height={600} />);
+
+        expect(screen.queryByText('nested-A')).not.toBeInTheDocument();
+        expect(screen.queryByText('nested-B')).not.toBeInTheDocument();
       });
     });
 

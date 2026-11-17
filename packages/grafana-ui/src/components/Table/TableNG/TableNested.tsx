@@ -225,21 +225,12 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
   );
 
   const expandAllRows = Boolean(data.meta?.custom?.expandAllRows);
-  const expandAllRowKeys = useMemo(
-    () => (expandAllRows ? nestedData.map((frame, i) => getStableRowKey(i, frame)) : []),
-    [expandAllRows, nestedData]
-  );
-  const [expandedRows, setExpandedRows] = useState<Set<string>>(() => new Set(expandAllRowKeys));
-  const [seenExpandAllRowKeys, setSeenExpandAllRowKeys] = useState<Set<string>>(() => new Set(expandAllRowKeys));
-  const addedRowKeys = useMemo(
-    () => expandAllRowKeys.filter((key) => !seenExpandAllRowKeys.has(key)),
-    [expandAllRowKeys, seenExpandAllRowKeys]
-  );
-  // Only rows no earlier result contained expand, so a refresh keeps the rows the user collapsed closed.
-  if (addedRowKeys.length > 0) {
-    setSeenExpandAllRowKeys(new Set([...seenExpandAllRowKeys, ...addedRowKeys]));
-    setExpandedRows(new Set([...expandedRows, ...addedRowKeys]));
-  }
+  // Holds only the rows the user toggled, so rows a later result adds follow the default.
+  const [expansionOverrides, setExpansionOverrides] = useState<Map<string, boolean>>(() => new Map());
+  const expandedRows = useMemo(() => {
+    const keys = nestedData.map((frame, i) => getStableRowKey(i, frame));
+    return new Set(keys.filter((key) => expansionOverrides.get(key) ?? expandAllRows));
+  }, [nestedData, expansionOverrides, expandAllRows]);
 
   const gridRef = useRef<DataGridHandle>(null);
   const scrollbarWidth = useScrollbarWidth(gridRef, height);
@@ -579,21 +570,13 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
         if (row.__depth === 0) {
           const rowIdx = row.__index;
           const stableKey = getRowStableKeyForRowIdx(rowIdx);
+          const isExpanded = expandedRows.has(stableKey);
 
           return (
             <RowExpander
               rowId={rowId}
-              isExpanded={expandedRows.has(stableKey)}
-              onCellExpand={() => {
-                setExpandedRows((er) => {
-                  if (er.has(stableKey)) {
-                    er.delete(stableKey);
-                  } else {
-                    er.add(stableKey);
-                  }
-                  return new Set(er);
-                });
-              }}
+              isExpanded={isExpanded}
+              onCellExpand={() => setExpansionOverrides((overrides) => new Map(overrides).set(stableKey, !isExpanded))}
             />
           );
         }
