@@ -823,33 +823,6 @@ describe('getInitialNavTree', () => {
       expect(findById(tree, NavID.cfgGeneral)?.url).toBe('/org');
     });
 
-    it('gives the regrouped destinations the icons of the design', () => {
-      const tree = administration();
-      tree[0].children = tree[0].children?.map((child) =>
-        child.id === 'authentication' ? { ...child, icon: 'shield' } : child
-      );
-      withBootdata(tree);
-
-      const icon = (id: string) => findById(getInitialNavTree(), id)?.icon;
-
-      expect(icon('migrate-to-cloud')).toBe('cloud-upload');
-      expect(icon('provisioning')).toBe('code-branch');
-      expect(icon('authentication')).toBe('key-skeleton-alt');
-      expect(icon('plugin-page-grafana-advisor-app')).toBe('heart');
-      expect(icon('secrets-management')).toBe('lock');
-    });
-
-    it('keeps an icon a destination already has', () => {
-      const tree = administration();
-      const general = tree[0].children?.find((child) => child.id === NavID.cfgGeneral);
-      general!.children = general!.children?.map((child) =>
-        child.id === 'provisioning' ? { ...child, icon: 'cog' } : child
-      );
-      withBootdata(tree);
-
-      expect(findById(getInitialNavTree(), 'provisioning')?.icon).toBe('cog');
-    });
-
     it('leaves General out of the breadcrumbs, and nothing else', () => {
       withBootdata(administration());
 

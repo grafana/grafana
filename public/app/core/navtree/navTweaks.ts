@@ -1,4 +1,4 @@
-import { type IconName, type NavModelItem } from '@grafana/data';
+import { type NavModelItem } from '@grafana/data';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 
 import { NavID, NavWeight } from './constants';
@@ -38,16 +38,6 @@ const ADMIN_GENERAL_TRAILING = [
   { id: 'secrets-management', sortWeight: 1002 },
 ];
 
-// Icons the section nav's design gives its destinations. Authentication has
-// one already and is changed to match, the others only gain one when they lack it
-const ADMIN_ICONS: Record<string, { icon: IconName; replace?: boolean }> = {
-  'migrate-to-cloud': { icon: 'cloud-upload' },
-  provisioning: { icon: 'code-branch' },
-  authentication: { icon: 'key-skeleton-alt', replace: true },
-  [pluginPageId('grafana-advisor-app')]: { icon: 'heart' },
-  'secrets-management': { icon: 'lock' },
-};
-
 const NAV_TWEAKS: NavTweak[] = [
   {
     // Temporarily list Machine Learning's pages directly under More apps for the refreshed IA.
@@ -76,7 +66,7 @@ const NAV_TWEAKS: NavTweak[] = [
         placed
       );
       // Without General nothing was regrouped, so there is nothing to restyle either
-      return findNavById(regrouped, NavID.cfgGeneral) ? withAdminIcons(landOnDefaultPreferences(regrouped)) : regrouped;
+      return findNavById(regrouped, NavID.cfgGeneral) ? landOnDefaultPreferences(regrouped) : regrouped;
     },
   },
 ];
@@ -106,17 +96,6 @@ function landOnDefaultPreferences(tree: NavModelItem[]): NavModelItem[] {
       ...(node.children ? { children: retarget(node.children) } : {}),
     }));
   return retarget(tree);
-}
-
-function withAdminIcons(nodes: NavModelItem[]): NavModelItem[] {
-  return nodes.map((node) => {
-    const wanted = node.id ? ADMIN_ICONS[node.id] : undefined;
-    return {
-      ...node,
-      ...(wanted && (wanted.replace || !node.icon) ? { icon: wanted.icon } : {}),
-      ...(node.children ? { children: withAdminIcons(node.children) } : {}),
-    };
-  });
 }
 
 /** Applies independently gated tweaks without letting one failure abort store creation. */
