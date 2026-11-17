@@ -299,27 +299,3 @@ func (p *grpcPlugin) RunStream(ctx context.Context, req *backend.RunStreamReques
 	}
 	return pc.RunStream(ctx, req, sender)
 }
-
-func (p *grpcPlugin) ValidateAdmission(ctx context.Context, request *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
-	pc, ok := p.getPluginClient(ctx)
-	if !ok {
-		return nil, plugins.ErrPluginUnavailable
-	}
-	return pc.ValidateAdmission(ctx, request)
-}
-
-func (p *grpcPlugin) MutateAdmission(ctx context.Context, request *backend.AdmissionRequest) (*backend.MutationResponse, error) {
-	pc, ok := p.getPluginClient(ctx)
-	if !ok {
-		return nil, plugins.ErrPluginUnavailable
-	}
-	return pc.MutateAdmission(ctx, request)
-}
-
-func (p *grpcPlugin) ConvertObjects(ctx context.Context, request *backend.ConversionRequest) (*backend.ConversionResponse, error) {
-	pc, ok := p.getPluginClient(ctx)
-	if !ok {
-		return nil, plugins.ErrPluginUnavailable
-	}
-	return pc.ConvertObjects(ctx, request)
-}

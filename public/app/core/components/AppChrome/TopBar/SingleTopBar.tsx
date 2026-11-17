@@ -18,9 +18,9 @@ import { useSelector } from 'app/types/store';
 import { HomeLogo } from '../../Branding/Branding';
 import { Breadcrumbs } from '../../Breadcrumbs/Breadcrumbs';
 import { buildBreadcrumbs } from '../../Breadcrumbs/utils';
+import { AssistantToolbarButtons } from '../AssistantWorkspace/AssistantToolbarButtons';
 import { ExtensionToolbarItem } from '../ExtensionSidebar/ExtensionToolbarItem';
 import { LazyFeatureControlButton } from '../FeatureControl/LazyFeatureControl';
-import { AssistantToolbarButtons } from '../FullscreenWorkspace/AssistantToolbarButtons';
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
 import { QuickAdd } from '../QuickAdd/QuickAdd';
 
