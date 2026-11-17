@@ -15,7 +15,8 @@ import (
 )
 
 func TestSnapshotDoesNotMutateCachedSources(t *testing.T) {
-	requester := &user.SignedInUser{UserID: 7, UserUID: "seven", OrgID: 1, OrgRole: org.RoleViewer, TeamIDs: []int64{10, 11}}
+	requester := &user.SignedInUser{UserID: 7, UserUID: "seven", OrgID: 1, OrgRole: org.RoleViewer}
+	requester.TeamIDs = []int64{10, 11} //nolint:staticcheck // The legacy team permission cache uses numeric team IDs.
 	cache := localcache.New(0, 0)
 	keys := []string{
 		ac.GetBasicRolePermissionCacheKey("Viewer", 1),
@@ -23,7 +24,7 @@ func TestSnapshotDoesNotMutateCachedSources(t *testing.T) {
 		ac.GetTeamPermissionCacheKey(11, 1),
 		ac.GetUserDirectPermissionCacheKey(requester),
 	}
-	var want []ac.Permission
+	want := make([]ac.Permission, 0, 2*len(keys))
 	for _, key := range keys {
 		grants := make([]ac.Permission, 2, 16)
 		grants[0] = ac.Permission{Action: "dashboards:read", Scope: "dashboards:uid:" + key}

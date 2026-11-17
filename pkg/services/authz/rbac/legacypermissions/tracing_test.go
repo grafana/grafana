@@ -129,7 +129,7 @@ func TestPermissionCacheTracing(t *testing.T) {
 				require.NotContains(t, span.Status().Description, "private-")
 				require.Empty(t, span.Events())
 				for _, attr := range span.Attributes() {
-					require.NotContains(t, attr.Value.Emit(), "private-")
+					require.NotContains(t, attr.Value.String(), "private-")
 				}
 			}
 		})
