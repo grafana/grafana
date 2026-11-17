@@ -360,14 +360,11 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 		configProviders[group] = NewDirectConfigProvider(config)
 	}
 
-	gRPCAuth := c.Settings.SectionWithEnvOverrides("grpc_client_authentication")
 	supported := resources.NewSupportedResourceSet(supportedResources)
 	manifestWatcher, err := resources.WatchManifests(supported, nil, resource.ManifestWatcherConfig{
-		DiscoveryURL:     aggregatedServerURL,
-		Token:            gRPCAuth.Key("token").String(),
-		TokenExchangeURL: gRPCAuth.Key("token_exchange_url").String(),
-		CAFile:           tlsConfig.CAFile,
-		AllowInsecure:    tlsConfig.Insecure,
+		DiscoveryURL: aggregatedServerURL,
+		Exchanger:    tokenExchangeClient,
+		TLS:          &tlsConfig,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create manifest watcher: %w", err)
