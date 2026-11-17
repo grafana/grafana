@@ -484,6 +484,22 @@ export const DashboardInteractions = {
     reportDashboardInteraction('set_visualization_option', properties);
   },
 
+  // Panels with options set from a variable, with grafana.panelOptionInterpolation
+  panelOptionVariableUsage: (properties: {
+    trigger: 'load' | 'save';
+    panel_count: number;
+    field_config_count: number;
+    threshold_count: number;
+    value_mapping_count: number;
+    dashboard_uid?: string;
+  }) => {
+    reportDashboardInteraction('panel_option_variable_usage', properties);
+  },
+
+  panelOptionVariableCreated: (properties: { type: 'custom' | 'switch' }) => {
+    reportDashboardInteraction('panel_option_variable_created', properties);
+  },
+
   // tracks attempts to resize a panel that is managed by auto layout
   autoLayoutResizeIntercepted: (properties: { scope: AutoLayoutScope; trigger: 'hover' | 'drag' }) => {
     reportDashboardInteraction('auto_layout_resize_intercepted', properties);

@@ -15,6 +15,39 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
+func TestBleveQueryHitCursor(t *testing.T) {
+	order := search.SortOrder{&search.SortScore{Desc: true}, &search.SortField{Field: "title"}, &search.SortDocID{}}
+	match := &search.DocumentMatch{
+		ID: "default/group/resource/name", Score: 1.25,
+		Sort:        []string{"_score", "encoded-title", "default/group/resource/name"},
+		DecodedSort: []string{"_score", "Title", "default/group/resource/name"},
+	}
+	hits := toQueryHits(search.DocumentMatchCollection{match}, order)
+	require.Len(t, hits, 1)
+	require.Equal(t, queryCursor{"1.25", "Title", match.ID}, hits[0].Cursor)
+	require.Equal(t, queryStableSortKey{"encoded-title", match.ID}, hits[0].StableSortKey)
+
+	match.Score = 9
+	updated := toQueryHits(search.DocumentMatchCollection{match}, order)
+	require.Equal(t, hits[0].StableSortKey, updated[0].StableSortKey, "a changed score must not invalidate an otherwise unchanged row")
+	require.NotEqual(t, hits[0].Cursor, updated[0].Cursor)
+}
+
+func TestBleveQueryBackendReverseSort(t *testing.T) {
+	backend := &bleveQueryBackend{request: &bleve.SearchRequest{Sort: search.SortOrder{
+		&search.SortScore{Desc: true}, &search.SortField{Field: "title"}, &search.SortDocID{},
+	}}}
+	for range 2 {
+		reversed := backend.sort(true)
+		for i, original := range backend.request.Sort {
+			require.NotEqual(t, original.Descending(), reversed[i].Descending())
+		}
+		require.True(t, backend.request.Sort[0].Descending())
+		require.False(t, backend.request.Sort[1].Descending())
+		require.False(t, backend.request.Sort[2].Descending())
+	}
+}
+
 func TestPostRankAuthzConfigWindowSize(t *testing.T) {
 	cfg := PostRankAuthzConfig{OverFetchFactor: 5, MaxWindow: 10000}.effective()
 	assert.Equal(t, 500, cfg.windowSize(100))
@@ -65,8 +98,8 @@ func TestReadAuthzMetadata(t *testing.T) {
 	dashboards := newIndex(t, map[string]string{"a": "folder-1", "root": ""})
 	folders := newIndex(t, map[string]string{"f": "folder-2"})
 
-	page := &postRankPage{index: bleve.NewIndexAlias(dashboards, folders), query: bleve.NewMatchAllQuery()}
-	hits := search.DocumentMatchCollection{{ID: "a"}, {ID: "deleted"}, {ID: "f"}, {ID: "root"}}
+	page := &postRankPage{backend: &bleveQueryBackend{index: bleve.NewIndexAlias(dashboards, folders)}}
+	hits := []*queryHit{{ID: "a"}, {ID: "deleted"}, {ID: "f"}, {ID: "root"}}
 	metadata, err := page.readAuthzMetadata(t.Context(), hits)
 	require.NoError(t, err)
 	require.Equal(t, map[string]authzMetadata{
@@ -84,18 +117,18 @@ func TestAuthzResourcesVerb(t *testing.T) {
 		dashboardaccess.PERMISSION_EDIT:   utils.VerbUpdate,
 		dashboardaccess.PERMISSION_CREATE: utils.VerbCreate,
 	} {
-		got := idx.authzResources(&resourcepb.ResourceSearchRequest{Permission: int64(perm)})
+		got := authzResources(idx.key, &resourcepb.ResourceSearchRequest{Permission: int64(perm)})
 		assert.Equal(t, map[string]string{"folder.grafana.app/folders": verb}, got, "permission %v", perm)
 	}
 }
 
 func TestAuthzResourcesCreateOnlyAppliesToFolders(t *testing.T) {
 	idx := &bleveIndex{key: resource.NamespacedResource{Namespace: "default", Group: dashboardGroup, Resource: "dashboards"}}
-	got := idx.authzResources(&resourcepb.ResourceSearchRequest{Permission: int64(dashboardaccess.PERMISSION_CREATE)})
+	got := authzResources(idx.key, &resourcepb.ResourceSearchRequest{Permission: int64(dashboardaccess.PERMISSION_CREATE)})
 	assert.Equal(t, map[string]string{dashboardGroup + "/dashboards": utils.VerbGet}, got)
 
 	other := &bleveIndex{key: resource.NamespacedResource{Namespace: "default", Group: "other.grafana.app", Resource: "folders"}}
-	got = other.authzResources(&resourcepb.ResourceSearchRequest{Permission: int64(dashboardaccess.PERMISSION_CREATE)})
+	got = authzResources(other.key, &resourcepb.ResourceSearchRequest{Permission: int64(dashboardaccess.PERMISSION_CREATE)})
 	assert.Equal(t, map[string]string{"other.grafana.app/folders": utils.VerbGet}, got, "same resource name in another group")
 }
 
@@ -103,7 +136,7 @@ func TestAuthzResourcesCreateOnlyAppliesToFolders(t *testing.T) {
 // different groups apart.
 func TestAuthzResourcesOfAGlobalIndex(t *testing.T) {
 	idx := &bleveIndex{key: resource.GlobalSearchKey("default")}
-	got := idx.authzResources(&resourcepb.ResourceSearchRequest{Permission: int64(dashboardaccess.PERMISSION_CREATE)})
+	got := authzResources(idx.key, &resourcepb.ResourceSearchRequest{Permission: int64(dashboardaccess.PERMISSION_CREATE)})
 
 	for _, tc := range []struct{ group, resource, verb string }{
 		{"folder.grafana.app", "folders", utils.VerbCreate},
@@ -116,7 +149,7 @@ func TestAuthzResourcesOfAGlobalIndex(t *testing.T) {
 	}
 
 	perResource := &bleveIndex{key: resource.NamespacedResource{Namespace: "default", Group: "assistant.ext.grafana.app", Resource: "pages"}}
-	_, ok := authzVerb(perResource.authzResources(&resourcepb.ResourceSearchRequest{}), "gas.ext.grafana.app", "pages")
+	_, ok := authzVerb(authzResources(perResource.key, &resourcepb.ResourceSearchRequest{}), "gas.ext.grafana.app", "pages")
 	assert.False(t, ok, "a per-resource index returns only its own type")
 }
 

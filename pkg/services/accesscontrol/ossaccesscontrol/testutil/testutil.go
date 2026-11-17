@@ -46,11 +46,14 @@ func ProvideFolderPermissions(
 
 	quotaService := quotatest.New(false, nil)
 
-	acSvc := acimpl.ProvideOSSService(
+	acSvc, initErr := acimpl.ProvideOSSService(
 		cfg, acdb.ProvideService(sqlStore), actionSets, localcache.ProvideService(),
 		features, tracing.InitializeTracerForTest(), sqlStore, permreg.ProvidePermissionRegistry(),
 		nil, iam.Features{}, nil, nil,
 	)
+	if initErr != nil {
+		return nil, initErr
+	}
 
 	orgService, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(sqlStore), cfg, quotaService)
 	if err != nil {
