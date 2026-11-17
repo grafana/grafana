@@ -102,6 +102,12 @@ describe('getPanelLinksChange', () => {
     { name: 'a link is removed', prev: [docs, runbook], next: [docs], expected: 'remove_panel_link' },
     { name: 'a link is edited', prev: [docs], next: [{ ...docs, url: '/docs/v2' }], expected: 'edit_panel_link' },
     { name: 'links are reordered', prev: [docs, runbook], next: [runbook, docs], expected: 'reorder_panel_links' },
+    {
+      name: 'a link is edited to match another link',
+      prev: [docs, runbook],
+      next: [docs, { ...docs }],
+      expected: 'edit_panel_link',
+    },
     { name: 'a link is saved without changes', prev: [docs], next: [{ ...docs }], expected: undefined },
   ])('returns $expected when $name', ({ prev, next, expected }) => {
     expect(getPanelLinksChange(prev, next)).toBe(expected);

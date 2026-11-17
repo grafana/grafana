@@ -1,6 +1,7 @@
 import { isEqual } from 'lodash';
 
 import { type VizPanel } from '@grafana/scenes';
+import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 
 import { DashboardInteractions, type PanelSettingItem, type PanelSettingSource } from './interactions';
 import { getDashboardSceneFor } from './utils';
@@ -39,6 +40,11 @@ export function getPanelLinksChange(prev: unknown[], next: unknown[]): PanelSett
     return undefined;
   }
 
-  const isReorder = next.every((link) => prev.some((prevLink) => isEqual(prevLink, link)));
+  // A reorder keeps the same links the same number of times, so compare them as sorted lists.
+  const isReorder = isEqual(sortedByContent(prev), sortedByContent(next));
   return isReorder ? 'reorder_panel_links' : 'edit_panel_link';
+}
+
+function sortedByContent(links: unknown[]): string[] {
+  return links.map((link) => JSON.stringify(sortedDeepCloneWithoutNulls(link))).sort();
 }
