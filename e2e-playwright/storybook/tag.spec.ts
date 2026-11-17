@@ -31,6 +31,33 @@ test('removable tags retain list semantics and focus through removal and reset',
   await expect(europe).toBeFocused();
 });
 
+test('removable story updates a polite status after removal and clears it on reset', async ({ page }) => {
+  await page.goto('/iframe.html?id=information-tag--removable&viewMode=story');
+  const status = page.getByRole('status');
+  const items = page.getByRole('list', { name: 'Tags', exact: true }).getByRole('listitem');
+  const removeProduction = page.getByRole('button', { name: 'Remove tag: Production', exact: true });
+  const reset = page.getByRole('button', { name: 'Reset tags', exact: true });
+
+  await expect(status).toHaveText('');
+  await expect(status).toHaveAttribute('aria-live', 'polite');
+  await expect(status).toHaveAttribute('aria-atomic', 'true');
+
+  await removeProduction.click();
+  await expect(items).toHaveText(['Europe', 'Frontend']);
+  await expect(status).toHaveText('Production removed');
+
+  await reset.click();
+  await expect(items).toHaveText(['Production', 'Europe', 'Frontend']);
+  await expect(status).toHaveText('');
+
+  await removeProduction.click();
+  await expect(items).toHaveText(['Europe', 'Frontend']);
+  await expect(status).toHaveText('Production removed');
+
+  await page.getByRole('button', { name: 'Remove tag: Europe', exact: true }).click();
+  await expect(status).toHaveText('Europe removed');
+});
+
 for (const theme of ['light', 'dark', 'visual_refresh_light', 'visual_refresh_dark']) {
   test(`removable tag hover feedback stays on the individual action in ${theme}`, async ({ page }) => {
     await page.goto(`/iframe.html?id=information-tag--states&viewMode=story&globals=theme:${theme}`);

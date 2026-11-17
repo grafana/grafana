@@ -45,6 +45,12 @@ The close button has a localized accessible name, `Remove tag: NAME`, using the 
 `onRemove(name, event)` requests removal. The consumer owns the list state and focus after removal.
 This example focuses the next remove button, or the previous one when removing the last tag.
 When the list is empty, focus moves to **Reset tags**.
+The example also keeps an initially empty `role="status"` region mounted and updates it with a short message,
+such as `Production removed`, after removing a tag. Reset clears the message so removing the same tag again
+can produce a new update. The consumer owns this feedback: `Tag` cannot know whether an `onRemove` request
+succeeded. Keep announcements concise and test them with focus changes in a screen reader to avoid duplicate
+or competing feedback.
+
 This example assumes one remove button per tag. If tags also have label actions, track the intended focus target
 with refs rather than indexing all buttons in the group.
 

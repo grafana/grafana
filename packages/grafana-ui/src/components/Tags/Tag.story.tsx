@@ -37,6 +37,7 @@ const initialTags = ['Production', 'Europe', 'Frontend'];
 
 export const Removable: StoryFn<typeof Tag> = () => {
   const [tags, setTags] = useState(initialTags);
+  const [announcement, setAnnouncement] = useState('');
   const styles = useStyles2(getRemovableStyles);
   const listRef = useRef<HTMLUListElement>(null);
   const resetRef = useRef<HTMLButtonElement>(null);
@@ -56,6 +57,7 @@ export const Removable: StoryFn<typeof Tag> = () => {
   const removeTag = (name: string) => {
     focusIndex.current = tags.indexOf(name);
     setTags(tags.filter((tag) => tag !== name));
+    setAnnouncement(`${name} removed`);
   };
 
   return (
@@ -68,9 +70,19 @@ export const Removable: StoryFn<typeof Tag> = () => {
           </li>
         ))}
       </ul>
-      <Button ref={resetRef} variant="secondary" onClick={() => setTags(initialTags)}>
+      <Button
+        ref={resetRef}
+        variant="secondary"
+        onClick={() => {
+          setTags(initialTags);
+          setAnnouncement('');
+        }}
+      >
         Reset tags
       </Button>
+      <div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
+        {announcement}
+      </div>
     </Stack>
   );
 };
