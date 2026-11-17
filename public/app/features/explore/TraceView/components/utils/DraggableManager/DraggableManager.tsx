@@ -84,7 +84,7 @@ export default class DraggableManager {
   setOptions({ getBounds, tag, resetBoundsOnResize = true, ...rest }: DraggableManagerOptions) {
     this.getBounds = getBounds;
     this.tag = tag;
-    if (resetBoundsOnResize) {
+    if (resetBoundsOnResize && !this._resetBoundsOnResize) {
       window.addEventListener('resize', this.resetBounds);
     } else if (this._resetBoundsOnResize) {
       window.removeEventListener('resize', this.resetBounds);
