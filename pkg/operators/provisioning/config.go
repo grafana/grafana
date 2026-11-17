@@ -360,7 +360,7 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 		configProviders[group] = NewDirectConfigProvider(config)
 	}
 
-	supported := resources.NewSupportedResourceSet(supportedResources)
+	supported := resources.NewSupportedResourceProvider(supportedResources)
 	c.manifestWatcher, err = newManifestWatcher(supported, resource.ManifestWatcherConfig{
 		DiscoveryURL:      aggregatedServerURL,
 		DiscoveryAudience: provisioning.GROUP,
@@ -378,7 +378,7 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 
 // newManifestWatcher returns the service that adds to supported the kinds that the app manifests
 // of the router enable. Without a router URL, the service does nothing.
-func newManifestWatcher(supported resources.SupportedResourceSet, cfg resource.ManifestWatcherConfig) (services.Service, error) {
+func newManifestWatcher(supported resources.SupportedResourceProvider, cfg resource.ManifestWatcherConfig) (services.Service, error) {
 	if cfg.DiscoveryURL == "" {
 		return services.NewIdleService(nil, nil), nil
 	}

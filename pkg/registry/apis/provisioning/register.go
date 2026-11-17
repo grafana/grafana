@@ -112,7 +112,7 @@ type APIBuilder struct {
 	useExclusivelyAccessCheckerForAuthz bool
 
 	allowedTargets      []provisioning.SyncTargetType
-	supportedResources  resources.SupportedResourceSet
+	supportedResources  resources.SupportedResourceProvider
 	manifestWatcher     services.Service
 	allowImageRendering bool
 	minSyncInterval     time.Duration
@@ -225,7 +225,7 @@ func NewAPIBuilder(
 	extraWorkers []jobs.Worker,
 	jobHistoryConfig *JobHistoryConfig,
 	allowedTargets []provisioning.SyncTargetType,
-	supportedResources resources.SupportedResourceSet,
+	supportedResources resources.SupportedResourceProvider,
 	manifestWatcher services.Service,
 	restConfigGetter func(context.Context) (*clientrest.Config, error),
 	allowImageRendering bool,
@@ -396,7 +396,7 @@ func RegisterAPIService(
 	if err != nil {
 		return nil, fmt.Errorf("invalid [provisioning] resources configuration: %w", err)
 	}
-	supported := resources.NewSupportedResourceSet(supportedResources)
+	supported := resources.NewSupportedResourceProvider(supportedResources)
 	manifestWatcher := resource.NewLocalManifestWatcher(manifests, nil, resources.ManifestKinds(supported), nil)
 
 	jobHistoryConfig := createJobHistoryConfigFromSettings(cfg)

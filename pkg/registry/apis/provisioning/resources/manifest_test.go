@@ -20,11 +20,11 @@ func TestManifestKinds(t *testing.T) {
 	gadget := SupportedResource{GroupKind: schema.GroupKind{Group: testManifestGroup, Kind: "Gadget"}, Capabilities: sets.New[string]()}
 
 	// watch starts a watcher for the manifests that the router of this process publishes.
-	watch := func(t *testing.T, manifests *appmanifestv1alpha2.AppManifestList) SupportedResourceSet {
+	watch := func(t *testing.T, manifests *appmanifestv1alpha2.AppManifestList) SupportedResourceProvider {
 		t.Helper()
 		router := NewMockManifestDiscovery(t)
 		router.EXPECT().ListManifests(mock.Anything).Return(manifests, nil)
-		set := NewSupportedResourceSet(nil)
+		set := NewSupportedResourceProvider(nil)
 		watcher := resource.NewLocalManifestWatcher(router, nil, ManifestKinds(set), nil)
 		require.NoError(t, services.StartAndAwaitRunning(t.Context(), watcher))
 		t.Cleanup(watcher.StopAsync)

@@ -43,7 +43,7 @@ func TestResourceClients_SupportedResources(t *testing.T) {
 		active := SupportedResource{GroupKind: DashboardKind.GroupKind(), Capabilities: sets.New(CapabilityFolder)}
 		disabled := SupportedResource{GroupKind: playlistKind, Capabilities: sets.New(CapabilityDisabled)}
 
-		clients, err := NewClientFactory(nil, NewSupportedResourceSet([]SupportedResource{active, disabled})).Clients(context.Background(), "default")
+		clients, err := NewClientFactory(nil, NewSupportedResourceProvider([]SupportedResource{active, disabled})).Clients(context.Background(), "default")
 		require.NoError(t, err)
 
 		// Disabled resources are not acted on, so they are excluded from the active set.
@@ -470,7 +470,7 @@ func TestClientFactorySupportedResourcesRetriesAfterFailure(t *testing.T) {
 	require.NoError(t, err)
 
 	provider := &flakyClientsProvider{err: errors.New("apis unreachable")}
-	factory := &clientFactory{clientsProvider: provider, configuredResources: configured}
+	factory := &clientFactory{clientsProvider: provider, provider: NewSupportedResourceProvider(configured)}
 
 	_, err = factory.supportedResources(t.Context())
 	require.ErrorContains(t, err, "apis unreachable")
@@ -523,8 +523,8 @@ func TestClientFactorySupportedResourcesDropsDisabledMembers(t *testing.T) {
 	require.NoError(t, err)
 
 	factory := &clientFactory{
-		clientsProvider:     &flakyClientsProvider{discovery: servedDiscoveryClient{}},
-		configuredResources: configured,
+		clientsProvider: &flakyClientsProvider{discovery: servedDiscoveryClient{}},
+		provider:        NewSupportedResourceProvider(configured),
 	}
 
 	supported, err := factory.supportedResources(t.Context())
@@ -590,9 +590,9 @@ func TestClientFactoryPerServerExpansion(t *testing.T) {
 
 	factoryFor := func(api string, discovery client.DiscoveryClient) *clientFactory {
 		return &clientFactory{
-			clientsProvider:     &flakyClientsProvider{discovery: discovery},
-			configuredResources: configured,
-			storageGroup:        api,
+			clientsProvider: &flakyClientsProvider{discovery: discovery},
+			provider:        NewSupportedResourceProvider(configured),
+			storageGroup:    api,
 		}
 	}
 

@@ -8,10 +8,10 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 )
 
-// SupportedResourceSet is the set of resources that provisioning supports: the configured ones,
+// SupportedResourceProvider gives the resources that provisioning supports: the configured ones,
 // plus the kinds that a source such as the app manifests adds while the process runs.
-type SupportedResourceSet interface {
-	// Get returns the set at the time of the call.
+type SupportedResourceProvider interface {
+	// Get returns the supported resources at the time of the call.
 	Get() []SupportedResource
 	// Update replaces the kinds that the source added. A configured resource, or a configured
 	// collection that covers a kind, takes precedence over the kind.
@@ -22,16 +22,16 @@ type SupportedResourceSet interface {
 	Added() []SupportedResource
 }
 
-func NewSupportedResourceSet(configured []SupportedResource) SupportedResourceSet {
-	return &supportedResourceSet{configured: configured}
+func NewSupportedResourceProvider(configured []SupportedResource) SupportedResourceProvider {
+	return &supportedResourceProvider{configured: configured}
 }
 
-type supportedResourceSet struct {
+type supportedResourceProvider struct {
 	configured []SupportedResource
 	added      atomic.Pointer[[]SupportedResource]
 }
 
-func (s *supportedResourceSet) Get() []SupportedResource {
+func (s *supportedResourceProvider) Get() []SupportedResource {
 	added := s.Added()
 	if len(added) == 0 {
 		return s.configured
@@ -39,7 +39,7 @@ func (s *supportedResourceSet) Get() []SupportedResource {
 	return append(slices.Clip(defaultSupportedResources(s.configured)), added...)
 }
 
-func (s *supportedResourceSet) Update(kinds []SupportedResource) {
+func (s *supportedResourceProvider) Update(kinds []SupportedResource) {
 	added := []SupportedResource{}
 	seen := sets.New[schema.GroupKind]()
 	for _, r := range defaultSupportedResources(s.configured) {
@@ -55,9 +55,9 @@ func (s *supportedResourceSet) Update(kinds []SupportedResource) {
 	s.added.Store(&added)
 }
 
-func (s *supportedResourceSet) Configured() []SupportedResource { return s.configured }
+func (s *supportedResourceProvider) Configured() []SupportedResource { return s.configured }
 
-func (s *supportedResourceSet) Added() []SupportedResource {
+func (s *supportedResourceProvider) Added() []SupportedResource {
 	if added := s.added.Load(); added != nil {
 		return *added
 	}

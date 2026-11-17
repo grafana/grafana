@@ -198,16 +198,15 @@ type ClientFactory interface {
 
 type clientFactory struct {
 	clientsProvider clientsProvider
-	// configuredResources may still name collections rather than served groups.
-	configuredResources []SupportedResource
+	// provider gives the supported resources. Its configured ones may still name collections rather
+	// than served groups.
+	provider SupportedResourceProvider
 	// storageGroup is the group this factory's API server holds, empty for a single server that
 	// holds everything. It decides which collections are expanded here.
 	storageGroup string
 	// expanded caches the result of resolving collections through discovery.
 	expandMu sync.Mutex
 	expanded []SupportedResource
-	// set adds the kinds that arrive after startup, when the factory has one.
-	set SupportedResourceSet
 }
 
 // holds reports whether this factory's API server stores a collection, and so expands it. A
@@ -229,8 +228,9 @@ func (f *clientFactory) supportedResources(ctx context.Context) ([]SupportedReso
 	// Expansion sees the disabled declarations too: a member declared on its own and disabled is
 	// excluded even when an active collection covers it. Discovery sees only the active ones, so
 	// a failure in a collection nobody acts on cannot fail the expansion.
-	active := activeResources(f.configuredResources)
-	expanded, err := expandCollections(ctx, discoveryKinds(f.clientsProvider, active, f.holds), f.configuredResources, f.holds)
+	configured := defaultSupportedResources(f.provider.Configured())
+	active := activeResources(configured)
+	expanded, err := expandCollections(ctx, discoveryKinds(f.clientsProvider, active, f.holds), configured, f.holds)
 	if err != nil {
 		return nil, err
 	}
@@ -330,21 +330,19 @@ func (p *singleAPIClients) GetClientsForResource(ctx context.Context, _ schema.G
 // resources that can be managed from the UI; the ResourceClients it produces expose only
 // the enabled subset via SupportedResources(). When none is provided it falls back to the
 // static SupportedProvisioningResources base set.
-func NewClientFactory(configProvider apiserver.RestConfigProvider, supported ...SupportedResourceSet) ClientFactory {
-	set := supportedSet(supported)
+func NewClientFactory(configProvider apiserver.RestConfigProvider, supported ...SupportedResourceProvider) ClientFactory {
 	return &clientFactory{
-		clientsProvider:     newSingleAPIClients(configProvider),
-		configuredResources: defaultSupportedResources(set.Configured()),
-		set:                 set,
+		clientsProvider: newSingleAPIClients(configProvider),
+		provider:        supportedProvider(supported),
 	}
 }
 
-// supportedSet returns the set that a constructor got, or an empty set.
-func supportedSet(supported []SupportedResourceSet) SupportedResourceSet {
+// supportedProvider returns the provider that a constructor got, or an empty one.
+func supportedProvider(supported []SupportedResourceProvider) SupportedResourceProvider {
 	if len(supported) > 0 {
 		return supported[0]
 	}
-	return NewSupportedResourceSet(nil)
+	return NewSupportedResourceProvider(nil)
 }
 
 // NewClientFactoryForMultipleAPIServers creates a ClientFactory for multiple API servers.
@@ -354,20 +352,18 @@ func supportedSet(supported []SupportedResourceSet) SupportedResourceSet {
 // declared on its own is resolved the same way wherever it is resolved. Only the server that holds
 // a collection expands it: its members reach the merged set from there, and a server that holds no
 // collection asks discovery nothing, so its outage cannot fail the clients for other groups.
-func NewClientFactoryForMultipleAPIServers(configProviders map[string]apiserver.RestConfigProvider, supported ...SupportedResourceSet) ClientFactory {
-	set := supportedSet(supported)
-	configured := defaultSupportedResources(set.Configured())
+func NewClientFactoryForMultipleAPIServers(configProviders map[string]apiserver.RestConfigProvider, supported ...SupportedResourceProvider) ClientFactory {
+	provider := supportedProvider(supported)
 	clientFactories := make(map[string]ClientFactory)
 	for api, configProvider := range configProviders {
 		clientFactories[api] = &clientFactory{
-			clientsProvider:     newSingleAPIClients(configProvider),
-			configuredResources: configured,
-			storageGroup:        api,
-			set:                 set,
+			clientsProvider: newSingleAPIClients(configProvider),
+			provider:        provider,
+			storageGroup:    api,
 		}
 	}
 
-	return &multiClientFactory{clientFactories: clientFactories, collections: collectionPatterns(configured)}
+	return &multiClientFactory{clientFactories: clientFactories, collections: collectionPatterns(provider.Configured())}
 }
 
 // activeResources returns only the active resources. Disabled resources are declared (and
@@ -456,13 +452,10 @@ func (f *clientFactory) Clients(ctx context.Context, namespace string) (Resource
 	if err != nil {
 		return nil, err
 	}
-	if f.set != nil {
-		supported = append(slices.Clip(supported), f.set.Added()...)
-	}
 	return &resourceClients{
 		namespace:          namespace,
 		clientsProvider:    f.clientsProvider,
-		supportedResources: supported,
+		supportedResources: append(slices.Clip(supported), f.provider.Added()...),
 		byKind:             make(map[schema.GroupVersionKind]*clientInfo),
 		byResource:         make(map[schema.GroupVersionResource]*clientInfo),
 	}, nil

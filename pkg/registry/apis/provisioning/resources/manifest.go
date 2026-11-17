@@ -7,9 +7,9 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 )
 
-// ManifestKinds returns the callback of a resource.ManifestWatcher. It updates set with each
+// ManifestKinds returns the callback of a resource.ManifestWatcher. It updates provider with each
 // kind that a published app manifest opts in to provisioning.
-func ManifestKinds(set SupportedResourceSet) func([]*app.ManifestData) {
+func ManifestKinds(provider SupportedResourceProvider) func([]*app.ManifestData) {
 	return func(manifests []*app.ManifestData) {
 		var kinds []SupportedResource
 		for _, manifest := range manifests {
@@ -26,6 +26,6 @@ func ManifestKinds(set SupportedResourceSet) func([]*app.ManifestData) {
 				}
 			}
 		}
-		set.Update(kinds)
+		provider.Update(kinds)
 	}
 }
