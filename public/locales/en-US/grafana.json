@@ -6239,8 +6239,7 @@
       }
     },
     "get-var-mapping-option-overrides": {
-      "defaults": "This option takes its value from a dashboard variable",
-      "rule": "An override rule sets this option from a dashboard variable"
+      "uses-variables": "This option uses variables"
     },
     "inspect": {
       "data-tab": "Data",
@@ -6435,9 +6434,6 @@
       "only-overrides-button-tooltip": "Show only overrides",
       "placeholder-search-options": "Search options",
       "visualization-button-tooltip": "Search options"
-    },
-    "panel-editor": {
-      "ad-hoc-transformations-disabled": "Ad hoc transformations are disabled in edit mode"
     },
     "plan-building-overlay": {
       "quip-corners": "Polishing the panel corners…",
@@ -8026,6 +8022,12 @@
       "confirmText-restore-version": "Yes, restore to version {{version}}",
       "title-restore-version": "Restore version"
     },
+    "row-edit-actions": {
+      "copy-disabled": "Repeated rows can't be copied individually",
+      "delete-disabled": "Repeated rows can't be deleted individually",
+      "duplicate-disabled": "Repeated rows can't be duplicated individually",
+      "tooltip-row-settings": "Row settings"
+    },
     "sandbox-consent": {
       "allow": "Allow",
       "allow-tooltip": "Load content from the selected sources in the panels listed, until you close this tab.",
@@ -8221,6 +8223,12 @@
       "switch-options": "Switch options",
       "value-pair-type": "Value pair type",
       "value-pair-type-description": "Choose the type of values for the switch states"
+    },
+    "tab-edit-actions": {
+      "copy-disabled": "Repeated tabs can't be copied individually",
+      "delete-disabled": "Repeated tabs can't be deleted individually",
+      "duplicate-disabled": "Repeated tabs can't be duplicated individually",
+      "tooltip-tab-settings": "Tab settings"
     },
     "text-box-variable": {
       "name-default-value": "Default value"
@@ -13468,6 +13476,12 @@
     }
   },
   "navigation": {
+    "assistant-workspace": {
+      "exit": "Exit Workspace",
+      "exit-tooltip": "Return to the page you were on",
+      "open": "Workspace",
+      "open-tooltip": "Open Assistant Workspace"
+    },
     "breadcrumbs": {
       "aria-label": "Breadcrumbs"
     },
@@ -13483,14 +13497,6 @@
         "open-all": "Open AI assistants and sidebar apps"
       },
       "floating-resize": "Resize sidebar width"
-    },
-    "fullscreen-workspace": {
-      "enter": "Enter Workspace",
-      "error-exit": "Exit workspace",
-      "error-message": "The Grafana Assistant workspace could not be loaded.",
-      "error-reload": "Reload page",
-      "error-title": "Workspace unavailable",
-      "workspace": "Workspace"
     },
     "help": {
       "aria-label": "Help",

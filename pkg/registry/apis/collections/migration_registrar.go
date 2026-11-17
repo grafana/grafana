@@ -37,6 +37,7 @@ func StarsMigration(migrator legacy.StarsMigrator) migrations.MigrationDefinitio
 				},
 			}),
 		},
-		RenameTables: []string{},
+		SkipWhenMissing: true, // fresh installs never create the star table
+		RenameTables:    []string{},
 	}
 }

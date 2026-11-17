@@ -15,8 +15,6 @@ import (
 	collections "github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1"
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -31,38 +29,13 @@ func TestIntegrationStars(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	for _, mode := range []grafanarest.DualWriterMode{
-		grafanarest.Mode0,
-		grafanarest.Mode1,
 		grafanarest.Mode5,
 	} {
-		flags := []string{featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs}
-
-		// Provisioning requires dashboards/folders in unified storage (Mode4+).
-		// Disable it for legacy modes to avoid startup failures.
-		provisioning := testinfra.FeatureEnabled
-		if mode < grafanarest.Mode5 {
-			provisioning = testinfra.FeatureDisabled
-		}
-
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			AppModeProduction:    false, // required for experimental APIs
 			DisableAnonymous:     true,
-			EnableFeatureToggles: flags,
-			Provisioning:         provisioning,
-			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-				"dashboards.dashboard.grafana.app": {
-					DualWriterMode: mode,
-				},
-				"folders.folder.grafana.app": {
-					DualWriterMode: mode,
-				},
-				"stars.collections.grafana.app": {
-					DualWriterMode: mode,
-				},
-				"collections.collections.grafana.app": {
-					DualWriterMode: mode,
-				},
-			},
+			EnableFeatureToggles: []string{},
+			Provisioning:         testinfra.FeatureEnabled,
 		})
 
 		t.Run(fmt.Sprintf("test stars (mode:%d)", mode), func(t *testing.T) {

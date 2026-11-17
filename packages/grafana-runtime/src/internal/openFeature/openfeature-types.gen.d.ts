@@ -159,6 +159,7 @@ declare module "@openfeature/core" {
     | "grafana.visualDesignRefresh"
     | "dashboard.vectorSearch"
     | "grafana.cmdkHybridSearch"
+    | "grafana.cmdkHybridSearchSkipRerank"
     | "grafana.cmdkDashboardTags"
     | "assistant.fullscreenWorkspace"
     | "assistant.dashboard.artifacts"

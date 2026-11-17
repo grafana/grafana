@@ -1493,9 +1493,29 @@
         "records": "기록",
         "to": "~로"
       },
+      "recording-rule-actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "view": ""
+      },
       "recording-rules": {
         "folder-rules-error": "",
         "folders-error": "",
+        "header": {
+          "new-rule": ""
+        },
         "load-more-rules-in-folder": "",
         "loading-folders": "",
         "no-rules": "기록 규칙을 찾을 수 없습니다",
@@ -2384,6 +2404,7 @@
       "contact-points": "연락처",
       "notification-policies": "알림 정책",
       "recently-deleted": "최근에 삭제됨",
+      "recording-rules": "",
       "templates": "템플릿",
       "time-intervals": "시간 간격"
     },
@@ -6169,8 +6190,7 @@
       }
     },
     "get-var-mapping-option-overrides": {
-      "defaults": "",
-      "rule": ""
+      "uses-variables": ""
     },
     "inspect": {
       "data-tab": "데이터",
@@ -6364,9 +6384,6 @@
       "only-overrides-button-tooltip": "재정의만 표시",
       "placeholder-search-options": "검색 옵션",
       "visualization-button-tooltip": "검색 옵션"
-    },
-    "panel-editor": {
-      "ad-hoc-transformations-disabled": "편집 모드에서는 임시 변환이 비활성화됩니다"
     },
     "plan-building-overlay": {
       "quip-corners": "패널 모서리를 다듬는 중…",
@@ -7652,7 +7669,7 @@
       "apply": "적용",
       "apply-body": "액세스 권한이 있는 모든 사용자에게 변경 사항이 표시됩니다. 버전 기록에서 이전 버전으로 복원할 수 있습니다.",
       "apply-failed": "변경 사항을 적용하지 못했습니다. 다시 시도하거나 먼저 변경 사항을 비교하세요.",
-      "apply-needs-edit": "변경 사항을 적용하려면 “{{title}}”에 대한 편집 권한이 필요합니다. 변경 사항을 미리 볼 수는 있지만 적용할 수는 없습니다.",
+      "apply-needs-save": "",
       "breadcrumb-draft": "초안",
       "breadcrumb-pending-changes": "보류 중인 변경 사항",
       "change-added": "추가됨 ",
@@ -7949,6 +7966,12 @@
       "confirmText-restore-version": "네, {{version}} 버전으로 복구해 주세요",
       "title-restore-version": "버전 복구"
     },
+    "row-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-row-settings": ""
+    },
     "sandbox-consent": {
       "allow": "허용",
       "allow-tooltip": "이 탭을 닫을 때까지 나열된 패널에서 선택한 소스의 콘텐츠를 불러옵니다.",
@@ -8136,6 +8159,12 @@
       "switch-options": "스위치 옵션",
       "value-pair-type": "값 쌍 유형",
       "value-pair-type-description": "스위치 상태에 대한 값 유형을 선택하세요"
+    },
+    "tab-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-tab-settings": ""
     },
     "text-box-variable": {
       "name-default-value": "기본값"
@@ -14318,6 +14347,9 @@
     },
     "empty-state": {
       "message": "찾은 플러그인 없음"
+    },
+    "errors": {
+      "app-plugin-metas-error": ""
     },
     "extensions": {
       "extension-error-alert-description": "오류에 대한 자세한 내용은 콘솔을 확인하세요.",

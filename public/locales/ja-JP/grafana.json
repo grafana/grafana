@@ -1493,9 +1493,29 @@
         "records": "記録",
         "to": "～"
       },
+      "recording-rule-actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "view": ""
+      },
       "recording-rules": {
         "folder-rules-error": "",
         "folders-error": "",
+        "header": {
+          "new-rule": ""
+        },
         "load-more-rules-in-folder": "",
         "loading-folders": "",
         "no-rules": "記録ルールが見つかりません",
@@ -2384,6 +2404,7 @@
       "contact-points": "コンタクトポイント",
       "notification-policies": "通知ポリシー",
       "recently-deleted": "最近削除",
+      "recording-rules": "",
       "templates": "テンプレート",
       "time-intervals": "時間間隔"
     },
@@ -6169,8 +6190,7 @@
       }
     },
     "get-var-mapping-option-overrides": {
-      "defaults": "",
-      "rule": ""
+      "uses-variables": ""
     },
     "inspect": {
       "data-tab": "データ",
@@ -6364,9 +6384,6 @@
       "only-overrides-button-tooltip": "オーバーライドのみ表示",
       "placeholder-search-options": "検索オプション",
       "visualization-button-tooltip": "検索オプション"
-    },
-    "panel-editor": {
-      "ad-hoc-transformations-disabled": "編集モードではアドホック変換は無効になります"
     },
     "plan-building-overlay": {
       "quip-corners": "パネルの角を整えています…",
@@ -7652,7 +7669,7 @@
       "apply": "適用",
       "apply-body": "アクセス権を持つ全員に表示されます。バージョン履歴から以前のバージョンに戻すことができます。",
       "apply-failed": "変更を適用できませんでした。もう一度お試しください。または、適用前に変更内容を比較してください。",
-      "apply-needs-edit": "変更を適用するには、「{{title}}」の編集権限が必要です。変更内容をプレビューすることはできますが、適用することはできません。",
+      "apply-needs-save": "",
       "breadcrumb-draft": "下書き",
       "breadcrumb-pending-changes": "未適用の変更",
       "change-added": "追加済み",
@@ -7949,6 +7966,12 @@
       "confirmText-restore-version": "バージョン{{version}}に復元",
       "title-restore-version": "バージョンの復元"
     },
+    "row-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-row-settings": ""
+    },
     "sandbox-consent": {
       "allow": "許可",
       "allow-tooltip": "このタブを閉じるまで、選択したソースから、一覧に表示されているパネルにコンテンツを読み込みます。",
@@ -8136,6 +8159,12 @@
       "switch-options": "スイッチオプション",
       "value-pair-type": "値ペアのタイプ",
       "value-pair-type-description": "スイッチ状態の値のタイプを選択します"
+    },
+    "tab-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-tab-settings": ""
     },
     "text-box-variable": {
       "name-default-value": "既定値"
@@ -14318,6 +14347,9 @@
     },
     "empty-state": {
       "message": "プラグインが見つかりませんでした"
+    },
+    "errors": {
+      "app-plugin-metas-error": ""
     },
     "extensions": {
       "extension-error-alert-description": "エラーの詳細については、コンソールを確認してください。",
