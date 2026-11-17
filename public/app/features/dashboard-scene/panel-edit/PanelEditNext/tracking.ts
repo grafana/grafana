@@ -14,7 +14,7 @@ import { QueryEditorType } from './constants';
  */
 const EVENT_PANEL_EDIT_NEXT = 'grafana_panel_edit_next_interaction';
 
-export type QueryEditorVersion = 'classic' | 'next';
+type QueryEditorVersion = 'classic' | 'next';
 
 /**
  * For events both query editors send. `editor` says which one sent it (default: next).
