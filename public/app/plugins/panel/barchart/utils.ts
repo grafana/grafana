@@ -159,9 +159,20 @@ export interface PrepConfigOpts {
   options: Options;
   timeZone: TimeZone;
   theme: GrafanaTheme2;
+  /** Data indices of selected bars, or null; read on every draw (see BarsOptions.getSelection) */
+  getSelection?: () => Set<number> | null;
 }
 
-export const prepConfig = ({ series, totalSeries, color, orientation, options, timeZone, theme }: PrepConfigOpts) => {
+export const prepConfig = ({
+  series,
+  totalSeries,
+  color,
+  orientation,
+  options,
+  timeZone,
+  theme,
+  getSelection,
+}: PrepConfigOpts) => {
   let {
     showValue,
     groupWidth,
@@ -283,6 +294,7 @@ export const prepConfig = ({ series, totalSeries, color, orientation, options, t
     negY: frame.fields.map((f) => f.config.custom?.transform === GraphTransform.NegativeY),
     fullHighlight,
     hoverMulti: tooltip.mode === TooltipDisplayMode.Multi,
+    getSelection,
   };
 
   const config = getConfig(opts, theme);
