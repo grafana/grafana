@@ -111,7 +111,7 @@ export function ComposerOverlay({
 }) {
   const styles = useStyles2(getStyles);
   const overlayState = useSyncExternalStore(session.subscribe, session.getOverlayState);
-  const { picking, pickMode, paused, capturing, annotations, tool, drag } = overlayState;
+  const { picking, pickMode, paused, capturing, working, annotations, tool, drag } = overlayState;
   /** A Select drag picks the elements it covers instead of drawing a region. */
   const dragSelectsElements = tool === 'select' && drag === 'elements';
   const rootRef = useRef<HTMLDivElement>(null);
@@ -436,7 +436,8 @@ export function ComposerOverlay({
     [dragSelectsElements, session, dragRefOf]
   );
 
-  const hintAllowed = pickMode === 'element' && !paused && !capturing;
+  // No hint while Assistant edits: a send from the keyboard moves no pointer, and the edit's scroll would bring it back.
+  const hintAllowed = pickMode === 'element' && !paused && !capturing && !working;
 
   const hideHint = useCallback(() => {
     cancelAnimationFrame(hintFrameRef.current);
@@ -948,6 +949,7 @@ export function ComposerOverlay({
     drag,
     paused,
     capturing,
+    working,
     session,
     isOnDocumentBody,
     isOverControls,
