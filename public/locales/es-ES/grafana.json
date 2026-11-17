@@ -1500,9 +1500,29 @@
         "records": "Registros",
         "to": "hasta"
       },
+      "recording-rule-actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "view": ""
+      },
       "recording-rules": {
         "folder-rules-error": "",
         "folders-error": "",
+        "header": {
+          "new-rule": ""
+        },
         "load-more-rules-in-folder": "",
         "loading-folders": "",
         "no-rules": "No se han encontrado reglas de registro",
@@ -2400,6 +2420,7 @@
       "contact-points": "Puntos de contacto",
       "notification-policies": "Políticas de notificación",
       "recently-deleted": "Eliminadas recientemente",
+      "recording-rules": "",
       "templates": "Plantillas",
       "time-intervals": "Intervalos de tiempo"
     },
@@ -6218,8 +6239,7 @@
       }
     },
     "get-var-mapping-option-overrides": {
-      "defaults": "",
-      "rule": ""
+      "uses-variables": ""
     },
     "inspect": {
       "data-tab": "Datos",
@@ -6414,9 +6434,6 @@
       "only-overrides-button-tooltip": "Mostrar solo anulaciones",
       "placeholder-search-options": "Opciones de búsqueda",
       "visualization-button-tooltip": "Opciones de búsqueda"
-    },
-    "panel-editor": {
-      "ad-hoc-transformations-disabled": "Las transformaciones «ad hoc» están deshabilitadas en el modo de edición"
     },
     "plan-building-overlay": {
       "quip-corners": "Puliendo las esquinas del panel…",
@@ -7706,7 +7723,7 @@
       "apply": "Aplicar",
       "apply-body": "Todos los que tengan acceso los verán. Puedes restaurar la versión anterior desde el historial de versiones.",
       "apply-failed": "No se han podido aplicar los cambios. Inténtalo de nuevo o compáralos primero.",
-      "apply-needs-edit": "Para aplicar los cambios, se necesita acceso de edición a «{{title}}». Puedes previsualizar los cambios, pero no aplicarlos.",
+      "apply-needs-save": "",
       "breadcrumb-draft": "Borrador",
       "breadcrumb-pending-changes": "Cambios pendientes",
       "change-added": "Añadido",
@@ -8005,6 +8022,12 @@
       "confirmText-restore-version": "Sí, restaurar a la versión {{version}}",
       "title-restore-version": "Restaurar versión"
     },
+    "row-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-row-settings": ""
+    },
     "sandbox-consent": {
       "allow": "Permitir",
       "allow-tooltip": "Cargar contenido de las fuentes seleccionadas en los paneles indicados hasta que cierres esta pestaña.",
@@ -8200,6 +8223,12 @@
       "switch-options": "Opciones de cambio",
       "value-pair-type": "Tipo de par de valores",
       "value-pair-type-description": "Elige el tipo de valores para los estados del interruptor"
+    },
+    "tab-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-tab-settings": ""
     },
     "text-box-variable": {
       "name-default-value": "Valor predeterminado"
@@ -14429,6 +14458,9 @@
     },
     "empty-state": {
       "message": "No se ha encontrado ningún complemento"
+    },
+    "errors": {
+      "app-plugin-metas-error": ""
     },
     "extensions": {
       "extension-error-alert-description": "Consulta la consola para obtener más detalles sobre el error.",

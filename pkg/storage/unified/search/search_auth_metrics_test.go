@@ -117,7 +117,6 @@ func TestSearchAuthMetricsAdaptsPreRankCursor(t *testing.T) {
 	ctx := authlib.WithAuthInfo(context.Background(), requester)
 	response, err := index.Search(ctx, &countingAccessClient{allowAll: true}, query, nil, nil)
 	require.NoError(t, err)
-	require.Nil(t, response.Error)
 	require.Len(t, response.Rows, 10)
 	require.Equal(t, "doc-001", response.Rows[0].Key.Name)
 	require.Equal(t, []string{"doc-000", "doc-000"}, query.SearchAfter)

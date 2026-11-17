@@ -1500,9 +1500,29 @@
         "records": "Kayıtlar",
         "to": "hedef"
       },
+      "recording-rule-actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "view": ""
+      },
       "recording-rules": {
         "folder-rules-error": "",
         "folders-error": "",
+        "header": {
+          "new-rule": ""
+        },
         "load-more-rules-in-folder": "",
         "loading-folders": "",
         "no-rules": "Kayıt kuralı bulunamadı",
@@ -2400,6 +2420,7 @@
       "contact-points": "İletişim noktaları",
       "notification-policies": "Bildirim politikaları",
       "recently-deleted": "Son silinenler",
+      "recording-rules": "",
       "templates": "Şablonlar",
       "time-intervals": "Zaman aralıkları"
     },
@@ -6218,8 +6239,7 @@
       }
     },
     "get-var-mapping-option-overrides": {
-      "defaults": "",
-      "rule": ""
+      "uses-variables": ""
     },
     "inspect": {
       "data-tab": "Veri",
@@ -6414,9 +6434,6 @@
       "only-overrides-button-tooltip": "Sadece geçersiz kılmaları göster",
       "placeholder-search-options": "Arama seçenekleri",
       "visualization-button-tooltip": "Arama seçenekleri"
-    },
-    "panel-editor": {
-      "ad-hoc-transformations-disabled": "Düzenleme modunda geçici dönüştürmeler devre dışı"
     },
     "plan-building-overlay": {
       "quip-corners": "Panel köşeleri düzeltiliyor...",
@@ -7706,7 +7723,7 @@
       "apply": "Uygula",
       "apply-body": "Erişimi olan herkes bunları görecek. Önceki sürümü sürüm geçmişinden geri yükleyebilirsiniz.",
       "apply-failed": "Değişiklikler uygulanamadı. Yeniden deneyin ya da önce karşılaştırın.",
-      "apply-needs-edit": "\"{{title}}\" ögesine uygulama işlemi yapabilmek için düzenleme erişimi gerekir. Bu değişiklikleri ön izleyebilirsiniz ancak uygulayamazsınız.",
+      "apply-needs-save": "",
       "breadcrumb-draft": "Taslak",
       "breadcrumb-pending-changes": "Bekleyen değişiklikler",
       "change-added": "Eklendi",
@@ -8005,6 +8022,12 @@
       "confirmText-restore-version": "Evet, {{version}} sürümüne geri yükle",
       "title-restore-version": "Sürümü geri yükle"
     },
+    "row-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-row-settings": ""
+    },
     "sandbox-consent": {
       "allow": "İzin ver",
       "allow-tooltip": "Bu sekmeyi kapatana kadar, listelenen panellerdeki seçili kaynaklardan içerik yükle.",
@@ -8200,6 +8223,12 @@
       "switch-options": "Düğme seçenekleri",
       "value-pair-type": "Değer çifti türü",
       "value-pair-type-description": "Düğme durumları için kullanılacak değer türünü seçin"
+    },
+    "tab-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-tab-settings": ""
     },
     "text-box-variable": {
       "name-default-value": "Varsayılan değer"
@@ -14429,6 +14458,9 @@
     },
     "empty-state": {
       "message": "Eklenti bulunamadı"
+    },
+    "errors": {
+      "app-plugin-metas-error": ""
     },
     "extensions": {
       "extension-error-alert-description": "Hata hakkında daha fazla bilgi için konsolu kontrol edin.",

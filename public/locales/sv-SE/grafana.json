@@ -1500,9 +1500,29 @@
         "records": "Register",
         "to": "till"
       },
+      "recording-rule-actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "view": ""
+      },
       "recording-rules": {
         "folder-rules-error": "",
         "folders-error": "",
+        "header": {
+          "new-rule": ""
+        },
         "load-more-rules-in-folder": "",
         "loading-folders": "",
         "no-rules": "Inga registreringsregler hittades",
@@ -2400,6 +2420,7 @@
       "contact-points": "Kontaktpunkter",
       "notification-policies": "Aviseringspolicyer",
       "recently-deleted": "Nyligen raderat",
+      "recording-rules": "",
       "templates": "Mallar",
       "time-intervals": "Tidsintervall"
     },
@@ -6218,8 +6239,7 @@
       }
     },
     "get-var-mapping-option-overrides": {
-      "defaults": "",
-      "rule": ""
+      "uses-variables": ""
     },
     "inspect": {
       "data-tab": "Data",
@@ -6414,9 +6434,6 @@
       "only-overrides-button-tooltip": "Visa endast åsidosättningar",
       "placeholder-search-options": "Sökalternativ",
       "visualization-button-tooltip": "Sökalternativ"
-    },
-    "panel-editor": {
-      "ad-hoc-transformations-disabled": "Ad hoc-omvandlingar är inaktiverade i redigeringsläge"
     },
     "plan-building-overlay": {
       "quip-corners": "Polerar panelhörnen …",
@@ -7706,7 +7723,7 @@
       "apply": "Tillämpa",
       "apply-body": "Alla med åtkomst kommer att se dem. Du kan återställa den tidigare versionen från versionshistoriken.",
       "apply-failed": "Det gick inte att tillämpa ändringarna. Försök igen, eller jämför dem först.",
-      "apply-needs-edit": "För att kunna tillämpa krävs redigeringsåtkomst till ”{{title}}”. Du kan förhandsgranska dessa ändringar, men inte tillämpa dem.",
+      "apply-needs-save": "",
       "breadcrumb-draft": "Utkast",
       "breadcrumb-pending-changes": "Väntande ändringar",
       "change-added": "Tillagd",
@@ -8005,6 +8022,12 @@
       "confirmText-restore-version": "Ja, återställ till version {{version}}",
       "title-restore-version": "Återställ versionen"
     },
+    "row-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-row-settings": ""
+    },
     "sandbox-consent": {
       "allow": "Tillåt",
       "allow-tooltip": "Ladda innehåll från de valda källorna i de listade panelerna tills du stänger den här fliken.",
@@ -8200,6 +8223,12 @@
       "switch-options": "Alternativ för omkopplare",
       "value-pair-type": "Typ av värdepar",
       "value-pair-type-description": "Välj typ av värden för omkopplarlägena"
+    },
+    "tab-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-tab-settings": ""
     },
     "text-box-variable": {
       "name-default-value": "Standardvärde"
@@ -14429,6 +14458,9 @@
     },
     "empty-state": {
       "message": "Inga tilläggsprogram hittades"
+    },
+    "errors": {
+      "app-plugin-metas-error": ""
     },
     "extensions": {
       "extension-error-alert-description": "Kontrollera konsolen för mer information om felet.",

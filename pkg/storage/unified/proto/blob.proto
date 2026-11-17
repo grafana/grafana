@@ -37,8 +37,8 @@ message PutBlobRequest {
 }
 
 message PutBlobResponse {
-  // Error details
-  ErrorResult error = 1;
+  reserved 1;
+  reserved "error";
 
   // The blob uid.  This must be saved into the resource to support access
   string uid = 2;
@@ -73,8 +73,8 @@ message GetBlobRequest {
 }
 
 message GetBlobResponse {
-  // Error details
-  ErrorResult error = 1;
+  reserved 1;
+  reserved "error";
 
   // (optional) When possible, the system will return a presigned URL
   // that can be used to actually read the full blob+metadata
@@ -105,7 +105,7 @@ service BlobStoreStreaming {
   // First upload message has metadata only; subsequent messages have only value.
   rpc PutBlobStream(stream PutBlobRequest) returns (PutBlobResponse);
 
-  // First response has content_type (or error); subsequent responses have only
-  // value. Consume the stream to EOF to detect errors.
+  // First response has content_type; subsequent responses have only value.
+  // Consume the stream to EOF to detect terminal status errors.
   rpc GetBlobStream(GetBlobRequest) returns (stream GetBlobResponse);
 }
