@@ -6,7 +6,13 @@ import { selectors } from '@grafana/e2e-selectors';
 import { useTheme2 } from '../../themes/ThemeContext';
 import { Banner } from '../Banner/Banner';
 
-import { buttonVariantsBySeverity, getIconFromSeverity, getOutlineAction, rolesBySeverity } from './utils';
+import {
+  buttonVariantsBySeverity,
+  getDismissButton,
+  getIconFromSeverity,
+  getOutlineAction,
+  rolesBySeverity,
+} from './utils';
 
 // TODO: move to a status type shared with Button's ButtonVariant, where 'danger' replaces 'error' here and 'destructive' there.
 export type AlertVariant = 'success' | 'warning' | 'error' | 'info';
@@ -18,6 +24,10 @@ export interface Props extends HTMLAttributes<HTMLDivElement> {
   severity?: AlertVariant;
   children?: ReactNode;
   elevated?: boolean;
+  /**
+   * Content of the dismiss button, which replaces the X icon and needs `onRemove`. It is rendered in a `Button`
+   * whose variant matches the severity in `Alert` and is `primary` in `AlertBanner`. A `Button` is rendered as passed.
+   */
   buttonContent?: React.ReactNode | string;
   bottomSpacing?: number;
   topSpacing?: number;
@@ -35,9 +45,10 @@ export interface Props extends HTMLAttributes<HTMLDivElement> {
  * https://developers.grafana.com/ui/latest/index.html?path=/docs/information-alert--docs
  */
 export const Alert = React.forwardRef<HTMLDivElement, Props>(
-  ({ severity = 'error', role, action, ...restProps }, ref) => {
+  ({ severity = 'error', role, action, buttonContent, onRemove, ...restProps }, ref) => {
     const theme = useTheme2();
     const color = theme.colors[severity];
+    const buttonVariant = buttonVariantsBySeverity[severity];
     const visualRefreshEnabled = theme.flags.visualDesignRefresh;
 
     return (
@@ -50,7 +61,9 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
         iconColor={color.text}
         textColor={visualRefreshEnabled ? color.textEmphasis : theme.colors.text.primary}
         dataTestId={selectors.components.Alert.alertV2(severity)}
-        action={getOutlineAction(action, buttonVariantsBySeverity[severity])}
+        action={getOutlineAction(action, buttonVariant)}
+        buttonContent={getDismissButton(buttonContent, onRemove, buttonVariant)}
+        onRemove={onRemove}
         {...restProps}
       />
     );

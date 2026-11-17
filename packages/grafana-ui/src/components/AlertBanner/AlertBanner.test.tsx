@@ -3,6 +3,8 @@ import userEvent from '@testing-library/user-event';
 
 import { selectors } from '@grafana/e2e-selectors';
 
+import { Button } from '../Button/Button';
+
 import { AlertActionButton } from './AlertActionButton';
 import { AlertBanner } from './AlertBanner';
 
@@ -90,6 +92,36 @@ describe('AlertBanner', () => {
   });
 
   describe('button accessible names and onRemove', () => {
+    it.each(['error', 'warning', 'info', 'success'] as const)(
+      'renders buttonContent of a %s alert banner in a primary Button that calls onRemove',
+      async (severity) => {
+        const user = userEvent.setup();
+        const onRemove = jest.fn();
+        render(
+          <>
+            <AlertBanner title="Test" severity={severity} buttonContent="Dismiss" onRemove={onRemove} />
+            <Button variant="primary">Reference</Button>
+          </>
+        );
+        const dismiss = screen.getByRole('button', { name: 'Dismiss' });
+        expect(dismiss).toHaveClass(screen.getByRole('button', { name: 'Reference' }).className);
+        await user.click(dismiss);
+        expect(onRemove).toHaveBeenCalledTimes(1);
+      }
+    );
+
+    it('renders a Button passed as buttonContent as passed', () => {
+      render(
+        <>
+          <AlertBanner title="Test" severity="error" buttonContent={<Button variant="secondary">Dismiss</Button>} />
+          <Button variant="secondary">Reference</Button>
+        </>
+      );
+      expect(screen.getByRole('button', { name: 'Dismiss' })).toHaveClass(
+        screen.getByRole('button', { name: 'Reference' }).className
+      );
+    });
+
     it('uses visible string buttonContent as the accessible name', () => {
       render(<AlertBanner title="Test" buttonContent="Go back" onRemove={jest.fn()} />);
       expect(screen.getByRole('button', { name: 'Go back' })).toBeInTheDocument();

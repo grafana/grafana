@@ -112,6 +112,38 @@ describe('Alert', () => {
   });
 
   describe('button accessible names and onRemove', () => {
+    it.each([
+      ['error', 'destructive'],
+      ['warning', 'warning'],
+      ['info', 'info'],
+      ['success', 'success'],
+    ] as const)('renders buttonContent of a %s alert in a %s Button that calls onRemove', async (severity, variant) => {
+      const user = userEvent.setup();
+      const onRemove = jest.fn();
+      render(
+        <>
+          <Alert title="Test" severity={severity} buttonContent="Dismiss" onRemove={onRemove} />
+          <Button variant={variant}>Reference</Button>
+        </>
+      );
+      const dismiss = screen.getByRole('button', { name: 'Dismiss' });
+      expect(dismiss).toHaveClass(screen.getByRole('button', { name: 'Reference' }).className);
+      await user.click(dismiss);
+      expect(onRemove).toHaveBeenCalledTimes(1);
+    });
+
+    it('renders a Button passed as buttonContent as passed', () => {
+      render(
+        <>
+          <Alert title="Test" severity="error" buttonContent={<Button variant="secondary">Dismiss</Button>} />
+          <Button variant="secondary">Reference</Button>
+        </>
+      );
+      expect(screen.getByRole('button', { name: 'Dismiss' })).toHaveClass(
+        screen.getByRole('button', { name: 'Reference' }).className
+      );
+    });
+
     it('uses visible string buttonContent as the accessible name', () => {
       render(<Alert title="Test" buttonContent="Go back" onRemove={jest.fn()} />);
       expect(screen.getByRole('button', { name: 'Go back' })).toBeInTheDocument();

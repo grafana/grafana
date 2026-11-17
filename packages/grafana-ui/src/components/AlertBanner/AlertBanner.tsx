@@ -5,7 +5,7 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 import { type Props as AlertProps } from '../Alert/Alert';
-import { getIconFromSeverity, rolesBySeverity } from '../Alert/utils';
+import { getDismissButton, getIconFromSeverity, rolesBySeverity } from '../Alert/utils';
 import { Banner } from '../Banner/Banner';
 
 import { AlertActionButton } from './AlertActionButton';
@@ -26,7 +26,7 @@ export type AlertBannerProps = Omit<AlertProps, 'action'> & ActionProps;
  * except that `action` is a click handler and `actionLabel` is the label of the button it renders.
  */
 export const AlertBanner = React.forwardRef<HTMLDivElement, AlertBannerProps>(
-  ({ severity = 'error', role, action, actionLabel, ...restProps }, ref) => {
+  ({ severity = 'error', role, action, actionLabel, buttonContent, onRemove, ...restProps }, ref) => {
     const theme = useTheme2();
     const color = theme.colors[severity];
     const visualRefreshEnabled = theme.flags.visualDesignRefresh;
@@ -44,6 +44,8 @@ export const AlertBanner = React.forwardRef<HTMLDivElement, AlertBannerProps>(
         dismissIconColor={color.contrastText}
         dataTestId={selectors.components.Alert.alertV2(severity)}
         action={action && <AlertActionButton onClick={action}>{actionLabel}</AlertActionButton>}
+        buttonContent={getDismissButton(buttonContent, onRemove, 'primary')}
+        onRemove={onRemove}
         {...restProps}
       />
     );
