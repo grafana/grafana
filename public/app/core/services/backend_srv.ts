@@ -399,7 +399,7 @@ export class BackendSrv implements BackendService {
       return;
     }
 
-    // The ST pod is still starting; the MT fallback loading UI already communicates this.
+    // the MT fallback loading UI already communicates this.
     if (
       err.status === ST_POD_BUSY_STATUS &&
       typeof err.data?.message === 'string' &&
