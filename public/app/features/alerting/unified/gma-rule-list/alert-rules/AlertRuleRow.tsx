@@ -13,6 +13,7 @@ import { RuleListItem } from '../rule-row/RuleListItem';
 import { RuleOriginBadge } from '../rule-row/RuleOriginBadge';
 import { RuleRouting } from '../rule-row/RuleRouting';
 import { RuleStatusIcon } from '../rule-row/RuleStatusIcon';
+import { getAlertRuleStatus } from '../rule-row/ruleStatus';
 import { EffectiveRuleInterval } from '../rule-sequences/EffectiveRuleInterval';
 import { type RuleSequenceMembership } from '../rule-sequences/ruleSequenceMembership';
 
@@ -26,17 +27,18 @@ interface AlertRuleRowProps {
   rule?: AlertRule;
   /** `null`: not in a sequence. Absent while loading or when the lookup failed. */
   sequence?: RuleSequenceMembership | null;
+  onSequenceClick: () => void;
   /** Edit button, More dropdown, or a loading skeleton — provided by AlertRuleListEntry. */
   actions?: ReactNode;
 }
 
-export function AlertRuleRow({ searchHit, folderPath, rule, sequence, actions }: AlertRuleRowProps) {
+export function AlertRuleRow({ searchHit, folderPath, rule, sequence, onSequenceClick, actions }: AlertRuleRowProps) {
   const titleId = useId();
 
   return (
     <RuleListItem
       aria-labelledby={titleId}
-      icon={<RuleStatusIcon kind="alert" state={searchHit.state} health={searchHit.health} paused={searchHit.paused} />}
+      icon={<RuleStatusIcon status={getAlertRuleStatus(searchHit)} />}
       title={
         <Stack direction="row" alignItems="center" gap={0.5} wrap={false}>
           <TextLink id={titleId} href={grafanaRulesNav.viewLink(searchHit.uid)} color="primary" inline={false}>
@@ -52,7 +54,11 @@ export function AlertRuleRow({ searchHit, folderPath, rule, sequence, actions }:
       }
       right={
         <Stack alignItems="center" gap={1.5} wrap={false}>
-          <EffectiveRuleInterval sequence={sequence} ruleInterval={searchHit.interval} />
+          <EffectiveRuleInterval
+            sequence={sequence}
+            ruleInterval={searchHit.interval}
+            onSequenceClick={onSequenceClick}
+          />
           {actions}
         </Stack>
       }

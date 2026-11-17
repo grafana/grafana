@@ -41,5 +41,17 @@ export const getRuleSequenceSearchHandler = (
     return HttpResponse.json({ metadata: { totalHits: items.length, totalHitsRelation: 'eq' }, items });
   });
 
+export const getRuleSequenceHandler = (sequences: RuleSequence[] = []) =>
+  http.get<{ namespace: string; name: string }>(
+    `/apis/${API_GROUP}/${API_VERSION}/namespaces/:namespace/rulesequences/:name`,
+    ({ params: { name } }) => {
+      const sequence = sequences.find((candidate) => candidate.metadata.name === name);
+      if (!sequence) {
+        return HttpResponse.json({ kind: 'Status', status: 'Failure', reason: 'NotFound', code: 404 }, { status: 404 });
+      }
+      return HttpResponse.json(sequence);
+    }
+  );
+
 const handlers = [getRuleSequenceSearchHandler()];
 export default handlers;

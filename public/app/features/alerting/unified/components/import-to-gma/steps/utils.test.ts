@@ -1,4 +1,9 @@
-import { canRunDryRun, isStep1Valid, validatePolicyTreeName } from './utils';
+import { skipToken } from '@reduxjs/toolkit/query/react';
+
+import { mockImportFormValues } from '../testUtils';
+import { type Step1Values } from '../types';
+
+import { buildDryRunArgs, canRunDryRun, isStep1Valid, pickStep1Values, validatePolicyTreeName } from './utils';
 
 describe('validatePolicyTreeName', () => {
   it.each(['prometheus-prod', 'my-alertmanager', 'a', 'abc123', 'my.config.name', 'a-b.c-d', '0', '1abc2'])(
@@ -238,5 +243,90 @@ describe('canRunDryRun', () => {
         autoSyncNotificationsEnabled: false,
       })
     ).toBe(false);
+  });
+});
+
+describe('buildDryRunArgs', () => {
+  const yamlFile = new File(['route: {}'], 'am.yaml');
+  const base: Step1Values = {
+    policyTreeName: '',
+    notificationsSource: 'yaml',
+    notificationsDatasourceUID: undefined,
+    notificationsDatasourceName: null,
+    notificationsYamlFile: yamlFile,
+    notificationsTemplateFiles: [],
+    autoSyncNotificationsEnabled: false,
+  };
+
+  it('skips the dry run until a source is chosen', () => {
+    expect(buildDryRunArgs({ ...base, notificationsYamlFile: null }, undefined)).toBe(skipToken);
+  });
+
+  it('skips the dry run while two template files share a name', () => {
+    const templateFiles = [new File(['a'], 'same.tmpl'), new File(['b'], 'same.tmpl')];
+    expect(buildDryRunArgs({ ...base, notificationsTemplateFiles: templateFiles }, undefined)).toBe(skipToken);
+  });
+
+  it('sends a valid policy tree name along as the config identifier', () => {
+    const args = buildDryRunArgs({ ...base, policyTreeName: 'imported' }, undefined);
+
+    expect(args).toMatchObject({ source: 'yaml', configIdentifier: 'imported' });
+    // Compared by identity: toMatchObject would walk into the File.
+    expect(args !== skipToken && args.yamlFile).toBe(yamlFile);
+  });
+
+  it('leaves out a policy tree name that would be rejected', () => {
+    expect(buildDryRunArgs({ ...base, policyTreeName: 'Not Valid' }, undefined)).toMatchObject({
+      configIdentifier: undefined,
+    });
+  });
+
+  describe('with Auto-sync', () => {
+    const autoSync: Step1Values = {
+      ...base,
+      notificationsSource: 'datasource',
+      notificationsDatasourceUID: 'mimir-uid',
+      notificationsDatasourceName: 'Mimir',
+      notificationsYamlFile: null,
+      autoSyncNotificationsEnabled: true,
+      policyTreeName: 'typed-name',
+    };
+
+    it('waits until the name the sync will pick is known', () => {
+      expect(buildDryRunArgs(autoSync, undefined)).toBe(skipToken);
+    });
+
+    it('checks under the name the sync will pick, not the typed one', () => {
+      expect(buildDryRunArgs(autoSync, 'mimir-sync')).toMatchObject({
+        source: 'datasource',
+        datasourceName: 'Mimir',
+        configIdentifier: 'mimir-sync',
+      });
+    });
+  });
+});
+
+describe('pickStep1Values', () => {
+  it('keeps exactly the step 1 fields', () => {
+    const values = mockImportFormValues({
+      step1Completed: true,
+      policyTreeName: 'imported',
+      notificationsSource: 'datasource',
+      notificationsDatasourceUID: 'uid',
+      notificationsDatasourceName: 'Mimir',
+      autoSyncNotificationsEnabled: true,
+      rulesSource: 'yaml',
+      namespace: 'ns',
+    });
+
+    expect(pickStep1Values(values)).toEqual({
+      policyTreeName: 'imported',
+      notificationsSource: 'datasource',
+      notificationsDatasourceUID: 'uid',
+      notificationsDatasourceName: 'Mimir',
+      notificationsYamlFile: null,
+      notificationsTemplateFiles: [],
+      autoSyncNotificationsEnabled: true,
+    });
   });
 });

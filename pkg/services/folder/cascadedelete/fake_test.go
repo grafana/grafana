@@ -301,10 +301,15 @@ func sortedKeys[V any](m map[string]V) []string {
 
 func newTestReconciler(m *memStore, batch int) *Reconciler {
 	return &Reconciler{
-		Children:  m,
-		Deleter:   m,
+		Handlers:  []KindHandler{{ChildFolder, m, m}, {ChildDashboard, m, m}},
 		Folders:   m,
 		BatchSize: batch,
+	}
+}
+
+func setLister(r *Reconciler, l ChildLister) {
+	for i := range r.Handlers {
+		r.Handlers[i].Lister = l
 	}
 }
 
