@@ -13806,7 +13806,7 @@
       "submit": "Add to notebook",
       "success": "Panel added to {{title}}",
       "success-cells": "Added to {{title}}",
-      "success-link": "View notebook",
+      "success-open-link": "Open notebook",
       "tag-placeholder": "Filter by tag",
       "target-description": "Choose where to add the panel.",
       "target-existing": "Existing notebook",
