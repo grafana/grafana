@@ -24,7 +24,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/rest"
 
-	appmanifestv1alpha2 "github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha2"
 	"github.com/grafana/grafana-app-sdk/logging"
 	apisprovisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
@@ -432,38 +431,10 @@ func (r *stubRouter) accessToken(path string) string {
 
 func newStubRouter(t *testing.T) *stubRouter {
 	t.Helper()
-	served, enabled := true, true
-	responses := map[string]any{
-		"/apis/discovery/v1alpha2/manifests": appmanifestv1alpha2.AppManifestList{
-			TypeMeta: metav1.TypeMeta{APIVersion: appmanifestv1alpha2.GroupVersion.String(), Kind: "AppManifestList"},
-			Items: []appmanifestv1alpha2.AppManifest{{
-				TypeMeta:   metav1.TypeMeta{APIVersion: appmanifestv1alpha2.GroupVersion.String(), Kind: "AppManifest"},
-				ObjectMeta: metav1.ObjectMeta{Name: stubRouterGroup},
-				Spec: appmanifestv1alpha2.AppManifestSpec{
-					AppName: "example",
-					Group:   stubRouterGroup,
-					Versions: []appmanifestv1alpha2.AppManifestManifestVersion{{
-						Name:   "v1",
-						Served: &served,
-						Kinds: []appmanifestv1alpha2.AppManifestManifestVersionKind{{
-							Kind:  "Widget",
-							Scope: appmanifestv1alpha2.AppManifestManifestVersionKindScopeNamespaced,
-							Extensions: &appmanifestv1alpha2.AppManifestManifestVersionKindExtensions{
-								Provisioning: &appmanifestv1alpha2.AppManifestManifestVersionKindProvisioning{Enabled: &enabled},
-							},
-						}},
-					}},
-				},
-			}},
-		},
-		"/apis/" + stubRouterGroup + "/v1": metav1.APIResourceList{
-			TypeMeta:     metav1.TypeMeta{APIVersion: "v1", Kind: "APIResourceList"},
-			GroupVersion: stubRouterGroup + "/v1",
-			APIResources: []metav1.APIResource{{Name: "widgets", SingularName: "widget", Namespaced: true, Kind: "Widget", Verbs: metav1.Verbs{"get", "list"}}},
-		},
-		"/apis/" + stubRouterGroup + "/v1/namespaces/default/widgets": map[string]any{
-			"apiVersion": stubRouterGroup + "/v1", "kind": "WidgetList", "metadata": map[string]any{}, "items": []any{},
-		},
+	responses := map[string]string{
+		"/apis/discovery/v1alpha2/manifests":                          `{"apiVersion":"apps.grafana.app/v1alpha2","kind":"AppManifestList","items":[{"apiVersion":"apps.grafana.app/v1alpha2","kind":"AppManifest","metadata":{"name":"example"},"spec":{"appName":"example","group":"example.ext.grafana.app","versions":[{"name":"v1","served":true,"kinds":[{"kind":"Widget","scope":"Namespaced","extensions":{"provisioning":{"enabled":true}}}]}]}}]}`,
+		"/apis/" + stubRouterGroup + "/v1":                            `{"kind":"APIResourceList","apiVersion":"v1","groupVersion":"example.ext.grafana.app/v1","resources":[{"name":"widgets","namespaced":true,"kind":"Widget","verbs":["get","list"]}]}`,
+		"/apis/" + stubRouterGroup + "/v1/namespaces/default/widgets": `{"apiVersion":"example.ext.grafana.app/v1","kind":"WidgetList","items":[]}`,
 	}
 
 	router := &stubRouter{tokens: map[string]string{}}
@@ -478,7 +449,7 @@ func newStubRouter(t *testing.T) *stubRouter {
 		router.tokens[r.URL.Path] = r.Header.Get("X-Access-Token")
 		router.mu.Unlock()
 		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(response)
+		_, _ = w.Write([]byte(response))
 	}))
 	t.Cleanup(router.Close)
 	return router

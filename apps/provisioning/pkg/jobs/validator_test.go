@@ -1412,12 +1412,7 @@ func TestAdmissionValidator_AcceptsAnUpdateThatKeepsTheSpec(t *testing.T) {
 		},
 	}
 	update := func(job *provisioning.Job) error {
-		return v.Validate(context.Background(), admission.NewAttributesRecord(
-			job, accepted,
-			provisioning.JobResourceInfo.GroupVersionKind(), "default", "test-job",
-			provisioning.JobResourceInfo.GroupVersionResource(), "",
-			admission.Update, nil, false, &user.DefaultInfo{},
-		), nil)
+		return v.Validate(context.Background(), jobUpdateAttributes(job, accepted), nil)
 	}
 
 	claimed := accepted.DeepCopy()
