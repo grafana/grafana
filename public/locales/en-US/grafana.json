@@ -1624,10 +1624,6 @@
         "recording": "Recording",
         "recovering": "Recovering",
         "unavailable": "Status unavailable"
-      },
-      "tab": {
-        "alert-rules": "Alert rules",
-        "recently-deleted": "Recently deleted"
       }
     },
     "grafana-alertmanager-delivery-warning": {
