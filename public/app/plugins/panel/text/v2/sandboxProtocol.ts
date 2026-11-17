@@ -37,7 +37,11 @@ export interface MermaidCommand {
   source: string;
 }
 
-/** Updates application-owned CSS without replacing panel content or advancing its render revision. */
+/**
+ * Updates application-owned CSS without replacing panel content or advancing its render revision.
+ * Content revisions invalidate pending content work; font/style updates must let that work (such as Mermaid) finish.
+ * A separate styleRevision rejects superseded style updates and font completions without cancelling content work.
+ */
 export interface StylesCommand {
   protocol: typeof TEXT_FRAME_PROTOCOL;
   channel: string;
