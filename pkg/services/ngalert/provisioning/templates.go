@@ -80,7 +80,14 @@ func (t *TemplateService) GetTemplates(ctx context.Context, orgID int64) ([]v1.T
 		}
 	}
 
-	if len(allTemplates) == 0 {
+	visibleTemplates := make([]v1.TemplateGroup, 0, len(allTemplates))
+	for _, tmpl := range allTemplates {
+		if !t.includeImported && tmpl.Kind == v1.TemplateKindMimir {
+			continue
+		}
+		visibleTemplates = append(visibleTemplates, tmpl)
+	}
+	if len(visibleTemplates) == 0 {
 		return nil, nil
 	}
 
@@ -94,8 +101,8 @@ func (t *TemplateService) GetTemplates(ctx context.Context, orgID int64) ([]v1.T
 		imported[uid] = struct{}{}
 	}
 
-	templates := make([]v1.TemplateGroup, 0, len(allTemplates))
-	for _, tmpl := range allTemplates {
+	templates := make([]v1.TemplateGroup, 0, len(visibleTemplates))
+	for _, tmpl := range visibleTemplates {
 		if _, isImported := imported[tmpl.UID]; isImported {
 			// Imported templates are not tracked in the provisioning store and may share a title
 			// with a Grafana template, so they must not pick up its record.
@@ -417,6 +424,9 @@ func (t *TemplateService) assignTemplateManager(ctx context.Context, orgID int64
 
 func (t *TemplateService) getTemplateByUID(ctx context.Context, revision *legacy_storage.ConfigRevision, orgID int64, uid string) (v1.TemplateGroup, bool, error) {
 	if tmpl, ok := revision.Config.Templates[v1.ResourceUID(uid)]; ok {
+		if !t.includeImported && tmpl.Kind == v1.TemplateKindMimir {
+			return v1.TemplateGroup{}, false, nil
+		}
 		if err := t.assignTemplateManager(ctx, orgID, &tmpl); err != nil {
 			return v1.TemplateGroup{}, false, err
 		}

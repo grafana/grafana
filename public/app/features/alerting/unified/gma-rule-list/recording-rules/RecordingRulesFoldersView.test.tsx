@@ -3,6 +3,7 @@ import { render, screen, within } from 'test/test-utils';
 import { setupMswServer } from '../../mockApi';
 import { alertRuleFactory, folderFactory, recordingRuleFactory } from '../mocks/factories';
 import { setupRuleListBackend } from '../mocks/ruleListBackend';
+import { RuleSequenceDrawerProvider } from '../rule-sequences/RuleSequenceDrawer';
 
 import { RecordingRulesFoldersView } from './RecordingRulesFoldersView';
 
@@ -30,7 +31,11 @@ async function findFolderRow(title: string) {
 describe('RecordingRulesFoldersView', () => {
   it('shows a folder holding rules with its parent and its own count, and its rules once expanded', async () => {
     setup();
-    const { user } = render(<RecordingRulesFoldersView folderUids={[]} />);
+    const { user } = render(
+      <RuleSequenceDrawerProvider>
+        <RecordingRulesFoldersView folderUids={[]} />
+      </RuleSequenceDrawerProvider>
+    );
 
     const row = await findFolderRow('Team Metrics');
     expect(await within(row).findByText('Platform')).toBeInTheDocument();
@@ -48,7 +53,11 @@ describe('RecordingRulesFoldersView', () => {
   it('shows an unavailable message in place of the count when /counts fails, while the folder row stays usable', async () => {
     setup().failNext('folderCounts');
 
-    render(<RecordingRulesFoldersView folderUids={[]} />);
+    render(
+      <RuleSequenceDrawerProvider>
+        <RecordingRulesFoldersView folderUids={[]} />
+      </RuleSequenceDrawerProvider>
+    );
 
     expect(await screen.findByText('Count unavailable')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Team Metrics' })).toBeInTheDocument();
@@ -59,7 +68,11 @@ describe('RecordingRulesFoldersView', () => {
   it('shows zero Recording rules for a folder holding only alert rules', async () => {
     setup({ recordingRules: [], alertRules: [alertRuleFactory.inFolder('team').build()] });
 
-    render(<RecordingRulesFoldersView folderUids={[]} />);
+    render(
+      <RuleSequenceDrawerProvider>
+        <RecordingRulesFoldersView folderUids={[]} />
+      </RuleSequenceDrawerProvider>
+    );
 
     const row = await findFolderRow('Team Metrics');
     expect(await within(row).findByRole('img', { name: /^0 recording rules\./ })).toBeInTheDocument();
@@ -75,7 +88,11 @@ describe('RecordingRulesFoldersView', () => {
   ])('says "$text" when $name', async ({ folderUids, text }) => {
     setup({ recordingRules: folderUids.length > 0 ? RECORDING_RULES : [] });
 
-    render(<RecordingRulesFoldersView folderUids={folderUids} />);
+    render(
+      <RuleSequenceDrawerProvider>
+        <RecordingRulesFoldersView folderUids={folderUids} />
+      </RuleSequenceDrawerProvider>
+    );
 
     expect(await screen.findByText(text)).toBeInTheDocument();
   });
@@ -83,7 +100,11 @@ describe('RecordingRulesFoldersView', () => {
   it('shows the folder search error with Retry for a 500 response, and the folder after Retry', async () => {
     setup().failNext('folderSearch');
 
-    const { user } = render(<RecordingRulesFoldersView folderUids={[]} />);
+    const { user } = render(
+      <RuleSequenceDrawerProvider>
+        <RecordingRulesFoldersView folderUids={[]} />
+      </RuleSequenceDrawerProvider>
+    );
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Failed to load folders');
 

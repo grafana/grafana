@@ -4,6 +4,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { useStyles2 } from '@grafana/ui';
+import { getInternalRadius } from '@grafana/ui/internal';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { KioskMode } from 'app/types/dashboard';
 
@@ -47,7 +48,8 @@ export function NotebookSceneControls({ model, stickyOffset }: Props) {
     <div
       className={cx(
         styles.controls,
-        usesCanvasBackground ? styles.controlsCanvasBackground : styles.controlsPageBackground
+        usesCanvasBackground ? styles.controlsCanvasBackground : styles.controlsPageBackground,
+        visualRefreshEnabled && !hostConfig.embedded && styles.controlsRoundedCorners
       )}
       style={{ top: stickyOffset, background: hostConfig.controlsBackground }}
       data-testid={selectors.pages.Notebooks.Item.controls}
@@ -93,5 +95,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   controlsPageBackground: css({
     background: theme.colors.background.page,
+  }),
+  // The row's opaque background would otherwise paint square over the corners of the Page wrapper.
+  // Matches the radii the dashboard's controls chrome takes from the same parent.
+  controlsRoundedCorners: css({
+    borderTopLeftRadius: getInternalRadius(theme, 0, { parentBorderRadius: 'lg' }),
+    borderTopRightRadius: getInternalRadius(theme, 0, { parentBorderRadius: 'lg' }),
   }),
 });

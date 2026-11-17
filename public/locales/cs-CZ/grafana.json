@@ -1514,9 +1514,29 @@
         "records": "Záznamy",
         "to": "do"
       },
+      "recording-rule-actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "view": ""
+      },
       "recording-rules": {
         "folder-rules-error": "",
         "folders-error": "",
+        "header": {
+          "new-rule": ""
+        },
         "load-more-rules-in-folder": "",
         "loading-folders": "",
         "no-rules": "Nebyla nalezena žádná pravidla záznamu",
@@ -1596,6 +1616,12 @@
         "view-folders": "Složky",
         "view-list": "Seznam",
         "wildcard-in-text": "Hledaný text nemůže obsahovat * nebo %."
+      },
+      "sequence-pill": {
+        "label": "",
+        "label-with-interval": "",
+        "tooltip": "",
+        "tooltip-with-interval": ""
       },
       "shared": {
         "load-more": "Načíst další",
@@ -2426,6 +2452,7 @@
       "contact-points": "Kontaktní body",
       "notification-policies": "Zásady oznamování",
       "recently-deleted": "Nedávno odstraněné",
+      "recording-rules": "",
       "templates": "Šablony",
       "time-intervals": "Časové intervaly"
     },
@@ -5449,6 +5476,7 @@
       "change-theme": "Změnit motiv",
       "dark-theme": "Tmavý",
       "dashboard-from-template": "Nástěnka ze šablony",
+      "experimental": "",
       "light-theme": "Světlý",
       "open-saved-queries": "Otevřít uložené dotazy",
       "scopes": "Rozsahy"
@@ -5907,7 +5935,7 @@
         "hint-layer": "",
         "hint-layer-select": "",
         "hint-not-removable": "",
-        "hint-panel": "Kliknutím okomentujte panel nebo přetažením nakreslete oblast",
+        "hint-panel": "",
         "hint-panel-select": "",
         "hint-region": "Přetažením nakreslete oblast",
         "hint-remove": "",
@@ -6309,8 +6337,7 @@
       }
     },
     "get-var-mapping-option-overrides": {
-      "defaults": "",
-      "rule": ""
+      "uses-variables": ""
     },
     "inspect": {
       "data-tab": "Data",
@@ -6507,9 +6534,6 @@
       "only-overrides-button-tooltip": "Zobrazit pouze přepsání",
       "placeholder-search-options": "Možnosti hledání",
       "visualization-button-tooltip": "Možnosti hledání"
-    },
-    "panel-editor": {
-      "ad-hoc-transformations-disabled": "Transformace ad hoc jsou v režimu úprav zakázány"
     },
     "plan-building-overlay": {
       "quip-corners": "Zjemňování rohů panelu…",
@@ -6890,8 +6914,6 @@
         "open-editor": "Otevřít editor proměnných",
         "open-editor-tooltip": "Pro další možnosti proměnných otevřete editor proměnných",
         "query-options": {
-          "close": "Zavřít",
-          "old-modal-title": "Proměnná dotazu",
           "preview": "Náhled"
         },
         "remove": "Odebrat",
@@ -7809,7 +7831,7 @@
       "apply": "Použít",
       "apply-body": "Uvidí je všichni s přístupem. Předchozí verzi můžete obnovit z historie verzí.",
       "apply-failed": "Změny se nepodařilo použít. Zkuste to znovu nebo je nejdřív porovnejte.",
-      "apply-needs-edit": "Pro použití je potřeba přístup k úpravám „{{title}}“. Tyto změny si můžete prohlédnout v náhledu, ale nemůžete je použít.",
+      "apply-needs-save": "",
       "breadcrumb-draft": "Návrh",
       "breadcrumb-pending-changes": "Nevyřízené změny",
       "change-added": "Přidáno",
@@ -8112,6 +8134,12 @@
       "confirmText-restore-version": "Ano, obnovit na verzi {{version}}",
       "title-restore-version": "Obnovit verzi"
     },
+    "row-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-row-settings": ""
+    },
     "sandbox-consent": {
       "allow": "Povolit",
       "allow-tooltip": "Načítat obsah z vybraných zdrojů v uvedených panelech, dokud nezavřete tuto kartu.",
@@ -8323,6 +8351,12 @@
       "switch-options": "Možnosti přepínače",
       "value-pair-type": "Typ páru hodnot",
       "value-pair-type-description": "Vyberte typ hodnot pro stavy přepínače"
+    },
+    "tab-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-tab-settings": ""
     },
     "text-box-variable": {
       "name-default-value": "Výchozí hodnota"
@@ -10976,6 +11010,8 @@
       "tooltip": {
         "category": "Popisek",
         "description-hover-proximity": "Jak blízko musí být kurzor k bodu, aby se spustil popisek, v pixelech",
+        "description-max-height": "",
+        "description-max-width": "",
         "modeOptions": {
           "label-all": "Vše",
           "label-hidden": "Skryté",
@@ -13320,6 +13356,10 @@
       "subtitle": "Vyberte, jak upozornit kontaktní bod, když je spuštěna instance výstrahy",
       "title": "Kontaktní body"
     },
+    "alerting-recording-rules": {
+      "subtitle": "",
+      "title": ""
+    },
     "alerting-silences": {
       "subtitle": "Zastavit oznamování z jednoho nebo více pravidel výstrahy",
       "title": "Potlačení"
@@ -14184,6 +14224,32 @@
     },
     "units": {
       "clear-tooltip": "Vymazat výběr jednotky"
+    },
+    "var-mapping-checks": {
+      "data-macro": "",
+      "not-allowed": "",
+      "not-found": "",
+      "not-number": "",
+      "not-one-value": "",
+      "out-of-range": "",
+      "resolves": "",
+      "values": ""
+    },
+    "var-mapping-toggle": {
+      "aria-label-picker": "",
+      "fallback-off": "",
+      "fallback-on": "",
+      "group-matching": "",
+      "group-other": "",
+      "hint-boolean": "",
+      "hint-number": "",
+      "hint-option": "",
+      "hint-option-no-fallback": "",
+      "new-variable": "",
+      "option-current": "",
+      "placeholder": "",
+      "use-fixed-value": "",
+      "use-variable": ""
     }
   },
   "org": {
@@ -14614,6 +14680,9 @@
     },
     "empty-state": {
       "message": "Nebyly nalezeny žádné pluginy"
+    },
+    "errors": {
+      "app-plugin-metas-error": ""
     },
     "extensions": {
       "extension-error-alert-description": "Další podrobnosti o chybě najdete v konzole.",
