@@ -77,7 +77,8 @@ export interface AlertManagerDataSource {
 }
 
 /**
- * @deprecated Reads `config.datasources` synchronously. In React code, use `useDataSourcesForRules`.
+ * @deprecated Reads `config.datasources` synchronously. In React code, use `useDataSourcesForRules`. Elsewhere, use
+ * `getDataSourcesForRules`.
  */
 export function getRulesDataSources() {
   const canView = getExternalGlobalRuleAbility(ExternalRuleAction.ViewAlertRule).granted;
