@@ -30,9 +30,9 @@ This API is in `alpha`, so it might change in future releases.
 
 {{< /admonition >}}
 
-The `/apis/advisor.grafana.app/*` API exposes the results of [Grafana Advisor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/grafana-advisor/), the app that runs regular health checks on your data sources, plugins, and Grafana instance.
+The `/apis/advisor.grafana.app/*` API exposes the results of [Grafana Advisor](https://grafana.com/grafana/plugins/grafana-advisor-app/docs/), the app that runs regular health checks on your data sources, plugins, and Grafana instance.
 
-Advisor stores each run as a `Check` resource. The check's `status.report` field contains the number of analyzed items and the list of failures. You can [read these checks](#list-checks) to [create an alert based on Grafana Advisor results](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/grafana-advisor/advisor-create-alert/). The rest of the endpoints are for internal use.
+Advisor stores each run as a `Check` resource. The check's `status.report` field contains the number of analyzed items and the list of failures. You can [read these checks](#list-checks) to [create an alert based on Grafana Advisor results](https://grafana.com/grafana/plugins/grafana-advisor-app/docs/). The rest of the endpoints are for internal use.
 
 ## Requirements
 
@@ -215,6 +215,6 @@ The endpoints on this page return the following status codes:
 
 Use the following resources to keep working with Grafana Advisor and the Grafana APIs:
 
-- **Alerting on Advisor results:** Refer to [Create an alert based on Grafana Advisor results](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/grafana-advisor/advisor-create-alert/).
-- **Grafana Advisor:** Refer to [Grafana Advisor](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/grafana-advisor/).
+- **Alerting on Advisor results:** Refer to [Create an alert based on Grafana Advisor results](https://grafana.com/grafana/plugins/grafana-advisor-app/docs/).
+- **Grafana Advisor:** Refer to [Grafana Advisor](https://grafana.com/grafana/plugins/grafana-advisor-app/docs/).
 - **API structure:** Refer to [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis).
