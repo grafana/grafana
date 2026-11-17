@@ -4,6 +4,8 @@ import (
 	"context"
 	"strings"
 
+	"go.opentelemetry.io/otel/attribute"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 )
@@ -20,7 +22,13 @@ func (s permissionStore) permissionsForActions(
 	ctx context.Context,
 	query ac.GetUserPermissionsQuery,
 	actions []string,
-) ([]ac.Permission, error) {
+) (_ []ac.Permission, err error) {
+	ctx, span := tracer.Start(ctx, "authz.legacypermissions.sql.permissions")
+	attempts := 0
+	defer func() {
+		span.SetAttributes(attribute.Int("query.count", attempts))
+		endPermissionSpan(span, err)
+	}()
 	if query.UserID == 0 && len(query.TeamIDs) == 0 && len(query.Roles) == 0 {
 		return []ac.Permission{}, nil
 	}
@@ -43,19 +51,28 @@ func (s permissionStore) permissionsForActions(
 	}
 	var out []ac.Permission
 	// Keep transaction-bound sessions and SQLite retry behavior from the legacy path.
-	err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
+	err = s.sql.WithDbSession(ctx, func(sess *db.Session) (err error) {
+		attempts++
+		// Execution includes connection acquisition; scanning includes fetching remaining rows.
+		_, executeSpan := tracer.Start(ctx, "authz.legacypermissions.sql.execute")
 		rows, err := sess.QueryRows(q, params...)
+		endPermissionSpan(executeSpan, err)
 		if err != nil {
 			return err
 		}
+		_, scanSpan := tracer.Start(ctx, "authz.legacypermissions.sql.scan")
+		defer func() {
+			scanSpan.SetAttributes(attribute.Int("result_count", len(out)))
+			endPermissionSpan(scanSpan, err)
+		}()
 		defer func() { _ = rows.Close() }()
 		out = make([]ac.Permission, 0, 512)
+		var action, scope string
 		for rows.Next() {
-			var p ac.Permission
-			if err := rows.Scan(&p.Action, &p.Scope); err != nil {
+			if err := rows.Scan(&action, &scope); err != nil {
 				return err
 			}
-			out = append(out, p)
+			out = append(out, ac.Permission{Action: action, Scope: scope})
 		}
 		return rows.Err()
 	})
@@ -65,7 +82,13 @@ func (s permissionStore) permissionsForActions(
 	return out, nil
 }
 
-func (s permissionStore) teams(ctx context.Context, query ac.GetUserPermissionsQuery) (map[int64][]ac.Permission, error) {
+func (s permissionStore) teams(ctx context.Context, query ac.GetUserPermissionsQuery) (_ map[int64][]ac.Permission, err error) {
+	ctx, span := tracer.Start(ctx, "authz.legacypermissions.sql.teams")
+	attempts := 0
+	defer func() {
+		span.SetAttributes(attribute.Int("query.count", attempts))
+		endPermissionSpan(span, err)
+	}()
 	if len(query.TeamIDs) == 0 {
 		return nil, nil
 	}
@@ -88,20 +111,33 @@ func (s permissionStore) teams(ctx context.Context, query ac.GetUserPermissionsQ
 		q += ac.ManagedPermissionsActionSetsFilter()
 	}
 	var out map[int64][]ac.Permission
-	err := s.sql.WithDbSession(ctx, func(sess *db.Session) error {
+	err = s.sql.WithDbSession(ctx, func(sess *db.Session) (err error) {
+		attempts++
+		_, executeSpan := tracer.Start(ctx, "authz.legacypermissions.sql.execute")
 		rows, err := sess.QueryRows(q, params...)
+		endPermissionSpan(executeSpan, err)
 		if err != nil {
 			return err
 		}
+		_, scanSpan := tracer.Start(ctx, "authz.legacypermissions.sql.scan")
+		rowCount := 0
+		defer func() {
+			scanSpan.SetAttributes(attribute.Int("result_count", rowCount), attribute.Int("team.count", len(out)))
+			endPermissionSpan(scanSpan, err)
+		}()
 		defer func() { _ = rows.Close() }()
 		out = make(map[int64][]ac.Permission)
+		var action, scope string
+		var teamID int64
 		for rows.Next() {
-			var p ac.Permission
-			var teamID int64
-			if err := rows.Scan(&p.Action, &p.Scope, &teamID); err != nil {
+			if err := rows.Scan(&action, &scope, &teamID); err != nil {
 				return err
 			}
-			out[teamID] = append(out[teamID], p)
+			if _, ok := out[teamID]; !ok {
+				out[teamID] = make([]ac.Permission, 0, 32)
+			}
+			out[teamID] = append(out[teamID], ac.Permission{Action: action, Scope: scope})
+			rowCount++
 		}
 		return rows.Err()
 	})

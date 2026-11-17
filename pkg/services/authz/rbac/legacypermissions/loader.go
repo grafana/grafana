@@ -9,6 +9,7 @@ import (
 	claims "github.com/grafana/authlib/types"
 	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"golang.org/x/sync/singleflight"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -98,6 +99,7 @@ func (l *Loader) GetUserPermissions(ctx context.Context, user identity.Requester
 		defer func() { metrics.MAccessPermissionsSummary.Observe(time.Since(started).Seconds()) }()
 	}
 	cached := l.cfg.RBAC.PermissionCache && user.HasUniqueId()
+	span.SetAttributes(attribute.Bool("cache.enabled", cached), attribute.Bool("cache.reload", options.ReloadCache), attribute.Bool("permission.shadow", isPermissionShadow(ctx)))
 	var permissions []ac.Permission
 	var err error
 	if !cached {
@@ -130,15 +132,15 @@ func (l *Loader) GetUserPermissions(ctx context.Context, user identity.Requester
 	if l.zanzana == nil || (!settings.enforcementEnabled && l.license.Edition() != licensing.OpenSourceEdition) {
 		return legacyscopes.ResolveUserScopes(ctx, user, l.scopeResolver, permissions)
 	}
-	resolve := func() ([]ac.Permission, error) {
+	resolve := func(ctx context.Context) ([]ac.Permission, error) {
 		return l.zanzana.ResolveCurrentUserPermissions(ctx, user, options.ReloadCache)
 	}
 	var migrated []ac.Permission
 	// Request-supplied memberships must be composed again; principal grants remain cacheable.
 	if !cached || options.SkipZanzanaCache || l.cfg.IDUseExternalGroupsForGroupsClaim {
-		migrated, err = resolve()
+		migrated, err = resolve(ctx)
 	} else {
-		migrated, err = l.cached(ctx, ac.GetZanzanaUserPermissionCacheKey(user), options, resolve)
+		migrated, err = l.cached(ctx, "zanzana", ac.GetZanzanaUserPermissionCacheKey(user), options, resolve)
 	}
 	if err != nil {
 		l.log.Warn("could not get zanzana user permissions, using legacy only", "error", err)
@@ -190,10 +192,12 @@ func (l *Loader) uncached(ctx context.Context, user identity.Requester, p loadSe
 	return append(static, l.actions.ExpandActionSets(permissions)...), nil
 }
 
-func (l *Loader) assemble(ctx context.Context, user identity.Requester, options ac.Options, p loadSettings) ([]ac.Permission, error) {
+func (l *Loader) assemble(ctx context.Context, user identity.Requester, options ac.Options, p loadSettings) (_ []ac.Permission, err error) {
+	ctx, span := tracer.Start(ctx, "authz.legacypermissions.assemble")
+	defer func() { endPermissionSpan(span, err) }()
 	var chunks [][]ac.Permission
 	for _, role := range ac.GetOrgRoles(user) {
-		load := func() ([]ac.Permission, error) {
+		load := func(ctx context.Context) ([]ac.Permission, error) {
 			q := queryFor(user.GetOrgID(), p)
 			q.Roles = []string{role}
 			// Both old basic-role stores drop this flag; preserve that asymmetry.
@@ -207,13 +211,13 @@ func (l *Loader) assemble(ctx context.Context, user identity.Requester, options 
 		var basic []ac.Permission
 		var err error
 		if p.enforcementEnabled {
-			basic, err = l.cached(ctx, ac.GetBasicRolePermissionCacheKey(role, user.GetOrgID()), options, load)
+			basic, err = l.cached(ctx, "basic_role", ac.GetBasicRolePermissionCacheKey(role, user.GetOrgID()), options, load)
 		} else {
 			// Local readers cache catalog and SQL grants together under this key.
 			// This path adds fresh catalog grants separately, so it needs SQL-only
 			// grants. The cached value includes catalog grants, and replacing it with
 			// SQL-only grants would make local readers lose their catalog grants.
-			basic, err = load()
+			basic, err = load(ctx)
 		}
 		if err != nil {
 			return nil, err
@@ -224,7 +228,7 @@ func (l *Loader) assemble(ctx context.Context, user identity.Requester, options 
 	if err != nil {
 		return nil, err
 	}
-	direct, err := l.cached(ctx, ac.GetUserDirectPermissionCacheKey(user), options, func() ([]ac.Permission, error) {
+	direct, err := l.cached(ctx, "direct", ac.GetUserDirectPermissionCacheKey(user), options, func(ctx context.Context) ([]ac.Permission, error) {
 		q := queryFor(user.GetOrgID(), p)
 		if p.enforcementEnabled {
 			q.ExcludeRedundantManagedPermissions = false
@@ -254,16 +258,23 @@ func (l *Loader) assemble(ctx context.Context, user identity.Requester, options 
 	for _, chunk := range chunks {
 		count += len(chunk)
 	}
+	_, copySpan := tracer.Start(ctx, "authz.legacypermissions.assemble.copy")
 	snapshot := make([]ac.Permission, 0, count)
 	for _, chunk := range chunks {
 		snapshot = append(snapshot, chunk...)
 	}
+	copySpan.SetAttributes(attribute.Int("result_count", count))
+	copySpan.End()
 	return snapshot, nil
 }
 
-func (l *Loader) cachedTeams(ctx context.Context, user identity.Requester, options ac.Options, p loadSettings) ([][]ac.Permission, error) {
+func (l *Loader) cachedTeams(ctx context.Context, user identity.Requester, options ac.Options, p loadSettings) (_ [][]ac.Permission, err error) {
+	ctx, span := tracer.Start(ctx, "authz.legacypermissions.cache.teams")
+	span.SetAttributes(attribute.Bool("cache.reload", options.ReloadCache), attribute.Bool("permission.shadow", isPermissionShadow(ctx)))
+	defer func() { endPermissionSpan(span, err) }()
 	var permissions [][]ac.Permission
 	var missing []int64
+	_, lookupSpan := tracer.Start(ctx, "authz.legacypermissions.cache.lookup")
 	for _, teamID := range user.GetTeams() {
 		if value, ok := l.cache.Get(ac.GetTeamPermissionCacheKey(teamID, user.GetOrgID())); ok && !options.ReloadCache {
 			metrics.MAccessPermissionsCacheUsage.WithLabelValues(ac.CacheHit).Inc()
@@ -272,6 +283,8 @@ func (l *Loader) cachedTeams(ctx context.Context, user identity.Requester, optio
 			missing = append(missing, teamID)
 		}
 	}
+	lookupSpan.SetAttributes(attribute.Int("cache.hits", len(permissions)), attribute.Int("cache.misses", len(missing)))
+	lookupSpan.End()
 	if len(missing) == 0 {
 		return permissions, nil
 	}
@@ -295,9 +308,16 @@ func (l *Loader) cachedTeams(ctx context.Context, user identity.Requester, optio
 	return permissions, nil
 }
 
-func (l *Loader) cached(ctx context.Context, key string, options ac.Options, load func() ([]ac.Permission, error)) ([]ac.Permission, error) {
+func (l *Loader) cached(ctx context.Context, source, key string, options ac.Options, load func(context.Context) ([]ac.Permission, error)) (_ []ac.Permission, err error) {
+	ctx, span := tracer.Start(ctx, "authz.legacypermissions.cache")
+	span.SetAttributes(attribute.String("cache.source", source), attribute.Bool("cache.reload", options.ReloadCache), attribute.Bool("permission.shadow", isPermissionShadow(ctx)), attribute.Bool("cache.load_executed", false))
+	defer func() { endPermissionSpan(span, err) }()
 	if !options.ReloadCache {
-		if value, ok := l.cache.Get(key); ok {
+		_, lookupSpan := tracer.Start(ctx, "authz.legacypermissions.cache.lookup")
+		value, ok := l.cache.Get(key)
+		lookupSpan.SetAttributes(attribute.Bool("cache.hit", ok))
+		lookupSpan.End()
+		if ok {
 			metrics.MAccessPermissionsCacheUsage.WithLabelValues(ac.CacheHit).Inc()
 			return value.([]ac.Permission), nil
 		}
@@ -305,12 +325,14 @@ func (l *Loader) cached(ctx context.Context, key string, options ac.Options, loa
 	metrics.MAccessPermissionsCacheUsage.WithLabelValues(ac.CacheMiss).Inc()
 	// Shadow misses and refreshes must not populate the authoritative cache or join its writes.
 	if isPermissionShadow(ctx) {
-		return load()
+		span.SetAttributes(attribute.Bool("cache.load_executed", true))
+		return load(ctx)
 	}
 	var fresh []ac.Permission
 	get := func() (any, error) {
+		span.SetAttributes(attribute.Bool("cache.load_executed", true))
 		var err error
-		fresh, err = load()
+		fresh, err = load(ctx)
 		return fresh, err
 	}
 	if options.ReloadCache {
