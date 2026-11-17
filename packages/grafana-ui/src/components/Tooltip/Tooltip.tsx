@@ -10,7 +10,17 @@ import {
   useInteractions,
   safePolygon,
 } from '@floating-ui/react';
-import { forwardRef, cloneElement, isValidElement, useCallback, useId, useRef, useState, type JSX } from 'react';
+import {
+  forwardRef,
+  cloneElement,
+  isValidElement,
+  useCallback,
+  useId,
+  useRef,
+  useState,
+  type FocusEvent,
+  type JSX,
+} from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -74,6 +84,13 @@ export const Tooltip = forwardRef<HTMLElement, TooltipProps>(
 
     const { getReferenceProps, getFloatingProps } = useInteractions([dismiss, hover, focus]);
 
+    // closes the tooltip when focus moves to a floating-ui focus guard. useFocus above ignores it
+    const closeOnFocusGuardBlur = (event: FocusEvent<HTMLElement>) => {
+      if (event.relatedTarget instanceof Element && event.relatedTarget.hasAttribute('data-floating-ui-focus-guard')) {
+        setControlledVisible(false);
+      }
+    };
+
     const contentIsFunction = typeof content === 'function';
 
     const styles = useStyles2(getStyles);
@@ -102,7 +119,7 @@ export const Tooltip = forwardRef<HTMLElement, TooltipProps>(
           ref: handleRef,
           tabIndex: 0, // tooltip trigger should be keyboard focusable
           'aria-describedby': !childHasMatchingAriaLabel && isOpen ? tooltipId : undefined,
-          ...getReferenceProps(),
+          ...getReferenceProps({ onBlur: closeOnFocusGuardBlur }),
         })}
         {isOpen && (
           <Portal>

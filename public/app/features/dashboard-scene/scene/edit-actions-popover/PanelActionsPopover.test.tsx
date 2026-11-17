@@ -20,6 +20,8 @@ import { DashboardScene } from '../DashboardScene';
 import { VizPanelHeaderActions } from '../VizPanelHeaderActions';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
+import { RowItem } from '../layout-rows/RowItem';
+import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 
 import { WAIT_FOR_MOUSE_REST_DURATION_MS } from './EditActionsPopover';
 import { usePanelActionsOverlayOpenChange } from './PanelActionsOverlayContext';
@@ -91,6 +93,29 @@ function createDashboard(panel: VizPanel, state: Partial<ConstructorParameters<t
     body: DefaultGridLayoutManager.fromVizPanels([panel]),
     ...state,
   });
+}
+
+function buildDashboardWithRepeatedRow() {
+  const panel = createPanel();
+  const row = new RowItem({
+    key: 'row-1',
+    layout: DefaultGridLayoutManager.fromVizPanels([panel]),
+  });
+  const cloneKey = getCloneKey('row-1', 1);
+  const repeatedRow = row.clone({
+    key: cloneKey,
+    repeatSourceKey: 'row-1',
+    layout: row.getLayout().cloneLayout(cloneKey, false),
+  });
+  row.setState({ repeatedRows: [repeatedRow] });
+  const dashboard = new DashboardScene({
+    editable: true,
+    meta: { canEdit: true, canSave: true },
+    isEditing: true,
+    body: new RowsLayoutManager({ rows: [row] }),
+  });
+
+  return { dashboard, panel: repeatedRow.getLayout().getVizPanels()[0] };
 }
 
 /** Stands in for PanelChrome rendering a hover header item into the slot provided by the popover. */
@@ -392,7 +417,11 @@ describe('<PanelActionsWrapper />', () => {
       expect(mockLocationServicePush).toHaveBeenCalledWith('/explore?left=panel-1');
     });
 
-    test('clicking Settings selects the panel in the edit sidebar', async () => {
+    test('when explicit sidebar opening is enabled, clicking Settings opens the panel settings', async () => {
+      setTestFlags({
+        [FlagKeys.GrafanaPanelActionsPopover]: true,
+        [FlagKeys.GrafanaDashboardSidebarExplicitOpen]: true,
+      });
       const panel = createPanel();
       const dashboard = createDashboard(panel, { isEditing: true });
       const user = userEvent.setup();
@@ -402,6 +431,23 @@ describe('<PanelActionsWrapper />', () => {
       await user.click(within(getToolbar()).getByRole('button', { name: 'Panel settings' }));
 
       expect(dashboard.state.sidebar.getSelectedObject()).toBe(panel);
+      expect(dashboard.state.sidebar.state.openPane?.getId()).toBe('element');
+    });
+
+    test('when explicit sidebar opening is enabled, Settings in a repeated row opens the source panel settings', async () => {
+      setTestFlags({
+        [FlagKeys.GrafanaPanelActionsPopover]: true,
+        [FlagKeys.GrafanaDashboardSidebarExplicitOpen]: true,
+      });
+      const { dashboard, panel } = buildDashboardWithRepeatedRow();
+      const user = userEvent.setup();
+
+      renderWrapper(panel, { isEditing: true });
+      await hoverAndRest(screen.getByTestId('reference-child'));
+      await user.click(within(getToolbar()).getByRole('button', { name: 'Panel settings' }));
+
+      expect(dashboard.state.sidebar.getSelectedObject()?.state.key).toBe('panel-1');
+      expect(dashboard.state.sidebar.state.openPane?.getId()).toBe('element');
     });
 
     test('clicking Duplicate duplicates the panel via the dashboard', async () => {

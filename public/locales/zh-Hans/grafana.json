@@ -1493,9 +1493,29 @@
         "records": "录制",
         "to": "至"
       },
+      "recording-rule-actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "view": ""
+      },
       "recording-rules": {
         "folder-rules-error": "",
         "folders-error": "",
+        "header": {
+          "new-rule": ""
+        },
         "load-more-rules-in-folder": "",
         "loading-folders": "",
         "no-rules": "未找到录制规则",
@@ -2384,6 +2404,7 @@
       "contact-points": "联络点",
       "notification-policies": "通知策略",
       "recently-deleted": "最近删除",
+      "recording-rules": "",
       "templates": "模板",
       "time-intervals": "时间间隔"
     },
@@ -6169,8 +6190,7 @@
       }
     },
     "get-var-mapping-option-overrides": {
-      "defaults": "",
-      "rule": ""
+      "uses-variables": ""
     },
     "inspect": {
       "data-tab": "数据",
@@ -6364,9 +6384,6 @@
       "only-overrides-button-tooltip": "仅显示覆盖",
       "placeholder-search-options": "搜索选项",
       "visualization-button-tooltip": "搜索选项"
-    },
-    "panel-editor": {
-      "ad-hoc-transformations-disabled": "临时转换在编辑模式下已禁用"
     },
     "plan-building-overlay": {
       "quip-corners": "正在润饰面板边角…",
@@ -7652,7 +7669,7 @@
       "apply": "应用",
       "apply-body": "所有有访问权限的人都会看到它们。您可以从版本历史记录中还原以前的版本。",
       "apply-failed": "无法应用更改。请重试，或先进行比较。",
-      "apply-needs-edit": "应用更改需要拥有“{{title}}”的编辑权限。您可以预览这些更改，但无法应用它们。",
+      "apply-needs-save": "",
       "breadcrumb-draft": "草稿",
       "breadcrumb-pending-changes": "待处理的更改",
       "change-added": "已添加",
@@ -7949,6 +7966,12 @@
       "confirmText-restore-version": "是，恢复到版本 {{version}}",
       "title-restore-version": "恢复版本"
     },
+    "row-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-row-settings": ""
+    },
     "sandbox-consent": {
       "allow": "允许",
       "allow-tooltip": "从所列面板中的选定源加载内容，直至您关闭此选项卡。",
@@ -8136,6 +8159,12 @@
       "switch-options": "切换选项",
       "value-pair-type": "值对类型",
       "value-pair-type-description": "选择开关状态的值类型"
+    },
+    "tab-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-tab-settings": ""
     },
     "text-box-variable": {
       "name-default-value": "默认值"
@@ -14318,6 +14347,9 @@
     },
     "empty-state": {
       "message": "找不到插件"
+    },
+    "errors": {
+      "app-plugin-metas-error": ""
     },
     "extensions": {
       "extension-error-alert-description": "请检查控制台，了解有关错误的更多详细信息。",

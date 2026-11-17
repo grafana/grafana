@@ -9,7 +9,7 @@ require (
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674
 	github.com/grafana/authlib/types v0.0.0-20261020151310-7a9be4c0c1c3
 	github.com/grafana/grafana-app-sdk v0.63.2
-	github.com/grafana/grafana-plugin-sdk-go v0.299.0
+	github.com/grafana/grafana-plugin-sdk-go v0.300.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20261022000032-e40de7898e1c
 	github.com/grafana/grafana/pkg/infra/log v0.0.0-20261022000032-e40de7898e1c
 	github.com/influxdata/line-protocol v0.0.0-20210922203350-b1ad95c89adf
@@ -28,6 +28,7 @@ require (
 	github.com/FZambia/eagle v0.2.0 // indirect
 	github.com/andybalholm/brotli v1.2.7 // indirect
 	github.com/apache/arrow-go/v18 v18.8.0 // indirect
+	github.com/apache/thrift v0.25.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bradfitz/gomemcache v0.0.0-20260422231931-4d751bb6e37c // indirect
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect

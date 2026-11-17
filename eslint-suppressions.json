@@ -470,16 +470,6 @@
       "count": 1
     }
   },
-  "packages/grafana-ui/src/components/CodeMirror/CodeEditor.story.tsx": {
-    "react-hooks/set-state-in-effect": {
-      "count": 1
-    }
-  },
-  "packages/grafana-ui/src/components/CodeMirror/InlineInput.story.tsx": {
-    "react-hooks/set-state-in-effect": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/CodeMirror/useLanguageExtension.ts": {
     "react-hooks/set-state-in-effect": {
       "count": 1
@@ -553,11 +543,6 @@
       "count": 2
     }
   },
-  "packages/grafana-ui/src/components/DateTimePickers/DatePicker/DatePicker.story.tsx": {
-    "react-hooks/immutability": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/DateTimePickers/DateTimePicker/DateTimePicker.tsx": {
     "react-hooks/refs": {
       "count": 1
@@ -606,11 +591,6 @@
       "count": 3
     }
   },
-  "packages/grafana-ui/src/components/Forms/InlineField.story.tsx": {
-    "react-hooks/rules-of-hooks": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/Forms/Legacy/Input/Input.tsx": {
     "@grafana/no-gf-form": {
       "count": 1
@@ -644,19 +624,9 @@
       "count": 1
     }
   },
-  "packages/grafana-ui/src/components/Forms/RadioButtonList/RadioButtonList.story.tsx": {
-    "react-hooks/static-components": {
-      "count": 4
-    }
-  },
   "packages/grafana-ui/src/components/Icon/Icon.tsx": {
     "react-hooks/refs": {
       "count": 13
-    }
-  },
-  "packages/grafana-ui/src/components/IconButton/IconButton.story.tsx": {
-    "react-hooks/static-components": {
-      "count": 3
     }
   },
   "packages/grafana-ui/src/components/InlineToast/InlineToast.tsx": {
@@ -711,11 +681,6 @@
   },
   "packages/grafana-ui/src/components/Portal/Portal.tsx": {
     "react-hooks/refs": {
-      "count": 1
-    }
-  },
-  "packages/grafana-ui/src/components/QueryInput/QueryInput.story.tsx": {
-    "react-hooks/set-state-in-effect": {
       "count": 1
     }
   },
@@ -783,16 +748,6 @@
   "packages/grafana-ui/src/components/Sparkline/Sparkline.tsx": {
     "react-hooks/set-state-in-effect": {
       "count": 1
-    }
-  },
-  "packages/grafana-ui/src/components/Splitter/useSplitter.story.tsx": {
-    "react-hooks/immutability": {
-      "count": 1
-    }
-  },
-  "packages/grafana-ui/src/components/Splitter/useSplitter.test.tsx": {
-    "react-hooks/immutability": {
-      "count": 3
     }
   },
   "packages/grafana-ui/src/components/Table/Cells/DefaultCell.tsx": {
@@ -934,16 +889,6 @@
   "packages/grafana-ui/src/components/Typeahead/Typeahead.tsx": {
     "react-hooks/refs": {
       "count": 2
-    }
-  },
-  "packages/grafana-ui/src/components/VizLayout/VizLayout.story.tsx": {
-    "react-hooks/set-state-in-effect": {
-      "count": 2
-    }
-  },
-  "packages/grafana-ui/src/components/VizLegend/VizLegend.story.tsx": {
-    "react-hooks/set-state-in-effect": {
-      "count": 1
     }
   },
   "packages/grafana-ui/src/components/VizLegend/VizLegendList.tsx": {
@@ -1098,11 +1043,6 @@
       "count": 1
     }
   },
-  "public/app/core/components/AppChrome/AppChrome.tsx": {
-    "react-hooks/refs": {
-      "count": 6
-    }
-  },
   "public/app/core/components/AppChrome/ExtensionSidebar/ExtensionSidebar.tsx": {
     "react-hooks/static-components": {
       "count": 1
@@ -1118,7 +1058,7 @@
       "count": 5
     },
     "react-hooks/refs": {
-      "count": 3
+      "count": 2
     }
   },
   "public/app/core/components/AppChrome/FeatureControl/FeatureControlFlag.tsx": {
@@ -1890,16 +1830,6 @@
       "count": 6
     }
   },
-  "public/app/features/alerting/unified/rule-list/PaginatedDataSourceLoader.tsx": {
-    "react-hooks/refs": {
-      "count": 1
-    }
-  },
-  "public/app/features/alerting/unified/rule-list/PaginatedGrafanaLoader.tsx": {
-    "react-hooks/refs": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/settings/import/StagedImportSection.tsx": {
     "@grafana/no-config-feature-toggles": {
       "count": 1
@@ -1937,21 +1867,6 @@
   },
   "public/app/features/alerting/unified/triage/scene/AlertRuleSummary.tsx": {
     "react-hooks/set-state-in-effect": {
-      "count": 1
-    }
-  },
-  "public/app/features/alerting/unified/triage/scene/tagKeysProviders.test.ts": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
-  "public/app/features/alerting/unified/triage/scene/tagKeysProviders.ts": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
-  "public/app/features/alerting/unified/triage/scene/useLabelsBreakdown.ts": {
-    "@grafana/no-get-data-source-srv": {
       "count": 1
     }
   },
@@ -2070,15 +1985,7 @@
       "count": 1
     }
   },
-  "public/app/features/commandPalette/scopes/recentScopesActions.ts": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
   "public/app/features/commandPalette/scopes/scopeActions.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 3
-    },
     "react-hooks/set-state-in-effect": {
       "count": 1
     }
@@ -2239,11 +2146,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/panel-edit/PanelEditNext/QueryEditor/QueryEditorRenderer.test.tsx": {
-    "react-hooks/refs": {
-      "count": 2
-    }
-  },
   "public/app/features/dashboard-scene/panel-edit/PanelEditNext/QueryEditor/QueryEditorRenderer.tsx": {
     "react-hooks/preserve-manual-memoization": {
       "count": 1
@@ -2255,11 +2157,6 @@
     }
   },
   "public/app/features/dashboard-scene/panel-edit/PanelEditNext/QueryEditor/StackedEditor/useStackedItemScroll.ts": {
-    "react-hooks/refs": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/panel-edit/PanelEditNext/QueryEditor/coauthoring/QueryCoauthoring.test.tsx": {
     "react-hooks/refs": {
       "count": 1
     }
@@ -2323,11 +2220,6 @@
   },
   "public/app/features/dashboard-scene/saving/useParkSaveFormDraft.ts": {
     "react-hooks/immutability": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/scene/DashboardControls.tsx": {
-    "@grafana/no-config-feature-toggles": {
       "count": 1
     }
   },
@@ -2458,16 +2350,6 @@
   },
   "public/app/features/dashboard-scene/serialization/layoutSerializers/utils.ts": {
     "@grafana/no-config-datasources": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/serialization/transformSaveModelSchemaV2ToScene.ts": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/serialization/transformSaveModelToScene.ts": {
-    "@grafana/no-config-feature-toggles": {
       "count": 1
     }
   },
@@ -2639,11 +2521,6 @@
   },
   "public/app/features/dashboard-scene/utils/utils.ts": {
     "react-hooks/immutability": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/utils/variables.ts": {
-    "@grafana/no-config-feature-toggles": {
       "count": 1
     }
   },
@@ -3393,11 +3270,6 @@
       "count": 2
     }
   },
-  "public/app/features/notebook/scene/NotebookScene.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
   "public/app/features/notebook/scene/layout-notebook/NotebookCellRenderer.tsx": {
     "react-hooks/refs": {
       "count": 1
@@ -3684,11 +3556,6 @@
       "count": 3
     }
   },
-  "public/app/features/scopes/ScopesContextProvider.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 2
-    }
-  },
   "public/app/features/scopes/dashboards/ScopesDashboardsTreeSearch.tsx": {
     "react-hooks/set-state-in-effect": {
       "count": 1
@@ -3753,9 +3620,6 @@
     }
   },
   "public/app/features/serviceaccounts/components/CreateTokenModal.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 4
-    },
     "react-hooks/set-state-in-effect": {
       "count": 1
     }

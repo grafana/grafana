@@ -1500,9 +1500,29 @@
         "records": "Nyilvántartás",
         "to": "vége"
       },
+      "recording-rule-actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "view": ""
+      },
       "recording-rules": {
         "folder-rules-error": "",
         "folders-error": "",
+        "header": {
+          "new-rule": ""
+        },
         "load-more-rules-in-folder": "",
         "loading-folders": "",
         "no-rules": "Nem találhatók rögzítési szabályok",
@@ -2400,6 +2420,7 @@
       "contact-points": "Kapcsolattartási pontok",
       "notification-policies": "Értesítési házirendek",
       "recently-deleted": "Nemrég törölt",
+      "recording-rules": "",
       "templates": "Sablonok",
       "time-intervals": "Időintervallumok"
     },
@@ -6218,8 +6239,7 @@
       }
     },
     "get-var-mapping-option-overrides": {
-      "defaults": "",
-      "rule": ""
+      "uses-variables": ""
     },
     "inspect": {
       "data-tab": "Adatok",
@@ -6414,9 +6434,6 @@
       "only-overrides-button-tooltip": "Csak a felülbírálások megjelenítése",
       "placeholder-search-options": "Keresési beállítások",
       "visualization-button-tooltip": "Keresési beállítások"
-    },
-    "panel-editor": {
-      "ad-hoc-transformations-disabled": "Az eseti átalakítások le vannak tiltva szerkesztési módban"
     },
     "plan-building-overlay": {
       "quip-corners": "A panel sarkainak csiszolása…",
@@ -7706,7 +7723,7 @@
       "apply": "Alkalmaz",
       "apply-body": "Mindenki, aki hozzáféréssel rendelkezik, látni fogja őket. Az előző verziót visszaállíthatja a verzióelőzményekből.",
       "apply-failed": "Nem sikerült alkalmazni a változtatásokat. Próbálja újra, vagy először hasonlítsa össze őket.",
-      "apply-needs-edit": "Az alkalmazáshoz szerkesztési hozzáférésre van szükség a következőhöz: „{{title}}”. Megtekintheti ezeknek a módosításoknak az előnézetét, de nem alkalmazhatja őket.",
+      "apply-needs-save": "",
       "breadcrumb-draft": "Vázlat",
       "breadcrumb-pending-changes": "Függőben levő módosítások",
       "change-added": "Hozzáadva",
@@ -8005,6 +8022,12 @@
       "confirmText-restore-version": "Igen, visszaállítás erre a verzióra: {{version}}",
       "title-restore-version": "Verzió visszaállítása"
     },
+    "row-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-row-settings": ""
+    },
     "sandbox-consent": {
       "allow": "Engedélyezés",
       "allow-tooltip": "Tartalmak betöltése a kiválasztott forrásokból a felsorolt paneleken, amíg be nem zárja ezt a lapot.",
@@ -8200,6 +8223,12 @@
       "switch-options": "Kapcsoló beállításai",
       "value-pair-type": "Értékpár típusa",
       "value-pair-type-description": "Válassza ki a kapcsolóállapotok értéktípusát"
+    },
+    "tab-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-tab-settings": ""
     },
     "text-box-variable": {
       "name-default-value": "Alapértelmezett érték"
@@ -14429,6 +14458,9 @@
     },
     "empty-state": {
       "message": "Nem található bővítmény"
+    },
+    "errors": {
+      "app-plugin-metas-error": ""
     },
     "extensions": {
       "extension-error-alert-description": "A hibával kapcsolatos további részletekért tekintse meg a konzolt.",

@@ -1514,9 +1514,29 @@
         "records": "Записи",
         "to": "в"
       },
+      "recording-rule-actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "view": ""
+      },
       "recording-rules": {
         "folder-rules-error": "",
         "folders-error": "",
+        "header": {
+          "new-rule": ""
+        },
         "load-more-rules-in-folder": "",
         "loading-folders": "",
         "no-rules": "Правила записи не найдены",
@@ -2432,6 +2452,7 @@
       "contact-points": "Точки контакта",
       "notification-policies": "Политики уведомлений",
       "recently-deleted": "Последние удаленные",
+      "recording-rules": "",
       "templates": "Шаблоны",
       "time-intervals": "Временные интервалы"
     },
@@ -6316,8 +6337,7 @@
       }
     },
     "get-var-mapping-option-overrides": {
-      "defaults": "",
-      "rule": ""
+      "uses-variables": ""
     },
     "inspect": {
       "data-tab": "Данные",
@@ -6514,9 +6534,6 @@
       "only-overrides-button-tooltip": "Показывать только переопределения",
       "placeholder-search-options": "Поиск параметров",
       "visualization-button-tooltip": "Поиск параметров"
-    },
-    "panel-editor": {
-      "ad-hoc-transformations-disabled": "Специальные преобразования отключены в режиме редактирования"
     },
     "plan-building-overlay": {
       "quip-corners": "Скругляем углы панели…",
@@ -7814,7 +7831,7 @@
       "apply": "Применить",
       "apply-body": "Их увидят все пользователи с доступом. Вы можете восстановить предыдущую версию из истории версий.",
       "apply-failed": "Не удалось применить изменения. Повторите попытку или сначала сравните их.",
-      "apply-needs-edit": "Для применения изменений требуются права на редактирование «{{title}}». Вы можете просмотреть изменения, но не применить их.",
+      "apply-needs-save": "",
       "breadcrumb-draft": "Черновик",
       "breadcrumb-pending-changes": "Ожидающие изменения",
       "change-added": "Добавлено",
@@ -8117,6 +8134,12 @@
       "confirmText-restore-version": "Да, восстановить до версии {{version}}",
       "title-restore-version": "Восстановление версии"
     },
+    "row-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-row-settings": ""
+    },
     "sandbox-consent": {
       "allow": "Разрешить",
       "allow-tooltip": "Загружать контент из выбранных источников на указанных панелях, пока вкладка не будет закрыта.",
@@ -8328,6 +8351,12 @@
       "switch-options": "Варианты переключения",
       "value-pair-type": "Тип пары значений",
       "value-pair-type-description": "Выберите тип значений для состояний переключателя"
+    },
+    "tab-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-tab-settings": ""
     },
     "text-box-variable": {
       "name-default-value": "Значение по умолчанию"
@@ -14651,6 +14680,9 @@
     },
     "empty-state": {
       "message": "Плагины не найдены"
+    },
+    "errors": {
+      "app-plugin-metas-error": ""
     },
     "extensions": {
       "extension-error-alert-description": "Для получения более подробной информации об ошибке проверьте консоль.",
