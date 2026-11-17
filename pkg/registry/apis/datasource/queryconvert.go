@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
 	dsV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
@@ -77,6 +78,8 @@ func (r *queryConvertREST) convertQueryDataRequest(ctx context.Context, req *htt
 	if err != nil {
 		return nil, err
 	}
+
+	logging.FromContext(ctx).Error("query convert is not yet implemented")
 
 	// NOOP passthrough for now: the plugin client no longer exposes conversion.
 	// TODO: call the v3 conversion client and unmarshal each converted object.
