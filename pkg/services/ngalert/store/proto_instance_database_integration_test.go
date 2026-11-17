@@ -322,6 +322,31 @@ func TestIntegration_RecordingSeriesInRuleState(t *testing.T) {
 		require.Len(t, instances, 1)
 	})
 
+	t.Run("a full sync with only empty series sets leaves the table alone", func(t *testing.T) {
+		require.NoError(t, ng.InstanceStore.SaveAlertInstancesForRule(ctx, alerting.GetKeyWithGroup(), []models.AlertInstance{instance(alerting, "h5")}))
+
+		err := seriesStore.FullSyncWithSeries(ctx, nil, map[models.AlertRuleKey][]models.RecordingSeries{recording.GetKey(): {}}, 0, nil)
+		require.NoError(t, err)
+
+		instances, err := ng.InstanceStore.ListAlertInstances(ctx, &models.ListAlertInstancesQuery{RuleOrgID: alerting.OrgID, RuleUID: alerting.UID})
+		require.NoError(t, err)
+		require.Len(t, instances, 1)
+	})
+
+	t.Run("a full sync does not keep the row of an empty set", func(t *testing.T) {
+		require.NoError(t, seriesStore.SaveRecordingSeriesForRule(ctx, recording.GetKeyWithGroup(), nil))
+		require.EqualValues(t, 1, rowCount(t, recording))
+
+		err := seriesStore.FullSyncWithSeries(ctx,
+			[]models.AlertInstance{instance(alerting, "h6")},
+			map[models.AlertRuleKey][]models.RecordingSeries{recording.GetKey(): {}},
+			0, nil)
+		require.NoError(t, err)
+
+		require.EqualValues(t, 0, rowCount(t, recording))
+		require.EqualValues(t, 1, rowCount(t, alerting))
+	})
+
 	t.Run("deleting the series of a series-only row removes the row", func(t *testing.T) {
 		require.NoError(t, seriesStore.SaveRecordingSeriesForRule(ctx, recording.GetKeyWithGroup(), series))
 		require.EqualValues(t, 1, rowCount(t, recording))

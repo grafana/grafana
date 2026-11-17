@@ -39,7 +39,7 @@ type InstanceWriter interface {
 // RecordingSeriesStore is an optional addition to InstanceStore for the series
 // recording rules wrote. Stores that do not implement it keep working unchanged.
 type RecordingSeriesStore interface {
-	// SaveRecordingSeriesForRule overwrites the series of the rule. An empty set is saved too.
+	// SaveRecordingSeriesForRule overwrites the series of the rule. An empty set is saved as an empty row.
 	SaveRecordingSeriesForRule(ctx context.Context, key models.AlertRuleKeyWithGroup, series []models.RecordingSeries) error
 	// ListRecordingSeries returns the series of every rule in the org, by rule UID.
 	ListRecordingSeries(ctx context.Context, orgID int64) (map[string][]models.RecordingSeries, error)

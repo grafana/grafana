@@ -124,9 +124,10 @@ func (st ProtoInstanceDBStore) FullSync(ctx context.Context, instances []models.
 }
 
 // FullSyncWithSeries rewrites the table from the instances and the recording series.
-// A rule that has only series gets a row of its own.
+// A rule that has only series gets a row of its own. A rule with an empty set gets none.
 func (st ProtoInstanceDBStore) FullSyncWithSeries(ctx context.Context, instances []models.AlertInstance, series map[models.AlertRuleKey][]models.RecordingSeries, batchSize int, jitterFunc func(int) time.Duration) error {
-	if len(instances) == 0 && len(series) == 0 {
+	// Like FullSync, an empty state leaves the table alone. Empty series sets do not count as state.
+	if len(instances) == 0 && !hasSeries(series) {
 		return nil
 	}
 
