@@ -24,6 +24,7 @@ import {
   getPendingChangesDiff,
   openPendingChangesForEditing,
   savePendingChanges,
+  withNewDashboardBaseline,
 } from './pendingChangesSave';
 
 jest.mock('app/features/plugins/extensions/registry/setup', () => ({ getPluginExtensionRegistries: jest.fn() }));
@@ -57,8 +58,8 @@ function pendingChanges(overrides: Partial<DashboardPendingChanges> = {}): Dashb
   };
 }
 
-/** The dashboard page showing `pending` to a dashboard saved at generation 3, as the page loads it. */
-async function openOnPage(pending: DashboardPendingChanges): Promise<DashboardScene> {
+/** The page's preview of `pending`, as their plugin's loader supplies them. */
+async function loadOnPage(pending: DashboardPendingChanges) {
   jest.mocked(getExtensionPointPluginDependencies).mockResolvedValue(['grafana-assistant-app']);
   jest.mocked(getAppPluginConfigs).mockResolvedValue([]);
   jest.mocked(getPluginExtensionRegistries).mockResolvedValue({
@@ -66,7 +67,27 @@ async function openOnPage(pending: DashboardPendingChanges): Promise<DashboardSc
       getState: async () => ({ 'grafana/dashboard/pending-changes/v1': [{ fn: async () => pending }] }),
     },
   } as unknown as Awaited<ReturnType<typeof getPluginExtensionRegistries>>);
-  const preview = await loadPendingChangePreview('page', 'dash-1', 'chat-1');
+  return loadPendingChangePreview('page', 'dash-1', 'chat-1');
+}
+
+/** The dashboard page showing a draft, `pending` to version 0, as the page loads it. */
+async function openDraftOnPage(pending: DashboardPendingChanges, newDashboard: DashboardV2Spec) {
+  const preview = await loadOnPage(pending);
+  preview!.newDashboard = newDashboard;
+  const scene = transformSaveModelSchemaV2ToScene({
+    kind: 'DashboardWithAccessInfo',
+    apiVersion: 'dashboard.grafana.app/v2beta1',
+    metadata: { name: '', generation: 0, resourceVersion: '', creationTimestamp: '', annotations: {} },
+    access: { canEdit: true, canSave: true, canShare: true, canStar: true, canDelete: false, canAdmin: true },
+    spec: structuredClone(pending.proposed),
+  } as unknown as DashboardWithAccessInfo<DashboardV2Spec>);
+  scene.setState({ meta: { ...scene.state.meta, newDashboardUid: 'dash-1' } });
+  return scene;
+}
+
+/** The dashboard page showing `pending` to a dashboard saved at generation 3, as the page loads it. */
+async function openOnPage(pending: DashboardPendingChanges): Promise<DashboardScene> {
+  const preview = await loadOnPage(pending);
   preview!.saved = { spec: saved, generation: 3 };
   const scene = transformSaveModelSchemaV2ToScene({
     kind: 'DashboardWithAccessInfo',
@@ -174,6 +195,18 @@ describe('discarding pending changes', () => {
     finishRecording();
     await discarded;
     expect(order).toEqual(['record', 'discard']);
+  });
+
+  it("shows a draft's changes from a blank dashboard, as for one made from scratch, and saves the draft as it is", async () => {
+    const newDashboard: DashboardV2Spec = { ...defaultSpec(), title: 'New dashboard' };
+    const scene = await openDraftOnPage(pendingChanges({ baseGeneration: 0 }), newDashboard);
+    const changes = scene.getDashboardChanges();
+
+    const shown = withNewDashboardBaseline(scene, changes);
+
+    expect(shown.initialSaveModel).toEqual(newDashboard);
+    expect(Object.keys(shown.diffs)).toContain('title');
+    expect(shown.changedSaveModel).toBe(changes.changedSaveModel);
   });
 
   it('opens the saved dashboard for editing after Discard changes, which keeps editing', async () => {

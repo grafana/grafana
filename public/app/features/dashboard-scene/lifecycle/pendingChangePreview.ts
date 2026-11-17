@@ -111,6 +111,11 @@ export interface PendingChangePreview {
    * them: changes are measured from it.
    */
   saved?: { spec: DashboardV2Spec; generation: number };
+  /**
+   * The blank dashboard a new one starts from, while a draft shows them: its save form measures
+   * changes from it, as for a dashboard made from scratch.
+   */
+  newDashboard?: DashboardV2Spec;
 }
 
 const previews = new Map<string, PendingChangePreview>();

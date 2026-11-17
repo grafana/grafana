@@ -88,6 +88,36 @@ describe('recording edits to pending changes', () => {
     });
   });
 
+  it('keeps the panels in the order the layout shows them after a move, as saving the dashboard does', async () => {
+    const inOrder = (names: string[], version?: string) =>
+      ({
+        ...specWith(
+          Object.fromEntries(names.map((name) => [name, version ? { title: name, version } : { title: name }]))
+        ),
+        layout: {
+          kind: 'AutoGridLayout',
+          spec: {
+            items: names.map((name) => ({
+              kind: 'AutoGridLayoutItem',
+              spec: { element: { kind: 'ElementReference', name } },
+            })),
+          },
+        },
+      }) as unknown as DashboardV2Spec;
+    let model = inOrder(['first', 'second'], '13.0.0');
+    const scene = fakeScene(() => model);
+    startRecordingPendingChanges(scene, inOrder(['first', 'second']));
+    const history = fakeHistory();
+
+    model = inOrder(['second', 'first'], '13.0.0');
+    await recordPendingChange(scene, history, 'Move Panel');
+
+    const { proposed } = history.record.mock.calls[0][0];
+    expect(Object.keys(proposed.elements)).toEqual(['second', 'first']);
+    // What the move didn't change keeps its stored form.
+    expect(proposed.elements.first.spec).toEqual({ title: 'first' });
+  });
+
   it('records nothing when the edit changed nothing', async () => {
     const model = specWith({ hello: { title: 'Hello', version: '13.0.0' } });
     const scene = fakeScene(() => model);

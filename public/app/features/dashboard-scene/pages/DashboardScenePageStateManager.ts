@@ -1580,6 +1580,7 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
     route: DashboardRoutes
   ): Promise<DashboardWithAccessInfo<DashboardV2Spec>> {
     const created = await buildNewDashboardSaveModelV2();
+    preview.newDashboard = structuredClone(created.spec);
     if (route === DashboardRoutes.Embedded) {
       // Embedded like a saved dashboard in that route: view-only, so it can't be edited or saved there.
       created.metadata.annotations = { ...created.metadata.annotations, [AnnoKeyEmbedded]: 'embedded' };

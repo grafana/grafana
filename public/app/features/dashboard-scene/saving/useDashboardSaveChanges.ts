@@ -4,6 +4,7 @@ import { useEffect, useReducer } from 'react';
 import { SceneObjectStateChangedEvent } from '@grafana/scenes';
 
 import { getPendingChangesHistory } from '../lifecycle/pendingChangePreview';
+import { withNewDashboardBaseline } from '../lifecycle/pendingChangesSave';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { DashboardStateChangedEvent } from '../sidebar/events';
 
@@ -36,5 +37,5 @@ export function useDashboardSaveChanges(
     };
   }, [dashboard]);
 
-  return dashboard.getDashboardChanges(saveTimeRange, saveVariables, saveRefresh);
+  return withNewDashboardBaseline(dashboard, dashboard.getDashboardChanges(saveTimeRange, saveVariables, saveRefresh));
 }

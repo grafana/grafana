@@ -86,6 +86,28 @@ export function getPendingChangesDiff(scene: DashboardScene): DashboardChangeInf
   };
 }
 
+/**
+ * A draft's changes as its save form shows them: from the blank dashboard a new one starts from, as
+ * for a dashboard made from scratch, rather than from the draft as stored, which would show only the
+ * defaults the scene fills in. What Save creates stays the draft as it is.
+ */
+export function withNewDashboardBaseline(scene: DashboardScene, changes: DashboardChangeInfo): DashboardChangeInfo {
+  const preview = getScenePendingChangePreview(scene.state);
+  if (!preview?.previewing || !preview.newDashboard || !proposesNewDashboard(preview.pending)) {
+    return changes;
+  }
+  const initialSaveModel = structuredClone(preview.newDashboard);
+  const diffs = jsonDiff(initialSaveModel, changes.changedSaveModel);
+  const diffCount = Object.values(diffs).reduce((count, diff) => count + diff.length, 0);
+  return {
+    ...changes,
+    initialSaveModel,
+    diffs,
+    diffCount,
+    hasChanges: diffCount > 0 || Boolean(changes.hasFolderChanges || changes.hasPredefinedVariablesChanges),
+  };
+}
+
 export type SavePendingChangesResult = { saved: true } | { saved: false; currentGeneration?: number };
 
 /**
