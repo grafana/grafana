@@ -15,7 +15,7 @@ export function sanitizeForRestore(rule: AlertRule): AlertRule {
     Object.entries(cleanMeta.labels ?? {}).filter(([key]) => !GROUP_LABELS_TO_REMOVE.has(key))
   );
 
-  return { ...rule, metadata: { ...cleanMeta, labels: cleanLabels } };
+  return { metadata: { ...cleanMeta, labels: cleanLabels }, spec: rule.spec };
 }
 
 interface RestoreResult {
