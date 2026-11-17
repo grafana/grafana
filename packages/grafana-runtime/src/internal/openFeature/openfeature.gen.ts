@@ -136,8 +136,6 @@ export const FlagKeys = {
   DashboardsPublicDashboardBadgeFromApi: "dashboards.publicDashboardBadgeFromApi",
   /** Shows defined connections for a data source in the plugins detail page */
   DatasourceConnectionsTab: "datasourceConnectionsTab",
-  /** Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request */
-  DatasourcesAzureMonitorBatchAPI: "datasources.azureMonitorBatchAPI",
   /** Use the new datasource API groups for datasource CRUD requests, frontend flag */
   DatasourcesConfigUiUseNewDatasourceCRUDAPIs: "datasources.config.ui.useNewDatasourceCRUDAPIs",
   /** Enable support for the query gateway audit policies */
@@ -1091,17 +1089,6 @@ export const useFlagDashboardsPublicDashboardBadgeFromApi = (options?: ReactFlag
  */
 export const useFlagDatasourceConnectionsTab = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("datasourceConnectionsTab", false, options).value;
-};
-
-/**
- * Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request
- *
- * **Details:**
- * - flag key: `datasources.azureMonitorBatchAPI`
- * - default value: `true`
- */
-export const useFlagDatasourcesAzureMonitorBatchAPI = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("datasources.azureMonitorBatchAPI", true, options).value;
 };
 
 /**

@@ -103,7 +103,6 @@ declare module "@openfeature/core" {
     | "alertRuleRestore"
     | "alertingMigrationWizardUI"
     | "azureMonitorLogsBuilderEditor"
-    | "datasources.azureMonitorBatchAPI"
     | "alertingRuleRecoverDeleted"
     | "unifiedNavbars"
     | "alertingListViewV2PreviewToggle"

@@ -196,7 +196,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-03-14,infinityRunQueriesInParallel,privatePreview,@grafana/data-sources-plugins,false,false,false
 2026-02-04,alertingMigrationWizardUI,preview,@grafana/alerting-squad,false,false,true
 2025-04-02,azureMonitorLogsBuilderEditor,preview,@grafana/data-sources-plugins,false,false,false
-2026-08-12,datasources.azureMonitorBatchAPI,preview,@grafana/data-sources-plugins,false,false,false
 2025-03-27,alertingRuleRecoverDeleted,GA,@grafana/alerting-squad,false,false,false
 2025-04-02,multiTenantTempCredentials,experimental,@grafana/data-sources-plugins,false,false,false
 2025-04-09,unifiedNavbars,GA,@grafana/grafana-frontend-navigation,false,false,true

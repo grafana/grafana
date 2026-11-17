@@ -1699,14 +1699,6 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true},
 		},
 		{
-			Name:        "datasources.azureMonitorBatchAPI",
-			Description: "Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request",
-			Generate:    Generate{Go: true, React: true, LegacyFrontend: true},
-			Stage:       FeatureStagePublicPreview,
-			Owner:       grafanaDataSourcesPlugins,
-			Expression:  "true", // enabled by default
-		},
-		{
 			Name:         "alertingRuleRecoverDeleted",
 			Description:  "Enables the UI functionality to recover and view deleted alert rules",
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true, React: true}, // changes navtree from the backend

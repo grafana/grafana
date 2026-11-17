@@ -1976,7 +1976,8 @@
       "metadata": {
         "name": "datasources.azureMonitorBatchAPI",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-08-12T15:07:16Z"
+        "creationTimestamp": "2026-08-12T15:07:16Z",
+        "deletionTimestamp": "2026-11-17T23:36:29Z"
       },
       "spec": {
         "description": "Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request",
