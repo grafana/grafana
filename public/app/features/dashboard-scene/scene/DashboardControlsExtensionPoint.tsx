@@ -288,6 +288,8 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     container: css({
       display: 'inline-flex',
+      // While the dashboard is edited, each question is its own item, so they wrap rather than run past the edge.
+      flexWrap: 'wrap',
       alignItems: 'center',
       verticalAlign: 'middle',
       gap: theme.spacing(1),
