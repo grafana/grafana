@@ -6,7 +6,7 @@ For chart rendering and interactions, also read the
 These Markdown guides require no agent installation or private access. Local commands and fixtures
 below specialize those principles. Provenance and content hashes live in
 [shared-testing-source.json](../.claude/skills/shared-testing-source.json); publication of the shared
-source is pending. Update shared copies together through reviewed PRs, preserving the adjacent license.
+source is pending. Update shared copies together through reviewed PRs, preserving the [root license](../LICENSE).
 
 ## Grafana core adapter
 
