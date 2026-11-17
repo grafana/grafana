@@ -1,6 +1,7 @@
 import { cloneDeep } from 'lodash';
 
 import { config } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
 import {
   behaviors,
   ConstantVariable,
@@ -15,6 +16,7 @@ import {
   type SceneDataTransformer,
   type SceneGridItem,
   SwitchVariable,
+  ScopesVariable,
 } from '@grafana/scenes';
 import { VariableRefresh } from '@grafana/schema';
 import {
@@ -454,6 +456,44 @@ describe('transformSaveModelSchemaV2ToScene', () => {
       expect(matching).toHaveLength(1);
       // The dashboard-local variable wins, so no origin is set.
       expect(matching[0].state.origin).toBeUndefined();
+    });
+  });
+
+  describe('scopes variable', () => {
+    afterEach(() => {
+      setTestFlags({});
+    });
+
+    it('adds a ScopesVariable when the scopeFilters flag is on', () => {
+      setTestFlags({ [FlagKeys.ScopeFilters]: true });
+
+      const scene = transformSaveModelSchemaV2ToScene(cloneDeep(defaultDashboard));
+
+      const variables = scene.state.$variables?.state.variables ?? [];
+      expect(variables.some((v) => v instanceof ScopesVariable)).toBe(true);
+    });
+
+    it('does not add a ScopesVariable when the scopeFilters flag is off', () => {
+      setTestFlags({ [FlagKeys.ScopeFilters]: false });
+
+      const scene = transformSaveModelSchemaV2ToScene(cloneDeep(defaultDashboard));
+
+      const variables = scene.state.$variables?.state.variables ?? [];
+      expect(variables.some((v) => v instanceof ScopesVariable)).toBe(false);
+    });
+
+    it('does not add a ScopesVariable for public dashboards', () => {
+      setTestFlags({ [FlagKeys.ScopeFilters]: true });
+      const originalToken = config.publicDashboardAccessToken;
+      config.publicDashboardAccessToken = 'test-public-token';
+      try {
+        const scene = transformSaveModelSchemaV2ToScene(cloneDeep(defaultDashboard));
+
+        const variables = scene.state.$variables?.state.variables ?? [];
+        expect(variables.some((v) => v instanceof ScopesVariable)).toBe(false);
+      } finally {
+        config.publicDashboardAccessToken = originalToken;
+      }
     });
   });
 

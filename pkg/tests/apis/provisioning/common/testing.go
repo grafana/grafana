@@ -2723,10 +2723,20 @@ func (h *ProvisioningTestHelper) UpdateGithubConnection(
 	}
 
 	var res *unstructured.Unstructured
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+	// The controller can write status between the caller's read and this update.
+	// Each attempt uses the latest resourceVersion so a conflict can resolve.
+	err = RetryOnConflict(t, func() error {
+		latest, getErr := h.Connections.Resource.Get(t.Context(), connection.GetName(), metav1.GetOptions{})
+		if getErr != nil {
+			return getErr
+		}
+		connection.SetResourceVersion(latest.GetResourceVersion())
 		res, err = h.Connections.Resource.Update(t.Context(), connection, metav1.UpdateOptions{FieldValidation: "Strict"})
-		require.NoError(collect, err)
-	}, WaitTimeoutDefault, WaitIntervalDefault, "connection should be updated")
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
 
 	return res, nil
 }

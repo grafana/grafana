@@ -3,7 +3,6 @@ import { useCallback, useMemo } from 'react';
 
 import {
   applyFieldOverrides,
-  CoreApp,
   DataTransformerID,
   type DataFrame,
   type GrafanaTheme2,
@@ -75,7 +74,7 @@ export function TablePanel(props: Props) {
   );
   const noPanelPadding = commonTableProps.tableRefreshEnabled;
   const tableRefreshNewFeaturesEnabled = useTableRefreshNewFeatures();
-  const adHocTransformationsEnabled = tableRefreshNewFeaturesEnabled && panelContext.app !== CoreApp.PanelEditor;
+  const adHocTransformationsEnabled = tableRefreshNewFeaturesEnabled;
   const onFieldAddToAssistant = useTableFieldAssistant(props);
   const onCellAddToAssistant = useTableCellAssistant(props);
   const enableSharedCrosshair = useTableSharedCrosshair();

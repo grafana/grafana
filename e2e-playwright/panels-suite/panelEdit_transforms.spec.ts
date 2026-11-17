@@ -4,6 +4,10 @@ const SMOKE_DASHBOARD_UID = 'transforms-smoke';
 const PANEL_MULTI_FIELD_TIME_SERIES = '1';
 const PANEL_NO_TIME_FIELD = '2';
 
+test.use({
+  openFeature: { flags: { queryEditorNext: false } },
+});
+
 test.describe(
   'Panels test: Transformations',
   {
