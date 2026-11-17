@@ -1,6 +1,5 @@
 import { SceneQueryRunner, VizPanel } from '@grafana/scenes';
 
-
 import { getPendingChangesHistory, type PendingChangesHistory } from '../../lifecycle/pendingChangePreview';
 import { hasUnrecordedPendingChange, reloadKeepingEditMode } from '../../lifecycle/pendingChangesHistory';
 import { buildPanelEditScene } from '../../panel-edit/PanelEditor';
