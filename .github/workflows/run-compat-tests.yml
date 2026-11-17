@@ -124,6 +124,10 @@ jobs:
       - name: Setup Go
         id: setup-go
         uses: ./.github/actions/setup-go
+        with:
+          # The shared build cache comes from jobs with other build settings, so restoring it
+          # costs more time than it saves here.
+          cache-build: 'false'
 
       - name: Summarize the tested versions
         env:
