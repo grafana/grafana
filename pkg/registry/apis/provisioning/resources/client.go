@@ -7,6 +7,7 @@ import (
 	"slices"
 	"strings"
 	"sync"
+	"sync/atomic"
 
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -212,7 +213,7 @@ type clientFactory struct {
 // holds reports whether this factory's API server stores a collection, and so expands it. A
 // factory without a storage group is the only server there is, and holds everything.
 func (f *clientFactory) holds(collection string) bool {
-	return f.storageGroup == "" || f.storageGroup == collection
+	return f.storageGroup == "" || f.storageGroup == AnyGroup || f.storageGroup == collection
 }
 
 // supportedResources resolves the configured set to served groups, caching the first success: a
@@ -386,8 +387,64 @@ func defaultSupportedResources(supported []SupportedResource) []SupportedResourc
 	return supported
 }
 
-// DefaultGroup keys the API server that serves each group without a server of its own.
-const DefaultGroup = ""
+// SupportedResourceProvider gives the resources that provisioning supports: the configured ones,
+// plus the kinds that a source such as the app manifests adds while the process runs.
+type SupportedResourceProvider interface {
+	// Get returns the supported resources at the time of the call.
+	Get() []SupportedResource
+	// Update replaces the kinds that the source added. A configured resource, or a configured
+	// collection that covers a kind, takes precedence over the kind.
+	Update(kinds []SupportedResource)
+	// Configured returns the configured resources. They do not change.
+	Configured() []SupportedResource
+	// Added returns the kinds that the source added.
+	Added() []SupportedResource
+}
+
+func NewSupportedResourceProvider(configured []SupportedResource) SupportedResourceProvider {
+	return &supportedResourceProvider{configured: configured}
+}
+
+type supportedResourceProvider struct {
+	configured []SupportedResource
+	added      atomic.Pointer[[]SupportedResource]
+}
+
+func (s *supportedResourceProvider) Get() []SupportedResource {
+	added := s.Added()
+	if len(added) == 0 {
+		return s.configured
+	}
+	return append(slices.Clip(defaultSupportedResources(s.configured)), added...)
+}
+
+func (s *supportedResourceProvider) Update(kinds []SupportedResource) {
+	added := []SupportedResource{}
+	seen := sets.New[schema.GroupKind]()
+	for _, r := range defaultSupportedResources(s.configured) {
+		seen.Insert(r.GroupKind)
+	}
+	for _, r := range kinds {
+		if seen.Has(r.GroupKind) || storingCollection(s.configured, r.GroupKind) != "" {
+			continue
+		}
+		added = append(added, r)
+		seen.Insert(r.GroupKind)
+	}
+	s.added.Store(&added)
+}
+
+func (s *supportedResourceProvider) Configured() []SupportedResource { return s.configured }
+
+func (s *supportedResourceProvider) Added() []SupportedResource {
+	if added := s.added.Load(); added != nil {
+		return *added
+	}
+	return nil
+}
+
+// AnyGroup keys the API server that serves each group without a server of its own.
+const AnyGroup = "*"
 
 type multiClientFactory struct {
 	clientFactories map[string]ClientFactory
@@ -665,7 +722,7 @@ func (c *multiResourceClients) clientsFor(group string) (ResourceClients, bool) 
 			return clients, true
 		}
 	}
-	clients, ok := c.resourceClientsByAPIGroup[DefaultGroup]
+	clients, ok := c.resourceClientsByAPIGroup[AnyGroup]
 	return clients, ok
 }
 

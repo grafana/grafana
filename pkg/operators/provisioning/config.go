@@ -321,7 +321,7 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 	// The aggregated server is the router. It serves each group without a server URL, accepts
 	// the provisioning audience for all of them, and publishes the app manifests.
 	if aggregatedServerURL != "" {
-		apiServerURLs[resources.DefaultGroup] = aggregatedServerURL
+		apiServerURLs[resources.AnyGroup] = aggregatedServerURL
 	}
 
 	configProviders := make(map[string]apiserver.RestConfigProvider)
@@ -337,7 +337,7 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 		if group != provisioning.GROUP {
 			audiences = append(audiences, provisioning.GROUP)
 		}
-		if group == resources.DefaultGroup {
+		if group == resources.AnyGroup {
 			audiences = []string{provisioning.GROUP}
 		}
 
