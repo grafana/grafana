@@ -362,7 +362,11 @@ describe('buildTree', () => {
   it('should nest every item under the root folder when it exists', () => {
     const mergedItems = [
       { path: '', resource: { ...mockFolderResource, path: '', title: 'My Repo' } },
-      { path: 'root-file.json', file: { path: 'root-file.json', hash: 'h1' }, resource: { ...mockResource, hash: 'h1' } },
+      {
+        path: 'root-file.json',
+        file: { path: 'root-file.json', hash: 'h1' },
+        resource: { ...mockResource, hash: 'h1' },
+      },
       { path: 'orphan/nested.json', file: { path: 'orphan/nested.json', hash: 'h2' } },
     ];
 
