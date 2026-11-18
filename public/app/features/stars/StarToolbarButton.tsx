@@ -20,7 +20,7 @@ type Props = {
   title: string;
   group: string;
   kind: string;
-  id: string;
+  name: string;
 };
 
 /** Renders nothing for a user without a stars resource, such as an anonymous user, since starring would fail. */
@@ -31,7 +31,7 @@ export function StarToolbarButton(props: Props) {
   return <StarToggle {...props} />;
 }
 
-function StarToggle({ title, group, kind, id }: Props) {
+function StarToggle({ title, group, kind, name }: Props) {
   const tooltips = getStarTooltips(title);
 
   const { data: stars, isLoading } = useStarredItems(group, kind);
@@ -39,11 +39,11 @@ function StarToggle({ title, group, kind, id }: Props) {
   const isStarred = useMemo(() => {
     const starredItems = stars || [];
 
-    return starredItems.includes(id);
-  }, [id, stars]);
+    return starredItems.includes(name);
+  }, [name, stars]);
 
   const handleStarToggle = async () => {
-    const ref = { group, kind, id };
+    const ref = { group, kind, name };
     try {
       await (isStarred ? getStarsSrv().unstar(ref) : getStarsSrv().star(ref));
     } catch {
@@ -100,10 +100,10 @@ function StarToggle({ title, group, kind, id }: Props) {
  * throwing out of someone else's React tree.
  */
 export function StarToolbarButtonExposed(props: Partial<Props>) {
-  const { title, group, kind, id } = props;
-  if (!title || !group || !kind || !id) {
-    console.error('[StarToolbarButton] Pass title, group, kind and id: the object to star.');
+  const { title, group, kind, name } = props;
+  if (!title || !group || !kind || !name) {
+    console.error('[StarToolbarButton] Pass title, group, kind and name: the object to star.');
     return null;
   }
-  return <StarToolbarButton {...props} title={title} group={group} kind={kind} id={id} />;
+  return <StarToolbarButton {...props} title={title} group={group} kind={kind} name={name} />;
 }

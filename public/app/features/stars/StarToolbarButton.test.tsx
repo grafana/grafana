@@ -42,7 +42,8 @@ const findStarButton = (title: string, isStarred: boolean) =>
 const setup = (
   itemForStarButton: typeof existingStarredItem | typeof itemToStar,
   { group = 'dashboard.grafana.app', kind = 'Dashboard' } = {}
-) => render(<StarToolbarButton title={itemForStarButton.title} group={group} kind={kind} id={itemForStarButton.uid} />);
+) =>
+  render(<StarToolbarButton title={itemForStarButton.title} group={group} kind={kind} name={itemForStarButton.uid} />);
 
 testWithStarsUser();
 
@@ -123,7 +124,12 @@ describe('StarToolbarButton', () => {
       )
     );
     const { user } = render(
-      <StarToolbarButton title={itemToStar.title} group="dashboard.grafana.app" kind="Dashboard" id={itemToStar.uid} />
+      <StarToolbarButton
+        title={itemToStar.title}
+        group="dashboard.grafana.app"
+        kind="Dashboard"
+        name={itemToStar.uid}
+      />
     );
 
     await user.click(await findStarButton(itemToStar.title, false));

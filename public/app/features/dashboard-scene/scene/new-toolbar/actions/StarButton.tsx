@@ -8,5 +8,5 @@ export const StarButton = ({ dashboard }: ToolbarActionProps) => {
     return null;
   }
 
-  return <StarToolbarButton group="dashboard.grafana.app" kind="Dashboard" id={uid} title={title} />;
+  return <StarToolbarButton group="dashboard.grafana.app" kind="Dashboard" name={uid} title={title} />;
 };

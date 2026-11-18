@@ -14,7 +14,11 @@ import { appKindListPathResolver } from './appKindPages';
 interface StarredKindBase {
   group: string;
   kind: string;
-  /** The kind string search rows and nav leaves carry: `dashboard`, `folder`, or `group/Kind` for an app kind. */
+  /**
+   * The kind string search rows and nav leaves carry. `dashboard` and `folder` are the dashboard index's own
+   * spelling, which it filters on and labels its rows with. An app kind's hits are labelled by the client, as
+   * `group/Kind`: kind names repeat across groups, and two kinds sharing a string would share one entry.
+   */
   searchKind: string;
   /** Singular display name. */
   title(): string;

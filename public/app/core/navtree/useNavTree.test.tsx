@@ -79,7 +79,7 @@ const StarFolderHarness = ({ uid }: { uid: string }) => {
       <button
         onClick={async () => {
           try {
-            await getStarsSrv().star({ group: 'folder.grafana.app', kind: 'Folder', id: uid });
+            await getStarsSrv().star({ group: 'folder.grafana.app', kind: 'Folder', name: uid });
           } catch {
             // The collections client reports the failure
           }
@@ -289,7 +289,7 @@ describe('useNavTree', () => {
 
     // The plugin saved the object under a new title, then tells Grafana
     server.use(getKindSearchHandler(MOCK_STARRED_KIND_SERVED, [{ name: THING_UUID, title: 'New title' }]));
-    getStarsSrv().resourceUpdated({ group: THING_GROUP, kind: THING_KIND, id: THING_UUID });
+    getStarsSrv().resourceUpdated(THING_UUID);
 
     await waitFor(() => {
       expect(screen.getByTestId(THING_ROW)).toHaveTextContent('New title');

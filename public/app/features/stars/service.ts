@@ -52,12 +52,12 @@ export class CollectionsStarsSrv implements StarsSrv {
     });
   }
 
-  resourceUpdated({ id }: StarredResourceRef): void {
-    dispatch(invalidateStarredSearchFor([id]));
+  resourceUpdated(name: string): void {
+    dispatch(invalidateStarredSearchFor([name]));
   }
 
-  resourceDeleted({ id }: StarredResourceRef): void {
-    dispatch(invalidateStarredSearchFor([id]));
+  resourceDeleted(name: string): void {
+    dispatch(invalidateStarredSearchFor([name]));
   }
 
   private async mutate(ref: StarredResourceRef, isStarred: boolean): Promise<void> {
@@ -65,13 +65,15 @@ export class CollectionsStarsSrv implements StarsSrv {
       throw new Error('Cannot change stars while signed out');
     }
 
-    const { group, kind, id } = ref;
-    const name = `user-${contextSrv.user.uid}`;
+    const { group, kind, name } = ref;
     const endpoint = isStarred ? collectionsAPIv1alpha1.endpoints.addStar : collectionsAPIv1alpha1.endpoints.removeStar;
 
     // Rejects on server error; the Stars tag invalidation refetches listStars, so starred() and every view follow.
     // Untracked: nothing reads this mutation's state, and a tracked entry stays in the store until it is reset
-    await dispatch(endpoint.initiate({ id, name, group, kind }, { track: false })).unwrap();
+    // The route names the starred object `id`, and its `name` is the user's Stars object
+    await dispatch(
+      endpoint.initiate({ group, kind, id: name, name: `user-${contextSrv.user.uid}` }, { track: false })
+    ).unwrap();
   }
 
   /** The starrable kind behind group/kind. App kinds are discovered first; Grafana's own need no discovery. */
