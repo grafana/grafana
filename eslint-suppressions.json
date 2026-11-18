@@ -2952,11 +2952,6 @@
       "count": 1
     }
   },
-  "public/app/features/home/DashboardTabs/DashboardTabs.tsx": {
-    "react-hooks/set-state-in-effect": {
-      "count": 1
-    }
-  },
   "public/app/features/home/Overview/useOverviewPlacement.ts": {
     "react-hooks/set-state-in-effect": {
       "count": 1

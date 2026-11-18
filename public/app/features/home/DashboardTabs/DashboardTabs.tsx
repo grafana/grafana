@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useAsyncRetry } from 'react-use';
 
 import { t, Trans } from '@grafana/i18n';
@@ -55,9 +55,6 @@ export function DashboardTabs() {
   const hasDashboards = hasMostUsed || hasStarred || recent.kinds.includes('dashboard');
   const { foldersByUid } = useDashboardLocationInfo(hasDashboards);
 
-  // Auto-switch to the non-empty tab when initial data finishes loading
-  const didAutoSwitch = useRef(false);
-
   // Tabs worth landing on, in display order.
   const selectableTabs = useMemo(
     () => [
@@ -68,28 +65,12 @@ export function DashboardTabs() {
     [hasRecent, hasMostUsed, hasStarred]
   );
 
-  useEffect(() => {
-    if (didAutoSwitch.current || initialLoading) {
-      return;
-    }
-
-    // Already on a tab with content: lock in and stay.
-    if (selectableTabs.includes(activeTab)) {
-      didAutoSwitch.current = true;
-      return;
-    }
-
-    // Current tab is empty - switch to the first tab with content
-    const [target] = selectableTabs;
-    if (target) {
-      setActiveTab(target);
-      didAutoSwitch.current = true;
-    }
-  }, [initialLoading, selectableTabs, activeTab]);
-
   // Latch once loaded so a later per-source refetch can't flash the skeleton back.
   if (!initialLoading && !initialLoadDone) {
     setInitialLoadDone(true);
+    if (!selectableTabs.includes(activeTab) && selectableTabs[0]) {
+      setActiveTab(selectableTabs[0]);
+    }
   }
 
   // The Recent footer belongs to its list: only once the list is loaded with rows, an empty row of the same height
