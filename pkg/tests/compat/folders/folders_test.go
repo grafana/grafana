@@ -9,7 +9,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"slices"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -337,7 +339,7 @@ func checkChildren(t *testing.T, h *apis.K8sTestHelper, v string, tr tree) {
 		for pages := 0; ; pages++ {
 			require.Less(t, pages, maxPages, "children of %s: the continue token never ran out", name)
 			var page childrenPage
-			getJSON(t, h, h.Org1.Admin, subresourcePath(h, v, name, fmt.Sprintf("children?limit=%d&continue=%s", limit, next)), &page)
+			getJSON(t, h, h.Org1.Admin, subresourcePath(h, v, name, childrenQuery(limit, next)), &page)
 			require.LessOrEqual(t, len(page.Items), limit)
 			for _, item := range page.Items {
 				names = append(names, item.Metadata.Name)
@@ -351,6 +353,11 @@ func checkChildren(t *testing.T, h *apis.K8sTestHelper, v string, tr tree) {
 	require.ElementsMatch(t, []string{child, sibling}, children(tr.parent, 1), "children of %s, one per page", tr.parent)
 	require.Empty(t, children(tr.otherParent, 10), "children of %s", tr.otherParent)
 	require.Equal(t, []string{grandchild}, children(child, 10))
+}
+
+// childrenQuery is the children subresource with a page size and a continue token.
+func childrenQuery(limit int, token string) string {
+	return "children?" + url.Values{"limit": {strconv.Itoa(limit)}, "continue": {token}}.Encode()
 }
 
 type descendantCounts struct {
