@@ -129,7 +129,7 @@ func TestStreamingRenderDecoderEnabled(t *testing.T) {
 			s := &Service{flags: flags}
 			assert.True(t, s.streamingRenderDecoderEnabled(withOpenFeatureConfig(ctx, providerType, "http://flags.invalid", `{"slug":"mystack","stackId":"1"}`), pluginCtx))
 			assert.Equal(t, "stacks-1", flags.evalCtx.TargetingKey())
-			assert.Equal(t, map[string]any{"slug": "mystack", "stackId": "1"}, flags.evalCtx.Attributes())
+			assert.Equal(t, map[string]any{"namespace": "stacks-1", "slug": "mystack", "stackId": "1"}, flags.evalCtx.Attributes())
 		})
 	}
 
@@ -138,13 +138,30 @@ func TestStreamingRenderDecoderEnabled(t *testing.T) {
 		s := &Service{flags: flags}
 		assert.True(t, s.streamingRenderDecoderEnabled(withOpenFeatureConfig(ctx, "features-service", "http://flags.invalid", `{"namespace":"stacks-2"}`), backend.PluginContext{}))
 		assert.Equal(t, "stacks-2", flags.evalCtx.TargetingKey())
+		assert.Equal(t, map[string]any{"namespace": "stacks-2"}, flags.evalCtx.Attributes())
 	})
 
-	t.Run("evaluates without host attributes when discovery is not configured", func(t *testing.T) {
+	t.Run("the host namespace attribute wins over the plugin namespace", func(t *testing.T) {
+		flags := &fakeFlags{value: true}
+		s := &Service{flags: flags}
+		assert.True(t, s.streamingRenderDecoderEnabled(withOpenFeatureConfig(ctx, "features-service", "http://flags.invalid", `{"namespace":"stacks-9"}`), pluginCtx))
+		assert.Equal(t, "stacks-1", flags.evalCtx.TargetingKey())
+		assert.Equal(t, map[string]any{"namespace": "stacks-9"}, flags.evalCtx.Attributes())
+	})
+
+	t.Run("sets the namespace attribute when discovery is not configured", func(t *testing.T) {
 		flags := &fakeFlags{value: true}
 		s := &Service{flags: flags}
 		assert.True(t, s.streamingRenderDecoderEnabled(ctx, pluginCtx))
 		assert.Equal(t, "stacks-1", flags.evalCtx.TargetingKey())
+		assert.Equal(t, map[string]any{"namespace": "stacks-1"}, flags.evalCtx.Attributes())
+	})
+
+	t.Run("sets no namespace attribute without a namespace", func(t *testing.T) {
+		flags := &fakeFlags{value: true}
+		s := &Service{flags: flags}
+		assert.True(t, s.streamingRenderDecoderEnabled(ctx, backend.PluginContext{}))
+		assert.Empty(t, flags.evalCtx.TargetingKey())
 		assert.Empty(t, flags.evalCtx.Attributes())
 	})
 
@@ -166,7 +183,7 @@ func TestStreamingRenderDecoderEnabledOverOFREP(t *testing.T) {
 		s := service()
 		assert.True(t, s.streamingRenderDecoderEnabled(ctx, pluginCtx))
 		assert.True(t, s.streamingRenderDecoderEnabled(ctx, pluginCtx))
-		assert.Equal(t, []map[string]any{{"targetingKey": "stacks-1", "slug": "mystack"}}, host.requests())
+		assert.Equal(t, []map[string]any{{"targetingKey": "stacks-1", "namespace": "stacks-1", "slug": "mystack"}}, host.requests())
 		assert.Zero(t, s.flags.(*fakeFlags).calls)
 	})
 

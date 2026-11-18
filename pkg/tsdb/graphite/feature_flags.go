@@ -49,14 +49,18 @@ func (s *Service) streamingRenderDecoderEnabled(ctx context.Context, pluginCtx b
 	return err == nil && enabled
 }
 
-// flagEvaluationContext targets the plugin namespace and adds the host's
-// OpenFeature context attributes, because the global provider sets no targeting key.
+// flagEvaluationContext sets the plugin namespace as the targeting key and the namespace
+// attribute, then adds the host's OpenFeature context attributes, which win on a name clash.
 func flagEvaluationContext(pluginCtx backend.PluginContext, hostAttrs map[string]string) openfeature.EvaluationContext {
-	attrs := make(map[string]any, len(hostAttrs))
+	namespace := cmp.Or(pluginCtx.Namespace, hostAttrs["namespace"])
+	attrs := make(map[string]any, len(hostAttrs)+1)
+	if namespace != "" {
+		attrs["namespace"] = namespace
+	}
 	for k, v := range hostAttrs {
 		attrs[k] = v
 	}
-	return openfeature.NewEvaluationContext(cmp.Or(pluginCtx.Namespace, hostAttrs["namespace"]), attrs)
+	return openfeature.NewEvaluationContext(namespace, attrs)
 }
 
 // ofrepFlags evaluates flags against the host's OFREP endpoint and caches each
