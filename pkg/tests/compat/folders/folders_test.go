@@ -267,6 +267,12 @@ func checkChild(t *testing.T, h *apis.K8sTestHelper, version string, tr tree) {
 	require.Equal(t, folderGR.WithVersion(version).GroupVersion().String(), obj.GetAPIVersion())
 	require.Equal(t, tr.childTitle, title(t, obj))
 	require.Equal(t, tr.parent, obj.GetAnnotations()[utils.AnnoKeyFolder])
+	// Clients read progress from the folder itself, not only from the status endpoint.
+	raw, err := json.Marshal(obj.Object)
+	require.NoError(t, err)
+	var got folderStatus
+	require.NoError(t, json.Unmarshal(raw, &got))
+	requireStatus(t, tr, got, "GET "+version)
 	checkStatus(t, h, version, tr)
 }
 
@@ -428,10 +434,15 @@ type folderStatus struct {
 func checkStatus(t *testing.T, h *apis.K8sTestHelper, v string, tr tree) {
 	var got folderStatus
 	getJSON(t, h, h.Org1.Admin, subresourcePath(h, v, child, "status"), &got)
-	require.Equal(t, tr.childTitle, got.Spec.Title)
-	require.Equal(t, "InProgress", got.Status.CascadeDelete.State)
-	require.EqualValues(t, 3, got.Status.CascadeDelete.Total)
-	require.Equal(t, tr.remaining, got.Status.CascadeDelete.Remaining)
+	requireStatus(t, tr, got, "GET "+v+" status")
+}
+
+func requireStatus(t *testing.T, tr tree, got folderStatus, read string) {
+	t.Helper()
+	require.Equal(t, tr.childTitle, got.Spec.Title, read)
+	require.Equal(t, "InProgress", got.Status.CascadeDelete.State, read)
+	require.EqualValues(t, 3, got.Status.CascadeDelete.Total, read)
+	require.Equal(t, tr.remaining, got.Status.CascadeDelete.Remaining, read)
 }
 
 type legacyFolder struct {
