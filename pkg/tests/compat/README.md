@@ -47,7 +47,6 @@ Each version follows its own `skip.yaml`, and stale entries fail the test, so th
 The smoke test cannot check field values or behavior across several objects.
 For that, add a package next to `folders/` and give it a CODEOWNERS entry.
 `folders/` builds a small tree, has the other version move folders through both the k8s and the legacy API, and checks nesting in every served version, the `parents`, `children` (with paging), `counts`, `access`, and `status` subresources, folder permissions, list pagination and label selectors, and deleting a non-empty subtree.
-Subresources the other version does not serve yet are skipped, so only routes both versions serve are part of the contract (`compat.Resource.Serves`).
 Copy it as a starting point.
 The package needs:
 
