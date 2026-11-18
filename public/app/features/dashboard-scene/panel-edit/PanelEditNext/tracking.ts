@@ -1,9 +1,8 @@
 import { debounce } from 'lodash';
 
 import { faro } from '@grafana/faro-web-sdk';
-import { getAppEvents, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
-import { PanelEditNextFeedbackEvent } from 'app/types/events';
 
 import { QueryEditorType } from './constants';
 
@@ -135,18 +134,6 @@ export function trackEditorVersionToggle(direction: 'upgrade' | 'downgrade') {
   reportInteraction(EVENT_PANEL_EDIT_NEXT, payload);
 }
 
-export function trackBannerDismiss() {
-  reportInteraction(EVENT_PANEL_EDIT_NEXT, {
-    action: 'dismiss_version_banner',
-  });
-}
-
-export function trackFeedbackClick() {
-  reportInteraction(EVENT_PANEL_EDIT_NEXT, {
-    action: 'click_feedback_link',
-  });
-}
-
 export function trackSidebarSizeToggle(direction: 'expand' | 'collapse') {
   reportInteraction(EVENT_PANEL_EDIT_NEXT, {
     action: 'toggle_sidebar_size',
@@ -195,16 +182,4 @@ export function trackRenameInitiated() {
     action: 'rename_initiated',
     item_type: QueryEditorType.Query,
   });
-}
-
-export function startFeedbackSurvey(): void {
-  const isPanelEditNextFeedbackEventEnabled = getFeatureFlagClient().getBooleanValue(
-    FlagKeys.GrafanaPanelEditNextFeedbackEvent,
-    false
-  );
-  if (isPanelEditNextFeedbackEventEnabled) {
-    // Fire an event for grafana-setupguide-app to detect, which will show the survey in Cloud.
-    getAppEvents().publish(new PanelEditNextFeedbackEvent());
-    return;
-  }
 }

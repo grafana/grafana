@@ -7977,16 +7977,6 @@
     "query-editor": {
       "query": "Query"
     },
-    "query-editor-banner": {
-      "description-classic": "Try the improved query editing experience.",
-      "description-new": "Welcome to the improved query editing experience.",
-      "dismiss": "Dismiss",
-      "downgrade-title": "New query editor",
-      "give-feedback": "Give feedback",
-      "go-back": "Back to classic",
-      "try-it": "Try it out",
-      "upgrade-title": "New editor available"
-    },
     "query-variable-editor": {
       "modal": {
         "apply": "Apply",

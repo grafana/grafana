@@ -1,7 +1,6 @@
 import { type PointerEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { useLocalStorage, useWindowSize } from 'react-use';
 
-import { useFlagQueryEditorNext } from '@grafana/runtime/internal';
 import { useTheme2 } from '@grafana/ui';
 import { MIN_SUGGESTIONS_PANE_WIDTH } from 'app/features/panel/suggestions/constants';
 
@@ -16,7 +15,6 @@ import {
   DEFAULT_SIDEBAR_WIDTH,
   DEFAULT_VIZ_RATIO,
   MIN_DATA_PANE_WIDTH,
-  QUERY_EDITOR_BANNER_DISMISSED_KEY,
   QUERY_EDITOR_SIDEBAR_COLLAPSED_KEY,
   QUERY_EDITOR_SIDEBAR_SIZE_KEY,
   QUERY_EDITOR_SIDEBAR_WIDTH_KEY,
@@ -37,15 +35,6 @@ export function getDefaultSidebarWidth(windowWidth: number): number {
     DEFAULT_SIDEBAR_WIDTH,
     Math.max(SIDEBAR_COLLAPSE_BELOW_PIXELS, Math.round(windowWidth * DEFAULT_SIDEBAR_WINDOW_RATIO))
   );
-}
-
-export function useQueryEditorBanner() {
-  const [dismissed = false, setDismissed] = useLocalStorage(QUERY_EDITOR_BANNER_DISMISSED_KEY, false);
-  const isQueryEditorNextEnabled = useFlagQueryEditorNext();
-  const showBanner = isQueryEditorNextEnabled && !dismissed;
-  const dismissBanner = useCallback(() => setDismissed(true), [setDismissed]);
-
-  return { showBanner, dismissBanner };
 }
 
 export function usePanelEditorShell(model: PanelEditor) {
