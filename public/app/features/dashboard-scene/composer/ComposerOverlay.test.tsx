@@ -1872,17 +1872,32 @@ describe('hover pass-through', () => {
     expect(seen.mousedown).not.toHaveBeenCalled();
   });
 
-  it('keeps blocking presses and clicks while Select is off, and still passes moves', () => {
+  it('passes presses and clicks to the document while no pick is pending, so it works as outside Composer', () => {
     setup();
+    const { plot, seen } = panelInContainer();
+
+    const pressed = fireEvent.pointerDown(plot, { clientX: 200, clientY: 350, button: 0 });
+    fireEvent.mouseDown(plot, { clientX: 200, clientY: 350, button: 0 });
+    fireEvent.click(plot, { clientX: 200, clientY: 350 });
+    fireEvent.pointerMove(plot, { clientX: 210, clientY: 360 });
+
+    expect(pressed).toBe(true);
+    expect(seen.pointerdown).toHaveBeenCalledTimes(1);
+    expect(seen.mousedown).toHaveBeenCalledTimes(1);
+    expect(seen.click).toHaveBeenCalledTimes(1);
+    expect(seen.pointermove).toHaveBeenCalledTimes(1);
+  });
+
+  it('holds presses again while paused, even with no pick pending', () => {
+    const { session } = setup();
+    act(() => session.setPaused(true));
     const { plot, seen } = panelInContainer();
 
     fireEvent.pointerDown(plot, { clientX: 200, clientY: 350, button: 0 });
     fireEvent.click(plot, { clientX: 200, clientY: 350 });
-    fireEvent.pointerMove(plot, { clientX: 210, clientY: 360 });
 
     expect(seen.pointerdown).not.toHaveBeenCalled();
     expect(seen.click).not.toHaveBeenCalled();
-    expect(seen.pointermove).toHaveBeenCalledTimes(1);
   });
 
   it('lets the wheel scroll', () => {

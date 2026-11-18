@@ -184,6 +184,7 @@ import { clearUnsavedDashboardConsent, copyDashboardConsent } from './sandbox-co
 import { type AnyDashboardLayoutManager, type DashboardLayoutManager } from './types/DashboardLayoutManager';
 import {
   isArrangingPlan,
+  canArrangeLayout,
   isFullDashboardEditing,
   isDashboardReviewing,
   type DashboardSceneLike,
@@ -617,7 +618,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     const presentationSubscription = this.subscribeToState((state, previousState) => {
       if (
         isDashboardReviewing(state) &&
-        (state.body !== previousState.body || state.sidebar !== previousState.sidebar)
+        (state.body !== previousState.body ||
+          state.sidebar !== previousState.sidebar ||
+          state.composerEditing !== previousState.composerEditing)
       ) {
         this.applyDashboardMode();
       }
@@ -1137,7 +1140,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   public applyDashboardMode() {
     const fullEditing = isFullDashboardEditing(this.state);
-    this.state.body.editModeChanged?.(fullEditing);
+    this.state.body.editModeChanged?.(canArrangeLayout(this.state));
     if (this.state.isEditing) {
       this.activateSidebar();
     }
@@ -1453,7 +1456,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     });
 
     // Ensure the restored layout stays editable.
-    restoredState.body.editModeChanged?.(isFullDashboardEditing(this.state));
+    restoredState.body.editModeChanged?.(canArrangeLayout(this.state));
 
     this.setState({
       ...restoredState,

@@ -90,7 +90,7 @@ const EMPTY_LAYOUT: Layout = {
  *
  * The layer itself takes no pointer events: outlines, the hover outline, the region draft and the hint are
  * drawn on it, so pointer moves and the wheel reach the document underneath (tooltips, crosshairs and hover
- * states keep working). Presses, clicks and drags on the document body are Composer's instead: taken on the
+ * states keep working). While a pick is pending, presses, clicks and drags on the document body are Composer's: taken on the
  * window in the capture phase before anything underneath sees them, so panel drag, graph drag-to-zoom,
  * menus and links never start. With Select on, a click picks the element under it and a press that moves
  * 8px draws a region, or selects the elements it covers when the pick asks for that; with Screenshot, a drag
@@ -654,6 +654,11 @@ export function ComposerOverlay({
   // Presses, clicks and drags on the document body are Composer's; pointer moves and the wheel pass through.
   // On the window in the capture phase, so nothing underneath sees a press it would start a drag from.
   useEffect(() => {
+    // With no pick pending (the plugin's Pointer tool) the body works as it does outside Composer: drag and drop,
+    // menus and links. A paused or capturing overlay still holds it, so a turn or a screenshot is not disturbed.
+    if (!picking && !paused && !capturing) {
+      return undefined;
+    }
     /** A tab header keeps switching tabs, except while a capture renders the current one. */
     const isUsableTab = (target: Element) => !capturing && Boolean(target.closest(TAB_SELECTOR));
     /**
