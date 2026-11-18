@@ -78,6 +78,10 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 		utils.AnnoKeyManagerKind:     string(utils.ManagerKindClassicFP), //nolint:staticcheck
 		utils.AnnoKeyManagerIdentity: "some-provisioner",
 	}
+	grafanaCloud := map[string]string{
+		utils.AnnoKeyManagerKind:     string(utils.ManagerKindGrafanaCloud),
+		utils.AnnoKeyManagerIdentity: "grafanacloud",
+	}
 	newDashboard := func(annotations map[string]string) *dashv1.Dashboard {
 		return &dashv1.Dashboard{
 			Spec:       common.Unstructured{},
@@ -100,6 +104,28 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 			deletionOptions:  metav1.DeleteOptions{GracePeriodSeconds: nil},
 			expectedError:    true,
 			expectBadRequest: true,
+		},
+		{
+			name:             "should block deletion of a grafana-cloud dashboard",
+			existingObj:      newDashboard(grafanaCloud),
+			deletionOptions:  metav1.DeleteOptions{GracePeriodSeconds: nil},
+			expectedError:    true,
+			expectBadRequest: true,
+		},
+		{
+			name: "should block deletion of a grafana-cloud dashboard without a manager identity",
+			existingObj: newDashboard(map[string]string{
+				utils.AnnoKeyManagerKind: string(utils.ManagerKindGrafanaCloud),
+			}),
+			deletionOptions:  metav1.DeleteOptions{GracePeriodSeconds: nil},
+			expectedError:    true,
+			expectBadRequest: true,
+		},
+		{
+			name:            "should not run the check for a grafana-cloud dashboard if grace period is set to 0",
+			existingObj:     newDashboard(grafanaCloud),
+			deletionOptions: metav1.DeleteOptions{GracePeriodSeconds: &zeroInt64},
+			expectedError:   false,
 		},
 		{
 			name:            "should return an error if the existing dashboard is missing",
