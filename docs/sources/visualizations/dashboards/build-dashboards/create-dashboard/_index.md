@@ -335,6 +335,8 @@ There are default parameters to constrain the layout, and you can update these t
 - **Fill screen**: Toggle the switch on to have the panel fill the entire height of the screen. If the panel is in a row, the **Fill screen** toggle for the row must also be enabled (refer to [grouping configuration options](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-groupings/#grouping-configuration-options)). When **Fill screen** is on, Grafana hides the [Auto fit](#auto-fit-panels-to-content) option.
 - **Auto fit**: Toggle the switch on to size panels to their content instead of to a fixed row height. This option is available only when **Fill screen** is off, and Grafana hides **Fill screen** while **Auto fit** is on. For more information, refer to [Auto fit panels to content](#auto-fit-panels-to-content). (Public preview)
 
+<!--TODO: Review lines 335 & 336-->
+
 If you try to resize a panel in auto grid layout, a dialog box opens with the following options:
 
 - **Edit auto layout**: Adjust the layout configuration.
@@ -356,22 +358,6 @@ When you lower **Min height**, a short text panel doesn't leave empty space, and
 
 **Auto fit** works only with the built-in **Table** and **Text** visualizations.
 Other visualizations, such as **Time series**, keep the row height, even when you turn on **Auto fit** for the layout.
-
-#### Enable the feature toggle
-
-The `grafana.dashboardsAutoHeightPanels` feature toggle is off by default.
-While it's off, Grafana hides the **Auto fit** options and ignores any **Auto fit** settings saved in a dashboard, but it doesn't remove them.
-
-To enable it in a self-managed instance, add the following to your Grafana configuration file, and then restart Grafana:
-
-```ini
-[feature_toggles]
-grafana.dashboardsAutoHeightPanels = true
-```
-
-To set a feature toggle in other ways, such as environment variables, refer to the [`feature_toggles` section of Configure Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#feature_toggles).
-
-If you use Grafana Cloud, contact Grafana Support to enable the feature toggle.
 
 #### Auto fit options
 
