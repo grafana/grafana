@@ -29,36 +29,47 @@ const PROMPT_OVERLAP = 24;
 const MIN_HEIGHT_WITH_TEMPLATES = 360;
 
 /**
- * Height that ends the landing at the bottom of the area its dashboard scrolls in, so the template grid scrolls
- * inside its panel and the "build it yourself" actions under it stay in view. The dashboard body grows with its
- * content, so no CSS height chain reaches this far down.
+ * Sizes the landing to the whole area its dashboard scrolls in, from the top edge to the bottom, so the content
+ * can be centered in it, the template grid scrolls inside its panel, and the "build it yourself" actions under it
+ * stay in view. The dashboard body grows with its content, so no CSS height chain reaches this far down, and the
+ * empty-state wrapper's top padding is pulled back into the area (`pullUp`).
  */
 function useFitToScrollArea(enabled: boolean) {
   const ref = useRef<HTMLDivElement>(null);
-  const [height, setHeight] = useState<number>();
+  const [fit, setFit] = useState<{ height: number; pullUp: number }>();
 
   useLayoutEffect(() => {
     const element = ref.current;
     if (!enabled || !element) {
-      setHeight(undefined);
+      setFit(undefined);
       return;
     }
     const update = () => {
-      let scrollArea = element.parentElement;
+      const parent = element.parentElement;
+      let scrollArea = parent;
       while (scrollArea && !/(auto|scroll)/.test(getComputedStyle(scrollArea).overflowY)) {
         scrollArea = scrollArea.parentElement;
       }
-      const bottom = scrollArea
-        ? scrollArea.getBoundingClientRect().bottom - parseFloat(getComputedStyle(scrollArea).paddingBottom || '0')
-        : window.innerHeight;
-      setHeight(Math.max(MIN_HEIGHT_WITH_TEMPLATES, Math.floor(bottom - element.getBoundingClientRect().top)));
+      if (!parent || !scrollArea) {
+        return;
+      }
+      const areaStyle = getComputedStyle(scrollArea);
+      const areaRect = scrollArea.getBoundingClientRect();
+      const areaTop = areaRect.top + parseFloat(areaStyle.paddingTop || '0');
+      const areaBottom = areaRect.bottom - parseFloat(areaStyle.paddingBottom || '0');
+      // Where the landing starts without the pull-up: the parent's content edge, which its own margin never moves.
+      const naturalTop = parent.getBoundingClientRect().top + parseFloat(getComputedStyle(parent).paddingTop || '0');
+      setFit({
+        height: Math.max(MIN_HEIGHT_WITH_TEMPLATES, Math.floor(areaBottom - areaTop)),
+        pullUp: Math.max(0, Math.floor(naturalTop - areaTop)),
+      });
     };
     update();
     window.addEventListener('resize', update);
     return () => window.removeEventListener('resize', update);
   }, [enabled]);
 
-  return { ref, height };
+  return { ref, fit };
 }
 
 export function AssistantDashboardEmpty({ dashboard }: Props) {
@@ -75,7 +86,7 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
   const { testDataSource, showGrafanaTemplates, showCustomTemplates, isAvailable } =
     useTemplateDashboardsAvailability();
   const showTemplates = isAvailable && !assistantDriven;
-  const { ref: fitRef, height: fitHeight } = useFitToScrollArea(showTemplates);
+  const { ref: fitRef, fit } = useFitToScrollArea(showTemplates);
   // The picked template travels to the Assistant as a context pill in the prompt.
   const [template, setTemplate] = useState<TemplateSelection>();
   const hostContextItems = useMemo(() => (template ? [template.contextItem] : []), [template]);
@@ -156,7 +167,7 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
   }, [assistantDriven, sidebar]);
 
   return (
-    <div ref={fitRef} className={styles.root} style={fitHeight ? { height: fitHeight } : undefined}>
+    <div ref={fitRef} className={styles.root} style={fit ? { height: fit.height, marginTop: -fit.pullUp } : undefined}>
       <div className={cx(styles.content, showTemplates && styles.contentWithTemplates)}>
         <div className={styles.top}>
           <Icon name="apps" size="xxl" className={styles.appsIcon} />
@@ -229,11 +240,13 @@ function getStyles(theme: GrafanaTheme2) {
       padding: theme.spacing(6, 4),
     }),
     // Room for the template grid's columns under the prompt, and a fixed height for the grid to scroll in.
+    // Centered in the dashboard's free space, with the same room above and below; a long template grid takes
+    // what is left and scrolls inside its panel.
     contentWithTemplates: css({
       maxWidth: 1040,
       height: '100%',
-      // The empty-state wrapper above already leaves room; the grid gets the rest.
-      paddingTop: theme.spacing(1),
+      justifyContent: 'center',
+      paddingTop: theme.spacing(3),
       paddingBottom: theme.spacing(3),
     }),
     top: css({
