@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/setting"
@@ -91,10 +92,10 @@ type Extension interface {
 	PostProcessOpenAPI(string, string, map[string]*spec3.Path)
 	Validate(context.Context, admission.Attributes) (bool, *apierrors.StatusError)
 	Mutate(context.Context, admission.Attributes) (bool, error)
-	AuthorizerSubresourceHandlers() map[string]authsvc.SubresourceCheck
+	GetAuthorizer(claims.AccessClient) authorizer.Authorizer
 }
 
-// There are no extensions in OSS by default so use a no-op interface.
+// There are no extensions in OSS by default so use a no-op implementation.
 type NoopExtension struct{}
 
 func (*NoopExtension) RestStorage() map[string]rest.Storage {
@@ -109,8 +110,8 @@ func (*NoopExtension) Validate(context.Context, admission.Attributes) (bool, *ap
 func (*NoopExtension) Mutate(context.Context, admission.Attributes) (bool, error) {
 	return false, nil
 }
-func (*NoopExtension) AuthorizerSubresourceHandlers() map[string]authsvc.SubresourceCheck {
-	return make(map[string]authsvc.SubresourceCheck)
+func (*NoopExtension) GetAuthorizer(claims.AccessClient) authorizer.Authorizer {
+	return nil
 }
 
 func ProvideNoopExtension() Extension {
@@ -461,8 +462,21 @@ spec:
 // For Secrets, this is not the case, but if we want to make it so, we need to update this ResourceAuthorizer to check the containing folder.
 // If we ever want to do that, get guidance from IAM first as well.
 func (b *SecretAPIBuilder) GetAuthorizer() authorizer.Authorizer {
-	subresourceHandlers := b.extension.AuthorizerSubresourceHandlers()
-	return authsvc.NewResourceAuthorizerWithSubresourceHandlers(b.accessClient, subresourceHandlers)
+	resourceAuthorizer := b.extension.GetAuthorizer(b.accessClient)
+	if resourceAuthorizer == nil {
+		resourceAuthorizer = authsvc.NewResourceAuthorizerWithSubresourceHandlers(b.accessClient, nil)
+	}
+
+	serviceAuthorizer := authsvc.NewServiceAuthorizer()
+	return authorizer.AuthorizerFunc(func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
+		if attr.IsResourceRequest() && attr.GetResource() == secretv1beta1.SecureValuesResourceInfo.GetName() &&
+			attr.GetSubresource() == "" && attr.GetVerb() == utils.VerbList {
+			// SecureValueService.List filters each result by the caller's access.
+			// A collection-wide check would reject users with named grants.
+			return serviceAuthorizer.Authorize(ctx, attr)
+		}
+		return resourceAuthorizer.Authorize(ctx, attr)
+	})
 }
 
 // Validate is called in `Create`, `Update` and `Delete` REST funcs, if the body calls the argument `rest.ValidateObjectFunc`.
