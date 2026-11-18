@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 )
 
 func TestToAPIError(t *testing.T) {
@@ -20,6 +21,7 @@ func TestToAPIError(t *testing.T) {
 				err  error
 				code int32
 			}{
+				{name: "optimistic lock", err: fmt.Errorf("update failed: %w", rulestore.ErrOptimisticLock), code: 409},
 				{name: "validation", err: fmt.Errorf("%w: missing annotations.summary", ngmodels.ErrAlertRuleFailedValidation), code: 400},
 				{name: "quota", err: fmt.Errorf("create failed: %w", ngmodels.ErrQuotaReached), code: 403},
 				{name: "not found", err: fmt.Errorf("update failed: %w", ngmodels.ErrAlertRuleNotFound), code: 404},
