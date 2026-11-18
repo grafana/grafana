@@ -213,6 +213,7 @@ packageExtensionsChecksum: sha256-HvE2tpjtVmkeRQLKlKfzfhNNPprtx2LC//uPw9mBzCw=
 
 patchedDependencies:
   history@4.10.1: 59f0d46e6f153d50eca0dd02e201978d26ff20d01917acd8ba8e7769d585b15d
+  kbar@0.1.0-beta.48: de8b80433310a5c32545d743ed9281972cbe23e1919c55b8a6a8a5d4bdc80b62
   react-calendar@6.0.1: 2d8f851119870b6f0b94fdbbec3f07042cab7166e1a9a93275c449a6e47a0912
   react-grid-layout@1.4.4: f1a020e2f44ff5505a5aef119759a350a83046f2a3bee15680bc355871f9265d
   react-split-pane@0.1.92: afb3a42fb3190c193915fdb61562d8f133312464de4daa4b42547af76085ff01
@@ -513,7 +514,7 @@ importers:
         version: 0.6.1
       kbar:
         specifier: 0.1.0-beta.48
-        version: 0.1.0-beta.48(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        version: 0.1.0-beta.48(patch_hash=de8b80433310a5c32545d743ed9281972cbe23e1919c55b8a6a8a5d4bdc80b62)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       lodash:
         specifier: ^4.17.23
         version: 4.18.1
@@ -25927,7 +25928,7 @@ snapshots:
     dependencies:
       commander: 8.3.0
 
-  kbar@0.1.0-beta.48(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
+  kbar@0.1.0-beta.48(patch_hash=de8b80433310a5c32545d743ed9281972cbe23e1919c55b8a6a8a5d4bdc80b62)(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8):
     dependencies:
       '@radix-ui/react-portal': 1.0.4(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       fast-equals: 2.0.4

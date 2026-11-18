@@ -1,0 +1,49 @@
+diff --git a/lib/InternalEvents.js b/lib/InternalEvents.js
+--- a/lib/InternalEvents.js
++++ b/lib/InternalEvents.js
+@@ -63,3 +63,3 @@
+         var shortcut = options.toggleShortcut || "$mod+k";
+-        var unsubscribe = (0, tinykeys_1.default)(window, (_a = {},
++        var bindings = (_a = {},
+             _a[shortcut] = function (event) {
+@@ -86,3 +86,4 @@
+             },
+-            _a));
++            _a);
++        var unsubscribe = (0, tinykeys_1.default)(window, options.toggleShortcut === false ? { Escape: bindings.Escape } : bindings);
+         return function () {
+diff --git a/lib/types.d.ts b/lib/types.d.ts
+--- a/lib/types.d.ts
++++ b/lib/types.d.ts
+@@ -56,5 +56,5 @@
+      * `toggleShortcut` enables customizing which keyboard shortcut triggers
+-     * kbar. Defaults to "$mod+k" (cmd+k / ctrl+k)
++     * kbar. Defaults to "$mod+k" (cmd+k / ctrl+k). Set to false to disable the toggle shortcut.
+      */
+-    toggleShortcut?: string;
++    toggleShortcut?: string | false;
+ }
+diff --git a/src/InternalEvents.tsx b/src/InternalEvents.tsx
+--- a/src/InternalEvents.tsx
++++ b/src/InternalEvents.tsx
+@@ -47,2 +47,2 @@
+-    const unsubscribe = tinykeys(window, {
++    const bindings = {
+       [shortcut]: (event: KeyboardEvent) => {
+@@ -67,3 +67,4 @@
+       },
+-    });
++    };
++    const unsubscribe = tinykeys(window, options.toggleShortcut === false ? { Escape: bindings.Escape } : bindings);
+     return () => {
+diff --git a/src/types.ts b/src/types.ts
+--- a/src/types.ts
++++ b/src/types.ts
+@@ -66,5 +66,5 @@
+    * `toggleShortcut` enables customizing which keyboard shortcut triggers
+-   * kbar. Defaults to "$mod+k" (cmd+k / ctrl+k)
++   * kbar. Defaults to "$mod+k" (cmd+k / ctrl+k). Set to false to disable the toggle shortcut.
+    */
+-  toggleShortcut?: string;
++  toggleShortcut?: string | false;
+ }

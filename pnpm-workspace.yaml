@@ -51,6 +51,7 @@ packageExtensions:
 
 patchedDependencies:
   "history@4.10.1": patches/history-npm-4.10.1-ee217563ae.patch
+  "kbar@0.1.0-beta.48": patches/kbar@0.1.0-beta.48.patch
   "react-split-pane@0.1.92": patches/react-split-pane-npm-0.1.92-93dbf51dff.patch
   "slate-dev-environment@0.2.5": patches/slate-dev-environment-npm-0.2.5-9aeb7da7b5.patch
   "react-grid-layout@1.4.4": patches/react-grid-layout-npm-1.4.4-4024c5395b.patch

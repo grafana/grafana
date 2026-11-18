@@ -20,6 +20,7 @@ import { GrafanaContext, type GrafanaContextType } from './core/context/GrafanaC
 import { GrafanaRouteWrapper } from './core/navigation/GrafanaRoute';
 import { type RouteDescriptor } from './core/navigation/types';
 import { ThemeProvider } from './core/utils/ConfigProvider';
+import { CommandPaletteKeybinding } from './features/commandPalette/CommandPaletteKeybinding';
 import { getCommandPaletteInputMode } from './features/commandPalette/inputMode';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
 import { ExtensionRegistriesProvider } from './features/plugins/extensions/ExtensionRegistriesContext';
@@ -141,8 +142,13 @@ export function AppWrapper({ context }: AppWrapperProps) {
                   <CacheProvider name={iconCacheID}>
                     <KBarProvider
                       actions={[]}
-                      options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}
+                      options={{
+                        enableHistory: true,
+                        toggleShortcut: false,
+                        callbacks: { onSelectAction: commandPaletteActionSelected },
+                      }}
                     >
+                      <CommandPaletteKeybinding keybindings={context.keybindings} />
                       <ScopesContextProvider>
                         <ExtensionRegistriesProvider registries={registries}>
                           <ExtensionsSidebarProvider>

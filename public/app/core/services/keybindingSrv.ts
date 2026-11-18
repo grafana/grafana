@@ -25,6 +25,16 @@ export class KeybindingSrv {
   ) {}
 
   private assistantSubscription: { unsubscribe: () => void } | null = null;
+  private toggleCommandPalette?: () => void;
+
+  registerCommandPaletteToggle(toggle: () => void) {
+    this.toggleCommandPalette = toggle;
+    return () => {
+      if (this.toggleCommandPalette === toggle) {
+        this.toggleCommandPalette = undefined;
+      }
+    };
+  }
 
   clearAndInitGlobalBindings(route: RouteDescriptor) {
     mousetrap.reset();
@@ -38,6 +48,17 @@ export class KeybindingSrv {
       this.bind('g e', this.goToExplore);
       this.bind('g a', this.openAlerting);
       this.bind('g p', this.goToProfile);
+      // The palette shortcut also works from editable controls that leave it unhandled.
+      mousetrap.bindGlobal(
+        'mod+k',
+        (event) => {
+          if (!event.defaultPrevented && this.toggleCommandPalette) {
+            event.preventDefault();
+            this.toggleCommandPalette();
+          }
+        },
+        'keydown'
+      );
       // Conditionally bind open Assistant shortcut ('o a') if Assistant is available
       this.bindAssistantShortcutIfAvailable();
       this.bind('esc', this.exit);
