@@ -1659,7 +1659,6 @@
         "operator-regex": "Matches regex",
         "panel-id": "Panel ID",
         "paused": "Paused",
-        "paused-false": "Not paused",
         "paused-true": "Paused",
         "plugin-rules": "Plugin rules",
         "plugin-rules-hide": "Hide",

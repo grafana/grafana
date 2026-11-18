@@ -180,10 +180,7 @@ export function AlertRulesFilterSidebar({ query, filter, onApply }: AlertRulesFi
             label={t('alerting.gma-rule-list.sidebar.paused', 'Paused')}
             value={filter.paused}
             onChange={(paused) => apply({ paused: [paused] })}
-            options={[
-              { label: t('alerting.gma-rule-list.sidebar.paused-true', 'Paused'), value: 'true' },
-              { label: t('alerting.gma-rule-list.sidebar.paused-false', 'Not paused'), value: 'false' },
-            ]}
+            options={[{ label: t('alerting.gma-rule-list.sidebar.paused-true', 'Paused'), value: 'true' }]}
           />
         </SidebarSection>
         <Divider spacing={0} />
