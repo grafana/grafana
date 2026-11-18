@@ -380,8 +380,6 @@ When you select a panel with one of these visualizations, the **Auto fit** secti
 - **On**: The panel fits to its content, even when **Auto fit** is off for the layout.
 - **Off**: The panel keeps the row height, even when **Auto fit** is on for the layout.
 
-A panel with the **On** override follows the layout's **Min height**, **Max height**, and **Match row heights** settings, even when **Auto fit** is off for the layout.
-You can change those settings only when **Auto fit** is on for the layout.
 
 Repeated panels use the same setting as the panel they repeat.
 
