@@ -50,14 +50,14 @@ func registerCoreAPIs() bool {
 // external app plugin does: through the local token exchange, as the caller. An
 // installer that cannot be served is skipped with a warning, so one bad app
 // does not leave the others unserved.
-func coreAppsFromInstallers(installers []appsdk.AppInstaller, cfg *setting.Cfg, pluginAuth *pluginauth.Config) ([]CoreApp, error) {
+func coreAppsFromInstallers(ctx context.Context, installers []appsdk.AppInstaller, cfg *setting.Cfg, pluginAuth *pluginauth.Config) ([]CoreApp, error) {
 	if !pluginAuth.LocalTokens() || pluginAuth.LocalAPIURL() == "" {
 		return nil, fmt.Errorf("%s needs Grafana to sign plugin tokens itself, and a local API URL to reach", featuremgmt.FlagRouterRegisterCoreAPIs)
 	}
 
-	log := logging.DefaultLogger
+	log := logging.FromContext(ctx)
 
-	installers = append(directInstallers(cfg), installers...)
+	installers = append(directInstallers(ctx, cfg), installers...)
 
 	apps := make([]CoreApp, 0, len(installers))
 	for _, installer := range installers {
@@ -77,8 +77,8 @@ func coreAppsFromInstallers(installers []appsdk.AppInstaller, cfg *setting.Cfg, 
 // directInstallers are the installers of the apps the embedded API server has
 // no installer for: it serves their groups from its own builders, so the router
 // adds them here. An app that cannot be installed is skipped with a warning.
-func directInstallers(cfg *setting.Cfg) []appsdk.AppInstaller {
-	log := logging.DefaultLogger
+func directInstallers(ctx context.Context, cfg *setting.Cfg) []appsdk.AppInstaller {
+	log := logging.FromContext(ctx)
 	installers := []appsdk.AppInstaller{}
 
 	collectionsManifest := collectionsmanifest.LocalManifest()

@@ -44,7 +44,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `cloudWatchNewLabelParsing`                  | Updates CloudWatch label parsing to be more accurate                                                                                | Yes                |
 | `playlistsRBAC`                              | Enables RBAC for playlists                                                                                                          |                    |
 | `savedQueriesRBAC`                           | Enables Saved queries (query library) RBAC permissions                                                                              | Yes                |
-| `newSavedQueriesExperience`                  | Enables the new Saved queries (query library) modal experience                                                                      | Yes                |
 | `alertingListViewV2`                         | Enables the new alert list view design                                                                                              | Yes                |
 | `alertingNavigationV2`                       | Enables the new Alerting navigation structure with improved menu grouping                                                           | Yes                |
 | `pluginProxyPreserveTrailingSlash`           | Preserve plugin proxy trailing slash.                                                                                               |                    |
