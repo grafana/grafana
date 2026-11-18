@@ -1,20 +1,24 @@
+import { act } from '@testing-library/react';
 import { HttpResponse, http } from 'msw';
 import { type SetupServer } from 'msw/node';
 
 import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { setBackendSrv } from '@grafana/runtime';
+import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import allHandlers from 'app/features/alerting/unified/mocks/server/all-handlers';
 import {
   setupAlertmanagerConfigMapDefaultState,
   setupAlertmanagerStatusMapDefaultState,
 } from 'app/features/alerting/unified/mocks/server/entities/alertmanagers';
 import { resetRoutingTreeMap } from 'app/features/alerting/unified/mocks/server/entities/k8s/routingtrees';
+import { getFolderHandlers } from 'app/features/alerting/unified/mocks/server/handlers/folders';
 import { resetHistorianState } from 'app/features/alerting/unified/mocks/server/handlers/historian';
 import { resetUserStorage } from 'app/features/alerting/unified/mocks/server/handlers/userStorage';
 import { resetAppPluginMetas } from 'app/features/alerting/unified/testSetup/plugins';
-import { type DashboardDTO } from 'app/types/dashboard';
+import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { type FolderDTO } from 'app/types/folders';
 import {
   type PromRulesResponse,
@@ -36,6 +40,7 @@ import {
 import { type DashboardSearchItem, DashboardSearchItemType } from '../../search/types';
 
 import { type RulerGroupUpdatedResponse } from './api/alertRuleModel';
+import { resetRulesAPIVersion } from './api/rulesApiVersion';
 
 type Configurator<T> = (builder: T) => T;
 
@@ -230,7 +235,7 @@ export function mockExportApi(server: SetupServer) {
 export function mockFolderApi(server: SetupServer) {
   return {
     folder: (folderUid: string, response: FolderDTO) => {
-      server.use(http.get(`/api/folders/${folderUid}`, () => HttpResponse.json(response)));
+      server.use(...getFolderHandlers({ ...response, uid: folderUid }));
     },
   };
 }
@@ -278,23 +283,11 @@ export function mockDashboardApi(server: SetupServer) {
 
       server.use(getCustomSearchHandler([...folderHits, ...dashboards]));
     },
-    dashboard: (response: DashboardDTO) => {
-      const k8sResponse = {
-        apiVersion: 'dashboard.grafana.app/v1beta1',
-        kind: 'DashboardWithAccessInfo',
-        metadata: {
-          name: response.dashboard.uid ?? '',
-          generation: response.dashboard.version ?? 1,
-          creationTimestamp: new Date().toISOString(),
-        },
-        access: response.meta,
-        spec: response.dashboard,
-      };
+    dashboard: (dashboard: DashboardWithAccessInfo<DashboardV2Spec>) => {
       server.use(
-        http.get(`/api/dashboards/uid/${response.dashboard.uid}`, () => HttpResponse.json(response)),
         http.get(
-          `/apis/dashboard.grafana.app/:version/namespaces/:namespace/dashboards/${response.dashboard.uid}/dto`,
-          () => HttpResponse.json(k8sResponse)
+          `/apis/dashboard.grafana.app/:version/namespaces/:namespace/dashboards/${dashboard.metadata.name}/dto`,
+          () => HttpResponse.json(dashboard)
         )
       );
     },
@@ -315,6 +308,14 @@ export function setupMswServer() {
     setupBackendSrv();
   });
 
+  afterEach(async () => {
+    // The act wrap is needed because clearing the flag fires OpenFeature events while components
+    // are still mounted.
+    await act(async () => {
+      setTestFlags({});
+    });
+  });
+
   afterEach(() => {
     // Reset any other necessary mock entities/state
     setupAlertmanagerConfigMapDefaultState();
@@ -323,6 +324,7 @@ export function setupMswServer() {
     resetUserStorage();
     resetHistorianState();
     resetAppPluginMetas();
+    resetRulesAPIVersion();
   });
 
   return server;

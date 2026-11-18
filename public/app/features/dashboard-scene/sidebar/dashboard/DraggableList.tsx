@@ -17,6 +17,9 @@ interface DraggableListProps<T extends { state: { key?: string; name: string } }
   onDuplicateItem: (item: T) => void;
   onDeleteItem: (item: T) => void;
   renderItemLabel: (item: T) => NonNullable<ReactNode>;
+  /** Rows shown in this category that cannot be reordered, duplicated, or deleted. */
+  leading?: ReactNode;
+  itemsCount?: number;
 }
 
 export function DraggableList<T extends { state: { key?: string; name: string } }>({
@@ -27,12 +30,15 @@ export function DraggableList<T extends { state: { key?: string; name: string } 
   onDuplicateItem,
   onDeleteItem,
   renderItemLabel,
+  leading,
+  itemsCount,
 }: DraggableListProps<T>) {
   const styles = useStyles2(getStyles);
 
   return (
-    <DroppableCategory droppableId={droppableId} title={title} itemsCount={items.length}>
+    <DroppableCategory droppableId={droppableId} title={title} itemsCount={itemsCount ?? items.length}>
       <ul className={styles.list} data-testid={droppableId}>
+        {leading}
         {items.map((item, index) => (
           <DraggableListItem
             key={item.state.key ?? item.state.name}

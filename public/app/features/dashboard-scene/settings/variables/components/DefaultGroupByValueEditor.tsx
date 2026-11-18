@@ -4,6 +4,7 @@ import { type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Field, MultiSelect, Stack } from '@grafana/ui';
+import { useOptionsPaneReadOnly } from 'app/features/dashboard/components/PanelEditor/OptionsPaneReadOnlyContext';
 
 export interface DefaultGroupByValueEditorProps {
   values: Array<SelectableValue<string>>;
@@ -16,6 +17,8 @@ export function DefaultGroupByValueEditor({
   options = [],
   onChange,
 }: DefaultGroupByValueEditorProps): ReactElement {
+  const readOnly = useOptionsPaneReadOnly();
+
   return (
     <Stack
       direction="column"
@@ -29,6 +32,7 @@ export function DefaultGroupByValueEditor({
           'Group by dimensions that are pre-selected by default.'
         )}
         noMargin
+        disabled={readOnly ? true : undefined}
       >
         <MultiSelect<string>
           aria-label={t('dashboard-scene.default-value-editor.aria-label', 'Default value')}

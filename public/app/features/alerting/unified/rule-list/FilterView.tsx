@@ -17,6 +17,10 @@ import LoadMoreHelper from './LoadMoreHelper';
 import { UnknownRuleListItem } from './components/AlertRuleListItem';
 import { AlertRuleListItemSkeleton } from './components/AlertRuleListItemLoader';
 import {
+  DataSourceManagedRulesBanner,
+  SearchDataSourceManagedRulesButton,
+} from './components/DataSourceManagedRulesNotice';
+import {
   type GrafanaRuleWithOrigin,
   type PromRuleWithOrigin,
   type RuleWithOrigin,
@@ -138,15 +142,19 @@ function FilterViewResults({ filterState }: FilterViewProps) {
   if (noRulesFound && doneSearching) {
     return (
       <EmptyState variant="not-found" message="No matching rules found">
-        <Trans i18nKey="alerting.rule-list.filter-view.no-rules-found">
-          No alert or recording rules matched your current set of filters.
-        </Trans>
+        <Stack direction="column" alignItems="center" gap={2}>
+          <Trans i18nKey="alerting.rule-list.filter-view.no-rules-found">
+            No alert or recording rules matched your current set of filters.
+          </Trans>
+          <SearchDataSourceManagedRulesButton />
+        </Stack>
       </EmptyState>
     );
   }
 
   return (
     <Stack direction="column" gap={0}>
+      <DataSourceManagedRulesBanner />
       <ul aria-label={t('alerting.filter-view-results.aria-label-filteredrulelist', 'filtered-rule-list')}>
         {rules.map((ruleWithOrigin) => {
           const { key, rule, groupIdentifier, origin } = ruleWithOrigin;

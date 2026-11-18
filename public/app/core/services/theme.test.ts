@@ -62,12 +62,9 @@ describe('changeTheme', () => {
     });
   });
 
-  // The build directory name differs per bundler, so the old stylesheet has to be matched by
-  // the URL the backend published rather than by a hardcoded path fragment.
-  it.each([
-    ['webpack', 'public/build/grafana.dark.abc123.css', 'public/build/grafana.light.def456.css'],
-    ['rspack', 'public/build/rspack/grafana.dark.abc123.css', 'public/build/rspack/grafana.light.def456.css'],
-  ])('removes the previous theme stylesheet under %s', async (_bundler, darkHref, lightHref) => {
+  it('removes the previous theme stylesheet', async () => {
+    const darkHref = 'public/build/grafana.dark.abc123.css';
+    const lightHref = 'public/build/grafana.light.def456.css';
     config.bootData.assets = { ...config.bootData.assets, dark: darkHref, light: lightHref };
     const oldLink = document.createElement('link');
     oldLink.rel = 'stylesheet';

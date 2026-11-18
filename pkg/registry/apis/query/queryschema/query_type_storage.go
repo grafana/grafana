@@ -22,7 +22,7 @@ var (
 	_ rest.Getter               = (*queryTypeStorage)(nil)
 
 	// The connectors
-	_ = rest.Connecter(&queryValidationREST{})
+	_ rest.Connecter = (*queryValidationREST)(nil)
 )
 
 type queryTypeStorage struct {

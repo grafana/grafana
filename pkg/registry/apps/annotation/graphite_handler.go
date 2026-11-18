@@ -23,6 +23,7 @@ import (
 // and legacy-ID handling with the standard Create path.
 func newGraphiteHandler(
 	creator rest.Creater,
+	tracer trace.Tracer,
 	metrics *Metrics,
 	logger log.Logger,
 ) func(ctx context.Context, writer app.CustomRouteResponseWriter, request *app.CustomRouteRequest) error {
@@ -34,7 +35,10 @@ func newGraphiteHandler(
 		))
 		defer span.End()
 		start := time.Now()
-		defer func() { observe(ctx, logger, metrics.RequestDuration, "graphite", start, err) }()
+		defer func() {
+			err = toAPIError(err, "")
+			observe(ctx, logger, metrics.RequestDuration, "graphite", start, err)
+		}()
 
 		var cmd PostGraphiteAnnotationsCmd
 		if err = json.NewDecoder(req.Body).Decode(&cmd); err != nil {

@@ -1,8 +1,16 @@
 import { lastValueFrom, Observable, of } from 'rxjs';
 
 import { type DataSourceInstanceListItem } from '@grafana/data';
-import { type BackendSrv, type DataSourceWithBackend, getBackendSrv } from '@grafana/runtime';
-import { getDataSourceInstance, getDataSourceInstanceList } from '@grafana/runtime/unstable';
+import {
+  type BackendSrv,
+  type DataSourceWithBackend,
+  getBackendSrv,
+  getDataSourceInstance,
+  getDataSourceInstanceList,
+  getDefaultDataSourceInstanceListItem,
+} from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import {
   abortNotifier,
@@ -23,24 +31,19 @@ import { backendInstance, deferred } from './test-utils';
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: jest.fn(),
-}));
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
   getDataSourceInstance: jest.fn(),
   getDataSourceInstanceList: jest.fn(),
+  getDefaultDataSourceInstanceListItem: jest.fn(),
 }));
-
 const getDataSourceInstanceListMock = jest.mocked(getDataSourceInstanceList);
 const healthGetMock = jest.fn();
 
-function listItem(ds: { uid?: string; name: string; isDefault?: boolean }): DataSourceInstanceListItem {
+function listItem(ds: { uid?: string; name: string }): DataSourceInstanceListItem {
   return {
     uid: ds.uid ?? ds.name,
     name: ds.name,
     type: 'loki',
     meta: { id: 'loki' } as DataSourceInstanceListItem['meta'],
-    isDefault: ds.isDefault ?? false,
   };
 }
 
@@ -308,8 +311,11 @@ describe('listProbeCandidates', () => {
   it('puts the default datasource first', async () => {
     getDataSourceInstanceListMock.mockResolvedValue([
       ...Array.from({ length: MAX_PROBED_DATASOURCES }, (_, i) => listItem({ name: `ds-${i}` })),
-      listItem({ name: 'the-default', isDefault: true }),
+      listItem({ name: 'the-default' }),
     ]);
+    jest
+      .mocked(getDefaultDataSourceInstanceListItem)
+      .mockImplementationOnce(async (items) => items.find((item) => item.name === 'the-default'));
 
     const names = (await listProbeCandidates('loki')).map((ds) => ds.name);
 
@@ -360,6 +366,21 @@ describe('isDatasourceHealthy', () => {
     } finally {
       jest.useRealTimers();
     }
+  });
+
+  it('skips the legacy health request and reads as healthy on a multi-tenant homepage', async () => {
+    setTestFlags({ [FlagKeys.GrafanaMultiTenantHomepage]: true });
+    try {
+      await expect(isDatasourceHealthy('unprobed')).resolves.toBe(true);
+      expect(healthGetMock).not.toHaveBeenCalled();
+    } finally {
+      setTestFlags({});
+    }
+
+    // Nothing was cached for the uid, so the next read with the legacy API available probes it.
+    healthGetMock.mockResolvedValue({ status: 'ERROR' });
+    await expect(isDatasourceHealthy('unprobed')).resolves.toBe(false);
+    expect(healthGetMock).toHaveBeenCalledTimes(1);
   });
 
   it('shares one /health request per uid across concurrent callers', async () => {

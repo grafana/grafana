@@ -63,7 +63,7 @@ func (c *commenter) Comment(ctx context.Context, prRepo repository.PullRequestRe
 		return fmt.Errorf("unable to generate comment text: %w", err)
 	}
 
-	if err := prRepo.CommentPullRequest(ctx, pr, comment); err != nil {
+	if err := prRepo.PullRequestClient().CreatePullRequestComment(ctx, pr, comment); err != nil {
 		return fmt.Errorf("comment pull request: %w", err)
 	}
 

@@ -18,7 +18,13 @@ import {
 } from '../constants';
 import { type ClickedItemData, ColorScheme, ColorSchemeDiff, type TextAlign } from '../types';
 
-import { getBarColorByDiff, getBarColorByPackage, getBarColorByValue } from './colors';
+import {
+  BAR_GROUP_STRIP_COLOR,
+  BAR_TEXT_COLOR,
+  getBarColorByDiff,
+  getBarColorByPackage,
+  getBarColorByValue,
+} from './colors';
 import { type CollapseConfig, type CollapsedMap, type FlameGraphDataContainer, type LevelItem } from './dataTransform';
 
 type RenderOptions = {
@@ -69,8 +75,8 @@ export function useFlameRender(options: RenderOptions) {
     focusedItemData,
     collapsedMap,
   } = options;
-  const { ctx, devicePixelRatio } = useSetupCanvas(canvasRef, wrapperWidth, depth);
   const theme = useTheme2();
+  const { ctx, devicePixelRatio } = useSetupCanvas(canvasRef, wrapperWidth, depth, theme);
 
   // There is a bit of dependency injections here that does not add readability, mainly to prevent recomputing some
   // common stuff for all the nodes in the graph when only once is enough. perf/readability tradeoff.
@@ -262,7 +268,7 @@ function renderGroupingStrip(
     }
   }
 
-  ctx.fillStyle = '#666';
+  ctx.fillStyle = BAR_GROUP_STRIP_COLOR;
   ctx.fill();
 }
 
@@ -411,7 +417,12 @@ function useDevicePixelRatio() {
   return devicePixelRatio;
 }
 
-function useSetupCanvas(canvasRef: RefObject<HTMLCanvasElement | null>, wrapperWidth: number, numberOfLevels: number) {
+function useSetupCanvas(
+  canvasRef: RefObject<HTMLCanvasElement | null>,
+  wrapperWidth: number,
+  numberOfLevels: number,
+  theme: GrafanaTheme2
+) {
   const [ctx, setCtx] = useState<CanvasRenderingContext2D>();
   const devicePixelRatio = useDevicePixelRatio();
 
@@ -429,9 +440,9 @@ function useSetupCanvas(canvasRef: RefObject<HTMLCanvasElement | null>, wrapperW
 
     ctx.textBaseline = 'middle';
     ctx.font = 12 * devicePixelRatio + 'px monospace';
-    ctx.strokeStyle = 'white';
+    ctx.strokeStyle = theme.colors.background.primary;
     setCtx(ctx);
-  }, [canvasRef, setCtx, wrapperWidth, numberOfLevels, devicePixelRatio]);
+  }, [canvasRef, setCtx, wrapperWidth, numberOfLevels, devicePixelRatio, theme]);
   return { ctx, devicePixelRatio };
 }
 
@@ -450,7 +461,7 @@ function renderLabel(
 ) {
   ctx.save();
   ctx.clip(); // so text does not overflow
-  ctx.fillStyle = '#222';
+  ctx.fillStyle = BAR_TEXT_COLOR;
 
   const displayValue = data.valueDisplayProcessor(item.value);
   const unit = displayValue.suffix ? displayValue.text + displayValue.suffix : displayValue.text;

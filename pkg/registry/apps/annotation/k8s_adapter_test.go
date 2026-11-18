@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -12,16 +13,21 @@ import (
 	authtypes "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
 	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 	registryrest "k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/utils/ptr"
 
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // errStore returns a configurable error from every method. Used to verify the
@@ -78,8 +84,8 @@ func testGetLegacyData(t *testing.T, anno *annotationV0.Annotation) string {
 }
 
 // TestToAPIError covers the helper in isolation: each sentinel maps to the
-// matching apierror predicate, wrapped sentinels still classify, already-typed
-// apierrors pass through, and unknown errors stay raw so apiserver wraps as 500.
+// matching apierror predicate, wrapped sentinels still classify, top-level 4xx
+// apierrors pass through, and everything else becomes a generic internal error.
 func TestToAPIError(t *testing.T) {
 	t.Run("nil passes through", func(t *testing.T) {
 		require.NoError(t, toAPIError(nil, "x"))
@@ -122,13 +128,46 @@ func TestToAPIError(t *testing.T) {
 		assert.Same(t, in, out)
 	})
 
-	t.Run("unknown error stays raw", func(t *testing.T) {
-		raw := errors.New("boom")
-		out := toAPIError(raw, "obj")
-		assert.Same(t, raw, out)
-		assert.False(t, apierrors.IsNotFound(out))
-		assert.False(t, apierrors.IsAlreadyExists(out))
-		assert.False(t, apierrors.IsBadRequest(out))
+	t.Run("canceled errors map to 499", func(t *testing.T) {
+		cases := []struct {
+			name string
+			err  error
+		}{
+			{"context.Canceled", context.Canceled},
+			{"wrapped context.Canceled", fmt.Errorf("db: %w", context.Canceled)},
+			{"grpc Canceled", status.Error(codes.Canceled, "context canceled")},
+			{"499 status error", &apierrors.StatusError{ErrStatus: metav1.Status{
+				Status: metav1.StatusFailure, Code: 499, Reason: "ClientClosedRequest"}}},
+		}
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				out := toAPIError(tc.err, "obj")
+				requireStatusCode(t, out, 499)
+				// The cause is kept, so logs and traces still say what was canceled.
+				assert.ErrorIs(t, out, tc.err)
+			})
+		}
+	})
+
+	internal := []struct {
+		name string
+		err  error
+	}{
+		{"unknown error", errors.New(`ERROR: relation "annotations" does not exist (SQLSTATE 42P01)`)},
+		{"5xx apierror", apierrors.NewInternalError(errors.New("dial tcp 10.0.0.1:10000: connection refused"))},
+		{"wrapped 4xx apierror", fmt.Errorf("resolve folder: %w", apierrors.NewForbidden(annotationGR, "dash", errors.New(`User "svc" cannot get`)))},
+	}
+	for _, tc := range internal {
+		t.Run(tc.name+" becomes a generic internal error", func(t *testing.T) {
+			out := toAPIError(tc.err, "obj")
+			assert.True(t, isGenericInternal(out), "got %v", out)
+			assert.ErrorIs(t, out, tc.err)
+		})
+	}
+
+	t.Run("is idempotent", func(t *testing.T) {
+		once := toAPIError(errors.New("boom"), "obj")
+		assert.Equal(t, once, toAPIError(once, "obj"))
 	})
 }
 
@@ -147,6 +186,7 @@ func TestK8sAdapter_StoreErrorMapping(t *testing.T) {
 		{"not found", ErrNotFound, apierrors.IsNotFound},
 		{"already exists", fmt.Errorf("%w: ns/obj", ErrAlreadyExists), apierrors.IsAlreadyExists},
 		{"invalid input", fmt.Errorf("%w: bad time", ErrInvalidInput), apierrors.IsBadRequest},
+		{"unknown", errors.New("failed to query annotations: ERROR: connection reset"), isGenericInternal},
 	}
 
 	for _, tc := range cases {
@@ -168,12 +208,70 @@ func TestK8sAdapter_StoreErrorMapping(t *testing.T) {
 				assert.True(t, tc.predicate(err), "got %v", err)
 			})
 
+			t.Run("Update", func(t *testing.T) {
+				_, _, err := adapter.Update(ctx, "obj", &updatedObjectInfo{}, nil, nil, false, &metav1.UpdateOptions{})
+				assert.True(t, tc.predicate(err), "got %v", err)
+			})
+
 			t.Run("Delete", func(t *testing.T) {
 				_, _, err := adapter.Delete(ctx, "obj", nil, &metav1.DeleteOptions{})
 				assert.True(t, tc.predicate(err), "got %v", err)
 			})
+
+			t.Run("List", func(t *testing.T) {
+				_, err := adapter.List(ctx, &internalversion.ListOptions{})
+				assert.True(t, tc.predicate(err), "got %v", err)
+			})
 		})
 	}
+}
+
+func isGenericInternal(err error) bool {
+	status := responsewriters.ErrorToAPIStatus(err)
+	return status.Code == http.StatusInternalServerError && status.Message == "an internal error occurred"
+}
+
+func TestK8sAdapter_DependencyErrorsAreInternal(t *testing.T) {
+	ns := "org-1"
+	ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), ns)
+	allowAll := &fakeAccessClient{fn: func(_ authtypes.BatchCheckItem) bool { return true }}
+	dashUID := "dash-1"
+	seed := func(t *testing.T) Store {
+		store := NewMemoryStore()
+		_, err := store.Create(ctx, &annotationV0.Annotation{
+			ObjectMeta: metav1.ObjectMeta{Name: "a-1", Namespace: ns},
+			Spec:       annotationV0.AnnotationSpec{Text: "test", Time: 1000, DashboardUID: &dashUID},
+		})
+		require.NoError(t, err)
+		return store
+	}
+
+	t.Run("authz failure", func(t *testing.T) {
+		adapter := newTestAdapter(seed(t), &failingAccessClient{err: errors.New("dial tcp 10.0.0.1:10000: connection refused")})
+		_, err := adapter.List(ctx, &internalversion.ListOptions{})
+		assert.True(t, isGenericInternal(err), "got %v", err)
+	})
+
+	t.Run("folder resolver 4xx", func(t *testing.T) {
+		resolver := newFakeFolderResolver(nil)
+		resolver.err = apierrors.NewForbidden(annotationGR, dashUID, errors.New(`User "svc" cannot get`))
+		adapter := newTestAdapter(seed(t), allowAll, resolver)
+		_, err := adapter.Get(ctx, "a-1", &metav1.GetOptions{})
+		assert.True(t, isGenericInternal(err), "got %v", err)
+	})
+}
+
+type failingAccessClient struct {
+	fakeAccessClient
+	err error
+}
+
+func (c *failingAccessClient) BatchCheck(context.Context, authtypes.AuthInfo, authtypes.BatchCheckRequest) (authtypes.BatchCheckResponse, error) {
+	return authtypes.BatchCheckResponse{}, c.err
+}
+
+func (c *failingAccessClient) Check(context.Context, authtypes.AuthInfo, authtypes.CheckRequest, string) (authtypes.CheckResponse, error) {
+	return authtypes.CheckResponse{}, c.err
 }
 
 func TestK8sAdapter_Create(t *testing.T) {
@@ -194,6 +292,39 @@ func TestK8sAdapter_Create(t *testing.T) {
 		_, err = adapter.Create(ctx, obj, nil, &metav1.CreateOptions{})
 		require.Error(t, err)
 		assert.True(t, apierrors.IsAlreadyExists(err), "expected 409 AlreadyExists, got %v", err)
+	})
+
+	t.Run("defaults timeEnd to time when unset", func(t *testing.T) {
+		adapter := newTestAdapter(NewMemoryStore(), allowAll)
+		ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), ns)
+
+		obj := &annotationV0.Annotation{
+			ObjectMeta: metav1.ObjectMeta{Name: "point", Namespace: ns},
+			Spec:       annotationV0.AnnotationSpec{Text: "hello", Time: 1000},
+		}
+		result, err := adapter.Create(ctx, obj, nil, &metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		created := result.(*annotationV0.Annotation)
+		require.NotNil(t, created.Spec.TimeEnd)
+		assert.Equal(t, created.Spec.Time, *created.Spec.TimeEnd)
+	})
+
+	t.Run("preserves caller-supplied timeEnd", func(t *testing.T) {
+		adapter := newTestAdapter(NewMemoryStore(), allowAll)
+		ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), ns)
+
+		timeEnd := int64(2000)
+		obj := &annotationV0.Annotation{
+			ObjectMeta: metav1.ObjectMeta{Name: "range", Namespace: ns},
+			Spec:       annotationV0.AnnotationSpec{Text: "hello", Time: 1000, TimeEnd: &timeEnd},
+		}
+		result, err := adapter.Create(ctx, obj, nil, &metav1.CreateOptions{})
+		require.NoError(t, err)
+
+		created := result.(*annotationV0.Annotation)
+		require.NotNil(t, created.Spec.TimeEnd)
+		assert.Equal(t, timeEnd, *created.Spec.TimeEnd)
 	})
 
 	t.Run("generates legacy ID when enabled", func(t *testing.T) {
@@ -436,7 +567,7 @@ func TestK8sAdapter_Update(t *testing.T) {
 		// Incoming object has no legacy data annotation — the omitted case.
 		incoming := &annotationV0.Annotation{
 			ObjectMeta: metav1.ObjectMeta{Name: "anno", Namespace: ns},
-			Spec:       annotationV0.AnnotationSpec{Text: "updated", Time: 1000},
+			Spec:       annotationV0.AnnotationSpec{Text: "updated", Time: 1000, TimeEnd: ptr.To(int64(1000))},
 		}
 		updated, _, err := adapter.Update(ctx, "anno", &updatedObjectInfo{obj: incoming}, nil, nil, false, &metav1.UpdateOptions{})
 		require.NoError(t, err)
@@ -457,7 +588,7 @@ func TestK8sAdapter_Update(t *testing.T) {
 				Namespace:   ns,
 				Annotations: map[string]string{AnnotationKeyLegacyData: ""},
 			},
-			Spec: annotationV0.AnnotationSpec{Text: "updated", Time: 1000},
+			Spec: annotationV0.AnnotationSpec{Text: "updated", Time: 1000, TimeEnd: ptr.To(int64(1000))},
 		}
 		_, _, err := adapter.Update(ctx, "anno", &updatedObjectInfo{obj: incoming}, nil, nil, false, &metav1.UpdateOptions{})
 		require.NoError(t, err)
@@ -476,7 +607,7 @@ func TestK8sAdapter_Update(t *testing.T) {
 				Namespace:   ns,
 				Annotations: map[string]string{AnnotationKeyLegacyData: `{"baz":"qux"}`},
 			},
-			Spec: annotationV0.AnnotationSpec{Text: "updated", Time: 1000},
+			Spec: annotationV0.AnnotationSpec{Text: "updated", Time: 1000, TimeEnd: ptr.To(int64(1000))},
 		}
 		_, _, err := adapter.Update(ctx, "anno", &updatedObjectInfo{obj: incoming}, nil, nil, false, &metav1.UpdateOptions{})
 		require.NoError(t, err)
@@ -514,7 +645,7 @@ func TestK8sAdapter_Update(t *testing.T) {
 				adapter, ctx := seedWithData(t)
 				incoming := &annotationV0.Annotation{
 					ObjectMeta: metav1.ObjectMeta{Name: "anno", Namespace: ns},
-					Spec:       annotationV0.AnnotationSpec{Text: "updated", Time: 1000},
+					Spec:       annotationV0.AnnotationSpec{Text: "updated", Time: 1000, TimeEnd: ptr.To(int64(1000))},
 				}
 				tc.mutate(incoming)
 				_, _, err := adapter.Update(ctx, "anno", &updatedObjectInfo{obj: incoming}, nil, nil, false, &metav1.UpdateOptions{})
@@ -527,11 +658,22 @@ func TestK8sAdapter_Update(t *testing.T) {
 		adapter, ctx := seedWithData(t)
 		incoming := &annotationV0.Annotation{
 			ObjectMeta: metav1.ObjectMeta{Name: "anno", Namespace: ns},
-			Spec:       annotationV0.AnnotationSpec{Text: "updated text", Time: 1000, Tags: []string{"new"}},
+			Spec:       annotationV0.AnnotationSpec{Text: "updated text", Time: 1000, TimeEnd: ptr.To(int64(1000)), Tags: []string{"new"}},
 		}
 		updated, _, err := adapter.Update(ctx, "anno", &updatedObjectInfo{obj: incoming}, nil, nil, false, &metav1.UpdateOptions{})
 		require.NoError(t, err)
 		assert.Equal(t, "updated text", updated.(*annotationV0.Annotation).Spec.Text)
+	})
+
+	t.Run("treats omitted timeEnd on a point annotation as unchanged", func(t *testing.T) {
+		adapter, ctx := seedWithData(t)
+		incoming := &annotationV0.Annotation{
+			ObjectMeta: metav1.ObjectMeta{Name: "anno", Namespace: ns},
+			Spec:       annotationV0.AnnotationSpec{Text: "updated text", Time: 1000},
+		}
+		updated, _, err := adapter.Update(ctx, "anno", &updatedObjectInfo{obj: incoming}, nil, nil, false, &metav1.UpdateOptions{})
+		require.NoError(t, err)
+		assert.Equal(t, ptr.To(int64(1000)), updated.(*annotationV0.Annotation).Spec.TimeEnd)
 	})
 }
 
@@ -749,7 +891,9 @@ func TestK8sAdapter_ValidateAnnotation(t *testing.T) {
 		time              int64
 		timeEnd           *int64
 		deletionTimestamp *metav1.Time
+		dashboardUID      *string
 		retentionTTL      time.Duration
+		maxAge            time.Duration
 		expectErr         bool
 		errContains       string
 	}{
@@ -758,14 +902,21 @@ func TestK8sAdapter_ValidateAnnotation(t *testing.T) {
 		{name: "time negative", time: -1, retentionTTL: defaultTTL, expectErr: true, errContains: "time is required"},
 		{name: "recent past within retention", time: now - retentionMs/2, retentionTTL: defaultTTL},
 		{name: "inside future bound", time: now + futureWindowMs - second, retentionTTL: defaultTTL},
-		{name: "too far in the future", time: now + futureWindowMs + second, retentionTTL: defaultTTL, expectErr: true, errContains: "time cannot be more than 1 week in the future"},
-		{name: "older than retention TTL", time: now - retentionMs - second, retentionTTL: defaultTTL, expectErr: true, errContains: "time cannot be older than retention TTL"},
+		{name: "too far in the future", time: now + futureWindowMs + second, retentionTTL: defaultTTL, expectErr: true, errContains: "end time cannot be more than 1 week in the future"},
+		{name: "older than retention TTL", time: now - retentionMs - second, retentionTTL: defaultTTL, expectErr: true, errContains: "end time cannot be older than"},
 		{name: "very old time accepted with no retention", time: now - veryOldMs, retentionTTL: 0},
-		{name: "future bound enforced with no retention", time: now + futureWindowMs + second, retentionTTL: 0, expectErr: true, errContains: "time cannot be more than 1 week in the future"},
+		{name: "older than max age", time: now - retentionMs/2 - second, maxAge: defaultTTL / 2, expectErr: true, errContains: "end time cannot be older than"},
+		{name: "max age takes precedence over retention TTL", time: now - retentionMs/2 - second, retentionTTL: defaultTTL, maxAge: defaultTTL / 2, expectErr: true, errContains: "end time cannot be older than"},
+		{name: "max age can exceed retention TTL", time: now - retentionMs - second, retentionTTL: defaultTTL, maxAge: 2 * defaultTTL},
+		{name: "future bound enforced with no retention", time: now + futureWindowMs + second, retentionTTL: 0, expectErr: true, errContains: "end time cannot be more than 1 week in the future"},
 		{name: "valid timeEnd after time", time: now, timeEnd: timeEnd(now + second), retentionTTL: defaultTTL},
 		{name: "timeEnd before time", time: now, timeEnd: timeEnd(now - second), retentionTTL: defaultTTL, expectErr: true, errContains: "timeEnd must be after time"},
-		{name: "timeEnd too far in the future", time: now, timeEnd: timeEnd(now + futureWindowMs + second), retentionTTL: defaultTTL, expectErr: true, errContains: "timeEnd cannot be more than 1 week in the future"},
+		{name: "timeEnd too far in the future", time: now, timeEnd: timeEnd(now + futureWindowMs + second), retentionTTL: defaultTTL, expectErr: true, errContains: "end time cannot be more than 1 week in the future"},
+		{name: "region with old time but end within retention", time: now - retentionMs - second, timeEnd: timeEnd(now - second), retentionTTL: defaultTTL},
+		{name: "region ending before retention cutoff", time: now - retentionMs - 2*second, timeEnd: timeEnd(now - retentionMs - second), retentionTTL: defaultTTL, expectErr: true, errContains: "end time cannot be older than"},
 		{name: "deletionTimestamp set on create", time: now, deletionTimestamp: &deletedAt, retentionTTL: defaultTTL, expectErr: true, errContains: "metadata.deletionTimestamp cannot be set on create"},
+		{name: "dashboardUID at max length", time: now, dashboardUID: ptr.To(strings.Repeat("d", util.MaxUIDLength)), retentionTTL: defaultTTL},
+		{name: "dashboardUID too long", time: now, dashboardUID: ptr.To(strings.Repeat("d", util.MaxUIDLength+1)), retentionTTL: defaultTTL, expectErr: true, errContains: "dashboardUID cannot be longer than 40 characters"},
 	}
 
 	for _, tc := range cases {
@@ -773,12 +924,13 @@ func TestK8sAdapter_ValidateAnnotation(t *testing.T) {
 			store := NewMemoryStore()
 			adapter := newTestAdapter(store, allowAll)
 			adapter.retentionTTL = tc.retentionTTL
+			adapter.maxAge = tc.maxAge
 			ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), ns)
 
 			name := "anno"
 			obj := &annotationV0.Annotation{
 				ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: ns, DeletionTimestamp: tc.deletionTimestamp},
-				Spec:       annotationV0.AnnotationSpec{Text: "test", Time: tc.time, TimeEnd: tc.timeEnd},
+				Spec:       annotationV0.AnnotationSpec{Text: "test", Time: tc.time, TimeEnd: tc.timeEnd, DashboardUID: tc.dashboardUID},
 			}
 			_, err := adapter.Create(ctx, obj, nil, &metav1.CreateOptions{})
 

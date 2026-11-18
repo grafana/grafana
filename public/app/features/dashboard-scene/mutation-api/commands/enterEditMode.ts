@@ -5,12 +5,14 @@
  * if the dashboard is not already in edit mode.
  */
 
+import * as z from 'zod/mini';
+
 import { payloads } from './schemas';
 import { requiresEdit, type MutationCommand } from './types';
 
 export const enterEditModeCommand: MutationCommand<Record<string, never>> = {
   name: 'ENTER_EDIT_MODE',
-  description: payloads.enterEditMode.description ?? '',
+  description: z.globalRegistry.get(payloads.enterEditMode)?.description ?? '',
 
   payloadSchema: payloads.enterEditMode,
   permission: requiresEdit,
@@ -22,9 +24,7 @@ export const enterEditModeCommand: MutationCommand<Record<string, never>> = {
     try {
       const wasEditing = scene.state.isEditing ?? false;
 
-      if (!wasEditing) {
-        scene.onEnterEditMode('assistant');
-      }
+      scene.onEnterEditMode('assistant');
 
       return {
         success: true,

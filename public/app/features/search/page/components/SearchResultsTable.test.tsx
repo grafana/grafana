@@ -1,4 +1,6 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { type MouseEvent } from 'react';
 import { Subject } from 'rxjs';
 
 import {
@@ -10,8 +12,8 @@ import {
   type PanelPluginMeta,
   toDataFrame,
 } from '@grafana/data';
+import { reportInteraction, useDataSourceInstanceSettings } from '@grafana/runtime';
 import { usePanelPluginMetasMap } from '@grafana/runtime/internal';
-import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 
 import { type DashboardQueryResult, type QueryResponse } from '../../service/types';
 import { DashboardSearchItemType } from '../../types';
@@ -23,8 +25,9 @@ jest.mock('@grafana/runtime/internal', () => ({
   usePanelPluginMetasMap: jest.fn(),
 }));
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
   useDataSourceInstanceSettings: jest.fn(),
 }));
 
@@ -33,6 +36,7 @@ const useDataSourceInstanceSettingsMock = jest.mocked(useDataSourceInstanceSetti
 
 describe('SearchResultsTable', () => {
   beforeEach(() => {
+    jest.mocked(reportInteraction).mockClear();
     usePanelPluginMetasMapMock.mockReturnValue({
       loading: false,
       error: undefined,
@@ -155,6 +159,85 @@ describe('SearchResultsTable', () => {
       await screen.findByRole('table');
 
       expect(screen.queryByLabelText('Description')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('when results include locations', () => {
+    function setup() {
+      const frame = toDataFrame({
+        fields: [
+          { name: 'kind', values: ['dashboard', 'dashboard'] },
+          { name: 'uid', values: ['team-dashboard', 'root-dashboard'] },
+          { name: 'name', values: ['Team dashboard', 'Root dashboard'] },
+          { name: 'url', values: ['/d/team-dashboard', '/d/root-dashboard'] },
+          { name: 'location', values: ['team-folder', 'general'] },
+          { name: 'tags', type: FieldType.other, values: [[], []] },
+        ],
+        meta: {
+          custom: {
+            locationInfo: {
+              'team-folder': { kind: 'folder', name: 'Team dashboards', url: '/dashboards/f/team-folder' },
+            },
+          },
+        },
+      });
+      const [dataFrame] = applyFieldOverrides({
+        data: [frame],
+        fieldConfig: { defaults: {}, overrides: [] },
+        replaceVariables: (value) => value,
+        theme: createTheme(),
+      });
+      const response: QueryResponse = {
+        view: new DataFrameView<DashboardQueryResult>(dataFrame),
+        totalRows: frame.length,
+        isItemLoaded: jest.fn().mockReturnValue(true),
+        loadMoreItems: jest.fn(),
+      };
+      const onClickItem = jest.fn((event: MouseEvent<HTMLElement>) => event.preventDefault());
+      const user = userEvent.setup();
+
+      render(
+        <SearchResultsTable
+          response={response}
+          clearSelection={mockClearSelection}
+          onTagSelected={mockOnTagSelected}
+          onClickItem={onClickItem}
+          keyboardEvents={mockKeyboardEvents}
+          trackingSource="search-test"
+          height={1000}
+          width={1000}
+        />
+      );
+
+      return { user, onClickItem };
+    }
+
+    it('links to the parent folder and falls back to Dashboards for the root location', () => {
+      setup();
+
+      expect(screen.getByRole('link', { name: 'Team dashboards' })).toHaveAttribute(
+        'href',
+        '/dashboards/f/team-folder'
+      );
+      expect(screen.getByRole('link', { name: 'Dashboards' })).toHaveAttribute('href', '/dashboards');
+    });
+
+    it.each([
+      { name: 'Team dashboard', href: '/d/team-dashboard', parent: 'folder' },
+      { name: 'Root dashboard', href: '/d/root-dashboard', parent: 'general' },
+    ])('reports the $parent parent when opening $name', async ({ name, href, parent }) => {
+      const { user, onClickItem } = setup();
+      const link = screen.getByRole('link', { name });
+      expect(link).toHaveAttribute('href', href);
+
+      await user.click(link);
+
+      expect(onClickItem).toHaveBeenCalledTimes(1);
+      expect(reportInteraction).toHaveBeenCalledWith('grafana_browse_dashboards_page_click_list_item', {
+        itemKind: 'dashboard',
+        parent,
+        source: 'search-test',
+      });
     });
   });
 
@@ -305,6 +388,88 @@ describe('SearchResultsTable', () => {
       expect(useDataSourceInstanceSettingsMock).toHaveBeenCalledWith('prometheus-uid');
       expect(screen.getByText('My Prometheus')).toBeInTheDocument();
       expect(screen.getByRole('columnheader', { name: 'Data source' })).toBeInTheDocument();
+    });
+  });
+
+  describe('when an item was deleted', () => {
+    // The second row has no deletion time, which is what an object deleted before those
+    // were recorded looks like.
+    const searchData = toDataFrame({
+      name: 'A',
+      fields: [
+        {
+          name: 'kind',
+          type: FieldType.string,
+          config: {},
+          values: [DashboardSearchItemType.DashDB, DashboardSearchItemType.DashDB],
+        },
+        { name: 'uid', type: FieldType.string, config: {}, values: ['my-dashboard-1', 'my-dashboard-2'] },
+        { name: 'name', type: FieldType.string, config: {}, values: ['My dashboard 1', 'My dashboard 2'] },
+        { name: 'panel_type', type: FieldType.string, config: {}, values: ['', ''] },
+        { name: 'url', type: FieldType.string, config: {}, values: ['/my-dashboard-1', '/my-dashboard-2'] },
+        { name: 'tags', type: FieldType.other, config: {}, values: [[], []] },
+        { name: 'ds_uid', type: FieldType.other, config: {}, values: ['', ''] },
+        { name: 'location', type: FieldType.string, config: {}, values: ['/my-dashboard-1', '/my-dashboard-2'] },
+        {
+          name: 'deletionTimestamp',
+          type: FieldType.string,
+          config: {},
+          values: ['2026-09-25T20:43:31.000Z', null],
+        },
+      ],
+    });
+
+    const dataFrames = applyFieldOverrides({
+      data: [searchData],
+      fieldConfig: { defaults: {}, overrides: [] },
+      replaceVariables: (value) => value,
+      theme: createTheme(),
+    });
+
+    const mockSearchResult: QueryResponse = {
+      isItemLoaded: jest.fn().mockReturnValue(true),
+      loadMoreItems: jest.fn(),
+      totalRows: searchData.length,
+      view: new DataFrameView<DashboardQueryResult>(dataFrames[0]),
+    };
+
+    it('shows when it was deleted', async () => {
+      render(
+        <SearchResultsTable
+          keyboardEvents={mockKeyboardEvents}
+          response={mockSearchResult}
+          onTagSelected={mockOnTagSelected}
+          selection={mockSelection}
+          selectionToggle={mockSelectionToggle}
+          clearSelection={mockClearSelection}
+          height={1000}
+          width={1000}
+        />
+      );
+      await screen.findByRole('table');
+
+      expect(screen.getByRole('columnheader', { name: 'Deleted on' })).toBeInTheDocument();
+      // Formatted in the test runner's locale, so match the year rather than a fixed string.
+      expect(screen.getByText(/2026/)).toBeInTheDocument();
+    });
+
+    it('shows a dash for an item with no deletion time, rather than a loading state', async () => {
+      render(
+        <SearchResultsTable
+          keyboardEvents={mockKeyboardEvents}
+          response={mockSearchResult}
+          onTagSelected={mockOnTagSelected}
+          selection={mockSelection}
+          selectionToggle={mockSelectionToggle}
+          clearSelection={mockClearSelection}
+          height={1000}
+          width={1000}
+        />
+      );
+      await screen.findByRole('table');
+
+      expect(screen.getByRole('columnheader', { name: 'Deleted on' })).toBeInTheDocument();
+      expect(screen.getByText('-')).toBeInTheDocument();
     });
   });
 

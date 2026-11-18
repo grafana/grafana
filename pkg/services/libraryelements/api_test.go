@@ -63,6 +63,23 @@ func TestWriteErrorPreservesLegacyFolderNotFoundMessage(t *testing.T) {
 	require.JSONEq(t, `{"message":"folder not found","traceID":""}`, recorder.Body.String())
 }
 
+func TestCreateHandlerMissingFolderIsBadRequest(t *testing.T) {
+	// The folder service's not-found error carries a 404 errutil status.
+	notFound := folder.ErrFolderNotFound.Errorf("%w", dashboards.ErrFolderNotFound)
+	service := &LibraryElementService{folderService: &foldertest.FakeService{ExpectedError: notFound}}
+	body := `{"folderUid":"missing","name":"panel","kind":1,"model":{}}`
+	reqContext := &contextmodel.ReqContext{
+		Context:      &web.Context{Req: httptest.NewRequest(http.MethodPost, "/api/library-elements", strings.NewReader(body))},
+		SignedInUser: &user.SignedInUser{OrgID: 1},
+	}
+	reqContext.Req.Header.Set("Content-Type", "application/json")
+
+	resp := service.createHandler(reqContext)
+
+	require.Equal(t, http.StatusBadRequest, resp.Status())
+	require.JSONEq(t, `{"message":"failed to get folder"}`, string(resp.Body()))
+}
+
 func TestWriteErrorMapsCreateNotFoundToMissingFolderWhenAggregationStripsDetails(t *testing.T) {
 	recorder := httptest.NewRecorder()
 	reqContext := &contextmodel.ReqContext{
@@ -214,7 +231,7 @@ func TestValidateK8sLibraryPanelUID(t *testing.T) {
 
 func TestFilterK8sLibraryPanelsFolderTitleSearchWithDeprecatedIDFilter(t *testing.T) {
 	handler := &libraryElementsK8sHandler{folderService: &foldertest.FakeService{ExpectedFolder: &folder.Folder{
-		ID: 42, UID: "folder-uid", Title: "Matching folder", OrgID: 1,
+		ID: 42, UID: "folder-uid", Title: "Matching folder", OrgID: 1, //nolint:staticcheck // Exercise legacy field compatibility.
 	}}}
 	items := []unstructured.Unstructured{{Object: map[string]interface{}{
 		"metadata": map[string]interface{}{
@@ -255,7 +272,7 @@ func TestFolderUIDFromLegacyID(t *testing.T) {
 	t.Run("folder", func(t *testing.T) {
 		handler := &libraryElementsK8sHandler{
 			folderService: &foldertest.FakeService{
-				ExpectedFolder: &folder.Folder{ID: 42, UID: "folder-uid", OrgID: 1},
+				ExpectedFolder: &folder.Folder{ID: 42, UID: "folder-uid", OrgID: 1}, //nolint:staticcheck // Exercise legacy field compatibility.
 			},
 		}
 
@@ -440,7 +457,7 @@ type fakeAccessControl struct {
 	evaluateFunc func(ctx context.Context, user identity.Requester, evaluator accesscontrol.Evaluator) (bool, error)
 }
 
-var _ accesscontrol.AccessControl = new(fakeAccessControl)
+var _ accesscontrol.AccessControl = (*fakeAccessControl)(nil)
 
 func (f *fakeAccessControl) Evaluate(ctx context.Context, user identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {
 	if f.evaluateFunc != nil {

@@ -1,6 +1,5 @@
 import { stringToJsRegex } from '@grafana/data';
-import { getTemplateSrv } from '@grafana/runtime';
-import { getDataSourceInstanceList } from '@grafana/runtime/unstable';
+import { getTemplateSrv, getDataSourceInstanceList, getDefaultDataSourceInstanceListItem } from '@grafana/runtime';
 import { type ThunkResult } from 'app/types/store';
 
 import { validateVariableSelectionState } from '../state/actions';
@@ -13,16 +12,21 @@ import { createDataSourceOptions } from './reducer';
 
 export interface DataSourceVariableActionDependencies {
   getDataSourceInstanceList: typeof getDataSourceInstanceList;
+  getDefaultDataSourceInstanceListItem: typeof getDefaultDataSourceInstanceListItem;
 }
 
 export const updateDataSourceVariableOptions =
   (
     identifier: KeyedVariableIdentifier,
-    dependencies: DataSourceVariableActionDependencies = { getDataSourceInstanceList }
+    dependencies: DataSourceVariableActionDependencies = {
+      getDataSourceInstanceList,
+      getDefaultDataSourceInstanceListItem,
+    }
   ): ThunkResult<void> =>
   async (dispatch, getState) => {
     const { rootStateKey } = identifier;
     const sources = await dependencies.getDataSourceInstanceList({ metrics: true, variables: false });
+    const defaultDataSourceInstance = await dependencies.getDefaultDataSourceInstanceListItem(sources);
     const variableInState = getVariable(identifier, getState());
     if (variableInState.type !== 'datasource') {
       return;
@@ -35,6 +39,13 @@ export const updateDataSourceVariableOptions =
       regex = stringToJsRegex(regex);
     }
 
-    dispatch(toKeyedAction(rootStateKey, createDataSourceOptions(toVariablePayload(identifier, { sources, regex }))));
+    dispatch(
+      toKeyedAction(
+        rootStateKey,
+        createDataSourceOptions(
+          toVariablePayload(identifier, { sources, regex, defaultDataSourceUid: defaultDataSourceInstance?.uid })
+        )
+      )
+    );
     await dispatch(validateVariableSelectionState(identifier));
   };

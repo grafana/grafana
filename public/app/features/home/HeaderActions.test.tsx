@@ -1,23 +1,23 @@
-import { http, HttpResponse } from 'msw';
 import { type RefObject } from 'react';
 import { render, screen, waitFor, within } from 'test/test-utils';
 
 import { setBackendSrv, setPluginComponentsHook } from '@grafana/runtime';
 import { invalidateCachedPromisesCache } from '@grafana/runtime/internal';
-import server, { setupMockServer } from '@grafana/test-utils/server';
+import { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
-import { ACTIVE_INCIDENTS_QUERY_LIMIT, type IncidentPreview } from 'app/features/alerting/unified/api/incidentsApi';
-import {
-  installAppPluginMeta,
-  pluginMeta,
-  uninstallAppPluginMeta,
-} from 'app/features/alerting/unified/testSetup/plugins';
-import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
-import { AlertState, type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
+import { ACTIVE_INCIDENTS_QUERY_LIMIT } from 'app/features/alerting/unified/api/incidentsApi';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { ALERTS_TAB_ID, INCIDENTS_TAB_ID, type AlertIncidentSwitchHandle } from './AlertsIncidents/AlertIncidentTabs';
+import {
+  makeAlert,
+  mockAlerts,
+  mockIrmPlugin,
+  mockNoIrmPlugin,
+  mockTeams,
+} from './AlertsIncidents/alertIncidentTabsTestUtils';
+import { mockIncidents } from './AlertsIncidents/mockIncidentsApi';
 import { useFiringAlerts } from './AlertsIncidents/useFiringAlerts';
 import { useIncidents } from './AlertsIncidents/useIncidents';
 import { HeaderActions } from './HeaderActions';
@@ -32,46 +32,6 @@ jest.mock('./analytics/main', () => ({
 
 setBackendSrv(backendSrv);
 setupMockServer();
-
-function makeAlert(overrides: Partial<AlertmanagerAlert> & { labels: AlertmanagerAlert['labels'] }): AlertmanagerAlert {
-  return {
-    startsAt: new Date(Date.now() - 60_000).toISOString(),
-    updatedAt: new Date().toISOString(),
-    endsAt: '0001-01-01T00:00:00Z',
-    fingerprint: Math.random().toString(36).slice(2),
-    receivers: [{ name: 'default' }],
-    status: { state: AlertState.Active, silencedBy: [], inhibitedBy: [] },
-    annotations: {},
-    ...overrides,
-    labels: { alertname: 'test', ...overrides.labels },
-  };
-}
-
-function mockAlerts(alerts: AlertmanagerAlert[]) {
-  server.use(http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', () => HttpResponse.json(alerts)));
-}
-
-function mockNoIrmPlugin() {
-  uninstallAppPluginMeta(SupportedPlugin.Irm);
-  server.use(http.get('/api/plugins/:pluginId/settings', () => HttpResponse.json({ enabled: false })));
-}
-
-function mockIrmPlugin() {
-  installAppPluginMeta(pluginMeta[SupportedPlugin.Irm]);
-  server.use(
-    http.get(`/api/plugins/${SupportedPlugin.Irm}/settings`, () =>
-      HttpResponse.json({ ...pluginMeta[SupportedPlugin.Irm], includes: [] })
-    )
-  );
-}
-
-function mockIncidents(incidents: IncidentPreview[], { hasMore = false } = {}) {
-  server.use(
-    http.post('/api/plugins/:pluginId/resources/api/v1/IncidentsService.QueryIncidentPreviews', () =>
-      HttpResponse.json({ incidentPreviews: incidents, cursor: { hasMore, nextValue: hasMore ? 'next' : '' } })
-    )
-  );
-}
 
 const noopRef = { current: null } satisfies RefObject<AlertIncidentSwitchHandle | null>;
 
@@ -90,7 +50,7 @@ beforeEach(() => {
   jest
     .spyOn(contextSrv, 'hasPermission')
     .mockImplementation((action: string) => action === AccessControlAction.AlertingInstanceRead);
-  server.use(http.get('/api/user/teams', () => HttpResponse.json([])));
+  mockTeams([]);
   mockAlerts([]);
   mockNoIrmPlugin();
 });
@@ -106,11 +66,6 @@ describe('HeaderActions', () => {
 
     const { container } = render(<HeaderActionsWithData />);
     await waitFor(() => expect(container).toBeEmptyDOMElement());
-  });
-
-  it('renders the firing alerts button when the user has alerting permission', async () => {
-    render(<HeaderActionsWithData />);
-    expect(await screen.findByRole('button', { name: /firing alerts/i })).toBeInTheDocument();
   });
 
   it('shows "All clear" on the firing alerts button when there are no alerts', async () => {
@@ -155,15 +110,6 @@ describe('HeaderActions', () => {
     await screen.findByRole('button', { name: /firing alerts/i });
     // IRM plugin bridge settles asynchronously; give it time before asserting absence
     await waitFor(() => expect(screen.queryByRole('button', { name: /active incidents/i })).not.toBeInTheDocument());
-  });
-
-  it('renders the incidents button when IRM is installed', async () => {
-    mockIrmPlugin();
-    mockIncidents([]);
-
-    render(<HeaderActionsWithData />);
-
-    expect(await screen.findByRole('button', { name: /active incidents/i })).toBeInTheDocument();
   });
 
   it('shows "All clear" on the incidents button when there are no active incidents', async () => {

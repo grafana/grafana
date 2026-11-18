@@ -2,9 +2,8 @@ import { HttpResponse, http } from 'msw';
 import { render, screen, waitFor } from 'test/test-utils';
 
 import { type DataSourceApi } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceSrv, useDataSourceInstanceList } from '@grafana/runtime';
 import { setDataSourceInstanceSettings } from '@grafana/runtime/internal';
-import { useDataSourceInstanceList } from '@grafana/runtime/unstable';
 
 import { type AlertDataQuery, type AlertQuery } from '../../../../../../types/unified-alerting-dto';
 import { setupMswServer } from '../../../mockApi';
@@ -18,14 +17,14 @@ const DS_UID = 'test-ds-uid';
 
 // Mocked so a test can hold the hook in its loading state; beforeEach restores the real
 // implementation, which reads the cache seeded by setDataSourceInstanceSettings below.
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   useDataSourceInstanceList: jest.fn(),
 }));
 
 const { useDataSourceInstanceList: actualUseDataSourceInstanceList } = jest.requireActual<{
   useDataSourceInstanceList: typeof useDataSourceInstanceList;
-}>('@grafana/runtime/unstable');
+}>('@grafana/runtime');
 
 const server = setupMswServer();
 
@@ -78,6 +77,46 @@ function makeGrafanaRule(data: Array<{ refId: string; datasourceUid: string; mod
 // ---------------------------------------------------------------------------
 
 describe('visualizationQueries transformation', () => {
+  it('previews raw SQL without line numbers, allows copying, and rejects edits without changing evaluation', async () => {
+    const capturedBodies: Array<{ data: Array<{ model: AlertDataQuery }> }> = [];
+    server.use(
+      http.post<never, { data: Array<{ model: AlertDataQuery }> }>('/api/v1/eval', async ({ request }) => {
+        capturedBodies.push(await request.json());
+        return HttpResponse.json<AlertingQueryResponse>({ results: {} });
+      })
+    );
+    const rule = makeGrafanaRule([
+      {
+        refId: 'A',
+        datasourceUid: DS_UID,
+        model: { refId: 'A', rawSql: 'SELECT value\nFROM metrics\nWHERE value > 10' },
+      },
+    ]);
+    const { user } = render(<QueryAndCondition rule={rule} />);
+
+    const preview = await screen.findByRole('textbox', { name: 'SQL query preview' });
+    expect(preview).toHaveTextContent('SELECT value');
+    expect(preview.closest('.cm-editor')).toHaveStyle({ height: '80px' });
+    expect(preview.closest('.cm-editor')?.querySelector('.cm-lineNumbers')).not.toBeInTheDocument();
+
+    await user.click(preview);
+    await user.keyboard('{Control>}a{/Control}');
+    const copiedQuery = await user.copy();
+    expect(copiedQuery?.getData('text/plain')).toBe('SELECT value\nFROM metrics\nWHERE value > 10');
+
+    await user.keyboard('{Backspace}');
+    await user.paste('SELECT 0');
+    await user.keyboard('edited');
+    await user.keyboard('{Control>}a{/Control}');
+    const copiedAfterEdits = await user.copy();
+    expect(copiedAfterEdits?.getData('text/plain')).toBe('SELECT value\nFROM metrics\nWHERE value > 10');
+    await waitFor(() => expect(capturedBodies).toHaveLength(2));
+    expect(capturedBodies.map((body) => body.data[0].model)).toEqual([
+      { refId: 'A', rawSql: 'SELECT value\nFROM metrics\nWHERE value > 10' },
+      { refId: 'A', rawSql: 'SELECT value\nFROM metrics\nWHERE value > 10' },
+    ]);
+  });
+
   it('converts Prometheus instant query (instant: true) to range', async () => {
     const capturedBodies: Array<{ data: unknown[]; condition: string }> = [];
 

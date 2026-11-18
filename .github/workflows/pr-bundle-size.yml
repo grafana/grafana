@@ -81,17 +81,26 @@ jobs:
 
       - name: Set up Node.js
         uses: ./.github/actions/setup-node
+
       - name: Build frontend
         uses: ./.github/actions/build-frontend
+        with:
+          sourcemaps: 'false'
 
       - name: Record bundle sizes
         id: stats
         env:
           OUTPUT_NAME: ${{ matrix.target }}
         run: |
+          # The base revision may still build into public/build rather than dist/frontend.
+          build_dir=public/build
+          if [ -d dist/frontend ]; then
+            build_dir=dist/frontend/build
+          fi
+          stats="$(node scripts/cli/reportBundleMetrics.mts --sizes-only "$build_dir")"
           {
             echo "${OUTPUT_NAME}<<EOF"
-            node scripts/cli/reportBundleSizeStats.mts
+            printf '%s\n' "$stats"
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
 

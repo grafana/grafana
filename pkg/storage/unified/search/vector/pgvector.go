@@ -569,6 +569,25 @@ func (b *pgvectorBackend) UpdateContentVersion(ctx context.Context, namespace, m
 	return err
 }
 
+func (b *pgvectorBackend) UpdateFolder(ctx context.Context, namespace, model, resource, uid, folder string) error {
+	if model == "" {
+		return fmt.Errorf("model must not be empty")
+	}
+	if err := b.validateResource(ctx, resource); err != nil {
+		return err
+	}
+	req := &sqlVectorCollectionUpdateFolderRequest{
+		SQLTemplate: sqltemplate.New(b.dialect),
+		Resource:    resource,
+		Namespace:   namespace,
+		Model:       model,
+		UID:         uid,
+		Folder:      folder,
+	}
+	_, err := dbutil.Exec(ctx, b.db, sqlVectorCollectionUpdateFolder, req)
+	return err
+}
+
 func (b *pgvectorBackend) Search(ctx context.Context, namespace, model, resource string,
 	embedding []float32, limit int, filters ...SearchFilter) (results []VectorSearchResult, retErr error) {
 	ctx, span := tracer.Start(ctx, "unified.vector.pgvector.Search")
@@ -608,22 +627,38 @@ func (b *pgvectorBackend) Search(ctx context.Context, namespace, model, resource
 
 	req.UIDValues, req.FolderValues, req.MetadataFilterGroups = searchFilterPredicates(filters)
 
-	rows, err := dbutil.Query(ctx, b.db, sqlVectorCollectionSearch, req)
-	if err != nil {
-		return nil, err
-	}
-
-	results = make([]VectorSearchResult, len(rows))
-	for i, row := range rows {
-		results[i] = VectorSearchResult{
-			UID:         row.UID,
-			Title:       row.Title,
-			Subresource: row.Subresource,
-			Content:     row.Content,
-			Score:       row.Score,
-			Folder:      row.Folder,
-			Metadata:    row.Metadata,
+	budget := min(1000, max(40, limit))
+	err = b.db.WithTx(ctx, nil, func(ctx context.Context, tx db.Tx) error {
+		var effectiveBudget string
+		// Preserve a higher session budget while keeping this search's increase local to the transaction.
+		err := tx.QueryRowContext(ctx, `SELECT set_config('hnsw.ef_search',
+			GREATEST($1, COALESCE(NULLIF(current_setting('hnsw.ef_search', true), '')::int, 40))::text,
+			true)`, budget).Scan(&effectiveBudget)
+		if err != nil {
+			return fmt.Errorf("set HNSW search budget: %w", err)
 		}
+		span.SetAttributes(attribute.String("hnsw_ef_search", effectiveBudget))
+
+		rows, err := dbutil.Query(ctx, tx, sqlVectorCollectionSearch, req)
+		if err != nil {
+			return fmt.Errorf("query vectors: %w", err)
+		}
+		results = make([]VectorSearchResult, len(rows))
+		for i, row := range rows {
+			results[i] = VectorSearchResult{
+				UID:         row.UID,
+				Title:       row.Title,
+				Subresource: row.Subresource,
+				Content:     row.Content,
+				Score:       row.Score,
+				Folder:      row.Folder,
+				Metadata:    row.Metadata,
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("search vectors: %w", err)
 	}
 	return results, nil
 }
@@ -641,13 +676,14 @@ func (b *pgvectorBackend) ListIncompleteBackfillJobs(ctx context.Context, model 
 	out := make([]BackfillJob, 0, len(rows))
 	for _, r := range rows {
 		out = append(out, BackfillJob{
-			ID:          r.ID,
-			Model:       r.Model,
-			Resource:    r.Resource,
-			StoppingRV:  r.StoppingRV,
-			LastSeenKey: r.LastSeenKey.String,
-			IsComplete:  r.IsComplete,
-			LastError:   r.LastError.String,
+			ID:             r.ID,
+			Model:          r.Model,
+			Resource:       r.Resource,
+			StoppingRV:     r.StoppingRV,
+			ContentVersion: r.ContentVersion,
+			LastSeenKey:    r.LastSeenKey.String,
+			IsComplete:     r.IsComplete,
+			LastError:      r.LastError.String,
 		})
 	}
 	return out, nil

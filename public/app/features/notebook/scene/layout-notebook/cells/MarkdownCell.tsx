@@ -8,6 +8,7 @@ import { LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import { type CellContentKind } from 'app/features/notebook/types';
 
 import { useFocusExtension } from './focusExtension';
+import { headingBoldWeight, headingStyles } from './markdownHeadingStyles';
 
 const MarkdownCellEditor = lazy(() =>
   import(/* webpackChunkName: "notebook-markdown-editor" */ './MarkdownCellEditor').then((m) => ({
@@ -82,20 +83,24 @@ const getStyles = (theme: GrafanaTheme2) => ({
     'h1, h2, h3, h4, h5, h6': {
       marginTop: theme.spacing(2),
       marginBottom: theme.spacing(1),
-      fontWeight: theme.typography.fontWeightMedium,
     },
     '& > :first-child': {
       marginTop: 0,
     },
-    h1: { fontSize: theme.typography.h1.fontSize, lineHeight: theme.typography.h1.lineHeight },
+    h1: headingStyles(theme.typography.h1),
     h2: {
-      fontSize: theme.typography.h2.fontSize,
-      lineHeight: theme.typography.h2.lineHeight,
+      ...headingStyles(theme.typography.h2),
       paddingBottom: theme.spacing(1),
       borderBottom: `1px solid ${theme.colors.border.weak}`,
     },
-    h3: { fontSize: theme.typography.h3.fontSize, lineHeight: theme.typography.h3.lineHeight },
-    h4: { fontSize: theme.typography.h4.fontSize },
+    h3: headingStyles(theme.typography.h3),
+    h4: headingStyles(theme.typography.h4),
+    'h1 strong, h1 b': { fontWeight: headingBoldWeight(theme.typography.h1, theme.typography) },
+    'h2 strong, h2 b': { fontWeight: headingBoldWeight(theme.typography.h2, theme.typography) },
+    'h3 strong, h3 b': { fontWeight: headingBoldWeight(theme.typography.h3, theme.typography) },
+    'h4 strong, h4 b': { fontWeight: headingBoldWeight(theme.typography.h4, theme.typography) },
+    'h5 strong, h5 b': { fontWeight: headingBoldWeight(theme.typography.h5, theme.typography) },
+    'h6 strong, h6 b': { fontWeight: headingBoldWeight(theme.typography.h6, theme.typography) },
     p: { marginBottom: theme.spacing(1) },
     blockquote: {
       margin: theme.spacing(1, 0),
@@ -109,6 +114,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
       borderRadius: theme.shape.radius.default,
       fontFamily: theme.typography.fontFamilyMonospace,
       fontSize: theme.typography.bodySmall.fontSize,
+    },
+    '& :not(pre) > code': {
+      whiteSpace: 'normal',
+      overflowWrap: 'anywhere',
     },
     pre: {
       background: theme.colors.background.secondary,

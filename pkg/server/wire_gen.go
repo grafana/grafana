@@ -13,7 +13,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/metricsservice"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/infra/tracingsetting"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/authz"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/server/reconciler"
@@ -50,7 +52,7 @@ func InitializeModuleServer(cfg *setting.Cfg, opts Options, apiOpts api.ServerOp
 	if err != nil {
 		return nil, err
 	}
-	tracingConfig, err := tracing.ProvideTracingConfig(configProvider)
+	tracingConfig, err := tracingsetting.ProvideTracingConfig(configProvider)
 	if err != nil {
 		return nil, err
 	}
@@ -65,14 +67,10 @@ func InitializeModuleServer(cfg *setting.Cfg, opts Options, apiOpts api.ServerOp
 	if err != nil {
 		return nil, err
 	}
-	experimentalKVOptions, err := sql.ProvideExperimentalKV(cfg)
-	if err != nil {
-		return nil, err
-	}
 	storeProvider := store.ProvideDefaultStoreProvider()
 	v := authz.ProvideReconcileCRDs()
 	stateStore := authz.ProvideDeferredZanzanaReconcilerState()
-	moduleServer, err := NewModule(opts, apiOpts, featureToggles, cfg, storageMetrics, bleveIndexMetrics, vectorMetrics, registerer, gatherer, tracingService, ossLicensingService, moduleRegisterer, kv, experimentalKVOptions, hooksService, storeProvider, v, stateStore)
+	moduleServer, err := NewModule(opts, apiOpts, featureToggles, cfg, storageMetrics, bleveIndexMetrics, vectorMetrics, registerer, gatherer, tracingService, ossLicensingService, moduleRegisterer, kv, hooksService, storeProvider, v, stateStore)
 	if err != nil {
 		return nil, err
 	}
@@ -127,12 +125,12 @@ func InitializeDashboardStats(cfg *setting.Cfg, features featuremgmt.FeatureTogg
 // wire_subinject_oss.go:
 
 var ossBaseCLISet = wire.NewSet(
-	NewModuleRunner, metrics.WireSet, featuremgmt.ProvideManagerService, featuremgmt.ProvideToggles, hooks.ProvideService, setting.ProvideProvider, wire.Bind(new(setting.Provider), new(*setting.OSSImpl)), licensing.ProvideService, wire.Bind(new(licensing.Licensing), new(*licensing.OSSLicensingService)), configprovider.ProvideService,
+	NewModuleRunner, metricsservice.WireSet, featuremgmt.ProvideManagerService, featuremgmt.ProvideToggles, hooks.ProvideService, setting.ProvideProvider, wire.Bind(new(setting.Provider), new(*setting.OSSImpl)), licensing.ProvideService, wire.Bind(new(licensing.Licensing), new(*licensing.OSSLicensingService)), configprovider.ProvideService,
 )
 
 var moduleServerSet = wire.NewSet(
 	NewModule,
-	ossBaseCLISet, tracing.ProvideTracingConfig, tracing.ProvideService, wire.Bind(new(tracing.Tracer), new(*tracing.TracingService)), resource.ProvideStorageMetrics, resource.ProvideIndexMetrics, resource.ProvideVectorMetrics, ProvideNoopModuleRegisterer, sql.ProvideModuleServerKV, sql.ProvideExperimentalKV, store.ProvideDefaultStoreProvider, authz.ProvideReconcileCRDs, authz.ProvideDeferredZanzanaReconcilerState,
+	ossBaseCLISet, tracingsetting.ProvideTracingConfig, tracing.ProvideService, wire.Bind(new(tracing.Tracer), new(*tracing.TracingService)), resource.ProvideStorageMetrics, resource.ProvideIndexMetrics, resource.ProvideVectorMetrics, ProvideNoopModuleRegisterer, sql.ProvideModuleServerKV, store.ProvideDefaultStoreProvider, authz.ProvideReconcileCRDs, authz.ProvideDeferredZanzanaReconcilerState,
 )
 
 var dashboardStatsSet = wire.NewSet(builders.ProvideDashboardStats, wire.Bind(new(builders.DashboardStats), new(*builders.OssDashboardStats)))

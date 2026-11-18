@@ -6,6 +6,9 @@ import {
   PluginType,
   type PluginMetaInfo,
 } from '@grafana/data';
+import { setTestFlags } from '@grafana/test-utils/unstable';
+
+import { FlagKeys } from '../internal/openFeature/openfeature.gen';
 
 import { useFavoriteDatasources } from './useFavoriteDatasources';
 
@@ -19,16 +22,6 @@ jest.mock('./userStorage', () => {
       getItem: (key: string) => mockGetItem(key),
       setItem: (key: string, value: string) => mockSetItem(key, value),
     })),
-  };
-});
-
-jest.mock('../config', () => {
-  return {
-    config: {
-      featureToggles: {
-        favoriteDatasources: true,
-      },
-    },
   };
 });
 
@@ -74,10 +67,26 @@ describe('useFavoriteDatasources', () => {
   beforeEach(() => {
     mockGetItem.mockReset();
     mockSetItem.mockReset();
+    setTestFlags({ [FlagKeys.FavoriteDatasources]: true });
   });
 
   afterEach(() => {
     jest.clearAllMocks();
+    setTestFlags({});
+  });
+
+  describe('when the favoriteDatasources flag is off', () => {
+    it('should report disabled and not read favorites from storage', async () => {
+      setTestFlags({ [FlagKeys.FavoriteDatasources]: false });
+      mockGetItem.mockResolvedValue(JSON.stringify(['prometheus-uid']));
+
+      const { result } = renderHook(() => useFavoriteDatasources());
+
+      expect(result.current.enabled).toBe(false);
+      expect(result.current.favoriteDatasources).toEqual([]);
+      expect(result.current.isFavoriteDatasource('prometheus-uid')).toBe(false);
+      expect(mockGetItem).not.toHaveBeenCalled();
+    });
   });
 
   describe('initial loading', () => {

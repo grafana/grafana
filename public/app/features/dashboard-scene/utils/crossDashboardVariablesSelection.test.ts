@@ -1,10 +1,16 @@
-import { defaultCustomVariableSpec, type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import {
+  defaultCustomVariableSpec,
+  defaultDatasourceVariableSpec,
+  defaultQueryVariableSpec,
+  type VariableKind,
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { AnnoKeyUseCrossDashboardVariables } from 'app/features/apiserver/types';
 
 import {
   applyUseCrossDashboardVariables,
   countPredefinedVariableOrigins,
   getGlobalVariablesMode,
+  getPredefinedVariableDependents,
   isPredefinedNameSelected,
   isScopeNameSelected,
   mayInjectAnyPredefinedVariables,
@@ -12,8 +18,10 @@ import {
   resolvePredefinedVariablesForDashboard,
   serializeUseCrossDashboardVariables,
   setScopeAll,
+  setShownScopeNames,
   toggleSelectionName,
   toggleScopeName,
+  withDependenciesSelected,
   writeUseCrossDashboardVariables,
 } from './crossDashboardVariablesSelection';
 import { toControlSourceRef } from './predefinedVariables';
@@ -26,6 +34,29 @@ function makeVar(name: string, origin: 'global' | 'folder'): VariableKind {
       name,
       query: 'a,b',
       origin: toControlSourceRef(origin === 'global' ? { type: 'global' } : { type: 'folder', folderUid: 'folder-1' }),
+    },
+  };
+}
+
+function makeOrigin(origin: 'global' | 'folder') {
+  return toControlSourceRef(origin === 'global' ? { type: 'global' } : { type: 'folder', folderUid: 'folder-1' });
+}
+
+function makeDatasourceVar(name: string, origin: 'global' | 'folder'): VariableKind {
+  return {
+    kind: 'DatasourceVariable',
+    spec: { ...defaultDatasourceVariableSpec(), name, pluginId: 'prometheus', origin: makeOrigin(origin) },
+  };
+}
+
+function makeQueryVar(name: string, datasourceName: string, origin: 'global' | 'folder'): VariableKind {
+  return {
+    kind: 'QueryVariable',
+    spec: {
+      ...defaultQueryVariableSpec(),
+      name,
+      query: { kind: 'DataQuery', group: 'prometheus', version: 'v0', datasource: { name: datasourceName }, spec: {} },
+      origin: makeOrigin(origin),
     },
   };
 }
@@ -230,6 +261,111 @@ describe('resolvePredefinedVariablesForDashboard', () => {
       }).map((v) => v.spec.name)
     ).toEqual(['region']);
   });
+
+  describe('datasource variable references', () => {
+    const select = (variables: VariableKind[], selection: string) =>
+      resolvePredefinedVariablesForDashboard(variables, {
+        annotations: { [AnnoKeyUseCrossDashboardVariables]: selection },
+      }).map((v) => v.spec.name);
+
+    it.each(['${ds}', '$ds', '[[ds]]'])('pulls in the global datasource variable referenced as %s', (ref) => {
+      const variables = [makeDatasourceVar('ds', 'global'), makeQueryVar('labels', ref, 'global')];
+
+      expect(select(variables, '{"global":["labels"],"folder":"none"}')).toEqual(['ds', 'labels']);
+    });
+
+    it('pulls in a global datasource variable for a selected folder query variable', () => {
+      const variables = [makeDatasourceVar('ds', 'global'), makeQueryVar('labels', '${ds}', 'folder')];
+
+      expect(select(variables, '{"global":"none","folder":["labels"]}')).toEqual(['ds', 'labels']);
+    });
+
+    it('ignores a concrete datasource uid and references to unknown variables', () => {
+      const variables = [
+        makeDatasourceVar('ds', 'global'),
+        makeQueryVar('byUid', 'prom-uid', 'global'),
+        makeQueryVar('byMissing', '${missing}', 'global'),
+      ];
+
+      expect(select(variables, '{"global":["byUid","byMissing"],"folder":"none"}')).toEqual(['byUid', 'byMissing']);
+    });
+
+    it('skips dependencies of a shadowed variable and shadowed dependencies', () => {
+      const variables = [makeDatasourceVar('ds', 'global'), makeQueryVar('labels', '${ds}', 'folder')];
+      const resolve = (localVariableNames: string[]) =>
+        resolvePredefinedVariablesForDashboard(variables, {
+          annotations: { [AnnoKeyUseCrossDashboardVariables]: '{"global":"none","folder":["labels"]}' },
+          localVariableNames,
+        }).map((v) => v.spec.name);
+
+      expect(resolve(['labels'])).toEqual([]);
+      expect(resolve(['ds'])).toEqual(['labels']);
+    });
+
+    it('terminates on a self-reference', () => {
+      const variables = [makeQueryVar('loop', '${loop}', 'global')];
+
+      expect(select(variables, '{"global":["loop"],"folder":"none"}')).toEqual(['loop']);
+    });
+  });
+});
+
+describe('getPredefinedVariableDependents', () => {
+  const ds = makeDatasourceVar('ds', 'global');
+  const labels = makeQueryVar('labels', '${ds}', 'folder');
+  const pods = makeQueryVar('pods', '${ds}', 'folder');
+  const variables = [ds, labels, pods];
+
+  it('maps an implicitly injected variable to every selected variable that requires it', () => {
+    const dependents = getPredefinedVariableDependents(variables, { global: 'none', folder: ['pods', 'labels'] });
+
+    expect([...dependents]).toEqual([[ds, ['labels', 'pods']]]);
+  });
+
+  it('still reports a dependency that is also selected explicitly, so it stays locked', () => {
+    const dependents = getPredefinedVariableDependents(variables, { global: ['ds'], folder: ['labels'] });
+
+    expect([...dependents]).toEqual([[ds, ['labels']]]);
+  });
+
+  it('skips predefined variables shadowed by dashboard variables', () => {
+    expect(getPredefinedVariableDependents(variables, { global: 'none', folder: ['labels'] }, ['labels']).size).toBe(0);
+    expect(getPredefinedVariableDependents(variables, { global: 'none', folder: ['labels'] }, ['ds']).size).toBe(0);
+  });
+
+  it('reports nothing when the dashboard has not opted in', () => {
+    expect(getPredefinedVariableDependents(variables, undefined).size).toBe(0);
+  });
+});
+
+describe('withDependenciesSelected', () => {
+  const ds = makeDatasourceVar('ds', 'global');
+  const labels = makeQueryVar('labels', '${ds}', 'folder');
+  const variables = [ds, labels];
+
+  it('adds a datasource dependency to its own scope', () => {
+    expect(withDependenciesSelected({ global: 'none', folder: ['labels'] }, variables)).toEqual({
+      global: ['ds'],
+      folder: ['labels'],
+    });
+  });
+
+  it('keeps the dependency once the variable that needed it is unchecked', () => {
+    const pinned = withDependenciesSelected({ global: 'none', folder: ['labels'] }, variables);
+    const unchecked = toggleSelectionName(pinned, 'folder', 'labels', false, ['labels']);
+
+    expect(
+      resolvePredefinedVariablesForDashboard(variables, {
+        annotations: { [AnnoKeyUseCrossDashboardVariables]: serializeUseCrossDashboardVariables(unchecked) },
+      }).map((v) => v.spec.name)
+    ).toEqual(['ds']);
+  });
+
+  it('leaves the selection alone when the dependency is shadowed by a dashboard variable', () => {
+    const selection = { global: 'none' as const, folder: ['labels'] };
+
+    expect(withDependenciesSelected(selection, variables, ['ds'])).toEqual(selection);
+  });
 });
 
 describe('mayInjectAnyPredefinedVariables', () => {
@@ -330,6 +466,51 @@ describe('setScopeAll', () => {
   it('writes all when checked and none when unchecked', () => {
     expect(setScopeAll(true)).toBe('all');
     expect(setScopeAll(false)).toBe('none');
+  });
+});
+
+describe('setShownScopeNames', () => {
+  it('adds shown names without upgrading to all when hidden names remain', () => {
+    expect(
+      setShownScopeNames({ global: 'none', folder: 'none' }, 'global', ['service'], ['env', 'service'], true)
+    ).toEqual({ global: ['service'], folder: 'none' });
+  });
+
+  it('upgrades to all when the shown names cover the scope', () => {
+    expect(
+      setShownScopeNames({ global: ['env'], folder: 'none' }, 'global', ['service'], ['env', 'service'], true)
+    ).toEqual({ global: 'all', folder: 'none' });
+  });
+
+  it('leaves all in place when unchecking hides some names in the scope', () => {
+    expect(
+      setShownScopeNames({ global: 'all', folder: ['service'] }, 'global', ['service'], ['env', 'service'], false)
+    ).toEqual({ global: 'all', folder: ['service'] });
+  });
+
+  it('clears all when every name in the scope is shown', () => {
+    expect(setShownScopeNames({ global: 'all', folder: 'none' }, 'global', ['service'], ['service'], false)).toEqual({
+      global: 'none',
+      folder: 'none',
+    });
+  });
+
+  it('drops unchecked shown names from the other scope', () => {
+    expect(
+      setShownScopeNames(
+        { global: ['service', 'env'], folder: ['service'] },
+        'global',
+        ['service'],
+        ['env', 'service'],
+        false
+      )
+    ).toEqual({ global: ['env'], folder: 'none' });
+  });
+
+  it('drops a same-named filter from the other scope when this scope lists none', () => {
+    expect(
+      setShownScopeNames({ global: 'none', folder: ['service'] }, 'global', ['service'], ['service'], false)
+    ).toEqual({ global: 'none', folder: 'none' });
   });
 });
 

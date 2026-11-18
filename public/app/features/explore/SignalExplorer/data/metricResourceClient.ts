@@ -1,6 +1,6 @@
 import type { DataSourceApi, DataSourceRef, TimeRange } from '@grafana/data';
 import type { PrometheusLanguageProviderInterface } from '@grafana/prometheus';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { getDataSourceInstance } from '@grafana/runtime';
 
 import type { MetricInfo } from '../types';
 
@@ -13,8 +13,18 @@ import { baseMetricName, deriveMetricType } from './metricType';
  */
 type PromLanguageProvider = Pick<
   PrometheusLanguageProviderInterface,
-  'start' | 'retrieveMetrics' | 'retrieveMetricsMetadata' | 'queryLabelKeys' | 'queryLabelValues'
+  'datasource' | 'start' | 'retrieveMetrics' | 'retrieveMetricsMetadata' | 'queryLabelKeys' | 'queryLabelValues'
 >;
+
+type PromMetricsMetadata = ReturnType<PromLanguageProvider['retrieveMetricsMetadata']>;
+
+/** A datasource's metric names, and whether the datasource's series limit cut the list short. */
+export interface Catalog {
+  metrics: MetricInfo[];
+  truncated: boolean;
+  /** False when the datasource has metric lookups disabled, so a search term must not reach it either. */
+  searchable: boolean;
+}
 
 /**
  * How long a resolved entry is served from cache. This is a bound on staleness, not a refresh: nothing
@@ -29,11 +39,12 @@ interface CacheEntry<T> {
   expiresAt: number;
 }
 
-const catalogCache = new Map<string, CacheEntry<MetricInfo[]>>();
+const catalogCache = new Map<string, CacheEntry<Catalog>>();
+const searchCache = new Map<string, CacheEntry<MetricInfo[]>>();
 const labelKeysCache = new Map<string, CacheEntry<string[]>>();
 const labelValuesCache = new Map<string, CacheEntry<string[]>>();
 
-const allCaches = [catalogCache, labelKeysCache, labelValuesCache];
+const allCaches = [catalogCache, searchCache, labelKeysCache, labelValuesCache];
 
 function once<T>(cache: Map<string, CacheEntry<T>>, key: string, fn: () => Promise<T>): Promise<T> {
   const hit = cache.get(key);
@@ -157,25 +168,96 @@ async function getLP(dsRef: DataSourceRef): Promise<PromLanguageProvider> {
 // the string literal early and the datasource rejects the selector as malformed.
 const selector = (metric: string) => `{__name__="${metric.replace(/[\\"]/g, '\\$&')}"}`;
 
-export function fetchCatalog(dsRef: DataSourceRef, timeRange: TimeRange): Promise<MetricInfo[]> {
-  return once(catalogCache, `cat:${dsKey(dsRef)}:${rangeKey(timeRange)}`, async () => {
+// Regex metacharacters are escaped so the term matches literally, then the result is escaped again
+// for the PromQL string literal it sits in. `(?i)` keeps the search case-insensitive.
+const searchSelector = (term: string) => {
+  const literal = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return `{__name__=~"(?i).*${literal.replace(/[\\"]/g, '\\$&')}.*"}`;
+};
+
+function toMetricInfos(names: string[], meta: PromMetricsMetadata, catalog: ReadonlySet<string>): MetricInfo[] {
+  return names.map<MetricInfo>((name) => {
+    // Metadata is keyed by the metric family, so a classic histogram or summary series has none of
+    // its own; fall back to its family's. Own entry first, in case a metric really is named with
+    // one of those suffixes.
+    const entry = meta[name] ?? meta[baseMetricName(name)];
+    return {
+      name,
+      type: deriveMetricType(name, entry, catalog),
+      help: entry?.help,
+      unit: entry?.unit,
+    };
+  });
+}
+
+const catalogKey = (dsRef: DataSourceRef, timeRange: TimeRange) => `cat:${dsKey(dsRef)}:${rangeKey(timeRange)}`;
+
+export function fetchCatalog(dsRef: DataSourceRef, timeRange: TimeRange): Promise<Catalog> {
+  return once(catalogCache, catalogKey(dsRef, timeRange), async () => {
     const lp = await getLP(dsRef);
     await lp.start(timeRange);
     const names = lp.retrieveMetrics() ?? [];
-    const meta = lp.retrieveMetricsMetadata() ?? {};
-    return names.map<MetricInfo>((name) => {
-      // Metadata is keyed by the metric family, so a classic histogram or summary series has none of
-      // its own; fall back to its family's. Own entry first, in case a metric really is named with
-      // one of those suffixes.
-      const entry = meta[name] ?? meta[baseMetricName(name)];
-      return {
-        name,
-        type: deriveMetricType(name, entry),
-        help: entry?.help,
-        unit: entry?.unit,
-      };
-    });
+    const { datasource } = lp;
+    const limit = datasource.seriesLimit;
+    // Only the labels endpoint caps names at `seriesLimit`: the series endpoint caps series, which
+    // yield far fewer names, and the search API applies its own lower cap. Neither can be told apart
+    // from a complete list, so both are treated as truncated.
+    const capsNames = datasource.hasLabelsMatchAPISupport() && !datasource.hasSearchApiSupport();
+    return {
+      metrics: toMetricInfos(names, lp.retrieveMetricsMetadata() ?? {}, new Set(names)),
+      // A capped request is answered with exactly `limit` names; zero means uncapped. Fewer names
+      // prove nothing, since a server can cap lower and the language provider drops its warning;
+      // only the row count's wording relies on this. With lookups disabled nothing was fetched.
+      truncated: !datasource.lookupsDisabled && (!capsNames || (limit > 0 && names.length >= limit)),
+      searchable: !datasource.lookupsDisabled,
+    };
   });
+}
+
+// Keyed by free text, so unlike the other caches it would otherwise grow with every term typed.
+const SEARCH_CACHE_MAX_ENTRIES = 20;
+
+/**
+ * Metric names containing `term`, matched by the datasource, since the catalog may be missing names
+ * that a limit, ours or the server's, cut off.
+ */
+export function searchCatalog(dsRef: DataSourceRef, timeRange: TimeRange, term: string): Promise<MetricInfo[]> {
+  // Lower-cased because the match is case-insensitive: `Quick` and `quick` are the same search.
+  const key = `search:${dsKey(dsRef)}:${rangeKey(timeRange)}:${term.toLowerCase()}`;
+  // Re-inserted on a hit so eviction drops the least recently used term, not the oldest one typed.
+  const hit = searchCache.get(key);
+  if (hit) {
+    searchCache.delete(key);
+    searchCache.set(key, hit);
+  }
+  const result = once(searchCache, key, async () => {
+    const lp = await getLP(dsRef);
+    if (lp.datasource.lookupsDisabled) {
+      return [];
+    }
+    const [names, catalog] = await Promise.all([
+      lp.queryLabelValues(timeRange, '__name__', searchSelector(term)),
+      // Loading the catalog loads the metadata the rows are typed from. An expired entry is reused, not
+      // reloaded: nothing refetches on expiry, so it is still the catalog on screen.
+      catalogCache.get(catalogKey(dsRef, timeRange))?.value ?? fetchCatalog(dsRef, timeRange),
+    ]);
+    // A term like `sum` matches `foo_sum` but not the `foo_bucket` that types it, so the loaded
+    // catalog supplies the rest of the family.
+    const catalogNames = catalog.metrics.map((metric) => metric.name);
+    const known = new Set([...names, ...catalogNames]);
+    // A failed request resolves to `[]` rather than rejecting, so the catalog's matches are the floor.
+    const q = term.toLowerCase();
+    const local = catalogNames.filter((name) => name.toLowerCase().includes(q));
+    return toMetricInfos([...new Set([...names, ...local])].sort(), lp.retrieveMetricsMetadata() ?? {}, known);
+  });
+  // A `Map` iterates in insertion order, so the first key is the least recently used search.
+  if (searchCache.size > SEARCH_CACHE_MAX_ENTRIES) {
+    const oldest = searchCache.keys().next().value;
+    if (oldest !== undefined) {
+      searchCache.delete(oldest);
+    }
+  }
+  return result;
 }
 
 export function fetchLabelKeys(dsRef: DataSourceRef, timeRange: TimeRange, metric: string): Promise<string[]> {

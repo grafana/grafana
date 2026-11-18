@@ -43,14 +43,15 @@ export function mergeFilesAndResources(files: unknown[], resources: ResourceList
 
   // Merge resources
   for (const resource of resources) {
-    if (!resource.path) {
+    const path = resource.path.replace(/\/+$/, '');
+    if (!path && resource.resource !== 'folders') {
       continue;
     }
-    const existing = merged.get(resource.path);
+    const existing = merged.get(path);
     if (existing) {
       existing.resource = resource;
     } else {
-      merged.set(resource.path, { path: resource.path, resource });
+      merged.set(path, { path, resource });
     }
   }
 
@@ -113,7 +114,7 @@ export function buildTree(mergedItems: MergedItem[]): TreeItem[] {
 
   // Create all nodes (files, dashboards, folders)
   for (const item of mergedItems) {
-    const type = getItemType(item.path, item.resource);
+    const type = !item.resource && item.file?.hash === '' ? 'Folder' : getItemType(item.path, item.resource);
     const isFolderMetadata = isFolderMetadataPath(item.path);
     // Show sync status for any provisioned resource kind (Folder, Dashboard, Playlist, ...) or for
     // unsynced .json files that haven't been turned into a resource yet. `type` is only 'File' for
@@ -130,8 +131,9 @@ export function buildTree(mergedItems: MergedItem[]): TreeItem[] {
       level: 0,
       children: [],
       resourceName: item.resource?.name,
+      resource: item.resource?.resource,
       hash: item.file?.hash ?? item.resource?.hash,
-      status: showStatus ? getStatus(item.file?.hash, resourceHash) : undefined,
+      status: !item.path ? 'synced' : showStatus ? getStatus(item.file?.hash, resourceHash) : undefined,
       hasFile: !!item.file,
     });
   }
@@ -140,7 +142,7 @@ export function buildTree(mergedItems: MergedItem[]): TreeItem[] {
   // has a non-empty hash, the metadata was previously synced — its absence means the
   // file was removed from the remote repo, so the folder is pending until the next sync.
   for (const [path, node] of nodeMap) {
-    if (node.type === 'Folder' && node.resourceName) {
+    if (path && node.type === 'Folder' && node.resourceName) {
       const metadataPath = getFolderMetadataPath(path);
       const fileExists = nodeMap.has(metadataPath);
       node.missingFolderMetadata = !fileExists;
@@ -150,19 +152,28 @@ export function buildTree(mergedItems: MergedItem[]): TreeItem[] {
     }
   }
 
+  for (const [path, node] of nodeMap) {
+    if (!isFolderMetadataPath(path)) {
+      continue;
+    }
+    nodeMap.delete(path);
+    const parent = path.includes('/') ? nodeMap.get(path.substring(0, path.lastIndexOf('/'))) : undefined;
+    if (parent) {
+      parent.metadataPath = path;
+      if (node.status === 'pending') {
+        parent.status = 'pending';
+      }
+    }
+  }
+
   // Build parent-child relationships
   for (const [path, node] of nodeMap) {
-    const lastSlashIndex = path.lastIndexOf('/');
-    if (lastSlashIndex === -1) {
-      roots.push(node);
+    const parentPath = path.substring(0, Math.max(path.lastIndexOf('/'), 0));
+    const parent = path ? (nodeMap.get(parentPath) ?? nodeMap.get('')) : undefined;
+    if (parent) {
+      parent.children.push(node);
     } else {
-      const parentPath = path.substring(0, lastSlashIndex);
-      const parent = nodeMap.get(parentPath);
-      if (parent) {
-        parent.children.push(node);
-      } else {
-        roots.push(node);
-      }
+      roots.push(node);
     }
   }
 
@@ -261,31 +272,35 @@ export function filterTree(items: TreeItem[], searchQuery: string): TreeItem[] {
  */
 export type StatusCategory = 'warning' | 'pending' | 'synced';
 
-export function getStatusCategory(node: TreeItem, includeWarnings: boolean): StatusCategory | undefined {
-  if (includeWarnings && node.missingFolderMetadata) {
+export function getStatusCategory(node: TreeItem): StatusCategory | undefined {
+  if (node.missingFolderMetadata) {
     return 'warning';
   }
   return node.status;
 }
 
 /**
- * Filter tree to items whose status is in `categories`, keeping ancestor folders so the
- * hierarchy stays intact. An empty `categories` list disables the filter (returns everything).
- * `includeWarnings` controls whether the folder-metadata warning is treated as its own category.
+ * Filter tree to items whose status is in `categories` and whose plural resource name (e.g.
+ * `dashboards`) is in `resources`, keeping ancestor folders so the hierarchy stays intact. An
+ * empty list disables that filter.
  */
-export function filterByStatusCategories(
+export function filterByStatusAndResources(
   items: TreeItem[],
   categories: StatusCategory[],
-  includeWarnings = false
+  resources: string[]
 ): TreeItem[] {
-  if (categories.length === 0) {
+  if (categories.length === 0 && resources.length === 0) {
     return items;
   }
 
-  const selected = new Set(categories);
+  const selectedCategories = new Set(categories);
+  const selectedResources = new Set(resources);
   const matches = (node: TreeItem): boolean => {
-    const category = getStatusCategory(node, includeWarnings);
-    return category !== undefined && selected.has(category);
+    const category = getStatusCategory(node);
+    const matchesStatus = selectedCategories.size === 0 || (category !== undefined && selectedCategories.has(category));
+    const matchesResource =
+      selectedResources.size === 0 || (node.resource !== undefined && selectedResources.has(node.resource));
+    return matchesStatus && matchesResource;
   };
 
   const filterNode = (node: TreeItem): TreeItem | null => {

@@ -4,11 +4,6 @@ import { type Repository, type RepositorySpec } from 'app/api/clients/provisioni
 
 import { RepositoryOverview } from './RepositoryOverview';
 
-jest.mock('@openfeature/react-sdk', () => ({
-  ...jest.requireActual('@openfeature/react-sdk'),
-  useBooleanFlagValue: jest.fn().mockReturnValue(false),
-}));
-
 jest.mock('../Job/RecentJobs', () => ({
   RecentJobs: () => null,
 }));
@@ -21,10 +16,9 @@ jest.mock('./RepositoryPullStatusCard', () => ({
   RepositoryPullStatusCard: () => null,
 }));
 
-const createMockRepository = (
-  spec: Partial<RepositorySpec>,
-  webhook: NonNullable<Repository['status']>['webhook'] = { id: 42, url: 'https://grafana.example/webhook' }
-): Repository => ({
+type RepositoryStatus = NonNullable<Repository['status']>;
+
+const createMockRepository = (spec: Partial<RepositorySpec>, status: Partial<RepositoryStatus> = {}): Repository => ({
   metadata: { name: 'test-repo' },
   spec: {
     title: 'Test Repository',
@@ -37,11 +31,54 @@ const createMockRepository = (
     health: { healthy: true, checked: Date.now() },
     sync: { state: 'success', message: [] },
     observedGeneration: 1,
-    webhook,
+    webhook: { id: 42, url: 'https://grafana.example/webhook' },
+    ...status,
   },
 });
 
 describe('RepositoryOverview', () => {
+  it('shows the missing folder metadata warning when the repository reports it', () => {
+    const repo = createMockRepository(
+      {},
+      {
+        conditions: [
+          {
+            type: 'PullStatus',
+            status: 'False',
+            reason: 'MissingFolderMetadata',
+            message: 'Folder metadata is missing',
+            lastTransitionTime: new Date().toISOString(),
+            observedGeneration: 1,
+          },
+        ],
+      }
+    );
+
+    render(<RepositoryOverview repo={repo} />);
+
+    expect(screen.getByText('Some folders are missing metadata in this repository.')).toBeInTheDocument();
+  });
+
+  it('links each resource kind to the resources tab filtered by that kind', async () => {
+    const repo = createMockRepository(
+      {},
+      {
+        stats: [
+          { group: 'dashboard.grafana.app', resource: 'dashboards', count: 2 },
+          { group: 'example.grafana.app', resource: 'widgets', count: 3 },
+        ],
+      }
+    );
+
+    render(<RepositoryOverview repo={repo} />);
+
+    const links = await screen.findAllByRole('link', { name: 'View' });
+    expect(links.map((link) => link.getAttribute('href'))).toEqual([
+      '/admin/provisioning/test-repo?tab=resources&resource=dashboards',
+      '/admin/provisioning/test-repo?tab=resources&resource=widgets',
+    ]);
+  });
+
   describe('webhook link', () => {
     it('should link to GitHub webhook settings for github repositories', () => {
       const repo = createMockRepository({
@@ -88,7 +125,7 @@ describe('RepositoryOverview', () => {
           type: 'bitbucket',
           bitbucket: { url: 'https://bitbucket.org/org/repo', branch: 'main' },
         },
-        { uuid: '{9a41cbfa-9b26-45f6-8b1a-ce8f7c78b6f0}', url: 'https://grafana.example/webhook' }
+        { webhook: { uuid: '{9a41cbfa-9b26-45f6-8b1a-ce8f7c78b6f0}', url: 'https://grafana.example/webhook' } }
       );
       render(<RepositoryOverview repo={repo} />);
 
@@ -104,7 +141,7 @@ describe('RepositoryOverview', () => {
           type: 'bitbucket',
           bitbucket: { url: 'https://bitbucket.org/org/repo', branch: 'main' },
         },
-        { uuid: '{9a41cbfa-9b26-45f6-8b1a-ce8f7c78b6f0}', url: 'https://grafana.example/webhook' }
+        { webhook: { uuid: '{9a41cbfa-9b26-45f6-8b1a-ce8f7c78b6f0}', url: 'https://grafana.example/webhook' } }
       );
       render(<RepositoryOverview repo={repo} />);
 

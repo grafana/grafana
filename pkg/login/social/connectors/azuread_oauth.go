@@ -12,12 +12,12 @@ import (
 	"slices"
 	"strings"
 	"time"
+	"uuid"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	jose "github.com/go-jose/go-jose/v4"
 	"github.com/go-jose/go-jose/v4/jwt"
-	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -485,6 +485,10 @@ func (s *SocialAzureAD) Validate(ctx context.Context, newSettings ssoModels.SSOS
 
 func validateAllowedGroups(info *social.OAuthInfo, requester identity.Requester) error {
 	for _, groupId := range info.AllowedGroups {
+		// Preserve case-insensitive URN prefixes accepted in existing configurations.
+		if len(groupId) >= len("urn:uuid:") && strings.EqualFold(groupId[:len("urn:uuid:")], "urn:uuid:") {
+			groupId = "urn:uuid:" + groupId[len("urn:uuid:"):]
+		}
 		_, err := uuid.Parse(groupId)
 		if err != nil {
 			return ssosettings.ErrInvalidOAuthConfig("One or more of the Allowed groups are not in the correct format. Allowed groups should be a list of Object Ids.")
@@ -678,12 +682,10 @@ func (s *SocialAzureAD) extractGroups(ctx context.Context, client *http.Client, 
 	}()
 
 	if res.StatusCode != http.StatusOK {
-		if res.StatusCode == http.StatusForbidden {
-			logger.Warn("AzureAD OAuth: Token need GroupMember.Read.All permission to fetch all groups")
-		} else {
-			body, _ := io.ReadAll(res.Body)
-			logger.Warn("AzureAD OAuth: could not fetch user groups", "code", res.StatusCode, "body", string(body))
-		}
+		// A 403 is not always a missing GroupMember.Read.All permission (e.g. Conditional Access),
+		// and the Graph error body carries the error code and request ID needed to tell the causes apart.
+		body, _ := io.ReadAll(io.LimitReader(res.Body, 4096))
+		logger.Warn("AzureAD OAuth: could not fetch user groups", "code", res.StatusCode, "body", string(body))
 		return []string{}, nil
 	}
 

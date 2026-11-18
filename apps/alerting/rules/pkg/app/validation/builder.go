@@ -10,6 +10,8 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-app-sdk/simple"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/convert"
 )
 
 type Request[T resource.Object] struct {
@@ -47,8 +49,8 @@ func (b *Builder[T]) OnDelete(fn ValidateFunc[T]) *Builder[T] {
 	return b.On([]resource.AdmissionAction{resource.AdmissionActionDelete}, fn)
 }
 
-func (b *Builder[T]) WithOpenAPIValidation(md app.ManifestData, gk schema.GroupKind) *Builder[T] {
-	validatorFn, err := OpenAPISpec[T](md, gk)
+func (b *Builder[T]) WithOpenAPIValidation(md app.ManifestData, gvk schema.GroupVersionKind) *Builder[T] {
+	validatorFn, err := OpenAPISpec[T](md, gvk)
 	if err != nil {
 		b.errors = append(b.errors, err)
 		return b
@@ -76,23 +78,29 @@ func (b *Builder[T]) Build() (*simple.Validator, error) {
 
 			request := Request[T]{Action: req.Action}
 
+			// Objects arrive in the version of the request or of the hub, so both
+			// are converted to T, the version validation is written against.
 			switch req.Action {
 			// req.Object won't be set on deletes
 			case resource.AdmissionActionDelete:
-				old, ok := req.OldObject.(T)
-				if !ok {
-					return fmt.Errorf("old object is not of type %T", *new(T))
+				old, err := convert.Hub[T](req.OldObject)
+				if err != nil {
+					return fmt.Errorf("old object: %w", err)
 				}
 				request.OldObject = old
 			default:
-				obj, ok := req.Object.(T)
-				if !ok {
-					return fmt.Errorf("object is not of type %T", *new(T))
+				obj, err := convert.Hub[T](req.Object)
+				if err != nil {
+					return err
 				}
 				request.Object = obj
 				// OldObject will be set on updates
 				if req.OldObject != nil {
-					request.OldObject, _ = req.OldObject.(T)
+					old, err := convert.Hub[T](req.OldObject)
+					if err != nil {
+						return fmt.Errorf("old object: %w", err)
+					}
+					request.OldObject = old
 				}
 			}
 

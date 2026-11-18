@@ -1,5 +1,4 @@
-import { DataSourceWithBackend } from '@grafana/runtime';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { DataSourceWithBackend, getDataSourceInstance } from '@grafana/runtime';
 import { type VizPanel } from '@grafana/scenes';
 import { supportedDatasources } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SupportedPubdashDatasources';
 

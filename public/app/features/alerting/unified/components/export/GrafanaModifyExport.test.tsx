@@ -5,9 +5,9 @@ import { render, userEvent, waitFor, waitForElementToBeRemoved } from 'test/test
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { mockExportApi, setupMswServer } from '../../mockApi';
-import { mockDataSource } from '../../mocks';
 import { grafanaRulerRule, mockPreviewApiResponse } from '../../mocks/grafanaRulerApi';
 import { setupDataSources } from '../../testSetup/datasources';
+import { mockDataSource } from '../../testSetup/mockDataSource';
 
 import GrafanaModifyExport from './GrafanaModifyExport';
 

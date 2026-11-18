@@ -1,4 +1,4 @@
-import { type Meta, type StoryFn } from '@storybook/react-webpack5';
+import { type Meta, type StoryFn } from '@storybook/react';
 import { useState } from 'react';
 
 import { Combobox } from '../Combobox/Combobox';
@@ -75,7 +75,7 @@ grow.args = {
   grow: true,
 };
 
-export const withCombobox: StoryFn<typeof InlineField> = (args) => {
+export const WithCombobox: StoryFn<typeof InlineField> = (args) => {
   const comboboxOptions = [
     { value: 1, label: 'One' },
     { value: 2, label: 'Two' },
@@ -88,7 +88,7 @@ export const withCombobox: StoryFn<typeof InlineField> = (args) => {
   );
 };
 
-withCombobox.args = {
+WithCombobox.args = {
   ...basic.args,
   label: 'Combobox option',
 };

@@ -33,7 +33,7 @@ const (
 	// KVRemoteIndexStore stores per-file snapshot data.
 	IndexSnapshotDataSection = kv.SearchSnapshotDataSection
 
-	// defaultKVLockTTL matches BucketRemoteIndexStore's default lock TTL.
+	// defaultKVLockTTL matches DefaultSnapshotLockTTL.
 	defaultKVLockTTL = 3 * time.Minute
 
 	// defaultKVReleaseTimeout bounds the lease release call when the caller
@@ -177,8 +177,8 @@ func NewKVRemoteIndexStore(cfg KVRemoteIndexStoreConfig) (*KVRemoteIndexStore, e
 }
 
 // kvResourceSubPath returns the per-resource path used as a prefix in both
-// snapshot KV sections. Unlike the bucket store's resourceSubPath (which
-// applies cleanFileSegment for filesystem safety), this version preserves
+// snapshot KV sections. Unlike resourceSubPath (which applies
+// cleanFileSegment for filesystem safety), this version preserves
 // the input verbatim so namespaces, resources, and groups round-trip
 // exactly through listing. Inputs are guarded by validateNsResource at the
 // public boundary, which delegates to the apimachinery validators.

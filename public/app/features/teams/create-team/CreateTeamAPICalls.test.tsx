@@ -3,11 +3,10 @@ import { delay, HttpResponse } from 'msw';
 import useMountedState from 'react-use/lib/useMountedState';
 
 import { AppEvents } from '@grafana/data';
-import { config, getAppEvents, setBackendSrv } from '@grafana/runtime';
+import { getAppEvents, setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 import {
   customCreateFolderHandler,
-  customCreateFolderHandlerAppPlatform,
   customCreateTeamHandler,
   customSetTeamRolesHandler,
 } from '@grafana/test-utils/unstable';
@@ -265,25 +264,9 @@ describe('useCreateTeamOrchestrate', () => {
       ).toBe('string');
     });
 
-    it('reports error when the legacy folder API returns an error response', async () => {
-      // The legacy folder mutation throws on HTTP error responses, caught by the try/catch in the hook.
-      server.use(customCreateFolderHandler(() => HttpResponse.json({}, { status: 500 })));
-
-      const { result } = renderHook(() => useCreateTeamOrchestrate([], true), { wrapper: getWrapper({}) });
-
-      await act(async () => {
-        await result.current.trigger(formModel);
-      });
-
-      expect(result.current.folderCreationStatus?.state).toBe('error');
-    });
-
     it('reports error when the app platform folder API returns an error response', async () => {
-      config.featureToggles.foldersAppPlatformAPI = true;
       server.use(
-        customCreateFolderHandlerAppPlatform(() =>
-          HttpResponse.json({ message: 'Internal server error' }, { status: 500 })
-        )
+        customCreateFolderHandler(() => HttpResponse.json({ message: 'Internal server error' }, { status: 500 }))
       );
 
       const { result } = renderHook(() => useCreateTeamOrchestrate([], true), { wrapper: getWrapper({}) });
@@ -293,7 +276,6 @@ describe('useCreateTeamOrchestrate', () => {
       });
 
       expect(result.current.folderCreationStatus?.state).toBe('error');
-      config.featureToggles.foldersAppPlatformAPI = false;
     });
 
     it('skips folder creation when autocreateTeamFolder is false', async () => {
@@ -311,9 +293,9 @@ describe('useCreateTeamOrchestrate', () => {
 
       server.use(
         customCreateFolderHandler(async ({ request }) => {
-          const body = (await request.json()) as { title: string };
-          capturedTitle = body.title;
-          return HttpResponse.json({ uid: 'new-folder', url: '/dashboards/f/new-folder/test-team' });
+          const body = (await request.json()) as { spec: { title: string } };
+          capturedTitle = body.spec.title;
+          return HttpResponse.json({ metadata: { name: 'new-folder' }, spec: { title: body.spec.title } });
         })
       );
 
@@ -423,7 +405,7 @@ describe('useCreateTeamOrchestrate', () => {
     });
 
     it('shows an error toast for folder creation failure instead of setting state', async () => {
-      server.use(customCreateFolderHandler(() => HttpResponse.json({})));
+      server.use(customCreateFolderHandler(() => HttpResponse.json({ message: 'error' }, { status: 500 })));
 
       const { result } = renderHook(() => useCreateTeamOrchestrate([], true), { wrapper: getWrapper({}) });
 

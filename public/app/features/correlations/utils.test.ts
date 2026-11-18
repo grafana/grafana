@@ -17,8 +17,8 @@ import { type Correlation } from './types';
 import { attachCorrelationsToDataFrames, generateDefaultLabel, generatePartialEditSpec } from './utils';
 import * as utils from './utils';
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getDataSourceInstance: jest.fn().mockResolvedValue({
     name: 'getTest',
     getRef: () => {

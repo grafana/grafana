@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"hash/fnv"
 	"io"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -18,6 +19,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
 
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
@@ -154,7 +156,7 @@ func (s *Server) listGeneric(ctx context.Context, subject, relation string, reso
 
 	var (
 		folderRelation     = common.SubresourceRelation(relation)
-		folderListRelation = common.FolderPermissionRelation(relation) // Optimized for permission management
+		folderListRelation = common.FolderContentPermissionRelation(relation)
 		resourceCtx        = resource.Context()
 	)
 
@@ -213,8 +215,19 @@ func (s *Server) listGeneric(ctx context.Context, subject, relation string, reso
 		objects = res.GetObjects()
 	}
 
+	folderUIDs := folderObject(folders)
+	// Stored root objects can still have an empty parent until they are rewritten.
+	if resource.UsesRootFolderPermissions() && slices.Contains(folderUIDs, accesscontrol.GeneralFolderUID) {
+		folderUIDs = append(folderUIDs, "")
+	} else if !resource.UsesRootFolderPermissions() && relation != common.RelationCreate {
+		// Match Check: the root sentinel is not an inheritable parent for these resources.
+		folderUIDs = slices.DeleteFunc(folderUIDs, func(uid string) bool {
+			return uid == accesscontrol.GeneralFolderUID
+		})
+	}
+
 	return &authzv1.ListResponse{
-		Folders: folderObject(folders),
+		Folders: folderUIDs,
 		Items:   genericObjects(resource.GroupResource(), objects),
 	}, nil
 }

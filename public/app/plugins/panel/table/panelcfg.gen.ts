@@ -39,6 +39,10 @@ export interface Options {
     left?: number;
   };
   /**
+   * Controls whether cells overflow when hovered. Selected cells always overflow.
+   */
+  hoverOverflow?: boolean;
+  /**
    * limits the maximum height of a row, if text wrapping or dynamic height is enabled
    */
   maxRowHeight?: number;
@@ -47,9 +51,17 @@ export interface Options {
    */
   pageSize?: number;
   /**
+   * Whether the column management sidebar starts open
+   */
+  showColumnsSidebar?: boolean;
+  /**
    * Controls whether the panel should show the header
    */
   showHeader: boolean;
+  /**
+   * Whether to show generated row positions. Only applies when `table.refreshNewFeatures` is enabled.
+   */
+  showRowNumbers?: boolean;
   /**
    * Controls whether the header should show icons for the column types
    */
@@ -58,14 +70,22 @@ export interface Options {
    * Used to control row sorting
    */
   sortBy?: Array<ui.TableSortByFieldState>;
+  /**
+   * Alternates the background color of every other row. Only applies when the
+   * `table.refreshNewFeatures` feature toggle is enabled.
+   */
+  zebraStriping?: boolean;
 }
 
 export const defaultOptions: Partial<Options> = {
   cellHeight: ui.TableCellHeight.Sm,
   frameIndex: 0,
+  hoverOverflow: true,
   showHeader: true,
+  showRowNumbers: false,
   showTypeIcons: false,
   sortBy: [],
+  zebraStriping: false,
 };
 
 export interface FieldConfig extends ui.TableFieldOptions {}

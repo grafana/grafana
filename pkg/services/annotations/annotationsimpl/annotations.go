@@ -8,7 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationsimpl/loki"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	alertingStore "github.com/grafana/grafana/pkg/services/ngalert/store"
+	alertingrules "github.com/grafana/grafana/pkg/services/ngalert/rules"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -41,18 +41,18 @@ func ProvideService(
 	features featuremgmt.FeatureToggles,
 	tagService tag.Service,
 	tracer tracing.Tracer,
-	ruleStore *alertingStore.DBstore,
+	ruleService alertingrules.RuleService,
 	dashSvc dashboards.DashboardService,
 	reg prometheus.Registerer,
 ) *RepositoryImpl {
 	l := log.New("annotations")
 	l.Debug("Initializing annotations service")
 
-	xormStore := NewXormStore(cfg, log.New("annotations.sql"), db, tagService, reg)
+	xormStore := NewXormStore(cfg, log.New("annotations.sql"), db, tagService, ruleService, reg)
 	write := xormStore
 
 	var read ReadStore
-	historianStore := loki.NewLokiHistorianStore(cfg.UnifiedAlerting.StateHistory, db, ruleStore, log.New("annotations.loki"), tracer, reg)
+	historianStore := loki.NewLokiHistorianStore(cfg.UnifiedAlerting.StateHistory, db, log.New("annotations.loki"), tracer, reg)
 	if historianStore != nil {
 		l.Debug("Using composite read store")
 		read = NewCompositeStore(log.New("annotations.composite"), xormStore, historianStore)

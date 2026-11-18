@@ -68,6 +68,7 @@ describe('TooltipPlugin2', () => {
     const setCursor = jest.fn();
     const setSelect = jest.fn();
     const setScale = jest.fn();
+    const syncRect = jest.fn();
 
     const mockUPlot = {
       root,
@@ -78,6 +79,7 @@ describe('TooltipPlugin2', () => {
       setCursor,
       setScale,
       setSelect,
+      syncRect,
       select: { left: 0, top: 0, width: 0, height: 0 },
       ...overrides,
     } as uPlot;
@@ -456,6 +458,24 @@ describe('TooltipPlugin2', () => {
       expect(removeSpy).toHaveBeenCalledWith('keydown', expect.any(Function), true);
 
       removeSpy.mockRestore();
+    });
+
+    it('refreshes the cached plot rect before uPlot handles a mousedown', () => {
+      const { view, initCallback, mockUPlot } = setUp();
+      const uPlotMousedown = jest.fn(() => expect(mockUPlot.syncRect).toHaveBeenCalledWith(true));
+
+      mockUPlot.root.appendChild(mockUPlot.over);
+      // uPlot registers its own mousedown handler on u.over before init fires; the capture listener on the root
+      // must still refresh the rect before that handler reads it
+      mockUPlot.over.addEventListener('mousedown', uPlotMousedown);
+      initCallback(mockUPlot);
+
+      mockUPlot.over.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+
+      expect(uPlotMousedown).toHaveBeenCalled();
+      expect(mockUPlot.syncRect).toHaveBeenCalledTimes(1);
+
+      view.unmount();
     });
 
     it('registers u.over event listeners on init', () => {

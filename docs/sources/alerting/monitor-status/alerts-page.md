@@ -15,17 +15,6 @@ labels:
     - cloud
     - enterprise
     - oss
-refs:
-  rbac:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-rbac/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/configure-rbac/
-  configure-alert-state-history:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alert-state-history/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/configure-alert-state-history/
 ---
 
 {{< docs/public-preview product="Alerts page" >}}
@@ -55,7 +44,7 @@ To see alerts in the Alerts page, you need both of the following permissions:
 
 The page queries the alert state history data source directly, so it can't display any alerts without the `datasources:query` permission for that data source. This applies even when you can read the alert rules and view them in the **Alert rules** page.
 
-For more information about alerting permissions, refer to [Configure role-based access control](ref:rbac). To find out which data source records alert state history in your Grafana instance, refer to [Configure alert state history](ref:configure-alert-state-history).
+For more information about alerting permissions, refer to [Configure role-based access control](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-rbac/). To find out which data source records alert state history in your Grafana instance, refer to [Configure alert state history](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alert-state-history/).
 
 ## Filter alerts in the Alerts page
 

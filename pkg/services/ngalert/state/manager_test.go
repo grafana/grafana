@@ -12,6 +12,7 @@ import (
 	"sort"
 	"strings"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/benbjohnson/clock"
@@ -54,14 +55,14 @@ func TestIntegrationWarmStateCache(t *testing.T) {
 	evaluationTime, err := time.Parse("2006-01-02", "2021-03-25")
 	require.NoError(t, err)
 	ctx := context.Background()
-	ng, dbstore := tests.SetupTestEnv(t, 1)
+	ng, dbstore, ruleStore := tests.SetupTestEnv(t, 1)
 
 	orgService, err := alertTestUtil.SetupOrgService(t, dbstore.SQLStore, setting.NewCfg())
 	require.NoError(t, err)
 	mainOrg, err := orgService.CreateWithMember(ctx, &org.CreateOrgCommand{})
 	require.NoError(t, err)
 
-	rule := tests.CreateTestAlertRule(t, ctx, dbstore, 600, mainOrg.ID)
+	rule := tests.CreateTestAlertRule(t, ctx, ruleStore, 600, mainOrg.ID)
 
 	expectedEntries := []*state.State{
 		{
@@ -277,7 +278,7 @@ func TestIntegrationWarmStateCache(t *testing.T) {
 		Log:           log.New("ngalert.state.manager"),
 	}
 	st := state.NewManager(cfg, state.NewNoopPersister())
-	st.Warm(ctx, dbstore, dbstore, ng.InstanceStore)
+	st.Warm(ctx, dbstore, ruleStore, ng.InstanceStore)
 
 	t.Run("instance cache has expected entries", func(t *testing.T) {
 		for _, entry := range expectedEntries {
@@ -308,7 +309,7 @@ func TestIntegrationDashboardAnnotations(t *testing.T) {
 	require.NoError(t, err)
 
 	ctx := context.Background()
-	ng, dbstore := tests.SetupTestEnv(t, 1)
+	ng, dbstore, ruleStore := tests.SetupTestEnv(t, 1)
 
 	fakeAnnoRepo := annotationstest.NewFakeAnnotationsRepo()
 	historianMetrics := metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem)
@@ -330,12 +331,12 @@ func TestIntegrationDashboardAnnotations(t *testing.T) {
 
 	const mainOrgID int64 = 1
 
-	rule := tests.CreateTestAlertRuleWithLabels(t, ctx, dbstore, 600, mainOrgID, map[string]string{
+	rule := tests.CreateTestAlertRuleWithLabels(t, ctx, ruleStore, 600, mainOrgID, map[string]string{
 		"test1": "testValue1",
 		"test2": "{{ $labels.instance_label }}",
 	})
 
-	st.Warm(ctx, dbstore, dbstore, ng.InstanceStore)
+	st.Warm(ctx, dbstore, ruleStore, ng.InstanceStore)
 	bValue := float64(42)
 	cValue := float64(1)
 	_, _ = st.ProcessEvalResults(ctx, evaluationTime, rule, eval.Results{{
@@ -377,7 +378,7 @@ func TestIntegrationProcessEvalResultsTemplatedLabelKeysAreNotExpanded(t *testin
 	require.NoError(t, err)
 
 	ctx := context.Background()
-	ng, dbstore := tests.SetupTestEnv(t, 1)
+	ng, dbstore, ruleStore := tests.SetupTestEnv(t, 1)
 
 	cfg := state.ManagerCfg{
 		Metrics:       metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics(),
@@ -396,12 +397,12 @@ func TestIntegrationProcessEvalResultsTemplatedLabelKeysAreNotExpanded(t *testin
 	templatedKeyOne := `{{ with (index $labels "missing_key") }}{{.}}{{ end }}`
 	templatedKeyTwo := `{{ $labels. }}`
 
-	rule := tests.CreateTestAlertRuleWithLabels(t, ctx, dbstore, 600, mainOrgID, map[string]string{
+	rule := tests.CreateTestAlertRuleWithLabels(t, ctx, ruleStore, 600, mainOrgID, map[string]string{
 		templatedKeyOne: "empty-key-value",
 		templatedKeyTwo: "error-key-value",
 	})
 
-	st.Warm(ctx, dbstore, dbstore, ng.InstanceStore)
+	st.Warm(ctx, dbstore, ruleStore, ng.InstanceStore)
 	_, _ = st.ProcessEvalResults(ctx, evaluationTime, rule, eval.Results{{
 		Instance:    data.Labels{"instance_label": "test-value"},
 		State:       eval.Alerting,
@@ -1774,75 +1775,77 @@ func TestProcessEvalResults(t *testing.T) {
 			}
 			st := state.NewManager(cfg, state.NewNoopPersister())
 
-			evals := make([]time.Time, 0, len(tc.evalResults))
-			for evalTime := range tc.evalResults {
-				evals = append(evals, evalTime)
-			}
-			slices.SortFunc(evals, func(a, b time.Time) int {
-				return a.Compare(b)
-			})
-			results := 0
-			for _, evalTime := range evals {
-				res := tc.evalResults[evalTime]
-				for i := range res {
-					res[i].EvaluatedAt = evalTime
+			synctest.Test(t, func(t *testing.T) {
+				evals := make([]time.Time, 0, len(tc.evalResults))
+				for evalTime := range tc.evalResults {
+					evals = append(evals, evalTime)
 				}
-				clk.Set(evalTime)
-				_, _ = st.ProcessEvalResults(context.Background(), evalTime, tc.alertRule, res, systemLabels, state.NoopSender)
-				results += len(res)
-			}
+				slices.SortFunc(evals, func(a, b time.Time) int {
+					return a.Compare(b)
+				})
+				results := 0
+				for _, evalTime := range evals {
+					res := tc.evalResults[evalTime]
+					for i := range res {
+						res[i].EvaluatedAt = evalTime
+					}
+					clk.Set(evalTime)
+					_, _ = st.ProcessEvalResults(context.Background(), evalTime, tc.alertRule, res, systemLabels, state.NoopSender)
+					results += len(res)
+				}
 
-			states := st.GetStatesForRuleUID(context.Background(), tc.alertRule.OrgID, tc.alertRule.UID)
-			assert.Len(t, states, len(tc.expectedStates))
+				states := st.GetStatesForRuleUID(context.Background(), tc.alertRule.OrgID, tc.alertRule.UID)
+				assert.Len(t, states, len(tc.expectedStates))
 
-			expectedStates := make(map[data.Fingerprint]*state.State, len(tc.expectedStates))
-			for _, s := range tc.expectedStates {
-				// patch all optional fields of the expected state
-				setCacheID(s)
-				if s.AlertRuleUID == "" {
-					s.AlertRuleUID = tc.alertRule.UID
+				expectedStates := make(map[data.Fingerprint]*state.State, len(tc.expectedStates))
+				for _, s := range tc.expectedStates {
+					// patch all optional fields of the expected state
+					setCacheID(s)
+					if s.AlertRuleUID == "" {
+						s.AlertRuleUID = tc.alertRule.UID
+					}
+					if s.OrgID == 0 {
+						s.OrgID = tc.alertRule.OrgID
+					}
+					if s.Annotations == nil {
+						s.Annotations = tc.alertRule.Annotations
+					}
+					if s.EvaluationDuration == 0 {
+						s.EvaluationDuration = evaluationDuration
+					}
+					if s.Values == nil {
+						s.Values = make(map[string]float64)
+					}
+					expectedStates[s.CacheID] = s
 				}
-				if s.OrgID == 0 {
-					s.OrgID = tc.alertRule.OrgID
-				}
-				if s.Annotations == nil {
-					s.Annotations = tc.alertRule.Annotations
-				}
-				if s.EvaluationDuration == 0 {
-					s.EvaluationDuration = evaluationDuration
-				}
-				if s.Values == nil {
-					s.Values = make(map[string]float64)
-				}
-				expectedStates[s.CacheID] = s
-			}
 
-			for _, actual := range states {
-				expected, ok := expectedStates[actual.CacheID]
-				if !ok {
-					assert.Failf(t, "state is not expected", "State: %#v", actual)
-					continue
+				for _, actual := range states {
+					expected, ok := expectedStates[actual.CacheID]
+					if !ok {
+						assert.Failf(t, "state is not expected", "State: %#v", actual)
+						continue
+					}
+					delete(expectedStates, actual.CacheID)
+					if !assert.ObjectsAreEqual(expected, actual) {
+						assert.Failf(t, "expected and actual states are not equal", "Diff: %s", cmp.Diff(expected, actual, cmpopts.EquateErrors()))
+					}
 				}
-				delete(expectedStates, actual.CacheID)
-				if !assert.ObjectsAreEqual(expected, actual) {
-					assert.Failf(t, "expected and actual states are not equal", "Diff: %s", cmp.Diff(expected, actual, cmpopts.EquateErrors()))
+
+				if len(expectedStates) > 0 {
+					vals := make([]state.State, 0, len(expectedStates))
+					for _, s := range expectedStates {
+						vals = append(vals, *s)
+					}
+					assert.Failf(t, "some expected states do not exist", "States: %#v", vals)
 				}
-			}
 
-			if len(expectedStates) > 0 {
-				vals := make([]state.State, 0, len(expectedStates))
-				for _, s := range expectedStates {
-					vals = append(vals, *s)
-				}
-				assert.Failf(t, "some expected states do not exist", "States: %#v", vals)
-			}
+				// Finish asynchronous annotation writes before comparing their persisted history.
+				synctest.Wait()
 
-			require.Eventuallyf(t, func() bool {
-				return tc.expectedAnnotations == fakeAnnoRepo.Len()
-			}, time.Second, 100*time.Millisecond, "%d annotations are present, expected %d. We have %+v", fakeAnnoRepo.Len(), tc.expectedAnnotations, printAllAnnotations(fakeAnnoRepo.Items()))
+				require.Equal(t, tc.expectedAnnotations, fakeAnnoRepo.Len(), "%+v", printAllAnnotations(fakeAnnoRepo.Items()))
 
-			expectedMetric := fmt.Sprintf(
-				`# HELP grafana_alerting_state_calculation_duration_seconds The duration of calculation of a single state.
+				expectedMetric := fmt.Sprintf(
+					`# HELP grafana_alerting_state_calculation_duration_seconds The duration of calculation of a single state.
         	            # TYPE grafana_alerting_state_calculation_duration_seconds histogram
         	            grafana_alerting_state_calculation_duration_seconds_bucket{le="0.01"} %[1]d
         	            grafana_alerting_state_calculation_duration_seconds_bucket{le="0.1"} %[1]d
@@ -1854,10 +1857,11 @@ func TestProcessEvalResults(t *testing.T) {
         	            grafana_alerting_state_calculation_duration_seconds_sum 0
         	            grafana_alerting_state_calculation_duration_seconds_count %[1]d
 						`, results)
-			err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_state_calculation_duration_seconds")
-			require.NoError(t, err)
-			err = testutil.GatherAndCompare(reg, bytes.NewBufferString(""), "grafana_alerting_state_calculation_total")
-			require.NoError(t, err)
+				err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_state_calculation_duration_seconds")
+				require.NoError(t, err)
+				err = testutil.GatherAndCompare(reg, bytes.NewBufferString(""), "grafana_alerting_state_calculation_total")
+				require.NoError(t, err)
+			})
 		})
 	}
 
@@ -1964,14 +1968,14 @@ func TestIntegrationStaleResultsHandler(t *testing.T) {
 	interval := time.Minute
 
 	ctx := context.Background()
-	ng, dbstore := tests.SetupTestEnv(t, 1)
+	ng, dbstore, ruleStore := tests.SetupTestEnv(t, 1)
 
 	orgService, err := alertTestUtil.SetupOrgService(t, dbstore.SQLStore, setting.NewCfg())
 	require.NoError(t, err)
 	mainOrg, err := orgService.CreateWithMember(ctx, &org.CreateOrgCommand{})
 	require.NoError(t, err)
 
-	rule := tests.CreateTestAlertRule(t, ctx, dbstore, int64(interval.Seconds()), mainOrg.ID)
+	rule := tests.CreateTestAlertRule(t, ctx, ruleStore, int64(interval.Seconds()), mainOrg.ID)
 	lastEval := evaluationTime.Add(-2 * interval)
 
 	labels1 := models.InstanceLabels{
@@ -2085,7 +2089,7 @@ func TestIntegrationStaleResultsHandler(t *testing.T) {
 			Log:           log.New("ngalert.state.manager"),
 		}
 		st := state.NewManager(cfg, state.NewNoopPersister())
-		st.Warm(ctx, dbstore, dbstore, ng.InstanceStore)
+		st.Warm(ctx, dbstore, ruleStore, ng.InstanceStore)
 		existingStatesForRule := st.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID)
 
 		// We have loaded the expected number of entries from the db
@@ -2248,14 +2252,14 @@ func TestIntegrationDeleteStateByRuleUID(t *testing.T) {
 
 	interval := time.Minute
 	ctx := context.Background()
-	ng, dbstore := tests.SetupTestEnv(t, 1)
+	ng, dbstore, ruleStore := tests.SetupTestEnv(t, 1)
 
 	orgService, err := alertTestUtil.SetupOrgService(t, dbstore.SQLStore, setting.NewCfg())
 	require.NoError(t, err)
 	mainOrg, err := orgService.CreateWithMember(ctx, &org.CreateOrgCommand{})
 	require.NoError(t, err)
 
-	rule := tests.CreateTestAlertRule(t, ctx, dbstore, int64(interval.Seconds()), mainOrg.ID)
+	rule := tests.CreateTestAlertRule(t, ctx, ruleStore, int64(interval.Seconds()), mainOrg.ID)
 
 	labels1 := models.InstanceLabels{"test1": "testValue1"}
 	_, hash1, _ := labels1.StringAndHash()
@@ -2346,7 +2350,7 @@ func TestIntegrationDeleteStateByRuleUID(t *testing.T) {
 				Log:           log.New("ngalert.state.manager"),
 			}
 			st := state.NewManager(cfg, state.NewNoopPersister())
-			st.Warm(ctx, dbstore, dbstore, ng.InstanceStore)
+			st.Warm(ctx, dbstore, ruleStore, ng.InstanceStore)
 			q := &models.ListAlertInstancesQuery{RuleOrgID: rule.OrgID, RuleUID: rule.UID}
 			alerts, _ := ng.InstanceStore.ListAlertInstances(ctx, q)
 			existingStatesForRule := st.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID)
@@ -2395,14 +2399,14 @@ func TestIntegrationResetStateByRuleUID(t *testing.T) {
 
 	interval := time.Minute
 	ctx := context.Background()
-	ng, dbstore := tests.SetupTestEnv(t, 1)
+	ng, dbstore, ruleStore := tests.SetupTestEnv(t, 1)
 
 	orgService, err := alertTestUtil.SetupOrgService(t, dbstore.SQLStore, setting.NewCfg())
 	require.NoError(t, err)
 	mainOrg, err := orgService.CreateWithMember(ctx, &org.CreateOrgCommand{})
 	require.NoError(t, err)
 
-	rule := tests.CreateTestAlertRule(t, ctx, dbstore, int64(interval.Seconds()), mainOrg.ID)
+	rule := tests.CreateTestAlertRule(t, ctx, ruleStore, int64(interval.Seconds()), mainOrg.ID)
 
 	labels1 := models.InstanceLabels{"test1": "testValue1"}
 	_, hash1, _ := labels1.StringAndHash()
@@ -2492,7 +2496,7 @@ func TestIntegrationResetStateByRuleUID(t *testing.T) {
 				Log:           log.New("ngalert.state.manager"),
 			}
 			st := state.NewManager(cfg, state.NewNoopPersister())
-			st.Warm(ctx, dbstore, dbstore, ng.InstanceStore)
+			st.Warm(ctx, dbstore, ruleStore, ng.InstanceStore)
 			q := &models.ListAlertInstancesQuery{RuleOrgID: rule.OrgID, RuleUID: rule.UID}
 			alerts, _ := ng.InstanceStore.ListAlertInstances(ctx, q)
 			existingStatesForRule := st.GetStatesForRuleUID(context.Background(), rule.OrgID, rule.UID)

@@ -225,6 +225,7 @@ resource "grafana_contact_point" "contact_point_2b661702215368fe" {
 
   telegram {
     disable_resolve_message  = true
+    api_url                  = "http://localhost:8081/telegram"
     token                    = "[REDACTED]"
     chat_id                  = "12345678"
     message_thread_id        = "13579"
@@ -233,6 +234,7 @@ resource "grafana_contact_point" "contact_point_2b661702215368fe" {
     disable_web_page_preview = true
     protect_content          = true
     disable_notifications    = true
+    send_message_as_caption  = true
   }
 
   threema {
@@ -305,10 +307,15 @@ resource "grafana_contact_point" "contact_point_2b661702215368fe" {
         }
       }
     }
+
+    payload {
+      template = ""
+    }
   }
 
   wecom {
     disable_resolve_message = true
+    endpoint_url            = "http://localhost/test-endpointUrl"
     url                     = "[REDACTED]"
     secret                  = "[REDACTED]"
     agent_id                = "test-agent_id"

@@ -8,21 +8,22 @@ import (
 
 	jose "github.com/go-jose/go-jose/v4"
 	"github.com/go-jose/go-jose/v4/jwt"
-	"go.opentelemetry.io/otel/trace"
-
 	authlib "github.com/grafana/authlib/authn"
 	claims "github.com/grafana/authlib/types"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
+	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginauth"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var _ authn.Client = new(ExtendedJWT)
+var _ authn.Client = (*ExtendedJWT)(nil)
 
 const (
 	ExtJWTAuthenticationHeaderName = "X-Access-Token"
@@ -46,10 +47,34 @@ var (
 	)
 )
 
+// ProvideExtendedJWT returns the client for access tokens from the signer
+// configured in [auth.extended_jwt].
 func ProvideExtendedJWT(cfg *setting.Cfg, tracer trace.Tracer) *ExtendedJWT {
-	keys := authlib.NewKeyRetriever(authlib.KeyRetrieverConfig{
+	return ProvideExtendedJWTWithPluginAuth(cfg, tracer, nil)
+}
+
+// ProvideExtendedJWTWithPluginAuth returns the client that, when pluginAuth
+// says Grafana signs plugin access tokens itself, also trusts the local plugin
+// signing key, and is then enabled without [auth.extended_jwt].
+func ProvideExtendedJWTWithPluginAuth(cfg *setting.Cfg, tracer trace.Tracer, pluginAuth *pluginauth.Config) *ExtendedJWT {
+	logger := log.New(authn.ClientExtendedJWT)
+	var keys authlib.KeyRetriever = authlib.NewKeyRetriever(authlib.KeyRetrieverConfig{
 		SigningKeysURL: cfg.ExtJWTAuth.JWKSUrl,
 	})
+	// Without a real signer, the plugins Grafana starts call its API with
+	// tokens from the local token exchange, which only this process can sign.
+	localKeys := false
+	// Without audiences the verifier skips the audience check, and would then
+	// accept the tokens Grafana sends to plugins.
+	if pluginAuth.LocalTokens() && len(cfg.ExtJWTAuth.Audiences) > 0 {
+		local, err := v3.LocalKeyRetriever()
+		if err != nil {
+			logger.Error("Failed to get the local plugin signing key", "error", err)
+		} else {
+			keys = local
+			localKeys = true
+		}
+	}
 
 	accessTokenVerifier := authlib.NewAccessTokenVerifier(authlib.VerifierConfig{
 		AllowedAudiences: cfg.ExtJWTAuth.Audiences,
@@ -61,18 +86,24 @@ func ProvideExtendedJWT(cfg *setting.Cfg, tracer trace.Tracer) *ExtendedJWT {
 
 	return &ExtendedJWT{
 		cfg:                 cfg,
-		log:                 log.New(authn.ClientExtendedJWT),
+		localKeys:           localKeys,
+		log:                 logger,
 		namespaceMapper:     request.GetNamespaceMapper(cfg),
 		accessTokenVerifier: accessTokenVerifier,
+		accessTokenKeys:     keys,
 		idTokenVerifier:     idTokenVerifier,
 		tracer:              tracer,
 	}
 }
 
 type ExtendedJWT struct {
-	cfg                 *setting.Cfg
+	cfg *setting.Cfg
+	// localKeys is set when tokens are verified with the local plugin signing
+	// key, which enables the client without [auth.extended_jwt] enabled.
+	localKeys           bool
 	log                 log.Logger
 	accessTokenVerifier authlib.Verifier[authlib.AccessTokenClaims]
+	accessTokenKeys     authlib.KeyRetriever
 	idTokenVerifier     authlib.Verifier[authlib.IDTokenClaims]
 	namespaceMapper     request.NamespaceMapper
 	tracer              trace.Tracer
@@ -84,42 +115,75 @@ func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*auth
 
 	jwtToken := s.retrieveAuthenticationToken(r.HTTPRequest)
 
-	accessTokenClaims, err := s.accessTokenVerifier.Verify(ctx, jwtToken)
+	accessTokenClaims, err := authn.VerifyAccessTokenForRequest(ctx, jwtToken, r.HTTPRequest, s.accessTokenVerifier, s.accessTokenKeys)
 	if err != nil {
 		return nil, errExtJWTInvalid.Errorf("failed to verify access token: %w", err)
 	}
 
+	orgID := s.cfg.DefaultOrgID()
+	if s.localKeys {
+		orgID, err = s.localTokenOrgID(accessTokenClaims.Rest.Namespace, r.OrgID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	var identity *authn.Identity
 	idToken := s.retrieveAuthorizationToken(r.HTTPRequest)
 	if idToken != "" {
-		idTokenClaims, err := s.idTokenVerifier.Verify(ctx, idToken)
-		if err != nil {
-			return nil, errExtJWTInvalid.Errorf("failed to verify id token: %w", err)
+		idTokenClaims, verifyErr := s.idTokenVerifier.Verify(ctx, idToken)
+		if verifyErr != nil {
+			return nil, errExtJWTInvalid.Errorf("failed to verify id token: %w", verifyErr)
 		}
 
-		return s.authenticateAsUserViaIDToken(*idTokenClaims, *accessTokenClaims, jwtToken)
+		identity, err = s.authenticateAsUserViaIDToken(*idTokenClaims, *accessTokenClaims, jwtToken, orgID)
+	} else if accessTokenClaims.Rest.IsOnBehalfOfUser() {
+		identity, err = s.authenticateAsUserViaOBO(*accessTokenClaims, jwtToken, orgID)
+	} else {
+		identity, err = s.authenticateAsService(*accessTokenClaims, jwtToken, orgID)
 	}
-
-	// Access token without ID token: may be service-only or OBO (on-behalf-of).
-	// IsOnBehalfOfUser traverses the full actor chain and returns true only when
-	// the innermost actor is a User or ServiceAccount — correctly handles multi-hop chains.
-	if accessTokenClaims.Rest.IsOnBehalfOfUser() {
-		return s.authenticateAsUserViaOBO(*accessTokenClaims, jwtToken)
+	if err == nil && s.localKeys {
+		// User sync must use the signed tenant even when no org was supplied in the request.
+		r.OrgID = orgID
 	}
+	return identity, err
+}
 
-	return s.authenticateAsService(*accessTokenClaims, jwtToken)
+// Local plugins serve all of this instance's organizations. Cloud tokens retain
+// the configured stack boundary; only locally signed tokens use request orgs.
+func (s *ExtendedJWT) localTokenOrgID(namespace string, requestedOrgID int64) (int64, error) {
+	orgID := requestedOrgID
+	if namespace != "*" {
+		info, err := claims.ParseNamespace(namespace)
+		if err != nil || info.OrgID < 1 || namespace != s.namespaceMapper(info.OrgID) {
+			return 0, errExtJWTDisallowedNamespaceClaim.Errorf("unexpected access token namespace: %s", namespace)
+		}
+		if requestedOrgID > 0 && requestedOrgID != info.OrgID {
+			return 0, errExtJWTDisallowedNamespaceClaim.Errorf("access token namespace does not match requested organization")
+		}
+		orgID = info.OrgID
+	}
+	if orgID <= 0 {
+		orgID = s.cfg.DefaultOrgID()
+	}
+	if s.cfg.StackID != "" && orgID != s.cfg.DefaultOrgID() {
+		return 0, errExtJWTDisallowedNamespaceClaim.Errorf("unexpected organization for configured stack")
+	}
+	return orgID, nil
 }
 
 func (s *ExtendedJWT) IsEnabled(context.Context) bool {
-	return s.cfg.ExtJWTAuth.Enabled
+	return s.cfg.ExtJWTAuth.Enabled || s.localKeys
 }
 
 func (s *ExtendedJWT) authenticateAsUserViaIDToken(
 	idTokenClaims authlib.Claims[authlib.IDTokenClaims],
 	accessTokenClaims authlib.Claims[authlib.AccessTokenClaims],
 	accessTokenInPlainText string,
+	orgID int64,
 ) (*authn.Identity, error) {
 	// Only allow id tokens signed for namespace configured for this instance.
-	if allowedNamespace := s.namespaceMapper(s.cfg.DefaultOrgID()); !claims.NamespaceMatches(idTokenClaims.Rest.Namespace, allowedNamespace) {
+	if allowedNamespace := s.namespaceMapper(orgID); !claims.NamespaceMatches(idTokenClaims.Rest.Namespace, allowedNamespace) {
 		return nil, errExtJWTDisallowedNamespaceClaim.Errorf("unexpected id token namespace: %s", idTokenClaims.Rest.Namespace)
 	}
 
@@ -160,7 +224,7 @@ func (s *ExtendedJWT) authenticateAsUserViaIDToken(
 	identity := &authn.Identity{
 		ID:                id,
 		Type:              t,
-		OrgID:             s.cfg.DefaultOrgID(),
+		OrgID:             orgID,
 		AccessToken:       accessTokenInPlainText,
 		AccessTokenClaims: &accessTokenClaims,
 		IDTokenClaims:     &idTokenClaims,
@@ -176,7 +240,7 @@ func (s *ExtendedJWT) authenticateAsUserViaIDToken(
 
 	if t == claims.TypeAnonymous {
 		identity.OrgRoles = map[int64]org.RoleType{
-			s.cfg.DefaultOrgID(): org.RoleType(s.cfg.Anonymous.OrgRole),
+			orgID: org.RoleType(s.cfg.Anonymous.OrgRole),
 		}
 		identity.ClientParams.FetchSyncedUser = false
 	}
@@ -184,7 +248,7 @@ func (s *ExtendedJWT) authenticateAsUserViaIDToken(
 	if t == claims.TypeRenderService {
 		// RenderService always has Admin role (based on render.go logic)
 		identity.OrgRoles = map[int64]org.RoleType{
-			s.cfg.DefaultOrgID(): org.RoleAdmin,
+			orgID: org.RoleAdmin,
 		}
 		identity.ClientParams.FetchSyncedUser = false
 	}
@@ -192,9 +256,9 @@ func (s *ExtendedJWT) authenticateAsUserViaIDToken(
 	return identity, nil
 }
 
-func (s *ExtendedJWT) authenticateAsService(accessTokenClaims authlib.Claims[authlib.AccessTokenClaims], accessTokenInPlainText string) (*authn.Identity, error) {
+func (s *ExtendedJWT) authenticateAsService(accessTokenClaims authlib.Claims[authlib.AccessTokenClaims], accessTokenInPlainText string, orgID int64) (*authn.Identity, error) {
 	// Allow access tokens with that has a wildcard namespace or a namespace matching this instance.
-	if allowedNamespace := s.namespaceMapper(s.cfg.DefaultOrgID()); !claims.NamespaceMatches(accessTokenClaims.Rest.Namespace, allowedNamespace) {
+	if allowedNamespace := s.namespaceMapper(orgID); !claims.NamespaceMatches(accessTokenClaims.Rest.Namespace, allowedNamespace) {
 		return nil, errExtJWTDisallowedNamespaceClaim.Errorf("unexpected access token namespace: %s", accessTokenClaims.Rest.Namespace)
 	}
 
@@ -231,7 +295,7 @@ func (s *ExtendedJWT) authenticateAsService(accessTokenClaims authlib.Claims[aut
 		UID:               id,
 		Name:              id,
 		Type:              t,
-		OrgID:             s.cfg.DefaultOrgID(),
+		OrgID:             orgID,
 		AccessToken:       accessTokenInPlainText,
 		AccessTokenClaims: &accessTokenClaims,
 		AuthenticatedBy:   login.ExtendedJWTModule,
@@ -253,8 +317,9 @@ func (s *ExtendedJWT) authenticateAsService(accessTokenClaims authlib.Claims[aut
 func (s *ExtendedJWT) authenticateAsUserViaOBO(
 	accessTokenClaims authlib.Claims[authlib.AccessTokenClaims],
 	accessTokenInPlainText string,
+	orgID int64,
 ) (*authn.Identity, error) {
-	if allowedNamespace := s.namespaceMapper(s.cfg.DefaultOrgID()); !claims.NamespaceMatches(accessTokenClaims.Rest.Namespace, allowedNamespace) {
+	if allowedNamespace := s.namespaceMapper(orgID); !claims.NamespaceMatches(accessTokenClaims.Rest.Namespace, allowedNamespace) {
 		return nil, errExtJWTDisallowedNamespaceClaim.Errorf("unexpected access token namespace: %s", accessTokenClaims.Rest.Namespace)
 	}
 
@@ -297,7 +362,7 @@ func (s *ExtendedJWT) authenticateAsUserViaOBO(
 		ID:                id,
 		UID:               authInfo.GetIdentifier(),
 		Type:              t,
-		OrgID:             s.cfg.DefaultOrgID(),
+		OrgID:             orgID,
 		AccessToken:       accessTokenInPlainText,
 		AccessTokenClaims: &accessTokenClaims,
 		AuthenticatedBy:   login.ExtendedJWTModule,
@@ -312,14 +377,14 @@ func (s *ExtendedJWT) authenticateAsUserViaOBO(
 
 	if t == claims.TypeAnonymous {
 		identity.OrgRoles = map[int64]org.RoleType{
-			s.cfg.DefaultOrgID(): org.RoleType(s.cfg.Anonymous.OrgRole),
+			orgID: org.RoleType(s.cfg.Anonymous.OrgRole),
 		}
 		identity.ClientParams.FetchSyncedUser = false
 	}
 
 	if t == claims.TypeRenderService {
 		identity.OrgRoles = map[int64]org.RoleType{
-			s.cfg.DefaultOrgID(): org.RoleAdmin,
+			orgID: org.RoleAdmin,
 		}
 		identity.ClientParams.FetchSyncedUser = false
 	}
@@ -328,7 +393,7 @@ func (s *ExtendedJWT) authenticateAsUserViaOBO(
 }
 
 func (s *ExtendedJWT) Test(ctx context.Context, r *authn.Request) bool {
-	if !s.cfg.ExtJWTAuth.Enabled {
+	if !s.IsEnabled(ctx) {
 		return false
 	}
 
@@ -339,6 +404,13 @@ func (s *ExtendedJWT) Test(ctx context.Context, r *authn.Request) bool {
 
 	parsedToken, err := jwt.ParseSigned(rawToken, []jose.SignatureAlgorithm{jose.ES256})
 	if err != nil {
+		return false
+	}
+
+	// With only the local key trusted, other tokens can never verify, so leave
+	// them to other clients rather than fail them here.
+	if s.localKeys && !s.cfg.ExtJWTAuth.Enabled &&
+		(len(parsedToken.Headers) == 0 || parsedToken.Headers[0].KeyID != v3.LocalKeyID) {
 		return false
 	}
 

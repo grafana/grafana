@@ -3,6 +3,8 @@ package modules
 import (
 	"context"
 	"errors"
+	"maps"
+	"slices"
 
 	"github.com/grafana/dskit/modules"
 	"github.com/grafana/dskit/services"
@@ -20,6 +22,8 @@ type Engine interface {
 type Registry interface {
 	RegisterModule(name string, fn func() (services.Service, error))
 	RegisterInvisibleModule(name string, fn func() (services.Service, error))
+	// AddDependency declares that module name depends on the given modules.
+	AddDependency(name string, dependsOn ...string)
 }
 
 type Manager interface {
@@ -51,7 +55,7 @@ func New(
 	s := &service{
 		log:           logger,
 		targets:       targets,
-		dependencyMap: dependencyMap,
+		dependencyMap: maps.Clone(dependencyMap),
 		moduleManager: tracing.WrapModuleManager(modules.NewManager(logger)),
 		serviceMap:    map[string]services.Service{},
 	}
@@ -202,6 +206,14 @@ func (m *service) RegisterModule(name string, fn func() (services.Service, error
 // Invisible modules are not visible to the user, and are intended to be used as dependencies.
 func (m *service) RegisterInvisibleModule(name string, fn func() (services.Service, error)) {
 	m.moduleManager.RegisterInvisibleModule(name, fn)
+}
+
+// AddDependency declares that module name depends on the given modules. It
+// must be called before the service starts.
+func (m *service) AddDependency(name string, dependsOn ...string) {
+	// Concat rather than append, so the slice in the package-level map is never
+	// written through.
+	m.dependencyMap[name] = slices.Concat(m.dependencyMap[name], dependsOn)
 }
 
 func (m *service) IsModuleEnabled(name string) bool {

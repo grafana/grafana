@@ -3,17 +3,19 @@ package dashboard
 import (
 	"context"
 
+	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/home"
+	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/live"
 )
 
@@ -35,7 +37,37 @@ type dashboardStorageWrapper struct {
 	live live.DashboardActivityChannel
 
 	// Skip the legacy permission deletion when the App Platform path owns permissions
-	features featuremgmt.FeatureToggles
+	iamFeatures iamapi.Features
+
+	// Hide draft dashboards from List by default
+	lifecycleExtras DashboardLifecycleExtras
+}
+
+func (d dashboardStorageWrapper) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+	return listHidingDrafts(ctx, d.Storage, d.lifecycleExtras, options)
+}
+
+// draftHidingStorage applies draft hiding to List only. Standalone mode uses it because it
+// has none of the other behaviors dashboardStorageWrapper adds. It embeds the concrete store
+// rather than grafanarest.Storage so Watch and DeleteCollection stay advertised.
+type draftHidingStorage struct {
+	*genericregistry.Store
+
+	lifecycleExtras DashboardLifecycleExtras
+}
+
+func (d draftHidingStorage) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+	return listHidingDrafts(ctx, d.Store, d.lifecycleExtras, options)
+}
+
+func listHidingDrafts(ctx context.Context, store rest.Lister, extras DashboardLifecycleExtras, options *internalversion.ListOptions) (runtime.Object, error) {
+	if options == nil {
+		options = &internalversion.ListOptions{}
+	}
+	hide := extras != nil && extras.HideDraftsByDefault(ctx)
+	opts := *options
+	opts.LabelSelector = applyDraftListSelector(options.LabelSelector, hide)
+	return store.List(ctx, &opts)
 }
 
 func (d dashboardStorageWrapper) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
@@ -72,7 +104,7 @@ func (d dashboardStorageWrapper) Delete(ctx context.Context, name string, delete
 	}
 	// With the flag on, the App Platform path (the store's afterDelete hook) deletes permissions, so
 	// skip the legacy deletion here to avoid a double call. Standalone never registers this wrapper.
-	if d.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis) { //nolint:staticcheck
+	if d.iamFeatures.ResourcePermissionsAPI {
 		return obj, async, nil
 	}
 	if accessErr := d.dashboardPermissionsSvc.DeleteResourcePermissions(ctx, ns.OrgID, name); accessErr != nil {

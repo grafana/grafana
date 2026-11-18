@@ -1,5 +1,5 @@
 import { QueryStatus } from '@reduxjs/toolkit/query';
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import { type UserEvent } from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import type { JSX } from 'react';
@@ -7,7 +7,8 @@ import { act, render, waitFor } from 'test/test-utils';
 
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
-import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
+import { type Repository, provisioningAPIv0alpha1 } from 'app/api/clients/provisioning/v0alpha1';
+import { configureStore } from 'app/store/configureStore';
 
 import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
 import { createJob, createRepository } from '../mocks/factories';
@@ -77,7 +78,7 @@ async function navigateToConnectionStep(
   }
 
   if ((type === 'bitbucket' || type === 'git') && data?.tokenUser) {
-    await pasteIntoInput(user, screen.getByPlaceholderText('username'), data.tokenUser);
+    await pasteIntoInput(user, screen.getByPlaceholderText(type === 'git' ? 'git' : 'username'), data.tokenUser);
   }
 
   if (type !== 'local' && data?.url) {
@@ -580,9 +581,130 @@ describe('ProvisioningWizard', () => {
         expect(screen.queryByText('Repository status unhealthy')).not.toBeInTheDocument();
       });
     });
+
+    it('enters the synchronize step in the loading state after the bootstrap save bumps the generation', async () => {
+      // Real submission hook: the bootstrap save must perform the actual connection test + PUT round-trip
+      const { useCreateOrUpdateRepository: realUseCreateOrUpdateRepository } = jest.requireActual<{
+        useCreateOrUpdateRepository: typeof useCreateOrUpdateRepository;
+      }>('../hooks/useCreateOrUpdateRepository');
+      mockUseCreateOrUpdateRepository.mockImplementation(realUseCreateOrUpdateRepository);
+
+      let stored = createRepository({ metadata: { resourceVersion: '5' } }); // generation 1, observedGeneration 1
+      const saved = createRepository({ metadata: { generation: 2, resourceVersion: '6' } }); // observedGeneration still 1
+      let savingBootstrap = false;
+      let releaseLists = () => {};
+      const listsReleased = new Promise<void>((resolve) => (releaseLists = resolve));
+
+      server.use(
+        http.post(`${BASE}/repositories`, () => HttpResponse.json(stored)),
+        http.put(`${BASE}/repositories/:name`, () => {
+          if (savingBootstrap) {
+            stored = saved; // the bootstrap step changes title/target: spec change, generation bump
+          }
+          return HttpResponse.json(stored);
+        }),
+        http.get(`${BASE}/repositories`, async () => {
+          const snapshot = stored; // read at request time, like a server does
+          if (savingBootstrap) {
+            await listsReleased; // only the PUT response can reach the cache until released
+          }
+          return HttpResponse.json({
+            items: [snapshot],
+            metadata: { resourceVersion: snapshot.metadata?.resourceVersion },
+          });
+        })
+      );
+
+      const store = configureStore();
+      const { user } = render(
+        <StepStatusProvider>
+          <ProvisioningWizard type="github" />
+        </StepStatusProvider>,
+        { store }
+      );
+      await navigateToBootstrapStep(user);
+
+      savingBootstrap = true;
+      await user.click(screen.getByRole('button', { name: /Synchronize with external storage/i }));
+      expect(
+        await screen.findByRole('heading', { name: /4\. Synchronize with external storage/i })
+      ).toBeInTheDocument();
+      expect(screen.getByText('Checking repository status...')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /Begin synchronization/i })).not.toBeInTheDocument();
+
+      // The list refetch triggered by the save lands; the step must stay loading until a watch
+      // event reports the new generation as reconciled.
+      const selectRepositoryList = provisioningAPIv0alpha1.endpoints.listRepository.select({
+        fieldSelector: 'metadata.name=test-repo-abc123',
+        watch: true,
+      });
+      releaseLists();
+      await waitFor(() => expect(selectRepositoryList(store.getState()).isLoading).toBe(false));
+      expect(screen.getByText('Checking repository status...')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /Begin synchronization/i })).not.toBeInTheDocument();
+
+      act(() => {
+        getMockLiveSrv().emitWatchEvent('repositories', {
+          type: 'MODIFIED',
+          object: createRepository({
+            metadata: { generation: 2, resourceVersion: '7' },
+            status: { observedGeneration: 2 },
+          }),
+        });
+      });
+      expect(await screen.findByRole('button', { name: /Begin synchronization/i })).toBeEnabled();
+    });
   });
 
   describe('Synchronization Step', () => {
+    it('shows resource counts as they arrive and updates them during initial synchronization', async () => {
+      setupWorkingJobHandlers();
+
+      const { user } = setup(<ProvisioningWizard type="github" />);
+      await beginSynchronization(user);
+
+      expect(screen.getByRole('progressbar', { name: 'Progress Bar' })).toHaveAttribute('aria-valuenow', '30');
+      expect(screen.queryByRole('table')).not.toBeInTheDocument();
+
+      act(() => {
+        getMockLiveSrv().emitWatchEvent('jobs', {
+          type: 'MODIFIED',
+          object: createJob({
+            status: { summary: [{ group: 'dashboard.grafana.app', kind: 'Dashboard', create: 2 }] },
+          }),
+        });
+      });
+
+      const dashboardRow = await screen.findByRole('row', { name: /Dashboard/ });
+      expect(
+        within(dashboardRow)
+          .getAllByRole('cell')
+          .map((cell) => cell.textContent)
+      ).toEqual(['Dashboard', '2', '-', '-', '-', '-', '-', '2']);
+
+      act(() => {
+        getMockLiveSrv().emitWatchEvent('jobs', {
+          type: 'MODIFIED',
+          object: createJob({
+            status: {
+              progress: 60,
+              summary: [{ group: 'dashboard.grafana.app', kind: 'Dashboard', create: 5, update: 1 }],
+            },
+          }),
+        });
+      });
+
+      await waitFor(() => {
+        const updatedRow = screen.getByRole('row', { name: /Dashboard/ });
+        expect(
+          within(updatedRow)
+            .getAllByRole('cell')
+            .map((cell) => cell.textContent)
+        ).toEqual(['Dashboard', '5', '-', '1', '-', '-', '-', '6']);
+      });
+      expect(screen.getByRole('progressbar', { name: 'Progress Bar' })).toHaveAttribute('aria-valuenow', '60');
+    });
+
     it('enables the finish button after the sync job succeeds via a watch event', async () => {
       setupWorkingJobHandlers();
       mockSyncRepositoryLookup();
@@ -877,7 +999,7 @@ describe('ProvisioningWizard', () => {
       const { user } = setup(<ProvisioningWizard type="git" />);
 
       await typeIntoTokenField(user, 'token or password', 'test-token');
-      await pasteIntoInput(user, screen.getByPlaceholderText('username'), 'test-user');
+      await pasteIntoInput(user, screen.getByPlaceholderText('git'), 'test-user');
       await pasteIntoInput(
         user,
         screen.getByRole('textbox', { name: /Repository URL/i }),

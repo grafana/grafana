@@ -1,4 +1,15 @@
-import { createTheme, type Field, type FieldSparkline, FieldType, toDataFrame } from '@grafana/data';
+import tinycolor from 'tinycolor2';
+import type uPlot from 'uplot';
+
+import {
+  createTheme,
+  type Field,
+  FieldColorModeId,
+  type FieldSparkline,
+  FieldType,
+  ThresholdsMode,
+  toDataFrame,
+} from '@grafana/data';
 
 import { getYRange, prepareConfig, preparePlotFrame } from './utils';
 
@@ -345,5 +356,261 @@ describe('prepareConfig', () => {
     const config = prepareConfig(sparkline, dataFrame, createTheme(), false);
     expect(config.series.length).toBe(1);
     expect(config.series[0].getConfig().points?.show).not.toBe(true);
+  });
+
+  describe('series color', () => {
+    const theme = createTheme();
+    const green = theme.visualization.getColorByName('green');
+    const orange = theme.visualization.getColorByName('orange');
+    const red = theme.visualization.getColorByName('red');
+    const blue = theme.visualization.getColorByName('blue');
+
+    const thresholds = {
+      mode: ThresholdsMode.Absolute,
+      steps: [
+        { value: -Infinity, color: 'green' },
+        { value: 50, color: 'orange' },
+        { value: 80, color: 'red' },
+      ],
+    };
+
+    const getStroke = (values: Array<number | null>, config: Field['config']) => {
+      const dataFrame = toDataFrame({
+        fields: [
+          { name: 'x', values: values.map((_, i) => i), type: FieldType.number },
+          { name: 'y', values, type: FieldType.number, config },
+        ],
+      });
+      const [x, y] = dataFrame.fields;
+      return String(prepareConfig({ x, y }, dataFrame, theme).series[0].getConfig().stroke);
+    };
+
+    it.each([
+      { description: 'the top of the range', values: [1, 2, 3, 4, 5], expected: green },
+      { description: 'the middle of the range', values: [1, 5, 3], expected: 'rgb(226, 192, 61)' },
+      { description: 'the bottom of the range', values: [5, 4, 3, 2, 1], expected: red },
+    ])('uses the scheme color when the last value is at $description', ({ values, expected }) => {
+      const stroke = getStroke(values, { color: { mode: FieldColorModeId.ContinuousRdYlGr } });
+
+      expect(tinycolor.equals(stroke, expected)).toBe(true);
+    });
+
+    it.each([
+      { description: 'above the top step', values: [1, 99], expected: red },
+      { description: 'in a middle step', values: [99, 60], expected: orange },
+      { description: 'in the base step', values: [99, 1], expected: green },
+    ])('uses the threshold color when the last value is $description', ({ values, expected }) => {
+      const stroke = getStroke(values, { color: { mode: FieldColorModeId.Thresholds }, thresholds });
+
+      expect(tinycolor.equals(stroke, expected)).toBe(true);
+    });
+
+    it('uses the threshold color for color.seriesBy instead of the last value', () => {
+      const stroke = getStroke([99, 1], { color: { mode: FieldColorModeId.Thresholds, seriesBy: 'max' }, thresholds });
+
+      expect(tinycolor.equals(stroke, red)).toBe(true);
+    });
+
+    it('uses the last non-null value when the series ends in null', () => {
+      const stroke = getStroke([1, 2, 3, 4, 5, null], { color: { mode: FieldColorModeId.ContinuousRdYlGr } });
+
+      expect(tinycolor.equals(stroke, green)).toBe(true);
+    });
+
+    it.each([
+      { description: 'a trailing null after 50', withNull: [1, 20, 90, 50, null], withoutNull: [1, 20, 90, 50, 50] },
+      { description: 'a trailing null after 90', withNull: [1, 20, 50, 90, null], withoutNull: [10, 30, 50, 70, 90] },
+    ])('colors series with the same last value alike despite $description', ({ withNull, withoutNull }) => {
+      const config = { color: { mode: FieldColorModeId.ContinuousRdYlGr } };
+
+      expect(tinycolor.equals(getStroke(withNull, config), getStroke(withoutNull, config))).toBe(true);
+    });
+
+    it('uses the last non-null threshold color when the series ends in null', () => {
+      const stroke = getStroke([10, 90, null], { color: { mode: FieldColorModeId.Thresholds }, thresholds });
+
+      expect(tinycolor.equals(stroke, red)).toBe(true);
+    });
+
+    it.each([
+      { description: 'rising', values: [1, 99] },
+      { description: 'falling', values: [99, 1] },
+    ])('uses the fixed color for a $description series', ({ values }) => {
+      const stroke = getStroke(values, { color: { mode: FieldColorModeId.Fixed, fixedColor: 'blue' } });
+
+      expect(tinycolor.equals(stroke, blue)).toBe(true);
+    });
+  });
+});
+
+describe('prepareConfig hover', () => {
+  const theme = createTheme();
+
+  beforeEach(() => jest.useFakeTimers());
+  afterEach(() => jest.useRealTimers());
+
+  const makeHoverSparkline = (yConfig: Field['config'] = {}): FieldSparkline => ({
+    x: { name: 'x', values: [0, 1, 2, 3, 4], type: FieldType.number, config: {} },
+    y: { name: 'y', values: [10, 20, 30, 40, 50], type: FieldType.number, config: yConfig },
+  });
+
+  const getSetCursorHook = (onHover: jest.Mock, sparkline = makeHoverSparkline()) => {
+    const dataFrame = toDataFrame({ fields: [sparkline.x, sparkline.y] });
+    const builder = prepareConfig(sparkline, dataFrame, theme, false, true, onHover);
+    const hook = builder.getConfig().hooks?.setCursor?.[0];
+    if (!hook) {
+      throw new Error('expected a setCursor hook to be registered');
+    }
+    return hook;
+  };
+
+  const makeU = (
+    idxs: Array<number | null>,
+    { left = 40, top = 10, data }: { left?: number; top?: number; data?: Array<Array<number | null>> } = {}
+  ) =>
+    ({
+      cursor: { idxs, left, top },
+      data: data ?? [
+        [0, 1, 2, 3, 4],
+        [10, 20, 30, 40, 50],
+      ],
+      rect: { left: 100, top: 50 },
+    }) as unknown as uPlot;
+
+  it('disables the cursor and registers no hover hook by default', () => {
+    const sparkline = makeHoverSparkline();
+    const dataFrame = toDataFrame({ fields: [sparkline.x, sparkline.y] });
+
+    const config = prepareConfig(sparkline, dataFrame, theme).getConfig();
+
+    expect(config.cursor?.show).toBe(false);
+    expect(config.hooks?.setCursor).toBeUndefined();
+  });
+
+  it('enables a non-dragging crosshair cursor and one hover hook when enabled', () => {
+    const sparkline = makeHoverSparkline();
+    const dataFrame = toDataFrame({ fields: [sparkline.x, sparkline.y] });
+
+    const config = prepareConfig(sparkline, dataFrame, theme, false, true, jest.fn()).getConfig();
+
+    expect(config.cursor?.show).toBe(true);
+    expect(config.cursor?.x).toBe(true);
+    expect(config.cursor?.y).toBe(false);
+    expect(config.hooks?.setCursor).toHaveLength(1);
+  });
+
+  // uPlot's default cursor-point color fn reads the builder's `frames`, which Sparkline never
+  // populates, so it throws on gradient series. We override it with a solid color string.
+  it('paints the cursor point with a solid color string, not the frames-reading default fn', () => {
+    const sparkline = makeHoverSparkline();
+    const dataFrame = toDataFrame({ fields: [sparkline.x, sparkline.y] });
+
+    const config = prepareConfig(sparkline, dataFrame, theme, false, true, jest.fn()).getConfig();
+
+    expect(typeof config.cursor?.points?.stroke).toBe('string');
+    expect(typeof config.cursor?.points?.fill).toBe('string');
+  });
+
+  it('emits the hovered index, raw value, formatted display and cursor viewport coords', () => {
+    const onHover = jest.fn();
+    const hook = getSetCursorHook(onHover, makeHoverSparkline({ decimals: 1 }));
+
+    hook(makeU([null, 2]));
+    jest.advanceTimersToNextTimer();
+
+    expect(onHover).toHaveBeenCalledTimes(1);
+    expect(onHover).toHaveBeenCalledWith({ index: 2, value: 30, display: '30.0', left: 140, top: 60 });
+  });
+
+  it('dedupes repeated hovers on the same index', () => {
+    const onHover = jest.fn();
+    const hook = getSetCursorHook(onHover);
+
+    hook(makeU([null, 2]));
+    jest.advanceTimersToNextTimer();
+    hook(makeU([null, 2], { left: 41 }));
+    jest.advanceTimersToNextTimer();
+
+    expect(onHover).toHaveBeenCalledTimes(1);
+  });
+
+  it('emits null once when leaving a previously-hovered point', () => {
+    const onHover = jest.fn();
+    const hook = getSetCursorHook(onHover);
+
+    hook(makeU([null, 2]));
+    jest.advanceTimersToNextTimer();
+    onHover.mockClear();
+    hook(makeU([null, null]));
+    hook(makeU([null, null]));
+
+    expect(onHover).toHaveBeenCalledTimes(1);
+    expect(onHover).toHaveBeenCalledWith(null);
+  });
+
+  it('does not emit before any point has been hovered', () => {
+    const onHover = jest.fn();
+    const hook = getSetCursorHook(onHover);
+
+    hook(makeU([null, null]));
+
+    expect(onHover).not.toHaveBeenCalled();
+  });
+
+  it('treats a non-finite value as no hover', () => {
+    const onHover = jest.fn();
+    const hook = getSetCursorHook(onHover);
+
+    hook(makeU([null, 2]));
+    jest.advanceTimersToNextTimer();
+    onHover.mockClear();
+    hook(
+      makeU([null, 3], {
+        data: [
+          [0, 1, 2, 3, 4],
+          [10, 20, 30, NaN, 50],
+        ],
+      })
+    );
+
+    expect(onHover).toHaveBeenCalledTimes(1);
+    expect(onHover).toHaveBeenCalledWith(null);
+  });
+
+  it('formats only the latest index in a frame and dedupes a return to the emitted index', () => {
+    const sparkline = makeHoverSparkline();
+    const display = jest.fn((value: unknown) => ({ numeric: Number(value), text: `${value} ms` }));
+    sparkline.y.display = display;
+    const onHover = jest.fn();
+    const hook = getSetCursorHook(onHover, sparkline);
+
+    hook(makeU([null, 1]));
+    hook(makeU([null, 2]));
+    hook(makeU([null, 3]));
+    expect(display).not.toHaveBeenCalled();
+    jest.advanceTimersToNextTimer();
+
+    expect(display.mock.calls).toEqual([[40]]);
+    expect(onHover.mock.calls).toEqual([[{ index: 3, value: 40, display: '40 ms', left: 140, top: 60 }]]);
+
+    hook(makeU([null, 2]));
+    hook(makeU([null, 3]));
+    jest.advanceTimersToNextTimer();
+    expect(display.mock.calls).toEqual([[40]]);
+    expect(onHover).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([null, 99])('cancels a pending point when the next index is invalid (%s)', (index) => {
+    const onHover = jest.fn();
+    const hook = getSetCursorHook(onHover);
+    hook(makeU([null, 1]));
+    jest.advanceTimersToNextTimer();
+    expect(onHover).toHaveBeenLastCalledWith({ index: 1, value: 20, display: '20', left: 140, top: 60 });
+
+    hook(makeU([null, 2]));
+    hook(makeU([null, index]));
+    expect(onHover).toHaveBeenLastCalledWith(null);
+    jest.advanceTimersToNextTimer();
+    expect(onHover).toHaveBeenCalledTimes(2);
   });
 });

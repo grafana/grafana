@@ -68,6 +68,19 @@ Determines the query type.
 - **Range:** Returns a set of time series where each series includes multiple data points over the selected time range. Use this for graph visualizations (lines, bars, points, stacked).
 - **Instant:** Returns a single data point per series (the most recent value within the selected time range). Use this for stat panels, tables, or gauges. To visualize instant query results in a time series panel, add a field override with the `Transform` property set to `Constant`. For more information, refer to [Time Series Transform option](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/time-series/#transform).
 
+The query type doesn't change how aggregations are calculated. Both types evaluate the same PromQL expression, including aggregation operators such as `sum`, `avg`, and `count`. The type only controls how many points in time Grafana evaluates:
+
+- An **Instant** query evaluates the expression once, at the end of the selected time range, and returns a single value per series.
+- A **Range** query evaluates the same expression at every step across the range, and returns a value per series at each step.
+
+Because both types run the same aggregation at each evaluated timestamp, an Instant query returns the same value as the most recent data point of the equivalent Range query. For example, `sum(rate(http_requests_total[5m]))` returns one value as an Instant query and the full history of that value as a Range query, where the final Range data point matches the Instant result.
+
+Choose the type based on what you want to display:
+
+- Use **Instant** when you only need the current value, such as in a stat, gauge, or single-row table.
+- Use **Range** when you need to see how the value changes over time, such as in a time series graph.
+- Use **Both** when you want both a trend and a current-value readout from one query. This runs two queries against Prometheus.
+
 {{< admonition type="note" >}}
 Grafana adjusts the query time range to align with the dynamically calculated step interval. This ensures consistent metric visualization and supports Prometheus result caching. However, this alignment can cause minor visual differences, such as a slight gap at the graph's right edge or a shifted start time. For example, a `15s` step aligns timestamps to Unix times divisible by 15 seconds. A `1w` Min step aligns the range to the start of the week (Thursday at 00:00 UTC in Prometheus).
 {{< /admonition >}}

@@ -1,5 +1,7 @@
 import { DragDropContext, Droppable } from '@hello-pangea/dnd';
-import { fireEvent, render, screen } from 'test/test-utils';
+import { act, fireEvent, render, screen } from 'test/test-utils';
+
+import { VizPanel } from '@grafana/scenes';
 
 import { NotebookCellItem } from '../NotebookCellItem';
 
@@ -80,11 +82,11 @@ describe('NotebookCellFrame', () => {
     expect(await screen.findByText('Hello notebook')).toBeInTheDocument();
   });
 
-  it('renders no affordances outside edit mode', () => {
+  it('renders no cell controls outside edit mode', () => {
     renderFrame();
 
     expect(screen.queryByRole('button', { name: 'Drag to reorder' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Click to add below' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Click to add above' })).not.toBeInTheDocument();
   });
 
   it('renders the handle and the add button in edit mode', async () => {
@@ -92,20 +94,20 @@ describe('NotebookCellFrame', () => {
 
     expect(await screen.findByText('Hello notebook')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Drag to reorder' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Click to add below' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Click to add above' })).toBeInTheDocument();
   });
 
-  // The only behavioural pin on the insertion index. The button belongs to the cell above it, so
-  // the frame at position i inserts at i + 1 — an off-by-one here would silently insert blocks in
-  // the wrong place once edit mode wires onAdd up.
-  it('inserts below its own cell', async () => {
+  // The only behavioural pin on the insertion index. The button is anchored to this cell's own top
+  // edge and inserts there, so the frame at position i inserts at i — an off-by-one here would
+  // silently insert blocks in the wrong place once edit mode wires onAdd up.
+  it('inserts above its own cell', async () => {
     const onAdd = jest.fn();
     const { user } = renderFrame({ index: 1, isEditing: true, onAdd });
 
-    await user.click(screen.getByRole('button', { name: 'Click to add below' }));
+    await user.click(screen.getByRole('button', { name: 'Click to add above' }));
     await user.click(screen.getByRole('menuitem', { name: 'Heading' }));
 
-    expect(onAdd).toHaveBeenCalledWith('heading', 2);
+    expect(onAdd).toHaveBeenCalledWith('heading', 1);
   });
 
   // The actions bar sits in the reserved band at the top of this frame's own box. Hidden but
@@ -115,7 +117,7 @@ describe('NotebookCellFrame', () => {
   it('makes the hidden actions bar inert', async () => {
     renderFrame({ isEditing: true, onDuplicate: () => {}, onDelete: () => {} });
 
-    const actions = (await screen.findByRole('button', { name: 'Duplicate block' })).parentElement;
+    const actions = (await screen.findByRole('button', { name: 'Block actions' })).parentElement;
 
     expect(getComputedStyle(actions!).pointerEvents).toBe('none');
   });
@@ -182,10 +184,32 @@ describe('NotebookCellFrame', () => {
       }
     );
 
-    it('labels the frame with the cell element name for an assistive-technology user', () => {
+    it('labels the frame by block type, not by the element name, for an assistive-technology user', () => {
       renderFrame({ cell: buildCollapsedCell(), isEditing: true });
 
-      expect(screen.getByRole('group', { name: 'Collapsed block: hidden-panel' })).toBeInTheDocument();
+      expect(screen.getByRole('group', { name: 'Collapsed block' })).toBeInTheDocument();
+    });
+
+    it('adds the panel title to the label when the cell has one', () => {
+      const cell = new NotebookCellItem({
+        elementName: 'hidden-panel-k3x9qa',
+        source: 'user',
+        collapsed: true,
+        body: new VizPanel({ key: 'panel-1', pluginId: 'timeseries', title: 'p95 latency' }),
+      });
+      renderFrame({ cell, isEditing: true });
+
+      expect(screen.getByRole('group', { name: 'Collapsed block: p95 latency' })).toBeInTheDocument();
+    });
+
+    it('follows a rename of the panel', () => {
+      const body = new VizPanel({ key: 'panel-1', pluginId: 'timeseries', title: 'p95 latency' });
+      const cell = new NotebookCellItem({ elementName: 'hidden-panel-k3x9qa', source: 'user', collapsed: true, body });
+      renderFrame({ cell, isEditing: true });
+
+      act(() => body.setState({ title: 'p99 latency' }));
+
+      expect(screen.getByRole('group', { name: 'Collapsed block: p99 latency' })).toBeInTheDocument();
     });
 
     it('takes DOM focus once a fresh grant targets it', () => {

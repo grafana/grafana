@@ -120,11 +120,20 @@ func (f *fakeStore) GetUserPermissions(ctx context.Context, namespace types.Name
 	}
 	var permissions []accesscontrol.Permission
 	for _, p := range f.userPermissions {
-		if p.Action == query.Action || slices.Contains(query.ActionSets, p.Action) {
+		if query.Action == "" || p.Action == query.Action || slices.Contains(query.ActionSets, p.Action) {
 			permissions = append(permissions, p)
 		}
 	}
 	return permissions, nil
+}
+
+func (f *fakeStore) HasUserPermissions(
+	ctx context.Context,
+	namespace types.NamespaceInfo,
+	query store.PermissionsQuery,
+) (bool, error) {
+	permissions, err := f.GetUserPermissions(ctx, namespace, query)
+	return len(permissions) > 0, err
 }
 
 func (f *fakeStore) ListFolders(ctx context.Context, namespace types.NamespaceInfo) ([]store.Folder, error) {

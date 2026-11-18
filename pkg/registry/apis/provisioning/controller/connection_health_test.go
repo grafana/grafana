@@ -565,7 +565,7 @@ func TestConnectionHealthChecker_RefreshHealthWithPatchOps(t *testing.T) {
 			} else {
 				mockTester.EXPECT().TestConnection(mock.Anything, tt.conn).Return(tt.testResults, nil)
 			}
-			mockMetrics.EXPECT().RecordHealthCheck("connection", mock.Anything, mock.Anything).Return()
+			mockMetrics.EXPECT().RecordHealthCheck("connection", mock.Anything, mock.Anything, mock.Anything).Return()
 
 			hc := NewConnectionHealthChecker(mockTester, mockMetrics)
 			result, err := hc.RefreshHealthWithPatchOps(context.Background(), tt.conn)

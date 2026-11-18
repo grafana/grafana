@@ -11,7 +11,7 @@
  *  - includeStatus: include runtime status and data frame schema per panel
  */
 
-import type * as z from 'zod';
+import * as z from 'zod/mini';
 
 import { type DataFrame, type DataQueryError, LoadingState } from '@grafana/data';
 import { sceneGraph, SceneDataTransformer, type SceneObject, type VizPanel } from '@grafana/scenes';
@@ -52,7 +52,7 @@ function deepInterpolate(sceneObj: SceneObject, value: unknown): unknown {
   return value;
 }
 
-function getPanelRuntimeStatus(vizPanel: VizPanel): PanelRuntimeStatus | undefined {
+export function getPanelRuntimeStatus(vizPanel: VizPanel): PanelRuntimeStatus | undefined {
   // A missing/unknown plugin throws on import and sets `_pluginLoadError`; a module
   // that fails to compile resolves to an error plugin (`loadError`) without throwing.
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- loadError is set ad-hoc by getPanelPluginError, not on the PanelPlugin type
@@ -168,7 +168,7 @@ function getDataFrameSchema(vizPanel: VizPanel): FrameSchema[] | undefined {
 
 export const listPanelsCommand: MutationCommand<ListPanelsPayload> = {
   name: 'LIST_PANELS',
-  description: payloads.listPanels.description ?? '',
+  description: z.globalRegistry.get(payloads.listPanels)?.description ?? '',
 
   payloadSchema: payloads.listPanels,
   permission: readOnly,

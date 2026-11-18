@@ -1,11 +1,8 @@
-import { isEqual } from 'lodash';
-import { useRef } from 'react';
 import { useAsyncFn } from 'react-use';
 
 import { LoadingState } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { sceneGraph, type VizPanel } from '@grafana/scenes';
-import { type DataQuery } from '@grafana/schema';
 import { Button, Stack } from '@grafana/ui';
 import { addQuery } from 'app/core/utils/query';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
@@ -17,7 +14,7 @@ import { applyQueries } from './applyQueries';
 
 interface Props {
   panel: VizPanel;
-  cell?: NotebookCellItem;
+  cell: NotebookCellItem;
   /** True right after this cell was inserted or converted — see NotebookCellRenderer's own doc comment. */
   autoFocus?: boolean;
 }
@@ -33,26 +30,25 @@ export function PanelQueryEditor({ panel, cell, autoFocus }: Props) {
   const { queries } = queryRunner?.useState() ?? { queries: [] };
   const { data } = sceneGraph.getData(panel).useState();
   const range = sceneGraph.getTimeRange(panel).useState().value;
-  // The last query we successfully fetched a viz suggestion for.
-  const lastSuggestedQuery = useRef<DataQuery | undefined>(undefined);
 
   const [runState, runQuery] = useAsyncFn(async () => {
     if (!queryRunner || queries.length === 0) {
       return;
     }
-    if (!isEqual(lastSuggestedQuery.current, queries[0])) {
+    if (cell.shouldAutoSuggest(queries[0])) {
       try {
         const suggestion = await getVizSuggestionForQuery(queries[0], range);
-        lastSuggestedQuery.current = queries[0];
-        if (suggestion) {
-          await panel.changePluginType(suggestion.pluginId, suggestion.options, suggestion.fieldConfig);
+        if (suggestion && cell.shouldAutoSuggest(queries[0]) && cell.getParentLayout().state.isEditing !== false) {
+          await cell.onVisualizationChange(suggestion);
+          cell.disableAutoSuggest();
         }
+        cell.recordSuggestedQuery(queries[0]);
       } catch {
         console.error('Failed to get viz suggestion for query', queries[0]);
       }
     }
     queryRunner.runQueries();
-  }, [queries, range, panel, queryRunner]);
+  }, [queries, range, panel, queryRunner, cell]);
 
   if (!queryRunner || queries.length === 0) {
     return null;
@@ -62,7 +58,7 @@ export function PanelQueryEditor({ panel, cell, autoFocus }: Props) {
 
   return (
     <Stack direction="column" gap={1}>
-      <Stack justifyContent="flex-end">
+      <Stack justifyContent="flex-end" alignItems="center">
         <Button
           icon="plus"
           variant="secondary"

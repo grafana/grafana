@@ -51,7 +51,7 @@ function screenshotsMapper(spec: v0alpha1Spec): PluginMetaInfo['screenshots'] {
   }));
 }
 
-function logosMapper(spec: v0alpha1Spec): PluginMetaInfo['logos'] {
+export function logosMapper(spec: v0alpha1Spec): PluginMetaInfo['logos'] {
   return {
     ...spec.pluginJson.info.logos,
     large: toCDNUrl(spec, spec.pluginJson.info.logos.large),
@@ -200,7 +200,9 @@ export function extensionsMapper(spec: v0alpha1Spec): PluginExtensions {
     title: v.title ?? '',
   }));
 
+  const skills = spec.pluginJson.extensions?.skills;
   const extensions: PluginExtensions = {
+    ...(skills ? { skills } : {}),
     addedComponents,
     addedFunctions,
     addedLinks,

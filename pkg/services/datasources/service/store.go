@@ -190,7 +190,7 @@ func (ss *SqlStore) GetPrunableProvisionedDataSources(ctx context.Context) ([]*d
 // and is added to the bus. It also removes permissions related to the datasource.
 func (ss *SqlStore) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteDataSourceCommand) error {
 	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		dsQuery := &datasources.GetDataSourceQuery{ID: cmd.ID, UID: cmd.UID, Name: cmd.Name, OrgID: cmd.OrgID}
+		dsQuery := &datasources.GetDataSourceQuery{ID: cmd.ID, UID: cmd.UID, Name: cmd.Name, OrgID: cmd.OrgID} //nolint:staticcheck // Preserve legacy field compatibility.
 		ds, errGettingDS := ss.getDataSource(ctx, dsQuery, sess)
 
 		if errGettingDS != nil && !errors.Is(errGettingDS, datasources.ErrDataSourceNotFound) {
@@ -415,6 +415,9 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 		sess.MustCols("password")
 		sess.MustCols("basic_auth_password")
 		sess.MustCols("user")
+		if cmd.BasicAuthUserSet {
+			sess.MustCols("basic_auth_user")
+		}
 		// Make sure secure json data is zeroed out if empty. We do this as we want to migrate secrets from
 		// secure json data to the unified secrets table.
 		sess.MustCols("secure_json_data")

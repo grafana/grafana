@@ -30,7 +30,7 @@ export interface AxisProps {
   ticks?: Axis.Ticks;
   filter?: Axis.Filter;
   space?: Axis.Space;
-  formatValue?: (v: any, decimals?: DecimalCount) => string;
+  formatValue?: (v: number, decimals?: DecimalCount) => string;
   incrs?: Axis.Incrs;
   splits?: Axis.Splits;
   values?: Axis.Values;
@@ -110,7 +110,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       filter = (u, splits) => splits.map((v) => (Number.isInteger(v) ? v : null));
     }
 
-    let config: Axis = {
+    let config: Axis & { timeZone?: TimeZone | undefined } = {
       scale: scaleKey,
       show,
       stroke: color ?? theme.colors.text.primary,
@@ -184,7 +184,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
     }
 
     // store timezone
-    (config as any).timeZone = timeZone;
+    config.timeZone = timeZone;
 
     return config;
   }
@@ -237,7 +237,7 @@ function calculateSpace(
   scaleMin: number,
   scaleMax: number,
   plotDim: number,
-  formatValue?: (value: unknown) => string
+  formatValue?: (value: number) => string
 ): number {
   const axis = self.axes[axisIdx];
   const scale = self.scales[axis.scale!];

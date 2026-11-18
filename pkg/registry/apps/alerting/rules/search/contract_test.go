@@ -11,15 +11,15 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 )
 
 // CUE-generated schemas must match the generic Go contract despite separate types.
 func TestRequestBodyMatchesGenericSearchQuery(t *testing.T) {
 	for name, generated := range map[string]any{
-		"alert rules":     model.ListAlertRuleSearchRulesV0alpha1RequestBody{},
-		"recording rules": model.ListRecordingRuleSearchRulesV0alpha1RequestBody{},
+		"alert rules":     v0alpha1.ListAlertRuleSearchRulesV0alpha1RequestBody{},
+		"recording rules": v0alpha1.ListRecordingRuleSearchRulesV0alpha1RequestBody{},
 	} {
 		t.Run(name, func(t *testing.T) {
 			assertSameJSONShape(t, searchv0.SearchQuery{}, generated)
@@ -29,8 +29,8 @@ func TestRequestBodyMatchesGenericSearchQuery(t *testing.T) {
 
 func TestResponseBodyMatchesGenericSearchResults(t *testing.T) {
 	for name, generated := range map[string]any{
-		"alert rules":     model.ListAlertRuleSearchRulesV0alpha1Response{},
-		"recording rules": model.ListRecordingRuleSearchRulesV0alpha1Response{},
+		"alert rules":     v0alpha1.ListAlertRuleSearchRulesV0alpha1Response{},
+		"recording rules": v0alpha1.ListRecordingRuleSearchRulesV0alpha1Response{},
 	} {
 		t.Run(name, func(t *testing.T) {
 			assertSameJSONShape(t, searchv0.SearchResults{}, generated)
@@ -39,8 +39,8 @@ func TestResponseBodyMatchesGenericSearchResults(t *testing.T) {
 }
 
 func TestFilterOperatorsIncludeGenericAllOperator(t *testing.T) {
-	assert.Equal(t, "All", string(model.ListAlertRuleSearchRulesV0alpha1RequestSearchFilterLeafOperatorAll))
-	assert.Equal(t, "All", string(model.ListRecordingRuleSearchRulesV0alpha1RequestSearchFilterLeafOperatorAll))
+	assert.Equal(t, "All", string(v0alpha1.ListAlertRuleSearchRulesV0alpha1RequestSearchFilterLeafOperatorAll))
+	assert.Equal(t, "All", string(v0alpha1.ListRecordingRuleSearchRulesV0alpha1RequestSearchFilterLeafOperatorAll))
 }
 
 func assertSameJSONShape(t *testing.T, want, got any) {
@@ -113,8 +113,8 @@ func compareStructs(want, got reflect.Type, path string, seen map[typePair]bool)
 
 func jsonFields(t reflect.Type) map[string]reflect.Type {
 	out := map[string]reflect.Type{}
-	for i := 0; i < t.NumField(); i++ {
-		f := t.Field(i)
+	for f := range t.Fields() {
+		f := f
 		if !f.IsExported() {
 			continue
 		}
@@ -220,7 +220,7 @@ func TestJSONShapeComparison(t *testing.T) {
 	}
 
 	t.Run("accepts an identical shape", func(t *testing.T) {
-		assert.Empty(t, compareShapes(reflect.TypeOf(base{}), reflect.TypeOf(base{}), ""))
+		assert.Empty(t, compareShapes(reflect.TypeFor[base](), reflect.TypeFor[base](), ""))
 	})
 
 	t.Run("accepts a pointer in place of a value", func(t *testing.T) {
@@ -232,7 +232,7 @@ func TestJSONShapeComparison(t *testing.T) {
 			Open  map[string]any   `json:"open,omitempty"`
 			Tags  map[string]int64 `json:"tags,omitempty"`
 		}
-		assert.Empty(t, compareShapes(reflect.TypeOf(base{}), reflect.TypeOf(relaxed{}), ""))
+		assert.Empty(t, compareShapes(reflect.TypeFor[base](), reflect.TypeFor[relaxed](), ""))
 	})
 
 	t.Run("accepts a named string in place of a string", func(t *testing.T) {
@@ -243,7 +243,7 @@ func TestJSONShapeComparison(t *testing.T) {
 		type plain struct {
 			Name string `json:"name"`
 		}
-		assert.Empty(t, compareShapes(reflect.TypeOf(plain{}), reflect.TypeOf(enum{}), ""))
+		assert.Empty(t, compareShapes(reflect.TypeFor[plain](), reflect.TypeFor[enum](), ""))
 	})
 
 	t.Run("flattens an inline embedded struct", func(t *testing.T) {
@@ -255,14 +255,14 @@ func TestJSONShapeComparison(t *testing.T) {
 			A string `json:"a"`
 			B string `json:"b"`
 		}
-		assert.Empty(t, compareShapes(reflect.TypeOf(flat{}), reflect.TypeOf(embedded{}), ""))
+		assert.Empty(t, compareShapes(reflect.TypeFor[flat](), reflect.TypeFor[embedded](), ""))
 	})
 
 	t.Run("reports a missing property", func(t *testing.T) {
 		type short struct {
 			Name string `json:"name"`
 		}
-		problems := compareShapes(reflect.TypeOf(base{}), reflect.TypeOf(short{}), "")
+		problems := compareShapes(reflect.TypeFor[base](), reflect.TypeFor[short](), "")
 		assert.Len(t, problems, 5)
 		assert.Contains(t, strings.Join(problems, "\n"), `missing "count"`)
 	})
@@ -277,7 +277,7 @@ func TestJSONShapeComparison(t *testing.T) {
 			Tags  map[string]int64 `json:"tags,omitempty"`
 			Extra string           `json:"extra"`
 		}
-		problems := compareShapes(reflect.TypeOf(base{}), reflect.TypeOf(long{}), "")
+		problems := compareShapes(reflect.TypeFor[base](), reflect.TypeFor[long](), "")
 		assert.Len(t, problems, 1)
 		assert.Contains(t, problems[0], `declares "extra"`)
 	})
@@ -291,7 +291,7 @@ func TestJSONShapeComparison(t *testing.T) {
 			Open  map[string]any   `json:"open,omitempty"`
 			Tags  map[string]int64 `json:"tags,omitempty"`
 		}
-		problems := compareShapes(reflect.TypeOf(base{}), reflect.TypeOf(retyped{}), "")
+		problems := compareShapes(reflect.TypeFor[base](), reflect.TypeFor[retyped](), "")
 		assert.Len(t, problems, 1)
 		assert.Contains(t, problems[0], "name")
 		assert.Contains(t, problems[0], "JSON string")
@@ -309,7 +309,7 @@ func TestJSONShapeComparison(t *testing.T) {
 			Open  map[string]any   `json:"open,omitempty"`
 			Tags  map[string]int64 `json:"tags,omitempty"`
 		}
-		problems := compareShapes(reflect.TypeOf(base{}), reflect.TypeOf(nested{}), "")
+		problems := compareShapes(reflect.TypeFor[base](), reflect.TypeFor[nested](), "")
 		assert.Len(t, problems, 1)
 		assert.Contains(t, problems[0], "inner.a")
 	})
@@ -321,7 +321,7 @@ func TestJSONShapeComparison(t *testing.T) {
 			Leaf *string `json:"leaf,omitempty"`
 		}
 		done := make(chan []string, 1)
-		go func() { done <- compareShapes(reflect.TypeOf(node{}), reflect.TypeOf(node{}), "") }()
+		go func() { done <- compareShapes(reflect.TypeFor[node](), reflect.TypeFor[node](), "") }()
 		select {
 		case problems := <-done:
 			assert.Empty(t, problems)
@@ -339,7 +339,7 @@ func TestJSONShapeComparison(t *testing.T) {
 			And  []got  `json:"and,omitempty"`
 			Leaf *int64 `json:"leaf,omitempty"`
 		}
-		problems := compareShapes(reflect.TypeOf(want{}), reflect.TypeOf(got{}), "")
+		problems := compareShapes(reflect.TypeFor[want](), reflect.TypeFor[got](), "")
 		assert.NotEmpty(t, problems)
 		assert.Contains(t, strings.Join(problems, "\n"), "leaf")
 	})
@@ -353,7 +353,7 @@ func TestJSONShapeComparison(t *testing.T) {
 			Open  inner            `json:"open,omitempty"`
 			Tags  map[string]int64 `json:"tags,omitempty"`
 		}
-		problems := compareShapes(reflect.TypeOf(base{}), reflect.TypeOf(narrowed{}), "")
+		problems := compareShapes(reflect.TypeFor[base](), reflect.TypeFor[narrowed](), "")
 		assert.Len(t, problems, 1)
 		assert.Contains(t, problems[0], "open")
 		assert.Contains(t, problems[0], "open object")

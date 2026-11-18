@@ -21,12 +21,21 @@ EXTERNAL_MANIFESTS="
 alerting_historian github.com/grafana/alerting/apps/historian/pkg/apis
 "
 
+# Manifest packages under ./apps that are deliberately not registered, one
+# package directory per line.
+EXCLUDED_MANIFESTS="
+apps/alerting/alertenrichment/pkg/generated/manifestdata
+"
+
 # Find all paths and store them
 find apps -name '*.go' 2>/dev/null | \
   xargs grep -l 'func LocalManifest() app.Manifest' 2>/dev/null | \
-  $AWK '{
+  $AWK -v excluded="$EXCLUDED_MANIFESTS" '
+  BEGIN { n = split(excluded, lines, "\n"); for (i = 1; i <= n; i++) if (lines[i] != "") skip[lines[i]] = 1 }
+  {
     path = $1
     sub(/\/[^\/]+\.go$/, "", path)
+    if (path in skip) next
     if (match(path, /^apps\/(.+)\/pkg/, arr)) {
       print path
     }
@@ -35,6 +44,9 @@ find apps -name '*.go' 2>/dev/null | \
 # Start generating the file
 cat > "$OUTPUT_FILE" << 'HEADER'
 package resource
+
+// Generated: edits are overwritten. To add a manifest that is compiled into a
+// distribution but lives outside apps/, see RegisterAppManifest.
 
 //go:generate sh -c "cd ../../../.. && bash pkg/storage/unified/resource/generate_manifests.sh"
 
@@ -73,7 +85,7 @@ echo "$EXTERNAL_MANIFESTS" | $AWK 'NF { print "\t" $1 " \"" $2 "\"" }' >> "$OUTP
 cat >> "$OUTPUT_FILE" << 'MIDDLE'
 )
 
-func AppManifests() []*app.ManifestData {
+func generatedAppManifests() []*app.ManifestData {
 	// TODO: don't use hardcoded list of manifests when possible.
 	return []*app.ManifestData{
 MIDDLE

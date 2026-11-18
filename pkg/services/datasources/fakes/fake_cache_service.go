@@ -11,7 +11,7 @@ type FakeCacheService struct {
 	DataSources []*datasources.DataSource
 }
 
-var _ datasources.CacheService = &FakeCacheService{}
+var _ datasources.CacheService = (*FakeCacheService)(nil)
 
 func (c *FakeCacheService) GetDatasource(ctx context.Context, datasourceID int64, user identity.Requester, skipCache bool) (*datasources.DataSource, error) {
 	for _, datasource := range c.DataSources {

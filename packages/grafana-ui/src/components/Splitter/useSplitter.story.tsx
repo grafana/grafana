@@ -1,4 +1,4 @@
-import { type Meta, type StoryFn } from '@storybook/react-webpack5';
+import { type Meta, type StoryFn } from '@storybook/react';
 
 import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
 import { Box } from '../Layout/Box/Box';
@@ -31,15 +31,13 @@ export const Basic: StoryFn<StoryOptions> = (options) => {
     ...options,
   });
 
-  if (!options.hasSecondPane) {
-    primaryProps.style.flexGrow = 1;
-  }
+  const primaryStyle = options.hasSecondPane ? primaryProps.style : { ...primaryProps.style, flexGrow: 1 };
 
   return (
     <DashboardStoryCanvas>
       <div style={{ display: 'flex', width: '700px', height: '500px' }}>
         <div {...containerProps}>
-          <div {...primaryProps}>
+          <div {...primaryProps} style={primaryStyle}>
             <Box display="flex" grow={1} backgroundColor="primary" padding={2}>
               Primary
             </Box>

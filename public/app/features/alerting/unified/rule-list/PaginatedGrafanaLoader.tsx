@@ -1,5 +1,5 @@
 import { groupBy, isEmpty } from 'lodash';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { Dropdown, Icon, LinkButton, Menu, Stack, TextLink } from '@grafana/ui';
@@ -12,13 +12,14 @@ import { GrafanaRuleGroupExporter } from '../components/export/GrafanaRuleGroupE
 import { FolderActionsButton } from '../components/folder-actions/FolderActionsButton';
 import { GrafanaNoRulesCTA } from '../components/rules/NoRulesCTA';
 import { AlertingAction, useAlertingAbility } from '../hooks/useAbilities';
-import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../utils/constants';
 import { makeFolderAlertsLink } from '../utils/misc';
 import { groups } from '../utils/navigation';
 import { getPromGroupReadOnlyStatus, isUngroupedRuleGroup } from '../utils/rules';
 
 import { GrafanaGroupLoader } from './GrafanaGroupLoader';
 import { GrafanaRuleListItem } from './GrafanaRuleListItem';
+import { DataSourceManagedRulesInlineNotice } from './components/DataSourceManagedRulesNotice';
 import { DataSourceSection } from './components/DataSourceSection';
 import { GroupIntervalIndicator } from './components/GroupIntervalMetadata';
 import { ListGroup } from './components/ListGroup';
@@ -36,9 +37,15 @@ interface LoaderProps {
   groupFilter?: string;
   namespaceFilter?: string;
   onLoadingStateChange?: (uid: string, state: DataSourceLoadState) => void;
+  collapsible?: boolean;
 }
 
-export function PaginatedGrafanaLoader({ groupFilter, namespaceFilter, onLoadingStateChange }: LoaderProps) {
+export function PaginatedGrafanaLoader({
+  groupFilter,
+  namespaceFilter,
+  onLoadingStateChange,
+  collapsible,
+}: LoaderProps) {
   const key = `${groupFilter}-${namespaceFilter}`;
 
   // Key is crucial. It resets the generator when filters change.
@@ -48,11 +55,12 @@ export function PaginatedGrafanaLoader({ groupFilter, namespaceFilter, onLoading
       groupFilter={groupFilter}
       namespaceFilter={namespaceFilter}
       onLoadingStateChange={onLoadingStateChange}
+      collapsible={collapsible}
     />
   );
 }
 
-function PaginatedGroupsLoader({ groupFilter, namespaceFilter, onLoadingStateChange }: LoaderProps) {
+function PaginatedGroupsLoader({ groupFilter, namespaceFilter, onLoadingStateChange, collapsible }: LoaderProps) {
   // When backend filters are enabled, groupFilter is handled on the backend
   const filterState = { namespace: namespaceFilter, groupName: groupFilter };
   const { backendFilter } = getGrafanaFilter(filterState);
@@ -70,17 +78,6 @@ function PaginatedGroupsLoader({ groupFilter, namespaceFilter, onLoadingStateCha
   // If there are no filters we can match one frontend page to one API page.
   // However, if there are filters, we need to fetch more groups from the API to populate one frontend page
   const apiGroupPageSize = getApiGroupPageSize(needsClientSideFiltering);
-
-  const groupsGenerator = useRef(
-    toIndividualRuleGroups(grafanaGroupsGenerator({ groupLimit: apiGroupPageSize }, backendFilter))
-  );
-
-  useEffect(() => {
-    const currentGenerator = groupsGenerator.current;
-    return () => {
-      currentGenerator.return();
-    };
-  }, []);
 
   const filterFn = useMemo(() => {
     const { frontendFilter } = getGrafanaFilter({
@@ -102,7 +99,7 @@ function PaginatedGroupsLoader({ groupFilter, namespaceFilter, onLoadingStateCha
   }, [namespaceFilter, groupFilter]);
 
   const { isLoading, groups, hasMoreGroups, fetchMoreGroups, error } = useLazyLoadPrometheusGroups(
-    groupsGenerator.current,
+    () => toIndividualRuleGroups(grafanaGroupsGenerator({ groupLimit: apiGroupPageSize }, backendFilter)),
     FRONTED_GROUPED_PAGE_SIZE,
     filterFn
   );
@@ -130,6 +127,8 @@ function PaginatedGroupsLoader({ groupFilter, namespaceFilter, onLoadingStateCha
       uid={GrafanaRulesSourceSymbol}
       isLoading={isLoading}
       error={error}
+      actions={<DataSourceManagedRulesInlineNotice />}
+      collapsible={collapsible}
     >
       <Stack direction="column" gap={0}>
         {Object.entries(groupsByFolder).map(([folderUid, groups]) => {

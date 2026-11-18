@@ -1,6 +1,5 @@
 import { type DataSourceInstanceSettings } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
-import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { locationService, getDataSourceInstanceSettings } from '@grafana/runtime';
 import {
   InputType,
   type DataSourceInput,
@@ -46,13 +45,8 @@ jest.mock('@grafana/runtime', () => ({
   locationService: {
     push: jest.fn(),
   },
-}));
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
   getDataSourceInstanceSettings: jest.fn(),
 }));
-
 // Mock function references
 const mockFetchCommunityDashboard = fetchCommunityDashboard as jest.MockedFunction<typeof fetchCommunityDashboard>;
 const mockTryAutoMapDatasources = tryAutoMapDatasources as jest.MockedFunction<typeof tryAutoMapDatasources>;

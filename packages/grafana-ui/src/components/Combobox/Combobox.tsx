@@ -1,7 +1,7 @@
 import { cx } from '@emotion/css';
-import { useVirtualizer, type Range } from '@tanstack/react-virtual';
+import { useMergeRefs } from '@floating-ui/react';
 import { useCombobox } from 'downshift';
-import React, { type ComponentProps, useCallback, useId, useMemo, useState } from 'react';
+import React, { type ComponentProps, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 
@@ -15,16 +15,11 @@ import { Portal } from '../Portal/Portal';
 import { ComboboxList } from './ComboboxList';
 import { SuffixIcon } from './SuffixIcon';
 import { itemToString } from './filter';
-import {
-  getComboboxStyles,
-  MENU_OPTION_HEIGHT,
-  MENU_OPTION_HEIGHT_DESCRIPTION,
-  MENU_PADDING,
-} from './getComboboxStyles';
+import { getComboboxStyles } from './getComboboxStyles';
 import { type ComboboxOption } from './types';
 import { useComboboxFloat } from './useComboboxFloat';
 import { useOptions } from './useOptions';
-import { isNewGroup, isKeyboardEvent } from './utils';
+import { isKeyboardEvent } from './utils';
 
 // TODO: It would be great if ComboboxOption["label"] was more generic so that if consumers do pass it in (for async),
 // then the onChange handler emits ComboboxOption with the label as non-undefined.
@@ -51,6 +46,13 @@ interface ComboboxStaticProps<T extends string | number>
   options: Array<ComboboxOption<T>> | ((inputValue: string) => Promise<Array<ComboboxOption<T>>>);
 
   /**
+   * Renders custom content for each mounted option supplied through `options`.
+   * Combobox owns the option row and its interactions. Generated options use the default content.
+   * The renderer must be pure because it can run repeatedly.
+   */
+  renderOption?: (option: ComboboxOption<T>) => React.ReactNode;
+
+  /**
    * Current selected value. Most consumers should pass a scalar value (string | number). However, sometimes with Async
    * it may be better to pass in an Option with a label to display.
    */
@@ -60,6 +62,8 @@ interface ComboboxStaticProps<T extends string | number>
    * Defaults to full width of container. Number is a multiple of the spacing unit. 'auto' will size the input to the content.
    * */
   width?: number | 'auto';
+
+  inputRef?: React.Ref<HTMLInputElement>;
 
   ['data-testid']?: string;
 
@@ -140,8 +144,6 @@ export type ComboboxProps<T extends string | number> = ComboboxBaseProps<T> & Au
 
 const noop = () => {};
 
-const VIRTUAL_OVERSCAN_ITEMS = 4;
-
 /**
  * A performant and accessible combobox component that supports both synchronous and asynchronous options loading. It provides type-ahead filtering, keyboard navigation, and virtual scrolling for handling large datasets efficiently.
  * Replaces the Select component, and has better performance.
@@ -152,6 +154,7 @@ const VIRTUAL_OVERSCAN_ITEMS = 4;
 export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => {
   const {
     options: allOptions,
+    renderOption,
     onChange,
     value: valueProp,
     placeholder: placeholderProp,
@@ -166,6 +169,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     'aria-label': ariaLabel,
     'data-testid': dataTestId,
     autoFocus,
+    inputRef: externalInputRef,
     onBlur,
     disabled: disabledProp,
     invalid: invalidProp,
@@ -187,13 +191,27 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
 
   const {
     options: filteredOptions,
-    groupStartIndices,
+    customValueOption,
     updateOptions,
     asyncLoading,
     asyncError,
     resetSearch,
   } = useOptions(allOptions, createCustomValue, customValueDescription);
   const isAsync = typeof allOptions === 'function';
+  const searchTermRef = useRef('');
+
+  useEffect(() => {
+    if (isOpenProp === undefined) {
+      return;
+    }
+
+    if (isOpenProp && searchTermRef.current === '') {
+      updateOptions('');
+    } else if (!isOpenProp) {
+      searchTermRef.current = '';
+      resetSearch();
+    }
+  }, [isOpenProp, resetSearch, updateOptions]);
 
   const selectedItemIndex = useMemo(() => {
     if (isAsync) {
@@ -235,63 +253,19 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     (changes: { isOpen: boolean; inputValue?: string }) => {
       onIsOpenChangeProp?.(changes.isOpen);
 
-      if (changes.isOpen && (changes.inputValue ?? '') === '') {
-        updateOptions('');
-      }
+      if (isOpenProp === undefined) {
+        if (changes.isOpen && (changes.inputValue ?? '') === '') {
+          updateOptions('');
+        }
 
-      if (!changes.isOpen) {
-        resetSearch();
-      }
-    },
-    [onIsOpenChangeProp, updateOptions, resetSearch]
-  );
-
-  // Injects the group header for the first rendered item into the range to render.
-  // Accepts the range that useVirtualizer wants to render, and then returns indexes
-  // to actually render.
-  const rangeExtractor = useCallback(
-    (range: Range) => {
-      const startIndex = Math.max(0, range.startIndex - range.overscan);
-      const endIndex = Math.min(filteredOptions.length - 1, range.endIndex + range.overscan);
-      const rangeToReturn = Array.from({ length: endIndex - startIndex + 1 }, (_, i) => startIndex + i);
-
-      // If the first item doesn't have a group, no need to find a header for it
-      const firstDisplayedOption = filteredOptions[rangeToReturn[0]];
-      if (firstDisplayedOption?.group) {
-        const groupStartIndex = groupStartIndices.get(firstDisplayedOption.group);
-        if (groupStartIndex !== undefined && groupStartIndex < rangeToReturn[0]) {
-          rangeToReturn.unshift(groupStartIndex);
+        if (!changes.isOpen) {
+          searchTermRef.current = '';
+          resetSearch();
         }
       }
-
-      return rangeToReturn;
     },
-    [filteredOptions, groupStartIndices]
+    [isOpenProp, onIsOpenChangeProp, updateOptions, resetSearch]
   );
-
-  const rowVirtualizer = useVirtualizer({
-    count: filteredOptions.length,
-    getScrollElement: () => scrollRef.current,
-    estimateSize: (index: number) => {
-      const firstGroupItem = isNewGroup(filteredOptions[index], index > 0 ? filteredOptions[index - 1] : undefined);
-      const hasDescription = 'description' in filteredOptions[index];
-      const hasGroup = 'group' in filteredOptions[index];
-
-      let itemHeight = MENU_OPTION_HEIGHT;
-      if (hasDescription) {
-        itemHeight = MENU_OPTION_HEIGHT_DESCRIPTION;
-      }
-      if (firstGroupItem && hasGroup) {
-        itemHeight += MENU_OPTION_HEIGHT;
-      }
-      return itemHeight;
-    },
-    getItemKey: (index: number) => filteredOptions[index]?.value ?? index,
-    overscan: VIRTUAL_OVERSCAN_ITEMS,
-    rangeExtractor,
-    paddingStart: MENU_PADDING,
-    paddingEnd: MENU_PADDING,
-  });
 
   const {
     isOpen,
@@ -341,19 +315,17 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
 
     onIsOpenChange: onIsOpenChangeHandler,
 
-    onHighlightedIndexChange: ({ highlightedIndex, type }) => {
-      if (type !== useCombobox.stateChangeTypes.MenuMouseLeave) {
-        rowVirtualizer.scrollToIndex(highlightedIndex);
-      }
-    },
     onStateChange: ({ inputValue: newInputValue, type, selectedItem: newSelectedItem }) => {
       setShowFocusRing(isKeyboardEvent(type));
 
       switch (type) {
-        case useCombobox.stateChangeTypes.InputChange:
-          updateOptions(newInputValue ?? '');
+        case useCombobox.stateChangeTypes.InputChange: {
+          const searchTerm = newInputValue ?? '';
+          searchTermRef.current = searchTerm;
+          updateOptions(searchTerm);
 
           break;
+        }
         default:
           break;
       }
@@ -394,6 +366,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
   });
 
   const { inputRef, floatingRef, floatStyles, scrollRef } = useComboboxFloat(filteredOptions, isOpen);
+  const mergedInputRef = useMergeRefs([inputRef, externalInputRef]);
 
   const isAutoSize = width === 'auto';
   const InputComponent = isAutoSize ? AutoSizeInput : Input;
@@ -446,7 +419,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
         className={styles.input}
         suffix={inputSuffix}
         {...getInputProps({
-          ref: inputRef,
+          ref: mergedInputRef,
           onChange: noop, // Empty onCall to avoid TS error https://github.com/downshift-js/downshift/issues/718
           'aria-labelledby': ariaLabelledBy, // Label should be handled with the Field component
           'aria-label': ariaLabel,
@@ -478,6 +451,8 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
             <ComboboxList
               loading={loading}
               options={filteredOptions}
+              renderOption={renderOption}
+              customValueOption={customValueOption}
               highlightedIndex={highlightedIndex}
               showFocusRing={showFocusRing}
               selectedItems={selectedItem ? [selectedItem] : []}

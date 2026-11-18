@@ -561,7 +561,7 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
     emptyBar.bottom = '-3px';
 
     //adjust empty region to always have same width as colored bar
-    emptyBar.width = `${valueWidth}px`;
+    emptyBar.width = `${maxBarWidth}px`;
 
     if (isBasic) {
       // Basic styles
@@ -587,7 +587,7 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
     emptyBar.left = '-3px';
 
     //adjust empty region to always have same height as colored bar
-    emptyBar.height = `${valueHeight}px`;
+    emptyBar.height = `${maxBarHeight}px`;
 
     if (isBasic) {
       // Basic styles
@@ -618,7 +618,7 @@ export function getBarGradient(props: Props, maxSize: number): string {
 
   let gradient = '';
   let lastpos = 0;
-  let mode = getFieldColorMode(field.color?.mode);
+  let mode = getFieldColorMode(field.color?.mode, field.color?.reverse);
 
   if (mode.id === FieldColorModeId.Thresholds) {
     const thresholds = field.thresholds!;

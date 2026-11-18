@@ -59,7 +59,7 @@ func AddDashboardPermissionsMigrator(mg *migrator.Migrator) {
 	mg.AddMigration("drop managed folder create actions", &managedFolderCreateAction{})
 }
 
-var _ migrator.CodeMigration = new(dashboardPermissionsMigrator)
+var _ migrator.CodeMigration = (*dashboardPermissionsMigrator)(nil)
 
 type dashboardPermissionsMigrator struct {
 	permissionMigrator
@@ -257,7 +257,7 @@ func deduplicateAcl(acl []dashboards.DashboardACL) []dashboards.DashboardACL {
 	return output
 }
 
-var _ migrator.CodeMigration = new(dashboardUidPermissionMigrator)
+var _ migrator.CodeMigration = (*dashboardUidPermissionMigrator)(nil)
 
 type dashboardUidPermissionMigrator struct {
 	migrator.MigrationBase

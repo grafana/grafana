@@ -6,8 +6,13 @@ import {
   type CorrelationSpec,
 } from '@grafana/api-clients/rtkq/correlations/v0alpha1';
 import { type DataFrame, DataLinkConfigOrigin } from '@grafana/data';
-import { config, type CorrelationData, type CorrelationsData, getBackendSrv } from '@grafana/runtime';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import {
+  config,
+  type CorrelationData,
+  type CorrelationsData,
+  getBackendSrv,
+  getDataSourceInstance,
+} from '@grafana/runtime';
 import { type DataQuery, type DataSourceRef } from '@grafana/schema';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { type ExploreItemState } from 'app/types/explore';

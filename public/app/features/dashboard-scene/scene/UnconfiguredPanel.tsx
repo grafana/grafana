@@ -18,10 +18,12 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
+import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
 import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryLibraryContext';
 import { hasSavedQueryReadPermissions } from 'app/features/explore/QueryLibrary/utils/identity';
 import emptyPanelSvg from 'img/dashboards/empty-panel.svg';
 
+import { findVizPanelByKey } from '../utils/findVizPanel';
 import { applyQueryToPanel, getVizSuggestionForQuery } from '../utils/getVizSuggestionForQuery';
 import { DashboardInteractions } from '../utils/interactions';
 import {
@@ -36,7 +38,6 @@ import {
   textFrames,
   useViewPhase,
 } from '../utils/unconfiguredPanelUtils';
-import { findVizPanelByKey } from '../utils/utils';
 import { getVizPanelKeyForPanelId } from '../utils/utils-panels';
 
 import { DashboardScene } from './DashboardScene';
@@ -50,13 +51,13 @@ const UnconfiguredPanel = new PanelPlugin(UnconfiguredPanelComp);
 function useUnconfiguredPanelDashboard(): { dashboard: DashboardScene | null; isEditing: boolean } {
   const ctx = window.__grafanaSceneContext;
   const dashboard = ctx instanceof DashboardScene ? ctx : null;
-  const [isEditing, setIsEditing] = useState(() => dashboard?.state.isEditing ?? false);
+  const [isEditing, setIsEditing] = useState(() => (dashboard ? isFullDashboardEditing(dashboard.state) : false));
 
   useEffect(() => {
     if (!dashboard) {
       return;
     }
-    const sub = dashboard.subscribeToState((state) => setIsEditing(state.isEditing ?? false));
+    const sub = dashboard.subscribeToState((state) => setIsEditing(isFullDashboardEditing(state)));
     return () => sub.unsubscribe();
   }, [dashboard]);
 
@@ -88,7 +89,7 @@ export function UnconfiguredPanelComp(props: PanelProps) {
 
   const onConfigure = () => {
     locationService.partial({ editPanel: props.id });
-    DashboardInteractions.panelActionClicked('configure', props.id, 'panel');
+    DashboardInteractions.panelActionClicked('configure', props.id, 'panel', UNCONFIGURED_PANEL_PLUGIN_ID);
   };
 
   const onUseSavedQuery = () => {
@@ -142,7 +143,7 @@ export function UnconfiguredPanelComp(props: PanelProps) {
     }
 
     dashboard.onShowAddLibraryPanelDrawer(panel.getRef());
-    DashboardInteractions.panelActionClicked('use_library_panel', props.id, 'panel');
+    DashboardInteractions.panelActionClicked('use_library_panel', props.id, 'panel', UNCONFIGURED_PANEL_PLUGIN_ID);
   };
 
   if (panelContext.app === CoreApp.PanelEditor) {

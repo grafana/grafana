@@ -1,16 +1,26 @@
+import { history, undo } from '@codemirror/commands';
 import { ensureSyntaxTree, syntaxTree } from '@codemirror/language';
 import { EditorSelection, EditorState } from '@codemirror/state';
-import { type DecorationSet } from '@codemirror/view';
+import { EditorView, type DecorationSet } from '@codemirror/view';
+import { fireEvent, within } from '@testing-library/dom';
+
+import { createTheme } from '@grafana/data';
 
 import {
   BOLD_NODE,
   buildDecorations,
   enclosingListKind,
   findEnclosingMarkNode,
+  inlineMarkRange,
   INLINE_CODE_NODE,
   ITALIC_NODE,
   LINK_NODE,
   markdownLanguageSupport,
+  markdownLivePreview,
+  nextListContinuation,
+  toggleChecklist,
+  toggleBulletedList,
+  toggleSurroundInline,
   overlapsSelection,
   STRIKETHROUGH_NODE,
   type MarkdownEditorStyles,
@@ -39,6 +49,8 @@ const STYLES: MarkdownEditorStyles = {
   heading2: 'h2',
   heading3: 'h3',
   heading4: 'h4',
+  heading5: 'h5',
+  heading6: 'h6',
   bold: 'bold',
   italic: 'italic',
   inlineCode: 'inline-code',
@@ -207,6 +219,14 @@ describe('buildDecorations', () => {
     expect(decorations.some((d) => d.class?.includes(STYLES.heading1) && d.from === 0)).toBe(true);
   });
 
+  it('styles h5 and h6 headings with their own classes', () => {
+    const h5 = decorationsIn(createState('##### Heading 5'), STYLES);
+    expect(h5.some((d) => d.class?.includes(STYLES.heading5) && d.from === 0)).toBe(true);
+
+    const h6 = decorationsIn(createState('###### Heading 6'), STYLES);
+    expect(h6.some((d) => d.class?.includes(STYLES.heading6) && d.from === 0)).toBe(true);
+  });
+
   it('keeps the blockquote marker hidden even when the cursor is inside it', () => {
     const state = createState('> quoted', { anchor: 4 });
     const decorations = decorationsIn(state, STYLES);
@@ -294,5 +314,261 @@ describe('enclosingListKind', () => {
     const state = createState('plain text');
 
     expect(enclosingListKind(syntaxTree(state), 3)).toBeUndefined();
+  });
+});
+
+describe('checklists', () => {
+  const views: EditorView[] = [];
+  function createView(doc: string, selection?: { anchor: number; head?: number }) {
+    const preview = markdownLivePreview(createTheme());
+    const view = new EditorView({
+      state: EditorState.create({ doc, selection, extensions: [preview.extensions, history()] }),
+      parent: document.body.appendChild(document.createElement('div')),
+    });
+    views.push(view);
+    return view;
+  }
+
+  afterEach(() => {
+    for (const view of views.splice(0)) {
+      const parent = view.dom.parentElement;
+      view.destroy();
+      parent?.remove();
+    }
+  });
+
+  it.each(['- [ ] investigate', '- [x] investigate', '- [X] investigate'])(
+    'continues %s with an unchecked item',
+    (doc) => {
+      const state = createState(doc);
+      expect(enclosingListKind(syntaxTree(state), doc.length)).toBe('checklist');
+      expect(nextListContinuation(state, doc.length)).toBe('- [ ] ');
+      expect(hiddenRangesIn(state, STYLES)).toContainEqual({ from: 2, to: 5, hidden: true, class: undefined });
+    }
+  );
+
+  it.each(['- [ ] ', '- [x] ', '- [X] '])('ends an empty checklist item %s', (doc) => {
+    expect(nextListContinuation(createState(doc), doc.length)).toBeUndefined();
+  });
+
+  it('converts selected bullets and numbered items, preserves indentation and completed tasks', () => {
+    const doc = '- first\n  2. second\n- [x] done\nlast';
+    const view = createView(doc, { anchor: 0, head: doc.length });
+    toggleChecklist(view);
+    expect(view.state.doc.toString()).toBe('- [ ] first\n  - [ ] second\n- [x] done\n- [ ] last');
+    toggleChecklist(view);
+    expect(view.state.doc.toString()).toBe('first\n  second\ndone\nlast');
+  });
+
+  it('replaces heading markers when converting to a checklist', () => {
+    const view = createView('# Heading\n### Subheading', { anchor: 0, head: 24 });
+    toggleChecklist(view);
+    expect(view.state.doc.toString()).toBe('- [ ] Heading\n- [ ] Subheading');
+  });
+
+  it('converts nested tasks to bullets and removes bullets without losing indentation', () => {
+    const doc = '- [ ] Parent\n  - [x] Child';
+    const view = createView(doc, { anchor: doc.indexOf('Child'), head: doc.length });
+    toggleBulletedList(view);
+    expect(view.state.doc.toString()).toBe('- [ ] Parent\n  - Child');
+    toggleBulletedList(view);
+    expect(view.state.doc.toString()).toBe('- [ ] Parent\n  Child');
+  });
+
+  it('does not convert the line at the exclusive end of a selection', () => {
+    const view = createView('first\nsecond', { anchor: 0, head: 6 });
+    toggleChecklist(view);
+    expect(view.state.doc.toString()).toBe('- [ ] first\nsecond');
+  });
+
+  it('toggles the correct checkbox after text was inserted before its reused widget', () => {
+    const view = createView('- [ ] first\n- [ ] second');
+    const second = within(view.dom).getByRole('checkbox', { name: 'second' });
+    view.dispatch({ changes: { from: 0, insert: 'Introduction\n\n' } });
+    expect(within(view.dom).getByRole('checkbox', { name: 'second' })).toBe(second);
+    fireEvent.click(second);
+    expect(view.state.doc.toString()).toBe('Introduction\n\n- [ ] first\n- [x] second');
+    expect(second).toBeChecked();
+    fireEvent.click(second);
+    expect(view.state.doc.toString()).toBe('Introduction\n\n- [ ] first\n- [ ] second');
+  });
+
+  it('records checkbox changes as undoable text edits', () => {
+    const view = createView('- [ ] investigate');
+    fireEvent.click(within(view.dom).getByRole('checkbox', { name: 'investigate' }));
+    expect(view.state.doc.toString()).toBe('- [x] investigate');
+    undo(view);
+    expect(view.state.doc.toString()).toBe('- [ ] investigate');
+    expect(within(view.dom).getByRole('checkbox', { name: 'investigate' })).not.toBeChecked();
+  });
+});
+
+describe('inline marks on block lines', () => {
+  const views: EditorView[] = [];
+  function createView(doc: string, anchor: number, head: number) {
+    const preview = markdownLivePreview(createTheme());
+    const view = new EditorView({
+      state: EditorState.create({
+        doc,
+        selection: { anchor, head },
+        extensions: [preview.extensions, history()],
+      }),
+      parent: document.body.appendChild(document.createElement('div')),
+    });
+    views.push(view);
+    return view;
+  }
+  const selected = (view: EditorView) => {
+    const { from, to } = view.state.selection.main;
+    return view.state.sliceDoc(from, to);
+  };
+  const lineNodeName = (view: EditorView) => {
+    ensureSyntaxTree(view.state, view.state.doc.length, 5000);
+    return syntaxTree(view.state).topNode.firstChild?.name;
+  };
+
+  afterEach(() => {
+    for (const view of views.splice(0)) {
+      const parent = view.dom.parentElement;
+      view.destroy();
+      parent?.remove();
+    }
+  });
+
+  it.each([1, 2, 3, 4, 5, 6])('bolds a whole h%i without breaking the heading', (level) => {
+    const marker = '#'.repeat(level);
+    const doc = `${marker} Title`;
+    const view = createView(doc, 0, doc.length);
+
+    toggleSurroundInline(view, '**');
+
+    expect(view.state.doc.toString()).toBe(`${marker} **Title**`);
+    expect(selected(view)).toBe('Title');
+    expect(lineNodeName(view)).toBe(`ATXHeading${level}`);
+  });
+
+  it('ignores the trailing newline of a triple-click selection', () => {
+    const view = createView('## Title\nbody', 0, 9);
+
+    toggleSurroundInline(view, '**');
+
+    expect(view.state.doc.toString()).toBe('## **Title**\nbody');
+  });
+
+  it('unwraps inline code whose content ends in a space', () => {
+    const view = createView('`value `', 1, 7);
+
+    toggleSurroundInline(view, '`');
+
+    expect(view.state.doc.toString()).toBe('value ');
+  });
+
+  it('keeps the heading across repeated toggles', () => {
+    const view = createView('## Title', 0, 8);
+
+    const docs = [1, 2, 3].map(() => {
+      toggleSurroundInline(view, '**');
+      expect(lineNodeName(view)).toBe('ATXHeading2');
+      return view.state.doc.toString();
+    });
+
+    expect(docs).toEqual(['## **Title**', '## Title', '## **Title**']);
+  });
+
+  it('unbolds a whole-line selection of a bold heading', () => {
+    const view = createView('## **Title**', 0, 12);
+
+    toggleSurroundInline(view, '**');
+
+    expect(view.state.doc.toString()).toBe('## Title');
+  });
+
+  it('bolds a selection that already excludes the prefix', () => {
+    const view = createView('## Title', 3, 8);
+
+    toggleSurroundInline(view, '**');
+
+    expect(view.state.doc.toString()).toBe('## **Title**');
+  });
+
+  it('preserves a backward selection direction', () => {
+    const view = createView('## Title', 8, 0);
+
+    toggleSurroundInline(view, '**');
+
+    expect(view.state.doc.toString()).toBe('## **Title**');
+    expect(selected(view)).toBe('Title');
+  });
+
+  it.each([
+    ['*', '## *Title*'],
+    ['~~', '## ~~Title~~'],
+    ['`', '## `Title`'],
+  ])('applies %s to a whole heading', (mark, expected) => {
+    const view = createView('## Title', 0, 8);
+
+    toggleSurroundInline(view, mark);
+
+    expect(view.state.doc.toString()).toBe(expected);
+  });
+
+  it.each([
+    ['> quote', 7, '> **quote**'],
+    ['- [ ] task', 10, '- [ ] **task**'],
+  ])('keeps the prefix of %s outside the mark', (doc, end, expected) => {
+    const view = createView(doc, 0, end);
+
+    toggleSurroundInline(view, '**');
+
+    expect(view.state.doc.toString()).toBe(expected);
+  });
+
+  it('wraps the raw selection inside fenced code', () => {
+    const view = createView('```\n# Title\n```', 4, 11);
+
+    toggleSurroundInline(view, '**');
+
+    expect(view.state.doc.toString()).toBe('```\n**# Title**\n```');
+  });
+
+  it('bolds a whole heading with Mod-b', () => {
+    const view = createView('## Title', 0, 8);
+
+    fireEvent.keyDown(view.contentDOM, { key: 'b', ctrlKey: true });
+
+    expect(view.state.doc.toString()).toBe('## **Title**');
+  });
+});
+
+describe('inlineMarkRange', () => {
+  function stateWith(doc: string, anchor: number, head: number) {
+    const state = EditorState.create({
+      doc,
+      selection: { anchor, head },
+      extensions: [markdownLanguageSupport],
+    });
+    ensureSyntaxTree(state, doc.length, 5000);
+    return state;
+  }
+
+  it('is undefined for an empty selection', () => {
+    expect(inlineMarkRange(stateWith('## Title', 4, 4))).toBeUndefined();
+  });
+
+  it('is undefined when only the block prefix is selected', () => {
+    expect(inlineMarkRange(stateWith('## Title', 0, 3))).toBeUndefined();
+  });
+
+  it('skips the prefix and trailing newline', () => {
+    expect(inlineMarkRange(stateWith('## Title\nbody', 0, 9))).toEqual({ from: 3, to: 8 });
+  });
+
+  it('skips nested prefixes', () => {
+    expect(inlineMarkRange(stateWith('> ## Title', 0, 10))).toEqual({ from: 5, to: 10 });
+    expect(inlineMarkRange(stateWith('> - [ ] task', 0, 12))).toEqual({ from: 8, to: 12 });
+  });
+
+  it('keeps a quote marker that is part of the heading text', () => {
+    expect(inlineMarkRange(stateWith('## > Title', 0, 10))).toEqual({ from: 3, to: 10 });
   });
 });

@@ -84,7 +84,11 @@ func (e *extra) Build(ctx context.Context, conn *provisioning.Connection) (conne
 		return nil, fmt.Errorf("build provider: %w", err)
 	}
 
-	return newConnection(provider, e.repoType, *conn.Spec.OAuth, clientSecret, token), nil
+	c := newConnection(provider, e.repoType, *conn.Spec.OAuth, clientSecret, token)
+	if lister, ok := provider.(connection.RepositoryLister); ok {
+		return &listingConnection{oauthConnection: c, lister: lister}, nil
+	}
+	return c, nil
 }
 
 func (e *extra) Mutate(_ context.Context, _ runtime.Object) error {

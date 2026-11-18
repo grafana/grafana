@@ -1,10 +1,12 @@
 import { t } from '@grafana/i18n';
 import { type SceneObject } from '@grafana/scenes';
 
+import { type DashboardActionMeta } from '../../sidebar/events';
 import { edit } from '../utils/edit';
-import { getEditableElementFor } from '../utils/getEditableElementFor';
+import { getElementTypeName } from '../utils/getElementTypeName';
 
 interface MoveElementActionHelperProps {
+  meta: DashboardActionMeta;
   movedObject: SceneObject;
   source: SceneObject;
   perform: () => void;
@@ -15,14 +17,13 @@ interface MoveElementActionHelperProps {
 export function moveElement(props: MoveElementActionHelperProps) {
   const { movedObject, source, perform, undo, selectOnMove } = props;
 
-  const element = getEditableElementFor(movedObject);
-  if (!element) {
+  const typeName = getElementTypeName(movedObject);
+  if (typeName === undefined) {
     throw new Error('Moved object is not an editable element');
   }
 
-  const typeName = element.getEditableElementInfo().typeName;
-
   edit({
+    meta: props.meta,
     description: t('dashboard.edit-actions.move', 'Move {{typeName}}', { typeName }),
     movedObject,
     selectOnMove,

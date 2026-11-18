@@ -3,11 +3,12 @@ import { HttpResponse, delay, http } from 'msw';
 import { render, screen, userEvent, waitFor } from 'test/test-utils';
 import { byLabelText, byRole, byText } from 'testing-library-selector';
 
+import { type AlertManagerDataSourceJsonData } from '@grafana/alerting/internal';
 import { config, setPluginLinksHook } from '@grafana/runtime';
 import server from '@grafana/test-utils/server';
 import { alertmanagerApi } from 'app/features/alerting/unified/api/alertmanagerApi';
 import { mockAlertRuleApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
-import { type AlertManagerDataSourceJsonData, AlertState } from 'app/plugins/datasource/alertmanager/types';
+import { AlertState } from 'app/plugins/datasource/alertmanager/types';
 import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type CombinedRule, type RuleIdentifier } from 'app/types/unified-alerting';
@@ -258,7 +259,7 @@ describe('RuleViewer', () => {
 
         expect(await screen.findByRole('button', { name: /Compare versions/i })).toBeDisabled();
 
-        expect(screen.getAllByRole('row')).toHaveLength(7);
+        expect(await screen.findAllByRole('row')).toHaveLength(7);
         expect(screen.getAllByRole('row')[1]).toHaveTextContent(/6Provisioning2025-01-18 04:35:17/i);
         expect(screen.getAllByRole('row')[1]).toHaveTextContent('Updated by provisioning service');
         expect(screen.getAllByRole('row')[1]).toHaveTextContent('+4-3Latest');
@@ -295,7 +296,7 @@ describe('RuleViewer', () => {
         expect(await screen.findByRole('button', { name: /Compare versions/i })).toBeDisabled();
 
         // Check for special updated_by values - use getAllByRole since some text appears in multiple columns
-        expect(screen.getAllByRole('cell', { name: /provisioning/i }).length).toBeGreaterThan(0);
+        expect((await screen.findAllByRole('cell', { name: /provisioning/i })).length).toBeGreaterThan(0);
         expect(screen.getByRole('cell', { name: /^alerting$/i })).toBeInTheDocument();
         expect(screen.getByRole('cell', { name: /^Unknown$/i })).toBeInTheDocument();
         expect(screen.getByRole('cell', { name: /user id foo/i })).toBeInTheDocument();
@@ -305,7 +306,7 @@ describe('RuleViewer', () => {
         const { user } = await renderRuleViewer(mockRule, mockRuleIdentifier, ActiveTab.VersionHistory);
         expect(await screen.findByRole('button', { name: /Compare versions/i })).toBeDisabled();
 
-        await user.click(screen.getByLabelText('1'));
+        await user.click(await screen.findByLabelText('1'));
         await user.click(screen.getByLabelText('2'));
         // The button becomes enabled only after both checkboxes have been processed and the
         // component re-renders with canCompare=true. Wait explicitly rather than relying on
@@ -325,7 +326,7 @@ describe('RuleViewer', () => {
         const { user } = await renderRuleViewer(mockRule, mockRuleIdentifier, ActiveTab.VersionHistory);
         expect(await screen.findByRole('button', { name: /Compare versions/i })).toBeDisabled();
 
-        await user.click(screen.getByLabelText('6'));
+        await user.click(await screen.findByLabelText('6'));
         await user.click(screen.getByLabelText('5'));
         const compareButton = screen.getByRole('button', { name: /Compare versions/i });
         await waitFor(() => expect(compareButton).toBeEnabled());
@@ -387,7 +388,7 @@ describe('RuleViewer', () => {
 
         await screen.findByRole('button', { name: /Compare versions/i });
 
-        expect(screen.getAllByRole('row')).toHaveLength(3); // 1 header + 2 data rows
+        expect(await screen.findAllByRole('row')).toHaveLength(3); // 1 header + 2 data rows
         expect(screen.queryByRole('columnheader', { name: /Notes/i })).not.toBeInTheDocument();
       });
     });

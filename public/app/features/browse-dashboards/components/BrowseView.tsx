@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useCallback, useMemo } from 'react';
 
@@ -8,6 +7,7 @@ import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { CallToActionCard, EmptyState, LinkButton, TextLink, useStyles2 } from '@grafana/ui';
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
+import { useIsMobileEditDeprecated } from 'app/features/dashboard-scene/utils/mobileEditDeprecation';
 import { FolderReadmePanel } from 'app/features/provisioning/components/Folders/FolderReadmePanel';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
 import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
@@ -59,27 +59,23 @@ export function BrowseView({
   const childrenByParentUID = useChildrenByParentUIDState();
   const canSelect = canSelectItems(permissions);
   const provisioningEnabled = config.provisioningEnabled;
+  const isMobileEditDeprecated = useIsMobileEditDeprecated();
   const { data: settingsData } = useGetFrontendSettingsQuery(!provisioningEnabled ? skipToken : undefined);
   const isProvisionedInstance = useIsProvisionedInstance({ settings: settingsData });
   const rootItems = useSelector(rootItemsSelector);
 
   const [, stateManager] = useSearchStateManager();
 
-  const excludeUIDs = useMemo(() => {
+  const excludeFolderUIDs = useMemo(() => {
     if (isProvisionedInstance || !provisioningEnabled) {
       return [];
     }
-    if (provisioningEnabled) {
-      // if only one repo folder and no local folders, then don't exclude it from selection
-      if (rootItems?.items.length === 1 && settingsData?.items.length === 1) {
-        return [];
-      }
-      // loop through settingsData to find all available repo name, and exclude them from select all action
-      // repo root folder is not actionable on browse dashboards page
-      return settingsData?.items.map((repo) => repo.name);
+    // A lone repo folder with no local folders stays selectable
+    if (rootItems?.items.length === 1 && settingsData?.items.length === 1) {
+      return [];
     }
-
-    return [];
+    // Repo root folders are not actionable from the browse page
+    return settingsData?.items.map((repo) => repo.name) ?? [];
   }, [isProvisionedInstance, settingsData, provisioningEnabled, rootItems]);
 
   const handleFolderClick = useCallback(
@@ -151,8 +147,7 @@ export function BrowseView({
     [selectedItems, childrenByParentUID]
   );
 
-  const provisioningReadmesEnabled = useBooleanFlagValue('provisioning.readmes', false);
-  const showReadme = provisioningReadmesEnabled && isProvisionedFolder && folderUID;
+  const showReadme = isProvisionedFolder && folderUID;
   const styles = useStyles2(getStyles);
 
   const flatTreeWithReadme = useMemo(() => {
@@ -191,14 +186,16 @@ export function BrowseView({
           <EmptyState
             variant="call-to-action"
             button={
-              <LinkButton
-                href={folderUID ? `dashboard/new?folderUid=${folderUID}` : 'dashboard/new'}
-                icon="plus"
-                size="lg"
-                disabled={isReadOnlyRepo}
-              >
-                <Trans i18nKey="browse-dashboards.empty-state.button-title">Create dashboard</Trans>
-              </LinkButton>
+              isMobileEditDeprecated ? undefined : (
+                <LinkButton
+                  href={folderUID ? `dashboard/new?folderUid=${folderUID}` : 'dashboard/new'}
+                  icon="plus"
+                  size="lg"
+                  disabled={isReadOnlyRepo}
+                >
+                  <Trans i18nKey="browse-dashboards.empty-state.button-title">Create dashboard</Trans>
+                </LinkButton>
+              )
             }
             message={
               folderUID
@@ -238,7 +235,9 @@ export function BrowseView({
       height={height}
       isSelected={isSelected}
       onFolderClick={handleFolderClick}
-      onAllSelectionChange={(newState) => dispatch(setAllSelection({ isSelected: newState, folderUID, excludeUIDs }))}
+      onAllSelectionChange={(newState) =>
+        dispatch(setAllSelection({ isSelected: newState, folderUID, excludeFolderUIDs }))
+      }
       onItemSelectionChange={handleItemSelectionChange}
       isItemLoaded={isItemLoaded}
       requestLoadMore={handleLoadMore}
@@ -252,6 +251,11 @@ function hasSelectedDescendants(
   childrenByParentUID: BrowseDashboardsState['childrenByParentUID'],
   selectedItems: DashboardTreeSelection
 ): boolean {
+  // Only folders have children
+  if (item.kind !== 'folder') {
+    return false;
+  }
+
   const collection = childrenByParentUID[item.uid];
   if (!collection) {
     return false;

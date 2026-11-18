@@ -32,8 +32,14 @@ type RepositoryStatusApplyConfiguration struct {
 	Webhook *WebhookStatusApplyConfiguration `json:"webhook,omitempty"`
 	// Token will get updated with current token information
 	Token *TokenStatusApplyConfiguration `json:"token,omitempty"`
-	// Error information during repository deletion (if any)
+	// Error information during repository deletion (if any).
+	// Deprecated: prefer the structured Deletion field. Retained for
+	// backwards compatibility with clients that read the concise string.
 	DeleteError *string `json:"deleteError,omitempty"`
+	// Deletion reports the progress of an in-progress deletion and the problem
+	// blocking it, so a client can explain the holdup and force-remove the
+	// blocking finalizer. Populated only while the repository is Terminating.
+	Deletion *DeletionStatusApplyConfiguration `json:"deletion,omitempty"`
 	// Quota contains the configured quota limits for this repository
 	Quota *QuotaStatusApplyConfiguration `json:"quota,omitempty"`
 }
@@ -128,6 +134,14 @@ func (b *RepositoryStatusApplyConfiguration) WithToken(value *TokenStatusApplyCo
 // If called multiple times, the DeleteError field is set to the value of the last call.
 func (b *RepositoryStatusApplyConfiguration) WithDeleteError(value string) *RepositoryStatusApplyConfiguration {
 	b.DeleteError = &value
+	return b
+}
+
+// WithDeletion sets the Deletion field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the Deletion field is set to the value of the last call.
+func (b *RepositoryStatusApplyConfiguration) WithDeletion(value *DeletionStatusApplyConfiguration) *RepositoryStatusApplyConfiguration {
+	b.Deletion = value
 	return b
 }
 

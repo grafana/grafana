@@ -33,6 +33,7 @@ export function reorderAutoGridItems({ layout, movedItem, fromIndex, toIndex }: 
   const panelKey = movedItem.state.body.state.key!;
 
   moveElement({
+    meta: { actionId: 'panel.reorder' },
     source: layout,
     movedObject: movedItem.state.body,
     // Dragging panels around shouldn't auto-select them: a user moving several panels in a row

@@ -51,6 +51,12 @@ export interface DashboardMeta {
   hasUnsavedFolderChange?: boolean;
   annotationsPermissions?: AnnotationsPermissions;
   publicDashboardEnabled?: boolean;
+  /**
+   * Whether the library panel's repeat options still have to be resolved onto the grid item.
+   * True only when the spec this dashboard scene was built from reached the browser unresolved:
+   * a v1 spec, or a v2 spec converted here by ensureV2Response.
+   */
+  libraryPanelRepeatUnresolved?: boolean;
   isEmbedded?: boolean;
   isNew?: boolean;
   version?: number;
@@ -59,6 +65,10 @@ export interface DashboardMeta {
   // via DashboardRoutes.Template with editTemplate=true.
   isDashboardTemplate?: boolean;
   dashboardTemplateUid?: string;
+
+  // A new dashboard proposed as pending changes (dashboard-scene/lifecycle/pendingChangePreview.ts):
+  // the uid saving it creates it under.
+  newDashboardUid?: string;
 
   // When loaded from kubernetes, we stick the raw metadata here
   // yes weird, but this means all the editor structures can exist unchanged

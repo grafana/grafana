@@ -22,7 +22,7 @@ type alertingMigrator struct {
 	migrator.MigrationBase
 }
 
-var _ migrator.CodeMigration = new(alertingMigrator)
+var _ migrator.CodeMigration = (*alertingMigrator)(nil)
 
 func (m *alertingMigrator) SQL(migrator.Dialect) string {
 	return "code migration"
@@ -92,7 +92,7 @@ type receiverCreateScopeMigration struct {
 	migrator.MigrationBase
 }
 
-var _ migrator.CodeMigration = new(alertingMigrator)
+var _ migrator.CodeMigration = (*alertingMigrator)(nil)
 
 func (m *receiverCreateScopeMigration) SQL(migrator.Dialect) string {
 	return "code migration"
@@ -123,7 +123,7 @@ type receiverProtectedFieldsEditor struct {
 	migrator.MigrationBase
 }
 
-var _ migrator.CodeMigration = new(alertingMigrator)
+var _ migrator.CodeMigration = (*alertingMigrator)(nil)
 
 func (m *receiverProtectedFieldsEditor) SQL(migrator.Dialect) string {
 	return "code migration"
@@ -169,7 +169,7 @@ type scopedReceiverTestingPermissions struct {
 	migrator.MigrationBase
 }
 
-var _ migrator.CodeMigration = new(alertingMigrator)
+var _ migrator.CodeMigration = (*alertingMigrator)(nil)
 
 func (m *scopedReceiverTestingPermissions) SQL(migrator.Dialect) string {
 	return "code migration"
@@ -217,7 +217,7 @@ type managedRoutesPermissions struct {
 	migrator.MigrationBase
 }
 
-var _ migrator.CodeMigration = new(managedRoutesPermissions)
+var _ migrator.CodeMigration = (*managedRoutesPermissions)(nil)
 
 func (m *managedRoutesPermissions) SQL(migrator.Dialect) string {
 	return "code migration"

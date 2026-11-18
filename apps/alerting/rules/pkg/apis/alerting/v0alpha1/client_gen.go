@@ -42,7 +42,7 @@ func (c *CustomRouteClient) ListAlertRuleSearchRulesV0alpha1(ctx context.Context
 		return nil, fmt.Errorf("unable to marshal body to JSON: %w", err)
 	}
 	resp, err := c.NamespacedRequest(ctx, namespace, resource.CustomRouteRequestOptions{
-		Path:    "/alertrules/searchRules",
+		Path:    "/searchAlertRules",
 		Verb:    "POST",
 		Body:    io.NopCloser(bytes.NewReader(body)),
 		Headers: request.Headers,
@@ -69,7 +69,7 @@ func (c *CustomRouteClient) ListRecordingRuleSearchRulesV0alpha1(ctx context.Con
 		return nil, fmt.Errorf("unable to marshal body to JSON: %w", err)
 	}
 	resp, err := c.NamespacedRequest(ctx, namespace, resource.CustomRouteRequestOptions{
-		Path:    "/recordingrules/searchRules",
+		Path:    "/searchRecordingRules",
 		Verb:    "POST",
 		Body:    io.NopCloser(bytes.NewReader(body)),
 		Headers: request.Headers,
@@ -81,33 +81,6 @@ func (c *CustomRouteClient) ListRecordingRuleSearchRulesV0alpha1(ctx context.Con
 	err = json.Unmarshal(resp, &cast)
 	if err != nil {
 		return nil, fmt.Errorf("unable to unmarshal response bytes into ListRecordingRuleSearchRulesV0alpha1Response: %w", err)
-	}
-	return &cast, nil
-}
-
-type CreateSearchRulesRequest struct {
-	Body    CreateSearchRulesRequestBody
-	Headers http.Header
-}
-
-func (c *CustomRouteClient) CreateSearchRules(ctx context.Context, namespace string, request CreateSearchRulesRequest) (*CreateSearchRulesResponse, error) {
-	body, err := json.Marshal(request.Body)
-	if err != nil {
-		return nil, fmt.Errorf("unable to marshal body to JSON: %w", err)
-	}
-	resp, err := c.NamespacedRequest(ctx, namespace, resource.CustomRouteRequestOptions{
-		Path:    "/searchRules",
-		Verb:    "POST",
-		Body:    io.NopCloser(bytes.NewReader(body)),
-		Headers: request.Headers,
-	})
-	if err != nil {
-		return nil, err
-	}
-	cast := CreateSearchRulesResponse{}
-	err = json.Unmarshal(resp, &cast)
-	if err != nil {
-		return nil, fmt.Errorf("unable to unmarshal response bytes into CreateSearchRulesResponse: %w", err)
 	}
 	return &cast, nil
 }

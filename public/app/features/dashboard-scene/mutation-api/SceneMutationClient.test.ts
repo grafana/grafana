@@ -1,7 +1,7 @@
-import * as z from 'zod';
+import * as z from 'zod/mini';
 
 import { SceneMutationClient, type MutationTargetScene } from './SceneMutationClient';
-import type { MutationCommand } from './commands/types';
+import type { LazyMutationCommand, MutationCommand } from './commands/types';
 
 // Synthetic commands rather than real ones: testing the dispatcher through a dashboard or notebook
 // command only covers whichever combination that command happens to be.
@@ -12,7 +12,7 @@ function scene(): MutationTargetScene & { forceRender: jest.Mock } {
 
 interface TestCommandOverrides<T> {
   name?: string;
-  payloadSchema?: z.ZodType<T>;
+  payloadSchema?: z.ZodMiniType<T>;
   permission?: MutationCommand<T, MutationTargetScene>['permission'];
   readOnly?: boolean;
   handler?: MutationCommand<T, MutationTargetScene>['handler'];
@@ -24,7 +24,7 @@ function command<T = any>(overrides: TestCommandOverrides<T> = {}): MutationComm
     name: 'TEST_COMMAND',
     description: 'A command that exists only for this suite.',
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- default schema for tests that do not care about the payload
-    payloadSchema: z.object({}) as unknown as z.ZodType<T>,
+    payloadSchema: z.object({}) as unknown as z.ZodMiniType<T>,
     permission: () => ({ allowed: true }),
     handler: async () => ({ success: true, changes: [] }),
     ...overrides,
@@ -33,6 +33,112 @@ function command<T = any>(overrides: TestCommandOverrides<T> = {}): MutationComm
 
 describe('SceneMutationClient', () => {
   describe('command lookup', () => {
+    it.each([true, false])('reports readOnly=%s without loading lazy commands', (readOnly) => {
+      class InspectableClient extends SceneMutationClient<MutationTargetScene> {
+        public isReadOnly(type: string) {
+          return super.isReadOnly(type);
+        }
+      }
+
+      const load = jest.fn(async () => command({ name: 'LAZY_COMMAND', readOnly }));
+      const client = new InspectableClient(scene(), [
+        { name: 'LAZY_COMMAND', readOnly, load },
+        command({ name: 'EAGER_COMMAND', readOnly }),
+        { name: 'DEFAULT_COMMAND', load },
+      ]);
+
+      expect(client.getAvailableCommands()).toEqual(['LAZY_COMMAND', 'EAGER_COMMAND', 'DEFAULT_COMMAND']);
+      expect(client.isReadOnly('lazy_command')).toBe(readOnly);
+      expect(client.isReadOnly('eager_command')).toBe(readOnly);
+      expect(client.isReadOnly('DEFAULT_COMMAND')).toBe(false);
+      expect(client.isReadOnly('UNKNOWN_COMMAND')).toBe(false);
+      expect(load).not.toHaveBeenCalled();
+    });
+
+    it('loads a lazy command only when it is first executed', async () => {
+      const load = jest.fn(async () => command({ name: 'LAZY_COMMAND' }));
+      const lazyCommand: LazyMutationCommand<MutationTargetScene> = { name: 'LAZY_COMMAND', load };
+      const client = new SceneMutationClient(scene(), [lazyCommand]);
+
+      expect(client.getAvailableCommands()).toEqual(['LAZY_COMMAND']);
+      expect(load).not.toHaveBeenCalled();
+
+      await client.execute({ type: 'LAZY_COMMAND', payload: {} });
+      await client.execute({ type: 'LAZY_COMMAND', payload: {} });
+
+      expect(load).toHaveBeenCalledTimes(1);
+    });
+
+    it('shares an in-flight lazy load and caches the successful registration', async () => {
+      let resolveLoad!: () => void;
+      const pendingLoad = new Promise<void>((resolve) => {
+        resolveLoad = resolve;
+      });
+      const handler = jest.fn(async () => ({ success: true, changes: [] }));
+      const load = jest.fn(async () => {
+        await pendingLoad;
+        return command({ name: 'LAZY_COMMAND', handler });
+      });
+      const client = new SceneMutationClient(scene(), [{ name: 'LAZY_COMMAND', load }]);
+
+      const first = client.execute({ type: 'LAZY_COMMAND', payload: {} });
+      const second = client.execute({ type: 'LAZY_COMMAND', payload: {} });
+
+      expect(load).toHaveBeenCalledTimes(1);
+      expect(handler).not.toHaveBeenCalled();
+
+      resolveLoad();
+      expect(await Promise.all([first, second])).toEqual([
+        { success: true, changes: [] },
+        { success: true, changes: [] },
+      ]);
+      expect(await client.execute({ type: 'LAZY_COMMAND', payload: {} })).toEqual({ success: true, changes: [] });
+      expect(load).toHaveBeenCalledTimes(1);
+      expect(handler).toHaveBeenCalledTimes(3);
+    });
+
+    it.each([
+      { name: 'Error', error: new Error('Failed to load command') },
+      { name: 'non-Error', error: 'Failed to load command' },
+    ])('retries a shared lazy load after a $name rejection and caches success', async ({ error }) => {
+      let rejectLoad!: (reason: unknown) => void;
+      const pendingLoad = new Promise<never>((_resolve, reject) => {
+        rejectLoad = reject;
+      });
+      const handler = jest.fn(async () => ({ success: true, changes: [] }));
+      const load = jest
+        .fn(async () => command({ name: 'LAZY_COMMAND', handler }))
+        .mockImplementationOnce(() => pendingLoad);
+      const target = scene();
+      const client = new SceneMutationClient(target, [{ name: 'LAZY_COMMAND', load }]);
+
+      const first = client.execute({ type: 'LAZY_COMMAND', payload: {} });
+      const second = client.execute({ type: 'LAZY_COMMAND', payload: {} });
+      expect(load).toHaveBeenCalledTimes(1);
+
+      rejectLoad(error);
+      expect(await Promise.all([first, second])).toEqual([
+        { success: false, error: 'Failed to load command', changes: [] },
+        { success: false, error: 'Failed to load command', changes: [] },
+      ]);
+      expect(handler).not.toHaveBeenCalled();
+      expect(target.forceRender).not.toHaveBeenCalled();
+
+      expect(
+        await Promise.all([
+          client.execute({ type: 'LAZY_COMMAND', payload: {} }),
+          client.execute({ type: 'LAZY_COMMAND', payload: {} }),
+        ])
+      ).toEqual([
+        { success: true, changes: [] },
+        { success: true, changes: [] },
+      ]);
+      expect(await client.execute({ type: 'LAZY_COMMAND', payload: {} })).toEqual({ success: true, changes: [] });
+      expect(load).toHaveBeenCalledTimes(2);
+      expect(handler).toHaveBeenCalledTimes(3);
+      expect(target.forceRender).toHaveBeenCalledTimes(3);
+    });
+
     it('names the commands that do exist when asked for one that does not', async () => {
       const client = new SceneMutationClient(scene(), [command({ name: 'FIRST' }), command({ name: 'SECOND' })]);
 
@@ -99,7 +205,7 @@ describe('SceneMutationClient', () => {
         // being safe from it: write it either of those ways and the test passes with the clone taken out.
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- the payload shape is the test's own; z.unknown() cannot express it
         command<{ spec: Record<string, unknown> }>({
-          payloadSchema: z.object({ spec: z.unknown() }) as unknown as z.ZodType<{ spec: Record<string, unknown> }>,
+          payloadSchema: z.object({ spec: z.unknown() }) as unknown as z.ZodMiniType<{ spec: Record<string, unknown> }>,
           handler: async (payload) => {
             payload.spec.title = 'mutated by the handler';
             return { success: true, changes: [] };

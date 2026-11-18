@@ -7,7 +7,12 @@ import { type RawTimeRange } from '../types/time';
 
 import { type UrlQueryMap, urlUtil } from './url';
 
-let grafanaConfig = { appSubUrl: '' } as GrafanaConfig;
+interface MinimalGrafanaConfig {
+  appSubUrl: string;
+  disableSanitizeHtml?: boolean;
+}
+
+let grafanaConfig: MinimalGrafanaConfig = { appSubUrl: '' };
 let getTimeRangeUrlParams: () => RawTimeRange;
 let getVariablesUrlParams: (scopedVars?: ScopedVars) => UrlQueryMap;
 

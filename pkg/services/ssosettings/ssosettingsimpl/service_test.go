@@ -344,7 +344,6 @@ func TestService_GetForProvider(t *testing.T) {
 	for _, tc := range testCases {
 		// create a local copy of "tc" to allow concurrent access within tests to the different items of testCases,
 		// otherwise it would be like a moving pointer while tests run in parallel
-		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
@@ -461,7 +460,6 @@ func TestService_GetForProvider_StorageReadMode(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -590,7 +588,6 @@ func TestService_GetForProviderFromCache(t *testing.T) {
 	for _, tc := range testCases {
 		// create a local copy of "tc" to allow concurrent access within tests to the different items of testCases,
 		// otherwise it would be like a moving pointer while tests run in parallel
-		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
@@ -690,7 +687,6 @@ func TestService_GetForProviderFromCache(t *testing.T) {
 	for _, tc := range testCasesUpsert {
 		// create a local copy of "tc" to allow concurrent access within tests to the different items of testCases,
 		// otherwise it would be like a moving pointer while tests run in parallel
-		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
@@ -901,7 +897,6 @@ func TestService_GetForProviderWithRedactedSecrets(t *testing.T) {
 	for _, tc := range testCases {
 		// create a local copy of "tc" to allow concurrent access within tests to the different items of testCases,
 		// otherwise it would be like a moving pointer while tests run in parallel
-		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
@@ -1057,7 +1052,6 @@ func TestService_List(t *testing.T) {
 	for _, tc := range testCases {
 		// create a local copy of "tc" to allow concurrent access within tests to the different items of testCases,
 		// otherwise it would be like a moving pointer while tests run in parallel
-		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
@@ -1418,7 +1412,6 @@ func TestService_ListWithRedactedSecrets(t *testing.T) {
 	for _, tc := range testCases {
 		// create a local copy of "tc" to allow concurrent access within tests to the different items of testCases,
 		// otherwise it would be like a moving pointer while tests run in parallel
-		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
@@ -1930,6 +1923,68 @@ func TestService_Patch(t *testing.T) {
 
 		require.Equal(t, true, env.store.ActualSSOSettings.Settings["enabled"])
 		require.Equal(t, "stored-client-id", env.store.ActualSSOSettings.Settings["client_id"])
+	})
+
+	t.Run("converts camelCase keys to snake_case", func(t *testing.T) {
+		t.Parallel()
+
+		env := setupTestEnv(t, false, false, false)
+
+		provider := social.GenericOAuthProviderName
+		patchData := map[string]any{
+			"orgMapping":       "org-a:OrganizationA:Admin",
+			"orgAttributePath": "grafana_orgs",
+		}
+
+		reloadable := ssosettingstests.NewMockReloadable(t)
+		reloadable.On("Validate", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
+		var wg sync.WaitGroup
+		wg.Add(1)
+		reloadable.On("Reload", mock.Anything, mock.Anything).Run(func(mock.Arguments) { wg.Done() }).Return(nil).Once()
+		env.reloadables[provider] = reloadable
+
+		env.store.GetFn = func(ctx context.Context, provider string) (*models.SSOSettings, error) {
+			return &models.SSOSettings{
+				ID:       "someid",
+				Provider: provider,
+				Settings: map[string]any{
+					"org_mapping":        "",
+					"org_attribute_path": "old",
+				},
+			}, nil
+		}
+		env.store.UpsertFn = func(ctx context.Context, settings *models.SSOSettings) error {
+			env.store.ActualSSOSettings = *settings
+			return nil
+		}
+
+		err := env.service.Patch(context.Background(), provider, patchData, &user.SignedInUser{})
+		require.NoError(t, err)
+		wg.Wait()
+
+		require.Equal(t, map[string]any{
+			"org_mapping":        "org-a:OrganizationA:Admin",
+			"org_attribute_path": "grafana_orgs",
+		}, env.store.ActualSSOSettings.Settings)
+	})
+
+	t.Run("returns error if keys collide after conversion", func(t *testing.T) {
+		t.Parallel()
+
+		env := setupTestEnv(t, false, false, false)
+
+		provider := social.GenericOAuthProviderName
+		env.reloadables[provider] = ssosettingstests.NewMockReloadable(t)
+		env.store.GetFn = func(ctx context.Context, provider string) (*models.SSOSettings, error) {
+			return &models.SSOSettings{Provider: provider, Settings: map[string]any{}}, nil
+		}
+
+		err := env.service.Patch(context.Background(), provider, map[string]any{
+			"orgMapping":  "a",
+			"org_mapping": "b",
+		}, &user.SignedInUser{})
+		require.Error(t, err)
+		require.True(t, ssosettings.ErrInvalidSettings.Is(err))
 	})
 
 	t.Run("returns error if provider is not configurable", func(t *testing.T) {
@@ -2524,7 +2579,6 @@ func TestService_decryptSecrets(t *testing.T) {
 	for _, tc := range testCases {
 		// create a local copy of "tc" to allow concurrent access within tests to the different items of testCases,
 		// otherwise it would be like a moving pointer while tests run in parallel
-		tc := tc
 
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
@@ -2602,7 +2656,6 @@ func Test_ProviderService(t *testing.T) {
 		},
 	}
 	for _, tc := range tests {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -2705,4 +2758,28 @@ type testEnv struct {
 	fallbackStrategy *ssosettingstests.FakeFallbackStrategy
 	secrets          *secretsFakes.MockService
 	reloadables      map[string]ssosettings.Reloadable
+}
+
+type reloadableWithDefaults struct {
+	*ssosettingstests.MockReloadable
+	*ssosettingstests.MockDefaultsProvider
+}
+
+func TestService_RegisterReloadable_DefaultsProvider(t *testing.T) {
+	env := setupTestEnv(t, true, true, false)
+
+	defaultsMock := ssosettingstests.NewMockDefaultsProvider(t)
+	defaults := map[string]any{"setting_1": "value_1"}
+	defaultsMock.On("Defaults").Return(defaults)
+	reloadable := &reloadableWithDefaults{
+		MockReloadable:       ssosettingstests.NewMockReloadable(t),
+		MockDefaultsProvider: defaultsMock,
+	}
+	env.service.RegisterReloadable("providerWithDefaults", reloadable)
+	require.Equal(t, defaults, env.service.GetDefaults("providerWithDefaults"))
+
+	env.service.RegisterReloadable("providerWithoutDefaults", ssosettingstests.NewMockReloadable(t))
+	require.Nil(t, env.service.GetDefaults("providerWithoutDefaults"))
+
+	require.Nil(t, env.service.GetDefaults("providerNotRegistered"))
 }

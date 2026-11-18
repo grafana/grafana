@@ -6,7 +6,7 @@ import { grafanaESModules, nodeModulesToTransform } from './utils.js';
 
 export default {
   moduleNameMapper: {
-    '\\.(css|scss|sass)$': 'identity-obj-proxy',
+    '\\.css$': 'identity-obj-proxy',
     'react-inlinesvg': path.resolve(import.meta.dirname, 'mocks', 'react-inlinesvg.tsx'),
     '\\.(svg|png|jpg)': path.resolve(import.meta.dirname, 'mocks', 'images.ts'),
     '^monaco-editor$': 'monaco-editor/esm/vs/editor/editor.api.js',
@@ -24,7 +24,7 @@ export default {
   },
   testMatch: ['<rootDir>/**/__tests__/**/*.{js,jsx,ts,tsx}', '<rootDir>/**/*.{spec,test,jest}.{js,jsx,ts,tsx}'],
   transform: {
-    '^.+\\.(t|j)sx?$': [
+    '^.+\\.(mjs|[tj]sx?)$': [
       '@swc/jest',
       {
         sourceMaps: 'inline',

@@ -1,9 +1,14 @@
 import { renderTextPanelMarkdown, textUtil, type DataFrame } from '@grafana/data';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { type CodeMirrorEditorLanguage } from '@grafana/ui/unstable';
 
 import { CodeLanguage, TextMode } from '../panelcfg.gen';
 
 export const EMPTY_CONTENT = ' ';
+
+export function isTextNewFeaturesEnabled(): boolean {
+  return getFeatureFlagClient().getBooleanValue(FlagKeys.TextNewFeatures, false);
+}
 
 export function getCurrentFrameIndex(frames: DataFrame[], options: { frameIndex?: number }) {
   const frameIndex = options.frameIndex ?? 0;

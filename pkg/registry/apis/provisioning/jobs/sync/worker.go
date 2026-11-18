@@ -163,7 +163,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 		setupSpan.End()
 		logger.Error("failed to create repository resources client", "error", err)
 		setupError := fmt.Errorf("create repository resources client: %w", err)
-		progress.Complete(ctx, setupError)
+		r.completeFailedSync(ctx, cfg, job, progress, lastRef, setupError)
 		return tracing.Error(span, setupError)
 	}
 	clients, err := r.clients.Clients(setupCtx, cfg.Namespace)
@@ -171,7 +171,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 		setupSpan.End()
 		logger.Error("failed to get clients for the repository", "error", err)
 		setupError := fmt.Errorf("get clients for %s: %w", cfg.Name, err)
-		progress.Complete(ctx, setupError)
+		r.completeFailedSync(ctx, cfg, job, progress, lastRef, setupError)
 		return tracing.Error(span, setupError)
 	}
 	setupSpan.End()
@@ -182,6 +182,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	currentRef, syncError := r.syncer.Sync(syncCtx, rw, *job.Spec.Pull, repositoryResources, clients, progress, quotaTracker)
 	jobStatus := progress.Complete(ctx, syncError)
 	syncStatus = jobStatus.ToSyncStatus(job.Name)
+	syncStatus.LastChecked = cfg.Status.Sync.LastChecked
 	resultReasons := progress.ResultReasons()
 	isQuotaWarning := slices.Contains(resultReasons, provisioning.ReasonQuotaExceeded)
 
@@ -216,26 +217,16 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 
 	finalCtx, finalSpan := r.tracer.Start(ctx, "provisioning.sync.update_final_status")
 
-	// Only add stats patch if stats are not nil
-	stats, err := repositoryResources.Stats(finalCtx)
-	var repoStats []provisioning.ResourceCount
-	switch {
-	case err != nil:
+	repoStats, err := repositoryResources.Stats(finalCtx)
+	if err != nil {
 		logger.Error("unable to read stats", "error", err)
 		finalSpan.SetAttributes(attribute.String("stats.error", err.Error()))
-	case stats == nil:
-		logger.Error("stats are nil")
-		finalSpan.SetAttributes(attribute.Bool("stats.nil", true))
-	case len(stats.Managed) == 1:
-		repoStats = stats.Managed[0].Stats
+	} else {
 		patchOperations = append(patchOperations, map[string]interface{}{
 			"op":    "replace",
 			"path":  "/status/stats",
 			"value": repoStats,
 		})
-	default:
-		logger.Warn("unexpected number of managed stats", "count", len(stats.Managed))
-		finalSpan.SetAttributes(attribute.Int("stats.unexpected_count", len(stats.Managed)))
 	}
 
 	// Update conditions based on sync outcome and quota evaluation.
@@ -263,4 +254,30 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	finalSpan.End()
 
 	return syncError
+}
+
+// completeFailedSync writes the terminal state back after a failure past the 'working' mark.
+// Without it the repository reports 'working' forever: failed syncs are not re-enqueued.
+func (r *SyncWorker) completeFailedSync(ctx context.Context, cfg *provisioning.Repository, job provisioning.Job, progress jobs.JobProgressRecorder, lastRef string, syncErr error) {
+	jobStatus := progress.Complete(ctx, syncErr)
+	syncStatus := jobStatus.ToSyncStatus(job.Name)
+	syncStatus.LastChecked = cfg.Status.Sync.LastChecked
+	syncStatus.LastRef = lastRef
+
+	patchOperations := []map[string]interface{}{
+		{
+			"op":    "replace",
+			"path":  "/status/sync",
+			"value": syncStatus,
+		},
+	}
+
+	syncCondition := EvaluatePullCondition(jobStatus.State, progress.ResultReasons())
+	if conditionOps := controller.BuildConditionPatchOpsFromExisting(cfg.Status.Conditions, cfg.GetGeneration(), syncCondition); conditionOps != nil {
+		patchOperations = append(patchOperations, conditionOps...)
+	}
+
+	if err := r.patchStatus(ctx, cfg, patchOperations...); err != nil {
+		logging.FromContext(ctx).Error("failed to update the repository sync status after a failed sync", "error", err)
+	}
 }

@@ -1,4 +1,4 @@
-import { type Meta, type StoryFn } from '@storybook/react-webpack5';
+import { type Meta, type StoryFn } from '@storybook/react';
 import { useState } from 'react';
 
 import { StoryExample } from '../../utils/storybook/StoryExample';
@@ -19,7 +19,7 @@ const meta: Meta = {
   argTypes: {
     variant: {
       control: 'select',
-      options: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'body', 'bodySmall', 'code', undefined],
+      options: ['xxl', 'xl', 'lg', 'md', 'base', 'sm', 'code', undefined],
     },
     weight: {
       control: 'select',

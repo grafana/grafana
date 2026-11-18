@@ -133,8 +133,7 @@ function StateVisualization({ ruleUID, timeRange, labels }: StateVisualizationPr
   } = useGetRuleHistoryQuery(
     {
       ruleUid: ruleUID,
-      from: timeRange.from.unix(),
-      to: timeRange.to.unix(),
+      timeRange: { from: timeRange.from, to: timeRange.to },
       limit: LIMIT_EVENTS,
     },
     {

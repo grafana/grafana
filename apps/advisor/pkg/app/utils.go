@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/resource"
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
+	"github.com/grafana/grafana/apps/advisor/pkg/app/checkregistry"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/metrics"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
@@ -21,17 +22,17 @@ import (
 
 var retryAnnotationPollingInterval = 1 * time.Second
 
-func getCheck(obj resource.Object, checkMap map[string]checks.Check) (checks.Check, error) {
+func getCheck(obj resource.Object, checkRegistry checkregistry.CheckService) (checks.Check, error) {
 	labels := obj.GetLabels()
 	objTypeLabel, ok := labels[checks.TypeLabel]
 	if !ok {
 		return nil, errors.New("missing check type as label")
 	}
-	c, ok := checkMap[objTypeLabel]
+	c, ok := checkRegistry.Check(objTypeLabel)
 	if !ok {
 		supportedTypes := ""
-		for k := range checkMap {
-			supportedTypes += k + ", "
+		for _, c := range checkRegistry.Checks() {
+			supportedTypes += c.ID() + ", "
 		}
 		return nil, fmt.Errorf("unknown check type %s. Supported types are: %s", objTypeLabel, supportedTypes)
 	}
@@ -101,12 +102,26 @@ func processCheck(ctx context.Context, log logging.Logger, client resource.Clien
 	if err != nil {
 		return err
 	}
+	recordReportMetrics(check.ID(), steps, report)
 	// Set the status annotation to processed and annotate the steps ignored
 	annotations := checks.AddAnnotations(ctx, obj, map[string]string{
 		checks.StatusAnnotation:          checks.StatusAnnotationProcessed,
 		checks.IgnoreStepsAnnotationList: checkType.GetAnnotations()[checks.IgnoreStepsAnnotationList],
 	})
 	return checks.SetAnnotations(ctx, client, obj, annotations)
+}
+
+// recordReportMetrics adds a processed check's report to the item and failure counters.
+// Every step that ran gets a failures series, so a step that stops reporting failures
+// shows up as 0 instead of disappearing.
+func recordReportMetrics(checkType string, steps []checks.Step, report *advisorv0alpha1.CheckReport) {
+	metrics.CheckItemsTotal.WithLabelValues(checkType).Add(float64(report.Count))
+	for _, step := range steps {
+		metrics.CheckFailuresTotal.WithLabelValues(checkType, step.ID()).Add(0)
+	}
+	for _, failure := range report.Failures {
+		metrics.CheckFailuresTotal.WithLabelValues(checkType, failure.StepID).Inc()
+	}
 }
 
 func processCheckRetry(ctx context.Context, log logging.Logger, client resource.Client, typesClient resource.Client, obj resource.Object, check checks.Check) error {

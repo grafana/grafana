@@ -19,16 +19,22 @@ import { type LogListModel } from './processing';
 import { LogLineVirtualization } from './virtualization';
 
 const useBooleanFlagValueMock = jest.fn((_: string, defaultValue: boolean) => defaultValue);
+const useFlagMock = jest.fn((_: string, defaultValue: boolean) => ({ value: defaultValue }));
 
 const setBooleanFlags = (flags: Record<string, boolean>) => {
-  useBooleanFlagValueMock.mockImplementation((flag: string, defaultValue: boolean) => {
-    return Object.prototype.hasOwnProperty.call(flags, flag) ? flags[flag] : defaultValue;
-  });
+  const getFlagValue = (flag: string, defaultValue: boolean) =>
+    Object.prototype.hasOwnProperty.call(flags, flag) ? flags[flag] : defaultValue;
+
+  useBooleanFlagValueMock.mockImplementation((flag: string, defaultValue: boolean) => getFlagValue(flag, defaultValue));
+  useFlagMock.mockImplementation((flag: string, defaultValue: boolean) => ({
+    value: getFlagValue(flag, defaultValue),
+  }));
 };
 
 jest.mock('@openfeature/react-sdk', () => ({
   ...jest.requireActual('@openfeature/react-sdk'),
   useBooleanFlagValue: (flag: string, defaultValue: boolean) => useBooleanFlagValueMock(flag, defaultValue),
+  useFlag: (flag: string, defaultValue: boolean) => useFlagMock(flag, defaultValue),
 }));
 
 jest.mock('@grafana/assistant', () => ({
@@ -266,6 +272,36 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
     expect(screen.getByLabelText('Has errors')).toBeInTheDocument();
   });
 
+  test('Describes a stack trace separately from error fields', async () => {
+    const user = userEvent.setup();
+    log.labels['exception.stacktrace'] = 'at main';
+
+    render(
+      <LogListContextProvider {...contextProps} logs={[log]}>
+        <LogLine {...defaultProps} log={log} />
+      </LogListContextProvider>
+    );
+
+    const icon = await screen.findByLabelText('Has a stack trace');
+    await user.hover(icon);
+    expect(await screen.findByText('This log line contains a stack trace.')).toBeInTheDocument();
+  });
+
+  test('Describes error fields when the log has no stack trace', async () => {
+    const user = userEvent.setup();
+    log.labels['exception.message'] = 'failed';
+
+    render(
+      <LogListContextProvider {...contextProps} logs={[log]}>
+        <LogLine {...defaultProps} log={log} />
+      </LogListContextProvider>
+    );
+
+    const icon = await screen.findByLabelText('Has error fields');
+    await user.hover(icon);
+    expect(await screen.findByText('This log line contains error-related fields.')).toBeInTheDocument();
+  });
+
   test('Shows sampled log lines', async () => {
     log.isSampled = true;
     log.labels.__adaptive_logs_sampled__ = 'true';
@@ -287,6 +323,8 @@ describe.each(fontSizes)('LogLine', (fontSize: LogListFontSize) => {
     );
     await screen.findByText('log message 1');
     expect(screen.queryByLabelText('Has errors')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Has a stack trace')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Has error fields')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Is sampled')).not.toBeInTheDocument();
   });
 

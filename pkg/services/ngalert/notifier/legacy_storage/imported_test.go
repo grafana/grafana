@@ -36,25 +36,25 @@ func TestConfigRevisionImported_GetReceivers(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, receivers, 2)
 		assert.Equal(t, "imported-receiver-1", receivers[0].Name)
-		assert.Equal(t, NameToUid("imported-receiver-1"), receivers[0].UID)
+		assert.Equal(t, string(v1.ReceiverUID("imported-receiver-1")), receivers[0].UID)
 		assert.Equal(t, models.ProvenanceConvertedPrometheus, receivers[0].Provenance)
 		assert.Equal(t, models.ResourceOriginImported, receivers[0].Origin)
 		assert.Len(t, receivers[0].Integrations, 1)
 
 		assert.Equal(t, "imported-receiver-2", receivers[1].Name)
-		assert.Equal(t, NameToUid("imported-receiver-2"), receivers[1].UID)
+		assert.Equal(t, string(v1.ReceiverUID("imported-receiver-2")), receivers[1].UID)
 		assert.Equal(t, models.ProvenanceConvertedPrometheus, receivers[1].Provenance)
 		assert.Equal(t, models.ResourceOriginImported, receivers[1].Origin)
 		assert.Len(t, receivers[1].Integrations, 1)
 	})
 	t.Run("should filter receivers in imported config", func(t *testing.T) {
-		receivers, err := imported.GetReceivers([]string{models.NameToUid("imported-receiver-2")})
+		receivers, err := imported.GetReceivers([]string{"imported-receiver-2"})
 		require.NoError(t, err)
 		require.Len(t, receivers, 1)
 		assert.Equal(t, "imported-receiver-2", receivers[0].Name)
-		assert.Equal(t, NameToUid("imported-receiver-2"), receivers[0].UID)
+		assert.Equal(t, string(v1.ReceiverUID("imported-receiver-2")), receivers[0].UID)
 
-		receivers, err = imported.GetReceivers([]string{models.NameToUid("not-found")})
+		receivers, err = imported.GetReceivers([]string{"not-found"})
 		require.NoError(t, err)
 		assert.Empty(t, receivers)
 	})
@@ -77,16 +77,16 @@ receivers:
 		require.NoError(t, err)
 		require.Len(t, result, 2)
 		assert.Equal(t, "receiver1"+expectedDedupSuffix, result[0].Name)
-		assert.Equal(t, models.NameToUid("receiver1"+expectedDedupSuffix), result[0].UID)
+		assert.Equal(t, string(v1.ReceiverUID("receiver1"+expectedDedupSuffix)), result[0].UID)
 		assert.Equal(t, "dupe-receiver"+expectedDedupSuffix, result[1].Name)
-		assert.Equal(t, models.NameToUid("dupe-receiver"+expectedDedupSuffix), result[1].UID)
+		assert.Equal(t, string(v1.ReceiverUID("dupe-receiver"+expectedDedupSuffix)), result[1].UID)
 
-		t.Run("should search by renamed uid", func(t *testing.T) {
-			result, err = imported.GetReceivers([]string{NameToUid("receiver1")})
+		t.Run("should search by renamed name", func(t *testing.T) {
+			result, err = imported.GetReceivers([]string{"receiver1"})
 			require.NoError(t, err)
 			require.Empty(t, result)
 
-			result, err = imported.GetReceivers([]string{NameToUid("receiver1" + expectedDedupSuffix)})
+			result, err = imported.GetReceivers([]string{"receiver1" + expectedDedupSuffix})
 			require.NoError(t, err)
 			require.Len(t, result, 1)
 		})
@@ -101,6 +101,60 @@ receivers:
 		result, err := imported.GetReceivers(nil)
 		require.NoError(t, err)
 		require.Empty(t, result)
+	})
+}
+
+func TestConfigRevisionImported_GetReceiver(t *testing.T) {
+	t.Run("should return the receiver with the given uid", func(t *testing.T) {
+		rev := getConfigRevisionForTest(withExtraConfig(extraConfig(extraConfigurationYaml)))
+		imported, err := rev.Imported()
+		require.NoError(t, err)
+
+		receiver, err := imported.GetReceiver(string(v1.ReceiverUID("imported-receiver-2")))
+		require.NoError(t, err)
+		assert.Equal(t, "imported-receiver-2", receiver.Name)
+		assert.Equal(t, string(v1.ReceiverUID("imported-receiver-2")), receiver.UID)
+		assert.Equal(t, models.ProvenanceConvertedPrometheus, receiver.Provenance)
+		assert.Equal(t, models.ResourceOriginImported, receiver.Origin)
+	})
+
+	t.Run("should return not found if the uid does not exist", func(t *testing.T) {
+		rev := getConfigRevisionForTest(withExtraConfig(extraConfig(extraConfigurationYaml)))
+		imported, err := rev.Imported()
+		require.NoError(t, err)
+
+		_, err = imported.GetReceiver(string(v1.ReceiverUID("not-found")))
+		require.ErrorIs(t, err, models.ErrReceiverNotFound)
+	})
+
+	t.Run("should look up renamed receivers by the uid of the renamed name", func(t *testing.T) {
+		const dupeConfig = `
+route:
+  receiver: receiver1
+receivers:
+  - name: receiver1
+`
+		extra := extraConfig(dupeConfig)
+		suffix := "_" + extra.Identifier
+		rev := getConfigRevisionForTest(withExtraConfig(extra))
+		imported, err := rev.Imported()
+		require.NoError(t, err)
+
+		_, err = imported.GetReceiver(string(v1.ReceiverUID("receiver1")))
+		require.ErrorIs(t, err, models.ErrReceiverNotFound)
+
+		receiver, err := imported.GetReceiver(string(v1.ReceiverUID("receiver1" + suffix)))
+		require.NoError(t, err)
+		assert.Equal(t, "receiver1"+suffix, receiver.Name)
+	})
+
+	t.Run("should return not found if no imported configuration", func(t *testing.T) {
+		rev := getConfigRevisionForTest()
+		imported, err := rev.Imported()
+		require.NoError(t, err)
+
+		_, err = imported.GetReceiver(string(v1.ReceiverUID("any")))
+		require.ErrorIs(t, err, models.ErrReceiverNotFound)
 	})
 }
 
@@ -197,16 +251,17 @@ receivers:
 		require.NoError(t, err)
 		assert.NotEmpty(t, route.Version) // Test separately so we don't couple this test to version consistency.
 		route.Version = ""
-		require.Equal(t, &ManagedRoute{
-			Name:     extra.Identifier,
-			Version:  "",
+		require.Equal(t, &v1.ManagedRoute{
+			ResourceMetadata: v1.ResourceMetadata{
+				UID:        v1.RouteUID(extra.Identifier),
+				Provenance: models.ProvenanceConvertedPrometheus,
+			},
 			Receiver: "r1",
 			Routes: []*v1.Route{
 				{Receiver: "r2", Routes: []*v1.Route{{Receiver: "r1", Routes: make([]*v1.Route, 0)}}},
 				{Receiver: "", Routes: []*v1.Route{{Receiver: "r2", Routes: make([]*v1.Route, 0)}}},
 			},
-			Provenance: models.ProvenanceConvertedPrometheus,
-			Origin:     models.ResourceOriginImported,
+			Origin: models.ResourceOriginImported,
 		}, route)
 	})
 
@@ -240,16 +295,17 @@ mute_time_intervals:
 		require.NoError(t, err)
 		assert.NotEmpty(t, route.Version) // Test separately so we don't couple this test to version consistency.
 		route.Version = ""
-		require.Equal(t, &ManagedRoute{
-			Name:     extra.Identifier,
-			Version:  "",
+		require.Equal(t, &v1.ManagedRoute{
+			ResourceMetadata: v1.ResourceMetadata{
+				UID:        v1.RouteUID(extra.Identifier),
+				Provenance: models.ProvenanceConvertedPrometheus,
+			},
 			Receiver: "receiver1" + expectedDedupSuffix,
 			Routes: []*v1.Route{
 				{Receiver: "dupe-receiver" + expectedDedupSuffix, MuteTimeIntervals: []string{"mute-interval-1" + expectedDedupSuffix}, Routes: make([]*v1.Route, 0)},
 				{Receiver: "r1", ActiveTimeIntervals: []string{"time-interval-1" + expectedDedupSuffix}, Routes: make([]*v1.Route, 0)},
 			},
-			Provenance: models.ProvenanceConvertedPrometheus,
-			Origin:     models.ResourceOriginImported,
+			Origin: models.ResourceOriginImported,
 		}, route)
 	})
 }

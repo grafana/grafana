@@ -1,20 +1,20 @@
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
-import { Fragment, lazy, Suspense, useMemo, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 
 import { type NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { useFlagGrafanaCustomDashboardTemplates } from '@grafana/runtime/internal';
-import { Menu, Dropdown, ToolbarButton, useTheme2 } from '@grafana/ui';
-import { contextSrv } from 'app/core/services/context_srv';
+import { Dropdown, Menu, ToolbarButton, useTheme2 } from '@grafana/ui';
+import { useNavTree } from 'app/core/navtree/useNavTree';
 import { NewDashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/analytics/main';
 import { CONTENT_KINDS, SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashgrid/DashboardLibrary/constants';
 import { useTemplateDashboardsAvailability } from 'app/features/dashboard/dashgrid/DashboardLibrary/hooks/useTemplateDashboardsAvailability';
 import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
-import { useDashboardGenerationAvailable } from 'app/features/dashboard-prompt/useDashboardGenerationAvailable';
-import { AccessControlAction } from 'app/types/accessControl';
-import { useSelector } from 'app/types/store';
+import { useIsMobileEditDeprecated } from 'app/features/dashboard-scene/utils/mobileEditDeprecation';
+import { NOTEBOOK_ENTRY_POINT } from 'app/features/notebook/analytics/types';
+import { notebookNewEditHref } from 'app/features/notebook/urls';
 
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
 
@@ -22,32 +22,33 @@ import {
   ALERTING_GROUP_COLOR_DARK_NAME,
   ALERTING_GROUP_COLOR_LIGHT_NAME,
   DASHBOARD_GROUP_COLOR_NAME,
-  ITEM_ICONS,
   findCreateActionGroups,
+  ITEM_ICONS,
 } from './utils';
-
-const GenerateDashboardModal = lazy(() =>
-  import('app/features/dashboard-prompt/GenerateDashboardModal').then((module) => ({
-    default: module.GenerateDashboardModal,
-  }))
-);
 
 export interface Props {}
 
 export const QuickAdd = ({}: Props) => {
-  const navBarTree = useSelector((state) => state.navBarTree);
+  const navBarTree = useNavTree();
   const [isOpen, setIsOpen] = useState(false);
-  const [showGenerateDashboardPrompt, setShowGenerateDashboardPrompt] = useState(false);
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
   const isCustomDashboardTemplatesEnabled = useFlagGrafanaCustomDashboardTemplates();
   const { isAvailable: isTemplateDashboardsAvailable } = useTemplateDashboardsAvailability();
-  const isGenerateDashboardAvailable =
-    useDashboardGenerationAvailable() && contextSrv.hasPermission(AccessControlAction.DashboardsCreate);
+  const isMobileEditDeprecated = useIsMobileEditDeprecated();
 
   const theme = useTheme2();
 
   const actionGroups = useMemo(() => {
     const groups = findCreateActionGroups(navBarTree);
+
+    // New dashboard needs edit mode
+    if (isMobileEditDeprecated) {
+      return groups
+        .map((g) =>
+          g.parentId === 'dashboards/browse' ? { ...g, items: g.items.filter((i) => i.id !== 'dashboards/new') } : g
+        )
+        .filter((g) => g.items.length > 0);
+    }
 
     if (isTemplateDashboardsAvailable) {
       const templateItem: NavModelItem = {
@@ -80,26 +81,12 @@ export const QuickAdd = ({}: Props) => {
       }
     }
 
-    if (isGenerateDashboardAvailable) {
-      const generateItem: NavModelItem = {
-        id: 'generate-dashboard',
-        text: t('navigation.quick-add.generate-dashboard-button', 'Generate dashboard'),
-        onClick: () => setShowGenerateDashboardPrompt(true),
-      };
-
-      const dashboardGroup = groups.find((g) => g.parentId === 'dashboards/browse');
-      if (dashboardGroup) {
-        const newDashboardIndex = dashboardGroup.items.findIndex((item) => item.id === 'dashboards/new');
-        dashboardGroup.items.splice(newDashboardIndex + 1, 0, generateItem);
-      }
-    }
-
     return groups;
   }, [
     isAnalyticsFrameworkEnabled,
     isCustomDashboardTemplatesEnabled,
     isTemplateDashboardsAvailable,
-    isGenerateDashboardAvailable,
+    isMobileEditDeprecated,
     navBarTree,
   ]);
 
@@ -140,7 +127,7 @@ export const QuickAdd = ({}: Props) => {
                   return (
                     <Menu.Item
                       key={item.id ?? item.url}
-                      url={item.url}
+                      url={item.id === 'notebooks/new' ? notebookNewEditHref(NOTEBOOK_ENTRY_POINT.QUICK_ADD) : item.url}
                       label={item.text}
                       icon={item.id ? ITEM_ICONS[item.id] : undefined}
                       iconColor={iconColor}
@@ -171,11 +158,6 @@ export const QuickAdd = ({}: Props) => {
         />
       </Dropdown>
       <NavToolbarSeparator />
-      {showGenerateDashboardPrompt && (
-        <Suspense fallback={null}>
-          <GenerateDashboardModal onDismiss={() => setShowGenerateDashboardPrompt(false)} />
-        </Suspense>
-      )}
     </>
   );
 };

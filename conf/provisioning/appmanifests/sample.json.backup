@@ -421,10 +421,6 @@
             "permissionSet": "admin"
           },
           {
-            "kind": "Widget/status",
-            "permissionSet": "admin"
-          },
-          {
             "kind": "WorkflowSteps",
             "permissionSet": "admin"
           },

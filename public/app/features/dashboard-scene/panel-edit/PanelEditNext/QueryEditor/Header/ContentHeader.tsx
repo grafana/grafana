@@ -1,5 +1,5 @@
-import { css } from '@emotion/css';
-import { type RefObject, useMemo, useRef } from 'react';
+import { css, cx } from '@emotion/css';
+import { type RefObject, useCallback, useId, useMemo, useRef } from 'react';
 
 import { type DataSourceInstanceSettings, type GrafanaTheme2, type ScopedVars } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
@@ -10,18 +10,22 @@ import { DataSourcePicker } from 'app/features/datasources/components/picker/Dat
 import { type ExpressionQuery } from 'app/features/expressions/types';
 
 import { getQueryEditorTypeConfig, type QueryEditorTypeConfig, QueryEditorType } from '../../constants';
+import { type CardActionSource } from '../../tracking';
 import {
   useActionsContext,
+  usePanelContext,
   useQueryEditorUIContext,
   useQueryRunnerContext,
   useQueryEditorTypeConfig,
 } from '../QueryEditorContext';
 import { usePanelScopedVars } from '../hooks/usePanelScopedVars';
 import { type AlertRule, type Transformation } from '../types';
-import { getEditorBorderColor, getExpressionSectionLabel } from '../utils';
+import { getEditorBorderColor, getExpressionSectionLabel, truncatedTextStyles } from '../utils';
 
 import { EditableQueryName } from './EditableQueryName';
 import { HeaderActions } from './HeaderActions';
+import { TransformationIdentifier } from './TransformationIdentifier';
+import { type HeaderActionTarget } from './headerActionTarget';
 
 interface DatasourceSectionProps {
   selectedQuery: DataQuery;
@@ -32,10 +36,13 @@ interface DatasourceSectionProps {
 
 function DatasourceSection({ selectedQuery, onChange, currentDatasource, scopedVars }: DatasourceSectionProps) {
   const styles = useStyles2(getDatasourceSectionStyles);
+  // The stacked view renders one picker per query, and the picker's default id is shared.
+  const inputId = useId();
 
   return (
     <div className={styles.dataSourcePickerWrapper}>
       <DataSourcePicker
+        inputId={inputId}
         dashboard={true}
         variables={true}
         current={currentDatasource ?? selectedQuery.datasource}
@@ -107,6 +114,11 @@ interface ContentHeaderProps {
    */
   renderHeaderExtras?: () => React.ReactNode;
   /**
+   * Renders the selected transformation's name. Supplied by the Scene wrapper, which can reach the
+   * pipeline state the editable name needs; without it the registry name is shown as plain text.
+   */
+  renderTransformationName?: (transformation: Transformation) => React.ReactNode;
+  /**
    * Optional ref to the container div.
    * Used downstream for saved queries positioning.
    */
@@ -116,7 +128,15 @@ interface ContentHeaderProps {
    * If not provided, will be computed from the current theme.
    */
   typeConfig?: Record<QueryEditorType, QueryEditorTypeConfig>;
+  /** The card the header actions act on. Defaults to the selected card. */
+  target?: HeaderActionTarget;
+  /** `stacked` renders the header inside a stacked view section, which draws its own accent bar. */
+  variant?: ContentHeaderVariant;
+  /** Analytics source reported by the header actions. */
+  source?: CardActionSource;
 }
+
+type ContentHeaderVariant = 'default' | 'stacked';
 
 /**
  * Standalone, prop-based query editor header component.
@@ -140,10 +160,14 @@ export function ContentHeader({
   onChangeDataSource,
   onUpdateQuery,
   renderHeaderExtras,
+  renderTransformationName,
   containerRef: externalContainerRef,
   typeConfig: typeConfigProp,
   currentDatasource,
   scopedVars,
+  target,
+  variant = 'default',
+  source = 'content_header',
 }: ContentHeaderProps) {
   // Fallback ref if none provided (for saved queries positioning)
   const internalContainerRef = useRef<HTMLDivElement>(null);
@@ -184,8 +208,10 @@ export function ContentHeader({
     return null;
   }
 
+  const isStacked = variant === 'stacked';
+
   return (
-    <div className={styles.container} ref={containerRef}>
+    <div className={cx(styles.container, isStacked && styles.stackedContainer)} ref={containerRef}>
       <div className={styles.leftSection}>
         <Icon name={typeConfig[cardType].icon} size="sm" />
 
@@ -195,9 +221,11 @@ export function ContentHeader({
               <Trans i18nKey="query-editor-next.header.alert">Alert</Trans>
             </Text>
             <NavToolbarSeparator />
-            <Text weight="light" variant="body" color="primary">
-              {selectedAlert.rule.name}
-            </Text>
+            <span className={styles.truncatedName} title={selectedAlert.rule.name}>
+              <Text weight="light" variant="body" color="primary">
+                {selectedAlert.rule.name}
+              </Text>
+            </span>
           </>
         )}
 
@@ -228,25 +256,33 @@ export function ContentHeader({
               <Trans i18nKey="query-editor-next.header.transformation">Transformation</Trans>
             </Text>
             <NavToolbarSeparator />
-            <Text weight="light" variant="body" color="primary">
-              {selectedTransformation.registryItem?.name || selectedTransformation.transformConfig.id}
-            </Text>
+            {renderTransformationName ? (
+              renderTransformationName(selectedTransformation)
+            ) : (
+              <Text weight="light" variant="body" color="primary">
+                {selectedTransformation.registryItem?.name || selectedTransformation.transformConfig.id}
+              </Text>
+            )}
           </>
         )}
 
         {selectedQuery && cardType !== QueryEditorType.Alert && (
           <>
-            <EditableQueryName
-              key={selectedQuery.refId}
-              query={selectedQuery}
-              queries={queries}
-              onQueryUpdate={onUpdateQuery}
-            />
+            <span className={styles.queryName}>
+              <EditableQueryName
+                key={selectedQuery.refId}
+                query={selectedQuery}
+                queries={queries}
+                onQueryUpdate={onUpdateQuery}
+              />
+            </span>
             {renderHeaderExtras && <div className={styles.headerExtras}>{renderHeaderExtras()}</div>}
           </>
         )}
       </div>
-      <HeaderActions containerRef={containerRef} />
+      <div className={styles.actions}>
+        <HeaderActions containerRef={containerRef} target={target} source={source} />
+      </div>
     </div>
   );
 }
@@ -261,42 +297,71 @@ export function ContentHeader({
  */
 export function ContentHeaderSceneWrapper({
   renderHeaderExtras,
+  target,
+  variant,
 }: {
   renderHeaderExtras?: () => React.ReactNode;
+  /** Renders the header for this card instead of the selected one. */
+  target?: HeaderActionTarget;
+  variant?: ContentHeaderVariant;
 } = {}) {
-  const {
-    selectedAlert,
-    selectedQuery,
-    selectedTransformation,
-    cardType,
-    pendingExpression,
-    setPendingExpression,
-    pendingTransformation,
-    setPendingTransformation,
-    selectedQueryDsData,
-  } = useQueryEditorUIContext();
-  const { queries } = useQueryRunnerContext();
-  const { changeDataSource, updateSelectedQuery } = useActionsContext();
+  const uiState = useQueryEditorUIContext();
+  const { pendingExpression, setPendingExpression, pendingTransformation, setPendingTransformation } = uiState;
+  const { queries, data } = useQueryRunnerContext();
+  const { transformations } = usePanelContext();
+  const { changeDataSource, updateSelectedQuery, updateTransformation } = useActionsContext();
   const typeConfig = useQueryEditorTypeConfig();
   const scopedVars = usePanelScopedVars();
 
+  const renderTransformationName = useCallback(
+    (transformation: Transformation) => (
+      <TransformationIdentifier
+        transformation={transformation}
+        transformations={transformations}
+        data={data}
+        fallbackName={transformation.registryItem?.name || transformation.transformConfig.id}
+        onUpdate={updateTransformation}
+      />
+    ),
+    [transformations, data, updateTransformation]
+  );
+
+  // A targeted header describes one existing card, so the selection's alert and pending pickers don't apply.
+  const card = target
+    ? {
+        selectedAlert: null,
+        selectedQuery: target.cardType === QueryEditorType.Transformation ? null : target.query,
+        selectedTransformation: target.cardType === QueryEditorType.Transformation ? target.transformation : null,
+        cardType: target.cardType,
+        currentDatasource: target.cardType === QueryEditorType.Transformation ? undefined : target.dsData?.dsSettings,
+        pendingExpression: false,
+        pendingTransformation: false,
+      }
+    : {
+        selectedAlert: uiState.selectedAlert,
+        selectedQuery: uiState.selectedQuery,
+        selectedTransformation: uiState.selectedTransformation,
+        cardType: uiState.cardType,
+        currentDatasource: uiState.selectedQueryDsData?.dsSettings,
+        pendingExpression: !!pendingExpression,
+        pendingTransformation: !!pendingTransformation,
+      };
+
   return (
     <ContentHeader
-      selectedAlert={selectedAlert}
-      selectedQuery={selectedQuery}
-      selectedTransformation={selectedTransformation}
+      {...card}
+      renderTransformationName={renderTransformationName}
       queries={queries}
-      cardType={cardType}
-      pendingExpression={!!pendingExpression}
       onCancelPendingExpression={() => setPendingExpression(null)}
-      pendingTransformation={!!pendingTransformation}
       onCancelPendingTransformation={() => setPendingTransformation(null)}
       onChangeDataSource={changeDataSource}
       onUpdateQuery={updateSelectedQuery}
       renderHeaderExtras={renderHeaderExtras}
       typeConfig={typeConfig}
-      currentDatasource={selectedQueryDsData?.dsSettings}
       scopedVars={scopedVars}
+      target={target}
+      variant={variant}
+      source={uiState.stackedMode.enabled ? 'stacked_header' : 'content_header'}
     />
   );
 }
@@ -333,12 +398,30 @@ const getStyles = (
         borderTopLeftRadius: theme.shape.radius.default,
       },
     }),
+    stackedContainer: css({
+      background: theme.colors.background.secondary,
+      '&::before': {
+        content: 'none',
+      },
+    }),
+    // No overflow clipping here: it would cut off the rename validation message that hangs below the name.
     leftSection: css({
       display: 'flex',
       alignItems: 'center',
       gap: theme.spacing(1),
       padding: `0 ${theme.spacing(0.5)}`,
+      flex: '1 1 auto',
+      minWidth: 0,
+      whiteSpace: 'nowrap',
     }),
+    actions: css({
+      flexShrink: 0,
+    }),
+    // The data source picker gives up width first, so the query name stays readable.
+    queryName: css({
+      flexShrink: 0,
+    }),
+    truncatedName: css(truncatedTextStyles),
     headerExtras: css({
       display: 'flex',
       alignItems: 'center',
@@ -350,6 +433,7 @@ const getStyles = (
 // TODO: This is a hacky solution to create an inline datasource picker.
 const getDatasourceSectionStyles = (theme: GrafanaTheme2) => ({
   dataSourcePickerWrapper: css({
+    minWidth: 0,
     // Target the Input component inside the picker
     input: {
       border: 'none',

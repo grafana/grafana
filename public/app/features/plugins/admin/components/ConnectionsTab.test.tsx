@@ -34,16 +34,13 @@ const setupContextSrv = () => {
 
 describe('<ConnectionsTab>', () => {
   const oldExporeEnabled = config.exploreEnabled;
-  const olddatasourceConnectionsTab = config.featureToggles.datasourceConnectionsTab;
   config.exploreEnabled = true;
-  config.featureToggles.datasourceConnectionsTab = true;
   afterEach(() => {
     jest.clearAllMocks();
   });
 
   afterAll(() => {
     config.exploreEnabled = oldExporeEnabled;
-    config.featureToggles.datasourceConnectionsTab = olddatasourceConnectionsTab;
   });
 
   it('should only render list of datasources with type=plugin.id', async () => {

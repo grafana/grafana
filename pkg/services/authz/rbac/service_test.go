@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/authlib/authn"
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	"github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -198,6 +199,52 @@ func TestService_checkPermission(t *testing.T) {
 				Name:         "admin-only",
 				ParentFolder: "",
 				Verb:         utils.VerbGet,
+			},
+			expected: false,
+		},
+		{
+			// Regression for folder-move escalation masking: a general grant must
+			// not gate write on an empty-parent root folder, else the move-escalation
+			// probe reads an inflated old tier and masks a privilege increase.
+			name: "should not treat general as parent of root folders on update",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "folders:write",
+					Scope:      "folders:uid:general",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "general",
+				},
+			},
+			check: checkRequest{
+				Action:       "folders:write",
+				Group:        "folder.grafana.app",
+				Resource:     "folders",
+				Name:         "admin-only",
+				ParentFolder: "",
+				Verb:         utils.VerbUpdate,
+			},
+			expected: false,
+		},
+		{
+			// Same as above for the Admin-tier setpermissions verb.
+			name: "should not treat general as parent of root folders on setpermissions",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "folders.permissions:write",
+					Scope:      "folders:uid:general",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "general",
+				},
+			},
+			check: checkRequest{
+				Action:       "folders.permissions:write",
+				Group:        "folder.grafana.app",
+				Resource:     "folders",
+				Name:         "admin-only",
+				ParentFolder: "",
+				Verb:         utils.VerbSetPermissions,
 			},
 			expected: false,
 		},
@@ -708,46 +755,7 @@ func TestService_checkPermission(t *testing.T) {
 			expected: true,
 		},
 		{
-			name: "wildcard grant must NOT pass permissions:type:escalate check (SkipWildcard)",
-			permissions: []accesscontrol.Permission{
-				// permissions:type:delegate resolves to "*" in the scope map
-				{
-					Action: "roles:write",
-					Scope:  "*",
-					Kind:   "*",
-				},
-			},
-			check: checkRequest{
-				Action:   "roles:write",
-				Group:    "iam.grafana.app",
-				Resource: "permissions",
-				Verb:     utils.VerbPatch,
-				Name:     "escalate",
-			},
-			expected: false,
-		},
-		{
-			name: "explicit permissions:type:escalate scope passes escalate check",
-			permissions: []accesscontrol.Permission{
-				{
-					Action:     "roles:write",
-					Scope:      "permissions:type:escalate",
-					Kind:       "permissions",
-					Attribute:  "type",
-					Identifier: "escalate",
-				},
-			},
-			check: checkRequest{
-				Action:   "roles:write",
-				Group:    "iam.grafana.app",
-				Resource: "permissions",
-				Verb:     utils.VerbPatch,
-				Name:     "escalate",
-			},
-			expected: true,
-		},
-		{
-			name: "wildcard grant still passes normal roles check (SkipWildcard only affects permissions resource)",
+			name: "wildcard grant passes normal roles check",
 			permissions: []accesscontrol.Permission{
 				{
 					Action: "roles:write",
@@ -842,28 +850,6 @@ func TestService_mapping(t *testing.T) {
 				Subresource: "annotations",
 				Name:        "dash1",
 				Verb:        "create",
-				Namespace: types.NamespaceInfo{
-					Value: ns,
-					OrgID: 1,
-				},
-			},
-		},
-		{
-			name: "should map the permissions subresource to the RBAC action being delegated",
-			input: &authzv1.CheckRequest{
-				Group:       "iam.grafana.app",
-				Resource:    "permissions",
-				Subresource: "users.roles:add",
-				Name:        "delegate",
-				Verb:        utils.VerbPatch,
-			},
-			output: &checkRequest{
-				Action:      "users.roles:add",
-				Group:       "iam.grafana.app",
-				Resource:    "permissions",
-				Subresource: "users.roles:add",
-				Name:        "delegate",
-				Verb:        "patch",
 				Namespace: types.NamespaceInfo{
 					Value: ns,
 					OrgID: 1,
@@ -1234,6 +1220,30 @@ func TestService_listPermission(t *testing.T) {
 
 	testCases := []testCase{
 		{
+			name: "unscoped snapshot read grants access to all snapshots",
+			permissions: []accesscontrol.Permission{
+				{Action: "snapshots:read", Scope: ""},
+			},
+			list: listRequest{
+				Action:   "snapshots:read",
+				Group:    "dashboard.grafana.app",
+				Resource: "snapshots",
+				Verb:     utils.VerbList,
+				Options:  &ListRequestOptions{},
+			},
+			expectedAll: true,
+		},
+		{
+			name: "no snapshot read grant returns no snapshots",
+			list: listRequest{
+				Action:   "snapshots:read",
+				Group:    "dashboard.grafana.app",
+				Resource: "snapshots",
+				Verb:     utils.VerbList,
+				Options:  &ListRequestOptions{},
+			},
+		},
+		{
 			name: "should return wildcard if user has a wildcard permission",
 			permissions: []accesscontrol.Permission{
 				{
@@ -1329,7 +1339,7 @@ func TestService_listPermission(t *testing.T) {
 			expectedFolders: []string{"folder-a"},
 		},
 		{
-			name: "should not alias empty parent for dashboard list with general grant",
+			name: "should not inherit general folder grants for dashboard list",
 			permissions: []accesscontrol.Permission{
 				{
 					Action:     "dashboards:read",
@@ -1346,7 +1356,6 @@ func TestService_listPermission(t *testing.T) {
 				Resource: "dashboards",
 				Options:  &ListRequestOptions{},
 			},
-			expectedFolders: []string{accesscontrol.GeneralFolderUID},
 		},
 		{
 			name: "should return dashboards that user has annotation read access to via subresource",
@@ -1966,15 +1975,14 @@ func TestService_Check(t *testing.T) {
 			expected: false,
 		},
 		{
-			name: "permissions:type check with action subresource should deny when user holds the delegate scope on a different action",
+			name: "rolebindings wildcard check should deny when user holds the delegate scope on a different action",
 			req: &authzv1.CheckRequest{
-				Namespace:   "org-12",
-				Subject:     "user:test-uid",
-				Group:       "iam.grafana.app",
-				Resource:    "permissions",
-				Subresource: "users.roles:add",
-				Verb:        utils.VerbPatch,
-				Name:        "delegate",
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "iam.grafana.app",
+				Resource:  "rolebindings",
+				Verb:      utils.VerbCreate,
+				Name:      "*",
 			},
 			permissions: []accesscontrol.Permission{
 				{Action: "roles:write", Scope: "permissions:type:delegate"},
@@ -1982,15 +1990,14 @@ func TestService_Check(t *testing.T) {
 			expected: false,
 		},
 		{
-			name: "permissions:type check with action subresource should allow when user holds the delegate scope on that same action",
+			name: "rolebindings wildcard check should allow when user holds the delegate scope on that same action",
 			req: &authzv1.CheckRequest{
-				Namespace:   "org-12",
-				Subject:     "user:test-uid",
-				Group:       "iam.grafana.app",
-				Resource:    "permissions",
-				Subresource: "users.roles:add",
-				Verb:        utils.VerbPatch,
-				Name:        "delegate",
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "iam.grafana.app",
+				Resource:  "rolebindings",
+				Verb:      utils.VerbCreate,
+				Name:      "*",
 			},
 			permissions: []accesscontrol.Permission{
 				{Action: "users.roles:add", Scope: "permissions:type:delegate"},
@@ -2073,22 +2080,6 @@ func TestService_Check(t *testing.T) {
 			expected: true,
 		},
 		{
-			name: "delegation gate for a non-role action works from the literal alone",
-			req: &authzv1.CheckRequest{
-				Namespace:   "org-12",
-				Subject:     "user:test-uid",
-				Group:       "iam.grafana.app",
-				Resource:    "permissions",
-				Subresource: "dashboards:read",
-				Verb:        utils.VerbPatch,
-				Name:        "delegate",
-			},
-			permissions: []accesscontrol.Permission{
-				{Action: "dashboards:read", Scope: "permissions:type:delegate"},
-			},
-			expected: true,
-		},
-		{
 			name: "should allow datasources create with unscoped datasources:create (create skips scope)",
 			req: &authzv1.CheckRequest{
 				Namespace: "org-12",
@@ -2101,6 +2092,50 @@ func TestService_Check(t *testing.T) {
 				{Action: "datasources:create", Scope: ""},
 			},
 			expected: true,
+		},
+		{
+			name: "should allow playlists create with wildcard-scoped playlists:write (skipped scope accepts wildcard)",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "playlist.grafana.app",
+				Resource:  "playlists",
+				Verb:      "create",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "playlists:write", Scope: "playlists:*", Kind: "playlists", Attribute: "*"},
+			},
+			expected: true,
+		},
+		{
+			name: "should allow named playlists update with unscoped playlists:write",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "playlist.grafana.app",
+				Resource:  "playlists",
+				Verb:      "update",
+				Name:      "pl1",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "playlists:write", Scope: ""},
+			},
+			expected: true,
+		},
+		{
+			name: "should deny named playlists update without playlists:write",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "playlist.grafana.app",
+				Resource:  "playlists",
+				Verb:      "update",
+				Name:      "pl1",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "playlists:read", Scope: ""},
+			},
+			expected: false,
 		},
 		{
 			name: "should allow datasources update via datasources:edit action set scoped to uid",
@@ -2207,21 +2242,6 @@ func TestService_Check(t *testing.T) {
 			},
 			permissions: []accesscontrol.Permission{
 				{Action: "datasources:query", Scope: "datasources:uid:ds1"},
-			},
-			expected: true,
-		},
-		{
-			name: "permissions:type check without action subresource should keep the roles:write verb mapping",
-			req: &authzv1.CheckRequest{
-				Namespace: "org-12",
-				Subject:   "user:test-uid",
-				Group:     "iam.grafana.app",
-				Resource:  "permissions",
-				Verb:      utils.VerbPatch,
-				Name:      "delegate",
-			},
-			permissions: []accesscontrol.Permission{
-				{Action: "roles:write", Scope: "permissions:type:delegate"},
 			},
 			expected: true,
 		},
@@ -2411,155 +2431,6 @@ func TestService_Check(t *testing.T) {
 				assert.Equal(t, tc.expected, resp.Allowed)
 			})
 		}
-	})
-}
-
-// TestService_Check_DelegationOverrideCacheIsolation guards against delegation
-// checks (action override, no action sets) sharing permission-cache entries
-// with ordinary checks for the same action, which would make authorization
-// depend on request order.
-func TestService_Check_DelegationOverrideCacheIsolation(t *testing.T) {
-	callingService := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
-		Claims: jwt.Claims{
-			Subject:  types.NewTypeID(types.TypeAccessPolicy, "some-service"),
-			Audience: []string{"authzservice"},
-		},
-		Rest: authn.AccessTokenClaims{Namespace: "org-12"},
-	})
-
-	// A delegate grant on folders:view only — none on dashboards:read itself.
-	permissions := []accesscontrol.Permission{
-		{Action: "dashboards:admin", Scope: "dashboards:uid:dash1"},
-		{Action: "folders:view", Scope: "permissions:type:delegate"},
-	}
-
-	ordinaryReq := &authzv1.CheckRequest{
-		Namespace: "org-12",
-		Subject:   "user:test-uid",
-		Group:     "dashboard.grafana.app",
-		Resource:  "dashboards",
-		Verb:      "get",
-		Name:      "dash1",
-	}
-	delegationReq := &authzv1.CheckRequest{
-		Namespace:   "org-12",
-		Subject:     "user:test-uid",
-		Group:       "iam.grafana.app",
-		Resource:    "permissions",
-		Subresource: "dashboards:read",
-		Verb:        utils.VerbPatch,
-		Name:        "delegate",
-	}
-
-	newService := func() *Service {
-		s := setupService()
-		st := &fakeStore{
-			userID:          &store.UserIdentifiers{UID: "test-uid", ID: 1},
-			userPermissions: permissions,
-		}
-		s.store = st
-		s.permissionStore = st
-		s.identityStore = &fakeIdentityStore{}
-		return s
-	}
-
-	t.Run("ordinary check first must not leak action-set grants into the delegation check", func(t *testing.T) {
-		s := newService()
-		ctx := types.WithAuthInfo(context.Background(), callingService)
-
-		resp, err := s.Check(ctx, ordinaryReq)
-		require.NoError(t, err)
-		require.True(t, resp.Allowed, "ordinary check must pass via the dashboards:admin action set")
-
-		resp, err = s.Check(ctx, delegationReq)
-		require.NoError(t, err)
-		require.False(t, resp.Allowed,
-			"delegate grant on folders:view must not authorize delegating dashboards:read")
-	})
-
-	t.Run("delegation check first must not starve the ordinary check of action-set grants", func(t *testing.T) {
-		s := newService()
-		ctx := types.WithAuthInfo(context.Background(), callingService)
-
-		resp, err := s.Check(ctx, delegationReq)
-		require.NoError(t, err)
-		require.False(t, resp.Allowed,
-			"delegate grant on folders:view must not authorize delegating dashboards:read")
-
-		resp, err = s.Check(ctx, ordinaryReq)
-		require.NoError(t, err)
-		require.True(t, resp.Allowed, "ordinary check must still pass via the dashboards:admin action set")
-	})
-
-	t.Run("delegation denial must not deny an ordinary resource named delegate", func(t *testing.T) {
-		s := setupService()
-		st := &fakeStore{
-			userID: &store.UserIdentifiers{UID: "test-uid", ID: 1},
-			userPermissions: []accesscontrol.Permission{
-				{Action: "dashboards:admin", Scope: "dashboards:uid:delegate"},
-			},
-		}
-		s.store = st
-		s.permissionStore = st
-		s.identityStore = &fakeIdentityStore{}
-		ctx := types.WithAuthInfo(context.Background(), callingService)
-
-		resp, err := s.Check(ctx, delegationReq)
-		require.NoError(t, err)
-		require.False(t, resp.Allowed)
-
-		resp, err = s.Check(ctx, &authzv1.CheckRequest{
-			Namespace: "org-12",
-			Subject:   "user:test-uid",
-			Group:     "dashboard.grafana.app",
-			Resource:  "dashboards",
-			Verb:      "get",
-			Name:      "delegate",
-		})
-		require.NoError(t, err)
-		require.True(t, resp.Allowed)
-	})
-
-	t.Run("ordinary denial must not deny delegation for the same action and name", func(t *testing.T) {
-		s := setupService()
-		st := &fakeStore{
-			userID: &store.UserIdentifiers{UID: "test-uid", ID: 1},
-			userPermissions: []accesscontrol.Permission{
-				{Action: "dashboards:read", Scope: "permissions:type:delegate"},
-			},
-		}
-		s.store = st
-		s.permissionStore = st
-		s.identityStore = &fakeIdentityStore{}
-		ctx := types.WithAuthInfo(context.Background(), callingService)
-
-		resp, err := s.Check(ctx, &authzv1.CheckRequest{
-			Namespace: "org-12",
-			Subject:   "user:test-uid",
-			Group:     "dashboard.grafana.app",
-			Resource:  "dashboards",
-			Verb:      "get",
-			Name:      "delegate",
-		})
-		require.NoError(t, err)
-		require.False(t, resp.Allowed)
-
-		resp, err = s.Check(ctx, delegationReq)
-		require.NoError(t, err)
-		require.True(t, resp.Allowed)
-	})
-
-	t.Run("legacy bare-action cache entries must not be readable by any lookup", func(t *testing.T) {
-		s := newService()
-		ctx := types.WithAuthInfo(context.Background(), callingService)
-
-		// A widened entry written under the pre-change key format by an older
-		// instance sharing the cache during a rollout.
-		s.permCache.Set(ctx, "org-12.perm_test-uid_dashboards:read", map[string]bool{"permissions:type:delegate": true})
-
-		resp, err := s.Check(ctx, delegationReq)
-		require.NoError(t, err)
-		require.False(t, resp.Allowed, "delegation check must not read grants cached under the legacy key format")
 	})
 }
 
@@ -2754,7 +2625,8 @@ func TestService_checkPermissionWithFolderAuthz(t *testing.T) {
 		expected    bool
 	}
 
-	testCases := []testCase{
+	testCases := make([]testCase, 0, 43)
+	testCases = append(testCases, []testCase{
 		{
 			name: "resource with stack role and folder read permission",
 			permissions: []accesscontrol.Permission{
@@ -2854,6 +2726,27 @@ func TestService_checkPermissionWithFolderAuthz(t *testing.T) {
 			req:      &authzv1.CheckRequest{Group: group, Resource: "widgets", Verb: utils.VerbSetPermissions, Name: "w1", Folder: "f1"},
 			expected: false,
 		},
+	}...)
+
+	for _, parent := range []string{"", accesscontrol.GeneralFolderUID} {
+		for _, name := range []string{"", "w1"} {
+			for _, verb := range []string{utils.VerbCreate, utils.VerbGet, utils.VerbUpdate, utils.VerbDelete} {
+				for _, hasStackRole := range []bool{false, true} {
+					var permissions []accesscontrol.Permission
+					if hasStackRole {
+						permissions = []accesscontrol.Permission{stackRole(group + "/widgets:" + verb)}
+					} else {
+						permissions = []accesscontrol.Permission{folderPerm("folders:read", accesscontrol.GeneralFolderUID), folderPerm("folders:write", accesscontrol.GeneralFolderUID)}
+					}
+					testCases = append(testCases, testCase{
+						name:        fmt.Sprintf("root parent=%q name=%q verb=%s stackRole=%t", parent, name, verb, hasStackRole),
+						permissions: permissions,
+						req:         &authzv1.CheckRequest{Group: group, Resource: "widgets", Verb: verb, Name: name, Folder: parent},
+						expected:    hasStackRole,
+					})
+				}
+			}
+		}
 	}
 
 	for _, tc := range testCases {
@@ -3660,7 +3553,7 @@ func TestService_BatchCheck(t *testing.T) {
 			},
 		},
 		{
-			name: "should use the permissions subresource as the RBAC action being delegated in batch checks",
+			name: "delegate grant allows role writes but denies rolebinding creation in the same batch",
 			req: &authzv1.BatchCheckRequest{
 				Namespace: "org-12",
 				Subject:   "user:test-uid",
@@ -3668,18 +3561,16 @@ func TestService_BatchCheck(t *testing.T) {
 					{
 						CorrelationId: "delegate-roles",
 						Group:         "iam.grafana.app",
-						Resource:      "permissions",
-						Subresource:   "roles:write",
+						Resource:      "roles",
 						Verb:          utils.VerbPatch,
-						Name:          "delegate",
+						Name:          "*",
 					},
 					{
 						CorrelationId: "delegate-users",
 						Group:         "iam.grafana.app",
-						Resource:      "permissions",
-						Subresource:   "users.roles:add",
-						Verb:          utils.VerbPatch,
-						Name:          "delegate",
+						Resource:      "rolebindings",
+						Verb:          utils.VerbCreate,
+						Name:          "*",
 					},
 				},
 			},
@@ -3689,70 +3580,6 @@ func TestService_BatchCheck(t *testing.T) {
 			expected: map[string]bool{
 				"delegate-roles": true,
 				"delegate-users": false,
-			},
-		},
-		{
-			name: "mixed batch: ordinary item first must not leak action-set grants into the delegation item",
-			req: &authzv1.BatchCheckRequest{
-				Namespace: "org-12",
-				Subject:   "user:test-uid",
-				Checks: []*authzv1.BatchCheckItem{
-					{
-						CorrelationId: "ordinary-dash",
-						Group:         "dashboard.grafana.app",
-						Resource:      "dashboards",
-						Verb:          "get",
-						Name:          "dash1",
-					},
-					{
-						CorrelationId: "delegate-dash-read",
-						Group:         "iam.grafana.app",
-						Resource:      "permissions",
-						Subresource:   "dashboards:read",
-						Verb:          utils.VerbPatch,
-						Name:          "delegate",
-					},
-				},
-			},
-			permissions: []accesscontrol.Permission{
-				{Action: "dashboards:admin", Scope: "dashboards:uid:dash1"},
-				{Action: "folders:view", Scope: "permissions:type:delegate"},
-			},
-			expected: map[string]bool{
-				"ordinary-dash":      true,
-				"delegate-dash-read": false,
-			},
-		},
-		{
-			name: "mixed batch: delegation item first must not starve the ordinary item of action-set grants",
-			req: &authzv1.BatchCheckRequest{
-				Namespace: "org-12",
-				Subject:   "user:test-uid",
-				Checks: []*authzv1.BatchCheckItem{
-					{
-						CorrelationId: "delegate-dash-read",
-						Group:         "iam.grafana.app",
-						Resource:      "permissions",
-						Subresource:   "dashboards:read",
-						Verb:          utils.VerbPatch,
-						Name:          "delegate",
-					},
-					{
-						CorrelationId: "ordinary-dash",
-						Group:         "dashboard.grafana.app",
-						Resource:      "dashboards",
-						Verb:          "get",
-						Name:          "dash1",
-					},
-				},
-			},
-			permissions: []accesscontrol.Permission{
-				{Action: "dashboards:admin", Scope: "dashboards:uid:dash1"},
-				{Action: "folders:view", Scope: "permissions:type:delegate"},
-			},
-			expected: map[string]bool{
-				"ordinary-dash":      true,
-				"delegate-dash-read": false,
 			},
 		},
 		{
@@ -4512,6 +4339,14 @@ func (t *trackingPermissionStore) GetUserPermissions(ctx context.Context, ns typ
 	return t.inner.GetUserPermissions(ctx, ns, query)
 }
 
+func (t *trackingPermissionStore) HasUserPermissions(
+	ctx context.Context,
+	ns types.NamespaceInfo,
+	query store.PermissionsQuery,
+) (bool, error) {
+	return t.inner.HasUserPermissions(ctx, ns, query)
+}
+
 // Checking a folder that is missing from the tree rebuilds the tree, and a batch can
 // be mostly missing folders: a trash listing names the folders things were deleted
 // from. Rebuilding per item lists every folder in the namespace once per item.
@@ -4560,4 +4395,64 @@ func TestService_BatchCheckRebuildsFolderTreeAtMostOnce(t *testing.T) {
 
 	assert.LessOrEqual(t, fStore.folderListCalls, 2,
 		"the folder list is fetched once and rebuilt at most once, not once per item")
+}
+
+func TestRootFolderInheritance(t *testing.T) {
+	s := &Service{}
+	for _, resource := range []string{"dashboards", "folders"} {
+		for _, verb := range []string{utils.VerbGet, utils.VerbUpdate, utils.VerbDelete} {
+			allowed, err := s.checkInheritedPermissions(t.Context(), map[string]bool{"folders:uid:general": true}, &checkRequest{Resource: resource, Verb: verb, ParentFolder: "general"}, func(bool) (*folderTree, error) {
+				t.Fatal("root is not a parent to inherit from")
+				return nil, nil
+			})
+			require.NoError(t, err)
+			require.False(t, allowed)
+		}
+	}
+	tree := newFolderTree(nil)
+	scopes := map[string]bool{"folders:uid:general": true}
+	require.Empty(t, buildItemList(scopes, tree, "dashboards:uid:", false, false).Folders)
+	require.ElementsMatch(t, []string{"general"}, buildItemList(scopes, tree, "dashboards:uid:", false, true).Folders)
+	require.ElementsMatch(t, []string{"", "general"}, buildItemList(scopes, tree, "", true, false).Folders)
+}
+
+func TestRootFolderPermissionMapping(t *testing.T) {
+	for _, resource := range []string{"variables", "librarypanels", "dashboards"} {
+		for _, parent := range []string{"", "general"} {
+			for _, verb := range []string{utils.VerbGet, utils.VerbUpdate, utils.VerbDelete} {
+				for _, scope := range []string{"general", "other-folder"} {
+					t.Run(fmt.Sprintf("%s/%q/%s/%s", resource, parent, verb, scope), func(t *testing.T) {
+						s := setupService()
+						ns := types.NamespaceInfo{Value: "default", OrgID: 1}
+						s.folderCache.Set(t.Context(), folderCacheKey(ns.Value), newFolderTree(nil))
+						req := &checkRequest{Namespace: ns, Group: "dashboard.grafana.app", Resource: resource, Name: "resource", Verb: verb, ParentFolder: parent}
+						allowed, err := s.checkPermission(t.Context(), map[string]bool{"folders:uid:" + scope: true}, nil, req, s.newFolderTreeGetter(t.Context(), ns, false))
+						require.NoError(t, err)
+						require.Equal(t, resource != "dashboards" && scope == "general", allowed)
+					})
+				}
+			}
+		}
+		for _, verb := range []string{utils.VerbList, utils.VerbWatch} {
+			t.Run(resource+"/"+verb, func(t *testing.T) {
+				s := setupService()
+				ns := types.NamespaceInfo{Value: "default", OrgID: 1}
+				s.folderCache.Set(t.Context(), folderCacheKey(ns.Value), newFolderTree(nil))
+				action := "variables:read"
+				switch resource {
+				case "librarypanels":
+					action = "library.panels:read"
+				case "dashboards":
+					action = "dashboards:read"
+				}
+				result, err := s.listPermission(t.Context(), map[string]bool{"folders:uid:general": true}, &listRequest{Namespace: ns, Group: "dashboard.grafana.app", Resource: resource, Verb: verb, Action: action, Options: &ListRequestOptions{}})
+				require.NoError(t, err)
+				if resource == "dashboards" {
+					require.Empty(t, result.Folders)
+				} else {
+					require.ElementsMatch(t, []string{"", "general"}, result.Folders)
+				}
+			})
+		}
+	}
 }

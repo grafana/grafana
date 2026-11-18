@@ -1,14 +1,14 @@
 import { type TypedVariableModel, type VariableModel } from '@grafana/data';
 import { type SceneObject, SceneVariableSet, sceneGraph } from '@grafana/scenes';
 
-import { DashboardScene } from '../scene/DashboardScene';
+import { isDashboardSceneLike } from '../scene/types/dashboard';
 import { sceneVariablesSetToVariables } from '../serialization/sceneVariablesSetToVariables';
 
 export function getVariablesCompatibility(sceneObject: SceneObject): TypedVariableModel[] {
   // When a panel is being edited, scope variables to that panel's ancestry.
   // This ensures the query editor autocomplete only shows the panel's own
   // section variables + dashboard globals, not variables from other sections.
-  if (sceneObject instanceof DashboardScene && sceneObject.state.editPanel) {
+  if (isDashboardSceneLike(sceneObject) && sceneObject.state.editPanel) {
     const panel = sceneObject.state.editPanel.state.panelRef.resolve();
     // @ts-expect-error
     return collectAncestorVariables(panel);
@@ -17,7 +17,7 @@ export function getVariablesCompatibility(sceneObject: SceneObject): TypedVariab
   // When a scene object is selected in the sidebar (e.g., editing a section variable),
   // scope to that object's ancestry so datasource pickers only show variables from
   // the same section + dashboard globals.
-  if (sceneObject instanceof DashboardScene) {
+  if (isDashboardSceneLike(sceneObject)) {
     const selectedObject = sceneObject.state.sidebar.getSelectedObject();
 
     if (selectedObject) {

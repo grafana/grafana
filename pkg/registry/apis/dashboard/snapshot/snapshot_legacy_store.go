@@ -2,22 +2,27 @@ package snapshot
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"net/url"
 
 	"github.com/open-feature/go-sdk/openfeature"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/apiserver/pkg/util/dryrun"
 
 	dashV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 var (
@@ -29,6 +34,7 @@ type SnapshotLegacyStore struct {
 	Service               dashboardsnapshots.Service
 	Namespacer            request.NamespaceMapper
 	ExternalSnapshotToken string
+	Blobs                 resourcepb.BlobStoreClient
 }
 
 func (s *SnapshotLegacyStore) New() runtime.Object {
@@ -74,23 +80,22 @@ func (s *SnapshotLegacyStore) Delete(ctx context.Context, name string, deleteVal
 		return nil, false, s.ResourceInfo.NewNotFound(name)
 	}
 
-	// Delete the external one first. The stored ExternalDeleteURL may have an outdated
-	// path format (e.g. created with externalSnapshotsK8SAPIPush in the opposite
-	// state), so each branch extracts the host and rebuilds the URL with the
-	// deleteKey in its own expected format.
+	// Delete the external one first. Rebuild old URLs when the configured protocol
+	// changed, but skip a duplicate request only when the effective endpoint matches.
+	completedDeleteURL, _ := ctx.Value(externalSnapshotDeleteURLKey{}).(string)
 	if snap.ExternalDeleteURL != "" {
-		if openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagExternalSnapshotsK8SAPIPush, false, openfeature.TransactionContext(ctx)) {
-			parsed, err := url.Parse(snap.ExternalDeleteURL)
-			if err != nil || parsed.Scheme == "" || parsed.Host == "" {
-				return nil, false, fmt.Errorf("invalid external delete URL: %w", err)
+		kubernetesPush := openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagExternalSnapshotsK8SAPIPush, false, openfeature.TransactionContext(ctx))
+		deleteURL, err := externalSnapshotDeleteEndpoint(snap.ExternalDeleteURL, snap.DeleteKey, kubernetesPush)
+		if err != nil {
+			return nil, false, err
+		}
+		if completedDeleteURL != deleteURL {
+			if kubernetesPush {
+				err = deleteExternalSnapshot(deleteURL, s.ExternalSnapshotToken)
+			} else {
+				err = deleteExternalSnapshotLegacy(deleteURL)
 			}
-			prefix := dashV0.SnapshotResourceInfo.GroupResource().Resource
-			deleteURL := parsed.Scheme + "://" + parsed.Host + "/apis/" + dashV0.GROUP + "/" + dashV0.VERSION + "/namespaces/default/" + prefix + "/delete/" + snap.DeleteKey
-			if err := deleteExternalSnapshot(deleteURL, s.ExternalSnapshotToken); err != nil {
-				return nil, false, err
-			}
-		} else {
-			if err := deleteExternalSnapshotLegacy(snap.ExternalDeleteURL); err != nil {
+			if err != nil {
 				return nil, false, err
 			}
 		}
@@ -125,9 +130,36 @@ func (s *SnapshotLegacyStore) List(ctx context.Context, options *internalversion
 			if snap.OrgID != ns.OrgID {
 				return &dashV0.SnapshotList{}, nil
 			}
-			return &dashV0.SnapshotList{
-				Items: []dashV0.Snapshot{*convertSnapshotToK8sResource(snap, s.Namespacer)},
-			}, nil
+			item, err := convertSnapshotToK8sResource(snap, s.Namespacer)
+			if err != nil {
+				return nil, err
+			}
+			return &dashV0.SnapshotList{Items: []dashV0.Snapshot{*item}}, nil
+		}
+	}
+
+	if options.FieldSelector != nil {
+		if name, found := options.FieldSelector.RequiresExactMatch("metadata.name"); found {
+			snap, err := s.Service.GetDashboardSnapshot(ctx, &dashboardsnapshots.GetDashboardSnapshotQuery{Key: name})
+			if errors.Is(err, dashboardsnapshots.ErrBaseNotFound) || apierrors.IsNotFound(err) {
+				return &dashV0.SnapshotList{}, nil
+			}
+			if err != nil {
+				return nil, err
+			}
+			if snap == nil {
+				return &dashV0.SnapshotList{}, nil
+			}
+			item, err := convertSnapshotToK8sResource(snap, s.Namespacer)
+			if err != nil {
+				return nil, err
+			}
+			// Public key resolution lists across namespaces; ordinary LIST stays org-scoped.
+			namespace := k8srequest.NamespaceValue(ctx)
+			if (namespace != "" && item.Namespace != namespace) || !options.FieldSelector.Matches(SnapshotToSelectableFields(item)) {
+				return &dashV0.SnapshotList{}, nil
+			}
+			return &dashV0.SnapshotList{Items: []dashV0.Snapshot{*item}}, nil
 		}
 	}
 
@@ -177,7 +209,7 @@ func (s *SnapshotLegacyStore) Get(ctx context.Context, name string, options *met
 	}
 
 	if res != nil {
-		return convertSnapshotToK8sResource(res, s.Namespacer), nil
+		return convertSnapshotToK8sResource(res, s.Namespacer)
 	}
 	return nil, s.ResourceInfo.NewNotFound(name)
 }
@@ -196,6 +228,15 @@ func (s *SnapshotLegacyStore) Create(ctx context.Context, obj runtime.Object, cr
 		}
 	}
 
+	if _, err := inlineDashboardContent(snap); err != nil {
+		return nil, apierrors.NewBadRequest(err.Error())
+	}
+	if options != nil && dryrun.IsDryRun(options.DryRun) {
+		result := snap.DeepCopy()
+		redactDashboardInput(result)
+		return result, nil
+	}
+
 	// Get user identity from context
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
@@ -208,7 +249,17 @@ func (s *SnapshotLegacyStore) Create(ctx context.Context, obj runtime.Object, cr
 	}
 
 	// Convert K8s resource to service command
-	cmd := convertK8sResourceToCreateCommand(snap, requester.GetOrgID(), userID)
+	cmd, err := convertK8sResourceToCreateCommand(snap, requester.GetOrgID(), userID)
+	if err != nil {
+		return nil, err
+	}
+	if ref := snap.Blobs.Dashboard; ref != nil && ref.Uid != nil {
+		dashboard, err := loadDashboardContent(ctx, s.Blobs, snap)
+		if err != nil {
+			return nil, err
+		}
+		cmd.Dashboard = &common.Unstructured{Object: dashboard}
+	}
 
 	// Create the snapshot via service
 	result, err := s.Service.CreateDashboardSnapshot(ctx, cmd)
@@ -216,8 +267,14 @@ func (s *SnapshotLegacyStore) Create(ctx context.Context, obj runtime.Object, cr
 		return nil, err
 	}
 
-	// Convert result back to K8s resource
-	return convertSnapshotToK8sResource(result, s.Namespacer), nil
+	// The legacy service encrypts the dashboard and returns an empty inline value.
+	// Preserve the input on the result so the dual writer can copy it to unified storage.
+	created, err := convertSnapshotToK8sResource(result, s.Namespacer)
+	if err != nil {
+		return nil, err
+	}
+	created.Blobs = *snap.Blobs.DeepCopy()
+	return created, nil
 }
 
 // Update implements rest.Updater - snapshots are immutable, so this returns an error

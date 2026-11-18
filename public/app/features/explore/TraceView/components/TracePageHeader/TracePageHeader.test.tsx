@@ -23,9 +23,10 @@ import {
   type PluginExtensionLink,
   PluginExtensionPoints,
   PluginExtensionTypes,
+  type TraceSearchProps,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { usePluginLinks, usePluginComponents, config } from '@grafana/runtime';
+import { usePluginLinks, usePluginComponents, config, reportInteraction } from '@grafana/runtime';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { DEFAULT_SPAN_FILTERS } from 'app/features/explore/state/constants';
 
@@ -95,7 +96,8 @@ const setup = (
   pluginLinks: { links: PluginExtensionLink[]; isLoading: boolean } = { links: [], isLoading: false },
   hideHeaderDetails = false,
   logsLinkModel?: LinkModel,
-  traceOverride = trace
+  traceOverride = trace,
+  overrides: { search?: TraceSearchProps; spanFilterMatches?: Set<string> } = {}
 ) => {
   const mockUsePluginLinks = usePluginLinks as jest.MockedFunction<typeof usePluginLinks>;
   mockUsePluginLinks.mockReturnValue(pluginLinks);
@@ -108,12 +110,13 @@ const setup = (
     app: CoreApp.Unknown,
     trace: traceOverride,
     timeZone: '',
-    search: DEFAULT_SPAN_FILTERS,
+    search: overrides.search ?? DEFAULT_SPAN_FILTERS,
     setSearch: jest.fn(),
     showSpanFilters: true,
     setShowSpanFilters: jest.fn(),
-    spanFilterMatches: undefined,
+    spanFilterMatches: overrides.spanFilterMatches,
     setFocusedSpanIdForSearch: jest.fn(),
+    onGoToSpan: jest.fn(),
     datasourceType: 'tempo',
     setHeaderHeight: jest.fn(),
     data: new MutableDataFrame(),
@@ -130,6 +133,9 @@ const setup = (
     ...render(<TracePageHeader {...defaultProps} />),
     mockUsePluginLinks,
     mockUsePluginComponents,
+    setFocusedSpanIdForSearch: defaultProps.setFocusedSpanIdForSearch,
+    onGoToSpan: defaultProps.onGoToSpan,
+    setSearch: defaultProps.setSearch,
   };
 };
 
@@ -138,6 +144,24 @@ describe('TracePageHeader test', () => {
     jest.clearAllMocks();
     mockWindowOpen.mockClear();
     config.feedbackLinksEnabled = false; // Default to false to avoid interference with tests
+  });
+
+  it('shortens a long trace id in the middle and copies the full id', async () => {
+    const traceId = '0000000000000000000000000009bfab';
+    const longIdTrace = {
+      ...trace,
+      traceID: traceId,
+      spans: trace.spans.map((span) => ({ ...span, traceID: traceId })),
+    };
+
+    setup({ links: [], isLoading: false }, false, undefined, longIdTrace);
+
+    const copyButton = screen.getByRole('button', { name: `Copy trace ID ${traceId}` });
+    expect(copyButton).toHaveTextContent('00000000...9bfab');
+
+    await userEvent.click(copyButton);
+
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith(traceId);
   });
 
   it('shows the span count next to the other header metadata', () => {
@@ -209,11 +233,12 @@ describe('TracePageHeader test', () => {
 
     setup({ links: [], isLoading: false }, false, undefined, errorTrace);
 
-    expect(screen.getByLabelText('Trace has errors')).toBeInTheDocument();
+    expect(screen.getByLabelText('Trace has errors')).toHaveAttribute('data-testid', 'icon-exclamation-circle');
     expect(screen.queryByLabelText('Trace has client errors')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Trace succeeded')).not.toBeInTheDocument();
     expect(screen.getByText('POST')).toBeInTheDocument();
     expect(screen.getByText('500')).toBeInTheDocument();
+    expect(within(screen.getByLabelText('Trace error banner')).getByText('Error: 500')).toBeInTheDocument();
     expect(screen.queryByText('200')).not.toBeInTheDocument();
     expect(screen.getByLabelText('Trace error banner')).toBeInTheDocument();
   });
@@ -237,11 +262,14 @@ describe('TracePageHeader test', () => {
 
     setup({ links: [], isLoading: false }, false, undefined, warningTrace);
 
-    expect(screen.getByLabelText('Trace has client errors')).toBeInTheDocument();
+    expect(screen.getByLabelText('Trace has client errors')).toHaveAttribute(
+      'data-testid',
+      'icon-exclamation-triangle'
+    );
     expect(screen.queryByLabelText('Trace has errors')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Trace succeeded')).not.toBeInTheDocument();
     expect(screen.getByText('404')).toBeInTheDocument();
-    expect(screen.getByLabelText('Trace warning banner')).toBeInTheDocument();
+    expect(within(screen.getByLabelText('Trace warning banner')).getByText('Warning: 404')).toBeInTheDocument();
     expect(screen.queryByLabelText('Trace error banner')).not.toBeInTheDocument();
   });
 
@@ -358,8 +386,139 @@ describe('TracePageHeader test', () => {
     const banner = screen.getByLabelText('Trace error banner');
     expect(within(banner).getByText('payment-service')).toBeInTheDocument();
     expect(within(banner).getByText('POST /payments/authorize')).toBeInTheDocument();
-    expect(within(banner).getByText('1.42s · 58.9% of trace')).toBeInTheDocument();
+    expect(within(banner).getByText('1.42 s · 58.9% of trace')).toBeInTheDocument();
+    expect(within(banner).getByRole('button', { name: 'Go to span' })).toBeInTheDocument();
     expect(within(banner).queryByText('checkout-service')).not.toBeInTheDocument();
+  });
+
+  it('shows a span too short to round to 0.1% as an unescaped "<0.1%"', () => {
+    const errorTraceId = 'tiny-span-trace-id';
+    const errorTrace = {
+      ...trace,
+      traceID: errorTraceId,
+      duration: 5_000_000,
+      spans: [
+        {
+          ...trace.spans[0],
+          traceID: errorTraceId,
+          spanID: 'root-error',
+          depth: 0,
+          duration: 5_000_000,
+          tags: [{ key: 'http.status_code', type: 'String', value: '500' }],
+        },
+        {
+          ...trace.spans[1],
+          traceID: errorTraceId,
+          spanID: 'tiny-error',
+          depth: 1,
+          duration: 811,
+          tags: [{ key: 'error', type: 'String', value: 'true' }],
+        },
+      ],
+    };
+
+    setup({ links: [], isLoading: false }, false, undefined, errorTrace);
+
+    const banner = screen.getByLabelText('Trace error banner');
+    expect(within(banner).getByText('811 μs · <0.1% of trace')).toBeInTheDocument();
+  });
+
+  it('asks to go to the highlighted span and reports the click on every Go to span click, including repeats', async () => {
+    const errorTraceId = 'go-to-span-trace-id';
+    const errorTrace = {
+      ...trace,
+      traceID: errorTraceId,
+      duration: 2_410_000,
+      spans: [
+        {
+          ...trace.spans[0],
+          traceID: errorTraceId,
+          spanID: 'root-error',
+          depth: 0,
+          duration: 2_410_000,
+          tags: [{ key: 'http.status_code', type: 'String', value: '500' }],
+        },
+        {
+          ...trace.spans[1],
+          traceID: errorTraceId,
+          spanID: 'payment-error',
+          depth: 2,
+          duration: 1_420_000,
+          operationName: 'authorize',
+          process: { ...trace.spans[1].process, serviceName: 'payment-service' },
+          tags: [
+            { key: 'http.method', type: 'String', value: 'POST' },
+            { key: 'http.route', type: 'String', value: '/payments/authorize' },
+            { key: 'error', type: 'String', value: 'true' },
+          ],
+        },
+      ],
+    };
+
+    const { onGoToSpan } = setup({ links: [], isLoading: false }, false, undefined, errorTrace);
+    const goToSpan = screen.getByRole('button', { name: 'Go to span' });
+
+    await userEvent.click(goToSpan);
+    await userEvent.click(goToSpan);
+
+    expect(onGoToSpan).toHaveBeenCalledTimes(2);
+    expect(onGoToSpan).toHaveBeenCalledWith('payment-error');
+    expect(jest.mocked(reportInteraction)).toHaveBeenCalledTimes(2);
+    expect(jest.mocked(reportInteraction)).toHaveBeenCalledWith('grafana_traces_trace_view_go_to_span_clicked', {
+      app: CoreApp.Unknown,
+      datasourceType: 'tempo',
+      grafana_version: config.buildInfo.version,
+      location: 'trace-banner',
+    });
+  });
+
+  it('reports opening and closing the banner exception details', async () => {
+    const errorTraceId = 'exception-banner-trace-id';
+    const errorTrace = {
+      ...trace,
+      traceID: errorTraceId,
+      spans: [
+        {
+          ...trace.spans[0],
+          traceID: errorTraceId,
+          spanID: 'timeout-error',
+          tags: [
+            { key: 'http.status_code', type: 'String', value: '504' },
+            { key: 'exception.type', type: 'String', value: 'java.lang.TimeoutException' },
+          ],
+        },
+      ],
+    };
+
+    setup({ links: [], isLoading: false }, false, undefined, errorTrace);
+
+    const toggle = screen.getByTestId(selectors.components.TraceViewer.traceBanner.toggleButton);
+    await userEvent.click(toggle);
+    await userEvent.click(toggle);
+
+    expect(jest.mocked(reportInteraction)).toHaveBeenCalledTimes(2);
+    expect(jest.mocked(reportInteraction)).toHaveBeenNthCalledWith(
+      1,
+      'grafana_traces_trace_view_banner_exception_toggled',
+      {
+        app: CoreApp.Unknown,
+        datasourceType: 'tempo',
+        grafana_version: config.buildInfo.version,
+        location: 'trace-banner',
+        isOpen: true,
+      }
+    );
+    expect(jest.mocked(reportInteraction)).toHaveBeenNthCalledWith(
+      2,
+      'grafana_traces_trace_view_banner_exception_toggled',
+      {
+        app: CoreApp.Unknown,
+        datasourceType: 'tempo',
+        grafana_version: config.buildInfo.version,
+        location: 'trace-banner',
+        isOpen: false,
+      }
+    );
   });
 
   it('should render the trace-level logs link when provided', () => {
@@ -727,7 +886,7 @@ describe('TracePageHeader test', () => {
       setup({ links: [], isLoading: false }, false);
 
       expect(screen.getByText('Trace ID')).toBeInTheDocument();
-      expect(screen.getByText('Start time')).toBeInTheDocument();
+      expect(screen.getByText('Start')).toBeInTheDocument();
       expect(screen.getByText('Duration')).toBeInTheDocument();
       expect(screen.getByText('Services')).toBeInTheDocument();
       expect(screen.getByText('Spans')).toBeInTheDocument();

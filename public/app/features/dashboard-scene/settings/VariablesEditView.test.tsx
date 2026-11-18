@@ -1,8 +1,6 @@
-import { OpenFeatureProvider } from '@openfeature/react-sdk';
-import { render as RTLRender } from '@testing-library/react';
-import * as React from 'react';
+import { act, cleanup } from '@testing-library/react';
 import { of } from 'rxjs';
-import { TestProvider } from 'test/helpers/TestProvider';
+import { render, userEvent, waitFor } from 'test/test-utils';
 
 import {
   FieldType,
@@ -13,11 +11,11 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
-import { setPluginImportUtils, setRunRequest } from '@grafana/runtime';
+import { locationService, setPluginImportUtils, setRunRequest } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { SceneVariableSet, CustomVariable, VizPanel, AdHocFiltersVariable, SceneTimeRange } from '@grafana/scenes';
-import { setTestFlags } from '@grafana/test-utils/unstable';
-import { mockDataSource } from 'app/features/alerting/unified/mocks';
+import { setTestFlags, testWithFlags } from '@grafana/test-utils/unstable';
+import { mockDataSource } from 'app/features/alerting/unified/testSetup/mockDataSource';
 import { LegacyVariableQueryEditor } from 'app/features/variables/editor/LegacyVariableQueryEditor';
 
 import { DashboardScene } from '../scene/DashboardScene';
@@ -25,14 +23,7 @@ import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLay
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { VariablesEditView } from './VariablesEditView';
-
-function render(component: React.ReactNode) {
-  return RTLRender(
-    <TestProvider>
-      <OpenFeatureProvider>{component}</OpenFeatureProvider>
-    </TestProvider>
-  );
-}
+import { VariablesEditViewRenderer } from './VariablesEditViewRenderer';
 
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
@@ -229,13 +220,26 @@ describe('VariablesEditView', () => {
     let variableView: VariablesEditView;
 
     beforeEach(async () => {
+      // New layouts plus the settings redesign replace this list with a sidebar redirect.
+      // setTestFlags replaces the whole config, so keep the redesign flag from beforeAll.
+      setTestFlags({
+        [FlagKeys.GrafanaDashboardSettingsRedesign]: false,
+        dashboardNewLayouts: false,
+      });
       const result = await buildTestScene();
       variableView = result.variableView;
     });
 
-    it('should not show Provisioned by data source section when no variables have origin', () => {
-      const { queryByText } = render(<variableView.Component model={variableView} />);
+    afterEach(() => {
+      act(() => {
+        setTestFlags({ [FlagKeys.GrafanaDashboardSettingsRedesign]: false });
+      });
+    });
 
+    it('should not show Provisioned by data source section when no variables have origin', async () => {
+      const { findByText, queryByText } = render(<variableView.Component model={variableView} />);
+
+      expect(await findByText('customVar')).toBeInTheDocument();
       expect(queryByText('Provisioned by data source')).not.toBeInTheDocument();
     });
 
@@ -251,9 +255,9 @@ describe('VariablesEditView', () => {
       });
       variableView.getVariableSet().setState({ variables: [...variables, originVariable] });
 
-      const { getByText } = render(<variableView.Component model={variableView} />);
+      const { findByText } = render(<variableView.Component model={variableView} />);
 
-      expect(getByText('Provisioned by data source')).toBeInTheDocument();
+      expect(await findByText('Provisioned by data source')).toBeInTheDocument();
     });
   });
 
@@ -362,3 +366,54 @@ async function buildTestScene() {
 
   return { dashboard, variableView };
 }
+
+function renderSidebarRedirect() {
+  const view = new VariablesEditView({});
+  const dashboard = new DashboardScene({
+    isEditing: true,
+    editview: view,
+    $variables: new SceneVariableSet({ variables: [] }),
+  });
+  const user = userEvent.setup();
+  const result = render(<VariablesEditViewRenderer model={view} />);
+  const elements = {
+    takeMeThere: () => result.getByRole('button', { name: 'Take me there' }),
+  };
+
+  return {
+    ...result,
+    dashboard,
+    user,
+    elements,
+    actions: {
+      async goToSidebar() {
+        await user.click(elements.takeMeThere());
+      },
+    },
+  };
+}
+
+describe.each([true, false])('VariablesEditView with explicit sidebar opening %s', (explicitOpen) => {
+  afterEach(cleanup);
+
+  testWithFlags({
+    dashboardNewLayouts: true,
+    [FlagKeys.GrafanaDashboardSettingsRedesign]: true,
+    [FlagKeys.GrafanaDashboardSidebarExplicitOpen]: explicitOpen,
+  });
+
+  it('when clicking Take me there with the sidebar closed, opens dashboard settings at variables', async () => {
+    const { dashboard, actions } = renderSidebarRedirect();
+    const sidebar = dashboard.state.sidebar;
+    expect(sidebar.state.openPane).toBeUndefined();
+
+    await actions.goToSidebar();
+
+    await waitFor(() => expect(sidebar.state.openPane?.getId()).toBe('element'));
+    expect(sidebar.getSelectedObject()).toBe(dashboard);
+    expect(locationService.getSearchObject()).toMatchObject({
+      showCategory: 'dashboard-variables',
+      highlightCategory: 'dashboard-variables',
+    });
+  });
+});

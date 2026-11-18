@@ -27,6 +27,7 @@ type TagItem struct {
 
 func newTagsHandler(
 	tagProvider TagProvider,
+	tracer trace.Tracer,
 	accessClient authtypes.AccessClient,
 	metrics *Metrics,
 	logger log.Logger,
@@ -39,7 +40,10 @@ func newTagsHandler(
 		))
 		defer span.End()
 		start := time.Now()
-		defer func() { observe(ctx, logger, metrics.RequestDuration, "tags", start, err) }()
+		defer func() {
+			err = toAPIError(err, "")
+			observe(ctx, logger, metrics.RequestDuration, "tags", start, err)
+		}()
 
 		// Tags are an org-wide aggregate, so gate the request on org-level
 		// annotation read before exposing any tag metadata.

@@ -63,14 +63,15 @@ export function createTraceLogsLink({
       // If multiple queries are returned, use the first query to respect the interface.
       // LogsLink will then try to figure out which query to use and uppdate the link.
       // Otherwise, non-array, will use the legacy behavior.
-      query: Array.isArray(query) ? query[0] : query,
+      query: {
+        ...(Array.isArray(query) ? query[0] : query),
+        datasource: { type: logsDataSourceSettings.type, uid: logsDataSourceSettings.uid },
+      },
       range: getTimeRangeFromTrace(
         trace,
         {
-          startMs: traceToLogsOptions.spanStartTimeShift
-            ? rangeUtil.intervalToMs(traceToLogsOptions.spanStartTimeShift)
-            : 0,
-          endMs: traceToLogsOptions.spanEndTimeShift ? rangeUtil.intervalToMs(traceToLogsOptions.spanEndTimeShift) : 0,
+          startMs: timeShiftToMs(traceToLogsOptions.spanStartTimeShift),
+          endMs: timeShiftToMs(traceToLogsOptions.spanEndTimeShift),
         },
         isSplunkDS
       ),
@@ -121,20 +122,38 @@ export function createTraceLogsLink({
       })) ||
     link;
 
-  if (Array.isArray(query)) {
-    link.interpolatedParams = {
-      ...link.interpolatedParams,
-      alternativeQueries: interpolateQueries(query, scopedVars, replaceVariables).map((query) => ({
+  if (Array.isArray(query) && link.interpolatedParams) {
+    link.interpolatedParams.alternativeQueries = interpolateQueries(query, scopedVars, replaceVariables).map(
+      (query) => ({
         ...query,
-        datasource: { uid: logsDataSourceSettings.uid },
-      })),
-    };
+        datasource: { type: logsDataSourceSettings.type, uid: logsDataSourceSettings.uid },
+      })
+    );
   }
 
   return {
     ...link,
     title: getLogsButtonCTA(traceDataSourceSettings, 'trace'),
   };
+}
+
+/**
+ * Converts a configured span time shift to milliseconds. An invalid shift is treated as unset so it cannot break
+ * building links.
+ */
+export function timeShiftToMs(shift: string | undefined, defaultMs = 0): number {
+  if (!shift?.trim()) {
+    return defaultMs;
+  }
+  // rangeUtil.intervalToMs reads a unit-less number as seconds but rejects a unit-less 0, which the editor suggests.
+  if (Number(shift) === 0) {
+    return 0;
+  }
+  try {
+    return rangeUtil.intervalToMs(shift);
+  } catch {
+    return defaultMs;
+  }
 }
 
 /**

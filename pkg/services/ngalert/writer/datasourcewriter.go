@@ -39,7 +39,27 @@ type backendType string
 const (
 	grafanaCloudPromType backendType = "grafanacloud-prom"
 	prometheusType       backendType = "prometheus"
+	amazonPrometheusType backendType = "amazon-prometheus"
 )
+
+const (
+	// amazonPrometheusRemoteWritePath is appended to an Amazon Managed Prometheus
+	// workspace URL to form the remote write endpoint.
+	amazonPrometheusRemoteWritePath = "/api/v1/remote_write"
+
+	// amazonPrometheusSigV4Service is the AWS service namespace used to sign
+	// Amazon Managed Prometheus requests. It matches the value Grafana's core
+	// data source service derives for this type.
+	amazonPrometheusSigV4Service = "aps"
+)
+
+// supportedRemoteWriteTypes is the set of data source types that recording rules
+// can write to. In addition to core Prometheus, the purpose-built Amazon Managed
+// Prometheus data source plugin is supported.
+var supportedRemoteWriteTypes = map[string]bool{
+	datasources.DS_PROMETHEUS:        true,
+	datasources.DS_AMAZON_PROMETHEUS: true,
+}
 
 type DatasourceWriterConfig struct {
 	// Timeout is the maximum time to wait for a remote write to succeed.
@@ -53,6 +73,13 @@ type DatasourceWriterConfig struct {
 	// CustomHeaders is a map of optional custom HTTP headers
 	// to include in recording rule write requests.
 	CustomHeaders map[string]string
+
+	// MaxBatchSize splits a write larger than this many (estimated) bytes into
+	// several requests. 0 never splits.
+	MaxBatchSize int
+	// MaxWriteConcurrency bounds how many split requests run in parallel.
+	// Ignored if MaxBatchSize is 0. 0 defaults to 1 (sequential).
+	MaxWriteConcurrency int
 }
 
 type PluginContextProvider interface {
@@ -121,6 +148,14 @@ func getRemoteWriteURL(ds *datasources.DataSource) (*url.URL, error) {
 		return nil, err
 	}
 
+	// Amazon Managed Prometheus: the data source URL points at the workspace root
+	// (e.g. https://aps-workspaces.<region>.amazonaws.com/workspaces/<ws-id>), so the
+	// remote write path is appended directly. The generic Mimir/Cortex handling below
+	// would drop the /workspaces/<ws-id> prefix, so AMP must be handled explicitly.
+	if ds.Type == datasources.DS_AMAZON_PROMETHEUS {
+		return u.JoinPath(amazonPrometheusRemoteWritePath), nil
+	}
+
 	if getPrometheusType(ds) == "Prometheus" {
 		return u.JoinPath("/api/v1/write"), nil
 	}
@@ -176,8 +211,9 @@ func (w *DatasourceWriter) makeWriter(ctx context.Context, orgID int64, dsUID st
 		return nil, err
 	}
 
-	if ds.Type != datasources.DS_PROMETHEUS {
-		return nil, errors.New("can only write to data sources of type prometheus")
+	if !supportedRemoteWriteTypes[ds.Type] {
+		return nil, fmt.Errorf("can only write to data sources of type prometheus "+
+			"or amazon managed prometheus, but got %q", ds.Type)
 	}
 
 	is, err := adapters.ModelToInstanceSettings(ds, w.decrypt)
@@ -227,10 +263,24 @@ func (w *DatasourceWriter) makeWriter(ctx context.Context, orgID int64, dsUID st
 	}
 
 	var backend backendType
-	if dsUID == string(grafanaCloudPromType) {
+	switch {
+	case dsUID == string(grafanaCloudPromType):
 		backend = grafanaCloudPromType
-	} else {
+	case ds.Type == datasources.DS_AMAZON_PROMETHEUS:
+		backend = amazonPrometheusType
+	default:
 		backend = prometheusType
+	}
+
+	// The SDK's HTTPClientOptions never populates SigV4.Service; only Grafana's
+	// core data source service sets it (via awsServiceNamespace). The AWS signer
+	// uses the service name verbatim with no default, so leaving it empty
+	// produces a signature AWS rejects with 403. Set it explicitly for AMP.
+	sigV4 := ho.SigV4
+	if sigV4 != nil && ds.Type == datasources.DS_AMAZON_PROMETHEUS && sigV4.Service == "" {
+		sigV4Copy := *sigV4
+		sigV4Copy.Service = amazonPrometheusSigV4Service
+		sigV4 = &sigV4Copy
 	}
 
 	cfg := PrometheusWriterConfig{
@@ -241,9 +291,18 @@ func (w *DatasourceWriter) makeWriter(ctx context.Context, orgID int64, dsUID st
 			BasicAuth:    ho.BasicAuth,
 			Header:       headers,
 			ProxyOptions: ho.ProxyOptions,
+			// SigV4 is required for Amazon Managed Prometheus, which only accepts
+			// SigV4-signed remote_write requests. CustomOptions and Middlewares carry
+			// plugin-specific auth (e.g. the AMP data source plugin) that must
+			// reach the writer's HTTP client for signing to work.
+			SigV4:         sigV4,
+			CustomOptions: ho.CustomOptions,
+			Middlewares:   ho.Middlewares,
 		},
-		Timeout:     w.cfg.Timeout,
-		BackendType: backend,
+		Timeout:             w.cfg.Timeout,
+		BackendType:         backend,
+		MaxBatchSize:        w.cfg.MaxBatchSize,
+		MaxWriteConcurrency: w.cfg.MaxWriteConcurrency,
 	}
 	if err != nil {
 		return nil, err
@@ -270,10 +329,11 @@ func uidKey(orgID int64, uid string) string {
 	return fmt.Sprintf("%d-%s", orgID, uid)
 }
 
-func (w *DatasourceWriter) WriteDatasource(ctx context.Context, dsUID string, name string, t time.Time, frames data.Frames, orgID int64, extraLabels map[string]string) error {
+// getWriter falls back to the default data source when dsUID is empty.
+func (w *DatasourceWriter) getWriter(ctx context.Context, dsUID string, orgID int64) (*PrometheusWriter, error) {
 	if dsUID == "" {
 		if w.cfg.DefaultDatasourceUID == "" {
-			return errors.New("data source uid not specified and no default set")
+			return nil, errors.New("data source uid not specified and no default set")
 		}
 		dsUID = w.cfg.DefaultDatasourceUID
 		w.l.Debug("Using default data source for remote write",
@@ -282,26 +342,40 @@ func (w *DatasourceWriter) WriteDatasource(ctx context.Context, dsUID string, na
 
 	key := uidKey(orgID, dsUID)
 
-	var writer *PrometheusWriter
-
 	val, ok := w.writers.Get(key)
 	if ok {
-		var ok bool
-		writer, ok = val.(*PrometheusWriter)
+		writer, ok := val.(*PrometheusWriter)
 		if !ok {
-			return errors.New("type in cache not a Writer")
+			return nil, errors.New("type in cache not a Writer")
 		}
-	} else {
-		var err error
-		writer, err = w.makeWriter(ctx, orgID, dsUID)
-		if err != nil {
-			w.l.Error("Failed to create writer for data source",
-				"org_id", orgID, "datasource_uid", dsUID)
-			return err
-		}
+		return writer, nil
+	}
 
-		w.writers.Set(key, writer, 0)
+	writer, err := w.makeWriter(ctx, orgID, dsUID)
+	if err != nil {
+		w.l.Error("Failed to create writer for data source",
+			"org_id", orgID, "datasource_uid", dsUID)
+		return nil, err
+	}
+
+	w.writers.Set(key, writer, 0)
+	return writer, nil
+}
+
+func (w *DatasourceWriter) WriteDatasource(ctx context.Context, dsUID string, name string, t time.Time, frames data.Frames, orgID int64, extraLabels map[string]string) error {
+	writer, err := w.getWriter(ctx, dsUID, orgID)
+	if err != nil {
+		return err
 	}
 
 	return writer.Write(ctx, name, t, frames, orgID, extraLabels)
+}
+
+func (w *DatasourceWriter) WriteStale(ctx context.Context, dsUID string, name string, t time.Time, orgID int64, labelSets []map[string]string) error {
+	writer, err := w.getWriter(ctx, dsUID, orgID)
+	if err != nil {
+		return err
+	}
+
+	return writer.WriteStale(ctx, name, t, orgID, labelSets)
 }

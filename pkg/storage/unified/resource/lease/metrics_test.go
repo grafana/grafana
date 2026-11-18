@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sync/atomic"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -146,25 +147,32 @@ func TestMetricsLossOnExpiry(t *testing.T) {
 }
 
 func TestMetricsRenewalSuccess(t *testing.T) {
-	const ttl = 100 * time.Millisecond
+	synctest.Test(t, func(t *testing.T) {
+		const ttl = 100 * time.Millisecond
 
-	m := lease.NewManager(newMapKV(), "holder-renew", "test", prometheus.NewPedanticRegistry(),
-		lease.WithGarbageCollectionDisabled,
-		lease.WithInternalMinTTL(ttl),
-	)
-	metrics := m.Metrics()
+		m := lease.NewManager(newMapKV(), "holder-renew", "test", prometheus.NewPedanticRegistry(),
+			lease.WithGarbageCollectionDisabled,
+			lease.WithInternalMinTTL(ttl),
+		)
+		metrics := m.Metrics()
 
-	l, err := m.Acquire(t.Context(), "metrics/renew", lease.WithTTL(ttl), lease.WithAutoRenew())
-	require.NoError(t, err)
+		l, err := m.Acquire(t.Context(), "metrics/renew", lease.WithTTL(ttl), lease.WithAutoRenew())
+		require.NoError(t, err)
 
-	// renewInterval = ttl/3, so we should see at least one renewal quickly.
-	require.Eventually(t, func() bool {
-		return testutil.ToFloat64(metrics.RenewalsTotal) >= 1
-	}, ttl*5, ttl/3)
+		// renewInterval = ttl/3, so we should see at least one renewal quickly.
 
-	require.NoError(t, m.Release(t.Context(), l))
+		// Let auto-renewal register its timer before advancing to the first renewal.
+		synctest.Wait()
 
-	requireNoLosses(t, metrics)
+		// Renew the lease once at its TTL/3 interval before releasing it.
+		synctest.Sleep(ttl / 3)
+
+		require.Equal(t, float64(1), testutil.ToFloat64(metrics.RenewalsTotal))
+
+		require.NoError(t, m.Release(t.Context(), l))
+
+		requireNoLosses(t, metrics)
+	})
 }
 
 func TestMetricsRenewalFailureLost(t *testing.T) {

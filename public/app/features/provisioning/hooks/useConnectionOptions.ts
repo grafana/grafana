@@ -7,6 +7,7 @@ import { useLazyGetConnectionRepositoriesQuery } from 'app/api/clients/provision
 
 import { type GitHubBasedConnectionType } from '../Wizard/types';
 import { type ExternalRepository, type OAuthConnectionType } from '../types';
+import { canListRepositories } from '../utils/connectionOAuth';
 import { isConnectionReady } from '../utils/connectionStatus';
 import { formatRepoUrl } from '../utils/git';
 
@@ -30,7 +31,7 @@ export function useConnectionOptions(
   const connectionNames = useMemo(
     () =>
       githubConnections
-        .filter((c) => isConnectionReady(c.status))
+        .filter((c) => isConnectionReady(c.status) && canListRepositories(c.spec?.type))
         .map((conn) => conn.metadata?.name)
         .filter((name): name is string => Boolean(name)),
     [githubConnections]
@@ -79,6 +80,10 @@ export function useConnectionOptions(
 
       if (connDescription) {
         descriptionParts.push(connDescription);
+      }
+
+      if (!canListRepositories(conn.spec?.type)) {
+        return { value: name, label: title, description: descriptionParts.join(' · ') };
       }
 
       if (reposLoading || !reposByConnection) {

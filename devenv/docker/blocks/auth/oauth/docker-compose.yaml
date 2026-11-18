@@ -21,6 +21,9 @@
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
       PROXY_ADDRESS_FORWARDING: "true"
+      # Keeps the token issuer stable when Grafana reaches Keycloak through a different host than the browser.
+      KC_HOSTNAME_URL: http://localhost:8087
+      KC_HOSTNAME_STRICT_BACKCHANNEL: "false"
     ports:
       - 8087:8080
     depends_on:

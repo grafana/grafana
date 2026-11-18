@@ -15,75 +15,6 @@ labels:
 title: Labels and annotations template examples
 menuTitle: Examples
 weight: 102
-refs:
-  shared-dynamic-label-example:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/dynamic-labels/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/best-practices/dynamic-labels/
-  labels:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/#labels
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label/#labels
-  annotations:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/#annotations
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label/#annotations
-  alert-rule-templates:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/
-    - pattern: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/
-  reference:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/reference/
-  reference-labels:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/#labels
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/reference/#labels
-  reference-values:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/#values
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/reference/#values
-  reference-humanize:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/#humanize
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/reference/#humanize
-  reference-humanizepercentage:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/#humanizepercentage
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/reference/#humanizepercentage
-  reference-match:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/#match
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/reference/#match
-  reference-functions:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/#functions
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/reference/#functions
-  language-functions:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/language/#functions
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/language/#functions
-  language-index:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/language/#functions
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/language/#functions
-  language:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/language
-    - pattern: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/language
 ---
 
 # Labels and annotations template examples
@@ -92,23 +23,23 @@ Templating allows you to add dynamic data from queries to alert labels and annot
 
 This page provides common examples for templating labels and annotations. For more information on templating, refer to:
 
-- [Template annotations and labels](ref:alert-rule-templates)
-- [Annotation and label template reference](ref:reference)
-- [Alerting template language](ref:language)
+- [Template annotations and labels](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/)
+- [Annotation and label template reference](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/)
+- [Alerting template language](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/language)
 
 ## Annotation example
 
-[Annotations](ref:annotations) add extra details to alert instances and are often used to provide helpful information for identifying the issue and guiding the response.
+[Annotations](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/#annotations) add extra details to alert instances and are often used to provide helpful information for identifying the issue and guiding the response.
 
 A common use case for annotations is to display the specific query value or threshold that triggered the alert.
 
-For example, you can display the query value from the [`$values`](ref:reference-values) variable to inform about the CPU value that triggered the alert.
+For example, you can display the query value from the [`$values`](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/#values) variable to inform about the CPU value that triggered the alert.
 
 ```
 CPU usage has exceeded 80% ({{ $values.A.value }}) for the last 5 minutes.
 ```
 
-Alternatively, you can use the [`index()`](ref:language-index) function to retrieve the query value as follows.
+Alternatively, you can use the [`index()`](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/language/#functions) function to retrieve the query value as follows.
 
 ```
 CPU usage has exceeded 80% ({{ index $values "A" }}) for the last 5 minutes.
@@ -120,7 +51,7 @@ CPU usage has exceeded 80% (81.2345) for the last 5 minutes.
 
 ### Include labels for extra details
 
-To provide additional context, you can include labels from the query using the [`$labels`](ref:reference-labels) variable.
+To provide additional context, you can include labels from the query using the [`$labels`](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/#labels) variable.
 
 For instance, the previous case could also include the affected `instance`.
 
@@ -158,7 +89,7 @@ For range queries, reduce them from a time series to an instant vector using a r
 
 ### Humanize the value of a query
 
-To print the humanized value of an instant query, use the [`humanize`](ref:reference-humanize) function:
+To print the humanized value of an instant query, use the [`humanize`](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/#humanize) function:
 
 ```
 {{ humanize $values.A.Value }}
@@ -174,7 +105,7 @@ Alternatively:
 554.9
 ```
 
-To print the value of an instant query as a percentage, use the [`humanizePercentage`](ref:reference-humanizepercentage) function:
+To print the value of an instant query as a percentage, use the [`humanizePercentage`](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/#humanizepercentage) function:
 
 ```
 {{ humanizePercentage $values.A.Value }}
@@ -186,12 +117,12 @@ To print the value of an instant query as a percentage, use the [`humanizePercen
 
 For additional functions to display or format data, refer to:
 
-- [Annotation and label template functions](ref:reference-functions)
-- [Template language functions](ref:language-functions)
+- [Annotation and label template functions](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/#functions)
+- [Template language functions](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/language/#functions)
 
 ## Label example
 
-[Labels](ref:labels) determine how alerts are routed and managed, ensuring that notifications reach the right teams at the right time. If the labels returned by your queries don’t fully capture the necessary context, you can create a new label and sets its value based on query data.
+[Labels](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/#labels) determine how alerts are routed and managed, ensuring that notifications reach the right teams at the right time. If the labels returned by your queries don’t fully capture the necessary context, you can create a new label and sets its value based on query data.
 
 ### Based on query value
 
@@ -217,7 +148,7 @@ You can then use the `severity` label to control how alerts are handled. For ins
 > **Note:** An alert instance is uniquely identified by its set of labels.
 >
 > - Avoid displaying query values in labels, as this can create numerous alert instances—one for each distinct label set. Instead, use annotations for query values.
-> - If a templated label's value changes, it maps to a different alert instance, and the previous instance is considered **stale**. Learn all the details in this [example using dynamic labels](ref:shared-dynamic-label-example).
+> - If a templated label's value changes, it maps to a different alert instance, and the previous instance is considered **stale**. Learn all the details in this [example using dynamic labels](/docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/dynamic-labels/).
 
 [//]: <> ({{< docs/shared lookup="alerts/note-dynamic-labels.md" source="grafana" version="<GRAFANA_VERSION>" >}})
 
@@ -241,7 +172,7 @@ This would print:
 - For `staging-server-1`, the label would be `staging`.
 - All other instances would be labeled `development`.
 
-To make this template more flexible, you can use a regular expression that matches the instance name with the instance name prefix using the [`match()`](ref:reference-match) function:
+To make this template more flexible, you can use a regular expression that matches the instance name with the instance name prefix using the [`match()`](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/#match) function:
 
 ```go
 {{- if match "^prod-server-.*" $labels.instance -}}

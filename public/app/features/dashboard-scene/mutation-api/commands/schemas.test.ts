@@ -1,3 +1,5 @@
+import * as z from 'zod/mini';
+
 import { FieldMatcherID } from '@grafana/data';
 
 import { payloads } from './schemas';
@@ -52,6 +54,63 @@ describe('variable payloads require a non-empty name', () => {
     expect(named.success).toBe(true);
     const blank = payloads.updateTab.safeParse({ path: '/tabs/0', spec: { variables: [variable('')] } });
     expect(blank.success).toBe(false);
+  });
+});
+
+// Structurally valid: GroupByVariable is still a v2 spec kind, so only the payload rule rejects it.
+function groupByVariable(name: string) {
+  return { kind: 'GroupByVariable', group: 'prometheus', datasource: { name: 'prom' }, spec: { name } };
+}
+
+describe('variable payloads reject the deprecated GroupByVariable kind', () => {
+  it.each([
+    ['ADD_VARIABLE', () => payloads.addVariable.safeParse({ variable: groupByVariable('groupBy') })],
+    [
+      'UPDATE_VARIABLE',
+      () => payloads.updateVariable.safeParse({ name: 'groupBy', variable: groupByVariable('groupBy') }),
+    ],
+    ['ADD_ROW', () => payloads.addRow.safeParse({ row: { spec: { variables: [groupByVariable('groupBy')] } } })],
+    [
+      'UPDATE_ROW',
+      () => payloads.updateRow.safeParse({ path: '/rows/0', spec: { variables: [groupByVariable('groupBy')] } }),
+    ],
+    ['ADD_TAB', () => payloads.addTab.safeParse({ tab: { spec: { variables: [groupByVariable('groupBy')] } } })],
+    [
+      'UPDATE_TAB',
+      () => payloads.updateTab.safeParse({ path: '/tabs/0', spec: { variables: [groupByVariable('groupBy')] } }),
+    ],
+  ])('%s points to enableGroupBy on an AdhocVariable', (_command, parse) => {
+    const result = parse();
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues.map((issue) => issue.message)).toContainEqual(
+      expect.stringContaining('AdhocVariable with spec.enableGroupBy: true')
+    );
+  });
+
+  it('names the replacement even when the GroupByVariable payload is incomplete', () => {
+    const result = payloads.addVariable.safeParse({ variable: { kind: 'GroupByVariable', spec: { name: 'groupBy' } } });
+
+    expect(result.error?.issues).toEqual([
+      expect.objectContaining({
+        path: ['variable', 'kind'],
+        message: expect.stringContaining('AdhocVariable with spec.enableGroupBy: true'),
+      }),
+    ]);
+  });
+
+  it.each([
+    ['ADD_VARIABLE', payloads.addVariable],
+    ['UPDATE_VARIABLE', payloads.updateVariable],
+    ['ADD_ROW', payloads.addRow],
+    ['UPDATE_ROW', payloads.updateRow],
+    ['ADD_TAB', payloads.addTab],
+    ['UPDATE_TAB', payloads.updateTab],
+  ])('%s no longer advertises GroupByVariable in its JSON schema', (_command, schema) => {
+    const jsonSchema = JSON.stringify(z.toJSONSchema(schema));
+
+    expect(jsonSchema).toContain('AdhocVariable');
+    expect(jsonSchema).not.toContain('GroupByVariable');
   });
 });
 
@@ -111,6 +170,48 @@ describe('fieldConfigSchema matcher validation', () => {
     });
 
     expect(result.success).toBe(false);
+  });
+});
+
+describe('transformation refId', () => {
+  function transformation(spec: Record<string, unknown>) {
+    return { kind: 'Transformation', group: 'limit', spec };
+  }
+
+  function parseUpdatePanelTransformation(spec: Record<string, unknown>) {
+    const result = payloads.updatePanel.safeParse({
+      element: { name: 'panel-1' },
+      panel: { spec: { data: { spec: { transformations: [transformation(spec)] } } } },
+    });
+    if (!result.success) {
+      throw new Error(`expected parse success: ${result.error.message}`);
+    }
+    return result.data.panel!.spec.data!.spec.transformations![0].spec;
+  }
+
+  it('keeps a user-set refId on UPDATE_PANEL', () => {
+    expect(parseUpdatePanelTransformation({ refId: 'T1', options: { limitField: 10 } }).refId).toBe('T1');
+  });
+
+  it('leaves refId unset when the caller omits it', () => {
+    expect(parseUpdatePanelTransformation({ options: {} }).refId).toBeUndefined();
+  });
+
+  it('keeps a user-set refId on ADD_PANEL', () => {
+    const result = payloads.addPanel.safeParse({
+      panel: {
+        spec: {
+          title: 'Transform panel',
+          data: { spec: { queries: [], transformations: [transformation({ refId: 'T1', options: {} })] } },
+          vizConfig: { group: 'timeseries', spec: {} },
+        },
+      },
+    });
+
+    if (!result.success) {
+      throw new Error(`expected parse success: ${result.error.message}`);
+    }
+    expect(result.data.panel.spec.data.spec.transformations[0].spec.refId).toBe('T1');
   });
 });
 

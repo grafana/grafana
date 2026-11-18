@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
 	claims "github.com/grafana/authlib/types"
@@ -32,6 +33,7 @@ func TestRender_Authenticate(t *testing.T) {
 			desc:      "expect valid render key to return anonymous user identity for org role Viewer",
 			renderKey: "123",
 			req: &authn.Request{
+				OrgID: 1,
 				HTTPRequest: &http.Request{
 					Header: map[string][]string{"Cookie": {"renderKey=123"}},
 				},
@@ -55,6 +57,7 @@ func TestRender_Authenticate(t *testing.T) {
 			desc:      "expect valid render key to return render user identity for org role Admin",
 			renderKey: "123",
 			req: &authn.Request{
+				OrgID: 1,
 				HTTPRequest: &http.Request{
 					Header: map[string][]string{"Cookie": {"renderKey=123"}},
 				},
@@ -78,6 +81,7 @@ func TestRender_Authenticate(t *testing.T) {
 			desc:      "expect valid render key connected to user to return identity",
 			renderKey: "123",
 			req: &authn.Request{
+				OrgID: 1,
 				HTTPRequest: &http.Request{
 					Header: map[string][]string{"Cookie": {"renderKey=123"}},
 				},
@@ -97,6 +101,7 @@ func TestRender_Authenticate(t *testing.T) {
 			desc:      "expect error when render key is invalid",
 			renderKey: "123",
 			req: &authn.Request{
+				OrgID: 2,
 				HTTPRequest: &http.Request{
 					Header: map[string][]string{"Cookie": {"renderKey=123"}},
 				},
@@ -110,12 +115,13 @@ func TestRender_Authenticate(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 			renderService := rendering.NewMockService(ctrl)
-			renderService.EXPECT().GetRenderUser(gomock.Any(), tt.renderKey).Return(tt.expectedRenderUsr, tt.expectedRenderUsr != nil)
+			renderService.EXPECT().GetRenderUser(gomock.Any(), tt.renderKey, tt.req.OrgID).Return(tt.expectedRenderUsr, tt.expectedRenderUsr != nil)
 
 			c := ProvideRender(renderService)
 			identity, err := c.Authenticate(context.Background(), tt.req)
 			if tt.expectedErr != nil {
-				assert.ErrorIs(t, tt.expectedErr, err)
+				require.ErrorIs(t, err, tt.expectedErr)
+				assert.NotContains(t, err.Error(), tt.renderKey)
 				assert.Nil(t, identity)
 			} else {
 				assert.NoError(t, err)

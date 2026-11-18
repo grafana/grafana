@@ -6,8 +6,7 @@ import { type GrafanaTheme2, type QueryResultMetaNotice } from '@grafana/data';
 import { Badge, useStyles2 } from '@grafana/ui';
 import { filterPanelDataToQuery } from 'app/features/query/components/QueryEditorRow';
 
-import { QueryEditorType } from '../../constants';
-import { useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
+import { useQueryRunnerContext } from '../QueryEditorContext';
 
 type SeverityType = 'warning' | 'info';
 
@@ -46,17 +45,19 @@ function SeverityBadge({ type, notices }: SeverityBadgeProps) {
   );
 }
 
-export function WarningBadges() {
+interface WarningBadgesProps {
+  refId: string;
+}
+
+export function WarningBadges({ refId }: WarningBadgesProps) {
   const { data } = useQueryRunnerContext();
-  const { selectedQuery, cardType } = useQueryEditorUIContext();
-  const queryRefId = selectedQuery?.refId;
 
   const severityGroups = useMemo<SeverityGroup[]>(() => {
-    if (!data || !queryRefId) {
+    if (!data) {
       return [];
     }
 
-    const dataFilteredByRefId = filterPanelDataToQuery(data, queryRefId)?.series ?? [];
+    const dataFilteredByRefId = filterPanelDataToQuery(data, refId)?.series ?? [];
 
     // Collect notices grouped by severity type
     const groups: SeverityGroup[] = [];
@@ -80,11 +81,7 @@ export function WarningBadges() {
     });
 
     return groups;
-  }, [data, queryRefId]);
-
-  if (cardType === QueryEditorType.Transformation) {
-    return null;
-  }
+  }, [data, refId]);
 
   if (severityGroups.length === 0) {
     return null;

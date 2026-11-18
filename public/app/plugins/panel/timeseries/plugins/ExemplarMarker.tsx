@@ -17,6 +17,11 @@ import {
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { ExemplarTooltip } from 'app/features/visualization/data-hover/ExemplarTooltip';
 
+export interface ExemplarSelection {
+  dataFrame: DataFrame;
+  rowIndex: number;
+}
+
 interface ExemplarMarkerProps {
   timeZone: TimeZone;
   dataFrame: DataFrame;
@@ -24,8 +29,8 @@ interface ExemplarMarkerProps {
   rowIndex: number;
   config: UPlotConfigBuilder;
   exemplarColor?: string;
-  clickedRowIndex: number | undefined;
-  setClickedRowIndex: React.Dispatch<number | undefined>;
+  lockedExemplar: ExemplarSelection | undefined;
+  setLockedExemplar: React.Dispatch<ExemplarSelection | undefined>;
   maxHeight?: number;
   maxWidth?: number;
 }
@@ -37,14 +42,14 @@ export const ExemplarMarker = ({
   rowIndex,
   config,
   exemplarColor,
-  clickedRowIndex,
-  setClickedRowIndex,
+  lockedExemplar,
+  setLockedExemplar,
   maxHeight,
   maxWidth,
 }: ExemplarMarkerProps) => {
   const styles = useStyles2(getExemplarMarkerStyles, maxWidth);
   const [isOpen, setIsOpen] = useState(false);
-  const [isLocked, setIsLocked] = useState(false);
+  const isLocked = lockedExemplar?.dataFrame === dataFrame && lockedExemplar.rowIndex === rowIndex;
   const placement = 'bottom';
 
   // the order of middleware is important!
@@ -62,16 +67,14 @@ export const ExemplarMarker = ({
   const dismiss = useDismiss(context);
   const hover = useHover(context, {
     handleClose: safePolygon(),
-    enabled: clickedRowIndex === undefined,
+    enabled: lockedExemplar === undefined,
   });
 
   const { getReferenceProps, getFloatingProps } = useInteractions([dismiss, hover]);
 
   useEffect(() => {
-    if (clickedRowIndex !== rowIndex) {
-      setIsLocked(false);
-    }
-  }, [clickedRowIndex, rowIndex]);
+    setIsOpen(false);
+  }, [lockedExemplar]);
 
   const getSymbol = () => {
     return (
@@ -116,15 +119,10 @@ export const ExemplarMarker = ({
     // return symbols[dataFrameFieldIndex.frameIndex % symbols.length];
   };
 
-  const lockExemplarModal = () => {
-    setIsLocked(true);
-  };
-
   const renderMarker = useCallback(() => {
     const onClose = () => {
-      setIsLocked(false);
       setIsOpen(false);
-      setClickedRowIndex(undefined);
+      setLockedExemplar(undefined);
     };
 
     let items: VizTooltipItem[] = [];
@@ -132,6 +130,10 @@ export const ExemplarMarker = ({
 
     dataFrame.fields.forEach((field: Field) => {
       const value = field.values[rowIndex];
+
+      if (value == null && field.config.noValue == null) {
+        return;
+      }
 
       links.push(...getFieldDisplayLinks(field, rowIndex));
 
@@ -159,7 +161,7 @@ export const ExemplarMarker = ({
     rowIndex,
     styles,
     isLocked,
-    setClickedRowIndex,
+    setLockedExemplar,
     floatingStyles,
     getFloatingProps,
     refs.setFloating,
@@ -170,8 +172,7 @@ export const ExemplarMarker = ({
     ?.props.lineColor;
 
   const onExemplarClick = () => {
-    setClickedRowIndex(rowIndex);
-    lockExemplarModal();
+    setLockedExemplar({ dataFrame, rowIndex });
   };
 
   return (

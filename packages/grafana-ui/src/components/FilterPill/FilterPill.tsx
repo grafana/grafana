@@ -48,7 +48,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       color: theme.colors.text.secondary,
       display: 'flex',
       alignItems: 'center',
-      height: '32px',
+      height: theme.spacing(theme.components.height.md),
       position: 'relative',
       border: `1px solid ${theme.colors.background.secondary}`,
       whiteSpace: 'nowrap',

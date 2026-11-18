@@ -8,6 +8,7 @@
   "name": "mapping-with-team-and-group",
   "rv": 1234,
   "_rv": "1234",
+  "groupResource": "iam.grafana.app/externalgroupmappings",
   "title": "mapping-with-team-and-group",
   "title_ngram": "mapping-with-team-and-group",
   "title_phrase": "mapping-with-team-and-group",

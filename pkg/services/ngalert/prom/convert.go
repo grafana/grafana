@@ -1,11 +1,13 @@
 package prom
 
 import (
+	// #nosec G505 SHA-1 is required for compatibility with existing UUIDv5 rule IDs.
+	"crypto/sha1"
 	"fmt"
 	"maps"
 	"time"
+	"uuid"
 
-	"github.com/google/uuid"
 	"go.yaml.in/yaml/v3"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
@@ -175,6 +177,11 @@ func (p *Converter) convertRuleGroup(orgID int64, namespaceUID string, promGroup
 			return nil, fmt.Errorf("failed to generate UID for rule '%s': %w", gr.Title, err)
 		}
 		gr.UID = uid
+		// The label only selects the UID. Keeping it would change the rule's fingerprint,
+		// and so reset its alert state, when it is added to pin the rule's current UID.
+		// When KeepOriginalRuleDefinition is set, the stored definition keeps the label, so exported
+		// rules can be re-imported with the same UID. Otherwise only the client's own copy has it.
+		delete(gr.Labels, ruleUIDLabel)
 
 		rules = append(rules, gr)
 	}
@@ -202,9 +209,24 @@ func getUID(orgID int64, namespaceUID string, group string, position int, promRu
 
 	// Generate stable UUID based on the orgID, namespace, group and position.
 	uidData := fmt.Sprintf("%d|%s|%s|%d", orgID, namespaceUID, group, position)
-	u := uuid.NewSHA1(uuid.NameSpaceOID, []byte(uidData))
+	u := ruleUUID(uidData)
 
 	return u.String(), nil
+}
+
+// ruleUUID preserves the UUIDv5 OID namespace IDs used by existing imported rules.
+func ruleUUID(data string) uuid.UUID {
+	namespace := uuid.MustParse("6ba7b812-9dad-11d1-80b4-00c04fd430c8")
+	// SHA-1 preserves existing UUIDv5 rule IDs; this hash is not used for cryptographic security.
+	// #nosec G401 nosemgrep: go.lang.security.audit.crypto.use_of_weak_crypto.use-of-sha1
+	hash := sha1.New()
+	hash.Write(namespace[:])
+	hash.Write([]byte(data))
+	var id uuid.UUID
+	copy(id[:], hash.Sum(nil))
+	id[6] = (id[6] & 0x0f) | 0x50
+	id[8] = (id[8] & 0x3f) | 0x80
+	return id
 }
 
 func (p *Converter) convertRule(orgID int64, namespaceUID string, promGroup PrometheusRuleGroup, rule PrometheusRule) (models.AlertRule, error) {
@@ -221,6 +243,7 @@ func (p *Converter) convertRule(orgID int64, namespaceUID string, promGroup Prom
 	var query []models.AlertQuery
 	var title string
 	var isPaused bool
+	execErrState := p.cfg.ExecErrState
 	var record *models.Record
 	var err error
 
@@ -243,6 +266,8 @@ func (p *Converter) convertRule(orgID int64, namespaceUID string, promGroup Prom
 
 		isPaused = p.cfg.RecordingRules.IsPaused
 		title = rule.Record
+		// Recording rules have no alert state, so the configured error state does not apply.
+		execErrState = defaultConfig.ExecErrState
 	} else {
 		isPaused = p.cfg.AlertRules.IsPaused
 		title = rule.Alert
@@ -277,7 +302,7 @@ func (p *Converter) convertRule(orgID int64, namespaceUID string, promGroup Prom
 		Data:          query,
 		Condition:     query[len(query)-1].RefID,
 		NoDataState:   p.cfg.NoDataState,
-		ExecErrState:  p.cfg.ExecErrState,
+		ExecErrState:  execErrState,
 		Annotations:   rule.Annotations,
 		Labels:        labels,
 		For:           forInterval,

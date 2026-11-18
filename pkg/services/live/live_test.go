@@ -221,7 +221,6 @@ func TestCheckOrigin(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			appURL, err := url.Parse(tc.appURL)
@@ -445,13 +444,13 @@ func newDummyTransport(name string) *dummyTransport {
 
 // There is a duplication of this function in the identity package. pkg/apimachinery/identity/requester_test.go.
 // If you need to copy it, place it as a test helper function in the identity package.
-var testKey = decodePrivateKey([]byte(`
------BEGIN EC PRIVATE KEY-----
-MHcCAQEEID6lXWsmcv/UWn9SptjOThsy88cifgGIBj2Lu0M9I8tQoAoGCCqGSM49
-AwEHoUQDQgAEsf6eNnNMNhl+q7jXsbdUf3ADPh248uoFUSSV9oBzgptyokHCjJz6
-n6PKDm2W7i3S2+dAs5M5f3s7d8KiLjGZdQ==
------END EC PRIVATE KEY-----
-`))
+var testKey = decodePrivateKey([]byte(
+	"-----BEGIN EC PRIVATE KEY-----\n" + // trufflehog:ignore
+		"MHcCAQEEID6lXWsmcv/UWn9SptjOThsy88cifgGIBj2Lu0M9I8tQoAoGCCqGSM49\n" + // trufflehog:ignore
+		"AwEHoUQDQgAEsf6eNnNMNhl+q7jXsbdUf3ADPh248uoFUSSV9oBzgptyokHCjJz6\n" + // trufflehog:ignore
+		"n6PKDm2W7i3S2+dAs5M5f3s7d8KiLjGZdQ==\n" + // trufflehog:ignore
+		"-----END EC PRIVATE KEY-----", // trufflehog:ignore
+))
 
 func decodePrivateKey(data []byte) *ecdsa.PrivateKey {
 	block, _ := pem.Decode(data)

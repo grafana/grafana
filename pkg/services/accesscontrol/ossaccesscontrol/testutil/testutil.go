@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	acdb "github.com/grafana/grafana/pkg/services/accesscontrol/database"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
@@ -45,17 +46,20 @@ func ProvideFolderPermissions(
 
 	quotaService := quotatest.New(false, nil)
 
-	acSvc := acimpl.ProvideOSSService(
+	acSvc, initErr := acimpl.ProvideOSSService(
 		cfg, acdb.ProvideService(sqlStore), actionSets, localcache.ProvideService(),
 		features, tracing.InitializeTracerForTest(), sqlStore, permreg.ProvidePermissionRegistry(),
-		nil,
+		nil, iam.Features{}, nil, nil,
 	)
+	if initErr != nil {
+		return nil, initErr
+	}
 
 	orgService, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(sqlStore), cfg, quotaService)
 	if err != nil {
 		return nil, err
 	}
-	teamSvc, err := teamimpl.ProvideService(legacysql.NewDatabaseProvider(sqlStore), cfg, tracing.InitializeTracerForTest(), nil)
+	teamSvc, err := teamimpl.ProvideService(legacysql.NewDatabaseProvider(sqlStore), cfg, tracing.InitializeTracerForTest(), nil, iam.Features{})
 	if err != nil {
 		return nil, err
 	}
@@ -89,6 +93,7 @@ func ProvideFolderPermissions(
 		routing.NewRouteRegister(),
 		sqlStore,
 		ac,
+		iam.Features{},
 		license,
 		fService,
 		acSvc,

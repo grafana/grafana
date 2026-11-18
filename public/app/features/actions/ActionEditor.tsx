@@ -26,8 +26,7 @@ import {
   useStyles2,
   useTheme2,
 } from '@grafana/ui';
-
-import { HTMLElementType, SuggestionsInput } from '../transformers/suggestionsInput/SuggestionsInput';
+import { HTMLElementType, SuggestionsInput } from 'app/core/components/SuggestionsInput/SuggestionsInput';
 
 import { ActionVariablesEditor } from './ActionVariablesEditor';
 import { ConnectionPicker } from './ConnectionPicker';

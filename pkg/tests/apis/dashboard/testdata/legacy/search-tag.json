@@ -1,0 +1,26 @@
+{
+  "body": [
+    {
+      "folderId": "<id>",
+      "folderTitle": "Golden child",
+      "folderUid": "golden-child",
+      "folderUrl": "/dashboards/f/golden-child/golden-child",
+      "id": "<id>",
+      "isDeleted": false,
+      "isStarred": false,
+      "orgId": 1,
+      "slug": "",
+      "sortMeta": 0,
+      "tags": [
+        "golden",
+        "nested"
+      ],
+      "title": "Golden nested",
+      "type": "dash-db",
+      "uid": "golden-nested",
+      "uri": "db/golden-nested",
+      "url": "/d/golden-nested/golden-nested"
+    }
+  ],
+  "status": 200
+}
