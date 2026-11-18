@@ -133,6 +133,7 @@ export function toRgbString(computed: string): string | undefined {
 // handles every color format. The large factor makes clamp() act as a step function.
 const OPAQUE = 'clamp(0, alpha * 1e9, 1)';
 
+// selected as a middle ground to ensure readable contrast while also still usually rendering colorful text instead of full black or white
 const TARGET_CONTRAST = 6;
 // WCAG 2 relative luminance, from linear sRGB channels.
 const LUMINANCE = '(0.2126 * r + 0.7152 * g + 0.0722 * b)';
