@@ -95,9 +95,13 @@ func exampleRoutes(url string) []*plugins.Route {
 // manifest. Proxy routes the settings manifest leaves out are matched in the
 // order plugin.json declares them.
 func pluginWithRoutes(routes []*plugins.Route, manifests ...*app.ManifestData) definition.PluginDefinition {
-	p := definition.PluginDefinition{
-		JSONData:  plugins.JSONData{ID: exampleApp, Type: plugins.TypeApp, Routes: routes},
-		Manifests: manifests,
+	p := definition.PluginDefinition{JSONData: plugins.JSONData{ID: exampleApp, Type: plugins.TypeApp, Routes: routes}}
+	for _, m := range manifests {
+		if m.Group == exampleApp { // as the loader does
+			p.Settings = m
+		} else {
+			p.Manifests = append(p.Manifests, m)
+		}
 	}
 	_ = p.LoadSettings(pluginproxy.MatchRoute)
 	return p

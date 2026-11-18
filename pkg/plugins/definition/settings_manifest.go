@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"net/url"
 	"reflect"
-	"slices"
 	"strings"
 
 	"k8s.io/kube-openapi/pkg/spec3"
@@ -65,10 +64,11 @@ var SettingsRouteOptions = manifestroutes.Options{UnservedMethods: []string{http
 // served under the plugin ID, and the routes of its resources and proxy
 // subresources. It returns nil for a plugin that is not an app.
 //
-// An app manifest whose group is the plugin ID is the foundation of the
-// settings manifest: it describes the settings API rather than an API of its
-// own, and its v0alpha1 version declares routes below the settings object's
-// resources and proxy subresources, as /app/{name}/... or /app/instance/....
+// p.Settings, when set, is the foundation of the settings manifest: the app
+// manifest whose group is the plugin ID, which describes the settings API
+// rather than an API of its own. Its v0alpha1 version declares routes below
+// the settings object's resources and proxy subresources, as /app/{name}/...
+// or /app/instance/....
 //
 // When it declares no proxy routes, plugin.json's are used. plugin.json
 // routes are matched in the order they are declared, and the settings API
@@ -82,8 +82,8 @@ func NewSettingsManifest(p PluginDefinition, match RouteMatcher) (manifest *app.
 		return nil, nil
 	}
 	manifest = &app.ManifestData{AppName: p.JSONData.ID}
-	if base := p.settingsFoundation(); base != nil {
-		*manifest = *base
+	if p.Settings != nil {
+		*manifest = *p.Settings
 	}
 	manifest.Group = p.JSONData.ID
 	manifest.PreferredVersion = SettingsAPIVersion
@@ -135,24 +135,6 @@ func NewSettingsManifest(p PluginDefinition, match RouteMatcher) (manifest *app.
 	return manifest, errors.Join(errs...)
 }
 
-// settingsFoundation returns the app manifest that describes the settings
-// API, the one whose group is the plugin ID, or nil.
-func (p PluginDefinition) settingsFoundation() *app.ManifestData {
-	for _, m := range p.Manifests {
-		if p.isSettingsFoundation(m) {
-			return m
-		}
-	}
-	return nil
-}
-
-// isSettingsFoundation is whether m describes the settings API. Its group is
-// the plugin ID, which has no dots: a group with one is an API of its own.
-func (p PluginDefinition) isSettingsFoundation(m *app.ManifestData) bool {
-	id := p.JSONData.ID
-	return m != nil && id != "" && !strings.Contains(id, ".") && m.Group == id
-}
-
 // settingsRoutes returns the resource and proxy routes the settings manifest's
 // foundation declares, below the settings object as SettingsResourcesRoot and
 // SettingsProxyRoot name it, and errors for what it declares that the settings
@@ -199,17 +181,13 @@ func withPaths(version app.ManifestVersion, paths map[string]spec3.PathProps) ap
 	return version
 }
 
-// LoadSettings sets p.Settings from p's plugin.json and manifests, which must
-// already have their deprecated routes migrated, and removes the manifest it
-// is founded on from p.Manifests; see NewSettingsManifest. An error says what
-// was left out of it; Settings is set regardless.
+// LoadSettings sets p.Settings from p's plugin.json and the settings manifest
+// it was loaded with, which must already have its deprecated routes migrated;
+// see NewSettingsManifest. An error says what was left out of it; Settings is
+// set regardless.
 func (p *PluginDefinition) LoadSettings(match RouteMatcher) error {
 	settings, err := NewSettingsManifest(*p, match)
 	p.Settings = settings
-	if settings != nil {
-		// The foundation describes the settings API, not an API of its own.
-		p.Manifests = slices.DeleteFunc(slices.Clone(p.Manifests), p.isSettingsFoundation)
-	}
 	return err
 }
 

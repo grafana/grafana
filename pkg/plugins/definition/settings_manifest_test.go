@@ -14,11 +14,18 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
+// appWithRoutes is an app loaded with routes and manifests, where, as the
+// loader does, the manifest of the plugin ID's group is the settings manifest.
 func appWithRoutes(routes []*plugins.Route, manifests ...*app.ManifestData) PluginDefinition {
-	return PluginDefinition{
-		JSONData:  plugins.JSONData{ID: "example-app", Type: plugins.TypeApp, Routes: routes},
-		Manifests: manifests,
+	p := PluginDefinition{JSONData: plugins.JSONData{ID: "example-app", Type: plugins.TypeApp, Routes: routes}}
+	for _, m := range manifests {
+		if m.Group == p.JSONData.ID {
+			p.Settings = m
+		} else {
+			p.Manifests = append(p.Manifests, m)
+		}
 	}
+	return p
 }
 
 func settingsPaths(t *testing.T, manifest *app.ManifestData) map[string]spec3.PathProps {
@@ -149,15 +156,17 @@ func TestLoadSettings(t *testing.T) {
 	require.Error(t, p.LoadSettings(testMatcher))
 	require.NotNil(t, p.Settings, "the settings API is described even without its proxy routes")
 
-	other := &app.ManifestData{Group: "example.ext.grafana.app"}
-	p = appWithRoutes(nil, &app.ManifestData{Group: "example-app"}, other)
+	// The loader sets the manifest the settings manifest is founded on.
+	resource := &spec3.Operation{}
+	p = appWithRoutes(nil)
+	p.Settings = &app.ManifestData{AppName: "example", Group: "example-app", Versions: []app.ManifestVersion{{
+		Name: "v0alpha1", Served: true, OpenAPI: app.ManifestVersionOpenAPI{Paths: map[string]spec3.PathProps{
+			"/namespaces/{namespace}/app/instance/resources/things": {Get: resource},
+		}},
+	}}}
 	require.NoError(t, p.LoadSettings(testMatcher))
-	require.Equal(t, []*app.ManifestData{other}, p.Manifests, "the foundation is not served as an API of its own")
-
-	dotted := &app.ManifestData{Group: "playlist.grafana.app"}
-	p = PluginDefinition{JSONData: plugins.JSONData{ID: "playlist.grafana.app", Type: plugins.TypeApp}, Manifests: []*app.ManifestData{dotted}}
-	require.NoError(t, p.LoadSettings(testMatcher))
-	require.Equal(t, []*app.ManifestData{dotted}, p.Manifests, "a group with a dot is an API of its own")
+	require.Equal(t, "example", p.Settings.AppName)
+	require.Same(t, resource, settingsPaths(t, p.Settings)[SettingsResourcesRoot+"/things"].Get)
 }
 
 func TestNewSettingsManifestNeedsAMatcherForPluginJSONRoutes(t *testing.T) {
