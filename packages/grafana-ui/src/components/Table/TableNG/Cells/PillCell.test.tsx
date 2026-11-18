@@ -2,6 +2,7 @@ import { render, screen, type RenderResult } from '@testing-library/react';
 
 import {
   type Field,
+  type GrafanaTheme2,
   FieldType,
   MappingType,
   ThemeContext,
@@ -22,8 +23,8 @@ const expectTagColors = (element: HTMLElement, background: string, text: string)
   expect(element.style.getPropertyValue('--tag-text')).toBe(text);
 };
 
-const expectBaseColor = (element: HTMLElement, baseColor: string) => {
-  const variables = getTagColorVariables(baseColor);
+const expectBaseColor = (element: HTMLElement, baseColor: string, theme?: GrafanaTheme2) => {
+  const variables = getTagColorVariables(baseColor, theme);
   expectTagColors(element, variables['--tag-background'], variables['--tag-text']);
 };
 
@@ -225,7 +226,7 @@ describe('PillCell', () => {
           <PillCell field={field} rowIdx={0} theme={theme} getTextColorForBackground={getTextColorForBackground} />
         </ThemeContext.Provider>
       );
-      expectBaseColor(screen.getByText('error'), '#ff0000');
+      expectBaseColor(screen.getByText('error'), '#ff0000', theme);
     });
 
     // Tag reads the theme off context, so the flag has to be on the provided theme too — in the
@@ -276,7 +277,7 @@ describe('PillCell', () => {
       } satisfies Field;
 
       renderRefreshed(fixed);
-      expectBaseColor(screen.getByText('value1'), refreshTheme.visualization.getColorByName('red'));
+      expectBaseColor(screen.getByText('value1'), refreshTheme.visualization.getColorByName('red'), refreshTheme);
     });
 
     it('outlines transparent mapped pills', () => {
@@ -286,7 +287,7 @@ describe('PillCell', () => {
 
       renderRefreshed(field);
       const pill = screen.getByText('none');
-      expectBaseColor(pill, 'rgba(255, 255, 255, 0)');
+      expectBaseColor(pill, 'rgba(255, 255, 255, 0)', refreshTheme);
       expect(pill).toHaveStyle({
         boxShadow: `inset 0 0 0 1px ${getTransparentOutlineColor('rgba(255, 255, 255, 0)', refreshTheme.colors.border.strong)}`,
       });
@@ -301,7 +302,7 @@ describe('PillCell', () => {
 
       renderRefreshed(classic);
       const palette = fieldColorModeRegistry.get(FieldColorModeId.PaletteClassic).getColors!(refreshTheme);
-      expectBaseColor(screen.getByText('value1'), getColorByStringHash(palette, 'value1'));
+      expectBaseColor(screen.getByText('value1'), getColorByStringHash(palette, 'value1'), refreshTheme);
     });
   });
 

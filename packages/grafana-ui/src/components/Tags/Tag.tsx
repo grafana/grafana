@@ -8,7 +8,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
 import { type IconName } from '../../types/icon';
 import { type SkeletonComponent, attachSkeleton } from '../../utils/skeleton';
-import { getTagColorIndexFromName, getTagTextChannelVariables, getTagColorVariables } from '../../utils/tags';
+import { getTagColorIndexFromName, getTagColorVariables } from '../../utils/tags';
 import { Icon } from '../Icon/Icon';
 
 /**
@@ -91,7 +91,6 @@ const getTagStyles = (theme: GrafanaTheme2) => {
   return {
     wrapper: css(
       {
-        ...getTagTextChannelVariables(theme),
         appearance: 'none',
         borderStyle: 'none',
         fontWeight: theme.typography.fontWeightMedium,

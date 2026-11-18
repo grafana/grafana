@@ -1,4 +1,4 @@
-import { type GrafanaTheme2, colorManipulator } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { DEFAULT_TAG_COLORS } from '@grafana/data/unstable';
 
 export function getTagColorIndexFromName(name = '', theme?: GrafanaTheme2): number {
@@ -42,7 +42,7 @@ export function getTagColor(index: number | string, theme?: GrafanaTheme2) {
 function getContrastingTagColors(color: string, theme?: GrafanaTheme2) {
   return {
     background: `rgb(from ${color} r g b / ${OPAQUE})`,
-    text: `color(from ${color} srgb-linear ${getTextChannels(theme).join(' ')})`,
+    text: getContrastingText(color, theme),
   };
 }
 
@@ -64,51 +64,41 @@ const LIGHTER_MIX = `clamp(0, (${TARGET_CONTRAST} * (${LUMINANCE} + 0.05) - 0.05
 
 const FALLBACK_TEXT = 'rgb(247, 248, 250)';
 
-/** A theme color as linear sRGB channels and alpha, to use as literals inside relative color math. */
-function toLinear(color: string): [number, number, number, number] {
-  const { values } = colorManipulator.decomposeColor(colorManipulator.asRgbString(color));
-  const [r, g, b] = values.slice(0, 3).map((value: number) => {
-    const channel = value / 255;
-    return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
-  });
-  return [r, g, b, values[3] ?? 1];
-}
-
-const round = (value: number) => Number(value.toFixed(6));
+// Same-hue contrasting text channels in linear sRGB. They use only relative color keywords and literals, so they
+// resolve against whichever color they are applied to. The alpha is OPAQUE so a transparent source stays
+// transparent, which is what lets pickByVisibility swap in the fallback.
+const CONTRASTING_CHANNELS = `${(['r', 'g', 'b'] as const)
+  .map(
+    (channel) =>
+      `calc(${USE_DARKER} * ${channel} * ${DARKER_SCALE} + (1 - ${USE_DARKER}) * (${channel} + ${LIGHTER_MIX} * (1 - ${channel})))`
+  )
+  .join(' ')} / ${OPAQUE}`;
 
 /**
- * Per-channel text math: same-hue contrasting text for a visible background, and the theme text for a
- * transparent one. The values use only relative color keywords and literals, so they hold as raw tokens and
- * resolve inside whichever relative color uses them.
+ * Picks `visible` for a visible tag color and `fallback` for a fully transparent one, resolved in CSS so no
+ * color has to be parsed in JS. `visible` must have alpha OPAQUE. Mixing in 0.1% of `fallback` leaves `visible`
+ * unchanged when it is opaque, and yields exactly `fallback` when `visible` is transparent. The final alpha is
+ * a step function of that mix: 1 (or 0 with `hideWhenVisible`) when visible, and the fallback's own alpha otherwise.
  */
-function getTextChannels(theme?: GrafanaTheme2) {
-  const fallback = toLinear(theme?.colors.text.primary ?? FALLBACK_TEXT).map(round);
-  const rgb = (['r', 'g', 'b'] as const).map((channel, index) => {
-    const contrasting = `${USE_DARKER} * ${channel} * ${DARKER_SCALE} + (1 - ${USE_DARKER}) * (${channel} + ${LIGHTER_MIX} * (1 - ${channel}))`;
-    return `calc(${OPAQUE} * (${contrasting}) + (1 - ${OPAQUE}) * ${fallback[index]})`;
-  });
-  return [...rgb, `/ calc(${OPAQUE} + (1 - ${OPAQUE}) * ${fallback[3]})`];
+function pickByVisibility(visible: string, fallback: string, { hideWhenVisible = false } = {}) {
+  const whenVisible = hideWhenVisible ? '0' : 'clamp(0, (alpha - 0.5) * 1e9, 1)';
+  const whenTransparent = 'clamp(0, (0.5 - alpha) * 1e9, 1) * alpha * 1000';
+  return `rgb(from color-mix(in srgb, ${visible}, ${fallback} 0.1%) r g b / calc(${whenVisible} + ${whenTransparent}))`;
 }
 
-/**
- * Text channel custom properties for styles that read `var(--tag-text)`. They depend on the theme only, so a
- * tag's class stays the same for every color: only the inline color variables change.
- */
-export function getTagTextChannelVariables(theme?: GrafanaTheme2) {
-  const [r, g, b, alpha] = getTextChannels(theme);
-  return { '--tag-text-r': r, '--tag-text-g': g, '--tag-text-b': b, '--tag-text-alpha': alpha };
+function getContrastingText(source: string, theme?: GrafanaTheme2) {
+  return pickByVisibility(
+    `color(from ${source} srgb-linear ${CONTRASTING_CHANNELS})`,
+    theme?.colors.text.primary ?? FALLBACK_TEXT
+  );
 }
-
-const TEXT_FROM_VARIABLES =
-  'color(from var(--tag-background) srgb-linear var(--tag-text-r) var(--tag-text-g) var(--tag-text-b) var(--tag-text-alpha))';
 
 /**
  * A color that is only visible when `color` is fully transparent, for example to outline a tag that has no
  * fill. Rendered as an inset box shadow, it does not change the tag size.
  */
 export function getTransparentOutlineColor(color: string, outline: string) {
-  const [r, g, b, alpha] = toLinear(outline).map(round);
-  return `color(from ${color} srgb-linear ${r} ${g} ${b} / calc((1 - ${OPAQUE}) * ${alpha}))`;
+  return pickByVisibility(`rgb(from ${color} r g b / ${OPAQUE})`, outline, { hideWhenVisible: true });
 }
 
 export interface TagColorVariables {
@@ -118,12 +108,14 @@ export interface TagColorVariables {
 
 /**
  * Returns the tag colors as inline custom properties, for styles that read `var(--tag-background)` and
- * `var(--tag-text)` and include {@link getTagTextChannelVariables}. `--tag-text` is always set so a tag
- * never inherits one from an ancestor.
+ * `var(--tag-text)`. `--tag-text` is always set so a tag never inherits one from an ancestor.
  */
 export function getTagColorVariables(color: number | string, theme?: GrafanaTheme2): TagColorVariables {
   if (typeof color === 'string') {
-    return { '--tag-background': `rgb(from ${color} r g b / ${OPAQUE})`, '--tag-text': TEXT_FROM_VARIABLES };
+    return {
+      '--tag-background': `rgb(from ${color} r g b / ${OPAQUE})`,
+      '--tag-text': getContrastingText('var(--tag-background)', theme),
+    };
   }
 
   const { background, text } = getTagColor(color, theme);
