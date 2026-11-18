@@ -35,11 +35,15 @@ func ProvideRoutesLoader(cfg *setting.Cfg, deps PluginLoaderDependencies, apps [
 		if !middlewareEnabled(cfg, deps.Features) {
 			return nil, fmt.Errorf("%s requires %s", featuremgmt.FlagRouterRegisterCoreAPIs, featuremgmt.FlagGrafanaUseRouterMiddleware)
 		}
-		coreApps, err := coreAppsFromInstallers(apps, deps.PluginAuth)
+		coreApps, err := coreAppsFromInstallers(context.Background(), apps, cfg, deps.PluginAuth)
 		if err != nil {
 			return nil, err
 		}
 		loader = newCoreAppsLoader(loader, deps.PluginDependencies, coreApps)
+	}
+	// In grafana cloud, each stack *may* aggregate a multi-tenant upstream service
+	if middlewareEnabled(cfg, deps.Features) {
+		return newRemoteServicesLoader(context.Background(), cfg, loader)
 	}
 	return loader, nil
 }

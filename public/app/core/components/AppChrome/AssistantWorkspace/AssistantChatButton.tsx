@@ -75,7 +75,8 @@ interface PresetDrawing {
 }
 
 /**
- * The digit after ⌘⌥ (Ctrl+Alt elsewhere) that moves the Assistant, in the menu's order; Pop up follows on 5. The
+ * The digit after ⌘⌥ (Ctrl+Alt elsewhere) that moves the Assistant, in the menu's order; Pop up follows on 5. Pressed
+ * while the Assistant already shows there, a shortcut hides it, and the next press shows it there again. The
  * browser's own ⌘1-9 switches tabs, so the shortcuts add ⌥.
  */
 const LAYOUT_SHORTCUT_DIGITS: Record<AssistantLayout, number> = { left: 1, right: 2, bottom: 3, floating: 4 };
@@ -139,7 +140,7 @@ interface Props {
  * floating's flag are on, hovering the button, or pressing Down arrow on it, opens a menu that moves the Assistant to the left,
  * right or bottom of the page, floats it, or, while the Assistant can, opens it in a new window, and presets that
  * arrange the nav and the Assistant together. Choosing a layout, or a preset that shows the Assistant, shows it if it
- * is hidden.
+ * is hidden. A layout's shortcut, pressed while the Assistant already shows in that layout, hides it instead.
  */
 export function AssistantChatButton({ assistantComponentId, isOpen, icon, className }: Props) {
   const styles = useStyles2(getStyles);
@@ -185,6 +186,12 @@ export function AssistantChatButton({ assistantComponentId, isOpen, icon, classN
     if (!isOpen) {
       setDockedComponentId(assistantComponentId);
     }
+  };
+
+  // Closed as the Chat button closes it, its own window included.
+  const hide = () => {
+    setMenuOpenedBy(undefined);
+    setDockedComponentId(undefined);
   };
 
   const moveTo = (next: AssistantLayout) => {
@@ -237,6 +244,10 @@ export function AssistantChatButton({ assistantComponentId, isOpen, icon, classN
       return shortcutPreset !== undefined;
     }
     if (digit === POP_UP_SHORTCUT_DIGIT) {
+      if (poppedOut && isOpen) {
+        hide();
+        return true;
+      }
       if (!canPopOutExtensionSidebar()) {
         return false;
       }
@@ -244,10 +255,16 @@ export function AssistantChatButton({ assistantComponentId, isOpen, icon, classN
       return true;
     }
     const shortcutLayout = getLayoutOptions().find((option) => LAYOUT_SHORTCUT_DIGITS[option.value] === digit);
-    if (shortcutLayout) {
+    if (!shortcutLayout) {
+      return false;
+    }
+    // In its own window the Assistant is in none of the page's layouts, so its layout's shortcut brings it back.
+    if (isOpen && !poppedOut && layout === shortcutLayout.value) {
+      hide();
+    } else {
       moveTo(shortcutLayout.value);
     }
-    return shortcutLayout !== undefined;
+    return true;
   };
 
   const onKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {

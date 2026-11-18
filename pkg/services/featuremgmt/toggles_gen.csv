@@ -119,12 +119,11 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-07-15,grafana.savedQueriesPage,experimental,@grafana/sharing-squad,false,false,false
 2026-03-19,playlistsRBAC,GA,@grafana/sharing-squad,false,false,false
 2026-01-27,savedQueriesRBAC,GA,@grafana/sharing-squad,false,false,false
-2026-03-16,newSavedQueriesExperience,GA,@grafana/sharing-squad,false,false,true
 2025-08-29,dashboardLibrary,experimental,@grafana/sharing-squad,false,false,false
 2025-11-07,suggestedDashboards,experimental,@grafana/sharing-squad,false,false,false
 2026-01-22,dashboardValidatorApp,experimental,@grafana/sharing-squad,false,false,false
 2025-10-28,dashboardTemplates,preview,@grafana/sharing-squad,false,false,false
-2026-06-24,grafana.customDashboardTemplates,experimental,@grafana/sharing-squad,false,false,false
+2026-06-24,grafana.customDashboardTemplates,preview,@grafana/sharing-squad,false,false,false
 2026-10-13,grafana.smtpSettingsPage,privatePreview,@grafana/grafana-backend-services-squad,false,false,false
 2026-02-19,dashboardTemplatesAssistantButton,experimental,@grafana/sharing-squad,false,false,true
 2026-03-12,suggestedDashboardsAssistantButton,experimental,@grafana/sharing-squad,false,false,true
@@ -241,6 +240,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-05,grafana.dedicatedGrafanaComProxyAPIToken,experimental,@grafana/grafana-catalog,false,false,false
 2026-07-01,heatmapNegativeLogBuckets,experimental,@grafana/dataviz-squad,false,false,true
 2026-03-30,pieChartGradientColorScheme,experimental,@grafana/dataviz-squad,false,false,true
+2026-11-12,dataviz.reverseColorScheme,experimental,@grafana/dataviz-squad,false,false,true
 2025-10-31,jaegerEnableGrpcEndpoint,experimental,@grafana/data-sources-plugins,false,false,false
 2025-10-17,pluginStoreServiceLoading,experimental,@grafana/grafana-catalog,false,false,false
 2025-10-20,onlyStoreActionSets,GA,@grafana/identity-access-team,false,false,false
@@ -397,6 +397,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-10-07,datasources.apiServerConnectToHostedGrafanaDatabases,experimental,@grafana/data-sources-plugins,false,false,false
 2026-10-14,grafana.extensionSidebarFloating,experimental,@grafana/dashboards-squad,false,false,true
 2026-11-17,grafana.extensionSidebarPlacements,experimental,@grafana/dashboards-squad,false,false,true
+2026-11-17,grafana.megaMenuPeekAndDock,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2026-10-07,grafana.otelLogDetails,experimental,@grafana/observability-logs,false,false,true
 2026-10-16,grafana.announcementBannerDismissible,GA,@grafana/grafana-frontend-navigation,false,false,true
 2026-10-14,datasources.gatewayAuditPolicy,experimental,@grafana/data-sources-plugins,false,false,false
