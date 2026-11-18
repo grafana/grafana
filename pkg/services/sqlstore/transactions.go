@@ -97,21 +97,26 @@ func (ss *SQLStore) inTransactionWithRetryCtx(ctx context.Context, engine *xorm.
 		}
 	}
 
-	if err != nil {
+	return completeTransaction(ctx, sess, bus, true, err)
+}
+
+func completeTransaction(ctx context.Context, sess *DBSession, events bus.Bus, owner bool, callbackErr error) error {
+	if !owner {
+		return callbackErr
+	}
+	if callbackErr != nil {
 		if rollErr := sess.Rollback(); rollErr != nil {
-			return fmt.Errorf("rolling back transaction due to error failed: %s: %w", rollErr, err)
+			return fmt.Errorf("rolling back transaction due to error failed: %s: %w", rollErr, callbackErr)
 		}
-		return err
+		return callbackErr
 	}
 	if err := sess.Commit(); err != nil {
 		return err
 	}
-
-	for _, e := range sess.events {
-		if err = bus.Publish(ctx, e); err != nil {
-			ctxLogger.Error("Failed to publish event after commit.", "error", err)
+	for _, event := range sess.events {
+		if err := events.Publish(ctx, event); err != nil {
+			tsclogger.FromContext(ctx).Error("Failed to publish event after commit.", "error", err)
 		}
 	}
-
 	return nil
 }

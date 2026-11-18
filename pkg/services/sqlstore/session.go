@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/xorm/core"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -68,17 +69,72 @@ func startSessionOrUseExisting(ctx context.Context, engine *xorm.Engine, beginTr
 
 	span.SetAttributes(attribute.Bool("transaction", beginTran))
 
-	newSess := &DBSession{Session: engine.NewSession(), transactionOpen: beginTran}
+	newSess := &DBSession{Session: engine.NewSession().Context(tctx), transactionOpen: beginTran}
 
 	if beginTran {
 		err := newSess.Begin()
 		if err != nil {
+			newSess.Close()
 			return nil, false, span, err
 		}
 	}
-	newSess.Session = newSess.Context(tctx)
 
 	return newSess, true, span, nil
+}
+
+// WithSession calls callback with a session for engine and closes a newly created session.
+// A session already carried by ctx is reused without taking ownership of it.
+func WithSession(ctx context.Context, engine *xorm.Engine, tracer tracing.Tracer, callback DBTransactionFunc) error {
+	if err := validateHelperSession(ctx, engine); err != nil {
+		return err
+	}
+	sess, isNew, span, err := startSessionOrUseExisting(ctx, engine, false, tracer)
+	defer span.End()
+	if err != nil {
+		return fmt.Errorf("start database session: %w", err)
+	}
+	if isNew {
+		defer sess.Close()
+	}
+	return callback(sess)
+}
+
+// WithTransaction runs callback in a transaction on engine. Nested calls reuse
+// the context session; only the owner commits, rolls back, and publishes events.
+func WithTransaction(ctx context.Context, engine *xorm.Engine, events bus.Bus, tracer tracing.Tracer, callback DBTransactionFunc) error {
+	if err := validateHelperSession(ctx, engine); err != nil {
+		return err
+	}
+	sess, isNew, span, err := startSessionOrUseExisting(ctx, engine, true, tracer)
+	defer span.End()
+	if err != nil {
+		return fmt.Errorf("start database transaction: %w", err)
+	}
+	if isNew {
+		defer sess.Close()
+	} else if !sess.transactionOpen {
+		return fmt.Errorf("cannot reuse session without an open transaction")
+	}
+	return completeTransaction(ctx, sess, events, isNew, callback(sess))
+}
+
+func validateHelperSession(ctx context.Context, engine *xorm.Engine) error {
+	if engine == nil {
+		return fmt.Errorf("database engine is nil")
+	}
+	if value := ctx.Value(ContextSessionKey{}); value != nil {
+		sess, ok := value.(*DBSession)
+		if !ok || sess == nil {
+			return fmt.Errorf("context database session is invalid")
+		}
+		if sess.Session == nil || sess.IsClosed() {
+			return fmt.Errorf("context database session is closed or invalid")
+		}
+		if sess.DB() != engine.DB() {
+			return fmt.Errorf("context database session belongs to another engine")
+		}
+	}
+	return nil
 }
 
 // WithDbSession calls the callback with the session in the context (if exists).
