@@ -53,15 +53,16 @@ describe('PillCell', () => {
     });
 
     it.each([
-      ['classic palette', FieldColorModeId.PaletteClassic],
-      ['thresholds', FieldColorModeId.Thresholds],
-    ])('uses theme tag colors for %s', (_, colorMode) => {
+      ['classic palette', FieldColorModeId.PaletteClassic, 'value1'],
+      ['classic palette by series name', FieldColorModeId.PaletteClassicByName, 'test'],
+      ['thresholds', FieldColorModeId.Thresholds, 'value1'],
+    ])('uses theme tag colors for %s', (_, colorMode, colorName) => {
       const mockField = fieldWithValues(['value1']);
       const field = {
         ...mockField,
         config: { ...mockField.config, color: { mode: colorMode } },
       } satisfies Field;
-      const { background, text } = getTagColorsFromName('value1', theme);
+      const { background, text } = getTagColorsFromName(colorName, theme);
 
       render(<PillCell getTextColorForBackground={getTextColorForBackground} field={field} rowIdx={0} theme={theme} />);
 
@@ -293,15 +294,18 @@ describe('PillCell', () => {
       expect(tinycolor.readability(pill.style.backgroundColor, pill.style.color)).toBeGreaterThanOrEqual(5.5);
     });
 
-    it('uses theme tag colors for the classic palette', () => {
+    it.each([
+      ['classic palette', FieldColorModeId.PaletteClassic, 'value1'],
+      ['classic palette by series name', FieldColorModeId.PaletteClassicByName, 'test'],
+    ])('uses theme tag colors for the %s', (_, colorMode, colorName) => {
       const mockField = fieldWithValues(['value1']);
       const classic = {
         ...mockField,
-        config: { ...mockField.config, color: { mode: FieldColorModeId.PaletteClassic } },
+        config: { ...mockField.config, color: { mode: colorMode } },
       } satisfies Field;
 
       renderRefreshed(classic);
-      const { background, text } = getTagColorsFromName('value1', refreshTheme);
+      const { background, text } = getTagColorsFromName(colorName, refreshTheme);
       expect(screen.getByText('value1')).toHaveStyle({ backgroundColor: background, color: text });
     });
 

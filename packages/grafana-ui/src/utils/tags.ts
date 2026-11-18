@@ -56,22 +56,19 @@ const getTonalTagColors = memoize(
     const base = tinycolor(color);
     base.setAlpha(1);
     const background = base.toRgb();
-    const source = rgbToOklch(base.toRgb());
+    const source = rgbToOklch(background);
     const themeDirection = isDark ? -1 : 1;
     const preferred = findTextColor(source, background, themeDirection);
     const alternate = findTextColor(source, background, -themeDirection);
-    let text = preferred;
-    if (!preferred.meetsTarget && alternate.meetsTarget) {
-      text = alternate;
-    } else if (!preferred.meetsTarget && !alternate.meetsTarget) {
-      const hasSimilarContrast = Math.abs(preferred.contrast - alternate.contrast) <= TAG_TEXT_SIMILARITY_TOLERANCE;
-      if (
-        preferred.contrast < TAG_TEXT_MIN_CONTRAST ||
-        (!hasSimilarContrast && alternate.contrast > preferred.contrast)
-      ) {
-        text = alternate;
-      }
-    }
+    const hasSimilarContrast = Math.abs(preferred.contrast - alternate.contrast) <= TAG_TEXT_SIMILARITY_TOLERANCE;
+    // Keep the theme-directed candidate for a near tie; otherwise use the more legible candidate.
+    const shouldUseAlternate =
+      (!preferred.meetsTarget && alternate.meetsTarget) ||
+      (!preferred.meetsTarget &&
+        !alternate.meetsTarget &&
+        alternate.contrast > preferred.contrast &&
+        (preferred.contrast < TAG_TEXT_MIN_CONTRAST || !hasSimilarContrast));
+    const text = shouldUseAlternate ? alternate : preferred;
 
     return {
       background: base.toRgbString(),
@@ -100,7 +97,6 @@ function findTextColor(source: OklchColor, background: RgbColor, direction: numb
   return {
     color,
     contrast,
-    delta: upperDelta,
     meetsTarget: contrast >= TAG_TEXT_TARGET_CONTRAST,
   };
 }
