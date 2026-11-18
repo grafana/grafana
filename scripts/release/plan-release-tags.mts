@@ -20,6 +20,14 @@ export interface PendingPr {
   mergeCommit: string;
 }
 
+// The version of each package, by the path of its package.json, or null when the file did not exist.
+export type Versions = Record<string, string | null>;
+
+export interface VersionedPr extends PendingPr {
+  before: Versions;
+  after: Versions;
+}
+
 export interface PlannedTag {
   name: string;
   version: string;
@@ -34,16 +42,6 @@ export interface Plan {
   tagged: PlannedTag[];
 }
 
-export interface Deps {
-  packages: IndependentPackage[];
-  sha: string;
-  listPendingPrs(): PendingPr[];
-  parentOf(commit: string): string;
-  readVersionAt(commit: string, manifestPath: string): string | null;
-  tagCommit(tag: string): string | null;
-  warning(message: string): void;
-}
-
 export function readTags(env: Record<string, string | undefined>): string[] | undefined {
   const tags = (env.TAGS ?? '')
     .split(',')
@@ -53,35 +51,35 @@ export function readTags(env: Record<string, string | undefined>): string[] | un
   return tags.length > 0 ? tags : undefined;
 }
 
-function changedPackages(deps: Deps, mergeCommit: string): PlannedTag[] {
-  const parent = deps.parentOf(mergeCommit);
-  const changed: PlannedTag[] = [];
-
-  for (const pkg of deps.packages) {
-    const version = deps.readVersionAt(mergeCommit, pkg.manifestPath);
-    if (version !== null && version !== deps.readVersionAt(parent, pkg.manifestPath)) {
-      changed.push({ name: pkg.name, version, tag: tagFor(pkg.name, version), path: pkg.root, commit: mergeCommit });
+function changedPackages(packages: IndependentPackage[], pr: VersionedPr): PlannedTag[] {
+  return packages.flatMap((pkg) => {
+    const version = pr.after[pkg.manifestPath] ?? null;
+    if (version === null || version === (pr.before[pkg.manifestPath] ?? null)) {
+      return [];
     }
-  }
-
-  return changed;
+    return [{ name: pkg.name, version, tag: tagFor(pkg.name, version), path: pkg.root, commit: pr.mergeCommit }];
+  });
 }
 
-// Plans one release per run, so that everything reported belongs to a single commit that the publish job can
-// check out. Any other pending PR waits for the next run.
-export function planReleaseTags(deps: Deps): Plan {
-  let release: { pr: PendingPr; changed: PlannedTag[] } | undefined;
-  const waiting: PendingPr[] = [];
+// Plans one release, so that everything reported belongs to a single commit that the publish job can check out.
+// The PRs are given oldest first. Any other pending PR waits for the next run.
+export function planReleaseTags(
+  packages: IndependentPackage[],
+  sha: string,
+  prs: VersionedPr[]
+): { plan: Plan; warnings: string[] } {
+  const warnings: string[] = [];
+  let release: { pr: VersionedPr; changed: PlannedTag[] } | undefined;
 
-  for (const pr of deps.listPendingPrs()) {
+  for (const pr of prs) {
     if (release) {
-      waiting.push(pr);
+      warnings.push(`PR #${pr.number} is also labelled nx-release:pending. A later run will finish it.`);
       continue;
     }
 
-    const changed = changedPackages(deps, pr.mergeCommit);
+    const changed = changedPackages(packages, pr);
     if (changed.length === 0) {
-      deps.warning(
+      warnings.push(
         `PR #${pr.number} is labelled nx-release:pending but changes no independent package version. Leaving it alone.`
       );
     } else {
@@ -90,23 +88,24 @@ export function planReleaseTags(deps: Deps): Plan {
   }
 
   if (!release) {
-    return { pr: null, sha: deps.sha, tagged: [] };
+    return { plan: { pr: null, sha, tagged: [] }, warnings };
   }
 
-  for (const pr of waiting) {
-    deps.warning(`PR #${pr.number} is also labelled nx-release:pending. A later run will finish it.`);
-  }
-
-  return { pr: release.pr.number, sha: release.pr.mergeCommit, tagged: release.changed };
+  return { plan: { pr: release.pr.number, sha: release.pr.mergeCommit, tagged: release.changed }, warnings };
 }
 
-export function resolveDispatchTags(tags: string[], deps: Deps): Plan {
+// The commit of each tag is null when the tag does not exist.
+export function resolveDispatchTags(
+  tags: string[],
+  packages: IndependentPackage[],
+  commits: Record<string, string | null>
+): Plan {
   if (tags.length === 0) {
     throw new Error('Pass at least one tag to publish.');
   }
 
   const tagged: PlannedTag[] = [];
-  const commits = new Set<string>();
+  const found = new Set<string>();
 
   for (const tag of tags) {
     const separator = tag.lastIndexOf('@');
@@ -115,25 +114,25 @@ export function resolveDispatchTags(tags: string[], deps: Deps): Plan {
     }
 
     const name = tag.slice(0, separator);
-    const pkg = deps.packages.find((candidate) => candidate.name === name);
+    const pkg = packages.find((candidate) => candidate.name === name);
     if (!pkg) {
       throw new Error(`Tag ${tag} is not an independent package.`);
     }
 
-    const commit = deps.tagCommit(tag);
+    const commit = commits[tag] ?? null;
     if (commit === null) {
       throw new Error(`Tag ${tag} does not exist.`);
     }
 
-    commits.add(commit);
+    found.add(commit);
     tagged.push({ name, version: tag.slice(separator + 1), tag, path: pkg.root, commit });
   }
 
-  if (commits.size > 1) {
-    throw new Error(`Tags point at different commits: ${[...commits].join(', ')}.`);
+  if (found.size > 1) {
+    throw new Error(`Tags point at different commits: ${[...found].join(', ')}.`);
   }
 
-  return { pr: null, sha: [...commits][0], tagged };
+  return { pr: null, sha: [...found][0], tagged };
 }
 
 export function formatOutputs(plan: Plan): Record<string, string> {
@@ -195,45 +194,54 @@ function listMergedPendingPrs(repo: string): PendingPr[] {
   return selectPendingPrs(closed);
 }
 
-export async function createPlanningDeps(): Promise<Deps> {
-  const repo = requireEnv(process.env, 'GITHUB_REPOSITORY');
-
-  return {
-    packages: await getIndependentPackages(),
-    sha: requireEnv(process.env, 'GITHUB_SHA'),
-    listPendingPrs: () => listMergedPendingPrs(repo),
-    parentOf: (commit) => run('git', ['rev-parse', `${commit}^1`]).trim(),
-    readVersionAt: (commit, manifestPath) => {
+function versionsAt(commit: string, packages: IndependentPackage[]): Versions {
+  return Object.fromEntries(
+    packages.map(({ manifestPath }) => {
       try {
-        return JSON.parse(run('git', ['show', `${commit}:${manifestPath}`])).version;
+        return [manifestPath, JSON.parse(run('git', ['show', `${commit}:${manifestPath}`])).version];
       } catch (error) {
         if (/does not exist in|exists on disk, but not in/.test(stderrOf(error))) {
-          return null;
+          return [manifestPath, null];
         }
         throw error;
       }
-    },
-    tagCommit: (tag) => {
-      try {
-        return run('git', ['rev-parse', '-q', '--verify', `refs/tags/${tag}^{commit}`]).trim();
-      } catch (error) {
-        // rev-parse --verify answers 1 when the tag does not exist; any other failure is a real problem.
-        if (error instanceof Error && 'status' in error && error.status === 1) {
-          return null;
-        }
-        throw error;
-      }
-    },
-    warning: (message) => console.error(`::warning::${message}`),
-  };
+    })
+  );
+}
+
+function tagCommit(tag: string): string | null {
+  try {
+    return run('git', ['rev-parse', '-q', '--verify', `refs/tags/${tag}^{commit}`]).trim();
+  } catch (error) {
+    // rev-parse --verify answers 1 when the tag does not exist; any other failure is a real problem.
+    if (error instanceof Error && 'status' in error && error.status === 1) {
+      return null;
+    }
+    throw error;
+  }
 }
 
 if (isMainModule(import.meta.url)) {
   try {
+    const packages = await getIndependentPackages();
     const tags = readTags(process.env);
-    const deps = await createPlanningDeps();
-    const outputs = formatOutputs(tags ? resolveDispatchTags(tags, deps) : planReleaseTags(deps));
-    for (const [key, value] of Object.entries(outputs)) {
+
+    let plan: Plan;
+    if (tags) {
+      plan = resolveDispatchTags(tags, packages, Object.fromEntries(tags.map((tag) => [tag, tagCommit(tag)])));
+    } else {
+      const prs = listMergedPendingPrs(requireEnv(process.env, 'GITHUB_REPOSITORY')).map((pr) => ({
+        ...pr,
+        before: versionsAt(run('git', ['rev-parse', `${pr.mergeCommit}^1`]).trim(), packages),
+        after: versionsAt(pr.mergeCommit, packages),
+      }));
+
+      const planned = planReleaseTags(packages, requireEnv(process.env, 'GITHUB_SHA'), prs);
+      planned.warnings.forEach((warning) => console.error(`::warning::${warning}`));
+      plan = planned.plan;
+    }
+
+    for (const [key, value] of Object.entries(formatOutputs(plan))) {
       console.log(`${key}=${value}`);
     }
   } catch (error) {

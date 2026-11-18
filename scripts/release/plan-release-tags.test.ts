@@ -8,8 +8,7 @@ import {
   resolveDispatchTags,
   selectPendingPrs,
   type ClosedPr,
-  type Deps,
-  type PendingPr,
+  type VersionedPr,
 } from './plan-release-tags.mjs';
 
 const MANIFEST = 'packages/grafana-plugin-compat/package.json';
@@ -27,39 +26,6 @@ const other: IndependentPackage = {
   manifestPath: OTHER_MANIFEST,
 };
 
-interface Setup {
-  packages?: IndependentPackage[];
-  sha?: string;
-  pendingPrs?: PendingPr[];
-  versions?: Record<string, string>;
-  parents?: Record<string, string>;
-  tags?: Record<string, string>;
-}
-
-function createFakeDeps({
-  packages = [pluginCompat],
-  sha = 'head',
-  pendingPrs = [],
-  versions = {},
-  parents = {},
-  tags = {},
-}: Setup = {}) {
-  const messages: string[] = [];
-
-  const deps: Deps = {
-    packages,
-    sha,
-    listPendingPrs: () => pendingPrs,
-    parentOf: (commit) => parents[commit],
-    readVersionAt: (commit, manifestPath) => versions[`${commit}:${manifestPath}`] ?? null,
-    tagCommit: (tag) => tags[tag] ?? null,
-    warning: (message) => messages.push(`warning: ${message}`),
-  };
-  return { deps, messages };
-}
-
-const versionPr = { pendingPrs: [{ number: 7, mergeCommit: 'm1' }], parents: { m1: 'p1' } };
-const bumpedToV12 = { [`m1:${MANIFEST}`]: '0.12.0', [`p1:${MANIFEST}`]: '0.11.0' };
 const pluginCompatTag = {
   name: '@grafana/plugin-compat',
   version: '0.12.0',
@@ -68,118 +34,110 @@ const pluginCompatTag = {
   commit: 'm1',
 };
 
+function versionPr(
+  number: number,
+  mergeCommit: string,
+  before: VersionedPr['before'],
+  after: VersionedPr['after']
+): VersionedPr {
+  return { number, mergeCommit, before, after };
+}
+
+const bumpedToV12 = versionPr(7, 'm1', { [MANIFEST]: '0.11.0' }, { [MANIFEST]: '0.12.0' });
+
 describe('planReleaseTags', () => {
   it('plans nothing when no version PR is pending', () => {
-    const { deps } = createFakeDeps();
-
-    expect(planReleaseTags(deps)).toEqual({ pr: null, sha: 'head', tagged: [] });
+    expect(planReleaseTags([pluginCompat], 'head', [])).toEqual({
+      plan: { pr: null, sha: 'head', tagged: [] },
+      warnings: [],
+    });
   });
 
   it('plans the tags of a pending version PR at its merge commit', () => {
-    const { deps } = createFakeDeps({ ...versionPr, versions: bumpedToV12 });
-
-    expect(planReleaseTags(deps)).toEqual({ pr: 7, sha: 'm1', tagged: [pluginCompatTag] });
+    expect(planReleaseTags([pluginCompat], 'head', [bumpedToV12])).toEqual({
+      plan: { pr: 7, sha: 'm1', tagged: [pluginCompatTag] },
+      warnings: [],
+    });
   });
 
   it('does not plan a package whose version the PR left unchanged', () => {
-    const { deps } = createFakeDeps({
-      ...versionPr,
-      packages: [pluginCompat, other],
-      versions: { ...bumpedToV12, [`m1:${OTHER_MANIFEST}`]: '1.0.0', [`p1:${OTHER_MANIFEST}`]: '1.0.0' },
-    });
+    const pr = versionPr(
+      7,
+      'm1',
+      { [MANIFEST]: '0.11.0', [OTHER_MANIFEST]: '1.0.0' },
+      { [MANIFEST]: '0.12.0', [OTHER_MANIFEST]: '1.0.0' }
+    );
 
-    expect(planReleaseTags(deps).tagged.map((planned) => planned.tag)).toEqual([PLUGIN_COMPAT_TAG]);
+    const { plan } = planReleaseTags([pluginCompat, other], 'head', [pr]);
+
+    expect(plan.tagged.map(({ tag }) => tag)).toEqual([PLUGIN_COMPAT_TAG]);
   });
 
   it('plans every package whose version changed in the same PR', () => {
-    const { deps } = createFakeDeps({
-      ...versionPr,
-      packages: [pluginCompat, other],
-      versions: { ...bumpedToV12, [`m1:${OTHER_MANIFEST}`]: '1.1.0', [`p1:${OTHER_MANIFEST}`]: '1.0.0' },
-    });
+    const pr = versionPr(
+      7,
+      'm1',
+      { [MANIFEST]: '0.11.0', [OTHER_MANIFEST]: '1.0.0' },
+      { [MANIFEST]: '0.12.0', [OTHER_MANIFEST]: '1.1.0' }
+    );
 
-    expect(planReleaseTags(deps).tagged.map((planned) => planned.tag)).toEqual([
-      PLUGIN_COMPAT_TAG,
-      '@grafana/other@1.1.0',
-    ]);
+    const { plan } = planReleaseTags([pluginCompat, other], 'head', [pr]);
+
+    expect(plan.tagged.map(({ tag }) => tag)).toEqual([PLUGIN_COMPAT_TAG, '@grafana/other@1.1.0']);
   });
 
   it('treats a package that did not exist before the PR as changed', () => {
-    const { deps } = createFakeDeps({ ...versionPr, versions: { [`m1:${MANIFEST}`]: '0.1.0' } });
+    const pr = versionPr(7, 'm1', { [MANIFEST]: null }, { [MANIFEST]: '0.1.0' });
 
-    expect(planReleaseTags(deps).tagged.map((planned) => planned.tag)).toEqual(['@grafana/plugin-compat@0.1.0']);
+    const { plan } = planReleaseTags([pluginCompat], 'head', [pr]);
+
+    expect(plan.tagged.map(({ tag }) => tag)).toEqual(['@grafana/plugin-compat@0.1.0']);
   });
 
   it('plans only the oldest pending PR and warns that the others wait for a later run', () => {
-    const { deps, messages } = createFakeDeps({
-      pendingPrs: [
-        { number: 7, mergeCommit: 'm1' },
-        { number: 9, mergeCommit: 'm2' },
-      ],
-      parents: { m1: 'p1', m2: 'm1' },
-      versions: {
-        [`p1:${MANIFEST}`]: '0.11.0',
-        [`m1:${MANIFEST}`]: '0.12.0',
-        [`m2:${MANIFEST}`]: '0.13.0',
-      },
-    });
+    const second = versionPr(9, 'm2', { [MANIFEST]: '0.12.0' }, { [MANIFEST]: '0.13.0' });
 
-    const plan = planReleaseTags(deps);
+    const { plan, warnings } = planReleaseTags([pluginCompat], 'head', [bumpedToV12, second]);
 
     expect(plan.pr).toBe(7);
     expect(plan.sha).toBe('m1');
-    expect(messages).toEqual(['warning: PR #9 is also labelled nx-release:pending. A later run will finish it.']);
+    expect(warnings).toEqual(['PR #9 is also labelled nx-release:pending. A later run will finish it.']);
   });
 
   it('skips a pending PR that changes no version and plans the next one', () => {
-    const { deps, messages } = createFakeDeps({
-      pendingPrs: [
-        { number: 7, mergeCommit: 'm1' },
-        { number: 9, mergeCommit: 'm2' },
-      ],
-      parents: { m1: 'p1', m2: 'm1' },
-      versions: {
-        [`p1:${MANIFEST}`]: '0.11.0',
-        [`m1:${MANIFEST}`]: '0.11.0',
-        [`m2:${MANIFEST}`]: '0.12.0',
-      },
-    });
+    const noChange = versionPr(7, 'm1', { [MANIFEST]: '0.11.0' }, { [MANIFEST]: '0.11.0' });
+    const next = versionPr(9, 'm2', { [MANIFEST]: '0.11.0' }, { [MANIFEST]: '0.12.0' });
 
-    const plan = planReleaseTags(deps);
+    const { plan, warnings } = planReleaseTags([pluginCompat], 'head', [noChange, next]);
 
     expect(plan.pr).toBe(9);
     expect(plan.sha).toBe('m2');
-    expect(messages).toEqual([
-      'warning: PR #7 is labelled nx-release:pending but changes no independent package version. Leaving it alone.',
+    expect(warnings).toEqual([
+      'PR #7 is labelled nx-release:pending but changes no independent package version. Leaving it alone.',
     ]);
   });
 
   it('warns and plans nothing when the only pending PR changes no independent package version', () => {
-    const { deps, messages } = createFakeDeps({
-      ...versionPr,
-      versions: { [`m1:${MANIFEST}`]: '0.11.0', [`p1:${MANIFEST}`]: '0.11.0' },
-    });
+    const noChange = versionPr(7, 'm1', { [MANIFEST]: '0.11.0' }, { [MANIFEST]: '0.11.0' });
 
-    expect(planReleaseTags(deps)).toEqual({ pr: null, sha: 'head', tagged: [] });
-    expect(messages).toEqual([
-      'warning: PR #7 is labelled nx-release:pending but changes no independent package version. Leaving it alone.',
-    ]);
+    expect(planReleaseTags([pluginCompat], 'head', [noChange])).toEqual({
+      plan: { pr: null, sha: 'head', tagged: [] },
+      warnings: ['PR #7 is labelled nx-release:pending but changes no independent package version. Leaving it alone.'],
+    });
   });
 
   it('reports the merge commit of the PR, not the pushed commit, when they differ', () => {
-    const { deps } = createFakeDeps({ ...versionPr, sha: 'later', versions: bumpedToV12 });
-
-    expect(planReleaseTags(deps).sha).toBe('m1');
+    expect(planReleaseTags([pluginCompat], 'later', [bumpedToV12]).plan.sha).toBe('m1');
   });
 });
 
 describe('resolveDispatchTags', () => {
-  const distinctTags = { '@grafana/plugin-compat@0.12.0': 'm1', '@grafana/other@1.1.0': 'm1' };
+  const packages = [pluginCompat, other];
 
   it('resolves the given tags to the commit they point at, reading the version after the last @', () => {
-    const { deps } = createFakeDeps({ packages: [pluginCompat, other], tags: distinctTags });
+    const commits = { [PLUGIN_COMPAT_TAG]: 'm1', '@grafana/other@1.1.0': 'm1' };
 
-    expect(resolveDispatchTags([PLUGIN_COMPAT_TAG, '@grafana/other@1.1.0'], deps)).toEqual({
+    expect(resolveDispatchTags([PLUGIN_COMPAT_TAG, '@grafana/other@1.1.0'], packages, commits)).toEqual({
       pr: null,
       sha: 'm1',
       tagged: [
@@ -196,37 +154,32 @@ describe('resolveDispatchTags', () => {
   });
 
   it('rejects an empty list', () => {
-    expect(() => resolveDispatchTags([], createFakeDeps().deps)).toThrow('Pass at least one tag to publish.');
+    expect(() => resolveDispatchTags([], packages, {})).toThrow('Pass at least one tag to publish.');
   });
 
   it.each(['plugin-compat', '@grafana', '@grafana/plugin-compat@'])(
     'rejects %s because it is not name@version',
     (tag) => {
-      expect(() => resolveDispatchTags([tag], createFakeDeps().deps)).toThrow(
-        `Invalid tag ${tag}: expected name@version.`
-      );
+      expect(() => resolveDispatchTags([tag], packages, {})).toThrow(`Invalid tag ${tag}: expected name@version.`);
     }
   );
 
   it('rejects a package that is not independent', () => {
-    expect(() => resolveDispatchTags(['@grafana/data@1.0.0'], createFakeDeps().deps)).toThrow(
+    expect(() => resolveDispatchTags(['@grafana/data@1.0.0'], packages, {})).toThrow(
       'Tag @grafana/data@1.0.0 is not an independent package.'
     );
   });
 
   it('rejects a tag that does not exist', () => {
-    expect(() => resolveDispatchTags([PLUGIN_COMPAT_TAG], createFakeDeps().deps)).toThrow(
+    expect(() => resolveDispatchTags([PLUGIN_COMPAT_TAG], packages, { [PLUGIN_COMPAT_TAG]: null })).toThrow(
       `Tag ${PLUGIN_COMPAT_TAG} does not exist.`
     );
   });
 
   it('rejects tags that point at different commits', () => {
-    const { deps } = createFakeDeps({
-      packages: [pluginCompat, other],
-      tags: { '@grafana/plugin-compat@0.12.0': 'm1', '@grafana/other@1.1.0': 'm2' },
-    });
+    const commits = { [PLUGIN_COMPAT_TAG]: 'm1', '@grafana/other@1.1.0': 'm2' };
 
-    expect(() => resolveDispatchTags([PLUGIN_COMPAT_TAG, '@grafana/other@1.1.0'], deps)).toThrow(
+    expect(() => resolveDispatchTags([PLUGIN_COMPAT_TAG, '@grafana/other@1.1.0'], packages, commits)).toThrow(
       'Tags point at different commits: m1, m2.'
     );
   });
