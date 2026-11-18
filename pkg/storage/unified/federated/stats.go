@@ -71,29 +71,31 @@ const (
 // From mode 4 on nothing writes the legacy table, so its rows are leftovers and counting
 // them would warn about resources that no longer exist. Library panels can also be
 // migrated while still in mode 1, so their successful migration log takes precedence
-// over config, as it does for the dual-writer's storage mode resolution.
+// over config, as it does for the dual-writer's storage mode resolution. That holds for
+// callers without config too, since they have no other way to know a panel lives only in
+// unified storage.
 //
-// A caller with no DualWriterMode config at all (nil Cfg) falls back to a per-stack kv_store
-// marker instead -- the only signal that exists there today.
+// A caller with no DualWriterMode config at all (nil Cfg) otherwise falls back to a per-stack
+// kv_store marker instead.
 func (s *LegacyStatsGetter) legacyTableIsStale(sess *sqlstore.DBSession, helper *legacysql.LegacyDatabaseHelper, resource string) (bool, error) {
-	if s.Cfg != nil {
-		if resource == libraryPanelResource {
-			exists, err := sess.IsTableExist(helper.Table(migrationLogTable))
+	if resource == libraryPanelResource {
+		exists, err := sess.IsTableExist(helper.Table(migrationLogTable))
+		if err != nil {
+			return false, err
+		}
+		if exists {
+			count, err := sess.Table(helper.Table(migrationLogTable)).
+				Where("migration_id = ? AND success = ?", libraryPanelMigration, true).
+				Count()
 			if err != nil {
 				return false, err
 			}
-			if exists {
-				count, err := sess.Table(helper.Table(migrationLogTable)).
-					Where("migration_id = ? AND success = ?", libraryPanelMigration, true).
-					Count()
-				if err != nil {
-					return false, err
-				}
-				if count > 0 {
-					return true, nil
-				}
+			if count > 0 {
+				return true, nil
 			}
 		}
+	}
+	if s.Cfg != nil {
 		return s.Cfg.UnifiedStorage[resource].DualWriterMode >= grafanarest.Mode4, nil
 	}
 
