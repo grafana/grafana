@@ -6,7 +6,7 @@ export function DataLinkMenuItems({ links }: { links: LinkModel[] }) {
   return links.map((link, index) => (
     <Menu.Item
       key={index}
-      label={link.title}
+      label={link.title || link.href}
       url={link.href}
       target={link.target}
       icon={link.target === '_blank' ? 'external-link-alt' : 'link'}

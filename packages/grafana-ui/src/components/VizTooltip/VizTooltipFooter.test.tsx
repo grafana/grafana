@@ -37,6 +37,27 @@ describe('VizTooltipFooter', () => {
     jest.spyOn(console, 'warn').mockRestore();
   });
 
+  it('falls back to the href as the accessible name when a link has no title', () => {
+    const field: Field = { name: '', type: FieldType.string, values: [], config: {} };
+    const link: LinkModel<Field> = {
+      href: 'https://example.com/d/abc',
+      title: '',
+      origin: field,
+      target: '_blank',
+    };
+
+    render(
+      <MemoryRouter>
+        <VizTooltipFooter dataLinks={[link]} />
+      </MemoryRouter>
+    );
+
+    expect(screen.getByRole('menuitem', { name: 'https://example.com/d/abc' })).toHaveAttribute(
+      'href',
+      'https://example.com/d/abc'
+    );
+  });
+
   it('should render ad hoc filter button and fire onclick', async () => {
     const onFilterClick = jest.fn();
     const adHocFilter: AdHocFilterModel = {
