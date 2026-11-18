@@ -3,6 +3,7 @@ package appsettings
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -11,6 +12,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 
+	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
@@ -53,6 +55,10 @@ type PluginContextWrapper interface {
 type Options struct {
 	RegisterProxy bool
 
+	// OpenAPIProxyRoutes matches proxy requests against the plugin's routes
+	// converted to OpenAPI paths, and publishes those paths.
+	OpenAPIProxyRoutes bool
+
 	DataProxyLogging         bool // from cfg
 	SendUserHeader           bool // from cfg
 	PluginsAppsSkipVerifyTLS bool // from cfg
@@ -69,7 +75,8 @@ type Builder struct {
 	// The settings API group is the plugin ID.
 	group           string
 	pluginJSON      plugins.JSONData
-	client          PluginClient // will only ever be called with the same plugin id!
+	manifests       []*app.ManifestData // may declare the proxy routes
+	client          PluginClient        // will only ever be called with the same plugin id!
 	contextProvider PluginContextWrapper
 	schemas         map[string]*pluginschema.PluginSchema
 	decrypter       decrypt.DecryptService
@@ -86,6 +93,9 @@ type Builder struct {
 
 	secureValues secureValuesCache
 	proxy        *proxyHandler
+
+	openAPIRoutesOnce sync.Once
+	openAPIRoutes     *proxyRoutes
 }
 
 func NewBuilder(
@@ -108,6 +118,7 @@ func NewBuilder(
 	return &Builder{
 		group:           plugin.JSONData.ID,
 		pluginJSON:      plugin.JSONData,
+		manifests:       plugin.Manifests,
 		client:          client,
 		contextProvider: contextProvider,
 		schemas:         plugin.Schemas,
@@ -118,6 +129,23 @@ func NewBuilder(
 		features:        features,
 		tracer:          tracer,
 	}, nil
+}
+
+// proxyRoutes returns the proxy routes as OpenAPI routes, or nil when they are
+// not enabled, there are none, or they cannot be served that way.
+func (b *Builder) proxyRoutes() *proxyRoutes {
+	b.openAPIRoutesOnce.Do(func() {
+		if !b.opts.RegisterProxy || !b.opts.OpenAPIProxyRoutes {
+			return
+		}
+		routes, err := compileProxyRoutes(b.group, definition.PluginDefinition{JSONData: b.pluginJSON, Manifests: b.manifests})
+		if err != nil {
+			logger.Warn("plugin proxy routes are matched in the order plugin.json declares them", "plugin", b.pluginJSON.ID, "reason", err)
+			return
+		}
+		b.openAPIRoutes = routes
+	})
+	return b.openAPIRoutes
 }
 
 // GetGroupVersions returns the settings API version.

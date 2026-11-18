@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"path/filepath"
 	"runtime"
 	"slices"
@@ -422,6 +423,22 @@ func setupHelperWithManifest(t *testing.T, mode rest.DualWriterMode, extraFeatur
 // with no manifest when manifestFile is empty.
 func setupHelperFull(t *testing.T, mode rest.DualWriterMode, manifestFile string, extraFeatures ...string) *apis.K8sTestHelper {
 	t.Helper()
+	return setupHelperWithPlugin(t, mode, testAppSetup{manifestFile: manifestFile}, extraFeatures...)
+}
+
+// testAppSetup changes the test app before Grafana loads it.
+type testAppSetup struct {
+	// manifestFile is a testdata manifest to install.
+	manifestFile string
+	// manifest is installed as the app's manifest, in place of manifestFile.
+	manifest []byte
+	// routes are added to the app's plugin.json.
+	routes []map[string]any
+}
+
+func setupHelperWithPlugin(t *testing.T, mode rest.DualWriterMode, setup testAppSetup, extraFeatures ...string) *apis.K8sTestHelper {
+	t.Helper()
+	manifestFile := setup.manifestFile
 	withManifest := manifestFile != ""
 
 	// The settings API alone enables the router, which serves both the settings
@@ -452,9 +469,25 @@ func setupHelperFull(t *testing.T, mode rest.DualWriterMode, manifestFile string
 
 	require.NoError(t, grafanafs.CopyRecursive(testAppSrc, testAppDst))
 
-	if withManifest {
+	manifestDst := filepath.Join(testAppDst, "app-sdk-manifest.json")
+	switch {
+	case setup.manifest != nil:
+		require.NoError(t, os.WriteFile(manifestDst, setup.manifest, 0o600))
+	case withManifest:
 		manifestSrc := filepath.Join(filepath.Dir(thisFile), "testdata", manifestFile)
-		require.NoError(t, grafanafs.CopyFile(manifestSrc, filepath.Join(testAppDst, "app-sdk-manifest.json")))
+		require.NoError(t, grafanafs.CopyFile(manifestSrc, manifestDst))
+	}
+
+	if setup.routes != nil {
+		pluginJSON := filepath.Join(testAppDst, "plugin.json")
+		raw, err := os.ReadFile(pluginJSON) //nolint:gosec // the copy of plugin.json this test made
+		require.NoError(t, err)
+		var plugin map[string]any
+		require.NoError(t, json.Unmarshal(raw, &plugin))
+		plugin["routes"] = setup.routes
+		raw, err = json.Marshal(plugin)
+		require.NoError(t, err)
+		require.NoError(t, os.WriteFile(pluginJSON, raw, 0o600))
 	}
 
 	helper := apis.NewK8sTestHelperWithOpts(t, apis.K8sTestHelperOpts{

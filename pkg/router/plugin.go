@@ -404,6 +404,19 @@ func newPluginSettingsBackend(plugin definition.PluginDefinition, client PluginC
 	h := sha256.New()
 	_, _ = h.Write(key)
 	_, _ = h.Write([]byte(id))
+	// The key leaves out the manifests, but the settings API serves the proxy
+	// routes they declare.
+	if paths, declared, err := plugin.ProxyRoutes(); declared {
+		routes, merr := json.Marshal(paths)
+		switch {
+		case err != nil:
+			_, _ = h.Write([]byte(err.Error()))
+		case merr != nil:
+			return nil, fmt.Errorf("plugin %q: proxy routes: %w", id, merr)
+		default:
+			_, _ = h.Write(routes)
+		}
+	}
 
 	version := metav1.GroupVersionForDiscovery{GroupVersion: id + "/" + apppluginV0.VERSION, Version: apppluginV0.VERSION}
 	return &PluginBackend{
@@ -538,6 +551,7 @@ func (b *PluginBackend) loadSettings(ctx context.Context, cfg *setting.Cfg, opts
 	opts.Features = b.deps.Features
 	opts.Settings = appsettings.Options{
 		RegisterProxy:            openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagApppluginsHandleProxyRequests, false, openfeature.TransactionContext(ctx)),
+		OpenAPIProxyRoutes:       openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagPluginsProxyWithOpenAPIRoutes, false, openfeature.TransactionContext(ctx)),
 		AccessControl:            b.deps.AccessControl,
 		DataProxyLogging:         cfg.DataProxyLogging,
 		SendUserHeader:           cfg.SendUserHeader,

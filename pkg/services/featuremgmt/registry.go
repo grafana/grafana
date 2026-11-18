@@ -3558,6 +3558,15 @@ var (
 			Expression:   "false",
 			HideFromDocs: true,
 		},
+		{
+			Name:         "plugins.proxyWithOpenAPIRoutes",
+			Description:  "Matches app plugin proxy requests against the plugin's routes converted to OpenAPI paths, and publishes those paths",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAppPlatformSquad,
+			Generate:     Generate{Go: true},
+			Expression:   "false",
+			HideFromDocs: true,
+		},
 
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//
