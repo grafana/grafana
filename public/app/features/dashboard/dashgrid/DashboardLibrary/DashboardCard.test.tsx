@@ -162,6 +162,23 @@ describe('DashboardCard', () => {
       expect(screen.queryByRole('button', { name: 'View template: RED metrics' })).not.toBeInTheDocument();
     });
 
+    it('picks the card only from its Use template action, as the template modal does', async () => {
+      const onSelect = jest.fn();
+      const { user } = render(
+        <DashboardCard
+          title="RED metrics"
+          dashboard={createMockGnetDashboard()}
+          onClick={mockOnClick}
+          onSelect={onSelect}
+          kind="template_dashboard"
+        />
+      );
+
+      await user.click(screen.getByText('RED metrics'));
+
+      expect(onSelect).not.toHaveBeenCalled();
+    });
+
     it('reports the selected card as pressed', () => {
       render(
         <DashboardCard

@@ -78,8 +78,8 @@ interface BaseProps {
   /** Resolved display name of the user who created the template. Only rendered for `custom_dashboard_template`. */
   createdByName?: string;
   /**
-   * Picks the card instead of opening it: the whole thumbnail becomes one button and the hover actions are
-   * not shown. Used where a template is attached to the Assistant prompt rather than opened.
+   * Picks the card instead of opening it: the hover's Use template action hands it to `onSelect`. Used where a
+   * template is attached to the Assistant prompt rather than opened.
    */
   onSelect?: () => void;
   /** Shows the card as picked. Only read together with `onSelect`. */
@@ -181,11 +181,6 @@ function DashboardCardComponent({
     <article
       className={cx(styles.card, onSelect && styles.selectableCard, onSelect && selected && styles.selectedCard)}
     >
-      {onSelect && (
-        // A click anywhere on the card picks it. Keyboard and screen readers use the Use template action
-        // instead, so this mouse target stays out of the tab order and the accessibility tree.
-        <button type="button" tabIndex={-1} aria-hidden="true" className={styles.selectButton} onClick={onSelect} />
-      )}
       {hasCardMenu && (
         <div className={styles.cardMenu}>
           <Dropdown
@@ -277,8 +272,7 @@ function DashboardCardComponent({
           </div>
         )}
         {onSelect && (
-          // Joined rather than cx(): cx merges them into a new class, and the hover rules target thumbnailOverlay.
-          <div className={`${styles.thumbnailOverlay} ${styles.selectOverlay}`}>
+          <div className={styles.thumbnailOverlay}>
             <Button
               variant="secondary"
               className={styles.overlayButton}
@@ -589,40 +583,12 @@ function getStyles(theme: GrafanaTheme2) {
     selectableCard: css({
       width: '100%',
       borderColor: theme.colors.border.weak,
-      '&:hover': {
-        borderColor: theme.colors.border.medium,
-        backgroundColor: theme.colors.action.hover,
-      },
-      [`&:hover .${thumbnailOverlay}, &:focus-within .${thumbnailOverlay}`]: {
-        opacity: 1,
-      },
     }),
+    // What CardContainer draws for `isSelected`, so a picked template looks like every selected card. Drawn over
+    // the border, since the picker's scrolling list would clip an outline outside it.
     selectedCard: css({
-      borderColor: theme.colors.primary.border,
-      boxShadow: `0 0 0 1px ${theme.colors.primary.border}`,
-      backgroundColor: theme.colors.action.selected,
-      '&:hover': {
-        borderColor: theme.colors.primary.border,
-      },
-    }),
-    // Covers the whole card so it is one click target; the hover actions sit above it.
-    selectButton: css({
-      position: 'absolute',
-      inset: 0,
-      zIndex: 1,
-      padding: 0,
-      border: 0,
-      background: 'transparent',
-      borderRadius: theme.shape.radius.default,
-      cursor: 'pointer',
-    }),
-    // Above the card's click target; only its buttons take clicks, the rest falls through to it.
-    selectOverlay: css({
-      zIndex: 2,
-      pointerEvents: 'none',
-      '& > *': {
-        pointerEvents: 'auto',
-      },
+      outline: `solid 1px ${theme.colors.accent.border}`,
+      outlineOffset: -1,
     }),
     overlayButton: css({
       width: '80%',
