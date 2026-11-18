@@ -2,19 +2,20 @@ import { type Observable } from 'rxjs';
 
 /** A Grafana shortcut available to trusted plugins that host embedded content. @public */
 export interface EmbeddedKeybinding {
+  /** Identifier to pass to the service with the current snapshot revision. */
   readonly id: string;
   /** Mousetrap notation. Spaces separate chords and `mod` selects the platform modifier. */
   readonly keys: string;
   readonly allowInEditable: boolean;
 }
 
-/** The shortcuts currently active in Grafana's host context. @public */
+/** The active shortcuts registered through Grafana's keybinding service. @public */
 export interface EmbeddedKeybindingsSnapshot {
   readonly revision: number;
   readonly bindings: readonly EmbeddedKeybinding[];
 }
 
-/** Observes and invokes Grafana shortcuts that opt in to embedded use. @public */
+/** Observes and invokes active shortcuts registered through Grafana's keybinding service. @public */
 export interface EmbeddedKeybindingService {
   /** Emits the current snapshot on subscription and a new revision when the active bindings change. */
   readonly snapshots: Observable<EmbeddedKeybindingsSnapshot>;
