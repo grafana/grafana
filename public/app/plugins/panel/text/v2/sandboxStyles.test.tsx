@@ -30,6 +30,9 @@ it.each(['light', 'dark'] as const)('keeps content styling while excluding app s
     expect(css).toContain('.sr-only');
     expect(css).toContain('.btn-success,.btn-primary');
     expect(css).toContain('.text-center');
+    // Saved v1 Text panel HTML uses these legacy classes.
+    expect(css).toContain('.filter-table');
+    expect(css).toContain('.card-item');
     expect(css).toContain('input,button,select,textarea');
     expect(css).toContain('@font-face');
     expect(css).toContain('Inter-Regular.woff2');

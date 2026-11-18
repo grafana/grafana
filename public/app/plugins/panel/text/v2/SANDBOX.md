@@ -79,7 +79,7 @@ Browser CSP events do not carry render revisions. A delayed violation from a rem
 
 ## Styling
 
-Text documents receive shared typography, element, code, Markdown, accessibility, form and legacy utility styles, compiled once per theme. They do not copy feature-specific global styles such as dashboard layout or query editor styles. HTML that depends on those feature-specific classes should supply its own styles.
+Text documents receive shared typography, element, code, Markdown, accessibility, form, legacy utility, card (`.card-*`) and filter table (`.filter-table`) styles, compiled once per theme. They do not copy feature-specific global styles such as dashboard layout or query editor styles. HTML that depends on those feature-specific classes should supply its own styles.
 
 Font faces are still collected from the application's global styles so configured fonts remain available, and their existing network policy and inlining rules are unchanged. The Text stylesheet is compiled into a detached CSSStyleSheet through Emotion and serialized from CSSOM, matching the browser's handling of unsupported selectors and invalid declarations without applying styles in the parent document.
 
