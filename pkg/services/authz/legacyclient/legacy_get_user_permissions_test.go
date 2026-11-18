@@ -35,6 +35,19 @@ func legacyRequest() LegacyGetUserPermissionsRequest {
 	}
 }
 
+func TestLegacyRequesterContextIsCopied(t *testing.T) {
+	rpc := &legacyTestRPC{}
+	client := &LegacyClient{clientV1: rpc, tracer: noop.Tracer{}}
+	key, namespace := "caller-key", ""
+	req := legacyRequest()
+	req.Identity.CacheKey, req.Identity.RequesterNamespace = &key, &namespace
+	_, err := client.LegacyGetUserPermissions(t.Context(), legacyCaller("stacks-12", "authz.grafana.app/legacyuserpermissions:get"), req)
+	require.NoError(t, err)
+	key, namespace = "changed", "changed"
+	require.Equal(t, "caller-key", *rpc.request.Identity.CacheKey)
+	require.Equal(t, "", *rpc.request.Identity.RequesterNamespace)
+}
+
 func TestClient_LegacyGetUserPermissionsCompleteSnapshot(t *testing.T) {
 	rpc := &legacyTestRPC{responses: []*authzv1.LegacyGetUserPermissionsResponse{
 		{},

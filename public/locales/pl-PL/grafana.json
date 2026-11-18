@@ -1617,10 +1617,17 @@
         "view-list": "Lista",
         "wildcard-in-text": "Tekst wyszukiwania nie może zawierać znaków * ani %."
       },
+      "sequence-drawer": {
+        "alert-rules": "",
+        "error": "",
+        "interval": "",
+        "missing-rule": "",
+        "recording-rules": "",
+        "this-rule": "",
+        "title": ""
+      },
       "sequence-pill": {
-        "label": "",
         "label-with-interval": "",
-        "tooltip": "",
         "tooltip-with-interval": ""
       },
       "shared": {
@@ -1845,17 +1852,18 @@
         "autosync-rules-error-title": "Niepowodzenie importowania reguł",
         "autosync-rules-imported-note": "Wybrane reguły alertów również zostały zaimportowane.",
         "autosync-rules-note": "Wybrane reguły alertów również zostaną zaimportowane.",
-        "autosync-success-body": "Automatyczna synchronizacja jest włączona. Przekierowuję…",
+        "autosync-success-body": "",
         "autosync-success-title": "Automatyczna synchronizacja włączona",
         "autosync-title": "Potwierdź automatyczną synchronizację",
         "body": "Czy na pewno chcesz rozpocząć import? To działanie spowoduje utworzenie nowych zasobów w usłudze Grafana Alerting.",
         "confirm": "Rozpocznij importowanie",
+        "continue": "",
         "error-body": "",
         "error-details": "",
         "error-title": "Niepowodzenie importu",
         "importing-body": "Trwa importowanie zasobów do usługi Grafana Alerting. Czekaj…",
         "importing-title": "Importowanie…",
-        "success-body": "Zasoby zostały zaimportowane. Trwa przekierowywanie…",
+        "success-body": "",
         "success-title": "Powodzenie importu",
         "title": "Potwierdź import"
       },
@@ -7827,11 +7835,7 @@
       "usage-count_other": "Używane na {{count}} pulpitach"
     },
     "lifecycle": {
-      "applied": "Zmiany zostały zastosowane do „{{title}}”",
-      "apply": "Zastosuj",
-      "apply-body": "Zobaczą je wszyscy, którzy mają dostęp. Możesz przywrócić poprzednią wersję z historii wersji.",
-      "apply-failed": "Nie udało się zastosować zmian. Spróbuj ponownie lub najpierw je porównaj.",
-      "apply-needs-save": "",
+      "ask-assistant-to-update": "",
       "breadcrumb-draft": "Wersja robocza",
       "breadcrumb-pending-changes": "Oczekujące zmiany",
       "change-added": "Dodano",
@@ -7863,7 +7867,6 @@
       "draft-discarded": "",
       "draft-title": "Wersja robocza",
       "edited-dashboard": "",
-      "highlight-changes": "Wyróżnij zmiany na pulpicie",
       "pending-body": "Wyświetlanie podglądu oczekujących zmian. Tylko Ty możesz je zobaczyć.",
       "pending-body-source": "Wyświetlanie podglądu oczekujących zmian ({{source}}). Tylko Ty możesz je zobaczyć.",
       "pending-changes-changed": "",
@@ -7872,15 +7875,18 @@
       "pending-stale": "Od momentu wprowadzenia przez Ciebie zmian pulpit został zaktualizowany",
       "pending-title": "Oczekujące zmiany",
       "preview-changes": "Podgląd zmian",
-      "rebase": "Przywróć stan bazowy",
       "record-pending-change-failed": "",
       "save": "Zapisz",
+      "save-failed": "",
+      "save-needs-permission": "",
+      "save-pending-body": "",
+      "save-pending-failed": "",
+      "saved-pending": "",
       "show-original-dashboard": "Pokaż oryginalny pulpit",
-      "stop-highlighting-changes": "Przestań wyróżniać zmiany",
-      "apply-title_one": "Zastosować {{count}} zmianę w „{{title}}”?",
-      "apply-title_few": "Zastosować {{count}} zmiany w „{{title}}”?",
-      "apply-title_many": "Zastosować {{count}} zmian w „{{title}}”?",
-      "apply-title_other": "Zastosować {{count}} zmiany w „{{title}}”?"
+      "save-pending-title_one": "",
+      "save-pending-title_few": "",
+      "save-pending-title_many": "",
+      "save-pending-title_other": ""
     },
     "link-edit-actions": {
       "add-link": "Dodaj link",
@@ -13684,6 +13690,31 @@
     }
   },
   "navigation": {
+    "assistant-toolbar-button": {
+      "arrange-window": "",
+      "assistant-page": "",
+      "bottom": "",
+      "floating": "",
+      "left": "",
+      "menu": "",
+      "move": "",
+      "navigation-assistant-page": "",
+      "navigation-page-assistant": "",
+      "navigation-page-assistant-below": "",
+      "navigation-page-floating-assistant": "",
+      "page-assistant": "",
+      "page-assistant-below": "",
+      "page-floating-assistant": "",
+      "page-only": "",
+      "pop-up": "",
+      "right": ""
+    },
+    "assistant-workspace": {
+      "exit": "",
+      "exit-tooltip": "",
+      "open": "",
+      "open-tooltip": ""
+    },
     "breadcrumbs": {
       "aria-label": "Ścieżka nawigacji"
     },
@@ -13699,14 +13730,6 @@
         "open-all": "Otwórz asystentów AI i aplikacje na pasku bocznym"
       },
       "floating-resize": "Zmień szerokość paska bocznego"
-    },
-    "fullscreen-workspace": {
-      "enter": "Otwórz obszar roboczy",
-      "error-exit": "Wyjdź z obszaru roboczego",
-      "error-message": "Nie udało się wczytać obszaru roboczego Asystenta Grafany.",
-      "error-reload": "Odśwież stronę",
-      "error-title": "Obszar roboczy jest niedostępny",
-      "workspace": "Obszar roboczy"
     },
     "help": {
       "aria-label": "Pomoc",
@@ -13744,6 +13767,7 @@
       "tv-alert": "Naciśnij ESC, aby wyjść z trybu kiosku"
     },
     "megamenu": {
+      "click-to-dock": "",
       "close": "Zamknij menu",
       "customise": "Dostosuj nawigację",
       "customise-cancel": "Anuluj",
@@ -13911,8 +13935,10 @@
       "drag-handle": "Przeciągnij, aby zmienić kolejność",
       "duplicate": "Duplikuj blok",
       "frame": {
-        "aria-label-collapsed": "Zwinięty blok: {{name}}",
-        "aria-label-panel": "Blok wizualizacji: {{name}}"
+        "aria-label-collapsed-titled": "",
+        "aria-label-collapsed-untitled": "",
+        "aria-label-panel-titled": "",
+        "aria-label-panel-untitled": ""
       },
       "markdown": {
         "aria-label-editor": "Markdown",
@@ -14000,7 +14026,7 @@
       "submit": "Dodaj do notatnika",
       "success": "Panel został dodany do notatnika „{{title}}”",
       "success-cells": "Dodano do: {{title}}",
-      "success-link": "Wyświetl notatnik",
+      "success-open-link": "",
       "tag-placeholder": "Filtruj według tagu",
       "target-description": "Wybierz, gdzie chcesz dodać panel.",
       "target-existing": "Istniejący notatnik",
@@ -14174,7 +14200,8 @@
       "swatch-placeholder-aria-label": "Wybierz kolor, {{placeholder}}"
     },
     "field-color": {
-      "color-by-label": "Kolory serii wg"
+      "color-by-label": "Kolory serii wg",
+      "reverse-label": ""
     },
     "number-input": {
       "error-out-of-range": "Poza zakresem. {{range}}",
@@ -15845,6 +15872,8 @@
       "header-title": "Tytuł",
       "header-type": "Typ",
       "missing-folder-metadata": "Brak pliku metadanych folderów",
+      "resource-filter-aria-label": "",
+      "resource-filter-placeholder": "",
       "search-placeholder": "Szukaj według ścieżki lub tytułu",
       "source": "Źródło",
       "status-filter-aria-label": "Filtruj według statusu",

@@ -1830,16 +1830,6 @@
       "count": 6
     }
   },
-  "public/app/features/alerting/unified/rule-list/PaginatedDataSourceLoader.tsx": {
-    "react-hooks/refs": {
-      "count": 1
-    }
-  },
-  "public/app/features/alerting/unified/rule-list/PaginatedGrafanaLoader.tsx": {
-    "react-hooks/refs": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/settings/import/StagedImportSection.tsx": {
     "@grafana/no-config-feature-toggles": {
       "count": 1
@@ -1877,21 +1867,6 @@
   },
   "public/app/features/alerting/unified/triage/scene/AlertRuleSummary.tsx": {
     "react-hooks/set-state-in-effect": {
-      "count": 1
-    }
-  },
-  "public/app/features/alerting/unified/triage/scene/tagKeysProviders.test.ts": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
-  "public/app/features/alerting/unified/triage/scene/tagKeysProviders.ts": {
-    "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
-  "public/app/features/alerting/unified/triage/scene/useLabelsBreakdown.ts": {
-    "@grafana/no-get-data-source-srv": {
       "count": 1
     }
   },
@@ -3000,11 +2975,6 @@
   },
   "public/app/features/explore/TraceView/components/TraceTimelineViewer/SpanDetail/LogsLink.tsx": {
     "react-hooks/set-state-in-effect": {
-      "count": 1
-    }
-  },
-  "public/app/features/explore/TraceView/components/TraceTimelineViewer/TimelineHeaderRow/TimelineViewingLayer.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
