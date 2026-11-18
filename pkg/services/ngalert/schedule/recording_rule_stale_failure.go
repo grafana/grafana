@@ -17,6 +17,14 @@ const (
 	markerReasonExpired         = "expired"
 )
 
+var retryableRejections = []string{
+	writer.MimirSampleOutOfOrderError,
+	writer.MimirSampleTimestampTooOldError,
+	writer.MimirSampleTooFarInPastError,
+	writer.MimirSampleTooFarInFutureError,
+	writer.MimirIngestionRateLimitedError,
+}
+
 type markerFailure struct {
 	reason string
 	// retry is false when the same marker would be rejected again.
@@ -29,6 +37,13 @@ type markerFailure struct {
 func classifyMarkerError(err error) markerFailure {
 	if strings.Contains(err.Error(), writer.MimirMaxActiveSeriesError) {
 		return markerFailure{reason: markerReasonMaxActiveSeries}
+	}
+
+	// These rejections depend on timing or load, and a retry carries a later timestamp.
+	for _, id := range retryableRejections {
+		if strings.Contains(err.Error(), id) {
+			return markerFailure{reason: markerReasonTransient, retry: true}
+		}
 	}
 
 	if errors.Is(err, writer.ErrRejectedWrite) ||
