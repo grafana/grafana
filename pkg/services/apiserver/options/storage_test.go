@@ -19,7 +19,14 @@ import (
 	"google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/test/bufconn"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
+	genericapiserver "k8s.io/apiserver/pkg/server"
+	"k8s.io/apiserver/pkg/server/options"
+	"k8s.io/apiserver/pkg/storage/storagebackend"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -277,4 +284,37 @@ type healthTestStorageServer struct {
 func (s *healthTestStorageServer) Read(context.Context, *resourcepb.ReadRequest) (*resourcepb.ReadResponse, error) {
 	s.calls.Add(1)
 	return &resourcepb.ReadResponse{}, nil
+}
+
+func TestStorageOptionsGrafanaCloudServiceIdentity(t *testing.T) {
+	// applied parses args, runs ApplyTo and reports the identity on the getter it installs.
+	applied := func(t *testing.T, args ...string) string {
+		t.Helper()
+		storageOpts := NewStorageOptions()
+		flags := pflag.NewFlagSet("test", pflag.ContinueOnError)
+		storageOpts.AddFlags(flags)
+		require.NoError(t, flags.Parse(append([]string{
+			"--grafana-apiserver-storage-type=unified-grpc",
+			"--grafana-apiserver-storage-address=passthrough:///storage",
+			"--grpc-client-authentication-token=test-token",
+			"--grpc-client-authentication-token-exchange-url=http://localhost/v1/sign-access-token",
+			"--grpc-client-authentication-token-namespace=*",
+		}, args...)))
+
+		serverConfig := genericapiserver.NewRecommendedConfig(serializer.NewCodecFactory(runtime.NewScheme()))
+		etcdOptions := options.NewEtcdOptions(storagebackend.NewDefaultConfig("", nil))
+		require.NoError(t, storageOpts.ApplyTo(serverConfig, etcdOptions, tracing.InitializeTracerForTest(), nil))
+
+		getter, ok := serverConfig.RESTOptionsGetter.(*apistore.RESTOptionsGetter)
+		require.True(t, ok, "unexpected getter type %T", serverConfig.RESTOptionsGetter)
+		return getter.GrafanaCloudServiceIdentity()
+	}
+
+	t.Run("the flag reaches the storage options getter", func(t *testing.T) {
+		require.Equal(t, "cloud-writer", applied(t, "--grafana-apiserver-grafana-cloud-service-identity=cloud-writer"))
+	})
+
+	t.Run("without the flag nobody may assign the manager", func(t *testing.T) {
+		require.Empty(t, applied(t))
+	})
 }

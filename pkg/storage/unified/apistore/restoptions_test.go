@@ -4,7 +4,11 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/registry/generic"
+	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 )
 
@@ -195,5 +199,48 @@ func TestRegisterVersionedOptionsRejectsGVKMismatch(t *testing.T) {
 
 	t.Run("a contradicting group is rejected", func(t *testing.T) {
 		require.Error(t, register(t, schema.GroupVersionKind{Group: "other.grafana.app", Version: "v1alpha1", Kind: "Thing"}))
+	})
+}
+
+func TestRESTOptionsGetterFillsGrafanaCloudServiceIdentity(t *testing.T) {
+	gr := schema.GroupResource{Group: "example.grafana.app", Resource: "things"}
+
+	// storeOptions builds the store the way the generic registry does and reports the options it got.
+	storeOptions := func(t *testing.T, getter generic.RESTOptionsGetter) StorageOptions {
+		t.Helper()
+		restOpts, err := getter.GetRESTOptions(gr, nil)
+		require.NoError(t, err)
+		store, destroy, err := restOpts.Decorator(restOpts.StorageConfig, "", nil,
+			func() runtime.Object { return &unstructured.Unstructured{} },
+			func() runtime.Object { return &unstructured.UnstructuredList{} },
+			nil, storage.IndexerFuncs{}, nil)
+		require.NoError(t, err)
+		if destroy != nil {
+			t.Cleanup(destroy)
+		}
+		s, ok := store.(*Storage)
+		require.True(t, ok, "unexpected store type %T", store)
+		return s.opts
+	}
+	newGetter := func() *RESTOptionsGetter {
+		return NewRESTOptionsGetterForClient(nil, nil, storagebackend.Config{}, nil, nil)
+	}
+
+	t.Run("resources registered by GroupResource get the getter's identity", func(t *testing.T) {
+		r := newGetter()
+		r.SetGrafanaCloudServiceIdentity("cloud-writer")
+		require.Equal(t, "cloud-writer", storeOptions(t, r).GrafanaCloudServiceIdentity)
+	})
+
+	t.Run("resources with their own options get the getter's identity", func(t *testing.T) {
+		r := newGetter()
+		r.SetGrafanaCloudServiceIdentity("cloud-writer")
+		opts := storeOptions(t, r.WithStorageOptions(StorageOptions{EnableFolderSupport: true}))
+		require.Equal(t, "cloud-writer", opts.GrafanaCloudServiceIdentity)
+		require.True(t, opts.EnableFolderSupport)
+	})
+
+	t.Run("an unset identity stays empty", func(t *testing.T) {
+		require.Empty(t, storeOptions(t, newGetter()).GrafanaCloudServiceIdentity)
 	})
 }
