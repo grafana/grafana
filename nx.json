@@ -22,21 +22,7 @@
   "release": {
     "groups": {
       "grafana": {
-        "projects": [
-          "@grafana/alerting",
-          "@grafana/api-clients",
-          "@grafana/data",
-          "@grafana/e2e-selectors",
-          "@grafana/flamegraph",
-          "@grafana/i18n",
-          "@grafana/o11y-ds-frontend",
-          "@grafana/openapi",
-          "@grafana/runtime",
-          "@grafana/schema",
-          "@grafana/sql",
-          "@grafana/ui",
-          "public/app/plugins/*/*"
-        ],
+        "projects": ["tag:release:grafana"],
         "projectsRelationship": "fixed"
       }
     },
