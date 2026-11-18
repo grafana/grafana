@@ -10,8 +10,11 @@
 # updated, and deleted. Every other resource must keep its metadata, and a listed
 # resource that starts keeping labels fails the test until it is removed from the list.
 # "api_version_mismatch" lists resources the server returns in another apiVersion than
-# requested, for example in a list; only that check is waived, and it fails once the
-# server returns the requested version, until the entry is removed.
+# requested, with the version and the kind of read ("get", "list", or "list item"); only
+# that exact read is waived, and it fails once the server returns the requested version,
+# until the entry is removed.
+# Entries for a resource this build does not serve fail too: the Enterprise build checks
+# every section but oss, the OSS build checks all and oss.
 # "stale_writes_accepted" lists resources that are tested, except that their storage
 # does not reject writes with a stale resourceVersion; once it does, the test fails
 # until the entry is removed.
@@ -51,4 +54,7 @@ legacy_storage:
 stale_writes_accepted:
   securevalues.secret.grafana.app: the secret store does not check the resourceVersion on update
 api_version_mismatch:
-  queries.queries.grafana.app: listing through v1beta1 returns the items as v1
+  queries.queries.grafana.app:
+    version: v1beta1
+    read: list item
+    reason: listing through v1beta1 returns the items as v1

@@ -67,9 +67,14 @@ const (
 func TestCompatSetup(t *testing.T) {
 	dir := compat.Dir(t)
 	h := compat.NewHelper(t)
-	skips, stale := readSkipFile(t).resolve()
+	f := readSkipFile(t)
+	skips, stale := f.resolve()
 	served := compat.Served(t, h)
 	ctx := context.Background()
+
+	for _, entry := range unservedSkipEntries(f, served, extensions.IsEnterprise) {
+		t.Errorf("skip.yaml lists %s, but this build does not serve it; remove the entry", entry)
+	}
 
 	for gr, flag := range stale {
 		t.Run("stale-skip/"+gr.String(), func(t *testing.T) {
@@ -195,7 +200,7 @@ func TestCompatVerify(t *testing.T) {
 
 			got, err := resourceClient(h, gr, e.Version).Get(ctx, e.Name, metav1.GetOptions{})
 			require.NoError(t, err)
-			requireServedAs(t, newVersionCheck(t, gr, f), got, gr.WithVersion(e.Version).GroupVersion().String(), "get in "+e.Version)
+			requireServedAs(t, newVersionCheck(t, gr, f), got, gr.WithVersion(e.Version).GroupVersion().String(), "get", e.Version)
 			if e.UpdatedIn == "" || e.UpdatedIn == e.Version {
 				require.NoError(t, sameSpecError(e.Spec, specJSON(t, got)), "spec changed after the other version read or rewrote the object")
 			} else {
@@ -266,14 +271,14 @@ func readEverywhere(t *testing.T, h *apis.K8sTestHelper, e written, res compat.R
 		gv := e.gr().WithVersion(v).GroupVersion().String()
 		obj, err := resourceClient(h, e.gr(), v).Get(ctx, e.Name, metav1.GetOptions{})
 		require.NoError(t, err, "get in %s%s", v, hint(e, res))
-		requireServedAs(t, vc, obj, gv, "get in "+v)
+		requireServedAs(t, vc, obj, gv, "get", v)
 
 		list, err := resourceClient(h, e.gr(), v).List(ctx, metav1.ListOptions{})
 		require.NoError(t, err, "list in %s%s", v, hint(e, res))
-		vc.check(gv, list.GetAPIVersion(), "list in "+v)
+		vc.check(gv, list.GetAPIVersion(), "list", v)
 		i := slices.IndexFunc(list.Items, named(e.Name))
 		require.GreaterOrEqual(t, i, 0, "list in %s does not contain %s", v, e.Name)
-		requireServedAs(t, vc, &list.Items[i], gv, "list item in "+v)
+		requireServedAs(t, vc, &list.Items[i], gv, "list item", v)
 	}
 }
 
@@ -283,29 +288,31 @@ func readEverywhere(t *testing.T, h *apis.K8sTestHelper, e written, res compat.R
 type versionCheck struct {
 	t          *testing.T
 	gr         schema.GroupResource
-	waived     string
+	waiver     apiVersionWaiver
 	mismatched bool
 }
 
 func newVersionCheck(t *testing.T, gr schema.GroupResource, f skipFile) *versionCheck {
-	return &versionCheck{t: t, gr: gr, waived: f.APIVersionMismatch[gr.String()]}
+	return &versionCheck{t: t, gr: gr, waiver: f.APIVersionMismatch[gr.String()]}
 }
 
-func (c *versionCheck) check(want, got, what string) {
+// check compares the apiVersion returned by one kind of read ("get", "list", or
+// "list item") in one version. Only the exact read and version an entry names is waived.
+func (c *versionCheck) check(want, got, read, version string) {
 	c.t.Helper()
 	if want == got {
 		return
 	}
-	if c.waived == "" {
-		require.Equal(c.t, want, got, "%s: apiVersion", what)
+	if !c.waiver.covers(read, version) {
+		require.Equal(c.t, want, got, "%s in %s: apiVersion", read, version)
 	}
 	c.mismatched = true
-	c.t.Logf("%s: got apiVersion %s, known issue: %s", what, got, c.waived)
+	c.t.Logf("%s in %s: got apiVersion %s, known issue: %s", read, version, got, c.waiver.Reason)
 }
 
 func (c *versionCheck) done() {
 	c.t.Helper()
-	if c.waived != "" && !c.mismatched {
+	if c.waiver.Read != "" && !c.mismatched {
 		c.t.Errorf("%s returns the requested apiVersion now; remove it from api_version_mismatch in skip.yaml", c.gr)
 	}
 }
@@ -314,9 +321,10 @@ func (c *versionCheck) done() {
 // either it kept another apiVersion, or it reports in status.conversion that it could not
 // convert. A failed conversion still reads successfully, with a placeholder spec, so the
 // status is the only sign of it.
-func requireServedAs(t *testing.T, vc *versionCheck, obj *unstructured.Unstructured, apiVersion, what string) {
+func requireServedAs(t *testing.T, vc *versionCheck, obj *unstructured.Unstructured, apiVersion, read, version string) {
 	t.Helper()
-	vc.check(apiVersion, obj.GetAPIVersion(), what)
+	vc.check(apiVersion, obj.GetAPIVersion(), read, version)
+	what := read + " in " + version
 	failed, _, _ := unstructured.NestedBool(obj.Object, "status", "conversion", "failed")
 	if failed {
 		msg, _, _ := unstructured.NestedString(obj.Object, "status", "conversion", "error")
@@ -512,13 +520,56 @@ func newObject(t *testing.T, h *apis.K8sTestHelper, gr schema.GroupResource, res
 // skipFile is skip.yaml. Every map is keyed by "<resource>.<group>"; the values are
 // reasons, except in FeatureFlags, where they are the flag the resource needs.
 type skipFile struct {
-	FeatureFlags        map[string]string `yaml:"feature_flags"`
-	All                 map[string]string `yaml:"all"`
-	OSS                 map[string]string `yaml:"oss"`
-	Enterprise          map[string]string `yaml:"enterprise"`
-	LegacyStorage       map[string]string `yaml:"legacy_storage"`
-	APIVersionMismatch  map[string]string `yaml:"api_version_mismatch"`
-	StaleWritesAccepted map[string]string `yaml:"stale_writes_accepted"`
+	FeatureFlags        map[string]string           `yaml:"feature_flags"`
+	All                 map[string]string           `yaml:"all"`
+	OSS                 map[string]string           `yaml:"oss"`
+	Enterprise          map[string]string           `yaml:"enterprise"`
+	LegacyStorage       map[string]string           `yaml:"legacy_storage"`
+	APIVersionMismatch  map[string]apiVersionWaiver `yaml:"api_version_mismatch"`
+	StaleWritesAccepted map[string]string           `yaml:"stale_writes_accepted"`
+}
+
+// apiVersionWaiver is an api_version_mismatch entry: the server returns another apiVersion
+// for one kind of read in one version.
+type apiVersionWaiver struct {
+	Version string `yaml:"version"`
+	Read    string `yaml:"read"`
+	Reason  string `yaml:"reason"`
+}
+
+func (w apiVersionWaiver) covers(read, version string) bool {
+	return w.Read != "" && w.Read == read && w.Version == version
+}
+
+// unservedSkipEntries lists skip.yaml entries, as "<section>: <resource>.<group>", for
+// resources this build does not serve, so they are removed when a resource goes away. The
+// Enterprise build serves everything OSS does, so it checks every section but oss; the
+// OSS build checks all and oss.
+func unservedSkipEntries(f skipFile, served map[schema.GroupResource]compat.Resource, enterprise bool) []string {
+	sections := map[string][]string{"all": keysOf(f.All)}
+	if enterprise {
+		sections["enterprise"] = keysOf(f.Enterprise)
+		sections["feature_flags"] = keysOf(f.FeatureFlags)
+		sections["legacy_storage"] = keysOf(f.LegacyStorage)
+		sections["stale_writes_accepted"] = keysOf(f.StaleWritesAccepted)
+		sections["api_version_mismatch"] = keysOf(f.APIVersionMismatch)
+	} else {
+		sections["oss"] = keysOf(f.OSS)
+	}
+	var out []string
+	for name, keys := range sections {
+		for _, key := range keys {
+			if _, ok := served[schema.ParseGroupResource(key)]; !ok {
+				out = append(out, name+": "+key)
+			}
+		}
+	}
+	slices.Sort(out)
+	return out
+}
+
+func keysOf[V any](m map[string]V) []string {
+	return slices.Collect(maps.Keys(m))
 }
 
 func readSkipFile(t *testing.T) skipFile {
@@ -538,7 +589,8 @@ func readSkipFile(t *testing.T) skipFile {
 // evaluate as the server evaluates them. stale lists the feature_flags entries whose
 // flag is on, which should be tested instead.
 func (f skipFile) resolve() (skips map[schema.GroupResource]string, stale map[schema.GroupResource]string) {
-	reasons := maps.Clone(f.All)
+	reasons := map[string]string{}
+	maps.Copy(reasons, f.All)
 	if extensions.IsEnterprise {
 		maps.Copy(reasons, f.Enterprise)
 	} else {
