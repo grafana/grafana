@@ -136,6 +136,12 @@ func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*auth
 			return nil, errExtJWTInvalid.Errorf("failed to verify id token: %w", verifyErr)
 		}
 
+		// ID tokens minted for personal access tokens carry the owner's full identity; accepting
+		// one here would let a forwarded token escape the token's narrowing.
+		if idTokenClaims.Rest.AuthenticatedBy == login.PersonalTokenAuthModule {
+			return nil, errExtJWTInvalid.Errorf("id token was issued for a personal access token")
+		}
+
 		identity, err = s.authenticateAsUserViaIDToken(*idTokenClaims, *accessTokenClaims, jwtToken, orgID)
 	} else if accessTokenClaims.Rest.IsOnBehalfOfUser() {
 		identity, err = s.authenticateAsUserViaOBO(*accessTokenClaims, jwtToken, orgID)

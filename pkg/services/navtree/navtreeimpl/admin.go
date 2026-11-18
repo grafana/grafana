@@ -147,6 +147,16 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 			Url:      s.cfg.AppSubURL + "/org/serviceaccounts",
 		})
 	}
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if s.features.IsEnabled(ctx, featuremgmt.FlagPersonalAccessTokens) && c.GetIsGrafanaAdmin() {
+		accessNodeLinks = append(accessNodeLinks, &navtree.NavLink{
+			Text:     "Personal access tokens",
+			Id:       "personal-access-tokens-admin",
+			SubTitle: "Manage personal access tokens and the instance-wide switch",
+			Icon:     "key-skeleton-alt",
+			Url:      s.cfg.AppSubURL + "/admin/personal-access-tokens",
+		})
+	}
 
 	usersNode := &navtree.NavLink{
 		Text:     "Users and access",

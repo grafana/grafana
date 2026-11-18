@@ -292,7 +292,7 @@ func (hs *HTTPServer) registerRoutes() {
 			userRoute.Get("/orgs", routing.Wrap(hs.GetSignedInUserOrgList))
 			userRoute.Get("/teams", routing.Wrap(hs.GetSignedInUserTeamList))
 
-			userRoute.Get("/stars", routing.Wrap(hs.starApi.GetStars))
+			userRoute.Get("/stars", hs.personalTokenRequiresDashboardsRead(), routing.Wrap(hs.starApi.GetStars))
 			userRoute.Post("/stars/dashboard/uid/:uid", routing.Wrap(hs.starApi.StarDashboardByUID))     //nolint:staticcheck // legacy plumbing
 			userRoute.Delete("/stars/dashboard/uid/:uid", routing.Wrap(hs.starApi.UnstarDashboardByUID)) //nolint:staticcheck // legacy plumbing
 
@@ -304,10 +304,23 @@ func (hs *HTTPServer) registerRoutes() {
 
 			userRoute.Get("/auth-tokens", requestmeta.SetOwner(requestmeta.TeamAuth), routing.Wrap(hs.GetUserAuthTokens))
 			userRoute.Post("/revoke-auth-token", requestmeta.SetOwner(requestmeta.TeamAuth), routing.Wrap(hs.RevokeUserAuthToken))
+
+			userRoute.Get("/tokens-policy", authorize(ac.EvalPermission(ac.ActionUsersTokensRead)), routing.Wrap(hs.GetEffectivePersonalAccessTokenPolicy))
+			userRoute.Get("/tokens", authorize(ac.EvalPermission(ac.ActionUsersTokensRead)), routing.Wrap(hs.ListUserPersonalAccessTokens))
+			userRoute.Post("/tokens", authorize(ac.EvalPermission(ac.ActionUsersTokensCreate)), routing.Wrap(hs.CreateUserPersonalAccessToken))
+			userRoute.Delete("/tokens/:uid", authorize(ac.EvalPermission(ac.ActionUsersTokensDelete)), routing.Wrap(hs.RevokeUserPersonalAccessToken))
+		}, reqSignedInNoAnonymous)
+
+		apiRoute.Group("/personal-access-tokens", func(patRoute routing.RouteRegister) {
+			patRoute.Get("/", authorize(ac.EvalPermission(ac.ActionUsersTokensRead, ac.ScopeUsersAll)), routing.Wrap(hs.SearchPersonalAccessTokens))
+			patRoute.Delete("/:uid", authorize(ac.EvalPermission(ac.ActionUsersTokensDelete, ac.ScopeUsersAll)), routing.Wrap(hs.RevokePersonalAccessTokenByUID))
 		}, reqSignedInNoAnonymous)
 
 		apiRoute.Group("/users", func(usersRoute routing.RouteRegister) {
 			userIDScope := ac.Scope("global.users", "id", ac.Parameter(":id"))
+			orgUserIDScope := ac.Scope("users", "id", ac.Parameter(":id"))
+			usersRoute.Get("/:id/tokens", authorize(ac.EvalPermission(ac.ActionUsersTokensRead, orgUserIDScope)), routing.Wrap(hs.AdminListUserPersonalAccessTokens))
+			usersRoute.Delete("/:id/tokens/:uid", authorize(ac.EvalPermission(ac.ActionUsersTokensDelete, orgUserIDScope)), routing.Wrap(hs.AdminRevokeUserPersonalAccessToken))
 			usersRoute.Get("/", authorize(ac.EvalPermission(ac.ActionUsersRead)), routing.Wrap(hs.searchUsersService.SearchUsers))
 			usersRoute.Get("/search", authorize(ac.EvalPermission(ac.ActionUsersRead)), routing.Wrap(hs.searchUsersService.SearchUsersWithPaging))
 			usersRoute.Get("/:id", userUIDResolver, authorize(ac.EvalPermission(ac.ActionUsersRead, userIDScope)), routing.Wrap(hs.GetUserByID))
@@ -330,6 +343,8 @@ func (hs *HTTPServer) registerRoutes() {
 			userIDScope := ac.Scope("users", "id", ac.Parameter(":userId"))
 			orgRoute.Put("/", authorize(ac.EvalPermission(ac.ActionOrgsWrite)), routing.Wrap(hs.UpdateCurrentOrg))
 			orgRoute.Put("/address", authorize(ac.EvalPermission(ac.ActionOrgsWrite)), routing.Wrap(hs.UpdateCurrentOrgAddress))
+			orgRoute.Get("/settings/personal-access-tokens", authorize(ac.EvalPermission(ac.ActionOrgsRead)), routing.Wrap(hs.GetOrgPersonalAccessTokenPolicy))
+			orgRoute.Put("/settings/personal-access-tokens", authorize(ac.EvalPermission(ac.ActionOrgsWrite)), routing.Wrap(hs.UpdateOrgPersonalAccessTokenPolicy))
 			orgRoute.Get("/users", requestmeta.SetOwner(requestmeta.TeamAuth), authorize(ac.EvalPermission(ac.ActionOrgUsersRead)), routing.Wrap(hs.GetOrgUsersForCurrentOrg))
 			orgRoute.Get("/users/search", requestmeta.SetOwner(requestmeta.TeamAuth), authorize(ac.EvalPermission(ac.ActionOrgUsersRead)), routing.Wrap(hs.SearchOrgUsersWithPaging))
 			orgRoute.Post("/users", requestmeta.SetOwner(requestmeta.TeamAuth), authorize(ac.EvalPermission(ac.ActionOrgUsersAdd, ac.ScopeUsersAll)), quota(user.QuotaTargetSrv), quota(org.QuotaTargetSrv), routing.Wrap(hs.AddOrgUserToCurrentOrg))
@@ -401,11 +416,11 @@ func (hs *HTTPServer) registerRoutes() {
 			datasourceRoute.Delete("/uid/:uid", authorize(ac.EvalPermission(datasources.ActionDelete, uidScope)), routing.Wrap(hs.DeleteDataSourceByUID))
 			datasourceRoute.Get("/uid/:uid", authorize(ac.EvalPermission(datasources.ActionRead, uidScope)), hs.getK8sDataSourceByUIDHandler())
 
-			datasourceRoute.Any("/uid/:uid/health", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.callK8sDataSourceHealthHandler())
-			datasourceRoute.Any("/uid/:uid/resources", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.callK8sDataSourceResourceHandler())
-			datasourceRoute.Any("/uid/:uid/resources/*", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.callK8sDataSourceResourceHandler())
-			datasourceRoute.Any("/proxy/uid/:uid", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.ProxyDataSourceRequestWithUID)
-			datasourceRoute.Any("/proxy/uid/:uid/*", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.ProxyDataSourceRequestWithUID)
+			datasourceRoute.Any("/uid/:uid/health", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery, uidScope)), hs.callK8sDataSourceHealthHandler())
+			datasourceRoute.Any("/uid/:uid/resources", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery, uidScope)), hs.callK8sDataSourceResourceHandler())
+			datasourceRoute.Any("/uid/:uid/resources/*", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery, uidScope)), hs.callK8sDataSourceResourceHandler())
+			datasourceRoute.Any("/proxy/uid/:uid", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery, uidScope)), hs.ProxyDataSourceRequestWithUID)
+			datasourceRoute.Any("/proxy/uid/:uid/*", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery, uidScope)), hs.ProxyDataSourceRequestWithUID)
 
 			//nolint:staticcheck // not yet migrated to OpenFeature
 			if hs.Features.IsEnabledGlobally(featuremgmt.FlagDatasourceLegacyIdApi) {
@@ -493,7 +508,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// Search
 		apiRoute.Get("/search/sorting", routing.Wrap(hs.ListSortOptions))
-		apiRoute.Get("/search/", routing.Wrap(hs.Search))
+		apiRoute.Get("/search/", authorize(ac.EvalAny(ac.EvalPermission(dashboards.ActionDashboardsRead), ac.EvalPermission(folder.ActionFoldersRead))), routing.Wrap(hs.Search))
 
 		// metrics
 		// DataSource w/ expressions
@@ -556,6 +571,8 @@ func (hs *HTTPServer) registerRoutes() {
 		adminRoute.Get("/settings", authorize(ac.EvalPermission(ac.ActionSettingsRead)), routing.Wrap(hs.AdminGetSettings))
 		adminRoute.Get("/settings-verbose", authorize(ac.EvalPermission(ac.ActionSettingsRead)), routing.Wrap(hs.AdminGetVerboseSettings))
 		adminRoute.Get("/stats", authorize(ac.EvalPermission(ac.ActionServerStatsRead)), routing.Wrap(hs.AdminGetStats))
+		adminRoute.Get("/settings/personal-access-tokens", reqGrafanaAdmin, routing.Wrap(hs.GetInstancePersonalAccessTokenPolicy))
+		adminRoute.Put("/settings/personal-access-tokens", reqGrafanaAdmin, routing.Wrap(hs.UpdateInstancePersonalAccessTokenPolicy))
 
 		adminRoute.Post("/encryption/rotate-data-keys", reqGrafanaAdmin, routing.Wrap(hs.AdminRotateDataEncryptionKeys))
 		adminRoute.Post("/encryption/reencrypt-data-keys", reqGrafanaAdmin, routing.Wrap(hs.AdminReEncryptEncryptionKeys))

@@ -53,6 +53,10 @@ func (hs *HTTPServer) getCreatedSnapshotHandler() web.Handler {
 			c.JsonApiErr(http.StatusUnauthorized, "Unauthorized", nil)
 			return
 		}
+		if personalTokenScopedDelegationDenied(c.SignedInUser, dashboardsnapshots.ActionSnapshotsCreate) {
+			writePersonalTokenDelegationDenied(c.Resp)
+			return
+		}
 		c.Req.URL.Path = "/apis/dashboard.grafana.app/v0alpha1/namespaces/" +
 			namespaceMapper(c.GetOrgID()) + "/snapshots/create"
 		// Direct dispatch bypasses the API proxy that normally installs SignedInUser as the requester.

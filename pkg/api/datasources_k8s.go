@@ -204,6 +204,10 @@ func (hs *HTTPServer) callK8sDataSourceResourceHandler() web.Handler {
 		}
 
 		c.Req.URL.Path = k8sPath
+		if personalTokenScopedDelegationDenied(c.SignedInUser, datasources.ActionQuery) {
+			writePersonalTokenDelegationDenied(c.Resp)
+			return
+		}
 		hs.clientConfigProvider.DirectlyServeHTTP(c.Resp, c.Req)
 	}
 }
@@ -257,6 +261,10 @@ func (hs *HTTPServer) callK8sDataSourceHealthHandler() web.Handler {
 		namespace := hs.namespacer(c.GetOrgID())
 		c.Req.URL.Path = fmt.Sprintf("/apis/%s/%s/namespaces/%s/datasources/%s/health", conn.APIGroup, apiVersionForLegacy, namespace, conn.Name)
 		hs.dsEndpointRedirects.WithLabelValues("health", pluginTypeFromConnection(conn), "remote").Inc()
+		if personalTokenScopedDelegationDenied(c.SignedInUser, datasources.ActionQuery) {
+			writePersonalTokenDelegationDenied(c.Resp)
+			return
+		}
 		hs.clientConfigProvider.DirectlyServeHTTP(c.Resp, c.Req)
 	}
 }

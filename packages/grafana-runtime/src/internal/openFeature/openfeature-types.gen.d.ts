@@ -81,6 +81,7 @@ declare module "@openfeature/core" {
     | "alertingDisableSendAlertsExternal"
     | "alertingSyncNotifiersApiMigration"
     | "preserveDashboardStateWhenNavigating"
+    | "personalAccessTokens"
     | "reloadDashboardsOnParamsChange"
     | "vizActionsAuth"
     | "alertingPrometheusRulesPrimary"

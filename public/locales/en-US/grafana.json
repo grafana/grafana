@@ -295,6 +295,17 @@
       "grafana-admin-yes": "Yes",
       "title": "Permissions"
     },
+    "user-personal-access-tokens": {
+      "error": "Request failed",
+      "heading": "Personal access tokens",
+      "revoke-all": "Revoke all tokens",
+      "revoke-all-body": "All active personal access tokens of this user will be permanently revoked.",
+      "revoke-all-confirm": "Revoke all",
+      "revoke-all-title": "Revoke all tokens",
+      "revoke-body": "Revoking token {{name}} is permanent and immediately stops it from working.",
+      "revoke-confirm": "Revoke",
+      "revoke-title": "Revoke token"
+    },
     "user-profile": {
       "body-delete": "Are you sure you want to delete this user?",
       "body-disable": "Are you sure you want to disable this user?",
@@ -13364,6 +13375,10 @@
       "subtitle": "Manage preferences across an organization",
       "title": "Default preferences"
     },
+    "personal-access-tokens-admin": {
+      "subtitle": "Manage personal access tokens and the instance-wide switch",
+      "title": "Personal access tokens"
+    },
     "playlists": {
       "subtitle": "Groups of dashboards that are displayed in a sequence",
       "title": "Playlists"
@@ -13381,6 +13396,9 @@
     },
     "profile/password": {
       "title": "Change password"
+    },
+    "profile/personal-access-tokens": {
+      "title": "Personal access tokens"
     },
     "profile/settings": {
       "title": "Profile"
@@ -14257,6 +14275,104 @@
     "select-aria-label": "Panel type filter",
     "select-no-options": "No panel types found",
     "select-placeholder": "Filter by type"
+  },
+  "personal-access-tokens": {
+    "add": "Add token",
+    "admin": {
+      "error": "Request failed",
+      "policy-heading": "Availability",
+      "tokens-heading": "User tokens"
+    },
+    "create": {
+      "cancel": "Cancel",
+      "close": "Close",
+      "copy": "Copy to clipboard",
+      "custom-actions": "Allowed actions",
+      "custom-actions-description": "Comma or space separated RBAC actions, for example dashboards:read or folders:*",
+      "error": "Could not create token",
+      "generate": "Generate token",
+      "lifetime": "Expires in (days)",
+      "lifetime-description": "The server enforces a maximum lifetime.",
+      "lifetime-error": "Enter a whole number of days greater than 0",
+      "name": "Display name",
+      "preset-custom": "Custom",
+      "preset-full": "Same as my permissions",
+      "preset-read-only": "Read only",
+      "scopes": "Permissions",
+      "scopes-description": "A token can never do more than your own permissions allow, and some sensitive actions are always blocked.",
+      "title": "Add personal access token",
+      "title-created": "Personal access token created",
+      "token": "Token",
+      "token-description": "Copy the token now as you will not be able to see it again. Losing a token requires creating a new one."
+    },
+    "description": "Personal access tokens let scripts and tools act on your behalf through the HTTP API. They can never do more than you can, and expire automatically.",
+    "detail": {
+      "created": "Created",
+      "expires": "Expires",
+      "last-used": "Last used",
+      "org": "Organization",
+      "owner": "Owner",
+      "revoke": "Revoke token",
+      "revoked": "Revoked",
+      "scopes": "Scopes",
+      "user-agent": "Last used user agent"
+    },
+    "disabled-body": "You cannot create new tokens. Existing tokens do not work, but you can still revoke them.",
+    "disabled-title": "Personal access tokens are disabled by your administrator",
+    "filter": {
+      "all-orgs": "All organizations",
+      "any-expiry": "Any expiry",
+      "any-status": "Any status",
+      "expiring-30": "Expiring within 30 days",
+      "expiring-7": "Expiring within 7 days",
+      "expiry": "Expiry",
+      "search": "Search",
+      "search-placeholder": "Token name, owner login or email",
+      "status": "Status"
+    },
+    "load-error": "Request failed",
+    "policy": {
+      "disable-body": "Existing tokens stop working while the switch is off. They work again when it is re-enabled, unless you revoke them.",
+      "disable-confirm": "Disable",
+      "disable-title": "Disable personal access tokens",
+      "error": "Request failed",
+      "instance": "Allow personal access tokens on this instance",
+      "managed": "This setting is managed by the Grafana configuration and cannot be changed here.",
+      "org": "Allow personal access tokens in this organization",
+      "retry": "Retry",
+      "revoke-existing": "Also permanently revoke existing tokens",
+      "revoked_one": "{{count}} token revoked",
+      "revoked_other": "{{count}} tokens revoked"
+    },
+    "revoke-body": "Revoking token {{name}} is permanent and immediately stops it from working.",
+    "revoke-confirm": "Revoke",
+    "revoke-title": "Revoke token",
+    "status": {
+      "active": "Active",
+      "expired": "Expired",
+      "revoked": "Revoked"
+    },
+    "table": {
+      "created": "Created",
+      "empty": "No personal access tokens.",
+      "expired": "Expired",
+      "expires": "Expires",
+      "label": "Personal access tokens",
+      "last-used": "Last used",
+      "name": "Name",
+      "never": "Never",
+      "never-used": "Never",
+      "open": "View token {{name}}",
+      "org": "Organization",
+      "owner": "Owner",
+      "revoke": "Revoke",
+      "revoke-aria": "Revoke token {{name}}",
+      "revoked": "Revoked",
+      "scopes": "Scopes",
+      "status": "Status",
+      "token": "Token"
+    },
+    "unknown-error": "Unexpected error"
   },
   "piechart": {
     "category-legend": "Legend",

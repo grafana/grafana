@@ -112,6 +112,17 @@ var (
 			Namespace:       "stack-1234",
 		},
 	}
+	patIDTokenClaims = idTokenClaims{
+		Claims: jwt.Claims{
+			Subject:  "user:2",
+			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
+		},
+		Rest: authnlib.IDTokenClaims{
+			AuthenticatedBy: login.PersonalTokenAuthModule,
+			Namespace:       "stacks-1234",
+		},
+	}
 	validAccessTokenClaimsWithActor = accessTokenClaims{
 		Claims: jwt.Claims{
 			Subject:  "access-policy:this-uid",
@@ -626,6 +637,13 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 					FetchPermissionsParams: authn.FetchPermissionsParams{RestrictedActions: []string{}, K8sRestrictedActions: []string{}},
 				},
 			},
+		},
+		{
+			name:        "should reject id tokens issued for personal access tokens",
+			accessToken: &validAccessTokenClaims,
+			idToken:     &patIDTokenClaims,
+			orgID:       1,
+			wantErr:     errExtJWTInvalid,
 		},
 		{
 			name:        "should return error when id token has an invalid namespace",

@@ -136,6 +136,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/ofrep"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/personalaccesstokens"
+	"github.com/grafana/grafana/pkg/services/personalaccesstokens/patpolicy"
+	"github.com/grafana/grafana/pkg/services/personalaccesstokens/patstore"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	plugindashboardsservice "github.com/grafana/grafana/pkg/services/plugindashboards/service"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration"
@@ -377,6 +380,12 @@ var Basic = wire.NewSet(
 	wire.Bind(new(accesscontrol.RoutePermissionsService), new(*ossaccesscontrol.RoutePermissionsService)),
 	starimpl.ProvideService,
 	apikeyimpl.ProvideService,
+	patstore.ProvideStore,
+	patpolicy.ProvideService,
+	wire.Bind(new(patpolicy.Policy), new(*patpolicy.Service)),
+	personalaccesstokens.ProvideService,
+	personalaccesstokens.ProvideMaintenance,
+	wire.Bind(new(personalaccesstokens.Service), new(*personalaccesstokens.ServiceImpl)),
 	dashverimpl.ProvideService,
 	publicdashboards.ProvideService,
 	publicdashboards.ProvideStore,

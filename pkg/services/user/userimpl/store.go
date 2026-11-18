@@ -433,6 +433,16 @@ func (ss *sqlStore) Update(ctx context.Context, cmd *user.UpdateUserCommand) err
 			return handleSQLError(dbHelper.DB.GetDialect(), err)
 		}
 
+		if cmd.IsDisabled != nil && *cmd.IsDisabled {
+			if err := revokeUserPersonalAccessTokens(dbHelper, sess, []int64{cmd.UserID}, "user_disabled"); err != nil {
+				return err
+			}
+		} else if cmd.Password != nil {
+			if err := revokeUserPersonalAccessTokens(dbHelper, sess, []int64{cmd.UserID}, "password_changed"); err != nil {
+				return err
+			}
+		}
+
 		if cmd.IsGrafanaAdmin != nil && !*cmd.IsGrafanaAdmin {
 			// validate that after update there is at least one server admin
 			if err := validateOneAdminLeft(dbHelper, sess); err != nil {
@@ -682,9 +692,29 @@ func (ss *sqlStore) BatchDisableUsers(ctx context.Context, cmd *user.BatchDisabl
 			return err
 		}
 
-		_, err = sess.Exec(append([]any{disableSQL}, query.GetArgs()...)...)
-		return err
+		if _, err = sess.Exec(append([]any{disableSQL}, query.GetArgs()...)...); err != nil {
+			return err
+		}
+		if cmd.IsDisabled {
+			return revokeUserPersonalAccessTokens(dbHelper, sess, userIds, "user_disabled")
+		}
+		return nil
 	})
+}
+
+// revokeUserPersonalAccessTokens eagerly revokes tokens of disabled users or users whose password changed. Auth-time
+// checks stay authoritative; this only makes the state visible and permanent.
+func revokeUserPersonalAccessTokens(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session, userIDs []int64, reason string) error {
+	if len(userIDs) == 0 {
+		return nil
+	}
+	placeholders := strings.TrimSuffix(strings.Repeat("?,", len(userIDs)), ",")
+	args := []any{"UPDATE " + dbHelper.Table("personal_access_token") + " SET revoked_at = ?, revoked_reason = ? WHERE revoked_at IS NULL AND user_id IN (" + placeholders + ")", time.Now().UTC(), reason}
+	for _, id := range userIDs {
+		args = append(args, id)
+	}
+	_, err := sess.Exec(args...)
+	return err
 }
 
 type searchUserJoin struct {

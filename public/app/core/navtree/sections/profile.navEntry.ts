@@ -1,6 +1,8 @@
 import { type NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { NavID, NavWeight } from '../constants';
 import { buildEntries, isSignedIn, type NavEntryBuilder } from '../utils';
@@ -20,6 +22,17 @@ const PROFILE_CHILDREN: NavEntryBuilder[] = [
       id: 'profile/notifications',
       url: '/profile/notifications',
       icon: 'bell',
+    }),
+  },
+  {
+    when: () =>
+      getFeatureFlagClient().getBooleanValue(FlagKeys.PersonalAccessTokens, false) &&
+      contextSrv.hasPermission(AccessControlAction.UsersTokensRead),
+    build: () => ({
+      text: 'Personal access tokens',
+      id: 'profile/personal-access-tokens',
+      url: '/profile/personal-access-tokens',
+      icon: 'key-skeleton-alt',
     }),
   },
   {

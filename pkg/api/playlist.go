@@ -26,9 +26,10 @@ func (hs *HTTPServer) registerPlaylistAPI(apiRoute routing.RouteRegister) {
 	apiRoute.Group("/playlists", func(playlistRoute routing.RouteRegister) {
 		// Use k8s client to implement legacy API
 		handler := newPlaylistK8sHandler(hs)
-		playlistRoute.Get("/", handler.searchPlaylists)
-		playlistRoute.Get("/:uid", handler.getPlaylist)
-		playlistRoute.Get("/:uid/items", handler.getPlaylistItems)
+		patGuard := hs.personalTokenRequiresDashboardsRead()
+		playlistRoute.Get("/", patGuard, handler.searchPlaylists)
+		playlistRoute.Get("/:uid", patGuard, handler.getPlaylist)
+		playlistRoute.Get("/:uid/items", patGuard, handler.getPlaylistItems)
 		playlistRoute.Delete("/:uid", handler.deletePlaylist)
 		playlistRoute.Put("/:uid", handler.updatePlaylist)
 		playlistRoute.Post("/", handler.createPlaylist)

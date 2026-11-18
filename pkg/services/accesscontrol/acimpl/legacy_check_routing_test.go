@@ -158,3 +158,29 @@ func (s *legacyCheckRoutingServer) LegacyCheck(_ context.Context, req *authzextv
 	s.requests = append(s.requests, req)
 	return s.response, s.err
 }
+
+func TestEvaluateLegacyCheckSkippedForPersonalTokens(t *testing.T) {
+	require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
+		featuremgmt.FlagAuthzUseLegacyCheck: {State: memprovider.Enabled, Variants: map[string]any{"value": true}, DefaultVariant: "value"},
+	})))
+	t.Cleanup(func() { require.NoError(t, openfeature.SetProviderAndWait(openfeature.NoopProvider{})) })
+
+	backend := &legacyCheckRoutingServer{response: &authzextv1.LegacyCheckResponse{Allowed: true}}
+	channel := &inprocgrpc.Channel{}
+	authzextv1.RegisterLegacyAuthzServiceServer(channel, backend)
+	ac := ProvideAccessControlTest()
+	ac.SetLegacyCheckClient(legacyclient.NewLegacyClient(channel), false, types.OrgNamespaceFormatter)
+
+	// The token only holds datasources:read; the owner-based legacy check would allow dashboards:read.
+	token := &user.SignedInUser{
+		UserID: 1, UserUID: "user-uid", OrgID: 1, AuthenticatedBy: "personal_token",
+		Permissions: map[int64]map[string][]string{1: {"datasources:read": {"datasources:*"}}},
+	}
+	allowed, err := ac.Evaluate(t.Context(), token, accesscontrol.EvalPermission("dashboards:read", "dashboards:uid:one"))
+	require.NoError(t, err)
+	require.False(t, allowed)
+	allowed, err = ac.Evaluate(t.Context(), token, accesscontrol.EvalPermission("datasources:read", "datasources:uid:a"))
+	require.NoError(t, err)
+	require.True(t, allowed)
+	require.Empty(t, backend.requests, "legacy RPC must not be used for personal tokens")
+}

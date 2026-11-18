@@ -1,0 +1,8 @@
+[[HiddenSubject .Subject "Personal access token [[.Event]]: [[.TokenName]]"]]
+
+Hi [[.Name]],
+
+The personal access token "[[.TokenName]]" on your account was [[.Event]].
+
+If you did not expect this, review your tokens and contact your Grafana administrator.
+[[.AppUrl]]profile/personal-access-tokens

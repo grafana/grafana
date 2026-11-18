@@ -1,0 +1,37 @@
+<mjml>
+  <!-- global variables -->
+  <mj-include path="./partials/_globals.mjml" />
+  <!-- css styling -->
+  <mj-include path="./partials/layout/theme.css" type="css" css-inline="inline" />
+  <mj-head>
+    <!-- ⬇ Don't forget to specify an email subject below! ⬇ -->
+    <mj-title>
+      {{ Subject .Subject .TemplateData "Personal access token {{.Event}}: {{.TokenName}}" }}
+    </mj-title>
+    <mj-include path="./partials/layout/head.mjml" />
+  </mj-head>
+  <mj-body>
+    <mj-section>
+      <mj-include path="./partials/layout/header.mjml" />
+    </mj-section>
+    <mj-section css-class="background">
+      <mj-column>
+        <mj-text>
+          <h2>Hi {{ .Name }},</h2>
+        </mj-text>
+        <mj-text>
+          The personal access token <strong>{{ .TokenName }}</strong> on your account was <strong>{{ .Event }}</strong>.
+        </mj-text>
+        <mj-text>
+          If you did not expect this, review your tokens and contact your Grafana administrator.
+        </mj-text>
+        <mj-button href="{{ .AppUrl }}profile/personal-access-tokens">
+          Review tokens
+        </mj-button>
+      </mj-column>
+    </mj-section>
+    <mj-section>
+      <mj-include path="./partials/layout/footer.mjml" />
+    </mj-section>
+  </mj-body>
+</mjml>

@@ -28,14 +28,15 @@ type Store interface {
 
 const (
 	// modules
-	PasswordAuthModule  = "password"
-	APIKeyAuthModule    = "apikey"
-	SAMLAuthModule      = "auth.saml"
-	LDAPAuthModule      = "ldap"
-	AuthProxyAuthModule = "authproxy"
-	JWTModule           = "jwt"
-	ExtendedJWTModule   = "extendedjwt"
-	RenderModule        = "render"
+	PasswordAuthModule      = "password"
+	APIKeyAuthModule        = "apikey"
+	PersonalTokenAuthModule = "personal_token"
+	SAMLAuthModule          = "auth.saml"
+	LDAPAuthModule          = "ldap"
+	AuthProxyAuthModule     = "authproxy"
+	JWTModule               = "jwt"
+	ExtendedJWTModule       = "extendedjwt"
+	RenderModule            = "render"
 	// OAuth provider modules
 	AzureADAuthModule    = "oauth_azuread"
 	GoogleAuthModule     = "oauth_google"

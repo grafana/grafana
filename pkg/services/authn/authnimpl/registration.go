@@ -2,7 +2,11 @@ package authnimpl
 
 import (
 	"context"
+	"strings"
 
+	"github.com/grafana/authlib/types"
+
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
@@ -24,6 +28,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/personalaccesstokens/patpolicy"
+	"github.com/grafana/grafana/pkg/services/personalaccesstokens/patstore"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginauth"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -46,7 +52,7 @@ func ProvideRegistration(
 	socialService social.Service, cache *remotecache.RemoteCache,
 	ldapService service.LDAP, settingsProvider setting.Provider,
 	tracer tracing.Tracer, tempUserService tempuser.Service, notificationService notifications.Service,
-	pluginAuth *pluginauth.Config,
+	pluginAuth *pluginauth.Config, patStore patstore.Store, patPolicy patpolicy.Policy,
 ) (Registration, error) {
 	logger := log.New("authn.registration")
 
@@ -57,6 +63,14 @@ func ProvideRegistration(
 
 	authnSvc.RegisterClient(clients.ProvideRender(renderService))
 	authnSvc.RegisterClient(clients.ProvideAPIKey(apikeyService, tracer))
+
+	patEnabled := func(ctx context.Context) bool {
+		//nolint:staticcheck // not yet migrated to OpenFeature
+		return features.IsEnabledGlobally(featuremgmt.FlagPersonalAccessTokens) && patPolicy.InstanceEnabled(ctx)
+	}
+	authnSvc.RegisterClient(clients.ProvidePersonalToken(patStore, userService, orgService, patEnabled, patPolicy.OrgEnabled, func() bool { return cfg.PersonalAccessTokens.AllowAdminActions }, tracer).WithTrustedProxies(cfg.PersonalAccessTokens.TrustedProxyHeader, cfg.PersonalAccessTokens.TrustedProxies))
+
+	registerPersonalTokenIdPBinding(logger, oauthTokenService, authnSvc, patStore, cfg.PersonalAccessTokens.RevokeOnIdPLogout)
 
 	if cfg.LoginCookieName != "" {
 		authnSvc.RegisterClient(clients.ProvideSession(cfgProvider, sessionService, authInfoService, tracer))
@@ -138,6 +152,7 @@ func ProvideRegistration(
 	authnSvc.RegisterPreLogoutHook(gcomsso.ProvideGComSSOService(cfg).LogoutHook, 50)
 
 	authnSvc.RegisterPostAuthHook(rbacSync.SyncPermissionsHook, 120)
+	authnSvc.RegisterPostAuthHook(sync.ProvidePersonalTokenScopeHook(func() bool { return cfg.PersonalAccessTokens.AllowAdminActions }).Hook, 125)
 	authnSvc.RegisterPostLoginHook(orgSync.SetDefaultOrgHook, 140)
 	authnSvc.RegisterPostLoginHook(userSync.CatalogLoginHook, 145)
 	authnSvc.RegisterPostLoginHook(rbacSync.ClearUserPermissionCacheHook, 170)
@@ -167,5 +182,38 @@ func registerOAuthClients(
 	for name := range oauthProviders {
 		clientName := authn.ClientWithPrefix(name)
 		authnSvc.RegisterClient(clients.ProvideOAuth(clientName, cfgProvider, oauthTokenService, socialService, settingsProvider, features, tracer))
+	}
+}
+
+type refreshFailureNotifier interface {
+	RegisterRefreshFailureHook(oauthtoken.RefreshFailureHook)
+}
+
+// registerPersonalTokenIdPBinding revokes a user's personal access tokens when their IdP session is
+// known to be gone: a failed OAuth refresh always revokes, and logout does so when configured.
+func registerPersonalTokenIdPBinding(logger log.Logger, oauthSvc oauthtoken.OAuthTokenService, authnSvc authn.Service, store patstore.Store, onLogout bool) {
+	revoke := func(ctx context.Context, usr identity.Requester) {
+		if usr == nil || !usr.IsIdentityType(types.TypeUser) {
+			return
+		}
+		id, err := usr.GetInternalID()
+		if err != nil || id == 0 {
+			return
+		}
+		if _, err := store.RevokeAllForUser(ctx, id, patstore.ReasonIDPRevoked); err != nil {
+			logger.Warn("Failed to revoke personal access tokens after IdP session end", "userId", id, "error", err)
+		}
+	}
+
+	if n, ok := oauthSvc.(refreshFailureNotifier); ok {
+		n.RegisterRefreshFailureHook(func(ctx context.Context, usr identity.Requester, _ string) { revoke(ctx, usr) })
+	}
+	if onLogout {
+		authnSvc.RegisterPreLogoutHook(func(ctx context.Context, usr identity.Requester, _ *auth.UserToken) error {
+			if strings.HasPrefix(usr.GetAuthenticatedBy(), "oauth_") {
+				revoke(ctx, usr)
+			}
+			return nil
+		}, 60)
 	}
 }

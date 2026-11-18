@@ -1,6 +1,7 @@
 package loggermw
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"testing"
@@ -37,6 +38,17 @@ func Test_prepareLog(t *testing.T) {
 		expectAbsence map[string]struct{}
 		expectedLevel errutil.LogLevel
 	}{
+		{
+			name:     "personal access tokens are redacted",
+			req:      mustRequest(http.NewRequest(http.MethodGet, "/api/glpat_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA_00000000", nil)),
+			response: mockResponseWriter{},
+			error:    errors.New("bad glpat_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA_00000000"),
+
+			expectFields: map[string]any{
+				"path":  "/api/glpat_[REDACTED]",
+				"error": "bad glpat_[REDACTED]",
+			},
+		},
 		{
 			name:     "base case",
 			req:      mustRequest(http.NewRequest(http.MethodGet, "/", nil)),

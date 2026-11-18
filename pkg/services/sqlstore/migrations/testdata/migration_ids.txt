@@ -744,3 +744,8 @@
 "alter alert_rule missing_series_evals_to_resolve column to bigint"
 "alter alert_rule_version missing_series_evals_to_resolve column to bigint"
 "copy receiver permissions to the uids of receivers"
+"create personal_access_token table"
+"add unique index personal_access_token.uid"
+"add unique index personal_access_token.token_hash"
+"add index personal_access_token.user_id_org_id"
+"add index personal_access_token.expires_at"

@@ -202,8 +202,12 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.profile/settings.title', 'Profile');
     case 'profile/notifications':
       return t('nav.profile/notifications.title', 'Notification history');
+    case 'profile/personal-access-tokens':
+      return t('nav.profile/personal-access-tokens.title', 'Personal access tokens');
     case 'profile/password':
       return t('nav.profile/password.title', 'Change password');
+    case 'personal-access-tokens-admin':
+      return t('nav.personal-access-tokens-admin.title', 'Personal access tokens');
     case 'sign-out':
       return t('nav.sign-out.title', 'Sign out');
     case 'search':
@@ -323,6 +327,11 @@ export function getNavSubTitle(navId: string | undefined) {
       return t('nav.service-accounts.subtitle', 'Use service accounts to run automated workloads in Grafana');
     case 'global-users':
       return t('nav.global-users.subtitle', 'Manage users in Grafana');
+    case 'personal-access-tokens-admin':
+      return t(
+        'nav.personal-access-tokens-admin.subtitle',
+        'Manage personal access tokens and the instance-wide switch'
+      );
     case 'global-orgs':
       return t('nav.global-orgs.subtitle', 'Isolated instances of Grafana running on the same server');
     case 'server-settings':

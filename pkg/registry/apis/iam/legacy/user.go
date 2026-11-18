@@ -730,6 +730,10 @@ func (s *legacySQLStore) DeleteUser(ctx context.Context, ns claims.NamespaceInfo
 			return fmt.Errorf("failed to delete from org_user: %w", err)
 		}
 
+		if _, err := st.Exec(ctx, "DELETE FROM "+sql.Table("personal_access_token")+" WHERE user_id = ?", userID); err != nil {
+			return fmt.Errorf("failed to delete personal access tokens: %w", err)
+		}
+
 		userAuthReq := newDeleteUserAuth(sql, userID)
 		userAuthDeleteQuery, err := sqltemplate.Execute(sqlDeleteUserAuthTemplate, userAuthReq)
 		if err != nil {
@@ -849,6 +853,13 @@ func (s *legacySQLStore) UpdateUser(ctx context.Context, ns claims.NamespaceInfo
 		_, err = st.Exec(ctx, userQuery, req.GetArgs()...)
 		if err != nil {
 			return fmt.Errorf("failed to update user: %w", err)
+		}
+
+		if cmd.IsDisabled {
+			// Auth-time owner checks stay authoritative; this makes the revocation permanent.
+			if _, err := st.Exec(ctx, "UPDATE "+sql.Table("personal_access_token")+" SET revoked_at = ?, revoked_reason = ? WHERE revoked_at IS NULL AND user_id = ?", now, "user_disabled", userInternalID.ID); err != nil {
+				return fmt.Errorf("failed to revoke personal access tokens: %w", err)
+			}
 		}
 
 		orgUserCmd := &UpdateOrgUserCommand{

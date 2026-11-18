@@ -387,6 +387,10 @@ const (
 	// Enables the gRPC server for authorization
 	FlagAuthZGRPCServer = "authZGRPCServer"
 
+	// FlagPersonalAccessTokens
+	// Enables user-issued personal access tokens that act as the owning user
+	FlagPersonalAccessTokens = "personalAccessTokens"
+
 	// FlagAuthzLegacyUserPermissionsShadow
 	// Compare local permissions with embedded AuthZ in the background when authz.legacyUserPermissions is enabled.
 	FlagAuthzLegacyUserPermissionsShadow = "authz.legacyUserPermissionsShadow"

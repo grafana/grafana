@@ -1296,6 +1296,63 @@
         ]
       }
     },
+    "/admin/settings/personal-access-tokens": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Get the instance-wide personal access token switch.",
+        "operationId": "getInstancePersonalAccessTokenPolicy",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/personalAccessTokenPolicyResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Enable or disable personal access tokens for the instance.",
+        "operationId": "updateInstancePersonalAccessTokenPolicy",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdatePersonalAccessTokenPolicyCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/updatePersonalAccessTokenPolicyResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/admin/stats": {
       "get": {
         "description": "Only works with Basic Authentication (username and password). See introduction for an explanation.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled, you need to have a permission with action `server:stats:read`.",
@@ -6288,6 +6345,64 @@
         }
       }
     },
+    "/org/settings/personal-access-tokens": {
+      "get": {
+        "tags": [
+          "org"
+        ],
+        "summary": "Get the personal access token switch of the current organization.",
+        "operationId": "getOrgPersonalAccessTokenPolicy",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/personalAccessTokenPolicyResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "put": {
+        "description": "An organization can only narrow what the instance allows.",
+        "tags": [
+          "org"
+        ],
+        "summary": "Enable or disable personal access tokens for the current organization.",
+        "operationId": "updateOrgPersonalAccessTokenPolicy",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdatePersonalAccessTokenPolicyCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/updatePersonalAccessTokenPolicyResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/org/users": {
       "get": {
         "description": "Returns all org users within the current organization. Accessible to users with org admin role.\nIf you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `org.users:read` with scope `users:*`.",
@@ -7062,6 +7177,127 @@
           },
           "403": {
             "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/personal-access-tokens": {
+      "get": {
+        "description": "Limited to the current organization; Grafana server admins can pass scope=all to search every organization.",
+        "tags": [
+          "signed_in_user"
+        ],
+        "summary": "Search personal access tokens of all users.",
+        "operationId": "searchPersonalAccessTokens",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "query",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "status",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "userId",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "expiringBefore",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "name": "scope",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "Sort field: name, owner, org, created, expires, lastUsed, status or scopes.",
+            "name": "sort",
+            "in": "query"
+          },
+          {
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "type": "string",
+            "name": "order",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "page",
+            "in": "query"
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "perpage",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/searchPersonalAccessTokensResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/personal-access-tokens/{token_uid}": {
+      "delete": {
+        "tags": [
+          "signed_in_user"
+        ],
+        "summary": "Revoke any personal access token in the current organization (any organization with scope=all for server admins).",
+        "operationId": "revokePersonalAccessTokenByUID",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "token_uid",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "scope",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
           },
           "500": {
             "$ref": "#/responses/internalServerError"
@@ -10269,6 +10505,118 @@
         }
       }
     },
+    "/user/tokens": {
+      "get": {
+        "tags": [
+          "signed_in_user"
+        ],
+        "summary": "List the personal access tokens of the actual user.",
+        "operationId": "listPersonalAccessTokens",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/listPersonalAccessTokensResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      },
+      "post": {
+        "description": "The token secret is returned only in this response and cannot be retrieved later.",
+        "tags": [
+          "signed_in_user"
+        ],
+        "summary": "Create a personal access token for the actual user.",
+        "operationId": "createPersonalAccessToken",
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CreatePersonalAccessTokenCommand"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/createPersonalAccessTokenResponse"
+          },
+          "400": {
+            "$ref": "#/responses/badRequestError"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/user/tokens-policy": {
+      "get": {
+        "tags": [
+          "signed_in_user"
+        ],
+        "summary": "Whether personal access tokens can currently be created in the active organization.",
+        "operationId": "getEffectivePersonalAccessTokenPolicy",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/personalAccessTokenPolicyResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          }
+        }
+      }
+    },
+    "/user/tokens/{token_uid}": {
+      "delete": {
+        "tags": [
+          "signed_in_user"
+        ],
+        "summary": "Revoke a personal access token of the actual user.",
+        "operationId": "revokePersonalAccessToken",
+        "parameters": [
+          {
+            "type": "string",
+            "name": "token_uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
     "/user/using/{org_id}": {
       "post": {
         "description": "Switch user context to the given organization.",
@@ -10545,6 +10893,79 @@
         "responses": {
           "200": {
             "$ref": "#/responses/getUserTeamsResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "404": {
+            "$ref": "#/responses/notFoundError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/users/{user_id}/tokens": {
+      "get": {
+        "tags": [
+          "users"
+        ],
+        "summary": "List the personal access tokens of a user in the current organization.",
+        "operationId": "listUserPersonalAccessTokens",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "user_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/listPersonalAccessTokensResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/users/{user_id}/tokens/{token_uid}": {
+      "delete": {
+        "tags": [
+          "users"
+        ],
+        "summary": "Revoke a personal access token of a user in the current organization.",
+        "operationId": "adminRevokePersonalAccessToken",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "user_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "name": "token_uid",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/okResponse"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -12396,6 +12817,78 @@
         },
         "uid": {
           "type": "string"
+        }
+      }
+    },
+    "AdminPersonalAccessTokenDTO": {
+      "type": "object",
+      "title": "AdminPersonalAccessTokenDTO adds owner, organization and audit details to a token.",
+      "properties": {
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "createdIp": {
+          "type": "string"
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "hint": {
+          "type": "string"
+        },
+        "lastUsedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "lastUsedIp": {
+          "type": "string"
+        },
+        "lastUsedUserAgent": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "orgId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "orgName": {
+          "type": "string"
+        },
+        "ownerEmail": {
+          "type": "string"
+        },
+        "ownerLogin": {
+          "type": "string"
+        },
+        "ownerName": {
+          "type": "string"
+        },
+        "revokedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "revokedReason": {
+          "type": "string"
+        },
+        "scopes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "uid": {
+          "type": "string"
+        },
+        "userId": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -14441,6 +14934,73 @@
       "type": "object",
       "properties": {
         "name": {
+          "type": "string"
+        }
+      }
+    },
+    "CreatePersonalAccessTokenCommand": {
+      "type": "object",
+      "title": "CreatePersonalAccessTokenCommand is the body of a create request.",
+      "properties": {
+        "lifetimeDays": {
+          "description": "LifetimeDays defaults to the instance default when 0; -1 requests no expiry where allowed.",
+          "type": "integer",
+          "format": "int64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "scopes": {
+          "description": "Scopes maps RBAC action patterns to optional resource scopes.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "CreatePersonalAccessTokenResponse": {
+      "type": "object",
+      "title": "CreatePersonalAccessTokenResponse is the only place the secret is ever returned.",
+      "properties": {
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "hint": {
+          "type": "string"
+        },
+        "lastUsedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "name": {
+          "type": "string"
+        },
+        "revokedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "scopes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "token": {
+          "type": "string"
+        },
+        "uid": {
           "type": "string"
         }
       }
@@ -18484,6 +19044,59 @@
     "PermissionDenied": {
       "type": "object"
     },
+    "PersonalAccessTokenDTO": {
+      "type": "object",
+      "title": "PersonalAccessTokenDTO never contains the token secret, only a display hint.",
+      "properties": {
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "hint": {
+          "type": "string"
+        },
+        "lastUsedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "name": {
+          "type": "string"
+        },
+        "revokedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "scopes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "uid": {
+          "type": "string"
+        }
+      }
+    },
+    "PersonalAccessTokenPolicyDTO": {
+      "type": "object",
+      "title": "PersonalAccessTokenPolicyDTO is the admin view of the personal access token switch.",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "managedByConfig": {
+          "description": "ManagedByConfig is true when the instance switch can only be changed in the configuration file.",
+          "type": "boolean"
+        }
+      }
+    },
     "Playlist": {
       "description": "Playlist model",
       "type": "object",
@@ -20929,6 +21542,30 @@
         }
       }
     },
+    "SearchPersonalAccessTokensResponse": {
+      "type": "object",
+      "title": "SearchPersonalAccessTokensResponse is a page of tokens.",
+      "properties": {
+        "page": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "perPage": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "tokens": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AdminPersonalAccessTokenDTO"
+          }
+        },
+        "totalCount": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
     "SearchTeamGroupsQueryResult": {
       "type": "object",
       "properties": {
@@ -22316,7 +22953,7 @@
 			"type": "string", 
 			"format": "url" 
 		},
-		"Unstructured": {
+    "Unstructured": {
       "description": "Unstructured allows objects that do not have Golang structs registered to be manipulated\ngenerically.",
       "type": "object",
       "properties": {
@@ -22535,6 +23172,36 @@
             "Editor",
             "Admin"
           ]
+        }
+      }
+    },
+    "UpdatePersonalAccessTokenPolicyCommand": {
+      "type": "object",
+      "title": "UpdatePersonalAccessTokenPolicyCommand changes the switch.",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "revokeExisting": {
+          "description": "RevokeExisting permanently revokes existing tokens; only applies when disabling.",
+          "type": "boolean"
+        }
+      }
+    },
+    "UpdatePersonalAccessTokenPolicyResponse": {
+      "type": "object",
+      "title": "UpdatePersonalAccessTokenPolicyResponse reports how many tokens were revoked.",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "managedByConfig": {
+          "description": "ManagedByConfig is true when the instance switch can only be changed in the configuration file.",
+          "type": "boolean"
+        },
+        "revoked": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -24082,6 +24749,12 @@
         }
       }
     },
+    "createPersonalAccessTokenResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/CreatePersonalAccessTokenResponse"
+      }
+    },
     "createPlaylistResponse": {
       "description": "(empty)",
       "schema": {
@@ -24817,6 +25490,15 @@
         }
       }
     },
+    "listPersonalAccessTokensResponse": {
+      "description": "(empty)",
+      "schema": {
+        "type": "array",
+        "items": {
+          "$ref": "#/definitions/PersonalAccessTokenDTO"
+        }
+      }
+    },
     "listPublicDashboardsResponse": {
       "description": "(empty)",
       "schema": {
@@ -24946,6 +25628,12 @@
       "description": "An OKResponse is returned if the request was successful.",
       "schema": {
         "$ref": "#/definitions/SuccessResponseBody"
+      }
+    },
+    "personalAccessTokenPolicyResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/PersonalAccessTokenPolicyDTO"
       }
     },
     "postAnnotationResponse": {
@@ -25127,6 +25815,12 @@
         }
       }
     },
+    "searchPersonalAccessTokensResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/SearchPersonalAccessTokensResponse"
+      }
+    },
     "searchPlaylistsResponse": {
       "description": "(empty)",
       "schema": {
@@ -25209,6 +25903,12 @@
       "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/UpdateCorrelationResponseBody"
+      }
+    },
+    "updatePersonalAccessTokenPolicyResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/UpdatePersonalAccessTokenPolicyResponse"
       }
     },
     "updatePlaylistResponse": {

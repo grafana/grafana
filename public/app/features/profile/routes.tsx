@@ -18,6 +18,15 @@ const profileRoutes: RouteDescriptor[] = [
     ),
   },
   {
+    path: '/profile/personal-access-tokens',
+    component: SafeDynamicImport(
+      () =>
+        import(
+          /* webpackChunkName: "PersonalAccessTokensPage" */ 'app/features/personal-access-tokens/PersonalAccessTokensPage'
+        )
+    ),
+  },
+  {
     path: '/profile/select-org',
     component: SafeDynamicImport(
       () => import(/* webpackChunkName: "SelectOrgPage" */ 'app/features/org/SelectOrgPage')

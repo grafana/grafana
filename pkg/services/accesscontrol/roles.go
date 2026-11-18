@@ -318,6 +318,29 @@ var (
 		},
 	}
 
+	usersTokensSelfRole = RoleDTO{
+		Name:        "fixed:users.tokens:self",
+		DisplayName: "Own personal access tokens manager",
+		Description: "Create, list and revoke your own personal access tokens.",
+		Group:       "Personal access tokens",
+		Permissions: []Permission{
+			{Action: ActionUsersTokensCreate},
+			{Action: ActionUsersTokensRead},
+			{Action: ActionUsersTokensDelete},
+		},
+	}
+
+	usersTokensAdminRole = RoleDTO{
+		Name:        "fixed:users.tokens:admin",
+		DisplayName: "Personal access tokens administrator",
+		Description: "List and revoke personal access tokens of users in the organization.",
+		Group:       "Personal access tokens",
+		Permissions: []Permission{
+			{Action: ActionUsersTokensRead, Scope: ScopeUsersAll},
+			{Action: ActionUsersTokensDelete, Scope: ScopeUsersAll},
+		},
+	}
+
 	usagestatsReaderRole = RoleDTO{
 		Name:        "fixed:usagestats:reader",
 		DisplayName: "Usage report reader",
@@ -383,7 +406,18 @@ func FixedRoleRegistrations() []RoleRegistration {
 		Grants: []string{RoleGrafanaAdmin},
 	}
 
+	usersTokensSelf := RoleRegistration{
+		Role:   usersTokensSelfRole,
+		Grants: []string{string(org.RoleViewer)},
+	}
+
+	usersTokensAdmin := RoleRegistration{
+		Role:   usersTokensAdminRole,
+		Grants: []string{string(org.RoleAdmin)},
+	}
+
 	return []RoleRegistration{
+		usersTokensSelf, usersTokensAdmin,
 		ldapReader, ldapWriter, orgUsersReader, orgUsersWriter,
 		settingsReader, statsReader, usersReader, usersWriter,
 		authenticationConfigWriter, generalAuthConfigWriter, smtpSettingsWriter, usageStatsReader,

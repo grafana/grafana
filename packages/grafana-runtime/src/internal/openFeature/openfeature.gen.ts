@@ -322,6 +322,8 @@ export const FlagKeys = {
   PaneleditButtonLabels: "paneledit.buttonLabels",
   /** Enables viewing non-applicable drilldowns on a panel level */
   PerPanelNonApplicableDrilldowns: "perPanelNonApplicableDrilldowns",
+  /** Enables user-issued personal access tokens that act as the owning user */
+  PersonalAccessTokens: "personalAccessTokens",
   /** Enable gradient color scheme option for the pie chart panel */
   PieChartGradientColorScheme: "pieChartGradientColorScheme",
   /** Enables RBAC for playlists */
@@ -2114,6 +2116,17 @@ export const useFlagPaneleditButtonLabels = (options?: ReactFlagEvaluationOption
  */
 export const useFlagPerPanelNonApplicableDrilldowns = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("perPanelNonApplicableDrilldowns", false, options).value;
+};
+
+/**
+ * Enables user-issued personal access tokens that act as the owning user
+ *
+ * **Details:**
+ * - flag key: `personalAccessTokens`
+ * - default value: `false`
+ */
+export const useFlagPersonalAccessTokens = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("personalAccessTokens", false, options).value;
 };
 
 /**

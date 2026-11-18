@@ -11,6 +11,9 @@ export type UserPermission = Record<string, boolean>;
 // Permission actions
 export enum AccessControlAction {
   UsersRead = 'users:read',
+  UsersTokensRead = 'users.tokens:read',
+  UsersTokensCreate = 'users.tokens:create',
+  UsersTokensDelete = 'users.tokens:delete',
   UsersWrite = 'users:write',
   UsersAuthTokenList = 'users.authtoken:read',
   UsersAuthTokenUpdate = 'users.authtoken:write',

@@ -360,6 +360,7 @@ func (ss *sqlStore) Delete(ctx context.Context, cmd *org.DeleteOrgCommand) error
 			{table: "star", column: "org_id"},
 			{table: "dashboard_tag", column: "org_id"},
 			{table: "api_key", column: "org_id"},
+			{table: "personal_access_token", column: "org_id"},
 			{table: "data_source", column: "org_id"},
 			{table: "org_user", column: "org_id"},
 			{table: "org", column: "id"},
@@ -1139,6 +1140,10 @@ func (ss *sqlStore) RemoveOrgUser(ctx context.Context, cmd *org.RemoveOrgUserCom
 			}
 		}
 
+		if _, err := sess.Exec("UPDATE "+dbHelper.Table("personal_access_token")+" SET revoked_at = ?, revoked_reason = ? WHERE revoked_at IS NULL AND user_id = ? AND org_id = ?", time.Now().UTC(), "org_removed", cmd.UserID, cmd.OrgID); err != nil {
+			return err
+		}
+
 		// validate that after delete, there is at least one user with admin role in org
 		if err := validateOneAdminLeftInOrg(dbHelper, cmd.OrgID, sess); err != nil {
 			return err
@@ -1327,6 +1332,7 @@ func (ss *sqlStore) userDeletions() []struct{ table, column string } {
 		{table: "team_member", column: "user_id"},
 		{table: "user_auth", column: "user_id"},
 		{table: "user_auth_token", column: "user_id"},
+		{table: "personal_access_token", column: "user_id"},
 		{table: "quota", column: "user_id"},
 	}
 	return deletes

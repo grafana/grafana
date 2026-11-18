@@ -7,6 +7,8 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/services/personalaccesstokens/patscope"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -81,6 +83,34 @@ func TestService_SignIdentity(t *testing.T) {
 			return token, nil
 		},
 	}
+
+	t.Run("personal access tokens of one owner do not share an ID token and remember their grants", func(t *testing.T) {
+		s := ProvideService(
+			setting.NewCfg(), signer, remotecache.NewFakeCacheStorage(),
+			&authntest.FakeService{}, nil, tracing.InitializeTracerForTest(),
+		)
+		pat := func(perms map[string][]string) *authn.Identity {
+			return &authn.Identity{
+				ID: "1", Type: claims.TypeUser, OrgID: 1, UID: "u1", AuthenticatedBy: login.PersonalTokenAuthModule,
+				Permissions: map[int64]map[string][]string{1: perms},
+			}
+		}
+		narrow, _, err := s.SignIdentity(context.Background(), pat(map[string][]string{"datasources:read": {"*"}}))
+		require.NoError(t, err)
+		wide, _, err := s.SignIdentity(context.Background(), pat(map[string][]string{"dashboards:read": {"*"}}))
+		require.NoError(t, err)
+		require.NotEqual(t, narrow, wide)
+
+		g, ok := patscope.LookupGrants(narrow)
+		require.True(t, ok)
+		require.Contains(t, g.Permissions, "datasources:read")
+		require.NotContains(t, g.Permissions, "dashboards:read")
+
+		plain, _, err := s.SignIdentity(context.Background(), &authn.Identity{ID: "2", Type: claims.TypeUser, OrgID: 1, UID: "u2"})
+		require.NoError(t, err)
+		_, ok = patscope.LookupGrants(plain)
+		require.False(t, ok)
+	})
 
 	t.Run("should sign identity", func(t *testing.T) {
 		s := ProvideService(
@@ -396,4 +426,12 @@ func TestService_SyncIDToken(t *testing.T) {
 		assert.Empty(t, ident.IDToken)
 		assert.Nil(t, ident.IDTokenClaims)
 	})
+}
+
+func TestHashPATGrantsHasNoConcatenationCollisions(t *testing.T) {
+	mk := func(perms map[string][]string, scoped bool) identity.Requester {
+		return &authn.Identity{AuthenticatedBy: login.PersonalTokenAuthModule, OrgID: 1, Permissions: map[int64]map[string][]string{1: perms}, PersonalTokenResourceScoped: scoped}
+	}
+	require.NotEqual(t, hashPATGrants(mk(map[string][]string{"ab": {"c"}}, false)), hashPATGrants(mk(map[string][]string{"a": {"bc"}}, false)))
+	require.NotEqual(t, hashPATGrants(mk(map[string][]string{"a": {"b"}}, false)), hashPATGrants(mk(map[string][]string{"a": {"b"}}, true)))
 }

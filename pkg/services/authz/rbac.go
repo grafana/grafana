@@ -70,7 +70,7 @@ func newAuthZClients(
 
 // ProvideAuthZAccessClient returns the client used for authorization checks.
 func ProvideAuthZAccessClient(clients *AuthZClients) authlib.AccessClient {
-	return clients.accessClient
+	return withPersonalTokenGuard(clients.accessClient)
 }
 
 func ProvideAuthZLegacyAccessClient(clients *AuthZClients) LegacyAccessClient {
