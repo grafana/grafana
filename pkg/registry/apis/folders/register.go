@@ -26,6 +26,7 @@ import (
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	dashV2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	foldersv1alpha1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1alpha1"
 	foldersv1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -66,6 +67,10 @@ type FolderAPIBuilder struct {
 	maxNestedFolderDepth int
 	deleteChecks         *deleteCheckMetrics
 	countMetrics         *countMetrics
+
+	pendingDeletionResourceEnabled bool
+	// Nil when the resource is disabled; consumers requiring durable intent must fail closed.
+	pendingDeletionStore *genericregistry.Store
 
 	// Flags
 	useZanzana          bool // features.IsEnabledGlobally(featuremgmt.FlagZanzana)
@@ -156,15 +161,16 @@ func RegisterAPIService(cfg *setting.Cfg,
 	contentsDeleter FolderContentsDeleter,
 ) *FolderAPIBuilder {
 	builder := &FolderAPIBuilder{
-		accessClient:         accessClient,
-		permissionsOnCreate:  cfg.RBAC.PermissionsOnCreation("folder"),
-		useZanzana:           features.IsEnabledGlobally(featuremgmt.FlagZanzana), //nolint:staticcheck
-		searcher:             unified,
-		permissionStore:      NewZanzanaPermissionStore(zanzanaClient),
-		maxNestedFolderDepth: cfg.MaxNestedFolderDepth,
-		contentsDeleter:      contentsDeleter,
-		deleteChecks:         newDeleteCheckMetrics(registerer, true), // the monolith always joins legacy storage
-		countMetrics:         newCountMetrics(registerer, true),
+		pendingDeletionResourceEnabled: cfg.PendingDeletionResourceEnabled,
+		accessClient:                   accessClient,
+		permissionsOnCreate:            cfg.RBAC.PermissionsOnCreation("folder"),
+		useZanzana:                     features.IsEnabledGlobally(featuremgmt.FlagZanzana), //nolint:staticcheck
+		searcher:                       unified,
+		permissionStore:                NewZanzanaPermissionStore(zanzanaClient),
+		maxNestedFolderDepth:           cfg.MaxNestedFolderDepth,
+		contentsDeleter:                contentsDeleter,
+		deleteChecks:                   newDeleteCheckMetrics(registerer, true), // the monolith always joins legacy storage
+		countMetrics:                   newCountMetrics(registerer, true),
 	}
 
 	// With the flag on, use the App Platform permission path and leave the legacy folderPermissionsSvc
@@ -217,13 +223,22 @@ func WithCountMetrics(reg prometheus.Registerer, legacyJoinEnabled bool) APIServ
 	return func(b *FolderAPIBuilder) { b.countMetrics = newCountMetrics(reg, legacyJoinEnabled) }
 }
 
+// WithPendingDeletionResourceEnabled sets the process-startup resource gate in standalone deployments.
+func WithPendingDeletionResourceEnabled(enabled bool) APIServiceOption {
+	return func(b *FolderAPIBuilder) { b.pendingDeletionResourceEnabled = enabled }
+}
+
 func (b *FolderAPIBuilder) GetGroupVersions() []schema.GroupVersion {
 	// Same pattern as dashboards: stable version first, then compatibility alias.
 	// This order feeds LegacyCodec(groupVersions...) and must match SetVersionPriority below.
-	return []schema.GroupVersion{
+	versions := []schema.GroupVersion{
 		foldersv1.FolderResourceInfo.GroupVersion(),
 		foldersv1beta1.FolderResourceInfo.GroupVersion(),
 	}
+	if b.pendingDeletionResourceEnabled {
+		versions = append(versions, foldersv1alpha1.PendingFolderDeletionResourceInfo.GroupVersion())
+	}
+	return versions
 }
 
 func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion, types ...runtime.Object) {
@@ -233,6 +248,10 @@ func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion, types ...runt
 func (b *FolderAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	gvv1beta1 := foldersv1beta1.FolderResourceInfo.GroupVersion()
 	gvv1 := foldersv1.FolderResourceInfo.GroupVersion()
+
+	gvalpha := foldersv1alpha1.PendingFolderDeletionResourceInfo.GroupVersion()
+	addKnownTypes(scheme, gvalpha, &foldersv1alpha1.PendingFolderDeletion{}, &foldersv1alpha1.PendingFolderDeletionList{})
+	metav1.AddToGroupVersion(scheme, gvalpha)
 
 	addKnownTypes(scheme, gvv1,
 		&foldersv1.Folder{},
@@ -256,6 +275,8 @@ func (b *FolderAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
 		Group:   foldersv1.FolderResourceInfo.GroupVersion().Group,
 		Version: runtime.APIVersionInternal,
 	},
+		&foldersv1alpha1.PendingFolderDeletion{},
+		&foldersv1alpha1.PendingFolderDeletionList{},
 		&foldersv1.Folder{},
 		&foldersv1.FolderList{},
 		&foldersv1.FolderInfoList{},
@@ -360,6 +381,15 @@ func (b *FolderAPIBuilder) folderStorageOpts() apistore.StorageOptions {
 }
 
 func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
+	if b.pendingDeletionResourceEnabled {
+		pending := foldersv1alpha1.PendingFolderDeletionResourceInfo
+		store, err := grafanaregistry.NewRegistryStore(opts.Scheme, pending, opts.StorageOptsGetterFor(pending, apistore.StorageOptions{}))
+		if err != nil {
+			return err
+		}
+		b.pendingDeletionStore = store
+		apiGroupInfo.VersionedResourcesStorageMap[pending.GroupVersion().Version] = map[string]rest.Storage{pending.StoragePath(): store}
+	}
 	// v1
 	if err := b.storageForVersion(
 		apiGroupInfo,
@@ -476,8 +506,14 @@ func (b *FolderAPIBuilder) registerPermissionHooks(store *genericregistry.Store)
 }
 
 func (b *FolderAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
-	// Same pattern as dashboards: v1beta1 aliases v1; kube-openapi definitions use v1 model keys only.
-	return foldersv1.GetOpenAPIDefinitions
+	// Folder v1beta1 aliases v1; only the pending resource has separate alpha definitions.
+	return func(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
+		definitions := foldersv1.GetOpenAPIDefinitions(ref)
+		for name, definition := range foldersv1alpha1.GetOpenAPIDefinitions(ref) {
+			definitions[name] = definition
+		}
+		return definitions
+	}
 }
 
 func (b *FolderAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
@@ -496,10 +532,13 @@ func (b *FolderAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAP
 
 // The default authorizer is fine because authorization happens in storage where we know the parent folder
 func (b *FolderAPIBuilder) GetAuthorizer() authorizer.Authorizer {
-	return grafanaauthorizer.NewServiceAuthorizer()
+	return pendingDeletionAuthorizer(grafanaauthorizer.NewServiceAuthorizer())
 }
 
 func (b *FolderAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {
+	if a.GetResource().GroupResource() == foldersv1alpha1.PendingFolderDeletionResourceInfo.GroupResource() {
+		return nil
+	}
 	verb := a.GetOperation()
 	if verb == admission.Create || verb == admission.Update {
 		obj := a.GetObject()
@@ -523,6 +562,9 @@ func (b *FolderAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, _
 }
 
 func (b *FolderAPIBuilder) Validate(ctx context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {
+	if a.GetResource().GroupResource() == foldersv1alpha1.PendingFolderDeletionResourceInfo.GroupResource() {
+		return validatePendingDeletion(a)
+	}
 	var obj runtime.Object
 	verb := a.GetOperation()
 

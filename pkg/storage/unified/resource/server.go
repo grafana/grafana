@@ -350,8 +350,7 @@ type ResourceStats struct {
 	Count           int64
 	ResourceVersion int64
 
-	// LastSearchedAt is when a global index was last searched before a restart,
-	// so its idle time carries on. Zero when unknown.
+	// LastSearchedAt carries idle time across restarts. Zero when unknown.
 	LastSearchedAt time.Time
 }
 
