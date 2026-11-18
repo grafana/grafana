@@ -169,7 +169,7 @@ func TestController_StaleSearchHitsBackOff(t *testing.T) {
 		m.addFolder("a", "", foldersv1.CascadeDeleteFinalizer)
 		lag := &lagLister{memStore: m, stale: []Child{{ChildDashboard, "d1"}}, passes: 5}
 		r := newTestReconciler(m, 100)
-		r.Children = lag
+		setLister(r, lag)
 		c := NewController(m, r, nil)
 		m.handler = c.Handler()
 		stop := run(c)

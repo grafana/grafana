@@ -1,4 +1,5 @@
-import { store } from '@grafana/data';
+import { MappingType, store, type ThresholdsConfig, type ValueMapping } from '@grafana/data';
+import { hasVarMappingVariableReference, isVarMappingProp } from '@grafana/data/internal';
 import { config, locationService } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { type SceneGridItemLike, type VizPanel } from '@grafana/scenes';
@@ -43,6 +44,7 @@ export function trackDashboardSceneLoaded(dashboard: DashboardScene, duration?: 
   });
 
   trackTextPanelUsage(dashboard);
+  trackPanelOptionVariableUsage(dashboard, 'load');
 }
 
 export const trackDashboardSceneEditButtonClicked = (dashboardUid?: string) => {
@@ -99,6 +101,8 @@ export async function trackDashboardSceneCreatedOrSaved(
           ...dashboardLibraryProperties,
         }),
   });
+
+  trackPanelOptionVariableUsage(dashboard, 'save');
 
   if (getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaCustomDashboardTemplates, false) && isNew) {
     const { pathname, search } = locationService.getLocation();
@@ -185,6 +189,51 @@ function getTextPanelUsage(panels: VizPanel[]) {
   }
 
   return usage;
+}
+
+/**
+ * Counts the panels whose saved field config sets options from variables, so the counts follow what
+ * dashboards hold, whichever way an option got or lost its variable
+ */
+function trackPanelOptionVariableUsage(dashboard: DashboardScene, trigger: 'load' | 'save') {
+  if (!dashboard.isV2() || !getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaPanelOptionInterpolation, false)) {
+    return;
+  }
+
+  const usage = { panel_count: 0, field_config_count: 0, threshold_count: 0, value_mapping_count: 0 };
+
+  for (const panel of dashboard.state.body.getVizPanels()) {
+    const { defaults, overrides } = panel.state.fieldConfig;
+    const properties = overrides.flatMap((rule) => rule.properties);
+    const valuesOf = (id: string) => properties.filter((prop) => prop.id === id).map((prop) => prop.value);
+
+    const fieldConfig = Object.keys(defaults.varMappings ?? {}).length > 0 || properties.some(isVarMappingProp);
+    const thresholds = [defaults.thresholds, ...valuesOf('thresholds')].some(hasThresholdVariable);
+    const valueMappings = [defaults.mappings, ...valuesOf('mappings')].some(hasValueMappingVariable);
+
+    usage.field_config_count += Number(fieldConfig);
+    usage.threshold_count += Number(thresholds);
+    usage.value_mapping_count += Number(valueMappings);
+    usage.panel_count += Number(fieldConfig || thresholds || valueMappings);
+  }
+
+  if (usage.panel_count > 0) {
+    DashboardInteractions.panelOptionVariableUsage({ ...usage, trigger, dashboard_uid: dashboard.state.uid });
+  }
+}
+
+function hasThresholdVariable(thresholds: ThresholdsConfig | undefined): boolean {
+  return Boolean(thresholds?.steps?.some((step) => step.valueExpr));
+}
+
+function hasValueMappingVariable(mappings: ValueMapping[] | undefined): boolean {
+  return Boolean(
+    mappings?.some((mapping) => {
+      const results =
+        mapping.type === MappingType.ValueToText ? Object.values(mapping.options ?? {}) : [mapping.options?.result];
+      return results.some((result) => typeof result?.text === 'string' && hasVarMappingVariableReference(result.text));
+    })
+  );
 }
 
 async function getDashboardLibraryTrackingProperties(dashboard: DashboardScene) {
