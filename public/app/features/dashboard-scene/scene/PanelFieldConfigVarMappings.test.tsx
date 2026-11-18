@@ -10,7 +10,7 @@ import {
   standardFieldConfigEditorRegistry,
   toDataFrame,
 } from '@grafana/data';
-import { setVarMappingsEnabled } from '@grafana/data/internal';
+import { setVarMappingsEnabledResolver } from '@grafana/data/internal';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils, setRunRequest } from '@grafana/runtime';
 import { CustomVariable, SceneQueryRunner, SceneVariableSet, VizPanel, sceneGraph } from '@grafana/scenes';
@@ -91,8 +91,8 @@ async function tick() {
 }
 
 describe('Variables in panel field config via varMappings (dashboard scene)', () => {
-  beforeAll(() => setVarMappingsEnabled(true));
-  afterAll(() => setVarMappingsEnabled(false));
+  beforeAll(() => setVarMappingsEnabledResolver(() => true));
+  afterAll(() => setVarMappingsEnabledResolver(() => false));
 
   it('resolves defaults.varMappings.min through the real sceneGraph.interpolate path and reacts to variable change', async () => {
     // CustomVariable rather than ConstantVariable + setState: only changeValueTo publishes the
@@ -129,7 +129,7 @@ describe('Variables in panel field config via varMappings (dashboard scene)', ()
   });
 
   it('keeps the stored value and ignores varMappings while resolution is turned off', async () => {
-    setVarMappingsEnabled(false);
+    setVarMappingsEnabledResolver(() => false);
     try {
       const varVariable = new CustomVariable({ name: 'myVar', query: '50,75', value: '50', text: '50' });
       const panel = buildPanel({ min: 0, varMappings: { min: '$myVar' } });
@@ -150,7 +150,7 @@ describe('Variables in panel field config via varMappings (dashboard scene)', ()
 
       deactivate();
     } finally {
-      setVarMappingsEnabled(true);
+      setVarMappingsEnabledResolver(() => true);
     }
   });
 

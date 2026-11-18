@@ -21,7 +21,7 @@ export {
   isVarMappingExpressionInput,
   type VarMappingKind,
 } from '../field/overrides/processors';
-export { setVarMappingsEnabled } from '../field/fieldOverrides';
+export { setVarMappingsEnabledResolver } from '../field/fieldOverrides';
 export {
   clearCustomFieldConfig,
   clearCustomVarMappings,

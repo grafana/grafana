@@ -25,7 +25,7 @@ import {
   getLinksSupplier,
   setDynamicConfigValue,
   setFieldConfigDefaults,
-  setVarMappingsEnabled,
+  setVarMappingsEnabledResolver,
   validateFieldConfig,
 } from './fieldOverrides';
 import { getFieldDisplayName } from './fieldState';
@@ -600,8 +600,8 @@ describe('applyFieldOverrides', () => {
     // `currentConfig == null` gate always lets defaults (and their varMappings) run.
     const numField = toDataFrame([{ value: 10 }, { value: 20 }]);
 
-    beforeAll(() => setVarMappingsEnabled(true));
-    afterAll(() => setVarMappingsEnabled(false));
+    beforeAll(() => setVarMappingsEnabledResolver(() => true));
+    afterAll(() => setVarMappingsEnabledResolver(() => false));
 
     function makeReplaceVariables(variables: Record<string, unknown>): InterpolateFunction {
       // Mimics the function-format calling convention shared by sceneGraph.interpolate and
@@ -648,8 +648,8 @@ describe('applyFieldOverrides', () => {
     });
 
     describe('while resolution is turned off', () => {
-      beforeAll(() => setVarMappingsEnabled(false));
-      afterAll(() => setVarMappingsEnabled(true));
+      beforeAll(() => setVarMappingsEnabledResolver(() => false));
+      afterAll(() => setVarMappingsEnabledResolver(() => true));
 
       it('ignores varMappings from defaults and overrides and keeps the stored values', () => {
         const data = applyFieldOverrides({
