@@ -15,6 +15,8 @@ import { RuleListModeToggle } from '../rule-search/RuleListModeToggle';
 import { RuleSearchInput } from '../rule-search/RuleSearchInput';
 import { type RuleListMode, useRuleListSearchState } from '../rule-search/useRuleListSearchState';
 import { RuleSequenceDrawerProvider } from '../rule-sequences/RuleSequenceDrawer';
+import { RuleListSavedSearches } from '../saved-searches/RuleListSavedSearches';
+import { useRuleListSavedSearches } from '../saved-searches/useRuleListSavedSearches';
 import { useTrackRuleListPageView } from '../shared/analytics';
 
 import { AlertRulesFilterSidebar } from './AlertRulesFilterSidebar';
@@ -28,6 +30,8 @@ function AlertRulesPage() {
     useRuleListSearchState(alertRuleSearchSchema);
   const rejectionIssues = useAlertRuleSearchRejection(filter, { parseIssues, mode });
   const issues = parseIssues.length > 0 ? parseIssues : rejectionIssues;
+
+  const savedSearches = useRuleListSavedSearches('alert');
 
   useTrackRuleListPageView('alert', mode);
 
@@ -45,7 +49,17 @@ function AlertRulesPage() {
               onApply={applyQuery}
               filterHelp={filterHelp}
               issues={issues}
-              trailing={<RuleListModeToggle mode={mode} onChange={setMode} foldersDisabled={hasNonFolderFilters} />}
+              trailing={
+                <Stack direction="row" gap={1} alignItems="center">
+                  <RuleListSavedSearches
+                    kind="alert"
+                    query={query}
+                    onApply={applyQuery}
+                    savedSearches={savedSearches}
+                  />
+                  <RuleListModeToggle mode={mode} onChange={setMode} foldersDisabled={hasNonFolderFilters} />
+                </Stack>
+              }
             />
           </div>
           <Stack direction="row" gap={2}>

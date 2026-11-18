@@ -14,6 +14,8 @@ import { RuleListModeToggle } from '../rule-search/RuleListModeToggle';
 import { RuleSearchInput } from '../rule-search/RuleSearchInput';
 import { type RuleListMode, useRuleListSearchState } from '../rule-search/useRuleListSearchState';
 import { RuleSequenceDrawerProvider } from '../rule-sequences/RuleSequenceDrawer';
+import { RuleListSavedSearches } from '../saved-searches/RuleListSavedSearches';
+import { useRuleListSavedSearches } from '../saved-searches/useRuleListSavedSearches';
 import { useTrackRuleListPageView } from '../shared/analytics';
 
 import { RecordingRulesFoldersView } from './RecordingRulesFoldersView';
@@ -26,6 +28,8 @@ function RecordingRulesPage() {
     useRuleListSearchState(recordingRuleSearchSchema);
   const rejectionIssues = useRecordingRuleSearchRejection(filter, { parseIssues, mode });
   const issues = parseIssues.length > 0 ? parseIssues : rejectionIssues;
+
+  const savedSearches = useRuleListSavedSearches('recording');
 
   useTrackRuleListPageView('recording', mode);
 
@@ -43,7 +47,17 @@ function RecordingRulesPage() {
               onApply={applyQuery}
               filterHelp={filterHelp}
               issues={issues}
-              trailing={<RuleListModeToggle mode={mode} onChange={setMode} foldersDisabled={hasNonFolderFilters} />}
+              trailing={
+                <Stack direction="row" gap={1} alignItems="center">
+                  <RuleListSavedSearches
+                    kind="recording"
+                    query={query}
+                    onApply={applyQuery}
+                    savedSearches={savedSearches}
+                  />
+                  <RuleListModeToggle mode={mode} onChange={setMode} foldersDisabled={hasNonFolderFilters} />
+                </Stack>
+              }
             />
           </div>
           <RuleSequenceDrawerProvider>
