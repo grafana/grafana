@@ -24,7 +24,7 @@ You can also create custom dashboard templates for your organization.
 {{< admonition type="note" >}}
 Dashboard templates is currently in public preview.
 Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
-To try it out, enable `dashboardTemplates` feature toggle.
+To try it out, enable the `dashboardTemplates` feature toggle.
 {{< /admonition >}}
 
 Grafana provides a variety of pre-built dashboard templates that you can use to quickly set up visualizations for your data.
