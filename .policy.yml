@@ -609,12 +609,17 @@ approval_rules:
           - ^(?:(?:[^/]*(?:/|$))*)go\.mod$
           - ^(?:(?:[^/]*(?:/|$))*)go\.sum$
           - ^apps\/(?:(?:[^/]*(?:/|$))*)$
+          - ^pkg\/api\/folder(?:[^/]*)\.go$
           - ^pkg\/apimachinery\/(?:(?:[^/]*(?:/|$))*)$
           - ^pkg\/apiserver\/(?:(?:[^/]*(?:/|$))*)$
           - ^pkg\/apis\/(?:(?:[^/]*(?:/|$))*)$
           - ^pkg\/registry\/apis\/(?:(?:[^/]*(?:/|$))*)$
           - ^pkg\/registry\/apps\/(?:(?:[^/]*(?:/|$))*)$
+          - ^pkg\/services\/accesscontrol\/ossaccesscontrol\/folder\.go$
+          - ^pkg\/services\/accesscontrol\/resourcepermissions\/(?:(?:[^/]*(?:/|$))*)$
           - ^pkg\/services\/apiserver\/(?:(?:[^/]*(?:/|$))*)$
+          - ^pkg\/services\/authz\/rbac\/(?:(?:[^/]*(?:/|$))*)$
+          - ^pkg\/services\/folder\/(?:(?:[^/]*(?:/|$))*)$
           - ^pkg\/services\/sqlstore\/migrations\/(?:(?:[^/]*(?:/|$))*)$
           - ^pkg\/storage\/(?:(?:[^/]*(?:/|$))*)$
           - ^pkg\/tests\/apis\/helper\.go$
