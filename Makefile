@@ -289,6 +289,20 @@ gen-app-manifests-unistore: ## Generate unified storage app manifests list
 		echo "Generated app manifests code is up to date."; \
 	fi
 
+.PHONY: gen-core-kinds
+gen-core-kinds: ## Generate the frontend core kind table from the compiled app manifests
+	@echo "generating core kinds"
+	$(GO) generate ./public/app/core/kinds/gen.go
+	@if [ -n "$$CODEGEN_VERIFY" ]; then \
+		echo "Verifying generated code is up to date..."; \
+		if ! git diff --quiet public/app/core/kinds/coreKinds.gen.ts; then \
+			echo "Error: public/app/core/kinds/coreKinds.gen.ts is not up to date. Please run 'make gen-core-kinds' to regenerate."; \
+			git diff public/app/core/kinds/coreKinds.gen.ts; \
+			exit 1; \
+		fi; \
+		echo "Generated core kinds code is up to date."; \
+	fi
+
 .PHONY: fix-cue
 fix-cue: ## Format and fix CUE files. Use app=<name> to fix a specific app.
 	@set -e; \
