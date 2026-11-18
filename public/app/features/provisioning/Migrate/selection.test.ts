@@ -7,6 +7,10 @@ import { resolveSelection } from './selection';
 // group/kind/name so different kinds that share a name can't collide.
 const dashKey = (uid: string) => `${resourceKindInfos.dashboard.group}/${resourceKindInfos.dashboard.kind}/${uid}`;
 const playlistKey = (uid: string) => `${resourceKindInfos.playlist.group}/${resourceKindInfos.playlist.kind}/${uid}`;
+// A collection kind is keyed by the collection, not the member group — the key only has to be
+// unique per kind, and the registry group is what the table has.
+const datasourceKey = (uid: string) =>
+  `${resourceKindInfos.datasource.group}/${resourceKindInfos.datasource.kind}/${uid}`;
 
 function folder(uid: string, dashboardUids: string[]): FolderRow {
   const directResources = dashboardUids.map((d) => ({ uid: d, title: d, kind: resourceKindInfos.dashboard }));
@@ -26,6 +30,24 @@ function playlistFolder(uid: string, playlistUids: string[]): FolderRow {
   return {
     uid,
     title: 'Playlists',
+    path: [],
+    resourceCount: directResources.length,
+    directResources,
+  };
+}
+
+// Every data source plugin serves its own API group, so a row carries the group that serves it
+// rather than the collection the registry entry names.
+function datasourceFolder(members: Array<{ uid: string; group: string }>): FolderRow {
+  const directResources = members.map(({ uid, group }) => ({
+    uid,
+    title: uid,
+    kind: resourceKindInfos.datasource,
+    group,
+  }));
+  return {
+    uid: 'datasources',
+    title: 'Data sources',
     path: [],
     resourceCount: directResources.length,
     directResources,
@@ -103,5 +125,30 @@ describe('resolveSelection', () => {
     // Only the dashboard is selected; the same-named playlist must not be pulled in.
     expect(result.items).toBe(1);
     expect(result.resources).toEqual([{ name: 'shared', group: 'dashboard.grafana.app', kind: 'Dashboard' }]);
+  });
+
+  // The collection group no API server serves would be rejected by the export job's admission, so
+  // the ref has to carry the group the resource was listed through.
+  it('refs a collection member by the group serving it, cascaded and ticked alike', () => {
+    const datasources = datasourceFolder([
+      { uid: 'prom', group: 'prometheus.datasource.grafana.app' },
+      { uid: 'logs', group: 'loki.datasource.grafana.app' },
+    ]);
+
+    const cascaded = resolveSelection([datasources], new Set(['datasources']), new Set());
+    expect(cascaded.resources).toEqual([
+      { name: 'prom', group: 'prometheus.datasource.grafana.app', kind: 'DataSource' },
+      { name: 'logs', group: 'loki.datasource.grafana.app', kind: 'DataSource' },
+    ]);
+
+    const ticked = resolveSelection([datasources], new Set(), new Set([datasourceKey('logs')]));
+    expect(ticked.resources).toEqual([{ name: 'logs', group: 'loki.datasource.grafana.app', kind: 'DataSource' }]);
+  });
+
+  it('falls back to the registry group for a kind served under it', () => {
+    // Playlists carry no per-resource group, so the ref comes from the kind.
+    const result = resolveSelection([playlistFolder('playlists', ['p1'])], new Set(['playlists']), new Set());
+
+    expect(result.resources).toEqual([{ name: 'p1', group: 'playlist.grafana.app', kind: 'Playlist' }]);
   });
 });

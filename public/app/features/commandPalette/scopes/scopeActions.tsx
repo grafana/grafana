@@ -2,7 +2,7 @@ import { useRegisterActions } from 'kbar';
 import { last } from 'lodash';
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { config } from '@grafana/runtime';
+import { useFlagScopeFilters, useFlagScopeSearchAllLevels } from '@grafana/runtime/internal';
 
 import { type CommandPaletteAction } from '../types';
 
@@ -33,6 +33,7 @@ export function useRegisterScopesActions(
   onApply: () => void,
   parentId?: string | null
 ): { scopesRow?: ReactNode } {
+  const scopeFiltersEnabled = useFlagScopeFilters();
   // Call hooks unconditionally to follow React Hooks rules
   const globalScopeActions = useGlobalScopesSearch(searchQuery, parentId);
   const scopeTreeActions = useScopeTreeActions(searchQuery, parentId);
@@ -40,13 +41,13 @@ export function useRegisterScopesActions(
 
   // If we have global search actions we use those. Inside the hook the search should be conditional based on where
   // in the command palette we are.
-  const nodesActions = config.featureToggles.scopeFilters ? globalScopeActions || scopeTreeActions : [];
+  const nodesActions = scopeFiltersEnabled ? globalScopeActions || scopeTreeActions : [];
 
   // Register actions unconditionally (empty array if feature toggle is off)
   useRegisterActions(nodesActions, [nodesActions]);
 
   // Returns a component to show what scopes are selected or applied (undefined if feature toggle is off)
-  return { scopesRow: config.featureToggles.scopeFilters ? scopesRow : undefined };
+  return { scopesRow: scopeFiltersEnabled ? scopesRow : undefined };
 }
 
 /**
@@ -140,9 +141,10 @@ function useGlobalScopesSearch(searchQuery: string, parentId?: string | null) {
   const { selectScope, searchAllNodes, getScopeNodes } = useScopeServicesState();
   const [actions, setActions] = useState<CommandPaletteAction[] | undefined>(undefined);
   const searchQueryRef = useRef<string>(undefined);
+  const scopeSearchAllLevelsEnabled = useFlagScopeSearchAllLevels();
 
   useEffect(() => {
-    if ((!parentId || parentId === 'scopes') && searchQuery && config.featureToggles.scopeSearchAllLevels) {
+    if ((!parentId || parentId === 'scopes') && searchQuery && scopeSearchAllLevelsEnabled) {
       // We only search globally if there is no parentId
       searchQueryRef.current = searchQuery;
       searchAllNodes(searchQuery, 10).then((nodes) => {
@@ -175,7 +177,7 @@ function useGlobalScopesSearch(searchQuery: string, parentId?: string | null) {
       searchQueryRef.current = undefined;
       setActions(undefined);
     }
-  }, [searchAllNodes, searchQuery, parentId, selectScope, getScopeNodes]);
+  }, [searchAllNodes, searchQuery, parentId, selectScope, getScopeNodes, scopeSearchAllLevelsEnabled]);
 
   return actions;
 }

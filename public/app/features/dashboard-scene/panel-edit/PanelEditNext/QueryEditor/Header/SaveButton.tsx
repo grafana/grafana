@@ -7,16 +7,20 @@ import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryL
 import { QueryEditorType } from '../../constants';
 import { useActionsContext, useQueryEditorUIContext } from '../QueryEditorContext';
 
+import { type QueryActionTarget } from './headerActionTarget';
+
 interface SaveButtonProps {
+  target: QueryActionTarget;
   // Ref to the parent container for positioning/formatting the saved queries dropdown
   parentRef?: RefObject<HTMLDivElement | null>;
 }
 
 // TODO: Confirm this works as expected once we get the query content work completed
-export function SaveButton({ parentRef }: SaveButtonProps) {
+export function SaveButton({ target, parentRef }: SaveButtonProps) {
   const { queryLibraryEnabled, renderSavedQueryButtons, isEditingQuery, setIsEditingQuery } = useQueryLibraryContext();
-  const { selectedQuery, setSelectedQuery, cardType, selectedQueryDsData } = useQueryEditorUIContext();
+  const { setSelectedQuery } = useQueryEditorUIContext();
   const { updateSelectedQuery, addQuery, runQueries } = useActionsContext();
+  const { query: targetQuery, cardType, dsData } = target;
 
   const onUpdateSuccess = useCallback(() => {
     // Exit query library editing mode after successful save
@@ -26,12 +30,8 @@ export function SaveButton({ parentRef }: SaveButtonProps) {
   // Callback when user selects a query from the library
   const onSelectQuery = useCallback(
     (query: DataQuery) => {
-      if (!selectedQuery) {
-        return;
-      }
-
-      // Replace the current query with the library query, preserving refId
-      const originalRefId = selectedQuery.refId;
+      // Replace the target query with the library query, preserving refId
+      const originalRefId = targetQuery.refId;
       updateSelectedQuery(
         {
           ...query,
@@ -46,19 +46,19 @@ export function SaveButton({ parentRef }: SaveButtonProps) {
       // Run queries with the new query from library
       runQueries();
     },
-    [selectedQuery, updateSelectedQuery, setSelectedQuery, runQueries]
+    [targetQuery.refId, updateSelectedQuery, setSelectedQuery, runQueries]
   );
 
   // Callback when the user selects a multi-query entry (e.g. a recent entry that ran several
-  // queries together). Replaces the selected query in place with the first and inserts the rest
+  // queries together). Replaces the target query in place with the first and inserts the rest
   // right after it, preserving order. The first reuses the original refId; the rest get fresh ones.
   const onSelectQueries = useCallback(
     (queries: DataQuery[]) => {
-      if (!selectedQuery || queries.length === 0) {
+      if (queries.length === 0) {
         return;
       }
 
-      const originalRefId = selectedQuery.refId;
+      const originalRefId = targetQuery.refId;
       const [first, ...rest] = queries;
 
       const replacement = { ...first, refId: originalRefId };
@@ -76,7 +76,7 @@ export function SaveButton({ parentRef }: SaveButtonProps) {
 
       runQueries();
     },
-    [selectedQuery, updateSelectedQuery, setSelectedQuery, addQuery, runQueries]
+    [targetQuery.refId, updateSelectedQuery, setSelectedQuery, addQuery, runQueries]
   );
 
   // Only queries can be saved to library (expressions/transformations can't)
@@ -84,8 +84,7 @@ export function SaveButton({ parentRef }: SaveButtonProps) {
     return null;
   }
 
-  // Don't show if query library feature is disabled or no selected query
-  if (!queryLibraryEnabled || !selectedQuery) {
+  if (!queryLibraryEnabled) {
     return null;
   }
 
@@ -94,12 +93,12 @@ export function SaveButton({ parentRef }: SaveButtonProps) {
     return null;
   }
 
-  const datasource = selectedQueryDsData?.datasource;
+  const datasource = dsData?.datasource;
 
   return renderSavedQueryButtons({
     query: {
-      ...selectedQuery,
-      datasource: datasource ? { uid: datasource.uid, type: datasource.type } : selectedQuery.datasource,
+      ...targetQuery,
+      datasource: datasource ? { uid: datasource.uid, type: datasource.type } : targetQuery.datasource,
     },
     app: CoreApp.PanelEditor,
     onUpdateSuccess,

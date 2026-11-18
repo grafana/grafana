@@ -68,8 +68,16 @@ func (rs *RenderingService) generateImageRendererURL(renderType RenderType, opts
 		return nil, err
 	}
 
+	callbackPath, err := url.Parse(opts.Path)
+	if err != nil {
+		return nil, err
+	}
+	callbackQuery := callbackPath.Query()
+	callbackQuery.Set("orgId", strconv.FormatInt(opts.OrgID, 10))
+	callbackPath.RawQuery = callbackQuery.Encode()
+
 	queryParams := imageRendererURL.Query()
-	url := rs.getGrafanaCallbackURL(opts.Path)
+	url := rs.getGrafanaCallbackURL(callbackPath.String())
 	queryParams.Add("url", url)
 	queryParams.Add("renderKey", renderKey)
 	queryParams.Add("domain", rs.domain)

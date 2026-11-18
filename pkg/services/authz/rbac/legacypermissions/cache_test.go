@@ -27,12 +27,14 @@ type migratedGrants struct {
 	permissions []ac.Permission
 	err         error
 	calls       int
+	skipCache   bool
 }
 
-func (m *migratedGrants) ResolveCurrentUserPermissions(context.Context, identity.Requester) ([]ac.Permission, error) {
+func (m *migratedGrants) ResolveCurrentUserPermissions(_ context.Context, _ identity.Requester, skipCache bool) ([]ac.Permission, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.calls++
+	m.skipCache = skipCache
 	return m.permissions, m.err
 }
 
@@ -53,8 +55,12 @@ func TestIntegrationLoaderCacheOptionsAndFailures(t *testing.T) {
 			requester := &user.SignedInUser{UserID: 7, OrgID: 1, OrgRole: org.RoleViewer}
 			check := func(options ac.Options, want ...ac.Permission) {
 				t.Helper()
+				before := z.calls
 				got, err := loader.GetUserPermissions(context.Background(), requester, options)
 				require.NoError(t, err)
+				if z.calls > before {
+					require.Equal(t, options.ReloadCache, z.skipCache)
+				}
 				require.ElementsMatch(t, append(want, ac.Permission{Action: "folders:read", Scope: "folders:uid:sharedwithme"}), got)
 			}
 			check(ac.Options{}, a, b)
@@ -119,4 +125,39 @@ func TestRoleCatalogSnapshots(t *testing.T) {
 	require.Equal(t, "users:read", catalog.Permissions("Viewer")[0].Action)
 	catalog.Replace(nil)
 	require.Empty(t, catalog.Permissions("Viewer"))
+}
+
+type contextualGrants struct{ calls int }
+
+func (m *contextualGrants) ResolveCurrentUserPermissions(_ context.Context, user identity.Requester, skip bool) ([]ac.Permission, error) {
+	m.calls++
+	teams := user.GetExternalGroups()
+	result := make([]ac.Permission, 0, len(teams))
+	for _, team := range teams {
+		result = append(result, ac.Permission{Action: "dashboards:write", Scope: "folders:uid:" + team})
+	}
+	return result, nil
+}
+
+func TestIntegrationLoaderComposesCurrentExternalGroups(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	cfg := loaderConfig(true)
+	cfg.IDUseExternalGroupsForGroupsClaim = true
+	grants := &contextualGrants{}
+	loader := legacypermissions.NewLoader(db.NewTestStore(t), legacypermissions.NewRoleCatalog(),
+		resourcepermissions.NewActionSetService(), localcache.New(0, 0), cfg,
+		featuremgmt.WithFeatures(), &enforcementLicense{enabled: true}, grants)
+	requester := &user.SignedInUser{UserID: 7, UserUID: "alice", OrgID: 1}
+	for i, teams := range [][]string{{"team-a"}, {"team-b"}, nil, {"team-a"}} {
+		requester.ExternalGroups = teams
+		got, err := loader.GetUserPermissions(t.Context(), requester, ac.Options{})
+		require.NoError(t, err)
+		want := make([]ac.Permission, 0, 1+len(teams))
+		want = append(want, ac.Permission{Action: "folders:read", Scope: "folders:uid:sharedwithme"})
+		for _, team := range teams {
+			want = append(want, ac.Permission{Action: "dashboards:write", Scope: "folders:uid:" + team})
+		}
+		require.ElementsMatch(t, want, got)
+		require.Equal(t, i+1, grants.calls)
+	}
 }

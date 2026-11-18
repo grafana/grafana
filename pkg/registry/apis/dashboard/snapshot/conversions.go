@@ -51,7 +51,7 @@ func convertSnapshotDTOToK8sResource(v *dashboardsnapshots.DashboardSnapshotDTO,
 	return snap
 }
 
-func convertSnapshotToK8sResource(v *dashboardsnapshots.DashboardSnapshot, namespacer request.NamespaceMapper) *dashV0.Snapshot {
+func convertSnapshotToK8sResource(v *dashboardsnapshots.DashboardSnapshot, namespacer request.NamespaceMapper) (*dashV0.Snapshot, error) {
 	expires := v.Expires.UnixMilli()
 	if !v.Expires.Before(time.Date(2070, time.January, 1, 0, 0, 0, 0, time.UTC)) {
 		expires = 0 // ignore things expiring long into the future
@@ -65,11 +65,15 @@ func convertSnapshotToK8sResource(v *dashboardsnapshots.DashboardSnapshot, names
 			Namespace:         namespacer(v.OrgID),
 		},
 		Spec: dashV0.SnapshotSpec{
-			Title:     &v.Name,
-			Dashboard: v.Dashboard.MustMap(),
+			Title: &v.Name,
 		},
 	}
 
+	if v.Dashboard != nil {
+		if err := setDashboardContent(snap, v.Dashboard.MustMap()); err != nil {
+			return nil, err
+		}
+	}
 	if v.UserID > 0 {
 		snap.SetCreatedBy(authlib.NewTypeID(authlib.TypeUser, strconv.FormatInt(v.UserID, 10)))
 	}
@@ -94,11 +98,11 @@ func convertSnapshotToK8sResource(v *dashboardsnapshots.DashboardSnapshot, names
 		meta, _ := utils.MetaAccessor(snap)
 		meta.SetUpdatedTimestamp(&v.Updated)
 	}
-	return snap
+	return snap, nil
 }
 
 // convertK8sResourceToCreateCommand converts a K8s Snapshot to a CreateDashboardSnapshotCommand
-func convertK8sResourceToCreateCommand(snap *dashV0.Snapshot, orgID int64, userID int64) *dashboardsnapshots.CreateDashboardSnapshotCommand {
+func convertK8sResourceToCreateCommand(snap *dashV0.Snapshot, orgID int64, userID int64) (*dashboardsnapshots.CreateDashboardSnapshotCommand, error) {
 	cmd := &dashboardsnapshots.CreateDashboardSnapshotCommand{
 		OrgID:  orgID,
 		UserID: userID,
@@ -117,12 +121,11 @@ func convertK8sResourceToCreateCommand(snap *dashV0.Snapshot, orgID int64, userI
 		cmd.Name = *snap.Spec.Title
 	}
 
-	// Map dashboard (convert map[string]interface{} to *common.Unstructured)
-	if snap.Spec.Dashboard != nil {
-		cmd.Dashboard = &common.Unstructured{Object: snap.Spec.Dashboard}
-	} else {
-		cmd.Dashboard = &common.Unstructured{}
+	dashboard, err := inlineDashboardContent(snap)
+	if err != nil {
+		return nil, err
 	}
+	cmd.Dashboard = &common.Unstructured{Object: dashboard}
 
 	// Map expires
 	// snap.Spec.Expires is an absolute timestamp in milliseconds; cmd.Expires is a
@@ -143,12 +146,12 @@ func convertK8sResourceToCreateCommand(snap *dashV0.Snapshot, orgID int64, userI
 		}
 	}
 
-	return cmd
+	return cmd, nil
 }
 
 // convertCreateCmdToK8sSnapshot converts a CreateDashboardSnapshotCommand request to a K8s Snapshot
 // Used by routes.go to create a Snapshot object from the incoming create command
-func convertCreateCmdToK8sSnapshot(cmd *dashboardsnapshots.CreateDashboardSnapshotCommand, namespace string) *dashV0.Snapshot {
+func convertCreateCmdToK8sSnapshot(cmd *dashboardsnapshots.CreateDashboardSnapshotCommand, namespace string) (*dashV0.Snapshot, error) {
 	snap := &dashV0.Snapshot{
 		TypeMeta: dashV0.SnapshotResourceInfo.TypeMeta(),
 		ObjectMeta: metav1.ObjectMeta{
@@ -159,9 +162,10 @@ func convertCreateCmdToK8sSnapshot(cmd *dashboardsnapshots.CreateDashboardSnapsh
 		},
 	}
 
-	// Convert *common.Unstructured to map[string]interface{}
-	if cmd.Dashboard != nil {
-		snap.Spec.Dashboard = cmd.Dashboard.Object
+	if cmd.Dashboard != nil && !cmd.External {
+		if err := setDashboardContent(snap, cmd.Dashboard.Object); err != nil {
+			return nil, err
+		}
 	}
 
 	if cmd.Expires > 0 {
@@ -189,5 +193,5 @@ func convertCreateCmdToK8sSnapshot(cmd *dashboardsnapshots.CreateDashboardSnapsh
 		snap.Spec.DeleteKey = &cmd.DeleteKey
 	}
 
-	return snap
+	return snap, nil
 }

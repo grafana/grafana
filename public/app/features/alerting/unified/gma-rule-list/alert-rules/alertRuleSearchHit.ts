@@ -1,8 +1,9 @@
-import * as z from 'zod';
+import * as z from 'zod/mini';
 
 import {
   type AlertRuleAlertRuleHealth,
   type AlertRuleAlertRuleState,
+  type AlertRuleNotificationSettingsType,
 } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { type Labels } from 'app/types/unified-alerting-dto';
 
@@ -26,6 +27,19 @@ export interface AlertRuleSearchHit {
   labels?: Labels;
   /** UIDs of data sources queried by the rule's expressions. */
   datasourceUIDs?: string[];
+  /** Per-state instance counts; absent when alerting.ruleStatusSync is off or not yet synced. */
+  totalsHealthy?: number;
+  totalsFiring?: number;
+  totalsPending?: number;
+  totalsRecovering?: number;
+  totalsNoData?: number;
+  totalsError?: number;
+  /** Routing type; absent when the rule has no notification settings. */
+  notificationType?: AlertRuleNotificationSettingsType;
+  /** Contact point name for SimplifiedRouting. */
+  receiver?: string;
+  /** Named policy for NamedRoutingTree; absent means the default policy. */
+  routingTree?: string;
 }
 
 // Keyed by the generated unions, so a value the API adds or drops fails the type check here.
@@ -44,6 +58,12 @@ const ALERT_RULE_HEALTHS = {
   Error: 'Error',
   NoData: 'NoData',
 } satisfies Record<AlertRuleAlertRuleHealth, AlertRuleAlertRuleHealth>;
+
+// Keyed by the generated union so a value the API adds or drops fails the type check here.
+const NOTIFICATION_SETTING_TYPES = {
+  SimplifiedRouting: 'SimplifiedRouting',
+  NamedRoutingTree: 'NamedRoutingTree',
+} satisfies Record<AlertRuleNotificationSettingsType, AlertRuleNotificationSettingsType>;
 
 // annotations comes back as a JSON-encoded string; parse it safely via Zod.
 const annotationsSchema = z.record(z.string(), z.string());
@@ -81,25 +101,34 @@ export function parseSearchLabels(entries?: string[]): Labels | undefined {
 // Search fields are untyped in the API. A field that is missing or fails its check reads as absent
 // instead of failing the whole hit.
 const alertRuleSearchFieldsSchema = z.object({
-  title: z.string().optional().catch(undefined),
-  folder: z.string().optional().catch(undefined),
-  paused: z.boolean().optional().catch(undefined),
-  state: z.enum(ALERT_RULE_STATES).optional().catch(undefined),
-  health: z.enum(ALERT_RULE_HEALTHS).optional().catch(undefined),
-  lastError: z.string().optional().catch(undefined),
-  annotations: z.string().transform(tryParseAnnotations).optional().catch(undefined),
-  interval: z.string().optional().catch(undefined),
-  labels: z.array(z.string()).optional().catch(undefined),
-  datasourceUIDs: z.array(z.string()).optional().catch(undefined),
+  title: z.catch(z.optional(z.string()), undefined),
+  folder: z.catch(z.optional(z.string()), undefined),
+  paused: z.catch(z.optional(z.boolean()), undefined),
+  state: z.catch(z.optional(z.enum(ALERT_RULE_STATES)), undefined),
+  health: z.catch(z.optional(z.enum(ALERT_RULE_HEALTHS)), undefined),
+  lastError: z.catch(z.optional(z.string()), undefined),
+  annotations: z.catch(z.optional(z.pipe(z.string(), z.transform(tryParseAnnotations))), undefined),
+  interval: z.catch(z.optional(z.string()), undefined),
+  labels: z.catch(z.optional(z.array(z.string())), undefined),
+  datasourceUIDs: z.catch(z.optional(z.array(z.string())), undefined),
+  totalsHealthy: z.catch(z.optional(z.number()), undefined),
+  totalsFiring: z.catch(z.optional(z.number()), undefined),
+  totalsPending: z.catch(z.optional(z.number()), undefined),
+  totalsRecovering: z.catch(z.optional(z.number()), undefined),
+  totalsNoData: z.catch(z.optional(z.number()), undefined),
+  totalsError: z.catch(z.optional(z.number()), undefined),
+  notificationType: z.catch(z.optional(z.enum(NOTIFICATION_SETTING_TYPES)), undefined),
+  receiver: z.catch(z.optional(z.string()), undefined),
+  routingTree: z.catch(z.optional(z.string()), undefined),
 });
 
 /** Parses one search item straight into the row's shape. */
-export const alertRuleSearchHitSchema = z
-  .object({
+export const alertRuleSearchHitSchema = z.pipe(
+  z.object({
     resource: z.object({ name: z.string() }),
-    fields: alertRuleSearchFieldsSchema.catch({}),
-  })
-  .transform(
+    fields: z.catch(alertRuleSearchFieldsSchema, {}),
+  }),
+  z.transform(
     ({ resource, fields }): AlertRuleSearchHit => ({
       uid: resource.name,
       title: fields.title ?? resource.name,
@@ -112,5 +141,15 @@ export const alertRuleSearchHitSchema = z
       interval: fields.interval,
       labels: parseSearchLabels(fields.labels),
       datasourceUIDs: fields.datasourceUIDs,
+      totalsHealthy: fields.totalsHealthy,
+      totalsFiring: fields.totalsFiring,
+      totalsPending: fields.totalsPending,
+      totalsRecovering: fields.totalsRecovering,
+      totalsNoData: fields.totalsNoData,
+      totalsError: fields.totalsError,
+      notificationType: fields.notificationType,
+      receiver: fields.receiver,
+      routingTree: fields.routingTree,
     })
-  );
+  )
+);

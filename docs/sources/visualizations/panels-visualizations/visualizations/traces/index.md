@@ -92,7 +92,7 @@ This procedure uses dashboard variables and templates to allow you to enter trac
 
 1. From your Grafana instance, do one of the following:
    - On a new dashboard: Click or drag a panel onto the dashboard.
-   - On an existing dashboard: Click **Edit** in the top-right corner, click the **Add new element** icon, and then click or drag a panel onto the dashboard.
+   - On an existing dashboard: select **Editing** in the dashboard mode drop-down list, click the **Add new element** icon, and then click or drag a panel onto the dashboard.
 
 1. Click **Configure visualization** to open panel edit mode.
 1. In the query editor, click the data source list and select the appropriate tracing data source.
@@ -114,7 +114,7 @@ This procedure uses dashboard variables and templates to allow you to enter trac
 
 1. Click **Save**.
 1. Enter an optional description of your changes, and click **Save**.
-1. Click **Exit edit**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 1. Verify that the panel works by using a valid trace ID for the data source used for the trace panel and editing the ID in the dashboard variable.
 
    {{< figure src="/static/img/docs/panels/traces/screenshot-traces-traceid-panel.png" alt="Results of query in trace panel" >}}
@@ -124,7 +124,7 @@ This procedure uses dashboard variables and templates to allow you to enter trac
 While you can add a trace visualization to a dashboard, having to manually add trace IDs as a dashboard variable is cumbersome.
 It's more useful to instead be able to use TraceQL queries to search for specific types of traces and then select appropriate traces from matching results.
 
-1. In the same dashboard where you added the trace visualization, click **Edit** in the top-right corner.
+1. In the same dashboard where you added the trace visualization, select **Editing** in the dashboard mode drop-down list.
 1. Click the **Add new element** icon, and then click or drag a panel onto the dashboard.
 1. Click **Configure visualization**.
 1. Select the same trace data source you used in the previous task.
@@ -137,7 +137,8 @@ It's more useful to instead be able to use TraceQL queries to search for specifi
 
 1. Click **Save**.
 1. Enter an optional description of your changes, and click **Save**.
-1. Click **Back** and **Exit edit**.
+1. Click **Back**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 When results are returned from a query, the results are rendered in the panel’s table.
 
@@ -162,7 +163,8 @@ To create a set of data links in the panel, use the following steps:
 
 1. Select **Save** to save the data link.
 1. Enter an optional description of your changes, and click **Save**.
-1. Click **Back** and **Exit edit**.
+1. Click **Back**.
+1. Select **Viewing** in the dashboard mode drop-down list.
 
 You should now see a list of matching traces in the table visualization. While selecting the **TraceID** or **SpanID** fields will give you the option to either open the **Explore** page to visualize the trace or following the data link, selecting any other field (such as **Start time**, **Name** or **Duration**) automatically follows the data link, filling in the `traceId` dashboard variable, and then shows the relevant trace in the trace panel.
 

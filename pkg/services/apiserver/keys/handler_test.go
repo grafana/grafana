@@ -312,20 +312,13 @@ func TestListKeys_RequiresWildcardNamespaceScope(t *testing.T) {
 	}
 }
 
-// The backend reports failures in the payload as well as over the transport, so
-// both have to become an HTTP status rather than a 200 with no items.
+// Storage failures have to become an HTTP status rather than a 200 with no items.
 func TestListKeys_SurfacesErrors(t *testing.T) {
 	for name, tc := range map[string]struct {
 		store    *fakeStore
 		wantCode int
 		exact    bool
 	}{
-		"payload error": {
-			store: &fakeStore{rsp: &resourcepb.ListResponse{
-				Error: &resourcepb.ErrorResult{Code: http.StatusBadRequest, Message: "nope"},
-			}},
-			wantCode: http.StatusBadRequest,
-		},
 		"transport error": {
 			store:    &fakeStore{err: fmt.Errorf("boom")},
 			wantCode: http.StatusInternalServerError,
@@ -348,6 +341,15 @@ func TestListKeys_SurfacesErrors(t *testing.T) {
 			assert.NotEqual(t, http.StatusOK, rec.Code)
 		})
 	}
+}
+
+// An unstructured gRPC failure carries server internals in its message; the
+// response keeps the status code but must not echo them to the caller.
+func TestListKeys_HidesUnstructuredGRPCMessage(t *testing.T) {
+	const internal = "sql: connection to 10.0.0.7 refused"
+	rec := do(t, &fakeStore{err: status.Error(codes.Internal, internal)}, serviceIdentity(), `{}`)
+	require.Equal(t, http.StatusInternalServerError, rec.Code, rec.Body.String())
+	assert.NotContains(t, rec.Body.String(), internal)
 }
 
 // Mirrors how the resource server reports a failure over gRPC: a status whose

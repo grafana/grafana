@@ -17,11 +17,19 @@ export interface JobContentProps {
   jobType: JobType;
   job?: Job;
   isFinishedJob?: boolean;
+  showLiveSummary?: boolean;
   onStatusChange?: (statusInfo: StepStatusInfo) => void;
   onRetry?: () => void;
 }
 
-export function JobContent({ jobType, job, isFinishedJob = false, onStatusChange, onRetry }: JobContentProps) {
+export function JobContent({
+  jobType,
+  job,
+  isFinishedJob = false,
+  showLiveSummary = false,
+  onStatusChange,
+  onRetry,
+}: JobContentProps) {
   const errorSetRef = useRef(false);
 
   const { state, message, progress, summary } = job?.status || {};
@@ -104,7 +112,7 @@ export function JobContent({ jobType, job, isFinishedJob = false, onStatusChange
             <ProgressBar progress={progress ?? 0} />
           </Stack>
         )}
-        {isFinishedJob && summary && (
+        {summary && (isFinishedJob || (showLiveSummary && summary.length > 0)) && (
           <Stack direction="column" gap={2}>
             <Text variant="h3">
               <Trans i18nKey="provisioning.job-status.summary">Summary</Trans>

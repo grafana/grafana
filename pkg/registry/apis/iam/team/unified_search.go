@@ -63,8 +63,8 @@ func (c *unifiedSearchClient) Search(ctx context.Context, query SearchQuery) (*i
 	}
 
 	resp, err := c.client.Search(ctx, req)
-	if err := resource.StatusErrorFromResponse(resp.GetError(), err); err != nil {
-		return nil, err
+	if err != nil {
+		return nil, resource.StatusErrorFromGRPC(err)
 	}
 	result, err := teamsearch.ParseResults(resp, query.Offset)
 	if err != nil {
@@ -87,8 +87,8 @@ func (c *unifiedSearchClient) Search(ctx context.Context, query SearchQuery) (*i
 func (c *unifiedSearchClient) authorizedTotal(ctx context.Context, req *resourcepb.ResourceSearchRequest) (int64, error) {
 	countReq := &resourcepb.ResourceSearchRequest{Options: req.Options, Query: req.Query, ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES}
 	resp, err := c.client.Search(ctx, countReq)
-	if err := resource.StatusErrorFromResponse(resp.GetError(), err); err != nil {
-		return 0, err
+	if err != nil {
+		return 0, resource.StatusErrorFromGRPC(err)
 	}
 	if !resp.GetTotalHitsExact() {
 		return 0, nil

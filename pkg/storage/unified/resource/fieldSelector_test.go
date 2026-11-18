@@ -7,7 +7,6 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/proto"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -28,18 +27,19 @@ func TestTryFieldSelectorReadErrors(t *testing.T) {
 			srv, err := NewUninitializedResourceServer(ResourceServerOptions{Backend: &internalReadBackend{failure: failure}})
 			require.NoError(t, err)
 			t.Cleanup(srv.cancel)
-			resp := srv.tryFieldSelector(authlib.WithAuthInfo(t.Context(), newWatchTestUser()), &resourcepb.ListRequest{
+			resp, err := srv.tryFieldSelector(authlib.WithAuthInfo(t.Context(), newWatchTestUser()), &resourcepb.ListRequest{
 				Source: resourcepb.ListRequest_STORE,
 				Options: &resourcepb.ListOptions{
 					Key:    bookmarkWatchRequest().Options.Key,
 					Fields: []*resourcepb.Requirement{{Key: "metadata.name", Operator: "=", Values: []string{"missing"}}},
 				},
 			})
-			require.Empty(t, resp.Items)
 			if code == http.StatusNotFound {
-				require.Nil(t, resp.Error)
+				require.NoError(t, err)
+				require.Empty(t, resp.Items)
 			} else {
-				require.True(t, proto.Equal(failure, resp.Error))
+				require.Nil(t, resp)
+				requireRPCError(t, err, failure)
 			}
 		})
 	}

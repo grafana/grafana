@@ -1,17 +1,19 @@
-import { useEffect } from 'react';
+import { createFocusManager } from '@react-aria/focus';
+import { useEffect, useEffectEvent } from 'react';
+import { usePrevious } from 'react-use';
 
 import { type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, reportInteraction } from '@grafana/runtime';
 import { MEGA_MENU_TOGGLE_ID } from 'app/core/constants';
-import { ID_PREFIX } from 'app/core/reducers/navBarTree';
+import { DASHBOARDS_TAB_NAV_IDS, STARRED_ID_PREFIX } from 'app/core/navtree/constants';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 
 import { ShowModalReactEvent } from '../../../../types/events';
 import { appEvents } from '../../../app_events';
 import { getFooterLinks } from '../../Footer/Footer';
 
-import { DOCK_MENU_BUTTON_ID, MEGA_MENU_HEADER_TOGGLE_ID } from './MegaMenuHeader';
+import { DOCK_MENU_BUTTON_ID, DOCKED_MENU_TOGGLE_ID, MEGA_MENU_HEADER_TOGGLE_ID } from './MegaMenuHeader';
 import { getNavExperimentPayload } from './navExperiment';
 
 const emitOpenShortcutsModal = async () => {
@@ -171,7 +173,7 @@ function getEditionAndUpdateLinks(): NavModelItem[] {
  * regardless of its dynamic children.
  */
 const isPinnable = (item: NavModelItem): boolean =>
-  Boolean(item.url) && !item.isCreateAction && item.id !== 'home' && !item.id?.startsWith(ID_PREFIX);
+  Boolean(item.url) && !item.isCreateAction && item.id !== 'home' && !item.id?.startsWith(STARRED_ID_PREFIX);
 
 // Children that participate in pinning.
 const pinnableChildren = (item: NavModelItem): NavModelItem[] => (item.children ?? []).filter(isPinnable);
@@ -276,6 +278,9 @@ export const NON_MENU_NAV_IDS = new Set(['profile', 'help', HOME_NAV_ID]);
  * Should be a temporary way to fix the menu sprawl until a more robust solution.
  */
 export const HIDDEN_NAV_ITEMS = new Set<string>([
+  // Shown as tabs on the browse dashboards view instead
+  ...DASHBOARDS_TAB_NAV_IDS,
+
   '/a/grafana-adaptive-metrics-app/configuration',
   '/a/grafana-adaptive-metrics-app/rule-management',
   '/a/grafana-adaptive-metrics-app/segments',
@@ -294,6 +299,8 @@ export const HIDDEN_NAV_ITEMS = new Set<string>([
   '/a/grafana-cmab-app/invoices',
   '/a/grafana-cmab-app/settings',
   '/a/grafana-cmab-app/resources',
+
+  'standalone-plugin-page-/a/grafana-collector-app/alloy',
 ]);
 
 /**
@@ -310,7 +317,7 @@ export const isHideable = (item: NavModelItem): boolean =>
   Boolean(hiddenKey(item)) &&
   !PROTECTED_NAV_IDS.has(item.id ?? '') &&
   !item.isCreateAction &&
-  !item.id?.startsWith(ID_PREFIX);
+  !item.id?.startsWith(STARRED_ID_PREFIX);
 
 // Children that can be hidden — used when "breaking apart" a hidden parent.
 const hideableChildren = (item: NavModelItem): NavModelItem[] => (item.children ?? []).filter(isHideable);
@@ -323,6 +330,26 @@ export function removeHiddenItems(items: NavModelItem[], hidden: Set<string>): N
   return items
     .filter((item) => !hidden.has(hiddenKey(item)))
     .map((item) => (item.children ? { ...item, children: removeHiddenItems(item.children, hidden) } : item));
+}
+
+/**
+ * Drop the Starred and Bookmarks sections when they have no children. Pending sections (still
+ * loading, or failed to load) are kept so their loading or error state stays visible.
+ */
+export function removeEmptySavedSections(
+  items: NavModelItem[],
+  { starredPending, bookmarksPending }: { starredPending: boolean; bookmarksPending: boolean }
+): NavModelItem[] {
+  return items.filter((item) => {
+    const isEmpty = !item.children?.length;
+    if (item.id === 'starred') {
+      return starredPending || !isEmpty;
+    }
+    if (item.id === 'bookmarks') {
+      return bookmarksPending || !isEmpty;
+    }
+    return true;
+  });
 }
 
 /** All descendant keys of an item. */
@@ -409,27 +436,58 @@ export function reorderSections(
   return next === ordered ? currentOrder : next;
 }
 
+/** The mega menu over the page, as opposed to the docked one. */
+export const MEGA_MENU_OVERLAY_ID = 'mega-menu-overlay';
+
+/** Moves focus to the first control in the mega menu over the page, where opening it with a click puts focus. */
+export function focusMegaMenuOverlay() {
+  const menu = document.getElementById(MEGA_MENU_OVERLAY_ID);
+  if (menu) {
+    createFocusManager({ current: menu }).focusFirst({ tabbable: true });
+  }
+}
+
 /**
  * helper to manage focus when opening/closing and docking/undocking the mega menu
  * @param isOpen whether the mega menu is open
  * @param isDocked whether mega menu is docked
+ * @param isPeek whether the pointer opened the mega menu, by resting on its toggle
  */
-export function useMegaMenuFocusHelper(isOpen: boolean, isDocked: boolean) {
+export function useMegaMenuFocusHelper(isOpen: boolean, isDocked: boolean, isPeek = false) {
+  // Opening the menu by pointing at its toggle, and closing it by moving away, leave focus where it is.
+  const wasPeek = usePrevious(isPeek);
+  const openedOrClosedByPeek = isPeek || Boolean(wasPeek);
+
   // manage focus when opening/closing
-  useEffect(() => {
-    if (isOpen) {
+  const onOpenChange = useEffectEvent((open: boolean) => {
+    if (openedOrClosedByPeek) {
+      return;
+    }
+    if (open) {
       document.getElementById(MEGA_MENU_HEADER_TOGGLE_ID)?.focus();
     } else {
       document.getElementById(MEGA_MENU_TOGGLE_ID)?.focus();
     }
-  }, [isOpen]);
+  });
 
   // manage focus when docking/undocking
-  useEffect(() => {
-    if (isDocked) {
-      document.getElementById(DOCK_MENU_BUTTON_ID)?.focus();
+  const onDockedChange = useEffectEvent((docked: boolean) => {
+    // A peek opens a docked menu the user closed undocked.
+    if (isPeek) {
+      return;
+    }
+    if (docked) {
+      (document.getElementById(DOCKED_MENU_TOGGLE_ID) ?? document.getElementById(DOCK_MENU_BUTTON_ID))?.focus();
     } else {
       document.getElementById(MEGA_MENU_TOGGLE_ID)?.focus();
     }
+  });
+
+  // Only an open or a close, and docking or undocking, move focus.
+  useEffect(() => {
+    onOpenChange(isOpen);
+  }, [isOpen]);
+  useEffect(() => {
+    onDockedChange(isDocked);
   }, [isDocked]);
 }

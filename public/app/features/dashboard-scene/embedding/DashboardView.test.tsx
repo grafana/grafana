@@ -9,9 +9,14 @@ import { defaultSpec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { getPluginExtensionRegistries } from 'app/features/plugins/extensions/registry/setup';
 import { getAppPluginConfigs, getExtensionPointPluginDependencies } from 'app/features/plugins/extensions/utils';
+import { DashboardRoutes } from 'app/types/dashboard';
 
 import { getSavedDashboard } from '../lifecycle/lifecycleApi';
-import { clearPendingChangePreview, loadPendingChangePreview } from '../lifecycle/pendingChangePreview';
+import {
+  clearPendingChangePreview,
+  getPendingChangePreview,
+  loadPendingChangePreview,
+} from '../lifecycle/pendingChangePreview';
 import { provideMutationClientFactory } from '../mutation-api/clientBridge';
 import { DashboardScene } from '../scene/DashboardScene';
 
@@ -24,6 +29,7 @@ const render = (element: ReactElement) =>
 
 let mockDashboard: DashboardScene;
 const reload = jest.fn(async (): Promise<void> => undefined);
+const reloadInPlace = jest.fn(async (): Promise<boolean> => true);
 const saveDashboard = jest.fn();
 const pending = {
   baseGeneration: 0,
@@ -33,7 +39,11 @@ const pending = {
 };
 
 jest.mock('../pages/DashboardScenePageStateManager', () => ({
+  reloadDashboardInPlace: (...args: unknown[]) => reloadInPlace(...(args as [])),
   UnifiedDashboardScenePageStateManager: jest.fn(() => ({
+    get state() {
+      return { dashboard: mockDashboard };
+    },
     useState: () => ({ dashboard: mockDashboard }),
     loadDashboard: jest.fn(),
     clearState: jest.fn(),
@@ -97,6 +107,41 @@ afterEach(() => {
   config.provisioningEnabled = provisioningEnabled;
   setTestFlags({});
   jest.restoreAllMocks();
+});
+
+it('loads a newer revision in place and reports each revision it shows', async () => {
+  const shown = jest.fn();
+  const { rerender } = render(
+    <DashboardView uid="draft-1" pendingChanges="chat-1" revision={1} onRevisionShown={shown} />
+  );
+  await waitFor(() => expect(shown).toHaveBeenCalledWith(1));
+
+  rerender(<DashboardView uid="draft-1" pendingChanges="chat-1" revision={2} onRevisionShown={shown} />);
+
+  await waitFor(() => expect(shown).toHaveBeenLastCalledWith(2));
+  expect(reloadInPlace).toHaveBeenCalledWith(expect.anything(), mockDashboard, {
+    uid: 'draft-1',
+    route: DashboardRoutes.Embedded,
+    pendingChanges: 'chat-1',
+  });
+  expect(reload).not.toHaveBeenCalled();
+});
+
+// A fresh load would replace the scene the newer revision is reloading in place.
+it('leaves a failed reload of an overtaken revision to the newer one', async () => {
+  let failOlder = (_error: Error) => {};
+  reloadInPlace.mockImplementationOnce(() => new Promise((_resolve, reject) => (failOlder = reject)));
+  const shown = jest.fn();
+  const { rerender } = render(
+    <DashboardView uid="draft-1" pendingChanges="chat-1" revision={1} onRevisionShown={shown} />
+  );
+  rerender(<DashboardView uid="draft-1" pendingChanges="chat-1" revision={2} onRevisionShown={shown} />);
+  rerender(<DashboardView uid="draft-1" pendingChanges="chat-1" revision={3} onRevisionShown={shown} />);
+
+  await act(async () => failOlder(new Error('offline')));
+
+  await waitFor(() => expect(shown).toHaveBeenLastCalledWith(3));
+  expect(reload).not.toHaveBeenCalled();
 });
 
 it('opens the native save form and saves the draft without navigating the host', async () => {
@@ -176,7 +221,7 @@ it('shows a different dashboard when the host reuses a view after discarding its
   expect(screen.queryByText('Draft discarded')).not.toBeInTheDocument();
 });
 
-it.each(['Apply', 'Discard'] as const)(
+it.each(['Save', 'Discard'] as const)(
   '%s reloads pending changes in place before notifying the host',
   async (action) => {
     const user = userEvent.setup();
@@ -205,8 +250,8 @@ it.each(['Apply', 'Discard'] as const)(
     await waitFor(() => expect(reload).toHaveBeenCalledTimes(1));
     expect(changed).not.toHaveBeenCalled();
     await act(async () => finishReload());
-    await waitFor(() => expect(changed).toHaveBeenCalledWith(action === 'Apply' ? 'applied' : 'discarded'));
-    if (action === 'Apply') {
+    await waitFor(() => expect(changed).toHaveBeenCalledWith(action === 'Save' ? 'applied' : 'discarded'));
+    if (action === 'Save') {
       expect(pending.apply).toHaveBeenCalledWith({ force: false });
     } else {
       expect(pending.discard).toHaveBeenCalledTimes(1);
@@ -214,3 +259,59 @@ it.each(['Apply', 'Discard'] as const)(
     expect(locationService.getLocation().pathname).toBe('/a/grafana-assistant-app/workspace');
   }
 );
+
+describe('a host that offers Save and Discard itself', () => {
+  it('gets them instead of a banner, and loses them once the draft is discarded', async () => {
+    const user = userEvent.setup();
+    const actions = jest.fn();
+    const changed = jest.fn();
+    render(
+      <DashboardView uid="draft-1" pendingChanges="chat-1" onLifecycleActions={actions} onLifecycleChange={changed} />
+    );
+    await waitFor(() =>
+      expect(actions).toHaveBeenLastCalledWith({
+        draft: true,
+        save: expect.any(Function),
+        discard: expect.any(Function),
+      })
+    );
+    expect(screen.queryByRole('button', { name: 'Discard' })).not.toBeInTheDocument();
+
+    act(() => actions.mock.lastCall[0].discard());
+    const dialog = await screen.findByRole('dialog');
+    expect(dialog).toHaveTextContent('Discard this draft?');
+    await user.click(within(dialog).getByRole('button', { name: 'Discard' }));
+
+    expect(await screen.findByText('Draft discarded')).toBeVisible();
+    expect(changed).toHaveBeenCalledWith('discarded');
+    expect(pending.discard).toHaveBeenCalledTimes(1);
+    expect(actions).toHaveBeenLastCalledWith(undefined);
+  });
+
+  it("saves pending changes through the native save form from the host's Save, then reloads before notifying it", async () => {
+    const user = userEvent.setup();
+    pending.baseGeneration = 3;
+    getPendingChangePreview('embedded', 'draft-1')!.saved = {
+      spec: { ...defaultSpec(), title: 'Saved dashboard' },
+      generation: 3,
+    };
+    mockDashboard.setState({ uid: 'draft-1', meta: { isEmbedded: true, canSave: true } });
+    const actions = jest.fn();
+    const changed = jest.fn();
+    render(
+      <DashboardView uid="draft-1" pendingChanges="chat-1" onLifecycleActions={actions} onLifecycleChange={changed} />
+    );
+    await waitFor(() => expect(actions).toHaveBeenLastCalledWith(expect.objectContaining({ draft: false })));
+
+    act(() => actions.mock.lastCall[0].save());
+    expect(await screen.findByRole('heading', { name: 'Save dashboard' })).toBeVisible();
+    await user.click(screen.getByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton));
+
+    await waitFor(() => expect(changed).toHaveBeenCalledWith('applied'));
+    expect(pending.apply).toHaveBeenCalledWith({ force: false, message: '' });
+    expect(reload).toHaveBeenCalledTimes(1);
+    expect(saveDashboard).not.toHaveBeenCalled();
+    expect(mockDashboard.state.isEditing).toBe(false);
+    expect(locationService.getLocation().pathname).toBe('/a/grafana-assistant-app/workspace');
+  });
+});

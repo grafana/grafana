@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/test-utils",
-  "version": "13.4.0-pre",
+  "version": "1.0.0",
   "private": true,
   "description": "Grafana test utils & Mock API",
   "keywords": [
@@ -40,6 +40,11 @@
     "./unstable": {
       "import": "./src/unstable.ts",
       "require": "./src/unstable.ts"
+    },
+    "./feature-flags": {
+      "types": "./src/utilities/featureFlags.ts",
+      "import": "./src/utilities/featureFlags.ts",
+      "require": "./src/utilities/featureFlags.ts"
     },
     "./matchers": {
       "types": "./src/matchers/index.ts",

@@ -337,7 +337,7 @@ func TestAlertmanager_HashStabilityAndChangeDetection(t *testing.T) {
 				if cfg.Receivers == nil {
 					cfg.Receivers = make(map[v1.ResourceUID]v1.PostableApiReceiver, 1)
 				}
-				r := v1.NewReceiver("new-receiver", nil, ngmodels.ProvenanceNone)
+				r := v1.NewReceiver(v1.ReceiverUID("new-receiver"), "new-receiver", nil, ngmodels.ProvenanceNone)
 				cfg.Receivers[r.UID] = r
 			},
 		},

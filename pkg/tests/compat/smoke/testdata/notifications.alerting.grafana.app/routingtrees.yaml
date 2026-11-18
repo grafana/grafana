@@ -1,0 +1,6 @@
+apiVersion: notifications.alerting.grafana.app/v1beta1
+kind: RoutingTree
+spec:
+  defaults:
+    receiver: empty
+  routes: []

@@ -74,8 +74,6 @@ var (
 	_ backend.QueryChunkedDataHandler = (*Plugin)(nil)
 	_ backend.CallResourceHandler     = (*Plugin)(nil)
 	_ backend.StreamHandler           = (*Plugin)(nil)
-	_ backend.AdmissionHandler        = (*Plugin)(nil)
-	_ backend.ConversionHandler       = (*Plugin)(nil)
 )
 
 type AngularMeta struct {
@@ -104,8 +102,9 @@ type JSONData struct {
 	ActionSets []ActionSet        `json:"actionSets,omitempty"`
 
 	// Panel settings
-	SkipDataQuery bool `json:"skipDataQuery"`
-	Suggestions   bool `json:"suggestions,omitempty"`
+	SkipDataQuery    bool `json:"skipDataQuery"`
+	SkipDefaultQuery bool `json:"skipDefaultQuery,omitempty"`
+	Suggestions      bool `json:"suggestions,omitempty"`
 
 	// App settings
 	AutoEnabled bool       `json:"autoEnabled"`
@@ -405,33 +404,6 @@ func (p *Plugin) RunStream(ctx context.Context, req *backend.RunStreamRequest, s
 	return pluginClient.RunStream(ctx, req, sender)
 }
 
-// ValidateAdmission implements backend.AdmissionHandler.
-func (p *Plugin) ValidateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {
-	pluginClient, ok := p.Client()
-	if !ok {
-		return nil, ErrPluginUnavailable
-	}
-	return pluginClient.ValidateAdmission(ctx, req)
-}
-
-// MutateAdmission implements backend.AdmissionHandler.
-func (p *Plugin) MutateAdmission(ctx context.Context, req *backend.AdmissionRequest) (*backend.MutationResponse, error) {
-	pluginClient, ok := p.Client()
-	if !ok {
-		return nil, ErrPluginUnavailable
-	}
-	return pluginClient.MutateAdmission(ctx, req)
-}
-
-// ConvertObject implements backend.AdmissionHandler.
-func (p *Plugin) ConvertObjects(ctx context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
-	pluginClient, ok := p.Client()
-	if !ok {
-		return nil, ErrPluginUnavailable
-	}
-	return pluginClient.ConvertObjects(ctx, req)
-}
-
 func (p *Plugin) File(name string) (fs.File, error) {
 	cleanPath, err := CleanRelativePath(name)
 	if err != nil {
@@ -495,8 +467,6 @@ type PluginClient interface {
 	backend.CollectMetricsHandler
 	backend.CheckHealthHandler
 	backend.CallResourceHandler
-	backend.AdmissionHandler
-	backend.ConversionHandler
 	backend.StreamHandler
 }
 

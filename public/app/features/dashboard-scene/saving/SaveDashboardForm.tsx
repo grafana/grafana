@@ -61,7 +61,7 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
   };
 
   const cancelButton = (
-    <Button variant="secondary" onClick={() => dashboard.closeModal()} fill="outline">
+    <Button variant="secondary" onClick={drawer.onClose} fill="outline">
       <Trans i18nKey="dashboard-scene.save-dashboard-form.cancel-button.cancel">Cancel</Trans>
     </Button>
   );

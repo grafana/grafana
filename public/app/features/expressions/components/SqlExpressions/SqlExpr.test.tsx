@@ -6,6 +6,7 @@ import { act, render, testWithFeatureToggles, userEvent, waitFor } from 'test/te
 import { type AdHocVariableFilter, type DataFrame, type DataQueryRequest, type ScopedVars } from '@grafana/data';
 import { SQLEditor } from '@grafana/plugin-ui';
 import { reportInteraction } from '@grafana/runtime';
+import { type DataQuery } from '@grafana/schema';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { dataSource } from '../../ExpressionDatasource';
@@ -1049,6 +1050,26 @@ describe('fetchSQLFields', () => {
 
     expect(interpolateVariablesInQueries).toHaveBeenCalledWith([sourceQuery], scopedVars, filters);
     expect(runMetaSQLExprQuery.mock.calls[0][2]).toEqual([interpolatedQuery]);
+  });
+
+  it('interpolates sibling queries with the table query but only sends the table query', async () => {
+    const datasource = { uid: 'graphite-uid', type: 'graphite' };
+    const sibling = { refId: 'A', hide: true, datasource, target: 'metric.a' };
+    const table = { refId: 'B', datasource, target: 'sumSeries(#A)' };
+    const interpolateVariablesInQueries = jest.fn((queries: DataQuery[]) =>
+      queries.map((q) => ({ ...q, interpolated: true }))
+    );
+    const runMetaSQLExprQuery = jest
+      .spyOn(dataSource, 'runMetaSQLExprQuery')
+      .mockResolvedValue({ fields: [], length: 0 } as DataFrame);
+
+    mockDataSourceSrv.get.mockResolvedValue({ uid: 'graphite-uid', interpolateVariablesInQueries });
+
+    await fetchSQLFields({ table: 'B' }, [sibling, table]);
+
+    expect(interpolateVariablesInQueries).toHaveBeenCalledTimes(1);
+    expect(interpolateVariablesInQueries).toHaveBeenCalledWith([sibling, table], {}, undefined);
+    expect(runMetaSQLExprQuery.mock.calls[0][2]).toEqual([{ ...table, interpolated: true }]);
   });
 
   it('returns no fields without a table and skips metadata queries', async () => {

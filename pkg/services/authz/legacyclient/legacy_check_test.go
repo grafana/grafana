@@ -236,22 +236,22 @@ func TestClient_LegacyCheckRequest(t *testing.T) {
 			name: "global evaluation preserves requester org",
 			req: LegacyCheckRequest{
 				Namespace: "default", Subject: "user:checked-user", Evaluator: accesscontrol.EvalPermission("users:read"),
-				GlobalEvaluation: &LegacyGlobalEvaluation{RequesterOrgID: accesscontrol.GlobalOrgID},
+				RequesterOrgID: proto.Int64(accesscontrol.GlobalOrgID),
 			},
 			want: &authzextv1.LegacyCheckRequest{
 				Namespace: "default", Subject: "user:checked-user", Expression: permission("users:read"),
-				GlobalEvaluation: &authzextv1.LegacyGlobalEvaluation{RequesterOrgId: accesscontrol.GlobalOrgID},
+				RequesterOrgId: proto.Int64(accesscontrol.GlobalOrgID),
 			},
 		},
 		{
 			name: "NoOrgID remains distinct from organization evaluation",
 			req: LegacyCheckRequest{
 				Namespace: "stacks-123", Subject: "user:checked-user", Evaluator: accesscontrol.EvalPermission("users:read"),
-				GlobalEvaluation: &LegacyGlobalEvaluation{RequesterOrgID: accesscontrol.NoOrgID},
+				RequesterOrgID: proto.Int64(accesscontrol.NoOrgID),
 			},
 			want: &authzextv1.LegacyCheckRequest{
 				Namespace: "stacks-123", Subject: "user:checked-user", Expression: permission("users:read"),
-				GlobalEvaluation: &authzextv1.LegacyGlobalEvaluation{RequesterOrgId: accesscontrol.NoOrgID},
+				RequesterOrgId: proto.Int64(accesscontrol.NoOrgID),
 			},
 		},
 	} {
@@ -287,6 +287,44 @@ func TestClient_LegacyCheckRejectsInvalidEvaluator(t *testing.T) {
 			require.False(t, allowed)
 			require.ErrorContains(t, err, tc.wantErr)
 			require.Nil(t, server.request)
+		})
+	}
+}
+
+func TestClient_LegacyCheckRequesterOrgID(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		namespace string
+		orgID     *int64
+	}{
+		{name: "organization", namespace: "org-12", orgID: proto.Int64(12)},
+		{name: "cloud organization", namespace: "stacks-123", orgID: proto.Int64(1)},
+		{name: "global", namespace: "org-12", orgID: proto.Int64(accesscontrol.GlobalOrgID)},
+		{name: "no membership", namespace: "org-12", orgID: proto.Int64(accesscontrol.NoOrgID)},
+		{name: "missing org forwarded for server validation", namespace: "org-12"},
+		{name: "invalid org forwarded for server validation", namespace: "org-12", orgID: proto.Int64(accesscontrol.NoOrgID - 1)},
+		{name: "mismatched org forwarded for server validation", namespace: "org-13", orgID: proto.Int64(12)},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			server := &legacyCheckServer{}
+			client := newLegacyTransportClient(t, server)
+			request := LegacyCheckRequest{
+				Namespace: tc.namespace, Subject: "user:checked-user",
+				RequesterOrgID: tc.orgID,
+				Evaluator:      accesscontrol.EvalPermission("users:read"),
+			}
+
+			allowed, err := client.LegacyCheck(t.Context(), request)
+
+			require.NoError(t, err)
+			require.True(t, allowed)
+			expression, err := accesscontrol.ToLegacyExpression(request.Evaluator)
+			require.NoError(t, err)
+			want := &authzextv1.LegacyCheckRequest{
+				Namespace: tc.namespace, Subject: request.Subject, Expression: expression,
+				RequesterOrgId: tc.orgID,
+			}
+			require.True(t, proto.Equal(want, server.request), "want %v, got %v", want, server.request)
 		})
 	}
 }

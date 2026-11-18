@@ -23,7 +23,7 @@ describe('ImportToGMABanner', () => {
     render(<ImportToGMABanner />);
 
     expect(ui.banner.get()).toBeInTheDocument();
-    expect(ui.openButton.get()).toHaveAttribute('href', expect.stringContaining('/alerting/import-to-gma'));
+    expect(ui.openButton.get()).toHaveAttribute('href', expect.stringContaining('/alerting/admin/import'));
   });
 
   it('persists dismissal and hides the banner when dismissed', async () => {

@@ -1,0 +1,45 @@
+name: Run a compatibility test phase
+description: Runs one phase of pkg/tests/compat from prebuilt test binaries. See pkg/tests/compat/README.md.
+
+inputs:
+  checkout:
+    description: Grafana checkout the tests run in; they read testdata and config from it
+    required: true
+  binaries:
+    description: Directory with the <package>.test binaries built by go test -c from that checkout
+    required: true
+  test:
+    description: TestCompatSetup, TestCompatUpdate, or TestCompatVerify
+    required: true
+  role:
+    description: older or newer
+    required: true
+  data:
+    description: Directory shared by the phases of one round trip
+    required: true
+  log:
+    description: File the output is appended to
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Run ${{ inputs.test }}
+      shell: bash
+      env:
+        CHECKOUT: ${{ inputs.checkout }}
+        BINARIES: ${{ inputs.binaries }}
+        TEST: ${{ inputs.test }}
+        GRAFANA_COMPAT_ROLE: ${{ inputs.role }}
+        GRAFANA_COMPAT_DIR: ${{ inputs.data }}
+        LOG: ${{ inputs.log }}
+      run: |
+        set -uo pipefail
+        rc=0
+        # go test -c names each binary after its package directory under pkg/tests/compat.
+        for bin in "$BINARIES"/*.test; do
+          pkg="$(basename "$bin" .test)"
+          echo "=== $pkg"
+          (cd "$CHECKOUT/pkg/tests/compat/$pkg" && "$bin" -test.count=1 -test.timeout=20m -test.run "^${TEST}\$") 2>&1 | tee -a "$LOG" || rc=1
+        done
+        exit "$rc"

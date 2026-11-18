@@ -74,6 +74,20 @@ function convertGlobToRegEx(text: string): string {
   }
 }
 
+function expandSeriesReferences(
+  target: string,
+  targetsByRefId: Map<string, string>,
+  seen: ReadonlySet<string>
+): string {
+  return target.replace(/#([A-Z])/g, (match: string, refId: string) => {
+    const referenced = targetsByRefId.get(refId);
+    if (referenced === undefined || seen.has(refId)) {
+      return match;
+    }
+    return expandSeriesReferences(referenced, targetsByRefId, new Set([...seen, refId]));
+  });
+}
+
 export class GraphiteDatasource
   extends DataSourceWithBackend<GraphiteQuery, GraphiteOptions>
   implements DataSourceWithQueryExportSupport<GraphiteQuery>
@@ -514,14 +528,25 @@ export class GraphiteDatasource
     return tags;
   }
 
+  // SQL expressions send these queries to the backend without calling `query()`, so `#A`
+  // references are resolved here too. The backend uses `targetFull` before `target`.
   interpolateVariablesInQueries(queries: GraphiteQuery[], scopedVars: ScopedVars): GraphiteQuery[] {
     let expandedQueries = queries;
     if (queries && queries.length > 0) {
+      const targetsByRefId = new Map(
+        queries.flatMap((query) => (query.target ? [[query.refId, query.target] as const] : []))
+      );
       expandedQueries = queries.map((query) => {
+        const target = query.target ?? '';
+        const targetWithReferences = expandSeriesReferences(target, targetsByRefId, new Set([query.refId]));
+        // A partial expansion must not replace a saved `targetFull`.
+        const isFullyResolved = targetWithReferences !== target && !/#[A-Z]/.test(targetWithReferences);
+        const targetFull = isFullyResolved ? targetWithReferences : query.targetFull;
         const expandedQuery = {
           ...query,
           datasource: this.getRef(),
-          target: this.templateSrv.replace(query.target ?? '', scopedVars),
+          target: this.templateSrv.replace(target, scopedVars),
+          ...(targetFull !== undefined && { targetFull: this.templateSrv.replace(targetFull, scopedVars) }),
         };
         return expandedQuery;
       });

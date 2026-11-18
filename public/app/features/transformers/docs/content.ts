@@ -993,7 +993,7 @@ For example, one query returns measurements with two IDs, and the query run on e
 Add two transformations:
 
 1. **Join by field** on \`GroupID\`, with **Keep unjoined** enabled. Query C has no \`GroupID\`, so it's passed through rather than dropped.
-2. **Join by field** on \`ProductID\`. The result of the first join still has a \`ProductID\` column, so it joins with query C.
+1. **Join by field** on \`ProductID\`. The result of the first join still has a \`ProductID\` column, so it joins with query C.
 
 The result looks like this:
 
