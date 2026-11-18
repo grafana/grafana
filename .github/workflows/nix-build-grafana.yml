@@ -1,0 +1,39 @@
+name: Nix build Grafana
+
+on:
+  push:
+    paths:
+      - .github/workflows/nix-build-grafana.yml
+      - flake.nix
+      - flake.lock
+      - 'nix/**'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build Linux AMD64 tarball
+    runs-on: ubuntu-x64-large
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          filter: blob:none
+      - uses: cachix/install-nix-action@3dc140bfc76c49fbd4dd958429132e3746bcb086 # v31.11.5
+        with:
+          set_as_trusted_user: false
+          extra_nix_config: |
+            sandbox = true
+            sandbox-fallback = false
+      - name: Build Grafana
+        run: nix build -L .#tarball-linux-amd64
+      - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        with:
+          name: grafana-nix-linux-amd64
+          path: result/*.tar.gz
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 1
