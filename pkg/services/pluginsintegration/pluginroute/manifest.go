@@ -155,7 +155,7 @@ func (b *manifestBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIG
 						return fmt.Errorf("kind %s in %s claims the already registered resource %q",
 							kind.Kind, gv.String(), resource)
 					}
-					storage[resource] = store
+					storage[resource] = b.withListScope(resource, store)
 					kinds[gv.WithResource(resource)] = store
 
 					if store.HasStatus() {
@@ -186,4 +186,14 @@ func (b *manifestBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIG
 
 func (b *manifestBuilder) AllowedV0Alpha1Resources() []string {
 	return []string{builder.AllResourcesAllowed}
+}
+
+// withListScope applies the kind's list scope to its served storage. Direct
+// reads (the getter) keep using the unwrapped store.
+func (b *manifestBuilder) withListScope(resource string, store *kindstore.Store) rest.Storage {
+	policy := b.kindPolicies[resource]
+	if policy.ownerFromName != nil {
+		return newOwnerScopedStore(store, policy.ownerFromName)
+	}
+	return store
 }

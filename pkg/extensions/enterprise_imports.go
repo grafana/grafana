@@ -637,6 +637,7 @@ import (
 	_ "github.com/russellhaering/gosaml2"
 	_ "github.com/russellhaering/gosaml2/types"
 	_ "github.com/russellhaering/goxmldsig"
+	_ "github.com/sony/gobreaker/v2"
 	_ "github.com/spf13/cobra"
 	_ "github.com/spf13/pflag"
 	_ "github.com/spyzhov/ajson"

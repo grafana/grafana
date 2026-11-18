@@ -1,5 +1,6 @@
 import { http, HttpResponse } from 'msw';
 import { makeDataSourceSettings } from 'test/helpers/makeDataSourceSettings';
+import { testWithStarsUser } from 'test/helpers/testWithStarsUser';
 import { render, screen, waitFor, within } from 'test/test-utils';
 
 import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
@@ -87,6 +88,8 @@ function seedHistory(entries: PageHistoryEntry[]) {
 function seedRecent(uids: string[]) {
   seedHistory(uids.map((uid) => dashboardEntry(uid)));
 }
+
+testWithStarsUser();
 
 beforeEach(() => {
   jest.clearAllMocks();
