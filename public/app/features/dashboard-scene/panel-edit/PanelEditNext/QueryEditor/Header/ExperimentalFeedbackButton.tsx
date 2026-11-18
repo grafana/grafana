@@ -1,5 +1,5 @@
 import { css, cx, keyframes } from '@emotion/css';
-import { useRef } from 'react';
+import { useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -20,8 +20,8 @@ export function ExperimentalFeedbackButton() {
   // Track whether the banner was visible when this component first mounted.
   // If it was, the user dismissed it - animate the button in.
   // If it wasn't (already dismissed on load), skip the animation.
-  const bannerWasInitiallyVisible = useRef(showVersionBanner);
-  const shouldAnimate = bannerWasInitiallyVisible.current && !showVersionBanner;
+  const [bannerWasInitiallyVisible] = useState(showVersionBanner);
+  const shouldAnimate = bannerWasInitiallyVisible && !showVersionBanner;
 
   if (showVersionBanner || !onSwitchToClassic) {
     return null;

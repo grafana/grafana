@@ -452,7 +452,7 @@
   },
   "packages/grafana-sql/src/components/visual-query-builder/WhereRow.tsx": {
     "react-hooks/set-state-in-effect": {
-      "count": 2
+      "count": 1
     }
   },
   "packages/grafana-ui/src/components/AutoSaveField/AutoSaveField.tsx": {
@@ -1010,11 +1010,6 @@
   },
   "packages/grafana-ui/src/types/react-table-config.d.ts": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 2
-    }
-  },
-  "packages/grafana-ui/src/utils/useComponetInstanceId.ts": {
-    "react-hooks/refs": {
       "count": 2
     }
   },
@@ -2136,11 +2131,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/panel-edit/PanelEditNext/QueryEditor/Header/ExperimentalFeedbackButton.tsx": {
-    "react-hooks/refs": {
-      "count": 3
-    }
-  },
   "public/app/features/dashboard-scene/panel-edit/PanelEditNext/QueryEditor/QueryEditorContextWrapper.tsx": {
     "react-hooks/refs": {
       "count": 1
@@ -2442,11 +2432,6 @@
   "public/app/features/dashboard-scene/settings/variables/editors/AdHocFiltersVariableEditor.tsx": {
     "react-hooks/refs": {
       "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/settings/variables/editors/CustomVariableEditor/ModalEditor.tsx": {
-    "react-hooks/refs": {
-      "count": 4
     }
   },
   "public/app/features/dashboard-scene/settings/variables/editors/GroupByVariableEditor.tsx": {
@@ -2860,7 +2845,7 @@
   },
   "public/app/features/explore/ExplorePaneContainer.tsx": {
     "react-hooks/refs": {
-      "count": 2
+      "count": 1
     }
   },
   "public/app/features/explore/Graph/ExploreGraph.tsx": {
@@ -3227,9 +3212,6 @@
   "public/app/features/migrate-to-cloud/onprem/ConfigureSnapshot.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
-    },
-    "react-hooks/set-state-in-effect": {
-      "count": 1
     }
   },
   "public/app/features/migrate-to-cloud/onprem/EmptyState/CallToAction/ConnectModal.tsx": {
@@ -3576,11 +3558,6 @@
       "count": 1
     }
   },
-  "public/app/features/search/hooks/useSearchKeyboardSelection.ts": {
-    "react-hooks/refs": {
-      "count": 2
-    }
-  },
   "public/app/features/search/page/components/ActionRow.tsx": {
     "@grafana/no-config-feature-toggles": {
       "count": 1
@@ -3652,11 +3629,6 @@
   },
   "public/app/features/transformers/FilterByValueTransformer/ValueMatchers/valueMatchersUI.ts": {
     "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/features/transformers/calculateHeatmap/editor/AxisEditor.tsx": {
-    "react-hooks/refs": {
       "count": 1
     }
   },
