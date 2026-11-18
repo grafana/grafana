@@ -2,7 +2,7 @@ import { useId, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 import { useDataSourceInstanceList } from '@grafana/runtime';
-import { Box, Input, MultiCombobox, Stack } from '@grafana/ui';
+import { Input, MultiCombobox, Stack } from '@grafana/ui';
 import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
 
 import {
@@ -11,20 +11,6 @@ import {
   ToggleButtonGroup,
   type ToggleOption,
 } from '../../rule-list/filter/RulesFilterSidebar';
-
-/**
- * The sidebar shell each page fills with its filters. Every filter applies at once, except text, on blur or Enter.
- * Clearing them all is the search input's Clear button.
- */
-export function FilterSidebar({ children }: { children: React.ReactNode }) {
-  return (
-    <Box width={32} shrink={0} paddingBottom={2}>
-      <Stack direction="column" gap={2}>
-        {children}
-      </Stack>
-    </Box>
-  );
-}
 
 /** One choice of a few, plus All for no filter. */
 export function ChoiceFilter<Value extends string>({
@@ -91,9 +77,9 @@ export function TextFilter({
   );
 }
 
-/** One picker per folder, and an empty one that adds a folder. */
+/** One picker per chosen folder, then an empty one that adds a folder. */
 export function FolderFilter({ folderUids, onChange }: { folderUids: string[]; onChange: (uids: string[]) => void }) {
-  const pick = (index: number, uid: string | undefined) => {
+  const replace = (index: number, uid: string | undefined) => {
     const next = [...folderUids];
     next.splice(index, 1, ...(uid ? [uid] : []));
     onChange(next);
@@ -110,7 +96,7 @@ export function FolderFilter({ folderUids, onChange }: { folderUids: string[]; o
       }
     >
       <Stack direction="column" gap={1}>
-        {[...folderUids, undefined].map((uid, index) => (
+        {folderUids.map((uid, index) => (
           <NestedFolderPicker
             // The same folder can be listed twice, and the picker reads its value from props.
             // eslint-disable-next-line react/no-array-index-key
@@ -118,21 +104,34 @@ export function FolderFilter({ folderUids, onChange }: { folderUids: string[]; o
             value={uid}
             permission="view"
             clearable
-            onChange={(next) => pick(index, next)}
+            onChange={(next) => replace(index, next)}
           />
         ))}
+        <NestedFolderPicker
+          // A new key after each pick, so the next empty picker starts empty.
+          key={folderUids.length}
+          permission="view"
+          onChange={(uid) => uid && onChange([...folderUids, uid])}
+        />
       </Stack>
     </SidebarField>
   );
 }
 
-/** Query data sources, by UID. */
-export function DataSourceFilter({ uids, onChange }: { uids: string[]; onChange: (uids: string[]) => void }) {
+export function DataSourceFilter({
+  dataSourceUids,
+  onChange,
+}: {
+  dataSourceUids: string[];
+  onChange: (dataSourceUids: string[]) => void;
+}) {
   const id = useId();
   const { items, isLoading } = useDataSourceInstanceList({ alerting: true });
   const options = items.map((ds) => ({ label: ds.name, value: ds.uid }));
   // Options, not UIDs, so a UID with no data source behind it still shows and can be removed.
-  const value = uids.map((uid) => options.find((option) => option.value === uid) ?? { label: uid, value: uid });
+  const value = dataSourceUids.map(
+    (uid) => options.find((option) => option.value === uid) ?? { label: uid, value: uid }
+  );
 
   return (
     <SidebarField label={t('alerting.gma-rule-list.sidebar.datasource', 'Query data source')} htmlFor={id}>
