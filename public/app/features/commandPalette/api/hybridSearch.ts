@@ -1,4 +1,8 @@
-import { type HybridSearchResultItem } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
+import {
+  type HybridSearchResultItem,
+  type ListDashboardHybridSearchV0Alpha1ApiArg,
+  type ListDashboardHybridSearchV0Alpha1ApiResponse,
+} from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { dashboardAPIv0alpha1 } from 'app/api/clients/dashboard/v0alpha1';
 import { dispatch } from 'app/types/store';
@@ -6,6 +10,23 @@ import { dispatch } from 'app/types/store';
 export interface HybridSearchOptions {
   limit?: number;
 }
+
+const cmdkHybridSearchAPI = dashboardAPIv0alpha1.injectEndpoints({
+  endpoints: (build) => ({
+    listCmdkDashboardHybridSearch: build.query<
+      ListDashboardHybridSearchV0Alpha1ApiResponse,
+      ListDashboardHybridSearchV0Alpha1ApiArg
+    >({
+      query: (queryArg) => ({
+        url: '/dashboards/search/hybrid',
+        method: 'POST',
+        body: queryArg.hybridSearchQuery,
+        headers: { 'X-Grafana-Caller-Id': 'cmdk' },
+      }),
+      providesTags: ['Search'],
+    }),
+  }),
+});
 
 /**
  * Hybrid search over dashboards via the core dashboard API. Returns one hit per
@@ -17,7 +38,7 @@ export async function searchDashboardsHybrid(
   { limit }: HybridSearchOptions = {}
 ): Promise<HybridSearchResultItem[]> {
   const request = dispatch(
-    dashboardAPIv0alpha1.endpoints.listDashboardHybridSearchV0Alpha1.initiate(
+    cmdkHybridSearchAPI.endpoints.listCmdkDashboardHybridSearch.initiate(
       {
         hybridSearchQuery: {
           apiVersion: 'search.grafana.app/v0alpha1',
