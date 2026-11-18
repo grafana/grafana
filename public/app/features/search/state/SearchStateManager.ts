@@ -5,6 +5,7 @@ import { store } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { type TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
+import { getDraftDashboardExtension } from 'app/features/dashboard-scene/saving/enterprise-components/DraftDashboardExtension';
 
 import {
   RECENTLY_DELETED_SORT_VALUES,
@@ -77,6 +78,11 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
 
   initStateFromUrl(folderUid?: string, doInitialSearch = true) {
     const stateFromUrl = parseRouteParams(locationService.getSearchObject());
+
+    // Without draft mode there is no Drafts checkbox, so a shared link must not apply a filter nobody can see or clear
+    if (!getDraftDashboardExtension()?.isEnabled()) {
+      delete stateFromUrl.draftsOnly;
+    }
 
     // Force list view when conditions are specified from the URL
     if (needsListLayout(stateFromUrl)) {

@@ -7,6 +7,7 @@ import { getCustomSearchHandler, searchRoute } from '@grafana/test-utils/handler
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { TrashStateManager } from 'app/features/browse-dashboards/api/useRecentlyDeletedStateManager';
+import { registerDraftDashboardExtension } from 'app/features/dashboard-scene/saving/enterprise-components/DraftDashboardExtension';
 
 import {
   RECENTLY_DELETED_SORT_VALUES,
@@ -215,7 +216,16 @@ describe('SearchStateManager', () => {
   });
 
   describe('onDraftsOnlyChange', () => {
+    const registerDraftMode = () =>
+      registerDraftDashboardExtension({
+        isEnabled: () => true,
+        getCreateLabels: async () => ({}),
+        DraftBadge: () => null,
+        PublishButton: () => null,
+      });
+
     afterEach(() => {
+      registerDraftDashboardExtension(null);
       locationService.partial({ draftsOnly: null });
     });
 
@@ -242,6 +252,7 @@ describe('SearchStateManager', () => {
     });
 
     it('restores the drafts filter from the URL', () => {
+      registerDraftMode();
       locationService.partial({ draftsOnly: true });
       const stm = createSearchStateManager();
       jest.spyOn(stm, 'doSearch').mockResolvedValue(undefined);
@@ -250,6 +261,18 @@ describe('SearchStateManager', () => {
 
       expect(stm.getSearchQuery().lifecycle).toBe('draft');
       expect(stm.doSearch).toHaveBeenCalledTimes(1);
+    });
+
+    it('ignores the drafts filter in the URL when draft mode is off', () => {
+      locationService.partial({ draftsOnly: true, query: 'cpu' });
+      const stm = createSearchStateManager();
+      jest.spyOn(stm, 'doSearch').mockResolvedValue(undefined);
+
+      stm.initStateFromUrl();
+
+      expect(stm.getSearchQuery().query).toBe('cpu');
+      expect(stm.getSearchQuery().lifecycle).toBeUndefined();
+      locationService.partial({ query: null });
     });
 
     it('turns off a drafts filter that is no longer in the URL', () => {
