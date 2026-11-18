@@ -8,6 +8,7 @@ import { usePluginComponents } from '@grafana/runtime';
 import { useTheme2 } from '@grafana/ui';
 
 import { useExtensionSidebarContext } from './ExtensionSidebarProvider';
+import { FLOATING_HEIGHT_VARIABLE, FloatingHeightHandle } from './FloatingHeightHandle';
 import { FloatingWidthHandle } from './FloatingWidthHandle';
 import {
   canCollapseFloatingExtensionSidebar,
@@ -45,6 +46,9 @@ export function ExtensionSidebar() {
     extensionSidebarHeight,
     floatingExtensionSidebarWidth,
     setFloatingExtensionSidebarWidth,
+    floatingHeightOptions,
+    floatingExtensionSidebarHeight,
+    setFloatingExtensionSidebarHeight,
     props = {},
   } = useExtensionSidebarContext();
   const [wrapper, setWrapper] = useState<HTMLDivElement | null>(null);
@@ -95,6 +99,13 @@ export function ExtensionSidebar() {
     return null;
   }
 
+  // The extension sizes its floating surface with it; unset until the user resizes the height.
+  const floatingHeightStyle =
+    floating && floatingExtensionSidebarHeight !== undefined
+      ? // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- CSSProperties has no custom properties
+        ({ [FLOATING_HEIGHT_VARIABLE]: `${floatingExtensionSidebarHeight}px` } as CSSProperties)
+      : undefined;
+
   return (
     <div
       ref={setWrapper}
@@ -105,6 +116,7 @@ export function ExtensionSidebar() {
         floating && styles.sidebarWrapperFloating,
         (floating || canDragToFloat) && styles.sidebarWrapperDraggable
       )}
+      style={floatingHeightStyle}
       // Lets page captures (Composer regions) leave the sidebar out.
       data-extension-sidebar
     >
@@ -120,6 +132,19 @@ export function ExtensionSidebar() {
       {floating && (
         <FloatingWidthHandle width={floatingExtensionSidebarWidth} onWidthChange={setFloatingExtensionSidebarWidth} />
       )}
+      {/* Only for an extension that lets core resize its height; the corner comes last, above both edges. */}
+      {floating &&
+        floatingHeightOptions &&
+        (['top', 'corner'] as const).map((edge) => (
+          <FloatingHeightHandle
+            key={edge}
+            edge={edge}
+            options={floatingHeightOptions}
+            height={floatingExtensionSidebarHeight}
+            onHeightChange={setFloatingExtensionSidebarHeight}
+            onWidthChange={setFloatingExtensionSidebarWidth}
+          />
+        ))}
       {/* Portalled: the floating container's transform would otherwise position it. */}
       {edgeActionPreview &&
         createPortal(
@@ -225,9 +250,9 @@ const getStyles = (theme: GrafanaTheme2) => {
     ),
     // The extension draws the floating surface itself; core adds no background, border or shadow.
     sidebarWrapperFloating: css({
-      // Positions the width handle on its edge.
+      // Positions the resize handles on its edges.
       position: 'relative',
-      // The extension rounds its surface by this, so the width handle's line can follow the corners.
+      // The extension rounds its surface by this, so the resize handles' lines can follow the corners.
       '--extension-sidebar-floating-radius': theme.shape.radius.lg,
       // The container around it ignores the pointer, so only the sidebar itself takes clicks where it is.
       pointerEvents: 'auto',

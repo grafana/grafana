@@ -67,6 +67,16 @@ export interface ExtensionSidebarAPI {
    * onto the page floats it there. Show a handle in the docked sidebar only while this is true.
    */
   canDragToFloat(): boolean;
+  /**
+   * Lets core resize the floating sidebar's height from its top edge and its top-left corner, as it resizes the width
+   * from its left edge. `minHeight` is the least height the extension shows. With `collapsedHeight`, a drag follows
+   * below the minimum down to it, and a release nearer to it than to the minimum asks the extension to collapse,
+   * through `subscribeToCollapse`. Once the user resizes the height, core sets `--extension-sidebar-floating-height`
+   * on the sidebar for the extension to size its surface with; until then the extension's own height applies. Call it
+   * again whenever the heights change, and with `null` to hide the handles, for example while collapsed. Absent on a
+   * Grafana that cannot resize the height.
+   */
+  setFloatingHeightResize?(options: { minHeight: number; collapsedHeight?: number } | null): void;
   // The five members below are absent while `grafana.extensionSidebarPlacements` is off, so an extension keeps the
   // controls it shows on a Grafana without them.
   /**

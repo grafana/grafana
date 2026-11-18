@@ -72,6 +72,9 @@ const extensionSidebarContextMock: ExtensionSidebarContextType = {
   setExtensionSidebarHeight: jest.fn(),
   floatingExtensionSidebarWidth: 480,
   setFloatingExtensionSidebarWidth: jest.fn(),
+  floatingHeightOptions: null,
+  floatingExtensionSidebarHeight: undefined,
+  setFloatingExtensionSidebarHeight: jest.fn(),
   presentation: 'docked',
   dockSide: 'right',
   floatingHidden: false,
@@ -204,6 +207,47 @@ describe('ExtensionSidebar', () => {
       mockUseExtensionSidebarContext.mockReturnValue({ ...extensionSidebarContextMock, presentation: 'docked' });
       rerender(<ExtensionSidebar />);
       expect(screen.queryByRole('separator', { name: 'Resize sidebar width' })).not.toBeInTheDocument();
+    });
+
+    it('adds the top and corner handles only while the extension lets core resize its height', () => {
+      const { container, rerender } = render(<ExtensionSidebar />);
+      expect(screen.queryByRole('separator', { name: 'Resize sidebar height' })).not.toBeInTheDocument();
+      expect(screen.queryByTestId('extension-sidebar-floating-corner-handle')).not.toBeInTheDocument();
+
+      const floatingHeightOptions = { minHeight: 400, collapsedHeight: 100 };
+      mockUseExtensionSidebarContext.mockReturnValue({
+        ...extensionSidebarContextMock,
+        presentation: 'floating',
+        floatingHeightOptions,
+      });
+      rerender(<ExtensionSidebar />);
+      expect(screen.getByRole('separator', { name: 'Resize sidebar height' }).parentElement).toBe(container.firstChild);
+      expect(screen.getByTestId('extension-sidebar-floating-corner-handle').parentElement).toBe(container.firstChild);
+
+      mockUseExtensionSidebarContext.mockReturnValue({
+        ...extensionSidebarContextMock,
+        presentation: 'docked',
+        floatingHeightOptions,
+      });
+      rerender(<ExtensionSidebar />);
+      expect(screen.queryByRole('separator', { name: 'Resize sidebar height' })).not.toBeInTheDocument();
+      expect(screen.queryByTestId('extension-sidebar-floating-corner-handle')).not.toBeInTheDocument();
+    });
+
+    it('hands the resized height to the extension as a CSS variable, only while floating', () => {
+      const resized = {
+        ...extensionSidebarContextMock,
+        floatingHeightOptions: { minHeight: 400 },
+        floatingExtensionSidebarHeight: 560,
+      };
+      mockUseExtensionSidebarContext.mockReturnValue({ ...resized, presentation: 'floating' });
+      const { container, rerender } = render(<ExtensionSidebar />);
+      const sidebar = container.querySelector<HTMLElement>('[data-extension-sidebar]');
+      expect(sidebar?.style.getPropertyValue('--extension-sidebar-floating-height')).toBe('560px');
+
+      mockUseExtensionSidebarContext.mockReturnValue({ ...resized, presentation: 'docked' });
+      rerender(<ExtensionSidebar />);
+      expect(sidebar?.style.getPropertyValue('--extension-sidebar-floating-height')).toBe('');
     });
 
     it.each(['left', 'right', 'bottom'] as const)('docks on the %s when the drag asks it to', (side) => {

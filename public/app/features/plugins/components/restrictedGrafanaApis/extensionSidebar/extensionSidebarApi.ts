@@ -3,9 +3,11 @@ import {
   canFloatExtensionSidebar,
   canPlaceExtensionSidebar,
   type ExtensionSidebarPlacement,
+  type FloatingExtensionSidebarHeightOptions,
   getFloatingExtensionSidebarPlacement,
   setExtensionSidebarPlacement,
   setExtensionSidebarPresentation,
+  setFloatingExtensionSidebarHeightOptions,
   subscribeToExtensionSidebarPopOut,
   subscribeToExtensionSidebarPresentation,
   subscribeToFloatingExtensionSidebarCollapse,
@@ -16,6 +18,24 @@ const PLACEMENTS: readonly ExtensionSidebarPlacement[] = ['left', 'right', 'bott
 
 function isPlacement(value: unknown): value is ExtensionSidebarPlacement {
   return PLACEMENTS.some((placement) => placement === value);
+}
+
+function isPositiveNumber(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value) && value > 0;
+}
+
+/**
+ * Plugins call `setFloatingHeightResize` from untyped code too: anything without a usable minimum hides the handles,
+ * and a collapsed height that is not below the minimum is left out.
+ */
+function toHeightOptions(value: unknown): FloatingExtensionSidebarHeightOptions | null {
+  if (typeof value !== 'object' || value === null || !('minHeight' in value) || !isPositiveNumber(value.minHeight)) {
+    return null;
+  }
+  const minHeight = Math.round(value.minHeight);
+  const collapsedHeight =
+    'collapsedHeight' in value && isPositiveNumber(value.collapsedHeight) ? Math.round(value.collapsedHeight) : 0;
+  return collapsedHeight > 0 && collapsedHeight < minHeight ? { minHeight, collapsedHeight } : { minHeight };
 }
 
 export const extensionSidebarApi: ExtensionSidebarAPI = {
@@ -33,6 +53,10 @@ export const extensionSidebarApi: ExtensionSidebarAPI = {
     return subscribeToFloatingExtensionSidebarCollapse(listener);
   },
   canDragToFloat: () => canFloatExtensionSidebar(),
+  // Not behind the floating flag: Composer floats the sidebar without it.
+  setFloatingHeightResize: (options) => {
+    setFloatingExtensionSidebarHeightOptions(toHeightOptions(options));
+  },
   // Absent while placements are off, so an extension keeps the controls it shows on a core without them. Read when
   // the extension reads them, after the flags load.
   get subscribeToPopOut() {

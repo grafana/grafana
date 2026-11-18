@@ -4,6 +4,7 @@ import {
   canPopOutExtensionSidebar,
   collapseFloatingExtensionSidebar,
   getEffectiveExtensionSidebarPresentation,
+  getFloatingExtensionSidebarHeightOptions,
   getRequestedExtensionSidebarDockSide,
   getRequestedExtensionSidebarPresentation,
   isExtensionSidebarPoppedOut,
@@ -134,6 +135,39 @@ describe('extensionSidebarApi', () => {
     expect(canCollapseFloatingExtensionSidebar()).toBe(false);
     collapseFloatingExtensionSidebar();
     expect(listener).toHaveBeenCalledTimes(1);
+  });
+
+  it('lets core resize the height between the heights the extension gives, until it passes null', () => {
+    const { setFloatingHeightResize } = extensionSidebarApi;
+    if (!setFloatingHeightResize) {
+      throw new Error('setFloatingHeightResize is absent');
+    }
+
+    setFloatingHeightResize({ minHeight: 400.4, collapsedHeight: 99.6 });
+    expect(getFloatingExtensionSidebarHeightOptions()).toEqual({ minHeight: 400, collapsedHeight: 100 });
+
+    setFloatingHeightResize({ minHeight: 400 });
+    expect(getFloatingExtensionSidebarHeightOptions()).toEqual({ minHeight: 400 });
+
+    setFloatingHeightResize(null);
+    expect(getFloatingExtensionSidebarHeightOptions()).toBeNull();
+  });
+
+  it.each([
+    ['a value that is not an object', 'tall'],
+    ['no minimum', { collapsedHeight: 100 }],
+    ['a minimum that is not a positive number', { minHeight: -1 }],
+    ['a minimum that is not finite', { minHeight: Infinity }],
+  ])('hides the height handles for %s', (_, options) => {
+    extensionSidebarApi.setFloatingHeightResize?.({ minHeight: 400 });
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- a plugin calling from untyped code
+    extensionSidebarApi.setFloatingHeightResize?.(options as unknown as { minHeight: number });
+    expect(getFloatingExtensionSidebarHeightOptions()).toBeNull();
+  });
+
+  it('leaves out a collapsed height that is not below the minimum', () => {
+    extensionSidebarApi.setFloatingHeightResize?.({ minHeight: 400, collapsedHeight: 400 });
+    expect(getFloatingExtensionSidebarHeightOptions()).toEqual({ minHeight: 400 });
   });
 
   it('ignores a collapse subscriber that is not a function', () => {

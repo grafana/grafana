@@ -317,10 +317,43 @@ export function canCollapseFloatingExtensionSidebar(): boolean {
   return collapseListeners.size > 0;
 }
 
-/** Asks the floating sidebar's extension to collapse. */
-export function collapseFloatingExtensionSidebar(): void {
+/**
+ * Asks the floating sidebar's extension to collapse: `drag` when the user dragged the sidebar to the bottom edge,
+ * `resize` when they let go of its height near the extension's collapsed height.
+ */
+export function collapseFloatingExtensionSidebar(method: 'drag' | 'resize' = 'drag'): void {
   collapseListeners.forEach((listener) => listener());
-  reportInteraction('grafana_extension_sidebar_floating_collapsed', { method: 'drag' });
+  reportInteraction('grafana_extension_sidebar_floating_collapsed', { method });
+}
+
+/** The heights the floating sidebar's extension lets core resize it between; see `setFloatingHeightResize`. */
+export interface FloatingExtensionSidebarHeightOptions {
+  minHeight: number;
+  collapsedHeight?: number;
+}
+
+/**
+ * The height resize the extension asked for, or `null` while it asks for none: core then shows no top or corner
+ * handle and leaves the height to the extension. Module state for the same reason as the layout.
+ */
+let floatingHeightOptions: FloatingExtensionSidebarHeightOptions | null = null;
+
+/** Sets the height resize the extension asked for. A call that changes nothing notifies no one. */
+export function setFloatingExtensionSidebarHeightOptions(options: FloatingExtensionSidebarHeightOptions | null): void {
+  // The extension calls this whenever its surface resizes, which a resize itself does.
+  if (
+    options?.minHeight === floatingHeightOptions?.minHeight &&
+    options?.collapsedHeight === floatingHeightOptions?.collapsedHeight
+  ) {
+    return;
+  }
+  floatingHeightOptions = options;
+  notify();
+}
+
+/** The height resize the extension asked for. Subscribe with `subscribeToExtensionSidebarPresentation`. */
+export function getFloatingExtensionSidebarHeightOptions(): FloatingExtensionSidebarHeightOptions | null {
+  return floatingHeightOptions;
 }
 
 /**
@@ -391,6 +424,7 @@ export function resetExtensionSidebarPresentationForTests({ keepStorage = false 
   floatingHolds.clear();
   listeners.clear();
   collapseListeners.clear();
+  floatingHeightOptions = null;
   popOutListeners.clear();
   popIn = undefined;
   closeListeners.clear();

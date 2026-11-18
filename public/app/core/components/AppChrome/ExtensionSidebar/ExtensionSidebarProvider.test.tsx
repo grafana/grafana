@@ -16,6 +16,7 @@ import {
   setExtensionSidebarFloatingOverride,
   setExtensionSidebarDockSide,
   setExtensionSidebarPresentation,
+  setFloatingExtensionSidebarHeightOptions,
 } from './extensionSidebarLayout';
 import {
   EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY,
@@ -542,6 +543,64 @@ describe('ExtensionSidebarProvider', () => {
       act(() => resizeWindowTo(700));
 
       await waitFor(() => expect(screen.getByTestId('height')).toHaveTextContent('350'));
+    });
+  });
+
+  describe('floating height', () => {
+    const FLOATING_HEIGHT_KEY = 'grafana.navigation.extensionSidebarFloatingHeight';
+    const FloatingHeightComponent = () => {
+      const { floatingExtensionSidebarHeight, setFloatingExtensionSidebarHeight } = useExtensionSidebarContext();
+      return (
+        <>
+          <div data-testid="floating-height">{String(floatingExtensionSidebarHeight)}</div>
+          <button onClick={() => setFloatingExtensionSidebarHeight(undefined)}>Reset</button>
+        </>
+      );
+    };
+    const renderFloatingHeight = () =>
+      render(
+        <ExtensionSidebarContextProvider>
+          <FloatingHeightComponent />
+        </ExtensionSidebarContextProvider>
+      );
+
+    afterEach(() => {
+      window.localStorage.removeItem(FLOATING_HEIGHT_KEY);
+      resetExtensionSidebarPresentationForTests();
+    });
+
+    it('applies the remembered height only while the extension lets core resize it, within its minimum', () => {
+      window.localStorage.setItem(FLOATING_HEIGHT_KEY, '300');
+      renderFloatingHeight();
+      expect(screen.getByTestId('floating-height')).toHaveTextContent('undefined');
+
+      act(() => setFloatingExtensionSidebarHeightOptions({ minHeight: 400 }));
+      expect(screen.getByTestId('floating-height')).toHaveTextContent('400');
+
+      act(() => setFloatingExtensionSidebarHeightOptions({ minHeight: 200 }));
+      expect(screen.getByTestId('floating-height')).toHaveTextContent('300');
+
+      act(() => setFloatingExtensionSidebarHeightOptions(null));
+      expect(screen.getByTestId('floating-height')).toHaveTextContent('undefined');
+    });
+
+    it('keeps the remembered height inside the window', () => {
+      // jsdom's window is 768px tall.
+      window.localStorage.setItem(FLOATING_HEIGHT_KEY, '900');
+      renderFloatingHeight();
+      act(() => setFloatingExtensionSidebarHeightOptions({ minHeight: 400 }));
+      expect(screen.getByTestId('floating-height')).toHaveTextContent('720');
+    });
+
+    it("forgets the remembered height to go back to the extension's own", () => {
+      window.localStorage.setItem(FLOATING_HEIGHT_KEY, '500');
+      renderFloatingHeight();
+      act(() => setFloatingExtensionSidebarHeightOptions({ minHeight: 400 }));
+      expect(screen.getByTestId('floating-height')).toHaveTextContent('500');
+
+      act(() => screen.getByRole('button', { name: 'Reset' }).click());
+      expect(screen.getByTestId('floating-height')).toHaveTextContent('undefined');
+      expect(window.localStorage.getItem(FLOATING_HEIGHT_KEY)).toBeNull();
     });
   });
 
