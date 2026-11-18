@@ -2232,6 +2232,30 @@ func TestRebuildAfterIndexEviction(t *testing.T) {
 	}
 }
 
+func TestRebuildSkipsMemoryIndexEvictedBeforeBackendLookup(t *testing.T) {
+	const ttl = 4 * time.Hour
+	backend, reg := setupBleveBackend(t, withIndexCacheTTL(ttl), withIndexCacheTTLIdleOnly(true))
+	key := resource.NamespacedResource{Namespace: "test", Group: "group", Resource: "resource"}
+	_, err := backend.BuildIndex(t.Context(), key, 1, "test", indexTestDocs(key, 1, 100), nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
+	require.NoError(t, err)
+	original := backend.PeekIndex(key)
+	require.NotNil(t, original)
+
+	lastSearch := time.UnixMilli(original.(*bleveIndex).lastSearchedAt.Load())
+	backend.runEvictExpiredOrUnownedIndexes(lastSearch.Add(ttl + time.Millisecond))
+	require.Nil(t, backend.PeekIndex(key))
+
+	builderCalled := false
+	_, err = backend.BuildIndex(t.Context(), key, 1, "rebuild", func(index resource.ResourceIndex) (int64, error) {
+		builderCalled = true
+		return indexTestDocs(key, 1, 101)(index)
+	}, nil, true, time.Time{}, 0, resource.BuildIndexOptions{RebuildFrom: original})
+	require.ErrorIs(t, err, resource.ErrIndexClosedDuringRebuild)
+	require.False(t, builderCalled)
+	require.Nil(t, backend.PeekIndex(key))
+	checkOpenIndexes(t, reg, 0, 0)
+}
+
 func TestNewUnownedIndexIdleTimeout(t *testing.T) {
 	backend, reg := setupBleveBackend(t, withIndexCacheTTL(4*time.Hour), withOwnsIndexFn(func(resource.NamespacedResource) (bool, error) {
 		return false, nil

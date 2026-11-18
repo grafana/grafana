@@ -2698,6 +2698,28 @@ func checkRebuildIndex(t *testing.T, support *searchServer, req rebuildRequest, 
 	}
 }
 
+func TestRebuildIndexPassesOriginalIndexToBackend(t *testing.T) {
+	key := NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}
+	original := &MockResourceIndex{}
+	var rebuildFrom ResourceIndex
+	backend := &initialBuildTestBackend{
+		mockSearchBackend: mockSearchBackend{cache: map[NamespacedResource]ResourceIndex{key: original}},
+		beforeBuild: func(_ context.Context, _ NamespacedResource, opts BuildIndexOptions) error {
+			rebuildFrom = opts.RebuildFrom
+			return ErrIndexClosedDuringRebuild
+		},
+	}
+	server, err := newSearchServer(SearchOptions{
+		Backend:   backend,
+		Resources: &TestDocumentBuilderSupplier{GroupsResources: map[string]string{"group": "resource"}},
+	}, &mockStorageBackend{}, nil, nil, nil, nil, nil, nil, nil, nil)
+	require.NoError(t, err)
+
+	server.rebuildIndex(t.Context(), rebuildRequest{NamespacedResource: key, minBuildTime: time.Now()})
+
+	require.Same(t, original, rebuildFrom)
+}
+
 type failingRebuildSearchBackend struct {
 	mockSearchBackend
 	buildCalls atomic.Int32

@@ -433,6 +433,10 @@ var ErrIndexBuildInProgress = errors.New("another replica is building the index"
 var ErrIndexClosedDuringRebuild = errors.New("index was closed while it was being rebuilt")
 
 type BuildIndexOptions struct {
+	// RebuildFrom is the index seen by the rebuild worker, so the backend can
+	// avoid reopening it if idle cleanup closes it before the rebuild starts.
+	RebuildFrom ResourceIndex
+
 	// Startup workers can try other indexes instead of waiting for a replica.
 	SkipIfBuilding bool
 
@@ -2233,7 +2237,7 @@ func (s *searchServer) rebuildIndex(ctx context.Context, req rebuildRequest) {
 	}
 
 	// Pass rebuild=true to force rebuild of any existing file-based index.
-	_, err = s.build(ctx, req.NamespacedResource, size, "rebuild", true, req.lastImportTime)
+	_, err = s.buildWithOptions(ctx, req.NamespacedResource, size, "rebuild", true, req.lastImportTime, BuildIndexOptions{RebuildFrom: idx})
 	if errors.Is(err, ErrIndexClosedDuringRebuild) {
 		l.Info("index was closed while it was being rebuilt, discarding the rebuilt index")
 	} else if err != nil {

@@ -1067,8 +1067,15 @@ func (b *bleveBackend) BuildIndex(
 	skipIfBuilding := options.SkipIfBuilding
 
 	cachedIndex := b.getCachedIndex(key, time.Now())
-	originalHasMemoryIdleTimeout := b.opts.IndexCacheTTLIdleOnly && b.opts.IndexCacheTTL > 0 &&
-		cachedIndex != nil && cachedIndex.indexStorage == indexStorageMemory
+	original := cachedIndex
+	if rebuildFrom, ok := options.RebuildFrom.(*bleveIndex); ok && rebuildFrom != nil {
+		original = rebuildFrom
+	}
+	originalHasMemoryIdleTimeout := rebuild && b.opts.IndexCacheTTLIdleOnly && b.opts.IndexCacheTTL > 0 &&
+		original != nil && original.indexStorage == indexStorageMemory
+	if originalHasMemoryIdleTimeout && cachedIndex != original {
+		return nil, resource.ErrIndexClosedDuringRebuild
+	}
 	prepared, err := b.prepareIndex(ctx, key, snapshotBuildEnabled, downloadOnly, mapper, selectableFields, searchFieldsHash, rebuild, cachedIndex != nil, lastImportTime, maxFreshSnapshotAge, resourceDir, logWithDetails, skipIfBuilding)
 	if err != nil {
 		return nil, err
@@ -1176,7 +1183,7 @@ func (b *bleveBackend) BuildIndex(
 	b.cacheMx.Lock()
 	prev := b.cache[key]
 	// The original index can go idle even if its replacement was promoted to disk.
-	if rebuild && prev == nil && (key.IsGlobal() || originalHasMemoryIdleTimeout) {
+	if (rebuild && key.IsGlobal() && prev == nil) || (originalHasMemoryIdleTimeout && prev != original) {
 		b.cacheMx.Unlock()
 		return nil, resource.ErrIndexClosedDuringRebuild
 	}
