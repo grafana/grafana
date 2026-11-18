@@ -3591,11 +3591,6 @@
       "count": 1
     }
   },
-  "public/app/features/search/utils.ts": {
-    "@grafana/no-direct-local-storage-access": {
-      "count": 3
-    }
-  },
   "public/app/features/serviceaccounts/ServiceAccountCreatePage.tsx": {
     "@grafana/no-config-feature-toggles": {
       "count": 2
