@@ -23,7 +23,7 @@ import { type DashboardSidebar } from './DashboardSidebar';
 import { ElementEditPaneHeader } from './ElementEditPaneHeader';
 
 setPluginImportUtils({
-  importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
+  importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({ id })),
   getPanelPluginFromCache: (id: string) => undefined,
 });
 
@@ -90,7 +90,8 @@ describe('ElementEditPaneHeader', () => {
       expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith(
         'duplicate',
         expect.any(Number),
-        'edit_pane'
+        'edit_pane',
+        'text'
       );
     });
 
@@ -102,7 +103,12 @@ describe('ElementEditPaneHeader', () => {
       const user = userEvent.setup();
       await user.click(screen.getByTestId(selectors.components.EditPaneHeader.copy));
 
-      expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('copy', expect.any(Number), 'edit_pane');
+      expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith(
+        'copy',
+        expect.any(Number),
+        'edit_pane',
+        'text'
+      );
     });
   });
 });

@@ -1039,14 +1039,6 @@ var (
 			Expression:  "true",                                                      // enabled by default
 		},
 		{
-			Name:        "newSavedQueriesExperience",
-			Description: "Enables the new Saved queries (query library) modal experience",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaSharingSquad,
-			Generate:    Generate{LegacyFrontend: true, React: true},
-			Expression:  "true", // enabled by default
-		},
-		{
 			Name:        "dashboardLibrary",
 			Description: "Displays datasource provisioned dashboards in dashboard empty page, only when coming from datasource configuration page",
 			Stage:       FeatureStageExperimental,
@@ -2076,6 +2068,14 @@ var (
 			Description: "Enable gradient color scheme option for the pie chart panel",
 			Stage:       FeatureStageExperimental,
 			Generate:    Generate{LegacyFrontend: true, React: true},
+			Owner:       grafanaDatavizSquad,
+			Expression:  "false",
+		},
+		{
+			Name:        "dataviz.reverseColorScheme",
+			Description: "Enable the option to reverse by value color schemes",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
 			Owner:       grafanaDatavizSquad,
 			Expression:  "false",
 		},

@@ -22,7 +22,7 @@ type LegacyAccessClient interface {
 // In contrast, legacypermissions.ProvideClient only needs the loader and config,
 // allowing constructor injection for LegacyGetUserPermissions.
 type LegacyCheckClientSetter interface {
-	SetLegacyCheckClient(client *LegacyClient, useExternalGroups bool, namespace types.NamespaceFormatter)
+	SetLegacyCheckClient(client LegacyAccessClient, useExternalGroups bool, namespace types.NamespaceFormatter)
 }
 
 type LegacyCheckRequest struct {
