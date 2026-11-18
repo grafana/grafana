@@ -4,8 +4,9 @@ This guide documents conventions for Playwright e2e tests under
 `e2e-playwright/alerting-suite/`. Follow it when adding or modifying specs in this
 directory. For general spec-authoring principles (assert real behavior, avoiding AI-slop
 tests, anti-flake rules) that apply to any Grafana frontend test, also invoke the
-`frontend-testing-strategy` skill with the Skill tool — this guide covers what's specific to
-this suite on top of that.
+`frontend-testing-strategy` skill with the Skill tool and the
+[Grafana anti-flake rules](../../contribute/testing-grafana-frontend.md#anti-flake-rules) — this
+guide covers what's specific to this suite on top of that.
 
 ## Test isolation and parallelism
 

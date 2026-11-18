@@ -85,7 +85,7 @@ Each rule maps to a real stabilization; global Playwright config retries once in
 
 Testing HTML5 canvas / uPlot-based visualizations, or writing panel accessibility and
 interaction-snapshot E2E tests, has its own harness and additional canvas-specific anti-flake
-rules — see the `panel-testing-strategy` skill.
+rules — see [Grafana panel testing conventions](testing-grafana-panels.md).
 
 ## When to add which tests (by SDLC phase)
 
@@ -102,9 +102,5 @@ Tie the test layer to the feature-toggle phase:
 
 **Close every bug with a test** — at the layer where it should have been caught, in the
 same PR as the fix. Tests land in the same PR as the feature or fix, so git history explains
-why each test exists.
-
-**A regression test must fail on `main`.** It has to fail in the absence of the fix and pass in
-its presence — otherwise it isn't pinning the bug. Prove it: stash or revert the product change,
-run the new test, and confirm it goes **red**; restore the fix and confirm green. A regression test
-that stays green without the fix documents nothing and will not catch the bug coming back.
+why each test exists. Regression tests must fail without the fix; see the
+[frontend testing strategy](../.claude/skills/frontend-testing-strategy/SKILL.md).

@@ -434,6 +434,9 @@
 
 # Backend code docs
 /contribute/backend/ @grafana/grafana-backend-services-squad
+/contribute/testing.md @grafana/dataviz-squad
+/contribute/testing-grafana-frontend.md @grafana/dataviz-squad
+/contribute/testing-grafana-panels.md @grafana/dataviz-squad
 
 
 /crowdin.yml @grafana/grafana-frontend-platform

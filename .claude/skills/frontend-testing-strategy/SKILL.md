@@ -9,15 +9,36 @@ Use the repository's runner and fixtures already identified for the task. These 
 with Jest, Vitest, and other runners. Do not introduce a new runner just to follow this skill.
 For visualization behavior, also read the panel companion. Do not reload guidance already read.
 
+## Grafana conventions
+
+In this repository, also read the matching section of
+[testing-grafana-frontend.md](../../../contribute/testing-grafana-frontend.md):
+
+- [Running Playwright E2E tests](../../../contribute/testing-grafana-frontend.md#running-playwright-e2e-tests)
+  for E2E server setup.
+- [Mocking and feature flags](../../../contribute/testing-grafana-frontend.md#mocking-and-feature-flags)
+  for `jest.mocked`, `setTestFlags`, and `testWithFeatureToggles`.
+- [Anti-flake rules](../../../contribute/testing-grafana-frontend.md#anti-flake-rules) for
+  Grafana-specific examples of the flake classes below.
+- [When to add which tests](../../../contribute/testing-grafana-frontend.md#when-to-add-which-tests-by-sdlc-phase)
+  when planning coverage for a feature-toggle phase.
+
+## Resolve the target
+
+Test the named file, or the files under a named directory or module that lack meaningful coverage.
+If no file or area is given, ask which one; do not generate tests for everything. Skip modules
+that are deprecated or slated for deletion: tests on them make the code look necessary.
+
 ## Choose meaningful coverage
 
-- Extend existing focused tests. Test production code, not test-local helpers or framework behavior.
+- Extend existing focused tests. Prefer deleting an assertion over adding one when a stronger
+  assertion in the same test already covers it. Test production code, not test-local helpers or framework behavior.
 - Use unit tests for logic, component/integration tests for collaboration and observable UI behavior,
   and targeted E2E tests for critical user journeys. Keep static checks as the foundation.
 - Name each test for the behavior its assertions establish. Consolidate duplicate cases; use
   table-driven tests for meaningful variants. Avoid testing trivial initial values or mere rendering.
-- Add tests with features and fixes. A regression test must fail without the fix and pass with it.
-  Verify this using a reversible local change; restore production code before finishing.
+- Add tests with features and fixes, in the same change. A regression test must fail without the
+  fix and pass with it. Verify this: stash or revert the fix, confirm the test fails, then restore it.
 - Before updating a failing assertion or snapshot, trace the failure and distinguish an intended
   behavior change from a regression. Never update expectations merely to obtain a green run.
 - Review AI-generated tests for readability, real coverage, and unnecessary mocks. Coverage
@@ -29,11 +50,12 @@ Assert concrete computed values, visible behavior, or exact collaborator argumen
 "did not throw", and lengths that merely mirror input are insufficient by themselves.
 Use independent expected values: do not call the implementation or duplicate its formula to
 compute the expectation. A small, reviewed inline snapshot can freeze awkward deterministic
-values. Broad DOM snapshots are not a substitute for behavioral assertions.
+values. Never add DOM snapshot tests.
 
 For consumers of theme colors, assert the intended semantic token from the supplied theme,
 rather than today's hex value. When testing the palette or resolver itself, use independent
-expected values. For query builders, compare the complete deterministic query, not a fragment.
+expected values. For the repository's datasource query builders, compare the complete query string, not a
+fragment. Use a looser match only when part of the query is not deterministic.
 
 Set every precondition needed to reach the target branch: flags, input shape, loading state,
 and permissions. Check that deliberately breaking the behavior makes the test fail. Test names

@@ -4,7 +4,7 @@ When writing or reviewing frontend tests, read the
 [frontend testing strategy](../.claude/skills/frontend-testing-strategy/SKILL.md) if not already loaded.
 For visualization tests, also read the
 [panel testing strategy](../.claude/skills/panel-testing-strategy/SKILL.md).
-These Markdown guides require no agent installation or private access.
+Each skill links the Grafana-specific sections listed below.
 
 ## Commands
 
@@ -31,7 +31,5 @@ In [Grafana panel conventions](testing-grafana-panels.md):
 
 ## Provenance
 
-[shared-testing-source.json](../.claude/skills/shared-testing-source.json) records the original source
-and hashes of these locally adapted copies. The hashes do not assert equality with upstream files.
-No automated drift check consumes them. Update them when changing the local skills.
-Publication of a canonical shared repository is a follow-up. Preserve the [root license](../LICENSE).
+[shared-testing-source.json](../.claude/skills/shared-testing-source.json) records the source and
+hashes of the skills. Update it when changing them.

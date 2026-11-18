@@ -6,7 +6,18 @@ description: Test visualization data, rendering, interactions, and accessibility
 # Panel testing strategy
 
 Read [frontend-testing-strategy](../frontend-testing-strategy/SKILL.md) if not already loaded.
-Use the repository's visualization conventions supplied for the task. Do not reload guidance
+Use the repository's visualization conventions supplied for the task. In this repository, they are
+in [testing-grafana-panels.md](../../../contribute/testing-grafana-panels.md):
+
+- [Step 1](../../../contribute/testing-grafana-panels.md#step-1--set-up-data-with-the-repos-builders)
+  for panel-props and data-frame builders.
+- [Step 2](../../../contribute/testing-grafana-panels.md#step-2--html5-canvas--rendering-panels-use-the-draw-call-snapshot-harness)
+  for the canvas draw-call snapshot harness.
+- [Step 3](../../../contribute/testing-grafana-panels.md#step-3--e2e-for-interaction-accessibility-and-interaction-snapshots)
+  for panel E2E, accessibility scans, and aria snapshots.
+- [Canvas / uPlot anti-flake rules](../../../contribute/testing-grafana-panels.md#canvas--uplot-anti-flake-rules).
+
+The list below is the portable summary; the sections above hold the Grafana detail. Do not reload guidance
 already read. Use the existing rendering harness; do not import Grafana core-only helpers into
 standalone plugins or prescribe one rendering engine to every repository.
 

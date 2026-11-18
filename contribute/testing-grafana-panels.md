@@ -138,7 +138,7 @@ visual regression to Meticulous.
 
 ## Canvas / uPlot anti-flake rules
 
-These are the viz-specific additions to `frontend-testing-strategy`'s generic anti-flake list.
+These are the viz-specific additions to the [generic anti-flake rules](testing-grafana-frontend.md#anti-flake-rules).
 **Avoid → Do:**
 
 1. **Non-deterministic data / relative time ranges.** Avoid `random_walk` + `now-30m` when
@@ -171,5 +171,5 @@ See also the `add-e2e-selectors` skill, `contribute/style-guides/e2e-playwright.
 ## Verify
 
 Use [AGENTS.md, Test](../AGENTS.md#test) and [Testing gotchas](../AGENTS.md#testing-gotchas).
-Confirm the new test fails without the fix and passes with it. Use the type-checking command in
+Use the type-checking command in
 [Lint & Format](../AGENTS.md#lint--format) when changed types require it.

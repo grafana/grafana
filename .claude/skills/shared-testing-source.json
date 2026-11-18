@@ -8,8 +8,8 @@
     "paths": [".claude/skills/frontend-testing-strategy/SKILL.md", ".claude/skills/panel-testing-strategy/SKILL.md"]
   },
   "sha256": {
-    "frontend-testing-strategy/SKILL.md": "e93233b5bb124cc66fb2027148d89df0ce3c6c410bc0292974534c6fc9f4a86a",
-    "panel-testing-strategy/SKILL.md": "162836a64d619632ea6cddb163da31aa48dcb34b53b494218c4838eb91082905"
+    "frontend-testing-strategy/SKILL.md": "5c8cdaa5e08c3142fcd071e0250f6e1d4a38c0e699d47279de997202bc0f0784",
+    "panel-testing-strategy/SKILL.md": "93b0e111edcdecc9e37db3dc1a9cda5a3c7f9112191026dbc7b5e195f8fd5065"
   },
   "hashScope": "SHA-256 of the local adapted SKILL.md files, not the original upstream files. No automated drift check consumes these hashes.",
   "adaptations": "Portable principles extracted and condensed from derivedFrom; repository-specific conventions are routed separately to avoid repeated guide reads."
