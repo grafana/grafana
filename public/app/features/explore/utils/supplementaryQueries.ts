@@ -4,6 +4,7 @@ import { scan } from 'rxjs/operators';
 
 import {
   type DataFrame,
+  type GrafanaTheme2,
   type DataQuery,
   type DataQueryRequest,
   type DataQueryResponse,
@@ -56,7 +57,8 @@ export const loadSupplementaryQueries = (): SupplementaryQueries => {
 const createFallbackLogVolumeProvider = (
   explorePanelData: Observable<ExplorePanelData>,
   queryTargets: DataQuery[],
-  datasourceName: string
+  datasourceName: string,
+  theme: GrafanaTheme2
 ): Observable<DataQueryResponse> => {
   return new Observable<DataQueryResponse>((observer) => {
     return explorePanelData.subscribe((exploreData) => {
@@ -73,7 +75,7 @@ const createFallbackLogVolumeProvider = (
         let allSeries: DataFrame[] = [];
         targetRefIds.forEach((refId) => {
           if (rowsByRefId[refId]?.length) {
-            const series = makeDataFramesForLogs(rowsByRefId[refId], bucketSize);
+            const series = makeDataFramesForLogs(rowsByRefId[refId], bucketSize, theme);
             allSeries = [...allSeries, ...series];
             const logVolumeCustomMetaData: LogsVolumeCustomMetaData = {
               logsVolumeType: LogsVolumeType.Limited,
@@ -109,10 +111,11 @@ const getSupplementaryQueryFallback = (
   type: SupplementaryQueryType,
   explorePanelData: Observable<ExplorePanelData>,
   queryTargets: DataQuery[],
-  datasourceName: string
+  datasourceName: string,
+  theme: GrafanaTheme2
 ) => {
   if (type === SupplementaryQueryType.LogsVolume) {
-    return createFallbackLogVolumeProvider(explorePanelData, queryTargets, datasourceName);
+    return createFallbackLogVolumeProvider(explorePanelData, queryTargets, datasourceName, theme);
   } else {
     return undefined;
   }
@@ -122,7 +125,8 @@ export const getSupplementaryQueryProvider = (
   groupedQueries: Array<{ datasource: DataSourceApi; targets: DataQuery[] }>,
   type: SupplementaryQueryType,
   request: DataQueryRequest,
-  explorePanelData: Observable<ExplorePanelData>
+  explorePanelData: Observable<ExplorePanelData>,
+  theme: GrafanaTheme2
 ): Observable<DataQueryResponse> | undefined => {
   const providers = groupedQueries.map(({ datasource, targets }, i) => {
     const dsRequest = cloneDeep(request);
@@ -138,13 +142,13 @@ export const getSupplementaryQueryProvider = (
           return undefined;
         }
         return type === SupplementaryQueryType.LogsVolume
-          ? queryLogsVolume(datasource, request, { targets: dsRequest.targets })
+          ? queryLogsVolume(datasource, request, { targets: dsRequest.targets, theme })
           : queryLogsSample(datasource, request);
       } else {
         return undefined;
       }
     } else {
-      return getSupplementaryQueryFallback(type, explorePanelData, targets, datasource.name);
+      return getSupplementaryQueryFallback(type, explorePanelData, targets, datasource.name, theme);
     }
   });
 

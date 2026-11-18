@@ -1,12 +1,10 @@
 import { css } from '@emotion/css';
 import { useCallback, useMemo, useRef, type ChangeEvent, type MouseEvent } from 'react';
 
-import { colorManipulator, type GrafanaTheme2, type LogRowModel, store } from '@grafana/data';
+import { colorManipulator, type GrafanaTheme2, store } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Dropdown, IconButton, Input, Menu, useStyles2 } from '@grafana/ui';
-
-import { copyText, handleOpenLogsContextClick } from '../../utils';
+import { copyTextToClipboard, Dropdown, IconButton, Input, Menu, useStyles2 } from '@grafana/ui';
 
 import { useLogDetailsContext } from './LogDetailsContext';
 import { type LogLineDetailsMode } from './LogLineDetails';
@@ -38,7 +36,6 @@ export const LogLineDetailsHeader = ({
   onSearch,
 }: Props) => {
   const {
-    getRowContextQuery,
     logOptionsStorageKey,
     logSupportsContext,
     noInteractions,
@@ -73,12 +70,12 @@ export const LogLineDetailsHeader = ({
   }, [focusLogLine, log, reportInteractionWrapper]);
 
   const copyLogLine = useCallback(() => {
-    copyText(log.entry, containerRef);
+    copyTextToClipboard(log.entry, containerRef);
     reportInteractionWrapper('logs_log_line_details_header_copy_clicked');
   }, [log.entry, reportInteractionWrapper]);
 
   const copyLogLineAsJson = useCallback(async () => {
-    copyText(await getLogAsJSON(log), containerRef);
+    copyTextToClipboard(await getLogAsJSON(log), containerRef);
     reportInteractionWrapper('logs_log_line_details_header_copy_json_clicked');
   }, [log, reportInteractionWrapper]);
 
@@ -102,11 +99,11 @@ export const LogLineDetailsHeader = ({
   );
 
   const showContext = useCallback(
-    async (event: MouseEvent<HTMLElement>) => {
-      handleOpenLogsContextClick(event, log, getRowContextQuery, (log: LogRowModel) => onOpenContext?.(log, () => {}));
+    (event: MouseEvent<HTMLElement>) => {
+      onOpenContext?.(log, () => {}, event);
       reportInteractionWrapper('logs_log_line_details_header_context_clicked');
     },
-    [log, getRowContextQuery, reportInteractionWrapper, onOpenContext]
+    [log, reportInteractionWrapper, onOpenContext]
   );
 
   const toggleDetailsMode = useCallback(() => {

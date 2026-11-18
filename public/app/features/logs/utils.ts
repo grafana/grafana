@@ -1,9 +1,9 @@
 import saveAs from 'file-saver';
 import { countBy, chain } from 'lodash';
-import { type MouseEvent } from 'react';
 import { lastValueFrom, map, type Observable } from 'rxjs';
 
 import {
+  type AbsoluteTimeRange,
   LogLevel,
   type LogRowModel,
   type LogLabelStatsModel,
@@ -13,14 +13,12 @@ import {
   type FieldConfig,
   FieldCache,
   FieldType,
+  DataFrameType,
   MutableDataFrame,
   type QueryResultMeta,
   LogsVolumeType,
   NumericLogLevel,
   getFieldDisplayName,
-  getDefaultTimeRange,
-  locationUtil,
-  urlUtil,
   dateTime,
   dateTimeFormat,
   type DataTransformerConfig,
@@ -33,14 +31,11 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
-import { getConfig } from 'app/core/config';
 
-import { getLogsExtractFields } from '../explore/Logs/LogsTable';
 import { downloadDataFrameAsCsv, downloadLogsModelAsTxt } from '../inspector/utils/download';
 
 import { LOG_LINE_BODY_FIELD_NAME } from './components/fieldSelector/logFields';
 import { getDataframeFields } from './components/logParser';
-import { type GetRowContextQueryFn } from './components/panel/LogLineMenu';
 import { DATAPLANE_LABELS_NAME, DATAPLANE_LABEL_TYPES_NAME, parseLogsFrame } from './logsFrame';
 
 /**
@@ -346,54 +341,6 @@ export const isLogsVolumeLimited = (dataFrames: DataFrame[]) => {
   return dataFrames[0]?.meta?.custom?.logsVolumeType === LogsVolumeType.Limited;
 };
 
-export const copyText = async (text: string, buttonRef: React.MutableRefObject<Element | null>) => {
-  if (navigator.clipboard && window.isSecureContext) {
-    return navigator.clipboard.writeText(text);
-  } else {
-    // Use a fallback method for browsers/contexts that don't support the Clipboard API.
-    // See https://web.dev/async-clipboard/#feature-detection.
-    // Use textarea so the user can copy multi-line content.
-    const textarea = document.createElement('textarea');
-    // Normally we'd append this to the body. However if we're inside a focus manager
-    // from react-aria, we can't focus anything outside of the managed area.
-    // Instead, let's append it to the button. Then we're guaranteed to be able to focus + copy.
-    buttonRef.current?.appendChild(textarea);
-    textarea.value = text;
-    textarea.focus();
-    textarea.select();
-    document.execCommand('copy');
-    textarea.remove();
-  }
-};
-
-export async function handleOpenLogsContextClick(
-  event: MouseEvent<HTMLElement>,
-  row: LogRowModel,
-  getRowContextQuery: GetRowContextQueryFn | undefined,
-  onOpenContext: (row: LogRowModel) => void
-) {
-  // if ctrl or meta key is pressed, open query in new Explore tab
-  if (getRowContextQuery && (event.nativeEvent.ctrlKey || event.nativeEvent.metaKey || event.nativeEvent.shiftKey)) {
-    const win = window.open('about:blank');
-    // for this request we don't want to use the cached filters from a context provider, but always want to refetch and clear
-    const query = await getRowContextQuery(row, undefined, false);
-    if (query && win) {
-      const url = urlUtil.renderUrl(locationUtil.assureBaseUrl(`${getConfig().appSubUrl}explore`), {
-        left: JSON.stringify({
-          datasource: query.datasource,
-          queries: [query],
-          range: getDefaultTimeRange(),
-        }),
-      });
-      win.location = url;
-
-      return;
-    }
-    win?.close();
-  }
-  onOpenContext(row);
-}
-
 export function getLogLevelInfo(dataFrame: DataFrame, allDataFrames: DataFrame[]) {
   const fieldCache = new FieldCache(dataFrame);
   const timeField = fieldCache.getFirstFieldOfType(FieldType.time);
@@ -613,4 +560,64 @@ export function getLogsVisibleRange(logs: LogRowModel[]) {
     end = values[values.length - 1];
   }
   return { end, start };
+}
+
+function getPreviousLog(row: LogRowModel, allLogs: LogRowModel[]): LogRowModel | null {
+  for (let i = allLogs.indexOf(row) - 1; i >= 0; i--) {
+    if (allLogs[i].timeEpochMs > row.timeEpochMs) {
+      return allLogs[i];
+    }
+  }
+
+  return null;
+}
+
+export function getLogsPermalinkRange(row: LogRowModel, rows: LogRowModel[], absoluteRange: AbsoluteTimeRange) {
+  // With infinite scrolling, the time range of the log line can be after the absolute range or beyond the request line limit, so we need to adjust
+  // Look for the previous sibling log, and use its timestamp
+  const allLogs = rows.filter((logRow) => logRow.dataFrame.refId === row.dataFrame.refId);
+  const prevLog = getPreviousLog(row, allLogs);
+
+  if (row.timeEpochMs > absoluteRange.to && !prevLog) {
+    // Because there's no sibling and the current `to` is oldest than the log, we have no reference we can use for the interval
+    // This only happens when you scroll into the future and you want to share the first log of the list
+    return {
+      from: new Date(absoluteRange.from).toISOString(),
+      // Slide 1ms otherwise it's very likely to be omitted in the results
+      to: new Date(row.timeEpochMs + 1).toISOString(),
+    };
+  }
+
+  return {
+    from: new Date(absoluteRange.from).toISOString(),
+    to: new Date(prevLog ? prevLog.timeEpochMs : absoluteRange.to).toISOString(),
+  };
+}
+
+// TODO: explore if `logsFrame.ts` can help us with getting the right fields
+// TODO Why is typeInfo not defined on the Field interface?
+export function getLogsExtractFields(dataFrame: DataFrame) {
+  return dataFrame.fields
+    .filter((field: Field & { typeInfo?: { frame: string } }) => {
+      const isFieldLokiLabels =
+        field.typeInfo?.frame === 'json.RawMessage' &&
+        field.name === 'labels' &&
+        dataFrame?.meta?.type !== DataFrameType.LogLines;
+      const isFieldDataplaneLabels =
+        field.name === 'labels' && field.type === FieldType.other && dataFrame?.meta?.type === DataFrameType.LogLines;
+      return isFieldLokiLabels || isFieldDataplaneLabels;
+    })
+    .flatMap((field: Field) => {
+      return [
+        {
+          id: 'extractFields',
+          options: {
+            format: 'json',
+            keepTime: false,
+            replace: false,
+            source: field.name,
+          },
+        },
+      ];
+    });
 }

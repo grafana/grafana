@@ -5,6 +5,7 @@ import Prism, { type Grammar, type Token } from 'prismjs';
 import {
   type DataFrame,
   dateTimeFormat,
+  type GetFieldLinksFn,
   type Labels,
   LogLevel,
   type LogRowModel,
@@ -12,7 +13,6 @@ import {
   systemDateFormats,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { type GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { checkLogsError, checkLogsSampled, escapeUnescapedString, sortLogRows } from '../../utils';
 import { LOG_LINE_BODY_FIELD_NAME, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields';

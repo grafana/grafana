@@ -1,9 +1,16 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { copyTextToClipboard } from '@grafana/ui';
+
 import { createLogRow } from '../../logs/components/mocks/logRow';
 
 import { PopoverMenu } from './PopoverMenu';
+
+jest.mock('@grafana/ui', () => ({
+  ...jest.requireActual('@grafana/ui'),
+  copyTextToClipboard: jest.fn(),
+}));
 
 const row = createLogRow();
 
@@ -118,4 +125,34 @@ test('Can be disabled', async () => {
   expect(screen.getByText('Disable menu')).toBeInTheDocument();
   await userEvent.click(screen.getByText('Disable menu'));
   expect(onDisable).toHaveBeenCalledTimes(1);
+});
+
+test('Copies the captured selection through the public helper before closing', async () => {
+  const close = jest.fn();
+  const copy = jest.mocked(copyTextToClipboard).mockImplementation((text, appendTo) => {
+    expect(text).toBe('selected log text');
+    expect(appendTo?.current).toBe(screen.getByRole('menu'));
+    expect(close).not.toHaveBeenCalled();
+    return Promise.resolve();
+  });
+  try {
+    render(
+      <PopoverMenu
+        selection="selected log text"
+        x={0}
+        y={0}
+        row={row}
+        close={close}
+        onDisable={() => {}}
+        onClickFilterString={() => {}}
+      />
+    );
+
+    await userEvent.click(screen.getByText('Copy selection'));
+
+    expect(copy).toHaveBeenCalledTimes(1);
+    expect(close).toHaveBeenCalledTimes(1);
+  } finally {
+    copy.mockRestore();
+  }
 });

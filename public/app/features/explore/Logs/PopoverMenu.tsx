@@ -4,9 +4,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import { type GrafanaTheme2, type LogRowModel } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Menu, useStyles2 } from '@grafana/ui';
-
-import { copyText } from '../../logs/utils';
+import { copyTextToClipboard, Menu, useStyles2 } from '@grafana/ui';
 
 interface PopoverMenuProps {
   selection: string;
@@ -65,7 +63,7 @@ export const PopoverMenu = ({
           <Menu.Item
             label={t('logs.popover-menu.copy', 'Copy selection')}
             onClick={() => {
-              copyText(selection, containerRef);
+              copyTextToClipboard(selection, containerRef);
               close();
               track('copy', selection.length, row.datasourceType);
             }}

@@ -2,6 +2,7 @@ import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import {
   createContext,
   type Dispatch,
+  type MouseEvent,
   type ReactNode,
   type SetStateAction,
   useCallback,
@@ -34,7 +35,7 @@ import { getDisplayedFieldsForLogs } from '../otel/formats';
 
 import { getDefaultDetailsMode, getDetailsWidth } from './LogDetailsContext';
 import { type LogLineTimestampResolution } from './LogLine';
-import { type GetRowContextQueryFn, type LogLineMenuCustomItem } from './LogLineMenu';
+import { type LogLineMenuCustomItem } from './LogLineMenu';
 import { type LogListOptions, type LogListFontSize } from './LogList';
 import { collectInsights } from './analytics';
 import { logsSupportHighlighting } from './grammar';
@@ -160,7 +161,6 @@ export interface Props {
   displayedFields: string[];
   filterLevels?: LogLevel[];
   fontSize: LogListFontSize;
-  getRowContextQuery?: GetRowContextQueryFn;
   isCustomGrammar?: boolean;
   isLabelFilterActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
   logs: LogRowModel[];
@@ -179,7 +179,7 @@ export interface Props {
   onLogLineHover?: (row?: LogRowModel) => void;
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
   onPinLine?: (row: LogRowModel) => void;
-  onOpenContext?: (row: LogRowModel, onClose: () => void) => void;
+  onOpenContext?: (row: LogRowModel, onClose: () => void, event?: MouseEvent<HTMLElement>) => void;
   onUnpinLine?: (row: LogRowModel) => void;
   permalinkedLogId?: string;
   pinLineButtonTooltipTitle?: PopoverContent;
@@ -210,7 +210,6 @@ export const LogListContextProvider = ({
   fontSize,
   isCustomGrammar,
   isLabelFilterActive,
-  getRowContextQuery,
   logs,
   logLineMenuCustomItems,
   logsMeta,
@@ -625,7 +624,6 @@ export const LogListContextProvider = ({
         hasUnescapedContent,
         isCustomGrammar,
         isLabelFilterActive,
-        getRowContextQuery,
         logSupportsContext,
         logLineMenuCustomItems,
         logOptionsStorageKey,

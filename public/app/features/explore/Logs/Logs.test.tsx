@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ComponentProps } from 'react';
 import { Provider } from 'react-redux';
@@ -17,6 +17,7 @@ import {
   type DataQuery,
 } from '@grafana/data';
 import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
+import { createLogRow } from 'app/features/logs/components/mocks/logRow';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
 import { configureStore } from 'app/store/configureStore';
 
@@ -27,6 +28,7 @@ import { makeExplorePaneState } from '../state/utils';
 import { Logs } from './Logs';
 import { visualisationTypeKey } from './utils/logs';
 import { getMockElasticFrame, getMockLokiFrame } from './utils/mocks';
+import { handleOpenLogsContextClick } from './utils/url';
 
 const reportInteraction = jest.fn();
 jest.mock('@grafana/runtime', () => ({
@@ -222,6 +224,23 @@ describe('Logs', () => {
     expect(await screen.findByText('log message 3')).toBeInTheDocument();
     expect(screen.getByText('log message 2')).toBeInTheDocument();
     expect(screen.getByText('log message 1')).toBeInTheDocument();
+  });
+
+  it('routes modified context-menu clicks through the Explore wrapper', async () => {
+    const query = { refId: 'context', datasource: { uid: 'loki' } };
+    const getRowContextQuery = jest.fn().mockResolvedValue(query);
+    const popup = { location: '', close: jest.fn() } as unknown as Window;
+    const openWindow = jest.spyOn(window, 'open').mockReturnValue(popup);
+    try {
+      setup({ showContextToggle: () => true, getRowContextQuery });
+      const menus = await screen.findAllByLabelText('Log menu');
+      await userEvent.click(menus[0]);
+      fireEvent.click(await screen.findByText('Show context'), { ctrlKey: true });
+      await waitFor(() => expect(popup.location).toEqual(expect.stringContaining('explore?')));
+      expect(getRowContextQuery).toHaveBeenCalledWith(expect.objectContaining({ uid: '3' }), undefined, false);
+    } finally {
+      openWindow.mockRestore();
+    }
   });
 
   it('should render no logs found', () => {
@@ -639,3 +658,79 @@ const makeLog = (overrides: Partial<LogRowModel>): LogRowModel => {
     ...overrides,
   };
 };
+
+describe('host context navigation', () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it.each(['ctrlKey', 'metaKey', 'shiftKey'])('opens a fresh Explore query for %s', async (modifier) => {
+    const row = createLogRow();
+    const query = { refId: 'context', datasource: { uid: 'loki' } };
+    const getRowContextQuery = jest.fn().mockResolvedValue(query);
+    const onOpenContext = jest.fn();
+    const popup = { location: '', close: jest.fn() } as unknown as Window;
+    const openWindow = jest.spyOn(window, 'open').mockReturnValue(popup);
+    render(
+      <button onClick={(event) => void handleOpenLogsContextClick(event, row, getRowContextQuery, onOpenContext)}>
+        Context
+      </button>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Context' }), { [modifier]: true });
+
+    await waitFor(() => expect(popup.location).toEqual(expect.stringContaining('explore?')));
+    expect(openWindow).toHaveBeenCalledWith('about:blank');
+    expect(getRowContextQuery).toHaveBeenCalledWith(row, undefined, false);
+    const url = new URL(String(popup.location), window.location.href);
+    expect(JSON.parse(url.searchParams.get('left')!)).toMatchObject({ datasource: query.datasource, queries: [query] });
+    expect(onOpenContext).not.toHaveBeenCalled();
+  });
+
+  it('opens the context modal for an ordinary click', async () => {
+    const row = createLogRow();
+    const getRowContextQuery = jest.fn();
+    const onOpenContext = jest.fn();
+    const openWindow = jest.spyOn(window, 'open');
+    render(
+      <button onClick={(event) => void handleOpenLogsContextClick(event, row, getRowContextQuery, onOpenContext)}>
+        Context
+      </button>
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Context' }));
+    expect(onOpenContext).toHaveBeenCalledWith(row);
+    expect(getRowContextQuery).not.toHaveBeenCalled();
+    expect(openWindow).not.toHaveBeenCalled();
+  });
+
+  it('closes the blank tab and opens the modal when no context query is available', async () => {
+    const row = createLogRow();
+    const getRowContextQuery = jest.fn().mockResolvedValue(null);
+    const onOpenContext = jest.fn();
+    const close = jest.fn();
+    jest.spyOn(window, 'open').mockReturnValue({ close } as unknown as Window);
+    render(
+      <button onClick={(event) => void handleOpenLogsContextClick(event, row, getRowContextQuery, onOpenContext)}>
+        Context
+      </button>
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Context' }), { ctrlKey: true });
+    await waitFor(() => expect(onOpenContext).toHaveBeenCalledWith(row));
+    expect(close).toHaveBeenCalledTimes(1);
+  });
+
+  it('opens the modal when the browser blocks the new tab', async () => {
+    const row = createLogRow();
+    const getRowContextQuery = jest.fn().mockResolvedValue({ refId: 'context', datasource: { uid: 'loki' } });
+    const onOpenContext = jest.fn();
+    jest.spyOn(window, 'open').mockReturnValue(null);
+    render(
+      <button onClick={(event) => void handleOpenLogsContextClick(event, row, getRowContextQuery, onOpenContext)}>
+        Context
+      </button>
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Context' }), { ctrlKey: true });
+    await waitFor(() => expect(onOpenContext).toHaveBeenCalledWith(row));
+    expect(getRowContextQuery).toHaveBeenCalledWith(row, undefined, false);
+  });
+});

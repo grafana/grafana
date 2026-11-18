@@ -1,4 +1,5 @@
 import { type ScopedVars } from './ScopedVars';
+import { type DataFrame, type Field } from './dataFrame';
 import { type ExploreCorrelationHelperData, type ExplorePanelsState } from './explore';
 import { type LinkTarget } from './linkTarget';
 import { type InterpolateFunction } from './panel';
@@ -111,6 +112,13 @@ export interface LinkModel<T = any> {
     timeRange?: TimeRange;
   };
 }
+
+export type GetFieldLinksFn = (
+  field: Field,
+  rowIndex: number,
+  dataFrame: DataFrame,
+  vars: ScopedVars
+) => Array<LinkModel<Field>>;
 
 /**
  * Provides a way to produce links on demand

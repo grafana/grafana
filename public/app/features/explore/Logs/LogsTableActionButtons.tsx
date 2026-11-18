@@ -11,9 +11,9 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { ClipboardButton, type CustomCellRendererProps, IconButton, Modal, useTheme2 } from '@grafana/ui';
-import { getLogsPermalinkRange } from 'app/core/utils/shortLinks';
 import { getUrlStateFromPaneState } from 'app/features/explore/hooks/useStateSync/external.utils';
 import { type LogsFrame, DATAPLANE_ID_NAME } from 'app/features/logs/logsFrame';
+import { getLogsPermalinkRange } from 'app/features/logs/utils';
 import { getState } from 'app/store/store';
 
 import { getExploreBaseUrl } from './utils/url';

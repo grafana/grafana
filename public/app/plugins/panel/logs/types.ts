@@ -1,6 +1,6 @@
 import type { Grammar } from 'prismjs';
 
-import { CoreApp, type DataFrame, type Field, type LinkModel, type ScopedVars } from '@grafana/data';
+import { CoreApp, type DataFrame } from '@grafana/data';
 import { type LogLineMenuCustomItem } from 'app/features/logs/components/panel/LogLineMenu';
 import { type LogListOptions } from 'app/features/logs/components/panel/LogList';
 
@@ -14,13 +14,6 @@ type onClickHideFieldType = (value: string) => void;
 export type onNewLogsReceivedType = (allLogs: DataFrame[], newLogs: DataFrame[]) => void;
 type onLogOptionsChangeType = (option: LogListOptions, value: string | boolean | string[]) => void;
 type setDisplayedFieldsType = (fields: string[]) => void;
-
-export type GetFieldLinksFn = (
-  field: Field,
-  rowIndex: number,
-  dataFrame: DataFrame,
-  vars: ScopedVars
-) => Array<LinkModel<Field>>;
 
 export function isOnClickFilterLabel(callback: unknown): callback is onClickFilterLabelType {
   return typeof callback === 'function';

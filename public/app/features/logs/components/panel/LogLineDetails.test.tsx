@@ -19,10 +19,10 @@ import {
 } from '@grafana/data';
 import { setPluginLinksHook, usePluginLinks, getDataSourceInstance } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
+import { copyTextToClipboard } from '@grafana/ui';
 import { createLokiDatasource } from 'app/features/loki-helpers/mocks';
 
 import { DATAPLANE_LABEL_TYPES_NAME, DATAPLANE_LABELS_NAME } from '../../logsFrame';
-import * as logsUtils from '../../utils';
 import { getFieldSelectorWidth } from '../fieldSelector/fieldSelectorUtils';
 import { LOG_LINE_BODY_FIELD_NAME } from '../fieldSelector/logFields';
 import { createLogLine } from '../mocks/logRow';
@@ -45,6 +45,11 @@ const setBooleanFlags = (flags: Record<string, boolean>) => {
     value: getFlagValue(flag, defaultValue),
   }));
 };
+
+jest.mock('@grafana/ui', () => ({
+  ...jest.requireActual('@grafana/ui'),
+  copyTextToClipboard: jest.fn(),
+}));
 
 jest.mock('@openfeature/react-sdk', () => ({
   ...jest.requireActual('@openfeature/react-sdk'),
@@ -171,16 +176,16 @@ describe('LogLineDetails', () => {
   });
 
   test('Copy log as JSON from header copies structured JSON from the log', async () => {
-    const copyTextSpy = jest.spyOn(logsUtils, 'copyText').mockResolvedValue(undefined);
+    const copyTextSpy = jest.mocked(copyTextToClipboard).mockResolvedValue(undefined);
 
     await setup(undefined, { labels: { svc: 'api' } });
 
     await userEvent.click(screen.getByRole('button', { name: /Copy to clipboard/i }));
     await userEvent.click(screen.getByRole('menuitem', { name: /JSON/i }));
 
-    await waitFor(() => {
+    await waitFor(async () => {
       expect(copyTextSpy).toHaveBeenCalled();
-      const text = copyTextSpy.mock.calls[0][0];
+      const text = await copyTextSpy.mock.calls[0][0];
       const parsed = JSON.parse(text);
       expect(parsed).toMatchObject({
         line: expect.any(String),
@@ -189,6 +194,17 @@ describe('LogLineDetails', () => {
       });
     });
     copyTextSpy.mockRestore();
+  });
+
+  test('forwards modified header context clicks to the host', async () => {
+    const onOpenContext = jest.fn();
+    await setup(undefined, undefined, { logSupportsContext: () => true, onOpenContext });
+    fireEvent.click(screen.getByRole('button', { name: 'Show context' }), { metaKey: true });
+    expect(onOpenContext).toHaveBeenCalledWith(
+      expect.objectContaining({ logLevel: LogLevel.error }),
+      expect.any(Function),
+      expect.objectContaining({ metaKey: true })
+    );
   });
 
   describe('Toggleable filters', () => {
