@@ -152,7 +152,7 @@ func (s *ownerScopedStore) ownedObjects(ctx context.Context) (items []runtime.Ob
 // owner of the name writes it without having to create it first. The update is
 // attempted first, and only a not-found takes the create path.
 func (s *ownerScopedStore) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
-	unconditional := withStoredResourceVersion{objInfo}
+	unconditional := withStoredResourceVersion{UpdatedObjectInfo: objInfo, resource: s.resource}
 	updated, created, err := s.Store.Update(ctx, name, unconditional, createValidation, updateValidation, forceAllowCreate, options)
 	if err == nil || !apierrors.IsNotFound(err) {
 		return updated, created, err
@@ -172,7 +172,7 @@ func (s *ownerScopedStore) Update(ctx context.Context, name string, objInfo rest
 	if err != nil {
 		return nil, false, err
 	}
-	// "0" asks for an unconditional write, and a create takes no version.
+	// "0" asks for a create only, and a create takes no version.
 	objMeta, err := meta.Accessor(obj)
 	if err != nil {
 		return nil, false, err
@@ -198,8 +198,13 @@ func (s *ownerScopedStore) Update(ctx context.Context, name string, objInfo rest
 // withStoredResourceVersion gives an updated object that names no resource
 // version the one of the object it replaces. The storage layer then finds it
 // current, as it would for a store that allows unconditional updates.
+//
+// The version "0" is different: it asks for the object to be created, so it
+// conflicts with one that exists. A writer that found nothing stored cannot
+// then overwrite what a concurrent writer created in the meantime.
 type withStoredResourceVersion struct {
 	rest.UpdatedObjectInfo
+	resource schema.GroupResource
 }
 
 func (i withStoredResourceVersion) UpdatedObject(ctx context.Context, current runtime.Object) (runtime.Object, error) {
@@ -211,12 +216,16 @@ func (i withStoredResourceVersion) UpdatedObject(ctx context.Context, current ru
 	if err != nil {
 		return nil, err
 	}
-	if rv := target.GetResourceVersion(); rv != "" && rv != "0" {
+	rv := target.GetResourceVersion()
+	if rv != "" && rv != "0" {
 		return updated, nil
 	}
 	stored, err := meta.Accessor(current)
 	if err != nil {
 		return nil, err
+	}
+	if rv == "0" && stored.GetResourceVersion() != "" {
+		return nil, apierrors.NewConflict(i.resource, stored.GetName(), fmt.Errorf("the object already exists"))
 	}
 	target.SetResourceVersion(stored.GetResourceVersion())
 	return updated, nil

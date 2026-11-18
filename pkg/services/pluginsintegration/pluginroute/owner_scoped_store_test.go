@@ -164,14 +164,22 @@ func TestWithStoredResourceVersion(t *testing.T) {
 	}
 	update := func(t *testing.T, requested *unstructured.Unstructured, current *unstructured.Unstructured) string {
 		t.Helper()
-		got, err := withStoredResourceVersion{rest.DefaultUpdatedObjectInfo(requested)}.UpdatedObject(context.Background(), current)
+		got, err := withStoredResourceVersion{UpdatedObjectInfo: rest.DefaultUpdatedObjectInfo(requested)}.UpdatedObject(context.Background(), current)
 		require.NoError(t, err)
 		return got.(*unstructured.Unstructured).GetResourceVersion()
 	}
 
 	t.Run("an update without a resource version is made against the stored one", func(t *testing.T) {
 		require.Equal(t, "7", update(t, withRV(""), withRV("7")))
-		require.Equal(t, "7", update(t, withRV("0"), withRV("7")))
+	})
+
+	t.Run("version 0 asks for a create, so it conflicts with a stored object", func(t *testing.T) {
+		_, err := withStoredResourceVersion{UpdatedObjectInfo: rest.DefaultUpdatedObjectInfo(withRV("0"))}.UpdatedObject(context.Background(), withRV("7"))
+		require.True(t, apierrors.IsConflict(err))
+
+		got, err := withStoredResourceVersion{UpdatedObjectInfo: rest.DefaultUpdatedObjectInfo(withRV("0"))}.UpdatedObject(context.Background(), withRV(""))
+		require.NoError(t, err)
+		require.Equal(t, "", got.(*unstructured.Unstructured).GetResourceVersion())
 	})
 
 	t.Run("an update that names one keeps it", func(t *testing.T) {
@@ -180,7 +188,7 @@ func TestWithStoredResourceVersion(t *testing.T) {
 
 	t.Run("the update's own failure is returned", func(t *testing.T) {
 		boom := errors.New("boom")
-		_, err := withStoredResourceVersion{failingUpdate{boom}}.UpdatedObject(context.Background(), withRV("7"))
+		_, err := withStoredResourceVersion{UpdatedObjectInfo: failingUpdate{boom}}.UpdatedObject(context.Background(), withRV("7"))
 		require.ErrorIs(t, err, boom)
 	})
 }

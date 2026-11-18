@@ -23,11 +23,27 @@ type fakeStars struct {
 	updated     *v1alpha1.Stars
 	updatedWith resource.UpdateOptions
 	deleted     *resource.Identifier
+	stored      *v1alpha1.Stars // returned by Get
 	err         error
+	errs        []error // returned by the first Updates, before err
+	updates     int
+}
+
+func (f *fakeStars) Get(context.Context, resource.Identifier) (*v1alpha1.Stars, error) {
+	if f.stored == nil {
+		return nil, apierrors.NewNotFound(schema.GroupResource{Group: v1alpha1.APIGroup, Resource: "stars"}, "user-1")
+	}
+	return f.stored, nil
 }
 
 func (f *fakeStars) Update(_ context.Context, obj *v1alpha1.Stars, opts resource.UpdateOptions) (*v1alpha1.Stars, error) {
 	f.updated, f.updatedWith = obj, opts
+	f.updates++
+	if len(f.errs) > 0 {
+		err := f.errs[0]
+		f.errs = f.errs[1:]
+		return nil, err
+	}
 	return obj, f.err
 }
 
@@ -114,6 +130,26 @@ func TestStarsUpdate(t *testing.T) {
 		client := &fakeStars{err: apierrors.NewConflict(schema.GroupResource{Group: v1alpha1.APIGroup, Resource: "stars"}, "user-1", nil)}
 		code, _ := call(t, client, http.MethodPut, "user-1", addPath, starsParent(t, "user-1", "xyz"))
 		require.Equal(t, http.StatusConflict, code)
+	})
+
+	t.Run("a first star that loses a race is added to what the winner stored", func(t *testing.T) {
+		conflict := apierrors.NewConflict(schema.GroupResource{Group: v1alpha1.APIGroup, Resource: "stars"}, "user-1", nil)
+		client := &fakeStars{errs: []error{conflict}}
+		client.stored = &v1alpha1.Stars{ObjectMeta: metav1.ObjectMeta{Name: "user-1", Namespace: "default", ResourceVersion: "3"}}
+		client.stored.Spec.Add("dashboard.grafana.app", "Dashboard", "xyz")
+
+		code, _ := call(t, client, http.MethodPut, "user-1", addPath, nil)
+		require.Equal(t, http.StatusOK, code)
+		require.Equal(t, 2, client.updates)
+		require.Equal(t, "3", client.updatedWith.ResourceVersion, "the retry is against the stored version")
+		require.ElementsMatch(t, []string{"abc", "xyz"}, client.updated.Spec.Resource[0].Names)
+	})
+
+	t.Run("a write that keeps conflicting gives up", func(t *testing.T) {
+		client := &fakeStars{err: apierrors.NewConflict(schema.GroupResource{Group: v1alpha1.APIGroup, Resource: "stars"}, "user-1", nil)}
+		code, _ := call(t, client, http.MethodPut, "user-1", addPath, starsParent(t, "user-1", "xyz"))
+		require.Equal(t, http.StatusConflict, code)
+		require.Equal(t, maxStarsAttempts, client.updates)
 	})
 
 	t.Run("without an API connection the route is unavailable", func(t *testing.T) {

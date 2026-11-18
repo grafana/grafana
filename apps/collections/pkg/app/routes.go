@@ -21,6 +21,7 @@ const starsUpdatePath = "update/{group}/{kind}/{id}"
 
 // starsClient is what the update route needs of the stars API.
 type starsClient interface {
+	Get(ctx context.Context, identifier resource.Identifier) (*v1alpha1.Stars, error)
 	Update(ctx context.Context, obj *v1alpha1.Stars, opts resource.UpdateOptions) (*v1alpha1.Stars, error)
 	Delete(ctx context.Context, identifier resource.Identifier, opts resource.DeleteOptions) error
 }
@@ -63,11 +64,36 @@ func (r *starsRoutes) update(ctx context.Context, w app.CustomRouteResponseWrite
 	if err != nil {
 		return writeStatus(w, err)
 	}
+	// The write is made against the version that was read, so a concurrent
+	// write conflicts instead of being overwritten. A conflict reads the
+	// object again and applies the change to what is stored now.
+	for attempt := 1; ; attempt++ {
+		err = r.write(ctx, resource.Identifier{Namespace: ident.Namespace, Name: ident.Name}, stars, item, remove)
+		if !apierrors.IsConflict(err) || attempt == maxStarsAttempts {
+			return writeStatus(w, err)
+		}
+		stars, err = r.client.Get(ctx, resource.Identifier{Namespace: ident.Namespace, Name: ident.Name})
+		if apierrors.IsNotFound(err) {
+			stars, err = nil, nil
+		}
+		if err != nil {
+			return writeStatus(w, err)
+		}
+	}
+}
+
+// maxStarsAttempts bounds how often a write that conflicts is made again.
+const maxStarsAttempts = 3
+
+// write applies the change to stars, the stored object or nil when there is none.
+func (r *starsRoutes) write(ctx context.Context, ident resource.Identifier, stars *v1alpha1.Stars, item starItem, remove bool) error {
 	if stars == nil {
 		if remove {
-			return writeStatus(w, nil) // nothing to remove from
+			return nil // nothing to remove from
 		}
 		stars = &v1alpha1.Stars{ObjectMeta: metav1.ObjectMeta{Name: ident.Name, Namespace: ident.Namespace}}
+	} else {
+		stars = stars.DeepCopy()
 	}
 
 	if remove {
@@ -76,22 +102,19 @@ func (r *starsRoutes) update(ctx context.Context, w app.CustomRouteResponseWrite
 		stars.Spec.Add(item.group, item.kind, item.id)
 	}
 
-	switch {
-	case len(stars.Spec.Resource) == 0:
-		err = r.client.Delete(ctx, resource.Identifier{Namespace: ident.Namespace, Name: ident.Name}, resource.DeleteOptions{})
-	default:
-		// A collection-level create is not allowed for a user, so a first star
-		// is an update to the name, which the store turns into a create. The
-		// client reads the object first unless it is given a resource version,
-		// and "0" is the unconditional one: it neither requires the object to
-		// exist nor to be at a version.
-		resourceVersion := stars.ResourceVersion
-		if resourceVersion == "" {
-			resourceVersion = "0"
-		}
-		_, err = r.client.Update(ctx, stars, resource.UpdateOptions{ResourceVersion: resourceVersion})
+	if len(stars.Spec.Resource) == 0 {
+		return r.client.Delete(ctx, resource.Identifier{Namespace: ident.Namespace, Name: ident.Name}, resource.DeleteOptions{})
 	}
-	return writeStatus(w, err)
+	// A collection-level create is not allowed for a user, so a first star is
+	// an update to the name, which the store turns into a create. The client
+	// reads the object first unless it is given a resource version, and "0"
+	// asks the store for a create that conflicts with an existing object.
+	resourceVersion := stars.ResourceVersion
+	if resourceVersion == "" {
+		resourceVersion = "0"
+	}
+	_, err := r.client.Update(ctx, stars, resource.UpdateOptions{ResourceVersion: resourceVersion})
+	return err
 }
 
 // parentStars is the stored object, or nil when there is none.
