@@ -431,6 +431,33 @@ describe('v2 dashboard API', () => {
       expect(mockPut.mock.calls[0][1].metadata.labels).toEqual({});
     });
 
+    it('does not add the extension labels when draft mode is off', async () => {
+      registerDraftDashboardExtension({
+        isEnabled: () => false,
+        getCreateLabels,
+        DraftBadge: () => null,
+        SaveAndPublishButton: () => null,
+      });
+      const api = new K8sDashboardV2API();
+      await api.saveDashboard({ dashboard: defaultDashboardV2Spec(), k8s: {} });
+
+      expect(mockPost).toHaveBeenCalledTimes(1);
+      expect(mockPost.mock.calls[0][1].metadata.labels).toBeUndefined();
+      expect(getCreateLabels).not.toHaveBeenCalled();
+    });
+
+    it('leaves the caller labels untouched when saving published fails', async () => {
+      mockPut.mockRejectedValueOnce(new Error('save failed'));
+      const labels = { [LabelKeyLifecycle]: LifecycleDraft };
+      const api = new K8sDashboardV2API();
+
+      await expect(
+        api.saveDashboard({ dashboard: defaultDashboardV2Spec(), k8s: { name: 'test-dash', labels }, publish: true })
+      ).rejects.toThrow('save failed');
+
+      expect(labels).toEqual({ [LabelKeyLifecycle]: LifecycleDraft });
+    });
+
     it('does not ask for or add the extension labels when updating a dashboard', async () => {
       const api = new K8sDashboardV2API();
       await api.saveDashboard({

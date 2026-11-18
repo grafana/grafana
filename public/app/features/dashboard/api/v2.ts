@@ -1,3 +1,5 @@
+import { omit } from 'lodash';
+
 import { locationUtil, type UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type Status, type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
@@ -163,7 +165,8 @@ export class K8sDashboardV2API
     if (obj.metadata.name && !options.create) {
       delete obj.metadata.labels?.[DeprecatedInternalId];
       if (options.publish) {
-        delete obj.metadata.labels?.[LabelKeyLifecycle];
+        // Copy instead of deleting: the labels object is the open dashboard's, and a failed save must not change it
+        obj.metadata.labels = omit(obj.metadata.labels, LabelKeyLifecycle);
       }
       return this.client.update(obj, undefined, requestOptions).then((v) => this.asSaveDashboardResponseDTO(v));
     }
@@ -171,7 +174,9 @@ export class K8sDashboardV2API
     // clear the deprecated id label so the backend generates a new unique id to prevent duplicate ids.
     delete obj.metadata.labels?.[DeprecatedInternalId];
 
-    const createLabels = options.publish ? undefined : await getDraftDashboardExtension()?.getCreateLabels();
+    const draftExtension = getDraftDashboardExtension();
+    const createLabels =
+      !options.publish && draftExtension?.isEnabled() ? await draftExtension.getCreateLabels() : undefined;
     if (createLabels && Object.keys(createLabels).length > 0) {
       obj.metadata.labels = { ...obj.metadata.labels, ...createLabels };
     }
