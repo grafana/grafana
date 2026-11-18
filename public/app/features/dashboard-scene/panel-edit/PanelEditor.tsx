@@ -178,6 +178,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     const changedState = layoutItem.state;
     const changedAdHocTransformations = collectAdHocTransformations(layoutItem);
     const originalState = this._layoutItemState!;
+    const restoreLibraryRepeats = Boolean(getLibraryPanelBehavior(panel));
     const originalAdHocTransformations = this._layoutItemAdHocTransformations;
 
     // Temp fix for old edit mode
@@ -194,10 +195,10 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
         // Because panel edit makes changes directly to layout item & panel
         // we only need to do this in case we want to re-perform after undo
         if (layoutItem.state !== changedState) {
-          setLayoutItemState(layoutItem, changedState, changedAdHocTransformations);
+          setLayoutItemState(layoutItem, changedState, changedAdHocTransformations, restoreLibraryRepeats);
         }
       },
-      undo: () => setLayoutItemState(layoutItem, originalState, originalAdHocTransformations),
+      undo: () => setLayoutItemState(layoutItem, originalState, originalAdHocTransformations, restoreLibraryRepeats),
     });
 
     // sadly we cannot publish this event directly here as the main dashboard edit / undo system
@@ -241,7 +242,13 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     }
     // Advance saved layout while retaining library content and its transformation baseline.
     this._originalSaveModel = this.getSaveModel(original.body);
-    this._layoutItemState = sceneUtils.cloneSceneObjectState({ ...this._layoutItem.state, body: original.body });
+    this._layoutItemState = sceneUtils.cloneSceneObjectState({
+      ...this._layoutItem.state,
+      body: original.body,
+      // Repeat copies are runtime content, not part of the saved dashboard layout.
+      repeatedPanels: undefined,
+      ...(this._layoutItem instanceof AutoGridItem ? { repeatedConditionalRendering: undefined } : {}),
+    });
   }
 
   /**
@@ -408,7 +415,12 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       dashboard.removePanel(panel);
     } else {
       // Revert any layout element changes
-      setLayoutItemState(this._layoutItem, this._layoutItemState!, this._layoutItemAdHocTransformations);
+      setLayoutItemState(
+        this._layoutItem,
+        this._layoutItemState!,
+        this._layoutItemAdHocTransformations,
+        Boolean(getLibraryPanelBehavior(panel))
+      );
     }
 
     locationService.partial({ editPanel: null });
@@ -416,7 +428,9 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
   public dashboardSaved() {
     if (getLibraryPanelBehavior(this.getPanel())) {
-      this.refreshLibraryLayoutBaseline();
+      if (getDashboardSceneFor(this).isV2()) {
+        this.refreshLibraryLayoutBaseline();
+      }
     } else {
       this.setOriginalState(this.state.panelRef);
     }
@@ -508,10 +522,31 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 function setLayoutItemState(
   layoutItem: DashboardLayoutItem,
   state: SceneObjectState,
-  baseline?: AdHocTransformationsByPanelKey
+  baseline?: AdHocTransformationsByPanelKey,
+  restoreLibraryRepeats = false
 ) {
   const adHocTransformations = collectAdHocTransformations(layoutItem);
-  layoutItem.setState(state);
+  const previousVariable = layoutItem instanceof AutoGridItem ? layoutItem.state.variableName : undefined;
+  if (restoreLibraryRepeats && layoutItem instanceof DashboardGridItem) {
+    layoutItem.restorePanelEditState(state);
+  } else {
+    layoutItem.setState(state);
+  }
+  if (restoreLibraryRepeats && layoutItem instanceof AutoGridItem) {
+    // Restored library content must replace derived copies even with unchanged repeat values.
+    if (!layoutItem.state.variableName) {
+      layoutItem.state.body.setState({ $variables: undefined });
+    }
+    layoutItem.setState({ repeatedPanels: undefined, repeatedConditionalRendering: undefined });
+    if (previousVariable !== layoutItem.state.variableName) {
+      layoutItem.setRepeatByVariable(layoutItem.state.variableName);
+    }
+    // The setter already repeats unless unchanged values (or loading) prevented it.
+    if (!layoutItem.state.repeatedPanels) {
+      layoutItem.handleEditChange();
+    }
+    layoutItem.state.conditionalRendering?.setTarget(layoutItem.state.body);
+  }
   restoreAdHocTransformations(layoutItem, adHocTransformations, baseline);
 }
 

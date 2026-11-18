@@ -117,6 +117,22 @@ export class DashboardGridItem
     this.setState({ body });
   }
 
+  public restorePanelEditState(state: Partial<DashboardGridItemState>) {
+    // The snapshot omits runtime repeats; resize handling must not use that temporary child count.
+    this._handleGridSizeUnsubscribe();
+    try {
+      this.setState({ ...state, repeatedPanels: undefined });
+      if (!this.state.variableName) {
+        this.state.body.setState({ $variables: undefined });
+      }
+      this.handleEditChange();
+    } finally {
+      if (this.isActive) {
+        this.handleVariableName();
+      }
+    }
+  }
+
   public handleEditChange() {
     this._prevRepeatValues = undefined;
 

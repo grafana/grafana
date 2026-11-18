@@ -1,4 +1,4 @@
-import { SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import { SceneGridLayout, SceneQueryRunner, VizPanel } from '@grafana/scenes';
 
 import { ConditionalRenderingData } from '../../conditional-rendering/conditions/ConditionalRenderingData';
 import { getPendingChangesHistory, type PendingChangesHistory } from '../../lifecycle/pendingChangePreview';
@@ -10,6 +10,7 @@ import { AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from '../../scene/layout-auto-grid/AutoGridLayout';
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
+import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 
 import { reloadFromServerCommand } from './reloadFromServer';
 import { type MutationContext } from './types';
@@ -146,26 +147,36 @@ describe('RELOAD_FROM_SERVER', () => {
     }
   );
 
-  it('keeps unsaved library queries protected after a dashboard save', async () => {
-    const runner = new SceneQueryRunner({ queries: [{ refId: 'A', expression: '1' }] });
-    const panel = new VizPanel({
-      key: 'panel-1',
-      pluginId: 'timeseries',
-      $data: runner,
-      $behaviors: [new LibraryPanelBehavior({ uid: 'lib-uid', name: 'Library panel', isLoaded: true })],
-    });
-    new DashboardGridItem({ body: panel });
-    const editor = buildPanelEditScene(panel);
-    runner.setState({ queries: [{ refId: 'A', expression: '2' }] });
-    editor.dashboardSaved();
-    expect(editor.hasUnsavedChanges()).toBe(true);
-    expect(editor.state.isDirty).toBe(true);
-    expect(
-      await reloadFromServerCommand.handler({}, contextFor({ isDirty: false, isEditing: true, editPanel: editor }))
-    ).toMatchObject({ data: { reloaded: false, reason: 'unsaved-changes' } });
-    expect(runner.state.queries).toEqual([{ refId: 'A', expression: '2' }]);
-    expect(reloadKeepingEditMode).not.toHaveBeenCalled();
-  });
+  it.each<{ schemaVersion: 'v1' | 'v2' }>([{ schemaVersion: 'v1' }, { schemaVersion: 'v2' }])(
+    'keeps unsaved library queries protected after a $schemaVersion dashboard save',
+    async ({ schemaVersion }) => {
+      const runner = new SceneQueryRunner({ queries: [{ refId: 'A', expression: '1' }] });
+      const panel = new VizPanel({
+        key: 'panel-1',
+        pluginId: 'timeseries',
+        $data: runner,
+        $behaviors: [new LibraryPanelBehavior({ uid: 'lib-uid', name: 'Library panel', isLoaded: true })],
+      });
+      const item = new DashboardGridItem({ body: panel });
+      const editor = buildPanelEditScene(panel);
+      new DashboardScene(
+        {
+          editPanel: editor,
+          body: new DefaultGridLayoutManager({ grid: new SceneGridLayout({ children: [item] }) }),
+        },
+        schemaVersion
+      );
+      runner.setState({ queries: [{ refId: 'A', expression: '2' }] });
+      editor.dashboardSaved();
+      expect(editor.hasUnsavedChanges()).toBe(true);
+      expect(editor.state.isDirty).toBe(true);
+      expect(
+        await reloadFromServerCommand.handler({}, contextFor({ isDirty: false, isEditing: true, editPanel: editor }))
+      ).toMatchObject({ data: { reloaded: false, reason: 'unsaved-changes' } });
+      expect(runner.state.queries).toEqual([{ refId: 'A', expression: '2' }]);
+      expect(reloadKeepingEditMode).not.toHaveBeenCalled();
+    }
+  );
 
   it('reports unsaved changes in the open scene instead of discarding them', async () => {
     const result = await reloadFromServerCommand.handler({}, contextFor({ isDirty: true, isEditing: true }));
