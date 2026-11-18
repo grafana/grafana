@@ -5,6 +5,7 @@ import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/us
 import { type DashboardScene } from './DashboardScene';
 
 export const ManagedDashboardNavBarBadge = ({ dashboard }: { dashboard: DashboardScene }) => {
+  dashboard.useState();
   const kind = dashboard.getManagerKind();
   const id = dashboard.getManagerIdentity();
   const { isReadOnlyRepo } = useGetResourceRepositoryView({ name: kind === ManagerKind.Repo ? id : undefined });

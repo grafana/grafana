@@ -231,7 +231,7 @@ function useUpdateAppChromeActions(dashboard: DashboardScene) {
       <>
         {hasUid && canStar && <StarButton dashboard={dashboard} />}
         {hasUid && canStar && !isSnapshot && <PublicDashboardBadge dashboard={dashboard} />}
-        {dashboard.isManaged() && <ManagedDashboardNavBarBadge dashboard={dashboard} />}
+        <ManagedDashboardNavBarBadge dashboard={dashboard} />
         {renderDynamicNavActions()}
       </>
     );
