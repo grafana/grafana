@@ -1,15 +1,12 @@
-import { QueryStatus } from '@reduxjs/toolkit/query';
 import { render, screen } from 'test/test-utils';
 
 import { setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures } from '@grafana/test-utils/unstable';
-import * as folderHooks from 'app/api/clients/folder/v1beta1/hooks';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import * as permissions from '../permissions';
 
-import { FolderPermissionsExposedComponent } from './FolderPermissionsExposedComponent';
 import { FolderPermissionsExposedComponentLazy } from './FolderPermissionsExposedComponentLazy';
 
 setBackendSrv(backendSrv);
@@ -21,8 +18,9 @@ jest.mock('app/core/components/AccessControl/Permissions', () => ({
   ),
 }));
 
-const [_, { folderA }] = getFolderFixtures();
+const [_, { folderA, folderB }] = getFolderFixtures();
 const folderUid = folderA.item.uid;
+const otherFolderUid = folderB.item.uid;
 
 const access = {
   canCreateDashboards: false,
@@ -67,22 +65,16 @@ describe('grafana/folder-permissions/v1', () => {
     expect(screen.queryByText(/Permissions for/)).not.toBeInTheDocument();
   });
 
-  it('keeps loading while the folder facade has no data and no error between requests', () => {
-    jest.spyOn(folderHooks, 'useGetFolderQueryFacade').mockReturnValue({
-      data: undefined,
-      isLoading: false,
-      isFetching: false,
-      isSuccess: false,
-      isError: false,
-      isUninitialized: true,
-      status: QueryStatus.uninitialized,
-      refetch: jest.fn(),
-    });
+  it('shows loading instead of the previous folder when the host names a different folder', async () => {
+    jest.spyOn(permissions, 'getFolderPermissions').mockReturnValue(access);
+    const { rerender } = render(<FolderPermissionsExposedComponentLazy folderUid={folderUid} />);
+    expect(await screen.findByText(`Permissions for ${folderUid}, editable`)).toBeInTheDocument();
 
-    render(<FolderPermissionsExposedComponent folderUid={folderUid} />);
+    rerender(<FolderPermissionsExposedComponentLazy folderUid={otherFolderUid} />);
 
     expect(screen.getByText('Loading...')).toBeInTheDocument();
-    expect(screen.queryByText('Unable to load this folder.')).not.toBeInTheDocument();
+    expect(screen.queryByText(`Permissions for ${folderUid}, editable`)).not.toBeInTheDocument();
+    expect(await screen.findByText(`Permissions for ${otherFolderUid}, editable`)).toBeInTheDocument();
   });
 
   it('reports a folder that cannot be loaded', async () => {

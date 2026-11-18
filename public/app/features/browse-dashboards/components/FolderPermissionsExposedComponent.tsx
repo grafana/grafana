@@ -1,6 +1,6 @@
 import { t } from '@grafana/i18n';
 import { Alert, LoadingPlaceholder } from '@grafana/ui';
-import { useGetFolderQueryFacade } from 'app/api/clients/folder/v1beta1/hooks';
+import { useGetCombinedFolderQuery } from 'app/api/clients/folder/v1beta1/hooks';
 import { FolderPermissions } from 'app/features/provisioning/components/Folders/FolderPermissions';
 import { isItemManagedByRepository } from 'app/features/provisioning/utils/managedResource';
 
@@ -15,9 +15,9 @@ export interface FolderPermissionsExposedComponentProps {
  * names by uid. access comes from the folder itself, as on the folder page.
  */
 export function FolderPermissionsExposedComponent({ folderUid }: FolderPermissionsExposedComponentProps) {
-  const { data: folder, isLoading, isError } = useGetFolderQueryFacade(folderUid);
+  const { data: folder, isLoading } = useGetCombinedFolderQuery(folderUid);
 
-  if (isLoading || (!folder && !isError)) {
+  if (isLoading) {
     return <LoadingPlaceholder text={t('browse-dashboards.folder-permissions-exposed.loading', 'Loading...')} />;
   }
 
