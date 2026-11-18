@@ -6130,6 +6130,7 @@
       "add-visualization-button": "Add visualization",
       "add-visualization-header": "Start your new dashboard by adding a visualization",
       "assistant-placeholder": "Describe your dashboard. This will open the assistant chat and start a conversation.",
+      "assistant-placeholder-template": "Describe what to change in {{title}}, or send to start from it as is.",
       "auto-grid": "Auto grid",
       "auto-grid-description": "Panels resize to fit and form uniform grids",
       "build-assistant": "Build your dashboard with Assistant",
@@ -6143,6 +6144,7 @@
       "mobile-not-available": "Building a new dashboard isn't available on small screens. Switch to a larger screen to continue.",
       "or-start-blank": "Or build it yourself",
       "select-layout-header": "Select layout",
+      "templates-title": "Start from a template",
       "title": "New dashboard"
     },
     "errors": {

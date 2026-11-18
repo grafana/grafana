@@ -4,6 +4,7 @@ import { render } from 'test/test-utils';
 import { type ChatContextItem } from '@grafana/assistant';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { isFloatingExtensionSidebarHeld } from 'app/core/components/AppChrome/ExtensionSidebar/extensionSidebarLayout';
+import { type TemplateSelection } from 'app/features/dashboard/dashgrid/DashboardLibrary/types';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { AutoGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-auto-grid/AutoGridLayoutManager';
 
@@ -19,12 +20,43 @@ jest.mock('./datasources', () => ({
 }));
 
 let latestOnSubmit: ((prompt: string, contextItems: ChatContextItem[]) => void) | undefined;
+interface LandingPromptProps {
+  onSubmit: (prompt: string, contextItems: ChatContextItem[]) => void;
+  placeholder?: string;
+  hostContextItems?: ChatContextItem[];
+  onHostContextItemRemove?: (id: string) => void;
+}
+let latestPromptProps: LandingPromptProps | undefined;
 
 jest.mock('./DashboardLandingPrompt', () => ({
-  DashboardLandingPrompt: ({ onSubmit }: { onSubmit: (prompt: string, contextItems: ChatContextItem[]) => void }) => {
-    latestOnSubmit = onSubmit;
+  DashboardLandingPrompt: (props: LandingPromptProps) => {
+    latestOnSubmit = props.onSubmit;
+    latestPromptProps = props;
     return <div data-testid="dashboard-landing-prompt">prompt</div>;
   },
+}));
+
+interface LandingTemplatesProps {
+  onSelectTemplate: (selection: TemplateSelection) => void;
+  selectedTemplateId?: string;
+}
+let latestTemplatesProps: LandingTemplatesProps | undefined;
+
+jest.mock('./LandingTemplates', () => ({
+  LandingTemplates: (props: LandingTemplatesProps) => {
+    latestTemplatesProps = props;
+    return <div data-testid="landing-templates" />;
+  },
+}));
+
+const mockAvailability = {
+  testDataSource: undefined,
+  showGrafanaTemplates: false,
+  showCustomTemplates: false,
+  isAvailable: false,
+};
+jest.mock('app/features/dashboard/dashgrid/DashboardLibrary/hooks/useTemplateDashboardsAvailability', () => ({
+  useTemplateDashboardsAvailability: () => mockAvailability,
 }));
 
 const mockStartPlanning = jest.mocked(startPlanningInAssistant);
@@ -43,6 +75,9 @@ describe('AssistantDashboardEmpty', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     latestOnSubmit = undefined;
+    latestPromptProps = undefined;
+    latestTemplatesProps = undefined;
+    Object.assign(mockAvailability, { showGrafanaTemplates: false, isAvailable: false });
     setTestFlags({ dashboardNewLayouts: true });
   });
 
@@ -133,5 +168,93 @@ describe('AssistantDashboardEmpty', () => {
         dashboards: [],
       })
     );
+  });
+
+  describe('templates under the prompt', () => {
+    const red: TemplateSelection = {
+      id: 'grafana:1',
+      title: 'RED metrics',
+      kind: 'template_dashboard',
+      contextItem: {
+        node: { id: 'template-red', name: 'Dashboard Template: RED metrics', navigable: false },
+        occurrences: [],
+      },
+    };
+    const use: TemplateSelection = {
+      id: 'grafana:2',
+      title: 'USE method',
+      kind: 'template_dashboard',
+      contextItem: {
+        node: { id: 'template-use', name: 'Dashboard Template: USE method', navigable: false },
+        occurrences: [],
+      },
+    };
+
+    beforeEach(() => {
+      Object.assign(mockAvailability, { showGrafanaTemplates: true, isAvailable: true });
+    });
+
+    it('does not list templates when none are available', () => {
+      Object.assign(mockAvailability, { showGrafanaTemplates: false, isAvailable: false });
+      renderEmpty();
+
+      expect(screen.queryByTestId('landing-templates')).not.toBeInTheDocument();
+    });
+
+    it('attaches the picked template to the prompt and swaps it on the next pick', () => {
+      renderEmpty();
+      expect(latestPromptProps?.hostContextItems).toEqual([]);
+
+      act(() => latestTemplatesProps?.onSelectTemplate(red));
+      expect(latestPromptProps?.hostContextItems).toEqual([red.contextItem]);
+      expect(latestPromptProps?.placeholder).toBe(
+        'Describe what to change in RED metrics, or send to start from it as is.'
+      );
+      expect(latestTemplatesProps?.selectedTemplateId).toBe('grafana:1');
+
+      act(() => latestTemplatesProps?.onSelectTemplate(use));
+      expect(latestPromptProps?.hostContextItems).toEqual([use.contextItem]);
+
+      act(() => latestTemplatesProps?.onSelectTemplate(use));
+      expect(latestPromptProps?.hostContextItems).toEqual([]);
+      expect(latestPromptProps?.placeholder).toBeUndefined();
+    });
+
+    it('clears the pick when the person removes its pill in the prompt', () => {
+      renderEmpty();
+      act(() => latestTemplatesProps?.onSelectTemplate(red));
+
+      act(() => latestPromptProps?.onHostContextItemRemove?.('template-red'));
+
+      expect(latestTemplatesProps?.selectedTemplateId).toBeUndefined();
+      expect(latestPromptProps?.hostContextItems).toEqual([]);
+    });
+
+    it('plans from the template alone when the prompt is sent empty', () => {
+      renderEmpty();
+      act(() => latestTemplatesProps?.onSelectTemplate(red));
+
+      act(() => latestOnSubmit?.('', [red.contextItem]));
+
+      expect(mockStartPlanning).toHaveBeenCalledWith(
+        expect.objectContaining({
+          request: 'Create a new dashboard based on this dashboard template.',
+          displayPrompt: 'Create a new dashboard based on this dashboard template.',
+          context: [red.contextItem],
+        })
+      );
+      expect(screen.queryByTestId('landing-templates')).not.toBeInTheDocument();
+    });
+
+    it('still sends the template when the prompt did not hand it back', () => {
+      renderEmpty();
+      act(() => latestTemplatesProps?.onSelectTemplate(red));
+
+      act(() => latestOnSubmit?.('add a latency panel', []));
+
+      expect(mockStartPlanning).toHaveBeenCalledWith(
+        expect.objectContaining({ request: 'add a latency panel', context: [red.contextItem] })
+      );
+    });
   });
 });

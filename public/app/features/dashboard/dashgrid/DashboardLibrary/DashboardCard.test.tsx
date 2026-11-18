@@ -142,6 +142,42 @@ describe('DashboardCard', () => {
     });
   });
 
+  describe('Select mode', () => {
+    it('turns the thumbnail into one button that selects the card instead of opening it', async () => {
+      const onSelect = jest.fn();
+      const { user } = render(
+        <DashboardCard
+          title="RED metrics"
+          dashboard={createMockGnetDashboard()}
+          onClick={mockOnClick}
+          onSelect={onSelect}
+          kind="template_dashboard"
+        />
+      );
+
+      await user.click(screen.getByRole('button', { name: 'Use template: RED metrics' }));
+
+      expect(onSelect).toHaveBeenCalledTimes(1);
+      expect(mockOnClick).not.toHaveBeenCalled();
+      expect(screen.queryByRole('button', { name: 'View template: RED metrics' })).not.toBeInTheDocument();
+    });
+
+    it('reports the selected card as pressed', () => {
+      render(
+        <DashboardCard
+          title="RED metrics"
+          dashboard={createMockGnetDashboard()}
+          onClick={mockOnClick}
+          onSelect={jest.fn()}
+          selected
+          kind="template_dashboard"
+        />
+      );
+
+      expect(screen.getByRole('button', { name: 'Use template: RED metrics' })).toHaveAttribute('aria-pressed', 'true');
+    });
+  });
+
   describe('Badge display', () => {
     it('should show datasource-provided badge when flag is true', () => {
       render(

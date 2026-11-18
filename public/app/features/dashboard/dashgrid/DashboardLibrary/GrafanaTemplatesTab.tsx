@@ -1,6 +1,7 @@
 import { type MutableRefObject, useEffect } from 'react';
 import { useAsync } from 'react-use';
 
+import { createAssistantContextItem } from '@grafana/assistant';
 import { type DataSourceInstanceListItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getBackendSrv, locationService } from '@grafana/runtime';
@@ -21,10 +22,11 @@ import {
   TemplateDashboardSourceEntryPoint,
 } from './constants';
 import { TemplateDashboardInteractions } from './interactions';
-import { type GnetDashboard, type GnetDashboardsResponse, type Link } from './types';
+import { type GnetDashboard, type GnetDashboardsResponse, type Link, type TemplateSelectionProps } from './types';
+import { buildTemplateContextData, buildTemplateContextTitle } from './utils/assistantHelpers';
 import { getTemplateDashboardUrl } from './utils/templateDashboardHelpers';
 
-interface GrafanaTemplatesTabProps {
+interface GrafanaTemplatesTabProps extends TemplateSelectionProps {
   /** Raw `source` search param value, mapped to a known entry point when fired. */
   entryPoint: string;
   testDataSource: DataSourceInstanceListItem | undefined;
@@ -42,6 +44,8 @@ export const GrafanaTemplatesTab = ({
   testDataSource,
   onClose,
   loadedFiredRef,
+  onSelectTemplate,
+  selectedTemplateId,
 }: GrafanaTemplatesTabProps) => {
   const isDashboardTemplatesAssistantButtonEnabled = useFlagDashboardTemplatesAssistantButton();
   const isDashboardTemplatesAssistantToolEnabled = useFlagAssistantFrontendToolsDashboardTemplates();
@@ -117,6 +121,19 @@ export const GrafanaTemplatesTab = ({
     locationService.push(templateUrl);
   };
 
+  const selectTemplate = (dashboard: GnetDashboard) => {
+    onSelectTemplate?.({
+      id: getGrafanaTemplateSelectionId(dashboard),
+      title: dashboard.name,
+      kind: 'template_dashboard',
+      contextItem: createAssistantContextItem('structured', {
+        hidden: false,
+        title: buildTemplateContextTitle(dashboard, 'template_dashboard'),
+        data: buildTemplateContextData(dashboard, 'template_dashboard'),
+      }),
+    });
+  };
+
   // Without a test data source there is nothing to power the templates, so render nothing.
   if (!testDataSource) {
     return null;
@@ -163,9 +180,15 @@ export const GrafanaTemplatesTab = ({
                 showAssistantButton={
                   isDashboardTemplatesAssistantButtonEnabled && isDashboardTemplatesAssistantToolEnabled
                 }
+                onSelect={onSelectTemplate ? () => selectTemplate(dashboard) : undefined}
+                selected={selectedTemplateId === getGrafanaTemplateSelectionId(dashboard)}
               />
             );
           })}
     </Grid>
   );
 };
+
+function getGrafanaTemplateSelectionId(dashboard: GnetDashboard): string {
+  return `grafana:${dashboard.id}`;
+}

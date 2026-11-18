@@ -24,7 +24,7 @@ import {
   Tooltip,
   useStyles2,
 } from '@grafana/ui';
-import { ConfirmContent } from '@grafana/ui/internal';
+import { ConfirmContent, getFocusStyles } from '@grafana/ui/internal';
 import { attachSkeleton, type SkeletonComponent } from '@grafana/ui/unstable';
 import { type PluginDashboard } from 'app/types/plugins';
 
@@ -77,6 +77,13 @@ interface BaseProps {
   tags?: string[];
   /** Resolved display name of the user who created the template. Only rendered for `custom_dashboard_template`. */
   createdByName?: string;
+  /**
+   * Picks the card instead of opening it: the whole thumbnail becomes one button and the hover actions are
+   * not shown. Used where a template is attached to the Assistant prompt rather than opened.
+   */
+  onSelect?: () => void;
+  /** Shows the card as picked. Only read together with `onSelect`. */
+  selected?: boolean;
 }
 
 // Discriminated on `kind` so the `dashboard` shape is correlated with the kind of card being rendered.
@@ -106,6 +113,8 @@ function DashboardCardComponent({
   onDelete,
   tags,
   createdByName,
+  onSelect,
+  selected = false,
 }: Props) {
   const styles = useStyles2(getStyles);
   const isCompatibilityAppEnabled = config.featureToggles.dashboardValidatorApp;
@@ -166,7 +175,9 @@ function DashboardCardComponent({
   const hasCompatActions = isCompatibilityAppEnabled && showCompatibilityBadge && onCompatibilityCheck;
 
   return (
-    <article className={styles.card}>
+    <article
+      className={cx(styles.card, onSelect && styles.selectableCard, onSelect && selected && styles.selectedCard)}
+    >
       {hasCardMenu && (
         <div className={styles.cardMenu}>
           <Dropdown
@@ -257,43 +268,54 @@ function DashboardCardComponent({
             <Badge text={t('dashboard-library.card.community-badge', 'Community')} color="blue" />
           </div>
         )}
-        <div className={styles.thumbnailOverlay}>
-          <Button
-            variant="secondary"
-            className={styles.overlayButton}
-            onClick={() => onClick()}
-            aria-label={
-              kind === 'template_dashboard'
-                ? t('dashboard-library.card.view-template-button-label', 'View template: {{title}}', { title })
-                : kind === 'suggested_dashboard'
-                  ? t('dashboard-library.card.view-dashboard-button-label', 'View dashboard: {{title}}', { title })
-                  : t('dashboard-library.card.use-template-button-label', 'Use template: {{title}}', { title })
-            }
-          >
-            {kind === 'template_dashboard' ? (
-              <Trans i18nKey="dashboard-library.card.view-template-button">View template</Trans>
-            ) : kind === 'suggested_dashboard' ? (
-              <Trans i18nKey="dashboard-library.card.view-dashboard-button">View dashboard</Trans>
-            ) : (
-              <Trans i18nKey="dashboard-library.card.use-template-button">Use template</Trans>
-            )}
-          </Button>
-          {assistantAvailable && showAssistantButton && (
+        {onSelect && (
+          <button
+            type="button"
+            className={styles.selectButton}
+            aria-pressed={selected}
+            aria-label={t('dashboard-library.card.use-template-button-label', 'Use template: {{title}}', { title })}
+            onClick={onSelect}
+          />
+        )}
+        {!onSelect && (
+          <div className={styles.thumbnailOverlay}>
             <Button
               variant="secondary"
               className={styles.overlayButton}
-              onClick={onUseAssistantClick}
-              icon="ai-sparkle"
-              aria-label={t(
-                'dashboard-library.card.customize-with-assistant-button-label',
-                'Customize with Assistant: {{title}}',
-                { title }
-              )}
+              onClick={() => onClick()}
+              aria-label={
+                kind === 'template_dashboard'
+                  ? t('dashboard-library.card.view-template-button-label', 'View template: {{title}}', { title })
+                  : kind === 'suggested_dashboard'
+                    ? t('dashboard-library.card.view-dashboard-button-label', 'View dashboard: {{title}}', { title })
+                    : t('dashboard-library.card.use-template-button-label', 'Use template: {{title}}', { title })
+              }
             >
-              <Trans i18nKey="dashboard-library.card.customize-with-assistant-button">Customize with Assistant</Trans>
+              {kind === 'template_dashboard' ? (
+                <Trans i18nKey="dashboard-library.card.view-template-button">View template</Trans>
+              ) : kind === 'suggested_dashboard' ? (
+                <Trans i18nKey="dashboard-library.card.view-dashboard-button">View dashboard</Trans>
+              ) : (
+                <Trans i18nKey="dashboard-library.card.use-template-button">Use template</Trans>
+              )}
             </Button>
-          )}
-        </div>
+            {assistantAvailable && showAssistantButton && (
+              <Button
+                variant="secondary"
+                className={styles.overlayButton}
+                onClick={onUseAssistantClick}
+                icon="ai-sparkle"
+                aria-label={t(
+                  'dashboard-library.card.customize-with-assistant-button-label',
+                  'Customize with Assistant: {{title}}',
+                  { title }
+                )}
+              >
+                <Trans i18nKey="dashboard-library.card.customize-with-assistant-button">Customize with Assistant</Trans>
+              </Button>
+            )}
+          </div>
+        )}
       </div>
       <div className={styles.bottomSection}>
         {isCustomTemplate && (
@@ -532,6 +554,28 @@ function getStyles(theme: GrafanaTheme2) {
       },
     }),
     thumbnailOverlay,
+    selectableCard: css({
+      width: '100%',
+      '&:hover': {
+        backgroundColor: theme.colors.action.hover,
+      },
+    }),
+    selectedCard: css({
+      borderColor: theme.colors.primary.border,
+      boxShadow: `0 0 0 1px ${theme.colors.primary.border}`,
+    }),
+    // Sits over the thumbnail and its gradient so the whole preview is one click target.
+    selectButton: css({
+      position: 'absolute',
+      inset: 0,
+      zIndex: 1,
+      padding: 0,
+      border: 0,
+      background: 'transparent',
+      borderRadius: theme.shape.radius.default,
+      cursor: 'pointer',
+      '&:focus-visible': getFocusStyles(theme),
+    }),
     overlayButton: css({
       width: '80%',
       justifyContent: 'center',

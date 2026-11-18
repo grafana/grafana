@@ -1,16 +1,20 @@
-import { css } from '@emotion/css';
-import { useCallback, useEffect, useState } from 'react';
+import { css, cx } from '@emotion/css';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { type ChatContextItem } from '@grafana/assistant';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Trans } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, Icon, Stack, useStyles2 } from '@grafana/ui';
 import { useHoldFloatingExtensionSidebar } from 'app/core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider';
+import { useTemplateDashboardsAvailability } from 'app/features/dashboard/dashgrid/DashboardLibrary/hooks/useTemplateDashboardsAvailability';
+import { type TemplateSelection } from 'app/features/dashboard/dashgrid/DashboardLibrary/types';
+import { buildAssistantPrompt } from 'app/features/dashboard/dashgrid/DashboardLibrary/utils/assistantHelpers';
 import { type DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 
 import { DashboardLandingPrompt } from './DashboardLandingPrompt';
+import { LandingTemplates } from './LandingTemplates';
 import { getPromptDatasources } from './datasources';
 import { startPlanningInAssistant } from './handoff';
 
@@ -29,48 +33,78 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
   // Assistant with it; opening the Assistant from the toolbar shows it too.
   useHoldFloatingExtensionSidebar(!assistantDriven);
 
+  const { testDataSource, showGrafanaTemplates, showCustomTemplates, isAvailable } =
+    useTemplateDashboardsAvailability();
+  const showTemplates = isAvailable && !assistantDriven;
+  // The picked template travels to the Assistant as a context pill in the prompt.
+  const [template, setTemplate] = useState<TemplateSelection>();
+  const hostContextItems = useMemo(() => (template ? [template.contextItem] : []), [template]);
+
+  const onSelectTemplate = useCallback((selection: TemplateSelection) => {
+    setTemplate((current) => (current?.id === selection.id ? undefined : selection));
+  }, []);
+
+  const onTemplatePillRemove = useCallback((id: string) => {
+    setTemplate((current) => (current?.contextItem.node.id === id ? undefined : current));
+  }, []);
+
   const onAddVisualization = () => {
     sidebar.addNewPanel(sidebar.getSelectedObject());
   };
 
-  const onSubmitPrompt = useCallback((prompt: string, contextItems: ChatContextItem[]) => {
-    const selectedDatasources = contextItems.flatMap(({ node }) => {
-      const data = node.data;
-      if (data?.type !== 'datasource' || typeof data.datasourceUid !== 'string') {
-        return [];
-      }
-      return [
-        {
-          uid: data.datasourceUid,
-          type: typeof data.datasourceType === 'string' ? data.datasourceType : 'unknown',
-          name: typeof data.datasourceName === 'string' ? data.datasourceName : node.name,
-        },
-      ];
-    });
-    const dashboards = contextItems.flatMap(({ node }) => {
-      const data = node.data;
-      if (data?.type !== 'dashboard' || typeof data.dashboardUid !== 'string') {
-        return [];
-      }
-      return [
-        {
-          uid: data.dashboardUid,
-          title: typeof data.dashboardTitle === 'string' ? data.dashboardTitle : node.name,
-        },
-      ];
-    });
+  const onSubmitPrompt = useCallback(
+    (prompt: string, submittedContextItems: ChatContextItem[]) => {
+      // A plugin version without host pills never sends the template back, so make sure it travels.
+      const templateItem = template?.contextItem;
+      const contextItems =
+        templateItem && !submittedContextItems.some(({ node }) => node.id === templateItem.node.id)
+          ? [...submittedContextItems, templateItem]
+          : submittedContextItems;
+      // The prompt can be sent empty once a template is attached; the template is then the whole request.
+      const request = prompt.trim() || (template ? buildAssistantPrompt(template.kind) : prompt);
+      const selectedDatasources = contextItems.flatMap(({ node }) => {
+        const data = node.data;
+        if (data?.type !== 'datasource' || typeof data.datasourceUid !== 'string') {
+          return [];
+        }
+        return [
+          {
+            uid: data.datasourceUid,
+            type: typeof data.datasourceType === 'string' ? data.datasourceType : 'unknown',
+            name: typeof data.datasourceName === 'string' ? data.datasourceName : node.name,
+          },
+        ];
+      });
+      const dashboards = contextItems.flatMap(({ node }) => {
+        const data = node.data;
+        if (data?.type !== 'dashboard' || typeof data.dashboardUid !== 'string') {
+          return [];
+        }
+        return [
+          {
+            uid: data.dashboardUid,
+            title: typeof data.dashboardTitle === 'string' ? data.dashboardTitle : node.name,
+          },
+        ];
+      });
 
-    startPlanningInAssistant({
-      request: prompt,
-      displayPrompt: prompt,
-      datasources: selectedDatasources.length > 0 ? selectedDatasources : getPromptDatasources(),
-      context: contextItems,
-      dashboards,
-    });
+      startPlanningInAssistant({
+        request,
+        displayPrompt: request,
+        datasources: selectedDatasources.length > 0 ? selectedDatasources : getPromptDatasources(),
+        context: contextItems,
+        dashboards,
+      });
 
-    setAssistantDriven(true);
-    reportInteraction('dashboard_prompt_planning_started', { source: 'empty_dashboard' });
-  }, []);
+      setAssistantDriven(true);
+      setTemplate(undefined);
+      reportInteraction('dashboard_prompt_planning_started', {
+        source: 'empty_dashboard',
+        templateKind: template?.kind,
+      });
+    },
+    [template]
+  );
 
   useEffect(() => {
     if (!assistantDriven) {
@@ -83,16 +117,39 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
 
   return (
     <div className={styles.root}>
-      <div className={styles.content}>
+      <div className={cx(styles.content, showTemplates && styles.contentWithTemplates)}>
         <Stack alignItems="center" direction="column" gap={2}>
           <Icon name="apps" size="xxl" className={styles.appsIcon} />
           <h2 className={styles.title}>
             <Trans i18nKey="dashboard.empty.build-assistant">Build your dashboard with Assistant</Trans>
           </h2>
           <div className={styles.prompt}>
-            <DashboardLandingPrompt onSubmit={onSubmitPrompt} />
+            <DashboardLandingPrompt
+              onSubmit={onSubmitPrompt}
+              placeholder={
+                template
+                  ? t(
+                      'dashboard.empty.assistant-placeholder-template',
+                      'Describe what to change in {{title}}, or send to start from it as is.',
+                      { title: template.title }
+                    )
+                  : undefined
+              }
+              hostContextItems={hostContextItems}
+              onHostContextItemRemove={onTemplatePillRemove}
+            />
           </div>
         </Stack>
+
+        {showTemplates && (
+          <LandingTemplates
+            testDataSource={testDataSource}
+            showGrafanaTemplates={showGrafanaTemplates}
+            showCustomTemplates={showCustomTemplates}
+            onSelectTemplate={onSelectTemplate}
+            selectedTemplateId={template?.id}
+          />
+        )}
 
         <div className={styles.divider}>
           <div className={styles.orLine} />
@@ -133,6 +190,10 @@ function getStyles(theme: GrafanaTheme2) {
       width: '100%',
       maxWidth: 660,
       padding: theme.spacing(6, 4),
+    }),
+    // Room for the template grid's columns under the prompt.
+    contentWithTemplates: css({
+      maxWidth: 1040,
     }),
     appsIcon: css({
       fill: theme.v1.palette.orange,

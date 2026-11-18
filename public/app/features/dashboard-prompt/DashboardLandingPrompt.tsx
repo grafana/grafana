@@ -18,12 +18,17 @@ interface StandalonePromptProps {
   hideModeSelector?: boolean;
   mode?: string;
   className?: string;
+  /** Context attached from outside the prompt, shown as pills. Older plugin versions ignore it. */
+  hostContextItems?: ChatContextItem[];
+  onHostContextItemRemove?: (id: string) => void;
 }
 
 interface DashboardLandingPromptProps {
   onSubmit: (prompt: string, contextItems: ChatContextItem[]) => void;
   placeholder?: string;
   className?: string;
+  hostContextItems?: ChatContextItem[];
+  onHostContextItemRemove?: (id: string) => void;
 }
 
 function PromptLoadingSlot() {
@@ -40,7 +45,12 @@ function PromptLoadingSlot() {
  * Grafana host for the new-dashboard prompt. ChatInput itself lives in the
  * assistant plugin; this file configures the placeholder and dashboarding mode.
  */
-export function DashboardLandingPrompt({ onSubmit, placeholder }: DashboardLandingPromptProps) {
+export function DashboardLandingPrompt({
+  onSubmit,
+  placeholder,
+  hostContextItems,
+  onHostContextItemRemove,
+}: DashboardLandingPromptProps) {
   const { component: Prompt, isLoading } = usePluginComponent<StandalonePromptProps>(STANDALONE_PROMPT_COMPONENT_ID);
 
   if (!Prompt) {
@@ -60,6 +70,8 @@ export function DashboardLandingPrompt({ onSubmit, placeholder }: DashboardLandi
         }
         hideModeSelector
         mode="dashboarding"
+        hostContextItems={hostContextItems}
+        onHostContextItemRemove={onHostContextItemRemove}
       />
     </Suspense>
   );

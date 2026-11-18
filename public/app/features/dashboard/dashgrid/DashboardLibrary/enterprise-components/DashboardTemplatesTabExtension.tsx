@@ -1,6 +1,8 @@
 import { type ComponentType, type MutableRefObject } from 'react';
 
-export interface DashboardTemplatesTabProps {
+import { type TemplateSelectionProps } from '../types';
+
+export interface DashboardTemplatesTabProps extends TemplateSelectionProps {
   isOpen: boolean;
   onClose: () => void;
   /**
