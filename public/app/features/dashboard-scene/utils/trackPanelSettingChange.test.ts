@@ -71,7 +71,7 @@ describe('trackPanelSettingChange', () => {
     const panel = new VizPanel({ title: 'CPU', pluginId: 'timeseries' });
     panel.setState({ key: undefined });
 
-    expect(() => trackPanelSettingChange(panel, 'change_panel_title', 'outline')).not.toThrow();
+    expect(() => trackPanelSettingChange(panel, 'change_query_option', 'panel_editor')).not.toThrow();
     expect(panelSettingChanged).not.toHaveBeenCalled();
   });
 

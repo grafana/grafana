@@ -50,6 +50,7 @@ import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
 import { setQueryRunnerQueries } from '../../utils/queryRunnerState';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { trackAddQuery } from '../PanelEditNext/tracking';
+import { getChangedQueryOptions, getQueryOptionState, trackQueryOptionChanges } from '../queryOptionChanges';
 
 import { type PanelDataPaneTab, type PanelDataTabHeaderProps, TabId } from './types';
 import { useHasBackendDatasource } from './utils';
@@ -245,6 +246,7 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
   public onQueryOptionsChange = (options: QueryGroupOptions) => {
     const panel = this.state.panelRef.resolve();
     const dataObj = this.queryRunner;
+    const optionsBefore = getQueryOptionState(panel, dataObj);
 
     const dataObjStateUpdate: Partial<SceneQueryRunner['state']> = {};
     const panelStateUpdate: Partial<VizPanel['state']> = {};
@@ -283,6 +285,11 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
 
     dataObj.setState(dataObjStateUpdate);
     dataObj.runQueries();
+    trackQueryOptionChanges(
+      panel,
+      getChangedQueryOptions(optionsBefore, getQueryOptionState(panel, dataObj)),
+      'classic'
+    );
   };
 
   public onQueriesChange = (queries: SceneDataQuery[]) => {
