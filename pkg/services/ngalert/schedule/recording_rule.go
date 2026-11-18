@@ -56,6 +56,8 @@ type recordingRule struct {
 	written writtenSeries
 	// When a marker for a series in written first failed. Only series that are still retried are here.
 	failedAt map[seriesTarget]map[data.Fingerprint]time.Time
+	// Keeps a rule that fails every tick from logging every tick.
+	failureLog logThrottle
 	// Latest tick an evaluation started for, whether or not it wrote. Only touched from Run.
 	lastTick time.Time
 
@@ -411,7 +413,9 @@ func (r *recordingRule) writeStale(ctx context.Context, markerAt time.Time, curr
 		}
 
 		failure := classifyMarkerError(err)
-		logger.Warn("Failed to write stale markers", "metric", target.name, "series", len(try), "reason", failure.reason, "retry", failure.retry, "error", err)
+		if suppressed, ok := r.failureLog.allow(markerAt); ok {
+			logger.Warn("Failed to write stale markers", "metric", target.name, "series", len(try), "reason", failure.reason, "retry", failure.retry, "suppressed", suppressed, "error", err)
+		}
 		if !failure.retry {
 			dropped = dropped.merge(writtenSeries{target: try})
 			continue
