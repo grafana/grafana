@@ -1,4 +1,4 @@
-# Chromeless buttons
+# Inline actions
 
 Use `InlineButton` for actions within text or data, such as opening a details dialog.
 Don't make a `Button` look inline by stripping its padding and border with `className`:

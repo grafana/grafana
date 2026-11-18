@@ -23,7 +23,7 @@ MDX. Follow linked guides when they match your task. The MDX is enough for
 ordinary usage.
 
 Shared patterns live in [`src/guidance/patterns/`](src/guidance/patterns/), such as
-[chromeless buttons](src/guidance/patterns/chromeless-button.md).
+[inline actions](src/guidance/patterns/inline-actions.md).
 
 When you add or change a component, update its MDX using the
 [component docs template](../../contribute/style-guides/component-docs-template.mdx).
