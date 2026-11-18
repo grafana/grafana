@@ -129,6 +129,27 @@ describe('useFoldersQuery', () => {
     expect(uids(children)).toEqual(sortedUids([folderA_folderA, folderA_folderB, folderA_folderC]));
   });
 
+  it('sends permission create without asking for the path to creatable folders by default', async () => {
+    let searchParams: URLSearchParams | undefined;
+    server.use(
+      http.get(searchRoute, ({ request }) => {
+        searchParams = new URL(request.url).searchParams;
+        return HttpResponse.json({
+          totalHits: 1,
+          hits: [{ resource: 'folders', name: 'a', title: 'A', field: { canCreate: false } }],
+        });
+      })
+    );
+    const { result } = renderFoldersQuery({ permission: 'create' });
+
+    act(() => result.current.requestNextPage(undefined));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(searchParams?.get('permission')).toBe('create');
+    expect(searchParams?.has('include')).toBe(false);
+    expect(result.current.items.find((treeItem) => treeItem.item.uid === 'a')).toMatchObject({ readOnly: false });
+  });
+
   it('asks for the path to creatable folders and marks the ones the user cannot create in as read only', async () => {
     let searchParams: URLSearchParams | undefined;
     server.use(
@@ -144,7 +165,7 @@ describe('useFoldersQuery', () => {
         });
       })
     );
-    const { result } = renderFoldersQuery({ permission: 'create' });
+    const { result } = renderFoldersQuery({ permission: 'create', includePathToCreatable: true });
 
     act(() => result.current.requestNextPage(undefined));
     await waitFor(() => expect(result.current.isLoading).toBe(false));
