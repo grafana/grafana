@@ -277,7 +277,8 @@ function DashboardCardComponent({
           </div>
         )}
         {onSelect && (
-          <div className={cx(styles.thumbnailOverlay, styles.selectOverlay)}>
+          // Joined rather than cx(): cx merges them into a new class, and the hover rules target thumbnailOverlay.
+          <div className={`${styles.thumbnailOverlay} ${styles.selectOverlay}`}>
             <Button
               variant="secondary"
               className={styles.overlayButton}
