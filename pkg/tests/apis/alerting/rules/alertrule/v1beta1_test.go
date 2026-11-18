@@ -19,36 +19,10 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/apis/alerting/rules/common"
-	"github.com/grafana/grafana/pkg/tests/testinfra"
-	"github.com/grafana/grafana/pkg/util/testutil"
 )
-
-// Both versions serve the same rules: whichever version writes a rule, the
-// other reads it, and v1beta1 requires the notification settings type that
-// v0alpha1 defaults.
-func TestIntegrationV1beta1(t *testing.T) {
-	testutil.SkipIntegrationTestInShortMode(t)
-
-	// Legacy storage serves modes 0-3 and unified storage mode 4. The dual writer
-	// in between can hand either one the object in the version of the request.
-	for _, mode := range []grafanarest.DualWriterMode{grafanarest.Mode0, grafanarest.Mode2, grafanarest.Mode3, grafanarest.Mode4, grafanarest.Mode5} {
-		t.Run(fmt.Sprintf("dualWriterMode=%d", mode), func(t *testing.T) {
-			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-					"alertrules.rules.alerting.grafana.app":     {DualWriterMode: mode},
-					"recordingrules.rules.alerting.grafana.app": {DualWriterMode: mode},
-				},
-				UnifiedAlertingDisableExecuteAlerts: true,
-			})
-			common.CreateTestFolder(t, helper, "test-folder")
-			runV1beta1Tests(t, helper, mode)
-		})
-	}
-}
 
 type versionClient struct {
 	rc *rest.RESTClient
@@ -243,6 +217,11 @@ func recordingRuleBody(t *testing.T) map[string]any {
 	})
 }
 
+// Both versions serve the same rules: whichever version writes a rule, the
+// other reads it, and v1beta1 requires the notification settings type that
+// v0alpha1 defaults. Legacy storage serves modes 0-3 and unified storage modes
+// 4-5; the dual writer in between can hand either one the object in the version
+// of the request. Run from TestIntegrationDualWriterModes.
 func runV1beta1Tests(t *testing.T, helper *apis.K8sTestHelper, mode grafanarest.DualWriterMode) {
 	ctx := context.Background()
 	alpha := versionClient{rc: helper.Org1.Admin.RESTClient(t, &v0alpha1.GroupVersion), gv: v0alpha1.GroupVersion}
