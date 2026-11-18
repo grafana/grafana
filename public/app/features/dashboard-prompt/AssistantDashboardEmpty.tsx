@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { type RefObject, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { type ChatContextItem } from '@grafana/assistant';
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -34,6 +34,36 @@ const MIN_HEIGHT_WITH_TEMPLATES = 360;
  * stay in view. The dashboard body grows with its content, so no CSS height chain reaches this far down, and the
  * empty-state wrapper's top padding is pulled back into the area (`pullUp`).
  */
+/**
+ * True once the prompt shows its text box. The prompt is a plugin component that loads its own code after the
+ * page, behind its own Suspense, so its text box rendering is the only signal the host gets.
+ */
+function useHasTextbox(ref: RefObject<HTMLElement | null>) {
+  const [hasTextbox, setHasTextbox] = useState(false);
+
+  useEffect(() => {
+    const element = ref.current;
+    if (!element || hasTextbox) {
+      return;
+    }
+    const check = () => Boolean(element.querySelector('[role="textbox"], textarea'));
+    if (check()) {
+      setHasTextbox(true);
+      return;
+    }
+    const observer = new MutationObserver(() => {
+      if (check()) {
+        observer.disconnect();
+        setHasTextbox(true);
+      }
+    });
+    observer.observe(element, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, [ref, hasTextbox]);
+
+  return hasTextbox;
+}
+
 function useFitToScrollArea(enabled: boolean) {
   const ref = useRef<HTMLDivElement>(null);
   const [fit, setFit] = useState<{ height: number; pullUp: number }>();
@@ -89,6 +119,8 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
     useTemplateDashboardsAvailability();
   const showTemplates = isAvailable && !assistantDriven;
   const { ref: fitRef, fit } = useFitToScrollArea(showTemplates);
+  const promptRef = useRef<HTMLDivElement>(null);
+  const promptReady = useHasTextbox(promptRef);
   // The picked template travels to the Assistant as a context pill in the prompt.
   const [template, setTemplate] = useState<TemplateSelection>();
   const hostContextItems = useMemo(() => (template ? [template.contextItem] : []), [template]);
@@ -178,7 +210,7 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
               <Trans i18nKey="dashboard.empty.build-assistant">Build your dashboard with Assistant</Trans>
             </h2>
           </div>
-          <div className={styles.prompt}>
+          <div ref={promptRef} className={styles.prompt}>
             <DashboardLandingPrompt
               onSubmit={onSubmitPrompt}
               placeholder={
@@ -192,7 +224,9 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
             />
           </div>
           {showTemplates && (
+            // Mounted at once so the templates load alongside the prompt, shown only once the prompt is there.
             <LandingTemplates
+              hidden={!promptReady}
               className={styles.templates}
               testDataSource={testDataSource}
               showGrafanaTemplates={showGrafanaTemplates}

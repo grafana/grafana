@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useCallback, useId, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 
 import { type DataSourceInstanceListItem, type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
@@ -16,6 +16,8 @@ interface Props {
   showCustomTemplates: boolean;
   onSelectTemplate: (selection: TemplateSelection) => void;
   selectedTemplateId?: string;
+  /** Keeps the panel out of view while its lists still load. */
+  hidden?: boolean;
   className?: string;
 }
 
@@ -24,6 +26,8 @@ const noop = () => {};
 const GRID_COLUMNS = { xs: 1, sm: 2, lg: 3 } as const;
 /** Two rows on a desktop, enough to fill the panel while the lists load. */
 const LOADING_CARDS = 6;
+/** How long the cards wait for every list before showing the ones that have loaded. */
+export const LOAD_WAIT_MS = 3000;
 
 /**
  * The templates under the new-dashboard prompt: a collapsible panel holding one scrollable grid, the
@@ -36,6 +40,7 @@ export function LandingTemplates({
   showCustomTemplates,
   onSelectTemplate,
   selectedTemplateId,
+  hidden,
   className,
 }: Props) {
   const styles = useStyles2(getStyles);
@@ -52,9 +57,20 @@ export function LandingTemplates({
   );
   const DashboardTemplatesTab = getDashboardTemplatesTab();
   const hasCustomTemplates = Boolean(DashboardTemplatesTab) && showCustomTemplates;
-  const loaded =
+  const allLoaded =
     (!hasCustomTemplates || counts.custom !== undefined) && (!showGrafanaTemplates || counts.grafana !== undefined);
-  const isEmpty = loaded && (counts.custom ?? 0) + (counts.grafana ?? 0) === 0;
+  const total = (counts.custom ?? 0) + (counts.grafana ?? 0);
+  // A list that never reports (an older enterprise build) must not hold back the cards the others loaded.
+  const [waitedLong, setWaitedLong] = useState(false);
+  useEffect(() => {
+    if (allLoaded) {
+      return;
+    }
+    const timeout = setTimeout(() => setWaitedLong(true), LOAD_WAIT_MS);
+    return () => clearTimeout(timeout);
+  }, [allLoaded]);
+  const loaded = allLoaded || (waitedLong && total > 0);
+  const isEmpty = allLoaded && total === 0;
   // Open while the lists load and when they show templates; closed when there are none to show.
   const isOpen = openedByUser ?? !isEmpty;
   // Pre-set so the lists' `loaded` events, which report the template modal as their location, stay silent here.
@@ -79,7 +95,11 @@ export function LandingTemplates({
   };
 
   return (
-    <section className={cx(styles.panel, !isOpen && styles.panelClosed, className)} aria-labelledby={titleId}>
+    <section
+      className={cx(styles.panel, !isOpen && styles.panelClosed, className)}
+      aria-labelledby={titleId}
+      hidden={hidden}
+    >
       <button
         type="button"
         id={titleId}
@@ -139,6 +159,9 @@ function getStyles(theme: GrafanaTheme2) {
       background: theme.colors.background.secondary,
       border: `1px solid ${theme.colors.border.weak}`,
       borderRadius: theme.shape.radius.default,
+      '&[hidden]': {
+        display: 'none',
+      },
     }),
     // Closed, the header sits as far from the panel's bottom edge as from the prompt above it: the same inset
     // the page leaves past the prompt's edge, since the header's own padding already applies on both sides.

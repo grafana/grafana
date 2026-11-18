@@ -1,21 +1,25 @@
 import { useEffect } from 'react';
-import { render, screen } from 'test/test-utils';
+import { act, render, screen } from 'test/test-utils';
 
 import { getDashboardTemplatesTab } from 'app/features/dashboard/dashgrid/DashboardLibrary/enterprise-components/DashboardTemplatesTabExtension';
 import { type TemplateSelectionProps } from 'app/features/dashboard/dashgrid/DashboardLibrary/types';
 
-import { LandingTemplates } from './LandingTemplates';
+import { LOAD_WAIT_MS, LandingTemplates } from './LandingTemplates';
 
-let mockGrafanaCount = 1;
-// `undefined` keeps the custom list loading.
+// `undefined` keeps a list loading.
+let mockGrafanaCount: number | undefined = 1;
 let mockCustomCount: number | undefined = 1;
 
 jest.mock('app/features/dashboard/dashgrid/DashboardLibrary/GrafanaTemplatesTab', () => {
   const { useEffect: useMockEffect } = jest.requireActual('react');
   return {
     GrafanaTemplatesTab: ({ onTemplatesLoad }: TemplateSelectionProps) => {
-      useMockEffect(() => onTemplatesLoad?.(mockGrafanaCount), [onTemplatesLoad]);
-      return mockGrafanaCount > 0 ? <article data-testid="grafana-card" /> : null;
+      useMockEffect(() => {
+        if (mockGrafanaCount !== undefined) {
+          onTemplatesLoad?.(mockGrafanaCount);
+        }
+      }, [onTemplatesLoad]);
+      return (mockGrafanaCount ?? 0) > 0 ? <article data-testid="grafana-card" /> : null;
     },
   };
 });
@@ -95,6 +99,32 @@ describe('LandingTemplates', () => {
 
     expect(screen.getByRole('button', { name: 'Start from a template' })).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByTestId('grafana-card')).not.toBeVisible();
+  });
+
+  describe('when a list never reports', () => {
+    beforeEach(() => jest.useFakeTimers());
+    afterEach(() => jest.useRealTimers());
+
+    it('shows the cards that loaded after a short wait', () => {
+      mockCustomCount = undefined;
+      renderTemplates();
+      expect(screen.getByTestId('grafana-card')).not.toBeVisible();
+
+      act(() => jest.advanceTimersByTime(LOAD_WAIT_MS));
+
+      expect(screen.getByTestId('grafana-card')).toBeVisible();
+    });
+
+    it('keeps waiting while no list has shown a card, and does not call the panel empty', () => {
+      mockCustomCount = undefined;
+      mockGrafanaCount = undefined;
+      renderTemplates();
+
+      act(() => jest.advanceTimersByTime(LOAD_WAIT_MS));
+
+      expect(screen.getByRole('button', { name: 'Start from a template' })).toHaveAttribute('aria-expanded', 'true');
+      expect(screen.queryByText('No templates available')).not.toBeInTheDocument();
+    });
   });
 
   it('starts closed when no list has templates, and says so when opened', async () => {

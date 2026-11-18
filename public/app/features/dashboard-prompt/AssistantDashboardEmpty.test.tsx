@@ -1,4 +1,4 @@
-import { act, fireEvent, screen } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
 import { type ChatContextItem } from '@grafana/assistant';
@@ -27,25 +27,28 @@ interface LandingPromptProps {
   onHostContextItemRemove?: (id: string) => void;
 }
 let latestPromptProps: LandingPromptProps | undefined;
+// The plugin prompt renders its text box once its code has loaded.
+let mockPromptLoaded = true;
 
 jest.mock('./DashboardLandingPrompt', () => ({
   DashboardLandingPrompt: (props: LandingPromptProps) => {
     latestOnSubmit = props.onSubmit;
     latestPromptProps = props;
-    return <div data-testid="dashboard-landing-prompt">prompt</div>;
+    return <div data-testid="dashboard-landing-prompt">{mockPromptLoaded ? <div role="textbox" /> : 'loading'}</div>;
   },
 }));
 
 interface LandingTemplatesProps {
   onSelectTemplate: (selection: TemplateSelection) => void;
   selectedTemplateId?: string;
+  hidden?: boolean;
 }
 let latestTemplatesProps: LandingTemplatesProps | undefined;
 
 jest.mock('./LandingTemplates', () => ({
   LandingTemplates: (props: LandingTemplatesProps) => {
     latestTemplatesProps = props;
-    return <div data-testid="landing-templates" />;
+    return <div data-testid="landing-templates" hidden={props.hidden} />;
   },
 }));
 
@@ -67,8 +70,8 @@ function renderEmpty() {
     body: AutoGridLayoutManager.createEmpty(),
   });
   const addNewPanel = jest.spyOn(dashboard.state.sidebar, 'addNewPanel').mockImplementation(() => {});
-  render(<AssistantDashboardEmpty dashboard={dashboard} />);
-  return { dashboard, addNewPanel };
+  const { rerender } = render(<AssistantDashboardEmpty dashboard={dashboard} />);
+  return { dashboard, addNewPanel, rerender };
 }
 
 describe('AssistantDashboardEmpty', () => {
@@ -192,6 +195,18 @@ describe('AssistantDashboardEmpty', () => {
 
     beforeEach(() => {
       Object.assign(mockAvailability, { showGrafanaTemplates: true, isAvailable: true });
+      mockPromptLoaded = true;
+    });
+
+    it('loads the templates out of view until the prompt shows its text box', async () => {
+      mockPromptLoaded = false;
+      const { dashboard, rerender } = renderEmpty();
+      expect(screen.getByTestId('landing-templates')).not.toBeVisible();
+
+      mockPromptLoaded = true;
+      rerender(<AssistantDashboardEmpty dashboard={dashboard} />);
+
+      await waitFor(() => expect(screen.getByTestId('landing-templates')).toBeVisible());
     });
 
     it('does not list templates when none are available', () => {
