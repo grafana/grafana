@@ -96,6 +96,7 @@ func newStaleHarness(t *testing.T) *staleHarness {
 		WriteStaleFunc: func(ctx context.Context, dsUID, name string, ts time.Time, orgID int64, series []map[string]string) error {
 			h.staleAttempts++
 			if h.failStale {
+				h.events = append(h.events, "stale failed")
 				if h.staleErr != nil {
 					return h.staleErr
 				}
@@ -298,6 +299,7 @@ func TestRecordingRuleStaleMarkers(t *testing.T) {
 		require.Equal(t, 1, h.staleAttempts)
 		require.Equal(t, "ok", h.rule.Status().Health)
 		require.NoError(t, h.rule.Status().LastError)
+		require.Equal(t, []string{"data", "stale failed", "data"}, h.events, "the data of the tick is still written after the failed markers")
 
 		h.failStale = false
 		h.tick()
@@ -592,6 +594,6 @@ func TestRecordingRuleStaleMarkersOnStop(t *testing.T) {
 		h.stop(errRuleDeleted)
 
 		require.Empty(t, h.stale)
-		require.Equal(t, []string{"data"}, h.events)
+		require.Equal(t, []string{"data", "stale failed"}, h.events)
 	})
 }
