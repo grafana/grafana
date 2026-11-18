@@ -13,6 +13,7 @@ import {
   standardFieldConfigEditorRegistry,
   standardTransformersRegistry,
 } from '@grafana/data';
+import { setVarMappingsEnabled } from '@grafana/data/internal';
 import { DEFAULT_LANGUAGE, t } from '@grafana/i18n';
 import { initializeI18n, loadNamespacedResources } from '@grafana/i18n/internal';
 import {
@@ -248,6 +249,7 @@ export class GrafanaApp {
       setPanelScreenshotService(new PanelScreenshotServiceImpl());
       setEmbeddedDashboard(EmbeddedDashboardLazy);
       setTimeZoneResolver(() => contextSrv.user.timezone);
+      setVarMappingsEnabled(getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaPanelOptionInterpolation, false));
       initGrafanaLive();
       setCurrentUser(contextSrv.user);
 

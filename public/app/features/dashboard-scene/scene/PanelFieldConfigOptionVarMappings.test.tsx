@@ -9,6 +9,7 @@ import {
   standardFieldConfigEditorRegistry,
   toDataFrame,
 } from '@grafana/data';
+import { setVarMappingsEnabled } from '@grafana/data/internal';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils, setRunRequest } from '@grafana/runtime';
 import { CustomVariable, SceneQueryRunner, SceneVariableSet, VizPanel, sceneGraph } from '@grafana/scenes';
@@ -85,6 +86,9 @@ function resolvedCustom(panel: VizPanel) {
 }
 
 describe('Select and boolean field config expressions via varMappings (dashboard scene)', () => {
+  beforeAll(() => setVarMappingsEnabled(true));
+  afterAll(() => setVarMappingsEnabled(false));
+
   it('switches the resolved draw style with the variable and falls back on an unmatched value', async () => {
     // CustomVariable.changeValueTo publishes the value change that clears VizPanel's field config cache
     const style = new CustomVariable({ name: 'style', query: 'line,bars,points,foo', value: 'bars', text: 'bars' });
