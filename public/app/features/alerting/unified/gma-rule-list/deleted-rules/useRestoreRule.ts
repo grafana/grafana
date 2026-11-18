@@ -9,7 +9,8 @@ const GROUP_LABELS_TO_REMOVE = new Set(['grafana.com/group', 'grafana.com/group-
  * Group labels are stripped because the group-free create API rejects them.
  */
 export function sanitizeForRestore(rule: AlertRule): AlertRule {
-  const { resourceVersion, deletionTimestamp, managedFields, finalizers, ...cleanMeta } = rule.metadata ?? {};
+  const { resourceVersion, deletionTimestamp, managedFields, finalizers, generation, ...cleanMeta } =
+    rule.metadata ?? {};
 
   const cleanLabels = Object.fromEntries(
     Object.entries(cleanMeta.labels ?? {}).filter(([key]) => !GROUP_LABELS_TO_REMOVE.has(key))

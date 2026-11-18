@@ -12,15 +12,19 @@ const server = setupMswServer();
 const CREATE_URL = `/apis/${API_GROUP}/${API_VERSION}/namespaces/default/alertrules`;
 
 describe('sanitizeForRestore', () => {
-  it('removes deletionTimestamp, resourceVersion, managedFields and finalizers', () => {
+  it('removes deletionTimestamp, resourceVersion, managedFields, finalizers and generation', () => {
     const rule = makeDeletedRule();
     rule.metadata.deletionTimestamp = '2026-11-10T10:00:00Z';
     rule.metadata.resourceVersion = 'abc123';
+    // Unified storage sets generation to -999 (DeletedGeneration) for trash items;
+    // the apiserver rejects creates with generation < 0.
+    rule.metadata.generation = -999;
 
     const result = sanitizeForRestore(rule);
 
     expect(result.metadata.deletionTimestamp).toBeUndefined();
     expect(result.metadata.resourceVersion).toBeUndefined();
+    expect(result.metadata.generation).toBeUndefined();
   });
 
   it('keeps annotations as-is (provenance and ownership left for the backend to handle)', () => {
