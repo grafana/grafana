@@ -57,7 +57,7 @@ jest.mock('app/features/provisioning/hooks/useGetResourceRepositoryView', () => 
 }));
 
 // Same as what the real hook returns with provisioning off, so the existing toolbar tests keep
-// their baseline. Only the read-only badge tests care about this mock.
+// their baseline. Only the read-only repository tests care about this mock.
 const noRepositoryView: RepositoryViewData = {
   isLoading: false,
   isInstanceManaged: false,

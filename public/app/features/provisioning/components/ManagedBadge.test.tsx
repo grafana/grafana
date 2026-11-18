@@ -77,12 +77,13 @@ describe('ManagedBadge', () => {
       expect(await screen.findByText('Managed by: Repository')).toBeInTheDocument();
     });
 
-    it('renders the read-only variant with a lock and says so in the tooltip', async () => {
+    it('renders the read-only variant with a labelled lock and says so in the tooltip', async () => {
       const { user } = render(<ManagedBadge managerKind={ManagerKind.Repo} name="My Repo" isReadOnly />);
 
       expect(screen.queryByTestId('icon-exchange-alt')).not.toBeInTheDocument();
+      expect(screen.getByRole('img', { name: 'Read only, Managed by: Repository My Repo' })).toBeInTheDocument();
       await user.hover(screen.getByTestId('icon-exchange-alt-lock'));
-      expect(await screen.findByText('Read only, Managed by: Repository My Repo')).toBeInTheDocument();
+      expect(await screen.findByRole('tooltip')).toHaveTextContent('Read only, Managed by: Repository My Repo');
     });
 
     it('renders the orphaned repository state', async () => {

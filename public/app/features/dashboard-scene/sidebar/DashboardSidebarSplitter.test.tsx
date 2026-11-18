@@ -1,4 +1,4 @@
-import { act, screen } from '@testing-library/react';
+import { act, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
@@ -7,8 +7,8 @@ import { selectors } from '@grafana/e2e-selectors';
 import { setPluginImportUtils, setPluginLinksHook } from '@grafana/runtime';
 import { SceneGridLayout, SceneTimeRange, SceneVariableSet, VizPanel } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
-import { AppChromeService } from 'app/core/components/AppChrome/AppChromeService';
-import { ManagerKind } from 'app/features/apiserver/types';
+import { useGrafana } from 'app/core/context/GrafanaContext';
+import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -38,7 +38,6 @@ describe('DashboardSidebarSplitter', () => {
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
     act(() => {
       setTestFlags({});
     });
@@ -84,26 +83,25 @@ describe('DashboardSidebarSplitter', () => {
   });
 
   it('shows the managed badge next to the breadcrumbs and not in the sidebar', () => {
-    const update = jest.spyOn(AppChromeService.prototype, 'update');
     const scene = buildTestScene();
-    jest.spyOn(scene, 'getManagerKind').mockReturnValue(ManagerKind.Terraform);
-
-    render(<DashboardSidebarSplitter dashboard={scene} />);
-
-    expect(screen.queryByTestId('icon-exchange-alt')).not.toBeInTheDocument();
+    scene.setState({ meta: { k8s: { annotations: { [AnnoKeyManagerKind]: ManagerKind.Terraform } } } });
 
     render(
       <>
-        {update.mock.calls
-          .map(([state]) => state.breadcrumbActions)
-          .filter(Boolean)
-          .pop()}
+        <BreadcrumbActions />
+        <DashboardSidebarSplitter dashboard={scene} />
       </>
     );
 
-    expect(screen.getByTestId('icon-exchange-alt')).toBeInTheDocument();
+    expect(within(screen.getByTestId('breadcrumb-actions')).getByTestId('icon-exchange-alt')).toBeInTheDocument();
+    expect(screen.getAllByTestId('icon-exchange-alt')).toHaveLength(1);
   });
 });
+
+function BreadcrumbActions() {
+  const { chrome } = useGrafana();
+  return <div data-testid="breadcrumb-actions">{chrome.useState().breadcrumbActions}</div>;
+}
 
 export function buildTestScene() {
   const testScene = new DashboardScene({

@@ -5,7 +5,12 @@ import { config } from '@grafana/runtime';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
-import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
+import {
+  AnnoKeyManagerIdentity,
+  AnnoKeyManagerKind,
+  AnnoKeySourcePath,
+  ManagerKind,
+} from 'app/features/apiserver/types';
 import { setupProvisioningMswServer } from 'app/features/provisioning/mocks/server';
 
 import { DashboardScene } from './DashboardScene';
@@ -18,17 +23,20 @@ function mockRepositories(repositories: Array<Partial<RepositoryView>>) {
   server.use(http.get(`${BASE}/settings`, () => HttpResponse.json({ items: repositories })));
 }
 
-function buildDashboard(kind?: ManagerKind, id?: string): DashboardScene {
-  const dashboard = new DashboardScene({
+function buildDashboard(kind?: ManagerKind, id?: string, canEdit = false): DashboardScene {
+  const annotations: Record<string, string> = { [AnnoKeySourcePath]: 'dashboards/test.json' };
+  if (kind) {
+    annotations[AnnoKeyManagerKind] = kind;
+  }
+  if (id) {
+    annotations[AnnoKeyManagerIdentity] = id;
+  }
+
+  return new DashboardScene({
     title: 'test dashboard',
     uid: 'dash-1',
+    meta: { canEdit, k8s: { annotations } },
   });
-
-  jest.spyOn(dashboard, 'getManagerKind').mockReturnValue(kind);
-  jest.spyOn(dashboard, 'getManagerIdentity').mockReturnValue(id);
-  jest.spyOn(dashboard, 'getPath').mockReturnValue('dashboards/test.json');
-
-  return dashboard;
 }
 
 describe('ManagedDashboardNavBarBadge', () => {
@@ -41,7 +49,6 @@ describe('ManagedDashboardNavBarBadge', () => {
 
   afterEach(() => {
     config.provisioningEnabled = originalProvisioning;
-    jest.restoreAllMocks();
   });
 
   it('returns null when manager kind is missing', () => {
@@ -80,8 +87,7 @@ describe('ManagedDashboardNavBarBadge', () => {
   it('shows the lock on a read-only repository for a user who could otherwise edit', async () => {
     mockRepositories([{ name: 'repo-main', title: 'Main Repo', target: 'folder', type: 'github', workflows: [] }]);
 
-    const dashboard = buildDashboard(ManagerKind.Repo, 'repo-main');
-    jest.spyOn(dashboard, 'canEditDashboard').mockReturnValue(true);
+    const dashboard = buildDashboard(ManagerKind.Repo, 'repo-main', true);
     const { user } = render(<ManagedDashboardNavBarBadge dashboard={dashboard} />);
 
     await user.hover(await screen.findByTestId('icon-exchange-alt-lock'));
@@ -93,7 +99,6 @@ describe('ManagedDashboardNavBarBadge', () => {
     mockRepositories([{ name: 'repo-main', title: 'Main Repo', target: 'folder', type: 'github', workflows: [] }]);
 
     const dashboard = buildDashboard(ManagerKind.Repo, 'repo-main');
-    jest.spyOn(dashboard, 'canEditDashboard').mockReturnValue(false);
     const { user } = render(<ManagedDashboardNavBarBadge dashboard={dashboard} />);
 
     await user.hover(await screen.findByTestId('icon-exchange-alt'));
@@ -103,11 +108,7 @@ describe('ManagedDashboardNavBarBadge', () => {
   });
 
   it('removes the badge when the dashboard loses its manager', () => {
-    const dashboard = new DashboardScene({
-      title: 'test dashboard',
-      uid: 'dash-1',
-      meta: { k8s: { annotations: { [AnnoKeyManagerKind]: ManagerKind.Terraform } } },
-    });
+    const dashboard = buildDashboard(ManagerKind.Terraform);
     render(<ManagedDashboardNavBarBadge dashboard={dashboard} />);
 
     expect(screen.getByTestId('icon-exchange-alt')).toBeInTheDocument();
