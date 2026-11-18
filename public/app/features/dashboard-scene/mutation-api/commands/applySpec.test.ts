@@ -10,22 +10,40 @@
 
 import { waitFor } from '@testing-library/react';
 import { cloneDeep } from 'lodash';
+import { of } from 'rxjs';
 
+import { LoadingState } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
-import { reportInteraction, setPluginImportUtils } from '@grafana/runtime';
+import { locationService, reportInteraction, setPluginImportUtils, setRunRequest } from '@grafana/runtime';
 import { type Spec as DashboardV2Spec, type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { handyTestingSchema } from '@grafana/schema/apis/dashboard.grafana.app/v2/examples';
 import { setTestFlags } from '@grafana/test-utils/feature-flags';
 import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
+import { dataSource as expressionDataSource } from 'app/features/expressions/ExpressionDatasource';
+import { dashboardMutationApi } from 'app/features/plugins/components/restrictedGrafanaApis/dashboardMutation/dashboardMutationApi';
+import { getPluginExtensionRegistries } from 'app/features/plugins/extensions/registry/setup';
+import { getExtensionPointPluginDependencies } from 'app/features/plugins/extensions/utils';
+import { getMockDataSource } from 'app/features/query/state/mocks/mockDataSource';
 
-import { applyDashboardSpec } from '../../actions/dashboard/applyDashboardSpec';
+import { applyDashboardSpec, swapInReloadedDashboard } from '../../actions/dashboard/applyDashboardSpec';
+import { changeViewPanelOptions } from '../../actions/panel/changeViewPanelOptions';
 import { endBatch as endEditBatch, startBatch as startEditBatch } from '../../actions/utils/batch';
+import { edit } from '../../actions/utils/edit';
+import {
+  clearPendingChangePreview,
+  getPendingChangesHistory,
+  loadPendingChangePreview,
+  type PendingChangesHistory,
+} from '../../lifecycle/pendingChangePreview';
+import { setPendingChangesPageReload } from '../../lifecycle/pendingChangesPageReload';
+import { QueryCoauthoringSessionEngine } from '../../panel-edit/PanelEditNext/QueryEditor/coauthoring/QueryCoauthoringSessionEngine';
 import { buildPanelEditScene } from '../../panel-edit/PanelEditor';
 import { type DashboardScene } from '../../scene/DashboardScene';
 import { dashboardViews } from '../../scene/dashboardViewRegistry';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { transformSaveModelSchemaV2ToScene } from '../../serialization/transformSaveModelSchemaV2ToScene';
 import { findVizPanelByKey } from '../../utils/findVizPanel';
+import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
 import { createDeferred } from '../../utils/test-utils';
 import { getLibraryPanelBehavior } from '../../utils/utils';
 
@@ -34,6 +52,13 @@ import { getSpecCommand } from './getSpec';
 import { endBatchCommand, getLastActionCommand, redoCommand, startBatchCommand, undoCommand } from './history';
 import { enterEditModeIfNeeded, type MutationContext } from './types';
 
+jest.mock('app/features/plugins/extensions/registry/setup', () => ({ getPluginExtensionRegistries: jest.fn() }));
+jest.mock('app/features/plugins/extensions/utils', () => ({
+  getAppPluginConfigs: jest.fn(async () => []),
+  getExtensionPointPluginDependencies: jest.fn(),
+}));
+jest.mock('app/features/plugins/pluginPreloader', () => ({ preloadPlugins: jest.fn(async () => undefined) }));
+
 // Entering edit mode starts the change tracker, which spawns a real web worker jsdom does not have.
 jest.mock('../../saving/createDetectChangesWorker', () => ({
   createWorker: () => ({ postMessage: jest.fn(), terminate: jest.fn(), onmessage: null }),
@@ -41,7 +66,9 @@ jest.mock('../../saving/createDetectChangesWorker', () => ({
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: () => ({ getInstanceSettings: jest.fn() }),
+  getDataSourceSrv: () => ({ getInstanceSettings: jest.fn(), get: () => Promise.resolve(mockCoauthoringDatasource) }),
+  getDataSourceInstance: () => Promise.resolve(mockCoauthoringDatasource),
+  getDataSourceInstanceSettings: async () => undefined,
   reportInteraction: jest.fn(),
 }));
 
@@ -49,6 +76,21 @@ jest.mock('app/features/library-panels/state/api', () => ({
   ...jest.requireActual('app/features/library-panels/state/api'),
   getLibraryPanel: jest.fn(() => new Promise(() => {})),
 }));
+
+const mockCoauthoringDatasource = Object.assign(getMockDataSource(), {
+  queryCoauthoring: () => expressionDataSource.queryCoauthoring(),
+});
+
+let cachedPanelPlugin: ReturnType<typeof getPanelPlugin> | undefined;
+beforeAll(() =>
+  setPluginImportUtils({
+    importPanelPlugin: async () => cachedPanelPlugin ?? getPanelPlugin({}),
+    getPanelPluginFromCache: () => cachedPanelPlugin,
+  })
+);
+afterEach(() => {
+  cachedPanelPlugin = undefined;
+});
 
 /**
  * `handyTestingSchema` holds `panel-1` (a plain panel) and `panel-2` (a library panel). Its
@@ -164,13 +206,6 @@ describe('APPLY_SPEC during review', () => {
 });
 
 describe('APPLY_SPEC with a panel open for editing', () => {
-  beforeAll(() => {
-    setPluginImportUtils({
-      importPanelPlugin: async () => getPanelPlugin({}),
-      getPanelPluginFromCache: () => undefined,
-    });
-  });
-
   it('re-binds the editor onto the panel in the rebuilt tree', async () => {
     const scene = buildScene(makeSpec());
     const beforeSwap = openPanelEdit(scene, 'panel-1');
@@ -714,6 +749,267 @@ describe('mutation API history of APPLY_SPEC edits', () => {
       expect((await readSpec(scene)).title).toBe('Before');
     } finally {
       scene.exitEditMode({ skipConfirm: true });
+    }
+  });
+});
+
+describe('coauthoring Accept and Assistant checkpoint history', () => {
+  it.each([
+    'closed',
+    'open',
+    'nested',
+    'redo',
+    'unrelated',
+    'older-panel',
+    'older-open',
+    'older-nested',
+    'redo-panel',
+    'detached',
+    'blocked',
+    'no-activation',
+  ])('protects query ownership across %s history', async (mode) => {
+    const openDuringAccept = ['open', 'nested', 'older-open', 'older-nested'].includes(mode);
+    setTestFlags({ dashboardNewLayouts: true });
+    cachedPanelPlugin = getPanelPlugin({ id: 'timeseries' });
+    Object.defineProperty(navigator, 'userActivation', { configurable: true, value: { isActive: true } });
+    setRunRequest((_ds, request) => of({ request, state: LoadingState.Done, series: [], timeRange: request.range }));
+    const scene = buildScene(makeSpec());
+    const stop = scene.activate();
+    const detachSidebarView = mode === 'detached' ? scene.state.sidebar.activate() : () => {};
+    let engine: QueryCoauthoringSessionEngine | undefined;
+    try {
+      const firstPanel = findVizPanelByKey(scene, 'panel-1')!;
+      getQueryRunnerFor(firstPanel)!.setState({
+        queries: [{ refId: 'A', type: 'math', expression: '1', datasource: { uid: '__expr__', type: '__expr__' } }],
+      });
+      enterEditModeIfNeeded(scene);
+      if (['older-panel', 'older-open', 'older-nested'].includes(mode)) {
+        const stopPanel = firstPanel.activate();
+        await waitFor(() => expect(firstPanel.getPlugin()?.meta.id).toBe('timeseries'));
+        changeViewPanelOptions(firstPanel, { ...firstPanel.state.options, bars: true }, 'Bars', 'Display');
+        stopPanel();
+      }
+      const before = await readSpec(scene);
+
+      const { data } = await startBatchCommand.handler({ description: 'Assistant dashboard changes' }, { scene });
+      const batchId = (data as { batchId: string }).batchId;
+      if (mode === 'nested' || mode === 'older-nested') {
+        await startBatchCommand.handler({ description: 'Nested schema changes' }, { scene });
+      }
+      await applySpec(scene, { ...before, title: 'Assistant title' });
+      if (!openDuringAccept) {
+        await endBatchCommand.handler({}, { scene });
+      }
+      if (mode === 'redo-panel') {
+        const changedPanel = findVizPanelByKey(scene, 'panel-1')!;
+        const stopPanel = changedPanel.activate();
+        await waitFor(() => expect(changedPanel.getPlugin()?.meta.id).toBe('timeseries'));
+        changeViewPanelOptions(changedPanel, { ...changedPanel.state.options, bars: true }, 'Bars', 'Display');
+        scene.state.sidebar.undoLastAction();
+        stopPanel();
+      }
+      if (mode === 'redo' || mode === 'redo-panel') {
+        expect(
+          (await undoCommand.handler({ expectedActor: 'mutation-api', expectedBatchId: batchId }, { scene })).data
+        ).toEqual({ undone: true });
+      }
+      if (mode === 'unrelated') {
+        edit({
+          source: scene,
+          meta: { actionId: 'dashboard.changeDescription' },
+          perform: () => scene.setState({ description: 'Standalone edit' }),
+          undo: () => scene.setState({ description: 'Restored standalone' }),
+        });
+      }
+      const panel = openPanelEdit(scene, 'panel-1');
+      const runner = getQueryRunnerFor(panel)!;
+      setRunRequest((_ds, request) => of({ request, state: LoadingState.Done, series: [], timeRange: request.range }));
+      engine = QueryCoauthoringSessionEngine.getOrCreate(panel);
+      const session = engine.enter('A', [], undefined, undefined, {
+        refId: 'A',
+        revision: engine.getRevision(),
+        contextGeneration: engine.getContextGeneration(),
+        ranges: [],
+        status: 'ready',
+        text: '1',
+      });
+      if (mode === 'blocked') {
+        setRunRequest((_ds, request) =>
+          of({
+            request,
+            state: LoadingState.Error,
+            series: [],
+            timeRange: request.range,
+            error: { refId: 'A', message: 'Preview rejected' },
+          })
+        );
+      }
+      const [result] = await session.stageProposal([{ changes: [{ refId: 'A', text: '2' }] }], {
+        baseRevision: session.getState().revision,
+        baseContextGeneration: session.getState().contextGeneration,
+      });
+      expect(result.status).toBe('staged');
+      if (result.status !== 'staged') {
+        throw new Error('Expected staged');
+      }
+      detachSidebarView();
+      if (mode === 'blocked' || mode === 'no-activation') {
+        if (mode === 'blocked') {
+          await waitFor(() => expect(session.getState().proposal?.[0].previewOutcome).toBe('error'));
+        } else {
+          Object.defineProperty(navigator, 'userActivation', { configurable: true, value: { isActive: false } });
+        }
+        expect(await session.accept(result.id, { baseRevision: session.getState().revision })).toEqual({
+          status: mode === 'blocked' ? 'blocked' : 'no_user_activation',
+        });
+        expect((await getLastActionCommand.handler({}, { scene })).data).toMatchObject({ action: { batchId } });
+        expect(runner.state.queries[0]).toMatchObject({ expression: '1' });
+        return;
+      }
+      expect(await session.accept(result.id, { baseRevision: session.getState().revision })).toMatchObject({
+        status: 'applied',
+      });
+      const accepted = await readSpec(scene);
+      expect(accepted.elements['panel-1']).not.toEqual(before.elements['panel-1']);
+      expect(runner.state.queries[0]).toMatchObject({ expression: '2' });
+      if (openDuringAccept) {
+        await endBatchCommand.handler({}, { scene });
+      }
+      if (mode === 'nested' || mode === 'older-nested') {
+        await endBatchCommand.handler({}, { scene });
+      }
+      const undone = await undoCommand.handler({ expectedActor: 'mutation-api', expectedBatchId: batchId }, { scene });
+      expect((await readSpec(scene)).elements['panel-1']).toEqual(accepted.elements['panel-1']);
+      if (mode === 'unrelated') {
+        expect(undone.success).toBe(false);
+        scene.state.sidebar.undoLastAction();
+        expect(scene.state.description).toBe('Restored standalone');
+      } else {
+        expect(undone).toMatchObject({ success: true, data: { undone: false } });
+      }
+      if (mode === 'redo' || mode === 'redo-panel') {
+        expect(
+          await redoCommand.handler({ expectedActor: 'mutation-api', expectedBatchId: batchId }, { scene })
+        ).toMatchObject({ success: true, data: { redone: false } });
+      }
+      expect(getQueryRunnerFor(findVizPanelByKey(scene, 'panel-1')!)!.state.queries[0]).toMatchObject({
+        expression: '2',
+      });
+      expect(session.signal.aborted).toBe(false);
+      expect(await session.undo({})).toMatchObject({ status: 'applied' });
+      expect(runner.state.queries[0]).toMatchObject({ expression: '1' });
+    } finally {
+      engine?.dispose();
+      stop();
+      setTestFlags({});
+    }
+  });
+});
+
+describe('Coauthoring Accept and server reload admission', () => {
+  it.each([false, true])('keeps an accepted Panel Edit query unsaved with plugin history=%s', async (pluginHistory) => {
+    setTestFlags({ dashboardNewLayouts: true, 'assistant.dashboard.artifacts': true });
+    cachedPanelPlugin = getPanelPlugin({ id: 'timeseries' });
+    Object.defineProperty(navigator, 'userActivation', { configurable: true, value: { isActive: true } });
+    setRunRequest((_ds, request) => of({ request, state: LoadingState.Done, series: [], timeRange: request.range }));
+    const saved = makeSpec((spec) => {
+      const panel = spec.elements['panel-1'];
+      if (panel.kind !== 'Panel') {
+        throw new Error('Expected Panel');
+      }
+      panel.spec.data.spec.queries[0].spec.query = {
+        kind: 'DataQuery',
+        group: '__expr__',
+        version: 'v0',
+        datasource: { name: '__expr__' },
+        spec: { type: 'math', expression: '1' },
+      };
+    });
+    const scene = buildScene(saved);
+    const uid = scene.state.uid!;
+    const history = {
+      record: jest.fn(async () => ({ recorded: true })),
+      undo: jest.fn(),
+      redo: jest.fn(),
+      getState: () => ({ proposed: saved }),
+      subscribe: () => () => {},
+    } satisfies PendingChangesHistory;
+    if (pluginHistory) {
+      jest.mocked(getExtensionPointPluginDependencies).mockResolvedValue(['grafana-assistant-app']);
+      jest.mocked(getPluginExtensionRegistries).mockResolvedValue({
+        addedFunctionsRegistry: {
+          getState: async () => ({
+            'grafana/dashboard/pending-changes/v1': [
+              { fn: async () => ({ baseGeneration: 1, proposed: saved, history }) },
+            ],
+          }),
+        },
+      } as unknown as Awaited<ReturnType<typeof getPluginExtensionRegistries>>);
+      await loadPendingChangePreview('page', uid, 'chat-reload');
+      expect(getPendingChangesHistory(scene.state)).toBe(history);
+    }
+    const stop = scene.activate();
+    let engine: QueryCoauthoringSessionEngine | undefined;
+    const reload = jest.fn(async () => {
+      swapInReloadedDashboard(scene, buildScene(saved));
+      return true;
+    });
+    setPendingChangesPageReload(reload);
+    try {
+      const panel = openPanelEdit(scene, 'panel-1');
+      const runner = getQueryRunnerFor(panel)!;
+      engine = QueryCoauthoringSessionEngine.getOrCreate(panel);
+      const session = engine.enter('A', [], undefined, undefined, {
+        refId: 'A',
+        revision: engine.getRevision(),
+        contextGeneration: engine.getContextGeneration(),
+        ranges: [],
+        status: 'ready',
+        text: '1',
+      });
+      const [option] = await session.stageProposal([{ changes: [{ refId: 'A', text: '2' }] }], {
+        baseRevision: session.getState().revision,
+        baseContextGeneration: session.getState().contextGeneration,
+      });
+      if (option.status !== 'staged') {
+        throw new Error(option.status);
+      }
+      expect(await session.accept(option.id, { baseRevision: session.getState().revision })).toMatchObject({
+        status: 'applied',
+      });
+      const accepted = (await readSpec(scene)).elements['panel-1'];
+      expect(runner.state.queries[0]).toMatchObject({ expression: '2' });
+      const result = await dashboardMutationApi.execute({
+        type: 'RELOAD_FROM_SERVER',
+        payload: { pendingChanges: null },
+      });
+      expect((await readSpec(scene)).elements['panel-1']).toEqual(accepted);
+      expect(result).toMatchObject({ success: true, data: { reloaded: false, reason: 'unsaved-changes' } });
+      expect(reload).toHaveBeenCalledTimes(0);
+      expect(getQueryRunnerFor(findVizPanelByKey(scene, 'panel-1')!)!.state.queries[0]).toMatchObject({
+        expression: '2',
+      });
+      expect(editorIsAttached(scene)).toBe(true);
+      expect(session.signal.aborted).toBe(false);
+      expect(history.record).toHaveBeenCalledTimes(0);
+      const beforeSwitch = locationService.getLocation().search;
+      expect(
+        await dashboardMutationApi.execute({ type: 'RELOAD_FROM_SERVER', payload: { pendingChanges: 'other-chat' } })
+      ).toMatchObject({ success: true, data: { reloaded: false, reason: 'unsaved-changes' } });
+      expect(locationService.getLocation().search).toBe(beforeSwitch);
+      expect(await session.undo({})).toMatchObject({ status: 'applied' });
+      expect(runner.state.queries[0]).toMatchObject({ expression: '1' });
+      expect(
+        await dashboardMutationApi.execute({ type: 'RELOAD_FROM_SERVER', payload: { pendingChanges: null } })
+      ).toMatchObject({ success: true, data: { reloaded: true } });
+      expect(reload).toHaveBeenCalledTimes(1);
+    } finally {
+      engine?.dispose();
+      stop();
+      clearPendingChangePreview(uid, 'chat-reload');
+      setPendingChangesPageReload(async () => false);
+      locationService.replace('/');
+      setTestFlags({});
     }
   });
 });

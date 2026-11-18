@@ -41,6 +41,8 @@ import { getDashboardSceneFor } from '../../utils/utils';
 import { QueryEditorContent } from './QueryEditor/QueryEditorContent';
 import { QueryCoauthoringSessionEngine } from './QueryEditor/coauthoring/QueryCoauthoringSessionEngine';
 import {
+  type QueryCoauthoringClosedReason,
+  type QueryCoauthoringEntryBaseline,
   type QueryCoauthoringRange,
   type QueryCoauthoringSession,
 } from './QueryEditor/coauthoring/queryCoauthoringContracts';
@@ -417,14 +419,26 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
   public startCoauthoringSession = (
     refId: string,
     ranges: QueryCoauthoringRange[] = [],
-    select?: (refId: string) => void
+    select?: (refId: string) => void,
+    sessionId?: string,
+    entry?: QueryCoauthoringEntryBaseline
   ): QueryCoauthoringSession => {
-    return QueryCoauthoringSessionEngine.getOrCreate(this.state.panelRef.resolve()).enter(refId, ranges, select);
+    return QueryCoauthoringSessionEngine.getOrCreate(this.state.panelRef.resolve()).enter(
+      refId,
+      ranges,
+      select,
+      sessionId,
+      entry
+    );
+  };
+
+  public getCoauthoringHealth = () => {
+    return QueryCoauthoringSessionEngine.getOrCreate(this.state.panelRef.resolve()).getHealth();
   };
 
   public getCoauthoringEditorQueries = (): DataQuery[] | undefined => this.coauthoring?.getEditorQueries();
 
-  public closeCoauthoringSession = (reason: 'flag_off' | 'left_panel_edit') => this.coauthoring?.close(reason);
+  public closeCoauthoringSession = (reason: QueryCoauthoringClosedReason) => this.coauthoring?.close(reason);
 
   public runQueries = () => {
     this.coauthoring?.manualRun();

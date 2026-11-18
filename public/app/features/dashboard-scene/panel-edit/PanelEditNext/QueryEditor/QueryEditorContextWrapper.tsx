@@ -13,6 +13,7 @@ import { getQueryEditorTypeConfig } from '../constants';
 
 import { type PendingSavedQuery, QueryEditorProvider, type SelectionModifiers } from './QueryEditorContext';
 import { useStackedModeOrchestration } from './StackedEditor/useStackedModeOrchestration';
+import { useMountedCoauthoringPanel } from './coauthoring/useCoauthoringSurface';
 import { useAlertRulesForPanel } from './hooks/useAlertRulesForPanel';
 import { usePendingExpression } from './hooks/usePendingExpression';
 import { usePendingPickerSetters } from './hooks/usePendingPickerSetters';
@@ -278,6 +279,17 @@ export function QueryEditorContextWrapper({
     },
     [selectAlert]
   );
+
+  const selectCoauthoringQuery = useCallback(
+    (refId: string) => {
+      const query = queryRunner?.state.queries.find((query) => query.refId === refId);
+      if (query) {
+        setSelectedQuery(query);
+      }
+    },
+    [queryRunner, setSelectedQuery]
+  );
+  useMountedCoauthoringPanel(dataPane, panel, queryRunnerState?.queries ?? [], selectCoauthoringQuery);
 
   const dsState = useMemo(
     () => ({
