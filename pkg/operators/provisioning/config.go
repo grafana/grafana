@@ -336,7 +336,7 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 			audiences = append(audiences, provisioning.GROUP)
 		}
 		if group == resources.AnyGroup {
-			audiences = []string{provisioning.GROUP}
+			audiences = []string{resources.AnyGroupAudience}
 		}
 
 		config := &rest.Config{
@@ -361,7 +361,7 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 	supported := resources.NewSupportedResourceProvider(supportedResources)
 	c.manifestWatcher, err = newManifestWatcher(supported, resource.ManifestWatcherConfig{
 		DiscoveryURL:      aggregatedServerURL,
-		DiscoveryAudience: provisioning.GROUP,
+		DiscoveryAudience: resources.AnyGroupAudience,
 		Exchanger:         tokenExchangeClient,
 		TLS:               &tlsConfig,
 		PollInterval:      time.Minute,

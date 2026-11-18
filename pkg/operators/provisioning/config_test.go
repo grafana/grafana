@@ -163,7 +163,7 @@ func TestProvisioningRESTClientCarriesTheExchangedToken(t *testing.T) {
 }
 
 // The aggregated server is the router: it publishes the app manifests, and it serves each group
-// that has no server URL. Both requests carry a token for the provisioning audience.
+// that has no server URL. Both requests carry a token for the audience of the router.
 func TestClientsServeManifestKindsFromTheAggregatedServer(t *testing.T) {
 	router := newStubRouter(t)
 	cfg := newClientsConfig(t, newStubSigner(t).URL, map[string]string{"aggregated_server_url": router.URL})
@@ -183,7 +183,7 @@ func TestClientsServeManifestKindsFromTheAggregatedServer(t *testing.T) {
 	_, err = client.List(t.Context(), metav1.ListOptions{})
 	require.NoError(t, err)
 
-	token := "Bearer token-for-" + apisprovisioning.GROUP
+	token := "Bearer token-for-" + resources.AnyGroupAudience
 	require.Equal(t, token, router.accessToken("/apis/discovery/v1alpha2/manifests"))
 	require.Equal(t, token, router.accessToken("/apis/"+stubRouterGroup+"/v1/namespaces/default/widgets"))
 }

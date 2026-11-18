@@ -467,6 +467,10 @@ func WithPinnedKinds(ctx context.Context) context.Context {
 // AnyGroup keys the API server that serves each group without a server of its own.
 const AnyGroup = "*"
 
+// AnyGroupAudience is the token audience of the API server under AnyGroup. That server is the
+// router, which accepts the default audience of Grafana.
+const AnyGroupAudience = "grafana"
+
 type multiClientFactory struct {
 	clientFactories map[string]ClientFactory
 	// collections are the configured patterns, resolving a member group onto the API server
