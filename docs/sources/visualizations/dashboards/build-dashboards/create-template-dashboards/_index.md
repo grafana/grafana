@@ -84,6 +84,9 @@ To create a custom dashboard template, follow these steps:
    This name is separate from the dashboard title.
 
 1. (Optional) Enter a description and set tags for the template.
+
+   These are separate from the dashboard description and tags.
+
 1. Click **Save**.
 
 Now the template is available in the **Custom** tab of the **Start a dashboard from a template** dialog box.
