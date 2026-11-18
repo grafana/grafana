@@ -2,13 +2,14 @@ import { acceptCompletion, autocompletion, startCompletion } from '@codemirror/a
 import { EditorState, Prec } from '@codemirror/state';
 import { EditorView, keymap } from '@codemirror/view';
 import { type ReactCodeMirrorProps, type ReactCodeMirrorRef } from '@uiw/react-codemirror';
-import { type ReactNode, type RefObject, useMemo, useRef } from 'react';
+import { type ReactNode, type RefObject, useMemo, useRef, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 import { Alert } from '../Alert/Alert';
 
+import { createOverviewRulerExtension, OverviewRuler, type OverviewRulerState } from './OverviewRuler';
 import { createCodeEditorTheme } from './theme';
 import {
   type CodeMirrorCompletionMode,
@@ -26,6 +27,8 @@ export interface CodeMirrorSetup {
   props: ReactCodeMirrorProps;
   /** Render above the editor; set when the language fails to load. */
   languageAlert: ReactNode;
+  /** Render after the editor; set when `overviewRuler` is enabled. */
+  overviewRuler: ReactNode;
 }
 
 const getCompletionExtensions = (
@@ -119,6 +122,7 @@ export function useCodeMirrorSetup({
   indentWithTab = true,
   readOnly = false,
   lineWrapping = false,
+  overviewRuler = false,
 }: Omit<CodeMirrorEditorProps, 'loadingFallback'>): CodeMirrorSetup {
   const theme = useTheme2();
   const { extension: languageExtension, error: languageExtensionError } = useLanguageExtension(language, sqlDialect);
@@ -129,6 +133,8 @@ export function useCodeMirrorSetup({
   const sources = useShallowStable(completionSources);
   const basicSetup = useShallowStable(basicSetupProp);
   const editorRef = useRef<ReactCodeMirrorRef>(null);
+  // A fresh wrapper makes React redraw the ruler when CodeMirror's mutable view changes.
+  const [overviewRulerState, setOverviewRulerState] = useState<OverviewRulerState | null>(null);
   const handleChange = useStableCallback(onChange);
   const handleBlur = useStableCallback(() => {
     const editorView = editorRef.current?.view;
@@ -149,6 +155,7 @@ export function useCodeMirrorSetup({
       ...(languageExtension ? [languageExtension] : []),
       ...getCompletionExtensions(sources, completionMode, completeOnSpace),
       ...(lineWrapping ? [EditorView.lineWrapping] : []),
+      ...(overviewRuler ? createOverviewRulerExtension(setOverviewRulerState) : []),
       ...(additionalExtensions ?? []),
     ],
     [
@@ -160,6 +167,7 @@ export function useCodeMirrorSetup({
       completionMode,
       completeOnSpace,
       lineWrapping,
+      overviewRuler,
       additionalExtensions,
     ]
   );
@@ -185,5 +193,6 @@ export function useCodeMirrorSetup({
         )}
       </Alert>
     ) : null,
+    overviewRuler: overviewRuler && overviewRulerState ? <OverviewRuler editor={overviewRulerState} /> : null,
   };
 }

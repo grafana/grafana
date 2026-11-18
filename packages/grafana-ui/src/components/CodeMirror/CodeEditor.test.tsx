@@ -1,9 +1,10 @@
 import { acceptCompletion, autocompletion, startCompletion, type CompletionSource } from '@codemirror/autocomplete';
+import { linter, setDiagnostics } from '@codemirror/lint';
 import { EditorState } from '@codemirror/state';
 import { keymap, type EditorView as CodeMirrorEditorView } from '@codemirror/view';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { EditorView, type ReactCodeMirrorProps } from '@uiw/react-codemirror';
+import CodeMirror, { EditorView, type ReactCodeMirrorProps } from '@uiw/react-codemirror';
 
 import { createTheme, type GrafanaTheme2 } from '@grafana/data';
 import { faro } from '@grafana/faro-web-sdk';
@@ -308,5 +309,157 @@ describe('CodeMirror CodeEditor', () => {
         }),
       })
     );
+  });
+
+  describe('overview ruler with a real editor', () => {
+    const originalCodeMirror = jest.mocked(CodeMirror).getMockImplementation()!;
+    const originalTheme = createCodeEditorThemeMock.getMockImplementation()!;
+    const getOverview = (view: CodeMirrorEditorView) => view.dom.querySelector<HTMLElement>('.cm-overview-ruler');
+
+    beforeEach(() => {
+      const ActualCodeMirror = jest.requireActual('@uiw/react-codemirror').default;
+      jest.mocked(CodeMirror).mockImplementation((props) => <ActualCodeMirror {...props} />);
+      createCodeEditorThemeMock.mockImplementation(jest.requireActual('./theme').createCodeEditorTheme);
+    });
+
+    afterEach(() => {
+      jest.mocked(CodeMirror).mockImplementation(originalCodeMirror);
+      createCodeEditorThemeMock.mockImplementation(originalTheme);
+    });
+
+    async function setup(overviewRuler?: boolean) {
+      const props = {
+        value: 'one\ntwo\nthree',
+        onChange: jest.fn(),
+        onBlur: jest.fn(),
+        extensions: [linter(null)],
+        indentWithTab: false,
+      };
+      const { rerender } = render(<CodeEditor {...props} overviewRuler={overviewRuler} />);
+      const editor = await screen.findByRole('textbox');
+      return { props, rerender, editor, view: EditorView.findFromDOM(editor)! };
+    }
+
+    function mockScrollArea(scroller: HTMLElement) {
+      Object.defineProperties(scroller, {
+        clientHeight: {
+          configurable: true,
+          get: () => (scroller.classList.contains('cm-overview-ruler-horizontal') ? 188 : 200),
+        },
+        clientWidth: { configurable: true, value: 400 },
+        scrollHeight: { configurable: true, value: 10000 },
+        scrollWidth: { configurable: true, value: 1000 },
+      });
+      // jsdom has no scrolling or layout; preserve the browser's scroll event contract.
+      jest.spyOn(scroller, 'scrollTo').mockImplementation((options: number | ScrollToOptions) => {
+        if (typeof options === 'object') {
+          scroller.scrollTop = options.top ?? scroller.scrollTop;
+          scroller.scrollLeft = options.left ?? scroller.scrollLeft;
+          fireEvent.scroll(scroller);
+        }
+      });
+    }
+
+    it('opts in to informational error markers, groups errors, ignores warnings, and clears fixed errors', async () => {
+      const { props, rerender, view } = await setup();
+      act(() =>
+        view.dispatch(
+          setDiagnostics(view.state, [
+            { from: 4, to: 5, severity: 'error', message: 'First error' },
+            { from: 6, to: 7, severity: 'error', message: 'Second error' },
+            { from: 8, to: 13, severity: 'warning', message: 'Warning' },
+          ])
+        )
+      );
+      expect(getOverview(view)).not.toBeInTheDocument();
+
+      rerender(<CodeEditor {...props} overviewRuler />);
+      await waitFor(() => expect(getOverview(view)?.children).toHaveLength(1));
+      expect(getOverview(view)).toHaveAttribute('aria-hidden', 'true');
+
+      act(() => view.dispatch(setDiagnostics(view.state, [])));
+      await waitFor(() => expect(getOverview(view)).not.toBeInTheDocument());
+    });
+
+    it('centers the rendered diagnostic when clicking its position on the track, without selecting it', async () => {
+      const user = userEvent.setup();
+      const { view, editor, props } = await setup(true);
+      await user.tab();
+      mockScrollArea(view.scrollDOM);
+      const lineBlockAt = view.lineBlockAt.bind(view);
+      jest
+        .spyOn(view, 'lineBlockAt')
+        .mockImplementation((from) => Object.create(lineBlockAt(from), { top: { value: 1076 } }));
+      jest.spyOn(view, 'documentPadding', 'get').mockReturnValue({ top: 4, bottom: 4 });
+      act(() =>
+        view.dispatch(setDiagnostics(view.state, [{ from: 4, to: 7, severity: 'error', message: 'Invalid value' }]))
+      );
+      await waitFor(() => expect(getOverview(view)).toBeVisible());
+      const marker = getOverview(view)!.firstElementChild as HTMLElement;
+      expect(marker).toHaveStyle({ pointerEvents: 'none' });
+      const selection = view.state.selection;
+      const thumb = screen.getByRole('scrollbar', { name: 'Scroll vertically' });
+
+      await user.pointer({
+        target: thumb.parentElement!,
+        keys: '[MouseLeft]',
+        coords: { y: parseFloat(marker.style.top) + 4 },
+      });
+      expect(view.scrollDOM.scrollTop + view.scrollDOM.clientHeight / 2).toBeCloseTo(1080);
+      expect(view.state.selection).toEqual(selection);
+      expect(editor).toHaveFocus();
+      expect(props.onBlur).not.toHaveBeenCalled();
+    });
+
+    it('supports thumb dragging and keyboard scrolling on both axes without diagnostics', async () => {
+      const user = userEvent.setup();
+      const { view, props } = await setup(true);
+      mockScrollArea(view.scrollDOM);
+      act(() => view.dispatch(setDiagnostics(view.state, [])));
+      const thumb = await screen.findByRole('scrollbar', { name: 'Scroll vertically' });
+      const horizontal = screen.getByRole('scrollbar', { name: 'Scroll horizontally' });
+      await waitFor(() => expect(horizontal.parentElement).toHaveStyle({ top: '188px' }));
+      thumb.setPointerCapture = jest.fn();
+
+      await user.tab();
+      await user.pointer([
+        { target: thumb, keys: '[MouseLeft>]', coords: { y: 10 } },
+        { coords: { y: 92 } },
+        { keys: '[/MouseLeft]' },
+      ]);
+      expect(view.scrollDOM.scrollTop).toBe(4906);
+      expect(props.onBlur).not.toHaveBeenCalled();
+      await waitFor(() => expect(thumb).toHaveAttribute('aria-valuetext', '50%'));
+      await user.tab();
+      await user.keyboard('{End}');
+      expect(view.scrollDOM.scrollTop).toBe(9812);
+      await user.tab();
+      await user.keyboard('{ArrowRight}');
+      expect(view.scrollDOM.scrollLeft).toBe(40);
+
+      view.scrollDOM.scrollTop = -50;
+      view.scrollDOM.scrollLeft = 1000;
+      fireEvent.scroll(view.scrollDOM);
+      await waitFor(() => expect(thumb).toHaveStyle({ top: '0px' }));
+      expect(horizontal).toHaveStyle({ left: '240px' });
+    });
+
+    it('wheels the editor from the track and lets the page scroll once the editor is at its edge', async () => {
+      const { view } = await setup(true);
+      const scroller = view.scrollDOM;
+      mockScrollArea(scroller);
+      scroller.scrollBy = jest.fn((options: number | ScrollToOptions) => {
+        if (typeof options === 'object') {
+          scroller.scrollTop = Math.min(9800, Math.max(0, scroller.scrollTop + (options.top ?? 0)));
+        }
+      }) as typeof scroller.scrollBy;
+      const track = (await screen.findByRole('scrollbar', { name: 'Scroll vertically' })).parentElement!;
+
+      expect(fireEvent.wheel(track, { deltaY: 100 })).toBe(false);
+      expect(scroller.scrollTop).toBe(100);
+
+      scroller.scrollTop = 9800;
+      expect(fireEvent.wheel(track, { deltaY: 100 })).toBe(true);
+    });
   });
 });

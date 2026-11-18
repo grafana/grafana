@@ -1,3 +1,5 @@
+import { jsonParseLinter } from '@codemirror/lang-json';
+import { linter } from '@codemirror/lint';
 import type { Meta, StoryFn } from '@storybook/react';
 import { action } from 'storybook/actions';
 import { useArgs } from 'storybook/preview-api';
@@ -98,6 +100,15 @@ WithCompletions.args = {
   height: '240px',
   completionMode: 'override',
   completionSources: [keywordCompletionSource],
+};
+
+export const WithOverviewRuler = ControlledEditor.bind({});
+WithOverviewRuler.args = {
+  value: '{\n  "title": "Example",\n  "panels": [],\n}',
+  language: 'json',
+  height: '320px',
+  overviewRuler: true,
+  extensions: [linter(jsonParseLinter())],
 };
 
 export default meta;
