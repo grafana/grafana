@@ -20,7 +20,7 @@ import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { edit } from '../../actions/utils/edit';
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
-import { type ScenePrompt } from '../../prompts/types';
+import { type SceneQuestion } from '../../questions/types';
 import { serializeTab } from '../../serialization/layoutSerializers/TabsLayoutSerializer';
 import { getElements } from '../../serialization/layoutSerializers/utils';
 import { SectionFiltersSet } from '../../settings/variables/SectionFiltersSet';
@@ -54,8 +54,8 @@ export interface TabItemState extends SceneObjectState {
   isDropTarget?: boolean;
   conditionalRendering?: ConditionalRenderingGroup;
   repeatByVariable?: string;
-  /** Prompts viewers can run on the panels in this tab, offered by plugins in the tab's controls */
-  prompts?: ScenePrompt[];
+  /** Questions viewers can run on the panels in this tab, offered by plugins in the tab's controls */
+  questions?: SceneQuestion[];
   repeatedTabs?: TabItem[];
   /** Marks object as a repeated object and a key pointer to source object */
   repeatSourceKey?: string;

@@ -9,7 +9,7 @@ import {
 import { LS_PANEL_COPY_KEY, LS_ROW_COPY_KEY, LS_STYLES_COPY_KEY, LS_TAB_COPY_KEY } from 'app/core/constants';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 
-import { remapPromptSources } from '../../prompts/promptSources';
+import { remapQuestionSources } from '../../questions/questionSources';
 import { deserializeAutoGridItem } from '../../serialization/layoutSerializers/AutoGridLayoutSerializer';
 import { deserializeGridItem } from '../../serialization/layoutSerializers/DefaultGridLayoutSerializer';
 import { deserializeRow } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
@@ -74,9 +74,9 @@ export function getRowFromClipboard(scene: DashboardScene): RowItem {
   // We don't control the local storage content, so if it's out of sync with the code all bets are off.
   try {
     row = deserializeRow(jsonObj.row, jsonObj.elements, false, panelIdGenerator);
-    // Deserialized again with the copied IDs, to point the row's prompts at the pasted panels. The row may come from
-    // another dashboard, where its prompts' other picked IDs name other panels, so those are dropped.
-    remapPromptSources(deserializeRow(jsonObj.row, jsonObj.elements, false), row, { keepOutside: false });
+    // Deserialized again with the copied IDs, to point the row's questions at the pasted panels. The row may come from
+    // another dashboard, where its questions' other picked IDs name other panels, so those are dropped.
+    remapQuestionSources(deserializeRow(jsonObj.row, jsonObj.elements, false), row, { keepOutside: false });
   } catch (error) {
     throw new Error(`Error pasting row from clipboard. Please try to copy again.`, { cause: error });
   }
@@ -95,7 +95,7 @@ export function getTabFromClipboard(scene: DashboardScene): TabItem {
   try {
     tab = deserializeTab(jsonObj.tab, jsonObj.elements, false, panelIdGenerator);
     // See getRowFromClipboard.
-    remapPromptSources(deserializeTab(jsonObj.tab, jsonObj.elements, false), tab, { keepOutside: false });
+    remapQuestionSources(deserializeTab(jsonObj.tab, jsonObj.elements, false), tab, { keepOutside: false });
   } catch (error) {
     throw new Error(`Error pasting tab from clipboard. Please try to copy again.`, { cause: error });
   }

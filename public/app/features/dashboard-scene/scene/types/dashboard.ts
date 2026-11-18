@@ -5,7 +5,7 @@ import { type ScopeMeta } from 'app/features/dashboard/state/DashboardModel';
 import { type DashboardMeta } from 'app/types/dashboard';
 
 import { type PanelEditor } from '../../panel-edit/PanelEditor';
-import { type ScenePrompt } from '../../prompts/types';
+import { type SceneQuestion } from '../../questions/types';
 import { type DashboardEditView } from '../../settings/utils';
 import { type DashboardSidebarLike } from '../../sidebar/types';
 import { type DashboardControls } from '../DashboardControls';
@@ -66,8 +66,8 @@ export interface DashboardSceneState extends SceneObjectState, DashboardViewStat
   editable?: boolean;
   /** Allows disabling grid lazy loading */
   preload?: boolean;
-  /** Prompts viewers can run on the dashboard, offered by plugins in the dashboard controls */
-  prompts?: ScenePrompt[];
+  /** Questions viewers can run on the dashboard, offered by plugins in the dashboard controls */
+  questions?: SceneQuestion[];
   /** A uid when saved */
   uid?: string;
   /** @experimental */

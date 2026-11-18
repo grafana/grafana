@@ -17,8 +17,8 @@ import { appEvents } from 'app/core/app_events';
 import { createComponentWithMeta } from 'app/features/plugins/extensions/usePluginComponents';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
-import { type ScenePrompt } from '../prompts/types';
-import { PromptEdit } from '../sidebar/prompts/PromptEdit';
+import { type SceneQuestion } from '../questions/types';
+import { QuestionEdit } from '../sidebar/questions/QuestionEdit';
 
 import { DashboardControlsExtensionPoint } from './DashboardControlsExtensionPoint';
 import { DashboardScene } from './DashboardScene';
@@ -62,14 +62,14 @@ describe('DashboardControlsExtensionPoint', () => {
     });
   });
 
-  it('gives plugin controls the prompts saved on the dashboard', () => {
+  it('gives plugin controls the questions saved on the dashboard', () => {
     setTestFlags({ 'grafana.dashboardQuestions': true });
     renderControls();
 
     expect(screen.getByText('What stands out?')).toBeInTheDocument();
   });
 
-  it('gives each prompt the panels to answer it from: the ones picked, or every panel on the dashboard', () => {
+  it('gives each question the panels to answer it from: the ones picked, or every panel on the dashboard', () => {
     setTestFlags({ 'grafana.dashboardQuestions': true });
     renderControls([{ text: 'What stands out?' }, { text: 'Why did errors rise?', sources: [{ panelId: 3 }] }]);
 
@@ -85,7 +85,7 @@ describe('DashboardControlsExtensionPoint', () => {
     ]);
   });
 
-  it('gives plugin controls the title to show instead of the prompt', () => {
+  it('gives plugin controls the title to show instead of the question', () => {
     setTestFlags({ 'grafana.dashboardQuestions': true });
     renderControls([
       { text: 'Which services drove the rise in errors?', title: 'Errors' },
@@ -98,7 +98,7 @@ describe('DashboardControlsExtensionPoint', () => {
     ]);
   });
 
-  it('answers a prompt from every panel once the panels it picked are removed', () => {
+  it('answers a question from every panel once the panels it picked are removed', () => {
     setTestFlags({ 'grafana.dashboardQuestions': true });
     renderControls([{ text: 'Why did errors rise?', sources: [{ panelId: 9 }] }]);
 
@@ -112,11 +112,11 @@ describe('DashboardControlsExtensionPoint', () => {
     expect(screen.queryByText('What stands out?')).not.toBeInTheDocument();
   });
 
-  it('leaves out prompts without text, and renders no controls when none has any', () => {
+  it('leaves out questions without text, and renders no controls when none has any', () => {
     setTestFlags({ 'grafana.dashboardQuestions': true });
     const { unmount } = renderControls([{ text: 'What stands out?' }, { text: '  ' }]);
 
-    // The control joins the prompts it gets, so a blank one would show up as a trailing comma.
+    // The control joins the questions it gets, so a blank one would show up as a trailing comma.
     expect(screen.getByText('What stands out?')).toBeInTheDocument();
 
     unmount();
@@ -137,9 +137,9 @@ describe('DashboardControlsExtensionPoint', () => {
     });
   });
 
-  it('leaves out a saved prompt whose text is not a string, with the toggle on or off', () => {
+  it('leaves out a saved question whose text is not a string, with the toggle on or off', () => {
     // Saved JSON isn't validated.
-    const saved: ScenePrompt[] = JSON.parse('[{ "text": 42 }, { "text": "What stands out?" }]');
+    const saved: SceneQuestion[] = JSON.parse('[{ "text": 42 }, { "text": "What stands out?" }]');
     setTestFlags({ 'grafana.dashboardQuestions': false });
     const { unmount } = renderControls(saved);
     unmount();
@@ -189,42 +189,42 @@ describe('DashboardControlsExtensionPoint', () => {
   });
 
   describe('while the dashboard is edited', () => {
-    const prompts = [{ text: 'What stands out?' }, { text: 'Why did errors rise?' }];
+    const questions = [{ text: 'What stands out?' }, { text: 'Why did errors rise?' }];
 
-    it('renders each prompt as its own control', () => {
+    it('renders each question as its own control', () => {
       setTestFlags({ 'grafana.dashboardQuestions': true });
-      renderControls(prompts, { isEditing: true }, 'v2');
+      renderControls(questions, { isEditing: true }, 'v2');
 
-      // The control joins the prompts it gets, so one control for both would show them as one button.
+      // The control joins the questions it gets, so one control for both would show them as one button.
       expect(screen.getByRole('button', { name: 'What stands out?' })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Why did errors rise?' })).toBeInTheDocument();
     });
 
-    // A v1 save drops the prompts, so editors can't change them.
+    // A v1 save drops the questions, so editors can't change them.
     it('renders no controls on a dashboard that saves as v1', () => {
       setTestFlags({ 'grafana.dashboardQuestions': true });
-      const { container } = renderControls(prompts, { isEditing: true }, 'v1');
+      const { container } = renderControls(questions, { isEditing: true }, 'v1');
 
       expect(container).toBeEmptyDOMElement();
     });
 
-    it('opens a prompt for editing from its control', async () => {
+    it('opens a question for editing from its control', async () => {
       setTestFlags({ 'grafana.dashboardQuestions': true });
-      const { dashboard } = renderEditableControls(prompts);
+      const { dashboard } = renderEditableControls(questions);
 
       await hoverAndRest(screen.getByRole('button', { name: 'Why did errors rise?' }));
       await userEvent.click(screen.getByRole('button', { name: 'Question settings' }));
 
       await waitFor(() => {
         const selected = dashboard.state.sidebar.getSelectedObject();
-        expect(selected instanceof PromptEdit && selected.state.promptIndex).toBe(1);
+        expect(selected instanceof QuestionEdit && selected.state.questionIndex).toBe(1);
       });
     });
 
-    it('deletes a prompt from its control once the editor confirms', async () => {
+    it('deletes a question from its control once the editor confirms', async () => {
       setTestFlags({ 'grafana.dashboardQuestions': true });
       const publish = jest.spyOn(appEvents, 'publish');
-      const { dashboard } = renderEditableControls(prompts);
+      const { dashboard } = renderEditableControls(questions);
 
       await hoverAndRest(screen.getByRole('button', { name: 'What stands out?' }));
       await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
@@ -233,14 +233,14 @@ describe('DashboardControlsExtensionPoint', () => {
         .find((event) => event instanceof ShowConfirmModalEvent);
       act(() => confirm?.payload.onConfirm?.());
 
-      expect(dashboard.state.prompts).toEqual([{ text: 'Why did errors rise?' }]);
+      expect(dashboard.state.questions).toEqual([{ text: 'Why did errors rise?' }]);
       publish.mockRestore();
     });
 
-    // Running a prompt while it is edited leaves it open in the sidebar, so the editor can change it and run it again.
-    it('keeps a click on a prompt from reaching the dashboard, which would clear the selection', () => {
+    // Running a question while it is edited leaves it open in the sidebar, so the editor can change it and run it again.
+    it('keeps a click on a question from reaching the dashboard, which would clear the selection', () => {
       setTestFlags({ 'grafana.dashboardQuestions': true });
-      const { onDashboardPointerDown } = renderEditableControls(prompts);
+      const { onDashboardPointerDown } = renderEditableControls(questions);
 
       fireEvent.pointerDown(screen.getByRole('button', { name: 'What stands out?' }));
 
@@ -292,7 +292,7 @@ function buildDashboard(
   const errors = new RowItem({
     title: 'Errors',
     layout: grid(errorRate, latency),
-    prompts: [{ text: 'Why did errors rise?' }],
+    questions: [{ text: 'Why did errors rise?' }],
     ...errorsState,
   });
   const traffic = new RowItem({ title: 'Traffic', layout: grid(requests) });
@@ -309,17 +309,17 @@ function buildDashboard(
 }
 
 function renderControls(
-  prompts: ScenePrompt[] = [{ text: 'What stands out?' }],
+  questions: SceneQuestion[] = [{ text: 'What stands out?' }],
   dashboardState: Partial<DashboardSceneState> = {},
   serializerVersion: 'v1' | 'v2' = 'v1'
 ) {
-  const { dashboard } = buildDashboard({ ...dashboardState, prompts }, {}, serializerVersion);
+  const { dashboard } = buildDashboard({ ...dashboardState, questions }, {}, serializerVersion);
   return render(<DashboardControlsExtensionPoint dashboard={dashboard} />);
 }
 
 /** The controls of an edited dashboard, with its sidebar active, which turns selection on. */
-function renderEditableControls(prompts: ScenePrompt[]) {
-  const { dashboard } = buildDashboard({ isEditing: true, prompts }, {}, 'v2');
+function renderEditableControls(questions: SceneQuestion[]) {
+  const { dashboard } = buildDashboard({ isEditing: true, questions }, {}, 'v2');
   act(() => {
     dashboard.state.sidebar.activate();
   });

@@ -573,7 +573,7 @@ function sectionAnnotation(name: string) {
   };
 }
 
-describe('prompts', () => {
+describe('questions', () => {
   const rowWith = (prompts?: Prompt[]): DashboardV2Spec['layout'] => ({
     kind: 'RowsLayout',
     spec: {
@@ -586,17 +586,17 @@ describe('prompts', () => {
     },
   });
 
-  it('keeps the prompts saved on a row through a load and a save', () => {
+  it('keeps the questions saved on a row through a load and a save', () => {
     const prompts = [{ text: 'Why did errors rise?' }, { text: 'Is p95 latency getting worse?' }];
 
     const manager = deserializeRowsLayout(rowWith(prompts), {}, false);
-    expect(manager.state.rows[0].state.prompts).toEqual(prompts);
+    expect(manager.state.rows[0].state.questions).toEqual(prompts);
 
     const serialized = serializeRowsLayout(manager).spec as RowsLayoutSpec;
     expect(serialized.rows[0].spec.prompts).toEqual(prompts);
   });
 
-  it('leaves the key out when a row has no prompts', () => {
+  it('leaves the key out when a row has no questions', () => {
     const manager = deserializeRowsLayout(rowWith([]), {}, false);
 
     const serialized = serializeRowsLayout(manager).spec as RowsLayoutSpec;

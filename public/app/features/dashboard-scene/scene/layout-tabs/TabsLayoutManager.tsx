@@ -18,7 +18,7 @@ import { addElement } from '../../actions/element/addElement';
 import { moveElement } from '../../actions/element/moveElement';
 import { removeElement } from '../../actions/element/removeElement';
 import { edit } from '../../actions/utils/edit';
-import { remapPromptSources } from '../../prompts/promptSources';
+import { remapQuestionSources } from '../../questions/questionSources';
 import { serializeTabsLayout } from '../../serialization/layoutSerializers/TabsLayoutSerializer';
 import { ObjectsReorderedOnCanvasEvent } from '../../sidebar/events';
 import { dashboardSceneGraph, type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
@@ -122,7 +122,7 @@ export class TabsLayoutManager
 
   public duplicateTab(tab: TabItem) {
     const newTab = tab.duplicate();
-    remapPromptSources(tab, newTab, { keepOutside: true });
+    remapQuestionSources(tab, newTab, { keepOutside: true });
     this.addNewTab(newTab);
   }
 

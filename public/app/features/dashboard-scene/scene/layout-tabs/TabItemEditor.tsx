@@ -25,7 +25,7 @@ import {
   SectionVariablesCategoryTitle,
   SectionVariablesList,
 } from '../../sidebar/SectionVariablesList';
-import { usePromptsCategory } from '../../sidebar/prompts/PromptsList';
+import { useQuestionsCategory } from '../../sidebar/questions/QuestionsList';
 import { SidebarCategoryType } from '../../sidebar/types';
 import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
 import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
@@ -44,7 +44,7 @@ export function useSidebarOptions(this: TabItem, isNewElement: boolean): Options
   const model = this;
   // The canvas can remount during DnD loading while this editor remains mounted.
   const { layout } = useSceneObjectState(model, { shouldActivateOrKeepAlive: true });
-  const promptsCategory = usePromptsCategory(model, 'tab');
+  const questionsCategory = useQuestionsCategory(model, 'tab');
 
   const tabCategory = useMemo(
     () =>
@@ -163,7 +163,7 @@ export function useSidebarOptions(this: TabItem, isNewElement: boolean): Options
     sectionFiltersCategory,
     sectionVariablesCategory,
     sectionAnnotationsCategory,
-    ...promptsCategory,
+    ...questionsCategory,
     ...layoutCategory,
     repeatCategory,
   ];

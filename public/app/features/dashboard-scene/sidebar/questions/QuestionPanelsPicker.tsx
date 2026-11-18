@@ -6,7 +6,7 @@ import { t } from '@grafana/i18n';
 import { sceneGraph } from '@grafana/scenes';
 import { Checkbox, Icon, IconButton, Text, useStyles2 } from '@grafana/ui';
 
-import { getSectionLabel, getSourcePanels, type SourceSection } from '../../prompts/sourcePanels';
+import { getSectionLabel, getSourcePanels, type SourceSection } from '../../questions/sourcePanels';
 import { type DashboardSceneLike } from '../../scene/types/dashboard';
 import { getPanelIdForVizPanel } from '../../utils/utils-panels';
 
@@ -41,7 +41,7 @@ interface Props {
  * The entire dashboard, then its tabs, rows, and panels with queries, in dashboard order, like the dashboard outline.
  * Picking a tab or row picks every panel in it now; panels added to it later are not picked.
  */
-export function PromptPanelsPicker({ dashboard, value, onChange }: Props) {
+export function QuestionPanelsPicker({ dashboard, value, onChange }: Props) {
   const styles = useStyles2(getStyles);
   const id = useId();
   const [expanded, setExpanded] = useState<Set<string>>();
@@ -56,7 +56,10 @@ export function PromptPanelsPicker({ dashboard, value, onChange }: Props) {
   if (!tree.length && !unavailable.length) {
     return (
       <Text element="p" variant="bodySmall" color="secondary">
-        {t('dashboard.sidebar.prompts.sources.no-panels', 'This dashboard has no panels with queries to answer from.')}
+        {t(
+          'dashboard.sidebar.questions.sources.no-panels',
+          'This dashboard has no panels with queries to answer from.'
+        )}
       </Text>
     );
   }
@@ -114,7 +117,7 @@ export function PromptPanelsPicker({ dashboard, value, onChange }: Props) {
           {count !== undefined && (
             <span className={styles.count}>
               <Text color="secondary" variant="bodySmall">
-                {t('dashboard.sidebar.prompts.sources.panel-count', '', {
+                {t('dashboard.sidebar.questions.sources.panel-count', '', {
                   count,
                   defaultValue_one: '{{count}} panel',
                   defaultValue_other: '{{count}} panels',
@@ -153,10 +156,10 @@ export function PromptPanelsPicker({ dashboard, value, onChange }: Props) {
                   aria-expanded={isOpen}
                   aria-label={
                     isOpen
-                      ? t('dashboard.sidebar.prompts.sources.collapse', 'Collapse {{name}}', {
+                      ? t('dashboard.sidebar.questions.sources.collapse', 'Collapse {{name}}', {
                           name: node.label,
                         })
-                      : t('dashboard.sidebar.prompts.sources.expand', 'Expand {{name}}', {
+                      : t('dashboard.sidebar.questions.sources.expand', 'Expand {{name}}', {
                           name: node.label,
                         })
                   }
@@ -175,7 +178,7 @@ export function PromptPanelsPicker({ dashboard, value, onChange }: Props) {
     <div
       className={styles.picker}
       role="group"
-      aria-label={t('dashboard.sidebar.prompts.sources.label', 'Source panels')}
+      aria-label={t('dashboard.sidebar.questions.sources.label', 'Source panels')}
     >
       {unavailable.length > 0 && (
         <ul className={styles.tree}>
@@ -184,7 +187,7 @@ export function PromptPanelsPicker({ dashboard, value, onChange }: Props) {
               <Checkbox
                 id={`${id}-unavailable-${panelId}`}
                 value
-                label={t('dashboard.sidebar.prompts.sources.unavailable-panel', 'Panel {{panelId}} (unavailable)', {
+                label={t('dashboard.sidebar.questions.sources.unavailable-panel', 'Panel {{panelId}} (unavailable)', {
                   panelId,
                 })}
                 onChange={() => pick([panelId], false)}
@@ -199,7 +202,7 @@ export function PromptPanelsPicker({ dashboard, value, onChange }: Props) {
             {renderRow({
               inputId: `${id}-dashboard`,
               icon: ICONS.dashboard,
-              label: t('dashboard.sidebar.prompts.sources.entire-dashboard', 'Entire dashboard'),
+              label: t('dashboard.sidebar.questions.sources.entire-dashboard', 'Entire dashboard'),
               panelIds: allPanelIds,
               count: allPanelIds.length,
             })}
@@ -209,7 +212,7 @@ export function PromptPanelsPicker({ dashboard, value, onChange }: Props) {
       {renderNodes(tree, id, false)}
       {pickedCount > 0 && (
         <Text color="secondary" variant="bodySmall">
-          {t('dashboard.sidebar.prompts.sources.picked-count', '', {
+          {t('dashboard.sidebar.questions.sources.picked-count', '', {
             count: pickedCount,
             defaultValue_one: '{{count}} panel picked',
             defaultValue_other: '{{count}} panels picked',
@@ -260,8 +263,8 @@ function formatSection(section: SourceSection): string {
     return getSectionLabel(section);
   }
   return section.kind === 'tab'
-    ? t('dashboard.sidebar.prompts.sources.untitled-tab', 'Untitled tab')
-    : t('dashboard.sidebar.prompts.sources.untitled-row', 'Untitled row');
+    ? t('dashboard.sidebar.questions.sources.untitled-tab', 'Untitled tab')
+    : t('dashboard.sidebar.questions.sources.untitled-row', 'Untitled row');
 }
 
 function getStyles(theme: GrafanaTheme2) {

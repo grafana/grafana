@@ -26,7 +26,7 @@ export interface SourcePanel {
 const skipsDataQueryByPluginId = new Map<string, boolean>();
 
 /**
- * Panels a prompt can be answered from, in layout order: panels with queries. Repeat clones are excluded because
+ * Panels a question can be answered from, in layout order: panels with queries. Repeat clones are excluded because
  * their keys are not stable across loads, and so are panels whose plugin skips data queries, because a query runner
  * left by the editor is not data the panel shows.
  */

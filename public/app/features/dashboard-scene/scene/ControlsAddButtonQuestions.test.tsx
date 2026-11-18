@@ -7,7 +7,7 @@ import { usePluginComponents } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { createComponentWithMeta } from 'app/features/plugins/extensions/usePluginComponents';
 
-import { PromptEdit } from '../sidebar/prompts/PromptEdit';
+import { QuestionEdit } from '../sidebar/questions/QuestionEdit';
 
 import { AddControlsButton } from './ControlsAddButton';
 import { DashboardScene } from './DashboardScene';
@@ -34,7 +34,7 @@ describe('AddControlsButton', () => {
     });
   });
 
-  it('adds a prompt to the dashboard and opens it', async () => {
+  it('adds a question to the dashboard and opens it', async () => {
     setTestFlags({ 'grafana.dashboardQuestions': true });
     const dashboard = renderAddButton('v2');
 
@@ -42,18 +42,18 @@ describe('AddControlsButton', () => {
     await userEvent.click(screen.getByRole('menuitem', { name: 'Question' }));
 
     await waitFor(() => {
-      expect(dashboard.state.prompts).toEqual([{ text: '' }]);
+      expect(dashboard.state.questions).toEqual([{ text: '' }]);
     });
     const selected = dashboard.state.sidebar.getSelectedObject();
-    expect(selected instanceof PromptEdit && selected.state.promptIndex).toBe(0);
+    expect(selected instanceof QuestionEdit && selected.state.questionIndex).toBe(0);
   });
 
   it.each<[string, boolean, 'v1' | 'v2']>([
     ['grafana.dashboardQuestions is off', false, 'v2'],
-    // A v1 save drops the prompts.
+    // A v1 save drops the questions.
     ['the dashboard saves as v1', true, 'v1'],
-  ])('offers no prompts while %s', async (_, promptsEnabled, serializerVersion) => {
-    setTestFlags({ 'grafana.dashboardQuestions': promptsEnabled });
+  ])('offers no questions while %s', async (_, questionsEnabled, serializerVersion) => {
+    setTestFlags({ 'grafana.dashboardQuestions': questionsEnabled });
     renderAddButton(serializerVersion);
 
     await userEvent.click(screen.getByTestId(selectors.components.ControlsAddButton.triggerButton));

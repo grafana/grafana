@@ -560,11 +560,11 @@ describe('transformSceneToSaveModelSchemaV2', () => {
     }).not.toThrow();
   });
 
-  it('saves the prompts on the dashboard, and leaves the key out when there are none', () => {
-    const prompts = [{ text: 'What stands out on this dashboard?' }];
+  it('saves the questions on the dashboard, and leaves the key out when there are none', () => {
+    const questions = [{ text: 'What stands out on this dashboard?' }];
 
-    expect(transformSceneToSaveModelSchemaV2(new DashboardScene({ prompts })).prompts).toEqual(prompts);
-    expect(transformSceneToSaveModelSchemaV2(new DashboardScene({ prompts: [] }))).not.toHaveProperty('prompts');
+    expect(transformSceneToSaveModelSchemaV2(new DashboardScene({ questions })).prompts).toEqual(questions);
+    expect(transformSceneToSaveModelSchemaV2(new DashboardScene({ questions: [] }))).not.toHaveProperty('prompts');
   });
 
   describe('getPersistedDSFor query', () => {

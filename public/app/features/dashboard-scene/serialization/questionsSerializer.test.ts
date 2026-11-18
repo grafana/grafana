@@ -9,21 +9,21 @@ import {
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 
-import { getPickedPanelIds } from '../prompts/promptSources';
-import { getPromptLabel } from '../prompts/utils';
+import { getPickedPanelIds } from '../questions/questionSources';
+import { getQuestionLabel } from '../questions/utils';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 
 import { transformSaveModelSchemaV2ToScene } from './transformSaveModelSchemaV2ToScene';
 import { transformSceneToSaveModelSchemaV2 } from './transformSceneToSaveModelSchemaV2';
 
-describe('prompt sources', () => {
+describe('question sources', () => {
   it('pick panels by ID once loaded, and by the element names the dashboard saved them under once saved', () => {
     const prompts: Prompt[] = [{ text: 'Why did errors rise?', sources: [source('errors'), source('panel-1')] }];
     const scene = load(prompts);
 
     const loaded = [{ text: 'Why did errors rise?', sources: [{ panelId: 3 }, { panelId: 1 }] }];
-    expect(scene.state.prompts).toEqual(loaded);
-    expect(getRow(scene).state.prompts).toEqual(loaded);
+    expect(scene.state.questions).toEqual(loaded);
+    expect(getRow(scene).state.questions).toEqual(loaded);
 
     const saved = transformSceneToSaveModelSchemaV2(scene);
     expect(saved.prompts).toEqual(prompts);
@@ -36,8 +36,8 @@ describe('prompt sources', () => {
       { text: 'What stands out?', sources: [source('panel-9')] },
     ]);
 
-    // With none of its picked panels left, a prompt is answered from every panel.
-    expect(scene.state.prompts).toEqual([
+    // With none of its picked panels left, a question is answered from every panel.
+    expect(scene.state.questions).toEqual([
       { text: 'Why did errors rise?', sources: [{ panelId: 3 }] },
       { text: 'What stands out?' },
     ]);
@@ -45,7 +45,7 @@ describe('prompt sources', () => {
 
   it('leave out a panel removed from the dashboard when saved', () => {
     const scene = load([]);
-    scene.setState({ prompts: [{ text: 'Why did errors rise?', sources: [{ panelId: 3 }, { panelId: 9 }] }] });
+    scene.setState({ questions: [{ text: 'Why did errors rise?', sources: [{ panelId: 3 }, { panelId: 9 }] }] });
 
     expect(transformSceneToSaveModelSchemaV2(scene).prompts).toEqual([
       { text: 'Why did errors rise?', sources: [source('errors')] },
@@ -53,9 +53,9 @@ describe('prompt sources', () => {
   });
 });
 
-// Nothing checks a spec applied through the mutation API, so a prompt can arrive as something the schema forbids.
-describe('prompts that do not follow the schema', () => {
-  it('load with sources that are not a list left out, so the prompt is answered from every panel', () => {
+// Nothing checks a spec applied through the mutation API, so a question can arrive as something the schema forbids.
+describe('saved questions that do not follow the schema', () => {
+  it('load with sources that are not a list left out, so the question is answered from every panel', () => {
     const scene = load(
       malformed(
         { text: 'Why did errors rise?', sources: 'errors' },
@@ -63,13 +63,13 @@ describe('prompts that do not follow the schema', () => {
       )
     );
 
-    expect(scene.state.prompts).toEqual([{ text: 'Why did errors rise?' }, { text: 'What stands out?' }]);
-    expect(getRow(scene).state.prompts).toEqual(scene.state.prompts);
-    // A new panel's ID is chosen from the picked ones, so a prompt that picked none must leave nothing to read.
+    expect(scene.state.questions).toEqual([{ text: 'Why did errors rise?' }, { text: 'What stands out?' }]);
+    expect(getRow(scene).state.questions).toEqual(scene.state.questions);
+    // A new panel's ID is chosen from the picked ones, so a question that picked none must leave nothing to read.
     expect(getPickedPanelIds(scene)).toEqual([]);
   });
 
-  it('load with a title that is not a string left out, so viewers see the prompt', () => {
+  it('load with a title that is not a string left out, so viewers see the question', () => {
     const scene = load(
       malformed(
         { text: 'Why did errors rise?', title: 5 },
@@ -78,12 +78,16 @@ describe('prompts that do not follow the schema', () => {
       )
     );
 
-    expect(scene.state.prompts).toEqual([
+    expect(scene.state.questions).toEqual([
       { text: 'Why did errors rise?' },
       { text: 'What stands out?' },
       { text: 'Which endpoints got slower?', title: 'Latency' },
     ]);
-    expect(scene.state.prompts?.map(getPromptLabel)).toEqual(['Why did errors rise?', 'What stands out?', 'Latency']);
+    expect(scene.state.questions?.map(getQuestionLabel)).toEqual([
+      'Why did errors rise?',
+      'What stands out?',
+      'Latency',
+    ]);
   });
 });
 

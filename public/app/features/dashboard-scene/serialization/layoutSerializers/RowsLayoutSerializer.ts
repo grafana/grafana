@@ -4,7 +4,7 @@ import { type Spec as DashboardV2Spec, type RowsLayoutRowKind } from '@grafana/s
 import { RowItem } from '../../scene/layout-rows/RowItem';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 import { type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
-import { deserializePrompts, serializePrompts } from '../promptsSerializer';
+import { deserializeQuestions, serializeQuestions } from '../questionsSerializer';
 
 import { layoutDeserializerRegistry } from './layoutSerializerRegistry';
 import { deserializeSectionAnnotations, serializeSectionAnnotations } from './sectionAnnotations';
@@ -91,9 +91,9 @@ export function serializeRow(row: RowItem, isSnapshot?: boolean): RowsLayoutRowK
     rowKind.spec.annotations = sectionAnnotations;
   }
 
-  const prompts = serializePrompts(row, row.state.prompts);
-  if (prompts) {
-    rowKind.spec.prompts = prompts;
+  const saved = serializeQuestions(row, row.state.questions);
+  if (saved) {
+    rowKind.spec.prompts = saved;
   }
 
   const conditionalRenderingRootGroup = row.state.conditionalRendering?.serialize();
@@ -134,7 +134,7 @@ export function deserializeRow(
     hideHeader: row.spec.hideHeader,
     fillScreen: row.spec.fillScreen,
     repeatByVariable: row.spec.repeat?.value,
-    prompts: deserializePrompts(row.spec.prompts, elements),
+    questions: deserializeQuestions(row.spec.prompts, elements),
     $variables: deserializeSectionVariables(row.spec.variables),
     $data: deserializeSectionAnnotations(row.spec.annotations, isSnapshot),
     layout: layoutDeserializerRegistry

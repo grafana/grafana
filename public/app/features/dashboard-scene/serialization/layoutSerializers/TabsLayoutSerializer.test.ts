@@ -247,7 +247,7 @@ function sectionAnnotation(name: string) {
   };
 }
 
-describe('prompts', () => {
+describe('questions', () => {
   const tabWith = (prompts?: Prompt[]): DashboardV2Spec['layout'] => ({
     kind: 'TabsLayout',
     spec: {
@@ -260,17 +260,17 @@ describe('prompts', () => {
     },
   });
 
-  it('keeps the prompts saved on a tab through a load and a save', () => {
+  it('keeps the questions saved on a tab through a load and a save', () => {
     const prompts = [{ text: 'Which services keep restarting?' }];
 
     const manager = deserializeTabsLayout(tabWith(prompts), {}, false);
-    expect(manager.state.tabs[0].state.prompts).toEqual(prompts);
+    expect(manager.state.tabs[0].state.questions).toEqual(prompts);
 
     const serialized = serializeTabsLayout(manager).spec as TabsLayoutSpec;
     expect(serialized.tabs[0].spec.prompts).toEqual(prompts);
   });
 
-  it('leaves the key out when a tab has no prompts', () => {
+  it('leaves the key out when a tab has no questions', () => {
     const manager = deserializeTabsLayout(tabWith(undefined), {}, false);
 
     const serialized = serializeTabsLayout(manager).spec as TabsLayoutSpec;
