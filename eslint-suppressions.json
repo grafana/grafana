@@ -455,11 +455,6 @@
       "count": 2
     }
   },
-  "packages/grafana-ui/src/components/AutoSaveField/AutoSaveField.tsx": {
-    "react-hooks/refs": {
-      "count": 2
-    }
-  },
   "packages/grafana-ui/src/components/Carousel/Carousel.tsx": {
     "react-hooks/set-state-in-effect": {
       "count": 1
@@ -822,17 +817,11 @@
   "packages/grafana-ui/src/components/Table/TableRT/Filter.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
-    },
-    "react-hooks/refs": {
-      "count": 3
     }
   },
   "packages/grafana-ui/src/components/Table/TableRT/FilterPopup.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
-    },
-    "react-hooks/refs": {
-      "count": 3
     }
   },
   "packages/grafana-ui/src/components/Table/TableRT/FooterRow.tsx": {
@@ -3035,11 +3024,6 @@
   "public/app/features/expressions/ExpressionDatasource.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
-    }
-  },
-  "public/app/features/expressions/components/QueryToolbox.tsx": {
-    "react-hooks/refs": {
-      "count": 1
     }
   },
   "public/app/features/expressions/components/SqlExpressions/SqlExpr.tsx": {
