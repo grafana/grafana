@@ -308,6 +308,20 @@ describe('applyDashboardSpec', () => {
     jest.mocked(getDataSourceInstanceSettings).mockImplementation(async () => variableDatasource as never);
   });
 
+  // The spec has no cross-dashboard variables; a swap that did not inject them again left the
+  // panels that reference one unresolved until the page reloaded.
+  it('injects the cross-dashboard variables again on apply and redo', () => {
+    const scene = buildScene(makeSpec('Old title'));
+    const refresh = jest.spyOn(scene, 'refreshPredefinedVariables').mockResolvedValue();
+
+    applyDashboardSpec({ scene, spec: makeSpec('New title'), description: 'Apply spec', scope: 'code-pane' });
+    expect(refresh).toHaveBeenCalledTimes(1);
+
+    scene.state.sidebar.undoAction();
+    scene.state.sidebar.redoAction();
+    expect(refresh).toHaveBeenCalledTimes(2);
+  });
+
   it('applies the spec, and undo/redo toggle between the old and new scene', () => {
     const scene = buildScene(makeSpec('Old title'));
     const originalBody = scene.state.body;

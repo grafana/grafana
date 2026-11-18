@@ -104,6 +104,11 @@ export function applyDashboardSpec({ scene, spec, description, scope, actor }: A
 
       resolveAdHocMultiValueOperators(scene);
 
+      // The spec never holds the global and folder variables an opted-in dashboard receives: they are
+      // injected after a load. The swap installed a variable set without them, so panels that
+      // reference one lost it until the page reloaded. Inject them again, as a load does.
+      void scene.refreshPredefinedVariables();
+
       scene.state.sidebar.refreshAfterRebuild();
 
       // The swapped-in children have never seen the URL, so url-only state is gone and a tabs
