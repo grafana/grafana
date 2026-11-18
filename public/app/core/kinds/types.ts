@@ -23,8 +23,6 @@ export interface KindInfo {
    * Absent when the kind has no page for a single object.
    */
   getRoute?: (name: string) => string;
-  /** Path of the page that lists the kind's objects, without the app sub path. */
-  listRoute: string;
 }
 
 /**

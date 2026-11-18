@@ -25,7 +25,6 @@ export const CORE_KINDS = {
       plural ? t('core-kinds.folder.label-plural', 'folders') : t('core-kinds.folder.label', 'folder'),
     icon: 'folder',
     getRoute: page('/dashboards/f'),
-    listRoute: '/dashboards',
   },
   dashboard: {
     group: DASHBOARD_API_GROUP,
@@ -35,7 +34,6 @@ export const CORE_KINDS = {
       plural ? t('core-kinds.dashboard.label-plural', 'dashboards') : t('core-kinds.dashboard.label', 'dashboard'),
     icon: 'apps',
     getRoute: page('/d'),
-    listRoute: '/dashboards',
   },
   playlist: {
     group: PLAYLIST_API_GROUP,
@@ -46,7 +44,6 @@ export const CORE_KINDS = {
     icon: 'presentation-play',
     // The edit page, not /playlists/play, which starts the fullscreen slideshow at once
     getRoute: page('/playlists/edit'),
-    listRoute: '/playlists',
   },
   // No `getRoute`: a library panel has no page of its own, only its row on the collection page
   librarypanel: {
@@ -59,7 +56,6 @@ export const CORE_KINDS = {
         ? t('core-kinds.librarypanel.label-plural', 'library panels')
         : t('core-kinds.librarypanel.label', 'library panel'),
     icon: 'library-panel',
-    listRoute: '/library-panels',
   },
   repository: {
     group: PROVISIONING_API_GROUP,
@@ -69,7 +65,6 @@ export const CORE_KINDS = {
       plural ? t('core-kinds.repository.label-plural', 'repositories') : t('core-kinds.repository.label', 'repository'),
     icon: 'code-branch',
     getRoute: page(PROVISIONING_ROUTE),
-    listRoute: PROVISIONING_ROUTE,
   },
   connection: {
     group: PROVISIONING_API_GROUP,
@@ -79,7 +74,6 @@ export const CORE_KINDS = {
       plural ? t('core-kinds.connection.label-plural', 'connections') : t('core-kinds.connection.label', 'connection'),
     icon: 'plug',
     getRoute: page(CONNECTIONS_ROUTE, '/edit'),
-    listRoute: CONNECTIONS_ROUTE,
   },
   datasource: {
     // Each data source plugin serves its own `{plugin}.datasource.grafana.app`
@@ -92,6 +86,5 @@ export const CORE_KINDS = {
         : t('core-kinds.datasource.label', 'data source'),
     icon: 'database',
     getRoute: page('/connections/datasources/edit'),
-    listRoute: '/connections/datasources',
   },
 } as const satisfies Record<string, KindInfo | CollectionKindInfo>;
