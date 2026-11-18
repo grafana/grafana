@@ -179,6 +179,10 @@
     "input": {
       "background": "palette.ink850"
     },
+    "navmenu": {
+      "activeItemBackground": "palette.orange950",
+      "activeItemText": "palette.orange300"
+    },
     "codeEditor": {
       "keyword": "palette.blue300",
       "controlKeyword": "palette.violet300",
