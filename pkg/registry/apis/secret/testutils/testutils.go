@@ -78,6 +78,7 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 	database := database.ProvideDatabase(testDB, tracer)
 
 	clock := NewFakeClock()
+	cfg := setting.NewCfg()
 
 	var (
 		keeperMetadataStorage      contracts.KeeperMetadataStorage
@@ -89,7 +90,7 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 		require.NoError(t, err)
 		keeperMetadataStorage = k
 
-		s, err := metadata.ProvideSecureValueMetadataStorage(clock, database, tracer, nil)
+		s, err := metadata.ProvideSecureValueMetadataStorage(clock, database, tracer, nil, cfg)
 		require.NoError(t, err)
 		secureValueMetadataStorage = s
 	case contracts.StorageBackendKV:
@@ -115,7 +116,6 @@ func Setup(t *testing.T, opts ...func(*SetupConfig)) Sut {
 	})
 
 	defaultKey := "SdlklWklckeLS"
-	cfg := setting.NewCfg()
 	cfg.SecretsManagement = setting.SecretsManagerSettings{
 		CurrentEncryptionProvider:         "secret_key.v1",
 		ConfiguredKMSProviders:            map[string]map[string]string{"secret_key.v1": {"secret_key": defaultKey}},

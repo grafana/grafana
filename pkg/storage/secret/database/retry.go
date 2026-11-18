@@ -20,7 +20,18 @@ var transientTransactionBackoff = backoff.Config{
 }
 
 func RetryOnTransientTransactionError(ctx context.Context, operation func() error) error {
-	boff := backoff.New(ctx, transientTransactionBackoff)
+	return retryOnTransientTransactionError(ctx, transientTransactionBackoff, operation)
+}
+
+func RetryOnTransientTransactionErrorWithRetries(ctx context.Context, attempts int, operation func() error) error {
+	cfg := transientTransactionBackoff
+	// SQLStore's query_retries counts attempts, with zero disabling retries.
+	cfg.MaxRetries = max(1, attempts)
+	return retryOnTransientTransactionError(ctx, cfg, operation)
+}
+
+func retryOnTransientTransactionError(ctx context.Context, cfg backoff.Config, operation func() error) error {
+	boff := backoff.New(ctx, cfg)
 	var err error
 	for boff.Ongoing() {
 		err = operation()
