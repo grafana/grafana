@@ -86,7 +86,7 @@ describe('resourceKinds registry', () => {
     expect(await resourceKindInfos.connection.list()).toEqual([]);
   });
 
-  it('returns a localized singular label for each kind', () => {
+  it('names each kind as it reads mid-sentence', () => {
     expect(resourceKindInfos.folder.getLabel()).toBe('folder');
     expect(resourceKindInfos.dashboard.getLabel()).toBe('dashboard');
     expect(resourceKindInfos.playlist.getLabel()).toBe('playlist');
@@ -96,7 +96,7 @@ describe('resourceKinds registry', () => {
 
   it('every kind exposes a translated plural label and a list function', () => {
     for (const info of Object.values(resourceKindInfos)) {
-      expect(info.pluralLabel()).toBeTruthy();
+      expect(info.getLabel({ plural: true })).toBeTruthy();
       expect(typeof info.list).toBe('function');
     }
   });

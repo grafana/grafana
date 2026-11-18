@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { upperFirst } from 'lodash';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -45,7 +46,7 @@ export function OverviewStatCards({ totals }: OverviewStatCardsProps) {
       {totals.map(({ kind, totals }) => (
         <ResourceStatusCard
           key={`${kind.group}/${kind.kind}`}
-          label={kind.pluralLabel()}
+          label={upperFirst(kind.getLabel({ plural: true }))}
           managed={totals.managed}
           total={totals.instanceTotal}
         />

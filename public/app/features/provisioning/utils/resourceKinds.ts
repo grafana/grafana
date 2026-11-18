@@ -1,6 +1,5 @@
 import { type UnknownAction } from '@reduxjs/toolkit';
 
-import { t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import { playlistAPIv1 } from 'app/api/clients/playlist/v1';
 import { type Repository, type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
@@ -49,18 +48,17 @@ interface ResourceListDeps {
 
 /**
  * Ties each registry entry to the {@link CORE_KINDS} row of the same key, so an entry cannot spread
- * another kind's row or carry another kind's `key`. `Record<string, unknown>` admits the fields only
- * provisioning adds.
+ * another kind's row. `Record<string, unknown>` admits the fields only provisioning adds.
  */
 type OnCoreKinds = {
-  [K in keyof typeof CORE_KINDS]?: (typeof CORE_KINDS)[K] & { key: K } & Record<string, unknown>;
+  [K in keyof typeof CORE_KINDS]?: (typeof CORE_KINDS)[K] & Record<string, unknown>;
 };
 
 /**
  * Registry of provisioning resource kinds, keyed by a stable identifier — the single source of truth
  * the UI reads from instead of scattering per-kind knowledge across switch statements (item types,
  * count labels, resource-ref unions, how to enumerate each kind). Each entry builds on the kind's
- * shared description in {@link CORE_KINDS} (identity, icon, plural label, pages) and adds what only
+ * shared description in {@link CORE_KINDS} (identity, icon, label, pages) and adds what only
  * provisioning needs.
  *
  * `as const` preserves the literal field types so the keys ({@link ResourceKindKey}) and tree labels
@@ -74,8 +72,6 @@ type OnCoreKinds = {
 export const resourceKindInfos = {
   folder: {
     ...CORE_KINDS.folder,
-    key: 'folder',
-    getLabel: () => t('provisioning.resource-kind.folder', 'folder'),
     itemType: 'Folder',
     folderScoped: true,
     list: () => listViaSearch('folder'),
@@ -83,8 +79,6 @@ export const resourceKindInfos = {
   },
   dashboard: {
     ...CORE_KINDS.dashboard,
-    key: 'dashboard',
-    getLabel: () => t('provisioning.resource-kind.dashboard', 'dashboard'),
     itemType: 'Dashboard',
     folderScoped: true,
     list: () => listViaSearch('dashboard'),
@@ -92,8 +86,6 @@ export const resourceKindInfos = {
   },
   playlist: {
     ...CORE_KINDS.playlist,
-    key: 'playlist',
-    getLabel: () => t('provisioning.resource-kind.playlist', 'playlist'),
     itemType: 'Playlist',
     // Playlists aren't folder-contained — they only have their own collection page.
     folderScoped: false,
@@ -107,8 +99,6 @@ export const resourceKindInfos = {
   },
   librarypanel: {
     ...CORE_KINDS.librarypanel,
-    key: 'librarypanel',
-    getLabel: () => t('provisioning.resource-kind.library-panel', 'library panel'),
     itemType: 'LibraryPanel',
     // Library panels live inside folders on the backend, but the dashboards folder
     // browse doesn't list them — they have their own collection page — so for
@@ -123,8 +113,6 @@ export const resourceKindInfos = {
   },
   repository: {
     ...CORE_KINDS.repository,
-    key: 'repository',
-    getLabel: () => t('provisioning.resource-kind.repository', 'repository'),
     itemType: 'Repository',
     // Repositories are instance-scoped configuration, not folder-contained.
     folderScoped: false,
@@ -135,8 +123,6 @@ export const resourceKindInfos = {
   },
   connection: {
     ...CORE_KINDS.connection,
-    key: 'connection',
-    getLabel: () => t('provisioning.resource-kind.connection', 'connection'),
     itemType: 'Connection',
     folderScoped: false,
     // Not a migration target, for the same reason as repositories.
@@ -147,8 +133,6 @@ export const resourceKindInfos = {
     ...CORE_KINDS.datasource,
     // The backend names the kind by its collection, as no single group serves it
     group: CORE_KINDS.datasource.collection,
-    key: 'datasource',
-    getLabel: () => t('provisioning.resource-kind.datasource', 'data source'),
     itemType: 'DataSource',
     // Data sources are org-scoped, not folder-contained.
     folderScoped: false,
@@ -162,9 +146,9 @@ export const resourceKindInfos = {
 
 /**
  * Stable per-kind key (`folder`, `dashboard`, `playlist`, ...) used to identify a provisioning
- * resource kind across the UI: the commit-message noun, branch-name prefix, telemetry, the shared
- * edit-form fields, and each registry entry's own `key` all use this. Derived from the registry keys,
- * so a new kind only needs its registry entry.
+ * resource kind across the UI: the commit-message noun, branch-name prefix, telemetry and the shared
+ * edit-form fields all use this. Derived from the registry keys, so a new kind only needs its
+ * registry entry.
  */
 export type ResourceKindKey = keyof typeof resourceKindInfos;
 
@@ -178,8 +162,8 @@ export type ResourceItemType = (typeof resourceKindInfos)[ResourceKindKey]['item
 
 /**
  * Consumer-facing shape of a registry entry: the kind's shared description plus what provisioning
- * needs to know about it. `key`/`itemType` are typed as the derived unions, so a
- * {@link ResourceKindInfo} carries the kind's identity and tree label without a separate lookup.
+ * needs to know about it. `itemType` is typed as the derived union, so a {@link ResourceKindInfo}
+ * carries the kind's tree label without a separate lookup.
  *
  * This is the single source of truth the UI reads from instead of scattering per-kind knowledge
  * across switch statements (item types, count labels, resource-ref unions, how to enumerate each
@@ -200,20 +184,6 @@ export interface ResourceKindInfo extends KindInfo {
    * resource is not what the kind is called.
    */
   collection?: string;
-  /**
-   * Stable lowercase identifier — equals this entry's key in {@link resourceKindInfos} (e.g.
-   * `dashboard`). The UI-facing resource type for commit messages, branch prefixes, telemetry and the
-   * shared edit-form fields. The registry's `satisfies` clause rejects an entry whose `key` differs
-   * from its registry key.
-   */
-  key: ResourceKindKey;
-  /**
-   * Returns the localized singular noun for this kind, interpolated into UI copy such as the drawer
-   * title (e.g. "Save provisioned {{resource}}"). It's a function rather than a string because i18n
-   * must resolve at render time, not at module load — and the literal `t()` call inside it is what
-   * the i18n extractor needs, so each kind contributes its translated noun right here on the entry.
-   */
-  getLabel: () => string;
   /** Label shown for this kind in the combined files/resources tree. */
   itemType: ResourceItemType;
   /**
@@ -310,16 +280,31 @@ export function getKindInfoByStatGroup(group?: string): ResourceKindInfo | undef
   return allKindInfos.find((info) => (group !== undefined && coversGroup(info, group)) || info.resource === group);
 }
 
+function isResourceKindKey(key: string): key is ResourceKindKey {
+  return key in resourceKindInfos;
+}
+
+const allKindKeys = Object.keys(resourceKindInfos).filter(isResourceKindKey);
+
 /**
- * Look up a kind from a job summary row, which carries both the API group
- * (`dashboard.grafana.app`) and the Kubernetes Kind (`Dashboard`). Matches on
- * whichever identifiers are present so partially-populated summary rows still resolve.
+ * Look up a kind's registry key from a resource or a job summary row, which carry both the API group
+ * (`dashboard.grafana.app`) and the Kubernetes Kind (`Dashboard`). Matches on whichever identifiers
+ * are present so partially-populated summary rows still resolve.
  */
-export function getKindInfoByGroupKind(group?: string, kind?: string): ResourceKindInfo | undefined {
+export function getKindKeyByGroupKind(group?: string, kind?: string): ResourceKindKey | undefined {
   if (!group && !kind) {
     return undefined;
   }
-  return allKindInfos.find((info) => (!group || coversGroup(info, group)) && (!kind || info.kind === kind));
+  return allKindKeys.find((key) => {
+    const info: ResourceKindInfo = resourceKindInfos[key];
+    return (!group || coversGroup(info, group)) && (!kind || info.kind === kind);
+  });
+}
+
+/** Look up a kind from a resource or a job summary row; see {@link getKindKeyByGroupKind}. */
+export function getKindInfoByGroupKind(group?: string, kind?: string): ResourceKindInfo | undefined {
+  const key = getKindKeyByGroupKind(group, kind);
+  return key && resourceKindInfos[key];
 }
 
 /**

@@ -1,3 +1,4 @@
+import { upperFirst } from 'lodash';
 import { useMemo, useState } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
@@ -183,7 +184,7 @@ export function Migrate() {
                 {t(
                   'provisioning.migrate.partial-error-body',
                   "{{kinds}} aren't shown below, so this list is incomplete. Selecting everything here migrates only the resources listed; use Migrate everything to include all unmanaged resources, or refresh to load the full list.",
-                  { kinds: failedKinds.map((kind) => kind.pluralLabel()).join(', ') }
+                  { kinds: failedKinds.map((kind) => upperFirst(kind.getLabel({ plural: true }))).join(', ') }
                 )}
                 {hasUnmanaged &&
                   (hasRepo ? (

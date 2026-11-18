@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { upperFirst } from 'lodash';
 import { useCallback, useId, useMemo, useState } from 'react';
 
 import { textUtil, type GrafanaTheme2 } from '@grafana/data';
@@ -82,10 +83,10 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
 
   const resourceFilterOptions: Array<ComboboxOption<string>> = useMemo(() => {
     const resources = new Set(resourcesQuery.data?.items?.map((item) => item.resource));
-    return Array.from(resources, (value) => ({
-      label: getKindInfoByResource(value)?.pluralLabel() ?? value,
-      value,
-    }));
+    return Array.from(resources, (value) => {
+      const label = getKindInfoByResource(value)?.getLabel({ plural: true });
+      return { label: label ? upperFirst(label) : value, value };
+    });
   }, [resourcesQuery.data?.items]);
 
   const tree = useMemo(() => {

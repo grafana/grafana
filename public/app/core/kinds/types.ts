@@ -11,8 +11,12 @@ export interface KindInfo {
   kind: string;
   /** Plural resource name in API paths, e.g. `dashboards`. */
   resource: string;
-  /** Translated plural name, as a title: "Dashboards". A function, so it translates at render and not at module load. */
-  pluralLabel: () => string;
+  /**
+   * Translated name as it reads mid-sentence: "dashboard", or "dashboards" with `plural`. A title
+   * capitalizes it with `upperFirst`, never the other way round: some languages, such as German,
+   * capitalize every noun. A function, so it translates at render and not at module load.
+   */
+  getLabel: (options?: { plural?: boolean }) => string;
   icon: IconName;
   /**
    * Builds the path of the page for one object from its `metadata.name`, without the app sub path.
