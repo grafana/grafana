@@ -26,12 +26,9 @@ export const Basic = (args: DatePickerProps) => {
   const [date, setDate] = useState<Date>(new Date());
   const [open, setOpen] = useState(false);
 
-  if (args?.minDate !== undefined) {
-    args.minDate = new Date(args.minDate);
-  }
-
-  args = {
+  const pickerProps: DatePickerProps = {
     ...args,
+    minDate: args.minDate !== undefined ? new Date(args.minDate) : undefined,
     isOpen: open,
     value: date,
     onChange: (newDate) => setDate(newDate),
@@ -41,7 +38,7 @@ export const Basic = (args: DatePickerProps) => {
   return (
     <>
       <Button onClick={() => setOpen(true)}>Show Calendar</Button>
-      <DatePicker {...args} />
+      <DatePicker {...pickerProps} />
     </>
   );
 };

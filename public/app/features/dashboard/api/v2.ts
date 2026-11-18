@@ -34,7 +34,7 @@ import {
   type DashboardWithAccessInfo,
   type ListDashboardHistoryOptions,
 } from './types';
-import { buildRestorePayload, fetchDeletedDashboard, getRequestOptions, isV0V1StoredVersion } from './utils';
+import { fetchDeletedDashboard, getRequestOptions, isV0V1StoredVersion, restoreDashboardResource } from './utils';
 
 export function getK8sV2DashboardApiConfig() {
   return {
@@ -269,6 +269,6 @@ export class K8sDashboardV2API
   }
 
   restoreDashboard(dashboard: Resource<DashboardV2Spec>) {
-    return this.client.create(buildRestorePayload(dashboard));
+    return restoreDashboardResource(this.client, dashboard);
   }
 }

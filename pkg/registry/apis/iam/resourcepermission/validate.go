@@ -8,6 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
 func ValidateCreateAndUpdateInput(ctx context.Context, v0ResourcePerm *v0alpha1.ResourcePermission, mappers *MappersRegistry) error {
@@ -44,6 +45,18 @@ func ValidateCreateAndUpdateInput(ctx context.Context, v0ResourcePerm *v0alpha1.
 	mapper, ok := mappers.Get(groupResource)
 	if !ok {
 		return apierrors.NewBadRequest(fmt.Sprintf("mapper not found for group/resource %s/%s", grn.Group, grn.Resource))
+	}
+
+	// The legacy permission table stores the entire scope in varchar(190).
+	scope := mapper.Scope(grn.Name)
+	if len(scope) > 190 {
+		return apierrors.NewBadRequest("resource permission scope must not exceed 190 characters")
+	}
+
+	// The same permission row stores the resource identifier in varchar(40).
+	_, _, identifier := accesscontrol.SplitScope(scope)
+	if len(identifier) > 40 {
+		return apierrors.NewBadRequest("resource permission identifier must not exceed 40 characters")
 	}
 
 	// Check for duplicate entities and validate kind/verb per permission

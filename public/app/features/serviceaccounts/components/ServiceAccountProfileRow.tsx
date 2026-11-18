@@ -23,7 +23,7 @@ export const ServiceAccountProfileRow = ({ label, value, inputType, disabled, on
 
   useEffect(() => {
     if (isEditing) {
-      focusInput();
+      inputElem.current?.focus();
     }
   }, [isEditing]);
 
@@ -48,10 +48,6 @@ export const ServiceAccountProfileRow = ({ label, value, inputType, disabled, on
       return;
     }
     setInputValue(event.target.value);
-  };
-
-  const focusInput = () => {
-    inputElem?.current?.focus();
   };
 
   const onSave = () => {

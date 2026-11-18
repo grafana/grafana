@@ -43,7 +43,7 @@ func TestNatsWatchNotificationRoundTrip(t *testing.T) {
 		backend := newTestKVStorageBackend(pub)
 		expiry := NewWatchExpiry()
 		notifier := newNatsNotifier(natsSubscriberAdapter{sub: sub}, expiry, nil, &logging.NoOpLogger{})
-		out := notifier.Watch(ctx, WatchOptions{})
+		out := notifier.Watch(ctx, WatchOptions{SettleDelay: time.Millisecond})
 
 		event := Event{
 			Namespace:       "default",
@@ -79,7 +79,7 @@ func TestNatsWatchNotificationRoundTrip(t *testing.T) {
 		backend := newTestKVStorageBackend(pub)
 		expiry := NewWatchExpiry()
 		notifier := newNatsNotifier(natsSubscriberAdapter{sub: sub}, expiry, nil, &logging.NoOpLogger{})
-		out := notifier.Watch(ctx, WatchOptions{})
+		out := notifier.Watch(ctx, WatchOptions{SettleDelay: time.Millisecond})
 
 		establishInterest(t, ctx, out, backend)
 
@@ -157,7 +157,7 @@ func TestNatsWatchNotificationRoundTrip(t *testing.T) {
 		assert.Equal(t, int64(defaultMaxWatchNotificationBytes), pub.MaxPayload(), "the embedded server applies the NATS default")
 		assert.Equal(t, defaultMaxWatchNotificationBytes, backend.watchPublisher.maxWatchNotificationBytes())
 		notifier := newNatsNotifier(natsSubscriberAdapter{sub: sub}, NewWatchExpiry(), nil, &logging.NoOpLogger{})
-		out := notifier.Watch(ctx, WatchOptions{})
+		out := notifier.Watch(ctx, WatchOptions{SettleDelay: time.Millisecond})
 
 		event := Event{
 			Namespace:       "default",
@@ -196,7 +196,7 @@ func TestNatsWatchNotificationRoundTrip(t *testing.T) {
 		dropped := prometheus.NewCounterVec(prometheus.CounterOpts{Name: "nats_notifier_dropped_total"}, []string{"reason"})
 		expiry := NewWatchExpiry()
 		notifier := newNatsNotifier(natsSubscriberAdapter{sub: sub}, expiry, dropped, &logging.NoOpLogger{})
-		out := notifier.Watch(ctx, WatchOptions{})
+		out := notifier.Watch(ctx, WatchOptions{SettleDelay: time.Millisecond})
 
 		// Interest must be live first, else NATS drops the bad messages before the
 		// handler runs and the drop counters never move.

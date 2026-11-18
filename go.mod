@@ -130,7 +130,7 @@ require (
 	github.com/google/wire v0.7.0 // @grafana/grafana-backend-group
 	github.com/googleapis/gax-go/v2 v2.24.1 // @grafana/grafana-backend-group
 	github.com/gorilla/mux v1.8.1 // @grafana/grafana-backend-group
-	github.com/grafana/alerting v0.0.0-20261014191024-71374176ca7b // @grafana/alerting-backend
+	github.com/grafana/alerting v0.0.0-20261113222548-56ba26dfa050 // @grafana/alerting-backend
 	github.com/grafana/alerting/apps/historian v0.0.0-20260729133334-340f1168af6c // @grafana/alerting-backend
 	github.com/grafana/authlib v0.0.0-20261108003752-80ed9e737add // @grafana/identity-access-team
 	github.com/grafana/authlib/types v0.0.0-20261020151310-7a9be4c0c1c3 // @grafana/identity-access-team
@@ -141,14 +141,14 @@ require (
 	github.com/grafana/gofpdf v0.0.0-20250307124105-3b9c5d35577f // @grafana/sharing-squad
 	github.com/grafana/gomemcache v0.0.0-20260728143316-9448343bd654 // @grafana/grafana-operator-experience-squad
 	github.com/grafana/grafana-api-golang-client v0.27.0 // @grafana/alerting-backend
-	github.com/grafana/grafana-app-sdk v0.63.1 // @grafana/grafana-app-platform-squad
-	github.com/grafana/grafana-app-sdk/logging v0.63.1 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana-app-sdk v0.63.2 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana-app-sdk/logging v0.63.2 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana-aws-sdk v1.5.5 // @grafana/data-sources-plugins
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.4.1 // @grafana/data-sources-plugins
 	github.com/grafana/grafana-cloud-migration-snapshot v1.11.0 // @grafana/grafana-operator-experience-squad
 	github.com/grafana/grafana-google-sdk-go v0.4.2 // @grafana/data-sources-plugins
 	github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 // @grafana/grafana-backend-group
-	github.com/grafana/grafana-plugin-sdk-go v0.299.0 // @grafana/grafana-catalog
+	github.com/grafana/grafana-plugin-sdk-go v0.300.0 // @grafana/grafana-catalog
 	github.com/grafana/grafana/apps/advisor v0.0.0 // @grafana/grafana-catalog
 	github.com/grafana/grafana/apps/alerting/alertenrichment v0.0.0 // @grafana/alerting-backend
 	github.com/grafana/grafana/apps/alerting/alertrulequality v0.0.0 // @grafana/alerting-backend
@@ -283,7 +283,7 @@ require (
 	golang.org/x/time v0.16.0 // @grafana/grafana-backend-group
 	gonum.org/v1/gonum v0.17.0 // @grafana/data-sources-plugins
 	google.golang.org/api v0.297.0 // @grafana/grafana-backend-group
-	google.golang.org/genproto/googleapis/api v0.0.0-20261026165753-2ffab32bce7e // @grafana/identity-access-team
+	google.golang.org/genproto/googleapis/api v0.0.0-20261104224025-d1e00e9f33ab // @grafana/identity-access-team
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20261104224025-d1e00e9f33ab // @grafana/identity-access-team
 	google.golang.org/grpc v1.85.0 // @grafana/grafana-catalog
 	google.golang.org/protobuf v1.36.12 // @grafana/grafana-catalog
@@ -350,7 +350,7 @@ require (
 	github.com/alecthomas/units v0.0.0-20240927000941-0f3dac36c52b // indirect
 	github.com/antithesishq/antithesis-sdk-go v0.7.2-default-no-op // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
-	github.com/apache/thrift v0.24.0 // indirect
+	github.com/apache/thrift v0.25.0 // indirect
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
 	github.com/armon/go-metrics v0.4.1 // indirect
 	github.com/at-wat/mqtt-go v0.19.6 // indirect
@@ -679,7 +679,7 @@ require (
 	go.opentelemetry.io/otel/exporters/stdout/stdouttrace v1.47.0 // indirect
 	go.opentelemetry.io/otel/log v1.47.0 // indirect
 	go.opentelemetry.io/otel/metric v1.47.0 // indirect
-	go.opentelemetry.io/otel/sdk/log v0.22.0 // indirect
+	go.opentelemetry.io/otel/sdk/log v1.47.0 // indirect
 	go.opentelemetry.io/otel/sdk/metric v1.47.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.11.1 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
@@ -717,13 +717,13 @@ require (
 )
 
 replace (
+	// v22.7.0 breaks builds for BSDs and Solaris (AIX), see: https://github.com/coreos/go-systemd/issues/512
+	github.com/coreos/go-systemd/v22 => github.com/coreos/go-systemd/v22 v22.6.0
+
 	// Use our fork of dolthub/go-mysql-server which adds TableHintedTable for FOR (...) hints
 	// and makes non-cgo the default for developer builds.
 	github.com/dolthub/go-mysql-server => github.com/grafana/go-mysql-server v0.20.2-grafana-4
 	github.com/dolthub/vitess => github.com/grafana/vitess v0.0.0-grafana-2
-
-	// app-sdk v0.62.1 requires logging v0.0.0 (resolved via a replace that consumers ignore); point it at the real release.
-	github.com/grafana/grafana-app-sdk/logging v0.0.0 => github.com/grafana/grafana-app-sdk/logging v0.62.1
 
 	// Use our fork of memberlist which includes some fixes that haven't been merged upstream yet.
 	github.com/hashicorp/memberlist => github.com/grafana/memberlist v0.3.1-0.20260515134459-1798cf41aca7
