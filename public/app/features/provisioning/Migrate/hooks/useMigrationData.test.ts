@@ -5,7 +5,7 @@ import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1'
 import { getCustomSearchHandler, searchRoute } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
 import { type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
-import { AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
+import { AnnoKeyFolder, AnnoKeyManagerKind, ManagerKind } from 'app/features/apiserver/types';
 
 import { setupProvisioningMswServer } from '../../mocks/server';
 import { getMigratableKinds, resourceKindInfos } from '../../utils/resourceKinds';
@@ -15,6 +15,7 @@ import { useMigrationData } from './useMigrationData';
 setupProvisioningMswServer();
 
 const PLAYLISTS_ROUTE = '/apis/playlist.grafana.app/v1/namespaces/:namespace/playlists';
+const LIBRARY_PANELS_ROUTE = '/apis/dashboard.grafana.app/v0alpha1/namespaces/:namespace/librarypanels';
 
 // Kinds are derived from the registry. With no availableResources only the
 // always-on base (dashboards) is migratable; declaring the playlist kind brings
@@ -25,6 +26,11 @@ const playlistAvailable: SupportedResource[] = [
   { group: 'playlist.grafana.app', kind: 'Playlist' },
 ];
 const dashboardAndPlaylistKinds = getMigratableKinds(playlistAvailable);
+const libraryPanelAvailable: SupportedResource[] = [
+  { group: 'dashboard.grafana.app', kind: 'Dashboard' },
+  { group: 'dashboard.grafana.app', kind: 'LibraryPanel' },
+];
+const dashboardAndLibraryPanelKinds = getMigratableKinds(libraryPanelAvailable);
 
 // Render with the app providers; the searcher and the playlist apiserver list
 // are both driven through MSW.
@@ -66,6 +72,20 @@ function mockPlaylists(items: PlaylistItem[]) {
   server.use(http.get(PLAYLISTS_ROUTE, () => HttpResponse.json({ items, metadata: {} })));
 }
 
+interface LibraryPanelItem {
+  metadata: { name: string; annotations?: Record<string, string> };
+  spec: { title: string };
+}
+function libraryPanel(name: string, parent?: string): LibraryPanelItem {
+  return {
+    metadata: { name, ...(parent ? { annotations: { [AnnoKeyFolder]: parent } } : {}) },
+    spec: { title: name },
+  };
+}
+function mockLibraryPanels(items: LibraryPanelItem[]) {
+  server.use(http.get(LIBRARY_PANELS_ROUTE, () => HttpResponse.json({ items, metadata: {} })));
+}
+
 describe('useMigrationData (folder-scoped kinds)', () => {
   it('nests unmanaged dashboards under the folder directly containing them (not recursively)', async () => {
     mockSearch([folder('parent'), folder('child', 'parent'), dashboard('d1', 'parent'), dashboard('d2', 'child')]);
@@ -76,6 +96,20 @@ describe('useMigrationData (folder-scoped kinds)', () => {
     const parent = result.current.data.find((f) => f.uid === 'parent');
     expect(parent?.directResources.map((d) => d.uid)).toEqual(['d1']);
     expect(result.current.data.find((f) => f.uid === 'child')?.directResources.map((d) => d.uid)).toEqual(['d2']);
+  });
+
+  it('nests library panels under the folder their annotation names', async () => {
+    mockSearch([folder('team-a')]);
+    mockLibraryPanels([libraryPanel('lp1', 'team-a'), libraryPanel('lp2')]);
+
+    const { result } = renderHook(() => useMigrationData(dashboardAndLibraryPanelKinds, libraryPanelAvailable), {
+      wrapper,
+    });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.data.find((f) => f.uid === 'team-a')?.directResources.map((r) => r.uid)).toEqual(['lp1']);
+    // A library panel outside every folder is a root resource, not a kind without folders.
+    expect(result.current.data.find((f) => f.uid === 'general')?.directResources.map((r) => r.uid)).toEqual(['lp2']);
   });
 
   it('records the ancestor path for nested folders and leaves root/general rows pathless', async () => {

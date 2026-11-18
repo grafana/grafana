@@ -11,6 +11,7 @@ import { playlistAPIv1 } from 'app/api/clients/playlist/v1';
 import { type Repository, type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
 import { getAPIBaseURL } from 'app/api/utils';
 import { getAPIGroupDiscoveryList } from 'app/features/apiserver/discovery';
+import { AnnoKeyFolder } from 'app/features/apiserver/types';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 import { getIconForKind } from 'app/features/search/service/icons';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
@@ -37,7 +38,7 @@ const DATASOURCE_COLLECTION_GROUP = 'datasource.grafana.app';
 export interface ListedResource {
   uid: string;
   title: string;
-  /** Immediate parent folder UID; undefined for root or non-folder-scoped kinds. */
+  /** Immediate parent folder UID; undefined for a root resource or a kind not contained in folders. */
   parentUid?: string;
   /** Owned by a manager (Git Sync, Terraform, …), or otherwise not writable — no migration target. */
   managed: boolean;
@@ -142,10 +143,7 @@ export const resourceKindInfos = {
     // No deep-link route for a single library panel exists; they're only viewable
     // from the library panels collection page.
     listRoute: '/library-panels',
-    // Library panels live inside folders on the backend, but the dashboards folder
-    // browse doesn't list them — they have their own collection page — so for
-    // routing they behave like a non-foldered kind and always resolve to listRoute.
-    folderScoped: false,
+    folderScoped: true,
     // Library panels aren't in the unified search index; list them through their
     // apiserver (same group as dashboards, v0alpha1). Gated out of migration by
     // default — they ship disabled and aren't in the static base — so this only
@@ -279,9 +277,9 @@ export interface ResourceKindInfo {
   /** The in-app collection page listing all resources of this kind, e.g. `/dashboards`. */
   listRoute: string;
   /**
-   * Whether resources of this kind are contained in folders, and so can be scoped
-   * to a repository's own folder. Foldered kinds (folders, dashboards) live in the
-   * dashboards browse; others (e.g. playlists) only have their `listRoute`.
+   * Whether resources of this kind are contained in a folder, and so nest under one when listed.
+   * Mirrors the backend's `folder` capability for the kind; it says nothing about where the kind is
+   * browsable, which `getRepositoryRoute` decides from the collection page.
    */
   folderScoped: boolean;
   /**
@@ -330,15 +328,18 @@ export function getReportedGroup(group?: string, kind?: string): string | undefi
 }
 
 /**
- * Builds the in-app route to view a repository's resources of the given kind.
- * Folder-scoped kinds resolve to the repository's own folder (named after the
- * repository) for folder-target repos; everything else — non-folder targets, a
- * repo missing its name, or non-folder-scoped kinds — resolves to the kind's
- * collection page.
+ * Builds the in-app route to view a repository's resources of the given kind. A kind browsable in the
+ * dashboards folder view resolves to the repository's own folder (named after the repository) for
+ * folder-target repos; everything else — non-folder targets, a repo missing its name, or a kind with
+ * its own collection page — resolves to that collection page.
  */
 export function getRepositoryRoute(info: ResourceKindInfo, repo: Repository): string {
   const repoName = repo.metadata?.name;
-  if (info.folderScoped && repo.spec?.sync.target === 'folder' && repoName) {
+  // The repository folder is a scoped view of the dashboards browse, so only a kind whose own
+  // collection page is that browse can be shown scoped to it. Library panels are contained in
+  // folders yet have their own page, which no folder scopes.
+  const browsableInRepositoryFolder = info.listRoute === resourceKindInfos.folder.listRoute;
+  if (browsableInRepositoryFolder && repo.spec?.sync.target === 'folder' && repoName) {
     // The repository's folder is named after the repo, so reuse the folder kind's
     // route rather than duplicating the `/dashboards/f/...` shape here.
     return resourceKindInfos.folder.getRoute(repoName);
@@ -534,19 +535,14 @@ interface ApiserverListItem {
   spec?: { title?: string; readOnly?: boolean };
 }
 
-/**
- * Lists a kind through its apiserver collection — for kinds the unified search
- * index doesn't serve (e.g. playlists). Read directly (not via an RTK client) so
- * any kind can be listed from its group/version/resource without a bespoke
- * client. These kinds are org-scoped, so no parent folder is resolved.
- */
 /** Maps an apiserver list response into ListedResources: name as uid, spec title
- * (falling back to the name), manager presence; entries without a name dropped. */
+ * (falling back to the name), folder annotation, manager presence; entries without a name dropped. */
 function toListedResources(items: ApiserverListItem[] | undefined): ListedResource[] {
   return (items ?? [])
     .map((item) => ({
       uid: item.metadata?.name ?? '',
       title: item.spec?.title || item.metadata?.name || '',
+      parentUid: readImmediateParent(item.metadata?.annotations?.[AnnoKeyFolder]),
       // Classic file provisioning marks a data source read-only without a manager annotation, so
       // the annotation alone would offer a resource no write can take over.
       managed: isManaged(item) || item.spec?.readOnly === true,
@@ -554,6 +550,13 @@ function toListedResources(items: ApiserverListItem[] | undefined): ListedResour
     .filter((row) => row.uid);
 }
 
+/**
+ * Lists a kind through its apiserver collection — for kinds the unified search
+ * index doesn't serve (e.g. playlists). Read directly (not via an RTK client) so
+ * any kind can be listed from its group/version/resource without a bespoke
+ * client. The parent folder is read from the object's folder annotation, which a
+ * kind not contained in folders simply doesn't carry.
+ */
 async function listViaApiserver(group: string, version: string, resource: string): Promise<ListedResource[]> {
   const url = `${getAPIBaseURL(group, version)}/${resource}`;
   const response = await getBackendSrv().get<{ items?: ApiserverListItem[] }>(url);
