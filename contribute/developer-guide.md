@@ -213,7 +213,7 @@ The tarball outputs package the target backend, production frontend, and [pinned
 
 On release builders, set `sandbox = true` and `sandbox-fallback = false` in the [Nix daemon configuration](https://nix.dev/manual/nix/latest/command-ref/conf-file#conf-sandbox). To verify the frontend, backend, and archive by rebuilding all three on a configured Linux builder, run `nix build --rebuild --no-link .#frontend .#backend-linux-amd64 .#tarball-linux-amd64`.
 
-The [Nix CI workflow](../.github/workflows/nix-build-grafana.yml) evaluates `ciJobs` on an AMD64 runner. Hestia builds cache misses for the frontend and the configured backends in parallel. The packaging matrix uses those outputs to build and upload one release tarball per target.
+The [Nix CI workflow](../.github/workflows/nix-build-grafana.yml) evaluates `ciJobs` on an AMD64 runner. Hestia builds cache misses for the frontend and the configured backends in parallel. The packaging matrix uploads a release tarball for every target, including runs where all component outputs come from cache.
 
 CI uses stable commit and timestamp values so commits outside the build inputs can reuse cached binaries. The regular release targets embed the checkout revision and timestamp.
 

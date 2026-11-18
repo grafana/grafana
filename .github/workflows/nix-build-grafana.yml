@@ -88,7 +88,7 @@ jobs:
 
   package:
     needs: [eval, build]
-    # The build matrix is skipped when every component is cached.
+    # Publish tarballs even when Hestia skips every component build.
     if: >-
       !cancelled() && needs.eval.result == 'success' &&
       (needs.build.result == 'success' ||
