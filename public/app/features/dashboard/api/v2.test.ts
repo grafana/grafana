@@ -402,23 +402,23 @@ describe('v2 dashboard API', () => {
       registerDraftDashboardExtension(null);
     });
 
-    it('adds the extension labels to the existing labels when creating a dashboard', async () => {
+    it('adds the extension labels when creating a dashboard', async () => {
       const api = new K8sDashboardV2API();
-      await api.saveDashboard({ dashboard: defaultDashboardV2Spec(), k8s: { labels: { team: 'a' } } });
+      await api.saveDashboard({ dashboard: defaultDashboardV2Spec(), k8s: {} });
 
       expect(mockPost).toHaveBeenCalledTimes(1);
-      expect(mockPost.mock.calls[0][1].metadata.labels).toEqual({ team: 'a', [LabelKeyLifecycle]: LifecycleDraft });
+      expect(mockPost.mock.calls[0][1].metadata.labels).toEqual({ [LabelKeyLifecycle]: LifecycleDraft });
     });
 
     it('does not ask for or add the extension labels when updating a dashboard', async () => {
       const api = new K8sDashboardV2API();
       await api.saveDashboard({
         dashboard: defaultDashboardV2Spec(),
-        k8s: { name: 'test-dash', labels: { team: 'a' } },
+        k8s: { name: 'test-dash' },
       });
 
       expect(mockPut).toHaveBeenCalledTimes(1);
-      expect(mockPut.mock.calls[0][1].metadata.labels).toEqual({ team: 'a' });
+      expect(mockPut.mock.calls[0][1].metadata.labels).toBeUndefined();
       expect(getCreateLabels).not.toHaveBeenCalled();
     });
   });

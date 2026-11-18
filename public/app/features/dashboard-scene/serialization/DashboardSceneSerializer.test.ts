@@ -15,6 +15,7 @@ import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import {
   AnnoKeyDashboardSnapshotOriginalUrl,
   AnnoKeyUseCrossDashboardVariables,
+  DeprecatedInternalId,
   LabelKeyLifecycle,
   LifecycleDraft,
 } from 'app/features/apiserver/types';
@@ -1398,14 +1399,22 @@ describe('DashboardSceneSerializer', () => {
       const serializer = new V1DashboardSerializer();
       serializer.metadata = {
         canSave: true,
-        k8s: { name: 'dash-1', annotations: { a: '1' }, labels: { team: 'a', [LabelKeyLifecycle]: LifecycleDraft } },
+        k8s: {
+          name: 'dash-1',
+          annotations: { [AnnoKeyUseCrossDashboardVariables]: 'all' },
+          labels: { [DeprecatedInternalId]: '42', [LabelKeyLifecycle]: LifecycleDraft },
+        },
       };
 
-      serializer.setK8SLabels({ team: 'a' });
+      serializer.setK8SLabels({ [DeprecatedInternalId]: '42' });
 
       expect(serializer.metadata).toEqual({
         canSave: true,
-        k8s: { name: 'dash-1', annotations: { a: '1' }, labels: { team: 'a' } },
+        k8s: {
+          name: 'dash-1',
+          annotations: { [AnnoKeyUseCrossDashboardVariables]: 'all' },
+          labels: { [DeprecatedInternalId]: '42' },
+        },
       });
     });
 
@@ -1415,18 +1424,18 @@ describe('DashboardSceneSerializer', () => {
         name: 'dash-1',
         resourceVersion: '7',
         creationTimestamp: '2023-01-01T00:00:00Z',
-        annotations: { a: '1' },
-        labels: { team: 'a', [LabelKeyLifecycle]: LifecycleDraft },
+        annotations: { [AnnoKeyUseCrossDashboardVariables]: 'all' },
+        labels: { [DeprecatedInternalId]: '42', [LabelKeyLifecycle]: LifecycleDraft },
       };
 
-      serializer.setK8SLabels({ team: 'a' });
+      serializer.setK8SLabels({ [DeprecatedInternalId]: '42' });
 
       expect(serializer.metadata).toEqual({
         name: 'dash-1',
         resourceVersion: '7',
         creationTimestamp: '2023-01-01T00:00:00Z',
-        annotations: { a: '1' },
-        labels: { team: 'a' },
+        annotations: { [AnnoKeyUseCrossDashboardVariables]: 'all' },
+        labels: { [DeprecatedInternalId]: '42' },
       });
     });
   });
