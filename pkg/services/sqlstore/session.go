@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/util/xorm/core"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -80,69 +79,6 @@ func startSessionOrUseExisting(ctx context.Context, engine *xorm.Engine, beginTr
 	newSess.Session = newSess.Context(tctx)
 
 	return newSess, true, span, nil
-}
-
-// WithEngineSession lets database-provider implementations use their own engine.
-// It closes a newly created session; a session carried by ctx is reused without
-// taking ownership of it. Normal service code should use db.DB.WithDbSession.
-func WithEngineSession(ctx context.Context, engine *xorm.Engine, tracer tracing.Tracer, callback DBTransactionFunc) error {
-	if err := validateHelperSession(ctx, engine); err != nil {
-		return err
-	}
-	sess, isNew, span, err := startSessionOrUseExisting(ctx, engine, false, tracer)
-	defer span.End()
-	if err != nil {
-		return fmt.Errorf("start database session: %w", err)
-	}
-	if isNew {
-		defer sess.Close()
-	}
-	return callback(sess)
-}
-
-// WithEngineTransaction lets database-provider implementations use their own engine.
-// Nested calls reuse the context session; only the owner commits, rolls back,
-// and publishes events. Normal service code should use db.DB.InTransaction.
-func WithEngineTransaction(ctx context.Context, engine *xorm.Engine, events bus.Bus, tracer tracing.Tracer, callback DBTransactionFunc) error {
-	if err := validateHelperSession(ctx, engine); err != nil {
-		return err
-	}
-	sess, isNew, span, err := startSessionOrUseExisting(ctx, engine, false, tracer)
-	defer span.End()
-	if err != nil {
-		return fmt.Errorf("start database transaction: %w", err)
-	}
-	span.SetAttributes(attribute.Bool("transaction", true))
-	if isNew {
-		defer sess.Close()
-		if err := sess.Begin(); err != nil {
-			return fmt.Errorf("start database transaction: %w", err)
-		}
-		sess.transactionOpen = true
-	} else if !sess.transactionOpen {
-		return fmt.Errorf("cannot reuse session without an open transaction")
-	}
-	return completeTransaction(ctx, sess, events, isNew, callback(sess))
-}
-
-// validateHelperSession prevents nested helpers from reusing invalid sessions or sessions from another database pool.
-func validateHelperSession(ctx context.Context, engine *xorm.Engine) error {
-	if engine == nil {
-		return fmt.Errorf("database engine is nil")
-	}
-	if value := ctx.Value(ContextSessionKey{}); value != nil {
-		sess, ok := value.(*DBSession)
-		if !ok || sess == nil {
-			return fmt.Errorf("context database session is invalid")
-		}
-		if sess.Session == nil || sess.IsClosed() {
-			return fmt.Errorf("context database session is closed or invalid")
-		}
-		if sess.DB() != engine.DB() {
-			return fmt.Errorf("context database session belongs to another engine")
-		}
-	}
-	return nil
 }
 
 // WithDbSession calls the callback with the session in the context (if exists).
