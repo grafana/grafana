@@ -484,10 +484,13 @@ describe('sandbox runtime', () => {
     postMessage.mockClear();
     finish();
     await flush();
-    expectNotification('mermaid-needed', { revision: 3 });
-    expect(postMessage.mock.calls.some(([notification]) => notification.type === 'rendered')).toBe(false);
-    message({ ...command, revision: 3, type: 'mermaid-source', source: '/* new source */' });
-    await flush();
+    // The document keeps the evaluated bundle, so later diagrams don't request or evaluate it again.
+    expect(postMessage.mock.calls.some(([notification]) => notification.type === 'mermaid-needed')).toBe(false);
+    const scripts = jest
+      .mocked(document.head.append)
+      .mock.calls.flat()
+      .filter((node) => node instanceof HTMLScriptElement);
+    expect(scripts).toHaveLength(1);
     expect(renderer).toHaveBeenCalledTimes(2);
     expectNotification('rendered', { revision: 3 });
   });

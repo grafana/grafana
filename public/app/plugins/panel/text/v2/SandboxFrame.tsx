@@ -67,17 +67,7 @@ export interface SandboxFrameProps {
 }
 
 export function SandboxFrame(props: SandboxFrameProps) {
-  const { html, globalCss, policy, mermaid, diagramError, onState } = props;
-  const [canReuse, setCanReuse] = useState(true);
-  const reportState = useCallback(
-    (state: TextSandboxState | undefined) => {
-      if (state !== undefined) {
-        setCanReuse(state.status !== 'error' && state.resources.length === 0);
-      }
-      onState(state);
-    },
-    [onState]
-  );
+  const { html, globalCss, policy, mermaid, diagramError } = props;
   // Content-only protected updates and CSS-only updates avoid restarting the document.
   // Policy and diagram configuration changes still need a fresh runtime.
   const [documentVersion, setDocumentVersion] = useState({ html, globalCss, policy, mermaid, diagramError, id: 0 });
@@ -87,14 +77,16 @@ export function SandboxFrame(props: SandboxFrameProps) {
     documentVersion.diagramError !== diagramError;
   const contentChanged = documentVersion.html !== html;
   if (contentChanged || documentVersion.globalCss !== globalCss || shellChanged) {
-    // Legacy scripts need a fresh realm. Failed documents and blocked stylesheet loads need a fresh attempt too.
-    const recreate = shellChanged || (contentChanged && (policy === undefined || !canReuse));
+    // Legacy scripts need a fresh realm.
+    const recreate = shellChanged || (contentChanged && policy === undefined);
     setDocumentVersion({ html, globalCss, policy, mermaid, diagramError, id: documentVersion.id + Number(recreate) });
   }
-  return <FrameDocument key={documentVersion.id} {...props} onState={reportState} />;
+  // The controller tracks failures and blocked loads synchronously; React state would lag a batched update.
+  const recreate = useCallback(() => setDocumentVersion((current) => ({ ...current, id: current.id + 1 })), []);
+  return <FrameDocument key={documentVersion.id} {...props} onRecreate={recreate} />;
 }
 
-function FrameDocument(props: SandboxFrameProps) {
+function FrameDocument(props: SandboxFrameProps & { onRecreate: () => void }) {
   const { title, minHeight = 0, onState, onHeight } = props;
   const { iframeRef, sandboxState, dimensions, protectedFrame } = useFrameRuntime(props);
 
@@ -142,7 +134,8 @@ function useFrameRuntime({
   policy,
   mermaid,
   diagramError = 'Diagram could not be rendered',
-}: SandboxFrameProps) {
+  onRecreate,
+}: SandboxFrameProps & { onRecreate: () => void }) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [sandboxState, setSandboxState] = useState<TextSandboxState>({ status: 'loading', resources: [] });
   const [dimensions, setDimensions] = useState({ height: 1, contentHeight: 0 });
@@ -159,8 +152,11 @@ function useFrameRuntime({
   const latestCommand = useRef(command);
   useLayoutEffect(() => {
     latestCommand.current = command;
-    controllerRef.current?.update(command);
-  }, [command]);
+    if (controllerRef.current?.update(command) === false) {
+      // Failed documents and blocked stylesheet loads need a fresh attempt.
+      onRecreate();
+    }
+  }, [command, onRecreate]);
 
   useLayoutEffect(() => {
     if (!iframeRef.current) {
@@ -223,6 +219,7 @@ function createFrameController({
   let revision = 0;
   let styleRevision = 0;
   let hasFailed = false;
+  let hasBlocked = false;
   let mermaidRequested = false;
   let disposed = false;
   const expectedOrigin = protectedFrame ? 'null' : window.location.origin;
@@ -291,6 +288,7 @@ function createFrameController({
       revision++;
       onReset();
       hasFailed = false;
+      hasBlocked = false;
       mermaidRequested = false;
       clearTimeout(watchdog);
       watchdog = window.setTimeout(fail, WATCHDOG_TIMEOUT_MS);
@@ -347,6 +345,7 @@ function createFrameController({
 
   function recordBlockedResources(resources: BlockedResource[]) {
     if (renderedDocument !== undefined) {
+      hasBlocked = true;
       onBlocked(resources);
     }
   }
@@ -363,14 +362,18 @@ function createFrameController({
     stopListening();
   }
 
-  function update(next: FullRenderCommand) {
+  /** Returns false when the content change needs a fresh document. */
+  function update(next: FullRenderCommand): boolean {
     const contentChanged =
       next.html !== renderCommand.html ||
       next.mermaid !== renderCommand.mermaid ||
       next.diagramError !== renderCommand.diagramError;
     const cssChanged = next.globalCss !== renderCommand.globalCss;
     if (!contentChanged && !cssChanged) {
-      return;
+      return true;
+    }
+    if (contentChanged && (hasFailed || hasBlocked)) {
+      return false;
     }
     renderCommand = next;
     if (!contentChanged) {
@@ -386,7 +389,7 @@ function createFrameController({
         };
         iframe.contentWindow?.postMessage(styles, targetOrigin);
       }
-      return;
+      return true;
     }
     revision++;
     hasFailed = false;
@@ -401,6 +404,7 @@ function createFrameController({
         targetOrigin
       );
     }
+    return true;
   }
 
   return { dispose, update };

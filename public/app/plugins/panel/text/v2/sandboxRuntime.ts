@@ -50,7 +50,9 @@ let readyTimer = 0;
 let observer: ResizeObserver | undefined;
 let content: HTMLDivElement | undefined;
 let lastDimensions: { height: number; contentHeight: number } | undefined;
-let receiveMermaid: ((source: string) => void) | undefined;
+let receiveMermaid: ((source?: string) => void) | undefined;
+// Reused documents keep the evaluated bundle; re-sending and re-evaluating it per update costs megabytes.
+let mermaidRenderer: RenderDiagrams | undefined;
 const resources: Array<{
   directive: string;
   origin?: string;
@@ -186,27 +188,36 @@ async function renderDiagrams(command: RenderCommand, container: HTMLElement) {
   if (!command.mermaid || !container.querySelector('code.language-mermaid, pre.mermaid') || isCancelled()) {
     return;
   }
-  const source = await new Promise<string>((resolve) => {
+  mermaidRenderer ??= await loadMermaid();
+  if (!mermaidRenderer || isCancelled()) {
+    return;
+  }
+  await mermaidRenderer(command, container, isCancelled);
+}
+
+/** Resolves undefined when a newer render cancels the request. */
+async function loadMermaid(): Promise<RenderDiagrams | undefined> {
+  const source = await new Promise<string | undefined>((resolve) => {
     receiveMermaid = resolve;
     send({ type: 'mermaid-needed' });
   });
-  if (isCancelled()) {
-    return;
+  if (source === undefined || disposed) {
+    return undefined;
   }
-  let render: RenderDiagrams | undefined;
+  let renderer: RenderDiagrams | undefined;
   const script = Object.assign(document.createElement('script'), {
     nonce,
     textContent: scriptPolicy?.createScript(source) ?? source,
-    registerMermaid: (renderer: RenderDiagrams) => {
-      render = renderer;
+    registerMermaid: (registered: RenderDiagrams) => {
+      renderer = registered;
     },
   });
   document.head.append(script);
   script.remove();
-  if (!render) {
+  if (!renderer) {
     throw new Error('Text diagram runtime did not initialize');
   }
-  await render(command, container, isCancelled);
+  return renderer;
 }
 
 function applyStyles(css: string) {
@@ -319,7 +330,7 @@ function onMessage(event: MessageEvent<RenderCommand | MermaidCommand | StylesCo
     return;
   }
   revision = command.revision;
-  receiveMermaid?.('');
+  receiveMermaid?.();
   receiveMermaid = undefined;
   observer?.disconnect();
   clearTimeout(violationTimer);
@@ -335,7 +346,7 @@ function onMessage(event: MessageEvent<RenderCommand | MermaidCommand | StylesCo
 
 function dispose() {
   disposed = true;
-  receiveMermaid?.('');
+  receiveMermaid?.();
   receiveMermaid = undefined;
   observer?.disconnect();
   clearTimeout(violationTimer);

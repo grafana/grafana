@@ -881,3 +881,20 @@ it('recreates blocked documents so unchanged stylesheet violations are reported 
     resources: [{ directive: 'font-src', origin: 'https://fonts.test' }],
   });
 });
+
+it('recreates failed documents when the failure and a content update land in one render', async () => {
+  const options = props();
+  const { rerender } = render(<SandboxFrame {...options} />);
+  const element = await frame();
+  const postMessage = jest.spyOn(element.contentWindow!, 'postMessage').mockImplementation(() => {});
+  notify(element, 'ready');
+  postMessage.mockClear();
+  act(() => {
+    jest.advanceTimersByTime(WATCHDOG_TIMEOUT_MS);
+    rerender(<SandboxFrame {...options} html="<p>Updated</p>" />);
+  });
+  const updated = await frame();
+  expect(updated).not.toBe(element);
+  expect(postMessage).not.toHaveBeenCalled();
+  expect(options.onState).toHaveBeenLastCalledWith({ status: 'loading', resources: [] });
+});
