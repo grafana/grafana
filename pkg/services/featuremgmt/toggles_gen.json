@@ -1645,6 +1645,20 @@
     },
     {
       "metadata": {
+        "name": "dashboard.crossFilterSelection",
+        "resourceVersion": "1794839166203",
+        "creationTimestamp": "2026-11-16T14:26:06Z"
+      },
+      "spec": {
+        "description": "Cross filtering between panels: Alt-click (Option-click on macOS) selects and multi-selects values that filter the other panels, while the selecting panel highlights them instead of filtering itself",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboard.notebookComments",
         "resourceVersion": "1793648427125",
         "creationTimestamp": "2026-11-02T19:40:27Z"

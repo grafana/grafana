@@ -104,6 +104,8 @@ export const FlagKeys = {
   CreateAlertRuleFromPanel: "createAlertRuleFromPanel",
   /** Enables Critical User Journey (CUJ) tracking */
   CujTracking: "cujTracking",
+  /** Cross filtering between panels: Alt-click (Option-click on macOS) selects and multi-selects values that filter the other panels, while the selecting panel highlights them instead of filtering itself */
+  DashboardCrossFilterSelection: "dashboard.crossFilterSelection",
   /** Enables commenting on Notebook cells */
   DashboardNotebookComments: "dashboard.notebookComments",
   /** Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels */
@@ -915,6 +917,17 @@ export const useFlagCreateAlertRuleFromPanel = (options?: ReactFlagEvaluationOpt
  */
 export const useFlagCujTracking = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("cujTracking", false, options).value;
+};
+
+/**
+ * Cross filtering between panels: Alt-click (Option-click on macOS) selects and multi-selects values that filter the other panels, while the selecting panel highlights them instead of filtering itself
+ *
+ * **Details:**
+ * - flag key: `dashboard.crossFilterSelection`
+ * - default value: `false`
+ */
+export const useFlagDashboardCrossFilterSelection = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dashboard.crossFilterSelection", false, options).value;
 };
 
 /**
