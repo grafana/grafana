@@ -24,7 +24,7 @@ import {
 } from '../utils/managedResource';
 import { getIsReadOnlyWorkflows, getRepositoryResourcesUrl } from '../utils/repository';
 import { getKindInfoByStat } from '../utils/resourceKinds';
-import { getManagedReadOnlyTooltip } from '../utils/tooltip';
+import { getManagedReadOnlyTooltip, getReadOnlyRepositoryTooltip } from '../utils/tooltip';
 
 import { SyncRepository } from './SyncRepository';
 
@@ -40,7 +40,7 @@ export function RepositoryListItem({ repository }: Props) {
   // A provisioned repository is configured wherever it was provisioned from, so it is read-only
   // here. Being managed is the broader condition: a manager that allows edits still gets the
   // badge, without the read-only treatment.
-  const isReadOnly = isProvisioningResourceReadOnly(repository);
+  const isConfigReadOnly = isProvisioningResourceReadOnly(repository);
   const isManagedRepo = isManaged(repository);
 
   const getRepositoryMeta = (): ReactNode[] => {
@@ -85,17 +85,10 @@ export function RepositoryListItem({ repository }: Props) {
         <Stack gap={2} direction="row" alignItems="center" wrap>
           {spec?.title && <Text variant="h3">{spec.title}</Text>}
           <StatusBadge repo={repository} />
-          {isReadOnlyRepo && (
-            <ReadOnlyBadge
-              tooltip={t(
-                'provisioning.config-form.description-read-only',
-                "Resources can't be modified through Grafana."
-              )}
-            />
-          )}
+          {isReadOnlyRepo && <ReadOnlyBadge tooltip={getReadOnlyRepositoryTooltip()} />}
           {isManagedRepo && (
             <ManagedBadge
-              isReadOnly={isReadOnly}
+              isReadOnly={isConfigReadOnly}
               managerKind={getManagerKind(repository)}
               name={getManagerIdentity(repository)}
               repositoryName={getManagerIdentity(repository)}
@@ -149,7 +142,7 @@ export function RepositoryListItem({ repository }: Props) {
           >
             <Trans i18nKey="provisioning.repository-card.export">Export</Trans>
           </Button>
-          {isReadOnly ? (
+          {isConfigReadOnly ? (
             // Not a disabled LinkButton: that keeps its href and Tooltip restores tabIndex, so the
             // link stays reachable by keyboard, while pointerEvents:none hides the explanation.
             <Button variant="secondary" icon="cog" size="md" disabled tooltip={getManagedReadOnlyTooltip()}>

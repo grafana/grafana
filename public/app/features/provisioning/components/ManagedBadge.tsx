@@ -1,7 +1,7 @@
 import { textUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { Badge, type BadgeColor, Dropdown, IconButton, type IconName, Menu, Stack, Text } from '@grafana/ui';
+import { Badge, type BadgeProps, Dropdown, IconButton, Menu, Stack, Text } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -9,7 +9,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { PROVISIONING_URL } from '../constants';
 import { RepoViewStatus, useGetResourceRepositoryView } from '../hooks/useGetResourceRepositoryView';
 import { getRepoFileUrl } from '../utils/git';
-import { getRepositoryTypeConfig } from '../utils/repositoryTypes';
+import { getRepositoryTypeIcon } from '../utils/repositoryTypes';
 import { getManagedByRepositoryTooltip, getOrphanedRepositoryTooltip } from '../utils/tooltip';
 
 import { splitSourcePath } from './utils/path';
@@ -67,9 +67,8 @@ export function ManagedBadge({
 }
 
 /** Plain, non-interactive badge with a hover tooltip. */
-function StaticManagedBadge({ managerKind, name, isOrphaned = false, isReadOnly }: ManagedBadgeProps) {
-  const { color, icon, tooltip } = getBadgeDisplay({ managerKind, name, isOrphaned, isReadOnly });
-  return <Badge color={color} icon={icon} tooltip={tooltip} />;
+function StaticManagedBadge(props: ManagedBadgeProps) {
+  return <Badge {...getBadgeDisplay(props)} />;
 }
 
 interface RepoManagedBadgeProps {
@@ -86,14 +85,17 @@ interface RepoManagedBadgeProps {
 function RepoManagedBadge({ name, isReadOnly, repositoryName, sourcePath }: RepoManagedBadgeProps) {
   const { repository, status } = useGetResourceRepositoryView({ name: repositoryName });
 
-  const isOrphaned = status === RepoViewStatus.Orphaned;
-  const displayName = repository?.title || name || repositoryName;
-  const { color, icon, tooltip } = getBadgeDisplay({
+  const display = getBadgeDisplay({
     managerKind: ManagerKind.Repo,
-    name: displayName,
-    isOrphaned,
+    name: repository?.title || name || repositoryName,
+    isOrphaned: status === RepoViewStatus.Orphaned,
     isReadOnly,
   });
+  const badge = <Badge {...display} />;
+
+  if (!repository) {
+    return badge;
+  }
 
   const { filePath, fragmentRef } = splitSourcePath(sourcePath);
 
@@ -101,7 +103,7 @@ function RepoManagedBadge({ name, isReadOnly, repositoryName, sourcePath }: Repo
   // (getRepoFileUrl resolves to undefined for local/generic-git). Prefer the ref the resource was
   // loaded from (provisioning previews) over the repository's configured branch.
   const rawSourceUrl =
-    contextSrv.isEditor && repository && filePath
+    contextSrv.isEditor && filePath
       ? getRepoFileUrl({
           repoType: repository.type,
           url: repository.url,
@@ -115,14 +117,11 @@ function RepoManagedBadge({ name, isReadOnly, repositoryName, sourcePath }: Repo
   // Repository administration link, for repository managers. Deliberately gated on write:
   // `provisioning.repositories:read` is granted to the Viewer basic role (git-sync flows need it),
   // so it would match every logged-in user.
-  const manageUrl =
-    repository && contextSrv.hasPermission(AccessControlAction.ProvisioningRepositoriesWrite)
-      ? `${PROVISIONING_URL}/${encodeURIComponent(repository.name ?? repositoryName)}`
-      : undefined;
+  const manageUrl = contextSrv.hasPermission(AccessControlAction.ProvisioningRepositoriesWrite)
+    ? `${PROVISIONING_URL}/${encodeURIComponent(repository.name)}`
+    : undefined;
 
-  const badge = <Badge color={color} icon={icon} tooltip={tooltip} />;
-
-  if (isOrphaned || (!sourceUrl && !manageUrl)) {
+  if (!sourceUrl && !manageUrl) {
     return badge;
   }
 
@@ -134,7 +133,7 @@ function RepoManagedBadge({ name, isReadOnly, repositoryName, sourcePath }: Repo
           <Menu
             header={
               <Text variant="bodySmall" color="secondary">
-                {tooltip}
+                {display.tooltip}
               </Text>
             }
           >
@@ -147,7 +146,7 @@ function RepoManagedBadge({ name, isReadOnly, repositoryName, sourcePath }: Repo
             )}
             {sourceUrl && (
               <Menu.Item
-                icon={(repository?.type && getRepositoryTypeConfig(repository.type)?.icon) || 'external-link-alt'}
+                icon={getRepositoryTypeIcon(repository.type)}
                 label={t('provisioning.managed-badge.view-source', 'View source')}
                 url={sourceUrl}
                 target="_blank"
@@ -166,51 +165,43 @@ function RepoManagedBadge({ name, isReadOnly, repositoryName, sourcePath }: Repo
   );
 }
 
-function getBadgeDisplay({ managerKind, name, isOrphaned, isReadOnly }: ManagedBadgeProps): {
-  color: BadgeColor;
-  icon: IconName;
-  tooltip: string;
-} {
-  let color: BadgeColor = 'purple';
-  let icon: IconName = 'exchange-alt';
-  let tooltip: string;
+function getBadgeDisplay({
+  managerKind,
+  name,
+  isOrphaned,
+  isReadOnly,
+}: ManagedBadgeProps): Pick<BadgeProps, 'color' | 'icon' | 'role' | 'aria-label'> & { tooltip: string } {
+  if (managerKind === ManagerKind.Repo && isOrphaned) {
+    return { color: 'orange', icon: 'exclamation-triangle', tooltip: getOrphanedRepositoryTooltip() };
+  }
 
+  const managedBy = getManagedByTooltip(managerKind, name);
+  if (!isReadOnly) {
+    return { color: 'purple', icon: 'exchange-alt', tooltip: managedBy };
+  }
+
+  const tooltip = t('provisioning.managed-badge.read-only', 'Read only, {{managedBy}}', {
+    managedBy,
+    interpolation: { escapeValue: false },
+  });
+  return { color: 'purple', icon: 'exchange-alt-lock', tooltip, role: 'img', 'aria-label': tooltip };
+}
+
+function getManagedByTooltip(managerKind?: ManagerKind, name?: string): string {
   switch (managerKind) {
     case ManagerKind.Terraform:
-      tooltip = t('provisioning.managed-badge.terraform', 'Managed by: Terraform');
-      break;
+      return t('provisioning.managed-badge.terraform', 'Managed by: Terraform');
     case ManagerKind.Kubectl:
-      tooltip = t('provisioning.managed-badge.kubectl', 'Managed by: Kubectl');
-      break;
+      return t('provisioning.managed-badge.kubectl', 'Managed by: Kubectl');
     case ManagerKind.Plugin:
-      tooltip = t('provisioning.managed-badge.plugin', 'Managed by: Plugin {{id}}', { id: name });
-      break;
+      return t('provisioning.managed-badge.plugin', 'Managed by: Plugin {{id}}', { id: name });
     case ManagerKind.FileProvisioning:
-      tooltip = t('provisioning.managed-badge.file-provisioning', 'Managed by: Grafana configuration');
-      break;
+      return t('provisioning.managed-badge.file-provisioning', 'Managed by: Grafana configuration');
     case ManagerKind.ClassicFP:
-      tooltip = t('provisioning.managed-badge.classic-file-provisioning', 'Managed by: File provisioning');
-      break;
+      return t('provisioning.managed-badge.classic-file-provisioning', 'Managed by: File provisioning');
     case ManagerKind.Repo:
-      if (isOrphaned) {
-        color = 'orange';
-        icon = 'exclamation-triangle';
-        tooltip = getOrphanedRepositoryTooltip();
-      } else {
-        tooltip = getManagedByRepositoryTooltip(name);
-      }
-      break;
+      return getManagedByRepositoryTooltip(name);
     default:
-      tooltip = t('provisioning.managed-badge.provisioned', 'Provisioned');
+      return t('provisioning.managed-badge.provisioned', 'Provisioned');
   }
-
-  if (isReadOnly && !isOrphaned) {
-    icon = 'exchange-alt-lock';
-    tooltip = t('provisioning.managed-badge.read-only', 'Read only, {{managedBy}}', {
-      managedBy: tooltip,
-      interpolation: { escapeValue: false },
-    });
-  }
-
-  return { color, icon, tooltip };
 }

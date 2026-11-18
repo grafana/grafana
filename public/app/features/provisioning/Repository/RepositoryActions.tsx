@@ -1,5 +1,5 @@
 import { textUtil } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, LinkButton, Stack } from '@grafana/ui';
 import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
@@ -9,8 +9,9 @@ import { StatusBadge } from '../Shared/StatusBadge';
 import { CONNECTIONS_URL, PROVISIONING_URL } from '../constants';
 import { getRepoHrefForProvider } from '../utils/git';
 import { getIsReadOnlyWorkflows } from '../utils/repository';
-import { getRepositoryTypeConfig } from '../utils/repositoryTypes';
+import { getRepositoryTypeIcon } from '../utils/repositoryTypes';
 import { getRepositoryRoute, resourceKindInfos } from '../utils/resourceKinds';
+import { getReadOnlyRepositoryTooltip } from '../utils/tooltip';
 
 import { SyncRepository } from './SyncRepository';
 
@@ -24,20 +25,14 @@ export function RepositoryActions({ repository }: RepositoryActionsProps) {
   const repoHref = rawRepoHref ? textUtil.sanitizeUrl(rawRepoHref) : undefined;
   const connectionName = repository.spec?.connection?.name;
 
-  const repoType = repository.spec?.type;
-  const repoConfig = repoType ? getRepositoryTypeConfig(repoType) : undefined;
-  const providerIcon = repoConfig?.icon || 'external-link-alt';
+  const providerIcon = getRepositoryTypeIcon(repository.spec?.type);
   const isReadOnlyRepo = getIsReadOnlyWorkflows(repository.spec?.workflows);
   // The repository's resources are contained in a folder named after it.
   const isFolderContained = repository.spec?.sync.target === 'folder';
 
   return (
     <Stack wrap="wrap" alignItems="center">
-      {isReadOnlyRepo && (
-        <ReadOnlyBadge
-          tooltip={t('provisioning.config-form.description-read-only', "Resources can't be modified through Grafana.")}
-        />
-      )}
+      {isReadOnlyRepo && <ReadOnlyBadge tooltip={getReadOnlyRepositoryTooltip()} />}
       <StatusBadge repo={repository} displayOnly />
       {isFolderContained && (
         <LinkButton

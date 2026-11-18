@@ -11,9 +11,9 @@ import { isItemManagedByRepository, type ManagedResourceItem } from 'app/feature
 
 export interface Props {
   folder?: ManagedResourceItem;
-  /** When true, the badge exposes repository actions (source folder, repository admin). Opt-in so the folder picker dropdown stays non-interactive. */
+  /** When true, a menu button next to the badge exposes repository actions (source folder, repository admin). Opt-in so the folder picker dropdown stays non-interactive. */
   enableRepositoryLink?: boolean;
-  /** The folder's path within its repository (`grafana.app/sourcePath`); with `enableRepositoryLink`, the badge links to it. */
+  /** The folder's path within its repository (`grafana.app/sourcePath`); with `enableRepositoryLink`, the menu links to it. */
   sourcePath?: string;
   /** Whether the current user could edit this folder. Only users who could otherwise edit get the read-only variant; the managed badge is shown to everyone. */
   canEdit?: boolean;
@@ -39,14 +39,11 @@ export const FolderRepo = memo(function FolderRepo({
     return null;
   }
 
-  if (status === RepoViewStatus.Orphaned) {
-    return <ManagedBadge managerKind={ManagerKind.Repo} isOrphaned />;
-  }
-
   return (
     <ManagedBadge
       managerKind={ManagerKind.Repo}
       name={repository?.title || repository?.name}
+      isOrphaned={status === RepoViewStatus.Orphaned}
       isReadOnly={canEdit && isReadOnlyRepo}
       repositoryName={enableRepositoryLink ? repository?.name : undefined}
       // Trailing slash marks the path as a directory, so the source link points at the
