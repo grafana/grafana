@@ -11,6 +11,7 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
+	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema"
 	kcommon "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
@@ -153,7 +154,48 @@ func (b *Builder) addSubresourcePaths(oas *spec3.OpenAPI, item, version string) 
 	if b.registersProxy() {
 		publish("proxy", b.proxyRoutes().paths)
 	}
+	b.addComponents(oas, routes.components)
 	return nil
+}
+
+// addComponents publishes the components the settings manifest's routes refer
+// to. One named as a generated component, such as the settings kind, is left
+// out: the API server describes what it serves.
+func (b *Builder) addComponents(oas *spec3.OpenAPI, components app.ManifestVersionOpenAPIComponents) {
+	if len(components.Schemas)+len(components.Responses)+len(components.Examples) == 0 {
+		return
+	}
+	if oas.Components == nil {
+		oas.Components = &spec3.Components{}
+	}
+	skipped := func(kind, name string) {
+		logger.Warn("settings manifest component is not published: the name is taken", "plugin", b.group, "component", kind, "name", name)
+	}
+	for name, s := range components.Schemas {
+		if _, ok := oas.Components.Schemas[name]; ok {
+			skipped("schema", name)
+			continue
+		}
+		if oas.Components.Schemas == nil {
+			oas.Components.Schemas = map[string]*spec.Schema{}
+		}
+		oas.Components.Schemas[name] = &s
+	}
+	addMissing(&oas.Components.Responses, components.Responses, func(name string) { skipped("response", name) })
+	addMissing(&oas.Components.Examples, components.Examples, func(name string) { skipped("example", name) })
+}
+
+func addMissing[T any](dst *map[string]T, src map[string]T, taken func(string)) {
+	for name, v := range src {
+		if _, ok := (*dst)[name]; ok {
+			taken(name)
+			continue
+		}
+		if *dst == nil {
+			*dst = map[string]T{}
+		}
+		(*dst)[name] = v
+	}
 }
 
 // undeclaredPathParameters documents the parameters of a route's path that

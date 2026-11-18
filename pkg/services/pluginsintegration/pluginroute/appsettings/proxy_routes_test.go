@@ -303,6 +303,40 @@ func TestOpenAPIPublishesResourceRoutes(t *testing.T) {
 	require.Len(t, thing.Parameters, 3, "the settings path parameters are documented with the route's own")
 }
 
+func TestOpenAPIPublishesSettingsManifestComponents(t *testing.T) {
+	const item = "/apis/" + exampleApp + "/v0alpha1/namespaces/{namespace}/app/{name}"
+	base := manifestDeclaring(map[string]spec3.PathProps{
+		declaredResources + "things": {Get: &spec3.Operation{OperationProps: spec3.OperationProps{
+			Responses: &spec3.Responses{ResponsesProps: spec3.ResponsesProps{StatusCodeResponses: map[int]*spec3.Response{
+				http.StatusOK: {Refable: spec.Refable{Ref: spec.MustCreateRef("#/components/responses/Things")}},
+			}}},
+		}}},
+	})
+	things := &spec3.Response{ResponseProps: spec3.ResponseProps{Description: "things"}}
+	base.Versions[0].OpenAPI.Components = app.ManifestVersionOpenAPIComponents{
+		Schemas:   map[string]spec.Schema{"Thing": *spec.StringProperty(), "Settings": *spec.StringProperty()},
+		Responses: map[string]*spec3.Response{"Things": things},
+	}
+	plugin := pluginWithRoutes(nil, base)
+	b := &Builder{group: exampleApp, pluginJSON: plugin.JSONData, settings: plugin.Settings}
+
+	generated := &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"object"}}}
+	oas := &spec3.OpenAPI{
+		Paths: &spec3.Paths{Paths: map[string]*spec3.Path{item: {PathProps: spec3.PathProps{
+			Parameters: []*spec3.Parameter{
+				{ParameterProps: spec3.ParameterProps{Name: "namespace", In: "path", Required: true, Schema: spec.StringProperty()}},
+				{ParameterProps: spec3.ParameterProps{Name: "name", In: "path", Required: true, Schema: spec.StringProperty()}},
+			},
+		}}}},
+		Components: &spec3.Components{Schemas: map[string]*spec.Schema{"Settings": generated}},
+	}
+	require.NoError(t, b.addSubresourcePaths(oas, item, apppluginV0.VERSION))
+	require.Contains(t, oas.Paths.Paths, item+"/resources/things")
+	require.Contains(t, oas.Components.Schemas, "Thing")
+	require.Same(t, things, oas.Components.Responses["Things"], "the route's reference resolves")
+	require.Same(t, generated, oas.Components.Schemas["Settings"], "a generated component is not replaced")
+}
+
 // The definition module cannot import the settings API's types, so it repeats
 // their names.
 func TestSettingsManifestNamesMatchTheSettingsAPI(t *testing.T) {

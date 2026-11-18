@@ -9,6 +9,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"k8s.io/kube-openapi/pkg/spec3"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -113,6 +114,15 @@ func TestNewSettingsManifest(t *testing.T) {
 		require.Len(t, paths, 2, "the manifest's proxy routes replace plugin.json's")
 		require.Contains(t, paths, SettingsProxyRoot+"/v2/{path:*}", "the instance is named as on any settings path")
 		require.Same(t, resource, paths[SettingsResourcesRoot+"/things"].Get)
+	})
+
+	t.Run("the components its routes refer to are kept", func(t *testing.T) {
+		components := app.ManifestVersionOpenAPIComponents{Schemas: map[string]spec.Schema{"Thing": *spec.StringProperty()}}
+		base := foundation(map[string]spec3.PathProps{SettingsResourcesRoot + "/things": {Get: resource}})
+		base.Versions[0].OpenAPI.Components = components
+		manifest, err := NewSettingsManifest(appWithRoutes(nil, base), testMatcher)
+		require.NoError(t, err)
+		require.Equal(t, components, manifest.Versions[0].OpenAPI.Components)
 	})
 
 	t.Run("plugin.json routes are used when the foundation declares no proxy routes", func(t *testing.T) {

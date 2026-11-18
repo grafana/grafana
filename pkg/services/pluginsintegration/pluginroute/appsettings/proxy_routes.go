@@ -29,6 +29,9 @@ type settingsRoutes struct {
 	// publishing. The plugin serves its resources, so every request is passed
 	// on, not only those of these routes.
 	resources map[string]spec3.PathProps
+
+	// components are the schemas, responses and examples the routes refer to.
+	components app.ManifestVersionOpenAPIComponents
 }
 
 // proxyRoutes are the proxy routes of the settings manifest, served through
@@ -60,6 +63,7 @@ func compileSettingsRoutes(settings *app.ManifestData) (*settingsRoutes, error) 
 		return compiled, nil
 	}
 	version := settings.Versions[idx]
+	compiled.components = version.OpenAPI.Components
 
 	parsed, problems := manifestroutes.Parse(version, definition.SettingsRouteOptions)
 	if len(problems) > 0 {

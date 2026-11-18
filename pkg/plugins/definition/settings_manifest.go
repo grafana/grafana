@@ -95,7 +95,8 @@ func NewSettingsManifest(p PluginDefinition, match RouteMatcher) (manifest *app.
 	}
 	defer func() { manifest.Versions = []app.ManifestVersion{version} }()
 
-	resources, proxy, errs := settingsRoutes(manifest)
+	resources, proxy, components, errs := settingsRoutes(manifest)
+	version.OpenAPI.Components = components
 	if len(resources) > 0 {
 		candidate := withPaths(version, resources)
 		if _, err := settingsRouteMux(candidate); err != nil {
@@ -138,8 +139,8 @@ func NewSettingsManifest(p PluginDefinition, match RouteMatcher) (manifest *app.
 // settingsRoutes returns the resource and proxy routes the settings manifest's
 // foundation declares, below the settings object as SettingsResourcesRoot and
 // SettingsProxyRoot name it, and errors for what it declares that the settings
-// API does not serve.
-func settingsRoutes(foundation *app.ManifestData) (resources, proxy map[string]spec3.PathProps, errs []error) {
+// API does not serve, with the components its routes may refer to.
+func settingsRoutes(foundation *app.ManifestData) (resources, proxy map[string]spec3.PathProps, components app.ManifestVersionOpenAPIComponents, errs []error) {
 	resources, proxy = map[string]spec3.PathProps{}, map[string]spec3.PathProps{}
 	for _, version := range foundation.Versions {
 		if version.Name != SettingsAPIVersion {
@@ -148,6 +149,7 @@ func settingsRoutes(foundation *app.ManifestData) (resources, proxy map[string]s
 			}
 			continue
 		}
+		components = version.OpenAPI.Components
 		for path, props := range version.OpenAPI.Paths {
 			if rest, ok := strings.CutPrefix(path, settingsInstanceRoot); ok && (rest == "" || rest[0] == '/') {
 				path = settingsObjectRoot + rest
@@ -169,7 +171,7 @@ func settingsRoutes(foundation *app.ManifestData) (resources, proxy map[string]s
 			}
 		}
 	}
-	return resources, proxy, errs
+	return resources, proxy, components, errs
 }
 
 // withPaths returns version with paths added to its OpenAPI paths.
