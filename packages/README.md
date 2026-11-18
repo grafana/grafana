@@ -36,7 +36,7 @@ Package authors are free to create as many exports as they like but should consi
 
 ## Versioning
 
-We use [Nx Release](https://nx.dev/docs/guides/nx-release) to version packages. The `release` block in `nx.json` lists the packages that are versioned together. `@grafana/plugin-compat` is not in it because it has its own version.
+We use [Nx Release](https://nx.dev/docs/guides/nx-release) to version packages. The `release` block in `nx.json` selects the packages that are versioned together with the `release:grafana` project tag, and `pnpm packages:pack` packs the projects with that tag except the private plugin workspaces, so a package is versioned and published by the Grafana release only if it has that tag. `@grafana/plugin-compat` has the `release:independent` tag instead because it has its own version.
 
 All packages are versioned according to the current Grafana version:
 
