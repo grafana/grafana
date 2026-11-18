@@ -53,7 +53,14 @@ runs:
           fi
           echo "=== $pkg"
           ran=$((ran + 1))
-          (cd "$CHECKOUT/pkg/tests/compat/$pkg" && "$bin" -test.count=1 -test.timeout=20m -test.run "^${TEST}\$") 2>&1 | tee -a "$LOG" || rc=1
+          out="$(mktemp)"
+          (cd "$CHECKOUT/pkg/tests/compat/$pkg" && "$bin" -test.count=1 -test.timeout=20m -test.v -test.run "^${TEST}\$") 2>&1 | tee -a "$LOG" "$out" || rc=1
+          # A binary without the test, or a test that skips, exits 0 without checking anything.
+          if ! grep -q "^--- PASS: ${TEST} (" "$out"; then
+            echo "::error::$pkg did not pass $TEST: it is missing, skipped, or failed"
+            rc=1
+          fi
+          rm -f "$out"
         done
         # A missing build or no package in common must not pass as a green phase.
         if [ "$ran" -eq 0 ]; then

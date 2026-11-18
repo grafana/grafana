@@ -20,6 +20,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/compat"
@@ -59,6 +60,8 @@ const (
 	updatedTitle = "Compat child, updated by the other version"
 	pageLabel    = "compat.grafana.app/page"
 	deletedPage  = "compat-folder-page-3"
+	// otherViewer may edit parent-a, the parent child and sibling move away from.
+	otherViewer = "compat-folder-viewer"
 )
 
 // maxPages bounds the pagination loops, so a broken continue token fails instead of
@@ -135,6 +138,7 @@ func TestCompatSetup(t *testing.T) {
 	require.NoError(t, err)
 
 	request(t, h, http.MethodPost, "/api/access-control/folders/"+parentB+"/users/"+h.Org1.Viewer.Identity.GetIdentifier(), `{"permission":"Edit"}`)
+	request(t, h, http.MethodPost, "/api/access-control/folders/"+parentA+"/users/"+viewerOfParentA(h).Identity.GetIdentifier(), `{"permission":"Edit"}`)
 }
 
 // TestCompatUpdate runs on the other version: it checks the tree the setup version
@@ -185,6 +189,17 @@ func TestCompatVerify(t *testing.T) {
 	_, err := folders.Get(ctx, deletedPage, metav1.GetOptions{})
 	require.True(t, apierrors.IsNotFound(err), "page deleted by the other version: expected not found, got %v", err)
 	checkList(t, folders, allFolders(pages[:2]))
+
+	// A plain delete must refuse a folder that still has a subfolder and a dashboard, also
+	// when the other version moved it.
+	err = folders.Delete(ctx, child, metav1.DeleteOptions{})
+	require.True(t, apierrors.IsBadRequest(err), "deleting a non-empty folder: expected a bad request, got %v", err)
+	for _, name := range []string{child, grandchild} {
+		_, err := folders.Get(ctx, name, metav1.GetOptions{})
+		require.NoError(t, err, "%s after a refused delete", name)
+	}
+	_, err = dashboards(h).Get(ctx, dashboard, metav1.GetOptions{})
+	require.NoError(t, err, "dashboard after a refused delete of its folder")
 
 	// Deleting a non-empty folder through the legacy API removes its whole subtree,
 	// including the dashboard, and nothing else.
@@ -348,15 +363,19 @@ func checkAccess(t *testing.T, h *apis.K8sTestHelper, v string, tr tree) {
 		{"editor", h.Org1.Editor, parentB, accessInfo{CanEdit: true}},
 		{"viewer with an edit grant", h.Org1.Viewer, parentB, accessInfo{CanEdit: true}},
 		{"viewer", h.Org1.Viewer, parentA, accessInfo{}},
+		{"other viewer with an edit grant", viewerOfParentA(h), parentA, accessInfo{CanEdit: true}},
+		{"other viewer", viewerOfParentA(h), parentB, accessInfo{}},
 	}
-	// The viewer's grant on parent-b is inherited by whatever sits below it, so a move
-	// that leaves permissions pointing at the old parent shows up here.
+	// Each viewer's grant is inherited by whatever sits below that parent, so a move that
+	// keeps permissions of the old parent, or misses those of the new one, shows up here.
 	if tr.skipInherited != "" {
 		t.Logf("skipping inherited permissions: %s", tr.skipInherited)
 	} else {
-		inherited := accessInfo{CanEdit: tr.parent == parentB}
 		for _, name := range []string{child, grandchild, sibling} {
-			cases = append(cases, accessCase{"viewer, inherited from " + tr.parent, h.Org1.Viewer, name, inherited})
+			cases = append(cases,
+				accessCase{"viewer, under " + tr.parent, h.Org1.Viewer, name, accessInfo{CanEdit: tr.parent == parentB}},
+				accessCase{"other viewer, under " + tr.parent, viewerOfParentA(h), name, accessInfo{CanEdit: tr.parent == parentA}},
+			)
 		}
 	}
 	for _, c := range cases {
@@ -490,6 +509,12 @@ func folderResource(t *testing.T, h *apis.K8sTestHelper) compat.Resource {
 
 func client(h *apis.K8sTestHelper, user apis.User, version string) dynamic.ResourceInterface {
 	return h.GetResourceClient(apis.ResourceClientArgs{User: user, GVR: folderGR.WithVersion(version)}).Resource
+}
+
+// viewerOfParentA returns the viewer with Edit on parent-a, creating it in the first phase
+// and finding it again in the later ones.
+func viewerOfParentA(h *apis.K8sTestHelper) apis.User {
+	return h.CreateUser(otherViewer, apis.Org1, identity.RoleViewer, nil)
 }
 
 func dashboards(h *apis.K8sTestHelper) dynamic.ResourceInterface {
