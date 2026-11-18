@@ -358,7 +358,6 @@ For repeated panels, this interaction is available on the last panel in the grou
 By default, the auto grid layout gives every panel the same fixed height, which you set with **Row height**.
 With the **Auto fit** option enabled, each panel sets its height to match its content, within a minimum and maximum height range that you choose.
 When you lower the **Min height** selection, a short text panel doesn't leave empty space, and a long table can show all of its rows without an inner scroll bar.
-<!--this doesn't make sense; the min height doesn't affect the long table, the max height does-->
 
 Auto fit only works with the table and text visualizations.
 Other visualizations keep the row height, even when you turn on **Auto fit**.
