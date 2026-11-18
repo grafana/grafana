@@ -168,7 +168,8 @@ func (r *recordingRule) Run() error {
 	r.logger.Debug("Recording rule routine started")
 
 	defer r.stopApplied()
-	defer r.untrack(r.written)
+	// The closure reads written at exit: it is replaced on every evaluation.
+	defer func() { r.untrack(r.written) }()
 
 	for {
 		select {

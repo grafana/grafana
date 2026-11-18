@@ -244,3 +244,47 @@ func TestRecordingRuleSeriesBudget(t *testing.T) {
 func noDataResponse() *backend.QueryDataResponse {
 	return &backend.QueryDataResponse{Responses: backend.Responses{"A": {}}}
 }
+
+// A rule is stopped while Run is going, as in production: Run starts before the first
+// evaluation, so anything that captures written at the start of Run sees nothing.
+func TestRecordingRuleSeriesBudgetReleasedWhenRunStops(t *testing.T) {
+	for name, reason := range map[string]error{
+		"deleted":   errRuleDeleted,
+		"restarted": errRuleRestarted,
+		"moved":     errors.New("not owned"),
+		"cancelled": context.Canceled,
+	} {
+		for _, markersFail := range []bool{false, true} {
+			t.Run(fmt.Sprintf("%s, markers failing %v", name, markersFail), func(t *testing.T) {
+				budget := state.NewSeriesBudget(10)
+				h := newStaleHarness(t)
+				h.rule.budget = budget
+
+				done := make(chan error, 1)
+				go func() { done <- h.rule.Run() }()
+
+				evaluate := func() {
+					evaluated := make(chan struct{})
+					h.now = h.now.Add(time.Minute)
+					sent, _ := h.rule.Eval(&Evaluation{scheduledAt: h.now, rule: h.model, afterEval: func() { close(evaluated) }})
+					require.True(t, sent)
+					<-evaluated
+				}
+
+				h.ev.resp = seriesResponse(instance("a"), instance("b"))
+				evaluate()
+				h.ev.resp = seriesResponse(instance("a"))
+				h.failStale, h.staleErr = true, foreignError{"temporarily unavailable"}
+				evaluate()
+				require.EqualValues(t, 2, budget.Used(), "b is kept for a retry and holds its room")
+
+				h.failStale = markersFail
+				h.rule.Stop(reason)
+				require.NoError(t, <-done)
+
+				require.EqualValues(t, 0, budget.Used())
+				require.Zero(t, h.rule.held)
+			})
+		}
+	}
+}
