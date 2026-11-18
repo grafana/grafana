@@ -233,7 +233,11 @@ export function useSidebarSavedState<T = number | boolean>(
         }
 
         if (persistenceKey) {
-          store.set(`grafana.ui.sidebar.${persistenceKey}.${subKey}`, String(newState));
+          try {
+            store.set(`grafana.ui.sidebar.${persistenceKey}.${subKey}`, String(newState));
+          } catch {
+            // Persistence is best-effort (e.g. quota exceeded); the in-memory state still updates
+          }
         }
 
         return newState;

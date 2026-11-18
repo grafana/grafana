@@ -19,8 +19,10 @@ export class Store {
     }
   }
 
-  // Storage is optional: on SSR, or in sandboxed/opaque-origin iframes where the
-  // window.localStorage getter itself throws, reads return undefined and writes are dropped.
+  // Used instead of localStorage when it is unavailable (SSR, or sandboxed/opaque-origin iframes
+  // where the getter or operations throw SecurityError), so values persist for the page lifetime.
+  private memory = new Map<string, string>();
+
   private get storage(): Storage | undefined {
     try {
       return typeof window === 'undefined' ? undefined : window.localStorage;
@@ -29,12 +31,18 @@ export class Store {
     }
   }
 
-  private read(key: string): string | undefined {
-    try {
-      return this.storage?.[key];
-    } catch {
-      return undefined;
+  // Returns `any` like the localStorage index signature it replaces, to keep existing callers compiling
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private read(key: string): any {
+    const storage = this.storage;
+    if (storage) {
+      try {
+        return storage[key];
+      } catch {
+        // fall through to the in-memory fallback
+      }
     }
+    return this.memory.get(key);
   }
 
   private notifySubscribers(key: string) {
@@ -65,9 +73,20 @@ export class Store {
     return this.read(key);
   }
 
+  /* Throws when storage is available but the write fails, e.g. QuotaExceededError */
   set(key: string, value: StoreValue) {
-    if (this.storage) {
-      this.storage[key] = value;
+    const storage = this.storage;
+    try {
+      if (!storage) {
+        this.memory.set(key, String(value));
+      } else {
+        storage[key] = value;
+      }
+    } catch (error) {
+      if (!isUnavailableError(error)) {
+        throw error;
+      }
+      this.memory.set(key, String(value));
     }
     this.notifySubscribers(key);
   }
@@ -86,7 +105,7 @@ export class Store {
     if (this.exists(key)) {
       const json = this.read(key);
       try {
-        ret = JSON.parse(json ?? '');
+        ret = JSON.parse(json);
       } catch (error) {
         console.error(`Error parsing store object: ${key}. Returning default: ${def}. [${error}]`);
       }
@@ -120,36 +139,62 @@ export class Store {
   }
 
   delete(key: string) {
+    this.memory.delete(key);
     try {
       this.storage?.removeItem(key);
-    } catch {
-      // storage became unavailable; nothing to remove
+    } catch (error) {
+      if (!isUnavailableError(error)) {
+        throw error;
+      }
     }
     this.notifySubscribers(key);
   }
 
   all(prefix?: string): Record<string, string> {
-    const result: Record<string, string> = {};
     const storage = this.storage;
-    if (!storage) {
-      return result;
-    }
-    try {
-      for (let i = 0; i < storage.length; i++) {
-        const rawKey = storage.key(i);
-        if (rawKey && rawKey.startsWith(prefix ?? '')) {
-          const key = rawKey.slice(prefix?.length ?? 0);
-          const value = storage.getItem(rawKey);
-          if (value !== null) {
-            result[key] = value;
-          }
-        }
+    if (storage) {
+      try {
+        return collect(
+          prefix,
+          storage.length,
+          (i) => storage.key(i),
+          (k) => storage.getItem(k)
+        );
+      } catch {
+        // fall through to the in-memory fallback
       }
-    } catch {
-      return {};
     }
-    return result;
+    const keys = [...this.memory.keys()];
+    return collect(
+      prefix,
+      keys.length,
+      (i) => keys[i],
+      (k) => this.memory.get(k) ?? null
+    );
   }
+}
+
+function isUnavailableError(error: unknown) {
+  return error instanceof DOMException && error.name === 'SecurityError';
+}
+
+function collect(
+  prefix: string | undefined,
+  length: number,
+  keyAt: (index: number) => string | null,
+  getItem: (key: string) => string | null
+): Record<string, string> {
+  const result: Record<string, string> = {};
+  for (let i = 0; i < length; i++) {
+    const rawKey = keyAt(i);
+    if (rawKey && rawKey.startsWith(prefix ?? '')) {
+      const value = getItem(rawKey);
+      if (value !== null) {
+        result[rawKey.slice(prefix?.length ?? 0)] = value;
+      }
+    }
+  }
+  return result;
 }
 
 export const store = new Store();

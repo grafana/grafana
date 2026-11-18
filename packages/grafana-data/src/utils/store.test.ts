@@ -210,6 +210,48 @@ describe('Store when localStorage is unavailable', () => {
     }
   });
 
+  function storageThrowing(name: string) {
+    const throwing = () => {
+      throw new DOMException('denied', name);
+    };
+    return new Proxy({} as Storage, { get: throwing, set: throwing });
+  }
+
+  function expectInMemoryFallback(getStore: () => Store) {
+    it('reads return defaults before anything is written', () => {
+      const store = getStore();
+      expect(store.get('key')).toBeUndefined();
+      expect(store.exists('key')).toBe(false);
+      expect(store.getBool('key', true)).toBe(true);
+      expect(store.getObject('key', { a: 1 })).toEqual({ a: 1 });
+      expect(store.all()).toEqual({});
+    });
+
+    it('keeps written values in memory so subscribers read the new value', () => {
+      const store = getStore();
+      const seen: unknown[] = [];
+      store.subscribe('flag', () => seen.push(store.getBool('flag', false)));
+
+      store.set('flag', true);
+      expect(seen).toEqual([true]);
+
+      expect(store.setObject('obj', { a: 1 })).toBe(true);
+      expect(store.getObject('obj')).toEqual({ a: 1 });
+      expect(store.all()).toEqual({ flag: 'true', obj: '{"a":1}' });
+    });
+
+    it('delete removes the in-memory value and notifies', () => {
+      const store = getStore();
+      const subscriber = jest.fn();
+      store.set('key', 'value');
+      store.subscribe('key', subscriber);
+
+      expect(() => store.delete('key')).not.toThrow();
+      expect(store.exists('key')).toBe(false);
+      expect(subscriber).toHaveBeenCalledTimes(1);
+    });
+  }
+
   describe('getter throws (sandboxed iframe without allow-same-origin)', () => {
     let store: Store;
 
@@ -223,55 +265,36 @@ describe('Store when localStorage is unavailable', () => {
       store = new Store();
     });
 
-    it('reads fall back to absent values and defaults', () => {
-      expect(store.get('key')).toBeUndefined();
-      expect(store.exists('key')).toBe(false);
-      expect(store.getBool('key', true)).toBe(true);
-      expect(store.getObject('key')).toBeUndefined();
-      expect(store.getObject('key', { a: 1 })).toEqual({ a: 1 });
-      expect(store.all()).toEqual({});
-    });
-
-    it('writes and removes do nothing but still notify subscribers', () => {
-      const subscriber = jest.fn();
-      store.subscribe('key', subscriber);
-
-      expect(() => store.set('key', 'value')).not.toThrow();
-      expect(store.setObject('key', { a: 1 })).toBe(true);
-      expect(() => store.delete('key')).not.toThrow();
-      expect(store.get('key')).toBeUndefined();
-      expect(subscriber).toHaveBeenCalledTimes(3);
-    });
+    expectInMemoryFallback(() => store);
   });
 
-  describe('storage operations throw', () => {
+  describe('storage operations throw SecurityError', () => {
     let store: Store;
 
     beforeEach(() => {
-      const throwing = () => {
-        throw new DOMException('denied', 'SecurityError');
-      };
+      Object.defineProperty(window, 'localStorage', { configurable: true, value: storageThrowing('SecurityError') });
+      store = new Store();
+    });
+
+    expectInMemoryFallback(() => store);
+  });
+
+  describe('writes fail for other reasons', () => {
+    let store: Store;
+
+    beforeEach(() => {
       Object.defineProperty(window, 'localStorage', {
         configurable: true,
-        value: new Proxy({} as Storage, { get: throwing, set: throwing }),
+        value: storageThrowing('QuotaExceededError'),
       });
       store = new Store();
     });
 
-    it('reads fall back to absent values and defaults', () => {
-      expect(store.get('key')).toBeUndefined();
-      expect(store.exists('key')).toBe(false);
-      expect(store.getBool('key', false)).toBe(false);
-      expect(store.getObject('key', [])).toEqual([]);
-      expect(store.all('prefix.')).toEqual({});
-    });
-
-    it('delete does not throw', () => {
-      expect(() => store.delete('key')).not.toThrow();
-    });
-
-    it('setObject still reports write failures such as quota errors', () => {
-      expect(() => store.setObject('key', { a: 1 })).toThrow(/Could not save item in localStorage: key/);
+    it('set and setObject throw so callers can react, e.g. by pruning', () => {
+      expect(() => store.set('key', 'value')).toThrow(expect.objectContaining({ name: 'QuotaExceededError' }));
+      expect(() => store.setObject('key', { a: 1 })).toThrow(
+        expect.objectContaining({ name: 'QuotaExceededError', message: expect.stringMatching(/Could not save item/) })
+      );
     });
   });
 });
