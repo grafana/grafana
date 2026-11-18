@@ -11,36 +11,9 @@ import (
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 )
-
-func TestRouteClass(t *testing.T) {
-	tests := []struct {
-		path string
-		want string
-	}{
-		{"", "/"},
-		{"/", "/"},
-		{"api/v1/query_range", "/api/v1/query_range"},
-		{"/api/v1/query_range?query=up", "/api/v1/query_range"},
-		{"api/v1/label/job/values", "/api/v1/label/job"},
-		{"apis/apps/v1beta1/things", "/apis/apps/v1beta1/things"},
-		{"version/x", "/version/x"},
-		{"api/v1/series", "/api/v1/series"},
-		{"loki/api/v1/query", "/loki/api/v1/query"},
-		{"logs-2026.11.12/_search", "/:id/_search"},
-		{"api/datasources/12/query", "/api/datasources/:id"},
-		{"a1b2c3d4-0000-4000-8000-000000000000/info", "/:id/info"},
-		{"metrics/find", "/metrics/find"},
-		{"name%20with%20space/x", "/:id/x"},
-		{"averyveryveryveryveryveryverylongsegmentname/x", "/:id/x"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.path, func(t *testing.T) {
-			require.Equal(t, tt.want, RouteClass(tt.path))
-		})
-	}
-}
 
 func TestClassifySource(t *testing.T) {
 	tests := []struct {
@@ -68,14 +41,14 @@ func TestMetrics_Observe(t *testing.T) {
 	reg := prometheus.NewPedanticRegistry()
 	m := New(reg, VariantMT)
 
-	m.Observe(Observation{PluginID: "prometheus", Method: http.MethodPost, Path: "api/v1/query_range", Status: 200, Source: SourceServer, Duration: time.Second})
-	m.Observe(Observation{PluginID: "prometheus", Method: http.MethodPost, Path: "api/v1/query_range", Status: 200, Source: SourceServer, Duration: time.Second})
-	m.Observe(Observation{PluginID: "prometheus", Method: http.MethodPost, Path: "api/v1/query_range", Status: 502, Source: SourceDownstream, Duration: time.Second})
-	m.Observe(Observation{Method: "BREW", Path: "x", Status: 42, Source: "bogus", Duration: time.Millisecond})
+	m.Observe(Observation{PluginID: "prometheus", Status: 200, Source: SourceServer, Duration: time.Second})
+	m.Observe(Observation{PluginID: "prometheus", Status: 200, Source: SourceServer, Duration: time.Second})
+	m.Observe(Observation{PluginID: "prometheus", Status: 502, Source: SourceDownstream, Duration: time.Second})
+	m.Observe(Observation{Status: 42, Source: "bogus", Duration: time.Millisecond})
 
-	require.Equal(t, 2.0, testutil.ToFloat64(m.requests.WithLabelValues("prometheus", "/api/v1/query_range", "POST", "200", SourceServer)))
-	require.Equal(t, 1.0, testutil.ToFloat64(m.requests.WithLabelValues("prometheus", "/api/v1/query_range", "POST", "502", SourceDownstream)))
-	require.Equal(t, 1.0, testutil.ToFloat64(m.requests.WithLabelValues("unknown", "/x", "other", "0", SourceServer)))
+	require.Equal(t, 2.0, testutil.ToFloat64(m.requests.WithLabelValues("prometheus", "200", SourceServer)))
+	require.Equal(t, 1.0, testutil.ToFloat64(m.requests.WithLabelValues("prometheus", "502", SourceDownstream)))
+	require.Equal(t, 1.0, testutil.ToFloat64(m.requests.WithLabelValues("unknown", "0", SourceServer)))
 
 	families, err := reg.Gather()
 	require.NoError(t, err)
@@ -100,20 +73,50 @@ func TestMetrics_VariantsShareNamesInOneRegistry(t *testing.T) {
 	})
 }
 
-func TestMetrics_BoundsRouteClasses(t *testing.T) {
-	m := New(prometheus.NewPedanticRegistry(), VariantLegacy)
-	m.Observe(Observation{PluginID: "q", Path: "known", Status: 200})
-	for i := range maxRouteClassesPerPlugin {
-		m.Observe(Observation{PluginID: "p", Path: fmt.Sprintf("r%c%c", 'a'+i%26, 'a'+i/26), Status: 200})
+func TestMetrics_Logging(t *testing.T) {
+	newMetrics := func() (*Metrics, *logtest.Fake) {
+		fake := &logtest.Fake{}
+		m := New(prometheus.NewPedanticRegistry(), VariantMT)
+		m.log = fake
+		return m, fake
 	}
-	m.Observe(Observation{PluginID: "p", Path: "overflow", Status: 200})
-	m.Observe(Observation{PluginID: "p", Path: "overflow", Status: 200})
+	obs := Observation{
+		PluginID: "prometheus", DatasourceUID: "ds1", Namespace: "stacks-1", Method: http.MethodPost,
+		Path: "api/v1/query_range?query=secret_metric", Status: 200, Source: SourceServer,
+	}
 
-	require.Equal(t, 2.0, testutil.ToFloat64(m.requests.WithLabelValues("p", otherRoute, "other", "200", SourceServer)))
-	require.Equal(t, 1.0, testutil.ToFloat64(m.requests.WithLabelValues("p", "/raa", "other", "200", SourceServer)),
-		"a route seen before the limit keeps its own label")
-	require.Equal(t, 1.0, testutil.ToFloat64(m.requests.WithLabelValues("q", "/known", "other", "200", SourceServer)),
-		"a plugin at its limit must not affect another plugin")
+	t.Run("a datasource failure is always logged, without the query string", func(t *testing.T) {
+		m, fake := newMetrics()
+		o := obs
+		o.Status, o.Source = 502, SourceDownstream
+		m.Observe(o)
+		require.Equal(t, 1, fake.WarnLogs.Calls)
+		require.Contains(t, fake.WarnLogs.Ctx, "datasourceUid")
+		require.Contains(t, fake.WarnLogs.Ctx, "api/v1/query_range")
+		require.NotContains(t, fmt.Sprint(fake.WarnLogs.Ctx...), "secret_metric")
+	})
+
+	t.Run("a Grafana 5xx and a client cancel are logged", func(t *testing.T) {
+		m, fake := newMetrics()
+		o := obs
+		o.Status = 500
+		m.Observe(o)
+		o.Status, o.Source = 499, SourceClient
+		m.Observe(o)
+		require.Equal(t, 2, fake.WarnLogs.Calls)
+	})
+
+	t.Run("successes and datasource 4xx are only sampled", func(t *testing.T) {
+		m, fake := newMetrics()
+		o := obs
+		for range sampleEvery - 1 {
+			m.Observe(o)
+		}
+		o.Status = 404
+		m.Observe(o)
+		require.Equal(t, 1, fake.InfoLogs.Calls, "one request in sampleEvery is logged")
+		require.Zero(t, fake.WarnLogs.Calls)
+	})
 }
 
 func TestNilMetricsIsNoop(t *testing.T) {

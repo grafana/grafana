@@ -14,6 +14,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
@@ -140,12 +141,14 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 				status = errStatus
 			}
 			r.builder.proxyMetrics.Observe(proxymetrics.Observation{
-				PluginID: r.builder.pluginJSON.ID,
-				Method:   req.Method,
-				Path:     proxyPathFromRequest(req, name),
-				Status:   status,
-				Source:   proxymetrics.ClassifySource(status, requestmeta.GetRequestMetaData(req.Context()).StatusSource),
-				Duration: time.Since(start),
+				PluginID:      r.builder.pluginJSON.ID,
+				DatasourceUID: name,
+				Namespace:     k8srequest.NamespaceValue(req.Context()),
+				Method:        req.Method,
+				Path:          proxyPathFromRequest(req, name),
+				Status:        status,
+				Source:        proxymetrics.ClassifySource(status, requestmeta.GetRequestMetaData(req.Context()).StatusSource),
+				Duration:      time.Since(start),
 			})
 		}()
 
