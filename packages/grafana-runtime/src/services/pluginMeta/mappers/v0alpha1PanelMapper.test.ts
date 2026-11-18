@@ -238,6 +238,26 @@ describe('coreSpecMapper when called with a core plugin on prem', () => {
   });
 });
 
+it('maps dependencies.extensions.exposedComponents', () => {
+  const response = structuredClone(v0alpha1Response);
+  const panel = response.items.find((item) => item.spec.pluginJson.type === 'panel')!;
+  panel.spec.pluginJson.dependencies.extensions = { exposedComponents: ['myorg-app/component/v1'] };
+
+  const result = v0alpha1PanelMapper(response)[panel.spec.pluginJson.id];
+
+  expect(result.dependencies?.extensions.exposedComponents).toEqual(['myorg-app/component/v1']);
+});
+
+it('defaults dependencies.extensions.exposedComponents to an empty list', () => {
+  const response = structuredClone(v0alpha1Response);
+  const panel = response.items.find((item) => item.spec.pluginJson.type === 'panel')!;
+  delete panel.spec.pluginJson.dependencies.extensions;
+
+  const result = v0alpha1PanelMapper(response)[panel.spec.pluginJson.id];
+
+  expect(result.dependencies?.extensions.exposedComponents).toEqual([]);
+});
+
 it.each([true, false, undefined])('maps skipDefaultQuery=%s', (skipDefaultQuery) => {
   const response = structuredClone(v0alpha1Response);
   const panel = response.items.find((item) => item.spec.pluginJson.type === 'panel')!;
