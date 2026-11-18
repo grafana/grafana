@@ -54,6 +54,7 @@ func RecordingRuleToK8s(
 			UID:             types.UID(rule.GUID),
 			Namespace:       namespaceMapper(orgID),
 			ResourceVersion: fmt.Sprint(rule.Version),
+			Generation:      rule.Version,
 			Labels:          make(map[string]string),
 		},
 		Spec: v1beta1.RecordingRuleSpec{

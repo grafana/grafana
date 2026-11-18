@@ -57,7 +57,7 @@ func TestAlertRuleFromK8sRoundTrip(t *testing.T) {
 	k8sRule, err := AlertRuleToK8s(src.OrgID, src, managerProps, nsMapperForTest())
 	require.NoError(t, err)
 
-	got, gotManagerProps, err := AlertRuleFromK8s(src.OrgID, k8sRule, src.Version)
+	got, gotManagerProps, err := AlertRuleFromK8s(src.OrgID, k8sRule)
 	require.NoError(t, err)
 	assert.Equal(t, managerProps, gotManagerProps)
 	assertRoundTrip(t, src, got, "Record")
@@ -75,7 +75,7 @@ func TestRecordingRuleFromK8sRoundTrip(t *testing.T) {
 	k8sRule, err := RecordingRuleToK8s(src.OrgID, src, managerProps, nsMapperForTest())
 	require.NoError(t, err)
 
-	got, gotManagerProps, err := RecordingRuleFromK8s(src.OrgID, k8sRule, src.Version)
+	got, gotManagerProps, err := RecordingRuleFromK8s(src.OrgID, k8sRule)
 	require.NoError(t, err)
 	assert.Equal(t, managerProps, gotManagerProps)
 
@@ -106,7 +106,7 @@ func TestAlertRuleFromK8sStorageManagedFields(t *testing.T) {
 		meta.SetCreatedBy("user:creator")
 		k8sRule.CreationTimestamp = metav1.NewTime(created)
 
-		got, _, err := AlertRuleFromK8s(1, k8sRule, 1)
+		got, _, err := AlertRuleFromK8s(1, k8sRule)
 		require.NoError(t, err)
 		assert.True(t, created.Equal(got.Updated), "got %s", got.Updated)
 		require.NotNil(t, got.UpdatedBy)
@@ -119,7 +119,7 @@ func TestAlertRuleFromK8sStorageManagedFields(t *testing.T) {
 		require.NoError(t, err)
 		meta.SetUpdatedBy("")
 
-		got, _, err := AlertRuleFromK8s(1, k8sRule, 1)
+		got, _, err := AlertRuleFromK8s(1, k8sRule)
 		require.NoError(t, err)
 		assert.Nil(t, got.UpdatedBy)
 	})
@@ -128,19 +128,19 @@ func TestAlertRuleFromK8sStorageManagedFields(t *testing.T) {
 		k8sRule := newRule(t)
 		k8sRule.Status = v1beta1.AlertRuleStatus{}
 
-		got, _, err := AlertRuleFromK8s(1, k8sRule, 1)
+		got, _, err := AlertRuleFromK8s(1, k8sRule)
 		require.NoError(t, err)
 		assert.Nil(t, got.K8sStatus)
 	})
 
-	t.Run("version is the one the caller passes", func(t *testing.T) {
+	t.Run("version is the generation, not the resourceVersion", func(t *testing.T) {
 		k8sRule := newRule(t)
-		k8sRule.ResourceVersion = "123"
+		k8sRule.ResourceVersion = "1763372400000000"
 		k8sRule.Generation = 7
 
-		got, _, err := AlertRuleFromK8s(1, k8sRule, 42)
+		got, _, err := AlertRuleFromK8s(1, k8sRule)
 		require.NoError(t, err)
-		assert.Equal(t, int64(42), got.Version)
+		assert.Equal(t, int64(7), got.Version)
 	})
 }
 
