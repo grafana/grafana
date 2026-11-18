@@ -196,6 +196,25 @@ The Grafana binaries will be installed in `bin\\windows-amd64`.
 
 Alternatively, if you are on Windows and want to use the `make` command, install [Make for Windows](https://gnuwin32.sourceforge.net/packages/make.htm) and use it in a UNIX shell (for example, Git Bash).
 
+### Build with Nix
+
+With [Nix flakes enabled](https://nix.dev/manual/nix/latest/development/experimental-features), run `nix build` to build Grafana OSS for the current system. The flake supports x86-64 and ARM64 build hosts on Linux and macOS.
+
+```sh
+nix build .#frontend            # Static assets from make build-js
+nix build .#backend             # Grafana binary for the current system
+nix build .#backend-linux-armv7  # Cross-compile a backend for Linux ARMv7
+```
+
+The target list in [flake.nix](../flake.nix) defines the available backends. Use `nix flake show` to list their package names. After running `nix build`, start Grafana with the packaged assets and a writable data directory:
+
+```sh
+GF_PATHS_DATA="$PWD/data" \
+GF_PATHS_LOGS="$PWD/data/log" \
+GF_PATHS_PLUGINS="$PWD/data/plugins" \
+  ./result/bin/grafana server --homepath "$PWD/result/share/grafana"
+```
+
 ## Test Grafana
 
 The test suite consists of three types of tests: _Frontend tests_, _backend tests_, and _end-to-end tests_.
