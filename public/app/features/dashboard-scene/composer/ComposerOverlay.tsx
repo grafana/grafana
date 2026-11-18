@@ -313,8 +313,9 @@ export function ComposerOverlay({
       cancelDrag();
       return;
     }
-    // Escape cancels a drag, else leaves Composer, before any other Escape handler (exit edit, close view
-    // panel) sees it, except inside an annotation anchor: that Escape belongs to the plugin's editor.
+    // Escape cancels a drag and otherwise does nothing: a stray key press must not end the session. It is
+    // still swallowed before any other Escape handler (exit edit, close view panel) sees it, except inside an
+    // annotation anchor: that Escape belongs to the plugin's editor.
     const onKeyDown = (event: KeyboardEvent) => {
       const fromAnchor = event.target instanceof Node && anchorHostRef.current?.contains(event.target);
       if (event.key !== 'Escape' || fromAnchor) {
@@ -322,11 +323,7 @@ export function ComposerOverlay({
       }
       event.preventDefault();
       event.stopPropagation();
-      if (dragStartRef.current) {
-        cancelDrag();
-      } else {
-        session.exit();
-      }
+      cancelDrag();
     };
     window.addEventListener('keydown', onKeyDown, true);
     window.addEventListener('blur', cancelDrag);
@@ -336,7 +333,7 @@ export function ComposerOverlay({
       window.removeEventListener('blur', cancelDrag);
       window.removeEventListener('scroll', cancelDrag, { capture: true });
     };
-  }, [picking, session, cancelDrag]);
+  }, [picking, cancelDrag]);
 
   /**
    * The rectangle between the press and the pointer, in viewport coordinates, clamped to the overlay (the

@@ -36,7 +36,7 @@ func newPermissionShadow(t *testing.T, reg prometheus.Registerer, maxConcurrent 
 }
 
 type shadowLegacyClient struct {
-	legacyclient.Service
+	legacyclient.LegacyUserPermissionsClient
 	get func(context.Context, legacyclient.LegacyGetUserPermissionsRequest) (legacyclient.LegacyGetUserPermissionsResponse, error)
 }
 
@@ -143,7 +143,7 @@ func TestPermissionShadowFailures(t *testing.T) {
 			if mode == "primary error" {
 				primaryErr = errors.New("primary failed")
 			}
-			var client legacyclient.Service = shadowLegacyClient{get: func(context.Context, legacyclient.LegacyGetUserPermissionsRequest) (legacyclient.LegacyGetUserPermissionsResponse, error) {
+			var client legacyclient.LegacyUserPermissionsClient = shadowLegacyClient{get: func(context.Context, legacyclient.LegacyGetUserPermissionsRequest) (legacyclient.LegacyGetUserPermissionsResponse, error) {
 				if mode == "panic" {
 					panic("shadow panic")
 				}
