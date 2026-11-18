@@ -381,7 +381,6 @@ When you select a panel with one of these visualizations, the **Auto fit** secti
 
 A panel with the **On** override follows the layout's **Min height**, **Max height**, and **Match row heights** settings, even when **Auto fit** is off for the layout.
 You can change those settings only when **Auto fit** is on for the layout.
-<!-- Lines 383-384 don't make sense--there are no settings if auto fit is off for the layout-->
 
 Repeated panels use the same setting as the panel they repeat.
 
