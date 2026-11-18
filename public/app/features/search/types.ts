@@ -105,4 +105,5 @@ export interface SearchQueryParams {
   layout?: SearchLayout | null;
   folder?: string | null;
   createdBy?: string | null;
+  draftsOnly?: boolean | null;
 }

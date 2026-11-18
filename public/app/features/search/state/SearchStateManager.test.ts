@@ -215,6 +215,10 @@ describe('SearchStateManager', () => {
   });
 
   describe('onDraftsOnlyChange', () => {
+    afterEach(() => {
+      locationService.partial({ draftsOnly: null });
+    });
+
     it('asks for drafts only while the drafts filter is on', () => {
       const stm = createSearchStateManager();
       jest.spyOn(stm, 'doSearch').mockResolvedValue(undefined);
@@ -224,6 +228,37 @@ describe('SearchStateManager', () => {
 
       stm.onDraftsOnlyChange(false);
       expect(stm.getSearchQuery().lifecycle).toBeUndefined();
+    });
+
+    it('keeps the drafts filter in the URL while it is on', () => {
+      const stm = createSearchStateManager();
+      jest.spyOn(stm, 'doSearch').mockResolvedValue(undefined);
+
+      stm.onDraftsOnlyChange(true);
+      expect(locationService.getSearchObject().draftsOnly).toBe(true);
+
+      stm.onDraftsOnlyChange(false);
+      expect(locationService.getSearchObject()).not.toHaveProperty('draftsOnly');
+    });
+
+    it('restores the drafts filter from the URL', () => {
+      locationService.partial({ draftsOnly: true });
+      const stm = createSearchStateManager();
+      jest.spyOn(stm, 'doSearch').mockResolvedValue(undefined);
+
+      stm.initStateFromUrl();
+
+      expect(stm.getSearchQuery().lifecycle).toBe('draft');
+      expect(stm.doSearch).toHaveBeenCalledTimes(1);
+    });
+
+    it('turns off a drafts filter that is no longer in the URL', () => {
+      const stm = createSearchStateManager();
+      stm.setState({ draftsOnly: true });
+
+      stm.initStateFromUrl();
+
+      expect(stm.state.draftsOnly).toBe(false);
     });
 
     it('turns the drafts filter off when search and filters are cleared', () => {

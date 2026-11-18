@@ -34,6 +34,7 @@ export const initialState: SearchState = {
   eventTrackingNamespace: 'dashboard_search',
   deleted: false,
   createdBy: undefined,
+  draftsOnly: false,
 };
 
 const defaultQueryParams: SearchQueryParams = {
@@ -44,6 +45,7 @@ const defaultQueryParams: SearchQueryParams = {
   ownerReference: null,
   layout: null,
   createdBy: null,
+  draftsOnly: null,
 };
 
 const getLayoutFromStore = (key: string) => {
@@ -130,6 +132,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       panel_type: this.state.panel_type,
       createdBy: this.state.createdBy ?? null,
       starred: this.state.starred ? this.state.starred : null,
+      draftsOnly: this.state.draftsOnly ? true : null,
       sort: this.state.sort,
     });
 
