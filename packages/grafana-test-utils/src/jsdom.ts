@@ -26,6 +26,14 @@ export function mockBoundingClientRect(rect: Partial<DOMRect> = {}): void {
 
   // @tanstack/react-virtual >=3.11 reads offsetWidth/offsetHeight directly
   // (not getBoundingClientRect) to size the scroll container and items.
+  Object.defineProperty(HTMLElement.prototype, 'clientWidth', {
+    get: () => merged.width,
+    configurable: true,
+  });
+  Object.defineProperty(HTMLElement.prototype, 'clientHeight', {
+    get: () => merged.height,
+    configurable: true,
+  });
   Object.defineProperty(HTMLElement.prototype, 'offsetWidth', {
     get: () => merged.width,
     configurable: true,
