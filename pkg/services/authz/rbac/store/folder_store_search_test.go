@@ -33,20 +33,15 @@ func (f *fakeSearcher) Search(ctx context.Context, in *resourcepb.ResourceSearch
 
 func TestAPIFolderStore_ListFoldersViaSearch(t *testing.T) {
 	searcher := &fakeSearcher{resp: &resourcepb.ResourceSearchResponse{
-		TotalHits: 3,
-		Results: &resourcepb.ResourceTable{
-			Columns: []*resourcepb.ResourceTableColumnDefinition{
-				{Name: "title", Type: resourcepb.ResourceTableColumnDefinition_STRING},
-				{Name: "folder", Type: resourcepb.ResourceTableColumnDefinition_STRING},
-			},
-			Rows: []*resourcepb.ResourceTableRow{
-				// root folder: no parent
-				{Key: &resourcepb.ResourceKey{Name: "root-1", Resource: "folders"}, Cells: [][]byte{[]byte("Root 1"), []byte("")}},
-				// nested folder: parent root-1
-				{Key: &resourcepb.ResourceKey{Name: "child-1", Resource: "folders"}, Cells: [][]byte{[]byte("Child 1"), []byte("root-1")}},
-				// parent reported as the general folder: treated as no parent
-				{Key: &resourcepb.ResourceKey{Name: "top-2", Resource: "folders"}, Cells: [][]byte{[]byte("Top 2"), []byte("general")}},
-			},
+		TotalHits:    3,
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Fields: []*resourcepb.ResourceSearchField{
+			{Name: resource.SEARCH_FIELD_FOLDER, Type: resourcepb.ResourceSearchField_STRING},
+		},
+		Rows: []*resourcepb.ResourceSearchRow{
+			{Key: &resourcepb.ResourceKey{Name: "root-1", Resource: "folders"}, Values: []*resourcepb.ResourceSearchValue{{FieldIndex: 0, StringValues: []string{""}}}},
+			{Key: &resourcepb.ResourceKey{Name: "child-1", Resource: "folders"}, Values: []*resourcepb.ResourceSearchValue{{FieldIndex: 0, StringValues: []string{"root-1"}}}},
+			{Key: &resourcepb.ResourceKey{Name: "top-2", Resource: "folders"}, Values: []*resourcepb.ResourceSearchValue{{FieldIndex: 0, StringValues: []string{"general"}}}},
 		},
 	}}
 
@@ -119,8 +114,8 @@ func TestAPIFolderStore_ListFolders_FallsBackToListPath(t *testing.T) {
 
 	t.Run("empty search result falls back to object list", func(t *testing.T) {
 		searcher := &fakeSearcher{resp: &resourcepb.ResourceSearchResponse{
-			TotalHits: 0,
-			Results:   &resourcepb.ResourceTable{},
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			TotalHits:    0,
 		}}
 		s := newStore(searcher)
 

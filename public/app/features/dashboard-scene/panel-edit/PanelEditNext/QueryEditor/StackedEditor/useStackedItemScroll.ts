@@ -50,6 +50,9 @@ export function useStackedItemScroll({
 }: UseStackedItemScrollArgs): void {
   const autoFollowRef = useRef(true);
   const scrollSyncedKeyRef = useRef<string | null>(null);
+  // A card growing (e.g. data source help opening) shifts visibility without any scrolling, so
+  // the observer's next change is only trusted once the user has scrolled since the last resize.
+  const scrolledSinceResizeRef = useRef(false);
 
   // Latest selected item, read by the resize/scroll callbacks without making them reactive deps.
   const selectedItemRef = useRef(selectedItem);
@@ -90,8 +93,13 @@ export function useStackedItemScroll({
 
     // Instant corrections: as content loads it can grow faster than a smooth animation completes,
     // and chained smooth scrolls would lag behind the growth. The deliberate scroll above is smooth.
+    // An add bar grows as it opens; re-pinning would scroll it out from under the pointer and close
+    // it again. So re-pinning only pauses while the pointer is on a bar — auto-follow stays on, so the
+    // card added from that bar still gets pinned once the pointer leaves and the bar shrinks.
+    let pointerOnAddBar = false;
     const resizeObserver = new ResizeObserver(() => {
-      if (autoFollowRef.current) {
+      scrolledSinceResizeRef.current = false;
+      if (autoFollowRef.current && !pointerOnAddBar) {
         scrollSelectedIntoView('auto');
       }
     });
@@ -100,23 +108,41 @@ export function useStackedItemScroll({
     // User-intent events only — not 'scroll', which our own programmatic scrolls would trigger.
     const onUserScroll = () => {
       autoFollowRef.current = false;
+      scrolledSinceResizeRef.current = true;
     };
     // keydown bubbles up from the section editors and inputs, so only count keys pressed on the
     // scroll region itself (keyboard scrolling) as intent — not typing inside a card.
     const onContainerKeyDown = (event: KeyboardEvent) => {
       if (event.target === container) {
-        autoFollowRef.current = false;
+        onUserScroll();
+      }
+    };
+    const getAddBar = (target: EventTarget | null) =>
+      target instanceof Element ? target.closest('[data-stacked-add-bar]') : null;
+    // pointermove, not pointerover: re-pinning itself scrolls bars under a still pointer, which
+    // fires pointerover.
+    const onPointerMove = (event: PointerEvent) => {
+      pointerOnAddBar = getAddBar(event.target) !== null;
+    };
+    const onPointerOut = (event: PointerEvent) => {
+      const bar = getAddBar(event.target);
+      if (bar && bar !== getAddBar(event.relatedTarget)) {
+        pointerOnAddBar = false;
       }
     };
     container.addEventListener('wheel', onUserScroll, { passive: true });
     container.addEventListener('touchmove', onUserScroll, { passive: true });
     container.addEventListener('keydown', onContainerKeyDown);
+    container.addEventListener('pointermove', onPointerMove, { passive: true });
+    container.addEventListener('pointerout', onPointerOut);
 
     return () => {
       resizeObserver.disconnect();
       container.removeEventListener('wheel', onUserScroll);
       container.removeEventListener('touchmove', onUserScroll);
       container.removeEventListener('keydown', onContainerKeyDown);
+      container.removeEventListener('pointermove', onPointerMove);
+      container.removeEventListener('pointerout', onPointerOut);
     };
   }, [containerRef, contentRef, scrollSelectedIntoView]);
 
@@ -128,8 +154,12 @@ export function useStackedItemScroll({
       if (autoFollowRef.current) {
         return;
       }
+      if (!scrolledSinceResizeRef.current) {
+        return false;
+      }
       scrollSyncedKeyRef.current = getStackedItemKey(item);
       onActiveItemChange(item);
+      return true;
     },
     [onActiveItemChange]
   );

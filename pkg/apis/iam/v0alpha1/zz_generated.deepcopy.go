@@ -15,6 +15,11 @@ import (
 func (in *CurrentUserInfo) DeepCopyInto(out *CurrentUserInfo) {
 	*out = *in
 	out.Display = in.Display
+	if in.Teams != nil {
+		in, out := &in.Teams, &out.Teams
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	return
 }
 

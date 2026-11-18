@@ -272,6 +272,56 @@ func TestValidateOnCreate(t *testing.T) {
 			},
 			expectError: false,
 		},
+		{
+			name: "numeric name is rejected",
+			user: &iamv0alpha1.User{
+				ObjectMeta: metav1.ObjectMeta{Name: "1"},
+				Spec: iamv0alpha1.UserSpec{
+					Login: "chosen-uid",
+					Role:  "Viewer",
+				},
+			},
+			requester: &identity.StaticRequester{
+				Type:           types.TypeUser,
+				IsGrafanaAdmin: true,
+			},
+			searchClient:  &fakeSearchBackend{},
+			expectError:   true,
+			errorContains: "name must not be a number",
+		},
+		{
+			name: "numeric name with leading zeros is rejected",
+			user: &iamv0alpha1.User{
+				ObjectMeta: metav1.ObjectMeta{Name: "01"},
+				Spec: iamv0alpha1.UserSpec{
+					Login: "chosen-uid-01",
+					Role:  "Viewer",
+				},
+			},
+			requester: &identity.StaticRequester{
+				Type:           types.TypeUser,
+				IsGrafanaAdmin: true,
+			},
+			searchClient:  &fakeSearchBackend{},
+			expectError:   true,
+			errorContains: "name must not be a number",
+		},
+		{
+			name: "name that only contains a digit among other characters is allowed",
+			user: &iamv0alpha1.User{
+				ObjectMeta: metav1.ObjectMeta{Name: "user-1"},
+				Spec: iamv0alpha1.UserSpec{
+					Login: "user-1",
+					Role:  "Viewer",
+				},
+			},
+			requester: &identity.StaticRequester{
+				Type:           types.TypeUser,
+				IsGrafanaAdmin: true,
+			},
+			searchClient: &fakeSearchBackend{},
+			expectError:  false,
+		},
 	}
 
 	for _, tt := range tests {

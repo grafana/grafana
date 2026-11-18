@@ -138,6 +138,7 @@ export const availableIconsIndex = {
   'flask-bubbling': true,
   'filter-plus': true,
   'filter-minus': true,
+  fjord: true,
   flip: true,
   folder: true,
   font: true,
@@ -150,6 +151,7 @@ export const availableIconsIndex = {
   'gf-bar-alignment-after': true,
   'gf-bar-alignment-before': true,
   'gf-bar-alignment-center': true,
+  'gf-floating-panel': true,
   'gf-glue': true,
   'gf-grid': true,
   'gf-grotfood': true,
@@ -164,6 +166,7 @@ export const availableIconsIndex = {
   'gf-ml-alt': true,
   'gf-movepane-left': true,
   'gf-movepane-right': true,
+  'gf-notebook': true,
   'gf-portrait': true,
   'gf-service-account': true,
   'gf-show-context': true,
@@ -306,6 +309,9 @@ export const availableIconsIndex = {
   'dollar-alt': true,
   'ai-sparkle': true,
   'message-sparkles': true,
+  'ai-select': true,
+  'marquee-select': true,
+  eraser: true,
   bitbucket: true,
   git: true,
   'tachometer-fast': true,
@@ -317,6 +323,7 @@ export const availableIconsIndex = {
   'cursor-logo': true,
   'github-copilot-logo': true,
   robot: true,
+  workflows: true,
 };
 
 export type IconName = keyof typeof availableIconsIndex;

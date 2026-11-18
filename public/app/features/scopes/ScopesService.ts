@@ -12,7 +12,6 @@ import { type ScopesMap, type SelectedScope } from './selector/types';
 
 export interface State {
   enabled: boolean;
-  readOnly: boolean;
 }
 
 /**
@@ -37,7 +36,6 @@ export class ScopesService implements ScopesContextValue {
   ) {
     this._state = new BehaviorSubject<State>({
       enabled: false,
-      readOnly: false,
     });
 
     this._stateObservable = new BehaviorSubject({
@@ -49,28 +47,6 @@ export class ScopesService implements ScopesContextValue {
       loading: this.selectorService.state.loading,
       drawerOpened: this.dashboardsService.state.drawerOpened,
     });
-
-    // We combine the latest emissions from this state + selectorService + dashboardsService.
-    this.subscriptions.push(
-      combineLatest([
-        this._state.asObservable(),
-        this.getSelectorServiceStateObservable(),
-        this.getDashboardsServiceStateObservable(),
-      ])
-        .pipe(
-          // Map the 3 states into single ScopesContextValueState object
-          map(
-            ([thisState, selectorState, dashboardsState]): ScopesContextValueState => ({
-              ...thisState,
-              value: selectorState.selectedScopes,
-              loading: selectorState.loading,
-              drawerOpened: dashboardsState.drawerOpened,
-            })
-          )
-        )
-        // We pass this into behaviourSubject so we get the 1 event buffer and we can access latest value.
-        .subscribe(this._stateObservable)
-    );
 
     // Init from the URL when we first load
     const queryParams = new URLSearchParams(locationService.getLocation().search);
@@ -208,6 +184,32 @@ export class ScopesService implements ScopesContextValue {
         }
       })
     );
+
+    // We combine the latest emissions from this state + selectorService + dashboardsService.
+    // This must stay below the URL writers above. Subscribers are notified in the order they subscribed, so consumers
+    // must hear about a change only after the URL reflects it. Otherwise a consumer that writes to the URL, such as
+    // Scenes URL sync for a variable that depends on scopes, triggers the URL listener while the URL still holds the
+    // previous scopes, and the listener re-applies them.
+    this.subscriptions.push(
+      combineLatest([
+        this._state.asObservable(),
+        this.getSelectorServiceStateObservable(),
+        this.getDashboardsServiceStateObservable(),
+      ])
+        .pipe(
+          // Map the 3 states into single ScopesContextValueState object
+          map(
+            ([thisState, selectorState, dashboardsState]): ScopesContextValueState => ({
+              ...thisState,
+              value: selectorState.selectedScopes,
+              loading: selectorState.loading,
+              drawerOpened: dashboardsState.drawerOpened,
+            })
+          )
+        )
+        // We pass this into behaviourSubject so we get the 1 event buffer and we can access latest value.
+        .subscribe(this._stateObservable)
+    );
   }
 
   /**
@@ -234,16 +236,6 @@ export class ScopesService implements ScopesContextValue {
   public changeScopes = (scopeNames: string[], parentNodeId?: string, scopeNodeId?: string) =>
     // Don't redirect on apply for initial load from URL. We only want to redirect when selecting from the selector
     this.selectorService.changeScopes(scopeNames, parentNodeId, scopeNodeId, false);
-
-  public setReadOnly = (readOnly: boolean) => {
-    if (this.state.readOnly !== readOnly) {
-      this.updateState({ readOnly });
-    }
-
-    if (readOnly && this.selectorService.state.opened) {
-      this.selectorService.closeAndReset();
-    }
-  };
 
   public setEnabled = (enabled: boolean) => {
     if (this.state.enabled !== enabled) {

@@ -10,6 +10,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -160,28 +162,9 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *contextmodel.ReqContext)
 	// Single-org with users in unified storage: the legacy org_user/user join is
 	// empty, so read the shared users via the k8s-redirected user search instead.
 	if hs.Cfg.RBAC.SingleOrganization && ofClient.Boolean(ctx, featuremgmt.FlagKubernetesUsersRedirect, false, openfeature.TransactionContext(ctx)) {
-		searchResult, err := hs.userService.Search(ctx, &user.SearchUsersQuery{
-			SignedInUser: c.SignedInUser,
-			OrgID:        c.GetOrgID(),
-			Query:        c.Query("query"),
-			Limit:        c.QueryInt("limit"),
-		})
+		result, err := hs.searchOrgUsersForLookupUsingK8s(c)
 		if err != nil {
 			return response.Error(http.StatusInternalServerError, "Failed to get users for current organization", err)
-		}
-
-		result := make([]*dtos.UserLookupDTO, 0, len(searchResult.Users))
-		for _, u := range searchResult.Users {
-			avatarURL := u.AvatarURL
-			if avatarURL == "" {
-				avatarURL = dtos.GetGravatarUrl(hs.Cfg, u.Email)
-			}
-			result = append(result, &dtos.UserLookupDTO{
-				UID:       u.UID,
-				UserID:    u.ID,
-				Login:     u.Login,
-				AvatarURL: avatarURL,
-			})
 		}
 		return response.JSON(http.StatusOK, result)
 	}
@@ -388,6 +371,67 @@ func (hs *HTTPServer) searchOrgUsersHelper(c *contextmodel.ReqContext, query *or
 	result.Page = query.Page
 	result.PerPage = query.Limit
 	return result, nil
+}
+
+func (hs *HTTPServer) searchOrgUsersForLookupUsingK8s(c *contextmodel.ReqContext) ([]*dtos.UserLookupDTO, error) {
+	ctx := c.Req.Context()
+	enforced := hs.License.FeatureEnabled("accesscontrol.enforcement")
+	// When fine-grained permissions are disabled, allow anyone authorized
+	// to use this endpoint to search the organization's users.
+	if !enforced {
+		ctx = identity.WithServiceIdentityContext(ctx, c.GetOrgID(), func(service *identity.StaticRequester) {
+			// User search derives its namespace from the requester.
+			service.Namespace = c.GetNamespace()
+		})
+	}
+	limit := min(c.QueryInt("limit"), common.MaxListLimit)
+	searchLimit := limit
+	// Only the service identity sees hidden users, so only its search pages past them.
+	// Searches as the caller already exclude hidden users, and their totals may count
+	// unauthorized users, so paging on them could issue many empty requests.
+	paginate := !enforced && limit > 0 && !c.IsGrafanaAdmin
+	if paginate {
+		// Fetch extra candidates for hidden users without exceeding the search API's page limit.
+		searchLimit += min(len(hs.Cfg.HiddenUsers), common.MaxListLimit-searchLimit)
+	}
+	query := &user.SearchUsersQuery{
+		SignedInUser: c.SignedInUser,
+		OrgID:        c.GetOrgID(),
+		Query:        c.Query("query"),
+		Limit:        searchLimit,
+		Page:         1,
+	}
+	result := make([]*dtos.UserLookupDTO, 0)
+	for ; ; query.Page++ {
+		searchResult, err := hs.userService.Search(ctx, query)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, u := range searchResult.Users {
+			// The service identity used for unlicensed lookup can see hidden users;
+			// directory visibility must still follow the original caller.
+			if dtos.IsHiddenUser(u.Login, c.SignedInUser, hs.Cfg) {
+				continue
+			}
+			avatarURL := u.AvatarURL
+			if avatarURL == "" {
+				avatarURL = dtos.GetGravatarUrl(hs.Cfg, u.Email)
+			}
+			result = append(result, &dtos.UserLookupDTO{
+				UID:       u.UID,
+				UserID:    u.ID,
+				Login:     u.Login,
+				AvatarURL: avatarURL,
+			})
+			if limit > 0 && len(result) == limit {
+				return result, nil
+			}
+		}
+		if !paginate || int64(query.Page)*int64(searchLimit) >= searchResult.TotalCount {
+			return result, nil
+		}
+	}
 }
 
 func (hs *HTTPServer) searchOrgUsersUsingK8s(c *contextmodel.ReqContext, query *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error) {

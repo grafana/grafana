@@ -11,7 +11,7 @@
  * why no command carries a "is this the right kind of document" permission check.
  */
 
-import type * as z from 'zod';
+import type * as z from 'zod/mini';
 
 import type { LazyMutationCommand, MutationCommand, MutationContext } from './commands/types';
 import type { MutationClient, MutationRequest, MutationResult } from './types';
@@ -27,7 +27,7 @@ interface CommandRegistration<TScene> {
   handler: MutationHandler<TScene>;
   canExecute: (scene: TScene) => { allowed: true } | { allowed: false; error: string };
   readOnly: boolean;
-  payloadSchema: z.ZodType;
+  payloadSchema: z.ZodMiniType;
 }
 
 export class SceneMutationClient<TScene extends MutationTargetScene> implements MutationClient {
@@ -62,6 +62,14 @@ export class SceneMutationClient<TScene extends MutationTargetScene> implements 
   }
 
   async execute(mutation: MutationRequest): Promise<MutationResult> {
+    return this.executeChecked(mutation);
+  }
+
+  protected async executeChecked(
+    mutation: MutationRequest,
+    checkWrite?: () => string | undefined,
+    runWrite?: (write: () => Promise<MutationResult>) => Promise<MutationResult>
+  ): Promise<MutationResult> {
     const type = mutation.type.toUpperCase();
 
     const command = this.commands.get(type);
@@ -86,6 +94,11 @@ export class SceneMutationClient<TScene extends MutationTargetScene> implements 
       };
     }
 
+    const writeError = !registration.readOnly ? checkWrite?.() : undefined;
+    if (writeError) {
+      return { success: false, error: writeError, changes: [] };
+    }
+
     const permissionResult = registration.canExecute(this.scene);
     if (!permissionResult.allowed) {
       return { success: false, error: permissionResult.error, changes: [] };
@@ -104,7 +117,8 @@ export class SceneMutationClient<TScene extends MutationTargetScene> implements 
       // argument. Inside the try because structuredClone throws on a payload it cannot clone.
       const payload = registration.readOnly ? validationResult.data : structuredClone(validationResult.data);
 
-      const result = await registration.handler(payload, context);
+      const execute = () => registration.handler(payload, context);
+      const result = await (runWrite && !registration.readOnly ? runWrite(execute) : execute());
 
       if (result.success && !registration.readOnly) {
         this.scene.forceRender();
@@ -142,7 +156,7 @@ function createCommandRegistration<TScene>(cmd: MutationCommand<any, TScene>): C
 
 /** Flattens Zod issues into `<path>: <message>`, the shape a caller can act on and an agent can correct from. */
 function validatePayload(
-  schema: z.ZodType,
+  schema: z.ZodMiniType,
   payload: unknown
 ): { success: true; data: unknown } | { success: false; error: string } {
   const result = schema.safeParse(payload);

@@ -4,18 +4,19 @@ import memoize from 'micro-memoize';
 
 import { formattedValueToString } from '@grafana/data';
 
-import { MaybeWrapWithLink } from '../components/MaybeWrapWithLink';
 import { TABLE } from '../constants';
 import { getActiveCellSelector, isTableCellStylesKeyEqual } from '../styles';
 import { type AutoCellProps, type TableCellStyleOptions, type TableCellStyles } from '../types';
 
-export function AutoCell({ value, field, rowIdx }: AutoCellProps) {
+import { TextCellContents, textCellClassName } from './TextCellContents';
+
+export function AutoCell({ value, field, rowIdx, tableRefreshEnabled }: AutoCellProps) {
   const displayValue = field.display!(value);
   const formattedValue = formattedValueToString(displayValue);
   return (
-    <MaybeWrapWithLink field={field} rowIdx={rowIdx}>
+    <TextCellContents field={field} rowIdx={rowIdx} tableRefreshEnabled={tableRefreshEnabled}>
       {formattedValue}
-    </MaybeWrapWithLink>
+    </TextCellContents>
   );
 }
 
@@ -31,7 +32,7 @@ type CellWhiteSpace = 'pre-line' | 'pre-wrap';
  * specificity, so the winner would come down to the order emotion happened to insert them.
  */
 function buildAutoCellStyles(
-  { textWrap, shouldOverflow, hoverOverflow, maxHeight }: TableCellStyleOptions,
+  { textWrap, shouldOverflow, hoverOverflow, maxHeight, tableRefreshEnabled }: TableCellStyleOptions,
   whiteSpace: CellWhiteSpace,
   // Bounds the hover expansion. Worth it where a single value can be arbitrarily large, since an
   // unbounded cell grows past the panel and puts its own content out of reach. Applies in both the
@@ -58,6 +59,16 @@ function buildAutoCellStyles(
     alignItems: 'flex-start' as const,
   };
 
+  const lineClamp = {
+    display: '-webkit-box',
+    WebkitBoxOrient: 'vertical' as const,
+    WebkitLineClamp: Math.floor((maxHeight ?? 0) / TABLE.LINE_HEIGHT),
+  };
+  const clearLineClamp = {
+    WebkitLineClamp: 'none',
+    WebkitBoxOrient: 'unset' as const,
+  };
+
   return css({
     ...(textWrap && { whiteSpace }),
     ...(shouldOverflow && {
@@ -70,13 +81,12 @@ function buildAutoCellStyles(
       textWrap && {
         height: 'auto',
         overflowY: 'hidden',
-        display: '-webkit-box',
-        WebkitBoxOrient: 'vertical',
-        WebkitLineClamp: Math.floor(maxHeight / TABLE.LINE_HEIGHT),
+        ...(tableRefreshEnabled ? { [`> .${textCellClassName}`]: lineClamp } : lineClamp),
         [getActiveCellSelector(true, hoverOverflow)]: {
           display: 'flex',
-          WebkitLineClamp: 'none',
-          WebkitBoxOrient: 'unset',
+          ...(tableRefreshEnabled
+            ? { [`> .${textCellClassName}`]: { display: 'block', ...clearLineClamp } }
+            : clearLineClamp),
           overflowY: 'auto',
           height: 'fit-content',
           ...(boundExpansion && expansionBounds),

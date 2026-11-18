@@ -92,6 +92,9 @@ When you open a panel in full-screen view mode, Grafana displays a **View panel*
 These controls make it easier to view specific data or identify patterns and correlations.
 Because these controls exist in view mode, you don't need edit permissions to use them, and the changes you make don't affect the saved dashboard.
 
+After you close the sidebar, it stays closed when you view a panel again.
+Select **View panel controls** in the toolbar to reopen it and turn automatic opening back on.
+
 The sidebar includes the following controls:
 
 - **Quick toggles**: Adjust common visualization options, such as legend visibility and basic graph styles.
@@ -217,13 +220,13 @@ Time series
 
 ## Add a panel
 
-To add a panel to an empty dashboard, click or drag the panel onto the dashboard:
+To add a panel to an empty dashboard, click **+ Add visualization**:
 
-![Empty dashboard state](/media/docs/grafana/dashboards/screenshot-empty-dashboard-v13.2.png)
+![Empty dashboard state](/media/docs/grafana/dashboards/screenshot-empty-dashboard-v13.3.png)
 
 To add a panel to an existing dashboard, follow these steps:
 
-1. Click **Edit** in the top-right corner of the dashboard.
+1. Select **Editing** in the dashboard mode drop-down list.
 1. Click the **Add new element** icon (blue plus sign).
 
    {{< figure src="/media/docs/grafana/dashboards/screenshot-add-element-icon-v13.1.png" max-width="250px" alt="Add element icon" >}}

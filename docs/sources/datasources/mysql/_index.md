@@ -28,7 +28,7 @@ The data source ships with Grafana out of the box. It's preinstalled in both Gra
 
 Watch the following video to learn more about using the Grafana MySQL data source plugin: {{< youtube id="p_RDHfHS-P8">}}
 
-{{< docs/play title="MySQL Overview" url="https://play.grafana.org/d/edyh1ib7db6rkb/mysql-overview" >}}
+{{< docs/play title="MySQL Overview" url="https://play.grafana.org/d/dbg1erw7kech6oe/placeholder-dashboard" >}}
 
 ## Supported databases
 

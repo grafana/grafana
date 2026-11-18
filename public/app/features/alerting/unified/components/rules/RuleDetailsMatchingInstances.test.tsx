@@ -1,14 +1,27 @@
-import { render } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { times } from 'lodash';
+import { render as renderWithProviders } from 'test/test-utils';
 import { byLabelText, byRole, byTestId } from 'testing-library-selector';
 
 import { PluginExtensionTypes } from '@grafana/data';
 import { usePluginLinks } from '@grafana/runtime';
+import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction } from 'app/types/accessControl';
 
-import { type CombinedRuleNamespace } from '../../../../../types/unified-alerting';
+import { type Alert, type CombinedRuleNamespace } from '../../../../../types/unified-alerting';
 import { GrafanaAlertState, PromAlertingRuleState } from '../../../../../types/unified-alerting-dto';
-import { mockCombinedRule, mockDataSource, mockPromAlert, mockPromAlertingRule } from '../../mocks';
+import { setupMswServer } from '../../mockApi';
+import {
+  grantUserPermissions,
+  mockCombinedRule,
+  mockDataSource,
+  mockGrafanaPromAlertingRule,
+  mockGrafanaRulerRule,
+  mockPromAlert,
+  mockPromAlertingRule,
+} from '../../mocks';
+import { setFolderAccessControl } from '../../mocks/server/configure';
 import { alertStateToReadable } from '../../utils/rules';
 
 import { RuleDetailsMatchingInstances } from './RuleDetailsMatchingInstances';
@@ -18,6 +31,10 @@ jest.mock('@grafana/runtime', () => ({
   getPluginLinkExtensions: jest.fn(),
   usePluginLinks: jest.fn(),
 }));
+
+jest.mock('../../useRouteGroupsMatcher');
+
+setupMswServer();
 
 const mocks = {
   usePluginLinksMock: jest.mocked(usePluginLinks),
@@ -175,6 +192,128 @@ describe('RuleDetailsMatchingInstances', () => {
       await event.click(ui.showAllInstances.get());
       expect(ui.showAllInstances.query()).not.toBeInTheDocument();
     });
+  });
+});
+
+const SILENCE_RULE_UID = 'rule-uid-1';
+const SILENCE_FOLDER_UID = 'NAMESPACE_UID';
+
+const instanceWithState = (state: Alert['state'], labels: Record<string, string>) =>
+  mockPromAlert({ state, labels: { alertname: 'CPU high', __alert_rule_uid__: SILENCE_RULE_UID, ...labels } });
+
+const grafanaRuleWithInstances = (alerts: Alert[], rulerOverrides: Parameters<typeof mockGrafanaRulerRule>[0] = {}) =>
+  mockCombinedRule({
+    rulerRule: mockGrafanaRulerRule({ uid: SILENCE_RULE_UID, namespace_uid: SILENCE_FOLDER_UID, ...rulerOverrides }),
+    promRule: mockGrafanaPromAlertingRule({ uid: SILENCE_RULE_UID, folderUid: SILENCE_FOLDER_UID, alerts }),
+  });
+
+describe('RuleDetailsMatchingInstances silence action', () => {
+  let mainView: HTMLDivElement;
+
+  beforeEach(() => {
+    grantUserPermissions([AccessControlAction.AlertingInstanceCreate]);
+    setFolderAccessControl({ [AccessControlAction.AlertingSilenceCreate]: true });
+    contextSrv.user.isSignedIn = true;
+    contextSrv.user.name = 'admin';
+
+    mainView = document.createElement('div');
+    mainView.classList.add('main-view');
+    document.body.appendChild(mainView);
+  });
+
+  afterEach(() => {
+    document.body.removeChild(mainView);
+  });
+
+  it('does not render Silence buttons unless the consumer opts in', async () => {
+    const rule = grafanaRuleWithInstances([instanceWithState(GrafanaAlertState.Alerting, { instance: 'server-1' })]);
+
+    renderWithProviders(<RuleDetailsMatchingInstances rule={rule} />);
+
+    expect(await screen.findByTestId('row')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^silence$/i })).not.toBeInTheDocument();
+  });
+
+  it('renders a Silence button per row and opens the clicked row', async () => {
+    const user = userEvent.setup();
+    const rule = grafanaRuleWithInstances([
+      instanceWithState(GrafanaAlertState.Alerting, { instance: 'server-1', severity: 'critical' }),
+      instanceWithState(GrafanaAlertState.Alerting, { instance: 'server-2', severity: 'warning' }),
+    ]);
+
+    renderWithProviders(<RuleDetailsMatchingInstances rule={rule} showSilenceAction />);
+
+    const rows = await screen.findAllByTestId('row');
+    await user.click(await within(rows[1]).findByRole('button', { name: /^silence$/i }));
+
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+    expect(screen.getAllByPlaceholderText('value').map((input) => (input as HTMLInputElement).value)).toEqual([
+      'CPU high',
+      'server-2',
+      'warning',
+    ]);
+  });
+
+  it('renders a Silence button next to a direct contact point route', async () => {
+    const rule = grafanaRuleWithInstances([instanceWithState(GrafanaAlertState.Alerting, { instance: 'server-1' })], {
+      notification_settings: { receiver: 'slack' },
+    });
+
+    renderWithProviders(<RuleDetailsMatchingInstances rule={rule} showSilenceAction />);
+
+    expect(await screen.findByText('slack')).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /^silence$/i })).toBeInTheDocument();
+  });
+
+  it('renders a Silence button for a prom-only Grafana rule without ruler data', async () => {
+    const rule = mockCombinedRule({
+      rulerRule: undefined,
+      promRule: mockGrafanaPromAlertingRule({
+        uid: SILENCE_RULE_UID,
+        folderUid: SILENCE_FOLDER_UID,
+        alerts: [instanceWithState(GrafanaAlertState.Alerting, { instance: 'server-1' })],
+      }),
+    });
+
+    renderWithProviders(<RuleDetailsMatchingInstances rule={rule} showSilenceAction />);
+
+    expect(await screen.findByTestId('row')).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /^silence$/i })).toBeInTheDocument();
+  });
+
+  it.each([
+    GrafanaAlertState.Alerting,
+    GrafanaAlertState.Normal,
+    GrafanaAlertState.Pending,
+    GrafanaAlertState.Recovering,
+  ])('renders a Silence button for a %s instance', async (state) => {
+    const rule = grafanaRuleWithInstances([instanceWithState(state, { instance: 'server-1' })]);
+
+    renderWithProviders(<RuleDetailsMatchingInstances rule={rule} showSilenceAction />);
+
+    expect(await screen.findByRole('button', { name: /^silence$/i })).toBeInTheDocument();
+  });
+
+  it.each([
+    GrafanaAlertState.NoData,
+    GrafanaAlertState.Error,
+    'NoData (Timeout)' as const,
+    'Error (DatasourceError)' as const,
+  ])('hides the Silence button for a %s instance', async (state) => {
+    const rule = grafanaRuleWithInstances([
+      instanceWithState(GrafanaAlertState.Alerting, { instance: 'allowed' }),
+      instanceWithState(state, { instance: 'hidden' }),
+    ]);
+
+    renderWithProviders(<RuleDetailsMatchingInstances rule={rule} showSilenceAction />);
+
+    await waitFor(() => expect(screen.getAllByRole('button', { name: /^silence$/i })).toHaveLength(1));
+
+    const rows = screen.getAllByTestId('row');
+    const allowedRow = rows.find((row) => row.textContent?.includes('allowed'));
+    const hiddenRow = rows.find((row) => row.textContent?.includes('hidden'));
+    expect(within(allowedRow!).getByRole('button', { name: /^silence$/i })).toBeInTheDocument();
+    expect(within(hiddenRow!).queryByRole('button', { name: /^silence$/i })).not.toBeInTheDocument();
   });
 });
 

@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/resource"
-	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	model "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/config"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/util"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/validation"
@@ -83,6 +83,12 @@ func validateDurations(r *model.AlertRule) error {
 
 func ValidateDelete(cfg config.RuntimeConfig) validation.ValidateFunc[*model.AlertRule] {
 	return func(ctx context.Context, req validation.Request[*model.AlertRule]) error {
+		if cfg.AllowDeletingSequenceMembers != nil {
+			allowed, err := cfg.AllowDeletingSequenceMembers(ctx)
+			if err != nil || allowed {
+				return err
+			}
+		}
 		oldRule := req.OldObject
 		if cfg.MembershipResolver != nil {
 			memberships, err := cfg.MembershipResolver.Resolve(ctx, []string{oldRule.Name})

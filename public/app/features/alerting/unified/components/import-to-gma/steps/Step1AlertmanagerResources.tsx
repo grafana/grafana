@@ -1,69 +1,43 @@
-import { css } from '@emotion/css';
 import { kebabCase } from 'lodash';
-import { type ComponentProps, useCallback, useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
+import { type AlertManagerDataSourceJsonData } from '@grafana/alerting/internal';
 import { type DataSourceSettings, OrgRole, type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {
   Alert,
-  Badge,
   Box,
   Divider,
   Field,
-  FileDropzone,
-  Icon,
-  IconButton,
   InlineField,
   InlineSwitch,
-  Input,
-  Label,
   RadioButtonList,
   Select,
-  SelectMenuOptions,
   Stack,
   Text,
-  Tooltip,
 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
-import { type AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
 
-import { getAlertManagerDataSources } from '../../../utils/datasource';
-import { useAutoSyncConfiguration } from '../../settings/useAutoSyncConfiguration';
-import { type ImportFormValues } from '../ImportToGMA';
+import { isVanillaPrometheusAlertManagerDataSource } from '../../../utils/datasource';
+import {
+  AlertmanagerDataSourceOption,
+  useAlertmanagerDataSourceOptions,
+} from '../../settings/AlertmanagerDataSourceOptions';
 import { PolicyTreeNameHelp } from '../PolicyTreeNameHelp';
 import { ValidationStatus } from '../ValidationStatus';
 import { getNotificationsSourceOptions, isAutoSyncSelected } from '../Wizard/steps';
-import { type DryRunValidationResult } from '../types';
+import { type DryRunState, type DryRunValidationResult, type ImportFormValues } from '../types';
 
-import { findDuplicateTemplateFileName, hasValidSourceSelection, isStep1Valid, validatePolicyTreeName } from './utils';
-
-const YAML_FILE_EXTENSIONS = ['.yaml', '.yml'];
-
-// FileDropzone has no prop to suppress its built-in "Accepted file types" caption, shown via Field description instead.
-const hideAcceptedFileTypesCaption = css({
-  small: {
-    display: 'none',
-  },
-});
-
-// FileDropzone's `accept` option buckets extensions by MIME type, so a `.txt` file (MIME
-// text/plain) collides with the `.yml` bucket and passes; re-check the filename directly.
-function validateYamlFileExtension(file: File) {
-  const hasYamlExtension = YAML_FILE_EXTENSIONS.some((ext) => file.name.toLowerCase().endsWith(ext));
-  if (hasYamlExtension) {
-    return null;
-  }
-  return {
-    code: 'file-invalid-type',
-    message: t('alerting.import-to-gma.step1.yaml-invalid-type', 'File must be a YAML file ({{extensions}})', {
-      extensions: YAML_FILE_EXTENSIONS.join(', '),
-    }),
-  };
-}
+import { PolicyTreeNameField } from './PolicyTreeNameField';
+import { TemplateFilesField } from './TemplateFilesField';
+import { YamlFileDropzone, getYamlFileDescription } from './YamlFileDropzone';
+import { useAutoSyncPrediction } from './useAutoSyncPrediction';
+import { useStep1Form } from './useStep1Form';
+import { isStep1Valid } from './utils';
 
 /** Whether the Auto-sync checkbox may be offered: requires the sync toggle and Org Admin. */
 function isAutoSyncSegmentEnabled(): boolean {
@@ -99,121 +73,40 @@ interface Step1ContentProps {
   /** Whether the user has permission to import notifications */
   canImport: boolean;
   /** Dry-run validation state */
-  dryRunState: 'idle' | 'loading' | 'success' | 'warning' | 'error';
+  dryRunState: DryRunState;
   /** Dry-run validation result */
   dryRunResult?: DryRunValidationResult;
-  /** Callback to trigger dry-run validation */
-  onTriggerDryRun: () => void;
-  /** Callback to clear a stale dry-run result when the step is no longer runnable */
-  onResetDryRun: () => void;
 }
 
 /**
- * Step1Content - Content for the notification resources import step
+ * Step1Content - Content for the notification configuration import step
  * This component contains only the form fields, without the header or action buttons
  * The WizardStep wrapper provides those
  */
-export function Step1Content({
-  canImport,
-  dryRunState,
-  dryRunResult,
-  onTriggerDryRun,
-  onResetDryRun,
-}: Step1ContentProps) {
+export function Step1Content({ canImport, dryRunState, dryRunResult }: Step1ContentProps) {
   const {
     control,
     register,
     watch,
     setValue,
-    trigger,
-    clearErrors,
     formState: { errors },
   } = useFormContext<ImportFormValues>();
 
   const notifyApp = useAppNotification();
+  const [notificationsSource, notificationsYamlFile] = watch(['notificationsSource', 'notificationsYamlFile']);
 
-  const [
-    notificationsSource,
-    policyTreeName,
-    notificationsDatasourceUID,
-    notificationsYamlFile,
-    notificationsTemplateFiles,
-    autoSyncNotificationsEnabled,
-  ] = watch([
-    'notificationsSource',
-    'policyTreeName',
-    'notificationsDatasourceUID',
-    'notificationsYamlFile',
-    'notificationsTemplateFiles',
-    'autoSyncNotificationsEnabled',
-  ]);
-
-  // Auto-sync mirrors the source directly, skipping Policy Tree Name and the dry-run.
-  const autoSyncActive = isAutoSyncSelected(autoSyncNotificationsEnabled ?? false, notificationsSource);
-
-  // Called unconditionally (even for the YAML source) so the Auto-sync checkbox always knows
-  // whether the selected datasource qualifies; its own queries stay skipped for non-admins/toggle-off.
   const {
+    autoSyncActive,
     autoSyncEligibleAlertmanagers,
-    isLoading: isLoadingAutoSyncConfig,
-    isReady: isAutoSyncConfigReady,
-    notReadyMessage: autoSyncNotReadyMessage,
-  } = useAutoSyncConfiguration();
-  const isSelectedDatasourceAutoSyncCapable =
-    !isLoadingAutoSyncConfig && autoSyncEligibleAlertmanagers.some((ds) => ds.uid === notificationsDatasourceUID);
-
-  const duplicateTemplateFileName = findDuplicateTemplateFileName(notificationsTemplateFiles);
-
-  // Whether we have enough data to run a dry-run validation
-  const canRunDryRun =
-    !autoSyncActive &&
-    Boolean(policyTreeName) &&
-    validatePolicyTreeName(policyTreeName) === true &&
-    !duplicateTemplateFileName &&
-    hasValidSourceSelection(notificationsSource, notificationsYamlFile, notificationsDatasourceUID);
-
-  // Trigger dry-run when a source is selected (YAML file or datasource) or the template files change.
-  // When the step is no longer runnable (e.g. a duplicate template name), clear any previous result so
-  // a stale success can't keep the review step reporting the config as ready to import.
-  useEffect(() => {
-    if (canRunDryRun) {
-      onTriggerDryRun();
-    } else {
-      onResetDryRun();
-    }
-  }, [
-    canRunDryRun,
-    onTriggerDryRun,
-    onResetDryRun,
-    notificationsSource,
-    notificationsYamlFile,
-    notificationsDatasourceUID,
-    notificationsTemplateFiles,
-  ]);
-
-  // Drop any leftover Policy Tree Name error once Auto-sync disables the field.
-  useEffect(() => {
-    if (autoSyncActive) {
-      clearErrors('policyTreeName');
-    }
-  }, [autoSyncActive, clearErrors]);
-
-  // Don't leave a stale checked Auto-sync flag pointing at a datasource that doesn't support it.
-  // Skip while loading so a legitimately-checked, still-valid selection isn't cleared against the
-  // momentarily-empty Mimir/Cortex list.
-  useEffect(() => {
-    if (!isLoadingAutoSyncConfig && !isSelectedDatasourceAutoSyncCapable && autoSyncNotificationsEnabled) {
-      setValue('autoSyncNotificationsEnabled', false);
-    }
-  }, [isLoadingAutoSyncConfig, isSelectedDatasourceAutoSyncCapable, autoSyncNotificationsEnabled, setValue]);
-
-  // Trigger validation + dry-run when the policy tree name input loses focus
-  const handlePolicyTreeNameBlur = useCallback(async () => {
-    await trigger('policyTreeName'); //force validation onblur
-    if (canRunDryRun) {
-      onTriggerDryRun();
-    }
-  }, [trigger, canRunDryRun, onTriggerDryRun]);
+    isAutoSyncConfigReady,
+    autoSyncNotReadyMessage,
+    isSelectedDatasourceAutoSyncCapable,
+    autoSyncIdentifier,
+    autoSyncConflictMessage,
+    duplicateTemplateFileName,
+    validatePolicyTreeNameIsFree,
+    handlePolicyTreeNameBlur,
+  } = useStep1Form();
 
   const sourceOptions = getNotificationsSourceOptions();
 
@@ -226,7 +119,7 @@ export function Step1Content({
           title={t('alerting.import-to-gma.step1.no-permission-title', 'Insufficient permissions')}
         >
           <Trans i18nKey="alerting.import-to-gma.step1.no-permission-desc">
-            You do not have permission to import notification resources. You need the{' '}
+            You do not have permission to import notification configuration. You need the{' '}
             <strong>alerting.notifications:write</strong> permission. You can skip this step.
           </Trans>
         </Alert>
@@ -236,7 +129,7 @@ export function Step1Content({
       <Box backgroundColor="secondary" borderRadius="default" borderColor="weak" borderStyle="solid">
         <Box display="flex" alignItems="center" justifyContent="space-between" padding={2}>
           <Text variant="h5" element="h3">
-            {t('alerting.import-to-gma.step1.source-title', 'Import Source')}
+            {t('alerting.import-to-gma.step1.source-title', 'Import source')}
           </Text>
         </Box>
         <Divider spacing={0} />
@@ -264,129 +157,30 @@ export function Step1Content({
               <Stack direction="column" gap={2}>
                 <Field
                   label={t('alerting.import-to-gma.step1.yaml-file', 'Alertmanager config YAML')}
-                  description={t('alerting.import-to-gma.step1.yaml-desc', 'Accepted file types: {{extensions}}', {
-                    extensions: YAML_FILE_EXTENSIONS.join(', '),
-                  })}
+                  description={getYamlFileDescription()}
                   invalid={Boolean(errors.notificationsYamlFile)}
                   error={errors.notificationsYamlFile?.message}
                   noMargin
                 >
                   <Controller
                     render={({ field: { onChange } }) => (
-                      <Stack direction="column" gap={1}>
-                        <div className={hideAcceptedFileTypesCaption}>
-                          <FileDropzone
-                            options={{
-                              multiple: false,
-                              accept: YAML_FILE_EXTENSIONS,
-                              validator: validateYamlFileExtension,
-                              onDrop: (acceptedFiles) => {
-                                const file = acceptedFiles[0];
-                                if (file) {
-                                  onChange(file);
-                                  notifyApp.success(
-                                    t('alerting.import-to-gma.step1.yaml-added-title', 'Configuration file uploaded'),
-                                    file.name
-                                  );
-                                }
-                              },
-                            }}
-                            fileListRenderer={() => null}
-                          >
-                            <Text color="secondary">
-                              {t('alerting.import-to-gma.step1.upload', 'Drop YAML file here or click to upload')}
-                            </Text>
-                          </FileDropzone>
-                        </div>
-
-                        {notificationsYamlFile && (
-                          <Stack direction="row" alignItems="center" justifyContent="space-between">
-                            <Text>{notificationsYamlFile.name}</Text>
-                            <IconButton
-                              name="trash-alt"
-                              tooltip={t('alerting.import-to-gma.step1.yaml-remove', 'Remove {{name}}', {
-                                name: notificationsYamlFile.name,
-                              })}
-                              onClick={() => onChange(null)}
-                            />
-                          </Stack>
-                        )}
-                      </Stack>
+                      <YamlFileDropzone
+                        file={notificationsYamlFile}
+                        onChange={onChange}
+                        onUploaded={(file) =>
+                          notifyApp.success(
+                            t('alerting.import-to-gma.step1.yaml-added-title', 'Configuration file uploaded'),
+                            file.name
+                          )
+                        }
+                      />
                     )}
                     control={control}
                     name="notificationsYamlFile"
                   />
                 </Field>
 
-                <Field
-                  label={t('alerting.import-to-gma.step1.templates-label', 'Notification templates')}
-                  description={t(
-                    'alerting.import-to-gma.step1.templates-desc',
-                    'Optional. Upload the template files referenced by your Alertmanager config. Each file is imported as a template named after the file.'
-                  )}
-                  invalid={Boolean(duplicateTemplateFileName)}
-                  error={
-                    duplicateTemplateFileName
-                      ? t(
-                          'alerting.import-to-gma.step1.templates-duplicate',
-                          'Duplicate template file name: "{{name}}". Template file names must be unique.',
-                          { name: duplicateTemplateFileName }
-                        )
-                      : undefined
-                  }
-                  noMargin
-                >
-                  <Controller
-                    render={({ field: { value, onChange } }) => (
-                      <Stack direction="column" gap={1}>
-                        <FileDropzone
-                          // Template files can have any name/extension (mimirtool loads arbitrary *.tpl);
-                          // the file name becomes the template key, so we don't restrict by extension.
-                          options={{
-                            multiple: true,
-                            onDrop: (acceptedFiles) => {
-                              onChange([...value, ...acceptedFiles]);
-                              const title = t('alerting.import-to-gma.step1.templates-added-title', '', {
-                                count: acceptedFiles.length,
-                                defaultValue_one: 'Template file added',
-                                defaultValue_other: 'Template files added',
-                              });
-                              notifyApp.success(title, acceptedFiles.map((file) => file.name).join(', '));
-                            },
-                          }}
-                          fileListRenderer={() => null}
-                        >
-                          <Text color="secondary">
-                            {t(
-                              'alerting.import-to-gma.step1.templates-dropzone',
-                              'Drop template files here or click to upload'
-                            )}
-                          </Text>
-                        </FileDropzone>
-
-                        {value.map((file, index) => (
-                          <Stack
-                            key={`${file.name}-${index}`}
-                            direction="row"
-                            alignItems="center"
-                            justifyContent="space-between"
-                          >
-                            <Text>{file.name}</Text>
-                            <IconButton
-                              name="trash-alt"
-                              tooltip={t('alerting.import-to-gma.step1.templates-remove', 'Remove {{name}}', {
-                                name: file.name,
-                              })}
-                              onClick={() => onChange(value.filter((_, fileIndex) => fileIndex !== index))}
-                            />
-                          </Stack>
-                        ))}
-                      </Stack>
-                    )}
-                    control={control}
-                    name="notificationsTemplateFiles"
-                  />
-                </Field>
+                <TemplateFilesField duplicateFileName={duplicateTemplateFileName} />
               </Stack>
             )}
 
@@ -414,6 +208,13 @@ export function Step1Content({
                 )}
               </Stack>
             )}
+
+            {/* Shown with the source it describes, as soon as one is chosen. */}
+            {dryRunState !== 'idle' && (
+              <Box marginTop={2}>
+                <ValidationStatus state={dryRunState} result={dryRunResult} />
+              </Box>
+            )}
           </Box>
         </Box>
       </Box>
@@ -436,51 +237,16 @@ export function Step1Content({
             <PolicyTreeNameHelp />
           </Stack>
           <Box marginTop={2}>
-            <Field
-              label={
-                autoSyncActive ? (
-                  <Label>
-                    <Stack direction="row" alignItems="center" gap={0.5}>
-                      {t('alerting.import-to-gma.step1.policy-tree-name', 'Policy tree name')}
-                      <Tooltip
-                        content={t(
-                          'alerting.import-to-gma.step1.policy-tree-autosync-disabled',
-                          "Not needed. Auto-sync mirrors the source directly, so there's no policy tree to name."
-                        )}
-                      >
-                        <Icon name="info-circle" size="sm" />
-                      </Tooltip>
-                    </Stack>
-                  </Label>
-                ) : (
-                  t('alerting.import-to-gma.step1.policy-tree-name', 'Policy tree name')
-                )
-              }
-              invalid={!!errors.policyTreeName}
-              error={errors.policyTreeName?.message}
-              noMargin
-            >
-              <Input
-                {...register('policyTreeName', {
-                  required: autoSyncActive
-                    ? undefined
-                    : t('alerting.import-to-gma.step1.policy-tree-required', 'Policy tree name is required'),
-                  validate: autoSyncActive ? undefined : validatePolicyTreeName,
-                  onBlur: handlePolicyTreeNameBlur,
-                })}
-                disabled={autoSyncActive}
-                placeholder={t('alerting.import-to-gma.step1.policy-tree-placeholder', 'prometheus-prod')}
-                width={40}
-              />
-            </Field>
+            <PolicyTreeNameField
+              autoSyncActive={autoSyncActive}
+              autoSyncIdentifier={autoSyncIdentifier}
+              autoSyncConflictMessage={autoSyncConflictMessage}
+              validate={validatePolicyTreeNameIsFree}
+              onBlur={handlePolicyTreeNameBlur}
+            />
           </Box>
         </Box>
       </Box>
-
-      {/* Validation Status */}
-      {canRunDryRun && dryRunState && dryRunState !== 'idle' && (
-        <ValidationStatus state={dryRunState} result={dryRunResult} />
-      )}
     </Stack>
   );
 }
@@ -501,6 +267,7 @@ export function useStep1Validation(canImport: boolean): boolean {
     notificationsYamlFile,
     notificationsTemplateFiles,
     autoSyncNotificationsEnabled,
+    notificationsDatasourceName,
   ] = watch([
     'notificationsSource',
     'policyTreeName',
@@ -508,9 +275,18 @@ export function useStep1Validation(canImport: boolean): boolean {
     'notificationsYamlFile',
     'notificationsTemplateFiles',
     'autoSyncNotificationsEnabled',
+    'notificationsDatasourceName',
   ]);
 
+  // The sync fails on a taken name, so Next stays blocked until it is renamed.
+  const autoSyncPrediction = useAutoSyncPrediction(
+    isAutoSyncSelected(autoSyncNotificationsEnabled ?? false, notificationsSource),
+    notificationsDatasourceUID,
+    notificationsDatasourceName
+  );
+
   const hasStep1Errors =
+    Boolean(autoSyncPrediction?.conflict) ||
     Boolean(errors.notificationsSource) ||
     Boolean(errors.policyTreeName) ||
     Boolean(errors.notificationsDatasourceUID) ||
@@ -543,21 +319,33 @@ function AlertmanagerDataSourceSelect({ autoSyncEligibleAlertmanagers }: Alertma
   // badged yet regardless.
   const shouldAnnotateAutoSync = isAutoSyncSegmentEnabled();
 
-  const alertmanagerOptions: Array<SelectableValue<string>> = useMemo(() => {
-    return getAlertManagerDataSources().map((ds) => ({
-      label: ds.name,
-      value: ds.uid,
-      imgUrl: ds.meta.info.logos.small,
-      description: ds.url || undefined,
-      supportsAutoSync: shouldAnnotateAutoSync
-        ? autoSyncEligibleAlertmanagers.some((m) => m.uid === ds.uid)
-        : undefined,
-    }));
-  }, [autoSyncEligibleAlertmanagers, shouldAnnotateAutoSync]);
+  const alertmanagerOptions = useAlertmanagerDataSourceOptions(autoSyncEligibleAlertmanagers, {
+    annotateAutoSync: shouldAnnotateAutoSync,
+  });
+
+  // A plain Prometheus Alertmanager has no config endpoint. It only shares its configuration through its
+  // status page, with every credential replaced by "<secret>", so importing from it would leave contact
+  // points that can't send. Its YAML file has the real values.
+  const options = useMemo(
+    () =>
+      alertmanagerOptions.map((option) =>
+        typeof option.label === 'string' && isVanillaPrometheusAlertManagerDataSource(option.label)
+          ? {
+              ...option,
+              isDisabled: true,
+              description: t(
+                'alerting.import-to-gma.step1.datasource-prometheus-unsupported',
+                "Doesn't share its full configuration. Upload its YAML file instead."
+              ),
+            }
+          : option
+      ),
+    [alertmanagerOptions]
+  );
 
   return (
     <DataSourceSelectField
-      options={alertmanagerOptions}
+      options={options}
       noOptionsMessage={t('alerting.import-to-gma.step1.no-datasources', 'No Alertmanager data sources found')}
     />
   );
@@ -577,6 +365,28 @@ function DataSourceSelectField({ options, noOptionsMessage }: DataSourceSelectFi
     formState: { errors },
   } = useFormContext<ImportFormValues>();
 
+  // Cleared, which lets the user back out of this step. A policy tree name that was only filled in from this
+  // datasource goes with it, so the step can read as empty again.
+  const handleClear = (onChange: (value: undefined) => void) => {
+    const previousName = getValues('notificationsDatasourceName');
+    if (previousName && getValues('policyTreeName') === kebabCase(previousName)) {
+      setValue('policyTreeName', '');
+    }
+    onChange(undefined);
+    setValue('notificationsDatasourceName', null);
+  };
+
+  const handleSelect = (uid: string, onChange: (value: string) => void) => {
+    onChange(uid);
+    const ds = options.find((o) => o.value === uid);
+    const dsName = typeof ds?.label === 'string' ? ds.label : undefined;
+    setValue('notificationsDatasourceName', dsName ?? null);
+
+    if (!getValues('policyTreeName') && dsName) {
+      setValue('policyTreeName', kebabCase(dsName));
+    }
+  };
+
   return (
     <Field
       label={t('alerting.import-to-gma.step1.datasource', 'Alertmanager data source')}
@@ -590,46 +400,17 @@ function DataSourceSelectField({ options, noOptionsMessage }: DataSourceSelectFi
           <Select
             {...field}
             options={options}
-            onChange={(selected) => {
-              if (selected?.value) {
-                onChange(selected.value);
-                const ds = options.find((o) => o.value === selected.value);
-                const dsName = typeof ds?.label === 'string' ? ds.label : undefined;
-                setValue('notificationsDatasourceName', dsName ?? null);
-
-                // Auto-populate policy tree name with sanitized datasource name if empty
-                const currentPolicyTreeName = getValues('policyTreeName');
-                if (!currentPolicyTreeName && dsName) {
-                  setValue('policyTreeName', kebabCase(dsName));
-                }
-              }
-            }}
+            onChange={(selected) => (selected?.value ? handleSelect(selected.value, onChange) : handleClear(onChange))}
+            isClearable
             placeholder={t('alerting.import-to-gma.step1.select-datasource', 'Select data source')}
             width={40}
             noOptionsMessage={noOptionsMessage}
-            components={{ Option: CustomOption }}
+            components={{ Option: AlertmanagerDataSourceOption }}
           />
         )}
         control={control}
         name="notificationsDatasourceUID"
       />
     </Field>
-  );
-}
-
-/** Adds an inline "Auto-sync" badge next to datasources that support it — mirrors AlertManagerPicker's CustomOption. */
-function CustomOption(props: ComponentProps<typeof SelectMenuOptions>) {
-  return (
-    <SelectMenuOptions
-      {...props}
-      renderOptionLabel={({ label, supportsAutoSync }) => (
-        <Stack direction="row" alignItems="center" gap={1}>
-          <span>{label}</span>
-          {supportsAutoSync && (
-            <Badge text={t('alerting.import-to-gma.step1.datasource-autosync-badge', 'Auto-sync')} color="green" />
-          )}
-        </Stack>
-      )}
-    />
   );
 }

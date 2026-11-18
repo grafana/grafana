@@ -82,10 +82,11 @@ type UpdateUserCommand struct {
 	Login string `json:"login"`
 	Theme string `json:"theme"`
 
-	UserID         int64 `json:"-"`
-	IsDisabled     *bool `json:"-"`
-	EmailVerified  *bool `json:"-"`
-	IsGrafanaAdmin *bool `json:"-"`
+	UserID         int64  `json:"-"`
+	UID            string `json:"-"`
+	IsDisabled     *bool  `json:"-"`
+	EmailVerified  *bool  `json:"-"`
+	IsGrafanaAdmin *bool  `json:"-"`
 	// If password is included it will be validated, hashed and updated for user.
 	Password *Password `json:"-"`
 	// If old password is included it will be validated against users current password.
@@ -100,6 +101,9 @@ type UpdateUserCommand struct {
 type UpdateUserLastSeenAtCommand struct {
 	UserID int64
 	OrgID  int64
+
+	// LastSeenAt is the previously observed timestamp, used to avoid a redundant lookup.
+	LastSeenAt time.Time
 }
 
 type ListUserResult struct {
@@ -198,9 +202,12 @@ type BatchDisableUsersCommand struct {
 
 type GetSignedInUserQuery struct {
 	UserID int64 `xorm:"user_id"`
-	Login  string
-	Email  string
-	OrgID  int64 `xorm:"org_id"`
+
+	// UserUID selects the Kubernetes user directly; legacy lookups still use UserID.
+	UserUID string
+	Login   string
+	Email   string
+	OrgID   int64 `xorm:"org_id"`
 	// SkipTeamLookup returns identity fields without populating TeamIDs or TeamUIDs.
 	SkipTeamLookup bool
 }

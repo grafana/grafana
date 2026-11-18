@@ -11,6 +11,7 @@ import (
 	"github.com/cespare/xxhash/v2"
 	jose "github.com/go-jose/go-jose/v4"
 	"github.com/go-jose/go-jose/v4/jwt"
+	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/singleflight"
@@ -24,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -43,9 +45,10 @@ func ProvideService(
 	s := &Service{
 		cfg: cfg, logger: log.New("id-service"),
 		signer: signer, cache: cache,
-		metrics:  newMetrics(reg),
-		nsMapper: request.GetNamespaceMapper(cfg),
-		tracer:   tracer,
+		metrics:           newMetrics(reg),
+		nsMapper:          request.GetNamespaceMapper(cfg),
+		tracer:            tracer,
+		openFeatureClient: openfeature.NewDefaultClient(),
 	}
 
 	authnService.RegisterPostAuthHook(s.SyncIDToken, 140)
@@ -62,6 +65,8 @@ type Service struct {
 	metrics  *metrics
 	tracer   trace.Tracer
 	nsMapper request.NamespaceMapper
+
+	openFeatureClient *openfeature.Client
 }
 
 func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (string, *authnlib.Claims[authnlib.IDTokenClaims], error) {
@@ -73,22 +78,25 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 	}(time.Now())
 
 	cacheKey := s.getCacheKey(id)
+	cacheDisabled := s.cacheDisabled(ctx)
 
 	type resultType struct {
 		token    string
 		idClaims *auth.IDClaims
 	}
-	result, err, _ := s.si.Do(cacheKey, func() (any, error) {
-		cachedToken, err := s.cache.Get(ctx, cacheKey)
-		if err == nil {
-			s.metrics.tokenSigningFromCacheCounter.Inc()
-			s.logger.FromContext(ctx).Debug("Cached token found", "id", id.GetID())
+	load := func() (any, error) {
+		if !cacheDisabled {
+			cachedToken, err := s.cache.Get(ctx, cacheKey)
+			if err == nil {
+				s.metrics.tokenSigningFromCacheCounter.Inc()
+				s.logger.FromContext(ctx).Debug("Cached token found", "id", id.GetID())
 
-			tokenClaims, err := s.extractTokenClaims(string(cachedToken))
-			if err != nil {
-				return resultType{}, err
+				tokenClaims, err := s.extractTokenClaims(string(cachedToken))
+				if err != nil {
+					return resultType{}, err
+				}
+				return resultType{token: string(cachedToken), idClaims: tokenClaims}, nil
 			}
-			return resultType{token: string(cachedToken), idClaims: tokenClaims}, nil
 		}
 
 		s.metrics.tokenSigningCounter.Inc()
@@ -126,7 +134,7 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 		token, err := s.signer.SignIDToken(ctx, idClaims)
 		if err != nil {
 			s.metrics.failedTokenSigningCounter.Inc()
-			return resultType{}, nil
+			return resultType{}, fmt.Errorf("failed to sign id token: %w", err)
 		}
 
 		extracted, err := s.extractTokenClaims(token)
@@ -134,13 +142,24 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 			return resultType{}, err
 		}
 
-		expires := time.Until(extracted.Expiry.Time())
-		if err := s.cache.Set(ctx, cacheKey, []byte(token), expires-cacheLeeway); err != nil {
-			s.logger.FromContext(ctx).Error("Failed to add id token to cache", "error", err)
+		if !cacheDisabled {
+			expires := time.Until(extracted.Expiry.Time())
+			if err := s.cache.Set(ctx, cacheKey, []byte(token), expires-cacheLeeway); err != nil {
+				s.logger.FromContext(ctx).Error("Failed to add id token to cache", "error", err)
+			}
 		}
 
 		return resultType{token: token, idClaims: idClaims}, nil
-	})
+	}
+
+	var result any
+	var err error
+	if cacheDisabled {
+		// Skip singleflight so overlapping authentications don't share one token.
+		result, err = load()
+	} else {
+		result, err, _ = s.si.Do(cacheKey, load)
+	}
 
 	if err != nil {
 		return "", nil, err
@@ -152,6 +171,10 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 func (s *Service) RemoveIDToken(ctx context.Context, id identity.Requester) error {
 	ctx, span := s.tracer.Start(ctx, "user.sync.RemoveIDToken")
 	defer span.End()
+
+	if s.cacheDisabled(ctx) {
+		return nil
+	}
 
 	return s.cache.Delete(ctx, s.getCacheKey(id))
 }
@@ -206,8 +229,32 @@ func getAudience(orgID int64) jwt.Audience {
 	return jwt.Audience{fmt.Sprintf("org:%d", orgID)}
 }
 
+func (s *Service) cacheDisabled(ctx context.Context) bool {
+	return s.openFeatureClient.Boolean(ctx, featuremgmt.FlagIdTokenCacheDisabled, false, openfeature.TransactionContext(ctx))
+}
+
+// getCacheKey must include every input of the signed claims that can differ between two
+// authentications of the same identity. authenticatedBy is one of them: a render (for example a
+// scheduled report) and the user's browser session sign in as the same user, and without it in
+// the key one would get the other's token. The same goes for the user attributes (email, login,
+// name): a changed value must produce a new key.
 func (s *Service) getCacheKey(ident identity.Requester) string {
-	return cachePrefix + ident.GetCacheKey() + string(ident.GetOrgRole()) + hashGroups(s.resolveGroupsClaim(ident))
+	return cachePrefix + ident.GetCacheKey() + string(ident.GetOrgRole()) + ident.GetAuthenticatedBy() +
+		hashGroups(s.resolveGroupsClaim(ident)) + hashUserClaims(ident)
+}
+
+// hashUserClaims covers the claims that are only set for users, see SignIdentity.
+func hashUserClaims(ident identity.Requester) string {
+	if !ident.IsIdentityType(claims.TypeUser) {
+		return ""
+	}
+
+	h := xxhash.New()
+	for _, v := range []string{ident.GetEmail(), strconv.FormatBool(ident.GetEmailVerified()), ident.GetLogin(), ident.GetName()} {
+		_, _ = h.WriteString(v)
+		_, _ = h.Write([]byte{0})
+	}
+	return strconv.FormatUint(h.Sum64(), 16)
 }
 
 func shouldLogErr(err error) bool {

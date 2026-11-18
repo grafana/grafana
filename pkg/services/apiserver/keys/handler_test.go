@@ -21,7 +21,7 @@ import (
 	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	storagev0 "github.com/grafana/grafana/pkg/apis/storage/v0alpha1"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -88,7 +88,7 @@ func do(t *testing.T, store *fakeStore, ident claims.AuthInfo, body string) *htt
 	return rec
 }
 
-func TestListKeys_ProjectsOntoPartialObjectMetadataList(t *testing.T) {
+func TestListKeys_ProjectsOntoListKeyResponse(t *testing.T) {
 	store := &fakeStore{rsp: &resourcepb.ListResponse{
 		ResourceVersion: 4242,
 		NextPageToken:   "next-please",
@@ -102,11 +102,11 @@ func TestListKeys_ProjectsOntoPartialObjectMetadataList(t *testing.T) {
 	require.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
 
 	// Decoded with the real type, not just JSON that looks like one.
-	var got metav1.PartialObjectMetadataList
+	var got storagev0.ListKeyResponse
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &got))
 
-	assert.Equal(t, "PartialObjectMetadataList", got.Kind)
-	assert.Equal(t, "meta.k8s.io/v1", got.APIVersion)
+	assert.Equal(t, storagev0.KindListKeyResponse, got.Kind)
+	assert.Equal(t, storagev0.APIVERSION, got.APIVersion)
 
 	assert.Equal(t, "4242", got.ResourceVersion)
 	assert.Equal(t, "next-please", got.Continue)
@@ -115,13 +115,20 @@ func TestListKeys_ProjectsOntoPartialObjectMetadataList(t *testing.T) {
 	assert.Equal(t, "ns-one", got.Items[0].Namespace)
 	assert.Equal(t, "aaa", got.Items[0].Name)
 	assert.Equal(t, "11", got.Items[0].ResourceVersion)
-	assert.Equal(t, map[string]string{utils.AnnoKeyFolder: "folder-a"}, got.Items[0].Annotations)
+	assert.Equal(t, "folder-a", got.Items[0].Folder)
 
-	// No folder stays absent rather than becoming an empty annotation.
 	assert.Equal(t, "ns-two", got.Items[1].Namespace)
 	assert.Equal(t, "bbb", got.Items[1].Name)
 	assert.Equal(t, "22", got.Items[1].ResourceVersion)
-	assert.Empty(t, got.Items[1].Annotations)
+	assert.Empty(t, got.Items[1].Folder)
+
+	// No folder stays absent rather than becoming an empty string.
+	var raw struct {
+		Items []map[string]any `json:"items"`
+	}
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &raw))
+	require.Len(t, raw.Items, 2)
+	assert.NotContains(t, raw.Items[1], "folder")
 
 	require.Len(t, store.calls, 1)
 	sent := store.calls[0]
@@ -305,20 +312,13 @@ func TestListKeys_RequiresWildcardNamespaceScope(t *testing.T) {
 	}
 }
 
-// The backend reports failures in the payload as well as over the transport, so
-// both have to become an HTTP status rather than a 200 with no items.
+// Storage failures have to become an HTTP status rather than a 200 with no items.
 func TestListKeys_SurfacesErrors(t *testing.T) {
 	for name, tc := range map[string]struct {
 		store    *fakeStore
 		wantCode int
 		exact    bool
 	}{
-		"payload error": {
-			store: &fakeStore{rsp: &resourcepb.ListResponse{
-				Error: &resourcepb.ErrorResult{Code: http.StatusBadRequest, Message: "nope"},
-			}},
-			wantCode: http.StatusBadRequest,
-		},
 		"transport error": {
 			store:    &fakeStore{err: fmt.Errorf("boom")},
 			wantCode: http.StatusInternalServerError,
@@ -341,6 +341,15 @@ func TestListKeys_SurfacesErrors(t *testing.T) {
 			assert.NotEqual(t, http.StatusOK, rec.Code)
 		})
 	}
+}
+
+// An unstructured gRPC failure carries server internals in its message; the
+// response keeps the status code but must not echo them to the caller.
+func TestListKeys_HidesUnstructuredGRPCMessage(t *testing.T) {
+	const internal = "sql: connection to 10.0.0.7 refused"
+	rec := do(t, &fakeStore{err: status.Error(codes.Internal, internal)}, serviceIdentity(), `{}`)
+	require.Equal(t, http.StatusInternalServerError, rec.Code, rec.Body.String())
+	assert.NotContains(t, rec.Body.String(), internal)
 }
 
 // Mirrors how the resource server reports a failure over gRPC: a status whose
@@ -369,7 +378,7 @@ func TestListKeys_ReportsPerItemNamespace(t *testing.T) {
 	rec := do(t, store, serviceIdentity(), `{}`)
 	require.Equal(t, http.StatusOK, rec.Code, rec.Body.String())
 
-	var got metav1.PartialObjectMetadataList
+	var got storagev0.ListKeyResponse
 	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &got))
 	require.Len(t, got.Items, 3)
 

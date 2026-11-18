@@ -1,7 +1,8 @@
-import { type Locator, type Page } from '@playwright/test';
+import { type APIRequestContext, type Locator, type Page } from '@playwright/test';
 
 import { type DashboardPage, type E2ESelectorGroups, expect, test } from '@grafana/plugin-e2e';
 
+import { type Spec as DashboardV2Spec } from '../../../packages/grafana-schema/src/schema/dashboard/v2';
 import type { Panels, Rows, Tabs } from '../page-objects';
 
 /**
@@ -47,13 +48,6 @@ export async function getPanelBox(
   expect(boundingBox, `Panel "${panelTitle}" should have a bounding box`).not.toBeNull();
 
   return boundingBox!;
-}
-
-export async function movePanel(panels: Panels, sourcePanel: string | RegExp, targetPanel: string | RegExp) {
-  await test.step(`Move panel "${sourcePanel}" onto "${targetPanel}"`, async () => {
-    // Perform drag and drop; pixel-sensitive mechanics stay out of page objects
-    await panels.getHeader(sourcePanel).dragTo(panels.getHeader(targetPanel));
-  });
 }
 
 export async function getTabBox(
@@ -111,11 +105,157 @@ export async function moveRow(
   );
 }
 
+export type Point = { x: number; y: number };
+
+/** A drag in progress, started by `startPointerDrag`: the pointer button stays pressed until `drop()` */
+export interface PointerDrag {
+  /**
+   * Moves the held pointer over the target, at its center by default
+   * @param position offset from the target's top-left corner, like Playwright's `position` option
+   */
+  moveTo(target: Locator, options?: { position?: Point; steps?: number }): Promise<void>;
+  /** Moves the held pointer to viewport coordinates, which may lie outside the viewport */
+  moveToPoint(point: Point, options?: { steps?: number }): Promise<void>;
+  /** Presses Escape while the pointer is still held */
+  pressEscape(): Promise<void>;
+  /** Releases the pointer where it currently is */
+  drop(): Promise<void>;
+}
+
+async function getCenter(target: Locator, position?: Point): Promise<Point> {
+  const box = await target.boundingBox();
+  expect(box, 'Drag target should have a bounding box').not.toBeNull();
+
+  return position
+    ? { x: box!.x + position.x, y: box!.y + position.y }
+    : { x: box!.x + box!.width / 2, y: box!.y + box!.height / 2 };
+}
+
+/**
+ * Presses the pointer on `source` and nudges it far enough to pass every drag engine's start
+ * threshold, then hands back a `PointerDrag` to move and release it in separate steps.
+ * Only real pointer events are used (no `locator.dragTo()`, no keyboard dragging), so the
+ * gesture stays valid whichever drag-and-drop library the dashboard uses.
+ * Pointer moves are interpolated in several steps because drag engines ignore a single jump.
+ */
+export async function startPointerDrag(
+  page: Page,
+  sourceName: string,
+  source: Locator,
+  options?: { position?: Point }
+): Promise<PointerDrag> {
+  const DEFAULT_STEPS = 10;
+  let current: Point = { x: 0, y: 0 };
+
+  const moveToPoint = async (point: Point, { steps = DEFAULT_STEPS }: { steps?: number } = {}) => {
+    await page.mouse.move(point.x, point.y, { steps });
+    current = point;
+  };
+
+  await test.step(`Start dragging ${sourceName}`, async () => {
+    // Entering edit mode can remount the drag handle while the drag library loads.
+    await source.hover({ position: options?.position });
+    current = await getCenter(source, options?.position);
+    await page.mouse.move(current.x, current.y);
+    await page.mouse.down();
+    await moveToPoint({ x: current.x, y: current.y + 10 }, { steps: 5 });
+  });
+
+  return {
+    moveTo: (target, moveOptions) =>
+      test.step(`Drag ${sourceName} over target`, async () => {
+        await moveToPoint(await getCenter(target, moveOptions?.position), moveOptions);
+      }),
+    moveToPoint: (point, moveOptions) =>
+      test.step(`Drag ${sourceName} to (${point.x}, ${point.y})`, async () => {
+        await moveToPoint(point, moveOptions);
+      }),
+    pressEscape: () =>
+      test.step(`Press Escape while dragging ${sourceName}`, async () => {
+        await page.keyboard.press('Escape');
+      }),
+    drop: () =>
+      test.step(`Drop ${sourceName} at (${current.x}, ${current.y})`, async () => {
+        await page.mouse.up();
+      }),
+  };
+}
+
+/**
+ * Drags `source` onto `target` and releases it there, as a single step named after both in the report.
+ * `target` is either a locator, whose center is the drop point, or a callback that measures the
+ * drop point once the drag has started, since starting it may scroll or change the layout.
+ * Drags that need intermediate moves or checks before the release use `startPointerDrag` directly.
+ */
+export async function dragAndDrop(
+  page: Page,
+  sourceName: string,
+  source: Locator,
+  targetName: string,
+  target: Locator | (() => Promise<Point>)
+) {
+  await test.step(`Drag ${sourceName} to ${targetName}`, async () => {
+    const drag = await startPointerDrag(page, sourceName, source);
+    if (typeof target === 'function') {
+      await drag.moveToPoint(await target());
+    } else {
+      await drag.moveTo(target);
+    }
+    await drag.drop();
+  });
+}
+
 export async function undockMegaMenu(dashboardPage: DashboardPage, selectors: E2ESelectorGroups) {
   await test.step('Undock the mega menu', async () => {
     await dashboardPage
       .getByGrafanaSelector(selectors.components.NavMenu.Menu)
       .getByRole('button', { name: 'Undock menu' })
       .click();
+  });
+}
+
+export async function getGrafanaBuildVersion(page: Page): Promise<string> {
+  const version = await page.evaluate(() => window.grafanaBootData.settings.buildInfo.version);
+  expect(version, `Grafana build version: ${version}`).toEqual(expect.stringMatching(/\S/));
+  return version;
+}
+
+/**
+ * Creates a fresh dashboard and returns its UID and URL.
+ * Pass a spec built with the running Grafana version.
+ * This way of creating dashboards is not only helpful to speed up test execution but also because
+ * stale panel versions in saved JSON fixtures can update when hidden panels first load in edit mode,
+ * triggering an unexpected unsaved-changes prompt on exit.
+ */
+export async function createDashboardViaAPI(
+  request: APIRequestContext,
+  selectors: E2ESelectorGroups,
+  spec: DashboardV2Spec
+): Promise<{ uid: string; url: string }> {
+  return test.step('Create dashboard via API', async () => {
+    const response = await request.post('/apis/dashboard.grafana.app/v2beta1/namespaces/stacks-12345/dashboards', {
+      data: {
+        metadata: {
+          generateName: 'conditional-rendering-',
+          annotations: {
+            'grafana.app/folder': '',
+            'grafana.app/grant-permissions': 'default',
+          },
+        },
+        spec,
+      },
+    });
+
+    if (!response.ok()) {
+      throw new Error(`Failed to create dashboard: HTTP ${response.status()}: ${response.statusText()}`);
+    }
+
+    const dashboard = await response.json();
+    const uid = dashboard?.metadata?.name;
+    if (typeof uid !== 'string' || uid.trim() === '') {
+      throw new Error('Failed to create dashboard: the response did not contain a dashboard UID');
+    }
+
+    return { uid, url: selectors.pages.Dashboard.url(uid) };
   });
 }

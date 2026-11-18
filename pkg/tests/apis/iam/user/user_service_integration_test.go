@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
@@ -709,6 +711,59 @@ func TestIntegrationUserServiceOrgUsers(t *testing.T) {
 				require.Equal(t, 200, searchRsp.Response.StatusCode, "body: %s", string(searchRsp.Body))
 
 				require.ElementsMatch(t, logins(searchRsp.Result.OrgUsers), logins(*listRsp.Result))
+			})
+			t.Run("GET /api/org/users/lookup respects directory visibility", func(t *testing.T) {
+				scopeAttr, scopeID := "id", strconv.FormatInt(firstUser.Result.ID, 10)
+				if mode >= rest.Mode4 {
+					// Unified-only users have no legacy SQL row for the ID-to-UID resolver.
+					scopeAttr, scopeID = "uid", firstUser.Result.UID
+				}
+				scoped := helper.CreateUser("lookup-scoped", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+					{Actions: []string{accesscontrol.ActionOrgUsersRead}, Resource: "users", ResourceAttribute: scopeAttr, ResourceID: scopeID},
+				})
+				teamPermissionsOnly := helper.CreateUser("lookup-team-permissions", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+					{Actions: []string{accesscontrol.ActionTeamsPermissionsWrite}, Resource: "teams", ResourceAttribute: "id", ResourceID: "*"},
+				})
+				hs := helper.GetEnv().Server.HTTPServer
+				cfg := helper.GetEnv().Cfg
+				// Route authorization is registered with the startup license; swapping it below only changes the handler.
+				routeEnforcement := hs.License.FeatureEnabled("accesscontrol.enforcement")
+				for _, tt := range []struct {
+					name    string
+					enforce bool
+					hidden  bool
+					caller  apis.User
+					want    []string
+				}{
+					{name: "team permission writers respect route enforcement", caller: teamPermissionsOnly, want: []string{"org-user-one", "org-user-two"}},
+					{name: "team permission writers cannot see hidden users", hidden: true, caller: teamPermissionsOnly, want: []string{"org-user-one"}},
+					{name: "without enforcement scoped callers see the directory", caller: scoped, want: []string{"org-user-one", "org-user-two"}},
+					{name: "handler enforcement limits callers to their allowed users", enforce: true, caller: scoped, want: []string{"org-user-one"}},
+					{name: "hidden users stay hidden without enforcement", hidden: true, caller: scoped, want: []string{"org-user-one"}},
+					{name: "server admins can see hidden users", hidden: true, caller: helper.Org1.Admin, want: []string{"org-user-one", "org-user-two"}},
+				} {
+					t.Run(tt.name, func(t *testing.T) {
+						oldLicense, oldHidden := hs.License, cfg.HiddenUsers
+						t.Cleanup(func() { hs.License, cfg.HiddenUsers = oldLicense, oldHidden })
+						license := licensingtest.NewFakeLicensing()
+						license.On("FeatureEnabled", "accesscontrol.enforcement").Return(tt.enforce)
+						hs.License = license
+						if tt.hidden {
+							cfg.HiddenUsers = map[string]struct{}{"org-user-two": {}}
+						}
+						require.EventuallyWithT(t, func(collect *assert.CollectT) {
+							rsp := apis.DoRequest(helper, apis.RequestParams{
+								User: tt.caller, Method: "GET", Path: "/api/org/users/lookup?query=org-user-",
+							}, &[]orgUser{})
+							if routeEnforcement && tt.caller.Identity.GetUID() == teamPermissionsOnly.Identity.GetUID() {
+								assert.Equal(collect, 403, rsp.Response.StatusCode, "body: %s", rsp.Body)
+								return
+							}
+							assert.Equal(collect, 200, rsp.Response.StatusCode, "body: %s", rsp.Body)
+							assert.ElementsMatch(collect, tt.want, logins(*rsp.Result))
+						}, 10*time.Second, 100*time.Millisecond)
+					})
+				}
 			})
 		})
 	}

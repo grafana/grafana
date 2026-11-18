@@ -64,6 +64,23 @@ describe('canonicalZoneName', () => {
   });
 });
 
+describe('zones that abolished DST in 2026 (tzdata 2026b-2026e)', () => {
+  // BC, Alberta, NWT and Manitoba stay on their former DST offset after
+  // 2026-11-01 instead of falling back; the years before keep the old cycle.
+  it.each([
+    ['America/Vancouver', '-08:00', '-07:00'],
+    ['America/Edmonton', '-07:00', '-06:00'],
+    ['America/Inuvik', '-07:00', '-06:00'],
+    ['America/Winnipeg', '-06:00', '-05:00'],
+  ])('%s stays on %s -> %s year-round from 2026-11', (zone, standard, permanent) => {
+    expect(findTimeZoneAt(zone, Date.UTC(2025, 0, 15))?.offsetDisplay).toBe(standard);
+    expect(findTimeZoneAt(zone, Date.UTC(2025, 6, 15))?.offsetDisplay).toBe(permanent);
+    expect(findTimeZoneAt(zone, Date.UTC(2026, 11, 1, 12))?.offsetDisplay).toBe(permanent);
+    expect(findTimeZoneAt(zone, Date.UTC(2027, 0, 15))?.offsetDisplay).toBe(permanent);
+    expect(findTimeZoneAt(zone, Date.UTC(2027, 6, 15))?.offsetDisplay).toBe(permanent);
+  });
+});
+
 describe('on runtimes that list only canonical zone ids (e.g. Firefox)', () => {
   it('still resolves persisted legacy spellings', async () => {
     // Node's ICU lists the legacy Asia/Calcutta (like Chrome). Simulate a

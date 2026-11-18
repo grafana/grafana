@@ -67,12 +67,11 @@ type Parser interface {
 }
 
 type parserFactory struct {
-	ClientFactory         ClientFactory
-	folderMetadataEnabled bool
+	ClientFactory ClientFactory
 }
 
-func NewParserFactory(clientFactory ClientFactory, folderMetadataEnabled bool) ParserFactory {
-	return &parserFactory{clientFactory, folderMetadataEnabled}
+func NewParserFactory(clientFactory ClientFactory) ParserFactory {
+	return &parserFactory{clientFactory}
 }
 
 func (f *parserFactory) GetParser(ctx context.Context, repo repository.Reader) (Parser, error) {
@@ -91,11 +90,10 @@ func (f *parserFactory) GetParser(ctx context.Context, repo repository.Reader) (
 			Namespace: config.Namespace,
 			Name:      config.Name,
 		},
-		reader:                repo,
-		urls:                  urls,
-		clients:               clients,
-		config:                config,
-		folderMetadataEnabled: f.folderMetadataEnabled,
+		reader:  repo,
+		urls:    urls,
+		clients: clients,
+		config:  config,
 	}, nil
 }
 
@@ -113,8 +111,6 @@ type parser struct {
 
 	// ResourceClients give access to k8s apis
 	clients ResourceClients
-
-	folderMetadataEnabled bool
 }
 
 type ParsedResource struct {
@@ -202,9 +198,9 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 
 	if parsed.GVK.Group == folder.GROUP && parsed.GVK.Kind == folder.FolderResourceInfo.GroupVersionKind().Kind {
 		// _folder.json is a system-managed folder manifest written by the provisioning
-		// layer when the provisioningFolderMetadata flag is on. It is the only folder-typed
-		// file allowed through the files endpoint (e.g. for GET requests).
-		if !r.folderMetadataEnabled || !IsFolderMetadataFile(info.Path) {
+		// layer. It is the only folder-typed file allowed through the files endpoint
+		// (e.g. for GET requests).
+		if !IsFolderMetadataFile(info.Path) {
 			return nil, NewResourceValidationError(errors.New("cannot declare folders through files"))
 		}
 	}
@@ -284,13 +280,12 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 }
 
 // resolveFolderID derives the folder annotation value for a folder-contained
-// resource from its file path. When folder metadata is enabled and the parent
-// directory has a _folder.json, its stable UID is preferred over the
-// hash-derived ID.
+// resource from its file path. When the parent directory has a _folder.json,
+// its stable UID is preferred over the hash-derived ID.
 func (r *parser) resolveFolderID(ctx context.Context, info *repository.FileInfo) string {
 	dirPath := safepath.Dir(info.Path)
 	// _folder.json represents the directory it lives in, so its parent is one level above.
-	if r.folderMetadataEnabled && IsFolderMetadataFile(info.Path) {
+	if IsFolderMetadataFile(info.Path) {
 		dirPath = safepath.Dir(dirPath)
 	}
 	if dirPath == "" {
@@ -298,9 +293,9 @@ func (r *parser) resolveFolderID(ctx context.Context, info *repository.FileInfo)
 	}
 
 	folderID := ParseFolder(dirPath, r.repo.Name).ID
-	// When folder metadata is enabled and the parent folder has a _folder.json,
+	// When the parent folder has a _folder.json,
 	// use the stable UID from that file instead of the hash-derived one.
-	if r.folderMetadataEnabled && r.reader != nil {
+	if r.reader != nil {
 		if meta, _, err := ReadFolderMetadata(ctx, r.reader, dirPath, info.Ref); err == nil && meta.Name != "" {
 			folderID = meta.Name
 		} else if err != nil && errors.Is(err, repository.ErrRefNotFound) {
@@ -698,4 +693,25 @@ func (f *ParsedResource) AsResourceWrapper() *provisioning.ResourceWrapper {
 	}
 
 	return wrap
+}
+
+func (f *ParsedResource) loadExisting(ctx context.Context) error {
+	if f.Existing != nil || f.Client == nil || f.DryRunResponse != nil {
+		return nil
+	}
+
+	ctx, _, err := identity.WithProvisioningIdentity(ctx, f.Obj.GetNamespace())
+	if err != nil {
+		return err
+	}
+
+	existing, err := f.Client.Get(ctx, f.Obj.GetName(), metav1.GetOptions{})
+	if apierrors.IsNotFound(err) {
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("get existing resource: %w", err)
+	}
+	f.Existing = existing
+	return nil
 }

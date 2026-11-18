@@ -109,6 +109,7 @@ describe('readNotebookShape', () => {
       nonEmptyCellCount: 4,
       textCellCount: 2,
       codeCellCount: 1,
+      codeLanguages: ['promql'],
       configuredPanelCount: 1,
       datasourceCount: 1,
     });
@@ -125,6 +126,7 @@ describe('readNotebookShape', () => {
       nonEmptyCellCount: 0,
       textCellCount: 0,
       codeCellCount: 0,
+      codeLanguages: [],
       configuredPanelCount: 0,
       datasourceCount: 0,
     });

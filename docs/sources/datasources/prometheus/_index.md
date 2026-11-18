@@ -56,6 +56,10 @@ After you configure the Prometheus data source, you can:
 - Save and reuse PromQL queries across dashboards, Explore, and annotations with [saved queries](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/panels-visualizations/query-transform-data/#saved-queries) (available in Grafana Enterprise and Grafana Cloud)
 - Build a wide variety of [visualizations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/)
 
+To see the Prometheus data source in action, explore this demo dashboard on Grafana Play:
+
+{{< docs/play title="The Four Golden Signals" url="https://play.grafana.org/d/000000109/" >}}
+
 ## Cloud-managed Prometheus services
 
 {{< admonition type="note" >}}

@@ -14,6 +14,7 @@ import (
 	"google.golang.org/grpc/backoff"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
+	_ "google.golang.org/grpc/health" // Register client-side health checking.
 	"google.golang.org/grpc/keepalive"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/options"
@@ -279,7 +280,7 @@ func (o *StorageOptions) ApplyTo(serverConfig *genericapiserver.RecommendedConfi
 
 	const resourceStoreAudience = "resourceStore"
 
-	unified, err := resource.NewRemoteResourceClient(tracer, conn, indexConn, resource.RemoteResourceClientConfig{
+	unified, err := resource.NewStandaloneRemoteResourceClient(tracer, conn, indexConn, resource.RemoteResourceClientConfig{
 		Token:            o.GrpcClientAuthenticationToken,
 		TokenExchangeURL: o.GrpcClientAuthenticationTokenExchangeURL,
 		Namespace:        o.GrpcClientAuthenticationTokenNamespace,
@@ -339,7 +340,7 @@ func (o *StorageOptions) buildGrpcDialOptions() []grpc.DialOption {
 		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpc.WithChainUnaryInterceptor(retryInterceptor),
-		grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy":"round_robin"}`),
+		grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy":"round_robin","healthCheckConfig":{"serviceName":""}}`),
 		grpc.WithConnectParams(grpc.ConnectParams{
 			Backoff: backoff.Config{
 				BaseDelay:  100 * time.Millisecond,

@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 
+	"github.com/grafana/authlib/types"
+	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 
@@ -11,6 +13,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/shadow"
+	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
@@ -22,9 +26,10 @@ func ProvideAccessControl(features featuremgmt.FeatureToggles) *AccessControl {
 	logger := log.New("accesscontrol")
 
 	return &AccessControl{
-		features,
-		logger,
-		accesscontrol.NewResolvers(logger),
+		features:          features,
+		log:               logger,
+		resolvers:         accesscontrol.NewResolvers(logger),
+		openFeatureClient: openfeature.NewDefaultClient(),
 	}
 }
 
@@ -32,10 +37,20 @@ func ProvideAccessControlTest() *AccessControl {
 	return ProvideAccessControl(featuremgmt.WithFeatures())
 }
 
+func ProvideScopeResolverRegistry(ac *AccessControl) *accesscontrol.ScopeResolverRegistry {
+	return ac.resolvers.ScopeResolverRegistry()
+}
+
 type AccessControl struct {
-	features  featuremgmt.FeatureToggles
-	log       log.Logger
-	resolvers accesscontrol.Resolvers
+	features            featuremgmt.FeatureToggles
+	log                 log.Logger
+	resolvers           accesscontrol.Resolvers
+	skipScopeResolution bool
+	openFeatureClient   *openfeature.Client
+	legacyCheckClient   legacyclient.LegacyAccessClient
+	legacyCheckShadow   *legacyCheckShadow
+	useExternalGroups   bool
+	legacyNamespace     types.NamespaceFormatter
 }
 
 func (a *AccessControl) Evaluate(ctx context.Context, user identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {
@@ -58,6 +73,26 @@ func (a *AccessControl) evaluate(ctx context.Context, user identity.Requester, e
 		return false, nil
 	}
 
+	const (
+		defaultLegacyCheck       = false
+		defaultLegacyCheckShadow = false
+	)
+	flagContext := openfeature.TransactionContext(ctx)
+	legacyEnabled := !shadow.IsShadow(ctx) &&
+		a.openFeatureClient.Boolean(ctx, featuremgmt.FlagAuthzUseLegacyCheck, defaultLegacyCheck, flagContext)
+	shadowEnabled := legacyEnabled &&
+		a.openFeatureClient.Boolean(ctx, featuremgmt.FlagAuthzUseLegacyCheckShadow, defaultLegacyCheckShadow, flagContext)
+	if shadowEnabled {
+		return a.legacyCheckShadow.evaluate(ctx, a, user, evaluator)
+	}
+	if legacyEnabled {
+		return a.evaluateLegacyCheck(ctx, user, evaluator)
+	}
+
+	return a.evaluateLocal(ctx, user, evaluator)
+}
+
+func (a *AccessControl) evaluateLocal(ctx context.Context, user identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {
 	// If the user is in no organization, then the evaluation must happen based on the user's global permissions
 	permissions := user.GetPermissions()
 	if user.GetOrgID() == accesscontrol.NoOrgID {
@@ -92,9 +127,15 @@ func (a *AccessControl) RegisterScopeAttributeResolver(prefix string, resolver a
 
 func (a *AccessControl) WithoutResolvers() accesscontrol.AccessControl {
 	return &AccessControl{
-		features:  a.features,
-		log:       a.log,
-		resolvers: accesscontrol.NewResolvers(a.log),
+		features:            a.features,
+		log:                 a.log,
+		resolvers:           accesscontrol.NewResolvers(a.log),
+		skipScopeResolution: true,
+		openFeatureClient:   a.openFeatureClient,
+		legacyCheckClient:   a.legacyCheckClient,
+		legacyCheckShadow:   a.legacyCheckShadow,
+		useExternalGroups:   a.useExternalGroups,
+		legacyNamespace:     a.legacyNamespace,
 	}
 }
 

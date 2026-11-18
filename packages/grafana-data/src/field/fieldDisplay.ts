@@ -1,4 +1,4 @@
-import { isEmpty } from 'lodash';
+import { isEmpty, toNumber } from 'lodash';
 
 import { DataFrameView } from '../dataframe/DataFrameView';
 import { getTimeField } from '../dataframe/processDataFrame';
@@ -449,8 +449,8 @@ function createNoValuesFieldDisplay(options: GetFieldDisplayValuesOptions): Fiel
     name: displayName,
     field: {
       ...defaults,
-      max: defaults.max ?? 0,
-      min: defaults.min ?? 0,
+      max: toNumber(defaults.max) || 0,
+      min: toNumber(defaults.min) || 0,
     },
     display: {
       text,

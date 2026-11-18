@@ -19,9 +19,9 @@ import (
 	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/registry/apis/appplugin"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/kindstore"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -33,7 +33,7 @@ type manifestBuilder struct {
 	manifest      *app.ManifestData
 	clientV3      appclientv3.Client
 	decrypter     *secureValueLookup
-	accessChecker appplugin.PluginAccessChecker
+	accessChecker pluginaccesscontrol.AppAccessChecker
 	accessClient  authlib.AccessChecker
 	search        resourcepb.ResourceIndexClient
 	store         resourcepb.ResourceStoreClient
@@ -155,7 +155,7 @@ func (b *manifestBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIG
 						return fmt.Errorf("kind %s in %s claims the already registered resource %q",
 							kind.Kind, gv.String(), resource)
 					}
-					storage[resource] = store
+					storage[resource] = b.withListScope(resource, store)
 					kinds[gv.WithResource(resource)] = store
 
 					if store.HasStatus() {
@@ -186,4 +186,14 @@ func (b *manifestBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIG
 
 func (b *manifestBuilder) AllowedV0Alpha1Resources() []string {
 	return []string{builder.AllResourcesAllowed}
+}
+
+// withListScope applies the kind's list scope to its served storage. Direct
+// reads (the getter) keep using the unwrapped store.
+func (b *manifestBuilder) withListScope(resource string, store *kindstore.Store) rest.Storage {
+	policy := b.kindPolicies[resource]
+	if policy.ownerFromName != nil {
+		return newOwnerScopedStore(store, policy.ownerFromName, b.accessClient)
+	}
+	return store
 }

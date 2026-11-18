@@ -5,6 +5,8 @@ import { locationService } from '@grafana/runtime';
 import { SceneRefreshPicker, SceneTimePicker, SceneTimeRange } from '@grafana/scenes';
 import { ModalRoot } from '@grafana/ui';
 
+import { NotebookAnalytics } from '../analytics/main';
+
 import { NotebookPrompt, needsConfirmBeforeLeaving } from './NotebookPrompt';
 import { NotebookScene } from './NotebookScene';
 import { NotebookCellItem } from './layout-notebook/NotebookCellItem';
@@ -184,5 +186,52 @@ describe('NotebookPrompt', () => {
 
     expect(screen.queryByText('This notebook is still saving')).not.toBeInTheDocument();
     expect(locationService.push).not.toHaveBeenCalled();
+  });
+
+  describe('reporting the answer', () => {
+    beforeEach(() => {
+      jest.spyOn(NotebookAnalytics, 'leavePromptResolved').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    it('reports leaving, with the reason the prompt came up', async () => {
+      const scene = buildScene();
+      scene.setState({ isEditing: true });
+      scene.autosave.setState({ status: 'saving' });
+      renderPrompt(scene);
+      block();
+
+      await userEvent.click(screen.getByRole('button', { name: 'Leave anyway' }));
+
+      expect(NotebookAnalytics.leavePromptResolved).toHaveBeenCalledTimes(1);
+      expect(NotebookAnalytics.leavePromptResolved).toHaveBeenCalledWith('nb-1', 'saving', 'leave');
+    });
+
+    it('reports staying, including for a conflict', async () => {
+      const scene = buildScene();
+      scene.setState({ isEditing: true });
+      scene.autosave.setState({ status: 'error', isConflict: true });
+      renderPrompt(scene);
+      block();
+
+      await userEvent.click(screen.getByRole('button', { name: 'Stay' }));
+
+      expect(NotebookAnalytics.leavePromptResolved).toHaveBeenCalledTimes(1);
+      expect(NotebookAnalytics.leavePromptResolved).toHaveBeenCalledWith('nb-1', 'conflict', 'stay');
+    });
+
+    it('reports nothing when navigation went through without asking', () => {
+      const scene = buildScene();
+      scene.setState({ isEditing: true });
+      scene.autosave.setState({ status: 'saved' });
+      renderPrompt(scene);
+
+      block();
+
+      expect(NotebookAnalytics.leavePromptResolved).not.toHaveBeenCalled();
+    });
   });
 });

@@ -43,6 +43,18 @@ export function getTraceIdFromTraceQlQuery(query: string): string | undefined {
   return query.trim().match(TRACE_ID_QUERY_REGEX)?.[2];
 }
 
+// A bare Tempo trace id (16 or 32 hex chars) as stored by derived fields that interpolate ${__value.raw}.
+const BARE_TRACE_ID_REGEX = /^[0-9a-fA-F]{16}(?:[0-9a-fA-F]{16})?$/;
+
+export function getTraceIdFromTempoQuery(query: string): string | undefined {
+  const fromTraceQl = getTraceIdFromTraceQlQuery(query);
+  if (fromTraceQl) {
+    return fromTraceQl;
+  }
+  const trimmed = query.trim();
+  return BARE_TRACE_ID_REGEX.test(trimmed) ? trimmed : undefined;
+}
+
 type TempoQuery = {
   query: string;
   queryType: string;

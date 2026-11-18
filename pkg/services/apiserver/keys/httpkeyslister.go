@@ -8,17 +8,12 @@ import (
 	"strconv"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	storagev0 "github.com/grafana/grafana/pkg/apis/storage/v0alpha1"
 )
-
-// listKeysKind is spelled out rather than taken from the response, so a body that
-// is not the projection cannot pass by agreeing with itself.
-const listKeysKind = "PartialObjectMetadataList"
 
 // httpLister reads keys through this package's list-keys route, for a caller with
 // no storage connection of its own.
@@ -42,7 +37,7 @@ func NewHTTPLister(client rest.Interface, gvr schema.GroupVersionResource, opts 
 // page posts one request. An absent route answers 404 or 405: the endpoint is
 // gated by server config, and a POST to an unmounted path resolves to the object
 // handler, so neither status means the request itself was wrong.
-func (l httpLister) page(ctx context.Context, token string) (*metav1.PartialObjectMetadataList, error) {
+func (l httpLister) page(ctx context.Context, token string) (*storagev0.ListKeyResponse, error) {
 	body, err := json.Marshal(storagev0.ListKeyRequest{Limit: l.cfg.PageSize, Continue: token})
 	if err != nil {
 		return nil, err
@@ -60,12 +55,14 @@ func (l httpLister) page(ctx context.Context, token string) (*metav1.PartialObje
 		return nil, err
 	}
 
-	var list metav1.PartialObjectMetadataList
+	var list storagev0.ListKeyResponse
 	if err := json.Unmarshal(raw, &list); err != nil {
 		return nil, fmt.Errorf("decode keys page: %w", err)
 	}
-	if list.Kind != listKeysKind {
-		return nil, fmt.Errorf("%w: answered with %q", ErrUnsupported, list.Kind)
+	// A server on another version of the envelope answers with a different kind;
+	// the full list is still correct there, so it is unsupported rather than broken.
+	if list.APIVersion != storagev0.APIVERSION || list.Kind != storagev0.KindListKeyResponse {
+		return nil, fmt.Errorf("%w: answered with %s %q", ErrUnsupported, list.APIVersion, list.Kind)
 	}
 	return &list, nil
 }
@@ -101,7 +98,7 @@ func (l httpLister) ListKeys(ctx context.Context) (int64, iter.Seq2[Key, error])
 					Namespace:       item.Namespace,
 					Name:            item.Name,
 					ResourceVersion: item.ResourceVersion,
-					Folder:          item.Annotations[utils.AnnoKeyFolder],
+					Folder:          item.Folder,
 				}
 				if !yield(k, nil) {
 					return
@@ -113,8 +110,8 @@ func (l httpLister) ListKeys(ctx context.Context) (int64, iter.Seq2[Key, error])
 
 // pages yields successive list pages, starting from first, until the continue
 // token is empty.
-func (l httpLister) pages(ctx context.Context, first *metav1.PartialObjectMetadataList) iter.Seq2[*metav1.PartialObjectMetadataList, error] {
-	return func(yield func(*metav1.PartialObjectMetadataList, error) bool) {
+func (l httpLister) pages(ctx context.Context, first *storagev0.ListKeyResponse) iter.Seq2[*storagev0.ListKeyResponse, error] {
+	return func(yield func(*storagev0.ListKeyResponse, error) bool) {
 		for page := first; ; {
 			if !yield(page, nil) {
 				return

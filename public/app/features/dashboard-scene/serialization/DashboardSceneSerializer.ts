@@ -418,7 +418,8 @@ export class V2DashboardSerializer
     return {
       ...saveModel,
       title: options.title || '',
-      description: options.description || '',
+      // Match normal serialization so an empty description doesn't mark the dashboard dirty after saving.
+      description: options.description || undefined,
       tags: options.copyTags === false ? [] : saveModel.tags,
     };
   }

@@ -191,6 +191,26 @@ func (f *RuleStore) Count(_ context.Context, orgID int64) (int64, error) {
 	return total, nil
 }
 
+func (f *RuleStore) CountRuleGroups(_ context.Context, orgID int64) (int64, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+	query := GenericRecordedQuery{Name: "CountRuleGroups", Params: []any{orgID}}
+	f.RecordedOps = append(f.RecordedOps, query)
+	if err := f.Hook(query); err != nil {
+		return 0, err
+	}
+	groups := make(map[string]struct{})
+	for id, rules := range f.Rules {
+		if orgID != 0 && id != orgID {
+			continue
+		}
+		for _, rule := range rules {
+			groups[rule.RuleGroup] = struct{}{}
+		}
+	}
+	return int64(len(groups)), nil
+}
+
 func (f *RuleStore) GetAlertRulesGroupByRuleUID(_ context.Context, q *models.GetAlertRulesGroupByRuleUIDQuery) ([]*models.AlertRule, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
@@ -533,6 +553,28 @@ func (f *RuleStore) GetOrCreateNamespaceByTitle(ctx context.Context, title strin
 	newFolder := &folder.Folder{
 		ID:        rand.Int63(), // nolint:staticcheck
 		UID:       util.GenerateShortUID(),
+		Title:     title,
+		ParentUID: parentUID,
+		Fullpath:  "fullpath_" + title,
+	}
+
+	f.Folders[orgID] = append(f.Folders[orgID], newFolder)
+	return newFolder.ToFolderReference(), true, nil
+}
+
+func (f *RuleStore) GetOrCreateNamespaceByUID(ctx context.Context, uid, title string, orgID int64, user identity.Requester, parentUID string) (*folder.FolderReference, bool, error) {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+
+	for _, folder := range f.Folders[orgID] {
+		if folder.UID == uid {
+			return folder.ToFolderReference(), false, nil
+		}
+	}
+
+	newFolder := &folder.Folder{
+		ID:        rand.Int63(), // nolint:staticcheck
+		UID:       uid,
 		Title:     title,
 		ParentUID: parentUID,
 		Fullpath:  "fullpath_" + title,

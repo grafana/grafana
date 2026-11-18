@@ -1,5 +1,6 @@
 import { toNumber } from 'lodash';
 
+import { fieldReducers, reduceField } from '../transformations/fieldReducer';
 import { type DataFrame } from '../types/dataFrame';
 import { type DisplayValue } from '../types/displayValue';
 import { type TimeZone } from '../types/time';
@@ -13,14 +14,14 @@ import { getDisplayProcessor } from './displayProcessor';
  * variable that will allow you to access dataFrame data with ${__data.fields.fieldName}.
  * Allows accessing fields by name, index, displayName or 'name' label
  *
+ * Pass `reducer` instead of `rowIndex` to get each field's value reduced across all rows.
+ *
  * @param options
  * @internal
  */
-export function getFieldDisplayValuesProxy(options: {
-  frame: DataFrame;
-  rowIndex: number;
-  timeZone?: TimeZone;
-}): Record<string, DisplayValue> {
+export function getFieldDisplayValuesProxy(
+  options: { frame: DataFrame; timeZone?: TimeZone } & ({ rowIndex: number } | { reducer: string })
+): Record<string, DisplayValue> {
   return new Proxy(
     {},
     {
@@ -54,8 +55,13 @@ export function getFieldDisplayValuesProxy(options: {
         }
         // TODO: we could supply the field here for the getDisplayProcessor fallback but we would also need theme which
         //  we do not have access to here
-        const displayProcessor = field.display ?? getDisplayProcessor();
-        const raw = field.values[options.rowIndex];
+        const reduced = 'reducer' in options;
+        const raw = reduced
+          ? reduceField({ field, reducers: [options.reducer] })[options.reducer]
+          : field.values[options.rowIndex];
+        // Reducers like count return how many values there are, not a value in the field's unit.
+        const keepsUnit = !reduced || fieldReducers.getIfExists(options.reducer)?.preservesUnits !== false;
+        const displayProcessor = (keepsUnit ? field.display : undefined) ?? getDisplayProcessor();
         const disp = displayProcessor(raw);
         disp.toString = () => formattedValueToString(disp);
         return disp;

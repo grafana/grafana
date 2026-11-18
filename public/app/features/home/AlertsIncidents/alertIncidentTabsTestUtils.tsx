@@ -1,13 +1,11 @@
 import { http, HttpResponse } from 'msw';
 import { useState, type Ref } from 'react';
-import { act } from 'test/test-utils';
 
-import { type PluginMeta } from '@grafana/data';
+import { type PluginMeta, store } from '@grafana/data';
 import { setBackendSrv, setPluginComponentsHook } from '@grafana/runtime';
 import { invalidateCachedPromisesCache } from '@grafana/runtime/internal';
 import { mockComboboxRect } from '@grafana/test-utils';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import { setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { type IncidentPreview } from 'app/features/alerting/unified/api/incidentsApi';
@@ -23,9 +21,14 @@ import { AlertState, type AlertmanagerAlert } from 'app/plugins/datasource/alert
 import { AccessControlAction } from 'app/types/accessControl';
 import { type Labels } from 'app/types/unified-alerting-dto';
 
-import { AlertIncidentTabs, type AlertIncidentSwitchHandle } from './AlertIncidentTabs';
+import {
+  ALERTS_INCIDENTS_TAB_STORAGE_KEY,
+  AlertIncidentTabs,
+  type AlertIncidentSwitchHandle,
+} from './AlertIncidentTabs';
 import { type FilterSelection } from './filterSelection';
 import { mockNoIncidentFields } from './mockIncidentsApi';
+import { mockCurrentUserEvents, mockSchedules } from './mockOnCallSchedulesApi';
 import { useFiringAlerts } from './useFiringAlerts';
 import { useIncidents } from './useIncidents';
 
@@ -90,7 +93,7 @@ export function mockAlerts(alerts: AlertmanagerAlert[]) {
 }
 
 /** Report the IRM plugin as absent so the component only shows the alerts tab. */
-function mockNoIrmPlugin() {
+export function mockNoIrmPlugin() {
   uninstallAppPluginMeta(SupportedPlugin.Irm);
   server.use(http.get('/api/plugins/:pluginId/settings', () => HttpResponse.json({ enabled: false })));
 }
@@ -124,7 +127,9 @@ export function setupAlertIncidentTabsTests() {
   // the virtualizer measures 0 height in jsdom and renders no options.
   mockComboboxRect();
 
-  beforeEach(async () => {
+  beforeEach(() => {
+    // Tab selection persists across reloads; a reset keeps one test's clicks out of the next test's default.
+    store.delete(ALERTS_INCIDENTS_TAB_STORAGE_KEY);
     setPluginComponentsHook(() => ({ components: [], isLoading: false }));
     // Grant alerting permissions by default: reading alerts, and reading rules for the filter's labels.
     jest
@@ -143,18 +148,12 @@ export function setupAlertIncidentTabsTests() {
     mockNoIrmPlugin();
     // No custom fields by default, so the incidents dropdown stays hidden.
     mockNoIncidentFields();
-    // AlertIncidentTabs only ships in the growth-homepage redesign, which is flag-gated,
-    // so exercise it in the same flag state it renders in production.
-    await act(async () => {
-      setTestFlags({ 'grafana.growthHomepage': true });
-    });
+    // With IRM installed the On call tab loads the user's shifts and schedule lists; none by default.
+    mockCurrentUserEvents({ schedules: [] });
+    mockSchedules({});
   });
 
-  afterEach(async () => {
-    // Wrap in act() because setTestFlags fires OpenFeature events that trigger React state updates.
-    await act(async () => {
-      setTestFlags({});
-    });
+  afterEach(() => {
     jest.restoreAllMocks();
     // getPluginSettings memoizes per plugin ID at module scope; clear it so each
     // test's plugin-settings handler actually gets hit.

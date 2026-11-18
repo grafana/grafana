@@ -5,8 +5,8 @@ import { getFeatureFlagClient } from '../../internal/openFeature';
 import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
 import { getBackendSrv } from '../backendSrv';
 
-import { FALLBACK_TO_BOOTDATA_ERROR_WARNING, FALLBACK_TO_BOOTDATA_WARNING } from './constants';
-import { logPluginMetaDebug, logPluginMetaWarning } from './logging';
+import { FALLBACK_TO_BOOTDATA_ERROR_WARNING, FALLBACK_TO_BOOTDATA_WARNING, META_FAILED_ERROR } from './constants';
+import { logPluginMetaDebug, logPluginMetaError, logPluginMetaWarning } from './logging';
 import { getDatasourcePluginMapper } from './mappers/mappers';
 import { getPluginMetasUrl, initPluginMetas, refetchPluginMetas } from './plugins';
 import type { DatasourcePluginMetas, FrontendSettings, PluginMetasResponse } from './types';
@@ -78,14 +78,25 @@ function extractFromConfig(
   return seen;
 }
 
-function setMetas(metas: PluginMetasResponse | null) {
-  if (!metas?.items.length) {
+export async function setDatasourcePluginMetasFromResponse(metas: PluginMetasResponse | null): Promise<void> {
+  if (
+    !metas?.items.length &&
+    !getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsDisableMTPluginsFallback, false)
+  ) {
     // null means plugin meta failed to load, empty items means the API had nothing
     const message = metas ? FALLBACK_TO_BOOTDATA_WARNING : FALLBACK_TO_BOOTDATA_ERROR_WARNING;
     // eslint-disable-next-line @grafana/no-config-datasources
     setDatasourcesAndAliases(extractFromConfig(config.datasources));
-    logPluginMetaWarning(message, { pluginType: PluginType.datasource, requestUrl: getPluginMetasUrl() });
+    logPluginMetaWarning(message, { pluginType: PluginType.datasource, requestUrl: await getPluginMetasUrl() });
     return;
+  }
+
+  if (!metas) {
+    logPluginMetaError(META_FAILED_ERROR, new Error(META_FAILED_ERROR), {
+      pluginType: PluginType.datasource,
+      requestUrl: await getPluginMetasUrl(),
+    });
+    throw new Error(META_FAILED_ERROR);
   }
 
   const mapper = getDatasourcePluginMapper();
@@ -102,7 +113,7 @@ async function initDatasourcePluginMetas(): Promise<void> {
   }
 
   const metas = await initPluginMetas();
-  setMetas(metas);
+  await setDatasourcePluginMetasFromResponse(metas);
 }
 
 export async function getDatasourcePluginMetas(): Promise<DataSourcePluginMeta[]> {
@@ -140,13 +151,30 @@ export function setDatasourcePluginMetas(override: DatasourcePluginMetas): void 
   setDatasourcesAndAliases(structuredClone(override));
 }
 
-export async function refetchDatasourcePluginMetas(settings?: FrontendSettings): Promise<void> {
+/**
+ * Update the metas from an already-fetched `/api/frontend/settings` payload after a data source
+ * change. Without MT plugins the metas come from the data sources in boot data, so the first data
+ * source of a plugin adds its meta. MT plugin metas change only with a plugin install, update or
+ * uninstall, so a data source change leaves them as they are.
+ */
+export function syncDatasourcePluginMetas(settings: Pick<FrontendSettings, 'datasources'>): void {
+  if (getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false)) {
+    return;
+  }
+  setDatasourcePluginMetasFromBootData(settings.datasources);
+}
+
+export function setDatasourcePluginMetasFromBootData(configDatasources: FrontendSettings['datasources']): void {
+  setDatasourcesAndAliases(extractFromConfig(configDatasources));
+}
+
+export async function refetchDatasourcePluginMetas(): Promise<void> {
   if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false)) {
-    const resolved = settings ?? (await getBackendSrv().get<FrontendSettings>('/api/frontend/settings'));
-    setDatasourcesAndAliases(extractFromConfig(resolved.datasources));
+    const settings = await getBackendSrv().get<FrontendSettings>('/api/frontend/settings');
+    setDatasourcesAndAliases(extractFromConfig(settings.datasources));
     return;
   }
 
   const metas = await refetchPluginMetas();
-  setMetas(metas);
+  await setDatasourcePluginMetasFromResponse(metas);
 }

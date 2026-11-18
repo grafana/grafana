@@ -14,6 +14,7 @@ import { hasAlphaPanels } from 'app/core/config';
 
 import { basemapLayers } from './basemaps';
 import { carto } from './basemaps/carto';
+import { isProtomapsBasemapEnabled, protomaps } from './basemaps/protomaps';
 import { dataLayers } from './data';
 
 export const DEFAULT_BASEMAP_CONFIG: MapLayerOptions = {
@@ -98,10 +99,14 @@ function getLayersSelection(items: Array<MapLayerRegistryItem<any>>, current?: s
   return registry;
 }
 
+function selectableBasemapLayers() {
+  return isProtomapsBasemapEnabled() ? basemapLayers : basemapLayers.filter((layer) => layer.id !== protomaps.id);
+}
+
 export function getLayersOptions(basemap: boolean, current?: string): RegistrySelectInfo {
   if (basemap) {
-    return getLayersSelection([defaultBaseLayer, ...basemapLayers], current);
+    return getLayersSelection([defaultBaseLayer, ...selectableBasemapLayers()], current);
   }
 
-  return getLayersSelection([...dataLayers, ...basemapLayers], current);
+  return getLayersSelection([...dataLayers, ...selectableBasemapLayers()], current);
 }

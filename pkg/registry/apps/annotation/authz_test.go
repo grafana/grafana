@@ -2,6 +2,7 @@ package annotation
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"regexp"
 	"testing"
@@ -11,6 +12,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -21,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry/apis/dashboard/folderresolver"
 )
 
 var testTracer = noop.NewTracerProvider().Tracer("")
@@ -29,7 +33,7 @@ var testTracer = noop.NewTracerProvider().Tracer("")
 // no-op test implementations. An optional folderResolver may be passed; otherwise
 // a no-op resolver is used (sufficient for tests that don't exercise dashboard authz).
 func newTestAdapter(store Store, ac authtypes.AccessClient, fr ...DashboardFolderResolver) *k8sRESTAdapter {
-	var resolver DashboardFolderResolver = NoopDashboardFolderResolver{}
+	var resolver DashboardFolderResolver = folderresolver.NoopResolver{}
 	if len(fr) > 0 && fr[0] != nil {
 		resolver = fr[0]
 	}
@@ -50,10 +54,14 @@ func newTestAdapter(store Store, ac authtypes.AccessClient, fr ...DashboardFolde
 type fakeAccessClient struct {
 	fn        func(item authtypes.BatchCheckItem) bool
 	namespace string
+	err       error
 }
 
 func (c *fakeAccessClient) Check(_ context.Context, _ authtypes.AuthInfo, req authtypes.CheckRequest, _ string) (authtypes.CheckResponse, error) {
 	c.namespace = req.Namespace
+	if c.err != nil {
+		return authtypes.CheckResponse{}, c.err
+	}
 	return authtypes.CheckResponse{Allowed: c.fn(authtypes.BatchCheckItem{
 		Verb:        req.Verb,
 		Group:       req.Group,
@@ -72,6 +80,9 @@ var openFGACorrelationID = regexp.MustCompile(`^[\w\d-]{1,36}$`)
 
 func (c *fakeAccessClient) BatchCheck(_ context.Context, _ authtypes.AuthInfo, req authtypes.BatchCheckRequest) (authtypes.BatchCheckResponse, error) {
 	c.namespace = req.Namespace
+	if c.err != nil {
+		return authtypes.BatchCheckResponse{}, c.err
+	}
 	results := make(map[string]authtypes.BatchCheckResult, len(req.Checks))
 	for _, item := range req.Checks {
 		if !openFGACorrelationID.MatchString(item.CorrelationID) {
@@ -404,4 +415,61 @@ func TestAuthorizeReadOrganizationAnnotations(t *testing.T) {
 		require.Error(t, err)
 		assert.True(t, apierrors.IsUnauthorized(err), "expected Unauthorized, got %v", err)
 	})
+}
+
+func TestAuthzClientClosedRequest(t *testing.T) {
+	ns := "default"
+	dashUID := "dash-abc"
+	ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), ns)
+	items := []annotationV0.Annotation{{
+		ObjectMeta: metav1.ObjectMeta{Name: "dash-anno", Namespace: ns},
+		Spec:       annotationV0.AnnotationSpec{DashboardUID: &dashUID},
+	}}
+
+	canceledCtx, cancel := context.WithCancel(ctx)
+	cancel()
+
+	tests := []struct {
+		name     string
+		ctx      context.Context
+		err      error
+		wantCode int32
+	}{
+		{"grpc canceled", ctx, status.Error(codes.Canceled, "context canceled"), 499},
+		{"wrapped grpc canceled", ctx, fmt.Errorf("wrap: %w", status.Error(codes.Canceled, "context canceled")), 499},
+		{"context canceled", ctx, context.Canceled, 499},
+		// The folder resolver detaches with context.WithoutCancel, so its work outlives
+		// the caller and a canceled request context must not relabel a real failure.
+		{"canceled request context does not mask a real error", canceledCtx, errors.New("boom"), 500},
+		{"grpc unavailable stays 500", ctx, status.Error(codes.Unavailable, "down"), 500},
+		{"plain error stays 500", ctx, errors.New("boom"), 500},
+	}
+	// Authz returns plain wrapped errors; toAPIError assigns the status, as it does for
+	// every error reaching the adapter and the custom routes.
+	for _, tt := range tests {
+		t.Run("batch check "+tt.name, func(t *testing.T) {
+			client := &fakeAccessClient{err: tt.err}
+			_, err := canAccessAnnotations(tt.ctx, testTracer, client, newFakeFolderResolver(map[string]string{dashUID: "f"}), ns, items, utils.VerbList)
+			requireStatusCode(t, toAPIError(err, ""), tt.wantCode)
+		})
+		t.Run("org check "+tt.name, func(t *testing.T) {
+			client := &fakeAccessClient{err: tt.err}
+			err := authorizeReadOrganizationAnnotations(identity.WithServiceIdentityContext(tt.ctx, 1), client, ns)
+			requireStatusCode(t, toAPIError(err, ""), tt.wantCode)
+		})
+		t.Run("folder resolve "+tt.name, func(t *testing.T) {
+			resolver := newFakeFolderResolver(nil)
+			resolver.err = tt.err
+			client := &fakeAccessClient{fn: func(authtypes.BatchCheckItem) bool { return true }}
+			_, err := canAccessAnnotations(tt.ctx, testTracer, client, resolver, ns, items, utils.VerbList)
+			requireStatusCode(t, toAPIError(err, ""), tt.wantCode)
+		})
+	}
+}
+
+func requireStatusCode(t *testing.T, err error, want int32) {
+	t.Helper()
+	var apiStatus apierrors.APIStatus
+	require.ErrorAs(t, err, &apiStatus)
+	assert.Equal(t, want, apiStatus.Status().Code)
 }

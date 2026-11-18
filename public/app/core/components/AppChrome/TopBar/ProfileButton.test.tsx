@@ -1,8 +1,12 @@
-import { screen, waitFor } from '@testing-library/react';
+import { act, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
 import { config } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
+import { RedirectToUrlKey } from 'app/core/services/context_srv';
+import { getLoginSectionTitle, rememberLoginSectionTitle } from 'app/core/services/loginSectionTitle';
 import { createComponentWithMeta, usePluginComponents } from 'app/features/plugins/extensions/usePluginComponents';
 
 import { ProfileButton } from './ProfileButton';
@@ -68,6 +72,24 @@ describe('ProfileButton', () => {
     config.newsFeedEnabled = originalNewsFeedEnabled;
     config.auth.disableSignoutMenu = originalDisableSignoutMenu;
     document.body.removeChild(mainView);
+  });
+
+  it('forgets the section when signing out', async () => {
+    setTestFlags({ [FlagKeys.GrafanaPreserveLoginTabTitle]: true });
+    try {
+      rememberLoginSectionTitle({ id: 'dashboards/browse', text: 'Secret dashboard' }, '/d/abc/test');
+      sessionStorage.setItem(RedirectToUrlKey, encodeURIComponent('/d/abc/test'));
+      expect(getLoginSectionTitle()).toBe('Dashboards');
+      render(<ProfileButton {...defaultProps} />);
+      await user.click(screen.getByRole('button', { name: /profile/i }));
+      const signOut = await screen.findByRole('menuitem', { name: /sign out/i });
+      signOut.addEventListener('click', (event) => event.preventDefault());
+      await user.click(signOut);
+      expect(getLoginSectionTitle()).toBeUndefined();
+    } finally {
+      sessionStorage.clear();
+      act(() => setTestFlags({}));
+    }
   });
 
   it('should not render the sign out divider when the sign out menu is disabled', async () => {

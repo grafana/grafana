@@ -22,7 +22,6 @@ export const GROUP_BY_OPTIONS = (): SelectableValue[] => [
 ];
 
 export const TYPE_FILTER_OPTIONS = (): SelectableValue[] => [
-  { value: 'all', label: t('connections.add-new-connection.filter-by-options.label.all', 'All') },
   { value: PluginType.datasource, label: t('connections.connect-data.datasources-header', 'Data Sources') },
   { value: PluginType.app, label: t('connections.connect-data.apps-header', 'Apps') },
 ];

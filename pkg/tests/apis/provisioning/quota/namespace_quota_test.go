@@ -59,6 +59,9 @@ func TestIntegrationProvisioning_NamespaceRepositoryQuota(t *testing.T) {
 	// --- Step 3: delete one repo — remaining repo recovers -------------
 	err := helper.Repositories.Resource.Delete(t.Context(), repo2Name, metav1.DeleteOptions{})
 	require.NoError(t, err)
+	// A repository still counts while its finalizers run, so recovery waits for
+	// the deletion to finish.
+	helper.WaitForRepositoryDeleted(t, repo2Name)
 
 	helper.TriggerRepositoryReconciliation(t, repo1Name)
 	waitForHealthyWithNamespaceQuota(t, helper, repo1Name, provisioning.ReasonQuotaReached)

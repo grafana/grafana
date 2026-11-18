@@ -6,9 +6,9 @@ import (
 	"slices"
 
 	"github.com/grafana/grafana-app-sdk/app"
-	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	appsdkapiserver "github.com/grafana/grafana/pkg/apiserver/appsdk"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	keysapi "github.com/grafana/grafana/pkg/services/apiserver/keys"
@@ -86,7 +86,11 @@ func BuildForServedGroupVersions(
 				if kind.Scope != supportedKindScope {
 					continue
 				}
-				resourceName := resource.ManifestResourceName(kind)
+				// Without a resource name the route would mount at the group root.
+				if kind.Resource == "" {
+					continue
+				}
+				resourceName := kind.Resource
 				gvr := gv.WithResource(resourceName)
 				if optedOut[gvr] {
 					continue
@@ -125,7 +129,7 @@ func listKeysOptOuts(
 			}
 			for _, kind := range version.Kinds {
 				if !kind.HasListKeysEndpoint() {
-					optedOut[gv.WithResource(resource.ManifestResourceName(kind))] = true
+					optedOut[gv.WithResource(kind.Resource)] = true
 				}
 			}
 		}

@@ -9,6 +9,7 @@ import {
   getDataSourceInstance,
   getDataSourceInstanceSettings,
 } from '@grafana/runtime';
+import { setDatasourcePluginMetas } from '@grafana/runtime/internal';
 
 import { seedDataSources, watchDataSourceFallbacks } from './seedDataSources';
 
@@ -78,6 +79,20 @@ describe('seedDataSources', () => {
     await expect(getDataSourceInstance('missing-uid')).rejects.toThrow();
     expect(() => fallbacks.expectNoFallbacks(['instance', 'settings', 'list'])).not.toThrow();
   });
+
+  it('hands back each fixture when several share a plugin id and the plugin meta is a clone', async () => {
+    const lokiA = makeFixture('loki', 'loki-a');
+    const lokiB = makeFixture('loki', 'loki-b');
+    // Settings are keyed by name, so give the second instance of the plugin its own name.
+    lokiB.settings.name = 'Loki B';
+    seedDataSources([lokiA, lokiB], { legacySrv: 'none' });
+    // The loader imports with the meta from the plugin meta cache (keyed by the data source
+    // type), which is a clone of the settings meta.
+    setDatasourcePluginMetas({ [lokiA.settings.type]: structuredClone(lokiA.settings.meta) });
+
+    await expect(getDataSourceInstance('loki-a')).resolves.toBe(lokiA.api);
+    await expect(getDataSourceInstance('loki-b')).resolves.toBe(lokiB.api);
+  });
 });
 
 describe('watchDataSourceFallbacks', () => {
@@ -85,7 +100,9 @@ describe('watchDataSourceFallbacks', () => {
     const loki = makeFixture('loki', 'loki-uid');
     const legacyOnly: DataSourceSrv = {
       get: () => Promise.resolve(loki.api!),
-      getInstanceSettings: () => loki.settings,
+      // Missing here too, so the new path cannot resolve the settings, and only the legacy get()
+      // can resolve the instance.
+      getInstanceSettings: () => undefined,
       getList: () => [loki.settings],
       reload: jest.fn(),
       registerRuntimeDataSource: jest.fn(),

@@ -13,6 +13,7 @@ export interface RadialBarProps {
   gradient?: GradientStop[];
   roundedBars?: boolean;
   endpointMarker?: 'point' | 'glow';
+  markerAtStart?: boolean;
   shape: RadialShape;
   startAngle: number;
   startValueAngle: number;
@@ -27,6 +28,7 @@ export function RadialBar({
   gradient,
   roundedBars,
   endpointMarker,
+  markerAtStart,
   shape,
   startAngle,
   startValueAngle,
@@ -70,6 +72,7 @@ export function RadialBar({
         barEndcaps={shape === 'circle' && roundedBars}
         dimensions={dimensions}
         endpointMarker={roundedBars ? endpointMarker : undefined}
+        markerAtStart={markerAtStart}
         endpointMarkerGlowFilter={endpointMarkerGlowFilter}
         fieldDisplay={fieldDisplay}
         glowFilter={glowFilter}

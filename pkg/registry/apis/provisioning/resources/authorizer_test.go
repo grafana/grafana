@@ -103,7 +103,7 @@ func TestAuthorizeResource(t *testing.T) {
 			return req.Verb == utils.VerbCreate
 		}), "dest-folder").Return(nil).Once()
 
-		err := NewAuthorizer(repo, nil, mockAccess, authTestClients(t), nil, false).AuthorizeResource(context.Background(), parsed, utils.VerbCreate)
+		err := NewAuthorizer(repo, nil, mockAccess, authTestClients(t), nil).AuthorizeResource(context.Background(), parsed, utils.VerbCreate)
 		assert.NoError(t, err)
 		mockAccess.AssertExpectations(t)
 	})
@@ -115,7 +115,7 @@ func TestAuthorizeResource(t *testing.T) {
 			return req.Verb == utils.VerbUpdate
 		}), "folder-a").Return(nil).Once()
 
-		err := NewAuthorizer(repo, nil, mockAccess, authTestClients(t), nil, false).AuthorizeResource(context.Background(), parsed, utils.VerbUpdate)
+		err := NewAuthorizer(repo, nil, mockAccess, authTestClients(t), nil).AuthorizeResource(context.Background(), parsed, utils.VerbUpdate)
 		assert.NoError(t, err)
 		mockAccess.AssertExpectations(t)
 	})
@@ -132,7 +132,7 @@ func TestAuthorizeResource(t *testing.T) {
 			return req.Verb == utils.VerbUpdate
 		}), "folder-b").Return(nil).Once()
 
-		err := NewAuthorizer(repo, nil, mockAccess, authTestClients(t), nil, false).AuthorizeResource(context.Background(), parsed, utils.VerbUpdate)
+		err := NewAuthorizer(repo, nil, mockAccess, authTestClients(t), nil).AuthorizeResource(context.Background(), parsed, utils.VerbUpdate)
 		assert.NoError(t, err)
 		mockAccess.AssertExpectations(t)
 	})
@@ -149,7 +149,7 @@ func TestAuthorizeResource(t *testing.T) {
 			return req.Verb == utils.VerbUpdate
 		}), "restricted-folder").Return(assert.AnError).Once()
 
-		err := NewAuthorizer(repo, nil, mockAccess, authTestClients(t), nil, false).AuthorizeResource(context.Background(), parsed, utils.VerbUpdate)
+		err := NewAuthorizer(repo, nil, mockAccess, authTestClients(t), nil).AuthorizeResource(context.Background(), parsed, utils.VerbUpdate)
 		assert.Error(t, err)
 		mockAccess.AssertExpectations(t)
 	})
@@ -162,7 +162,7 @@ func TestAuthorizeResource(t *testing.T) {
 			return req.Verb == utils.VerbUpdate
 		}), "restricted-folder").Return(assert.AnError).Once()
 
-		err := NewAuthorizer(repo, nil, mockAccess, authTestClients(t), nil, false).AuthorizeResource(context.Background(), parsed, utils.VerbUpdate)
+		err := NewAuthorizer(repo, nil, mockAccess, authTestClients(t), nil).AuthorizeResource(context.Background(), parsed, utils.VerbUpdate)
 		assert.Error(t, err)
 		mockAccess.AssertExpectations(t)
 	})
@@ -243,23 +243,22 @@ func testAuthorizeResourceReadExistingAncestor(t *testing.T, gvr schema.GroupVer
 	require.NoError(t, err)
 
 	tests := []struct {
-		name            string
-		path            string
-		destination     string
-		target          provisioning.SyncTargetType
-		metadataEnabled bool
-		metadata        []byte
-		metadataErr     error
-		existing        []string
-		allowed         string
-		alsoAllowed     string
-		accessErrorID   string
-		accessErr       error
-		lookupErrorID   string
-		wantProbes      []string
-		wantChecks      []string
-		wantErr         error
-		wantForbidden   bool
+		name          string
+		path          string
+		destination   string
+		target        provisioning.SyncTargetType
+		metadata      []byte
+		metadataErr   error
+		existing      []string
+		allowed       string
+		alsoAllowed   string
+		accessErrorID string
+		accessErr     error
+		lookupErrorID string
+		wantProbes    []string
+		wantChecks    []string
+		wantErr       error
+		wantForbidden bool
 	}{
 		{
 			name: "inherits from the nearest existing parent", existing: []string{teamID}, allowed: teamID,
@@ -284,8 +283,8 @@ func testAuthorizeResourceReadExistingAncestor(t *testing.T, gvr schema.GroupVer
 		},
 		{
 			name: "malformed configured metadata precedes destination permission", existing: []string{newID},
-			metadataEnabled: true, metadata: []byte("{invalid"),
-			wantErr: ErrInvalidFolderMetadata,
+			metadata: []byte("{invalid"),
+			wantErr:  ErrInvalidFolderMetadata,
 		},
 		{
 			name: "existing destination access error stops before an allowed ancestor", existing: []string{newID, teamID}, allowed: teamID,
@@ -309,29 +308,29 @@ func testAuthorizeResourceReadExistingAncestor(t *testing.T, gvr schema.GroupVer
 		},
 		{
 			name: "PR UID cannot bypass the configured directory", destination: "pr-controlled-uid",
-			metadataEnabled: true, metadata: metadata, existing: []string{"configured-folder", teamID}, allowed: teamID,
+			metadata: metadata, existing: []string{"configured-folder", teamID}, allowed: teamID,
 			wantProbes: []string{"configured-folder"},
 			wantChecks: []string{"configured-folder"}, wantErr: denied,
 		},
 		{
 			name: "allowed PR UID cannot bypass the configured directory", destination: "pr-controlled-uid",
-			metadataEnabled: true, metadata: metadata, existing: []string{"pr-controlled-uid", "configured-folder"}, allowed: "pr-controlled-uid",
+			metadata: metadata, existing: []string{"pr-controlled-uid", "configured-folder"}, allowed: "pr-controlled-uid",
 			wantProbes: []string{"configured-folder"},
 			wantChecks: []string{"configured-folder"}, wantErr: denied,
 		},
 		{
 			name: "configured directory is authoritative even when PR UID is inaccessible", destination: "pr-controlled-uid",
-			metadataEnabled: true, metadata: metadata, existing: []string{"pr-controlled-uid", "configured-folder"}, allowed: "configured-folder",
+			metadata: metadata, existing: []string{"pr-controlled-uid", "configured-folder"}, allowed: "configured-folder",
 			wantProbes: []string{"configured-folder"}, wantChecks: []string{"configured-folder"},
 		},
 		{
 			name: "configured folder UID authorizes the immediate directory", destination: "pr-controlled-uid",
-			metadataEnabled: true, metadata: metadata, existing: []string{"configured-folder"}, allowed: "configured-folder",
+			metadata: metadata, existing: []string{"configured-folder"}, allowed: "configured-folder",
 			wantProbes: []string{"configured-folder"}, wantChecks: []string{"configured-folder"},
 		},
 		{
 			name: "matching configured UID preserves allowed check", destination: "configured-folder",
-			metadataEnabled: true, metadata: metadata, existing: []string{"configured-folder"}, allowed: "configured-folder",
+			metadata: metadata, existing: []string{"configured-folder"}, allowed: "configured-folder",
 			wantProbes: []string{"configured-folder"}, wantChecks: []string{"configured-folder"},
 		},
 		{
@@ -339,7 +338,7 @@ func testAuthorizeResourceReadExistingAncestor(t *testing.T, gvr schema.GroupVer
 			wantProbes: []string{newID}, wantChecks: []string{newID},
 		},
 		{
-			name: "metadata enabled falls back to hash IDs for missing manifests", metadataEnabled: true,
+			name:     "falls back to hash IDs for missing manifests",
 			existing: []string{teamID}, allowed: teamID, wantProbes: []string{newID, teamID}, wantChecks: []string{teamID},
 		},
 		{
@@ -365,11 +364,11 @@ func testAuthorizeResourceReadExistingAncestor(t *testing.T, gvr schema.GroupVer
 		},
 		{
 			name: "instance metadata error prevents root fallback", target: provisioning.SyncTargetTypeInstance,
-			metadataEnabled: true, metadataErr: readErr, wantErr: readErr,
+			metadataErr: readErr, wantErr: readErr,
 		},
 		{
 			name: "instance malformed metadata prevents root fallback", target: provisioning.SyncTargetTypeInstance,
-			metadataEnabled: true, metadata: []byte("{invalid"), wantErr: ErrInvalidFolderMetadata,
+			metadata: []byte("{invalid"), wantErr: ErrInvalidFolderMetadata,
 		},
 		{
 			name: "folderless repository uses a real ancestor", target: provisioning.SyncTargetTypeFolderless,
@@ -390,11 +389,11 @@ func testAuthorizeResourceReadExistingAncestor(t *testing.T, gvr schema.GroupVer
 		},
 		{
 			name: "folderless metadata error prevents root fallback", target: provisioning.SyncTargetTypeFolderless,
-			metadataEnabled: true, metadataErr: readErr, wantErr: readErr,
+			metadataErr: readErr, wantErr: readErr,
 		},
 		{
 			name: "folderless malformed metadata prevents root fallback", target: provisioning.SyncTargetTypeFolderless,
-			metadataEnabled: true, metadata: []byte("{invalid"), wantErr: ErrInvalidFolderMetadata,
+			metadata: []byte("{invalid"), wantErr: ErrInvalidFolderMetadata,
 		},
 		{
 			name: "grant on missing destination is skipped for an allowed ancestor", existing: []string{teamID},
@@ -410,7 +409,7 @@ func testAuthorizeResourceReadExistingAncestor(t *testing.T, gvr schema.GroupVer
 		},
 		{
 			name: "allowed missing configured UID still requires an ancestor", destination: "configured-folder",
-			metadataEnabled: true, metadata: metadata, allowed: "configured-folder",
+			metadata: metadata, allowed: "configured-folder",
 			wantProbes: []string{"configured-folder", teamID, repoName}, wantForbidden: true,
 		},
 		{
@@ -435,28 +434,27 @@ func testAuthorizeResourceReadExistingAncestor(t *testing.T, gvr schema.GroupVer
 			wantProbes: []string{newID}, wantErr: lookupErr,
 		},
 		{
-			name: "metadata lookup errors propagate", metadataEnabled: true, metadataErr: readErr,
+			name: "metadata lookup errors propagate", metadataErr: readErr,
 			wantErr: readErr,
 		},
 		{
 			name: "allowed destination still propagates metadata lookup errors", existing: []string{newID}, allowed: newID,
-			metadataEnabled: true, metadataErr: readErr,
-			wantErr: readErr,
+			metadataErr: readErr,
+			wantErr:     readErr,
 		},
 		{
 			name: "allowed destination cannot bypass malformed configured metadata", existing: []string{newID}, allowed: newID,
-			metadataEnabled: true, metadata: []byte("{invalid"),
-			wantErr: ErrInvalidFolderMetadata,
+			metadata: []byte("{invalid"),
+			wantErr:  ErrInvalidFolderMetadata,
 		},
 		{
-			name: "malformed configured metadata prevents fallback", metadataEnabled: true, metadata: []byte("{invalid"),
+			name: "malformed configured metadata prevents fallback", metadata: []byte("{invalid"),
 			wantErr: ErrInvalidFolderMetadata,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			metadataEnabled := tt.metadataEnabled
 			cfg := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: repoName, Namespace: "stacks-123"}}
 			cfg.Spec.Sync.Target = tt.target
 			if cfg.Spec.Sync.Target == "" {
@@ -481,9 +479,7 @@ func testAuthorizeResourceReadExistingAncestor(t *testing.T, gvr schema.GroupVer
 			}
 			reader := repository.NewMockReaderWriter(t)
 			reader.On("Config").Return(cfg).Maybe()
-			if metadataEnabled {
-				expectConfiguredAncestorMetadata(t, reader, caller, tt.metadata, tt.metadataErr)
-			}
+			expectConfiguredAncestorMetadata(t, reader, caller, tt.metadata, tt.metadataErr)
 			var probes, checks []string
 			folderClient := &MockDynamicResourceInterface{}
 			folderClient.Test(t)
@@ -545,8 +541,10 @@ func testAuthorizeResourceReadExistingAncestor(t *testing.T, gvr schema.GroupVer
 				}).Once()
 			}
 
-			folders := NewFolderManager(reader, folderClient, NewEmptyFolderTree(), FolderKind, WithFolderMetadataEnabled(metadataEnabled))
-			err := NewAuthorizer(cfg, reader, access, clients, folders, metadataEnabled).AuthorizeResourcePreview(ctx, parsed)
+			expectMissingFolderMetadata(&reader.Mock)
+
+			folders := NewFolderManager(reader, folderClient, NewEmptyFolderTree(), FolderKind)
+			err := NewAuthorizer(cfg, reader, access, clients, folders).AuthorizeResourcePreview(ctx, parsed)
 			if tt.wantForbidden {
 				require.True(t, apierrors.IsForbidden(err), "expected forbidden, got %v", err)
 			} else if tt.wantErr != nil {
@@ -648,7 +646,7 @@ func testAuthorizeResourceReadUsesRoot(t *testing.T, target provisioning.SyncTar
 						}).Once()
 					}
 
-					err := NewAuthorizer(cfg, reader, access, NewMockResourceClients(t), folders, true).AuthorizeResourcePreview(ctx, parsed)
+					err := NewAuthorizer(cfg, reader, access, NewMockResourceClients(t), folders).AuthorizeResourcePreview(ctx, parsed)
 					if tt.denySource || tt.denyRoot {
 						require.ErrorIs(t, err, denied)
 					} else {
@@ -779,9 +777,9 @@ func TestAuthorizeResourcePreview_SkipsUnrelatedAncestors(t *testing.T) {
 							Group: gvr.Group, Resource: gvr.Resource, Name: parsed.Obj.GetName(), Verb: utils.VerbGet,
 						}, authorizationFolder).Return(accessErr).Once()
 					}
-					folders := NewFolderManager(reader, folderClient, NewEmptyFolderTree(), FolderKind, WithFolderMetadataEnabled(true))
+					folders := NewFolderManager(reader, folderClient, NewEmptyFolderTree(), FolderKind)
 
-					err = NewAuthorizer(cfg, reader, access, NewMockResourceClients(t), folders, true).AuthorizeResourcePreview(ctx, parsed)
+					err = NewAuthorizer(cfg, reader, access, NewMockResourceClients(t), folders).AuthorizeResourcePreview(ctx, parsed)
 					if canAuthorize && tt.canReadAncestor {
 						require.NoError(t, err)
 					} else {
@@ -865,7 +863,7 @@ func TestAuthorizeResource_FolderReadsUseDirectAuthorization(t *testing.T) {
 						}
 					}
 					reader := repository.NewMockReaderWriter(t)
-					authorizer := NewAuthorizer(cfg, reader, access, NewMockResourceClients(t), nil, true)
+					authorizer := NewAuthorizer(cfg, reader, access, NewMockResourceClients(t), nil)
 
 					err := authorizer.AuthorizeResource(t.Context(), parsed, utils.VerbGet)
 					require.ErrorIs(t, err, wantErr)
@@ -903,7 +901,7 @@ func TestAuthorizeResourcePreview_PanicsWithoutFolderManager(t *testing.T) {
 			reader := repository.NewMockReaderWriter(t)
 
 			require.Panics(t, func() {
-				_ = NewAuthorizer(cfg, reader, access, clients, nil, true).AuthorizeResourcePreview(ctx, parsed)
+				_ = NewAuthorizer(cfg, reader, access, clients, nil).AuthorizeResourcePreview(ctx, parsed)
 			})
 		})
 	}
@@ -947,7 +945,7 @@ func TestAuthorizeResourcePreview_RequiresSourceAccess(t *testing.T) {
 						Group: gvr.Group, Resource: gvr.Resource, Name: parsed.Existing.GetName(), Verb: utils.VerbGet,
 					}, "source-folder").Return(tt.err).Once()
 
-					err := NewAuthorizer(cfg, reader, access, clients, nil, true).AuthorizeResourcePreview(ctx, parsed)
+					err := NewAuthorizer(cfg, reader, access, clients, nil).AuthorizeResourcePreview(ctx, parsed)
 					require.ErrorIs(t, err, tt.err)
 				})
 			}
@@ -987,9 +985,10 @@ func TestAuthorizeResourcePreview_MatchingPRMetadataRetainsSourceCheck(t *testin
 			}, "restricted-source").Return(denied).Run(func(mock.Arguments) {
 				assert.True(t, found, "matching PR and DB metadata must not skip the source check when the resolved ancestor differs")
 			}).Once()
+			expectMissingFolderMetadata(&reader.Mock)
 			folders := NewFolderManager(reader, folderClient, NewEmptyFolderTree(), FolderKind)
 
-			err := NewAuthorizer(cfg, reader, access, NewMockResourceClients(t), folders, false).AuthorizeResourcePreview(ctx, parsed)
+			err := NewAuthorizer(cfg, reader, access, NewMockResourceClients(t), folders).AuthorizeResourcePreview(ctx, parsed)
 			require.ErrorIs(t, err, denied)
 		})
 	}
@@ -1072,7 +1071,7 @@ func testResourceDirectAuthorization(t *testing.T, gvr schema.GroupVersionResour
 			access.On("Check", mock.Anything, req, parsed.Meta.GetFolder()).Return(tt.result).Once()
 			clients := NewMockResourceClients(t)
 			reader := repository.NewMockReaderWriter(t)
-			err = NewAuthorizer(&provisioning.Repository{Spec: provisioning.RepositorySpec{Type: provisioning.GitRepositoryType, Git: &provisioning.GitRepositoryConfig{Branch: "main"}}}, reader, access, clients, nil, true).
+			err = NewAuthorizer(&provisioning.Repository{Spec: provisioning.RepositorySpec{Type: provisioning.GitRepositoryType, Git: &provisioning.GitRepositoryConfig{Branch: "main"}}}, reader, access, clients, nil).
 				AuthorizeResource(context.Background(), parsed, tt.verb)
 			assert.Equal(t, tt.result, err)
 		})
@@ -1192,8 +1191,10 @@ func TestAuthorizeResourcePreview_StopsOnWrappedAccessErrors(t *testing.T) {
 						return authlib.CheckResponse{Allowed: true}, nil
 					}))
 
+					expectMissingFolderMetadata(&reader.Mock)
+
 					folderManager := NewFolderManager(reader, folders, NewEmptyFolderTree(), FolderKind)
-					err := NewAuthorizer(cfg, reader, access, clients, folderManager, false).AuthorizeResourcePreview(ctx, parsed)
+					err := NewAuthorizer(cfg, reader, access, clients, folderManager).AuthorizeResourcePreview(ctx, parsed)
 					require.True(t, apierrors.IsForbidden(err), "expected forbidden, got %v", err)
 					if tt.accessErr != nil {
 						assert.ErrorContains(t, err, serviceErr.Error())
@@ -1254,7 +1255,7 @@ func TestAuthorizeCreateFolder(t *testing.T) {
 				mockAccess.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(assert.AnError).Once()
 			}
 
-			authorizer := NewAuthorizer(repo, nil, mockAccess, authTestClients(t), nil, false)
+			authorizer := NewAuthorizer(repo, nil, mockAccess, authTestClients(t), nil)
 			err := authorizer.AuthorizeCreateFolder(context.Background(), tt.path)
 
 			if tt.shouldAllow {
@@ -1322,7 +1323,7 @@ func TestAuthorizeDeleteByPath_Folders(t *testing.T) {
 				mockAccess.On("Check", mock.Anything, mock.Anything, expectedParentFolderID).Return(assert.AnError).Once()
 			}
 
-			authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), nil, false)
+			authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), nil)
 			err := authorizer.AuthorizeDeleteByPath(context.Background(), tt.path)
 
 			if tt.shouldAllow {
@@ -1426,7 +1427,7 @@ func TestAuthorizeMoveByPath_Folders(t *testing.T) {
 				}
 			}
 
-			authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), nil, false)
+			authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), nil)
 			err := authorizer.AuthorizeMoveByPath(context.Background(), tt.originalPath, tt.targetPath)
 
 			if tt.shouldSucceed {
@@ -1439,7 +1440,7 @@ func TestAuthorizeMoveByPath_Folders(t *testing.T) {
 	}
 }
 
-// TestAuthorizeFolderMetadata tests authorization with folder metadata enabled
+// TestAuthorizeFolderMetadata tests authorization with folder metadata
 func TestAuthorizeFolderMetadata(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -1517,7 +1518,7 @@ func TestAuthorizeFolderMetadata(t *testing.T) {
 				}), tt.expectedFolder).Return(nil).Once()
 			}
 
-			authorizer := NewAuthorizer(repo, reader, mockAccess, authTestClients(t), nil, true) // folderMetadataEnabled=true
+			authorizer := NewAuthorizer(repo, reader, mockAccess, authTestClients(t), nil)
 			err := authorizer.AuthorizeDeleteByPath(context.Background(), tt.folderPath)
 
 			if tt.shouldPass {
@@ -1608,7 +1609,7 @@ func TestAuthorizeCreateFolderWithMetadata(t *testing.T) {
 				}), tt.expectedParentID).Return(nil).Once()
 			}
 
-			authorizer := NewAuthorizer(repo, reader, mockAccess, authTestClients(t), nil, true)
+			authorizer := NewAuthorizer(repo, reader, mockAccess, authTestClients(t), nil)
 			err := authorizer.AuthorizeCreateFolder(context.Background(), tt.childPath)
 
 			if tt.shouldPass {
@@ -1660,7 +1661,7 @@ func TestAuthorizeMoveByPathWithMetadata(t *testing.T) {
 			return req.Verb == utils.VerbCreate
 		}), "target-parent-stable-uid").Return(nil).Once()
 
-		authorizer := NewAuthorizer(repo, rw, mockAccess, authTestClients(t), nil, true)
+		authorizer := NewAuthorizer(repo, rw, mockAccess, authTestClients(t), nil)
 		err := authorizer.AuthorizeMoveByPath(context.Background(), "source/", "target-parent/moved/")
 
 		assert.NoError(t, err)
@@ -1684,7 +1685,7 @@ func TestAuthorizeReadAllSupported(t *testing.T) {
 			}), "").Return(nil).Once()
 		}
 
-		authorizer := NewAuthorizer(repo, nil, mockAccess, authTestClients(t), nil, false)
+		authorizer := NewAuthorizer(repo, nil, mockAccess, authTestClients(t), nil)
 		err := authorizer.AuthorizeReadAllSupported(context.Background())
 
 		assert.NoError(t, err)
@@ -1698,7 +1699,7 @@ func TestAuthorizeReadAllSupported(t *testing.T) {
 		mockAccess := auth.NewMockAccessChecker(t)
 		mockAccess.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(assert.AnError).Once()
 
-		authorizer := NewAuthorizer(repo, nil, mockAccess, authTestClients(t), nil, false)
+		authorizer := NewAuthorizer(repo, nil, mockAccess, authTestClients(t), nil)
 		err := authorizer.AuthorizeReadAllSupported(context.Background())
 
 		assert.Error(t, err)
@@ -1723,7 +1724,7 @@ func TestAuthorizeCreateAllSupported(t *testing.T) {
 			}), "my-repo").Return(nil).Once()
 		}
 
-		authorizer := NewAuthorizer(repo, nil, mockAccess, authTestClients(t), nil, false)
+		authorizer := NewAuthorizer(repo, nil, mockAccess, authTestClients(t), nil)
 		err := authorizer.AuthorizeCreateAllSupported(context.Background())
 
 		assert.NoError(t, err)
@@ -1747,7 +1748,7 @@ func TestAuthorizeCreateAllSupported(t *testing.T) {
 			}), "").Return(nil).Once()
 		}
 
-		authorizer := NewAuthorizer(repo, nil, mockAccess, authTestClients(t), nil, false)
+		authorizer := NewAuthorizer(repo, nil, mockAccess, authTestClients(t), nil)
 		err := authorizer.AuthorizeCreateAllSupported(context.Background())
 
 		assert.NoError(t, err)
@@ -1764,7 +1765,7 @@ func TestAuthorizeCreateAllSupported(t *testing.T) {
 		mockAccess := auth.NewMockAccessChecker(t)
 		mockAccess.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(assert.AnError).Once()
 
-		authorizer := NewAuthorizer(repo, nil, mockAccess, authTestClients(t), nil, false)
+		authorizer := NewAuthorizer(repo, nil, mockAccess, authTestClients(t), nil)
 		err := authorizer.AuthorizeCreateAllSupported(context.Background())
 
 		assert.Error(t, err)
@@ -1786,7 +1787,7 @@ func TestAuthorizeDeleteAllSupported(t *testing.T) {
 			}), "").Return(nil).Once()
 		}
 
-		authorizer := NewAuthorizer(repo, nil, mockAccess, authTestClients(t), nil, false)
+		authorizer := NewAuthorizer(repo, nil, mockAccess, authTestClients(t), nil)
 		err := authorizer.AuthorizeDeleteAllSupported(context.Background())
 
 		assert.NoError(t, err)
@@ -1800,7 +1801,7 @@ func TestAuthorizeDeleteAllSupported(t *testing.T) {
 		mockAccess := auth.NewMockAccessChecker(t)
 		mockAccess.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(assert.AnError).Once()
 
-		authorizer := NewAuthorizer(repo, nil, mockAccess, authTestClients(t), nil, false)
+		authorizer := NewAuthorizer(repo, nil, mockAccess, authTestClients(t), nil)
 		err := authorizer.AuthorizeDeleteAllSupported(context.Background())
 
 		assert.Error(t, err)
@@ -1834,7 +1835,7 @@ func TestAuthorizeDeleteByPath(t *testing.T) {
 				req.Verb == utils.VerbDelete
 		}), mock.AnythingOfType("string")).Return(nil).Once()
 
-		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), nil, false)
+		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), nil)
 		err := authorizer.AuthorizeDeleteByPath(context.Background(), "team-a/dashboard.json")
 
 		assert.NoError(t, err)
@@ -1859,7 +1860,7 @@ func TestAuthorizeDeleteByPath(t *testing.T) {
 				req.Verb == utils.VerbDelete
 		}), rootFolder).Return(nil).Once()
 
-		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), nil, false)
+		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), nil)
 		err := authorizer.AuthorizeDeleteByPath(context.Background(), "dashboard.json")
 
 		assert.NoError(t, err)
@@ -1882,7 +1883,7 @@ func TestAuthorizeDeleteByPath(t *testing.T) {
 				req.Verb == utils.VerbDelete
 		}), mock.AnythingOfType("string")).Return(nil).Once()
 
-		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), nil, false)
+		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), nil)
 		err := authorizer.AuthorizeDeleteByPath(context.Background(), "team-a/")
 
 		assert.NoError(t, err)
@@ -1903,7 +1904,7 @@ func TestAuthorizeDeleteByPath(t *testing.T) {
 
 		mockAccess.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(assert.AnError).Once()
 
-		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), nil, false)
+		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), nil)
 		err := authorizer.AuthorizeDeleteByPath(context.Background(), "restricted/dashboard.json")
 
 		assert.Error(t, err)
@@ -1919,7 +1920,7 @@ func TestAuthorizeDeleteByPath(t *testing.T) {
 		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).
 			Return(nil, repository.ErrFileNotFound).Maybe()
 
-		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), nil, false)
+		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), nil)
 		err := authorizer.AuthorizeDeleteByPath(context.Background(), "unknown/file.json")
 
 		assert.Error(t, err)
@@ -1940,7 +1941,7 @@ func TestAuthorizeDeleteByPath(t *testing.T) {
 		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).
 			Return(nil, repository.ErrFileNotFound).Maybe()
 
-		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), nil, false)
+		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), nil)
 		err := authorizer.AuthorizeDeleteByPath(context.Background(), "bad/widget.json")
 
 		assert.Error(t, err)
@@ -1961,7 +1962,7 @@ func TestAuthorizeDeleteByPath(t *testing.T) {
 		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).
 			Return(nil, repository.ErrFileNotFound).Maybe()
 
-		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), nil, false)
+		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), nil)
 		err := authorizer.AuthorizeDeleteByPath(context.Background(), "sneaky/folder.json")
 
 		assert.Error(t, err)
@@ -1991,7 +1992,7 @@ func TestAuthorizeDeleteByPath(t *testing.T) {
 				req.Verb == utils.VerbDelete
 		}), "stable-folder-uid").Return(nil).Once()
 
-		authorizer := NewAuthorizer(repo, rw, mockAccess, authTestClients(t), nil, true)
+		authorizer := NewAuthorizer(repo, rw, mockAccess, authTestClients(t), nil)
 		err := authorizer.AuthorizeDeleteByPath(context.Background(), "team-a/dashboard.json")
 
 		assert.NoError(t, err)
@@ -2023,7 +2024,7 @@ func TestAuthorizeMoveByPath(t *testing.T) {
 				req.Verb == utils.VerbCreate
 		}), mock.AnythingOfType("string")).Return(nil).Once()
 
-		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), nil, false)
+		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), nil)
 		err := authorizer.AuthorizeMoveByPath(context.Background(), "src/dashboard.json", "dst/dashboard.json")
 
 		assert.NoError(t, err)
@@ -2051,7 +2052,7 @@ func TestAuthorizeMoveByPath(t *testing.T) {
 				req.Verb == utils.VerbCreate
 		}), mock.AnythingOfType("string")).Return(nil).Once()
 
-		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), nil, false)
+		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), nil)
 		err := authorizer.AuthorizeMoveByPath(context.Background(), "src-folder/", "dst-folder/")
 
 		assert.NoError(t, err)
@@ -2074,7 +2075,7 @@ func TestAuthorizeMoveByPath(t *testing.T) {
 			return req.Verb == utils.VerbUpdate
 		}), mock.Anything).Return(assert.AnError).Once()
 
-		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), nil, false)
+		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), nil)
 		err := authorizer.AuthorizeMoveByPath(context.Background(), "restricted/dash.json", "dest/dash.json")
 
 		assert.Error(t, err)
@@ -2099,7 +2100,7 @@ func TestAuthorizeMoveByPath(t *testing.T) {
 			return req.Verb == utils.VerbCreate
 		}), mock.Anything).Return(assert.AnError).Once()
 
-		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), nil, false)
+		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), nil)
 		err := authorizer.AuthorizeMoveByPath(context.Background(), "src/dash.json", "restricted/dash.json")
 
 		assert.Error(t, err)
@@ -2124,20 +2125,20 @@ func testReadNewResourcePreviewWithTokenAuth(t *testing.T, kind schema.GroupVers
 		name                  string
 		path                  string
 		ref                   string
-		folderMetadata        bool
+		hasFolderMetadata     bool
 		metadataOnlyOnFeature bool
 		canRead               bool
 	}{
 		{name: "feature branch with one missing hash folder", path: "new/dashboard.json", ref: "feature", canRead: true},
 		{name: "feature branch with multiple missing hash folders", path: "new/nested/dashboard.json", ref: "feature", canRead: true},
-		{name: "feature branch with one missing metadata folder", path: "new/dashboard.json", ref: "feature", folderMetadata: true, canRead: true},
-		{name: "feature branch with multiple missing metadata folders", path: "new/nested/dashboard.json", ref: "feature", folderMetadata: true, canRead: true},
-		{name: "folder metadata exists only on feature branch", path: "new/nested/dashboard.json", ref: "feature", folderMetadata: true, metadataOnlyOnFeature: true, canRead: true},
-		{name: "configured branch awaiting sync", path: "new/nested/dashboard.json", ref: "main", folderMetadata: true, canRead: true},
+		{name: "feature branch with one missing metadata folder", path: "new/dashboard.json", ref: "feature", hasFolderMetadata: true, canRead: true},
+		{name: "feature branch with multiple missing metadata folders", path: "new/nested/dashboard.json", ref: "feature", hasFolderMetadata: true, canRead: true},
+		{name: "folder metadata exists only on feature branch", path: "new/nested/dashboard.json", ref: "feature", hasFolderMetadata: true, metadataOnlyOnFeature: true, canRead: true},
+		{name: "configured branch awaiting sync", path: "new/nested/dashboard.json", ref: "main", hasFolderMetadata: true, canRead: true},
 		{name: "empty ref uses configured branch", path: "new/dashboard.json", canRead: true},
 		{name: "configured branch read denied", path: "new/dashboard.json", ref: "main"},
 		{name: "hash folder ancestor permission denied", path: "new/nested/dashboard.json", ref: "feature"},
-		{name: "metadata folder ancestor permission denied", path: "new/nested/dashboard.json", ref: "feature", folderMetadata: true},
+		{name: "metadata folder ancestor permission denied", path: "new/nested/dashboard.json", ref: "feature", hasFolderMetadata: true},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := &provisioning.Repository{
@@ -2171,7 +2172,7 @@ func testReadNewResourcePreviewWithTokenAuth(t *testing.T, kind schema.GroupVers
 			var destination string
 			for dir := safepath.Dir(tt.path); dir != ""; dir = safepath.Dir(dir) {
 				folderID := ParseFolder(dir, cfg.Name).ID
-				if tt.folderMetadata {
+				if tt.hasFolderMetadata {
 					folderID = "stable-" + safepath.Base(dir)
 					metadataPath := safepath.Join(dir, folderMetadataFileName)
 					file := &repository.FileInfo{Path: metadataPath, Data: []byte(fmt.Sprintf(`{"metadata":{"name":%q}}`, folderID))}
@@ -2226,7 +2227,7 @@ func testReadNewResourcePreviewWithTokenAuth(t *testing.T, kind schema.GroupVers
 				repo: provisioning.ResourceRepositoryInfo{
 					Name: cfg.Name, Namespace: cfg.Namespace, Type: cfg.Spec.Type,
 				},
-				reader: repo, config: cfg, clients: clients, folderMetadataEnabled: tt.folderMetadata,
+				reader: repo, config: cfg, clients: clients,
 			}
 			var checkedFolders []string
 			access := auth.NewTokenAccessChecker(previewTokenAccessChecker(func(checkCtx context.Context, id authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
@@ -2238,9 +2239,10 @@ func testReadNewResourcePreviewWithTokenAuth(t *testing.T, kind schema.GroupVers
 				checkedFolders = append(checkedFolders, folder)
 				return authlib.CheckResponse{Allowed: tt.canRead && folder == checkedFolder}, nil
 			})).WithFallbackRole(identity.RoleViewer)
-			fm := NewFolderManager(repo, folders, NewEmptyFolderTree(), FolderKind, WithFolderMetadataEnabled(tt.folderMetadata))
-			authorizer := NewAuthorizer(cfg, repo, access, clients, fm, tt.folderMetadata)
-			readWriter := NewDualReadWriter(repo, parser, nil, authorizer, tt.folderMetadata)
+			expectMissingFolderMetadata(&repo.Mock)
+			fm := NewFolderManager(repo, folders, NewEmptyFolderTree(), FolderKind)
+			authorizer := NewAuthorizer(cfg, repo, access, clients, fm)
+			readWriter := NewDualReadWriter(repo, parser, nil, authorizer, 0)
 
 			parsed, err := readWriter.Read(ctx, tt.path, tt.ref)
 			if tt.canRead {
@@ -2362,9 +2364,10 @@ func testReadPreviewAtRoot(t *testing.T, kind schema.GroupVersionKind, resource 
 				checkedFolders = append(checkedFolders, folder)
 				return authlib.CheckResponse{Allowed: tt.rootAllowed}, nil
 			})).WithFallbackRole(identity.RoleViewer)
+			expectMissingFolderMetadata(&repo.Mock)
 			fm := NewFolderManager(repo, folders, NewEmptyFolderTree(), FolderKind)
-			authorizer := NewAuthorizer(cfg, repo, access, clients, fm, false)
-			readWriter := NewDualReadWriter(repo, parser, nil, authorizer, false)
+			authorizer := NewAuthorizer(cfg, repo, access, clients, fm)
+			readWriter := NewDualReadWriter(repo, parser, nil, authorizer, 0)
 
 			parsed, err := readWriter.Read(ctx, resourcePath, "feature")
 			if tt.wantAllowed {
@@ -2451,9 +2454,10 @@ func TestDualReadWriter_ReadRejectsReadableUnmanagedAncestor(t *testing.T) {
 		checkedFolders = append(checkedFolders, folder)
 		return authlib.CheckResponse{Allowed: folder == decoyUID}, nil
 	})).WithFallbackRole(identity.RoleViewer)
+	expectMissingFolderMetadata(&repo.Mock)
 	fm := NewFolderManager(repo, folders, NewEmptyFolderTree(), FolderKind)
-	authorizer := NewAuthorizer(cfg, repo, access, clients, fm, false)
-	readWriter := NewDualReadWriter(repo, parser, nil, authorizer, false)
+	authorizer := NewAuthorizer(cfg, repo, access, clients, fm)
+	readWriter := NewDualReadWriter(repo, parser, nil, authorizer, 0)
 
 	parsed, err := readWriter.Read(ctx, resourcePath, "feature")
 	require.True(t, apierrors.IsForbidden(err), "expected forbidden, got %v", err)
@@ -2480,7 +2484,7 @@ func testReadNewResourcePreviewValidatesConfiguredFolder(t *testing.T, kind sche
 		name              string
 		path              string
 		target            provisioning.SyncTargetType
-		folderMetadata    bool
+		hasFolderMetadata bool
 		unsynced          bool
 		configuredFolder  string
 		denyDestination   bool
@@ -2489,14 +2493,14 @@ func testReadNewResourcePreviewValidatesConfiguredFolder(t *testing.T, kind sche
 		canReadAncestor   bool
 		wantAllowed       bool
 	}{
-		{name: "allowed PR folder cannot bypass denied configured folder", folderMetadata: true, configuredFolder: "restricted-folder"},
-		{name: "different allowed configured folder permits preview", folderMetadata: true, configuredFolder: "other-allowed-folder", canReadConfigured: true, wantAllowed: true},
-		{name: "denied PR folder cannot override allowed configured folder", folderMetadata: true, configuredFolder: "other-allowed-folder", denyDestination: true, canReadConfigured: true, wantAllowed: true},
-		{name: "matching allowed folder permits preview", folderMetadata: true, configuredFolder: "preview-folder", wantAllowed: true},
+		{name: "allowed PR folder cannot bypass denied configured folder", hasFolderMetadata: true, configuredFolder: "restricted-folder"},
+		{name: "different allowed configured folder permits preview", hasFolderMetadata: true, configuredFolder: "other-allowed-folder", canReadConfigured: true, wantAllowed: true},
+		{name: "denied PR folder cannot override allowed configured folder", hasFolderMetadata: true, configuredFolder: "other-allowed-folder", denyDestination: true, canReadConfigured: true, wantAllowed: true},
+		{name: "matching allowed folder permits preview", hasFolderMetadata: true, configuredFolder: "preview-folder", wantAllowed: true},
 		{name: "missing hash folder requires instance root permission", target: provisioning.SyncTargetTypeInstance, unsynced: true, canReadConfigured: true},
 		{name: "missing repository root before folder sync forbids preview", path: "dashboard.json", unsynced: true, canReadConfigured: true},
-		{name: "matching allowed metadata folder requires ancestor permission", folderMetadata: true, configuredFolder: "preview-folder", unsynced: true, ancestorExists: true},
-		{name: "matching allowed metadata folder inherits from allowed ancestor", folderMetadata: true, configuredFolder: "preview-folder", unsynced: true, ancestorExists: true, canReadAncestor: true, wantAllowed: true},
+		{name: "matching allowed metadata folder requires ancestor permission", hasFolderMetadata: true, configuredFolder: "preview-folder", unsynced: true, ancestorExists: true},
+		{name: "matching allowed metadata folder inherits from allowed ancestor", hasFolderMetadata: true, configuredFolder: "preview-folder", unsynced: true, ancestorExists: true, canReadAncestor: true, wantAllowed: true},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			resourcePath := tt.path
@@ -2518,7 +2522,7 @@ func testReadNewResourcePreviewValidatesConfiguredFolder(t *testing.T, kind sche
 			}
 			destination := "preview-folder"
 			configuredFolder := tt.configuredFolder
-			if !tt.folderMetadata {
+			if !tt.hasFolderMetadata {
 				destination = ParentFolder(resourcePath, cfg)
 				configuredFolder = destination
 			}
@@ -2528,7 +2532,7 @@ func testReadNewResourcePreviewValidatesConfiguredFolder(t *testing.T, kind sche
 				Path: resourcePath, Ref: "feature",
 				Data: []byte(fmt.Sprintf(`{"apiVersion":%q,"kind":%q,"metadata":{"name":%q},"spec":{"title":"Preview resource"}}`, kind.GroupVersion().String(), kind.Kind, resourceName)),
 			}, nil).Once()
-			if tt.folderMetadata {
+			if tt.hasFolderMetadata {
 				repo.EXPECT().Read(mock.Anything, metadataPath, "feature").Return(&repository.FileInfo{
 					Path: metadataPath, Data: []byte(fmt.Sprintf(`{"metadata":{"name":%q}}`, destination)),
 				}, nil).Once()
@@ -2587,7 +2591,7 @@ func testReadNewResourcePreviewValidatesConfiguredFolder(t *testing.T, kind sche
 			}).Once()
 			parser := &parser{
 				repo:   provisioning.ResourceRepositoryInfo{Name: cfg.Name, Namespace: cfg.Namespace, Type: cfg.Spec.Type},
-				reader: repo, config: cfg, clients: clients, folderMetadataEnabled: tt.folderMetadata,
+				reader: repo, config: cfg, clients: clients,
 			}
 			var checkedFolders []string
 			access := auth.NewTokenAccessChecker(previewTokenAccessChecker(func(checkCtx context.Context, id authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
@@ -2602,9 +2606,10 @@ func testReadNewResourcePreviewValidatesConfiguredFolder(t *testing.T, kind sche
 					(tt.canReadAncestor && folder == cfg.Name)
 				return authlib.CheckResponse{Allowed: allowed}, nil
 			})).WithFallbackRole(identity.RoleViewer)
-			fm := NewFolderManager(repo, folders, NewEmptyFolderTree(), FolderKind, WithFolderMetadataEnabled(tt.folderMetadata))
-			authorizer := NewAuthorizer(cfg, repo, access, clients, fm, tt.folderMetadata)
-			readWriter := NewDualReadWriter(repo, parser, nil, authorizer, tt.folderMetadata)
+			expectMissingFolderMetadata(&repo.Mock)
+			fm := NewFolderManager(repo, folders, NewEmptyFolderTree(), FolderKind)
+			authorizer := NewAuthorizer(cfg, repo, access, clients, fm)
+			readWriter := NewDualReadWriter(repo, parser, nil, authorizer, 0)
 
 			parsed, err := readWriter.Read(ctx, resourcePath, "feature")
 			if tt.wantAllowed {
@@ -2648,7 +2653,7 @@ func TestDualReadWriter_ReadMovedResourcePreviewWithTokenAuth(t *testing.T) {
 
 type movedResourcePreviewCase struct {
 	name                  string
-	folderMetadata        bool
+	hasFolderMetadata     bool
 	metadataOnlyOnFeature bool
 	configuredFolder      string
 	canReadSource         bool
@@ -2660,7 +2665,7 @@ type movedResourcePreviewCase struct {
 }
 
 type movedResourcePreviewFixture struct {
-	folderMetadata        bool
+	hasFolderMetadata     bool
 	resourceName          string
 	resourcePath          string
 	sourcePath            string
@@ -2675,15 +2680,15 @@ type movedResourcePreviewFixture struct {
 
 func newMovedResourcePreviewFixture(tt movedResourcePreviewCase, resource schema.GroupVersionResource, repoName string) movedResourcePreviewFixture {
 	f := movedResourcePreviewFixture{
-		folderMetadata: tt.folderMetadata,
-		resourceName:   "existing-" + resource.Resource,
-		resourcePath:   "team/renamed/resource.json",
-		sourcePath:     "team/original/resource.json",
-		sourceFolder:   ParseFolder("team/original/", repoName).ID,
-		destination:    ParseFolder("team/renamed/", repoName).ID,
-		ancestor:       ParseFolder("team/", repoName).ID,
+		hasFolderMetadata: tt.hasFolderMetadata,
+		resourceName:      "existing-" + resource.Resource,
+		resourcePath:      "team/renamed/resource.json",
+		sourcePath:        "team/original/resource.json",
+		sourceFolder:      ParseFolder("team/original/", repoName).ID,
+		destination:       ParseFolder("team/renamed/", repoName).ID,
+		ancestor:          ParseFolder("team/", repoName).ID,
 	}
-	if f.folderMetadata {
+	if f.hasFolderMetadata {
 		f.sourceFolder, f.destination = "source-folder", "destination-folder"
 		if !tt.metadataOnlyOnFeature {
 			f.ancestor = "team-folder"
@@ -2720,7 +2725,8 @@ func (f movedResourcePreviewFixture) expectRepositoryReads(t *testing.T, tt move
 		Path: f.resourcePath, Ref: "feature",
 		Data: []byte(fmt.Sprintf(`{"apiVersion":%q,"kind":%q,"metadata":{"name":%q},"spec":{"title":"Moved resource"}}`, kind.GroupVersion().String(), kind.Kind, f.resourceName)),
 	}, nil).Once()
-	if !f.folderMetadata {
+	if !f.hasFolderMetadata {
+		expectMissingFolderMetadata(&repo.Mock)
 		return repo
 	}
 
@@ -2795,16 +2801,16 @@ func testReadMovedResourcePreviewWithTokenAuth(t *testing.T, kind schema.GroupVe
 		{name: "directory rename inherits allowed hash ancestor", canReadSource: true, canReadAncestor: true, wantAllowed: true},
 		{name: "directory rename respects denied hash ancestor", canReadSource: true},
 		{name: "directory rename requires source permission", canReadAncestor: true},
-		{name: "metadata move inherits allowed ancestor", folderMetadata: true, canReadSource: true, canReadAncestor: true, wantAllowed: true},
-		{name: "metadata move respects denied ancestor", folderMetadata: true, canReadSource: true},
-		{name: "metadata move requires source permission", folderMetadata: true, canReadAncestor: true},
-		{name: "feature-only metadata uses configured hash ancestor", folderMetadata: true, metadataOnlyOnFeature: true, canReadSource: true, canReadAncestor: true, wantAllowed: true},
+		{name: "metadata move inherits allowed ancestor", hasFolderMetadata: true, canReadSource: true, canReadAncestor: true, wantAllowed: true},
+		{name: "metadata move respects denied ancestor", hasFolderMetadata: true, canReadSource: true},
+		{name: "metadata move requires source permission", hasFolderMetadata: true, canReadAncestor: true},
+		{name: "feature-only metadata uses configured hash ancestor", hasFolderMetadata: true, metadataOnlyOnFeature: true, canReadSource: true, canReadAncestor: true, wantAllowed: true},
 		{name: "move without any real ancestor is forbidden", canReadSource: true, canReadAncestor: true, noAncestor: true},
-		{name: "same-folder rename retains original resource check", folderMetadata: true, canReadSource: true, sameFolder: true, wantAllowed: true},
-		{name: "same-folder rename respects denied resource permission", folderMetadata: true, sameFolder: true},
-		{name: "same-folder PR metadata cannot bypass denied configured folder", folderMetadata: true, configuredFolder: "restricted-folder", canReadSource: true, sameFolder: true},
-		{name: "same-folder PR metadata permits allowed configured folder", folderMetadata: true, configuredFolder: "other-allowed-folder", canReadSource: true, canReadAncestor: true, sameFolder: true, wantAllowed: true},
-		{name: "source folder is the nearest configured ancestor", folderMetadata: true, canReadSource: true, canReadAncestor: true, sourceMatchesAncestor: true, wantAllowed: true},
+		{name: "same-folder rename retains original resource check", hasFolderMetadata: true, canReadSource: true, sameFolder: true, wantAllowed: true},
+		{name: "same-folder rename respects denied resource permission", hasFolderMetadata: true, sameFolder: true},
+		{name: "same-folder PR metadata cannot bypass denied configured folder", hasFolderMetadata: true, configuredFolder: "restricted-folder", canReadSource: true, sameFolder: true},
+		{name: "same-folder PR metadata permits allowed configured folder", hasFolderMetadata: true, configuredFolder: "other-allowed-folder", canReadSource: true, canReadAncestor: true, sameFolder: true, wantAllowed: true},
+		{name: "source folder is the nearest configured ancestor", hasFolderMetadata: true, canReadSource: true, canReadAncestor: true, sourceMatchesAncestor: true, wantAllowed: true},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := &provisioning.Repository{
@@ -2857,7 +2863,7 @@ func testReadMovedResourcePreviewWithTokenAuth(t *testing.T, kind schema.GroupVe
 			}).Once()
 			parser := &parser{
 				repo:   provisioning.ResourceRepositoryInfo{Name: cfg.Name, Namespace: cfg.Namespace, Type: cfg.Spec.Type},
-				reader: repo, config: cfg, clients: clients, folderMetadataEnabled: f.folderMetadata,
+				reader: repo, config: cfg, clients: clients,
 			}
 			access := auth.NewTokenAccessChecker(previewTokenAccessChecker(func(checkCtx context.Context, id authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
 				require.Same(t, caller, id)
@@ -2869,9 +2875,10 @@ func testReadMovedResourcePreviewWithTokenAuth(t *testing.T, kind schema.GroupVe
 				allowed := (folder == f.sourceFolder && tt.canReadSource) || (folder == f.resolvedFolder && tt.canReadAncestor)
 				return authlib.CheckResponse{Allowed: allowed}, nil
 			})).WithFallbackRole(identity.RoleViewer)
-			fm := NewFolderManager(repo, folders, NewEmptyFolderTree(), FolderKind, WithFolderMetadataEnabled(f.folderMetadata))
-			authorizer := NewAuthorizer(cfg, repo, access, clients, fm, f.folderMetadata)
-			readWriter := NewDualReadWriter(repo, parser, nil, authorizer, f.folderMetadata)
+			expectMissingFolderMetadata(&repo.Mock)
+			fm := NewFolderManager(repo, folders, NewEmptyFolderTree(), FolderKind)
+			authorizer := NewAuthorizer(cfg, repo, access, clients, fm)
+			readWriter := NewDualReadWriter(repo, parser, nil, authorizer, 0)
 
 			parsed, err := readWriter.Read(ctx, f.resourcePath, "feature")
 			if tt.wantAllowed {
@@ -2992,8 +2999,15 @@ func TestAuthorizeResourcePreview_Eligibility(t *testing.T) {
 			access.EXPECT().Check(t.Context(), authlib.CheckRequest{
 				Group: parsed.GVR.Group, Resource: parsed.GVR.Resource, Name: parsed.Obj.GetName(), Verb: utils.VerbGet,
 			}, wantFolder).Return(nil).Once()
-			authorizer := NewAuthorizer(cfg, repository.NewMockReader(t), access, NewMockResourceClients(t), folders, true)
+			authorizer := NewAuthorizer(cfg, repository.NewMockReader(t), access, NewMockResourceClients(t), folders)
 			require.NoError(t, authorizer.AuthorizeResourcePreview(t.Context(), parsed))
 		})
 	}
+}
+
+// Fixtures without manifests represent existing repositories that still use path-derived UIDs.
+// Register this fallback after explicit metadata reads so those expectations take precedence.
+func expectMissingFolderMetadata(reader *mock.Mock) {
+	reader.On("Read", mock.Anything, mock.MatchedBy(IsFolderMetadataFile), mock.Anything).
+		Return(nil, repository.ErrFileNotFound).Maybe()
 }

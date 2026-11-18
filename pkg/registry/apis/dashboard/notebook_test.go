@@ -7,6 +7,7 @@ import (
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/admission"
@@ -28,9 +29,14 @@ func newNotebook(name string) *dashv2beta1.Notebook {
 }
 
 func notebookAttributes(op admission.Operation, nb *dashv2beta1.Notebook, opts runtime.Object) admission.Attributes {
+	return notebookAttributesWithOld(op, nb, nil, opts)
+}
+
+// notebookAttributesWithOld is notebookAttributes for an update, which carries the stored object.
+func notebookAttributesWithOld(op admission.Operation, nb *dashv2beta1.Notebook, old runtime.Object, opts runtime.Object) admission.Attributes {
 	return admission.NewAttributesRecord(
 		nb,
-		nil,
+		old,
 		dashv2beta1.NotebookResourceInfo.GroupVersionKind(),
 		"stacks-1",
 		nb.GetName(),
@@ -112,6 +118,29 @@ func TestDashboardsAPIBuilderValidateNotebook(t *testing.T) {
 		err := builder.Validate(ctx, notebookAttributes(admission.Delete, nb, &metav1.DeleteOptions{}), nil)
 		require.NoError(t, err)
 	})
+
+	t.Run("rejects two cells that share an id on create and update", func(t *testing.T) {
+		cases := []struct {
+			name string
+			op   admission.Operation
+			opts runtime.Object
+		}{
+			{name: "create", op: admission.Create, opts: &metav1.CreateOptions{}},
+			{name: "update", op: admission.Update, opts: &metav1.UpdateOptions{}},
+		}
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				nb := newNotebook("dup")
+				nb.Spec.Layout.Spec.Cells = []dashv2beta1.NotebookNotebookLayoutItemKind{
+					layoutCell("a", testCellID(1)),
+					layoutCell("b", testCellID(1)),
+				}
+				err := builder.Validate(ctx, notebookAttributes(tc.op, nb, tc.opts), nil)
+				require.True(t, apierrors.IsInvalid(err), "expected an Invalid error, got %v", err)
+				require.ErrorContains(t, err, "spec.layout.spec.cells[1].spec.id")
+			})
+		}
+	})
 }
 
 // The format the UI uses for the same default, so the two cannot drift apart unnoticed.
@@ -155,6 +184,26 @@ func TestMutateNotebook(t *testing.T) {
 
 		require.Empty(t, nb.Spec.Title)
 	})
+
+	for _, tc := range []struct {
+		name string
+		op   admission.Operation
+		opts runtime.Object
+	}{
+		{"create", admission.Create, &metav1.CreateOptions{}},
+		{"update", admission.Update, &metav1.UpdateOptions{}},
+	} {
+		t.Run("a hidden time picker is turned off on "+tc.name, func(t *testing.T) {
+			nb := newNotebook("nb")
+			nb.Spec.TimeSettings.HideTimepicker = true
+			nb.Spec.TimeSettings.From = "now-1h"
+
+			require.NoError(t, mutateNotebook(notebookAttributes(tc.op, nb, tc.opts)))
+
+			require.False(t, nb.Spec.TimeSettings.HideTimepicker)
+			require.Equal(t, "now-1h", nb.Spec.TimeSettings.From)
+		})
+	}
 }
 
 func TestDashboardsAPIBuilderMutateNotebook(t *testing.T) {
@@ -175,10 +224,48 @@ func TestDashboardsAPIBuilderMutateNotebook(t *testing.T) {
 	t.Run("leaves a delete alone", func(t *testing.T) {
 		nb := newNotebook("nb")
 		nb.Spec.Title = ""
+		nb.Spec.Layout.Spec.Cells = []dashv2beta1.NotebookNotebookLayoutItemKind{layoutCell("a", "")}
 
 		require.NoError(t, builder.Mutate(ctx, notebookAttributes(admission.Delete, nb, &metav1.DeleteOptions{}), nil))
 
 		require.Empty(t, nb.Spec.Title)
+		require.Nil(t, nb.Spec.Layout.Spec.Cells[0].Spec.Id)
+	})
+
+	t.Run("gives every cell of a created notebook an id", func(t *testing.T) {
+		nb := newNotebook("nb")
+		nb.Spec.Layout.Spec.Cells = []dashv2beta1.NotebookNotebookLayoutItemKind{layoutCell("a", ""), layoutCell("b", "")}
+
+		require.NoError(t, builder.Mutate(ctx, notebookAttributes(admission.Create, nb, &metav1.CreateOptions{}), nil))
+
+		require.Regexp(t, notebookCellIDPattern, notebookCellID(nb.Spec.Layout.Spec.Cells[0]))
+		require.Regexp(t, notebookCellIDPattern, notebookCellID(nb.Spec.Layout.Spec.Cells[1]))
+	})
+
+	// What the editor does: it saves the whole spec, and a client that has not learned about ids sends
+	// none back.
+	t.Run("an update without ids keeps the ids of the stored notebook", func(t *testing.T) {
+		stored := newNotebook("nb")
+		stored.Spec.Layout.Spec.Cells = []dashv2beta1.NotebookNotebookLayoutItemKind{
+			layoutCell("a", testCellID(1)),
+			layoutCell("b", testCellID(2)),
+		}
+		incoming := newNotebook("nb")
+		incoming.Spec.Layout.Spec.Cells = []dashv2beta1.NotebookNotebookLayoutItemKind{layoutCell("b", ""), layoutCell("a", "")}
+
+		attrs := notebookAttributesWithOld(admission.Update, incoming, stored, &metav1.UpdateOptions{})
+		require.NoError(t, builder.Mutate(ctx, attrs, nil))
+
+		require.Equal(t, testCellID(2), notebookCellID(incoming.Spec.Layout.Spec.Cells[0]))
+		require.Equal(t, testCellID(1), notebookCellID(incoming.Spec.Layout.Spec.Cells[1]))
+	})
+
+	t.Run("an update whose stored object is not a notebook is an error", func(t *testing.T) {
+		nb := newNotebook("nb")
+
+		attrs := notebookAttributesWithOld(admission.Update, nb, &dashv0.Dashboard{}, &metav1.UpdateOptions{})
+
+		require.ErrorContains(t, builder.Mutate(ctx, attrs, nil), "expected notebook")
 	})
 }
 

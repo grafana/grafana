@@ -88,8 +88,9 @@ test.describe(
         await expect(table.getByText(otherValue), `"${otherValue}" is rendered`).toContainText(otherValue);
 
         // click the "Filter for value" button on the cell with the specified labelValue
-        await table.getByText(labelValue).hover();
-        table.getByText(labelValue).getByRole('button', { name: 'Filter for value' }).click();
+        const cell = table.getByRole('gridcell').filter({ has: page.getByText(labelValue, { exact: true }) });
+        await cell.hover();
+        await cell.getByRole('button', { name: 'Filter for value', exact: true }).click();
 
         // Look for submenu items that contain the filtered value
         // The adhoc filter should appear as a filter chip or within the variable controls

@@ -275,10 +275,6 @@ func (srv RulerSrv) RouteGetRulesGroupConfig(c *contextmodel.ReqContext, namespa
 // RouteGetRulesConfig returns all alert rules that are available to the current user
 func (srv RulerSrv) RouteGetRulesConfig(c *contextmodel.ReqContext) response.Response {
 	if strings.ToLower(c.Query("deleted")) == "true" {
-		//nolint:staticcheck // not yet migrated to OpenFeature
-		if !srv.featureManager.IsEnabledGlobally(featuremgmt.FlagAlertRuleRestore) {
-			return ErrResp(http.StatusBadRequest, errors.New("restore of deleted rules is not enabled"), "")
-		}
 		if !c.HasRole(identity.RoleAdmin) {
 			return ErrResp(http.StatusForbidden, errors.New("only admins can get deleted rules"), "")
 		}
@@ -511,6 +507,7 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 	return changesToResponse(finalChanges)
 }
 
+//nolint:gocyclo
 func (srv RulerSrv) performUpdateAlertRules(ctx context.Context, c *contextmodel.ReqContext, groupKey ngmodels.AlertRuleGroupKey, rules []*ngmodels.AlertRuleWithOptionals, deletePermanently bool) (*rulestore.GroupDelta, *ngmodels.AlertConfiguration, error) {
 	var finalChanges *rulestore.GroupDelta
 	var dbConfig *ngmodels.AlertConfiguration
@@ -536,13 +533,13 @@ func (srv RulerSrv) performUpdateAlertRules(ctx context.Context, c *contextmodel
 			return err
 		}
 
-		if err := validateQueries(tranCtx, groupChanges, srv.conditionValidator, c.SignedInUser); err != nil {
-			return err
-		}
-
+		// The receivers that notification settings refer to are authorized and validated against the same
+		// configuration, so that both agree on which receivers there are.
 		newOrUpdatedNotificationSettings := groupChanges.NewOrUpdatedNotificationSettings()
+		var amConfig *ngmodels.AlertConfiguration
+		var settingsValidator notifier.NotificationSettingsValidator
 		if len(newOrUpdatedNotificationSettings) > 0 {
-			amConfig, err := srv.amConfigStore.GetLatestAlertmanagerConfiguration(tranCtx, groupChanges.GroupKey.OrgID)
+			amConfig, err = srv.amConfigStore.GetLatestAlertmanagerConfiguration(tranCtx, groupChanges.GroupKey.OrgID)
 			if err != nil {
 				return fmt.Errorf("failed to get latest configuration: %w", err)
 			}
@@ -550,10 +547,20 @@ func (srv RulerSrv) performUpdateAlertRules(ctx context.Context, c *contextmodel
 			if err != nil {
 				return fmt.Errorf("failed to parse configuration: %w", err)
 			}
-			validator := notifier.NewNotificationSettingsValidator(cfg)
+			settingsValidator = notifier.NewNotificationSettingsValidator(cfg)
+			if err := srv.authz.AuthorizeNotificationSettings(tranCtx, c.SignedInUser, authz.ReceiverRefs(cfg, newOrUpdatedNotificationSettings...)); err != nil {
+				return err
+			}
+		}
+
+		if err := validateQueries(tranCtx, groupChanges, srv.conditionValidator, c.SignedInUser); err != nil {
+			return err
+		}
+
+		if settingsValidator != nil {
 			contactPointRoutingChanged := false
 			for _, s := range newOrUpdatedNotificationSettings {
-				if err := validator.Validate(s); err != nil {
+				if err := settingsValidator.Validate(s); err != nil {
 					return errors.Join(ngmodels.ErrAlertRuleFailedValidation, err)
 				}
 				contactPointRoutingChanged = contactPointRoutingChanged || s.ContactPointRouting != nil

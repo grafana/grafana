@@ -62,7 +62,8 @@ func (s *conversionSerializer) Decode(ctx context.Context, data []byte, into run
 func (s *conversionSerializer) DecodeBatch(ctx context.Context, data [][]byte) ([]runtime.Object, error) {
 	results := make([]runtime.Object, len(data))
 	var indices []int
-	var objects []*pluginv3.ConvertObjectsRequest_Object
+	var objects [][]byte
+	var namespace string
 	for i, raw := range data {
 		if err := ctx.Err(); err != nil {
 			return nil, err
@@ -76,27 +77,28 @@ func (s *conversionSerializer) DecodeBatch(ctx context.Context, data [][]byte) (
 		if source == s.gvk {
 			continue
 		}
-		gvk := &pluginv3.GroupVersionKind{}
-		gvk.SetGroup(source.Group)
-		gvk.SetVersion(source.Version)
-		gvk.SetKind(source.Kind)
-		obj := &pluginv3.ConvertObjectsRequest_Object{}
-		obj.SetGvk(gvk)
-		obj.SetRaw(raw)
-		objects = append(objects, obj)
+		if len(objects) == 0 {
+			namespace = original.GetNamespace()
+		} else if namespace != original.GetNamespace() {
+			namespace = ""
+		}
+		objects = append(objects, raw)
 		indices = append(indices, i)
 	}
 	if len(objects) == 0 {
 		return results, nil
 	}
-	api := &pluginv3.GroupVersion{}
-	api.SetGroup(s.gvk.Group)
-	api.SetVersion(s.gvk.Version)
+	target := &pluginv3.GroupVersionKind{}
+	target.SetGroup(s.gvk.Group)
+	target.SetVersion(s.gvk.Version)
+	target.SetKind(s.gvk.Kind)
 	req := &pluginv3.ConvertObjectsRequest{}
-	req.SetApi(api)
+	req.SetTarget(target)
+	if namespace != "" {
+		req.SetNamespace(namespace)
+	}
 	req.SetUid(string(uuid.NewUUID()))
 	req.SetObjects(objects)
-	req.SetTargetVersion(s.gvk.Version)
 	rsp, err := s.client.ConvertObjects(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("conversion to %s failed: %w", s.gvk, err)

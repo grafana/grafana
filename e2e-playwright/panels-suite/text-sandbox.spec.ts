@@ -151,7 +151,13 @@ test.describe('Text sandbox network boundary', () => {
     await expect(content.locator('.mermaid-diagram svg')).toHaveCount(1);
     await expect
       .poll(() => page.evaluate(() => window.sandboxStates.at(-1)?.resources))
-      .toEqual([{ directive: 'img-src', origin: 'https://external.test' }]);
+      .toEqual([
+        {
+          directive: 'img-src',
+          origin: 'https://external.test',
+          urls: [{ url: 'https://external.test/initial?secret=one', count: 1 }],
+        },
+      ]);
     await content.locator('[data-text-blocks]').evaluate((container) => {
       container.style.minHeight = '900px';
       const image = document.createElement('img');
@@ -164,8 +170,19 @@ test.describe('Text sandbox network boundary', () => {
     await expect
       .poll(() => page.evaluate(() => window.sandboxStates.at(-1)?.resources))
       .toEqual([
-        { directive: 'img-src', origin: 'https://external.test' },
-        { directive: 'media-src', origin: 'https://external.test' },
+        {
+          directive: 'img-src',
+          origin: 'https://external.test',
+          urls: [
+            { url: 'https://external.test/initial?secret=one', count: 1 },
+            { url: 'https://external.test/repeated?secret=two', count: 1 },
+          ],
+        },
+        {
+          directive: 'media-src',
+          origin: 'https://external.test',
+          urls: [{ url: 'https://external.test/late?secret=three', count: 1 }],
+        },
       ]);
     await expect(iframe).toHaveCSS('height', '900px');
     await expect(content.getByText('Permitted content')).toBeVisible();
@@ -210,7 +227,13 @@ test.describe('Text sandbox network boundary', () => {
       .poll(() => page.evaluate(() => window.sandboxStates.at(-1)))
       .toEqual({
         status: 'ready',
-        resources: [{ directive: 'img-src', origin: 'https://external.test' }],
+        resources: [
+          {
+            directive: 'img-src',
+            origin: 'https://external.test',
+            urls: [{ url: 'https://external.test/collect?secret=first', count: 1 }],
+          },
+        ],
       });
     expect(requests).toEqual([]);
     await expect(page.getByTitle('Text panel content')).toBeVisible();
@@ -266,6 +289,30 @@ test.describe('Text sandbox network boundary', () => {
       await expect(page.getByTitle('Text panel content')).toBeVisible();
     });
   }
+
+  test('counts every image using a blocked URL even when the browser reports it once', async ({ page }) => {
+    await page.route('https://external.test/**', (route) => route.abort());
+    await page.evaluate(() => {
+      window.sandboxStates = [];
+      window.sandboxSession = window.textSandbox.renderSandbox(document.getElementById('host')!, {
+        html: '<img src="https://external.test/avatar.png"><img src="https://external.test/avatar.png"><img src="https://external.test/avatar.png">',
+        globalCss: '',
+        title: 'Text panel content',
+        policy: window.textSandbox.textSandboxPolicy([], '/public/fonts/'),
+        onState: (state) => window.sandboxStates.push(state),
+        onHeight: () => {},
+      });
+    });
+    await expect
+      .poll(() => page.evaluate(() => window.sandboxStates.at(-1)?.resources))
+      .toEqual([
+        {
+          directive: 'img-src',
+          origin: 'https://external.test',
+          urls: [{ url: 'https://external.test/avatar.png', count: 3 }],
+        },
+      ]);
+  });
 
   test('reveals styled text after runtime verification', async ({ page }) => {
     await page.evaluate(() => {
@@ -389,7 +436,13 @@ test.describe('Text sandbox network boundary', () => {
       .poll(() => page.evaluate(() => window.sandboxStates.at(-1)), { timeout: 15000 })
       .toEqual({
         status: 'ready',
-        resources: [{ directive: 'img-src', origin: 'https://external.test' }],
+        resources: [
+          {
+            directive: 'img-src',
+            origin: 'https://external.test',
+            urls: [{ url: 'https://external.test/image?secret=synthetic', count: 1 }],
+          },
+        ],
       });
     expect(requests).toEqual([]);
     await expect(page.locator('iframe')).toHaveCount(1);
@@ -513,7 +566,11 @@ test.describe('Text sandbox network boundary', () => {
           .toEqual(
             expect.arrayContaining([
               { directive: 'img-src', origin: undefined },
-              { directive: 'img-src', origin: 'https://external.test' },
+              {
+                directive: 'img-src',
+                origin: 'https://external.test',
+                urls: [{ url: 'https://external.test/secret', count: 1 }],
+              },
             ])
           );
       }

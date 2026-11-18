@@ -2,7 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { type DataSourceInstanceSettings } from '@grafana/data';
 
-import { config } from '../config';
+import { getFeatureFlagClient } from '../internal/openFeature';
+import { FlagKeys } from '../internal/openFeature/openfeature.gen';
 
 import { UserStorage } from './userStorage';
 
@@ -39,10 +40,13 @@ export function useFavoriteDatasources(): FavoriteDatasources {
   const [favoriteDatasources, setFavoriteDatasources] = useState<string[]>([]);
   const [initialFavoriteDataSources, setInitialFavoriteDataSources] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  // Uses the client rather than the generated React hook because this public hook can be called
+  // from plugins rendered under their own OpenFeatureProvider domain.
+  const enabled = getFeatureFlagClient().getBooleanValue(FlagKeys.FavoriteDatasources, false);
 
   // Load favorites from storage on mount
   useEffect(() => {
-    if (!config.featureToggles.favoriteDatasources) {
+    if (!enabled) {
       return;
     }
 
@@ -58,7 +62,7 @@ export function useFavoriteDatasources(): FavoriteDatasources {
     };
 
     loadFavorites();
-  }, []);
+  }, [enabled]);
 
   // Helper function to save favorites to storage
   const saveFavorites = useCallback(async (newFavorites: string[]) => {
@@ -100,7 +104,7 @@ export function useFavoriteDatasources(): FavoriteDatasources {
     [favoriteDatasources]
   );
 
-  if (!config.featureToggles.favoriteDatasources) {
+  if (!enabled) {
     return {
       enabled: false,
       isLoading: false,

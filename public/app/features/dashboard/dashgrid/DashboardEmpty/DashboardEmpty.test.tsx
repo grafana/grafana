@@ -1,4 +1,4 @@
-import { act, fireEvent, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
 import { locationService, reportInteraction } from '@grafana/runtime';
@@ -8,6 +8,7 @@ import { useDashboardGenerationAvailable } from 'app/features/dashboard-prompt/u
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { AutoGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-auto-grid/AutoGridLayoutManager';
 import { type DashboardSceneState } from 'app/features/dashboard-scene/scene/types/dashboard';
+import { setMobileViewport } from 'app/features/dashboard-scene/utils/mobileViewportTestUtils';
 
 import { createDashboardModelFixture } from '../../state/__fixtures__/dashboardFixtures';
 import { onCreateNewPanel, onImportDashboard, onAddLibraryPanel } from '../../utils/dashboard';
@@ -80,9 +81,6 @@ function setup(options?: Partial<Props>) {
 
 beforeEach(() => {
   jest.clearAllMocks();
-  // The legacy empty-dashboard clicks expect isDynamicDashboard: false. The new-layouts
-  // describe below sets the flag true after this.
-  setTestFlags({ dashboardNewLayouts: false });
   // Reset the mock to default state
   mockUseGetResourceRepositoryView.mockReturnValue({
     isReadOnlyRepo: false,
@@ -126,7 +124,7 @@ it('creates new visualization when clicked Add visualization', () => {
 
   expect(reportInteraction).toHaveBeenCalledWith('dashboards_emptydashboard_clicked', {
     item: 'add_visualization',
-    isDynamicDashboard: false,
+    isDynamicDashboard: true,
   });
   expect(locationService.partial).toHaveBeenCalled();
   expect(locationService.partial).toHaveBeenCalledWith({ editPanel: undefined, firstPanel: true });
@@ -142,7 +140,7 @@ it('open import dashboard when clicked Import dashboard', () => {
 
   expect(reportInteraction).toHaveBeenCalledWith('dashboards_emptydashboard_clicked', {
     item: 'import_dashboard',
-    isDynamicDashboard: false,
+    isDynamicDashboard: true,
   });
   expect(onImportDashboard).toHaveBeenCalled();
 });
@@ -156,7 +154,7 @@ it('adds a library panel when clicked Add library panel', () => {
 
   expect(reportInteraction).toHaveBeenCalledWith('dashboards_emptydashboard_clicked', {
     item: 'import_from_library',
-    isDynamicDashboard: false,
+    isDynamicDashboard: true,
   });
   expect(locationService.partial).not.toHaveBeenCalled();
   expect(onAddLibraryPanel).toHaveBeenCalled();
@@ -186,12 +184,24 @@ it('renders with buttons disabled when repository is read-only', () => {
   expect(screen.getByRole('button', { name: 'Add library panel' })).toBeDisabled();
 });
 
+it('renders with buttons disabled when blocked on mobile, even with canCreate true', () => {
+  setTestFlags({ 'grafana.mobileEditDeprecation': true });
+  setMobileViewport();
+
+  setup({ canCreate: true });
+
+  expect(screen.getByRole('button', { name: 'Add visualization' })).toBeDisabled();
+  expect(screen.getByRole('button', { name: 'Import dashboard' })).toBeDisabled();
+  expect(screen.getByRole('button', { name: 'Add library panel' })).toBeDisabled();
+});
+
 describe('new layouts empty state', () => {
   beforeEach(() => {
     setTestFlags({ dashboardNewLayouts: true });
   });
 
   afterEach(() => {
+    cleanup();
     setTestFlags({});
     mockUseDashboardGenerationAvailable.mockReturnValue({ isAvailable: false, isLoading: false });
   });
@@ -206,11 +216,45 @@ describe('new layouts empty state', () => {
     return dashboard;
   }
 
+  it('hides manual layout controls and the add pane in View mode', () => {
+    setTestFlags({ 'grafana.dashboardPreviewMode': true });
+    const dashboard = setupScene({ mode: 'view' });
+    expect(screen.getByText('This dashboard has no panels.')).toBeInTheDocument();
+    expect(screen.queryByText('Select layout')).not.toBeInTheDocument();
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+    expect(dashboard.state.sidebar.state.openPane).toBeUndefined();
+  });
+
   it('keeps the layout picker and opens the add pane when assistant dashboard planning is off', async () => {
     const dashboard = setupScene();
 
     expect(screen.getByText('Select layout')).toBeInTheDocument();
     expect(screen.queryByText('Or build it yourself')).not.toBeInTheDocument();
+    await waitFor(() => expect(dashboard.state.sidebar.state.openPane?.getId()).toBe('add'));
+  });
+
+  it('shows a message instead of the layout picker when blocked on mobile', () => {
+    setTestFlags({ dashboardNewLayouts: true, 'grafana.mobileEditDeprecation': true });
+    setMobileViewport();
+
+    const dashboard = setupScene({ isEditing: false });
+
+    expect(
+      screen.getByText(
+        "Building a new dashboard isn't available on small screens. Switch to a larger screen to continue."
+      )
+    ).toBeInTheDocument();
+    expect(screen.queryByText('Select layout')).not.toBeInTheDocument();
+    expect(dashboard.state.sidebar.state.openPane).toBeUndefined();
+  });
+
+  it('keeps the layout picker and add pane for an edit session already in progress on mobile', async () => {
+    setTestFlags({ dashboardNewLayouts: true, 'grafana.mobileEditDeprecation': true });
+    setMobileViewport();
+
+    const dashboard = setupScene();
+
+    expect(screen.getByText('Select layout')).toBeInTheDocument();
     await waitFor(() => expect(dashboard.state.sidebar.state.openPane?.getId()).toBe('add'));
   });
 

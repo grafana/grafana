@@ -4,6 +4,7 @@ import { memo, useState } from 'react';
 import { type DataFrame, type GrafanaTheme2, type LoadingState, type SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { useFlagRawPrometheusTableNg } from '@grafana/runtime/internal';
+import { type TimeZone } from '@grafana/schema';
 import { RadioButtonGroup, Table, type AdHocFilterItem, PanelChrome, useStyles2 } from '@grafana/ui';
 import { PANEL_BORDER } from 'app/core/constants';
 import { CommonTableNG } from 'app/features/table/CommonTableNG';
@@ -27,6 +28,7 @@ const getStyles = (_theme: GrafanaTheme2) => ({
 export interface RawPrometheusContainerPureProps {
   /** Pre-processed DataFrames to display */
   tableResult: DataFrame[];
+  timeZone: TimeZone;
   /** Width of the container in pixels */
   width: number;
   /** Loading state for panel chrome indicator */
@@ -48,6 +50,7 @@ export const RawPrometheusContainerPure = memo(
     loading,
     onCellFilterAdded,
     tableResult,
+    timeZone,
     width,
     ariaLabel,
     showRawPrometheus,
@@ -116,6 +119,7 @@ export const RawPrometheusContainerPure = memo(
                 <CommonTableNG
                   ariaLabel={ariaLabel}
                   data={frames[0]}
+                  timeZone={timeZone}
                   width={tableWidth}
                   height={height}
                   onCellFilterAdded={onCellFilterAdded}

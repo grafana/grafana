@@ -31,7 +31,7 @@ import { FilterSidebar } from './FilterSidebar/FilterSidebar';
 import { NoAccessModal } from './NoAccessModal/NoAccessModal';
 import { PluginContentView } from './components/PluginContentView';
 import { FILTER_BY_OPTIONS, GROUP_BY_OPTIONS, TYPE_FILTER_OPTIONS } from './constants';
-import { useConnectionFiltersFromQuery } from './hooks/useConnectionFiltersFromQuery';
+import { serializeListFilter, useConnectionFiltersFromQuery } from './hooks/useConnectionFiltersFromQuery';
 import { useCategoryFilterOptions, useFilteredPlugins, usePluginsByCategory } from './hooks/usePluginFiltering';
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -116,7 +116,14 @@ function AddNewConnectionWithSidebar() {
 
   const updateFilter = useCallback(
     (params: Record<string, string>) => {
-      history.push({ query: { ...filterState, ...params } });
+      history.push({
+        query: {
+          ...filterState,
+          categoryFilter: serializeListFilter(filterState.categoryFilter),
+          typeFilter: serializeListFilter(filterState.typeFilter),
+          ...params,
+        },
+      });
     },
     [filterState, history]
   );
@@ -127,8 +134,8 @@ function AddNewConnectionWithSidebar() {
       onFilterByChange: (v: string) => updateFilter({ filterBy: v }),
       onGroupByChange: (v: { value?: string } | string) =>
         updateFilter({ groupBy: (typeof v === 'string' ? v : v.value) || 'type' }),
-      onCategoryFilterChange: (v: { value?: string }) => updateFilter({ categoryFilter: v.value || 'all' }),
-      onTypeFilterChange: (v: { value?: string }) => updateFilter({ typeFilter: v.value || 'all' }),
+      onCategoryFilterChange: (values: string[]) => updateFilter({ categoryFilter: serializeListFilter(values) }),
+      onTypeFilterChange: (values: string[]) => updateFilter({ typeFilter: serializeListFilter(values) }),
       onResetFilters: () =>
         updateFilter({ sortBy: 'nameAsc', filterBy: 'all', categoryFilter: 'all', typeFilter: 'all' }),
     }),
@@ -202,7 +209,7 @@ function AddNewConnectionWithSidebar() {
   const handleCloseModal = useCallback(() => setSelectedItem(null), []);
 
   const hasActiveFilters =
-    categoryFilter !== 'all' || typeFilter !== 'all' || filterBy !== 'all' || sortBy !== 'nameAsc';
+    categoryFilter.length > 0 || typeFilter.length > 0 || filterBy !== 'all' || sortBy !== 'nameAsc';
 
   const showNoResults = !isLoading && !error && datasourceCardGridItems.length === 0 && appsCardGridItems.length === 0;
 

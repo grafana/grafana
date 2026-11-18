@@ -2,6 +2,7 @@ package config
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/grafana/authlib/types"
@@ -32,6 +33,7 @@ func attrs(verb, subresource string) authorizer.AttributesRecord {
 		Resource:        ResourceInfo.GroupResource().Resource,
 		Subresource:     subresource,
 		Name:            "default",
+		Namespace:       "default",
 		ResourceRequest: true,
 	}
 }
@@ -99,9 +101,12 @@ func TestAuthorize(t *testing.T) {
 		{name: "status update denied", verb: "update", subresource: "status", rbac: false, wantAction: accesscontrol.ActionAlertingRulesConfigStatusUpdate, want: authorizer.DecisionDeny},
 		{name: "status patch permitted", verb: "patch", subresource: "status", rbac: true, wantAction: accesscontrol.ActionAlertingRulesConfigStatusUpdate, want: authorizer.DecisionAllow},
 
-		// delete/deletecollection are always rejected (destructive on a singleton).
+		// Humans cannot delete the singleton even with delete permission.
 		{name: "delete denied", verb: "delete", rbac: true, want: authorizer.DecisionDeny},
 		{name: "deletecollection denied", verb: "deletecollection", rbac: true, want: authorizer.DecisionDeny},
+		{name: "service delete permitted", id: idService, verb: "delete", rbac: true, wantAction: ActionDelete, want: authorizer.DecisionAllow},
+		{name: "service collection delete permitted", id: idService, verb: "deletecollection", rbac: true, wantAction: ActionDelete, want: authorizer.DecisionAllow},
+		{name: "service delete denied without permission", id: idService, verb: "delete", rbac: false, wantAction: ActionDelete, want: authorizer.DecisionDeny},
 
 		// Unknown verbs fall through to no opinion (main resource and /status).
 		{name: "unknown verb on main", verb: "connect", rbac: true, want: authorizer.DecisionNoOpinion},
@@ -143,4 +148,45 @@ func TestAuthorize(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestAuthorizeDeleteTenantAndPermission(t *testing.T) {
+	for _, verb := range []string{"delete", "deletecollection"} {
+		for _, namespace := range []string{"", "*", "org-2", "invalid", "stacks-2"} {
+			t.Run(verb+" rejects namespace "+namespace, func(t *testing.T) {
+				ctx, _ := identity.WithServiceIdentityForSingleNamespace(context.Background(), "default")
+				ac := &recordingAC{FakeAccessControl: actest.FakeAccessControl{ExpectedEvaluate: true}}
+				a := attrs(verb, "")
+				a.Namespace = namespace
+				decision, reason, err := Authorize(ctx, ac, a)
+				require.NoError(t, err)
+				require.Equal(t, authorizer.DecisionDeny, decision)
+				require.Contains(t, reason, "namespace")
+				require.Nil(t, ac.last)
+			})
+		}
+	}
+	t.Run("wildcard service identity cannot delete another org", func(t *testing.T) {
+		ac := &recordingAC{FakeAccessControl: actest.FakeAccessControl{ExpectedEvaluate: true}}
+		a := attrs("deletecollection", "")
+		a.Namespace = "org-2"
+		decision, _, err := Authorize(ctxFor(t, idService), ac, a)
+		require.NoError(t, err)
+		require.Equal(t, authorizer.DecisionDeny, decision)
+		require.Nil(t, ac.last)
+	})
+	t.Run("permission evaluation failure denies deletion", func(t *testing.T) {
+		ac := &recordingAC{FakeAccessControl: actest.FakeAccessControl{ExpectedErr: errors.New("authorization unavailable")}}
+		decision, reason, err := Authorize(ctxFor(t, idService), ac, attrs("delete", ""))
+		require.NoError(t, err)
+		require.Equal(t, authorizer.DecisionDeny, decision)
+		require.Contains(t, reason, "authorization unavailable")
+	})
+	t.Run("delete permission is scoped to the singleton", func(t *testing.T) {
+		ac := &recordingAC{FakeAccessControl: actest.FakeAccessControl{ExpectedEvaluate: true}}
+		_, _, err := Authorize(ctxFor(t, idService), ac, attrs("delete", ""))
+		require.NoError(t, err)
+		require.True(t, ac.last.Evaluate(map[string][]string{ActionDelete: {"rules-configs:uid:default"}}))
+		require.False(t, ac.last.Evaluate(map[string][]string{ActionDelete: {"rules-configs:uid:other"}}))
+	})
 }

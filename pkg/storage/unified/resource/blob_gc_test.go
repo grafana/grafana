@@ -3,10 +3,17 @@ package resource
 import (
 	"context"
 	"errors"
+	"fmt"
+	"iter"
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 
@@ -64,8 +71,15 @@ func TestBlobGarbageCollector(t *testing.T) {
 			case "restart":
 				gc = NewBlobGarbageCollector(store, 100, 0)
 			}
+			var deleted []kv.BlobKey
+			gc.onDeleted = func(key kv.BlobKey) { deleted = append(deleted, key) }
 			count, err = gc.Collect(t.Context(), now.Add(2*time.Hour), time.Hour, scenario == "dry run", referenced)
 			require.Equal(t, scenario == "read error", err != nil)
+			if scenario == "orphan" || scenario == "restart" {
+				require.Equal(t, []kv.BlobKey{key}, deleted)
+			} else {
+				require.Empty(t, deleted)
+			}
 			expectedCount := 0
 			if scenario == "orphan" || scenario == "dry run" || scenario == "restart" {
 				expectedCount = 1
@@ -117,20 +131,12 @@ func TestBlobGCPagedKeys(t *testing.T) {
 	require.NoError(t, reader.Close())
 }
 
-func TestBlobGCRejectsBadgerWithoutAgeTracking(t *testing.T) {
-	gc := NewBlobGarbageCollector(setupBadgerKV(t), 1, 0)
-	count, err := gc.Collect(t.Context(), time.Now(), time.Hour, false, func(context.Context, kv.BlobKey) (bool, error) {
-		t.Fatal("must not scan unsupported backends")
-		return false, nil
-	})
-	require.ErrorContains(t, err, "durable age tracking")
-	require.Zero(t, count)
-}
-
 func TestKVBlobGCOptInAndDryRun(t *testing.T) {
 	b := setupTestStorageBackend(t)
+	logger := &blobGCShutdownLogger{}
+	b.log = logger
 	b.kv = setupSqlKV(t)
-	b.dataStore = newDataStore(b.kv, nil)
+	b.dataStore = newDataStore(b.kv)
 	key := kv.BlobKey{Group: "group", Resource: "resource", Namespace: "default", Name: "snap", UID: "unreferenced"}
 	writer, err := b.kv.Save(t.Context(), kv.BlobDataSection, key.String())
 	require.NoError(t, err)
@@ -150,10 +156,244 @@ func TestKVBlobGCOptInAndDryRun(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, reader.Close())
 
+	require.Equal(t, []string{"blob garbage collection finished", "blob garbage collection finished"}, logger.infos)
 	b.garbageCollection.BlobDryRun = false
 	b.collectBlobs(t.Context())
 	_, err = b.kv.Get(t.Context(), kv.BlobDataSection, key.String())
 	require.ErrorIs(t, err, kv.ErrNotFound)
+	require.Equal(t, []string{"blob garbage collection delete succeeded", "blob garbage collection finished"}, logger.infos[2:])
+	require.Equal(t, []any{"uid", key.UID, "group", key.Group, "resource", key.Resource}, logger.infoFields[2])
+}
+
+type blobGCShutdownStore struct {
+	KV
+	keys   func(context.Context) iter.Seq2[string, error]
+	delete func() error
+}
+
+func (s blobGCShutdownStore) Keys(ctx context.Context, section string, _ kv.ListOptions) iter.Seq2[string, error] {
+	if section != kv.BlobDataSection {
+		return func(func(string, error) bool) {}
+	}
+	return s.keys(ctx)
+}
+
+func (s blobGCShutdownStore) FirstUnused(context.Context, string, time.Time) (time.Time, error) {
+	return time.Now().Add(-2 * time.Hour), nil
+}
+
+func (s blobGCShutdownStore) Delete(context.Context, string, string) error {
+	if s.delete != nil {
+		return s.delete()
+	}
+	return nil
+}
+
+type blobGCShutdownLogger struct {
+	logging.NoOpLogger
+	infos      []string
+	infoFields [][]any
+	errors     []string
+}
+
+func (l *blobGCShutdownLogger) Info(msg string, fields ...any) {
+	l.infos = append(l.infos, msg)
+	l.infoFields = append(l.infoFields, fields)
+}
+func (l *blobGCShutdownLogger) Error(msg string, _ ...any) { l.errors = append(l.errors, msg) }
+
+func TestKVBlobGCShutdown(t *testing.T) {
+	for _, scenario := range []string{"already canceled", "canceled during scan", "grpc canceled during scan", "storage error", "storage error during cancellation", "remote cancellation", "success"} {
+		t.Run(scenario, func(t *testing.T) {
+			ctx, cancel := context.WithCancel(t.Context())
+			defer cancel()
+			if scenario == "already canceled" {
+				cancel()
+			}
+			calls := 0
+			store := blobGCShutdownStore{keys: func(ctx context.Context) iter.Seq2[string, error] {
+				calls++
+				return func(yield func(string, error) bool) {
+					switch scenario {
+					case "already canceled":
+						yield("", ctx.Err())
+					case "canceled during scan":
+						cancel()
+						yield("", ctx.Err())
+					case "grpc canceled during scan":
+						cancel()
+						yield("", status.Error(codes.Canceled, "context canceled"))
+					case "storage error":
+						yield("", errors.New("storage unavailable"))
+					case "storage error during cancellation":
+						cancel()
+						yield("", errors.New("storage unavailable"))
+					case "remote cancellation":
+						yield("", status.Error(codes.Canceled, "remote canceled"))
+					}
+				}
+			}}
+			logger := &blobGCShutdownLogger{}
+			metrics := NewBlobGCMetricsIfEnabled(prometheus.NewRegistry(), "kv", true)
+			metrics.Candidates.Set(7)
+			b := &kvStorageBackend{
+				blobGC:        NewBlobGarbageCollector(store, 100, 0),
+				blobGCMetrics: metrics,
+				log:           logger,
+			}
+			b.garbageCollection.MaxAge = time.Hour
+			b.garbageCollection.BlobDryRun = true
+			b.collectBlobs(ctx)
+
+			if scenario == "already canceled" {
+				require.Zero(t, calls, "must not start a scan with a canceled context")
+			} else {
+				require.Equal(t, 1, calls)
+			}
+			switch scenario {
+			case "storage error", "storage error during cancellation", "remote cancellation":
+				require.Equal(t, []string{"blob garbage collection failed"}, logger.errors)
+				require.Empty(t, logger.infos)
+				require.Equal(t, float64(1), testutil.ToFloat64(metrics.Errors))
+				require.Equal(t, float64(1), testutil.ToFloat64(metrics.Runs))
+			case "success":
+				require.Empty(t, logger.errors)
+				require.Equal(t, []string{"blob garbage collection finished"}, logger.infos)
+				require.Equal(t, float64(1), testutil.ToFloat64(metrics.Runs))
+				require.Zero(t, testutil.ToFloat64(metrics.Candidates))
+			default:
+				require.Empty(t, logger.errors)
+				require.Empty(t, logger.infos)
+				require.Zero(t, testutil.ToFloat64(metrics.Errors))
+				if scenario == "already canceled" {
+					require.Zero(t, testutil.ToFloat64(metrics.Runs))
+				} else {
+					require.Equal(t, float64(1), testutil.ToFloat64(metrics.Runs))
+				}
+			}
+			if scenario != "success" {
+				require.Equal(t, float64(7), testutil.ToFloat64(metrics.Candidates))
+			}
+		})
+	}
+}
+
+func TestKVBlobGCPartialProgress(t *testing.T) {
+	for _, scenario := range []string{"cancellation", "storage error with cancellation"} {
+		t.Run(scenario, func(t *testing.T) {
+			ctx, cancel := context.WithCancel(t.Context())
+			defer cancel()
+			key := kv.BlobKey{Group: "group", Resource: "resource", Namespace: "default", Name: "snap", UID: "blob"}.String()
+			store := blobGCShutdownStore{keys: func(context.Context) iter.Seq2[string, error] {
+				return func(yield func(string, error) bool) {
+					if !yield(key, nil) {
+						return
+					}
+					cancel()
+					if scenario == "cancellation" {
+						yield("", ctx.Err())
+					} else {
+						yield("", fmt.Errorf("scan: %w", errors.Join(ctx.Err(), errors.New("storage unavailable"))))
+					}
+				}
+			}}
+			logger := &blobGCShutdownLogger{}
+			metrics := NewBlobGCMetricsIfEnabled(prometheus.NewRegistry(), "kv", true)
+			metrics.Candidates.Set(7)
+			b := &kvStorageBackend{
+				blobGC:        NewBlobGarbageCollector(store, 100, 0),
+				blobGCMetrics: metrics,
+				log:           logger,
+				dataStore:     newDataStore(store),
+			}
+			b.garbageCollection.MaxAge = time.Hour
+			b.collectBlobs(ctx)
+			require.Equal(t, float64(1), testutil.ToFloat64(metrics.Runs))
+			require.Equal(t, float64(1), testutil.ToFloat64(metrics.Deleted))
+			require.Equal(t, float64(7), testutil.ToFloat64(metrics.Candidates))
+			require.Equal(t, []string{"blob garbage collection delete succeeded"}, logger.infos)
+			require.Equal(t, []any{"uid", "blob", "group", "group", "resource", "resource"}, logger.infoFields[0])
+			if scenario == "cancellation" {
+				require.Zero(t, testutil.ToFloat64(metrics.Errors))
+				require.Empty(t, logger.errors)
+			} else {
+				require.Equal(t, float64(1), testutil.ToFloat64(metrics.Errors))
+				require.Equal(t, []string{"blob garbage collection failed"}, logger.errors)
+			}
+		})
+	}
+}
+
+func TestKVBlobGCErrorBeforeCancellation(t *testing.T) {
+	for _, scenario := range []string{"context check", "batch wait"} {
+		t.Run(scenario, func(t *testing.T) {
+			ctx, cancel := context.WithCancel(t.Context())
+			defer cancel()
+			storageErr := errors.New("delete failed")
+			key := kv.BlobKey{Group: "group", Resource: "resource", Namespace: "default", Name: "snap", UID: "blob"}.String()
+			store := blobGCShutdownStore{
+				keys: func(context.Context) iter.Seq2[string, error] {
+					return func(yield func(string, error) bool) {
+						if !yield(key, nil) {
+							return
+						}
+						if scenario == "batch wait" {
+							time.AfterFunc(20*time.Millisecond, cancel)
+						}
+						yield(key, nil)
+					}
+				},
+				delete: func() error {
+					if scenario == "context check" {
+						cancel()
+					}
+					return storageErr
+				},
+			}
+			gc := NewBlobGarbageCollector(store, 1, 0)
+			if scenario == "batch wait" {
+				gc.batchWait = time.Second
+			}
+			logger := &blobGCShutdownLogger{}
+			metrics := NewBlobGCMetricsIfEnabled(prometheus.NewRegistry(), "kv", true)
+			b := &kvStorageBackend{
+				blobGC: gc, blobGCMetrics: metrics, log: logger,
+				dataStore: newDataStore(store),
+			}
+			b.garbageCollection.MaxAge = time.Hour
+			b.collectBlobs(ctx)
+			require.Equal(t, []string{"blob garbage collection failed"}, logger.errors)
+			require.Empty(t, logger.infos)
+			require.Equal(t, float64(1), testutil.ToFloat64(metrics.Errors))
+			require.Equal(t, float64(1), testutil.ToFloat64(metrics.Runs))
+			require.Zero(t, testutil.ToFloat64(metrics.Deleted))
+
+			ctx2, cancel2 := context.WithCancel(t.Context())
+			defer cancel2()
+			store.keys = func(context.Context) iter.Seq2[string, error] {
+				return func(yield func(string, error) bool) {
+					if !yield(key, nil) {
+						return
+					}
+					if scenario == "batch wait" {
+						time.AfterFunc(20*time.Millisecond, cancel2)
+					}
+					yield(key, nil)
+				}
+			}
+			store.delete = func() error {
+				if scenario == "context check" {
+					cancel2()
+				}
+				return storageErr
+			}
+			gc = NewBlobGarbageCollector(store, 1, gc.batchWait)
+			_, err := gc.Collect(ctx2, time.Now(), time.Hour, false,
+				func(context.Context, kv.BlobKey) (bool, error) { return false, nil })
+			require.ErrorIs(t, err, storageErr)
+			require.ErrorIs(t, err, context.Canceled)
+		})
+	}
 }
 
 func TestBlobGCPreservesProvisioningPreviewURL(t *testing.T) {

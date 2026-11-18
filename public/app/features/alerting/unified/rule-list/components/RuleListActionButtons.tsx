@@ -5,7 +5,6 @@ import { logInfo } from '@grafana/runtime';
 import { LinkButton, Stack } from '@grafana/ui';
 
 import { LogMessages } from '../../Analytics';
-import { AIAlertRuleButtonComponent } from '../../enterprise-components/AI/AIGenAlertRuleButton/addAIAlertRuleButton';
 import { AlertingAction, useAlertingAbility } from '../../hooks/useAbilities';
 import { createReturnTo } from '../../hooks/useReturnTo';
 import { createRelativeUrl } from '../../utils/url';
@@ -41,7 +40,6 @@ function CreateAlertButtons() {
   if (canCreateGrafanaRules || canCreateCloudRules) {
     return (
       <Stack direction="row" gap={1}>
-        {canCreateGrafanaRules && <AIAlertRuleButtonComponent />}
         <LinkButton
           href={createRelativeUrl('/alerting/new/alerting', { returnTo })}
           icon="plus"

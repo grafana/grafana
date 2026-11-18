@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useCallback, useMemo } from 'react';
+import { useCallback } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
@@ -8,6 +8,7 @@ import { getPrettyJSON } from 'app/features/inspector/utils/utils';
 
 import { usePanelContext, useQueryEditorUIContext, useQueryRunnerContext } from './QueryEditorContext';
 import { useTransformationDebugData } from './hooks/useTransformationDebugData';
+import { framesForTopic } from './hooks/useTransformedFrames';
 
 export function TransformationDebugDisplay() {
   const { selectedTransformation, transformToggles } = useQueryEditorUIContext();
@@ -16,12 +17,10 @@ export function TransformationDebugDisplay() {
 
   const styles = useStyles2(getStyles);
 
-  const seriesData = useMemo(() => data?.series ?? [], [data?.series]);
-
   const { input, output } = useTransformationDebugData({
     selectedTransformation,
     transformations,
-    data: seriesData,
+    data: framesForTopic(data, selectedTransformation),
     isActive: transformToggles.showDebug,
   });
   const getInputJson = useCallback(() => getPrettyJSON(input), [input]);

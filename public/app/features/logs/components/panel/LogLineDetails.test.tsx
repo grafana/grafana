@@ -440,14 +440,9 @@ describe('LogLineDetails', () => {
     await setup({ logs: [log] }, undefined, undefined, { showDetails: [log], currentLog: log });
 
     expect(screen.getByText('Fields')).toBeInTheDocument();
-    expect(screen.getByText('Links')).toBeInTheDocument();
-    expect(screen.getByText('traceId')).toBeInTheDocument();
-    expect(screen.getByText('link title')).toBeInTheDocument();
-    expect(screen.queryByText('1234')).not.toBeInTheDocument();
-
-    await userEvent.click(screen.getByLabelText('Link value'));
-
-    expect(screen.getByText('1234')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Links' })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'link title' })).toHaveAttribute('href', 'localhost:3210/1234');
+    expect(screen.getByText('userId')).toBeInTheDocument();
   });
 
   test('should show the correct log details fields, links and labels for DataFrameType.LogLines frames', async () => {
@@ -510,16 +505,16 @@ describe('LogLineDetails', () => {
 
     expect(screen.getByText('Log line')).toBeInTheDocument();
     expect(screen.getByText('Fields')).toBeInTheDocument();
-    expect(screen.getByText('Links')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Links' })).not.toBeInTheDocument();
 
     // Don't show additional fields for DataFrameType.LogLines
     expect(screen.queryByText('shouldNotShowFieldName')).not.toBeInTheDocument();
     expect(screen.queryByText('shouldNotShowFieldValue')).not.toBeInTheDocument();
 
-    // Show labels and links
+    // Show labels, and the derived link in the summary
     expect(screen.getByText('label1')).toBeInTheDocument();
     expect(screen.getByText('value1')).toBeInTheDocument();
-    expect(screen.getByText('shouldShowLinkName')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'link' })).toHaveAttribute('href', 'localhost:3210/shouldShowLinkValue');
   });
 
   test('should load plugin links for logs view resource attributes extension point', () => {
@@ -721,7 +716,7 @@ describe('LogLineDetails', () => {
 
         await userEvent.type(input, 'something else');
 
-        expect(screen.getAllByText('No results to display.')).toHaveLength(3);
+        expect(screen.getAllByText('No matching results.')).toHaveLength(3);
       });
     });
     describe('Default label types', () => {
@@ -733,28 +728,6 @@ describe('LogLineDetails', () => {
       test('Does not show displayed fields controls if required props are not present', async () => {
         await setup(undefined, { labels: { key1: 'label1', key2: 'label2' } }, { displayedFields: ['key1', 'key2'] });
         expect(screen.queryByText('Displayed fields')).not.toBeInTheDocument();
-      });
-
-      test('Shows displayed fields controls if required props are present', async () => {
-        setBooleanFlags({ [FlagKeys.GrafanaLogDetailsDisplayedFieldControls]: true });
-        const setDisplayedFields = jest.fn();
-        const onClickHideField = jest.fn();
-        await setup(
-          undefined,
-          { labels: { key1: 'label1', key2: 'label2' } },
-          { displayedFields: ['key1', 'key2'], setDisplayedFields, onClickHideField }
-        );
-
-        expect(screen.getByText('Organize displayed fields')).toBeInTheDocument();
-        expect(screen.queryAllByLabelText('Remove field')).toHaveLength(0);
-
-        await userEvent.click(screen.getByText('Organize displayed fields'));
-
-        expect(screen.getAllByLabelText('Remove field')).toHaveLength(2);
-
-        await userEvent.click(screen.getAllByLabelText('Remove field')[0]);
-
-        expect(onClickHideField).toHaveBeenCalledWith('key1');
       });
 
       test('Renders JSON field values', async () => {
@@ -886,31 +859,6 @@ describe('LogLineDetails', () => {
         expect(screen.getByText(/"key"/)).toBeInTheDocument();
         expect(screen.getByText(/"value"/)).toBeInTheDocument();
       });
-
-      test('Exposes buttons to reorder displayed fields', async () => {
-        setBooleanFlags({ [FlagKeys.GrafanaLogDetailsDisplayedFieldControls]: true });
-        const setDisplayedFields = jest.fn();
-        const onClickHideField = jest.fn();
-        await setup(
-          undefined,
-          { labels: { key1: 'label1', key2: 'label2' } },
-          { displayedFields: ['key1', 'key2', 'key3'], setDisplayedFields, onClickHideField }
-        );
-
-        await userEvent.click(screen.getByText('Organize displayed fields'));
-
-        expect(screen.getAllByLabelText('Remove field')).toHaveLength(3);
-        expect(screen.getAllByLabelText('Move down')).toHaveLength(3);
-        expect(screen.getAllByLabelText('Move up')).toHaveLength(3);
-
-        await userEvent.click(screen.getAllByLabelText('Move down')[0]);
-
-        expect(setDisplayedFields).toHaveBeenCalledWith(['key2', 'key1', 'key3']);
-
-        await userEvent.click(screen.getAllByLabelText('Move up')[2]);
-
-        expect(setDisplayedFields).toHaveBeenCalledWith(['key1', 'key3', 'key2']);
-      });
     });
   });
 
@@ -1035,7 +983,8 @@ describe('LogLineDetails', () => {
 
     await setup({ logs: [log] }, undefined, undefined, { showDetails: [log], currentLog: log });
 
-    expect(screen.getByText('Links')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'tempo' })).toHaveAttribute('href', '/explore');
+    expect(screen.queryByRole('button', { name: 'Links' })).not.toBeInTheDocument();
     expect(screen.getByText('Trace')).toBeInTheDocument();
 
     await userEvent.click(screen.getByText('Trace'));
@@ -1172,7 +1121,8 @@ describe('LogLineDetails', () => {
 
     await setup({ logs: [log] }, undefined, undefined, { showDetails: [log], currentLog: log });
 
-    expect(screen.getByText('Links')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'tempo' })).toHaveAttribute('href', '/explore');
+    expect(screen.queryByRole('button', { name: 'Links' })).not.toBeInTheDocument();
     expect(screen.getByText('Trace')).toBeInTheDocument();
 
     await userEvent.click(screen.getByText('Trace'));
@@ -1197,9 +1147,142 @@ describe('LogLineDetails', () => {
 
     await setup(undefined, { labels: { label: 'value' } });
 
+    const link = screen.getByRole('link', { name: 'Open service overview for label' });
+    expect(link).toHaveAttribute('href', 'https://example.com');
+    expect(link).toHaveTextContent('value');
     expect(screen.getByText('label')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'value' })).not.toBeInTheDocument();
+  });
+
+  test('shows a dropdown when a label has multiple extension links', async () => {
+    const usePluginLinksMock = jest.fn().mockReturnValue({
+      links: [
+        {
+          type: 'link',
+          title: 'APM',
+          path: 'https://example.com/apm',
+          category: 'label',
+          icon: 'compass',
+        },
+        {
+          type: 'link',
+          title: 'Kubernetes',
+          path: 'https://example.com/k8s',
+          category: 'label',
+          icon: 'apps',
+        },
+      ],
+    });
+    setPluginLinksHook(usePluginLinksMock);
+    jest.requireMock('@grafana/runtime').usePluginLinks = usePluginLinksMock;
+
+    await setup(undefined, { labels: { label: 'value' } });
+
+    expect(screen.queryByRole('link', { name: 'APM' })).not.toBeInTheDocument();
     expect(screen.getByText('value')).toBeInTheDocument();
-    expect(screen.getByText('Open service overview for label')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'value' }));
+
+    expect(await screen.findByText('OPEN VALUE IN')).toBeInTheDocument();
+    expect(await screen.findByRole('menuitem', { name: 'APM' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Kubernetes' })).toBeInTheDocument();
+  });
+
+  test('shows legacy log details for an OTel log when otel log details are disabled', async () => {
+    await setup(undefined, { labels: { severity_number: '9', 'service.name': 'checkout' } });
+
+    expect(screen.getByText('Log line')).toBeInTheDocument();
+    expect(screen.queryByText('Service')).not.toBeInTheDocument();
+  });
+
+  test('shows OTel log details when the log has an OTel language and the flag is enabled', async () => {
+    setBooleanFlags({ [FlagKeys.GrafanaOtelLogDetails]: true });
+
+    await setup(
+      undefined,
+      { labels: { severity_number: '9', 'service.name': 'checkout' } },
+      undefined,
+      undefined,
+      'Service'
+    );
+
+    expect(screen.getByText('Service')).toBeInTheDocument();
+    expect(screen.getByText('checkout')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Log line' })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByText('log message 1')).not.toBeInTheDocument();
+  });
+
+  test('OTel details wrap a single attribute extension link around the value', async () => {
+    setBooleanFlags({ [FlagKeys.GrafanaOtelLogDetails]: true });
+
+    const usePluginLinksMock = jest.fn().mockReturnValue({
+      links: [
+        {
+          type: 'link',
+          title: 'Open service overview',
+          path: 'https://example.com/overview',
+          category: 'service.name',
+          icon: 'compass',
+        },
+      ],
+    });
+    setPluginLinksHook(usePluginLinksMock);
+    jest.requireMock('@grafana/runtime').usePluginLinks = usePluginLinksMock;
+
+    await setup(
+      undefined,
+      { labels: { severity_number: '9', 'service.name': 'checkout' } },
+      undefined,
+      undefined,
+      'checkout'
+    );
+
+    const link = screen.getByRole('link', { name: 'Open service overview' });
+    expect(link).toHaveAttribute('href', 'https://example.com/overview');
+    expect(link).toHaveTextContent('checkout');
+    expect(screen.queryByRole('button', { name: 'checkout' })).not.toBeInTheDocument();
+  });
+
+  test('OTel details show a dropdown when an attribute has multiple extension links', async () => {
+    setBooleanFlags({ [FlagKeys.GrafanaOtelLogDetails]: true });
+
+    const usePluginLinksMock = jest.fn().mockReturnValue({
+      links: [
+        {
+          type: 'link',
+          title: 'APM',
+          path: 'https://example.com/apm',
+          category: 'service.name',
+          icon: 'compass',
+        },
+        {
+          type: 'link',
+          title: 'Kubernetes',
+          path: 'https://example.com/k8s',
+          category: 'service.name',
+          icon: 'apps',
+        },
+      ],
+    });
+    setPluginLinksHook(usePluginLinksMock);
+    jest.requireMock('@grafana/runtime').usePluginLinks = usePluginLinksMock;
+
+    await setup(
+      undefined,
+      { labels: { severity_number: '9', 'service.name': 'checkout' } },
+      undefined,
+      undefined,
+      'checkout'
+    );
+
+    expect(screen.queryByRole('link', { name: 'APM' })).not.toBeInTheDocument();
+    expect(screen.getByText('checkout')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'checkout' }));
+
+    expect(await screen.findByText('OPEN VALUE IN')).toBeInTheDocument();
+    expect(await screen.findByRole('menuitem', { name: 'APM' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Kubernetes' })).toBeInTheDocument();
   });
 
   describe('Width regressions', () => {

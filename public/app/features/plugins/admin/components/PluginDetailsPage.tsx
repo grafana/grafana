@@ -18,6 +18,7 @@ import { usePluginDetailsTabs } from '../hooks/usePluginDetailsTabs';
 import { usePluginPageExtensions } from '../hooks/usePluginPageExtensions';
 import { useGetSingle, useFetchStatus, useFetchDetailsStatus, useGetPluginInsights } from '../state/hooks';
 
+import { PluginDetailsCanvasExternalizationNotice } from './PluginDetailsCanvasExternalizationNotice';
 import { PluginDetailsDeprecatedWarning } from './PluginDetailsDeprecatedWarning';
 
 export type Props = {
@@ -90,6 +91,7 @@ export function PluginDetailsPage({
             <PluginDetailsSignature plugin={plugin} className={styles.alert} />
             <PluginDetailsDisabledError plugin={plugin} className={styles.alert} />
             <PluginDetailsDeprecatedWarning plugin={plugin} className={styles.alert} />
+            <PluginDetailsCanvasExternalizationNotice plugin={plugin} className={styles.alert} />
             <PluginDetailsBody
               queryParams={Object.fromEntries(queryParams)}
               plugin={plugin}

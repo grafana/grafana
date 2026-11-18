@@ -50,3 +50,33 @@ func FoldersDashboardsMigration(migrator migrator.FoldersDashboardsMigrator) mig
 		RenameTables: []string{},
 	}
 }
+
+func LibraryPanelsMigration(migrator migrator.FoldersDashboardsMigrator) migrations.MigrationDefinition {
+	libraryPanelGR := schema.GroupResource{
+		Group:    dashV0.GROUP,
+		Resource: dashV0.LIBRARY_PANEL_RESOURCE,
+	}
+
+	return migrations.MigrationDefinition{
+		ID:          "librarypanels",
+		MigrationID: "librarypanels migration",
+		Resources: []migrations.ResourceInfo{
+			{
+				GroupResource: libraryPanelGR,
+				LockTables:    []string{"library_element", "user"},
+				FloorVersion:  dashV0.VERSION,
+			},
+		},
+		Migrators: map[schema.GroupResource]migrations.MigratorFunc{
+			libraryPanelGR: migrator.MigrateLibraryPanels,
+		},
+		Validators: []migrations.ValidatorFactory{
+			migrations.CountValidation(libraryPanelGR, migrations.CountValidationOptions{
+				Table: "library_element",
+				Where: "org_id = ?",
+			}),
+		},
+		// The library_element table is still read by the legacy service in dual-write modes
+		RenameTables: []string{},
+	}
+}

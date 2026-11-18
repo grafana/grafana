@@ -5,6 +5,7 @@ import { PageObject, type PageObjectArgs } from '../PageObject';
 import { AddOptions } from './AddOptions';
 import { ContentOutline } from './ContentOutline';
 import { DashboardOptions } from './DashboardOptions';
+import { FiltersOverview } from './FiltersOverview';
 import { GroupOptions } from './GroupOptions';
 import { PanelOptions } from './PanelOptions';
 import { RowOptions } from './RowOptions';
@@ -21,6 +22,7 @@ export class Sidebar extends PageObject {
   readonly contentOutline: ContentOutline;
   readonly addOptions: AddOptions;
   readonly dashboardOptions: DashboardOptions;
+  readonly filtersOverview: FiltersOverview;
   readonly variableOptions: VariableOptions;
   readonly panelOptions: PanelOptions;
   readonly rowOptions: RowOptions;
@@ -33,6 +35,7 @@ export class Sidebar extends PageObject {
     this.contentOutline = new ContentOutline(args);
     this.addOptions = new AddOptions(args);
     this.dashboardOptions = new DashboardOptions(args);
+    this.filtersOverview = new FiltersOverview(args);
     this.variableOptions = new VariableOptions(args);
     this.panelOptions = new PanelOptions(args);
     this.rowOptions = new RowOptions(args);

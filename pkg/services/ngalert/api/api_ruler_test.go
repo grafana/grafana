@@ -893,7 +893,6 @@ func TestRouteGetRulesConfig(t *testing.T) {
 		}
 
 		svc := createService(ruleStore, nil)
-		svc.featureManager = featuremgmt.WithFeatures(featuremgmt.FlagAlertRuleRestore)
 
 		response := svc.RouteGetRulesConfig(req)
 		require.Equal(t, http.StatusOK, response.Status())

@@ -1,10 +1,6 @@
 import { useCallback, useMemo } from 'react';
 
-import {
-  type RoutingTree,
-  generatedAPI as notificationsAPIv1beta1,
-} from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
-
+import { type RoutingTree, notificationsAPI } from '../../api/notifications';
 import { type Label } from '../../matchers/types';
 import { type RouteMatchResult, type TreeMatch, matchInstancesToRoute } from '../route.utils';
 import { USER_DEFINED_TREE_NAME, convertRoutingTreeToRoute } from '../routingTree.utils';
@@ -29,7 +25,7 @@ export type InstanceMatchResult = {
 };
 
 interface UseMatchInstancesToRouteTreesReturnType
-  extends ReturnType<typeof notificationsAPIv1beta1.endpoints.listRoutingTree.useQuery> {
+  extends ReturnType<typeof notificationsAPI.endpoints.listRoutingTree.useQuery> {
   matchInstancesToRouteTrees: (instances: Label[][]) => InstanceMatchResult[];
 }
 
@@ -45,7 +41,7 @@ interface UseMatchInstancesToRouteTreesReturnType
  *          and returns an array of InstanceMatchResult objects, each containing the matched routes and matching details
  */
 export function useMatchInstancesToRouteTrees(): UseMatchInstancesToRouteTreesReturnType {
-  const { data, ...rest } = notificationsAPIv1beta1.endpoints.listRoutingTree.useQuery(
+  const { data, ...rest } = notificationsAPI.endpoints.listRoutingTree.useQuery(
     {},
     {
       refetchOnFocus: true,
@@ -109,25 +105,26 @@ export function matchInstancesToRouteTrees(trees: RoutingTree[], instances: Labe
     return matchInstancesToRoute(rootRoute, instances);
   });
 
+  // Index each tree's matches by instance once, so grouping doesn't rescan every match for every instance.
+  const matchesByInstance = treeMatches.map(({ expandedTree, matchedPolicies }, index) => {
+    const routeTree = {
+      metadata: { name: trees[index].metadata.name ?? USER_DEFINED_TREE_NAME },
+      expandedSpec: expandedTree,
+    };
+    const byLabels = new Map<Label[], RouteMatch[]>();
+    for (const [route, results] of matchedPolicies) {
+      for (const matchDetails of results) {
+        const matches = byLabels.get(matchDetails.labels) ?? [];
+        matches.push({ route, routeTree, matchDetails });
+        byLabels.set(matchDetails.labels, matches);
+      }
+    }
+    return byLabels;
+  });
+
   // Group results by instance
   return instances.map<InstanceMatchResult>((labels) => {
-    // Collect matches for this specific instance from all trees
-    const allMatchedRoutes = treeMatches.flatMap(({ expandedTree, matchedPolicies }, index) => {
-      const tree = trees[index];
-
-      return Array.from(matchedPolicies.entries()).flatMap(([route, results]) =>
-        results
-          .filter((matchDetails) => matchDetails.labels === labels)
-          .map((matchDetails) => ({
-            route,
-            routeTree: {
-              metadata: { name: tree.metadata.name ?? USER_DEFINED_TREE_NAME },
-              expandedSpec: expandedTree,
-            },
-            matchDetails,
-          }))
-      );
-    });
+    const allMatchedRoutes = matchesByInstance.flatMap((byLabels) => byLabels.get(labels) ?? []);
 
     return {
       labels,

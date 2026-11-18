@@ -181,7 +181,7 @@ describe('MyComponent', () => {
 
 Sass styles are deprecated. Use [Emotion](https://emotion.sh/docs/introduction) for new or modified component styles.
 
-`yarn themes-generate` creates these committed CSS files:
+`pnpm themes-generate` creates these committed CSS files:
 
 - `public/sass/grafana.dark.css`
 - `public/sass/grafana.light.css`

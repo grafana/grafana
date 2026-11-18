@@ -127,7 +127,7 @@ func (f *finalizer) process(ctx context.Context,
 		cause := ""
 		if err != nil {
 			outcome = metricutils.ErrorOutcome
-			cause = classifyTokenErrorCause(err)
+			cause = classifyDeletionErrorCause(err)
 		}
 
 		f.metrics.RecordFinalizer(finalizer, outcome, cause, count, time.Since(start).Seconds())
@@ -241,7 +241,7 @@ func (f *finalizer) deleteExistingItems(
 		return 0, err
 	}
 
-	items, err := f.lister.List(ctx, repo.Namespace, repo.Name)
+	items, err := f.lister.List(ctx, repo.Namespace, repo.Name, resources.ListOptions{})
 	if err != nil {
 		logger.Error("error listing resources", "error", err)
 		return 0, err
@@ -291,7 +291,7 @@ func (f *finalizer) releaseExistingItems(
 		return 0, err
 	}
 
-	items, err := f.lister.List(ctx, repo.Namespace, repo.Name)
+	items, err := f.lister.List(ctx, repo.Namespace, repo.Name, resources.ListOptions{})
 	if err != nil {
 		logger.Error("error listing resources", "error", err)
 		return 0, err

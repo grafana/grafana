@@ -43,6 +43,7 @@ describe('valueFormats', () => {
     ${'deckbytes'}                     | ${undefined} | ${10000000}                                 | ${'10 GB'}
     ${'megwatt'}                       | ${3}         | ${1000}                                     | ${'1.000 GW'}
     ${'mohm'}                          | ${3}         | ${1000}                                     | ${'1.000 Ω'}
+    ${'dBm'}                           | ${0}         | ${-60}                                      | ${'-60 dBm'}
     ${'kohm'}                          | ${3}         | ${1000}                                     | ${'1.000 MΩ'}
     ${'Mohm'}                          | ${3}         | ${1000}                                     | ${'1.000 GΩ'}
     ${'farad'}                         | ${3}         | ${1000}                                     | ${'1.000 kF'}
@@ -77,6 +78,13 @@ describe('valueFormats', () => {
     ${'dateTimeAsSystem'}              | ${0}         | ${dateTime(new Date(2010, 6, 2)).valueOf()} | ${'2010-07-02 00:00:00'}
     ${'dtdurationms'}                  | ${undefined} | ${100000}                                   | ${'1 minute'}
     ${'dtdurationms'}                  | ${undefined} | ${150000}                                   | ${'2 minutes'}
+    ${'ordinal'}                       | ${undefined} | ${1}                                        | ${'1st'}
+    ${'ordinal'}                       | ${undefined} | ${2}                                        | ${'2nd'}
+    ${'ordinal'}                       | ${undefined} | ${3}                                        | ${'3rd'}
+    ${'ordinal'}                       | ${undefined} | ${11}                                       | ${'11th'}
+    ${'ordinal'}                       | ${undefined} | ${22}                                       | ${'22nd'}
+    ${'ordinal'}                       | ${2}         | ${5.25}                                     | ${'5th'}
+    ${'ordinal'}                       | ${undefined} | ${-3}                                       | ${'-3rd'}
   `(
     'With format=$format decimals=$decimals and value=$value then result should be = $expected',
     async ({ format, value, decimals, expected }) => {

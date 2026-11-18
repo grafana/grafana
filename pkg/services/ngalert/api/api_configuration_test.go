@@ -169,6 +169,13 @@ func TestExternalAlertmanagerUID_PostAndGet(t *testing.T) {
 			"implementation": "prometheus",
 		}),
 	}
+	noImplAMDS := &datasources.DataSource{
+		UID:      "no-impl-am",
+		OrgID:    1,
+		Type:     datasources.DS_ALERTMANAGER,
+		URL:      "http://mimir:9009",
+		JsonData: simplejson.New(),
+	}
 
 	tests := []struct {
 		name        string
@@ -243,6 +250,19 @@ func TestExternalAlertmanagerUID_PostAndGet(t *testing.T) {
 				},
 			},
 			wantStatus: http.StatusBadRequest,
+		},
+		{
+			name:        "POST with alertmanager datasource without implementation is treated as mimir",
+			datasources: []*datasources.DataSource{noImplAMDS},
+			flagEnabled: true,
+			posts: []definitions.PostableNGalertConfig{
+				{
+					AlertmanagersChoice:     new(definitions.InternalAlertmanager),
+					ExternalAlertmanagerUID: new("no-impl-am"),
+				},
+			},
+			wantStatus: http.StatusCreated,
+			wantUID:    new("no-impl-am"),
 		},
 		{
 			name:        "POST with UID set but feature flag disabled is rejected with 400",
@@ -366,7 +386,7 @@ func TestExternalAlertmanagerUID_GetReturnsIniValueWhenSet(t *testing.T) {
 	t.Run("ini set overrides DB value on read", func(t *testing.T) {
 		s := store.NewFakeAdminConfigStore(t)
 		dbUID := "db-uid"
-		require.NoError(t, s.UpdateAdminConfiguration(store.UpdateAdminConfigurationCmd{
+		require.NoError(t, s.UpdateAdminConfiguration(t.Context(), store.UpdateAdminConfigurationCmd{
 			AdminConfiguration: &models.AdminConfiguration{
 				OrgID:                   1,
 				ExternalAlertmanagerUID: &dbUID,
@@ -387,7 +407,7 @@ func TestExternalAlertmanagerUID_GetReturnsIniValueWhenSet(t *testing.T) {
 	t.Run("ini unset returns DB value", func(t *testing.T) {
 		s := store.NewFakeAdminConfigStore(t)
 		dbUID := "db-uid"
-		require.NoError(t, s.UpdateAdminConfiguration(store.UpdateAdminConfigurationCmd{
+		require.NoError(t, s.UpdateAdminConfiguration(t.Context(), store.UpdateAdminConfigurationCmd{
 			AdminConfiguration: &models.AdminConfiguration{
 				OrgID:                   1,
 				ExternalAlertmanagerUID: &dbUID,
@@ -449,7 +469,7 @@ func TestExternalAlertmanagerUID_PostRejectedWhenIniSet(t *testing.T) {
 			require.Equal(t, http.StatusConflict, resp.Status())
 
 			// DB unchanged — fake store returns (nil, nil) when no row exists.
-			cfg, err := s.GetAdminConfiguration(1)
+			cfg, err := s.GetAdminConfiguration(t.Context(), 1)
 			require.NoError(t, err)
 			require.Nil(t, cfg)
 		})

@@ -4,7 +4,14 @@ import { useLayoutEffect, useRef, useState } from 'react';
 import { textUtil } from '@grafana/data';
 
 import { loadSandboxMermaid, loadSandboxRuntime } from './loadSandboxRuntime';
-import { resourceOrigin, type BlockedResource, type TextSandboxState } from './sandboxPolicy';
+import {
+  MAX_BLOCKED_URL_CHARS,
+  resourceOrigin,
+  urlChars,
+  type BlockedResource,
+  type BlockedUrl,
+  type TextSandboxState,
+} from './sandboxPolicy';
 import {
   isFrameNotification,
   randomId,
@@ -26,6 +33,8 @@ export interface SandboxFrameProps {
   mermaid?: MermaidConfig;
   diagramError?: string;
   title: string;
+  /** Lets absolutely positioned content lay out against the panel: the frame is otherwise only as tall as its flow content. */
+  minHeight?: number;
   onState: (state: TextSandboxState | undefined) => void;
   onHeight: (height: number, contentHeight: number) => void;
 }
@@ -47,7 +56,7 @@ export function SandboxFrame(props: SandboxFrameProps) {
 }
 
 function FrameDocument(props: SandboxFrameProps) {
-  const { title, onState, onHeight } = props;
+  const { title, minHeight = 0, onState, onHeight } = props;
   const { iframeRef, sandboxState, dimensions, protectedFrame } = useFrameRuntime(props);
 
   // Keep reporting separate from runtime setup: state or consumer changes must not restart the frame's protocol.
@@ -79,8 +88,10 @@ function FrameDocument(props: SandboxFrameProps) {
       data-text-content-height={dimensions.contentHeight || undefined}
       style={{
         width: '100%',
-        height: dimensions.height,
+        height: Math.max(dimensions.height, minHeight),
         border: 0,
+        // Inline frames leave a baseline gap below, which overflows a container sized to the frame.
+        display: 'block',
       }}
     />
   );
@@ -124,7 +135,7 @@ function useFrameRuntime({
       onResize: setDimensions,
       onBlocked: (incoming) =>
         setSandboxState((current) => {
-          const resources = mergeBlockedResources(current.resources, incoming);
+          const resources = mergeResources(current.resources, incoming);
           return resources === current.resources ? current : { ...current, resources };
         }),
     });
@@ -176,6 +187,7 @@ function createFrameController({
         nonce,
         channel: renderCommand.channel,
         parentOrigin: window.location.origin,
+        colorScheme: getComputedStyle(iframe).colorScheme,
       });
       assignFrameShell(iframe, shell);
     })
@@ -302,12 +314,14 @@ function buildFrameShell({
   nonce,
   channel,
   parentOrigin,
+  colorScheme,
 }: {
   runtimeSource: string;
   policy?: string;
   nonce: string;
   channel: string;
   parentOrigin: string;
+  colorScheme: string;
 }) {
   const escape = textUtil.escapeHtml;
   const appliedPolicy = policy?.replace("script-src 'none'", `script-src 'nonce-${nonce}'`);
@@ -315,9 +329,12 @@ function buildFrameShell({
   const cspMeta =
     escapedPolicy === undefined ? '' : `<meta http-equiv="Content-Security-Policy" content="${escapedPolicy}">`;
   const policyAttribute = escapedPolicy === undefined ? '' : ` data-policy="${escapedPolicy}"`;
+  // A frame whose color scheme differs from its host paints an opaque white backdrop before the runtime themes it.
+  const schemeMeta =
+    colorScheme === 'dark' || colorScheme === 'light' ? `<meta name="color-scheme" content="${colorScheme}">` : '';
   const scriptSource = runtimeSource.replace(/<\/script/gi, '<\\/script');
 
-  return `<!doctype html><html><head><meta http-equiv="x-dns-prefetch-control" content="off">${cspMeta}<base target="_blank"></head><body><script nonce="${escape(nonce)}" data-channel="${escape(channel)}" data-parent-origin="${escape(parentOrigin)}"${policyAttribute}>${scriptSource}</script></body></html>`;
+  return `<!doctype html><html><head><meta http-equiv="x-dns-prefetch-control" content="off">${schemeMeta}${cspMeta}<base target="_blank"></head><body><script nonce="${escape(nonce)}" data-channel="${escape(channel)}" data-parent-origin="${escape(parentOrigin)}"${policyAttribute}>${scriptSource}</script></body></html>`;
 }
 
 function assignFrameShell(iframe: HTMLIFrameElement, shell: string) {
@@ -329,16 +346,55 @@ function assignFrameShell(iframe: HTMLIFrameElement, shell: string) {
   Object.assign(iframe, { srcdoc: shellPolicy?.createHTML(shell) ?? shell });
 }
 
-function mergeBlockedResources(current: BlockedResource[], incoming: BlockedResource[]): BlockedResource[] {
+/** Returns `current` when nothing changed, so a repeated report doesn't re-render. */
+function mergeResources(current: BlockedResource[], reported: BlockedResource[]): BlockedResource[] {
+  let changed = false;
   const resources = [...current];
-  for (const resource of incoming) {
-    const normalized = {
-      directive: resource.directive,
-      origin: resource.origin ? resourceOrigin(resource.origin) : undefined,
-    };
-    if (!resources.some((entry) => entry.directive === normalized.directive && entry.origin === normalized.origin)) {
-      resources.push(normalized);
+  for (const resource of reported) {
+    const origin = resource.origin ? resourceOrigin(resource.origin) : undefined;
+    // The frame is untrusted, so drop URLs that don't match the origin they're reported under.
+    const urls = origin ? resource.urls?.filter(({ url }) => resourceOrigin(url) === origin) : undefined;
+    let index = resources.findIndex((entry) => entry.directive === resource.directive && entry.origin === origin);
+    if (index === -1) {
+      index = resources.push({ directive: resource.directive, origin }) - 1;
+      changed = true;
+    }
+    if (!urls) {
+      continue;
+    }
+    const entry = resources[index];
+    const merged = mergeUrls(entry.urls ?? [], urls);
+    const truncated = Boolean(entry.truncated || resource.truncated || merged.dropped);
+    if (merged.urls !== entry.urls || truncated !== Boolean(entry.truncated)) {
+      resources[index] = { ...entry, urls: merged.urls, ...(truncated && { truncated }) };
+      changed = true;
     }
   }
-  return resources.length === current.length ? current : resources;
+  return changed ? resources : current;
+}
+
+/** `dropped` is true when the budget left out a URL. */
+function mergeUrls(current: BlockedUrl[], reported: BlockedUrl[]): { urls: BlockedUrl[]; dropped: boolean } {
+  let changed = false;
+  let dropped = false;
+  let chars = urlChars(current);
+  const urls = [...current];
+  const indexes = new Map(urls.map(({ url }, index) => [url, index]));
+  for (const entry of reported) {
+    const index = indexes.get(entry.url);
+    if (index === undefined) {
+      if (chars + entry.url.length > MAX_BLOCKED_URL_CHARS) {
+        dropped = true;
+        continue;
+      }
+      indexes.set(entry.url, urls.length);
+      urls.push({ url: entry.url, count: entry.count });
+      chars += entry.url.length;
+      changed = true;
+    } else if (entry.count > urls[index].count) {
+      urls[index] = { url: entry.url, count: entry.count };
+      changed = true;
+    }
+  }
+  return { urls: changed ? urls : current, dropped };
 }

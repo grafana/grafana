@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strings"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
@@ -37,7 +38,7 @@ func (h *Handler) ListKeysRoute(group, version, resourceName, kindName string) R
 		Path:    resourceName + "/" + utils.ListKeysPathSegment,
 		Spec:    listKeysRouteSpec(kindName, version, false),
 		Handler: h.ListKeysFor(kind),
-		Schemas: envelopeSchemas(listKeyRequestGoName, partialListGoName),
+		Schemas: envelopeSchemas(listKeyRequestGoName, listKeyResponseGoName),
 	}
 }
 
@@ -50,8 +51,15 @@ func (h *Handler) ListKeysInNamespaceRoute(group, version, resourceName, kindNam
 		Path:    resourceName + "/" + utils.ListKeysPathSegment,
 		Spec:    listKeysRouteSpec(kindName, version, true),
 		Handler: h.ListKeysInNamespaceFor(kind),
-		Schemas: envelopeSchemas(listKeyRequestGoName, partialListGoName),
+		Schemas: envelopeSchemas(listKeyRequestGoName, listKeyResponseGoName),
 	}
+}
+
+// Swagger UI pre-fills the request body from this, instead of placeholder values
+// for every field.
+var listKeyRequestExample = storagev0.ListKeyRequest{
+	TypeMeta: metav1.TypeMeta{APIVersion: storagev0.APIVERSION, Kind: storagev0.KindListKeyRequest},
+	Limit:    100,
 }
 
 func listKeysRouteSpec(kindName, version string, namespaced bool) *spec3.PathProps {
@@ -87,7 +95,7 @@ func listKeysRouteSpec(kindName, version string, namespaced bool) *spec3.PathPro
 						Required: false,
 						Description: "A " + storagev0.KindListKeyRequest + " carrying limit, continue and resourceVersion, " +
 							"optionally with apiVersion and kind. Any other field is rejected.",
-						Content: jsonContent(listKeyRequestGoName),
+						Content: jsonContent(listKeyRequestGoName, listKeyRequestExample),
 					},
 				},
 				Responses: &spec3.Responses{
@@ -95,9 +103,9 @@ func listKeysRouteSpec(kindName, version string, namespaced bool) *spec3.PathPro
 						StatusCodeResponses: map[int]*spec3.Response{
 							200: {
 								ResponseProps: spec3.ResponseProps{
-									Description: "A PartialObjectMetadataList in which only namespace, name, " +
-										"resourceVersion and the grafana.app/folder annotation are populated.",
-									Content: jsonContent(partialListGoName),
+									Description: "A " + storagev0.KindListKeyResponse + " page of keys, " +
+										"each carrying namespace, name, resourceVersion and folder.",
+									Content: jsonContent(listKeyResponseGoName, nil),
 								},
 							},
 						},
