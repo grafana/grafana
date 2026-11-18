@@ -123,6 +123,10 @@ function getStyles(theme: GrafanaTheme2) {
       background: theme.colors.background.secondary,
       border: `1px solid ${theme.colors.border.weak}`,
       borderRadius: theme.shape.radius.lg,
+      [theme.breakpoints.down('sm')]: {
+        paddingLeft: theme.spacing(1),
+        paddingRight: theme.spacing(1),
+      },
     }),
     // Closed, the header sits as far from the panel's bottom edge as from the prompt above it: the same inset
     // the page leaves past the prompt's edge, since the header's own padding already applies on both sides.

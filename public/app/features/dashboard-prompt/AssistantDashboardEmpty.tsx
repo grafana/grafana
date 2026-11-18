@@ -56,7 +56,9 @@ function useFitToScrollArea(enabled: boolean) {
       const areaStyle = getComputedStyle(scrollArea);
       const areaRect = scrollArea.getBoundingClientRect();
       const areaTop = areaRect.top + parseFloat(areaStyle.paddingTop || '0');
-      const areaBottom = areaRect.bottom - parseFloat(areaStyle.paddingBottom || '0');
+      // On narrow screens the page scrolls instead and the dashboard area grows with its content, so the
+      // viewport's bottom edge is the limit there.
+      const areaBottom = Math.min(areaRect.bottom, window.innerHeight) - parseFloat(areaStyle.paddingBottom || '0');
       // Where the landing starts without the pull-up: the parent's content edge, which its own margin never moves.
       const naturalTop = parent.getBoundingClientRect().top + parseFloat(getComputedStyle(parent).paddingTop || '0');
       setFit({
@@ -240,14 +242,20 @@ function getStyles(theme: GrafanaTheme2) {
       padding: theme.spacing(6, 4),
     }),
     // Room for the template grid's columns under the prompt, and a fixed height for the grid to scroll in.
-    // Centered in the dashboard's free space, with the same room above and below; a long template grid takes
-    // what is left and scrolls inside its panel.
+    // Centered in the dashboard's free space; a long template grid takes what is left and scrolls inside its
+    // panel. The extra room below keeps "Add visualization" well clear of the bottom edge.
     contentWithTemplates: css({
       maxWidth: 1040,
       height: '100%',
       justifyContent: 'center',
       paddingTop: theme.spacing(3),
-      paddingBottom: theme.spacing(3),
+      paddingBottom: theme.spacing(8),
+      [theme.breakpoints.down('sm')]: {
+        // On a phone the scroll area already insets the page, so the prompt and templates take the full width.
+        paddingLeft: 0,
+        paddingRight: 0,
+        paddingBottom: theme.spacing(6),
+      },
     }),
     top: css({
       display: 'flex',
