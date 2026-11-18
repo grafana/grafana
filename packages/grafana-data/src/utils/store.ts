@@ -19,9 +19,22 @@ export class Store {
     }
   }
 
-  // don't throw on SSR - reads return undefined, writes are dropped
+  // Storage is optional: on SSR, or in sandboxed/opaque-origin iframes where the
+  // window.localStorage getter itself throws, reads return undefined and writes are dropped.
   private get storage(): Storage | undefined {
-    return typeof window === 'undefined' ? undefined : window.localStorage;
+    try {
+      return typeof window === 'undefined' ? undefined : window.localStorage;
+    } catch {
+      return undefined;
+    }
+  }
+
+  private read(key: string): string | undefined {
+    try {
+      return this.storage?.[key];
+    } catch {
+      return undefined;
+    }
   }
 
   private notifySubscribers(key: string) {
@@ -49,7 +62,7 @@ export class Store {
   }
 
   get(key: string) {
-    return this.storage?.[key];
+    return this.read(key);
   }
 
   set(key: string, value: StoreValue) {
@@ -63,7 +76,7 @@ export class Store {
     if (def !== void 0 && !this.exists(key)) {
       return def;
     }
-    return this.storage?.[key] === 'true';
+    return this.read(key) === 'true';
   }
 
   getObject<T = unknown>(key: string): T | undefined;
@@ -71,9 +84,9 @@ export class Store {
   getObject<T = unknown>(key: string, def?: T) {
     let ret = def;
     if (this.exists(key)) {
-      const json = this.storage?.[key];
+      const json = this.read(key);
       try {
-        ret = JSON.parse(json);
+        ret = JSON.parse(json ?? '');
       } catch (error) {
         console.error(`Error parsing store object: ${key}. Returning default: ${def}. [${error}]`);
       }
@@ -103,11 +116,15 @@ export class Store {
   }
 
   exists(key: string) {
-    return this.storage?.[key] !== void 0;
+    return this.read(key) !== void 0;
   }
 
   delete(key: string) {
-    this.storage?.removeItem(key);
+    try {
+      this.storage?.removeItem(key);
+    } catch {
+      // storage became unavailable; nothing to remove
+    }
     this.notifySubscribers(key);
   }
 
@@ -117,15 +134,19 @@ export class Store {
     if (!storage) {
       return result;
     }
-    for (let i = 0; i < storage.length; i++) {
-      const rawKey = storage.key(i);
-      if (rawKey && rawKey.startsWith(prefix ?? '')) {
-        const key = rawKey.slice(prefix?.length ?? 0);
-        const value = storage.getItem(rawKey);
-        if (value !== null) {
-          result[key] = value;
+    try {
+      for (let i = 0; i < storage.length; i++) {
+        const rawKey = storage.key(i);
+        if (rawKey && rawKey.startsWith(prefix ?? '')) {
+          const key = rawKey.slice(prefix?.length ?? 0);
+          const value = storage.getItem(rawKey);
+          if (value !== null) {
+            result[key] = value;
+          }
         }
       }
+    } catch {
+      return {};
     }
     return result;
   }

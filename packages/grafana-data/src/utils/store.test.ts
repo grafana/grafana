@@ -195,3 +195,82 @@ describe('store', () => {
     expect(store.exists('key6')).toBe(false);
   });
 });
+
+describe('Store when localStorage is unavailable', () => {
+  let originalDescriptor: PropertyDescriptor | undefined;
+
+  beforeEach(() => {
+    originalDescriptor = Object.getOwnPropertyDescriptor(window, 'localStorage');
+  });
+
+  afterEach(() => {
+    if (originalDescriptor) {
+      Object.defineProperty(window, 'localStorage', originalDescriptor);
+    }
+  });
+
+  describe('getter throws (sandboxed iframe without allow-same-origin)', () => {
+    let store: Store;
+
+    beforeEach(() => {
+      Object.defineProperty(window, 'localStorage', {
+        configurable: true,
+        get() {
+          throw new DOMException("Failed to read the 'localStorage' property from 'Window'", 'SecurityError');
+        },
+      });
+      store = new Store();
+    });
+
+    it('reads fall back to absent values and defaults', () => {
+      expect(store.get('key')).toBeUndefined();
+      expect(store.exists('key')).toBe(false);
+      expect(store.getBool('key', true)).toBe(true);
+      expect(store.getObject('key')).toBeUndefined();
+      expect(store.getObject('key', { a: 1 })).toEqual({ a: 1 });
+      expect(store.all()).toEqual({});
+    });
+
+    it('writes and removes do nothing but still notify subscribers', () => {
+      const subscriber = jest.fn();
+      store.subscribe('key', subscriber);
+
+      expect(() => store.set('key', 'value')).not.toThrow();
+      expect(store.setObject('key', { a: 1 })).toBe(true);
+      expect(() => store.delete('key')).not.toThrow();
+      expect(store.get('key')).toBeUndefined();
+      expect(subscriber).toHaveBeenCalledTimes(3);
+    });
+  });
+
+  describe('storage operations throw', () => {
+    let store: Store;
+
+    beforeEach(() => {
+      const throwing = () => {
+        throw new DOMException('denied', 'SecurityError');
+      };
+      Object.defineProperty(window, 'localStorage', {
+        configurable: true,
+        value: new Proxy({} as Storage, { get: throwing, set: throwing }),
+      });
+      store = new Store();
+    });
+
+    it('reads fall back to absent values and defaults', () => {
+      expect(store.get('key')).toBeUndefined();
+      expect(store.exists('key')).toBe(false);
+      expect(store.getBool('key', false)).toBe(false);
+      expect(store.getObject('key', [])).toEqual([]);
+      expect(store.all('prefix.')).toEqual({});
+    });
+
+    it('delete does not throw', () => {
+      expect(() => store.delete('key')).not.toThrow();
+    });
+
+    it('setObject still reports write failures such as quota errors', () => {
+      expect(() => store.setObject('key', { a: 1 })).toThrow(/Could not save item in localStorage: key/);
+    });
+  });
+});
