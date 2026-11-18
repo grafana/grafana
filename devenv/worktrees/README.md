@@ -6,12 +6,14 @@ The name is the worktree directory name (`grafana` is `main`; a `grafana-` prefi
 
 ## Workflow
 
-1. In the worktree that should run the backend:
+1. In the main checkout (`grafana`), run the backend:
 
    ```bash
    mise run worktree:backend
    ```
 
+   Run the backend from the main checkout. It uses that checkout's existing `data/` and `conf/custom.ini`, so your dashboards, users and teams are there.
+   A backend started from any other worktree begins with an empty database and no `custom.ini`.
    Only one worktree runs the backend at a time. Stop it and run `mise run worktree:down` there before moving it.
 
 2. In every worktree whose frontend you want to test, including the backend worktree if you want to open its own hostname:

@@ -232,7 +232,7 @@ function frontend(opts) {
       throw new Error(
         hosts.length
           ? `More than one worktree runs the backend (${hosts.map((h) => h.name).join(', ')}). Run \`mise run worktree:down\` in all but one.`
-          : 'No backend is registered. Run `mise run worktree:backend` in the worktree that should run it first.'
+          : 'No backend is registered. Run `mise run worktree:backend` in the main checkout first.'
       );
     }
     backendName = hosts[0].name;
