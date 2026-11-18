@@ -48,6 +48,9 @@ Plain `make run` / `pnpm start` are unchanged.
 - Requires Docker with the Compose v2 plugin, port 80, and `*.localhost` resolving to loopback (add hosts entries if yours doesn't).
 - The backend worktree needs built `dist/` folders for the `graphite` and `grafana-testdata-datasource` plugins, or the backend fails
   at startup. Copy them from another worktree if the plugin build doesn't work.
+- Enterprise is not handled. `make enterprise-dev` overlays enterprise code onto one OSS checkout (the main one by default), so an
+  enterprise backend has to run from the main checkout. Worktree frontends are OSS-only, so enterprise-only pages will not appear in them.
+  Overlaying enterprise onto a worktree (`GRAFANA_DIR` in `grafana-enterprise`) is untested here.
 - You are responsible for the frontends being compatible with the backend.
 - On Linux the proxy reaches host processes through `host.docker.internal`; services bound only to `127.0.0.1` may be unreachable.
 - Not an authentication boundary; for trusted dev machines only.
