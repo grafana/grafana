@@ -5,17 +5,17 @@ inputs:
   checkout:
     description: Grafana checkout the tests run in; they read testdata and config from it
     required: true
-  binaries:
-    description: Directory with the <package>.test binaries built by go test -c from that checkout
+  newer-binaries:
+    description: Directory with the <package>.test binaries built by go test -c from the newer version
     required: true
-  other-binaries:
-    description: Test binaries of the other version in the round trip; packages it does not ship are skipped
+  older-binaries:
+    description: Directory with the <package>.test binaries built by go test -c from the older version
     required: true
   test:
     description: TestCompatSetup, TestCompatUpdate, or TestCompatVerify
     required: true
   role:
-    description: older or newer
+    description: older or newer, the version that runs this phase; checkout must be that version's
     required: true
   data:
     description: Directory shared by the phases of one round trip
@@ -31,8 +31,8 @@ runs:
       shell: bash
       env:
         CHECKOUT: ${{ inputs.checkout }}
-        BINARIES: ${{ inputs.binaries }}
-        OTHER_BINARIES: ${{ inputs.other-binaries }}
+        NEWER_BINARIES: ${{ inputs.newer-binaries }}
+        OLDER_BINARIES: ${{ inputs.older-binaries }}
         TEST: ${{ inputs.test }}
         GRAFANA_COMPAT_ROLE: ${{ inputs.role }}
         GRAFANA_COMPAT_DIR: ${{ inputs.data }}
@@ -40,6 +40,11 @@ runs:
       run: |
         set -uo pipefail
         shopt -s nullglob
+        case "$GRAFANA_COMPAT_ROLE" in
+          newer) BINARIES="$NEWER_BINARIES" OTHER_BINARIES="$OLDER_BINARIES" ;;
+          older) BINARIES="$OLDER_BINARIES" OTHER_BINARIES="$NEWER_BINARIES" ;;
+          *) echo "::error::role must be older or newer, got $GRAFANA_COMPAT_ROLE"; exit 1 ;;
+        esac
         rc=0
         ran=0
         # go test -c names each binary after its package directory under pkg/tests/compat.
@@ -64,7 +69,7 @@ runs:
         done
         # A missing build or no package in common must not pass as a green phase.
         if [ "$ran" -eq 0 ]; then
-          echo "::error::No package of $TEST ran: $BINARIES and $OTHER_BINARIES have no test binary in common"
+          echo "::error::No package of $TEST ran: $NEWER_BINARIES and $OLDER_BINARIES have no test binary in common"
           exit 1
         fi
         exit "$rc"

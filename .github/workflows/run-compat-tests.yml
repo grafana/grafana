@@ -220,8 +220,8 @@ jobs:
         uses: ./.github/actions/run-compat-phase
         with:
           checkout: ${{ env.OLD_DIR }}
-          binaries: ${{ env.OLDER_BIN }}
-          other-binaries: ${{ env.NEWER_BIN }}
+          newer-binaries: ${{ env.NEWER_BIN }}
+          older-binaries: ${{ env.OLDER_BIN }}
           test: TestCompatSetup
           role: older
           data: ${{ env.COMPAT_DIR }}/upgrade-rollback
@@ -232,8 +232,8 @@ jobs:
         uses: ./.github/actions/run-compat-phase
         with:
           checkout: ${{ github.workspace }}
-          binaries: ${{ env.NEWER_BIN }}
-          other-binaries: ${{ env.OLDER_BIN }}
+          newer-binaries: ${{ env.NEWER_BIN }}
+          older-binaries: ${{ env.OLDER_BIN }}
           test: TestCompatUpdate
           role: newer
           data: ${{ env.COMPAT_DIR }}/upgrade-rollback
@@ -244,8 +244,8 @@ jobs:
         uses: ./.github/actions/run-compat-phase
         with:
           checkout: ${{ env.OLD_DIR }}
-          binaries: ${{ env.OLDER_BIN }}
-          other-binaries: ${{ env.NEWER_BIN }}
+          newer-binaries: ${{ env.NEWER_BIN }}
+          older-binaries: ${{ env.OLDER_BIN }}
           test: TestCompatVerify
           role: older
           data: ${{ env.COMPAT_DIR }}/upgrade-rollback
@@ -256,8 +256,8 @@ jobs:
         uses: ./.github/actions/run-compat-phase
         with:
           checkout: ${{ github.workspace }}
-          binaries: ${{ env.NEWER_BIN }}
-          other-binaries: ${{ env.OLDER_BIN }}
+          newer-binaries: ${{ env.NEWER_BIN }}
+          older-binaries: ${{ env.OLDER_BIN }}
           test: TestCompatSetup
           role: newer
           data: ${{ env.COMPAT_DIR }}/rollback-upgrade
@@ -268,8 +268,8 @@ jobs:
         uses: ./.github/actions/run-compat-phase
         with:
           checkout: ${{ env.OLD_DIR }}
-          binaries: ${{ env.OLDER_BIN }}
-          other-binaries: ${{ env.NEWER_BIN }}
+          newer-binaries: ${{ env.NEWER_BIN }}
+          older-binaries: ${{ env.OLDER_BIN }}
           test: TestCompatUpdate
           role: older
           data: ${{ env.COMPAT_DIR }}/rollback-upgrade
@@ -280,8 +280,8 @@ jobs:
         uses: ./.github/actions/run-compat-phase
         with:
           checkout: ${{ github.workspace }}
-          binaries: ${{ env.NEWER_BIN }}
-          other-binaries: ${{ env.OLDER_BIN }}
+          newer-binaries: ${{ env.NEWER_BIN }}
+          older-binaries: ${{ env.OLDER_BIN }}
           test: TestCompatVerify
           role: newer
           data: ${{ env.COMPAT_DIR }}/rollback-upgrade
