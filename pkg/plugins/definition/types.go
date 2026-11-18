@@ -18,9 +18,6 @@ type PluginDefinition struct {
 	// NOTE: this will soon be merged into ManifestData (automatically)
 	Schemas map[string]*pluginschema.PluginSchema `json:"schemas,omitempty"`
 
-	// Deprecated -- will be removed very soon!
-	Manifest *app.ManifestData `json:"manifest,omitempty"`
-
 	// When an app manifest is defined, we can use that
 	Manifests []*app.ManifestData `json:"manifests,omitempty"`
 }

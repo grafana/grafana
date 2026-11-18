@@ -24,10 +24,12 @@ import { type VarMappingVariableSource } from 'app/core/components/OptionsUI/var
 import { LibraryVizPanelInfo } from 'app/features/dashboard-scene/panel-edit/LibraryVizPanelInfo';
 import { type LibraryPanelBehavior } from 'app/features/dashboard-scene/scene/LibraryPanelBehavior';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
+import { getPanelIdForVizPanel } from 'app/features/dashboard-scene/utils/utils-panels';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
 import { OptionsPaneCategoryDescriptor } from './OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from './OptionsPaneItemDescriptor';
+import { getReportableOptionValue } from './getReportableOptionValue';
 import { getOptionOverrides, getVarMappingOptionOverrides } from './state/getOptionOverrides';
 import { type OptionPaneRenderProps } from './types';
 import { setOptionImmutably, updateDefaultFieldConfigValue, updateDefaultFieldConfigVarMapping } from './utils';
@@ -321,8 +323,8 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
       // Merged rather than replaced, so an editor that drops a key from an object value keeps the old
       // key — clearing requires setting it to undefined. Documented on StandardEditorProps.onChange.
       // Switching to replace here would break editors that emit partial values for their own path.
+      const option = panelOptionItems.find((item) => item.path === path);
       if (props.onOptionsChange) {
-        const option = panelOptionItems.find((item) => item.path === path);
         props.onOptionsChange(newOptions, option?.name ?? path, option?.category?.[0] ?? plugin.meta.name);
       } else {
         panel.onOptionsChange(newOptions);
@@ -331,7 +333,9 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
       DashboardInteractions.setVisualOption({
         ui: props.reportInteractionUI,
         option: path,
-        value: JSON.stringify(value),
+        ...getReportableOptionValue(value, option?.settings),
+        panel_type: plugin.meta.id,
+        panel_id: getPanelIdForVizPanel(panel),
       });
     },
   };
@@ -396,7 +400,9 @@ export function getVisualizationOptions2(props: OptionPaneRenderProps2): Options
             DashboardInteractions.setVisualOption({
               ui: props.reportInteractionUI,
               option: `?${fieldOption.isCustom ? 'custom.' : ''}${fieldOption.path}`,
-              value: JSON.stringify(value),
+              ...getReportableOptionValue(v, fieldOption.settings),
+              panel_type: plugin.meta.id,
+              panel_id: getPanelIdForVizPanel(panel),
             });
           };
 

@@ -20,18 +20,30 @@ import (
 )
 
 type fakeStars struct {
-	created, updated *v1alpha1.Stars
-	deleted          *resource.Identifier
-	err              error
+	updated     *v1alpha1.Stars
+	updatedWith resource.UpdateOptions
+	deleted     *resource.Identifier
+	stored      *v1alpha1.Stars // returned by Get
+	err         error
+	errs        []error // returned by the first Updates, before err
+	updates     int
 }
 
-func (f *fakeStars) Create(_ context.Context, obj *v1alpha1.Stars, _ resource.CreateOptions) (*v1alpha1.Stars, error) {
-	f.created = obj
-	return obj, f.err
+func (f *fakeStars) Get(context.Context, resource.Identifier) (*v1alpha1.Stars, error) {
+	if f.stored == nil {
+		return nil, apierrors.NewNotFound(schema.GroupResource{Group: v1alpha1.APIGroup, Resource: "stars"}, "user-1")
+	}
+	return f.stored, nil
 }
 
-func (f *fakeStars) Update(_ context.Context, obj *v1alpha1.Stars, _ resource.UpdateOptions) (*v1alpha1.Stars, error) {
-	f.updated = obj
+func (f *fakeStars) Update(_ context.Context, obj *v1alpha1.Stars, opts resource.UpdateOptions) (*v1alpha1.Stars, error) {
+	f.updated, f.updatedWith = obj, opts
+	f.updates++
+	if len(f.errs) > 0 {
+		err := f.errs[0]
+		f.errs = f.errs[1:]
+		return nil, err
+	}
 	return obj, f.err
 }
 
@@ -69,14 +81,15 @@ func call(t *testing.T, client starsClient, method, name, path string, parent *a
 const addPath = "/update/dashboard.grafana.app/Dashboard/abc"
 
 func TestStarsUpdate(t *testing.T) {
-	t.Run("the first star creates the object", func(t *testing.T) {
+	t.Run("the first star is a named update, which creates the object", func(t *testing.T) {
 		client := &fakeStars{}
 		code, _ := call(t, client, http.MethodPut, "user-1", addPath, nil)
 		require.Equal(t, http.StatusOK, code)
-		require.NotNil(t, client.created)
-		require.Equal(t, "user-1", client.created.Name)
-		require.Equal(t, "default", client.created.Namespace)
-		require.Equal(t, []string{"abc"}, client.created.Spec.Resource[0].Names)
+		require.NotNil(t, client.updated)
+		require.Equal(t, "0", client.updatedWith.ResourceVersion, "unconditional, so the client does not read first")
+		require.Equal(t, "user-1", client.updated.Name)
+		require.Equal(t, "default", client.updated.Namespace)
+		require.Equal(t, []string{"abc"}, client.updated.Spec.Resource[0].Names)
 	})
 
 	t.Run("a later star updates the stored object", func(t *testing.T) {
@@ -99,7 +112,7 @@ func TestStarsUpdate(t *testing.T) {
 		code, _ := call(t, client, http.MethodDelete, "user-1", addPath, nil)
 		require.Equal(t, http.StatusOK, code)
 		require.Nil(t, client.deleted)
-		require.Nil(t, client.created)
+		require.Nil(t, client.updated)
 	})
 
 	t.Run("only user stars are written", func(t *testing.T) {
@@ -117,6 +130,26 @@ func TestStarsUpdate(t *testing.T) {
 		client := &fakeStars{err: apierrors.NewConflict(schema.GroupResource{Group: v1alpha1.APIGroup, Resource: "stars"}, "user-1", nil)}
 		code, _ := call(t, client, http.MethodPut, "user-1", addPath, starsParent(t, "user-1", "xyz"))
 		require.Equal(t, http.StatusConflict, code)
+	})
+
+	t.Run("a first star that loses a race is added to what the winner stored", func(t *testing.T) {
+		conflict := apierrors.NewConflict(schema.GroupResource{Group: v1alpha1.APIGroup, Resource: "stars"}, "user-1", nil)
+		client := &fakeStars{errs: []error{conflict}}
+		client.stored = &v1alpha1.Stars{ObjectMeta: metav1.ObjectMeta{Name: "user-1", Namespace: "default", ResourceVersion: "3"}}
+		client.stored.Spec.Add("dashboard.grafana.app", "Dashboard", "xyz")
+
+		code, _ := call(t, client, http.MethodPut, "user-1", addPath, nil)
+		require.Equal(t, http.StatusOK, code)
+		require.Equal(t, 2, client.updates)
+		require.Equal(t, "3", client.updatedWith.ResourceVersion, "the retry is against the stored version")
+		require.ElementsMatch(t, []string{"abc", "xyz"}, client.updated.Spec.Resource[0].Names)
+	})
+
+	t.Run("a write that keeps conflicting gives up", func(t *testing.T) {
+		client := &fakeStars{err: apierrors.NewConflict(schema.GroupResource{Group: v1alpha1.APIGroup, Resource: "stars"}, "user-1", nil)}
+		code, _ := call(t, client, http.MethodPut, "user-1", addPath, starsParent(t, "user-1", "xyz"))
+		require.Equal(t, http.StatusConflict, code)
+		require.Equal(t, maxStarsAttempts, client.updates)
 	})
 
 	t.Run("without an API connection the route is unavailable", func(t *testing.T) {
