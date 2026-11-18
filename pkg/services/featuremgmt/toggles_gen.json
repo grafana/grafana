@@ -240,7 +240,8 @@
       "metadata": {
         "name": "alerting.rulesAPIV2",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-04-23T09:33:00Z"
+        "creationTimestamp": "2026-04-23T09:33:00Z",
+        "deletionTimestamp": "2026-11-18T10:48:24Z"
       },
       "spec": {
         "description": "Enables the new Rules API v2 UI with evaluation chains and groupless rule creation",

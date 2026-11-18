@@ -3086,10 +3086,6 @@
         "group-name": "Evaluation group name",
         "group-text": "All rules in the selected group are evaluated every {{evaluateEvery}}.",
         "interval-label": "Evaluation interval",
-        "mode": {
-          "legacy": "Use groups (Legacy)",
-          "new": "Set interval"
-        },
         "new-group": "New evaluation group",
         "pause": {
           "alerting": "Turn on to pause evaluation for this alert rule.",

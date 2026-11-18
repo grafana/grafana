@@ -15,7 +15,6 @@ import {
   Input,
   Label,
   Modal,
-  RadioButtonGroup,
   Select,
   Stack,
   Switch,
@@ -25,7 +24,7 @@ import {
 } from '@grafana/ui';
 import { type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
-import { shouldUseRulesAPIV2 } from '../../featureToggles';
+import { shouldUseGmaOnlyListView } from '../../featureToggles';
 import { evaluateEveryValidationOptions } from '../../group-details/validation';
 import { useFetchGroupsForFolder } from '../../hooks/useFetchGroupsForFolder';
 import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../../rule-editor/formDefaults';
@@ -53,19 +52,6 @@ import { GrafanaAlertStatePicker } from './GrafanaAlertStatePicker';
 import { NeedHelpInfo } from './NeedHelpInfo';
 import { RuleEditorSection } from './RuleEditorSection';
 import { RuleEvaluationIntervalField } from './RuleEvaluationIntervalField';
-
-type EvaluationMode = 'rule-based' | 'group-based';
-
-const getEvaluationModeOptions = (): Array<SelectableValue<EvaluationMode>> => [
-  {
-    label: t('alerting.rule-form.evaluation.mode.new', 'Set interval'),
-    value: 'rule-based',
-  },
-  {
-    label: t('alerting.rule-form.evaluation.mode.legacy', 'Use groups (Legacy)'),
-    value: 'group-based',
-  },
-];
 
 const collator = new Intl.Collator();
 const sortByLabel = (a: SelectableValue<string>, b: SelectableValue<string>) => {
@@ -156,7 +142,6 @@ export function GrafanaEvaluationBehaviorStep({
   const {
     setValue,
     getValues,
-    clearErrors,
     formState: { errors, defaultValues },
     control,
     register,
@@ -202,21 +187,9 @@ export function GrafanaEvaluationBehaviorStep({
   }, [existingGroup, setValue]);
 
   const [isCreatingEvaluationGroup, setIsCreatingEvaluationGroup] = useState(false);
-  const v2Enabled = shouldUseRulesAPIV2();
-  const isEditingUngroupedRule = Boolean(existing && group && isUngroupedRuleGroup(group));
-  const [lastSelectedGroup, setLastSelectedGroup] = useState(group);
+  const gmaOnlyListView = shouldUseGmaOnlyListView();
   const wasGroupedRule = Boolean(existing && defaultValues?.group && !isUngroupedRuleGroup(defaultValues.group));
-  const evaluationMode: EvaluationMode = isUngroupedRule ? 'rule-based' : 'group-based';
-  const showGroupSelection = evaluationMode === 'group-based';
-
-  useEffect(() => {
-    // When a real group lands on the form (user picked one or the form mounted with one),
-    // remember it for round-trips and snap the form into legacy mode.
-    if (group && !isUngroupedRuleGroup(group)) {
-      setLastSelectedGroup(group);
-      setValue('isUngroupedRuleGroup', false);
-    }
-  }, [group, setValue]);
+  const showGroupSelection = !gmaOnlyListView && !isUngroupedRule;
 
   const handleEvalGroupCreation = (groupName: string, evaluationInterval: string) => {
     setValue('group', groupName);
@@ -240,22 +213,6 @@ export function GrafanaEvaluationBehaviorStep({
     : t('alerting.rule-form.evaluation.pause.alerting', 'Turn on to pause evaluation for this alert rule.');
 
   const onOpenEvaluationGroupCreationModal = () => setIsCreatingEvaluationGroup(true);
-  const onEvaluationModeChange = (value: EvaluationMode) => {
-    setValue('isUngroupedRuleGroup', value === 'rule-based');
-
-    if (value === 'rule-based') {
-      if (group && !isUngroupedRuleGroup(group)) {
-        setLastSelectedGroup(group);
-      }
-      setValue('group', '');
-      clearErrors('group');
-      return;
-    }
-
-    if (!group && lastSelectedGroup) {
-      setValue('group', lastSelectedGroup);
-    }
-  };
 
   const step = isGrafanaManagedRuleByType(type) ? 4 : 3;
   const noFolderTooltip = t('alerting.rule-form.evaluation.select-folder-first-tooltip', 'Select a folder first');
@@ -268,17 +225,7 @@ export function GrafanaEvaluationBehaviorStep({
       description={getDescription(isGrafanaRecordingRule)}
     >
       <Stack direction="column" justify-content="flex-start" align-items="flex-start">
-        {v2Enabled && !isEditingUngroupedRule && (
-          <Field noMargin>
-            <RadioButtonGroup
-              value={evaluationMode}
-              options={getEvaluationModeOptions()}
-              onChange={onEvaluationModeChange}
-              className={styles.modeField}
-            />
-          </Field>
-        )}
-        {v2Enabled && wasGroupedRule && evaluationMode === 'rule-based' && (
+        {gmaOnlyListView && wasGroupedRule && (
           <Alert
             severity="warning"
             title={t(
@@ -396,7 +343,7 @@ export function GrafanaEvaluationBehaviorStep({
           <RuleEvaluationIntervalField inputId="evaluate-every-no-group" />
         )}
 
-        {folder?.title && group && !isUngroupedRuleGroup(group) && (
+        {showGroupSelection && folder?.title && group && (
           <div className={styles.evaluationContainer}>
             <Stack direction="column" gap={0}>
               <div className={styles.marginTop}>
@@ -887,9 +834,6 @@ function getDescription(isGrafanaRecordingRule: boolean) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  modeField: css({
-    marginBottom: theme.spacing(1.5),
-  }),
   inlineField: css({
     marginBottom: 0,
   }),

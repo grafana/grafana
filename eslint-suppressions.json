@@ -1542,11 +1542,6 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/components/rule-editor/GrafanaEvaluationBehavior.tsx": {
-    "react-hooks/set-state-in-effect": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/components/rule-editor/GrafanaFolderAndLabelsStep.tsx": {
     "react-hooks/static-components": {
       "count": 1
@@ -1702,7 +1697,7 @@
   },
   "public/app/features/alerting/unified/featureToggles.ts": {
     "@grafana/no-config-feature-toggles": {
-      "count": 6
+      "count": 5
     }
   },
   "public/app/features/alerting/unified/gma-rule-list/rule-search/RuleSearchInput.tsx": {
