@@ -29,6 +29,13 @@ var (
 type rawChunkWriter struct {
 	w       http.ResponseWriter
 	flusher http.Flusher
+	// converted holds the frames that already have a line with the schema.
+	converted map[frameKey]bool
+}
+
+type frameKey struct {
+	refID   string
+	frameID string
 }
 
 func NewChunkedHTTPWriter(w http.ResponseWriter) *rawChunkWriter {
@@ -58,7 +65,13 @@ func (r *rawChunkWriter) OnChunk(chunk *pluginv2.QueryChunkedDataResponse) error
 			if err != nil {
 				return fmt.Errorf("failed to unmarshal frame: %w", err)
 			}
-			chunk.Frame, err = tmp.MarshalJSON()
+			// Each Arrow chunk has the schema, but receivers append a later JSON chunk of the
+			// same frame with data.AppendJSONData, which rejects a schema.
+			if r.isContinuation(chunk.RefId, chunk.FrameId) {
+				chunk.Frame, err = data.FrameToJSON(tmp, data.IncludeDataOnly)
+			} else {
+				chunk.Frame, err = tmp.MarshalJSON()
+			}
 			if err != nil {
 				return fmt.Errorf("failed to marshal frame to JSON: %w", err)
 			}
@@ -84,6 +97,23 @@ func (r *rawChunkWriter) OnChunk(chunk *pluginv2.QueryChunkedDataResponse) error
 		r.flusher.Flush()
 	}
 	return nil
+}
+
+// isContinuation reports whether an earlier line already started the frame. A chunk
+// without a frame ID is a separate frame, so it always starts one.
+func (r *rawChunkWriter) isContinuation(refID, frameID string) bool {
+	if frameID == "" {
+		return false
+	}
+	key := frameKey{refID: refID, frameID: frameID}
+	if r.converted[key] {
+		return true
+	}
+	if r.converted == nil {
+		r.converted = make(map[frameKey]bool)
+	}
+	r.converted[key] = true
+	return false
 }
 
 func (r *rawChunkWriter) writeField(f string, v string) {
