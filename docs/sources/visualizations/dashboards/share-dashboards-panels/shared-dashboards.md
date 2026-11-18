@@ -156,7 +156,7 @@ The viewer receives an email with a new one-time use link. This invalidates all 
 
 To see a list of users who have accessed your externally shared dashboard by way of an emailed link, follow these steps:
 
-1. Click **Administration** in in the main menu.
+1. Click **Administration** in the main menu.
 1. Select **Users and access** > **Users**.
 1. On the **Users** page, click the **Shared dashboard users** tab.
 

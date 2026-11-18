@@ -1,6 +1,7 @@
 import userEvent from '@testing-library/user-event';
-import { render, screen } from 'test/test-utils';
+import { render, screen, within } from 'test/test-utils';
 
+import { locationService } from '@grafana/runtime';
 import {
   type Repository,
   useGetRepositoryFilesQuery,
@@ -180,6 +181,135 @@ describe('ResourceTreeView', () => {
       // None of the sample resources are missing metadata, so filtering by Warnings hides them all.
       expect(screen.queryByText('Synced Dashboard')).not.toBeInTheDocument();
       expect(screen.queryByText('Pending Dashboard')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('resource filter', () => {
+    const resources = [
+      { path: 'folder/dash.json', hash: 'aaa', name: 'dash', title: 'My Dashboard', resource: 'dashboards' },
+      { path: 'folder/widget.json', hash: 'bbb', name: 'widget', title: 'My Widget', resource: 'widgets' },
+    ];
+
+    beforeEach(() => {
+      setupQueries([], resources);
+    });
+
+    it('should filter to the resource type in the URL', async () => {
+      render(<ResourceTreeView repo={repo} />, { historyOptions: { initialEntries: ['/?resource=widgets'] } });
+
+      expect(await screen.findByText('My Widget')).toBeInTheDocument();
+      expect(screen.queryByText('My Dashboard')).not.toBeInTheDocument();
+    });
+
+    it('should filter to the selected resource type and keep it in the URL', async () => {
+      const { user } = render(<ResourceTreeView repo={repo} />);
+
+      await user.click(screen.getByRole('combobox', { name: 'Filter by resource type' }));
+      await user.keyboard('{Enter}'); // index 0: Dashboards
+
+      expect(await screen.findByText('My Dashboard')).toBeInTheDocument();
+      expect(screen.queryByText('My Widget')).not.toBeInTheDocument();
+      expect(locationService.getSearchObject()).toEqual({ resource: 'dashboards' });
+
+      await user.click(screen.getByRole('button', { name: 'Remove Dashboards' }));
+
+      expect(await screen.findByText('My Widget')).toBeInTheDocument();
+      expect(locationService.getSearchObject()).toEqual({});
+    });
+
+    it('should label a kind outside the registry with its resource name', async () => {
+      const { user } = render(<ResourceTreeView repo={repo} />);
+
+      await user.click(screen.getByRole('combobox', { name: 'Filter by resource type' }));
+      await user.keyboard('{ArrowDown}{Enter}'); // index 1: widgets
+
+      expect(await screen.findByRole('button', { name: 'Remove widgets' })).toBeInTheDocument();
+    });
+
+    it('should drop a folder that matches the resource filter but not the status filter', async () => {
+      // The folder has no _folder.json, so its status is a warning, not synced.
+      setupQueries(
+        [{ path: 'folder/dash.json', hash: 'aaa' }],
+        [
+          { path: 'folder', hash: '', name: 'folder-uid', title: 'My Folder', resource: 'folders' },
+          { path: 'folder/dash.json', hash: 'aaa', name: 'dash', title: 'My Dashboard', resource: 'dashboards' },
+        ]
+      );
+      const { user } = render(<ResourceTreeView repo={repo} />);
+      expect(await screen.findByText('My Folder')).toBeInTheDocument();
+
+      await user.click(screen.getByRole('combobox', { name: 'Filter by status' }));
+      await user.keyboard('{Enter}'); // index 0: Synced
+      await user.click(screen.getByRole('combobox', { name: 'Filter by resource type' }));
+      await user.keyboard('{Enter}'); // index 0: Folders
+
+      expect(screen.queryByText('My Folder')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('actions', () => {
+    beforeEach(() => {
+      setupQueries(
+        [{ path: 'README.md', hash: 'aaa' }],
+        [{ path: 'orphan.json', hash: 'bbb', name: 'orphan', title: 'Orphan Dashboard', resource: 'dashboards' }]
+      );
+    });
+
+    it('should disable the View button of a row without a Grafana resource', async () => {
+      render(<ResourceTreeView repo={repo} />);
+
+      const row = await screen.findByRole('row', { name: /README\.md/ });
+      expect(within(row).getByText('View').closest('a')).toHaveAttribute('aria-disabled', 'true');
+    });
+
+    it('should disable the Source button of a row without a file', async () => {
+      render(<ResourceTreeView repo={repo} />);
+
+      const row = await screen.findByRole('row', { name: /Orphan Dashboard/ });
+      expect(within(row).getByText('Source').closest('a')).toHaveAttribute('aria-disabled', 'true');
+    });
+  });
+
+  describe('root folder', () => {
+    const files = [
+      { path: 'folder/_folder.json', hash: 'meta' },
+      { path: 'folder/dash.json', hash: 'aaa' },
+    ];
+    const resources = [
+      { path: '', hash: '', name: 'test-repo', title: 'Test Repository', resource: 'folders' },
+      { path: 'folder', hash: 'meta', name: 'folder-uid', title: 'My Folder', resource: 'folders' },
+      { path: 'folder/dash.json', hash: 'aaa', name: 'dash', title: 'My Dashboard', resource: 'dashboards' },
+    ];
+
+    beforeEach(() => {
+      setupQueries(files, resources);
+    });
+
+    it('should start with only the root folder unfolded', async () => {
+      render(<ResourceTreeView repo={repo} />);
+
+      expect(await screen.findByRole('button', { name: 'Test Repository' })).toHaveAttribute('aria-expanded', 'true');
+      expect(screen.getByRole('button', { name: 'My Folder' })).toHaveAttribute('aria-expanded', 'false');
+    });
+
+    it('should link the root folder Source button to the repository', async () => {
+      render(<ResourceTreeView repo={repo} />);
+
+      const row = await screen.findByRole('row', { name: /Test Repository/ });
+      expect(within(row).getByRole('link', { name: 'Source' })).toHaveAttribute(
+        'href',
+        'https://github.com/org/repo/tree/main'
+      );
+    });
+
+    it('should link a folder Source button to its _folder.json', async () => {
+      render(<ResourceTreeView repo={repo} />);
+
+      const row = await screen.findByRole('row', { name: /My Folder/ });
+      expect(within(row).getByRole('link', { name: 'Source' })).toHaveAttribute(
+        'href',
+        'https://github.com/org/repo/blob/main/folder/_folder.json'
+      );
     });
   });
 });

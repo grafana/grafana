@@ -1287,7 +1287,7 @@ func getDataSourceForQuery(explicitDS *dashv2alpha1.DashboardDataSourceRef, quer
 // - Mixed datasource reference if queries use different datasources
 // - Mixed datasource reference if multiple queries use Dashboard datasource (they fetch from different panels)
 // - Dashboard datasource reference if a single query uses Dashboard datasource
-// - First query's datasource if all queries use the same datasource
+// - First query's datasource if all queries use the same datasource (expression queries are ignored)
 // - nil if no queries exist
 // Compares based on V2 input without runtime resolution:
 // - If query has explicit datasource.uid → use that UID and type
@@ -1334,6 +1334,11 @@ func getPanelDatasource(queries []dashv2alpha1.DashboardPanelQueryKind) map[stri
 			// No explicit datasource - use query kind as type
 			queryUID = ""
 			queryType = query.Spec.Query.Kind
+		}
+
+		// Expressions run alongside any datasource, so they don't make a panel mixed
+		if queryUID == "__expr__" || queryType == "__expr__" {
+			continue
 		}
 
 		if !hasFirst {

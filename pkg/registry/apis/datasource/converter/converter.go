@@ -206,6 +206,9 @@ func (r *Converter) ToUpdateCommand(ds *datasourceV0.DataSource) (*datasources.U
 
 		// The only field different than add
 		Version: version,
+
+		// The resource contains the full state after any PATCH has been applied.
+		BasicAuthUserSet: true,
 	}
 
 	jsonData := ds.Spec.JSONData()

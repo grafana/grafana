@@ -499,8 +499,9 @@ func newSearchPermissionsFixture(t *testing.T) *searchPermissionsFixture {
 	registry.RegisterPluginScope("tests:id:")
 	cache := localcache.ProvideService()
 	store := &searchPermissionsStore{Store: database.ProvideService(sql)}
-	service := acimpl.ProvideOSSService(cfg, store, actions, cache,
+	service, initErr := acimpl.ProvideOSSService(cfg, store, actions, cache,
 		features, tracer, sql, registry, nil, iam.Features{}, nil, legacypermissions.NewRoleCatalog())
+	require.NoError(t, initErr)
 
 	routes := routing.NewRouteRegister()
 	api.NewAccessControlAPI(routes, acimpl.ProvideAccessControl(features), service, users).RegisterAPIEndpoints()
