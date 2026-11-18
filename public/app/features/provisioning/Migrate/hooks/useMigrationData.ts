@@ -6,7 +6,8 @@ import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 import { useDispatch } from 'app/types/store';
 
 import { isAppGeneratedResource } from '../../utils/managedResource';
-import { type ListedResource, type ResourceKindInfo, resourceKindInfos } from '../../utils/resourceKinds';
+import { isFolderScoped, listResources, type ResourceKindInfo, resourceKindInfos } from '../../utils/resourceKinds';
+import { type ListedResource } from '../../utils/resourceListing';
 
 /**
  * A single resource that can be migrated, tagged with its kind so the selection
@@ -167,11 +168,11 @@ function aggregate(folders: ListedResource[], results: KindResult[]): { rows: Fo
   for (const { kind, raw } of results) {
     const unmanaged = raw.filter((r) => !r.managed && !isAppGeneratedResource(r.uid));
 
-    if (!kind.folderScoped) {
+    if (!isFolderScoped(kind)) {
       if (unmanaged.length > 0) {
         syntheticRows.push({
           uid: syntheticFolderUid(kind),
-          title: kind.pluralLabel(),
+          title: kind.getLabel(),
           path: [],
           resourceCount: unmanaged.length,
           directResources: unmanaged.map((r) => ({ uid: r.uid, title: r.title, kind, group: r.group })),
@@ -233,8 +234,8 @@ function aggregate(folders: ListedResource[], results: KindResult[]): { rows: Fo
 
 /**
  * Enumerates the unmanaged resources to migrate across the given kinds and joins
- * them into the per-folder table. Each kind knows how to `list()` itself (see the
- * resource-kind registry), so this hook is generic — adding a kind is a registry
+ * them into the per-folder table. Each kind declares where its resources are
+ * served from (see the resource-kind registry), so this hook is generic — adding a kind is a registry
  * entry, not a change here. Folders are listed once to label the rows that
  * folder-scoped kinds nest under. When a dedicated backend roll-up endpoint
  * lands, swap the body to consume it.
@@ -263,15 +264,16 @@ export function useMigrationData(
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const needsFolders = kinds.some((kind) => kind.folderScoped);
+      const needsFolders = kinds.some(isFolderScoped);
       // Enumerate folders (for labels) and each kind independently. A single kind
       // failing to list — an apiserver that's unavailable, a client that rejects —
       // must not blank the whole table: keep the kinds that succeeded and only
       // fall back to the error state when nothing could be loaded at all.
       const outcomes = await Promise.allSettled([
-        // Folders list through the searcher and ignore dispatch.
-        needsFolders ? resourceKindInfos.folder.list() : Promise.resolve<ListedResource[]>([]),
-        ...kinds.map((kind) => kind.list({ dispatch, availableResources })),
+        needsFolders
+          ? listResources(resourceKindInfos.folder, { dispatch, availableResources })
+          : Promise.resolve<ListedResource[]>([]),
+        ...kinds.map((kind) => listResources(kind, { dispatch, availableResources })),
       ]);
       if (cancelled) {
         return;

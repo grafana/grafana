@@ -1,26 +1,24 @@
-import { type UnknownAction } from '@reduxjs/toolkit';
-
-import { API_GROUP as DASHBOARD_API_GROUP } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
+import {
+  API_GROUP as DASHBOARD_API_GROUP,
+  API_VERSION as DASHBOARD_API_VERSION,
+} from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { API_GROUP as FOLDER_API_GROUP } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { API_GROUP as PLAYLIST_API_GROUP } from '@grafana/api-clients/rtkq/playlist/v1';
 import { API_GROUP as PROVISIONING_API_GROUP } from '@grafana/api-clients/rtkq/provisioning/v0alpha1';
 import { t } from '@grafana/i18n';
-import { getBackendSrv } from '@grafana/runtime';
 import { type IconName } from '@grafana/ui';
-import { playlistAPIv1 } from 'app/api/clients/playlist/v1';
 import { type Repository, type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
-import { getAPIBaseURL } from 'app/api/utils';
-import { getAPIGroupDiscoveryList } from 'app/features/apiserver/discovery';
-import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
-import { getIconForKind } from 'app/features/search/service/icons';
-import { getGrafanaSearcher } from 'app/features/search/service/searcher';
-import { type DashboardQueryResult } from 'app/features/search/service/types';
-import { queryResultToViewItem } from 'app/features/search/service/utils';
-import { type AppDispatch } from 'app/store/configureStore';
 
 import { CONNECTIONS_URL, PROVISIONING_URL } from '../constants';
 
-import { isManaged } from './managedResource';
+import {
+  type ListedResource,
+  type ResourceListDeps,
+  listCollectionMembers,
+  listPlaylists,
+  listViaApiserver,
+  listViaSearch,
+} from './resourceListing';
 
 /**
  * The storage collection every data source plugin's API group is stored in; each plugin serves its
@@ -29,295 +27,221 @@ import { isManaged } from './managedResource';
 const DATASOURCE_COLLECTION_GROUP = 'datasource.grafana.app';
 
 /**
- * A resource of some kind enumerated from the instance, in the minimal shape the
- * provisioning UI needs to list and migrate it. Where it lands in the migrate
- * table is decided from its kind: folder-scoped kinds nest under `parentUid`,
- * others group under a synthetic per-kind row.
+ * How a kind's resources are served, and so how the UI enumerates them. This single fact also
+ * decides whether the kind is folder-scoped (only the search index serves parent folders) and
+ * whether its `group` is a collection rather than a served group.
  */
-export interface ListedResource {
-  uid: string;
-  title: string;
-  /** Immediate parent folder UID; undefined for root or non-folder-scoped kinds. */
-  parentUid?: string;
-  /** Owned by a manager (Git Sync, Terraform, …), or otherwise not writable — no migration target. */
-  managed: boolean;
-  /**
-   * The API group serving this resource, for a kind whose registry group is a collection and so
-   * cannot supply it. A job addresses a resource through the group that serves it.
-   */
-  group?: string;
-}
-
-/** Dependencies a kind's `list()` may need. `dispatch` lets a kind read through
- * an RTK Query client imperatively. */
-interface ResourceListDeps {
-  dispatch: AppDispatch;
-  /**
-   * The backend's declared resources, so a collection kind enumerates only the members provisioning
-   * acts on. Undefined before settings load, which enumerates every member served.
-   */
-  availableResources?: SupportedResource[];
-}
+export type ResourceSource =
+  /** Served by the unified search index, under the kind's registry key as the search kind. */
+  | { via: 'search' }
+  /** Served by its own apiserver, at the given version. */
+  | { via: 'apiserver'; version: string }
+  /** Served by one API group per member of the kind's collection `group`. */
+  | { via: 'collection' }
+  /** Never enumerated: provisioning's own configuration is not content to migrate. */
+  | { via: 'none' }
+  /** Enumerated by the kind itself, for a kind needing its generated client. */
+  | { via: 'custom'; list: (deps: ResourceListDeps) => Promise<ListedResource[]> };
 
 /**
  * Registry of provisioning resource kinds, keyed by a stable identifier — the single source of truth
- * the UI reads from instead of scattering per-kind knowledge across switch statements (item types,
- * icons, count labels, resource-ref unions, how to enumerate each kind).
+ * the UI reads from instead of scattering per-kind knowledge across switch statements (icons, count
+ * labels, routes, how to enumerate each kind).
  *
  * `as const` preserves the literal field types so the keys ({@link ResourceKindKey}) and tree labels
  * ({@link ResourceItemType}) are derived from this object: adding a kind is ONE entry here (plus, if
  * needed, enabling it on the backend so it appears in the settings endpoint's `availableResources`) —
  * no parallel unions to keep in sync. Entries are validated against {@link ResourceKindInfo} where
- * `allKindInfos` is built below; `as const` is used instead of `satisfies ResourceKindInfo` because
- * the interface references the derived types, which `satisfies` would make a circular reference.
+ * {@link resourceKindInfos} is built below; `as const` is used instead of `satisfies` because the
+ * interface references the derived types, which `satisfies` would make a circular reference.
  */
-export const resourceKindInfos = {
+const kindDefinitions = {
   folder: {
-    key: 'folder',
-    getLabel: () => t('provisioning.resource-kind.folder', 'folder'),
-    pluralLabel: () => t('provisioning.resource-kind.folders', 'Folders'),
+    getLabel: () => t('provisioning.resource-kind.folders', 'Folders'),
     group: FOLDER_API_GROUP,
     kind: 'Folder',
     resource: 'folders',
-    itemType: 'Folder',
-    icon: getIconForKind('folder'),
-    getRoute: (name: string) => `/dashboards/f/${name}`,
-    listRoute: '/dashboards',
-    folderScoped: true,
-    list: () => listViaSearch('folder'),
-    alwaysAvailable: true,
+    icon: 'folder',
+    routes: { item: (name: string) => `/dashboards/f/${name}`, list: '/dashboards' },
+    source: { via: 'search' },
   },
   dashboard: {
-    key: 'dashboard',
-    getLabel: () => t('provisioning.resource-kind.dashboard', 'dashboard'),
-    pluralLabel: () => t('provisioning.resource-kind.dashboards', 'Dashboards'),
+    getLabel: () => t('provisioning.resource-kind.dashboards', 'Dashboards'),
     group: DASHBOARD_API_GROUP,
     kind: 'Dashboard',
     resource: 'dashboards',
-    itemType: 'Dashboard',
-    icon: getIconForKind('dashboard'),
-    getRoute: (name: string) => `/d/${name}`,
-    listRoute: '/dashboards',
-    folderScoped: true,
-    list: () => listViaSearch('dashboard'),
-    alwaysAvailable: true,
+    icon: 'apps',
+    routes: { item: (name: string) => `/d/${name}`, list: '/dashboards' },
+    source: { via: 'search' },
   },
   playlist: {
-    key: 'playlist',
-    getLabel: () => t('provisioning.resource-kind.playlist', 'playlist'),
-    pluralLabel: () => t('provisioning.resource-kind.playlists', 'Playlists'),
+    getLabel: () => t('provisioning.resource-kind.playlists', 'Playlists'),
     group: PLAYLIST_API_GROUP,
     kind: 'Playlist',
     resource: 'playlists',
-    itemType: 'Playlist',
-    // The search package's getIconForKind doesn't know playlists, so use the
-    // playlist nav icon directly.
     icon: 'presentation-play',
-    // Link to the edit page (config + items), not /playlists/play, which would
-    // immediately launch the fullscreen slideshow — not a sensible "View" target.
-    getRoute: (name: string) => `/playlists/edit/${name}`,
-    // Playlists aren't folder-contained — they only have their own collection page.
-    listRoute: '/playlists',
-    folderScoped: false,
-    // Playlists aren't in the unified search index; list them through their
-    // generated apiserver client (which carries the v1→v0alpha1 fallback).
-    list: ({ dispatch }: ResourceListDeps) => listPlaylists(dispatch),
-    // Gated on availableResources — not part of the static folder+dashboard base.
-    alwaysAvailable: false,
-    // The playlist list is fetched elsewhere; invalidate it so a committed change shows up there.
-    invalidateListTags: () => playlistAPIv1.util.invalidateTags(['Playlist']),
+    routes: {
+      // The edit page (config + items), not /playlists/play, which would immediately launch the
+      // fullscreen slideshow — not a sensible "View" target.
+      item: (name: string) => `/playlists/edit/${name}`,
+      list: '/playlists',
+    },
+    // Playlists aren't in the unified search index; list them through their generated apiserver
+    // client, which carries the v1→v0alpha1 fallback.
+    source: { via: 'custom', list: ({ dispatch }: ResourceListDeps) => listPlaylists(dispatch) },
   },
   librarypanel: {
-    key: 'librarypanel',
-    getLabel: () => t('provisioning.resource-kind.library-panel', 'library panel'),
-    pluralLabel: () => t('provisioning.resource-kind.library-panels', 'Library panels'),
+    getLabel: () => t('provisioning.resource-kind.library-panels', 'Library panels'),
     // Library panels share the dashboards API group but are keyed by their own
     // GroupResource (librarypanels.dashboard.grafana.app).
     group: DASHBOARD_API_GROUP,
     kind: 'LibraryPanel',
     resource: 'librarypanels',
-    itemType: 'LibraryPanel',
-    // getIconForKind doesn't know library panels, so use the library-panel icon directly.
     icon: 'library-panel',
-    // No deep-link route for a single library panel exists; they're only viewable
-    // from the library panels collection page.
-    listRoute: '/library-panels',
-    // Library panels live inside folders on the backend, but the dashboards folder
-    // browse doesn't list them — they have their own collection page — so for
-    // routing they behave like a non-foldered kind and always resolve to listRoute.
-    folderScoped: false,
-    // Library panels aren't in the unified search index; list them through their
-    // apiserver (same group as dashboards, v0alpha1). Gated out of migration by
-    // default — they ship disabled and aren't in the static base — so this only
-    // runs once the backend reports the kind as available.
-    list: () => listViaApiserver(DASHBOARD_API_GROUP, 'v0alpha1', 'librarypanels'),
-    alwaysAvailable: false,
+    // No deep-link route for a single library panel exists; they're only viewable from the
+    // collection page, which is also why they route like a non-foldered kind despite living in
+    // folders on the backend.
+    routes: { list: '/library-panels' },
+    source: { via: 'apiserver', version: DASHBOARD_API_VERSION },
   },
   repository: {
-    key: 'repository',
-    getLabel: () => t('provisioning.resource-kind.repository', 'repository'),
-    pluralLabel: () => t('provisioning.resource-kind.repositories', 'Repositories'),
+    getLabel: () => t('provisioning.resource-kind.repositories', 'Repositories'),
     group: PROVISIONING_API_GROUP,
     kind: 'Repository',
     resource: 'repositories',
-    itemType: 'Repository',
-    // getIconForKind doesn't know provisioning's own kinds; a repository is a branch of files.
+    // A repository is a branch of files.
     icon: 'code-branch',
-    getRoute: (name: string) => `${PROVISIONING_URL}/${name}`,
-    listRoute: PROVISIONING_URL,
-    // Repositories are instance-scoped configuration, not folder-contained.
-    folderScoped: false,
+    routes: { item: (name: string) => `${PROVISIONING_URL}/${name}`, list: PROVISIONING_URL },
     // Provisioning's own configuration is never a migration target: it is the mechanism that
     // moves resources into a repository, so it is not one of the resources moved.
-    list: async () => [],
-    alwaysAvailable: false,
+    source: { via: 'none' },
   },
   connection: {
-    key: 'connection',
-    getLabel: () => t('provisioning.resource-kind.connection', 'connection'),
-    pluralLabel: () => t('provisioning.resource-kind.connections', 'Connections'),
+    getLabel: () => t('provisioning.resource-kind.connections', 'Connections'),
     group: PROVISIONING_API_GROUP,
     kind: 'Connection',
     resource: 'connections',
-    itemType: 'Connection',
     icon: 'plug',
-    getRoute: (name: string) => `${CONNECTIONS_URL}/${name}/edit`,
-    listRoute: CONNECTIONS_URL,
-    folderScoped: false,
+    routes: { item: (name: string) => `${CONNECTIONS_URL}/${name}/edit`, list: CONNECTIONS_URL },
     // Not a migration target, for the same reason as repositories.
-    list: async () => [],
-    alwaysAvailable: false,
+    source: { via: 'none' },
   },
   datasource: {
-    key: 'datasource',
-    getLabel: () => t('provisioning.resource-kind.datasource', 'data source'),
-    pluralLabel: () => t('provisioning.resource-kind.datasources', 'Data sources'),
+    getLabel: () => t('provisioning.resource-kind.datasources', 'Data sources'),
     // The collection every data source plugin's own group is stored in, not a served group —
-    // see `collectionGroup`.
+    // see `isCollectionGroup`.
     group: DATASOURCE_COLLECTION_GROUP,
-    collectionGroup: true,
     kind: 'DataSource',
     resource: 'datasources',
-    itemType: 'DataSource',
-    // getIconForKind doesn't know data sources, so use the connections nav icon.
     icon: 'database',
-    getRoute: (name: string) => `/connections/datasources/edit/${name}`,
-    listRoute: '/connections/datasources',
-    // Data sources are org-scoped, not folder-contained.
-    folderScoped: false,
-    list: ({ availableResources }: ResourceListDeps) =>
-      listCollectionMembers(DATASOURCE_COLLECTION_GROUP, 'datasources', 'DataSource', availableResources),
-    alwaysAvailable: false,
+    routes: { item: (name: string) => `/connections/datasources/edit/${name}`, list: '/connections/datasources' },
+    source: { via: 'collection' },
   },
 } as const;
 
 /**
  * Stable per-kind key (`folder`, `dashboard`, `playlist`, ...) used to identify a provisioning
  * resource kind across the UI: the commit-message noun, branch-name prefix, telemetry, the shared
- * edit-form fields, and each registry entry's own `key` all use this. Derived from the registry keys,
- * so a new kind only needs its registry entry.
+ * edit-form fields, and the search kind of a search-served kind all use this. Derived from the
+ * registry keys, so a new kind only needs its registry entry.
  */
-export type ResourceKindKey = keyof typeof resourceKindInfos;
+export type ResourceKindKey = keyof typeof kindDefinitions;
 
 /**
- * Tree-view labels for the provisioning *resource* kinds (`Folder`, `Dashboard`, ...), derived from
- * the registry's `itemType`s so the set stays in lockstep with the kinds above. The full tree
+ * Tree-view labels for the provisioning *resource* kinds (`Folder`, `Dashboard`, ...) — the
+ * Kubernetes Kinds the registry declares, which is what the tree's type column shows. The full tree
  * {@link ItemType} (these labels plus the `File` fallback) is assembled from this in `../types`, so a
  * new kind needs no edit there either.
  */
-export type ResourceItemType = (typeof resourceKindInfos)[ResourceKindKey]['itemType'];
+export type ResourceItemType = (typeof kindDefinitions)[ResourceKindKey]['kind'];
 
 /**
- * Consumer-facing shape of a registry entry. `key`/`itemType` are typed as the derived unions, so a
+ * Consumer-facing shape of a registry entry. `key`/`kind` are typed as the derived unions, so a
  * {@link ResourceKindInfo} carries the kind's identity and tree label without a separate lookup.
  *
  * This is the single source of truth the UI reads from instead of scattering per-kind knowledge
- * across switch statements (item types, icons, count labels, resource-ref unions, how to enumerate
- * each kind). Adding a new provisioning kind is one {@link resourceKindInfos} entry, plus (if needed)
- * enabling it on the backend so it appears in the settings `availableResources`.
+ * across switch statements. Adding a new provisioning kind is one {@link kindDefinitions} entry,
+ * plus (if needed) enabling it on the backend so it appears in the settings `availableResources`.
  */
 export interface ResourceKindInfo {
   /**
-   * Stable lowercase identifier — equals this entry's key in {@link resourceKindInfos} (e.g.
-   * `dashboard`). The UI-facing resource type for commit messages, branch prefixes, telemetry and the
-   * shared edit-form fields. A test asserts each entry's `key` matches its registry key.
+   * Stable lowercase identifier — the entry's key in {@link kindDefinitions} (e.g. `dashboard`),
+   * stamped onto the entry below. The UI-facing resource type for commit messages, branch prefixes,
+   * telemetry and the shared edit-form fields.
    */
   key: ResourceKindKey;
   /**
-   * Returns the localized singular noun for this kind, interpolated into UI copy such as the drawer
-   * title (e.g. "Save provisioned {{resource}}"). It's a function rather than a string because i18n
-   * must resolve at render time, not at module load — and the literal `t()` call inside it is what
-   * the i18n extractor needs, so each kind contributes its translated noun right here on the entry.
+   * Translated collection label (e.g. "Dashboards"), shown wherever a kind is named to the user —
+   * stat cards, the synthetic per-kind migrate row. A function because i18n must resolve at render
+   * time, not at module load; the literal `t()` call inside it is what the extractor needs, so each
+   * kind contributes its translated noun right here on the entry.
    */
   getLabel: () => string;
-  /**
-   * Translated, pluralized label for this kind (e.g. "Dashboards"), used wherever
-   * a kind is named to the user — stat cards, the synthetic per-kind migrate
-   * folder, etc. A function so the translation resolves at render, not module load.
-   */
-  pluralLabel: () => string;
   /** API group, e.g. `dashboard.grafana.app`. */
   group: string;
-  /**
-   * Whether `group` names a storage collection served by one API group per member rather than a
-   * served group itself. Data sources are the case: each plugin serves
-   * `{plugin}.datasource.grafana.app`. Such a kind covers any group inside the collection, and is
-   * reported to the user as the collection — the plugin that served a resource is not what the
-   * kind is called.
-   */
-  collectionGroup?: boolean;
-  /** Kubernetes Kind, e.g. `Dashboard`. */
-  kind: string;
+  /** Kubernetes Kind, e.g. `Dashboard`. Also the kind's label in the files/resources tree. */
+  kind: ResourceItemType;
   /** Plural resource name as reported by the API (`ResourceListItem.resource`), e.g. `dashboards`. */
   resource: string;
-  /** Label shown for this kind in the combined files/resources tree. */
-  itemType: ResourceItemType;
-  /** Icon shown for this kind in the resource tree. Sourced from the search package's getIconForKind. */
+  /** Icon shown for this kind in the resource tree. */
   icon: IconName;
-  /** Builds the in-app route to view a single resource of this kind, given its k8s name. */
-  getRoute?: (name: string) => string;
-  /** The in-app collection page listing all resources of this kind, e.g. `/dashboards`. */
-  listRoute: string;
-  /**
-   * Whether resources of this kind are contained in folders, and so can be scoped
-   * to a repository's own folder. Foldered kinds (folders, dashboards) live in the
-   * dashboards browse; others (e.g. playlists) only have their `listRoute`.
-   */
-  folderScoped: boolean;
-  /**
-   * Enumerates every resource of this kind on the instance. Each kind owns how it
-   * lists itself — dashboards/folders through the unified search index, playlists
-   * through their generated apiserver client — so callers iterate kinds
-   * generically without knowing the data source. `dispatch` is provided for kinds
-   * that read through an RTK Query client; kinds that don't simply ignore it.
-   */
-  list: (deps: ResourceListDeps) => Promise<ListedResource[]>;
-  /**
-   * Whether the kind is in the static provisioning base (folder + dashboard),
-   * which the backend always supports. Such kinds are acted on regardless of the
-   * settings endpoint's `availableResources`; others are gated on it.
-   */
-  alwaysAvailable: boolean;
-  /**
-   * Builds the action that invalidates this kind's list-view cache, dispatched after a successful
-   * commit so the change shows up when navigating back to the list. Optional — only kinds whose
-   * pages drive `SaveProvisionedResourceDrawer` need it. Defining it couples this registry to the
-   * kind's RTK Query client (the cost of keeping per-kind invalidation here rather than in a hook).
-   */
-  invalidateListTags?: () => UnknownAction;
+  routes: {
+    /** Builds the in-app route to view a single resource of this kind, given its k8s name. */
+    item?: (name: string) => string;
+    /** The in-app collection page listing all resources of this kind, e.g. `/dashboards`. */
+    list: string;
+  };
+  /** How the kind's resources are served — see {@link ResourceSource}. */
+  source: ResourceSource;
 }
 
-// Widening the `as const` registry to ResourceKindInfo[] here also validates every entry against the
-// interface — a missing or mis-typed field (e.g. an unknown `icon`) fails at this line rather than at
-// each call site. The literal `key`/`itemType` values stay the source of truth for the unions above.
+/**
+ * The registry entries as the UI consumes them: each definition with its own registry key stamped
+ * on, so a kind carries its identity wherever it travels. Widening to {@link ResourceKindInfo} in
+ * `allKindInfos` also validates every entry against the interface — a missing or mis-typed field
+ * (e.g. an unknown `icon`) fails there rather than at each call site.
+ */
+// Object.fromEntries erases the per-key types the definitions were written to preserve; the
+// assertion restates the mapping it performs, so each entry keeps its own literal shape.
+// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+export const resourceKindInfos = Object.fromEntries(
+  Object.entries(kindDefinitions).map(([key, definition]) => [key, { ...definition, key }])
+) as { [K in ResourceKindKey]: (typeof kindDefinitions)[K] & { key: K } };
+
 const allKindInfos: ResourceKindInfo[] = Object.values(resourceKindInfos);
+
+/**
+ * The static provisioning base the backend always supports, acted on regardless of the settings
+ * endpoint's `availableResources`; every other kind is gated on it.
+ */
+const STATIC_BASE_KINDS: ResourceKindKey[] = ['folder', 'dashboard'];
+
+/**
+ * Whether resources of this kind are contained in folders, and so can be scoped to a repository's
+ * own folder. True exactly of the search-served kinds: the search index is what reports a parent
+ * folder, and the dashboards browse lists what it serves. Library panels do live in folders on the
+ * backend but aren't browsable there, so they behave like a non-foldered kind.
+ */
+export function isFolderScoped(info: ResourceKindInfo): boolean {
+  return info.source.via === 'search';
+}
+
+/**
+ * Whether `group` names a storage collection served by one API group per member rather than a served
+ * group itself. Data sources are the case: each plugin serves `{plugin}.datasource.grafana.app`.
+ * Such a kind covers any group inside the collection, and is reported to the user as the collection —
+ * the plugin that served a resource is not what the kind is called.
+ */
+function isCollectionGroup(info: ResourceKindInfo): boolean {
+  return info.source.via === 'collection';
+}
 
 /**
  * Whether `group` identifies this kind. A collection kind also covers the groups served inside the
  * collection, which is what the backend reports for an individual resource and for a job result.
  */
 export function coversGroup(info: ResourceKindInfo, group: string): boolean {
-  return info.group === group || (Boolean(info.collectionGroup) && group.endsWith(`.${info.group}`));
+  return info.group === group || (isCollectionGroup(info) && group.endsWith(`.${info.group}`));
 }
 
 /**
@@ -326,7 +250,7 @@ export function coversGroup(info: ResourceKindInfo, group: string): boolean {
  */
 export function getReportedGroup(group?: string, kind?: string): string | undefined {
   const info = getKindInfoByGroupKind(group, kind);
-  return info?.collectionGroup ? info.group : group;
+  return info && isCollectionGroup(info) ? info.group : group;
 }
 
 /**
@@ -338,12 +262,12 @@ export function getReportedGroup(group?: string, kind?: string): string | undefi
  */
 export function getRepositoryRoute(info: ResourceKindInfo, repo: Repository): string {
   const repoName = repo.metadata?.name;
-  if (info.folderScoped && repo.spec?.sync.target === 'folder' && repoName) {
+  if (isFolderScoped(info) && repo.spec?.sync.target === 'folder' && repoName) {
     // The repository's folder is named after the repo, so reuse the folder kind's
     // route rather than duplicating the `/dashboards/f/...` shape here.
-    return resourceKindInfos.folder.getRoute(repoName);
+    return resourceKindInfos.folder.routes.item(repoName);
   }
-  return info.listRoute;
+  return info.routes.list;
 }
 
 /** Look up a kind by its plural resource name (`ResourceListItem.resource`). */
@@ -357,7 +281,7 @@ export function getKindInfoByResource(resource?: string): ResourceKindInfo | und
  * union and create an import cycle with `../types`.
  */
 export function getKindInfoByItemType(itemType: string): ResourceKindInfo | undefined {
-  return allKindInfos.find((info) => info.itemType === itemType);
+  return allKindInfos.find((info) => info.kind === itemType);
 }
 
 /**
@@ -436,197 +360,35 @@ export function isResourceKindAvailable(info: ResourceKindInfo, availableResourc
  * kind: only kinds it reports active are returned, so an overridden
  * `[provisioning] resources` config that omits or disables a kind (even
  * dashboards) is honored. Before settings load (`availableResources` undefined)
- * we fall back to the static base (`alwaysAvailable`, i.e. dashboards) so the
- * common case isn't blank during the initial render. Each returned kind knows
- * how to `list()` itself.
+ * we fall back to the static base (dashboards) so the common case isn't blank
+ * during the initial render.
  */
 export function getMigratableKinds(availableResources?: SupportedResource[]): ResourceKindInfo[] {
   return allKindInfos.filter((info) => {
     if (info.kind === resourceKindInfos.folder.kind) {
       return false;
     }
-    return availableResources ? isResourceKindAvailable(info, availableResources) : info.alwaysAvailable;
+    return availableResources
+      ? isResourceKindAvailable(info, availableResources)
+      : STATIC_BASE_KINDS.includes(info.key);
   });
 }
 
-// --- Resource enumeration -------------------------------------------------
-// How each kind lists itself, backing the `list()` methods above. Kept here so
-// the registry stays the single place that knows how to enumerate each kind.
-
-const PAGE_SIZE = 200;
-// How many page requests to have in flight at once, so a large instance doesn't
-// fire hundreds of concurrent requests on load.
-const PAGE_CONCURRENCY = 5;
-// Guardrail so a pathological response can't spin off unbounded requests.
-// Exceeding it throws rather than returning a silently truncated list.
-const MAX_PAGES = 200;
-
 /**
- * The unified searcher reports a resource's immediate parent folder UID in
- * `item.location`. Root-level resources come back empty or as the literal
- * "general" UID — normalize both to undefined. Although `location` is declared as
- * a string, a folderless resource yields it absent at runtime, so this tolerates
- * undefined: calling .trim() on a missing location would throw and reject the
- * whole enumeration.
+ * Enumerates every resource of this kind on the instance, per the kind's {@link ResourceSource}, so
+ * callers iterate kinds generically without knowing where each one is served from.
  */
-export function readImmediateParent(location: string | undefined): string | undefined {
-  const trimmed = location?.trim();
-  if (!trimmed || trimmed === GENERAL_FOLDER_UID) {
-    return undefined;
+export function listResources(info: ResourceKindInfo, deps: ResourceListDeps): Promise<ListedResource[]> {
+  switch (info.source.via) {
+    case 'search':
+      return listViaSearch(info.key);
+    case 'apiserver':
+      return listViaApiserver(info.group, info.source.version, info.resource);
+    case 'collection':
+      return listCollectionMembers(info.group, info.resource, info.kind, deps.availableResources);
+    case 'none':
+      return Promise.resolve([]);
+    case 'custom':
+      return info.source.list(deps);
   }
-  return trimmed;
-}
-
-/**
- * Pages through every item of a search kind via the unified searcher, fetching
- * the pages after the first in small concurrent batches. Bounded by MAX_PAGES;
- * fails loudly rather than truncating, since a partial list would drop rows from
- * the migrate table and its payload.
- */
-async function fetchAllSearchPages(searchKind: string): Promise<DashboardQueryResult[]> {
-  const searcher = getGrafanaSearcher();
-  const searchPage = (page: number) =>
-    searcher.search({
-      kind: [searchKind],
-      query: '*',
-      from: page * PAGE_SIZE,
-      offset: page * PAGE_SIZE,
-      limit: PAGE_SIZE,
-    });
-
-  const first = await searchPage(0);
-  const items: DashboardQueryResult[] = first.view.toArray();
-  const pageCount = Math.max(1, Math.ceil(first.totalRows / PAGE_SIZE));
-  if (pageCount > MAX_PAGES) {
-    throw new Error(`Too many ${searchKind}s to enumerate (${first.totalRows}); aborting to avoid an incomplete list.`);
-  }
-
-  for (let page = 1; page < pageCount; page += PAGE_CONCURRENCY) {
-    const batch = Array.from({ length: Math.min(PAGE_CONCURRENCY, pageCount - page) }, (_, index) =>
-      searchPage(page + index)
-    );
-    for (const result of await Promise.all(batch)) {
-      items.push(...result.view.toArray());
-    }
-  }
-  return items;
-}
-
-/**
- * Lists a kind the unified search index serves (dashboards, folders). The search
- * index only serves folder-scoped kinds, so the parent folder is always read.
- */
-async function listViaSearch(searchKind: string): Promise<ListedResource[]> {
-  const items = await fetchAllSearchPages(searchKind);
-  return items.map((item) => {
-    const view = queryResultToViewItem(item);
-    return {
-      uid: view.uid,
-      title: view.title,
-      parentUid: readImmediateParent(item.location),
-      managed: Boolean(view.managedBy),
-    };
-  });
-}
-
-interface ApiserverListItem {
-  metadata?: { name?: string; annotations?: Record<string, string> };
-  spec?: { title?: string; readOnly?: boolean };
-}
-
-/**
- * Lists a kind through its apiserver collection — for kinds the unified search
- * index doesn't serve (e.g. playlists). Read directly (not via an RTK client) so
- * any kind can be listed from its group/version/resource without a bespoke
- * client. These kinds are org-scoped, so no parent folder is resolved.
- */
-/** Maps an apiserver list response into ListedResources: name as uid, spec title
- * (falling back to the name), manager presence; entries without a name dropped. */
-function toListedResources(items: ApiserverListItem[] | undefined): ListedResource[] {
-  return (items ?? [])
-    .map((item) => ({
-      uid: item.metadata?.name ?? '',
-      title: item.spec?.title || item.metadata?.name || '',
-      // Classic file provisioning marks a data source read-only without a manager annotation, so
-      // the annotation alone would offer a resource no write can take over.
-      managed: isManaged(item) || item.spec?.readOnly === true,
-    }))
-    .filter((row) => row.uid);
-}
-
-async function listViaApiserver(group: string, version: string, resource: string): Promise<ListedResource[]> {
-  const url = `${getAPIBaseURL(group, version)}/${resource}`;
-  const response = await getBackendSrv().get<{ items?: ApiserverListItem[] }>(url);
-  return toListedResources(response.items);
-}
-
-/**
- * Whether provisioning acts on a member of a collection it covers. A member declared on its own
- * wins over the collection, disabled or not: that is the precedence job admission applies, so a
- * member enumerated against it would be offered for migration and then rejected.
- *
- * Membership is already established, so a declaration covers the member only by naming the
- * collection or the member itself -- a sibling's group covers nothing here.
- *
- * A pattern restricted to some of a collection's members is reported as the plain collection, so
- * the members it excludes cannot be told from the ones it covers and are listed too.
- */
-function actsOnMember(
-  collection: string,
-  group: string,
-  kind: string,
-  availableResources?: SupportedResource[]
-): boolean {
-  if (!availableResources) {
-    return true;
-  }
-  const declared = availableResources.find((r) => r.kind === kind && r.group === group);
-  if (declared) {
-    return !declared.disabled;
-  }
-  return availableResources.some((r) => r.kind === kind && r.group === collection && !r.disabled);
-}
-
-/**
- * Lists a collection's members, through each of the groups serving the kind: a member has to be
- * reported with the group that serves it, which the collection group does not name. Discovery is
- * the source, as it is for the backend's own expansion, because a plugin can be installed without
- * its group being served.
- */
-async function listCollectionMembers(
-  collection: string,
-  resource: string,
-  kind: string,
-  availableResources?: SupportedResource[]
-): Promise<ListedResource[]> {
-  const apis = await getAPIGroupDiscoveryList();
-  const perGroup = await Promise.all(
-    apis.items
-      .filter((api) => api.metadata.name.endsWith(`.${collection}`))
-      .flatMap((api) => {
-        if (!actsOnMember(collection, api.metadata.name, kind, availableResources)) {
-          return [];
-        }
-        // Versions are listed preferred-first.
-        const version = api.versions.find((v) => v.resources.some((r) => r.resource === resource));
-        return version ? [{ group: api.metadata.name, version: version.version }] : [];
-      })
-      .map(async ({ group, version }) => {
-        const listed = await listViaApiserver(group, version, resource);
-        return listed.map((item) => ({ ...item, group }));
-      })
-  );
-  return perGroup.flat();
-}
-
-/**
- * Lists playlists through their generated RTK Query client, read imperatively so
- * the registry's list() stays a plain function. Using the client (rather than a
- * raw request) keeps the v1→v0alpha1 fallback and the shared base query.
- */
-async function listPlaylists(dispatch: AppDispatch): Promise<ListedResource[]> {
-  const response = await dispatch(
-    playlistAPIv1.endpoints.listPlaylist.initiate({}, { forceRefetch: true, subscribe: false })
-  ).unwrap();
-  return toListedResources(response.items);
 }

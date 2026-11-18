@@ -48,7 +48,7 @@ type TreeCell<T extends keyof FlatTreeItem = keyof FlatTreeItem> = CellProps<Fla
 
 function getGrafanaLink(item: TreeItem) {
   if (item.resourceName) {
-    return getKindInfoByItemType(item.type)?.getRoute?.(item.resourceName);
+    return getKindInfoByItemType(item.type)?.routes.item?.(item.resourceName);
   }
   return undefined;
 }

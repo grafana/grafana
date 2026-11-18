@@ -354,14 +354,9 @@ function ResourceDrawerContent({
   const canPushToConfiguredBranch = getCanPushToConfiguredBranch(repository);
   const sourcePath = getSourcePath(managedResource);
 
-  // Title combines a shared translated template with the kind's translated noun (interpolated, so
-  // translators control word order), instead of a per-kind "Save/Delete provisioned <kind>" string.
-  const resourceLabel = kind.getLabel();
   const drawerTitle = isDelete
-    ? t('provisioning.save-resource.drawer-title-delete', 'Delete provisioned {{resource}}', {
-        resource: resourceLabel,
-      })
-    : t('provisioning.save-resource.drawer-title-save', 'Save provisioned {{resource}}', { resource: resourceLabel });
+    ? t('provisioning.save-resource.drawer-title-delete-resource', 'Delete provisioned resource')
+    : t('provisioning.save-resource.drawer-title-save-resource', 'Save provisioned resource');
 
   const initialValues = useMemo<BaseProvisionedFormData | undefined>(() => {
     if (!repository || isLoading) {
