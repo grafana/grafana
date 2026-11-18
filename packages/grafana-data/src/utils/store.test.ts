@@ -151,6 +151,15 @@ describe('Store without window (SSR)', () => {
       ssrStore.delete('key');
     }).not.toThrow();
   });
+
+  it('does not keep values in memory, so values never leak between server requests', () => {
+    const ssrStore = new Store();
+    ssrStore.set('key', 'value');
+
+    expect(ssrStore.get('key')).toBeUndefined();
+    expect(ssrStore.exists('key')).toBe(false);
+    expect(ssrStore.all()).toEqual({});
+  });
 });
 
 /* tests moved here from public/app/core/specs/store.test.ts */
@@ -280,6 +289,19 @@ describe('Store when localStorage is unavailable', () => {
   });
 
   describe('writes fail for other reasons', () => {
+    it('delete warns with a delete message', () => {
+      const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+      Object.defineProperty(window, 'localStorage', {
+        configurable: true,
+        value: storageThrowing('QuotaExceededError'),
+      });
+
+      new Store().delete('key');
+
+      expect(warn).toHaveBeenCalledWith(expect.stringMatching(/^Could not delete localStorage key: key\./));
+      warn.mockRestore();
+    });
+
     let store: Store;
 
     beforeEach(() => {

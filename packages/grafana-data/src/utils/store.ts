@@ -24,9 +24,15 @@ export class Store {
     }
   }
 
-  // Used instead of localStorage when it is unavailable (SSR, or sandboxed/opaque-origin iframes
+  // Used instead of localStorage when it is unavailable in a browser (sandboxed/opaque-origin iframes
   // where the getter or operations throw SecurityError), so values persist for the page lifetime.
-  private memory = new Map<string, string>();
+  private memoryValues = new Map<string, string>();
+
+  // Without a window (e.g. server-side rendering) the store is shared across requests, so writes are
+  // dropped instead of kept in memory where one request could read another's values.
+  private get memory(): Map<string, string> | undefined {
+    return typeof window === 'undefined' ? undefined : this.memoryValues;
+  }
 
   private get storage(): Storage | undefined {
     try {
@@ -47,16 +53,18 @@ export class Store {
         // fall through to the in-memory fallback
       }
     }
-    return this.memory.get(key);
+    return this.memory?.get(key);
   }
 
   // Warn only once so a full or broken storage doesn't flood the console on every write
   private warnedWriteFailure = false;
 
-  private warnWriteFailure(key: string, error: unknown) {
+  private warnWriteFailure(action: 'write' | 'delete', key: string, error: unknown) {
     if (!this.warnedWriteFailure) {
       this.warnedWriteFailure = true;
-      console.warn(`Could not write to localStorage: ${key}. Further write failures will not be logged. [${error}]`);
+      console.warn(
+        `Could not ${action} localStorage key: ${key}. Further write failures will not be logged. [${error}]`
+      );
     }
   }
 
@@ -99,7 +107,7 @@ export class Store {
       if (options?.throwOnFailure) {
         throw error;
       }
-      this.warnWriteFailure(key, error);
+      this.warnWriteFailure('write', key, error);
       return;
     }
     this.notifySubscribers(key);
@@ -109,7 +117,7 @@ export class Store {
     const storage = this.storage;
     try {
       if (!storage) {
-        this.memory.set(key, String(value));
+        this.memory?.set(key, String(value));
       } else {
         storage[key] = value;
       }
@@ -117,7 +125,7 @@ export class Store {
       if (!isUnavailableError(error)) {
         throw error;
       }
-      this.memory.set(key, String(value));
+      this.memory?.set(key, String(value));
     }
   }
 
@@ -169,12 +177,12 @@ export class Store {
   }
 
   delete(key: string) {
-    this.memory.delete(key);
+    this.memory?.delete(key);
     try {
       this.storage?.removeItem(key);
     } catch (error) {
       if (!isUnavailableError(error)) {
-        this.warnWriteFailure(key, error);
+        this.warnWriteFailure('delete', key, error);
       }
     }
     this.notifySubscribers(key);
@@ -194,12 +202,13 @@ export class Store {
         // fall through to the in-memory fallback
       }
     }
-    const keys = [...this.memory.keys()];
+    const memory = this.memory;
+    const keys = memory ? [...memory.keys()] : [];
     return collect(
       prefix,
       keys.length,
       (i) => keys[i],
-      (k) => this.memory.get(k) ?? null
+      (k) => memory?.get(k) ?? null
     );
   }
 }
