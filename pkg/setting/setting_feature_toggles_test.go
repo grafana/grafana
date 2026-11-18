@@ -206,21 +206,6 @@ func TestFeatureToggleEnvOverrides(t *testing.T) {
 }
 
 func TestFeatureToggleCmdOverrides(t *testing.T) {
-	t.Run("cmd override sets exact search count limit without a custom ini", func(t *testing.T) {
-		cfg := NewCfg()
-		err := cfg.Load(CommandLineArgs{
-			HomePath: "../../",
-			Args:     []string{"cfg:feature_toggles.search.exactAuthorizedTotalsLimit=1000"},
-		})
-		require.NoError(t, err)
-
-		flags, err := ReadFeatureTogglesFromInitFile(cfg.Raw.Section("feature_toggles"))
-		require.NoError(t, err)
-		require.Contains(t, flags, "search.exactAuthorizedTotalsLimit")
-		flag := flags["search.exactAuthorizedTotalsLimit"]
-		require.Equal(t, 1000, flag.Variants[flag.DefaultVariant])
-	})
-
 	t.Run("cfg:feature_toggles.name creates a feature toggle", func(t *testing.T) {
 		cfg := NewCfg()
 		err := cfg.Load(CommandLineArgs{

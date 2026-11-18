@@ -809,6 +809,9 @@ type Cfg struct {
 	// aggregating facets on the post-filter path. Zero falls back to the
 	// default in search.PostRankAuthzConfig.effective().
 	SearchPostRankAuthzFacetSampleSize int
+	// SearchPostRankAuthzExactCountThreshold enables full authorized counts for
+	// small result sets. Zero disables optional counting.
+	SearchPostRankAuthzExactCountThreshold int
 
 	// Vector storage
 	EnableVectorBackend bool
