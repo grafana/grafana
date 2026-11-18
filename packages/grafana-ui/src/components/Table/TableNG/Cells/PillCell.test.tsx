@@ -3,7 +3,6 @@ import tinycolor from 'tinycolor2';
 
 import {
   type Field,
-  FieldColorModeId,
   FieldType,
   MappingType,
   ThemeContext,
@@ -11,6 +10,7 @@ import {
   fieldColorModeRegistry,
   getColorByStringHash,
 } from '@grafana/data';
+import { FieldColorModeId } from '@grafana/schema';
 
 import { getTextColorForBackground } from '../../../../utils/colors';
 import { getTagColorsFromName } from '../../../../utils/tags';
@@ -50,27 +50,6 @@ describe('PillCell', () => {
         ),
         `<span style="background-color: rgb(63, 43, 91); color: rgb(247, 248, 250);">value1</span>`
       );
-    });
-
-    it.each([
-      ['classic palette', FieldColorModeId.PaletteClassic, 'rgb(222, 218, 247)', 'rgb(32, 34, 38)'],
-      [
-        'classic palette by series name',
-        FieldColorModeId.PaletteClassicByName,
-        'rgb(98, 158, 81)',
-        'rgb(247, 248, 250)',
-      ],
-      ['thresholds', FieldColorModeId.Thresholds, 'rgb(63, 43, 91)', 'rgb(247, 248, 250)'],
-    ])('preserves legacy colors for %s', (_, colorMode, backgroundColor, color) => {
-      const mockField = fieldWithValues(['value1']);
-      const field = {
-        ...mockField,
-        config: { ...mockField.config, color: { mode: colorMode } },
-      } satisfies Field;
-
-      render(<PillCell getTextColorForBackground={getTextColorForBackground} field={field} rowIdx={0} theme={theme} />);
-
-      expect(screen.getByText('value1')).toHaveStyle({ backgroundColor, color });
     });
 
     it('empty string', () => {
@@ -298,30 +277,15 @@ describe('PillCell', () => {
       expect(tinycolor.readability(pill.style.backgroundColor, pill.style.color)).toBeGreaterThanOrEqual(5.5);
     });
 
-    it.each([
-      ['classic palette', FieldColorModeId.PaletteClassic, 'value1'],
-      ['classic palette by series name', FieldColorModeId.PaletteClassicByName, 'test'],
-    ])('uses theme tag colors for the %s', (_, colorMode, colorName) => {
+    it('keeps a categorical field palette as the background', () => {
       const mockField = fieldWithValues(['value1']);
       const classic = {
         ...mockField,
-        config: { ...mockField.config, color: { mode: colorMode } },
+        config: { ...mockField.config, color: { mode: FieldColorModeId.PaletteClassic } },
       } satisfies Field;
 
       renderRefreshed(classic);
-      const { background, text } = getTagColorsFromName(colorName, refreshTheme);
-      expect(screen.getByText('value1')).toHaveStyle({ backgroundColor: background, color: text });
-    });
-
-    it('honours other categorical field palettes over the tag colors', () => {
-      const mockField = fieldWithValues(['value1']);
-      const colorblind = {
-        ...mockField,
-        config: { ...mockField.config, color: { mode: FieldColorModeId.PaletteColorblind } },
-      } satisfies Field;
-
-      renderRefreshed(colorblind);
-      const palette = fieldColorModeRegistry.get(FieldColorModeId.PaletteColorblind).getColors!(refreshTheme);
+      const palette = fieldColorModeRegistry.get(FieldColorModeId.PaletteClassic).getColors!(refreshTheme);
       const pill = screen.getByText('value1');
       expect(pill.style.backgroundColor).toBe(tinycolor(getColorByStringHash(palette, 'value1')).toRgbString());
       expect(tinycolor.readability(pill.style.backgroundColor, pill.style.color)).toBeGreaterThanOrEqual(4.5);
