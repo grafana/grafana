@@ -11,6 +11,7 @@ on:
 
 permissions:
   contents: read
+  actions: read # Lets Hestia detect evicted cache entries before substituting them.
 
 jobs:
   build:
@@ -22,12 +23,18 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
           filter: blob:none
-      - uses: cachix/install-nix-action@3dc140bfc76c49fbd4dd958429132e3746bcb086 # v31.11.5
+      - uses: NixOS/nix-installer-action@62c1943b776c509394b550f3f983adc14e9212d6 # v1.0.0
         with:
-          set_as_trusted_user: false
-          extra_nix_config: |
+          installer-version: '2.35.4'
+          # The Nix daemon requires a trusted user to accept Hestia's substituter and build hook.
+          trust-runner-user: 'true'
+          extra-conf: |
             sandbox = true
             sandbox-fallback = false
+      - uses: Mic92/hestia@dfed9ced335d28978ba74e513939a10db1f71025 # v3.1.0
+        with:
+          version: v3.1.0
+          upstream-cache-filter: 'true'
       - name: Build Grafana
         run: nix build -L .#tarball-linux-amd64
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
