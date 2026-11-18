@@ -447,6 +447,7 @@ func (r *recordingRule) untrack(gone writtenSeries) {
 	r.written.remove(gone)
 	r.held -= n
 	r.budget.Release(n)
+	r.metrics.RecordingRuleTrackedSeries.Set(float64(r.budget.Used()))
 }
 
 // writeStale writes markers at markerAt for the series from the previous evaluation that are

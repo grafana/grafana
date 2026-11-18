@@ -288,3 +288,36 @@ func TestRecordingRuleSeriesBudgetReleasedWhenRunStops(t *testing.T) {
 		}
 	}
 }
+
+func TestRecordingRuleTrackedSeriesGaugeFollowsStops(t *testing.T) {
+	budget := state.NewSeriesBudget(10)
+	h, other := newStaleHarness(t), newStaleHarness(t)
+	h.rule.budget, other.rule.budget = budget, budget
+	other.rule.metrics = h.rule.metrics
+	h.peers, other.peers = []*staleHarness{other}, []*staleHarness{h}
+	gauge := func() float64 { return testutil.ToFloat64(h.rule.metrics.RecordingRuleTrackedSeries) }
+
+	h.ev.resp = seriesResponse(instance("a"), instance("b"))
+	other.ev.resp = seriesResponse(instance("c"))
+	h.tick()
+	other.tick()
+	require.EqualValues(t, 3, gauge())
+
+	h.stop(context.Canceled)
+	require.EqualValues(t, 1, budget.Used())
+	require.EqualValues(t, 1, gauge(), "the gauge is updated when a rule stops, without another evaluation")
+}
+
+func TestRecordingRuleTrackedSeriesGaugeFollowsDrops(t *testing.T) {
+	h := newStaleHarness(t)
+	h.rule.budget = state.NewSeriesBudget(10)
+	h.ev.resp = seriesResponse(instance("a"), instance("b"))
+	h.tick()
+
+	h.ev.resp = seriesResponse(instance("a"))
+	h.failStale, h.staleErr = true, foreignError{"err-mimir-max-active-series"}
+	h.failWrite = true
+	h.tick()
+	require.EqualValues(t, 1, h.rule.budget.Used(), "b was dropped even though the data write failed")
+	require.EqualValues(t, 1, testutil.ToFloat64(h.rule.metrics.RecordingRuleTrackedSeries), "and the gauge says so")
+}
