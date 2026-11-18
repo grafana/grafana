@@ -8,6 +8,7 @@ import { LocationServiceProvider, locationService } from '@grafana/runtime';
 import { SceneQueryRunner, SceneTimeRange, UrlSyncContextProvider, VizPanel } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { mockLocalStorage } from 'app/features/alerting/unified/testSetup/mockLocalStorage';
+import { LabelKeyLifecycle, LifecycleDraft } from 'app/features/apiserver/types';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import {
   RepoViewStatus,
@@ -17,6 +18,7 @@ import {
 import { type DashboardMeta } from 'app/types/dashboard';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
+import { registerDraftDashboardExtension } from '../saving/enterprise-components/DraftDashboardExtension';
 import { DashboardInteractions } from '../utils/interactions';
 
 import { DashboardScene } from './DashboardScene';
@@ -248,6 +250,45 @@ describe('NavToolbarActions', () => {
       });
 
       expect(screen.queryByTestId('button-snapshot')).toBeInTheDocument();
+    });
+  });
+
+  describe('Draft dashboards', () => {
+    const draftMeta = { k8s: { labels: { [LabelKeyLifecycle]: LifecycleDraft } } };
+
+    beforeEach(() => {
+      registerDraftDashboardExtension({
+        isEnabled: () => true,
+        getCreateLabels: async () => ({}),
+        DraftBadge: () => <span>Draft badge</span>,
+        PublishButton: ({ size }) => <button>Publish {size}</button>,
+      });
+    });
+
+    afterEach(() => {
+      registerDraftDashboardExtension(null);
+    });
+
+    it('shows the draft badge and a small Publish button for a draft the user can save', async () => {
+      setup(draftMeta);
+
+      expect(await screen.findByText('Draft badge')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Publish sm' })).toBeInTheDocument();
+    });
+
+    it('shows the badge without Publish to a user who cannot save', async () => {
+      setup({ ...draftMeta, canSave: false });
+
+      expect(await screen.findByText('Draft badge')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /Publish/ })).not.toBeInTheDocument();
+    });
+
+    it('shows neither for a published dashboard', async () => {
+      setup();
+
+      expect(await screen.findByText('Share')).toBeInTheDocument();
+      expect(screen.queryByText('Draft badge')).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /Publish/ })).not.toBeInTheDocument();
     });
   });
 

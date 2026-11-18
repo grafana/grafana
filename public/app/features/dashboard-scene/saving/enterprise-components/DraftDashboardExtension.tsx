@@ -1,9 +1,13 @@
 import { type ComponentType } from 'react';
 
+import { type ComponentSize } from '@grafana/ui';
+
 import { type DashboardScene } from '../../scene/DashboardScene';
 
 interface DraftDashboardComponentProps {
   dashboard: DashboardScene;
+  // Set by toolbars whose buttons are not the default size
+  size?: ComponentSize;
 }
 
 export interface DraftDashboardExtension {
