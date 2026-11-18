@@ -1,9 +1,10 @@
 import { useId, useState } from 'react';
+import { useAsync } from 'react-use';
 
 import { t } from '@grafana/i18n';
 import { useDataSourceInstanceList } from '@grafana/runtime';
-import { Input, MultiCombobox, Stack } from '@grafana/ui';
-import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
+import { Input, MultiCombobox } from '@grafana/ui';
+import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 
 import {
   FieldLabelWithTooltip,
@@ -77,16 +78,14 @@ export function TextFilter({
   );
 }
 
-/** One picker per chosen folder, then an empty one that adds a folder. */
 export function FolderFilter({ folderUids, onChange }: { folderUids: string[]; onChange: (uids: string[]) => void }) {
-  const replace = (index: number, uid: string | undefined) => {
-    const next = [...folderUids];
-    next.splice(index, 1, ...(uid ? [uid] : []));
-    onChange(next);
-  };
+  const id = useId();
+  const { value: titles } = useAsync(() => getFolderTitles(folderUids), [folderUids]);
+  const value = folderUids.map((uid) => ({ value: uid, label: titles?.get(uid) ?? uid }));
 
   return (
     <SidebarField
+      htmlFor={id}
       label={
         <FieldLabelWithTooltip
           label={t('alerting.gma-rule-list.sidebar.folder', 'Folder')}
@@ -95,27 +94,38 @@ export function FolderFilter({ folderUids, onChange }: { folderUids: string[]; o
         />
       }
     >
-      <Stack direction="column" gap={1}>
-        {folderUids.map((uid, index) => (
-          <NestedFolderPicker
-            // The same folder can be listed twice, and the picker reads its value from props.
-            // eslint-disable-next-line react/no-array-index-key
-            key={index}
-            value={uid}
-            permission="view"
-            clearable
-            onChange={(next) => replace(index, next)}
-          />
-        ))}
-        <NestedFolderPicker
-          // A new key after each pick, so the next empty picker starts empty.
-          key={folderUids.length}
-          permission="view"
-          onChange={(uid) => uid && onChange([...folderUids, uid])}
-        />
-      </Stack>
+      <MultiCombobox<string>
+        id={id}
+        options={searchFolders}
+        value={value}
+        placeholder={t('alerting.gma-rule-list.sidebar.folder-placeholder', 'Select folders')}
+        onChange={(selected) => onChange(selected.map((option) => option.value))}
+      />
     </SidebarField>
   );
+}
+
+async function searchFolders(query: string) {
+  const { view } = await getGrafanaSearcher().search({ query, kind: ['folder'], limit: 100, permission: 'view' });
+  // The searcher loads every folder's title once, so parent paths cost no request per folder.
+  const locationInfo: Record<string, { name: string }> = view.dataFrame.meta?.custom?.locationInfo ?? {};
+  return view.map((folder) => ({
+    label: folder.name,
+    value: folder.uid,
+    description: (folder.location || '')
+      .split('/')
+      .filter((uid) => uid && uid !== 'general')
+      .map((uid) => locationInfo[uid]?.name ?? uid)
+      .join(' / '),
+  }));
+}
+
+async function getFolderTitles(uids: string[]): Promise<Map<string, string>> {
+  if (uids.length === 0) {
+    return new Map();
+  }
+  const { view } = await getGrafanaSearcher().search({ uid: uids, kind: ['folder'] });
+  return new Map(view.map((folder) => [folder.uid, folder.name]));
 }
 
 export function DataSourceFilter({

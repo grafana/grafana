@@ -1633,6 +1633,7 @@
         "folder": "Folder",
         "folder-description": "Rules directly in this folder",
         "folder-help": "Folder filter help",
+        "folder-placeholder": "Select folders",
         "health": "Health",
         "health-error": "Error",
         "health-nodata": "No data",

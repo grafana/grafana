@@ -1,6 +1,9 @@
 import { render, screen, waitFor, within } from 'test/test-utils';
 
 import { locationService } from '@grafana/runtime';
+import { mockComboboxRect } from '@grafana/test-utils';
+import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
+import server from '@grafana/test-utils/server';
 
 import { setupMswServer } from '../../mockApi';
 import { setupDataSources } from '../../testSetup/datasources';
@@ -60,6 +63,25 @@ describe('AlertRulesFilterSidebar', () => {
     renderPage(`datasource:${uid}`);
 
     expect(await screen.findByText(shown)).toBeInTheDocument();
+  });
+
+  it('shows the folders of the query by title in one picker, and adds a picked folder to the query', async () => {
+    server.use(
+      getCustomSearchHandler([
+        { resource: 'folders', name: 'folder-1', title: 'Team Alerts' },
+        { resource: 'folders', name: 'folder-2', title: 'Payments' },
+      ])
+    );
+    mockComboboxRect();
+    const { user } = renderPage('cpu folder:folder-1');
+    const folders = await screen.findByRole('combobox', { name: 'Folder' });
+
+    await waitFor(() => expect(folders.closest('div')?.parentElement).toHaveTextContent('Team Alerts'));
+
+    await user.click(folders);
+    await user.click(await screen.findByRole('option', { name: 'Payments' }));
+
+    await waitFor(() => expect(searchParam()).toBe('cpu folder:folder-1 folder:folder-2'));
   });
 
   it('rewrites only the changed filter, keeping the rest of the query in order', async () => {
