@@ -57,7 +57,7 @@ export class AddPanelToNotebookScene extends SceneObjectBase<AddPanelToNotebookS
   public getCapturedTimeRange = (): CapturedTimeRange => {
     const timeRange = sceneGraph.getTimeRange(this.state.panelRef.resolve());
 
-    return captureTimeRange(timeRange.state.value.raw, timeRange.getTimeZone());
+    return captureTimeRange(timeRange.state.value.raw, timeRange.getTimeZone(), timeRange.state.fiscalYearStartMonth);
   };
 }
 

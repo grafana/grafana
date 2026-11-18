@@ -16,16 +16,25 @@ export interface CapturedTimeRange {
   to: string;
   /** The source's time zone, used only to describe the range to the user. */
   timeZone?: string;
+  /**
+   * The source's fiscal year start month. Only conversion reads it: date math such as `now/fy` lands on
+   * a different instant under another fiscal calendar, so resolving without it would freeze the wrong window.
+   */
+  fiscalYearStartMonth?: number;
 }
 
 /**
  * `raw` is what the source had, not what it resolved to: a dashboard's SceneTimeRange keeps its
  * from/to as the strings the picker wrote, and Explore's TimeRange.raw is the same thing for a pane.
  */
-export function captureTimeRange(raw: RawTimeRange, timeZone?: string): CapturedTimeRange {
+export function captureTimeRange(
+  raw: RawTimeRange,
+  timeZone?: string,
+  fiscalYearStartMonth?: number
+): CapturedTimeRange {
   // formatRawTimeRange's from/to are always strings; RawTimeRange's type just does not say so.
   const { from, to } = rangeUtil.formatRawTimeRange(raw);
-  return { from: String(from), to: String(to), timeZone };
+  return { from: String(from), to: String(to), timeZone, fiscalYearStartMonth };
 }
 
 /**
@@ -48,7 +57,11 @@ export function shouldLockCapturedTimeRange(range: CapturedTimeRange): boolean {
  * already absolute is kept as it was written, so a half-pinned window only has its moving end fixed.
  */
 export function toAbsoluteCapturedTimeRange(range: CapturedTimeRange): CapturedTimeRange {
-  const resolved = rangeUtil.convertRawToRange({ from: range.from, to: range.to }, range.timeZone);
+  const resolved = rangeUtil.convertRawToRange(
+    { from: range.from, to: range.to },
+    range.timeZone,
+    range.fiscalYearStartMonth
+  );
 
   return {
     ...range,
