@@ -1,9 +1,10 @@
 import { useId, useState } from 'react';
 import { useAsync } from 'react-use';
 
+import { buildRoutingTreeOptions, isDefaultRoutingTreeName, useRoutingTrees } from '@grafana/alerting/unstable';
 import { t } from '@grafana/i18n';
 import { useDataSourceInstanceList } from '@grafana/runtime';
-import { Input, MultiCombobox } from '@grafana/ui';
+import { Combobox, Input, MultiCombobox } from '@grafana/ui';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 
 import {
@@ -105,29 +106,6 @@ export function FolderFilter({ folderUids, onChange }: { folderUids: string[]; o
   );
 }
 
-async function searchFolders(query: string) {
-  const { view } = await getGrafanaSearcher().search({ query, kind: ['folder'], limit: 100, permission: 'view' });
-  // The searcher loads every folder's title once, so parent paths cost no request per folder.
-  const locationInfo: Record<string, { name: string }> = view.dataFrame.meta?.custom?.locationInfo ?? {};
-  return view.map((folder) => ({
-    label: folder.name,
-    value: folder.uid,
-    description: (folder.location || '')
-      .split('/')
-      .filter((uid) => uid && uid !== 'general')
-      .map((uid) => locationInfo[uid]?.name ?? uid)
-      .join(' / '),
-  }));
-}
-
-async function getFolderTitles(uids: string[]): Promise<Map<string, string>> {
-  if (uids.length === 0) {
-    return new Map();
-  }
-  const { view } = await getGrafanaSearcher().search({ uid: uids, kind: ['folder'] });
-  return new Map(view.map((folder) => [folder.uid, folder.name]));
-}
-
 export function DataSourceFilter({
   dataSourceUids,
   onChange,
@@ -155,4 +133,69 @@ export function DataSourceFilter({
       />
     </SidebarField>
   );
+}
+
+/** Named notification policies only: the search can't match the default policy yet. */
+export function PolicyFilter({
+  policy,
+  disabled,
+  onChange,
+}: {
+  policy: string | undefined;
+  disabled: boolean;
+  onChange: (policy: string | undefined) => void;
+}) {
+  const id = useId();
+  const { trees, isLoading } = useRoutingTrees();
+  const options = buildRoutingTreeOptions(trees).filter((option) => !isDefaultRoutingTreeName(option.value));
+
+  return (
+    <SidebarField
+      htmlFor={id}
+      label={
+        <FieldLabelWithTooltip
+          label={t('alerting.gma-rule-list.sidebar.policy', 'Notification policy')}
+          tooltip={t(
+            'alerting.gma-rule-list.sidebar.policy-description',
+            'Rules routed through it, not straight to a contact point'
+          )}
+          tooltipTitle={t('alerting.gma-rule-list.sidebar.policy-help', 'Notification policy filter help')}
+        />
+      }
+    >
+      <Combobox
+        id={id}
+        placeholder={t('alerting.gma-rule-list.sidebar.policy-placeholder', 'Select policy')}
+        options={options}
+        loading={isLoading}
+        value={policy}
+        isClearable
+        disabled={disabled}
+        onChange={(option) => onChange(option?.value)}
+      />
+    </SidebarField>
+  );
+}
+
+async function searchFolders(query: string) {
+  const { view } = await getGrafanaSearcher().search({ query, kind: ['folder'], limit: 100, permission: 'view' });
+  // The searcher loads every folder's title once, so parent paths cost no request per folder.
+  const locationInfo: Record<string, { name: string }> = view.dataFrame.meta?.custom?.locationInfo ?? {};
+  return view.map((folder) => ({
+    label: folder.name,
+    value: folder.uid,
+    description: (folder.location || '')
+      .split('/')
+      .filter((uid) => uid && uid !== 'general')
+      .map((uid) => locationInfo[uid]?.name ?? uid)
+      .join(' / '),
+  }));
+}
+
+async function getFolderTitles(uids: string[]): Promise<Map<string, string>> {
+  if (uids.length === 0) {
+    return new Map();
+  }
+  const { view } = await getGrafanaSearcher().search({ uid: uids, kind: ['folder'] });
+  return new Map(view.map((folder) => [folder.uid, folder.name]));
 }

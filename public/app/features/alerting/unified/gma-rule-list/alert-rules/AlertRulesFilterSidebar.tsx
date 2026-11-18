@@ -1,13 +1,8 @@
 import { useId } from 'react';
 
-import {
-  ContactPointSelector,
-  buildRoutingTreeOptions,
-  isDefaultRoutingTreeName,
-  useRoutingTrees,
-} from '@grafana/alerting/unstable';
+import { ContactPointSelector } from '@grafana/alerting/unstable';
 import { t } from '@grafana/i18n';
-import { Box, Combobox, Divider, Stack } from '@grafana/ui';
+import { Box, Divider, Stack } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 
 import { isGranted } from '../../hooks/abilities/abilityUtils';
@@ -19,7 +14,7 @@ import {
   SidebarSection,
   ToggleButtonGroup,
 } from '../../rule-list/filter/RulesFilterSidebar';
-import { ChoiceFilter, DataSourceFilter, FolderFilter, TextFilter } from '../rule-search/FilterSidebar';
+import { ChoiceFilter, DataSourceFilter, FolderFilter, PolicyFilter, TextFilter } from '../rule-search/FilterSidebar';
 import { LabelMatchersFilter } from '../rule-search/LabelMatchersFilter';
 import { setFilterValues } from '../rule-search/setFilterValues';
 import { formatLabelMatcher } from '../rule-search/sharedFilters';
@@ -39,10 +34,6 @@ interface AlertRulesFilterSidebarProps {
 export function AlertRulesFilterSidebar({ query, filter, onApply }: AlertRulesFilterSidebarProps) {
   const canViewContactPoints = isGranted(useGlobalContactPointAbility(ContactPointAction.View));
   const pluginsLabelId = useId();
-  const policyId = useId();
-  const { trees, isLoading: isLoadingTrees } = useRoutingTrees();
-  // The search can't match the default policy yet.
-  const policyOptions = buildRoutingTreeOptions(trees).filter((option) => !isDefaultRoutingTreeName(option.value));
 
   const apply = (changes: Partial<Record<AlertFilterKey, Array<string | undefined>>>) => {
     const newQuery = Object.entries(changes).reduce((currentQuery, [filterKey, values]) => {
@@ -127,30 +118,11 @@ export function AlertRulesFilterSidebar({ query, filter, onApply }: AlertRulesFi
               />
             </SidebarField>
           )}
-          <SidebarField
-            htmlFor={policyId}
-            label={
-              <FieldLabelWithTooltip
-                label={t('alerting.gma-rule-list.sidebar.policy', 'Notification policy')}
-                tooltip={t(
-                  'alerting.gma-rule-list.sidebar.policy-description',
-                  'Rules routed through it, not straight to a contact point'
-                )}
-                tooltipTitle={t('alerting.gma-rule-list.sidebar.policy-help', 'Notification policy filter help')}
-              />
-            }
-          >
-            <Combobox
-              id={policyId}
-              placeholder={t('alerting.gma-rule-list.sidebar.policy-placeholder', 'Select policy')}
-              options={policyOptions}
-              loading={isLoadingTrees}
-              value={filter.policy}
-              isClearable
-              disabled={Boolean(filter.contactPoint) && !filter.policy}
-              onChange={(option) => apply({ policy: [option?.value] })}
-            />
-          </SidebarField>
+          <PolicyFilter
+            policy={filter.policy}
+            disabled={Boolean(filter.contactPoint) && !filter.policy}
+            onChange={(policy) => apply({ policy: [policy] })}
+          />
         </SidebarSection>
         <Divider spacing={0} />
         <SidebarSection>
