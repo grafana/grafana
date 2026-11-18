@@ -22,6 +22,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -2672,15 +2673,18 @@ func TestKvStorageBackend_ListIterator_InvalidContinueToken(t *testing.T) {
 				Resource:  "resources",
 			},
 		},
-		Limit:         10,
-		NextPageToken: "invalid-token",
+		Limit: 10,
 	}
 
-	_, err := backend.ListIterator(ctx, listReq, func(iter ListIterator) error {
-		return nil
-	})
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "invalid continue token")
+	for _, token := range []string{"invalid-token", "bm90LWpzb24=", ContinueToken{ResourceVersion: 1}.String()} {
+		listReq.NextPageToken = token
+		_, err := backend.ListIterator(ctx, listReq, func(iter ListIterator) error {
+			t.Fatal("malformed continuation must fail before iteration")
+			return nil
+		})
+		require.True(t, apierrors.IsBadRequest(err), "got %v", err)
+		require.Contains(t, err.Error(), "invalid continue token")
+	}
 }
 
 func TestKvStorageBackend_ListIterator_KeysOnlyRejectsContinueTokenScopeChanges(t *testing.T) {
