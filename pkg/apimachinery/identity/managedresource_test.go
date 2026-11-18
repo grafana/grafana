@@ -238,6 +238,9 @@ func TestGrafanaCloudAssignment(t *testing.T) {
 	cloud := func() utils.GrafanaMetaAccessor {
 		return managedBy(t, utils.ManagerProperties{Kind: utils.ManagerKindGrafanaCloud, Identity: "grafanacloud"})
 	}
+	classicFP := func() utils.GrafanaMetaAccessor {
+		return managedBy(t, utils.ManagerProperties{Kind: utils.ManagerKindClassicFP, Identity: "dashboards"}) //nolint:staticcheck
+	}
 	cloudWithoutIdentity := func() utils.GrafanaMetaAccessor {
 		meta := unmanaged(t)
 		meta.SetAnnotation(utils.AnnoKeyManagerKind, string(utils.ManagerKindGrafanaCloud))
@@ -266,6 +269,7 @@ func TestGrafanaCloudAssignment(t *testing.T) {
 			forbidden(t, identity.CheckManagerOnCreate(auth, cloudWithoutIdentity(), writer), "create without a manager identity")
 			forbidden(t, identity.CheckManagerOnUpdate(auth, cloud(), unmanaged(t), writer), "adopt")
 			forbidden(t, identity.CheckManagerOnUpdate(auth, cloudWithoutIdentity(), unmanaged(t), writer), "adopt without a manager identity")
+			forbidden(t, identity.CheckManagerOnUpdate(auth, cloud(), classicFP(), writer), "convert from classic-file-provisioning")
 		})
 
 		t.Run(name+" may change a resource that already carries it", func(t *testing.T) {
@@ -279,17 +283,24 @@ func TestGrafanaCloudAssignment(t *testing.T) {
 	t.Run("the configured service may assign it", func(t *testing.T) {
 		require.NoError(t, identity.CheckManagerOnCreate(cloudWriter, cloud(), writer), "create")
 		require.NoError(t, identity.CheckManagerOnUpdate(cloudWriter, cloud(), unmanaged(t), writer), "adopt")
+		require.NoError(t, identity.CheckManagerOnUpdate(cloudWriter, cloud(), classicFP(), writer), "convert from classic-file-provisioning")
+		require.NoError(t, identity.CheckManagerOnUpdate(cloudWriter, cloudWithoutIdentity(), classicFP(), writer), "convert without a manager identity")
+		require.NoError(t, identity.CheckManagerOnUpdate(cloudWriter, classicFP(), classicFP(), writer), "update while still classic-file-provisioning")
 	})
 
 	t.Run("an empty identity lets nobody assign it", func(t *testing.T) {
 		forbidden(t, identity.CheckManagerOnCreate(cloudWriter, cloud(), ""), "create")
 		forbidden(t, identity.CheckManagerOnUpdate(cloudWriter, cloud(), unmanaged(t), ""), "adopt")
+		forbidden(t, identity.CheckManagerOnUpdate(cloudWriter, cloud(), classicFP(), ""), "convert from classic-file-provisioning")
 		forbidden(t, identity.CheckManagerOnCreate(accessPolicy(""), cloud(), ""), "a token without the claim")
 	})
 
 	t.Run("the kind may not change from another manager", func(t *testing.T) {
 		repo := managedBy(t, utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "my-repo"})
 		forbidden(t, identity.CheckManagerOnUpdate(cloudWriter, cloud(), repo, writer), "repo to grafana-cloud")
+		classicAPI := managedBy(t, utils.ManagerProperties{Kind: utils.ManagerKindClassicAPI}) //nolint:staticcheck
+		forbidden(t, identity.CheckManagerOnUpdate(cloudWriter, cloud(), classicAPI, writer), "classic-api to grafana-cloud")
+		forbidden(t, identity.CheckManagerOnUpdate(cloudWriter, classicFP(), cloud(), writer), "grafana-cloud back to classic-file-provisioning")
 	})
 
 	t.Run("the configured service gets no other manager's rights", func(t *testing.T) {

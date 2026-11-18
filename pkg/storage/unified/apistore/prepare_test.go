@@ -1516,6 +1516,14 @@ func TestPrepareObjectGrafanaCloudServiceIdentity(t *testing.T) {
 	stored := cloudDashboard()
 	stored.ResourceVersion = "1"
 	unmanagedStored := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "billing", ResourceVersion: "1"}}
+	classicFPStored := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{
+		Name:            "billing",
+		ResourceVersion: "1",
+		Annotations: map[string]string{
+			utils.AnnoKeyManagerKind:     string(utils.ManagerKindClassicFP), //nolint:staticcheck
+			utils.AnnoKeyManagerIdentity: "dashboards",
+		},
+	}}
 
 	t.Run("the configured identity may create and adopt", func(t *testing.T) {
 		s := newStorage("cloud-writer")
@@ -1523,6 +1531,16 @@ func TestPrepareObjectGrafanaCloudServiceIdentity(t *testing.T) {
 		require.NoError(t, err)
 		_, err = s.prepareObjectForUpdate(cloudWriter, cloudDashboard(), unmanagedStored)
 		require.NoError(t, err)
+	})
+
+	t.Run("the configured identity may convert a classic-file-provisioning resource", func(t *testing.T) {
+		_, err := newStorage("cloud-writer").prepareObjectForUpdate(cloudWriter, cloudDashboard(), classicFPStored)
+		require.NoError(t, err)
+	})
+
+	t.Run("a user may not convert a classic-file-provisioning resource", func(t *testing.T) {
+		_, err := newStorage("cloud-writer").prepareObjectForUpdate(user, cloudDashboard(), classicFPStored)
+		require.True(t, apierrors.IsForbidden(err), "%v", err)
 	})
 
 	t.Run("a user may not create or adopt", func(t *testing.T) {
