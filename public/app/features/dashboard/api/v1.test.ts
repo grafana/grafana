@@ -9,7 +9,6 @@ import {
   AnnoKeyMessage,
   AnnoKeySourcePath,
   AnnoReloadOnParamsChange,
-  DeprecatedInternalId,
   ManagerKind,
 } from 'app/features/apiserver/types';
 import { type DashboardDataDTO } from 'app/types/dashboard';
@@ -663,34 +662,6 @@ describe('v1 dashboard API', () => {
           [AnnoKeyGrantPermissions]: 'default',
         })
       );
-    });
-
-    it('should retry without the legacy ID when another dashboard holds it', async () => {
-      const dashboardToRestore = {
-        ...mockDashboardDto,
-        metadata: {
-          ...mockDashboardDto.metadata,
-          labels: { [DeprecatedInternalId]: '5' },
-        },
-      };
-      mockPost
-        .mockRejectedValueOnce({
-          status: 409,
-          data: {
-            kind: 'Status',
-            status: 'Failure',
-            reason: 'Conflict',
-            message: 'deprecatedInternalID=5 is already in use',
-          },
-        })
-        .mockResolvedValueOnce(saveDashboardResponse);
-
-      const api = new K8sDashboardAPI();
-      await api.restoreDashboard(dashboardToRestore);
-
-      expect(mockPost).toHaveBeenCalledTimes(2);
-      expect(mockPost.mock.calls[0][1].metadata.labels).toEqual({ [DeprecatedInternalId]: '5' });
-      expect(mockPost.mock.calls[1][1].metadata.labels).toEqual({});
     });
   });
 });

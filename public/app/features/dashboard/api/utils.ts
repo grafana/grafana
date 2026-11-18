@@ -1,3 +1,6 @@
+import { omit } from 'lodash';
+
+import { logWarning } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { type Dashboard } from '@grafana/schema';
 import { type Status, type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
@@ -87,28 +90,18 @@ export function isV2DashboardCommand(
   return isDashboardV2Spec(cmd.dashboard);
 }
 
-function buildRestorePayload<T>(
-  dashboard: Resource<T>,
-  options?: { omitDeprecatedInternalId?: boolean }
-): ResourceForCreate<T> {
-  const metadata = {
-    ...dashboard.metadata,
-    resourceVersion: '',
-    annotations: {
-      ...dashboard.metadata.annotations,
-      [AnnoKeyGrantPermissions]: 'default',
+function buildRestorePayload<T>(dashboard: Resource<T>): ResourceForCreate<T> {
+  return {
+    metadata: {
+      ...dashboard.metadata,
+      resourceVersion: '',
+      annotations: {
+        ...dashboard.metadata.annotations,
+        [AnnoKeyGrantPermissions]: 'default',
+      },
     },
+    spec: dashboard.spec,
   };
-
-  // The apiserver only rejects the stale ID when another live dashboard took it, so the
-  // caller retries with this flag instead of dropping the ID on every restore.
-  if (options?.omitDeprecatedInternalId && metadata.labels) {
-    const labels = { ...metadata.labels };
-    delete labels[DeprecatedInternalId];
-    metadata.labels = labels;
-  }
-
-  return { metadata, spec: dashboard.spec };
 }
 
 /**
@@ -123,21 +116,26 @@ export async function restoreDashboardResource<T>(
   client: Pick<ResourceClient<T>, 'create'>,
   dashboard: Resource<T>
 ): Promise<Resource<T>> {
+  const payload = buildRestorePayload(dashboard);
   try {
-    return await client.create(buildRestorePayload(dashboard));
+    return await client.create(payload);
   } catch (error) {
-    if (!isDeprecatedInternalIdConflict(error, dashboard)) {
+    if (!isApiMachineryError(error) || error.data.reason !== 'Conflict') {
       throw error;
     }
-    return await client.create(buildRestorePayload(dashboard, { omitDeprecatedInternalId: true }));
+    // The retry owns this failure, so keep it out of the global error toast.
+    error.isHandled = true;
+    const restored = await client.create({
+      ...payload,
+      metadata: { ...payload.metadata, labels: omit(payload.metadata.labels, DeprecatedInternalId) },
+    });
+    // The restore reports plain success, so this is the only trace that the numeric ID changed.
+    logWarning('Dashboard restored with a new legacy ID', {
+      uid: restored.metadata.name,
+      conflict: error.data.message,
+    });
+    return restored;
   }
-}
-
-function isDeprecatedInternalIdConflict(error: unknown, dashboard: Resource<unknown>): boolean {
-  if (!dashboard.metadata.labels?.[DeprecatedInternalId]) {
-    return false;
-  }
-  return isApiMachineryError(error) && error.data.reason === 'Conflict';
 }
 
 /**

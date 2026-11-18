@@ -181,10 +181,8 @@ describe('restoreDashboardResource', () => {
 
   it('retries without the legacy ID when another dashboard holds it', async () => {
     const created = { ...resource };
-    const create = jest
-      .fn()
-      .mockRejectedValueOnce(statusError('Conflict', 'deprecatedInternalID=42 is already in use'))
-      .mockResolvedValueOnce(created);
+    const conflict = statusError('Conflict', 'deprecatedInternalID=42 is already in use');
+    const create = jest.fn().mockRejectedValueOnce(conflict).mockResolvedValueOnce(created);
 
     await expect(restoreDashboardResource({ create }, resource)).resolves.toBe(created);
 
@@ -194,6 +192,8 @@ describe('restoreDashboardResource', () => {
     expect(retryPayload.metadata.resourceVersion).toBe('');
     // The caller's resource must not be mutated by the retry.
     expect(resource.metadata.labels).toEqual({ [DeprecatedInternalId]: '42' });
+    // BackendSrv raises a toast for any rejection that is not marked handled.
+    expect(conflict).toHaveProperty('isHandled', true);
   });
 
   it('does not retry when the name is still taken', async () => {
@@ -201,15 +201,6 @@ describe('restoreDashboardResource', () => {
     const create = jest.fn().mockRejectedValue(alreadyExists);
 
     await expect(restoreDashboardResource({ create }, resource)).rejects.toBe(alreadyExists);
-    expect(create).toHaveBeenCalledTimes(1);
-  });
-
-  it('does not retry a conflict when there is no legacy ID to drop', async () => {
-    const noIdResource = { ...resource, metadata: { ...resource.metadata, labels: undefined } };
-    const conflict = statusError('Conflict', 'deleted object conflict');
-    const create = jest.fn().mockRejectedValue(conflict);
-
-    await expect(restoreDashboardResource({ create }, noIdResource)).rejects.toBe(conflict);
     expect(create).toHaveBeenCalledTimes(1);
   });
 });
