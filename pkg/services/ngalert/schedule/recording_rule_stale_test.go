@@ -286,7 +286,7 @@ func TestRecordingRuleStaleMarkers(t *testing.T) {
 		require.Len(t, h.stale, 2)
 	})
 
-	t.Run("failed marker write does not fail the evaluation and is tried again", func(t *testing.T) {
+	t.Run("failed marker write does not fail the evaluation and is not retried", func(t *testing.T) {
 		h := newStaleHarness(t)
 		h.ev.resp = seriesResponse(a, b)
 		h.tick()
@@ -295,14 +295,15 @@ func TestRecordingRuleStaleMarkers(t *testing.T) {
 		h.failStale = true
 		h.tick()
 		require.Empty(t, h.stale)
+		require.Equal(t, 1, h.staleAttempts)
 		require.Equal(t, "ok", h.rule.Status().Health)
 		require.NoError(t, h.rule.Status().LastError)
 
 		h.failStale = false
-		ts := h.tick()
-		require.Len(t, h.stale, 1)
-		require.Equal(t, markerTime(ts), h.stale[0].t, "the retry uses the later tick, so it is never older than the series' last sample")
-		require.Equal(t, []map[string]string{withRuleLabels(b)}, h.staleSeries(0))
+		h.tick()
+		h.tick()
+		require.Empty(t, h.stale, "b was forgotten with the failed write")
+		require.Equal(t, 1, h.staleAttempts)
 	})
 
 	t.Run("failed marker write is dropped if the series came back", func(t *testing.T) {

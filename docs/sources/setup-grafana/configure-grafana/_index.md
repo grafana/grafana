@@ -2404,10 +2404,6 @@ Set the maximum size, in bytes (estimated from label names and values), of a sin
 
 Set the maximum number of requests of a split recording rule write that may be in flight at once. This setting has no effect unless `max_write_batch_size` is set. The default value of `0` uses the client default. The value must be between `0` and `32`.
 
-#### `stale_marker_max_age`
-
-Set how long Grafana retries a failing stale marker, counted from the first failure and checked on each evaluation. Grafana drops the marker after this time. If a rule's evaluation interval is at least this long, a failing marker is not retried. Markers that the data source rejects for good, such as when the tenant is over its active series limit, are dropped right away. Keep this value above the `lookback-delta` of the data source, which is `5m` by default in Mimir and Prometheus. The default value is `10m`. The value must be positive.
-
 #### `max_tracked_series`
 
 Set the maximum number of series that Grafana remembers for stale markers across all recording rules. After the limit is reached, Grafana still evaluates and writes every series, but new series get no stale marker, and Grafana logs a warning. One million series take roughly 1.2 to 1.5 GiB of memory, which is an estimate. The limit is shared by all organizations and is first come, first served. Set it to `0` for no limit. The default value is `1000000`.

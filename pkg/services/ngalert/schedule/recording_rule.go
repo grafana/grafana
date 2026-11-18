@@ -60,8 +60,6 @@ type recordingRule struct {
 	written writtenSeries
 	held    int
 	budget  *state.SeriesBudget
-	// When a marker for a series in written first failed. Only series that are still retried are here.
-	failedAt map[seriesTarget]map[data.Fingerprint]time.Time
 	// Latest tick an evaluation started for, whether or not it wrote. Only touched from Run.
 	lastTick time.Time
 
@@ -334,13 +332,13 @@ func (r *recordingRule) tryEvaluation(ctx context.Context, ev *Evaluation, logge
 
 	// Markers go first: they are written one ms before the sample, so a marker for a series
 	// that is output again is overridden by the sample instead of conflicting with it.
-	var current, unmarked writtenSeries
+	var current writtenSeries
 	points, pointsErr := writer.PointsFromFrames(ev.rule.Record.Metric, ev.scheduledAt, frames, filteredLabels)
 	if pointsErr != nil {
 		logger.Warn("Failed to read series, stale markers are not tracked for this evaluation", "error", pointsErr)
 	} else {
 		current = newWrittenSeries(ev.rule.Record.TargetDatasourceUID, ev.rule.OrgID, ev.rule.Record.Metric, points)
-		unmarked = r.writeStale(ctx, markerBefore(ev.scheduledAt), current, logger)
+		r.writeStale(ctx, markerBefore(ev.scheduledAt), current, logger)
 	}
 
 	writeStart := r.clock.Now()
@@ -359,7 +357,7 @@ func (r *recordingRule) tryEvaluation(ctx context.Context, ev *Evaluation, logge
 	))
 
 	if pointsErr == nil {
-		r.commitWritten(current.merge(unmarked), logger)
+		r.commitWritten(current, logger)
 	}
 
 	return nil
@@ -388,9 +386,10 @@ func (r *recordingRule) staleOnStop(ctx context.Context) {
 	r.markStale(writeCtx, r.lastTick.Add(time.Millisecond), r.logger)
 }
 
-// markStale stales every remembered series and forgets the ones that were staled.
+// markStale stales every remembered series and forgets all of them.
 func (r *recordingRule) markStale(ctx context.Context, markerAt time.Time, logger log.Logger) {
-	r.commitWritten(r.writeStale(ctx, markerAt, nil, logger), logger)
+	r.writeStale(ctx, markerAt, nil, logger)
+	r.commitWritten(nil, logger)
 }
 
 // commitWritten makes next the remembered series. Room goes back for the series that left
@@ -446,63 +445,20 @@ func (r *recordingRule) untrack(gone writtenSeries) {
 }
 
 // writeStale writes markers at markerAt for the series from the previous evaluation that are
-// not in current, and returns the ones it failed to stale. Those are kept, so the next evaluation
-// tries again unless they came back. A marker that is rejected for good or has failed for longer
-// than the retry age is dropped, and its series is forgotten.
-func (r *recordingRule) writeStale(ctx context.Context, markerAt time.Time, current writtenSeries, logger log.Logger) writtenSeries {
+// not in current. A failed write is logged and counted, and not retried: queries hide the
+// series after the lookback anyway.
+func (r *recordingRule) writeStale(ctx context.Context, markerAt time.Time, current writtenSeries, logger log.Logger) {
 	missing := r.written.missingFrom(current)
-	maxAge := r.cfg.StaleMarkerMaxAge
-	if maxAge <= 0 {
-		maxAge = setting.DefaultStaleMarkerMaxAge
-	}
-
-	var failed, dropped writtenSeries
-	expired := 0
-	failedAt := make(map[seriesTarget]map[data.Fingerprint]time.Time)
-	for target, set := range missing {
-		try := make(seriesSet, len(set))
-		for fp, labels := range set {
-			if since, ok := r.failedAt[target][fp]; ok && markerAt.Sub(since) >= maxAge {
-				dropped = dropped.merge(writtenSeries{target: {fp: labels}})
-				expired++
-				continue
-			}
-			try[fp] = labels
-		}
-		if len(try) == 0 {
-			continue
-		}
-
-		err := r.writer.WriteStale(ctx, target.dsUID, target.name, markerAt, target.orgID, writtenSeries{target: try}.labelSets(target))
+	for target := range missing {
+		err := r.writer.WriteStale(ctx, target.dsUID, target.name, markerAt, target.orgID, missing.labelSets(target))
 		if err == nil {
 			continue
 		}
 
-		failure := classifyMarkerError(err)
-		r.metrics.StaleMarkerFailures.WithLabelValues(failure.reason).Add(float64(len(try)))
-		logger.Warn("Failed to write stale markers", "metric", target.name, "series", len(try), "reason", failure.reason, "retry", failure.retry, "error", err)
-		if !failure.retry {
-			r.metrics.StaleMarkersDropped.WithLabelValues(failure.reason).Add(float64(len(try)))
-			dropped = dropped.merge(writtenSeries{target: try})
-			continue
-		}
-		failed = failed.merge(writtenSeries{target: try})
-		failedAt[target] = make(map[data.Fingerprint]time.Time, len(try))
-		for fp := range try {
-			since, ok := r.failedAt[target][fp]
-			if !ok {
-				since = markerAt
-			}
-			failedAt[target][fp] = since
-		}
+		reason := markerFailureReason(err)
+		r.metrics.StaleMarkerFailures.WithLabelValues(reason).Add(float64(len(missing[target])))
+		logger.Warn("Failed to write stale markers", "metric", target.name, "series", len(missing[target]), "reason", reason, "error", err)
 	}
-
-	if expired > 0 {
-		r.metrics.StaleMarkersDropped.WithLabelValues(markerReasonExpired).Add(float64(expired))
-	}
-	r.failedAt = failedAt
-	r.untrack(dropped)
-	return failed
 }
 
 func (r *recordingRule) buildAndExecutePipeline(ctx context.Context, evalCtx eval.EvaluationContext, ev *Evaluation, logger log.Logger) (*backend.QueryDataResponse, error) {

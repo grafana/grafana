@@ -35,7 +35,6 @@ type Scheduler struct {
 	PrometheusImportedRules             *prometheus.GaugeVec
 	PluginOriginRules                   *prometheus.GaugeVec
 	StaleMarkerFailures                 *prometheus.CounterVec
-	StaleMarkersDropped                 *prometheus.CounterVec
 	RecordingRuleTrackedSeries          prometheus.Gauge
 	RecordingRuleUntrackedSeries        prometheus.Counter
 }
@@ -221,16 +220,7 @@ func NewSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 				Namespace: Namespace,
 				Subsystem: Subsystem,
 				Name:      "recording_rule_stale_marker_failures_total",
-				Help:      "The number of series whose stale marker failed to write, by reason.",
-			},
-			[]string{"reason"},
-		),
-		StaleMarkersDropped: promauto.With(r).NewCounterVec(
-			prometheus.CounterOpts{
-				Namespace: Namespace,
-				Subsystem: Subsystem,
-				Name:      "recording_rule_stale_markers_dropped_total",
-				Help:      "The number of series whose stale marker was given up on, by reason.",
+				Help:      "The number of series whose stale marker failed to write, by reason. Failed markers are not retried.",
 			},
 			[]string{"reason"},
 		),

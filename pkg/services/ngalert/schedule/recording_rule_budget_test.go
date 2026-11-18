@@ -18,7 +18,7 @@ import (
 )
 
 // assertAccounting checks the invariant behind the budget: a rule holds one slot per remembered
-// series, failed markers waiting for a retry included.
+// series.
 func (h *staleHarness) assertAccounting() {
 	h.t.Helper()
 	require.Equal(h.t, h.rule.written.size(), h.rule.held, "held is the number of remembered series")
@@ -145,37 +145,17 @@ func TestRecordingRuleSeriesBudget(t *testing.T) {
 	})
 
 	t.Run("every way a series is forgotten gives its room back", func(t *testing.T) {
-		stale := foreignError{"temporarily unavailable"}
-
 		for name, run := range map[string]func(t *testing.T, h *staleHarness){
 			"vanished and marked": func(t *testing.T, h *staleHarness) {
 				h.ev.resp = seriesResponse(instance("a"))
 				h.tick()
 				require.EqualValues(t, 1, h.rule.budget.Used())
 			},
-			"marker rejected for good": func(t *testing.T, h *staleHarness) {
-				h.failStale, h.staleErr = true, foreignError{"err-mimir-max-active-series"}
+			"marker write fails": func(t *testing.T, h *staleHarness) {
+				h.failStale, h.staleErr = true, foreignError{"temporarily unavailable"}
 				h.ev.resp = seriesResponse(instance("a"))
 				h.tick()
-				require.EqualValues(t, 1, h.rule.budget.Used(), "b is dropped, not retained")
-			},
-			"retry age reached": func(t *testing.T, h *staleHarness) {
-				h.rule.cfg.StaleMarkerMaxAge = 2 * time.Minute
-				h.failStale, h.staleErr = true, stale
-				h.ev.resp = seriesResponse(instance("a"))
-				h.tick()
-				require.EqualValues(t, 2, h.rule.budget.Used(), "a failed marker still holds its room")
-				h.tick()
-				h.tick()
-				require.EqualValues(t, 1, h.rule.budget.Used())
-			},
-			"the series comes back": func(t *testing.T, h *staleHarness) {
-				h.failStale, h.staleErr = true, stale
-				h.ev.resp = seriesResponse(instance("a"))
-				h.tick()
-				h.ev.resp = seriesResponse(instance("a"), instance("b"))
-				h.tick()
-				require.EqualValues(t, 2, h.rule.budget.Used())
+				require.EqualValues(t, 1, h.rule.budget.Used(), "b is forgotten with the failed write")
 			},
 			"no data": func(t *testing.T, h *staleHarness) {
 				h.ev.resp = noDataResponse()
@@ -275,7 +255,7 @@ func TestRecordingRuleSeriesBudgetReleasedWhenRunStops(t *testing.T) {
 				h.ev.resp = seriesResponse(instance("a"))
 				h.failStale, h.staleErr = true, foreignError{"temporarily unavailable"}
 				evaluate()
-				require.EqualValues(t, 2, budget.Used(), "b is kept for a retry and holds its room")
+				require.EqualValues(t, 1, budget.Used(), "b was forgotten with the failed marker write")
 
 				h.failStale = markersFail
 				h.rule.Stop(reason)
@@ -305,18 +285,4 @@ func TestRecordingRuleTrackedSeriesGaugeFollowsStops(t *testing.T) {
 	h.stop(context.Canceled)
 	require.EqualValues(t, 1, budget.Used())
 	require.EqualValues(t, 1, gauge(), "the gauge is updated when a rule stops, without another evaluation")
-}
-
-func TestRecordingRuleTrackedSeriesGaugeFollowsDrops(t *testing.T) {
-	h := newStaleHarness(t)
-	h.rule.budget = state.NewSeriesBudget(10)
-	h.ev.resp = seriesResponse(instance("a"), instance("b"))
-	h.tick()
-
-	h.ev.resp = seriesResponse(instance("a"))
-	h.failStale, h.staleErr = true, foreignError{"err-mimir-max-active-series"}
-	h.failWrite = true
-	h.tick()
-	require.EqualValues(t, 1, h.rule.budget.Used(), "b was dropped even though the data write failed")
-	require.EqualValues(t, 1, testutil.ToFloat64(h.rule.metrics.RecordingRuleTrackedSeries), "and the gauge says so")
 }
