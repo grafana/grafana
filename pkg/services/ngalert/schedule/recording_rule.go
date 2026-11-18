@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/writer"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -53,11 +54,17 @@ type recordingRule struct {
 	writer      RecordingWriter
 
 	// Series from the last successful evaluation, to stale the ones that go missing.
+	// Every series in it, and only those, holds one slot of budget, so held is its size
+	// and the budget's Used is the sum of held over all rules sharing it. Change written
+	// only through commitWritten and untrack, so the two cannot drift.
 	written writtenSeries
+	held    int
+	budget  *state.SeriesBudget
 	// When a marker for a series in written first failed. Only series that are still retried are here.
 	failedAt map[seriesTarget]map[data.Fingerprint]time.Time
 	// Keeps a rule that fails every tick from logging every tick.
 	failureLog logThrottle
+	budgetLog  logThrottle
 	// Latest tick an evaluation started for, whether or not it wrote. Only touched from Run.
 	lastTick time.Time
 
@@ -81,10 +88,15 @@ func newRecordingRule(
 	metrics *metrics.Scheduler,
 	tracer tracing.Tracer,
 	writer RecordingWriter,
+	budget *state.SeriesBudget,
 	evalAppliedHook evalAppliedFunc,
 	stopAppliedHook stopAppliedFunc,
 ) *recordingRule {
 	ctx, stop := util.WithCancelCause(ngmodels.WithRuleKey(parent, key.AlertRuleKey))
+	if budget == nil {
+		budget = state.NewSeriesBudget(0)
+	}
+
 	return &recordingRule{
 		key:                 key,
 		ctx:                 ctx,
@@ -104,6 +116,7 @@ func newRecordingRule(
 		metrics:             metrics,
 		tracer:              tracer,
 		writer:              writer,
+		budget:              budget,
 	}
 }
 
@@ -155,6 +168,7 @@ func (r *recordingRule) Run() error {
 	r.logger.Debug("Recording rule routine started")
 
 	defer r.stopApplied()
+	defer r.untrack(r.written)
 
 	for {
 		select {
@@ -347,7 +361,7 @@ func (r *recordingRule) tryEvaluation(ctx context.Context, ev *Evaluation, logge
 	))
 
 	if pointsErr == nil {
-		r.written = current.merge(unmarked)
+		r.commitWritten(current.merge(unmarked), markerBefore(ev.scheduledAt), logger)
 	}
 
 	return nil
@@ -378,7 +392,60 @@ func (r *recordingRule) staleOnStop(ctx context.Context) {
 
 // markStale stales every remembered series and forgets the ones that were staled.
 func (r *recordingRule) markStale(ctx context.Context, markerAt time.Time, logger log.Logger) {
-	r.written = r.writeStale(ctx, markerAt, nil, logger)
+	r.commitWritten(r.writeStale(ctx, markerAt, nil, logger), markerAt, logger)
+}
+
+// commitWritten makes next the remembered series. Room goes back for the series that left
+// before new ones ask for it, so a series that replaces another fits in a full budget.
+// A new series that finds the budget full is not remembered, so it gets no marker later.
+func (r *recordingRule) commitWritten(next writtenSeries, at time.Time, logger log.Logger) {
+	var leaving writtenSeries
+	for target, set := range r.written {
+		for fp, labels := range set {
+			if !next.contains(target, fp) {
+				leaving = leaving.merge(writtenSeries{target: {fp: labels}})
+			}
+		}
+	}
+	r.untrack(leaving)
+
+	untracked := 0
+	for target, set := range next {
+		for fp := range set {
+			if r.written.contains(target, fp) {
+				continue
+			}
+			if r.budget.Admit() {
+				r.held++
+				continue
+			}
+			delete(set, fp)
+			untracked++
+		}
+		if len(set) == 0 {
+			delete(next, target)
+		}
+	}
+	r.written = next
+
+	if untracked > 0 {
+		r.metrics.RecordingRuleUntrackedSeries.Add(float64(untracked))
+		if suppressed, ok := r.budgetLog.allow(at); ok {
+			logger.Warn("Series limit for stale markers reached, new series get no marker", "untracked", untracked, "tracked", r.held, "suppressed", suppressed)
+		}
+	}
+	r.metrics.RecordingRuleTrackedSeries.Set(float64(r.budget.Used()))
+}
+
+// untrack forgets the series in gone, which must be in written, and returns their room.
+func (r *recordingRule) untrack(gone writtenSeries) {
+	n := gone.size()
+	if n == 0 {
+		return
+	}
+	r.written.remove(gone)
+	r.held -= n
+	r.budget.Release(n)
 }
 
 // writeStale writes markers at markerAt for the series from the previous evaluation that are
@@ -439,7 +506,7 @@ func (r *recordingRule) writeStale(ctx context.Context, markerAt time.Time, curr
 		r.metrics.StaleMarkersDropped.WithLabelValues(markerReasonExpired).Add(float64(expired))
 	}
 	r.failedAt = failedAt
-	r.written.remove(dropped)
+	r.untrack(dropped)
 	return failed
 }
 

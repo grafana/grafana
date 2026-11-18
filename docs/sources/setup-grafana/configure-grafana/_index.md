@@ -2408,6 +2408,10 @@ Set the maximum number of requests of a split recording rule write that may be i
 
 Set how long Grafana retries a failing stale marker. Grafana drops the marker after this time. Markers that the data source rejects for good, such as when the tenant is over its active series limit, are dropped right away. Keep this value above the query lookback of the data source, which is `5m` by default in Mimir and Prometheus. The default value is `10m`. The value must be positive.
 
+#### `max_tracked_series`
+
+Set the maximum number of series that Grafana remembers for stale markers across all recording rules. Once the limit is reached, Grafana still evaluates and writes every series, but new series get no stale marker, and Grafana logs a warning at most every five minutes. One million series take roughly 1.2 to 1.5 GiB of memory, which is an estimate. The limit is shared by all organizations and is first come, first served. Set it to `0` for no limit. The default value is `1000000`.
+
 <hr>
 
 ### `[annotations]`

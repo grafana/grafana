@@ -93,6 +93,7 @@ type schedule struct {
 	disableGrafanaFolder bool
 	jitterEvaluations    JitterStrategy
 	rrCfg                setting.RecordingRuleSettings
+	seriesBudget         *state.SeriesBudget
 
 	metrics *metrics.Scheduler
 
@@ -138,6 +139,10 @@ type SchedulerCfg struct {
 	RecordingWriter        RecordingWriter
 	RuleStopReasonProvider AlertRuleStopReasonProvider
 	FeatureToggles         featuremgmt.FeatureToggles
+
+	// SeriesBudget caps the series tracked for stale markers by all recording rules of this scheduler.
+	// nil counts them without a limit.
+	SeriesBudget *state.SeriesBudget
 }
 
 // NewScheduler returns a new scheduler.
@@ -165,6 +170,7 @@ func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager) *schedule {
 		disableGrafanaFolder:   cfg.DisableGrafanaFolder,
 		jitterEvaluations:      cfg.JitterEvaluations,
 		rrCfg:                  cfg.RecordingRulesCfg,
+		seriesBudget:           cfg.SeriesBudget,
 		stateManager:           stateManager,
 		minRuleInterval:        cfg.MinRuleInterval,
 		schedulableAlertRules:  alertRulesRegistry{rules: make(map[ngmodels.AlertRuleKey]*ngmodels.AlertRule)},
@@ -323,6 +329,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 		sch.tracer,
 		sch.featureToggles,
 		sch.recordingWriter,
+		sch.seriesBudget,
 		sch.evalAppliedFunc,
 		sch.stopAppliedFunc,
 	)

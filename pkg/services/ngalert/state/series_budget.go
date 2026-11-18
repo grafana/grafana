@@ -21,6 +21,8 @@ func (b *SeriesBudget) Child(limit int64) *SeriesBudget {
 }
 
 // Admit reserves room for one series. It returns false when the budget, or its parent, is full.
+// A child counts its reservation before the parent answers, so under contention its limit is a
+// soft cap: a concurrent Admit can be refused for room that is about to come back.
 func (b *SeriesBudget) Admit() bool {
 	if b == nil {
 		return true

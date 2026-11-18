@@ -67,6 +67,7 @@ func newRuleFactory(
 	tracer tracing.Tracer,
 	featureToggles featuremgmt.FeatureToggles,
 	recordingWriter RecordingWriter,
+	seriesBudget *state.SeriesBudget,
 	evalAppliedHook evalAppliedFunc,
 	stopAppliedHook stopAppliedFunc,
 ) ruleFactoryFunc {
@@ -83,6 +84,7 @@ func newRuleFactory(
 				met,
 				tracer,
 				recordingWriter,
+				seriesBudget,
 				evalAppliedHook,
 				stopAppliedHook,
 			)

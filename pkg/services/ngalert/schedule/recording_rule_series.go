@@ -100,6 +100,19 @@ func (s writtenSeries) merge(other writtenSeries) writtenSeries {
 	return s
 }
 
+func (s writtenSeries) contains(target seriesTarget, fp data.Fingerprint) bool {
+	_, ok := s[target][fp]
+	return ok
+}
+
+func (s writtenSeries) size() int {
+	n := 0
+	for _, set := range s {
+		n += len(set)
+	}
+	return n
+}
+
 // remove forgets the series in other.
 func (s writtenSeries) remove(other writtenSeries) {
 	for target, set := range other {

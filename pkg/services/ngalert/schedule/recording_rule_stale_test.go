@@ -66,6 +66,8 @@ type staleHarness struct {
 	// staleErr is returned instead of a generic error while failStale is set.
 	staleErr      error
 	staleAttempts int
+	// peers share this harness' budget, so the budget counts their series too.
+	peers []*staleHarness
 
 	cancelParent context.CancelFunc
 }
@@ -123,6 +125,7 @@ func newStaleHarness(t *testing.T) *staleHarness {
 		&dsAgnosticWriter{FakeWriter: fake},
 		nil,
 		nil,
+		nil,
 	)
 	return h
 }
@@ -152,6 +155,7 @@ func (h *staleHarness) tick() time.Time {
 	h.t.Helper()
 	h.now = h.now.Add(time.Minute)
 	h.rule.doEvaluate(context.Background(), &Evaluation{scheduledAt: h.now, rule: h.model})
+	h.assertAccounting()
 	return h.now
 }
 
