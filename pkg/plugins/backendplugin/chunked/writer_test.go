@@ -407,7 +407,7 @@ func TestProcessTypedResponsePreservesErrorSource(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			cause := errors.New("query failed")
-			var queryErr error = cause
+			queryErr := cause
 			if tc.embeddedSource != "" {
 				queryErr = backend.NewErrorWithSource(queryErr, tc.embeddedSource)
 			}
