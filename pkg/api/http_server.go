@@ -456,6 +456,9 @@ func (w *customErrorLogger) Write(msg []byte) (int, error) {
 	return len(msg), nil
 }
 
+// httpShutdownGracePeriod is how long in-flight requests get to finish on shutdown.
+const httpShutdownGracePeriod = 10 * time.Second
+
 func (hs *HTTPServer) Run(ctx context.Context) error {
 	hs.context = ctx
 
@@ -506,8 +509,18 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 	// handle http shutdown on server context done
 	wg.Go(func() {
 		<-ctx.Done()
-		if err := hs.httpSrv.Shutdown(context.Background()); err != nil {
-			hs.log.Error("Failed to shutdown server", "error", err)
+		// Long-running requests, such as watches opened by in-process clients,
+		// stay active until their own context is cancelled, and that only
+		// happens after this server has stopped. Waiting for them without a
+		// bound would block shutdown forever, so close what is left after the
+		// grace period.
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), httpShutdownGracePeriod)
+		defer cancel()
+		if err := hs.httpSrv.Shutdown(shutdownCtx); err != nil {
+			hs.log.Warn("Graceful shutdown did not complete, closing remaining connections", "error", err)
+			if err := hs.httpSrv.Close(); err != nil {
+				hs.log.Error("Failed to close server", "error", err)
+			}
 		}
 	})
 
