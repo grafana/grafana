@@ -38,8 +38,8 @@ export interface SearchQuery {
   // `create` means the user can create dashboards in the folder
   permission?: PermissionLevel | 'create';
   deleted?: boolean;
-  // Dashboard lifecycle filter. 'draft' returns only drafts, 'all' includes them; unset uses the server default
-  lifecycle?: 'draft' | 'all';
+  // Dashboard lifecycle filter. 'draft' returns only drafts; unset uses the server default
+  lifecycle?: 'draft';
   // Same as from, but as we have 2 different searcher backends, one uses from and the other offset
   offset?: number;
 }

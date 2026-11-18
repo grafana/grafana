@@ -174,7 +174,6 @@ describe('Unified Storage Searcher', () => {
 
   it.each([
     { lifecycle: 'draft' as const, expected: 'draft' },
-    { lifecycle: 'all' as const, expected: 'all' },
     { lifecycle: undefined, expected: null },
   ])('sends lifecycle=$expected when the query lifecycle is $lifecycle', async ({ lifecycle, expected }) => {
     const sent: Array<string | null> = [];
