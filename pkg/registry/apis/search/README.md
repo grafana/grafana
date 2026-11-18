@@ -598,27 +598,6 @@ errors instead of implementing a separate fallback.
 The storage service authorizes individual results in both modes. Its embedding
 query rate limit applies only when semantic search is enabled (429 when exceeded).
 
-#### Migrate dashboard hybrid search clients
-
-The former `GET /apis/dashboard.grafana.app/v0alpha1/namespaces/{namespace}/search/hybrid` is no longer served.
-Send dashboard hybrid searches to `POST /apis/dashboard.grafana.app/v0alpha1/namespaces/{namespace}/dashboards/search/hybrid` with a JSON body:
-
-```json
-{
-  "apiVersion": "search.grafana.app/v0alpha1",
-  "kind": "HybridSearchQuery",
-  "query": "cpu",
-  "limit": 10
-}
-```
-
-`limit` is optional.
-Read results from the response's `items` array instead of the former `hits` array.
-Before deploying the backend release that removes the GET route, verify that the deployed frontend uses the POST route.
-Check available traffic for older clients.
-The dashboard search UI keeps its classic search fallback when hybrid search is missing or unavailable.
-If older clients fail after deployment, revert the backend change or restore the previous backend release to restore the GET route.
-
 ### Search across resources
 
 Deploy hybrid eligibility checks to all search-api instances before setting

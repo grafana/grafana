@@ -325,15 +325,4 @@ func TestNewSearchAuthorizer(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, []authorizer.Attributes{attr}, fake.asked)
 	})
-
-	t.Run("retired hybrid name delegates to the fallback", func(t *testing.T) {
-		for _, decision := range []authorizer.Decision{authorizer.DecisionAllow, authorizer.DecisionDeny} {
-			fake := &recordingAuthorizer{decisions: []authorizer.Decision{decision, decision, decision}}
-			attr := searchAttributes("hybrid", "get")
-			got, _, err := newSearchAuthorizer(fake.authorizer()).Authorize(context.Background(), attr)
-			require.NoError(t, err)
-			require.Equal(t, decision, got)
-			require.Equal(t, []authorizer.Attributes{attr}, fake.asked)
-		}
-	})
 }

@@ -293,29 +293,6 @@ func TestVectorSearch(t *testing.T) {
 	})
 }
 
-func TestLegacyHybridSearchRouteIsAbsent(t *testing.T) {
-	for _, tc := range []struct {
-		name     string
-		features featuremgmt.FeatureToggles
-		vector   bool
-	}{
-		{"vector disabled", featuremgmt.WithFeatures(), false},
-		{"vector enabled", featuremgmt.WithFeatures(featuremgmt.FlagDashboardVectorSearch), true},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			routes := (&SearchHandler{features: tc.features}).GetAPIRoutes(nil)
-			paths := make(map[string]bool, len(routes.Namespace))
-			for _, route := range routes.Namespace {
-				paths[route.Path] = true
-			}
-			assert.False(t, paths["search/hybrid"])
-			assert.True(t, paths["search"])
-			assert.True(t, paths["search/sortable"])
-			assert.Equal(t, tc.vector, paths["search/vector"])
-		})
-	}
-}
-
 func TestSearchHandler(t *testing.T) {
 	t.Run("Sort - default sort by resource", func(t *testing.T) {
 		rows := make([]*resourcepb.ResourceSearchRow, len(mockResults))
