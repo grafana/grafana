@@ -17,7 +17,9 @@ export const variableCompletionOptions: VariableCompletionOptions = {
 };
 
 /** Autocompletion for the reducer in `${__data.fields.x:reduce:<id>}`. Replaces only the id. */
-export function reducerCompletion(context: CodeMirrorCompletionContext): CodeMirrorCompletionResult | null {
+export function reducerCompletion(
+  context: Pick<CodeMirrorCompletionContext, 'matchBefore'>
+): CodeMirrorCompletionResult | null {
   const match = context.matchBefore(REDUCER_ID_BEFORE_CURSOR);
   if (!match) {
     return null;

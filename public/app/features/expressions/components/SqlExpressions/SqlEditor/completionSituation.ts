@@ -1,9 +1,9 @@
+import { type CompletionContext } from '@codemirror/autocomplete';
 import { syntaxTree } from '@codemirror/language';
 import { type EditorState } from '@codemirror/state';
 import { type SyntaxNode } from '@lezer/common';
 
 import { unquoteIdentifier } from '@grafana/sql';
-import { type CodeMirrorCompletionContext } from '@grafana/ui/unstable';
 
 import { SQL_EXPRESSIONS_DIALECT } from '../../../utils/sqlIdentifier';
 
@@ -84,7 +84,7 @@ export type SqlCompletionSituation =
  * Turns the SQL parser's shallow token stream into the editor situation used to choose completions.
  */
 export function getSqlCompletionSituation(
-  context: CodeMirrorCompletionContext,
+  context: CompletionContext,
   word: CompletionWord | null
 ): SqlCompletionSituation {
   const statement = getStatementAtCursor(context);
@@ -220,7 +220,7 @@ function getStateNodeText(state: EditorState, node: SyntaxNode): string {
   return state.doc.sliceString(node.from, node.to);
 }
 
-function getStatementAtCursor(context: CodeMirrorCompletionContext): SyntaxNode | null {
+function getStatementAtCursor(context: CompletionContext): SyntaxNode | null {
   const tree = syntaxTree(context.state);
   const pos = Math.min(context.pos, context.state.doc.length);
   let node: SyntaxNode | null = tree.resolveInner(pos, -1);
@@ -254,11 +254,7 @@ function getStatementAtOrBefore(node: SyntaxNode, pos: number): SyntaxNode | nul
   return candidate;
 }
 
-function getCurrentSelectSegmentChildren(
-  context: CodeMirrorCompletionContext,
-  statement: SyntaxNode,
-  pos: number
-): SyntaxNode[] {
+function getCurrentSelectSegmentChildren(context: CompletionContext, statement: SyntaxNode, pos: number): SyntaxNode[] {
   const children = getStatementChildren(statement);
   let segmentStart = 0;
   let segmentEnd = children.length;
@@ -286,7 +282,7 @@ function getCurrentSelectSegmentChildren(
 }
 
 function getQualifiedColumnContext(
-  context: CodeMirrorCompletionContext,
+  context: CompletionContext,
   statement: SyntaxNode
 ): QualifiedColumnContext | undefined {
   const compositeIdentifier = getCompositeIdentifierAtCursor(context, statement);
@@ -315,10 +311,7 @@ function getQualifiedColumnContext(
   };
 }
 
-function getCompositeIdentifierAtCursor(
-  context: CodeMirrorCompletionContext,
-  statement: SyntaxNode
-): SyntaxNode | null {
+function getCompositeIdentifierAtCursor(context: CompletionContext, statement: SyntaxNode): SyntaxNode | null {
   let node: SyntaxNode | null = syntaxTree(context.state).resolveInner(context.pos, -1);
 
   while (node && node !== statement) {
@@ -335,7 +328,7 @@ function getCompositeIdentifierAtCursor(
 /**
  * Extracts table refs and aliases from FROM/JOIN tokens in the parsed statement.
  */
-function getTableRefs(context: CodeMirrorCompletionContext, children: SyntaxNode[]): TableRef[] {
+function getTableRefs(context: CompletionContext, children: SyntaxNode[]): TableRef[] {
   const tableRefs: TableRef[] = [];
 
   for (let index = 0; index < children.length; index++) {
@@ -360,7 +353,7 @@ function getTableRefs(context: CodeMirrorCompletionContext, children: SyntaxNode
 }
 
 function readFromTableRefs(
-  context: CodeMirrorCompletionContext,
+  context: CompletionContext,
   children: SyntaxNode[],
   startIndex: number,
   tableRefs: TableRef[]
@@ -394,7 +387,7 @@ function readFromTableRefs(
 }
 
 function readTableRefAt(
-  context: CodeMirrorCompletionContext,
+  context: CompletionContext,
   children: SyntaxNode[],
   index: number
 ): { tableRef: TableRef; nextIndex: number } | undefined {
@@ -414,7 +407,7 @@ function readTableRefAt(
 }
 
 function readAliasAt(
-  context: CodeMirrorCompletionContext,
+  context: CompletionContext,
   children: SyntaxNode[],
   index: number
 ): { alias?: string; nextIndex: number } {
@@ -456,7 +449,7 @@ function getUniqueTables(tableRefs: TableRef[]): string[] {
 }
 
 function isTableCompletionPosition(
-  context: CodeMirrorCompletionContext,
+  context: CompletionContext,
   statementChildren: SyntaxNode[],
   completionFrom: number
 ): boolean {
@@ -474,7 +467,7 @@ function isTableCompletionPosition(
  * Detects cursor positions before FROM where unqualified SELECT-list columns are useful.
  */
 function isSelectListCompletionPosition(
-  context: CodeMirrorCompletionContext,
+  context: CompletionContext,
   statementChildren: SyntaxNode[],
   completionFrom: number
 ): boolean {
@@ -500,15 +493,11 @@ function isSelectListCompletionPosition(
   return hasSelectBeforeCursor;
 }
 
-function isAfterStatementTerminator(
-  context: CodeMirrorCompletionContext,
-  statementChildren: SyntaxNode[],
-  pos: number
-): boolean {
+function isAfterStatementTerminator(context: CompletionContext, statementChildren: SyntaxNode[], pos: number): boolean {
   return isStatementTerminator(context, getPreviousStatementChild(statementChildren, pos));
 }
 
-function isInFromSection(context: CodeMirrorCompletionContext, statementChildren: SyntaxNode[], pos: number): boolean {
+function isInFromSection(context: CompletionContext, statementChildren: SyntaxNode[], pos: number): boolean {
   let hasFrom = false;
 
   for (const child of statementChildren) {
@@ -567,18 +556,18 @@ function isIdentifierNode(node: SyntaxNode | undefined): node is SyntaxNode {
   return node !== undefined && SQL_IDENTIFIER_NODE_NAMES.has(node.name);
 }
 
-function isComma(context: CodeMirrorCompletionContext, node: SyntaxNode | undefined): boolean {
+function isComma(context: CompletionContext, node: SyntaxNode | undefined): boolean {
   return node?.name === SQL_PUNCTUATION_NODE_NAME && getNodeText(context, node) === ',';
 }
 
-function isStatementTerminator(context: CodeMirrorCompletionContext, node: SyntaxNode | undefined): boolean {
+function isStatementTerminator(context: CompletionContext, node: SyntaxNode | undefined): boolean {
   return node ? getNodeText(context, node) === SQL_STATEMENT_TERMINATOR : false;
 }
 
-function getKeywordText(context: CodeMirrorCompletionContext, node: SyntaxNode | undefined): string {
+function getKeywordText(context: CompletionContext, node: SyntaxNode | undefined): string {
   return node?.name === SQL_KEYWORD_NODE_NAME ? getNodeText(context, node).toUpperCase() : '';
 }
 
-function getNodeText(context: CodeMirrorCompletionContext, node: SyntaxNode): string {
+function getNodeText(context: CompletionContext, node: SyntaxNode): string {
   return context.state.doc.sliceString(node.from, node.to);
 }

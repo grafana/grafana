@@ -9,6 +9,7 @@ import { t } from '@grafana/i18n';
 import { useTheme2 } from '../../themes/ThemeContext';
 import { Alert } from '../Alert/Alert';
 
+import { adaptSignatureHelp } from './providerAdapters';
 import { signatureHelp } from './signatureHelp';
 import { createCodeEditorTheme } from './theme';
 import { isThemeOverrides } from './themeOverrides';
@@ -68,6 +69,7 @@ export function useCodeMirrorSetup(props: BaseCodeEditorProps): CodeMirrorSetup 
     'aria-label': ariaLabel,
     'aria-labelledby': ariaLabelledby,
     signatureHelp: signatureHelpProvider,
+    publicSignatureHelp,
     placeholder,
     extensions: additionalExtensionsProp,
     theme: themeProp,
@@ -92,10 +94,10 @@ export function useCodeMirrorSetup(props: BaseCodeEditorProps): CodeMirrorSetup 
   const basicSetup = useShallowStable(basicSetupProp);
 
   const completionExtensions = useCompletionExtensions(props);
-  const signatureHelpExtension = useMemo(
-    () => (signatureHelpProvider ? [signatureHelp(signatureHelpProvider, { theme })] : []),
-    [signatureHelpProvider, theme]
-  );
+  const signatureHelpExtension = useMemo(() => {
+    const provider = publicSignatureHelp ? adaptSignatureHelp(publicSignatureHelp) : signatureHelpProvider;
+    return provider ? [signatureHelp(provider, { theme })] : [];
+  }, [signatureHelpProvider, publicSignatureHelp, theme]);
 
   const editorRef = useRef<ReactCodeMirrorRef>(null);
   const handleChange = useStableCallback(onChange);

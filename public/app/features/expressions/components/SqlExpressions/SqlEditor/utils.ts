@@ -1,10 +1,11 @@
+import {
+  type Completion,
+  type CompletionContext,
+  type CompletionResult,
+  type CompletionSource,
+} from '@codemirror/autocomplete';
+
 import { unquoteIdentifier } from '@grafana/sql';
-import type {
-  CodeMirrorCompletion,
-  CodeMirrorCompletionContext,
-  CodeMirrorCompletionResult,
-  CodeMirrorCompletionSource,
-} from '@grafana/ui/unstable';
 
 import { SQL_EXPRESSIONS_DIALECT } from '../../../utils/sqlIdentifier';
 
@@ -37,7 +38,7 @@ export interface SqlCompletionProvider {
 /**
  * Builds the CodeMirror completion source and selects the suggestion set from the cursor context.
  */
-export function getSqlCompletionSource(completionProvider: SqlCompletionProvider): CodeMirrorCompletionSource {
+export function getSqlCompletionSource(completionProvider: SqlCompletionProvider): CompletionSource {
   return async (context) => {
     const word = context.matchBefore(SQL_WORD_PATTERN);
     const situation = getSqlCompletionSituation(context, word);
@@ -92,7 +93,7 @@ interface CompletionItemGroup {
   fallbackKind: SqlCompletionKind;
 }
 
-function toCodeMirrorCompletionResult(from: number, groups: CompletionItemGroup[]): CodeMirrorCompletionResult {
+function toCodeMirrorCompletionResult(from: number, groups: CompletionItemGroup[]): CompletionResult {
   return {
     from,
     options: toCodeMirrorCompletions(groups),
@@ -101,10 +102,10 @@ function toCodeMirrorCompletionResult(from: number, groups: CompletionItemGroup[
 }
 
 function toPinnedCodeMirrorCompletionResult(
-  context: CodeMirrorCompletionContext,
+  context: CompletionContext,
   from: number,
   groups: CompletionItemGroup[]
-): CodeMirrorCompletionResult {
+): CompletionResult {
   const filterText = getCompletionFilterText(context, from);
   const options = toCodeMirrorCompletions(groups).filter((completion) =>
     matchesCompletionFilter(completion, filterText)
@@ -119,11 +120,11 @@ function toPinnedCodeMirrorCompletionResult(
   };
 }
 
-function toCodeMirrorCompletions(groups: CompletionItemGroup[]): CodeMirrorCompletion[] {
+function toCodeMirrorCompletions(groups: CompletionItemGroup[]): Completion[] {
   return groups.flatMap(({ items, fallbackKind }) => items.map((item) => toCodeMirrorCompletion(item, fallbackKind)));
 }
 
-function toCodeMirrorCompletion(item: SqlCompletionItem, fallbackKind: SqlCompletionKind): CodeMirrorCompletion {
+function toCodeMirrorCompletion(item: SqlCompletionItem, fallbackKind: SqlCompletionKind): Completion {
   const kind = item.kind ?? fallbackKind;
 
   return {
@@ -136,11 +137,11 @@ function toCodeMirrorCompletion(item: SqlCompletionItem, fallbackKind: SqlComple
   };
 }
 
-function getCompletionFilterText(context: CodeMirrorCompletionContext, from: number): string {
+function getCompletionFilterText(context: CompletionContext, from: number): string {
   return context.state.doc.sliceString(from, context.pos).toLowerCase();
 }
 
-function matchesCompletionFilter(completion: CodeMirrorCompletion, filterText: string): boolean {
+function matchesCompletionFilter(completion: Completion, filterText: string): boolean {
   if (!filterText) {
     return true;
   }

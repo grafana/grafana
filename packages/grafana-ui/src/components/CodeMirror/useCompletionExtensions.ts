@@ -3,13 +3,19 @@ import { EditorState, Prec } from '@codemirror/state';
 import { keymap } from '@codemirror/view';
 import { useMemo } from 'react';
 
+import { adaptCompletionSource } from './providerAdapters';
 import { type BaseCodeEditorProps, type CodeMirrorExtension } from './types';
 import { useShallowStable } from './useStableProps';
 import { createVariableCompletionSource } from './variableCompletion';
 
 type CompletionProps = Pick<
   BaseCodeEditorProps,
-  'completionSources' | 'completionMode' | 'completeOnSpace' | 'variableSuggestions' | 'variableCompletionOptions'
+  | 'completionSources'
+  | 'publicCompletionSources'
+  | 'completionMode'
+  | 'completeOnSpace'
+  | 'variableSuggestions'
+  | 'variableCompletionOptions'
 >;
 
 const autocompleteSpaceKeymap = Prec.highest(
@@ -31,22 +37,25 @@ const autocompleteSpaceKeymap = Prec.highest(
 
 export function useCompletionExtensions({
   completionSources,
+  publicCompletionSources,
   completionMode = 'merge',
   completeOnSpace = false,
   variableSuggestions: variableSuggestionsProp,
   variableCompletionOptions: variableCompletionOptionsProp,
 }: CompletionProps): CodeMirrorExtension[] {
   const sources = useShallowStable(completionSources);
+  const publicSources = useShallowStable(publicCompletionSources);
   const variableSuggestions = useShallowStable(variableSuggestionsProp);
   const variableCompletionOptions = useShallowStable(variableCompletionOptionsProp);
   const allSources = useMemo(
     () => [
       ...(sources ?? []),
+      ...(publicSources?.map(adaptCompletionSource) ?? []),
       ...(variableSuggestions?.length
         ? [createVariableCompletionSource(variableSuggestions, variableCompletionOptions)]
         : []),
     ],
-    [sources, variableSuggestions, variableCompletionOptions]
+    [sources, publicSources, variableSuggestions, variableCompletionOptions]
   );
 
   return useMemo(() => {

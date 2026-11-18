@@ -65,16 +65,13 @@ Include `&` in a nested selector to refer to its parent. For example,
 Keep `signatureHelp` providers stable between renders, for example with
 `useMemo`. A new provider reconfigures the editor.
 
-Grafana creates the CodeMirror objects passed to callbacks. In plugins, read
-text and cursor positions through the arguments directly, for example with
-`state.sliceDoc()`, `context.pos`, and `context.matchBefore()`. Helpers that
-look up state fields or depend on class identity, such as `syntaxTree(state)`,
-need to come from the same CodeMirror instance as the state. If your plugin
-needs its own parser, pass it the document text.
+Completion and signature-help providers receive a read-only context with
+`pos` and `sliceDoc()`. Completion providers also receive `matchBefore()` and
+an `AbortSignal` for cancelling async work.
 
-A completion option can use a string as its `apply` value to replace the
-matched range. A function passed as `apply` receives Grafana's editor view
-and can use its methods directly.
+Return completion options with a replacement range. Grafana inserts an
+option's `insertText` and falls back to its `label` when `insertText` is empty
+or omitted.
 
 ## Props
 

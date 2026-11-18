@@ -1,16 +1,17 @@
 import { sql as sqlLanguage } from '@codemirror/lang-sql';
+import { ensureSyntaxTree } from '@codemirror/language';
 import { EditorState } from '@codemirror/state';
 import { render } from '@testing-library/react';
 
-import { type SignatureHelpProvider } from '@grafana/ui/unstable';
+import { type InternalCodeMirrorEditorProps } from '@grafana/ui/internal';
 
 import { SqlEditor } from './SqlEditor';
 
-let editorProps: Record<string, unknown> | undefined;
+let editorProps: InternalCodeMirrorEditorProps | undefined;
 
-jest.mock('@grafana/ui/unstable', () => ({
-  ...jest.requireActual('@grafana/ui/unstable'),
-  CodeMirrorEditor: (props: Record<string, unknown>) => {
+jest.mock('@grafana/ui/internal', () => ({
+  ...jest.requireActual('@grafana/ui/internal'),
+  InternalCodeMirrorEditor: (props: InternalCodeMirrorEditorProps) => {
     editorProps = props;
     return <div className="cm-scroller" />;
   },
@@ -36,9 +37,10 @@ describe('SqlEditor', () => {
       />
     );
 
-    const provider = editorProps?.signatureHelp as SignatureHelpProvider;
     const state = EditorState.create({ doc: 'SELECT round(', extensions: [sqlLanguage()] });
-    expect(provider(state, state.doc.length)?.signatures.map((signature) => signature.name)).toEqual(['round']);
+    expect(ensureSyntaxTree(state, state.doc.length, 5000)).not.toBeNull();
+    const help = editorProps?.signatureHelp?.(state.update({}).state, state.doc.length);
+    expect(help?.signatures.map((signature) => signature.name)).toEqual(['round']);
   });
 
   it('omits signature help when there are no function signatures', () => {

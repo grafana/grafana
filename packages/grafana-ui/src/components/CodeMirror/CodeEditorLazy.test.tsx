@@ -5,15 +5,18 @@ import userEvent from '@testing-library/user-event';
 import { VariableOrigin } from '@grafana/data';
 
 import { CodeMirrorEditor, InternalCodeMirrorEditor } from './CodeEditorLazy';
-import { type CodeMirrorEditorProps, type SignatureHelpProvider } from './types';
+import { type CodeMirrorCompletionContext, type CodeMirrorEditorProps, type SignatureHelpProvider } from './types';
 
 const signature =
   (name: string): SignatureHelpProvider =>
-  () => ({
-    signatures: [{ name, parameters: [{ label: 'value' }], documentation: `${name} documentation` }],
-    activeSignature: 0,
-    activeParameter: 0,
-  });
+  ({ sliceDoc }) =>
+    sliceDoc() === 'round(1)'
+      ? {
+          signatures: [{ name, parameters: [{ label: 'value' }], documentation: `${name} documentation` }],
+          activeSignature: 0,
+          activeParameter: 0,
+        }
+      : null;
 
 describe('CodeMirrorEditor', () => {
   it('ignores raw extensions, so one from another copy of CodeMirror cannot break the editor', async () => {
@@ -31,6 +34,58 @@ describe('CodeMirrorEditor', () => {
     render(<CodeMirrorEditor value="" onChange={jest.fn()} placeholder="Write a query" />);
 
     expect(await screen.findByText('Write a query')).toBeInTheDocument();
+  });
+
+  it('applies a completion described through the public context and result', async () => {
+    const user = userEvent.setup();
+    const nativeApply = jest.fn();
+    const source = jest.fn(({ matchBefore, sliceDoc, pos }: CodeMirrorCompletionContext) => {
+      const word = matchBefore(/\w+$/);
+      if (!word || sliceDoc(word.from, pos) !== 'ma') {
+        return null;
+      }
+
+      return {
+        from: word.from,
+        options: [{ label: 'max', insertText: 'max(value)', apply: nativeApply }],
+      };
+    });
+    render(<CodeMirrorEditor value="ma" onChange={jest.fn()} completionMode="override" completionSources={[source]} />);
+    const textbox = await screen.findByRole('textbox');
+    await user.click(textbox);
+    await user.keyboard('{End}{Control>} {/Control}');
+
+    const option = await screen.findByRole('option', { selected: true });
+    expect(option).toHaveTextContent(/^max$/);
+    const context = source.mock.calls[0][0];
+    expect(context).not.toHaveProperty('state');
+    expect(context).not.toHaveProperty('view');
+
+    await user.click(option);
+    expect(textbox).toHaveTextContent('max(value)');
+    expect(nativeApply).not.toHaveBeenCalled();
+  });
+
+  it('signals cancellation to an abandoned async completion provider', async () => {
+    const user = userEvent.setup();
+    const source = jest.fn(
+      ({ signal }: CodeMirrorCompletionContext) =>
+        new Promise<null>((_resolve, reject) => {
+          signal.addEventListener('abort', () => reject(signal.reason), { once: true });
+        })
+    );
+    render(
+      <CodeMirrorEditor value="abc" onChange={jest.fn()} completionMode="override" completionSources={[source]} />
+    );
+    const textbox = await screen.findByRole('textbox');
+    await user.click(textbox);
+    await user.keyboard('{End}{Control>} {/Control}');
+    await waitFor(() => expect(source).toHaveBeenCalled());
+    const { signal } = source.mock.calls[0][0];
+    expect(signal.aborted).toBe(false);
+
+    await user.keyboard('{Home}');
+    await waitFor(() => expect(signal.aborted).toBe(true));
   });
 
   it('updates and removes signature help on the same mounted editor', async () => {

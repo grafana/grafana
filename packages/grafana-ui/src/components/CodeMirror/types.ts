@@ -1,4 +1,4 @@
-import type { Completion, CompletionContext, CompletionResult, CompletionSource } from '@codemirror/autocomplete';
+import { type CompletionSource } from '@codemirror/autocomplete';
 import { type EditorState, type Extension } from '@codemirror/state';
 import { type BasicSetupOptions } from '@uiw/react-codemirror';
 import { type ReactNode } from 'react';
@@ -7,17 +7,41 @@ import { type VariableSuggestion } from '@grafana/data';
 
 import { type CODE_MIRROR_LANGUAGES } from './languages';
 
-export type CodeMirrorCompletion = Completion;
-export type CodeMirrorCompletionContext = CompletionContext;
-export type CodeMirrorCompletionResult = CompletionResult;
+export interface CodeMirrorProviderContext {
+  readonly pos: number;
+  sliceDoc(from?: number, to?: number): string;
+}
 
-/**
- * Receives Grafana's completion context. Plugin sources can use its methods
- * directly, such as `context.matchBefore()` and `context.state.sliceDoc()`.
- * Helpers that look up state fields must use the same CodeMirror instance as
- * the editor state.
- */
-export type CodeMirrorCompletionSource = CompletionSource;
+export interface CodeMirrorCompletionContext extends CodeMirrorProviderContext {
+  readonly explicit: boolean;
+  readonly signal: AbortSignal;
+  matchBefore(pattern: RegExp): { from: number; to: number; text: string } | null;
+}
+
+export interface CodeMirrorCompletion {
+  label: string;
+  /** Replacement text. An empty or omitted value uses the label. */
+  insertText?: string;
+  detail?: string;
+  info?: string;
+  type?: string;
+  boost?: number;
+}
+
+export interface CodeMirrorCompletionResult {
+  from: number;
+  /** The end of the replacement range. Defaults to the cursor position. */
+  to?: number;
+  options: readonly CodeMirrorCompletion[];
+  /** Set to false when the source has already filtered and ordered the options. */
+  filter?: boolean;
+  /** Reuse these options while the replacement text matches this pattern and filtering is enabled. */
+  validFor?: RegExp;
+}
+
+export type CodeMirrorCompletionSource = (
+  context: CodeMirrorCompletionContext
+) => CodeMirrorCompletionResult | null | Promise<CodeMirrorCompletionResult | null>;
 
 export type CodeMirrorExtension = Extension;
 
@@ -154,12 +178,10 @@ export interface SignatureHelp {
   activeParameter: number;
 }
 
-/**
- * Computes signature help for the cursor position, or `null` when none applies.
- * Plugin providers can read the document with `state.sliceDoc()`. Helpers such
- * as `syntaxTree` must use the same CodeMirror instance as the editor state.
- */
-export type SignatureHelpProvider = (state: EditorState, pos: number) => SignatureHelp | null;
+/** Computes signature help for the cursor position, or `null` when none applies. */
+export type SignatureHelpProvider = (context: CodeMirrorProviderContext) => SignatureHelp | null;
+
+export type NativeSignatureHelpProvider = (state: EditorState, pos: number) => SignatureHelp | null;
 
 /** How a suggestion is presented in the completion list. */
 export interface VariableCompletionDisplay {
@@ -309,15 +331,18 @@ export interface CodeMirrorEditorProps {
   loadingFallback?: ReactNode;
 }
 
-export interface BaseCodeEditorProps extends Omit<CodeMirrorEditorProps, 'theme' | 'basicSetup' | 'loadingFallback'> {
+export interface InternalCodeMirrorEditorProps
+  extends Omit<CodeMirrorEditorProps, 'theme' | 'basicSetup' | 'completionSources' | 'signatureHelp'> {
   /** Extensions layered on top of the editor's defaults. */
   extensions?: CodeMirrorExtension[];
   /** Style overrides merged into Grafana's theme, or a theme extension that replaces it. */
   theme?: CodeMirrorThemeOverrides | CodeMirrorExtension;
   basicSetup?: boolean | BasicSetupOptions;
+  completionSources?: readonly CompletionSource[];
+  signatureHelp?: NativeSignatureHelpProvider;
 }
 
-export interface InternalCodeMirrorEditorProps extends BaseCodeEditorProps {
-  /** Rendered while the editor bundle loads. */
-  loadingFallback?: ReactNode;
+export interface BaseCodeEditorProps extends Omit<InternalCodeMirrorEditorProps, 'loadingFallback'> {
+  publicCompletionSources?: readonly CodeMirrorCompletionSource[];
+  publicSignatureHelp?: SignatureHelpProvider;
 }

@@ -1,4 +1,6 @@
-import { type SignatureHelp, type SignatureHelpProvider } from '@grafana/ui/unstable';
+import { type EditorState } from '@codemirror/state';
+
+import { type SignatureHelp } from '@grafana/ui/unstable';
 
 import { getEnclosingFunctionCall } from './completionSituation';
 
@@ -19,10 +21,10 @@ export interface SqlFunctionSignature {
  * function signatures. Detection of the enclosing call is delegated to the SQL
  * syntax tree so the editor itself stays language-agnostic.
  */
-export function getSqlSignatureHelpProvider(signatures: SqlFunctionSignature[]): SignatureHelpProvider {
+export function getSqlSignatureHelpProvider(signatures: SqlFunctionSignature[]) {
   const signaturesByName = new Map(signatures.map((signature) => [signature.name.toLowerCase(), signature]));
 
-  return (state, pos) => {
+  return (state: EditorState, pos: number): SignatureHelp | null => {
     const call = getEnclosingFunctionCall(state, pos);
 
     if (!call) {

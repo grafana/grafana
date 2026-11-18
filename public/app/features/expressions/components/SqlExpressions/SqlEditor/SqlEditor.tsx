@@ -3,7 +3,8 @@ import { useCallback, useMemo, type ReactNode } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
-import { CodeMirrorEditor, type CodeMirrorSqlDialect } from '@grafana/ui/unstable';
+import { InternalCodeMirrorEditor } from '@grafana/ui/internal';
+import { type CodeMirrorSqlDialect } from '@grafana/ui/unstable';
 
 import { SQL_EXPRESSIONS_DIALECT } from '../../../utils/sqlIdentifier';
 
@@ -66,7 +67,7 @@ export const SqlEditor = ({
   return (
     <>
       <div className={styles.editorBorder}>
-        <CodeMirrorEditor
+        <InternalCodeMirrorEditor
           language="sql"
           sqlDialect={dialect}
           value={value}

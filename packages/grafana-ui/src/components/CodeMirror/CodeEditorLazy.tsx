@@ -70,7 +70,15 @@ function LazyEditor({ loadingFallback, ...props }: BaseCodeEditorProps & { loadi
 }
 
 export function CodeMirrorEditor(props: CodeMirrorEditorProps) {
-  return <LazyEditor {...toBaseProps(props)} loadingFallback={props.loadingFallback} />;
+  const { completionSources, signatureHelp, ...editorProps } = toBaseProps(props);
+  return (
+    <LazyEditor
+      {...editorProps}
+      publicCompletionSources={completionSources}
+      publicSignatureHelp={signatureHelp}
+      loadingFallback={props.loadingFallback}
+    />
+  );
 }
 
 export function InternalCodeMirrorEditor(props: InternalCodeMirrorEditorProps) {

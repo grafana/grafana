@@ -1,20 +1,20 @@
-import { insertCompletionText } from '@codemirror/autocomplete';
+import {
+  type Completion,
+  type CompletionContext,
+  type CompletionResult,
+  insertCompletionText,
+} from '@codemirror/autocomplete';
 import { type EditorState } from '@codemirror/state';
 
 import { type VariableSuggestion } from '@grafana/data';
 
-import {
-  type CodeMirrorCompletion,
-  type CodeMirrorCompletionContext,
-  type CodeMirrorCompletionResult,
-  type VariableCompletionOptions,
-} from './types';
+import { type VariableCompletionOptions } from './types';
 
 // The rest of a braced reference the cursor sits inside: the remainder of the
 // name, an optional `:format` suffix, then the closing brace.
 const BRACED_TAIL_PATTERN = /^[\w.:]*\}/;
 
-type CompletionApply = NonNullable<Exclude<CodeMirrorCompletion['apply'], string>>;
+type CompletionApply = NonNullable<Exclude<Completion['apply'], string>>;
 
 function escapeForCharClass(char: string): string {
   return char.replace(/[\\\]^-]/g, '\\$&');
@@ -66,7 +66,7 @@ export function applyVariableReference(text: string): CompletionApply {
 export function createVariableCompletionSource(
   suggestions: readonly VariableSuggestion[],
   options: VariableCompletionOptions = {}
-): (context: CodeMirrorCompletionContext) => CodeMirrorCompletionResult | null {
+): (context: CompletionContext) => CompletionResult | null {
   const {
     separators = [],
     getInsertText = (suggestion: VariableSuggestion) => `\${${suggestion.value}}`,
@@ -74,14 +74,14 @@ export function createVariableCompletionSource(
   } = options;
   const triggerPattern = buildTriggerPattern(separators);
 
-  const toCompletion = (suggestion: VariableSuggestion): CodeMirrorCompletion => ({
+  const toCompletion = (suggestion: VariableSuggestion): Completion => ({
     ...toDisplay(suggestion),
     info: suggestion.documentation,
     apply: applyVariableReference(getInsertText(suggestion)),
     type: 'variable',
   });
 
-  return (context: CodeMirrorCompletionContext): CodeMirrorCompletionResult | null => {
+  return (context: CompletionContext): CompletionResult | null => {
     if (suggestions.length === 0) {
       return null;
     }
