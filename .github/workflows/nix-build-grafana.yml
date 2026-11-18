@@ -21,6 +21,7 @@ jobs:
       matrix: ${{ steps.matrix.outputs.matrix }}
       any-jobs: ${{ steps.matrix.outputs.any-jobs }}
       manifest-version: ${{ steps.matrix.outputs.manifest-version }}
+      tarballs: ${{ steps.tarballs.outputs.targets }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -47,6 +48,14 @@ jobs:
         with:
           flake: .#ciJobs
           nix-eval-jobs: nix run --inputs-from . nixpkgs#nix-eval-jobs --
+      - name: List tarball packages
+        id: tarballs
+        run: |
+          targets=$(nix eval --json .#packages.x86_64-linux --apply '
+            packages: builtins.filter (name: builtins.match "tarball-.+" name != null)
+              (builtins.attrNames packages)
+          ')
+          printf 'targets=%s\n' "$targets" >> "$GITHUB_OUTPUT"
 
   build:
     needs: eval
@@ -84,8 +93,12 @@ jobs:
       !cancelled() && needs.eval.result == 'success' &&
       (needs.build.result == 'success' ||
       (needs.build.result == 'skipped' && needs.eval.outputs.any-jobs == 'false'))
-    name: Package release tarballs
+    name: Package ${{ matrix.tarball }}
     runs-on: ubuntu-x64-large
+    strategy:
+      fail-fast: false
+      matrix:
+        tarball: ${{ fromJSON(needs.eval.outputs.tarballs) }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -106,11 +119,13 @@ jobs:
           wait-manifest-version: ${{ needs.eval.outputs.manifest-version }}
           # Keep the cache available for component outputs. Archives go to the artifact store.
           read-only: 'true'
-      - name: Build release tarballs
-        run: nix build -L .#release-tarballs
+      - name: Build release tarball
+        env:
+          TARBALL: ${{ matrix.tarball }}
+        run: nix build -L ".#$TARBALL"
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
-          name: grafana-nix-tarballs
+          name: grafana-nix-${{ matrix.tarball }}
           path: result/*.tar.gz
           if-no-files-found: error
           compression-level: 0
