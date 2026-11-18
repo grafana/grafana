@@ -189,14 +189,22 @@ func (c *ClientV2) QueryChunkedData(ctx context.Context, req *backend.QueryChunk
 	}
 
 	sizes := responsesize.FromContext(ctx)
+	received := false
 	for {
 		chunk, err := stream.Recv()
 		if err != nil {
 			if errors.Is(err, io.EOF) {
 				return nil
 			}
+			// A server stream reports the status of the plugin at the first Recv, not when it opens.
+			// The fallback is safe only before a chunk reached the writer.
+			if !received && status.Code(err) == codes.Unimplemented {
+				c.chunkUnimplemented.Store(true)
+				return c.queryChunkedDataFacade(ctx, req, w)
+			}
 			return err
 		}
+		received = true
 		sizes.AddChunk(chunk)
 
 		if isRaw {

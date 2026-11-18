@@ -1072,6 +1072,12 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 	_, err = dashboardsSection.NewKey("min_refresh_interval", "10s")
 	require.NoError(t, err)
 
+	if opts.PendingDeletionResourceEnabled {
+		section, err := getOrCreateSection("folder")
+		require.NoError(t, err)
+		_, err = section.NewKey("pending_deletion_resource_enabled", "true")
+		require.NoError(t, err)
+	}
 	if opts.APIServerRuntimeConfig != "" {
 		section, err := getOrCreateSection("grafana-apiserver")
 		require.NoError(t, err)
@@ -1248,6 +1254,9 @@ type GrafanaOpts struct {
 	MigrationParquetBuffer      bool
 	MigrationChunkMaxBytes      int64
 	EnableSQLKVBackend          bool
+
+	PendingDeletionResourceEnabled bool
+
 	// ProvisioningKeysOnlyReList sets [provisioning] keys_only_relist, making the
 	// connection informer's periodic re-list ask storage for keys instead of whole
 	// objects. Off by default, matching the shipped default.
