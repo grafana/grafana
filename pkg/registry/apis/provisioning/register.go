@@ -64,6 +64,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/usage"
+	"github.com/grafana/grafana/pkg/router"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -394,9 +395,12 @@ func RegisterAPIService(
 		return nil, fmt.Errorf("invalid [provisioning] resources configuration: %w", err)
 	}
 	supportedResources := resources.NewSupportedResourceProvider(configured)
-	manifestWatcher := resource.NewLocalManifestWatcher(manifests, nil, supportedResources.Update, cfg.Logger)
-	if err := manifestWatcher.StartAsync(ctx); err != nil {
-		return nil, fmt.Errorf("failed to start manifest watcher: %w", err)
+	// The router always publishes the manifests, but it serves their groups only as middleware.
+	if router.MiddlewareEnabled(cfg, features) {
+		manifestWatcher := resource.NewLocalManifestWatcher(manifests, nil, supportedResources.Update, cfg.Logger)
+		if err := manifestWatcher.StartAsync(ctx); err != nil {
+			return nil, fmt.Errorf("failed to start manifest watcher: %w", err)
+		}
 	}
 
 	jobHistoryConfig := createJobHistoryConfigFromSettings(cfg)

@@ -1,6 +1,7 @@
 package manifestkinds
 
 import (
+	"slices"
 	"testing"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -19,7 +21,7 @@ import (
 func TestIntegrationProvisioning_ManifestKind(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := runGrafana(t)
+	helper := runGrafana(t, featuremgmt.FlagGrafanaUseRouterMiddleware)
 
 	t.Run("settings list the kind that the manifest enables", func(t *testing.T) {
 		// The manifests are read in the background, after the router publishes them.
@@ -51,4 +53,20 @@ func TestIntegrationProvisioning_ManifestKind(t *testing.T) {
 		require.Equal(t, "from the repository", foo)
 		require.Equal(t, repo, got.GetAnnotations()[utils.AnnoKeyManagerIdentity])
 	})
+}
+
+// Without the router middleware, Grafana does not serve the groups of the app plugins. A kind of
+// a manifest is then not provisionable, because no export or sync can reach it.
+func TestIntegrationProvisioning_ManifestKindWithoutRouterMiddleware(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := runGrafana(t)
+
+	// The router publishes its manifests a few seconds after the start.
+	require.Never(t, func() bool {
+		settings := &provisioning.RepositoryViewList{}
+		result := helper.AdminREST.Get().Namespace("default").Resource("settings").Do(t.Context())
+		return result.Error() == nil && result.Into(settings) == nil &&
+			slices.Contains(settings.AvailableResources, provisioning.SupportedResource{Group: testAppGroup, Kind: "Thing"})
+	}, 10*time.Second, time.Second)
 }

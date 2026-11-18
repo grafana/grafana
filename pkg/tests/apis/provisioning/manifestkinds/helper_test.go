@@ -14,7 +14,6 @@ import (
 
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	grafanafs "github.com/grafana/grafana/pkg/infra/fs"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
@@ -33,13 +32,10 @@ func TestMain(m *testing.M) {
 
 // runGrafana starts Grafana with the test app plugin installed. The manifest of the plugin opts
 // the Thing kind in to provisioning, and not the Widget kind.
-func runGrafana(t *testing.T) *common.ProvisioningTestHelper {
+func runGrafana(t *testing.T, features ...string) *common.ProvisioningTestHelper {
 	t.Helper()
 	return common.RunGrafana(t, func(opts *testinfra.GrafanaOpts) {
-		opts.EnableFeatureToggles = append(opts.EnableFeatureToggles,
-			featuremgmt.FlagApppluginsRegisterAPIServer,
-			featuremgmt.FlagGrafanaUseRouterMiddleware,
-		)
+		opts.EnableFeatureToggles = append(opts.EnableFeatureToggles, features...)
 		opts.UnifiedStorageConfig["app."+testAppID] = setting.UnifiedStorageConfig{DualWriterMode: grafanarest.Mode5}
 
 		// The router finds the plugin in the plugins directory, so the directory exists before the start.
