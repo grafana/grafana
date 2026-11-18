@@ -12,7 +12,12 @@ import {
   type QueryVariableKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
-import { AnnoKeyDashboardSnapshotOriginalUrl, AnnoKeyUseCrossDashboardVariables } from 'app/features/apiserver/types';
+import {
+  AnnoKeyDashboardSnapshotOriginalUrl,
+  AnnoKeyUseCrossDashboardVariables,
+  LabelKeyLifecycle,
+  LifecycleDraft,
+} from 'app/features/apiserver/types';
 import { type SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
 import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/DashboardMigrator';
 
@@ -1384,6 +1389,44 @@ describe('DashboardSceneSerializer', () => {
           annotations: expect.any(Map),
         });
         expect(serializer.getDSReferencesMapping().panels.size).toBe(0);
+      });
+    });
+  });
+
+  describe('setK8SLabels', () => {
+    it('replaces the v1 labels and keeps the other k8s metadata', () => {
+      const serializer = new V1DashboardSerializer();
+      serializer.metadata = {
+        canSave: true,
+        k8s: { name: 'dash-1', annotations: { a: '1' }, labels: { team: 'a', [LabelKeyLifecycle]: LifecycleDraft } },
+      };
+
+      serializer.setK8SLabels({ team: 'a' });
+
+      expect(serializer.metadata).toEqual({
+        canSave: true,
+        k8s: { name: 'dash-1', annotations: { a: '1' }, labels: { team: 'a' } },
+      });
+    });
+
+    it('replaces the v2 labels and keeps the other metadata', () => {
+      const serializer = new V2DashboardSerializer();
+      serializer.metadata = {
+        name: 'dash-1',
+        resourceVersion: '7',
+        creationTimestamp: '2023-01-01T00:00:00Z',
+        annotations: { a: '1' },
+        labels: { team: 'a', [LabelKeyLifecycle]: LifecycleDraft },
+      };
+
+      serializer.setK8SLabels({ team: 'a' });
+
+      expect(serializer.metadata).toEqual({
+        name: 'dash-1',
+        resourceVersion: '7',
+        creationTimestamp: '2023-01-01T00:00:00Z',
+        annotations: { a: '1' },
+        labels: { team: 'a' },
       });
     });
   });

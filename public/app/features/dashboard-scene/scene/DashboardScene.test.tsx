@@ -37,7 +37,13 @@ import { type Spec as DashboardV2Spec, type VariableKind } from '@grafana/schema
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { appEvents } from 'app/core/app_events';
 import { LS_PANEL_COPY_KEY, LS_STYLES_COPY_KEY } from 'app/core/constants';
-import { AnnoKeyManagerKind, AnnoKeyUseCrossDashboardVariables, ManagerKind } from 'app/features/apiserver/types';
+import {
+  AnnoKeyManagerKind,
+  AnnoKeyUseCrossDashboardVariables,
+  LabelKeyLifecycle,
+  LifecycleDraft,
+  ManagerKind,
+} from 'app/features/apiserver/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { type DecoratedRevisionModel } from 'app/features/dashboard/types/revisionModels';
 import { setDesktopViewport, setMobileViewport } from 'app/features/dashboard-scene/utils/mobileViewportTestUtils';
@@ -2604,6 +2610,45 @@ describe('DashboardScene', () => {
       const filters = sceneGraph.lookupVariable('filters', scene);
       expect(filters).toBeInstanceOf(AdHocFiltersVariable);
       await waitFor(() => expect(filters?.state).toMatchObject({ supportsMultiValueOperators: true }));
+    });
+  });
+
+  describe('Lifecycle draft labels', () => {
+    const draftLabels = { team: 'a', [LabelKeyLifecycle]: LifecycleDraft };
+
+    function buildDraftScene() {
+      const scene = buildTestScene({ meta: { k8s: { labels: draftLabels } } });
+      scene.serializer.metadata = { k8s: { labels: draftLabels } };
+      return scene;
+    }
+
+    it.each([
+      { desc: 'the lifecycle label is draft', labels: draftLabels, expected: true },
+      { desc: 'the lifecycle label has another value', labels: { [LabelKeyLifecycle]: 'published' }, expected: false },
+      { desc: 'there is no lifecycle label', labels: { team: 'a' }, expected: false },
+    ])('isDraft returns $expected when $desc', ({ labels, expected }) => {
+      const scene = buildTestScene({ meta: { k8s: { labels } } });
+
+      expect(scene.isDraft()).toBe(expected);
+    });
+
+    it('sends the new labels on the next save after setK8sLabels', () => {
+      const scene = buildDraftScene();
+
+      scene.setK8sLabels({ team: 'a' });
+
+      expect(scene.serializer.getK8SMetadata()?.labels).toEqual({ team: 'a' });
+      expect(scene.isDraft()).toBe(false);
+    });
+
+    it('keeps the labels from setK8sLabels when later edits are discarded', () => {
+      const scene = buildDraftScene();
+      scene.onEnterEditMode();
+
+      scene.setK8sLabels({ team: 'a' });
+      scene.exitEditMode({ skipConfirm: true, restoreInitialState: true });
+
+      expect(scene.state.meta.k8s?.labels).toEqual({ team: 'a' });
     });
   });
 
