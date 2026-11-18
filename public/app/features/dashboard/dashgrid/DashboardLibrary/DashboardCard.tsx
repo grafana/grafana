@@ -204,6 +204,7 @@ function DashboardCardComponent({
             }
           >
             <IconButton
+              variant="primary"
               name="ellipsis-v"
               aria-label={t('dashboard-library.card.more-actions-label', 'More actions for {{title}}', { title })}
             />

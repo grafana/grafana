@@ -1500,9 +1500,29 @@
         "records": "Kayıtlar",
         "to": "hedef"
       },
+      "recording-rule-actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "view": ""
+      },
       "recording-rules": {
         "folder-rules-error": "",
         "folders-error": "",
+        "header": {
+          "new-rule": ""
+        },
         "load-more-rules-in-folder": "",
         "loading-folders": "",
         "no-rules": "Kayıt kuralı bulunamadı",
@@ -1579,10 +1599,17 @@
         "view-list": "Liste",
         "wildcard-in-text": "Arama metni * veya % içeremez."
       },
+      "sequence-drawer": {
+        "alert-rules": "",
+        "error": "",
+        "interval": "",
+        "missing-rule": "",
+        "recording-rules": "",
+        "this-rule": "",
+        "title": ""
+      },
       "sequence-pill": {
-        "label": "",
         "label-with-interval": "",
-        "tooltip": "",
         "tooltip-with-interval": ""
       },
       "shared": {
@@ -1805,17 +1832,18 @@
         "autosync-rules-error-title": "Kurallar içe aktarılamadı",
         "autosync-rules-imported-note": "Seçtiğiniz uyarı kuralları da içe aktarıldı.",
         "autosync-rules-note": "Seçtiğiniz uyarı kuralları da içe aktarılacak.",
-        "autosync-success-body": "Otomatik eşitleme etkinleştirildi. Yönlendiriliyor...",
+        "autosync-success-body": "",
         "autosync-success-title": "Otomatik eşitleme etkinleştirildi",
         "autosync-title": "Otomatik eşitlemeyi onayla",
         "body": "İçe aktarma işlemini başlatmak istediğinizden emin misiniz? Bu eylem, Grafana Alerting'de yeni kaynaklar oluşturacaktır.",
         "confirm": "İçe aktarmayı başlat",
+        "continue": "",
         "error-body": "",
         "error-details": "",
         "error-title": "İçe Aktarılamadı",
         "importing-body": "Kaynaklar Grafana Alerting'e aktarılıyor. Lütfen bekleyin...",
         "importing-title": "İçe aktarılıyor...",
-        "success-body": "Kaynaklar başarıyla içe aktarıldı. Yönlendiriliyor...",
+        "success-body": "",
         "success-title": "İçe Aktarıldı",
         "title": "İçe aktarmayı onayla"
       },
@@ -2400,6 +2428,7 @@
       "contact-points": "İletişim noktaları",
       "notification-policies": "Bildirim politikaları",
       "recently-deleted": "Son silinenler",
+      "recording-rules": "",
       "templates": "Şablonlar",
       "time-intervals": "Zaman aralıkları"
     },
@@ -6218,8 +6247,7 @@
       }
     },
     "get-var-mapping-option-overrides": {
-      "defaults": "",
-      "rule": ""
+      "uses-variables": ""
     },
     "inspect": {
       "data-tab": "Veri",
@@ -6414,9 +6442,6 @@
       "only-overrides-button-tooltip": "Sadece geçersiz kılmaları göster",
       "placeholder-search-options": "Arama seçenekleri",
       "visualization-button-tooltip": "Arama seçenekleri"
-    },
-    "panel-editor": {
-      "ad-hoc-transformations-disabled": "Düzenleme modunda geçici dönüştürmeler devre dışı"
     },
     "plan-building-overlay": {
       "quip-corners": "Panel köşeleri düzeltiliyor...",
@@ -7702,11 +7727,7 @@
       "usage-count_other": "{{count}} panoda kullanılıyor"
     },
     "lifecycle": {
-      "applied": "Değişiklikleriniz {{title}} panosuna uygulandı",
-      "apply": "Uygula",
-      "apply-body": "Erişimi olan herkes bunları görecek. Önceki sürümü sürüm geçmişinden geri yükleyebilirsiniz.",
-      "apply-failed": "Değişiklikler uygulanamadı. Yeniden deneyin ya da önce karşılaştırın.",
-      "apply-needs-edit": "\"{{title}}\" ögesine uygulama işlemi yapabilmek için düzenleme erişimi gerekir. Bu değişiklikleri ön izleyebilirsiniz ancak uygulayamazsınız.",
+      "ask-assistant-to-update": "",
       "breadcrumb-draft": "Taslak",
       "breadcrumb-pending-changes": "Bekleyen değişiklikler",
       "change-added": "Eklendi",
@@ -7738,7 +7759,6 @@
       "draft-discarded": "",
       "draft-title": "Taslak",
       "edited-dashboard": "",
-      "highlight-changes": "Panodaki değişiklikleri vurgula",
       "pending-body": "Bekleyen değişiklikler ön izleniyor. Yalnızca siz görebilirsiniz.",
       "pending-body-source": "Bekleyen değişiklikler {{source}} ön izleniyor. Yalnızca siz görebilirsiniz.",
       "pending-changes-changed": "",
@@ -7747,13 +7767,16 @@
       "pending-stale": "Değişiklikleriniz yapıldıktan sonra pano güncellendi",
       "pending-title": "Bekleyen değişiklikler",
       "preview-changes": "Değişiklikleri ön izle",
-      "rebase": "Yeniden temelle",
       "record-pending-change-failed": "",
       "save": "Kaydet",
+      "save-failed": "",
+      "save-needs-permission": "",
+      "save-pending-body": "",
+      "save-pending-failed": "",
+      "saved-pending": "",
       "show-original-dashboard": "Orijinal panoyu göster",
-      "stop-highlighting-changes": "Değişiklikleri vurgulamayı durdur",
-      "apply-title_one": "\"{{title}}\" üzerinde {{count}} değişiklik uygulansın mı?",
-      "apply-title_other": "\"{{title}}\" üzerinde {{count}} değişiklik uygulansın mı?"
+      "save-pending-title_one": "",
+      "save-pending-title_other": ""
     },
     "link-edit-actions": {
       "add-link": "Bağlantı ekle",
@@ -8005,6 +8028,12 @@
       "confirmText-restore-version": "Evet, {{version}} sürümüne geri yükle",
       "title-restore-version": "Sürümü geri yükle"
     },
+    "row-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-row-settings": ""
+    },
     "sandbox-consent": {
       "allow": "İzin ver",
       "allow-tooltip": "Bu sekmeyi kapatana kadar, listelenen panellerdeki seçili kaynaklardan içerik yükle.",
@@ -8200,6 +8229,12 @@
       "switch-options": "Düğme seçenekleri",
       "value-pair-type": "Değer çifti türü",
       "value-pair-type-description": "Düğme durumları için kullanılacak değer türünü seçin"
+    },
+    "tab-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-tab-settings": ""
     },
     "text-box-variable": {
       "name-default-value": "Varsayılan değer"
@@ -13445,6 +13480,31 @@
     }
   },
   "navigation": {
+    "assistant-toolbar-button": {
+      "arrange-window": "",
+      "assistant-page": "",
+      "bottom": "",
+      "floating": "",
+      "left": "",
+      "menu": "",
+      "move": "",
+      "navigation-assistant-page": "",
+      "navigation-page-assistant": "",
+      "navigation-page-assistant-below": "",
+      "navigation-page-floating-assistant": "",
+      "page-assistant": "",
+      "page-assistant-below": "",
+      "page-floating-assistant": "",
+      "page-only": "",
+      "pop-up": "",
+      "right": ""
+    },
+    "assistant-workspace": {
+      "exit": "",
+      "exit-tooltip": "",
+      "open": "",
+      "open-tooltip": ""
+    },
     "breadcrumbs": {
       "aria-label": "İçerik Haritaları"
     },
@@ -13460,14 +13520,6 @@
         "open-all": "Yapay Zeka asistanlarını ve yan menü uygulamalarını aç"
       },
       "floating-resize": "Kenar çubuğu genişliğini yeniden boyutlandır"
-    },
-    "fullscreen-workspace": {
-      "enter": "Çalışma alanına gir",
-      "error-exit": "Çalışma alanından çık",
-      "error-message": "Grafana Assistant çalışma alanı yüklenemedi.",
-      "error-reload": "Sayfayı yeniden yükle",
-      "error-title": "Çalışma alanı kullanılamıyor",
-      "workspace": "Çalışma alanı"
     },
     "help": {
       "aria-label": "Yardım",
@@ -13505,6 +13557,7 @@
       "tv-alert": "Kiosk modundan çıkmak için ESC tuşuna basın"
     },
     "megamenu": {
+      "click-to-dock": "",
       "close": "Menüyü kapat",
       "customise": "Gezinmeyi özelleştir",
       "customise-cancel": "İptal et",
@@ -13662,8 +13715,10 @@
       "drag-handle": "Yeniden sıralamak için sürükleyin",
       "duplicate": "Bloğu çoğalt",
       "frame": {
-        "aria-label-collapsed": "Daraltılmış blok: {{name}}",
-        "aria-label-panel": "Görselleştirme bloğu: {{name}}"
+        "aria-label-collapsed-titled": "",
+        "aria-label-collapsed-untitled": "",
+        "aria-label-panel-titled": "",
+        "aria-label-panel-untitled": ""
       },
       "markdown": {
         "aria-label-editor": "Markdown",
@@ -13751,7 +13806,7 @@
       "submit": "Not defterine ekle",
       "success": "Panel {{title}} adlı not defterine eklendi",
       "success-cells": "Eklendiği yer: {{title}}",
-      "success-link": "Not defterini göster",
+      "success-open-link": "",
       "tag-placeholder": "Etikete göre filtrele",
       "target-description": "Panelin nereye ekleneceğini seçin.",
       "target-existing": "Mevcut not defteri",
@@ -13923,7 +13978,8 @@
       "swatch-placeholder-aria-label": "Bir renk seçin, {{placeholder}}"
     },
     "field-color": {
-      "color-by-label": "Serileri şuna göre renklendir:"
+      "color-by-label": "Serileri şuna göre renklendir:",
+      "reverse-label": ""
     },
     "number-input": {
       "error-out-of-range": "Aralık dışında. {{range}}",
@@ -14429,6 +14485,9 @@
     },
     "empty-state": {
       "message": "Eklenti bulunamadı"
+    },
+    "errors": {
+      "app-plugin-metas-error": ""
     },
     "extensions": {
       "extension-error-alert-description": "Hata hakkında daha fazla bilgi için konsolu kontrol edin.",
@@ -15555,6 +15614,8 @@
       "header-title": "Başlık",
       "header-type": "Tür",
       "missing-folder-metadata": "Klasör meta veri dosyası eksik",
+      "resource-filter-aria-label": "",
+      "resource-filter-placeholder": "",
       "search-placeholder": "Yola veya başlığa göre ara",
       "source": "Kaynak",
       "status-filter-aria-label": "Duruma göre filtrele",

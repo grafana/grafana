@@ -1,6 +1,6 @@
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
 import { syntaxTree } from '@codemirror/language';
-import { type EditorState, type Extension, type Range, type SelectionRange } from '@codemirror/state';
+import { EditorSelection, type EditorState, type Extension, type Range, type SelectionRange } from '@codemirror/state';
 import {
   Decoration,
   type DecorationSet,
@@ -18,7 +18,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { toggleSurround } from 'app/plugins/panel/text/v2/editor/editorCommands';
 
-import { headingStyles } from './markdownHeadingStyles';
+import { headingBoldWeight, headingStyles } from './markdownHeadingStyles';
 
 // Inline marks the toolbar (and, later, other callers) can ask "is the selection already X" about.
 // Kept here, next to the decoration logic that walks the same tree, so there is one implementation of
@@ -55,6 +55,42 @@ export function findEnclosingMarkNode(tree: Tree, pos: number, typeNames: readon
     }
   }
   return undefined;
+}
+
+// Containers (quotes, list items) can nest and hold a heading, but nothing nests inside a heading.
+const BLOCK_PREFIX = /^(?:[ \t]*(?:>[ \t]?|(?:[-+*]|\d+[.)])[ \t]+(?:\[[ xX]\][ \t]+)?))*(?:[ \t]{0,3}#{1,6}[ \t]+)?/;
+
+/**
+ * The part of the main selection an inline mark should wrap. Live preview hides a line's block prefix
+ * (`## `, `> `, `- [ ] `) and snaps the cursor past it, so a whole-line selection still starts at the
+ * line start and would otherwise wrap the hidden prefix, breaking the block. Starts after that prefix
+ * and drops a trailing line break (a triple-click selects it too). Trailing spaces are kept: inline
+ * code may end in one, and trimming it would stop an existing span from being recognised and
+ * unwrapped. Undefined when there is nothing to wrap or the selection is in code, where the text is
+ * literal.
+ */
+export function inlineMarkRange(state: EditorState): { from: number; to: number } | undefined {
+  const { from, to } = state.selection.main;
+  if (from === to || findEnclosingMarkNode(syntaxTree(state), from, ['FencedCode', 'CodeBlock'])) {
+    return undefined;
+  }
+  const line = state.doc.lineAt(from);
+  const prefix = BLOCK_PREFIX.exec(line.text);
+  const start = Math.max(from, line.from + (prefix?.[0].length ?? 0));
+  const end = from + state.sliceDoc(from, to).replace(/[\r\n]+$/, '').length;
+  return start < end ? { from: start, to: end } : undefined;
+}
+
+export function toggleSurroundInline(view: EditorView, before: string, after = before): void {
+  const range = inlineMarkRange(view.state);
+  const { anchor, head } = view.state.selection.main;
+  if (range && (range.from !== Math.min(anchor, head) || range.to !== Math.max(anchor, head))) {
+    view.dispatch({
+      selection:
+        anchor > head ? EditorSelection.range(range.to, range.from) : EditorSelection.range(range.from, range.to),
+    });
+  }
+  toggleSurround(view, before, after);
 }
 
 /**
@@ -599,6 +635,12 @@ function buildEditorStyles(theme: GrafanaTheme2): { theme: Extension; classes: M
     [`.${classes.bold}`]: {
       fontWeight: theme.typography.fontWeightBold,
     },
+    [`.${classes.heading1} .${classes.bold}`]: { fontWeight: headingBoldWeight(theme.typography.h1, theme.typography) },
+    [`.${classes.heading2} .${classes.bold}`]: { fontWeight: headingBoldWeight(theme.typography.h2, theme.typography) },
+    [`.${classes.heading3} .${classes.bold}`]: { fontWeight: headingBoldWeight(theme.typography.h3, theme.typography) },
+    [`.${classes.heading4} .${classes.bold}`]: { fontWeight: headingBoldWeight(theme.typography.h4, theme.typography) },
+    [`.${classes.heading5} .${classes.bold}`]: { fontWeight: headingBoldWeight(theme.typography.h5, theme.typography) },
+    [`.${classes.heading6} .${classes.bold}`]: { fontWeight: headingBoldWeight(theme.typography.h6, theme.typography) },
     [`.${classes.italic}`]: {
       fontStyle: 'italic',
     },
@@ -659,14 +701,14 @@ function buildKeymap(): readonly KeyBinding[] {
     {
       key: 'Mod-b',
       run: (view) => {
-        toggleSurround(view, '**');
+        toggleSurroundInline(view, '**');
         return true;
       },
     },
     {
       key: 'Mod-i',
       run: (view) => {
-        toggleSurround(view, '*');
+        toggleSurroundInline(view, '*');
         return true;
       },
     },

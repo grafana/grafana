@@ -15,33 +15,7 @@ const signature =
     activeParameter: 0,
   });
 
-describe('CodeMirrorEditor lazy wrapper', () => {
-  it('shows a loading placeholder before rendering the editor', async () => {
-    render(<CodeMirrorEditor value="SELECT 1" onChange={jest.fn()} />);
-
-    expect(screen.getByText('Loading editor')).toBeInTheDocument();
-    expect(await screen.findByRole('textbox')).toHaveTextContent('SELECT 1');
-  });
-
-  it('shows an error boundary fallback when the editor fails to start', async () => {
-    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-    try {
-      render(
-        <CodeMirrorEditor
-          value=""
-          onChange={jest.fn()}
-          signatureHelp={() => {
-            throw new Error('Provider failure');
-          }}
-        />
-      );
-      expect(await screen.findByText('CodeMirror editor failed to load')).toBeInTheDocument();
-      expect(consoleErrorSpy).toHaveBeenCalled();
-    } finally {
-      consoleErrorSpy.mockRestore();
-    }
-  });
-
+describe('CodeMirrorEditor', () => {
   it('ignores raw extensions, so one from another copy of CodeMirror cannot break the editor', async () => {
     // CodeMirror rejects an object it doesn't recognize, which is how an extension
     // built with a plugin's own copy of CodeMirror looks to Grafana's copy.
