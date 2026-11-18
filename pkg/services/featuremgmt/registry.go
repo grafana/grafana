@@ -3542,6 +3542,15 @@ var (
 			Generate:     Generate{Go: true, React: true},
 		},
 		{
+			Name:         "datasources.gatewaySamplesRead",
+			Description:  "Record the samples Mimir read for each query in query gateway audit events",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDataSourcesPlugins,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
+		{
 			Name:         "plugins.disableMTPluginsFallback",
 			Description:  "Disables the ST fallback for multi-tenant plugin api calls",
 			Stage:        FeatureStageExperimental,

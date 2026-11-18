@@ -1065,4 +1065,8 @@ const (
 	// FlagDatasourcesGatewayRateLimits
 	// Enable support for query gateway rate limits
 	FlagDatasourcesGatewayRateLimits = "datasources.gatewayRateLimits"
+
+	// FlagDatasourcesGatewaySamplesRead
+	// Record the samples Mimir read for each query in query gateway audit events
+	FlagDatasourcesGatewaySamplesRead = "datasources.gatewaySamplesRead"
 )

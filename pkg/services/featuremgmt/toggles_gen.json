@@ -2056,6 +2056,20 @@
     },
     {
       "metadata": {
+        "name": "datasources.gatewaySamplesRead",
+        "resourceVersion": "1795006319632",
+        "creationTimestamp": "2026-11-18T12:51:59Z"
+      },
+      "spec": {
+        "description": "Record the samples Mimir read for each query in query gateway audit events",
+        "stage": "experimental",
+        "codeowner": "@grafana/data-sources-plugins",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "datasources.loadOpenAPI",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-04-13T18:34:04Z"
