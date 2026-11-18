@@ -35,6 +35,7 @@ describe('Store', () => {
         },
       }),
       writable: true,
+      configurable: true,
     });
     store = new Store();
   });
