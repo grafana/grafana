@@ -125,9 +125,10 @@ function getStyles(theme: GrafanaTheme2) {
       border: `1px solid ${theme.colors.border.weak}`,
       borderRadius: theme.shape.radius.lg,
     }),
-    // Closed, the header sits as far from the panel's bottom edge as from the prompt above it.
+    // Closed, the header sits as far from the panel's bottom edge as from the prompt above it: the same inset
+    // the page leaves past the prompt's edge, since the header's own padding already applies on both sides.
     panelClosed: css({
-      paddingBottom: theme.spacing(1.5),
+      paddingBottom: theme.spacing(0.5),
     }),
     toggle: css({
       alignSelf: 'flex-start',

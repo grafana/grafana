@@ -262,7 +262,8 @@ function getStyles(theme: GrafanaTheme2) {
     templates: css({
       alignSelf: 'stretch',
       marginTop: `calc(-1 * (${theme.spacing(2)} + ${PROMPT_OVERLAP}px))`,
-      paddingTop: PROMPT_OVERLAP + 4,
+      // The header's top inset; the closed panel repeats it at the bottom (LandingTemplates `panelClosed`).
+      paddingTop: `calc(${PROMPT_OVERLAP}px + ${theme.spacing(0.5)})`,
     }),
     divider: css({
       display: 'flex',
