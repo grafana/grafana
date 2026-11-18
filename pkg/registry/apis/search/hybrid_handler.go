@@ -8,6 +8,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -76,7 +77,22 @@ func (h *HybridHandler) hybridSearchFor(kind kindRef, prepare func(context.Conte
 			errhttp.Write(ctx, err, w)
 			return
 		}
-		res, err := h.client.HybridSearch(ctx, req)
+		const callerIDKey = "x-grafana-caller-id"
+		incoming, _ := metadata.FromIncomingContext(ctx)
+		incoming = incoming.Copy()
+		delete(incoming, callerIDKey)
+		rpcCtx := metadata.NewIncomingContext(ctx, incoming)
+		outgoing, _ := metadata.FromOutgoingContext(ctx)
+		outgoing = outgoing.Copy()
+		delete(outgoing, callerIDKey)
+		if values := r.Header.Values("X-Grafana-Caller-Id"); len(values) == 1 {
+			switch values[0] {
+			case "assistant", "gcx", "cmdk":
+				outgoing[callerIDKey] = []string{values[0]}
+			}
+		}
+		rpcCtx = metadata.NewOutgoingContext(rpcCtx, outgoing)
+		res, err := h.client.HybridSearch(rpcCtx, req)
 		if err != nil {
 			errhttp.Write(ctx, hybridSearchError(err), w)
 			return
