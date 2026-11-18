@@ -373,14 +373,14 @@ func (hs *HTTPServer) getFSPanels(c *contextmodel.ReqContext, availablePanels ma
 		}
 
 		panels[panel.ID] = plugins.PanelDTO{
-			ID:              panel.ID,
-			Name:            panel.Name,
-			AliasIDs:        panel.AliasIDs,
-			Info:            panel.Info,
-			Module:          panel.Module,
-			ModuleHash:      hs.pluginAssets.ModuleHash(c.Req.Context(), panel),
-			BaseURL:         panel.BaseURL,
-			SkipDataQuery:   panel.SkipDataQuery,
+			ID:               panel.ID,
+			Name:             panel.Name,
+			AliasIDs:         panel.AliasIDs,
+			Info:             panel.Info,
+			Module:           panel.Module,
+			ModuleHash:       hs.pluginAssets.ModuleHash(c.Req.Context(), panel),
+			BaseURL:          panel.BaseURL,
+			SkipDataQuery:    panel.SkipDataQuery,
 			SkipDefaultQuery: panel.SkipDefaultQuery,
 			Suggestions:      panel.Suggestions,
 			HideFromList:     panel.HideFromList,
