@@ -22,7 +22,7 @@
   "release": {
     "groups": {
       "grafana": {
-        "projects": ["tag:release:grafana"],
+        "projects": ["tag:release:grafana", "public/app/plugins/*/*"],
         "projectsRelationship": "fixed"
       }
     },
