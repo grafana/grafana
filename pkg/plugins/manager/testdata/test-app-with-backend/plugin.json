@@ -17,10 +17,7 @@
     "version": "1.0.0",
     "updated": "2026-04-30"
   },
-  "routes": [{
-    "path": "api/*",
-    "url": "http://127.0.0.1:58376/api"
-  }],
+
   "dependencies": {
     "grafanaDependency": ">=10.0.0"
   }

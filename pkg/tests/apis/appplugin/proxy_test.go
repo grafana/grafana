@@ -79,8 +79,17 @@ func proxyRequest(t *testing.T, helper *apis.K8sTestHelper, user apis.User, meth
 // settingsPaths lists the paths the settings API's OpenAPI document describes.
 func settingsPaths(t *testing.T, helper *apis.K8sTestHelper) []string {
 	t.Helper()
-	raw, err := helper.NewDiscoveryClient().RESTClient().Get().AbsPath("/openapi/v3/apis/" + testAppID + "/v0alpha1").DoRaw(context.Background())
+	return openAPIPaths(t, helper, testAppID+"/v0alpha1")
+}
+
+// openAPIPaths lists the paths a group version's OpenAPI document describes.
+// Where a proxy route forwards to names upstream hosts and secure settings, so
+// no document may publish it.
+func openAPIPaths(t *testing.T, helper *apis.K8sTestHelper, groupVersion string) []string {
+	t.Helper()
+	raw, err := helper.NewDiscoveryClient().RESTClient().Get().AbsPath("/openapi/v3/apis/" + groupVersion).DoRaw(context.Background())
 	require.NoError(t, err)
+	require.NotContains(t, string(raw), "x-grafana-proxy", "the %s OpenAPI document publishes where proxy routes forward to", groupVersion)
 	var doc struct {
 		Paths map[string]json.RawMessage `json:"paths"`
 	}
@@ -197,7 +206,11 @@ func TestIntegrationAppPluginProxyRoutesFromManifest(t *testing.T) {
 
 	require.Contains(t, settingsPaths(t, helper), settingsRoot+"namespaces/{namespace}/app/instance/proxy/v2/{path}")
 
-	// The manifest's own API leaves the proxy routes to the settings API.
+	// The manifest's own API leaves the proxy routes to the settings API, and
+	// its OpenAPI document does not describe them.
+	for _, path := range openAPIPaths(t, helper, testAppGroup+"/v1") {
+		require.NotContains(t, path, "/proxy/")
+	}
 	rsp := apis.DoRequest(helper, apis.RequestParams{
 		User: viewer,
 		Path: "/apis/" + testAppGroup + "/v1/namespaces/" + apis.DefaultNamespace + "/app/instance/proxy/v2/a",

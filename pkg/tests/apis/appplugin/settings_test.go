@@ -469,10 +469,20 @@ func setupHelperWithPlugin(t *testing.T, mode rest.DualWriterMode, setup testApp
 
 	require.NoError(t, grafanafs.CopyRecursive(testAppSrc, testAppDst))
 
+	// CopyFile hard links where it can, so a copied file is replaced rather than
+	// written to, or the write would change the source too.
+	replaceFile := func(path string, data []byte) {
+		t.Helper()
+		if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
+			require.NoError(t, err)
+		}
+		require.NoError(t, os.WriteFile(path, data, 0o600))
+	}
+
 	manifestDst := filepath.Join(testAppDst, "app-sdk-manifest.json")
 	switch {
 	case setup.manifest != nil:
-		require.NoError(t, os.WriteFile(manifestDst, setup.manifest, 0o600))
+		replaceFile(manifestDst, setup.manifest)
 	case withManifest:
 		manifestSrc := filepath.Join(filepath.Dir(thisFile), "testdata", manifestFile)
 		require.NoError(t, grafanafs.CopyFile(manifestSrc, manifestDst))
@@ -487,7 +497,7 @@ func setupHelperWithPlugin(t *testing.T, mode rest.DualWriterMode, setup testApp
 		plugin["routes"] = setup.routes
 		raw, err = json.Marshal(plugin)
 		require.NoError(t, err)
-		require.NoError(t, os.WriteFile(pluginJSON, raw, 0o600))
+		replaceFile(pluginJSON, raw)
 	}
 
 	helper := apis.NewK8sTestHelperWithOpts(t, apis.K8sTestHelperOpts{
