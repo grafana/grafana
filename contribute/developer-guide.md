@@ -198,22 +198,21 @@ Alternatively, if you are on Windows and want to use the `make` command, install
 
 ### Build with Nix
 
-With [Nix flakes enabled](https://nix.dev/manual/nix/latest/development/experimental-features), run `nix build` to build Grafana OSS for the current system. The flake supports x86-64 and ARM64 build hosts on Linux and macOS.
+With [Nix flakes enabled](https://nix.dev/manual/nix/latest/development/experimental-features), run `nix build` to build the Grafana OSS release tarball for the current system. The flake supports x86-64 and ARM64 build hosts on Linux and macOS.
 
 ```sh
 nix build .#frontend            # Static assets from make build-js
 nix build .#backend             # Grafana binary for the current system
 nix build .#backend-linux-armv7  # Cross-compile a backend for Linux ARMv7
+nix build .#tarball              # Release archive for the current system
+nix build .#tarball-linux-amd64   # Release archive for Linux AMD64
 ```
 
-The target list in [flake.nix](../flake.nix) defines the available backends. Use `nix flake show` to list their package names. After running `nix build`, start Grafana with the packaged assets and a writable data directory:
+The tarball outputs package the target backend, production frontend, and [pinned catalog plugins](../nix/catalog-plugins.json) into the release layout. The `.tar.gz` in `result/` uses the filename expected by the existing DEB, RPM, and Docker build targets. Copy it to `dist/` and pass `-o dist/<archive>.tar.gz` to Make with the matching target and version to reuse the archive.
 
-```sh
-GF_PATHS_DATA="$PWD/data" \
-GF_PATHS_LOGS="$PWD/data/log" \
-GF_PATHS_PLUGINS="$PWD/data/plugins" \
-  ./result/bin/grafana server --homepath "$PWD/result/share/grafana"
-```
+On release builders, set `sandbox = true` and `sandbox-fallback = false` in the [Nix daemon configuration](https://nix.dev/manual/nix/latest/command-ref/conf-file#conf-sandbox). To verify the frontend, backend, and archive by rebuilding all three on a configured Linux builder, run `nix build --rebuild --no-link .#frontend .#backend-linux-amd64 .#tarball-linux-amd64`.
+
+The target list in [flake.nix](../flake.nix) defines the available backends. Use `nix flake show` to list their package names. To run Grafana locally, extract the archive from `result/` and run `./bin/grafana server` from the extracted directory.
 
 ## Test Grafana
 

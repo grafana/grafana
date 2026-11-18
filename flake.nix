@@ -1,5 +1,8 @@
 {
-  description = "Grafana OSS backend and frontend";
+  description = ''
+    The open and composable observability and data visualization platform.
+    Visualize metrics, logs, and traces from multiple sources like Prometheus, Loki, Elasticsearch, InfluxDB, Postgres and many more.
+  '';
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
 
@@ -13,7 +16,6 @@
         x86_64-darwin = "darwin-amd64";
         x86_64-linux = "linux-amd64";
       };
-      forAllSystems = lib.genAttrs (builtins.attrNames systems);
       manifest = builtins.fromJSON (builtins.readFile ./package.json);
       version = lib.replaceStrings [ "-pre" ] [ "-local" ] manifest.version;
       src = lib.fileset.toSource {
@@ -22,9 +24,25 @@
           lib.fileset.unions [
             ./flake.nix
             ./flake.lock
+            ./nix
           ]
         );
       };
+      tarballSrc = lib.fileset.toSource {
+        root = ./.;
+        fileset = lib.fileset.unions [
+          ./conf
+          ./Dockerfile
+          ./docs/sources
+          ./LICENSE
+          ./NOTICE.md
+          ./packaging
+          ./README.md
+          ./scripts/build-targz.sh
+        ];
+      };
+      catalogPlugins = builtins.fromJSON (builtins.readFile ./nix/catalog-plugins.json);
+      sourceDateEpoch = toString (self.lastModified or 1);
 
       targets = [
         {
@@ -72,8 +90,8 @@
       ];
     in
     {
-      packages = forAllSystems (
-        system:
+      packages = lib.mapAttrs (
+        system: nativeTarget:
         let
           pkgs = nixpkgs.legacyPackages.${system};
           pnpm = pkgs.pnpm_12;
@@ -126,18 +144,17 @@
             '';
           });
 
-          mkBackend =
+          mkTargetPackages =
             {
               goos,
               goarch,
               goarm ? "",
             }:
             let
-              target = "${goos}-${goarch}${lib.optionalString (goarm != "") "v${goarm}"}";
+              platform = "${goos}-${goarch}";
+              target = "${platform}${lib.optionalString (goarm != "") "v${goarm}"}";
               executable = "grafana${lib.optionalString (goos == "windows") ".exe"}";
-            in
-            lib.nameValuePair target (
-              pkgs.buildGo127Module {
+              backend = pkgs.buildGo127Module {
                 pname = "grafana-backend-${target}";
                 inherit src version;
                 # Keep the workspace and download cache shared across all CGO-free targets.
@@ -153,7 +170,7 @@
                   GOMAXPROCS="$NIX_BUILD_CORES" make build-go OS=${goos} ARCH=${goarch} ARM=${goarm} \
                     BUILD_VERSION=${lib.escapeShellArg version} \
                     COMMIT_SHA=${self.rev or self.dirtyRev or "unknown"} \
-                    SOURCE_DATE_EPOCH=${toString (self.lastModified or 1)}
+                    SOURCE_DATE_EPOCH=${sourceDateEpoch}
                   runHook postBuild
                 '';
                 installPhase = ''
@@ -173,22 +190,78 @@
                   ''}
                   runHook postInstallCheck
                 '';
-              }
-            );
-          backends = builtins.listToAttrs (map mkBackend targets);
-          backend = backends.${systems.${system}};
-          grafana = pkgs.runCommand "grafana-${version}" { meta.mainProgram = "grafana"; } ''
-            mkdir -p "$out/bin" "$out/share/grafana"
-            ln -s ${backend}/bin/grafana "$out/bin/grafana"
-            ln -s ${frontend} "$out/share/grafana/public"
-            ln -s ${./conf} "$out/share/grafana/conf"
-          '';
+              };
+              pluginArchives = lib.mapAttrs (
+                id:
+                { version, hashes }:
+                let
+                  # Match the catalog's OS/arch lookup. ARM variants share linux-arm,
+                  # and generic "any" archives can cover a subset of backend targets.
+                  variant = if builtins.hasAttr platform hashes then platform else "any";
+                  query = lib.optionalString (variant != "any") "?os=${goos}&arch=${goarch}";
+                in
+                pkgs.fetchurl {
+                  name = "${id}-${version}-${variant}.zip";
+                  url = "https://grafana.com/api/plugins/${id}/versions/${version}/download${query}";
+                  hash = hashes.${variant};
+                }
+              ) catalogPlugins;
+              tarball = pkgs.stdenvNoCC.mkDerivation {
+                pname = "grafana-tarball-${target}";
+                inherit version;
+                src = tarballSrc;
+                strictDeps = true;
+                nativeBuildInputs = [
+                  pkgs.gnutar
+                  pkgs.go_1_27
+                  pkgs.jq
+                  pkgs.libarchive
+                ];
+                env = {
+                  OS = goos;
+                  ARCH = goarch;
+                  GOARM = goarm;
+                  BUILD_VERSION = version;
+                  TAR_OPTIONS = "--sort=name --mtime=@${sourceDateEpoch} --owner=0 --group=0 --numeric-owner";
+                };
+                dontConfigure = true;
+                # The fixup audit probes compressed archives for executable files.
+                dontFixup = true;
+                buildPhase = ''
+                  runHook preBuild
+                  mkdir -p dist data/plugins-bundled
+                  install -Dm755 ${backend}/bin/${executable} "bin/${goos}/${goarch}/${executable}"
+                  cp -RL ${frontend} dist/frontend
+
+                  ${lib.concatStringsSep "\n" (
+                    lib.mapAttrsToList (id: archive: ''
+                      bash ${./nix/extract-plugin.sh} ${lib.escapeShellArg id} "${archive}" data/plugins-bundled
+                    '') pluginArchives
+                  )}
+                  chmod -R u+w dist/frontend data/plugins-bundled
+                  bash scripts/build-targz.sh
+                  runHook postBuild
+                '';
+                installPhase = ''
+                  runHook preInstall
+                  mkdir -p "$out"
+                  install -m644 dist/*.tar.gz "$out/"
+                  runHook postInstall
+                '';
+              };
+            in
+            lib.nameValuePair target { inherit backend tarball; };
+          targetPackages = builtins.listToAttrs (map mkTargetPackages targets);
+          inherit (targetPackages.${nativeTarget}) backend tarball;
         in
-        lib.mapAttrs' (target: lib.nameValuePair "backend-${target}") backends
+        lib.concatMapAttrs (target: { backend, tarball }: {
+          "backend-${target}" = backend;
+          "tarball-${target}" = tarball;
+        }) targetPackages
         // {
-          inherit backend frontend grafana;
-          default = grafana;
+          inherit backend frontend tarball;
+          default = tarball;
         }
-      );
+      ) systems;
     };
 }
