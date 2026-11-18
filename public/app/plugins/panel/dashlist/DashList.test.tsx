@@ -1,3 +1,4 @@
+import { testWithStarsUser } from 'test/helpers/testWithStarsUser';
 import { render, screen, waitFor } from 'test/test-utils';
 
 import { setBackendSrv, setStarsSrv } from '@grafana/runtime';
@@ -37,6 +38,8 @@ const defaultOptions: Options = {
 
 const findStarButton = (title: string, isStarred: boolean) =>
   screen.findByRole('button', { name: new RegExp(`^${isStarred ? 'unmark' : 'mark'} "${title}" as favorite`, 'i') });
+
+testWithStarsUser();
 
 describe('DashList', () => {
   it('renders different groups of dashboards', async () => {

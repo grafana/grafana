@@ -1,4 +1,5 @@
 import { HttpResponse } from 'msw';
+import { testWithStarsUser } from 'test/helpers/testWithStarsUser';
 import { act, render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
 import { type NavModelItem } from '@grafana/data';
@@ -92,6 +93,8 @@ const renderMegaMenu = ({
 
   return render(<MegaMenu onClose={() => {}} />, { preloadedState: { navBarTree } });
 };
+
+testWithStarsUser();
 
 describe('MegaMenu', () => {
   beforeEach(() => {

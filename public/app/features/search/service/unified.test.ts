@@ -1,6 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { http, HttpResponse } from 'msw';
 import { type Store } from 'redux';
+import { testWithStarsUser } from 'test/helpers/testWithStarsUser';
 
 import { config, setBackendSrv } from '@grafana/runtime';
 import {
@@ -15,10 +16,13 @@ import server, { setupMockServer } from '@grafana/test-utils/server';
 import { MOCK_STARRED_KIND_PAGE, MOCK_STARRED_KIND_SERVED } from '@grafana/test-utils/unstable';
 import { collectionsAPIv1alpha1 } from 'app/api/clients/collections/v1alpha1';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { contextSrv } from 'app/core/services/context_srv';
 import { setStore } from 'app/store/store';
 
 import { type SearchQuery } from './types';
 import { toDashboardResults, type SearchHit, type SearchAPIResponse, UnifiedSearcher } from './unified';
+
+testWithStarsUser();
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -311,6 +315,25 @@ describe('Unified Storage Searcher', () => {
       const response = await searcher.starred({ kind: ['dashboard', 'folder'] });
 
       expect(response.totalRows).toBe(0);
+      expect(findStarredSearchRequest()).toBeUndefined();
+    });
+
+    it('returns an empty response without reading stars for a user without a uid', async () => {
+      jest.replaceProperty(contextSrv.user, 'uid', '');
+      const starsRequest = jest.fn();
+      server.use(
+        http.get(starsRoute, () => {
+          starsRequest();
+          return HttpResponse.json({});
+        }),
+        captureSearchHandler(starredHits)
+      );
+
+      const searcher = new UnifiedSearcher();
+      const response = await searcher.starred({ kind: ['dashboard', 'folder'] });
+
+      expect(response.totalRows).toBe(0);
+      expect(starsRequest).not.toHaveBeenCalled();
       expect(findStarredSearchRequest()).toBeUndefined();
     });
 

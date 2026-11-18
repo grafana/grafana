@@ -898,6 +898,8 @@ type Cfg struct {
 	EventRetentionPeriod time.Duration
 	EventPruningInterval time.Duration
 	SearchLookback       time.Duration
+	// NotifierSettleDelay is how long watch notifiers hold a change for
+	// lower RVs that arrive later. 0 uses each notifier's default.
 	NotifierSettleDelay  time.Duration
 	SeededWatchesEnabled bool
 	// explicitWatchSettings records which watch settings had a value before
@@ -2186,7 +2188,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 
 	cfg.ApiKeyMaxSecondsToLive = auth.Key("api_key_max_seconds_to_live").MustInt64(-1)
 
-	cfg.DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
+	readDisableLoginForm(iniFile, cfg)
 	cfg.DisableSignoutMenu = auth.Key("disable_signout_menu").MustBool(false)
 
 	// Deprecated

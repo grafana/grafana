@@ -20,7 +20,7 @@ import { type TermCount } from 'app/core/components/TagFilter/TagFilter';
 import kbn from 'app/core/utils/kbn';
 import { searchAppKindHits } from 'app/features/stars/kindSearch';
 import { loadStarredKindsFor, partitionStarred } from 'app/features/stars/kinds';
-import { userStarsFieldSelector } from 'app/features/stars/utils';
+import { canUseStars, userStarsFieldSelector } from 'app/features/stars/utils';
 import { dispatch } from 'app/store/store';
 
 import { isRootFolderUID } from '../constants';
@@ -98,6 +98,10 @@ export class UnifiedSearcher implements GrafanaSearcher {
   async starred(query: SearchQuery): Promise<QueryResponse> {
     if (query.facet?.length) {
       throw new Error('facets not supported!');
+    }
+    // A user without a stars resource has nothing starred
+    if (!canUseStars()) {
+      return noDataResponse();
     }
     // Read once, so not subscribed. A star set that can't be read is an empty one, not a failed search
     const { data: stars } = await dispatch(

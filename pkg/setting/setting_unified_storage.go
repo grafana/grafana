@@ -99,8 +99,8 @@ var MigratedUnifiedResources = map[string]bool{
 	ShortURLResource:         true,  // Only Mode5!
 	SnapshotResource:         false, // Requires kubernetesSnapshots to be enabled by default
 	LibraryPanelResource:     false, // Explicit migration opt-in; legacy storage remains the default
-	StarsResource:            false,
-	PreferencesResource:      true, // Only Mode5!
+	StarsResource:            true,  // Only Mode5!
+	PreferencesResource:      true,  // Only Mode5!
 	DataSourceResources:      false,
 	QueryCacheConfigResource: false,
 }
@@ -348,7 +348,9 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.EventRetentionPeriod = section.Key("event_retention_period").MustDuration(1 * time.Hour)
 	cfg.EventPruningInterval = section.Key("event_pruning_interval").MustDuration(5 * time.Minute)
 	cfg.SearchLookback = section.Key("search_lookback").MustDuration(1 * time.Second)
-	cfg.NotifierSettleDelay = section.Key("notifier_settle_delay").MustDuration(3 * time.Second)
+	// Unset leaves each notifier its own default: 100ms for legacy SQL watches
+	// fed from NATS, 3s otherwise.
+	cfg.NotifierSettleDelay = section.Key("notifier_settle_delay").MustDuration(0)
 	cfg.FastLatestKeyLookupEnabled = section.Key("fast_latest_key_lookup_enabled").MustBool(false)
 	cfg.ResourceVersionBatchTransactionTimeout = section.Key("resource_version_batch_transaction_timeout").MustDuration(5 * time.Second)
 	cfg.ResourceVersionMaxWait = section.Key("resource_version_max_wait").MustDuration(time.Second)
@@ -672,12 +674,30 @@ func explicitlySet(section *ini.Section, key string) bool {
 	return section.HasKey(key) && strings.TrimSpace(section.Key(key).String()) != ""
 }
 
-// UnifiedStorageConfig returns the UnifiedStorageConfig for a resource.
+// AppPluginSettingsWildcard is a config key that applies to all app plugin settings
+// resources when no plugin-specific override exists. Configure it as:
+//
+//	[unified_storage.app.*-app]
+//	dualWriterMode = 1 // or 5
+const AppPluginSettingsWildcard = "app.*-app"
+
+// UnifiedStorageConfig returns the UnifiedStorageConfig for a resource. An app plugin's
+// settings resource ("app.<plugin-id>") without its own entry takes the dual writer mode
+// of AppPluginSettingsWildcard. Plugins can load after startup, so this resolves the
+// wildcard on read instead of writing an entry for each plugin into the shared map.
 func (cfg *Cfg) UnifiedStorageConfig(resource string) UnifiedStorageConfig {
 	if cfg.UnifiedStorage == nil {
 		return UnifiedStorageConfig{}
 	}
-	return cfg.UnifiedStorage[resource]
+	if config, ok := cfg.UnifiedStorage[resource]; ok {
+		return config
+	}
+	if strings.HasPrefix(resource, "app.") && strings.HasSuffix(resource, "-app") {
+		if fallback, ok := cfg.UnifiedStorage[AppPluginSettingsWildcard]; ok {
+			return UnifiedStorageConfig{DualWriterMode: fallback.DualWriterMode}
+		}
+	}
+	return UnifiedStorageConfig{}
 }
 
 // EnableMode5 enables migration and sets mode 5 for a resource.
