@@ -220,8 +220,8 @@ describe('PillCell', () => {
 
   describe('Visual refresh', () => {
     it.each([
-      ['dark', 'rgb(255, 0, 0)', 'rgb(55, 0, 0)'],
-      ['light', 'rgb(255, 0, 0)', 'rgb(55, 0, 0)'],
+      ['dark', 'rgb(255, 0, 0)', 'rgb(0, 0, 0)'],
+      ['light', 'rgb(255, 0, 0)', 'rgb(0, 0, 0)'],
     ] as const)('renders mapped pills with tonal colors in %s mode', (mode, backgroundColor, color) => {
       const theme = createTheme({ colors: { mode } });
       theme.flags.visualDesignRefresh = true;
@@ -289,10 +289,8 @@ describe('PillCell', () => {
 
       renderRefreshed(fixed);
       const pill = screen.getByText('value1');
-      expect(pill.style.backgroundColor).toBe(
-        tinycolor(refreshTheme.visualization.getColorByName('red')).toRgbString()
-      );
-      expect(tinycolor.readability(pill.style.backgroundColor, pill.style.color)).toBeGreaterThanOrEqual(4.5);
+      expect(pill).toHaveStyle({ backgroundColor: 'rgb(242, 73, 92)' });
+      expect(tinycolor.readability(pill.style.backgroundColor, pill.style.color)).toBeGreaterThanOrEqual(5.5);
     });
 
     it('uses theme tag colors for the classic palette', () => {

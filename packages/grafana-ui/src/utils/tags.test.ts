@@ -4,6 +4,9 @@ import { createTheme } from '@grafana/data';
 
 import { getTagColor } from './tags';
 
+const TAG_TEXT_TARGET_CONTRAST = 7;
+const TAG_TEXT_MIN_CONTRAST = 4.5;
+
 describe.each(['dark', 'light'] as const)('tonal tag colors in %s mode', (mode) => {
   const theme = createTheme({ colors: { mode } });
   const edgeCases = [
@@ -17,12 +20,21 @@ describe.each(['dark', 'light'] as const)('tonal tag colors in %s mode', (mode) 
     '#ff00ff',
     '#808080',
     '#7f8081',
+    '#440154',
   ];
   const colors = [...theme.components.tag.colors.map(({ background }) => background), ...edgeCases];
 
-  it.each(colors)('provides at least 4.5:1 text contrast for %s', (base) => {
+  it.each(colors)('preserves the background and provides accessible text for %s', (base) => {
     const { background, text } = getTagColor(base, theme);
-    expect(tinycolor.readability(background, text)).toBeGreaterThanOrEqual(4.5);
+    const maximumContrast = Math.max(
+      tinycolor.readability(background, '#000000'),
+      tinycolor.readability(background, '#ffffff')
+    );
+    const requiredContrast =
+      maximumContrast >= TAG_TEXT_TARGET_CONTRAST ? TAG_TEXT_TARGET_CONTRAST : TAG_TEXT_MIN_CONTRAST;
+
+    expect(background).toBe(tinycolor(base).setAlpha(1).toRgbString());
+    expect(tinycolor.readability(background, text)).toBeGreaterThanOrEqual(requiredContrast);
   });
 
   it('keeps transparent mappings transparent with theme text', () => {
@@ -35,16 +47,26 @@ describe.each(['dark', 'light'] as const)('tonal tag colors in %s mode', (mode) 
   });
 });
 
-it('preserves the base hue in a dark tonal pair', () => {
-  expect(getTagColor('#FF0000', createTheme())).toMatchObject({
-    background: 'rgb(255, 0, 0)',
-    text: 'rgb(55, 0, 0)',
-  });
+it.each([
+  ['dark', '#ffff00', 'rgb(255, 255, 0)', 'rgb(87, 87, 1)'],
+  ['light', '#000080', 'rgb(0, 0, 128)', 'rgb(131, 171, 255)'],
+] as const)('uses the target-meeting text direction in %s mode', (mode, source, background, text) => {
+  expect(getTagColor(source, createTheme({ colors: { mode } }))).toMatchObject({ background, text });
 });
 
 it.each([
-  ['dark', '#ffff00', 'rgb(255, 255, 0)', 'rgb(117, 117, 0)'],
-  ['light', '#000080', 'rgb(0, 0, 128)', 'rgb(78, 131, 251)'],
-] as const)('uses the smaller tonal shift even when it opposes %s mode', (mode, source, background, text) => {
-  expect(getTagColor(source, createTheme({ colors: { mode } }))).toMatchObject({ background, text });
+  ['dark', 'rgb(255, 0, 0)', 'rgb(0, 0, 0)'],
+  ['light', 'rgb(255, 0, 0)', 'rgb(0, 0, 0)'],
+] as const)('uses the legible red pair in %s mode', (mode, background, text) => {
+  expect(getTagColor('#ff0000', createTheme({ colors: { mode } }))).toMatchObject({ background, text });
+});
+
+it.each([
+  ['dark', 'rgb(0, 0, 0)'],
+  ['light', 'rgb(255, 255, 255)'],
+] as const)('prefers the %s theme direction when purple candidates have similar contrast', (mode, text) => {
+  expect(getTagColor('#A352CC', createTheme({ colors: { mode } }))).toMatchObject({
+    background: 'rgb(163, 82, 204)',
+    text,
+  });
 });

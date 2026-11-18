@@ -4,6 +4,10 @@ import tinycolor from 'tinycolor2';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { DEFAULT_TAG_COLORS } from '@grafana/data/unstable';
 
+const TAG_TEXT_TARGET_CONTRAST = 7;
+const TAG_TEXT_MIN_CONTRAST = 4.5;
+const TAG_TEXT_SIMILARITY_TOLERANCE = 0.5;
+
 export function getTagColorIndexFromName(name = '', theme?: GrafanaTheme2): number {
   const colors = theme?.components.tag.colors ?? DEFAULT_TAG_COLORS;
   const hash = djb2(name.toLowerCase());
@@ -53,15 +57,21 @@ const getTonalTagColors = memoize(
     base.setAlpha(1);
     const background = base.toRgb();
     const source = rgbToOklch(base.toRgb());
-    const themeDirection = isDark ? 1 : -1;
-    // Keep the configured background exact. Bright colors can use dark text and dark colors light text,
-    // regardless of theme mode. Prefer the theme direction only when both shifts are equal.
+    const themeDirection = isDark ? -1 : 1;
     const preferred = findTextColor(source, background, themeDirection);
     const alternate = findTextColor(source, background, -themeDirection);
-    const text =
-      alternate.meetsContrast && (!preferred.meetsContrast || alternate.delta < preferred.delta)
-        ? alternate
-        : preferred;
+    let text = preferred;
+    if (!preferred.meetsTarget && alternate.meetsTarget) {
+      text = alternate;
+    } else if (!preferred.meetsTarget && !alternate.meetsTarget) {
+      const hasSimilarContrast = Math.abs(preferred.contrast - alternate.contrast) <= TAG_TEXT_SIMILARITY_TOLERANCE;
+      if (
+        preferred.contrast < TAG_TEXT_MIN_CONTRAST ||
+        (!hasSimilarContrast && alternate.contrast > preferred.contrast)
+      ) {
+        text = alternate;
+      }
+    }
 
     return {
       background: base.toRgbString(),
@@ -78,7 +88,7 @@ function findTextColor(source: OklchColor, background: RgbColor, direction: numb
   for (let index = 0; index < 12; index++) {
     const delta = (lowerDelta + upperDelta) / 2;
     const color = getTextColor(source, delta, direction);
-    if (tinycolor.readability(background, color) >= 4.5) {
+    if (getContrast(background, color) >= TAG_TEXT_TARGET_CONTRAST) {
       upperDelta = delta;
     } else {
       lowerDelta = delta;
@@ -86,11 +96,17 @@ function findTextColor(source: OklchColor, background: RgbColor, direction: numb
   }
 
   const color = getTextColor(source, upperDelta, direction);
+  const contrast = getContrast(background, color);
   return {
     color,
+    contrast,
     delta: upperDelta,
-    meetsContrast: tinycolor.readability(background, color) >= 4.5,
+    meetsTarget: contrast >= TAG_TEXT_TARGET_CONTRAST,
   };
+}
+
+function getContrast(background: RgbColor, text: RgbColor) {
+  return tinycolor.readability(background, tinycolor(text).toRgbString());
 }
 
 interface OklchColor {

@@ -17,8 +17,8 @@ const mockOnClick = jest.fn();
 
 describe('Tag', () => {
   it.each([
-    ['dark', 'rgb(255, 0, 0)', 'rgb(55, 0, 0)'],
-    ['light', 'rgb(255, 0, 0)', 'rgb(55, 0, 0)'],
+    ['dark', 'rgb(255, 0, 0)', 'rgb(0, 0, 0)'],
+    ['light', 'rgb(255, 0, 0)', 'rgb(0, 0, 0)'],
   ] as const)('uses a custom base color in %s mode ahead of the palette index', (mode, backgroundColor, color) => {
     render(
       <ThemeContext.Provider value={createTheme({ colors: { mode } })}>
