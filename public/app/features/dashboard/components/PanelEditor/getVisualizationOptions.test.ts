@@ -676,6 +676,44 @@ describe('getVisualizationOptions', () => {
       });
       expect(JSON.stringify(setVisualOption.mock.calls)).not.toContain('Revenue per customer');
     });
+
+    it('reports a field config default chosen from a fixed list with its value', () => {
+      const plugin = buildFieldConfigPlugin([
+        buildFieldConfigProperty({
+          id: 'color.mode',
+          path: 'color.mode',
+          name: 'Color scheme',
+          settings: {
+            options: [
+              { value: 'palette-classic', label: 'Classic palette' },
+              { value: 'thresholds', label: 'From thresholds' },
+            ],
+          },
+        }),
+      ]);
+      const vizPanel = new VizPanel({ title: 'Panel A', pluginId: 'stat', key: 'panel-9' });
+      jest.spyOn(vizPanel, 'onFieldConfigChange').mockImplementation();
+
+      const vizOptions = getVisualizationOptions2({
+        panel: vizPanel,
+        eventBus: new EventBusSrv(),
+        plugin,
+        instanceState: {},
+        currentOptions: {},
+        currentFieldConfig: { defaults: {}, overrides: [] },
+        reportInteractionUI: 'panel-edit',
+      });
+      changeFirstItem(vizOptions, 'thresholds');
+
+      expect(setVisualOption).toHaveBeenCalledWith({
+        ui: 'panel-edit',
+        option: '?color.mode',
+        value: '"thresholds"',
+        value_type: 'string',
+        panel_type: 'stat',
+        panel_id: 9,
+      });
+    });
   });
 
   describe('varMappings wiring', () => {
