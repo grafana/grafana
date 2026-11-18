@@ -292,6 +292,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	// default to 24 hours because usage insights summarizes the data every 24 hours
 	cfg.IndexRebuildInterval = section.Key("index_rebuild_interval").MustDuration(24 * time.Hour)
 	cfg.IndexCacheTTL = section.Key("index_cache_ttl").MustDuration(10 * time.Minute)
+	cfg.IndexCacheTTLIdleOnly = section.Key("index_cache_ttl_idle_only").MustBool(false)
 	cfg.IndexMinUpdateInterval = section.Key("index_min_update_interval").MustDuration(0)
 	cfg.IndexModificationCacheTTL = section.Key("index_modification_cache_ttl").MustDuration(0)
 	// Off by default: this builds a global index per namespace, holding the
