@@ -184,6 +184,7 @@ This action is permanent and you can't recover deleted templates.
 {{< admonition type="note" >}}
 Suggested dashboards is currently in public preview.
 Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
+To try it out, enable the `suggestedDashboards` feature toggle.
 {{< /admonition >}}
 
 Suggested dashboards can be helpful when you have a data source configured, but you're not sure how to most effectively visualize your data.
