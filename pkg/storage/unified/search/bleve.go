@@ -1159,7 +1159,8 @@ func (b *bleveBackend) BuildIndex(
 
 	b.cacheMx.Lock()
 	prev := b.cache[key]
-	if rebuild && prev == nil && key.IsGlobal() {
+	if rebuild && prev == nil &&
+		(key.IsGlobal() || b.opts.IndexCacheTTLIdleOnly && idx.indexStorage == indexStorageMemory) {
 		// Closed for being idle while it was being rebuilt. Publishing the rebuilt
 		// index would open it again and restart its idle clock, so it is closed
 		// instead.

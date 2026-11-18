@@ -2149,6 +2149,70 @@ func TestRebuildDoesNotReopenAnIdleClosedGlobalIndex(t *testing.T) {
 	require.Equal(t, before, listDirs(), "the discarded index's directory is removed; the closed one stays for a later search")
 }
 
+func TestRebuildAfterIndexEviction(t *testing.T) {
+	const ttl = 4 * time.Hour
+	for _, tc := range []struct {
+		name        string
+		idleOnly    bool
+		memory      bool
+		owned       bool
+		wantDiscard bool
+	}{
+		{name: "idle-only memory", idleOnly: true, memory: true, owned: true, wantDiscard: true},
+		{name: "age-based memory", memory: true, owned: true},
+		{name: "unowned file", idleOnly: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			backend, reg := setupBleveBackend(t, withIndexCacheTTL(ttl), withIndexCacheTTLIdleOnly(tc.idleOnly),
+				withOwnsIndexFn(func(resource.NamespacedResource) (bool, error) { return tc.owned, nil }))
+			key := resource.NamespacedResource{Namespace: "test", Group: "group", Resource: "resource"}
+			docs := defaultFileThreshold
+			if tc.memory {
+				docs = 1
+			}
+			original, err := backend.BuildIndex(t.Context(), key, int64(docs), "test", indexTestDocs(key, docs, 100), nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
+			require.NoError(t, err)
+
+			var replacement resource.ResourceIndex
+			rebuilt, err := backend.BuildIndex(t.Context(), key, int64(docs), "rebuild", func(index resource.ResourceIndex) (int64, error) {
+				cached := backend.peekCachedIndex(key)
+				require.NotNil(t, cached)
+				var deadline time.Time
+				switch {
+				case tc.memory && tc.idleOnly:
+					deadline = time.UnixMilli(cached.lastSearchedAt.Load()).Add(ttl)
+				case tc.memory:
+					deadline = cached.expiration
+				default:
+					deadline = time.UnixMilli(cached.lastFetchedFromCache.Load()).Add(unownedIndexIdleTimeout)
+				}
+				backend.runEvictExpiredOrUnownedIndexes(deadline.Add(time.Millisecond))
+				require.Nil(t, backend.PeekIndex(key))
+				replacement = index
+				return indexTestDocs(key, docs, 101)(index)
+			}, nil, true, time.Time{}, 0, resource.BuildIndexOptions{})
+
+			if tc.wantDiscard {
+				require.ErrorIs(t, err, resource.ErrIndexClosedDuringRebuild)
+				require.Nil(t, backend.PeekIndex(key))
+				_, err = replacement.DocCount(t.Context(), "", nil)
+				require.ErrorIs(t, err, bleve.ErrorIndexClosed)
+				checkOpenIndexes(t, reg, 0, 0)
+			} else {
+				require.NoError(t, err)
+				require.Same(t, rebuilt, backend.PeekIndex(key))
+				if tc.memory {
+					checkOpenIndexes(t, reg, 1, 0)
+				} else {
+					checkOpenIndexes(t, reg, 0, 1)
+				}
+			}
+			_, err = original.DocCount(t.Context(), "", nil)
+			require.ErrorIs(t, err, bleve.ErrorIndexClosed)
+		})
+	}
+}
+
 func TestNewUnownedIndexIdleTimeout(t *testing.T) {
 	backend, reg := setupBleveBackend(t, withIndexCacheTTL(4*time.Hour), withOwnsIndexFn(func(resource.NamespacedResource) (bool, error) {
 		return false, nil
