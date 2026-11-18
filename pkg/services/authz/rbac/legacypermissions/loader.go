@@ -41,7 +41,7 @@ type MigratedPermissions interface {
 }
 
 type Loader struct {
-	store             permissionStore
+	store             permissionReader
 	catalog           *RoleCatalog
 	actions           ac.ActionResolver
 	cache             *localcache.CacheService

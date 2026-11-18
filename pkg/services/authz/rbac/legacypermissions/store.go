@@ -8,6 +8,14 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
+type permissionReader interface {
+	permissions(context.Context, ac.GetUserPermissionsQuery) ([]ac.Permission, error)
+	permissionsForActions(context.Context, ac.GetUserPermissionsQuery, []string) ([]ac.Permission, error)
+	teams(context.Context, ac.GetUserPermissionsQuery) (map[int64][]ac.Permission, error)
+}
+
+var _ permissionReader = permissionStore{}
+
 // permissionStore owns embedded legacy enumeration reads. It deliberately does not
 // accept an Access Control service or store: those still own mutations, not loading.
 type permissionStore struct{ sql db.DB }
