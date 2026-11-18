@@ -1,4 +1,4 @@
-import { type GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2, colorManipulator } from '@grafana/data';
 import { DEFAULT_TAG_COLORS } from '@grafana/data/unstable';
 
 export function getTagColorIndexFromName(name = '', theme?: GrafanaTheme2): number {
@@ -40,45 +40,76 @@ export function getTagColor(index: number | string, theme?: GrafanaTheme2) {
 }
 
 function getContrastingTagColors(color: string, theme?: GrafanaTheme2) {
-  if (isFullyTransparent(color)) {
-    return { background: 'rgba(0,0,0,0)', text: theme?.colors.text.primary ?? 'rgb(247, 248, 250)' };
-  }
-
-  return { background: `rgb(from ${color} r g b / 1)`, text: getContrastingTextColor(color) };
+  return {
+    background: `rgb(from ${color} r g b / ${OPAQUE})`,
+    text: `color(from ${color} srgb-linear ${getTextChannels(theme).join(' ')})`,
+  };
 }
+
+// 1 for any visible color, 0 for a fully transparent one. Read from the relative color source, so the browser
+// handles every color format. The large factor makes clamp() act as a step function.
+const OPAQUE = 'clamp(0, alpha * 1e9, 1)';
 
 const TARGET_CONTRAST = 6;
 // WCAG 2 relative luminance, from linear sRGB channels.
 const LUMINANCE = '(0.2126 * r + 0.7152 * g + 0.0722 * b)';
 // Luminance where black and white text have equal contrast: (Y + 0.05) / 0.05 = 1.05 / (Y + 0.05).
 const CROSSOVER_LUMINANCE = Math.sqrt(1.05 * 0.05) - 0.05;
-// 1 above the crossover, so darker text wins; 0 below it, so lighter text wins. The large factor makes
-// clamp() act as a step function.
+// 1 above the crossover, so darker text wins; 0 below it, so lighter text wins.
 const USE_DARKER = `clamp(0, (${LUMINANCE} - ${CROSSOVER_LUMINANCE.toFixed(4)}) * 1e9, 1)`;
 // Scale linear channels toward black until text luminance is (Y + 0.05) / target - 0.05.
 const DARKER_SCALE = `max(0, ((${LUMINANCE} + 0.05) / ${TARGET_CONTRAST} - 0.05) / max(${LUMINANCE}, 1e-6))`;
 // Mix linear channels toward white until text luminance is target * (Y + 0.05) - 0.05.
 const LIGHTER_MIX = `clamp(0, (${TARGET_CONTRAST} * (${LUMINANCE} + 0.05) - 0.05 - ${LUMINANCE}) / max(1 - ${LUMINANCE}, 1e-6), 1)`;
 
-function getContrastingChannel(channel: 'r' | 'g' | 'b') {
-  return `calc(${USE_DARKER} * ${channel} * ${DARKER_SCALE} + (1 - ${USE_DARKER}) * (${channel} + ${LIGHTER_MIX} * (1 - ${channel})))`;
+const FALLBACK_TEXT = 'rgb(247, 248, 250)';
+
+/** A theme color as linear sRGB channels and alpha, to use as literals inside relative color math. */
+function toLinear(color: string): [number, number, number, number] {
+  const { values } = colorManipulator.decomposeColor(colorManipulator.asRgbString(color));
+  const [r, g, b] = values.slice(0, 3).map((value: number) => {
+    const channel = value / 255;
+    return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+  });
+  return [r, g, b, values[3] ?? 1];
 }
 
-const CONTRASTING_CHANNELS = (['r', 'g', 'b'] as const).map(getContrastingChannel).join(' ');
+const round = (value: number) => Number(value.toFixed(6));
 
 /**
- * Per-channel contrast math for tag text, as custom properties. The values use only the relative color
- * channel keywords, so they hold as raw tokens and resolve inside whichever relative color uses them.
- * This lets a tag's styles stay the same for every color: only the inline color variables change.
+ * Per-channel text math: same-hue contrasting text for a visible background, and the theme text for a
+ * transparent one. The values use only relative color keywords and literals, so they hold as raw tokens and
+ * resolve inside whichever relative color uses them.
  */
-export const TAG_TEXT_CHANNEL_VARIABLES = {
-  '--tag-text-r': getContrastingChannel('r'),
-  '--tag-text-g': getContrastingChannel('g'),
-  '--tag-text-b': getContrastingChannel('b'),
-};
+function getTextChannels(theme?: GrafanaTheme2) {
+  const fallback = toLinear(theme?.colors.text.primary ?? FALLBACK_TEXT).map(round);
+  const rgb = (['r', 'g', 'b'] as const).map((channel, index) => {
+    const contrasting = `${USE_DARKER} * ${channel} * ${DARKER_SCALE} + (1 - ${USE_DARKER}) * (${channel} + ${LIGHTER_MIX} * (1 - ${channel}))`;
+    return `calc(${OPAQUE} * (${contrasting}) + (1 - ${OPAQUE}) * ${fallback[index]})`;
+  });
+  return [...rgb, `/ calc(${OPAQUE} + (1 - ${OPAQUE}) * ${fallback[3]})`];
+}
 
-const CONTRASTING_TEXT_FROM_VARIABLES =
-  'color(from var(--tag-background) srgb-linear var(--tag-text-r) var(--tag-text-g) var(--tag-text-b) / 1)';
+/**
+ * Text channel custom properties for styles that read `var(--tag-text)`. They depend on the theme only, so a
+ * tag's class stays the same for every color: only the inline color variables change.
+ */
+export function getTagTextChannelVariables(theme?: GrafanaTheme2) {
+  const [r, g, b, alpha] = getTextChannels(theme);
+  return { '--tag-text-r': r, '--tag-text-g': g, '--tag-text-b': b, '--tag-text-alpha': alpha };
+}
+
+const TEXT_FROM_VARIABLES =
+  'color(from var(--tag-background) srgb-linear var(--tag-text-r) var(--tag-text-g) var(--tag-text-b) var(--tag-text-alpha))';
+
+/**
+ * A color that is only visible when `color` is fully transparent, for example to outline a tag that has no
+ * fill. Rendered as an inset box shadow, it does not change the tag size.
+ */
+export function getTransparentOutlineColor(color: string, outline: string) {
+  const [r, g, b, alpha] = toLinear(outline).map(round);
+  return `color(from ${color} srgb-linear ${r} ${g} ${b} / calc((1 - ${OPAQUE}) * ${alpha}))`;
+}
 
 export interface TagColorVariables {
   '--tag-background': string;
@@ -87,32 +118,16 @@ export interface TagColorVariables {
 
 /**
  * Returns the tag colors as inline custom properties, for styles that read `var(--tag-background)` and
- * `var(--tag-text)` and include {@link TAG_TEXT_CHANNEL_VARIABLES}. `--tag-text` is always set so a tag
+ * `var(--tag-text)` and include {@link getTagTextChannelVariables}. `--tag-text` is always set so a tag
  * never inherits one from an ancestor.
  */
 export function getTagColorVariables(color: number | string, theme?: GrafanaTheme2): TagColorVariables {
-  if (typeof color === 'string' && !isFullyTransparent(color)) {
-    return { '--tag-background': `rgb(from ${color} r g b / 1)`, '--tag-text': CONTRASTING_TEXT_FROM_VARIABLES };
+  if (typeof color === 'string') {
+    return { '--tag-background': `rgb(from ${color} r g b / ${OPAQUE})`, '--tag-text': TEXT_FROM_VARIABLES };
   }
 
   const { background, text } = getTagColor(color, theme);
   return { '--tag-background': background, '--tag-text': text };
-}
-
-/**
- * Builds a same-hue text color for an opaque background with CSS relative color syntax, so the browser
- * resolves the color instead of JavaScript. Scaling or mixing in linear sRGB keeps the channel ratios,
- * and so the hue, of the background. The text targets 6:1 contrast and falls back to black or white
- * when the target is out of reach, which still gives at least 4.5:1.
- */
-function getContrastingTextColor(background: string) {
-  return `color(from ${background} srgb-linear ${CONTRASTING_CHANNELS} / 1)`;
-}
-
-const ZERO_ALPHA = /^(?:transparent|#[0-9a-f]{3}0|#[0-9a-f]{6}00|(?:rgb|hsl)a?\(.*[,/]\s*0(?:\.0*)?%?\s*\))$/i;
-
-export function isFullyTransparent(color: string) {
-  return ZERO_ALPHA.test(color.trim());
 }
 
 function djb2(str: string) {

@@ -12,7 +12,7 @@ import {
 import { FieldColorModeId } from '@grafana/schema';
 
 import { getTextColorForBackground } from '../../../../utils/colors';
-import { getTagColorVariables, getTagColorsFromName } from '../../../../utils/tags';
+import { getTagColorVariables, getTagColorsFromName, getTransparentOutlineColor } from '../../../../utils/tags';
 
 import { PillCell } from './PillCell';
 
@@ -286,8 +286,10 @@ describe('PillCell', () => {
 
       renderRefreshed(field);
       const pill = screen.getByText('none');
-      expectTagColors(pill, 'rgba(0,0,0,0)', refreshTheme.colors.text.primary);
-      expect(pill).toHaveStyle({ border: `1px solid ${refreshTheme.colors.border.strong}` });
+      expectBaseColor(pill, 'rgba(255, 255, 255, 0)');
+      expect(pill).toHaveStyle({
+        boxShadow: `inset 0 0 0 1px ${getTransparentOutlineColor('rgba(255, 255, 255, 0)', refreshTheme.colors.border.strong)}`,
+      });
     });
 
     it('keeps a categorical field palette as the background', () => {

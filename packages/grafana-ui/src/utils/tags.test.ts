@@ -1,6 +1,6 @@
-import { createTheme } from '@grafana/data';
+import { createTheme, colorManipulator } from '@grafana/data';
 
-import { TAG_TEXT_CHANNEL_VARIABLES, getTagColor, getTagColorVariables } from './tags';
+import { getTagColor, getTagColorVariables, getTagTextChannelVariables, getTransparentOutlineColor } from './tags';
 
 const TARGET_CONTRAST = 6;
 const MIN_CONTRAST = 4.5;
@@ -41,28 +41,56 @@ function splitChannels(expression: string) {
   return [...channels, current];
 }
 
+const black: Linear = [0, 0, 0];
 const cssClamp = (min: number, value: number, max: number) => Math.min(max, Math.max(min, value));
 
-/** jsdom does not resolve relative colors, so evaluate the emitted CSS math the way a browser would. */
-function resolveTextColor(text: string, source: Linear): Linear {
-  const match = text.match(/^color\(from \S+ srgb-linear (.+) \/ 1\)$/);
-  if (!match) {
-    throw new Error(`Unexpected text color: ${text}`);
-  }
-
-  const [r, g, b] = source;
-  return splitChannels(match[1]).map((channel) =>
-    new Function('r', 'g', 'b', 'clamp', 'max', `return ${channel.replace(/\bcalc\(/g, '(')};`)(
-      r,
-      g,
-      b,
-      cssClamp,
-      Math.max
-    )
-  ) as Linear;
+function evaluate(expression: string, [r, g, b]: Linear, alpha: number): number {
+  return new Function('r', 'g', 'b', 'alpha', 'clamp', 'max', `return ${expression.replace(/\bcalc\(/g, '(')};`)(
+    r,
+    g,
+    b,
+    alpha,
+    cssClamp,
+    Math.max
+  );
 }
 
-const black: Linear = [0, 0, 0];
+/** jsdom does not resolve relative colors, so evaluate the emitted CSS math the way a browser would. */
+function resolveColor(color: string, source: Linear, sourceAlpha = 1): { rgb: Linear; alpha: number } {
+  const match = color.match(/^color\(from .+? srgb-linear (.+)\)$/);
+  if (!match) {
+    throw new Error(`Unexpected color: ${color}`);
+  }
+
+  const [r, g, b, slash, alpha] = splitChannels(match[1]);
+  if (slash !== '/') {
+    throw new Error(`Expected an alpha channel: ${color}`);
+  }
+  return {
+    rgb: [r, g, b].map((channel) => evaluate(channel, source, sourceAlpha)) as Linear,
+    alpha: evaluate(alpha, source, sourceAlpha),
+  };
+}
+
+const resolveTextColor = (text: string, source: Linear) => resolveColor(text, source).rgb;
+
+function resolveBackgroundAlpha(background: string, sourceAlpha: number) {
+  const match = background.match(/ r g b \/ (.+)\)$/);
+  if (!match) {
+    throw new Error(`Unexpected background: ${background}`);
+  }
+  return evaluate(match[1], black, sourceAlpha);
+}
+
+function themeColorToLinear(color: string): { rgb: Linear; alpha: number } {
+  const { values } = colorManipulator.decomposeColor(colorManipulator.asRgbString(color));
+  const hex = `#${values
+    .slice(0, 3)
+    .map((value: number) => Math.round(value).toString(16).padStart(2, '0'))
+    .join('')}`;
+  return { rgb: hexToLinear(hex), alpha: values[3] ?? 1 };
+}
+
 const white: Linear = [1, 1, 1];
 
 describe.each(['dark', 'light'] as const)('contrasting tag colors in %s mode', (mode) => {
@@ -91,7 +119,8 @@ describe.each(['dark', 'light'] as const)('contrasting tag colors in %s mode', (
     const bestContrast = Math.max(contrast(linear, black), contrast(linear, white));
     const required = bestContrast >= TARGET_CONTRAST ? TARGET_CONTRAST : MIN_CONTRAST;
 
-    expect(background).toBe(`rgb(from ${source} r g b / 1)`);
+    expect(background).toBe(`rgb(from ${source} r g b / clamp(0, alpha * 1e9, 1))`);
+    expect(resolveBackgroundAlpha(background, 1)).toBe(1);
     expect(contrast(linear, resolveTextColor(text, linear))).toBeGreaterThanOrEqual(required - 1e-6);
   });
 });
@@ -100,7 +129,7 @@ it.each(['#fde725', '#3b528b', '#21918c', '#ffffff'])(
   'resolves the variable-based text for %s to the same color as the inline text',
   (source) => {
     const { '--tag-text': variableText } = getTagColorVariables(source);
-    const expanded = Object.entries(TAG_TEXT_CHANNEL_VARIABLES).reduce(
+    const expanded = Object.entries(getTagTextChannelVariables()).reduce(
       (text, [name, value]) => text.replace(`var(${name})`, value),
       variableText
     );
@@ -118,18 +147,38 @@ it('keeps the hue of the background when the target contrast is reachable', () =
   expect(g / b).toBeCloseTo(source[1] / source[2]);
 });
 
-it.each(['transparent', 'rgba(0,0,0,0)', 'rgba(255, 255, 255, 0)', '#ffffff00', 'hsl(0 0% 0% / 0)'])(
-  'keeps %s transparent with theme text',
-  (color) => {
-    const theme = createTheme({ colors: { mode: 'light' } });
-    expect(getTagColor(color, theme)).toEqual({
-      background: 'rgba(0,0,0,0)',
-      text: theme.colors.text.primary,
-      color: 'rgba(0,0,0,0)',
-      borderColor: theme.colors.text.primary,
+describe.each(['dark', 'light'] as const)('transparent tag colors in %s mode', (mode) => {
+  const theme = createTheme({ colors: { mode } });
+  const themeText = themeColorToLinear(theme.colors.text.primary);
+
+  it('uses a transparent background and the theme text for a fully transparent color', () => {
+    const { background, text } = getTagColor('transparent', theme);
+    const resolved = resolveColor(text, black, 0);
+
+    expect(resolveBackgroundAlpha(background, 0)).toBe(0);
+    resolved.rgb.forEach((channel, index) => expect(channel).toBeCloseTo(themeText.rgb[index], 5));
+    expect(resolved.alpha).toBeCloseTo(themeText.alpha);
+  });
+
+  it.each([1, 0.5, 0.001])('keeps a fill and contrasting text for alpha %s', (alpha) => {
+    const { background, text } = getTagColor('rgb(255, 0, 0)', theme);
+    const red = hexToLinear('#ff0000');
+
+    expect(resolveBackgroundAlpha(background, alpha)).toBe(1);
+    expect(resolveColor(text, red, alpha)).toEqual({
+      rgb: resolveTextColor(getTagColor('#ff0000').text, red),
+      alpha: 1,
     });
-  }
-);
+  });
+
+  it('shows the outline only for a fully transparent color', () => {
+    const border = themeColorToLinear(theme.colors.border.strong);
+    const outline = getTransparentOutlineColor('transparent', theme.colors.border.strong);
+
+    expect(resolveColor(outline, black, 0).alpha).toBeCloseTo(border.alpha);
+    expect(resolveColor(outline, black, 1).alpha).toBe(0);
+  });
+});
 
 it('uses palette colors directly for an index', () => {
   const theme = createTheme();

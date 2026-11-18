@@ -31,7 +31,7 @@ describe('Tag', () => {
       </ThemeContext.Provider>
     );
     expect(getColorVariables(screen.getByText('error'))).toEqual({
-      '--tag-background': 'rgb(from #ff0000 r g b / 1)',
+      '--tag-background': 'rgb(from #ff0000 r g b / clamp(0, alpha * 1e9, 1))',
       '--tag-text': getTagColorVariables('#ff0000', theme)['--tag-text'],
     });
   });

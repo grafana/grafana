@@ -14,7 +14,7 @@ import {
 } from '@grafana/data';
 import { FieldColorModeId } from '@grafana/schema';
 
-import { isFullyTransparent } from '../../../../utils/tags';
+import { getTransparentOutlineColor } from '../../../../utils/tags';
 import { Tag } from '../../../Tags/Tag';
 import { getActiveCellSelector, isTableCellStylesKeyEqual } from '../styles';
 import { type PillCellProps, type TableCellStyles } from '../types';
@@ -48,15 +48,11 @@ export function PillCell({ rowIdx, field, theme, getTextColorForBackground }: Pi
     // everywhere else. Tag derives the text color, and without a base color it hashes the value
     // over the theme tag palette.
     if (theme.flags.visualDesignRefresh) {
-      const transparent = pill.baseColor !== undefined && isFullyTransparent(pill.baseColor);
-      return (
-        <Tag
-          key={pill.key}
-          name={pill.value}
-          baseColor={pill.baseColor}
-          style={transparent ? { border: `1px solid ${theme.colors.border.strong}` } : undefined}
-        />
-      );
+      const outline =
+        pill.baseColor !== undefined
+          ? { boxShadow: `inset 0 0 0 1px ${getTransparentOutlineColor(pill.baseColor, theme.colors.border.strong)}` }
+          : undefined;
+      return <Tag key={pill.key} name={pill.value} baseColor={pill.baseColor} style={outline} />;
     }
 
     const background = pill.baseColor ?? getColorByStringHash(classicColors, pill.value);
