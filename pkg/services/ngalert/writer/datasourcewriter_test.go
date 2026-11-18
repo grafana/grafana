@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	dsfakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	"github.com/grafana/grafana/pkg/services/ngalert/writer/writertest"
 )
 
 type mockHTTPClientProvider struct {
@@ -56,7 +57,7 @@ func (m *mockHTTPClientProvider) New(options ...sdkhttpclient.Options) (*http.Cl
 type testDataSources struct {
 	dsfakes.FakeDataSourceService
 
-	prom1, prom2, prom3, prom4 *TestRemoteWriteTarget
+	prom1, prom2, prom3, prom4 *writertest.TestRemoteWriteTarget
 }
 
 func (t *testDataSources) Reset() {
@@ -68,10 +69,10 @@ func (t *testDataSources) Reset() {
 
 func setupDataSources(t *testing.T) *testDataSources {
 	res := &testDataSources{
-		prom1: NewTestRemoteWriteTarget(t),
-		prom2: NewTestRemoteWriteTarget(t),
-		prom3: NewTestRemoteWriteTarget(t),
-		prom4: NewTestRemoteWriteTarget(t),
+		prom1: writertest.NewTestRemoteWriteTarget(t),
+		prom2: writertest.NewTestRemoteWriteTarget(t),
+		prom3: writertest.NewTestRemoteWriteTarget(t),
+		prom4: writertest.NewTestRemoteWriteTarget(t),
 	}
 	res.DataSourceHeaders = make(map[string]http.Header)
 
@@ -94,7 +95,7 @@ func setupDataSources(t *testing.T) *testDataSources {
 		Type:     datasources.DS_PROMETHEUS,
 		JsonData: simplejson.MustJson([]byte(`{"prometheusType":"Prometheus"}`)),
 	})
-	p1.URL = res.prom1.srv.URL
+	p1.URL = res.prom1.DatasourceURL()
 	res.prom1.ExpectedPath = "/api/v1/write"
 
 	p2, _ := res.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
@@ -103,7 +104,7 @@ func setupDataSources(t *testing.T) *testDataSources {
 		Type:     datasources.DS_PROMETHEUS,
 		JsonData: simplejson.MustJson([]byte(`{"prometheusType":"Mimir"}`)),
 	})
-	p2.URL = res.prom2.srv.URL + "/api/prom"
+	p2.URL = res.prom2.DatasourceURL() + "/api/prom"
 	res.prom2.ExpectedPath = "/api/prom/push"
 
 	// Add a non-Prometheus datasource.
@@ -124,7 +125,7 @@ func setupDataSources(t *testing.T) *testDataSources {
 			"secureSocksProxyUsername": "testuser"
 		}`)),
 	})
-	p3.URL = res.prom3.srv.URL
+	p3.URL = res.prom3.DatasourceURL()
 	res.prom3.ExpectedPath = "/api/v1/write"
 
 	require.True(t, p3.IsSecureSocksDSProxyEnabled())
@@ -136,7 +137,7 @@ func setupDataSources(t *testing.T) *testDataSources {
 		Type:     datasources.DS_PROMETHEUS,
 		JsonData: simplejson.MustJson([]byte(`{"prometheusType":"Prometheus"}`)),
 	})
-	p4.URL = res.prom4.srv.URL
+	p4.URL = res.prom4.DatasourceURL()
 	res.prom4.ExpectedPath = "/api/v1/write"
 	res.DataSourceHeaders["prom-4"] = http.Header{
 		"X-Scope-OrgID":   []string{"test-user"},
@@ -360,7 +361,7 @@ func TestDatasourceWriter(t *testing.T) {
 						Type:     datasources.DS_PROMETHEUS,
 						JsonData: simplejson.MustJson([]byte(`{"prometheusType":"Prometheus"}`)),
 					})
-					gcProm.URL = testDS.prom1.srv.URL
+					gcProm.URL = testDS.prom1.DatasourceURL()
 				}
 
 				cfg := DatasourceWriterConfig{
@@ -493,7 +494,7 @@ func TestDatasourceWriterManagedPrometheus(t *testing.T) {
 			Type:     datasources.DS_AMAZON_PROMETHEUS,
 			JsonData: simplejson.MustJson([]byte(`{}`)),
 		})
-		ampDS.URL = testDS.prom1.srv.URL
+		ampDS.URL = testDS.prom1.DatasourceURL()
 		testDS.prom1.ExpectedPath = amazonPrometheusRemoteWritePath
 
 		cfg := DatasourceWriterConfig{Timeout: time.Second * 5}
@@ -527,7 +528,7 @@ func TestDatasourceWriterManagedPrometheus(t *testing.T) {
 			Type:     datasources.DS_AMAZON_PROMETHEUS,
 			JsonData: simplejson.MustJson([]byte(`{}`)),
 		})
-		ampDS.URL = testDS.prom1.srv.URL
+		ampDS.URL = testDS.prom1.DatasourceURL()
 		testDS.prom1.ExpectedPath = amazonPrometheusRemoteWritePath
 
 		cfg := DatasourceWriterConfig{Timeout: time.Second * 5}
@@ -556,7 +557,7 @@ func TestDatasourceWriterManagedPrometheus(t *testing.T) {
 			Type:     datasources.DS_AMAZON_PROMETHEUS,
 			JsonData: simplejson.MustJson([]byte(`{"sigV4Auth": true, "sigV4Region": "us-west-2"}`)),
 		})
-		ampDS.URL = testDS.prom1.srv.URL
+		ampDS.URL = testDS.prom1.DatasourceURL()
 		testDS.prom1.ExpectedPath = amazonPrometheusRemoteWritePath
 
 		cfg := DatasourceWriterConfig{Timeout: time.Second * 5}

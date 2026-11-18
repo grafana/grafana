@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/featuremgmt/featuremgmttest"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/setting"
@@ -88,7 +89,7 @@ func TestDeleteExpiredSnapshots_LegacyMode(t *testing.T) {
 }
 
 func TestDeleteExpiredSnapshots_KubernetesMode(t *testing.T) {
-	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagSnapshotsKubernetesSnapshots)
+	featuremgmttest.WithEnabledFlags(t, featuremgmt.FlagSnapshotsKubernetesSnapshots)
 
 	t.Run("deletes expired snapshots across multiple orgs", func(t *testing.T) {
 		// Create expired snapshots - one per org

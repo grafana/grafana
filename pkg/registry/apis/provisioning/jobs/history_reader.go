@@ -15,7 +15,7 @@ import (
 
 // HistoryReader keeps track of completed jobs
 //
-//go:generate mockery --name HistoryReader --structname MockHistoryReader --inpackage --filename history_reader_mock.go --with-expecter
+//go:generate mockery --name HistoryReader --structname MockHistoryReader --inpackage --filename history_reader_mock_test.go --with-expecter
 type HistoryReader interface {
 	// Gets recent jobs for a repository
 	RecentJobs(ctx context.Context, namespace, repo string) (*provisioning.JobList, error)

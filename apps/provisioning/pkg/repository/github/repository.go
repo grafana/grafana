@@ -30,7 +30,7 @@ type githubRepository struct {
 // GithubRepository is an interface that combines all repository capabilities
 // needed for GitHub repositories.
 
-//go:generate mockery --name GithubRepository --structname MockGithubRepository --inpackage --filename github_repository_mock.go --with-expecter
+//go:generate mockery --name GithubRepository --structname MockGithubRepository --inpackage --filename github_repository_mock_test.go --with-expecter
 type GithubRepository interface {
 	repository.Repository
 	repository.Versioned

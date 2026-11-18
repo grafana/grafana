@@ -14,7 +14,7 @@ import (
 	"github.com/open-feature/go-sdk/openfeature"
 )
 
-//go:generate mockery --name Migrator --structname MockMigrator --inpackage --filename mock_migrator.go --with-expecter
+//go:generate mockery --name Migrator --structname MockMigrator --inpackage --filename mock_migrator_test.go --with-expecter
 type Migrator interface {
 	Migrate(ctx context.Context, rw repository.ReaderWriter, job provisioning.Job, progress jobs.JobProgressRecorder) error
 }

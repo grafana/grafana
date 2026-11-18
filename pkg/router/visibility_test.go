@@ -23,6 +23,7 @@ import (
 	appmanifestv1alpha2 "github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha2"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/featuremgmt/featuremgmttest"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -322,7 +323,7 @@ func TestVisibilityHidesGroupRequests(t *testing.T) {
 }
 
 func TestVisibilityHidesGroupsBeforeTheWatchRestriction(t *testing.T) {
-	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagGrafanaRestrictWatchToServiceIdentities)
+	featuremgmttest.WithEnabledFlags(t, featuremgmt.FlagGrafanaRestrictWatchToServiceIdentities)
 	f := newVisibilityFixture(t, true)
 	// The restriction refuses a user's watch with a 403, which would say the
 	// group exists; a hidden group must get the same 404 as any other request.

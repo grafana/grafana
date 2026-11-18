@@ -146,7 +146,7 @@ type Authorizer interface {
 // FolderAncestorFinder reports missing ancestors with found=false, separately from
 // repository and storage lookup errors.
 //
-//go:generate mockery --name FolderAncestorFinder --structname MockFolderAncestorFinder --inpackage --filename folder_ancestor_finder_mock.go --with-expecter
+//go:generate mockery --name FolderAncestorFinder --structname MockFolderAncestorFinder --inpackage --filename folder_ancestor_finder_mock_test.go --with-expecter
 type FolderAncestorFinder interface {
 	FindExistingAncestor(ctx context.Context, dir, ref string) (folderID string, found bool, err error)
 }

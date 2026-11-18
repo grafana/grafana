@@ -18,12 +18,13 @@ import (
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/featuremgmt/featuremgmttest"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginauth"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestExtendedJWT_localPluginTokens(t *testing.T) {
-	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagApppluginsLoadAppManifest)
+	featuremgmttest.WithEnabledFlags(t, featuremgmt.FlagApppluginsLoadAppManifest)
 	cfgWith := func(jwksURL string) *setting.Cfg {
 		return &setting.Cfg{
 			Raw:        ini.Empty(),
@@ -179,7 +180,7 @@ func TestExtendedJWT_localPluginTokens(t *testing.T) {
 }
 
 func TestExtendedJWT_localPluginOrganizations(t *testing.T) {
-	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagApppluginsLoadAppManifest)
+	featuremgmttest.WithEnabledFlags(t, featuremgmt.FlagApppluginsLoadAppManifest)
 	cfg := &setting.Cfg{
 		Raw:        ini.Empty(),
 		ExtJWTAuth: setting.ExtJWTSettings{Audiences: []string{"grafana"}},

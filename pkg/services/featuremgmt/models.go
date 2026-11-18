@@ -7,7 +7,7 @@ import (
 	"slices"
 )
 
-//go:generate mockery --name FeatureToggles --structname MockFeatureToggles --inpackage --filename feature_toggles_mock.go --with-expecter
+//go:generate mockery --name FeatureToggles --structname MockFeatureToggles --outpkg featuremgmttest --output ./featuremgmttest/ --filename feature_toggles_mock.go --with-expecter
 type FeatureToggles interface {
 	// IsEnabled checks if a feature is enabled for a given context.
 	// The settings may be per user, tenant, or globally set in the cloud

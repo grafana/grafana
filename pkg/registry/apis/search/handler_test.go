@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/featuremgmt/featuremgmttest"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -146,7 +147,7 @@ func TestHandler_FolderTreeFlag(t *testing.T) {
 }
 
 func TestHandler_FolderTreePropagatesUnsupportedBackend(t *testing.T) {
-	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagSearchPerResourceFolderTree)
+	featuremgmttest.WithEnabledFlags(t, featuremgmt.FlagSearchPerResourceFolderTree)
 	result := &resourcepb.ErrorResult{Code: http.StatusBadRequest, Message: "folderTree can only be searched in the global search index"}
 	grpcStatus, err := status.New(codes.InvalidArgument, result.Message).WithDetails(result)
 	require.NoError(t, err)

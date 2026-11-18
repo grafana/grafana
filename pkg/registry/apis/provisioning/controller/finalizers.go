@@ -22,7 +22,7 @@ import (
 	metricutils "github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
 )
 
-//go:generate mockery --name jobQueueCleaner --structname MockJobQueueCleaner --inpackage --filename job_queue_cleaner_mock.go --with-expecter
+//go:generate mockery --name jobQueueCleaner --structname MockJobQueueCleaner --inpackage --filename job_queue_cleaner_mock_test.go --with-expecter
 type jobQueueCleaner interface {
 	// CleanupQueue deletes all queued jobs for the repository that are not
 	// currently being executed. Returns the number of jobs deleted.

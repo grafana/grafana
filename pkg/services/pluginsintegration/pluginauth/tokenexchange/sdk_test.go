@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/clients"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/featuremgmt/featuremgmttest"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginauth"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -33,7 +34,7 @@ import (
 // Exercise the SDK's actual HTTP transport: its audiences, caller context and
 // authentication headers must all agree with the local exchange and Grafana.
 func TestSDKLocalTokenRoundTrip(t *testing.T) {
-	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagApppluginsLoadAppManifest)
+	featuremgmttest.WithEnabledFlags(t, featuremgmt.FlagApppluginsLoadAppManifest)
 	for _, name := range []string{
 		appplugin.EnvVarGrafanaJWKS, appplugin.EnvVarGrafanaJWKSURL,
 		appplugin.EnvVarAPIAccessBearerToken, appplugin.EnvVarAPIAccessCAFile, appplugin.EnvVarAPIAccessInsecureTLS, //nolint:gosec,staticcheck // SA1019: includes a deprecated variable name; names, not credentials

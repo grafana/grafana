@@ -6,11 +6,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/featuremgmt/featuremgmttest"
 )
 
 func TestParallelDashboardDeleteConcurrency(t *testing.T) {
 	t.Run("defaults to sequential", func(t *testing.T) {
-		featuremgmt.WithFlagValues(t, map[string]any{})
+		featuremgmttest.WithFlagValues(t, map[string]any{})
 		require.Equal(t, 1, ParallelDashboardDeleteConcurrency(t.Context()))
 	})
 
@@ -25,7 +26,7 @@ func TestParallelDashboardDeleteConcurrency(t *testing.T) {
 		{"non-integer is sequential", "lots", 1},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			featuremgmt.WithFlagValues(t, map[string]any{featuremgmt.FlagFoldersParallelDashboardDeleteConcurrency: tc.value})
+			featuremgmttest.WithFlagValues(t, map[string]any{featuremgmt.FlagFoldersParallelDashboardDeleteConcurrency: tc.value})
 			require.Equal(t, tc.want, ParallelDashboardDeleteConcurrency(t.Context()))
 		})
 	}

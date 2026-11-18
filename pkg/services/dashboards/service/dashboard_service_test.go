@@ -48,6 +48,7 @@ import (
 	dashboardclient "github.com/grafana/grafana/pkg/services/dashboards/service/client"
 	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/featuremgmt/featuremgmttest"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -2663,7 +2664,7 @@ func (c *folderDeleteClient) Delete(ctx context.Context, uid string, orgID int64
 // withParallelDashboardDelete serves the parallel delete flag for the duration of the test. Call it outside a
 // synctest bubble: the OpenFeature provider is process-global.
 func withParallelDashboardDelete(t *testing.T, concurrency int) {
-	featuremgmt.WithFlagValues(t, map[string]any{featuremgmt.FlagFoldersParallelDashboardDeleteConcurrency: concurrency})
+	featuremgmttest.WithFlagValues(t, map[string]any{featuremgmt.FlagFoldersParallelDashboardDeleteConcurrency: concurrency})
 }
 
 func newFolderDeleteService(t *testing.T, count int, cleanupErr error) (*DashboardServiceImpl, *folderDeleteClient, *user.SignedInUser) {

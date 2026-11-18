@@ -14,7 +14,7 @@ import (
 
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/apiserver/rest/resttest"
 )
 
 func TestPublicSnapshotLookupOutsideDefaultNamespace(t *testing.T) {
@@ -22,7 +22,7 @@ func TestPublicSnapshotLookupOutsideDefaultNamespace(t *testing.T) {
 		t.Run(map[bool]string{false: "metadata", true: "dashboard"}[dashboard], func(t *testing.T) {
 			snap := newBlobTestSnapshot()
 			snap.Namespace = "org-2"
-			store := grafanarest.NewMockStorage(t)
+			store := resttest.NewMockStorage(t)
 			store.On("List", mock.MatchedBy(func(ctx context.Context) bool {
 				caller, err := identity.GetRequester(ctx)
 				return err == nil && caller.GetNamespace() == "*" && k8srequest.NamespaceValue(ctx) == ""
@@ -57,7 +57,7 @@ func TestPublicSnapshotLookupRejectsAmbiguousKeys(t *testing.T) {
 	first.Namespace = "org-2"
 	second := first.DeepCopy()
 	second.Namespace = "org-3"
-	store := grafanarest.NewMockStorage(t)
+	store := resttest.NewMockStorage(t)
 	store.On("List", mock.Anything, mock.Anything).Return(&dashv0.SnapshotList{Items: []dashv0.Snapshot{*first, *second}}, nil)
 
 	ctx := k8srequest.WithNamespace(t.Context(), "default")
@@ -71,7 +71,7 @@ func TestPublicSnapshotLookupRejectsExpiredSnapshots(t *testing.T) {
 	snap.Namespace = "org-2"
 	expires := time.Now().Add(-time.Minute).UnixMilli()
 	snap.Spec.Expires = &expires
-	store := grafanarest.NewMockStorage(t)
+	store := resttest.NewMockStorage(t)
 	store.On("List", mock.Anything, mock.Anything).Return(&dashv0.SnapshotList{Items: []dashv0.Snapshot{*snap}}, nil)
 
 	ctx := k8srequest.WithNamespace(t.Context(), "default")
@@ -81,7 +81,7 @@ func TestPublicSnapshotLookupRejectsExpiredSnapshots(t *testing.T) {
 }
 
 func TestSnapshotLookupWithExplicitNamespaceStaysScoped(t *testing.T) {
-	store := grafanarest.NewMockStorage(t)
+	store := resttest.NewMockStorage(t)
 	notFound := apierrors.NewNotFound(dashv0.SnapshotResourceInfo.GroupResource(), "missing")
 	store.On("Get", mock.MatchedBy(func(ctx context.Context) bool {
 		caller, err := identity.GetRequester(ctx)

@@ -17,6 +17,7 @@ import (
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/featuremgmt/featuremgmttest"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginauth"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -215,7 +216,7 @@ func TestSignAccessTokenLoopbackOnly(t *testing.T) {
 }
 
 func TestProvideServiceLocalAPIURL(t *testing.T) {
-	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagApppluginsLoadAppManifest)
+	featuremgmttest.WithEnabledFlags(t, featuremgmt.FlagApppluginsLoadAppManifest)
 	for _, tc := range []struct {
 		name, override, jwksURL string
 		registered              bool

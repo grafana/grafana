@@ -24,7 +24,7 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/apiserver/rest/resttest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -121,7 +121,7 @@ func TestCreateSnapshotDashboardValidation(t *testing.T) {
 				}).Return(&dashboards.Dashboard{UID: "valid-uid", OrgID: orgID}, nil)
 			},
 			setupStorageMock: func(t *testing.T) func() rest.Storage {
-				mockStorage := grafanarest.NewMockStorage(t)
+				mockStorage := resttest.NewMockStorage(t)
 				mockStorage.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 					Return(&dashv0.Snapshot{}, nil)
 				return func() rest.Storage { return mockStorage }
@@ -181,7 +181,7 @@ func TestCreateSnapshotDefersBlobUploadToStorage(t *testing.T) {
 		UID: "valid-uid", OrgID: orgID,
 	}).Return(&dashboards.Dashboard{UID: "valid-uid", OrgID: orgID}, nil)
 
-	storage := grafanarest.NewMockStorage(t)
+	storage := resttest.NewMockStorage(t)
 	storage.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Run(func(args mock.Arguments) {
 			snap := args.Get(1).(*dashv0.Snapshot)
@@ -229,7 +229,7 @@ func TestCreateSnapshotDuplicateKeyReturns409(t *testing.T) {
 
 	// The storage Create is the seam the real SnapshotLegacyStore -> service -> store
 	// chain collapses to; returning the sentinel simulates a duplicate-key collision.
-	mockStorage := grafanarest.NewMockStorage(t)
+	mockStorage := resttest.NewMockStorage(t)
 	mockStorage.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(nil, dashboardsnapshots.ErrDashboardSnapshotAlreadyExists.Errorf("snapshot with the same key already exists"))
 
@@ -310,7 +310,7 @@ func TestCreateSnapshotPublicMode(t *testing.T) {
 			dashboardService := dashboards.NewFakeDashboardService(t)
 
 			var createdSnapshot *dashv0.Snapshot
-			mockStorage := grafanarest.NewMockStorage(t)
+			mockStorage := resttest.NewMockStorage(t)
 			mockStorage.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 				Run(func(args mock.Arguments) {
 					createdSnapshot = args.Get(1).(*dashv0.Snapshot)
@@ -360,7 +360,7 @@ func TestCreateSnapshotPublicModeRejectsExternal(t *testing.T) {
 	}
 
 	dashboardService := dashboards.NewFakeDashboardService(t)
-	mockStorage := grafanarest.NewMockStorage(t)
+	mockStorage := resttest.NewMockStorage(t)
 
 	routes := GetRoutes(
 		dashv0.SnapshotSharingOptions{SnapshotsEnabled: true, PublicMode: true, ExternalEnabled: true},
@@ -430,7 +430,7 @@ func TestCreateExternalSnapshot(t *testing.T) {
 			OrgID: orgID,
 		}).Return(&dashboards.Dashboard{UID: "dash-1", OrgID: orgID}, nil)
 
-		mockStorage := grafanarest.NewMockStorage(t)
+		mockStorage := resttest.NewMockStorage(t)
 		mockStorage.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 			Return(&dashv0.Snapshot{}, nil)
 
@@ -625,7 +625,7 @@ func TestCreateExternalSnapshot(t *testing.T) {
 			OrgID: orgID,
 		}).Return(&dashboards.Dashboard{UID: "dash-1", OrgID: orgID}, nil)
 
-		mockStorage := grafanarest.NewMockStorage(t)
+		mockStorage := resttest.NewMockStorage(t)
 		mockStorage.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 			Return(&dashv0.Snapshot{}, nil)
 
@@ -699,7 +699,7 @@ func TestCreateExternalSnapshotLegacy(t *testing.T) {
 			OrgID: orgID,
 		}).Return(&dashboards.Dashboard{UID: "dash-1", OrgID: orgID}, nil)
 
-		mockStorage := grafanarest.NewMockStorage(t)
+		mockStorage := resttest.NewMockStorage(t)
 		mockStorage.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 			Return(&dashv0.Snapshot{}, nil)
 
@@ -882,7 +882,7 @@ func TestHandleDeleteByKey(t *testing.T) {
 		require.NoError(t, setDashboardContent(&listed, map[string]any{"uid": "unreadable-source"}))
 		listed.SetCreatedBy("user:another-user")
 
-		mockStorage := grafanarest.NewMockStorage(t)
+		mockStorage := resttest.NewMockStorage(t)
 		mockStorage.On("List", mock.Anything, mock.MatchedBy(func(opts *internalversion.ListOptions) bool {
 			return opts != nil && opts.FieldSelector != nil &&
 				opts.FieldSelector.String() == "spec.deleteKey="+deleteKey
@@ -926,7 +926,7 @@ func TestHandleDeleteByKey(t *testing.T) {
 	})
 
 	t.Run("returns 404 and skips delete when no snapshot matches deleteKey", func(t *testing.T) {
-		mockStorage := grafanarest.NewMockStorage(t)
+		mockStorage := resttest.NewMockStorage(t)
 		mockStorage.On("List", mock.Anything, mock.Anything).
 			Return(&dashv0.SnapshotList{Items: []dashv0.Snapshot{}}, nil)
 
@@ -952,7 +952,7 @@ func TestHandleDeleteByKey(t *testing.T) {
 	})
 
 	t.Run("returns 403 without delete permission", func(t *testing.T) {
-		mockStorage := grafanarest.NewMockStorage(t)
+		mockStorage := resttest.NewMockStorage(t)
 
 		routes := GetRoutes(
 			dashv0.SnapshotSharingOptions{SnapshotsEnabled: true},

@@ -41,7 +41,7 @@ const (
 // plus any provider-specific ones. Identifiers are strings because providers
 // disagree on the type: GitHub and GitLab use numeric IDs, Bitbucket uses UUIDs.
 //
-//go:generate mockery --name WebhookConfig --structname MockWebhookConfig --inpackage --filename mock_webhook_config.go --with-expecter
+//go:generate mockery --name WebhookConfig --structname MockWebhookConfig --inpackage --filename mock_webhook_config_test.go --with-expecter
 type WebhookConfig interface {
 	GetID() string
 	GetURL() string

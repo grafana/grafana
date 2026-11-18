@@ -17,7 +17,7 @@ import (
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/apiserver/rest/resttest"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -246,7 +246,7 @@ func TestSubAccessREST_getAccessInfo(t *testing.T) {
 			if tc.parentFolder != "" {
 				meta.SetFolder(tc.parentFolder)
 			}
-			store := grafanarest.NewMockStorage(t)
+			store := resttest.NewMockStorage(t)
 			store.On("Get", mock.Anything, "this-folder", &metav1.GetOptions{}).Return(f, nil)
 
 			allowed := make(map[string]bool, len(tc.allowed))
@@ -309,7 +309,7 @@ func TestSubAccessREST_getAccessInfo_virtualFolders(t *testing.T) {
 		for _, name := range []string{folder.GeneralFolderUID, folder.LegacyRootFolderUID} { //nolint:staticcheck // testing the deprecated legacy empty-string root UID is intentional
 			t.Run("name="+strconv.Quote(name), func(t *testing.T) {
 				// Bare mock with no expectations: fails if Get is called.
-				store := grafanarest.NewMockStorage(t)
+				store := resttest.NewMockStorage(t)
 
 				ac := &subAccessMockClient{
 					batchCheckFunc: func(_ context.Context, _ authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
@@ -361,7 +361,7 @@ func TestSubAccessREST_getAccessInfo_virtualFolders(t *testing.T) {
 
 	t.Run("sharedwithme folder reports no access without touching the getter or authz", func(t *testing.T) {
 		// Bare getter mock fails if Get is called; BatchCheck fails the test below.
-		store := grafanarest.NewMockStorage(t)
+		store := resttest.NewMockStorage(t)
 		ac := &subAccessMockClient{
 			batchCheckFunc: func(_ context.Context, _ authlib.AuthInfo, _ authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
 				t.Fatal("BatchCheck must not be called for the sharedwithme folder")

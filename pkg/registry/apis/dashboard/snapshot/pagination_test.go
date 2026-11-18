@@ -14,7 +14,7 @@ import (
 
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/apiserver/rest/resttest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -51,7 +51,7 @@ func TestSnapshotListRefillsOwnedPages(t *testing.T) {
 		{name: "later error fails closed", pages: []*dashv0.SnapshotList{page("page2", "alice", "bob"), nil}, limits: []int64{2, 1}, lastErr: errors.New("storage unavailable")},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			storage := grafanarest.NewMockStorage(t)
+			storage := resttest.NewMockStorage(t)
 			options := &internalversion.ListOptions{Limit: 2, Continue: "start"}
 			if tc.unlimited {
 				options.Limit = 0

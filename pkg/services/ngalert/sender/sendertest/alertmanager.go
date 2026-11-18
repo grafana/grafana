@@ -1,4 +1,4 @@
-package sender
+package sendertest
 
 import (
 	"encoding/json"

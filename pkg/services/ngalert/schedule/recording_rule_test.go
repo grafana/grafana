@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	models "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/writer"
+	"github.com/grafana/grafana/pkg/services/ngalert/writer/writertest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -183,7 +184,7 @@ func blankRecordingRuleForTests(ctx context.Context) *recordingRule {
 
 func TestRecordingRule_Integration(t *testing.T) {
 	t.Run("with datasource writer", func(t *testing.T) {
-		writeTarget := writer.NewTestRemoteWriteTarget(t)
+		writeTarget := writertest.NewTestRemoteWriteTarget(t)
 		defer writeTarget.Close()
 		writerReg := prometheus.NewPedanticRegistry()
 		writer := setupDatasourceWriter(t, writeTarget, writerReg, "ds-uid")
@@ -427,7 +428,7 @@ func TestRecordingRuleAfterEval(t *testing.T) {
 	})
 }
 
-func testRecordingRule_Integration(t *testing.T, writeTarget *writer.TestRemoteWriteTarget, writer RecordingWriter, writerReg *prometheus.Registry, dsUID string) {
+func testRecordingRule_Integration(t *testing.T, writeTarget *writertest.TestRemoteWriteTarget, writer RecordingWriter, writerReg *prometheus.Registry, dsUID string) {
 	gen := models.RuleGen.With(models.RuleGen.WithAllRecordingRules(), models.RuleGen.WithOrgID(123))
 	ruleStore := newFakeRulesStore()
 	reg := prometheus.NewPedanticRegistry()
@@ -886,7 +887,7 @@ func withQueryForHealth(health string) models.AlertRuleMutator {
 	}
 }
 
-func setupDatasourceWriter(t *testing.T, target *writer.TestRemoteWriteTarget, reg prometheus.Registerer, dsUID string) *writer.DatasourceWriter {
+func setupDatasourceWriter(t *testing.T, target *writertest.TestRemoteWriteTarget, reg prometheus.Registerer, dsUID string) *writer.DatasourceWriter {
 	provider := testClientProvider{}
 	m := metrics.NewNGAlert(reg)
 

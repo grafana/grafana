@@ -24,6 +24,7 @@ import (
 	infraserverlock "github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/featuremgmt/featuremgmttest"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -302,7 +303,7 @@ func TestSyncer_Sync(t *testing.T) {
 			ctx := context.Background()
 
 			// Setup feature toggles
-			ft := featuremgmt.NewMockFeatureToggles(t)
+			ft := featuremgmttest.NewMockFeatureToggles(t)
 			ft.EXPECT().IsEnabled(ctx, featuremgmt.FlagPluginInstallAPISync).Return(tt.pluginInstallAPISyncEnabled).Maybe()
 			ft.EXPECT().IsEnabled(ctx, featuremgmt.FlagPluginStoreServiceLoading).Return(tt.pluginStoreServiceEnabled).Maybe()
 
@@ -712,7 +713,7 @@ func TestSyncer_syncNamespace(t *testing.T) {
 
 			// Create syncer
 			s := newSyncer(
-				featuremgmt.NewMockFeatureToggles(t),
+				featuremgmttest.NewMockFeatureToggles(t),
 				registrar,
 				orgtest.NewOrgServiceFake(),
 				func(orgID int64) string { return "org-1" },
@@ -775,7 +776,7 @@ func TestSyncer_syncAllNamespaces_ContinuesAfterNamespaceError(t *testing.T) {
 	orgService.ExpectedOrgs = []*org.OrgDTO{{ID: 1}, {ID: 2}}
 
 	s := newSyncer(
-		featuremgmt.NewMockFeatureToggles(t),
+		featuremgmttest.NewMockFeatureToggles(t),
 		install.NewInstallRegistrar(&logging.NoOpLogger{}, clientGen),
 		orgService,
 		func(orgID int64) string { return fmt.Sprintf("org-%d", orgID) },
@@ -807,7 +808,7 @@ func TestInstallRegistrar_GetClient(t *testing.T) {
 			clientGen := &fakeClientGenerator{client: fakeClient}
 
 			s := newSyncer(
-				featuremgmt.NewMockFeatureToggles(t),
+				featuremgmttest.NewMockFeatureToggles(t),
 				install.NewInstallRegistrar(&logging.NoOpLogger{}, clientGen),
 				orgtest.NewOrgServiceFake(),
 				func(orgID int64) string { return "org-1" },

@@ -27,7 +27,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/apiserver/rest/resttest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	folderlegacy "github.com/grafana/grafana/pkg/services/folder"
@@ -49,7 +49,7 @@ func TestFolderStorageCreateLogsOriginalError(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			var logs bytes.Buffer
 			ctx := logging.Context(context.Background(), logging.NewSLogLogger(slog.NewJSONHandler(&logs, nil)))
-			store := grafanarest.NewMockStorage(t)
+			store := resttest.NewMockStorage(t)
 			store.On("Create", ctx, mock.Anything, mock.Anything, mock.Anything).Return(nil, original).Once()
 			fs := folderStorage{store: store}
 
@@ -133,7 +133,7 @@ func TestFolderStorageCreateErrorResponses(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			store := grafanarest.NewMockStorage(t)
+			store := resttest.NewMockStorage(t)
 			store.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, tc.err).Once()
 			fs := folderStorage{store: store}
 			out, err := fs.Create(context.Background(), &folders.Folder{}, nil, &metav1.CreateOptions{})
@@ -178,7 +178,7 @@ func TestSetDefaultPermissionsWhenCreatingFolder(t *testing.T) {
 			tempCfg, err := setting.NewCfgFromINIFile(f)
 			require.NoError(t, err)
 			cfg.RBAC = tempCfg.RBAC
-			store := grafanarest.NewMockStorage(t)
+			store := resttest.NewMockStorage(t)
 			store.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 				Return(&folders.Folder{}, nil).Maybe() // we don't really care
 
@@ -213,7 +213,7 @@ func newRefreshingFolderStorage(t *testing.T, permErr error, acService accesscon
 	folderPermService := acmock.NewMockedPermissionsService()
 	folderPermService.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, permErr).Once()
 
-	store := grafanarest.NewMockStorage(t)
+	store := resttest.NewMockStorage(t)
 	store.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&folders.Folder{}, nil)
 
 	b := &FolderAPIBuilder{acService: acService}

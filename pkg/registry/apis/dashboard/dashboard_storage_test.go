@@ -14,7 +14,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/apiserver/rest/resttest"
 	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 )
@@ -24,7 +24,7 @@ func TestDashboardStorageWrapperDelete(t *testing.T) {
 	ctx := apirequest.WithNamespace(context.Background(), "default")
 
 	newWrapper := func(iamFeatures iamapi.Features, perms *acmock.MockPermissionsService) dashboardStorageWrapper {
-		storage := grafanarest.NewMockStorage(t)
+		storage := resttest.NewMockStorage(t)
 		storage.On("Delete", mock.Anything, "dash-uid", mock.Anything, mock.Anything).
 			Return(&unstructured.Unstructured{}, false, nil)
 		return dashboardStorageWrapper{
@@ -60,7 +60,7 @@ func TestDashboardStorageWrapperListHidesDrafts(t *testing.T) {
 	listSelector := func(t *testing.T, extras DashboardLifecycleExtras, in labels.Selector) string {
 		t.Helper()
 		var got labels.Selector
-		storage := grafanarest.NewMockStorage(t)
+		storage := resttest.NewMockStorage(t)
 		storage.On("List", mock.Anything, mock.Anything).
 			Run(func(args mock.Arguments) { got = args.Get(1).(*internalversion.ListOptions).LabelSelector }).
 			Return(&unstructured.UnstructuredList{}, nil)
@@ -100,7 +100,7 @@ func TestListHidingDrafts(t *testing.T) {
 	listSelector := func(t *testing.T, extras DashboardLifecycleExtras, in labels.Selector) string {
 		t.Helper()
 		var got labels.Selector
-		storage := grafanarest.NewMockStorage(t)
+		storage := resttest.NewMockStorage(t)
 		storage.On("List", mock.Anything, mock.Anything).
 			Run(func(args mock.Arguments) { got = args.Get(1).(*internalversion.ListOptions).LabelSelector }).
 			Return(&unstructured.UnstructuredList{}, nil)

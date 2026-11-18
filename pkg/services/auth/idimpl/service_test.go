@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/featuremgmt/featuremgmttest"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
@@ -304,7 +305,7 @@ func TestService_SignIdentity_UserAttributeChange(t *testing.T) {
 }
 
 func TestService_IDTokenCacheDisabled(t *testing.T) {
-	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagIdTokenCacheDisabled)
+	featuremgmttest.WithEnabledFlags(t, featuremgmt.FlagIdTokenCacheDisabled)
 
 	var calls atomic.Int32
 	signer := &idtest.FakeSigner{

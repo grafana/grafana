@@ -21,12 +21,13 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/featuremgmt/featuremgmttest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 )
 
 func TestDataSourceCreateAdmission(t *testing.T) {
-	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagDatasourcesTeamHttpHeadersWriteGuard)
+	featuremgmttest.WithEnabledFlags(t, featuremgmt.FlagDatasourcesTeamHttpHeadersWriteGuard)
 	resourceInfo := datasourceV0.DataSourceResourceInfo.WithGroupAndShortName("prometheus.datasource.grafana.app", "prometheus")
 	apiBuilder := &DataSourceAPIBuilder{datasourceResourceInfo: resourceInfo}
 	admissionPlugin := builder.NewAdmissionFromBuilders([]builder.APIGroupBuilder{apiBuilder})
@@ -99,7 +100,7 @@ func TestDataSourceCreateAdmission(t *testing.T) {
 }
 
 func TestDataSourceCreateAdmissionFlagDisabled(t *testing.T) {
-	featuremgmt.WithDisabledFlags(t, featuremgmt.FlagDatasourcesTeamHttpHeadersWriteGuard)
+	featuremgmttest.WithDisabledFlags(t, featuremgmt.FlagDatasourcesTeamHttpHeadersWriteGuard)
 	resourceInfo := datasourceV0.DataSourceResourceInfo.WithGroupAndShortName("prometheus.datasource.grafana.app", "prometheus")
 	apiBuilder := &DataSourceAPIBuilder{datasourceResourceInfo: resourceInfo}
 	admissionPlugin := builder.NewAdmissionFromBuilders([]builder.APIGroupBuilder{apiBuilder})
@@ -127,7 +128,7 @@ func (p *countingCreateDatasourceProvider) CreateDataSource(_ context.Context, d
 }
 
 func TestLegacyStorageCreateGuardBeforeWrite(t *testing.T) {
-	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagDatasourcesTeamHttpHeadersWriteGuard)
+	featuremgmttest.WithEnabledFlags(t, featuremgmt.FlagDatasourcesTeamHttpHeadersWriteGuard)
 	resourceInfo := datasourceV0.DataSourceResourceInfo.WithGroupAndShortName("prometheus.datasource.grafana.app", "prometheus")
 	provider := &countingCreateDatasourceProvider{}
 	store := &legacyStorage{datasources: provider, resourceInfo: &resourceInfo}
@@ -154,7 +155,7 @@ func TestLegacyStorageCreateGuardBeforeWrite(t *testing.T) {
 }
 
 func TestLegacyStorageCreateGuardFlagDisabled(t *testing.T) {
-	featuremgmt.WithDisabledFlags(t, featuremgmt.FlagDatasourcesTeamHttpHeadersWriteGuard)
+	featuremgmttest.WithDisabledFlags(t, featuremgmt.FlagDatasourcesTeamHttpHeadersWriteGuard)
 	resourceInfo := datasourceV0.DataSourceResourceInfo.WithGroupAndShortName("prometheus.datasource.grafana.app", "prometheus")
 	provider := &countingCreateDatasourceProvider{}
 	store := &legacyStorage{datasources: provider, resourceInfo: &resourceInfo}
@@ -170,7 +171,7 @@ func TestLegacyStorageCreateGuardFlagDisabled(t *testing.T) {
 }
 
 func TestDataSourceUpdateAdmission(t *testing.T) {
-	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagDatasourcesTeamHttpHeadersWriteGuard)
+	featuremgmttest.WithEnabledFlags(t, featuremgmt.FlagDatasourcesTeamHttpHeadersWriteGuard)
 	resourceInfo := datasourceV0.DataSourceResourceInfo.WithGroupAndShortName("prometheus.datasource.grafana.app", "prometheus")
 	apiBuilder := &DataSourceAPIBuilder{datasourceResourceInfo: resourceInfo}
 	admissionPlugin := builder.NewAdmissionFromBuilders([]builder.APIGroupBuilder{apiBuilder})
@@ -226,7 +227,7 @@ func TestDataSourceUpdateAdmission(t *testing.T) {
 }
 
 func TestDataSourceUpdateAdmissionFlagDisabled(t *testing.T) {
-	featuremgmt.WithDisabledFlags(t, featuremgmt.FlagDatasourcesTeamHttpHeadersWriteGuard)
+	featuremgmttest.WithDisabledFlags(t, featuremgmt.FlagDatasourcesTeamHttpHeadersWriteGuard)
 	resourceInfo := datasourceV0.DataSourceResourceInfo.WithGroupAndShortName("prometheus.datasource.grafana.app", "prometheus")
 	apiBuilder := &DataSourceAPIBuilder{datasourceResourceInfo: resourceInfo}
 	admissionPlugin := builder.NewAdmissionFromBuilders([]builder.APIGroupBuilder{apiBuilder})
@@ -238,7 +239,7 @@ func TestDataSourceUpdateAdmissionFlagDisabled(t *testing.T) {
 }
 
 func TestLegacyStorageUpdateGuardBeforeWrite(t *testing.T) {
-	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagDatasourcesTeamHttpHeadersWriteGuard)
+	featuremgmttest.WithEnabledFlags(t, featuremgmt.FlagDatasourcesTeamHttpHeadersWriteGuard)
 	resourceInfo := datasourceV0.DataSourceResourceInfo.WithGroupAndShortName("prometheus.datasource.grafana.app", "prometheus")
 	apiBuilder := &DataSourceAPIBuilder{datasourceResourceInfo: resourceInfo}
 	admissionPlugin := builder.NewAdmissionFromBuilders([]builder.APIGroupBuilder{apiBuilder})
@@ -260,7 +261,7 @@ func TestLegacyStorageUpdateGuardBeforeWrite(t *testing.T) {
 }
 
 func TestLegacyStorageUpdateGuardPatchFormats(t *testing.T) {
-	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagDatasourcesTeamHttpHeadersWriteGuard)
+	featuremgmttest.WithEnabledFlags(t, featuremgmt.FlagDatasourcesTeamHttpHeadersWriteGuard)
 	resourceInfo := datasourceV0.DataSourceResourceInfo.WithGroupAndShortName("prometheus.datasource.grafana.app", "prometheus")
 	apiBuilder := &DataSourceAPIBuilder{datasourceResourceInfo: resourceInfo}
 	admissionPlugin := builder.NewAdmissionFromBuilders([]builder.APIGroupBuilder{apiBuilder})
@@ -309,7 +310,7 @@ func TestLegacyStorageUpdateGuardPatchFormats(t *testing.T) {
 }
 
 func TestDataSourceUpdateGuardAllowsStaleUnifiedMirror(t *testing.T) {
-	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagDatasourcesTeamHttpHeadersWriteGuard)
+	featuremgmttest.WithEnabledFlags(t, featuremgmt.FlagDatasourcesTeamHttpHeadersWriteGuard)
 	resourceInfo := datasourceV0.DataSourceResourceInfo.WithGroupAndShortName("prometheus.datasource.grafana.app", "prometheus")
 	apiBuilder := &DataSourceAPIBuilder{datasourceResourceInfo: resourceInfo}
 	admissionPlugin := builder.NewAdmissionFromBuilders([]builder.APIGroupBuilder{apiBuilder})
@@ -340,7 +341,7 @@ func TestDataSourceUpdateGuardAllowsStaleUnifiedMirror(t *testing.T) {
 }
 
 func TestDataSourceUpdateGuardDryRunUsesSQLState(t *testing.T) {
-	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagDatasourcesTeamHttpHeadersWriteGuard)
+	featuremgmttest.WithEnabledFlags(t, featuremgmt.FlagDatasourcesTeamHttpHeadersWriteGuard)
 	resourceInfo := datasourceV0.DataSourceResourceInfo.WithGroupAndShortName("prometheus.datasource.grafana.app", "prometheus")
 	apiBuilder := &DataSourceAPIBuilder{datasourceResourceInfo: resourceInfo}
 	admissionPlugin := builder.NewAdmissionFromBuilders([]builder.APIGroupBuilder{apiBuilder})
@@ -407,7 +408,7 @@ func TestDataSourceUpdateGuardAllowsStoredRulesDuringMirrorCreate(t *testing.T) 
 		{verb: "patch", dryRun: true},
 	} {
 		t.Run(fmt.Sprintf("%s/dryRun=%t", tc.verb, tc.dryRun), func(t *testing.T) {
-			featuremgmt.WithEnabledFlags(t, featuremgmt.FlagDatasourcesTeamHttpHeadersWriteGuard)
+			featuremgmttest.WithEnabledFlags(t, featuremgmt.FlagDatasourcesTeamHttpHeadersWriteGuard)
 			resourceInfo := datasourceV0.DataSourceResourceInfo.WithGroupAndShortName("prometheus.datasource.grafana.app", "prometheus")
 			apiBuilder := &DataSourceAPIBuilder{datasourceResourceInfo: resourceInfo}
 			admissionPlugin := builder.NewAdmissionFromBuilders([]builder.APIGroupBuilder{apiBuilder})
@@ -462,7 +463,7 @@ func TestDataSourceUpdateGuardAllowsStoredRulesDuringMirrorCreate(t *testing.T) 
 }
 
 func TestDataSourceUpdateGuardUnifiedPrimary(t *testing.T) {
-	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagDatasourcesTeamHttpHeadersWriteGuard)
+	featuremgmttest.WithEnabledFlags(t, featuremgmt.FlagDatasourcesTeamHttpHeadersWriteGuard)
 	resourceInfo := datasourceV0.DataSourceResourceInfo.WithGroupAndShortName("prometheus.datasource.grafana.app", "prometheus")
 	apiBuilder := &DataSourceAPIBuilder{datasourceResourceInfo: resourceInfo}
 	admissionPlugin := builder.NewAdmissionFromBuilders([]builder.APIGroupBuilder{apiBuilder})

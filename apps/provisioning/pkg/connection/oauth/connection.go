@@ -20,7 +20,7 @@ import (
 // Provider supplies the provider-specific pieces of an OAuth app connection
 // (e.g. GitLab, Bitbucket): its OAuth application settings and health check.
 //
-//go:generate mockery --name Provider --structname MockProvider --inpackage --filename provider_mock.go --with-expecter
+//go:generate mockery --name Provider --structname MockProvider --inpackage --filename provider_mock_test.go --with-expecter
 type Provider interface {
 	Endpoint() oauth2.Endpoint
 	Test(ctx context.Context) *provisioning.TestResults

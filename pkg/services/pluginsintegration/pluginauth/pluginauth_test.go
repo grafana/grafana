@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/plugin"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/featuremgmt/featuremgmttest"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -115,7 +116,7 @@ func TestLocalAPIURLRequiresGrafanaAudience(t *testing.T) {
 }
 
 func TestLocalPluginAuthEnabled(t *testing.T) {
-	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagApppluginsLoadAppManifest)
+	featuremgmttest.WithEnabledFlags(t, featuremgmt.FlagApppluginsLoadAppManifest)
 	cfgWith := func(enabled string) *setting.Cfg {
 		cfg := &setting.Cfg{Raw: ini.Empty()}
 		if enabled != "" {
@@ -139,12 +140,12 @@ func TestLocalPluginAuthRequiresAppManifests(t *testing.T) {
 	// Without the appplugins.loadAppManifest feature toggle, the default.
 	require.False(t, localPluginAuthEnabled(&setting.Cfg{Raw: ini.Empty()}))
 
-	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagApppluginsLoadAppManifest)
+	featuremgmttest.WithEnabledFlags(t, featuremgmt.FlagApppluginsLoadAppManifest)
 	require.True(t, localPluginAuthEnabled(&setting.Cfg{Raw: ini.Empty()}))
 }
 
 func TestProvideConfig(t *testing.T) {
-	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagApppluginsLoadAppManifest)
+	featuremgmttest.WithEnabledFlags(t, featuremgmt.FlagApppluginsLoadAppManifest)
 	cfgWith := func(protocol setting.Scheme, override string) *setting.Cfg {
 		cfg := &setting.Cfg{Raw: ini.Empty(), Protocol: protocol, HTTPPort: "3000", ExtJWTAuth: setting.ExtJWTSettings{Audiences: []string{"grafana"}}}
 		cfg.Raw.Section("plugins").Key("local_api_url").SetValue(override)
@@ -185,7 +186,7 @@ func TestProvideConfig(t *testing.T) {
 }
 
 func TestProvideConfigDecision(t *testing.T) {
-	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagApppluginsLoadAppManifest)
+	featuremgmttest.WithEnabledFlags(t, featuremgmt.FlagApppluginsLoadAppManifest)
 	for _, tc := range []struct {
 		name, token, url, jwksURL string
 		hostEnv                   string

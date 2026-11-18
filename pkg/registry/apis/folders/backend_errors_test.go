@@ -27,7 +27,7 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/apiserver/rest/resttest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -68,7 +68,7 @@ func TestCreateSanitizesBackendServerErrors(t *testing.T) {
 		{"transport", status.Error(codes.Unavailable, backendDiagnostic), 503, ""},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			store := grafanarest.NewMockStorage(t)
+			store := resttest.NewMockStorage(t)
 			store.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, tc.err).Once()
 			fs := folderStorage{store: store}
 			_, err := fs.Create(context.Background(), ancestryTestFolder("child", ""), nil, &metav1.CreateOptions{})
@@ -87,7 +87,7 @@ func TestBackendServerTimeoutRetainsRetryClassification(t *testing.T) {
 				if wrapped {
 					original = fmt.Errorf("%s: %w", backendDiagnostic, original)
 				}
-				store := grafanarest.NewMockStorage(t)
+				store := resttest.NewMockStorage(t)
 				var err error
 				if boundary == "create" {
 					store.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, original).Once()
@@ -122,7 +122,7 @@ func TestCreationLookupServerMessagesRemainCompatible(t *testing.T) {
 	} {
 		for _, wrapped := range []bool{false, true} {
 			t.Run(fmt.Sprintf("%d/wrapped=%t", tc.code, wrapped), func(t *testing.T) {
-				store := grafanarest.NewMockStorage(t)
+				store := resttest.NewMockStorage(t)
 				store.On("Get", mock.Anything, "C", mock.Anything).Return(nil, &apierrors.StatusError{ErrStatus: metav1.Status{Code: int32(tc.code), Message: backendDiagnostic}}).Once()
 				err := validateAncestryTestCreateThroughStorage(ancestryTestContext(t, "org-42", false), store, 5, false, ancestryTestStorageWrapper(t, wrapped))
 				require.Error(t, err)
@@ -150,7 +150,7 @@ func TestBackendStatusReasonAllowlist(t *testing.T) {
 }
 
 func TestMoveTargetAdmissionHidesBackendDiagnostics(t *testing.T) {
-	store := grafanarest.NewMockStorage(t)
+	store := resttest.NewMockStorage(t)
 	store.On("Get", mock.Anything, "new-parent", mock.Anything).Return(nil, apierrors.NewServiceUnavailable(backendDiagnostic)).Once()
 	b := &FolderAPIBuilder{storage: store, parents: newParentsGetter(store), maxNestedFolderDepth: 5}
 	old := ancestryTestFolder("child", "")
@@ -208,7 +208,7 @@ func TestParentFailuresAreLogged(t *testing.T) {
 			t.Run(fmt.Sprintf("%s/create=%t", tc.name, forCreate), func(t *testing.T) {
 				logger := captureFolderLogs(t)
 				ctx := context.Background()
-				store := grafanarest.NewMockStorage(t)
+				store := resttest.NewMockStorage(t)
 				store.On("Get", mock.Anything, "parent", mock.Anything).Return(tc.obj, tc.err).Once()
 				_, _ = newParentsGetterWithPolicy(store, forCreate)(ctx, ancestryTestFolder("child", "parent"))
 				level := tc.level
@@ -243,7 +243,7 @@ func TestExpectedParentFailuresDoNotMarkTraceAsFailed(t *testing.T) {
 	} {
 		t.Run(lookupErr.Error(), func(t *testing.T) {
 			ctx, recorder, _ := newFolderTrace(t)
-			store := grafanarest.NewMockStorage(t)
+			store := resttest.NewMockStorage(t)
 			store.On("Get", mock.Anything, "parent", mock.Anything).Return(nil, lookupErr).Once()
 			info, err := newParentsGetter(store)(ctx, ancestryTestFolder("child", "parent"))
 			require.NoError(t, err)
@@ -256,7 +256,7 @@ func TestExpectedParentFailuresDoNotMarkTraceAsFailed(t *testing.T) {
 }
 
 func TestDetachedParentHidesBackendDiagnostics(t *testing.T) {
-	store := grafanarest.NewMockStorage(t)
+	store := resttest.NewMockStorage(t)
 	store.On("Get", mock.Anything, "parent", mock.Anything).Return(nil, errors.New(backendDiagnostic)).Once()
 	info, err := newParentsGetter(store)(context.Background(), ancestryTestFolder("child", "parent"))
 	require.NoError(t, err)

@@ -26,6 +26,7 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/featuremgmt/featuremgmttest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	unifiedmigrations "github.com/grafana/grafana/pkg/storage/unified/migrations/contract"
@@ -42,7 +43,7 @@ func snapshotAPIResponse(r *http.Request, status int, body string) *http.Respons
 
 func snapshotAPIContext(t *testing.T, path string) (*HTTPServer, *contextmodel.ReqContext) {
 	t.Helper()
-	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagSnapshotsKubernetesSnapshots)
+	featuremgmttest.WithEnabledFlags(t, featuremgmt.FlagSnapshotsKubernetesSnapshots)
 	cfg := setting.NewCfg()
 	cfg.SnapshotEnabled = true
 	req := httptest.NewRequest(http.MethodGet, path, nil)
@@ -312,7 +313,7 @@ func TestSnapshotMigrationLegacyFallbacks(t *testing.T) {
 				hs.Features = featuremgmt.WithFeatures(featuremgmt.FlagExternalSnapshotsSupportLegacyAPI)
 				c.IsSignedIn = false
 			} else {
-				featuremgmt.WithDisabledFlags(t, featuremgmt.FlagSnapshotsKubernetesSnapshots)
+				featuremgmttest.WithDisabledFlags(t, featuremgmt.FlagSnapshotsKubernetesSnapshots)
 			}
 			service := dashboardsnapshots.NewMockService(t)
 			hs.dashboardsnapshotsService = service

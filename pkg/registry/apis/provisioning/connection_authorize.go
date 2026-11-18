@@ -19,7 +19,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 )
 
-//go:generate mockery --name=ConnectionAuthorizeAccess --structname=MockConnectionAuthorizeAccess --inpackage --filename=connection_authorize_access_mock.go --with-expecter
+//go:generate mockery --name=ConnectionAuthorizeAccess --structname=MockConnectionAuthorizeAccess --inpackage --filename=connection_authorize_access_mock_test.go --with-expecter
 type ConnectionAuthorizeAccess interface {
 	ConnectionGetter
 	repository.ConnectionSpecGetter

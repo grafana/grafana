@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/featuremgmt/featuremgmttest"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -396,7 +397,7 @@ func TestCreateDashboardSnapshotPublicModeWithKubernetesSnapshots(t *testing.T) 
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			featuremgmt.WithEnabledFlags(t, featuremgmt.FlagSnapshotsKubernetesSnapshots)
+			featuremgmttest.WithEnabledFlags(t, featuremgmt.FlagSnapshotsKubernetesSnapshots)
 
 			dashSnapSvc := dashboardsnapshots.NewMockService(t)
 			if tt.supportLegacy {
@@ -446,7 +447,7 @@ func TestCreateDashboardSnapshot_DispatchSwitchesAtRuntime(t *testing.T) {
 	_ = sendPostRequest(t, server, signedInUser)
 	assert.Empty(t, kubeMock.lastServedPath)
 
-	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagSnapshotsKubernetesSnapshots)
+	featuremgmttest.WithEnabledFlags(t, featuremgmt.FlagSnapshotsKubernetesSnapshots)
 
 	// Flag ON: request is dispatched to kube API.
 	_ = sendPostRequest(t, server, signedInUser)

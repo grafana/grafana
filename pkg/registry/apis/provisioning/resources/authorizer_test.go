@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/apimachinery/utils/utilstest"
 )
 
 // authTestClients returns a ResourceClients exposing the static supported set and
@@ -58,7 +59,7 @@ func emptyClients(t *testing.T) *MockResourceClients {
 }
 
 func makeAuthorizeResourceParsed(t *testing.T, fileFolderID, existingFolder string, hasExisting bool) *ParsedResource {
-	mockMeta := utils.NewMockGrafanaMetaAccessor(t)
+	mockMeta := utilstest.NewMockGrafanaMetaAccessor(t)
 	mockMeta.On("GetFolder").Return(fileFolderID)
 
 	parsed := &ParsedResource{

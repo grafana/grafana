@@ -23,7 +23,7 @@ import (
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/apiserver/rest/resttest"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
@@ -54,7 +54,7 @@ func TestCreateSnapshotRequiresDashboardRead(t *testing.T) {
 			if tc.allowed && !tc.public {
 				dashboardService.On("GetDashboard", mock.Anything, &dashboards.GetDashboardQuery{UID: "source", OrgID: 1}).Return(&dashboards.Dashboard{UID: "source"}, nil)
 			}
-			storage := grafanarest.NewMockStorage(t)
+			storage := resttest.NewMockStorage(t)
 			if tc.allowed {
 				storage.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&dashv0.Snapshot{}, nil)
 			}
@@ -106,7 +106,7 @@ func TestSnapshotListPreservesLegacyOwnership(t *testing.T) {
 		{"legacy service account", &user.SignedInUser{OrgID: 1, UserID: 1, IsServiceAccount: true}, []string{"legacy-owned"}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			storage := grafanarest.NewMockStorage(t)
+			storage := resttest.NewMockStorage(t)
 			storage.On("List", mock.Anything, mock.Anything).Return(list, nil)
 			wrapper := NewStorageWrapper(storage, dashv0.SnapshotSharingOptions{}, acmock.New(), nil).(rest.Lister)
 			obj, err := wrapper.List(identity.WithRequester(ctxForOrg(1), tc.requester), &internalversion.ListOptions{})
@@ -195,7 +195,7 @@ func TestSnapshotAdministrativeDeletePolicy(t *testing.T) {
 							return false, tc.writeErr
 						}
 					}
-					storage := grafanarest.NewMockStorage(t)
+					storage := resttest.NewMockStorage(t)
 					if !tc.crossOrgRequest {
 						storage.On("Get", mock.Anything, "snapshot", mock.Anything).Return(snap, nil)
 					}
@@ -264,7 +264,7 @@ func TestSnapshotWrapperPreservesLocalSnapshotOnExternalFailure(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{Name: "snapshot", Namespace: "default"},
 		Spec:       dashv0.SnapshotSpec{External: new(true), DeleteKey: new("secret")},
 	}
-	storage := grafanarest.NewMockStorage(t)
+	storage := resttest.NewMockStorage(t)
 	storage.On("Get", mock.Anything, snap.Name, mock.Anything).Return(snap, nil)
 	access := acmock.New().WithPermissions([]ac.Permission{{Action: dashboards.ActionSnapshotsDelete}})
 	wrapper := NewStorageWrapper(storage, dashv0.SnapshotSharingOptions{ExternalSnapshotURL: server.URL}, access, nil).(*storageWrapper)
@@ -286,7 +286,7 @@ func TestSnapshotWrapperUsesOriginalExternalHost(t *testing.T) {
 		Spec:       dashv0.SnapshotSpec{External: new(true), DeleteKey: new("secret")},
 	}
 	snap.Spec.ExternalUrl = new(server.URL + "/dashboard/snapshot/public-key")
-	storage := grafanarest.NewMockStorage(t)
+	storage := resttest.NewMockStorage(t)
 	storage.On("Get", mock.Anything, snap.Name, mock.Anything).Return(snap, nil)
 	access := acmock.New().WithPermissions([]ac.Permission{{Action: dashboards.ActionSnapshotsDelete}})
 	wrapper := NewStorageWrapper(storage, dashv0.SnapshotSharingOptions{}, access, nil).(*storageWrapper)
@@ -316,7 +316,7 @@ func TestSnapshotWrapperRejectedDeleteDoesNotContactExternal(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{Name: "snapshot", Namespace: "default", UID: "correct", ResourceVersion: "new"},
 				Spec:       dashv0.SnapshotSpec{External: new(true), DeleteKey: new("secret")},
 			}
-			storage := grafanarest.NewMockStorage(t)
+			storage := resttest.NewMockStorage(t)
 			storage.On("Get", mock.Anything, snap.Name, mock.Anything).Return(snap, nil)
 			access := acmock.New().WithPermissions([]ac.Permission{{Action: dashboards.ActionSnapshotsDelete}})
 			wrapper := NewStorageWrapper(storage, dashv0.SnapshotSharingOptions{ExternalSnapshotURL: server.URL}, access, nil).(*storageWrapper)
@@ -338,7 +338,7 @@ func TestSnapshotWrapperDryRunDoesNotDeleteExternal(t *testing.T) {
 		ObjectMeta: metav1.ObjectMeta{Name: "snapshot", Namespace: "default"},
 		Spec:       dashv0.SnapshotSpec{External: new(true), DeleteKey: new("secret")},
 	}
-	storage := grafanarest.NewMockStorage(t)
+	storage := resttest.NewMockStorage(t)
 	storage.On("Get", mock.Anything, snap.Name, mock.Anything).Return(snap, nil)
 	storage.On("Delete", mock.Anything, snap.Name, mock.Anything, mock.Anything).
 		Run(func(args mock.Arguments) {
@@ -356,7 +356,7 @@ func TestSnapshotDeleteRevalidatesAsCaller(t *testing.T) {
 	snap := &dashv0.Snapshot{ObjectMeta: metav1.ObjectMeta{Name: "snapshot", Namespace: authlib.OrgNamespaceFormatter(1)}}
 	require.NoError(t, setDashboardContent(snap, map[string]any{"uid": "source"}))
 	snap.SetCreatedBy("user:alice")
-	storage := grafanarest.NewMockStorage(t)
+	storage := resttest.NewMockStorage(t)
 	storage.On("Get", mock.Anything, "snapshot", mock.Anything).Return(snap, nil)
 	validationCalls := 0
 	storage.On("Delete", mock.Anything, "snapshot", mock.Anything, mock.Anything).

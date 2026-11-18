@@ -32,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugintest"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	fakeSecrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -53,7 +54,7 @@ func TestIntegrationCallResource(t *testing.T) {
 
 	coreRegistry := coreplugin.ProvideCoreRegistry(tracing.InitializeTracerForTest(), nil, testdatasource.ProvideService(), nil)
 
-	testCtx := pluginsintegration.CreateIntegrationTestCtx(t, cfg, coreRegistry)
+	testCtx := plugintest.CreateIntegrationTestCtx(t, cfg, coreRegistry)
 
 	pcp := plugincontext.ProvideService(cfg, localcache.ProvideService(), testCtx.PluginStore, &datasources.FakeCacheService{},
 		&datasources.FakeDataSourceService{}, pluginSettings.ProvideService(db.InitTestDB(t), fakeSecrets.NewFakeSecretsService()), pluginconfig.NewFakePluginRequestConfigProvider()) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore

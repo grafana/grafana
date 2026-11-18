@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/featuremgmt/featuremgmttest"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -87,7 +88,7 @@ func TestTrashHandler_AlwaysReturnsTheDeletedResourceVersion(t *testing.T) {
 }
 
 func TestTrashHandler_RejectsFolderTreeWhenEnabledForLiveSearch(t *testing.T) {
-	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagSearchPerResourceFolderTree)
+	featuremgmttest.WithEnabledFlags(t, featuremgmt.FlagSearchPerResourceFolderTree)
 	client := &fakeIndexClient{resp: emptyResponse()}
 	h := NewHandler(client, testProvider(), noop.NewTracerProvider().Tracer(""))
 	w := doTrashRequest(t, h, trashBody(`, "where": {"filter": {"field": "folderTree", "operator": "In", "values": ["team-a"]}}`))

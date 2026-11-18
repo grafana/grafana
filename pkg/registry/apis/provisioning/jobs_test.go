@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/featuremgmt/featuremgmttest"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -198,7 +199,7 @@ func TestExportFeatureGate(t *testing.T) {
 	cfg := newTestRepo("my-repo", "default")
 
 	t.Run("push rejected when disabled", func(t *testing.T) {
-		featuremgmt.WithDisabledFlags(t, featuremgmt.FlagProvisioningExport)
+		featuremgmttest.WithDisabledFlags(t, featuremgmt.FlagProvisioningExport)
 		c := &jobsConnector{}
 		spec := provisioning.JobSpec{Action: provisioning.JobActionPush, Push: &provisioning.ExportJobOptions{}}
 
@@ -209,7 +210,7 @@ func TestExportFeatureGate(t *testing.T) {
 	})
 
 	t.Run("migrate rejected when disabled", func(t *testing.T) {
-		featuremgmt.WithDisabledFlags(t, featuremgmt.FlagProvisioningExport)
+		featuremgmttest.WithDisabledFlags(t, featuremgmt.FlagProvisioningExport)
 		c := &jobsConnector{}
 		spec := provisioning.JobSpec{Action: provisioning.JobActionMigrate, Migrate: &provisioning.MigrateJobOptions{}}
 
@@ -220,7 +221,7 @@ func TestExportFeatureGate(t *testing.T) {
 	})
 
 	t.Run("migrate passes the gate when enabled", func(t *testing.T) {
-		featuremgmt.WithEnabledFlags(t, featuremgmt.FlagProvisioningExport)
+		featuremgmttest.WithEnabledFlags(t, featuremgmt.FlagProvisioningExport)
 		c := &jobsConnector{}
 		// spec.Migrate == nil short-circuits authorizeMigrateJob after the gate,
 		// so this exercises the gate without needing authorization mocks.
@@ -231,7 +232,7 @@ func TestExportFeatureGate(t *testing.T) {
 	})
 
 	t.Run("push passes the gate when enabled", func(t *testing.T) {
-		featuremgmt.WithEnabledFlags(t, featuremgmt.FlagProvisioningExport)
+		featuremgmttest.WithEnabledFlags(t, featuremgmt.FlagProvisioningExport)
 		c := &jobsConnector{}
 		spec := provisioning.JobSpec{Action: provisioning.JobActionPush, Push: &provisioning.ExportJobOptions{}}
 

@@ -19,6 +19,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/featuremgmt/featuremgmttest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -394,7 +395,7 @@ func TestMiddlewareEnabledBySettingsAPI(t *testing.T) {
 		{"standalone router with router middleware", standalone, []any{featuremgmt.FlagGrafanaUseRouterMiddleware}, nil, false, false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			featuremgmt.WithEnabledFlags(t, tc.flags...)
+			featuremgmttest.WithEnabledFlags(t, tc.flags...)
 			features := featuremgmt.WithFeatures(tc.toggles...)
 			require.Equal(t, tc.middleware, middlewareEnabled(tc.cfg, features))
 			require.Equal(t, tc.settings, settingsEnabled(tc.cfg))

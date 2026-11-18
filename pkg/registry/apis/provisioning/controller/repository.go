@@ -47,7 +47,7 @@ const (
 	maxAttempts = 3
 )
 
-//go:generate mockery --name finalizerProcessor --structname MockFinalizerProcessor --inpackage --filename finalizer_mock.go --with-expecter
+//go:generate mockery --name finalizerProcessor --structname MockFinalizerProcessor --inpackage --filename finalizer_mock_test.go --with-expecter
 type finalizerProcessor interface {
 	process(ctx context.Context, cfg *provisioning.Repository) error
 }

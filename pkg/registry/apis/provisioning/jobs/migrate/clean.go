@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
-//go:generate mockery --name NamespaceCleaner --structname MockNamespaceCleaner --inpackage --filename mock_namespace_cleaner.go --with-expecter
+//go:generate mockery --name NamespaceCleaner --structname MockNamespaceCleaner --inpackage --filename mock_namespace_cleaner_test.go --with-expecter
 type NamespaceCleaner interface {
 	// Clean deletes every unmanaged resource of every supported kind in the namespace.
 	Clean(ctx context.Context, namespace string, progress jobs.JobProgressRecorder) error

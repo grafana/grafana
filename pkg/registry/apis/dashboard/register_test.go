@@ -47,6 +47,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/apiserver/rest/resttest"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/snapshot"
 	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
@@ -866,7 +867,7 @@ func TestSnapshotBlobEligibilityWithLegacyOnlyStore(t *testing.T) {
 	require.NoError(t, err)
 	require.False(t, enabled)
 
-	b.snapshotStorage = grafanarest.NewMockStorage(t)
+	b.snapshotStorage = resttest.NewMockStorage(t)
 	mode.On("ReadFromUnified", context.Background(), dashv0.SnapshotResourceInfo.GroupResource()).Return(true, nil)
 	enabled, err = b.snapshotReadFromUnified(context.Background())
 	require.NoError(t, err)
@@ -952,7 +953,7 @@ func TestSnapshotRegistrationFiltersEveryServedVersion(t *testing.T) {
 			theirs := dashv0.Snapshot{ObjectMeta: metav1.ObjectMeta{Name: "theirs"}, Spec: dashv0.SnapshotSpec{DeleteKey: &deleteKey}, Blobs: blobs}
 			theirs.SetCreatedBy("user:bob")
 
-			mockStore := grafanarest.NewMockStorage(t)
+			mockStore := resttest.NewMockStorage(t)
 			mockStore.On("List", mock.Anything, mock.Anything).Return(&dashv0.SnapshotList{Items: []dashv0.Snapshot{*mine.DeepCopy(), *theirs.DeepCopy()}}, nil)
 
 			scheme := runtime.NewScheme()

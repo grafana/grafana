@@ -1,4 +1,4 @@
-package writer
+package writertest
 
 import (
 	"fmt"

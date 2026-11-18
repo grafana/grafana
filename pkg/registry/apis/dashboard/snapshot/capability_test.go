@@ -15,7 +15,7 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/apiserver/rest/resttest"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -40,7 +40,7 @@ func TestDeleteKeyPreservesExternalSnapshotOnRemoteFailure(t *testing.T) {
 			snap.Namespace = "default"
 			snap.Spec.External = new(true)
 			snap.Spec.DeleteKey = new("delete-key")
-			storage := grafanarest.NewMockStorage(t)
+			storage := resttest.NewMockStorage(t)
 			storage.On("List", mock.Anything, mock.Anything).Return(&dashv0.SnapshotList{Items: []dashv0.Snapshot{snap}}, nil)
 			storage.On("Delete", mock.Anything, snap.Name, mock.Anything, mock.Anything).
 				Run(func(mock.Arguments) { require.True(t, remoteDeleted.Load()) }).Return(&snap, true, nil).Once()
@@ -73,7 +73,7 @@ func TestDeleteKeyCapabilityCannotAuthorizeArbitraryDeletes(t *testing.T) {
 		{"cross-org request", authlib.OrgNamespaceFormatter(2), authlib.OrgNamespaceFormatter(2), "delete-key"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			storage := grafanarest.NewMockStorage(t)
+			storage := resttest.NewMockStorage(t)
 			if tc.requestNamespace == authlib.OrgNamespaceFormatter(1) {
 				snap := dashv0.Snapshot{}
 				snap.Name = "snapshot"

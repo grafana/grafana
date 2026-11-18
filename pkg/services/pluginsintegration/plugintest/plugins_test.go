@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/coreplugin"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -136,7 +135,7 @@ func TestIntegrationPluginManager(t *testing.T) {
 	graf := grafanads.ProvideService(nil, features)
 	coreRegistry := coreplugin.ProvideCoreRegistry(tracing.InitializeTracerForTest(), grap, td, graf)
 
-	testCtx := pluginsintegration.CreateIntegrationTestCtx(t, cfg, coreRegistry)
+	testCtx := CreateIntegrationTestCtx(t, cfg, coreRegistry)
 
 	ctx := context.Background()
 	verifyCorePluginCatalogue(t, ctx, testCtx.PluginStore)

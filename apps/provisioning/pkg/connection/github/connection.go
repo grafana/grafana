@@ -31,7 +31,7 @@ type ConnectionSecrets struct {
 // implementation (config) reads them from spec.Github; GitHub Enterprise injects its
 // own implementation via NewConnectionWithCustomConfig.
 //
-//go:generate mockery --name ConnectionConfig --structname MockConnectionConfig --inpackage --filename connectionconfig_mock.go --with-expecter
+//go:generate mockery --name ConnectionConfig --structname MockConnectionConfig --inpackage --filename connectionconfig_mock_test.go --with-expecter
 type ConnectionConfig interface {
 	AppID() string
 	InstallationID() string

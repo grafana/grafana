@@ -42,7 +42,7 @@ const (
 
 // ConnectionStatusPatcher defines the interface for updating connection status.
 //
-//go:generate mockery --name=ConnectionStatusPatcher --structname=MockConnectionStatusPatcher --inpackage --filename=connection_status_patcher_mock.go --with-expecter
+//go:generate mockery --name=ConnectionStatusPatcher --structname=MockConnectionStatusPatcher --inpackage --filename=connection_status_patcher_mock_test.go --with-expecter
 type ConnectionStatusPatcher interface {
 	Patch(ctx context.Context, conn *provisioning.Connection, patchOperations ...map[string]interface{}) error
 }

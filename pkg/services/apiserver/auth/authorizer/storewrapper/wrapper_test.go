@@ -21,7 +21,7 @@ import (
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/apiserver/rest/resttest"
 )
 
 var allowAllWatchFilter WatchEventFilter = func(events []watch.Event) ([]bool, error) {
@@ -33,7 +33,7 @@ var allowAllWatchFilter WatchEventFilter = func(events []watch.Event) ([]bool, e
 }
 
 type testSetup struct {
-	mockStore *rest.MockStorage
+	mockStore *resttest.MockStorage
 	mockAuth  *FakeAuthorizer
 	wrapper   *Wrapper
 	ctx       context.Context
@@ -42,7 +42,7 @@ type testSetup struct {
 var testResource = schema.GroupResource{Group: "test.grafana.app", Resource: "fakes"}
 
 func newTestSetup(t *testing.T) *testSetup {
-	mockStore := rest.NewMockStorage(t)
+	mockStore := resttest.NewMockStorage(t)
 	mockAuth := &FakeAuthorizer{}
 	wrapper := New(mockStore, testResource, mockAuth)
 
@@ -55,7 +55,7 @@ func newTestSetup(t *testing.T) *testSetup {
 }
 
 func newTestSetupWithPreserveIdentity(t *testing.T) *testSetup {
-	mockStore := rest.NewMockStorage(t)
+	mockStore := resttest.NewMockStorage(t)
 	mockAuth := &FakeAuthorizer{}
 	wrapper := New(mockStore, testResource, mockAuth, WithPreserveIdentity())
 
@@ -126,7 +126,7 @@ func TestWrapper_Create(t *testing.T) {
 
 func TestWrapper_Observer(t *testing.T) {
 	t.Run("records authz and inner calls with explicit resource", func(t *testing.T) {
-		mockStore := rest.NewMockStorage(t)
+		mockStore := resttest.NewMockStorage(t)
 		mockAuth := &FakeAuthorizer{}
 		observer := &fakeObserver{}
 		resource := schema.GroupResource{Group: "iam.grafana.app", Resource: "resourcepermissions"}
@@ -151,7 +151,7 @@ func TestWrapper_Observer(t *testing.T) {
 	})
 
 	t.Run("records authz failure without inner call", func(t *testing.T) {
-		mockStore := rest.NewMockStorage(t)
+		mockStore := resttest.NewMockStorage(t)
 		mockAuth := &FakeAuthorizer{}
 		observer := &fakeObserver{}
 		resource := schema.GroupResource{Group: "iam.grafana.app", Resource: "resourcepermissions"}
@@ -369,7 +369,7 @@ func TestWrapper_UpdateAuthorizationUsesExecutionContext(t *testing.T) {
 
 	const authorizationContextKey contextKey = "fake-authorization-context-key"
 
-	mockStore := rest.NewMockStorage(t)
+	mockStore := resttest.NewMockStorage(t)
 	mockAuth := &FakeAuthorizer{}
 	wrapper := New(mockStore, testResource, mockAuth)
 	requester := &identity.StaticRequester{UserUID: "fake-user-uid", Type: types.TypeUser}
@@ -432,7 +432,7 @@ func TestWrapper_UpdateFailsClosedWithoutOriginalIdentity(t *testing.T) {
 
 	for name, ctx := range testCases {
 		t.Run(name, func(t *testing.T) {
-			mockStore := rest.NewMockStorage(t)
+			mockStore := resttest.NewMockStorage(t)
 			mockAuth := &FakeAuthorizer{}
 			wrapper := New(mockStore, testResource, mockAuth)
 

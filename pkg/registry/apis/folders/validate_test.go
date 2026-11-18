@@ -23,7 +23,7 @@ import (
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/apiserver/rest/resttest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -481,7 +481,7 @@ func TestValidateCreate(t *testing.T) {
 				ctx = identity.WithRequester(ctx, &user.SignedInUser{UserID: 1, OrgID: 1, IsServiceAccount: true})
 			}
 
-			mockStorage := grafanarest.NewMockStorage(t)
+			mockStorage := resttest.NewMockStorage(t)
 			for name, f := range tt.mockFolders {
 				f.Name = name
 				mockStorage.On("Get", mock.Anything, name, &metav1.GetOptions{}).Return(f, nil).Maybe()
@@ -515,7 +515,7 @@ func TestValidateCreateDetachedAncestors(t *testing.T) {
 	} {
 		for _, dryRun := range []bool{false, true} {
 			t.Run(fmt.Sprintf("%s/dryRun=%t", tc.name, dryRun), func(t *testing.T) {
-				storage := grafanarest.NewMockStorage(t)
+				storage := resttest.NewMockStorage(t)
 				parents := map[string]string{"C": "B", "B": "A", "A": folder.GeneralFolderUID}
 				for _, name := range []string{"C", "B", "A"} {
 					if name == tc.brokenAt {
@@ -1072,7 +1072,7 @@ func TestValidateUpdate(t *testing.T) {
 			if maxDepth == 0 {
 				maxDepth = 5
 			}
-			m := grafanarest.NewMockStorage(t)
+			m := resttest.NewMockStorage(t)
 			if tt.parents != nil {
 				for _, v := range tt.parents.Items {
 					m.On("Get", context.Background(), v.Name, &metav1.GetOptions{}).Return(&folders.Folder{

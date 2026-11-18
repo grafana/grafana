@@ -21,7 +21,7 @@ const (
 
 // ConnectionHealthCheckerInterface defines the interface for connection health checking operations
 //
-//go:generate mockery --name=ConnectionHealthCheckerInterface --structname=MockConnectionHealthChecker --inpackage --filename connection_health_mock.go --with-expecter
+//go:generate mockery --name=ConnectionHealthCheckerInterface --structname=MockConnectionHealthChecker --inpackage --filename connection_health_mock_test.go --with-expecter
 type ConnectionHealthCheckerInterface interface {
 	ShouldCheckHealth(conn *provisioning.Connection) bool
 	RefreshHealthWithPatchOps(ctx context.Context, conn *provisioning.Connection) (ConnectionHealthResultWithPatchOps, error)
@@ -36,7 +36,7 @@ type ConnectionHealthResultWithPatchOps struct {
 	PatchOps       []map[string]interface{}
 }
 
-//go:generate mockery --name=ConnectionTester --structname=MockConnectionTester --inpackage --filename connection_tester_mock.go --with-expecter
+//go:generate mockery --name=ConnectionTester --structname=MockConnectionTester --inpackage --filename connection_tester_mock_test.go --with-expecter
 type ConnectionTester interface {
 	TestConnection(ctx context.Context, conn *provisioning.Connection) (*provisioning.TestResults, error)
 }

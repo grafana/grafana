@@ -34,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/apiserver/rest/resttest"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 )
@@ -681,7 +682,7 @@ func TestDashboardPreferencesStorageList(t *testing.T) {
 					ListMeta: metav1.ListMeta{Continue: "c2"},
 					Items:    []dashv2beta1.DashboardPreferences{*stored["user-u1"], *stored["user-u2"]},
 				}
-				store := grafanarest.NewMockStorage(t)
+				store := resttest.NewMockStorage(t)
 				store.EXPECT().List(mock.Anything, mock.MatchedBy(func(got *metainternalversion.ListOptions) bool {
 					return got == options
 				})).Return(want, nil).Once()
@@ -975,7 +976,7 @@ func (f *fakeDashboardPreferencesStore) Create(ctx context.Context, obj runtime.
 // names it gets. A list reads folder tiers at once, so the record is guarded. Any other call fails the
 // test.
 type dashboardPreferencesListStore struct {
-	*grafanarest.MockStorage
+	*resttest.MockStorage
 	mu   sync.Mutex
 	gets []string
 
@@ -984,7 +985,7 @@ type dashboardPreferencesListStore struct {
 }
 
 func newDashboardPreferencesListStore(t *testing.T, stored map[string]*dashv2beta1.DashboardPreferences) *dashboardPreferencesListStore {
-	s := &dashboardPreferencesListStore{MockStorage: grafanarest.NewMockStorage(t)}
+	s := &dashboardPreferencesListStore{MockStorage: resttest.NewMockStorage(t)}
 	s.EXPECT().Get(mock.Anything, mock.Anything, mock.Anything).RunAndReturn(func(_ context.Context, name string, _ *metav1.GetOptions) (runtime.Object, error) {
 		s.mu.Lock()
 		s.gets = append(s.gets, name)

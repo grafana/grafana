@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands/commandstest"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -16,12 +15,12 @@ import (
 func TestValidateInput(t *testing.T) {
 	t.Skip("Error removed due to development plugins")
 	t.Run("should return an error for wrong args number", func(t *testing.T) {
-		mockCmdLine := &utils.MockCommandLine{}
+		mockCmdLine := &MockCommandLine{}
 		defer mockCmdLine.AssertExpectations(t)
 
 		cmdArgs := []string{"foo", "bar", "--bar=foo"}
 
-		mockArgs := &utils.MockArgs{}
+		mockArgs := &MockArgs{}
 		defer mockArgs.AssertExpectations(t)
 
 		mockArgs.On("Len").Return(len(cmdArgs))
@@ -54,12 +53,12 @@ func TestValidateInput(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			mockCmdLine := &utils.MockCommandLine{}
+			mockCmdLine := &MockCommandLine{}
 			defer mockCmdLine.AssertExpectations(t)
 
 			cmdArgs := []string{"foo", tt.versionArg}
 
-			mockArgs := &utils.MockArgs{}
+			mockArgs := &MockArgs{}
 			defer mockArgs.AssertExpectations(t)
 
 			mockArgs.On("Len").Return(len(cmdArgs))

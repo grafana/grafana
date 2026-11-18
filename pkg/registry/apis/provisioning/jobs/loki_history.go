@@ -32,7 +32,7 @@ const (
 	maxJobsLimit         = 10             // Maximum jobs to return per repository
 )
 
-//go:generate mockery --name LokiClient --structname MockLokiClient --inpackage --filename loki_client_mock.go --with-expecter
+//go:generate mockery --name LokiClient --structname MockLokiClient --inpackage --filename loki_client_mock_test.go --with-expecter
 type LokiClient interface {
 	Push(context.Context, []loki.Stream) error
 	RangeQuery(ctx context.Context, logQL string, start, end, limit int64) (loki.QueryRes, error)

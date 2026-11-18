@@ -47,6 +47,18 @@ func mustConfigProvider(t *testing.T, cfg *setting.Cfg) configprovider.ConfigPro
 	return provider
 }
 
+func newTestRemoteCache(t *testing.T) *remotecache.RemoteCache {
+	t.Helper()
+
+	cfg := &setting.Cfg{
+		RemoteCacheOptions: &setting.RemoteCacheSettings{Name: "database"},
+	}
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	cache, err := remotecache.ProvideService(cfg, sqlStore, &usagestats.UsageStatsMock{}, secretsfake.NewFakeSecretsService())
+	require.NoError(t, err)
+	return cache
+}
+
 func TestIntegrationSocialService_ProvideService(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -106,7 +118,7 @@ func TestIntegrationSocialService_ProvideService(t *testing.T) {
 			usageInsights := &usagestats.UsageStatsMock{}
 			supportBundle := supportbundlestest.NewFakeBundleService()
 
-			socialService := ProvideService(ctx, mustConfigProvider(t, cfg), featuremgmt.WithFeatures(), usageInsights, supportBundle, remotecache.NewFakeStore(t), nil, ssoSettingsSvc)
+			socialService := ProvideService(ctx, mustConfigProvider(t, cfg), featuremgmt.WithFeatures(), usageInsights, supportBundle, newTestRemoteCache(t), nil, ssoSettingsSvc)
 			providers, err := socialService.GetOAuthProviders(ctx)
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedSocialMapLength, len(providers))
@@ -182,7 +194,7 @@ func TestSocialService_GetConnectorUsesCurrentSettings(t *testing.T) {
 		featuremgmt.WithFeatures(),
 		&usagestats.UsageStatsMock{},
 		supportbundlestest.NewFakeBundleService(),
-		remotecache.NewFakeStore(t),
+		newTestRemoteCache(t),
 		nil,
 		settingsSvc,
 	)
@@ -323,7 +335,7 @@ func TestIntegrationSocialService_ProvideService_GrafanaComGrafanaNet(t *testing
 			)
 
 			ctx := context.Background()
-			socialService := ProvideService(ctx, mustConfigProvider(t, cfg), featuremgmt.WithFeatures(), &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService(), remotecache.NewFakeStore(t), nil, ssoSettingsSvc)
+			socialService := ProvideService(ctx, mustConfigProvider(t, cfg), featuremgmt.WithFeatures(), &usagestats.UsageStatsMock{}, supportbundlestest.NewFakeBundleService(), newTestRemoteCache(t), nil, ssoSettingsSvc)
 
 			// Create a custom comparison that treats nil slices as equal to empty slices for the tests
 			opts := cmp.Options{

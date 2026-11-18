@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/apiserver/rest/resttest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -103,7 +104,7 @@ func TestFolderAPIBuilder_Validate_CreateHiddenAncestors(t *testing.T) {
 					ctx := ancestryTestContext(t, namespace, tc.serviceAccount)
 					caller, err := identity.GetRequester(ctx)
 					require.NoError(t, err)
-					storage := grafanarest.NewMockStorage(t)
+					storage := resttest.NewMockStorage(t)
 					storage.On("Get", mock.Anything, "C", &metav1.GetOptions{}).
 						Return(ancestryTestFolder("C", "B"), nil).
 						Run(func(args mock.Arguments) {
@@ -175,7 +176,7 @@ func TestFolderAPIBuilder_Validate_CreateAncestryErrors(t *testing.T) {
 		for _, dryRun := range []bool{false, true} {
 			t.Run(fmt.Sprintf("%s/dryRun=%t", tc.name, dryRun), func(t *testing.T) {
 				ctx := ancestryTestContext(t, "org-42", false)
-				storage := grafanarest.NewMockStorage(t)
+				storage := resttest.NewMockStorage(t)
 				if tc.failedFolder == "B" {
 					storage.On("Get", mock.Anything, "C", &metav1.GetOptions{}).
 						Return(ancestryTestFolder("C", "B"), nil).Once()
@@ -204,7 +205,7 @@ func TestFolderAPIBuilder_Validate_CreateAncestryInvalidNamespace(t *testing.T) 
 	for _, namespace := range []string{"", "*"} {
 		t.Run(fmt.Sprintf("namespace=%q", namespace), func(t *testing.T) {
 			ctx := ancestryTestContext(t, namespace, false)
-			storage := grafanarest.NewMockStorage(t)
+			storage := resttest.NewMockStorage(t)
 			storage.On("Get", mock.Anything, "C", &metav1.GetOptions{}).
 				Return(ancestryTestFolder("C", "B"), nil).Once()
 			err := validateAncestryTestCreate(ctx, storage, 5, false)
@@ -218,7 +219,7 @@ func TestParentsLookupRemainsCallerBound(t *testing.T) {
 	ctx := ancestryTestContext(t, "org-42", false)
 	caller, err := identity.GetRequester(ctx)
 	require.NoError(t, err)
-	storage := grafanarest.NewMockStorage(t)
+	storage := resttest.NewMockStorage(t)
 	denied := apierrors.NewForbidden(folders.FolderResourceInfo.GroupResource(), "B", errors.New("no read permission"))
 	storage.On("Get", mock.Anything, "B", &metav1.GetOptions{}).
 		Return(nil, denied).
@@ -241,7 +242,7 @@ func TestCreateParentsPreservesRequestContext(t *testing.T) {
 	ctx := context.WithValue(ancestryTestContext(t, "org-42", false), contextKey{}, "request value")
 	ctx, cancel := context.WithTimeout(ctx, time.Minute)
 	defer cancel()
-	storage := grafanarest.NewMockStorage(t)
+	storage := resttest.NewMockStorage(t)
 	storage.On("Get", mock.Anything, "C", &metav1.GetOptions{}).
 		Return(ancestryTestFolder("C", "B"), nil).Once()
 	storage.On("Get", mock.Anything, "B", &metav1.GetOptions{}).
@@ -268,7 +269,7 @@ func ancestryTestStorageWrapper(t *testing.T, wrapped bool) *folderStorage {
 	if !wrapped {
 		return nil
 	}
-	store := grafanarest.NewMockStorage(t)
+	store := resttest.NewMockStorage(t)
 	store.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Return(func(ctx context.Context, obj runtime.Object, validation rest.ValidateObjectFunc, _ *metav1.CreateOptions) (runtime.Object, error) {
 			return nil, validation(ctx, obj)
@@ -315,7 +316,7 @@ func TestCreateLookupFailuresPreserveStatusWithoutDiagnostics(t *testing.T) {
 			for _, dryRun := range []bool{false, true} {
 				for _, wrapped := range []bool{false, true} {
 					t.Run(fmt.Sprintf("%s/ancestor=%t/dryRun=%t/wrapped=%t", tc.name, ancestor, dryRun, wrapped), func(t *testing.T) {
-						store := grafanarest.NewMockStorage(t)
+						store := resttest.NewMockStorage(t)
 						failed := "C"
 						if ancestor {
 							store.On("Get", mock.Anything, "C", mock.Anything).Return(ancestryTestFolder("C", "B"), nil).Once()
@@ -352,7 +353,7 @@ func TestCreateReasonOnlyLookupErrors(t *testing.T) {
 		for _, dryRun := range []bool{false, true} {
 			for _, wrapped := range []bool{false, true} {
 				t.Run(fmt.Sprintf("%s/dryRun=%t/wrapped=%t", tc.name, dryRun, wrapped), func(t *testing.T) {
-					store := grafanarest.NewMockStorage(t)
+					store := resttest.NewMockStorage(t)
 					failed := "C"
 					if tc.ancestor {
 						store.On("Get", mock.Anything, "C", mock.Anything).Return(ancestryTestFolder("C", "B"), nil).Once()
@@ -379,7 +380,7 @@ func TestCreateReasonOnlyLookupErrors(t *testing.T) {
 func TestCreateValidationPreservesPublicIdentityThroughStorage(t *testing.T) {
 	for _, wrapped := range []bool{false, true} {
 		t.Run(fmt.Sprintf("wrapped=%t", wrapped), func(t *testing.T) {
-			store := grafanarest.NewMockStorage(t)
+			store := resttest.NewMockStorage(t)
 			store.On("Get", mock.Anything, "C", mock.Anything).Return(ancestryTestFolder("C", "B"), nil).Once()
 			store.On("Get", mock.Anything, "B", mock.Anything).Return(ancestryTestFolder("B", ""), nil).Once()
 			err := validateAncestryTestCreateThroughStorage(ancestryTestContext(t, "org-42", false), store, 1, false, ancestryTestStorageWrapper(t, wrapped))
@@ -399,7 +400,7 @@ func TestCreateValidationPreservesPublicIdentityThroughStorage(t *testing.T) {
 
 func TestFolderAPIBuilder_Validate_CreateAncestryWrongType(t *testing.T) {
 	ctx := ancestryTestContext(t, "default", false)
-	storage := grafanarest.NewMockStorage(t)
+	storage := resttest.NewMockStorage(t)
 	storage.On("Get", mock.Anything, "C", &metav1.GetOptions{}).
 		Return(&unstructured.Unstructured{}, nil).Once()
 	err := validateAncestryTestCreate(ctx, storage, 5, false)

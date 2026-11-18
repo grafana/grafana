@@ -41,7 +41,7 @@ import (
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/apiserver/rest/resttest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission/rpclient"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -505,7 +505,7 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 	tests := []struct {
 		name    string
 		input   input
-		setupFn func(*grafanarest.MockStorage)
+		setupFn func(*resttest.MockStorage)
 		err     error
 	}{
 		{
@@ -571,7 +571,7 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 				},
 				name: "p0",
 			},
-			setupFn: func(m *grafanarest.MockStorage) {
+			setupFn: func(m *resttest.MockStorage) {
 				m.On("Get", mock.Anything, "p1", mock.Anything).Return(
 					&folders.Folder{
 						ObjectMeta: metav1.ObjectMeta{
@@ -613,7 +613,7 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			us := grafanarest.NewMockStorage(t)
+			us := resttest.NewMockStorage(t)
 
 			b := &FolderAPIBuilder{
 				storage:              us,
@@ -663,7 +663,7 @@ func TestFolderAPIBuilder_Validate_CreateMissingParent(t *testing.T) {
 	} {
 		for _, dryRun := range []bool{false, true} {
 			t.Run(fmt.Sprintf("%s/dryRun=%t", tc.name, dryRun), func(t *testing.T) {
-				storage := grafanarest.NewMockStorage(t)
+				storage := resttest.NewMockStorage(t)
 				if tc.missingGrandparent {
 					storage.On("Get", mock.Anything, "parent", &metav1.GetOptions{}).Return(&folders.Folder{
 						ObjectMeta: metav1.ObjectMeta{
@@ -827,7 +827,7 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			us := grafanarest.NewMockStorage(t)
+			us := resttest.NewMockStorage(t)
 			sm := resource.NewMockResourceClient(t)
 			if !tt.cascadeDeleteEnabled || !forceDeleteFromDeleteOptions(tt.deleteOptions) {
 				sm.On("GetStats", mock.Anything, &resourcepb.ResourceStatsRequest{Namespace: obj.Namespace, Kinds: countedKinds, Folder: []string{obj.Name}}).Return(
@@ -872,7 +872,7 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 		name       string
 		updatedObj *folders.Folder
 		expected   *folders.Folder
-		setupFn    func(*grafanarest.MockStorage)
+		setupFn    func(*resttest.MockStorage)
 		wantErr    bool
 	}{
 		{
@@ -924,7 +924,7 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 					Annotations: map[string]string{"grafana.app/folder": "new-parent"},
 				},
 			},
-			setupFn: func(m *grafanarest.MockStorage) {
+			setupFn: func(m *resttest.MockStorage) {
 				m.On("Get", mock.Anything, "new-parent", mock.Anything).Return(
 					&folders.Folder{},
 					nil).Once()
@@ -943,7 +943,7 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 					Annotations: map[string]string{"grafana.app/folder": accesscontrol.K6FolderUID},
 				},
 			},
-			setupFn: func(m *grafanarest.MockStorage) {
+			setupFn: func(m *resttest.MockStorage) {
 				// nothing
 			},
 			wantErr: true,
@@ -960,7 +960,7 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 					Annotations: map[string]string{"grafana.app/folder": "p5"},
 				},
 			},
-			setupFn: func(m *grafanarest.MockStorage) {
+			setupFn: func(m *resttest.MockStorage) {
 				m.On("Get", mock.Anything, "p5", mock.Anything).Return(
 					&folders.Folder{
 						ObjectMeta: metav1.ObjectMeta{
@@ -1017,7 +1017,7 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			us := grafanarest.NewMockStorage(t)
+			us := resttest.NewMockStorage(t)
 			sm := resource.NewMockResourceClient(t)
 			// the source chain is resolved to reject moves out of the k6 tree
 			us.On("Get", mock.Anything, "valid-parent", mock.Anything).Return(
@@ -1122,7 +1122,7 @@ func TestFolderAPIBuilder_Mutate_Create(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			setOpenFeatureToggles(t, map[string]bool{featuremgmt.FlagFolderAsyncCascadeDeleteThroughController: false})
-			us := grafanarest.NewMockStorage(t)
+			us := resttest.NewMockStorage(t)
 			sm := resource.NewMockResourceClient(t)
 			b := &FolderAPIBuilder{
 				storage:  us,
@@ -1226,7 +1226,7 @@ func TestFolderAPIBuilder_Mutate_Update(t *testing.T) {
 			wantErr: true,
 		},
 	}
-	us := grafanarest.NewMockStorage(t)
+	us := resttest.NewMockStorage(t)
 	sm := resource.NewMockResourceClient(t)
 	b := &FolderAPIBuilder{
 		storage:  us,
@@ -1265,7 +1265,7 @@ func TestFolderAPIBuilder_Mutate_Update(t *testing.T) {
 
 func TestFolderAPIBuilder_Mutate_CascadeDeleteFinalizer(t *testing.T) {
 	newBuilder := func(t *testing.T) *FolderAPIBuilder {
-		us := grafanarest.NewMockStorage(t)
+		us := resttest.NewMockStorage(t)
 		return &FolderAPIBuilder{
 			storage:  us,
 			searcher: resource.NewMockResourceClient(t),

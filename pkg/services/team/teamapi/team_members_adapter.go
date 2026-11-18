@@ -28,7 +28,7 @@ var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/team/teamapi")
 
 const subjectKindUser = "User"
 
-//go:generate mockery --name teamClientFactory --structname MockTeamClientFactory --inpackage --filename team_client_factory_mock.go
+//go:generate mockery --name teamClientFactory --structname MockTeamClientFactory --inpackage --filename team_client_factory_mock_test.go
 type teamClientFactory interface {
 	GetClient(c *contextmodel.ReqContext) (*iamv0alpha1.TeamClient, error)
 }

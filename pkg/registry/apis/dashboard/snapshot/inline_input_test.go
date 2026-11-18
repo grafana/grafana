@@ -15,7 +15,7 @@ import (
 
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/apiserver/rest/resttest"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -30,7 +30,7 @@ func TestSnapshotCreateRejectsDryRunBeforeSideEffects(t *testing.T) {
 	t.Cleanup(remote.Close)
 	for _, external := range []bool{false, true} {
 		for _, query := range []string{"dryRun=All", "dryRun=invalid", "dryRun="} {
-			storage := grafanarest.NewMockStorage(t)
+			storage := resttest.NewMockStorage(t)
 			blobs := &fakeBlobStore{}
 			routes := GetRoutes(dashv0.SnapshotSharingOptions{
 				SnapshotsEnabled: true, ExternalEnabled: true, ExternalSnapshotURL: remote.URL,
@@ -71,7 +71,7 @@ func TestSnapshotInlineValidationBeforeStorage(t *testing.T) {
 				if dryRun {
 					options.DryRun = []string{metav1.DryRunAll}
 				}
-				unified := NewUnifiedBlobStorage(grafanarest.NewMockStorage(t))
+				unified := NewUnifiedBlobStorage(resttest.NewMockStorage(t))
 				_, err := unified.Create(t.Context(), input, nil, options)
 				require.Error(t, err)
 				legacy := &SnapshotLegacyStore{Service: dashboardsnapshots.NewMockService(t)}
@@ -105,7 +105,7 @@ func TestHistoricalSnapshotReadAndRedaction(t *testing.T) {
 
 func TestSnapshotUnifiedUpdateIsImmutable(t *testing.T) {
 	for _, dryRun := range []bool{false, true} {
-		storage := NewUnifiedBlobStorage(grafanarest.NewMockStorage(t))
+		storage := NewUnifiedBlobStorage(resttest.NewMockStorage(t))
 		options := &metav1.UpdateOptions{}
 		if dryRun {
 			options.DryRun = []string{metav1.DryRunAll}

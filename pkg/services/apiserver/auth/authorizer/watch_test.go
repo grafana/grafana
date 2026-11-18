@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/featuremgmt/featuremgmttest"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/stretchr/testify/require"
 	k8suser "k8s.io/apiserver/pkg/authentication/user"
@@ -15,7 +16,7 @@ import (
 )
 
 func TestWatchRestriction(t *testing.T) {
-	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagGrafanaRestrictWatchToServiceIdentities)
+	featuremgmttest.WithEnabledFlags(t, featuremgmt.FlagGrafanaRestrictWatchToServiceIdentities)
 	for _, tc := range []struct {
 		name     string
 		identity types.AuthInfo
@@ -63,7 +64,7 @@ func TestWatchRestriction(t *testing.T) {
 }
 
 func TestWatchRestrictionPreservesAuthorization(t *testing.T) {
-	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagGrafanaRestrictWatchToServiceIdentities)
+	featuremgmttest.WithEnabledFlags(t, featuremgmt.FlagGrafanaRestrictWatchToServiceIdentities)
 	ctx := types.WithAuthInfo(context.Background(), &identity.StaticRequester{Type: types.TypeServiceAccount})
 	delegate := authorizer.AuthorizerFunc(func(context.Context, authorizer.Attributes) (authorizer.Decision, string, error) {
 		return authorizer.DecisionDeny, "resource permission denied", nil
@@ -82,9 +83,9 @@ func TestWatchRestrictionFlagChangesWithoutRestart(t *testing.T) {
 	for _, enabled := range []bool{false, true, false} {
 		t.Run(map[bool]string{false: "disabled", true: "enabled"}[enabled], func(t *testing.T) {
 			if enabled {
-				featuremgmt.WithEnabledFlags(t, featuremgmt.FlagGrafanaRestrictWatchToServiceIdentities)
+				featuremgmttest.WithEnabledFlags(t, featuremgmt.FlagGrafanaRestrictWatchToServiceIdentities)
 			} else {
-				featuremgmt.WithDisabledFlags(t, featuremgmt.FlagGrafanaRestrictWatchToServiceIdentities)
+				featuremgmttest.WithDisabledFlags(t, featuremgmt.FlagGrafanaRestrictWatchToServiceIdentities)
 			}
 			decision, _, err := auth.Authorize(context.Background(), authorizer.AttributesRecord{Verb: "watch", ResourceRequest: true})
 			require.NoError(t, err)
@@ -98,7 +99,7 @@ func TestWatchRestrictionFlagChangesWithoutRestart(t *testing.T) {
 }
 
 func TestWatchRestrictionDefaultsOff(t *testing.T) {
-	featuremgmt.WithEnabledFlags(t)
+	featuremgmttest.WithEnabledFlags(t)
 	delegate := authorizer.AuthorizerFunc(func(context.Context, authorizer.Attributes) (authorizer.Decision, string, error) {
 		return authorizer.DecisionAllow, "", nil
 	})

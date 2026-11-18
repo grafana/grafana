@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/featuremgmt/featuremgmttest"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 )
 
@@ -135,7 +136,7 @@ func TestProvisioningLBACFlagReevaluatedOnReload(t *testing.T) {
 }
 
 func TestProvisioningLBACDefaultRejectsRules(t *testing.T) {
-	featuremgmt.WithFlags(t, nil, nil)
+	featuremgmttest.WithFlags(t, nil, nil)
 	dir := t.TempDir()
 	writeLBACValidationFile(t, dir, "datasources.yaml", 1, provisionedLBACPolicy)
 	store := &spyStore{}

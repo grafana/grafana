@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
+	"github.com/grafana/grafana/pkg/services/ngalert/sender/sendertest"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	fake_secrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/util"
@@ -38,7 +39,7 @@ func TestIntegrationSendingToExternalAlertmanager(t *testing.T) {
 
 	ruleKey := models.GenerateRuleKey(1)
 
-	fakeAM := NewFakeExternalAlertmanager(t)
+	fakeAM := sendertest.NewFakeExternalAlertmanager(t)
 	defer fakeAM.Close()
 
 	fakeAdminConfigStore := &store.AdminConfigurationStoreMock{}
@@ -107,7 +108,7 @@ func TestIntegrationSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T)
 	ruleKey1 := models.GenerateRuleKey(1)
 	ruleKey2 := models.GenerateRuleKey(2)
 
-	fakeAM := NewFakeExternalAlertmanager(t)
+	fakeAM := sendertest.NewFakeExternalAlertmanager(t)
 	defer fakeAM.Close()
 
 	fakeAdminConfigStore := &store.AdminConfigurationStoreMock{}
@@ -194,7 +195,7 @@ func TestIntegrationSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T)
 	assertAlertsDelivered(t, fakeAM, expected)
 
 	// 2. Next, let's modify the configuration of an organization by adding an extra alertmanager.
-	fakeAM2 := NewFakeExternalAlertmanager(t)
+	fakeAM2 := sendertest.NewFakeExternalAlertmanager(t)
 	ds3 := datasources.DataSource{
 		URL:   fakeAM2.Server.URL,
 		OrgID: ruleKey2.OrgID,
@@ -266,7 +267,7 @@ func TestIntegrationSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T)
 func TestChangingAlertmanagersChoice(t *testing.T) {
 	ruleKey := models.GenerateRuleKey(1)
 
-	fakeAM := NewFakeExternalAlertmanager(t)
+	fakeAM := sendertest.NewFakeExternalAlertmanager(t)
 	defer fakeAM.Close()
 
 	fakeAdminConfigStore := &store.AdminConfigurationStoreMock{}
@@ -358,7 +359,7 @@ func TestChangingAlertmanagersChoice(t *testing.T) {
 func TestAlertmanagersChoiceWithDisableExternalFeatureToggle(t *testing.T) {
 	ruleKey := models.GenerateRuleKey(1)
 
-	fakeAM := NewFakeExternalAlertmanager(t)
+	fakeAM := sendertest.NewFakeExternalAlertmanager(t)
 	defer fakeAM.Close()
 
 	fakeAdminConfigStore := &store.AdminConfigurationStoreMock{}
@@ -451,7 +452,7 @@ func (s *pluginStoreNotReadyDataSourceService) GetDataSourcesByType(ctx context.
 func TestSyncSendsToExternalAlertmanagerWhenPluginStoreIsNotReady(t *testing.T) {
 	ruleKey := models.GenerateRuleKey(1)
 
-	fakeAM := NewFakeExternalAlertmanager(t)
+	fakeAM := sendertest.NewFakeExternalAlertmanager(t)
 	defer fakeAM.Close()
 
 	fakeAdminConfigStore := &store.AdminConfigurationStoreMock{}
@@ -511,7 +512,7 @@ func assertAlertmanagersStatusForOrg(t *testing.T, alertsRouter *AlertsRouter, o
 		fmt.Sprintf("expected %d active Alertmanagers and %d dropped ones but got %d active and %d dropped", active, dropped, len(alertsRouter.AlertmanagersFor(orgID)), len(alertsRouter.DroppedAlertmanagersFor(orgID))))
 }
 
-func assertAlertsDelivered(t *testing.T, fakeAM *FakeExternalAlertmanager, expectedAlerts []*models2.PostableAlert) {
+func assertAlertsDelivered(t *testing.T, fakeAM *sendertest.FakeExternalAlertmanager, expectedAlerts []*models2.PostableAlert) {
 	t.Helper()
 	require.Eventuallyf(t, func() bool {
 		return fakeAM.AlertsCount() == len(expectedAlerts)

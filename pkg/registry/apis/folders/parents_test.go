@@ -12,7 +12,7 @@ import (
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/apiserver/rest/resttest"
 )
 
 func TestParents(t *testing.T) {
@@ -27,7 +27,7 @@ func TestParents(t *testing.T) {
 			folder string
 		}
 		getter      map[string]*folders.Folder
-		setupFn     func(*grafanarest.MockStorage) // called after the getter is registered
+		setupFn     func(*resttest.MockStorage) // called after the getter is registered
 		expected    *folders.FolderInfoList
 		expectedErr string
 	}{
@@ -67,7 +67,7 @@ func TestParents(t *testing.T) {
 				name:   "test",
 				folder: "parent", // NOTE that parent is not found
 			},
-			setupFn: func(m *grafanarest.MockStorage) {
+			setupFn: func(m *resttest.MockStorage) {
 				var nothing *folders.Folder // needs to be an object
 				m.On("Get", mock.Anything, "parent", &metav1.GetOptions{}).Return(
 					nothing, fmt.Errorf("custom error message"))
@@ -83,7 +83,7 @@ func TestParents(t *testing.T) {
 				name:   "test",
 				folder: "parent", // not a folder
 			},
-			setupFn: func(m *grafanarest.MockStorage) {
+			setupFn: func(m *resttest.MockStorage) {
 				m.On("Get", mock.Anything, "parent", &metav1.GetOptions{}).Return(
 					&unstructured.Unstructured{}, // not a folder
 					nil).Once()
@@ -99,7 +99,7 @@ func TestParents(t *testing.T) {
 				name:   "test",
 				folder: "test",
 			},
-			setupFn: func(m *grafanarest.MockStorage) {
+			setupFn: func(m *resttest.MockStorage) {
 				m.On("Get", mock.Anything, "test", &metav1.GetOptions{}).Return(
 					&folders.Folder{
 						ObjectMeta: metav1.ObjectMeta{
@@ -115,7 +115,7 @@ func TestParents(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			m := grafanarest.NewMockStorage(t)
+			m := resttest.NewMockStorage(t)
 			if tt.getter == nil && tt.setupFn == nil {
 				// Default to filling the getter with expected results
 				for _, item := range tt.expected.Items {

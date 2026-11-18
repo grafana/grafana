@@ -9,12 +9,13 @@ import (
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/featuremgmt/featuremgmttest"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestRouterRestrictsWatchesBeforeDispatch(t *testing.T) {
-	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagGrafanaRestrictWatchToServiceIdentities)
+	featuremgmttest.WithEnabledFlags(t, featuremgmt.FlagGrafanaRestrictWatchToServiceIdentities)
 	for _, typ := range []types.IdentityType{types.TypeUser, types.TypeServiceAccount, types.TypeAccessPolicy} {
 		for _, group := range []string{"example", "unknown"} {
 			for _, query := range []string{"?watch=true", "?watch=1&sendInitialEvents=true", ""} {

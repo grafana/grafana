@@ -102,7 +102,7 @@ func (m *reconcileErrorMetrics) RecordReconcileError(phase, cause string) {
 	m.reconcileErrorsTotal.WithLabelValues(phase, cause).Inc()
 }
 
-//go:generate mockery --name=HealthMetricsRecorder --structname=MockHealthMetricsRecorder --inpackage --filename metrics_mock.go --with-expecter
+//go:generate mockery --name=HealthMetricsRecorder --structname=MockHealthMetricsRecorder --inpackage --filename metrics_mock_test.go --with-expecter
 type HealthMetricsRecorder interface {
 	RecordHealthCheck(resource, outcome, cause string, duration float64)
 }

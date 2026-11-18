@@ -14,7 +14,7 @@ import (
 
 // HistoryWriter stores completed jobs
 //
-//go:generate mockery --name=HistoryWriter --structname=MockHistoryWriter --inpackage --filename history_writer_mock.go --with-expecter
+//go:generate mockery --name=HistoryWriter --structname=MockHistoryWriter --inpackage --filename history_writer_mock_test.go --with-expecter
 type HistoryWriter interface {
 	// Adds a job to the history
 	WriteJob(ctx context.Context, job *provisioning.Job) error

@@ -166,15 +166,17 @@ use [`mockery`](https://github.com/vektra/mockery) library to generate the mocks
 The command is like the following (there are more options documented if you need to use another one):
 
 ```
-mockery --name InterfaceName --structname MockImplementationName --inpackage --filename my_implementation_mock.go
+mockery --name InterfaceName --structname MockImplementationName --inpackage --filename my_implementation_mock_test.go
 ```
 
 - `--name`: Interface to mock
 - `--structname`: Mock implementation name
 - `--inpackage`: To use the same package name as the interface
-- `--filename`: Your mock generated file name
+- `--filename`: Use a `_test.go` suffix when the mock is used by tests in the same directory.
 
 If any interface signature changes, executing the command again updates the mock.
+
+For mocks shared across packages, use a dedicated helper package imported by tests.
 
 Additionally, you can put `go:generate` command on the top of the file as a comment. It's useful because some IDEs
 like Goland and Visual Studio Code allows executing scripts from the IDE.
@@ -186,7 +188,7 @@ import (
 	...
 )
 
-//go:generate mockery --name InterfaceName --structname MockImplementationName --inpackage --filename my_implementation_mock.go
+//go:generate mockery --name InterfaceName --structname MockImplementationName --inpackage --filename my_implementation_mock_test.go
 ```
 
 ## Globals

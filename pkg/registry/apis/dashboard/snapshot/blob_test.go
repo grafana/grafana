@@ -20,7 +20,7 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/apiserver/rest/resttest"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -101,7 +101,7 @@ func TestPublicSnapshotDashboardBlob(t *testing.T) {
 	snap := newBlobTestSnapshot()
 	snap.Namespace = namespace
 	snap.Blobs.Dashboard = &dashv0.SnapshotBlobReference{Uid: new("blob-1")}
-	getter := grafanarest.NewMockStorage(t)
+	getter := resttest.NewMockStorage(t)
 	getter.On("Get", mock.Anything, "snap-1", mock.Anything).Return(snap, nil)
 	getter.On("List", mock.Anything, mock.Anything).Return(&dashv0.SnapshotList{Items: []dashv0.Snapshot{*snap}}, nil)
 	rest, err := NewDashboardREST(getter, store)
@@ -155,7 +155,7 @@ func TestPublicSnapshotDashboardBlob(t *testing.T) {
 		inline := snap.DeepCopy()
 		inline.Blobs.Dashboard = nil
 		require.NoError(t, setDashboardContent(inline, map[string]any{"title": "CPU"}))
-		getter := grafanarest.NewMockStorage(t)
+		getter := resttest.NewMockStorage(t)
 		getter.On("List", mock.Anything, mock.Anything).Return(&dashv0.SnapshotList{Items: []dashv0.Snapshot{*inline}}, nil)
 		r, err := NewDashboardREST(getter, nil)
 		require.NoError(t, err)

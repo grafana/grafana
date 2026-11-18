@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/featuremgmt/featuremgmttest"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -56,7 +57,7 @@ func TestIntegrationLoaderReadsCurrentConfigAndLicense(t *testing.T) {
 func TestIntegrationLoaderReadsCurrentFeatureToggle(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 	sql := db.NewTestStore(t)
-	features := featuremgmt.NewMockFeatureToggles(t)
+	features := featuremgmttest.NewMockFeatureToggles(t)
 	loader := legacypermissions.NewLoader(sql, legacypermissions.NewRoleCatalog(),
 		resourcepermissions.NewActionSetService(), localcache.New(0, 0),
 		loaderConfig(false), features, &licensing.OSSLicensingService{}, nil)
@@ -82,7 +83,7 @@ func TestIntegrationGlobalLoaderUsesOpenFeature(t *testing.T) {
 	actions.StoreActionSet("dashboards:view", []string{"dashboards:read"})
 	loader := legacypermissions.NewLoader(sql, legacypermissions.NewRoleCatalog(),
 		actions, localcache.New(0, 0), loaderConfig(false),
-		featuremgmt.NewMockFeatureToggles(t), &licensing.OSSLicensingService{}, nil)
+		featuremgmttest.NewMockFeatureToggles(t), &licensing.OSSLicensingService{}, nil)
 	seedGrant(t, sql, "managed:direct", ac.GlobalOrgID, 7, ac.Permission{
 		Action: "dashboards:read", Scope: "dashboards:uid:direct", Kind: "dashboards",
 	})

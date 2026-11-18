@@ -18,7 +18,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-//go:generate mockery --name RepositoryPatchFn --structname MockRepositoryPatchFn --inpackage --filename repository_patch_fn_mock.go --with-expecter
+//go:generate mockery --name RepositoryPatchFn --structname MockRepositoryPatchFn --inpackage --filename repository_patch_fn_mock_test.go --with-expecter
 type RepositoryPatchFn func(ctx context.Context, repo *provisioning.Repository, patchOperations ...map[string]interface{}) error
 
 // SyncWorker synchronizes the external repo with grafana database

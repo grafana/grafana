@@ -16,7 +16,7 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/apiserver/rest/resttest"
 	"github.com/grafana/grafana/pkg/storage/unified/resourceclient"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -62,7 +62,7 @@ func TestPublicSnapshotDashboardRemoteClient(t *testing.T) {
 			snap.Blobs.Dashboard = &dashv0.SnapshotBlobReference{Uid: new("blob-1")}
 			// Exercise blob credentials independently of the remote metadata lookup
 			// covered by TestPublicSnapshotMetadataWithStandaloneRemoteClient.
-			getter := grafanarest.NewMockStorage(t)
+			getter := resttest.NewMockStorage(t)
 			getter.On("List", mock.Anything, mock.Anything).Return(&dashv0.SnapshotList{Items: []dashv0.Snapshot{*snap}}, nil)
 			r, err := NewDashboardREST(getter, client)
 			require.NoError(t, err)

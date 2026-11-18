@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/featuremgmt/featuremgmttest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 )
@@ -13,9 +14,9 @@ import (
 func callBeforeSave(t *testing.T, ftOn bool, uid, stack string, existing, jsonData *simplejson.Json) {
 	t.Helper()
 	if ftOn {
-		featuremgmt.WithEnabledFlags(t, featuremgmt.FlagAwsAssumeRolePerDatasourceExternalId)
+		featuremgmttest.WithEnabledFlags(t, featuremgmt.FlagAwsAssumeRolePerDatasourceExternalId)
 	} else {
-		featuremgmt.WithDisabledFlags(t, featuremgmt.FlagAwsAssumeRolePerDatasourceExternalId)
+		featuremgmttest.WithDisabledFlags(t, featuremgmt.FlagAwsAssumeRolePerDatasourceExternalId)
 	}
 	cfg := &setting.Cfg{AWSExternalId: stack}
 	BeforeSave(t.Context(), uid, cfg, existing, jsonData)

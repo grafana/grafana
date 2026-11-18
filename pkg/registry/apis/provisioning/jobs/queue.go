@@ -11,7 +11,7 @@ import (
 
 // RepoGetter is a function that can be called to get a repository by name
 //
-//go:generate mockery --name RepoGetter --structname MockRepoGetter --inpackage --filename repo_getter_mock.go --with-expecter
+//go:generate mockery --name RepoGetter --structname MockRepoGetter --inpackage --filename repo_getter_mock_test.go --with-expecter
 type RepoGetter interface {
 	GetRepository(ctx context.Context, namespace, name string) (repository.Repository, error)
 }
@@ -92,5 +92,5 @@ func ValidateRepoForCleanup(repo repository.Repository) error {
 
 // ProgressFn is a function that can be called to update the progress of a job
 //
-//go:generate mockery --name ProgressFn --structname MockProgressFn --inpackage --filename progress_fn_mock.go --with-expecter
+//go:generate mockery --name ProgressFn --structname MockProgressFn --inpackage --filename progress_fn_mock_test.go --with-expecter
 type ProgressFn func(ctx context.Context, status provisioning.JobStatus) error

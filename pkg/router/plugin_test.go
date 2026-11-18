@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/featuremgmt/featuremgmttest"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginroute/appsettings"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -743,7 +744,7 @@ func TestProvideRoutesLoaderServesSettingsOnlyInGrafana(t *testing.T) {
 		{"standalone router", []string{"router"}, false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			featuremgmt.WithEnabledFlags(t, featuremgmt.FlagApppluginsRegisterAPIServer)
+			featuremgmttest.WithEnabledFlags(t, featuremgmt.FlagApppluginsRegisterAPIServer)
 			cfg := setting.NewCfg()
 			cfg.Target = tc.target
 			loader, err := ProvideRoutesLoader(cfg, PluginLoaderDependencies{

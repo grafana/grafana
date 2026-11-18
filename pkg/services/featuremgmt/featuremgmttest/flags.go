@@ -1,13 +1,15 @@
-package featuremgmt
+package featuremgmttest
 
 import (
 	"fmt"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // WithEnabledFlags sets up an OpenFeature static provider with the given flags
@@ -54,7 +56,7 @@ func WithFlagValues(t *testing.T, values map[string]any) {
 		inMemoryFlags[name] = setting.NewInMemoryFlag(name, value)
 	}
 
-	provider, err := CreateStaticProviderWithStandardFlags(inMemoryFlags)
+	provider, err := featuremgmt.CreateStaticProviderWithStandardFlags(inMemoryFlags)
 	require.NoError(t, err)
 	require.NoError(t, openfeature.SetProviderAndWait(provider))
 

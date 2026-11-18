@@ -19,6 +19,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/featuremgmt/featuremgmttest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -50,7 +51,7 @@ func hybridRequest(t *testing.T, handler *HybridHandler, ctx context.Context, na
 }
 
 func TestHybridSearch(t *testing.T) {
-	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagAlertingHybridSearch)
+	featuremgmttest.WithEnabledFlags(t, featuremgmt.FlagAlertingHybridSearch)
 	client := &hybridIndex{response: &resourcepb.HybridSearchResponse{
 		Results: []*resourcepb.HybridSearchResult{{
 			Key: &resourcepb.ResourceKey{Name: "cpu-alert"}, Title: "CPU alert", Folder: "f1", FolderTitle: "Production", Score: 0.9,
@@ -108,7 +109,7 @@ func TestHybridSearchFlag(t *testing.T) {
 }
 
 func TestHybridSearchRejectsRequest(t *testing.T) {
-	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagAlertingHybridSearch)
+	featuremgmttest.WithEnabledFlags(t, featuremgmt.FlagAlertingHybridSearch)
 	for _, tc := range []struct {
 		name      string
 		ctx       context.Context
@@ -132,7 +133,7 @@ func TestHybridSearchRejectsRequest(t *testing.T) {
 }
 
 func TestHybridSearchQueryOptions(t *testing.T) {
-	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagAlertingHybridSearch)
+	featuremgmttest.WithEnabledFlags(t, featuremgmt.FlagAlertingHybridSearch)
 	for _, tc := range []struct {
 		name       string
 		query      string
@@ -161,7 +162,7 @@ func TestHybridSearchQueryOptions(t *testing.T) {
 }
 
 func TestHybridSearchBackendErrors(t *testing.T) {
-	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagAlertingHybridSearch)
+	featuremgmttest.WithEnabledFlags(t, featuremgmt.FlagAlertingHybridSearch)
 	for _, tc := range []struct {
 		name string
 		err  error
