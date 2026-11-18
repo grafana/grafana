@@ -369,7 +369,10 @@ export function labelSearch(search: string, data: FlameGraphDataContainer): Set<
   const regexFilter = (labels: string[], pattern: string): boolean => {
     let regex: RegExp;
     try {
-      regex = new RegExp(pattern);
+      // Case-insensitive so a query that only differs by case still counts as a regex hit.
+      // A case-sensitive miss falls through to fuzzy search, which splits on punctuation and
+      // highlights many more labels than the regex did.
+      regex = new RegExp(pattern, 'i');
     } catch (e) {
       return false;
     }
@@ -463,7 +466,8 @@ function getStyles(theme: GrafanaTheme2, fillHeight: boolean) {
       label: 'horizontalPaneContainer',
       flexBasis: '50%',
       minWidth: 0,
-      overflow: 'auto',
+      overflowX: 'hidden',
+      overflowY: 'auto',
       ...(fillHeight ? { height: '100%', minHeight: 0 } : { maxHeight: FLAMEGRAPH_CONTAINER_HEIGHT }),
     }),
 

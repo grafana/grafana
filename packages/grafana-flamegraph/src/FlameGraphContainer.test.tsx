@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useRef, useCallback } from 'react';
 
-import { createDataFrame, createTheme } from '@grafana/data';
+import { createDataFrame, createTheme, FieldType } from '@grafana/data';
 import { mockBoundingClientRect, mockClientSize } from '@grafana/test-utils';
 
 import { FlameGraphDataContainer } from './FlameGraph/dataTransform';
@@ -93,6 +93,32 @@ describe('labelSearch', () => {
       let found = labelSearch(term, container);
       expect(found.size).toBe(0);
     });
+
+    it('keeps the same matches when a matching prefix is completed with different casing', () => {
+      const df = createDataFrame({
+        fields: [
+          { name: 'level', type: FieldType.number, values: [0, 1, 1, 1] },
+          {
+            name: 'label',
+            type: FieldType.string,
+            values: [
+              'total',
+              'github.com/prometheus/prometheus/tsdb.PostingsForMatchers',
+              'github.com/prometheus/prometheus/tsdb/index.PostingsForMatchers',
+              'github.com/prometheus/prometheus/tsdb.(*Head).Range',
+            ],
+          },
+          { name: 'value', type: FieldType.number, values: [3, 1, 1, 1] },
+          { name: 'self', type: FieldType.number, values: [0, 1, 1, 1] },
+        ],
+      });
+      const caseContainer = new FlameGraphDataContainer(df, { collapsing: false });
+      const matched = ['github.com/prometheus/prometheus/tsdb.PostingsForMatchers'];
+
+      expect([...labelSearch('tsdb.Postings', caseContainer)]).toEqual(matched);
+      expect([...labelSearch('tsdb.PostingsFor', caseContainer)]).toEqual(matched);
+      expect([...labelSearch('tsdb.Postingsfor', caseContainer)]).toEqual(matched);
+    });
   });
 
   describe('fuzzy and regex', () => {
@@ -152,6 +178,7 @@ describe('FlameGraphContainer', () => {
 
   it('should render without error', async () => {
     expect(() => render(<FlameGraphContainerWithProps />)).not.toThrow();
+    expect(await screen.findByRole('columnheader', { name: 'Symbol' })).toBeInTheDocument();
   });
 
   it('should update search when row selected in top table', async () => {
@@ -171,6 +198,7 @@ describe('FlameGraphContainer', () => {
   it('should render pane view options in multi mode', async () => {
     // Default is Multi mode with Split view, showing two pane selectors
     render(<FlameGraphContainerWithProps />);
+    await screen.findByRole('columnheader', { name: 'Symbol' });
     // In split mode, there are 2 pane selectors, each with Top Table, Flame Graph, Call Tree
     expect(screen.getAllByText(/Top Table/).length).toBeGreaterThanOrEqual(2);
     expect(screen.getAllByText(/Flame Graph/).length).toBeGreaterThanOrEqual(2);
@@ -181,6 +209,7 @@ describe('FlameGraphContainer', () => {
 
   it('should switch to single view mode', async () => {
     render(<FlameGraphContainerWithProps />);
+    await screen.findByRole('columnheader', { name: 'Symbol' });
 
     // Start in Multi + Split mode - both views visible
     expect(screen.getByTestId('flameGraph')).toBeDefined();
@@ -197,6 +226,7 @@ describe('FlameGraphContainer', () => {
     global.innerWidth = MIN_WIDTH_FOR_SPLIT_VIEW;
     global.dispatchEvent(new Event('resize'));
     render(<FlameGraphContainerWithProps />);
+    await screen.findByRole('columnheader', { name: 'Symbol' });
 
     // Multi mode is default, view mode options should be visible
     expect(screen.getByText(/Split/)).toBeDefined();
@@ -204,6 +234,7 @@ describe('FlameGraphContainer', () => {
 
   it('should filter table items based on search input', async () => {
     render(<FlameGraphContainerWithProps />);
+    await screen.findByRole('columnheader', { name: 'Symbol' });
 
     const matchingText1 = 'net/http.HandlerFunc.ServeHTTP';
     const matchingText2 = 'runtime.gcBgMarkWorker';
@@ -242,6 +273,16 @@ describe('FlameGraphContainer with useTableNG', () => {
 
     await userEvent.click((await screen.findAllByTitle('Highlight symbol'))[0]);
     expect(screen.getByDisplayValue('^net/http\\.HandlerFunc\\.ServeHTTP$')).toBeInTheDocument();
+  });
+
+  it('keeps horizontal overflow inside the table', () => {
+    render(<FlameGraphContainer data={makeFlameGraphData()} getTheme={getTheme} useTableNG={true} />);
+
+    const pane = screen.getByTestId('topTable').closest<HTMLElement>('[class*="horizontalPaneContainer"]');
+    expect(pane).not.toBeNull();
+    const styles = window.getComputedStyle(pane!);
+    expect(styles.overflowX).toBe('hidden');
+    expect(styles.overflowY).toBe('auto');
   });
 
   // TableNG's feature-toggle values have to travel from here down to the top table, and the refreshed

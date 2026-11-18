@@ -1,32 +1,38 @@
 import { css } from '@emotion/css';
-import { useCallback, useEffect } from 'react';
+import { type ReactElement, useCallback, useEffect, useSyncExternalStore } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import {
-  useFlagGrafanaDashboardGlobalVariables,
+  useFlagGrafanaPanelActionsPopover,
   useFlagGrafanaViewPanelPane,
   useFlagFeedbackButton,
 } from '@grafana/runtime/internal';
-import { sceneGraph, type SceneVariable, useSceneObjectState } from '@grafana/scenes';
+import {
+  sceneGraph,
+  SceneObjectStateChangedEvent,
+  type SceneVariable,
+  useSceneObjectState,
+  type VizPanel,
+} from '@grafana/scenes';
 import { Sidebar, useStyles2, useSidebarContext } from '@grafana/ui';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
 
+import { DashboardLoadingBar } from '../scene/DashboardLoadingBar';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { onOpenSnapshotOriginalDashboard } from '../scene/GoToSnapshotOriginButton';
 import { ManagedDashboardNavBarBadge } from '../scene/ManagedDashboardNavBarBadge';
-import { DashboardFiltersOverviewPane } from '../scene/dashboard-filters-overview/DashboardFiltersOverviewPane';
-import { type ToolbarActionProps } from '../scene/new-toolbar/types';
+import { hasPanelActionsPopover } from '../scene/edit-actions-popover/PanelActionsPopover';
+import { hasViewPanelPaneContent } from '../solo/ViewPanelSidePane';
 import { DashboardInteractions } from '../utils/interactions';
+import { findVizPanelByPathId } from '../utils/pathId';
 import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
-import { DashboardCodePane } from './DashboardCodePane';
 import { ShareExportDashboardButton } from './DashboardExportButton';
 import { DashboardSidebarExtensionPoint } from './DashboardSidebarExtensionPoint';
-import { AddNewPane } from './add-new/AddNewPane';
-import { DashboardCrossDashboardVariablesPane } from './dashboard/DashboardCrossDashboardVariablesPane';
 import { ToggleViewPanePaneEvent } from './events';
 import { DashboardOutline } from './outline/DashboardOutline';
 import { type DashboardSidebarLike, type DashboardSidebarPane } from './types';
@@ -40,22 +46,45 @@ export interface Props {
  */
 export function DashboardSidebarRenderer({ dashboard }: Props) {
   const sidebar = dashboard.state.sidebar;
-  const { openPane, selectionContext, outlinePane } = useSceneObjectState(sidebar, {
+  const { openPane, selectionContext, outlinePane, isLoading } = useSceneObjectState(sidebar, {
     shouldActivateOrKeepAlive: true,
   });
-  const { isEditing, meta, uid, viewPanel } = dashboard.useState();
+  const dashboardState = dashboard.useState();
+  const { meta, uid, viewPanel } = dashboardState;
+  const isEditing = isFullDashboardEditing(dashboardState);
   const styles = useStyles2(getStyles, isEditing);
   const hasUid = Boolean(uid);
   const isEmbedded = meta.isEmbedded;
   const selectedObject = sidebar.getSelectedObject();
   const sidebarContext = useSidebarContext();
   const viewPanelPane = useFlagGrafanaViewPanelPane();
-  const globalDashboardVariablesEnabled = useFlagGrafanaDashboardGlobalVariables();
   const feedbackButton = useFlagFeedbackButton();
+  const dashboardNewLayoutsEnabled = isDashboardNewLayoutsEnabled();
+
+  const onOpenAddPane = useCallback(async () => {
+    await sidebar.runPaneRequest(async (signal) => {
+      const { AddNewPane } = await import(/* webpackChunkName: "dashboard-add-new-pane" */ './add-new/AddNewPane');
+      if (!signal.aborted) {
+        sidebar.openPane(new AddNewPane({}));
+      }
+    });
+  }, [sidebar]);
+
+  const onOpenCodePane = useCallback(async () => {
+    if (sidebar.state.openPane?.getId() !== 'code') {
+      DashboardInteractions.codePaneOpened();
+    }
+    await sidebar.runPaneRequest(async (signal) => {
+      const { DashboardCodePane } = await import(/* webpackChunkName: "dashboard-code-pane" */ './DashboardCodePane');
+      if (!signal.aborted) {
+        sidebar.openPane(new DashboardCodePane({}));
+      }
+    });
+  }, [sidebar]);
 
   const onClickHideSidebar: React.MouseEventHandler<HTMLButtonElement> = useCallback(
     (e) => {
-      sidebar.closePane();
+      sidebar.closePane('explicit');
       sidebarContext?.setIsHidden(true);
       e.currentTarget.blur();
     },
@@ -74,9 +103,14 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
 
   return (
     <>
-      {openPane && (
+      {(openPane || isLoading) && (
         <Sidebar.OpenPane>
-          <openPane.Component key={openPane.state.key} model={openPane} />
+          {isLoading && <DashboardLoadingBar label={t('dashboard.loading.sidebar', 'Loading sidebar')} />}
+          {openPane ? (
+            <openPane.Component key={openPane.state.key} model={openPane} />
+          ) : (
+            <Sidebar.PaneHeader title={t('dashboard.loading.sidebar-title', 'Loading…')} />
+          )}
         </Sidebar.OpenPane>
       )}
       <Sidebar.Toolbar>
@@ -85,15 +119,21 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
             <Sidebar.Button
               icon="plus"
               variant="primary"
-              onClick={() => sidebar.openPane(new AddNewPane({}))}
+              onClick={onOpenAddPane}
               title={t('dashboard.sidebar.add.title', 'Add')}
               tooltip={t('dashboard.sidebar.add.tooltip', 'Add new element')}
               data-testid={selectors.pages.Dashboard.Sidebar.addButton}
-              active={openPane instanceof AddNewPane}
+              active={openPane?.getId() === 'add'}
             />
             <Sidebar.Button
               icon="cog"
-              onClick={() => sidebar.selectObject(dashboard)}
+              onClick={() => {
+                if (selectedObject === dashboard && openPane?.getId() === 'element') {
+                  sidebar.closePane();
+                } else {
+                  sidebar.openElementSettings(dashboard);
+                }
+              }}
               title={t('dashboard.sidebar.dashboard-options.title', 'Options')}
               tooltip={t('dashboard.sidebar.dashboard-options.tooltip', 'Dashboard options')}
               data-testid={selectors.pages.Dashboard.Sidebar.optionsButton}
@@ -117,26 +157,10 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
               tooltip={t('dashboard.sidebar.edit-schema.tooltip', 'Edit as code')}
               title={t('dashboard.sidebar.edit-schema.title', 'Code')}
               icon="brackets-curly"
-              onClick={() => sidebar.openPane(new DashboardCodePane({}))}
+              onClick={onOpenCodePane}
               data-testid={selectors.pages.Dashboard.Sidebar.codeButton}
-              active={openPane instanceof DashboardCodePane}
+              active={openPane?.getId() === 'code'}
             />
-            {globalDashboardVariablesEnabled && (
-              <Sidebar.Button
-                icon="gf-variable"
-                onClick={() => sidebar.openPane(new DashboardCrossDashboardVariablesPane({}))}
-                title={t('dashboard.sidebar.cross-dashboard-variables.title', 'Cross-dashboard')}
-                tooltip={t('dashboard.sidebar.cross-dashboard-variables.tooltip', 'Choose global and folder variables')}
-                active={openPane instanceof DashboardCrossDashboardVariablesPane}
-              />
-            )}
-            {config.featureToggles.dashboardUndoRedo && (
-              <>
-                <Sidebar.Divider />
-                <UndoButton dashboard={dashboard} />
-                <RedoButton dashboard={dashboard} />
-              </>
-            )}
           </div>
         )}
         <div className={styles.viewGroup}>
@@ -152,19 +176,16 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
             data-testid={selectors.pages.Dashboard.Sidebar.outlineButton}
             active={openPane instanceof DashboardOutline}
           />
-          {config.featureToggles.dashboardNewLayouts && config.featureToggles.dashboardUnifiedDrilldownControls && (
-            <FiltersOverviewButton sidebar={sidebar} openPane={openPane} />
-          )}
+          {dashboardNewLayoutsEnabled && <FiltersOverviewButton sidebar={sidebar} openPane={openPane} />}
           {dashboard.isManaged() && Boolean(meta.canEdit) && <ManagedDashboardNavBarBadge dashboard={dashboard} />}
           {renderEnterpriseItems()}
           <DashboardSidebarExtensionPoint />
           {viewPanel && viewPanelPane && (
-            <Sidebar.Button
-              icon="layer-group"
-              onClick={() => sidebar.publishEvent(new ToggleViewPanePaneEvent())}
-              title={t('dashboard.sidebar.view-panel.title', 'View panel controls')}
-              data-testid={selectors.pages.Dashboard.Sidebar.viewPanelControls}
+            <ViewPanelControlsButton
+              dashboard={dashboard}
+              viewPanel={viewPanel}
               active={openPane?.getId() === 'view-panel-pane'}
+              onClick={() => sidebar.publishEvent(new ToggleViewPanePaneEvent())}
             />
           )}
           {Boolean(meta.isSnapshot) && (
@@ -199,6 +220,17 @@ function FiltersOverviewButton({
   const variables: SceneVariable[] = sceneGraph.getVariables(sidebar)?.useState().variables ?? [];
   const hasFilters = variables.some((v) => v.state.type === 'adhoc');
 
+  const onClick = useCallback(async () => {
+    await sidebar.runPaneRequest(async (signal) => {
+      const { DashboardFiltersOverviewPane } = await import(
+        /* webpackChunkName: "dashboard-filters-overview" */ '../scene/dashboard-filters-overview/DashboardFiltersOverviewPane'
+      );
+      if (!signal.aborted) {
+        sidebar.openPane(new DashboardFiltersOverviewPane({}));
+      }
+    });
+  }, [sidebar]);
+
   if (!hasFilters) {
     return null;
   }
@@ -206,12 +238,79 @@ function FiltersOverviewButton({
   return (
     <Sidebar.Button
       icon="filter"
-      onClick={() => sidebar.openPane(new DashboardFiltersOverviewPane({}))}
+      onClick={onClick}
       title={t('dashboard.sidebar.filters.title', 'Filters')}
       tooltip={t('dashboard.sidebar.filters.tooltip', 'Filters overview')}
-      active={openPane instanceof DashboardFiltersOverviewPane}
+      active={openPane?.getId() === 'filters'}
     />
   );
+}
+
+interface ViewPanelControlsButtonProps {
+  dashboard: DashboardScene;
+  viewPanel: string;
+  active: boolean;
+  onClick: () => void;
+}
+
+function ViewPanelControlsButton({ dashboard, viewPanel, active, onClick }: ViewPanelControlsButtonProps) {
+  const isActionsPopoverEnabled = useFlagGrafanaPanelActionsPopover();
+
+  const button = (
+    <Sidebar.Button
+      icon="layer-group"
+      onClick={onClick}
+      title={t('dashboard.sidebar.view-panel.title', 'View panel controls')}
+      data-testid={selectors.pages.Dashboard.Sidebar.viewPanelControls}
+      active={active}
+    />
+  );
+
+  if (!isActionsPopoverEnabled) {
+    return button;
+  }
+
+  return (
+    <ViewPanelControlsButtonForPathId dashboard={dashboard} viewPanel={viewPanel}>
+      {button}
+    </ViewPanelControlsButtonForPathId>
+  );
+}
+
+function ViewPanelControlsButtonForPathId({
+  dashboard,
+  viewPanel,
+  children,
+}: {
+  dashboard: DashboardScene;
+  viewPanel: string;
+  children: ReactElement;
+}) {
+  const panel = useVizPanelByPathId(dashboard, viewPanel);
+
+  return panel ? <ViewPanelControlsButtonForPanel panel={panel}>{children}</ViewPanelControlsButtonForPanel> : null;
+}
+
+function useVizPanelByPathId(dashboard: DashboardScene, pathId: string): VizPanel | null {
+  const subscribe = useCallback(
+    (onChange: () => void) => {
+      // The panel can be added after the first render, e.g. a repeat clone once its variable resolves.
+      // State changes anywhere in the dashboard bubble up to it, so any of them can be that addition.
+      const sub = dashboard.subscribeToEvent(SceneObjectStateChangedEvent, onChange);
+      return () => sub.unsubscribe();
+    },
+    [dashboard]
+  );
+
+  return useSyncExternalStore(subscribe, () => findVizPanelByPathId(dashboard, pathId));
+}
+
+function ViewPanelControlsButtonForPanel({ panel, children }: { panel: VizPanel; children: ReactElement }) {
+  // Re-renders once the panel plugin, and with it its view panel options, has loaded.
+  panel.useState();
+
+  // Without the actions popover, the pane holds the only "Back to dashboard" button, so it always has content.
+  return !hasPanelActionsPopover(panel) || hasViewPanelPaneContent(panel) ? children : null;
 }
 
 function renderEnterpriseItems() {
@@ -225,42 +324,6 @@ function renderEnterpriseItems() {
     }
     return null;
   });
-}
-
-function UndoButton({ dashboard }: ToolbarActionProps) {
-  const sidebar = dashboard.state.sidebar;
-  const { undoStack } = sidebar.useState();
-  const undoAction = undoStack[undoStack.length - 1];
-  const undoWord = t('dashboard.sidebar.undo', 'Undo');
-  const tooltip = `${undoWord}${undoAction?.description ? ` ${undoAction.description}` : ''}`;
-
-  return (
-    <Sidebar.Button
-      icon="corner-up-left"
-      disabled={undoStack.length === 0}
-      onClick={() => sidebar.undoAction()}
-      title={undoWord}
-      tooltip={tooltip}
-    />
-  );
-}
-
-function RedoButton({ dashboard }: ToolbarActionProps) {
-  const sidebar = dashboard.state.sidebar;
-  const { redoStack } = sidebar.useState();
-  const redoAction = redoStack[redoStack.length - 1];
-  const redoWord = t('dashboard.sidebar.redo', 'Redo');
-  const tooltip = `${redoWord}${redoAction?.description ? ` ${redoAction.description}` : ''}`;
-
-  return (
-    <Sidebar.Button
-      icon="corner-up-right"
-      disabled={redoStack.length === 0}
-      title={redoWord}
-      tooltip={tooltip}
-      onClick={() => sidebar.redoAction()}
-    />
-  );
 }
 
 function getStyles(theme: GrafanaTheme2, isEditing: boolean | undefined) {

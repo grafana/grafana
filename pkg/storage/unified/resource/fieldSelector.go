@@ -2,14 +2,16 @@ package resource
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-// Some list queries can be calculated with simple reads or search index
-func (s *server) tryFieldSelector(ctx context.Context, req *resourcepb.ListRequest) *resourcepb.ListResponse {
+// Some list queries can be calculated with simple reads or search index.
+// Returns a nil response and nil error when the request can't be answered this way.
+func (s *server) tryFieldSelector(ctx context.Context, req *resourcepb.ListRequest) (*resourcepb.ListResponse, error) {
 	if req.Source != resourcepb.ListRequest_STORE || req.Options.Key.Namespace == "" {
-		return nil
+		return nil, nil
 	}
 
 	var names []string
@@ -35,7 +37,10 @@ func (s *server) tryFieldSelector(ctx context.Context, req *resourcepb.ListReque
 			read.Key.Name = name
 			found, err := s.Read(ctx, read)
 			if err != nil {
-				return &resourcepb.ListResponse{Error: AsErrorResult(err)}
+				if AsErrorResult(err).Code == http.StatusNotFound {
+					continue
+				}
+				return nil, rpcErrorFrom(err)
 			}
 			if len(found.Value) > 0 {
 				rsp.Items = append(rsp.Items, &resourcepb.ResourceWrapper{
@@ -47,7 +52,7 @@ func (s *server) tryFieldSelector(ctx context.Context, req *resourcepb.ListReque
 				}
 			}
 		}
-		return rsp
+		return rsp, nil
 	}
-	return nil
+	return nil, nil
 }

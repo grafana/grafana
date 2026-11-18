@@ -26,10 +26,6 @@ jest.mock('@grafana/runtime', () => ({
   get config() {
     return mockConfig;
   },
-}));
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
   getDataSourceInstanceSettings: (nameOrUid: string | { uid: string }) => {
     const datasources: Record<string, { uid: string; name: string }> = {
       Prometheus: { uid: 'ds-prom', name: 'Prometheus' },
@@ -41,7 +37,6 @@ jest.mock('@grafana/runtime/unstable', () => ({
     return Promise.resolve(Object.values(datasources).find((ds) => ds.uid === nameOrUid.uid));
   },
 }));
-
 // Use recent timestamps so retention cleanup does not remove them
 const NOW = new Date('2025-01-15T12:00:00Z').getTime();
 const ONE_HOUR = 3_600_000;

@@ -78,6 +78,10 @@ function SolutionGroup({ label, cards, variant }: SolutionGroupProps) {
         {cards.map((card) =>
           card.kind === 'offer' ? (
             <AvailableSolutionCard key={card.solution.id} solution={card.solution} offer={card.offer} />
+          ) : card.refreshing ? (
+            // Same key, different component type: the card remounts with fresh facts once its
+            // placement lands, exactly like first load.
+            <SolutionCardSkeleton key={card.solution.id} />
           ) : (
             <SolutionCard key={card.solution.id} solution={card.solution} needsAttention={card.needsAttention} />
           )

@@ -1,9 +1,10 @@
-import { render, screen } from '@testing-library/react';
+import { cleanup, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { render } from 'test/test-utils';
 
 import { type StandardEditorContext, type StandardEditorsRegistryItem } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { type LineStyle } from '@grafana/schema';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { LineStyleEditor } from './LineStyleEditor';
 
@@ -61,20 +62,15 @@ describe('LineStyleEditor', () => {
     });
 
     describe('Accessible fill', () => {
-      let originalEnableColorblindSafePanelOptions: boolean | undefined;
-
-      beforeEach(() => {
-        originalEnableColorblindSafePanelOptions = config.featureToggles.enableColorblindSafePanelOptions;
-      });
-
       afterEach(() => {
-        config.featureToggles.enableColorblindSafePanelOptions = originalEnableColorblindSafePanelOptions;
+        cleanup();
+        setTestFlags({});
       });
 
       it.each([false, undefined])(
         'does not show the Accessible line fill option when enableColorblindSafePanelOptions is %s',
         (flagValue) => {
-          config.featureToggles.enableColorblindSafePanelOptions = flagValue;
+          setTestFlags(flagValue === undefined ? {} : { enableColorblindSafePanelOptions: flagValue });
 
           render(
             <LineStyleEditor value={{ fill: 'solid' }} onChange={jest.fn()} context={mockContext} item={mockItem} />
@@ -86,7 +82,7 @@ describe('LineStyleEditor', () => {
       );
 
       it('shows the Accessible line fill option when enableColorblindSafePanelOptions is true', () => {
-        config.featureToggles.enableColorblindSafePanelOptions = true;
+        setTestFlags({ enableColorblindSafePanelOptions: true });
 
         render(
           <LineStyleEditor value={{ fill: 'solid' }} onChange={jest.fn()} context={mockContext} item={mockItem} />

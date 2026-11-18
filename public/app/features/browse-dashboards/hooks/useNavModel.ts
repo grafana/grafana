@@ -25,6 +25,7 @@ export function useNavModel(folderDTO: FolderDTO | undefined, activeTab: FolderA
   });
   let panelsCount: number | undefined = undefined;
   let rulesCount: number | undefined = undefined;
+  let variablesCount: number | undefined = undefined;
 
   // The counts are not critical to have so we are not dealing with the possible api error state here, we just won't
   // show the numbers in that case.
@@ -32,6 +33,7 @@ export function useNavModel(folderDTO: FolderDTO | undefined, activeTab: FolderA
     const counts = getParsedCounts(folderCountsResult.data.counts);
     panelsCount = counts.librarypanels ?? 0;
     rulesCount = (counts.alertrules ?? 0) + (counts.recordingrules ?? 0);
+    variablesCount = counts.variables ?? 0;
   }
 
   return useMemo(() => {
@@ -41,7 +43,9 @@ export function useNavModel(folderDTO: FolderDTO | undefined, activeTab: FolderA
     const model = buildNavModel(
       folderDTO,
       undefined,
-      panelsCount !== undefined && rulesCount !== undefined ? { panels: panelsCount, rules: rulesCount } : undefined
+      panelsCount !== undefined && rulesCount !== undefined && variablesCount !== undefined
+        ? { panels: panelsCount, rules: rulesCount, variables: variablesCount }
+        : undefined
     );
 
     const activeTabID =
@@ -57,5 +61,5 @@ export function useNavModel(folderDTO: FolderDTO | undefined, activeTab: FolderA
       tab.active = true;
     }
     return model;
-  }, [activeTab, folderDTO, panelsCount, rulesCount]);
+  }, [activeTab, folderDTO, panelsCount, rulesCount, variablesCount]);
 }

@@ -28,37 +28,38 @@ export function requiresNotebookRead(): PermissionCheckResult {
   if (!enabled.allowed) {
     return enabled;
   }
-  if (!contextSrv.hasPermission(AccessControlAction.DashboardsRead)) {
+  if (!contextSrv.hasPermission(AccessControlAction.NotebooksRead)) {
     return { allowed: false, error: 'Cannot read notebook: insufficient permissions.' };
   }
   return { allowed: true };
 }
 
 /**
- * The permission is the dashboards write action, matching how the notebook editor gates itself. That is
- * coarse: it is an org-level action, not a check against this notebook's folder. `notebook_authorizer.go`
- * defers to the same authorizer dashboards use and the apiserver authorizes the eventual save per
- * resource, and nothing here is persisted, so the blast radius is a scene the user could not have saved
- * anyway. A notebook-scoped action is tracked with the resource's permission model.
+ * This is an org-level action, not a check against this notebook's folder: nothing here is persisted,
+ * so the blast radius of a false positive is a scene the user could not have saved anyway — the
+ * apiserver still authorizes the eventual save per resource.
  */
 export function requiresNotebookEdit(): PermissionCheckResult {
   const enabled = requiresNotebooksEnabled();
   if (!enabled.allowed) {
     return enabled;
   }
-  if (!contextSrv.hasPermission(AccessControlAction.DashboardsWrite)) {
+  if (!contextSrv.hasPermission(AccessControlAction.NotebooksWrite)) {
     return { allowed: false, error: 'Cannot edit notebook: insufficient permissions.' };
   }
   return { allowed: true };
 }
 
-/** Says nothing about the open document: CREATE runs from anywhere. */
+/**
+ * Says nothing about the open document: CREATE runs from anywhere. Checked against
+ * `notebooks:create`, which is the action the apiserver authorizes the create verb with.
+ */
 export function requiresNotebookCreate(): PermissionCheckResult {
   const enabled = requiresNotebooksEnabled();
   if (!enabled.allowed) {
     return enabled;
   }
-  if (!contextSrv.hasPermission(AccessControlAction.DashboardsCreate)) {
+  if (!contextSrv.hasPermission(AccessControlAction.NotebooksCreate)) {
     return { allowed: false, error: 'Cannot create notebook: insufficient permissions.' };
   }
   return { allowed: true };

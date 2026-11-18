@@ -1,4 +1,6 @@
 import { type EventProperty, type EventVariants } from '@grafana/runtime/unstable';
+import { type PageHistoryKind } from 'app/core/services/pageHistory/types';
+import { type RecentActivityFilter } from 'app/features/home/DashboardTabs/useRecentActivity';
 
 export interface TabChanged extends EventProperty {
   /** Tab the user switched to. */
@@ -23,6 +25,43 @@ export interface RecommendationsShown extends EventProperty {
 export interface ClearHistoryClicked extends EventProperty {
   /** Number of dashboards in history before clearing. */
   dashboard_count: number;
+  /** Number of entries of any kind in history before clearing. */
+  total_count: number;
+}
+
+/** Counts cover the whole history, not the rows left after the kind filter; `filter` says which rows were on screen. */
+export interface RecentActivityShown extends EventProperty {
+  /** Entries of any kind in history when the tab was displayed. */
+  total_count: number;
+  /** Dashboards in history. */
+  dashboard_count: number;
+  /** Grafana Pages in history. */
+  page_count: number;
+  /** Explore sessions in history. */
+  explore_count: number;
+  /** Alerting pages in history. */
+  alerting_count: number;
+  /** App plugin pages in history. */
+  app_count: number;
+  /** Kind filter in effect, or `all`: only rows of that kind were shown. */
+  filter: RecentActivityFilter;
+}
+
+export interface RecentActivityFilterChanged extends EventProperty {
+  /** Kind the user chose to show, or `all`. */
+  filter: RecentActivityFilter;
+}
+
+export interface SolutionFilterChanged extends EventProperty {
+  /** Stable id of the solution whose card scope changed. */
+  solution: string;
+  /** Whether the user saved a scope or cleared it. */
+  change: 'saved' | 'cleared';
+  /**
+   * Comma-separated names of the scope dimensions set after the change, in the solution's own terms;
+   * empty when cleared. Names only: the values are customer data and are never reported.
+   */
+  customized: string;
 }
 
 interface CtaClickedBase extends EventProperty {
@@ -71,6 +110,18 @@ export type CtaClicked = EventVariants<
         }
     ))
   | ({
+      surface: 'oncall_card';
+    } & (
+      | {
+          action: 'my_shift_detail' | 'team_schedule_detail';
+          placement: 'list';
+        }
+      | {
+          action: 'view_schedules';
+          placement: 'footer';
+        }
+    ))
+  | ({
       surface: 'news_card';
     } & (
       | {
@@ -82,11 +133,24 @@ export type CtaClicked = EventVariants<
           placement: 'footer';
         }
     ))
-  | {
+  | ({
       surface: 'recent_tab';
-      action: 'create_dashboard' | 'browse_dashboards';
-      placement: 'empty_state';
-    }
+    } & (
+      | {
+          action: 'open_page';
+          placement: 'list';
+          /** Kind of page the row restores. Never the page itself: hrefs carry customer data. */
+          page_kind: PageHistoryKind;
+          /** 0-based row index as displayed, so clicks on the top row can be told from deeper ones. */
+          position: number;
+          /** Kind filter in effect: under a kind, `page_kind` is forced and `position` counts within that kind. */
+          filter: RecentActivityFilter;
+        }
+      | {
+          action: 'create_dashboard' | 'browse_dashboards';
+          placement: 'empty_state';
+        }
+    ))
   | {
       surface: 'recommendations';
       action: 'enable' | 'setup' | 'learn_more';
@@ -129,6 +193,11 @@ export type CtaClicked = EventVariants<
         }
       | {
           action: 'open_guide';
+          placement: 'card';
+          solution: string;
+        }
+      | {
+          action: 'open_solution_filter';
           placement: 'card';
           solution: string;
         }

@@ -6,7 +6,7 @@ import { Icon, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
 import { ctaClicked } from '../analytics/main';
 import { LearnMoreLink } from '../solutions/LearnMoreLink';
 
-import { isExternal, type RecommendationItem } from './types';
+import { isExternal, type RecommendationItem, type VizColorName } from './types';
 
 interface RecommendationCardProps {
   recommendation: RecommendationItem;
@@ -69,8 +69,8 @@ export function RecommendationCard({ recommendation, startingState, solution }: 
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, color: RecommendationItem['color']) => ({
+const getStyles = (theme: GrafanaTheme2, color: VizColorName) => ({
   icon: css({
-    color: typeof color === 'function' ? color(theme) : color,
+    color: theme.visualization.getColorByName(color),
   }),
 });

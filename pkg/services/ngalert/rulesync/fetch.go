@@ -1,24 +1,19 @@
 package rulesync
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"hash/fnv"
-	"io"
-	"net/http"
+	"strings"
 
 	"go.yaml.in/yaml/v3"
 
-	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
-	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/web"
+	"github.com/grafana/grafana/pkg/services/ngalert/dsproxyclient"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // RulerConfig is the namespace-grouped rule configuration returned by a
@@ -33,81 +28,63 @@ type RulerConfig = map[string][]apimodels.PrometheusRuleGroup
 // (no rule groups) is NOT an error; see Fetch.
 var ErrNotARuler = errors.New("datasource does not expose a Mimir ruler config API")
 
-// datasourceProxy routes an outbound request through Grafana's datasource proxy
-// service, so the datasource's configured auth/TLS/headers are honoured and the
-// same egress allow/deny-list validation the user-driven proxy runs is applied.
-// *datasourceproxy.DataSourceProxyService satisfies it; a fake stands in for it
-// in tests.
-type datasourceProxy interface {
-	ProxyDatasourceRequestWithUID(c *contextmodel.ReqContext, dsUID string)
+// IsRulerCandidate statically classifies ds as a plausible external ruler
+// sync source, from its stored type/JsonData alone -- no network call. It
+// catches the common, cheap-to-detect cases (wrong datasource type, vanilla
+// Prometheus) up front; it can't confirm the ruler config API is actually
+// reachable, since that requires an actual fetch (see Fetch / ErrNotARuler).
+// Used both by the admission-time check (reject obviously wrong datasources
+// synchronously, without a network round trip) and by the sync loop (fail
+// fast before attempting Fetch).
+func IsRulerCandidate(ds *datasources.DataSource) error {
+	if ds.Type != datasources.DS_PROMETHEUS {
+		return fmt.Errorf("datasource must be of type prometheus")
+	}
+	// Empty prometheusType is treated as Mimir/Cortex.
+	if ds.JsonData != nil && strings.EqualFold(ds.JsonData.Get("prometheusType").MustString(""), "prometheus") {
+		return fmt.Errorf("datasource is a vanilla Prometheus (prometheusType=Prometheus), which does not expose a ruler config API; use a Mimir or Cortex datasource")
+	}
+	return nil
 }
+
+// rulerSyncLogin identifies this worker in the service-identity user the
+// datasource proxy access-checks (surfaced in logs/audit only).
+const rulerSyncLogin = "grafana_external_ruler_sync"
 
 // RulerFetcher fetches namespace-grouped rule configs from a Mimir ruler
 // datasource by routing the ruler config GET through Grafana's datasource proxy
 // service (transport, auth and egress validation are all handled there).
 type RulerFetcher struct {
-	proxy  datasourceProxy
-	logger log.Logger
+	client *dsproxyclient.Client
 }
 
-// NewRulerFetcher constructs a RulerFetcher around the datasource proxy service.
-func NewRulerFetcher(proxy datasourceProxy, logger log.Logger) *RulerFetcher {
-	return &RulerFetcher{proxy: proxy, logger: logger}
+// NewRulerFetcher constructs a RulerFetcher around the datasource proxy
+// service. Mimir serves the ruler config API as YAML.
+func NewRulerFetcher(proxy dsproxyclient.Proxy, logger log.Logger) *RulerFetcher {
+	return &RulerFetcher{client: dsproxyclient.New(proxy, logger, "config/v1/rules", rulerSyncLogin, "application/yaml")}
 }
 
 // Fetch retrieves the ruler configuration from ds, returning the parsed configs
 // and the FNV-1a hash of the raw body (for cross-tick dedup). Any non-2xx
 // (including a 404) is a fetch failure — the ruler config list API returns 200
 // with an empty object when there are no rule groups, so a 404 is never "no
-// rules"; a 2xx body that is not a rule-config object (unparseable, empty or null) yields ErrNotARuler. The GET is routed through the datasource
-// proxy service, which loads the datasource by UID, access-checks SignedInUser,
-// validates egress, and derives the upstream path from the request URL
-// (/api/datasources/proxy/uid/<uid>/config/v1/rules -> config/v1/rules).
+// rules"; a 2xx body that isn't a rule-config object yields ErrNotARuler.
 func (f *RulerFetcher) Fetch(ctx context.Context, ds *datasources.DataSource) (RulerConfig, uint64, error) {
-	// Service-identity context so the proxy's requester lookup succeeds; Fetch
-	// runs from a background job with no user request context.
-	svcCtx, _ := identity.WithServiceIdentity(ctx, ds.OrgID)
-
-	// The proxy strips the /api/datasources/proxy/uid/<uid>/ prefix to derive the
-	// upstream path.
-	proxyURL := fmt.Sprintf("/api/datasources/proxy/uid/%s/config/v1/rules", ds.UID)
-	req, err := http.NewRequestWithContext(svcCtx, http.MethodGet, proxyURL, nil)
+	res, err := f.client.Get(ctx, ds)
 	if err != nil {
-		return nil, 0, fmt.Errorf("failed to create HTTP request: %w", err)
+		return nil, 0, err
 	}
-	// Mimir serves the ruler config API as YAML.
-	req.Header.Set("Accept", "application/yaml")
-
-	// Capture the proxied reply in-memory (mirrors AlertingProxy.withReq in
-	// api/util.go): response.NormalResponse records status/body and the wrapper
-	// adds the CloseNotify method web.NewResponseWriter requires. SignedInUser is
-	// the org-scoped service identity the proxy access-checks.
-	resp := response.CreateNormalResponse(make(http.Header), nil, 0)
-	c := &contextmodel.ReqContext{
-		Context: &web.Context{
-			Req:  req,
-			Resp: web.NewResponseWriter(req.Method, &closeNotifierResponseWriter{resp}),
-		},
-		SignedInUser: serviceIdentityUser(ds.OrgID),
-		// The proxy calls ReqContext.JsonApiErr on failures (datasource lookup,
-		// access, plugin load), which logs via Logger when err != nil — it must be
-		// non-nil or that call panics (and this runs in a background goroutine).
-		Logger: f.logger,
-	}
-
-	f.proxy.ProxyDatasourceRequestWithUID(c, ds.UID)
 
 	// The ruler config list API returns HTTP 200 with an empty object when there
 	// are no rule groups (see Mimir's ListRules), so a non-2xx is never "no rules":
 	// a 404 here is a proxy-local error (datasource/plugin not found) or an upstream
 	// failure, not an empty ruler. Treat every non-2xx as a fetch failure so
 	// apply/prune never runs and synced rules aren't wiped.
-	if resp.Status()/100 != 2 {
-		body, _ := io.ReadAll(io.LimitReader(bytes.NewReader(resp.Body()), 1024))
-		return nil, 0, fmt.Errorf("ruler config API returned HTTP %d: %s", resp.Status(), string(body))
+	if res.Status/100 != 2 {
+		return nil, 0, fmt.Errorf("ruler config API returned HTTP %d: %s", res.Status, util.TruncateUTF8(string(res.Body), 1024))
 	}
 
-	body := resp.Body()
+	body := res.Body
 	var cfg RulerConfig
 	if err := yaml.Unmarshal(body, &cfg); err != nil {
 		return nil, 0, fmt.Errorf("%w: failed to parse response as ruler config: %v", ErrNotARuler, err)
@@ -123,34 +100,4 @@ func (f *RulerFetcher) Fetch(ctx context.Context, ds *datasources.DataSource) (R
 	h := fnv.New64a()
 	_, _ = h.Write(body)
 	return cfg, h.Sum64(), nil
-}
-
-// closeNotifierResponseWriter adapts the in-memory response.NormalResponse to
-// what web.NewResponseWriter expects, adding CloseNotify. Mirrors the
-// safeMacaronWrapper used by AlertingProxy (api/util.go).
-type closeNotifierResponseWriter struct {
-	http.ResponseWriter
-}
-
-func (w *closeNotifierResponseWriter) CloseNotify() <-chan bool {
-	return make(chan bool)
-}
-
-// serviceIdentityUser builds the *user.SignedInUser the datasource proxy
-// access-checks. The ReqContext requires a *user.SignedInUser, which
-// identity.WithServiceIdentity does not provide, so mirror it here carrying the
-// datasource query/read permissions the proxy's access check requires.
-func serviceIdentityUser(orgID int64) *user.SignedInUser {
-	return &user.SignedInUser{
-		OrgID:          orgID,
-		OrgRole:        identity.RoleAdmin,
-		Login:          "grafana_external_ruler_sync",
-		IsGrafanaAdmin: true,
-		Permissions: map[int64]map[string][]string{
-			orgID: {
-				datasources.ActionQuery: {datasources.ScopeAll},
-				datasources.ActionRead:  {datasources.ScopeAll},
-			},
-		},
-	}
 }

@@ -96,6 +96,7 @@ func TestAnnotationHistorian(t *testing.T) {
 
 		require.NoError(t, err)
 		query := store.lastQuery
+		require.Equal(t, "my-rule", query.AlertUID)
 		require.Equal(t, now.UnixMilli(), query.To)
 		require.Equal(t, now.Add(-10*time.Second).UnixMilli(), query.From)
 	})
@@ -111,6 +112,26 @@ func TestAnnotationHistorian(t *testing.T) {
 		err := <-anns.Record(context.Background(), rule, states)
 
 		require.NoError(t, err)
+	})
+
+	t.Run("preserves a folder path longer than the previous column limit", func(t *testing.T) {
+		store := &interceptingAnnotationStore{enforceTagColumnLimits: true}
+		anns := createTestAnnotationSutWithStore(t, store)
+		rule := createTestRule()
+		folderPath := strings.Repeat("Business Units/Technology and Digital/Products and Platforms/", 4)
+		states := singleFromNormal(&state.State{
+			State: eval.Alerting,
+			Labels: data.Labels{
+				"grafana_folder": folderPath,
+				"severity":       "critical",
+			},
+		})
+
+		err := <-anns.Record(context.Background(), rule, states)
+
+		require.NoError(t, err)
+		require.Len(t, store.savedAnnotations, 1)
+		require.Equal(t, []string{"grafana_folder:" + folderPath, "severity:critical"}, store.savedAnnotations[0].Tags)
 	})
 
 	t.Run("an oversized tag does not drop the history batch", func(t *testing.T) {
@@ -131,7 +152,7 @@ func TestAnnotationHistorian(t *testing.T) {
 				State: &state.State{
 					State: eval.Normal,
 					Labels: data.Labels{
-						"grafana_folder": strings.Repeat("f", 101),
+						"grafana_folder": strings.Repeat("f", 513),
 						"severity":       "critical",
 					},
 				},
@@ -233,16 +254,27 @@ func createFailingAnnotationSut(t *testing.T, met *metrics.Historian) *Annotatio
 
 func createAnnotation() annotations.Item {
 	return annotations.Item{
-		ID:      1,
-		OrgID:   1,
-		AlertID: 1,
-		Text:    "MyAlert {a=b} - No data",
-		Data:    simplejson.New(),
-		Epoch:   time.Now().UnixNano() / int64(time.Millisecond),
+		ID:       1,
+		OrgID:    1,
+		AlertUID: "my-rule",
+		Text:     "MyAlert {a=b} - No data",
+		Data:     simplejson.New(),
+		Epoch:    time.Now().UnixNano() / int64(time.Millisecond),
 	}
 }
 
 func TestBuildAnnotations(t *testing.T) {
+	t.Run("identifies the rule by both UID and ID", func(t *testing.T) {
+		backend := createTestAnnotationBackendSut(t)
+		rule := history_model.RuleMeta{ID: 7, UID: "my-rule"}
+
+		items := backend.buildAnnotations(rule, []state.StateTransition{makeStateTransition()}, log.NewNopLogger())
+
+		require.Len(t, items, 1)
+		require.Equal(t, "my-rule", items[0].AlertUID)
+		require.Equal(t, int64(7), items[0].AlertID)
+	})
+
 	t.Run("data wraps nil values when values are nil", func(t *testing.T) {
 		backend := createTestAnnotationBackendSut(t)
 		logger := log.NewNopLogger()
@@ -351,7 +383,7 @@ func TestBuildAnnotations(t *testing.T) {
 		logger := &logtest.Fake{}
 		rule := history_model.RuleMeta{}
 		states := []state.StateTransition{makeStateTransition()}
-		oversizedValue := strings.Repeat("v", 101)
+		oversizedValue := strings.Repeat("v", 513)
 		states[0].Labels = data.Labels{"grafana_folder": oversizedValue}
 
 		items := backend.buildAnnotations(rule, states, logger)
@@ -361,7 +393,8 @@ func TestBuildAnnotations(t *testing.T) {
 		require.Equal(t, 1, logger.WarnLogs.Calls)
 		require.Equal(t, "Skipping alert label as annotation tag because it exceeds the tag storage limit", logger.WarnLogs.Message)
 		require.Equal(t, "grafana_folder", logContextValue(t, logger.WarnLogs.Ctx, "labelKey"))
-		require.Equal(t, 101, logContextValue(t, logger.WarnLogs.Ctx, "labelValueLength"))
+		require.Equal(t, 513, logContextValue(t, logger.WarnLogs.Ctx, "labelValueLength"))
+		require.Equal(t, 512, logContextValue(t, logger.WarnLogs.Ctx, "maxLabelValueLength"))
 		require.NotContains(t, logger.WarnLogs.Ctx, oversizedValue)
 	})
 }
@@ -472,7 +505,7 @@ func TestConvertLabelsToTags(t *testing.T) {
 
 	t.Run("keeps tags at the column limits", func(t *testing.T) {
 		labelKey := strings.Repeat("k", 100)
-		labelValue := strings.Repeat("v", 100)
+		labelValue := strings.Repeat("v", 512)
 
 		tags := convertLabelsToTags(data.Labels{labelKey: labelValue}, 4096)
 
@@ -492,7 +525,7 @@ func TestConvertLabelsToTags(t *testing.T) {
 
 	t.Run("skips a label with a value beyond the column limit", func(t *testing.T) {
 		labels := data.Labels{
-			"a-oversized": strings.Repeat("v", 101),
+			"a-oversized": strings.Repeat("v", 513),
 			"z-valid":     "value",
 		}
 
@@ -502,14 +535,28 @@ func TestConvertLabelsToTags(t *testing.T) {
 	})
 
 	t.Run("measures the value column limit in characters", func(t *testing.T) {
-		acceptedValue := strings.Repeat("🔥", 100)
-		rejectedValue := strings.Repeat("🔥", 101)
+		acceptedValue := strings.Repeat("🔥", 512)
+		rejectedValue := strings.Repeat("🔥", 513)
 
 		acceptedTags := convertLabelsToTags(data.Labels{"label": acceptedValue}, 4096)
 		rejectedTags := convertLabelsToTags(data.Labels{"label": rejectedValue}, 4096)
 
 		require.Equal(t, []string{"label:" + acceptedValue}, acceptedTags)
 		require.Empty(t, rejectedTags)
+	})
+
+	t.Run("omits a value within the column limit that exceeds the default total tags length", func(t *testing.T) {
+		labels := data.Labels{
+			"grafana_folder": strings.Repeat("f", 512),
+			"severity":       "critical",
+		}
+		logger := &logtest.Fake{}
+
+		tags := convertLabelsToTagsWithLogger(labels, 500, logger)
+
+		require.Equal(t, []string{"severity:critical"}, tags)
+		require.Equal(t, 1, logger.WarnLogs.Calls)
+		require.Equal(t, "Skipping alert label as annotation tag because it exceeds the configured annotation tags length", logger.WarnLogs.Message)
 	})
 
 	t.Run("continues with smaller tags after reaching maxLength", func(t *testing.T) {
@@ -613,7 +660,7 @@ func (i *interceptingAnnotationStore) Save(ctx context.Context, panel *PanelKey,
 	if i.enforceTagColumnLimits {
 		for _, item := range items {
 			for _, parsedTag := range tag.ParseTagPairs(item.Tags) {
-				if len([]rune(parsedTag.Key)) > 100 || len([]rune(parsedTag.Value)) > 100 {
+				if len([]rune(parsedTag.Key)) > 100 || len([]rune(parsedTag.Value)) > 512 {
 					return errors.New("tag exceeds column limit")
 				}
 			}

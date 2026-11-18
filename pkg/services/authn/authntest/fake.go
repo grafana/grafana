@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn"
 )
 
-var _ authn.SSOClientConfig = new(FakeSSOClientConfig)
+var _ authn.SSOClientConfig = (*FakeSSOClientConfig)(nil)
 
 type FakeSSOClientConfig struct {
 	ExpectedName                             string
@@ -40,8 +40,8 @@ func (f *FakeSSOClientConfig) IsAllowAssignGrafanaAdminEnabled() bool {
 }
 
 var (
-	_ authn.Service              = new(FakeService)
-	_ authn.IdentitySynchronizer = new(FakeService)
+	_ authn.Service              = (*FakeService)(nil)
+	_ authn.IdentitySynchronizer = (*FakeService)(nil)
 )
 
 type FakeService struct {
@@ -156,7 +156,7 @@ func (f *FakeService) SyncIdentity(ctx context.Context, identity *authn.Identity
 	return f.ExpectedErr
 }
 
-var _ authn.ContextAwareClient = new(FakeClient)
+var _ authn.ContextAwareClient = (*FakeClient)(nil)
 
 type FakeClient struct {
 	ExpectedName     string
@@ -203,7 +203,7 @@ func (f *FakeClient) UsageStatFn(ctx context.Context) (map[string]any, error) {
 	return f.ExpectedStats, f.ExpectedErr
 }
 
-var _ authn.PasswordClient = new(FakePasswordClient)
+var _ authn.PasswordClient = (*FakePasswordClient)(nil)
 
 type FakePasswordClient struct {
 	ExpectedErr      error
@@ -214,7 +214,7 @@ func (f FakePasswordClient) AuthenticatePassword(ctx context.Context, r *authn.R
 	return f.ExpectedIdentity, f.ExpectedErr
 }
 
-var _ authn.RedirectClient = new(FakeRedirectClient)
+var _ authn.RedirectClient = (*FakeRedirectClient)(nil)
 
 type FakeRedirectClient struct {
 	ExpectedErr      error

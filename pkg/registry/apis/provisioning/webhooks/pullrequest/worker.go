@@ -46,7 +46,7 @@ func ProvidePullRequestWorker(
 	// FIXME: we should create providers for client and parsers, so that we don't have
 	// multiple connections for webhooks
 	clients := resources.NewClientFactory(configProvider)
-	parsers := resources.NewParserFactory(clients, resources.IsFolderMetadataEnabled(cfg))
+	parsers := resources.NewParserFactory(clients)
 	screenshotRenderer := NewScreenshotRenderer(renderer, blobstore)
 	evaluator := NewEvaluator(screenshotRenderer, parsers, urls, registry)
 	commenter := NewCommenter(cfg.ProvisioningAllowImageRendering, urls)
@@ -148,7 +148,7 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 	}
 
 	progress.SetMessage(ctx, "listing pull request files")
-	base, err := prRepo.MergeBase(ctx, opts.Ref)
+	base, err := prRepo.PullRequestClient().MergeBase(ctx, prRepo.Config().Branch(), opts.Ref)
 	if err != nil {
 		base = prRepo.Config().Branch()
 		logger.Warn("failed to resolve pull request base, falling back to the configured branch", "error", err, "branch", base)

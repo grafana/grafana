@@ -1,3 +1,4 @@
+import { isEqual } from 'lodash';
 import { type ReactNode, useEffect, useMemo, useRef } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
@@ -12,6 +13,7 @@ import {
 } from 'app/api/clients/provisioning/v0alpha1';
 import { FormPrompt } from 'app/core/components/FormPrompt/FormPrompt';
 
+import { ManagedReadOnlyBanner } from '../components/ManagedReadOnlyBanner';
 import { AppInstruction } from '../components/Shared/AppInstruction';
 import { ConnectionBaseFields } from '../components/Shared/ConnectionBaseFields';
 import { GitHubConnectionFields } from '../components/Shared/GitHubConnectionFields';
@@ -19,11 +21,12 @@ import { OAuthConnectionFields } from '../components/Shared/OAuthConnectionField
 import { WebhookDisabledField } from '../components/Shared/WebhookDisabledField';
 import { CONNECTIONS_TAB_URL } from '../constants';
 import { useSaveConnection } from '../hooks/useSaveConnection';
-import { type ConnectionFormData } from '../types';
+import { type ConnectionFormData, type OAuthConnectionType } from '../types';
 import { type ConnectionProvider, getConnectionFormDefaults, toConnectionType } from '../utils/connectionData';
 import { connectionProviderType, isOAuthConnectionType } from '../utils/connectionOAuth';
 import { isConnectionPending } from '../utils/connectionStatus';
 import { getConnectionFormErrors } from '../utils/getFormErrors';
+import { isProvisioningResourceReadOnly } from '../utils/managedResource';
 
 import { DeleteConnectionButton } from './DeleteConnectionButton';
 
@@ -41,8 +44,25 @@ const PROVIDER_OPTIONS: Array<{
   },
   { value: 'gitlab', label: 'GitLab', types: ['gitlabOAuth'] },
   { value: 'bitbucket', label: 'Bitbucket', types: ['bitbucketOAuth'] },
+  { value: 'git', label: 'Git', types: ['gitOAuth'] },
 ];
 /* eslint-enable @grafana/i18n/no-untranslated-strings */
+
+const OAUTH_IDENTITY_FIELDS: Record<OAuthConnectionType, Array<keyof ConnectionFormData>> = {
+  githubOAuth: ['clientID'],
+  githubEnterpriseOAuth: ['clientID', 'serverUrl'],
+  gitlabOAuth: ['clientID'],
+  bitbucketOAuth: ['clientID'],
+  gitOAuth: ['clientID', 'tokenURL'],
+};
+
+const OAUTH_AUTHORIZATION_FIELDS: Record<OAuthConnectionType, Array<keyof ConnectionFormData>> = {
+  githubOAuth: [],
+  githubEnterpriseOAuth: [],
+  gitlabOAuth: [],
+  bitbucketOAuth: ['workspace'],
+  gitOAuth: ['authURL', 'scopes'],
+};
 
 interface ConnectionFormProps {
   data?: Connection;
@@ -53,6 +73,8 @@ interface ConnectionFormProps {
 export function ConnectionForm({ data, children }: ConnectionFormProps) {
   const connectionName = data?.metadata?.name;
   const isEdit = Boolean(connectionName);
+  // Externally managed connections (terraform, kubectl, ...) are read-only in the UI.
+  const isReadOnly = data ? isProvisioningResourceReadOnly(data) : false;
   const privateKey = data?.secure?.privateKey;
   const navigate = useNavigate();
 
@@ -106,11 +128,13 @@ export function ConnectionForm({ data, children }: ConnectionFormProps) {
   // The client secret belongs to the OAuth app itself; pointing the connection at
   // a different app (client ID, or GHES host) makes the stored secret invalid for
   // the code exchange, so the user must supply the new app's secret.
+  const fieldsChanged = (form: ConnectionFormData, fields: Array<keyof ConnectionFormData>) => {
+    const saved = getConnectionFormDefaults(form.type, data);
+    return fields.some((field) => !isEqual(form[field], saved[field]));
+  };
+
   const oauthIdentityChanged = (form: ConnectionFormData) =>
-    isEdit &&
-    isOAuthConnectionType(form.type) &&
-    (form.clientID !== data?.spec?.oauth?.clientID ||
-      (form.type === 'githubEnterpriseOAuth' && form.serverUrl !== data?.spec?.githubEnterpriseOAuth?.serverUrl));
+    isEdit && isOAuthConnectionType(form.type) && fieldsChanged(form, OAUTH_IDENTITY_FIELDS[form.type]);
 
   // OAuth app connections need the user to authorize the app before tokens can be issued
   const needsAuthorization = (form: ConnectionFormData) =>
@@ -118,7 +142,7 @@ export function ConnectionForm({ data, children }: ConnectionFormProps) {
     (!isEdit ||
       Boolean(form.clientSecret) ||
       oauthIdentityChanged(form) ||
-      (form.type === 'bitbucketOAuth' && (form.workspace ?? '') !== (data?.spec?.bitbucket?.workspace ?? '')) ||
+      fieldsChanged(form, OAUTH_AUTHORIZATION_FIELDS[form.type]) ||
       reauthorizeRef.current);
 
   useEffect(() => {
@@ -231,7 +255,7 @@ export function ConnectionForm({ data, children }: ConnectionFormProps) {
                 severity="error"
                 title={t('provisioning.connection.disconnected-title', 'Disconnected')}
                 action={
-                  isOAuthConnectionType(data?.spec?.type) && selectedTypeAvailable ? (
+                  isOAuthConnectionType(data?.spec?.type) && selectedTypeAvailable && !isReadOnly ? (
                     <Button variant="secondary" onClick={handleReauthorize}>
                       {t('provisioning.connection-form.reauthorize-button', 'Reauthorize')}
                     </Button>
@@ -255,6 +279,7 @@ export function ConnectionForm({ data, children }: ConnectionFormProps) {
         <form onSubmit={handleSubmit(onSubmit)} style={{ maxWidth: 700 }}>
           <FormPrompt onDiscard={reset} confirmRedirect={isDirty} />
           <Stack direction="column" gap={2}>
+            {isReadOnly && <ManagedReadOnlyBanner />}
             <Field
               noMargin
               htmlFor="type"
@@ -315,12 +340,17 @@ export function ConnectionForm({ data, children }: ConnectionFormProps) {
             />
 
             <Stack gap={2}>
-              <Button type="submit" disabled={request.isLoading || isAuthorizing || !selectedTypeAvailable}>
+              <Button
+                type="submit"
+                disabled={request.isLoading || isAuthorizing || !selectedTypeAvailable || isReadOnly}
+              >
                 {request.isLoading
                   ? t('provisioning.connection-form.button-saving', 'Saving...')
                   : t('provisioning.connection-form.button-save', 'Save')}
               </Button>
-              {connectionName && data && <DeleteConnectionButton name={connectionName} connection={data} />}
+              {connectionName && data && !isReadOnly && (
+                <DeleteConnectionButton name={connectionName} connection={data} />
+              )}
             </Stack>
           </Stack>
         </form>

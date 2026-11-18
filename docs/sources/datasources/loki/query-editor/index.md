@@ -45,6 +45,10 @@ You can then decide whether you still want to switch to Builder mode.
 
 You can also augment queries by using [template variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/loki/template-variables/).
 
+To see example LogQL log and metric queries, explore this demo dashboard on Grafana Play. Open any panel's editor to view its query:
+
+{{< docs/play title="Loki NGINX Service Mesh - Pattern version" url="https://play.grafana.org/d/-lPcmrp7z/" >}}
+
 ## Toolbar elements
 
 The query editor toolbar contains the following elements:

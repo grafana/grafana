@@ -11,8 +11,6 @@ import {
 } from '@grafana/api-clients/rtkq/provisioning/v0alpha1';
 import { t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
-import { clearFolders } from 'app/features/browse-dashboards/state/slice';
-import { getState } from 'app/store/store';
 import { type ThunkDispatch } from 'app/types/store';
 
 import {
@@ -24,9 +22,9 @@ import { notifyApp } from '../../../../core/reducers/appNotification';
 import { PAGE_SIZE } from '../../../../features/browse-dashboards/api/constants';
 import { refetchChildren } from '../../../../features/browse-dashboards/state/actions';
 import { handleError } from '../../../utils';
-import { createOnCacheEntryAdded } from '../utils/createOnCacheEntryAdded';
+import { applyWatchEvent, createOnCacheEntryAdded } from '../utils/createOnCacheEntryAdded';
 
-const handleProvisioningFormError = (e: unknown, dispatch: ThunkDispatch, title: string) => {
+export const handleProvisioningFormError = (e: unknown, dispatch: ThunkDispatch, title: string) => {
   if (typeof e === 'object' && e && 'error' in e && isFetchError(e.error)) {
     if (e.error.data.kind === 'Status' && e.error.data.status === 'Failure') {
       const statusError: Status = e.error.data;
@@ -178,13 +176,9 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
       },
     },
     createRepositoryTest: {
-      onQueryStarted: async (_, { queryFulfilled, dispatch }) => {
-        try {
-          await queryFulfilled;
-        } catch (e) {
-          handleProvisioningFormError(e, dispatch, 'Error validating repository');
-        }
-      },
+      // Testing a submitted spec touches nothing on the server, so the generated
+      // invalidation would only refetch every Repository-tagged query for nothing.
+      invalidatesTags: [],
     },
     createRepositoryJobs: {
       onQueryStarted: async ({ jobSpec }, { queryFulfilled, dispatch }) => {
@@ -227,9 +221,18 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
       },
     },
     replaceRepository: {
-      onQueryStarted: async (_, { queryFulfilled, dispatch }) => {
+      onQueryStarted: async (_, { queryFulfilled, dispatch, getState }) => {
         try {
-          await queryFulfilled;
+          const { data } = await queryFulfilled;
+          // Cached lists must show the saved object before the invalidation refetch or watch
+          // event lands; apply the response like a watch MODIFIED event.
+          for (const args of generatedAPI.util.selectCachedArgsForQuery(getState(), 'listRepository')) {
+            dispatch(
+              generatedAPI.util.updateQueryData('listRepository', args, (draft) => {
+                applyWatchEvent(draft.items, { type: 'MODIFIED', object: data });
+              })
+            );
+          }
           dispatch(
             notifyApp(
               createSuccessNotification(
@@ -246,33 +249,6 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
         }
         // Refetch dashboards and folders after creating/updating a provisioned repository
         dispatch(refetchChildren({ parentUID: undefined, pageSize: PAGE_SIZE }));
-      },
-    },
-    getRepositoryJobsWithPath: {
-      onQueryStarted: async (_, { queryFulfilled, dispatch }) => {
-        try {
-          const result = await queryFulfilled;
-          const job = result.data;
-
-          // Clear folder cache after successful move/delete jobs
-          // We use clearFolders here to clear cached data and closes folders (immediate visual feedback)
-          // Force a refetch of subfolders if user has opened them, so user see latest data
-          if (job.status?.state === 'success' && (job.spec?.action === 'delete' || job.spec?.action === 'move')) {
-            const state = getState().browseDashboards;
-            const action = job.spec?.action;
-            let childrenKeys = Object.keys(state.childrenByParentUID);
-
-            if (action === 'delete') {
-              // Do not clear deleted resources to avoid 404s when refetching them
-              const deletedResourceNames =
-                job.spec?.[action]?.resources?.map((resource) => resource.name).filter(Boolean) || [];
-              childrenKeys = childrenKeys.filter((key) => !deletedResourceNames.includes(key));
-            }
-            dispatch(clearFolders(childrenKeys));
-          }
-        } catch (e) {
-          console.error('Error in getRepositoryJobsWithPath:', e);
-        }
       },
     },
     createConnection: {

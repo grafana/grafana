@@ -1,4 +1,4 @@
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useState } from 'react';
 
 import { type SelectableValue, type TimeZone, InternalTimeZones } from '@grafana/data';
 import { canonicalZoneName, getTimeZonesAt } from '@grafana/data/unstable';
@@ -79,8 +79,8 @@ interface SelectableZoneGroup extends SelectableValue<string> {
 }
 
 const useTimeZones = (includeInternal: boolean | InternalTimeZones[]): SelectableZoneGroup[] => {
+  const [now] = useState(Date.now);
   const timeZoneGroups = useMemo(() => {
-    const now = Date.now();
     const groups = new Map<string, SelectableZone[]>();
 
     const pushOption = (group: string, zone: TimeZone, info: TimeZoneDisplayInfo, legacyName?: string) => {
@@ -144,7 +144,7 @@ const useTimeZones = (includeInternal: boolean | InternalTimeZones[]): Selectabl
     }
 
     return Array.from(groups, ([label, options]) => ({ label, options }));
-  }, [includeInternal]);
+  }, [includeInternal, now]);
 
   return timeZoneGroups;
 };

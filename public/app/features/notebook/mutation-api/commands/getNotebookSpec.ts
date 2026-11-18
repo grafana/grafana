@@ -3,25 +3,22 @@
  * APPLY_NOTEBOOK_SPEC): return the whole notebook as a single `NotebookSpec`.
  */
 
-import * as z from 'zod';
+import * as z from 'zod/mini';
 
 import { type MutationCommand } from 'app/features/dashboard-scene/mutation-api/commands/types';
 
 import { type NotebookScene } from '../../scene/NotebookScene';
 import { validateNotebookSpec } from '../../schema/notebookSpecSchema';
-import { transformNotebookSceneToSaveModel } from '../../serialization/transformNotebookSceneToSaveModel';
 
 import { requiresNotebookRead } from './permissions';
 
-const getNotebookSpecPayloadSchema = z
-  .object({
-    validate: z
-      .boolean()
-      .optional()
-      .default(false)
-      .describe('When true, validate the serialized spec against the notebook schema and fail if it is invalid.'),
-  })
-  .strict();
+const getNotebookSpecPayloadSchema = z.strictObject({
+  validate: z
+    ._default(z.boolean(), false)
+    .check(
+      z.describe('When true, validate the serialized spec against the notebook schema and fail if it is invalid.')
+    ),
+});
 
 export type GetNotebookSpecPayload = z.infer<typeof getNotebookSpecPayloadSchema>;
 
@@ -30,7 +27,10 @@ export const getNotebookSpecCommand: MutationCommand<GetNotebookSpecPayload, Not
   description:
     'Return the entire notebook as one NotebookSpec JSON object: settings, elements (markdown, code, ' +
     'panel and library panel cells) and the ordered NotebookLayout that places them. Panel elements ' +
-    'use the same shape as a dashboard v2 spec.',
+    'use the same shape as a dashboard v2 spec. The result also reports pendingViewOnlyChanges: panel ' +
+    'elements whose current look is an unsaved tweak the person reading made, not yet confirmed as part ' +
+    'of the notebook. If present and you plan to call APPLY_NOTEBOOK_SPEC, ask the person whether to ' +
+    "keep or discard those changes first, and pass their answer as that call's viewOnlyChanges.",
 
   payloadSchema: getNotebookSpecPayloadSchema,
   permission: requiresNotebookRead,
@@ -39,6 +39,9 @@ export const getNotebookSpecCommand: MutationCommand<GetNotebookSpecPayload, Not
   handler: async (payload, context) => {
     const { scene } = context;
     try {
+      const { transformNotebookSceneToSaveModel } = await import(
+        /* webpackChunkName: "notebook-serialization" */ '../../serialization/transformNotebookSceneToSaveModel'
+      );
       const notebook = transformNotebookSceneToSaveModel(scene);
 
       // Opt-in, default off so a read never fails on someone else's notebook. Worth requesting: a read
@@ -52,9 +55,20 @@ export const getNotebookSpecCommand: MutationCommand<GetNotebookSpecPayload, Not
         warnings = result.warnings;
       }
 
+      const pendingViewOnlyChanges = scene.autosave.viewOnlyVizChanges();
+
       return {
         success: true,
-        data: { spec: notebook },
+        // An existing notebook's resourceVersion always exists on the server — what's missing here
+        // is this session's own cache of it (NotebookAutosave.savedResourceVersion), which is only
+        // populated once a save has gone through this scene. A caller that gets none back can fall
+        // back to a REST read for the authoritative value instead (a blank/new/unsaved notebook has
+        // none to read there either, so the fallback agrees in that case too).
+        data: {
+          spec: notebook,
+          resourceVersion: scene.autosave.state.savedResourceVersion,
+          pendingViewOnlyChanges: pendingViewOnlyChanges.length > 0 ? pendingViewOnlyChanges : undefined,
+        },
         changes: [],
         warnings: warnings.length > 0 ? warnings : undefined,
       };

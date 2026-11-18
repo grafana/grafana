@@ -2,6 +2,7 @@ package v0alpha1
 
 import (
 	"net/http"
+	"slices"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -41,15 +42,58 @@ func GetResponseCode(rsp *backend.QueryDataResponse) int {
 	if rsp == nil {
 		return http.StatusBadRequest // rsp is nil, so we return a 400
 	}
-	for _, res := range rsp.Responses {
-		if res.Error != nil && res.Status != 0 {
+	// Responses is a map, so its iteration order is randomized. Walk it in refID order so a
+	// given response always reports the same status, and let a plugin error outrank a
+	// downstream one -- the precedence ErrorSourceMiddleware already applies, and the safe
+	// direction: a genuine plugin failure must not be hidden behind a tenant's bad config.
+	refIDs := make([]string, 0, len(rsp.Responses))
+	for refID := range rsp.Responses {
+		refIDs = append(refIDs, refID)
+	}
+	slices.Sort(refIDs)
+
+	var (
+		downstream     backend.DataResponse
+		haveDownstream bool
+	)
+
+	for _, refID := range refIDs {
+		res := rsp.Responses[refID]
+		if res.Error == nil {
+			continue
+		}
+
+		if res.ErrorSource == backend.ErrorSourceDownstream {
+			if !haveDownstream {
+				downstream, haveDownstream = res, true
+			}
+			continue
+		}
+
+		// Not explicitly downstream, so treat it as ours -- including an unset error source,
+		// where over-reporting a server error beats hiding one.
+		if res.Status != 0 {
 			return int(res.Status)
 		}
 
-		if res.Error != nil {
-			return http.StatusBadRequest // Status is nil but we have an error, so we return a 400
-		}
+		return http.StatusBadRequest // Status is nil but we have an error, so we return a 400
 	}
+
+	if haveDownstream {
+		// A downstream error is the data source's failure, not this API server's, so it must
+		// never surface as a 5xx here. Note that we cannot trust res.Status to say so: the
+		// SDK sets ErrorSource and Status independently, and Status falls back to
+		// StatusUnknown (500) for any error it cannot classify -- which is most of them, since
+		// plugins typically return a plain error. That fallback is applied both by
+		// ErrorSourceMiddleware and again during protobuf conversion, so a plugin that leaves
+		// Status unset always arrives here as a 500. Honor an explicit downstream 4xx so
+		// callers keep the detail; collapse everything else to 400.
+		if downstream.Status >= 400 && downstream.Status < 500 {
+			return int(downstream.Status)
+		}
+		return http.StatusBadRequest
+	}
+
 	return http.StatusOK
 }
 

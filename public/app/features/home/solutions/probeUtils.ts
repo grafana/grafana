@@ -3,8 +3,14 @@ import { fromEvent, lastValueFrom, type Observable, throwError } from 'rxjs';
 import { map, mergeMap, takeUntil } from 'rxjs/operators';
 
 import { type DataSourceInstanceListItem } from '@grafana/data';
-import { DataSourceWithBackend, getBackendSrv } from '@grafana/runtime';
-import { getDataSourceInstance, getDataSourceInstanceList } from '@grafana/runtime/unstable';
+import {
+  DataSourceWithBackend,
+  getBackendSrv,
+  getDataSourceInstance,
+  getDataSourceInstanceList,
+  getDefaultDataSourceInstanceListItem,
+} from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 
 /**
  * A lazily-started, shared solution fact derived from the solution's datasource: the first read
@@ -205,7 +211,7 @@ export async function listProbeCandidates(
     filter: (ds) => ds.meta.id !== 'grafana',
   });
   const pool = list.filter((ds) => !excludeUids?.has(ds.uid) && !isCloudUtilityDatasourceName(ds.name));
-  const def = pool.find((ds) => ds.isDefault);
+  const def = await getDefaultDataSourceInstanceListItem(pool);
   return def ? [def, ...pool.filter((ds) => ds !== def)] : pool;
 }
 
@@ -217,6 +223,11 @@ const healthCache = new Map<string, TtlCachedPromise<boolean>>();
  * health check owns its cutoff, which cancels the request.
  */
 export function isDatasourceHealthy(uid: string): Promise<boolean> {
+  // /api/datasources/.../health is legacy-only; on a multi-tenant stack the probe query (which has its own
+  // deadline) decides on its own. The gate goes once this uses DataSourceWithBackend.callHealthCheck().
+  if (getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaMultiTenantHomepage, false)) {
+    return Promise.resolve(true);
+  }
   let cache = healthCache.get(uid);
   if (!cache) {
     cache = createTtlCachedPromise(

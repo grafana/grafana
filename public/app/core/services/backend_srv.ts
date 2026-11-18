@@ -521,6 +521,9 @@ export class BackendSrv implements BackendService {
                     authChecker = this.rotateToken();
                   }
                 }
+                if (error.data?.messageId === 'session.token.rotate') {
+                  authChecker = this.rotateToken();
+                }
 
                 return from(authChecker).pipe(
                   catchError((err) => {
@@ -641,12 +644,21 @@ export class BackendSrv implements BackendService {
       return this._loginPingInProgress;
     }
 
-    this._loginPingInProgress = this.fetch({ url: '/api/login/ping', method: 'GET', retry: 1 }).pipe(
+    this._loginPingInProgress = this.fetch({
+      url: '/api/login/ping',
+      method: 'GET',
+      retry: 1,
+      showErrorAlert: false,
+    }).pipe(
       // Runs once against the shared source, upstream of share(), so a failure logs out exactly once
       // no matter how many requests are waiting on this same ping.
-      catchError((err) => {
+      catchError((err: FetchError) => {
         if (err.status === 401) {
           this.dependencies.logout();
+        } else {
+          // The ping is a background session check, so the user can't act on its failure. Marking it
+          // handled stops the request that triggered the ping from alerting with this error.
+          err.isHandled = true;
         }
         return throwError(() => err);
       }),
@@ -676,12 +688,9 @@ export class BackendSrv implements BackendService {
     return this.get<DashboardDTO>(`/api/public/dashboards/${uid}`);
   }
 
-  /**
-   * @deprecated Use getFolderByUidFacade from app/api/clients/folder/v1beta1/hooks instead
-   * or manually handle calling legacy vs app platform API based on feature toggles
-   */
+  /** @deprecated Use getCombinedFolder from app/api/clients/folder/v1beta1/hooks instead */
   getFolderByUid(uid: string, options: FolderRequestOptions = {}) {
-    deprecationWarning('backend_srv', 'getFolderByUid(uid)', 'getFolderByUidFacade(uid)');
+    deprecationWarning('backend_srv', 'getFolderByUid(uid)', 'getCombinedFolder(uid)');
     const queryParams = new URLSearchParams();
     if (options.withAccessControl) {
       queryParams.set('accesscontrol', 'true');

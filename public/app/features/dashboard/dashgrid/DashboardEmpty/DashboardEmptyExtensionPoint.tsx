@@ -1,7 +1,7 @@
 import type { JSX } from 'react';
 
 import { PluginExtensionPoints } from '@grafana/data';
-import { config, renderLimitedComponents, usePluginComponents } from '@grafana/runtime';
+import { renderLimitedComponents, usePluginComponents } from '@grafana/runtime';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
 
@@ -13,15 +13,6 @@ interface DashboardEmptyExtensionPointProps {
 }
 
 export function DashboardEmptyExtensionPoint(props: DashboardEmptyExtensionPointProps): JSX.Element | null {
-  if (config.featureToggles.enableDashboardEmptyExtensions !== true) {
-    return props.renderDefaultUI();
-  }
-
-  return <InternalDashboardEmptyExtensionPoint {...props} />;
-}
-
-// We have this "internal" component so we can prevent pre-loading the plugins associated with the extension-point if the feature is not enabled.
-function InternalDashboardEmptyExtensionPoint(props: DashboardEmptyExtensionPointProps): JSX.Element | null {
   const { components, isLoading } = usePluginComponents<DashboardEmptyExtensionPointProps>({
     extensionPointId: PluginExtensionPoints.DashboardEmpty,
   });

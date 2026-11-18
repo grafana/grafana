@@ -1,5 +1,7 @@
 import { t } from '@grafana/i18n';
 
+import { type ImportFormValues } from '../types';
+
 import { type NotificationsSourceOption, type RulesSourceOption, StepKey, type WizardStep } from './types';
 
 /**
@@ -9,12 +11,12 @@ import { type NotificationsSourceOption, type RulesSourceOption, StepKey, type W
 export const getWizardSteps = (): WizardStep[] => [
   {
     id: StepKey.Notifications,
-    name: t('alerting.import-to-gma.wizard.step-notifications', 'Notification resources'),
+    name: t('alerting.import-to-gma.wizard.step-notifications', 'Notification configuration'),
     description: t('alerting.import-to-gma.wizard.step-notifications-desc', 'Contact points, policies, templates'),
   },
   {
     id: StepKey.Rules,
-    name: t('alerting.import-to-gma.wizard.step-rules', 'Alert rules'),
+    name: t('alerting.import-to-gma.wizard.step-rules', 'Rules'),
     description: t('alerting.import-to-gma.wizard.step-rules-desc', 'Alert and recording rules'),
   },
   {
@@ -46,6 +48,35 @@ export function isAutoSyncCommitted(
   return isAutoSyncSelected(autoSyncNotificationsEnabled, notificationsSource) && !step1Skipped;
 }
 
+export interface ImportPlan {
+  willEnableAutoSync: boolean;
+  willImportNotifications: boolean;
+  willImportRules: boolean;
+}
+
+/** What confirming the import will do, from the steps the user completed or skipped. */
+export function getImportPlan(
+  values: Pick<
+    ImportFormValues,
+    | 'autoSyncNotificationsEnabled'
+    | 'notificationsSource'
+    | 'step1Completed'
+    | 'step1Skipped'
+    | 'step2Completed'
+    | 'step2Skipped'
+  >
+): ImportPlan {
+  return {
+    willEnableAutoSync: isAutoSyncCommitted(
+      values.autoSyncNotificationsEnabled ?? false,
+      values.notificationsSource,
+      values.step1Skipped
+    ),
+    willImportNotifications: values.step1Completed && !values.step1Skipped,
+    willImportRules: values.step2Completed && !values.step2Skipped,
+  };
+}
+
 export const getNextStep = (currentStep: StepKey): WizardStep | undefined => {
   const steps = getWizardSteps();
   const currentIndex = steps.findIndex((s) => s.id === currentStep);
@@ -69,7 +100,7 @@ export const isLastStep = (currentStep: StepKey): boolean => {
 };
 
 /**
- * Returns the source options for importing Alertmanager notification resources (Step 1).
+ * Returns the source options for importing Alertmanager notification configuration (Step 1).
  * Uses a function to ensure translations are evaluated at runtime.
  */
 export const getNotificationsSourceOptions = (): NotificationsSourceOption[] => [

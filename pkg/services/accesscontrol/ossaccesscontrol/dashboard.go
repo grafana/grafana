@@ -11,10 +11,11 @@ import (
 
 	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/apiserver"
@@ -22,6 +23,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/licensing"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -30,6 +33,10 @@ import (
 type DashboardPermissionsService struct {
 	*resourcepermissions.Service
 }
+
+// ErrDashboardFolderNotFound is returned when the dashboard's parent folder no longer exists.
+var ErrDashboardFolderNotFound = errutil.Conflict("dashboards.folder-not-found",
+	errutil.WithPublicMessage("Dashboard permissions cannot be resolved: the dashboard's folder does not exist"))
 
 var DashboardViewActions = []string{dashboards.ActionDashboardsRead, accesscontrol.ActionAnnotationsRead}
 var DashboardEditActions = append(DashboardViewActions, []string{dashboards.ActionDashboardsWrite, dashboards.ActionDashboardsDelete, accesscontrol.ActionAnnotationsWrite, accesscontrol.ActionAnnotationsDelete, accesscontrol.ActionAnnotationsCreate}...)
@@ -102,9 +109,11 @@ func DashboardPermissionsRoleRegistrations() []accesscontrol.RoleRegistration {
 }
 
 func ProvideDashboardPermissions(
-	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql db.DB, ac accesscontrol.AccessControl,
+	cfg *setting.Cfg, features featuremgmt.FeatureToggles, router routing.RouteRegister, sql *sqlstore.SQLStore, ac accesscontrol.AccessControl,
+	iamFeatures iamapi.Features,
 	license licensing.Licensing, dashboardService dashboards.DashboardService, folderService folder.Service, service accesscontrol.Service,
-	teamService team.Service, userService user.Service, actionSetService resourcepermissions.ActionSetService,
+	teamService team.Service, userService user.Service, serviceAccountRetriever serviceaccounts.ServiceAccountRetriever,
+	actionSetService resourcepermissions.ActionSetService,
 	dashboardPermissionsRegistration dashboards.PermissionsRegistrationService, restConfigProvider apiserver.DirectRestConfigProvider,
 ) (*DashboardPermissionsService, error) {
 	getDashboard := func(ctx context.Context, orgID int64, resourceID string) (*dashboards.Dashboard, error) {
@@ -151,6 +160,9 @@ func ProvideDashboardPermissions(
 			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.AccessControl).Inc()
 			if dashboard.FolderUID != "" {
 				nestedScopes, err := folder.GetInheritedScopes(ctx, orgID, dashboard.FolderUID, folderService)
+				if errors.Is(err, folder.ErrFolderNotFound) {
+					return nil, ErrDashboardFolderNotFound.Errorf("folder %s of dashboard %s: %w", dashboard.FolderUID, resourceID, err)
+				}
 				if err != nil {
 					return nil, err
 				}
@@ -198,7 +210,7 @@ func ProvideDashboardPermissions(
 		RestConfigProvider: restConfigProvider,
 	}
 
-	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, teamService, userService, actionSetService)
+	srv, err := resourcepermissions.New(cfg, options, features, router, license, ac, service, sql, teamService, userService, serviceAccountRetriever, actionSetService, iamFeatures)
 	if err != nil {
 		return nil, err
 	}

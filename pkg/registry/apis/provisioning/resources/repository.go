@@ -3,12 +3,14 @@ package resources
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	provisioningv0alpha1 "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -39,17 +41,16 @@ type RepositoryResources interface {
 	ReplaceResourceFromFileByRef(ctx context.Context, path, ref, previousRef string, opts ...WriteResourceOption) (string, schema.GroupVersionKind, int, error)
 	RemoveResourceFromFile(ctx context.Context, path, ref string) (string, string, schema.GroupVersionKind, int, error)
 	FindResourcePath(ctx context.Context, name string, gvk schema.GroupVersionKind) (string, error)
-	RenameResourceFile(ctx context.Context, path, previousRef, newPath, newRef string, folderOpts ...EnsurePathOption) (string, string, schema.GroupVersionKind, int, error)
-	// Stats
-	Stats(ctx context.Context) (*provisioning.ResourceStats, error)
+	RenameResourceFile(ctx context.Context, path, previousRef, newPath, newRef string, beforeCreate BeforeCreate, folderOpts ...EnsurePathOption) (string, string, schema.GroupVersionKind, int, error)
+	// Stats returns the counts this repository manages.
+	Stats(ctx context.Context) ([]provisioning.ResourceCount, error)
 	List(ctx context.Context) (*provisioning.ResourceList, error)
 }
 
 type repositoryResourcesFactory struct {
-	parsers               ParserFactory
-	clients               ClientFactory
-	lister                ResourceLister
-	folderMetadataEnabled bool
+	parsers ParserFactory
+	clients ClientFactory
+	lister  ResourceLister
 }
 
 type RepositoryResourcesOption func(*repositoryResourcesOptions)
@@ -72,12 +73,12 @@ type repositoryResources struct {
 	repoName  string
 }
 
-func (r *repositoryResources) Stats(ctx context.Context) (*provisioning.ResourceStats, error) {
-	return r.lister.Stats(ctx, r.namespace, r.repoName)
+func (r *repositoryResources) Stats(ctx context.Context) ([]provisioning.ResourceCount, error) {
+	return r.lister.RepositoryStats(ctx, r.namespace, r.repoName)
 }
 
 func (r *repositoryResources) List(ctx context.Context) (*provisioning.ResourceList, error) {
-	return r.lister.List(ctx, r.namespace, r.repoName)
+	return r.lister.List(ctx, r.namespace, r.repoName, ListOptions{})
 }
 
 // FindResourcePath finds the repository file path for a resource by its name and GroupVersionKind
@@ -97,14 +98,20 @@ func (r *repositoryResources) FindResourcePath(ctx context.Context, name string,
 		return "", fmt.Errorf("failed to get resource %s/%s/%s: %w", gvr.Group, gvr.Resource, name, err)
 	}
 
-	// Extract the source path from annotations
-	annotations := obj.GetAnnotations()
-	if annotations == nil {
-		return "", fmt.Errorf("resource %s/%s/%s has no annotations", gvr.Group, gvr.Resource, name)
+	meta, err := utils.MetaAccessor(obj)
+	if err != nil {
+		return "", fmt.Errorf("create meta accessor for resource %s/%s/%s: %w", gvr.Group, gvr.Resource, name, err)
 	}
 
-	sourcePath, exists := annotations[utils.AnnoKeySourcePath]
-	if !exists || sourcePath == "" {
+	source, _ := meta.GetSourceProperties()
+	sourcePath := source.Path
+	if sourcePath == "" {
+		logging.FromContext(ctx).Error("resource has no source path annotation",
+			"group", gvr.Group,
+			"resource", gvr.Resource,
+			"name", name,
+			"annotation_keys", provisioningAnnotationKeys(obj.GetAnnotations()),
+		)
 		return "", fmt.Errorf("resource %s/%s/%s has no source path annotation", gvr.Group, gvr.Resource, name)
 	}
 
@@ -113,15 +120,43 @@ func (r *repositoryResources) FindResourcePath(ctx context.Context, name string,
 		sourcePath = sourcePath + "/"
 	}
 
+	if err := IsPathSupported(sourcePath); err != nil {
+		return "", fmt.Errorf("unsafe source path %q for resource %s/%s/%s: %w", sourcePath, gvr.Group, gvr.Resource, name, err)
+	}
+
 	return sourcePath, nil
 }
 
-func NewRepositoryResourcesFactory(parsers ParserFactory, clients ClientFactory, lister ResourceLister, folderMetadataEnabled bool) RepositoryResourcesFactory {
+func provisioningAnnotationKeys(annotations map[string]string) []string {
+	// Include legacy repository annotations in diagnostics because the shared metadata
+	// accessor still supports them, but their constants in apimachinery/utils are private.
+	const (
+		legacyAnnoKeyRepoName      = "grafana.app/repoName"
+		legacyAnnoKeyRepoPath      = "grafana.app/repoPath"
+		legacyAnnoKeyRepoHash      = "grafana.app/repoHash"
+		legacyAnnoKeyRepoTimestamp = "grafana.app/repoTimestamp"
+	)
+
+	annotationKeys := make([]string, 0, len(annotations))
+	// Custom annotation names can contain user data, so only log known provisioning keys.
+	for key := range annotations {
+		switch key {
+		case utils.AnnoKeyManagerKind, utils.AnnoKeyManagerIdentity,
+			utils.AnnoKeyManagerAllowsEdits, utils.AnnoKeyManagerSuspended,
+			utils.AnnoKeySourcePath, utils.AnnoKeySourceChecksum, utils.AnnoKeySourceTimestamp,
+			legacyAnnoKeyRepoName, legacyAnnoKeyRepoPath, legacyAnnoKeyRepoHash, legacyAnnoKeyRepoTimestamp:
+			annotationKeys = append(annotationKeys, key)
+		}
+	}
+	slices.Sort(annotationKeys)
+	return annotationKeys
+}
+
+func NewRepositoryResourcesFactory(parsers ParserFactory, clients ClientFactory, lister ResourceLister) RepositoryResourcesFactory {
 	return &repositoryResourcesFactory{
-		parsers:               parsers,
-		clients:               clients,
-		lister:                lister,
-		folderMetadataEnabled: folderMetadataEnabled,
+		parsers: parsers,
+		clients: clients,
+		lister:  lister,
 	}
 }
 
@@ -145,8 +180,7 @@ func (r *repositoryResourcesFactory) Client(ctx context.Context, repo repository
 		opt(cfg)
 	}
 
-	folderManagerOpts := append(cfg.folderManagerOptions, WithFolderMetadataEnabled(r.folderMetadataEnabled))
-	folders := NewFolderManager(repo, folderClient, NewEmptyFolderTree(), folderGVK, folderManagerOpts...)
+	folders := NewFolderManager(repo, folderClient, NewEmptyFolderTree(), folderGVK, cfg.folderManagerOptions...)
 	resources := NewResourcesManager(repo, folders, parser, clients)
 
 	return &repositoryResources{

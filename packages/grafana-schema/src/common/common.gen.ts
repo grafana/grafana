@@ -811,6 +811,10 @@ export interface TableColorTextCellOptions {
  * Json view cell options
  */
 export interface TableJsonViewCellOptions {
+  /**
+   * Enables syntax highlighting. Defaults to true when omitted.
+   */
+  syntaxHighlighting?: boolean;
   type: TableCellDisplayMode.JSONView;
 }
 
@@ -851,6 +855,7 @@ export interface TableBarGaugeCellOptions {
  */
 export interface TableSparklineCellOptions extends GraphFieldConfig {
   hideValue?: boolean;
+  showTooltip?: boolean;
   type: TableCellDisplayMode.Sparkline;
 }
 
@@ -1052,6 +1057,10 @@ export interface TableOptions {
     left?: number;
   };
   /**
+   * Controls whether cells overflow when hovered. Selected cells always overflow.
+   */
+  hoverOverflow?: boolean;
+  /**
    * limits the maximum height of a row, if text wrapping or dynamic height is enabled
    */
   maxRowHeight?: number;
@@ -1060,9 +1069,17 @@ export interface TableOptions {
    */
   pageSize?: number;
   /**
+   * Whether the column management sidebar starts open.
+   */
+  showColumnsSidebar?: boolean;
+  /**
    * Controls whether the panel should show the header
    */
   showHeader: boolean;
+  /**
+   * Whether to show generated row positions. Only applies when `table.refreshNewFeatures` is enabled.
+   */
+  showRowNumbers?: boolean;
   /**
    * Controls whether the header should show icons for the column types
    */
@@ -1071,14 +1088,22 @@ export interface TableOptions {
    * Used to control row sorting
    */
   sortBy?: Array<TableSortByFieldState>;
+  /**
+   * Alternates the background color of every other row. Only applies when the
+   * `table.refreshNewFeatures` feature toggle is enabled.
+   */
+  zebraStriping?: boolean;
 }
 
 export const defaultTableOptions: Partial<TableOptions> = {
   cellHeight: TableCellHeight.Sm,
   frameIndex: 0,
+  hoverOverflow: true,
   showHeader: true,
+  showRowNumbers: false,
   showTypeIcons: false,
   sortBy: [],
+  zebraStriping: false,
 };
 
 /**
@@ -1101,6 +1126,10 @@ export interface TableFieldOptions extends HideableFieldConfig {
    * Hides any header for a column, useful for columns that show some static content or buttons.
    */
   hideHeader?: boolean;
+  /**
+   * Whether the column can be hidden from the table.
+   */
+  hideable?: boolean;
   inspect: boolean;
   minWidth?: number;
   /**

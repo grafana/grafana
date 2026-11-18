@@ -4,6 +4,10 @@ name: Deploy frontend preview
 # request and uploads it to the preview assets bucket, to use with the new
 # frontend PR preview feature
 #
+# PRs with backend changes still deploy, but the status comment warns that the
+# preview may not work correctly. Backend-only PRs are not deployed; the bot
+# comments instead.
+#
 # NOTE: the `/deploy-to-fs` command is temporary, while we test this
 # mechanism. The plan is to later fold it into `/deploy-to-hg`: that command
 # will deploy a frontend preview for frontend-only PRs, and an ephemeral
@@ -42,6 +46,8 @@ jobs:
       should-deploy: ${{ steps.check.outputs.should-deploy }}
       pr-number: ${{ steps.pr.outputs.number }}
       head-sha: ${{ steps.check.outputs.head-sha }}
+      has-backend-changes: ${{ steps.check.outputs.has-backend-changes }}
+      backend-only: ${{ steps.check.outputs.backend-only }}
     steps:
       # Checkout the default branch (not the PR merge ref) so the local
       # actions used by this job always run trusted code
@@ -85,6 +91,25 @@ jobs:
           gh api "repos/${REPO}/issues/${PR_NUMBER}/labels" -f "labels[]=deploy-frontend-preview"
           gh api "repos/${REPO}/issues/comments/${COMMENT_ID}/reactions" -f content=rocket
 
+  comment-backend-only:
+    name: Comment that the PR is backend-only
+    needs: check
+    if: github.event_name == 'issue_comment' && needs.check.outputs.backend-only == 'true'
+    runs-on: ubuntu-arm64-small
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Comment that there is nothing to preview
+        uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
+        with:
+          header: frontend-preview
+          number: ${{ needs.check.outputs.pr-number }}
+          GITHUB_TOKEN: ${{ github.token }}
+          message: |
+            ### Frontend preview
+
+            ℹ️ This PR only contains backend changes, so there is no frontend to preview and nothing was deployed.
+
   comment-building:
     name: Comment that the build started
     needs: check
@@ -103,6 +128,8 @@ jobs:
             ### Frontend preview
 
             ⏳ The preview build for commit ${{ needs.check.outputs.head-sha }} is in progress.
+
+            ${{ needs.check.outputs.has-backend-changes == 'true' && '⚠️ **Warning:** this PR contains backend changes. The preview only swaps the frontend assets of an existing instance, so it may not work correctly.' || '' }}
 
   build:
     name: Build frontend
@@ -129,15 +156,14 @@ jobs:
 
       - name: Restore or build frontend
         uses: ./.github/actions/build-frontend
+        with:
+          sourcemaps: 'false'
 
       - name: Upload build artifact
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
           name: frontend-preview-build
-          # Both paths share public/ as their root inside the artifact
-          path: |
-            public/build
-            public/fonts
+          path: dist/frontend/
           retention-days: 1
 
   deploy:
@@ -168,7 +194,7 @@ jobs:
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
           name: frontend-preview-build
-          path: public
+          path: dist/frontend
 
       # The deploy name is the folder users put in the preview assets cookie.
       # It must match the backend's validation: alphanumeric and underscores
@@ -184,32 +210,19 @@ jobs:
       - name: Stage manifests to upload last
         run: |
           mkdir -p preview-manifest
-          mv public/build/assets-manifest*.json preview-manifest/
+          mv dist/frontend/build/assets-manifest*.json preview-manifest/
 
       - name: Upload assets (manifests excluded)
         uses: grafana/shared-workflows/actions/push-to-gcs@main
         with:
           environment: dev
           bucket: ${{ env.BUCKET_NAME }}
-          # Assets live under <deploy-name>/public/build/ to match the layout
-          # the assets manifest and CDN paths expect
-          bucket_path: ${{ steps.deploy-name.outputs.deploy-name }}/public/build
-          path: public/build
+          bucket_path: ${{ steps.deploy-name.outputs.deploy-name }}/public
+          path: dist/frontend
           service_account: github-gf-frontend-preview-dev@grafanalabs-workload-identity.iam.gserviceaccount.com
           parent: false
           # The action's default ACL is rejected by the bucket's uniform
           # bucket-level access. Public read comes from an IAM binding instead.
-          predefinedAcl: ""
-
-      - name: Upload fonts
-        uses: grafana/shared-workflows/actions/push-to-gcs@main
-        with:
-          environment: dev
-          bucket: ${{ env.BUCKET_NAME }}
-          bucket_path: ${{ steps.deploy-name.outputs.deploy-name }}/public/fonts
-          path: public/fonts
-          service_account: github-gf-frontend-preview-dev@grafanalabs-workload-identity.iam.gserviceaccount.com
-          parent: false
           predefinedAcl: ""
 
       - name: Upload manifests to switch the preview to this build
@@ -256,6 +269,8 @@ jobs:
 
             - Each new push to this PR builds and deploys the preview again automatically.
             - Share the above link for others to preview it in their browsers too.
+
+            ${{ needs.check.outputs.has-backend-changes == 'true' && '⚠️ **Warning:** this PR contains backend changes. The preview only swaps the frontend assets of an existing instance, so it may not work correctly.' || '' }}
 
   comment-failure:
     name: Comment that the deploy failed

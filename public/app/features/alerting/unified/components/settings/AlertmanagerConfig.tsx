@@ -5,7 +5,8 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Button, CodeEditor, ConfirmModal, Stack, useStyles2 } from '@grafana/ui';
+import { Alert, Button, ConfirmModal, Stack, useStyles2 } from '@grafana/ui';
+import { CodeMirrorEditor } from '@grafana/ui/unstable';
 
 import { reportFormErrors } from '../../Analytics';
 import { useAlertmanagerConfig } from '../../hooks/useAlertmanagerConfig';
@@ -46,6 +47,7 @@ export default function AlertmanagerConfig({ alertmanagerName, onDismiss, onSave
   const defaultValues = {
     configJSON: config ? JSON.stringify(config, null, 2) : '',
   };
+  const [configJSON, setConfigJSON] = useState(defaultValues.configJSON);
 
   const {
     register,
@@ -60,7 +62,9 @@ export default function AlertmanagerConfig({ alertmanagerName, onDismiss, onSave
   // make sure we update the configJSON field when we receive a response from the `useAlertmanagerConfig` hook
   useEffect(() => {
     if (config) {
-      setValue('configJSON', JSON.stringify(config, null, 2));
+      const value = JSON.stringify(config, null, 2);
+      setValue('configJSON', value);
+      setConfigJSON(value);
     }
   }, [config, setValue]);
 
@@ -167,16 +171,12 @@ export default function AlertmanagerConfig({ alertmanagerName, onDismiss, onSave
         <div className={styles.content}>
           <AutoSizer disableWidth>
             {({ height }) => (
-              <CodeEditor
+              <CodeMirrorEditor
                 language="json"
-                width="100%"
-                height={height}
-                showLineNumbers={true}
-                monacoOptions={{
-                  scrollBeyondLastLine: false,
-                }}
-                value={defaultValues.configJSON}
-                showMiniMap={false}
+                height={`${height}px`}
+                value={configJSON}
+                onChange={setConfigJSON}
+                aria-label={t('alerting.alertmanager-config.editor-label', 'Alertmanager configuration')}
                 onSave={(value) => setValue('configJSON', value)}
                 onBlur={(value) => setValue('configJSON', value)}
                 readOnly={isOperating}

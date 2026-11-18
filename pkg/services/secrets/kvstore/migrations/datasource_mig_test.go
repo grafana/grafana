@@ -10,13 +10,10 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	dsservice "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
@@ -39,8 +36,7 @@ func SetupTestDataSourceSecretMigrationService(t *testing.T, sqlStore db.DB, kvS
 	quotaService := quotatest.New(false, nil)
 	dsRetriever := dsservice.ProvideDataSourceRetriever(sqlStore, features)
 	dsService, err := dsservice.ProvideService(sqlStore, secretsService, secretsStore, cfg, features, acmock.New(),
-		acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, &pluginfakes.FakePluginClient{},
-		plugincontext.ProvideBaseService(cfg, pluginconfig.NewFakePluginRequestConfigProvider()), dsRetriever)
+		acmock.NewMockedPermissionsService(), quotaService, &pluginstore.FakePluginStore{}, dsRetriever, nil)
 	require.NoError(t, err)
 	migService := ProvideDataSourceMigrationService(dsService, kvStore, features)
 	return migService
@@ -73,7 +69,7 @@ func TestIntegrationMigrate(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Check if the secret json data was added
-		query := &datasources.GetDataSourceQuery{OrgID: dataSourceOrg, Name: dataSourceName}
+		query := &datasources.GetDataSourceQuery{OrgID: dataSourceOrg, Name: dataSourceName} //nolint:staticcheck // Exercise legacy field compatibility.
 		dataSource, err := ds.GetDataSource(context.Background(), query)
 		assert.NoError(t, err)
 		assert.NotNil(t, dataSource)
@@ -96,7 +92,7 @@ func TestIntegrationMigrate(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Check if the secure json data was maintained for compatibility
-		query = &datasources.GetDataSourceQuery{OrgID: dataSourceOrg, Name: dataSourceName}
+		query = &datasources.GetDataSourceQuery{OrgID: dataSourceOrg, Name: dataSourceName} //nolint:staticcheck // Exercise legacy field compatibility.
 		dataSource, err = ds.GetDataSource(context.Background(), query)
 		assert.NoError(t, err)
 		assert.NotNil(t, dataSource)

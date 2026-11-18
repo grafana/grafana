@@ -37,6 +37,7 @@ export class ConditionalRenderingData extends SceneObjectBase<ConditionalRenderi
   };
 
   private _dataProvider: SceneDataProvider | undefined = undefined;
+  private _releaseDataProvider: CancelActivationHandler | undefined = undefined;
 
   public constructor(state: ConditionalRenderingDataState) {
     super(state);
@@ -51,22 +52,44 @@ export class ConditionalRenderingData extends SceneObjectBase<ConditionalRenderi
       }
     });
 
-    this._dataProvider = this._getObjectDataProvider();
+    this._bindDataProvider();
 
-    if (!this._dataProvider) {
-      return;
+    // The layout item can outlive the panel's provider, e.g. while panel edit keeps it active.
+    const panel = this._getPanelFromObject();
+    if (panel) {
+      this._subs.add(
+        panel.subscribeToState((n, p) => {
+          if (n.$data !== p.$data) {
+            this._bindDataProvider();
+          }
+        })
+      );
     }
 
-    // Be sure to activate the data provider so it doesn't get deactivated on item unmount
-    const dpDeactivate: CancelActivationHandler = this._dataProvider.activate();
+    return () => {
+      this._releaseDataProvider?.();
+      this._releaseDataProvider = undefined;
+    };
+  }
+
+  private _bindDataProvider() {
+    this._releaseDataProvider?.();
+    this._releaseDataProvider = undefined;
+
+    this._dataProvider = this._getObjectDataProvider();
+
+    if (this._dataProvider) {
+      // Be sure to activate the data provider so it doesn't get deactivated on item unmount
+      const dpDeactivate = this._dataProvider.activate();
+      const dpSub = this._dataProvider.subscribeToState(() => this._check());
+
+      this._releaseDataProvider = () => {
+        dpSub.unsubscribe();
+        dpDeactivate();
+      };
+    }
 
     this._check();
-
-    this._subs.add(this._dataProvider.subscribeToState(() => this._check()));
-
-    return () => {
-      dpDeactivate?.();
-    };
   }
 
   private _getPanelFromObject(): VizPanel | undefined {
@@ -198,6 +221,7 @@ function ConditionalRenderingDataRenderer({ model }: SceneComponentProps<Conditi
         value={enableConditionOption}
         onChange={({ value: newValue }) => {
           edit({
+            meta: { actionId: 'conditional-rendering.changeRule', scope: 'query-result' },
             description: t('dashboard.edit-actions.edit-query-result-rule', 'Change query result rule'),
             source: model,
             perform: () => model.changeValue(Boolean(newValue)),

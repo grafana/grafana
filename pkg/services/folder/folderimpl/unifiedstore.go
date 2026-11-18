@@ -3,6 +3,7 @@ package folderimpl
 import (
 	"context"
 	"fmt"
+	"maps"
 	"slices"
 	"strings"
 
@@ -14,6 +15,7 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	internalfolders "github.com/grafana/grafana/pkg/registry/apis/folders"
@@ -30,6 +32,32 @@ import (
 )
 
 const tracePrefix = "folder.unifiedstore."
+
+// Large name filters can cost more than a full search because Bleve opens a term query per UID.
+const maxFolderUIDFilterSize = 1000
+
+// errFolderNotFound matches folder.ErrFolderNotFound, which scope resolvers map to a 404,
+// and dashboards.ErrFolderNotFound, whose message it keeps for existing callers.
+var errFolderNotFound error = folderNotFoundError{
+	err: folder.ErrFolderNotFound.Errorf("%w", dashboards.ErrFolderNotFound),
+}
+
+type folderNotFoundError struct {
+	err errutil.Error
+}
+
+func (e folderNotFoundError) Error() string { return dashboards.ErrFolderNotFound.Error() }
+
+func (e folderNotFoundError) Unwrap() error { return e.err }
+
+var folderReferenceFields = []string{
+	resource.SEARCH_FIELD_TITLE,
+	resource.SEARCH_FIELD_FOLDER,
+	resource.SEARCH_FIELD_MANAGER_KIND,
+	resource.SEARCH_FIELD_LEGACY_ID,
+	// The numeric legacy ID is derived from this stored label.
+	resource.SEARCH_FIELD_LABELS + "." + resource.SEARCH_FIELD_LEGACY_ID,
+}
 
 type FolderUnifiedStoreImpl struct {
 	log         log.Logger
@@ -106,7 +134,7 @@ func (ss *FolderUnifiedStoreImpl) Update(ctx context.Context, cmd folder.UpdateF
 	obj, err := ss.k8sclient.Get(ctx, cmd.UID, cmd.OrgID, v1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			return nil, dashboards.ErrFolderNotFound
+			return nil, errFolderNotFound
 		}
 
 		return nil, err
@@ -182,7 +210,7 @@ func (ss *FolderUnifiedStoreImpl) Get(ctx context.Context, q folder.GetFolderQue
 	if err != nil && !apierrors.IsNotFound(err) {
 		return nil, err
 	} else if err != nil || out == nil {
-		return nil, dashboards.ErrFolderNotFound
+		return nil, errFolderNotFound
 	}
 
 	return ss.UnstructuredToLegacyFolder(ctx, out)
@@ -279,21 +307,22 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 }
 
 // doSearchPage performs one Search round-trip against the unified resource
-// index and returns the parsed hits along with the raw response hit count
-// (so paginating callers can detect a short final page).
-func (ss *FolderUnifiedStoreImpl) doSearchPage(ctx context.Context, orgID int64, req *resourcepb.ResourceSearchRequest) ([]*folder.FolderReference, int, error) {
+// index and reports whether pagination is complete. A short page alone is not
+// enough: authorization can stop at its candidate budget with more hits remaining.
+func (ss *FolderUnifiedStoreImpl) doSearchPage(ctx context.Context, orgID int64, req *resourcepb.ResourceSearchRequest) ([]*folder.FolderReference, bool, error) {
+	req.Fields = folderReferenceFields
 	out, err := ss.k8sclient.Search(ctx, orgID, req)
 	if err != nil {
-		return nil, 0, err
+		return nil, false, err
 	}
 	res, err := dashboardsearch.ParseResults(out, 0)
 	if err != nil {
-		return nil, 0, err
+		return nil, false, err
 	}
 	hits := make([]*folder.FolderReference, 0, len(res.Hits))
 	for _, item := range res.Hits {
 		hits = append(hits, &folder.FolderReference{
-			ID:    item.Field.GetNestedInt64(resource.SEARCH_FIELD_LEGACY_ID),
+			ID:    item.Field.GetNestedInt64(resource.SEARCH_FIELD_LEGACY_ID), //nolint:staticcheck // Preserve legacy field compatibility.
 			UID:   item.Name,
 			Title: item.Title,
 			// Legacy responses convey root with an empty ParentUID; the apistore
@@ -302,7 +331,8 @@ func (ss *FolderUnifiedStoreImpl) doSearchPage(ctx context.Context, orgID int64,
 			ManagedBy: item.ManagedBy.Kind,
 		})
 	}
-	return hits, len(res.Hits), nil
+	done := len(hits) == 0 || (out.GetTotalHitsExact() && req.Offset+int64(len(hits)) >= out.GetTotalHits())
+	return hits, done, nil
 }
 
 // GetFolders returns org folders by their UIDs.
@@ -393,17 +423,57 @@ func (ss *FolderUnifiedStoreImpl) GetFolders(ctx context.Context, q folder.GetFo
 	return hits, nil
 }
 
-// getFoldersMetadata serves GetFolders from the search index. It fetches
-// metadata for ALL readable folders (needed to resolve parent chains for the
-// full paths) then applies the UID filter client-side, mirroring the list
-// path's semantics without reading any full stored objects.
+// getFoldersMetadata loads readable parents only when full paths need them.
+// Parent lookups use the same permissions as the requested folders.
 func (ss *FolderUnifiedStoreImpl) getFoldersMetadata(ctx context.Context, q folder.GetFoldersFromStoreQuery) ([]*folder.Folder, error) {
 	ctx, span := ss.tracer.Start(ctx, tracePrefix+"getFoldersMetadata")
 	defer span.End()
 
-	refs, err := ss.searchAllFolders(ctx, q.OrgID)
+	filters := make(map[string]struct{}, len(q.UIDs))
+	for _, uid := range q.UIDs {
+		filters[uid] = struct{}{}
+	}
+
+	uids := q.UIDs
+	if len(filters) > maxFolderUIDFilterSize {
+		uids = nil
+	}
+	refs, err := ss.searchAllFolders(ctx, q.OrgID, uids...)
 	if err != nil {
 		return nil, err
+	}
+	if len(refs) == 0 {
+		return []*folder.Folder{}, nil
+	}
+
+	if len(uids) > 0 && (q.WithFullpath || q.WithFullpathUIDs) {
+		seen := maps.Clone(filters)
+		foldersToCheck := make([]*folder.FolderReference, 0, len(refs))
+		for _, ref := range refs {
+			seen[ref.UID] = struct{}{}
+			if _, requested := filters[ref.UID]; requested {
+				foldersToCheck = append(foldersToCheck, ref)
+			}
+		}
+		for len(foldersToCheck) > 0 {
+			parents := make([]string, 0, len(foldersToCheck))
+			for _, ref := range foldersToCheck {
+				if _, ok := seen[ref.ParentUID]; ok || ref.ParentUID == "" {
+					continue
+				}
+				// Remember absent and unreadable parents too, so shared paths do not retry them.
+				seen[ref.ParentUID] = struct{}{}
+				parents = append(parents, ref.ParentUID)
+			}
+			if len(parents) == 0 {
+				break
+			}
+			foldersToCheck, err = ss.searchAllFolders(ctx, q.OrgID, parents...)
+			if err != nil {
+				return nil, err
+			}
+			refs = append(refs, foldersToCheck...)
+		}
 	}
 
 	folders := make([]*folder.Folder, len(refs))
@@ -416,11 +486,6 @@ func (ss *FolderUnifiedStoreImpl) getFoldersMetadata(ctx context.Context, q fold
 			Title:     ref.Title,
 			ManagedBy: ref.ManagedBy,
 		}
-	}
-
-	filters := make(map[string]struct{}, len(q.UIDs))
-	for _, uid := range q.UIDs {
-		filters[uid] = struct{}{}
 	}
 
 	folderMap := make(map[string]*folder.Folder)
@@ -450,30 +515,49 @@ func (ss *FolderUnifiedStoreImpl) getFoldersMetadata(ctx context.Context, q fold
 	return hits, nil
 }
 
-// searchAllFolders returns metadata for every folder the caller can read,
-// paginating to exhaustion. No field requirements matches all folders; the
-// search backend applies RBAC, matching the list path's visibility.
-func (ss *FolderUnifiedStoreImpl) searchAllFolders(ctx context.Context, orgID int64) ([]*folder.FolderReference, error) {
+// searchAllFolders paginates through readable metadata, optionally limited to UIDs.
+// An omitted UID filter preserves the all-folders behavior of GetFolders.
+func (ss *FolderUnifiedStoreImpl) searchAllFolders(ctx context.Context, orgID int64, uids ...string) ([]*folder.FolderReference, error) {
 	ctx, span := ss.tracer.Start(ctx, tracePrefix+"searchAllFolders")
 	defer span.End()
+
+	var fields []*resourcepb.Requirement
+	limit := int64(searchPageSize)
+	if len(uids) > 0 {
+		uids = slices.Clone(uids)
+		slices.Sort(uids)
+		uids = slices.Compact(uids)
+		if uids[0] == "" {
+			uids = uids[1:]
+		}
+		// An empty In selector matches everything, not an empty requested set.
+		if len(uids) == 0 {
+			return nil, nil
+		}
+		fields = []*resourcepb.Requirement{{
+			Key: resource.SEARCH_FIELD_NAME, Operator: string(selection.In), Values: uids,
+		}}
+		// Leave room past every possible match so authorization can establish an exact total.
+		limit = min(limit, int64(len(uids))+1)
+	}
 
 	var all []*folder.FolderReference
 	for offset := int64(0); ; {
 		req := &resourcepb.ResourceSearchRequest{
-			Options:      &resourcepb.ListOptions{},
-			Limit:        searchPageSize,
+			Options:      &resourcepb.ListOptions{Fields: fields},
+			Limit:        limit,
 			Offset:       offset,
 			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		}
-		hits, raw, err := ss.doSearchPage(ctx, orgID, req)
+		hits, done, err := ss.doSearchPage(ctx, orgID, req)
 		if err != nil {
 			return nil, err
 		}
 		all = append(all, hits...)
-		if raw == 0 {
+		if done {
 			return all, nil
 		}
-		offset += int64(raw)
+		offset += int64(len(hits))
 	}
 }
 
@@ -507,15 +591,15 @@ func (ss *FolderUnifiedStoreImpl) searchChildren(ctx context.Context, orgID int6
 			Offset:       offset,
 			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		}
-		hits, raw, err := ss.doSearchPage(ctx, orgID, req)
+		hits, done, err := ss.doSearchPage(ctx, orgID, req)
 		if err != nil {
 			return nil, err
 		}
 		all = append(all, hits...)
-		if raw < searchPageSize {
+		if done {
 			return all, nil
 		}
-		offset += int64(raw)
+		offset += int64(len(hits))
 	}
 }
 
@@ -594,7 +678,7 @@ func (ss *FolderUnifiedStoreImpl) CountFolderContent(ctx context.Context, orgID 
 	counts, err := ss.k8sclient.Get(ctx, ancestor_uid, orgID, v1.GetOptions{}, "counts")
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			return nil, dashboards.ErrFolderNotFound
+			return nil, errFolderNotFound
 		}
 
 		return nil, err
@@ -670,8 +754,17 @@ func toFolderLegacyCounts(u *unstructured.Unstructured) (*folder.DescendantCount
 	// A resource can be reported twice, by unified storage and by the "sql-fallback"
 	// group. Resources not yet in unified storage still get an entry there with a count
 	// of 0, so treat 0 as no data, otherwise a folder holding only alert rules looks empty.
+	// A sql-fallback entry means legacy is authoritative for that resource; unified then only holds
+	// a dual-write copy that can outlive its legacy row.
+	legacyLibraryPanels := slices.ContainsFunc(ds.Counts, func(c folderv1.ResourceStats) bool {
+		return c.Group == "sql-fallback" && c.Resource == "library_elements"
+	})
+
 	var out = make(folder.DescendantCounts)
 	for _, v := range ds.Counts {
+		if legacyLibraryPanels && v.Resource == "librarypanels" {
+			continue
+		}
 		current, seen := out[v.Resource]
 		if !seen || current == 0 || (v.Group != "sql-fallback" && v.Count != 0) {
 			out[v.Resource] = v.Count

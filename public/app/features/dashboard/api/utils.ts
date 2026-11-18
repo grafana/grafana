@@ -1,11 +1,17 @@
-import { config } from '@grafana/runtime';
+import { omit } from 'lodash';
+
+import { logWarning } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { type Dashboard } from '@grafana/schema';
 import { type Status, type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { isRecord } from 'app/core/utils/isRecord';
 import {
   AnnoKeyGrantPermissions,
+  DeprecatedInternalId,
+  isApiMachineryError,
   type Resource,
   type ResourceClient,
+  type ResourceClientRequestOptions,
   type ResourceForCreate,
 } from 'app/features/apiserver/types';
 import { type DashboardDataDTO } from 'app/types/dashboard';
@@ -13,6 +19,13 @@ import { type DashboardDataDTO } from 'app/types/dashboard';
 import { type SaveDashboardCommand } from '../components/SaveDashboard/types';
 
 import { type DashboardWithAccessInfo } from './types';
+
+/**
+ * Prefer the `useDashboardNewLayouts` hook in React components - use this only where a hook can't be used
+ */
+export function isDashboardNewLayoutsEnabled(): boolean {
+  return getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNewLayouts, true);
+}
 
 export function isV2StoredVersion(version: string | undefined): boolean {
   return version === 'v2alpha1' || version === 'v2beta1' || version === 'v2';
@@ -26,7 +39,7 @@ export function getDashboardsApiVersion(responseFormat?: 'v1' | 'v2') {
   if (responseFormat === 'v1') {
     return 'v1';
   }
-  if (responseFormat === 'v2' || config.featureToggles.dashboardNewLayouts) {
+  if (responseFormat === 'v2' || isDashboardNewLayoutsEnabled()) {
     return 'v2';
   }
   return 'unified';
@@ -77,7 +90,7 @@ export function isV2DashboardCommand(
   return isDashboardV2Spec(cmd.dashboard);
 }
 
-export function buildRestorePayload<T>(dashboard: Resource<T>): ResourceForCreate<T> {
+function buildRestorePayload<T>(dashboard: Resource<T>): ResourceForCreate<T> {
   return {
     metadata: {
       ...dashboard.metadata,
@@ -89,6 +102,40 @@ export function buildRestorePayload<T>(dashboard: Resource<T>): ResourceForCreat
     },
     spec: dashboard.spec,
   };
+}
+
+/**
+ * Re-create a deleted dashboard from its trash entry.
+ *
+ * Trash entries keep the legacy numeric ID the dashboard had when deleted. If a dashboard took
+ * that ID meanwhile the apiserver answers `409 Conflict` and writes nothing, so retry once
+ * without it: the backend then mints a new ID. `409 AlreadyExists` means the name is still
+ * taken and must not be retried.
+ */
+export async function restoreDashboardResource<T>(
+  client: Pick<ResourceClient<T>, 'create'>,
+  dashboard: Resource<T>
+): Promise<Resource<T>> {
+  const payload = buildRestorePayload(dashboard);
+  try {
+    return await client.create(payload);
+  } catch (error) {
+    if (!isApiMachineryError(error) || error.data.reason !== 'Conflict') {
+      throw error;
+    }
+    // The retry owns this failure, so keep it out of the global error toast.
+    error.isHandled = true;
+    const restored = await client.create({
+      ...payload,
+      metadata: { ...payload.metadata, labels: omit(payload.metadata.labels, DeprecatedInternalId) },
+    });
+    // The restore reports plain success, so this is the only trace that the numeric ID changed.
+    logWarning('Dashboard restored with a new legacy ID', {
+      uid: restored.metadata.name,
+      conflict: error.data.message,
+    });
+    return restored;
+  }
 }
 
 /**
@@ -134,4 +181,18 @@ export async function fetchDeletedDashboard<T>(
     fieldSelector: `metadata.name=${name}`,
   });
   return list.items.find((item) => item.metadata.name === name);
+}
+
+/**
+ * Callers that render the save failure in their own UI (the save drawer) pass
+ * `showErrorAlert: false` so the global error toast doesn't double-report it. Returns undefined
+ * when the caller didn't ask, to keep the request options out of the payload entirely.
+ */
+export function getRequestOptions(
+  command: Pick<SaveDashboardCommand<unknown>, 'showErrorAlert'>
+): ResourceClientRequestOptions | undefined {
+  if (command.showErrorAlert === undefined) {
+    return undefined;
+  }
+  return { showErrorAlert: command.showErrorAlert };
 }

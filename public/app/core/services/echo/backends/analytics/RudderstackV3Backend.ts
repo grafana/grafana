@@ -2,6 +2,8 @@ import { type BuildInfo } from '@grafana/data';
 import {
   type EchoBackend,
   EchoEventType,
+  type ExperimentViewEchoEvent,
+  type InteractionEchoEvent,
   isExperimentViewEvent,
   isInteractionEvent,
   isPageviewEvent,
@@ -27,6 +29,13 @@ interface Rudderstack {
         };
         migrate?: boolean;
       };
+      queueOptions?: {
+        maxAttempts?: number;
+        batch?: {
+          enabled?: boolean;
+          flushInterval?: number;
+        };
+      };
     }
   ) => void;
   page: () => void;
@@ -49,9 +58,12 @@ export interface RudderstackBackendOptions {
   sdkUrl?: string;
   configUrl?: string;
   integrationsUrl?: string;
+  batchInterval?: number;
 }
 
-export class RudderstackBackend implements EchoBackend<PageviewEchoEvent, RudderstackBackendOptions> {
+export class RudderstackBackend
+  implements EchoBackend<PageviewEchoEvent | InteractionEchoEvent | ExperimentViewEchoEvent, RudderstackBackendOptions>
+{
   supportedEvents = [EchoEventType.Pageview, EchoEventType.Interaction, EchoEventType.ExperimentView];
 
   constructor(public options: RudderstackBackendOptions) {
@@ -105,6 +117,15 @@ export class RudderstackBackend implements EchoBackend<PageviewEchoEvent, Rudder
         },
         migrate: false,
       },
+      // reduce the maximum number of retries for failed requests to avoid network spam,
+      // and enable batching of the events we generate to further reduce network spam.
+      queueOptions: {
+        maxAttempts: 3,
+        batch: {
+          enabled: (options.batchInterval ?? 0) > 0,
+          flushInterval: options.batchInterval ?? 0,
+        },
+      },
     });
 
     if (options.user) {
@@ -120,7 +141,7 @@ export class RudderstackBackend implements EchoBackend<PageviewEchoEvent, Rudder
     }
   }
 
-  addEvent = (e: PageviewEchoEvent) => {
+  addEvent = (e: PageviewEchoEvent | InteractionEchoEvent | ExperimentViewEchoEvent) => {
     if (!window.rudderanalytics) {
       return;
     }

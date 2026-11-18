@@ -4,12 +4,9 @@ import { Dropdown, Menu } from '@grafana/ui';
 
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
 
-import {
-  getComponentIdFromComponentMeta,
-  getComponentMetaFromComponentId,
-  useExtensionSidebarContext,
-} from './ExtensionSidebarProvider';
+import { useExtensionSidebarContext } from './ExtensionSidebarProvider';
 import { ExtensionToolbarItemButton } from './ExtensionToolbarItemButton';
+import { getComponentIdFromComponentMeta, getComponentMetaFromComponentId } from './extensionSidebarUtils';
 
 type ComponentWithPluginId = ExtensionInfo & { pluginId: string };
 
@@ -21,7 +18,14 @@ const compactAllowedComponents = ['grafana-assistant-app', 'grafana-assistant-on
 const interactiveLearningPluginIds = ['grafana-pathfinder-app', 'grafana-grafanadocsplugin-app'];
 
 export function ExtensionToolbarItem({ compact }: Props) {
-  const { availableComponents, dockedComponentId, setDockedComponentId } = useExtensionSidebarContext();
+  const {
+    availableComponents,
+    dockedComponentId: openComponentId,
+    setDockedComponentId,
+    floatingHidden,
+  } = useExtensionSidebarContext();
+  // Held hidden, the sidebar reads as closed here, so its button opens (shows) it instead of closing it unseen.
+  const dockedComponentId = floatingHidden ? undefined : openComponentId;
   const fullscreenWorkspaceEnabled = useFlagAssistantFullscreenWorkspace();
 
   // Don't render the toolbar if the only available plugins are interactive learning plugins.
@@ -41,7 +45,7 @@ export function ExtensionToolbarItem({ compact }: Props) {
     if (interactiveLearningPluginIds.includes(pluginId)) {
       return null;
     }
-    // Fullscreen workspace renders its own Chat/Workspace buttons (`AssistantToolbarButtons`
+    // With the workspace flag on, the assistant has its own Chat/Workspace buttons (`AssistantToolbarButtons`
     // in `SingleTopBar`) instead of the generic extension-sidebar button for this plugin
     if (fullscreenWorkspaceEnabled && pluginId === 'grafana-assistant-app') {
       return null;

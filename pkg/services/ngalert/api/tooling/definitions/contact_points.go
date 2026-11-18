@@ -263,15 +263,17 @@ type SlackIntegration struct {
 type TelegramIntegration struct {
 	DisableResolveMessage *bool `json:"-" yaml:"-" hcl:"disable_resolve_message"`
 
-	BotToken        Secret `json:"bottoken" yaml:"bottoken" hcl:"token"`
-	ChatID          string `json:"chatid,omitempty" yaml:"chatid,omitempty" hcl:"chat_id"`
-	MessageThreadID string `json:"message_thread_id,omitempty" yaml:"message_thread_id,omitempty" hcl:"message_thread_id"`
+	APIURL          *string `json:"api_url,omitempty" yaml:"api_url,omitempty" hcl:"api_url"`
+	BotToken        Secret  `json:"bottoken" yaml:"bottoken" hcl:"token"`
+	ChatID          string  `json:"chatid,omitempty" yaml:"chatid,omitempty" hcl:"chat_id"`
+	MessageThreadID string  `json:"message_thread_id,omitempty" yaml:"message_thread_id,omitempty" hcl:"message_thread_id"`
 
 	Message               *string `json:"message,omitempty" yaml:"message,omitempty" hcl:"message"`
 	ParseMode             *string `json:"parse_mode,omitempty" yaml:"parse_mode,omitempty" hcl:"parse_mode"`
 	DisableWebPagePreview *bool   `json:"disable_web_page_preview,omitempty" yaml:"disable_web_page_preview,omitempty" hcl:"disable_web_page_preview"`
 	ProtectContent        *bool   `json:"protect_content,omitempty" yaml:"protect_content,omitempty" hcl:"protect_content"`
 	DisableNotifications  *bool   `json:"disable_notifications,omitempty" yaml:"disable_notifications,omitempty" hcl:"disable_notifications"`
+	SendMessageAsCaption  *bool   `json:"send_message_as_caption,omitempty" yaml:"send_message_as_caption,omitempty" hcl:"send_message_as_caption"`
 }
 
 type TeamsIntegration struct {
@@ -389,14 +391,15 @@ type OAuth2Config struct {
 type WecomIntegration struct {
 	DisableResolveMessage *bool `json:"-" yaml:"-" hcl:"disable_resolve_message"`
 
-	URL     *Secret `json:"url,omitempty" yaml:"url,omitempty" hcl:"url"`
-	Secret  *Secret `json:"secret,omitempty" yaml:"secret,omitempty" hcl:"secret"`
-	AgentID *string `json:"agent_id,omitempty" yaml:"agent_id,omitempty" hcl:"agent_id"`
-	CorpID  *string `json:"corp_id,omitempty" yaml:"corp_id,omitempty" hcl:"corp_id"`
-	Message *string `json:"message,omitempty" yaml:"message,omitempty" hcl:"message"`
-	Title   *string `json:"title,omitempty" yaml:"title,omitempty" hcl:"title"`
-	MsgType *string `json:"msgtype,omitempty" yaml:"msgtype,omitempty" hcl:"msg_type"`
-	ToUser  *string `json:"touser,omitempty" yaml:"touser,omitempty" hcl:"to_user"`
+	EndpointURL *string `json:"endpointUrl,omitempty" yaml:"endpointUrl,omitempty" hcl:"endpoint_url"`
+	URL         *Secret `json:"url,omitempty" yaml:"url,omitempty" hcl:"url"`
+	Secret      *Secret `json:"secret,omitempty" yaml:"secret,omitempty" hcl:"secret"`
+	AgentID     *string `json:"agent_id,omitempty" yaml:"agent_id,omitempty" hcl:"agent_id"`
+	CorpID      *string `json:"corp_id,omitempty" yaml:"corp_id,omitempty" hcl:"corp_id"`
+	Message     *string `json:"message,omitempty" yaml:"message,omitempty" hcl:"message"`
+	Title       *string `json:"title,omitempty" yaml:"title,omitempty" hcl:"title"`
+	MsgType     *string `json:"msgtype,omitempty" yaml:"msgtype,omitempty" hcl:"msg_type"`
+	ToUser      *string `json:"touser,omitempty" yaml:"touser,omitempty" hcl:"to_user"`
 }
 
 type ContactPoint struct {

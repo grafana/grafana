@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
+	rulesv0alpha1 "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	playlistv1 "github.com/grafana/grafana/apps/playlist/pkg/apis/playlist/v1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver"
@@ -29,6 +30,7 @@ type k8sResourceDeleter struct {
 	restConfig apiserver.RestConfigProvider
 	log        log.Logger
 	gvrs       []schema.GroupVersionResource
+	stackID    string
 }
 
 func newK8sResourceDeleter(cfg *setting.Cfg, restCfg apiserver.RestConfigProvider, logger log.Logger) *k8sResourceDeleter {
@@ -37,6 +39,7 @@ func newK8sResourceDeleter(cfg *setting.Cfg, restCfg apiserver.RestConfigProvide
 		restConfig: restCfg,
 		log:        logger,
 		gvrs:       migratedResourceGVRs(),
+		stackID:    cfg.StackID,
 	}
 }
 
@@ -45,6 +48,11 @@ func newK8sResourceDeleter(cfg *setting.Cfg, restCfg apiserver.RestConfigProvide
 func migratedResourceGVRs() []schema.GroupVersionResource {
 	return []schema.GroupVersionResource{
 		playlistv1.PlaylistKind().GroupVersionResource(),
+		// Rules cannot be deleted while they belong to a sequence.
+		rulesv0alpha1.RuleSequenceKind().GroupVersionResource(),
+		rulesv0alpha1.AlertRuleKind().GroupVersionResource(),
+		rulesv0alpha1.RecordingRuleKind().GroupVersionResource(),
+		rulesv0alpha1.ConfigKind().GroupVersionResource(),
 	}
 }
 
@@ -53,6 +61,16 @@ func migratedResourceGVRs() []schema.GroupVersionResource {
 // are logged as warnings and do not block org deletion. All other errors are
 // propagated so that the caller fails visibly when resources cannot be cleaned up.
 func (d *k8sResourceDeleter) deleteCollections(ctx context.Context, orgID int64) error {
+	if orgID < 1 {
+		return fmt.Errorf("invalid org ID: %d", orgID)
+	}
+	// Cloud namespaces identify the stack, not the org. Org deletion must not
+	// delete stack resources through a namespace shared with another org.
+	if d.stackID != "" {
+		d.log.Warn("Skipping org resource collection deletion in a Cloud namespace", "orgId", orgID, "stackId", d.stackID)
+		return nil
+	}
+
 	cfg, err := d.restConfig.GetRestConfig(ctx)
 	if err != nil {
 		return fmt.Errorf("get rest config: %w", err)

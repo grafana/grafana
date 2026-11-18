@@ -37,6 +37,38 @@ export const addTableCustomPanelOptions = <O extends TableOptions>(builder: Pane
         ],
       },
     })
+    .addBooleanSwitch({
+      path: 'zebraStriping',
+      name: t('table.name-zebra-striping', 'Zebra striping'),
+      description: t('table.description-zebra-striping', 'Alternate the background color of every other row'),
+      category,
+      defaultValue: defaultTableOptions.zebraStriping,
+      // The alternating row background only exists behind `table.refreshNewFeatures`, so the option
+      // that controls it is only offered there.
+      showIf: () => getFeatureFlagClient().getBooleanValue(FlagKeys.TableRefreshNewFeatures, false),
+    })
+    .addBooleanSwitch({
+      path: 'showRowNumbers',
+      name: t('table.name-show-row-numbers', 'Show row numbers'),
+      description: t('table.description-show-row-numbers', 'Show the position of each row in the displayed table'),
+      category,
+      defaultValue: defaultTableOptions.showRowNumbers ?? false,
+      showIf: () =>
+        getFeatureFlagClient().getBooleanValue(FlagKeys.TableRefresh, false) &&
+        getFeatureFlagClient().getBooleanValue(FlagKeys.TableRefreshNewFeatures, false),
+    })
+    .addBooleanSwitch({
+      path: 'showColumnsSidebar',
+      name: t('table.name-show-columns-sidebar', 'Show columns sidebar'),
+      description: t(
+        'table.description-show-columns-sidebar',
+        'Open the column management sidebar with the panel, rather than from a column menu'
+      ),
+      category,
+      showIf: () =>
+        getFeatureFlagClient().getBooleanValue(FlagKeys.TableRefresh, false) &&
+        getFeatureFlagClient().getBooleanValue(FlagKeys.TableRefreshNewFeatures, false),
+    })
     .addNumberInput({
       path: 'maxRowHeight',
       name: t('table.name-max-height', 'Max row height'),

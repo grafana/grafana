@@ -11,25 +11,6 @@ labels:
 title: Import data source-managed rules to Grafana-managed rules
 menuTitle: Import to Grafana-managed rules
 weight: 300
-refs:
-  configure-grafana-rule_query_offset:
-    - pattern: /docs/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#rule_query_offset
-  evaluation-strategies:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/
-  missing_series_evaluations_to_resolve:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/stale-alert-instances/#configure-missing-series-evaluations-to-resolve
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/stale-alert-instances/#configure-missing-series-evaluations-to-resolve
-  configure-recording-rules:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/create-grafana-managed-recording-rules/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-recording-rules/create-grafana-managed-recording-rules/
 ---
 
 # Import data source-managed rules to Grafana-managed rules
@@ -46,6 +27,12 @@ Importing rules is a safe operation: the original data source–managed rules re
 
 Choose the method that best fits your workflow. As a best practice, test and validate your import process before migrating all alert rules.
 
+## Import your notification configuration first
+
+Rules only tell you about a problem if the notification reaches someone. Grafana-managed rules route through the Grafana Alertmanager, not through the Alertmanager your data source-managed rules used, so imported rules notify through whatever contact points and notification policies already exist in Grafana.
+
+Consider [importing your Alertmanager configuration](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/import-alertmanager-configuration/) before you import rules. Grafana imports the configuration as it is and runs it the way your Prometheus or Mimir Alertmanager does. You can then route the rules you import through the imported policy tree.
+
 ## How it works
 
 When you use any of the import methods, data source–managed rules are copied to another folder as Grafana-managed rules.
@@ -58,12 +45,13 @@ The copied rules are converted to Grafana-managed rules, preserving their behavi
 
   The newly created rules are assigned unique UIDs.
   If you don’t want a UID to be auto-generated, you can specify one using the `__grafana_alert_rule_uid__` label.
+  Grafana uses this label only to set the UID and doesn’t add it to the labels of the imported rule.
 
 - **Query offset**
 
   A query offset is applied to each rule. For example, an offset of `1m` adjusts the query's time range to `To: now-1m`.
 
-  The rule query offset is taken from the `query_offset` value in the rule group configuration. If empty, it defaults to the [`rule_query_offset` configuration setting](ref:configure-grafana-rule_query_offset), which is `1m` by default.
+  The rule query offset is taken from the `query_offset` value in the rule group configuration. If empty, it defaults to the [`rule_query_offset` configuration setting](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#rule_query_offset), which is `1m` by default.
 
 - **Rule query conversion**
 
@@ -71,7 +59,7 @@ The copied rules are converted to Grafana-managed rules, preserving their behavi
 
 - **Missing series evaluations to resolve**
 
-  The [Missing series evaluations to resolve](ref:missing_series_evaluations_to_resolve) setting is set to `1` to replicate Prometheus’s alert eviction behavior.
+  The [Missing series evaluations to resolve](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/stale-alert-instances/#configure-missing-series-evaluations-to-resolve) setting is set to `1` to replicate Prometheus’s alert eviction behavior.
 
 - **Rule group labels**
 
@@ -79,7 +67,7 @@ The copied rules are converted to Grafana-managed rules, preserving their behavi
 
 - **Sequential evaluation**
 
-  Imported rules are evaluated sequentially within each rule group, mirroring Prometheus behavior. This differs from native Grafana-managed alert rules, where the evaluation order is not enforced. For more details, refer to [evaluation strategies](ref:evaluation-strategies).
+  Imported rules are evaluated sequentially within each rule group, mirroring Prometheus behavior. This differs from native Grafana-managed alert rules, where the evaluation order is not enforced. For more details, refer to [evaluation strategies](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/).
 
 - **Feature compatibility**
 
@@ -107,6 +95,10 @@ To use Grafana Alerting to migrate rules, you need the following [RBAC permissio
 - **Folders**: `Creator`.
 
   The Folders permission is optional and only necessary if you want to create new folders for your target namespace. If your account doesn't have permissions to view a namespace, the tool creates a new one.
+
+{{< admonition type="note" >}}
+When the `alertingMigrationWizardUI` feature toggle is enabled, the import wizard replaces the **Import to Grafana-managed rules** page. To import rules with the wizard, go to **Alerting** > **Alert rules** and click **More** > **Import alert rules**. This opens the **Rules** step of the wizard on the **Import** tab of the Grafana Alerting settings, which requires the Organization administrator role. For more information, refer to [Import with the Grafana Alerting user interface](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/import-alertmanager-configuration/#import-with-the-grafana-alerting-user-interface).
+{{< /admonition >}}
 
 To convert data source-managed alert rules to Grafana managed alerts:
 
@@ -233,6 +225,12 @@ Do not enable this header when using the `rules sync` command, as it relies on t
 #### `X-Grafana-Alerting-Alert-Rules-Paused`
 
 Set to `true` to import alert rules in paused state.
+
+#### `X-Grafana-Alerting-Exec-Err-State`
+
+The error state of the imported alert rules: `OK`, `Alerting`, `Error`, or `KeepLast`. The value is case-sensitive and applies to every alert rule in the request. If not set, the rules use `OK`. Recording rules ignore it.
+
+With `KeepLast`, an evaluation error leaves firing alerts firing. Pending alerts stay Pending and become firing once the `for` duration has passed, even if the query keeps failing. Re-importing a group with a different value updates the error state of its rules and resets their alert state once.
 
 #### `X-Grafana-Alerting-Recording-Rules-Paused`
 

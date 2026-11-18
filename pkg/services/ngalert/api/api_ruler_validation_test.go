@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"testing"
 	"time"
+	"uuid"
 
-	"github.com/google/uuid"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
@@ -17,7 +17,7 @@ import (
 	. "github.com/grafana/grafana/pkg/services/ngalert/api/compat"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 
@@ -108,7 +108,7 @@ func randFolder() *folder.Folder {
 		// UpdatedBy: 0,
 		// CreatedBy: 0,
 		// HasACL:    false,
-		ParentUID: uuid.NewString(),
+		ParentUID: uuid.NewV4().String(),
 		Fullpath:  path.Join("parent-folder", title),
 	}
 }
@@ -264,7 +264,7 @@ func TestValidateRuleGroupFailures(t *testing.T) {
 			name: "fail if title is too long",
 			group: func() *apimodels.PostableRuleGroupConfig {
 				g := validGroup(cfg)
-				for len(g.Name) < store.AlertRuleMaxRuleGroupNameLength {
+				for len(g.Name) < rulestore.AlertRuleMaxRuleGroupNameLength {
 					g.Name += g.Name
 				}
 				return &g
@@ -567,7 +567,7 @@ func TestValidateRuleNodeFailures_NoUID(t *testing.T) {
 			name: "fail if title is too long",
 			rule: func() *apimodels.PostableExtendedRuleNode {
 				r := validRule()
-				for len(r.GrafanaManagedAlert.Title) < store.AlertRuleMaxTitleLength {
+				for len(r.GrafanaManagedAlert.Title) < rulestore.AlertRuleMaxTitleLength {
 					r.GrafanaManagedAlert.Title += r.GrafanaManagedAlert.Title
 				}
 				return &r
@@ -656,7 +656,7 @@ func TestValidateRuleNodeFailures_NoUID(t *testing.T) {
 			name: "fail if Condition does not exist",
 			rule: func() *apimodels.PostableExtendedRuleNode {
 				r := validRule()
-				r.GrafanaManagedAlert.Condition = uuid.NewString()
+				r.GrafanaManagedAlert.Condition = uuid.NewV4().String()
 				return &r
 			},
 		},
@@ -872,7 +872,7 @@ func TestValidateRuleNodeFailures_UID(t *testing.T) {
 			name: "fail if title is too long",
 			rule: func() *apimodels.PostableExtendedRuleNode {
 				r := validRule()
-				for len(r.GrafanaManagedAlert.Title) < store.AlertRuleMaxTitleLength {
+				for len(r.GrafanaManagedAlert.Title) < rulestore.AlertRuleMaxTitleLength {
 					r.GrafanaManagedAlert.Title += r.GrafanaManagedAlert.Title
 				}
 				return &r

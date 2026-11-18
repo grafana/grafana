@@ -26,7 +26,7 @@ var (
 	registerStatusReaderMetricsOnce sync.Once
 
 	migrationLogBootstrapFailuresMetric = metricutil.NewCounterStartingAtZero(prometheus.CounterOpts{
-		Name: "migration_status_reader_bootstrap_failures_total",
+		Name: "grafana_migration_status_reader_bootstrap_failures_total",
 		Help: "Total number of failures when ensuring the migration log table exists at startup",
 	})
 )
@@ -117,8 +117,8 @@ func (r *migrationStatusReader) resolveStorageMode(ctx context.Context, gr schem
 	// Config is used if table does not exist or in case of errors
 	// DualWrite modes (Mode1, Mode2, Mode3) and Unified modes (Mode4, Mode5).
 	mode := contract.StorageModeLegacy
-	if config, found := r.cfg.UnifiedStorage[configKey]; found {
-		if config.DualWriterMode >= rest.Mode1 && config.DualWriterMode <= rest.Mode3 {
+	if config := r.cfg.UnifiedStorageConfig(configKey); config.DualWriterMode >= rest.Mode1 {
+		if config.DualWriterMode <= rest.Mode3 {
 			mode = contract.StorageModeDualWrite
 		}
 		if config.DualWriterMode >= rest.Mode4 {

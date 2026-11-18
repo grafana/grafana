@@ -6,9 +6,12 @@ import { testScopesWithRedirect } from '../utils/scopes';
 test.use({
   featureToggles: {
     scopeFilters: true,
-    groupByVariable: true,
-    reloadDashboardsOnParamsChange: true,
-    useScopesNavigationEndpoint: true,
+  },
+  openFeature: {
+    flags: {
+      scopeFilters: true,
+      reloadDashboardsOnParamsChange: true,
+    },
   },
   // Trusted Types blocks the change detection web worker under this server's CSP.
   // Without this dashboards won't report unsaved changes.
@@ -66,7 +69,7 @@ test.describe('Scope Redirect Functionality', () => {
     });
 
     await test.step('Navigate to dashboard not in scope dashboard list', async () => {
-      // Navigate to a dashboard that is not in the scope dashboard bindings
+      // Navigate to a dashboard that is not in the scope navigations
       // Preserve the scope parameter using queryParams
       await gotoDashboardPage({
         uid: 'cuj-dashboard-3',
@@ -114,7 +117,7 @@ test.describe('Scope Redirect Functionality', () => {
     });
 
     await test.step('Navigate to dashboard not in scope dashboard list', async () => {
-      // Navigate to a dashboard that is not in the scope dashboard bindings
+      // Navigate to a dashboard that is not in the scope navigations
       // Preserve the scope parameter using queryParams
       await gotoDashboardPage({
         uid: 'cuj-dashboard-3',

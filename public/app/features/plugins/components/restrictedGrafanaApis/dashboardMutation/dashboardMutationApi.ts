@@ -15,11 +15,14 @@
 import type { DashboardMutationAPI } from '@grafana/data';
 import { DashboardMutationClient } from 'app/features/dashboard-scene/mutation-api/DashboardMutationClient';
 import { provideMutationClientFactory } from 'app/features/dashboard-scene/mutation-api/clientBridge';
+import { renderPlanPayloadSchemaFor } from 'app/features/dashboard-scene/mutation-api/commands/schemas';
 import type { MutationClient, MutationRequest } from 'app/features/dashboard-scene/mutation-api/types';
 import type { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
+import { dashboardPlanEditingEnabled } from 'app/features/dashboard-scene/scene/dashboardModes';
 import { NotebookMutationClient } from 'app/features/notebook/mutation-api/NotebookMutationClient';
 import type { NotebookScene } from 'app/features/notebook/scene/NotebookScene';
 
+import { DashboardPlanPreview, isPlanBuildingScreenEnabled } from './DashboardPlanPreview';
 import { allMutationCommands } from './commandRegistry';
 
 /**
@@ -56,9 +59,16 @@ provideMutationClientFactory((sceneObject, resource) => {
     const index = _clients.lastIndexOf(client);
     if (index !== -1) {
       _clients.splice(index, 1);
+      planPreview.onClientDeactivated(client);
     }
   };
 });
+
+/** The dashboard serving the API, or null when nothing is mounted or the top document is not a dashboard. */
+export function getMountedDashboardScene(): DashboardScene | null {
+  const client = currentClient();
+  return client instanceof DashboardMutationClient ? client.getScene() : null;
+}
 
 /** @internal — exposed only for unit tests that need to inject a mock client. */
 export function setDashboardMutationClientForTests(client: MutationClient | null): void {
@@ -68,22 +78,46 @@ export function setDashboardMutationClientForTests(client: MutationClient | null
   }
 }
 
-export const dashboardMutationApi: DashboardMutationAPI = {
-  execute: (mutation: MutationRequest) => {
-    const client = currentClient();
-    if (!client) {
-      return Promise.reject(new Error('Dashboard Mutation API is not available. No dashboard is currently loaded.'));
-    }
-    return client.execute(mutation);
-  },
-  getPayloadSchema: (commandId: string) => {
-    const normalized = commandId.toUpperCase();
-    // Every command, not just the ones the mounted document exposes: `execute` is what enforces where a
-    // command can run.
-    const cmd = allMutationCommands().find((c) => c.name === normalized);
-    return cmd?.payloadSchema ?? null;
-  },
-  getAvailableCommands: () => {
-    return currentClient()?.getAvailableCommands() ?? [];
-  },
-};
+// The API already owns the mounted client stack; its preview coordinator shares that lifecycle.
+const planPreview = new DashboardPlanPreview(() => {
+  const client = currentClient();
+  return client instanceof DashboardMutationClient ? client : null;
+});
+
+export const dashboardMutationApi: DashboardMutationAPI = createDashboardMutationApi();
+
+export function createDashboardMutationApi(pluginId?: string): DashboardMutationAPI {
+  return {
+    execute: (mutation: MutationRequest) => {
+      if (mutation.type.toUpperCase() === 'RENDER_PLAN') {
+        return planPreview.render(mutation.payload);
+      }
+      if (mutation.type.toUpperCase() === 'END_PLANNING') {
+        return planPreview.end(mutation.payload);
+      }
+      const client = currentClient();
+      if (!client) {
+        return Promise.reject(new Error('Dashboard Mutation API is not available. No dashboard is currently loaded.'));
+      }
+      return client instanceof DashboardMutationClient ? client.execute(mutation, pluginId) : client.execute(mutation);
+    },
+    getPayloadSchema: (commandId: string) => {
+      const normalized = commandId.toUpperCase();
+      // RENDER_PLAN leaves out the fields for whatever is off, as an older core's would, so a caller
+      // checking for the building screen or plan editing sees none and never asks for it.
+      if (normalized === 'RENDER_PLAN') {
+        return renderPlanPayloadSchemaFor({
+          building: isPlanBuildingScreenEnabled(),
+          editing: dashboardPlanEditingEnabled(),
+        });
+      }
+      // Every command, not just the ones the mounted document exposes: `execute` is what enforces where a
+      // command can run.
+      const cmd = allMutationCommands().find((c) => c.name === normalized);
+      return cmd?.payloadSchema ?? null;
+    },
+    getAvailableCommands: () => {
+      return [...new Set(['RENDER_PLAN', ...(currentClient()?.getAvailableCommands() ?? [])])];
+    },
+  };
+}

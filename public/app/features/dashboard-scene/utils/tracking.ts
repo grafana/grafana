@@ -1,19 +1,23 @@
-import { store } from '@grafana/data';
+import { MappingType, store, type ThresholdsConfig, type ValueMapping } from '@grafana/data';
+import { hasVarMappingVariableReference, isVarMappingProp } from '@grafana/data/internal';
 import { config, locationService } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
-import { type SceneGridItemLike } from '@grafana/scenes';
+import { type SceneGridItemLike, type VizPanel } from '@grafana/scenes';
 import {
   isTemplateDashboardAssistantEnabled,
   isSuggestedDashboardAssistantEnabled,
 } from 'app/features/dashboard/dashgrid/DashboardLibrary/utils/assistantHelpers';
 import { getDatasourceTypes } from 'app/features/dashboard/dashgrid/DashboardLibrary/utils/dashboardLibraryHelpers';
 import { DASHBOARD_LIBRARY_ROUTES } from 'app/features/dashboard/dashgrid/types';
+import { getTextDataUsage } from 'app/plugins/panel/text/dataUsage';
+import { type Options, TextMode } from 'app/plugins/panel/text/panelcfg.gen';
 
 import { CustomDashboardTemplateInteractions } from '../analytics/dashboard-templates/main';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 
+import { type DashboardEditSessionTracking } from './dashboardModeTracking';
 import { DashboardInteractions } from './interactions';
 
 export function trackDashboardSceneLoaded(dashboard: DashboardScene, duration?: number) {
@@ -38,6 +42,9 @@ export function trackDashboardSceneLoaded(dashboard: DashboardScene, duration?: 
         }
       : {}),
   });
+
+  trackTextPanelUsage(dashboard);
+  trackPanelOptionVariableUsage(dashboard, 'load');
 }
 
 export const trackDashboardSceneEditButtonClicked = (dashboardUid?: string) => {
@@ -56,7 +63,7 @@ export async function trackDashboardSceneCreatedOrSaved(
     diff_count: number;
     transformation_counts?: Record<string, number>;
     expression_counts?: Record<string, number>;
-  }
+  } & Partial<DashboardEditSessionTracking>
 ) {
   const sceneDashboardTrackingInfo = dashboard.getTrackingInformation();
   const dynamicDashboardsTrackingInformation = dashboard.getDynamicDashboardsTrackingInformation();
@@ -95,6 +102,8 @@ export async function trackDashboardSceneCreatedOrSaved(
         }),
   });
 
+  trackPanelOptionVariableUsage(dashboard, 'save');
+
   if (getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaCustomDashboardTemplates, false) && isNew) {
     const { pathname, search } = locationService.getLocation();
     const isOnTemplateRoute = pathname === DASHBOARD_LIBRARY_ROUTES.Template;
@@ -115,6 +124,116 @@ export function trackDropItemCrossLayout(gridItem: SceneGridItemLike) {
       isCrossLayout: true,
     });
   }
+}
+
+const TEXT_PANEL_PLUGIN_ID = 'text';
+
+const MERMAID_PATTERN = /(?:```|~~~)[ \t]*mermaid|class=["'][^"']*\bmermaid\b/i;
+
+function trackTextPanelUsage(dashboard: DashboardScene) {
+  if (!isTextV2WithNewFeatures()) {
+    return;
+  }
+
+  const usage = getTextPanelUsage(dashboard.state.body.getVizPanels());
+
+  if (usage) {
+    DashboardInteractions.textPanelUsage({ ...usage, dashboard_uid: dashboard.state.uid });
+  }
+}
+
+function isTextV2WithNewFeatures() {
+  const flags = getFeatureFlagClient();
+
+  return (
+    flags.getBooleanValue(FlagKeys.GrafanaNewTextPanel, false) && flags.getBooleanValue(FlagKeys.TextNewFeatures, false)
+  );
+}
+
+function getTextPanelUsage(panels: VizPanel[]) {
+  const textPanels = panels.filter((panel) => panel.state.pluginId === TEXT_PANEL_PLUGIN_ID);
+
+  if (textPanels.length === 0) {
+    return undefined;
+  }
+
+  const usage = {
+    mermaid_count: 0,
+    handlebars_count: 0,
+    data_macro_count: 0,
+    per_row_count: 0,
+  };
+
+  for (const panel of textPanels) {
+    const options: Partial<Options> = panel.state.options;
+    const content = options.content ?? '';
+    const dataUsage = getTextDataUsage(options);
+
+    if (options.mode !== TextMode.Code) {
+      if (MERMAID_PATTERN.test(content)) {
+        usage.mermaid_count++;
+      }
+
+      if (dataUsage.handlebars) {
+        usage.handlebars_count++;
+      }
+    }
+
+    if (dataUsage.dataMacros) {
+      usage.data_macro_count++;
+    }
+
+    if (dataUsage.perRow) {
+      usage.per_row_count++;
+    }
+  }
+
+  return usage;
+}
+
+/**
+ * Counts the panels whose saved field config sets options from variables, so the counts follow what
+ * dashboards hold, whichever way an option got or lost its variable
+ */
+function trackPanelOptionVariableUsage(dashboard: DashboardScene, trigger: 'load' | 'save') {
+  if (!dashboard.isV2() || !getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaPanelOptionInterpolation, false)) {
+    return;
+  }
+
+  const usage = { panel_count: 0, field_config_count: 0, threshold_count: 0, value_mapping_count: 0 };
+
+  for (const panel of dashboard.state.body.getVizPanels()) {
+    const { defaults, overrides } = panel.state.fieldConfig;
+    const properties = overrides.flatMap((rule) => rule.properties);
+    const valuesOf = (id: string) => properties.filter((prop) => prop.id === id).map((prop) => prop.value);
+
+    const fieldConfig = Object.keys(defaults.varMappings ?? {}).length > 0 || properties.some(isVarMappingProp);
+    const thresholds = [defaults.thresholds, ...valuesOf('thresholds')].some(hasThresholdVariable);
+    const valueMappings = [defaults.mappings, ...valuesOf('mappings')].some(hasValueMappingVariable);
+
+    usage.field_config_count += Number(fieldConfig);
+    usage.threshold_count += Number(thresholds);
+    usage.value_mapping_count += Number(valueMappings);
+    usage.panel_count += Number(fieldConfig || thresholds || valueMappings);
+  }
+
+  if (usage.panel_count > 0) {
+    DashboardInteractions.panelOptionVariableUsage({ ...usage, trigger, dashboard_uid: dashboard.state.uid });
+  }
+}
+
+function hasThresholdVariable(thresholds: ThresholdsConfig | undefined): boolean {
+  return Boolean(thresholds?.steps?.some((step) => step.valueExpr));
+}
+
+function hasValueMappingVariable(mappings: ValueMapping[] | undefined): boolean {
+  return Boolean(
+    mappings?.some((mapping) => {
+      const results =
+        mapping.type === MappingType.ValueToText ? Object.values(mapping.options ?? {}) : [mapping.options?.result];
+      return results.some((result) => typeof result?.text === 'string' && hasVarMappingVariableReference(result.text));
+    })
+  );
 }
 
 async function getDashboardLibraryTrackingProperties(dashboard: DashboardScene) {

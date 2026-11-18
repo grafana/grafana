@@ -1,7 +1,7 @@
 import { LoadingState } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { config } from '@grafana/runtime';
-import { setPanelPluginMetas } from '@grafana/runtime/internal';
+import { FlagKeys, setPanelPluginMetas } from '@grafana/runtime/internal';
 import {
   AdHocFiltersVariable,
   behaviors,
@@ -21,7 +21,7 @@ import {
   type RowPanel,
   type VariableType,
 } from '@grafana/schema';
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { setTestFlags, testWithFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -144,6 +144,15 @@ describe('transformSaveModelToScene', () => {
       expect((cursorSync as behaviors.CursorSync).state.sync).toEqual(DashboardCursorSync.Crosshair);
     });
 
+    it('marks the scene as needing the library panel repeat migration', () => {
+      const dash = { ...defaultDashboard, title: 'Test dashboard', uid: 'test-uid' };
+      const oldModel = new DashboardModel(dash);
+
+      const scene = createDashboardSceneFromDashboardModel(oldModel, dash);
+
+      expect(scene.state.meta.libraryPanelRepeatUnresolved).toBe(true);
+    });
+
     it('should apply live now timer behavior', () => {
       const dash = {
         ...defaultDashboard,
@@ -227,6 +236,37 @@ describe('transformSaveModelToScene', () => {
       const body = layout.state.grid;
 
       expect(body.state.isLazy).toBeFalsy();
+    });
+  });
+
+  describe('scopeMeta', () => {
+    const scopeMeta = { trait: 'trait', groups: ['group-a', 'group-b'] };
+
+    const buildSceneWithScopeMeta = () => {
+      const dash = { ...defaultDashboard, title: 'Test dashboard', uid: 'test-uid' };
+      const oldModel = new DashboardModel(dash);
+      oldModel.scopeMeta = scopeMeta;
+      return createDashboardSceneFromDashboardModel(oldModel, dash);
+    };
+
+    afterEach(() => {
+      setTestFlags({});
+    });
+
+    it('copies scopeMeta to the scene state when the scopeFilters flag is on', () => {
+      setTestFlags({ [FlagKeys.ScopeFilters]: true });
+
+      const scene = buildSceneWithScopeMeta();
+
+      expect(scene.state.scopeMeta).toEqual(scopeMeta);
+    });
+
+    it('leaves scopeMeta unset when the scopeFilters flag is off', () => {
+      setTestFlags({ [FlagKeys.ScopeFilters]: false });
+
+      const scene = buildSceneWithScopeMeta();
+
+      expect(scene.state.scopeMeta).toBeUndefined();
     });
   });
 
@@ -862,15 +902,7 @@ describe('transformSaveModelToScene', () => {
   });
 
   describe('Convert to new rows', () => {
-    beforeEach(() => {
-      // set feature flag to true
-      config.featureToggles.dashboardNewLayouts = true;
-      setTestFlags({ 'grafana.dashboardAutoGridDefault': false });
-    });
-    afterEach(() => {
-      config.featureToggles.dashboardNewLayouts = false;
-      setTestFlags({});
-    });
+    testWithFlags({ 'grafana.dashboardAutoGridDefault': false });
 
     it('Should convert legacy rows to new rows', () => {
       const scene = transformSaveModelToScene(

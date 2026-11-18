@@ -10,22 +10,22 @@ import (
 var (
 	registerMetricsOnce    sync.Once
 	backgroundErrorsMetric = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Name: "dualwriter_background_errors_total",
+		Name: "grafana_dualwriter_background_errors_total",
 		Help: "Total number of failed background operations in unified storage",
 	}, []string{"resource", "method"})
 
 	statusReaderNullMetric = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Name: "dualwriter_status_reader_null_total",
+		Name: "grafana_dualwriter_status_reader_null_total",
 		Help: "Total number of times the status reader was null when resolving storage mode",
 	}, []string{"resource"})
 
 	statusReaderErrorsMetric = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Name: "dualwriter_status_reader_errors_total",
+		Name: "grafana_dualwriter_status_reader_errors_total",
 		Help: "Total number of errors from the status reader when resolving storage mode",
 	}, []string{"resource"})
 
 	currentModeMetric = prometheus.NewGaugeVec(prometheus.GaugeOpts{
-		Name: "unified_storage_dual_writer_current_mode",
+		Name: "grafana_unified_storage_dual_writer_current_mode",
 		Help: "Unified storage current storage mode, resolved dynamically from migration log (0=legacy, 1=dual-write, 5=unified)",
 	}, []string{"resource", "group"})
 

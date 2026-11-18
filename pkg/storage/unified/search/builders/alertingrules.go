@@ -41,8 +41,8 @@ func GetRecordingRuleSearchBuilder(registry *resource.SearchFieldsRegistry) (res
 }
 
 var (
-	_ resource.DocumentBuilder = new(alertRuleSearchBuilder)
-	_ resource.DocumentBuilder = new(recordingRuleSearchBuilder)
+	_ resource.DocumentBuilder = (*alertRuleSearchBuilder)(nil)
+	_ resource.DocumentBuilder = (*recordingRuleSearchBuilder)(nil)
 )
 
 // alertRuleSearchBuilder builds an AlertRule search document. It delegates the

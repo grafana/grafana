@@ -8,7 +8,6 @@ import { t } from '@grafana/i18n';
 import { useAppNotification } from 'app/core/copy/appNotification';
 
 import { pluralizeResourceName } from './resourceInfo';
-import { type ResourceTableItem } from './types';
 
 // After the number of distinct resource types migrated exceeeds this value, we display a generic success message.
 const SUCCESS_MESSAGE_ITEM_TYPES_THRESHOLD = 4;
@@ -49,7 +48,7 @@ function getTranslatedMessage(snapshot: GetSnapshotResponseDto) {
 
     // We don't have per-resource status counts, so there's no way to accurately pluralize these
     // so we just don't :)
-    const resourceType = pluralizeResourceName(type as ResourceTableItem['type']);
+    const resourceType = pluralizeResourceName(type);
     if (!resourceType) {
       continue;
     }

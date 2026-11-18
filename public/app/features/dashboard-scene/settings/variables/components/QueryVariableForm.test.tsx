@@ -16,7 +16,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { setRunRequest } from '@grafana/runtime';
 import { VariableRefresh, VariableSort } from '@grafana/schema';
 import { mockBoundingClientRect } from '@grafana/test-utils';
-import { mockDataSource } from 'app/features/alerting/unified/mocks';
+import { mockDataSource } from 'app/features/alerting/unified/testSetup/mockDataSource';
 import { LegacyVariableQueryEditor } from 'app/features/variables/editor/LegacyVariableQueryEditor';
 import { getVariableQueryEditor } from 'app/features/variables/editor/getVariableQueryEditor';
 
@@ -46,10 +46,6 @@ jest.mock('@grafana/runtime', () => ({
     getList: () => [defaultDatasource, promDatasource],
     getInstanceSettings: (uid: string) => (uid === promDatasource.uid ? promDatasource : defaultDatasource),
   }),
-}));
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
   getDataSourceInstance: jest.fn(async () => ({
     ...defaultDatasource,
     variables: {
@@ -63,7 +59,6 @@ jest.mock('@grafana/runtime/unstable', () => ({
     return uid === promDatasource.uid ? promDatasource : defaultDatasource;
   }),
 }));
-
 const runRequestMock = jest.fn().mockReturnValue(
   of<PanelData>({
     state: LoadingState.Done,

@@ -21,7 +21,7 @@ VALUES (
     'chunk/0',
     '',
     'cpu usage high',
-    '[123 34 107 105 110 100 34 58 34 97 108 101 114 116 95 114 117 108 101 34 125]',
+    '{"kind":"alert_rule"}',
     '[0.1,0.2,0.3]',
     0,
     to_tsvector('english', 'cpu usage high')
@@ -31,7 +31,7 @@ DO UPDATE SET
     "title"           = 'CPU Alert',
     "folder"          = '',
     "content"         = 'cpu usage high',
-    "metadata"        = '[123 34 107 105 110 100 34 58 34 97 108 101 114 116 95 114 117 108 101 34 125]',
+    "metadata"        = '{"kind":"alert_rule"}',
     "embedding"       = '[0.1,0.2,0.3]',
     "content_version" = 0,
     "ts"              = EXCLUDED."ts",

@@ -21,8 +21,9 @@ export const AccentBoxBadge = forwardRef<HTMLDivElement, Props>(function AccentB
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     icon: css({
-      color: theme.colors.accent.text,
-      backgroundColor: theme.colors.accent.background,
+      // intentionally using the navmenu styles so they're consistent with each other
+      color: theme.components.navmenu.activeItemText,
+      backgroundColor: theme.components.navmenu.activeItemBackground,
       borderRadius: theme.shape.radius.default,
       padding: theme.spacing(1),
       width: theme.spacing(4.5),

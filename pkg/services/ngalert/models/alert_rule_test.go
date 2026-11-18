@@ -496,7 +496,7 @@ func TestDiff(t *testing.T) {
 			assert.Equal(t, rule2.Updated, diff[0].Right.Interface())
 			difCnt++
 		}
-		if rule1.UpdatedBy != rule2.UpdatedBy {
+		if !reflect.DeepEqual(rule1.UpdatedBy, rule2.UpdatedBy) {
 			diff := diffs.GetDiffsForField("UpdatedBy")
 			assert.Len(t, diff, 1)
 			difCnt++
@@ -529,12 +529,12 @@ func TestDiff(t *testing.T) {
 			assert.Equal(t, rule2.NamespaceUID, diff[0].Right.String())
 			difCnt++
 		}
-		if rule1.DashboardUID != rule2.DashboardUID {
+		if !reflect.DeepEqual(rule1.DashboardUID, rule2.DashboardUID) {
 			diff := diffs.GetDiffsForField("DashboardUID")
 			assert.Len(t, diff, 1)
 			difCnt++
 		}
-		if rule1.PanelID != rule2.PanelID {
+		if !reflect.DeepEqual(rule1.PanelID, rule2.PanelID) {
 			diff := diffs.GetDiffsForField("PanelID")
 			assert.Len(t, diff, 1)
 			difCnt++
@@ -1087,11 +1087,11 @@ func TestGeneratorFillsAllFields(t *testing.T) {
 
 	tpe := reflect.TypeFor[AlertRule]()
 	fields := make(map[string]struct{}, tpe.NumField())
-	for i := 0; i < tpe.NumField(); i++ {
-		if _, ok := ignoredFields[tpe.Field(i).Name]; ok {
+	for field := range tpe.Fields() {
+		if _, ok := ignoredFields[field.Name]; ok {
 			continue
 		}
-		fields[tpe.Field(i).Name] = struct{}{}
+		fields[field.Name] = struct{}{}
 	}
 
 	for range 1000 {
@@ -1131,11 +1131,11 @@ func TestGeneratorFillsAllRecordingRuleFields(t *testing.T) {
 
 	tpe := reflect.TypeFor[AlertRule]()
 	fields := make(map[string]struct{}, tpe.NumField())
-	for i := 0; i < tpe.NumField(); i++ {
-		if _, ok := ignoredFields[tpe.Field(i).Name]; ok {
+	for field := range tpe.Fields() {
+		if _, ok := ignoredFields[field.Name]; ok {
 			continue
 		}
-		fields[tpe.Field(i).Name] = struct{}{}
+		fields[field.Name] = struct{}{}
 	}
 
 	for range 1000 {

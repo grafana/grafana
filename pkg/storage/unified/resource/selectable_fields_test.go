@@ -8,15 +8,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestAppManifestsCanFilterOutManifestsWithNoKinds(t *testing.T) {
-	all := AppManifests()
-	for _, m := range AppManifestsWithKinds(all...) {
-		if m.AppName == "provisioning" {
-			t.Errorf("should not have a provisioning manifest as it has no kinds defined")
-		}
-	}
-}
-
 func TestSelectableFieldsForManifests(t *testing.T) {
 	// No selectable fields
 	m1 := &app.ManifestData{
@@ -27,7 +18,7 @@ func TestSelectableFieldsForManifests(t *testing.T) {
 				Kinds: []app.ManifestVersionKind{
 					{
 						Kind:   "TestKind",
-						Plural: "TestKinds",
+						Plural: "TestKinds", Resource: "testkinds",
 					},
 				},
 			},
@@ -43,7 +34,7 @@ func TestSelectableFieldsForManifests(t *testing.T) {
 				Kinds: []app.ManifestVersionKind{
 					{
 						Kind:   "TestKind",
-						Plural: "TestKinds",
+						Plural: "TestKinds", Resource: "testkinds",
 						SelectableFields: []string{
 							"spec.field1",
 							"spec.field2",
@@ -63,7 +54,7 @@ func TestSelectableFieldsForManifests(t *testing.T) {
 				Kinds: []app.ManifestVersionKind{
 					{
 						Kind:   "TestKind",
-						Plural: "TestKinds",
+						Plural: "TestKinds", Resource: "testkinds",
 					},
 				},
 			},
@@ -72,7 +63,7 @@ func TestSelectableFieldsForManifests(t *testing.T) {
 				Kinds: []app.ManifestVersionKind{
 					{
 						Kind:   "TestKind",
-						Plural: "TestKinds",
+						Plural: "TestKinds", Resource: "testkinds",
 						SelectableFields: []string{
 							"spec.field1",
 							"spec.field2",
@@ -85,7 +76,7 @@ func TestSelectableFieldsForManifests(t *testing.T) {
 				Kinds: []app.ManifestVersionKind{
 					{
 						Kind:   "TestKind",
-						Plural: "TestKinds",
+						Plural: "TestKinds", Resource: "testkinds",
 						SelectableFields: []string{
 							"spec.field2", // duplicate
 							"spec.field3", // new field
@@ -98,7 +89,7 @@ func TestSelectableFieldsForManifests(t *testing.T) {
 				Kinds: []app.ManifestVersionKind{
 					{
 						Kind:   "TestKind",
-						Plural: "TestKinds",
+						Plural: "TestKinds", Resource: "testkinds",
 						SelectableFields: []string{
 							"spec.field3", // duplicate
 							"spec.field4", // new
@@ -118,14 +109,14 @@ func TestSelectableFieldsForManifests(t *testing.T) {
 				Kinds: []app.ManifestVersionKind{
 					{
 						Kind:   "KindA",
-						Plural: "KindAs",
+						Plural: "KindAs", Resource: "kindas",
 						SelectableFields: []string{
 							"spec.fieldA",
 						},
 					},
 					{
 						Kind:   "KindB",
-						Plural: "KindBs",
+						Plural: "KindBs", Resource: "kindbs",
 						SelectableFields: []string{
 							"spec.fieldB",
 						},

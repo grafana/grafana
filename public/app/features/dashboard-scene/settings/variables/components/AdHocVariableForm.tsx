@@ -11,10 +11,10 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { EditorField } from '@grafana/plugin-ui';
-import { config } from '@grafana/runtime';
 import { type AdHocFiltersController } from '@grafana/scenes';
 import { type DataSourceRef } from '@grafana/schema';
 import { Alert, Field, Switch, Stack, useStyles2, FieldSet } from '@grafana/ui';
+import { useOptionsPaneReadOnly } from 'app/features/dashboard/components/PanelEditor/OptionsPaneReadOnlyContext';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { AdHocOriginFiltersEditor } from './AdHocOriginFiltersEditor';
@@ -60,6 +60,7 @@ export function AdHocVariableForm({
   datasourceSupportsGroupBy,
 }: AdHocVariableFormProps) {
   const styles = useStyles2(getStyles);
+  const readOnly = useOptionsPaneReadOnly();
   const updateStaticKeys = useCallback(
     (csvContent: string) => {
       const df = readCSV('key,value\n' + csvContent)[0];
@@ -94,6 +95,7 @@ export function AdHocVariableForm({
             variables={true}
             dashboard={true}
             noDefault
+            disabled={readOnly}
           />
         </EditorField>
 
@@ -115,24 +117,23 @@ export function AdHocVariableForm({
           </div>
         )}
 
-        {config.featureToggles.dashboardUnifiedDrilldownControls &&
-          onEnableGroupByChange &&
-          (!datasource || (datasourceSupported && datasourceSupportsGroupBy)) && (
-            <Field
-              label={t('dashboard-scene.ad-hoc-variable-form.name-enable-group-by', 'Enable group by')}
-              description={t(
-                'dashboard-scene.ad-hoc-variable-form.description-enable-group-by',
-                'Enables group by operator in the filter combobox'
-              )}
-              noMargin
-            >
-              <Switch
-                value={enableGroupBy ?? false}
-                onChange={onEnableGroupByChange}
-                data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.enableGroupByToggle}
-              />
-            </Field>
-          )}
+        {onEnableGroupByChange && (!datasource || (datasourceSupported && datasourceSupportsGroupBy)) && (
+          <Field
+            label={t('dashboard-scene.ad-hoc-variable-form.name-enable-group-by', 'Enable group by')}
+            description={t(
+              'dashboard-scene.ad-hoc-variable-form.description-enable-group-by',
+              'Enables group by operator in the filter combobox'
+            )}
+            noMargin
+            disabled={readOnly ? true : undefined}
+          >
+            <Switch
+              value={enableGroupBy ?? false}
+              onChange={onEnableGroupByChange}
+              data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.enableGroupByToggle}
+            />
+          </Field>
+        )}
 
         {datasourceSupported && onDefaultGroupByChange && (
           <div className={!inline ? styles.originFiltersWrapper : undefined}>
@@ -157,6 +158,7 @@ export function AdHocVariableForm({
                 { name: 'dimensionName', value: 'dimensionId' }
               )}
               noMargin
+              disabled={readOnly ? true : undefined}
             >
               <Switch
                 data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.modeToggle}
@@ -183,6 +185,7 @@ export function AdHocVariableForm({
               'Enables users to enter values'
             )}
             noMargin
+            disabled={readOnly ? true : undefined}
           >
             <Switch
               value={allowCustomValue ?? true}

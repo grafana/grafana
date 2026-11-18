@@ -10,12 +10,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	prommodel "github.com/prometheus/common/model"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.yaml.in/yaml/v3"
 
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -27,12 +29,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	acfakes "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol/fakes"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/merge"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -349,7 +352,7 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 		acFake := &acfakes.FakeRuleService{}
 		srv, _, _ := createConvertPrometheusSrv(t, withFakeAccessControlRuleService(acFake))
 
-		acFake.AuthorizeRuleChangesFunc = func(context.Context, identity.Requester, *store.GroupDelta) error {
+		acFake.AuthorizeRuleChangesFunc = func(context.Context, identity.Requester, *rulestore.GroupDelta) error {
 			return datasources.ErrDataSourceAccessDenied
 		}
 
@@ -557,6 +560,105 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 				require.Contains(t, string(response.Body()), tc.expectedError)
 			})
 		}
+	})
+
+	t.Run("exec err state header", func(t *testing.T) {
+		errStatesByTitle := func(t *testing.T, ruleStore *fakes.RuleStore) map[string]models.ExecutionErrorState {
+			t.Helper()
+			rules, err := ruleStore.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{OrgID: 1})
+			require.NoError(t, err)
+			result := make(map[string]models.ExecutionErrorState, len(rules))
+			for _, r := range rules {
+				result[r.Title] = r.ExecErrState
+			}
+			return result
+		}
+
+		t.Run("without the header alert rules keep OK", func(t *testing.T) {
+			srv, _, ruleStore := createConvertPrometheusSrv(t)
+			rc := createRequestCtx()
+
+			response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
+			require.Equal(t, http.StatusAccepted, response.Status())
+
+			states := errStatesByTitle(t, ruleStore)
+			require.Equal(t, models.OkErrState, states["TestAlert"])
+		})
+
+		for _, state := range []models.ExecutionErrorState{models.OkErrState, models.AlertingErrState, models.ErrorErrState, models.KeepLastErrState} {
+			t.Run("sets "+string(state)+" on alert rules and not on recording rules", func(t *testing.T) {
+				srv, _, ruleStore := createConvertPrometheusSrv(t)
+				rc := createRequestCtx()
+				rc.Req.Header.Set(execErrStateHeader, string(state))
+
+				response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
+				require.Equal(t, http.StatusAccepted, response.Status())
+
+				states := errStatesByTitle(t, ruleStore)
+				require.Equal(t, state, states["TestAlert"])
+				require.Equal(t, models.OkErrState, states["recorded-metric"])
+			})
+		}
+
+		t.Run("applies to every alert rule of a multi-group request", func(t *testing.T) {
+			srv, _, ruleStore := createConvertPrometheusSrv(t)
+			rc := createRequestCtx()
+			rc.Req.Header.Set(execErrStateHeader, string(models.KeepLastErrState))
+
+			second := simpleGroup
+			second.Name = "Second Group"
+			second.Rules = []apimodels.PrometheusRule{{Alert: "SecondAlert", Expr: "up == 1"}}
+
+			response := srv.RouteConvertPrometheusPostRuleGroups(rc, map[string][]apimodels.PrometheusRuleGroup{"test": {simpleGroup, second}})
+			require.Equal(t, http.StatusAccepted, response.Status())
+
+			states := errStatesByTitle(t, ruleStore)
+			require.Equal(t, models.KeepLastErrState, states["TestAlert"])
+			require.Equal(t, models.KeepLastErrState, states["SecondAlert"])
+		})
+
+		t.Run("re-import with a different value updates the stored rule", func(t *testing.T) {
+			srv, _, ruleStore := createConvertPrometheusSrv(t)
+
+			rc := createRequestCtx()
+			response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
+			require.Equal(t, http.StatusAccepted, response.Status())
+			require.Equal(t, models.OkErrState, errStatesByTitle(t, ruleStore)["TestAlert"])
+
+			rc = createRequestCtx()
+			rc.Req.Header.Set(execErrStateHeader, string(models.KeepLastErrState))
+			response = srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
+			require.Equal(t, http.StatusAccepted, response.Status())
+
+			var updated *models.AlertRule
+			for _, op := range ruleStore.RecordedOps {
+				if updates, ok := op.([]models.UpdateRule); ok {
+					for _, u := range updates {
+						if u.New.Title == "TestAlert" {
+							require.Equal(t, models.OkErrState, u.Existing.ExecErrState)
+							updated = &u.New
+						}
+					}
+				}
+			}
+			require.NotNil(t, updated, "the alert rule should be updated by the second import")
+			require.Equal(t, models.KeepLastErrState, updated.ExecErrState)
+		})
+
+		t.Run("invalid values return 400 and store nothing", func(t *testing.T) {
+			for _, value := range []string{"keeplast", "KEEPLAST", "Normal", "NoData"} {
+				t.Run(value, func(t *testing.T) {
+					srv, _, ruleStore := createConvertPrometheusSrv(t)
+					rc := createRequestCtx()
+					rc.Req.Header.Set(execErrStateHeader, value)
+
+					response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
+					require.Equal(t, http.StatusBadRequest, response.Status())
+					require.Contains(t, string(response.Body()), "Invalid value for header X-Grafana-Alerting-Exec-Err-State")
+					require.Empty(t, errStatesByTitle(t, ruleStore))
+				})
+			}
+		})
 	})
 
 	t.Run("with empty rule group name should return 400", func(t *testing.T) {
@@ -1839,7 +1941,8 @@ type convertPrometheusSrvOptions struct {
 	featureToggles               featuremgmt.FeatureToggles
 	alertmanager                 Alertmanager
 	folderService                folder.Service
-	rulerSync                    ExternalRulerSyncChecker
+	rulerSync                    externalRulerSyncChecker
+	requests                     *prometheus.CounterVec
 }
 
 type convertPrometheusSrvOptionsFunc func(*convertPrometheusSrvOptions)
@@ -1874,7 +1977,7 @@ func withAlertmanager(am Alertmanager) convertPrometheusSrvOptionsFunc {
 	}
 }
 
-func withRulerSync(checker ExternalRulerSyncChecker) convertPrometheusSrvOptionsFunc {
+func withRulerSync(checker externalRulerSyncChecker) convertPrometheusSrvOptionsFunc {
 	return func(opts *convertPrometheusSrvOptions) {
 		opts.rulerSync = checker
 	}
@@ -1916,6 +2019,7 @@ func createConvertPrometheusSrv(t *testing.T, opts ...convertPrometheusSrvOption
 		quotaChecker:                 quotas,
 		folderService:                foldertest.NewFakeService(),
 		rulerSync:                    fakeRulerSyncChecker{},
+		requests:                     metrics.NewAPIMetrics(nil).ConvertRequests,
 	}
 
 	for _, opt := range opts {
@@ -1955,7 +2059,7 @@ func createConvertPrometheusSrv(t *testing.T, opts ...convertPrometheusSrvOption
 		},
 	}
 
-	srv := NewConvertPrometheusSrv(cfg, log.NewNopLogger(), ruleStore, dsCache, alertRuleService, options.featureToggles, options.alertmanager, nil, options.rulerSync)
+	srv := NewConvertPrometheusSrv(cfg, log.NewNopLogger(), ruleStore, dsCache, alertRuleService, options.featureToggles, options.alertmanager, nil, options.rulerSync, options.requests)
 
 	return srv, dsCache, ruleStore
 }
@@ -2131,6 +2235,58 @@ func TestRouteConvertPrometheusPostAlertmanagerConfig(t *testing.T) {
 
 	ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
 	srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
+
+	for _, tc := range []struct {
+		name   string
+		header string
+	}{
+		{name: "import"},
+		{name: "dry run", header: dryRunHeader},
+		{name: "promote", header: promoteHeader},
+	} {
+		t.Run("rejects unknown fields on "+tc.name, func(t *testing.T) {
+			rc := createRequestCtx()
+			if tc.header != "" {
+				rc.Req.Header.Set(tc.header, "true")
+			}
+			response := srv.RouteConvertPrometheusPostAlertmanagerConfig(rc, apimodels.AlertmanagerUserConfig{
+				AlertmanagerConfig: "route: {receiver: default}\nreceivers:\n  - name: default\n    foo_configs: [{}]",
+			})
+			require.Equal(t, http.StatusBadRequest, response.Status())
+		})
+	}
+
+	t.Run("returns bad request when the identifier already exists", func(t *testing.T) {
+		const reservedIdentifier = "default"
+
+		mockAM := &mockAlertmanager{}
+		mockAM.On("IsExternalAMSyncConfiguredForOrg", mock.Anything, int64(1)).Return(false, nil).Once()
+		identifierExists := notifier.ErrIdentifierAlreadyExists.Build(errutil.TemplateData{
+			Public: map[string]interface{}{"Identifier": reservedIdentifier},
+		})
+		mockAM.On("SaveAndApplyExtraConfiguration", mock.Anything, int64(1), mock.Anything, mock.Anything,
+			mock.MatchedBy(func(extraConfig v1.ExtraConfiguration) bool { return extraConfig.Identifier == reservedIdentifier }),
+			false, false, false).Return(merge.MergeResult{}, identifierExists).Once()
+
+		srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
+		rc := createRequestCtx()
+		rc.Req = rc.Req.WithContext(t.Context())
+		rc.Req.Header.Set(configIdentifierHeader, reservedIdentifier)
+
+		response := srv.RouteConvertPrometheusPostAlertmanagerConfig(rc, apimodels.AlertmanagerUserConfig{
+			AlertmanagerConfig: `{"route":{"receiver":"default"},"receivers":[{"name":"default"}]}`,
+		})
+
+		require.Equal(t, http.StatusBadRequest, response.Status())
+		var body struct {
+			Message   string `json:"message"`
+			MessageID string `json:"messageId"`
+		}
+		require.NoError(t, json.Unmarshal(response.Body(), &body))
+		require.Equal(t, "Identifier [default] is already used by existing managed routes. Use another identifier or delete the existing route.", body.Message)
+		require.Equal(t, "alerting.notifications.alertmanager.identifierAlreadyExists", body.MessageID)
+		mockAM.AssertExpectations(t)
+	})
 
 	t.Run("should parse headers and call SaveAndApplyExtraConfiguration", func(t *testing.T) {
 		mockAM.On("SaveAndApplyExtraConfiguration", mock.Anything, int64(1), mock.Anything, mock.Anything, mock.MatchedBy(func(extraConfig v1.ExtraConfiguration) bool {
@@ -2340,6 +2496,7 @@ func TestRouteConvertPrometheusPostAlertmanagerConfig(t *testing.T) {
 
 		rc := createRequestCtx()
 		rc.Req.Header.Set(configIdentifierHeader, identifier)
+		rc.Req.Header.Set(configForceReplaceHeader, "true")
 
 		amCfg := apimodels.AlertmanagerUserConfig{
 			AlertmanagerConfig: `{"route":{"receiver":"default"},"receivers":[{"name":"default"}]}`,
@@ -2749,6 +2906,30 @@ func TestRouteConvertPrometheusPromoteAlertmanagerConfig(t *testing.T) {
 		response := srv.RouteConvertPrometheusPromoteAlertmanagerConfig(rc, identifier)
 
 		require.Equal(t, http.StatusInternalServerError, response.Status())
+		mockAM.AssertExpectations(t)
+	})
+
+	t.Run("should return bad request when the identifier already exists", func(t *testing.T) {
+		mockAM := &mockAlertmanager{}
+		identifierExists := notifier.ErrIdentifierAlreadyExists.Build(errutil.TemplateData{
+			Public: map[string]interface{}{"Identifier": identifier},
+		})
+		mockAM.On("PromoteExtraConfiguration", mock.Anything, orgID, mock.Anything, mock.Anything, identifier).
+			Return(merge.MergeResult{}, identifierExists).Once()
+		srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
+
+		rc := createRequestCtx()
+		rc.Req = rc.Req.WithContext(t.Context())
+		response := srv.RouteConvertPrometheusPromoteAlertmanagerConfig(rc, identifier)
+
+		require.Equal(t, http.StatusBadRequest, response.Status())
+		var body struct {
+			Message   string `json:"message"`
+			MessageID string `json:"messageId"`
+		}
+		require.NoError(t, json.Unmarshal(response.Body(), &body))
+		require.Equal(t, "Identifier [test-config] is already used by existing managed routes. Use another identifier or delete the existing route.", body.Message)
+		require.Equal(t, "alerting.notifications.alertmanager.identifierAlreadyExists", body.MessageID)
 		mockAM.AssertExpectations(t)
 	})
 

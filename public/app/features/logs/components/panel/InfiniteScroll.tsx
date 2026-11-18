@@ -1,8 +1,18 @@
-import { type ReactNode, useCallback, useEffect, useRef, useState, type MouseEvent } from 'react';
+import {
+  type ComponentType,
+  memo,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type MouseEvent,
+} from 'react';
 import { usePrevious } from 'react-use';
 import { type ListChildComponentProps, type ListOnItemsRenderedProps } from 'react-window';
 
-import { type AbsoluteTimeRange, LoadingState, LogsSortOrder, type TimeRange } from '@grafana/data';
+import { LoadingState, LogsSortOrder, type TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Spinner, useStyles2 } from '@grafana/ui';
@@ -11,6 +21,8 @@ import {
   canScrollBottom,
   canScrollTop,
   getVisibleRange,
+  type InfiniteScrollTimeRange,
+  loadMoreRangeFromVisible,
   ScrollDirection,
   shouldLoadMore,
 } from '../infiniteScrollUtils';
@@ -20,11 +32,30 @@ import { LogLineMessage } from './LogLineMessage';
 import { type LogListModel } from './processing';
 import { type LogLineVirtualization } from './virtualization';
 
+// The data every LogLine needs
+interface LogData {
+  displayedFields: string[];
+  handleOverflow: (index: number, id: string, height?: number) => void;
+  infiniteLoaderState: InfiniteLoaderState;
+  lastLogOfPage: string[];
+  loadMoreBottom: () => void;
+  logs: LogListModel[];
+  onClick: (e: MouseEvent<HTMLElement>, log: LogListModel) => void;
+  showTime: boolean;
+  sortOrder: LogsSortOrder;
+  styles: ReturnType<typeof getStyles>;
+  timeRange: TimeRange;
+  timeZone: string;
+  virtualization: LogLineVirtualization;
+  wrapLogMessage: boolean;
+}
+
 interface ChildrenProps {
   itemCount: number;
+  itemData: LogData;
   getItemKey: (index: number) => string;
   onItemsRendered: (props: ListOnItemsRenderedProps) => void;
-  Renderer: (props: ListChildComponentProps) => ReactNode;
+  Log: ComponentType<ListChildComponentProps<LogData>>;
 }
 
 export interface Props {
@@ -49,8 +80,8 @@ export interface Props {
 type InfiniteLoaderState = 'idle' | 'out-of-bounds' | 'pre-scroll-top' | 'pre-scroll-bottom' | 'loading';
 export type InfiniteScrollMode = 'interval' | 'unlimited';
 export type LoadMoreLogsType =
-  | ((range: AbsoluteTimeRange) => void)
-  | ((range: AbsoluteTimeRange, scrollDirection: ScrollDirection) => void);
+  | ((range: InfiniteScrollTimeRange) => void)
+  | ((range: InfiniteScrollTimeRange, scrollDirection: ScrollDirection) => void);
 
 export const InfiniteScroll = ({
   children,
@@ -87,11 +118,13 @@ export const InfiniteScroll = ({
   // The request backing a load-more is in flight while its state is Loading or Streaming.
   const requestInFlight = loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming;
   const prevInFlight = usePrevious(requestInFlight);
+  // Fresh logs from a new query (not infinite scrolling).
+  const isFreshQuery = Boolean(prevLogs) && prevLogs !== logs && infiniteLoaderState !== 'loading';
 
   useEffect(() => {
-    // Fresh logs from a new query (not infinite scrolling): reset paging, scroll, and clear a stale
-    // 'out-of-bounds' so re-running the query re-enables scrolling instead of latching end-of-range.
-    if (prevLogs && prevLogs !== logs && infiniteLoaderState !== 'loading') {
+    // Reset paging and scroll, and clear a stale 'out-of-bounds' so re-running the query re-enables scrolling
+    // instead of latching end-of-range.
+    if (isFreshQuery) {
       lastLogOfPage.current = [];
       setAutoScroll(true);
       if (infiniteLoaderState !== 'idle') {
@@ -125,7 +158,16 @@ export const InfiniteScroll = ({
         }
       }
     }
-  }, [infiniteLoaderState, infiniteScrollMode, loadingState, requestInFlight, prevInFlight, logs, prevLogs]);
+  }, [
+    infiniteLoaderState,
+    infiniteScrollMode,
+    isFreshQuery,
+    loadingState,
+    requestInFlight,
+    prevInFlight,
+    logs,
+    prevLogs,
+  ]);
 
   useEffect(() => {
     if (prevSortOrder && prevSortOrder !== sortOrder) {
@@ -143,10 +185,11 @@ export const InfiniteScroll = ({
 
   const onLoadMore = useCallback(
     (scrollDirection: ScrollDirection) => {
+      const visibleRange = getVisibleRange(logs);
       const newRange =
         scrollDirection === ScrollDirection.Bottom
-          ? canScrollBottom(getVisibleRange(logs), timeRange, timeZone, sortOrder)
-          : canScrollTop(getVisibleRange(logs), timeRange, timeZone, sortOrder);
+          ? canScrollBottom(visibleRange, timeRange, timeZone, sortOrder)
+          : canScrollTop(visibleRange, timeRange, timeZone, sortOrder);
       if (!newRange && infiniteScrollMode === 'interval') {
         setInfiniteLoaderState('out-of-bounds');
         return;
@@ -160,7 +203,7 @@ export const InfiniteScroll = ({
       // Snapshot the row count so the completion effect can tell whether new rows arrived.
       loadMoreCountRef.current = logs.length;
       setInfiniteLoaderState('loading');
-      loadMore?.(newRange ?? getVisibleRange(logs), scrollDirection);
+      loadMore?.(newRange ?? loadMoreRangeFromVisible(visibleRange, scrollDirection, sortOrder), scrollDirection);
 
       reportInteraction('grafana_logs_infinite_scrolling', {
         direction: scrollDirection,
@@ -231,42 +274,28 @@ export const InfiniteScroll = ({
     onLoadMore(ScrollDirection.Bottom);
   }, [onLoadMore]);
 
-  const Renderer = useCallback(
-    ({ index, style }: ListChildComponentProps) => {
-      if (!logs[index] && infiniteLoaderState !== 'idle') {
-        return (
-          <LogLineMessage
-            style={style}
-            styles={styles}
-            onClick={infiniteLoaderState === 'pre-scroll-bottom' ? loadMoreBottom : undefined}
-          >
-            {getMessageFromInfiniteLoaderState(infiniteLoaderState, sortOrder)}
-          </LogLineMessage>
-        );
-      }
-      return (
-        <LogLine
-          displayedFields={displayedFields}
-          index={index}
-          log={logs[index]}
-          logs={logs}
-          onClick={onClick}
-          showTime={showTime}
-          style={style}
-          styles={styles}
-          timeRange={timeRange}
-          timeZone={timeZone}
-          variant={getLogLineVariant(logs, index, lastLogOfPage.current)}
-          virtualization={virtualization}
-          wrapLogMessage={wrapLogMessage}
-          onOverflow={handleOverflow}
-        />
-      );
-    },
+  const itemData = useMemo<LogData>(
+    () => ({
+      displayedFields,
+      handleOverflow,
+      infiniteLoaderState,
+      lastLogOfPage: isFreshQuery ? [] : lastLogOfPage.current,
+      loadMoreBottom,
+      logs,
+      onClick,
+      showTime,
+      sortOrder,
+      styles,
+      timeRange,
+      timeZone,
+      virtualization,
+      wrapLogMessage,
+    }),
     [
       displayedFields,
       handleOverflow,
       infiniteLoaderState,
+      isFreshQuery,
       loadMoreBottom,
       logs,
       onClick,
@@ -319,7 +348,7 @@ export const InfiniteScroll = ({
           </LogLineMessage>
         </div>
       )}
-      {children({ getItemKey, itemCount, onItemsRendered, Renderer })}
+      {children({ getItemKey, itemCount, itemData, onItemsRendered, Log })}
     </>
   );
 };
@@ -343,6 +372,56 @@ function getMessageFromInfiniteLoaderState(state: InfiniteLoaderState, order: Lo
       return null;
   }
 }
+
+const Log = memo(({ index, style, data }: ListChildComponentProps<LogData>) => {
+  const {
+    displayedFields,
+    handleOverflow,
+    infiniteLoaderState,
+    lastLogOfPage,
+    loadMoreBottom,
+    logs,
+    onClick,
+    showTime,
+    sortOrder,
+    styles,
+    timeRange,
+    timeZone,
+    virtualization,
+    wrapLogMessage,
+  } = data;
+
+  if (!logs[index] && infiniteLoaderState !== 'idle') {
+    return (
+      <LogLineMessage
+        style={style}
+        styles={styles}
+        onClick={infiniteLoaderState === 'pre-scroll-bottom' ? loadMoreBottom : undefined}
+      >
+        {getMessageFromInfiniteLoaderState(infiniteLoaderState, sortOrder)}
+      </LogLineMessage>
+    );
+  }
+  return (
+    <LogLine
+      displayedFields={displayedFields}
+      index={index}
+      log={logs[index]}
+      logs={logs}
+      onClick={onClick}
+      showTime={showTime}
+      style={style}
+      styles={styles}
+      timeRange={timeRange}
+      timeZone={timeZone}
+      variant={getLogLineVariant(logs, index, lastLogOfPage)}
+      virtualization={virtualization}
+      wrapLogMessage={wrapLogMessage}
+      onOverflow={handleOverflow}
+    />
+  );
+});
+Log.displayName = 'InfiniteScrollLog';
 
 function getLogLineVariant(logs: LogListModel[], index: number, lastLogOfPage: string[]) {
   if (!lastLogOfPage.length || !logs[index - 1]) {

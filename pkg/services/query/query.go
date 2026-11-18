@@ -40,9 +40,9 @@ const (
 	HeaderDashboardTitle = "X-Dashboard-Title" // used for identifying the dashboard with heavy query load
 	HeaderPanelTitle     = "X-Panel-Title"     // used for identifying the panel with heavy query load
 	HeaderPanelPluginId  = "X-Panel-Plugin-Id"
-	HeaderQueryGroupID   = "X-Query-Group-Id"    // mainly useful for finding related queries with query chunking
-	HeaderFromExpression = "X-Grafana-From-Expr" // used by datasources to identify expression queries
-	HeaderCallerID       = "X-Grafana-Caller-Id" // identifies the caller that initiated this query (e.g. an app plugin id or external tool name)
+	HeaderQueryGroupID   = "X-Query-Group-Id"        // mainly useful for finding related queries with query chunking
+	HeaderFromExpression = expr.HeaderFromExpression // used by datasources to identify expression queries
+	HeaderCallerID       = "X-Grafana-Caller-Id"     // identifies the caller that initiated this query (e.g. an app plugin id or external tool name)
 )
 
 func ProvideService(
@@ -116,15 +116,23 @@ func (s *ServiceImpl) queryData(ctx context.Context, user identity.Requester, sk
 		return nil, err
 	}
 
+	queryCount := 0
+	for _, queries := range parsedReq.parsedQueries {
+		queryCount += len(queries)
+	}
+
 	// If there are expressions, handle them and return
 	if parsedReq.hasExpression || fromAlert {
+		s.log.Info("queryData", "handler", "handleExpressions", "fromAlert", fromAlert, "queryCount", queryCount)
 		return s.handleExpressions(ctx, user, parsedReq)
 	}
 	// If there is only one datasource, query it and return
 	if len(parsedReq.parsedQueries) == 1 {
+		s.log.Info("queryData", "handler", "handleQuerySingleDatasource", "fromAlert", fromAlert, "queryCount", queryCount)
 		return s.handleQuerySingleDatasource(ctx, user, parsedReq)
 	}
 	// If there are multiple datasources, handle their queries concurrently and return the aggregate result
+	s.log.Info("queryData", "handler", "executeConcurrentQueries", "fromAlert", fromAlert, "queryCount", queryCount)
 	return s.executeConcurrentQueries(ctx, user, skipDSCache, reqDTO, parsedReq.parsedQueries)
 }
 

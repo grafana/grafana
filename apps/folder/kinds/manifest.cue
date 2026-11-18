@@ -4,6 +4,7 @@ manifest: {
 	appName:          "folder"
 	groupOverride:    "folder.grafana.app"
 	preferredVersion: "v1"
+	embed: folders: reembedVersion: 1
 
 	versions: {
 		"v1": {
@@ -14,6 +15,13 @@ manifest: {
 			kinds: [
 				foldersV1,
 			]
+		}
+		"v1alpha1": {
+			codegen: {
+				ts: {enabled: false}
+				go: {enabled: true}
+			}
+			kinds: [pendingFolderDeletionsV1alpha1]
 		}
 		"v1beta1": {
 			codegen: {

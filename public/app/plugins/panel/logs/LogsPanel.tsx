@@ -5,7 +5,6 @@ import * as React from 'react';
 import { isObservable, lastValueFrom } from 'rxjs';
 
 import {
-  type AbsoluteTimeRange,
   CoreApp,
   type DataFrame,
   DataHoverClearEvent,
@@ -34,11 +33,16 @@ import { getAppEvents } from '@grafana/runtime';
 import { usePanelContext, useStyles2 } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
+import {
+  type InfiniteScrollTimeRange,
+  withLokiInfiniteScrollBound,
+} from 'app/features/logs/components/infiniteScrollUtils';
 import { LogLineContext } from 'app/features/logs/components/panel/LogLineContext';
 import { LogList } from 'app/features/logs/components/panel/LogList';
 import { getLogsPanelState } from 'app/features/logs/components/panel/panelState/getLogsPanelState';
 import { isMissingStringField, isMissingTimeField } from 'app/features/logs/utils';
 import { combineResponses } from 'app/features/loki-helpers/mergeResponses';
+import { SupportingQueryType } from 'app/features/loki-helpers/types';
 import { PanelDataErrorView } from 'app/features/panel/components/PanelDataErrorView';
 
 import { createAndCopyShortLink, getLogsPermalinkRange } from '../../../core/utils/shortLinks';
@@ -397,7 +401,7 @@ export const LogsPanel = ({ data, timeZone, fieldConfig, options, onOptionsChang
   }, [options.displayedFields]);
 
   const loadMoreLogs = useCallback(
-    async (scrollRange: AbsoluteTimeRange) => {
+    async (scrollRange: InfiniteScrollTimeRange) => {
       if (!data.request || loadingRef.current) {
         return;
       }
@@ -596,7 +600,7 @@ async function copyDashboardUrl(row: LogRowModel, rows: LogRowModel[], timeRange
 async function requestMoreLogs(
   dataSourcesMap: Map<string, DataSourceApi>,
   panelData: PanelData,
-  timeRange: AbsoluteTimeRange,
+  timeRange: InfiniteScrollTimeRange,
   timeZone: TimeZone,
   onNewLogsReceived?: onNewLogsReceivedType
 ) {
@@ -622,7 +626,16 @@ async function requestMoreLogs(
       dataSource.query({
         ...panelData.request,
         range,
-        targets: targetGroups[uid],
+        targets: targetGroups[uid].map((target) =>
+          withLokiInfiniteScrollBound(
+            {
+              ...target,
+              supportingQueryType: SupportingQueryType.InfiniteScroll,
+            },
+            timeRange,
+            dataSource.type
+          )
+        ),
       })
     );
   }

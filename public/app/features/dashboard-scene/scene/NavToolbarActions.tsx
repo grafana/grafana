@@ -4,12 +4,13 @@ import { memo, type ReactNode, useState } from 'react';
 import { type GrafanaTheme2, store } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { Button, ButtonGroup, Dropdown, Icon, Menu, ToolbarButton, ToolbarButtonRow, useStyles2 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { trackDashboardSceneEditButtonClicked } from 'app/features/dashboard-scene/utils/tracking';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
@@ -20,10 +21,12 @@ import { StarToolbarButton } from 'app/features/stars/StarToolbarButton';
 import { useSelector } from 'app/types/store';
 
 import { selectFolderRepository } from '../../provisioning/utils/selectors';
+import { savesPendingChanges } from '../lifecycle/pendingChangesSave';
 import { openPanelEditor } from '../panel-edit/openPanelEditor';
 import ExportButton from '../sharing/ExportButton/ExportButton';
 import ShareButton from '../sharing/ShareButton/ShareButton';
 import { DashboardInteractions } from '../utils/interactions';
+import { useIsMobileEditDeprecated } from '../utils/mobileEditDeprecation';
 import { type DynamicDashNavButtonModel, dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 import { isLibraryPanel } from '../utils/utils';
 
@@ -32,6 +35,7 @@ import { GoToSnapshotOriginButton } from './GoToSnapshotOriginButton';
 import { ManagedDashboardNavBarBadge } from './ManagedDashboardNavBarBadge';
 import { Actions } from './new-toolbar/Actions';
 import { BreadcrumbActions } from './new-toolbar/BreadcrumbActions';
+import { PlanningBanner } from './new-toolbar/PlanningBanner';
 import { PublicDashboardBadge } from './new-toolbar/actions/PublicDashboardBadge';
 
 interface Props {
@@ -39,7 +43,18 @@ interface Props {
 }
 
 export const NavToolbarActions = memo<Props>(({ dashboard }) => {
-  const hasNewToolbar = config.featureToggles.dashboardNewLayouts;
+  const hasNewToolbar = isDashboardNewLayoutsEnabled();
+  const { planning } = dashboard.useState();
+
+  // A plan preview replaces the whole toolbar with just the banner: the preview never enters
+  // edit mode, so none of the normal actions (Edit, Save, Settings, Share) apply, and checking
+  // this before any other branching keeps both toolbar variants consistent.
+  // While the plan is building there is nothing left to decide, so the toolbar stays empty.
+  if (planning) {
+    return (
+      <AppChromeUpdate actions={planning.phase === 'preview' ? <PlanningBanner planning={planning} /> : undefined} />
+    );
+  }
 
   return hasNewToolbar ? (
     <AppChromeUpdate
@@ -80,6 +95,8 @@ export function ToolbarActions({ dashboard }: Props) {
 
   const isEditingLibraryPanel = editPanel && isLibraryPanel(editPanel.state.panelRef.resolve());
   const isNew = !Boolean(uid || dashboard.isManaged());
+  // Pending changes are unsaved changes until Save saves them.
+  const hasUnsavedChanges = isDirty || savesPendingChanges(dashboard);
 
   const hasCopiedPanel = store.exists(LS_PANEL_COPY_KEY);
   // Means we are not in settings view, fullscreen panel or edit panel
@@ -91,6 +108,7 @@ export function ToolbarActions({ dashboard }: Props) {
   const { isReadOnlyRepo, repoType } = useGetResourceRepositoryView({
     folderName: folderUid,
   });
+  const isMobileEditDeprecated = useIsMobileEditDeprecated();
 
   if (!isEditingPanel) {
     // This adds the presence indicators in enterprise
@@ -314,7 +332,13 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'main-buttons',
-    condition: !isEditing && dashboard.canEditDashboard() && !isViewingPanel && !isPlaying && editable,
+    condition:
+      !isEditing &&
+      dashboard.canEditDashboard() &&
+      !isViewingPanel &&
+      !isPlaying &&
+      editable &&
+      !isMobileEditDeprecated,
     render: () => (
       <Button
         onClick={() => {
@@ -340,7 +364,13 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'main-buttons',
-    condition: !isEditing && dashboard.canEditDashboard() && !isViewingPanel && !isPlaying && !editable,
+    condition:
+      !isEditing &&
+      dashboard.canEditDashboard() &&
+      !isViewingPanel &&
+      !isPlaying &&
+      !editable &&
+      !isMobileEditDeprecated,
     render: () => (
       <Button
         onClick={() => {
@@ -447,7 +477,7 @@ export function ToolbarActions({ dashboard }: Props) {
             tooltip={t('dashboard.toolbar.save-dashboard-copy.tooltip', 'Save as copy')}
             key="save"
             size="sm"
-            variant={isDirty ? 'primary' : 'secondary'}
+            variant={hasUnsavedChanges ? 'primary' : 'secondary'}
           >
             <Trans i18nKey="dashboard.toolbar.save-dashboard-copy.label">Save as copy</Trans>
           </Button>
@@ -484,7 +514,7 @@ export function ToolbarActions({ dashboard }: Props) {
             tooltip={t('dashboard.toolbar.save-dashboard.tooltip', 'Save changes')}
             size="sm"
             data-testid={selectors.components.NavToolbar.editDashboard.saveButton}
-            variant={isDirty ? 'primary' : 'secondary'}
+            variant={hasUnsavedChanges ? 'primary' : 'secondary'}
           >
             <Trans i18nKey="dashboard.toolbar.save-dashboard.label">Save dashboard</Trans>
           </Button>
@@ -492,7 +522,7 @@ export function ToolbarActions({ dashboard }: Props) {
             <Button
               aria-label={t('dashboard.toolbar.more-save-options', 'More save options')}
               icon="angle-down"
-              variant={isDirty ? 'primary' : 'secondary'}
+              variant={hasUnsavedChanges ? 'primary' : 'secondary'}
               size="sm"
               data-testid={selectors.components.NavToolbar.editDashboard.moreSaveOptionsButton}
             />

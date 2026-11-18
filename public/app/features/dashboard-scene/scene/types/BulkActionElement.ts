@@ -1,10 +1,10 @@
-import { type EditableDashboardElement } from './EditableDashboardElement';
+import { type EditActionSource, type EditableDashboardElement } from './EditableDashboardElement';
 
 export interface BulkActionElement extends EditableDashboardElement {
   /**
    * Called when the element should be deleted
    */
-  onDelete(): void;
+  onDelete(source?: EditActionSource): void;
 
   /**
    * Called when the element should be copied

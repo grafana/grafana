@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"maps"
 	"net/http"
+	"slices"
 	"strings"
 	"sync"
 
@@ -14,6 +15,7 @@ import (
 	"k8s.io/klog/v2"
 	openapi "k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
+	"k8s.io/kube-openapi/pkg/util"
 	spec "k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -102,6 +104,47 @@ func addRouteSchemas(openAPISpec *spec3.OpenAPI, route APIRouteHandler) {
 	}
 }
 
+// RouteSchemas returns the components a route whose spec references roots must
+// publish in Schemas, keyed by component name. Each root is named the way
+// definitions keys it. Dependencies are followed rather than listed, so a new
+// field cannot reference a component nobody publishes.
+func RouteSchemas(definitions openapi.GetOpenAPIDefinitions, roots ...string) map[string]spec.Schema {
+	defs := definitions(RouteSchemaRef)
+
+	out := map[string]spec.Schema{}
+	queue := slices.Clone(roots)
+	for len(queue) > 0 {
+		name := queue[0]
+		queue = queue[1:]
+
+		if _, seen := out[routeSchemaName(name)]; seen {
+			continue
+		}
+		def, ok := defs[name]
+		if !ok {
+			continue
+		}
+		out[routeSchemaName(name)] = def.Schema
+		queue = append(queue, def.Dependencies...)
+	}
+
+	return out
+}
+
+// RouteSchemaRef is the $ref to a component RouteSchemas publishes.
+func RouteSchemaRef(name string) spec.Ref {
+	return spec.MustCreateRef("#/components/schemas/" + routeSchemaName(name))
+}
+
+// Generated dependencies come as either Go import paths or names OpenAPIModelName
+// already converted, and converting a converted name again changes it.
+func routeSchemaName(name string) string {
+	if strings.Contains(name, "/") {
+		return util.ToRESTFriendlyName(name)
+	}
+	return name
+}
+
 func addBuilderRoutes(
 	targetGroupVersion schema.GroupVersion,
 	openAPISpec *spec3.OpenAPI,
@@ -174,14 +217,23 @@ func isAllRoute(prefix, path string, paths map[string]*spec3.Path) bool {
 // Modify the OpenAPI spec to include the additional routes.
 // nolint:gocyclo
 func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder, gvs []schema.GroupVersion, apiResourceConfig *serverstorage.ResourceConfig, extra []GroupVersionRoutes) func(*spec3.OpenAPI) (*spec3.OpenAPI, error) {
+	// A group version served only through caller-supplied routes has no builder, so
+	// it is not in gvs, and its spec has no discovery path. Its routes still need
+	// their full spec, rather than the bare one the WebService alone produces.
+	targets := slices.Clone(gvs)
+	for _, e := range extra {
+		if !slices.Contains(targets, e.GroupVersion) {
+			targets = append(targets, e.GroupVersion)
+		}
+	}
 	return func(s *spec3.OpenAPI) (*spec3.OpenAPI, error) {
 		if s.Paths == nil {
 			return s, nil
 		}
 
-		for _, gv := range gvs {
+		for _, gv := range targets {
 			prefix := "/apis/" + gv.String() + "/"
-			if s.Paths.Paths[prefix] != nil {
+			if hasPathUnder(s.Paths.Paths, prefix) {
 				copy := spec3.OpenAPI{
 					Version: s.Version,
 					Info: &spec.Info{
@@ -344,6 +396,15 @@ func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder, gvs []s
 		}
 		return s, nil
 	}
+}
+
+func hasPathUnder(paths map[string]*spec3.Path, prefix string) bool {
+	for path := range paths {
+		if strings.HasPrefix(path, prefix) {
+			return true
+		}
+	}
+	return false
 }
 
 // GetPathOperations returns the set of non-nil operations defined on a path

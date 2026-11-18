@@ -38,6 +38,8 @@ func TestApplyAuthnSettings(t *testing.T) {
 		require.NoError(t, err)
 		_, err = auth.NewKey("oauth_refresh_token_server_lock_min_wait_ms", "1250")
 		require.NoError(t, err)
+		_, err = auth.NewKey("oauth_refresh_token_server_lock_wait_budget_ms", "3000")
+		require.NoError(t, err)
 		_, err = auth.NewKey("oauth_allow_insecure_email_lookup", "true")
 		require.NoError(t, err)
 
@@ -56,6 +58,17 @@ func TestApplyAuthnSettings(t *testing.T) {
 		_, err = grafanaCom.NewKey("url", "http://localhost:13001")
 		require.NoError(t, err)
 
+		quota, err := settings.NewSection("quota")
+		require.NoError(t, err)
+		_, err = quota.NewKey("enabled", "true")
+		require.NoError(t, err)
+		_, err = quota.NewKey("global_user", "42")
+		require.NoError(t, err)
+		_, err = quota.NewKey("org_user", "17")
+		require.NoError(t, err)
+		_, err = quota.NewKey("user_org", "3")
+		require.NoError(t, err)
+
 		cfg := NewCfg()
 		err = cfg.ApplyAuthnSettings(settings)
 		require.NoError(t, err)
@@ -70,12 +83,17 @@ func TestApplyAuthnSettings(t *testing.T) {
 		assert.Equal(t, "secretKey.v1", cfg.Raw.Section("security").Key("encryption_provider").String())
 		assert.Equal(t, 900, cfg.OAuthCookieMaxAge)
 		assert.Equal(t, int64(1250), cfg.OAuthRefreshTokenServerLockMinWaitMs)
+		assert.Equal(t, int64(3000), cfg.OAuthRefreshTokenServerLockWaitBudgetMs)
 		assert.True(t, cfg.OAuthAllowInsecureEmailLookup)
 		assert.True(t, cfg.CookieSecure)
 		assert.Equal(t, http.SameSiteStrictMode, cfg.CookieSameSiteMode)
 		assert.Equal(t, "http://localtest.example.com:8080/", cfg.AppURL)
 		assert.Empty(t, cfg.AppSubURL)
 		assert.Equal(t, "http://localhost:13001", cfg.GrafanaComURL)
+		assert.True(t, cfg.Quota.Enabled)
+		assert.EqualValues(t, 42, cfg.Quota.Global.User)
+		assert.EqualValues(t, 17, cfg.Quota.Org.User)
+		assert.EqualValues(t, 3, cfg.Quota.User.Org)
 	})
 
 	t.Run("applies Grafana defaults", func(t *testing.T) {
@@ -96,10 +114,15 @@ func TestApplyAuthnSettings(t *testing.T) {
 		assert.Equal(t, 15*time.Minute, cfg.UserLastSeenUpdateInterval)
 		assert.Equal(t, 600, cfg.OAuthCookieMaxAge)
 		assert.Equal(t, int64(1000), cfg.OAuthRefreshTokenServerLockMinWaitMs)
+		assert.Equal(t, int64(5000), cfg.OAuthRefreshTokenServerLockWaitBudgetMs)
 		assert.False(t, cfg.CookieSecure)
 		assert.Equal(t, http.SameSiteLaxMode, cfg.CookieSameSiteMode)
 		assert.Equal(t, "http://localhost:3000/", cfg.AppURL)
 		assert.Equal(t, "https://grafana.com", cfg.GrafanaComURL)
+		assert.False(t, cfg.Quota.Enabled)
+		assert.EqualValues(t, -1, cfg.Quota.Global.User)
+		assert.EqualValues(t, 10, cfg.Quota.Org.User)
+		assert.EqualValues(t, 10, cfg.Quota.User.Org)
 	})
 
 	t.Run("does not mutate compatibility globals", func(t *testing.T) {
@@ -137,5 +160,57 @@ func TestApplyAuthnSettings(t *testing.T) {
 
 		err = NewCfg().ApplyAuthnSettings(settings)
 		assert.ErrorContains(t, err, "auth.login_maximum_lifetime_duration")
+	})
+}
+
+func TestApplyLoginSettings(t *testing.T) {
+	t.Run("no ini file", func(t *testing.T) {
+		err := NewCfg().ApplyLoginSettings(nil)
+		assert.ErrorContains(t, err, "cannot be nil")
+	})
+
+	t.Run("empty ini file uses defaults", func(t *testing.T) {
+		cfg := NewCfg()
+		err := cfg.ApplyLoginSettings(ini.Empty())
+		require.NoError(t, err)
+
+		assert.False(t, cfg.LDAPAuthEnabled)
+		assert.False(t, cfg.DisableLoginForm)
+		assert.True(t, cfg.AllowUserSignUp)
+		assert.Empty(t, cfg.LoginHint)
+		assert.Empty(t, cfg.PasswordHint)
+	})
+
+	t.Run("sets keys", func(t *testing.T) {
+		settings := ini.Empty()
+
+		ldap, err := settings.NewSection("auth.ldap")
+		require.NoError(t, err)
+		_, err = ldap.NewKey("enabled", "true")
+		require.NoError(t, err)
+
+		auth, err := settings.NewSection("auth")
+		require.NoError(t, err)
+		_, err = auth.NewKey("disable_login_form", "true")
+		require.NoError(t, err)
+
+		users, err := settings.NewSection("users")
+		require.NoError(t, err)
+		_, err = users.NewKey("allow_sign_up", "false")
+		require.NoError(t, err)
+		_, err = users.NewKey("login_hint", "a login hint")
+		require.NoError(t, err)
+		_, err = users.NewKey("password_hint", "a password hint")
+		require.NoError(t, err)
+
+		cfg := NewCfg()
+		err = cfg.ApplyLoginSettings(settings)
+		require.NoError(t, err)
+
+		assert.True(t, cfg.DisableLoginForm)
+		assert.True(t, cfg.LDAPAuthEnabled)
+		assert.False(t, cfg.AllowUserSignUp)
+		assert.Equal(t, "a login hint", cfg.LoginHint)
+		assert.Equal(t, "a password hint", cfg.PasswordHint)
 	})
 }

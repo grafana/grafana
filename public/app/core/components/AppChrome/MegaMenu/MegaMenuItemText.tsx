@@ -178,11 +178,11 @@ MegaMenuItemText.displayName = 'MegaMenuItemText';
 
 const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], visualRefreshEnabled: boolean) => {
   const wrapperActiveOld = css({
-    backgroundColor: theme.colors.action.selected,
+    backgroundColor: theme.components.navmenu.activeItemBackground,
     borderTopRightRadius: theme.shape.radius.default,
     borderBottomRightRadius: theme.shape.radius.default,
     position: 'relative',
-    color: theme.colors.text.primary,
+    color: theme.components.navmenu.activeItemText,
 
     '&::before': {
       backgroundImage: theme.colors.gradients.brandVertical,
@@ -198,13 +198,10 @@ const getStyles = (theme: GrafanaTheme2, isActive: Props['isActive'], visualRefr
   });
 
   const wrapperActiveVisualRefresh = css({
-    color: theme.colors.accent.text,
-    backgroundColor: theme.colors.accent.background,
+    backgroundColor: theme.components.navmenu.activeItemBackground,
+    color: theme.components.navmenu.activeItemText,
     position: 'relative',
     borderRadius: theme.shape.radius.default,
-    '&:hover': {
-      color: theme.colors.accent.textEmphasis,
-    },
   });
 
   return {

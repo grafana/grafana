@@ -1,4 +1,12 @@
+import { render, screen } from '@testing-library/react';
 import { of } from 'rxjs';
+import { makeDataSourceSettings } from 'test/helpers/makeDataSourceSettings';
+import {
+  type DataSourceFallbackWatcher,
+  seedDataSources,
+  watchDataSourceFallbacks,
+} from 'test/helpers/seedDataSources';
+import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 
 import {
   FieldType,
@@ -28,8 +36,9 @@ import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { type DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
+import { findVizPanelByKey } from '../utils/findVizPanel';
+import { useIsMobileEditDeprecated } from '../utils/mobileEditDeprecation';
 import { activateFullSceneTree } from '../utils/test-utils';
-import { findVizPanelByKey } from '../utils/utils';
 
 import { InspectJsonTab } from './InspectJsonTab';
 
@@ -69,14 +78,6 @@ jest.mock('@grafana/runtime', () => ({
   getPluginLinkExtensions: jest.fn(() => ({
     extensions: [],
   })),
-  getDataSourceSrv: () => {
-    return {
-      get: jest.fn().mockResolvedValue({
-        getRef: () => ({ uid: 'ds1' }),
-      }),
-      getInstanceSettings: jest.fn().mockResolvedValue({ uid: 'ds1' }),
-    };
-  },
   config: {
     ...jest.requireActual('@grafana/runtime').config,
     defaultDatasource: 'ds1',
@@ -89,6 +90,11 @@ jest.mock('@grafana/runtime', () => ({
       },
     },
   },
+}));
+
+jest.mock('../utils/mobileEditDeprecation', () => ({
+  ...jest.requireActual('../utils/mobileEditDeprecation'),
+  useIsMobileEditDeprecated: jest.fn(() => false),
 }));
 
 const runRequestMock = jest.fn().mockReturnValue(
@@ -119,6 +125,21 @@ const runRequestMock = jest.fn().mockReturnValue(
 );
 
 setRunRequest(runRequestMock);
+
+beforeEach(() => {
+  const settings = makeDataSourceSettings('abcdef', 'abcdef', 'abcdef-type', { isDefault: true });
+  seedDataSources([{ settings, api: new MockDataSourceApi(settings) }], { legacySrv: 'mock' });
+});
+
+let dataSourceFallbacks: DataSourceFallbackWatcher;
+
+beforeEach(() => {
+  dataSourceFallbacks = watchDataSourceFallbacks();
+});
+
+afterEach(() => {
+  dataSourceFallbacks.expectNoFallbacks(['instance', 'settings', 'list']);
+});
 
 describe('InspectJsonTab', () => {
   it('Can show panel json', async () => {
@@ -164,7 +185,7 @@ describe('InspectJsonTab', () => {
   it('Can update model', async () => {
     const { tab, panel, scene } = await buildTestScene();
 
-    tab.onCodeEditorBlur(`{
+    tab.onJsonTextChange(`{
       "id": 12,
       "type": "table",
       "title": "New title",
@@ -189,6 +210,48 @@ describe('InspectJsonTab', () => {
     expect(tab.state.onClose).toHaveBeenCalled();
   });
 
+  it('does not update the panel when entering edit mode is blocked', async () => {
+    const { tab, panel, scene } = await buildTestScene();
+    jest.spyOn(scene, 'onEnterEditMode').mockReturnValue(false);
+    scene.setState({ isEditing: false });
+
+    tab.onJsonTextChange(`{
+      "id": 12,
+      "type": "table",
+      "title": "New title",
+      "gridPos": { "x": 1, "y": 2, "w": 3, "h": 4 },
+      "options": {},
+      "fieldConfig": {},
+      "transformations": [],
+      "transparent": false
+    }`);
+
+    tab.onApplyChange();
+
+    expect(findVizPanelByKey(scene, panel.state.key)!.state.title).not.toBe('New title');
+    expect(tab.state.onClose).not.toHaveBeenCalled();
+  });
+
+  it('disables Apply and warns when edit is deprecated on mobile', async () => {
+    jest.mocked(useIsMobileEditDeprecated).mockReturnValue(true);
+    const { tab } = await buildTestScene();
+
+    render(<tab.Component model={tab} />);
+
+    expect(screen.getByText('Editing is unavailable on small screens')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Apply' })).toBeDisabled();
+  });
+
+  it('enables Apply without a warning when edit is not deprecated', async () => {
+    jest.mocked(useIsMobileEditDeprecated).mockReturnValue(false);
+    const { tab } = await buildTestScene();
+
+    render(<tab.Component model={tab} />);
+
+    expect(screen.queryByText('Editing is unavailable on small screens')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Apply' })).toBeEnabled();
+  });
+
   it('Can update gridPos and forces layout re-render', async () => {
     const { tab, panel, scene } = await buildTestScene();
 
@@ -203,7 +266,7 @@ describe('InspectJsonTab', () => {
     expect(originalGridItem.state.width).toBe(8);
     expect(originalGridItem.state.height).toBe(10);
 
-    tab.onCodeEditorBlur(`{
+    tab.onJsonTextChange(`{
       "id": 12,
       "type": "table",
       "title": "Panel A",
@@ -259,7 +322,7 @@ describe('InspectJsonTab', () => {
       const grid = layoutManager.state.grid as SceneGridLayout;
       const forceRenderSpy = jest.spyOn(grid, 'forceRender');
 
-      tab.onCodeEditorBlur(`{
+      tab.onJsonTextChange(`{
         "kind": "GridLayoutItem",
         "spec": {
           "x": 5,
@@ -289,7 +352,7 @@ describe('InspectJsonTab', () => {
       const { tab } = await buildTestSceneWithV2Spec();
       tab.onChangeSource({ value: 'panel-layout' });
 
-      tab.onCodeEditorBlur(`{
+      tab.onJsonTextChange(`{
         "kind": "GridLayoutItem",
         "spec": {
           "x": "not a number"

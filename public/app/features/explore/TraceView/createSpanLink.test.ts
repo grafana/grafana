@@ -83,8 +83,8 @@ describe('createSpanLinkFactory', () => {
     const spanId = '6605c7b08e715d6c';
     const defaultRange = { from: '1602637200000', to: '1602637201000' };
     const fieldVariants = [
-      { trace: 'traceID', span: 'spanID' },
       { trace: 'trace_id', span: 'span_id' },
+      { trace: 'traceID', span: 'spanID' },
       { trace: 'traceId', span: 'spanId' },
       { trace: 'TraceID', span: 'SpanID' },
       { trace: 'TraceId', span: 'SpanId' },
@@ -192,6 +192,38 @@ describe('createSpanLinkFactory', () => {
       ]);
     });
 
+    it('opens split view with a query rewritten on the original interpolatedParams object', () => {
+      const splitOpenFn = jest.fn();
+      const dsSrv = getDataSourceSrv();
+      const createLink = createSpanLinkFactory({
+        splitOpenFn,
+        traceToLogsOptions: {
+          customQuery: false,
+          datasourceUid: 'lokiUid',
+        },
+        trace: dummyTraceData,
+        dataFrame: dummyDataFrame,
+        logsDataSourceSettings: dsSrv.getInstanceSettings('lokiUid'),
+      });
+
+      const linkDef = createLink!(createTraceSpan())![0];
+      const rewrittenQuery = {
+        expr: '{job="api"} |= "matched"',
+        refId: 't2l:job:trace_id',
+        datasource: { uid: 'other-loki', type: 'loki' },
+      };
+      linkDef.linkModel!.interpolatedParams!.query = rewrittenQuery;
+
+      linkDef.onClick?.({});
+
+      expect(splitOpenFn).toHaveBeenCalledWith(
+        expect.objectContaining({
+          datasourceUid: 'other-loki',
+          queries: [rewrittenQuery],
+        })
+      );
+    });
+
     it('with tags that passed in and without tags that are not in the span', () => {
       const createLink = setupSpanLinkFactory({
         tags: [{ key: 'ip' }, { key: 'newTag' }],
@@ -258,6 +290,24 @@ describe('createSpanLinkFactory', () => {
       expectLokiLink(linkDef, 'hostname="hostname1"', ['service'], {
         from: String(span.startTime / 1000 - 60000),
         to: String(span.startTime / 1000 + span.duration / 1000 + 60000),
+      });
+    });
+
+    it('treats a unit-less 0 time shift as no shift', () => {
+      const createLink = setupSpanLinkFactory({
+        spanStartTimeShift: '0',
+        spanEndTimeShift: '0',
+      });
+      const span = createTraceSpan({
+        process: {
+          serviceName: 'service',
+          tags: [{ key: 'hostname', value: 'hostname1' }],
+        },
+      });
+      const links = createLink!(span);
+      expectLokiLink(links?.[0], 'hostname="hostname1"', ['service'], {
+        from: '1602637200000',
+        to: '1602637201000',
       });
     });
 
@@ -664,6 +714,31 @@ describe('createSpanLinkFactory', () => {
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
           '{"range":{"from":"1602633600000","to":"1602640801000"},"datasource":"prom1Uid","queries":[{"expr":"customQuery","refId":"A","datasource":{"type":"prometheus","uid":"prom1Uid"}}]}'
+        )}`
+      );
+    });
+
+    it.each([
+      { name: 'a unit-less 0 time shift as no shift', shift: '0', from: '1602637200000', to: '1602637201000' },
+      { name: 'an invalid time shift as the default', shift: 'soon', from: '1602637080000', to: '1602637321000' },
+    ])('treats $name', ({ shift, from, to }) => {
+      const createLink = createSpanLinkFactory({
+        splitOpenFn: jest.fn(),
+        traceToMetricsOptions: {
+          datasourceUid: 'prom1Uid',
+          queries: [{ query: 'customQuery' }],
+          spanStartTimeShift: shift,
+          spanEndTimeShift: shift,
+        },
+        metricsDataSourceSettings: getDataSourceSrv().getInstanceSettings('prom1Uid'),
+        trace: dummyTraceData,
+        dataFrame: dummyDataFrame,
+      });
+
+      const links = createLink!(createTraceSpan());
+      expect(links?.[0]?.href).toBe(
+        `/explore?left=${encodeURIComponent(
+          `{"range":{"from":"${from}","to":"${to}"},"datasource":"prom1Uid","queries":[{"expr":"customQuery","refId":"A","datasource":{"type":"prometheus","uid":"prom1Uid"}}]}`
         )}`
       );
     });

@@ -5,9 +5,45 @@ import (
 
 	sqlstoremigrator "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
+
+func TestRegisterMigrationValidatorOptions(t *testing.T) {
+	for _, driver := range []string{sqlstoremigrator.SQLite, sqlstoremigrator.MySQL, sqlstoremigrator.Postgres} {
+		for _, backend := range []struct {
+			name  string
+			sqlKV bool
+		}{
+			{name: "SQL"},
+			{name: "SQLKV", sqlKV: true},
+		} {
+			t.Run(driver+"/"+backend.name, func(t *testing.T) {
+				cfg := setting.NewCfg()
+				cfg.EnableSQLKVBackend = backend.sqlKV
+				client := resource.NewMockResourceClient(t)
+				var captured []ValidatorOptions
+				def := MigrationDefinition{
+					ID: "test", MigrationID: "test migration",
+					Validators: []ValidatorFactory{
+						func(got resourcepb.ResourceIndexClient, opts ValidatorOptions) Validator {
+							require.Same(t, client, got)
+							captured = append(captured, opts)
+							return newTestFolderTreeValidator(got)
+						},
+					},
+				}
+				err := sqlstoremigrator.CheckExpectedMigrations(driver, nil, func(mg *sqlstoremigrator.Migrator) {
+					registerMigration(mg, nil, nil, nil, cfg, client, def)
+				})
+				require.NoError(t, err)
+				require.Equal(t, []ValidatorOptions{{DriverName: driver, EnableSQLKVBackend: backend.sqlKV}}, captured)
+			})
+		}
+	}
+}
 
 // TestIsMigrationEnabled tests the isMigrationEnabled function directly
 func TestIsMigrationEnabled(t *testing.T) {

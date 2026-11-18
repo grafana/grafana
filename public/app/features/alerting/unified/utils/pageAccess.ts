@@ -1,4 +1,5 @@
 import { config } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { hasAny } from 'app/core/navtree/utils';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -16,12 +17,9 @@ import {
 // a leaf module: the nav tree builder calls these during redux store creation,
 // before the ability system is safe to touch.
 
-// TODO: migrate these to OpenFeature flags. They are legacy-only toggles, so
-// they live solely in the config.featureToggles map, which the multi-tenant
-// frontend service ships empty — both read false there and the section falls
-// back to its legacy shape. OpenFeature flags resolve over OFREP instead.
-const isAlertingV2 = () => Boolean(config.featureToggles.alertingNavigationV2);
-const isAlertingTriage = () => Boolean(config.featureToggles.alertingTriage);
+const isAlertingV2 = () => getFeatureFlagClient().getBooleanValue(FlagKeys.AlertingNavigationV2, true);
+
+const isGmaOnlyListView = () => getFeatureFlagClient().getBooleanValue(FlagKeys.AlertingGmaOnlyListView, false);
 
 // The history page is only available when state-history queries are served by
 // Loki: either as the only backend, or as the primary of the "multiple"
@@ -56,14 +54,27 @@ const notificationPoliciesPermissions = () =>
 /** Whether the alerting section itself is available */
 export const alertingEnabled = () => config.unifiedAlertingEnabled;
 
-export const alertRulesAccess = () =>
+const alertRulesAccess = () =>
   hasAny(AccessControlAction.AlertingRuleRead, AccessControlAction.AlertingRuleExternalRead);
+
+export const legacyAlertRulesListAccess = () => !isGmaOnlyListView() && alertRulesAccess();
+
+/** The GMA-only rule list pages need Grafana-managed read, not the data source-managed one */
+export const gmaRuleListAccess = () =>
+  isGmaOnlyListView() && contextSrv.hasPermission(AccessControlAction.AlertingRuleRead);
+
+// The alert activity page reads the alert state metrics that state history writes to
+// Prometheus. The backend only sends the target data source when that is set up, so
+// checking for it is enough. The flag is kept so the page can still be turned off.
+export const alertActivityEnabled = () =>
+  getFeatureFlagClient().getBooleanValue(FlagKeys.AlertingTriage, true) &&
+  Boolean(config.unifiedAlerting.stateHistory?.prometheusTargetDatasourceUID);
 
 /** V2 navigation groups alert activity and groups under one page (tabs managed on the frontend) */
 export const alertActivityAccess = () =>
-  isAlertingTriage() && isAlertingV2() && (alertRulesAccess() || alertInstanceAccess());
+  alertActivityEnabled() && isAlertingV2() && (alertRulesAccess() || alertInstanceAccess());
 
-export const legacyAlertActivityAccess = () => isAlertingTriage() && !isAlertingV2() && alertRulesAccess();
+export const legacyAlertActivityAccess = () => alertActivityEnabled() && !isAlertingV2() && alertRulesAccess();
 
 export const notificationConfigAccess = () =>
   isAlertingV2() && (contactPointsPermissions() || notificationPoliciesPermissions());
@@ -79,20 +90,14 @@ export const silencesAccess = () =>
     AccessControlAction.AlertingSilenceRead
   );
 
-/** In V2 navigation with triage enabled, Alert groups is shown as a tab under Alert activity */
-export const activeNotificationsAccess = () => alertInstanceAccess() && !(isAlertingV2() && isAlertingTriage());
+/** In V2 navigation with alert activity enabled, Alert groups is shown as a tab under Alert activity */
+export const activeNotificationsAccess = () => alertInstanceAccess() && !(isAlertingV2() && alertActivityEnabled());
 
 export const historyAccess = () =>
   stateHistoryServedByLoki() && contextSrv.hasPermission(AccessControlAction.AlertingRuleRead);
 
-// TODO: migrate these two to OpenFeature flags as well — being legacy-only they
-// read false in the multi-tenant frontend service, so this page never appears
-// there.
-export const recentlyDeletedAccess = () =>
-  contextSrv.hasRole('Admin') &&
-  Boolean(config.featureToggles.alertRuleRestore) &&
-  Boolean(config.featureToggles.alertingRuleRecoverDeleted) &&
-  !isAlertingV2();
+/** The GMA-only rule list pages have their own Recently deleted tabs */
+export const recentlyDeletedAccess = () => contextSrv.hasRole('Admin') && !isAlertingV2() && !isGmaOnlyListView();
 
 export const alertingAdminAccess = () => contextSrv.hasRole('Admin');
 

@@ -385,6 +385,15 @@ func (m *mockCheckRegistry) Checks() []checks.Check {
 	return m.checks
 }
 
+func (m *mockCheckRegistry) Check(id string) (checks.Check, bool) {
+	for _, c := range m.checks {
+		if c.ID() == id {
+			return c, true
+		}
+	}
+	return nil, false
+}
+
 type mockCheck struct {
 	id    string
 	steps []checks.Step

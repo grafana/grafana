@@ -1,7 +1,8 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvents from '@testing-library/user-event';
+import { act } from 'react';
 
-import { createDataFrame } from '@grafana/data';
+import { createDataFrame, FieldType } from '@grafana/data';
 import { mockBoundingClientRect, mockClientSize } from '@grafana/test-utils';
 
 import { FlameGraphDataContainer } from '../FlameGraph/dataTransform';
@@ -43,7 +44,7 @@ describe('FlameGraphTopTableContainer', () => {
     mockTableSize();
 
     setup();
-    const rows = screen.getAllByRole('row');
+    const rows = await screen.findAllByRole('row');
     expect(rows).toHaveLength(16);
 
     const columnHeaders = screen.getAllByRole('columnheader');
@@ -55,14 +56,14 @@ describe('FlameGraphTopTableContainer', () => {
     const cells = screen.getAllByRole('cell');
     expect(cells).toHaveLength(60); // 16 rows
     expect(cells[1].textContent).toEqual('net/http.HandlerFunc.ServeHTTP');
-    expect(cells[2].textContent).toEqual('31.7 K');
-    expect(cells[3].textContent).toEqual('5.58 Bil');
+    expect(cells[2].textContent).toEqual('0.00%');
+    expect(cells[3].textContent).toEqual('33.90%');
     expect(cells[5].textContent).toEqual('total');
-    expect(cells[6].textContent).toEqual('16.5 K');
-    expect(cells[7].textContent).toEqual('16.5 Bil');
+    expect(cells[6].textContent).toEqual('0.00%');
+    expect(cells[7].textContent).toEqual('100.00%');
     expect(cells[25].textContent).toEqual('net/http.(*conn).serve');
-    expect(cells[26].textContent).toEqual('5.63 K');
-    expect(cells[27].textContent).toEqual('5.63 Bil');
+    expect(cells[26].textContent).toEqual('0.00%');
+    expect(cells[27].textContent).toEqual('34.20%');
   });
 
   it('should render search and sandwich buttons', async () => {
@@ -77,7 +78,7 @@ describe('FlameGraphTopTableContainer', () => {
 
     const { mocks } = setup();
 
-    const searchButtons = screen.getAllByLabelText(/Search for symbol/);
+    const searchButtons = await screen.findAllByLabelText(/Search for symbol/);
     expect(searchButtons.length > 0).toBeTruthy();
     await userEvents.click(searchButtons[0]);
 
@@ -131,9 +132,50 @@ describe('FlameGraphTopTableContainer with useTableNG', () => {
     // react-data-grid's virtualized role="grid" doesn't have the same fixed row/cell counts as TableRT.
     expect(screen.getByText('net/http.HandlerFunc.ServeHTTP')).toBeInTheDocument();
     expect(screen.getByText('net/http.(*conn).serve')).toBeInTheDocument();
-    expect(screen.getAllByText('31.7 K').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('5.58 Bil').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('5.63 K').length).toBeGreaterThan(0);
+    const handlerCells = within(
+      screen.getByText('net/http.HandlerFunc.ServeHTTP').closest<HTMLElement>('[role="row"]')!
+    ).getAllByRole('gridcell');
+    expect(handlerCells[2]).toHaveTextContent(/^0\.00%$/);
+    expect(handlerCells[3]).toHaveTextContent(/^33\.90%$/);
+
+    const connCells = within(
+      screen.getByText('net/http.(*conn).serve').closest<HTMLElement>('[role="row"]')!
+    ).getAllByRole('gridcell');
+    expect(connCells[2]).toHaveTextContent(/^0\.00%$/);
+    expect(connCells[3]).toHaveTextContent(/^34\.20%$/);
+  });
+
+  it('uses the table itself as the full-size surface', () => {
+    mockTableSize();
+
+    setup();
+
+    const wrapper = screen.getByTestId('topTable');
+    const wrapperStyles = window.getComputedStyle(wrapper);
+    expect(wrapperStyles.padding).toBe('0px');
+    expect(wrapperStyles.backgroundColor).toBe('transparent');
+    expect(wrapperStyles.height).toBe('100%');
+  });
+
+  it('does not allow the controls column to be resized', () => {
+    mockTableSize();
+
+    setup();
+
+    const headers = screen.getAllByRole('columnheader');
+    expect(headers[0]).not.toHaveClass('rdg-cell-resizable');
+    expect(headers[1]).toHaveClass('rdg-cell-resizable');
+  });
+
+  it('does not apply cell-level hover overflow treatment to controls or numeric cells', () => {
+    mockTableSize();
+
+    setup();
+
+    const firstRowCells = screen.getAllByRole('gridcell').slice(0, 4);
+    expect(firstRowCells[0]).not.toHaveClass('table-ng-cell-overflow');
+    expect(firstRowCells[2]).not.toHaveClass('table-ng-cell-overflow');
+    expect(firstRowCells[3]).not.toHaveClass('table-ng-cell-overflow');
   });
 
   // The refreshed header lifts the sort arrow out of the label button so a long title can ellipsize
@@ -155,6 +197,23 @@ describe('FlameGraphTopTableContainer with useTableNG', () => {
 
       expect(selfHeader.querySelectorAll('svg')).toHaveLength(1);
       expect(label!.querySelectorAll('svg')).toHaveLength(tableRefreshEnabled ? 0 : 1);
+    }
+  );
+
+  it.each([
+    { tableRefreshEnabled: undefined, distinctHeaderSurface: false },
+    { tableRefreshEnabled: true, distinctHeaderSurface: true },
+  ])(
+    'uses a distinct header surface=$distinctHeaderSurface with tableRefreshEnabled=$tableRefreshEnabled',
+    ({ tableRefreshEnabled, distinctHeaderSurface }) => {
+      mockTableSize();
+
+      setup({ tableRefreshEnabled });
+
+      const grid = window.getComputedStyle(screen.getByRole('grid'));
+      expect(
+        grid.getPropertyValue('--rdg-header-background-color') !== grid.getPropertyValue('--rdg-background-color')
+      ).toBe(distinctHeaderSurface);
     }
   );
 
@@ -232,6 +291,89 @@ describe('FlameGraphTopTableContainer with useTableNG', () => {
     await userEvents.click(actionsHeader);
 
     expect(onTableSort).not.toHaveBeenCalled();
+  });
+});
+
+interface PercentageTableOptions {
+  useTableNG: boolean;
+  matchedLabels?: Set<string>;
+  decimals?: number;
+}
+
+function renderPercentageTable({ useTableNG, matchedLabels, decimals }: PercentageTableOptions) {
+  mockTableSize();
+  const container = new FlameGraphDataContainer(
+    createDataFrame({
+      fields: [
+        { name: 'level', type: FieldType.number, values: [0, 1, 2, 1] },
+        { name: 'label', type: FieldType.string, values: ['root', 'parent', 'leaf', 'sibling'] },
+        { name: 'value', type: FieldType.number, values: [100, 60, 50, 40], config: { unit: 's', decimals } },
+        { name: 'self', type: FieldType.number, values: [0, 10, 50, 40] },
+      ],
+    }),
+    { collapsing: false }
+  );
+
+  return render(
+    <FlameGraphTopTableContainer
+      data={container}
+      onSymbolClick={jest.fn()}
+      onSearch={jest.fn()}
+      onSandwich={jest.fn()}
+      colorScheme={ColorScheme.ValueBased}
+      useTableNG={useTableNG}
+      matchedLabels={matchedLabels}
+    />
+  );
+}
+
+describe.each([false, true])('top-table percentages with useTableNG=%s', (useTableNG) => {
+  function getParentCells() {
+    const row = within(screen.getByTestId('topTable'))
+      .getByText('parent', { exact: true })
+      .closest<HTMLElement>('[role="row"]')!;
+    return within(row).getAllByRole(useTableNG ? 'gridcell' : 'cell');
+  }
+
+  it.each([
+    { column: 'Self', columnIndex: 2, value: '10.00%' },
+    { column: 'Total', columnIndex: 3, value: '60.00%' },
+  ])('should use the value field unit for row details when hovering $column', async ({ columnIndex, value }) => {
+    renderPercentageTable({ useTableNG });
+    await screen.findByText('parent', { exact: true });
+    const trigger = within(getParentCells()[columnIndex]).getByText(value);
+
+    await userEvents.hover(trigger);
+
+    expect(await screen.findByRole('tooltip')).toHaveTextContent(
+      /parent\s*Count\s*Total: 1(?:\.0+)? min \(60%\)\s*Self: 10(?:\.0+)? s \(10%\)\s*Samples: 60/
+    );
+  });
+
+  it('should preserve value field precision in tooltip totals and self values', async () => {
+    renderPercentageTable({ useTableNG, decimals: 3 });
+    await screen.findByText('parent', { exact: true });
+
+    await userEvents.hover(within(getParentCells()[2]).getByText('10.00%'));
+
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('Total: 1.000 min (60%)');
+    expect(screen.getByRole('tooltip')).toHaveTextContent('Self: 10.000 s (10%)');
+  });
+
+  it('should expose the original value on focus', async () => {
+    renderPercentageTable({ useTableNG });
+    await screen.findByText('parent', { exact: true });
+    const trigger = within(getParentCells()[2]).getByText('10.00%');
+
+    await act(async () => {
+      trigger.focus();
+    });
+
+    await waitFor(() => {
+      expect(trigger).toHaveAccessibleDescription(
+        /parent\s*Count\s*Total: 1(?:\.0+)? min \(60%\)\s*Self: 10(?:\.0+)? s \(10%\)\s*Samples: 60/
+      );
+    });
   });
 });
 
@@ -373,36 +515,65 @@ describe('FlameGraphTopTableContainer column widths with useTableNG', () => {
     }
   };
 
+  // jsdom's canvas mock measures every string as zero-width, so content-aware widths would size the
+  // symbol column as if it were empty and never overflow the pane. Give text a width proportional to
+  // its length so the long Go symbols in the fixture stretch the column the way they do in a browser.
+  const CHAR_WIDTH = 8;
+  const mockTextMeasurement = () => {
+    jest.spyOn(CanvasRenderingContext2D.prototype, 'measureText').mockImplementation(
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      ((text: string) => ({
+        width: String(text).length * CHAR_WIDTH,
+      })) as typeof CanvasRenderingContext2D.prototype.measureText
+    );
+  };
+
   afterEach(() => {
+    jest.restoreAllMocks();
     for (const { property, target, descriptor } of originalDescriptors) {
       Object.defineProperty(target, property, descriptor);
     }
   });
 
-  it('fits the columns in the space the scrollbar leaves rather than the full width', async () => {
-    mockTableSize({ width: GRID_WIDTH, height: GRID_WIDTH });
-    mockGridScrollbar();
+  // Symbol is the one column left unsized, so whichever way TableNG sizes its auto columns it must
+  // land inside the space the scrollbar leaves — the pane has no room for a horizontal scrollbar.
+  it.each([{ contentAwareWidthsEnabled: undefined }, { contentAwareWidthsEnabled: true }])(
+    'fits the columns in the space the scrollbar leaves with contentAwareWidthsEnabled=$contentAwareWidthsEnabled',
+    async ({ contentAwareWidthsEnabled }) => {
+      mockTableSize({ width: GRID_WIDTH, height: GRID_WIDTH });
+      mockGridScrollbar();
+      mockTextMeasurement();
 
-    const container = new FlameGraphDataContainer(createDataFrame(data), { collapsing: true });
-    render(
-      <FlameGraphTopTableContainer
-        data={container}
-        onSymbolClick={jest.fn()}
-        onSearch={jest.fn()}
-        onSandwich={jest.fn()}
-        colorScheme={ColorScheme.ValueBased}
-        useTableNG={true}
-      />
-    );
+      const container = new FlameGraphDataContainer(createDataFrame(data), { collapsing: true });
+      render(
+        <FlameGraphTopTableContainer
+          data={container}
+          onSymbolClick={jest.fn()}
+          onSearch={jest.fn()}
+          onSandwich={jest.fn()}
+          colorScheme={ColorScheme.ValueBased}
+          useTableNG={true}
+          contentAwareWidthsEnabled={contentAwareWidthsEnabled}
+        />
+      );
 
-    await waitFor(() => {
-      const grid = document.querySelector<HTMLElement>('.rdg')!;
-      // The wrapper the TableNG branch sizes, i.e. the width the table was handed.
-      const handedWidth = parseFloat(grid.parentElement!.style.width);
-      const columnWidths = grid.style.gridTemplateColumns.split(' ').map(parseFloat);
+      await waitFor(() => {
+        const grid = document.querySelector<HTMLElement>('.rdg')!;
+        // The nearest explicitly sized container is the width the table was handed. TableNG may add
+        // structural wrappers between it and the grid.
+        const sizedContainer = grid.parentElement!.closest<HTMLElement>('[style*="width:"]');
+        const columnWidths = grid.style.gridTemplateColumns.split(' ').map(parseFloat);
 
-      expect(columnWidths).toHaveLength(4);
-      expect(columnWidths.reduce((total, columnWidth) => total + columnWidth, 0)).toBe(handedWidth - SCROLLBAR_WIDTH);
-    });
-  });
+        expect(sizedContainer).not.toBeNull();
+        expect(columnWidths).toHaveLength(4);
+        expect(columnWidths.reduce((total, columnWidth) => total + columnWidth, 0)).toBe(
+          parseFloat(sizedContainer!.style.width) - SCROLLBAR_WIDTH
+        );
+        expect(screen.getByText('net/http.HandlerFunc.ServeHTTP').closest('[role="gridcell"]')).toHaveClass(
+          'table-ng-cell-overflow'
+        );
+        expect(screen.getByText('total').closest('[role="gridcell"]')).not.toHaveClass('table-ng-cell-overflow');
+      });
+    }
+  );
 });

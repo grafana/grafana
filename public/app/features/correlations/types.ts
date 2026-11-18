@@ -24,7 +24,7 @@ export type GetCorrelationsParams = {
   page: number;
 };
 
-export type OmitUnion<T, K extends keyof any> = T extends any ? Omit<T, K> : never;
+export type OmitUnion<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never;
 
 export type RemoveCorrelationParams = Pick<Correlation, 'sourceUID' | 'uid'>;
 export type CreateCorrelationParams = OmitUnion<Correlation, 'uid' | 'provisioned'>;

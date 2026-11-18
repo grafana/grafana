@@ -43,13 +43,13 @@ describe('getRecentlyViewedDashboards', () => {
     expect(result.map((d) => d.uid)).toEqual(['a', 'b', 'c']);
   });
 
-  it('pushes dashboards missing from the impression list to the end', async () => {
-    getDashboardOpenedMock.mockResolvedValue(['a', 'b']);
+  it('skips dashboards the search did not return and ignores hits that were not asked for', async () => {
+    getDashboardOpenedMock.mockResolvedValue(['a', 'gone', 'b']);
     setupSearcher([hit('unknown'), hit('b'), hit('a')]);
 
     const result = await getRecentlyViewedDashboards(5);
 
-    expect(result.map((d) => d.uid)).toEqual(['a', 'b', 'unknown']);
+    expect(result.map((d) => d.uid)).toEqual(['a', 'b']);
   });
 
   it('only asks the search backend for maxItems dashboards', async () => {
@@ -59,16 +59,6 @@ describe('getRecentlyViewedDashboards', () => {
     await getRecentlyViewedDashboards(2);
 
     expect(search).toHaveBeenCalledWith(expect.objectContaining({ uid: ['a', 'b'], limit: 2 }));
-  });
-
-  it('caps the results at maxItems when the search backend returns more hits than requested', async () => {
-    getDashboardOpenedMock.mockResolvedValue(['a', 'b', 'c']);
-    setupSearcher([hit('a'), hit('b'), hit('c'), hit('extra-1'), hit('extra-2')]);
-
-    const result = await getRecentlyViewedDashboards(2);
-
-    // The two most recently opened dashboards survive; unrequested hits are dropped
-    expect(result.map((d) => d.uid)).toEqual(['a', 'b']);
   });
 
   it('does not search when nothing has been opened', async () => {

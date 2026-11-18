@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/bin/sh
+
 set -e
 
 PERMISSIONS_OK=0
@@ -27,24 +28,37 @@ if [ ! -d "$GF_PATHS_PLUGINS" ]; then
 fi
 
 if [ ! -z ${GF_AWS_PROFILES+x} ]; then
+    mkdir -p "$GF_PATHS_HOME/.aws"
+
+    # Save the current umask and restrict newly created files to 0600 (read/write by owner only)
+    old_umask="$(umask)"
+    umask 077
     :> "$GF_PATHS_HOME/.aws/credentials"
+    umask "$old_umask"
 
     for profile in ${GF_AWS_PROFILES}; do
         access_key_varname="GF_AWS_${profile}_ACCESS_KEY_ID"
         secret_key_varname="GF_AWS_${profile}_SECRET_ACCESS_KEY"
         region_varname="GF_AWS_${profile}_REGION"
 
-        if [ ! -z "${!access_key_varname}" ] && [ ! -z "${!secret_key_varname}" ]; then
-            echo "[${profile}]" >> "$GF_PATHS_HOME/.aws/credentials"
-            echo "aws_access_key_id = ${!access_key_varname}" >> "$GF_PATHS_HOME/.aws/credentials"
-            echo "aws_secret_access_key = ${!secret_key_varname}" >> "$GF_PATHS_HOME/.aws/credentials"
-            if [ ! -z "${!region_varname}" ]; then
-                echo "region = ${!region_varname}" >> "$GF_PATHS_HOME/.aws/credentials"
+        access_key="$(printenv "$access_key_varname")" || access_key=""
+        secret_key="$(printenv "$secret_key_varname")" || secret_key=""
+        if [ ! -z "${access_key}" ] && [ ! -z "${secret_key}" ]; then
+            # Feed credentials via stdin (here-document) instead of command-line arguments
+            cat <<EOF >> "$GF_PATHS_HOME/.aws/credentials"
+[${profile}]
+aws_access_key_id = ${access_key}
+aws_secret_access_key = ${secret_key}
+EOF
+            region="$(printenv "$region_varname")" || region=""
+            if [ ! -z "${region}" ]; then
+                echo "region = ${region}" >> "$GF_PATHS_HOME/.aws/credentials"
             fi
         fi
-    done
 
-    chmod 600 "$GF_PATHS_HOME/.aws/credentials"
+        # Clean sensitive variables from the shell environment before launching Grafana
+        unset "$access_key_varname" "$secret_key_varname" access_key secret_key
+    done
 fi
 
 # Convert all environment variables with names ending in __FILE into the content of
@@ -52,12 +66,14 @@ fi
 # This can be used to carry in Docker secrets.
 for VAR_NAME in $(env | grep '^GF_[^=]\+__FILE=.\+' | sed -r "s/([^=]*)__FILE=.*/\1/g"); do
     VAR_NAME_FILE="$VAR_NAME"__FILE
-    if [ "${!VAR_NAME}" ]; then
+    VAR="$(printenv "$VAR_NAME")" || VAR=""
+    if [ "${VAR}" ]; then
         echo >&2 "ERROR: Both $VAR_NAME and $VAR_NAME_FILE are set (but are exclusive)"
         exit 1
     fi
-    echo "Getting secret $VAR_NAME from ${!VAR_NAME_FILE}"
-    export "$VAR_NAME"="$(< "${!VAR_NAME_FILE}")"
+    FILE="$(printenv "$VAR_NAME_FILE")" || FILE=""
+    echo "Getting secret $VAR_NAME from ${FILE}"
+    export "$VAR_NAME"="$(cat "${FILE}")"
     unset "$VAR_NAME_FILE"
 done
 
@@ -70,13 +86,16 @@ if [ ! -z "${GF_INSTALL_PLUGINS}" ]; then
     IFS=','
     for plugin in ${GF_INSTALL_PLUGINS}; do
         IFS=$OLDIFS
-        if [[ $plugin =~ .*\;.* ]]; then
+        case "$plugin" in
+        *\;*)
             pluginUrl=$(echo "$plugin" | cut -d';' -f 1)
             pluginInstallFolder=$(echo "$plugin" | cut -d';' -f 2)
-            grafana cli --pluginUrl ${pluginUrl} --pluginsDir "${GF_PATHS_PLUGINS}" plugins install "${pluginInstallFolder}"
-        else
+            grafana cli --pluginUrl "${pluginUrl}" --pluginsDir "${GF_PATHS_PLUGINS}" plugins install "${pluginInstallFolder}"
+            ;;
+        *)
             grafana cli --pluginsDir "${GF_PATHS_PLUGINS}" plugins install ${plugin}
-        fi
+            ;;
+        esac
     done
   fi
 fi

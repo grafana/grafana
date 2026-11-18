@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/login/social"
@@ -57,6 +58,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/util/testutil"
+	"github.com/grafana/grafana/pkg/web"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
@@ -86,8 +88,9 @@ func TestIntegrationUserAPIEndpoint_userLoggedIn(t *testing.T) {
 	loggedInUserScenario(t, "When calling GET on", "api/users/1", "api/users/:id", func(sc *scenarioContext) {
 		fakeNow := time.Date(2019, 2, 11, 17, 30, 40, 0, time.UTC)
 		secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
-		authInfoStore, err := authinfoimpl.ProvideStore(context.Background(), legacysql.NewDatabaseProvider(sqlStore), secretsService)
+		legacyAuthInfoStore, err := authinfoimpl.ProvideLegacyStore(context.Background(), legacysql.NewDatabaseProvider(sqlStore), secretsService)
 		require.NoError(t, err)
+		authInfoStore := authinfoimpl.ProvideStore(legacyAuthInfoStore, sc.cfg, nil, tracing.InitializeTracerForTest())
 		srv := authinfoimpl.ProvideService(
 			authInfoStore, remotecache.NewFakeCacheStorage(), secretsService)
 		hs.authInfoService = srv
@@ -1440,5 +1443,51 @@ func updateSignedInUserScenario(t *testing.T, ctx updateUserContext, hs *HTTPSer
 		sc.m.Put(ctx.routePattern, sc.defaultHandler)
 
 		ctx.fn(sc)
+	})
+}
+
+func TestHTTPServer_SelfUpdateEndpointsPassUserUID(t *testing.T) {
+	const selfUID = "u-self"
+	const selfID int64 = 5
+
+	newReqContext := func(method, body string) *contextmodel.ReqContext {
+		req, err := http.NewRequest(method, "/", strings.NewReader(body))
+		require.NoError(t, err)
+		req.Header.Set("Content-Type", "application/json")
+		return &contextmodel.ReqContext{
+			Context:      &web.Context{Req: req},
+			SignedInUser: &user.SignedInUser{UserID: selfID, UserUID: selfUID, OrgID: 1},
+		}
+	}
+
+	var got *user.UpdateUserCommand
+	hs := &HTTPServer{
+		Cfg:             setting.NewCfg(),
+		log:             log.New("test"),
+		authInfoService: &authinfotest.FakeService{ExpectedError: user.ErrUserNotFound},
+		userService: &usertest.FakeUserService{
+			UpdateFn: func(_ context.Context, cmd *user.UpdateUserCommand) error {
+				got = cmd
+				return nil
+			},
+		},
+	}
+
+	t.Run("PUT /api/user", func(t *testing.T) {
+		got = nil
+		resp := hs.UpdateSignedInUser(newReqContext(http.MethodPut, `{"name":"n","login":"l","email":""}`))
+		require.Equal(t, http.StatusOK, resp.Status())
+		require.NotNil(t, got)
+		require.Equal(t, selfID, got.UserID)
+		require.Equal(t, selfUID, got.UID)
+	})
+
+	t.Run("PUT /api/user/password", func(t *testing.T) {
+		got = nil
+		resp := hs.ChangeUserPassword(newReqContext(http.MethodPut, `{"oldPassword":"old-pass-1","newPassword":"new-pass-1"}`))
+		require.Equal(t, http.StatusOK, resp.Status())
+		require.NotNil(t, got)
+		require.Equal(t, selfID, got.UserID)
+		require.Equal(t, selfUID, got.UID)
 	})
 }

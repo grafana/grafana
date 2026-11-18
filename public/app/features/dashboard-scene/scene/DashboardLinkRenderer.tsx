@@ -12,7 +12,7 @@ import {
 } from 'app/features/dashboard/components/SubMenu/DashboardLinksDashboard';
 import { getLinkSrv } from 'app/features/panel/panellinks/link_srv';
 
-import { duplicateLink, linkSelectionId, openEditLinkPane } from '../settings/links/LinkAddEditableElement';
+import { duplicateLink, linkSelectionId, openEditLinkPane } from '../settings/links/LinkEdit';
 import { linkEditActions } from '../settings/links/actions';
 import { LINK_ICON_MAP } from '../settings/links/utils';
 
@@ -35,7 +35,7 @@ export function DashboardLinkRenderer({ link, dashboardUID, inMenu, linkIndex, d
   const { isSelected, isSelectable } = useElementSelection(selectionId);
 
   const onClickEditLink = useCallback(() => {
-    openEditLinkPane(dashboard, Number(linkIndex));
+    openEditLinkPane(dashboard, Number(linkIndex), true);
   }, [dashboard, linkIndex]);
 
   const onClickDuplicateLink = useCallback(() => {
@@ -92,7 +92,7 @@ export function DashboardLinkRenderer({ link, dashboardUID, inMenu, linkIndex, d
   );
 
   return (
-    <EditActionsPopover content={editActions}>
+    <EditActionsPopover keyboardAccessible content={editActions}>
       <div className={containerClassName} data-testid={selectors.components.DashboardLinks.container}>
         {content}
       </div>

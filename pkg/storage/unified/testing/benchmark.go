@@ -245,7 +245,7 @@ func runListBenchmark(t *testing.T, backend resource.StorageBackend, opts *Bench
 		listResource = "bench-list-resource"
 	)
 
-	// --- Seed phase (sequential to avoid Optimistic locking conflicts) ---
+	// --- Seed phase (sequential to avoid write conflicts) ---
 	t.Log("List benchmark: seeding resources with history...")
 	seedStart := time.Now()
 
@@ -377,7 +377,7 @@ func runSearchBackendBenchmarkWriteThroughput(ctx context.Context, backend resou
 	size := int64(10000) // force the index to be on disk
 	index, err := backend.BuildIndex(ctx, nr, size, "benchmark", func(index resource.ResourceIndex) (int64, error) {
 		return 0, nil
-	}, nil, false, time.Time{}, 0)
+	}, nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize backend: %w", err)
 	}
@@ -538,7 +538,8 @@ func runStorageAndSearchBenchmark(
 						Name: resource.SEARCH_FIELD_TITLE_PHRASE,
 					},
 				},
-				Limit: 10,
+				Limit:        10,
+				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 			}
 			idx := job.idx
 			searchG.Go(func() error {
@@ -584,8 +585,9 @@ func runStorageAndSearchBenchmark(
 						Resource:  pair.resource,
 					},
 				},
-				Query: "*",
-				Limit: 10,
+				Query:        "*",
+				Limit:        10,
+				ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 			})
 			if err != nil && bgSearchCtx.Err() == nil {
 				t.Errorf("background search failed for %s/%s: %v", pair.group, pair.resource, err)

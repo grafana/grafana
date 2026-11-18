@@ -1,151 +1,118 @@
 import { Global } from '@emotion/react';
-import { OpenFeatureProvider } from '@openfeature/react-sdk';
-import getDefaultMonacoLanguages from 'lib/monaco-languages';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 import SwaggerUI from 'swagger-ui-react';
 
-import { createTheme, monacoLanguageRegistry, type SelectableValue } from '@grafana/data';
-import { Trans } from '@grafana/i18n';
-import { getFeatureFlagClient } from '@grafana/runtime/internal';
-import { Button, Icon, Select, Stack, UserIcon, type UserView } from '@grafana/ui';
-import { setMonacoEnv } from 'app/core/monacoEnv';
-import { ThemeProvider } from 'app/core/utils/ConfigProvider';
+import { createTheme, ThemeContext } from '@grafana/data';
+import { t, Trans } from '@grafana/i18n';
+import { Alert, Button, Combobox, Icon, Stack, UserIcon } from '@grafana/ui';
 
-import { NamespaceContext, WrappedPlugins } from './plugins';
+import { SpecOption } from './SpecOption';
+import { loadSpecs } from './apiSpecs';
+import { NamespaceContext } from './contexts';
+import { WrappedPlugins } from './plugins';
+import { loadWhoAmI } from './whoami';
 
 export const Page = () => {
   const theme = createTheme({ colors: { mode: 'light' } });
-  const [url, setURL] = useState<SelectableValue<string>>();
-  const urls = useAsync(async () => {
-    const v2 = { label: 'Grafana API (OpenAPI v2)', key: 'openapi2', value: 'public/api-merged.json' };
-    const v3 = { label: 'Grafana API (OpenAPI v3)', key: 'openapi3', value: 'public/openapi3.json' };
-    const urls: Array<SelectableValue<string>> = [v2, v3];
+  const [api, setAPI] = useState<string>();
+  const specs = useAsync(async () => {
+    const specs = await loadSpecs();
 
-    const rsp = await fetch('openapi/v3');
-    const apis = await rsp.json();
-    for (const [key, val] of Object.entries<any>(apis.paths)) {
-      const parts = key.split('/');
-      if (parts.length === 3) {
-        urls.push({
-          key: `${parts[1]}-${parts[2]}`,
-          label: `${parts[1]}/${parts[2]}`,
-          value: val.serverRelativeURL.substring(1), // remove initial slash
-        });
-      }
-    }
-
-    let idx = 0;
-    const urlParams = new URLSearchParams(window.location.search);
-    const api = urlParams.get('api');
-    if (api) {
-      urls.forEach((url, i) => {
-        if (url.key === api) {
-          idx = i;
-        }
-      });
-    }
-
-    monacoLanguageRegistry.setInit(getDefaultMonacoLanguages);
-    setMonacoEnv();
-
-    setURL(urls[idx]); // Remove to start at the generic landing page
-    return urls;
+    const requested = new URLSearchParams(window.location.search).get('api');
+    setAPI((specs.find((s) => s.key === requested) ?? specs[0]).key); // Remove to start at the generic landing page
+    return specs;
   });
+  const specsByKey = useMemo(() => new Map(specs.value?.map((s) => [s.key, s])), [specs.value]);
+  const options = useMemo(
+    () => specs.value?.map((s) => ({ label: s.label, value: s.key, ...(s.group && { group: s.group }) })) ?? [],
+    [specs.value]
+  );
+  const spec = api ? specsByKey.get(api) : undefined;
 
-  const [userView, setUserView] = useState<UserView>();
-
-  const namespace = useAsync(async () => {
-    const response = await fetch('api/frontend/settings');
-    if (!response.ok) {
-      console.warn('No settings found');
-      return 'default';
-    }
-    const val = await response.json();
-    return val.namespace;
-  });
-
-  useAsync(async () => {
-    const response = await fetch('api/user');
-    if (!response.ok) {
-      console.warn('No user found, show login button');
-      return;
-    }
-    const val = await response.json();
-    setUserView({
-      user: {
-        name: val.email || val.login,
-        avatarUrl: val.avatarUrl,
-      },
-      lastActiveAt: new Date(),
-    });
-  });
+  const whoami = useAsync(loadWhoAmI);
+  const namespace = whoami.value?.namespace;
+  const userView = whoami.value?.userView;
 
   return (
     <div>
-      <OpenFeatureProvider client={getFeatureFlagClient()}>
-        <ThemeProvider value={theme}>
-          <Global
-            styles={{
-              html: {
-                fontSize: `${theme.typography.htmlFontSize}px`,
-              },
-              body: {
-                margin: 0,
-                ...theme.typography.body,
-              },
-            }}
-          />
-          <NamespaceContext.Provider value={namespace.value}>
-            <div style={{ backgroundColor: '#000', padding: '10px' }}>
-              <Stack alignItems="center" justifyContent="space-between">
+      <ThemeContext.Provider value={theme}>
+        <Global
+          styles={{
+            // Sizes include padding and borders, as in Grafana: otherwise an input
+            // with a width overflows into what follows it.
+            html: {
+              fontSize: `${theme.typography.htmlFontSize}px`,
+              boxSizing: 'border-box',
+            },
+            '*, *::before, *::after': {
+              boxSizing: 'inherit',
+            },
+            body: {
+              margin: 0,
+              ...theme.typography.body,
+            },
+          }}
+        />
+        <NamespaceContext.Provider value={namespace}>
+          <div style={{ backgroundColor: '#000', padding: '10px' }}>
+            <Stack alignItems="center" justifyContent="space-between">
+              <Stack alignItems="center" gap={3}>
                 <Icon name="grafana" size="xxl" />
-                <Select
-                  options={urls.value}
+                <Combobox
+                  width={60}
+                  options={options}
                   isClearable={false /* TODO -- when we allow a landing page, this can be true */}
-                  onChange={(v) => {
+                  onChange={(option) => {
                     const url = new URL(window.location.href);
                     url.hash = '';
-                    if (v?.key) {
-                      url.searchParams.set('api', v.key);
-                    } else {
-                      url.searchParams.delete('api');
-                    }
+                    url.searchParams.set('api', option.value);
                     window.history.pushState(null, '', url);
-                    setURL(v);
+                    setAPI(option.value);
                   }}
-                  value={url}
-                  isLoading={urls.loading}
+                  value={api ?? null}
+                  loading={specs.loading}
+                  renderOption={(option) => {
+                    const spec = specsByKey.get(option.value);
+                    return spec ? <SpecOption spec={spec} /> : option.label;
+                  }}
                 />
-                <div>
-                  {userView ? (
-                    <UserIcon userView={userView} />
-                  ) : (
-                    <a href="/login">
-                      <Button variant="primary">
-                        <Trans i18nKey="swagger.login">Login</Trans>
-                      </Button>
-                    </a>
-                  )}
-                </div>
               </Stack>
-            </div>
+              <div>
+                {userView ? (
+                  <UserIcon userView={userView} />
+                ) : (
+                  <a href="/login">
+                    <Button variant="primary">
+                      <Trans i18nKey="swagger.login">Login</Trans>
+                    </Button>
+                  </a>
+                )}
+              </div>
+            </Stack>
+          </div>
 
-            {url?.value && (
-              <SwaggerUI
-                url={url.value}
-                presets={[WrappedPlugins]}
-                deepLinking={true}
-                tryItOutEnabled={true}
-                queryConfigEnabled={false}
-                persistAuthorization={false}
-                displayOperationId
-              />
-            )}
-            {!url?.value && <div>...{/** TODO, we can make an api docs loading page here */}</div>}
-          </NamespaceContext.Provider>
-        </ThemeProvider>
-      </OpenFeatureProvider>
+          {!whoami.loading && !namespace && (
+            <Alert title={t('swagger.namespace-unavailable-title', 'Unable to load namespace')} severity="warning">
+              <Trans i18nKey="swagger.namespace-unavailable">
+                Check the namespace before sending requests, or reload the page to try again.
+              </Trans>
+            </Alert>
+          )}
+          {spec && !whoami.loading && (
+            <SwaggerUI
+              url={spec.url}
+              presets={[WrappedPlugins]}
+              deepLinking={true}
+              tryItOutEnabled={true}
+              queryConfigEnabled={false}
+              persistAuthorization={false}
+              displayOperationId
+            />
+          )}
+          {(!spec || whoami.loading) && <div>...{/** TODO, we can make an api docs loading page here */}</div>}
+        </NamespaceContext.Provider>
+      </ThemeContext.Provider>
     </div>
   );
 };

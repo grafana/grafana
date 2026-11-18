@@ -8,6 +8,7 @@
   "name": "with-login-and-email",
   "rv": 1234,
   "_rv": "1234",
+  "groupResource": "iam.grafana.app/users",
   "title": "with-login-and-email",
   "title_ngram": "with-login-and-email",
   "title_phrase": "with-login-and-email",

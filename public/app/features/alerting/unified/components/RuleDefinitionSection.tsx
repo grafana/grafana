@@ -8,7 +8,7 @@ import { Trans, t } from '@grafana/i18n';
 import { Field, Input, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { type RuleFormValues } from '../types/rule-form';
-import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../utils/constants';
 
 import { FolderSelectorV2 } from './rule-editor/FolderSelectorV2';
 import { LabelsEditorModal } from './rule-editor/labels/LabelsEditorModal';
@@ -54,7 +54,7 @@ export function RuleDefinitionSection() {
               {...register('name', {
                 required: {
                   value: true,
-                  message: t('alerting.alert-rule-name-and-metric.message.must-enter-a-name', 'Must enter a name'),
+                  message: t('alerting.alert-rule-name-and-metric.message.name-required', 'Name is required'),
                 },
               })}
               aria-label={t('alerting.alert-rule-name-and-metric.aria-label-name', 'name')}

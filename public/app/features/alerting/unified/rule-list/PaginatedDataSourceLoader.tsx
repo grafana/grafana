@@ -1,5 +1,5 @@
 import { groupBy, isEmpty } from 'lodash';
-import { useEffect, useMemo, useRef } from 'react';
+import { useMemo } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
 import { Icon, LinkButton, Stack, Text } from '@grafana/ui';
@@ -34,6 +34,7 @@ interface LoaderProps extends Required<Pick<DataSourceSectionProps, 'application
   groupFilter?: string;
   namespaceFilter?: string;
   onLoadingStateChange?: (uid: string, state: DataSourceLoadState) => void;
+  hideEmptyDataSources?: boolean;
 }
 
 export function PaginatedDataSourceLoader({
@@ -42,6 +43,7 @@ export function PaginatedDataSourceLoader({
   groupFilter,
   namespaceFilter,
   onLoadingStateChange,
+  hideEmptyDataSources,
 }: LoaderProps) {
   const key = `${rulesSourceIdentifier.uid}-${groupFilter}-${namespaceFilter}`;
 
@@ -54,6 +56,7 @@ export function PaginatedDataSourceLoader({
       groupFilter={groupFilter}
       namespaceFilter={namespaceFilter}
       onLoadingStateChange={onLoadingStateChange}
+      hideEmptyDataSources={hideEmptyDataSources}
     />
   );
 }
@@ -64,6 +67,7 @@ function PaginatedGroupsLoader({
   groupFilter,
   namespaceFilter,
   onLoadingStateChange,
+  hideEmptyDataSources,
 }: LoaderProps) {
   // If there are filters, we don't want to populate the cache to avoid performance issues
   // Filtering may trigger multiple HTTP requests, which would populate the cache with a lot of groups hurting performance
@@ -75,17 +79,6 @@ function PaginatedGroupsLoader({
   // If there are no filters we can match one frontend page to one API page.
   // However, if there are filters, we need to fetch more groups from the API to populate one frontend page
   const apiGroupPageSize = getApiGroupPageSize(hasFilters);
-
-  const groupsGenerator = useRef(
-    toIndividualRuleGroups(prometheusGroupsGenerator(rulesSourceIdentifier, apiGroupPageSize))
-  );
-
-  useEffect(() => {
-    const currentGenerator = groupsGenerator.current;
-    return () => {
-      currentGenerator.return();
-    };
-  }, []);
 
   const filterFn = useMemo(() => {
     const { groupMatches } = getDatasourceFilter({
@@ -107,7 +100,7 @@ function PaginatedGroupsLoader({
   }, [namespaceFilter, groupFilter]);
 
   const { isLoading, groups, hasMoreGroups, fetchMoreGroups, error } = useLazyLoadPrometheusGroups(
-    groupsGenerator.current,
+    () => toIndividualRuleGroups(prometheusGroupsGenerator(rulesSourceIdentifier, apiGroupPageSize)),
     FRONTED_GROUPED_PAGE_SIZE,
     filterFn
   );
@@ -122,6 +115,15 @@ function PaginatedGroupsLoader({
   // until we have at least one result. This will provide a cleaner UI whent he user wants to find a specific folder or group.
   // We will have another UI element indicating that we are still searching in other datasources.
   if (hasFilters && isEmpty(groups)) {
+    return null;
+  }
+
+  // Avoid flashing headers for empty sources. Accumulated groups keep headers visible during "Load More".
+  if (!hasFilters && isLoading && isEmpty(groups)) {
+    return null;
+  }
+
+  if (hideEmptyDataSources && !hasFilters && hasNoRules && !error) {
     return null;
   }
 

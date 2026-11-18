@@ -3,21 +3,24 @@ package migrations
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
+	"uuid"
 
-	"github.com/google/uuid"
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/services"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -31,8 +34,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	sqlBackend "github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
-	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
-	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/grafana/grafana/pkg/util/xorm"
 )
@@ -53,7 +54,7 @@ func newTestEnv(t *testing.T) testEnv {
 
 func uniqueTable(t *testing.T, engine *xorm.Engine) string {
 	t.Helper()
-	name := fmt.Sprintf("test_%s", uuid.New().String()[:8])
+	name := fmt.Sprintf("test_%s", uuid.NewV4().String()[:8])
 	_, err := engine.Exec(fmt.Sprintf("CREATE TABLE %s (id INT PRIMARY KEY, val TEXT)", engine.Quote(name)))
 	require.NoError(t, err)
 	t.Cleanup(func() {
@@ -144,6 +145,176 @@ func assertNotRenamed(t *testing.T, engine *xorm.Engine, table string) {
 
 func noopLocker() *tableLockerMock {
 	return &tableLockerMock{unlockFunc: func(context.Context) error { return nil }}
+}
+
+var errStopAfterLock = errors.New("stop after lock")
+
+// sessionLocker inspects the migration session when tables are locked, then ends the run.
+type sessionLocker struct {
+	inspect func(*xorm.Session)
+}
+
+func (l *sessionLocker) LockMigrationTables(_ context.Context, sess *xorm.Session, _ []string) (func(context.Context) error, error) {
+	l.inspect(sess)
+	return nil, errStopAfterLock
+}
+
+func TestIntegrationRun_Postgres_SetsStatementTimeoutOnSession(t *testing.T) {
+	if !db.IsTestDbPostgres() {
+		t.Skip("Postgres-only")
+	}
+	env := newTestEnv(t)
+
+	cfg := setting.NewCfg()
+	cfg.MigrationStatementTimeout = 15 * time.Minute
+	var inside string
+	locker := &sessionLocker{inspect: func(sess *xorm.Session) {
+		_, err := sess.SQL("SHOW statement_timeout").Get(&inside)
+		require.NoError(t, err)
+	}}
+	runner, _ := newRunnerCfg(t, cfg, locker, &transactionalTableRenamer{log: logger}, testDef(dummyGR(), []string{"dashboard"}, nil))
+
+	// One connection, so the check after commit runs on the connection the migration used: a
+	// session-level SET would still show there, while rollback would have reverted it too.
+	engine, err := xorm.NewEngine(env.engine.DriverName(), env.engine.DataSourceName())
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = engine.Close() })
+	engine.DB().SetMaxOpenConns(1)
+
+	mg := migrator.NewMigrator(engine, setting.NewCfg())
+	sess := engine.NewSession()
+	defer sess.Close()
+	require.NoError(t, sess.Begin())
+	err = runner.Run(t.Context(), sess, mg, RunOptions{DriverName: migrator.Postgres})
+	require.ErrorIs(t, err, errStopAfterLock)
+	require.Equal(t, "15min", inside, "table locks and validators run on the migration session")
+	require.NoError(t, sess.Commit())
+
+	var after string
+	_, err = engine.SQL("SHOW statement_timeout").Get(&after)
+	require.NoError(t, err)
+	require.NotEqual(t, "15min", after, "the override ends with the migration transaction")
+}
+
+// readCtxValidator records whether validation runs with the migration read mark.
+type readCtxValidator struct{ migrationRead *bool }
+
+func (v readCtxValidator) Name() string { return "read-ctx" }
+
+func (v readCtxValidator) Validate(ctx context.Context, _ *xorm.Session, _ *resourcepb.BulkResponse, _ log.Logger) error {
+	*v.migrationRead = resource.MigrationReadFromContext(ctx)
+	return nil
+}
+
+func TestRunMarksRebuildAndValidationAsMigrationReads(t *testing.T) {
+	engine, err := xorm.NewEngine("sqlite3", ":memory:")
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = engine.Close() })
+	_, err = engine.Exec("CREATE TABLE org (id INTEGER PRIMARY KEY, name TEXT); INSERT INTO org (id, name) VALUES (1, 'test')")
+	require.NoError(t, err)
+
+	var validationMigrationRead bool
+	fake := &fakeUnifiedMigrator{migrateResponse: &resourcepb.BulkResponse{}}
+	runner := NewMigrationRunner(fake, noopLocker(), &transactionalTableRenamer{log: logger}, setting.NewCfg(),
+		testDef(dummyGR(), nil, nil), []Validator{readCtxValidator{migrationRead: &validationMigrationRead}})
+
+	runMigration(t, engine, runner, migrator.SQLite)
+	require.True(t, fake.rebuildMigrationRead, "index rebuild runs as a migration read")
+	require.True(t, validationMigrationRead, "validation runs as a migration read")
+}
+
+// listMarkRecordingBackend records, for each listing of a resource type, whether it runs as a
+// migration read. ProcessBulk is forwarded so the migration can still import through it.
+type listMarkRecordingBackend struct {
+	resource.StorageBackend
+	bulk resource.BulkProcessingBackend
+
+	mu    sync.Mutex
+	marks map[schema.GroupResource][]bool
+}
+
+func (b *listMarkRecordingBackend) ListIterator(ctx context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
+	if key := req.GetOptions().GetKey(); key != nil {
+		gr := schema.GroupResource{Group: key.Group, Resource: key.Resource}
+		b.mu.Lock()
+		b.marks[gr] = append(b.marks[gr], resource.MigrationReadFromContext(ctx))
+		b.mu.Unlock()
+	}
+	return b.StorageBackend.ListIterator(ctx, req, cb)
+}
+
+func (b *listMarkRecordingBackend) ProcessBulk(ctx context.Context, setting resource.BulkSettings, iter resource.BulkRequestIterator) (*resourcepb.BulkResponse, error) {
+	return b.bulk.ProcessBulk(ctx, setting, iter)
+}
+
+func (b *listMarkRecordingBackend) takeMarks(gr schema.GroupResource) []bool {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	marks := b.marks[gr]
+	delete(b.marks, gr)
+	return marks
+}
+
+// An index that is already open when the migration runs is rebuilt by the search server's
+// rebuild worker, not by the migration's request, so the worker has to read as the migration.
+func TestIntegrationRun_QueuedIndexRebuildIsMigrationRead(t *testing.T) {
+	env := newTestEnv(t)
+	eDB, err := dbimpl.ProvideResourceDB(env.store, setting.NewCfg(), nil)
+	require.NoError(t, err)
+	sqlStorage, err := sqlBackend.NewBackend(sqlBackend.BackendOptions{DBProvider: eDB})
+	require.NoError(t, err)
+	svc, ok := sqlStorage.(services.Service)
+	require.True(t, ok)
+	require.NoError(t, services.StartAndAwaitRunning(t.Context(), svc))
+	t.Cleanup(func() { _ = services.StopAndAwaitTerminated(context.Background(), svc) })
+
+	bulk, ok := sqlStorage.(resource.BulkProcessingBackend)
+	require.True(t, ok)
+	backend := &listMarkRecordingBackend{StorageBackend: sqlStorage, bulk: bulk, marks: map[schema.GroupResource][]bool{}}
+	server, err := newRetryTestResourceServerWithSearch(t, backend)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = server.Stop(context.Background()) })
+	client := &recordingRetryResourceClient{ResourceClient: resource.NewLocalResourceClient(server)}
+
+	gr := schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}
+	openTestSearchIndex(t, client, gr)
+	require.Equal(t, []bool{false}, backend.takeMarks(gr), "the search request builds the index as a normal read")
+
+	def := MigrationDefinition{
+		ID:          "queued-rebuild-migration-read",
+		MigrationID: "queued-rebuild-migration-read",
+		Resources:   []ResourceInfo{{GroupResource: gr}},
+		Migrators: map[schema.GroupResource]MigratorFunc{
+			gr: func(_ context.Context, _ int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
+				return stream.Send(&resourcepb.BulkRequest{
+					Key:    &resourcepb.ResourceKey{Namespace: opts.Namespace, Group: gr.Group, Resource: gr.Resource, Name: "folder-1"},
+					Action: resourcepb.BulkRequest_ADDED,
+					Value:  fmt.Appendf(nil, `{"apiVersion":"folder.grafana.app/v0alpha1","kind":"Folder","metadata":{"name":"folder-1","namespace":"%s"},"spec":{"title":"Folder 1"}}`, opts.Namespace),
+				})
+			},
+		},
+	}
+	registry := NewMigrationRegistry()
+	registry.Register(def)
+	runner := NewMigrationRunner(ProvideUnifiedMigrator(client, registry), noopLocker(), &transactionalTableRenamer{log: logger}, setting.NewCfg(), def, nil)
+
+	runMigration(t, env.engine, runner, env.engine.DriverName())
+	require.NotNil(t, client.lastRebuildResponse)
+	require.EqualValues(t, 1, client.lastRebuildResponse.RebuildCount, "the open index is rebuilt by the rebuild worker")
+	// The rebuild can run more than once, as the migration retries a rebuild finishing within the
+	// second of the import: build times are kept in seconds.
+	marks := backend.takeMarks(gr)
+	require.NotEmpty(t, marks)
+	require.NotContains(t, marks, false, "the queued rebuild reads as the migration")
+}
+
+func TestMigrationRunnerStatementTimeoutIsPostgresOnly(t *testing.T) {
+	cfg := setting.NewCfg()
+	cfg.MigrationStatementTimeout = time.Minute
+	runner, _ := newRunnerCfg(t, cfg, noopLocker(), &transactionalTableRenamer{log: logger}, testDef(dummyGR(), nil, nil))
+	require.Equal(t, time.Minute, runner.statementTimeout(RunOptions{DriverName: migrator.Postgres}))
+	require.Zero(t, runner.statementTimeout(RunOptions{DriverName: migrator.MySQL}))
+	require.Zero(t, runner.statementTimeout(RunOptions{DriverName: migrator.SQLite}))
 }
 
 func TestIntegrationRun_Postgres_LocksOnSession(t *testing.T) {
@@ -559,7 +730,7 @@ func TestIntegrationRecoverRenamedTables(t *testing.T) {
 	})
 
 	t.Run(setup.name+"/error — neither exists", func(t *testing.T) {
-		missing := "nonexistent_" + uuid.New().String()[:8]
+		missing := "nonexistent_" + uuid.NewV4().String()[:8]
 		renamer := setup.make(t)
 		err := renamer.RecoverRenamedTables([]string{missing})
 		require.Error(t, err)
@@ -610,18 +781,11 @@ func TestIntegrationRun_SQLiteRetryReleasesLock(t *testing.T) {
 		kvStore, err := kv.NewSQLKV(resDB.SqlDB(), resDB.DriverName())
 		require.NoError(t, err)
 
-		rvMgr, err := rvmanager.NewResourceVersionManager(rvmanager.ResourceManagerOptions{
-			Dialect: sqltemplate.SQLite,
-			DB:      resDB,
-		})
-		require.NoError(t, err)
-
 		backend, err := resource.NewKVStorageBackend(resource.KVBackendOptions{
 			KvStore:                kvStore,
-			RvManager:              rvMgr,
 			DBKeepAlive:            eDB,
 			DisableStorageServices: true,
-			Log:                    log.New("test.kv.retry"),
+			Log:                    logging.DefaultLogger.With("logger", "test.kv.retry"),
 		})
 		require.NoError(t, err)
 
@@ -702,7 +866,6 @@ func testSQLiteRetryReleasesLock(t *testing.T, env testEnv, backend resource.Sto
 	// once for the successful retry.
 	require.Equal(t, int32(2), callCount.Load())
 	require.NotNil(t, client.lastRebuildResponse, "expected real RebuildIndexes call")
-	require.Nil(t, client.lastRebuildResponse.Error)
 	if expectRebuild {
 		require.EqualValues(t, 1, client.lastRebuildResponse.RebuildCount)
 	}
@@ -754,9 +917,10 @@ func openTestSearchIndex(t *testing.T, client resource.ResourceClient, gr schema
 				Resource:  gr.Resource,
 			},
 		},
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	})
 	require.NoError(t, err)
-	require.Nil(t, searchResp.Error)
+	require.NotNil(t, searchResp)
 }
 
 type recordingRetryResourceClient struct {
@@ -879,7 +1043,6 @@ func TestIntegrationRun_SQLiteLargeMigrationRebuildUsesMigrationTransaction(t *t
 	err = runner.Run(runCtx, sess, mg, RunOptions{DriverName: migrator.SQLite})
 	require.NoError(t, err)
 	require.NotNil(t, client.lastRebuildResponse)
-	require.Nil(t, client.lastRebuildResponse.Error)
 	require.EqualValues(t, 1, client.lastRebuildResponse.RebuildCount)
 }
 
@@ -889,7 +1052,7 @@ func TestIntegrationBuildRenamePairs(t *testing.T) {
 	mg := migrator.NewMigrator(env.engine, setting.NewCfg())
 
 	t.Run("skips already renamed", func(t *testing.T) {
-		name := fmt.Sprintf("test_crash_%s", uuid.New().String()[:8])
+		name := fmt.Sprintf("test_crash_%s", uuid.NewV4().String()[:8])
 		_, err := env.engine.Exec(fmt.Sprintf("CREATE TABLE %s (id INT PRIMARY KEY)", env.engine.Quote(name+legacySuffix)))
 		require.NoError(t, err)
 		t.Cleanup(func() {

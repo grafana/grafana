@@ -30,6 +30,24 @@ function setupDiffData() {
 }
 
 describe('FlameGraphTooltip', () => {
+  it('should show zero percentages for a zero-total profile', () => {
+    const container = new FlameGraphDataContainer(
+      createDataFrame({
+        fields: [
+          { name: 'level', values: [0] },
+          { name: 'label', values: ['total'] },
+          { name: 'value', values: [0] },
+          { name: 'self', values: [0] },
+        ],
+      }),
+      { collapsing: false }
+    );
+
+    expect(
+      getTooltipData(container, { start: 0, itemIndexes: [0], value: 0, children: [], level: 0 }, 0)
+    ).toMatchObject({ percentValue: 0, percentSelf: 0 });
+  });
+
   it('for bytes', () => {
     const tooltipData = getTooltipData(
       setupData('bytes'),
@@ -185,6 +203,21 @@ describe('getDiffTooltipData', () => {
         diff: '99',
       },
     ]);
+  });
+
+  it('does not render NaN/undefined when valueRight is missing (e.g. a merged sandwich-view node)', () => {
+    const tooltipData = getDiffTooltipData(
+      setupDiffData(),
+      // No valueRight here - this is what mergeSubtrees/mergeParentSubtrees used to produce for sandwich view nodes.
+      { start: 0, itemIndexes: [1], value: 90, children: [], level: 0 },
+      200
+    );
+    for (const row of tooltipData) {
+      expect(String(row.baseline)).not.toMatch(/NaN|undefined/);
+      expect(String(row.comparison)).not.toMatch(/NaN|undefined/);
+      expect(String(row.diff)).not.toMatch(/NaN|undefined/);
+    }
+    expect(tooltipData[0].comparison).toBe('0%');
   });
 });
 

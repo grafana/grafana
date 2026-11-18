@@ -3,8 +3,8 @@ package test
 import (
 	"context"
 	"testing"
+	"uuid"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
 	claims "github.com/grafana/authlib/types"
@@ -18,18 +18,19 @@ import (
 )
 
 func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource.StorageBackend, searchBackend resource.SearchBackend) {
+	const nsPrefix = "test-ns"
+
 	// Create a test user with admin permissions
 	testUser := &identity.StaticRequester{
 		Type:           claims.TypeUser,
 		Login:          "testuser",
 		UserID:         123,
 		UserUID:        "u123",
+		Namespace:      nsPrefix,
 		OrgRole:        identity.RoleAdmin,
 		IsGrafanaAdmin: true,
 	}
 	ctx = claims.WithAuthInfo(ctx, testUser)
-
-	nsPrefix := "test-ns"
 
 	var server resource.ResourceServer
 
@@ -88,7 +89,7 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 				Key:    key,
 				Value:  value,
 				Object: meta,
-				GUID:   uuid.New().String(),
+				GUID:   uuid.NewV4().String(),
 			})
 			require.NoError(t, err)
 			require.Greater(t, rv, int64(0))
@@ -122,12 +123,12 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 					Namespace: nsPrefix,
 				},
 			},
-			Query: "initial",
-			Limit: 10,
+			Query:        "initial",
+			Limit:        10,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		})
 		require.NoError(t, err)
 		require.NotNil(t, searchResp)
-		require.Nil(t, searchResp.Error)
 		require.Equal(t, int64(2), searchResp.TotalHits)
 	})
 
@@ -189,7 +190,6 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 			})
 			require.NoError(t, err)
 			require.NotNil(t, createResp)
-			require.Nil(t, createResp.Error)
 		}
 	})
 
@@ -202,12 +202,12 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 					Namespace: nsPrefix,
 				},
 			},
-			Query: "Document",
-			Limit: 10,
+			Query:        "Document",
+			Limit:        10,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		})
 		require.NoError(t, err)
 		require.NotNil(t, searchResp)
-		require.Nil(t, searchResp.Error)
 		require.Equal(t, int64(5), searchResp.TotalHits)
 	})
 
@@ -220,12 +220,12 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 					Namespace: nsPrefix,
 				},
 			},
-			Query: "hello",
-			Limit: 10,
+			Query:        "hello",
+			Limit:        10,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		})
 		require.NoError(t, err)
 		require.NotNil(t, searchResp)
-		require.Nil(t, searchResp.Error)
 		// finding a document by its tag using the query field is not supported anymore, so should return nothing here
 		// https://github.com/grafana/grafana/pull/111842
 		require.Equal(t, int64(0), searchResp.TotalHits)
@@ -244,11 +244,11 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 					Values:   []string{"hello"},
 				}},
 			},
-			Limit: 10,
+			Limit:        10,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		})
 		require.NoError(t, err)
 		require.NotNil(t, searchResp)
-		require.Nil(t, searchResp.Error)
 		require.Equal(t, int64(3), searchResp.TotalHits)
 	})
 
@@ -261,12 +261,12 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 					Namespace: nsPrefix,
 				},
 			},
-			Query: "tag1",
-			Limit: 10,
+			Query:        "tag1",
+			Limit:        10,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		})
 		require.NoError(t, err)
 		require.NotNil(t, searchResp)
-		require.Nil(t, searchResp.Error)
 		// finding a document by its tag using the query field is not supported anymore, so should return nothing here
 		// https://github.com/grafana/grafana/pull/111842
 		require.Equal(t, int64(0), searchResp.TotalHits)
@@ -285,11 +285,87 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 					Values:   []string{"tag1"},
 				}},
 			},
-			Limit: 10,
+			Limit:        10,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		})
 		require.NoError(t, err)
 		require.NotNil(t, searchResp)
-		require.Nil(t, searchResp.Error)
 		require.Equal(t, int64(1), searchResp.TotalHits)
+	})
+
+	// A manager identity is only unique inside its kind: a repository can share its name
+	// with the manager that provisioned the repository itself.
+	t.Run("Count managed objects by kind and id", func(t *testing.T) {
+		managers := []struct {
+			name     string
+			kind     utils.ManagerKind
+			identity string
+		}{
+			{name: "managed1", kind: utils.ManagerKindFileProvisioning, identity: "bootstrap"},
+			{name: "managed2", kind: utils.ManagerKindRepo, identity: "bootstrap"},
+			{name: "managed3", kind: utils.ManagerKindRepo, identity: "bootstrap"},
+			{name: "managed4", kind: utils.ManagerKindRepo, identity: "team-dashboards"},
+		}
+
+		for _, m := range managers {
+			obj := &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"apiVersion": "test.grafana.app/v1",
+					"kind":       "testresources",
+					"metadata": map[string]interface{}{
+						"name":      m.name,
+						"namespace": nsPrefix,
+					},
+					"spec": map[string]interface{}{
+						"title": m.name,
+					},
+				},
+			}
+			meta, err := utils.MetaAccessor(obj)
+			require.NoError(t, err)
+			meta.SetManagerProperties(utils.ManagerProperties{Kind: m.kind, Identity: m.identity})
+
+			value, err := obj.MarshalJSON()
+			require.NoError(t, err)
+
+			_, err = server.Create(ctx, &resourcepb.CreateRequest{
+				Key: &resourcepb.ResourceKey{
+					Group:     "test.grafana.app",
+					Resource:  "testresources",
+					Namespace: nsPrefix,
+					Name:      m.name,
+				},
+				Value: value,
+			})
+			require.NoError(t, err)
+		}
+
+		count := func(kind, id string) []*resourcepb.CountManagedObjectsResponse_ResourceCount {
+			t.Helper()
+			rsp, err := server.CountManagedObjects(ctx, &resourcepb.CountManagedObjectsRequest{
+				Namespace: nsPrefix,
+				Kind:      kind,
+				Id:        id,
+			})
+			require.NoError(t, err)
+			return rsp.Items
+		}
+
+		require.Equal(t, []*resourcepb.CountManagedObjectsResponse_ResourceCount{
+			{Kind: "file-provisioning", Id: "bootstrap", Group: "test.grafana.app", Resource: "testresources", Count: 1},
+			{Kind: "repo", Id: "bootstrap", Group: "test.grafana.app", Resource: "testresources", Count: 2},
+			{Kind: "repo", Id: "team-dashboards", Group: "test.grafana.app", Resource: "testresources", Count: 1},
+		}, count("", ""))
+
+		require.Equal(t, []*resourcepb.CountManagedObjectsResponse_ResourceCount{
+			{Kind: "repo", Id: "bootstrap", Group: "test.grafana.app", Resource: "testresources", Count: 2},
+			{Kind: "repo", Id: "team-dashboards", Group: "test.grafana.app", Resource: "testresources", Count: 1},
+		}, count(string(utils.ManagerKindRepo), ""))
+
+		require.Equal(t, []*resourcepb.CountManagedObjectsResponse_ResourceCount{
+			{Kind: "repo", Id: "bootstrap", Group: "test.grafana.app", Resource: "testresources", Count: 2},
+		}, count(string(utils.ManagerKindRepo), "bootstrap"))
+
+		require.Empty(t, count(string(utils.ManagerKindTerraform), "bootstrap"))
 	})
 }

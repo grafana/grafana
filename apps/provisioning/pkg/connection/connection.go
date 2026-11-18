@@ -28,12 +28,18 @@ type Connection interface {
 	// The repo parameter specifies the repository name the token should be scoped to.
 	GenerateRepositoryToken(ctx context.Context, repo *provisioning.Repository) (*ExpirableSecureValue, error)
 
+	// Test checks if the connection information actually works.
+	Test(ctx context.Context) (*provisioning.TestResults, error)
+}
+
+// RepositoryLister is an optional interface that connections can implement if their
+// provider can list the repositories accessible through the connection.
+//
+//go:generate mockery --name RepositoryLister --structname MockRepositoryLister --inpackage --filename connection_repository_lister_mock.go --with-expecter
+type RepositoryLister interface {
 	// ListRepositories returns the list of repositories accessible through this connection.
 	// The repositories returned are external repositories from the git provider (e.g., GitHub, GitLab).
 	ListRepositories(ctx context.Context) ([]provisioning.ExternalRepository, error)
-
-	// Test checks if the connection information actually works.
-	Test(ctx context.Context) (*provisioning.TestResults, error)
 }
 
 // TokenConnection is an optional interface that connections can implement if they need

@@ -12,7 +12,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
@@ -511,67 +510,6 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, tt.expected, event)
 			}
-		})
-	}
-}
-
-func TestGitHubRepository_CommentPullRequest(t *testing.T) {
-	tests := []struct {
-		name          string
-		setupMock     func(m *MockClient)
-		prNumber      int
-		comment       string
-		expectedError error
-	}{
-		{
-			name: "successfully comment on pull request",
-			setupMock: func(m *MockClient) {
-				m.On("CreatePullRequestComment", mock.Anything, 123, "Test comment").
-					Return(nil)
-			},
-			prNumber:      123,
-			comment:       "Test comment",
-			expectedError: nil,
-		},
-		{
-			name: "error commenting on pull request",
-			setupMock: func(m *MockClient) {
-				m.On("CreatePullRequestComment", mock.Anything, 456, "Error comment").
-					Return(fmt.Errorf("failed to create comment"))
-			},
-			prNumber:      456,
-			comment:       "Error comment",
-			expectedError: fmt.Errorf("failed to create comment"),
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Setup mock GitHub client
-			mockGH := NewMockClient(t)
-			tt.setupMock(mockGH)
-
-			mockRepo := NewMockGithubRepository(t)
-			mockRepo.EXPECT().Client().Return(mockGH)
-
-			// Create repository with mock
-			repo := &githubWebhookRepository{
-				GithubRepository: mockRepo,
-			}
-
-			// Call the CommentPullRequest method
-			err := repo.CommentPullRequest(t.Context(), tt.prNumber, tt.comment)
-
-			// Check results
-			if tt.expectedError != nil {
-				require.Error(t, err)
-				require.Equal(t, tt.expectedError.Error(), err.Error())
-			} else {
-				require.NoError(t, err)
-			}
-
-			// Verify all mock expectations were met
-			mockGH.AssertExpectations(t)
 		})
 	}
 }

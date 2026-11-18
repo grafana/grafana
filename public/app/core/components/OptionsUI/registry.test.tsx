@@ -1,5 +1,6 @@
-import { act, render } from '@testing-library/react';
+import { act } from '@testing-library/react';
 import { type ComponentType } from 'react';
+import { render } from 'test/test-utils';
 
 import {
   FieldType,

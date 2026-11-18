@@ -5,7 +5,8 @@ import { t } from '@grafana/i18n';
 import { useTheme2 } from '@grafana/ui';
 import { SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
-import { canAccessPluginPage, isPluginEnabled, probePlugin } from 'app/features/alerting/unified/hooks/usePluginBridge';
+import { isPluginEnabled, probePlugin } from 'app/features/alerting/unified/hooks/pluginBridgeProbe';
+import { canAccessPluginPage } from 'app/features/alerting/unified/hooks/usePluginBridge';
 
 import type { GuideProps } from './Guide';
 
@@ -57,10 +58,10 @@ export function useGuides() {
       },
       {
         id: 'website-monitoring',
-        title: t('home.overview.get-started.cards.website-monitoring.title', 'Monitor website uptime and performance'),
+        title: t('home.overview.get-started.cards.website-monitoring.title', "Monitor your website's user experience"),
         description: t(
           'home.overview.get-started.cards.website-monitoring.description',
-          'Track the availability of your website and its performance from different locations.'
+          "Measure availability, speed, and key user journeys from your users' locations."
         ),
         icon: 'monitor',
         color: theme.visualization.getColorByName('green'),

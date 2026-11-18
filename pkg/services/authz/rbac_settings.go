@@ -70,9 +70,16 @@ func readAuthzClientSettings(cfg *setting.Cfg) (*authzClientSettings, error) {
 }
 
 type RBACServerSettings struct {
-	Folder              FolderAPISettings
-	CacheTTL            time.Duration
-	LocalFolderCacheTTL time.Duration
+	Folder                         FolderAPISettings
+	CacheTTL                       time.Duration
+	LocalFolderCacheTTL            time.Duration
+	ForcePermissionRoleActionIndex bool
+}
+
+func readEmbeddedRBACServerSettings(cfg *setting.Cfg) RBACServerSettings {
+	return RBACServerSettings{
+		ForcePermissionRoleActionIndex: cfg.SectionWithEnvOverrides("authorization").Key("force_permission_role_action_index").MustBool(false),
+	}
 }
 
 type FolderAPISettings struct {

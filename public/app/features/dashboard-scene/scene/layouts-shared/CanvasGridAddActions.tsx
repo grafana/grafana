@@ -63,7 +63,7 @@ export function CanvasGridAddActions({ layoutManager }: Props) {
               testId={selectors.components.CanvasGridAddActions.addRow}
               onClick={() => {
                 addNewRowTo(layoutManager);
-                DashboardInteractions.trackGroupRowClick();
+                DashboardInteractions.trackGroupRowClick('canvas');
               }}
             ></Menu.Item>
             <Menu.Item
@@ -75,7 +75,7 @@ export function CanvasGridAddActions({ layoutManager }: Props) {
               description={getDisableTabsMessage(disableTabsReason)}
               onClick={() => {
                 addNewTabTo(layoutManager);
-                DashboardInteractions.trackGroupTabClick();
+                DashboardInteractions.trackGroupTabClick('canvas');
               }}
             ></Menu.Item>
           </Menu>

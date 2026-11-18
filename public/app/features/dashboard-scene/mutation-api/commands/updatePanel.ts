@@ -8,7 +8,7 @@
  */
 
 import { mergeWith, cloneDeep, isArray } from 'lodash';
-import type * as z from 'zod';
+import * as z from 'zod/mini';
 
 import { type FieldConfigSource } from '@grafana/data';
 
@@ -70,7 +70,7 @@ function isDataTransformer(data: unknown): data is DataTransformerLike {
 
 export const updatePanelCommand: MutationCommand<UpdatePanelPayload> = {
   name: 'UPDATE_PANEL',
-  description: payloads.updatePanel.description ?? '',
+  description: z.globalRegistry.get(payloads.updatePanel)?.description ?? '',
 
   payloadSchema: payloads.updatePanel,
   permission: requiresEdit,
@@ -168,6 +168,7 @@ export const updatePanelCommand: MutationCommand<UpdatePanelPayload> = {
           if (dataSpec.transformations !== undefined && isDataTransformer(dataPipeline)) {
             const transformations = dataSpec.transformations.map((t: TransformationKind) => ({
               id: t.group,
+              refId: t.spec.refId,
               disabled: t.spec.disabled,
               filter: t.spec.filter,
               topic: t.spec.topic,

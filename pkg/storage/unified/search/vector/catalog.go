@@ -15,6 +15,16 @@ import (
 // exist.
 var ErrCollectionKindMismatch = errors.New("collection kind mismatch")
 
+type CollectionScope string
+
+const (
+	ScopeTenant     CollectionScope = "tenant"
+	ScopeShared     CollectionScope = "shared"
+	SharedNamespace                 = "__SHARED__"
+)
+
+var ErrCollectionScopeMismatch = errors.New("collection scope mismatch")
+
 // Collection is one row of the embedding_collections catalog: a (group,
 // resource) pair provisioned for vector storage. The catalog does two
 // things: maps resource names to partition keys (resource names may contain
@@ -25,6 +35,24 @@ type Collection struct {
 	Resource     string // resource name as callers send it, e.g. "dashboards"
 	PartitionKey string // value stored in embeddings.resource (LIST partition key)
 	IsExternal   bool   // externally-pushed rows
+	Scope        CollectionScope
+}
+
+// InternalPartitionKey lets enrollment validate partition names before any
+// catalog or schema changes. Distinct resources may derive the same key;
+// callers must also reject conflicting ownership.
+func InternalPartitionKey(resource string) (string, error) {
+	if resource == "" {
+		return "", fmt.Errorf("internal resource must not be empty")
+	}
+	key := sanitizeIdentifier(resource)
+	if isExternalPartitionKey(key) {
+		return "", fmt.Errorf("internal resource %q derives reserved partition key %q (suffix _external); rename the resource", resource, key)
+	}
+	if len(key) > maxPartitionKeyLen {
+		return "", fmt.Errorf("resource name %q too long: derived partition key %q exceeds %d chars", resource, key, maxPartitionKeyLen)
+	}
+	return key, nil
 }
 
 func (b *pgvectorBackend) ResolveCollection(ctx context.Context, group, resource string) (Collection, bool, error) {
@@ -49,14 +77,24 @@ func (b *pgvectorBackend) ResolveCollection(ctx context.Context, group, resource
 // internal collection. Only upsert paths call this — deletes resolve only,
 // so they can't create empty collections.
 func (b *pgvectorBackend) EnsureCollection(ctx context.Context, group, resource string, isExternal bool) (Collection, error) {
+	return b.EnsureCollectionWithScope(ctx, group, resource, isExternal, ScopeTenant)
+}
+
+func (b *pgvectorBackend) EnsureCollectionWithScope(ctx context.Context, group, resource string, isExternal bool, scope CollectionScope) (Collection, error) {
 	if group == "" || resource == "" {
 		return Collection{}, fmt.Errorf("group and resource must not be empty")
+	}
+	if err := validateCollectionScope(scope, isExternal); err != nil {
+		return Collection{}, err
 	}
 	c, found, err := b.ResolveCollection(ctx, group, resource)
 	if err != nil {
 		return Collection{}, err
 	}
 	if found {
+		if c.Scope != scope {
+			return Collection{}, fmt.Errorf("collection %s/%s has scope %q, requested %q: %w", group, resource, c.Scope, scope, ErrCollectionScopeMismatch)
+		}
 		if c.IsExternal != isExternal {
 			if isExternal {
 				return Collection{}, fmt.Errorf("collection %s/%s is internal, not writable through the external API: %w", group, resource, ErrCollectionKindMismatch)
@@ -76,13 +114,14 @@ func (b *pgvectorBackend) EnsureCollection(ctx context.Context, group, resource 
 	key := sanitizeIdentifier(resource)
 	if isExternal {
 		key += "_external"
-	} else if isExternalPartitionKey(key) {
-		// The suffix encodes external-ness downstream; an internal key
-		// carrying it would be misclassified.
-		return Collection{}, fmt.Errorf("internal resource %q derives reserved partition key %q (suffix _external); rename the resource", resource, key)
-	}
-	if len(key) > maxPartitionKeyLen {
-		return Collection{}, fmt.Errorf("resource name %q too long: derived partition key %q exceeds %d chars", resource, key, maxPartitionKeyLen)
+		if len(key) > maxPartitionKeyLen {
+			return Collection{}, fmt.Errorf("resource name %q too long: derived partition key %q exceeds %d chars", resource, key, maxPartitionKeyLen)
+		}
+	} else {
+		key, err = InternalPartitionKey(resource)
+		if err != nil {
+			return Collection{}, err
+		}
 	}
 
 	_, err = dbutil.Exec(ctx, b.db, sqlVectorCatalogInsert, &sqlVectorCatalogInsertRequest{
@@ -91,18 +130,23 @@ func (b *pgvectorBackend) EnsureCollection(ctx context.Context, group, resource 
 		Resource:     resource,
 		PartitionKey: key,
 		IsExternal:   isExternal,
+		Scope:        scope,
 	})
 	if err != nil {
-		// The insert's ON CONFLICT only swallows same-collection races, so a
-		// UNIQUE(partition_key) violation from a different collection lands
-		// here — name the owner so the conflict is resolvable without
-		// spelunking. Auto-renaming on conflict is a planned follow-up.
-		if owner, ok, oerr := b.collectionByPartitionKey(ctx, key); oerr == nil && ok {
+		// UNIQUE(partition_key) may race with another provisioner. An exact
+		// owner is safe to re-resolve; a different owner needs an explicit
+		// error because partition keys cannot be shared.
+		owner, ok, oerr := b.collectionByPartitionKey(ctx, key)
+		if oerr == nil && ok && owner.Group == group && owner.Resource == resource {
+			// A concurrent provisioner won this exact catalog row. The
+			// re-resolve below still checks scope before creating its leaf.
+		} else if oerr == nil && ok {
 			return Collection{}, fmt.Errorf(
 				"provision collection %s/%s: derived partition key %q is already owned by %s/%s; the new collection needs a manually assigned partition key",
 				group, resource, key, owner.Group, owner.Resource)
+		} else {
+			return Collection{}, fmt.Errorf("provision collection %s/%s: %w", group, resource, err)
 		}
-		return Collection{}, fmt.Errorf("provision collection %s/%s: %w", group, resource, err)
 	}
 
 	// Re-resolve: ON CONFLICT DO NOTHING means a concurrent provisioner may
@@ -113,6 +157,9 @@ func (b *pgvectorBackend) EnsureCollection(ctx context.Context, group, resource 
 	}
 	if !found {
 		return Collection{}, fmt.Errorf("provision collection %s/%s: catalog row missing after insert (partition key %q taken?)", group, resource, key)
+	}
+	if c.Scope != scope || c.IsExternal != isExternal {
+		return Collection{}, fmt.Errorf("collection %s/%s changed kind or scope during provisioning: %w", group, resource, ErrCollectionScopeMismatch)
 	}
 
 	if err := b.EnsureResourcePartition(ctx, c.PartitionKey); err != nil {
@@ -153,12 +200,26 @@ func (b *pgvectorBackend) listCollections(ctx context.Context) ([]Collection, er
 	}
 	out := make([]Collection, 0, len(rows))
 	for _, r := range rows {
+		if err := validateCollectionScope(CollectionScope(r.Scope), r.IsExternal); err != nil {
+			return nil, fmt.Errorf("collection %s/%s: %w", r.GroupName, r.Resource, err)
+		}
 		out = append(out, Collection{
 			Group:        r.GroupName,
 			Resource:     r.Resource,
 			PartitionKey: r.PartitionKey,
 			IsExternal:   r.IsExternal,
+			Scope:        CollectionScope(r.Scope),
 		})
 	}
 	return out, nil
+}
+
+func validateCollectionScope(scope CollectionScope, isExternal bool) error {
+	if scope != ScopeTenant && scope != ScopeShared {
+		return fmt.Errorf("invalid collection scope %q", scope)
+	}
+	if scope == ScopeShared && !isExternal {
+		return fmt.Errorf("shared scope requires an external collection")
+	}
+	return nil
 }

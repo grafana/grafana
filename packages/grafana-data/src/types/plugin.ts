@@ -132,6 +132,9 @@ export type ExtensionInfo = {
 };
 
 export interface PluginExtensions {
+  /** Bundled skill files keyed by a stable, plugin-local slug. Content and metadata live in the Markdown file. */
+  skills?: Record<string, { path: string }>;
+
   // The component extensions that the plugin registers
   addedComponents: ExtensionInfo[];
 
@@ -189,6 +192,10 @@ export interface PluginInclude {
   // Marks the app's default page: the one the app root URL resolves to. Serialized by the
   // plugin settings endpoints; at most one include should set it.
   defaultNav?: boolean;
+
+  // Unique identifier of the included resource. Currently only consumed for
+  // "dashboard" includes, where it builds the /d/<uid> navigation link.
+  uid?: string;
 
   // Angular app pages
   component?: string;

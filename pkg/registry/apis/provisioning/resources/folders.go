@@ -99,12 +99,11 @@ type FolderCreationInterceptor func(ctx context.Context, folder Folder) error
 type FolderManagerOption func(*FolderManager)
 
 type FolderManager struct {
-	repo                  repository.ReaderWriter
-	tree                  FolderTree
-	client                dynamic.ResourceInterface
-	beforeCreate          FolderCreationInterceptor
-	folderMetadataEnabled bool
-	folderGVK             schema.GroupVersionKind
+	repo         repository.ReaderWriter
+	tree         FolderTree
+	client       dynamic.ResourceInterface
+	beforeCreate FolderCreationInterceptor
+	folderGVK    schema.GroupVersionKind
 }
 
 func NewFolderManager(repo repository.ReaderWriter, client dynamic.ResourceInterface, lookup FolderTree, folderGVK schema.GroupVersionKind, opts ...FolderManagerOption) *FolderManager {
@@ -133,12 +132,6 @@ func WithBeforeCreate(beforeCreate FolderCreationInterceptor) FolderManagerOptio
 	}
 }
 
-func WithFolderMetadataEnabled(folderMetadataEnabled bool) FolderManagerOption {
-	return func(fm *FolderManager) {
-		fm.folderMetadataEnabled = folderMetadataEnabled
-	}
-}
-
 func (fm *FolderManager) Client() dynamic.ResourceInterface {
 	return fm.client
 }
@@ -149,6 +142,61 @@ func (fm *FolderManager) Tree() FolderTree {
 
 func (fm *FolderManager) SetTree(tree FolderTree) {
 	fm.tree = tree
+}
+
+// FindExistingAncestor resolves directories nearest-first and validates repository
+// ownership. It returns the folder's metadata.name and found=true for a matching
+// stored folder. If none is found, including at an implicit root, it returns
+// ("", false, nil). Folders with mismatched ownership or source paths are skipped.
+// Repository and storage lookup errors are returned separately.
+func (fm *FolderManager) FindExistingAncestor(ctx context.Context, dir, ref string) (folderID string, found bool, err error) {
+	cfg := fm.repo.Config()
+	folderCtx, _, err := identity.WithProvisioningIdentity(ctx, cfg.Namespace)
+	if err != nil {
+		return "", false, fmt.Errorf("create identity for ancestor lookup: %w", err)
+	}
+
+	rootFolder := RootFolder(cfg)
+	var ancestor string
+	err = safepath.WalkUp(ctx, dir, func(ctx context.Context, dir string) (bool, error) {
+		folderID := rootFolder
+		if dir != "" {
+			// Invalid metadata must not fall back to a cached folder or hash-derived UID.
+			var err error
+			folderID, err = GetFolderID(ctx, fm.repo, dir, ref)
+			if err != nil {
+				return false, fmt.Errorf("resolve ancestor %q: %w", dir, err)
+			}
+		}
+		if folderID == "" {
+			// Instance and folderless roots have no folder UID; stop without finding an ancestor.
+			return true, nil
+		}
+		obj, err := fm.GetFolder(folderCtx, folderID)
+		if apierrors.IsNotFound(err) {
+			return false, nil
+		}
+		if err != nil {
+			return false, fmt.Errorf("get ancestor folder %q: %w", folderID, err)
+		}
+		meta, err := utils.MetaAccessor(obj)
+		if err != nil {
+			return false, fmt.Errorf("get ancestor folder metadata: %w", err)
+		}
+		manager, _ := meta.GetManagerProperties()
+		source, _ := meta.GetSourceProperties()
+		// A matching UID alone does not establish repository and directory ownership.
+		// Repository roots legitimately have no source path annotation.
+		if !isManagedByRepository(manager, cfg.Name) || safepath.EnsureTrailingSlash(source.Path) != dir {
+			return false, nil
+		}
+		ancestor = folderID
+		return true, nil
+	})
+	if err != nil {
+		return "", false, err
+	}
+	return ancestor, ancestor != "", nil
 }
 
 // EnsureFolderPathExist creates the folder structure in the cluster.
@@ -235,7 +283,7 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath, re
 // invalid, it falls back to the current folder already known at that path. When
 // no folder exists yet, it falls back to the hash/path-derived folder identity.
 func (fm *FolderManager) resolveFolderForPath(ctx context.Context, path, ref string) (Folder, error) {
-	f, err := ParseFolderWithMetadata(ctx, fm.repo, path, ref, fm.folderMetadataEnabled)
+	f, err := ParseFolderWithMetadata(ctx, fm.repo, path, ref)
 	if err == nil {
 		return f, nil
 	}
@@ -293,7 +341,7 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 			Title:        currentTitle,
 			Path:         source.Path,
 			MetadataHash: source.Checksum,
-			ParentID:     meta.GetFolder(),
+			ParentID:     foldermodel.ToLegacyFolderUID(meta.GetFolder()),
 		}
 
 		if takeover || !folder.Equal(existing) {
@@ -526,7 +574,7 @@ func (fm *FolderManager) RemoveFolder(ctx context.Context, name string) error {
 // path-derived UID. That gives delete+recreate semantics instead of preserving
 // a metadata-backed identity we can no longer trust.
 func (fm *FolderManager) RenameFolderPath(ctx context.Context, previousPath, previousRef, newPath, newRef string, opts ...EnsurePathOption) (string, error) {
-	oldFolder, err := ParseFolderWithMetadata(ctx, fm.repo, previousPath, previousRef, fm.folderMetadataEnabled)
+	oldFolder, err := ParseFolderWithMetadata(ctx, fm.repo, previousPath, previousRef)
 	if err != nil {
 		if _, ok := errors.AsType[*InvalidFolderMetadata](err); !ok {
 			return "", fmt.Errorf("parse old folder: %w", err)
@@ -551,7 +599,7 @@ func (fm *FolderManager) RenameFolderPath(ctx context.Context, previousPath, pre
 		return "", fmt.Errorf("ensure new folder path: %w", err)
 	}
 
-	newFolder, err := ParseFolderWithMetadata(ctx, fm.repo, newPath, newRef, fm.folderMetadataEnabled)
+	newFolder, err := ParseFolderWithMetadata(ctx, fm.repo, newPath, newRef)
 	if err != nil {
 		if _, ok := errors.AsType[*InvalidFolderMetadata](err); !ok {
 			return "", fmt.Errorf("parse new folder: %w", err)
@@ -633,22 +681,16 @@ func (fm *FolderManager) EnsureFolderTreeExists(ctx context.Context, tree Folder
 			return opts.OnFolder(folder, false, startedAt, nil)
 		}
 
-		if fm.folderMetadataEnabled {
-			manifestID := folder.ID
-			if opts.GenerateNewFolderIDs {
-				manifestID = grafanautil.GenerateShortUID()
-			}
-			msg := fmt.Sprintf("Add folder and folder metadata %s", p)
-			manifest := NewFolderManifest(manifestID, folder.Title, fm.folderGVK)
-			if _, err := WriteFolderMetadata(ctx, fm.repo, p, manifest, opts.Ref, msg); err != nil {
-				return opts.OnFolder(folder, true, startedAt, err)
-			}
-		} else {
-			msg := fmt.Sprintf("Add folder %s", p)
-			if err := fm.repo.Create(ctx, p, opts.Ref, nil, msg); err != nil {
-				return opts.OnFolder(folder, true, startedAt, fmt.Errorf("write folder in repo: %w", err))
-			}
+		manifestID := folder.ID
+		if opts.GenerateNewFolderIDs {
+			manifestID = grafanautil.GenerateShortUID()
 		}
+		msg := fmt.Sprintf("Add folder and folder metadata %s", p)
+		manifest := NewFolderManifest(manifestID, folder.Title, fm.folderGVK)
+		if _, err := WriteFolderMetadata(ctx, fm.repo, p, manifest, opts.Ref, msg); err != nil {
+			return opts.OnFolder(folder, true, startedAt, err)
+		}
+
 		// Add it to the existing tree
 		fm.tree.Add(folder, parent)
 

@@ -172,7 +172,10 @@ export function fetchAllPromRulesAction(
 
 export const fetchGrafanaAnnotationsAction = createAsyncThunk(
   alertingActionTypePrefix.fetchGrafanaAnnotations,
-  (ruleUID: string): Promise<StateHistoryItem[]> => withSerializedError(fetchAnnotations(ruleUID))
+  async (ruleUID: string): Promise<{ ruleUID: string; history: StateHistoryItem[] }> => ({
+    ruleUID,
+    history: await withSerializedError(fetchAnnotations(ruleUID)),
+  })
 );
 
 interface UpdateAlertManagerConfigActionOptions {

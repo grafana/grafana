@@ -122,3 +122,23 @@ jobs:
           # This tee requires pipefail to be set, otherwise `go test`'s exit code is thrown away.
           # That means having no `-o pipefail` => failing tests => exit code 0, which is wrong.
           CGO_ENABLED=0 go test -vet=off -short -timeout=30m "${PACKAGES[@]}"
+
+      # The enterprise module beside this checkout is a separate Go module, so shard.sh's
+      # `find . -name go.mod` never reaches it and its packages need their own run.
+      # EXCLUDED mirrors grafana-enterprise's own root-module job: those packages already fail
+      # on main. Keep the two lists in step.
+      - name: Run enterprise module unit tests
+        env:
+          SHARD: ${{ matrix.shard }}
+          EXCLUDED: '/pkg/(saml)$'
+        run: |
+          set -euo pipefail
+
+          grafana_root="$PWD"
+          cd ../grafana-enterprise
+          readarray -t PACKAGES <<< "$("$grafana_root"/scripts/ci/backend-tests/shard.sh -N"$SHARD" -d ./pkg/... | grep -v -E "$EXCLUDED")"
+          if [ "${#PACKAGES[@]}" -eq 0 ] || [ -z "${PACKAGES[0]}" ]; then
+            echo "No enterprise packages in this shard"
+            exit 0
+          fi
+          CGO_ENABLED=0 go test -vet=off -short -timeout=30m "${PACKAGES[@]}"

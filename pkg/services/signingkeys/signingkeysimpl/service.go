@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -29,7 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/signingkeys/signingkeystore"
 )
 
-var _ signingkeys.Service = new(Service)
+var _ signingkeys.Service = (*Service)(nil)
 
 func ProvideEmbeddedSigningKeysService(dbStore db.DB,
 	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
@@ -158,7 +159,10 @@ func (s *Service) getPrivateKey(ctx context.Context, keyID string) (crypto.Signe
 
 	signer, err := s.decodePrivateKey(ctx, key.PrivateKey)
 	if err != nil {
-		return nil, err
+		// Usually this means the key was encrypted with a different secret_key (for example, the
+		// secret changed or the database was copied from another instance). Restore the original
+		// secret_key, or delete the row from the signing_key table so the key is regenerated.
+		return nil, fmt.Errorf("failed to decode signing key %q (was it encrypted with a different secret_key?): %w", keyID, err)
 	}
 
 	s.localCache.Set(keyID, signer, privateKeyTTL)

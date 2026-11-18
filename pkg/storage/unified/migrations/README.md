@@ -168,7 +168,8 @@ API rejected are accounted for and do not fail validation on their own.
 
 - **`CountValidation`** — compares legacy row count with unified storage. `Where` scopes to the org,
   `Distinct` counts unique values, and `Join` adds an inner join so orphaned rows the migrator skips are not
-  counted. Uses direct table queries on SQLite and `GetStats` elsewhere.
+  counted. On SQLite it reads within the migration transaction: current KV revisions for SQLKV, or the
+  `resource` table for the SQL backend. Other databases use `GetStats`.
 - **`FolderTreeValidation`** — compares folder parent maps built from legacy and unified storage to confirm
   the hierarchy survived.
 
@@ -195,6 +196,7 @@ Global keys in `[unified_storage]`:
 | `migration_parquet_buffer` | `false` | Buffer bulk writes through parquet |
 | `migration_chunked_writes` | `false` | Commit bulk writes in multiple transactions. Needs `migration_locking` for HA read isolation. |
 | `migration_chunk_max_bytes` | `256MiB` | Soft byte budget per chunk |
+| `migration_statement_timeout` | unset | Postgres only. Overrides `statement_timeout` for the migration's own transactions (for example `15m`). |
 
 ## Adding a new resource
 
@@ -257,8 +259,8 @@ func MyResourceMigration(m migrator.MyResourceMigrator) migrations.MigrationDefi
 
 `LockTables` must list every table the migrator reads. Set `SkipWhenMissing` when new deployments no longer
 create the legacy table, so a missing table skips the migration instead of failing it. Leave `RenameTables`
-empty while other code paths still read the legacy table. Set `ResourceGroupsFunc` only if the groups
-present in a namespace have to be discovered at runtime, as datasources do for per-plugin groups.
+empty while other code paths still read the legacy table. List the stored group for each resource
+in `Resources`; datasources use the shared `datasource.grafana.app` group rather than per-plugin groups.
 
 ### 3. Wire it up
 
@@ -297,7 +299,7 @@ of your definition:
 
 ```go
 func MyValidation(resource schema.GroupResource) ValidatorFactory {
-    return func(client resourcepb.ResourceIndexClient, driverName string) Validator {
+    return func(client resourcepb.ResourceIndexClient, opts ValidatorOptions) Validator {
         return &MyValidator{resource: resource, client: client}
     }
 }

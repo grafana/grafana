@@ -34,7 +34,7 @@ func TestAuthenticator(t *testing.T) {
 			Name:     "admin",
 			UserID:   1,
 			UserUID:  "xyz",
-			TeamIDs:  []int64{1, 2},
+			TeamIDs:  []int64{1, 2}, //nolint:staticcheck // Exercise legacy field compatibility.
 			TeamUIDs: []string{"team1", "team2"},
 		}
 

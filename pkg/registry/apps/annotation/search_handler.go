@@ -20,6 +20,7 @@ import (
 
 func newSearchHandler(
 	store Store,
+	tracer trace.Tracer,
 	accessClient authtypes.AccessClient,
 	folderResolver DashboardFolderResolver,
 	metrics *Metrics,
@@ -33,7 +34,10 @@ func newSearchHandler(
 		))
 		defer span.End()
 		start := time.Now()
-		defer func() { observe(ctx, logger, metrics.RequestDuration, "search", start, err) }()
+		defer func() {
+			err = toAPIError(err, "")
+			observe(ctx, logger, metrics.RequestDuration, "search", start, err)
+		}()
 
 		queryParams := request.URL.Query()
 		opts := listOptionsFromQueryParams(queryParams)
@@ -43,7 +47,7 @@ func newSearchHandler(
 			return err
 		}
 
-		allowed, err := canAccessAnnotations(ctx, accessClient, folderResolver, namespace, result.Items, utils.VerbList)
+		allowed, err := canAccessAnnotations(ctx, tracer, accessClient, folderResolver, namespace, result.Items, utils.VerbList)
 		if err != nil {
 			return err
 		}

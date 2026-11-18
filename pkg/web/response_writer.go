@@ -25,10 +25,10 @@ import (
 )
 
 var (
-	_ http.ResponseWriter                  = &responseWriter{}
-	_ http.Hijacker                        = &responseWriter{}
-	_ responsewriter.CloseNotifierFlusher  = &responseWriter{}
-	_ responsewriter.UserProvidedDecorator = &responseWriter{}
+	_ http.ResponseWriter                  = (*responseWriter)(nil)
+	_ http.Hijacker                        = (*responseWriter)(nil)
+	_ responsewriter.CloseNotifierFlusher  = (*responseWriter)(nil)
+	_ responsewriter.UserProvidedDecorator = (*responseWriter)(nil)
 )
 
 // ResponseWriter is a wrapper around http.ResponseWriter that provides extra information about

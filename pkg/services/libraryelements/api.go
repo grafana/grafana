@@ -132,7 +132,7 @@ func (l *LibraryElementService) createHandler(c *contextmodel.ReqContext) respon
 		} else {
 			folder, err := l.folderService.Get(c.Req.Context(), &foldermodel.GetFolderQuery{OrgID: c.GetOrgID(), UID: cmd.FolderUID, SignedInUser: c.SignedInUser})
 			if err != nil || folder == nil {
-				return response.ErrOrFallback(http.StatusBadRequest, "failed to get folder", err)
+				return folderLookupError(http.StatusBadRequest, err)
 			}
 			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
 			// nolint:staticcheck
@@ -152,7 +152,7 @@ func (l *LibraryElementService) createHandler(c *contextmodel.ReqContext) respon
 		// nolint:staticcheck
 		folder, err := l.folderService.Get(c.Req.Context(), &foldermodel.GetFolderQuery{OrgID: c.SignedInUser.GetOrgID(), ID: &element.FolderID, SignedInUser: c.SignedInUser})
 		if err != nil {
-			return response.ErrOrFallback(http.StatusInternalServerError, "failed to get folder", err)
+			return folderLookupError(http.StatusInternalServerError, err)
 		}
 		element.FolderUID = folder.UID
 		element.Meta.FolderUID = folder.UID
@@ -160,6 +160,14 @@ func (l *LibraryElementService) createHandler(c *contextmodel.ReqContext) respon
 	}
 
 	return response.JSON(http.StatusOK, model.LibraryElementResponse{Result: element})
+}
+
+// folderLookupError keeps the status for a missing folder, whose error carries its own 404.
+func folderLookupError(status int, err error) response.Response {
+	if errors.Is(err, dashboards.ErrFolderNotFound) {
+		return response.Error(status, "failed to get folder", err)
+	}
+	return response.ErrOrFallback(status, "failed to get folder", err)
 }
 
 // swagger:route DELETE /library-elements/{library_element_uid} library_elements deleteLibraryElementByUID
@@ -254,7 +262,7 @@ func (l *LibraryElementService) getAllHandler(c *contextmodel.ReqContext) respon
 		Kind:             c.QueryInt("kind"),
 		TypeFilter:       c.Query("typeFilter"),
 		ExcludeUID:       c.Query("excludeUid"),
-		FolderFilter:     c.Query("folderFilter"),
+		FolderFilter:     c.Query("folderFilter"), //nolint:staticcheck // Preserve legacy field compatibility.
 		FolderFilterUIDs: c.Query("folderFilterUIDs"),
 	}
 
@@ -406,7 +414,7 @@ func (l *LibraryElementService) getConnectionsHandler(c *contextmodel.ReqContext
 		connectionID := int64(hash.Sum64() & ((1 << 52) - 1))
 
 		connections = append(connections, model.LibraryElementConnectionDTO{
-			ID:            connectionID,
+			ID:            connectionID, //nolint:staticcheck // Preserve legacy field compatibility.
 			Kind:          int64(model.PanelElement),
 			ElementID:     element.ID,
 			ConnectionID:  dashboard.ID, // nolint:staticcheck
@@ -1278,7 +1286,7 @@ func (lk8s *libraryElementsK8sHandler) unstructuredToLegacyLibraryPanelDTO(c *co
 		return nil, err
 	}
 	id = meta.GetDeprecatedInternalID() // nolint:staticcheck
-	folderUID = meta.GetFolder()
+	folderUID = foldermodel.ToLegacyFolderUID(meta.GetFolder())
 
 	// rebuild the legacy model blob, then re-attach the identifiers the legacy API inlines
 	modelJSON, err := LibraryPanelToLegacyModel(panel)

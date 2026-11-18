@@ -11,15 +11,30 @@ import {
 export const xyChartMigrationHandler = (panel: PanelModel): Options => {
   const pluginVersion = panel?.pluginVersion ?? '';
 
-  if (pluginVersion === '' || parseFloat(pluginVersion) < 11.1) {
+  // An empty version can come from a saved panel that predates plugin versions, but also from
+  // current options without a version (e.g. a v2 dashboard with an empty vizConfig.version),
+  // so only migrate when the options have the legacy shape.
+  if (pluginVersion === '' ? hasLegacyOptions(panel.options) : parseFloat(pluginVersion) < 11.1) {
     return migrateOptions(panel);
   }
 
   return panel.options;
 };
 
+function hasLegacyOptions(options: Partial<PrevOptions> | undefined): boolean {
+  if (!options) {
+    return false;
+  }
+
+  return (
+    'dims' in options ||
+    'seriesMapping' in options ||
+    (Array.isArray(options.series) && options.series.some((s) => typeof s?.x === 'string' || typeof s?.y === 'string'))
+  );
+}
+
 function migrateOptions(panel: PanelModel): Options {
-  const { dims, seriesMapping, series: oldSeries, ...cleanedOpts } = panel.options as PrevOptions;
+  const { dims, seriesMapping, series: oldSeries, ...cleanedOpts }: PrevOptions = panel.options;
   const { exclude = [], frame: frameShared, x: xShared }: XYDimensionConfig = dims ?? {};
 
   const custDefaults = panel.fieldConfig.defaults.custom;

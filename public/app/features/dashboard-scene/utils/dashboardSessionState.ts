@@ -1,5 +1,6 @@
 import { type UrlQueryMap, urlUtil } from '@grafana/data';
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { sceneUtils } from '@grafana/scenes';
 
 import { type DashboardScene } from '../scene/DashboardScene';
@@ -63,7 +64,7 @@ function getValidVariableUrlKeys(root: DashboardScene): Set<string> {
  * Scenes behavior that will capture currently selected variables and time range and save them to local storage, so that they can be applied when the next dashboard is loaded.
  */
 export function preserveDashboardSceneStateInLocalStorage(search: URLSearchParams, uid?: string) {
-  if (!config.featureToggles.preserveDashboardStateWhenNavigating) {
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.PreserveDashboardStateWhenNavigating, false)) {
     return;
   }
 

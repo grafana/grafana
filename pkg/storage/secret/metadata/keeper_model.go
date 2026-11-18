@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
+	"uuid"
 
-	"github.com/google/uuid"
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
@@ -102,7 +102,7 @@ func toKeeperCreateRow(kp *secretv1beta1.Keeper, actorUID string) (*keeperDB, er
 
 	now := time.Now().UTC().Unix()
 
-	row.GUID = uuid.New().String()
+	row.GUID = uuid.NewV4().String()
 	row.Created = now
 	row.CreatedBy = actorUID
 	row.Updated = now

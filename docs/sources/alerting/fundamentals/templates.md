@@ -20,32 +20,6 @@ labels:
 title: Templates
 meta_image: /media/docs/alerting/how-notification-templates-works.png
 weight: 115
-refs:
-  labels:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/#labels
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label/#labels
-  annotations:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/#annotations
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label/#annotations
-  templating-labels-annotations:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/
-  notification-message-reference:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/reference/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/reference/
-  template-notifications:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/
 ---
 
 # Templates
@@ -86,7 +60,7 @@ In this diagram:
 
 ## Template annotations
 
-[Annotations](ref:annotations) can be defined in the alert rule to add extra information to alert instances.
+[Annotations](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/#annotations) can be defined in the alert rule to add extra information to alert instances.
 
 When creating an alert rule, Grafana suggests several optional annotations, such as `description`, `summary`, and `runbook_url`, which help identify and respond to alerts. You can also create custom annotations.
 
@@ -112,11 +86,11 @@ CPU usage for Instance 1 has exceeded 80% (81.2345) for the last 5 minutes.
 
 Implement annotations that provide meaningful information to respond to your alerts. Annotations are displayed in the Grafana alert detail view and are included by default in notifications.
 
-For more details on how to template annotations, refer to [Template annotations and labels](ref:templating-labels-annotations).
+For more details on how to template annotations, refer to [Template annotations and labels](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/).
 
 ## Template labels
 
-[Labels](ref:labels) are used to differentiate one alert instance from all other alert instances, as the set of labels uniquely identifies an alert instance. Notification policies and silences use labels to handle alert instances.
+[Labels](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/#labels) are used to differentiate one alert instance from all other alert instances, as the set of labels uniquely identifies an alert instance. Notification policies and silences use labels to handle alert instances.
 
 You can also template labels based on query results. This is helpful if the labels you get from your query aren't detailed enough. For instance:
 
@@ -135,11 +109,11 @@ development
 {{- end -}}
 ```
 
-For more details on how to template labels, refer to [Template annotations and labels](ref:templating-labels-annotations).
+For more details on how to template labels, refer to [Template annotations and labels](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/).
 
 ## Template notifications
 
-[Notification templates](ref:template-notifications) allow you to customize the content of your notifications, such as the subject of an email or the body of a Slack message.
+[Notification templates](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/) allow you to customize the content of your notifications, such as the subject of an email or the body of a Slack message.
 
 Notification templates differ from templating annotations and labels in the following ways:
 
@@ -147,7 +121,7 @@ Notification templates differ from templating annotations and labels in the foll
 - If not specified, the contact point uses a default template that includes relevant alert information.
 - The same template can be shared across multiple contact points, making it easier to maintain and ensuring consistency.
 - Notification templates should not be used to add additional information to individual alerts—use annotations for that purpose.
-- While both annotation/label templates and notification templates use the same templating language, the available variables and functions differ. For more details, refer to the [notification template reference](ref:notification-message-reference) and [annotation/label template reference](ref:templating-labels-annotations).
+- While both annotation/label templates and notification templates use the same templating language, the available variables and functions differ. For more details, refer to the [notification template reference](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/reference/) and [annotation/label template reference](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/).
 
 Here is an example of a notification template that summarizes all firing and resolved alerts in a notification group:
 
@@ -180,4 +154,4 @@ The notification message to the contact point would look like this:
 - The web server web1 has been responding to 5% of HTTP requests with 5xx errors for the last 5 minutes.
 ```
 
-For more details, refer to [Template notifications](ref:template-notifications).
+For more details, refer to [Template notifications](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/).

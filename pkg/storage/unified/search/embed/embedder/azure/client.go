@@ -11,8 +11,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/openai/openai-go/v3"
 	"github.com/openai/openai-go/v3/azure"
+	"github.com/openai/openai-go/v3/option"
 
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 )
@@ -37,14 +39,27 @@ var _ Client = (*restClient)(nil)
 // the `api-key` header. deployment is the Azure deployment name, not the base
 // model name.
 func NewClient(endpoint, deployment, apiVersion, apiKey string) (Client, error) {
+	if apiKey == "" {
+		return nil, fmt.Errorf("azure: api key is required")
+	}
+	return newClient(endpoint, deployment, apiVersion, azure.WithAPIKey(apiKey))
+}
+
+// NewClientWithTokenCredential uses Entra ID tokens instead of an API key.
+// The SDK requests the Cognitive Services scope and refreshes tokens as needed.
+func NewClientWithTokenCredential(endpoint, deployment, apiVersion string, credential azcore.TokenCredential) (Client, error) {
+	if credential == nil {
+		return nil, fmt.Errorf("azure: token credential is required")
+	}
+	return newClient(endpoint, deployment, apiVersion, azure.WithTokenCredential(credential))
+}
+
+func newClient(endpoint, deployment, apiVersion string, auth option.RequestOption) (Client, error) {
 	if endpoint == "" {
 		return nil, fmt.Errorf("azure: endpoint is required")
 	}
 	if deployment == "" {
 		return nil, fmt.Errorf("azure: deployment is required")
-	}
-	if apiKey == "" {
-		return nil, fmt.Errorf("azure: api key is required")
 	}
 	if apiVersion == "" {
 		apiVersion = "2024-02-01"
@@ -52,7 +67,7 @@ func NewClient(endpoint, deployment, apiVersion, apiKey string) (Client, error) 
 	return &restClient{
 		client: openai.NewClient(
 			azure.WithEndpoint(endpoint, apiVersion),
-			azure.WithAPIKey(apiKey),
+			auth,
 		),
 		deployment: deployment,
 	}, nil
@@ -92,9 +107,8 @@ func (c *restClient) EmbedTexts(ctx context.Context, texts []string, dimensions 
 func retryableError(err error, now time.Time) error {
 	var netErr net.Error
 	retryable := errors.Is(err, context.DeadlineExceeded) || (errors.As(err, &netErr) && netErr.Timeout())
-	var apiErr *openai.Error
 	var delay time.Duration
-	if errors.As(err, &apiErr) {
+	if apiErr, ok := errors.AsType[*openai.Error](err); ok {
 		switch apiErr.StatusCode {
 		case http.StatusRequestTimeout, http.StatusConflict, http.StatusTooManyRequests,
 			http.StatusInternalServerError, http.StatusBadGateway, http.StatusServiceUnavailable, http.StatusGatewayTimeout:

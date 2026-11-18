@@ -111,13 +111,13 @@ export function CodeCell({
   // render, but whether this cell has the behavior at all doesn't.
   const onNavigateRef = useRef(onNavigate);
   onNavigateRef.current = onNavigate;
+  const hasOnNavigate = Boolean(onNavigate);
   const navigateExt = useMemo(() => {
-    if (!onNavigate) {
+    if (!hasOnNavigate) {
       return [];
     }
     return navigationKeymap((direction) => onNavigateRef.current?.(direction));
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- the ref is always current; only whether onNavigate exists at all should rebuild this
-  }, [Boolean(onNavigate)]);
+  }, [hasOnNavigate]);
 
   if (content.kind !== 'Code') {
     return null;
@@ -173,6 +173,9 @@ export function CodeCell({
           height="auto"
           readOnly={!isEditing}
           lineWrapping
+          // Tab leaves the cell instead of indenting, so the language picker above and the rest
+          // of the document stay reachable from the keyboard.
+          indentWithTab={false}
           basicSetup={isEditing ? EDIT_SETUP : VIEW_SETUP}
           extensions={[scrollMargin, ...navigateExt, ...(focusExtension ?? [])]}
           aria-label={t('notebook.cell.code.aria-label-editor', 'Code')}

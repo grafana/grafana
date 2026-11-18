@@ -3,6 +3,7 @@ import { type ComponentProps } from 'react';
 
 import { type DataFrame, FieldType, LogsSortOrder, toUtc, urlUtil } from '@grafana/data';
 import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
+import { selectors } from '@grafana/e2e-selectors';
 import { extractFieldsTransformer } from 'app/features/transformers/extractFields/extractFields';
 
 import { parseLogsFrame } from '../../logs/logsFrame';
@@ -115,8 +116,8 @@ describe('LogsTable', () => {
 
     await waitFor(() => {
       const rows = screen.getAllByRole('row');
-      // tableFrame has 3 rows + 1 header row
-      expect(rows.length).toBe(4);
+      // tableFrame has 3 rows + 1 header row + 1 footer row
+      expect(rows.length).toBe(5);
     });
   });
 
@@ -161,6 +162,8 @@ describe('LogsTable', () => {
   it('should not render `tsNs` column', async () => {
     setup(undefined, getMockLokiFrame());
 
+    expect(await screen.findByRole('columnheader', { name: /Time/ })).toBeInTheDocument();
+
     await waitFor(() => {
       const columns = screen.queryAllByRole('columnheader', { name: 'tsNs' });
 
@@ -185,13 +188,16 @@ describe('LogsTable', () => {
       expect(columns.length).toBe(1);
     });
 
-    const cells = screen.queryAllByRole('cell');
+    const footer = screen.getByTestId(selectors.components.Panels.Visualization.Table.footer);
+    const cells = screen.queryAllByRole('cell').filter((cell) => !footer.contains(cell));
 
     expect(cells[cells.length - 1].style.textAlign).toBe('right');
   });
 
   it('should not render `labels`', async () => {
     setup();
+
+    expect(await screen.findByRole('columnheader', { name: /Time/ })).toBeInTheDocument();
 
     await waitFor(() => {
       const columns = screen.queryAllByRole('columnheader', { name: 'labels' });
@@ -220,8 +226,8 @@ describe('LogsTable', () => {
 
       await waitFor(() => {
         const rows = screen.getAllByRole('row');
-        // tableFrame has 3 rows + 1 header row
-        expect(rows.length).toBe(4);
+        // tableFrame has 3 rows + 1 header row + 1 footer row
+        expect(rows.length).toBe(5);
       });
     });
 
@@ -255,6 +261,8 @@ describe('LogsTable', () => {
         getMockLokiFrameDataPlane()
       );
 
+      expect(await screen.findByRole('columnheader', { name: /timestamp/ })).toBeInTheDocument();
+
       await waitFor(() => {
         const columns = screen.queryAllByRole('columnheader', { name: 'labels' });
 
@@ -272,6 +280,8 @@ describe('LogsTable', () => {
         },
         getMockLokiFrameDataPlane()
       );
+
+      expect(await screen.findByRole('columnheader', { name: /timestamp/ })).toBeInTheDocument();
 
       await waitFor(() => {
         const columns = screen.queryAllByRole('columnheader', { name: 'tsNs' });
@@ -326,7 +336,7 @@ describe('LogsTable', () => {
 
       await waitFor(() => {
         const rows = screen.getAllByRole('row');
-        expect(rows.length).toBe(4);
+        expect(rows.length).toBe(5);
       });
 
       // Verify the Time column has the sort indicator (arrow down for descending)
@@ -399,6 +409,8 @@ describe('LogsTable', () => {
 
       setup({ logsFrame }, testFrame);
 
+      expect(await screen.findByRole('columnheader', { name: /Time/ })).toBeInTheDocument();
+
       await waitFor(() => {
         expect(partialSpy).toHaveBeenCalled();
         // Verify that selectedLine is set to undefined
@@ -422,7 +434,13 @@ describe('LogsTable', () => {
 
       // Verify buttons are in the first column
       const rows = screen.getAllByRole('row');
-      const dataRows = rows.filter((row) => row.getAttribute('role') === 'row' && !row.getAttribute('aria-label'));
+      const footerTestId = selectors.components.Panels.Visualization.Table.footer;
+      const dataRows = rows.filter(
+        (row) =>
+          row.getAttribute('role') === 'row' &&
+          !row.getAttribute('aria-label') &&
+          row.getAttribute('data-testid') !== footerTestId
+      );
 
       dataRows.forEach((row) => {
         const cells = row.querySelectorAll('[role="cell"]');

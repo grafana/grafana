@@ -1,9 +1,9 @@
-import { render, prettyDOM, screen } from '@testing-library/react';
+import { act, render, prettyDOM, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef } from 'react';
 import { Provider } from 'react-redux';
 
-import { type DataFrame, MutableDataFrame } from '@grafana/data';
+import { type DataFrame, MutableDataFrame, type TraceSearchProps } from '@grafana/data';
 import { mockTimeRange } from '@grafana/plugin-ui/test';
 import {
   setPluginLinksHook,
@@ -13,8 +13,13 @@ import {
 } from '@grafana/runtime';
 
 import { configureStore } from '../../../store/configureStore';
+import { DEFAULT_SPAN_FILTERS } from '../state/constants';
+import { changePanelState } from '../state/explorePane';
+import { initialExploreState } from '../state/main';
+import { makeExplorePaneState } from '../state/utils';
 
 import { TraceView } from './TraceView';
+import { SPAN_NAME } from './components/constants/span';
 import { type TraceData, type TraceSpanData } from './components/types/trace';
 import { transformDataFrames } from './utils/transform';
 
@@ -22,6 +27,7 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   useAppPluginInstalled: jest.fn(),
   reportInteraction: jest.fn(),
+  useDataSourceInstanceSettings: jest.fn().mockReturnValue({ isLoading: false, settings: undefined }),
 }));
 
 // The summary-span minimap gradient emits fractional rgb() channels that real browsers accept
@@ -31,12 +37,6 @@ jest.mock('./components/TracePageHeader/SpanGraph/render-into-canvas', () => ({
   __esModule: true,
   default: jest.fn(),
 }));
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
-  useDataSourceInstanceSettings: jest.fn().mockReturnValue({ isLoading: false, settings: undefined }),
-}));
-
 const mockUseAppPluginInstalled = jest.mocked(useAppPluginInstalled);
 
 function mockPluginInstalled(installedPluginIds: string[] = []) {
@@ -47,26 +47,41 @@ function mockPluginInstalled(installedPluginIds: string[] = []) {
   }));
 }
 
-function getTraceView(frames: DataFrame[]) {
-  const store = configureStore();
+function getTraceView(
+  frames: DataFrame[],
+  spanFilters?: TraceSearchProps,
+  spanId?: string,
+  expandSpan?: boolean,
+  storeOverride?: ReturnType<typeof configureStore>
+) {
+  const store = configureStore({
+    explore: {
+      ...initialExploreState,
+      panes: {
+        left: makeExplorePaneState({ panelsState: { trace: { spanId, expandSpan } } }),
+      },
+    },
+  });
   const topOfViewRef = createRef<HTMLDivElement>();
 
   return (
-    <Provider store={store}>
+    <Provider store={storeOverride ?? store}>
       <TraceView
+        exploreId={spanId !== undefined || expandSpan !== undefined ? 'left' : undefined}
         dataFrames={frames}
         splitOpenFn={() => {}}
         traceProp={transformDataFrames(frames[0])!}
         datasource={undefined}
         topOfViewRef={topOfViewRef}
         timeRange={mockTimeRange()}
+        spanFilters={spanFilters}
       />
     </Provider>
   );
 }
 
-function renderTraceView(frames = [frameOld]) {
-  const { container, baseElement } = render(getTraceView(frames));
+function renderTraceView(frames = [frameOld], spanFilters?: TraceSearchProps) {
+  const { container, baseElement } = render(getTraceView(frames, spanFilters));
 
   return {
     header: container.children[0],
@@ -164,6 +179,76 @@ describe('TraceView', () => {
     );
   });
 
+  describe('Go to span', () => {
+    // client-uuid-3 belongs to the errored span the banner points at, so finding it in a
+    // resource attributes table proves the right span's detail is the one that opened.
+    const bannerSpanIsOpen = () =>
+      screen
+        .getAllByText('', { selector: 'div[data-testid="KeyValueTable"]' })
+        .some((table) => table.innerHTML.includes('client-uuid-3'));
+
+    it('opens the detail of the banner span', async () => {
+      renderTraceView([frameError]);
+      expect(screen.queryByText(/Span attributes/)).not.toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole('button', { name: 'Go to span' }));
+
+      expect(screen.getByText(/Span attributes/)).toBeInTheDocument();
+      expect(bannerSpanIsOpen()).toBe(true);
+    });
+
+    it('leaves the detail open when clicked again', async () => {
+      renderTraceView([frameError]);
+      const goToSpan = screen.getByRole('button', { name: 'Go to span' });
+
+      await userEvent.click(goToSpan);
+      await userEvent.click(goToSpan);
+
+      expect(bannerSpanIsOpen()).toBe(true);
+    });
+
+    it('leaves the detail open when the user already opened it from the timeline', async () => {
+      renderTraceView([frameError]);
+      const erroredSpan = screen.getAllByText('', { selector: 'div[data-testid="span-view"]' })[2];
+      await userEvent.click(erroredSpan);
+      expect(bannerSpanIsOpen()).toBe(true);
+
+      await userEvent.click(screen.getByRole('button', { name: 'Go to span' }));
+
+      expect(bannerSpanIsOpen()).toBe(true);
+    });
+
+    // "Show all spans" is off exactly when the matches-only filter is on.
+    const matchesOnly = (spanName: string): TraceSearchProps => ({
+      ...DEFAULT_SPAN_FILTERS,
+      matchesOnly: true,
+      adhocFilters: [{ key: SPAN_NAME, operator: '=', value: spanName }],
+    });
+
+    it('turns matches-only off when the banner span is hidden by the filter', async () => {
+      // Only the root span matches, so the errored banner span is filtered out of the timeline.
+      renderTraceView([frameError], matchesOnly('HTTP POST - api_prom_push'));
+      const showAllSpans = screen.getByRole('switch', { name: 'Show all spans' });
+      expect(showAllSpans).not.toBeChecked();
+
+      await userEvent.click(screen.getByRole('button', { name: 'Go to span' }));
+
+      expect(showAllSpans).toBeChecked();
+      expect(bannerSpanIsOpen()).toBe(true);
+    });
+
+    it('leaves matches-only on when the banner span already matches the filter', async () => {
+      renderTraceView([frameError], matchesOnly('/logproto.Pusher/Push'));
+      const showAllSpans = screen.getByRole('switch', { name: 'Show all spans' });
+      expect(showAllSpans).not.toBeChecked();
+
+      await userEvent.click(screen.getByRole('button', { name: 'Go to span' }));
+
+      expect(showAllSpans).not.toBeChecked();
+      expect(bannerSpanIsOpen()).toBe(true);
+    });
+  });
+
   it('shows timeline ticks', () => {
     renderTraceViewNew();
     function ticks() {
@@ -214,6 +299,85 @@ describe('TraceView', () => {
 
     rerender(getTraceView([frameNew]));
     expect(screen.queryByText(/Resource/)).not.toBeInTheDocument();
+  });
+
+  describe('linked span', () => {
+    const childSpanId = '35118c298fc91f68';
+    const rootSpanId = '1ed38015486087ca';
+
+    function setupLinkedSpan(spanId: string) {
+      const query = { refId: 'A', queryType: 'traceql', query: rootSpanId };
+      const frame = new MutableDataFrame(frameOld);
+      frame.refId = query.refId;
+      const store = configureStore({
+        explore: {
+          ...initialExploreState,
+          panes: {
+            left: makeExplorePaneState({
+              queries: [query],
+              panelsState: {
+                trace: {
+                  spanId,
+                  expandSpan: true,
+                  spanFilters: {
+                    ...DEFAULT_SPAN_FILTERS,
+                    adhocFilters: [{ key: SPAN_NAME, operator: '=', value: 'HTTP POST - api_prom_push' }],
+                  },
+                },
+              },
+            }),
+          },
+        },
+      });
+      render(getTraceView([frame], undefined, spanId, true, store));
+      return store;
+    }
+
+    it('clears the expansion request on ordinary same-trace focus changes', async () => {
+      const store = setupLinkedSpan(rootSpanId);
+      await screen.findByText(/Span attributes/);
+      await userEvent.click(screen.getAllByTestId('span-view')[2]);
+      await userEvent.click(screen.getAllByTitle('Deep link to this span')[1]);
+
+      expect(store.getState().explore.panes.left?.panelsState.trace).toMatchObject({ spanId: childSpanId });
+      expect(store.getState().explore.panes.left?.panelsState.trace?.expandSpan).toBeUndefined();
+      expect(screen.getAllByText(/Span attributes/)).toHaveLength(2);
+    });
+
+    it('clears the highlight created by expansion when its link target is removed', async () => {
+      const store = setupLinkedSpan(childSpanId);
+      await screen.findByText('client-uuid-3');
+      const row = screen.getAllByTestId('span-view')[2];
+      expect(row.closest('[class*="rowFocused"]')).not.toBeNull();
+
+      act(() => {
+        store.dispatch(changePanelState('left', 'trace', { spanId: undefined }));
+      });
+      expect(row.closest('[class*="rowFocused"]')).toBeNull();
+    });
+
+    it('preserves a search-selected highlight when the link target is removed', async () => {
+      const store = setupLinkedSpan(childSpanId);
+      await screen.findByText('client-uuid-3');
+      await userEvent.click(screen.getByRole('button', { name: 'Next result button' }));
+      const rootRow = screen.getAllByTestId('span-view')[0];
+      expect(rootRow.closest('[class*="rowFocused"]')).not.toBeNull();
+
+      act(() => {
+        store.dispatch(changePanelState('left', 'trace', { spanId: undefined }));
+      });
+      expect(rootRow.closest('[class*="rowFocused"]')).not.toBeNull();
+      expect(screen.getAllByTestId('span-view')[2].closest('[class*="rowFocused"]')).toBeNull();
+    });
+
+    it('opens the linked span attributes and resource attributes with expandSpan=true and allows closing its details', async () => {
+      render(getTraceView([frameOld], undefined, childSpanId, true));
+      await waitFor(() => expect(screen.getByText('client-uuid-3')).toBeInTheDocument());
+      expect(screen.getByText(/Span attributes/)).toBeInTheDocument();
+
+      await userEvent.click(screen.getAllByTestId('span-view')[2]);
+      expect(screen.queryByText('client-uuid-3')).not.toBeInTheDocument();
+    });
   });
 
   describe('Adaptive Traces restored banner', () => {
@@ -503,6 +667,26 @@ const summaryResponse: TraceData & { spans: TraceSpanData[] } = {
       : span
   ),
 };
+
+// The deepest span carries the error tag, so the header renders a trace banner pointing at it.
+const errorResponse: TraceData & { spans: TraceSpanData[] } = {
+  ...response,
+  spans: response.spans.map((span, index) =>
+    index === 2 ? { ...span, tags: [...(span.tags ?? []), { key: 'error', type: 'bool', value: true }] } : span
+  ),
+};
+
+export const frameError = new MutableDataFrame({
+  fields: [
+    {
+      name: 'trace',
+      values: [errorResponse],
+    },
+  ],
+  meta: {
+    preferredVisualisationType: 'trace',
+  },
+});
 
 const frameSummary = new MutableDataFrame({
   fields: [

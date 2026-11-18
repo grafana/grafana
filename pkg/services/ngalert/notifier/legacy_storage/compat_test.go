@@ -15,15 +15,16 @@ func TestManagedRouteToRoute(t *testing.T) {
 	gi := model.Duration(20)
 	ri := model.Duration(30)
 
-	mr := &ManagedRoute{
-		Name:           "test",
+	mr := &v1.ManagedRoute{
+		ResourceMetadata: v1.ResourceMetadata{
+			Provenance: models.Provenance("test"),
+		},
 		Receiver:       "receiver",
 		GroupBy:        []string{"alertname"},
 		GroupWait:      &gw,
 		GroupInterval:  &gi,
 		RepeatInterval: &ri,
 		Routes:         []*v1.Route{{Receiver: "child"}},
-		Provenance:     models.Provenance("test"),
 	}
 
 	route := ManagedRouteToRoute(mr)

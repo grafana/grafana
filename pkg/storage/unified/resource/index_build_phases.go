@@ -8,8 +8,6 @@ import (
 // buildPhaseRecorder measures where the time goes while an index is built or
 // updated. Totals are accumulated here and pushed to the metrics once per
 // batch, so a million documents cost a handful of counter operations.
-//
-// The recorder works without metrics, so callers need no special case.
 type buildPhaseRecorder struct {
 	metrics  *BleveIndexMetrics
 	path     string
@@ -30,15 +28,6 @@ func newBuildPhaseRecorder(metrics *BleveIndexMetrics, path string, nsr Namespac
 		group:    nsr.Group,
 		resource: nsr.Resource,
 	}
-}
-
-// pathLabel lets the index label what it records with the same path as the
-// caller. Empty when nothing is being measured.
-func (r *buildPhaseRecorder) pathLabel() string {
-	if r.metrics == nil {
-		return ""
-	}
-	return r.path
 }
 
 func (r *buildPhaseRecorder) recordFetch(d time.Duration, bytes int) {
@@ -99,10 +88,6 @@ func (r *buildPhaseRecorder) timeModifiedResources(seq iter.Seq2[*ModifiedResour
 // flush reports what has been accumulated and starts again. Call it after each
 // batch, and once when the loop ends.
 func (r *buildPhaseRecorder) flush() {
-	if r.metrics == nil {
-		return
-	}
-
 	if r.fetch > 0 {
 		r.metrics.BuildPhaseSeconds.WithLabelValues(IndexPhaseFetch, r.path, r.group, r.resource).Add(r.fetch.Seconds())
 	}

@@ -11,8 +11,7 @@ import {
   type PluginExtensionDataSourceConfigContext,
   DataSourceUpdatedSuccessfully,
 } from '@grafana/data';
-import { usePluginComponents, type UsePluginComponentsResult } from '@grafana/runtime';
-import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { usePluginComponents, type UsePluginComponentsResult, useDataSourceInstanceSettings } from '@grafana/runtime';
 import { appEvents } from 'app/core/app_events';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { type DataSourceSettingsState } from 'app/types/datasources';
@@ -210,7 +209,9 @@ export function EditDataSourceView({
   if (loadError || !hasDataSource || !instanceSettings) {
     return (
       <DataSourceLoadError
-        notFound={!hasDataSource || !instanceSettings}
+        // A failed init leaves the initial empty data source in state, so the load error has to
+        // take precedence over "not found" or its message is never shown.
+        notFound={!loadError && (!hasDataSource || !instanceSettings)}
         errorMsg={loadError}
         dataSourceRights={dataSourceRights}
         onDelete={() => {

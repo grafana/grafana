@@ -487,6 +487,42 @@ describe('prepareTimelineLegendItems', () => {
 
     expect(result).toHaveLength(1);
   });
+
+  it.each([
+    { displayMode: LegendDisplayMode.List, expectedItems: 2 },
+    { displayMode: LegendDisplayMode.Hidden, expectedItems: undefined },
+  ])('should return $expectedItems legend items when displayMode is $displayMode', ({ displayMode, expectedItems }) => {
+    const frames = [
+      toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1, 2] },
+          {
+            name: 'value',
+            type: FieldType.number,
+            values: [10, 90],
+            config: {
+              color: { mode: FieldColorModeId.Thresholds },
+              thresholds: {
+                mode: ThresholdsMode.Absolute,
+                steps: [
+                  { value: -Infinity, color: 'green' },
+                  { value: 50, color: 'red' },
+                ],
+              },
+            },
+          },
+        ],
+      }),
+    ];
+
+    const result = prepareTimelineLegendItems(
+      frames,
+      { showLegend: true, displayMode, placement: 'bottom', calcs: [] },
+      theme
+    );
+
+    expect(result?.length).toBe(expectedItems);
+  });
 });
 
 describe('duration', () => {

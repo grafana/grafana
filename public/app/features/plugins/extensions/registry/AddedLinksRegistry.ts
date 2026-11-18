@@ -4,7 +4,7 @@ import { type AppPluginConfig, type IconName, type PluginExtensionAddedLinkConfi
 import { type PluginAddedLinksConfigureFunc, type PluginExtensionEventHelpers } from '@grafana/data/internal';
 
 import * as errors from '../errors';
-import { isGrafanaDevMode } from '../utils';
+import { isGrafanaDevMode } from '../isGrafanaDevMode';
 import { isAddedLinkMetaInfoMissing, isConfigureFnValid } from '../validators';
 
 import { type PluginExtensionConfigs, Registry, type RegistryType } from './Registry';

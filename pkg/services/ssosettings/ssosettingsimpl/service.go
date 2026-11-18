@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/featuremgmt/strcase"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
@@ -55,6 +56,7 @@ type Service struct {
 	providersList         []string
 	configurableProviders map[string]bool
 	reloadables           map[string]ssosettings.Reloadable
+	defaultsProviders     map[string]ssosettings.DefaultsProvider
 	cachedSSOSettings     []*models.SSOSettings
 	cacheMutex            sync.RWMutex
 
@@ -380,9 +382,19 @@ func (s *Service) Patch(ctx context.Context, provider string, data map[string]an
 		return err
 	}
 
+	// The API accepts camelCase keys (like PUT does via SSOSettings.UnmarshalJSON), but settings are stored in snake_case.
+	snakeCaseData := make(map[string]any, len(data))
+	for k, v := range data {
+		sk := strcase.ToSnake(k)
+		if _, exists := snakeCaseData[sk]; exists {
+			return ssosettings.ErrInvalidSettings.Errorf("duplicate setting %q", sk)
+		}
+		snakeCaseData[sk] = v
+	}
+
 	newSettingsMap := make(map[string]any)
 	maps.Copy(newSettingsMap, storedSettings.Settings)
-	maps.Copy(newSettingsMap, data)
+	maps.Copy(newSettingsMap, snakeCaseData)
 
 	newSettings := &models.SSOSettings{
 		Provider: provider,
@@ -476,6 +488,23 @@ func (s *Service) RegisterReloadable(provider string, reloadable ssosettings.Rel
 		s.reloadables = make(map[string]ssosettings.Reloadable)
 	}
 	s.reloadables[provider] = reloadable
+
+	if dp, ok := reloadable.(ssosettings.DefaultsProvider); ok {
+		if s.defaultsProviders == nil {
+			s.defaultsProviders = make(map[string]ssosettings.DefaultsProvider)
+		}
+		s.defaultsProviders[provider] = dp
+	}
+}
+
+// GetDefaults returns the default setting values of the provider or nil if
+// the provider doesn't have default values registered.
+func (s *Service) GetDefaults(provider string) map[string]any {
+	dp, ok := s.defaultsProviders[provider]
+	if !ok {
+		return nil
+	}
+	return dp.Defaults()
 }
 
 func (s *Service) RegisterFallbackStrategy(providerRegex string, strategy ssosettings.FallbackStrategy) {

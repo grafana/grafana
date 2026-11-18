@@ -57,10 +57,12 @@ func (hs *HTTPServer) ProxyPluginRequest(c *contextmodel.ReqContext) {
 		return hs.SecretsService.DecryptJsonData(ctx, ps.SecureJSONData)
 	}
 
+	// Single-tenant Grafana mints its own id token at the edge, so c.SignedInUser always carries
+	// one and the derive fallback is never needed on this classic monolith path.
 	p, err := pluginproxy.NewPluginProxy(ps, plugin.Routes,
 		c.Req, c.Resp, c.SignedInUser,
 		proxyPath, hs.Cfg.DataProxyLogging, hs.Cfg.SendUserHeader,
-		secureJsonData, hs.tracer, pluginProxyTransport, hs.AccessControl, hs.Features)
+		secureJsonData, hs.tracer, pluginProxyTransport, hs.AccessControl, hs.Features, nil)
 	if err != nil {
 		c.JsonApiErr(http.StatusInternalServerError, "Failed to create plugin proxy", err)
 		return

@@ -6,9 +6,9 @@ import { MoveActionAvailableTargetWarning } from 'app/features/provisioning/comp
 import { ProvisioningAwareFolderPicker } from 'app/features/provisioning/components/Shared/ProvisioningAwareFolderPicker';
 
 import { type DashboardTreeSelection } from '../../types';
+import { getSelectedUIDs } from '../../utils/dashboards';
 
 import { AffectedFolderContents } from './AffectedFolderContents';
-import { getSelectedFolderUIDs } from './utils';
 
 export interface Props {
   isOpen: boolean;
@@ -21,7 +21,7 @@ export const MoveModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Pro
   const [moveTarget, setMoveTarget] = useState<string>();
   const [isMoving, setIsMoving] = useState(false);
 
-  const selectedFolders = getSelectedFolderUIDs(selectedItems);
+  const selectedFolders = getSelectedUIDs(selectedItems, 'folder');
 
   const onMove = async () => {
     if (moveTarget !== undefined) {

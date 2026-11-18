@@ -35,6 +35,7 @@ type VectorBackend interface {
 	// row and partition on first use. isExternal appends "_external" to the
 	// derived partition key. Only upsert paths may call this.
 	EnsureCollection(ctx context.Context, group, resource string, isExternal bool) (Collection, error)
+	EnsureCollectionWithScope(ctx context.Context, group, resource string, isExternal bool, scope CollectionScope) (Collection, error)
 
 	// Search returns top-N nearest neighbors by cosine distance. Query
 	// embedding must come from the same model as stored vectors. resource
@@ -96,6 +97,11 @@ type VectorBackend interface {
 
 	// UpdateContentVersion stamps every row of the uid so version-stale scans stop revisiting content a version bump didn't change.
 	UpdateContentVersion(ctx context.Context, namespace, model, resource, uid string, version int) error
+
+	// UpdateFolder refreshes the authorization folder of existing rows without
+	// changing their content, embedding, metadata, or content version.
+	// resource is the collection's partition key.
+	UpdateFolder(ctx context.Context, namespace, model, resource, uid, folder string) error
 
 	// GetLatestRV is the reconciler checkpoint. 0 if never advanced.
 	GetLatestRV(ctx context.Context) (int64, error)
@@ -167,13 +173,14 @@ type VectorBackend interface {
 // as JSON {"r":<resource>,"t":<continue token>} so resume picks the
 // correct Builder.
 type BackfillJob struct {
-	ID          int64
-	Model       string
-	Resource    string // empty = all registered resources for this model
-	StoppingRV  int64
-	LastSeenKey string // empty when starting from the beginning
-	IsComplete  bool
-	LastError   string
+	ID             int64
+	Model          string
+	Resource       string // empty = all registered resources for this model
+	StoppingRV     int64
+	ContentVersion int
+	LastSeenKey    string // empty when starting from the beginning
+	IsComplete     bool
+	LastError      string
 }
 
 // EmbeddingCount is the stored row count for one (partition key, model).

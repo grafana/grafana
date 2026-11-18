@@ -126,5 +126,5 @@ type SessionQuerier interface {
 	Query(ctx context.Context, query string, args ...any) (*sql.Rows, error)
 }
 
-var _ SessionQuerier = &SessionDB{}
-var _ SessionQuerier = &SessionTx{}
+var _ SessionQuerier = (*SessionDB)(nil)
+var _ SessionQuerier = (*SessionTx)(nil)

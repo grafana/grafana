@@ -1,4 +1,4 @@
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { getDataSourceInstance } from '@grafana/runtime';
 import {
   CustomVariable,
   type SceneObject,
@@ -16,8 +16,8 @@ import { buildPanelElementFromDashboard } from './buildPanelElementFromDashboard
 
 const interpolateVariablesInQueries = jest.fn();
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getDataSourceInstance: jest.fn(),
 }));
 

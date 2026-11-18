@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-// FullSync brings every existing folder's label in line with whether it holds rules, in both
+// FullSync brings every existing folder's labels in line with the kinds of rule it holds, in both
 // directions. It exists because the partial sync only reacts to changes, so folders that already
 // held rules before this shipped carry no label.
 //
@@ -22,7 +22,7 @@ import (
 // nor the query below would see those writes — that is the point at which an informer becomes
 // available and becomes the right mechanism.
 func (s *Service) FullSync(ctx context.Context) error {
-	orgIDs, err := s.store.FetchOrgIds(ctx)
+	orgIDs, err := s.orgs.FetchOrgIds(ctx)
 	if err != nil {
 		// Counted as one whole-pass attempt: it failed before any org could be attempted, so there is
 		// no per-org outcome to record.
@@ -63,11 +63,19 @@ func (s *Service) FullSync(ctx context.Context) error {
 	return nil
 }
 
-// fullSyncOrg queues the folders whose label disagrees with the database, and returns how many.
+// fullSyncOrg queues the folders whose labels disagree with the database, and returns how many.
 func (s *Service) fullSyncOrg(ctx context.Context, orgID int64) (int, error) {
-	withRules, err := s.store.GetAllFoldersWithRules(ctx, orgID)
+	// Attach the per-org identity before any database- or namespace-scoped call below: a
+	// context-dependent LegacyDatabaseProvider needs it to resolve the right org's database.
+	ctx, _ = serviceIdentity(ctx, orgID)
+
+	withAlerts, err := s.store.GetAllFoldersWithRulesByType(ctx, orgID, models.RuleTypeFilterAlerting)
 	if err != nil {
-		return 0, fmt.Errorf("list folders with rules: %w", err)
+		return 0, fmt.Errorf("list folders with alert rules: %w", err)
+	}
+	withRecordings, err := s.store.GetAllFoldersWithRulesByType(ctx, orgID, models.RuleTypeFilterRecording)
+	if err != nil {
+		return 0, fmt.Errorf("list folders with recording rules: %w", err)
 	}
 
 	labeled, err := s.labeledFolders(ctx, orgID)
@@ -75,7 +83,7 @@ func (s *Service) fullSyncOrg(ctx context.Context, orgID int64) (int, error) {
 		return 0, fmt.Errorf("list labeled folders: %w", err)
 	}
 
-	stale := diffFolderKeys(orgID, withRules, labeled)
+	stale := diffFolderKeys(orgID, withAlerts, withRecordings, labeled)
 	if len(stale) == 0 {
 		return 0, nil
 	}
@@ -84,39 +92,67 @@ func (s *Service) fullSyncOrg(ctx context.Context, orgID int64) (int, error) {
 	return len(stale), nil
 }
 
-func diffFolderKeys(orgID int64, withRules, labeled map[string]struct{}) []models.FolderKey {
-	var stale []models.FolderKey
-	for uid := range withRules {
-		if _, ok := labeled[uid]; !ok {
-			stale = append(stale, models.FolderKey{OrgID: orgID, UID: uid})
-		}
+// labelState is which of the syncer's labels a folder carries. legacy is the retired single label,
+// which is stale on any folder that still has it regardless of the rules it holds.
+type labelState struct {
+	alert, recording, legacy bool
+}
+
+// diffFolderKeys returns the folders whose labels differ from what their rules call for: the union of
+// folders holding rules and folders carrying any label, since either side can be the stale one.
+func diffFolderKeys(orgID int64, withAlerts, withRecordings map[string]struct{}, labeled map[string]labelState) []models.FolderKey {
+	uids := make(map[string]struct{}, len(withAlerts)+len(withRecordings)+len(labeled))
+	for uid := range withAlerts {
+		uids[uid] = struct{}{}
+	}
+	for uid := range withRecordings {
+		uids[uid] = struct{}{}
 	}
 	for uid := range labeled {
-		if _, ok := withRules[uid]; !ok {
+		uids[uid] = struct{}{}
+	}
+
+	var stale []models.FolderKey
+	for uid := range uids {
+		_, wantAlert := withAlerts[uid]
+		_, wantRecording := withRecordings[uid]
+		have := labeled[uid]
+		if have.legacy || have.alert != wantAlert || have.recording != wantRecording {
 			stale = append(stale, models.FolderKey{OrgID: orgID, UID: uid})
 		}
 	}
 	return stale
 }
 
-func (s *Service) labeledFolders(ctx context.Context, orgID int64) (map[string]struct{}, error) {
+// labeledFolders lists the folders carrying each of the syncer's labels. Label filters on a list are
+// ANDed, so each label needs its own list.
+func (s *Service) labeledFolders(ctx context.Context, orgID int64) (map[string]labelState, error) {
 	folders, err := s.folderClient()
 	if err != nil {
 		return nil, err
 	}
 
-	ctx, _ = serviceIdentity(ctx, orgID)
-
-	list, err := folders.ListAll(ctx, s.namespacer(orgID), resource.ListOptions{
-		LabelFilters: []string{HasRulesLabel + "=true"},
-	})
-	if err != nil {
-		return nil, err
+	out := make(map[string]labelState)
+	for _, l := range []struct {
+		label string
+		set   func(*labelState)
+	}{
+		{HasAlertRulesLabel, func(st *labelState) { st.alert = true }},
+		{HasRecordingRulesLabel, func(st *labelState) { st.recording = true }},
+		{legacyHasRulesLabel, func(st *labelState) { st.legacy = true }},
+	} {
+		// The syncer only ever wrote "true", so that is the only value to look for.
+		list, err := folders.ListAll(ctx, s.namespacer(orgID), resource.ListOptions{
+			LabelFilters: []string{l.label + "=true"},
+		})
+		if err != nil {
+			return nil, err
+		}
+		for i := range list.Items {
+			st := out[list.Items[i].Name]
+			l.set(&st)
+			out[list.Items[i].Name] = st
+		}
 	}
-
-	set := make(map[string]struct{}, len(list.Items))
-	for i := range list.Items {
-		set[list.Items[i].Name] = struct{}{}
-	}
-	return set, nil
+	return out, nil
 }

@@ -1,22 +1,16 @@
-import { test, expect } from '../fixtures';
+import { expect, test } from '../fixtures';
 import { expectRowVisibility, expectTabVisibility, flows } from '../helpers';
 
-import dashboardEditMode from './fixtures/dashboard-edit-mode.json';
-import dashboardOnlyApplicableRulesJSON from './fixtures/dashboard-only-applicable-rules.json';
-import dashboardQueryResultJSON from './fixtures/dashboard-query-result.json';
-import dashboardRepeatedPanelsJSON from './fixtures/dashboard-repeated-panels.json';
-import dashboardSeveralRulesJSON from './fixtures/dashboard-several-rules.json';
-import dashboardTimerangeJSON from './fixtures/dashboard-timerange.json';
-import dashboardVariableValueJSON from './fixtures/dashboard-variable-value.json';
+import { buildDashboardEditModeSpec } from './fixtures/dashboard-edit-mode-spec';
+import { buildDashboardOnlyApplicableRulesSpec } from './fixtures/dashboard-only-applicable-rules-spec';
+import { buildDashboardQueryResultSpec } from './fixtures/dashboard-query-result-spec';
+import { buildDashboardRepeatedPanelsSpec } from './fixtures/dashboard-repeated-panels-spec';
+import { buildDashboardSeveralRulesSpec } from './fixtures/dashboard-several-rules-spec';
+import { buildDashboardTimeRangeSpec } from './fixtures/dashboard-timerange-spec';
+import { buildDashboardVariableValueSpec } from './fixtures/dashboard-variable-value-spec';
 
 const HIDDEN_WRAPPER_SELECTOR = '.dashboard-visible-hidden-element';
 const HIDDEN_ICON_TEST_ID = 'icon-eye-slash';
-
-test.use({
-  featureToggles: {
-    dashboardNewLayouts: true,
-  },
-});
 
 test.describe(
   'Dashboard - Conditional Rendering - Rules creation',
@@ -24,17 +18,21 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('Hide a panel when its query returns no data', async ({ page, selectors, controls, panels, sidebar }) => {
-      // imports a single panel dashboard with a query to the gdev-testdata data source
-      await flows.dashboards.importTestDashboard(
+    test('Hide a panel when its query returns no data', async ({
+      page,
+      request,
+      selectors,
+      controls,
+      panels,
+      sidebar,
+    }) => {
+      // Creates a single-panel dashboard with a query to the gdev-testdata data source.
+      await flows.dashboards.createAndOpenDashboard({
         page,
+        request,
         selectors,
-        'Conditional Rendering - Query result',
-        JSON.stringify(dashboardQueryResultJSON),
-        {
-          requiresDataSourceSelection: false,
-        }
-      );
+        spec: buildDashboardQueryResultSpec,
+      });
 
       const { conditionalRenderingOptions } = sidebar.panelOptions;
 
@@ -42,7 +40,7 @@ test.describe(
       await controls.enterEditMode();
       await panels.selectByTitle('Panel 1');
 
-      await conditionalRenderingOptions.addQueryResultRule('No data');
+      await conditionalRenderingOptions.queryResult.addRule('No data');
       await conditionalRenderingOptions.selectVisibility('hide');
 
       await flows.dashboards.saveDashboard(page, controls);
@@ -52,7 +50,7 @@ test.describe(
       await panels.selectByTitle('Panel 1');
 
       await expect(conditionalRenderingOptions.getVisibilityRadio('hide')).toBeChecked();
-      await expect(conditionalRenderingOptions.getQueryResultRuleSelect()).toHaveValue('No data');
+      await expect(conditionalRenderingOptions.queryResult.getRuleSelect()).toHaveValue('No data');
 
       await controls.exitEditMode();
 
@@ -69,17 +67,21 @@ test.describe(
       await expect(panels.getPanel('Panel 1')).not.toBeVisible();
     });
 
-    test('Show a panel only for specific variable values', async ({ page, selectors, controls, panels, sidebar }) => {
-      // imports a dashboard with 2 panels and a "letter" custom variable holding the values "alpha", "beta", "gamma" ("alpha" selected on load)
-      await flows.dashboards.importTestDashboard(
+    test('Show a panel only for specific variable values', async ({
+      page,
+      request,
+      selectors,
+      controls,
+      panels,
+      sidebar,
+    }) => {
+      // Creates a dashboard with 2 panels and a "letter" custom variable holding "alpha", "beta", "gamma" ("alpha" selected on load).
+      await flows.dashboards.createAndOpenDashboard({
         page,
+        request,
         selectors,
-        'Conditional Rendering - Variable value',
-        JSON.stringify(dashboardVariableValueJSON),
-        {
-          requiresDataSourceSelection: false,
-        }
-      );
+        spec: buildDashboardVariableValueSpec,
+      });
 
       const { conditionalRenderingOptions } = sidebar.panelOptions;
 
@@ -88,7 +90,7 @@ test.describe(
       await panels.selectByTitle('Panel 2');
 
       await conditionalRenderingOptions.selectVisibility('hide');
-      await conditionalRenderingOptions.addVariableRule('letter', '=', 'beta');
+      await conditionalRenderingOptions.templateVariable.addRule('letter', '=', 'beta');
 
       await flows.dashboards.saveDashboard(page, controls);
 
@@ -97,9 +99,9 @@ test.describe(
       await panels.selectByTitle('Panel 2');
 
       await expect(conditionalRenderingOptions.getVisibilityRadio('hide')).toBeChecked();
-      await expect(conditionalRenderingOptions.getVariableRuleNameSelect()).toHaveValue('letter');
-      await expect(conditionalRenderingOptions.getVariableRuleOperatorSelect()).toHaveValue('=');
-      await expect(conditionalRenderingOptions.getVariableRuleValueInput()).toHaveValue('beta');
+      await expect(conditionalRenderingOptions.templateVariable.getRuleNameSelect()).toHaveValue('letter');
+      await expect(conditionalRenderingOptions.templateVariable.getRuleOperatorSelect()).toHaveValue('=');
+      await expect(conditionalRenderingOptions.templateVariable.getRuleValueInput()).toHaveValue('beta');
 
       await controls.exitEditMode();
 
@@ -114,21 +116,19 @@ test.describe(
 
     test('Hide a row when the selected time range is narrower', async ({
       page,
+      request,
       selectors,
       controls,
       rows,
       sidebar,
     }) => {
-      // imports a dashboard with 2 rows, each containing a panel and with the time range set to "Last 15 minutes"
-      await flows.dashboards.importTestDashboard(
+      // Creates a dashboard with 2 rows, each containing a panel, and the time range set to "Last 15 minutes".
+      await flows.dashboards.createAndOpenDashboard({
         page,
+        request,
         selectors,
-        'Conditional Rendering - Time range',
-        JSON.stringify(dashboardTimerangeJSON),
-        {
-          requiresDataSourceSelection: false,
-        }
-      );
+        spec: buildDashboardTimeRangeSpec,
+      });
 
       const { conditionalRenderingOptions } = sidebar.rowOptions;
 
@@ -137,7 +137,7 @@ test.describe(
       await rows.select('Row B');
 
       await conditionalRenderingOptions.selectVisibility('hide');
-      await conditionalRenderingOptions.addTimeRangeRule('5 minutes');
+      await conditionalRenderingOptions.timeRange.addRule('5 minutes');
 
       await flows.dashboards.saveDashboard(page, controls);
 
@@ -147,7 +147,7 @@ test.describe(
 
       await expect(conditionalRenderingOptions.getVisibilityRadio('hide')).toBeChecked();
       // the control is a Select, not a Combobox so we don't assert on the value, we assert on the text
-      await expect(conditionalRenderingOptions.getTimerangeRuleSelect()).toContainText('5 minutes');
+      await expect(conditionalRenderingOptions.timeRange.getRuleSelect()).toContainText('5 minutes');
 
       await controls.exitEditMode();
 
@@ -161,18 +161,22 @@ test.describe(
       await expectRowVisibility('Row B', rows, 'hidden');
     });
 
-    test('Combine several rules on a tab and remove one', async ({ page, selectors, controls, tabs, sidebar }) => {
-      // imports a dashboard with 2 tabs, each containing a panel, a "letter" custom variable holding
+    test('Combine several rules on a tab and remove one', async ({
+      page,
+      request,
+      selectors,
+      controls,
+      tabs,
+      sidebar,
+    }) => {
+      // Creates a dashboard with 2 tabs, each containing a panel, a "letter" custom variable holding
       // the values "alpha", "beta", "gamma" ("alpha" selected on load) and the time range set to "Last 15 minutes"
-      await flows.dashboards.importTestDashboard(
+      await flows.dashboards.createAndOpenDashboard({
         page,
+        request,
         selectors,
-        'Conditional Rendering - Several rules result',
-        JSON.stringify(dashboardSeveralRulesJSON),
-        {
-          requiresDataSourceSelection: false,
-        }
-      );
+        spec: buildDashboardSeveralRulesSpec,
+      });
 
       const { conditionalRenderingOptions } = sidebar.tabOptions;
 
@@ -181,13 +185,13 @@ test.describe(
 
       // a single rule leaves no choice, so no match selector is shown
       await conditionalRenderingOptions.selectVisibility('hide');
-      await conditionalRenderingOptions.addVariableRule('letter', '=', 'beta');
+      await conditionalRenderingOptions.templateVariable.addRule('letter', '=', 'beta');
 
       await expect(conditionalRenderingOptions.getMatchTypeRadio('all')).not.toBeVisible();
       await expect(conditionalRenderingOptions.getMatchTypeRadio('any')).not.toBeVisible();
 
       // a second rule brings up the match selector
-      await conditionalRenderingOptions.addTimeRangeRule('30 minutes');
+      await conditionalRenderingOptions.timeRange.addRule('30 minutes');
 
       await expect(conditionalRenderingOptions.getMatchTypeRadio('all')).toBeVisible();
       await expect(conditionalRenderingOptions.getMatchTypeRadio('any')).toBeVisible();
@@ -216,9 +220,9 @@ test.describe(
       await tabs.select('Tab A');
 
       await expect(conditionalRenderingOptions.getVisibilityRadio('hide')).toBeChecked();
-      await expect(conditionalRenderingOptions.getVariableRuleNameSelect()).toHaveValue('letter');
-      await expect(conditionalRenderingOptions.getVariableRuleOperatorSelect()).toHaveValue('=');
-      await expect(conditionalRenderingOptions.getVariableRuleValueInput()).toHaveValue('beta');
+      await expect(conditionalRenderingOptions.templateVariable.getRuleNameSelect()).toHaveValue('letter');
+      await expect(conditionalRenderingOptions.templateVariable.getRuleOperatorSelect()).toHaveValue('=');
+      await expect(conditionalRenderingOptions.templateVariable.getRuleValueInput()).toHaveValue('beta');
       await expect(conditionalRenderingOptions.getRule('timeRangeSize')).not.toBeVisible();
 
       await controls.exitEditMode();
@@ -235,17 +239,14 @@ test.describe(
       await expect(tabs.getTitle('Tab B')).toBeVisible();
     });
 
-    test('Only offer applicable rules', async ({ page, selectors, controls, panels, tabs, rows, sidebar }) => {
-      // imports a dashboard with a custom template variable and single row > tab > panel
-      await flows.dashboards.importTestDashboard(
+    test('Only offer applicable rules', async ({ page, request, selectors, controls, panels, tabs, rows, sidebar }) => {
+      // Creates a dashboard with a custom template variable and a single row > tab > panel.
+      await flows.dashboards.createAndOpenDashboard({
         page,
+        request,
         selectors,
-        'Conditional Rendering - Only applicable rules',
-        JSON.stringify(dashboardOnlyApplicableRulesJSON),
-        {
-          requiresDataSourceSelection: false,
-        }
-      );
+        spec: buildDashboardOnlyApplicableRulesSpec,
+      });
 
       await controls.enterEditMode();
 
@@ -324,6 +325,7 @@ test.describe(
 
     test('See which elements are hidden while I am editing', async ({
       page,
+      request,
       selectors,
       controls,
       panels,
@@ -331,27 +333,25 @@ test.describe(
       rows,
       sidebar,
     }) => {
-      // imports a dashboard with 3 rows and a custom template variable:
-      // "Row A" is hidden by a template variable rule
-      // "Row B" is visible and contains "Tab one", which is hidden by a timerange rule
-      // "Row C" is visible and contains "Panel 3", which is hidden by a query result rule
-      await flows.dashboards.importTestDashboard(
+      // Creates a dashboard with 3 rows and a custom template variable:
+      // "Row A" is hidden by a template variable rule.
+      // "Row B" is visible and contains "Tab one", which is hidden by a time range rule.
+      // "Row C" is visible and contains "Panel 3", which is hidden by a query result rule.
+      await flows.dashboards.createAndOpenDashboard({
         page,
+        request,
         selectors,
-        'Conditional Rendering - Edit mode',
-        JSON.stringify(dashboardEditMode),
-        {
-          requiresDataSourceSelection: false,
-        }
-      );
+        spec: buildDashboardEditModeSpec,
+      });
 
       await controls.enterEditMode();
 
       // the row is on the canvas and greyed
-      const rowA = await expectRowVisibility('Row A', rows, 'visible');
+      await expectRowVisibility('Row A', rows, 'visible');
 
-      const rowAHiddenWrapper = page.locator(HIDDEN_WRAPPER_SELECTOR).filter({ has: rowA.title });
+      const rowAHiddenWrapper = rows.getContainer('Row A');
       await expect(rowAHiddenWrapper).toBeVisible();
+      await expect(rowAHiddenWrapper).toHaveClass(/\bdashboard-visible-hidden-element\b/);
 
       // the row is selectable
       await rowAHiddenWrapper.hover();
@@ -376,6 +376,7 @@ test.describe(
 
       // the panel is on the canvas and greyed
       const panel3 = panels.getPanel('Panel 3');
+      await panel3.scrollIntoViewIfNeeded();
       await expect(panel3).toBeVisible();
 
       const panel3HiddenWrapper = page.locator(HIDDEN_WRAPPER_SELECTOR).filter({ has: panel3 });
@@ -416,18 +417,15 @@ test.describe(
       await expect(sidebar.contentOutline.getItem('Panel 3')).not.toBeVisible();
     });
 
-    test('Hide individual panels inside a repeat', async ({ page, selectors, controls, panels, sidebar }) => {
-      // imports a dashboard with a panel repeated over a multi-value variable
+    test('Hide individual panels inside a repeat', async ({ page, request, selectors, controls, panels, sidebar }) => {
+      // Creates a dashboard with a panel repeated over a multi-value variable.
       // the variable holds the values "alpha", "beta", "gamma" - they are all selected on load
-      await flows.dashboards.importTestDashboard(
+      await flows.dashboards.createAndOpenDashboard({
         page,
+        request,
         selectors,
-        'Conditional Rendering - Repeated panels',
-        JSON.stringify(dashboardRepeatedPanelsJSON),
-        {
-          requiresDataSourceSelection: false,
-        }
-      );
+        spec: buildDashboardRepeatedPanelsSpec,
+      });
 
       const { conditionalRenderingOptions } = sidebar.panelOptions;
 
@@ -436,7 +434,7 @@ test.describe(
       await panels.selectByTitle('Panel alpha');
 
       await conditionalRenderingOptions.selectVisibility('hide');
-      await conditionalRenderingOptions.addVariableRule('letter', '=', 'beta');
+      await conditionalRenderingOptions.templateVariable.addRule('letter', '=', 'beta');
 
       // the repeated panel is on the canvas and greyed
       const panelBeta = panels.getPanel('Panel beta');
@@ -451,9 +449,9 @@ test.describe(
       await panels.selectByTitle('Panel alpha');
 
       await expect(conditionalRenderingOptions.getVisibilityRadio('hide')).toBeChecked();
-      await expect(conditionalRenderingOptions.getVariableRuleNameSelect()).toHaveValue('letter');
-      await expect(conditionalRenderingOptions.getVariableRuleOperatorSelect()).toHaveValue('=');
-      await expect(conditionalRenderingOptions.getVariableRuleValueInput()).toHaveValue('beta');
+      await expect(conditionalRenderingOptions.templateVariable.getRuleNameSelect()).toHaveValue('letter');
+      await expect(conditionalRenderingOptions.templateVariable.getRuleOperatorSelect()).toHaveValue('=');
+      await expect(conditionalRenderingOptions.templateVariable.getRuleValueInput()).toHaveValue('beta');
 
       await controls.exitEditMode();
 

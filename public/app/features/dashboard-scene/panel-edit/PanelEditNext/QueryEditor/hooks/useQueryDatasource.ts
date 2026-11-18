@@ -1,8 +1,7 @@
 import { useAsync } from 'react-use';
 
 import { type DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { config, getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime';
 import { type VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 
