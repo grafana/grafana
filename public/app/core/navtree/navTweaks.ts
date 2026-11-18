@@ -2,7 +2,7 @@ import { type NavModelItem } from '@grafana/data';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 
 import { NavID, NavWeight } from './constants';
-import { moveNavItemToSection, pluginPageId } from './utils';
+import { findNavById, moveNavItemToSection, pluginPageId } from './utils';
 
 /**
  * Transitional nav adjustments, every one of them meant to be deleted. Each
@@ -20,6 +20,24 @@ interface NavTweak {
   apply: (tree: NavModelItem[]) => NavModelItem[];
 }
 
+const isAdminSubNav = () => getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaNavigationAdminSubNav, false);
+
+// Weights below General's own destinations (Stats and license carries -1), so
+// these lead it whatever weight they arrived with, in this order
+const ADMIN_GENERAL_LEADING = [
+  { id: 'org-settings', sortWeight: -30 },
+  { id: 'migrate-to-cloud', sortWeight: -20 },
+  { id: 'provisioning', sortWeight: -10 },
+];
+
+// Weights well above General's own destinations, so the moved items land after
+// them whatever weight they arrived with, in this order
+const ADMIN_GENERAL_TRAILING = [
+  { id: 'authentication', sortWeight: 1000 },
+  { id: pluginPageId('grafana-advisor-app'), sortWeight: 1001 },
+  { id: 'secrets-management', sortWeight: 1002 },
+];
+
 const NAV_TWEAKS: NavTweak[] = [
   {
     // Temporarily list Machine Learning's pages directly under More apps for the refreshed IA.
@@ -30,7 +48,55 @@ const NAV_TWEAKS: NavTweak[] = [
         hoistPages: true,
       }),
   },
+  {
+    // With Administration folded to one mega menu row, its destinations are read
+    // as groups in the section nav, so the ones that sat ungrouped join General
+    // and General's destinations are put in the order the section nav shows.
+    // A missing item is left out rather than failing the rest. Any other
+    // destination left ungrouped, such as an app's page, joins General too, as the
+    // section nav has no place for it otherwise.
+    when: isAdminSubNav,
+    apply: (tree) => {
+      const placed = [...ADMIN_GENERAL_LEADING, ...ADMIN_GENERAL_TRAILING].reduce(
+        (current, { id, sortWeight }) => moveNavItemToSection(current, id, NavID.cfgGeneral, { sortWeight }),
+        tree
+      );
+      const regrouped = ungroupedAdministrationIds(placed).reduce(
+        (current, id) => moveNavItemToSection(current, id, NavID.cfgGeneral),
+        placed
+      );
+      // Without General nothing was regrouped, so there is nothing to restyle either
+      return findNavById(regrouped, NavID.cfgGeneral) ? landOnDefaultPreferences(regrouped) : regrouped;
+    },
+  },
 ];
+
+function ungroupedAdministrationIds(tree: NavModelItem[]): string[] {
+  return (findNavById(tree, NavID.cfg)?.children ?? [])
+    .filter((child) => !child.children && !child.isCreateAction && child.id)
+    .map((child) => child.id!);
+}
+
+/**
+ * Points Administration and General at Default preferences, which the section
+ * nav lists first, so neither needs a landing page of its own, and drops General
+ * from breadcrumbs for the same reason. Left alone when the user has no Default
+ * preferences.
+ */
+function landOnDefaultPreferences(tree: NavModelItem[]): NavModelItem[] {
+  const url = findNavById(tree, 'org-settings')?.url;
+  if (!url) {
+    return tree;
+  }
+  const retarget = (nodes: NavModelItem[]): NavModelItem[] =>
+    nodes.map((node) => ({
+      ...node,
+      ...(node.id === NavID.cfg ? { url } : {}),
+      ...(node.id === NavID.cfgGeneral ? { url, hideFromBreadcrumbs: true } : {}),
+      ...(node.children ? { children: retarget(node.children) } : {}),
+    }));
+  return retarget(tree);
+}
 
 /** Applies independently gated tweaks without letting one failure abort store creation. */
 export function applyNavTweaks(tree: NavModelItem[], tweaks: NavTweak[] = NAV_TWEAKS): NavModelItem[] {

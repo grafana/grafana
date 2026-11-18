@@ -1,6 +1,14 @@
 import { InMemoryProvider, OpenFeature, OpenFeatureProvider } from '@openfeature/react-sdk';
 import { act, fireEvent, render, screen } from '@testing-library/react';
-import { type PropsWithChildren, type ReactElement, StrictMode, useEffect, useRef, useState } from 'react';
+import {
+  type PropsWithChildren,
+  type ReactElement,
+  StrictMode,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 
 import {
   type DataQueryError,
@@ -395,9 +403,11 @@ describe('QueryEditorRenderer', () => {
     function CleanupOnChangeEditor({ query, onChange }: { query: DataQuery; onChange: (q: DataQuery) => void }) {
       const pendingEdit = { ...query, legendFormat: `${getLegendFormat(query)}-edited` };
       const pendingEditRef = useRef(pendingEdit);
-      pendingEditRef.current = pendingEdit;
       const onChangeRef = useRef(onChange);
-      onChangeRef.current = onChange;
+      useLayoutEffect(() => {
+        pendingEditRef.current = pendingEdit;
+        onChangeRef.current = onChange;
+      });
 
       useEffect(() => {
         return () => onChangeRef.current(pendingEditRef.current);
@@ -630,5 +640,101 @@ describe('Coauthoring availability decisions', () => {
       expect.objectContaining({ experiment_variant: 'control' })
     );
     expect(reportInteraction).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('QueryEditorRenderer query edit reporting', () => {
+  function EditingQueryEditor({ query, onChange }: { query: DataQuery; onChange: (query: DataQuery) => void }) {
+    return (
+      <>
+        <button onClick={() => onChange({ ...query, queryType: 'edited' })}>Edit query</button>
+        <button onClick={() => onChange({ ...query })}>Echo query</button>
+      </>
+    );
+  }
+
+  const editingDsData = {
+    datasource: new MockDataSourceApi({ QueryEditor: EditingQueryEditor }),
+    dsSettings: ds1SettingsMock,
+  };
+
+  function renderEditing() {
+    const onQueryEdited = jest.fn();
+    const updateSelectedQuery = jest.fn();
+    renderWithQueryEditorProvider(<QueryEditorRenderer />, {
+      queries: [queryA],
+      selectedQuery: queryA,
+      uiStateOverrides: { selectedQueryDsData: editingDsData },
+      actionsOverrides: { onQueryEdited, updateSelectedQuery },
+    });
+    return { onQueryEdited, updateSelectedQuery };
+  }
+
+  beforeEach(() => {
+    setTestFlags({ [FlagKeys.QueryeditorCoauthoringUi]: false });
+  });
+
+  afterAll(() => {
+    setTestFlags({});
+  });
+
+  it('reports an edit from the data source query editor', () => {
+    const { onQueryEdited, updateSelectedQuery } = renderEditing();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit query' }));
+
+    expect(updateSelectedQuery).toHaveBeenCalledWith(
+      { refId: 'A', legendFormat: 'series-a', queryType: 'edited' },
+      'A'
+    );
+    expect(onQueryEdited).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not report an editor that sends back the query it was given', () => {
+    const { onQueryEdited, updateSelectedQuery } = renderEditing();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Echo query' }));
+
+    expect(updateSelectedQuery).toHaveBeenCalledTimes(1);
+    expect(onQueryEdited).not.toHaveBeenCalled();
+  });
+
+  it('compares with the current query when an editor keeps the first onChange it was given', () => {
+    function FirstOnChangeQueryEditor({ query, onChange }: { query: DataQuery; onChange: (q: DataQuery) => void }) {
+      const firstOnChange = useRef(onChange).current;
+      return (
+        <>
+          <button onClick={() => firstOnChange({ ...query })}>Echo query</button>
+          <button onClick={() => firstOnChange({ ...query, queryType: 'edited again' })}>Edit query</button>
+        </>
+      );
+    }
+    const editedQuery = { ...queryA, queryType: 'edited' };
+    const onQueryEdited = jest.fn();
+    const renderPanel = (query: DataQuery) => (
+      <QueryEditorPanel
+        panel={new VizPanel({ key: 'panel-1' })}
+        query={query}
+        queryDsData={{
+          datasource: new MockDataSourceApi({ QueryEditor: FirstOnChangeQueryEditor }),
+          dsSettings: ds1SettingsMock,
+        }}
+        queryDsLoading={false}
+        queries={[query]}
+        updateQuery={jest.fn()}
+        addQuery={jest.fn()}
+        runQueries={jest.fn()}
+        startQueryPreview={jest.fn()}
+        onQueryEdited={onQueryEdited}
+      />
+    );
+
+    const view = renderWithOpenFeature(renderPanel(queryA));
+    view.rerender(renderPanel(editedQuery));
+    fireEvent.click(screen.getByRole('button', { name: 'Echo query' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Edit query' }));
+
+    // Only the real edit counts: the echo matches the current query, not the one the editor first got.
+    expect(onQueryEdited).toHaveBeenCalledTimes(1);
   });
 });

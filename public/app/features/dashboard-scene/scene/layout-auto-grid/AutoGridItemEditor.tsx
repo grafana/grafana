@@ -6,6 +6,7 @@ import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSel
 
 import { edit } from '../../actions/utils/edit';
 import { useConditionalRenderingEditor } from '../../conditional-rendering/hooks/useConditionalRenderingEditor';
+import { trackPanelSettingChange } from '../../utils/trackPanelSettingChange';
 
 import { type AutoGridItem } from './AutoGridItem';
 import { isAutoHeightPanelsEnabled } from './AutoGridLayoutManager';
@@ -102,6 +103,9 @@ function RepeatByOption({ item, id }: { item: AutoGridItem; id?: string }) {
           perform: () => item.setRepeatByVariable(value),
           undo: () => item.setRepeatByVariable(variableName),
         });
+        if (value !== variableName) {
+          trackPanelSettingChange(item.state.body, 'change_panel_repeat');
+        }
       }}
     />
   );

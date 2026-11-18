@@ -12,6 +12,9 @@ type Licensing interface {
 	AppURL() string
 	// LicenseToken returns the marketplace license token for a plugin.
 	LicenseToken(context.Context, string) (string, error)
+	// ValidationKeys returns the validation key bundle that Grafana trusts for marketplace license tokens,
+	// or an empty string to trust only the keys embedded in the plugin SDK.
+	ValidationKeys() string
 }
 
 // OSS provides marketplace licensing data for OSS Grafana.
@@ -34,4 +37,9 @@ func (e *OSS) AppURL() string {
 // LicenseToken returns no marketplace license token for OSS Grafana.
 func (e *OSS) LicenseToken(context.Context, string) (string, error) {
 	return "", nil
+}
+
+// ValidationKeys returns no validation keys for OSS Grafana.
+func (e *OSS) ValidationKeys() string {
+	return ""
 }
