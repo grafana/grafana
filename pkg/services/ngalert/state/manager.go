@@ -428,7 +428,7 @@ func (st *Manager) ProcessEvalResults(
 	logger.Debug("State manager processing evaluation results", "resultCount", len(results))
 	states := st.setNextStateForRule(ctx, alertRule, results, extraLabels, logger, fn, evaluatedAt)
 
-	missingSeriesStates, staleCount := st.processMissingSeriesStates(logger, evaluatedAt, alertRule, fn)
+	missingSeriesStates, staleCount := processMissingSeriesStates(st.cache, logger, evaluatedAt, alertRule, fn)
 	span.AddEvent("results processed", trace.WithAttributes(
 		attribute.Int("state_transitions", len(states)),
 		attribute.Int("stale_states", staleCount),
@@ -577,11 +577,12 @@ func (st *Manager) Put(states []*State) {
 
 // processMissingSeriesStates finds cached states missing from the current evaluation,
 // resolves any that are stale, and returns them to be sent to the Alertmanager if needed.
-func (st *Manager) processMissingSeriesStates(logger log.Logger, evaluatedAt time.Time, alertRule *ngModels.AlertRule, takeImageFn takeImageFn) ([]StateTransition, int) {
+// It takes the cache so that the recording series tracking can run it on its own cache.
+func processMissingSeriesStates(c *cache, logger log.Logger, evaluatedAt time.Time, alertRule *ngModels.AlertRule, takeImageFn takeImageFn) ([]StateTransition, int) {
 	missingTransitions := []StateTransition{}
 	staleStates := map[data.Fingerprint]struct{}{}
 
-	for _, s := range st.cache.getStatesForRuleUID(alertRule.OrgID, alertRule.UID) {
+	for _, s := range c.getStatesForRuleUID(alertRule.OrgID, alertRule.UID) {
 		// Skip states that were just evaluated. They're not missing.
 		if s.LastEvaluationTime.Equal(evaluatedAt) {
 			continue
@@ -628,7 +629,7 @@ func (st *Manager) processMissingSeriesStates(logger log.Logger, evaluatedAt tim
 	}
 
 	// deleteRuleStates holds a lock on the cache, thus the pre-computed map of states.
-	st.cache.deleteRuleStates(alertRule.GetKey(), func(s *State) bool {
+	c.deleteRuleStates(alertRule.GetKey(), func(s *State) bool {
 		_, ok := staleStates[s.CacheID]
 		return ok
 	})
