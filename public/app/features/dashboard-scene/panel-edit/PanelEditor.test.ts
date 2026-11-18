@@ -736,13 +736,27 @@ describe('PanelEditor', () => {
       });
     });
 
+    describe('when queryEditorNext feature toggle is unresolved', () => {
+      beforeEach(() => {
+        store.delete(QUERY_EDITOR_V2_PREFERENCE_KEY);
+        setTestFlags({});
+      });
+
+      it('should fall back to the v2 query editor experience', async () => {
+        const { panelEditor } = await setup({ pluginSkipDataQuery: false });
+
+        expect(panelEditor.state.dataPane).toBeInstanceOf(PanelDataPaneNext);
+      });
+    });
+
     describe('when queryEditorNext feature toggle is disabled', () => {
       beforeEach(() => {
-        setTestFlags({});
+        setTestFlags({ queryEditorNext: false });
       });
 
       afterEach(() => {
         store.delete(QUERY_EDITOR_V2_PREFERENCE_KEY);
+        setTestFlags({});
       });
 
       it('should use the v1 query editor experience', async () => {

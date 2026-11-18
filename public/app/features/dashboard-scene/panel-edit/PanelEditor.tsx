@@ -480,7 +480,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 }
 
 export function buildPanelEditScene(panel: VizPanel, isNewPanel = false): PanelEditor {
-  const isQueryEditorNextEnabled = getFeatureFlagClient().getBooleanValue(FlagKeys.QueryEditorNext, false);
+  const isQueryEditorNextEnabled = getFeatureFlagClient().getBooleanValue(FlagKeys.QueryEditorNext, true);
   const storedPreference = isQueryEditorNextEnabled
     ? getLocalStorageWithTTL<boolean>(QUERY_EDITOR_V2_PREFERENCE_KEY)
     : null;

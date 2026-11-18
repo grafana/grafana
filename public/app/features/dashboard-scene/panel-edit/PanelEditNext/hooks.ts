@@ -1,7 +1,7 @@
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { type PointerEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { useLocalStorage, useWindowSize } from 'react-use';
 
+import { useFlagQueryEditorNext } from '@grafana/runtime/internal';
 import { useTheme2 } from '@grafana/ui';
 import { MIN_SUGGESTIONS_PANE_WIDTH } from 'app/features/panel/suggestions/constants';
 
@@ -41,7 +41,7 @@ export function getDefaultSidebarWidth(windowWidth: number): number {
 
 export function useQueryEditorBanner() {
   const [dismissed = false, setDismissed] = useLocalStorage(QUERY_EDITOR_BANNER_DISMISSED_KEY, false);
-  const isQueryEditorNextEnabled = useBooleanFlagValue('queryEditorNext', false);
+  const isQueryEditorNextEnabled = useFlagQueryEditorNext();
   const showBanner = isQueryEditorNextEnabled && !dismissed;
   const dismissBanner = useCallback(() => setDismissed(true), [setDismissed]);
 

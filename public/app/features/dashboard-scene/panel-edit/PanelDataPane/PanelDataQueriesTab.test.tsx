@@ -20,6 +20,7 @@ import {
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 import { PANEL_EDIT_LAST_USED_DATASOURCE } from 'app/features/dashboard/utils/dashboard';
 import { ExpressionQueryType } from 'app/features/expressions/types';
@@ -344,11 +345,13 @@ describe('PanelDataQueriesTab', () => {
     mockQueryLibraryEnabled.mockReturnValue(false);
     mockContextSrv.hasPermission.mockReturnValue(false);
     mockContextSrv.user.isSignedIn = true;
+    setTestFlags({ queryEditorNext: false });
   });
 
   afterEach(() => {
     deactivators.forEach((deactivate) => deactivate());
     deactivators = [];
+    setTestFlags({});
   });
 
   describe('Add from saved queries button', () => {
