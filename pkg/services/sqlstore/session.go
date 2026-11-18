@@ -82,9 +82,10 @@ func startSessionOrUseExisting(ctx context.Context, engine *xorm.Engine, beginTr
 	return newSess, true, span, nil
 }
 
-// WithSession calls callback with a session for engine and closes a newly created session.
-// A session already carried by ctx is reused without taking ownership of it.
-func WithSession(ctx context.Context, engine *xorm.Engine, tracer tracing.Tracer, callback DBTransactionFunc) error {
+// WithEngineSession lets database-provider implementations use their own engine.
+// It closes a newly created session; a session carried by ctx is reused without
+// taking ownership of it. Normal service code should use db.DB.WithDbSession.
+func WithEngineSession(ctx context.Context, engine *xorm.Engine, tracer tracing.Tracer, callback DBTransactionFunc) error {
 	if err := validateHelperSession(ctx, engine); err != nil {
 		return err
 	}
@@ -99,9 +100,10 @@ func WithSession(ctx context.Context, engine *xorm.Engine, tracer tracing.Tracer
 	return callback(sess)
 }
 
-// WithTransaction runs callback in a transaction on engine. Nested calls reuse
-// the context session; only the owner commits, rolls back, and publishes events.
-func WithTransaction(ctx context.Context, engine *xorm.Engine, events bus.Bus, tracer tracing.Tracer, callback DBTransactionFunc) error {
+// WithEngineTransaction lets database-provider implementations use their own engine.
+// Nested calls reuse the context session; only the owner commits, rolls back,
+// and publishes events. Normal service code should use db.DB.InTransaction.
+func WithEngineTransaction(ctx context.Context, engine *xorm.Engine, events bus.Bus, tracer tracing.Tracer, callback DBTransactionFunc) error {
 	if err := validateHelperSession(ctx, engine); err != nil {
 		return err
 	}

@@ -27,7 +27,7 @@ func helperTestEngine(t *testing.T) (*xorm.Engine, sqlmock.Sqlmock) {
 	return engine, mock
 }
 
-func TestWithTransactionCommitsAndPublishesQueuedEvents(t *testing.T) {
+func TestWithEngineTransactionCommitsAndPublishesQueuedEvents(t *testing.T) {
 	engine, mock := helperTestEngine(t)
 	mock.ExpectBegin()
 	mock.ExpectCommit()
@@ -38,7 +38,7 @@ func TestWithTransactionCommitsAndPublishesQueuedEvents(t *testing.T) {
 		published = append(published, event)
 		return nil
 	}}
-	err := WithTransaction(context.Background(), engine, events, tracer, func(sess *DBSession) error {
+	err := WithEngineTransaction(context.Background(), engine, events, tracer, func(sess *DBSession) error {
 		sess.PublishAfterCommit("done")
 		require.Empty(t, published)
 		return nil
@@ -48,7 +48,7 @@ func TestWithTransactionCommitsAndPublishesQueuedEvents(t *testing.T) {
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 
-func TestWithTransactionReusesNestedSessionAndPublishesOnce(t *testing.T) {
+func TestWithEngineTransactionReusesNestedSessionAndPublishesOnce(t *testing.T) {
 	engine, mock := helperTestEngine(t)
 	mock.ExpectBegin()
 	mock.ExpectCommit()
@@ -58,14 +58,14 @@ func TestWithTransactionReusesNestedSessionAndPublishesOnce(t *testing.T) {
 		published = append(published, event)
 		return nil
 	}}
-	err := WithTransaction(context.Background(), engine, events, tracer, func(outer *DBSession) error {
+	err := WithEngineTransaction(context.Background(), engine, events, tracer, func(outer *DBSession) error {
 		ctx := context.WithValue(context.Background(), ContextSessionKey{}, outer)
 		outer.PublishAfterCommit("outer")
-		return WithTransaction(ctx, engine, events, tracer, func(inner *DBSession) error {
+		return WithEngineTransaction(ctx, engine, events, tracer, func(inner *DBSession) error {
 			require.Same(t, outer, inner)
 			inner.PublishAfterCommit("inner")
 			require.Empty(t, published)
-			return WithSession(ctx, engine, tracer, func(reused *DBSession) error {
+			return WithEngineSession(ctx, engine, tracer, func(reused *DBSession) error {
 				require.Same(t, outer, reused)
 				return nil
 			})
@@ -76,7 +76,7 @@ func TestWithTransactionReusesNestedSessionAndPublishesOnce(t *testing.T) {
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 
-func TestWithTransactionRollsBackWithoutPublishing(t *testing.T) {
+func TestWithEngineTransactionRollsBackWithoutPublishing(t *testing.T) {
 	engine, mock := helperTestEngine(t)
 	mock.ExpectBegin()
 	mock.ExpectRollback()
@@ -86,7 +86,7 @@ func TestWithTransactionRollsBackWithoutPublishing(t *testing.T) {
 		published = true
 		return nil
 	}}
-	err := WithTransaction(context.Background(), engine, events, tracing.NewNoopTracerService(), func(sess *DBSession) error {
+	err := WithEngineTransaction(context.Background(), engine, events, tracing.NewNoopTracerService(), func(sess *DBSession) error {
 		sess.PublishAfterCommit("discard")
 		return callbackErr
 	})
@@ -95,7 +95,7 @@ func TestWithTransactionRollsBackWithoutPublishing(t *testing.T) {
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 
-func TestWithTransactionCommitErrorKeepsEventsQueued(t *testing.T) {
+func TestWithEngineTransactionCommitErrorKeepsEventsQueued(t *testing.T) {
 	engine, mock := helperTestEngine(t)
 	mock.ExpectBegin()
 	commitErr := errors.New("commit outcome unknown")
@@ -105,7 +105,7 @@ func TestWithTransactionCommitErrorKeepsEventsQueued(t *testing.T) {
 		published = true
 		return nil
 	}}
-	err := WithTransaction(context.Background(), engine, events, tracing.NewNoopTracerService(), func(sess *DBSession) error {
+	err := WithEngineTransaction(context.Background(), engine, events, tracing.NewNoopTracerService(), func(sess *DBSession) error {
 		sess.PublishAfterCommit("discard")
 		return nil
 	})
@@ -114,12 +114,12 @@ func TestWithTransactionCommitErrorKeepsEventsQueued(t *testing.T) {
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 
-func TestWithTransactionRejectsCanceledBeginBeforeCallback(t *testing.T) {
+func TestWithEngineTransactionRejectsCanceledBeginBeforeCallback(t *testing.T) {
 	engine, mock := helperTestEngine(t)
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 	called := false
-	err := WithTransaction(ctx, engine, &recordingBus{}, tracing.NewNoopTracerService(), func(*DBSession) error {
+	err := WithEngineTransaction(ctx, engine, &recordingBus{}, tracing.NewNoopTracerService(), func(*DBSession) error {
 		called = true
 		return nil
 	})
@@ -170,7 +170,7 @@ func TestExistingSQLStoreTransactionsCommitAfterRequestCancellation(t *testing.T
 	}
 }
 
-func TestWithTransactionDoesNotPublishAfterRequestCancellation(t *testing.T) {
+func TestWithEngineTransactionDoesNotPublishAfterRequestCancellation(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		engine, mock := helperTestEngine(t)
 		mock.ExpectBegin()
@@ -184,7 +184,7 @@ func TestWithTransactionDoesNotPublishAfterRequestCancellation(t *testing.T) {
 			return nil
 		}}
 
-		err := WithTransaction(ctx, engine, events, tracing.NewNoopTracerService(), func(sess *DBSession) error {
+		err := WithEngineTransaction(ctx, engine, events, tracing.NewNoopTracerService(), func(sess *DBSession) error {
 			if _, err := sess.Exec("INSERT INTO records (id) VALUES (1)"); err != nil {
 				return err
 			}
@@ -199,16 +199,16 @@ func TestWithTransactionDoesNotPublishAfterRequestCancellation(t *testing.T) {
 	})
 }
 
-func TestWithTransactionRejectsCrossEngineSession(t *testing.T) {
+func TestWithEngineTransactionRejectsCrossEngineSession(t *testing.T) {
 	engine, mock := helperTestEngine(t)
 	other, otherMock := helperTestEngine(t)
 	mock.ExpectBegin()
 	mock.ExpectRollback()
 	tracer := tracing.NewNoopTracerService()
 	called := false
-	err := WithTransaction(context.Background(), engine, &recordingBus{}, tracer, func(sess *DBSession) error {
+	err := WithEngineTransaction(context.Background(), engine, &recordingBus{}, tracer, func(sess *DBSession) error {
 		ctx := context.WithValue(context.Background(), ContextSessionKey{}, sess)
-		return WithTransaction(ctx, other, &recordingBus{}, tracer, func(*DBSession) error {
+		return WithEngineTransaction(ctx, other, &recordingBus{}, tracer, func(*DBSession) error {
 			called = true
 			return nil
 		})
@@ -219,7 +219,7 @@ func TestWithTransactionRejectsCrossEngineSession(t *testing.T) {
 	require.NoError(t, otherMock.ExpectationsWereMet())
 }
 
-func TestWithTransactionPublisherErrorDoesNotChangeCommittedResult(t *testing.T) {
+func TestWithEngineTransactionPublisherErrorDoesNotChangeCommittedResult(t *testing.T) {
 	engine, mock := helperTestEngine(t)
 	mock.ExpectBegin()
 	mock.ExpectCommit()
@@ -228,7 +228,7 @@ func TestWithTransactionPublisherErrorDoesNotChangeCommittedResult(t *testing.T)
 		published++
 		return errors.New("listener failed")
 	}}
-	err := WithTransaction(context.Background(), engine, events, tracing.NewNoopTracerService(), func(sess *DBSession) error {
+	err := WithEngineTransaction(context.Background(), engine, events, tracing.NewNoopTracerService(), func(sess *DBSession) error {
 		sess.PublishAfterCommit("committed")
 		return nil
 	})
@@ -237,11 +237,11 @@ func TestWithTransactionPublisherErrorDoesNotChangeCommittedResult(t *testing.T)
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 
-func TestWithSessionCallsCallbackOnceWithoutBeginningTransaction(t *testing.T) {
+func TestWithEngineSessionCallsCallbackOnceWithoutBeginningTransaction(t *testing.T) {
 	engine, mock := helperTestEngine(t)
 	called := 0
 	callbackErr := errors.New("callback failed")
-	err := WithSession(context.Background(), engine, tracing.NewNoopTracerService(), func(sess *DBSession) error {
+	err := WithEngineSession(context.Background(), engine, tracing.NewNoopTracerService(), func(sess *DBSession) error {
 		called++
 		require.NotNil(t, sess)
 		return callbackErr
@@ -251,12 +251,12 @@ func TestWithSessionCallsCallbackOnceWithoutBeginningTransaction(t *testing.T) {
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 
-func TestWithTransactionBeginFailureDoesNotCallCallback(t *testing.T) {
+func TestWithEngineTransactionBeginFailureDoesNotCallCallback(t *testing.T) {
 	engine, mock := helperTestEngine(t)
 	beginErr := errors.New("begin failed")
 	mock.ExpectBegin().WillReturnError(beginErr)
 	called := false
-	err := WithTransaction(context.Background(), engine, &recordingBus{}, tracing.NewNoopTracerService(), func(*DBSession) error {
+	err := WithEngineTransaction(context.Background(), engine, &recordingBus{}, tracing.NewNoopTracerService(), func(*DBSession) error {
 		called = true
 		return nil
 	})
@@ -265,19 +265,19 @@ func TestWithTransactionBeginFailureDoesNotCallCallback(t *testing.T) {
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 
-func TestWithTransactionRejectsClosedContextSession(t *testing.T) {
+func TestWithEngineTransactionRejectsClosedContextSession(t *testing.T) {
 	engine, mock := helperTestEngine(t)
 	mock.ExpectBegin()
 	mock.ExpectCommit()
 	tracer := tracing.NewNoopTracerService()
 	var captured *DBSession
-	require.NoError(t, WithTransaction(context.Background(), engine, &recordingBus{}, tracer, func(sess *DBSession) error {
+	require.NoError(t, WithEngineTransaction(context.Background(), engine, &recordingBus{}, tracer, func(sess *DBSession) error {
 		captured = sess
 		return nil
 	}))
 	called := false
 	ctx := context.WithValue(context.Background(), ContextSessionKey{}, captured)
-	err := WithTransaction(ctx, engine, &recordingBus{}, tracer, func(*DBSession) error {
+	err := WithEngineTransaction(ctx, engine, &recordingBus{}, tracer, func(*DBSession) error {
 		called = true
 		return nil
 	})
@@ -286,11 +286,11 @@ func TestWithTransactionRejectsClosedContextSession(t *testing.T) {
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 
-func TestWithTransactionRejectsTypedNilContextSession(t *testing.T) {
+func TestWithEngineTransactionRejectsTypedNilContextSession(t *testing.T) {
 	engine, mock := helperTestEngine(t)
 	ctx := context.WithValue(context.Background(), ContextSessionKey{}, (*DBSession)(nil))
 	called := false
-	err := WithTransaction(ctx, engine, &recordingBus{}, tracing.NewNoopTracerService(), func(*DBSession) error {
+	err := WithEngineTransaction(ctx, engine, &recordingBus{}, tracing.NewNoopTracerService(), func(*DBSession) error {
 		called = true
 		return nil
 	})
