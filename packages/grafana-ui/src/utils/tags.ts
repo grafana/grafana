@@ -21,29 +21,112 @@ export function getTagColorsFromName(name = '', theme?: GrafanaTheme2) {
 /**
  * Returns the background and text colors for a tag badge from the palette in the active theme
  * (`theme.components.tag.colors`).
- * A CSS color instead of an index produces a tonal pair in the same hue.
+ * A CSS color instead of an index keeps that color as an opaque background with contrasting text in the same hue.
+ * In a browser that supports relative color syntax, the colors are resolved to `rgb()` strings the first time
+ * they are read. Elsewhere, for example in tests, they are CSS color expressions.
  * @param index index into the palette. Wrapped with modulo, so any number is valid — indexes
  * beyond the end of the palette cycle back around to the start.
  */
-export function getTagColor(index: number | string, theme?: GrafanaTheme2) {
+export function getTagColor(index: number | string, theme?: GrafanaTheme2): TagColors {
   const colors = theme?.components.tag.colors ?? DEFAULT_TAG_COLORS;
-  const { background, text } =
-    typeof index === 'string' ? getContrastingTagColors(index, theme) : colors[Math.abs(index % colors.length)];
-
-  const result = { background, text };
+  const result =
+    typeof index === 'string' ? getContrastingTagColors(index, theme) : { ...colors[Math.abs(index % colors.length)] };
 
   // this maintains backwards runtime compatibility for a little bit
   // TODO remove in Grafana 14
-  Object.assign(result, { color: background, borderColor: text });
+  // Getters, so the aliases don't force the lazy colors of a CSS color to resolve.
+  Object.defineProperties(result, {
+    color: { get: () => result.background, enumerable: true },
+    borderColor: { get: () => result.text, enumerable: true },
+  });
 
   return result;
 }
 
-function getContrastingTagColors(color: string, theme?: GrafanaTheme2) {
+interface TagColors {
+  background: string;
+  text: string;
+}
+
+function getContrastingTagColors(color: string, theme?: GrafanaTheme2): TagColors {
+  const background = `rgb(from ${color} r g b / ${OPAQUE})`;
+  const text = getContrastingText(color, theme);
+
+  // Resolving needs a style recalculation, so it only happens when a caller reads the value. Rendering in Grafana
+  // uses getTagColorVariables, which never resolves in JS.
   return {
-    background: `rgb(from ${color} r g b / ${OPAQUE})`,
-    text: getContrastingText(color, theme),
+    get background() {
+      return resolveCssColor(background);
+    },
+    get text() {
+      return resolveCssColor(text);
+    },
   };
+}
+
+const RESOLVED_CACHE_LIMIT = 1000;
+const resolvedColors = new Map<string, string>();
+let probe: HTMLElement | undefined;
+
+/**
+ * Resolves a CSS color expression to an `rgb()` string by letting the browser compute it, so the contrast math
+ * only exists once, in CSS. Returns the expression unchanged when there is no DOM, the browser does not support
+ * it, or the computed value is in a format we can't convert.
+ */
+function resolveCssColor(expression: string): string {
+  const cached = resolvedColors.get(expression);
+  if (cached !== undefined) {
+    return cached;
+  }
+
+  if (typeof document === 'undefined' || typeof CSS === 'undefined' || !CSS.supports?.('color', expression)) {
+    return expression;
+  }
+
+  if (!probe || !probe.isConnected) {
+    probe = document.createElement('span');
+    probe.setAttribute('aria-hidden', 'true');
+    probe.style.display = 'none';
+    document.body.appendChild(probe);
+  }
+
+  probe.style.color = expression;
+  const resolved = toRgbString(getComputedStyle(probe).color) ?? expression;
+
+  if (resolvedColors.size >= RESOLVED_CACHE_LIMIT) {
+    resolvedColors.clear();
+  }
+  resolvedColors.set(expression, resolved);
+  return resolved;
+}
+
+const toByte = (value: number) => Math.round(Math.min(1, Math.max(0, value)) * 255);
+const linearToSrgb = (value: number) => (value <= 0.0031308 ? 12.92 * value : 1.055 * value ** (1 / 2.4) - 0.055);
+
+/**
+ * Converts a computed color value to `rgb()`/`rgba()`. Browsers serialize relative colors in the color space
+ * they were defined in, so this handles `rgb()`, `color(srgb …)` and `color(srgb-linear …)`.
+ */
+export function toRgbString(computed: string): string | undefined {
+  const value = computed.trim();
+  if (/^rgba?\(/.test(value)) {
+    return value;
+  }
+
+  const match = value.match(/^color\((srgb|srgb-linear)\s+([^)]+)\)$/);
+  if (!match) {
+    return undefined;
+  }
+
+  const [channelPart, alphaPart] = match[2].split('/');
+  const channels = channelPart.trim().split(/\s+/).map(Number);
+  const alpha = alphaPart === undefined ? 1 : Number(alphaPart.trim());
+  if (channels.length !== 3 || [...channels, alpha].some((channel) => Number.isNaN(channel))) {
+    return undefined;
+  }
+
+  const [r, g, b] = (match[1] === 'srgb-linear' ? channels.map(linearToSrgb) : channels).map(toByte);
+  return alpha >= 1 ? `rgb(${r}, ${g}, ${b})` : `rgba(${r}, ${g}, ${b}, ${Math.round(alpha * 1000) / 1000})`;
 }
 
 // 1 for any visible color, 0 for a fully transparent one. Read from the relative color source, so the browser

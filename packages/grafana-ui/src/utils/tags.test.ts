@@ -1,6 +1,6 @@
 import { createTheme, colorManipulator, type GrafanaTheme2 } from '@grafana/data';
 
-import { getTagColor, getTagColorVariables, getTransparentOutlineColor } from './tags';
+import { getTagColor, getTagColorVariables, getTransparentOutlineColor, toRgbString } from './tags';
 
 const TARGET_CONTRAST = 6;
 const MIN_CONTRAST = 4.5;
@@ -228,4 +228,70 @@ describe.each(['dark', 'light'] as const)('transparent tag colors in %s mode', (
 it('uses palette colors directly for an index', () => {
   const theme = createTheme();
   expect(getTagColor(1, theme)).toMatchObject(theme.components.tag.colors[1]);
+});
+
+it('keeps the deprecated color and borderColor aliases for palette colors', () => {
+  const theme = createTheme();
+  const { background, text } = theme.components.tag.colors[1];
+
+  expect(getTagColor(1, theme)).toEqual({ background, text, color: background, borderColor: text });
+});
+
+describe('resolving CSS color strings in a browser', () => {
+  const originalCSS = globalThis.CSS;
+  let getComputedStyleSpy: jest.SpyInstance;
+
+  beforeEach(() => {
+    Object.defineProperty(globalThis, 'CSS', { value: { supports: () => true }, configurable: true });
+    getComputedStyleSpy = jest
+      .spyOn(window, 'getComputedStyle')
+      // jsdom drops relative color values from style.color, so the computed value is stubbed.
+      .mockImplementation(() => ({ color: 'color(srgb 1 0.5 0)' }) as CSSStyleDeclaration);
+  });
+
+  afterEach(() => {
+    getComputedStyleSpy.mockRestore();
+    Object.defineProperty(globalThis, 'CSS', { value: originalCSS, configurable: true });
+  });
+
+  it('does not compute styles until a color is read', () => {
+    const colors = getTagColor('#ab1234', createTheme());
+
+    expect(getComputedStyleSpy).not.toHaveBeenCalled();
+    expect(colors.background).toBe('rgb(255, 128, 0)');
+    expect(getComputedStyleSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('resolves the deprecated aliases to the same rgb strings', () => {
+    const colors = getTagColor('#ab5678', createTheme());
+
+    expect(colors).toMatchObject({ color: colors.background, borderColor: colors.text });
+    expect(colors.background).toMatch(/^rgb\(/);
+  });
+
+  it('caches resolved colors', () => {
+    const theme = createTheme();
+    expect(getTagColor('#ab9abc', theme).background).toBe(getTagColor('#ab9abc', theme).background);
+
+    expect(getComputedStyleSpy).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('toRgbString', () => {
+  it.each([
+    ['rgb(1, 2, 3)', 'rgb(1, 2, 3)'],
+    ['color(srgb 1 0 0.5)', 'rgb(255, 0, 128)'],
+    ['color(srgb 0 0 0 / 0.25)', 'rgba(0, 0, 0, 0.25)'],
+    ['color(srgb-linear 0.2159 1 0)', 'rgb(128, 255, 0)'],
+    ['color(srgb 1.2 -0.1 0)', 'rgb(255, 0, 0)'],
+  ])('converts %s', (computed, expected) => {
+    expect(toRgbString(computed)).toBe(expected);
+  });
+
+  it.each(['oklch(0.5 0.1 20)', 'color(display-p3 1 0 0)', 'color(srgb none 0 0)', ''])(
+    'returns undefined for %s',
+    (computed) => {
+      expect(toRgbString(computed)).toBeUndefined();
+    }
+  );
 });
