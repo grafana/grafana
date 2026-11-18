@@ -639,7 +639,8 @@ type Cfg struct {
 
 	// MaxNestedFolderDepth is the hard ceiling for folder nesting depth.
 	// The SQL query builders use this value to generate JOIN chains.
-	MaxNestedFolderDepth int
+	MaxNestedFolderDepth           int
+	PendingDeletionResourceEnabled bool
 
 	SecureSocksDSProxy SecureSocksDSProxySettings
 
@@ -1852,6 +1853,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.Storage = readStorageSettings(iniFile)
 	cfg.Search = readSearchSettings(iniFile)
 	cfg.MaxNestedFolderDepth = maxDeptFolderSettings(iniFile)
+	cfg.PendingDeletionResourceEnabled = iniFile.Section("folder").Key("pending_deletion_resource_enabled").MustBool(false)
 
 	var err error
 	cfg.SecureSocksDSProxy, err = readSecureSocksDSProxySettings(iniFile)
