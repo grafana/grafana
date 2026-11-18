@@ -21,6 +21,7 @@ import { StarToolbarButton } from 'app/features/stars/StarToolbarButton';
 import { useSelector } from 'app/types/store';
 
 import { selectFolderRepository } from '../../provisioning/utils/selectors';
+import { savesPendingChanges } from '../lifecycle/pendingChangesSave';
 import { openPanelEditor } from '../panel-edit/openPanelEditor';
 import ExportButton from '../sharing/ExportButton/ExportButton';
 import ShareButton from '../sharing/ShareButton/ShareButton';
@@ -94,6 +95,8 @@ export function ToolbarActions({ dashboard }: Props) {
 
   const isEditingLibraryPanel = editPanel && isLibraryPanel(editPanel.state.panelRef.resolve());
   const isNew = !Boolean(uid || dashboard.isManaged());
+  // Pending changes are unsaved changes until Save saves them.
+  const hasUnsavedChanges = isDirty || savesPendingChanges(dashboard);
 
   const hasCopiedPanel = store.exists(LS_PANEL_COPY_KEY);
   // Means we are not in settings view, fullscreen panel or edit panel
@@ -474,7 +477,7 @@ export function ToolbarActions({ dashboard }: Props) {
             tooltip={t('dashboard.toolbar.save-dashboard-copy.tooltip', 'Save as copy')}
             key="save"
             size="sm"
-            variant={isDirty ? 'primary' : 'secondary'}
+            variant={hasUnsavedChanges ? 'primary' : 'secondary'}
           >
             <Trans i18nKey="dashboard.toolbar.save-dashboard-copy.label">Save as copy</Trans>
           </Button>
@@ -511,7 +514,7 @@ export function ToolbarActions({ dashboard }: Props) {
             tooltip={t('dashboard.toolbar.save-dashboard.tooltip', 'Save changes')}
             size="sm"
             data-testid={selectors.components.NavToolbar.editDashboard.saveButton}
-            variant={isDirty ? 'primary' : 'secondary'}
+            variant={hasUnsavedChanges ? 'primary' : 'secondary'}
           >
             <Trans i18nKey="dashboard.toolbar.save-dashboard.label">Save dashboard</Trans>
           </Button>
@@ -519,7 +522,7 @@ export function ToolbarActions({ dashboard }: Props) {
             <Button
               aria-label={t('dashboard.toolbar.more-save-options', 'More save options')}
               icon="angle-down"
-              variant={isDirty ? 'primary' : 'secondary'}
+              variant={hasUnsavedChanges ? 'primary' : 'secondary'}
               size="sm"
               data-testid={selectors.components.NavToolbar.editDashboard.moreSaveOptionsButton}
             />
