@@ -53,8 +53,8 @@ func TestEndWatchesOnShutdown(t *testing.T) {
 		synctest.Test(t, func(t *testing.T) {
 			stop, shutdown := context.WithCancel(context.Background())
 			defer shutdown()
-			var ended []func() bool
 			targets := []string{"/api/things", "/apis/x.grafana.app/v1/things?watch=false", "/apis/x.grafana.app/v1/things?labelSelector=watch"}
+			ended := make([]func() bool, 0, len(targets))
 			for _, target := range targets {
 				ended = append(ended, serve(t, stop, target))
 			}

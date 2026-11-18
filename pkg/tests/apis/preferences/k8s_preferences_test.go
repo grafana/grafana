@@ -200,7 +200,7 @@ func testPreferencesK8sAPIs(t *testing.T, routed bool) {
 			require.NoError(t, err, string(raw))
 			list := &preferences.PreferencesList{}
 			require.NoError(t, json.Unmarshal(raw, list))
-			names := []string{}
+			names := make([]string, 0, len(list.Items))
 			for _, item := range list.Items {
 				names = append(names, item.Name)
 			}
