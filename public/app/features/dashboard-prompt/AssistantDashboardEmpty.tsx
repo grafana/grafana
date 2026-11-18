@@ -129,7 +129,7 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
               placeholder={
                 template
                   ? // Short enough for one line at phone width; the pill already names the template.
-                    t('dashboard.empty.assistant-placeholder-template', 'Describe changes, or send as is')
+                    t('dashboard.empty.assistant-placeholder-template', 'Add changes, or send as is')
                   : undefined
               }
               hostContextItems={hostContextItems}
