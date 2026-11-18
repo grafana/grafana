@@ -4,6 +4,8 @@ import { type Status, type Spec as DashboardV2Spec } from '@grafana/schema/apis/
 import { isRecord } from 'app/core/utils/isRecord';
 import {
   AnnoKeyGrantPermissions,
+  DeprecatedInternalId,
+  isApiMachineryError,
   type Resource,
   type ResourceClient,
   type ResourceClientRequestOptions,
@@ -85,18 +87,57 @@ export function isV2DashboardCommand(
   return isDashboardV2Spec(cmd.dashboard);
 }
 
-export function buildRestorePayload<T>(dashboard: Resource<T>): ResourceForCreate<T> {
-  return {
-    metadata: {
-      ...dashboard.metadata,
-      resourceVersion: '',
-      annotations: {
-        ...dashboard.metadata.annotations,
-        [AnnoKeyGrantPermissions]: 'default',
-      },
+export function buildRestorePayload<T>(
+  dashboard: Resource<T>,
+  options?: { omitDeprecatedInternalId?: boolean }
+): ResourceForCreate<T> {
+  const metadata = {
+    ...dashboard.metadata,
+    resourceVersion: '',
+    annotations: {
+      ...dashboard.metadata.annotations,
+      [AnnoKeyGrantPermissions]: 'default',
     },
-    spec: dashboard.spec,
   };
+
+  // The apiserver only rejects the stale ID when another live dashboard took it, so the
+  // caller retries with this flag instead of dropping the ID on every restore.
+  if (options?.omitDeprecatedInternalId && metadata.labels) {
+    const labels = { ...metadata.labels };
+    delete labels[DeprecatedInternalId];
+    metadata.labels = labels;
+  }
+
+  return { metadata, spec: dashboard.spec };
+}
+
+/**
+ * Re-create a deleted dashboard from its trash entry.
+ *
+ * Trash entries keep the legacy numeric ID the dashboard had when deleted. If a dashboard took
+ * that ID meanwhile the apiserver answers `409 Conflict` and writes nothing, so retry once
+ * without it: the backend then mints a new ID. `409 AlreadyExists` means the name is still
+ * taken and must not be retried.
+ */
+export async function restoreDashboardResource<T>(
+  client: Pick<ResourceClient<T>, 'create'>,
+  dashboard: Resource<T>
+): Promise<Resource<T>> {
+  try {
+    return await client.create(buildRestorePayload(dashboard));
+  } catch (error) {
+    if (!isDeprecatedInternalIdConflict(error, dashboard)) {
+      throw error;
+    }
+    return await client.create(buildRestorePayload(dashboard, { omitDeprecatedInternalId: true }));
+  }
+}
+
+function isDeprecatedInternalIdConflict(error: unknown, dashboard: Resource<unknown>): boolean {
+  if (!dashboard.metadata.labels?.[DeprecatedInternalId]) {
+    return false;
+  }
+  return isApiMachineryError(error) && error.data.reason === 'Conflict';
 }
 
 /**
