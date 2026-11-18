@@ -1,5 +1,7 @@
 import { t } from '@grafana/i18n';
 
+import { type ImportFormValues } from '../types';
+
 import { type NotificationsSourceOption, type RulesSourceOption, StepKey, type WizardStep } from './types';
 
 /**
@@ -44,6 +46,35 @@ export function isAutoSyncCommitted(
   step1Skipped: boolean
 ): boolean {
   return isAutoSyncSelected(autoSyncNotificationsEnabled, notificationsSource) && !step1Skipped;
+}
+
+export interface ImportPlan {
+  willEnableAutoSync: boolean;
+  willImportNotifications: boolean;
+  willImportRules: boolean;
+}
+
+/** What confirming the import will do, from the steps the user completed or skipped. */
+export function getImportPlan(
+  values: Pick<
+    ImportFormValues,
+    | 'autoSyncNotificationsEnabled'
+    | 'notificationsSource'
+    | 'step1Completed'
+    | 'step1Skipped'
+    | 'step2Completed'
+    | 'step2Skipped'
+  >
+): ImportPlan {
+  return {
+    willEnableAutoSync: isAutoSyncCommitted(
+      values.autoSyncNotificationsEnabled ?? false,
+      values.notificationsSource,
+      values.step1Skipped
+    ),
+    willImportNotifications: values.step1Completed && !values.step1Skipped,
+    willImportRules: values.step2Completed && !values.step2Skipped,
+  };
 }
 
 export const getNextStep = (currentStep: StepKey): WizardStep | undefined => {
