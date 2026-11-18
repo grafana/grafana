@@ -30,6 +30,13 @@ func TestMain(m *testing.M) {
 	compat.Main(m)
 }
 
+// child is written through v1beta1 and moved through v1, and both are read explicitly,
+// so a version that stops serving either one fails even though discovery hides it.
+const (
+	childWriteVersion = "v1beta1"
+	childMoveVersion  = "v1"
+)
+
 var (
 	folderGR    = schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}
 	dashboardGV = schema.GroupVersion{Group: "dashboard.grafana.app", Version: "v1"}
@@ -41,13 +48,13 @@ var (
 // Setup creates:
 //
 //	parent-a
-//	  child           (with a dashboard and a status)
+//	  child           (through v1beta1, with a dashboard and a status)
 //	    grandchild
 //	  sibling
 //	parent-b          (the viewer may edit it)
 //	page-1..3         (labeled)
 //
-// Update moves child (through the k8s API) and sibling (through the legacy API) to
+// Update moves child (through the k8s API in v1) and sibling (through the legacy API) to
 // parent-b, renames child, patches its status, and deletes page-3.
 const (
 	parentA      = "compat-folder-parent-a"
@@ -99,12 +106,11 @@ var (
 func TestCompatSetup(t *testing.T) {
 	h := compat.NewHelper(t)
 	res := folderResource(t, h)
-	folders := client(h, h.Org1.Admin, res.Versions[0])
 	ctx := context.Background()
 
-	create := func(name, title, parent string, labels map[string]string) {
+	create := func(version, name, title, parent string, labels map[string]string) {
 		obj := &unstructured.Unstructured{Object: map[string]any{
-			"apiVersion": folderGR.WithVersion(res.Versions[0]).GroupVersion().String(),
+			"apiVersion": folderGR.WithVersion(version).GroupVersion().String(),
 			"kind":       "Folder",
 			"metadata":   map[string]any{"name": name},
 			"spec":       map[string]any{"title": title},
@@ -113,16 +119,17 @@ func TestCompatSetup(t *testing.T) {
 			obj.SetAnnotations(map[string]string{utils.AnnoKeyFolder: parent})
 		}
 		obj.SetLabels(labels)
-		_, err := folders.Create(ctx, obj, metav1.CreateOptions{})
+		_, err := client(h, h.Org1.Admin, version).Create(ctx, obj, metav1.CreateOptions{})
 		require.NoError(t, err, name)
 	}
-	create(parentA, titles[parentA], "", nil)
-	create(parentB, titles[parentB], "", nil)
-	create(child, childTitle, parentA, nil)
-	create(grandchild, titles[grandchild], child, nil)
-	create(sibling, titles[sibling], parentA, nil)
+	v := res.Versions[0]
+	create(v, parentA, titles[parentA], "", nil)
+	create(v, parentB, titles[parentB], "", nil)
+	create(childWriteVersion, child, childTitle, parentA, nil)
+	create(v, grandchild, titles[grandchild], child, nil)
+	create(v, sibling, titles[sibling], parentA, nil)
 	for i, name := range pages {
-		create(name, fmt.Sprintf("Compat page %d", i+1), "", map[string]string{pageLabel: "true"})
+		create(v, name, fmt.Sprintf("Compat page %d", i+1), "", map[string]string{pageLabel: "true"})
 	}
 
 	_, err := dashboards(h).Create(ctx, &unstructured.Unstructured{Object: map[string]any{
@@ -134,7 +141,7 @@ func TestCompatSetup(t *testing.T) {
 	require.NoError(t, err)
 
 	status := `{"status":{"cascadeDelete":{"state":"InProgress","total":3,"remaining":2}}}`
-	_, err = folders.Patch(ctx, child, types.MergePatchType, []byte(status), metav1.PatchOptions{}, "status")
+	_, err = client(h, h.Org1.Admin, childWriteVersion).Patch(ctx, child, types.MergePatchType, []byte(status), metav1.PatchOptions{}, "status")
 	require.NoError(t, err)
 
 	request(t, h, http.MethodPost, "/api/access-control/folders/"+parentB+"/users/"+h.Org1.Viewer.Identity.GetIdentifier(), `{"permission":"Edit"}`)
@@ -159,14 +166,15 @@ func TestCompatUpdate(t *testing.T) {
 
 	// Move child with an ordinary update, which must keep its status, and sibling
 	// through the legacy API.
-	obj, err := folders.Get(ctx, child, metav1.GetOptions{})
+	mover := client(h, h.Org1.Admin, childMoveVersion)
+	obj, err := mover.Get(ctx, child, metav1.GetOptions{})
 	require.NoError(t, err)
 	require.Equal(t, childTitle, title(t, obj), "a status write changed the spec")
 	require.NoError(t, unstructured.SetNestedField(obj.Object, updatedTitle, "spec", "title"))
 	annotations := obj.GetAnnotations()
 	annotations[utils.AnnoKeyFolder] = parentB
 	obj.SetAnnotations(annotations)
-	_, err = folders.Update(ctx, obj, metav1.UpdateOptions{})
+	_, err = mover.Update(ctx, obj, metav1.UpdateOptions{})
 	require.NoError(t, err)
 
 	request(t, h, http.MethodPost, "/api/folders/"+sibling+"/move", `{"parentUid":"`+parentB+`"}`)
@@ -239,8 +247,22 @@ func checkTree(t *testing.T, h *apis.K8sTestHelper, res compat.Resource, tr tree
 		} {
 			t.Run(c.subresource, func(t *testing.T) { c.check(t, h, v, tr) })
 		}
+		for _, version := range []string{childWriteVersion, childMoveVersion} {
+			t.Run("child in "+version, func(t *testing.T) { checkChild(t, h, version, tr) })
+		}
 		t.Run("legacy", func(t *testing.T) { checkLegacy(t, h, tr) })
 	})
+}
+
+// checkChild reads child through one version explicitly, whether or not discovery
+// still lists it.
+func checkChild(t *testing.T, h *apis.K8sTestHelper, version string, tr tree) {
+	obj, err := client(h, h.Org1.Admin, version).Get(context.Background(), child, metav1.GetOptions{})
+	require.NoError(t, err, "child through %s", version)
+	require.Equal(t, folderGR.WithVersion(version).GroupVersion().String(), obj.GetAPIVersion())
+	require.Equal(t, tr.childTitle, title(t, obj))
+	require.Equal(t, tr.parent, obj.GetAnnotations()[utils.AnnoKeyFolder])
+	checkStatus(t, h, version, tr)
 }
 
 // checkHierarchy reads every folder of the tree in every served version.
