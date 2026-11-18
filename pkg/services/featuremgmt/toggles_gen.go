@@ -339,10 +339,6 @@ const (
 	// Enables RBAC for playlists
 	FlagPlaylistsRBAC = "playlistsRBAC"
 
-	// FlagSavedQueriesRBAC
-	// Enables Saved queries (query library) RBAC permissions
-	FlagSavedQueriesRBAC = "savedQueriesRBAC"
-
 	// FlagDashboardLibrary
 	// Displays datasource provisioned dashboards in dashboard empty page, only when coming from datasource configuration page
 	FlagDashboardLibrary = "dashboardLibrary"
