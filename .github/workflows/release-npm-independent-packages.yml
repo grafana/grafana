@@ -207,25 +207,13 @@ jobs:
           rm -rf ./npm-artifacts
           pnpm run packages:pack:independent
 
-      - name: Select packages that are not published yet
-        id: select
-        run: |
-          node scripts/release/select-unpublished-npm-packages.mts ./npm-artifacts
-          count=$(find ./npm-artifacts -maxdepth 1 -name '*.tgz' | wc -l | tr -d ' ')
-          echo "count=$count" >> "$GITHUB_OUTPUT"
-          if [ "$count" = '0' ]; then
-            echo "Every tagged package is already published, nothing to do."
-          fi
-          tree -a ./npm-artifacts
-
       - name: Validate packages
-        if: steps.select.outputs.count != '0'
         run: ./scripts/validate-npm-packages.sh
 
       - name: Publish packages
-        if: steps.select.outputs.count != '0' && env.DRY_RUN != 'true'
+        if: env.DRY_RUN != 'true'
         run: ./scripts/publish-npm-packages.sh --dist-tag 'latest' --registry 'https://registry.npmjs.org/'
 
       - name: Report dry run
-        if: steps.select.outputs.count != '0' && env.DRY_RUN == 'true'
+        if: env.DRY_RUN == 'true'
         run: echo "Dry run, the tarballs listed above would have been published to the latest dist-tag."
