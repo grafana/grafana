@@ -87,7 +87,7 @@ export function isV2DashboardCommand(
   return isDashboardV2Spec(cmd.dashboard);
 }
 
-export function buildRestorePayload<T>(
+function buildRestorePayload<T>(
   dashboard: Resource<T>,
   options?: { omitDeprecatedInternalId?: boolean }
 ): ResourceForCreate<T> {
