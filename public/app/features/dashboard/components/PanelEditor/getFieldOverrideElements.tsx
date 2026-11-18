@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { cloneDeep } from 'lodash';
+import { cloneDeep, isEqual } from 'lodash';
 
 import {
   type FieldConfigOptionsRegistry,
@@ -259,7 +259,11 @@ export function getFieldOverrideCategories(
 
     const onMatcherConfigChange = (options: unknown, scope: MatcherScope | undefined = override.matcher.scope) => {
       onOverrideChange(idx, { ...override, matcher: { ...override.matcher, scope, options } });
-      reportOverrideChange('change_override_matcher');
+      // Some matcher editors (the regex one) call onChange on every blur. Scope isn't compared: editors send
+      // their default scope when none is stored, which isn't a change either.
+      if (!isEqual(options, override.matcher.options)) {
+        reportOverrideChange('change_override_matcher');
+      }
     };
 
     const onMatcherScopeChange = (scope: MatcherScope) => {

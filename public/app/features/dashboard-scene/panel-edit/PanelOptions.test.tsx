@@ -18,6 +18,7 @@ import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
+import { DashboardInteractions } from '../utils/interactions';
 import { activateFullSceneTree } from '../utils/test-utils';
 import * as utils from '../utils/utils';
 
@@ -190,11 +191,21 @@ describe('PanelOptions', () => {
     });
 
     it('Can delete rule', async () => {
+      const panelSettingChanged = jest.spyOn(DashboardInteractions, 'panelSettingChanged').mockImplementation();
       await setup();
 
       await userEvent.click(screen.getByLabelText('Remove override'));
 
+      expect(panelSettingChanged).toHaveBeenCalledWith({
+        item: 'remove_override',
+        source: 'panel_editor',
+        // The mocked plugin loader resolves every panel to TestPanel.
+        panel_type: 'TestPanel',
+        panel_id: 1,
+        matcher_id: 'byName',
+      });
       expect(screen.queryByText(overrideRuleTooltipDescription)).not.toBeInTheDocument();
+      panelSettingChanged.mockRestore();
     });
   });
 

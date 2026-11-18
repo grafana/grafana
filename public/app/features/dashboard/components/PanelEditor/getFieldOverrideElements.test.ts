@@ -858,6 +858,21 @@ describe('getFieldOverrideCategories change reporting', () => {
     expect(JSON.stringify(onOverrideChanged.mock.calls)).not.toContain('Cost');
   });
 
+  it('does not report a matcher editor that sends back the options it has', () => {
+    const { findItem, onOverrideChanged } = setup();
+    const matcherItem = findItem('-matcher');
+    const matcher = matcherItem.props.render(matcherItem) as React.ReactElement<{
+      onChange: (options: unknown, scope?: string) => void;
+    }>;
+
+    matcher.props.onChange('Revenue', 'series');
+    matcher.props.onChange('Cost', 'series');
+
+    expect(onOverrideChanged.mock.calls).toEqual([
+      [{ item: 'change_override_matcher', overrideIndex: 0, matcherId: 'byName' }],
+    ]);
+  });
+
   it('reports adding, changing and removing a property by its id', () => {
     const { findItem, onOverrideChanged } = setup();
     const addItem = findItem('-add-button');
