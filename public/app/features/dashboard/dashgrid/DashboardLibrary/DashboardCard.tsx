@@ -337,7 +337,7 @@ function DashboardCardComponent({
           </div>
         )}
       </div>
-      <div className={styles.bottomSection}>
+      <div className={cx(styles.bottomSection, onSelect && styles.selectableBottomSection)}>
         {isCustomTemplate && (
           <h3 className={styles.customTemplateTitle}>
             <span className={styles.titleText}>{title}</span>
@@ -356,12 +356,14 @@ function DashboardCardComponent({
           </div>
         )}
         {onSelect && kind === 'template_dashboard' && (
-          <p className={styles.createdBy}>
-            <Trans i18nKey="dashboard-library.card.provisioned-by-grafana">Provisioned by Grafana</Trans>
+          <p className={cx(styles.createdBy, styles.selectableCreatedBy)}>
+            <Trans i18nKey="dashboard-library.card.provisioned-by-grafana">
+              <span className={styles.createdByLabel}>Provisioned by:</span> Grafana
+            </Trans>
           </p>
         )}
         {isCustomTemplate && createdByName && (
-          <p className={styles.createdBy}>
+          <p className={cx(styles.createdBy, onSelect && styles.selectableCreatedBy)}>
             <span className={styles.createdByLabel}>
               <Trans i18nKey="dashboard-library.dashboard-card.created-by-label">Created by:</Trans>
             </span>{' '}
@@ -672,6 +674,15 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     createdByLabel: css({
       fontWeight: theme.typography.fontWeightBold,
+    }),
+    // In the picker the author line sits at the bottom of every card, so cards in a row line it up whether or
+    // not they have tags.
+    selectableBottomSection: css({
+      flexGrow: 1,
+    }),
+    selectableCreatedBy: css({
+      marginTop: 'auto',
+      paddingTop: theme.spacing(1),
     }),
     bottomSection: css({
       display: 'flex',

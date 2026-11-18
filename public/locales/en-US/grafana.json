@@ -7134,7 +7134,7 @@
       "no-preview": "No preview available ",
       "preview-template-button": "Preview",
       "preview-template-button-label": "Preview template: {{title}}",
-      "provisioned-by-grafana": "Provisioned by Grafana",
+      "provisioned-by-grafana": "<0>Provisioned by:</0> Grafana",
       "use-template-button": "Use template",
       "use-template-button-label": "Use template: {{title}}",
       "view-dashboard-button": "View dashboard",

@@ -239,7 +239,7 @@ describe('DashboardCard', () => {
         />
       );
 
-      expect(screen.getByText('Provisioned by Grafana')).toBeInTheDocument();
+      expect(screen.getByText('Provisioned by:').closest('p')).toHaveTextContent('Provisioned by: Grafana');
     });
 
     it('keeps the template modal card unchanged', () => {
