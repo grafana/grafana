@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/featuretoggles"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -63,16 +64,16 @@ func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginI
 	}
 
 	if providerURL := s.cfg.openFeatureProviderURL(); s.cfg.OpenFeature.ProviderType != "" && providerURL != "" {
-		m[openFeatureProviderURLKey] = providerURL
-		m[openFeatureProviderTypeKey] = string(s.cfg.OpenFeature.ProviderType)
-		m[openFeatureCacheTTLKey] = s.cfg.openFeatureCacheTTLSeconds()
+		m[config.OpenFeatureProviderURL] = providerURL
+		m[config.OpenFeatureProviderType] = string(s.cfg.OpenFeature.ProviderType)
+		m[config.OpenFeatureCacheTTL] = s.cfg.openFeatureCacheTTLSeconds()
 
 		if len(s.cfg.OpenFeature.ContextAttrs) > 0 {
 			attrs, err := json.Marshal(s.cfg.OpenFeature.ContextAttrs)
 			if err != nil {
 				s.logger.Error("Failed to marshal OpenFeature context attributes", "error", err)
 			} else {
-				m[openFeatureContextKey] = string(attrs)
+				m[config.OpenFeatureContext] = string(attrs)
 			}
 		}
 	}
