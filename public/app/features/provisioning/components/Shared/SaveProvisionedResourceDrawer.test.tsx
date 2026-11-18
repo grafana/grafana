@@ -100,8 +100,6 @@ type DrawerOverrides = {
   resource?: SaveProvisionedResourceDrawerProps['resource'];
   title?: string;
   action?: 'update' | 'delete';
-  onWriteSuccess?: () => void;
-  onBranchSuccess?: SaveProvisionedResourceDrawerProps['onBranchSuccess'];
 };
 
 function setup(props: DrawerOverrides = {}) {
@@ -161,26 +159,10 @@ describe('SaveProvisionedResourceDrawer', () => {
         metadata: { name: 'playlist-uid' },
         spec: { title: 'Test Playlist', interval: '5m', items: [{ type: 'dashboard_by_uid', value: 'abc' }] },
       });
-      // Default post-commit navigation goes to the kind's list route.
       await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/redirect-target'));
     });
 
-    it('runs a caller-supplied onWriteSuccess instead of the default navigation', async () => {
-      const onWriteSuccess = jest.fn();
-      server.use(
-        http.put(`${BASE}/repositories/:name/files/*`, () =>
-          HttpResponse.json({ path: 'playlists/test-playlist.json', resource: { upsert: {} } })
-        )
-      );
-
-      const { user } = setup({ onWriteSuccess });
-      await user.click(await screen.findByRole('button', { name: /^save$/i }));
-
-      await waitFor(() => expect(onWriteSuccess).toHaveBeenCalled());
-    });
-
-    it('sends the ref and runs onBranchSuccess for the branch workflow', async () => {
-      const onBranchSuccess = jest.fn();
+    it('sends the ref and navigates to the redirect URL with the pull request params for the branch workflow', async () => {
       // workflows[0] === 'branch' makes the branch (PR) workflow the default.
       mockRepoView({ repository: { ...mockRepository, workflows: ['branch'] } });
       server.use(
@@ -195,33 +177,16 @@ describe('SaveProvisionedResourceDrawer', () => {
         })
       );
 
-      const { user } = setup({ onBranchSuccess });
+      const { user } = setup();
       await user.click(await screen.findByRole('button', { name: /^save$/i }));
 
       await waitFor(() => expect(capturedRequest).not.toBeNull());
       expect(requireCapturedRequest(capturedRequest).url.searchParams.get('ref')).toBeTruthy();
-      await waitFor(() => expect(onBranchSuccess).toHaveBeenCalled());
-    });
-
-    it('navigates to the redirect URL with the pull request params for the branch workflow', async () => {
-      mockRepoView({ repository: { ...mockRepository, workflows: ['branch'] } });
-      server.use(
-        http.put(`${BASE}/repositories/:name/files/*`, () =>
-          HttpResponse.json({
-            ref: 'feature-branch',
-            path: 'playlists/test-playlist.json',
-            urls: { newPullRequestURL: 'https://example.com/pr/1' },
-            resource: { upsert: {} },
-          })
-        )
-      );
-
-      const { user } = setup();
-      await user.click(await screen.findByRole('button', { name: /^save$/i }));
-
       await waitFor(() =>
         expect(mockNavigate).toHaveBeenCalledWith(
-          expect.stringMatching(/^\/redirect-target\?new_pull_request_url=https%3A%2F%2Fexample\.com%2Fpr%2F1/)
+          expect.stringMatching(
+            /^\/redirect-target\?new_pull_request_url=https%3A%2F%2Fexample\.com%2Fpr%2F1&repo_type=git&action=update/
+          )
         )
       );
     });
@@ -280,7 +245,7 @@ describe('SaveProvisionedResourceDrawer', () => {
           title={newPlaylist.spec?.title ?? ''}
           action="create"
           repositoryName="test-repo"
-          redirectUrl="/playlists"
+          redirectUrl="/redirect-target"
           onDismiss={jest.fn()}
         />
       );
@@ -311,7 +276,7 @@ describe('SaveProvisionedResourceDrawer', () => {
           title={newPlaylist.spec?.title ?? ''}
           action="create"
           repositoryName="test-repo"
-          redirectUrl="/playlists"
+          redirectUrl="/redirect-target"
           onDismiss={jest.fn()}
         />
       );

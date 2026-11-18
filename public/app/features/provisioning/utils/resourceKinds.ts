@@ -135,8 +135,10 @@ export const resourceKindInfos = {
     itemType: 'LibraryPanel',
     // getIconForKind doesn't know library panels, so use the library-panel icon directly.
     icon: 'library-panel',
+    // No deep-link route for a single library panel exists; they're only viewable from the
+    // library panels collection page, so there is no `getRoute`.
     // Library panels live inside folders on the backend, but the dashboards folder browse doesn't
-    // list them — they have their own collection page — so they behave like a non-foldered kind.
+    // list them, so the migrate table groups them under one row like a non-foldered kind.
     folderScoped: false,
     // Library panels aren't in the unified search index; list them through their
     // apiserver (same group as dashboards, v0alpha1). Gated out of migration by
@@ -266,9 +268,8 @@ export interface ResourceKindInfo {
   /** Builds the in-app route to view a single resource of this kind, given its k8s name. */
   getRoute?: (name: string) => string;
   /**
-   * Whether resources of this kind are contained in folders, and so can be scoped to a
-   * repository's own folder. Foldered kinds (folders, dashboards) live in the dashboards browse;
-   * others (e.g. playlists) only have their own collection page.
+   * Whether the migrate table nests resources of this kind under their parent folder (folders,
+   * dashboards). Other kinds (e.g. playlists) are grouped under one row per kind.
    */
   folderScoped: boolean;
   /**
