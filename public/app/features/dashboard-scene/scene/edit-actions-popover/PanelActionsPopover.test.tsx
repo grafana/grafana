@@ -374,7 +374,7 @@ describe('<PanelActionsWrapper />', () => {
       await user.click(within(getToolbar()).getByRole('button', { name: 'Expand (v)' }));
 
       expect(mockLocationServicePartial).toHaveBeenCalledWith({ viewPanel: panel.getPathId(), editPanel: undefined });
-      expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('view', 1, 'actions_popover');
+      expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('view', 1, 'actions_popover', 'timeseries');
     });
 
     test('when the panel is expanded, Restore size returns to the dashboard', async () => {
@@ -388,7 +388,12 @@ describe('<PanelActionsWrapper />', () => {
       await user.click(within(getToolbar()).getByRole('button', { name: 'Restore size (v)' }));
 
       expect(mockLocationServicePartial).toHaveBeenCalledWith({ viewPanel: undefined });
-      expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('restore', 1, 'actions_popover');
+      expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith(
+        'restore',
+        1,
+        'actions_popover',
+        'timeseries'
+      );
     });
 
     test('clicking Edit opens the panel editor and reports the panel type', async () => {
