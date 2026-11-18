@@ -2,7 +2,6 @@ package legacy
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"slices"
 	"strconv"
@@ -33,37 +32,6 @@ func alertRuleTypeMeta() metav1.TypeMeta {
 		Kind:       alertRuleKind.Kind(),
 		APIVersion: alertRuleKind.Group() + "/" + alertRuleKind.Version(),
 	}
-}
-
-// OnlyAlertingVersions filters versions to those representing alerting rules. Versions of
-// recording rules share storage but should not surface through the AlertRule resource.
-func OnlyAlertingVersions(versions []*ngmodels.AlertRuleVersion) []*ngmodels.AlertRuleVersion {
-	out := versions[:0]
-	for _, v := range versions {
-		if v == nil {
-			continue
-		}
-		if v.Type() != ngmodels.RuleTypeAlerting {
-			continue
-		}
-		out = append(out, v)
-	}
-	return out
-}
-
-// OnlyAlertingRules filters deleted rules to those representing alerting rules.
-func OnlyAlertingRules(rules []*ngmodels.AlertRule) []*ngmodels.AlertRule {
-	out := rules[:0]
-	for _, r := range rules {
-		if r == nil {
-			continue
-		}
-		if r.Type() != ngmodels.RuleTypeAlerting {
-			continue
-		}
-		out = append(out, r)
-	}
-	return out
 }
 
 func AlertRuleToK8s(
@@ -351,6 +319,7 @@ func alertRuleVersionToK8s(
 
 // AlertRuleVersionsToK8s converts a list of AlertRuleVersion into a k8s AlertRuleList.
 // The Version on each rule is reflected via ResourceVersion so paginating clients can identify revisions.
+// Recording rule versions share storage with alerting rules, so they are skipped.
 func AlertRuleVersionsToK8s(
 	orgID int64,
 	versions []*ngmodels.AlertRuleVersion,
@@ -358,11 +327,11 @@ func AlertRuleVersionsToK8s(
 ) (*v1beta1.AlertRuleList, error) {
 	out := &v1beta1.AlertRuleList{Items: make([]v1beta1.AlertRule, 0, len(versions))}
 	for _, v := range versions {
+		if v == nil || v.Type() != ngmodels.RuleTypeAlerting {
+			continue
+		}
 		k8sRule, err := alertRuleVersionToK8s(orgID, v, namespaceMapper)
 		if err != nil {
-			if errors.Is(err, ErrNotAlertingRule) {
-				continue
-			}
 			return nil, fmt.Errorf("failed to convert version to k8s resource: %w", err)
 		}
 		out.Items = append(out.Items, *k8sRule)
@@ -371,7 +340,7 @@ func AlertRuleVersionsToK8s(
 }
 
 // DeletedAlertRulesToK8s converts soft-deleted alert rules into a k8s AlertRuleList,
-// stamping each item with a deletion timestamp.
+// stamping each item with a deletion timestamp. Deleted recording rules are skipped.
 func DeletedAlertRulesToK8s(
 	orgID int64,
 	rules []*ngmodels.AlertRule,
@@ -379,6 +348,9 @@ func DeletedAlertRulesToK8s(
 ) (*v1beta1.AlertRuleList, error) {
 	out := &v1beta1.AlertRuleList{Items: make([]v1beta1.AlertRule, 0, len(rules))}
 	for _, rule := range rules {
+		if rule == nil || rule.Type() != ngmodels.RuleTypeAlerting {
+			continue
+		}
 		// Tombstone rows clear the UID; the converter requires a non-empty Name, so fall back to the GUID.
 		copy := *rule
 		if copy.UID == "" {
@@ -386,9 +358,6 @@ func DeletedAlertRulesToK8s(
 		}
 		k8sRule, err := AlertRuleToK8s(orgID, &copy, utils.ManagerProperties{}, namespaceMapper)
 		if err != nil {
-			if errors.Is(err, ErrNotAlertingRule) {
-				continue
-			}
 			return nil, fmt.Errorf("failed to convert deleted rule to k8s resource: %w", err)
 		}
 		deleted := metav1.NewTime(rule.Updated)

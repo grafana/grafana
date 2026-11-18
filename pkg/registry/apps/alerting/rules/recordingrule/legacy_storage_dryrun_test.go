@@ -78,7 +78,7 @@ func TestLegacyStorage_DryRun(t *testing.T) {
 		ruleStore, fakes.NewFakeProvisioningStore(), folderService, &quotas, ruleStore,
 		60, log.NewNopLogger(), nil, allowAllRuleAccessControl{}, nil,
 	)
-	s := &legacyStorage{service: *svc, namespacer: request.GetNamespaceMapper(&setting.Cfg{})}
+	s := &legacyStorage{rules: legacy.NewRecordingRules(svc, request.GetNamespaceMapper(&setting.Cfg{}))}
 	ctx := genericapirequest.WithNamespace(context.Background(), "default")
 	ctx = identity.WithRequester(ctx, &user.SignedInUser{OrgID: 1, UserUID: "test-user"})
 	dryRun := []string{metav1.DryRunAll}

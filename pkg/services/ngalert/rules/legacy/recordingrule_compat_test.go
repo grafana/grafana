@@ -46,6 +46,7 @@ func TestRecordingRuleVersionsToK8s_FiltersInvalid(t *testing.T) {
 	versions := []*ngmodels.AlertRuleVersion{
 		{AlertRule: *recording, Message: "v1"},
 		{AlertRule: *alerting, Message: "should be skipped"},
+		nil,
 	}
 
 	out, err := RecordingRuleVersionsToK8s(1, versions, mapper)
@@ -60,8 +61,10 @@ func TestDeletedRecordingRulesToK8s(t *testing.T) {
 	rule := gen.With(gen.WithOrgID(1), gen.WithAllRecordingRules()).GenerateRef()
 	rule.UID = ""
 	rule.Updated = time.Now()
+	alerting := gen.With(gen.WithOrgID(1)).GenerateRef()
+	alerting.Record = nil
 
-	out, err := DeletedRecordingRulesToK8s(1, []*ngmodels.AlertRule{rule}, mapper)
+	out, err := DeletedRecordingRulesToK8s(1, []*ngmodels.AlertRule{rule, alerting, nil}, mapper)
 	require.NoError(t, err)
 	require.Len(t, out.Items, 1)
 	got := out.Items[0]

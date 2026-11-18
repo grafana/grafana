@@ -64,7 +64,7 @@ func newTestLegacyStorageWithStore(t *testing.T) (*legacyStorage, *fakes.RuleSto
 		ruleStore, fakes.NewFakeProvisioningStore(), folderService, &quotas, ruleStore,
 		60, log.NewNopLogger(), nil, fakeRuleAccessControl{}, nil,
 	)
-	return &legacyStorage{service: *svc, namespacer: request.GetNamespaceMapper(&setting.Cfg{})}, ruleStore
+	return &legacyStorage{rules: legacy.NewRecordingRules(svc, request.GetNamespaceMapper(&setting.Cfg{}))}, ruleStore
 }
 
 func deleteCollectionTestContext() context.Context {

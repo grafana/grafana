@@ -64,8 +64,7 @@ func NewStatusStorage(
 		statusWriter:  statusWriter,
 		writesUnified: writesUnified,
 		legacy: &legacyStorage{
-			service:        legacySvc,
-			namespacer:     namespacer,
+			rules:          legacy.NewRecordingRules(&legacySvc, namespacer),
 			tableConverter: rest.NewDefaultTableConvertor(ResourceInfo.GroupResource()),
 		},
 	}

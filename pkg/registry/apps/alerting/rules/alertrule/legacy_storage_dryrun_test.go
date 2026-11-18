@@ -68,7 +68,7 @@ func newDryRunFixture(t *testing.T, quotaReached bool) *dryRunFixture {
 	ctx := genericapirequest.WithNamespace(context.Background(), "default")
 	ctx = identity.WithRequester(ctx, &user.SignedInUser{OrgID: 1, UserUID: "test-user"})
 	return &dryRunFixture{
-		storage:   &legacyStorage{service: *svc, namespacer: request.GetNamespaceMapper(&setting.Cfg{})},
+		storage:   &legacyStorage{rules: legacy.NewAlertRules(svc, request.GetNamespaceMapper(&setting.Cfg{}))},
 		ruleStore: ruleStore,
 		validator: validator,
 		ctx:       ctx,
