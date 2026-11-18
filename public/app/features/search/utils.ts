@@ -2,6 +2,7 @@ import { store, type UrlQueryMap } from '@grafana/data';
 
 import { SECTION_STORAGE_KEY } from './constants';
 import { type SearchState } from './types';
+
 /**
  * Check if search query has filters enabled. Excludes folderId
  * @param query
