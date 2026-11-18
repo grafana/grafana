@@ -2785,11 +2785,6 @@
       "count": 1
     }
   },
-  "public/app/features/dimensions/editors/URLPickerTab.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 2
-    }
-  },
   "public/app/features/dimensions/editors/ValueMappingsEditor/ValueMappingsEditor.tsx": {
     "react-hooks/immutability": {
       "count": 2
