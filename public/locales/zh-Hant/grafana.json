@@ -1590,10 +1590,17 @@
         "view-list": "清單",
         "wildcard-in-text": "搜尋文字不能包含 * 或 %。"
       },
+      "sequence-drawer": {
+        "alert-rules": "",
+        "error": "",
+        "interval": "",
+        "missing-rule": "",
+        "recording-rules": "",
+        "this-rule": "",
+        "title": ""
+      },
       "sequence-pill": {
-        "label": "",
         "label-with-interval": "",
-        "tooltip": "",
         "tooltip-with-interval": ""
       },
       "shared": {
@@ -1815,17 +1822,18 @@
         "autosync-rules-error-title": "規則匯入失敗",
         "autosync-rules-imported-note": "您選取的警報規則也已匯入。",
         "autosync-rules-note": "您選取的警報規則也將被匯入。",
-        "autosync-success-body": "已啟用自動同步。重新導向中…",
+        "autosync-success-body": "",
         "autosync-success-title": "已啟用自動同步",
         "autosync-title": "確認自動同步",
         "body": "確定要開始匯入嗎？此動作將在 Grafana 警示中建立新資源。",
         "confirm": "開始匯入",
+        "continue": "",
         "error-body": "",
         "error-details": "",
         "error-title": "匯入失敗",
         "importing-body": "正在將資源匯入 Grafana 警示。請稍候…",
         "importing-title": "正在匯入...",
-        "success-body": "資源已成功匯入。正在重新導向…",
+        "success-body": "",
         "success-title": "匯入成功",
         "title": "確認匯入"
       },
@@ -7665,11 +7673,7 @@
       "usage-count_other": "用於 {{count}} 個儀表板"
     },
     "lifecycle": {
-      "applied": "已將您的變更套用至「{{title}}」",
-      "apply": "套用",
-      "apply-body": "所有有存取權限的人員都會看到這些變更。您可以從版本歷史記錄中還原先前的版本。",
-      "apply-failed": "無法套用變更。請再試一次，或先進行比較。",
-      "apply-needs-save": "",
+      "ask-assistant-to-update": "",
       "breadcrumb-draft": "草稿",
       "breadcrumb-pending-changes": "待定變更",
       "change-added": "已加入",
@@ -7701,7 +7705,6 @@
       "draft-discarded": "",
       "draft-title": "草稿",
       "edited-dashboard": "",
-      "highlight-changes": "在儀表板上醒目顯示變更",
       "pending-body": "正在預覽待處理的變更，只有您可以看到它們。",
       "pending-body-source": "正在預覽待處理的變更「{{source}}」，只有您可以看到它們。",
       "pending-changes-changed": "",
@@ -7710,12 +7713,15 @@
       "pending-stale": "自您進行變更以來，儀表板已更新",
       "pending-title": "待定變更",
       "preview-changes": "預覽變更",
-      "rebase": "重訂基底",
       "record-pending-change-failed": "",
       "save": "儲存",
+      "save-failed": "",
+      "save-needs-permission": "",
+      "save-pending-body": "",
+      "save-pending-failed": "",
+      "saved-pending": "",
       "show-original-dashboard": "顯示原始儀表板",
-      "stop-highlighting-changes": "停止醒目提示變更",
-      "apply-title_other": "要將 {{count}} 項變更套用至「{{title}}」嗎？"
+      "save-pending-title_other": ""
     },
     "link-edit-actions": {
       "add-link": "新增連結",
@@ -13369,6 +13375,31 @@
     }
   },
   "navigation": {
+    "assistant-toolbar-button": {
+      "arrange-window": "",
+      "assistant-page": "",
+      "bottom": "",
+      "floating": "",
+      "left": "",
+      "menu": "",
+      "move": "",
+      "navigation-assistant-page": "",
+      "navigation-page-assistant": "",
+      "navigation-page-assistant-below": "",
+      "navigation-page-floating-assistant": "",
+      "page-assistant": "",
+      "page-assistant-below": "",
+      "page-floating-assistant": "",
+      "page-only": "",
+      "pop-up": "",
+      "right": ""
+    },
+    "assistant-workspace": {
+      "exit": "",
+      "exit-tooltip": "",
+      "open": "",
+      "open-tooltip": ""
+    },
     "breadcrumbs": {
       "aria-label": "麵包屑"
     },
@@ -13384,14 +13415,6 @@
         "open-all": "開啟 AI 助理和側邊欄應用程式"
       },
       "floating-resize": "調整側邊欄寬度"
-    },
-    "fullscreen-workspace": {
-      "enter": "進入工作區",
-      "error-exit": "結束工作區",
-      "error-message": "無法載入 Grafana 助理工作區。",
-      "error-reload": "重新載入頁面",
-      "error-title": "工作區無法使用",
-      "workspace": "工作空間"
     },
     "help": {
       "aria-label": "說明",
@@ -13429,6 +13452,7 @@
       "tv-alert": "按 ESC 結束資訊站模式"
     },
     "megamenu": {
+      "click-to-dock": "",
       "close": "關閉選項",
       "customise": "自訂導覽",
       "customise-cancel": "取消",
@@ -13581,8 +13605,10 @@
       "drag-handle": "拖曳以重新排序",
       "duplicate": "複製區塊",
       "frame": {
-        "aria-label-collapsed": "已收合的區塊：{{name}}",
-        "aria-label-panel": "視覺化區塊：{{name}}"
+        "aria-label-collapsed-titled": "",
+        "aria-label-collapsed-untitled": "",
+        "aria-label-panel-titled": "",
+        "aria-label-panel-untitled": ""
       },
       "markdown": {
         "aria-label-editor": "Markdown",
@@ -13670,7 +13696,7 @@
       "submit": "新增至筆記本",
       "success": "已將面板新增至 {{title}}",
       "success-cells": "已新增至「{{title}}」",
-      "success-link": "檢視筆記本",
+      "success-open-link": "",
       "tag-placeholder": "依標籤篩選",
       "target-description": "選擇要新增面板的位置。",
       "target-existing": "現有筆記本",
@@ -13841,7 +13867,8 @@
       "swatch-placeholder-aria-label": "挑選顏色，{{placeholder}}"
     },
     "field-color": {
-      "color-by-label": "系列顏色依據"
+      "color-by-label": "系列顏色依據",
+      "reverse-label": ""
     },
     "number-input": {
       "error-out-of-range": "超出範圍。{{range}}",
@@ -15458,6 +15485,8 @@
       "header-title": "標題",
       "header-type": "類型",
       "missing-folder-metadata": "缺少資料夾中繼資料檔案",
+      "resource-filter-aria-label": "",
+      "resource-filter-placeholder": "",
       "search-placeholder": "按路徑或標題搜尋",
       "source": "來源",
       "status-filter-aria-label": "按狀態篩選",
