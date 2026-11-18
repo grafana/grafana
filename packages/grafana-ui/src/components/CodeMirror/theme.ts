@@ -3,15 +3,16 @@ import { type Extension } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
 import { tags } from '@lezer/highlight';
 
-import { colorManipulator, type GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
+import { getSolidButtonStyles } from '../Button/Button';
+import { getCheckboxIndicatorStyles, getSharedInputStyles } from '../Forms/commonStyles';
 
 export function createCodeEditorTheme(theme: GrafanaTheme2, options?: { transparent?: boolean }): Extension {
   const background = options?.transparent ? 'transparent' : theme.components.input.background;
-  const secondary = theme.colors.secondary;
-  const checkbox = theme.components.checkbox;
-  const visualRefresh = theme.flags.visualDesignRefresh;
+  const checkbox = getCheckboxIndicatorStyles(theme);
+  const controlHeight = theme.spacing(theme.components.height.sm);
   const selectionState = EditorView.editorAttributes.compute(
     ['selection'],
     (state): Record<string, string> => (state.selection.main.empty ? {} : { class: 'cm-hasSelection' })
@@ -76,8 +77,7 @@ export function createCodeEditorTheme(theme: GrafanaTheme2, options?: { transpar
       // CodeMirror builds the find/replace and go-to-line panels itself, so we can only restyle their DOM.
       '.cm-panel.cm-search, .cm-dialog': {
         padding: theme.spacing(1, 5, 1, 1),
-        fontFamily: theme.typography.fontFamily,
-        fontSize: theme.typography.bodySmall.fontSize,
+        ...theme.typography.sm,
         '& label': {
           color: theme.colors.text.secondary,
           fontSize: 'inherit',
@@ -93,68 +93,33 @@ export function createCodeEditorTheme(theme: GrafanaTheme2, options?: { transpar
           display: 'inline-flex',
           alignItems: 'center',
           gap: theme.spacing(0.5),
-          height: theme.spacing(theme.components.height.sm),
+          height: controlHeight,
           marginLeft: theme.spacing(1),
           verticalAlign: 'middle',
           cursor: 'pointer',
         },
-        // Mirrors <Checkbox>, which hides the native input; CodeMirror gives us only the input to style.
+        // CodeMirror has no sibling element to render the checkbox indicator into.
         '& input[type=checkbox]': {
+          ...checkbox.box,
           appearance: 'none',
           position: 'relative',
-          width: theme.spacing(2),
-          height: theme.spacing(2),
           margin: 0,
-          borderRadius: theme.shape.radius.sm,
-          background: theme.components.input.background,
-          border: `1px solid ${theme.components.input.borderColor}`,
           cursor: 'pointer',
-          '&:hover': {
-            borderColor: theme.components.input.borderHover,
-          },
           // Global form styles add a native outline to every focused checkbox, even on mouse focus.
           '&:focus': getMouseFocusStyles(theme),
           '&:focus-visible': getFocusStyles(theme),
-          '&:checked': {
-            background: checkbox.activeBackground,
-            borderColor: checkbox.activeBorder,
-            '&:hover': {
-              background: checkbox.activeBackgroundHover,
-              borderColor: checkbox.activeBorderHover,
-            },
-          },
-          '&:checked::after': {
-            content: '""',
-            position: 'absolute',
-            border: `solid ${checkbox.checkmarkColor}`,
-            ...(visualRefresh
-              ? {
-                  left: theme.spacing(0.625),
-                  top: theme.spacing(0.125),
-                  width: theme.spacing(0.5),
-                  height: theme.spacing(1.25),
-                  borderWidth: '0 2px 2px 0',
-                  transform: 'rotate(50deg)',
-                }
-              : {
-                  left: theme.spacing(0.5),
-                  top: 0,
-                  width: theme.spacing(0.75),
-                  height: theme.spacing(1.5),
-                  borderWidth: '0 3px 3px 0',
-                  transform: 'rotate(45deg)',
-                }),
-          },
+          '&:checked': checkbox.checked,
+          '&:checked::after': checkbox.checkmark,
         },
       },
       '.cm-panel.cm-search [name=close], .cm-dialog-close': {
         top: theme.spacing(1),
         right: theme.spacing(1),
-        width: theme.spacing(theme.components.height.sm),
-        height: theme.spacing(theme.components.height.sm),
+        width: controlHeight,
+        height: controlHeight,
         borderRadius: theme.shape.radius.default,
         color: theme.colors.text.secondary,
-        fontSize: theme.typography.h4.fontSize,
+        fontSize: theme.typography.md.fontSize,
         lineHeight: 1,
         '&:hover': {
           color: theme.colors.text.primary,
@@ -163,44 +128,29 @@ export function createCodeEditorTheme(theme: GrafanaTheme2, options?: { transpar
         '&:focus-visible': getFocusStyles(theme),
       },
       '.cm-textfield': {
-        height: theme.spacing(theme.components.height.sm),
+        ...getSharedInputStyles(theme),
+        ...theme.typography.sm,
+        height: controlHeight,
+        minHeight: controlHeight,
         padding: theme.spacing(0, 1),
         fontFamily: theme.typography.fontFamilyMonospace,
-        fontSize: theme.typography.bodySmall.fontSize,
-        color: theme.components.input.text,
-        backgroundColor: theme.components.input.background,
-        border: `1px solid ${theme.components.input.borderColor}`,
         borderRadius: theme.shape.radius.default,
-        '&:hover': {
-          borderColor: theme.components.input.borderHover,
-        },
         '&:focus': getFocusStyles(theme),
       },
       '.cm-button': {
-        // Mirrors the solid secondary <Button> variant.
-        color: secondary.contrastText,
-        background: visualRefresh ? secondary.background : secondary.main,
-        border: `1px solid ${secondary.subtleBorder}`,
-        '&:hover': {
-          background: visualRefresh ? secondary.backgroundEmphasis : secondary.shade,
-          borderColor: secondary.border,
-          boxShadow: theme.shadows.z1,
-        },
-        '&:active': {
-          background: visualRefresh ? secondary.background : secondary.main,
-        },
-        height: theme.spacing(theme.components.height.sm),
+        ...getSolidButtonStyles(theme, theme.colors.secondary),
+        ...theme.typography.sm,
+        height: controlHeight,
         padding: theme.spacing(0, 1),
-        fontSize: theme.typography.bodySmall.fontSize,
         fontWeight: theme.typography.fontWeightMedium,
         borderRadius: theme.shape.radius.default,
         '&:focus-visible': getFocusStyles(theme),
       },
       '.cm-searchMatch': {
-        backgroundColor: colorManipulator.alpha(theme.colors.warning.main, 0.3),
+        backgroundColor: `rgb(from ${theme.components.textHighlight.background} r g b / 0.3)`,
       },
       '.cm-searchMatch.cm-searchMatch-selected': {
-        backgroundColor: colorManipulator.alpha(theme.colors.primary.main, 0.45),
+        backgroundColor: `rgb(from ${theme.colors.primary.main} r g b / 0.45)`,
         outline: `1px solid ${theme.colors.primary.border}`,
       },
       // Moving to a match selects it, so every other match also gets the selection-match outline and the current one gets lost.

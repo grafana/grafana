@@ -10,7 +10,10 @@ export const getFocusStyle = (theme: GrafanaTheme2) =>
     '&:focus': getFocusStyles(theme),
   });
 
-export const sharedInputStyle = (theme: GrafanaTheme2, invalid = false) => {
+export const sharedInputStyle = (theme: GrafanaTheme2, invalid = false) =>
+  cx(inputPadding(theme), css(getSharedInputStyles(theme, invalid)));
+
+export const getSharedInputStyles = (theme: GrafanaTheme2, invalid = false) => {
   const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   let borderColor = invalid ? theme.colors.error.border : theme.components.input.borderColor;
   let borderColorHover = invalid ? theme.colors.error.shade : theme.components.input.borderHover;
@@ -25,53 +28,99 @@ export const sharedInputStyle = (theme: GrafanaTheme2, invalid = false) => {
   // Need to colors without alpha channel
   const autoFillBorder = theme.isDark ? '#2e2f35' : '#bab4ca';
 
-  return cx(
-    inputPadding(theme),
-    css({
-      background,
-      lineHeight: theme.typography.body.lineHeight,
-      minHeight: theme.spacing(theme.components.height.md),
-      fontSize: theme.typography.size.md,
-      color: textColor,
-      border: `1px solid ${borderColor}`,
+  return {
+    background,
+    lineHeight: theme.typography.body.lineHeight,
+    minHeight: theme.spacing(theme.components.height.md),
+    fontSize: theme.typography.size.md,
+    color: textColor,
+    border: `1px solid ${borderColor}`,
 
-      '&:-webkit-autofill, &:-webkit-autofill:hover': {
-        /* Welcome to 2005. This is a HACK to get rid od Chromes default autofill styling */
-        boxShadow: `inset 0 0 0 1px rgba(255, 255, 255, 0), inset 0 0 0 100px ${background}!important`,
-        WebkitTextFillColor: `${textColor} !important`,
-        borderColor: autoFillBorder,
-      },
+    '&:-webkit-autofill, &:-webkit-autofill:hover': {
+      /* Welcome to 2005. This is a HACK to get rid od Chromes default autofill styling */
+      boxShadow: `inset 0 0 0 1px rgba(255, 255, 255, 0), inset 0 0 0 100px ${background}!important`,
+      WebkitTextFillColor: `${textColor} !important`,
+      borderColor: autoFillBorder,
+    },
 
-      '&:-webkit-autofill:focus': {
-        /* Welcome to 2005. This is a HACK to get rid od Chromes default autofill styling */
-        boxShadow: `0 0 0 2px ${theme.colors.background.primary}, 0 0 0px 4px ${theme.colors.primary.main}, inset 0 0 0 1px rgba(255, 255, 255, 0), inset 0 0 0 100px ${background}!important`,
-        WebkitTextFillColor: `${textColor} !important`,
-      },
+    '&:-webkit-autofill:focus': {
+      /* Welcome to 2005. This is a HACK to get rid od Chromes default autofill styling */
+      boxShadow: `0 0 0 2px ${theme.colors.background.primary}, 0 0 0px 4px ${theme.colors.primary.main}, inset 0 0 0 1px rgba(255, 255, 255, 0), inset 0 0 0 100px ${background}!important`,
+      WebkitTextFillColor: `${textColor} !important`,
+    },
+
+    '&:hover': {
+      borderColor: borderColorHover,
+    },
+
+    '&:focus': {
+      outline: 'none',
+    },
+
+    '&:disabled': {
+      backgroundColor: theme.colors.action.disabledBackground,
+      color: theme.colors.action.disabledText,
+      border: `1px solid ${theme.colors.action.disabledBackground}`,
 
       '&:hover': {
-        borderColor: borderColorHover,
+        borderColor,
       },
+    },
 
-      '&:focus': {
-        outline: 'none',
+    '&::placeholder': {
+      color: theme.colors.text.disabled,
+      opacity: 1,
+    },
+  };
+};
+
+export const getCheckboxIndicatorStyles = (theme: GrafanaTheme2, invalid = false) => {
+  const checkbox = theme.components.checkbox;
+  const getBorderColor = (color: string) => (invalid ? theme.colors.error.border : color);
+
+  return {
+    box: {
+      width: theme.spacing(2),
+      height: theme.spacing(2),
+      borderRadius: theme.shape.radius.sm,
+      background: theme.components.input.background,
+      border: `1px solid ${getBorderColor(theme.components.input.borderColor)}`,
+      '&:hover': {
+        cursor: 'pointer',
+        borderColor: getBorderColor(theme.components.input.borderHover),
       },
-
-      '&:disabled': {
-        backgroundColor: theme.colors.action.disabledBackground,
-        color: theme.colors.action.disabledText,
-        border: `1px solid ${theme.colors.action.disabledBackground}`,
-
-        '&:hover': {
-          borderColor,
-        },
+    },
+    checked: {
+      background: checkbox.activeBackground,
+      border: `1px solid ${getBorderColor(checkbox.activeBorder)}`,
+      '&:hover': {
+        background: checkbox.activeBackgroundHover,
+        border: `1px solid ${getBorderColor(checkbox.activeBorderHover)}`,
       },
-
-      '&::placeholder': {
-        color: theme.colors.text.disabled,
-        opacity: 1,
-      },
-    })
-  );
+    },
+    checkmark: {
+      content: '""',
+      position: 'absolute' as const,
+      border: `solid ${checkbox.checkmarkColor}`,
+      ...(theme.flags.visualDesignRefresh
+        ? {
+            left: theme.spacing(0.625),
+            top: theme.spacing(0.125),
+            width: theme.spacing(0.5),
+            height: theme.spacing(1.25),
+            borderWidth: '0 2px 2px 0',
+            transform: 'rotate(50deg)',
+          }
+        : {
+            left: theme.spacing(0.5),
+            top: 0,
+            width: theme.spacing(0.75),
+            height: theme.spacing(1.5),
+            borderWidth: '0 3px 3px 0',
+            transform: 'rotate(45deg)',
+          }),
+    },
+  };
 };
 
 export const inputPadding = (theme: GrafanaTheme2) => {

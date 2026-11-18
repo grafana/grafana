@@ -9,6 +9,7 @@ import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 
 import { useFieldContext } from './FieldContext';
 import { getLabelStyles } from './Label';
+import { getCheckboxIndicatorStyles } from './commonStyles';
 
 export interface CheckboxProps extends Omit<HTMLProps<HTMLInputElement>, 'value'> {
   /** Label to display next to checkbox */
@@ -98,7 +99,7 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
 
 const getCheckboxStyles = (theme: GrafanaTheme2, invalid = false) => {
   const labelStyles = getLabelStyles(theme);
-  const checkboxSize = 2;
+  const indicator = getCheckboxIndicatorStyles(theme, invalid);
   const labelPadding = 1;
   const visualRefreshEnabled = theme.flags.visualDesignRefresh;
 
@@ -116,75 +117,46 @@ const getCheckboxStyles = (theme: GrafanaTheme2, invalid = false) => {
       position: 'relative',
       verticalAlign: 'middle',
     }),
-    input: css(
-      {
-        position: 'absolute',
-        zIndex: 1,
-        top: 0,
-        left: 0,
-        width: '100% !important', // global styles unset this
-        height: '100%',
-        opacity: 0,
+    input: css({
+      position: 'absolute',
+      zIndex: 1,
+      top: 0,
+      left: 0,
+      width: '100% !important', // global styles unset this
+      height: '100%',
+      opacity: 0,
 
-        '&:focus + span, &:focus-visible + span': getFocusStyles(theme),
+      '&:focus + span, &:focus-visible + span': getFocusStyles(theme),
 
-        '&:focus:not(:focus-visible) + span': getMouseFocusStyles(theme),
+      '&:focus:not(:focus-visible) + span': getMouseFocusStyles(theme),
 
-        /**
-         * Using adjacent sibling selector to style checked state.
-         * Primarily to limit the classes necessary to use
-         * */
-        '&:checked + span': {
-          background: theme.components.checkbox.activeBackground,
-          border: `1px solid ${getBorderColor(theme.components.checkbox.activeBorder)}`,
-
-          '&:hover': {
-            background: theme.components.checkbox.activeBackgroundHover,
-            border: `1px solid ${getBorderColor(theme.components.checkbox.activeBorderHover)}`,
-          },
-
-          '&:after': {
-            content: '""',
-            position: 'absolute',
-            zIndex: 2,
-            left: theme.spacing(0.5),
-            top: 0,
-            width: theme.spacing(0.75),
-            height: theme.spacing(1.5),
-            border: `solid ${theme.components.checkbox.checkmarkColor}`,
-            borderWidth: '0 3px 3px 0',
-            transform: 'rotate(45deg)',
-          },
-        },
-
-        '&:disabled + span': {
-          backgroundColor: theme.colors.action.disabledBackground,
-          cursor: 'not-allowed',
-          border: `1px solid ${getBorderColor(theme.colors.action.disabledBackground)}`,
-
-          '&:hover': {
-            backgroundColor: theme.colors.action.disabledBackground,
-            border: `1px solid ${getBorderColor(theme.colors.action.disabledBackground)}`,
-          },
-
-          '&:after': {
-            borderColor: theme.colors.action.disabledText,
-          },
+      /**
+       * Using adjacent sibling selector to style checked state.
+       * Primarily to limit the classes necessary to use
+       * */
+      '&:checked + span': {
+        ...indicator.checked,
+        '&:after': {
+          ...indicator.checkmark,
+          zIndex: 2,
         },
       },
-      visualRefreshEnabled && {
-        '&:checked + span': {
-          '&:after': {
-            left: theme.spacing(0.625),
-            top: theme.spacing(0.125),
-            width: theme.spacing(0.5),
-            height: theme.spacing(1.25),
-            borderWidth: '0 2px 2px 0',
-            transform: 'rotate(50deg)',
-          },
+
+      '&:disabled + span': {
+        backgroundColor: theme.colors.action.disabledBackground,
+        cursor: 'not-allowed',
+        border: `1px solid ${getBorderColor(theme.colors.action.disabledBackground)}`,
+
+        '&:hover': {
+          backgroundColor: theme.colors.action.disabledBackground,
+          border: `1px solid ${getBorderColor(theme.colors.action.disabledBackground)}`,
         },
-      }
-    ),
+
+        '&:after': {
+          borderColor: theme.colors.action.disabledText,
+        },
+      },
+    }),
 
     inputIndeterminate: css(
       {
@@ -235,19 +207,10 @@ const getCheckboxStyles = (theme: GrafanaTheme2, invalid = false) => {
       gridRowStart: 1,
     }),
     checkmark: css({
+      ...indicator.box,
       position: 'relative' /* Checkbox should be layered on top of the invisible input so it recieves :hover */,
       zIndex: 2,
       display: 'inline-block',
-      width: theme.spacing(checkboxSize),
-      height: theme.spacing(checkboxSize),
-      borderRadius: theme.shape.radius.sm,
-      background: theme.components.input.background,
-      border: `1px solid ${getBorderColor(theme.components.input.borderColor)}`,
-
-      '&:hover': {
-        cursor: 'pointer',
-        borderColor: getBorderColor(theme.components.input.borderHover),
-      },
     }),
     label: cx(
       labelStyles.label,
