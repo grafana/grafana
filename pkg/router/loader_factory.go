@@ -35,7 +35,7 @@ func ProvideRoutesLoader(cfg *setting.Cfg, deps PluginLoaderDependencies, apps [
 		if !middlewareEnabled(cfg, deps.Features) {
 			return nil, fmt.Errorf("%s requires %s", featuremgmt.FlagRouterRegisterCoreAPIs, featuremgmt.FlagGrafanaUseRouterMiddleware)
 		}
-		coreApps, err := coreAppsFromInstallers(apps, cfg, deps.PluginAuth)
+		coreApps, err := coreAppsFromInstallers(context.Background(), apps, cfg, deps.PluginAuth)
 		if err != nil {
 			return nil, err
 		}

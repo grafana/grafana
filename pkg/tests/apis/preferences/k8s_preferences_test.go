@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
-
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -178,6 +177,48 @@ func testPreferencesK8sAPIs(t *testing.T, routed bool) {
 			require.True(t, item.Name == viewerName || item.Name == "namespace" || strings.HasPrefix(item.Name, "team-"),
 				"unexpected preferences %q in the viewer's list", item.Name)
 		}
+	})
+
+	t.Run("a list can select one object by name", func(t *testing.T) {
+		admin := helper.Org1.Admin
+		adminName := "user-" + admin.Identity.GetIdentifier()
+		teamName := "team-" + helper.Org1.Staff.UID
+		require.NoError(t, putUserPrefsK8s(t, helper, admin, adminName,
+			fmt.Sprintf(`{"apiVersion": "preferences.grafana.app/v1", "kind": "Preferences", "metadata": {"name": "%s"}, "spec": {"theme":"dark"}}`, adminName)).Error())
+		require.NoError(t, putOrgPrefsK8s(t, helper, `{"apiVersion": "preferences.grafana.app/v1", "kind": "Preferences", "metadata": {"name": "namespace"}, "spec": {"theme":"dark"}}`).Error())
+		require.NoError(t, putTeamPrefsK8s(t, helper, helper.Org1.Staff.UID,
+			fmt.Sprintf(`{"apiVersion": "preferences.grafana.app/v1", "kind": "Preferences", "metadata": {"name": "%s"}, "spec": {"theme":"light"}}`, teamName)).Error())
+
+		listNamedRaw := func(user apis.User, name string) ([]byte, error) {
+			client := user.RESTClient(t, &preferences.GroupVersion)
+			return client.Get().AbsPath("apis", "preferences.grafana.app", "v1", "namespaces", "default", "preferences").
+				Param("fieldSelector", "metadata.name="+name).Do(context.Background()).Raw()
+		}
+		listNamed := func(user apis.User, name string) []string {
+			t.Helper()
+			raw, err := listNamedRaw(user, name)
+			require.NoError(t, err, string(raw))
+			list := &preferences.PreferencesList{}
+			require.NoError(t, json.Unmarshal(raw, list))
+			names := []string{}
+			for _, item := range list.Items {
+				names = append(names, item.Name)
+			}
+			return names
+		}
+
+		// An admin who also has their own preferences gets only the one asked for
+		require.Equal(t, []string{"namespace"}, listNamed(admin, "namespace"))
+		require.Equal(t, []string{adminName}, listNamed(admin, adminName))
+		require.Equal(t, []string{teamName}, listNamed(admin, teamName))
+		_, err := listNamedRaw(admin, "user-nobody")
+		require.True(t, apierrors.IsForbidden(err), "another user's name: %v", err)
+
+		// A viewer reads the org's, but not another user's
+		viewer := helper.Org1.Viewer
+		require.Equal(t, []string{"namespace"}, listNamed(viewer, "namespace"))
+		_, err = listNamedRaw(viewer, adminName)
+		require.True(t, apierrors.IsForbidden(err), "another user's name: %v", err)
 	})
 
 	t.Run("merged preferences via resource-shaped GET", func(t *testing.T) {

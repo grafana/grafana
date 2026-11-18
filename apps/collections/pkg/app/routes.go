@@ -21,7 +21,6 @@ const starsUpdatePath = "update/{group}/{kind}/{id}"
 
 // starsClient is what the update route needs of the stars API.
 type starsClient interface {
-	Create(ctx context.Context, obj *v1alpha1.Stars, opts resource.CreateOptions) (*v1alpha1.Stars, error)
 	Update(ctx context.Context, obj *v1alpha1.Stars, opts resource.UpdateOptions) (*v1alpha1.Stars, error)
 	Delete(ctx context.Context, identifier resource.Identifier, opts resource.DeleteOptions) error
 }
@@ -80,10 +79,17 @@ func (r *starsRoutes) update(ctx context.Context, w app.CustomRouteResponseWrite
 	switch {
 	case len(stars.Spec.Resource) == 0:
 		err = r.client.Delete(ctx, resource.Identifier{Namespace: ident.Namespace, Name: ident.Name}, resource.DeleteOptions{})
-	case stars.ResourceVersion == "":
-		_, err = r.client.Create(ctx, stars, resource.CreateOptions{})
 	default:
-		_, err = r.client.Update(ctx, stars, resource.UpdateOptions{ResourceVersion: stars.ResourceVersion})
+		// A collection-level create is not allowed for a user, so a first star
+		// is an update to the name, which the store turns into a create. The
+		// client reads the object first unless it is given a resource version,
+		// and "0" is the unconditional one: it neither requires the object to
+		// exist nor to be at a version.
+		resourceVersion := stars.ResourceVersion
+		if resourceVersion == "" {
+			resourceVersion = "0"
+		}
+		_, err = r.client.Update(ctx, stars, resource.UpdateOptions{ResourceVersion: resourceVersion})
 	}
 	return writeStatus(w, err)
 }

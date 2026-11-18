@@ -20,18 +20,14 @@ import (
 )
 
 type fakeStars struct {
-	created, updated *v1alpha1.Stars
-	deleted          *resource.Identifier
-	err              error
+	updated     *v1alpha1.Stars
+	updatedWith resource.UpdateOptions
+	deleted     *resource.Identifier
+	err         error
 }
 
-func (f *fakeStars) Create(_ context.Context, obj *v1alpha1.Stars, _ resource.CreateOptions) (*v1alpha1.Stars, error) {
-	f.created = obj
-	return obj, f.err
-}
-
-func (f *fakeStars) Update(_ context.Context, obj *v1alpha1.Stars, _ resource.UpdateOptions) (*v1alpha1.Stars, error) {
-	f.updated = obj
+func (f *fakeStars) Update(_ context.Context, obj *v1alpha1.Stars, opts resource.UpdateOptions) (*v1alpha1.Stars, error) {
+	f.updated, f.updatedWith = obj, opts
 	return obj, f.err
 }
 
@@ -69,14 +65,15 @@ func call(t *testing.T, client starsClient, method, name, path string, parent *a
 const addPath = "/update/dashboard.grafana.app/Dashboard/abc"
 
 func TestStarsUpdate(t *testing.T) {
-	t.Run("the first star creates the object", func(t *testing.T) {
+	t.Run("the first star is a named update, which creates the object", func(t *testing.T) {
 		client := &fakeStars{}
 		code, _ := call(t, client, http.MethodPut, "user-1", addPath, nil)
 		require.Equal(t, http.StatusOK, code)
-		require.NotNil(t, client.created)
-		require.Equal(t, "user-1", client.created.Name)
-		require.Equal(t, "default", client.created.Namespace)
-		require.Equal(t, []string{"abc"}, client.created.Spec.Resource[0].Names)
+		require.NotNil(t, client.updated)
+		require.Equal(t, "0", client.updatedWith.ResourceVersion, "unconditional, so the client does not read first")
+		require.Equal(t, "user-1", client.updated.Name)
+		require.Equal(t, "default", client.updated.Namespace)
+		require.Equal(t, []string{"abc"}, client.updated.Spec.Resource[0].Names)
 	})
 
 	t.Run("a later star updates the stored object", func(t *testing.T) {
@@ -99,7 +96,7 @@ func TestStarsUpdate(t *testing.T) {
 		code, _ := call(t, client, http.MethodDelete, "user-1", addPath, nil)
 		require.Equal(t, http.StatusOK, code)
 		require.Nil(t, client.deleted)
-		require.Nil(t, client.created)
+		require.Nil(t, client.updated)
 	})
 
 	t.Run("only user stars are written", func(t *testing.T) {

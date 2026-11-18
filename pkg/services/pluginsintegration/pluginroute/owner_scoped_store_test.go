@@ -11,6 +11,7 @@ import (
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -117,6 +118,25 @@ func TestOwnedListStoreList(t *testing.T) {
 		store, _ := newTestOwnerScopedStore(t, "preferences")
 		_, err := store.List(ctxFor(user), &metainternalversion.ListOptions{Continue: "x"})
 		require.True(t, apierrors.IsBadRequest(err))
+	})
+
+	t.Run("a name selector returns only that object, if the caller may get it", func(t *testing.T) {
+		byName := func(name string) *metainternalversion.ListOptions {
+			return &metainternalversion.ListOptions{FieldSelector: fields.OneTermEqualSelector("metadata.name", name)}
+		}
+		names := func(store *ownerScopedStore, name string) []string {
+			got, err := store.List(ctxFor(user), byName(name))
+			require.NoError(t, err)
+			items, err := meta.ExtractList(got)
+			require.NoError(t, err)
+			return namesOf(t, items)
+		}
+		store, _ := newTestOwnerScopedStore(t, "preferences", "user-abc", "user-other", "team-t1", "team-t2", "namespace")
+		require.Equal(t, []string{"namespace"}, names(store, "namespace"))
+		require.Equal(t, []string{"team-t1"}, names(store, "team-t1"))
+		require.Empty(t, names(store, "user-other"), "another user's object")
+		require.Empty(t, names(store, "team-t2"), "a team the caller is not in, without access to it")
+		require.Empty(t, names(store, "team-none"), "an object that does not exist")
 	})
 
 	t.Run("a list without a requester fails", func(t *testing.T) {
