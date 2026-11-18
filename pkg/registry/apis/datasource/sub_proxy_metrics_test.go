@@ -49,7 +49,7 @@ func TestSubProxyREST_RecordsProxyMetrics(t *testing.T) {
 	const proxyURL = "/apis/test.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test-ds/proxy/api/v1/query_range"
 
 	type series struct {
-		route, method, status, source string
+		status, source string
 	}
 
 	serve := func(t *testing.T, provider *proxyMockDatasourceProvider, ctx context.Context) (*prometheus.Registry, *resourceMockResponder, *httptest.ResponseRecorder) {
@@ -94,7 +94,7 @@ func TestSubProxyREST_RecordsProxyMetrics(t *testing.T) {
 				}
 				require.Equal(t, proxymetrics.VariantST, labels["variant"])
 				require.Equal(t, "test", labels["plugin_id"])
-				got = append(got, series{labels["route_class"], labels["method"], labels["status_code"], labels["status_source"]})
+				got = append(got, series{labels["status_code"], labels["status_source"]})
 				require.Equal(t, 1.0, m.GetCounter().GetValue())
 			}
 		}
@@ -107,7 +107,7 @@ func TestSubProxyREST_RecordsProxyMetrics(t *testing.T) {
 
 		reg, _, rec := serve(t, providerFor(target.URL), proxyTestContext())
 		require.Equal(t, http.StatusOK, rec.Code)
-		requireSeries(t, reg, series{"/api/v1/query_range", http.MethodPost, "200", proxymetrics.SourceServer})
+		requireSeries(t, reg, series{"200", proxymetrics.SourceServer})
 	})
 
 	t.Run("a datasource 4xx is not a downstream failure", func(t *testing.T) {
@@ -115,7 +115,7 @@ func TestSubProxyREST_RecordsProxyMetrics(t *testing.T) {
 		defer target.Close()
 
 		reg, _, _ := serve(t, providerFor(target.URL), proxyTestContext())
-		requireSeries(t, reg, series{"/api/v1/query_range", http.MethodPost, "404", proxymetrics.SourceServer})
+		requireSeries(t, reg, series{"404", proxymetrics.SourceServer})
 	})
 
 	t.Run("a datasource 5xx is downstream", func(t *testing.T) {
@@ -124,7 +124,7 @@ func TestSubProxyREST_RecordsProxyMetrics(t *testing.T) {
 
 		reg, _, rec := serve(t, providerFor(target.URL), proxyTestContext())
 		require.Equal(t, http.StatusInternalServerError, rec.Code, "the response status is not rewritten")
-		requireSeries(t, reg, series{"/api/v1/query_range", http.MethodPost, "500", proxymetrics.SourceDownstream})
+		requireSeries(t, reg, series{"500", proxymetrics.SourceDownstream})
 	})
 
 	t.Run("an unreachable datasource is downstream", func(t *testing.T) {
@@ -134,13 +134,13 @@ func TestSubProxyREST_RecordsProxyMetrics(t *testing.T) {
 
 		reg, _, rec := serve(t, providerFor(url), proxyTestContext())
 		require.Equal(t, http.StatusBadGateway, rec.Code)
-		requireSeries(t, reg, series{"/api/v1/query_range", http.MethodPost, "502", proxymetrics.SourceDownstream})
+		requireSeries(t, reg, series{"502", proxymetrics.SourceDownstream})
 	})
 
 	t.Run("a missing datasource is a Grafana 404", func(t *testing.T) {
 		reg, responder, _ := serve(t, &proxyMockDatasourceProvider{dsErr: datasources.ErrDataSourceNotFound}, proxyTestContext())
 		require.Error(t, responder.lastErr)
-		requireSeries(t, reg, series{"/api/v1/query_range", http.MethodPost, "404", proxymetrics.SourceServer})
+		requireSeries(t, reg, series{"404", proxymetrics.SourceServer})
 	})
 
 	t.Run("a canceled request is the client's, not the datasource's", func(t *testing.T) {
@@ -158,7 +158,7 @@ func TestSubProxyREST_RecordsProxyMetrics(t *testing.T) {
 		handler, err := r.Connect(ctx, "test-ds", nil, &resourceMockResponder{})
 		require.NoError(t, err)
 		handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodPost, proxyURL, nil))
-		requireSeries(t, reg, series{"/api/v1/query_range", http.MethodPost, "499", proxymetrics.SourceClient})
+		requireSeries(t, reg, series{"499", proxymetrics.SourceClient})
 	})
 
 	t.Run("records a duration observation with the status class", func(t *testing.T) {

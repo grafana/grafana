@@ -69,6 +69,7 @@ type proxyObservation struct {
 	c        *contextmodel.ReqContext
 	start    time.Time
 	pluginID string
+	dsUID    string
 }
 
 func (p *DataSourceProxyService) observe(c *contextmodel.ReqContext) *proxyObservation {
@@ -81,12 +82,13 @@ func (o *proxyObservation) finish() {
 	}
 	status := o.c.Resp.Status()
 	o.metrics.Observe(proxymetrics.Observation{
-		PluginID: o.pluginID,
-		Method:   o.c.Req.Method,
-		Path:     getProxyPath(o.c),
-		Status:   status,
-		Source:   proxymetrics.ClassifySource(status, requestmeta.GetRequestMetaData(o.c.Req.Context()).StatusSource),
-		Duration: time.Since(o.start),
+		PluginID:      o.pluginID,
+		DatasourceUID: o.dsUID,
+		Method:        o.c.Req.Method,
+		Path:          getProxyPath(o.c),
+		Status:        status,
+		Source:        proxymetrics.ClassifySource(status, requestmeta.GetRequestMetaData(o.c.Req.Context()).StatusSource),
+		Duration:      time.Since(o.start),
 	})
 }
 
@@ -148,6 +150,7 @@ func toAPIError(c *contextmodel.ReqContext, err error) {
 
 func (p *DataSourceProxyService) proxyDatasourceRequest(c *contextmodel.ReqContext, ds *datasources.DataSource, obs *proxyObservation) {
 	obs.pluginID = ds.Type
+	obs.dsUID = ds.UID
 	err := p.DataSourceRequestValidator.Validate(ds.URL, ds.JsonDataMap(), c.Req)
 	if err != nil {
 		c.JsonApiErr(http.StatusForbidden, "Access denied", err)

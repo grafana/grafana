@@ -136,8 +136,6 @@ func TestDatasourceProxy_proxyDatasourceRequest(t *testing.T) {
 			require.Equal(t, map[string]string{
 				"variant":       proxymetrics.VariantLegacy,
 				"plugin_id":     pluginID,
-				"route_class":   "/",
-				"method":        http.MethodGet,
 				"status_code":   "400",
 				"status_source": proxymetrics.SourceServer,
 			}, onlyRequestSeries(t, reg))

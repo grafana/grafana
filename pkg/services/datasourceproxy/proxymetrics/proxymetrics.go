@@ -8,11 +8,13 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/middleware/requestmeta"
 )
@@ -39,24 +41,23 @@ const (
 
 const (
 	unknownPlugin = "unknown"
-	otherRoute    = "other"
-	idSegment     = ":id"
 
-	// maxRouteClassesPerPlugin bounds the route_class label. Route classes are
-	// derived from request paths, which datasources and callers control, so the
-	// normalisation alone cannot guarantee a bounded set of values.
-	maxRouteClassesPerPlugin = 64
-	maxRouteSegments         = 3
-	maxSegmentLength         = 32
+	// sampleEvery logs one in this many requests that did not fail. Failures are
+	// always logged.
+	sampleEvery   = 1000
+	maxLoggedPath = 200
 )
 
 // Metrics holds the proxy collectors. The zero value and nil are valid and record nothing.
+//
+// The counter deliberately has no path or per-datasource label: those are
+// unbounded, and a multi-tenant process serves many stacks. That detail goes to
+// the log, which Observe writes for failures and a sample of other requests.
 type Metrics struct {
 	requests *prometheus.CounterVec
 	duration *prometheus.HistogramVec
-
-	mu     sync.Mutex
-	routes map[string]map[string]struct{}
+	log      log.Logger
+	seen     atomic.Uint64
 }
 
 // New registers the proxy collectors on reg with a constant variant label. Two
@@ -67,12 +68,12 @@ func New(reg prometheus.Registerer, variant string) *Metrics {
 	constLabels := prometheus.Labels{"variant": variant}
 
 	return &Metrics{
-		routes: make(map[string]map[string]struct{}),
+		log: log.New("datasource.proxy").New("variant", variant),
 		requests: factory.NewCounterVec(prometheus.CounterOpts{
 			Name:        "grafana_datasource_proxy_requests_total",
-			Help:        "Total requests proxied to a datasource, by plugin, route class, status code and status source.",
+			Help:        "Total requests proxied to a datasource, by plugin, status code and status source.",
 			ConstLabels: constLabels,
-		}, []string{"plugin_id", "route_class", "method", "status_code", "status_source"}),
+		}, []string{"plugin_id", "status_code", "status_source"}),
 		duration: factory.NewHistogramVec(prometheus.HistogramOpts{
 			Name:        "grafana_datasource_proxy_request_duration_seconds",
 			Help:        "Duration of requests proxied to a datasource, by plugin and status class.",
@@ -108,15 +109,20 @@ func ForVariant(variant string) *Metrics {
 // Observation is one finished proxy request.
 type Observation struct {
 	PluginID string
-	Method   string
-	// Path is the path forwarded to the datasource, without the proxy prefix.
-	Path     string
 	Status   int
 	Source   string
 	Duration time.Duration
+
+	// The fields below are only logged, never used as metric labels.
+	Method string
+	// Path is the path forwarded to the datasource, without the proxy prefix.
+	Path          string
+	DatasourceUID string
+	// Namespace identifies the tenant on the /apis path.
+	Namespace string
 }
 
-// Observe records one finished request.
+// Observe records one finished request, and logs it if it failed or was sampled.
 func (m *Metrics) Observe(o Observation) {
 	if m == nil {
 		return
@@ -125,106 +131,43 @@ func (m *Metrics) Observe(o Observation) {
 	if pluginID == "" {
 		pluginID = unknownPlugin
 	}
-	m.requests.WithLabelValues(
-		pluginID,
-		m.boundRoute(pluginID, RouteClass(o.Path)),
-		methodLabel(o.Method),
-		statusCodeLabel(o.Status),
-		sourceLabel(o.Source),
-	).Inc()
+	source := sourceLabel(o.Source)
+	m.requests.WithLabelValues(pluginID, statusCodeLabel(o.Status), source).Inc()
 	m.duration.WithLabelValues(pluginID, statusClass(o.Status)).Observe(o.Duration.Seconds())
+
+	failed := o.Status >= 500 || source != SourceServer
+	if failed || m.seen.Add(1)%sampleEvery == 0 {
+		m.logRequest(o, pluginID, source, failed)
+	}
 }
 
-// boundRoute returns route, or "other" once a plugin already has the maximum
-// number of distinct route classes.
-func (m *Metrics) boundRoute(pluginID, route string) string {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	seen := m.routes[pluginID]
-	if seen == nil {
-		seen = make(map[string]struct{})
-		m.routes[pluginID] = seen
+func (m *Metrics) logRequest(o Observation, pluginID, source string, failed bool) {
+	logFn := m.log.Info
+	if failed {
+		logFn = m.log.Warn
 	}
-	if _, ok := seen[route]; ok {
-		return route
-	}
-	if len(seen) >= maxRouteClassesPerPlugin {
-		return otherRoute
-	}
-	seen[route] = struct{}{}
-	return route
+	logFn("Proxied datasource request",
+		"pluginId", pluginID,
+		"datasourceUid", o.DatasourceUID,
+		"namespace", o.Namespace,
+		"method", o.Method,
+		"path", loggedPath(o.Path),
+		"status", o.Status,
+		"statusSource", source,
+		"duration", o.Duration,
+	)
 }
 
-// RouteClass reduces a forwarded path to a low-cardinality label: the first
-// three segments, with segments that look like identifiers replaced by ":id".
-// API version segments such as "v1" are kept and do not count towards the three,
-// so "loki/api/v1/query" keeps its operation.
-func RouteClass(path string) string {
+// loggedPath drops the query string, which can carry user data such as query
+// expressions, and bounds the length.
+func loggedPath(path string) string {
 	if i := strings.IndexAny(path, "?#"); i >= 0 {
 		path = path[:i]
 	}
-	path = strings.Trim(path, "/")
-	if path == "" {
-		return "/"
+	if len(path) > maxLoggedPath {
+		path = path[:maxLoggedPath]
 	}
-	var kept []string
-	named := 0
-	for _, s := range strings.Split(path, "/") {
-		if isVersionSegment(s) {
-			kept = append(kept, s)
-			continue
-		}
-		if named == maxRouteSegments {
-			break
-		}
-		named++
-		if looksLikeIdentifier(s) {
-			s = idSegment
-		}
-		kept = append(kept, s)
-	}
-	return "/" + strings.Join(kept, "/")
-}
-
-// isVersionSegment matches "v1", "v2", "v1beta1", "v1alpha2".
-func isVersionSegment(s string) bool {
-	if len(s) < 2 || s[0] != 'v' || s[1] < '0' || s[1] > '9' {
-		return false
-	}
-	for _, r := range s[1:] {
-		if (r < '0' || r > '9') && (r < 'a' || r > 'z') {
-			return false
-		}
-	}
-	return len(s) <= 12
-}
-
-// looksLikeIdentifier reports whether a path segment is probably a value (an
-// id, a name, a date-stamped index) rather than part of a fixed route.
-func looksLikeIdentifier(s string) bool {
-	if s == "" || len(s) > maxSegmentLength {
-		return true
-	}
-	for _, r := range s {
-		switch {
-		case r >= '0' && r <= '9':
-			return true
-		case r >= 'a' && r <= 'z', r >= 'A' && r <= 'Z', r == '_', r == '-', r == '.':
-		default:
-			return true
-		}
-	}
-	return false
-}
-
-func methodLabel(method string) string {
-	switch method {
-	case http.MethodGet, http.MethodHead, http.MethodPost, http.MethodPut,
-		http.MethodPatch, http.MethodDelete, http.MethodOptions:
-		return method
-	default:
-		return "other"
-	}
+	return path
 }
 
 func statusCodeLabel(status int) string {
