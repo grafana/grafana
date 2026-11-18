@@ -24,6 +24,7 @@ type Service struct {
 	HTTPClient      *http.Client
 	caps            caps
 	flags           booleanFlagEvaluator
+	ofrep           *ofrepFlags
 }
 
 const (
@@ -38,6 +39,7 @@ func ProvideService(httpClientProvider *httpclient.Provider, tracer trace.Tracer
 		tracer: tracer,
 		logger: logger,
 		caps:   loadCaps(),
+		ofrep:  newOFREPFlags(),
 	}
 
 	s.resourceHandler = httpadapter.New(s.newResourceMux())
