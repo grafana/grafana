@@ -318,8 +318,6 @@ func (c *ControllerConfig) Clients() (resources.ClientFactory, error) {
 			return nil, fmt.Errorf("aggregated_server_url is required in [operator] section to serve resource %s/%s", r.Group, r.Kind)
 		}
 	}
-	// The aggregated server is the router. It serves each group without a server URL, accepts
-	// the provisioning audience for all of them, and publishes the app manifests.
 	if aggregatedServerURL != "" {
 		apiServerURLs[resources.AnyGroup] = aggregatedServerURL
 	}
