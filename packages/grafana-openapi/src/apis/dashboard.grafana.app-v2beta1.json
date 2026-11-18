@@ -6954,7 +6954,7 @@
         }
       },
       "NotebookNotebookLayoutItemSpec": {
-        "description": "One ordered item in a notebook layout. `element` references either a CellKind (markdown/code content) or a V2PanelKind in the notebook's elements map. `source` records who authored the cell; `collapsed` hides the body in the UI. `id` identifies the cell itself, as opposed to the element name, which clients choose and can reuse.",
+        "description": "One ordered item in a notebook layout. `element` references either a CellKind (markdown/code content) or a V2PanelKind in the notebook's elements map. `source` records who authored the cell; `collapsed` hides the body in the UI.",
         "type": "object",
         "required": ["element", "source"],
         "properties": {
@@ -6970,7 +6970,7 @@
             ]
           },
           "id": {
-            "description": "Assigned by the server on create or update and never changed by clients (a UUID v4). Comments anchor to this rather than to the element name.",
+            "description": "Optional. The server assigns one on create or update when the item has none, and keeps one the client sends, which must be a UUID v4 that no other item in the notebook has.",
             "type": "string"
           },
           "source": {
@@ -7131,6 +7131,7 @@
             "type": "string"
           },
           "elements": {
+            "description": "The key is the element ID. It identifies the cell: comments and other references anchor to it",
             "type": "object",
             "additionalProperties": {
               "$ref": "#/components/schemas/NotebookCellKindOrV2PanelKindOrLibraryPanelKind"

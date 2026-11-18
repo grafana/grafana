@@ -7378,12 +7378,12 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookNotebookLayoutItemSpec(ref common
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "One ordered item in a notebook layout. `element` references either a CellKind (markdown/code content) or a V2PanelKind in the notebook's elements map. `source` records who authored the cell; `collapsed` hides the body in the UI. `id` identifies the cell itself, as opposed to the element name, which clients choose and can reuse.",
+				Description: "One ordered item in a notebook layout. `element` references either a CellKind (markdown/code content) or a V2PanelKind in the notebook's elements map. `source` records who authored the cell; `collapsed` hides the body in the UI.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"id": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Assigned by the server on create or update and never changed by clients (a UUID v4). Comments anchor to this rather than to the element name.",
+							Description: "Optional. The server assigns one on create or update when the item has none, and keeps one the client sends, which must be a UUID v4 that no other item in the notebook has.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -7700,7 +7700,8 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookSpec(ref common.ReferenceCallback
 					},
 					"elements": {
 						SchemaProps: spec.SchemaProps{
-							Type: []string{"object"},
+							Description: "The key is the element ID. It identifies the cell: comments and other references anchor to it",
+							Type:        []string{"object"},
 							AdditionalProperties: &spec.SchemaOrBool{
 								Allows: true,
 								Schema: &spec.Schema{
