@@ -124,6 +124,8 @@ export function hslToRgb(color: string | DecomposeColor) {
   return recomposeColor({ type, values: rgb });
 }
 
+const SUPPORTED_COLOR_SPACES = ['srgb', 'srgb-linear', 'display-p3', 'a98-rgb', 'prophoto-rgb', 'rec-2020'];
+
 /**
  * Returns an object with the type and values of a color.
  *
@@ -162,9 +164,9 @@ export function decomposeColor(color: string | DecomposeColor): DecomposeColor {
       .split(/\s*\/\s*|\s+/)
       .filter((value: string) => value !== '');
     colorSpace = values.shift();
-    if (['srgb', 'srgb-linear', 'display-p3', 'a98-rgb', 'prophoto-rgb', 'rec-2020'].indexOf(colorSpace) === -1) {
+    if (SUPPORTED_COLOR_SPACES.indexOf(colorSpace) === -1) {
       throw new Error(
-        `Unsupported ${colorSpace} color space. The following color spaces are supported: srgb, srgb-linear, display-p3, a98-rgb, prophoto-rgb, rec-2020.`
+        `Unsupported ${colorSpace} color space. The following color spaces are supported: ${SUPPORTED_COLOR_SPACES.join(', ')}.`
       );
     }
   } else {

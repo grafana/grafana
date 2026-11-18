@@ -124,7 +124,9 @@ export function toRgbString(computed: string): string | undefined {
   }
 
   const [r, g, b] = (colorSpace === 'srgb-linear' ? channels.map(linearToSrgb) : channels).map(toByte);
-  return alpha >= 1 ? `rgb(${r}, ${g}, ${b})` : `rgba(${r}, ${g}, ${b}, ${Math.round(alpha * 1000) / 1000})`;
+  return alpha >= 1
+    ? colorManipulator.recomposeColor({ type: 'rgb', values: [r, g, b] })
+    : colorManipulator.recomposeColor({ type: 'rgba', values: [r, g, b, Math.round(alpha * 1000) / 1000] });
 }
 
 // 1 for any visible color, 0 for a fully transparent one. Read from the relative color source, so the browser
