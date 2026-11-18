@@ -186,8 +186,12 @@ func TestWrapper_Delete(t *testing.T) {
 		// Verify original user identity is used for authorization
 		setup.mockAuth.On("BeforeDelete", mock.MatchedBy(matchesOriginalUser()), obj).Return(nil)
 
-		// Verify service identity is used to call the underlying store
-		setup.mockStore.On("Delete", mock.MatchedBy(matchesServiceIdentity()), "to-delete", mock.Anything, deleteOpts).Return(expectedObj, true, nil)
+		// Verify service identity is used to call the underlying store, and that it still names the
+		// requester as the metadata identity so storage attributes the deletion to them.
+		setup.mockStore.On("Delete", mock.MatchedBy(func(ctx context.Context) bool {
+			uid, ok := identity.MetadataIdentityUIDFrom(ctx)
+			return matchesServiceIdentity()(ctx) && ok && uid == "user:u001"
+		}), "to-delete", mock.Anything, deleteOpts).Return(expectedObj, true, nil)
 
 		result, deleted, err := setup.wrapper.Delete(setup.ctx, "to-delete", nil, deleteOpts)
 
@@ -222,60 +226,6 @@ func TestWrapper_Delete(t *testing.T) {
 		setup.mockAuth.AssertExpectations(t)
 		setup.mockStore.AssertExpectations(t)
 		setup.mockStore.AssertNotCalled(t, "Delete")
-	})
-}
-
-// matchesOriginalIdentityUID matches a context carrying the acting user as the metadata identity,
-// which apistore forwards to storage so the deleter is recorded as the user, not the service.
-func matchesOriginalIdentityUID(want string) func(context.Context) bool {
-	return func(ctx context.Context) bool {
-		uid, ok := identity.MetadataIdentityUIDFrom(ctx)
-		return ok && uid == want
-	}
-}
-
-func TestWrapper_DeleteAttribution(t *testing.T) {
-	obj := &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "to-delete"}}
-	deleteOpts := &metaV1.DeleteOptions{}
-
-	t.Run("service-identity delete carries the requester as the metadata identity", func(t *testing.T) {
-		setup := newTestSetup(t)
-
-		setup.mockStore.On("Get", mock.Anything, "to-delete", mock.Anything).Return(obj, nil)
-		setup.mockAuth.On("BeforeDelete", mock.Anything, obj).Return(nil)
-		// The inner delete runs as the service but must still name the user, so the deletion
-		// marker is attributed to them.
-		setup.mockStore.On("Delete",
-			mock.MatchedBy(func(ctx context.Context) bool {
-				return matchesServiceIdentity()(ctx) && matchesOriginalIdentityUID("user:u001")(ctx)
-			}),
-			"to-delete", mock.Anything, deleteOpts).Return(obj, true, nil)
-
-		_, deleted, err := setup.wrapper.Delete(setup.ctx, "to-delete", nil, deleteOpts)
-
-		require.NoError(t, err)
-		assert.True(t, deleted)
-		setup.mockStore.AssertExpectations(t)
-	})
-
-	t.Run("preserved-identity delete runs as the user without a metadata override", func(t *testing.T) {
-		setup := newTestSetupWithPreserveIdentity(t)
-
-		setup.mockStore.On("Get", mock.Anything, "to-delete", mock.Anything).Return(obj, nil)
-		setup.mockAuth.On("BeforeDelete", mock.Anything, obj).Return(nil)
-		// The caller is already the user, so storage records them directly.
-		setup.mockStore.On("Delete",
-			mock.MatchedBy(func(ctx context.Context) bool {
-				_, overridden := identity.MetadataIdentityUIDFrom(ctx)
-				return matchesOriginalUser()(ctx) && !overridden
-			}),
-			"to-delete", mock.Anything, deleteOpts).Return(obj, true, nil)
-
-		_, deleted, err := setup.wrapper.Delete(setup.ctx, "to-delete", nil, deleteOpts)
-
-		require.NoError(t, err)
-		assert.True(t, deleted)
-		setup.mockStore.AssertExpectations(t)
 	})
 }
 
@@ -611,7 +561,11 @@ func TestWrapper_WithPreserveIdentity(t *testing.T) {
 
 		setup.mockStore.On("Get", mock.MatchedBy(matchesOriginalUser()), "to-delete", mock.Anything).Return(obj, nil)
 		setup.mockAuth.On("BeforeDelete", mock.MatchedBy(matchesOriginalUser()), obj).Return(nil)
-		setup.mockStore.On("Delete", mock.MatchedBy(matchesOriginalUser()), "to-delete", mock.Anything, deleteOpts).Return(obj, true, nil)
+		// The caller is already the user, so storage records them directly: no metadata override.
+		setup.mockStore.On("Delete", mock.MatchedBy(func(ctx context.Context) bool {
+			_, overridden := identity.MetadataIdentityUIDFrom(ctx)
+			return matchesOriginalUser()(ctx) && !overridden
+		}), "to-delete", mock.Anything, deleteOpts).Return(obj, true, nil)
 
 		result, deleted, err := setup.wrapper.Delete(setup.ctx, "to-delete", nil, deleteOpts)
 
