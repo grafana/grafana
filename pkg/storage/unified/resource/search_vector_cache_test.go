@@ -139,7 +139,7 @@ func TestVectorSearch_SharedCollectionQueryPolicyUsesCallerNamespace(t *testing.
 	for _, namespace := range []string{"tenant-a", "tenant-b"} {
 		resp, err := search(namespace)
 		require.NoError(t, err)
-		require.Nil(t, resp.Error)
+		require.NotNil(t, resp)
 		require.Len(t, resp.Results, 1)
 		assert.Equal(t, "published", resp.Results[0].Name)
 		assert.Equal(t, namespace, provider.gotIn.Tenant)
@@ -150,14 +150,14 @@ func TestVectorSearch_SharedCollectionQueryPolicyUsesCallerNamespace(t *testing.
 
 	resp, err := search("tenant-a")
 	require.NoError(t, err)
-	require.Nil(t, resp.Error)
+	require.NotNil(t, resp)
 	assert.Equal(t, 2, cache.putCalls, "a cached repeat does not embed again")
 	resp, err = search("tenant-a")
 	require.Nil(t, resp)
 	require.Equal(t, codes.ResourceExhausted, status.Code(err))
 	resp, err = search("tenant-b")
 	require.NoError(t, err)
-	require.Nil(t, resp.Error)
+	require.NotNil(t, resp)
 	assert.Equal(t, map[string]int64{"tenant-a": 3, "tenant-b": 2}, limiter.counts)
 }
 
@@ -292,10 +292,9 @@ func TestVectorSearch_UnavailableCollectionsConsumeRateLimit(t *testing.T) {
 			s := newTestSearchServerWithCache(newTestEmbedder(fake), backend, nil, rl)
 			s.collectionAllowlist = vector.NewCollectionAllowlist(nil, nil)
 
-			resp, err := s.VectorSearch(authedCtx(), &resourcepb.VectorSearchRequest{Key: validKey(), Query: "q"})
-			require.NoError(t, err)
-			require.NotNil(t, resp.Error)
-			assert.EqualValues(t, http.StatusNotFound, resp.Error.Code)
+			_, err := s.VectorSearch(authedCtx(), &resourcepb.VectorSearchRequest{Key: validKey(), Query: "q"})
+			respErr := rpcErrorResult(t, err)
+			assert.EqualValues(t, http.StatusNotFound, respErr.Code)
 			assert.Equal(t, 1, rl.calls)
 			assert.Equal(t, 1, backend.resolveCalls)
 			assert.Empty(t, fake.gotIn.Texts)

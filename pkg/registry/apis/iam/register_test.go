@@ -33,11 +33,13 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/display"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/noopstorage"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/sso"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/team"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/userpermissions"
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/versionpolicy"
+	settingsvc "github.com/grafana/grafana/pkg/services/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
@@ -111,6 +113,36 @@ func TestNewAPIService_WiresLegacyTeamStore(t *testing.T) {
 
 	require.NotNil(t, b.legacyTeamStore)
 	require.Equal(t, features, b.features)
+}
+
+func TestNewAPIService_WiresResourcePermissionsSearch(t *testing.T) {
+	b := NewAPIService(
+		nil,
+		nil,
+		legacysql.NewDatabaseProvider(nil),
+		&NoopApiInstaller[*iamv0.RoleBinding]{ResourceInfo: iamv0.RoleBindingInfo},
+		&NoopApiInstaller[*iamv0.Role]{ResourceInfo: iamv0.RoleInfo},
+		&NoopApiInstaller[*iamv0.GlobalRole]{ResourceInfo: iamv0.GlobalRoleInfo},
+		&NoopApiInstaller[*iamv0.TeamLBACRule]{ResourceInfo: iamv0.TeamLBACRuleInfo},
+		nil,
+		prometheus.NewRegistry(),
+		nil,
+		nil,
+		tracing.InitializeTracerForTest(),
+		resourcepermission.NewMappersRegistry(),
+		nil,
+		Features{ResourcePermissionsAPI: true},
+	)
+
+	routes := b.GetAPIRoutes(legacyiamv0.SchemeGroupVersion)
+	found := false
+	for _, route := range routes.Namespace {
+		if route.Path == "resourcepermissions/search" {
+			found = true
+			break
+		}
+	}
+	require.True(t, found)
 }
 
 func TestNewAPIService_WiresSSOStore(t *testing.T) {
@@ -200,6 +232,59 @@ func TestNewAPIService_AuthorizesWhoami(t *testing.T) {
 	}
 }
 
+func TestNewAPIService_AuthorizesDisplay(t *testing.T) {
+	b := NewAPIService(
+		nil,
+		nil,
+		legacysql.NewDatabaseProvider(nil),
+		&NoopApiInstaller[*iamv0.RoleBinding]{ResourceInfo: iamv0.RoleBindingInfo},
+		&NoopApiInstaller[*iamv0.Role]{ResourceInfo: iamv0.RoleInfo},
+		&NoopApiInstaller[*iamv0.GlobalRole]{ResourceInfo: iamv0.GlobalRoleInfo},
+		&NoopApiInstaller[*iamv0.TeamLBACRule]{ResourceInfo: iamv0.TeamLBACRuleInfo},
+		nil,
+		prometheus.NewRegistry(),
+		nil,
+		nil,
+		tracing.InitializeTracerForTest(),
+		resourcepermission.NewMappersRegistry(),
+		nil,
+		Features{},
+	)
+
+	for _, tc := range []struct {
+		name       string
+		verb       string
+		noIdentity bool
+		anonymous  bool
+		want       authorizer.Decision
+	}{
+		{name: "list", verb: "list", want: authorizer.DecisionAllow},
+		{name: "get", verb: "get", want: authorizer.DecisionAllow},
+		{name: "create", verb: "create", want: authorizer.DecisionDeny},
+		{name: "delete", verb: "delete", want: authorizer.DecisionDeny},
+		{name: "missing identity", verb: "list", noIdentity: true, want: authorizer.DecisionDeny},
+		{name: "anonymous", verb: "list", anonymous: true, want: authorizer.DecisionDeny},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := context.Background()
+			if tc.anonymous {
+				ctx = identity.WithRequester(ctx, &identity.StaticRequester{Type: authlib.TypeAnonymous})
+			} else if !tc.noIdentity {
+				ctx = authlib.WithAuthInfo(ctx, newTestAuthInfo())
+			}
+			decision, _, err := b.GetAuthorizer().Authorize(ctx, authorizer.AttributesRecord{
+				ResourceRequest: true, Resource: "display", Verb: tc.verb, Namespace: "stacks-13",
+			})
+			if tc.noIdentity {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+			require.Equal(t, tc.want, decision)
+		})
+	}
+}
+
 func TestNewAPIService_AuthorizesSSOSettings(t *testing.T) {
 	b := NewAPIService(
 		nil,
@@ -219,46 +304,100 @@ func TestNewAPIService_AuthorizesSSOSettings(t *testing.T) {
 		Features{},
 	)
 
-	// Standalone serves this kind read-only to service identities: reads are allowed
-	// only for access policies; other identity types and mutating verbs are denied.
-	readAttrs := authorizer.AttributesRecord{
-		Resource:        legacyiamv0.SSOSettingResourceInfo.GetName(),
-		ResourceRequest: true,
-		Verb:            "get",
-	}
-	writeAttrs := authorizer.AttributesRecord{
-		Resource:        legacyiamv0.SSOSettingResourceInfo.GetName(),
-		ResourceRequest: true,
-		Verb:            "create",
+	t.Run("denies provider access for every identity type and verb", func(t *testing.T) {
+		for _, typ := range []authlib.IdentityType{authlib.TypeAccessPolicy, authlib.TypeUser, authlib.TypeAnonymous, authlib.TypeUnauthenticated} {
+			ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Type: typ})
+			for _, verb := range []string{"get", "list", "watch", "create", "update", "patch", "delete"} {
+				name := "github"
+				if verb == "list" || verb == "watch" || verb == "create" {
+					name = ""
+				}
+				decision, _, err := b.authorizer.Authorize(ctx, authorizer.AttributesRecord{
+					Resource:        legacyiamv0.SSOSettingResourceInfo.GetName(),
+					ResourceRequest: true,
+					Verb:            verb,
+					Name:            name,
+				})
+				require.NoError(t, err)
+				require.Equal(t, authorizer.DecisionDeny, decision, "%s %s", typ, verb)
+			}
+		}
+	})
+
+	loginConfigAttrs := func(verb string) authorizer.AttributesRecord {
+		return authorizer.AttributesRecord{
+			Resource:        legacyiamv0.SSOSettingResourceInfo.GetName(),
+			ResourceRequest: true,
+			Verb:            verb,
+			Name:            sso.LoginConfigName,
+		}
 	}
 
-	t.Run("allows reads from an access policy identity", func(t *testing.T) {
-		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Type: authlib.TypeAccessPolicy})
-		decision, _, err := b.authorizer.Authorize(ctx, readAttrs)
+	t.Run("allows an unauthenticated read of the login config", func(t *testing.T) {
+		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Type: authlib.TypeUnauthenticated})
+		decision, _, err := b.authorizer.Authorize(ctx, loginConfigAttrs("get"))
 		require.NoError(t, err)
 		require.Equal(t, authorizer.DecisionAllow, decision)
 	})
 
-	t.Run("denies writes even from an access policy identity", func(t *testing.T) {
-		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Type: authlib.TypeAccessPolicy})
-		decision, _, err := b.authorizer.Authorize(ctx, writeAttrs)
-		require.NoError(t, err)
-		require.Equal(t, authorizer.DecisionDeny, decision)
+	t.Run("denies unauthenticated writes to the login config", func(t *testing.T) {
+		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Type: authlib.TypeUnauthenticated})
+		for _, verb := range []string{"create", "update", "patch", "delete"} {
+			decision, _, err := b.authorizer.Authorize(ctx, loginConfigAttrs(verb))
+			require.NoError(t, err)
+			require.Equal(t, authorizer.DecisionDeny, decision, verb)
+		}
 	})
 
-	t.Run("denies non-access-policy identities", func(t *testing.T) {
-		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Type: authlib.TypeUser})
-		decision, _, err := b.authorizer.Authorize(ctx, readAttrs)
-		require.NoError(t, err)
+	t.Run("denies the login config without an identity", func(t *testing.T) {
+		decision, _, _ := b.authorizer.Authorize(context.Background(), loginConfigAttrs("get"))
 		require.Equal(t, authorizer.DecisionDeny, decision)
 	})
+}
 
-	t.Run("denies an anonymous identity", func(t *testing.T) {
-		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Type: authlib.TypeAnonymous})
-		decision, _, err := b.authorizer.Authorize(ctx, readAttrs)
-		require.NoError(t, err)
-		require.Equal(t, authorizer.DecisionDeny, decision)
-	})
+func TestNewAPIService_LoginConfigGate(t *testing.T) {
+	for _, tt := range []struct {
+		name     string
+		features Features
+		settings settingsvc.Service
+		want     bool
+	}{
+		{name: "absent when the SSO settings API is disabled", features: Features{}, settings: noopSettingService{}, want: false},
+		{name: "absent without a settings service", features: Features{SSOSettingsAPI: true}, settings: nil, want: false},
+		{name: "registered when enabled with a settings service", features: Features{SSOSettingsAPI: true}, settings: noopSettingService{}, want: true},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			b := NewAPIService(
+				nil,
+				nil,
+				legacysql.NewDatabaseProvider(nil),
+				&NoopApiInstaller[*iamv0.RoleBinding]{ResourceInfo: iamv0.RoleBindingInfo},
+				&NoopApiInstaller[*iamv0.Role]{ResourceInfo: iamv0.RoleInfo},
+				&NoopApiInstaller[*iamv0.GlobalRole]{ResourceInfo: iamv0.GlobalRoleInfo},
+				&NoopApiInstaller[*iamv0.TeamLBACRule]{ResourceInfo: iamv0.TeamLBACRuleInfo},
+				nil,
+				prometheus.NewRegistry(),
+				nil,
+				nil,
+				tracing.InitializeTracerForTest(),
+				resourcepermission.NewMappersRegistry(),
+				tt.settings,
+				tt.features,
+			)
+
+			found := false
+			for _, route := range b.GetAPIRoutes(legacyiamv0.SchemeGroupVersion).Namespace {
+				if route.Path == "ssosettings/"+sso.LoginConfigName {
+					found = true
+				}
+			}
+			require.Equal(t, tt.want, found)
+		})
+	}
+}
+
+type noopSettingService struct {
+	settingsvc.Service
 }
 
 func TestUpdateTeamLBACRulesAPIGroupWithNoopInstaller(t *testing.T) {

@@ -11,6 +11,8 @@ import { RepoViewStatus } from 'app/features/provisioning/hooks/useGetResourceRe
 import { getSaveTarget, type SaveTarget } from 'app/features/provisioning/hooks/useSaveRepositoryView';
 import { type RecoverToNewBranch } from 'app/features/provisioning/types';
 
+import { SavePendingChangesForm } from '../lifecycle/SavePendingChangesForm';
+import { savesPendingChanges } from '../lifecycle/pendingChangesSave';
 import { type DashboardScene } from '../scene/DashboardScene';
 import {
   formatPredefinedVariablesAnnotationLabel,
@@ -165,6 +167,11 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
       if (SaveAsTemplateForm) {
         return <SaveAsTemplateForm dashboard={dashboard} />;
       }
+    }
+
+    // Pending changes are saved through the plugin that keeps them; a copy of them is a new dashboard.
+    if (!saveAsCopy && savesPendingChanges(dashboard)) {
+      return <SavePendingChangesForm dashboard={dashboard} changeInfo={changeInfo} drawer={model} />;
     }
 
     if (target === 'repository') {

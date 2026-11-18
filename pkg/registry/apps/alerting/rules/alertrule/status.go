@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/app/convert"
 	appsdkapiserver "github.com/grafana/grafana/pkg/apiserver/appsdk"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
-	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
+	"github.com/grafana/grafana/pkg/services/ngalert/rules/legacy"
 )
 
 // ruleStatusWriter persists the serialized status subresource for a single rule.
@@ -51,7 +51,7 @@ var (
 
 // NewStatusStorage builds the AlertRule /status subresource storage.
 func NewStatusStorage(
-	legacySvc provisioning.AlertRuleService,
+	legacySvc legacy.LegacyRuleService,
 	namespacer request.NamespaceMapper,
 	statusWriter ruleStatusWriter,
 	unified *appsdkapiserver.StatusREST,

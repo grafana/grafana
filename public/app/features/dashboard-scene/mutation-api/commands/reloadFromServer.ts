@@ -6,6 +6,8 @@
  * caller can let the user decide.
  */
 
+import * as z from 'zod/mini';
+
 import { locationService } from '@grafana/runtime';
 
 import {
@@ -22,7 +24,7 @@ import { readOnly, type MutationCommand } from './types';
 
 export const reloadFromServerCommand: MutationCommand<{ pendingChanges?: string | null }> = {
   name: 'RELOAD_FROM_SERVER',
-  description: payloads.reloadFromServer.description ?? '',
+  description: z.globalRegistry.get(payloads.reloadFromServer)?.description ?? '',
 
   payloadSchema: payloads.reloadFromServer,
   // Reloading never writes; the server already holds the newer version.
@@ -52,9 +54,10 @@ export const reloadFromServerCommand: MutationCommand<{ pendingChanges?: string 
       return { success: true, data: { reloaded: false, reason: 'switched-preview' }, changes: [] };
     }
     try {
-      // A full load, so new or updated pending changes show too, in edit mode if it was editing.
-      await reloadKeepingEditMode(uid, scene.state.isEditing);
-      return { success: true, data: { reloaded: true }, changes: [] };
+      // A full load, so new or updated pending changes show too, in edit mode if it was editing. In
+      // place, the page keeps this scene: a caller waiting for a new one would wait in vain.
+      const inPlace = await reloadKeepingEditMode(uid, scene.state.isEditing);
+      return { success: true, data: { reloaded: true, ...(inPlace ? { inPlace } : {}) }, changes: [] };
     } catch (error) {
       return { success: false, error: error instanceof Error ? error.message : String(error), changes: [] };
     }

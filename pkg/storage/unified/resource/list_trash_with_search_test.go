@@ -42,7 +42,6 @@ func TestListTrashWithSearch(t *testing.T) {
 	resp, err := s.List(ctx, trashListRequest())
 
 	require.NoError(t, err)
-	require.Nil(t, resp.Error)
 	require.Len(t, resp.Items, 1)
 	require.Equal(t, int64(42), resp.Items[0].ResourceVersion)
 	require.Equal(t, 1, backend.batchCalls)
@@ -69,7 +68,6 @@ func TestListTrashWithSearchNotOlderThan(t *testing.T) {
 	resp, err := s.List(ctx, req)
 
 	require.NoError(t, err)
-	require.Nil(t, resp.Error)
 	require.Equal(t, requestedRV+100, resp.ResourceVersion)
 	require.Equal(t, []*resourcepb.ResourceSearchRequest_Sort{{Field: SEARCH_FIELD_DELETED_RV}}, searchClient.last.SortBy)
 	require.Equal(t, []string{sortableResourceVersion(requestedRV), ""}, searchClient.last.SearchAfter)
@@ -92,7 +90,6 @@ func TestListTrashWithSearchNotOlderThanFallsBackWhenIndexIsBehind(t *testing.T)
 	resp, err := s.List(ctx, req)
 
 	require.NoError(t, err)
-	require.Nil(t, resp.Error)
 	require.Equal(t, int64(77), resp.ResourceVersion)
 	require.NotNil(t, searchClient.last)
 	require.Equal(t, 1, backend.listHistoryCalls)
@@ -116,7 +113,7 @@ func TestListTrashWithSearchContinuesNotOlderThanSort(t *testing.T) {
 	resp, err := s.List(ctx, req)
 
 	require.NoError(t, err)
-	require.Nil(t, resp.Error)
+	require.NotNil(t, resp)
 	require.Equal(t, []*resourcepb.ResourceSearchRequest_Sort{{Field: SEARCH_FIELD_DELETED_RV}}, searchClient.last.SortBy)
 	require.Equal(t, []string{"0000000000000000042", "deleted-a"}, searchClient.last.SearchAfter)
 	require.Zero(t, backend.listHistoryCalls)
@@ -145,7 +142,6 @@ func TestListTrashWithSearchNotOlderThanTokenKeepsAscendingSort(t *testing.T) {
 	resp, err := s.List(ctx, req)
 
 	require.NoError(t, err)
-	require.Nil(t, resp.Error)
 	token, err := GetContinueToken(resp.NextPageToken)
 	require.NoError(t, err)
 	require.True(t, token.SortAscending)
@@ -229,14 +225,16 @@ func TestListTrashWithSearchFallsBackWhenIndexCannotServeTrash(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			ctx, metricsState := withRequestMetricsState(identity.WithServiceIdentityContext(context.Background(), 1))
-			searchResp := &resourcepb.ResourceSearchResponse{Error: NewServiceUnavailableError(test.message)}
+			searchErr := NewServiceUnavailableError(test.message)
+			grpcStatus, err := status.New(codes.Unavailable, searchErr.Message).WithDetails(searchErr)
+			require.NoError(t, err)
 			backend := &trashBatchFakeBackend{listRV: 77}
-			s, _ := newSearchBackedTrashTestServer(searchResp, backend)
+			s, searchClient := newSearchBackedTrashTestServer(nil, backend)
+			searchClient.err = grpcStatus.Err()
 
 			resp, err := s.List(ctx, trashListRequest())
 
 			require.NoError(t, err)
-			require.Nil(t, resp.Error)
 			require.Equal(t, int64(77), resp.ResourceVersion)
 			require.Equal(t, 1, backend.listHistoryCalls)
 			require.Zero(t, backend.batchCalls)
@@ -247,18 +245,13 @@ func TestListTrashWithSearchFallsBackWhenIndexCannotServeTrash(t *testing.T) {
 
 func TestListTrashWithSearchFallsBackFromRemoteUnavailableError(t *testing.T) {
 	ctx, metricsState := withRequestMetricsState(identity.WithServiceIdentityContext(context.Background(), 1))
-	searchErr := NewServiceUnavailableError("sorting trash by resource version is not available")
-	grpcStatus, err := status.New(codes.Unavailable, searchErr.Message).WithDetails(searchErr)
-	require.NoError(t, err)
-
 	backend := &trashBatchFakeBackend{listRV: 77}
 	s, searchClient := newSearchBackedTrashTestServer(nil, backend)
-	searchClient.err = grpcStatus.Err()
+	searchClient.err = status.Error(codes.Unavailable, "sorting trash by resource version is not available")
 
 	resp, err := s.List(ctx, trashListRequest())
 
 	require.NoError(t, err)
-	require.Nil(t, resp.Error)
 	require.Equal(t, int64(77), resp.ResourceVersion)
 	require.Equal(t, 1, backend.listHistoryCalls)
 	require.Zero(t, backend.batchCalls)
@@ -267,18 +260,19 @@ func TestListTrashWithSearchFallsBackFromRemoteUnavailableError(t *testing.T) {
 
 func TestListTrashWithSearchDoesNotFallBackFromSearchContinueToken(t *testing.T) {
 	ctx := identity.WithServiceIdentityContext(context.Background(), 1)
-	searchResp := &resourcepb.ResourceSearchResponse{
-		Error: NewServiceUnavailableError("sorting trash by resource version is not available for this resource until its search index has been rebuilt"),
-	}
+	searchErr := NewServiceUnavailableError("sorting trash by resource version is not available for this resource until its search index has been rebuilt")
+	grpcStatus, err := status.New(codes.Unavailable, searchErr.Message).WithDetails(searchErr)
+	require.NoError(t, err)
 	backend := &trashBatchFakeBackend{listRV: 77}
-	s, _ := newSearchBackedTrashTestServer(searchResp, backend)
+	s, searchClient := newSearchBackedTrashTestServer(nil, backend)
+	searchClient.err = grpcStatus.Err()
 	req := trashListRequest()
 	req.NextPageToken = ContinueToken{SearchAfter: []string{"42"}, ResourceVersion: 100}.String()
 
-	resp, err := s.List(ctx, req)
+	_, err = s.List(ctx, req)
 
-	require.NoError(t, err)
-	require.Equal(t, int32(http.StatusServiceUnavailable), resp.Error.GetCode())
+	respErr := rpcErrorResult(t, err)
+	require.Equal(t, int32(http.StatusServiceUnavailable), respErr.GetCode())
 	require.Zero(t, backend.listHistoryCalls)
 }
 
@@ -305,7 +299,6 @@ func TestListTrashWithSearchContinuesAfterFilteringRows(t *testing.T) {
 	resp, err := s.List(ctx, req)
 
 	require.NoError(t, err)
-	require.Nil(t, resp.Error)
 	require.Len(t, resp.Items, 1)
 	token, err := GetContinueToken(resp.NextPageToken)
 	require.NoError(t, err)
@@ -335,7 +328,6 @@ func TestListTrashWithSearchSkipsGarbageCollectedDeletionMarkers(t *testing.T) {
 	resp, err := s.List(ctx, req)
 
 	require.NoError(t, err)
-	require.Nil(t, resp.Error)
 	require.Len(t, resp.Items, 1)
 	require.Equal(t, backend.values["visible"], resp.Items[0].Value)
 	token, err := GetContinueToken(resp.NextPageToken)
@@ -357,7 +349,6 @@ func TestListTrashWithSearchUsesStoreWhenBatchReadsAreUnsupported(t *testing.T) 
 	resp, err := s.List(ctx, trashListRequest())
 
 	require.NoError(t, err)
-	require.Nil(t, resp.Error)
 	require.Equal(t, int64(77), resp.ResourceVersion)
 	require.Equal(t, 1, backend.listHistoryCalls)
 	require.Zero(t, backend.batchCalls)
@@ -379,7 +370,6 @@ func TestListTrashWithSearchKeepsStoreTokenOnStorePath(t *testing.T) {
 	resp, err := s.List(ctx, req)
 
 	require.NoError(t, err)
-	require.Nil(t, resp.Error)
 	require.Equal(t, int64(77), resp.ResourceVersion)
 	require.Equal(t, 1, backend.listHistoryCalls)
 	require.Nil(t, searchClient.last)
@@ -517,14 +507,14 @@ func TestTrashListServicePermissionErrors(t *testing.T) {
 					}
 					if granted {
 						require.NoError(t, err)
-						require.Nil(t, resp.Error)
 						require.Empty(t, resp.Items)
 						return
 					}
 					if path == "store" {
-						require.NoError(t, err)
-						require.Equal(t, int32(http.StatusInternalServerError), resp.Error.GetCode())
-						require.Contains(t, resp.Error.GetMessage(), "dashboard.grafana.app/dashboards:set_permissions")
+						require.Nil(t, resp)
+						respErr := rpcErrorResult(t, err)
+						require.Equal(t, int32(http.StatusInternalServerError), respErr.GetCode())
+						require.Contains(t, respErr.GetMessage(), "dashboard.grafana.app/dashboards:set_permissions")
 					} else {
 						require.ErrorIs(t, err, ErrServiceCannotDelegate)
 						require.Nil(t, resp)

@@ -636,6 +636,10 @@ type NotebookFieldConfig struct {
 	// How null values should be handled when calculating field stats
 	// "null" - Include null values, "connected" - Ignore nulls, "null as zero" - Treat nulls as zero
 	NullValueMode *NotebookNullValueMode `json:"nullValueMode,omitempty"`
+	// Maps field-config property ids (e.g. `min`, `unit` or `custom.lineWidth`) to a dashboard-variable
+	// expression resolved at render time. The property's own value is the fallback when the expression
+	// doesn't resolve to a valid value for that property.
+	VarMappings map[string]string `json:"varMappings,omitempty"`
 }
 
 // NewNotebookFieldConfig creates a new NotebookFieldConfig object.
@@ -1230,6 +1234,9 @@ func (NotebookNotebookLayoutItemKind) OpenAPIModelName() string {
 // records who authored the cell; `collapsed` hides the body in the UI.
 // +k8s:openapi-gen=true
 type NotebookNotebookLayoutItemSpec struct {
+	// Optional. The server assigns one on create or update when the item has none, and keeps one
+	// the client sends, which must be a UUID v4 that no other item in the notebook has.
+	Id        *string                              `json:"id,omitempty"`
 	Element   NotebookElementReference             `json:"element"`
 	Source    NotebookNotebookLayoutItemSpecSource `json:"source"`
 	Collapsed *bool                                `json:"collapsed,omitempty"`
@@ -1267,12 +1274,13 @@ func (NotebookElementReference) OpenAPIModelName() string {
 
 // +k8s:openapi-gen=true
 type NotebookSpec struct {
-	Title        string                             `json:"title"`
-	Description  *string                            `json:"description,omitempty"`
-	Tags         []string                           `json:"tags"`
-	TimeSettings NotebookTimeSettingsSpec           `json:"timeSettings"`
-	Elements     map[string]NotebookNotebookElement `json:"elements"`
-	Layout       NotebookNotebookLayoutKind         `json:"layout"`
+	Title        string                   `json:"title"`
+	Description  *string                  `json:"description,omitempty"`
+	Tags         []string                 `json:"tags"`
+	TimeSettings NotebookTimeSettingsSpec `json:"timeSettings"`
+	// The key is the element ID. It identifies the cell: comments and other references anchor to it
+	Elements map[string]NotebookNotebookElement `json:"elements"`
+	Layout   NotebookNotebookLayoutKind         `json:"layout"`
 }
 
 // NewNotebookSpec creates a new NotebookSpec object.

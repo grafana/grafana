@@ -1,5 +1,6 @@
 import { http, HttpResponse } from 'msw';
 import { makeDataSourceSettings } from 'test/helpers/makeDataSourceSettings';
+import { testWithStarsUser } from 'test/helpers/testWithStarsUser';
 import { render, screen, waitFor, within } from 'test/test-utils';
 
 import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
@@ -87,6 +88,8 @@ function seedHistory(entries: PageHistoryEntry[]) {
 function seedRecent(uids: string[]) {
   seedHistory(uids.map((uid) => dashboardEntry(uid)));
 }
+
+testWithStarsUser();
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -278,6 +281,25 @@ describe('DashboardTabs', () => {
       expect(await screen.findByText('Other Folder')).toBeInTheDocument();
       expect(screen.getByText('Starred Dashboard 1')).toBeInTheDocument();
       expect(screen.queryByText('Starred Folder')).not.toBeInTheDocument();
+      expect(screen.getByRole('tab', { name: /starred.*2/i })).toBeInTheDocument();
+    });
+
+    // A dashboard and a folder may share a uid; each is its own row, keyed by kind, or React warns about duplicate
+    // keys and the console guard fails the test
+    it('lists a dashboard and a folder that share a uid as two rows', async () => {
+      setMockStarredFolders(['shared']);
+      setMockStarredDashboards(['shared']);
+      server.use(
+        getCustomSearchHandler([
+          makeDashboardHit({ name: 'shared', title: 'Shared Dashboard' }),
+          makeDashboardHit({ name: 'shared', title: 'Shared Folder', resource: 'folders' }),
+        ])
+      );
+
+      render(<DashboardTabs />);
+
+      expect(await screen.findByText('Shared Dashboard')).toBeInTheDocument();
+      expect(screen.getByText('Shared Folder')).toBeInTheDocument();
       expect(screen.getByRole('tab', { name: /starred.*2/i })).toBeInTheDocument();
     });
   });

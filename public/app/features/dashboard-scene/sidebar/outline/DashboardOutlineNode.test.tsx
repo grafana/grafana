@@ -1,5 +1,6 @@
 import { SceneGridLayout, SceneVariableSet, VizPanel } from '@grafana/scenes';
 
+import { DashboardAnnotationsDataLayer } from '../../scene/DashboardAnnotationsDataLayer';
 import { DashboardDataLayerSet } from '../../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
@@ -94,6 +95,86 @@ describe('getOutlineSettingsTarget', () => {
 
       expect(getOutlineSettingsTarget(filtersSet)?.categoryId).toBe(SidebarCategoryType.TabSectionFilters);
       expect(getOutlineSettingsTarget(filtersSet)?.parent).toBe(tab);
+    });
+
+    it('maps a tab annotation set to the tab section annotations category', () => {
+      const dataLayerSet = new DashboardDataLayerSet({ annotationLayers: [] });
+      const tab = new TabItem({
+        $data: dataLayerSet,
+        layout: AutoGridLayoutManager.createEmpty(),
+      });
+
+      expect(getOutlineSettingsTarget(dataLayerSet)?.categoryId).toBe(SidebarCategoryType.TabSectionAnnotations);
+      expect(getOutlineSettingsTarget(dataLayerSet)?.parent).toBe(tab);
+      expect(tab.getOutlineChildren(true)).not.toContain(dataLayerSet);
+
+      dataLayerSet.addAnnotationLayer(
+        new DashboardAnnotationsDataLayer({
+          name: 'deploys',
+          query: { name: 'deploys', enable: true, iconColor: 'red' },
+        })
+      );
+      expect(tab.getOutlineChildren(true)).toContain(dataLayerSet);
+    });
+
+    it('maps a row annotation set to the row section annotations category', () => {
+      const dataLayerSet = new DashboardDataLayerSet({ annotationLayers: [] });
+      const row = new RowItem({
+        $data: dataLayerSet,
+        layout: AutoGridLayoutManager.createEmpty(),
+      });
+
+      expect(getOutlineSettingsTarget(dataLayerSet)?.categoryId).toBe(SidebarCategoryType.RowSectionAnnotations);
+      expect(getOutlineSettingsTarget(dataLayerSet)?.parent).toBe(row);
+      expect(row.getOutlineChildren(true)).not.toContain(dataLayerSet);
+
+      dataLayerSet.addAnnotationLayer(
+        new DashboardAnnotationsDataLayer({
+          name: 'deploys',
+          query: { name: 'deploys', enable: true, iconColor: 'red' },
+        })
+      );
+      expect(row.getOutlineChildren(true)).toContain(dataLayerSet);
+    });
+  });
+
+  describe('repeat clone section nodes', () => {
+    it('maps a repeated row clone annotation set to the source row', () => {
+      const cloneDataLayerSet = new DashboardDataLayerSet({ annotationLayers: [] });
+      const clone = new RowItem({
+        key: 'row-clone',
+        repeatSourceKey: 'row-source',
+        $data: cloneDataLayerSet,
+        layout: AutoGridLayoutManager.createEmpty(),
+      });
+      const source = new RowItem({
+        key: 'row-source',
+        $data: new DashboardDataLayerSet({ annotationLayers: [] }),
+        layout: AutoGridLayoutManager.createEmpty(),
+        repeatedRows: [clone],
+      });
+
+      expect(getOutlineSettingsTarget(cloneDataLayerSet)?.categoryId).toBe(SidebarCategoryType.RowSectionAnnotations);
+      expect(getOutlineSettingsTarget(cloneDataLayerSet)?.parent.state.key).toBe(source.state.key);
+    });
+
+    it('maps a repeated tab clone variable set to the source tab', () => {
+      const cloneVariables = new SceneVariableSet({ variables: [] });
+      const clone = new TabItem({
+        key: 'tab-clone',
+        repeatSourceKey: 'tab-source',
+        $variables: cloneVariables,
+        layout: AutoGridLayoutManager.createEmpty(),
+      });
+      const source = new TabItem({
+        key: 'tab-source',
+        $variables: new SceneVariableSet({ variables: [] }),
+        layout: AutoGridLayoutManager.createEmpty(),
+        repeatedTabs: [clone],
+      });
+
+      expect(getOutlineSettingsTarget(cloneVariables)?.categoryId).toBe(SidebarCategoryType.TabSectionVariables);
+      expect(getOutlineSettingsTarget(cloneVariables)?.parent.state.key).toBe(source.state.key);
     });
   });
 

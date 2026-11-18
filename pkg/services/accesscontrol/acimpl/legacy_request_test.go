@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"k8s.io/utils/ptr"
 
 	"github.com/grafana/authlib/types"
 
@@ -32,6 +33,7 @@ func TestBuildLegacyCheckRequest(t *testing.T) {
 		),
 	)
 	expected := legacyclient.LegacyCheckRequest{
+		RequesterOrgID:      ptr.To(int64(1)),
 		Restriction:         &legacyclient.LegacyActionRestriction{},
 		Namespace:           "stacks-123",
 		Subject:             "user:user-uid",
@@ -103,6 +105,7 @@ func TestBuildLegacyCheckRequestIdentity(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			ac := ProvideAccessControlTest()
 			expected := legacyclient.LegacyCheckRequest{
+				RequesterOrgID:      ptr.To(int64(2)),
 				Restriction:         &legacyclient.LegacyActionRestriction{},
 				Namespace:           "org-2",
 				Subject:             tc.subject,
@@ -217,6 +220,7 @@ func TestBuildLegacyCheckRequestWithoutResolvers(t *testing.T) {
 
 			require.NoError(t, err)
 			expected := legacyclient.LegacyCheckRequest{
+				RequesterOrgID:      ptr.To(int64(1)),
 				Restriction:         &legacyclient.LegacyActionRestriction{},
 				Namespace:           "stacks-123",
 				Subject:             "user:user-uid",
@@ -380,13 +384,11 @@ func TestBuildLegacyCheckRequestGlobalEvaluation(t *testing.T) {
 				Permissions: tc.permissions,
 			}
 			want := legacyclient.LegacyCheckRequest{
-				Restriction: &legacyclient.LegacyActionRestriction{Actions: tc.permittedActions},
-				Namespace:   tc.wantNamespace,
-				Subject:     "user:user-uid",
-				Evaluator:   accesscontrol.EvalPermission("users:read"),
-				GlobalEvaluation: &legacyclient.LegacyGlobalEvaluation{
-					RequesterOrgID: tc.orgID,
-				},
+				Restriction:    &legacyclient.LegacyActionRestriction{Actions: tc.permittedActions},
+				Namespace:      tc.wantNamespace,
+				Subject:        "user:user-uid",
+				Evaluator:      accesscontrol.EvalPermission("users:read"),
+				RequesterOrgID: ptr.To(tc.orgID),
 			}
 
 			useExternalGroups := false
@@ -412,10 +414,11 @@ func TestBuildLegacyCheckRequestCloudOrganization(t *testing.T) {
 		OrgID:   1,
 	}
 	want := legacyclient.LegacyCheckRequest{
-		Restriction: &legacyclient.LegacyActionRestriction{},
-		Namespace:   "stacks-123",
-		Subject:     "user:user-uid",
-		Evaluator:   accesscontrol.EvalPermission("users:read"),
+		RequesterOrgID: ptr.To(int64(1)),
+		Restriction:    &legacyclient.LegacyActionRestriction{},
+		Namespace:      "stacks-123",
+		Subject:        "user:user-uid",
+		Evaluator:      accesscontrol.EvalPermission("users:read"),
 	}
 
 	got, err := ProvideAccessControlTest().buildLegacyCheckRequest(

@@ -2,6 +2,7 @@ import {
   type DataSourceInstanceSettings,
   type DataTransformerConfig,
   getDataSourceRef,
+  LoadingState,
   PluginType,
 } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
@@ -50,6 +51,7 @@ const mockQueryRunner = {
     return mockQueryRunnerState;
   },
   setState: jest.fn(),
+  cancelQuery: jest.fn(),
   runQueries: jest.fn(),
   // onActivate subscribes to datasource changes; return an unsubscribable so activation works.
   subscribeToState: jest.fn().mockReturnValue({ unsubscribe: jest.fn() }),
@@ -535,6 +537,14 @@ describe('PanelDataPaneNext', () => {
       name: 'TestData',
       meta: { mixed: false },
     } as unknown as DataSourceInstanceSettings;
+
+    it('runs the first query added to an empty panel', () => {
+      mockQueryRunnerState.queries = [];
+      dataPane.setState({ dsSettings: defaultDsSettings });
+
+      expect(dataPane.addQuery()).toBe('A');
+      expect(mockQueryRunner.runQueries).toHaveBeenCalledTimes(1);
+    });
 
     it('should assign the panel datasource when it is not Mixed', () => {
       mockQueryRunnerState.queries = [{ refId: 'A', datasource: { type: 'prometheus', uid: 'prom-1' } }];
@@ -1530,6 +1540,34 @@ describe('PanelDataPaneNext', () => {
         })
       );
       expect(mockQueryRunner.runQueries).toHaveBeenCalled();
+    });
+
+    it('bulkDeleteQueries marks the runner ready when all queries are removed', () => {
+      mockQueryRunnerState.queries = [{ refId: 'A', datasource: { type: 'prometheus', uid: 'prom-1' } }];
+
+      dataPane.bulkDeleteQueries(['A']);
+
+      expect(mockQueryRunner.cancelQuery).toHaveBeenCalledTimes(1);
+      expect(mockQueryRunner.setState).toHaveBeenCalledWith({
+        queries: [],
+        _hasFetchedData: true,
+        data: expect.objectContaining({ series: [], state: LoadingState.Done }),
+      });
+      expect(mockQueryRunner.runQueries).not.toHaveBeenCalled();
+    });
+
+    it('deleteQuery does not run queries after removing the final query', () => {
+      mockQueryRunnerState.queries = [{ refId: 'A', datasource: { type: 'prometheus', uid: 'prom-1' } }];
+
+      dataPane.deleteQuery('A');
+
+      expect(mockQueryRunner.cancelQuery).toHaveBeenCalledTimes(1);
+      expect(mockQueryRunner.setState).toHaveBeenCalledWith({
+        queries: [],
+        _hasFetchedData: true,
+        data: expect.objectContaining({ series: [], state: LoadingState.Done }),
+      });
+      expect(mockQueryRunner.runQueries).not.toHaveBeenCalled();
     });
 
     it('bulkToggleQueriesHide hides the specified queries', () => {

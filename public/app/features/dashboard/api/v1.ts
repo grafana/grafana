@@ -2,7 +2,7 @@ import { locationUtil, type UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type Dashboard } from '@grafana/schema';
 import { type Status } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { getFolderByUidFacade } from 'app/api/clients/folder/v1beta1/hooks';
+import { getCombinedFolder } from 'app/api/clients/folder/v1beta1/hooks';
 import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
 import {
@@ -36,7 +36,7 @@ import {
   type DashboardWithAccessInfo,
   type ListDashboardHistoryOptions,
 } from './types';
-import { buildRestorePayload, fetchDeletedDashboard, isV2StoredVersion } from './utils';
+import { fetchDeletedDashboard, isV2StoredVersion, restoreDashboardResource } from './utils';
 
 export function getK8sV1DashboardApiConfig() {
   return {
@@ -205,7 +205,7 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
       // dashboard at the root.
       if (folderAnnotation && !isRootFolderUID(folderAnnotation)) {
         try {
-          const folder = await getFolderByUidFacade(folderAnnotation);
+          const folder = await getCombinedFolder(folderAnnotation);
           result.meta.folderTitle = folder.title;
           result.meta.folderUrl = folder.url;
           result.meta.folderUid = folder.uid;
@@ -314,6 +314,6 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
   }
 
   restoreDashboard(dashboard: Resource<DashboardDataDTO>) {
-    return this.client.create(buildRestorePayload(dashboard));
+    return restoreDashboardResource(this.client, dashboard);
   }
 }

@@ -1,4 +1,4 @@
-import * as z from 'zod';
+import * as z from 'zod/mini';
 
 import { isFetchError } from '@grafana/runtime';
 
@@ -40,10 +40,10 @@ function leafIndex(field: string, leafCount: number): number | undefined {
 
 // The Kubernetes Status the server answers a 422 with; only what the issues read.
 const rejectionSchema = z.object({
-  message: z.string().optional(),
-  details: z
-    .object({
-      causes: z.array(z.object({ field: z.string().optional(), message: z.string() })).optional(),
+  message: z.optional(z.string()),
+  details: z.optional(
+    z.object({
+      causes: z.optional(z.array(z.object({ field: z.optional(z.string()), message: z.string() }))),
     })
-    .optional(),
+  ),
 });

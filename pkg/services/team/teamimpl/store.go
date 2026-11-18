@@ -30,6 +30,7 @@ type store interface {
 	RemoveUsersMemberships(ctx context.Context, userID int64) error
 	IsMember(ctx context.Context, orgId int64, teamId int64, userId int64) (bool, error)
 	GetMemberships(ctx context.Context, orgID, userID int64, external bool) ([]*team.TeamMemberDTO, error)
+	GetMembershipsByUserUID(ctx context.Context, orgID int64, userUID string, external bool) ([]*team.TeamMemberDTO, error)
 	GetMembers(ctx context.Context, query *team.GetTeamMembersQuery) ([]*team.TeamMemberDTO, error)
 	RegisterDelete(renderer teamdelete.Renderer)
 }
@@ -784,7 +785,24 @@ func (ss *xormStore) GetMemberships(ctx context.Context, orgID, userID int64, ex
 		UserID:   userID,
 		External: external,
 	}
-	return ss.getTeamMembers(ctx, dbHelper, query, nil)
+	return ss.getTeamMembers(ctx, dbHelper, query, "", nil)
+}
+
+// GetMembershipsByUserUID is GetMemberships keyed by user UID. It doesn't perform any accesscontrol filtering.
+func (ss *xormStore) GetMembershipsByUserUID(ctx context.Context, orgID int64, userUID string, external bool) ([]*team.TeamMemberDTO, error) {
+	if userUID == "" {
+		return nil, errors.New("user UID is required")
+	}
+	dbHelper, err := ss.sql(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	query := &team.GetTeamMembersQuery{
+		OrgID:    orgID,
+		External: external,
+	}
+	return ss.getTeamMembers(ctx, dbHelper, query, userUID, nil)
 }
 
 // GetTeamMembers return a list of members for the specified team filtered based on the user's permissions
@@ -804,7 +822,7 @@ func (ss *xormStore) GetMembers(ctx context.Context, query *team.GetTeamMembersQ
 		return nil, err
 	}
 
-	return ss.getTeamMembers(ctx, dbHelper, query, acFilter)
+	return ss.getTeamMembers(ctx, dbHelper, query, "", acFilter)
 }
 
 type getTeamMembersQuery struct {
@@ -818,6 +836,7 @@ type getTeamMembersQuery struct {
 	TeamID           int64
 	TeamUID          string
 	UserID           int64
+	UserUID          string
 	External         bool
 	IsExternal       any
 	AccessAll        bool
@@ -827,7 +846,7 @@ type getTeamMembersQuery struct {
 func (q getTeamMembersQuery) Validate() error { return nil }
 
 // getTeamMembers return a list of members for the specified team
-func (ss *xormStore) getTeamMembers(ctx context.Context, dbHelper *legacysql.LegacyDatabaseHelper, query *team.GetTeamMembersQuery, acUserFilter *ac.SQLFilter) ([]*team.TeamMemberDTO, error) {
+func (ss *xormStore) getTeamMembers(ctx context.Context, dbHelper *legacysql.LegacyDatabaseHelper, query *team.GetTeamMembersQuery, userUID string, acUserFilter *ac.SQLFilter) ([]*team.TeamMemberDTO, error) {
 	queryResult := make([]*team.TeamMemberDTO, 0)
 
 	err := dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
@@ -848,6 +867,7 @@ func (ss *xormStore) getTeamMembers(ctx context.Context, dbHelper *legacysql.Leg
 			TeamID:           query.TeamID,
 			TeamUID:          query.TeamUID,
 			UserID:           query.UserID,
+			UserUID:          userUID,
 			External:         query.External,
 			IsExternal:       dbHelper.DB.GetDialect().BooleanValue(true),
 			AccessAll:        accessAll,

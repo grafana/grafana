@@ -7,10 +7,8 @@ import { getAppEvents, setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 import {
   customCreateFolderHandler,
-  customCreateFolderHandlerAppPlatform,
   customCreateTeamHandler,
   customSetTeamRolesHandler,
-  setTestFlags,
 } from '@grafana/test-utils/unstable';
 
 import { getWrapper } from '../../../../test/test-utils';
@@ -46,22 +44,9 @@ describe('useCreateTeamOrchestrate', () => {
     mockUseMountedState.mockReturnValue(() => true);
     mockGetAppEvents.mockReturnValue({ publish: mockPublish } as never);
 
-    // foldersAppPlatformAPI defaults to on, but these tests assert against the legacy folder
-    // handlers, so pin it off and let the app-platform cases opt in.
-    // TODO: add app platform folder fixtures and drop this pin, so these tests cover the API
-    // that production actually uses.
-    setTestFlags({ foldersAppPlatformAPI: false });
-
     contextSrv.fetchUserPermissions = jest.fn().mockResolvedValue(undefined);
     contextSrv.licensedAccessControlEnabled = () => false;
     contextSrv.hasPermission = () => true;
-  });
-
-  // The act wrap is needed because resetting fires OpenFeature events while the hook is mounted.
-  afterEach(async () => {
-    await act(async () => {
-      setTestFlags({});
-    });
   });
 
   it('returns undefined statuses before trigger is called', () => {
@@ -279,25 +264,9 @@ describe('useCreateTeamOrchestrate', () => {
       ).toBe('string');
     });
 
-    it('reports error when the legacy folder API returns an error response', async () => {
-      // The legacy folder mutation throws on HTTP error responses, caught by the try/catch in the hook.
-      server.use(customCreateFolderHandler(() => HttpResponse.json({}, { status: 500 })));
-
-      const { result } = renderHook(() => useCreateTeamOrchestrate([], true), { wrapper: getWrapper({}) });
-
-      await act(async () => {
-        await result.current.trigger(formModel);
-      });
-
-      expect(result.current.folderCreationStatus?.state).toBe('error');
-    });
-
     it('reports error when the app platform folder API returns an error response', async () => {
-      setTestFlags({ foldersAppPlatformAPI: true });
       server.use(
-        customCreateFolderHandlerAppPlatform(() =>
-          HttpResponse.json({ message: 'Internal server error' }, { status: 500 })
-        )
+        customCreateFolderHandler(() => HttpResponse.json({ message: 'Internal server error' }, { status: 500 }))
       );
 
       const { result } = renderHook(() => useCreateTeamOrchestrate([], true), { wrapper: getWrapper({}) });
@@ -324,9 +293,9 @@ describe('useCreateTeamOrchestrate', () => {
 
       server.use(
         customCreateFolderHandler(async ({ request }) => {
-          const body = (await request.json()) as { title: string };
-          capturedTitle = body.title;
-          return HttpResponse.json({ uid: 'new-folder', url: '/dashboards/f/new-folder/test-team' });
+          const body = (await request.json()) as { spec: { title: string } };
+          capturedTitle = body.spec.title;
+          return HttpResponse.json({ metadata: { name: 'new-folder' }, spec: { title: body.spec.title } });
         })
       );
 
@@ -436,7 +405,7 @@ describe('useCreateTeamOrchestrate', () => {
     });
 
     it('shows an error toast for folder creation failure instead of setting state', async () => {
-      server.use(customCreateFolderHandler(() => HttpResponse.json({})));
+      server.use(customCreateFolderHandler(() => HttpResponse.json({ message: 'error' }, { status: 500 })));
 
       const { result } = renderHook(() => useCreateTeamOrchestrate([], true), { wrapper: getWrapper({}) });
 

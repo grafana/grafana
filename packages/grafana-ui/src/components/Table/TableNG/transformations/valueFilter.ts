@@ -1,7 +1,17 @@
 import { type Field, type MatcherConfig } from '@grafana/data';
-import { FilterByValueType, type FilterByValueConfig, type ValueSetOptions } from '@grafana/data/internal';
+import {
+  FilterByValueType,
+  isPillCellField,
+  type FilterByValueConfig,
+  type ValueSetOptions,
+} from '@grafana/data/internal';
 
 import { editableRangeFilter } from './rangeFilter';
+
+/** True when the field holds multi-valued cells that filter element-wise. */
+export function fieldFiltersByElements(field: Field): boolean {
+  return isPillCellField(field) || field.values.some((value) => Array.isArray(value));
+}
 
 export function createValuePredicate(
   field: Field,
@@ -18,6 +28,7 @@ export function createValuePredicate(
       mode: 'display',
       displayConfig: field.config,
       timeZone,
+      matchElements: fieldFiltersByElements(field) ? true : undefined,
       ...(includeMissing !== undefined ? { includeMissing } : {}),
     } satisfies ValueSetOptions,
   };

@@ -240,9 +240,10 @@ func ManifestsFromBuilders(builders []APIGroupBuilder) []*app.ManifestData {
 					scope = "Cluster"
 				}
 				kinds = append(kinds, app.ManifestVersionKind{
-					Kind:   info.GroupVersionKind().Kind,
-					Plural: info.GetName(),
-					Scope:  scope,
+					Kind:     info.GroupVersionKind().Kind,
+					Plural:   info.GetName(),
+					Resource: info.GetName(),
+					Scope:    scope,
 				})
 			}
 			manifests = append(manifests, &app.ManifestData{

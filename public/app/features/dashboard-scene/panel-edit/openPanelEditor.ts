@@ -3,6 +3,7 @@ import { type VizPanel } from '@grafana/scenes';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { canManuallyEditDashboard } from '../scene/dashboardModes';
 import { dashboardViews } from '../scene/dashboardViewRegistry';
+import { isEditEntryBlocked } from '../utils/mobileEditDeprecation';
 
 /**
  * Enters panel edit for `panel`.
@@ -13,7 +14,7 @@ import { dashboardViews } from '../scene/dashboardViewRegistry';
  * by the time this returns.
  */
 export async function openPanelEditor(dashboard: DashboardScene, panel: VizPanel, isNewPanel = false) {
-  if (!canManuallyEditDashboard(dashboard.state)) {
+  if (!canManuallyEditDashboard(dashboard.state) || isEditEntryBlocked(dashboard)) {
     return;
   }
   dashboard.openFullEditor();

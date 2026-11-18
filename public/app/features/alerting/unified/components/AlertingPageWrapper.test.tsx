@@ -1,10 +1,12 @@
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
-import { render, screen, testWithFeatureToggles, waitFor } from 'test/test-utils';
+import { act, render, screen, testWithFeatureToggles, waitFor } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
+import { type AlertManagerDataSourceJsonData } from '@grafana/alerting/internal';
 import { type NavModelItem, OrgRole, store } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import { type AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../mockApi';
@@ -24,6 +26,11 @@ const testPageNav: NavModelItem = {
 };
 
 const server = setupMswServer();
+
+const IMPORT_WIZARD_FLAGS = {
+  [FlagKeys.AlertingMigrationWizardUI]: true,
+  [FlagKeys.AlertingImportAlertmanagerAPI]: true,
+};
 
 describe('AlertmanagerPageWrapper', () => {
   afterEach(() => {
@@ -215,7 +222,13 @@ describe('AlertmanagerPageWrapper', () => {
   });
 
   describe('ImportToGMA banner', () => {
-    testWithFeatureToggles({ enable: ['alertingMigrationWizardUI'] });
+    beforeEach(() => setTestFlags(IMPORT_WIZARD_FLAGS));
+    // The reset fires OpenFeature events while components are still mounted, so it needs act.
+    afterEach(async () => {
+      await act(async () => {
+        setTestFlags();
+      });
+    });
 
     const importBanner = byRole('link', { name: /import to grafana alerting/i });
 
@@ -241,8 +254,9 @@ describe('AlertmanagerPageWrapper', () => {
         }
       );
 
-    it('shows the import banner when an external Alertmanager is selected and the user can import notifications', async () => {
+    it('shows the import banner when an external Alertmanager is selected and an admin can import notifications', async () => {
       const externalAm = setupExternalAlertmanager();
+      grantUserRole(OrgRole.Admin);
       grantUserPermissions([
         AccessControlAction.AlertingNotificationsRead,
         AccessControlAction.AlertingNotificationsExternalRead,
@@ -282,8 +296,30 @@ describe('AlertmanagerPageWrapper', () => {
       expect(importBanner.query()).not.toBeInTheDocument();
     });
 
+    it('does not show the import banner to a non-admin who can write notifications, since it links to the admin-only Import tab', async () => {
+      const externalAm = setupExternalAlertmanager();
+      grantUserRole(OrgRole.Editor);
+      grantUserPermissions([
+        AccessControlAction.AlertingNotificationsRead,
+        AccessControlAction.AlertingNotificationsExternalRead,
+        AccessControlAction.AlertingNotificationsWrite,
+      ]);
+
+      renderWithSelectedAlertmanager(externalAm.name);
+
+      expect(await screen.findByText('Test content')).toBeInTheDocument();
+      expect(importBanner.query()).not.toBeInTheDocument();
+    });
+
     describe('while Mimir Alertmanager auto-sync is active', () => {
-      testWithFeatureToggles({ enable: ['alertingMigrationWizardUI', 'alerting.syncExternalAlertmanager'] });
+      testWithFeatureToggles({ enable: ['alerting.syncExternalAlertmanager'] });
+      beforeEach(() => setTestFlags(IMPORT_WIZARD_FLAGS));
+      // The reset fires OpenFeature events while components are still mounted, so it needs act.
+      afterEach(async () => {
+        await act(async () => {
+          setTestFlags();
+        });
+      });
 
       it('does not show the import banner', async () => {
         const externalAm = setupExternalAlertmanager();

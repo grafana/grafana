@@ -44,6 +44,7 @@ var (
 	sqlResourceHistoryInsert               = mustTemplate("resource_history_insert.sql")
 	sqlResourceHistoryInsertBulk           = mustTemplate("resource_history_insert_bulk.sql")
 	sqlResourceHistoryPoll                 = mustTemplate("resource_history_poll.sql")
+	sqlResourceHistoryBatchRead            = mustTemplate("resource_history_batch_read.sql")
 	sqlResourceHistoryGet                  = mustTemplate("resource_history_get.sql")
 	sqlResourceHistoryDelete               = mustTemplate("resource_history_delete.sql")
 	sqlResourceHistoryPrune                = mustTemplate("resource_history_prune.sql")
@@ -242,6 +243,30 @@ func (r *sqlResourceHistoryPollRequest) Results() (*historyPollResponse, error) 
 		Value:           r.Response.Value,
 		Action:          r.Response.Action,
 	}, nil
+}
+
+// sqlResourceHistoryBatchReadRequest reads the history rows of one collection
+// at the given resource versions.
+type sqlResourceHistoryBatchReadRequest struct {
+	sqltemplate.SQLTemplate
+	Group            string
+	Resource         string
+	ResourceVersions []int64
+	Response         *historyPollResponse
+}
+
+func (r *sqlResourceHistoryBatchReadRequest) Validate() error {
+	if r.Group == "" || r.Resource == "" {
+		return fmt.Errorf("missing group or resource")
+	}
+	if len(r.ResourceVersions) == 0 {
+		return fmt.Errorf("missing resource versions")
+	}
+	return nil
+}
+
+func (r *sqlResourceHistoryBatchReadRequest) Results() (*historyPollResponse, error) {
+	return (&sqlResourceHistoryPollRequest{Response: r.Response}).Results()
 }
 
 // sqlResourceReadRequest can be used to retrieve a row fromthe "resource" tables.

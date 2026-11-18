@@ -10,14 +10,16 @@ import { isPendingChangesEnabled } from './pendingChangesFlag';
 /**
  * Pending changes preview. Grafana doesn't store pending changes: the plugin that proposed
  * them (Grafana Assistant) keeps them and registers a loader at
- * PENDING_CHANGES_EXTENSION_POINT. A dashboard opens with one set of them under a banner, when
- * the page URL has `?pendingChanges=<id>` or the embedded dashboard view is given an id. The
- * preview is read-only, except on the page when the plugin keeps their history (`history`):
- * there each edit is recorded as the pending changes, and Undo and Redo step through the
- * plugin's history instead of the dashboard's own (see pendingChangesHistory.ts). Apply still
- * saves the dashboard. **Show original** switches to the saved dashboard; the choice is kept per dashboard
- * and id for the browser tab, so a reload keeps it. The page and the embedded view each keep
- * their own preview, so the same dashboard can be open in both.
+ * PENDING_CHANGES_EXTENSION_POINT. A dashboard opens with one set of them when the page URL has
+ * `?pendingChanges=<id>` or the embedded dashboard view is given an id. On the page, when the
+ * plugin keeps their history (`history`), they open in edit mode as unsaved changes to the saved
+ * version: each edit is recorded as the pending changes, Undo and Redo step through the plugin's
+ * history instead of the dashboard's own (see pendingChangesHistory.ts), and the dashboard's own
+ * Save and Discard save or discard them (see pendingChangesSave.ts). Elsewhere, and where the page
+ * can't edit them, the preview is read-only under a banner. The embedded view's banner can switch to
+ * the saved dashboard (**Show original**); the choice is kept per dashboard and id for the browser
+ * tab, so a reload keeps it. The page and the embedded view each keep their own preview, so the same
+ * dashboard can be open in both.
  *
  * Pending changes based on version 0 propose a new dashboard under a uid nothing has yet. It
  * opens as an unsaved dashboard, and saving it creates it under that uid (`newDashboardUid` in
@@ -31,8 +33,8 @@ const PENDING_CHANGES_EXTENSION_POINT = 'grafana/dashboard/pending-changes/v1';
 export const PENDING_CHANGES_QUERY_PARAM = 'pendingChanges';
 
 /**
- * With `original`, the dashboard page shows the saved dashboard instead of the pending changes,
- * with a way back to them. In the URL so a plugin linking to the page can tell which it shows.
+ * With `original`, the dashboard page used to show the saved dashboard instead of the pending
+ * changes. The page always shows them now, and drops this from the URL with the preview.
  */
 export const PENDING_CHANGES_VIEW_QUERY_PARAM = 'pendingChangesView';
 
@@ -75,9 +77,11 @@ export interface DashboardPendingChanges {
   /**
    * Saves the changes to the dashboard as the requester, then forgets them. Without force,
    * reports the dashboard's current version instead when it moved on from baseGeneration.
-   * Not called for a new dashboard, which the requester saves instead.
+   * `message` is the requester's note for the dashboard's version history, empty when they wrote
+   * none; older Grafana versions leave it out. Not called for a new dashboard, which the requester
+   * saves instead.
    */
-  apply(options: { force: boolean }): Promise<ApplyPendingChangesResult>;
+  apply(options: { force: boolean; message?: string }): Promise<ApplyPendingChangesResult>;
   /** Without it, the preview is read-only. */
   history?: PendingChangesHistory;
   /** Forgets the changes; the dashboard isn't affected. Also called once a new dashboard was saved. */
@@ -91,9 +95,6 @@ type DashboardPendingChangesLoader = (request: { uid: string; id: string }) => P
 /** The embedded view's Show original choices, which have no URL to live in. */
 const ORIGINAL_VIEW_KEY = 'grafana.dashboard.pendingChanges.showOriginal';
 
-/** The pending changes whose highlights the requester turned off, for the browser tab. */
-const UNHIGHLIGHTED_KEY = 'grafana.dashboard.pendingChanges.unhighlighted';
-
 /** Where a dashboard is shown: the dashboard page, or the embedded dashboard view. */
 export type PendingChangesView = 'page' | 'embedded';
 
@@ -105,6 +106,16 @@ export interface PendingChangePreview {
   pending: DashboardPendingChanges;
   /** True while the scene shows the proposed spec; false while it shows the saved dashboard. */
   previewing: boolean;
+  /**
+   * The saved version the pending changes would replace, as stored, while a saved dashboard shows
+   * them: changes are measured from it.
+   */
+  saved?: { spec: DashboardV2Spec; generation: number };
+  /**
+   * The blank dashboard a new one starts from, while a draft shows them: its save form measures
+   * changes from it, as for a dashboard made from scratch.
+   */
+  newDashboard?: DashboardV2Spec;
 }
 
 const previews = new Map<string, PendingChangePreview>();
@@ -124,29 +135,19 @@ function storedViews(storageKey: string): Set<string> {
   }
 }
 
-/** Whether the requester chose to see the saved dashboard instead of these pending changes. */
+/**
+ * Whether the requester chose to see the saved dashboard instead of these pending changes. Only the
+ * embedded view's banner offers that: the page edits them, with Undo and the save form's diff.
+ */
 function isShowingOriginal(view: PendingChangesView, uid: string, id: string): boolean {
-  return view === 'page'
-    ? locationService.getSearchObject()[PENDING_CHANGES_VIEW_QUERY_PARAM] === 'original'
-    : storedViews(ORIGINAL_VIEW_KEY).has(viewKey(uid, id));
+  return view === 'embedded' && storedViews(ORIGINAL_VIEW_KEY).has(viewKey(uid, id));
 }
 
 /**
- * Shows the saved dashboard instead of the pending changes, or the pending changes again. The
- * page changes its URL, which reloads it; the embedded view remembers the choice for the tab and
- * reloads itself (`reload`).
+ * Shows the saved dashboard in the embedded view instead of the pending changes, or the pending
+ * changes again: it remembers the choice for the tab and reloads itself (`reload`).
  */
-export async function showOriginal(
-  view: PendingChangesView,
-  uid: string,
-  id: string,
-  original: boolean,
-  reload: () => Promise<void>
-) {
-  if (view === 'page') {
-    locationService.partial({ [PENDING_CHANGES_VIEW_QUERY_PARAM]: original ? 'original' : null }, true);
-    return;
-  }
+export async function showOriginal(uid: string, id: string, original: boolean, reload: () => Promise<void>) {
   setShowOriginal(uid, id, original);
   await reload();
 }
@@ -169,16 +170,9 @@ function setShowOriginal(uid: string, id: string, showOriginal: boolean) {
   setStoredView(ORIGINAL_VIEW_KEY, uid, id, showOriginal);
 }
 
-/**
- * Whether these pending changes are highlighted: unless the requester turned it off. Kept for the
- * tab, because a new change from the plugin reloads the dashboard and its banner.
- */
-export function isHighlightingChanges(uid: string, id: string): boolean {
-  return !storedViews(UNHIGHLIGHTED_KEY).has(viewKey(uid, id));
-}
-
-export function setHighlightingChanges(uid: string, id: string, on: boolean) {
-  setStoredView(UNHIGHLIGHTED_KEY, uid, id, !on);
+/** Whether someone saved the dashboard since the pending changes started from it. */
+export function isPendingChangesStale(preview: Pick<PendingChangePreview, 'pending' | 'saved'>): boolean {
+  return preview.saved !== undefined && preview.saved.generation !== preview.pending.baseGeneration;
 }
 
 /** Whether the pending changes propose a new dashboard rather than change a saved one. */
@@ -307,7 +301,7 @@ export async function loadPendingChangePreview(
   return undefined;
 }
 
-/** Forgets a dashboard's pending changes, in every view, after they were applied or discarded. */
+/** Forgets a dashboard's pending changes, in every view, after they were saved or discarded. */
 export function clearPendingChangePreview(uid: string, id: string) {
   for (const view of ['page', 'embedded'] as const) {
     if (previews.get(previewKey(view, uid))?.id === id) {
@@ -315,7 +309,21 @@ export function clearPendingChangePreview(uid: string, id: string) {
     }
   }
   setShowOriginal(uid, id, false);
-  setHighlightingChanges(uid, id, true);
+}
+
+/**
+ * Takes the pending changes preview out of the dashboard page URL once they are applied or
+ * discarded, so the page shows the saved dashboard and no longer names them: another
+ * conversation's pending changes can then open on it. The page loads the dashboard again for the
+ * new URL. Returns false when the URL names no preview, so nothing reloads the page.
+ */
+export function stopPreviewingPendingChanges(): boolean {
+  const params = locationService.getSearchObject();
+  if (params[PENDING_CHANGES_QUERY_PARAM] === undefined && params[PENDING_CHANGES_VIEW_QUERY_PARAM] === undefined) {
+    return false;
+  }
+  locationService.partial({ [PENDING_CHANGES_QUERY_PARAM]: null, [PENDING_CHANGES_VIEW_QUERY_PARAM]: null }, true);
+  return true;
 }
 
 /** A dashboard page search string without the pending changes preview. */
@@ -325,6 +333,19 @@ export function withoutPendingChangesPreview(search: string): string {
   params.delete(PENDING_CHANGES_VIEW_QUERY_PARAM);
   const rest = params.toString();
   return rest ? `?${rest}` : '';
+}
+
+/**
+ * After the requester saved a copy of a dashboard showing pending changes: the copy has them, so the
+ * plugin discards them. A failed discard leaves them as they were before the copy.
+ */
+export async function finishCopyingPendingChanges(uid: string, preview: PendingChangePreview): Promise<void> {
+  clearPendingChangePreview(uid, preview.id);
+  try {
+    await preview.pending.discard();
+  } catch {
+    // See above.
+  }
 }
 
 /**
