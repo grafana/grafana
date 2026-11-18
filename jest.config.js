@@ -55,7 +55,8 @@ module.exports = {
     customExportConditions: ['@grafana-app/source', 'browser'],
   },
   transform: {
-    '^.+\\.(ts|tsx|js|jsx|mjs)$': [require.resolve('ts-jest')],
+    // the TypeScript native API that ts-jest compiles with ships with TypeScript 7.1
+    '^.+\\.(ts|tsx|js|jsx|mjs)$': [require.resolve('ts-jest'), { compiler: 'typescript-7.1' }],
   },
   transformIgnorePatterns: [
     // Transform listed ESM packages at the top level or nested under another package

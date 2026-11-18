@@ -48,6 +48,11 @@ packageExtensions:
   "doctrine@3.0.0":
     dependencies:
       assert: 2.0.0
+  # ts-jest compiles with the TypeScript native API, which needs TypeScript 7.1, while the rest of the repo stays
+  # on TypeScript 7.0 (jest.config.js selects it with ts-jest's `compiler` option)
+  "ts-jest":
+    dependencies:
+      typescript-7.1: npm:typescript@7.1.0-beta
 
 patchedDependencies:
   "history@4.10.1": patches/history-npm-4.10.1-ee217563ae.patch
