@@ -25,6 +25,7 @@ import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/Opti
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
 import { saveLibPanel } from 'app/features/library-panels/state/api';
 import { vizSuggestionsTracker } from 'app/features/panel/components/VizTypePicker/interactions';
+import { isManagedByRepository } from 'app/features/provisioning/utils/managedResource';
 import { createDefaultQuery } from 'app/features/query/state/queryDefaults';
 
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
@@ -64,6 +65,8 @@ export interface PanelEditorState extends SceneObjectState {
   dataPane?: PanelDataPane | PanelDataPaneNext;
   panelRef: SceneObjectRef<VizPanel>;
   showLibraryPanelSaveModal?: boolean;
+  /** Repository-managed library panels are saved by committing them to Git through this drawer. */
+  showLibraryPanelSaveDrawer?: boolean;
   showLibraryPanelUnlinkModal?: boolean;
   tableView?: VizPanel;
   pluginLoadError?: string;
@@ -88,6 +91,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   private _layoutItem: DashboardLayoutItem;
   private _originalSaveModel!: Panel;
   private _changesHaveBeenMade = false;
+  private _afterLibraryPanelSave?: () => void;
 
   public constructor(state: PanelEditorState) {
     super(state);
@@ -397,14 +401,32 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     this.setState({ showLibraryPanelSaveModal: true });
   };
 
-  public onConfirmSaveLibraryPanel = () => {
+  /** `afterSave` runs once the panel is saved, which for a repository-managed panel is after the Git commit. */
+  public onConfirmSaveLibraryPanel = (afterSave?: () => void) => {
+    this._afterLibraryPanelSave = afterSave;
+    const loadedPanel = this.getLibraryPanelBehavior()?.state._loadedPanel;
+    if (loadedPanel && isManagedByRepository(loadedPanel)) {
+      this.setState({ showLibraryPanelSaveModal: false, showLibraryPanelSaveDrawer: true });
+      return;
+    }
     saveLibPanel(this.state.panelRef.resolve());
-    this.setState({ isDirty: false });
-    locationService.partial({ editPanel: null });
+    this.onLibraryPanelSaved();
+  };
+
+  /** `leaveEditor` is false when the save navigates elsewhere, e.g. to the pull-request banner. */
+  public onLibraryPanelSaved = (leaveEditor = true) => {
+    const afterSave = this._afterLibraryPanelSave;
+    this._afterLibraryPanelSave = undefined;
+    this.setState({ isDirty: false, showLibraryPanelSaveDrawer: false });
+    if (leaveEditor) {
+      locationService.partial({ editPanel: null });
+      afterSave?.();
+    }
   };
 
   public onDismissLibraryPanelSaveModal = () => {
-    this.setState({ showLibraryPanelSaveModal: false });
+    this._afterLibraryPanelSave = undefined;
+    this.setState({ showLibraryPanelSaveModal: false, showLibraryPanelSaveDrawer: false });
   };
 
   public onUnlinkLibraryPanel = () => {

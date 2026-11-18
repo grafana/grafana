@@ -12,17 +12,20 @@ import { PanelTypeCard } from 'app/features/panel/components/VizTypePicker/Panel
 
 import { type LibraryElementDTO } from '../../types';
 import { DeleteLibraryPanelModal } from '../DeleteLibraryPanelModal/DeleteLibraryPanelModal';
+import { LibraryPanelManagedBadge } from '../LibraryPanelManagedBadge';
 
 interface LibraryPanelCardProps {
   libraryPanel: LibraryElementDTO;
   onClick: (panel: LibraryElementDTO) => void;
   onDelete?: (panel: LibraryElementDTO) => void;
+  /** Reloads the list after a repository-managed panel is deleted through Git. */
+  onRefresh?: () => void;
   showSecondaryActions?: boolean;
 }
 
 type Props = LibraryPanelCardProps & { children?: JSX.Element | JSX.Element[] };
 
-const LibraryPanelCardComponent = ({ libraryPanel, onClick, onDelete, showSecondaryActions }: Props) => {
+const LibraryPanelCardComponent = ({ libraryPanel, onClick, onDelete, onRefresh, showSecondaryActions }: Props) => {
   const [showDeletionModal, setShowDeletionModal] = useState(false);
 
   const onDeletePanel = () => {
@@ -44,11 +47,16 @@ const LibraryPanelCardComponent = ({ libraryPanel, onClick, onDelete, showSecond
         onDelete={showSecondaryActions ? () => setShowDeletionModal(true) : undefined}
       >
         <FolderLink libraryPanel={libraryPanel} />
+        {/* The badge's source menu must not also select the card. */}
+        <div role="presentation" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+          <LibraryPanelManagedBadge panel={libraryPanel} />
+        </div>
       </PanelTypeCard>
       {showDeletionModal && (
         <DeleteLibraryPanelModal
           libraryPanel={libraryPanel}
           onConfirm={onDeletePanel}
+          onDeleted={onRefresh}
           onDismiss={() => setShowDeletionModal(false)}
         />
       )}

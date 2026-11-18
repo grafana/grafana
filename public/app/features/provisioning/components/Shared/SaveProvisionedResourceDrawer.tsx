@@ -67,6 +67,8 @@ interface BaseDrawerProps {
    * resolve the repository.
    */
   resource: ProvisionedResource;
+  /** Committed file body, for kinds whose resource keeps data outside `spec`. Defaults to the resource's spec. */
+  body?: Record<string, unknown>;
   /**
    * Human-readable title for the drawer subtitle, the commit message and a new resource's file slug.
    * Passed explicitly rather than read from `spec.title` because the title field isn't consistent
@@ -307,6 +309,7 @@ type ResourceDrawerContentProps = SaveProvisionedResourceDrawerProps & { kind: R
 function ResourceDrawerContent({
   kind,
   resource,
+  body: fileBody,
   action,
   title,
   repositoryName,
@@ -344,7 +347,12 @@ function ResourceDrawerContent({
   // Delete removes the file, so it commits no body; create/update commit the standard resource shape.
   const body = isDelete
     ? undefined
-    : { apiVersion: resource.apiVersion, kind: resource.kind, metadata: { name: resourceName }, spec: resource.spec };
+    : (fileBody ?? {
+        apiVersion: resource.apiVersion,
+        kind: resource.kind,
+        metadata: { name: resourceName },
+        spec: resource.spec,
+      });
 
   // Branch names can't contain spaces, so prefix from the stable `key`, not the display noun.
   const prefix = branchPrefix ?? kind.key;

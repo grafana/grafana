@@ -1,4 +1,6 @@
 import { type SceneComponentProps } from '@grafana/scenes';
+import { SaveProvisionedLibraryPanelDrawer } from 'app/features/library-panels/components/SaveProvisionedLibraryPanelDrawer';
+import { libraryVizPanelToSaveModel } from 'app/features/library-panels/state/api';
 
 import { UnlinkModal } from '../scene/UnlinkModal';
 
@@ -8,7 +10,7 @@ import { SaveLibraryVizPanelModal } from './SaveLibraryVizPanelModal';
 // Both panel editor renderers (v1 and PanelEditNext) open these modals by toggling state on the
 // PanelEditor, so they render here to avoid code duplication.
 export function LibraryPanelEditModals({ model }: SceneComponentProps<PanelEditor>) {
-  const { showLibraryPanelSaveModal, showLibraryPanelUnlinkModal } = model.useState();
+  const { showLibraryPanelSaveModal, showLibraryPanelSaveDrawer, showLibraryPanelUnlinkModal } = model.useState();
   const libraryPanel = model.getLibraryPanelBehavior();
 
   if (!libraryPanel) {
@@ -23,6 +25,15 @@ export function LibraryPanelEditModals({ model }: SceneComponentProps<PanelEdito
           onDismiss={model.onDismissLibraryPanelSaveModal}
           onConfirm={model.onConfirmSaveLibraryPanel}
           onDiscard={model.onDiscard}
+        />
+      )}
+      {showLibraryPanelSaveDrawer && (
+        <SaveProvisionedLibraryPanelDrawer
+          action="update"
+          panel={libraryVizPanelToSaveModel(model.getPanel())}
+          onDismiss={model.onDismissLibraryPanelSaveModal}
+          onWriteSuccess={() => model.onLibraryPanelSaved()}
+          onBranchSaved={() => model.onLibraryPanelSaved(false)}
         />
       )}
       {showLibraryPanelUnlinkModal && (

@@ -221,6 +221,12 @@ export function k8sResourceToLegacyDTO(
 
   return {
     uid: metadata.name,
+    metadata: {
+      ...metadata,
+      annotations: Object.fromEntries(
+        Object.entries(annotations).filter((entry): entry is [string, string] => typeof entry[1] === 'string')
+      ),
+    },
     folderUid,
     name: item.spec.title ?? '',
     type: item.spec.type,

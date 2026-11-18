@@ -1,3 +1,4 @@
+import { customAlphabet } from 'nanoid';
 import { useCallback, useEffect, useState } from 'react';
 import { useAsync, useDebounce } from 'react-use';
 
@@ -6,11 +7,19 @@ import { Trans, t } from '@grafana/i18n';
 import { type FetchError, isFetchError } from '@grafana/runtime';
 import { type LibraryPanel } from '@grafana/schema';
 import { Button, Field, Input, Stack } from '@grafana/ui';
+import { isK8sLibraryPanelsClientEnabled } from 'app/api/clients/dashboard/v0alpha1/libraryPanels';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
+import { RepositorySelect } from 'app/features/provisioning/components/Shared/RepositorySelect';
+import { useResourceRepositorySelection } from 'app/features/provisioning/hooks/useResourceRepositorySelection';
+import { resourceKindInfos } from 'app/features/provisioning/utils/resourceKinds';
 
 import { type PanelModel } from '../../../dashboard/state/PanelModel';
 import { getLibraryPanelByName } from '../../state/api';
 import { usePanelSave } from '../../utils/usePanelSave';
+import { SaveProvisionedLibraryPanelDrawer } from '../SaveProvisionedLibraryPanelDrawer';
+
+// A repository create commits the panel under a name chosen here, so the dashboard panel can be linked to it.
+const generateUid = customAlphabet('abcdefghijklmnopqrstuvwxyz0123456789', 12);
 
 interface AddLibraryPanelContentsProps {
   onDismiss?: () => void;
@@ -29,6 +38,12 @@ export const AddLibraryPanelContents = ({
   const [panelName, setPanelName] = useState(panel.title);
   const [debouncedPanelName, setDebouncedPanelName] = useState(panel.title);
   const [waiting, setWaiting] = useState(false);
+  const { isAvailable, repositories } = useResourceRepositorySelection(resourceKindInfos.librarypanel);
+  // Repository ownership is only visible through the app-platform client, which keeps the annotations.
+  const { value: k8sClientEnabled } = useAsync(isK8sLibraryPanelsClientEnabled, []);
+  // No selection = save to Grafana; a repository name routes the save through the provisioning drawer.
+  const [repositoryName, setRepositoryName] = useState('');
+  const [provisionedPanel, setProvisionedPanel] = useState<Pick<LibraryPanel, 'uid' | 'name' | 'model'>>();
 
   useEffect(() => setWaiting(true), [panelName]);
   useDebounce(() => setDebouncedPanelName(panelName), 350, [panelName]);
@@ -36,6 +51,11 @@ export const AddLibraryPanelContents = ({
   const { saveLibraryPanel } = usePanelSave();
 
   const onCreate = useCallback(() => {
+    if (repositoryName) {
+      const { scopedVars, ...model } = panel.getSaveModel();
+      setProvisionedPanel({ uid: generateUid(), name: panelName, model });
+      return;
+    }
     panel.libraryPanel = { uid: '', name: panelName };
 
     saveLibraryPanel(panel, folderUid!).then((res: LibraryPanel | FetchError) => {
@@ -46,7 +66,7 @@ export const AddLibraryPanelContents = ({
         panel.libraryPanel = undefined;
       }
     });
-  }, [panel, panelName, saveLibraryPanel, folderUid, onDismiss, onCreateLibraryPanel]);
+  }, [panel, panelName, repositoryName, saveLibraryPanel, folderUid, onDismiss, onCreateLibraryPanel]);
 
   const isValidName = useAsync(async () => {
     try {
@@ -61,8 +81,13 @@ export const AddLibraryPanelContents = ({
     }
   }, [debouncedPanelName, folderUid]);
 
+  // A repository create places the panel by its file path, not by the folder checked here.
   const invalidInput =
-    !isValidName?.value && isValidName.value !== undefined && panelName === debouncedPanelName && !waiting;
+    !repositoryName &&
+    !isValidName?.value &&
+    isValidName.value !== undefined &&
+    panelName === debouncedPanelName &&
+    !waiting;
 
   return (
     <Stack direction="column" gap={2}>
@@ -80,16 +105,21 @@ export const AddLibraryPanelContents = ({
           onChange={(e) => setPanelName(e.currentTarget.value)}
         />
       </Field>
-      <Field
-        noMargin
-        label={t('library-panel.add-modal.folder', 'Save in folder')}
-        description={t(
-          'library-panel.add-modal.folder-description',
-          'Library panel permissions are derived from the folder permissions'
-        )}
-      >
-        <FolderPicker onChange={(uid) => setFolderUid(uid)} value={folderUid} />
-      </Field>
+      {isAvailable && k8sClientEnabled && (
+        <RepositorySelect repositories={repositories} value={repositoryName} onChange={setRepositoryName} />
+      )}
+      {!repositoryName && (
+        <Field
+          noMargin
+          label={t('library-panel.add-modal.folder', 'Save in folder')}
+          description={t(
+            'library-panel.add-modal.folder-description',
+            'Library panel permissions are derived from the folder permissions'
+          )}
+        >
+          <FolderPicker onChange={(uid) => setFolderUid(uid)} value={folderUid} />
+        </Field>
+      )}
       <Stack gap={1} justifyContent={'start'}>
         <Button
           onClick={onCreate}
@@ -102,6 +132,19 @@ export const AddLibraryPanelContents = ({
           <Trans i18nKey="share-panel.new-library-panel.cancel-button">Cancel</Trans>
         </Button>
       </Stack>
+      {provisionedPanel && (
+        <SaveProvisionedLibraryPanelDrawer
+          action="create"
+          repositoryName={repositoryName}
+          panel={provisionedPanel}
+          onDismiss={() => setProvisionedPanel(undefined)}
+          onWriteSuccess={() => {
+            onDismiss?.();
+            // Linking only needs the identity: the library panel behavior loads the committed panel itself.
+            onCreateLibraryPanel?.({ ...provisionedPanel, type: provisionedPanel.model.type, version: 0 });
+          }}
+        />
+      )}
     </Stack>
   );
 };

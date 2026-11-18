@@ -62,9 +62,8 @@ export const DashboardPrompt = memo(({ dashboard }: DashboardPromptProps) => {
         isUnsavedPrompt: true,
         libraryPanel: libPanelBehavior!,
         onConfirm: () => {
-          panelEditor.onConfirmSaveLibraryPanel();
           hideModal();
-          moveToBlockedLocationAfterReactStateUpdate(location);
+          panelEditor.onConfirmSaveLibraryPanel(() => moveToBlockedLocationAfterReactStateUpdate(location));
         },
         onDiscard: () => {
           panelEditor.onDiscard();

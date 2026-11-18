@@ -3,6 +3,7 @@ import { css } from '@emotion/css';
 import { type GrafanaTheme2, dateTimeFormat } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
+import { LibraryPanelManagedBadge } from 'app/features/library-panels/components/LibraryPanelManagedBadge';
 
 import { type LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 
@@ -15,13 +16,15 @@ export const LibraryVizPanelInfo = ({ libraryPanel }: Props) => {
 
   const libraryPanelState = libraryPanel.useState();
   const tz = libraryPanelState.$timeRange?.getTimeZone();
-  const meta = libraryPanelState._loadedPanel?.meta;
-  if (!meta) {
+  const loadedPanel = libraryPanelState._loadedPanel;
+  const meta = loadedPanel?.meta;
+  if (!loadedPanel || !meta) {
     return null;
   }
 
   return (
     <div className={styles.info}>
+      <LibraryPanelManagedBadge panel={loadedPanel} />
       <div className={styles.libraryPanelInfo}>
         <Trans
           i18nKey="dashboard-scene.library-viz-panel-info.usage-count"
