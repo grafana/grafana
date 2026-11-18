@@ -291,6 +291,42 @@ describe('PillCell', () => {
       expectTagColors(screen.getByText('value1'), background, text);
     });
 
+    it.each([false, true])('preserves categorical numeric pills with default thresholds (refresh: %s)', (refresh) => {
+      const field = fieldWithValues(['200,404,500']);
+      field.config.color = { mode: FieldColorModeId.Thresholds };
+      field.config.thresholds = {
+        mode: ThresholdsMode.Absolute,
+        steps: [
+          { value: -Infinity, color: 'green' },
+          { value: 80, color: 'red' },
+        ],
+      };
+      const selectedTheme = refresh ? refreshTheme : theme;
+      const { rerender } = render(
+        <ThemeContext.Provider value={selectedTheme}>
+          <PillCell
+            getTextColorForBackground={getTextColorForBackground}
+            field={field}
+            rowIdx={0}
+            theme={selectedTheme}
+          />
+        </ThemeContext.Provider>
+      );
+      const colors = ['200', '404', '500'].map((value) => screen.getByText(value).getAttribute('style'));
+      const categoricalField = { ...field, config: {} };
+      rerender(
+        <ThemeContext.Provider value={selectedTheme}>
+          <PillCell
+            getTextColorForBackground={getTextColorForBackground}
+            field={categoricalField}
+            rowIdx={0}
+            theme={selectedTheme}
+          />
+        </ThemeContext.Provider>
+      );
+      expect(['200', '404', '500'].map((value) => screen.getByText(value).getAttribute('style'))).toEqual(colors);
+    });
+
     it('keeps a fixed field color as the background and derives contrasting text', () => {
       const mockField = fieldWithValues(['value1']);
       const fixed = {
@@ -359,21 +395,25 @@ describe('PillCell', () => {
       );
     });
 
-    it('uses the numeric pill range for a continuous scale', () => {
-      const field = fieldWithValues(['10,20,30']);
-      field.config.color = { mode: FieldColorModeId.ContinuousBlues };
+    it.each([undefined, { min: null, max: null }, { min: 0, max: 100 }])(
+      'uses the numeric pill range for a continuous scale with cached calcs %j',
+      (calcs) => {
+        const field = fieldWithValues(['10,20,30']);
+        field.config.color = { mode: FieldColorModeId.ContinuousBlues };
+        field.state = { calcs };
 
-      expectHTML(
-        render(
-          <PillCell getTextColorForBackground={getTextColorForBackground} field={field} rowIdx={0} theme={theme} />
-        ),
-        `
+        expectHTML(
+          render(
+            <PillCell getTextColorForBackground={getTextColorForBackground} field={field} rowIdx={0} theme={theme} />
+          ),
+          `
         <span style="background-color: rgb(24, 27, 31); color: rgb(247, 248, 250);">10</span>
         <span style="background-color: rgb(28, 62, 114); color: rgb(247, 248, 250);">20</span>
         <span style="background-color: rgb(31, 96, 196); color: rgb(247, 248, 250);">30</span>
         `
-      );
-    });
+        );
+      }
+    );
 
     it('uses the numeric pill range for percentage thresholds', () => {
       const field = fieldWithValues(['10,20,30']);

@@ -16,7 +16,7 @@ import {
   isNumeric,
   formattedValueToString,
 } from '@grafana/data';
-import { FieldColorModeId } from '@grafana/schema';
+import { FieldColorModeId, ThresholdsMode } from '@grafana/schema';
 
 import { getTagColor, getTagColorIndexFromName, getTransparentOutlineColor } from '../../../../utils/tags';
 import { Tag } from '../../../Tags/Tag';
@@ -118,7 +118,20 @@ function createPillColorResolver(field: Field, theme: GrafanaTheme2): PillColorR
   const mode = cfg.color && getFieldColorModeForField(field);
   const hasMappings = Boolean(cfg.mappings?.length);
   const usesSchemeScale = mode?.isByValue && mode.id !== FieldColorModeId.Thresholds;
-  const usesThresholdScale = !hasMappings && mode?.id === FieldColorModeId.Thresholds;
+  const thresholds = cfg.thresholds;
+  // Standard thresholds are implicit on existing dashboards, including categorical numeric tokens.
+  const hasCustomThresholds =
+    thresholds &&
+    (thresholds.mode !== ThresholdsMode.Absolute ||
+      thresholds.steps.length !== 2 ||
+      thresholds.steps[0].color !== 'green' ||
+      (thresholds.steps[0].value != null && thresholds.steps[0].value !== -Infinity) ||
+      thresholds.steps[1].color !== 'red' ||
+      thresholds.steps[1].value !== 80);
+  const usesThresholdScale =
+    !hasMappings &&
+    mode?.id === FieldColorModeId.Thresholds &&
+    (field.type === FieldType.number || hasCustomThresholds);
   const scaleField = usesSchemeScale || usesThresholdScale ? getPillScaleField(field) : field;
   const schemeScale = usesSchemeScale ? getScaleCalculator(scaleField, theme) : undefined;
   const thresholdScale = usesThresholdScale ? getScaleCalculator(scaleField, theme) : undefined;
@@ -195,7 +208,7 @@ function getPillScaleField(field: Field): Field {
     ...field,
     type: FieldType.number,
     values,
-    state: field.state ? { ...field.state, range: undefined } : undefined,
+    state: field.state ? { ...field.state, range: undefined, calcs: undefined } : undefined,
   };
 }
 
