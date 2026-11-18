@@ -10,6 +10,13 @@ import { type CODE_MIRROR_LANGUAGES } from './languages';
 export type CodeMirrorCompletion = Completion;
 export type CodeMirrorCompletionContext = CompletionContext;
 export type CodeMirrorCompletionResult = CompletionResult;
+
+/**
+ * Receives Grafana's completion context. Plugin sources can use its methods
+ * directly, such as `context.matchBefore()` and `context.state.sliceDoc()`.
+ * Helpers that look up state fields must use the same CodeMirror instance as
+ * the editor state.
+ */
 export type CodeMirrorCompletionSource = CompletionSource;
 
 export type CodeMirrorExtension = Extension;
@@ -79,7 +86,7 @@ export interface CodeMirrorDiffEditorProps {
  */
 export type CodeMirrorSqlDialect = 'standardSql' | 'mySql';
 
-/** CSS properties, or nested selectors, applied to one theme selector. */
+/** CSS properties and nested selectors that use `&` to refer to the parent. */
 export interface CodeMirrorStyle {
   [propertyOrSelector: string]: string | number | CodeMirrorStyle | null;
 }
@@ -149,6 +156,8 @@ export interface SignatureHelp {
 
 /**
  * Computes signature help for the cursor position, or `null` when none applies.
+ * Plugin providers can read the document with `state.sliceDoc()`. Helpers such
+ * as `syntaxTree` must use the same CodeMirror instance as the editor state.
  */
 export type SignatureHelpProvider = (state: EditorState, pos: number) => SignatureHelp | null;
 
