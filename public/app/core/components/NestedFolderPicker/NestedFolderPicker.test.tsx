@@ -745,10 +745,15 @@ describe('NestedFolderPicker', () => {
       expect(mockOnChange).toHaveBeenCalledWith(folderA_folderA.item.uid, folderA_folderA.item.title);
     });
 
-    it.each<{ name: string; flags: Parameters<typeof setTestFlags>[0]; permission: 'edit' | 'create' }>([
-      { name: 'the feature flag is off', flags: {}, permission: 'create' },
-      { name: 'the picker does not opt in', flags: readOnlyFlags, permission: 'edit' },
-    ])('does not show read only folders when $name', async ({ flags, permission }) => {
+    it.each<{
+      name: string;
+      flags: Parameters<typeof setTestFlags>[0];
+      permission: 'edit' | 'create';
+      sent: 'edit' | 'create';
+    }>([
+      { name: 'the feature flag is off', flags: {}, permission: 'create', sent: 'create' },
+      { name: 'the picker does not opt in', flags: readOnlyFlags, permission: 'edit', sent: 'edit' },
+    ])('does not show read only folders when $name', async ({ flags, permission, sent }) => {
       setTestFlags(flags);
       const requests: URLSearchParams[] = [];
       server.use(
@@ -765,8 +770,9 @@ describe('NestedFolderPicker', () => {
 
       expect(await screen.findByLabelText(folderA.item.title)).toBeInTheDocument();
       expect(screen.queryByRole('img', { name: 'Read only' })).not.toBeInTheDocument();
+      expect(requests.length).toBeGreaterThan(0);
       for (const params of requests) {
-        expect(params.get('permission')).toBe('edit');
+        expect(params.get('permission')).toBe(sent);
         expect(params.has('include')).toBe(false);
       }
     });
