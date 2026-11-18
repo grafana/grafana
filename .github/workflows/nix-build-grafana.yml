@@ -41,7 +41,7 @@ jobs:
           upstream-cache-filter: 'true'
           filter-drv-closures: 'true'
       - name: Cache shared build inputs
-        run: nix build -L --no-link .#backend-linux-amd64.goModules
+        run: nix build -L --no-link .#backend.goModules
       - id: matrix
         uses: Mic92/hestia/matrix@dfed9ced335d28978ba74e513939a10db1f71025 # v3.1.0
         with:
@@ -84,7 +84,7 @@ jobs:
       !cancelled() && needs.eval.result == 'success' &&
       (needs.build.result == 'success' ||
       (needs.build.result == 'skipped' && needs.eval.outputs.any-jobs == 'false'))
-    name: Package Linux AMD64 and ARM64 tarballs
+    name: Package release tarballs
     runs-on: ubuntu-x64-large
     steps:
       - uses: actions/checkout@v6
@@ -104,12 +104,14 @@ jobs:
           version: v3.1.0
           upstream-cache-filter: 'true'
           wait-manifest-version: ${{ needs.eval.outputs.manifest-version }}
+          # Keep the cache available for component outputs. Archives go to the artifact store.
+          read-only: 'true'
       - name: Build release tarballs
-        run: nix build -L .#tarball-linux-amd64 .#tarball-linux-arm64
+        run: nix build -L .#release-tarballs
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
-          name: grafana-nix-linux-tarballs
-          path: result*/*.tar.gz
+          name: grafana-nix-tarballs
+          path: result/*.tar.gz
           if-no-files-found: error
           compression-level: 0
           retention-days: 1

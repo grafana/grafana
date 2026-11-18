@@ -90,12 +90,10 @@
       ];
     in
     {
-      # Both Linux tarballs consume the same frontend from the AMD64 build host.
-      ciJobs = lib.getAttrs [
-        "frontend"
-        "backend-linux-amd64"
-        "backend-linux-arm64"
-      ] self.packages.x86_64-linux;
+      # All release tarballs in CI share the frontend from the AMD64 build host.
+      ciJobs = lib.filterAttrs (
+        name: _: name == "frontend" || lib.hasPrefix "backend-" name
+      ) self.packages.x86_64-linux;
 
       packages = lib.mapAttrs (
         system: nativeTarget:
@@ -268,6 +266,10 @@
         // {
           inherit backend frontend tarball;
           default = tarball;
+          release-tarballs = pkgs.symlinkJoin {
+            name = "grafana-release-tarballs-${version}";
+            paths = lib.mapAttrsToList (_: target: target.tarball) targetPackages;
+          };
         }
       ) systems;
     };

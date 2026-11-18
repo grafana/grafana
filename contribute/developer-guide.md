@@ -206,13 +206,14 @@ nix build .#backend             # Grafana binary for the current system
 nix build .#backend-linux-armv7  # Cross-compile a backend for Linux ARMv7
 nix build .#tarball              # Release archive for the current system
 nix build .#tarball-linux-amd64   # Release archive for Linux AMD64
+nix build .#release-tarballs      # Release archives for every configured target
 ```
 
 The tarball outputs package the target backend, production frontend, and [pinned catalog plugins](../nix/catalog-plugins.json) into the release layout. The `.tar.gz` in `result/` uses the filename expected by the existing DEB, RPM, and Docker build targets. Copy it to `dist/` and pass `-o dist/<archive>.tar.gz` to Make with the matching target and version to reuse the archive.
 
 On release builders, set `sandbox = true` and `sandbox-fallback = false` in the [Nix daemon configuration](https://nix.dev/manual/nix/latest/command-ref/conf-file#conf-sandbox). To verify the frontend, backend, and archive by rebuilding all three on a configured Linux builder, run `nix build --rebuild --no-link .#frontend .#backend-linux-amd64 .#tarball-linux-amd64`.
 
-The [Nix CI workflow](../.github/workflows/nix-build-grafana.yml) evaluates the frontend and both Linux backends in `ciJobs` on an AMD64 runner. Hestia builds cache misses in parallel, then the packaging job uses those outputs for the AMD64 and ARM64 tarballs.
+The [Nix CI workflow](../.github/workflows/nix-build-grafana.yml) evaluates `ciJobs` on an AMD64 runner. Hestia builds cache misses for the frontend and the configured backends in parallel. The packaging job uses those outputs to build the release tarballs, all of which share the same frontend.
 
 The target list in [flake.nix](../flake.nix) defines the available backends. Use `nix flake show` to list their package names. To run Grafana locally, extract the archive from `result/` and run `./bin/grafana server` from the extracted directory.
 
