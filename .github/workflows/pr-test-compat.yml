@@ -23,6 +23,8 @@ on:
       - pkg/tests/apis/helper.go
       - pkg/tests/compat/**
       - pkg/tests/testinfra/**
+      - .github/actions/run-compat-phase/**
+      - .github/actions/setup-enterprise/**
       - .github/workflows/pr-test-compat.yml
       - .github/workflows/run-compat-tests.yml
   workflow_dispatch:

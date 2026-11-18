@@ -107,19 +107,23 @@ jobs:
           path: .compat-old
           persist-credentials: false
 
-      # The older version is a fixed commit, so its test binaries are built once and cached
-      # under its commit. The key also carries the ref, which names the grafana-enterprise
-      # side for the Enterprise build.
+      # A release tag names the same fixed code in grafana and grafana-enterprise, so the older
+      # version's test binaries are built once per tag and cached. Other refs, such as a branch
+      # given as old_ref in a manual run, can move in grafana-enterprise without changing the
+      # grafana commit, so they are always built.
       - name: Key for the tests of ${{ steps.old.outputs.ref }}
         if: steps.old.outputs.ref != ''
         id: older-key
         env:
           EDITION: ${{ inputs.edition }}
           OLD_REF: ${{ steps.old.outputs.ref }}
-        run: echo "key=compat-tests-$EDITION-$RUNNER_OS-$RUNNER_ARCH-$(git -C .compat-old rev-parse HEAD)-$OLD_REF" >> "$GITHUB_OUTPUT"
+        run: |
+          if [[ "$OLD_REF" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "key=compat-tests-$EDITION-$RUNNER_OS-$RUNNER_ARCH-$OLD_REF-$(git -C .compat-old rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Restore the tests of ${{ steps.old.outputs.ref }}
-        if: steps.old.outputs.ref != ''
+        if: steps.older-key.outputs.key != ''
         id: older-cache
         uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
         with:
@@ -199,7 +203,7 @@ jobs:
         run: go test -c -o "$OLDER_BIN/" ./pkg/tests/compat/...
 
       - name: Cache the tests of ${{ steps.old.outputs.ref }}
-        if: steps.build-older.outcome == 'success'
+        if: steps.build-older.outcome == 'success' && steps.older-key.outputs.key != ''
         uses: actions/cache/save@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
         with:
           path: ${{ env.OLDER_BIN }}
