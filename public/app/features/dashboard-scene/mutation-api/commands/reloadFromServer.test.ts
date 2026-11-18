@@ -4,6 +4,8 @@ import { getPendingChangesHistory, type PendingChangesHistory } from '../../life
 import { hasUnrecordedPendingChange, reloadKeepingEditMode } from '../../lifecycle/pendingChangesHistory';
 import { buildPanelEditScene } from '../../panel-edit/PanelEditor';
 import { type DashboardScene } from '../../scene/DashboardScene';
+import { LibraryPanelBehavior } from '../../scene/LibraryPanelBehavior';
+import { AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
 
 import { reloadFromServerCommand } from './reloadFromServer';
@@ -60,6 +62,37 @@ describe('RELOAD_FROM_SERVER', () => {
     });
     expect(reloadKeepingEditMode).toHaveBeenCalledTimes(1);
   });
+
+  it.each([false, true])(
+    'preserves library panel drafts without false dirty state (auto grid=%s)',
+    async (autoGrid) => {
+      const runner = new SceneQueryRunner({ queries: [{ refId: 'A', expression: '1' }] });
+      const panel = new VizPanel({
+        key: 'panel-1',
+        pluginId: 'timeseries',
+        $data: runner,
+        $behaviors: [new LibraryPanelBehavior({ uid: 'lib-uid', name: 'Library panel', isLoaded: true })],
+      });
+      if (autoGrid) {
+        new AutoGridItem({ body: panel });
+      } else {
+        new DashboardGridItem({ body: panel });
+      }
+      const editor = buildPanelEditScene(panel);
+      const context = contextFor({ isDirty: false, isEditing: true, editPanel: editor });
+
+      expect(editor.hasUnsavedChanges()).toBe(false);
+      expect(await reloadFromServerCommand.handler({}, context)).toMatchObject({ data: { reloaded: true } });
+      jest.mocked(reloadKeepingEditMode).mockClear();
+
+      runner.setState({ queries: [{ refId: 'A', expression: '2' }] });
+      expect(await reloadFromServerCommand.handler({}, context)).toMatchObject({
+        data: { reloaded: false, reason: 'unsaved-changes' },
+      });
+      expect(runner.state.queries).toEqual([{ refId: 'A', expression: '2' }]);
+      expect(reloadKeepingEditMode).not.toHaveBeenCalled();
+    }
+  );
 
   it('reports unsaved changes in the open scene instead of discarding them', async () => {
     const result = await reloadFromServerCommand.handler({}, contextFor({ isDirty: true, isEditing: true }));

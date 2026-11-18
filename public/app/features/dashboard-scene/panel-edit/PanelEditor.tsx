@@ -228,7 +228,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   private setOriginalState(panelRef: SceneObjectRef<VizPanel>) {
     const panel = panelRef.resolve();
 
-    this._originalSaveModel = vizPanelToPanel(panel);
+    this._originalSaveModel = this.getSaveModel(panel);
     this._layoutItemState = sceneUtils.cloneSceneObjectState(this._layoutItem.state);
     this._layoutItemAdHocTransformations = collectAdHocTransformations(this._layoutItem);
   }
@@ -262,7 +262,22 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
   /** Destructive admission checks cannot wait for the debounced UI dirty state. */
   public hasUnsavedChanges(): boolean {
-    return !deepEqual(this._originalSaveModel, vizPanelToPanel(this.getPanel()));
+    return !deepEqual(this._originalSaveModel, this.getSaveModel(this.getPanel()));
+  }
+
+  private getSaveModel(panel: VizPanel) {
+    const gridItem = this._layoutItem instanceof DashboardGridItem ? this._layoutItem : undefined;
+    const libraryPanel = getLibraryPanelBehavior(panel);
+    const model = vizPanelToPanel(
+      libraryPanel ? panel.clone({ $behaviors: undefined }) : panel,
+      undefined,
+      false,
+      gridItem
+    );
+    if (libraryPanel) {
+      model.libraryPanel = { uid: libraryPanel.state.uid, name: libraryPanel.state.name };
+    }
+    return model;
   }
 
   public getPanel(): VizPanel {

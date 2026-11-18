@@ -42,7 +42,7 @@ import { edit } from '../actions/utils/edit';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
-import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
+import { DashboardGridItem, type DashboardGridItemState } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { setupPanelNotices } from '../scene/setupPanelNotices';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
@@ -481,6 +481,27 @@ describe('PanelEditor', () => {
   });
 
   describe('When changes are made', () => {
+    it.each<Partial<DashboardGridItemState>>([{ variableName: 'server' }, { maxPerRow: 2 }, { repeatDirection: 'v' }])(
+      'detects unsaved repeat settings %j and becomes clean when restored',
+      async (change) => {
+        const { panelEditor, gridItem } = await setup({});
+        const original = gridItem.state;
+        expect(panelEditor.hasUnsavedChanges()).toBe(false);
+
+        gridItem.setState(change);
+        expect(panelEditor.hasUnsavedChanges()).toBe(true);
+        expect(panelEditor.state.isDirty).toBe(true);
+
+        gridItem.setState({
+          variableName: original.variableName,
+          maxPerRow: original.maxPerRow,
+          repeatDirection: original.repeatDirection,
+        });
+        expect(panelEditor.hasUnsavedChanges()).toBe(false);
+        expect(panelEditor.state.isDirty).toBe(false);
+      }
+    );
+
     it('Should set state to dirty', async () => {
       const { panelEditor, panel } = await setup({});
 
@@ -567,6 +588,30 @@ describe('PanelEditor', () => {
   });
 
   describe('Handling library panels', () => {
+    it.each(['query', 'options'])('detects unsaved library panel %s edits and resets after save', async (edit) => {
+      const libraryPanel = new LibraryPanelBehavior({
+        uid: 'lib-uid',
+        name: 'Library panel',
+        isLoaded: true,
+        _loadedPanel: { uid: 'lib-uid', name: 'Library panel', type: 'panel', version: 1, model: { type: 'text' } },
+      });
+      const { panelEditor, panel } = await setup({ libraryPanel });
+      expect(panelEditor.hasUnsavedChanges()).toBe(false);
+      expect(panelEditor.state.isDirty).not.toBe(true);
+
+      if (edit === 'query') {
+        getQueryRunnerFor(panel)?.setState({ queries: [{ refId: 'A', expression: '2' }] });
+      } else {
+        panel.setState({ options: { content: 'Edited library content' } });
+      }
+      expect(panelEditor.hasUnsavedChanges()).toBe(true);
+      expect(panelEditor.state.isDirty).toBe(true);
+
+      panelEditor.dashboardSaved();
+      expect(panelEditor.hasUnsavedChanges()).toBe(false);
+      expect(panelEditor.state.isDirty).toBe(false);
+    });
+
     it('should call the api with the updated panel', async () => {
       pluginPromise = Promise.resolve(getPanelPlugin({ id: 'text', skipDataQuery: true }));
 
@@ -634,6 +679,7 @@ describe('PanelEditor', () => {
       });
       const { dashboard, panel, panelEditor, gridItem } = await setup({ libraryPanel });
       panelEditor.onConfirmUnlinkLibraryPanel();
+      expect(panelEditor.hasUnsavedChanges()).toBe(true);
       expect(getLibraryPanelBehavior(panel)).toBeUndefined();
       deactivate!();
       deactivate = undefined;
