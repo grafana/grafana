@@ -39,20 +39,11 @@ type chunkedRefError struct {
 }
 
 func (w *errorRecordingChunkedWriter) WriteError(ctx context.Context, refID string, status backend.Status, err error) error {
-	w.recordError(refID, status, err, backend.ErrorResponseWithErrorSource(err).ErrorSource)
-	return w.ChunkedDataWriter.WriteError(ctx, refID, status, err)
-}
-
-func (w *errorRecordingChunkedWriter) WriteErrorWithSource(ctx context.Context, refID string, status backend.Status, err error, source backend.ErrorSource) error {
-	if source == "" {
-		return w.WriteError(ctx, refID, status, err)
+	source := backend.ErrorResponseWithErrorSource(err).ErrorSource
+	if source == "" && backend.IsDownstreamError(err) {
+		source = backend.ErrorSourceDownstream
 	}
 	w.recordError(refID, status, err, source)
-	if next, ok := w.ChunkedDataWriter.(interface {
-		WriteErrorWithSource(context.Context, string, backend.Status, error, backend.ErrorSource) error
-	}); ok {
-		return next.WriteErrorWithSource(ctx, refID, status, err, source)
-	}
 	return w.ChunkedDataWriter.WriteError(ctx, refID, status, err)
 }
 
