@@ -240,3 +240,71 @@ func TestGetAuthorizer_CheckError(t *testing.T) {
 	require.Equal(t, authorizer.DecisionDeny, decision)
 	require.Equal(t, "failed to check permissions", reason)
 }
+
+// TestGetAuthorizer_QueryTypesSkipDatasourceCheck covers the cluster-scoped
+// querytypes resource. The request has no namespace, so the access client
+// would reject it with a namespace mismatch; the client here errors on any
+// call to prove the authorizer never reaches it.
+func TestGetAuthorizer_QueryTypesSkipDatasourceCheck(t *testing.T) {
+	tests := []struct {
+		name        string
+		verb        string
+		subresource string
+		objName     string
+	}{
+		{name: "list", verb: "list"},
+		{name: "get", verb: "get", objName: "random_walk"},
+		{name: "validate", verb: "create", subresource: "validate", objName: "random_walk"},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			client := &recordingAccessClient{err: errors.New("namespace mismatch")}
+			b := newAuthorizerTestBuilder(client)
+
+			decision, _, err := b.GetAuthorizer().Authorize(authorizerTestContext(), authorizer.AttributesRecord{
+				ResourceRequest: true,
+				Resource:        "querytypes",
+				Verb:            tc.verb,
+				Subresource:     tc.subresource,
+				Name:            tc.objName,
+			})
+
+			require.NoError(t, err)
+			require.Equal(t, authorizer.DecisionAllow, decision)
+			require.Empty(t, client.lastReq, "query types must not be checked as a datasource")
+		})
+	}
+}
+
+func TestGetAuthorizer_QueryTypesAreReadOnly(t *testing.T) {
+	for _, verb := range []string{"create", "update", "patch", "delete", "deletecollection", "watch"} {
+		t.Run(verb, func(t *testing.T) {
+			client := &recordingAccessClient{resp: authlib.CheckResponse{Allowed: true}}
+			b := newAuthorizerTestBuilder(client)
+
+			decision, _, err := b.GetAuthorizer().Authorize(authorizerTestContext(), authorizer.AttributesRecord{
+				ResourceRequest: true,
+				Resource:        "querytypes",
+				Verb:            verb,
+				Name:            "random_walk",
+			})
+
+			require.NoError(t, err)
+			require.Equal(t, authorizer.DecisionDeny, decision)
+		})
+	}
+}
+
+func TestGetAuthorizer_QueryTypesRequireUser(t *testing.T) {
+	b := newAuthorizerTestBuilder(&recordingAccessClient{})
+
+	decision, _, err := b.GetAuthorizer().Authorize(context.Background(), authorizer.AttributesRecord{
+		ResourceRequest: true,
+		Resource:        "querytypes",
+		Verb:            "list",
+	})
+
+	require.Error(t, err)
+	require.Equal(t, authorizer.DecisionDeny, decision)
+}

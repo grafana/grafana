@@ -9,7 +9,10 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 )
+
+var queryTypesResource = datasourceV0.QueryTypeDefinitionResourceInfo.GroupResource().Resource
 
 func (b *DataSourceAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 	group := b.GetGroupVersion().Group
@@ -38,6 +41,19 @@ func (b *DataSourceAPIBuilder) GetAuthorizer() authorizer.Authorizer {
 			if err != nil {
 				recordAuthzDecision(group, sub, verb, caller, "deny", "no_user")
 				return authorizer.DecisionDeny, "valid user is required", err
+			}
+
+			// Query types are static plugin schemas, the same for every tenant and
+			// already public in the OpenAPI document. They are cluster-scoped, so
+			// the namespaced datasource check below would fail with a namespace
+			// mismatch for any caller that is not cluster-wide.
+			if attr.GetResource() == queryTypesResource {
+				if sub == "validate" || (sub == "" && (verb == utils.VerbGet || verb == utils.VerbList)) {
+					recordAuthzDecision(group, sub, verb, caller, "allow", "")
+					return authorizer.DecisionAllow, "", nil
+				}
+				recordAuthzDecision(group, sub, verb, caller, "deny", "access_denied")
+				return authorizer.DecisionDeny, "query types are read-only", nil
 			}
 
 			req := authlib.CheckRequest{
