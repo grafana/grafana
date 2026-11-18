@@ -366,10 +366,15 @@ function DashboardControlActions({
     (canSave || canSaveAs) &&
     !isEditingLibraryPanel &&
     getPickerMode({ mode, isEditing, composerEditing }) !== 'view';
-  // A draft (a new dashboard proposed as pending changes) has no uid until it's saved.
-  const isDraft = Boolean(meta.newDashboardUid);
+  // A new dashboard proposed as pending changes has no uid until it is saved. Not the same as a lifecycle draft.
+  const isPendingNewDashboard = Boolean(meta.newDashboardUid);
   const showEditButton =
-    (hasUid || isDraft) && !isPlaying && canEditDashboard && isEditable && !editPanel && !isMobileEditDeprecated;
+    (hasUid || isPendingNewDashboard) &&
+    !isPlaying &&
+    canEditDashboard &&
+    isEditable &&
+    !editPanel &&
+    !isMobileEditDeprecated;
   const showMakeEditableButton = !isPlaying && canEditDashboard && !isEditable && !isEditing && !isMobileEditDeprecated;
   const showPanelEditButtons = Boolean(editPanel);
   const showPublishDraftButton = hasUid && !isEditing && !editPanel && !isPlaying && canSave && dashboard.isDraft(meta);
