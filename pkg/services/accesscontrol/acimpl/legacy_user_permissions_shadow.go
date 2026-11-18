@@ -62,7 +62,7 @@ func NewLegacyUserPermissionsShadow(reg prometheus.Registerer, maxConcurrent int
 	}, nil
 }
 
-func (s *LegacyUserPermissionsShadow) GetUserPermissions(ctx context.Context, client legacyclient.Service, usr identity.Requester, options ac.Options, cfg *setting.Cfg, primary func() ([]ac.Permission, error)) ([]ac.Permission, error) {
+func (s *LegacyUserPermissionsShadow) GetUserPermissions(ctx context.Context, client legacyclient.LegacyUserPermissionsClient, usr identity.Requester, options ac.Options, cfg *setting.Cfg, primary func() ([]ac.Permission, error)) ([]ac.Permission, error) {
 	if s == nil {
 		return primary()
 	}
@@ -91,7 +91,7 @@ type userPermissionsResult struct {
 	err         error
 }
 
-func (s *LegacyUserPermissionsShadow) prepareShadowWork(client legacyclient.Service, usr identity.Requester, options ac.Options, cfg *setting.Cfg, primary *userPermissionsResult) shadow.Work {
+func (s *LegacyUserPermissionsShadow) prepareShadowWork(client legacyclient.LegacyUserPermissionsClient, usr identity.Requester, options ac.Options, cfg *setting.Cfg, primary *userPermissionsResult) shadow.Work {
 	req, shadowErr := legacyUserPermissionsRequest(usr, options, cfg)
 	var expected, actual []ac.Permission
 	var primaryErr error

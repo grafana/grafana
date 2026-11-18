@@ -1792,12 +1792,15 @@
     {
       "metadata": {
         "name": "dashboardUndoRedo",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-08-29T14:46:39Z"
+        "resourceVersion": "1794996543111",
+        "creationTimestamp": "2025-08-29T14:46:39Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-18 10:09:03.111749511 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables undo/redo in dynamic dashboards",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
         "expression": "false"
@@ -2300,6 +2303,20 @@
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
         "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "dataviz.reverseColorScheme",
+        "resourceVersion": "1794465675116",
+        "creationTimestamp": "2026-11-12T06:41:15Z"
+      },
+      "spec": {
+        "description": "Enable the option to reverse by value color schemes",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
         "expression": "false"
       }
     },
@@ -2944,12 +2961,15 @@
     {
       "metadata": {
         "name": "grafana.customDashboardTemplates",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-06-24T18:36:50Z"
+        "resourceVersion": "1794931415420",
+        "creationTimestamp": "2026-06-24T18:36:50Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-17 16:03:35.420811 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables custom dashboard templates for enterprise",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/sharing-squad",
         "expression": "false"
       }
@@ -3352,6 +3372,23 @@
         "codeowner": "@grafana/observability-logs",
         "frontend": true,
         "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.megaMenuPeekAndDock",
+        "resourceVersion": "1794924578516",
+        "creationTimestamp": "2026-11-17T10:20:15Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-17 14:09:38.516633 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Opens the mega menu over the page while the pointer rests on its toggle, and docks it when the toggle is clicked on wide screens. The toggle in the docked menu's header closes it, in place of the footer's dock button",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "frontend": true,
         "expression": "false"
       }
     },
@@ -5016,7 +5053,8 @@
       "metadata": {
         "name": "newSavedQueriesExperience",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-03-16T19:48:14Z"
+        "creationTimestamp": "2026-03-16T19:48:14Z",
+        "deletionTimestamp": "2026-11-02T21:10:32Z"
       },
       "spec": {
         "description": "Enables the new Saved queries (query library) modal experience",

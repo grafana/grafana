@@ -12,7 +12,14 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/shadow"
+	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
 )
+
+// legacyCheckPreparer snapshots a check before the shadow goroutine runs it.
+// LegacyAccessClient only requires LegacyCheck; the concrete client implements this.
+type legacyCheckPreparer interface {
+	PrepareLegacyCheck(legacyclient.LegacyCheckRequest) (func(context.Context) (bool, error), error)
+}
 
 const legacyCheckShadowMaxConcurrent = 32
 
@@ -67,11 +74,7 @@ func (s *legacyCheckShadow) evaluate(ctx context.Context, ac *AccessControl, use
 			req, shadowErr := ac.buildLegacyCheckRequest(user, evaluator, ac.useExternalGroups, ac.legacyNamespace)
 			var call func(context.Context) (bool, error)
 			if shadowErr == nil {
-				if ac.legacyCheckClient == nil {
-					shadowErr = errors.New("legacy check client is not configured")
-				} else {
-					call, shadowErr = ac.legacyCheckClient.PrepareLegacyCheck(req)
-				}
+				call, shadowErr = prepareLegacyCheck(ac.legacyCheckClient, req)
 			}
 
 			var expected, actual bool
@@ -102,6 +105,18 @@ func (s *legacyCheckShadow) evaluate(ctx context.Context, ac *AccessControl, use
 		shadow.WithSkip(skipPermissionShadowForSQLSession),
 	)
 	return allowed, err
+}
+
+func prepareLegacyCheck(client legacyclient.LegacyAccessClient, req legacyclient.LegacyCheckRequest) (func(context.Context) (bool, error), error) {
+	if client == nil {
+		return nil, errors.New("legacy check client is not configured")
+	}
+	if preparer, ok := client.(legacyCheckPreparer); ok {
+		return preparer.PrepareLegacyCheck(req)
+	}
+	return func(ctx context.Context) (bool, error) {
+		return client.LegacyCheck(ctx, req)
+	}, nil
 }
 
 func (s *legacyCheckShadow) ObserveDuration(implementation shadow.Implementation, elapsed time.Duration) {

@@ -55,7 +55,9 @@ func (c *embeddedTransactionCall) wait() {
 	}
 }
 
-type embeddedClient struct{ legacyclient.Service }
+type embeddedClient struct {
+	legacyclient.LegacyUserPermissionsClient
+}
 
 func (c *embeddedClient) LegacyGetUserPermissions(ctx context.Context, caller types.AuthInfo, req legacyclient.LegacyGetUserPermissionsRequest) (legacyclient.LegacyGetUserPermissionsResponse, error) {
 	if sess, ok := ctx.Value(sqlstore.ContextSessionKey{}).(*sqlstore.DBSession); ok && sess != nil {
@@ -63,7 +65,7 @@ func (c *embeddedClient) LegacyGetUserPermissions(ctx context.Context, caller ty
 		ctx = context.WithValue(ctx, embeddedTransactionCallKey{}, call)
 		defer call.wait()
 	}
-	return c.Service.LegacyGetUserPermissions(ctx, caller, req)
+	return c.LegacyUserPermissionsClient.LegacyGetUserPermissions(ctx, caller, req)
 }
 
 type embeddedStream struct {
@@ -82,7 +84,7 @@ type embeddedServer struct {
 
 // NewEmbeddedClient owns a private in-process channel. The legacy handler is
 // deliberately never registered on a network server or the Check/List channel.
-func NewEmbeddedClient(loader *Loader, cfg *setting.Cfg) legacyclient.Service {
+func NewEmbeddedClient(loader *Loader, cfg *setting.Cfg) legacyclient.LegacyUserPermissionsClient {
 	guard := new(int)
 	server := &embeddedServer{loader: loader, cfg: cfg, guard: guard}
 	channel := (&inprocgrpc.Channel{}).WithServerStreamInterceptor(func(srv any, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
@@ -110,7 +112,7 @@ func NewEmbeddedClient(loader *Loader, cfg *setting.Cfg) legacyclient.Service {
 		return handler(srv, embeddedStream{ServerStream: stream, ctx: ctx})
 	})
 	authzv1.RegisterLegacyAuthzServiceServer(channel, server)
-	return &embeddedClient{Service: legacyclient.NewLegacyClient(channel)}
+	return &embeddedClient{LegacyUserPermissionsClient: legacyclient.NewLegacyClient(channel)}
 }
 
 func (s *embeddedServer) LegacyGetUserPermissions(req *authzv1.LegacyGetUserPermissionsRequest, stream authzv1.LegacyAuthzService_LegacyGetUserPermissionsServer) error {
@@ -163,9 +165,12 @@ func (s *embeddedServer) LegacyGetUserPermissions(req *authzv1.LegacyGetUserPerm
 	const chunkSize = 1000
 	for start := 0; start < len(permissions); start += chunkSize {
 		end := min(start+chunkSize, len(permissions))
-		chunk := &authzv1.LegacyGetUserPermissionsResponse{Permissions: make([]*authzv1.LegacyUserPermission, 0, end-start)}
-		for _, p := range permissions[start:end] {
-			chunk.Permissions = append(chunk.Permissions, &authzv1.LegacyUserPermission{Action: p.Action, Scope: p.Scope})
+		// Allocate message values together instead of allocating one object per permission.
+		values := make([]authzv1.LegacyUserPermission, end-start)
+		chunk := &authzv1.LegacyGetUserPermissionsResponse{Permissions: make([]*authzv1.LegacyUserPermission, end-start)}
+		for i, p := range permissions[start:end] {
+			values[i].Action, values[i].Scope = p.Action, p.Scope
+			chunk.Permissions[i] = &values[i]
 		}
 		if err := stream.Send(chunk); err != nil {
 			return err

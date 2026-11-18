@@ -24,12 +24,8 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { type ImportFormValues } from '../types';
 
-import {
-  Step1Content,
-  useAutoSyncPrediction,
-  usePredictedAutoSyncIdentifier,
-  useStep1Validation,
-} from './Step1AlertmanagerResources';
+import { Step1Content, useStep1Validation } from './Step1AlertmanagerResources';
+import { useAutoSyncPrediction, usePredictedAutoSyncIdentifier } from './useAutoSyncPrediction';
 import { buildDryRunArgs } from './utils';
 
 const server = setupMswServer();
@@ -718,6 +714,39 @@ describe('Step1AlertmanagerResources', () => {
       // Verify the policy tree name field is NOT changed
       const policyTreeInput = screen.getByPlaceholderText(/prometheus-prod/i);
       expect(policyTreeInput).toHaveValue('my-custom-name');
+    });
+
+    it('takes back the name it filled in when the data source is cleared', async () => {
+      setupDataSources(selectableAlertmanagerDataSource);
+      const user = userEvent.setup();
+      render(
+        <TestWrapper defaultValues={{ notificationsSource: 'datasource', policyTreeName: '' }}>
+          <Step1Content {...defaultStep1Props} />
+        </TestWrapper>
+      );
+      await user.click(screen.getByRole('combobox'));
+      await user.click(screen.getByText('Alertmanager'));
+      expect(screen.getByPlaceholderText(/prometheus-prod/i)).toHaveValue('alertmanager');
+
+      await user.click(screen.getByLabelText(/clear/i));
+
+      expect(screen.getByPlaceholderText(/prometheus-prod/i)).toHaveValue('');
+    });
+
+    it('keeps a name the user typed when the data source is cleared', async () => {
+      setupDataSources(selectableAlertmanagerDataSource);
+      const user = userEvent.setup();
+      render(
+        <TestWrapper defaultValues={{ notificationsSource: 'datasource', policyTreeName: 'my-custom-name' }}>
+          <Step1Content {...defaultStep1Props} />
+        </TestWrapper>
+      );
+      await user.click(screen.getByRole('combobox'));
+      await user.click(screen.getByText('Alertmanager'));
+
+      await user.click(screen.getByLabelText(/clear/i));
+
+      expect(screen.getByPlaceholderText(/prometheus-prod/i)).toHaveValue('my-custom-name');
     });
 
     it('should convert datasource name with special characters to kebab-case', async () => {

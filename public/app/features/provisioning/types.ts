@@ -137,10 +137,12 @@ export interface TreeItem {
   level: number;
   children: TreeItem[];
   resourceName?: string;
+  resource?: string;
   hash?: string;
   status?: SyncStatus;
   hasFile?: boolean;
   missingFolderMetadata?: boolean;
+  metadataPath?: string;
 }
 
 export interface FlatTreeItem {

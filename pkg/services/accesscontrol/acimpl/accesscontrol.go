@@ -47,7 +47,7 @@ type AccessControl struct {
 	resolvers           accesscontrol.Resolvers
 	skipScopeResolution bool
 	openFeatureClient   *openfeature.Client
-	legacyCheckClient   *legacyclient.LegacyClient
+	legacyCheckClient   legacyclient.LegacyAccessClient
 	legacyCheckShadow   *legacyCheckShadow
 	useExternalGroups   bool
 	legacyNamespace     types.NamespaceFormatter

@@ -192,7 +192,7 @@ func (s *syncer) syncWithRetry(ctx context.Context, attempt func(ctx context.Con
 			return
 		}
 		if isServerLockExistsError(err) {
-			ctxLog.Debug("Another instance is running plugin sync, skipping this instance")
+			ctxLog.Info("Plugin install sync skipped", "reason", "another instance holds the sync lock")
 			return
 		}
 		if !isRetryableSyncError(err) {
@@ -274,12 +274,20 @@ func (s *syncer) Sync(ctx context.Context, source install.Source, installedPlugi
 	}
 
 	if len(installedPlugins) == 0 {
+		logging.FromContext(ctx).Info("Plugin install sync skipped", "reason", "the plugin store is empty", "source", source)
 		return nil
 	}
 
 	var syncErr error
 	lockErr := s.serverLock.LockExecuteAndRelease(ctx, syncerLockActionName, lockTimeout, func(ctx context.Context) {
+		start := time.Now()
 		syncErr = s.syncAllNamespaces(ctx, source, installedPlugins)
+		// The run is otherwise silent on success, so this is the only record of which process synced last and from how many plugins.
+		args := []any{"source", source, "storePlugins", len(installedPlugins), "duration", time.Since(start).Round(time.Millisecond)}
+		if syncErr != nil {
+			args = append(args, "error", syncErr)
+		}
+		logging.FromContext(ctx).Info("Plugin install sync finished", args...)
 	})
 
 	if lockErr != nil {

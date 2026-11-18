@@ -306,7 +306,6 @@ func (pl PluginLoader) prepareBackends(ctx context.Context, pluginDefs []definit
 // invalidate each other's handlers and active watches.
 func pluginManifestKeyData(plugin definition.PluginDefinition, manifest *app.ManifestData, host string) ([]byte, error) {
 	plugin.Manifests = nil
-	plugin.Manifest = nil //nolint:staticcheck
 	return json.Marshal(struct {
 		Definition definition.PluginDefinition
 		Manifest   *app.ManifestData
