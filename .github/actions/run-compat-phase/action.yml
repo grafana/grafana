@@ -39,23 +39,20 @@ runs:
         LOG: ${{ inputs.log }}
       run: |
         set -uo pipefail
-        shopt -s nullglob
-        case "$GRAFANA_COMPAT_ROLE" in
-          newer) BINARIES="$NEWER_BINARIES" OTHER_BINARIES="$OLDER_BINARIES" ;;
-          older) BINARIES="$OLDER_BINARIES" OTHER_BINARIES="$NEWER_BINARIES" ;;
-          *) echo "::error::role must be older or newer, got $GRAFANA_COMPAT_ROLE"; exit 1 ;;
-        esac
         rc=0
         ran=0
         # go test -c names each binary after its package directory under pkg/tests/compat.
-        for bin in "$BINARIES"/*.test; do
-          pkg="$(basename "$bin" .test)"
+        for newer in "$NEWER_BINARIES"/*.test; do
+          [ -e "$newer" ] || continue
+          pkg="$(basename "$newer" .test)"
           # A round trip needs both versions to run the package: without the other side, the
           # update or verify phase finds no fixtures, or changes that never happened.
-          if [ ! -e "$OTHER_BINARIES/$pkg.test" ]; then
-            echo "::notice::Skipping $pkg in $TEST: the other version does not ship it"
+          if [ ! -e "$OLDER_BINARIES/$pkg.test" ]; then
+            echo "::notice::Skipping $pkg in $TEST: the older version does not ship it"
             continue
           fi
+          bin="$newer"
+          if [ "$GRAFANA_COMPAT_ROLE" = older ]; then bin="$OLDER_BINARIES/$pkg.test"; fi
           echo "=== $pkg"
           ran=$((ran + 1))
           out="$(mktemp)"
@@ -69,7 +66,7 @@ runs:
         done
         # A missing build or no package in common must not pass as a green phase.
         if [ "$ran" -eq 0 ]; then
-          echo "::error::No package of $TEST ran: $NEWER_BINARIES and $OLDER_BINARIES have no test binary in common"
+          echo "::error::No package of $TEST ran: the newer and older test binaries have no package in common"
           exit 1
         fi
         exit "$rc"
