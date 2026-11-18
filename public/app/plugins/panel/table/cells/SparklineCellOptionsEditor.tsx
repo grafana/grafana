@@ -48,6 +48,24 @@ function getChartCellConfig(cfg: GraphFieldConfig): SetFieldConfigOptionsArgs<Gr
   };
 }
 
+/**
+ * Titles of the options this editor renders, read from the same registry the editor uses,
+ * so the options-pane search can index dependent sub-options like "Hide value" (#136909)
+ * without maintaining the titles in a separate list.
+ */
+export function getSparklineCellOptionTitles(): string[] {
+  const registry = createFieldConfigRegistry(getChartCellConfig(defaultSparklineCellConfig), 'ChartCell');
+  // This registry is built outside the options pane, so there are no panel options or field config to
+  // put on the context - a showIf that reads one sees undefined and keeps the option hidden.
+  const context: StandardEditorContext<unknown> = { data: [] };
+  const values = defaultSparklineCellConfig;
+
+  return registry
+    .list(optionIds.map((id) => `custom.${id}`))
+    .filter((item) => !item.showIf || item.showIf(values, context.data, context.annotations, context))
+    .map((item) => item.name);
+}
+
 export const SparklineCellOptionsEditor = (props: TableCellEditorProps<TableSparklineCellOptions>) => {
   const { cellOptions, onChange } = props;
 

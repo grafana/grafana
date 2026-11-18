@@ -12,18 +12,29 @@ const colorBackgroundOpts: Array<SelectableValue<TableCellBackgroundDisplayMode>
   { value: TableCellBackgroundDisplayMode.Basic, label: 'Basic' },
   { value: TableCellBackgroundDisplayMode.Gradient, label: 'Gradient' },
 ];
+
+// A function (not a constant) so the labels stay single-sourced between rendering and the
+// options-pane search keywords (see #136909) without top-level translations
+export function getColorBackgroundCellOptionLabels() {
+  return {
+    displayMode: t(
+      'table.color-background-cell-options-editor.label-background-display-mode',
+      'Background display mode'
+    ),
+    applyToRow: t('table.color-background-cell-options-editor.label-apply-to-entire-row', 'Apply to entire row'),
+  };
+}
+
 export const ColorBackgroundCellOptionsEditor = ({
   cellOptions,
   onChange,
 }: TableCellEditorProps<TableColoredBackgroundCellOptions>) => {
   const applyToRowSwitchId = useId();
+  const labels = getColorBackgroundCellOptionLabels();
 
   return (
     <>
-      <Field
-        noMargin
-        label={t('table.color-background-cell-options-editor.label-background-display-mode', 'Background display mode')}
-      >
+      <Field noMargin label={labels.displayMode}>
         <RadioButtonGroup<TableCellBackgroundDisplayMode>
           value={cellOptions?.mode ?? TableCellBackgroundDisplayMode.Gradient}
           onChange={(v) => {
@@ -36,7 +47,7 @@ export const ColorBackgroundCellOptionsEditor = ({
 
       <Field
         noMargin
-        label={t('table.color-background-cell-options-editor.label-apply-to-entire-row', 'Apply to entire row')}
+        label={labels.applyToRow}
         description={t(
           'table.color-background-cell-options-editor.description-apply-to-entire-row',
           'If selected the entire row will be colored as this cell would be.'

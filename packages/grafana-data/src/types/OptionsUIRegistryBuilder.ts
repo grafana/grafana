@@ -23,6 +23,13 @@ export interface OptionsEditorItem<TOptions, TSettings, TEditorProps, TValue, TC
 
   useFieldset?: boolean;
 
+  /**
+   * Additional terms the options pane search should match this option by. Useful when an
+   * editor renders dependent sub-options that are not registered as options themselves,
+   * e.g. a custom editor whose sub-option titles live inside the editor.
+   */
+  keywords?: string[];
+
   /*
    * @param value
    */

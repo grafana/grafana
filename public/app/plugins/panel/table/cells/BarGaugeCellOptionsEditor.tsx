@@ -7,30 +7,43 @@ import { type TableCellEditorProps } from '../TableCellOptionEditor';
 
 type Props = TableCellEditorProps<TableBarGaugeCellOptions>;
 
-export const BarGaugeCellOptionsEditor = ({ cellOptions, onChange }: Props) => (
-  <>
-    <Field noMargin label={t('table.bar-gauge-cell-options-editor.label-gauge-display-mode', 'Gauge display mode')}>
-      <RadioButtonGroup<BarGaugeDisplayMode>
-        value={cellOptions?.mode ?? BarGaugeDisplayMode.Gradient}
-        onChange={(v) => {
-          cellOptions.mode = v;
-          onChange(cellOptions);
-        }}
-        options={barGaugeOpts}
-      />
-    </Field>
-    <Field noMargin label={t('table.bar-gauge-cell-options-editor.label-value-display', 'Value display')}>
-      <RadioButtonGroup<BarGaugeValueMode>
-        value={cellOptions?.valueDisplayMode ?? BarGaugeValueMode.Text}
-        onChange={(v) => {
-          cellOptions.valueDisplayMode = v;
-          onChange(cellOptions);
-        }}
-        options={valueModes}
-      />
-    </Field>
-  </>
-);
+// A function (not a constant) so the labels stay single-sourced between rendering and the
+// options-pane search keywords (see #136909) without top-level translations
+export function getBarGaugeCellOptionLabels() {
+  return {
+    displayMode: t('table.bar-gauge-cell-options-editor.label-gauge-display-mode', 'Gauge display mode'),
+    valueDisplay: t('table.bar-gauge-cell-options-editor.label-value-display', 'Value display'),
+  };
+}
+
+export const BarGaugeCellOptionsEditor = ({ cellOptions, onChange }: Props) => {
+  const labels = getBarGaugeCellOptionLabels();
+
+  return (
+    <>
+      <Field noMargin label={labels.displayMode}>
+        <RadioButtonGroup<BarGaugeDisplayMode>
+          value={cellOptions?.mode ?? BarGaugeDisplayMode.Gradient}
+          onChange={(v) => {
+            cellOptions.mode = v;
+            onChange(cellOptions);
+          }}
+          options={barGaugeOpts}
+        />
+      </Field>
+      <Field noMargin label={labels.valueDisplay}>
+        <RadioButtonGroup<BarGaugeValueMode>
+          value={cellOptions?.valueDisplayMode ?? BarGaugeValueMode.Text}
+          onChange={(v) => {
+            cellOptions.valueDisplayMode = v;
+            onChange(cellOptions);
+          }}
+          options={valueModes}
+        />
+      </Field>
+    </>
+  );
+};
 
 const barGaugeOpts: SelectableValue[] = [
   { value: BarGaugeDisplayMode.Basic, label: 'Basic' },

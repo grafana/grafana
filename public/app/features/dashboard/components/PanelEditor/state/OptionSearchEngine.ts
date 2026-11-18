@@ -38,12 +38,16 @@ export class OptionSearchEngine {
           hits.push({ item: item, rank: 1 });
           continue;
         }
-        if (item.props.description && searchRegex.test(item.props.description)) {
+        if (item.props.keywords?.some((keyword) => searchRegex.test(keyword))) {
           hits.push({ item: item, rank: 2 });
           continue;
         }
-        if (categoryNameMatch) {
+        if (item.props.description && searchRegex.test(item.props.description)) {
           hits.push({ item: item, rank: 3 });
+          continue;
+        }
+        if (categoryNameMatch) {
+          hits.push({ item: item, rank: 4 });
         }
       }
 

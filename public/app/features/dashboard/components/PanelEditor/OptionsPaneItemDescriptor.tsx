@@ -16,6 +16,8 @@ export interface OptionsPaneItemInfo {
   title?: string;
   value?: unknown;
   description?: string;
+  /** Extra searchable terms (never rendered), e.g. titles of sub-options rendered by a custom editor */
+  keywords?: string[];
   popularRank?: number;
   render: (descriptor: OptionsPaneItemDescriptor) => React.ReactElement<Record<string, unknown>>;
   skipField?: boolean;

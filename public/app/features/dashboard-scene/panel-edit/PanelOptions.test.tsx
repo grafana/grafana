@@ -62,6 +62,16 @@ const plugin = getPanelPlugin({
           placeholder: 'CustomTextPropPlaceholder',
         },
         category: ['Axis'],
+      })
+      .addCustomEditor({
+        id: 'cellType',
+        path: 'cellType',
+        name: 'Cell type',
+        // Like the table cell editor (#136909): the dependent sub-options render inside the
+        // editor, so the options search can only match them through the item's keywords
+        keywords: ['Hide value'],
+        category: ['Cell options'],
+        editor: () => null,
       });
   },
 });
@@ -99,10 +109,12 @@ jest.spyOn(utils, 'getDashboardSceneFor').mockReturnValue(new DashboardScene({})
 
 interface SetupOptions {
   panel?: VizPanel;
+  searchQuery?: string;
 }
 
 async function setup(options: SetupOptions = {}) {
   let panel = options.panel;
+  const searchQuery = options.searchQuery ?? '';
 
   if (!panel) {
     panel = new VizPanel({
@@ -131,14 +143,16 @@ async function setup(options: SetupOptions = {}) {
   // need to wait for plugin to load
   const panelOptionsScene = new PanelOptionsPane({
     panelRef: panel.getRef(),
-    searchQuery: '',
+    searchQuery,
     listMode: OptionFilter.All,
   });
 
   activateFullSceneTree(panelOptionsScene);
   panel.activate();
 
-  const panelOptions = <PanelOptions panel={panel} searchQuery="" listMode={OptionFilter.All}></PanelOptions>;
+  const panelOptions = (
+    <PanelOptions panel={panel} searchQuery={searchQuery} listMode={OptionFilter.All}></PanelOptions>
+  );
   // Registry editors are lazy, so let them resolve before the test asserts
   const renderResult = await act(async () => render(panelOptions));
 
@@ -644,5 +658,16 @@ describe('PanelOptions', () => {
     });
 
     expect((panel.state.$behaviors![0] as LibraryPanelBehavior).state.name).toBe('new library panel name');
+  });
+
+  describe('Options search', () => {
+    // https://github.com/grafana/grafana/issues/136909
+    it('finds a field option by the keywords of the dependent sub-options it renders', async () => {
+      const { renderResult } = await setup({ searchQuery: 'Hide value' });
+
+      expect(
+        await renderResult.findByTestId(OptionsPaneSelector.fieldLabel('Cell options Cell type'))
+      ).toBeInTheDocument();
+    });
   });
 });

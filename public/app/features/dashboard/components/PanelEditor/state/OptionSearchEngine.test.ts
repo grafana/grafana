@@ -23,8 +23,22 @@ describe('OptionSearchEngine', () => {
   it('When matching both category and title category title should rank higher', () => {
     const engine = new OptionSearchEngine(getOptionCategories(), []);
     const results = engine.search('frame');
-    expect(results.optionHits.length).toBe(4);
+    expect(results.optionHits.length).toBe(5);
     expect(results.optionHits[0].props.title).toBe('Frame');
+  });
+
+  it('Can search options based on keywords', () => {
+    const engine = new OptionSearchEngine(getOptionCategories(), []);
+    const results = engine.search('KeywordOnlyMatch');
+    expect(results.optionHits.length).toBe(1);
+    expect(results.optionHits[0].props.title).toBe('KeywordTitle');
+  });
+
+  it('When matching both title and keywords title should rank higher', () => {
+    const engine = new OptionSearchEngine(getOptionCategories(), []);
+    const results = engine.search('KeywordMatch');
+    expect(results.optionHits.length).toBe(2);
+    expect(results.optionHits[0].props.title).toBe('KeywordMatch');
   });
 
   it('Override hits should contain matcher and matched properties', () => {
@@ -71,6 +85,14 @@ function getOptionCategories(): OptionsPaneCategoryDescriptor[] {
           description: 'DescriptionMatch',
           render: jest.fn(),
         })
+      )
+      .addItem(
+        new OptionsPaneItemDescriptor({
+          title: 'KeywordTitle',
+          id: generateUUID(),
+          keywords: ['KeywordOnlyMatch'],
+          render: jest.fn(),
+        })
       ),
     new OptionsPaneCategoryDescriptor({
       id: 'Axis',
@@ -94,6 +116,21 @@ function getOptionCategories(): OptionsPaneCategoryDescriptor[] {
         new OptionsPaneItemDescriptor({
           title: 'Frame',
           id: generateUUID(),
+          render: jest.fn(),
+        })
+      )
+      .addItem(
+        new OptionsPaneItemDescriptor({
+          title: 'KeywordMatch',
+          id: generateUUID(),
+          render: jest.fn(),
+        })
+      )
+      .addItem(
+        new OptionsPaneItemDescriptor({
+          title: 'ASDSADASDSADA2',
+          id: generateUUID(),
+          keywords: ['KeywordMatch'],
           render: jest.fn(),
         })
       ),
