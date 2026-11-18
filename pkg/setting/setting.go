@@ -136,6 +136,8 @@ type Cfg struct {
 	Raw    *ini.File
 	Logger log.Logger
 
+	skipGlobalCopies bool
+
 	// for logging purposes
 	configFiles                  []string
 	appliedCommandLineProperties []string
@@ -1000,6 +1002,9 @@ type CommandLineArgs struct {
 }
 
 func copyServerURLSettingsToGlobals(cfg *Cfg) {
+	if cfg.skipGlobalCopies {
+		return
+	}
 	AppUrl = cfg.AppURL
 	AppSubUrl = cfg.AppSubURL
 }
@@ -1556,6 +1561,18 @@ func NewCfgFromBytesWithoutJSValidation(bytes []byte) (*Cfg, error) {
 // NewCfgFromINIFile specialized function to create a new Cfg from an ini.File.
 func NewCfgFromINIFile(iniFile *ini.File) (*Cfg, error) {
 	cfg := NewCfg()
+
+	if err := cfg.parseINIFile(iniFile); err != nil {
+		return nil, fmt.Errorf("failed to parse setting from INI file: %w", err)
+	}
+
+	return cfg, nil
+}
+
+// NewCfgFromINIFileWithoutGlobals parses a config other than the running server's, and leaves the package-level URL and cookie settings unchanged.
+func NewCfgFromINIFileWithoutGlobals(iniFile *ini.File) (*Cfg, error) {
+	cfg := NewCfg()
+	cfg.skipGlobalCopies = true
 
 	if err := cfg.parseINIFile(iniFile); err != nil {
 		return nil, fmt.Errorf("failed to parse setting from INI file: %w", err)
@@ -2169,6 +2186,9 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 }
 
 func copyCookieSecuritySettingsToGlobals(cfg *Cfg) {
+	if cfg.skipGlobalCopies {
+		return
+	}
 	CookieSecure = cfg.CookieSecure
 	if cfg.CookieSameSiteDisabled {
 		CookieSameSiteDisabled = cfg.CookieSameSiteDisabled
