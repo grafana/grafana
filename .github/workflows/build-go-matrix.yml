@@ -143,12 +143,16 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
+      - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v3.0.0
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
+      # Packages stub artifacts, so it compiles almost nothing. Saving its nearly empty build
+      # cache would take the shared GOCACHE key, and setup-go does not save again on a hit.
       - uses: ./.github/actions/setup-go
+        with:
+          cache-build: 'false'
       - uses: ./.github/actions/setup-fpm
       - name: Create stub artifacts
         run: |

@@ -5,13 +5,14 @@ It contains the [gRPC API](grpc-contract.md), an optional authenticated [connect
 
 ## Start with the API
 
-Import `github.com/grafana/grafana/pkg/storage/dbproxy/api/dbproxy/v1` for `QueryRequest`, `QueryResponse`, and `NewDatabaseProxyServiceClient`.
+Import `github.com/grafana/grafana/pkg/storage/dbproxy/api/dbproxy/v1` for the request and response types and `NewDatabaseProxyServiceClient`.
 The generated package also provides `DatabaseProxyServiceServer` for server implementations.
-The server exposes `dbproxy.v1.DatabaseProxyService/Query`.
-The current server authenticates requests but returns `UNIMPLEMENTED` for authorized queries.
+The V1 service defines `Query`, `Exec`, and `Transaction`.
+The `Exec` and `Transaction` bindings define the wire contract; runtime support follows in later releases.
 
 For `database/sql`, follow the [SQL driver guide](sql-driver.md).
 For wire values, stream completion, errors, and SQL limits, read the [V1 contract](grpc-contract.md).
+For the new write and transaction methods, read the [write contract](write-contract.md).
 
 ## Release the module
 

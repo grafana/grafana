@@ -1,0 +1,19 @@
+apiVersion: rules.alerting.grafana.app/v1beta1
+kind: AlertRule
+metadata:
+  annotations:
+    grafana.app/folder: compat-smoke-folders
+spec:
+  title: Compat smoke alert rule
+  paused: true
+  trigger:
+    interval: 1m
+  noDataState: NoData
+  execErrState: Error
+  expressions:
+    A:
+      datasourceUID: __expr__
+      model:
+        type: math
+        expression: "0"
+      source: true

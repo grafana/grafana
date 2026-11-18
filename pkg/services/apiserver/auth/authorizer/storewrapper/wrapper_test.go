@@ -186,8 +186,12 @@ func TestWrapper_Delete(t *testing.T) {
 		// Verify original user identity is used for authorization
 		setup.mockAuth.On("BeforeDelete", mock.MatchedBy(matchesOriginalUser()), obj).Return(nil)
 
-		// Verify service identity is used to call the underlying store
-		setup.mockStore.On("Delete", mock.MatchedBy(matchesServiceIdentity()), "to-delete", mock.Anything, deleteOpts).Return(expectedObj, true, nil)
+		// Verify service identity is used to call the underlying store, and that it still names the
+		// requester as the metadata identity so storage attributes the deletion to them.
+		setup.mockStore.On("Delete", mock.MatchedBy(func(ctx context.Context) bool {
+			uid, ok := identity.MetadataIdentityUIDFrom(ctx)
+			return matchesServiceIdentity()(ctx) && ok && uid == "user:u001"
+		}), "to-delete", mock.Anything, deleteOpts).Return(expectedObj, true, nil)
 
 		result, deleted, err := setup.wrapper.Delete(setup.ctx, "to-delete", nil, deleteOpts)
 
@@ -557,7 +561,11 @@ func TestWrapper_WithPreserveIdentity(t *testing.T) {
 
 		setup.mockStore.On("Get", mock.MatchedBy(matchesOriginalUser()), "to-delete", mock.Anything).Return(obj, nil)
 		setup.mockAuth.On("BeforeDelete", mock.MatchedBy(matchesOriginalUser()), obj).Return(nil)
-		setup.mockStore.On("Delete", mock.MatchedBy(matchesOriginalUser()), "to-delete", mock.Anything, deleteOpts).Return(obj, true, nil)
+		// The caller is already the user, so storage records them directly: no metadata override.
+		setup.mockStore.On("Delete", mock.MatchedBy(func(ctx context.Context) bool {
+			_, overridden := identity.MetadataIdentityUIDFrom(ctx)
+			return matchesOriginalUser()(ctx) && !overridden
+		}), "to-delete", mock.Anything, deleteOpts).Return(obj, true, nil)
 
 		result, deleted, err := setup.wrapper.Delete(setup.ctx, "to-delete", nil, deleteOpts)
 

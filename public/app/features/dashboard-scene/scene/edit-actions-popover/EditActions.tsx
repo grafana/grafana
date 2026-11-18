@@ -122,6 +122,7 @@ export function DeleteActionButton({
   text,
   yesText,
   onConfirm,
+  confirm = true,
   tooltip,
   disabled,
   disabledTooltip,
@@ -130,6 +131,7 @@ export function DeleteActionButton({
   text: string;
   yesText: string;
   onConfirm: () => void;
+  confirm?: boolean;
   tooltip?: string;
   disabled?: boolean;
   disabledTooltip?: string;
@@ -139,6 +141,10 @@ export function DeleteActionButton({
 
   const onClickInternal = useCallback(() => {
     closePopover();
+    if (!confirm) {
+      onConfirm();
+      return;
+    }
     appEvents.publish(
       new ShowConfirmModalEvent({
         title,
@@ -147,7 +153,7 @@ export function DeleteActionButton({
         onConfirm,
       })
     );
-  }, [closePopover, title, text, yesText, onConfirm]);
+  }, [closePopover, title, text, yesText, onConfirm, confirm]);
 
   tooltip =
     tooltip ?? ((disabled && disabledTooltip) || t('dashboard-scene.control-edit-actions.delete-tooltip', 'Delete'));

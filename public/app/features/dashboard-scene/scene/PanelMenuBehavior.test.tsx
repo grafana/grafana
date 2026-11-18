@@ -834,6 +834,36 @@ describe('panelMenuBehavior', () => {
       expect(moreMenu?.find((i) => i.text === 'New library panel')).toBeDefined();
     });
 
+    it.each([
+      { itemText: 'Duplicate', reportedItem: 'duplicate' },
+      { itemText: 'Copy', reportedItem: 'copy' },
+      { itemText: 'Remove', reportedItem: 'delete' },
+    ])(
+      'reports $reportedItem with the panel id and panel type when $itemText is clicked in the panel menu',
+      async ({ itemText, reportedItem }) => {
+        const track = jest.spyOn(DashboardInteractions, 'panelActionClicked').mockImplementation();
+        try {
+          const { scene, menu, panel } = await buildTestScene({});
+          scene.setState({ isEditing: true });
+          jest.spyOn(scene, 'duplicatePanel').mockImplementation();
+          jest.spyOn(scene, 'copyPanel').mockImplementation();
+          panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+          menu.activate();
+          await new Promise((r) => setTimeout(r, 1));
+
+          const items = menu.state.items ?? [];
+          const subMenu = items.find((i) => i.text === 'More...')?.subMenu ?? [];
+          const item = [...items, ...subMenu].find((i) => i.text === itemText);
+          item?.onClick?.({} as React.MouseEvent);
+
+          expect(track).toHaveBeenCalledTimes(1);
+          expect(track).toHaveBeenCalledWith(reportedItem, 12, 'panel', 'table');
+        } finally {
+          track.mockRestore();
+        }
+      }
+    );
+
     it('should only contain explore when embedded', async () => {
       const { menu, panel } = await buildTestScene({ isEmbedded: true });
 

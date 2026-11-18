@@ -13,11 +13,11 @@ import { QueryEditorType } from './constants';
  */
 const EVENT_PANEL_EDIT_NEXT = 'grafana_panel_edit_next_interaction';
 
+// Reports that a search happened, never what was typed.
 export const trackTransformationSearch = debounce((query: string) => {
   if (query) {
     reportInteraction(EVENT_PANEL_EDIT_NEXT, {
       action: 'search_transformations',
-      query,
     });
   }
 }, 300);

@@ -21,6 +21,7 @@ import { resourceKindInfos } from 'app/features/provisioning/utils/resourceKinds
 import { type Playlist, useGetPlaylistQuery, useReplacePlaylistMutation } from '../../api/clients/playlist/v1';
 
 import { PlaylistForm } from './PlaylistForm';
+import { PLAYLISTS_URL } from './utils';
 
 export interface RouteParams {
   uid: string;
@@ -46,7 +47,7 @@ export const PlaylistEditPage = () => {
       name: playlist.metadata?.name ?? '',
       playlist,
     });
-    locationService.push('/playlists');
+    locationService.push(PLAYLISTS_URL);
   };
 
   const pageNav: NavModelItem = {
@@ -98,6 +99,7 @@ export const PlaylistEditPage = () => {
           resource={provisionedPlaylist}
           title={provisionedPlaylist.spec?.title ?? ''}
           action="update"
+          redirectUrl={PLAYLISTS_URL}
           onDismiss={() => setProvisionedPlaylist(undefined)}
         />
       )}
