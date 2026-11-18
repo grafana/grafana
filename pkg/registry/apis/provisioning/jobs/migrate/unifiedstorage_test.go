@@ -967,7 +967,7 @@ func TestUnifiedStorageMigrator_CleanupSeesTheKindsOfTheExport(t *testing.T) {
 	}).Return(nil)
 
 	migrator := NewUnifiedStorageMigrator(nc, exportWorker, jobs.NewMockWorker(t))
-	err := migrator.Migrate(context.Background(), repo, provisioning.Job{Spec: provisioning.JobSpec{
+	err := migrator.Migrate(t.Context(), repo, provisioning.Job{Spec: provisioning.JobSpec{
 		Migrate: &provisioning.MigrateJobOptions{Branch: "feature-x"},
 	}}, pr)
 	require.NoError(t, err)

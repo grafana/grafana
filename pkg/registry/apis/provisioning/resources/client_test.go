@@ -57,15 +57,15 @@ func TestMultiClientFactory_AnyGroup(t *testing.T) {
 	widget := schema.GroupVersionKind{Group: "example.ext.grafana.app", Version: "v1", Kind: "Widget"}
 	providers := map[string]apiserver.RestConfigProvider{DashboardResource.Group: apiserver.WithoutRestConfig}
 
-	clients, err := NewClientFactoryForMultipleAPIServers(providers).Clients(context.Background(), "default")
+	clients, err := NewClientFactoryForMultipleAPIServers(providers).Clients(t.Context(), "default")
 	require.NoError(t, err)
-	_, _, err = clients.ForKind(context.Background(), widget)
+	_, _, err = clients.ForKind(t.Context(), widget)
 	require.ErrorContains(t, err, "no clients provider for group example.ext.grafana.app")
 
 	providers[AnyGroup] = apiserver.WithoutRestConfig
-	clients, err = NewClientFactoryForMultipleAPIServers(providers).Clients(context.Background(), "default")
+	clients, err = NewClientFactoryForMultipleAPIServers(providers).Clients(t.Context(), "default")
 	require.NoError(t, err)
-	_, _, err = clients.ForKind(context.Background(), widget)
+	_, _, err = clients.ForKind(t.Context(), widget)
 	require.ErrorContains(t, err, "rest config will not be available")
 }
 
@@ -703,7 +703,7 @@ func TestSupportedResourceProvider(t *testing.T) {
 
 		set.Update(testManifests(widget))
 
-		clients, err := factory.Clients(context.Background(), "default")
+		clients, err := factory.Clients(t.Context(), "default")
 		require.NoError(t, err)
 		require.Equal(t, []SupportedResource{folder, widget}, clients.SupportedResources())
 	})

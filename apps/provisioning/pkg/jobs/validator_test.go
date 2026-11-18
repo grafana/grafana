@@ -1388,11 +1388,11 @@ func TestAdmissionValidator_ReadsTheSupportedResourcesOnEachValidation(t *testin
 		},
 	}
 
-	err := v.Validate(context.Background(), newAdmissionTestAttributes(job, admission.Create), nil)
+	err := v.Validate(t.Context(), newAdmissionTestAttributes(job, admission.Create), nil)
 	require.ErrorContains(t, err, "kind is not supported for export")
 
 	supported = []provisioning.SupportedResource{dashboard, widget}
-	require.NoError(t, v.Validate(context.Background(), newAdmissionTestAttributes(job, admission.Create), nil))
+	require.NoError(t, v.Validate(t.Context(), newAdmissionTestAttributes(job, admission.Create), nil))
 }
 
 // The job store claims a job and renews its lease with updates that keep the spec. They must
@@ -1412,7 +1412,7 @@ func TestAdmissionValidator_AcceptsAnUpdateThatKeepsTheSpec(t *testing.T) {
 		},
 	}
 	update := func(job *provisioning.Job) error {
-		return v.Validate(context.Background(), jobUpdateAttributes(job, accepted), nil)
+		return v.Validate(t.Context(), jobUpdateAttributes(job, accepted), nil)
 	}
 
 	claimed := accepted.DeepCopy()
