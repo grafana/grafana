@@ -189,21 +189,13 @@ func TestDeleteActingUserOverGRPC(t *testing.T) {
 	})
 
 	t.Run("a delete through apistore records the original user", func(t *testing.T) {
-		// The transport only attaches the service's access token. The user exists solely as the
-		// original UID in the context, as the authz store wrapper leaves it, so apistore itself
-		// must turn it into the request field for the marker to name them.
-		apiConn, err := grpc.NewClient(listener.Addr().String(),
-			grpc.WithTransportCredentials(insecure.NewCredentials()),
-			grpc.WithUnaryInterceptor(func(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
-				return invoker(metadata.AppendToOutgoingContext(ctx, "x-access-token", accessToken), method, req, reply, cc, opts...)
-			}))
-		require.NoError(t, err)
-		t.Cleanup(func() { _ = apiConn.Close() })
-
+		// The service's access token travels in the context metadata, like the other cases. The user
+		// exists solely as the original UID in the context, as the authz store wrapper leaves it, so
+		// apistore itself must turn it into the request field for the marker to name them.
 		rkey, _ := createFolder(t, "via-apistore", callers["access policy"])
 		store, _, err := apistore.NewStorage(
 			&storagebackend.ConfigForResource{GroupResource: schema.GroupResource{Group: rkey.Group, Resource: rkey.Resource}},
-			resourceclient.NewResourceClientFromConns(apiConn, apiConn),
+			resourceclient.NewResourceClientFromConns(conn, conn),
 			nil,
 			func(string) (*resourcepb.ResourceKey, error) { return rkey, nil },
 			func() runtime.Object { return &unstructured.Unstructured{} },
@@ -213,7 +205,9 @@ func TestDeleteActingUserOverGRPC(t *testing.T) {
 		)
 		require.NoError(t, err)
 
-		ctx := identity.WithOriginalIdentityUID(identity.WithServiceIdentityContext(t.Context(), 1), actingUID)
+		ctx := metadata.NewOutgoingContext(
+			identity.WithOriginalIdentityUID(identity.WithServiceIdentityContext(t.Context(), 1), actingUID),
+			callers["access policy"])
 		err = store.Delete(ctx, "folder.grafana.app/folders/"+namespace+"/via-apistore", &unstructured.Unstructured{}, nil, nil, nil, storage.DeleteOptions{})
 		require.NoError(t, err)
 
