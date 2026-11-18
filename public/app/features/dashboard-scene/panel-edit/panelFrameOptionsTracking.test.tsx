@@ -11,6 +11,7 @@ import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLay
 import { DashboardInteractions } from '../utils/interactions';
 
 import {
+  getPanelFrameOptions,
   PanelBackgroundSwitch,
   PanelDescriptionTextArea,
   PanelFrameTitleInput,
@@ -18,7 +19,9 @@ import {
 } from './getPanelFrameOptions';
 
 jest.mock('app/features/dashboard/components/GenAI/LazyGenAIButtons', () => ({
-  LazyGenAIPanelTitleButton: () => null,
+  LazyGenAIPanelTitleButton: ({ onGenerate }: { onGenerate: (title: string) => void }) => (
+    <button onClick={() => onGenerate('Generated title')}>Generate title</button>
+  ),
 }));
 
 setPluginImportUtils({
@@ -26,7 +29,7 @@ setPluginImportUtils({
   getPanelPluginFromCache: () => undefined,
 });
 
-function setup() {
+function setup({ description = 'Original description' }: { description?: string } = {}) {
   const links = new VizPanelLinks({
     rawLinks: [
       { title: 'Docs', url: '/docs' },
@@ -37,7 +40,7 @@ function setup() {
   const panel = new VizPanel({
     key: 'panel-2',
     title: 'Original title',
-    description: 'Original description',
+    description,
     pluginId: 'timeseries',
     titleItems: [links],
   });
@@ -104,6 +107,20 @@ describe('panel frame option tracking', () => {
     expect(panelSettingChanged).not.toHaveBeenCalled();
   });
 
+  it('reports a title generated with AI as coming from genai', async () => {
+    const { panel } = setup();
+    const titleItem = getPanelFrameOptions(panel).items.find((item) => item.props.id === 'panel-frame-options-title');
+    render(<>{titleItem?.props.addon}</>);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Generate title' }));
+
+    expect(panelSettingChanged).toHaveBeenCalledWith({
+      item: 'change_panel_title',
+      ...fromEditPane,
+      source: 'genai',
+    });
+  });
+
   it('reports switching the description to a subtitle', async () => {
     const { panel } = setup();
     render(<PanelDescriptionTextArea panel={panel} />);
@@ -111,6 +128,16 @@ describe('panel frame option tracking', () => {
     await userEvent.click(screen.getByRole('switch'));
 
     expect(panelSettingChanged).toHaveBeenCalledWith({ item: 'toggle_panel_subtitle', ...fromEditPane });
+  });
+
+  it('does not report the subtitle switch on a panel with no description to move', async () => {
+    const { panel } = setup({ description: '' });
+    render(<PanelDescriptionTextArea panel={panel} />);
+
+    await userEvent.click(screen.getByRole('switch'));
+
+    expect(screen.getByRole('switch')).toBeInTheDocument();
+    expect(panelSettingChanged).not.toHaveBeenCalled();
   });
 
   it('reports a transparent background change', async () => {

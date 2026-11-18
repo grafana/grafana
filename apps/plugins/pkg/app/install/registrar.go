@@ -363,6 +363,10 @@ func (r *InstallRegistrar) SyncNamespace(ctx context.Context, namespace string, 
 				}
 				continue
 			}
+			r.logger.WithContext(ctx).Info("Unregistering plugin install that is not in the plugin store",
+				"requestNamespace", namespace, "pluginId", record.Spec.Id,
+				"createdAt", record.CreationTimestamp.Time, "age", time.Since(record.CreationTimestamp.Time).Round(time.Second),
+				"cutoff", since, "storePlugins", len(desired), "storeFingerprint", storeFingerprint(desired))
 			changed, err := r.unregister(ctx, namespace, record.Spec.Id, source)
 			if err != nil {
 				return err
@@ -489,6 +493,8 @@ func (r *InstallRegistrar) unregister(ctx context.Context, namespace string, nam
 		metrics.RegistrationOperationsTotal.WithLabelValues("unregister", outcomeForError(err)).Inc()
 		return false, err
 	}
+	createdAt := existing.CreationTimestamp.Time
+	logger.Info("Unregistered plugin install", "createdAt", createdAt, "age", time.Since(createdAt).Round(time.Second))
 	metrics.RegistrationOperationsTotal.WithLabelValues("unregister", "success").Inc()
 	return true, nil
 }
