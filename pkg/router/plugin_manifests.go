@@ -249,8 +249,6 @@ func (p *pluginConnections) pluginClients(host, pluginID string, manifest *app.M
 		ResourceClient:    pluginv2.NewResourceClient(conn),
 		DataClient:        pluginv2.NewDataClient(conn),
 		StreamClient:      pluginv2.NewStreamClient(conn),
-		AdmissionClient:   pluginv2.NewAdmissionControlClient(conn),
-		ConversionClient:  pluginv2.NewResourceConversionClient(conn),
 	}, clientV3, nil
 }
 

@@ -1,6 +1,6 @@
 import type { Meta, StoryFn } from '@storybook/react';
-import { useEffect, useState } from 'react';
 import { action } from 'storybook/actions';
+import { useArgs } from 'storybook/preview-api';
 
 import { VariableOrigin, type VariableSuggestion } from '@grafana/data';
 
@@ -41,20 +41,16 @@ const meta: Meta<typeof CodeMirrorInlineInput> = {
 };
 
 const Controlled: StoryFn<typeof CodeMirrorInlineInput> = (args) => {
-  const [value, setValue] = useState(args.value);
-
-  useEffect(() => {
-    setValue(args.value);
-  }, [args.value]);
+  const [, updateArgs] = useArgs();
 
   return (
     <Field label="URL">
       <CodeMirrorInlineInput
         {...args}
-        value={value}
+        value={args.value}
         aria-label={args['aria-label'] ?? 'Inline input'}
         onChange={(nextValue) => {
-          setValue(nextValue);
+          updateArgs({ value: nextValue });
           action('onChange')(nextValue);
         }}
       />

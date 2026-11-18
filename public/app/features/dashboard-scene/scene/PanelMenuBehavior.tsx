@@ -98,7 +98,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
           editPanel: undefined,
         }),
         onClick: () => {
-          DashboardInteractions.panelActionClicked('view', getPanelIdForVizPanel(panel), 'panel');
+          DashboardInteractions.panelActionClicked('view', getPanelIdForVizPanel(panel), 'panel', panel.state.pluginId);
         },
       });
     }
@@ -212,7 +212,12 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         text: t('panel.header-menu.duplicate', `Duplicate`),
         iconClassName: 'file-copy-alt',
         onClick: () => {
-          DashboardInteractions.panelActionClicked('duplicate', getPanelIdForVizPanel(panel), 'panel');
+          DashboardInteractions.panelActionClicked(
+            'duplicate',
+            getPanelIdForVizPanel(panel),
+            'panel',
+            panel.state.pluginId
+          );
           dashboard.duplicatePanel(panel);
         },
         shortcut: 'p d',
@@ -228,7 +233,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
             : t('panel.header-menu.copy', `Copy`),
         iconClassName: 'copy',
         onClick: () => {
-          DashboardInteractions.panelActionClicked('copy', getPanelIdForVizPanel(panel), 'panel');
+          DashboardInteractions.panelActionClicked('copy', getPanelIdForVizPanel(panel), 'panel', panel.state.pluginId);
           dashboard.copyPanel(panel);
         },
         shortcut: 'p c',
@@ -450,7 +455,12 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         text: t('panel.header-menu.remove', `Remove`),
         iconClassName: 'trash-alt',
         onClick: () => {
-          DashboardInteractions.panelActionClicked('delete', getPanelIdForVizPanel(panel), 'panel');
+          DashboardInteractions.panelActionClicked(
+            'delete',
+            getPanelIdForVizPanel(panel),
+            'panel',
+            panel.state.pluginId
+          );
           onRemovePanel(dashboard, panel);
         },
         shortcut: 'p r',

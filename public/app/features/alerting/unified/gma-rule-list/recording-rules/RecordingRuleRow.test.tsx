@@ -10,10 +10,10 @@ function baseHit(overrides: Partial<RecordingRuleSearchHit> = {}): RecordingRule
   return { uid: 'rule-1', title: 'cpu:usage:rate5m', folderUid: 'folder-1', ...overrides };
 }
 
-function renderRow(props: Parameters<typeof RecordingRuleRow>[0]) {
+function renderRow(props: Omit<Parameters<typeof RecordingRuleRow>[0], 'onSequenceClick'>) {
   return render(
     <ul>
-      <RecordingRuleRow {...props} />
+      <RecordingRuleRow {...props} onSequenceClick={jest.fn()} />
     </ul>,
     { historyOptions: { initialEntries: ['/alerting/rules/recording?search=cpu'] } }
   );
@@ -67,7 +67,7 @@ describe('RecordingRuleRow', () => {
   it("shows its sequence's interval in place of its own when the rule is in a sequence", () => {
     renderRow({
       searchHit: baseHit({ interval: '1m' }),
-      sequence: { name: 'seq-1', interval: '2m' },
+      sequence: { uid: 'seq-1', interval: '2m' },
     });
 
     expect(screen.getByText('Rule sequence · 2m')).toBeInTheDocument();
