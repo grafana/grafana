@@ -23,6 +23,7 @@ import (
 	"github.com/blevesearch/bleve/v2"
 	"github.com/blevesearch/bleve/v2/analysis/analyzer/keyword"
 	"github.com/blevesearch/bleve/v2/analysis/analyzer/standard"
+	"github.com/blevesearch/bleve/v2/index/scorch"
 	"github.com/blevesearch/bleve/v2/mapping"
 	"github.com/blevesearch/bleve/v2/search"
 	"github.com/blevesearch/bleve/v2/search/query"
@@ -87,6 +88,10 @@ type BleveOptions struct {
 	// Index cache TTL for bleve indices. 0 disables expiration for in-memory indexes.
 	// Also used for file-based indexes, if they are not owned by this instance, and they are not fetched from the cache recently.
 	IndexCacheTTL time.Duration
+
+	// IndexCacheTTLIdleOnly keeps searched memory indexes open regardless of age,
+	// avoiding rebuilds that may reclaim little memory. IndexCacheTTL becomes an idle timeout.
+	IndexCacheTTLIdleOnly bool
 
 	// GlobalIndexIdleTimeout closes a global index this instance owns once it has
 	// not been searched for this long, so a namespace nobody searches stops paying
@@ -491,6 +496,11 @@ func (b *bleveBackend) evictExpiredOrUnownedIndexesPeriodically(ctx context.Cont
 
 func (b *bleveBackend) runEvictExpiredOrUnownedIndexes(now time.Time) {
 	cacheTTLMillis := b.opts.IndexCacheTTL.Milliseconds()
+	// Search timestamps use milliseconds; round up so short TTLs still enable cleanup.
+	memoryIdleTimeoutMillis := cacheTTLMillis
+	if b.opts.IndexCacheTTL%time.Millisecond > 0 {
+		memoryIdleTimeoutMillis++
+	}
 	unownedIdleTimeoutMillis := min(b.opts.IndexCacheTTL, unownedIndexIdleTimeout).Milliseconds()
 
 	globalIdleTimeoutMillis := b.opts.GlobalIndexIdleTimeout.Milliseconds()
@@ -503,10 +513,16 @@ func (b *bleveBackend) runEvictExpiredOrUnownedIndexes(now time.Time) {
 
 	b.cacheMx.Lock()
 	for key, idx := range b.cache {
-		// Memory indexes do not merge segments, so active indexes must also expire.
-		if !idx.expiration.IsZero() && now.After(idx.expiration) {
+		// Memory indexes do not merge segments, so age-based expiry can reclaim memory.
+		if !b.opts.IndexCacheTTLIdleOnly && !idx.expiration.IsZero() && now.After(idx.expiration) {
 			delete(b.cache, key)
 			expired[key] = idx
+			continue
+		}
+		if b.opts.IndexCacheTTLIdleOnly && idx.indexStorage == indexStorageMemory && b.opts.IndexCacheTTL > 0 &&
+			now.UnixMilli()-idx.lastSearchedAt.Load() > memoryIdleTimeoutMillis {
+			delete(b.cache, key)
+			idle[key] = idx
 			continue
 		}
 
@@ -723,6 +739,7 @@ func (b *bleveBackend) updateIndexMetricsPeriodically(ctx context.Context, index
 	defer b.bgTasksWg.Done()
 
 	for ctx.Err() == nil {
+		b.updateMemoryIndexSizeMetrics(ctx)
 		b.updateIndexSizeMetric(ctx, indexPath)
 		b.updateIndexedKindsMetric(ctx)
 
@@ -793,6 +810,34 @@ func (b *bleveBackend) updateIndexedKindsMetric(ctx context.Context) {
 		b.indexMetrics.IndexedKinds.DeleteLabelValues(kind, resource.IndexedDocumentsDeleted)
 		delete(b.reportedIndexedKinds, kind)
 	}
+}
+
+func (b *bleveBackend) updateMemoryIndexSizeMetrics(ctx context.Context) {
+	var totalSize, maxSize uint64
+	for _, key := range b.GetOpenIndexes() {
+		if ctx.Err() != nil {
+			return
+		}
+		idx := b.peekCachedIndex(key)
+		if idx == nil || idx.indexStorage != indexStorageMemory {
+			continue
+		}
+		advanced, err := idx.index.Advanced()
+		if err != nil {
+			b.log.Debug("Skipping memory index size measurement", "key", key, "err", err)
+			continue
+		}
+		scorchIndex, ok := advanced.(*scorch.Scorch)
+		if !ok {
+			continue
+		}
+		// Partially obsolete segments still occupy their full estimated size.
+		size := scorchIndex.MemoryUsed()
+		totalSize += size
+		maxSize = max(maxSize, size)
+	}
+	b.indexMetrics.MemoryIndexSize.Set(float64(totalSize))
+	b.indexMetrics.MemoryIndexMaxSize.Set(float64(maxSize))
 }
 
 // updateIndexSizeMetric sets the total size of all file-based indices metric.
@@ -1101,7 +1146,7 @@ func (b *bleveBackend) BuildIndex(
 	}
 
 	// Set expiration after building the index. Only expire in-memory indexes.
-	if prepared.fileIndexName == "" && b.opts.IndexCacheTTL > 0 {
+	if prepared.fileIndexName == "" && b.opts.IndexCacheTTL > 0 && !b.opts.IndexCacheTTLIdleOnly {
 		idx.expiration = time.Now().Add(b.opts.IndexCacheTTL)
 	}
 

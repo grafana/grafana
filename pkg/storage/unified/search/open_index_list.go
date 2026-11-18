@@ -166,7 +166,6 @@ func (b *bleveBackend) WriteOpenIndexStats(now time.Time) error {
 			Resource:  key.Resource,
 			DocCount:  int64(docCount),
 		}
-		// Only a global index is closed for not being searched.
 		if key.IsGlobal() {
 			entry.LastSearchedAt = idx.lastSearchedAt.Load()
 		}
