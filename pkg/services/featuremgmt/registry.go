@@ -2599,7 +2599,7 @@ var (
 			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 			HideFromDocs: true,
 			Generate:     Generate{React: true},
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:        "inlineLogDetailsNoScrolls",
@@ -3322,7 +3322,7 @@ var (
 			Owner:        grafanaDataSourcesPlugins,
 			HideFromDocs: true,
 			Generate:     Generate{React: true},
-			Expression:   "false",
+			Expression:   "true",
 		},
 		{
 			Name:         "datasources.queryGateway",

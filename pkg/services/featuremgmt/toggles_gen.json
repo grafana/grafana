@@ -2745,10 +2745,10 @@
     {
       "metadata": {
         "name": "flameGraph.tableNg",
-        "resourceVersion": "1795039673891",
+        "resourceVersion": "1795040338225",
         "creationTimestamp": "2026-08-13T19:21:31Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-11-18 22:07:53.89118 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-11-18 22:18:58.225136 +0000 UTC"
         }
       },
       "spec": {
@@ -2757,7 +2757,7 @@
         "codeowner": "@grafana/observability-traces-and-profiling",
         "frontend": true,
         "hideFromDocs": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -5870,10 +5870,10 @@
     {
       "metadata": {
         "name": "rawPrometheus.tableNg",
-        "resourceVersion": "1795039673891",
+        "resourceVersion": "1795040338225",
         "creationTimestamp": "2026-08-13T20:46:09Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-11-18 22:07:53.89118 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-11-18 22:18:58.225136 +0000 UTC"
         }
       },
       "spec": {
@@ -5882,7 +5882,7 @@
         "codeowner": "@grafana/data-sources-plugins",
         "frontend": true,
         "hideFromDocs": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
