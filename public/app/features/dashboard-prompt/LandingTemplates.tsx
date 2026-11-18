@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useId, useRef, useState } from 'react';
+import { useCallback, useId, useRef, useState } from 'react';
 
 import { type DataSourceInstanceListItem, type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
@@ -36,15 +36,29 @@ export function LandingTemplates({
   const styles = useStyles2(getStyles);
   const titleId = useId();
   const listId = useId();
-  const [isOpen, setIsOpen] = useState(true);
+  // Undefined until each list reports how many templates it shows.
+  const [counts, setCounts] = useState<{ custom?: number; grafana?: number }>({});
+  // A person's own toggle wins over the default.
+  const [openedByUser, setOpenedByUser] = useState<boolean>();
+  const onCustomTemplatesLoad = useCallback((custom: number) => setCounts((current) => ({ ...current, custom })), []);
+  const onGrafanaTemplatesLoad = useCallback(
+    (grafana: number) => setCounts((current) => ({ ...current, grafana })),
+    []
+  );
   const DashboardTemplatesTab = getDashboardTemplatesTab();
+  const hasCustomTemplates = Boolean(DashboardTemplatesTab) && showCustomTemplates;
+  const loaded =
+    (!hasCustomTemplates || counts.custom !== undefined) && (!showGrafanaTemplates || counts.grafana !== undefined);
+  const isEmpty = loaded && (counts.custom ?? 0) + (counts.grafana ?? 0) === 0;
+  // Open while the lists load and when they show templates; closed when there are none to show.
+  const isOpen = openedByUser ?? !isEmpty;
   // Pre-set so the lists' `loaded` events, which report the template modal as their location, stay silent here.
   const customLoadedFiredRef = useRef(true);
   const grafanaLoadedFiredRef = useRef(true);
 
   // Rendered through a function, as in the template modal: the tab is registered by the enterprise build.
   const renderCustomTemplates = () => {
-    if (!DashboardTemplatesTab || !showCustomTemplates) {
+    if (!DashboardTemplatesTab || !hasCustomTemplates) {
       return null;
     }
     return (
@@ -54,25 +68,31 @@ export function LandingTemplates({
         loadedFiredRef={customLoadedFiredRef}
         onSelectTemplate={onSelectTemplate}
         selectedTemplateId={selectedTemplateId}
+        onTemplatesLoad={onCustomTemplatesLoad}
       />
     );
   };
 
   return (
-    <section className={cx(styles.panel, className)} aria-labelledby={titleId}>
+    <section className={cx(styles.panel, !isOpen && styles.panelClosed, className)} aria-labelledby={titleId}>
       <button
         type="button"
         id={titleId}
         className={styles.toggle}
         aria-expanded={isOpen}
         aria-controls={listId}
-        onClick={() => setIsOpen((open) => !open)}
+        onClick={() => setOpenedByUser(!isOpen)}
       >
         <Trans i18nKey="dashboard.empty.templates-title">Start from a template</Trans>
         <Icon name={isOpen ? 'angle-up' : 'angle-down'} />
       </button>
       {isOpen && (
         <div id={listId} className={styles.list}>
+          {isEmpty && (
+            <p className={styles.empty}>
+              <Trans i18nKey="dashboard.empty.templates-empty">No templates available</Trans>
+            </p>
+          )}
           <Grid gap={2} columns={{ xs: 1, sm: 2, lg: 3 }}>
             {renderCustomTemplates()}
             {showGrafanaTemplates && (
@@ -83,6 +103,7 @@ export function LandingTemplates({
                 loadedFiredRef={grafanaLoadedFiredRef}
                 onSelectTemplate={onSelectTemplate}
                 selectedTemplateId={selectedTemplateId}
+                onTemplatesLoad={onGrafanaTemplatesLoad}
               />
             )}
           </Grid>
@@ -103,6 +124,10 @@ function getStyles(theme: GrafanaTheme2) {
       background: theme.colors.background.secondary,
       border: `1px solid ${theme.colors.border.weak}`,
       borderRadius: theme.shape.radius.lg,
+    }),
+    // Closed, the header sits as far from the panel's bottom edge as from the prompt above it.
+    panelClosed: css({
+      paddingBottom: theme.spacing(1.5),
     }),
     toggle: css({
       alignSelf: 'flex-start',
@@ -126,6 +151,11 @@ function getStyles(theme: GrafanaTheme2) {
       minHeight: 0,
       overflowY: 'auto',
       paddingTop: theme.spacing(0.5),
+    }),
+    empty: css({
+      margin: 0,
+      color: theme.colors.text.secondary,
+      fontSize: theme.typography.bodySmall.fontSize,
     }),
   };
 }

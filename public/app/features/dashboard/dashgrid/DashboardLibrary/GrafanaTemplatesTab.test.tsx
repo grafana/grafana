@@ -95,10 +95,19 @@ describe('GrafanaTemplatesTab', () => {
 
     it('renders nothing when there are no templates, to leave the shared grid alone', async () => {
       server.use(http.get('/api/gnet/dashboards', () => HttpResponse.json({ page: 1, pages: 1, items: [] })));
-      const { container } = renderTab({ onSelectTemplate: jest.fn() });
+      const onTemplatesLoad = jest.fn();
+      const { container } = renderTab({ onSelectTemplate: jest.fn(), onTemplatesLoad });
 
       // Skeletons show while loading, then nothing: no empty state taking a card's slot.
       await waitFor(() => expect(container).toBeEmptyDOMElement());
+      expect(onTemplatesLoad).toHaveBeenLastCalledWith(0);
+    });
+
+    it('reports how many templates it shows once they load', async () => {
+      const onTemplatesLoad = jest.fn();
+      renderTab({ onSelectTemplate: jest.fn(), onTemplatesLoad });
+
+      await waitFor(() => expect(onTemplatesLoad).toHaveBeenCalledWith(1));
     });
 
     it('marks the selected template', async () => {

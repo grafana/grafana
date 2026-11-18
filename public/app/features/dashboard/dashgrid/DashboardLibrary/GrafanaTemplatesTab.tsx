@@ -46,6 +46,7 @@ export const GrafanaTemplatesTab = ({
   loadedFiredRef,
   onSelectTemplate,
   selectedTemplateId,
+  onTemplatesLoad,
 }: GrafanaTemplatesTabProps) => {
   const isDashboardTemplatesAssistantButtonEnabled = useFlagDashboardTemplatesAssistantButton();
   const isDashboardTemplatesAssistantToolEnabled = useFlagAssistantFrontendToolsDashboardTemplates();
@@ -87,6 +88,12 @@ export const GrafanaTemplatesTab = ({
       ? NewTemplateDashboardInteractions.loaded(properties)
       : TemplateDashboardInteractions.loaded(properties);
   }, [loading, dashboards, entryPoint, testDataSource?.type, isAnalyticsFrameworkEnabled, loadedFiredRef]);
+
+  useEffect(() => {
+    if (!loading) {
+      onTemplatesLoad?.(dashboards.length);
+    }
+  }, [loading, dashboards.length, onTemplatesLoad]);
 
   const onPreviewDashboardClick = async (dashboard: GnetDashboard, customizeWithAssistant = false) => {
     const sourceEntryPoint = DashboardTemplatesSourceEntryPointMap[entryPoint] || 'unknown';

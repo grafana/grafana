@@ -78,4 +78,6 @@ export interface TemplateSelectionProps {
   onSelectTemplate?: (selection: TemplateSelection) => void;
   /** The picked template's `TemplateSelection.id`, shown as selected. */
   selectedTemplateId?: string;
+  /** Reports how many templates the list shows once they load, so the host can react to an empty list. */
+  onTemplatesLoad?: (count: number) => void;
 }

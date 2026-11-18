@@ -1,12 +1,23 @@
+import { useEffect } from 'react';
 import { render, screen } from 'test/test-utils';
 
 import { getDashboardTemplatesTab } from 'app/features/dashboard/dashgrid/DashboardLibrary/enterprise-components/DashboardTemplatesTabExtension';
+import { type TemplateSelectionProps } from 'app/features/dashboard/dashgrid/DashboardLibrary/types';
 
 import { LandingTemplates } from './LandingTemplates';
 
-jest.mock('app/features/dashboard/dashgrid/DashboardLibrary/GrafanaTemplatesTab', () => ({
-  GrafanaTemplatesTab: () => <article data-testid="grafana-card" />,
-}));
+let mockGrafanaCount = 1;
+let mockCustomCount = 1;
+
+jest.mock('app/features/dashboard/dashgrid/DashboardLibrary/GrafanaTemplatesTab', () => {
+  const { useEffect: useMockEffect } = jest.requireActual('react');
+  return {
+    GrafanaTemplatesTab: ({ onTemplatesLoad }: TemplateSelectionProps) => {
+      useMockEffect(() => onTemplatesLoad?.(mockGrafanaCount), [onTemplatesLoad]);
+      return mockGrafanaCount > 0 ? <article data-testid="grafana-card" /> : null;
+    },
+  };
+});
 
 jest.mock(
   'app/features/dashboard/dashgrid/DashboardLibrary/enterprise-components/DashboardTemplatesTabExtension',
@@ -16,7 +27,10 @@ jest.mock(
 );
 
 const mockGetDashboardTemplatesTab = jest.mocked(getDashboardTemplatesTab);
-const CustomTemplates = () => <article data-testid="custom-card" />;
+const CustomTemplates = ({ onTemplatesLoad }: TemplateSelectionProps) => {
+  useEffect(() => onTemplatesLoad?.(mockCustomCount), [onTemplatesLoad]);
+  return mockCustomCount > 0 ? <article data-testid="custom-card" /> : null;
+};
 
 function renderTemplates(props: Partial<Parameters<typeof LandingTemplates>[0]> = {}) {
   return render(
@@ -32,6 +46,8 @@ function renderTemplates(props: Partial<Parameters<typeof LandingTemplates>[0]> 
 
 describe('LandingTemplates', () => {
   beforeEach(() => {
+    mockGrafanaCount = 1;
+    mockCustomCount = 1;
     mockGetDashboardTemplatesTab.mockReturnValue(CustomTemplates);
   });
 
@@ -55,6 +71,26 @@ describe('LandingTemplates', () => {
 
     await user.click(toggle);
     expect(screen.getByTestId('grafana-card')).toBeInTheDocument();
+  });
+
+  it('starts closed when no list has templates, and says so when opened', async () => {
+    mockGrafanaCount = 0;
+    mockCustomCount = 0;
+    const { user } = renderTemplates();
+    const toggle = screen.getByRole('button', { name: 'Start from a template' });
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+
+    await user.click(toggle);
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByText('No templates available')).toBeInTheDocument();
+  });
+
+  it('stays open when only one list has templates', () => {
+    mockCustomCount = 0;
+    renderTemplates();
+
+    expect(screen.getByRole('button', { name: 'Start from a template' })).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.queryByText('No templates available')).not.toBeInTheDocument();
   });
 
   it('leaves out custom templates when they are not available', () => {
