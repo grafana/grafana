@@ -14,6 +14,7 @@ export const addTagTypes = [
   'dashboards',
   'snapshots',
   'dashboard_public',
+  'dashboard_variables',
   'datasources',
   'correlations',
   'health',
@@ -703,6 +704,40 @@ const injectedRtkApi = api
           body: queryArg.publicDashboardDto,
         }),
         invalidatesTags: ['dashboards', 'dashboard_public'],
+      }),
+      promoteSharedVariableCluster: build.mutation<
+        PromoteSharedVariableClusterApiResponse,
+        PromoteSharedVariableClusterApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/dashboards/variables/promote`,
+          method: 'POST',
+          body: queryArg.sharedVariablePromoteRequest,
+        }),
+        invalidatesTags: ['dashboard_variables', 'enterprise'],
+      }),
+      getSharedVariableClusters: build.query<GetSharedVariableClustersApiResponse, GetSharedVariableClustersApiArg>({
+        query: () => ({ url: `/dashboards/variables/shared-clusters` }),
+        providesTags: ['dashboard_variables', 'enterprise'],
+      }),
+      getSharedVariableClusterOccurrences: build.query<
+        GetSharedVariableClusterOccurrencesApiResponse,
+        GetSharedVariableClusterOccurrencesApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/dashboards/variables/shared-clusters/occurrences`,
+          params: {
+            id: queryArg.id,
+          },
+        }),
+        providesTags: ['dashboard_variables', 'enterprise'],
+      }),
+      rescanSharedVariableClusters: build.mutation<
+        RescanSharedVariableClustersApiResponse,
+        RescanSharedVariableClustersApiArg
+      >({
+        query: () => ({ url: `/dashboards/variables/shared-clusters/rescan`, method: 'POST' }),
+        invalidatesTags: ['dashboard_variables', 'enterprise'],
       }),
       getDataSources: build.query<GetDataSourcesApiResponse, GetDataSourcesApiArg>({
         query: () => ({ url: `/datasources` }),
@@ -2207,6 +2242,22 @@ export type UpdatePublicDashboardApiArg = {
   uid: string;
   publicDashboardDto: PublicDashboardDto;
 };
+export type PromoteSharedVariableClusterApiResponse = /** status 200 (empty) */ PromoteResultIsThePromoteApiResponse;
+export type PromoteSharedVariableClusterApiArg = {
+  sharedVariablePromoteRequest: SharedVariablePromoteRequest;
+};
+export type GetSharedVariableClustersApiResponse =
+  /** status 200 (empty) */ SharedVariableClustersIsTheOrgsLatestScanResult;
+export type GetSharedVariableClustersApiArg = void;
+export type GetSharedVariableClusterOccurrencesApiResponse =
+  /** status 200 (empty) */ SharedVariableOccurrencesListsTheDashboardsInOneCluster;
+export type GetSharedVariableClusterOccurrencesApiArg = {
+  /** The cluster's id, from `GET /dashboards/variables/shared-clusters`. */
+  id: string;
+};
+export type RescanSharedVariableClustersApiResponse =
+  /** status 202 (empty) */ SharedVariableRescanResultAcknowledgesAScanRequest;
+export type RescanSharedVariableClustersApiArg = void;
 export type GetDataSourcesApiResponse = /** status 200 (empty) */ DataSourceList;
 export type GetDataSourcesApiArg = void;
 export type AddDataSourceApiResponse = /** status 200 (empty) */ {
@@ -3742,6 +3793,88 @@ export type PublicDashboardDto = {
   share?: ShareType;
   timeSelectionEnabled?: boolean;
   uid?: string;
+};
+export type DashboardPromoteResultIsTheOutcomeForOneDashboardUpdate = {
+  dashboardUID?: string;
+  error?: string;
+  /** SkipReason is the scanner's reason for a dashboard this tool cannot write. */
+  skipReason?: string;
+  status?: string;
+};
+export type ScopeIsTheRecommendedVariableResourceScopeForAClusterGlobalOrFolder = string;
+export type PromoteResultIsThePromoteApiResponse = {
+  clusterId?: string;
+  folderUID?: string;
+  /** Remaining counts the cluster's dashboards in the snapshot still to strip after this
+    batch; ones this tool cannot write, or that the Variable's scope does not cover, are
+    not counted. */
+  remaining?: number;
+  results?: DashboardPromoteResultIsTheOutcomeForOneDashboardUpdate[];
+  scope?: ScopeIsTheRecommendedVariableResourceScopeForAClusterGlobalOrFolder;
+  variableAction?: string;
+  variableName?: string;
+};
+export type SharedVariablePromoteRequest = {
+  /** ClusterID is the cluster to promote, from the org's latest snapshot. */
+  clusterId?: string;
+  /** DashboardUIDs limits which dashboards are updated, at most MaxPromoteBatch (200). Empty means
+    the whole cluster, which is allowed only when it fits in one batch. */
+  dashboardUIDs?: string[];
+  /** FolderUID is the folder for a folder Scope override. */
+  folderUID?: string;
+  scope?: ScopeIsTheRecommendedVariableResourceScopeForAClusterGlobalOrFolder;
+};
+export type SharedVariableCluster = {
+  conflictReason?: string;
+  count?: number;
+  fingerprint?: string;
+  folderUID?: string;
+  id?: string;
+  kind?: string;
+  name?: string;
+  nameConflict?: boolean;
+  /** NoWritableDashboards means promote would change nothing: every dashboard is locked. */
+  noWritableDashboards?: boolean;
+  /** Promoted means the Variable exists and only local copies remain to strip. */
+  promoted?: boolean;
+  scope?: string;
+  spec?: any;
+};
+export type SharedVariableClustersIsTheOrgsLatestScanResult = {
+  clusters?: SharedVariableCluster[];
+  dashboards?: number;
+  error?: string;
+  progress?: number;
+  /** ScannedAt is when the clusters were computed; dashboards may have changed since. */
+  scannedAt?: string;
+  startedAt?: string;
+  /** Status is "scanning", "ready" or "failed". While scanning, clusters are the previous result. */
+  status?: string;
+  /** TotalClusters counts every qualifying cluster; Truncated is set when clusters holds
+    only the largest of them. */
+  totalClusters?: number;
+  truncated?: boolean;
+};
+export type OccurrenceIsOneDashboardThatContainsAMatchingLocalVariable = {
+  dashboardUID?: string;
+  folderUID?: string;
+  /** MarkedReadOnly is a dashboard whose own Editable setting is off. That is not a lock:
+    anyone who can edit the dashboard can still save it, so promote still writes it. But it
+    often means the dashboard is maintained as code elsewhere, whose next push would bring
+    the local copy back, so the UI calls it out. */
+  markedReadOnly?: boolean;
+  skipReason?: string;
+  storedVersion?: string;
+  title?: string;
+  writable?: boolean;
+};
+export type SharedVariableOccurrencesListsTheDashboardsInOneCluster = {
+  id?: string;
+  occurrences?: OccurrenceIsOneDashboardThatContainsAMatchingLocalVariable[];
+};
+export type SharedVariableRescanResultAcknowledgesAScanRequest = {
+  /** Status is always "scanning". */
+  status?: string;
 };
 export type DsAccess = string;
 export type DataSourceListItemDto = {
@@ -5491,6 +5624,12 @@ export const {
   useCreatePublicDashboardMutation,
   useDeletePublicDashboardMutation,
   useUpdatePublicDashboardMutation,
+  usePromoteSharedVariableClusterMutation,
+  useGetSharedVariableClustersQuery,
+  useLazyGetSharedVariableClustersQuery,
+  useGetSharedVariableClusterOccurrencesQuery,
+  useLazyGetSharedVariableClusterOccurrencesQuery,
+  useRescanSharedVariableClustersMutation,
   useGetDataSourcesQuery,
   useLazyGetDataSourcesQuery,
   useAddDataSourceMutation,
