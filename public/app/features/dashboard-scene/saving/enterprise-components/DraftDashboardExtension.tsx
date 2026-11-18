@@ -2,7 +2,7 @@ import { type ComponentType } from 'react';
 
 import { type DashboardScene } from '../../scene/DashboardScene';
 
-export interface DraftDashboardComponentProps {
+interface DraftDashboardComponentProps {
   dashboard: DashboardScene;
 }
 
