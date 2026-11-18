@@ -113,10 +113,18 @@ func TestPermissionCacheTracing(t *testing.T) {
 					require.Equal(t, old, result)
 				}
 			}
+			require.Len(t, recorder.Ended(), 1)
 			if !tc.reload {
-				lookup := permissionSpan(t, recorder, "cache.lookup")
-				require.Equal(t, span.SpanContext().SpanID(), lookup.Parent().SpanID())
-				require.Equal(t, attribute.BoolValue(tc.cached), spanAttributes(lookup)["cache.hit"])
+				require.Equal(t, attribute.BoolValue(tc.cached), attrs["cache.hit"])
+			} else {
+				require.NotContains(t, attrs, attribute.Key("cache.hit"))
+			}
+			if tc.fail {
+				require.Len(t, span.Events(), 1)
+				require.Equal(t, "exception", span.Events()[0].Name)
+				require.Contains(t, span.Events()[0].Attributes, attribute.String("exception.message", failure.Error()))
+			} else {
+				require.Empty(t, span.Events())
 			}
 			if tc.shadow {
 				value, present := loader.cache.Get(key)
@@ -127,13 +135,29 @@ func TestPermissionCacheTracing(t *testing.T) {
 			}
 			for _, span := range recorder.Ended() {
 				require.NotContains(t, span.Status().Description, "private-")
-				require.Empty(t, span.Events())
 				for _, attr := range span.Attributes() {
 					require.NotContains(t, attr.Value.String(), "private-")
 				}
 			}
 		})
 	}
+}
+
+func TestPermissionTeamCacheTracing(t *testing.T) {
+	recorder := recordPermissionSpans(t)
+	loader := &Loader{cache: localcache.New(0, 0)}
+	requester := &user.SignedInUser{OrgID: 1}
+	requester.TeamIDs = []int64{10, 11} //nolint:staticcheck // The legacy team permission cache uses numeric team IDs.
+	for _, teamID := range requester.GetTeams() {
+		loader.cache.Set(ac.GetTeamPermissionCacheKey(teamID, 1), []ac.Permission{{Action: "users:read"}}, cacheTTL)
+	}
+	permissions, err := loader.cachedTeams(t.Context(), requester, ac.Options{}, loadSettings{})
+	require.NoError(t, err)
+	require.Len(t, permissions, 2)
+	span := permissionSpan(t, recorder, "cache.teams")
+	require.Equal(t, attribute.IntValue(2), spanAttributes(span)["cache.hits"])
+	require.Equal(t, attribute.IntValue(0), spanAttributes(span)["cache.misses"])
+	require.Len(t, recorder.Ended(), 1)
 }
 
 func TestIntegrationPermissionSQLTracing(t *testing.T) {
@@ -179,13 +203,13 @@ func TestIntegrationPermissionSQLTracing(t *testing.T) {
 			}
 			require.ElementsMatch(t, []ac.Permission{{Action: "dashboards:read", Scope: "dashboards:uid:one"}, {Action: "dashboards:read", Scope: "dashboards:uid:two"}}, got)
 			parent := permissionSpan(t, recorder, "sql."+name)
-			execute := permissionSpan(t, recorder, "sql.execute")
 			scan := permissionSpan(t, recorder, "sql.scan")
 			require.Equal(t, attribute.IntValue(1), spanAttributes(parent)["query.count"])
 			require.Equal(t, attribute.IntValue(2), spanAttributes(scan)["result_count"])
-			require.Equal(t, parent.SpanContext().SpanID(), execute.Parent().SpanID())
 			require.Equal(t, parent.SpanContext().SpanID(), scan.Parent().SpanID())
-			require.False(t, scan.StartTime().Before(execute.EndTime()))
+			require.False(t, scan.StartTime().Before(parent.StartTime()))
+			require.False(t, scan.EndTime().After(parent.EndTime()))
+			require.Len(t, recorder.Ended(), 2)
 		})
 	}
 }
@@ -212,9 +236,7 @@ func TestIntegrationPermissionTracingColdAndWarmCache(t *testing.T) {
 	require.Len(t, cold, 3)
 	queryCount := 0
 	for _, span := range recorder.Ended() {
-		if span.Name() == "authz.legacypermissions.sql.execute" {
-			queryCount++
-		}
+		queryCount += int(spanAttributes(span)["query.count"].AsInt64())
 	}
 	require.Equal(t, 2, queryCount, "cold basic-role and direct caches each execute one query")
 	start := len(recorder.Ended())
@@ -223,7 +245,7 @@ func TestIntegrationPermissionTracingColdAndWarmCache(t *testing.T) {
 	require.Equal(t, cold, warm)
 	hits, copies := 0, 0
 	for _, span := range recorder.Ended()[start:] {
-		require.NotEqual(t, "authz.legacypermissions.sql.execute", span.Name())
+		require.Zero(t, spanAttributes(span)["query.count"].AsInt64())
 		if spanAttributes(span)["cache.hit"].AsBool() {
 			hits++
 		}
@@ -246,11 +268,12 @@ func TestIntegrationPermissionSQLTracingCancellation(t *testing.T) {
 	require.ErrorIs(t, err, context.Canceled)
 	require.Nil(t, result)
 	parent := permissionSpan(t, recorder, "sql.permissions")
-	execute := permissionSpan(t, recorder, "sql.execute")
 	require.Equal(t, attribute.IntValue(1), spanAttributes(parent)["query.count"])
 	require.Equal(t, codes.Error, parent.Status().Code)
-	require.Equal(t, codes.Error, execute.Status().Code)
-	require.Len(t, recorder.Ended(), 2)
+	require.Len(t, parent.Events(), 1)
+	require.Equal(t, "exception", parent.Events()[0].Name)
+	require.Contains(t, parent.Events()[0].Attributes, attribute.String("exception.message", context.Canceled.Error()))
+	require.Len(t, recorder.Ended(), 1)
 }
 
 func TestPermissionSQLTracingEmptyQuery(t *testing.T) {

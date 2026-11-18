@@ -274,7 +274,6 @@ func (l *Loader) cachedTeams(ctx context.Context, user identity.Requester, optio
 	defer func() { endPermissionSpan(span, err) }()
 	var permissions [][]ac.Permission
 	var missing []int64
-	_, lookupSpan := tracer.Start(ctx, "authz.legacypermissions.cache.lookup")
 	for _, teamID := range user.GetTeams() {
 		if value, ok := l.cache.Get(ac.GetTeamPermissionCacheKey(teamID, user.GetOrgID())); ok && !options.ReloadCache {
 			metrics.MAccessPermissionsCacheUsage.WithLabelValues(ac.CacheHit).Inc()
@@ -283,8 +282,7 @@ func (l *Loader) cachedTeams(ctx context.Context, user identity.Requester, optio
 			missing = append(missing, teamID)
 		}
 	}
-	lookupSpan.SetAttributes(attribute.Int("cache.hits", len(permissions)), attribute.Int("cache.misses", len(missing)))
-	lookupSpan.End()
+	span.SetAttributes(attribute.Int("cache.hits", len(permissions)), attribute.Int("cache.misses", len(missing)))
 	if len(missing) == 0 {
 		return permissions, nil
 	}
@@ -313,10 +311,8 @@ func (l *Loader) cached(ctx context.Context, source, key string, options ac.Opti
 	span.SetAttributes(attribute.String("cache.source", source), attribute.Bool("cache.reload", options.ReloadCache), attribute.Bool("permission.shadow", isPermissionShadow(ctx)), attribute.Bool("cache.load_executed", false))
 	defer func() { endPermissionSpan(span, err) }()
 	if !options.ReloadCache {
-		_, lookupSpan := tracer.Start(ctx, "authz.legacypermissions.cache.lookup")
 		value, ok := l.cache.Get(key)
-		lookupSpan.SetAttributes(attribute.Bool("cache.hit", ok))
-		lookupSpan.End()
+		span.SetAttributes(attribute.Bool("cache.hit", ok))
 		if ok {
 			metrics.MAccessPermissionsCacheUsage.WithLabelValues(ac.CacheHit).Inc()
 			return value.([]ac.Permission), nil

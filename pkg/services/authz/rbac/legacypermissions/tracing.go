@@ -7,7 +7,7 @@ import (
 
 func endPermissionSpan(span trace.Span, err error) {
 	if err != nil {
-		// Database errors can contain query text or values. Keep the status generic.
+		span.RecordError(err)
 		span.SetStatus(codes.Error, "permission operation failed")
 	}
 	span.End()

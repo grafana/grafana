@@ -53,10 +53,7 @@ func (s permissionStore) permissionsForActions(
 	// Keep transaction-bound sessions and SQLite retry behavior from the legacy path.
 	err = s.sql.WithDbSession(ctx, func(sess *db.Session) (err error) {
 		attempts++
-		// Execution includes connection acquisition; scanning includes fetching remaining rows.
-		_, executeSpan := tracer.Start(ctx, "authz.legacypermissions.sql.execute")
 		rows, err := sess.QueryRows(q, params...)
-		endPermissionSpan(executeSpan, err)
 		if err != nil {
 			return err
 		}
@@ -113,9 +110,7 @@ func (s permissionStore) teams(ctx context.Context, query ac.GetUserPermissionsQ
 	var out map[int64][]ac.Permission
 	err = s.sql.WithDbSession(ctx, func(sess *db.Session) (err error) {
 		attempts++
-		_, executeSpan := tracer.Start(ctx, "authz.legacypermissions.sql.execute")
 		rows, err := sess.QueryRows(q, params...)
-		endPermissionSpan(executeSpan, err)
 		if err != nil {
 			return err
 		}
