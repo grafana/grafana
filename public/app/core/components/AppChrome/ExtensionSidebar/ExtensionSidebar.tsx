@@ -120,6 +120,17 @@ export function ExtensionSidebar() {
       // Lets page captures (Composer regions) leave the sidebar out.
       data-extension-sidebar
     >
+      {/* Only for an extension that declared a floating height. Before the content, so it comes before the extension's
+          header in reading and tab order, on the edge above it. */}
+      {floating && floatingHeightOptions && (
+        <FloatingHeightHandle
+          edge="top"
+          options={floatingHeightOptions}
+          height={floatingExtensionSidebarHeight}
+          onHeightChange={setFloatingExtensionSidebarHeight}
+          onWidthChange={setFloatingExtensionSidebarWidth}
+        />
+      )}
       <div className={styles.content}>
         {/* When the sidebar is open, we don't want the body to scroll */}
         {/* Need type assertion here due to the use of !important */}
@@ -132,19 +143,16 @@ export function ExtensionSidebar() {
       {floating && (
         <FloatingWidthHandle width={floatingExtensionSidebarWidth} onWidthChange={setFloatingExtensionSidebarWidth} />
       )}
-      {/* Only for an extension that lets core resize its height; the corner comes last, above both edges. */}
-      {floating &&
-        floatingHeightOptions &&
-        (['top', 'corner'] as const).map((edge) => (
-          <FloatingHeightHandle
-            key={edge}
-            edge={edge}
-            options={floatingHeightOptions}
-            height={floatingExtensionSidebarHeight}
-            onHeightChange={setFloatingExtensionSidebarHeight}
-            onWidthChange={setFloatingExtensionSidebarWidth}
-          />
-        ))}
+      {/* The corner is pointer only, so its place in the tab order does not matter; it paints above both edges. */}
+      {floating && floatingHeightOptions && (
+        <FloatingHeightHandle
+          edge="corner"
+          options={floatingHeightOptions}
+          height={floatingExtensionSidebarHeight}
+          onHeightChange={setFloatingExtensionSidebarHeight}
+          onWidthChange={setFloatingExtensionSidebarWidth}
+        />
+      )}
       {/* Portalled: the floating container's transform would otherwise position it. */}
       {edgeActionPreview &&
         createPortal(

@@ -221,8 +221,13 @@ describe('ExtensionSidebar', () => {
         floatingHeightOptions,
       });
       rerender(<ExtensionSidebar />);
-      expect(screen.getByRole('separator', { name: 'Resize sidebar height' }).parentElement).toBe(container.firstChild);
+      const top = screen.getByRole('separator', { name: 'Resize sidebar height' });
+      expect(top.parentElement).toBe(container.firstChild);
       expect(screen.getByTestId('extension-sidebar-floating-corner-handle').parentElement).toBe(container.firstChild);
+      // On the edge above the extension, so before its header in reading and tab order.
+      expect(
+        screen.getByTestId('working-component').compareDocumentPosition(top) & Node.DOCUMENT_POSITION_PRECEDING
+      ).toBeTruthy();
 
       mockUseExtensionSidebarContext.mockReturnValue({
         ...extensionSidebarContextMock,
