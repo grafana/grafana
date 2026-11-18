@@ -60,15 +60,16 @@ Change or remove a fixture only together with the older versions that check it.
 
 ## Running locally
 
-Check out the older version next to this one, then run the phases the workflow runs.
+Check out the older version next to this one, then run the phases the workflow runs, for the packages both checkouts ship.
 For the upgrade-then-rollback round trip:
 
 ```sh
 git worktree add ../grafana-old <older-ref>
+pkgs=(); for d in pkg/tests/compat/*/; do [ -d "../grafana-old/$d" ] && pkgs+=("./$d"); done
 export GRAFANA_COMPAT_DIR=$(mktemp -d)/upgrade-rollback
-(cd ../grafana-old && GRAFANA_COMPAT_ROLE=older go test -count=1 -run '^TestCompatSetup$' ./pkg/tests/compat/...)
-GRAFANA_COMPAT_ROLE=newer go test -count=1 -run '^TestCompatUpdate$' ./pkg/tests/compat/...
-(cd ../grafana-old && GRAFANA_COMPAT_ROLE=older go test -count=1 -run '^TestCompatVerify$' ./pkg/tests/compat/...)
+(cd ../grafana-old && GRAFANA_COMPAT_ROLE=older go test -count=1 -run '^TestCompatSetup$' "${pkgs[@]}")
+GRAFANA_COMPAT_ROLE=newer go test -count=1 -run '^TestCompatUpdate$' "${pkgs[@]}"
+(cd ../grafana-old && GRAFANA_COMPAT_ROLE=older go test -count=1 -run '^TestCompatVerify$' "${pkgs[@]}")
 ```
 
 For rollback then re-upgrade, swap the directories.

@@ -12,12 +12,14 @@ on:
       - '**/go.mod'
       - '**/go.sum'
       - apps/**
+      - pkg/api/folder*.go
       - pkg/apimachinery/**
       - pkg/apiserver/**
       - pkg/apis/**
       - pkg/registry/apis/**
       - pkg/registry/apps/**
       - pkg/services/apiserver/**
+      - pkg/services/folder/**
       - pkg/services/sqlstore/migrations/**
       - pkg/storage/**
       - pkg/tests/apis/helper.go

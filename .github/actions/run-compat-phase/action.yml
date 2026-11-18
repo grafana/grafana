@@ -39,7 +39,9 @@ runs:
         LOG: ${{ inputs.log }}
       run: |
         set -uo pipefail
+        shopt -s nullglob
         rc=0
+        ran=0
         # go test -c names each binary after its package directory under pkg/tests/compat.
         for bin in "$BINARIES"/*.test; do
           pkg="$(basename "$bin" .test)"
@@ -50,6 +52,12 @@ runs:
             continue
           fi
           echo "=== $pkg"
+          ran=$((ran + 1))
           (cd "$CHECKOUT/pkg/tests/compat/$pkg" && "$bin" -test.count=1 -test.timeout=20m -test.run "^${TEST}\$") 2>&1 | tee -a "$LOG" || rc=1
         done
+        # A missing build or no package in common must not pass as a green phase.
+        if [ "$ran" -eq 0 ]; then
+          echo "::error::No package of $TEST ran: $BINARIES and $OTHER_BINARIES have no test binary in common"
+          exit 1
+        fi
         exit "$rc"

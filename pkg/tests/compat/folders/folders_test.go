@@ -61,6 +61,10 @@ const (
 	deletedPage  = "compat-folder-page-3"
 )
 
+// maxPages bounds the pagination loops, so a broken continue token fails instead of
+// running until the test timeout. The fixtures need at most five pages.
+const maxPages = 20
+
 var (
 	pages  = []string{"compat-folder-page-1", "compat-folder-page-2", deletedPage}
 	titles = map[string]string{
@@ -282,7 +286,8 @@ func checkChildren(t *testing.T, h *apis.K8sTestHelper, v string, tr tree) {
 	children := func(name string, limit int) []string {
 		var names []string
 		next := ""
-		for {
+		for pages := 0; ; pages++ {
+			require.Less(t, pages, maxPages, "children of %s: the continue token never ran out", name)
 			var page childrenPage
 			getJSON(t, h, h.Org1.Admin, subresourcePath(h, v, name, fmt.Sprintf("children?limit=%d&continue=%s", limit, next)), &page)
 			require.LessOrEqual(t, len(page.Items), limit)
@@ -368,6 +373,7 @@ type folderStatus struct {
 	Status struct {
 		CascadeDelete struct {
 			State     string `json:"state"`
+			Total     int64  `json:"total"`
 			Remaining int64  `json:"remaining"`
 		} `json:"cascadeDelete"`
 	} `json:"status"`
@@ -378,6 +384,7 @@ func checkStatus(t *testing.T, h *apis.K8sTestHelper, v string, tr tree) {
 	getJSON(t, h, h.Org1.Admin, subresourcePath(h, v, child, "status"), &got)
 	require.Equal(t, tr.childTitle, got.Spec.Title)
 	require.Equal(t, "InProgress", got.Status.CascadeDelete.State)
+	require.EqualValues(t, 3, got.Status.CascadeDelete.Total)
 	require.Equal(t, tr.remaining, got.Status.CascadeDelete.Remaining)
 }
 
@@ -416,7 +423,8 @@ func checkList(t *testing.T, folders dynamic.ResourceInterface, want []string) {
 
 	var names []string
 	opts := metav1.ListOptions{Limit: 2}
-	for {
+	for pages := 0; ; pages++ {
+		require.Less(t, pages, maxPages, "folder list: the continue token never ran out")
 		list, err := folders.List(ctx, opts)
 		require.NoError(t, err)
 		require.LessOrEqual(t, len(list.Items), 2)
