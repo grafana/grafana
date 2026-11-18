@@ -66,7 +66,7 @@ func ProvideService(
 	lock *serverlock.ServerLockService, zanzanaClient zanzana.Client,
 	restConfigProvider restcfg.RestConfigProvider,
 	iamFeatures IAMFeatures,
-	legacyClient legacyclient.Service, roleCatalog *legacypermissions.RoleCatalog,
+	legacyClient legacyclient.LegacyUserPermissionsClient, roleCatalog *legacypermissions.RoleCatalog,
 	reg prometheus.Registerer,
 ) (*Service, error) {
 	service, err := ProvideOSSService(
@@ -122,7 +122,7 @@ func ProvideOSSService(
 	cache *localcache.CacheService, features featuremgmt.FeatureToggles, tracer tracing.Tracer,
 	db db.DB, permRegistry permreg.PermissionRegistry, lock *serverlock.ServerLockService,
 	iamFeatures IAMFeatures,
-	legacyClient legacyclient.Service, roleCatalog *legacypermissions.RoleCatalog,
+	legacyClient legacyclient.LegacyUserPermissionsClient, roleCatalog *legacypermissions.RoleCatalog,
 ) (*Service, error) {
 	legacyShadow, err := NewLegacyUserPermissionsShadow(nil, cfg.RBAC.LegacyUserPermissionsShadowMaxConcurrent)
 	if err != nil {
@@ -173,7 +173,7 @@ type Service struct {
 	serverLock                *serverlock.ServerLockService
 	singleFlight              singleflight.Group
 	legacyShadow              *LegacyUserPermissionsShadow
-	legacyClient              legacyclient.Service
+	legacyClient              legacyclient.LegacyUserPermissionsClient
 	userPermissionsClient     accesscontrol.UserPermissionsClient
 	zanzanaResolver           *ZanzanaPermissionResolver
 	scopeResolver             legacyscopes.ScopeResolver
