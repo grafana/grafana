@@ -10,12 +10,10 @@ import {
   FieldType,
   getColorByStringHash,
   getFieldColorModeForField,
-  getFieldColorPalette,
   getScaleCalculator,
-  getValueMappingResult,
-  isNumeric,
   formattedValueToString,
 } from '@grafana/data';
+import { getFieldColorPalette, getValueMappingResult, isNumeric } from '@grafana/data/internal';
 import { FieldColorModeId, ThresholdsMode } from '@grafana/schema';
 
 import { getTagColor, getTagColorIndexFromName, getTransparentOutlineColor } from '../../../../utils/tags';

@@ -137,8 +137,6 @@ export {
 export {
   getFieldColorModeForField,
   getFieldColorMode,
-  /** @internal */
-  getFieldColorPalette,
   isReversibleFieldColorMode,
   fieldColorModeRegistry,
   type FieldColorMode,
@@ -229,14 +227,7 @@ export { DocsId } from './utils/docs';
 export { makeClassES5Compatible } from './utils/makeClassES5Compatible';
 export { anyToNumber } from './utils/anyToNumber';
 export { withLoadingIndicator, type WithLoadingIndicatorOptions } from './utils/withLoadingIndicator';
-export {
-  convertOldAngularValueMappings,
-  /** @internal */
-  getValueMappingResult,
-  /** @internal */
-  isNumeric,
-  LegacyMappingType,
-} from './utils/valueMappings';
+export { convertOldAngularValueMappings, LegacyMappingType } from './utils/valueMappings';
 export { containsSearchFilter, type SearchFilterOptions, getSearchFilterScopedVar } from './utils/variables';
 export { renderLegendFormat } from './utils/legend';
 export { matchPluginId } from './utils/matchPluginId';

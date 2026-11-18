@@ -578,7 +578,7 @@ function getShadedColor(field: Field, theme: GrafanaTheme2) {
   };
 }
 
-export function getShadesOfColor(baseColor: string): string[] {
+function getShadesOfColor(baseColor: string): string[] {
   const colors: string[] = [baseColor];
 
   const shadesCount = 6;
