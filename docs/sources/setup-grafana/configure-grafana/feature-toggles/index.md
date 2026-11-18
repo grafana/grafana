@@ -87,6 +87,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `secretsKeeperUI`                  | Enable the Secrets Keeper management UI for configuring external secret storage                                                |
 | `grafana.secretsReferenceValueUI`  | Enable referencing an existing secret in an active keeper when creating a secure value                                         |
 | `dashboardTemplates`               | Enables a flow to get started with a new dashboard from a template                                                             |
+| `grafana.customDashboardTemplates` | Enables custom dashboard templates for enterprise                                                                              |
 | `alertRuleRestore`                 | Enables the alert rule restore feature                                                                                         |
 | `alertingMigrationWizardUI`        | Enables the migration wizard UI to migrate alert rules and notification resources from external sources to Grafana Alerting    |
 | `azureMonitorLogsBuilderEditor`    | Enables the logs builder mode for the Azure Monitor data source                                                                |

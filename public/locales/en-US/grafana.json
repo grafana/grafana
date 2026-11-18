@@ -1835,17 +1835,18 @@
         "autosync-rules-error-title": "Rules Import Failed",
         "autosync-rules-imported-note": "Your selected alert rules were also imported.",
         "autosync-rules-note": "Your selected alert rules will also be imported.",
-        "autosync-success-body": "Auto-sync enabled. Redirecting...",
+        "autosync-success-body": "Auto-sync enabled.",
         "autosync-success-title": "Auto-sync Enabled",
         "autosync-title": "Confirm Auto-sync",
         "body": "Are you sure you want to start the import? This action will create new resources in Grafana Alerting.",
         "confirm": "Start Import",
+        "continue": "Continue",
         "error-body": "Failed to import resources. Check the error details below and try again.",
         "error-details": "Error details",
         "error-title": "Import Failed",
         "importing-body": "Importing resources to Grafana Alerting. Please wait...",
         "importing-title": "Importing...",
-        "success-body": "Resources imported successfully. Redirecting...",
+        "success-body": "Resources imported successfully.",
         "success-title": "Import Successful",
         "title": "Confirm Import"
       },
@@ -7729,13 +7730,7 @@
       "usage-count_other": "Used on {{count}} dashboards"
     },
     "lifecycle": {
-      "applied": "Applied your changes to {{title}}",
-      "apply": "Apply",
-      "apply-body": "Everyone with access will see them. You can restore the previous version from version history.",
-      "apply-failed": "Couldn't apply the changes. Try again, or compare them first.",
-      "apply-needs-save": "You don’t have permission to save “{{title}}”, so you can preview these changes but not apply them. Ask an admin for permission to save it.",
-      "apply-title_one": "Apply {{count}} change to “{{title}}”?",
-      "apply-title_other": "Apply {{count}} changes to “{{title}}”?",
+      "ask-assistant-to-update": "Ask Assistant to update",
       "breadcrumb-draft": "Draft",
       "breadcrumb-pending-changes": "Pending changes",
       "change-added": "Added",
@@ -7767,7 +7762,6 @@
       "draft-discarded": "Draft discarded",
       "draft-title": "Draft",
       "edited-dashboard": "Edit dashboard",
-      "highlight-changes": "Highlight changes on the dashboard",
       "pending-body": "Previewing pending changes, only you can see them.",
       "pending-body-source": "Previewing pending changes {{source}}, only you can see them.",
       "pending-changes-changed": "These pending changes changed",
@@ -7776,11 +7770,16 @@
       "pending-stale": "Dashboard has been updated since your changes were made",
       "pending-title": "Pending changes",
       "preview-changes": "Preview changes",
-      "rebase": "Rebase",
       "record-pending-change-failed": "Your change could not be saved",
       "save": "Save",
-      "show-original-dashboard": "Show original dashboard",
-      "stop-highlighting-changes": "Stop highlighting changes"
+      "save-failed": "Couldn't save the changes",
+      "save-needs-permission": "You don’t have permission to save “{{title}}”, so you can preview these changes but not save them. Ask an admin for permission to save it.",
+      "save-pending-body": "Everyone with access will see them. You can restore the previous version from version history.",
+      "save-pending-failed": "Couldn't save the changes. Try again, or compare them first.",
+      "save-pending-title_one": "Save {{count}} change to “{{title}}”?",
+      "save-pending-title_other": "Save {{count}} changes to “{{title}}”?",
+      "saved-pending": "Saved your changes to {{title}}",
+      "show-original-dashboard": "Show original dashboard"
     },
     "link-edit-actions": {
       "add-link": "Add link",
@@ -13563,6 +13562,7 @@
       "tv-alert": "Press ESC to exit kiosk mode"
     },
     "megamenu": {
+      "click-to-dock": "Click to dock",
       "close": "Close menu",
       "customise": "Customise navigation",
       "customise-cancel": "Cancel",
@@ -13720,8 +13720,10 @@
       "drag-handle": "Drag to reorder",
       "duplicate": "Duplicate block",
       "frame": {
-        "aria-label-collapsed": "Collapsed block: {{name}}",
-        "aria-label-panel": "Visualization block: {{name}}"
+        "aria-label-collapsed-titled": "Collapsed block: {{title}}",
+        "aria-label-collapsed-untitled": "Collapsed block",
+        "aria-label-panel-titled": "Visualization block: {{title}}",
+        "aria-label-panel-untitled": "Visualization block"
       },
       "markdown": {
         "aria-label-editor": "Markdown",
@@ -13981,7 +13983,8 @@
       "swatch-placeholder-aria-label": "Pick a color, {{placeholder}}"
     },
     "field-color": {
-      "color-by-label": "Color series by"
+      "color-by-label": "Color series by",
+      "reverse-label": "Reverse colors"
     },
     "number-input": {
       "error-out-of-range": "Out of range. {{range}}",
@@ -15616,6 +15619,8 @@
       "header-title": "Title",
       "header-type": "Type",
       "missing-folder-metadata": "Missing folder metadata file",
+      "resource-filter-aria-label": "Filter by resource type",
+      "resource-filter-placeholder": "Filter by resource type",
       "search-placeholder": "Search by path or title",
       "source": "Source",
       "status-filter-aria-label": "Filter by status",
