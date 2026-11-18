@@ -3992,10 +3992,10 @@
     {
       "metadata": {
         "name": "grafana.visualDesignRefresh",
-        "resourceVersion": "1794390113100",
+        "resourceVersion": "1794999519670",
         "creationTimestamp": "2026-06-12T11:11:47Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2026-11-11 09:41:53.100333 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2026-11-18 10:58:39.670875 +0000 UTC"
         }
       },
       "spec": {
@@ -4004,7 +4004,7 @@
         "codeowner": "@grafana/grafana-frontend-platform",
         "frontend": true,
         "hideFromDocs": true,
-        "expression": "true"
+        "expression": "false"
       }
     },
     {
