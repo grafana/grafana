@@ -136,7 +136,7 @@ type Cfg struct {
 	Raw    *ini.File
 	Logger log.Logger
 
-	skipGlobalCopies bool
+	withoutGlobals bool
 
 	// for logging purposes
 	configFiles                  []string
@@ -1002,7 +1002,7 @@ type CommandLineArgs struct {
 }
 
 func copyServerURLSettingsToGlobals(cfg *Cfg) {
-	if cfg.skipGlobalCopies {
+	if cfg.withoutGlobals {
 		return
 	}
 	AppUrl = cfg.AppURL
@@ -1569,10 +1569,10 @@ func NewCfgFromINIFile(iniFile *ini.File) (*Cfg, error) {
 	return cfg, nil
 }
 
-// NewCfgFromINIFileWithoutGlobals parses a config other than the running server's, and leaves the package-level URL and cookie settings unchanged.
+// NewCfgFromINIFileWithoutGlobals parses a config other than the running server's without writing package globals or environment variables, and returns an error for an invalid root_url instead of exiting.
 func NewCfgFromINIFileWithoutGlobals(iniFile *ini.File) (*Cfg, error) {
 	cfg := NewCfg()
-	cfg.skipGlobalCopies = true
+	cfg.withoutGlobals = true
 
 	if err := cfg.parseINIFile(iniFile); err != nil {
 		return nil, fmt.Errorf("failed to parse setting from INI file: %w", err)
@@ -1970,6 +1970,10 @@ func (cfg *Cfg) handleAWSConfig() {
 	cfg.AWSSessionDuration = awsPluginSec.Key("session_duration").Value()
 	cfg.AWSForwardSettingsPlugins = util.SplitString(awsPluginSec.Key("forward_settings_to_plugins").String())
 
+	if cfg.withoutGlobals {
+		return
+	}
+
 	// Also set environment variables that can be used by core plugins
 	err := os.Setenv(awsds.AssumeRoleEnabledEnvVarKeyName, strconv.FormatBool(cfg.AWSAssumeRoleEnabled))
 	if err != nil {
@@ -2186,7 +2190,7 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 }
 
 func copyCookieSecuritySettingsToGlobals(cfg *Cfg) {
-	if cfg.skipGlobalCopies {
+	if cfg.withoutGlobals {
 		return
 	}
 	CookieSecure = cfg.CookieSecure
@@ -2403,6 +2407,9 @@ func readSnapshotsSettings(cfg *Cfg, iniFile *ini.File) error {
 func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 	server := iniFile.Section("server")
 	if err := readServerURLSettings(iniFile, cfg); err != nil {
+		if cfg.withoutGlobals {
+			return err
+		}
 		cfg.Logger.Error("Invalid root_url.", "url", cfg.AppURL, "error", err)
 		os.Exit(1)
 	}
