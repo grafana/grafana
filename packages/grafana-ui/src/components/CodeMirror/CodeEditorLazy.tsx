@@ -23,7 +23,7 @@ type EveryProp<T> = { [K in keyof Required<T>]: T[K] };
  * Copies only the public props, so a plugin's raw extensions never reach CodeMirror,
  * even through a type cast or plain JavaScript.
  */
-function toBaseProps(props: CodeMirrorEditorProps): EveryProp<PublicBaseProps> {
+function getPublicProps(props: CodeMirrorEditorProps): EveryProp<PublicBaseProps> {
   return {
     value: props.value,
     language: props.language,
@@ -70,7 +70,7 @@ function LazyEditor({ loadingFallback, ...props }: BaseCodeEditorProps & { loadi
 }
 
 export function CodeMirrorEditor(props: CodeMirrorEditorProps) {
-  const { completionSources, signatureHelp, ...editorProps } = toBaseProps(props);
+  const { completionSources, signatureHelp, ...editorProps } = getPublicProps(props);
   return (
     <LazyEditor
       {...editorProps}

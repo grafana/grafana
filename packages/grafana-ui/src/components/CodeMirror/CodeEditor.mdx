@@ -5,73 +5,15 @@ import { CodeMirrorEditor } from './CodeEditorLazy';
 
 # CodeMirrorEditor
 
-A code editor that loads CodeMirror and the requested language on demand.
-Import the component and its types from `@grafana/ui/unstable`. The root
-`CodeEditor` export remains the Monaco editor.
+A code editor with syntax highlighting and autocompletion for supported languages.
 
 ### Usage
 
 ```tsx
 import { CodeMirrorEditor } from '@grafana/ui/unstable';
 
-<CodeMirrorEditor value="SELECT 1" onChange={() => {}} />;
+<CodeMirrorEditor value={query} onChange={setQuery} language="sql" />;
 ```
-
-### Customization
-
-Customize the editor through props. It doesn't accept raw CodeMirror
-extensions: a plugin bundles its own copy of CodeMirror, and extensions built
-with another copy don't work in Grafana's editor.
-
-Pass style overrides through `theme`. The editor merges each selector with
-Grafana's defaults. For example, let the parent background show through:
-
-```tsx
-const TRANSPARENT_THEME = {
-  '&': { backgroundColor: 'transparent' },
-  '.cm-gutters': { backgroundColor: 'transparent' },
-};
-
-<CodeMirrorEditor value={content} onChange={setContent} language="markdown" theme={TRANSPARENT_THEME} />;
-```
-
-Define overrides outside the component or memoize them. A new object
-reconfigures the editor.
-
-Include `&` in a nested selector to refer to its parent. For example,
-`{ '.cm-content': { '& span': { fontWeight: 600 } } }` styles spans inside the content.
-
-### Completion and signature help
-
-- `completionSources` adds completion sources. `completionMode` decides whether
-  they merge with the language's completions or replace them.
-- `variableSuggestions` offers Grafana variables when `$` is typed and inserts
-  complete references such as `${name}`. `variableCompletionOptions` changes the
-  trigger `separators`, the inserted text (`getInsertText`), and how options are
-  listed (`toDisplay`).
-- `signatureHelp` takes a provider that returns structured function signatures,
-  or `null` outside a function call, and shows them in a tooltip.
-
-```tsx
-<CodeMirrorEditor
-  value={query}
-  onChange={setQuery}
-  language="sql"
-  variableSuggestions={suggestions}
-  signatureHelp={signatureHelpProvider}
-/>
-```
-
-Keep `signatureHelp` providers stable between renders, for example with
-`useMemo`. A new provider reconfigures the editor.
-
-Completion and signature-help providers receive a read-only context with
-`pos` and `sliceDoc()`. Completion providers also receive `matchBefore()` and
-an `AbortSignal` for cancelling async work.
-
-Return completion options with a replacement range. Grafana inserts an
-option's `insertText` and falls back to its `label` when `insertText` is empty
-or omitted.
 
 ## Props
 
