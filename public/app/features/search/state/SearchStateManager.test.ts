@@ -214,6 +214,29 @@ describe('SearchStateManager', () => {
     });
   });
 
+  describe('onDraftsOnlyChange', () => {
+    it('asks for drafts only while the drafts filter is on', () => {
+      const stm = createSearchStateManager();
+      jest.spyOn(stm, 'doSearch').mockResolvedValue(undefined);
+
+      stm.onDraftsOnlyChange(true);
+      expect(stm.getSearchQuery().lifecycle).toBe('draft');
+
+      stm.onDraftsOnlyChange(false);
+      expect(stm.getSearchQuery().lifecycle).toBeUndefined();
+    });
+
+    it('turns the drafts filter off when search and filters are cleared', () => {
+      const stm = createSearchStateManager();
+      jest.spyOn(stm, 'doSearch').mockResolvedValue(undefined);
+      stm.onDraftsOnlyChange(true);
+
+      stm.onClearSearchAndFilters();
+
+      expect(stm.state.draftsOnly).toBe(false);
+    });
+  });
+
   describe('onLayoutChange', () => {
     beforeEach(() => {
       localStorage.clear();

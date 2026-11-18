@@ -172,6 +172,28 @@ describe('Unified Storage Searcher', () => {
     expect(response.view.get(0).uid).toBe('team-owned-dashboard');
   });
 
+  it.each([
+    { lifecycle: 'draft' as const, expected: 'draft' },
+    { lifecycle: 'all' as const, expected: 'all' },
+    { lifecycle: undefined, expected: null },
+  ])('sends lifecycle=$expected when the query lifecycle is $lifecycle', async ({ lifecycle, expected }) => {
+    const sent: Array<string | null> = [];
+    server.use(
+      http.get(searchRoute, ({ request }) => {
+        const params = new URL(request.url).searchParams;
+        // skip the folder lookup the searcher makes on its own
+        if (params.get('query') === 'cpu') {
+          sent.push(params.get('lifecycle'));
+        }
+        return HttpResponse.json({ totalHits: 0, hits: [] });
+      })
+    );
+
+    await new UnifiedSearcher().search({ query: 'cpu', kind: ['dashboard'], lifecycle });
+
+    expect(sent).toEqual([expected]);
+  });
+
   describe('sort request parameters', () => {
     let searchRequests: URL[] = [];
 
