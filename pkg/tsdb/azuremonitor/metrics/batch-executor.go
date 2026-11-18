@@ -136,6 +136,42 @@ func fanOutByResource(query backend.DataQuery, model dataquery.AzureMonitorQuery
 	return queries, nil
 }
 
+// executeFannedOutQuery splits query with fanOutByResource, runs each
+// per-resource sub-query against the legacy ARM endpoint at url, and merges
+// the frames into result under query.RefID. Sub-query failures are joined and
+// attached alongside the frames of the sub-queries that succeeded.
+func (e *AzureMonitorDatasource) executeFannedOutQuery(ctx context.Context, query backend.DataQuery, model dataquery.AzureMonitorQuery, dsInfo types.DatasourceInfo, client *http.Client, url string, result *backend.QueryDataResponse) {
+	subQueries, err := fanOutByResource(query, model)
+	if err != nil {
+		result.Responses[query.RefID] = backend.ErrorResponseWithErrorSource(err)
+		return
+	}
+	e.Logger.Debug("split query by resource", "refID", query.RefID, "numSubQueries", len(subQueries))
+	var subErrs []error
+	for i, subQuery := range subQueries {
+		azureQuery, err := e.buildQuery(subQuery, dsInfo)
+		if err != nil {
+			e.Logger.Debug("buildQuery error", "refID", query.RefID, "subQuery", i, "err", err)
+			subErrs = append(subErrs, err)
+			continue
+		}
+		e.Logger.Debug("executing sub-query", "refID", query.RefID, "subQuery", i, "url", azureQuery.URL)
+		res, err := e.executeQuery(ctx, azureQuery, dsInfo, client, url)
+		if err != nil {
+			e.Logger.Debug("executeQuery error", "refID", query.RefID, "subQuery", i, "err", err)
+			subErrs = append(subErrs, err)
+			continue
+		}
+		e.Logger.Debug("sub-query result", "refID", query.RefID, "subQuery", i, "numFrames", len(res.Frames))
+		dr := result.Responses[query.RefID]
+		dr.Frames = append(dr.Frames, res.Frames...)
+		result.Responses[query.RefID] = dr
+	}
+	if len(subErrs) > 0 {
+		attachErr(result, query.RefID, errors.Join(subErrs...))
+	}
+}
+
 // buildQueriesForBatch is like buildQuery but splits multi-resource queries into
 // separate AzureMonitorQuery objects per (subscription, region) pair so that
 // groupQueriesForBatch can correctly route each resource to the right batch endpoint.
@@ -304,35 +340,7 @@ func (e *AzureMonitorDatasource) executeBatchTimeSeriesQuery(ctx context.Context
 			continue
 		}
 		if !isBatchableModel(model) {
-			subQueries, err := fanOutByResource(query, model)
-			if err != nil {
-				result.Responses[query.RefID] = backend.ErrorResponseWithErrorSource(err)
-				continue
-			}
-			e.Logger.Debug("split non-batchable query", "refID", query.RefID, "numSubQueries", len(subQueries))
-			var subErrs []error
-			for i, subQuery := range subQueries {
-				azureQuery, err := e.buildQuery(subQuery, dsInfo)
-				if err != nil {
-					e.Logger.Debug("buildQuery error", "refID", query.RefID, "subQuery", i, "err", err)
-					subErrs = append(subErrs, err)
-					continue
-				}
-				e.Logger.Debug("executing sub-query", "refID", query.RefID, "subQuery", i, "url", azureQuery.URL)
-				res, err := e.executeQuery(ctx, azureQuery, dsInfo, client, armURL)
-				if err != nil {
-					e.Logger.Debug("executeQuery error", "refID", query.RefID, "subQuery", i, "err", err)
-					subErrs = append(subErrs, err)
-					continue
-				}
-				e.Logger.Debug("sub-query result", "refID", query.RefID, "subQuery", i, "numFrames", len(res.Frames))
-				dr := result.Responses[query.RefID]
-				dr.Frames = append(dr.Frames, res.Frames...)
-				result.Responses[query.RefID] = dr
-			}
-			if len(subErrs) > 0 {
-				attachErr(result, query.RefID, errors.Join(subErrs...))
-			}
+			e.executeFannedOutQuery(ctx, query, model, dsInfo, client, armURL, result)
 		} else {
 			batchableQueries = append(batchableQueries, parsedQuery{query: query, model: model})
 		}
