@@ -564,3 +564,55 @@ func TestProviderManager_GetMeta_RecordsFetchErrors(t *testing.T) {
 		assert.Equal(t, before, counter("not found"))
 	})
 }
+
+func TestProviderManager_GetMeta_RecordsResolutions(t *testing.T) {
+	resolutions := func(provider, pluginID string) float64 {
+		return testutil.ToFloat64(metrics.MetaResolutionsTotal.WithLabelValues(provider, pluginID))
+	}
+
+	t.Run("counts fresh fetches and cache hits against the resolving provider", func(t *testing.T) {
+		pm := NewProviderManager(
+			&namedProvider{name: "first"},
+			&namedProvider{name: "second", getMetaFunc: func(context.Context, PluginRef) (*Result, error) {
+				return &Result{TTL: time.Hour}, nil
+			}},
+		)
+		ref := PluginRef{ID: "resolutions-plugin", Version: "1.0.0"}
+
+		for range 3 {
+			_, err := pm.GetMeta(context.Background(), ref)
+			require.NoError(t, err)
+		}
+
+		assert.Equal(t, float64(3), resolutions("second", ref.ID))
+		assert.Equal(t, float64(0), resolutions("first", ref.ID))
+	})
+
+	t.Run("counts uncached results", func(t *testing.T) {
+		pm := NewProviderManager(&namedProvider{name: "uncached", getMetaFunc: func(context.Context, PluginRef) (*Result, error) {
+			return &Result{}, nil
+		}})
+		ref := PluginRef{ID: "uncached-plugin", Version: "1.0.0"}
+
+		for range 2 {
+			_, err := pm.GetMeta(context.Background(), ref)
+			require.NoError(t, err)
+		}
+
+		assert.Equal(t, float64(2), resolutions("uncached", ref.ID))
+	})
+}
+
+type namedProvider struct {
+	name        string
+	getMetaFunc func(ctx context.Context, ref PluginRef) (*Result, error)
+}
+
+func (p *namedProvider) Name() string { return p.name }
+
+func (p *namedProvider) GetMeta(ctx context.Context, ref PluginRef) (*Result, error) {
+	if p.getMetaFunc != nil {
+		return p.getMetaFunc(ctx, ref)
+	}
+	return nil, ErrMetaNotFound
+}

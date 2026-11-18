@@ -111,34 +111,35 @@ func (p *simpleClientProvider) GetOrCreateHandler(namespace string) client.K8sHa
 
 // This is used just so wire has something unique to return
 type DashboardsAPIBuilder struct {
-	dashboardService         dashboards.DashboardService
-	iamFeatures              iamapi.Features
-	accessControl            accesscontrol.AccessControl
-	accessClient             authlib.AccessClient
-	legacy                   legacy.DashboardAccessor
-	unified                  resource.ResourceClient
-	dashboardPermissions     dashboards.PermissionsRegistrationService
-	dashboardPermissionsSvc  accesscontrol.DashboardPermissionsService // TODO: once kubernetesAuthzResourcePermissionApis is enabled, rely solely on resourcePermissions and add integration test afterDelete hook
-	resourcePermissions      *rpclient.Client
-	scheme                   *runtime.Scheme
-	search                   *SearchHandler
-	QuotaService             quota.Service
-	ProvisioningService      provisioning.ProvisioningService
-	minRefreshInterval       string
-	settingService           settingservice.Service
-	dualWriter               dualwrite.Service
-	folderClientProvider     client.K8sHandlerProvider
-	libraryPanels            libraryelements.Service // for legacy library panels
-	publicDashboardService   publicdashboards.Service
-	snapshotService          dashboardsnapshots.Service
-	snapshotOptions          dashv0.SnapshotSharingOptions
-	snapshotBlobs            resourcepb.BlobStoreClient
-	snapshotStorage          rest.Storage             // for dual-write support in routes
-	homeDashboard            home.HomeDashboardGetter // On-prem home dashboard support
-	namespacer               request.NamespaceMapper
-	dashboardActivityChannel live.DashboardActivityChannel
-	isStandalone             bool // skips any handling including anything to do with legacy storage
-	lifecycleExtras          DashboardLifecycleExtras
+	dashboardService            dashboards.DashboardService
+	iamFeatures                 iamapi.Features
+	accessControl               accesscontrol.AccessControl
+	accessClient                authlib.AccessClient
+	legacy                      legacy.DashboardAccessor
+	unified                     resource.ResourceClient
+	dashboardPermissions        dashboards.PermissionsRegistrationService
+	dashboardPermissionsSvc     accesscontrol.DashboardPermissionsService // TODO: once kubernetesAuthzResourcePermissionApis is enabled, rely solely on resourcePermissions and add integration test afterDelete hook
+	resourcePermissions         *rpclient.Client
+	scheme                      *runtime.Scheme
+	search                      *SearchHandler
+	QuotaService                quota.Service
+	ProvisioningService         provisioning.ProvisioningService
+	minRefreshInterval          string
+	settingService              settingservice.Service
+	dualWriter                  dualwrite.Service
+	folderClientProvider        client.K8sHandlerProvider
+	libraryPanels               libraryelements.Service // for legacy library panels
+	publicDashboardService      publicdashboards.Service
+	snapshotService             dashboardsnapshots.Service
+	snapshotOptions             dashv0.SnapshotSharingOptions
+	snapshotBlobs               resourcepb.BlobStoreClient
+	snapshotStorage             rest.Storage                 // for dual-write support in routes
+	dashboardPreferencesStorage *dashboardPreferencesStorage // for the merged route
+	homeDashboard               home.HomeDashboardGetter     // On-prem home dashboard support
+	namespacer                  request.NamespaceMapper
+	dashboardActivityChannel    live.DashboardActivityChannel
+	isStandalone                bool // skips any handling including anything to do with legacy storage
+	lifecycleExtras             DashboardLifecycleExtras
 }
 
 func RegisterAPIService(
@@ -212,6 +213,8 @@ func RegisterAPIService(
 		lifecycleExtras:          lifecycleExtras,
 	}
 
+	builder.search.lifecycleExtras = lifecycleExtras
+
 	accessControl.RegisterScopeAttributeResolver(VariableUIDScopeResolver(folderService))
 
 	// Opt into the App Platform permission path (lazy ResourcePermission client) when the flag is on.
@@ -250,6 +253,10 @@ func RegisterAPIService(
 
 func NewAPIService(ac authlib.AccessClient, folderClientProvider client.K8sHandlerProvider, datasourceProvider schemaversion.DataSourceIndexProvider, libraryElementProvider schemaversion.LibraryElementIndexProvider, resourcePermissions *rpclient.Client, search *SearchHandler, unified resource.ResourceClient, settingService settingservice.Service, lifecycleExtras DashboardLifecycleExtras) *DashboardsAPIBuilder {
 	migration.Initialize(datasourceProvider, libraryElementProvider, migration.DefaultCacheTTL)
+	// The handler is built by the caller, so the standalone path has to wire the lifecycle in as well.
+	if search != nil {
+		search.lifecycleExtras = lifecycleExtras
+	}
 	b := &DashboardsAPIBuilder{
 		minRefreshInterval:   defaultMinRefreshInterval,
 		settingService:       settingService,
@@ -1296,6 +1303,7 @@ func (b *DashboardsAPIBuilder) registerDashboardPreferencesStorage(apiGroupInfo 
 	}
 	preferencesStorage := newDashboardPreferencesStorage(store, dashv2beta1.DashboardPreferencesResourceInfo.GroupVersionKind(), b.accessClient, b.accessControl, b.folderClientProvider)
 	apiGroupInfo.VersionedResourcesStorageMap[dashv2beta1.VERSION][dashv2beta1.DashboardPreferencesResourceInfo.StoragePath()] = preferencesStorage
+	b.dashboardPreferencesStorage = preferencesStorage
 	return nil
 }
 
@@ -1321,7 +1329,7 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 	unified.AfterDelete = b.afterDelete
 
 	if b.isStandalone {
-		storage[dashboards.StoragePath()] = unified
+		storage[dashboards.StoragePath()] = draftHidingStorage{Store: unified, lifecycleExtras: b.lifecycleExtras}
 		storage[dashboards.StoragePath("dto")], err = NewDTOConnector(
 			unified,
 			b.unified,
@@ -1361,6 +1369,7 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 		dashboardPermissionsSvc: b.dashboardPermissionsSvc,
 		live:                    b.dashboardActivityChannel,
 		iamFeatures:             b.iamFeatures,
+		lifecycleExtras:         b.lifecycleExtras,
 	}
 
 	// Register the DTO endpoint that will consolidate all dashboard bits
@@ -1663,6 +1672,10 @@ func (b *DashboardsAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.API
 			func() rest.Storage { return b.snapshotStorage }, b.dashboardService, b.snapshotBlobs, b.snapshotReadFromUnified)
 		routes.Namespace = append(routes.Namespace, legacySearchRoutes.Namespace...)
 		routes.Namespace = append(routes.Namespace, snapshotAPIRoutes.Namespace...)
+	}
+
+	if gv.Version == dashv2beta1.VERSION {
+		routes.Namespace = append(routes.Namespace, b.dashboardPreferencesMergedRoute())
 	}
 
 	if len(routes.Namespace) == 0 {

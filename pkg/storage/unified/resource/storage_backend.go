@@ -821,6 +821,10 @@ func (b *kvStorageBackend) collectBlobs(ctx context.Context) {
 		b.blobGC = NewBlobGarbageCollector(b.kv, b.garbageCollection.BatchSize, b.garbageCollection.BatchWait)
 	}
 	dryRun := b.garbageCollection.DryRun || b.garbageCollection.BlobDryRun
+	b.blobGC.onDeleted = func(key kv.BlobKey) {
+		// Names and namespaces may contain customer data; the blob UID identifies the deletion.
+		b.log.Info("blob garbage collection delete succeeded", "uid", key.UID, "group", key.Group, "resource", key.Resource)
+	}
 	count, err := b.blobGC.Collect(ctx, time.Now(), b.garbageCollection.MaxAge, dryRun, b.blobReferenced)
 	if err != nil && ctx.Err() != nil && resourceutil.OnlyCancellationErrors(err) {
 		b.blobGCMetrics.RecordInterrupted(count, dryRun)
@@ -1854,10 +1858,10 @@ func (k *kvStorageBackend) listResourceKeys(ctx context.Context, req *resourcepb
 	if req.NextPageToken != "" {
 		token, err := GetContinueToken(req.NextPageToken)
 		if err != nil {
-			return 0, nil, fmt.Errorf("invalid continue token: %w", err)
+			return 0, nil, apierrors.NewBadRequest(fmt.Sprintf("invalid continue token: %v", err))
 		}
 		if token.Name == "" {
-			return 0, nil, fmt.Errorf("invalid continue token: name is required for list resources")
+			return 0, nil, apierrors.NewBadRequest("invalid continue token: name is required for list resources")
 		}
 		if !continueTokenMatchesListRequest(token, req) {
 			return 0, nil, apierrors.NewBadRequest("invalid continue token: list scope does not match request")
@@ -1930,12 +1934,8 @@ type kvListKeyIterator struct {
 	clusterWide           bool
 	next                  func() (DataKey, error, bool)
 	stopFn                func()
-	started               bool
 	current               DataKey
-	nextKey               DataKey
 	err                   error
-	nextErr               error
-	hasMore               bool
 }
 
 func newKvListKeyIterator(keys iter.Seq2[DataKey, error], listRV int64, includeTokenNamespace, keysOnly, clusterWide bool) *kvListKeyIterator {
@@ -1957,20 +1957,12 @@ func (i *kvListKeyIterator) stop() {
 }
 
 func (i *kvListKeyIterator) Next() bool {
-	if !i.started {
-		i.started = true
-		i.nextKey, i.nextErr, i.hasMore = i.next()
-	}
-	if !i.hasMore {
+	key, err, ok := i.next()
+	if !ok {
 		return false
 	}
-
-	i.current, i.err = i.nextKey, i.nextErr
-	if i.err != nil {
-		return false
-	}
-	i.nextKey, i.nextErr, i.hasMore = i.next()
-	return true
+	i.current, i.err = key, err
+	return i.err == nil
 }
 
 func (i *kvListKeyIterator) Error() error {
@@ -1979,13 +1971,13 @@ func (i *kvListKeyIterator) Error() error {
 
 func (i *kvListKeyIterator) Item() BackendListKey {
 	token := ContinueToken{
-		Name:            i.nextKey.Name,
+		Name:            i.current.Name,
 		ResourceVersion: i.listRV,
 		KeysOnly:        i.keysOnly,
 		ClusterWide:     i.clusterWide,
 	}
 	if i.includeTokenNamespace {
-		token.Namespace = i.nextKey.Namespace
+		token.Namespace = i.current.Namespace
 	}
 	return BackendListKey{
 		Key: &resourcepb.ResourceKey{
@@ -2043,13 +2035,9 @@ type kvListIterator struct {
 	stopFn func()
 
 	// current item state
-	started        bool
 	currentDataObj DataObj
 	value          []byte
 	err            error
-	nextDataObj    DataObj
-	nextErr        error
-	hasMore        bool
 }
 
 // stop closes the underlying pull. Callers should defer this.
@@ -2060,16 +2048,12 @@ func (i *kvListIterator) stop() {
 }
 
 func (i *kvListIterator) Next() bool {
-	if !i.started {
-		i.started = true
-		i.nextDataObj, i.nextErr, i.hasMore = i.next()
-	}
-
-	if !i.hasMore {
+	obj, err, ok := i.next()
+	if !ok {
 		return false
 	}
 
-	i.currentDataObj, i.err = i.nextDataObj, i.nextErr
+	i.currentDataObj, i.err = obj, err
 	if i.err != nil {
 		return false
 	}
@@ -2080,8 +2064,6 @@ func (i *kvListIterator) Next() bool {
 			return false
 		}
 	}
-
-	i.nextDataObj, i.nextErr, i.hasMore = i.next()
 	return true
 }
 
@@ -2091,11 +2073,11 @@ func (i *kvListIterator) Error() error {
 
 func (i *kvListIterator) ContinueToken() string {
 	token := ContinueToken{
-		Name:            i.nextDataObj.Key.Name,
+		Name:            i.currentDataObj.Key.Name,
 		ResourceVersion: i.listRV,
 	}
 	if i.includeTokenNamespace {
-		token.Namespace = i.nextDataObj.Key.Namespace
+		token.Namespace = i.currentDataObj.Key.Namespace
 	}
 	if i.keysOnly {
 		token.KeysOnly = true

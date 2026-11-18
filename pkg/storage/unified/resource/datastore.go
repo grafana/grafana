@@ -280,7 +280,7 @@ type ListRequestOptions struct {
 	// ContinueNamespace is the namespace to continue from.
 	// Only used when Key.Namespace is empty (cross-namespace query).
 	ContinueNamespace string
-	// ContinueName is the name to continue from.
+	// ContinueName is the last name already listed; listing resumes strictly after it.
 	ContinueName    string
 	ResourceVersion int64
 	IncludeDeleted  bool
@@ -387,7 +387,9 @@ func (d *dataStore) ListResourceKeysAtRevision(ctx context.Context, options List
 		if options.Key.Namespace == "" && options.ContinueNamespace != "" {
 			continueKey.Namespace = options.ContinueNamespace
 		}
-		startKey = continueKey.Prefix()
+		// continueKey.Prefix() return a trailing '/'
+		// Names cannot contain '/', so this skips exactly the continue item's keys.
+		startKey = PrefixRangeEnd(continueKey.Prefix())
 	}
 
 	listOptions := ListOptions{

@@ -1493,9 +1493,29 @@
         "records": "录制",
         "to": "至"
       },
+      "recording-rule-actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "view": ""
+      },
       "recording-rules": {
         "folder-rules-error": "",
         "folders-error": "",
+        "header": {
+          "new-rule": ""
+        },
         "load-more-rules-in-folder": "",
         "loading-folders": "",
         "no-rules": "未找到录制规则",
@@ -1569,6 +1589,19 @@
         "view-folders": "文件夹",
         "view-list": "列表",
         "wildcard-in-text": "搜索文本不能包含 * 或 %。"
+      },
+      "sequence-drawer": {
+        "alert-rules": "",
+        "error": "",
+        "interval": "",
+        "missing-rule": "",
+        "recording-rules": "",
+        "this-rule": "",
+        "title": ""
+      },
+      "sequence-pill": {
+        "label-with-interval": "",
+        "tooltip-with-interval": ""
       },
       "shared": {
         "load-more": "加载更多",
@@ -1789,17 +1822,18 @@
         "autosync-rules-error-title": "规则导入失败",
         "autosync-rules-imported-note": "您选择的警报规则也已导入。",
         "autosync-rules-note": "您选择的警报规则也将被导入。",
-        "autosync-success-body": "已启用自动同步。正在重定向...",
+        "autosync-success-body": "",
         "autosync-success-title": "已启用自动同步",
         "autosync-title": "确认自动同步",
         "body": "您确定要开始导入吗？此操作将在 Grafana 警报中创建新资源。",
         "confirm": "开始导入",
+        "continue": "",
         "error-body": "",
         "error-details": "",
         "error-title": "导入失败",
         "importing-body": "正在将资源导入到 Grafana Alerting。请稍候…",
         "importing-title": "正在导入...",
-        "success-body": "资源已成功导入。正在重定向...",
+        "success-body": "",
         "success-title": "导入成功",
         "title": "确认导入"
       },
@@ -2378,6 +2412,7 @@
       "contact-points": "联络点",
       "notification-policies": "通知策略",
       "recently-deleted": "最近删除",
+      "recording-rules": "",
       "templates": "模板",
       "time-intervals": "时间间隔"
     },
@@ -5302,6 +5337,7 @@
       "change-theme": "更改主题",
       "dark-theme": "深色",
       "dashboard-from-template": "来自模板的数据面板",
+      "experimental": "",
       "light-theme": "浅色",
       "open-saved-queries": "打开已保存的查询",
       "scopes": "范围"
@@ -5760,7 +5796,7 @@
         "hint-layer": "",
         "hint-layer-select": "",
         "hint-not-removable": "",
-        "hint-panel": "点击以对面板发表评论，或拖动以绘制区域",
+        "hint-panel": "",
         "hint-panel-select": "",
         "hint-region": "拖动以绘制区域",
         "hint-remove": "",
@@ -6162,8 +6198,7 @@
       }
     },
     "get-var-mapping-option-overrides": {
-      "defaults": "",
-      "rule": ""
+      "uses-variables": ""
     },
     "inspect": {
       "data-tab": "数据",
@@ -6357,9 +6392,6 @@
       "only-overrides-button-tooltip": "仅显示覆盖",
       "placeholder-search-options": "搜索选项",
       "visualization-button-tooltip": "搜索选项"
-    },
-    "panel-editor": {
-      "ad-hoc-transformations-disabled": "临时转换在编辑模式下已禁用"
     },
     "plan-building-overlay": {
       "quip-corners": "正在润饰面板边角…",
@@ -6737,8 +6769,6 @@
         "open-editor": "打开变量编辑器",
         "open-editor-tooltip": "如需更多变量选项，请打开变量编辑器",
         "query-options": {
-          "close": "关闭",
-          "old-modal-title": "查询变量",
           "preview": "预览"
         },
         "remove": "移除",
@@ -7643,11 +7673,7 @@
       "usage-count_other": "用于 {{count}} 个数据面板"
     },
     "lifecycle": {
-      "applied": "已将您的更改应用于 {{title}}",
-      "apply": "应用",
-      "apply-body": "所有有访问权限的人都会看到它们。您可以从版本历史记录中还原以前的版本。",
-      "apply-failed": "无法应用更改。请重试，或先进行比较。",
-      "apply-needs-edit": "应用更改需要拥有“{{title}}”的编辑权限。您可以预览这些更改，但无法应用它们。",
+      "ask-assistant-to-update": "",
       "breadcrumb-draft": "草稿",
       "breadcrumb-pending-changes": "待处理的更改",
       "change-added": "已添加",
@@ -7679,7 +7705,6 @@
       "draft-discarded": "",
       "draft-title": "草稿",
       "edited-dashboard": "",
-      "highlight-changes": "突出显示数据面板上的更改",
       "pending-body": "正在预览待处理的更改，只有您才能看到它们。",
       "pending-body-source": "正在预览待处理的更改 {{source}}，只有您可以看到它们。",
       "pending-changes-changed": "",
@@ -7688,12 +7713,15 @@
       "pending-stale": "自您进行更改以来，数据面板已更新",
       "pending-title": "待处理的更改",
       "preview-changes": "预览更改",
-      "rebase": "变基",
       "record-pending-change-failed": "",
       "save": "保存",
+      "save-failed": "",
+      "save-needs-permission": "",
+      "save-pending-body": "",
+      "save-pending-failed": "",
+      "saved-pending": "",
       "show-original-dashboard": "显示原始数据面板",
-      "stop-highlighting-changes": "停止突出显示更改",
-      "apply-title_other": "将 {{count}} 项更改应用于“{{title}}”？"
+      "save-pending-title_other": ""
     },
     "link-edit-actions": {
       "add-link": "添加链接",
@@ -7944,6 +7972,12 @@
       "confirmText-restore-version": "是，恢复到版本 {{version}}",
       "title-restore-version": "恢复版本"
     },
+    "row-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-row-settings": ""
+    },
     "sandbox-consent": {
       "allow": "允许",
       "allow-tooltip": "从所列面板中的选定源加载内容，直至您关闭此选项卡。",
@@ -8131,6 +8165,12 @@
       "switch-options": "切换选项",
       "value-pair-type": "值对类型",
       "value-pair-type-description": "选择开关状态的值类型"
+    },
+    "tab-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-tab-settings": ""
     },
     "text-box-variable": {
       "name-default-value": "默认值"
@@ -10727,6 +10767,8 @@
       "tooltip": {
         "category": "工具提示",
         "description-hover-proximity": "光标必须多么靠近某个点才能触发工具提示，以像素为单位",
+        "description-max-height": "",
+        "description-max-width": "",
         "modeOptions": {
           "label-all": "全部",
           "label-hidden": "隐藏",
@@ -13005,6 +13047,10 @@
       "subtitle": "选择当警报实例触发时如何通知联系人",
       "title": "联络点"
     },
+    "alerting-recording-rules": {
+      "subtitle": "",
+      "title": ""
+    },
     "alerting-silences": {
       "subtitle": "停止来自一个或多个警报规则的通知",
       "title": "静默"
@@ -13329,6 +13375,31 @@
     }
   },
   "navigation": {
+    "assistant-toolbar-button": {
+      "arrange-window": "",
+      "assistant-page": "",
+      "bottom": "",
+      "floating": "",
+      "left": "",
+      "menu": "",
+      "move": "",
+      "navigation-assistant-page": "",
+      "navigation-page-assistant": "",
+      "navigation-page-assistant-below": "",
+      "navigation-page-floating-assistant": "",
+      "page-assistant": "",
+      "page-assistant-below": "",
+      "page-floating-assistant": "",
+      "page-only": "",
+      "pop-up": "",
+      "right": ""
+    },
+    "assistant-workspace": {
+      "exit": "",
+      "exit-tooltip": "",
+      "open": "",
+      "open-tooltip": ""
+    },
     "breadcrumbs": {
       "aria-label": "面包屑"
     },
@@ -13344,14 +13415,6 @@
         "open-all": "打开 AI 助手和侧边栏应用"
       },
       "floating-resize": "调整侧边栏宽度"
-    },
-    "fullscreen-workspace": {
-      "enter": "进入工作区",
-      "error-exit": "退出工作区",
-      "error-message": "无法加载 Grafana 助手工作区。",
-      "error-reload": "重新加载页面",
-      "error-title": "工作区不可用",
-      "workspace": "工作区"
     },
     "help": {
       "aria-label": "帮助",
@@ -13389,6 +13452,7 @@
       "tv-alert": "按 ESC 退出 kiosk 模式"
     },
     "megamenu": {
+      "click-to-dock": "",
       "close": "关闭菜单",
       "customise": "自定义导航",
       "customise-cancel": "取消",
@@ -13541,8 +13605,10 @@
       "drag-handle": "拖动以重新排序",
       "duplicate": "复制块",
       "frame": {
-        "aria-label-collapsed": "已折叠的块：{{name}}",
-        "aria-label-panel": "可视化块：{{name}}"
+        "aria-label-collapsed-titled": "",
+        "aria-label-collapsed-untitled": "",
+        "aria-label-panel-titled": "",
+        "aria-label-panel-untitled": ""
       },
       "markdown": {
         "aria-label-editor": "Markdown",
@@ -13630,7 +13696,7 @@
       "submit": "添加到笔记本",
       "success": "面板已添加至 {{title}}",
       "success-cells": "已添加到 {{title}}",
-      "success-link": "查看笔记本",
+      "success-open-link": "",
       "tag-placeholder": "按标签筛选",
       "target-description": "选择要添加面板的位置。",
       "target-existing": "现有笔记本",
@@ -13801,7 +13867,8 @@
       "swatch-placeholder-aria-label": "选择一个颜色，{{placeholder}}"
     },
     "field-color": {
-      "color-by-label": "为序列添加颜色的方式"
+      "color-by-label": "为序列添加颜色的方式",
+      "reverse-label": ""
     },
     "number-input": {
       "error-out-of-range": "超出范围。{{range}}",
@@ -13851,6 +13918,32 @@
     },
     "units": {
       "clear-tooltip": "清除单位选择"
+    },
+    "var-mapping-checks": {
+      "data-macro": "",
+      "not-allowed": "",
+      "not-found": "",
+      "not-number": "",
+      "not-one-value": "",
+      "out-of-range": "",
+      "resolves": "",
+      "values": ""
+    },
+    "var-mapping-toggle": {
+      "aria-label-picker": "",
+      "fallback-off": "",
+      "fallback-on": "",
+      "group-matching": "",
+      "group-other": "",
+      "hint-boolean": "",
+      "hint-number": "",
+      "hint-option": "",
+      "hint-option-no-fallback": "",
+      "new-variable": "",
+      "option-current": "",
+      "placeholder": "",
+      "use-fixed-value": "",
+      "use-variable": ""
     }
   },
   "org": {
@@ -14281,6 +14374,9 @@
     },
     "empty-state": {
       "message": "找不到插件"
+    },
+    "errors": {
+      "app-plugin-metas-error": ""
     },
     "extensions": {
       "extension-error-alert-description": "请检查控制台，了解有关错误的更多详细信息。",
@@ -15389,6 +15485,8 @@
       "header-title": "标题",
       "header-type": "类型",
       "missing-folder-metadata": "缺少文件夹元数据文件",
+      "resource-filter-aria-label": "",
+      "resource-filter-placeholder": "",
       "search-placeholder": "按路径或标题搜索",
       "source": "来源",
       "status-filter-aria-label": "按状态过滤",

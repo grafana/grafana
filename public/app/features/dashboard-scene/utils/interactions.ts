@@ -215,10 +215,15 @@ export const DashboardInteractions = {
       | 'restore'
       | 'explore'
       | 'more_actions'
-      | 'use_library_panel',
+      | 'use_library_panel'
+      | 'save_library_panel'
+      | 'unlink_library_panel'
+      | 'replace_library_panel'
+      | 'new_library_panel'
+      | 'rename_library_panel',
     id: number,
-    source: 'panel' | 'edit_pane' | 'edit_popover' | 'actions_popover' | 'keyboard',
-    panelType?: string
+    source: 'panel' | 'edit_pane' | 'edit_popover' | 'actions_popover' | 'keyboard' | 'panel_editor',
+    panelType: string
   ) {
     reportDashboardInteraction('panel_action_clicked', { item, id, source, panelType });
   },
@@ -229,8 +234,9 @@ export const DashboardInteractions = {
   },
 
   // Dashboard edit item actions
-  // dashboards_edit_action_clicked: when user adds or removes an item in edit mode
-  // props: { item: string } - item is one of: add_panel, group_row, group_tab, ungroup, paste_panel, remove_row, remove_tab
+  // dashboards_edit_action_clicked: when user adds, removes or changes an item in edit mode
+  // props: { item: string } - item is one of: add_panel, group_row, group_tab, ungroup, paste_panel, remove_row, remove_tab,
+  // or a PanelSettingItem
   trackAddPanelClick(
     source: 'sidebar' | 'canvas' = 'canvas',
     target?: 'row' | 'tab' | 'dashboard',
@@ -256,6 +262,24 @@ export const DashboardInteractions = {
   },
   trackDeleteDashboardElement(elementType: string, source: 'edit_pane' | 'edit_popover') {
     reportDashboardInteraction('edit_action_clicked', { item: `remove_${elementType.toLowerCase()}`, source });
+  },
+  trackDashboardSectionAction(
+    action: 'settings' | 'copy' | 'duplicate',
+    elementType: 'row' | 'tab',
+    source: 'edit_pane' | 'edit_popover'
+  ) {
+    reportDashboardInteraction('edit_action_clicked', { item: `${action}_${elementType}`, source });
+  },
+  // A panel setting was changed. Never add the setting's value here: titles, descriptions and links are typed by users.
+  panelSettingChanged(
+    properties: {
+      item: PanelSettingItem;
+      source: PanelSettingSource;
+      panel_type: string;
+      panel_id: number;
+    } & PanelSettingDetails
+  ) {
+    reportDashboardInteraction('edit_action_clicked', properties);
   },
   panelLinkClicked: (properties?: Record<string, unknown>) => {
     reportDashboardInteraction('panelheader_datalink_clicked', properties);
@@ -473,8 +497,33 @@ export const DashboardInteractions = {
     reportDashboardInteraction('view_panel_action', properties);
   },
 
-  setVisualOption: (properties?: { ui: 'panel-edit' | 'view-panel'; option: string; value: string }) => {
+  setVisualOption: (properties?: {
+    // text-panel-editor: the Text panel's own editor, which writes its options directly.
+    ui: 'panel-edit' | 'view-panel' | 'text-panel-editor';
+    option: string;
+    // Only set when the value cannot be free text; see getReportableOptionValue.
+    value?: string;
+    value_type: string;
+    panel_type: string;
+    panel_id: number;
+  }) => {
     reportDashboardInteraction('set_visualization_option', properties);
+  },
+
+  // Panels with options set from a variable, with grafana.panelOptionInterpolation
+  panelOptionVariableUsage: (properties: {
+    trigger: 'load' | 'save';
+    panel_count: number;
+    field_config_count: number;
+    threshold_count: number;
+    value_mapping_count: number;
+    dashboard_uid?: string;
+  }) => {
+    reportDashboardInteraction('panel_option_variable_usage', properties);
+  },
+
+  panelOptionVariableCreated: (properties: { type: 'custom' | 'switch' }) => {
+    reportDashboardInteraction('panel_option_variable_created', properties);
   },
 
   // tracks attempts to resize a panel that is managed by auto layout
@@ -492,6 +541,49 @@ export const DashboardInteractions = {
 };
 
 export type AutoLayoutScope = 'dashboard' | 'row' | 'tab';
+
+export type PanelSettingItem =
+  | 'change_panel_title'
+  | 'change_panel_description'
+  | 'toggle_panel_subtitle'
+  | 'change_panel_background'
+  | 'change_panel_repeat'
+  | 'change_panel_repeat_direction'
+  | 'change_panel_max_per_row'
+  | 'add_panel_link'
+  | 'remove_panel_link'
+  | 'edit_panel_link'
+  | 'reorder_panel_links'
+  | 'add_override'
+  | 'remove_override'
+  | 'change_override_matcher'
+  | 'add_override_property'
+  | 'change_override_property'
+  | 'remove_override_property'
+  | 'change_query_option';
+
+/**
+ * Ids that say which part of a setting changed. All come from code (matcher and option registries, query option
+ * names), never from what a user typed.
+ */
+export type PanelSettingDetails = {
+  matcher_id?: string;
+  property_id?: string;
+  option?: QueryOptionName;
+  editor?: 'classic' | 'next';
+};
+
+export type QueryOptionName =
+  | 'max_data_points'
+  | 'min_interval'
+  | 'cache_timeout'
+  | 'query_caching_ttl'
+  | 'relative_time'
+  | 'time_shift'
+  | 'hide_time_info';
+
+// genai: a title generated with the AI button in the panel editor.
+export type PanelSettingSource = 'edit_pane' | 'panel_editor' | 'outline' | 'genai';
 
 const reportDashboardInteraction = (
   name: string,

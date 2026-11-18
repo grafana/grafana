@@ -22,7 +22,7 @@ import { type ResponsiveProp } from '../Layout/utils/responsiveness';
 import { Menu } from '../Menu/Menu';
 import { type AdHocFilterItem } from '../Table/TableNG/types';
 
-import { VizTooltipContext } from './VizTooltipWrapper';
+import { VizTooltipMenuContext } from './VizTooltipContext';
 
 /** @alpha */
 export interface AdHocFilterModel extends AdHocFilterItem {
@@ -112,7 +112,7 @@ export const VizTooltipFooter = ({
   additionalContent,
 }: VizTooltipFooterProps) => {
   const styles = useStyles2(getStyles);
-  const context = useContext(VizTooltipContext);
+  const context = useContext(VizTooltipMenuContext);
   const hasOneClickLink = useMemo(() => dataLinks.some((link) => link.oneClick === true), [dataLinks]);
   const hasOneClickAction = useMemo(() => actions.some((action) => action.oneClick === true), [actions]);
 

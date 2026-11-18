@@ -13,6 +13,8 @@ import (
 	authtypes "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -124,6 +126,27 @@ func TestToAPIError(t *testing.T) {
 		in := apierrors.NewForbidden(annotationGR, "obj", errors.New("denied"))
 		out := toAPIError(in, "obj")
 		assert.Same(t, in, out)
+	})
+
+	t.Run("canceled errors map to 499", func(t *testing.T) {
+		cases := []struct {
+			name string
+			err  error
+		}{
+			{"context.Canceled", context.Canceled},
+			{"wrapped context.Canceled", fmt.Errorf("db: %w", context.Canceled)},
+			{"grpc Canceled", status.Error(codes.Canceled, "context canceled")},
+			{"499 status error", &apierrors.StatusError{ErrStatus: metav1.Status{
+				Status: metav1.StatusFailure, Code: 499, Reason: "ClientClosedRequest"}}},
+		}
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				out := toAPIError(tc.err, "obj")
+				requireStatusCode(t, out, 499)
+				// The cause is kept, so logs and traces still say what was canceled.
+				assert.ErrorIs(t, out, tc.err)
+			})
+		}
 	})
 
 	internal := []struct {

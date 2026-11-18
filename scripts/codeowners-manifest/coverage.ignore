@@ -1,0 +1,22 @@
+# Patterns use gitignore syntax, relative to the repository root.
+
+# Tests and mocks
+test/
+*.test.*
+*.spec.*
+__mocks__/
+
+# Stories, generated files, and types
+*.story.*
+*.gen.ts*
+*.d.ts*
+types.ts
+
+# Excluded directories
+graveyard/
+/scripts/
+/e2e-playwright/
+
+# Configuration and panel entrypoints
+jest.config*.js
+module.tsx
