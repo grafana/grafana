@@ -20,14 +20,14 @@ export function PromptEditActions({
     <>
       <SettingsActionButton
         onClick={onClickEdit}
-        tooltip={t('dashboard-scene.prompt-edit-actions.tooltip-prompt-settings', 'Prompt settings')}
+        tooltip={t('dashboard-scene.prompt-edit-actions.tooltip-prompt-settings', 'Question settings')}
       />
       <div className={styles.actionsDivider} />
       <DuplicateActionButton onClick={onClickDuplicate} />
       <DeleteActionButton
-        title={t('dashboard-scene.prompt-edit.delete-title', 'Delete prompt')}
+        title={t('dashboard-scene.prompt-edit.delete-title', 'Delete question')}
         text={t('dashboard-scene.prompt-edit.delete-text', 'Are you sure you want to delete: {{name}}?', { name })}
-        yesText={t('dashboard-scene.prompt-edit.delete-confirm', 'Delete prompt')}
+        yesText={t('dashboard-scene.prompt-edit.delete-confirm', 'Delete question')}
         onConfirm={onClickDelete}
       />
     </>

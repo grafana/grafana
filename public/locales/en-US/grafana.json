@@ -6720,7 +6720,7 @@
           "title": "Paste panel"
         },
         "prompt": {
-          "label": "Prompt"
+          "label": "Question"
         },
         "row": {
           "add-label": "Add row",
@@ -6845,7 +6845,7 @@
         "objects": "Objects",
         "panel": "Panel",
         "panels": "Panels",
-        "prompt": "Prompt",
+        "prompt": "Question",
         "row": "Row",
         "rows": "Rows",
         "section-filters-set": "Filters",
@@ -6898,21 +6898,21 @@
         }
       },
       "prompts": {
-        "add-prompt": "Add prompt",
-        "description-dashboard": "Viewers can run it on this dashboard.",
-        "description-row": "Viewers can run it on the panels in this row.",
-        "description-tab": "Viewers can run it on the panels in this tab.",
-        "new-prompt": "New prompt",
+        "add-prompt": "Add question",
+        "description-dashboard": "Viewers can ask it about this dashboard.",
+        "description-row": "Viewers can ask it about the panels in this row.",
+        "description-tab": "Viewers can ask it about the panels in this tab.",
+        "new-prompt": "New question",
         "placeholder": "What changed since the previous period?",
-        "prompt": "Prompt",
+        "prompt": "Question",
         "prompt-title": "Title",
-        "prompt-title-description": "Viewers see it on the dashboard instead of the prompt. Leave it empty to show the prompt.",
+        "prompt-title-description": "Viewers see it on the dashboard instead of the question. Leave it empty to show the question.",
         "prompt-title-placeholder": "What changed?",
         "sources": {
           "collapse": "Collapse {{name}}",
-          "description-dashboard": "With none picked, the prompt is answered from every panel on this dashboard.",
-          "description-row": "With none picked, the prompt is answered from every panel in this row.",
-          "description-tab": "With none picked, the prompt is answered from every panel in this tab.",
+          "description-dashboard": "With none picked, the question is answered from every panel on this dashboard.",
+          "description-row": "With none picked, the question is answered from every panel in this row.",
+          "description-tab": "With none picked, the question is answered from every panel in this tab.",
           "entire-dashboard": "Entire dashboard",
           "expand": "Expand {{name}}",
           "label": "Source panels",
@@ -6925,7 +6925,7 @@
           "untitled-row": "Untitled row",
           "untitled-tab": "Untitled tab"
         },
-        "title": "Prompts"
+        "title": "Questions"
       },
       "row": {
         "header": {
@@ -8089,18 +8089,18 @@
       "title-close": "Close"
     },
     "prompt-actions": {
-      "add": "Add prompt",
-      "remove": "Remove prompt",
-      "reorder": "Reorder prompts",
-      "update": "Change prompt"
+      "add": "Add question",
+      "remove": "Remove question",
+      "reorder": "Reorder questions",
+      "update": "Change question"
     },
     "prompt-edit": {
-      "delete-confirm": "Delete prompt",
+      "delete-confirm": "Delete question",
       "delete-text": "Are you sure you want to delete: {{name}}?",
-      "delete-title": "Delete prompt"
+      "delete-title": "Delete question"
     },
     "prompt-edit-actions": {
-      "tooltip-prompt-settings": "Prompt settings"
+      "tooltip-prompt-settings": "Question settings"
     },
     "provisioned-controls-section": {
       "label": "Provisioned by data source",

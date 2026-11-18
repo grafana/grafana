@@ -36,7 +36,7 @@ export class PromptEdit extends SceneObjectBase<PromptEditState> implements Edit
 
   public getEditableElementInfo(): EditableDashboardElementInfo {
     return {
-      typeName: t('dashboard.sidebar.elements.prompt', 'Prompt'),
+      typeName: t('dashboard.sidebar.elements.prompt', 'Question'),
       icon: 'ai-sparkle',
       instanceName: this.getName(),
     };
@@ -54,11 +54,11 @@ export class PromptEdit extends SceneObjectBase<PromptEditState> implements Edit
     const name = this.getName();
     appEvents.publish(
       new ShowConfirmModalEvent({
-        title: t('dashboard-scene.prompt-edit.delete-title', 'Delete prompt'),
+        title: t('dashboard-scene.prompt-edit.delete-title', 'Delete question'),
         text: t('dashboard-scene.prompt-edit.delete-text', 'Are you sure you want to delete: {{name}}?', {
           name,
         }),
-        yesText: t('dashboard-scene.prompt-edit.delete-confirm', 'Delete prompt'),
+        yesText: t('dashboard-scene.prompt-edit.delete-confirm', 'Delete question'),
         onConfirm: () => this.onDelete(),
       })
     );
@@ -84,7 +84,7 @@ export class PromptEdit extends SceneObjectBase<PromptEditState> implements Edit
 
   private getName(): string {
     const prompt = this.getPrompt();
-    return (prompt && getPromptLabel(prompt)) || t('dashboard.sidebar.prompts.new-prompt', 'New prompt');
+    return (prompt && getPromptLabel(prompt)) || t('dashboard.sidebar.prompts.new-prompt', 'New question');
   }
 }
 
@@ -171,17 +171,17 @@ const SOURCES_DESCRIPTIONS: Record<PromptsOwnerKind, () => string> = {
   dashboard: () =>
     t(
       'dashboard.sidebar.prompts.sources.description-dashboard',
-      'With none picked, the prompt is answered from every panel on this dashboard.'
+      'With none picked, the question is answered from every panel on this dashboard.'
     ),
   row: () =>
     t(
       'dashboard.sidebar.prompts.sources.description-row',
-      'With none picked, the prompt is answered from every panel in this row.'
+      'With none picked, the question is answered from every panel in this row.'
     ),
   tab: () =>
     t(
       'dashboard.sidebar.prompts.sources.description-tab',
-      'With none picked, the prompt is answered from every panel in this tab.'
+      'With none picked, the question is answered from every panel in this tab.'
     ),
 };
 
@@ -222,9 +222,9 @@ export function PromptSourcesField({ promptEdit }: { promptEdit: PromptEdit }) {
 }
 
 const PROMPT_DESCRIPTIONS: Record<PromptsOwnerKind, () => string> = {
-  dashboard: () => t('dashboard.sidebar.prompts.description-dashboard', 'Viewers can run it on this dashboard.'),
-  row: () => t('dashboard.sidebar.prompts.description-row', 'Viewers can run it on the panels in this row.'),
-  tab: () => t('dashboard.sidebar.prompts.description-tab', 'Viewers can run it on the panels in this tab.'),
+  dashboard: () => t('dashboard.sidebar.prompts.description-dashboard', 'Viewers can ask it about this dashboard.'),
+  row: () => t('dashboard.sidebar.prompts.description-row', 'Viewers can ask it about the panels in this row.'),
+  tab: () => t('dashboard.sidebar.prompts.description-tab', 'Viewers can ask it about the panels in this tab.'),
 };
 
 type PromptStringProp = 'text' | 'title';
@@ -291,7 +291,7 @@ export function PromptTextInput({ promptEdit, autoFocus }: { promptEdit: PromptE
 
   return (
     <Field
-      label={t('dashboard.sidebar.prompts.prompt', 'Prompt')}
+      label={t('dashboard.sidebar.prompts.prompt', 'Question')}
       description={PROMPT_DESCRIPTIONS[ownerKind]()}
       noMargin
     >
@@ -322,7 +322,7 @@ export function PromptTitleInput({ promptEdit }: { promptEdit: PromptEdit }) {
       label={t('dashboard.sidebar.prompts.prompt-title', 'Title')}
       description={t(
         'dashboard.sidebar.prompts.prompt-title-description',
-        'Viewers see it on the dashboard instead of the prompt. Leave it empty to show the prompt.'
+        'Viewers see it on the dashboard instead of the question. Leave it empty to show the question.'
       )}
       noMargin
     >

@@ -71,7 +71,7 @@ describe('prompts in the dashboard options', () => {
   });
 
   it('come right after Links', () => {
-    setTestFlags({ 'grafana.dashboardPrompts': true });
+    setTestFlags({ 'grafana.dashboardQuestions': true });
     const dashboard = v2Dashboard();
 
     const { result } = renderHook(() => new DashboardEditableElement(dashboard).useSidebarOptions(), {
@@ -82,8 +82,8 @@ describe('prompts in the dashboard options', () => {
     expect(ids.indexOf(SidebarCategoryType.DashboardPrompts)).toBe(ids.indexOf(SidebarCategoryType.DashboardLinks) + 1);
   });
 
-  it('are not offered while grafana.dashboardPrompts is off', () => {
-    setTestFlags({ 'grafana.dashboardPrompts': false });
+  it('are not offered while grafana.dashboardQuestions is off', () => {
+    setTestFlags({ 'grafana.dashboardQuestions': false });
     const dashboard = v2Dashboard();
 
     const { result } = renderHook(() => new DashboardEditableElement(dashboard).useSidebarOptions(), {
@@ -95,7 +95,7 @@ describe('prompts in the dashboard options', () => {
 
   // A v1 save drops the prompts, and turns rows into v1 rows.
   it('are offered on a row only when the dashboard saves as v2', () => {
-    setTestFlags({ 'grafana.dashboardPrompts': true });
+    setTestFlags({ 'grafana.dashboardQuestions': true });
     const rowCategoryIds = (serializerVersion: 'v1' | 'v2') => {
       const row = new RowItem({ title: 'Errors', layout: DefaultGridLayoutManager.createEmpty() });
       new DashboardScene(
@@ -273,7 +273,7 @@ describe('picking the panels a prompt is answered from', () => {
     expect(screen.getByRole('checkbox', { name: /^Entire dashboard/ })).not.toBeChecked();
     expect(screen.getByRole('checkbox', { name: /^Entire dashboard/ })).not.toBePartiallyChecked();
     expect(
-      screen.getByText('With none picked, the prompt is answered from every panel on this dashboard.')
+      screen.getByText('With none picked, the question is answered from every panel on this dashboard.')
     ).toBeInTheDocument();
   });
 

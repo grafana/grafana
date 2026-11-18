@@ -13,7 +13,7 @@ export const promptActions = {
 
     edit({
       meta: { actionId: 'prompt.add' },
-      description: t('dashboard-scene.prompt-actions.add', 'Add prompt'),
+      description: t('dashboard-scene.prompt-actions.add', 'Add question'),
       source: owner,
       addedObject,
       perform: () => owner.setState({ prompts: [...(before ?? []), prompt] }),
@@ -26,7 +26,7 @@ export const promptActions = {
 
     edit({
       meta: { actionId: 'prompt.remove' },
-      description: t('dashboard-scene.prompt-actions.remove', 'Remove prompt'),
+      description: t('dashboard-scene.prompt-actions.remove', 'Remove question'),
       source: owner,
       perform: () => owner.setState({ prompts: (before ?? []).filter((_, i) => i !== index) }),
       undo: () => owner.setState({ prompts: before }),
@@ -52,7 +52,7 @@ export const promptActions = {
 
     edit({
       meta: { actionId: 'prompt.change' },
-      description: t('dashboard-scene.prompt-actions.update', 'Change prompt'),
+      description: t('dashboard-scene.prompt-actions.update', 'Change question'),
       source: owner,
       perform: () => replace(next),
       undo: () => replace(previous),
@@ -67,7 +67,7 @@ export const promptActions = {
 
     edit({
       meta: { actionId: 'prompt.reorder' },
-      description: t('dashboard-scene.prompt-actions.reorder', 'Reorder prompts'),
+      description: t('dashboard-scene.prompt-actions.reorder', 'Reorder questions'),
       source: owner,
       perform: () => owner.setState({ prompts: after }),
       undo: () => owner.setState({ prompts: before }),

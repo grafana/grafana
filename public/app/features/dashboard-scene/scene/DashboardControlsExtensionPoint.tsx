@@ -8,7 +8,7 @@ import {
   type PluginExtensionDashboardControlsPanel,
 } from '@grafana/data';
 import { usePluginComponents } from '@grafana/runtime';
-import { useFlagGrafanaDashboardPrompts } from '@grafana/runtime/internal';
+import { useFlagGrafanaDashboardQuestions } from '@grafana/runtime/internal';
 import { sceneGraph, type SceneObject, SceneVariableValueChangedEvent } from '@grafana/scenes';
 import { useElementSelection, useStyles2 } from '@grafana/ui';
 
@@ -62,7 +62,7 @@ interface AskablePrompt {
  * prompt, which editors can select, duplicate, and delete like a link. Running it there keeps it selected, so editors
  * can change it and run it again.
  *
- * Renders nothing when `grafana.dashboardPrompts` is off, when no saved prompt has text (a prompt just added
+ * Renders nothing when `grafana.dashboardQuestions` is off, when no saved prompt has text (a prompt just added
  * in the editor has none yet), or while the dashboard is neither viewed nor edited (see `getControlsMode`).
  *
  * Also renders nothing on a repeated row or tab after the first, or inside one. Repeat clones' panels have no stable
@@ -70,7 +70,7 @@ interface AskablePrompt {
  */
 export function DashboardControlsExtensionPoint(props: Props) {
   const owner = props.section ?? props.dashboard;
-  const enabled = useFlagGrafanaDashboardPrompts();
+  const enabled = useFlagGrafanaDashboardQuestions();
   const { prompts } = owner.useState();
   const dashboardState = useDashboardState(owner);
 
@@ -124,10 +124,10 @@ function ControlsComponents({ owner, prompts, inBar, isEditing }: ControlsCompon
       {...(isEditing && { onPointerDown: stopPropagation, onPointerUp: stopPropagation })}
     >
       {isEditing
-        ? context.prompts.map((prompt, i) => (
+        ? context.questions.map((question, i) => (
             <EditablePrompt key={prompts[i].index} owner={owner} saved={prompts[i]}>
               {components.map((Component) => (
-                <Component key={Component.meta.id} {...context} prompts={[prompt]} />
+                <Component key={Component.meta.id} {...context} questions={[question]} />
               ))}
             </EditablePrompt>
           ))
@@ -248,11 +248,11 @@ function useDashboardControlsComponents() {
 }
 
 /**
- * Whether editors can save prompts: `grafana.dashboardPrompts` is on and a plugin adds a control
+ * Whether editors can save prompts: `grafana.dashboardQuestions` is on and a plugin adds a control
  * that offers them.
  */
 function usePromptsEnabled(): boolean {
-  const enabled = useFlagGrafanaDashboardPrompts();
+  const enabled = useFlagGrafanaDashboardQuestions();
   const { components } = useDashboardControlsComponents();
   return enabled && components.length > 0;
 }
@@ -275,7 +275,7 @@ function getControlsContext(owner: ControlsOwner, saved: ScenePrompt[]): PluginE
     isSection ? sources.filter((source) => source.sections.some(({ object }) => object === owner)) : sources
   ).map(toControlsPanel);
   const byKey = new Map(sources.map((source) => [source.key, source]));
-  const prompts = saved.map((prompt) => {
+  const questions = saved.map((prompt) => {
     // Panels removed since they were picked are left out. With none left, the prompt is answered from `panels`.
     const sources = Array.isArray(prompt.sources) ? prompt.sources : [];
     const picked = sources.flatMap(({ panelId }) => {
@@ -288,7 +288,7 @@ function getControlsContext(owner: ControlsOwner, saved: ScenePrompt[]): PluginE
       panels: picked.length ? picked : undefined,
     };
   });
-  const shared = { dashboard: { uid: dashboard.state.uid ?? '', title: dashboard.state.title }, panels, prompts };
+  const shared = { dashboard: { uid: dashboard.state.uid ?? '', title: dashboard.state.title }, panels, questions };
 
   if (!isSection) {
     return { scope: 'dashboard', ...shared };

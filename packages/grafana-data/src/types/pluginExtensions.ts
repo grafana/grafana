@@ -295,7 +295,7 @@ export type PluginExtensionPanelContext = {
 };
 
 /**
- * A panel a prompt in the dashboard controls is answered from.
+ * A panel a question in the dashboard controls is answered from.
  *
  * @alpha
  */
@@ -321,18 +321,18 @@ export type PluginExtensionDashboardControlsContext = {
   /** Every panel with queries on the dashboard, or in the row or tab, in layout order. */
   panels: PluginExtensionDashboardControlsPanel[];
   /**
-   * The prompts the author saved on the dashboard, row, or tab. Never empty: the control isn't rendered without.
-   * While the dashboard is edited, the control renders once per prompt, with only that prompt, so editors can
-   * select each one and run it.
+   * The questions the author saved on the dashboard, row, or tab. Never empty: the control isn't rendered without.
+   * While the dashboard is edited, the control renders once per question, with only that question, so editors can
+   * select each one and ask it.
    */
-  prompts: Array<{
-    /** The prompt to run. */
+  questions: Array<{
+    /** The question to ask. */
     text: string;
-    /** A short title to show viewers instead of the prompt. Undefined to show the prompt. */
+    /** A short title to show viewers instead of the question. Undefined to show the question. */
     title?: string;
     /**
      * The panels the author picked to answer it from. Undefined when they picked none, or none of them is left: the
-     * prompt is then answered from `panels`.
+     * question is then answered from `panels`.
      */
     panels?: PluginExtensionDashboardControlsPanel[];
   }>;

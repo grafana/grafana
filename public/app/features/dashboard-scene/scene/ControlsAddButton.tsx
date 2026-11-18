@@ -123,7 +123,7 @@ export function AddControlsButton({ dashboard }: { dashboard: DashboardScene }) 
       {canAddPrompt && (
         <Menu.Item
           icon="ai-sparkle"
-          label={t('dashboard.sidebar.add.prompt.label', 'Prompt')}
+          label={t('dashboard.sidebar.add.prompt.label', 'Question')}
           onClick={handleAddPrompt}
         />
       )}

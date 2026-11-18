@@ -42,7 +42,7 @@ export function usePromptsCategory(owner: PromptsOwner, ownerKind: PromptsOwnerK
       return [];
     }
 
-    const title = t('dashboard.sidebar.prompts.title', 'Prompts');
+    const title = t('dashboard.sidebar.prompts.title', 'Questions');
     const category = new OptionsPaneCategoryDescriptor({
       title,
       id: CATEGORY_IDS[ownerKind],
@@ -121,7 +121,9 @@ export function PromptsList({ owner, ownerKind }: { owner: PromptsOwner; ownerKi
 }
 
 const renderItemLabel = (prompt: PromptItem) => (
-  <span data-testid="prompt-text">{prompt.state.name || t('dashboard.sidebar.prompts.new-prompt', 'New prompt')}</span>
+  <span data-testid="prompt-text">
+    {prompt.state.name || t('dashboard.sidebar.prompts.new-prompt', 'New question')}
+  </span>
 );
 
 /** Marks prompts as an Assistant feature, as the controls that run them do. */
@@ -137,5 +139,5 @@ function PromptsCategoryTitle({ title }: { title: string }) {
 function AddPromptButton({ owner, ownerKind }: { owner: PromptsOwner; ownerKind: PromptsOwnerKind }) {
   const onAdd = useCallback(() => openAddPromptPane(owner, ownerKind), [owner, ownerKind]);
 
-  return <SidebarAddButton onAdd={onAdd} tooltip={t('dashboard.sidebar.prompts.add-prompt', 'Add prompt')} />;
+  return <SidebarAddButton onAdd={onAdd} tooltip={t('dashboard.sidebar.prompts.add-prompt', 'Add question')} />;
 }
