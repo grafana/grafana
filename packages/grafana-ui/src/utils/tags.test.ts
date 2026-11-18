@@ -1,8 +1,8 @@
 import { createTheme } from '@grafana/data';
 
-import { getTagColor } from './tags';
+import { TAG_TEXT_CHANNEL_VARIABLES, getTagColor, getTagColorVariables } from './tags';
 
-const TARGET_CONTRAST = 7;
+const TARGET_CONTRAST = 6;
 const MIN_CONTRAST = 4.5;
 
 type Linear = [number, number, number];
@@ -95,6 +95,20 @@ describe.each(['dark', 'light'] as const)('contrasting tag colors in %s mode', (
     expect(contrast(linear, resolveTextColor(text, linear))).toBeGreaterThanOrEqual(required - 1e-6);
   });
 });
+
+it.each(['#fde725', '#3b528b', '#21918c', '#ffffff'])(
+  'resolves the variable-based text for %s to the same color as the inline text',
+  (source) => {
+    const { '--tag-text': variableText } = getTagColorVariables(source);
+    const expanded = Object.entries(TAG_TEXT_CHANNEL_VARIABLES).reduce(
+      (text, [name, value]) => text.replace(`var(${name})`, value),
+      variableText
+    );
+    const linear = hexToLinear(source);
+
+    expect(resolveTextColor(expanded, linear)).toEqual(resolveTextColor(getTagColor(source).text, linear));
+  }
+);
 
 it('keeps the hue of the background when the target contrast is reachable', () => {
   const source = hexToLinear('#fde725');

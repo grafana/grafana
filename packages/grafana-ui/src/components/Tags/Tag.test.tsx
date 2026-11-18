@@ -1,17 +1,17 @@
-import { cache } from '@emotion/css';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { JSX } from 'react';
+import type { CSSProperties, JSX } from 'react';
 
 import { createTheme, ThemeContext } from '@grafana/data';
 
-import { getTagColor } from '../../utils/tags';
+import { getTagColorVariables } from '../../utils/tags';
 
 import { Tag } from './Tag';
 
-// jsdom drops relative color values, so read the declarations Emotion registered for the element.
-const getEmittedStyles = (element: HTMLElement) =>
-  Array.from(element.classList, (className) => cache.registered[className] ?? '').join('');
+const getColorVariables = (element: HTMLElement) => ({
+  '--tag-background': element.style.getPropertyValue('--tag-background'),
+  '--tag-text': element.style.getPropertyValue('--tag-text'),
+});
 
 const setup = (jsx: JSX.Element) => {
   return {
@@ -30,10 +30,42 @@ describe('Tag', () => {
         <Tag name="error" baseColor="#ff0000" colorIndex={2} />
       </ThemeContext.Provider>
     );
-    const { background, text } = getTagColor('#ff0000', theme);
-    const styles = getEmittedStyles(screen.getByText('error'));
-    expect(styles).toContain(`background-color:${background};`);
-    expect(styles).toContain(`color:${text};`);
+    expect(getColorVariables(screen.getByText('error'))).toEqual({
+      '--tag-background': 'rgb(from #ff0000 r g b / 1)',
+      '--tag-text': getTagColorVariables('#ff0000', theme)['--tag-text'],
+    });
+  });
+
+  it('uses the theme palette for a color index', () => {
+    const theme = createTheme();
+    render(
+      <ThemeContext.Provider value={theme}>
+        <Tag name="error" colorIndex={2} />
+      </ThemeContext.Provider>
+    );
+    const { background, text } = theme.components.tag.colors[2];
+    expect(getColorVariables(screen.getByText('error'))).toEqual({
+      '--tag-background': background,
+      '--tag-text': text,
+    });
+  });
+
+  it('shares one class across tag colors', () => {
+    render(
+      <>
+        <Tag name="red" baseColor="#ff0000" />
+        <Tag name="blue" baseColor="#0000ff" />
+        <Tag name="palette" colorIndex={3} />
+        <Tag name="hashed" />
+      </>
+    );
+    const classNames = new Set(['red', 'blue', 'palette', 'hashed'].map((name) => screen.getByText(name).className));
+    expect(classNames.size).toBe(1);
+  });
+
+  it('lets a passed style override the tag colors', () => {
+    render(<Tag name="error" baseColor="#ff0000" style={{ '--tag-text': 'black' } as CSSProperties} />);
+    expect(getColorVariables(screen.getByText('error'))['--tag-text']).toBe('black');
   });
 
   beforeEach(() => {
