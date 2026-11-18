@@ -48,6 +48,15 @@ interface ResourceListDeps {
 }
 
 /**
+ * Ties each registry entry to the {@link CORE_KINDS} row of the same key, so an entry cannot spread
+ * another kind's row or carry another kind's `key`. `Record<string, unknown>` admits the fields only
+ * provisioning adds.
+ */
+type OnCoreKinds = {
+  [K in keyof typeof CORE_KINDS]?: (typeof CORE_KINDS)[K] & { key: K } & Record<string, unknown>;
+};
+
+/**
  * Registry of provisioning resource kinds, keyed by a stable identifier — the single source of truth
  * the UI reads from instead of scattering per-kind knowledge across switch statements (item types,
  * count labels, resource-ref unions, how to enumerate each kind). Each entry builds on the kind's
@@ -145,7 +154,7 @@ export const resourceKindInfos = {
       listCollectionMembers(CORE_KINDS.datasource, availableResources),
     alwaysAvailable: false,
   },
-} as const;
+} as const satisfies OnCoreKinds;
 
 /**
  * Stable per-kind key (`folder`, `dashboard`, `playlist`, ...) used to identify a provisioning
@@ -178,7 +187,8 @@ export interface ResourceKindInfo extends KindInfo {
   /**
    * Stable lowercase identifier — equals this entry's key in {@link resourceKindInfos} (e.g.
    * `dashboard`). The UI-facing resource type for commit messages, branch prefixes, telemetry and the
-   * shared edit-form fields. A test asserts each entry's `key` matches its registry key.
+   * shared edit-form fields. The registry's `satisfies` clause rejects an entry whose `key` differs
+   * from its registry key.
    */
   key: ResourceKindKey;
   /**
@@ -459,7 +469,8 @@ function toListedResources(items: ApiserverListItem[] | undefined): ListedResour
 }
 
 async function listViaApiserver(
-  { group, resource }: Pick<KindInfo, 'group' | 'resource'>,
+  // A collection is not a served group, so it has no endpoint of its own to list
+  { group, resource }: Pick<KindInfo, 'group' | 'resource'> & { collectionGroup?: false },
   version: string
 ): Promise<ListedResource[]> {
   const url = `${getAPIBaseURL(group, version)}/${resource}`;
@@ -501,7 +512,7 @@ function actsOnMember(
  * its group being served.
  */
 async function listCollectionMembers(
-  { group: collection, resource, kind }: KindInfo,
+  { group: collection, resource, kind }: KindInfo & { collectionGroup: true },
   availableResources?: SupportedResource[]
 ): Promise<ListedResource[]> {
   const apis = await getAPIGroupDiscoveryList();
