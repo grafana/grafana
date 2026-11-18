@@ -146,6 +146,32 @@ func TestLegacyStorage_DryRun(t *testing.T) {
 		require.Empty(t, f.writes())
 	})
 
+	t.Run("create of an existing name conflicts", func(t *testing.T) {
+		f := newDryRunFixture(t, false)
+		f.seed(t, "dry-duplicate")
+		_, err := f.storage.Create(f.ctx, newDryRunRule("dry-duplicate", "other"), nil, &metav1.CreateOptions{DryRun: dryRunAll})
+		require.ErrorIs(t, err, ngmodels.ErrAlertRuleConflictBase)
+		require.Empty(t, f.writes())
+	})
+
+	t.Run("create and update still run the store's write checks", func(t *testing.T) {
+		f := newDryRunFixture(t, false)
+		stored := f.seed(t, "dry-store-checks")
+		storeErr := fmt.Errorf("%w: rule group name too long", ngmodels.ErrAlertRuleFailedValidation)
+		f.ruleStore.Hook = func(cmd any) error {
+			if q, ok := cmd.(fakes.GenericRecordedQuery); ok && q.Name == "ValidateAlertRuleForWrite" {
+				return storeErr
+			}
+			return nil
+		}
+
+		_, err := f.storage.Create(f.ctx, newDryRunRule("dry-store-checks-new", "dry"), nil, &metav1.CreateOptions{DryRun: dryRunAll})
+		require.True(t, apierrors.IsBadRequest(err), "expected bad request, got %v", err)
+		_, _, err = f.storage.Update(f.ctx, stored.Name, k8srest.DefaultUpdatedObjectInfo(stored.DeepCopy()), nil, nil, false, &metav1.UpdateOptions{DryRun: dryRunAll})
+		require.True(t, apierrors.IsBadRequest(err), "expected bad request, got %v", err)
+		require.Empty(t, f.writes())
+	})
+
 	t.Run("create still runs createValidation", func(t *testing.T) {
 		f := newDryRunFixture(t, false)
 		rejected := apierrors.NewBadRequest("rejected by admission")

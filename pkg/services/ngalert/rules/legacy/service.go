@@ -62,6 +62,8 @@ type RuleStore interface {
 	rulestore.RulePageReader
 	rulestore.RuleWriter
 	rulestore.RuleVersionReader
+	// ValidateAlertRuleForWrite runs the store's own write-time checks without writing.
+	ValidateAlertRuleForWrite(rule models.AlertRule) error
 }
 
 type ProvenanceStore interface {
@@ -492,16 +494,7 @@ func (service *LegacyRuleService) CreateAlertRule(ctx context.Context, user iden
 		}
 	}
 	if dryRun {
-		// A real create checks the quota after inserting, inside the transaction. Rolling back a
-		// trial insert is not safe: when the rule store routes to another database it does not
-		// join this transaction. So check the quota against the rules that exist now.
-		if err := service.checkLimitsTransactionCtx(ctx, user); err != nil {
-			return models.AlertRule{}, err
-		}
-		rule.Version = 1
-		rule.GUID = uuid.NewV4().String()
-		rule.UpdatedBy = userUidOrFallback(user)
-		return rule, nil
+		return service.dryRunCreate(ctx, user, rule)
 	}
 	err = service.xact.InTransaction(ctx, func(ctx context.Context) error {
 		ids, err := service.ruleStore.InsertAlertRules(ctx, userUidOrFallback(user), []models.InsertRule{
@@ -534,6 +527,30 @@ func (service *LegacyRuleService) CreateAlertRule(ctx context.Context, user iden
 	if err != nil {
 		return models.AlertRule{}, err
 	}
+	return rule, nil
+}
+
+// dryRunCreate makes the checks a create makes while writing, without writing, and returns the would-be rule.
+func (service *LegacyRuleService) dryRunCreate(ctx context.Context, user identity.Requester, rule models.AlertRule) (models.AlertRule, error) {
+	// A real create checks the quota after inserting, inside the transaction. Rolling back a
+	// trial insert is not safe: when the rule store routes to another database it does not
+	// join this transaction. So check the quota against the rules that exist now.
+	if err := service.checkLimitsTransactionCtx(ctx, user); err != nil {
+		return models.AlertRule{}, err
+	}
+	// The insert would fail on the (org_id, uid) unique key, and nothing else checks for it.
+	switch _, err := service.ruleStore.GetAlertRuleByUID(ctx, &models.GetAlertRuleByUIDQuery{OrgID: rule.OrgID, UID: rule.UID}); {
+	case err == nil:
+		return models.AlertRule{}, models.ErrAlertRuleConflict(rule.UID, rule.OrgID, errors.New("a rule with this UID already exists"))
+	case !errors.Is(err, models.ErrAlertRuleNotFound):
+		return models.AlertRule{}, err
+	}
+	rule.Version = 1
+	if err := service.ruleStore.ValidateAlertRuleForWrite(rule); err != nil {
+		return models.AlertRule{}, err
+	}
+	rule.GUID = uuid.NewV4().String()
+	rule.UpdatedBy = userUidOrFallback(user)
 	return rule, nil
 }
 
@@ -639,6 +656,9 @@ func (service *LegacyRuleService) UpdateAlertRule(ctx context.Context, user iden
 		return models.AlertRule{}, err
 	}
 	if dryRun {
+		if err := service.ruleStore.ValidateAlertRuleForWrite(rule); err != nil {
+			return models.AlertRule{}, err
+		}
 		rule.UpdatedBy = userUidOrFallback(user)
 		return rule, nil
 	}

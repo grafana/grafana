@@ -2,6 +2,7 @@ package dryrun
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"testing"
@@ -121,6 +122,41 @@ func runDryRunTests(t *testing.T, helper *apis.K8sTestHelper, k ruleKind, mode g
 			return err == nil && found
 		}, 10*time.Second, 50*time.Millisecond)
 	}
+
+	t.Run("create of an existing name answers like the real create", func(t *testing.T) {
+		before := snapshot(t, helper, k, name)
+		duplicate := toUnstructured(k.spec(t, folderUID, name, "duplicate"))
+		_, dryErr := client.Create(ctx, duplicate.DeepCopy(), metav1.CreateOptions{DryRun: dryRunAll})
+		_, realErr := client.Create(ctx, duplicate.DeepCopy(), metav1.CreateOptions{})
+		require.Equal(t, http.StatusConflict, statusCode(realErr), "real create: %v", realErr)
+		require.Equal(t, statusCode(realErr), statusCode(dryErr), "dry-run create: %v", dryErr)
+		require.Equal(t, before, snapshot(t, helper, k, name))
+		requireTitle(t, client, name, "original")
+	})
+
+	t.Run("create runs the checks the store makes when writing", func(t *testing.T) {
+		if mode == grafanarest.Mode2 {
+			// DualWrite sends dry-run creates to unified storage only, so the legacy store's checks
+			// cannot run for them, while the real create goes through legacy first.
+			t.Skip("dry-run create does not reach legacy storage in DualWrite mode")
+		}
+		invalidName := prefix + "-store-invalid"
+		before := snapshot(t, helper, k, invalidName)
+		// Admission accepts any query model; the legacy store rejects a non-string queryType when it saves.
+		invalid := toUnstructured(k.spec(t, folderUID, invalidName, "store invalid"))
+		require.NoError(t, unstructured.SetNestedField(invalid.Object, int64(5), "spec", "expressions", "A", "model", "queryType"))
+
+		_, dryErr := client.Create(ctx, invalid.DeepCopy(), metav1.CreateOptions{DryRun: dryRunAll})
+		require.Equal(t, before, snapshot(t, helper, k, invalidName))
+		_, realErr := client.Create(ctx, invalid.DeepCopy(), metav1.CreateOptions{})
+		if realErr == nil {
+			require.NoError(t, client.Delete(ctx, invalidName, metav1.DeleteOptions{}))
+		}
+		if mode == grafanarest.Mode0 {
+			require.Equal(t, http.StatusBadRequest, statusCode(realErr), "real create: %v", realErr)
+		}
+		require.Equal(t, statusCode(realErr), statusCode(dryErr), "dry-run create: %v", dryErr)
+	})
 
 	t.Run("update", func(t *testing.T) {
 		before := snapshot(t, helper, k, name)
@@ -242,6 +278,18 @@ func readUnified(helper *apis.K8sTestHelper, k ruleKind, name string) (rv int64,
 		return 0, false, err
 	}
 	return rsp.ResourceVersion, true, nil
+}
+
+// statusCode returns the HTTP status of an API error, or 0 for success.
+func statusCode(err error) int {
+	if err == nil {
+		return 0
+	}
+	var status apierrors.APIStatus
+	if errors.As(err, &status) {
+		return int(status.Status().Code)
+	}
+	return -1
 }
 
 func requireTitle(t *testing.T, client dynamic.ResourceInterface, name, want string) {

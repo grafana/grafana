@@ -2007,6 +2007,16 @@ var GenerateNewAlertRuleUID = func(sess *db.Session, orgID int64, ruleTitle stri
 	return "", ngmodels.ErrAlertRuleFailedGenerateUniqueUID
 }
 
+// ValidateAlertRuleForWrite runs the checks that InsertAlertRules and UpdateAlertRules apply to a rule before
+// writing it, so a dry run rejects what the write would reject. It works on a copy and writes nothing.
+func (st RuleStore) ValidateAlertRuleForWrite(alertRule ngmodels.AlertRule) error {
+	rule := alertRule.Copy()
+	if err := st.validateAlertRule(*rule); err != nil {
+		return err
+	}
+	return rule.PreSave(timeNow, nil)
+}
+
 // validateAlertRule validates the alert rule including db-level restrictions on field lengths.
 func (st RuleStore) validateAlertRule(alertRule ngmodels.AlertRule) error {
 	if err := alertRule.ValidateAlertRule(st.Cfg); err != nil {

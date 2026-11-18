@@ -103,6 +103,10 @@ func TestLegacyStorage_DryRun(t *testing.T) {
 	stored := created.(*v1beta1.RecordingRule)
 	ruleStore.RecordedOps = nil
 
+	_, err = s.Create(ctx, newDryRunRecordingRule("stored", "other"), nil, &metav1.CreateOptions{DryRun: dryRun})
+	require.ErrorIs(t, err, ngmodels.ErrAlertRuleConflictBase, "dry-run create of an existing name must conflict")
+	require.Empty(t, writes(), "dry-run create of an existing name must not write")
+
 	changed := stored.DeepCopy()
 	changed.Spec.Title = "changed"
 	out, _, err = s.Update(ctx, stored.Name, k8srest.DefaultUpdatedObjectInfo(changed), nil, nil, false, &metav1.UpdateOptions{DryRun: dryRun})
