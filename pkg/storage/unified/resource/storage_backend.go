@@ -1861,7 +1861,7 @@ func (k *kvStorageBackend) listResourceKeys(ctx context.Context, req *resourcepb
 			return 0, nil, apierrors.NewBadRequest(fmt.Sprintf("invalid continue token: %v", err))
 		}
 		if token.Name == "" {
-			return 0, nil, apierrors.NewResourceExpired("continue token is no longer valid, restart the list")
+			return 0, nil, apierrors.NewBadRequest("invalid continue token: name is required for list resources")
 		}
 		if !continueTokenMatchesListRequest(token, req) {
 			return 0, nil, apierrors.NewBadRequest("invalid continue token: list scope does not match request")

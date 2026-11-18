@@ -2667,8 +2667,8 @@ func TestKvStorageBackend_ListIterator_ContinueTokenResumesAfterLastItem(t *test
 }
 
 // Tokens from servers that predate the exclusive cursor named the next item to
-// list under "n". They must be rejected as expired, never read as exclusive,
-// which would silently drop that item.
+// list under "n". They must be rejected, never read as exclusive, which would
+// silently drop that item.
 func TestKvStorageBackend_ListRejectsPreExclusiveContinueToken(t *testing.T) {
 	backend := setupTestStorageBackend(t)
 	ctx := t.Context()
@@ -2683,10 +2683,10 @@ func TestKvStorageBackend_ListRejectsPreExclusiveContinueToken(t *testing.T) {
 			req.NextPageToken = preExclusiveContinueToken(t, "bbb", listRV, keysOnly)
 
 			_, err := backend.ListIterator(ctx, req, func(ListIterator) error { return nil })
-			require.True(t, apierrors.IsResourceExpired(err), "ListIterator: %v", err)
+			require.True(t, apierrors.IsBadRequest(err), "ListIterator: %v", err)
 
 			_, err = backend.ListKeys(ctx, req, func(ListKeyIterator) error { return nil })
-			require.True(t, apierrors.IsResourceExpired(err), "ListKeys: %v", err)
+			require.True(t, apierrors.IsBadRequest(err), "ListKeys: %v", err)
 		})
 	}
 }
@@ -2807,7 +2807,7 @@ func TestKvStorageBackend_ListIterator_InvalidContinueToken(t *testing.T) {
 		Limit: 10,
 	}
 
-	for _, token := range []string{"invalid-token", "bm90LWpzb24="} {
+	for _, token := range []string{"invalid-token", "bm90LWpzb24=", ContinueToken{ResourceVersion: 1}.String()} {
 		listReq.NextPageToken = token
 		_, err := backend.ListIterator(ctx, listReq, func(iter ListIterator) error {
 			t.Fatal("malformed continuation must fail before iteration")
@@ -2816,15 +2816,6 @@ func TestKvStorageBackend_ListIterator_InvalidContinueToken(t *testing.T) {
 		require.True(t, apierrors.IsBadRequest(err), "got %v", err)
 		require.Contains(t, err.Error(), "invalid continue token")
 	}
-
-	// A decodable token without a cursor is indistinguishable from one issued
-	// before the cursor moved to "an", so the client is sent to restart the list.
-	listReq.NextPageToken = ContinueToken{ResourceVersion: 1}.String()
-	_, err := backend.ListIterator(ctx, listReq, func(iter ListIterator) error {
-		t.Fatal("a continuation without a cursor must fail before iteration")
-		return nil
-	})
-	require.True(t, apierrors.IsResourceExpired(err), "got %v", err)
 }
 
 func TestKvStorageBackend_ListIterator_KeysOnlyRejectsContinueTokenScopeChanges(t *testing.T) {

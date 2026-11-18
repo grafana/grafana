@@ -4111,9 +4111,10 @@ func TestServerListContinueTokenPointsAtLastReturnedItem(t *testing.T) {
 	}
 }
 
-// Kubernetes clients restart a list on 410 Expired, so a token from a server
-// that predates the exclusive cursor must reach them with that status.
-func TestServerListRejectsPreExclusiveContinueTokenAsExpired(t *testing.T) {
+// A token from a server that predates the exclusive cursor must reach clients
+// as 400, not 410: client-go pagers answer 410 with one unpaginated list, which
+// this server truncates to the default page size.
+func TestServerListRejectsPreExclusiveContinueTokenAsBadRequest(t *testing.T) {
 	for _, authorizeBeforeFetch := range []bool{false, true} {
 		t.Run(fmt.Sprintf("authorizeBeforeFetch=%v", authorizeBeforeFetch), func(t *testing.T) {
 			backend := setupTestStorageBackend(t)
@@ -4137,8 +4138,8 @@ func TestServerListRejectsPreExclusiveContinueTokenAsExpired(t *testing.T) {
 			rsp, err := srv.List(ctx, req)
 			require.Nil(t, rsp)
 			res := rpcErrorResult(t, err)
-			require.Equal(t, int32(http.StatusGone), res.Code)
-			require.Equal(t, string(metav1.StatusReasonExpired), res.Reason)
+			require.Equal(t, int32(http.StatusBadRequest), res.Code)
+			require.Equal(t, string(metav1.StatusReasonBadRequest), res.Reason)
 		})
 	}
 }
