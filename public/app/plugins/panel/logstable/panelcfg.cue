@@ -25,16 +25,16 @@ composableKinds: PanelCfg: {
 			version: [0, 0]
 			schema: {
 				Options: {
-					permalinkedLogId?:    string
-					enableLogDetails?:    bool | *true
-					showCopyLogLink?:     bool | *false
-					showControls?:        bool | *true
-					sortOrder?:           common.LogsSortOrder | (*"Descending" | _)
-					fieldSelectorWidth?:  number | *220
-					isLabelFilterActive?: _
+					permalinkedLogId?:       string
+					enableLogDetails?:       bool | *true
+					showCopyLogLink?:        bool | *false
+					showControls?:           bool | *true
+					sortOrder?:              common.LogsSortOrder | (*"Descending" | _)
+					fieldSelectorWidth?:     number | *220
+					isLabelFilterActive?:    _
 					onClickFilterString?:    _
 					onClickFilterOutString?: _
-					logDetailsWidth?:     number | *400
+					logDetailsWidth?:        number | *400
 					displayedFields?: [...string]
 					buildLinkToLogLine?: _
 					wrapText?:           bool
