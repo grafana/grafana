@@ -24,11 +24,12 @@ type RuleDeleteV1 struct {
 }
 
 type AlertRuleGroupV1 struct {
-	OrgID    values.Int64Value  `json:"orgId" yaml:"orgId"`
-	Name     values.StringValue `json:"name" yaml:"name"`
-	Folder   values.StringValue `json:"folder" yaml:"folder"`
-	Interval values.StringValue `json:"interval" yaml:"interval"`
-	Rules    []AlertRuleV1      `json:"rules" yaml:"rules"`
+	OrgID     values.Int64Value  `json:"orgId" yaml:"orgId"`
+	Name      values.StringValue `json:"name" yaml:"name"`
+	Folder    values.StringValue `json:"folder" yaml:"folder"`
+	FolderUID values.StringValue `json:"folderUid" yaml:"folderUid"`
+	Interval  values.StringValue `json:"interval" yaml:"interval"`
+	Rules     []AlertRuleV1      `json:"rules" yaml:"rules"`
 }
 
 func (ruleGroupV1 *AlertRuleGroupV1) MapToModel() (models.AlertRuleGroupWithFolderFullpath, error) {
@@ -44,8 +45,9 @@ func (ruleGroupV1 *AlertRuleGroupV1) MapToModel() (models.AlertRuleGroupWithFold
 	}
 	ruleGroup.Interval = int64(time.Duration(interval).Seconds())
 	ruleGroup.FolderFullpath = ruleGroupV1.Folder.Value()
-	if strings.TrimSpace(ruleGroup.FolderFullpath) == "" {
-		return models.AlertRuleGroupWithFolderFullpath{}, errors.New("rule group has no folder set")
+	ruleGroup.FolderUID = strings.TrimSpace(ruleGroupV1.FolderUID.Value())
+	if strings.TrimSpace(ruleGroup.FolderFullpath) == "" && ruleGroup.FolderUID == "" {
+		return models.AlertRuleGroupWithFolderFullpath{}, errors.New("rule group has no folder or folderUid set")
 	}
 	for _, ruleV1 := range ruleGroupV1.Rules {
 		rule, err := ruleV1.mapToModel(ruleGroup.OrgID)

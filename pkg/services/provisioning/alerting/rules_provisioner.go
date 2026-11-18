@@ -47,9 +47,9 @@ func (prov *defaultAlertRuleProvisioner) Provision(ctx context.Context,
 		for _, group := range file.Groups {
 			ctx, u := identity.WithServiceIdentity(ctx, group.OrgID)
 
-			folderUID, err := prov.getOrCreateFolderFullpath(ctx, group.FolderFullpath, group.OrgID)
+			folderUID, err := prov.resolveFolder(ctx, group)
 			if err != nil {
-				prov.logger.Error("failed to get or create folder", "folder", group.FolderFullpath, "org", group.OrgID, "err", err)
+				prov.logger.Error("failed to get or create folder", "folder", group.FolderFullpath, "folderUID", group.FolderUID, "org", group.OrgID, "err", err)
 				return err
 			}
 			prov.logger.Debug("provisioning alert rule group",
@@ -100,6 +100,52 @@ func (prov *defaultAlertRuleProvisioner) provisionRule(
 	return err
 }
 
+// resolveFolder returns the UID of the folder the group should live in. When the
+// group sets folderUid, the folder is looked up by that UID first so rules land in
+// the same folder as dashboards provisioned with the same folderUid, instead of a
+// second folder that only shares the title.
+func (prov *defaultAlertRuleProvisioner) resolveFolder(ctx context.Context, group alert_models.AlertRuleGroupWithFolderFullpath) (string, error) {
+	if group.FolderUID == "" {
+		return prov.getOrCreateFolderFullpath(ctx, group.FolderFullpath, group.OrgID)
+	}
+	return prov.getOrCreateFolderByUID(ctx, group.FolderUID, group.FolderFullpath, group.OrgID)
+}
+
+func (prov *defaultAlertRuleProvisioner) getOrCreateFolderByUID(
+	ctx context.Context, uid string, folderFullpath string, orgID int64) (string, error) {
+	if uid == accesscontrol.GeneralFolderUID {
+		return "", folder.ErrInvalidUID
+	}
+	ctx, user := identity.WithServiceIdentity(ctx, orgID)
+
+	f, err := prov.folderService.Get(ctx, &folder.GetFolderQuery{
+		UID:          &uid,
+		OrgID:        orgID,
+		SignedInUser: user,
+	})
+	if err == nil {
+		return f.UID, nil
+	}
+	if !errors.Is(err, dashboards.ErrFolderNotFound) {
+		return "", err
+	}
+
+	folderTitles := folderimpl.SplitFullpath(folderFullpath)
+	if len(folderTitles) == 0 {
+		return "", fmt.Errorf("folder with uid %q not found and no folder title is set to create it", uid)
+	}
+
+	var parentUID *string
+	for _, title := range folderTitles[:len(folderTitles)-1] {
+		parent, err := prov.getOrCreateFolderByTitle(ctx, title, orgID, parentUID)
+		if err != nil {
+			return "", err
+		}
+		parentUID = &parent
+	}
+	return prov.createFolder(ctx, uid, folderTitles[len(folderTitles)-1], orgID, parentUID)
+}
+
 func (prov *defaultAlertRuleProvisioner) getOrCreateFolderFullpath(
 	ctx context.Context, folderFullpath string, orgID int64) (string, error) {
 	folderTitles := folderimpl.SplitFullpath(folderFullpath)
@@ -137,25 +183,30 @@ func (prov *defaultAlertRuleProvisioner) getOrCreateFolderByTitle(
 
 	// dashboard folder not found. create one.
 	if errors.Is(err, dashboards.ErrFolderNotFound) {
-		createCmd := &folder.CreateFolderCommand{
-			OrgID: orgID,
-			UID:   util.GenerateShortUID(),
-			Title: folderName,
-		}
-
-		if parentUID != nil {
-			createCmd.ParentUID = *parentUID
-		}
-
-		f, err := prov.dashboardProvService.SaveFolderForProvisionedDashboards(ctx, createCmd, "")
-		if err != nil {
-			return "", err
-		}
-
-		return f.UID, nil
+		return prov.createFolder(ctx, util.GenerateShortUID(), folderName, orgID, parentUID)
 	}
 
 	return cmdResult.UID, nil
+}
+
+func (prov *defaultAlertRuleProvisioner) createFolder(
+	ctx context.Context, uid string, title string, orgID int64, parentUID *string) (string, error) {
+	createCmd := &folder.CreateFolderCommand{
+		OrgID: orgID,
+		UID:   uid,
+		Title: title,
+	}
+
+	if parentUID != nil {
+		createCmd.ParentUID = *parentUID
+	}
+
+	f, err := prov.dashboardProvService.SaveFolderForProvisionedDashboards(ctx, createCmd, "")
+	if err != nil {
+		return "", err
+	}
+
+	return f.UID, nil
 }
 
 var provisionerUser = func(orgID int64) identity.Requester {
