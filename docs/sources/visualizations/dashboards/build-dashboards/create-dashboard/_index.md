@@ -21,12 +21,6 @@ labels:
 title: Create dashboards
 description: Create and edit a dashboard
 weight: 1
-refs:
-  feature-toggles:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#feature_toggles
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#feature_toggles
 image_maps:
   - key: sidebar-toolbar
     src: /media/docs/grafana/dashboards/screenshot-edit-mode-imagemap-v13.3.png
@@ -375,7 +369,7 @@ To enable it in a self-managed instance, add the following to your Grafana confi
 grafana.dashboardsAutoHeightPanels = true
 ```
 
-To set a feature toggle in other ways, such as environment variables, refer to the [`feature_toggles` section of Configure Grafana](ref:feature-toggles).
+To set a feature toggle in other ways, such as environment variables, refer to the [`feature_toggles` section of Configure Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#feature_toggles).
 
 If you use Grafana Cloud, contact Grafana Support to enable the feature toggle.
 
