@@ -62,15 +62,14 @@ jobs:
       - name: Setup Node
         uses: ./.github/actions/setup-node
 
-      - name: Find the independent packages
-        id: packages
-        run: node scripts/release/independent-packages.mts >> "$GITHUB_OUTPUT"
+      # The script asks Nx which projects have the release:independent tag.
+      - name: Install dependencies
+        uses: ./.github/actions/install-frontend-deps
 
       - name: Plan the tags
         id: plan
         env:
           GH_TOKEN: ${{ github.token }}
-          INDEPENDENT_PACKAGES: ${{ steps.packages.outputs.packages }}
         run: node scripts/release/plan-release-tags.mts >> "$GITHUB_OUTPUT"
 
   # One call of the shared workflow for each tag. It creates an annotated tag and does nothing when the same tag is
@@ -144,13 +143,7 @@ jobs:
       - name: Install dependencies
         uses: ./.github/actions/install-frontend-deps
 
-      - name: Find the independent packages
-        id: packages
-        run: node scripts/release/independent-packages.mts >> "$GITHUB_OUTPUT"
-
       - name: Version and generate changelogs
-        env:
-          INDEPENDENT_PACKAGES: ${{ steps.packages.outputs.packages }}
         run: node scripts/release/prepare-release-pr.mts
 
       - name: Describe the dry run

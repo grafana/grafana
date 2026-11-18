@@ -3,14 +3,13 @@
 // Both steps change files in the working tree, and the next step commits them to the version PR branch.
 //
 // Usage: node scripts/release/prepare-release-pr.mts
-// Reads INDEPENDENT_PACKAGES (the packages output of independent-packages.mts) from the environment and needs
-// the git tags fetched. Run from the repo root.
+// Needs the git tags fetched. Run from the repo root.
 
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 
+import { getIndependentPackages, type IndependentPackage } from './lib/independent-packages.mts';
 import { isMainModule } from './lib/main.mts';
-import { parsePackages, type IndependentPackage } from './lib/packages.mts';
 import { tagFor } from './lib/tags.mts';
 
 export interface VersionChange {
@@ -21,14 +20,14 @@ export interface Deps {
   packages: IndependentPackage[];
   readVersion(manifestPath: string): string;
   tagExists(tag: string): boolean;
-  releaseVersion(groups: string[]): Promise<Record<string, VersionChange>>;
-  releaseChangelog(groups: string[]): Promise<void>;
+  releaseVersion(projects: string[]): Promise<Record<string, VersionChange>>;
+  releaseChangelog(projects: string[]): Promise<void>;
   notice(message: string): void;
   warning(message: string): void;
 }
 
 export async function prepareReleasePr(deps: Deps): Promise<void> {
-  // Without packages the group list would be empty, which Nx may read as "every group".
+  // Without packages the project list would be empty, which Nx may read as "every project".
   if (deps.packages.length === 0) {
     deps.notice('There are no independent packages to release.');
     return;
@@ -47,15 +46,15 @@ export async function prepareReleasePr(deps: Deps): Promise<void> {
     }
   }
 
-  const groups = [...new Set(deps.packages.map((pkg) => pkg.group))];
-  const versions = await deps.releaseVersion(groups);
+  const projects = deps.packages.map((pkg) => pkg.name);
+  const versions = await deps.releaseVersion(projects);
 
   if (!deps.packages.some((pkg) => versions[pkg.name]?.newVersion)) {
     deps.notice('No package has releasable commits since its last release.');
     return;
   }
 
-  await deps.releaseChangelog(groups);
+  await deps.releaseChangelog(projects);
 }
 
 // Nx returns far more than the core needs (dependent projects, the release graph, tag names), so its answer is
@@ -70,7 +69,7 @@ export function toVersionChanges(
 
 export async function createVersioningDeps(packages: IndependentPackage[]): Promise<Deps> {
   const { releaseChangelog, releaseVersion } = await import('nx/release');
-  const options = (groups: string[]) => ({ groups, gitCommit: false, gitTag: false, stageChanges: false });
+  const options = (projects: string[]) => ({ projects, gitCommit: false, gitTag: false, stageChanges: false });
 
   // releaseChangelog needs everything releaseVersion returned, so it is kept here between the two calls.
   let versionResult: Awaited<ReturnType<typeof releaseVersion>> | undefined;
@@ -86,17 +85,17 @@ export async function createVersioningDeps(packages: IndependentPackage[]): Prom
         return false;
       }
     },
-    releaseVersion: async (groups) => {
-      versionResult = await releaseVersion(options(groups));
+    releaseVersion: async (projects) => {
+      versionResult = await releaseVersion(options(projects));
       return toVersionChanges(versionResult.projectsVersionData);
     },
-    releaseChangelog: async (groups) => {
+    releaseChangelog: async (projects) => {
       if (!versionResult) {
         throw new Error('The changelog can only be written after the versions were bumped.');
       }
 
       await releaseChangelog({
-        ...options(groups),
+        ...options(projects),
         versionData: versionResult.projectsVersionData,
         releaseGraph: versionResult.releaseGraph,
       });
@@ -108,7 +107,7 @@ export async function createVersioningDeps(packages: IndependentPackage[]): Prom
 
 if (isMainModule(import.meta.url)) {
   try {
-    await prepareReleasePr(await createVersioningDeps(parsePackages(process.env.INDEPENDENT_PACKAGES)));
+    await prepareReleasePr(await createVersioningDeps(await getIndependentPackages()));
   } catch (error) {
     console.error(`::error::${error instanceof Error ? error.message : String(error)}`);
     process.exit(1);

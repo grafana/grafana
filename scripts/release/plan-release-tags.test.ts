@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { IndependentPackage } from './lib/packages.mjs';
+import type { IndependentPackage } from './lib/independent-packages.mjs';
 import {
   formatOutputs,
   planReleaseTags,
@@ -17,13 +17,11 @@ const OTHER_MANIFEST = 'packages/grafana-other/package.json';
 const PLUGIN_COMPAT_TAG = '@grafana/plugin-compat@0.12.0';
 
 const pluginCompat: IndependentPackage = {
-  group: 'plugin-compat',
   name: '@grafana/plugin-compat',
   root: 'packages/grafana-plugin-compat',
   manifestPath: MANIFEST,
 };
 const other: IndependentPackage = {
-  group: 'plugin-compat',
   name: '@grafana/other',
   root: 'packages/grafana-other',
   manifestPath: OTHER_MANIFEST,
