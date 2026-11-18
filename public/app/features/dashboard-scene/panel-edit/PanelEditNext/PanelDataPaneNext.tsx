@@ -771,6 +771,10 @@ export class PanelDataPaneNext extends SceneObjectBase<PanelDataPaneNextState> {
     queryRunner.runQueries();
   };
 
+  public onQueryEdited = () => {
+    getDashboardSceneFor(this).state.editPanel?.recordQueryEdit();
+  };
+
   // Query Options Operations
   public onQueryOptionsChange = (options: QueryGroupOptions) => {
     const panel = this.state.panelRef.resolve();

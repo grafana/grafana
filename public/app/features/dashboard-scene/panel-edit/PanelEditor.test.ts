@@ -617,6 +617,7 @@ describe('PanelEditor', () => {
       panel_id: 1,
       is_new_panel: false,
       is_library_panel: false,
+      query_change_count: 0,
       query_editor: 'classic',
       isDynamicDashboard: true,
     };
@@ -803,6 +804,61 @@ describe('PanelEditor', () => {
           ...NO_CHANGES,
           isDynamicDashboard: false,
           outcome: 'kept',
+        });
+      } finally {
+        setTestFlags({});
+      }
+    });
+
+    it('counts query edits less than two seconds apart as one', async () => {
+      const { panelEditor } = await setup();
+
+      panelEditor.recordQueryEdit(10_000);
+      panelEditor.recordQueryEdit(11_500);
+      panelEditor.recordQueryEdit(13_000);
+      panelEditor.recordQueryEdit(15_500);
+      closeEditor();
+
+      expect(reported('panel_edit_closed')[0].properties).toEqual({
+        ...NO_CHANGES,
+        query_change_count: 2,
+        outcome: 'kept',
+      });
+    });
+
+    it('counts a query edit reported by the classic query editor', async () => {
+      const { panelEditor } = await setup();
+      const { dataPane } = panelEditor.state;
+      const queriesTab =
+        dataPane instanceof PanelDataPane
+          ? dataPane.state.tabs.find((tab) => tab instanceof PanelDataQueriesTab)
+          : undefined;
+      if (!(queriesTab instanceof PanelDataQueriesTab)) {
+        throw new Error('Expected the classic queries tab');
+      }
+
+      queriesTab.onQueryEdited();
+      closeEditor();
+
+      expect(reported('panel_edit_closed')[0].properties).toMatchObject({ query_change_count: 1 });
+    });
+
+    it('counts a query edit reported by the next query editor', async () => {
+      store.delete(QUERY_EDITOR_V2_PREFERENCE_KEY);
+      setTestFlags({ queryEditorNext: true });
+      try {
+        const { panelEditor } = await setup();
+        const { dataPane } = panelEditor.state;
+        if (!(dataPane instanceof PanelDataPaneNext)) {
+          throw new Error('Expected the next data pane');
+        }
+
+        dataPane.onQueryEdited();
+        closeEditor();
+
+        expect(reported('panel_edit_closed')[0].properties).toMatchObject({
+          query_change_count: 1,
+          query_editor: 'next',
         });
       } finally {
         setTestFlags({});

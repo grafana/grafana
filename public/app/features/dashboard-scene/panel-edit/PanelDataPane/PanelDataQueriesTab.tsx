@@ -292,6 +292,10 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
     );
   };
 
+  public onQueryEdited = () => {
+    getDashboardSceneFor(this).state.editPanel?.recordQueryEdit();
+  };
+
   public onQueriesChange = (queries: SceneDataQuery[]) => {
     const runner = this.queryRunner;
     const isFirstQuery = runner.state.queries.length === 0 && queries.length > 0;
@@ -332,7 +336,7 @@ export class PanelDataQueriesTab extends SceneObjectBase<PanelDataQueriesTabStat
 
   public addQueryClick = async () => {
     const queries = this.getQueries();
-    trackAddQuery('new_query', 'legacy', { silent: true });
+    trackAddQuery('new_query', 'legacy', { editor: 'classic' });
     this.onQueriesChange(addQuery(queries, await this.newQuery()));
   };
 
@@ -500,6 +504,7 @@ export function PanelDataQueriesTabRendered({ model }: SceneComponentProps<Panel
         onAddQuery={model.onAddQuery}
         onQueriesChange={model.onQueriesChange}
         onRunQueries={model.onRunQueries}
+        onQueryEdited={model.onQueryEdited}
         onUpdateDatasources={queryLibraryEnabled ? model.updateDatasourceIfNeeded : undefined}
         app={CoreApp.PanelEditor}
         panelRef={model.state.panelRef}
