@@ -1,31 +1,20 @@
 // Prepares the next release: checks that the last release of every independent package is tagged, then asks
 // Nx to bump the versions from the conventional commits since those tags and to write the changelog entries.
-// Both steps change files in the working tree, which the next step compares with the open version PR.
+// Both steps change files in the working tree, and the next step commits them to the version PR branch.
 //
-// Usage: node scripts/release/prepare-release-pr.mts >> "$GITHUB_OUTPUT"
+// Usage: node scripts/release/prepare-release-pr.mts
 // Reads INDEPENDENT_PACKAGES (the packages output of independent-packages.mts) from the environment and needs
-// the git tags fetched. Run from the repo root. Prints changed=true|false to stdout, and when it is true also
-// summary_path: a JSON list of {name, currentVersion, newVersion, changelog} written to RUNNER_TEMP. Nx prints its
-// own progress to stdout, so while it runs stdout is sent to stderr to keep it out of the output.
+// the git tags fetched. Run from the repo root.
 
 import { execFileSync } from 'node:child_process';
-import { readFileSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { readFileSync } from 'node:fs';
 
 import { isMainModule } from './lib/main.mts';
 import { parsePackages, type IndependentPackage } from './lib/packages.mts';
-import type { PackageRelease } from './lib/releases.mts';
 import { tagFor } from './lib/tags.mts';
 
 export interface VersionChange {
-  currentVersion: string;
   newVersion: string | null;
-}
-
-export interface Result {
-  changed: boolean;
-  releases: PackageRelease[];
 }
 
 export interface Deps {
@@ -33,18 +22,16 @@ export interface Deps {
   readVersion(manifestPath: string): string;
   tagExists(tag: string): boolean;
   releaseVersion(groups: string[]): Promise<Record<string, VersionChange>>;
-  releaseChangelog(groups: string[]): Promise<Record<string, string>>;
+  releaseChangelog(groups: string[]): Promise<void>;
   notice(message: string): void;
   warning(message: string): void;
 }
 
-const NOTHING_TO_RELEASE: Result = { changed: false, releases: [] };
-
-export async function prepareReleasePr(deps: Deps): Promise<Result> {
+export async function prepareReleasePr(deps: Deps): Promise<void> {
   // Without packages the group list would be empty, which Nx may read as "every group".
   if (deps.packages.length === 0) {
     deps.notice('There are no independent packages to release.');
-    return NOTHING_TO_RELEASE;
+    return;
   }
 
   // Nx counts commits from the tag of the last release. Without it, it would version from commits that were
@@ -56,56 +43,28 @@ export async function prepareReleasePr(deps: Deps): Promise<Result> {
       deps.warning(
         `The tag ${tag} does not exist, so Nx cannot tell which commits are new. Create it on the commit that published ${pkg.name} ${version}, then run the workflow again.`
       );
-      return NOTHING_TO_RELEASE;
+      return;
     }
   }
 
   const groups = [...new Set(deps.packages.map((pkg) => pkg.group))];
   const versions = await deps.releaseVersion(groups);
 
-  const bumped = deps.packages.flatMap((pkg) => {
-    const change = versions[pkg.name];
-    return change?.newVersion
-      ? [{ name: pkg.name, currentVersion: change.currentVersion, newVersion: change.newVersion }]
-      : [];
-  });
-  if (bumped.length === 0) {
+  if (!deps.packages.some((pkg) => versions[pkg.name]?.newVersion)) {
     deps.notice('No package has releasable commits since its last release.');
-    return NOTHING_TO_RELEASE;
+    return;
   }
 
-  const changelogs = await deps.releaseChangelog(groups);
-
-  return {
-    changed: true,
-    releases: bumped.map((release) => {
-      const changelog = changelogs[release.name];
-      if (changelog === undefined) {
-        deps.warning(`No changelog entry was generated for ${release.name} ${release.newVersion}.`);
-      }
-      return { ...release, changelog: changelog ?? '' };
-    }),
-  };
+  await deps.releaseChangelog(groups);
 }
 
-// Nx returns far more than the core needs (dependent projects, the release graph, tag names). These two
-// functions cut its answers down to the few fields the core reads.
+// Nx returns far more than the core needs (dependent projects, the release graph, tag names), so its answer is
+// cut down to the one field the core reads.
 export function toVersionChanges(
-  projectsVersionData: Record<string, { currentVersion: string; newVersion: string | null }>
+  projectsVersionData: Record<string, { newVersion: string | null }>
 ): Record<string, VersionChange> {
   return Object.fromEntries(
-    Object.entries(projectsVersionData).map(([project, { currentVersion, newVersion }]) => [
-      project,
-      { currentVersion, newVersion },
-    ])
-  );
-}
-
-export function toChangelogEntries(
-  projectChangelogs: Record<string, { contents: string }> | undefined
-): Record<string, string> {
-  return Object.fromEntries(
-    Object.entries(projectChangelogs ?? {}).map(([project, { contents }]) => [project, contents])
+    Object.entries(projectsVersionData).map(([project, { newVersion }]) => [project, { newVersion }])
   );
 }
 
@@ -136,40 +95,20 @@ export async function createVersioningDeps(packages: IndependentPackage[]): Prom
         throw new Error('The changelog can only be written after the versions were bumped.');
       }
 
-      const result = await releaseChangelog({
+      await releaseChangelog({
         ...options(groups),
         versionData: versionResult.projectsVersionData,
         releaseGraph: versionResult.releaseGraph,
       });
-      return toChangelogEntries(result.projectChangelogs);
     },
     notice: (message) => console.error(`::notice::${message}`),
     warning: (message) => console.error(`::warning::${message}`),
   };
 }
 
-async function withStdoutOnStderr<T>(work: () => Promise<T>): Promise<T> {
-  const stdoutWrite = process.stdout.write;
-  Object.assign(process.stdout, { write: process.stderr.write.bind(process.stderr) });
-  try {
-    return await work();
-  } finally {
-    Object.assign(process.stdout, { write: stdoutWrite });
-  }
-}
-
 if (isMainModule(import.meta.url)) {
   try {
-    const packages = parsePackages(process.env.INDEPENDENT_PACKAGES);
-    const result = await withStdoutOnStderr(async () => prepareReleasePr(await createVersioningDeps(packages)));
-
-    if (result.changed) {
-      const summaryPath = join(process.env.RUNNER_TEMP ?? tmpdir(), 'release-summary.json');
-      writeFileSync(summaryPath, JSON.stringify(result.releases, null, 2));
-      console.log(`changed=true\nsummary_path=${summaryPath}`);
-    } else {
-      console.log('changed=false');
-    }
+    await prepareReleasePr(await createVersioningDeps(parsePackages(process.env.INDEPENDENT_PACKAGES)));
   } catch (error) {
     console.error(`::error::${error instanceof Error ? error.message : String(error)}`);
     process.exit(1);

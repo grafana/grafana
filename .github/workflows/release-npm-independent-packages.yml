@@ -102,57 +102,42 @@ jobs:
 
       # Step 2: prepare the next version pull request. A manual run that publishes given tags skips it.
       - name: Version and generate changelogs
-        id: prepare
         if: env.TAGS == ''
         env:
           INDEPENDENT_PACKAGES: ${{ steps.packages.outputs.packages }}
-        run: node scripts/release/prepare-release-pr.mts >> "$GITHUB_OUTPUT"
-
-      - name: Decide what to do with the version pull request
-        id: sync
-        if: env.TAGS == ''
-        env:
-          CHANGED: ${{ steps.prepare.outputs.changed }}
-          SUMMARY_PATH: ${{ steps.prepare.outputs.summary_path }}
-        run: node scripts/release/sync-release-pr.mts decide >> "$GITHUB_OUTPUT"
+        run: node scripts/release/prepare-release-pr.mts
 
       - name: Describe the dry run
-        if: env.TAGS == '' && env.DRY_RUN == 'true' && steps.sync.outputs.action == 'update'
-        env:
-          BODY_PATH: ${{ steps.sync.outputs.body_path }}
+        if: env.TAGS == '' && env.DRY_RUN == 'true'
         run: |
           echo "Dry run: the version pull request would be created or updated with these changes."
           git status --short
-          cat "$BODY_PATH"
+          git diff --stat
 
-      # The branch name is the same for every release, so the branch is moved to the current main with a forced
-      # update. release-pr.yml makes a new branch for each release and only ever creates it.
-      - name: Reset release branch to main
-        if: env.TAGS == '' && steps.sync.outputs.action == 'update' && env.DRY_RUN != 'true'
-        env:
-          GH_TOKEN: ${{ steps.get-writer-app-token.outputs.token }}
-        run: node scripts/release/sync-release-pr.mts reset-branch
-
-      # Commits made through the Git Data API with an app token are signed by the app, which
-      # satisfies the signed-commits rule.
-      - name: Commit release changes
-        if: env.TAGS == '' && steps.sync.outputs.action == 'update' && env.DRY_RUN != 'true'
-        uses: planetscale/ghcommit-action@a6b150b81dca5dd027baa898604418eec9e11465 # v0.2.22
-        with:
-          commit_message: ${{ env.PR_TITLE }}
-          repo: ${{ github.repository }}
-          branch: ${{ env.RELEASE_BRANCH }}
-          empty: 'false'
-          file_pattern: '**'
-        env:
-          GITHUB_TOKEN: ${{ steps.get-writer-app-token.outputs.token }}
-
+      # Commits what Nx changed to the version pull request branch and opens the pull request, or updates it when the
+      # result differs. Nothing is done when there is nothing to commit, and an open pull request is never closed.
+      # Commits are signed by the writer app, and the token of the pull request app creates and edits the pull request.
       - name: Create or update the version pull request
-        if: env.TAGS == '' && steps.sync.outputs.action == 'update' && env.DRY_RUN != 'true'
-        env:
-          GH_TOKEN: ${{ steps.get-github-app-token.outputs.token }}
-          BODY_PATH: ${{ steps.sync.outputs.body_path }}
-        run: node scripts/release/sync-release-pr.mts open-pr
+        if: env.TAGS == '' && env.DRY_RUN != 'true'
+        uses: peter-evans/create-pull-request@67ccf781d68cd99b580ae25a5c18a1cc84ffff1f # 7.0.6
+        with:
+          token: ${{ steps.get-github-app-token.outputs.token }}
+          branch-token: ${{ steps.get-writer-app-token.outputs.token }}
+          sign-commits: true
+          base: main
+          branch: ${{ env.RELEASE_BRANCH }}
+          commit-message: ${{ env.PR_TITLE }}
+          title: ${{ env.PR_TITLE }}
+          labels: |
+            no-changelog
+            area/frontend
+            nx-release:pending
+          body: |
+            This pull request releases the independently versioned packages, with the versions and changelog entries that Nx derived from the conventional commit titles merged since their last release. Merging it publishes them to npm.
+
+            It is generated and is rebuilt from main whenever a change to these packages lands. Do not edit it.
+
+            Created by: [GitHub Action job](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
 
   publish:
     name: Publish the tagged packages
