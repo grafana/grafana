@@ -120,7 +120,7 @@
     "name": "area/explore",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/908"
+      "url": "https://github.com/orgs/grafana/projects/482"
     }
   },
   {
@@ -416,7 +416,7 @@
     "name": "area/transformations",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/908"
+      "url": "https://github.com/orgs/grafana/projects/928"
     }
   },
   {
@@ -424,7 +424,7 @@
     "name": "area/correlations",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/908"
+      "url": "https://github.com/orgs/grafana/projects/56"
     }
   },
   {
@@ -432,7 +432,7 @@
     "name": "area/expressions/sql",
     "action": "addToProject",
     "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/908"
+      "url": "https://github.com/orgs/grafana/projects/699"
     }
   },
   {
