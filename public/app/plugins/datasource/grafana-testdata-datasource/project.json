@@ -2,7 +2,7 @@
   "name": "@grafana-plugins/grafana-testdata-datasource",
   "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
   "projectType": "library",
-  "tags": ["scope:plugin", "type:datasource"],
+  "tags": ["scope:plugin", "type:datasource", "release:grafana"],
   "targets": {
     "build": {},
     "dev": {}
