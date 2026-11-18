@@ -210,7 +210,14 @@ type RecordingRuleSettings struct {
 	// MaxWriteConcurrency bounds how many split requests run in parallel.
 	// Ignored if MaxWriteBatchSize is 0. 0 defaults to 1 (sequential).
 	MaxWriteConcurrency int
+	// StaleMarkerMaxAge is how long a failing stale marker is retried.
+	// 0 or less uses DefaultStaleMarkerMaxAge.
+	StaleMarkerMaxAge time.Duration
 }
+
+// DefaultStaleMarkerMaxAge is above the 5m default query lookback of Mimir and Prometheus.
+// Once a series has been gone longer than the lookback, queries already hide it.
+const DefaultStaleMarkerMaxAge = 10 * time.Minute
 
 // RemoteAlertmanagerSettings contains the configuration needed
 // to disable the internal Alertmanager and use an external one instead.
@@ -637,6 +644,11 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 		DefaultDatasourceUID: rr.Key("default_datasource_uid").MustString(""),
 		MaxWriteBatchSize:    rr.Key("max_write_batch_size").MustInt(0),
 		MaxWriteConcurrency:  rr.Key("max_write_concurrency").MustInt(0),
+
+		StaleMarkerMaxAge: rr.Key("stale_marker_max_age").MustDuration(DefaultStaleMarkerMaxAge),
+	}
+	if uaCfgRecordingRules.StaleMarkerMaxAge <= 0 {
+		return fmt.Errorf("setting 'stale_marker_max_age' is invalid, it must be a positive duration")
 	}
 	if bs := uaCfgRecordingRules.MaxWriteBatchSize; bs != 0 && bs < recordingRulesMinWriteBatchSize {
 		return fmt.Errorf("setting 'max_write_batch_size' is invalid, only 0 or a value of at least %d bytes is allowed", recordingRulesMinWriteBatchSize)

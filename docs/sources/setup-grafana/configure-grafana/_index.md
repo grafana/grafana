@@ -2404,6 +2404,10 @@ Set the maximum size, in bytes (estimated from label names and values), of a sin
 
 Set the maximum number of requests of a split recording rule write that may be in flight at once. This setting has no effect unless `max_write_batch_size` is set. The default value of `0` uses the client default. The value must be between `0` and `32`.
 
+#### `stale_marker_max_age`
+
+Set how long Grafana retries a failing stale marker. Grafana drops the marker after this time. Markers that the data source rejects for good, such as when the tenant is over its active series limit, are dropped right away. Keep this value above the query lookback of the data source, which is `5m` by default in Mimir and Prometheus. The default value is `10m`. The value must be positive.
+
 <hr>
 
 ### `[annotations]`

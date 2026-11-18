@@ -100,6 +100,18 @@ func (s writtenSeries) merge(other writtenSeries) writtenSeries {
 	return s
 }
 
+// remove forgets the series in other.
+func (s writtenSeries) remove(other writtenSeries) {
+	for target, set := range other {
+		for fp := range set {
+			delete(s[target], fp)
+		}
+		if len(s[target]) == 0 {
+			delete(s, target)
+		}
+	}
+}
+
 func (s writtenSeries) labelSets(target seriesTarget) []map[string]string {
 	set := s[target]
 	out := make([]map[string]string, 0, len(set))

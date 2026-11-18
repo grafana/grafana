@@ -63,6 +63,9 @@ type staleHarness struct {
 	stale     []staleCall
 	failWrite bool
 	failStale bool
+	// staleErr is returned instead of a generic error while failStale is set.
+	staleErr      error
+	staleAttempts int
 
 	cancelParent context.CancelFunc
 }
@@ -89,7 +92,11 @@ func newStaleHarness(t *testing.T) *staleHarness {
 			return nil
 		},
 		WriteStaleFunc: func(ctx context.Context, dsUID, name string, ts time.Time, orgID int64, series []map[string]string) error {
+			h.staleAttempts++
 			if h.failStale {
+				if h.staleErr != nil {
+					return h.staleErr
+				}
 				return errors.New("stale write failed")
 			}
 			h.events = append(h.events, "stale")

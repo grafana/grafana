@@ -501,6 +501,41 @@ func TestRecordingRulesWriteBatchingSettings(t *testing.T) {
 	}
 }
 
+func TestReadStaleMarkerMaxAge(t *testing.T) {
+	testCases := []struct {
+		desc        string
+		value       string
+		expected    time.Duration
+		expectedErr string
+	}{
+		{desc: "defaults to ten minutes", expected: 10 * time.Minute},
+		{desc: "accepts a duration", value: "90s", expected: 90 * time.Second},
+		{desc: "rejects zero", value: "0s", expectedErr: "stale_marker_max_age"},
+		{desc: "rejects a negative value", value: "-1m", expectedErr: "stale_marker_max_age"},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			f := ini.Empty()
+			section, err := f.NewSection("recording_rules")
+			require.NoError(t, err)
+			if tc.value != "" {
+				_, err = section.NewKey("stale_marker_max_age", tc.value)
+				require.NoError(t, err)
+			}
+
+			cfg := NewCfg()
+			err = cfg.ReadUnifiedAlertingSettings(f)
+			if tc.expectedErr != "" {
+				require.ErrorContains(t, err, tc.expectedErr)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tc.expected, cfg.UnifiedAlerting.RecordingRules.StaleMarkerMaxAge)
+		})
+	}
+}
+
 func TestReadAllowedIntegrations(t *testing.T) {
 	testCases := []struct {
 		name    string

@@ -54,6 +54,8 @@ type recordingRule struct {
 
 	// Series from the last successful evaluation, to stale the ones that go missing.
 	written writtenSeries
+	// When a marker for a series in written first failed. Only series that are still retried are here.
+	failedAt map[seriesTarget]map[data.Fingerprint]time.Time
 	// Latest tick an evaluation started for, whether or not it wrote. Only touched from Run.
 	lastTick time.Time
 
@@ -379,19 +381,54 @@ func (r *recordingRule) markStale(ctx context.Context, markerAt time.Time, logge
 
 // writeStale writes markers at markerAt for the series from the previous evaluation that are
 // not in current, and returns the ones it failed to stale. Those are kept, so the next evaluation
-// tries again unless they came back.
+// tries again unless they came back. A marker that is rejected for good or has failed for longer
+// than the retry age is dropped, and its series is forgotten.
 func (r *recordingRule) writeStale(ctx context.Context, markerAt time.Time, current writtenSeries, logger log.Logger) writtenSeries {
 	missing := r.written.missingFrom(current)
+	maxAge := r.cfg.StaleMarkerMaxAge
+	if maxAge <= 0 {
+		maxAge = setting.DefaultStaleMarkerMaxAge
+	}
 
-	var failed writtenSeries
-	for target := range missing {
-		err := r.writer.WriteStale(ctx, target.dsUID, target.name, markerAt, target.orgID, missing.labelSets(target))
-		if err != nil {
-			logger.Warn("Failed to write stale markers", "metric", target.name, "series", len(missing[target]), "error", err)
-			failed = failed.merge(writtenSeries{target: missing[target]})
+	var failed, dropped writtenSeries
+	failedAt := make(map[seriesTarget]map[data.Fingerprint]time.Time)
+	for target, set := range missing {
+		try := make(seriesSet, len(set))
+		for fp, labels := range set {
+			if since, ok := r.failedAt[target][fp]; ok && markerAt.Sub(since) >= maxAge {
+				dropped = dropped.merge(writtenSeries{target: {fp: labels}})
+				continue
+			}
+			try[fp] = labels
+		}
+		if len(try) == 0 {
+			continue
+		}
+
+		err := r.writer.WriteStale(ctx, target.dsUID, target.name, markerAt, target.orgID, writtenSeries{target: try}.labelSets(target))
+		if err == nil {
+			continue
+		}
+
+		failure := classifyMarkerError(err)
+		logger.Warn("Failed to write stale markers", "metric", target.name, "series", len(try), "reason", failure.reason, "retry", failure.retry, "error", err)
+		if !failure.retry {
+			dropped = dropped.merge(writtenSeries{target: try})
+			continue
+		}
+		failed = failed.merge(writtenSeries{target: try})
+		failedAt[target] = make(map[data.Fingerprint]time.Time, len(try))
+		for fp := range try {
+			since, ok := r.failedAt[target][fp]
+			if !ok {
+				since = markerAt
+			}
+			failedAt[target][fp] = since
 		}
 	}
 
+	r.failedAt = failedAt
+	r.written.remove(dropped)
 	return failed
 }
 
