@@ -1940,6 +1940,69 @@ func pageAll(t *testing.T, index resource.ResourceIndex, ac authlib.AccessClient
 
 //nolint:gocyclo // The subtests share post-rank fixtures and helpers.
 func TestSearchPostRankAuthz(t *testing.T) {
+	t.Run("counts complete small result sets after filling the page", func(t *testing.T) {
+		for _, tc := range []struct {
+			name          string
+			total         int
+			offset        int64
+			maxCandidates int
+			wantTotal     int64
+			wantExact     bool
+		}{
+			{name: "below threshold", total: 80, wantTotal: 40, wantExact: true},
+			{name: "at threshold", total: 100, wantTotal: 50, wantExact: true},
+			{name: "above threshold", total: 102, wantTotal: 102},
+			{name: "independent count budget", total: 100, maxCandidates: 25, wantTotal: 50, wantExact: true},
+			{name: "offset includes skipped hits", total: 80, offset: 5, wantTotal: 40, wantExact: true},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				index := newTestDashboardsIndexPostRankWithConfig(t, 2, search.PostRankAuthzConfig{
+					ExactCountThreshold: 100, OverFetchFactor: 1, MaxWindow: 17, MaxCandidates: tc.maxCandidates,
+				})
+				docs := make([]*resource.BulkIndexItem, tc.total)
+				for i := range docs {
+					folder := "denied"
+					if i%2 == 0 {
+						folder = "allowed"
+					}
+					docs[i] = newDoc(fmt.Sprintf("doc-%03d", i), folder)
+				}
+				indexDocs(t, index, docs)
+				ac := &countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}
+				q := listQuery(10)
+				q.Offset = tc.offset
+				names, res := searchNames(t, index, ac, q)
+				require.Len(t, names, 10)
+				for i, name := range names {
+					require.Equal(t, fmt.Sprintf("doc-%03d", 2*(int(tc.offset)+i)), name)
+				}
+				require.Equal(t, tc.wantTotal, res.TotalHits)
+				require.Equal(t, tc.wantExact, res.TotalHitsExact)
+				if tc.wantExact {
+					require.Equal(t, tc.total, ac.checked)
+				} else {
+					require.Less(t, ac.checked, tc.total)
+				}
+			})
+		}
+	})
+
+	t.Run("returns authorization errors after filling an eligible page", func(t *testing.T) {
+		index := newTestDashboardsIndexPostRankWithConfig(t, 2, search.PostRankAuthzConfig{
+			ExactCountThreshold: 100, OverFetchFactor: 1, MaxWindow: 10,
+		})
+		docs := make([]*resource.BulkIndexItem, 30)
+		for i := range docs {
+			docs[i] = newDoc(fmt.Sprintf("doc-%03d", i), "allowed")
+		}
+		indexDocs(t, index, docs)
+		ac := &failingCountAccessClient{countingAccessClient: countingAccessClient{allowAll: true}}
+		requester := &identity.StaticRequester{Type: authlib.TypeUser, UserID: 1, Namespace: postRankKey.Namespace}
+		ctx := authlib.WithAuthInfo(context.Background(), requester)
+		_, err := index.Search(ctx, ac, listQuery(10), nil, nil)
+		require.ErrorContains(t, err, "count authorization failed")
+	})
+
 	t.Run("regex expansion errors are returned as bad requests", func(t *testing.T) {
 		index := newPostRankRegexExpansionIndex(t)
 
@@ -2125,7 +2188,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 	})
 
 	t.Run("count-only request approximates once the budget is hit", func(t *testing.T) {
-		cfg := search.PostRankAuthzConfig{MaxWindow: 20, MaxCandidates: 40}
+		cfg := search.PostRankAuthzConfig{MaxWindow: 20, MaxCandidates: 40, ExactCountThreshold: 300}
 		index := newTestDashboardsIndexPostRankWithConfig(t, 2, cfg)
 		docs := make([]*resource.BulkIndexItem, 0, 200)
 		for i := range 200 {
@@ -2261,7 +2324,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		// With req.SearchAfter set, the scan only authorizes the tail beyond the
 		// cursor; on exhaustion that's not the whole-query total, so the final
 		// short cursor page must fall back to firstRes.Total (unfiltered).
-		index := newTestDashboardsIndexPostRank(t, 2)
+		index := newTestDashboardsIndexPostRankWithConfig(t, 2, search.PostRankAuthzConfig{ExactCountThreshold: 100, MaxWindow: 10})
 		const n = 25
 		docs := make([]*resource.BulkIndexItem, 0, n)
 		for i := range n {
@@ -2270,10 +2333,11 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		indexDocs(t, index, docs)
 		ac := &countingAccessClient{allowAll: true}
 
-		// Page 1 (no cursor): fills early -> unfiltered total.
+		// Page 1 counts the whole set, but its cursor still follows the page.
 		p1, r1 := searchNames(t, index, ac, listQuery(10))
 		require.Len(t, p1, 10)
 		require.Equal(t, int64(n), r1.TotalHits)
+		require.True(t, r1.TotalHitsExact)
 
 		// Page 2: still fills early -> unfiltered total.
 		q2 := listQuery(10)
@@ -2281,6 +2345,13 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		p2, r2 := searchNames(t, index, ac, q2)
 		require.Len(t, p2, 10)
 		require.Equal(t, int64(n), r2.TotalHits)
+		require.False(t, r2.TotalHitsExact)
+
+		before := listQuery(5)
+		before.SearchBefore = r2.Rows[0].SortFields
+		_, backwards := searchNames(t, index, ac, before)
+		require.False(t, backwards.TotalHitsExact)
+		require.Equal(t, int64(n), backwards.TotalHits)
 
 		// Page 3: the tail (5 docs) exhausts. Pre-fix this reported
 		// TotalHits=5 (the tail authorized count); it must stay n (25).
@@ -2294,7 +2365,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 
 	t.Run("sparse short pages exhaust all matches beyond MaxCandidates", func(t *testing.T) {
 		// A short page must prove exhaustion, even with only one authorized hit.
-		cfg := search.PostRankAuthzConfig{MaxWindow: 20, MaxCandidates: 50}
+		cfg := search.PostRankAuthzConfig{MaxWindow: 20, MaxCandidates: 50, ExactCountThreshold: 100}
 		index := newTestDashboardsIndexPostRankWithConfig(t, 2, cfg)
 		docs := make([]*resource.BulkIndexItem, 0, 2000)
 		for i := range 2000 {
@@ -2806,7 +2877,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 	t.Run("facet sample stays exact when the budget covers every match", func(t *testing.T) {
 		// The sample consumes its whole budget, but that budget spans the entire
 		// match set, so no authorized document went uncounted.
-		cfg := search.PostRankAuthzConfig{MaxWindow: 10, FacetSampleSize: 20, MaxCandidates: 100}
+		cfg := search.PostRankAuthzConfig{MaxWindow: 10, FacetSampleSize: 20, MaxCandidates: 100, ExactCountThreshold: 100}
 		index := newTestDashboardsIndexPostRankWithConfig(t, 2, cfg)
 		docs := make([]*resource.BulkIndexItem, 0, 20)
 		for i := range 20 {
@@ -3054,6 +3125,17 @@ func newTestFoldersIndexPostRank(t testing.TB, size int64, cfg search.PostRankAu
 	return index
 }
 
+type failingCountAccessClient struct {
+	countingAccessClient
+}
+
+func (c *failingCountAccessClient) BatchCheck(ctx context.Context, user authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+	if c.batchChecks > 0 {
+		return authlib.BatchCheckResponse{}, fmt.Errorf("count authorization failed")
+	}
+	return c.countingAccessClient.BatchCheck(ctx, user, req)
+}
+
 // changingAccessClient runs change once, during the first authorization call,
 // to stand for a write landing while a search is being authorized.
 type changingAccessClient struct {
@@ -3093,7 +3175,7 @@ func TestSearchAuthzDoesNotReturnAnObjectChangedDuringAuthorization(t *testing.T
 	byTitle.SortBy = []*resourcepb.ResourceSearchRequest_Sort{{Field: resource.SEARCH_FIELD_TITLE}}
 	for change, apply := range changes {
 		t.Run(change, func(t *testing.T) {
-			index := newTestDashboardsIndexAuthz(t, 3, search.PostRankAuthzConfig{})
+			index := newTestDashboardsIndexAuthz(t, 3, search.PostRankAuthzConfig{ExactCountThreshold: 100})
 			indexDocs(t, index, []*resource.BulkIndexItem{newDoc("doc", "allowed"), newDoc("next", "allowed")})
 			ac := &changingAccessClient{countingAccessClient: countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}}
 			ac.change = func() {
@@ -3120,9 +3202,10 @@ func TestSearchPostRankAuthzPaginationDoesNotSkipResults(t *testing.T) {
 		for _, cursorBased := range []bool{false, true} {
 			t.Run(fmt.Sprintf("budget=%d/cursor=%t", budget, cursorBased), func(t *testing.T) {
 				index := newTestDashboardsIndexPostRankWithConfig(t, 2, search.PostRankAuthzConfig{
-					OverFetchFactor: 1,
-					MaxWindow:       3,
-					MaxCandidates:   budget,
+					OverFetchFactor:     1,
+					MaxWindow:           3,
+					MaxCandidates:       budget,
+					ExactCountThreshold: 100,
 				})
 				indexDocs(t, index, []*resource.BulkIndexItem{
 					newDoc("a", "allowed"),
@@ -3161,7 +3244,7 @@ func TestSearchPostRankAuthzPaginationDoesNotSkipResults(t *testing.T) {
 }
 
 func TestSearchPostRankAuthzRefillsPagesAfterValidationPastCandidateBudget(t *testing.T) {
-	index := newTestDashboardsIndexAuthz(t, 4, search.PostRankAuthzConfig{OverFetchFactor: 1, MaxWindow: 1, MaxCandidates: 1})
+	index := newTestDashboardsIndexAuthz(t, 4, search.PostRankAuthzConfig{OverFetchFactor: 1, MaxWindow: 1, MaxCandidates: 1, ExactCountThreshold: 100})
 	indexDocs(t, index, []*resource.BulkIndexItem{newDoc("doc", "allowed"), newDoc("e", "denied"), newDoc("next", "allowed"), newDoc("z-next", "allowed")})
 	ac := &changingAccessClient{countingAccessClient: countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}}
 	ac.change = func() {

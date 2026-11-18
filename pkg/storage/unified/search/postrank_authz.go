@@ -33,6 +33,9 @@ type PostRankAuthzConfig struct {
 	// MaxCandidates limits count-only scans and counting beyond a full trash
 	// page. It never shortens a result page.
 	MaxCandidates int
+	// ExactCountThreshold enables full authorized counts for ordinary searches
+	// from the top when the initial match count fits. Nonpositive disables it.
+	ExactCountThreshold int
 	// FacetSampleSize is the candidate budget when aggregating facets. Facet
 	// counts reflect a sample of up to this many ranked hits, not the full
 	// authorized set. Smaller than MaxCandidates since facets are a
@@ -426,6 +429,13 @@ windows:
 		if window == 0 {
 			firstRes = res
 			stats.AddTotalHits(int(res.Total))
+			if limit > 0 && !wantFacets && trashAuthz == nil &&
+				len(req.SearchAfter) == 0 && len(req.SearchBefore) == 0 &&
+				cfg.ExactCountThreshold > 0 && res.Total <= uint64(cfg.ExactCountThreshold) {
+				countEveryHit = true
+				// This budget is independent of count-only and trash scans.
+				maxCandidates = int64(cfg.ExactCountThreshold)
+			}
 		}
 
 		metadata, err := page.readAuthzMetadata(ctx, res.Hits)
