@@ -9,6 +9,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
 	"slices"
 	"testing"
 
@@ -19,6 +21,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/utils/ptr"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/tests/apis"
@@ -77,13 +80,39 @@ type tree struct {
 	parent      string // parent of child and sibling
 	otherParent string
 	childTitle  string
-	remaining   int64 // status.cascadeDelete.remaining of child
 }
 
 var (
-	beforeMove = tree{name: "before move", parent: parentA, otherParent: parentB, childTitle: childTitle, remaining: 2}
-	afterMove  = tree{name: "after move", parent: parentB, otherParent: parentA, childTitle: updatedTitle, remaining: 1}
+	beforeMove = tree{name: "before move", parent: parentA, otherParent: parentB, childTitle: childTitle}
+	afterMove  = tree{name: "after move", parent: parentB, otherParent: parentA, childTitle: updatedTitle}
 )
+
+// state is what the phases wrote, for what depends on the version that ran them.
+type state struct {
+	// StatusRemaining is child's status.cascadeDelete.remaining, or nil while no version
+	// that serves folders/status has written it.
+	StatusRemaining *int64 `json:"statusRemaining,omitempty"`
+}
+
+func statePath(t *testing.T) string {
+	return filepath.Join(compat.Dir(t), "folders.json")
+}
+
+func readState(t *testing.T) state {
+	t.Helper()
+	raw, err := os.ReadFile(statePath(t))
+	require.NoError(t, err, "run TestCompatSetup first")
+	var st state
+	require.NoError(t, json.Unmarshal(raw, &st))
+	return st
+}
+
+func writeState(t *testing.T, st state) {
+	t.Helper()
+	raw, err := json.Marshal(st)
+	require.NoError(t, err)
+	require.NoError(t, os.WriteFile(statePath(t), raw, 0o600))
+}
 
 // TestCompatSetup creates the tree, a dashboard in child, a status on child, an extra
 // permission on parent-b, and labeled folders for pagination and selectors.
@@ -124,13 +153,16 @@ func TestCompatSetup(t *testing.T) {
 	}}, metav1.CreateOptions{})
 	require.NoError(t, err)
 
+	var st state
 	if res.Serves(res.Versions[0], "status") {
 		status := `{"status":{"cascadeDelete":{"state":"InProgress","total":3,"remaining":2}}}`
 		_, err = folders.Patch(ctx, child, types.MergePatchType, []byte(status), metav1.PatchOptions{}, "status")
 		require.NoError(t, err)
+		st.StatusRemaining = ptr.To[int64](2)
 	}
 
 	request(t, h, http.MethodPost, "/api/access-control/folders/"+parentB+"/users/"+h.Org1.Viewer.Identity.GetIdentifier(), `{"permission":"Edit"}`)
+	writeState(t, st)
 }
 
 // TestCompatUpdate runs on the other version: it checks the tree the setup version
@@ -141,14 +173,18 @@ func TestCompatUpdate(t *testing.T) {
 	folders := client(h, h.Org1.Admin, res.Versions[0])
 	ctx := context.Background()
 
-	checkTree(t, h, res, beforeMove)
+	st := readState(t)
+
+	checkTree(t, h, res, beforeMove, st)
 	checkList(t, folders, allFolders(pages))
 
-	if res.Serves(res.Versions[0], "status") {
+	// Only patch a status the setup version wrote, so the expected values stay known.
+	if st.StatusRemaining != nil && res.Serves(res.Versions[0], "status") {
 		// A status write must not touch the spec.
 		patch := `{"spec":{"title":"Patched via status"},"status":{"cascadeDelete":{"remaining":1}}}`
 		_, err := folders.Patch(ctx, child, types.MergePatchType, []byte(patch), metav1.PatchOptions{}, "status")
 		require.NoError(t, err)
+		st.StatusRemaining = ptr.To[int64](1)
 	}
 
 	// Move child with an ordinary update, which must keep its status, and sibling
@@ -165,8 +201,9 @@ func TestCompatUpdate(t *testing.T) {
 
 	request(t, h, http.MethodPost, "/api/folders/"+sibling+"/move", `{"parentUid":"`+parentB+`"}`)
 	require.NoError(t, folders.Delete(ctx, deletedPage, metav1.DeleteOptions{}))
+	writeState(t, st)
 
-	checkTree(t, h, res, afterMove)
+	checkTree(t, h, res, afterMove, st)
 }
 
 // TestCompatVerify runs on the setup version again: it sees the other version's
@@ -177,7 +214,7 @@ func TestCompatVerify(t *testing.T) {
 	folders := client(h, h.Org1.Admin, res.Versions[0])
 	ctx := context.Background()
 
-	checkTree(t, h, res, afterMove)
+	checkTree(t, h, res, afterMove, readState(t))
 	_, err := folders.Get(ctx, deletedPage, metav1.GetOptions{})
 	require.True(t, apierrors.IsNotFound(err), "page deleted by the other version: expected not found, got %v", err)
 	checkList(t, folders, allFolders(pages[:2]))
@@ -202,9 +239,9 @@ func TestCompatVerify(t *testing.T) {
 }
 
 // checkTree checks the hierarchy through every served version, the subresources in the
-// preferred version, and the legacy API. Subresources the other version does not serve
-// yet are not part of the contract, so they are skipped.
-func checkTree(t *testing.T, h *apis.K8sTestHelper, res compat.Resource, tr tree) {
+// preferred version, and the legacy API. Subresources the running version does not serve
+// are skipped, and so is a status no version has written.
+func checkTree(t *testing.T, h *apis.K8sTestHelper, res compat.Resource, tr tree, st state) {
 	t.Helper()
 	t.Run(tr.name, func(t *testing.T) {
 		checkHierarchy(t, h, res, tr)
@@ -217,7 +254,6 @@ func checkTree(t *testing.T, h *apis.K8sTestHelper, res compat.Resource, tr tree
 			{"children", checkChildren},
 			{"counts", checkCounts},
 			{"access", checkAccess},
-			{"status", checkStatus},
 		} {
 			t.Run(c.subresource, func(t *testing.T) {
 				if !res.Serves(v, c.subresource) {
@@ -226,6 +262,15 @@ func checkTree(t *testing.T, h *apis.K8sTestHelper, res compat.Resource, tr tree
 				c.check(t, h, v, tr)
 			})
 		}
+		t.Run("status", func(t *testing.T) {
+			if !res.Serves(v, "status") {
+				t.Skipf("folders/status is not served in %s", v)
+			}
+			if st.StatusRemaining == nil {
+				t.Skip("the setup version does not serve folders/status, so it wrote no status")
+			}
+			checkStatus(t, h, v, tr, *st.StatusRemaining)
+		})
 		t.Run("legacy", func(t *testing.T) { checkLegacy(t, h, tr) })
 	})
 }
@@ -367,12 +412,12 @@ type folderStatus struct {
 	} `json:"status"`
 }
 
-func checkStatus(t *testing.T, h *apis.K8sTestHelper, v string, tr tree) {
+func checkStatus(t *testing.T, h *apis.K8sTestHelper, v string, tr tree, remaining int64) {
 	var got folderStatus
 	getJSON(t, h, h.Org1.Admin, subresourcePath(h, v, child, "status"), &got)
 	require.Equal(t, tr.childTitle, got.Spec.Title)
 	require.Equal(t, "InProgress", got.Status.CascadeDelete.State)
-	require.Equal(t, tr.remaining, got.Status.CascadeDelete.Remaining)
+	require.Equal(t, remaining, got.Status.CascadeDelete.Remaining)
 }
 
 type legacyFolder struct {

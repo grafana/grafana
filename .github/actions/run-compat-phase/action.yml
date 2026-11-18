@@ -8,6 +8,9 @@ inputs:
   binaries:
     description: Directory with the <package>.test binaries built by go test -c from that checkout
     required: true
+  other-binaries:
+    description: Test binaries of the other version in the round trip; packages it does not ship are skipped
+    required: true
   test:
     description: TestCompatSetup, TestCompatUpdate, or TestCompatVerify
     required: true
@@ -29,6 +32,7 @@ runs:
       env:
         CHECKOUT: ${{ inputs.checkout }}
         BINARIES: ${{ inputs.binaries }}
+        OTHER_BINARIES: ${{ inputs.other-binaries }}
         TEST: ${{ inputs.test }}
         GRAFANA_COMPAT_ROLE: ${{ inputs.role }}
         GRAFANA_COMPAT_DIR: ${{ inputs.data }}
@@ -39,6 +43,12 @@ runs:
         # go test -c names each binary after its package directory under pkg/tests/compat.
         for bin in "$BINARIES"/*.test; do
           pkg="$(basename "$bin" .test)"
+          # A round trip needs both versions to run the package: without the other side, the
+          # update or verify phase finds no fixtures, or changes that never happened.
+          if [ ! -e "$OTHER_BINARIES/$pkg.test" ]; then
+            echo "::notice::Skipping $pkg in $TEST: the other version does not ship it"
+            continue
+          fi
           echo "=== $pkg"
           (cd "$CHECKOUT/pkg/tests/compat/$pkg" && "$bin" -test.count=1 -test.timeout=20m -test.run "^${TEST}\$") 2>&1 | tee -a "$LOG" || rc=1
         done

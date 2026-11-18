@@ -221,6 +221,7 @@ jobs:
         with:
           checkout: ${{ env.OLD_DIR }}
           binaries: ${{ env.OLDER_BIN }}
+          other-binaries: ${{ env.NEWER_BIN }}
           test: TestCompatSetup
           role: older
           data: ${{ env.COMPAT_DIR }}/upgrade-rollback
@@ -232,6 +233,7 @@ jobs:
         with:
           checkout: ${{ github.workspace }}
           binaries: ${{ env.NEWER_BIN }}
+          other-binaries: ${{ env.OLDER_BIN }}
           test: TestCompatUpdate
           role: newer
           data: ${{ env.COMPAT_DIR }}/upgrade-rollback
@@ -243,6 +245,7 @@ jobs:
         with:
           checkout: ${{ env.OLD_DIR }}
           binaries: ${{ env.OLDER_BIN }}
+          other-binaries: ${{ env.NEWER_BIN }}
           test: TestCompatVerify
           role: older
           data: ${{ env.COMPAT_DIR }}/upgrade-rollback
@@ -254,6 +257,7 @@ jobs:
         with:
           checkout: ${{ github.workspace }}
           binaries: ${{ env.NEWER_BIN }}
+          other-binaries: ${{ env.OLDER_BIN }}
           test: TestCompatSetup
           role: newer
           data: ${{ env.COMPAT_DIR }}/rollback-upgrade
@@ -265,6 +269,7 @@ jobs:
         with:
           checkout: ${{ env.OLD_DIR }}
           binaries: ${{ env.OLDER_BIN }}
+          other-binaries: ${{ env.NEWER_BIN }}
           test: TestCompatUpdate
           role: older
           data: ${{ env.COMPAT_DIR }}/rollback-upgrade
@@ -276,6 +281,7 @@ jobs:
         with:
           checkout: ${{ github.workspace }}
           binaries: ${{ env.NEWER_BIN }}
+          other-binaries: ${{ env.OLDER_BIN }}
           test: TestCompatVerify
           role: newer
           data: ${{ env.COMPAT_DIR }}/rollback-upgrade
