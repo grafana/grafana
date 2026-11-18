@@ -369,17 +369,7 @@ func NewAPIService(
 					if a.GetVerb() == utils.VerbGet && a.GetName() == sso.LoginConfigName {
 						return authorizer.DecisionAllow, "", nil
 					}
-					// Standalone serves this kind read-only to service identities; scope to
-					// access policies and read verbs. Per-provider settings RBAC is a follow-up.
-					if user.GetIdentityType() != types.TypeAccessPolicy {
-						return authorizer.DecisionDeny, "only access policy identities have access for now", nil
-					}
-					switch a.GetVerb() {
-					case "get", "list", "watch":
-						return authorizer.DecisionAllow, "", nil
-					default:
-						return authorizer.DecisionDeny, "ssosettings is read-only in this apiserver", nil
-					}
+					return authorizer.DecisionDeny, "only the login config is served in this apiserver for now", nil
 				}
 
 				return authorizer.DecisionDeny, "access denied", nil
