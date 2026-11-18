@@ -84,7 +84,14 @@ export function AlertRulesDeletedView() {
         isLoadingMore={isFetchingMore}
         onLoadMore={loadMore}
       />
-      {reviewing && <ReviewDrawer rule={reviewing} onClose={() => setReviewing(null)} onJsonOpen={trackJsonOpened} />}
+      {reviewing && (
+        <ReviewDrawer
+          rule={reviewing}
+          deletedByName={userNames[reviewing.metadata?.annotations?.['grafana.app/updatedBy'] ?? '']}
+          onClose={() => setReviewing(null)}
+          onJsonOpen={trackJsonOpened}
+        />
+      )}
       {restoring && (
         <RestoreModal
           rule={restoring}
