@@ -475,6 +475,9 @@ func setupHelperWithPluginJSON(t *testing.T, mode rest.DualWriterMode, manifestF
 		editPluginJSON(pluginJSON)
 		raw, err = json.Marshal(pluginJSON)
 		require.NoError(t, err)
+		// The copy may be a hard link to the shared fixture, so replace the file
+		// rather than writing through the link.
+		require.NoError(t, os.Remove(pluginJSONPath))
 		require.NoError(t, os.WriteFile(pluginJSONPath, raw, 0o600))
 	}
 
