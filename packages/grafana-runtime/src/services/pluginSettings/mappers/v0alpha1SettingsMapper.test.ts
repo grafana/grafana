@@ -123,8 +123,21 @@ describe('v0alpha1SettingsMapper', () => {
     });
   });
 
-  it('should map enabled correctly', () => {
+  it('should map enabled to true when settings are stored', () => {
     expect(v0alpha1SettingsMapper(myOrgTestAppMeta.spec, myOrgTestAppSettings).enabled).toBe(true);
+  });
+
+  it.each(['0', ''])('should map enabled to false when nothing is stored (resourceVersion %j)', (resourceVersion) => {
+    const unstored = {
+      ...myOrgTestAppSettings,
+      metadata: { ...myOrgTestAppSettings.metadata, resourceVersion },
+      spec: null,
+    };
+
+    const result = v0alpha1SettingsMapper(myOrgTestAppMeta.spec, unstored);
+
+    expect(result.enabled).toBe(false);
+    expect(result.jsonData).toStrictEqual({});
   });
 
   it('should map enabled to true when autoEnabled is set to true', () => {
@@ -132,15 +145,18 @@ describe('v0alpha1SettingsMapper', () => {
       ...myOrgTestAppMeta.spec,
       pluginJson: { ...myOrgTestAppMeta.spec.pluginJson, autoEnabled: true },
     };
-    const updatedSettings = {
+    const unstored = {
       ...myOrgTestAppSettings,
-      spec: {
-        ...myOrgTestAppSettings.spec,
-        enabled: false,
-      },
+      metadata: { ...myOrgTestAppSettings.metadata, resourceVersion: '0' },
     };
 
-    expect(v0alpha1SettingsMapper(updatedSpec, updatedSettings).enabled).toBe(true);
+    expect(v0alpha1SettingsMapper(updatedSpec, unstored).enabled).toBe(true);
+  });
+
+  it('should map jsonData from the spec', () => {
+    expect(v0alpha1SettingsMapper(myOrgTestAppMeta.spec, myOrgTestAppSettings).jsonData).toStrictEqual({
+      apiUrl: 'http://api-url.com',
+    });
   });
 
   it('preserves declared skills in plugin settings', () => {
@@ -263,15 +279,8 @@ describe('v0alpha1SettingsMapper', () => {
       ...myOrgTestAppMeta.spec,
       pluginJson: { ...myOrgTestAppMeta.spec.pluginJson, autoEnabled: true },
     };
-    const updatedSettings = {
-      ...myOrgTestAppSettings,
-      spec: {
-        ...myOrgTestAppSettings.spec,
-        pinned: false,
-      },
-    };
 
-    expect(v0alpha1SettingsMapper(updatedSpec, updatedSettings).enabled).toBe(true);
+    expect(v0alpha1SettingsMapper(updatedSpec, myOrgTestAppSettings).pinned).toBe(true);
   });
 
   it('should map secureJsonFields correctly', () => {
@@ -466,42 +475,18 @@ describe('secureJsonFieldsMapper', () => {
 });
 
 describe('settingsSpecMapper', () => {
-  it('should return empty object when no relevant fields are provided', () => {
-    expect(settingsSpecMapper({})).toStrictEqual({});
-  });
-
-  it('should map enabled when provided', () => {
-    expect(settingsSpecMapper({ enabled: true })).toStrictEqual({ enabled: true });
-  });
-
-  it('should map enabled false', () => {
-    expect(settingsSpecMapper({ enabled: false })).toStrictEqual({ enabled: false });
-  });
-
-  it('should map pinned when provided', () => {
-    expect(settingsSpecMapper({ pinned: true })).toStrictEqual({ pinned: true });
-  });
-
-  it('should map jsonData when provided', () => {
+  it('should use jsonData when provided', () => {
     const jsonData = { apiUrl: 'http://example.com', timeout: '30' };
 
-    expect(settingsSpecMapper({ jsonData })).toStrictEqual({ jsonData });
+    expect(settingsSpecMapper({ jsonData }, myOrgTestAppSettings)).toStrictEqual(jsonData);
   });
 
-  it('should map all fields when all are provided', () => {
-    const data = { enabled: true, pinned: false, jsonData: { key: 'value' } };
-
-    expect(settingsSpecMapper(data)).toStrictEqual({
-      enabled: true,
-      pinned: false,
-      jsonData: { key: 'value' },
-    });
+  it('should keep the stored spec when jsonData is not provided', () => {
+    expect(settingsSpecMapper({ enabled: true }, myOrgTestAppSettings)).toStrictEqual({ apiUrl: 'http://api-url.com' });
   });
 
-  it('should ignore unrelated fields', () => {
-    const data = { enabled: true, id: 'some-plugin', name: 'Some Plugin' };
-
-    expect(settingsSpecMapper(data)).toStrictEqual({ enabled: true });
+  it('should return an empty object when nothing is provided or stored', () => {
+    expect(settingsSpecMapper({}, { ...myOrgTestAppSettings, spec: null })).toStrictEqual({});
   });
 });
 

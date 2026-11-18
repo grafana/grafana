@@ -159,12 +159,19 @@ func (b *Builder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo
 	if err != nil {
 		return err
 	}
-	var settingsStorage rest.Storage = unified
+	var settingsStorage grafanarest.Storage = unified
 	if b.opts.LegacyStore != nil && opts.DualWriteBuilder != nil {
 		settingsStorage, err = opts.DualWriteBuilder(settingsRI.GroupResource(), b.opts.LegacyStore, unified)
 		if err != nil {
 			return err
 		}
+	}
+	// Wrapping exposes only the grafanarest.Storage verbs: settings are a single
+	// object per app, so watch and deletecollection are not served.
+	if b.pluginJSON.AutoEnabled {
+		settingsStorage = &autoEnabledStorage{Storage: settingsStorage, pluginID: b.pluginJSON.ID}
+	} else {
+		settingsStorage = &struct{ grafanarest.Storage }{settingsStorage}
 	}
 
 	// The subresources are served by SubresourceHandler.
@@ -175,7 +182,7 @@ func (b *Builder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo
 	// Direct reads of this plugin's own storage, by group version resource.
 	b.getter = func(ctx context.Context, gvr schema.GroupVersionResource, name string) (runtime.Object, error) {
 		if gvr.Resource == apppluginV0.APP_RESOURCE_NAME {
-			return settingsStorage.(rest.Getter).Get(ctx, name, &v1.GetOptions{})
+			return settingsStorage.Get(ctx, name, &v1.GetOptions{})
 		}
 
 		return nil, apierrors.NewInternalError(fmt.Errorf("no storage registered for %s", gvr))

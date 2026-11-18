@@ -7,14 +7,10 @@ export const myOrgTestAppSettings: Settings = structuredClone({
     name: 'myorg-test-app',
     namespace: 'default',
     uid: '',
-    resourceVersion: '',
+    resourceVersion: '1700000000000',
   },
   spec: {
-    enabled: true,
-    pinned: false,
-    jsonData: {
-      apiUrl: 'http://api-url.com',
-    },
+    apiUrl: 'http://api-url.com',
   },
   secure: {
     apiKey: {

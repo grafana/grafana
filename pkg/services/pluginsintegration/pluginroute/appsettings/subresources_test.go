@@ -17,6 +17,7 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/definition"
@@ -46,7 +47,7 @@ func TestSubresourceHandler(t *testing.T) {
 		}), nil, nil, Options{}, nil, nil)
 	require.NoError(t, err)
 	b.getter = func(context.Context, schema.GroupVersionResource, string) (runtime.Object, error) {
-		return &apppluginV0.Settings{Spec: apppluginV0.SettingsSpec{Enabled: true}}, nil
+		return &apppluginV0.Settings{Spec: v0alpha1.Unstructured{}}, nil
 	}
 	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusNoContent) })
 	handler := b.SubresourceHandler(next)

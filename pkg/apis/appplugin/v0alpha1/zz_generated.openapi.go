@@ -18,7 +18,6 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		HealthCheckResult{}.OpenAPIModelName(): schema_pkg_apis_appplugin_v0alpha1_HealthCheckResult(ref),
 		Settings{}.OpenAPIModelName():          schema_pkg_apis_appplugin_v0alpha1_Settings(ref),
 		SettingsList{}.OpenAPIModelName():      schema_pkg_apis_appplugin_v0alpha1_SettingsList(ref),
-		SettingsSpec{}.OpenAPIModelName():      schema_pkg_apis_appplugin_v0alpha1_SettingsSpec(ref),
 	}
 }
 
@@ -105,8 +104,7 @@ func schema_pkg_apis_appplugin_v0alpha1_Settings(ref common.ReferenceCallback) c
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref(SettingsSpec{}.OpenAPIModelName()),
+							Ref: ref(commonv0alpha1.Unstructured{}.OpenAPIModelName()),
 						},
 					},
 					"secure": {
@@ -127,7 +125,7 @@ func schema_pkg_apis_appplugin_v0alpha1_Settings(ref common.ReferenceCallback) c
 			},
 		},
 		Dependencies: []string{
-			commonv0alpha1.InlineSecureValue{}.OpenAPIModelName(), SettingsSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+			commonv0alpha1.InlineSecureValue{}.OpenAPIModelName(), commonv0alpha1.Unstructured{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -175,39 +173,5 @@ func schema_pkg_apis_appplugin_v0alpha1_SettingsList(ref common.ReferenceCallbac
 		},
 		Dependencies: []string{
 			Settings{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"},
-	}
-}
-
-func schema_pkg_apis_appplugin_v0alpha1_SettingsSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"enabled": {
-						SchemaProps: spec.SchemaProps{
-							Default: false,
-							Type:    []string{"boolean"},
-							Format:  "",
-						},
-					},
-					"pinned": {
-						SchemaProps: spec.SchemaProps{
-							Default: false,
-							Type:    []string{"boolean"},
-							Format:  "",
-						},
-					},
-					"jsonData": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref(commonv0alpha1.Unstructured{}.OpenAPIModelName()),
-						},
-					},
-				},
-				Required: []string{"enabled", "pinned", "jsonData"},
-			},
-		},
-		Dependencies: []string{
-			commonv0alpha1.Unstructured{}.OpenAPIModelName()},
 	}
 }

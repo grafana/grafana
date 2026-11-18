@@ -254,7 +254,7 @@ func TestAugmentOpenAPI(t *testing.T) {
 		assert.Nil(t, resource.Example, "only apps get a canned example")
 	})
 
-	t.Run("app wraps the spec in the settings envelope", func(t *testing.T) {
+	t.Run("app uses the plugin spec directly", func(t *testing.T) {
 		oas := newAugmentOAS(augmentPath)
 		resource := newResourceSchema()
 
@@ -269,10 +269,8 @@ func TestAugmentOpenAPI(t *testing.T) {
 
 		registered := oas.Components.Schemas["SettingsSpec"]
 		require.NotNil(t, registered)
-		assert.Contains(t, registered.Properties, "enabled")
-		assert.Contains(t, registered.Properties, "pinned")
-		jsonData := registered.Properties["jsonData"]
-		assert.Contains(t, jsonData.Properties, "path", "the plugin spec becomes jsonData")
+		assert.Contains(t, registered.Properties, "path", "the plugin's own spec should be used verbatim")
+		assert.NotContains(t, registered.Properties, "jsonData")
 
 		example, ok := resource.Example.(map[string]any)
 		require.True(t, ok, "apps get a canned instance example")

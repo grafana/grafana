@@ -88,7 +88,7 @@ func (r *proxyHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		OrgID:    ns.OrgID, // will be 1 in cloud
 		PluginID: r.pluginID,
 		Enabled:  true,
-		JSONData: settings.Spec.JsonData.Object,
+		JSONData: settings.Spec.Object,
 	}
 
 	proxyReq, proxyPath, err := proxyRequest(ctx, req)

@@ -19,7 +19,7 @@ func TestGetSettingsDecryptsFromSharedGroup(t *testing.T) {
 	settings := &apppluginV0.Settings{
 		TypeMeta:   metav1.TypeMeta{APIVersion: "example-app/v0alpha1", Kind: "Settings"},
 		ObjectMeta: metav1.ObjectMeta{Name: apppluginV0.INSTANCE_NAME, Namespace: "default"},
-		Spec:       apppluginV0.SettingsSpec{Enabled: true},
+		Spec:       common.Unstructured{Object: map[string]any{}},
 		Secure:     common.InlineSecureValues{"token": {Name: "secret-token"}},
 	}
 	b := &Builder{

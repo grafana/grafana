@@ -12,6 +12,7 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 )
@@ -47,9 +48,7 @@ func TestSettingsGet_NoPersistedSettings(t *testing.T) {
 	require.Equal(t, "default", settings.Namespace)
 	require.Equal(t, getLegacySettingsUID(1, "test-app"), settings.UID)
 	require.Equal(t, getLegacySettingsResourceVersion(nil), settings.ResourceVersion)
-	require.False(t, settings.Spec.Enabled)
-	require.False(t, settings.Spec.Pinned)
-	require.Nil(t, settings.Spec.JsonData.Object)
+	require.Nil(t, settings.Spec.Object)
 }
 
 func TestSettingsGet_WithPersistedSettings(t *testing.T) {
@@ -80,9 +79,7 @@ func TestSettingsGet_WithPersistedSettings(t *testing.T) {
 		JSONData: map[string]any{"apiUrl": "https://api.example.com", "timeout": float64(30)},
 		Updated:  updated,
 	}), settings.ResourceVersion)
-	require.True(t, settings.Spec.Enabled)
-	require.True(t, settings.Spec.Pinned)
-	require.Equal(t, map[string]any{"apiUrl": "https://api.example.com", "timeout": float64(30)}, settings.Spec.JsonData.Object)
+	require.Equal(t, map[string]any{"apiUrl": "https://api.example.com", "timeout": float64(30)}, settings.Spec.Object)
 }
 
 func TestSettingsList(t *testing.T) {
@@ -103,28 +100,26 @@ func TestSettingsList(t *testing.T) {
 	list := obj.(*apppluginV0.SettingsList)
 	require.Len(t, list.Items, 1)
 	require.Equal(t, "instance", list.Items[0].Name)
-	require.True(t, list.Items[0].Spec.Enabled)
-	require.Equal(t, map[string]any{"key": "value"}, list.Items[0].Spec.JsonData.Object)
+	require.Equal(t, map[string]any{"key": "value"}, list.Items[0].Spec.Object)
 }
 
 func TestSettingsCreate(t *testing.T) {
-	storage := newTestStorage(map[string]*pluginsettings.DTO{})
+	plugins := map[string]*pluginsettings.DTO{}
+	storage := newTestStorage(plugins)
 
 	ctx := request.WithNamespace(context.Background(), "default")
 	input := &apppluginV0.Settings{
 		ObjectMeta: metav1.ObjectMeta{Name: "instance", Namespace: "default"},
-		Spec: apppluginV0.SettingsSpec{
-			Enabled: true,
-			Pinned:  true,
-		},
+		Spec:       common.Unstructured{Object: map[string]any{"url": "https://api.example.com"}},
 	}
 
 	obj, err := storage.Create(ctx, input, nil, nil)
 	require.NoError(t, err)
 
 	settings := obj.(*apppluginV0.Settings)
-	require.True(t, settings.Spec.Enabled)
-	require.True(t, settings.Spec.Pinned)
+	require.Equal(t, map[string]any{"url": "https://api.example.com"}, settings.Spec.Object)
+	require.True(t, plugins["test-app"].Enabled, "saving settings enables the app")
+	require.False(t, plugins["test-app"].Pinned)
 }
 
 func TestSettingsCreate_JSONDataTooLarge(t *testing.T) {
@@ -147,18 +142,14 @@ func TestSettingsCreate_DryRunDoesNotPersist(t *testing.T) {
 	ctx := request.WithNamespace(context.Background(), "default")
 	input := &apppluginV0.Settings{
 		ObjectMeta: metav1.ObjectMeta{Name: "instance", Namespace: "default"},
-		Spec: apppluginV0.SettingsSpec{
-			Enabled: true,
-			Pinned:  true,
-		},
+		Spec:       common.Unstructured{Object: map[string]any{"url": "https://api.example.com"}},
 	}
 
 	obj, err := storage.Create(ctx, input, nil, &metav1.CreateOptions{DryRun: []string{metav1.DryRunAll}})
 	require.NoError(t, err)
 
 	settings := obj.(*apppluginV0.Settings)
-	require.True(t, settings.Spec.Enabled)
-	require.True(t, settings.Spec.Pinned)
+	require.Equal(t, map[string]any{"url": "https://api.example.com"}, settings.Spec.Object)
 	require.Empty(t, plugins)
 }
 
@@ -181,43 +172,13 @@ func TestSettingsCreate_WithValidation(t *testing.T) {
 }
 
 func TestSettingsUpdate(t *testing.T) {
-	storage := newTestStorage(map[string]*pluginsettings.DTO{
-		"test-app": {
-			PluginID: "test-app",
-			OrgID:    1,
-			Enabled:  true,
-			Pinned:   false,
-		},
-	})
-
-	ctx := request.WithNamespace(context.Background(), "default")
-
-	updater := rest.DefaultUpdatedObjectInfo(
-		&apppluginV0.Settings{
-			ObjectMeta: metav1.ObjectMeta{Name: "instance", Namespace: "default"},
-			Spec: apppluginV0.SettingsSpec{
-				Enabled: false,
-				Pinned:  true,
-			},
-		},
-	)
-
-	obj, created, err := storage.Update(ctx, "instance", updater, nil, nil, false, nil)
-	require.NoError(t, err)
-	require.False(t, created)
-
-	settings := obj.(*apppluginV0.Settings)
-	require.False(t, settings.Spec.Enabled)
-	require.True(t, settings.Spec.Pinned)
-}
-
-func TestSettingsUpdate_DryRunDoesNotPersist(t *testing.T) {
 	plugins := map[string]*pluginsettings.DTO{
 		"test-app": {
 			PluginID: "test-app",
 			OrgID:    1,
 			Enabled:  true,
-			Pinned:   false,
+			Pinned:   true,
+			JSONData: map[string]any{"url": "https://old.example.com"},
 		},
 	}
 	storage := newTestStorage(plugins)
@@ -227,10 +188,36 @@ func TestSettingsUpdate_DryRunDoesNotPersist(t *testing.T) {
 	updater := rest.DefaultUpdatedObjectInfo(
 		&apppluginV0.Settings{
 			ObjectMeta: metav1.ObjectMeta{Name: "instance", Namespace: "default"},
-			Spec: apppluginV0.SettingsSpec{
-				Enabled: false,
-				Pinned:  true,
-			},
+			Spec:       common.Unstructured{Object: map[string]any{"url": "https://new.example.com"}},
+		},
+	)
+
+	obj, created, err := storage.Update(ctx, "instance", updater, nil, nil, false, nil)
+	require.NoError(t, err)
+	require.False(t, created)
+
+	settings := obj.(*apppluginV0.Settings)
+	require.Equal(t, map[string]any{"url": "https://new.example.com"}, settings.Spec.Object)
+	require.True(t, plugins["test-app"].Pinned, "pinned is not part of the API and must be preserved")
+}
+
+func TestSettingsUpdate_DryRunDoesNotPersist(t *testing.T) {
+	plugins := map[string]*pluginsettings.DTO{
+		"test-app": {
+			PluginID: "test-app",
+			OrgID:    1,
+			Enabled:  true,
+			JSONData: map[string]any{"url": "https://old.example.com"},
+		},
+	}
+	storage := newTestStorage(plugins)
+
+	ctx := request.WithNamespace(context.Background(), "default")
+
+	updater := rest.DefaultUpdatedObjectInfo(
+		&apppluginV0.Settings{
+			ObjectMeta: metav1.ObjectMeta{Name: "instance", Namespace: "default"},
+			Spec:       common.Unstructured{Object: map[string]any{"url": "https://new.example.com"}},
 		},
 	)
 
@@ -239,10 +226,8 @@ func TestSettingsUpdate_DryRunDoesNotPersist(t *testing.T) {
 	require.False(t, created)
 
 	settings := obj.(*apppluginV0.Settings)
-	require.False(t, settings.Spec.Enabled)
-	require.True(t, settings.Spec.Pinned)
-	require.True(t, plugins["test-app"].Enabled)
-	require.False(t, plugins["test-app"].Pinned)
+	require.Equal(t, map[string]any{"url": "https://new.example.com"}, settings.Spec.Object)
+	require.Equal(t, map[string]any{"url": "https://old.example.com"}, plugins["test-app"].JSONData)
 }
 
 func TestSettingsDelete_Noop(t *testing.T) {

@@ -160,11 +160,7 @@ func defaultSchema() *pluginschema.PluginSchema {
 							ObjectMeta: v1.ObjectMeta{
 								Name: apppluginV0.INSTANCE_NAME,
 							},
-							Spec: apppluginV0.SettingsSpec{
-								Enabled:  true,
-								Pinned:   true,
-								JsonData: kcommon.Unstructured{},
-							},
+							Spec: kcommon.Unstructured{},
 						},
 					},
 				},

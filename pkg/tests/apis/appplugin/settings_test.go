@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"path/filepath"
 	"runtime"
 	"slices"
@@ -54,6 +55,48 @@ func TestIntegrationAppPluginSettingsWithManifest(t *testing.T) {
 	testIntegrationAppPluginSettings(t, "app-sdk-manifest.json")
 }
 
+func TestIntegrationAppPluginSettingsAutoEnabled(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	for _, mode := range []rest.DualWriterMode{rest.Mode0, rest.Mode5} {
+		t.Run(fmt.Sprintf("DualWriterMode %d", mode), func(t *testing.T) {
+			helper := setupHelperWithPluginJSON(t, mode, "app-sdk-manifest.json", func(pluginJSON map[string]any) {
+				pluginJSON["autoEnabled"] = true
+			})
+			ctx := context.Background()
+			client := helper.GetResourceClient(apis.ResourceClientArgs{
+				User: helper.Org1.Admin,
+				GVR:  gvrSettings,
+			})
+
+			// Nothing is stored yet, but an auto-enabled app always has settings.
+			current, err := client.Resource.Get(ctx, instanceName, metav1.GetOptions{})
+			require.NoError(t, err)
+			require.Equal(t, instanceName, current.GetName())
+			spec, _, _ := unstructured.NestedMap(current.Object, "spec")
+			require.Empty(t, spec)
+
+			list, err := client.Resource.List(ctx, metav1.ListOptions{})
+			require.NoError(t, err)
+			require.Len(t, list.Items, 1)
+
+			// The frontend patches against the object it was served.
+			patch, err := json.Marshal([]map[string]any{
+				{"op": "test", "path": "/metadata/resourceVersion", "value": current.GetResourceVersion()},
+				{"op": "add", "path": "/spec", "value": map[string]any{"url": "https://api.example.com"}},
+			})
+			require.NoError(t, err)
+			_, err = client.Resource.Patch(ctx, instanceName, types.JSONPatchType, patch, metav1.PatchOptions{})
+			require.NoError(t, err)
+
+			stored, err := client.Resource.Get(ctx, instanceName, metav1.GetOptions{})
+			require.NoError(t, err)
+			url, _, _ := unstructured.NestedString(stored.Object, "spec", "url")
+			require.Equal(t, "https://api.example.com", url)
+		})
+	}
+}
+
 func testIntegrationAppPluginSettings(t *testing.T, manifestFile string, features ...string) {
 	t.Helper()
 	testutil.SkipIntegrationTestInShortMode(t)
@@ -83,11 +126,7 @@ func testIntegrationAppPluginSettings(t *testing.T, manifestFile string, feature
 						"apiVersion": testAppID + "/v0alpha1",
 						"kind":       "Settings",
 						"metadata":   map[string]any{"name": instanceName},
-						"spec": map[string]any{
-							"enabled":  true,
-							"pinned":   true,
-							"jsonData": map[string]any{"url": "https://api.example.com"},
-						},
+						"spec":       map[string]any{"url": "https://api.example.com"},
 						"secure": map[string]any{
 							"apiKey": map[string]any{"create": "my-secret-value"},
 						},
@@ -111,14 +150,7 @@ func testIntegrationAppPluginSettings(t *testing.T, manifestFile string, feature
 
 				require.NotEmpty(t, current.GetResourceVersion(), "PATCH test op needs a resourceVersion")
 
-				enabledValue := true
-				pinnedValue := true
-				expectedJSONData := any(nil)
-				if mode == rest.Mode5 {
-					enabledValue = false
-					pinnedValue = true
-					expectedJSONData = map[string]any{"url": "https://api.example.com"}
-				}
+				expectedSpec := map[string]any{"url": "https://patched.example.com"}
 
 				patchData, err := json.Marshal([]map[string]any{
 					{
@@ -127,14 +159,9 @@ func testIntegrationAppPluginSettings(t *testing.T, manifestFile string, feature
 						"value": current.GetResourceVersion(),
 					},
 					{
-						"op":    "replace",
-						"path":  "/spec/enabled",
-						"value": enabledValue,
-					},
-					{
-						"op":    "replace",
-						"path":  "/spec/pinned",
-						"value": pinnedValue,
+						"op":    "add",
+						"path":  "/spec",
+						"value": expectedSpec,
 					},
 				})
 				require.NoError(t, err)
@@ -150,9 +177,7 @@ func testIntegrationAppPluginSettings(t *testing.T, manifestFile string, feature
 
 				spec, ok := obj.Object["spec"].(map[string]any)
 				require.True(t, ok)
-				require.Equal(t, enabledValue, spec["enabled"])
-				require.Equal(t, pinnedValue, spec["pinned"])
-				require.Equal(t, expectedJSONData, spec["jsonData"])
+				require.Equal(t, expectedSpec, spec)
 			})
 
 			t.Run("patch with stale resourceVersion test fails after separate update", func(t *testing.T) {
@@ -168,18 +193,7 @@ func testIntegrationAppPluginSettings(t *testing.T, manifestFile string, feature
 				staleRV := current.GetResourceVersion()
 				require.NotEmpty(t, staleRV, "stale patch test needs an initial resourceVersion")
 
-				updateSpec := map[string]any{
-					"enabled":  true,
-					"pinned":   false,
-					"jsonData": nil,
-				}
-				if mode == rest.Mode5 {
-					updateSpec = map[string]any{
-						"enabled":  false,
-						"pinned":   false,
-						"jsonData": map[string]any{"url": "https://updated.example.com"},
-					}
-				}
+				updateSpec := map[string]any{"url": "https://updated.example.com"}
 
 				_, err = client.Resource.Update(ctx, &unstructured.Unstructured{
 					Object: map[string]any{
@@ -199,7 +213,7 @@ func testIntegrationAppPluginSettings(t *testing.T, manifestFile string, feature
 						return true
 					}
 
-					updateSpec["pinned"] = !(updateSpec["pinned"].(bool))
+					updateSpec["url"] = fmt.Sprintf("https://updated.example.com/%d", time.Now().UnixNano())
 					_, err = client.Resource.Update(ctx, &unstructured.Unstructured{
 						Object: map[string]any{
 							"apiVersion": testAppID + "/v0alpha1",
@@ -219,9 +233,9 @@ func testIntegrationAppPluginSettings(t *testing.T, manifestFile string, feature
 						"value": staleRV,
 					},
 					{
-						"op":    "replace",
-						"path":  "/spec/pinned",
-						"value": true,
+						"op":    "add",
+						"path":  "/spec",
+						"value": map[string]any{"url": "https://stale.example.com"},
 					},
 				})
 				require.NoError(t, err)
@@ -230,16 +244,14 @@ func testIntegrationAppPluginSettings(t *testing.T, manifestFile string, feature
 				helper.RequireApiErrorStatus(err, metav1.StatusReasonInvalid, http.StatusUnprocessableEntity)
 			})
 
-			t.Run("update persists jsonData and returns secure key references", func(t *testing.T) {
+			t.Run("update persists spec and returns secure key references", func(t *testing.T) {
 				obj := writeSettings(t)
 
 				require.Equal(t, instanceName, obj.GetName())
 
 				spec, ok := obj.Object["spec"].(map[string]any)
 				require.True(t, ok)
-				require.Equal(t, true, spec["enabled"])
-				require.Equal(t, true, spec["pinned"])
-				require.Equal(t, map[string]any{"url": "https://api.example.com"}, spec["jsonData"])
+				require.Equal(t, map[string]any{"url": "https://api.example.com"}, spec)
 
 				// Secure values are top-level and must be returned as opaque name references, never raw values.
 				secure, ok := obj.Object["secure"].(map[string]any)
@@ -307,11 +319,7 @@ func testIntegrationAppPluginSettings(t *testing.T, manifestFile string, feature
 						"apiVersion": testAppID + "/v0alpha1",
 						"kind":       "Settings",
 						"metadata":   map[string]any{"name": instanceName},
-						"spec": map[string]any{
-							"enabled":  true,
-							"pinned":   true,
-							"jsonData": map[string]any{"url": "https://api.example.com"},
-						},
+						"spec":       map[string]any{"url": "https://api.example.com"},
 						"secure": map[string]any{
 							"apiKey": map[string]any{"name": existingName},
 						},
@@ -395,18 +403,18 @@ func testIntegrationAppPluginSettings(t *testing.T, manifestFile string, feature
 							"apiVersion": testAppID + "/v0alpha1",
 							"kind":       "Settings",
 							"metadata":   map[string]any{"name": instanceName},
-							"spec":       map[string]any{"enabled": true, "jsonData": map[string]any{"url": "https://other.example.com"}},
+							"spec":       map[string]any{"url": "https://other.example.com"},
 						}}, metav1.UpdateOptions{})
 						require.True(t, apierrors.IsForbidden(err), "expected forbidden, got %v", err)
 
 						_, err = c.Resource.Patch(ctx, instanceName, types.MergePatchType,
-							[]byte(`{"spec":{"enabled":false}}`), metav1.PatchOptions{})
+							[]byte(`{"spec":{"url":"https://other.example.com"}}`), metav1.PatchOptions{})
 						require.True(t, apierrors.IsForbidden(err), "expected forbidden, got %v", err)
 					})
 				}
 				obj, err := client.Resource.Get(ctx, instanceName, metav1.GetOptions{})
 				require.NoError(t, err)
-				url, _, _ := unstructured.NestedString(obj.Object, "spec", "jsonData", "url")
+				url, _, _ := unstructured.NestedString(obj.Object, "spec", "url")
 				require.Equal(t, "https://api.example.com", url, "the settings are unchanged")
 			})
 		})
@@ -421,6 +429,12 @@ func setupHelperWithManifest(t *testing.T, mode rest.DualWriterMode, extraFeatur
 // setupHelperFull installs the test app with the named testdata manifest, or
 // with no manifest when manifestFile is empty.
 func setupHelperFull(t *testing.T, mode rest.DualWriterMode, manifestFile string, extraFeatures ...string) *apis.K8sTestHelper {
+	t.Helper()
+	return setupHelperWithPluginJSON(t, mode, manifestFile, nil, extraFeatures...)
+}
+
+// setupHelperWithPluginJSON is setupHelperFull with a hook to edit the test app's plugin.json.
+func setupHelperWithPluginJSON(t *testing.T, mode rest.DualWriterMode, manifestFile string, editPluginJSON func(map[string]any), extraFeatures ...string) *apis.K8sTestHelper {
 	t.Helper()
 	withManifest := manifestFile != ""
 
@@ -451,6 +465,18 @@ func setupHelperFull(t *testing.T, mode rest.DualWriterMode, manifestFile string
 	testAppDst := filepath.Join(dir, "plugins", testAppID)
 
 	require.NoError(t, grafanafs.CopyRecursive(testAppSrc, testAppDst))
+
+	if editPluginJSON != nil {
+		pluginJSONPath := filepath.Join(testAppDst, "plugin.json")
+		raw, err := os.ReadFile(pluginJSONPath) //nolint:gosec // path is built from the test temp dir
+		require.NoError(t, err)
+		pluginJSON := map[string]any{}
+		require.NoError(t, json.Unmarshal(raw, &pluginJSON))
+		editPluginJSON(pluginJSON)
+		raw, err = json.Marshal(pluginJSON)
+		require.NoError(t, err)
+		require.NoError(t, os.WriteFile(pluginJSONPath, raw, 0o600))
+	}
 
 	if withManifest {
 		manifestSrc := filepath.Join(filepath.Dir(thisFile), "testdata", manifestFile)

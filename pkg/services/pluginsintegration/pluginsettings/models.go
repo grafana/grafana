@@ -31,8 +31,8 @@ type DTO struct {
 	PluginVersion  string
 	JSONData       map[string]any
 	SecureJSONData map[string][]byte
-	Enabled        bool
-	Pinned         bool
+	Enabled        bool // will be removed
+	Pinned         bool // will be removed
 	Updated        time.Time
 }
 

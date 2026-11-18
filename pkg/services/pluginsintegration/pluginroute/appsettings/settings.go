@@ -159,9 +159,7 @@ func (s *settingsStorage) get(ctx context.Context) (*apppluginV0.Settings, error
 		obj.SetCreationTimestamp(metav1.NewTime(ps.Updated))
 		obj.SetResourceVersion(getLegacySettingsResourceVersion(ps))
 
-		obj.Spec.Enabled = ps.Enabled
-		obj.Spec.Pinned = ps.Pinned
-		obj.Spec.JsonData = common.Unstructured{Object: ps.JSONData}
+		obj.Spec = common.Unstructured{Object: ps.JSONData}
 
 		secureValues := make(common.InlineSecureValues, len(ps.SecureJSONData))
 		for k, v := range ps.SecureJSONData {
@@ -229,12 +227,26 @@ func (s *settingsStorage) save(ctx context.Context, obj runtime.Object, isDryRun
 		return p, nil
 	}
 
+	// Pinned is no longer part of the API, but the legacy column is still read by
+	// the nav tree, so keep whatever value is already stored.
+	pinned := false
+	existing, err := s.pluginSettings.GetPluginSettingByPluginID(ctx, &pluginsettings.GetByPluginIDArgs{
+		PluginID: s.pluginID,
+		OrgID:    nsInfo.OrgID,
+	})
+	if err != nil && !errors.Is(err, pluginsettings.ErrPluginSettingNotFound) {
+		return nil, fmt.Errorf("failed to get plugin settings: %w", err)
+	}
+	if existing != nil {
+		pinned = existing.Pinned
+	}
+
 	if err := s.pluginSettings.UpdatePluginSetting(ctx, &pluginsettings.UpdateArgs{
 		PluginID:       s.pluginID,
 		OrgID:          nsInfo.OrgID,
-		Enabled:        p.Spec.Enabled,
-		Pinned:         p.Spec.Pinned,
-		JSONData:       p.Spec.JsonData.Object,
+		Enabled:        true, // saving settings enables the app
+		Pinned:         pinned,
+		JSONData:       p.Spec.Object,
 		SecureJSONData: toSecureJSONData(p.Secure),
 	}); err != nil {
 		if errors.Is(err, pluginsettings.ErrPluginSettingDataTooLarge) {

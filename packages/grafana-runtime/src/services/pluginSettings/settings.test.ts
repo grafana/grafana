@@ -86,10 +86,12 @@ describe('settings', () => {
         );
       });
 
-      it('should return false if app exists and is disabled', async () => {
-        backendSrv.get = jest
-          .fn()
-          .mockResolvedValue({ ...myOrgTestAppSettings, spec: { ...myOrgTestAppSettings.spec, enabled: false } });
+      it('should return false if app exists but has no stored settings', async () => {
+        backendSrv.get = jest.fn().mockResolvedValue({
+          ...myOrgTestAppSettings,
+          metadata: { ...myOrgTestAppSettings.metadata, resourceVersion: '0' },
+          spec: null,
+        });
 
         const enabled = await isAppPluginEnabled(myOrgTestAppMeta.spec.pluginJson.id);
 

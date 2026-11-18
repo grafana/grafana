@@ -7,7 +7,6 @@ import (
 	"sync"
 	"time"
 
-	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -29,9 +28,6 @@ func (b *Builder) getSettings(ctx context.Context) (*apppluginV0.Settings, plugi
 	settings, ok := raw.(*apppluginV0.Settings)
 	if !ok {
 		return nil, nil, fmt.Errorf("unexpected type %T when getting plugin settings", raw)
-	}
-	if !settings.Spec.Enabled {
-		return nil, nil, k8serrors.NewBadRequest("plugin is not enabled")
 	}
 
 	if len(settings.Secure) < 1 {
@@ -119,7 +115,7 @@ func (b *Builder) getPluginContext(ctx context.Context) (context.Context, backen
 		return ctx, backend.PluginContext{}, err
 	}
 	instance := &backend.AppInstanceSettings{APIVersion: apppluginV0.VERSION}
-	instance.JSONData, err = json.Marshal(settings.Spec.JsonData)
+	instance.JSONData, err = json.Marshal(settings.Spec)
 	if err != nil {
 		return ctx, backend.PluginContext{}, fmt.Errorf("error marshalling JsonData: %w", err)
 	}
