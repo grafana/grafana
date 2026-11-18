@@ -287,7 +287,7 @@ func newRuleRefResolver(ng *ngalert.AlertNG) func(ctx context.Context, uid strin
 			return rulesAppConfig.RuleRef{}, false, err
 		}
 
-		return rulesAppConfig.RuleRef{UID: r.UID, FolderUID: r.NamespaceUID}, true, nil
+		return rulesAppConfig.RuleRef{UID: r.UID, FolderUID: r.NamespaceUID, IsRecording: r.Type() == ngmodels.RuleTypeRecording}, true, nil
 	}
 }
 

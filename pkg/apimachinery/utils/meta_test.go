@@ -718,6 +718,28 @@ func TestMetaAccessor(t *testing.T) {
 		require.NoError(t, err)
 	})
 
+	t.Run("find unstructured nested names", func(t *testing.T) {
+		for _, tc := range []struct {
+			name string
+			spec map[string]any
+			want string
+		}{
+			{"missing name", map[string]any{"spec": map[string]any{"name": "nested-name"}}, "nested-name"},
+			{"empty name", map[string]any{"name": "", "spec": map[string]any{"name": "nested-name"}}, "nested-name"},
+			{"name precedence", map[string]any{"name": "outer-name", "spec": map[string]any{"name": "nested-name"}}, "outer-name"},
+			{"title precedence", map[string]any{"title": "outer-title", "name": "outer-name", "spec": map[string]any{"name": "nested-name"}}, "outer-title"},
+			{"missing nested name", map[string]any{"spec": map[string]any{}}, "uid"},
+			{"empty nested name", map[string]any{"spec": map[string]any{"name": ""}}, "uid"},
+			{"non-string nested name", map[string]any{"spec": map[string]any{"name": int64(42)}}, "uid"},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				meta, err := utils.MetaAccessor(&unstructured.Unstructured{Object: map[string]any{"spec": tc.spec}})
+				require.NoError(t, err)
+				require.Equal(t, tc.want, meta.FindTitle("uid"))
+			})
+		}
+	})
+
 	t.Run("ManagerProperties", func(t *testing.T) {
 		tests := []struct {
 			name           string

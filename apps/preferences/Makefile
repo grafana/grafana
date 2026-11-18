@@ -10,4 +10,5 @@ generate: install-app-sdk update-app-sdk
 	@rm -f ./pkg/apis/preferences/v1alpha1/preferences_object_gen.go
 	@rm -f ./pkg/apis/preferences/v1alpha1/preferences_schema_gen.go
 	@rm -f ./pkg/apis/preferences/v1alpha1/preferences_spec_gen.go
+	@rm -f ./pkg/apis/preferences/v1alpha1/client_gen.go
 	@echo "Removed generated v1alpha1 files (v1alpha1 is a thin wrapper around v1)"

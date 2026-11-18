@@ -1500,9 +1500,29 @@
         "records": "",
         "to": ""
       },
+      "recording-rule-actions": {
+        "copy-link": "",
+        "copy-link-error": "",
+        "copy-link-success": "",
+        "delete": "",
+        "delete-confirm-body": "",
+        "delete-confirm-button": "",
+        "delete-confirm-title": "",
+        "delete-error": "",
+        "duplicate": "",
+        "pause": "",
+        "pause-action": "",
+        "pause-error": "",
+        "resume": "",
+        "resume-action": "",
+        "view": ""
+      },
       "recording-rules": {
         "folder-rules-error": "",
         "folders-error": "",
+        "header": {
+          "new-rule": ""
+        },
         "load-more-rules-in-folder": "",
         "loading-folders": "",
         "no-rules": "",
@@ -1579,10 +1599,17 @@
         "view-list": "",
         "wildcard-in-text": ""
       },
+      "sequence-drawer": {
+        "alert-rules": "",
+        "error": "",
+        "interval": "",
+        "missing-rule": "",
+        "recording-rules": "",
+        "this-rule": "",
+        "title": ""
+      },
       "sequence-pill": {
-        "label": "",
         "label-with-interval": "",
-        "tooltip": "",
         "tooltip-with-interval": ""
       },
       "shared": {
@@ -1805,17 +1832,18 @@
         "autosync-rules-error-title": "Importazione delle regole non riuscita",
         "autosync-rules-imported-note": "Anche le regole di avviso selezionate sono state importate.",
         "autosync-rules-note": "Verranno importate anche le regole di avviso selezionate.",
-        "autosync-success-body": "Sincronizzazione automatica abilitata. Reindirizzamento in corso...",
+        "autosync-success-body": "",
         "autosync-success-title": "Sincronizzazione automatica abilitata",
         "autosync-title": "Conferma sincronizzazione automatica",
         "body": "Vuoi davvero avviare l'importazione? Questa operazione creerà nuove risorse in Grafana Alerting.",
         "confirm": "Avvia importazione",
+        "continue": "",
         "error-body": "",
         "error-details": "",
         "error-title": "Importazione non riuscita",
         "importing-body": "Importazione delle risorse in Grafana Alerting. Attendi...",
         "importing-title": "Importazione in corso...",
-        "success-body": "Risorse importate correttamente. Reindirizzamento in corso...",
+        "success-body": "",
         "success-title": "Importazione riuscita",
         "title": "Conferma importazione"
       },
@@ -2400,6 +2428,7 @@
       "contact-points": "Punti di contatto",
       "notification-policies": "Criteri di notifica",
       "recently-deleted": "Eliminati di recente",
+      "recording-rules": "",
       "templates": "Modelli",
       "time-intervals": "Intervalli di tempo"
     },
@@ -6218,8 +6247,7 @@
       }
     },
     "get-var-mapping-option-overrides": {
-      "defaults": "",
-      "rule": ""
+      "uses-variables": ""
     },
     "inspect": {
       "data-tab": "Data",
@@ -6414,9 +6442,6 @@
       "only-overrides-button-tooltip": "Mostra solo sovrascritture",
       "placeholder-search-options": "Opzioni di ricerca",
       "visualization-button-tooltip": "Opzioni di ricerca"
-    },
-    "panel-editor": {
-      "ad-hoc-transformations-disabled": ""
     },
     "plan-building-overlay": {
       "quip-corners": "",
@@ -7702,11 +7727,7 @@
       "usage-count_other": "Utilizzato su {{count}} dashboard"
     },
     "lifecycle": {
-      "applied": "",
-      "apply": "",
-      "apply-body": "",
-      "apply-failed": "",
-      "apply-needs-edit": "",
+      "ask-assistant-to-update": "",
       "breadcrumb-draft": "",
       "breadcrumb-pending-changes": "",
       "change-added": "",
@@ -7738,7 +7759,6 @@
       "draft-discarded": "",
       "draft-title": "",
       "edited-dashboard": "",
-      "highlight-changes": "",
       "pending-body": "",
       "pending-body-source": "",
       "pending-changes-changed": "",
@@ -7747,13 +7767,16 @@
       "pending-stale": "",
       "pending-title": "",
       "preview-changes": "",
-      "rebase": "",
       "record-pending-change-failed": "",
       "save": "",
+      "save-failed": "",
+      "save-needs-permission": "",
+      "save-pending-body": "",
+      "save-pending-failed": "",
+      "saved-pending": "",
       "show-original-dashboard": "",
-      "stop-highlighting-changes": "",
-      "apply-title_one": "",
-      "apply-title_other": ""
+      "save-pending-title_one": "",
+      "save-pending-title_other": ""
     },
     "link-edit-actions": {
       "add-link": "Aggiungi link",
@@ -8005,6 +8028,12 @@
       "confirmText-restore-version": "Sì, ripristina alla versione {{version}}",
       "title-restore-version": "Ripristina versione"
     },
+    "row-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-row-settings": ""
+    },
     "sandbox-consent": {
       "allow": "",
       "allow-tooltip": "",
@@ -8200,6 +8229,12 @@
       "switch-options": "Opzioni del commutatore",
       "value-pair-type": "Tipo di coppia di valori",
       "value-pair-type-description": "Scegli il tipo di valori per gli stati del commutatore"
+    },
+    "tab-edit-actions": {
+      "copy-disabled": "",
+      "delete-disabled": "",
+      "duplicate-disabled": "",
+      "tooltip-tab-settings": ""
     },
     "text-box-variable": {
       "name-default-value": "Valore predefinito"
@@ -13445,6 +13480,31 @@
     }
   },
   "navigation": {
+    "assistant-toolbar-button": {
+      "arrange-window": "",
+      "assistant-page": "",
+      "bottom": "",
+      "floating": "",
+      "left": "",
+      "menu": "",
+      "move": "",
+      "navigation-assistant-page": "",
+      "navigation-page-assistant": "",
+      "navigation-page-assistant-below": "",
+      "navigation-page-floating-assistant": "",
+      "page-assistant": "",
+      "page-assistant-below": "",
+      "page-floating-assistant": "",
+      "page-only": "",
+      "pop-up": "",
+      "right": ""
+    },
+    "assistant-workspace": {
+      "exit": "",
+      "exit-tooltip": "",
+      "open": "",
+      "open-tooltip": ""
+    },
     "breadcrumbs": {
       "aria-label": "Breadcrumb"
     },
@@ -13460,14 +13520,6 @@
         "open-all": "Apri gli assistenti IA e le app della barra laterale"
       },
       "floating-resize": ""
-    },
-    "fullscreen-workspace": {
-      "enter": "Entra nell'area di lavoro",
-      "error-exit": "Esci dall'area di lavoro",
-      "error-message": "Impossibile caricare l'area di lavoro di Grafana Assistant.",
-      "error-reload": "Ricarica la pagina",
-      "error-title": "Area di lavoro non disponibile",
-      "workspace": "Area di lavoro"
     },
     "help": {
       "aria-label": "Guida",
@@ -13505,6 +13557,7 @@
       "tv-alert": "Premi ESC per uscire dalla modalità kiosk"
     },
     "megamenu": {
+      "click-to-dock": "",
       "close": "Chiudi il menu",
       "customise": "Personalizza la navigazione",
       "customise-cancel": "Annulla",
@@ -13662,8 +13715,10 @@
       "drag-handle": "Trascina per riordinare",
       "duplicate": "Duplica blocco",
       "frame": {
-        "aria-label-collapsed": "Blocco compresso: {{name}}",
-        "aria-label-panel": "Blocco di visualizzazione: {{name}}"
+        "aria-label-collapsed-titled": "",
+        "aria-label-collapsed-untitled": "",
+        "aria-label-panel-titled": "",
+        "aria-label-panel-untitled": ""
       },
       "markdown": {
         "aria-label-editor": "Markdown",
@@ -13751,7 +13806,7 @@
       "submit": "Aggiungi al blocco appunti",
       "success": "Pannello aggiunto a {{title}}",
       "success-cells": "",
-      "success-link": "Visualizza blocco appunti",
+      "success-open-link": "",
       "tag-placeholder": "Filtra per tag",
       "target-description": "Scegli dove aggiungere il pannello.",
       "target-existing": "Blocco appunti esistente",
@@ -13923,7 +13978,8 @@
       "swatch-placeholder-aria-label": "Scegli un colore, {{placeholder}}"
     },
     "field-color": {
-      "color-by-label": "Serie di colori per"
+      "color-by-label": "Serie di colori per",
+      "reverse-label": ""
     },
     "number-input": {
       "error-out-of-range": "Fuori intervallo. {{range}}",
@@ -14429,6 +14485,9 @@
     },
     "empty-state": {
       "message": "Nessun plug-in trovato"
+    },
+    "errors": {
+      "app-plugin-metas-error": ""
     },
     "extensions": {
       "extension-error-alert-description": "Controlla la console per maggiori dettagli sull'errore.",
@@ -15555,6 +15614,8 @@
       "header-title": "Titolo",
       "header-type": "Tipo",
       "missing-folder-metadata": "File di metadati della cartella mancante",
+      "resource-filter-aria-label": "",
+      "resource-filter-placeholder": "",
       "search-placeholder": "Cerca per percorso o titolo",
       "source": "Origine",
       "status-filter-aria-label": "Filtra per stato",
