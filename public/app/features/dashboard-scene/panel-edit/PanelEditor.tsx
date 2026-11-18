@@ -19,7 +19,6 @@ import {
   sceneUtils,
   type VizPanel,
 } from '@grafana/scenes';
-import { type Panel } from '@grafana/schema';
 import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
@@ -30,6 +29,7 @@ import { createDefaultQuery } from 'app/features/query/state/queryDefaults';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { type LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
+import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import {
   type AdHocTransformationsByPanelKey,
@@ -37,6 +37,7 @@ import {
   restoreAdHocTransformations,
 } from '../scene/panel-actions/adHocTransformations';
 import { type DashboardLayoutItem, isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
+import { serializeAutoGridItem } from '../serialization/layoutSerializers/AutoGridLayoutSerializer';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { DashboardEditActionEvent } from '../sidebar/events';
 import { SIDEBAR_COLLAPSED_KEY } from '../sidebar/shared';
@@ -86,7 +87,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   private _layoutItemState?: SceneObjectState;
   private _layoutItemAdHocTransformations?: AdHocTransformationsByPanelKey;
   private _layoutItem: DashboardLayoutItem;
-  private _originalSaveModel!: Panel;
+  private _originalSaveModel!: ReturnType<PanelEditor['getSaveModel']>;
   private _changesHaveBeenMade = false;
 
   public constructor(state: PanelEditorState) {
@@ -277,7 +278,10 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     if (libraryPanel) {
       model.libraryPanel = { uid: libraryPanel.state.uid, name: libraryPanel.state.name };
     }
-    return model;
+    return {
+      panel: model,
+      autoGridItem: this._layoutItem instanceof AutoGridItem ? serializeAutoGridItem(this._layoutItem) : undefined,
+    };
   }
 
   public getPanel(): VizPanel {
@@ -401,8 +405,11 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   };
 
   public dashboardSaved() {
-    this.setOriginalState(this.state.panelRef);
-    this.setState({ isDirty: false });
+    // Saving a dashboard writes a library reference, not the library panel's content.
+    if (!getLibraryPanelBehavior(this.getPanel())) {
+      this.setOriginalState(this.state.panelRef);
+    }
+    this.setState({ isDirty: this.hasUnsavedChanges() });
 
     // Remember that we have done changes
     this._changesHaveBeenMade = true;

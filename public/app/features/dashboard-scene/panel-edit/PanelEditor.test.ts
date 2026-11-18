@@ -16,6 +16,7 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
+import { locationService } from '@grafana/runtime';
 import {
   type CancelActivationHandler,
   CustomVariable,
@@ -31,6 +32,7 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
+import { ModalsContext } from '@grafana/ui';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { mockDataSource } from 'app/features/alerting/unified/testSetup/mockDataSource';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
@@ -39,6 +41,7 @@ import { TABLE_TRANSFORMATIONS_OWNER } from 'app/features/table/constants';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
 import { edit } from '../actions/utils/edit';
+import { DashboardPrompt } from '../saving/DashboardPrompt';
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
@@ -61,6 +64,7 @@ import { QUERY_EDITOR_V2_PREFERENCE_KEY } from './PanelEditNext/constants';
 import { getLocalStorageWithTTL, setLocalStorageWithTTL } from './PanelEditNext/localStorageWithTTL';
 import { PanelEditPanelWrapper } from './PanelEditPanelWrapper';
 import { buildPanelEditScene } from './PanelEditor';
+import { SaveLibraryVizPanelModal } from './SaveLibraryVizPanelModal';
 
 const loadingResponse = (ds: DataSourceApi, request: DataQueryRequest) => {
   return of({
@@ -588,7 +592,7 @@ describe('PanelEditor', () => {
   });
 
   describe('Handling library panels', () => {
-    it.each(['query', 'options'])('detects unsaved library panel %s edits and resets after save', async (edit) => {
+    it.each(['query', 'options'])('preserves unsaved library panel %s edits across dashboard save', async (edit) => {
       const libraryPanel = new LibraryPanelBehavior({
         uid: 'lib-uid',
         name: 'Library panel',
@@ -608,8 +612,82 @@ describe('PanelEditor', () => {
       expect(panelEditor.state.isDirty).toBe(true);
 
       panelEditor.dashboardSaved();
+      expect(panelEditor.hasUnsavedChanges()).toBe(true);
+      expect(panelEditor.state.isDirty).toBe(true);
+    });
+
+    it('keeps a conservative baseline when dashboard-saved layout changes outlive reverted library content', async () => {
+      const libraryPanel = new LibraryPanelBehavior({
+        uid: 'lib-uid',
+        name: 'Library panel',
+        isLoaded: true,
+        _loadedPanel: { uid: 'lib-uid', name: 'Library panel', type: 'panel', version: 1, model: { type: 'text' } },
+      });
+      const { panelEditor, panel, gridItem } = await setup({ libraryPanel });
+      gridItem.setState({ maxPerRow: 2 });
+      getQueryRunnerFor(panel)?.setState({ queries: [{ refId: 'A', expression: '2' }] });
+      panelEditor.dashboardSaved();
+      getQueryRunnerFor(panel)?.setState({ queries: [{ refId: 'A' }] });
+      expect(panelEditor.hasUnsavedChanges()).toBe(true);
+      expect(panelEditor.state.isDirty).toBe(true);
+      gridItem.setState({ maxPerRow: undefined });
+      expect(panelEditor.hasUnsavedChanges()).toBe(false);
+    });
+
+    it('resets a formerly linked panel baseline when the dashboard saves its unlinked content', async () => {
+      const libraryPanel = new LibraryPanelBehavior({
+        uid: 'lib-uid',
+        name: 'Library panel',
+        isLoaded: true,
+        _loadedPanel: { uid: 'lib-uid', name: 'Library panel', type: 'panel', version: 1, model: { type: 'text' } },
+      });
+      const { panelEditor, panel } = await setup({ libraryPanel });
+      getQueryRunnerFor(panel)?.setState({ queries: [{ refId: 'A', expression: '2' }] });
+      panelEditor.onConfirmUnlinkLibraryPanel();
+      panelEditor.dashboardSaved();
+      expect(getLibraryPanelBehavior(panel)).toBeUndefined();
       expect(panelEditor.hasUnsavedChanges()).toBe(false);
       expect(panelEditor.state.isDirty).toBe(false);
+    });
+
+    it('requests the library save prompt when leaving after a dashboard save with unsaved library queries', async () => {
+      const libraryPanel = new LibraryPanelBehavior({
+        uid: 'lib-uid',
+        name: 'Library panel',
+        isLoaded: true,
+        _loadedPanel: { uid: 'lib-uid', name: 'Library panel', type: 'panel', version: 1, model: { type: 'text' } },
+      });
+      const { dashboard, panelEditor, panel } = await setup({ libraryPanel });
+      const previousLocation = locationService.getLocation();
+      locationService.push('/d/library-draft?editPanel=1');
+      const showModal = jest.fn();
+      const view = render(
+        createElement(
+          ModalsContext.Provider,
+          {
+            value: { component: null, props: {}, showModal, hideModal: jest.fn() },
+          },
+          createElement(DashboardPrompt, { dashboard })
+        )
+      );
+      try {
+        act(() => {
+          getQueryRunnerFor(panel)?.setState({ queries: [{ refId: 'A', expression: '2' }] });
+          panelEditor.dashboardSaved();
+          locationService.partial({ editPanel: null });
+        });
+        expect(showModal).toHaveBeenCalledWith(
+          SaveLibraryVizPanelModal,
+          expect.objectContaining({
+            isUnsavedPrompt: true,
+            libraryPanel,
+          })
+        );
+        expect(locationService.getLocation().search).toBe('?editPanel=1');
+      } finally {
+        view.unmount();
+        locationService.replace(previousLocation);
+      }
     });
 
     it('should call the api with the updated panel', async () => {
