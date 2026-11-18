@@ -289,11 +289,6 @@
       "count": 1
     }
   },
-  "packages/grafana-flamegraph/src/FlameGraph/FlameGraph.tsx": {
-    "react-hooks/set-state-in-effect": {
-      "count": 1
-    }
-  },
   "packages/grafana-flamegraph/src/FlameGraph/rendering.ts": {
     "react-hooks/immutability": {
       "count": 2
@@ -450,11 +445,6 @@
       "count": 2
     }
   },
-  "packages/grafana-ui/src/components/Carousel/Carousel.tsx": {
-    "react-hooks/set-state-in-effect": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/ClipboardButton/ClipboardButton.tsx": {
     "react-hooks/refs": {
       "count": 1
@@ -488,11 +478,6 @@
   "packages/grafana-ui/src/components/Combobox/useComboboxFloat.ts": {
     "react-hooks/refs": {
       "count": 8
-    }
-  },
-  "packages/grafana-ui/src/components/Combobox/useMeasureMulti.ts": {
-    "react-hooks/set-state-in-effect": {
-      "count": 1
     }
   },
   "packages/grafana-ui/src/components/Combobox/useOptions.ts": {
@@ -1117,9 +1102,6 @@
   "public/app/core/components/RolePicker/RolePickerMenu.tsx": {
     "react-hooks/refs": {
       "count": 1
-    },
-    "react-hooks/set-state-in-effect": {
-      "count": 1
     }
   },
   "public/app/core/components/RolePicker/TeamRolePicker.tsx": {
@@ -1517,11 +1499,6 @@
     }
   },
   "public/app/features/alerting/unified/components/rule-editor/QueryOptions.tsx": {
-    "react-hooks/set-state-in-effect": {
-      "count": 1
-    }
-  },
-  "public/app/features/alerting/unified/components/rule-editor/RecordingRuleEditor.tsx": {
     "react-hooks/set-state-in-effect": {
       "count": 1
     }
@@ -2022,11 +1999,6 @@
       "count": 2
     }
   },
-  "public/app/features/dashboard-scene/conditional-rendering/conditions/ConditionalRenderingTimeRangeSize.tsx": {
-    "react-hooks/set-state-in-effect": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/conditional-rendering/conditions/ConditionalRenderingVariable.tsx": {
     "react-hooks/set-state-in-effect": {
       "count": 1
@@ -2385,11 +2357,6 @@
   },
   "public/app/features/dashboard-scene/settings/variables/components/VariableTextField.tsx": {
     "@grafana/require-no-margin": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard-scene/settings/variables/components/VariableValuesPreview.tsx": {
-    "react-hooks/set-state-in-effect": {
       "count": 1
     }
   },
@@ -2780,11 +2747,6 @@
   },
   "public/app/features/explore/Explore.tsx": {
     "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
-  "public/app/features/explore/ExploreActions.tsx": {
-    "react-hooks/set-state-in-effect": {
       "count": 1
     }
   },
