@@ -1,14 +1,13 @@
 // Lists the packages of every independent release group in nx.json, with the folder and package.json of
 // each. The workflow runs this as its own step and hands the list to the scripts that need it.
 //
-// Usage: node scripts/release/independent-packages.mts
-// Writes packages=<JSON list of {group, name, root, manifestPath}> to GITHUB_OUTPUT, or to stdout.
+// Usage: node scripts/release/independent-packages.mts >> "$GITHUB_OUTPUT"
+// Prints packages=<JSON list of {group, name, root, manifestPath}> to stdout.
 
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 
-import { writeOutputs } from './lib/github-output.mts';
 import { isMainModule } from './lib/main.mts';
 import type { IndependentPackage } from './lib/packages.mts';
 
@@ -72,7 +71,7 @@ export function createDeps(): Deps {
 
 if (isMainModule(import.meta.url)) {
   try {
-    writeOutputs({ packages: JSON.stringify(getIndependentPackages(createDeps())) });
+    console.log(`packages=${JSON.stringify(getIndependentPackages(createDeps()))}`);
   } catch (error) {
     console.error(`::error::${error instanceof Error ? error.message : String(error)}`);
     process.exit(1);

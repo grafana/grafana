@@ -4,7 +4,7 @@ import { type TreeItem } from '../types';
 
 import {
   buildTree,
-  filterByStatusCategories,
+  filterByStatusAndResources,
   filterTree,
   flattenTree,
   getIconName,
@@ -126,6 +126,25 @@ describe('mergeFilesAndResources', () => {
 
     expect(result).toHaveLength(1);
     expect(result[0].path).toBe('dashboards/my-dashboard.json');
+  });
+
+  it('should merge a folder resource whose path has a trailing slash into the folder inferred from files', () => {
+    const files = [{ path: 'dashboards/_folder.json', hash: 'meta' }];
+    const folder = { ...mockFolderResource, path: 'dashboards/' };
+
+    const result = mergeFilesAndResources(files, [folder]);
+
+    expect(result.map((r) => r.path).sort()).toEqual(['dashboards', 'dashboards/_folder.json']);
+    expect(result.find((r) => r.path === 'dashboards')?.resource).toBe(folder);
+  });
+
+  it('should keep the root folder resource with empty path', () => {
+    const rootFolder = { ...mockFolderResource, path: '' };
+
+    const result = mergeFilesAndResources([], [rootFolder, mockResource]);
+
+    expect(result).toHaveLength(2);
+    expect(result.find((r) => r.path === '')?.resource).toBe(rootFolder);
   });
 
   it('should handle folder in resources but not in files', () => {
@@ -324,6 +343,14 @@ describe('buildTree', () => {
     expect(result[2].title).toBe('zebra.json');
   });
 
+  it('should type a directory inferred from file paths as a folder even with a dot in its name', () => {
+    const merged = mergeFilesAndResources([{ path: 'team.v2/dash.json', hash: 'h1' }], []);
+
+    const result = buildTree(merged);
+
+    expect(result[0].type).toBe('Folder');
+  });
+
   it('should treat a nested item as a root when its parent folder is absent', () => {
     // buildTree does not infer parent folders (mergeFilesAndResources does); given a nested
     // path whose parent is not in the merged set, the node falls back to a root.
@@ -346,6 +373,32 @@ describe('buildTree', () => {
     expect(result).toHaveLength(1);
     expect(result[0].path).toBe('root-file.txt');
     expect(result[0].type).toBe('File');
+  });
+
+  describe('root folder', () => {
+    const root = { path: '', resource: { ...mockFolderResource, path: '' } };
+
+    it('should nest a top-level item under the root folder', () => {
+      const result = buildTree([root, { path: 'a.json', file: { path: 'a.json', hash: 'h1' } }]);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].children.map((child) => child.path)).toEqual(['a.json']);
+    });
+
+    it('should nest an item with an absent parent under the root folder', () => {
+      const result = buildTree([root, { path: 'orphan/a.json', file: { path: 'orphan/a.json', hash: 'h1' } }]);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].children.map((child) => child.path)).toEqual(['orphan/a.json']);
+    });
+
+    it('should mark the root folder synced without a file', () => {
+      expect(buildTree([root])[0].status).toBe('synced');
+    });
+
+    it('should not flag the root folder for missing folder metadata', () => {
+      expect(buildTree([root])[0].missingFolderMetadata).toBeUndefined();
+    });
   });
 
   it('should handle deeply nested paths', () => {
@@ -662,7 +715,19 @@ describe('buildTree', () => {
     expect(result[0].missingFolderMetadata).toBe(false);
   });
 
-  it('should mark _folder.json synced when its hash matches the parent folder resource hash', () => {
+  it('should hide _folder.json and point its folder at it', () => {
+    const mergedItems = [
+      { path: 'dashboards', file: { path: 'dashboards', hash: '' }, resource: mockFolderResource },
+      { path: 'dashboards/_folder.json', file: { path: 'dashboards/_folder.json', size: '200', hash: 'meta123' } },
+    ];
+
+    const result = buildTree(mergedItems);
+
+    expect(result[0].children).toHaveLength(0);
+    expect(result[0].metadataPath).toBe('dashboards/_folder.json');
+  });
+
+  it('should mark the folder synced when its hash matches the parent folder resource hash', () => {
     // The folder resource hash IS the synced metadata hash, so _folder.json is compared
     // against its parent folder's resource hash (not its own resource — it has none).
     const syncedDashboard = { ...mockResource, hash: 'matching-hash' };
@@ -683,13 +748,11 @@ describe('buildTree', () => {
 
     expect(result[0].type).toBe('Folder');
     expect(result[0].status).toBe('synced');
-    const metadataNode = result[0].children.find((c) => c.path === 'dashboards/_folder.json');
-    expect(metadataNode?.status).toBe('synced');
   });
 
-  it('should mark _folder.json and parent folder pending when _folder.json was updated remotely', () => {
+  it('should mark parent folder pending when _folder.json was updated remotely', () => {
     // File hash differs from the folder resource hash → metadata file was updated in the
-    // remote repo but not yet synced. Both the file row and the parent folder must reflect this.
+    // remote repo but not yet synced. The parent folder must reflect this.
     const syncedDashboard = { ...mockResource, hash: 'matching-hash' };
     const mergedItems = [
       { path: 'dashboards', file: { path: 'dashboards', hash: '' }, resource: mockFolderResource },
@@ -707,11 +770,9 @@ describe('buildTree', () => {
     const result = buildTree(mergedItems);
 
     expect(result[0].status).toBe('pending');
-    const metadataNode = result[0].children.find((c) => c.path === 'dashboards/_folder.json');
-    expect(metadataNode?.status).toBe('pending');
   });
 
-  it('should mark _folder.json and parent folder pending when _folder.json was added but folder has no metadata hash yet', () => {
+  it('should mark parent folder pending when _folder.json was added but folder has no metadata hash yet', () => {
     // File present in repo but parent folder resource has empty hash → freshly added,
     // not yet reflected on the resource.
     const folderWithoutMetadataHash = { ...mockFolderResource, hash: '' };
@@ -732,8 +793,6 @@ describe('buildTree', () => {
     const result = buildTree(mergedItems);
 
     expect(result[0].status).toBe('pending');
-    const metadataNode = result[0].children.find((c) => c.path === 'dashboards/_folder.json');
-    expect(metadataNode?.status).toBe('pending');
   });
 
   it('should mark parent folder pending when _folder.json was removed remotely but folder resource still has metadata hash', () => {
@@ -777,10 +836,9 @@ describe('buildTree', () => {
     expect(result[0].status).toBe('synced');
   });
 
-  it('should mark _folder.json and inferred parent folder pending when parent has no resource', () => {
+  it('should mark inferred parent folder pending when parent has no resource', () => {
     // Matrix row 6: parent folder is inferred from file paths but not yet provisioned
-    // (no resource), so getFolderMetadataResourceHash returns undefined → pending row,
-    // pending folder via child propagation.
+    // (no resource), so getFolderMetadataResourceHash returns undefined → pending folder.
     const syncedDashboard = { ...mockResource, hash: 'matching-hash' };
     const mergedItems = [
       // Inferred folder (no resource) — same shape mergeFilesAndResources produces.
@@ -802,8 +860,6 @@ describe('buildTree', () => {
     expect(folder?.type).toBe('Folder');
     expect(folder?.resourceName).toBeUndefined();
     expect(folder?.status).toBe('pending');
-    const metadataNode = folder?.children.find((c) => c.path === 'dashboards/_folder.json');
-    expect(metadataNode?.status).toBe('pending');
   });
 
   it('should mark folder pending when _folder.json is synced but a sibling dashboard is pending', () => {
@@ -826,8 +882,6 @@ describe('buildTree', () => {
     const result = buildTree(mergedItems);
 
     expect(result[0].status).toBe('pending');
-    const metadataNode = result[0].children.find((c) => c.path === 'dashboards/_folder.json');
-    expect(metadataNode?.status).toBe('synced');
     const dashboardNode = result[0].children.find((c) => c.path === 'dashboards/my-dashboard.json');
     expect(dashboardNode?.status).toBe('pending');
   });
@@ -882,35 +936,10 @@ describe('buildTree', () => {
     expect(folderB?.status).toBe('synced');
   });
 
-  it('should compare root-level _folder.json against repository state (no parent resource)', () => {
-    // Root-level _folder.json has no parent folder resource, so we cannot determine a
-    // matching resource hash — it falls back to pending until the backend reports otherwise.
-    const rootFolderResource: ResourceListItem = {
-      ...mockFolderResource,
-      path: 'dashboards',
-      hash: 'meta-dashboards',
-    };
-    const syncedResource = { ...mockResource, hash: 'matching-hash' };
-    const mergedItems = [
-      { path: '_folder.json', file: { path: '_folder.json', size: '200', hash: 'meta-root' } },
-      { path: 'dashboards', file: { path: 'dashboards', hash: '' }, resource: rootFolderResource },
-      {
-        path: 'dashboards/_folder.json',
-        file: { path: 'dashboards/_folder.json', size: '200', hash: rootFolderResource.hash },
-      },
-      {
-        path: 'dashboards/my-dashboard.json',
-        file: { path: 'dashboards/my-dashboard.json', size: '100', hash: 'matching-hash' },
-        resource: syncedResource,
-      },
-    ];
+  it('should ignore root-level _folder.json (no parent resource)', () => {
+    const mergedItems = [{ path: '_folder.json', file: { path: '_folder.json', size: '200', hash: 'meta-root' } }];
 
-    const result = buildTree(mergedItems);
-
-    const rootMetadata = result.find((n) => n.path === '_folder.json');
-    expect(rootMetadata?.status).toBe('pending');
-    const folder = result.find((n) => n.path === 'dashboards');
-    expect(folder?.status).toBe('synced');
+    expect(buildTree(mergedItems)).toEqual([]);
   });
 
   it('should not set missingFolderMetadata for inferred folders without a resource', () => {
@@ -1253,7 +1282,7 @@ describe('getStatusCategory', () => {
   });
 });
 
-describe('filterByStatusCategories', () => {
+describe('filterByStatusAndResources by status', () => {
   const sampleTree: TreeItem[] = [
     {
       path: 'dashboards',
@@ -1299,12 +1328,12 @@ describe('filterByStatusCategories', () => {
     },
   ];
 
-  it('should return all items when no categories are selected', () => {
-    expect(filterByStatusCategories(sampleTree, [])).toEqual(sampleTree);
+  it('should return all items when no filter is selected', () => {
+    expect(filterByStatusAndResources(sampleTree, [], [])).toEqual(sampleTree);
   });
 
   it('should keep only pending items and their ancestor folders', () => {
-    const result = filterByStatusCategories(sampleTree, ['pending']);
+    const result = filterByStatusAndResources(sampleTree, ['pending'], []);
 
     expect(result).toHaveLength(1);
     expect(result[0].path).toBe('dashboards');
@@ -1313,7 +1342,7 @@ describe('filterByStatusCategories', () => {
   });
 
   it('should keep only synced items and their ancestor folders', () => {
-    const result = filterByStatusCategories(sampleTree, ['synced']);
+    const result = filterByStatusAndResources(sampleTree, ['synced'], []);
 
     // Both folders have a synced descendant, and the synced 'reports' folder matches itself too.
     expect(result).toHaveLength(2);
@@ -1324,7 +1353,7 @@ describe('filterByStatusCategories', () => {
   });
 
   it('should combine multiple categories', () => {
-    const result = filterByStatusCategories(sampleTree, ['synced', 'pending']);
+    const result = filterByStatusAndResources(sampleTree, ['synced', 'pending'], []);
 
     expect(result).toHaveLength(2);
     expect(result[0].children).toHaveLength(2);
@@ -1342,7 +1371,7 @@ describe('filterByStatusCategories', () => {
       },
     ];
 
-    const result = filterByStatusCategories(tree, ['pending']);
+    const result = filterByStatusAndResources(tree, ['pending'], []);
 
     expect(result).toHaveLength(1);
     expect(result[0].path).toBe('folder');
@@ -1362,6 +1391,73 @@ describe('filterByStatusCategories', () => {
       },
     ];
 
-    expect(filterByStatusCategories(tree, ['warning'])).toHaveLength(1);
+    expect(filterByStatusAndResources(tree, ['warning'], [])).toHaveLength(1);
+  });
+});
+
+describe('filterByStatusAndResources by resource', () => {
+  const tree: TreeItem[] = [
+    {
+      path: 'folder',
+      title: 'Folder',
+      type: 'Folder',
+      resource: 'folders',
+      level: 0,
+      children: [
+        { path: 'folder/a.json', title: 'a', type: 'Dashboard', resource: 'dashboards', level: 0, children: [] },
+        { path: 'folder/b.json', title: 'b', type: 'File', resource: 'widgets', level: 0, children: [] },
+      ],
+    },
+    { path: 'c.json', title: 'c', type: 'File', level: 0, children: [] },
+  ];
+
+  it('should keep matching items and their ancestor folders, including kinds outside the registry', () => {
+    const result = filterByStatusAndResources(tree, [], ['widgets']);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].path).toBe('folder');
+    expect(result[0].children.map((child) => child.path)).toEqual(['folder/b.json']);
+  });
+
+  it('should keep a folder that matches itself without its non-matching children', () => {
+    const result = filterByStatusAndResources(tree, [], ['folders']);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].children).toHaveLength(0);
+  });
+});
+
+describe('filterByStatusAndResources by status and resource', () => {
+  const tree: TreeItem[] = [
+    {
+      path: 'folder',
+      title: 'Folder',
+      type: 'Folder',
+      resource: 'folders',
+      status: 'pending',
+      level: 0,
+      children: [
+        {
+          path: 'folder/a.json',
+          title: 'a',
+          type: 'Dashboard',
+          resource: 'dashboards',
+          status: 'synced',
+          level: 0,
+          children: [],
+        },
+      ],
+    },
+  ];
+
+  it('should drop an ancestor folder when no item matches both filters', () => {
+    expect(filterByStatusAndResources(tree, ['synced'], ['folders'])).toEqual([]);
+  });
+
+  it('should keep an ancestor folder for a descendant that matches both filters', () => {
+    const result = filterByStatusAndResources(tree, ['synced'], ['dashboards']);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].children.map((child) => child.path)).toEqual(['folder/a.json']);
   });
 });

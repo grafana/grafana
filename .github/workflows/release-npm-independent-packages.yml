@@ -30,20 +30,78 @@ env:
   PR_TITLE: 'Release: Frontend packages'
 
 jobs:
-  release:
-    name: Finish the last release and prepare the next one
+  # Finishes the last release in three jobs, in this order: plan works out which tags the merged version pull request
+  # needs, tag creates them, and release then prepares the next version pull request. Nx counts commits from the last
+  # tag, so the next release must not be prepared before the previous one is tagged. Publish only needs the tags.
+  plan:
+    name: Plan the tags of the last release
     if: github.repository == 'grafana/grafana'
+    runs-on: ubuntu-x64
+    permissions:
+      contents: read
+      pull-requests: read
+    env:
+      TAGS: ${{ inputs.tags }}
+    outputs:
+      pr: ${{ steps.plan.outputs.pr }}
+      release_created: ${{ steps.plan.outputs.release_created }}
+      tagged: ${{ steps.plan.outputs.tagged }}
+      matrix: ${{ steps.plan.outputs.matrix }}
+      sha: ${{ steps.plan.outputs.sha }}
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          ref: main
+          persist-credentials: false
+          # The planned tags come from the version of each package at the merge commit of the version pull request
+          # and at its parent, so the history and the tags are needed, but not the file contents.
+          fetch-depth: 0
+          filter: blob:none
+
+      - name: Setup Node
+        uses: ./.github/actions/setup-node
+
+      - name: Find the independent packages
+        id: packages
+        run: node scripts/release/independent-packages.mts >> "$GITHUB_OUTPUT"
+
+      - name: Plan the tags
+        id: plan
+        env:
+          GH_TOKEN: ${{ github.token }}
+          INDEPENDENT_PACKAGES: ${{ steps.packages.outputs.packages }}
+        run: node scripts/release/plan-release-tags.mts >> "$GITHUB_OUTPUT"
+
+  # One call of the shared workflow for each tag. It creates an annotated tag and does nothing when the same tag is
+  # already there, so a retry is safe. A manual run with tags and a dry run do not create tags.
+  tag:
+    name: Tag ${{ matrix.tag }}
+    needs: plan
+    if: needs.plan.outputs.pr != '' && !inputs.dry_run
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    uses: ./.github/workflows/create-release-tag.yml
+    with:
+      tag: ${{ matrix.tag }}
+      commit: ${{ matrix.commit }}
+
+  release:
+    name: Prepare the next version pull request
+    needs: [plan, tag]
+    # The tag job is skipped when there is nothing to tag, but when it failed the label stays pending and the next
+    # run tries again. A manual run that publishes given tags does not prepare a version pull request.
+    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.tag.result != 'failure' && inputs.tags == '' }}
     runs-on: ubuntu-x64
     permissions:
       contents: read
       id-token: write
     env:
       DRY_RUN: ${{ inputs.dry_run || 'false' }}
-      TAGS: ${{ inputs.tags }}
-    outputs:
-      release_created: ${{ steps.tag.outputs.release_created }}
-      tagged: ${{ steps.tag.outputs.tagged }}
-      sha: ${{ steps.tag.outputs.sha }}
     steps:
       - name: Get GitHub App token
         id: get-github-app-token
@@ -61,13 +119,13 @@ jobs:
           github_app: grafana-writer
           permission_set: release-writer-main
 
-      # Tags are created with the same token create-release-tag.yml uses: the writer app with its default
-      # permission set. The branch work above uses release-writer-main, as release-pr.yml does on main.
-      - name: Get GitHub App token (writer, tags)
-        id: get-tag-writer-app-token
-        uses: grafana/shared-workflows/actions/create-github-app-token@46f48da11e78ebdba7a8747ae456b11062fac83e # create-github-app-token/v0.3.1
-        with:
-          github_app: grafana-writer
+      # Every tag exists when the tag job succeeded, so the version pull request is marked as released.
+      - name: Mark the version pull request as tagged
+        if: needs.tag.result == 'success'
+        env:
+          GH_TOKEN: ${{ steps.get-github-app-token.outputs.token }}
+          PR_NUMBER: ${{ needs.plan.outputs.pr }}
+        run: gh pr edit "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --remove-label nx-release:pending --add-label nx-release:tagged
 
       - name: Checkout main
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
@@ -75,8 +133,8 @@ jobs:
           ref: main
           persist-credentials: false
           # nx release reads the commits since the package's last release tag, so it needs the full
-          # history and the tags. It lists the changed files of each of those commits, which needs
-          # trees but not blobs.
+          # history and the tags, including the ones the tag job has just created. It lists the changed files
+          # of each of those commits, which needs trees but not blobs.
           fetch-depth: 0
           filter: blob:none
 
@@ -88,78 +146,51 @@ jobs:
 
       - name: Find the independent packages
         id: packages
-        run: node scripts/release/independent-packages.mts
+        run: node scripts/release/independent-packages.mts >> "$GITHUB_OUTPUT"
 
-      # Step 1: finish the last release. Tags the merge commit of the merged version pull request and swaps its
-      # label, and reports what it tagged for the publish job.
-      - name: Tag the merged version pull request
-        id: tag
-        env:
-          GH_TOKEN: ${{ steps.get-github-app-token.outputs.token }}
-          GH_WRITER_TOKEN: ${{ steps.get-tag-writer-app-token.outputs.token }}
-          INDEPENDENT_PACKAGES: ${{ steps.packages.outputs.packages }}
-        run: node scripts/release/tag-merged-version-prs.mts
-
-      # Step 2: prepare the next version pull request. A manual run that publishes given tags skips it.
       - name: Version and generate changelogs
-        id: prepare
-        if: env.TAGS == ''
         env:
           INDEPENDENT_PACKAGES: ${{ steps.packages.outputs.packages }}
         run: node scripts/release/prepare-release-pr.mts
 
-      - name: Decide what to do with the version pull request
-        id: sync
-        if: env.TAGS == ''
-        env:
-          CHANGED: ${{ steps.prepare.outputs.changed }}
-          SUMMARY_PATH: ${{ steps.prepare.outputs.summary_path }}
-        run: node scripts/release/sync-release-pr.mts decide
-
       - name: Describe the dry run
-        if: env.TAGS == '' && env.DRY_RUN == 'true' && steps.sync.outputs.action == 'update'
-        env:
-          BODY_PATH: ${{ steps.sync.outputs.body_path }}
+        if: env.DRY_RUN == 'true'
         run: |
           echo "Dry run: the version pull request would be created or updated with these changes."
           git status --short
-          cat "$BODY_PATH"
+          git diff --stat
 
-      # The branch name is the same for every release, so the branch is moved to the current main with a forced
-      # update. release-pr.yml makes a new branch for each release and only ever creates it.
-      - name: Reset release branch to main
-        if: env.TAGS == '' && steps.sync.outputs.action == 'update' && env.DRY_RUN != 'true'
-        env:
-          GH_TOKEN: ${{ steps.get-writer-app-token.outputs.token }}
-        run: node scripts/release/sync-release-pr.mts reset-branch
-
-      # Commits made through the Git Data API with an app token are signed by the app, which
-      # satisfies the signed-commits rule.
-      - name: Commit release changes
-        if: env.TAGS == '' && steps.sync.outputs.action == 'update' && env.DRY_RUN != 'true'
-        uses: planetscale/ghcommit-action@a6b150b81dca5dd027baa898604418eec9e11465 # v0.2.22
-        with:
-          commit_message: ${{ env.PR_TITLE }}
-          repo: ${{ github.repository }}
-          branch: ${{ env.RELEASE_BRANCH }}
-          empty: 'false'
-          file_pattern: '**'
-        env:
-          GITHUB_TOKEN: ${{ steps.get-writer-app-token.outputs.token }}
-
+      # Commits what Nx changed to the version pull request branch and opens the pull request, or updates it when the
+      # result differs. Nothing is done when there is nothing to commit, and an open pull request is never closed.
+      # Commits are signed by the writer app, and the token of the pull request app creates and edits the pull request.
       - name: Create or update the version pull request
-        if: env.TAGS == '' && steps.sync.outputs.action == 'update' && env.DRY_RUN != 'true'
-        env:
-          GH_TOKEN: ${{ steps.get-github-app-token.outputs.token }}
-          BODY_PATH: ${{ steps.sync.outputs.body_path }}
-        run: node scripts/release/sync-release-pr.mts open-pr
+        if: env.DRY_RUN != 'true'
+        uses: peter-evans/create-pull-request@67ccf781d68cd99b580ae25a5c18a1cc84ffff1f # 7.0.6
+        with:
+          token: ${{ steps.get-github-app-token.outputs.token }}
+          branch-token: ${{ steps.get-writer-app-token.outputs.token }}
+          sign-commits: true
+          base: main
+          branch: ${{ env.RELEASE_BRANCH }}
+          commit-message: ${{ env.PR_TITLE }}
+          title: ${{ env.PR_TITLE }}
+          labels: |
+            no-changelog
+            area/frontend
+            nx-release:pending
+          body: |
+            This pull request releases the independently versioned packages, with the versions and changelog entries that Nx derived from the conventional commit titles merged since their last release. Merging it publishes them to npm.
+
+            It is generated and is rebuilt from main whenever a change to these packages lands. Do not edit it.
+
+            Created by: [GitHub Action job](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
 
   publish:
     name: Publish the tagged packages
-    needs: release
-    # Runs only when the release job tagged something, or on a dry run, which builds, packs and validates without
-    # publishing. Every other push skips it.
-    if: needs.release.outputs.release_created == 'true' || inputs.dry_run
+    needs: [plan, tag]
+    # Runs only when there are tags to publish, or on a dry run, which builds, packs and validates without
+    # publishing. It does not wait for the next version pull request, so a failure there does not block it.
+    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.tag.result != 'failure' && (needs.plan.outputs.release_created == 'true' || inputs.dry_run) }}
     # MUST use GitHub-hosted runners, as Trusted Publishing currently doesn't support self-hosted runners
     runs-on: github-hosted-ubuntu-x64-small
     environment: npm-publish
@@ -174,7 +205,7 @@ jobs:
       - name: Checkout the tagged commit
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
-          ref: ${{ needs.release.outputs.sha }}
+          ref: ${{ needs.plan.outputs.sha }}
           persist-credentials: false
 
       - name: Setup Node
@@ -192,7 +223,7 @@ jobs:
       - name: Choose the packages
         id: projects
         env:
-          TAGGED: ${{ needs.release.outputs.tagged }}
+          TAGGED: ${{ needs.plan.outputs.tagged }}
         run: echo "names=$(jq -r '[.[].name] | join(",")' <<< "${TAGGED:-[]}")" >> "$GITHUB_OUTPUT"
 
       - name: Build packages
@@ -207,25 +238,13 @@ jobs:
           rm -rf ./npm-artifacts
           pnpm run packages:pack:independent
 
-      - name: Select packages that are not published yet
-        id: select
-        run: |
-          node scripts/release/select-unpublished-npm-packages.mts ./npm-artifacts
-          count=$(find ./npm-artifacts -maxdepth 1 -name '*.tgz' | wc -l | tr -d ' ')
-          echo "count=$count" >> "$GITHUB_OUTPUT"
-          if [ "$count" = '0' ]; then
-            echo "Every tagged package is already published, nothing to do."
-          fi
-          tree -a ./npm-artifacts
-
       - name: Validate packages
-        if: steps.select.outputs.count != '0'
         run: ./scripts/validate-npm-packages.sh
 
       - name: Publish packages
-        if: steps.select.outputs.count != '0' && env.DRY_RUN != 'true'
+        if: env.DRY_RUN != 'true'
         run: ./scripts/publish-npm-packages.sh --dist-tag 'latest' --registry 'https://registry.npmjs.org/'
 
       - name: Report dry run
-        if: steps.select.outputs.count != '0' && env.DRY_RUN == 'true'
+        if: env.DRY_RUN == 'true'
         run: echo "Dry run, the tarballs listed above would have been published to the latest dist-tag."

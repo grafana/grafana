@@ -199,9 +199,7 @@ func (m *unifiedMigration) Migrate(ctx context.Context, opts MigrateOptions) (*r
 	}
 	m.log.Info("finished migrating legacy resources", "namespace", opts.Namespace, "orgId", info.OrgID, "stackId", info.StackID)
 	response, err := stream.CloseAndRecv()
-	// BulkProcess is client-streaming, so server interceptors don't convert its embedded
-	// error into a status; keep reading it until the bulk producer returns status errors.
-	if err := resource.ErrorFromResponse(response.GetError(), err); err != nil {
+	if err != nil {
 		return response, err
 	}
 	if response == nil {
