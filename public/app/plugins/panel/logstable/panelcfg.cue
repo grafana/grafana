@@ -32,6 +32,8 @@ composableKinds: PanelCfg: {
 					sortOrder?:           common.LogsSortOrder | (*"Descending" | _)
 					fieldSelectorWidth?:  number | *220
 					isLabelFilterActive?: _
+					onClickFilterString?:    _
+					onClickFilterOutString?: _
 					logDetailsWidth?:     number | *400
 					displayedFields?: [...string]
 					buildLinkToLogLine?: _
