@@ -1,13 +1,15 @@
 import { type ComponentType } from 'react';
 
-import { type ComponentSize } from '@grafana/ui';
-
 import { type DashboardScene } from '../../scene/DashboardScene';
 
 interface DraftDashboardComponentProps {
   dashboard: DashboardScene;
-  // Set by toolbars whose buttons are not the default size
-  size?: ComponentSize;
+}
+
+interface SaveAndPublishButtonProps {
+  disabled: boolean;
+  // Saves the dashboard with the publish option, so it is not, or no longer, a draft
+  onClick: () => void;
 }
 
 export interface DraftDashboardExtension {
@@ -15,8 +17,10 @@ export interface DraftDashboardExtension {
   isEnabled(): boolean;
   // Labels to add to the metadata of a newly created dashboard
   getCreateLabels(): Promise<Record<string, string>>;
+  // Shown for dashboards that are drafts. Holds the Publish action.
   DraftBadge: ComponentType<DraftDashboardComponentProps>;
-  PublishButton: ComponentType<DraftDashboardComponentProps>;
+  // Shown next to Save in the save drawer: for new dashboards in draft mode, and for drafts
+  SaveAndPublishButton: ComponentType<SaveAndPublishButtonProps>;
 }
 
 let internalDraftDashboardExtension: DraftDashboardExtension | null = null;

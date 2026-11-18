@@ -32,7 +32,7 @@ function registerDraftMode(enabled: boolean) {
     isEnabled: () => enabled,
     getCreateLabels: async () => ({}),
     DraftBadge: () => null,
-    PublishButton: () => null,
+    SaveAndPublishButton: () => null,
   });
 }
 

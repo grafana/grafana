@@ -17,7 +17,7 @@ describe('DraftDashboardBadge', () => {
       isEnabled: () => true,
       getCreateLabels: async () => ({}),
       DraftBadge: ({ dashboard }) => <span>Draft: {dashboard.state.uid}</span>,
-      PublishButton: () => null,
+      SaveAndPublishButton: () => null,
     });
   });
 

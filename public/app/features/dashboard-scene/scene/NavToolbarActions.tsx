@@ -39,7 +39,6 @@ import { BreadcrumbActions } from './new-toolbar/BreadcrumbActions';
 import { PlanningBanner } from './new-toolbar/PlanningBanner';
 import { DraftDashboardBadge } from './new-toolbar/actions/DraftDashboardBadge';
 import { PublicDashboardBadge } from './new-toolbar/actions/PublicDashboardBadge';
-import { PublishDraftButton } from './new-toolbar/actions/PublishDraftButton';
 
 interface Props {
   dashboard: DashboardScene;
@@ -339,12 +338,6 @@ export function ToolbarActions({ dashboard }: Props) {
   });
 
   const showShareButton = uid && !isEditing && !isSnapshot && !isPlaying && !isEmbedded;
-
-  toolbarActions.push({
-    group: 'main-buttons',
-    condition: isDraftWithExtension && !isEditing && !isViewingPanel && !isPlaying && Boolean(canSave),
-    render: () => <PublishDraftButton key="publish-draft-button" dashboard={dashboard} size="sm" />,
-  });
 
   toolbarActions.push({
     group: 'main-buttons',

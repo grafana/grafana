@@ -221,7 +221,7 @@ describe('SearchStateManager', () => {
         isEnabled: () => true,
         getCreateLabels: async () => ({}),
         DraftBadge: () => null,
-        PublishButton: () => null,
+        SaveAndPublishButton: () => null,
       });
 
     afterEach(() => {

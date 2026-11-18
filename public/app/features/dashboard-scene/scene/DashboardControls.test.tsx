@@ -20,13 +20,11 @@ import {
 import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/feature-flags';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { contextSrv } from 'app/core/services/context_srv';
-import { LabelKeyLifecycle, LifecycleDraft } from 'app/features/apiserver/types';
 import { setMobileViewport } from 'app/features/dashboard-scene/utils/mobileViewportTestUtils';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { KioskMode } from 'app/types/dashboard';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
-import { registerDraftDashboardExtension } from '../saving/enterprise-components/DraftDashboardExtension';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
@@ -626,46 +624,6 @@ describe('DashboardControls', () => {
     });
   });
 
-  describe('DashboardControlActions publish draft button', () => {
-    const draftLabels = { [LabelKeyLifecycle]: LifecycleDraft };
-
-    beforeEach(() => {
-      setTestFlags({ dashboardNewLayouts: true });
-      jest.mocked(playlistSrv.useState).mockReturnValue({ isPlaying: false });
-      registerDraftDashboardExtension({
-        isEnabled: () => true,
-        getCreateLabels: async () => ({}),
-        DraftBadge: () => null,
-        PublishButton: () => <button>Publish</button>,
-      });
-    });
-
-    afterEach(() => {
-      registerDraftDashboardExtension(null);
-      cleanup();
-      jest.clearAllMocks();
-    });
-
-    it('shows the extension Publish button for a draft the user can save, out of edit mode', async () => {
-      const controls = buildTestSceneWithEditable({ canSave: true, labels: draftLabels });
-      renderInGrafanaContext(<controls.Component model={controls} />, undefined);
-
-      expect(await screen.findByRole('button', { name: 'Publish' })).toBeInTheDocument();
-    });
-
-    it.each([
-      { desc: 'a published dashboard', options: { canSave: true } },
-      { desc: 'a user who cannot save', options: { canSave: false, labels: draftLabels } },
-      { desc: 'edit mode', options: { canSave: true, isEditing: true, labels: draftLabels } },
-    ])('does not show the Publish button for $desc', async ({ options }) => {
-      const controls = buildTestSceneWithEditable(options);
-      renderInGrafanaContext(<controls.Component model={controls} />, undefined);
-
-      expect(await screen.findByTestId(selectors.pages.Dashboard.DashNav.newShareButton.container)).toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'Publish' })).not.toBeInTheDocument();
-    });
-  });
-
   describe('DashboardControlActions save button visibility', () => {
     const mockedContextSrv = jest.mocked(contextSrv);
 
@@ -1181,7 +1139,6 @@ function buildTestSceneWithEditable(options: {
   canMakeEditable?: boolean;
   isSnapshot?: boolean;
   newDashboardUid?: string;
-  labels?: Record<string, string>;
 }): DashboardControls {
   const {
     editable = true,
@@ -1192,7 +1149,6 @@ function buildTestSceneWithEditable(options: {
     isSnapshot = false,
     hasUid = true,
     newDashboardUid,
-    labels,
   } = options;
 
   const dashboard = new DashboardScene({
@@ -1205,7 +1161,6 @@ function buildTestSceneWithEditable(options: {
       canMakeEditable,
       isSnapshot,
       ...(newDashboardUid ? { newDashboardUid } : {}),
-      ...(labels ? { k8s: { labels } } : {}),
     },
     controls: new DashboardControls({}),
   });

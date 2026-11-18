@@ -254,14 +254,12 @@ describe('NavToolbarActions', () => {
   });
 
   describe('Draft dashboards', () => {
-    const draftMeta = { k8s: { labels: { [LabelKeyLifecycle]: LifecycleDraft } } };
-
     beforeEach(() => {
       registerDraftDashboardExtension({
         isEnabled: () => true,
         getCreateLabels: async () => ({}),
         DraftBadge: () => <span>Draft badge</span>,
-        PublishButton: ({ size }) => <button>Publish {size}</button>,
+        SaveAndPublishButton: () => null,
       });
     });
 
@@ -269,26 +267,17 @@ describe('NavToolbarActions', () => {
       registerDraftDashboardExtension(null);
     });
 
-    it('shows the draft badge and a small Publish button for a draft the user can save', async () => {
-      setup(draftMeta);
+    it('shows the draft badge for a draft', async () => {
+      setup({ k8s: { labels: { [LabelKeyLifecycle]: LifecycleDraft } } });
 
       expect(await screen.findByText('Draft badge')).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Publish sm' })).toBeInTheDocument();
     });
 
-    it('shows the badge without Publish to a user who cannot save', async () => {
-      setup({ ...draftMeta, canSave: false });
-
-      expect(await screen.findByText('Draft badge')).toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: /Publish/ })).not.toBeInTheDocument();
-    });
-
-    it('shows neither for a published dashboard', async () => {
+    it('does not show the draft badge for a published dashboard', async () => {
       setup();
 
       expect(await screen.findByText('Share')).toBeInTheDocument();
       expect(screen.queryByText('Draft badge')).not.toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: /Publish/ })).not.toBeInTheDocument();
     });
   });
 

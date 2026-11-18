@@ -11,6 +11,7 @@ import {
   AnnoKeyGrantPermissions,
   AnnoKeyMessage,
   DeprecatedInternalId,
+  LabelKeyLifecycle,
   type Resource,
   type ResourceClient,
   type ResourceForCreate,
@@ -161,13 +162,16 @@ export class K8sDashboardV2API
 
     if (obj.metadata.name && !options.create) {
       delete obj.metadata.labels?.[DeprecatedInternalId];
+      if (options.publish) {
+        delete obj.metadata.labels?.[LabelKeyLifecycle];
+      }
       return this.client.update(obj, undefined, requestOptions).then((v) => this.asSaveDashboardResponseDTO(v));
     }
 
     // clear the deprecated id label so the backend generates a new unique id to prevent duplicate ids.
     delete obj.metadata.labels?.[DeprecatedInternalId];
 
-    const createLabels = await getDraftDashboardExtension()?.getCreateLabels();
+    const createLabels = options.publish ? undefined : await getDraftDashboardExtension()?.getCreateLabels();
     if (createLabels && Object.keys(createLabels).length > 0) {
       obj.metadata.labels = { ...obj.metadata.labels, ...createLabels };
     }

@@ -71,6 +71,7 @@ export function useSaveDashboard(isCopy = false) {
           showErrorAlert: false,
           k8s: newDashboardUid ? { ...options.k8s, name: newDashboardUid } : options.k8s,
           ...(newDashboardUid ? { create: true } : {}),
+          publish: options.publish,
         });
 
         if ('error' in result) {

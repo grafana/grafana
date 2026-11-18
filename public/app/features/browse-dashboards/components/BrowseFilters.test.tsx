@@ -69,7 +69,7 @@ describe('BrowseFilters', () => {
       isEnabled: () => true,
       getCreateLabels: async () => ({}),
       DraftBadge: () => null,
-      PublishButton: () => null,
+      SaveAndPublishButton: () => null,
     });
     const stateManager = createStateManager();
     mockUseSearchStateManager.mockReturnValue([createSearchState(), stateManager]);
