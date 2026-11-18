@@ -5333,20 +5333,6 @@
     },
     {
       "metadata": {
-        "name": "plugins.proxyWithOpenAPIRoutes",
-        "resourceVersion": "1794976648749",
-        "creationTimestamp": "2026-11-18T04:37:28Z"
-      },
-      "spec": {
-        "description": "Matches app plugin proxy requests against the plugin's routes converted to OpenAPI paths, and publishes those paths",
-        "stage": "experimental",
-        "codeowner": "@grafana/grafana-app-platform-squad",
-        "hideFromDocs": true,
-        "expression": "false"
-      }
-    },
-    {
-      "metadata": {
         "name": "plugins.useMTPluginSettings",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-05-08T08:32:12Z"

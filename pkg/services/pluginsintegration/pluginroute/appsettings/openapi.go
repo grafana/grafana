@@ -130,7 +130,8 @@ func (b *Builder) addSubresourcePaths(oas *spec3.OpenAPI, item, version string) 
 		"HealthCheckResult", spec.RefSchema("#/components/schemas/"+health))
 
 	subresources := []string{"resources"}
-	if converted := b.proxyRoutes(); converted != nil {
+	if b.registersProxy() {
+		converted := b.proxyRoutes()
 		for specPath, props := range converted.paths {
 			props.Parameters = slices.Clone(params)
 			for _, op := range []**spec3.Operation{&props.Get, &props.Head, &props.Post, &props.Put, &props.Patch, &props.Delete, &props.Options} {
@@ -142,8 +143,6 @@ func (b *Builder) addSubresourcePaths(oas *spec3.OpenAPI, item, version string) 
 			}
 			oas.Paths.Paths[item+"/proxy/"+specPath] = &spec3.Path{PathProps: props}
 		}
-	} else if b.registersProxy() {
-		subresources = append(subresources, "proxy")
 	}
 	for _, v := range subresources {
 		oas.Paths.Paths[item+"/"+v] = operation("getSettings"+strings.ToUpper(v[:1])+v[1:],

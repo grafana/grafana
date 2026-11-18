@@ -1065,8 +1065,4 @@ const (
 	// FlagDatasourcesGatewayRateLimits
 	// Enable support for query gateway rate limits
 	FlagDatasourcesGatewayRateLimits = "datasources.gatewayRateLimits"
-
-	// FlagPluginsProxyWithOpenAPIRoutes
-	// Matches app plugin proxy requests against the plugin's routes converted to OpenAPI paths, and publishes those paths
-	FlagPluginsProxyWithOpenAPIRoutes = "plugins.proxyWithOpenAPIRoutes"
 )

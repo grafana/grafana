@@ -55,10 +55,6 @@ type PluginContextWrapper interface {
 type Options struct {
 	RegisterProxy bool
 
-	// OpenAPIProxyRoutes matches proxy requests against the plugin's routes
-	// converted to OpenAPI paths, and publishes those paths.
-	OpenAPIProxyRoutes bool
-
 	DataProxyLogging         bool // from cfg
 	SendUserHeader           bool // from cfg
 	PluginsAppsSkipVerifyTLS bool // from cfg
@@ -131,16 +127,16 @@ func NewBuilder(
 	}, nil
 }
 
-// proxyRoutes returns the proxy routes as OpenAPI routes, or nil when they are
-// not enabled, there are none, or they cannot be served that way.
+// proxyRoutes returns the proxy routes the settings manifest declares, or nil
+// when the proxy is not registered or there are none.
 func (b *Builder) proxyRoutes() *proxyRoutes {
 	b.openAPIRoutesOnce.Do(func() {
-		if !b.opts.RegisterProxy || !b.opts.OpenAPIProxyRoutes {
+		if !b.opts.RegisterProxy {
 			return
 		}
 		routes, err := compileProxyRoutes(b.settings)
 		if err != nil {
-			logger.Warn("plugin proxy routes are matched in the order plugin.json declares them", "plugin", b.pluginJSON.ID, "reason", err)
+			logger.Warn("plugin proxy routes are not served", "plugin", b.group, "reason", err)
 			return
 		}
 		b.openAPIRoutes = routes

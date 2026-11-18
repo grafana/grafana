@@ -97,8 +97,8 @@ func openAPIPaths(t *testing.T, helper *apis.K8sTestHelper, groupVersion string)
 	return slices.Sorted(maps.Keys(doc.Paths))
 }
 
-// The plugin.json routes are forwarded the same way whether they are matched
-// in the order they are declared or as OpenAPI routes, at the same URL.
+// plugin.json routes are converted into the settings manifest at load, and
+// served from it at the URL they have always been served at.
 func TestIntegrationAppPluginProxy(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -109,51 +109,29 @@ func TestIntegrationAppPluginProxy(t *testing.T) {
 		{"path": "api/*", "url": upstream.URL + "/api",
 			"headers": []map[string]any{{"name": "X-Upstream", "content": "{{.JsonData.upstream}}"}}},
 	}
+	helper := setupHelperWithPlugin(t, rest.Mode5, testAppSetup{routes: routes}, featuremgmt.FlagApppluginsHandleProxyRequests)
+	enableTestApp(t, helper)
+	viewer, admin := helper.Org1.Viewer, helper.Org1.Admin
 
-	for _, tc := range []struct {
-		name          string
-		openAPIRoutes bool
-	}{
-		{name: "in declaration order"},
-		{name: "as OpenAPI routes", openAPIRoutes: true},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			features := []string{featuremgmt.FlagApppluginsHandleProxyRequests}
-			if tc.openAPIRoutes {
-				features = append(features, featuremgmt.FlagPluginsProxyWithOpenAPIRoutes)
-			}
-			helper := setupHelperWithPlugin(t, rest.Mode5, testAppSetup{routes: routes}, features...)
-			enableTestApp(t, helper)
-			viewer, admin := helper.Org1.Viewer, helper.Org1.Admin
+	require.Equal(t, http.StatusOK, proxyRequest(t, helper, viewer, http.MethodGet, "api/items/1"))
+	require.Equal(t, http.StatusOK, proxyRequest(t, helper, viewer, http.MethodGet, "api/items/1/more"))
+	require.Equal(t, http.StatusOK, proxyRequest(t, helper, viewer, http.MethodDelete, "api/items/1"))
+	require.Equal(t, http.StatusOK, proxyRequest(t, helper, admin, http.MethodPost, "api/admin"))
+	require.Equal(t, []string{
+		"GET /items",
+		"GET /api/items/1/more from-settings",
+		"DELETE /api/items/1 from-settings",
+		"POST /admin",
+	}, upstream.take(), "each request is forwarded with its route, and the route's templates read the settings")
 
-			require.Equal(t, http.StatusOK, proxyRequest(t, helper, viewer, http.MethodGet, "api/items/1"))
-			require.Equal(t, http.StatusOK, proxyRequest(t, helper, viewer, http.MethodGet, "api/items/1/more"))
-			require.Equal(t, http.StatusOK, proxyRequest(t, helper, viewer, http.MethodDelete, "api/items/1"))
-			require.Equal(t, http.StatusOK, proxyRequest(t, helper, admin, http.MethodPost, "api/admin"))
-			require.Equal(t, []string{
-				"GET /items",
-				"GET /api/items/1/more from-settings",
-				"DELETE /api/items/1 from-settings",
-				"POST /admin",
-			}, upstream.take(), "each request is forwarded with its route, and the route's templates read the settings")
+	require.Equal(t, http.StatusForbidden, proxyRequest(t, helper, viewer, http.MethodPost, "api/admin"),
+		"the matched route's role is still required")
+	require.Equal(t, http.StatusNotFound, proxyRequest(t, helper, viewer, http.MethodGet, "elsewhere"))
+	require.Empty(t, upstream.take())
 
-			require.Equal(t, http.StatusForbidden, proxyRequest(t, helper, viewer, http.MethodPost, "api/admin"),
-				"the matched route's role is still required")
-			require.Equal(t, http.StatusNotFound, proxyRequest(t, helper, viewer, http.MethodGet, "elsewhere"))
-			require.Empty(t, upstream.take())
-
-			paths := settingsPaths(t, helper)
-			documented := settingsRoot + "namespaces/{namespace}/app/instance/proxy/api/items/{id}"
-			opaque := settingsRoot + "namespaces/{namespace}/app/instance/proxy"
-			if tc.openAPIRoutes {
-				require.Contains(t, paths, documented)
-				require.NotContains(t, paths, opaque)
-			} else {
-				require.Contains(t, paths, opaque)
-				require.NotContains(t, paths, documented)
-			}
-		})
-	}
+	paths := settingsPaths(t, helper)
+	require.Contains(t, paths, settingsRoot+"namespaces/{namespace}/app/instance/proxy/api/items/{id}")
+	require.NotContains(t, paths, settingsRoot+"namespaces/{namespace}/app/instance/proxy")
 }
 
 // A manifest declares proxy routes in its OpenAPI paths below
@@ -191,7 +169,7 @@ func TestIntegrationAppPluginProxyRoutesFromManifest(t *testing.T) {
 	helper := setupHelperWithPlugin(t, rest.Mode5, testAppSetup{
 		manifest: manifest,
 		routes:   []map[string]any{{"path": "api/*", "url": upstream.URL + "/api"}},
-	}, featuremgmt.FlagApppluginsHandleProxyRequests, featuremgmt.FlagPluginsProxyWithOpenAPIRoutes)
+	}, featuremgmt.FlagApppluginsHandleProxyRequests)
 	enableTestApp(t, helper)
 	viewer := helper.Org1.Viewer
 

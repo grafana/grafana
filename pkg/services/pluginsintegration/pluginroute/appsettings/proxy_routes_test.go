@@ -15,6 +15,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -49,11 +50,11 @@ type proxyServer struct {
 	handler http.Handler
 }
 
-func newProxyServer(t *testing.T, plugin definition.PluginDefinition, openAPIRoutes bool) *proxyServer {
+func newProxyServer(t *testing.T, plugin definition.PluginDefinition) *proxyServer {
 	b, err := NewBuilder(plugin, struct{ PluginClient }{}, settingsContextFunc(
 		func(ctx context.Context, _ string, _ *backend.AppInstanceSettings) (context.Context, backend.PluginContext, error) {
 			return ctx, backend.PluginContext{}, nil
-		}), nil, nil, Options{RegisterProxy: true, OpenAPIProxyRoutes: openAPIRoutes},
+		}), nil, nil, Options{RegisterProxy: true},
 		tracing.InitializeTracerForTest(), featuremgmt.WithFeatures())
 	require.NoError(t, err)
 	b.getter = func(context.Context, schema.GroupVersionResource, string) (runtime.Object, error) {
@@ -98,7 +99,7 @@ func pluginWithRoutes(routes []*plugins.Route, manifests ...*app.ManifestData) d
 		JSONData:  plugins.JSONData{ID: exampleApp, Type: plugins.TypeApp, Routes: routes},
 		Manifests: manifests,
 	}
-	_ = p.LoadSettings()
+	_ = p.LoadSettings(pluginproxy.MatchRoute)
 	return p
 }
 
@@ -115,59 +116,63 @@ func proxyOperation(target definition.ProxyTarget) *spec3.Operation {
 	return op
 }
 
+// plugin.json routes are served from the settings manifest they are
+// converted into, forwarded as the plugin proxy forwards them.
 func TestPluginJSONRoutesAreServedAsBefore(t *testing.T) {
 	up := newUpstream(t)
-	plugin := pluginWithRoutes(exampleRoutes(up.URL))
-	for _, openAPIRoutes := range []bool{false, true} {
-		s := newProxyServer(t, plugin, openAPIRoutes)
-		require.Equal(t, openAPIRoutes, s.builder.proxyRoutes() != nil, "the routes compile when enabled")
+	s := newProxyServer(t, pluginWithRoutes(exampleRoutes(up.URL)))
+	require.NotNil(t, s.builder.proxyRoutes())
 
-		up.forwarded = nil
-		for _, path := range []string{"api/items/1", "api/items/1/", "api/items/1/more", "api/admin", "health", "health/"} {
-			require.Equal(t, http.StatusOK, s.serve(viewer, http.MethodGet, path), "GET %s with openAPIRoutes=%v", path, openAPIRoutes)
-		}
-		require.Equal(t, http.StatusOK, s.serve(admin, http.MethodPost, "api/admin"))
-		require.Equal(t, http.StatusOK, s.serve(viewer, http.MethodDelete, "api/items/1"))
-		require.Equal(t, []string{
-			"GET /items",
-			"GET /items",
-			"GET /api/items/1/more",
-			"GET /api/admin",
-			"GET /health",
-			"GET /health",
-			"POST /admin",
-			"DELETE /api/items/1",
-		}, up.forwarded, "openAPIRoutes=%v", openAPIRoutes)
-
-		require.Equal(t, http.StatusForbidden, s.serve(viewer, http.MethodPost, "api/admin"),
-			"the route's role is still required")
-		require.Equal(t, http.StatusNotFound, s.serve(admin, http.MethodGet, "other"))
-		require.Equal(t, http.StatusNotFound, s.serve(admin, http.MethodGet, "api/"))
+	for _, path := range []string{"api/items/1", "api/items/1/", "api/items/1/more", "api/admin", "health", "health/"} {
+		require.Equal(t, http.StatusOK, s.serve(viewer, http.MethodGet, path), "GET %s", path)
 	}
+	require.Equal(t, http.StatusOK, s.serve(admin, http.MethodPost, "api/admin"))
+	require.Equal(t, http.StatusOK, s.serve(viewer, http.MethodDelete, "api/items/1"))
+	require.Equal(t, []string{
+		"GET /items",
+		"GET /items",
+		"GET /api/items/1/more",
+		"GET /api/admin",
+		"GET /health",
+		"GET /health",
+		"POST /admin",
+		"DELETE /api/items/1",
+	}, up.forwarded)
+
+	require.Equal(t, http.StatusForbidden, s.serve(viewer, http.MethodPost, "api/admin"),
+		"the route's role is still required")
+	require.Equal(t, http.StatusNotFound, s.serve(admin, http.MethodGet, "other"))
+	require.Equal(t, http.StatusNotFound, s.serve(admin, http.MethodGet, "api/"))
 }
 
 // The one intended difference from the plugin proxy, which gives HEAD to the
 // first route that names no method.
 func TestOpenAPIRoutesAnswerHeadAsGet(t *testing.T) {
 	up := newUpstream(t)
-	s := newProxyServer(t, pluginWithRoutes(exampleRoutes(up.URL)), true)
+	s := newProxyServer(t, pluginWithRoutes(exampleRoutes(up.URL)))
 	require.Equal(t, http.StatusOK, s.serve(viewer, http.MethodHead, "api/items/1"))
 	require.Equal(t, http.StatusOK, s.serve(viewer, http.MethodHead, "health"))
 	require.Equal(t, []string{"HEAD /items", "HEAD /health"}, up.forwarded)
 }
 
-func TestRoutesMatchedDifferentlyKeepThePluginProxy(t *testing.T) {
-	// The plugin proxy never reaches the second route, since the first matches
-	// its requests, but ServeMux would choose it as the more specific path.
+// The proxy serves only the routes the settings manifest declares, so a
+// plugin whose plugin.json routes are left out of it has no proxy.
+func TestRoutesLeftOutOfTheSettingsManifestAreNotServed(t *testing.T) {
 	up := newUpstream(t)
-	routes := []*plugins.Route{
-		{Path: "api/*", URL: up.URL + "/api"},
-		{Path: "api/special", URL: up.URL + "/special"},
+	for name, routes := range map[string][]*plugins.Route{
+		// The plugin proxy never reaches the second route, since the first matches
+		// its requests, but ServeMux would choose it as the more specific path.
+		"matched differently": {
+			{Path: "api/*", URL: up.URL + "/api"},
+			{Path: "api/special", URL: up.URL + "/special"},
+		},
+		"cannot be converted": {{Path: "ids/:id([0-9]+)", URL: up.URL}},
+	} {
+		s := newProxyServer(t, pluginWithRoutes(routes))
+		require.Nil(t, s.builder.proxyRoutes(), name)
+		require.Equal(t, http.StatusNoContent, s.serve(viewer, http.MethodGet, "api/special"), "%s: there is no proxy subresource", name)
 	}
-	s := newProxyServer(t, pluginWithRoutes(routes), true)
-	require.Nil(t, s.builder.proxyRoutes())
-	require.Equal(t, http.StatusOK, s.serve(viewer, http.MethodGet, "api/special"))
-	require.Equal(t, []string{"GET /api/special"}, up.forwarded, "the plugin.json routes are matched as before")
+	require.Empty(t, up.forwarded)
 }
 
 func TestManifestDeclaredProxyRoutes(t *testing.T) {
@@ -181,7 +186,7 @@ func TestManifestDeclaredProxyRoutes(t *testing.T) {
 	})
 
 	t.Run("replace the plugin.json routes", func(t *testing.T) {
-		s := newProxyServer(t, pluginWithRoutes(exampleRoutes(up.URL), manifest), true)
+		s := newProxyServer(t, pluginWithRoutes(exampleRoutes(up.URL), manifest))
 		up.forwarded = nil
 		require.Equal(t, http.StatusOK, s.serve(viewer, http.MethodGet, "v2/a/b"))
 		require.Equal(t, http.StatusForbidden, s.serve(viewer, http.MethodPost, "v2/a"))
@@ -190,7 +195,7 @@ func TestManifestDeclaredProxyRoutes(t *testing.T) {
 	})
 
 	t.Run("mount the proxy without plugin.json routes", func(t *testing.T) {
-		s := newProxyServer(t, pluginWithRoutes(nil, manifest), true)
+		s := newProxyServer(t, pluginWithRoutes(nil, manifest))
 		up.forwarded = nil
 		require.Equal(t, http.StatusOK, s.serve(viewer, http.MethodGet, "v2/x"))
 		require.Equal(t, []string{"GET /v2/x"}, up.forwarded)
@@ -198,26 +203,22 @@ func TestManifestDeclaredProxyRoutes(t *testing.T) {
 			"an undeclared method is refused as on any manifest route")
 	})
 
-	t.Run("are not served while the flag is off", func(t *testing.T) {
-		s := newProxyServer(t, pluginWithRoutes(nil, manifest), false)
-		require.Equal(t, http.StatusNoContent, s.serve(viewer, http.MethodGet, "v2/x"), "there is no proxy subresource")
-	})
-
 	t.Run("must all declare where they forward to", func(t *testing.T) {
 		broken := manifestDeclaring(map[string]spec3.PathProps{
 			definition.SettingsProxyPrefix + "v2": {Get: &spec3.Operation{}},
 		})
-		s := newProxyServer(t, pluginWithRoutes(exampleRoutes(up.URL), broken), true)
-		require.Nil(t, s.builder.proxyRoutes(), "the plugin.json routes are matched as before")
-		require.Equal(t, http.StatusOK, s.serve(viewer, http.MethodGet, "health"))
+		s := newProxyServer(t, pluginWithRoutes(exampleRoutes(up.URL), broken))
+		require.Nil(t, s.builder.proxyRoutes())
+		require.Equal(t, http.StatusNoContent, s.serve(viewer, http.MethodGet, "health"),
+			"there is no proxy subresource, and plugin.json's routes are not used instead")
 	})
 }
 
 func TestOpenAPIPublishesProxyRoutes(t *testing.T) {
 	const item = "/apis/" + exampleApp + "/v0alpha1/namespaces/{namespace}/app/{name}"
-	publish := func(openAPIRoutes bool, plugin definition.PluginDefinition) map[string]*spec3.Path {
+	publish := func(plugin definition.PluginDefinition) map[string]*spec3.Path {
 		b := &Builder{group: exampleApp, pluginJSON: plugin.JSONData, settings: plugin.Settings,
-			opts: Options{RegisterProxy: true, OpenAPIProxyRoutes: openAPIRoutes}}
+			opts: Options{RegisterProxy: true}}
 		oas := &spec3.OpenAPI{
 			Paths: &spec3.Paths{Paths: map[string]*spec3.Path{item: {PathProps: spec3.PathProps{
 				Parameters: []*spec3.Parameter{
@@ -231,7 +232,7 @@ func TestOpenAPIPublishesProxyRoutes(t *testing.T) {
 		return oas.Paths.Paths
 	}
 
-	paths := publish(true, pluginWithRoutes(exampleRoutes("https://example")))
+	paths := publish(pluginWithRoutes(exampleRoutes("https://example")))
 	require.NotContains(t, paths, item+"/proxy", "the routes replace the opaque proxy path")
 	require.NotContains(t, paths, item+"/proxy/health/", "the trailing slash copies are not published")
 	items := paths[item+"/proxy/api/items/{id}"]
@@ -249,12 +250,20 @@ func TestOpenAPIPublishesProxyRoutes(t *testing.T) {
 		}
 	}
 
-	require.Contains(t, publish(false, pluginWithRoutes(exampleRoutes("https://example"))), item+"/proxy")
-	require.Contains(t, publish(true, pluginWithRoutes([]*plugins.Route{{Path: "ids/:id([0-9]+)"}})), item+"/proxy",
-		"routes that cannot be served as OpenAPI routes keep the opaque proxy path")
+	for path := range publish(pluginWithRoutes([]*plugins.Route{{Path: "ids/:id([0-9]+)"}})) {
+		require.NotContains(t, path, "/proxy", "a plugin with no proxy routes publishes no proxy")
+	}
 
-	declared := publish(true, pluginWithRoutes(nil, manifestDeclaring(map[string]spec3.PathProps{
+	declared := publish(pluginWithRoutes(nil, manifestDeclaring(map[string]spec3.PathProps{
 		definition.SettingsProxyPrefix + "v2/{path:*}": {Get: proxyOperation(definition.ProxyTarget{URL: "https://example"})},
 	})))
 	require.Contains(t, declared, item+"/proxy/v2/{path}")
+}
+
+// The definition module cannot import the settings API's types, so it repeats
+// their names.
+func TestSettingsManifestNamesMatchTheSettingsAPI(t *testing.T) {
+	require.Equal(t, apppluginV0.VERSION, definition.SettingsAPIVersion)
+	require.Equal(t, apppluginV0.APP_RESOURCE_NAME, definition.SettingsAPIResource)
+	require.Equal(t, apppluginV0.INSTANCE_NAME, definition.SettingsAPIInstance)
 }

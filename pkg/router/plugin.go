@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
+	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -246,6 +247,9 @@ func loadLocalPluginDefinitions(ctx context.Context, registry sources.Registry, 
 
 	if err != nil {
 		return nil, fmt.Errorf("error getting list of app plugins: %w", err)
+	}
+	for i := range pluginDefs {
+		loadSettingsManifest(ctx, &pluginDefs[i])
 	}
 	return pluginDefs, nil
 }
@@ -537,7 +541,6 @@ func (b *PluginBackend) loadSettings(ctx context.Context, cfg *setting.Cfg, opts
 	opts.Features = b.deps.Features
 	opts.Settings = appsettings.Options{
 		RegisterProxy:            openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagApppluginsHandleProxyRequests, false, openfeature.TransactionContext(ctx)),
-		OpenAPIProxyRoutes:       openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagPluginsProxyWithOpenAPIRoutes, false, openfeature.TransactionContext(ctx)),
 		AccessControl:            b.deps.AccessControl,
 		DataProxyLogging:         cfg.DataProxyLogging,
 		SendUserHeader:           cfg.SendUserHeader,
@@ -599,4 +602,12 @@ func (e *authOutcomeExchanger) Exchange(ctx context.Context, r authn.TokenExchan
 		setContextFailure(ctx, failureAuth)
 	}
 	return res, err
+}
+
+// loadSettingsManifest describes the plugin's settings API, with the proxy
+// routes it serves, once its manifests are loaded.
+func loadSettingsManifest(ctx context.Context, plugin *definition.PluginDefinition) {
+	if err := plugin.LoadSettings(pluginproxy.MatchRoute); err != nil {
+		logging.FromContext(ctx).Warn("router: plugin proxy routes are not served by the settings API", "pluginId", plugin.JSONData.ID, "reason", err)
+	}
 }

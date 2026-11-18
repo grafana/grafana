@@ -20,6 +20,7 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	gaprequest "github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginroute/routemux"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
@@ -28,9 +29,11 @@ import (
 // filled in from, with a loader for their decrypted secure values.
 type SettingsReader func(ctx context.Context) (*apppluginV0.Settings, pluginsettings.DecryptedSecureJSONLoader, error)
 
+// proxyHandler serves the proxy routes the settings manifest declares, and
+// forwards each request with the route it matched.
 type proxyHandler struct {
 	pluginID             string
-	routes               []*plugins.Route // matched in the order they are declared
+	mux                  http.Handler
 	settings             SettingsReader
 	accessControl        ac.AccessControl
 	tracer               tracing.Tracer
@@ -41,10 +44,9 @@ type proxyHandler struct {
 	SendUserHeader   bool // from cfg
 }
 
-func newProxy(b *Builder) *proxyHandler {
-	return &proxyHandler{
-		pluginID:         b.pluginJSON.ID,
-		routes:           b.pluginJSON.Routes,
+func newProxy(b *Builder, routes *proxyRoutes) *proxyHandler {
+	p := &proxyHandler{
+		pluginID:         b.group, // the settings API is served under the plugin ID
 		settings:         b.getSettings,
 		accessControl:    b.opts.AccessControl,
 		DataProxyLogging: b.opts.DataProxyLogging,
@@ -65,16 +67,20 @@ func newProxy(b *Builder) *proxyHandler {
 			TLSHandshakeTimeout: 10 * time.Second,
 		},
 	}
+	// A request no route matches is answered as the plugin proxy answers one
+	// that matches none of its routes.
+	unmatched := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { p.forward(w, r, nil) })
+	p.mux = routemux.Wrap(b.group, []routemux.Version{routes.version}, routes.handler(p.forward), unmatched, nil)
+	return p
 }
 
-// ServeHTTP forwards a request with the first plugin.json route that matches it.
 func (r *proxyHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	r.serve(w, req, r.routes)
+	r.mux.ServeHTTP(w, req)
 }
 
-// serve forwards a request with the first of routes that matches it, or
+// forward forwards a request with the first of routes that matches it, or
 // answers 404 when none does.
-func (r *proxyHandler) serve(w http.ResponseWriter, req *http.Request, routes []*plugins.Route) {
+func (r *proxyHandler) forward(w http.ResponseWriter, req *http.Request, routes []*plugins.Route) {
 	ctx := req.Context()
 	ns, err := gaprequest.NamespaceInfoFrom(ctx, true)
 	if err != nil {

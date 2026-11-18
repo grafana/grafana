@@ -12,19 +12,32 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/app"
 	manifestroutes "github.com/grafana/grafana-app-sdk/routes"
-	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
+)
+
+// The settings API's version, resource and the name of its one object. They
+// are those of pkg/apis/appplugin/v0alpha1, which this module cannot import.
+const (
+	SettingsAPIVersion  = "v0alpha1"
+	SettingsAPIResource = "app"
+	SettingsAPIInstance = "instance"
 )
 
 // SettingsProxyRoot is where the proxy routes are declared in the settings
 // manifest's version: below the proxy subresource of the settings object.
-const SettingsProxyRoot = "/namespaces/{namespace}/" + apppluginV0.APP_RESOURCE_NAME + "/{name}/proxy"
+const SettingsProxyRoot = "/namespaces/{namespace}/" + SettingsAPIResource + "/{name}/proxy"
+
+// RouteMatcher matches a request against plugin.json routes as the plugin
+// proxy does: the first route, in the order they are declared, that serves
+// method and path. rest is what a final * in the route's path matched, and
+// hasRest whether it has one.
+type RouteMatcher func(routes []*plugins.Route, method, path string) (route *plugins.Route, rest string, hasRest bool)
 
 // settingsKind is the kind the settings API serves its one object as.
 var settingsKind = app.ManifestVersionKind{
 	Kind:     "Settings",
 	Plural:   "Settings",
-	Resource: apppluginV0.APP_RESOURCE_NAME,
+	Resource: SettingsAPIResource,
 	Scope:    "Namespaced",
 }
 
@@ -40,22 +53,22 @@ var SettingsRouteOptions = manifestroutes.Options{UnservedMethods: []string{http
 // plugin.json's. plugin.json routes are matched in the order they are
 // declared, and the settings API matches the most specific path, as it does
 // any manifest route, so they are only included when every request they are
-// probed with is forwarded the same way. When the routes are left out, err
-// says why, and the settings API matches plugin.json's in the order they are
-// declared.
-func NewSettingsManifest(p PluginDefinition) (manifest *app.ManifestData, err error) {
+// probed with is forwarded the same way, as match decides; without match they
+// are left out. When the routes are left out, err says why, and the settings
+// API serves no proxy.
+func NewSettingsManifest(p PluginDefinition, match RouteMatcher) (manifest *app.ManifestData, err error) {
 	if p.JSONData.Type != plugins.TypeApp {
 		return nil, nil
 	}
 	version := app.ManifestVersion{
-		Name:   apppluginV0.VERSION,
+		Name:   SettingsAPIVersion,
 		Served: true,
 		Kinds:  []app.ManifestVersionKind{settingsKind},
 	}
 	manifest = &app.ManifestData{
 		AppName:          p.JSONData.ID,
 		Group:            p.JSONData.ID,
-		PreferredVersion: apppluginV0.VERSION,
+		PreferredVersion: SettingsAPIVersion,
 	}
 	defer func() { manifest.Versions = []app.ManifestVersion{version} }()
 
@@ -78,7 +91,10 @@ func NewSettingsManifest(p PluginDefinition) (manifest *app.ManifestData, err er
 		return manifest, err
 	}
 	if !declared {
-		if err := verifyProxyRoutes(matched, p.JSONData.Routes); err != nil {
+		if match == nil {
+			return manifest, errors.New("plugin.json routes cannot be checked without the plugin proxy's route matcher")
+		}
+		if err := verifyProxyRoutes(matched, p.JSONData.Routes, match); err != nil {
 			return manifest, err
 		}
 	}
@@ -87,10 +103,11 @@ func NewSettingsManifest(p PluginDefinition) (manifest *app.ManifestData, err er
 }
 
 // LoadSettings sets p.Settings from p's plugin.json and manifests, which must
-// already have their deprecated routes migrated. An error says why the proxy
-// routes were left out of it; Settings is set regardless.
-func (p *PluginDefinition) LoadSettings() error {
-	settings, err := NewSettingsManifest(*p)
+// already have their deprecated routes migrated; see NewSettingsManifest. An
+// error says why the proxy routes were left out of it; Settings is set
+// regardless.
+func (p *PluginDefinition) LoadSettings(match RouteMatcher) error {
+	settings, err := NewSettingsManifest(*p, match)
 	p.Settings = settings
 	return err
 }
@@ -179,8 +196,8 @@ func settingsRouteMux(version app.ManifestVersion) (*http.ServeMux, error) {
 // route settings, and the same remaining path, as the plugin proxy forwards it
 // with the plugin.json routes. HEAD is not compared: it is answered as GET is,
 // which is where app-sdk routes differ from the plugin proxy on purpose.
-func verifyProxyRoutes(mux *http.ServeMux, legacy []*plugins.Route) error {
-	root := strings.NewReplacer("{namespace}", "default", "{name}", apppluginV0.INSTANCE_NAME).Replace(SettingsProxyRoot) + "/"
+func verifyProxyRoutes(mux *http.ServeMux, legacy []*plugins.Route, match RouteMatcher) error {
+	root := strings.NewReplacer("{namespace}", "default", "{name}", SettingsAPIInstance).Replace(SettingsProxyRoot) + "/"
 	for _, probe := range proxyProbes(legacy) {
 		for _, method := range proxyMethods {
 			if method == http.MethodHead {
@@ -194,8 +211,8 @@ func verifyProxyRoutes(mux *http.ServeMux, legacy []*plugins.Route) error {
 				matched = []*plugins.Route{&route}
 			}
 
-			want, wantPath, wantHasPath := plugins.MatchRoute(legacy, method, probe)
-			got, gotPath, gotHasPath := plugins.MatchRoute(matched, method, probe)
+			want, wantPath, wantHasPath := match(legacy, method, probe)
+			got, gotPath, gotHasPath := match(matched, method, probe)
 			if !sameTarget(want, got) || wantPath != gotPath || wantHasPath != gotHasPath {
 				return fmt.Errorf("%s %q would be forwarded with %s, not %s", method, probe, describeRoute(got), describeRoute(want))
 			}

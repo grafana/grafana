@@ -102,10 +102,6 @@ func loadInfo(rootfs fs.FS, jsondata plugins.JSONData, opts Options) (PluginDefi
 		}
 	}
 
-	if err := info.LoadSettings(); err != nil {
-		backend.Logger.Warn("Plugin proxy routes are matched in the order plugin.json declares them", "pluginId", jsondata.ID, "reason", err)
-	}
-
 	if !opts.Schemas {
 		return info, nil
 	}

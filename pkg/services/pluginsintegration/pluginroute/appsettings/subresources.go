@@ -9,7 +9,6 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginroute/routemux"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
@@ -31,15 +30,8 @@ func (b *Builder) SubresourceHandler(next http.Handler) http.Handler {
 		}},
 	}
 	if b.registersProxy() {
-		b.proxy = newProxy(b)
-		var proxy http.Handler = b.proxy
-		if routes := b.proxyRoutes(); routes != nil {
-			// A request no route matches is answered as the plugin proxy answers
-			// one that matches none of its routes.
-			unmatched := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { b.proxy.serve(w, r, nil) })
-			proxy = routemux.Wrap(b.group, []routemux.Version{routes.version}, routes.handler(b.proxy.serve), unmatched, nil)
-		}
-		handlers["proxy"] = subresource{methods: forwardedMethods, handler: proxy}
+		b.proxy = newProxy(b, b.proxyRoutes())
+		handlers["proxy"] = subresource{methods: forwardedMethods, handler: b.proxy}
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -98,6 +90,8 @@ func (b *Builder) Destroy() {
 	}
 }
 
+// registersProxy is whether the proxy subresource is served: only for the
+// routes the settings manifest declares.
 func (b *Builder) registersProxy() bool {
-	return b.opts.RegisterProxy && (len(b.pluginJSON.Routes) > 0 || b.proxyRoutes() != nil)
+	return b.opts.RegisterProxy && b.proxyRoutes() != nil
 }

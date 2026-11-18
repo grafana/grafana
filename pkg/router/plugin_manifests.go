@@ -364,9 +364,7 @@ func fetchPluginManifests(ctx context.Context, client *http.Client, rawURL strin
 		for _, manifest := range plugin.Manifests {
 			definition.MigrateDeprecatedRoutes(manifest)
 		}
-		if err := plugin.LoadSettings(); err != nil {
-			logging.FromContext(ctx).Warn("router: plugin proxy routes are matched in the order plugin.json declares them", "pluginId", plugin.JSONData.ID, "reason", err)
-		}
+		loadSettingsManifest(ctx, plugin)
 	}
 
 	return deployment, nil
