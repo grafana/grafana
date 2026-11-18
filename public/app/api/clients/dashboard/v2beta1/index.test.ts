@@ -16,7 +16,8 @@ describe('dashboardAPIv2beta1 variable cache invalidation', () => {
       reducer: {
         [dashboardAPIv2beta1.reducerPath]: dashboardAPIv2beta1.reducer,
       },
-      middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(dashboardAPIv2beta1.middleware),
+      middleware: (getDefaultMiddleware) =>
+        getDefaultMiddleware({ serializableCheck: false, immutableCheck: false }).concat(dashboardAPIv2beta1.middleware),
     });
 
   it('does not refetch an active getVariable subscription after deleting that variable', async () => {
