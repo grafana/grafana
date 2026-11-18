@@ -3,6 +3,7 @@ import { render, screen, type RenderResult } from '@testing-library/react';
 import {
   type Field,
   type GrafanaTheme2,
+  FieldColorModeId,
   FieldType,
   MappingType,
   ThemeContext,
@@ -10,7 +11,7 @@ import {
   fieldColorModeRegistry,
   getColorByStringHash,
 } from '@grafana/data';
-import { FieldColorModeId } from '@grafana/schema';
+import { ThresholdsMode } from '@grafana/schema';
 
 import { getTextColorForBackground } from '../../../../utils/colors';
 import { getTagColorVariables, getTagColorsFromName, getTransparentOutlineColor } from '../../../../utils/tags';
@@ -61,6 +62,27 @@ describe('PillCell', () => {
         ),
         `<span style="background-color: rgb(63, 43, 91); color: rgb(247, 248, 250);">value1</span>`
       );
+    });
+
+    it.each([
+      ['classic palette', FieldColorModeId.PaletteClassic, 'rgb(222, 218, 247)', 'rgb(32, 34, 38)'],
+      [
+        'classic palette by series name',
+        FieldColorModeId.PaletteClassicByName,
+        'rgb(98, 158, 81)',
+        'rgb(247, 248, 250)',
+      ],
+      ['thresholds', FieldColorModeId.Thresholds, 'rgb(63, 43, 91)', 'rgb(247, 248, 250)'],
+    ])('preserves legacy colors for %s', (_, colorMode, backgroundColor, color) => {
+      const mockField = fieldWithValues(['value1']);
+      const field = {
+        ...mockField,
+        config: { ...mockField.config, color: { mode: colorMode } },
+      } satisfies Field;
+
+      render(<PillCell getTextColorForBackground={getTextColorForBackground} field={field} rowIdx={0} theme={theme} />);
+
+      expect(screen.getByText('value1')).toHaveStyle({ backgroundColor, color });
     });
 
     it('empty string', () => {
@@ -287,22 +309,95 @@ describe('PillCell', () => {
 
       renderRefreshed(field);
       const pill = screen.getByText('none');
-      expectBaseColor(pill, 'rgba(255, 255, 255, 0)', refreshTheme);
+      const transparent = refreshTheme.visualization.getColorByName('transparent');
+      expectBaseColor(pill, transparent, refreshTheme);
       expect(pill).toHaveStyle({
-        boxShadow: `inset 0 0 0 1px ${getTransparentOutlineColor('rgba(255, 255, 255, 0)', refreshTheme.colors.border.strong)}`,
+        boxShadow: `inset 0 0 0 1px ${getTransparentOutlineColor(transparent, refreshTheme.colors.border.strong)}`,
       });
     });
 
-    it('keeps a categorical field palette as the background', () => {
+    it.each([
+      ['classic palette', FieldColorModeId.PaletteClassic, 'value1'],
+      ['classic palette by series name', FieldColorModeId.PaletteClassicByName, 'test'],
+    ])('uses theme tag colors for the %s', (_, colorMode, colorName) => {
       const mockField = fieldWithValues(['value1']);
       const classic = {
         ...mockField,
-        config: { ...mockField.config, color: { mode: FieldColorModeId.PaletteClassic } },
+        config: { ...mockField.config, color: { mode: colorMode } },
       } satisfies Field;
 
       renderRefreshed(classic);
-      const palette = fieldColorModeRegistry.get(FieldColorModeId.PaletteClassic).getColors!(refreshTheme);
+      const { background, text } = getTagColorsFromName(colorName, refreshTheme);
+      expectTagColors(screen.getByText('value1'), background, text);
+    });
+
+    it('honours other categorical field palettes over the tag colors', () => {
+      const mockField = fieldWithValues(['value1']);
+      const colorblind = {
+        ...mockField,
+        config: { ...mockField.config, color: { mode: FieldColorModeId.PaletteColorblind } },
+      } satisfies Field;
+
+      renderRefreshed(colorblind);
+      const palette = fieldColorModeRegistry.get(FieldColorModeId.PaletteColorblind).getColors!(refreshTheme);
       expectBaseColor(screen.getByText('value1'), getColorByStringHash(palette, 'value1'), refreshTheme);
+    });
+
+    it('assigns stable shades of the configured color to pill labels', () => {
+      const field = fieldWithValues(['alpha,beta,gamma']);
+      field.config.color = { mode: FieldColorModeId.Shades, fixedColor: '#ff0000' };
+
+      expectHTML(
+        render(
+          <PillCell getTextColorForBackground={getTextColorForBackground} field={field} rowIdx={0} theme={theme} />
+        ),
+        `
+        <span style="background-color: rgb(225, 0, 6); color: rgb(247, 248, 250);">alpha</span>
+        <span style="background-color: rgb(255, 22, 15); color: rgb(247, 248, 250);">beta</span>
+        <span style="background-color: rgb(225, 0, 6); color: rgb(247, 248, 250);">gamma</span>
+        `
+      );
+    });
+
+    it('uses a continuous scale for numeric pill values', () => {
+      const field = fieldWithValues(['0,50,100']);
+      field.config.color = { mode: FieldColorModeId.ContinuousBlues };
+      field.config.min = 0;
+      field.config.max = 100;
+
+      expectHTML(
+        render(
+          <PillCell getTextColorForBackground={getTextColorForBackground} field={field} rowIdx={0} theme={theme} />
+        ),
+        `
+        <span style="background-color: rgb(24, 27, 31); color: rgb(247, 248, 250);">0</span>
+        <span style="background-color: rgb(28, 62, 114); color: rgb(247, 248, 250);">50</span>
+        <span style="background-color: rgb(31, 96, 196); color: rgb(247, 248, 250);">100</span>
+        `
+      );
+    });
+
+    it('applies thresholds to numeric pills when value mappings are not configured', () => {
+      const field = fieldWithValues(['0,50,100']);
+      field.config.color = { mode: FieldColorModeId.Thresholds };
+      field.config.thresholds = {
+        mode: ThresholdsMode.Absolute,
+        steps: [
+          { value: -Infinity, color: 'green' },
+          { value: 50, color: 'red' },
+        ],
+      };
+
+      expectHTML(
+        render(
+          <PillCell getTextColorForBackground={getTextColorForBackground} field={field} rowIdx={0} theme={theme} />
+        ),
+        `
+        <span style="background-color: rgb(115, 191, 105); color: rgb(247, 248, 250);">0</span>
+        <span style="background-color: rgb(242, 73, 92); color: rgb(247, 248, 250);">50</span>
+        <span style="background-color: rgb(242, 73, 92); color: rgb(247, 248, 250);">100</span>
+        `
+      );
     });
   });
 
@@ -346,16 +441,40 @@ describe('PillCell', () => {
         <span style="background-color: rgb(0, 255, 0); color: rgb(247, 248, 250);">success</span>
         <span style="background-color: rgb(255, 0, 0); color: rgb(247, 248, 250);">error</span>
         <span style="background-color: rgb(255, 255, 0); color: rgb(32, 34, 38);">warning</span>
-        <span style="background-color: rgb(255, 120, 10); color: rgb(247, 248, 250);">unknown</span>
+        <span style="background-color: rgb(5, 43, 81); color: rgb(247, 248, 250);">unknown</span>
         `
       );
     });
 
-    it('looks the mapped color up by the raw value, not by the text the mapping renders', () => {
+    it('uses the selected color scheme when a matching value mapping only changes text', () => {
+      const field = fieldWithValues(['success,error']);
+      field.config = {
+        color: { mode: FieldColorModeId.PaletteClassic },
+        mappings: [
+          {
+            type: MappingType.ValueToText,
+            options: {
+              success: { text: 'OK' },
+              error: { text: 'Bad' },
+            },
+          },
+        ],
+      };
+      field.display = (value: unknown) => ({ text: value === 'success' ? 'OK' : 'Bad', color: '#ff780a', numeric: 0 });
+
+      expectHTML(
+        render(
+          <PillCell getTextColorForBackground={getTextColorForBackground} field={field} rowIdx={0} theme={theme} />
+        ),
+        `
+        <span style="background-color: rgb(229, 172, 14); color: rgb(247, 248, 250);">OK</span>
+        <span style="background-color: rgb(87, 148, 242); color: rgb(247, 248, 250);">Bad</span>
+        `
+      );
+    });
+
+    it('uses explicit mapping colors instead of the selected color scheme', () => {
       const mockField = fieldWithValues(['success,error']);
-      // a mapping that rewrites the text as well as the color. `display` resolves against the raw
-      // value, as the real one does, and has no answer for the text it produced — so looking the
-      // color up by that text loses the mapping.
       const mapped: Record<string, { text: string; color: string }> = {
         success: { text: 'OK', color: '#00FF00' },
         error: { text: 'Bad', color: '#FF0000' },
@@ -364,6 +483,7 @@ describe('PillCell', () => {
         ...mockField,
         config: {
           ...mockField.config,
+          color: { mode: FieldColorModeId.Shades, fixedColor: '#0000ff' },
           mappings: [{ type: MappingType.ValueToText, options: mapped }],
         },
         display: (value: unknown) => ({

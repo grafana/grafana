@@ -539,6 +539,24 @@ export function isReversibleFieldColorMode(mode: FieldColorMode): boolean {
   return mode instanceof FieldColorSchemeMode && mode.isByValue;
 }
 
+/** @internal */
+export function getFieldColorPalette(field: Field, theme: GrafanaTheme2): string[] | undefined {
+  const color = field.config.color;
+  if (!color) {
+    return undefined;
+  }
+
+  if (color.mode === FieldColorModeId.Fixed) {
+    return [theme.visualization.getColorByName(color.fixedColor ?? FALLBACK_COLOR)];
+  }
+
+  if (color.mode === FieldColorModeId.Shades) {
+    return getShadesOfColor(theme.visualization.getColorByName(color.fixedColor ?? FALLBACK_COLOR));
+  }
+
+  return fieldColorModeRegistry.getIfExists(color.mode)?.getColors?.(theme);
+}
+
 export function getColorByStringHash(colors: string[], string: string) {
   return colors[Math.abs(stringHash(string)) % colors.length];
 }
@@ -554,33 +572,34 @@ function getShadedColor(field: Field, theme: GrafanaTheme2) {
     const baseColorString: string = theme.visualization.getColorByName(
       field.config.color?.fixedColor ?? FALLBACK_COLOR
     );
-
-    const colors: string[] = [
-      baseColorString, // start with base color
-    ];
-
-    const shadesCount = 6;
-    const maxHueSpin = 10; // hue spin, max is 360
-    const maxDarken = 35; // max 100%
-    const maxBrighten = 35; // max 100%
-
-    for (let i = 1; i < shadesCount; i++) {
-      // push alternating darker and brighter shades
-      colors.push(
-        tinycolor(baseColorString)
-          .spin((i / shadesCount) * maxHueSpin)
-          .brighten((i / shadesCount) * maxDarken)
-          .toHexString()
-      );
-      colors.push(
-        tinycolor(baseColorString)
-          .spin(-(i / shadesCount) * maxHueSpin)
-          .darken((i / shadesCount) * maxBrighten)
-          .toHexString()
-      );
-    }
-
+    const colors = getShadesOfColor(baseColorString);
     const seriesIndex = field.state?.seriesIndex ?? 0;
     return colors[seriesIndex % colors.length];
   };
+}
+
+export function getShadesOfColor(baseColor: string): string[] {
+  const colors: string[] = [baseColor];
+
+  const shadesCount = 6;
+  const maxHueSpin = 10;
+  const maxDarken = 35;
+  const maxBrighten = 35;
+
+  for (let i = 1; i < shadesCount; i++) {
+    colors.push(
+      tinycolor(baseColor)
+        .spin((i / shadesCount) * maxHueSpin)
+        .brighten((i / shadesCount) * maxDarken)
+        .toHexString()
+    );
+    colors.push(
+      tinycolor(baseColor)
+        .spin(-(i / shadesCount) * maxHueSpin)
+        .darken((i / shadesCount) * maxBrighten)
+        .toHexString()
+    );
+  }
+
+  return colors;
 }
