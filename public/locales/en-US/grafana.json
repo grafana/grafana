@@ -13524,6 +13524,9 @@
     }
   },
   "navigation": {
+    "administration-section-nav": {
+      "label": "Administration"
+    },
     "assistant-toolbar-button": {
       "arrange-window": "Arrange window",
       "assistant-page": "Assistant and page",
@@ -13636,7 +13639,10 @@
       "aria-label": "New",
       "new-template-dashboard-button": "Use template"
     },
-    "rss-button": "Latest from the blog"
+    "rss-button": "Latest from the blog",
+    "section-nav-menu": {
+      "label": "Menu"
+    }
   },
   "news": {
     "category-news": "News",
