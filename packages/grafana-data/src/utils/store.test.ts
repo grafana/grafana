@@ -290,8 +290,21 @@ describe('Store when localStorage is unavailable', () => {
       store = new Store();
     });
 
-    it('set and setObject throw so callers can react, e.g. by pruning', () => {
-      expect(() => store.set('key', 'value')).toThrow(expect.objectContaining({ name: 'QuotaExceededError' }));
+    it('set drops the value and warns only once', () => {
+      const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+      expect(() => store.set('key', 'value')).not.toThrow();
+      expect(() => store.set('other', 'value')).not.toThrow();
+      expect(() => store.delete('key')).not.toThrow();
+      expect(warn).toHaveBeenCalledTimes(1);
+
+      warn.mockRestore();
+    });
+
+    it('set with throwOnFailure and setObject throw so callers can react, e.g. by pruning', () => {
+      expect(() => store.set('key', 'value', { throwOnFailure: true })).toThrow(
+        expect.objectContaining({ name: 'QuotaExceededError' })
+      );
       expect(() => store.setObject('key', { a: 1 })).toThrow(
         expect.objectContaining({ name: 'QuotaExceededError', message: expect.stringMatching(/Could not save item/) })
       );

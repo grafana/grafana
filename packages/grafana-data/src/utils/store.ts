@@ -2,6 +2,11 @@
 type StoreValue = string | number | boolean | null;
 type StoreSubscriber = () => void;
 
+export interface StoreSetOptions {
+  /** Throw when storage is available but the write fails, e.g. QuotaExceededError. Defaults to false. */
+  throwOnFailure?: boolean;
+}
+
 /**
  * @deprecated Import singleton instance 'store' from '@grafana/data' instead
  */
@@ -45,6 +50,16 @@ export class Store {
     return this.memory.get(key);
   }
 
+  // Warn only once so a full or broken storage doesn't flood the console on every write
+  private warnedWriteFailure = false;
+
+  private warnWriteFailure(key: string, error: unknown) {
+    if (!this.warnedWriteFailure) {
+      this.warnedWriteFailure = true;
+      console.warn(`Could not write to localStorage: ${key}. Further write failures will not be logged. [${error}]`);
+    }
+  }
+
   private notifySubscribers(key: string) {
     const keySubscribers = this.subscribers.get(key);
     if (keySubscribers) {
@@ -73,8 +88,24 @@ export class Store {
     return this.read(key);
   }
 
-  /* Throws when storage is available but the write fails, e.g. QuotaExceededError */
-  set(key: string, value: StoreValue) {
+  /**
+   * Best-effort write: by default, failures such as QuotaExceededError are logged once and the value is dropped.
+   * Pass `throwOnFailure` when the caller needs to react to a failed write, e.g. by pruning and retrying.
+   */
+  set(key: string, value: StoreValue, options?: StoreSetOptions) {
+    try {
+      this.write(key, value);
+    } catch (error) {
+      if (options?.throwOnFailure) {
+        throw error;
+      }
+      this.warnWriteFailure(key, error);
+      return;
+    }
+    this.notifySubscribers(key);
+  }
+
+  private write(key: string, value: StoreValue) {
     const storage = this.storage;
     try {
       if (!storage) {
@@ -88,7 +119,6 @@ export class Store {
       }
       this.memory.set(key, String(value));
     }
-    this.notifySubscribers(key);
   }
 
   getBool(key: string, def: boolean): boolean {
@@ -122,7 +152,7 @@ export class Store {
       throw new Error(`Could not stringify object: ${key}. [${error}]`);
     }
     try {
-      this.set(key, json);
+      this.set(key, json, { throwOnFailure: true });
     } catch (error) {
       // Likely hitting storage quota
       const errorToThrow = new Error(`Could not save item in localStorage: ${key}. [${error}]`);
@@ -144,7 +174,7 @@ export class Store {
       this.storage?.removeItem(key);
     } catch (error) {
       if (!isUnavailableError(error)) {
-        throw error;
+        this.warnWriteFailure(key, error);
       }
     }
     this.notifySubscribers(key);
