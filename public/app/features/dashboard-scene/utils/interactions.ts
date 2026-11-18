@@ -483,7 +483,9 @@ export const DashboardInteractions = {
   setVisualOption: (properties?: {
     ui: 'panel-edit' | 'view-panel';
     option: string;
-    value: string;
+    // Only set when the value cannot be free text; see getReportableOptionValue.
+    value?: string;
+    value_type: string;
     panel_type: string;
     panel_id: number;
   }) => {
