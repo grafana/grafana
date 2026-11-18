@@ -3,9 +3,11 @@ package definition
 import (
 	"errors"
 	"fmt"
+	"maps"
 	"net/http"
 	"net/url"
 	"reflect"
+	"slices"
 	"strings"
 
 	"k8s.io/kube-openapi/pkg/spec3"
@@ -23,9 +25,23 @@ const (
 	SettingsAPIInstance = "instance"
 )
 
-// SettingsProxyRoot is where the proxy routes are declared in the settings
-// manifest's version: below the proxy subresource of the settings object.
-const SettingsProxyRoot = "/namespaces/{namespace}/" + SettingsAPIResource + "/{name}/proxy"
+// The settings manifest's version declares its routes below the settings
+// object's subresources: the plugin's own resources, which it serves, and the
+// routes its proxy forwards. Those are the only routes the settings API serves.
+const (
+	SettingsProxyRoot     = settingsObjectRoot + "/proxy"
+	SettingsResourcesRoot = settingsObjectRoot + "/resources"
+
+	settingsObjectRoot = "/namespaces/{namespace}/" + SettingsAPIResource + "/{name}"
+	// settingsInstanceRoot is the settings object as an app manifest may
+	// name it instead: by the URL it is served at.
+	settingsInstanceRoot = "/namespaces/{namespace}/" + SettingsAPIResource + "/" + SettingsAPIInstance
+)
+
+// IsBelow reports whether path is root or below it.
+func IsBelow(path, root string) bool {
+	return path == root || strings.HasPrefix(path, root+"/")
+}
 
 // RouteMatcher matches a request against plugin.json routes as the plugin
 // proxy does: the first route, in the order they are declared, that serves
@@ -46,69 +62,154 @@ var settingsKind = app.ManifestVersionKind{
 var SettingsRouteOptions = manifestroutes.Options{UnservedMethods: []string{http.MethodTrace}}
 
 // NewSettingsManifest describes an app's settings API: the app resource,
-// served under the plugin ID, and the routes its proxy serves. It returns nil
-// for a plugin that is not an app.
+// served under the plugin ID, and the routes of its resources and proxy
+// subresources. It returns nil for a plugin that is not an app.
 //
-// The proxy routes are the ones an app manifest declares or, failing that,
-// plugin.json's. plugin.json routes are matched in the order they are
-// declared, and the settings API matches the most specific path, as it does
-// any manifest route, so they are only included when every request they are
-// probed with is forwarded the same way, as match decides; without match they
-// are left out. When the routes are left out, err says why, and the settings
-// API serves no proxy.
+// An app manifest whose group is the plugin ID is the foundation of the
+// settings manifest: it describes the settings API rather than an API of its
+// own, and its v0alpha1 version declares routes below the settings object's
+// resources and proxy subresources, as /app/{name}/... or /app/instance/....
+//
+// When it declares no proxy routes, plugin.json's are used. plugin.json
+// routes are matched in the order they are declared, and the settings API
+// matches the most specific path, as it does any manifest route, so they are
+// only included when every request they are probed with is forwarded the same
+// way, as match decides; without match they are left out.
+//
+// err says what was left out of the manifest, which is returned regardless.
 func NewSettingsManifest(p PluginDefinition, match RouteMatcher) (manifest *app.ManifestData, err error) {
 	if p.JSONData.Type != plugins.TypeApp {
 		return nil, nil
 	}
+	manifest = &app.ManifestData{AppName: p.JSONData.ID}
+	if base := p.settingsFoundation(); base != nil {
+		*manifest = *base
+	}
+	manifest.Group = p.JSONData.ID
+	manifest.PreferredVersion = SettingsAPIVersion
+
 	version := app.ManifestVersion{
 		Name:   SettingsAPIVersion,
 		Served: true,
 		Kinds:  []app.ManifestVersionKind{settingsKind},
 	}
-	manifest = &app.ManifestData{
-		AppName:          p.JSONData.ID,
-		Group:            p.JSONData.ID,
-		PreferredVersion: SettingsAPIVersion,
-	}
 	defer func() { manifest.Versions = []app.ManifestVersion{version} }()
 
-	paths, declared, err := p.proxyRoutes()
-	if err != nil || len(paths) == 0 {
-		return manifest, err
+	resources, proxy, errs := settingsRoutes(manifest)
+	if len(resources) > 0 {
+		candidate := withPaths(version, resources)
+		if _, err := settingsRouteMux(candidate); err != nil {
+			errs = append(errs, fmt.Errorf("resource routes are left out: %w", err))
+		} else {
+			version = candidate
+		}
 	}
-	if !declared {
-		paths = withTrailingSlashes(paths)
-	}
-	routes := make(map[string]spec3.PathProps, len(paths))
-	for path, props := range paths {
-		routes[SettingsProxyRoot+path] = props
-	}
-	candidate := version
-	candidate.OpenAPI.Paths = routes
 
-	matched, err := settingsRouteMux(candidate)
-	if err != nil {
-		return manifest, err
-	}
+	declared := len(proxy) > 0
 	if !declared {
+		converted, err := ProxyRoutesToOpenAPI(p.JSONData.Routes)
+		if err != nil {
+			return manifest, errors.Join(append(errs, err)...)
+		}
+		for path, props := range withTrailingSlashes(converted) {
+			proxy[SettingsProxyRoot+path] = props
+		}
+	}
+	if len(proxy) == 0 {
+		return manifest, errors.Join(errs...)
+	}
+
+	candidate := withPaths(version, proxy)
+	matched, err := settingsRouteMux(candidate)
+	if err == nil && !declared {
 		if match == nil {
-			return manifest, errors.New("plugin.json routes cannot be checked without the plugin proxy's route matcher")
+			err = errors.New("plugin.json routes cannot be checked without the plugin proxy's route matcher")
+		} else {
+			err = verifyProxyRoutes(matched, p.JSONData.Routes, match)
 		}
-		if err := verifyProxyRoutes(matched, p.JSONData.Routes, match); err != nil {
-			return manifest, err
-		}
+	}
+	if err != nil {
+		return manifest, errors.Join(append(errs, fmt.Errorf("proxy routes are left out: %w", err))...)
 	}
 	version = candidate
-	return manifest, nil
+	return manifest, errors.Join(errs...)
+}
+
+// settingsFoundation returns the app manifest that describes the settings
+// API, the one whose group is the plugin ID, or nil.
+func (p PluginDefinition) settingsFoundation() *app.ManifestData {
+	for _, m := range p.Manifests {
+		if p.isSettingsFoundation(m) {
+			return m
+		}
+	}
+	return nil
+}
+
+// isSettingsFoundation is whether m describes the settings API. Its group is
+// the plugin ID, which has no dots: a group with one is an API of its own.
+func (p PluginDefinition) isSettingsFoundation(m *app.ManifestData) bool {
+	id := p.JSONData.ID
+	return m != nil && id != "" && !strings.Contains(id, ".") && m.Group == id
+}
+
+// settingsRoutes returns the resource and proxy routes the settings manifest's
+// foundation declares, below the settings object as SettingsResourcesRoot and
+// SettingsProxyRoot name it, and errors for what it declares that the settings
+// API does not serve.
+func settingsRoutes(foundation *app.ManifestData) (resources, proxy map[string]spec3.PathProps, errs []error) {
+	resources, proxy = map[string]spec3.PathProps{}, map[string]spec3.PathProps{}
+	for _, version := range foundation.Versions {
+		if version.Name != SettingsAPIVersion {
+			if version.Served {
+				errs = append(errs, fmt.Errorf("version %s is not served: the settings API serves only %s", version.Name, SettingsAPIVersion))
+			}
+			continue
+		}
+		for path, props := range version.OpenAPI.Paths {
+			if rest, ok := strings.CutPrefix(path, settingsInstanceRoot); ok && (rest == "" || rest[0] == '/') {
+				path = settingsObjectRoot + rest
+			}
+			switch {
+			case IsBelow(path, SettingsProxyRoot):
+				proxy[path] = props
+			case IsBelow(path, SettingsResourcesRoot):
+				for method, op := range manifestroutes.Operations(&props) {
+					if _, ok := op.Extensions[ExtensionProxy]; ok {
+						errs = append(errs, fmt.Errorf("%s %s: %s is only served below the proxy subresource", method, path, ExtensionProxy))
+						props = WithoutProxyExtension(props)
+						break
+					}
+				}
+				resources[path] = props
+			default:
+				errs = append(errs, fmt.Errorf("%s is not served: the settings API serves routes only below its resources and proxy subresources", path))
+			}
+		}
+	}
+	return resources, proxy, errs
+}
+
+// withPaths returns version with paths added to its OpenAPI paths.
+func withPaths(version app.ManifestVersion, paths map[string]spec3.PathProps) app.ManifestVersion {
+	merged := make(map[string]spec3.PathProps, len(version.OpenAPI.Paths)+len(paths))
+	maps.Copy(merged, version.OpenAPI.Paths)
+	maps.Copy(merged, paths)
+	version.OpenAPI.Paths = merged
+	return version
 }
 
 // LoadSettings sets p.Settings from p's plugin.json and manifests, which must
-// already have their deprecated routes migrated; see NewSettingsManifest. An
-// error says why the proxy routes were left out of it; Settings is set
-// regardless.
+// already have their deprecated routes migrated, and removes the manifest it
+// is founded on from p.Manifests; see NewSettingsManifest. An error says what
+// was left out of it; Settings is set regardless.
 func (p *PluginDefinition) LoadSettings(match RouteMatcher) error {
 	settings, err := NewSettingsManifest(*p, match)
 	p.Settings = settings
+	if settings != nil {
+		// The foundation describes the settings API, not an API of its own.
+		p.Manifests = slices.DeleteFunc(slices.Clone(p.Manifests), p.isSettingsFoundation)
+	}
 	return err
 }
 
@@ -168,8 +269,9 @@ type matchedRoute struct{ route *plugins.Route }
 
 func (matchedRoute) ServeHTTP(http.ResponseWriter, *http.Request) {}
 
-// settingsRouteMux registers a settings version's routes on a mux the way the
-// settings API mounts them, relative to the version.
+// settingsRouteMux parses a settings version's routes, and registers its
+// proxy routes on a mux the way the settings API mounts them, relative to the
+// version.
 func settingsRouteMux(version app.ManifestVersion) (*http.ServeMux, error) {
 	parsed, problems := manifestroutes.Parse(version, SettingsRouteOptions)
 	if len(problems) > 0 {
@@ -181,6 +283,9 @@ func settingsRouteMux(version app.ManifestVersion) (*http.ServeMux, error) {
 	}
 	mux := http.NewServeMux()
 	for _, r := range parsed {
+		if !IsBelow(r.Declared, SettingsProxyRoot) {
+			continue
+		}
 		for method, op := range manifestroutes.Operations(&r.Operations) {
 			route, err := ProxyRouteFor(r, method, op)
 			if err != nil {

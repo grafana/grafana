@@ -134,22 +134,23 @@ func TestIntegrationAppPluginProxy(t *testing.T) {
 	require.NotContains(t, paths, settingsRoot+"namespaces/{namespace}/app/instance/proxy")
 }
 
-// A manifest declares proxy routes in its OpenAPI paths below
-// app/instance/proxy. The settings API serves them, at the URL plugin.json
-// routes are served at, and they replace the plugin.json routes.
-func TestIntegrationAppPluginProxyRoutesFromManifest(t *testing.T) {
+// The app manifest whose group is the plugin ID describes the settings API: its
+// v0alpha1 version declares the routes below app/instance/resources and
+// app/instance/proxy. The settings API serves its proxy routes, at the URL
+// plugin.json routes are served at, and they replace the plugin.json routes.
+func TestIntegrationAppPluginSettingsRoutesFromManifest(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	upstream := newProxyUpstream(t)
 	manifest, err := json.Marshal(map[string]any{
 		"apiVersion": "apps.grafana.app/v1alpha2",
 		"kind":       "AppManifest",
-		"metadata":   map[string]any{"name": "test-app-with-sdk-manifest"},
+		"metadata":   map[string]any{"name": testAppID},
 		"spec": map[string]any{
-			"appName": "test-app-with-sdk-manifest",
-			"group":   testAppGroup,
+			"appName": testAppID,
+			"group":   testAppID,
 			"versions": []map[string]any{{
-				"name": "v1",
+				"name": "v0alpha1",
 				"routes": map[string]any{"namespaced": map[string]any{
 					"/app/instance/proxy/v2/{path:*}": map[string]any{
 						"get": map[string]any{
@@ -158,6 +159,12 @@ func TestIntegrationAppPluginProxyRoutesFromManifest(t *testing.T) {
 								"headers": []map[string]any{{"name": "X-Upstream", "content": "{{.JsonData.upstream}}"}},
 							},
 							"responses": map[string]any{"200": map[string]any{"description": "OK"}},
+						},
+					},
+					"/app/instance/resources/things/{id}": map[string]any{
+						"get": map[string]any{
+							"operationId": "getThing",
+							"responses":   map[string]any{"200": map[string]any{"description": "OK"}},
 						},
 					},
 				}},
@@ -182,17 +189,16 @@ func TestIntegrationAppPluginProxyRoutesFromManifest(t *testing.T) {
 		"an undeclared method is refused as on any manifest route")
 	require.Empty(t, upstream.take())
 
-	require.Contains(t, settingsPaths(t, helper), settingsRoot+"namespaces/{namespace}/app/instance/proxy/v2/{path}")
+	paths := settingsPaths(t, helper)
+	require.Contains(t, paths, settingsRoot+"namespaces/{namespace}/app/instance/proxy/v2/{path}")
+	require.Contains(t, paths, settingsRoot+"namespaces/{namespace}/app/instance/resources/things/{id}")
+	require.NotContains(t, paths, settingsRoot+"namespaces/{namespace}/app/instance/resources",
+		"the declared routes replace the opaque resources path")
 
-	// The manifest's own API leaves the proxy routes to the settings API, and
-	// its OpenAPI document does not describe them.
-	for _, path := range openAPIPaths(t, helper, testAppGroup+"/v1") {
-		require.NotContains(t, path, "/proxy/")
+	// The manifest describes the settings API, not an API of its own.
+	groups, err := helper.NewDiscoveryClient().ServerGroups()
+	require.NoError(t, err)
+	for _, g := range groups.Groups {
+		require.NotEqual(t, testAppGroup, g.Name)
 	}
-	rsp := apis.DoRequest(helper, apis.RequestParams{
-		User: viewer,
-		Path: "/apis/" + testAppGroup + "/v1/namespaces/" + apis.DefaultNamespace + "/app/instance/proxy/v2/a",
-	}, &map[string]any{})
-	require.Equal(t, http.StatusNotFound, rsp.Response.StatusCode)
-	require.Empty(t, upstream.take())
 }

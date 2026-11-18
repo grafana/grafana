@@ -970,16 +970,14 @@ func TestGetAPIRoutesWithInvalidSearchDeclarations(t *testing.T) {
 	require.Contains(t, mountedRoutes(b, gv), "namespaces/{namespace}/foobar")
 }
 
-// Proxy routes are served by the app settings API, so the manifest's API
-// leaves them out without reporting them, and refuses a proxy operation
-// declared anywhere else.
-func TestVersionRoutesLeaveProxyRoutesToTheSettingsAPI(t *testing.T) {
+// Proxy routes are served only by the app settings API, so the manifest's API
+// refuses a proxy operation.
+func TestVersionRoutesRefuseProxyOperations(t *testing.T) {
 	proxy := &spec3.Operation{}
 	proxy.AddExtension(definition.ExtensionProxy, definition.ProxyTarget{URL: "https://example"})
 	plain := &spec3.Operation{}
 	manifest := testManifest(t)
 	manifest.Versions[1].OpenAPI.Paths = map[string]spec3.PathProps{
-		definition.SettingsProxyPrefix + "api/{path:*}": {Get: proxy},
 		"/mixed": {Get: plain, Post: proxy},
 	}
 	b := &manifestBuilder{group: manifest.Group, manifest: manifest, pluginID: "example-app"}
@@ -992,7 +990,7 @@ func TestVersionRoutesLeaveProxyRoutesToTheSettingsAPI(t *testing.T) {
 	require.NotNil(t, routes[0].Operations.Get)
 	require.Nil(t, routes[0].Operations.Post, "a proxy operation is not served here")
 
-	require.Len(t, skipped, 1, "the settings proxy subtree is not reported")
+	require.Len(t, skipped, 1)
 	require.Equal(t, "/mixed", skipped[0].Path)
 	require.Equal(t, http.MethodPost, skipped[0].Method)
 

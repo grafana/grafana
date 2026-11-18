@@ -103,12 +103,18 @@ func pluginWithRoutes(routes []*plugins.Route, manifests ...*app.ManifestData) d
 	return p
 }
 
-// manifestDeclaring is a manifest whose v1 declares paths.
+// manifestDeclaring is the app manifest the settings manifest is founded on.
 func manifestDeclaring(paths map[string]spec3.PathProps) *app.ManifestData {
-	return &app.ManifestData{Group: "example.ext.grafana.app", Versions: []app.ManifestVersion{{
-		Name: "v1", Served: true, OpenAPI: app.ManifestVersionOpenAPI{Paths: paths},
+	return &app.ManifestData{Group: exampleApp, Versions: []app.ManifestVersion{{
+		Name: apppluginV0.VERSION, Served: true, OpenAPI: app.ManifestVersionOpenAPI{Paths: paths},
 	}}}
 }
+
+// The settings object as an app manifest names it in its paths.
+const (
+	declaredProxy     = "/namespaces/{namespace}/app/instance/proxy/"
+	declaredResources = "/namespaces/{namespace}/app/instance/resources/"
+)
 
 func proxyOperation(target definition.ProxyTarget) *spec3.Operation {
 	op := &spec3.Operation{}
@@ -178,11 +184,11 @@ func TestRoutesLeftOutOfTheSettingsManifestAreNotServed(t *testing.T) {
 func TestManifestDeclaredProxyRoutes(t *testing.T) {
 	up := newUpstream(t)
 	manifest := manifestDeclaring(map[string]spec3.PathProps{
-		definition.SettingsProxyPrefix + "v2/{path:*}": {
+		declaredProxy + "v2/{path:*}": {
 			Get:  proxyOperation(definition.ProxyTarget{URL: up.URL + "/v2"}),
 			Post: proxyOperation(definition.ProxyTarget{URL: up.URL + "/v2", ReqRole: identity.RoleAdmin}),
 		},
-		"/other": {Get: &spec3.Operation{}},
+		declaredResources + "things": {Get: &spec3.Operation{}},
 	})
 
 	t.Run("replace the plugin.json routes", func(t *testing.T) {
@@ -205,7 +211,7 @@ func TestManifestDeclaredProxyRoutes(t *testing.T) {
 
 	t.Run("must all declare where they forward to", func(t *testing.T) {
 		broken := manifestDeclaring(map[string]spec3.PathProps{
-			definition.SettingsProxyPrefix + "v2": {Get: &spec3.Operation{}},
+			declaredProxy + "v2": {Get: &spec3.Operation{}},
 		})
 		s := newProxyServer(t, pluginWithRoutes(exampleRoutes(up.URL), broken))
 		require.Nil(t, s.builder.proxyRoutes())
@@ -255,9 +261,42 @@ func TestOpenAPIPublishesProxyRoutes(t *testing.T) {
 	}
 
 	declared := publish(pluginWithRoutes(nil, manifestDeclaring(map[string]spec3.PathProps{
-		definition.SettingsProxyPrefix + "v2/{path:*}": {Get: proxyOperation(definition.ProxyTarget{URL: "https://example"})},
+		declaredProxy + "v2/{path:*}": {Get: proxyOperation(definition.ProxyTarget{URL: "https://example"})},
 	})))
 	require.Contains(t, declared, item+"/proxy/v2/{path}")
+}
+
+func TestOpenAPIPublishesResourceRoutes(t *testing.T) {
+	const item = "/apis/" + exampleApp + "/v0alpha1/namespaces/{namespace}/app/{name}"
+	b := &Builder{group: exampleApp}
+	newSpec := func() *spec3.OpenAPI {
+		return &spec3.OpenAPI{
+			Paths: &spec3.Paths{Paths: map[string]*spec3.Path{item: {PathProps: spec3.PathProps{
+				Parameters: []*spec3.Parameter{
+					{ParameterProps: spec3.ParameterProps{Name: "namespace", In: "path", Required: true, Schema: spec.StringProperty()}},
+					{ParameterProps: spec3.ParameterProps{Name: "name", In: "path", Required: true, Schema: spec.StringProperty()}},
+				},
+			}}}},
+			Components: &spec3.Components{Schemas: map[string]*spec.Schema{}},
+		}
+	}
+
+	oas := newSpec()
+	require.NoError(t, b.addSubresourcePaths(oas, item, apppluginV0.VERSION))
+	require.Contains(t, oas.Paths.Paths, item+"/resources", "without declared routes, the opaque resources path is published")
+
+	plugin := pluginWithRoutes(nil, manifestDeclaring(map[string]spec3.PathProps{
+		declaredResources + "things/{id}": {Get: &spec3.Operation{OperationProps: spec3.OperationProps{OperationId: "getThing"}}},
+	}))
+	b = &Builder{group: exampleApp, pluginJSON: plugin.JSONData, settings: plugin.Settings}
+	oas = newSpec()
+	require.NoError(t, b.addSubresourcePaths(oas, item, apppluginV0.VERSION))
+	require.NotContains(t, oas.Paths.Paths, item+"/resources", "the routes replace the opaque resources path")
+	thing := oas.Paths.Paths[item+"/resources/things/{id}"]
+	require.NotNil(t, thing)
+	require.Equal(t, "getThing", thing.Get.OperationId)
+	require.Equal(t, []string{"Settings"}, thing.Get.Tags)
+	require.Len(t, thing.Parameters, 3, "the settings path parameters are documented with the route's own")
 }
 
 // The definition module cannot import the settings API's types, so it repeats

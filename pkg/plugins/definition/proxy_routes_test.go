@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/kube-openapi/pkg/spec3"
 
-	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins"
 )
@@ -221,48 +220,4 @@ func TestWithoutProxyExtension(t *testing.T) {
 	require.NotContains(t, published.Get.Extensions, ExtensionProxy)
 	require.Equal(t, true, published.Get.Extensions["x-other"])
 	require.Contains(t, props.Get.Extensions, ExtensionProxy, "the served operation keeps it")
-}
-
-func TestPluginDefinitionProxyRoutes(t *testing.T) {
-	get := spec3.PathProps{Get: &spec3.Operation{}}
-	manifest := func(versions ...app.ManifestVersion) *app.ManifestData {
-		return &app.ManifestData{Group: "example.ext.grafana.app", Versions: versions}
-	}
-	version := func(name string, served bool, paths ...string) app.ManifestVersion {
-		v := app.ManifestVersion{Name: name, Served: served, OpenAPI: app.ManifestVersionOpenAPI{Paths: map[string]spec3.PathProps{}}}
-		for _, p := range paths {
-			v.OpenAPI.Paths[p] = get
-		}
-		return v
-	}
-	jsonRoutes := []*plugins.Route{{Path: "api/*"}}
-
-	t.Run("plugin.json routes are converted when no manifest declares any", func(t *testing.T) {
-		p := PluginDefinition{JSONData: plugins.JSONData{Routes: jsonRoutes}, Manifests: []*app.ManifestData{
-			manifest(version("v1", true, "/other"), version("v2", false, SettingsProxyPrefix+"unserved")),
-		}}
-		paths, declared, err := p.proxyRoutes()
-		require.NoError(t, err)
-		require.False(t, declared)
-		require.Contains(t, paths, "/api/{path:*}")
-	})
-
-	t.Run("a manifest's routes replace them", func(t *testing.T) {
-		p := PluginDefinition{JSONData: plugins.JSONData{Routes: jsonRoutes}, Manifests: []*app.ManifestData{
-			manifest(version("v1", true, "/other", SettingsProxyPrefix+"a", SettingsProxyPrefix+"b/{path:*}")),
-		}}
-		paths, declared, err := p.proxyRoutes()
-		require.NoError(t, err)
-		require.True(t, declared)
-		require.ElementsMatch(t, []string{"/a", "/b/{path:*}"}, slices.Collect(maps.Keys(paths)))
-	})
-
-	t.Run("only one version may declare them", func(t *testing.T) {
-		p := PluginDefinition{Manifests: []*app.ManifestData{
-			manifest(version("v1", true, SettingsProxyPrefix+"a"), version("v2", true, SettingsProxyPrefix+"a")),
-		}}
-		_, declared, err := p.proxyRoutes()
-		require.True(t, declared)
-		require.ErrorContains(t, err, "example.ext.grafana.app/v1 and example.ext.grafana.app/v2")
-	})
 }

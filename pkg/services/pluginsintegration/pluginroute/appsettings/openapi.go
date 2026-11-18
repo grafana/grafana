@@ -129,11 +129,16 @@ func (b *Builder) addSubresourcePaths(oas *spec3.OpenAPI, item, version string) 
 	oas.Paths.Paths[item+"/health"] = operation("getSettingsHealth", "connect GET requests to health of Settings",
 		"HealthCheckResult", spec.RefSchema("#/components/schemas/"+health))
 
-	subresources := []string{"resources"}
-	if b.registersProxy() {
-		converted := b.proxyRoutes()
-		for specPath, props := range converted.paths {
-			props.Parameters = slices.Clone(params)
+	routes := b.settingsRoutes()
+	if len(routes.resources) == 0 {
+		oas.Paths.Paths[item+"/resources"] = operation("getSettingsResources",
+			"Get resources in the resources plugin. NOTE, additional routes may exist, but are not exposed via OpenAPI",
+			"Status", spec.StringProperty())
+	}
+	publish := func(subresource string, paths map[string]spec3.PathProps) {
+		for specPath, props := range paths {
+			props.Parameters = append(slices.Clone(params), props.Parameters...)
+			props.Parameters = append(props.Parameters, undeclaredPathParameters(specPath, &props)...)
 			for _, op := range []**spec3.Operation{&props.Get, &props.Head, &props.Post, &props.Put, &props.Patch, &props.Delete, &props.Options} {
 				if *op != nil {
 					tagged := **op
@@ -141,15 +146,47 @@ func (b *Builder) addSubresourcePaths(oas *spec3.OpenAPI, item, version string) 
 					*op = &tagged
 				}
 			}
-			oas.Paths.Paths[item+"/proxy/"+specPath] = &spec3.Path{PathProps: props}
+			oas.Paths.Paths[strings.TrimSuffix(item+"/"+subresource+"/"+specPath, "/")] = &spec3.Path{PathProps: props}
 		}
 	}
-	for _, v := range subresources {
-		oas.Paths.Paths[item+"/"+v] = operation("getSettings"+strings.ToUpper(v[:1])+v[1:],
-			"Get resources in the "+v+" plugin. NOTE, additional routes may exist, but are not exposed via OpenAPI",
-			"Status", spec.StringProperty())
+	publish("resources", routes.resources)
+	if b.registersProxy() {
+		publish("proxy", b.proxyRoutes().paths)
 	}
 	return nil
+}
+
+// undeclaredPathParameters documents the parameters of a route's path that
+// neither the path nor its operations declare, as strings.
+func undeclaredPathParameters(path string, props *spec3.PathProps) []*spec3.Parameter {
+	declared := map[string]bool{}
+	for _, p := range props.Parameters {
+		declared[p.Name] = true
+	}
+	ops := []*spec3.Operation{props.Get, props.Head, props.Post, props.Put, props.Patch, props.Delete, props.Options}
+	var missing []*spec3.Parameter
+	for _, segment := range strings.Split(path, "/") {
+		if !strings.HasPrefix(segment, "{") || !strings.HasSuffix(segment, "}") {
+			continue
+		}
+		name := segment[1 : len(segment)-1]
+		if declared[name] {
+			continue
+		}
+		inOps := false
+		for _, op := range ops {
+			if op != nil && slices.ContainsFunc(op.Parameters, func(p *spec3.Parameter) bool { return p.Name == name && p.In == "path" }) {
+				inOps = true
+			}
+		}
+		if !inOps {
+			declared[name] = true
+			missing = append(missing, &spec3.Parameter{ParameterProps: spec3.ParameterProps{
+				Name: name, In: "path", Required: true, Schema: spec.StringProperty(),
+			}})
+		}
+	}
+	return missing
 }
 
 func defaultSchema() *pluginschema.PluginSchema {

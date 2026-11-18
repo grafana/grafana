@@ -19,8 +19,20 @@ import (
 
 var logger = log.New("plugins.appsettings")
 
-// proxyRoutes are the proxy routes the settings manifest declares, served
-// through routemux, as a manifest version's routes are.
+// settingsRoutes are the routes the settings manifest declares below the
+// settings object (definition.NewSettingsManifest).
+type settingsRoutes struct {
+	// proxy are the proxy subresource's routes, or nil when it has none.
+	proxy *proxyRoutes
+
+	// resources are the resources subresource's routes, relative to it, for
+	// publishing. The plugin serves its resources, so every request is passed
+	// on, not only those of these routes.
+	resources map[string]spec3.PathProps
+}
+
+// proxyRoutes are the proxy routes of the settings manifest, served through
+// routemux, as a manifest version's routes are.
 type proxyRoutes struct {
 	version routemux.Version
 
@@ -32,11 +44,11 @@ type proxyRoutes struct {
 	paths map[string]spec3.PathProps
 }
 
-// compileProxyRoutes resolves the proxy routes of a settings manifest
-// (definition.NewSettingsManifest), or returns nil when it declares none.
-func compileProxyRoutes(settings *app.ManifestData) (*proxyRoutes, error) {
+// compileSettingsRoutes resolves the routes of a settings manifest.
+func compileSettingsRoutes(settings *app.ManifestData) (*settingsRoutes, error) {
+	compiled := &settingsRoutes{resources: map[string]spec3.PathProps{}}
 	if settings == nil {
-		return nil, nil
+		return compiled, nil
 	}
 	idx := -1
 	for i, v := range settings.Versions {
@@ -45,7 +57,7 @@ func compileProxyRoutes(settings *app.ManifestData) (*proxyRoutes, error) {
 		}
 	}
 	if idx < 0 || len(settings.Versions[idx].OpenAPI.Paths) == 0 {
-		return nil, nil
+		return compiled, nil
 	}
 	version := settings.Versions[idx]
 
@@ -58,28 +70,42 @@ func compileProxyRoutes(settings *app.ManifestData) (*proxyRoutes, error) {
 		return nil, errors.Join(errs...)
 	}
 
-	compiled := &proxyRoutes{
-		version: routemux.Version{Name: version.Name, Routes: parsed},
-		routes:  map[string]map[string]*plugins.Route{},
-		paths:   map[string]spec3.PathProps{},
+	proxy := &proxyRoutes{
+		routes: map[string]map[string]*plugins.Route{},
+		paths:  map[string]spec3.PathProps{},
 	}
-	published := strings.TrimPrefix(definition.SettingsProxyRoot, "/") + "/"
+	var proxied []manifestroutes.Route
 	for _, r := range parsed {
-		byMethod := map[string]*plugins.Route{}
-		for method, op := range manifestroutes.Operations(&r.Operations) {
-			route, err := definition.ProxyRouteFor(r, method, op)
-			if err != nil {
-				return nil, err
+		switch {
+		case definition.IsBelow(r.Declared, definition.SettingsResourcesRoot):
+			compiled.resources[relativeSpecPath(r.SpecPath, definition.SettingsResourcesRoot)] = r.Operations
+		case definition.IsBelow(r.Declared, definition.SettingsProxyRoot):
+			byMethod := map[string]*plugins.Route{}
+			for method, op := range manifestroutes.Operations(&r.Operations) {
+				route, err := definition.ProxyRouteFor(r, method, op)
+				if err != nil {
+					return nil, err
+				}
+				byMethod[method] = route
 			}
-			byMethod[method] = route
+			proxy.routes[r.Declared] = byMethod
+			proxied = append(proxied, r)
+			if !definition.IsTrailingSlashCopy(version, r.Declared) {
+				proxy.paths[relativeSpecPath(r.SpecPath, definition.SettingsProxyRoot)] = definition.WithoutProxyExtension(r.Operations)
+			}
 		}
-		compiled.routes[r.Declared] = byMethod
-		if definition.IsTrailingSlashCopy(version, r.Declared) {
-			continue
-		}
-		compiled.paths[strings.TrimPrefix(r.SpecPath, published)] = definition.WithoutProxyExtension(r.Operations)
+	}
+	if len(proxied) > 0 {
+		proxy.version = routemux.Version{Name: version.Name, Routes: proxied}
+		compiled.proxy = proxy
 	}
 	return compiled, nil
+}
+
+// relativeSpecPath returns a route's published path below a subresource root.
+func relativeSpecPath(specPath, root string) string {
+	rest := strings.TrimPrefix(specPath, strings.TrimPrefix(root, "/"))
+	return strings.TrimPrefix(rest, "/")
 }
 
 // routeFor returns the plugin route a request is forwarded with. ServeMux

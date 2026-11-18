@@ -608,6 +608,6 @@ func (e *authOutcomeExchanger) Exchange(ctx context.Context, r authn.TokenExchan
 // routes it serves, once its manifests are loaded.
 func loadSettingsManifest(ctx context.Context, plugin *definition.PluginDefinition) {
 	if err := plugin.LoadSettings(pluginproxy.MatchRoute); err != nil {
-		logging.FromContext(ctx).Warn("router: plugin proxy routes are not served by the settings API", "pluginId", plugin.JSONData.ID, "reason", err)
+		logging.FromContext(ctx).Warn("router: parts of the plugin settings manifest are not served", "pluginId", plugin.JSONData.ID, "reason", err)
 	}
 }

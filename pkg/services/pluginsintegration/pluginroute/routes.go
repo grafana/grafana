@@ -113,21 +113,18 @@ func parseManifestRoutes(version app.ManifestVersion, skip func(manifestroutes.P
 	return routes
 }
 
-// manifestPaths returns the paths this API serves: proxy routes are left to the
-// app settings API, which serves them below its settings object, and a proxy
-// operation declared anywhere else is refused.
+// manifestPaths returns the paths this API serves. Proxy routes are served only
+// by the app settings API, below its settings object, so a proxy operation
+// is refused.
 func manifestPaths(version app.ManifestVersion, skip func(manifestroutes.Problem)) map[string]spec3.PathProps {
 	paths := make(map[string]spec3.PathProps, len(version.OpenAPI.Paths))
 	for path, props := range version.OpenAPI.Paths {
-		if definition.IsSettingsProxyPath(path) {
-			continue
-		}
 		for method, op := range manifestroutes.Operations(&props) {
 			if _, ok := op.Extensions[definition.ExtensionProxy]; !ok {
 				continue
 			}
 			skip(manifestroutes.Problem{Version: version.Name, Path: path, Method: method,
-				Reason: definition.ExtensionProxy + " is only served below " + definition.SettingsProxyPrefix})
+				Reason: definition.ExtensionProxy + " is only served by the app settings API, declared in the manifest whose group is the plugin ID"})
 			props = withoutOperation(props, method)
 		}
 		paths[path] = props

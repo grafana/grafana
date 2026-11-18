@@ -71,7 +71,7 @@ type Builder struct {
 	// The settings API group is the plugin ID.
 	group           string
 	pluginJSON      plugins.JSONData
-	settings        *app.ManifestData // declares the proxy routes
+	settings        *app.ManifestData // declares the resources and proxy routes
 	client          PluginClient      // will only ever be called with the same plugin id!
 	contextProvider PluginContextWrapper
 	schemas         map[string]*pluginschema.PluginSchema
@@ -90,8 +90,8 @@ type Builder struct {
 	secureValues secureValuesCache
 	proxy        *proxyHandler
 
-	openAPIRoutesOnce sync.Once
-	openAPIRoutes     *proxyRoutes
+	routesOnce sync.Once
+	routes     *settingsRoutes
 }
 
 func NewBuilder(
@@ -127,21 +127,27 @@ func NewBuilder(
 	}, nil
 }
 
+// settingsRoutes returns the routes the settings manifest declares. When they
+// cannot be compiled, none are served or published.
+func (b *Builder) settingsRoutes() *settingsRoutes {
+	b.routesOnce.Do(func() {
+		routes, err := compileSettingsRoutes(b.settings)
+		if err != nil {
+			logger.Warn("plugin settings routes are not served", "plugin", b.group, "reason", err)
+			routes = &settingsRoutes{}
+		}
+		b.routes = routes
+	})
+	return b.routes
+}
+
 // proxyRoutes returns the proxy routes the settings manifest declares, or nil
 // when the proxy is not registered or there are none.
 func (b *Builder) proxyRoutes() *proxyRoutes {
-	b.openAPIRoutesOnce.Do(func() {
-		if !b.opts.RegisterProxy {
-			return
-		}
-		routes, err := compileProxyRoutes(b.settings)
-		if err != nil {
-			logger.Warn("plugin proxy routes are not served", "plugin", b.group, "reason", err)
-			return
-		}
-		b.openAPIRoutes = routes
-	})
-	return b.openAPIRoutes
+	if !b.opts.RegisterProxy {
+		return nil
+	}
+	return b.settingsRoutes().proxy
 }
 
 // GetGroupVersions returns the settings API version.

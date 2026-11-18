@@ -21,57 +21,6 @@ import (
 // and secure settings, so it must be removed from any published spec.
 const ExtensionProxy = "x-grafana-proxy"
 
-// SettingsProxyPrefix is where an app manifest version declares, in its OpenAPI
-// paths, the routes the app settings API's proxy serves. Proxy routes are
-// served only there: the settings API answers them, at the URL plugin.json
-// routes have always been served at, and the manifest's own API leaves the
-// subtree to it.
-const SettingsProxyPrefix = "/namespaces/{namespace}/app/instance/proxy/"
-
-// IsSettingsProxyPath reports whether a manifest path declares a settings proxy route.
-func IsSettingsProxyPath(path string) bool {
-	return strings.HasPrefix(path, SettingsProxyPrefix)
-}
-
-// proxyRoutes returns the routes the app settings API's proxy serves, as OpenAPI
-// paths relative to the proxy root, and whether an app manifest declared them.
-// Routes a manifest declares replace the plugin.json routes, as a manifest's
-// OpenAPI paths replace its deprecated routes. Only one served version of one
-// manifest may declare them, since the settings API serves a single version.
-func (p PluginDefinition) proxyRoutes() (paths map[string]spec3.PathProps, declared bool, err error) {
-	var from string
-	for _, manifest := range p.Manifests {
-		if manifest == nil {
-			continue
-		}
-		for _, version := range manifest.Versions {
-			if !version.Served {
-				continue
-			}
-			for path, props := range version.OpenAPI.Paths {
-				rest, ok := strings.CutPrefix(path, SettingsProxyPrefix)
-				if !ok {
-					continue
-				}
-				at := manifest.Group + "/" + version.Name
-				if from != "" && from != at {
-					return nil, true, fmt.Errorf("proxy routes are declared in both %s and %s; only one version may declare them", from, at)
-				}
-				from = at
-				if paths == nil {
-					paths = map[string]spec3.PathProps{}
-				}
-				paths["/"+rest] = props
-			}
-		}
-	}
-	if from != "" {
-		return paths, true, nil
-	}
-	paths, err = ProxyRoutesToOpenAPI(p.JSONData.Routes)
-	return paths, false, err
-}
-
 // ProxyTarget is everything in a plugin route except where it matches: the path
 // comes from the OpenAPI path and the method from the operation.
 type ProxyTarget struct {

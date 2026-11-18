@@ -1,7 +1,9 @@
 package definition
 
 import (
+	"maps"
 	"net/http"
+	"slices"
 	"strings"
 	"testing"
 
@@ -78,31 +80,67 @@ func TestNewSettingsManifest(t *testing.T) {
 		require.Empty(t, settingsPaths(t, manifest))
 	})
 
-	declaring := func(paths map[string]spec3.PathProps) *app.ManifestData {
-		return &app.ManifestData{Group: "example.ext.grafana.app", Versions: []app.ManifestVersion{{
-			Name: "v1", Served: true, OpenAPI: app.ManifestVersionOpenAPI{Paths: paths},
-		}}}
+	foundation := func(paths map[string]spec3.PathProps, versions ...app.ManifestVersion) *app.ManifestData {
+		return &app.ManifestData{AppName: "example", Group: "example-app", Versions: append([]app.ManifestVersion{{
+			Name: "v0alpha1", Served: true, OpenAPI: app.ManifestVersionOpenAPI{Paths: paths},
+		}}, versions...)}
 	}
 	proxy := &spec3.Operation{}
 	proxy.AddExtension(ExtensionProxy, ProxyTarget{URL: "https://v2"})
+	resource := &spec3.Operation{OperationProps: spec3.OperationProps{Description: "list things"}}
 
-	t.Run("a manifest's proxy routes replace plugin.json's", func(t *testing.T) {
+	t.Run("the manifest of the plugin ID's group is the foundation", func(t *testing.T) {
 		manifest, err := NewSettingsManifest(appWithRoutes(
 			[]*plugins.Route{{Path: "api/*", URL: "https://api"}},
-			declaring(map[string]spec3.PathProps{SettingsProxyPrefix + "v2/{path:*}": {Get: proxy}, "/other": {Get: proxy}}),
+			&app.ManifestData{Group: "example.ext.grafana.app", Versions: []app.ManifestVersion{{
+				Name: "v1", Served: true, OpenAPI: app.ManifestVersionOpenAPI{Paths: map[string]spec3.PathProps{"/other": {Get: proxy}}},
+			}}},
+			foundation(map[string]spec3.PathProps{
+				"/namespaces/{namespace}/app/instance/proxy/v2/{path:*}": {Get: proxy},
+				SettingsResourcesRoot + "/things":                        {Get: resource},
+			}),
+		), testMatcher)
+		require.NoError(t, err)
+		require.Equal(t, "example", manifest.AppName)
+		paths := settingsPaths(t, manifest)
+		require.Len(t, paths, 2, "the manifest's proxy routes replace plugin.json's")
+		require.Contains(t, paths, SettingsProxyRoot+"/v2/{path:*}", "the instance is named as on any settings path")
+		require.Same(t, resource, paths[SettingsResourcesRoot+"/things"].Get)
+	})
+
+	t.Run("plugin.json routes are used when the foundation declares no proxy routes", func(t *testing.T) {
+		manifest, err := NewSettingsManifest(appWithRoutes(
+			[]*plugins.Route{{Path: "api/*", URL: "https://api"}},
+			foundation(map[string]spec3.PathProps{SettingsResourcesRoot + "/things": {Get: resource}}),
 		), testMatcher)
 		require.NoError(t, err)
 		paths := settingsPaths(t, manifest)
-		require.Len(t, paths, 1)
-		require.Contains(t, paths, SettingsProxyRoot+"/v2/{path:*}")
+		require.Contains(t, paths, SettingsResourcesRoot+"/things")
+		require.Contains(t, paths, SettingsProxyRoot+"/api/{path:*}")
+	})
+
+	t.Run("what the settings API does not serve is left out", func(t *testing.T) {
+		manifest, err := NewSettingsManifest(appWithRoutes(nil, foundation(map[string]spec3.PathProps{
+			"/namespaces/{namespace}/other":    {Get: resource},
+			SettingsResourcesRoot + "/proxied": {Get: proxy},
+			SettingsResourcesRoot + "/things":  {Get: resource},
+		}, app.ManifestVersion{Name: "v1", Served: true})), testMatcher)
+		require.ErrorContains(t, err, "/namespaces/{namespace}/other is not served")
+		require.ErrorContains(t, err, "version v1 is not served")
+		require.ErrorContains(t, err, ExtensionProxy+" is only served below the proxy subresource")
+		paths := settingsPaths(t, manifest)
+		require.ElementsMatch(t, []string{SettingsResourcesRoot + "/proxied", SettingsResourcesRoot + "/things"}, slices.Collect(maps.Keys(paths)))
+		require.NotContains(t, paths[SettingsResourcesRoot+"/proxied"].Get.Extensions, ExtensionProxy)
 	})
 
 	t.Run("a manifest's proxy routes must declare where they forward to", func(t *testing.T) {
-		manifest, err := NewSettingsManifest(appWithRoutes(nil, declaring(map[string]spec3.PathProps{
-			SettingsProxyPrefix + "v2": {Get: &spec3.Operation{}},
+		manifest, err := NewSettingsManifest(appWithRoutes(nil, foundation(map[string]spec3.PathProps{
+			SettingsProxyRoot + "/v2":         {Get: &spec3.Operation{}},
+			SettingsResourcesRoot + "/things": {Get: resource},
 		})), testMatcher)
 		require.ErrorContains(t, err, "must declare "+ExtensionProxy)
-		require.Empty(t, settingsPaths(t, manifest))
+		require.Equal(t, []string{SettingsResourcesRoot + "/things"}, slices.Collect(maps.Keys(settingsPaths(t, manifest))),
+			"the resource routes are kept")
 	})
 }
 
@@ -110,6 +148,16 @@ func TestLoadSettings(t *testing.T) {
 	p := appWithRoutes([]*plugins.Route{{Path: "ids/:id([0-9]+)"}})
 	require.Error(t, p.LoadSettings(testMatcher))
 	require.NotNil(t, p.Settings, "the settings API is described even without its proxy routes")
+
+	other := &app.ManifestData{Group: "example.ext.grafana.app"}
+	p = appWithRoutes(nil, &app.ManifestData{Group: "example-app"}, other)
+	require.NoError(t, p.LoadSettings(testMatcher))
+	require.Equal(t, []*app.ManifestData{other}, p.Manifests, "the foundation is not served as an API of its own")
+
+	dotted := &app.ManifestData{Group: "playlist.grafana.app"}
+	p = PluginDefinition{JSONData: plugins.JSONData{ID: "playlist.grafana.app", Type: plugins.TypeApp}, Manifests: []*app.ManifestData{dotted}}
+	require.NoError(t, p.LoadSettings(testMatcher))
+	require.Equal(t, []*app.ManifestData{dotted}, p.Manifests, "a group with a dot is an API of its own")
 }
 
 func TestNewSettingsManifestNeedsAMatcherForPluginJSONRoutes(t *testing.T) {
