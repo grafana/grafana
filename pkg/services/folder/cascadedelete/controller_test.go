@@ -248,6 +248,56 @@ func TestController_PendingAutomaticallyRetriesReadAndCleanup(t *testing.T) {
 	})
 }
 
+func TestController_PendingScanPageBudgets(t *testing.T) {
+	for _, earlierDeadline := range []bool{false, true} {
+		t.Run(fmt.Sprint(earlierDeadline), func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				ctx := context.Background()
+				if earlierDeadline {
+					var cancel context.CancelFunc
+					ctx, cancel = context.WithTimeout(ctx, 10*time.Second)
+					defer cancel()
+				}
+				var pages []context.Context
+				store := pagedPendingStore{list: func(ctx context.Context, namespace, continuation string) (*pendingv1alpha1.PendingFolderDeletionList, error) {
+					require.Empty(t, namespace)
+					if len(pages) > 0 {
+						require.ErrorIs(t, pages[len(pages)-1].Err(), context.Canceled)
+					}
+					pages = append(pages, ctx)
+					select {
+					case <-ctx.Done():
+						return nil, ctx.Err()
+					case <-time.After(20 * time.Second):
+					}
+					if len(pages) == 1 {
+						require.Empty(t, continuation)
+						return &pendingv1alpha1.PendingFolderDeletionList{ListMeta: metav1.ListMeta{Continue: "next"}}, nil
+					}
+					require.Equal(t, "next", continuation)
+					return &pendingv1alpha1.PendingFolderDeletionList{}, nil
+				}}
+				c := NewController(newMemStore(), nil, nil, WithPendingRecovery(store))
+				defer c.ShutDown()
+				start := time.Now()
+				err := c.scanPending(ctx)
+				if earlierDeadline {
+					require.ErrorIs(t, err, context.DeadlineExceeded)
+					require.Len(t, pages, 1)
+					require.Equal(t, 10*time.Second, time.Since(start))
+				} else {
+					require.NoError(t, err)
+					require.Len(t, pages, 2)
+					require.Equal(t, 40*time.Second, time.Since(start))
+					for _, page := range pages {
+						require.ErrorIs(t, page.Err(), context.Canceled)
+					}
+				}
+			})
+		})
+	}
+}
+
 func TestController_PendingRetriesFailedPageOnNextScan(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		objects := make([]runtime.Object, 0, 101)
@@ -261,7 +311,8 @@ func TestController_PendingRetriesFailedPageOnNextScan(t *testing.T) {
 		}
 		pending := NewPendingClient(newFake(objects...))
 		scans := 0
-		store := pagedPendingStore{PendingStore: pending, list: func(_ context.Context, namespace, continuation string) (*pendingv1alpha1.PendingFolderDeletionList, error) {
+		var stalledPage context.Context
+		store := pagedPendingStore{PendingStore: pending, list: func(ctx context.Context, namespace, continuation string) (*pendingv1alpha1.PendingFolderDeletionList, error) {
 			require.Empty(t, namespace)
 			if continuation == "" {
 				scans++
@@ -269,7 +320,9 @@ func TestController_PendingRetriesFailedPageOnNextScan(t *testing.T) {
 			}
 			require.Equal(t, "next", continuation)
 			if scans == 1 {
-				return nil, errors.New("second page unavailable")
+				stalledPage = ctx
+				<-ctx.Done()
+				return nil, ctx.Err()
 			}
 			return &pendingv1alpha1.PendingFolderDeletionList{Items: []pendingv1alpha1.PendingFolderDeletion{{ObjectMeta: metav1.ObjectMeta{Namespace: testNamespace, Name: pendingv1alpha1.PendingDeletionName("b", "b-uid")}}}}, nil
 		}}
@@ -283,8 +336,13 @@ func TestController_PendingRetriesFailedPageOnNextScan(t *testing.T) {
 		require.NoError(t, err)
 		remaining, err := pending.List(context.Background(), "", "")
 		require.NoError(t, err)
-		require.Len(t, remaining.Items, 1, "all 100 first-page entries must be processed despite the next-page failure")
-		time.Sleep(5 * time.Minute)
+		require.Len(t, remaining.Items, 1, "all 100 first-page entries must be processed despite the stalled next page")
+		time.Sleep(30 * time.Second)
+		synctest.Wait()
+		require.NotNil(t, stalledPage)
+		require.ErrorIs(t, stalledPage.Err(), context.DeadlineExceeded)
+		require.Equal(t, 1, scans)
+		time.Sleep(5*time.Minute - 30*time.Second)
 		synctest.Wait()
 		_, err = pending.Get(context.Background(), testNamespace, pendingv1alpha1.PendingDeletionName("b", "b-uid"))
 		require.True(t, apierrors.IsNotFound(err))

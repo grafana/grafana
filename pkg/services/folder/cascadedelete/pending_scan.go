@@ -19,6 +19,7 @@ const pendingQueuePrefix = "pending/"
 const PendingScanPeriod = 5 * time.Minute
 const pendingCaptureTimeout = 5 * time.Second
 const pendingReconcileTimeout = 30 * time.Second
+const pendingScanPageTimeout = 30 * time.Second
 
 type ControllerOption func(*Controller)
 
@@ -34,7 +35,9 @@ func (c *Controller) scanPending(ctx context.Context) error {
 		if err := ctx.Err(); err != nil {
 			return err
 		}
-		page, err := c.pending.List(ctx, "", continuation)
+		pageCtx, cancel := context.WithTimeout(ctx, pendingScanPageTimeout)
+		page, err := c.pending.List(pageCtx, "", continuation)
+		cancel()
 		if err != nil {
 			return err
 		}
