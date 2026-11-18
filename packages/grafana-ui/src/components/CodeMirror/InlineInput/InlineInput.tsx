@@ -6,12 +6,11 @@ import { memo, useMemo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 
-import { useStyles2, useTheme2 } from '../../themes/ThemeContext';
-import { getFocusStyles } from '../../themes/mixins';
-import { getInputStyles } from '../Input/Input';
-
-import { BaseCodeEditor } from './BaseCodeEditor';
-import { type CodeMirrorCompletionSource, type CodeMirrorExtension } from './types';
+import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
+import { getFocusStyles } from '../../../themes/mixins';
+import { getInputStyles } from '../../Input/Input';
+import { BaseCodeEditor } from '../BaseCodeEditor';
+import { type CodeMirrorCompletionSource, type CodeMirrorExtension } from '../types';
 
 export interface CodeMirrorInlineInputProps {
   value: string;

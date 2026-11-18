@@ -1,7 +1,8 @@
 import { render, screen } from '@testing-library/react';
 
+import { type CodeMirrorDiffEditorProps } from '../types';
+
 import { CodeMirrorDiffEditor } from './DiffEditorLazy';
-import { type CodeMirrorDiffEditorProps } from './types';
 
 let shouldThrowOnRender = false;
 

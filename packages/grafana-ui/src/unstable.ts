@@ -12,7 +12,7 @@
 export * from './utils/skeleton';
 
 export { CodeMirrorEditor } from './components/CodeMirror/CodeEditorLazy';
-export { CodeMirrorDiffEditor } from './components/CodeMirror/DiffEditorLazy';
+export { CodeMirrorDiffEditor } from './components/CodeMirror/DiffEditor/DiffEditorLazy';
 export { CODE_MIRROR_LANGUAGES } from './components/CodeMirror/languages';
 export type {
   CodeMirrorBasicSetup,

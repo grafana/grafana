@@ -2,10 +2,9 @@ import { lazy, type ReactElement, Suspense } from 'react';
 
 import { t } from '@grafana/i18n';
 
-import { ErrorBoundaryAlert } from '../ErrorBoundary/ErrorBoundary';
-import { LoadingPlaceholder } from '../LoadingPlaceholder/LoadingPlaceholder';
-
-import { type CodeMirrorDiffEditorProps } from './types';
+import { ErrorBoundaryAlert } from '../../ErrorBoundary/ErrorBoundary';
+import { LoadingPlaceholder } from '../../LoadingPlaceholder/LoadingPlaceholder';
+import { type CodeMirrorDiffEditorProps } from '../types';
 
 const DiffEditor = lazy(() =>
   import(/* webpackChunkName: "react-codemirror-diff-editor" */ './DiffEditor').then((module) => ({
