@@ -67,10 +67,21 @@ describe('LandingTemplates', () => {
 
     await user.click(toggle);
     expect(toggle).toHaveAttribute('aria-expanded', 'false');
-    expect(screen.queryByTestId('grafana-card')).not.toBeInTheDocument();
+    expect(screen.getByTestId('grafana-card')).not.toBeVisible();
 
     await user.click(toggle);
-    expect(screen.getByTestId('grafana-card')).toBeInTheDocument();
+    expect(screen.getByTestId('grafana-card')).toBeVisible();
+  });
+
+  it('keeps the lists mounted while closed, so reopening does not reload them', async () => {
+    const { user } = renderTemplates();
+    const card = screen.getByTestId('grafana-card');
+    const toggle = screen.getByRole('button', { name: 'Start from a template' });
+
+    await user.click(toggle);
+    await user.click(toggle);
+
+    expect(screen.getByTestId('grafana-card')).toBe(card);
   });
 
   it('starts closed when no list has templates, and says so when opened', async () => {

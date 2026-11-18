@@ -86,29 +86,28 @@ export function LandingTemplates({
         <Trans i18nKey="dashboard.empty.templates-title">Start from a template</Trans>
         <Icon name={isOpen ? 'angle-up' : 'angle-down'} />
       </button>
-      {isOpen && (
-        <div id={listId} className={styles.list}>
-          {isEmpty && (
-            <p className={styles.empty}>
-              <Trans i18nKey="dashboard.empty.templates-empty">No templates available</Trans>
-            </p>
+      {/* Hidden, not unmounted: reopening keeps the loaded templates instead of refetching them. */}
+      <div id={listId} className={styles.list} hidden={!isOpen}>
+        {isEmpty && (
+          <p className={styles.empty}>
+            <Trans i18nKey="dashboard.empty.templates-empty">No templates available</Trans>
+          </p>
+        )}
+        <Grid gap={2} columns={{ xs: 1, sm: 2, lg: 3 }}>
+          {renderCustomTemplates()}
+          {showGrafanaTemplates && (
+            <GrafanaTemplatesTab
+              entryPoint=""
+              testDataSource={testDataSource}
+              onClose={noop}
+              loadedFiredRef={grafanaLoadedFiredRef}
+              onSelectTemplate={onSelectTemplate}
+              selectedTemplateId={selectedTemplateId}
+              onTemplatesLoad={onGrafanaTemplatesLoad}
+            />
           )}
-          <Grid gap={2} columns={{ xs: 1, sm: 2, lg: 3 }}>
-            {renderCustomTemplates()}
-            {showGrafanaTemplates && (
-              <GrafanaTemplatesTab
-                entryPoint=""
-                testDataSource={testDataSource}
-                onClose={noop}
-                loadedFiredRef={grafanaLoadedFiredRef}
-                onSelectTemplate={onSelectTemplate}
-                selectedTemplateId={selectedTemplateId}
-                onTemplatesLoad={onGrafanaTemplatesLoad}
-              />
-            )}
-          </Grid>
-        </div>
-      )}
+        </Grid>
+      </div>
     </section>
   );
 }
@@ -152,6 +151,9 @@ function getStyles(theme: GrafanaTheme2) {
       minHeight: 0,
       overflowY: 'auto',
       paddingTop: theme.spacing(0.5),
+      '&[hidden]': {
+        display: 'none',
+      },
     }),
     empty: css({
       margin: 0,
