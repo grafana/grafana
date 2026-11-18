@@ -358,7 +358,7 @@ function DashboardCardComponent({
         {onSelect && kind === 'template_dashboard' && (
           <p className={cx(styles.createdBy, styles.selectableCreatedBy)}>
             <Trans i18nKey="dashboard-library.card.provisioned-by-grafana">
-              <span className={styles.createdByLabel}>Provisioned by:</span> Grafana
+              <span className={styles.createdByLabel}>Provisioned by</span> Grafana
             </Trans>
           </p>
         )}
