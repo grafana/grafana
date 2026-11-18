@@ -2,7 +2,7 @@ import { isEqual } from 'lodash';
 import { useState } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
-import { Button, Combobox, IconButton, Input, Stack } from '@grafana/ui';
+import { Box, Button, Combobox, IconButton, Input, Stack } from '@grafana/ui';
 
 import { SidebarField } from '../../rule-list/filter/RulesFilterSidebar';
 
@@ -53,31 +53,39 @@ export function LabelMatchersFilter({
           // Rows have no identity of their own, and their inputs hold no state, so the index is a safe key.
           // eslint-disable-next-line react/no-array-index-key
           <Stack key={index} direction="row" gap={0.5} alignItems="center">
-            <Input
-              aria-label={t('alerting.gma-rule-list.sidebar.label-key', 'Label key')}
-              placeholder={t('alerting.gma-rule-list.sidebar.label-key-placeholder', 'key')}
-              value={row.key}
-              onChange={(event) => edit(index, { key: event.currentTarget.value }, { apply: false })}
-              onBlur={applyRows}
-              onKeyDown={(event) => event.key === 'Enter' && applyRows()}
-            />
-            <Combobox
-              aria-label={t('alerting.gma-rule-list.sidebar.label-operator', 'Operator')}
-              width={8}
-              options={OPERATORS}
-              value={row.operator}
-              onChange={(option) => edit(index, { operator: option.value })}
-            />
-            {row.operator !== 'exists' && row.operator !== 'absent' && (
+            <Box grow={1} minWidth={8}>
               <Input
-                aria-label={t('alerting.gma-rule-list.sidebar.label-value', 'Label value')}
-                placeholder={t('alerting.gma-rule-list.sidebar.label-value-placeholder', 'value')}
-                value={row.value ?? ''}
-                onChange={(event) => edit(index, { value: event.currentTarget.value }, { apply: false })}
+                aria-label={t('alerting.gma-rule-list.sidebar.label-key', 'Label key')}
+                placeholder={t('alerting.gma-rule-list.sidebar.label-key-placeholder', 'key')}
+                value={row.key}
+                onChange={(event) => edit(index, { key: event.currentTarget.value }, { apply: false })}
                 onBlur={applyRows}
                 onKeyDown={(event) => event.key === 'Enter' && applyRows()}
               />
-            )}
+            </Box>
+            <Box shrink={0}>
+              <Combobox
+                aria-label={t('alerting.gma-rule-list.sidebar.label-operator', 'Operator')}
+                width="auto"
+                minWidth={8}
+                options={OPERATORS}
+                value={row.operator}
+                onChange={(option) => edit(index, { operator: option.value })}
+              />
+            </Box>
+            {/* Kept for exists and absent too, so the key stays as wide as in the other rows. */}
+            <Box grow={1} minWidth={8}>
+              {row.operator !== 'exists' && row.operator !== 'absent' && (
+                <Input
+                  aria-label={t('alerting.gma-rule-list.sidebar.label-value', 'Label value')}
+                  placeholder={t('alerting.gma-rule-list.sidebar.label-value-placeholder', 'value')}
+                  value={row.value ?? ''}
+                  onChange={(event) => edit(index, { value: event.currentTarget.value }, { apply: false })}
+                  onBlur={applyRows}
+                  onKeyDown={(event) => event.key === 'Enter' && applyRows()}
+                />
+              )}
+            </Box>
             <IconButton
               name="times"
               tooltip={t('alerting.gma-rule-list.sidebar.label-remove', 'Remove label matcher')}
