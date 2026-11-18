@@ -133,13 +133,7 @@ export function VizAndDataPaneNext({ model }: SceneComponentProps<PanelEditor>) 
 
   return (
     <div className={styles.pageContainer}>
-      <QueryEditorContextWrapper
-        dataPane={nextDataPane}
-        onSwitchToClassic={model.onToggleQueryEditorVersion}
-        showVersionBanner={showBanner}
-      >
-        {isFull ? fullLayout : miniLayout}
-      </QueryEditorContextWrapper>
+      <QueryEditorContextWrapper dataPane={nextDataPane}>{isFull ? fullLayout : miniLayout}</QueryEditorContextWrapper>
     </div>
   );
 }

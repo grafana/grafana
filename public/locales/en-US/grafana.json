@@ -16151,12 +16151,6 @@
       "width-of-panel": "Width of panel"
     },
     "edit-query-name": "Edit query name",
-    "experimental-button": {
-      "aria-label": "Experimental feature options",
-      "back-to-classic": "Go back to classic editor",
-      "give-feedback": "Give feedback",
-      "tooltip": "Experimental feature options"
-    },
     "header": {
       "alert": "Alert",
       "enter-stacked-view": "Enter stacked view",

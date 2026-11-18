@@ -6,7 +6,6 @@ import { Text, useStyles2 } from '@grafana/ui';
 
 import { usePanelContext, useQueryRunnerContext } from '../QueryEditorContext';
 
-import { ExperimentalFeedbackButton } from './ExperimentalFeedbackButton';
 import { QueryOptionsBar } from './QueryOptionsBar';
 import { StackedViewToggle } from './StackedViewToggle';
 
@@ -30,7 +29,6 @@ export function QueryEditorMainHeader() {
       </div>
       <div className={styles.rightSection}>
         <QueryOptionsBar />
-        <ExperimentalFeedbackButton />
       </div>
     </div>
   );

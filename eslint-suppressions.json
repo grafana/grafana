@@ -2174,11 +2174,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/panel-edit/PanelEditNext/QueryEditor/Header/ExperimentalFeedbackButton.tsx": {
-    "react-hooks/refs": {
-      "count": 3
-    }
-  },
   "public/app/features/dashboard-scene/panel-edit/PanelEditNext/QueryEditor/QueryEditorContextWrapper.tsx": {
     "react-hooks/refs": {
       "count": 1
