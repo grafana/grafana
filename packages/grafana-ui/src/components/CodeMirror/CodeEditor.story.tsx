@@ -100,4 +100,18 @@ WithCompletions.args = {
   completionSources: [keywordCompletionSource],
 };
 
+export const WithCopyButton = ControlledEditor.bind({});
+WithCopyButton.args = {
+  value: `{
+  "datasource": { "type": "prometheus", "uid": "grafana" },
+  "expr": "sum by (status) (rate(http_requests_total[5m]))",
+  "legendFormat": "{{status}}",
+  "refId": "A"
+}`,
+  language: 'json',
+  height: '240px',
+  readOnly: true,
+  showCopyButton: true,
+};
+
 export default meta;
