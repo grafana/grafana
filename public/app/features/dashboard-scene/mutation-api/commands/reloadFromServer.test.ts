@@ -147,6 +147,74 @@ describe('RELOAD_FROM_SERVER', () => {
     }
   );
 
+  it.each<{ schemaVersion: 'v1' | 'v2'; subtitle: string | undefined }>([
+    { schemaVersion: 'v1', subtitle: 'Changed subtitle' },
+    { schemaVersion: 'v2', subtitle: 'Changed subtitle' },
+    { schemaVersion: 'v1', subtitle: undefined },
+    { schemaVersion: 'v2', subtitle: undefined },
+  ])('protects only persisted $schemaVersion subtitle-only edits ($subtitle)', async ({ schemaVersion, subtitle }) => {
+    const panel = new VizPanel({
+      key: 'panel-1',
+      pluginId: 'timeseries',
+      title: 'Title',
+      subtitle: 'Original subtitle',
+    });
+    const item = new DashboardGridItem({ body: panel });
+    const editor = buildPanelEditScene(panel);
+    expect(editor.hasUnsavedChanges()).toBe(false);
+    const dashboard = new DashboardScene(
+      {
+        uid: 'abc',
+        isEditing: true,
+        editPanel: editor,
+        body: new DefaultGridLayoutManager({ grid: new SceneGridLayout({ children: [item] }) }),
+      },
+      schemaVersion
+    );
+    const saved = dashboard.serializer.getSaveModel(dashboard);
+    if ('panels' in saved) {
+      expect(saved.panels?.[0]).not.toHaveProperty('subtitle');
+    } else {
+      expect(saved).toMatchObject({
+        elements: { 'panel-1': { kind: 'Panel', spec: { subtitle: 'Original subtitle' } } },
+      });
+    }
+    expect(editor.hasUnsavedChanges()).toBe(false);
+    const context = contextFor({ isDirty: false, isEditing: true, editPanel: editor });
+    panel.setState({ subtitle });
+    expect(editor.hasUnsavedChanges()).toBe(schemaVersion === 'v2');
+    expect(await reloadFromServerCommand.handler({}, context)).toMatchObject({
+      data: schemaVersion === 'v2' ? { reloaded: false, reason: 'unsaved-changes' } : { reloaded: true },
+    });
+    if (schemaVersion === 'v2') {
+      expect(reloadKeepingEditMode).not.toHaveBeenCalled();
+    }
+    jest.mocked(reloadKeepingEditMode).mockClear();
+    panel.setState({ subtitle: 'Original subtitle' });
+    expect(editor.hasUnsavedChanges()).toBe(false);
+    expect(await reloadFromServerCommand.handler({}, context)).toMatchObject({ data: { reloaded: true } });
+  });
+
+  it('does not treat a library subtitle as persisted content', () => {
+    const panel = new VizPanel({
+      key: 'panel-1',
+      pluginId: 'timeseries',
+      subtitle: 'Original subtitle',
+      $behaviors: [new LibraryPanelBehavior({ uid: 'lib-uid', name: 'Library panel', isLoaded: true })],
+    });
+    const item = new DashboardGridItem({ body: panel });
+    const editor = buildPanelEditScene(panel);
+    const dashboard = new DashboardScene(
+      { editPanel: editor, body: new DefaultGridLayoutManager({ grid: new SceneGridLayout({ children: [item] }) }) },
+      'v2'
+    );
+    expect(dashboard.serializer.getSaveModel(dashboard)).toMatchObject({
+      elements: { 'panel-1': { kind: 'LibraryPanel' } },
+    });
+    panel.setState({ subtitle: 'Changed subtitle' });
+    expect(editor.hasUnsavedChanges()).toBe(false);
+  });
+
   it.each<{ schemaVersion: 'v1' | 'v2' }>([{ schemaVersion: 'v1' }, { schemaVersion: 'v2' }])(
     'keeps unsaved library queries protected after a $schemaVersion dashboard save',
     async ({ schemaVersion }) => {

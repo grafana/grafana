@@ -10,6 +10,7 @@ import {
   type DataTransformerConfig,
   FieldType,
   LoadingState,
+  VariableRefresh,
   type PanelPlugin,
   store,
   standardTransformersRegistry,
@@ -17,6 +18,7 @@ import {
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { locationService } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
 import {
   type CancelActivationHandler,
   CustomVariable,
@@ -29,6 +31,7 @@ import {
   SceneQueryRunner,
   SceneTimeRange,
   SceneVariableSet,
+  TestVariable,
   VizPanel,
 } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
@@ -643,6 +646,173 @@ describe('PanelEditor', () => {
       }
     );
 
+    it.each([
+      { auto: false, action: 'discard' },
+      { auto: true, action: 'discard' },
+      { auto: false, action: 'undo' },
+      { auto: true, action: 'undo' },
+    ])('restores saved library repeats after unlink then $action (auto=$auto)', async ({ auto, action }) => {
+      setTestFlags({ dashboardNewLayouts: true });
+      const { dashboard, panelEditor, panel, layout } = await setupLibraryLayout(auto);
+      getQueryRunnerFor(panel)?.setState({ queries: [{ refId: 'A', expression: 'dirty' }] });
+      layout.setRepeatByVariable('server');
+      if (layout instanceof DashboardGridItem) {
+        layout.handleVariableName();
+      }
+      layout.handleEditChange();
+      panelEditor.dashboardSaved();
+      panelEditor.onConfirmUnlinkLibraryPanel();
+      expect(getLibraryPanelBehavior(panel)).toBeUndefined();
+      if (action === 'discard') {
+        panelEditor.onDiscard();
+      } else {
+        deactivate?.();
+        dashboard.setState({ editPanel: undefined });
+        deactivate = activateFullSceneTree(dashboard);
+        dashboard.state.sidebar.undoAction();
+      }
+      const restored = [layout.state.body, ...(layout.state.repeatedPanels ?? [])];
+      expect(restored).toHaveLength(3);
+      for (const copy of restored) {
+        expect(getLibraryPanelBehavior(copy)?.state.uid).toBe('lib-uid');
+        expect(getQueryRunnerFor(copy)?.state.queries).toEqual([{ refId: 'A' }]);
+      }
+      if (action === 'undo') {
+        dashboard.state.sidebar.redoAction();
+        const unlinked = [layout.state.body, ...(layout.state.repeatedPanels ?? [])];
+        expect(unlinked).toHaveLength(3);
+        for (const copy of unlinked) {
+          expect(getLibraryPanelBehavior(copy)).toBeUndefined();
+          expect(getQueryRunnerFor(copy)?.state.queries).toEqual([{ refId: 'A', expression: 'dirty' }]);
+        }
+        dashboard.state.sidebar.undoAction();
+        expect(layout.state.repeatedPanels).toHaveLength(2);
+        expect(getLibraryPanelBehavior(layout.state.body)?.state.uid).toBe('lib-uid');
+      }
+    });
+
+    it.each<{ schemaVersion: 'v1' | 'v2'; preferLibraryTitle: boolean; action: string; savedTitle: string }>(
+      ['v1', 'v2'].flatMap((schemaVersion) => {
+        if (schemaVersion !== 'v1' && schemaVersion !== 'v2') {
+          throw new Error('Unexpected schema');
+        }
+        return [false, true].flatMap((preferLibraryTitle) =>
+          ['discard', 'undo'].flatMap((action) =>
+            ['Second saved title', ''].map((savedTitle) => ({ schemaVersion, preferLibraryTitle, action, savedTitle }))
+          )
+        );
+      })
+    )(
+      'retains the authoritative saved title after $action ($schemaVersion, library title=$preferLibraryTitle, saved=$savedTitle)',
+      async ({ schemaVersion, preferLibraryTitle, action, savedTitle }) => {
+        setTestFlags({ dashboardNewLayouts: true, [FlagKeys.PreferLibraryPanelTitle]: preferLibraryTitle });
+        const { dashboard, panelEditor, panel, layout } = await setupLibraryLayout(false, schemaVersion);
+        dashboard.updatePanelTitle(panel, 'Saved title');
+        panelEditor.dashboardSaved();
+        const titleOnlyDirty = panelEditor.hasUnsavedChanges();
+        dashboard.updatePanelTitle(panel, savedTitle);
+        getQueryRunnerFor(panel)?.setState({ queries: [{ refId: 'A', expression: 'dirty' }] });
+        layout.setRepeatByVariable('server');
+        layout.handleEditChange();
+        const model = dashboard.serializer.getSaveModel(dashboard);
+        if ('panels' in model) {
+          expect(model.panels?.[0].title).toBe(savedTitle);
+        } else {
+          expect(Object.values(model.elements)).toEqual([
+            expect.objectContaining({ kind: 'LibraryPanel', spec: expect.objectContaining({ title: savedTitle }) }),
+          ]);
+        }
+        panelEditor.dashboardSaved();
+        expect(panelEditor.hasUnsavedChanges()).toBe(true);
+        dashboard.updatePanelTitle(panel, 'Later title');
+        if (action === 'discard') {
+          panelEditor.onDiscard();
+        } else {
+          deactivate?.();
+          dashboard.setState({ editPanel: undefined });
+          deactivate = activateFullSceneTree(dashboard);
+          dashboard.state.sidebar.undoAction();
+        }
+        expect(layout.state.body.state.title).toBe(preferLibraryTitle ? 'original title' : savedTitle);
+        expect(layout.state.body.state.hoverHeader ?? false).toBe(!preferLibraryTitle && savedTitle === '');
+        expect(titleOnlyDirty).toBe(preferLibraryTitle);
+        expect(getQueryRunnerFor(layout.state.body)?.state.queries).toEqual([{ refId: 'A' }]);
+        expect(layout.state.variableName).toBe(schemaVersion === 'v1' ? undefined : 'server');
+        if (action === 'undo') {
+          dashboard.state.sidebar.redoAction();
+          expect(layout.state.body.state.title).toBe('Later title');
+          expect(getQueryRunnerFor(layout.state.body)?.state.queries).toEqual([{ refId: 'A', expression: 'dirty' }]);
+        }
+      }
+    );
+
+    it.each([false, true])(
+      'keeps live repeat expansion from shifting siblings again on Discard (loading=%s)',
+      async (loading) => {
+        setTestFlags({ dashboardNewLayouts: true });
+        const pending = loading
+          ? new TestVariable({
+              name: 'server',
+              query: 'initial',
+              isMulti: true,
+              value: ['A', 'B'],
+              text: ['A', 'B'],
+              delayMs: 0,
+              refresh: VariableRefresh.onTimeRangeChanged,
+              optionsToReturn: ['A', 'B', 'C', 'D'].map((value) => ({ value, label: value })),
+            })
+          : undefined;
+        const { dashboard, panelEditor, panel, layout } = await setupLibraryLayout(false, 'v2', pending);
+        if (!(layout instanceof DashboardGridItem) || !(layout.parent instanceof SceneGridLayout)) {
+          throw new Error('Expected grid');
+        }
+        const variable = dashboard.state.$variables?.getByName('server');
+        if (!(variable instanceof CustomVariable) && !(variable instanceof TestVariable)) {
+          throw new Error('Expected server variable');
+        }
+        variable.changeValueTo(['A', 'B']);
+        layout.setRepeatByVariable('server');
+        layout.handleVariableName();
+        layout.setState({ repeatDirection: 'v', itemHeight: 10, x: 0, y: 0, width: 12 });
+        layout.handleEditChange();
+        expect(layout.state.height).toBe(20);
+        const following = new DashboardGridItem({
+          y: 20,
+          x: 0,
+          width: 12,
+          height: 5,
+          body: new VizPanel({ key: 'panel-2', pluginId: 'text' }),
+        });
+        layout.parent.setState({ children: [...layout.parent.state.children, following] });
+        getQueryRunnerFor(panel)?.setState({ queries: [{ refId: 'A', expression: 'dirty' }] });
+        panelEditor.dashboardSaved();
+        variable.changeValueTo(['A', 'B', 'C', 'D']);
+        await waitFor(() => expect(layout.state.height).toBe(40));
+        expect(following.state.y).toBe(40);
+        if (pending) {
+          pending.setState({ delayMs: undefined });
+          const timeRange = dashboard.state.$timeRange;
+          if (!(timeRange instanceof SceneTimeRange)) {
+            throw new Error('Expected time range');
+          }
+          timeRange.setState({ from: 'now-5h' });
+          await waitFor(() => expect(pending.state.loading).toBe(true));
+        }
+        panelEditor.onDiscard();
+        expect(following.state.y).toBe(40);
+        if (loading) {
+          expect(layout.state.repeatedPanels).toBeUndefined();
+          pending?.signalUpdateCompleted();
+        }
+        await waitFor(() => expect(layout.state.repeatedPanels).toHaveLength(3));
+        expect(layout.state.height).toBe(40);
+        expect(following.state.y).toBe(40);
+        for (const copy of [layout.state.body, ...(layout.state.repeatedPanels ?? [])]) {
+          expect(getQueryRunnerFor(copy)?.state.queries).toEqual([{ refId: 'A' }]);
+        }
+      }
+    );
+
     it.each<{ schemaVersion: 'v1' | 'v2' }>([{ schemaVersion: 'v1' }, { schemaVersion: 'v2' }])(
       'keeps only actually persisted $schemaVersion library repeat changes after save',
       async ({ schemaVersion }) => {
@@ -936,10 +1106,12 @@ describe('PanelEditor', () => {
           resize.unsubscribe();
         }
         if (action === 'undo') {
-          dashboard.state.sidebar.redoAction();
-          assertRepeats('dirty', ['A', 'B', 'C']);
-          dashboard.state.sidebar.undoAction();
-          assertRepeats(undefined, ['A', 'B', 'C']);
+          for (let cycle = 0; cycle < 3; cycle++) {
+            dashboard.state.sidebar.redoAction();
+            assertRepeats('dirty', ['A', 'B', 'C']);
+            dashboard.state.sidebar.undoAction();
+            assertRepeats(undefined, ['A', 'B', 'C']);
+          }
         }
         const variable = dashboard.state.$variables?.getByName('server');
         if (!(variable instanceof CustomVariable)) {
@@ -1303,6 +1475,7 @@ describe('PanelEditor', () => {
 });
 
 interface SetupOptions {
+  repeatVariable?: TestVariable;
   schemaVersion?: 'v1' | 'v2';
   activateFullTree?: boolean;
   activateNoticesFirst?: boolean;
@@ -1365,13 +1538,14 @@ async function setup(options: SetupOptions = {}) {
       $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
       $variables: new SceneVariableSet({
         variables: [
-          new CustomVariable({
-            name: 'server',
-            query: 'A,B,C',
-            isMulti: true,
-            value: ['A', 'B', 'C'],
-            text: ['A', 'B', 'C'],
-          }),
+          options.repeatVariable ??
+            new CustomVariable({
+              name: 'server',
+              query: 'A,B,C',
+              isMulti: true,
+              value: ['A', 'B', 'C'],
+              text: ['A', 'B', 'C'],
+            }),
         ],
       }),
       body: new DefaultGridLayoutManager({
@@ -1404,14 +1578,14 @@ async function setup(options: SetupOptions = {}) {
   return { dashboard, panel, gridItem, panelEditor, pluginResolve, deactivatePanel, deactivateNotices };
 }
 
-async function setupLibraryLayout(auto: boolean) {
+async function setupLibraryLayout(auto: boolean, schemaVersion: 'v1' | 'v2' = 'v2', repeatVariable?: TestVariable) {
   const libraryPanel = new LibraryPanelBehavior({
     uid: 'lib-uid',
     name: 'Library panel',
     isLoaded: true,
     _loadedPanel: { uid: 'lib-uid', name: 'Library panel', type: 'panel', version: 1, model: { type: 'text' } },
   });
-  const fixture = await setup({ libraryPanel, schemaVersion: 'v2' });
+  const fixture = await setup({ libraryPanel, schemaVersion, repeatVariable });
   if (!auto) {
     return { ...fixture, layout: fixture.gridItem };
   }

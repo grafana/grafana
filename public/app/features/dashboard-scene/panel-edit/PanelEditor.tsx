@@ -36,6 +36,7 @@ import {
   collectAdHocTransformations,
   restoreAdHocTransformations,
 } from '../scene/panel-actions/adHocTransformations';
+import { getUpdatedHoverHeader } from '../scene/panel-timerange/utils';
 import { type DashboardLayoutItem, isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
 import { serializeAutoGridItem } from '../serialization/layoutSerializers/AutoGridLayoutSerializer';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
@@ -44,7 +45,7 @@ import { SIDEBAR_COLLAPSED_KEY } from '../sidebar/shared';
 import { clearDefaultQuery } from '../utils/clearDefaultQuery';
 import { findVizPanelByKey } from '../utils/findVizPanel';
 import { getEmptyQueryRunnerState } from '../utils/queryRunnerState';
-import { getDashboardSceneFor, getLibraryPanelBehavior } from '../utils/utils';
+import { getDashboardSceneFor, getLibraryPanelBehavior, isInV2Dashboard } from '../utils/utils';
 import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
 import { DataProviderSharer } from './PanelDataPane/DataProviderSharer';
@@ -178,7 +179,6 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     const changedState = layoutItem.state;
     const changedAdHocTransformations = collectAdHocTransformations(layoutItem);
     const originalState = this._layoutItemState!;
-    const restoreLibraryRepeats = Boolean(getLibraryPanelBehavior(panel));
     const originalAdHocTransformations = this._layoutItemAdHocTransformations;
 
     // Temp fix for old edit mode
@@ -195,10 +195,10 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
         // Because panel edit makes changes directly to layout item & panel
         // we only need to do this in case we want to re-perform after undo
         if (layoutItem.state !== changedState) {
-          setLayoutItemState(layoutItem, changedState, changedAdHocTransformations, restoreLibraryRepeats);
+          setLayoutItemState(layoutItem, changedState, changedAdHocTransformations);
         }
       },
-      undo: () => setLayoutItemState(layoutItem, originalState, originalAdHocTransformations, restoreLibraryRepeats),
+      undo: () => setLayoutItemState(layoutItem, originalState, originalAdHocTransformations),
     });
 
     // sadly we cannot publish this event directly here as the main dashboard edit / undo system
@@ -240,11 +240,21 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     if (!original || !('body' in original) || !(original.body instanceof VizPanel)) {
       return;
     }
-    // Advance saved layout while retaining library content and its transformation baseline.
-    this._originalSaveModel = this.getSaveModel(original.body);
+    const title = getFeatureFlagClient().getBooleanValue(FlagKeys.PreferLibraryPanelTitle, false)
+      ? original.body.state.title
+      : this.getPanel().state.title;
+    const body = original.body.clone({
+      title,
+      hoverHeader: getUpdatedHoverHeader(title, original.body.state.$timeRange?.state),
+    });
+    const isV2 = getDashboardSceneFor(this).isV2();
+    // Dashboard saves persist the reference title, but only v2 persists its repeat layout.
+    this._originalSaveModel = isV2
+      ? this.getSaveModel(body)
+      : { ...this._originalSaveModel, panel: { ...this._originalSaveModel.panel, title: body.state.title } };
     this._layoutItemState = sceneUtils.cloneSceneObjectState({
-      ...this._layoutItem.state,
-      body: original.body,
+      ...(isV2 ? this._layoutItem.state : original),
+      body,
       // Repeat copies are runtime content, not part of the saved dashboard layout.
       repeatedPanels: undefined,
       ...(this._layoutItem instanceof AutoGridItem ? { repeatedConditionalRendering: undefined } : {}),
@@ -280,7 +290,9 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
   /** Destructive admission checks cannot wait for the debounced UI dirty state. */
   public hasUnsavedChanges(): boolean {
-    return !deepEqual(this._originalSaveModel, this.getSaveModel(this.getPanel()));
+    const { subtitle: originalSubtitle, ...original } = this._originalSaveModel;
+    const { subtitle, ...current } = this.getSaveModel(this.getPanel());
+    return !deepEqual(original, current) || (isInV2Dashboard(this._layoutItem) && subtitle !== originalSubtitle);
   }
 
   private getSaveModel(panel: VizPanel) {
@@ -297,6 +309,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     }
     return {
       panel: model,
+      subtitle: libraryPanel ? undefined : panel.state.subtitle,
       autoGridItem: this._layoutItem instanceof AutoGridItem ? serializeAutoGridItem(this._layoutItem) : undefined,
     };
   }
@@ -415,12 +428,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       dashboard.removePanel(panel);
     } else {
       // Revert any layout element changes
-      setLayoutItemState(
-        this._layoutItem,
-        this._layoutItemState!,
-        this._layoutItemAdHocTransformations,
-        Boolean(getLibraryPanelBehavior(panel))
-      );
+      setLayoutItemState(this._layoutItem, this._layoutItemState!, this._layoutItemAdHocTransformations);
     }
 
     locationService.partial({ editPanel: null });
@@ -428,9 +436,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
   public dashboardSaved() {
     if (getLibraryPanelBehavior(this.getPanel())) {
-      if (getDashboardSceneFor(this).isV2()) {
-        this.refreshLibraryLayoutBaseline();
-      }
+      this.refreshLibraryLayoutBaseline();
     } else {
       this.setOriginalState(this.state.panelRef);
     }
@@ -522,9 +528,10 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 function setLayoutItemState(
   layoutItem: DashboardLayoutItem,
   state: SceneObjectState,
-  baseline?: AdHocTransformationsByPanelKey,
-  restoreLibraryRepeats = false
+  baseline?: AdHocTransformationsByPanelKey
 ) {
+  const restoreLibraryRepeats =
+    'body' in state && state.body instanceof VizPanel && Boolean(getLibraryPanelBehavior(state.body));
   const adHocTransformations = collectAdHocTransformations(layoutItem);
   const previousVariable = layoutItem instanceof AutoGridItem ? layoutItem.state.variableName : undefined;
   if (restoreLibraryRepeats && layoutItem instanceof DashboardGridItem) {

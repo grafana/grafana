@@ -121,7 +121,12 @@ export class DashboardGridItem
     // The snapshot omits runtime repeats; resize handling must not use that temporary child count.
     this._handleGridSizeUnsubscribe();
     try {
-      this.setState({ ...state, repeatedPanels: undefined });
+      // Captured sizes and live repeat growth have already positioned siblings; do not shift them twice.
+      const height =
+        state.variableName && this.state.height !== undefined
+          ? Math.max(state.height ?? this.state.height, this.state.height)
+          : state.height;
+      this.setState({ ...state, height, repeatedPanels: undefined });
       if (!this.state.variableName) {
         this.state.body.setState({ $variables: undefined });
       }
