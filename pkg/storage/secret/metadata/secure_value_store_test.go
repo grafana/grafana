@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/secret/database"
 	"github.com/grafana/grafana/pkg/storage/secret/metadata"
 	"github.com/grafana/grafana/pkg/storage/secret/migrator"
+	"github.com/grafana/grafana/pkg/util/sqlite"
 )
 
 func createTestKeeper(t *testing.T, ctx context.Context, keeperStorage contracts.KeeperMetadataStorage, name, namespace string) string {
@@ -373,6 +374,38 @@ func TestLeaseInactiveSecureValues(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, sv.UID, activeValue.UID)
 	})
+
+	t.Run("retries the claim when sqlite is busy", func(t *testing.T) {
+		t.Parallel()
+
+		sut := testutils.Setup(t)
+		uids := leasedUIDs(createInactiveSecureValues(t, sut, 1))
+
+		db := &busyExecDatabase{Database: sut.Database, failures: 1}
+		storage, err := metadata.ProvideSecureValueMetadataStorage(sut.Clock, db, noop.NewTracerProvider().Tracer("test"), nil)
+		require.NoError(t, err)
+
+		values, err := storage.LeaseInactiveSecureValues(t.Context(), 1)
+		require.NoError(t, err)
+		require.Equal(t, uids, leasedUIDs(values))
+		require.Equal(t, 2, db.calls)
+	})
+}
+
+// busyExecDatabase fails the first ExecContext calls with a simulated SQLITE_BUSY,
+// the way a write lock held by another connection does.
+type busyExecDatabase struct {
+	contracts.Database
+	failures int
+	calls    int
+}
+
+func (db *busyExecDatabase) ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error) {
+	db.calls++
+	if db.calls <= db.failures {
+		return nil, sqlite.ErrTestBusy
+	}
+	return db.Database.ExecContext(ctx, query, args...)
 }
 
 // Lease acquisition calls QueryContext to select candidates, then ExecContext to claim them.
