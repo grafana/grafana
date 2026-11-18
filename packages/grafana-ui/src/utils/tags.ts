@@ -1,4 +1,4 @@
-import { type GrafanaTheme2 } from '@grafana/data';
+import { colorManipulator, type GrafanaTheme2 } from '@grafana/data';
 import { DEFAULT_TAG_COLORS } from '@grafana/data/unstable';
 
 export function getTagColorIndexFromName(name = '', theme?: GrafanaTheme2): number {
@@ -22,23 +22,21 @@ export function getTagColorsFromName(name = '', theme?: GrafanaTheme2) {
  * Returns the background and text colors for a tag badge from the palette in the active theme
  * (`theme.components.tag.colors`).
  * A CSS color instead of an index keeps that color as an opaque background with contrasting text in the same hue.
- * In a browser that supports relative color syntax, the colors are resolved to `rgb()` strings the first time
- * they are read. Elsewhere, for example in tests, they are CSS color expressions.
+ * In a browser that supports relative color syntax, the colors are resolved to `rgb()` strings. Elsewhere, for
+ * example in tests, they are CSS color expressions.
  * @param index index into the palette. Wrapped with modulo, so any number is valid — indexes
  * beyond the end of the palette cycle back around to the start.
  */
 export function getTagColor(index: number | string, theme?: GrafanaTheme2): TagColors {
   const colors = theme?.components.tag.colors ?? DEFAULT_TAG_COLORS;
-  const result =
-    typeof index === 'string' ? getContrastingTagColors(index, theme) : { ...colors[Math.abs(index % colors.length)] };
+  const { background, text } =
+    typeof index === 'string' ? getContrastingTagColors(index, theme) : colors[Math.abs(index % colors.length)];
+
+  const result = { background, text };
 
   // this maintains backwards runtime compatibility for a little bit
   // TODO remove in Grafana 14
-  // Getters, so the aliases don't force the lazy colors of a CSS color to resolve.
-  Object.defineProperties(result, {
-    color: { get: () => result.background, enumerable: true },
-    borderColor: { get: () => result.text, enumerable: true },
-  });
+  Object.assign(result, { color: background, borderColor: text });
 
   return result;
 }
@@ -49,18 +47,11 @@ interface TagColors {
 }
 
 function getContrastingTagColors(color: string, theme?: GrafanaTheme2): TagColors {
-  const background = `rgb(from ${color} r g b / ${OPAQUE})`;
-  const text = getContrastingText(color, theme);
-
-  // Resolving needs a style recalculation, so it only happens when a caller reads the value. Rendering in Grafana
-  // uses getTagColorVariables, which never resolves in JS.
+  // Resolving needs a style recalculation per new color. Rendering in Grafana uses getTagColorVariables instead,
+  // which never resolves in JS.
   return {
-    get background() {
-      return resolveCssColor(background);
-    },
-    get text() {
-      return resolveCssColor(text);
-    },
+    background: resolveCssColor(`rgb(from ${color} r g b / ${OPAQUE})`),
+    text: resolveCssColor(getContrastingText(color, theme)),
   };
 }
 
@@ -108,24 +99,31 @@ const linearToSrgb = (value: number) => (value <= 0.0031308 ? 12.92 * value : 1.
  * they were defined in, so this handles `rgb()`, `color(srgb …)` and `color(srgb-linear …)`.
  */
 export function toRgbString(computed: string): string | undefined {
-  const value = computed.trim();
-  if (/^rgba?\(/.test(value)) {
-    return value;
-  }
-
-  const match = value.match(/^color\((srgb|srgb-linear)\s+([^)]+)\)$/);
-  if (!match) {
+  let decomposed;
+  try {
+    decomposed = colorManipulator.decomposeColor(computed.trim());
+  } catch {
     return undefined;
   }
 
-  const [channelPart, alphaPart] = match[2].split('/');
-  const channels = channelPart.trim().split(/\s+/).map(Number);
-  const alpha = alphaPart === undefined ? 1 : Number(alphaPart.trim());
-  if (channels.length !== 3 || [...channels, alpha].some((channel) => Number.isNaN(channel))) {
+  const { type, values, colorSpace } = decomposed;
+  if (type === 'rgb' || type === 'rgba') {
+    return computed.trim();
+  }
+
+  const channels: number[] = values.slice(0, 3);
+  const alpha: number = values[3] ?? 1;
+  if (
+    type !== 'color' ||
+    (colorSpace !== 'srgb' && colorSpace !== 'srgb-linear') ||
+    values.length < 3 ||
+    values.length > 4 ||
+    [...channels, alpha].some((channel) => Number.isNaN(channel))
+  ) {
     return undefined;
   }
 
-  const [r, g, b] = (match[1] === 'srgb-linear' ? channels.map(linearToSrgb) : channels).map(toByte);
+  const [r, g, b] = (colorSpace === 'srgb-linear' ? channels.map(linearToSrgb) : channels).map(toByte);
   return alpha >= 1 ? `rgb(${r}, ${g}, ${b})` : `rgba(${r}, ${g}, ${b}, ${Math.round(alpha * 1000) / 1000})`;
 }
 

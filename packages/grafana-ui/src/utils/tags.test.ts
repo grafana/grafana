@@ -254,12 +254,11 @@ describe('resolving CSS color strings in a browser', () => {
     Object.defineProperty(globalThis, 'CSS', { value: originalCSS, configurable: true });
   });
 
-  it('does not compute styles until a color is read', () => {
-    const colors = getTagColor('#ab1234', createTheme());
-
-    expect(getComputedStyleSpy).not.toHaveBeenCalled();
-    expect(colors.background).toBe('rgb(255, 128, 0)');
-    expect(getComputedStyleSpy).toHaveBeenCalledTimes(1);
+  it('resolves CSS colors to rgb strings', () => {
+    expect(getTagColor('#ab1234', createTheme())).toMatchObject({
+      background: 'rgb(255, 128, 0)',
+      text: 'rgb(255, 128, 0)',
+    });
   });
 
   it('resolves the deprecated aliases to the same rgb strings', () => {
@@ -271,9 +270,11 @@ describe('resolving CSS color strings in a browser', () => {
 
   it('caches resolved colors', () => {
     const theme = createTheme();
-    expect(getTagColor('#ab9abc', theme).background).toBe(getTagColor('#ab9abc', theme).background);
+    getTagColor('#ab9abc', theme);
+    getTagColor('#ab9abc', theme);
 
-    expect(getComputedStyleSpy).toHaveBeenCalledTimes(1);
+    // One computation each for the background and the text.
+    expect(getComputedStyleSpy).toHaveBeenCalledTimes(2);
   });
 });
 
