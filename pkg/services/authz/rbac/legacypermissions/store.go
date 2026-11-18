@@ -2,25 +2,21 @@ package legacypermissions
 
 import (
 	"context"
-	"strings"
+	"fmt"
 
 	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
-type permissionReader interface {
-	permissions(context.Context, ac.GetUserPermissionsQuery) ([]ac.Permission, error)
-	permissionsForActions(context.Context, ac.GetUserPermissionsQuery, []string) ([]ac.Permission, error)
-	teams(context.Context, ac.GetUserPermissionsQuery) (map[int64][]ac.Permission, error)
+// Resolve the provider for each operation so one store can serve multiple tenants.
+// Callers must authorize the namespace before it reaches the provider.
+type permissionStore struct {
+	database legacysql.LegacyDatabaseProvider
 }
-
-var _ permissionReader = permissionStore{}
-
-// permissionStore owns embedded legacy enumeration reads. It deliberately does not
-// accept an Access Control service or store: those still own mutations, not loading.
-type permissionStore struct{ sql db.DB }
 
 func (s permissionStore) permissions(ctx context.Context, query ac.GetUserPermissionsQuery) ([]ac.Permission, error) {
 	return s.permissionsForActions(ctx, query, nil)
@@ -40,26 +36,13 @@ func (s permissionStore) permissionsForActions(
 	if query.UserID == 0 && len(query.TeamIDs) == 0 && len(query.Roles) == 0 {
 		return []ac.Permission{}, nil
 	}
-	filter, params := ac.UserRolesFilter(query.OrgID, query.UserID, query.TeamIDs, query.Roles, s.sql.GetDialect())
-	q := `SELECT permission.action, permission.scope FROM permission
-	INNER JOIN role ON role.id = permission.role_id ` + filter
-	if len(query.RolePrefixes) > 0 {
-		filter, args := ac.RolePrefixesFilter(query.RolePrefixes)
-		q += filter
-		params = append(params, args...)
-	}
-	if query.ExcludeRedundantManagedPermissions {
-		q += ac.ManagedPermissionsActionSetsFilter()
-	}
-	if len(actions) > 0 {
-		q += " AND permission.action IN (?" + strings.Repeat(", ?", len(actions)-1) + ")"
-		for _, action := range actions {
-			params = append(params, action)
-		}
+	helper, q, params, err := s.query(ctx, "legacy_permissions_query.sql", query, actions)
+	if err != nil {
+		return nil, err
 	}
 	var out []ac.Permission
 	// Keep transaction-bound sessions and SQLite retry behavior from the legacy path.
-	err = s.sql.WithDbSession(ctx, func(sess *db.Session) (err error) {
+	err = helper.DB.WithDbSession(ctx, func(sess *db.Session) (err error) {
 		attempts++
 		rows, err := sess.QueryRows(q, params...)
 		if err != nil {
@@ -87,6 +70,22 @@ func (s permissionStore) permissionsForActions(
 	return out, nil
 }
 
+func (s permissionStore) query(ctx context.Context, name string, query ac.GetUserPermissionsQuery, actions []string) (*legacysql.LegacyDatabaseHelper, string, []any, error) {
+	helper, err := s.database(ctx)
+	if err != nil {
+		return nil, "", nil, fmt.Errorf("resolve legacy permission database: %w", err)
+	}
+	if helper == nil || helper.DB == nil || helper.Table == nil || helper.DialectForDriver() == nil {
+		return nil, "", nil, fmt.Errorf("invalid legacy permission database helper")
+	}
+	req := newPermissionQuery(helper, query, actions)
+	statement, err := sqltemplate.Execute(permissionQueries.Lookup(name), req)
+	if err != nil {
+		return nil, "", nil, fmt.Errorf("render legacy permission query: %w", err)
+	}
+	return helper, statement, req.GetArgs(), nil
+}
+
 func (s permissionStore) teams(ctx context.Context, query ac.GetUserPermissionsQuery) (_ map[int64][]ac.Permission, err error) {
 	ctx, span := tracer.Start(ctx, "authz.legacypermissions.sql.teams")
 	attempts := 0
@@ -97,26 +96,12 @@ func (s permissionStore) teams(ctx context.Context, query ac.GetUserPermissionsQ
 	if len(query.TeamIDs) == 0 {
 		return nil, nil
 	}
-	q := `SELECT permission.action, permission.scope, all_role.team_id
-	FROM permission INNER JOIN role ON role.id = permission.role_id
-	INNER JOIN (SELECT tr.role_id, tr.team_id FROM team_role AS tr
-	WHERE tr.team_id IN (?` + strings.Repeat(", ?", len(query.TeamIDs)-1) + `) AND tr.org_id = ?)
-	AS all_role ON role.id = all_role.role_id `
-	params := make([]any, 0, len(query.TeamIDs)+1)
-	for _, team := range query.TeamIDs {
-		params = append(params, team)
-	}
-	params = append(params, query.OrgID)
-	if len(query.RolePrefixes) > 0 {
-		filter, args := ac.RolePrefixesFilter(query.RolePrefixes)
-		q += filter
-		params = append(params, args...)
-	}
-	if query.ExcludeRedundantManagedPermissions {
-		q += ac.ManagedPermissionsActionSetsFilter()
+	helper, q, params, err := s.query(ctx, "legacy_team_permissions_query.sql", query, nil)
+	if err != nil {
+		return nil, err
 	}
 	var out map[int64][]ac.Permission
-	err = s.sql.WithDbSession(ctx, func(sess *db.Session) (err error) {
+	err = helper.DB.WithDbSession(ctx, func(sess *db.Session) (err error) {
 		attempts++
 		rows, err := sess.QueryRows(q, params...)
 		if err != nil {

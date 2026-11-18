@@ -10,11 +10,11 @@ import (
 )
 
 //go:embed legacy_*_query.sql
-var remoteQueriesFS embed.FS
+var permissionQueriesFS embed.FS
 
-var remoteQueries = template.Must(template.New("legacy_permissions").ParseFS(remoteQueriesFS, "legacy_*_query.sql"))
+var permissionQueries = template.Must(template.New("legacy_permissions").ParseFS(permissionQueriesFS, "legacy_*_query.sql"))
 
-type remotePermissionQuery struct {
+type permissionQuery struct {
 	sqltemplate.SQLTemplate
 	Query            ac.GetUserPermissionsQuery
 	Actions          []string
@@ -25,10 +25,10 @@ type remotePermissionQuery struct {
 	BuiltinRoleTable string
 }
 
-func (q remotePermissionQuery) Validate() error { return nil }
+func (q permissionQuery) Validate() error { return nil }
 
-func newRemotePermissionQuery(helper *legacysql.LegacyDatabaseHelper, query ac.GetUserPermissionsQuery, actions []string) remotePermissionQuery {
-	return remotePermissionQuery{
+func newPermissionQuery(helper *legacysql.LegacyDatabaseHelper, query ac.GetUserPermissionsQuery, actions []string) permissionQuery {
+	return permissionQuery{
 		SQLTemplate:      sqltemplate.New(helper.DialectForDriver()),
 		Query:            query,
 		Actions:          actions,

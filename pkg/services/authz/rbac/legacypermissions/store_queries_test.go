@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
-func TestRemotePermissionQueryDialects(t *testing.T) {
+func TestPermissionQueryDialects(t *testing.T) {
 	for _, dialect := range []sqltemplate.Dialect{sqltemplate.MySQL, sqltemplate.PostgreSQL, sqltemplate.SQLite} {
 		t.Run(dialect.DialectName(), func(t *testing.T) {
 			for _, teams := range []bool{false, true} {
@@ -20,14 +20,14 @@ func TestRemotePermissionQueryDialects(t *testing.T) {
 					name = "legacy_team_permissions_query.sql"
 				}
 				t.Run(name, func(t *testing.T) {
-					q := newRemotePermissionQuery(&legacysql.LegacyDatabaseHelper{Table: func(table string) string {
+					q := newPermissionQuery(&legacysql.LegacyDatabaseHelper{Table: func(table string) string {
 						return "hg_tenant." + table
 					}}, ac.GetUserPermissionsQuery{
 						OrgID: 4, UserID: 7, TeamIDs: []int64{11, 12}, Roles: []string{"Viewer", "Admin"},
 						RolePrefixes: []string{"managed:", "custom:'"}, ExcludeRedundantManagedPermissions: true,
 					}, []string{"users:read", "users:read') OR 1=1 --"})
 					q.SQLTemplate = sqltemplate.New(dialect)
-					statement, err := sqltemplate.Execute(remoteQueries.Lookup(name), q)
+					statement, err := sqltemplate.Execute(permissionQueries.Lookup(name), q)
 					require.NoError(t, err)
 					tables := []string{"permission", "role", "team_role"}
 					if !teams {

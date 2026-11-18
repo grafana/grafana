@@ -7,18 +7,15 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/util/testutil"
-	"github.com/grafana/grafana/pkg/util/xorm/core"
 )
 
-func TestIntegrationPermissionStoreMembershipParity(t *testing.T) {
+func TestIntegrationPermissionStoreMemberships(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 	database := db.NewTestStore(t)
 	shared := ac.Permission{Action: "users:read", Scope: "users:*"}
@@ -61,10 +58,7 @@ func TestIntegrationPermissionStoreMembershipParity(t *testing.T) {
 		return nil
 	}))
 
-	stores := map[string]permissionReader{
-		"embedded": permissionStore{sql: database},
-		"remote":   remotePermissionStore{database: legacysql.NewDatabaseProvider(database)},
-	}
+	store := permissionStore{database: legacysql.NewDatabaseProvider(database)}
 	for _, tc := range []struct {
 		name  string
 		query ac.GetUserPermissionsQuery
@@ -80,25 +74,19 @@ func TestIntegrationPermissionStoreMembershipParity(t *testing.T) {
 		{"prefixes", ac.GetUserPermissionsQuery{OrgID: 1, UserID: 7, RolePrefixes: []string{"custom:global", "missing:"}}, []ac.Permission{global}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			for name, store := range stores {
-				t.Run(name, func(t *testing.T) {
-					got, err := store.permissions(t.Context(), tc.query)
-					require.NoError(t, err)
-					require.ElementsMatch(t, tc.want, got)
-				})
-			}
-		})
-	}
-	for name, store := range stores {
-		t.Run(name+" grouped teams", func(t *testing.T) {
-			got, err := store.teams(t.Context(), ac.GetUserPermissionsQuery{OrgID: 1, TeamIDs: []int64{11, 12, 99}})
+			got, err := store.permissions(t.Context(), tc.query)
 			require.NoError(t, err)
-			require.Len(t, got, 2)
-			for _, teamID := range []int64{11, 12} {
-				require.ElementsMatch(t, []ac.Permission{shared, empty, shared}, got[teamID])
-			}
+			require.ElementsMatch(t, tc.want, got)
 		})
 	}
+	t.Run("grouped teams", func(t *testing.T) {
+		got, err := store.teams(t.Context(), ac.GetUserPermissionsQuery{OrgID: 1, TeamIDs: []int64{11, 12, 99}})
+		require.NoError(t, err)
+		require.Len(t, got, 2)
+		for _, teamID := range []int64{11, 12} {
+			require.ElementsMatch(t, []ac.Permission{shared, empty, shared}, got[teamID])
+		}
+	})
 }
 
 func TestIntegrationPermissionStoreTeamFilters(t *testing.T) {
@@ -124,6 +112,7 @@ func TestIntegrationPermissionStoreTeamFilters(t *testing.T) {
 		return nil
 	}))
 	direct.Kind = ""
+	store := permissionStore{database: legacysql.NewDatabaseProvider(database)}
 	for _, tc := range []struct {
 		name     string
 		prefixes []string
@@ -137,29 +126,22 @@ func TestIntegrationPermissionStoreTeamFilters(t *testing.T) {
 		{"no match", []string{"missing:"}, true, nil},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			for name, store := range map[string]permissionReader{
-				"embedded": permissionStore{sql: database},
-				"remote":   remotePermissionStore{database: legacysql.NewDatabaseProvider(database)},
-			} {
-				t.Run(name, func(t *testing.T) {
-					got, err := store.teams(t.Context(), ac.GetUserPermissionsQuery{OrgID: 1, TeamIDs: []int64{11}, RolePrefixes: tc.prefixes, ExcludeRedundantManagedPermissions: tc.exclude})
-					require.NoError(t, err)
-					require.ElementsMatch(t, tc.want, got[11])
-					if len(tc.want) == 0 {
-						require.Empty(t, got)
-					} else {
-						require.Len(t, got, 1)
-					}
-				})
+			got, err := store.teams(t.Context(), ac.GetUserPermissionsQuery{OrgID: 1, TeamIDs: []int64{11}, RolePrefixes: tc.prefixes, ExcludeRedundantManagedPermissions: tc.exclude})
+			require.NoError(t, err)
+			require.ElementsMatch(t, tc.want, got[11])
+			if len(tc.want) == 0 {
+				require.Empty(t, got)
+			} else {
+				require.Len(t, got, 1)
 			}
 		})
 	}
 }
 
-func TestRemotePermissionStoreEmptyAndProviderFailure(t *testing.T) {
+func TestPermissionStoreEmptyAndProviderFailure(t *testing.T) {
 	boom := errors.New("tenant lookup failed")
 	calls := 0
-	store := remotePermissionStore{database: func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+	store := permissionStore{database: func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
 		calls++
 		return nil, boom
 	}}
@@ -179,15 +161,8 @@ func TestRemotePermissionStoreEmptyAndProviderFailure(t *testing.T) {
 	require.Equal(t, 2, calls)
 }
 
-type remoteTestDB struct {
-	db.DB
-	sql *session.SessionDB
-}
-
-func (d remoteTestDB) GetDBType() core.DbType             { return core.MYSQL }
-func (d remoteTestDB) GetSqlxSession() *session.SessionDB { return d.sql }
-
-func TestRemotePermissionStoreDiscardsFailedReads(t *testing.T) {
+func TestIntegrationPermissionStoreDiscardsFailedReads(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
 	for _, teams := range []bool{false, true} {
 		for _, failure := range []string{"query", "scan", "rows", "canceled", "deadline"} {
 			name := "permissions/" + failure
@@ -197,9 +172,16 @@ func TestRemotePermissionStoreDiscardsFailedReads(t *testing.T) {
 			t.Run(name, func(t *testing.T) {
 				sqlDB, mock, err := sqlmock.New()
 				require.NoError(t, err)
-				t.Cleanup(func() { require.NoError(t, mock.ExpectationsWereMet()); _ = sqlDB.Close() })
-				database := remoteTestDB{sql: session.GetSession(sqlx.NewDb(sqlDB, "mysql"))}
-				store := remotePermissionStore{database: legacysql.NewDatabaseProvider(database)}
+				database := db.NewTestStore(t, db.WithoutMigrator(), db.WithoutDefaultOrgAndUser())
+				engineDB := database.GetEngine().DB()
+				original := engineDB.DB
+				engineDB.DB = sqlDB
+				t.Cleanup(func() {
+					engineDB.DB = original
+					require.NoError(t, mock.ExpectationsWereMet())
+					_ = sqlDB.Close()
+				})
+				store := permissionStore{database: legacysql.NewDatabaseProvider(database)}
 				ctx := t.Context()
 				boom := errors.New("database failure")
 				var wantErr error

@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-func TestIntegrationRemotePermissionStoreTenantIsolation(t *testing.T) {
+func TestIntegrationPermissionStoreTenantIsolation(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 	database := db.NewTestStore(t, db.WithoutMigrator(), db.WithoutDefaultOrgAndUser())
 	// SQLite attachments belong to one connection. MySQL/Postgres exercise
@@ -92,7 +92,7 @@ func TestIntegrationRemotePermissionStoreTenantIsolation(t *testing.T) {
 	for namespace, schema := range schemas {
 		seed(schema, namespace, 1)
 	}
-	store := remotePermissionStore{database: func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+	store := permissionStore{database: func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
 		namespace, _ := request.NamespaceFrom(ctx)
 		schema, ok := schemas[namespace]
 		if !ok {
