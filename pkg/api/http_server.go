@@ -466,9 +466,11 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 
 	// Remove any square brackets enclosing IPv6 addresses, a format we support for backwards compatibility
 	host := strings.TrimSuffix(strings.TrimPrefix(hs.Cfg.HTTPAddr, "["), "]")
+	watchesCtx, endWatches := context.WithCancel(context.Background())
+	defer endWatches()
 	hs.httpSrv = &http.Server{
 		Addr:        net.JoinHostPort(host, hs.Cfg.HTTPPort),
-		Handler:     hs.web,
+		Handler:     endWatchesOnShutdown(hs.web, watchesCtx),
 		ReadTimeout: hs.Cfg.ReadTimeout,
 	}
 
@@ -509,11 +511,11 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 	// handle http shutdown on server context done
 	wg.Go(func() {
 		<-ctx.Done()
-		// Long-running requests, such as watches opened by in-process clients,
-		// stay active until their own context is cancelled, and that only
-		// happens after this server has stopped. Waiting for them without a
-		// bound would block shutdown forever, so close what is left after the
-		// grace period.
+		// Watches opened by in-process clients stay active until their own
+		// context is cancelled, and that only happens after this server has
+		// stopped, so end them first rather than wait out the grace period.
+		endWatches()
+		// Whatever else is still running is closed after the grace period.
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), httpShutdownGracePeriod)
 		defer cancel()
 		if err := hs.httpSrv.Shutdown(shutdownCtx); err != nil {
