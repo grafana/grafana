@@ -681,6 +681,100 @@ describe('AddPanelToNotebookModalBody', () => {
 
       expect(lockCheckbox()).not.toBeChecked();
     });
+
+    describe('converting a relative range to an absolute one', () => {
+      const convertCheckbox = () => screen.getByRole('checkbox', { name: /^Convert to an absolute time range/ });
+      const queryConvertCheckbox = () => screen.queryByRole('checkbox', { name: /^Convert to an absolute/ });
+
+      it('is offered below the lock, and usable once the lock is on', async () => {
+        const { user } = renderModal(undefined, false, RELATIVE_CAPTURE);
+
+        expect(convertCheckbox()).not.toBeChecked();
+        expect(convertCheckbox()).toBeDisabled();
+        expect(
+          lockCheckbox().compareDocumentPosition(convertCheckbox()) & Node.DOCUMENT_POSITION_FOLLOWING
+        ).toBeTruthy();
+
+        await user.click(lockCheckbox());
+
+        expect(convertCheckbox()).toBeEnabled();
+      });
+
+      it('is not offered for an absolute capture', () => {
+        renderModal(undefined, false, ABSOLUTE_CAPTURE);
+
+        expect(queryConvertCheckbox()).not.toBeInTheDocument();
+      });
+
+      it('is disabled again when the lock is turned off', async () => {
+        const { user } = renderModal(undefined, false, RELATIVE_CAPTURE);
+        await user.click(lockCheckbox());
+        await user.click(lockCheckbox());
+
+        expect(convertCheckbox()).toBeDisabled();
+      });
+
+      it('locks to the instants the range covers, not to the relative window', async () => {
+        const { user } = renderModal(undefined, false, RELATIVE_CAPTURE);
+        await user.click(lockCheckbox());
+        await user.click(convertCheckbox());
+
+        await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), 'New investigation');
+        await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
+
+        await waitFor(() => expect(createWithContent).toHaveBeenCalled());
+        const [, [created]] = createWithContent.mock.calls[0];
+        if (created.kind !== 'panel' || created.panel.kind !== 'Panel') {
+          throw new Error('expected a panel cell');
+        }
+        const { timeFrom, timeTo } = created.panel.spec.data.spec.queryOptions;
+        const iso = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
+        expect(timeFrom).toMatch(iso);
+        expect(timeTo).toMatch(iso);
+        // Six hours, give or take the milliseconds between resolving the two ends.
+        expect(Math.abs(Date.parse(timeTo!) - Date.parse(timeFrom!) - 6 * 3600 * 1000)).toBeLessThan(1000);
+      });
+
+      it('does not carry the choice into an add that ends up unlocked', async () => {
+        const { user } = renderModal(undefined, false, RELATIVE_CAPTURE);
+        await user.click(lockCheckbox());
+        await user.click(convertCheckbox());
+        await user.click(lockCheckbox());
+
+        await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), 'New investigation');
+        await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
+
+        await waitFor(() => expect(createWithContent).toHaveBeenCalled());
+        expect(createWithContent.mock.calls[0][1]).toEqual([{ kind: 'panel', panel: panel(), isLibraryPanel: false }]);
+      });
+    });
+  });
+
+  describe('the text block', () => {
+    const noteBox = () => screen.getByRole('textbox', { name: /^Text above the panel/ });
+
+    it('is added as a markdown cell before the panel', async () => {
+      const { user } = renderModal();
+      await user.type(noteBox(), '  Latency spiked after the deploy  ');
+      await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), 'New investigation');
+      await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
+
+      await waitFor(() => expect(createWithContent).toHaveBeenCalled());
+      expect(createWithContent.mock.calls[0][1]).toEqual([
+        { kind: 'markdown', text: 'Latency spiked after the deploy' },
+        { kind: 'panel', panel: panel(), isLibraryPanel: false },
+      ]);
+    });
+
+    it('adds nothing when left blank', async () => {
+      const { user } = renderModal();
+      await user.type(noteBox(), '   ');
+      await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), 'New investigation');
+      await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
+
+      await waitFor(() => expect(createWithContent).toHaveBeenCalled());
+      expect(createWithContent.mock.calls[0][1]).toEqual([{ kind: 'panel', panel: panel(), isLibraryPanel: false }]);
+    });
   });
 
   describe('the notebook cards', () => {

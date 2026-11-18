@@ -43,6 +43,20 @@ export function shouldLockCapturedTimeRange(range: CapturedTimeRange): boolean {
   return !rangeUtil.isRelativeTime(range.from) || !rangeUtil.isRelativeTime(range.to);
 }
 
+/**
+ * Resolves a relative range to the instants it covers right now, as ISO strings. An end that is
+ * already absolute is kept as it was written, so a half-pinned window only has its moving end fixed.
+ */
+export function toAbsoluteCapturedTimeRange(range: CapturedTimeRange): CapturedTimeRange {
+  const resolved = rangeUtil.convertRawToRange({ from: range.from, to: range.to }, range.timeZone);
+
+  return {
+    ...range,
+    from: rangeUtil.isRelativeTime(range.from) ? resolved.from.toISOString() : range.from,
+    to: rangeUtil.isRelativeTime(range.to) ? resolved.to.toISOString() : range.to,
+  };
+}
+
 /** How the range reads in the picker, matching what the cell's own lock pill will say. */
 export function describeCapturedTimeRange(range: CapturedTimeRange): string {
   // Through convertRawToRange first: describeTimeRange formats absolute ends only once they are
