@@ -11,7 +11,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/selection"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/apiserver/pkg/util/dryrun"
 
@@ -266,7 +265,7 @@ func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.Up
 	return common.LegacyRuleUpdate(
 		ctx, name, objInfo, updateValidation, options != nil && dryrun.IsDryRun(options.DryRun),
 		&s.service, s.namespacer, ResourceInfo, s.Get,
-		convertUpdateToDomainModel, convertToK8sResource,
+		convertToDomainModel, convertToK8sResource,
 	)
 }
 
@@ -274,15 +273,8 @@ func (s *legacyStorage) PrepareDryRunUpdate(ctx context.Context, name string, ob
 	return common.LegacyRulePrepareDryRunUpdate(
 		ctx, name, objInfo,
 		&s.service, s.namespacer, ResourceInfo, s.Get,
-		convertUpdateToDomainModel, convertToK8sResource,
+		convertToDomainModel, convertToK8sResource,
 	)
-}
-
-func convertUpdateToDomainModel(orgID int64, rule *v1beta1.RecordingRule) (*ngmodels.AlertRule, utils.ManagerProperties, error) {
-	if rule.Name != "" {
-		rule.UID = types.UID(rule.Name)
-	}
-	return convertToDomainModel(orgID, rule)
 }
 
 func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, opts *metav1.DeleteOptions) (runtime.Object, bool, error) {

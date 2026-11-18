@@ -18,6 +18,7 @@ import (
 	"k8s.io/client-go/dynamic"
 
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -43,13 +44,15 @@ var dryRunAll = []string{metav1.DryRunAll}
 type ruleKind struct {
 	name string
 	gvr  schema.GroupVersionResource
+	// hubGVR is the storage version. Requests in it are not converted, so legacy storage gets the decoded object itself.
+	hubGVR schema.GroupVersionResource
 	// spec builds a valid rule of this kind in the given folder.
 	spec func(t *testing.T, folder, name, title string) map[string]any
 }
 
 var kinds = []ruleKind{
-	{name: "AlertRule", gvr: v0alpha1.AlertRuleKind().GroupVersionResource(), spec: alertRule},
-	{name: "RecordingRule", gvr: v0alpha1.RecordingRuleKind().GroupVersionResource(), spec: recordingRule},
+	{name: "AlertRule", gvr: v0alpha1.AlertRuleKind().GroupVersionResource(), hubGVR: v1beta1.AlertRuleKind().GroupVersionResource(), spec: alertRule},
+	{name: "RecordingRule", gvr: v0alpha1.RecordingRuleKind().GroupVersionResource(), hubGVR: v1beta1.RecordingRuleKind().GroupVersionResource(), spec: recordingRule},
 }
 
 // TestIntegrationDryRun checks that every mutating verb on the rule kinds honours
@@ -172,6 +175,31 @@ func runDryRunTests(t *testing.T, helper *apis.K8sTestHelper, k ruleKind, mode g
 
 		require.Equal(t, before, snapshot(t, helper, k, name))
 		requireTitle(t, client, name, "original")
+	})
+
+	t.Run("update in the storage version keeps the UID", func(t *testing.T) {
+		hubClient := helper.Org1.Admin.ResourceClient(t, k.hubGVR).Namespace(helper.Namespacer(helper.Org1.OrgID))
+		current, err := hubClient.Get(ctx, name, metav1.GetOptions{})
+		require.NoError(t, err)
+		require.NotEqual(t, name, string(current.GetUID()), "the UID must differ from the name for this check to mean anything")
+
+		dry := current.DeepCopy()
+		require.NoError(t, unstructured.SetNestedField(dry.Object, "updated by dry run", "spec", "title"))
+		out, err := hubClient.Update(ctx, dry, metav1.UpdateOptions{DryRun: dryRunAll})
+		require.NoError(t, err)
+		if mode != grafanarest.Mode2 {
+			// DualWrite answers a dry-run update from unified storage, whose copy of the rule has its own UID,
+			// while reads and real updates return the legacy one.
+			require.Equal(t, current.GetUID(), out.GetUID(), "dry-run update")
+		}
+
+		// A real update that changes nothing, so the later cases still see the original rule.
+		out, err = hubClient.Update(ctx, current.DeepCopy(), metav1.UpdateOptions{})
+		require.NoError(t, err)
+		require.Equal(t, current.GetUID(), out.GetUID(), "real update")
+		after, err := hubClient.Get(ctx, name, metav1.GetOptions{})
+		require.NoError(t, err)
+		require.Equal(t, current.GetUID(), after.GetUID(), "stored rule")
 	})
 
 	t.Run("patch", func(t *testing.T) {

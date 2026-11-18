@@ -119,6 +119,8 @@ func TestLegacyStorage_DryRun(t *testing.T) {
 	out, err = s.PrepareDryRunUpdate(ctx, stored.Name, k8srest.DefaultUpdatedObjectInfo(changed))
 	require.NoError(t, err)
 	require.Equal(t, "changed", out.(*v1beta1.RecordingRule).Spec.Title)
+	require.NotEqual(t, changed.Name, string(changed.UID), "the stored UID must differ from the name for this check to mean anything")
+	require.Equal(t, changed.UID, out.(*v1beta1.RecordingRule).UID, "PrepareDryRunUpdate must not change the UID")
 	require.Empty(t, writes(), "PrepareDryRunUpdate must not write")
 
 	_, _, err = s.Delete(ctx, stored.Name, nil, &metav1.DeleteOptions{DryRun: dryRun})
