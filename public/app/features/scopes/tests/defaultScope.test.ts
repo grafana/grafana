@@ -1,7 +1,8 @@
 import { waitFor } from '@testing-library/dom';
 import { type DataSourceFallbackWatcher, watchDataSourceFallbacks } from 'test/helpers/seedDataSources';
 
-import { config, locationService, setBackendSrv } from '@grafana/runtime';
+import { locationService, setBackendSrv } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { MOCK_DEFAULT_SCOPE, setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -35,12 +36,9 @@ describe('Default scope', () => {
   let scopesService: ScopesService;
   let scopesSelectorService: ScopesSelectorService;
 
-  beforeAll(() => {
-    config.featureToggles.scopeFilters = true;
-  });
-
   beforeEach(() => {
     setTestFlags({
+      [FlagKeys.ScopeFilters]: true,
       'grafana.useDefaultScopesEndpoint': true,
     });
     window.localStorage.clear();
@@ -87,6 +85,7 @@ describe('Default scope', () => {
 
   it('does not fetch the default scope when grafana.useDefaultScopesEndpoint is off', async () => {
     setTestFlags({
+      [FlagKeys.ScopeFilters]: true,
       'grafana.useDefaultScopesEndpoint': false,
     });
 
