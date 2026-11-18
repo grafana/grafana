@@ -769,6 +769,37 @@ function clampOffset(element: HTMLElement, current: Offset, next: Offset): Offse
  * The page content's edges, or the window's when the page has no content element. The content element
  * reserves the docked menu as padding, so its padding box would put the container over the menu.
  */
+/**
+ * The most height the floating sidebar `element` can take with its bottom edge where it is: up to the page content's
+ * top, less the gutter the drag keeps, so growing it never covers the top bar.
+ */
+export function getFloatingHeightRoom(element: HTMLElement): number {
+  const { bottom, height } = element.getBoundingClientRect();
+  // Not laid out yet: there is nothing to measure against, so only the window caps it.
+  if (!(height > 0) || !Number.isFinite(bottom)) {
+    return Infinity;
+  }
+  return Math.max(0, Math.floor(bottom - (contentEdges().top + GUTTER)));
+}
+
+/**
+ * `getFloatingHeightRoom` for `element`, kept current as the window resizes, so a height remembered in a taller window
+ * still fits under the top bar. `Infinity` without an element.
+ */
+export function useFloatingHeightRoom(element: HTMLElement | null): number {
+  const [room, setRoom] = useState(Infinity);
+  useLayoutEffect(() => {
+    if (!element) {
+      return;
+    }
+    const update = () => setRoom(getFloatingHeightRoom(element));
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, [element]);
+  return element ? room : Infinity;
+}
+
 function contentEdges(): { left: number; top: number; right: number; bottom: number } {
   const element = document.getElementById('pageContent');
   if (!element) {

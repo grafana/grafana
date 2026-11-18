@@ -17,7 +17,7 @@ import {
   collapseFloatingExtensionSidebar,
   type FloatingExtensionSidebarHeightOptions,
 } from './extensionSidebarLayout';
-import { FLOATING_SNAP_DURATION_MS } from './useFloatingDrag';
+import { FLOATING_SNAP_DURATION_MS, getFloatingHeightRoom } from './useFloatingDrag';
 
 /** The CSS variable the extension sizes its floating surface with, set on the sidebar once the user resized it. */
 export const FLOATING_HEIGHT_VARIABLE = '--extension-sidebar-floating-height';
@@ -32,8 +32,12 @@ function clampWidth(width: number): number {
   );
 }
 
-function clampHeight(height: number, min: number): number {
-  return Math.round(Math.min(getMaxFloatingExtensionSidebarHeight(window.innerHeight), Math.max(min, height)));
+function clampHeight(
+  height: number,
+  min: number,
+  max = getMaxFloatingExtensionSidebarHeight(window.innerHeight)
+): number {
+  return Math.round(Math.min(max, Math.max(min, height)));
 }
 
 /**
@@ -42,12 +46,13 @@ function clampHeight(height: number, min: number): number {
  */
 export function releasedFloatingHeight(
   height: number,
-  { minHeight, collapsedHeight }: FloatingExtensionSidebarHeightOptions
+  { minHeight, collapsedHeight }: FloatingExtensionSidebarHeightOptions,
+  max?: number
 ): number | 'collapse' {
   if (collapsedHeight !== undefined && height < (collapsedHeight + minHeight) / 2) {
     return 'collapse';
   }
-  return clampHeight(height, minHeight);
+  return clampHeight(height, minHeight, max);
 }
 
 type Edge = 'top' | 'corner';
@@ -97,6 +102,7 @@ export function FloatingHeightHandle({
     width: number;
     options: FloatingExtensionSidebarHeightOptions;
     floor: number;
+    max: number;
   } | null>(null);
   const [renderedHeight, setRenderedHeight] = useState<number | undefined>(undefined);
 
@@ -171,6 +177,13 @@ export function FloatingHeightHandle({
   const collapsibleOptions = (): FloatingExtensionSidebarHeightOptions =>
     canCollapseFloatingExtensionSidebar() ? options : { minHeight: options.minHeight };
 
+  // The window caps the height, and so does the room above the sidebar where it is, so it never covers the top bar.
+  const maxHeight = () => {
+    const element = sidebar();
+    const windowMax = getMaxFloatingExtensionSidebarHeight(window.innerHeight);
+    return element ? Math.min(windowMax, getFloatingHeightRoom(element)) : windowMax;
+  };
+
   const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
     if (event.button !== 0) {
       return;
@@ -193,6 +206,7 @@ export function FloatingHeightHandle({
       options: gestureOptions,
       // Below the minimum, the drag follows down to the collapsed height, so the collapse a release would make shows.
       floor: gestureOptions.collapsedHeight ?? gestureOptions.minHeight,
+      max: maxHeight(),
     };
   };
 
@@ -205,7 +219,7 @@ export function FloatingHeightHandle({
       active.width = clampWidth(active.startWidth + (active.startX - event.clientX));
       onWidthChange(active.width);
     }
-    write(clampHeight(active.startHeight + (active.startY - event.clientY), active.floor));
+    write(clampHeight(active.startHeight + (active.startY - event.clientY), active.floor, active.max));
   };
 
   const onPointerEnd = (event: PointerEvent<HTMLDivElement>) => {
@@ -216,8 +230,8 @@ export function FloatingHeightHandle({
     drag.current = null;
     event.currentTarget.releasePointerCapture?.(event.pointerId);
     const dragged = active.startHeight + (active.startY - event.clientY);
-    const from = clampHeight(dragged, active.floor);
-    const released = releasedFloatingHeight(dragged, active.options);
+    const from = clampHeight(dragged, active.floor, active.max);
+    const released = releasedFloatingHeight(dragged, active.options, active.max);
     if (released === 'collapse') {
       const committed = height;
       settle(from, active.floor, () => {
@@ -257,7 +271,7 @@ export function FloatingHeightHandle({
       collapseFloatingExtensionSidebar({ method: 'resize', input: 'keyboard' });
     } else if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
       event.preventDefault();
-      const next = clampHeight(current + (event.key === 'ArrowUp' ? step : -step), options.minHeight);
+      const next = clampHeight(current + (event.key === 'ArrowUp' ? step : -step), options.minHeight, maxHeight());
       onHeightChange(next);
       reportResized(edge, 'keyboard', { height: next });
     } else if (event.key === 'Home') {

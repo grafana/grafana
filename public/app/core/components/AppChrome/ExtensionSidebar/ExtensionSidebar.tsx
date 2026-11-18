@@ -28,6 +28,7 @@ import {
   FLOATING_SNAP_DURATION_MS,
   useDockedDrag,
   useFloatingDrag,
+  useFloatingHeightRoom,
 } from './useFloatingDrag';
 
 type ExtensionSidebarComponentProps = {
@@ -53,6 +54,9 @@ export function ExtensionSidebar() {
   } = useExtensionSidebarContext();
   const [wrapper, setWrapper] = useState<HTMLDivElement | null>(null);
   const floating = presentation === 'floating';
+  const floatingHeightRoom = useFloatingHeightRoom(
+    floating && floatingExtensionSidebarHeight !== undefined ? wrapper : null
+  );
   const pluginId = dockedComponentId ? getComponentMetaFromComponentId(dockedComponentId)?.pluginId : undefined;
   const canDragToFloat =
     !floating && resolveExtensionSidebarPresentation('floating', canFloatExtensionSidebar(), pluginId) === 'floating';
@@ -99,11 +103,14 @@ export function ExtensionSidebar() {
     return null;
   }
 
-  // The extension sizes its floating surface with it; unset until the user resizes the height.
+  // The extension sizes its floating surface with it; unset until the user resizes the height. A height remembered in
+  // a taller window is held to the room under the top bar.
   const floatingHeightStyle =
     floating && floatingExtensionSidebarHeight !== undefined
       ? // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- CSSProperties has no custom properties
-        ({ [FLOATING_HEIGHT_VARIABLE]: `${floatingExtensionSidebarHeight}px` } as CSSProperties)
+        ({
+          [FLOATING_HEIGHT_VARIABLE]: `${Math.min(floatingExtensionSidebarHeight, floatingHeightRoom)}px`,
+        } as CSSProperties)
       : undefined;
 
   return (

@@ -133,6 +133,27 @@ describe('FloatingHeightHandle', () => {
       });
     });
 
+    it('keeps the top edge below the page content top, so it never covers the top bar', () => {
+      const page = document.createElement('div');
+      page.id = 'pageContent';
+      page.getBoundingClientRect = () => ({ top: 100, left: 0, width: 1024, height: 668 }) as DOMRect;
+      document.body.appendChild(page);
+      try {
+        const { handle, variable, onHeightChange } = renderHandle({
+          rendered: { width: 500, height: 500, bottom: 750 } as { width: number; height: number },
+        });
+
+        fireEvent.pointerDown(handle, { pointerId: 1, button: 0, clientY: 300 });
+        fireEvent.pointerMove(handle, { pointerId: 1, clientY: -2000 });
+        // 750 at the bottom, less the content's top at 100 and the 8px gutter.
+        expect(variable()).toBe('642px');
+        fireEvent.pointerUp(handle, { pointerId: 1, clientY: -2000 });
+        expect(onHeightChange).toHaveBeenCalledWith(642);
+      } finally {
+        page.remove();
+      }
+    });
+
     it('keeps the height under the window', () => {
       const { handle, variable, onHeightChange } = renderHandle();
 
