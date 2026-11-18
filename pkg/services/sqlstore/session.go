@@ -69,15 +69,15 @@ func startSessionOrUseExisting(ctx context.Context, engine *xorm.Engine, beginTr
 
 	span.SetAttributes(attribute.Bool("transaction", beginTran))
 
-	newSess := &DBSession{Session: engine.NewSession().Context(tctx), transactionOpen: beginTran}
+	newSess := &DBSession{Session: engine.NewSession(), transactionOpen: beginTran}
 
 	if beginTran {
 		err := newSess.Begin()
 		if err != nil {
-			newSess.Close()
 			return nil, false, span, err
 		}
 	}
+	newSess.Session = newSess.Context(tctx)
 
 	return newSess, true, span, nil
 }
@@ -105,19 +105,25 @@ func WithTransaction(ctx context.Context, engine *xorm.Engine, events bus.Bus, t
 	if err := validateHelperSession(ctx, engine); err != nil {
 		return err
 	}
-	sess, isNew, span, err := startSessionOrUseExisting(ctx, engine, true, tracer)
+	sess, isNew, span, err := startSessionOrUseExisting(ctx, engine, false, tracer)
 	defer span.End()
 	if err != nil {
 		return fmt.Errorf("start database transaction: %w", err)
 	}
+	span.SetAttributes(attribute.Bool("transaction", true))
 	if isNew {
 		defer sess.Close()
+		if err := sess.Begin(); err != nil {
+			return fmt.Errorf("start database transaction: %w", err)
+		}
+		sess.transactionOpen = true
 	} else if !sess.transactionOpen {
 		return fmt.Errorf("cannot reuse session without an open transaction")
 	}
 	return completeTransaction(ctx, sess, events, isNew, callback(sess))
 }
 
+// validateHelperSession prevents nested helpers from reusing invalid sessions or sessions from another database pool.
 func validateHelperSession(ctx context.Context, engine *xorm.Engine) error {
 	if engine == nil {
 		return fmt.Errorf("database engine is nil")

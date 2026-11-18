@@ -2,8 +2,10 @@ package sqlstore
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"testing"
+	"testing/synctest"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/grafana/grafana/pkg/bus"
@@ -124,6 +126,77 @@ func TestWithTransactionRejectsCanceledBeginBeforeCallback(t *testing.T) {
 	require.ErrorIs(t, err, context.Canceled)
 	require.False(t, called)
 	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestExistingSQLStoreTransactionsCommitAfterRequestCancellation(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		run  func(*SQLStore, context.Context, DBTransactionFunc) error
+	}{
+		{
+			name: "WithTransactionalDbSession",
+			run: func(store *SQLStore, ctx context.Context, callback DBTransactionFunc) error {
+				return store.WithTransactionalDbSession(ctx, callback)
+			},
+		},
+		{
+			name: "InTransaction",
+			run: func(store *SQLStore, ctx context.Context, callback DBTransactionFunc) error {
+				return store.InTransaction(ctx, func(ctx context.Context) error {
+					return store.WithDbSession(ctx, callback)
+				})
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			engine, mock := helperTestEngine(t)
+			mock.ExpectBegin()
+			mock.ExpectExec("INSERT INTO records").WillReturnResult(sqlmock.NewResult(1, 1))
+			mock.ExpectCommit()
+			store := &SQLStore{engine: engine, dbCfg: &DatabaseConfig{}, tracer: tracing.NewNoopTracerService()}
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+
+			err := tc.run(store, ctx, func(sess *DBSession) error {
+				if _, err := sess.Exec("INSERT INTO records (id) VALUES (1)"); err != nil {
+					return err
+				}
+				cancel()
+				return nil
+			})
+			require.NoError(t, err)
+			require.NoError(t, mock.ExpectationsWereMet())
+		})
+	}
+}
+
+func TestWithTransactionDoesNotPublishAfterRequestCancellation(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		engine, mock := helperTestEngine(t)
+		mock.ExpectBegin()
+		mock.ExpectExec("INSERT INTO records").WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectRollback()
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		published := false
+		events := &recordingBus{publish: func(context.Context, any) error {
+			published = true
+			return nil
+		}}
+
+		err := WithTransaction(ctx, engine, events, tracing.NewNoopTracerService(), func(sess *DBSession) error {
+			if _, err := sess.Exec("INSERT INTO records (id) VALUES (1)"); err != nil {
+				return err
+			}
+			sess.PublishAfterCommit("discard")
+			cancel()
+			return nil
+		})
+		synctest.Wait()
+		require.True(t, errors.Is(err, context.Canceled) || errors.Is(err, sql.ErrTxDone), "expected canceled transaction, got %v", err)
+		require.False(t, published)
+		require.NoError(t, mock.ExpectationsWereMet())
+	})
 }
 
 func TestWithTransactionRejectsCrossEngineSession(t *testing.T) {
