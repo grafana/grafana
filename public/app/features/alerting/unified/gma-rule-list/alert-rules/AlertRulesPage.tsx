@@ -14,6 +14,7 @@ import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { RuleListModeToggle } from '../rule-search/RuleListModeToggle';
 import { RuleSearchInput } from '../rule-search/RuleSearchInput';
 import { type RuleListMode, useRuleListSearchState } from '../rule-search/useRuleListSearchState';
+import { RuleSequenceDrawerProvider } from '../rule-sequences/RuleSequenceDrawer';
 import { useTrackRuleListPageView } from '../shared/analytics';
 
 import { AlertRulesFilterSidebar } from './AlertRulesFilterSidebar';
@@ -51,7 +52,9 @@ function AlertRulesPage() {
             <AlertRulesFilterSidebar query={query} filter={filter} onApply={applyQuery} />
             <Divider direction="vertical" spacing={0} />
             <Box flex={1} minWidth={0}>
-              <AlertRulesBody hasIssues={issues.length > 0} mode={mode} filter={filter} />
+              <RuleSequenceDrawerProvider>
+                <AlertRulesBody hasIssues={issues.length > 0} mode={mode} filter={filter} />
+              </RuleSequenceDrawerProvider>
             </Box>
           </Stack>
         </Stack>

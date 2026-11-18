@@ -2525,6 +2525,18 @@ describe('pick hint', () => {
     expect(hint()).toBeInTheDocument();
   });
 
+  it('hides when a turn starts, though the pointer has not moved', () => {
+    const { session, startPick } = setup();
+    startPick();
+    move(200, 350);
+    frame();
+    expect(hint()).toBeInTheDocument();
+
+    act(() => session.setWorking(true));
+
+    expect(hint()).not.toBeInTheDocument();
+  });
+
   it('does not show without a pending pick or during a capture', () => {
     const { session, startPick } = setup();
     move(200, 350);
