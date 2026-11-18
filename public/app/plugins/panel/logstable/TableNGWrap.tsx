@@ -29,12 +29,11 @@ import {
 } from 'app/features/table/hooks';
 import { getCurrentFrameIndex, notifyTableFilterError, onColumnResize, onSortByChange } from 'app/features/table/utils';
 
-import { isOnClickFilterOutString, isOnClickFilterString } from '../logs/types';
-
 import { useLogDetailsContext } from './LogDetailsContext';
 import { useLogsTablePopoverMenu } from './hooks/useLogsTablePopoverMenu';
 import { type Options } from './options/types';
 import { defaultOptions } from './panelcfg.gen';
+import { isOnClickFilterOutString, isOnClickFilterString } from './types';
 
 interface Props extends Omit<PanelProps<Options>, 'timeRange'> {
   initialRowIndex?: number;
