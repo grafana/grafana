@@ -201,29 +201,53 @@ export function formatOutputs(result: Result): Record<string, string> {
   };
 }
 
-function listMergedPendingPrs(repo: string): PendingPr[] {
-  const prs: Array<{ number: number; mergeCommit: { oid: string }; mergedAt: string }> = JSON.parse(
-    run('gh', [
-      'pr',
-      'list',
-      '--repo',
-      repo,
-      '--state',
-      'merged',
-      '--base',
-      'main',
-      '--label',
-      'nx-release:pending',
-      '--limit',
-      '100',
-      '--json',
-      'number,mergeCommit,mergedAt',
-    ])
-  );
+export interface ClosedPr {
+  number: number;
+  merged_at: string | null;
+  merge_commit_sha: string | null;
+  labels: Array<{ name: string }>;
+}
 
+const PENDING_LABEL = 'nx-release:pending';
+const PAGE_SIZE = 100;
+// Three pages of closed pull requests reach back several days, long enough to re-run a failed release job.
+const MAX_PAGES = 3;
+
+export function selectPendingPrs(prs: ClosedPr[]): PendingPr[] {
   return prs
-    .sort((a, b) => Date.parse(a.mergedAt) - Date.parse(b.mergedAt))
-    .map((pr) => ({ number: pr.number, mergeCommit: pr.mergeCommit.oid }));
+    .flatMap((pr) =>
+      pr.merged_at !== null && pr.merge_commit_sha !== null && pr.labels.some(({ name }) => name === PENDING_LABEL)
+        ? [{ number: pr.number, mergeCommit: pr.merge_commit_sha, mergedAt: Date.parse(pr.merged_at) }]
+        : []
+    )
+    .sort((a, b) => a.mergedAt - b.mergedAt)
+    .map(({ number, mergeCommit }) => ({ number, mergeCommit }));
+}
+
+// gh pr list --label goes through GitHub's search index, which can lag right after a merge, so the plain list
+// endpoint is paged instead. Sorted by last update, a version PR that has just merged is on the first page.
+// The jq filter keeps only the fields used here: a full page of pull requests is larger than run() can buffer.
+const CLOSED_PR_FIELDS = '[.[] | {number, merged_at, merge_commit_sha, labels: [.labels[] | {name}]}]';
+
+function listMergedPendingPrs(repo: string): PendingPr[] {
+  const closed: ClosedPr[] = [];
+
+  for (let page = 1; page <= MAX_PAGES; page++) {
+    const batch: ClosedPr[] = JSON.parse(
+      run('gh', [
+        'api',
+        `repos/${repo}/pulls?state=closed&base=main&sort=updated&direction=desc&per_page=${PAGE_SIZE}&page=${page}`,
+        '--jq',
+        CLOSED_PR_FIELDS,
+      ])
+    );
+    closed.push(...batch);
+    if (batch.length < PAGE_SIZE) {
+      break;
+    }
+  }
+
+  return selectPendingPrs(closed);
 }
 
 function apiGet(path: string): { object: { type: string; sha: string } } | null {

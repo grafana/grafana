@@ -5,7 +5,9 @@ import {
   formatOutputs,
   readOptions,
   resolveDispatchTags,
+  selectPendingPrs,
   tagMergedVersionPrs,
+  type ClosedPr,
   type Deps,
   type ExistingTag,
   type PendingPr,
@@ -352,6 +354,45 @@ describe('resolveDispatchTags', () => {
     expect(() => resolveDispatchTags([PLUGIN_COMPAT_TAG, '@grafana/other@1.1.0'], deps)).toThrow(
       'Tags point at different commits: m1, m2.'
     );
+  });
+});
+
+describe('selectPendingPrs', () => {
+  const pending = [{ name: 'nx-release:pending' }];
+
+  function closedPr(overrides: Partial<ClosedPr> & { number: number }): ClosedPr {
+    return {
+      merged_at: '2026-11-10T10:00:00Z',
+      merge_commit_sha: `merge-${overrides.number}`,
+      labels: pending,
+      ...overrides,
+    };
+  }
+
+  it('keeps merged pull requests that carry the pending label', () => {
+    expect(selectPendingPrs([closedPr({ number: 1 })])).toEqual([{ number: 1, mergeCommit: 'merge-1' }]);
+  });
+
+  it('drops pull requests that were closed without merging', () => {
+    expect(selectPendingPrs([closedPr({ number: 1, merged_at: null, merge_commit_sha: null })])).toEqual([]);
+  });
+
+  it('drops pull requests without the pending label, including the tagged ones', () => {
+    const tagged = [{ name: 'nx-release:tagged' }];
+
+    expect(selectPendingPrs([closedPr({ number: 1, labels: [] }), closedPr({ number: 2, labels: tagged })])).toEqual(
+      []
+    );
+  });
+
+  it('orders the result by merge time, oldest first, whatever order GitHub returned', () => {
+    const prs = [
+      closedPr({ number: 3, merged_at: '2026-11-12T10:00:00Z' }),
+      closedPr({ number: 1, merged_at: '2026-11-10T10:00:00Z' }),
+      closedPr({ number: 2, merged_at: '2026-11-11T10:00:00Z' }),
+    ];
+
+    expect(selectPendingPrs(prs).map(({ number }) => number)).toEqual([1, 2, 3]);
   });
 });
 
