@@ -164,9 +164,12 @@ func (s *embeddedServer) LegacyGetUserPermissions(req *authzv1.LegacyGetUserPerm
 	const chunkSize = 1000
 	for start := 0; start < len(permissions); start += chunkSize {
 		end := min(start+chunkSize, len(permissions))
-		chunk := &authzv1.LegacyGetUserPermissionsResponse{Permissions: make([]*authzv1.LegacyUserPermission, 0, end-start)}
-		for _, p := range permissions[start:end] {
-			chunk.Permissions = append(chunk.Permissions, &authzv1.LegacyUserPermission{Action: p.Action, Scope: p.Scope})
+		// Allocate message values together instead of allocating one object per permission.
+		values := make([]authzv1.LegacyUserPermission, end-start)
+		chunk := &authzv1.LegacyGetUserPermissionsResponse{Permissions: make([]*authzv1.LegacyUserPermission, end-start)}
+		for i, p := range permissions[start:end] {
+			values[i].Action, values[i].Scope = p.Action, p.Scope
+			chunk.Permissions[i] = &values[i]
 		}
 		if err := stream.Send(chunk); err != nil {
 			return err
