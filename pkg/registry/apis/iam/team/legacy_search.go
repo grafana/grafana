@@ -104,14 +104,18 @@ func (c *legacySearchClient) Search(ctx context.Context, req SearchQuery) (*iamv
 		Hits:      make([]iamv0.GetSearchTeamsTeamHit, 0, len(res.Teams)),
 	}}
 	for _, t := range res.Teams {
-		result.Hits = append(result.Hits, iamv0.GetSearchTeamsTeamHit{
+		hit := iamv0.GetSearchTeamsTeamHit{
 			Name:        t.UID,
 			Title:       t.Name,
 			Email:       t.Email,
 			Provisioned: t.IsProvisioned,
 			ExternalUID: t.ExternalUID,
 			InternalId:  &t.ID,
-		})
+		}
+		if req.MemberCount {
+			hit.MemberCount = &t.MemberCount
+		}
+		result.Hits = append(result.Hits, hit)
 	}
 	return result, nil
 }
