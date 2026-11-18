@@ -278,15 +278,31 @@ func TestGetAuthorizer_QueryTypesSkipDatasourceCheck(t *testing.T) {
 }
 
 func TestGetAuthorizer_QueryTypesAreReadOnly(t *testing.T) {
-	for _, verb := range []string{"create", "update", "patch", "delete", "deletecollection", "watch"} {
-		t.Run(verb, func(t *testing.T) {
+	tests := []struct {
+		verb        string
+		subresource string
+	}{
+		{verb: "create"},
+		{verb: "update"},
+		{verb: "patch"},
+		{verb: "delete"},
+		{verb: "deletecollection"},
+		{verb: "watch"},
+		{verb: "get", subresource: "validate"},
+		{verb: "update", subresource: "validate"},
+		{verb: "get", subresource: "status"},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.verb+"/"+tc.subresource, func(t *testing.T) {
 			client := &recordingAccessClient{resp: authlib.CheckResponse{Allowed: true}}
 			b := newAuthorizerTestBuilder(client)
 
 			decision, _, err := b.GetAuthorizer().Authorize(authorizerTestContext(), authorizer.AttributesRecord{
 				ResourceRequest: true,
 				Resource:        "querytypes",
-				Verb:            verb,
+				Verb:            tc.verb,
+				Subresource:     tc.subresource,
 				Name:            "random_walk",
 			})
 
