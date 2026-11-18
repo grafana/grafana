@@ -1,8 +1,13 @@
 import { useId } from 'react';
 
-import { ContactPointSelector, RoutingTreeSelector } from '@grafana/alerting/unstable';
+import {
+  ContactPointSelector,
+  buildRoutingTreeOptions,
+  isDefaultRoutingTreeName,
+  useRoutingTrees,
+} from '@grafana/alerting/unstable';
 import { t } from '@grafana/i18n';
-import { Box, Divider, Stack } from '@grafana/ui';
+import { Box, Combobox, Divider, Stack } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 
 import { isGranted } from '../../hooks/abilities/abilityUtils';
@@ -19,7 +24,7 @@ import { LabelMatchersFilter } from '../rule-search/LabelMatchersFilter';
 import { setFilterValues } from '../rule-search/setFilterValues';
 import { formatLabelMatcher } from '../rule-search/sharedFilters';
 
-import { type AlertFilterKey, type AlertRuleFilter, DEFAULT_POLICY, alertRuleSearchSchema } from './alertRuleFilters';
+import { type AlertFilterKey, type AlertRuleFilter, alertRuleSearchSchema } from './alertRuleFilters';
 
 interface AlertRulesFilterSidebarProps {
   query: string;
@@ -34,6 +39,10 @@ interface AlertRulesFilterSidebarProps {
 export function AlertRulesFilterSidebar({ query, filter, onApply }: AlertRulesFilterSidebarProps) {
   const canViewContactPoints = isGranted(useGlobalContactPointAbility(ContactPointAction.View));
   const pluginsLabelId = useId();
+  const policyId = useId();
+  const { trees, isLoading: isLoadingTrees } = useRoutingTrees();
+  // The search can't match the default policy yet.
+  const policyOptions = buildRoutingTreeOptions(trees).filter((option) => !isDefaultRoutingTreeName(option.value));
 
   const apply = (changes: Partial<Record<AlertFilterKey, Array<string | undefined>>>) => {
     const newQuery = Object.entries(changes).reduce((currentQuery, [filterKey, values]) => {
@@ -119,6 +128,7 @@ export function AlertRulesFilterSidebar({ query, filter, onApply }: AlertRulesFi
             </SidebarField>
           )}
           <SidebarField
+            htmlFor={policyId}
             label={
               <FieldLabelWithTooltip
                 label={t('alerting.gma-rule-list.sidebar.policy', 'Notification policy')}
@@ -130,13 +140,15 @@ export function AlertRulesFilterSidebar({ query, filter, onApply }: AlertRulesFi
               />
             }
           >
-            <RoutingTreeSelector
+            <Combobox
+              id={policyId}
               placeholder={t('alerting.gma-rule-list.sidebar.policy-placeholder', 'Select policy')}
-              // The selector reads an empty name as the default tree.
-              value={filter.policy === DEFAULT_POLICY ? '' : filter.policy}
+              options={policyOptions}
+              loading={isLoadingTrees}
+              value={filter.policy}
               isClearable
               disabled={Boolean(filter.contactPoint) && !filter.policy}
-              onChange={(tree) => apply({ policy: [tree?.metadata.name] })}
+              onChange={(option) => apply({ policy: [option?.value] })}
             />
           </SidebarField>
         </SidebarSection>
@@ -149,10 +161,8 @@ export function AlertRulesFilterSidebar({ query, filter, onApply }: AlertRulesFi
               value={filter.dashboardUid}
               isClearable
               showUnknown
-              // A panel ID means nothing without its dashboard.
-              onChange={(dashboard) =>
-                apply(dashboard ? { dashboard: [dashboard.uid] } : { dashboard: [], panelId: [] })
-              }
+              // A panel ID means nothing outside its dashboard.
+              onChange={(dashboard) => apply({ dashboard: [dashboard?.uid], panelId: [] })}
             />
           </SidebarField>
           {(filter.dashboardUid || filter.panelId) && (

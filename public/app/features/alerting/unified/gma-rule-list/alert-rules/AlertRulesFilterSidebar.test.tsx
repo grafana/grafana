@@ -68,6 +68,18 @@ describe('AlertRulesFilterSidebar', () => {
     expect(await screen.findByText(shown)).toBeInTheDocument();
   });
 
+  it('offers only named notification policies, and adds a picked one to the query', async () => {
+    mockComboboxRect();
+    const { user } = renderPage('cpu');
+
+    await user.click(await screen.findByRole('combobox', { name: /Notification policy/ }));
+    const named = await screen.findByRole('option', { name: /Managed Policy - Empty Provisioned/ });
+    expect(screen.queryByRole('option', { name: /Default policy/ })).not.toBeInTheDocument();
+    await user.click(named);
+
+    await waitFor(() => expect(searchParam()).toBe('cpu policy:"Managed Policy - Empty Provisioned"'));
+  });
+
   it('shows the folders of the query by title in one picker, and adds a picked folder to the query', async () => {
     server.use(
       getCustomSearchHandler([
