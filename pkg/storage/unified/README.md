@@ -1283,11 +1283,11 @@ index_min_count = 1
 index_max_count = 0
 ```
 
-By default, memory indexes expire after `index_cache_ttl` from build completion, even when searched regularly. Setting `index_cache_ttl_idle_only = true` keeps them open until they have not been searched for that duration. Background lookups, writes and rebuilds do not reset the idle timeout. An index never searched starts its idle timeout when first built. A zero TTL disables both age-based and idle-only memory expiration. File-index cleanup, ownership cleanup and `global_search_index_idle_timeout` are unchanged.
+By default, memory indexes expire after `index_cache_ttl` from build completion, even when searched regularly. Setting `index_cache_ttl_idle_only = true` keeps them open until they have not been searched for that duration. Background lookups, writes and rebuilds do not reset the idle timeout. An index never searched starts its idle timeout when first built. Startup restores the last search time when a recent local open-index list contains it. A zero TTL disables both age-based and idle-only memory expiration. File-index cleanup, ownership cleanup and `global_search_index_idle_timeout` are unchanged.
 
 Idle-only expiration avoids periodic cache misses for regularly searched memory indexes, but may retain more memory because these indexes do not merge partially obsolete segments. It does not disable separately configured periodic rebuilds.
 
-`grafana_index_server_memory_index_size_bytes` reports the total estimated memory used by open memory indexes; `grafana_index_server_memory_index_max_size_bytes` reports the largest individual estimate. Both are refreshed by the existing 60-second metrics loop, include the full estimated size of partially obsolete segments, and have no per-index labels. Older snapshots temporarily held by searches and other application memory are not fully covered. Compare these estimates with `grafana_index_server_open_indexes{index_storage="memory"}`, Go heap and process memory when evaluating idle-only expiration.
+`grafana_index_server_memory_index_size_bytes` reports the total estimated memory used by open memory indexes; `grafana_index_server_memory_index_max_size_bytes` reports the largest individual estimate. Both are refreshed by the existing 60-second metrics loop, include the full estimated size of partially obsolete segments, and have no per-index labels. The estimates cover current root snapshots, not in-flight indexing buffers, older snapshots held by searches, or other application memory. Compare these estimates with `grafana_index_server_open_indexes{index_storage="memory"}`, Go heap and process memory when evaluating idle-only expiration.
 
 ### Search Request Sources
 

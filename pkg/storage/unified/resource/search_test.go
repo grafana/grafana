@@ -534,7 +534,9 @@ func (m *mockSearchBackend) TotalDocs() int64 {
 }
 
 func (m *mockSearchBackend) GetOpenIndexes() []NamespacedResource {
-	return m.openIndexes
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return slices.Clone(m.openIndexes)
 }
 
 func (m *mockSearchBackend) Stop() {
@@ -2648,6 +2650,7 @@ func TestRebuildIndexes(t *testing.T) {
 		rsp, err := support.RebuildIndexes(context.Background(), rebuildReq)
 		require.NoError(t, err)
 		require.Equal(t, int64(0), rsp.RebuildCount, "no rebuilds should be triggered")
+		require.Zero(t, search.getIndexCalls, "collecting build metadata must not refresh index idle timestamps")
 
 		// Verify BuildTimes contains entries for key1 and key2, but not key3 (zero time)
 		require.Len(t, rsp.BuildTimes, 2, "should have 2 build times (key3 has zero time)")

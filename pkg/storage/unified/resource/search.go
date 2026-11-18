@@ -1635,7 +1635,7 @@ func (s *searchServer) RebuildIndexes(ctx context.Context, req *resourcepb.Rebui
 
 	buildTimes := make([]*resourcepb.RebuildIndexesResponse_IndexBuildTime, 0)
 	for _, key := range filterKeys {
-		idx := s.search.GetIndex(key)
+		idx := s.search.PeekIndex(key)
 		if idx == nil {
 			continue
 		}

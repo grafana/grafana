@@ -827,12 +827,25 @@ func (b *bleveBackend) updateMemoryIndexSizeMetrics(ctx context.Context) {
 			b.log.Debug("Skipping memory index size measurement", "key", key, "err", err)
 			continue
 		}
-		scorchIndex, ok := advanced.(*scorch.Scorch)
+		reader, err := advanced.Reader()
+		if err != nil {
+			b.log.Debug("Skipping memory index size measurement", "key", key, "err", err)
+			continue
+		}
+		snapshot, ok := reader.(*scorch.IndexSnapshot)
 		if !ok {
+			if reader != nil {
+				_ = reader.Close()
+			}
+			continue
+		}
+		// Scorch can return a typed nil if the index closed after the cache lookup.
+		if snapshot == nil {
 			continue
 		}
 		// Partially obsolete segments still occupy their full estimated size.
-		size := scorchIndex.MemoryUsed()
+		size := uint64(snapshot.Size())
+		_ = snapshot.Close()
 		totalSize += size
 		maxSize = max(maxSize, size)
 	}
