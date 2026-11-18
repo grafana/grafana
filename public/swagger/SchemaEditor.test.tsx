@@ -20,7 +20,7 @@ jest.mock('@grafana/ui/unstable', () => ({
       aria-label="Request body"
       value={value}
       readOnly={readOnly}
-      onChange={(event) => onChange(event.target.value)}
+      onChange={(event) => onChange?.(event.target.value)}
       onBlur={(event) => onBlur?.(event.target.value)}
       onKeyDown={(event) => {
         if (event.key === 's' && (event.ctrlKey || event.metaKey)) {
