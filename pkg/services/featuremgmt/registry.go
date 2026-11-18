@@ -26,6 +26,14 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true},
 		},
 		{
+			Name:        "search.exactAuthorizedTotalsLimit",
+			Description: "Maximum matching resources to authorize for exact search totals; zero disables optional counting",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSearchAndStorageSquad,
+			Expression:  "0",
+			Generate:    Generate{Go: true},
+		},
+		{
 			Name:         "publicDashboardsEmailSharing",
 			Description:  "Enables public dashboard sharing to be restricted to only allowed emails",
 			Stage:        FeatureStagePublicPreview,

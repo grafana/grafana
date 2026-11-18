@@ -14,8 +14,10 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/open-feature/go-sdk/openfeature"
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -33,9 +35,6 @@ type PostRankAuthzConfig struct {
 	// MaxCandidates limits count-only scans and counting beyond a full trash
 	// page. It never shortens a result page.
 	MaxCandidates int
-	// ExactCountThreshold enables full authorized counts for ordinary searches
-	// from the top when the initial match count fits. Nonpositive disables it.
-	ExactCountThreshold int
 	// FacetSampleSize is the candidate budget when aggregating facets. Facet
 	// counts reflect a sample of up to this many ranked hits, not the full
 	// authorized set. Smaller than MaxCandidates since facets are a
@@ -61,10 +60,18 @@ func (c PostRankAuthzConfig) effective() PostRankAuthzConfig {
 	return c
 }
 
-func (c PostRankAuthzConfig) countSmallResultSet(req *resourcepb.ResourceSearchRequest, total uint64) bool {
+func exactCountLimit(ctx context.Context) int64 {
+	limit, err := openfeature.NewDefaultClient().IntValue(ctx, featuremgmt.FlagSearchExactAuthorizedTotalsLimit, 0, openfeature.TransactionContext(ctx))
+	if err != nil {
+		return 0
+	}
+	return max(0, limit)
+}
+
+func countSmallResultSet(req *resourcepb.ResourceSearchRequest, total uint64, threshold int64) bool {
 	return req.Limit > 0 && len(req.Facet) == 0 &&
 		len(req.SearchAfter) == 0 && len(req.SearchBefore) == 0 &&
-		c.ExactCountThreshold > 0 && total <= uint64(c.ExactCountThreshold)
+		threshold > 0 && total <= uint64(threshold)
 }
 
 func (c PostRankAuthzConfig) windowSize(limit int) int {
@@ -377,6 +384,7 @@ func (s *postRankSearch) run(
 
 	resources := authzResources(s.key, req)
 	cfg := s.config
+	exactCountThreshold := exactCountLimit(ctx)
 	wantFacets := len(req.Facet) > 0
 	// A count-only request returns no rows, so there is no page to fill: the
 	// scan authorizes ranked hits purely to total them and runs until the match
@@ -435,10 +443,10 @@ windows:
 		if window == 0 {
 			firstRes = res
 			stats.AddTotalHits(int(res.Total))
-			if trashAuthz == nil && cfg.countSmallResultSet(req, res.Total) {
+			if trashAuthz == nil && countSmallResultSet(req, res.Total, exactCountThreshold) {
 				countEveryHit = true
 				// This budget is independent of count-only and trash scans.
-				maxCandidates = int64(cfg.ExactCountThreshold)
+				maxCandidates = exactCountThreshold
 			}
 		}
 

@@ -74,11 +74,12 @@ func BenchmarkBlevePostRankExactCount(b *testing.B) {
 }
 
 func benchmarkPostRankExactCount(b *testing.B, total, visible int, limit int64, exact bool) {
-	threshold := -1
+	var threshold int64
 	if exact {
-		threshold = total
+		threshold = int64(total)
 	}
-	index := newTestDashboardsIndexPostRankWithConfig(b, int64(total), search.PostRankAuthzConfig{ExactCountThreshold: threshold})
+	setExactCountLimit(b, threshold)
+	index := newTestDashboardsIndexPostRank(b, int64(total))
 	docs := make([]*resource.BulkIndexItem, total)
 	for i := range docs {
 		folder := "denied"

@@ -12,12 +12,17 @@ import (
 
 	"github.com/blevesearch/bleve/v2"
 	authlib "github.com/grafana/authlib/types"
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/baggage"
 	apischema "k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/features"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourceclient/resourceutil"
@@ -1772,6 +1777,19 @@ func newTestDashboardsIndexAuthz(t testing.TB, size int64, cfg search.PostRankAu
 	return index
 }
 
+func setExactCountProvider(t testing.TB, provider openfeature.FeatureProvider) {
+	t.Helper()
+	require.NoError(t, openfeature.SetProviderAndWait(provider))
+	t.Cleanup(func() { require.NoError(t, openfeature.SetProviderAndWait(openfeature.NoopProvider{})) })
+}
+
+func setExactCountLimit(t testing.TB, limit any) {
+	t.Helper()
+	setExactCountProvider(t, memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
+		featuremgmt.FlagSearchExactAuthorizedTotalsLimit: {DefaultVariant: "limit", Variants: map[string]any{"limit": limit}},
+	}))
+}
+
 // countingAccessClient allows access based on allowedFolders (an empty/nil map
 // allows everything) and records how many items it was asked to check, so tests
 // can assert that authorization stops early once the page is full.
@@ -1940,6 +1958,88 @@ func pageAll(t *testing.T, index resource.ResourceIndex, ac authlib.AccessClient
 
 //nolint:gocyclo // The subtests share post-rank fixtures and helpers.
 func TestSearchPostRankAuthz(t *testing.T) {
+	t.Run("integer flag controls counting per request on the same index", func(t *testing.T) {
+		index := newTestDashboardsIndexPostRankWithConfig(t, 2, search.PostRankAuthzConfig{OverFetchFactor: 1, MaxWindow: 10})
+		docs := make([]*resource.BulkIndexItem, 80)
+		for i := range docs {
+			docs[i] = newDoc(fmt.Sprintf("doc-%03d", i), "allowed")
+		}
+		indexDocs(t, index, docs)
+		for _, tc := range []struct {
+			name      string
+			value     any
+			missing   bool
+			failure   bool
+			wantExact bool
+		}{
+			{name: "missing", missing: true},
+			{name: "disabled", value: int64(0)},
+			{name: "negative", value: int64(-1)},
+			{name: "wrong type", value: "100"},
+			{name: "provider error", value: int64(100), failure: true},
+			{name: "enabled", value: int64(100), wantExact: true},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				flags := map[string]memprovider.InMemoryFlag{}
+				if !tc.missing {
+					flag := memprovider.InMemoryFlag{DefaultVariant: "limit", Variants: map[string]any{"limit": tc.value}}
+					if tc.failure {
+						evaluator := func(_ memprovider.InMemoryFlag, _ openfeature.FlattenedContext) (any, openfeature.ProviderResolutionDetail) {
+							return tc.value, openfeature.ProviderResolutionDetail{ResolutionError: openfeature.NewGeneralResolutionError("unavailable")}
+						}
+						flag.ContextEvaluator = &evaluator
+					}
+					flags[featuremgmt.FlagSearchExactAuthorizedTotalsLimit] = flag
+				}
+				setExactCountProvider(t, memprovider.NewInMemoryProvider(flags))
+				ac := &countingAccessClient{allowAll: true}
+				names, res := searchNames(t, index, ac, listQuery(10))
+				require.Len(t, names, 10)
+				require.Equal(t, int64(80), res.TotalHits)
+				require.Equal(t, tc.wantExact, res.TotalHitsExact)
+				if tc.wantExact {
+					require.Equal(t, 80, ac.checked)
+				} else {
+					require.Equal(t, 10, ac.checked)
+				}
+			})
+		}
+	})
+
+	t.Run("evaluates targeted threshold once for each request", func(t *testing.T) {
+		calls := 0
+		evaluator := func(_ memprovider.InMemoryFlag, ctx openfeature.FlattenedContext) (any, openfeature.ProviderResolutionDetail) {
+			calls++
+			if ctx[openfeature.TargetingKey] == "enabled" {
+				return int64(100), openfeature.ProviderResolutionDetail{}
+			}
+			return int64(0), openfeature.ProviderResolutionDetail{}
+		}
+		setExactCountProvider(t, memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
+			featuremgmt.FlagSearchExactAuthorizedTotalsLimit: {ContextEvaluator: &evaluator},
+		}))
+		index := newTestDashboardsIndexPostRankWithConfig(t, 2, search.PostRankAuthzConfig{OverFetchFactor: 1, MaxWindow: 10})
+		docs := make([]*resource.BulkIndexItem, 80)
+		for i := range docs {
+			docs[i] = newDoc(fmt.Sprintf("doc-%03d", i), "allowed")
+		}
+		indexDocs(t, index, docs)
+		require.Zero(t, calls, "index construction must not capture the threshold")
+		for i, target := range []string{"disabled", "enabled", "disabled"} {
+			requester := &identity.StaticRequester{Type: authlib.TypeUser, UserID: 1, Namespace: postRankKey.Namespace}
+			ctx := authlib.WithAuthInfo(context.Background(), requester)
+			member, err := baggage.NewMember(features.NamespaceKey, target)
+			require.NoError(t, err)
+			bag, err := baggage.New(member)
+			require.NoError(t, err)
+			ctx = features.WithTransactionContextFromBaggage(baggage.ContextWithBaggage(ctx, bag))
+			res, err := index.Search(ctx, &countingAccessClient{allowAll: true}, listQuery(10), nil, nil)
+			require.NoError(t, err)
+			require.Equal(t, target == "enabled", res.TotalHitsExact)
+			require.Equal(t, i+1, calls, "one evaluation per request, regardless of window count")
+		}
+	})
+
 	t.Run("counts complete small result sets after filling the page", func(t *testing.T) {
 		for _, tc := range []struct {
 			name          string
@@ -1956,8 +2056,9 @@ func TestSearchPostRankAuthz(t *testing.T) {
 			{name: "offset includes skipped hits", total: 80, offset: 5, wantTotal: 40, wantExact: true},
 		} {
 			t.Run(tc.name, func(t *testing.T) {
+				setExactCountLimit(t, int64(100))
 				index := newTestDashboardsIndexPostRankWithConfig(t, 2, search.PostRankAuthzConfig{
-					ExactCountThreshold: 100, OverFetchFactor: 1, MaxWindow: 17, MaxCandidates: tc.maxCandidates,
+					OverFetchFactor: 1, MaxWindow: 17, MaxCandidates: tc.maxCandidates,
 				})
 				docs := make([]*resource.BulkIndexItem, tc.total)
 				for i := range docs {
@@ -1988,8 +2089,9 @@ func TestSearchPostRankAuthz(t *testing.T) {
 	})
 
 	t.Run("returns authorization errors after filling an eligible page", func(t *testing.T) {
+		setExactCountLimit(t, int64(100))
 		index := newTestDashboardsIndexPostRankWithConfig(t, 2, search.PostRankAuthzConfig{
-			ExactCountThreshold: 100, OverFetchFactor: 1, MaxWindow: 10,
+			OverFetchFactor: 1, MaxWindow: 10,
 		})
 		docs := make([]*resource.BulkIndexItem, 30)
 		for i := range docs {
@@ -2188,7 +2290,8 @@ func TestSearchPostRankAuthz(t *testing.T) {
 	})
 
 	t.Run("count-only request approximates once the budget is hit", func(t *testing.T) {
-		cfg := search.PostRankAuthzConfig{MaxWindow: 20, MaxCandidates: 40, ExactCountThreshold: 300}
+		setExactCountLimit(t, int64(300))
+		cfg := search.PostRankAuthzConfig{MaxWindow: 20, MaxCandidates: 40}
 		index := newTestDashboardsIndexPostRankWithConfig(t, 2, cfg)
 		docs := make([]*resource.BulkIndexItem, 0, 200)
 		for i := range 200 {
@@ -2324,7 +2427,8 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		// With req.SearchAfter set, the scan only authorizes the tail beyond the
 		// cursor; on exhaustion that's not the whole-query total, so the final
 		// short cursor page must fall back to firstRes.Total (unfiltered).
-		index := newTestDashboardsIndexPostRankWithConfig(t, 2, search.PostRankAuthzConfig{ExactCountThreshold: 100, MaxWindow: 10})
+		setExactCountLimit(t, int64(100))
+		index := newTestDashboardsIndexPostRankWithConfig(t, 2, search.PostRankAuthzConfig{MaxWindow: 10})
 		const n = 25
 		docs := make([]*resource.BulkIndexItem, 0, n)
 		for i := range n {
@@ -2365,7 +2469,8 @@ func TestSearchPostRankAuthz(t *testing.T) {
 
 	t.Run("sparse short pages exhaust all matches beyond MaxCandidates", func(t *testing.T) {
 		// A short page must prove exhaustion, even with only one authorized hit.
-		cfg := search.PostRankAuthzConfig{MaxWindow: 20, MaxCandidates: 50, ExactCountThreshold: 100}
+		setExactCountLimit(t, int64(100))
+		cfg := search.PostRankAuthzConfig{MaxWindow: 20, MaxCandidates: 50}
 		index := newTestDashboardsIndexPostRankWithConfig(t, 2, cfg)
 		docs := make([]*resource.BulkIndexItem, 0, 2000)
 		for i := range 2000 {
@@ -2877,7 +2982,8 @@ func TestSearchPostRankAuthz(t *testing.T) {
 	t.Run("facet sample stays exact when the budget covers every match", func(t *testing.T) {
 		// The sample consumes its whole budget, but that budget spans the entire
 		// match set, so no authorized document went uncounted.
-		cfg := search.PostRankAuthzConfig{MaxWindow: 10, FacetSampleSize: 20, MaxCandidates: 100, ExactCountThreshold: 100}
+		setExactCountLimit(t, int64(100))
+		cfg := search.PostRankAuthzConfig{MaxWindow: 10, FacetSampleSize: 20, MaxCandidates: 100}
 		index := newTestDashboardsIndexPostRankWithConfig(t, 2, cfg)
 		docs := make([]*resource.BulkIndexItem, 0, 20)
 		for i := range 20 {
@@ -3175,7 +3281,8 @@ func TestSearchAuthzDoesNotReturnAnObjectChangedDuringAuthorization(t *testing.T
 	byTitle.SortBy = []*resourcepb.ResourceSearchRequest_Sort{{Field: resource.SEARCH_FIELD_TITLE}}
 	for change, apply := range changes {
 		t.Run(change, func(t *testing.T) {
-			index := newTestDashboardsIndexAuthz(t, 3, search.PostRankAuthzConfig{ExactCountThreshold: 100})
+			setExactCountLimit(t, int64(100))
+			index := newTestDashboardsIndexAuthz(t, 3, search.PostRankAuthzConfig{})
 			indexDocs(t, index, []*resource.BulkIndexItem{newDoc("doc", "allowed"), newDoc("next", "allowed")})
 			ac := &changingAccessClient{countingAccessClient: countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}}
 			ac.change = func() {
@@ -3202,10 +3309,9 @@ func TestSearchPostRankAuthzPaginationDoesNotSkipResults(t *testing.T) {
 		for _, cursorBased := range []bool{false, true} {
 			t.Run(fmt.Sprintf("budget=%d/cursor=%t", budget, cursorBased), func(t *testing.T) {
 				index := newTestDashboardsIndexPostRankWithConfig(t, 2, search.PostRankAuthzConfig{
-					OverFetchFactor:     1,
-					MaxWindow:           3,
-					MaxCandidates:       budget,
-					ExactCountThreshold: 100,
+					OverFetchFactor: 1,
+					MaxWindow:       3,
+					MaxCandidates:   budget,
 				})
 				indexDocs(t, index, []*resource.BulkIndexItem{
 					newDoc("a", "allowed"),
@@ -3244,19 +3350,28 @@ func TestSearchPostRankAuthzPaginationDoesNotSkipResults(t *testing.T) {
 }
 
 func TestSearchPostRankAuthzRefillsPagesAfterValidationPastCandidateBudget(t *testing.T) {
-	index := newTestDashboardsIndexAuthz(t, 4, search.PostRankAuthzConfig{OverFetchFactor: 1, MaxWindow: 1, MaxCandidates: 1, ExactCountThreshold: 100})
-	indexDocs(t, index, []*resource.BulkIndexItem{newDoc("doc", "allowed"), newDoc("e", "denied"), newDoc("next", "allowed"), newDoc("z-next", "allowed")})
-	ac := &changingAccessClient{countingAccessClient: countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}}
-	ac.change = func() {
-		moved := newDoc("doc", "denied")
-		moved.Doc.RV = 2
-		indexDocs(t, index, []*resource.BulkIndexItem{moved})
-	}
-	q := listQuery(2)
-	q.SortBy = []*resourcepb.ResourceSearchRequest_Sort{{Field: resource.SEARCH_FIELD_TITLE}}
+	for _, threshold := range []int64{0, 100} {
+		t.Run(fmt.Sprintf("threshold=%d", threshold), func(t *testing.T) {
+			setExactCountLimit(t, threshold)
+			index := newTestDashboardsIndexAuthz(t, 4, search.PostRankAuthzConfig{OverFetchFactor: 1, MaxWindow: 1, MaxCandidates: 1})
+			indexDocs(t, index, []*resource.BulkIndexItem{newDoc("doc", "allowed"), newDoc("e", "denied"), newDoc("next", "allowed"), newDoc("z-next", "allowed")})
+			ac := &changingAccessClient{countingAccessClient: countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}}
+			ac.change = func() {
+				moved := newDoc("doc", "denied")
+				moved.Doc.RV = 2
+				indexDocs(t, index, []*resource.BulkIndexItem{moved})
+			}
+			q := listQuery(2)
+			q.SortBy = []*resourcepb.ResourceSearchRequest_Sort{{Field: resource.SEARCH_FIELD_TITLE}}
 
-	names, _ := searchNames(t, index, ac, q)
-	require.Equal(t, []string{"next", "z-next"}, names)
+			names, res := searchNames(t, index, ac, q)
+			require.Equal(t, []string{"next", "z-next"}, names)
+			if threshold > 0 {
+				require.Equal(t, int64(2), res.TotalHits)
+				require.True(t, res.TotalHitsExact)
+			}
+		})
+	}
 }
 
 func TestSearchPostRankAuthzReturnsExpectedRows(t *testing.T) {

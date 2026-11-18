@@ -11,6 +11,10 @@ const (
 	// Search for dashboards using panel title
 	FlagPanelTitleSearch = "panelTitleSearch"
 
+	// FlagSearchExactAuthorizedTotalsLimit
+	// Maximum matching resources to authorize for exact search totals; zero disables optional counting
+	FlagSearchExactAuthorizedTotalsLimit = "search.exactAuthorizedTotalsLimit"
+
 	// FlagPublicDashboardsEmailSharing
 	// Enables public dashboard sharing to be restricted to only allowed emails
 	FlagPublicDashboardsEmailSharing = "publicDashboardsEmailSharing"

@@ -6234,6 +6234,19 @@
     },
     {
       "metadata": {
+        "name": "search.exactAuthorizedTotalsLimit",
+        "resourceVersion": "1795019524690",
+        "creationTimestamp": "2026-11-18T16:32:04Z"
+      },
+      "spec": {
+        "description": "Maximum matching resources to authorize for exact search totals; zero disables optional counting",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-search-and-storage",
+        "expression": "0"
+      }
+    },
+    {
+      "metadata": {
         "name": "search.perResourceFolderTree",
         "resourceVersion": "1793306194106",
         "creationTimestamp": "2026-10-22T13:32:34Z",
