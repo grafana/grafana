@@ -134,29 +134,31 @@ func runDryRunTests(t *testing.T, helper *apis.K8sTestHelper, k ruleKind, mode g
 		requireTitle(t, client, name, "original")
 	})
 
-	t.Run("create runs the checks the store makes when writing", func(t *testing.T) {
-		if mode == grafanarest.Mode2 {
-			// DualWrite sends dry-run creates to unified storage only, so the legacy store's checks
-			// cannot run for them, while the real create goes through legacy first.
-			t.Skip("dry-run create does not reach legacy storage in DualWrite mode")
-		}
-		invalidName := prefix + "-store-invalid"
-		before := snapshot(t, helper, k, invalidName)
-		// Admission accepts any query model; the legacy store rejects a non-string queryType when it saves.
-		invalid := toUnstructured(k.spec(t, folderUID, invalidName, "store invalid"))
-		require.NoError(t, unstructured.SetNestedField(invalid.Object, int64(5), "spec", "expressions", "A", "model", "queryType"))
+	// The legacy store rejects these when it writes. Admission rejects them too, so every mode does.
+	storeInvalid := map[string]func(t *testing.T, obj *unstructured.Unstructured){
+		"non-string queryType": func(t *testing.T, obj *unstructured.Unstructured) {
+			require.NoError(t, unstructured.SetNestedField(obj.Object, int64(5), "spec", "expressions", "A", "model", "queryType"))
+		},
+		"name that is not a valid rule UID": func(t *testing.T, obj *unstructured.Unstructured) {
+			obj.SetName(prefix + ".dotted")
+		},
+		"empty title": func(t *testing.T, obj *unstructured.Unstructured) {
+			require.NoError(t, unstructured.SetNestedField(obj.Object, "", "spec", "title"))
+		},
+	}
+	for desc, mutate := range storeInvalid {
+		t.Run("create rejects a rule the store rejects: "+desc, func(t *testing.T) {
+			invalid := toUnstructured(k.spec(t, folderUID, prefix+"-store-invalid", "store invalid"))
+			mutate(t, invalid)
+			before := snapshot(t, helper, k, invalid.GetName())
 
-		_, dryErr := client.Create(ctx, invalid.DeepCopy(), metav1.CreateOptions{DryRun: dryRunAll})
-		require.Equal(t, before, snapshot(t, helper, k, invalidName))
-		_, realErr := client.Create(ctx, invalid.DeepCopy(), metav1.CreateOptions{})
-		if realErr == nil {
-			require.NoError(t, client.Delete(ctx, invalidName, metav1.DeleteOptions{}))
-		}
-		if mode == grafanarest.Mode0 {
+			_, dryErr := client.Create(ctx, invalid.DeepCopy(), metav1.CreateOptions{DryRun: dryRunAll})
+			_, realErr := client.Create(ctx, invalid.DeepCopy(), metav1.CreateOptions{})
 			require.Equal(t, http.StatusBadRequest, statusCode(realErr), "real create: %v", realErr)
-		}
-		require.Equal(t, statusCode(realErr), statusCode(dryErr), "dry-run create: %v", dryErr)
-	})
+			require.Equal(t, statusCode(realErr), statusCode(dryErr), "dry-run create: %v", dryErr)
+			require.Equal(t, before, snapshot(t, helper, k, invalid.GetName()))
+		})
+	}
 
 	t.Run("update", func(t *testing.T) {
 		before := snapshot(t, helper, k, name)

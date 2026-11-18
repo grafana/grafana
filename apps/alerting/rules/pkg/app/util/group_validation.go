@@ -39,6 +39,9 @@ func ValidateGroupLabels(labels map[string]string, oldLabels map[string]string, 
 		if groupIndexStrExists && groupIndexStr == "" {
 			return fmt.Errorf("%s cannot be empty", model.GroupIndexLabelKey)
 		}
+		if len(groupStr) > model.AlertRuleMaxRuleGroupNameLength {
+			return StoreRejection("%s is longer than %d characters", model.GroupLabelKey, model.AlertRuleMaxRuleGroupNameLength)
+		}
 		if _, err := strconv.Atoi(groupIndexStr); err != nil {
 			return fmt.Errorf("invalid %s: %w", model.GroupIndexLabelKey, err)
 		}

@@ -112,8 +112,15 @@ func ValidateWrite(cfg config.RuntimeConfig) validation.ValidateFunc[*model.Reco
 			return err
 		}
 
-		if len(r.Spec.Title) > model.AlertRuleMaxTitleLength {
-			return fmt.Errorf("recording rule title is too long. Max length is %d", model.AlertRuleMaxTitleLength)
+		// The name can't change, so an existing rule is not re-checked against rules added later.
+		if req.Action == resource.AdmissionActionCreate {
+			if err := util.ValidateRuleName(r.Name); err != nil {
+				return err
+			}
+		}
+
+		if err := util.ValidateTitle("recording rule", r.Spec.Title); err != nil {
+			return err
 		}
 
 		if err := util.ValidateInterval(cfg.BaseEvaluationInterval, &r.Spec.Trigger.Interval); err != nil {
@@ -129,7 +136,10 @@ func ValidateWrite(cfg config.RuntimeConfig) validation.ValidateFunc[*model.Reco
 		}
 
 		expressions := make([]util.Expression, 0, len(r.Spec.Expressions))
-		for _, expression := range r.Spec.Expressions {
+		for refID, expression := range r.Spec.Expressions {
+			if err := util.ValidateExpressionModel(refID, expression.Model); err != nil {
+				return err
+			}
 			expressions = append(expressions, &expression)
 		}
 		if err := util.ValidateExpressions(expressions); err != nil {
