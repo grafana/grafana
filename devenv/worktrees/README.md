@@ -4,6 +4,15 @@ Run several frontend branches side by side against one shared backend.
 Each worktree gets its own hostname (`<name>.localhost`), so logins and cookies are separate.
 The name is the worktree directory name (`grafana` is `main`; a `grafana-` prefix is dropped).
 
+## Before you start
+
+- Docker with the Compose v2 plugin is running, and port 80 is free.
+- In each worktree you use, run `mise trust` once. mise refuses to read `mise.toml` in a directory it has not been told to trust
+  ("Config files … are not trusted"), and every new worktree is a new directory.
+- In each worktree, run `pnpm install --frozen-lockfile`. The tooling imports `js-yaml` and `worktree:frontend` runs `pnpm start`.
+
+There is no separate setup task: `worktree:frontend` and `worktree:backend` register the worktree and start Traefik the first time you run them.
+
 ## Workflow
 
 1. In the main checkout (`grafana`), run the backend:
@@ -12,24 +21,32 @@ The name is the worktree directory name (`grafana` is `main`; a `grafana-` prefi
    mise run worktree:backend
    ```
 
-   Run the backend from the main checkout. It uses that checkout's existing `data/` and `conf/custom.ini`, so your dashboards, users and teams are there.
-   A backend started from any other worktree begins with an empty database and no `custom.ini`.
-   Only one worktree runs the backend at a time. Stop it and run `mise run worktree:down` there before moving it.
+   The backend always runs from the main checkout; the task refuses to run anywhere else. It is a plain `make run` with the worktree settings added,
+   so it uses that checkout's existing `data/` and `conf/custom.ini` and keeps your dashboards, users and teams. It listens on port 3000.
 
-2. In every worktree whose frontend you want to test, including the backend worktree if you want to open its own hostname:
+2. In every worktree whose frontend you want to test, including the main checkout if you want to open its own hostname:
 
    ```bash
    mise run worktree:frontend
    ```
 
-   The first run registers the worktree and starts the shared Traefik container. No setup step is needed.
+   The first run registers the worktree and starts the shared Traefik container.
 
-3. Open `http://<name>.localhost` for each worktree.
+3. Open `http://<name>.localhost` for each worktree, or use the dashboard below to find them.
 
-`mise run worktree:status` lists every registered worktree, what it routes to and whether those targets are listening.
-The Traefik dashboard is at <http://traefik.localhost>.
+## Dashboard
 
-`worktree:frontend` fails with a clear message if no backend is registered yet, or if more than one worktree claims to run it.
+`mise run worktree:dashboard` serves a list of the registered worktrees at <http://worktrees.localhost>, one card per worktree with a link that opens its frontend.
+It keeps running until you stop it, so start it in its own terminal. Open <http://traefik.localhost> for Traefik's own dashboard.
+
+Each card shows the branch, whether that frontend is listening, and a description of the change: the text from `mise run worktree:frontend --description "…"` if you passed one,
+otherwise the subjects of the branch's commits that are not on `origin/main` yet. The page refreshes every few seconds.
+
+The server listens on `127.0.0.1:3399` and only answers its own host names. Its files live in `scripts/worktree/dashboard/`:
+static `index.html`, `dashboard.css` and `dashboard.js`, plus a JSON endpoint at `/api/worktrees` that the page reads.
+
+`mise run worktree:status` shows whether the backend is up and lists every registered worktree with its frontend port.
+
 `mise run worktree:down` removes the current worktree's routes and registry entry.
 
 Plain `make run` / `pnpm start` are unchanged.
@@ -41,12 +58,12 @@ Plain `make run` / `pnpm start` are unchanged.
   and everything else to the backend, and sets `X-Grafana-Frontend` so the backend renders the right bundle.
 - The backend honours that header only in development mode and only for `http://<name>.localhost`
   (`[frontend_dev] worktree_server_url_template`). `worktree:backend` enables it.
-- Each worktree gets its own frontend port from a hashed block; `main` keeps 3333 and the usual backend ports.
+- Each worktree gets its own frontend port, picked from its name; `main` keeps 3333 for the frontend and 3000 for the backend.
 
 ## Limits
 
 - Requires Docker with the Compose v2 plugin, port 80, and `*.localhost` resolving to loopback (add hosts entries if yours doesn't).
-- The backend worktree needs built `dist/` folders for the `graphite` and `grafana-testdata-datasource` plugins, or the backend fails
+- The main checkout needs built `dist/` folders for the `graphite` and `grafana-testdata-datasource` plugins, or the backend fails
   at startup. Copy them from another worktree if the plugin build doesn't work.
 - Enterprise is not handled. `make enterprise-dev` overlays enterprise code onto one OSS checkout (the main one by default), so an
   enterprise backend has to run from the main checkout. Worktree frontends are OSS-only, so enterprise-only pages will not appear in them.

@@ -1,22 +1,30 @@
 #!/usr/bin/env node
 // Multiple frontends against one backend, behind one shared Traefik. Driven by `mise run worktree:*`.
-// One worktree runs the backend (`worktree:backend`); every worktree runs its own frontend (`worktree:frontend`) and is
-// routed to that backend. State lives in ~/.grafana-worktrees: a registry entry and a Traefik route file per worktree.
+// The backend always runs from the main checkout (`worktree:backend`); every worktree runs its own frontend
+// (`worktree:frontend`) and is routed to that backend. State lives in ~/.grafana-worktrees: a registry entry and a
+// Traefik route file per worktree.
 import yaml from 'js-yaml';
 import { execFileSync, spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
-import net from 'node:net';
-import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const HOME = process.env.GRAFANA_WORKTREES_HOME || path.join(os.homedir(), '.grafana-worktrees');
-const PORT_RANGE_START = 3400;
-const PORT_BLOCK = 5; // +0 frontend, +1 backend http, +2 grpc, +3 pprof, +4 ha
-const PORT_BLOCKS = 100;
-// `main` keeps the ports a plain `make run` / `pnpm start` use, so it is the natural default target.
-const MAIN_PORTS = { frontend: 3333, backend: 3000, grpc: 10000, pprof: 6000, ha: 9094 };
+import { startDashboard } from './dashboard/server.mjs';
+import {
+  DASHBOARD_HOST,
+  DASHBOARD_PORT,
+  HOME,
+  MAIN,
+  MAIN_BACKEND_PORT,
+  MAIN_FRONTEND_PORT,
+  listening,
+  readRegistry,
+} from './shared.mjs';
+
+const FRONTEND_PORT_START = 3400;
+const FRONTEND_PORT_COUNT = 500;
+const BACKEND_SERVICE = `${MAIN}-be`;
 
 function sanitizeName(raw) {
   const name = raw
@@ -33,97 +41,71 @@ function sanitizeName(raw) {
 }
 
 function deriveName(repoRoot) {
-  const base = path.basename(repoRoot);
-  return sanitizeName(base === 'grafana' ? 'main' : base.replace(/^grafana-/, ''));
+  const dirName = path.basename(repoRoot);
+  return sanitizeName(dirName === 'grafana' ? MAIN : dirName.replace(/^grafana-/, ''));
 }
 
-function portsFor(name, base) {
-  if (name === 'main') {
-    return { ...MAIN_PORTS };
-  }
-  return { frontend: base, backend: base + 1, grpc: base + 2, pprof: base + 3, ha: base + 4 };
-}
-
-// Stable block from the name, probing forward past blocks another worktree already holds.
-function allocateBase(name, taken) {
-  const start = createHash('sha1').update(name).digest().readUInt32BE(0) % PORT_BLOCKS;
-  for (let i = 0; i < PORT_BLOCKS; i++) {
-    const base = PORT_RANGE_START + ((start + i) % PORT_BLOCKS) * PORT_BLOCK;
-    if (!taken.has(base)) {
-      return base;
+// Stable port from the name, probing forward past ports another worktree already holds.
+function allocateFrontendPort(name, takenPorts) {
+  const start = createHash('sha1').update(name).digest().readUInt32BE(0) % FRONTEND_PORT_COUNT;
+  for (let i = 0; i < FRONTEND_PORT_COUNT; i++) {
+    const port = FRONTEND_PORT_START + ((start + i) % FRONTEND_PORT_COUNT);
+    if (!takenPorts.has(port)) {
+      return port;
     }
   }
-  throw new Error('No free port block left; run `mise run worktree:status` and remove stale worktrees.');
+  throw new Error('No free port left; run `mise run worktree:status` and remove stale worktrees.');
 }
 
+const server = (port) => ({ loadBalancer: { servers: [{ url: `http://host.docker.internal:${port}` }] } });
+
+// Routes a worktree's hostname: assets and the HMR socket to its own frontend dev server, everything else to the
+// shared backend.
 function traefikConfig(entry) {
-  const { name, frontend, backend, ports } = entry;
-  // `external` is a backend this tooling doesn't manage (e.g. `make run`), reached on `backendPort`.
-  const backendService = backend === 'external' ? `${name}-be` : `${backend}-be`;
-  const headers = `wt-${name}-headers`;
-  const host = `Host(\`${name}.localhost\`)`;
-  const routers = {};
-  if (frontend !== 'none') {
-    // Everything under /public (bundles and static assets) and the HMR socket come from the frontend dev server.
-    routers[`wt-${name}-assets`] = {
-      rule: `${host} && (PathPrefix(\`/public\`) || Path(\`/ws\`))`,
-      service: `${frontend}-fe`,
-      priority: 100,
-      middlewares: [headers],
-      entryPoints: ['web'],
-    };
-  }
-  if (backend !== 'none') {
-    routers[`wt-${name}-app`] = {
-      rule: host,
-      service: backendService,
-      priority: 1,
-      middlewares: [headers],
-      entryPoints: ['web'],
-    };
-  }
-  const server = (port) => ({ loadBalancer: { servers: [{ url: `http://host.docker.internal:${port}` }] } });
-  const services = {};
-  if (frontend === name) {
-    services[`${name}-fe`] = server(ports.frontend);
-  }
-  if (backend === name) {
-    services[`${name}-be`] = server(ports.backend);
-  } else if (backend === 'external') {
-    services[`${name}-be`] = server(entry.backendPort);
-  }
+  const middleware = `wt-${entry.name}-headers`;
+  const host = `Host(\`${entry.name}.localhost\`)`;
   const config = {
     http: {
-      routers,
-      // Traefik replaces any client-sent value, so only the proxy decides which frontend a request gets.
-      // An empty value removes the header, so a role-less frontend still drops anything the client sent.
-      middlewares: {
-        [headers]: { headers: { customRequestHeaders: { 'X-Grafana-Frontend': frontend === 'none' ? '' : frontend } } },
+      routers: {
+        [`wt-${entry.name}-assets`]: {
+          rule: `${host} && (PathPrefix(\`/public\`) || Path(\`/ws\`))`,
+          service: `${entry.name}-fe`,
+          priority: 100,
+          middlewares: [middleware],
+          entryPoints: ['web'],
+        },
+        [`wt-${entry.name}-app`]: {
+          rule: host,
+          service: BACKEND_SERVICE,
+          priority: 1,
+          middlewares: [middleware],
+          entryPoints: ['web'],
+        },
       },
-      ...(Object.keys(services).length ? { services } : {}),
+      // Traefik replaces any client-sent value, so only the proxy decides which frontend a request gets.
+      middlewares: { [middleware]: { headers: { customRequestHeaders: { 'X-Grafana-Frontend': entry.name } } } },
+      services: { [`${entry.name}-fe`]: server(entry.port) },
     },
   };
   return `# Generated by \`mise run worktree:*\` for ${entry.path}. Do not edit.\n${yaml.dump(config, { lineWidth: -1 })}`;
 }
 
-function readRegistry(home = HOME) {
-  const dir = path.join(home, 'registry');
-  if (!fs.existsSync(dir)) {
-    return [];
-  }
-  return fs
-    .readdirSync(dir)
-    .filter((f) => f.endsWith('.json'))
-    .map((f) => JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')));
-}
-
-function listening(port) {
-  return new Promise((resolve) => {
-    const socket = net.connect({ host: '127.0.0.1', port, timeout: 300 });
-    socket.once('connect', () => (socket.destroy(), resolve(true)));
-    socket.once('error', () => resolve(false));
-    socket.once('timeout', () => (socket.destroy(), resolve(false)));
-  });
+// The shared dashboard route and the one backend every worktree routes to.
+function sharedTraefikConfig() {
+  const config = {
+    http: {
+      routers: {
+        'traefik-dashboard': { rule: 'Host(`traefik.localhost`)', service: 'api@internal', entryPoints: ['web'] },
+        'worktrees-dashboard': {
+          rule: `Host(\`${DASHBOARD_HOST}\`)`,
+          service: 'worktrees-dashboard',
+          entryPoints: ['web'],
+        },
+      },
+      services: { [BACKEND_SERVICE]: server(MAIN_BACKEND_PORT), 'worktrees-dashboard': server(DASHBOARD_PORT) },
+    },
+  };
+  return yaml.dump(config, { lineWidth: -1 });
 }
 
 function repoRoot() {
@@ -133,27 +115,20 @@ function repoRoot() {
 function parseArgs(argv) {
   const opts = {};
   for (let i = 0; i < argv.length; i++) {
-    if (argv[i] === '--name') {
-      opts.name = argv[++i];
-    } else if (argv[i] === '--port') {
-      opts.port = argv[++i];
-    } else if (argv[i] === '--backend-port') {
-      opts.backendPort = Number(argv[++i]);
-    } else {
-      throw new Error(`Unknown argument "${argv[i]}".`);
+    const flag = argv[i];
+    if (flag !== '--name' && flag !== '--description') {
+      throw new Error(`Unknown argument "${flag}".`);
     }
+    opts[flag.slice(2)] = argv[++i];
   }
   return opts;
 }
 
 function ensureHome() {
-  for (const d of ['registry', 'traefik/dynamic']) {
-    fs.mkdirSync(path.join(HOME, d), { recursive: true });
+  for (const dir of ['registry', 'traefik/dynamic']) {
+    fs.mkdirSync(path.join(HOME, dir), { recursive: true });
   }
-  fs.writeFileSync(
-    path.join(HOME, 'traefik/dynamic/_traefik.yml'),
-    'http:\n  routers:\n    traefik-dashboard:\n      rule: "Host(`traefik.localhost`)"\n      service: api@internal\n      entryPoints: [web]\n'
-  );
+  fs.writeFileSync(path.join(HOME, 'traefik/dynamic/_traefik.yml'), sharedTraefikConfig());
 }
 
 const COMPOSE_FILE = fileURLToPath(new URL('../../devenv/worktrees/docker-compose.yaml', import.meta.url));
@@ -178,108 +153,67 @@ function currentName(opts) {
   return sanitizeName(opts.name || deriveName(repoRoot()));
 }
 
-// The worktree that runs the backend registers itself as its own backend.
-function backendHosts(exceptName) {
-  return readRegistry().filter((e) => e.backend === e.name && e.name !== exceptName);
-}
-
-function register(name, backendName, backendPort) {
+function register(name, description) {
   const root = repoRoot();
   ensureHome();
-  const all = readRegistry();
-  const others = all.filter((e) => e.name !== name);
-  const prev = all.find((e) => e.name === name);
-  const base = prev?.base ?? allocateBase(name, new Set(others.map((e) => e.base)));
+  const registry = readRegistry();
+  const previous = registry.find((existing) => existing.name === name);
+  const takenPorts = new Set(registry.filter((existing) => existing.name !== name).map((other) => other.port));
   const entry = {
     name,
     path: root,
     branch: execFileSync('git', ['branch', '--show-current'], { encoding: 'utf8' }).trim(),
-    base,
-    ports: portsFor(name, base),
-    frontend: name,
-    backend: backendName,
-    ...(backendPort ? { backendPort } : {}),
+    description: description ?? previous?.description,
+    port: name === MAIN ? MAIN_FRONTEND_PORT : (previous?.port ?? allocateFrontendPort(name, takenPorts)),
   };
   fs.writeFileSync(path.join(HOME, 'registry', `${name}.json`), JSON.stringify(entry, null, 2) + '\n');
   fs.writeFileSync(path.join(HOME, 'traefik/dynamic', `${name}.yml`), traefikConfig(entry));
   traefikUp();
-  console.log(
-    `Worktree "${name}": http://${name}.localhost  (backend: ${backendPort ? `localhost:${backendPort}` : backendName})`
-  );
+  console.log(`Worktree "${name}": http://${name}.localhost`);
   return entry;
 }
 
 function run(cmd, args, env) {
   const child = spawn(cmd, args, { stdio: 'inherit', env: { ...process.env, ...env } });
   child.on('exit', (code) => process.exit(code ?? 0));
-  for (const sig of ['SIGINT', 'SIGTERM']) {
-    process.on(sig, () => child.kill(sig));
+  for (const signal of ['SIGINT', 'SIGTERM']) {
+    process.on(signal, () => child.kill(signal));
   }
 }
 
 function frontend(opts) {
-  const name = currentName(opts);
-  // The worktree that runs the backend keeps its own backend; any other one is pointed at the single backend host.
-  let backendName = name;
-  if (opts.backendPort) {
-    if (!Number.isInteger(opts.backendPort) || opts.backendPort < 1 || opts.backendPort > 65535) {
-      throw new Error('--backend-port needs a port number.');
-    }
-    backendName = 'external';
-  } else if (readRegistry().find((e) => e.name === name)?.backend !== name) {
-    const hosts = backendHosts(name);
-    if (hosts.length !== 1) {
-      throw new Error(
-        hosts.length
-          ? `More than one worktree runs the backend (${hosts.map((h) => h.name).join(', ')}). Run \`mise run worktree:down\` in all but one.`
-          : 'No backend is registered. Run `mise run worktree:backend` in the main checkout first.'
-      );
-    }
-    backendName = hosts[0].name;
-  }
-  const e = register(name, backendName, opts.backendPort);
+  const entry = register(currentName(opts), opts.description);
   run('pnpm', ['start'], {
-    GF_FRONTEND_DEV_SERVER_URL: `http://127.0.0.1:${e.ports.frontend}`,
-    GRAFANA_DEV_SERVER_PUBLIC_URL: `http://${e.name}.localhost`,
+    GF_FRONTEND_DEV_SERVER_URL: `http://127.0.0.1:${entry.port}`,
+    GRAFANA_DEV_SERVER_PUBLIC_URL: `http://${entry.name}.localhost`,
   });
 }
 
 function backend(opts) {
   const name = currentName(opts);
-  const hosts = backendHosts(name);
-  if (hosts.length) {
-    throw new Error(`"${hosts[0].name}" already runs the backend. Run \`mise run worktree:down\` there first.`);
+  if (name !== MAIN) {
+    throw new Error(`The backend runs from the main checkout (directory "grafana"), not from "${name}".`);
   }
-  const e = register(name, name);
-  const p = { ...e.ports, ...(opts.port ? { backend: Number(opts.port) } : {}) };
-  const airConfig = path.join(e.path, 'data', 'air.worktree.toml');
-  fs.mkdirSync(path.dirname(airConfig), { recursive: true });
-  const base = fs.readFileSync(path.join(e.path, '.air.toml'), 'utf8');
-  fs.writeFileSync(airConfig, base.replace('-profile-port=6000', `-profile-port=${p.pprof}`));
-  // The Makefile owns how `air` is built and found; reuse its resolved command with our config.
-  const airCmd = execFileSync('make', ['-s', '-n', 'run'], { cwd: e.path, encoding: 'utf8' })
-    .trim()
-    .split('\n')
-    .pop()
-    .replace(' -c .air.toml', ` -c '${airConfig}'`);
-  run('sh', ['-c', airCmd], {
-    GF_SERVER_HTTP_PORT: String(p.backend),
-    GF_SERVER_DOMAIN: `${e.name}.localhost`,
-    GF_SERVER_ROOT_URL: `http://${e.name}.localhost/`,
-    GF_GRPC_SERVER_ADDRESS: `127.0.0.1:${p.grpc}`,
+  register(name);
+  // The main checkout's ports match a plain `make run`, so it runs as usual with only the hostname and
+  // dev-frontend settings added.
+  run('make', ['run'], {
+    GF_SERVER_HTTP_PORT: String(MAIN_BACKEND_PORT),
+    GF_SERVER_DOMAIN: `${MAIN}.localhost`,
+    GF_SERVER_ROOT_URL: `http://${MAIN}.localhost/`,
     GF_FRONTEND_DEV_WORKTREE_SERVER_URL_TEMPLATE: 'http://%s.localhost',
     GF_SECURITY_CSRF_TRUSTED_ORIGINS: '*.localhost',
     GF_LIVE_ALLOWED_ORIGINS: '*',
-    // The backend resolves `<name>.localhost` to this machine, so it can reach the proxy for manifests.
   });
+}
+
+function dashboard() {
+  traefikUp();
+  startDashboard();
 }
 
 function down(opts) {
   const name = currentName(opts);
-  const refs = readRegistry().filter((e) => e.name !== name && e.backend === name);
-  for (const r of refs) {
-    console.warn(`warning: "${r.name}" still routes to this worktree's backend.`);
-  }
   fs.rmSync(path.join(HOME, 'registry', `${name}.json`), { force: true });
   fs.rmSync(path.join(HOME, 'traefik/dynamic', `${name}.yml`), { force: true });
   console.log(`Removed routes for "${name}".`);
@@ -288,40 +222,17 @@ function down(opts) {
 const collator = new Intl.Collator();
 
 async function status() {
-  const entries = readRegistry();
-  const byName = new Map(entries.map((e) => [e.name, e]));
-  const rows = [];
-  for (const e of entries.sort((a, b) => collator.compare(a.name, b.name))) {
-    const target = async (role, key, portKey) => {
-      const t = e[role];
-      if (t === 'none') {
-        return 'none';
-      }
-      if (t === 'external') {
-        return `localhost:${e.backendPort} ${(await listening(e.backendPort)) ? 'up' : 'DOWN'}`;
-      }
-      const owner = byName.get(t);
-      if (!owner) {
-        return `${t} (not registered!)`;
-      }
-      return `${t}:${owner.ports[portKey]} ${(await listening(owner.ports[portKey])) ? 'up' : 'DOWN'}`;
-    };
-    rows.push({
-      name: e.name,
-      url: `http://${e.name}.localhost`,
-      frontend: await target('frontend', 'frontend', 'frontend'),
-      backend: await target('backend', 'backend', 'backend'),
-      branch: e.branch,
-      path: fs.existsSync(e.path) ? e.path : `${e.path} (MISSING)`,
-    });
-  }
-  if (!rows.length) {
-    console.log('No worktrees registered. Run `mise run worktree:backend` or `worktree:frontend`.');
+  const entries = readRegistry().sort((a, b) => collator.compare(a.name, b.name));
+  const upOrDown = async (port) => ((await listening(port)) ? 'up' : 'DOWN');
+  console.log(`backend (${MAIN}): localhost:${MAIN_BACKEND_PORT} ${await upOrDown(MAIN_BACKEND_PORT)}`);
+  if (!entries.length) {
+    console.log('No worktrees registered. Run `mise run worktree:frontend`.');
     return;
   }
-  for (const r of rows) {
+  for (const entry of entries) {
+    const missing = fs.existsSync(entry.path) ? '' : ' (MISSING)';
     console.log(
-      `${r.name}\n  url:      ${r.url}\n  frontend: ${r.frontend}\n  backend:  ${r.backend}\n  branch:   ${r.branch}\n  path:     ${r.path}`
+      `${entry.name}\n  url:      http://${entry.name}.localhost\n  frontend: localhost:${entry.port} ${await upOrDown(entry.port)}\n  branch:   ${entry.branch}\n  path:     ${entry.path}${missing}`
     );
   }
 }
@@ -333,6 +244,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     backend: () => backend(parseArgs(rest)),
     down: () => down(parseArgs(rest)),
     status,
+    dashboard,
     'traefik-up': traefikUp,
     'traefik-down': traefikDown,
   };

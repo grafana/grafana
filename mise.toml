@@ -12,8 +12,12 @@ description = "Run this worktree's frontend dev server against the shared backen
 run = "node scripts/worktree/worktree.mjs frontend"
 
 [tasks."worktree:backend"]
-description = "Run the backend all worktree frontends share, from the main checkout to keep your existing data (only one worktree at a time); --port N overrides the HTTP port"
+description = "Run the backend all worktree frontends share, from the main checkout to keep your existing data"
 run = "node scripts/worktree/worktree.mjs backend"
+
+[tasks."worktree:dashboard"]
+description = "Serve a list of the running worktree frontends at http://worktrees.localhost"
+run = "node scripts/worktree/worktree.mjs dashboard"
 
 [tasks."worktree:down"]
 description = "Remove this worktree's routes and registry entry"
