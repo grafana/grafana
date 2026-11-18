@@ -19,7 +19,7 @@ Until that release exists, it runs this commit against itself.
 It runs the Enterprise build (`-tags=enterprise`) for internal pull requests and `main`, and the OSS build for pull requests from forks, which cannot clone grafana-enterprise.
 For Enterprise, this commit pairs with the grafana-enterprise branch of the same name, or main, and the older release pairs with the grafana-enterprise tag of the same name.
 Each version runs the tests it ships with, so a change here reaches the older side only through a release that contains it.
-A package runs only when both versions ship it, so a new package starts running once a release that contains it is the older version.
+A package only the newer version ships runs against the newer version alone, on its own database, until a release that contains it is the older version.
 The job summary lists the commits that were tested and whether the run was really cross-version.
 When a phase fails, the job uploads the test logs, the manifests the phases hand to each other, and the SQLite databases as the `compat-<edition>` artifact, kept for 7 days.
 
