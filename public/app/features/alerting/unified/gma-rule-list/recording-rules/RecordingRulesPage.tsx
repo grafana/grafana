@@ -16,6 +16,7 @@ import { type RuleListMode, useRuleListSearchState } from '../rule-search/useRul
 import { RuleSequenceDrawerProvider } from '../rule-sequences/RuleSequenceDrawer';
 import { RuleListSavedSearches } from '../saved-searches/RuleListSavedSearches';
 import { useRuleListSavedSearches } from '../saved-searches/useRuleListSavedSearches';
+import { withSavedSearchesSetup } from '../saved-searches/withSavedSearchesSetup';
 import { useTrackRuleListPageView } from '../shared/analytics';
 
 import { RecordingRulesFoldersView } from './RecordingRulesFoldersView';
@@ -69,7 +70,7 @@ function RecordingRulesPage() {
   );
 }
 
-export default withPageErrorBoundary(RecordingRulesPage);
+export default withPageErrorBoundary(withSavedSearchesSetup('recording', RecordingRulesPage));
 
 function RecordingRulesPageHeader() {
   const [createSupported, createAllowed] = useAlertingAbility(AlertingAction.CreateAlertRule);

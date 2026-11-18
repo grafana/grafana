@@ -58,6 +58,37 @@ describe('GMA rule list saved searches', () => {
     setupBackend();
   });
 
+  it('applies the default saved search when the page opens without a search parameter', async () => {
+    await saveCollection('alertRulesSavedSearches', [{ id: '1', name: 'Busy CPUs', query: 'cpu', isDefault: true }]);
+
+    renderAlertRules('/?view=list');
+
+    expect(await screen.findByRole('link', { name: 'CPU high load' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Disk full' })).not.toBeInTheDocument();
+    expect(ui.searchInput.get()).toHaveValue('cpu');
+    expect(searchParam()).toBe('cpu');
+  });
+
+  it('keeps an empty search parameter unfiltered instead of applying the default', async () => {
+    await saveCollection('alertRulesSavedSearches', [{ id: '1', name: 'Busy CPUs', query: 'cpu', isDefault: true }]);
+
+    renderAlertRules('/?view=list&search=');
+
+    expect(await screen.findByRole('link', { name: 'Disk full' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'CPU high load' })).toBeInTheDocument();
+    expect(ui.searchInput.get()).toHaveValue('');
+  });
+
+  it('keeps the query from the URL instead of applying the default', async () => {
+    await saveCollection('alertRulesSavedSearches', [{ id: '1', name: 'Busy CPUs', query: 'cpu', isDefault: true }]);
+
+    renderAlertRules('/?view=list&search=disk');
+
+    expect(await screen.findByRole('link', { name: 'Disk full' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'CPU high load' })).not.toBeInTheDocument();
+    expect(ui.searchInput.get()).toHaveValue('disk');
+  });
+
   it('applies a saved search from the menu', async () => {
     await saveCollection('alertRulesSavedSearches', [{ id: '1', name: 'Full disks', query: 'disk', isDefault: false }]);
     const { user } = renderAlertRules('/?view=list');
@@ -89,5 +120,17 @@ describe('GMA rule list saved searches', () => {
     await view.user.click(ui.savedSearchesButton.get());
 
     expect(await screen.findByText(/no saved searches yet/i)).toBeInTheDocument();
+  });
+
+  it("applies the Recording rules page's own default, not the Alert rules one", async () => {
+    await saveCollection('alertRulesSavedSearches', [{ id: '1', name: 'Busy CPUs', query: 'cpu', isDefault: true }]);
+    await saveCollection('recordingRulesSavedSearches', [
+      { id: '2', name: 'Disk ratios', query: 'disk', isDefault: true },
+    ]);
+
+    render(<RecordingRulesPage />, { historyOptions: { initialEntries: ['/?view=list'] } });
+
+    expect(await screen.findByRole('link', { name: 'Disk usage ratio' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'CPU usage ratio' })).not.toBeInTheDocument();
   });
 });

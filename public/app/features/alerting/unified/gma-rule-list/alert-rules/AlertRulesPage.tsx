@@ -17,6 +17,7 @@ import { type RuleListMode, useRuleListSearchState } from '../rule-search/useRul
 import { RuleSequenceDrawerProvider } from '../rule-sequences/RuleSequenceDrawer';
 import { RuleListSavedSearches } from '../saved-searches/RuleListSavedSearches';
 import { useRuleListSavedSearches } from '../saved-searches/useRuleListSavedSearches';
+import { withSavedSearchesSetup } from '../saved-searches/withSavedSearchesSetup';
 import { useTrackRuleListPageView } from '../shared/analytics';
 
 import { AlertRulesFilterSidebar } from './AlertRulesFilterSidebar';
@@ -77,7 +78,7 @@ function AlertRulesPage() {
   );
 }
 
-export default withPageErrorBoundary(AlertRulesPage);
+export default withPageErrorBoundary(withSavedSearchesSetup('alert', AlertRulesPage));
 
 function AlertRulesPageHeader() {
   const [createSupported, createAllowed] = useAlertingAbility(AlertingAction.CreateAlertRule);

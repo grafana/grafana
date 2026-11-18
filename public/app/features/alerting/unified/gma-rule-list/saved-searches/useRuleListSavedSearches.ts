@@ -3,6 +3,8 @@ import {
   type SavedSearchesConfig,
   type UseGenericSavedSearchesResult,
   createAppliedTracker,
+  createAutoApplyTracker,
+  createDefaultLoader,
   useGenericSavedSearches,
 } from '../../hooks/useGenericSavedSearches';
 import { type RuleKind } from '../shared/ruleKind';
@@ -18,6 +20,14 @@ export function useRuleListSavedSearches(kind: RuleKind): UseGenericSavedSearche
   return useGenericSavedSearches(CONFIGS[kind]);
 }
 
+export function loadDefaultSavedSearch(kind: RuleKind): Promise<SavedSearch | null> {
+  return createDefaultLoader(CONFIGS[kind])();
+}
+
 export function trackSavedSearchApplied(kind: RuleKind, search: SavedSearch): void {
   createAppliedTracker(CONFIGS[kind].trackingContext)(search);
+}
+
+export function trackDefaultSavedSearchApplied(kind: RuleKind): void {
+  createAutoApplyTracker(CONFIGS[kind].trackingContext)();
 }
