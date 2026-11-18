@@ -67,6 +67,7 @@ describe('GMA rule list saved searches', () => {
     expect(screen.queryByRole('link', { name: 'Disk full' })).not.toBeInTheDocument();
     expect(ui.searchInput.get()).toHaveValue('cpu');
     expect(searchParam()).toBe('cpu');
+    expect(screen.getByText('Busy CPUs (default)')).toBeInTheDocument();
   });
 
   it('keeps an empty search parameter unfiltered instead of applying the default', async () => {
@@ -77,6 +78,7 @@ describe('GMA rule list saved searches', () => {
     expect(await screen.findByRole('link', { name: 'Disk full' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'CPU high load' })).toBeInTheDocument();
     expect(ui.searchInput.get()).toHaveValue('');
+    expect(screen.queryByText('Busy CPUs (default)')).not.toBeInTheDocument();
   });
 
   it('keeps the query from the URL instead of applying the default', async () => {
@@ -89,7 +91,7 @@ describe('GMA rule list saved searches', () => {
     expect(ui.searchInput.get()).toHaveValue('disk');
   });
 
-  it('applies a saved search from the menu', async () => {
+  it('applies a saved search from the menu and names it until the query changes', async () => {
     await saveCollection('alertRulesSavedSearches', [{ id: '1', name: 'Full disks', query: 'disk', isDefault: false }]);
     const { user } = renderAlertRules('/?view=list');
     await screen.findByRole('link', { name: 'CPU high load' });
@@ -97,10 +99,27 @@ describe('GMA rule list saved searches', () => {
     await user.click(ui.savedSearchesButton.get());
     await user.click(await screen.findByRole('link', { name: 'Full disks' }));
 
-    await waitFor(() => expect(searchParam()).toBe('disk'));
+    expect(await screen.findByText('Full disks')).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'CPU high load' })).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Disk full' })).toBeInTheDocument();
     expect(ui.searchInput.get()).toHaveValue('disk');
+
+    await user.type(ui.searchInput.get(), ' full{Enter}');
+
+    await waitFor(() => expect(searchParam()).toBe('disk full'));
+    expect(screen.queryByText('Full disks')).not.toBeInTheDocument();
+  });
+
+  it('names a saved search when a typed query reads the same, whatever the token order', async () => {
+    await saveCollection('alertRulesSavedSearches', [
+      { id: '1', name: 'Team API', query: 'label:team=api plugins:hide', isDefault: false },
+    ]);
+    const { user } = renderAlertRules('/?view=list&search=');
+    await screen.findByRole('link', { name: 'CPU high load' });
+
+    await user.type(ui.searchInput.get(), 'plugins:hide label:team=api{Enter}');
+
+    expect(await screen.findByText('Team API')).toBeInTheDocument();
   });
 
   it('keeps the Alert and Recording collections apart', async () => {
@@ -132,5 +151,6 @@ describe('GMA rule list saved searches', () => {
 
     expect(await screen.findByRole('link', { name: 'Disk usage ratio' })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'CPU usage ratio' })).not.toBeInTheDocument();
+    expect(screen.getByText('Disk ratios (default)')).toBeInTheDocument();
   });
 });

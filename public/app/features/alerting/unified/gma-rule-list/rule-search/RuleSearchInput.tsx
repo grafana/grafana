@@ -17,13 +17,22 @@ export interface RuleSearchInputProps {
   issues?: FilterIssue[];
   /** Rendered beside the input box, so it stays aligned with the box however many issue messages show below. */
   trailing?: ReactNode;
+  /** Rendered after the label, outside it, so it stays out of the input's accessible name. */
+  labelSuffix?: ReactNode;
 }
 
 const INPUT_ID = 'rule-search-input';
 const ISSUES_DESCRIPTION_ID = 'rule-search-input-issues';
 
 /** The typed text is a draft until it is applied. A change to the applied query, such as Back/Forward, replaces it. */
-export function RuleSearchInput({ query, onApply, filterHelp, issues = [], trailing }: RuleSearchInputProps) {
+export function RuleSearchInput({
+  query,
+  onApply,
+  filterHelp,
+  issues = [],
+  trailing,
+  labelSuffix,
+}: RuleSearchInputProps) {
   const [draft, setDraft] = useState(query);
 
   useEffect(() => {
@@ -52,21 +61,24 @@ export function RuleSearchInput({ query, onApply, filterHelp, issues = [], trail
 
   return (
     <Stack direction="column" gap={0.5} width="100%">
-      <Label htmlFor={INPUT_ID}>
-        <Stack gap={0.5} alignItems="center">
-          <span>
-            <Trans i18nKey="alerting.gma-rule-list.search.label">Search</Trans>
-          </span>
-          <PopupCard content={<SearchHelp filterHelp={filterHelp} />}>
-            <Icon
-              name="info-circle"
-              size="sm"
-              tabIndex={0}
-              title={t('alerting.gma-rule-list.search.help-title', 'Search help')}
-            />
-          </PopupCard>
-        </Stack>
-      </Label>
+      <Stack gap={0.5} alignItems="baseline">
+        <Label htmlFor={INPUT_ID}>
+          <Stack gap={0.5} alignItems="center">
+            <span>
+              <Trans i18nKey="alerting.gma-rule-list.search.label">Search</Trans>
+            </span>
+            <PopupCard content={<SearchHelp filterHelp={filterHelp} />}>
+              <Icon
+                name="info-circle"
+                size="sm"
+                tabIndex={0}
+                title={t('alerting.gma-rule-list.search.help-title', 'Search help')}
+              />
+            </PopupCard>
+          </Stack>
+        </Label>
+        {labelSuffix}
+      </Stack>
       <Stack direction="row" gap={2} alignItems="center">
         <Box grow={1} minWidth={0}>
           <FilterInput

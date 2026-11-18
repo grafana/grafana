@@ -14,7 +14,7 @@ import { RuleListModeToggle } from '../rule-search/RuleListModeToggle';
 import { RuleSearchInput } from '../rule-search/RuleSearchInput';
 import { type RuleListMode, useRuleListSearchState } from '../rule-search/useRuleListSearchState';
 import { RuleSequenceDrawerProvider } from '../rule-sequences/RuleSequenceDrawer';
-import { RuleListSavedSearches } from '../saved-searches/RuleListSavedSearches';
+import { RuleListSavedSearchIndicator, RuleListSavedSearches } from '../saved-searches/RuleListSavedSearches';
 import { useRuleListSavedSearches } from '../saved-searches/useRuleListSavedSearches';
 import { withSavedSearchesSetup } from '../saved-searches/withSavedSearchesSetup';
 import { useTrackRuleListPageView } from '../shared/analytics';
@@ -48,6 +48,13 @@ function RecordingRulesPage() {
               onApply={applyQuery}
               filterHelp={filterHelp}
               issues={issues}
+              labelSuffix={
+                <RuleListSavedSearchIndicator
+                  query={query}
+                  schema={recordingRuleSearchSchema}
+                  savedSearches={savedSearches.savedSearches}
+                />
+              }
               trailing={
                 <Stack direction="row" gap={1} alignItems="center">
                   <RuleListSavedSearches

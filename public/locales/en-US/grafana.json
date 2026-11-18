@@ -1545,6 +1545,9 @@
         "recording-rules_one": "{{formatted}} recording rule",
         "recording-rules_other": "{{formatted}} recording rules"
       },
+      "saved-searches": {
+        "applied-default": "{{name}} (default)"
+      },
       "search": {
         "default-policy-unavailable": "Filtering by the default policy isn't available yet.",
         "folders-disabled": "Clear filters to browse by folder",
