@@ -225,6 +225,60 @@ func TestWrapper_Delete(t *testing.T) {
 	})
 }
 
+// matchesOriginalIdentityUID matches a context carrying the acting user as the metadata identity,
+// which apistore forwards to storage so the deleter is recorded as the user, not the service.
+func matchesOriginalIdentityUID(want string) func(context.Context) bool {
+	return func(ctx context.Context) bool {
+		uid, ok := identity.MetadataIdentityUIDFrom(ctx)
+		return ok && uid == want
+	}
+}
+
+func TestWrapper_DeleteAttribution(t *testing.T) {
+	obj := &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "to-delete"}}
+	deleteOpts := &metaV1.DeleteOptions{}
+
+	t.Run("service-identity delete carries the requester as the metadata identity", func(t *testing.T) {
+		setup := newTestSetup(t)
+
+		setup.mockStore.On("Get", mock.Anything, "to-delete", mock.Anything).Return(obj, nil)
+		setup.mockAuth.On("BeforeDelete", mock.Anything, obj).Return(nil)
+		// The inner delete runs as the service but must still name the user, so the deletion
+		// marker is attributed to them.
+		setup.mockStore.On("Delete",
+			mock.MatchedBy(func(ctx context.Context) bool {
+				return matchesServiceIdentity()(ctx) && matchesOriginalIdentityUID("user:u001")(ctx)
+			}),
+			"to-delete", mock.Anything, deleteOpts).Return(obj, true, nil)
+
+		_, deleted, err := setup.wrapper.Delete(setup.ctx, "to-delete", nil, deleteOpts)
+
+		require.NoError(t, err)
+		assert.True(t, deleted)
+		setup.mockStore.AssertExpectations(t)
+	})
+
+	t.Run("preserved-identity delete runs as the user without a metadata override", func(t *testing.T) {
+		setup := newTestSetupWithPreserveIdentity(t)
+
+		setup.mockStore.On("Get", mock.Anything, "to-delete", mock.Anything).Return(obj, nil)
+		setup.mockAuth.On("BeforeDelete", mock.Anything, obj).Return(nil)
+		// The caller is already the user, so storage records them directly.
+		setup.mockStore.On("Delete",
+			mock.MatchedBy(func(ctx context.Context) bool {
+				_, overridden := identity.MetadataIdentityUIDFrom(ctx)
+				return matchesOriginalUser()(ctx) && !overridden
+			}),
+			"to-delete", mock.Anything, deleteOpts).Return(obj, true, nil)
+
+		_, deleted, err := setup.wrapper.Delete(setup.ctx, "to-delete", nil, deleteOpts)
+
+		require.NoError(t, err)
+		assert.True(t, deleted)
+		setup.mockStore.AssertExpectations(t)
+	})
+}
+
 func TestWrapper_Get(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		setup := newTestSetup(t)
