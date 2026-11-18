@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/writer"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type foreignError struct{ msg string }
@@ -161,6 +162,25 @@ func TestRecordingRuleStaleMarkerFailures(t *testing.T) {
 
 		h.tick()
 		require.Equal(t, 3, h.staleAttempts-start, "and never again")
+	})
+
+	t.Run("a zero age setting uses the default, as the settings built by hand elsewhere do", func(t *testing.T) {
+		h := missingB(t)
+		require.Zero(t, h.rule.cfg.StaleMarkerMaxAge)
+		require.Equal(t, 10*time.Minute, setting.DefaultStaleMarkerMaxAge)
+		h.staleErr = foreignError{"temporarily unavailable"}
+
+		start := h.staleAttempts
+		for range 9 {
+			h.tick()
+		}
+		require.Equal(t, 9, h.staleAttempts-start, "still retried 8 minutes after the first failure")
+
+		h.tick()
+		require.Equal(t, 10, h.staleAttempts-start, "the tick 9 minutes after the first failure retries too")
+		h.tick()
+		require.Equal(t, 10, h.staleAttempts-start, "dropped at 10 minutes")
+		require.Empty(t, h.rule.failedAt)
 	})
 
 	t.Run("the age limit also ends the retries when the data write keeps failing", func(t *testing.T) {
