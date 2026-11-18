@@ -1,8 +1,7 @@
-import { type UrlQueryMap } from '@grafana/data';
+import { store, type UrlQueryMap } from '@grafana/data';
 
 import { SECTION_STORAGE_KEY } from './constants';
 import { type SearchState } from './types';
-
 /**
  * Check if search query has filters enabled. Excludes folderId
  * @param query
@@ -18,11 +17,8 @@ export const hasFilters = (query: SearchState) => {
 export const cleanupOldExpandedFolders = () => {
   const keyPrefix = SECTION_STORAGE_KEY + '.';
 
-  for (let index = 0; index < window.localStorage.length; index++) {
-    const lsKey = window.localStorage.key(index);
-    if (lsKey?.startsWith(keyPrefix)) {
-      window.localStorage.removeItem(lsKey);
-    }
+  for (const key of Object.keys(store.all(keyPrefix))) {
+    store.delete(keyPrefix + key);
   }
 };
 
