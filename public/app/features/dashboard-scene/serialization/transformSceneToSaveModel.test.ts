@@ -127,19 +127,23 @@ const runRequestMock = jest.fn().mockImplementation((ds: DataSourceApi, request:
   );
 });
 
+const mockDataSource = {
+  getRef: () => ({ type: 'mock-ds', uid: 'mock-uid' }),
+  variables: {
+    getType: () => VariableSupportType.Standard,
+    toDataQuery: (q: StandardVariableQuery) => q,
+  },
+};
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => ({
-    get: () => ({
-      getRef: () => ({ type: 'mock-ds', uid: 'mock-uid' }),
-      variables: {
-        getType: () => VariableSupportType.Standard,
-        toDataQuery: (q: StandardVariableQuery) => q,
-      },
-    }),
+    get: () => mockDataSource,
     // mock getInstanceSettings()
     getInstanceSettings: jest.fn(),
   }),
+  // Scenes resolves data sources through the async API, which would otherwise look every ref up in an empty registry.
+  getDataSourceInstance: jest.fn(async () => mockDataSource),
   getRunRequest: () => (ds: DataSourceApi, request: DataQueryRequest) => {
     return runRequestMock(ds, request);
   },

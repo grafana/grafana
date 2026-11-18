@@ -84,7 +84,7 @@ func TestProvideRoutesLoader_NeverLoadsCloudSources(t *testing.T) {
 		} {
 			t.Run(name+"/"+key, func(t *testing.T) {
 				deps := PluginLoaderDependencies{PluginDependencies: PluginDependencies{Features: features}}
-				loader, err := ProvideRoutesLoader(cfgWithCloudRouterSection(t, map[string]string{key: value}), deps)
+				loader, err := ProvideRoutesLoader(cfgWithCloudRouterSection(t, map[string]string{key: value}), deps, nil)
 				require.NoError(t, err)
 				require.IsType(t, noRoutesLoader{}, loader)
 			})

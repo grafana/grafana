@@ -42,6 +42,29 @@ func TestServiceIdentityPluginGroups(t *testing.T) {
 	}
 }
 
+func TestServiceIdentityReportingPermissions(t *testing.T) {
+	_, service := identity.WithServiceIdentity(t.Context(), 1)
+	for name, requester := range map[string]authtypes.AuthInfo{
+		"service": service,
+		"delegated user": &identity.StaticRequester{
+			Type: authtypes.TypeUser, UserUID: "reader", AccessTokenClaims: identity.ServiceIdentityClaims,
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			for _, resource := range []string{"reports", "reportsettings"} {
+				for _, verb := range []string{"get", "list", "watch", "create", "update", "patch", "delete"} {
+					t.Run(resource+"/"+verb, func(t *testing.T) {
+						result := authz.CheckServicePermissions(requester, "reporting.grafana.app", resource, verb)
+						require.Equal(t, name == "service", result.ServiceCall)
+						require.True(t, result.Allowed)
+					})
+				}
+			}
+			require.False(t, authz.CheckServicePermissions(requester, "reporting.grafana.app", "unknown", "get").Allowed)
+		})
+	}
+}
+
 func TestServiceIdentityAlertReviewStoragePermissions(t *testing.T) {
 	_, requester := identity.WithServiceIdentity(context.Background(), 42)
 	for _, verb := range []string{"get", "create", "update"} {

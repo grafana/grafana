@@ -1,18 +1,12 @@
-import { configureStore } from '@reduxjs/toolkit';
-import { http, HttpResponse } from 'msw';
-import { type Store } from 'redux';
-
 import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { config, setBackendSrv } from '@grafana/runtime';
-import { getCustomSearchHandler, starsRoute } from '@grafana/test-utils/handlers';
+import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import { collectionsAPIv1alpha1 } from 'app/api/clients/collections/v1alpha1';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { STARRED_FOLDERS_UID, TEAM_FOLDERS_UID } from 'app/features/search/constants';
-import { setStore } from 'app/store/store';
 
-import { listDashboards, listFolders, listStarredFolders } from './services';
+import { listDashboards, listFolders } from './services';
 
 jest.mock('app/core/services/context_srv', () => {
   const contextSrvModule = jest.requireActual('app/core/services/context_srv');
@@ -172,73 +166,6 @@ describe('browse-dashboards services', () => {
         expect(sharedFolder?.url).toBeUndefined();
         expect(regularFolder?.url).toBeDefined();
       });
-    });
-  });
-
-  describe('listStarredFolders', () => {
-    const starsResponse = (resources: Array<{ group: string; kind: string; names: string[] }>) => ({
-      kind: 'StarsList',
-      apiVersion: 'collections.grafana.app/v1alpha1',
-      metadata: { resourceVersion: '1' },
-      items: [
-        {
-          metadata: { name: 'user-u000000001', namespace: 'default', resourceVersion: '1' },
-          spec: { resource: resources },
-        },
-      ],
-    });
-
-    const starredFolderHits: DashboardHit[] = [
-      { resource: 'folders', name: 'fa', title: 'Folder A', field: {} },
-      { resource: 'folders', name: 'fb', title: 'Folder B', field: {} },
-    ];
-
-    beforeEach(() => {
-      // listStarredFolders reads stars via an RTK Query dispatch on the global store, so wire one up.
-      const store = configureStore({
-        reducer: { [collectionsAPIv1alpha1.reducerPath]: collectionsAPIv1alpha1.reducer },
-        middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(collectionsAPIv1alpha1.middleware),
-      });
-      setStore(store as unknown as Store);
-    });
-
-    it('resolves starred folders to prefixed view items under the virtual root', async () => {
-      server.use(
-        http.get(starsRoute, () =>
-          HttpResponse.json(
-            starsResponse([
-              { group: 'dashboard.grafana.app', kind: 'Dashboard', names: ['dash-1'] },
-              { group: 'folder.grafana.app', kind: 'Folder', names: ['fa', 'fb'] },
-            ])
-          )
-        ),
-        getCustomSearchHandler(starredFolderHits)
-      );
-
-      const result = await listStarredFolders();
-
-      expect(result).toHaveLength(2);
-      expect(result[0]).toMatchObject({
-        kind: 'folder',
-        uid: 'starred_folders/fa',
-        title: 'Folder A',
-        parentUID: 'starred_folders',
-      });
-      expect(result[0].url).toContain('/dashboards/f/fa/');
-      expect(result[1]).toMatchObject({ uid: 'starred_folders/fb', title: 'Folder B', parentUID: 'starred_folders' });
-    });
-
-    it('returns an empty array when there is no starred folder resource', async () => {
-      server.use(
-        http.get(starsRoute, () =>
-          HttpResponse.json(starsResponse([{ group: 'dashboard.grafana.app', kind: 'Dashboard', names: ['dash-1'] }]))
-        ),
-        getCustomSearchHandler(starredFolderHits)
-      );
-
-      const result = await listStarredFolders();
-
-      expect(result).toEqual([]);
     });
   });
 });

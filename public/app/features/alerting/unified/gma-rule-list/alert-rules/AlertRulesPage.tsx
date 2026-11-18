@@ -8,11 +8,13 @@ import { Box, Dropdown, EmptyState, LinkButton, Menu, Stack, useStyles2 } from '
 import { AlertingPageWrapper } from '../../components/AlertingPageWrapper';
 import MoreButton from '../../components/MoreButton';
 import { AlertingAction, useAlertingAbility } from '../../hooks/useAbilities';
+import { useAlertRulesNav } from '../../navigation/useAlertRulesNav';
 import { grafanaRulesNav } from '../../utils/navigation';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { RuleListModeToggle } from '../rule-search/RuleListModeToggle';
 import { RuleSearchInput } from '../rule-search/RuleSearchInput';
 import { type RuleListMode, useRuleListSearchState } from '../rule-search/useRuleListSearchState';
+import { RuleSequenceDrawerProvider } from '../rule-sequences/RuleSequenceDrawer';
 import { useTrackRuleListPageView } from '../shared/analytics';
 
 import { AlertRulesFoldersView } from './AlertRulesFoldersView';
@@ -21,6 +23,7 @@ import { type AlertRuleFilter, alertRuleSearchSchema } from './alertRuleFilters'
 import { useAlertRuleSearchRejection } from './alertRuleSearch';
 
 function AlertRulesPage() {
+  const { navId, pageNav } = useAlertRulesNav();
   const { query, filter, parseIssues, filterHelp, mode, hasNonFolderFilters, applyQuery, setMode } =
     useRuleListSearchState(alertRuleSearchSchema);
   const rejectionIssues = useAlertRuleSearchRejection(filter, { parseIssues, mode });
@@ -32,8 +35,7 @@ function AlertRulesPage() {
   const styles = useStyles2(getStyles, headerHeight);
 
   return (
-    // The heading comes from the navId, so it also drives breadcrumbs and nav highlighting.
-    <AlertingPageWrapper navId="alert-rules" actions={<AlertRulesPageHeader />}>
+    <AlertingPageWrapper navId={navId} pageNav={pageNav} actions={<AlertRulesPageHeader />}>
       <Box paddingTop={2}>
         <Stack direction="column" gap={2}>
           <div className={styles.searchRow}>
@@ -45,7 +47,9 @@ function AlertRulesPage() {
               trailing={<RuleListModeToggle mode={mode} onChange={setMode} foldersDisabled={hasNonFolderFilters} />}
             />
           </div>
-          <AlertRulesBody hasIssues={issues.length > 0} mode={mode} filter={filter} />
+          <RuleSequenceDrawerProvider>
+            <AlertRulesBody hasIssues={issues.length > 0} mode={mode} filter={filter} />
+          </RuleSequenceDrawerProvider>
         </Stack>
       </Box>
     </AlertingPageWrapper>

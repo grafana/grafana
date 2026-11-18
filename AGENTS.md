@@ -1,6 +1,6 @@
 # AGENTS.md
 
-<!-- version: 2.0.0 -->
+<!-- version: 2.2.0 -->
 
 This file provides guidance to AI agents when working with code in the Grafana repository.
 
@@ -10,6 +10,7 @@ This file provides guidance to AI agents when working with code in the Grafana r
 - `public/app/features/alerting/unified/AGENTS.md` — Alerting squad patterns
 - `pkg/storage/unified/AGENTS.md` — Unified storage/search compatibility rules (for work under `pkg/storage/unified/`)
 - `public/app/core/journeys/AGENTS.md` — Critical User Journey instrumentation
+- `.github/AGENTS.md` - CI workflow and action rules (for work under `.github/`)
 
 ## Project Overview
 
@@ -25,6 +26,7 @@ Grafana is a monitoring and observability platform. Go backend, TypeScript/React
 - Separate PRs for frontend and backend changes (deployed at different cadences)
 - Security: prevent XSS, SQL injection, command injection
 - Security issues should be reported via [Grafana's security issue reporting page](https://grafana.com/legal/report-a-security-issue/) and not directly in this repository.
+- Before changing an existing branch or running tests, merge the latest `grafana/grafana` `main` into it; don't rebase pushed branches
 
 ## Code Review Rules
 
@@ -145,7 +147,7 @@ Build a specific plugin: `pnpm --filter @grafana-plugins/<name> dev`
 
 ## Key Notes
 
-- For unary unified storage gRPC calls, handle the returned error using the guidance in `pkg/storage/unified/resource/doc.go`; failures are reported through gRPC status, not the response's legacy `Error` field. Migrated direct Go calls are also error-only; streaming calls must check terminal errors. The Bulk migration client intentionally retains its legacy response-error fallback until the remote Bulk status rollout is confirmed; see the same guidance.
+- For unary unified storage gRPC calls, handle the returned error using the guidance in `pkg/storage/unified/resource/doc.go`; failures are reported through gRPC status, not the response's legacy `Error` field. Migrated direct Go calls are also error-only; streaming calls must check terminal errors.
 - **Wire DI**: Backend service init changes require `make gen-go`. Wire catches circular deps at compile time.
 - **CUE schemas**: Dashboard/panel schemas in `kinds/` generate both Go and TS code via `make gen-cue`.
 - **Feature toggles**: Defined in `pkg/services/featuremgmt/`, auto-generate code. Run `make gen-feature-toggles` after changes.

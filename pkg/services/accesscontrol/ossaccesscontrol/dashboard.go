@@ -11,6 +11,7 @@ import (
 
 	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -32,6 +33,10 @@ import (
 type DashboardPermissionsService struct {
 	*resourcepermissions.Service
 }
+
+// ErrDashboardFolderNotFound is returned when the dashboard's parent folder no longer exists.
+var ErrDashboardFolderNotFound = errutil.Conflict("dashboards.folder-not-found",
+	errutil.WithPublicMessage("Dashboard permissions cannot be resolved: the dashboard's folder does not exist"))
 
 var DashboardViewActions = []string{dashboards.ActionDashboardsRead, accesscontrol.ActionAnnotationsRead}
 var DashboardEditActions = append(DashboardViewActions, []string{dashboards.ActionDashboardsWrite, dashboards.ActionDashboardsDelete, accesscontrol.ActionAnnotationsWrite, accesscontrol.ActionAnnotationsDelete, accesscontrol.ActionAnnotationsCreate}...)
@@ -155,6 +160,9 @@ func ProvideDashboardPermissions(
 			metrics.MFolderIDsServiceCount.WithLabelValues(metrics.AccessControl).Inc()
 			if dashboard.FolderUID != "" {
 				nestedScopes, err := folder.GetInheritedScopes(ctx, orgID, dashboard.FolderUID, folderService)
+				if errors.Is(err, folder.ErrFolderNotFound) {
+					return nil, ErrDashboardFolderNotFound.Errorf("folder %s of dashboard %s: %w", dashboard.FolderUID, resourceID, err)
+				}
 				if err != nil {
 					return nil, err
 				}

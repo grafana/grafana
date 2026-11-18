@@ -4,7 +4,7 @@
  * Add a template variable to the dashboard using v2beta1 VariableKind format.
  */
 
-import type * as z from 'zod';
+import * as z from 'zod/mini';
 
 import type { VariableKind } from '@grafana/schema/dist/esm/schema/dashboard/v2';
 
@@ -21,7 +21,7 @@ export type AddVariablePayload = z.infer<typeof addVariablePayloadSchema>;
 
 export const addVariableCommand: MutationCommand<AddVariablePayload> = {
   name: 'ADD_VARIABLE',
-  description: payloads.addVariable.description ?? '',
+  description: z.globalRegistry.get(payloads.addVariable)?.description ?? '',
 
   payloadSchema: payloads.addVariable,
   permission: requiresEdit,

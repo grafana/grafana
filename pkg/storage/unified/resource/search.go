@@ -433,6 +433,10 @@ var ErrIndexBuildInProgress = errors.New("another replica is building the index"
 var ErrIndexClosedDuringRebuild = errors.New("index was closed while it was being rebuilt")
 
 type BuildIndexOptions struct {
+	// RebuildFrom is the index seen by the rebuild worker, so the backend can
+	// avoid reopening it if idle cleanup closes it before the rebuild starts.
+	RebuildFrom ResourceIndex
+
 	// Startup workers can try other indexes instead of waiting for a replica.
 	SkipIfBuilding bool
 
@@ -904,14 +908,15 @@ func (s *searchServer) CountManagedObjects(ctx context.Context, req *resourcepb.
 		if err != nil {
 			return nil, rpcErrorFrom(err)
 		}
-		if req.Id == "" {
-			rsp.Items = append(rsp.Items, counts...)
-		} else {
-			for _, k := range counts {
-				if k.Id == req.Id {
-					rsp.Items = append(rsp.Items, k)
-				}
+		for _, k := range counts {
+			// An id is only meaningful inside a kind, so both must match when both are set.
+			if req.Kind != "" && k.Kind != req.Kind {
+				continue
 			}
+			if req.Id != "" && k.Id != req.Id {
+				continue
+			}
+			rsp.Items = append(rsp.Items, k)
 		}
 	}
 
@@ -1634,7 +1639,7 @@ func (s *searchServer) RebuildIndexes(ctx context.Context, req *resourcepb.Rebui
 
 	buildTimes := make([]*resourcepb.RebuildIndexesResponse_IndexBuildTime, 0)
 	for _, key := range filterKeys {
-		idx := s.search.GetIndex(key)
+		idx := s.search.PeekIndex(key)
 		if idx == nil {
 			continue
 		}
@@ -2232,7 +2237,7 @@ func (s *searchServer) rebuildIndex(ctx context.Context, req rebuildRequest) {
 	}
 
 	// Pass rebuild=true to force rebuild of any existing file-based index.
-	_, err = s.build(ctx, req.NamespacedResource, size, "rebuild", true, req.lastImportTime)
+	_, err = s.buildWithOptions(ctx, req.NamespacedResource, size, "rebuild", true, req.lastImportTime, BuildIndexOptions{RebuildFrom: idx})
 	if errors.Is(err, ErrIndexClosedDuringRebuild) {
 		l.Info("index was closed while it was being rebuilt, discarding the rebuilt index")
 	} else if err != nil {
@@ -3404,7 +3409,7 @@ func (b *testDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb
 			val = v.(string)
 		}
 	}
-	return &IndexableDocument{
+	doc := &IndexableDocument{
 		Key: &resourcepb.ResourceKey{
 			Namespace: key.Namespace,
 			Group:     key.Group,
@@ -3417,7 +3422,13 @@ func (b *testDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb
 			"title": title,
 			"value": val,
 		},
-	}, nil
+	}
+	if meta, err := utils.MetaAccessor(&u); err == nil {
+		if manager, ok := meta.GetManagerProperties(); ok {
+			doc.Manager = &manager
+		}
+	}
+	return doc, nil
 }
 
 // TestDocumentBuilderSupplier implements DocumentBuilderSupplier for testing
