@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -2593,6 +2594,136 @@ func TestKvStorageBackend_ListIterator_KeysOnly_ContinueTokenPinsSnapshot(t *tes
 	}
 }
 
+// Continue tokens name the last item handed to the caller and resume strictly
+// after it. Names extending one another, or sorting around the '/' key
+// separator, must neither repeat nor go missing across pages.
+func TestKvStorageBackend_ListIterator_ContinueTokenResumesAfterLastItem(t *testing.T) {
+	names := []string{"abc", "abc-x", "abc.y", "abc0", "abc0-x", "abca", "abd"}
+
+	for _, tc := range []struct {
+		name      string
+		namespace string
+		keysOnly  bool
+	}{
+		{name: "namespaced", namespace: appsNamespace.Namespace},
+		{name: "namespaced keys-only", namespace: appsNamespace.Namespace, keysOnly: true},
+		{name: "cross-namespace", namespace: ""},
+		{name: "cross-namespace keys-only", namespace: "", keysOnly: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			backend := setupTestStorageBackend(t)
+			ctx := t.Context()
+			for _, ns := range []string{appsNamespace.Namespace, "ns-two"} {
+				target := appsNamespace
+				target.Namespace = ns
+				for _, name := range names {
+					obj, rv := writeTestObjectIn(t, backend, ctx, target, name)
+					if name == "abc" {
+						// Several revisions of the continue item must all be skipped.
+						updateTestObject(t, backend, ctx, obj, rv, target, name, "updated")
+					}
+				}
+			}
+
+			req := appsCollectionRequest(tc.keysOnly)
+			req.Options.Key.Namespace = tc.namespace
+
+			all, _ := collectListItems(t, backend, ctx, req)
+			var want []string
+			for _, item := range all {
+				want = append(want, item.namespace+"/"+item.name)
+			}
+			wantLen := len(names)
+			if tc.namespace == "" {
+				wantLen *= 2
+			}
+			require.Len(t, want, wantLen)
+
+			var got []string
+			token := ""
+			for range wantLen + 1 {
+				req.NextPageToken = token
+				token = ""
+				_, err := backend.ListIterator(ctx, req, func(iter ListIterator) error {
+					if !iter.Next() {
+						return iter.Error()
+					}
+					got = append(got, iter.Namespace()+"/"+iter.Name())
+					token = iter.ContinueToken()
+
+					decoded, err := GetContinueToken(token)
+					require.NoError(t, err)
+					require.Equal(t, iter.Name(), decoded.Name)
+					return iter.Error()
+				})
+				require.NoError(t, err)
+				if token == "" {
+					break
+				}
+			}
+			require.Equal(t, want, got)
+		})
+	}
+}
+
+// Tokens from servers that predate the exclusive cursor named the next item to
+// list under "n". They must be rejected as expired, never read as exclusive,
+// which would silently drop that item.
+func TestKvStorageBackend_ListRejectsPreExclusiveContinueToken(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx := t.Context()
+	for _, name := range []string{"aaa", "bbb", "ccc"} {
+		seedResource(t, backend, ctx, name, "")
+	}
+	_, listRV := collectListItems(t, backend, ctx, appsCollectionRequest(false))
+
+	for _, keysOnly := range []bool{false, true} {
+		t.Run(fmt.Sprintf("keysOnly=%v", keysOnly), func(t *testing.T) {
+			req := appsCollectionRequest(keysOnly)
+			req.NextPageToken = preExclusiveContinueToken(t, "bbb", listRV, keysOnly)
+
+			_, err := backend.ListIterator(ctx, req, func(ListIterator) error { return nil })
+			require.True(t, apierrors.IsResourceExpired(err), "ListIterator: %v", err)
+
+			_, err = backend.ListKeys(ctx, req, func(ListKeyIterator) error { return nil })
+			require.True(t, apierrors.IsResourceExpired(err), "ListKeys: %v", err)
+		})
+	}
+}
+
+func preExclusiveContinueToken(t *testing.T, name string, rv int64, keysOnly bool) string {
+	t.Helper()
+	raw := map[string]any{"n": name, "v": rv}
+	if keysOnly {
+		raw["ko"] = true
+		raw["ns"] = appsNamespace.Namespace
+	}
+	b, err := json.Marshal(raw)
+	require.NoError(t, err)
+	return base64.StdEncoding.EncodeToString(b)
+}
+
+func writeTestObjectIn(t *testing.T, backend *kvStorageBackend, ctx context.Context, target NamespacedResource, name string) (*unstructured.Unstructured, int64) {
+	t.Helper()
+	obj, err := createTestObjectWithName(name, target, "data-"+name)
+	require.NoError(t, err)
+	meta, err := utils.MetaAccessor(obj)
+	require.NoError(t, err)
+	rv, err := backend.WriteEvent(ctx, WriteEvent{
+		Type: resourcepb.WatchEvent_ADDED,
+		Key: &resourcepb.ResourceKey{
+			Namespace: target.Namespace,
+			Group:     target.Group,
+			Resource:  target.Resource,
+			Name:      name,
+		},
+		Value:  objectToJSONBytes(t, obj),
+		Object: meta,
+	})
+	require.NoError(t, err)
+	return obj, rv
+}
+
 func TestKvStorageBackend_ListIterator_EmptyResult(t *testing.T) {
 	backend := setupTestStorageBackend(t)
 	ctx := context.Background()
@@ -2676,7 +2807,7 @@ func TestKvStorageBackend_ListIterator_InvalidContinueToken(t *testing.T) {
 		Limit: 10,
 	}
 
-	for _, token := range []string{"invalid-token", "bm90LWpzb24=", ContinueToken{ResourceVersion: 1}.String()} {
+	for _, token := range []string{"invalid-token", "bm90LWpzb24="} {
 		listReq.NextPageToken = token
 		_, err := backend.ListIterator(ctx, listReq, func(iter ListIterator) error {
 			t.Fatal("malformed continuation must fail before iteration")
@@ -2685,6 +2816,15 @@ func TestKvStorageBackend_ListIterator_InvalidContinueToken(t *testing.T) {
 		require.True(t, apierrors.IsBadRequest(err), "got %v", err)
 		require.Contains(t, err.Error(), "invalid continue token")
 	}
+
+	// A decodable token without a cursor is indistinguishable from one issued
+	// before the cursor moved to "an", so the client is sent to restart the list.
+	listReq.NextPageToken = ContinueToken{ResourceVersion: 1}.String()
+	_, err := backend.ListIterator(ctx, listReq, func(iter ListIterator) error {
+		t.Fatal("a continuation without a cursor must fail before iteration")
+		return nil
+	})
+	require.True(t, apierrors.IsResourceExpired(err), "got %v", err)
 }
 
 func TestKvStorageBackend_ListIterator_KeysOnlyRejectsContinueTokenScopeChanges(t *testing.T) {
