@@ -21,19 +21,28 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/storage"
+	"k8s.io/apiserver/pkg/storage/storagebackend"
 
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/grpcutils"
 	"github.com/grafana/authlib/types"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourceclient"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-// TestDeleteActingUserOverGRPC sends DeleteRequest through a real gRPC connection, so the field is
+// TestDeleteActingUserOverGRPC deletes through a real gRPC connection, so the acting user is
 // serialized on the wire and the caller is authenticated from signed tokens by the production
-// authenticator, as on the remote storage path.
+// authenticator, as on the remote storage path. One case deletes through apistore.Storage with the
+// original UID in context, the way the authz store wrapper does, so the whole client-to-marker
+// path is covered; the others send DeleteRequest directly to pin the server's rules.
 func TestDeleteActingUserOverGRPC(t *testing.T) {
 	const (
 		namespace = "stacks-1"
@@ -115,37 +124,17 @@ func TestDeleteActingUserOverGRPC(t *testing.T) {
 		"user":          metadata.Pairs("x-access-token", accessToken, "x-id-token", idToken),
 	}
 
-	// deleteAs creates and deletes a resource over gRPC as the given caller and returns the
-	// updatedBy stored on the deletion marker.
-	deleteAs := func(t *testing.T, name string, md metadata.MD, actingUser string) string {
+	// markerUpdatedBy returns the updatedBy stored on the latest deletion marker for rkey. The marker
+	// is only visible through the trash listing.
+	markerUpdatedBy := func(t *testing.T, rkey *resourcepb.ResourceKey) string {
 		t.Helper()
-		ctx := metadata.NewOutgoingContext(t.Context(), md)
-		rkey := &resourcepb.ResourceKey{Group: "folder.grafana.app", Resource: "folders", Namespace: namespace, Name: name}
-		value, err := (&unstructured.Unstructured{Object: map[string]any{
-			"apiVersion": "folder.grafana.app/v1",
-			"kind":       "Folder",
-			"metadata":   map[string]any{"name": name, "namespace": namespace},
-			"spec":       map[string]any{"title": name},
-		}}).MarshalJSON()
-		require.NoError(t, err)
-
-		created, err := client.Create(ctx, &resourcepb.CreateRequest{Key: rkey, Value: value})
-		require.NoError(t, err)
-		deleted, err := client.Delete(ctx, &resourcepb.DeleteRequest{
-			Key: rkey, ResourceVersion: created.ResourceVersion, ActingUserUid: actingUser,
-		})
-		require.NoError(t, err)
-
-		// The deletion marker is only visible through the trash listing.
 		var markerValue []byte
-		_, err = backend.ListHistory(t.Context(), &resourcepb.ListRequest{
+		_, err := backend.ListHistory(t.Context(), &resourcepb.ListRequest{
 			Source:  resourcepb.ListRequest_TRASH,
 			Options: &resourcepb.ListOptions{Key: rkey},
 		}, func(it resource.ListIterator) error {
 			for it.Next() {
-				if it.ResourceVersion() == deleted.ResourceVersion {
-					markerValue = append([]byte(nil), it.Value()...)
-				}
+				markerValue = append([]byte(nil), it.Value()...)
 			}
 			return it.Error()
 		})
@@ -159,6 +148,34 @@ func TestDeleteActingUserOverGRPC(t *testing.T) {
 		return meta.GetUpdatedBy()
 	}
 
+	// createFolder creates a resource over gRPC as the given caller.
+	createFolder := func(t *testing.T, name string, md metadata.MD) (*resourcepb.ResourceKey, int64) {
+		t.Helper()
+		rkey := &resourcepb.ResourceKey{Group: "folder.grafana.app", Resource: "folders", Namespace: namespace, Name: name}
+		value, err := (&unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "folder.grafana.app/v1",
+			"kind":       "Folder",
+			"metadata":   map[string]any{"name": name, "namespace": namespace},
+			"spec":       map[string]any{"title": name},
+		}}).MarshalJSON()
+		require.NoError(t, err)
+		created, err := client.Create(metadata.NewOutgoingContext(t.Context(), md), &resourcepb.CreateRequest{Key: rkey, Value: value})
+		require.NoError(t, err)
+		return rkey, created.ResourceVersion
+	}
+
+	// deleteAs creates and deletes a resource over gRPC as the given caller, sending DeleteRequest
+	// directly, and returns the updatedBy stored on the deletion marker.
+	deleteAs := func(t *testing.T, name string, md metadata.MD, actingUser string) string {
+		t.Helper()
+		rkey, rv := createFolder(t, name, md)
+		_, err := client.Delete(metadata.NewOutgoingContext(t.Context(), md), &resourcepb.DeleteRequest{
+			Key: rkey, ResourceVersion: rv, ActingUserUid: actingUser,
+		})
+		require.NoError(t, err)
+		return markerUpdatedBy(t, rkey)
+	}
+
 	t.Run("acting user survives serialization for an access policy", func(t *testing.T) {
 		require.Equal(t, actingUID, deleteAs(t, "as-policy", callers["access policy"], actingUID))
 	})
@@ -169,5 +186,37 @@ func TestDeleteActingUserOverGRPC(t *testing.T) {
 
 	t.Run("user cannot choose the recorded deleter", func(t *testing.T) {
 		require.Equal(t, "user:1", deleteAs(t, "as-user", callers["user"], actingUID))
+	})
+
+	t.Run("a delete through apistore records the original user", func(t *testing.T) {
+		// The transport only attaches the service's access token. The user exists solely as the
+		// original UID in the context, as the authz store wrapper leaves it, so apistore itself
+		// must turn it into the request field for the marker to name them.
+		apiConn, err := grpc.NewClient(listener.Addr().String(),
+			grpc.WithTransportCredentials(insecure.NewCredentials()),
+			grpc.WithUnaryInterceptor(func(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+				return invoker(metadata.AppendToOutgoingContext(ctx, "x-access-token", accessToken), method, req, reply, cc, opts...)
+			}))
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = apiConn.Close() })
+
+		rkey, _ := createFolder(t, "via-apistore", callers["access policy"])
+		store, _, err := apistore.NewStorage(
+			&storagebackend.ConfigForResource{GroupResource: schema.GroupResource{Group: rkey.Group, Resource: rkey.Resource}},
+			resourceclient.NewResourceClientFromConns(apiConn, apiConn),
+			nil,
+			func(string) (*resourcepb.ResourceKey, error) { return rkey, nil },
+			func() runtime.Object { return &unstructured.Unstructured{} },
+			func() runtime.Object { return &unstructured.UnstructuredList{} },
+			nil, storage.IndexerFuncs{}, nil, nil,
+			apistore.StorageOptions{Serializer: apistore.JSONSerializer()},
+		)
+		require.NoError(t, err)
+
+		ctx := identity.WithOriginalIdentityUID(identity.WithServiceIdentityContext(t.Context(), 1), actingUID)
+		err = store.Delete(ctx, "folder.grafana.app/folders/"+namespace+"/via-apistore", &unstructured.Unstructured{}, nil, nil, nil, storage.DeleteOptions{})
+		require.NoError(t, err)
+
+		require.Equal(t, actingUID, markerUpdatedBy(t, rkey))
 	})
 }
