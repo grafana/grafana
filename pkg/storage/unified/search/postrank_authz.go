@@ -61,6 +61,12 @@ func (c PostRankAuthzConfig) effective() PostRankAuthzConfig {
 	return c
 }
 
+func (c PostRankAuthzConfig) countSmallResultSet(req *resourcepb.ResourceSearchRequest, total uint64) bool {
+	return req.Limit > 0 && len(req.Facet) == 0 &&
+		len(req.SearchAfter) == 0 && len(req.SearchBefore) == 0 &&
+		c.ExactCountThreshold > 0 && total <= uint64(c.ExactCountThreshold)
+}
+
 func (c PostRankAuthzConfig) windowSize(limit int) int {
 	w := min(limit*c.OverFetchFactor, c.MaxWindow)
 	return w
@@ -429,9 +435,7 @@ windows:
 		if window == 0 {
 			firstRes = res
 			stats.AddTotalHits(int(res.Total))
-			if limit > 0 && !wantFacets && trashAuthz == nil &&
-				len(req.SearchAfter) == 0 && len(req.SearchBefore) == 0 &&
-				cfg.ExactCountThreshold > 0 && res.Total <= uint64(cfg.ExactCountThreshold) {
+			if trashAuthz == nil && cfg.countSmallResultSet(req, res.Total) {
 				countEveryHit = true
 				// This budget is independent of count-only and trash scans.
 				maxCandidates = int64(cfg.ExactCountThreshold)
