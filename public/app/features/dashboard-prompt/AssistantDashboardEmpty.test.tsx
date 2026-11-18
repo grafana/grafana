@@ -207,9 +207,7 @@ describe('AssistantDashboardEmpty', () => {
 
       act(() => latestTemplatesProps?.onSelectTemplate(red));
       expect(latestPromptProps?.hostContextItems).toEqual([red.contextItem]);
-      expect(latestPromptProps?.placeholder).toBe(
-        'Describe what to change in RED metrics, or send to start from it as is.'
-      );
+      expect(latestPromptProps?.placeholder).toBe('Describe changes, or send as is');
       expect(latestTemplatesProps?.selectedTemplateId).toBe('grafana:1');
 
       act(() => latestTemplatesProps?.onSelectTemplate(use));

@@ -128,11 +128,8 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
               onSubmit={onSubmitPrompt}
               placeholder={
                 template
-                  ? t(
-                      'dashboard.empty.assistant-placeholder-template',
-                      'Describe what to change in {{title}}, or send to start from it as is.',
-                      { title: template.title }
-                    )
+                  ? // Short enough for one line at phone width; the pill already names the template.
+                    t('dashboard.empty.assistant-placeholder-template', 'Describe changes, or send as is')
                   : undefined
               }
               hostContextItems={hostContextItems}
