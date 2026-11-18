@@ -99,4 +99,18 @@ describe('AddPanelToNotebookScene.getCapturedTimeRange', () => {
 
     expect(scene.getCapturedTimeRange()).toEqual({ from: 'now-1h', to: 'now', timeZone: 'utc' });
   });
+
+  it("keeps the dashboard's fiscal year start month when the panel has its own time override", () => {
+    const panelTimeRange = new PanelTimeRange({ timeFrom: '2h' });
+    const scene = sceneForPanel(
+      undefined,
+      new SceneTimeRange({ from: 'now-6h', to: 'now', timeZone: 'utc', fiscalYearStartMonth: 3 }),
+      panelTimeRange
+    );
+
+    scene.layout!.state.$timeRange!.activate();
+    panelTimeRange.activate();
+
+    expect(scene.getCapturedTimeRange()).toMatchObject({ from: 'now-2h', to: 'now', fiscalYearStartMonth: 3 });
+  });
 });

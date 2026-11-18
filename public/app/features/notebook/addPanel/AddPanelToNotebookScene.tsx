@@ -55,9 +55,13 @@ export class AddPanelToNotebookScene extends SceneObjectBase<AddPanelToNotebookS
    * panel's own relative time changes, so its `from`/`to` can still describe the previous override.
    */
   public getCapturedTimeRange = (): CapturedTimeRange => {
-    const timeRange = sceneGraph.getTimeRange(this.state.panelRef.resolve());
+    const panel = this.state.panelRef.resolve();
+    const timeRange = sceneGraph.getTimeRange(panel);
+    // A panel's own PanelTimeRange never holds the fiscal calendar: like its time zone, it belongs to the
+    // dashboard range above it, so it is read from there.
+    const { fiscalYearStartMonth } = sceneGraph.getTimeRange(panel.parent ?? panel).state;
 
-    return captureTimeRange(timeRange.state.value.raw, timeRange.getTimeZone(), timeRange.state.fiscalYearStartMonth);
+    return captureTimeRange(timeRange.state.value.raw, timeRange.getTimeZone(), fiscalYearStartMonth);
   };
 }
 
