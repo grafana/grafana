@@ -44,7 +44,7 @@ func newLegacyCheckShadow(reg prometheus.Registerer) (*legacyCheckShadow, error)
 		duration: factory.NewHistogramVec(prometheus.HistogramOpts{
 			Name:    "grafana_accesscontrol_legacy_check_shadow_duration_seconds",
 			Help:    "Execution time of local and LegacyCheck evaluations during shadow comparisons.",
-			Buckets: prometheus.ExponentialBuckets(0.00001, 4, 10),
+			Buckets: append(prometheus.ExponentialBuckets(0.00001, 4, 10), 5, 10),
 		}, []string{"implementation"}),
 		results: factory.NewCounterVec(prometheus.CounterOpts{
 			Name: "grafana_accesscontrol_legacy_check_shadow_comparisons_total",
@@ -71,6 +71,7 @@ func (s *legacyCheckShadow) evaluate(ctx context.Context, ac *AccessControl, use
 			allowed, err = ac.evaluateLocal(ctx, user, evaluator)
 		},
 		func() shadow.Work {
+			permissions := evaluator.GoString()
 			req, shadowErr := ac.buildLegacyCheckRequest(user, evaluator, ac.useExternalGroups, ac.legacyNamespace)
 			var call func(context.Context) (bool, error)
 			if shadowErr == nil {
@@ -91,11 +92,11 @@ func (s *legacyCheckShadow) evaluate(ctx context.Context, ac *AccessControl, use
 				},
 				Compare: func(ctx context.Context) shadow.Outcome {
 					if primaryErr != nil || shadowErr != nil {
-						s.logger.FromContext(ctx).Warn("LegacyCheck shadow comparison failed", "namespace", req.Namespace, "subject", req.Subject, "currentError", primaryErr, "shadowError", shadowErr)
+						s.logger.FromContext(ctx).Warn("LegacyCheck shadow comparison failed", "namespace", req.Namespace, "subject", req.Subject, "permissions", permissions, "currentError", primaryErr, "shadowError", shadowErr)
 						return shadow.Failed
 					}
 					if expected != actual {
-						s.logger.FromContext(ctx).Warn("LegacyCheck shadow results differ", "namespace", req.Namespace, "subject", req.Subject, "currentAllowed", expected, "shadowAllowed", actual)
+						s.logger.FromContext(ctx).Warn("LegacyCheck shadow results differ", "namespace", req.Namespace, "subject", req.Subject, "permissions", permissions, "currentAllowed", expected, "shadowAllowed", actual)
 						return shadow.Mismatch
 					}
 					return shadow.Match

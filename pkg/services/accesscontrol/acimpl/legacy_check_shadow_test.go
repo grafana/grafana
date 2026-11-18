@@ -354,14 +354,14 @@ func TestLegacyCheckShadowMismatchLogs(t *testing.T) {
 	ac.legacyCheckShadow.logger = logger
 
 	synctest.Test(t, func(t *testing.T) {
-		_, err := ac.Evaluate(t.Context(), checkShadowUser(), accesscontrol.EvalPermission("folders:read"))
+		_, err := ac.Evaluate(t.Context(), checkShadowUser(), accesscontrol.EvalPermission("folders:read", "folders:uid:allowed"))
 		require.NoError(t, err)
 		synctest.Wait()
 
 		require.Equal(t, logtest.Logs{
 			Calls:   1,
 			Message: "LegacyCheck shadow results differ",
-			Ctx:     []any{"namespace", "org-12", "subject", "user:checked-user", "currentAllowed", true, "shadowAllowed", false},
+			Ctx:     []any{"namespace", "org-12", "subject", "user:checked-user", "permissions", "action:folders:read scopes:folders:uid:allowed", "currentAllowed", true, "shadowAllowed", false},
 		}, logger.WarnLogs)
 	})
 }
