@@ -1002,6 +1002,13 @@ func schema_pkg_apis_alerting_v0alpha1_ConfigV0alpha1StatusExternalRulerSync(ref
 							Format:      "",
 						},
 					},
+					"rootFolderUid": {
+						SchemaProps: spec.SchemaProps{
+							Description: "rootFolderUid is the UID of the folder the synced rules live under. The worker finds the folder by it, so a rename does not stop the sync and a deleted folder is recreated with the same UID. Internal bookkeeping.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
 			},
 		},

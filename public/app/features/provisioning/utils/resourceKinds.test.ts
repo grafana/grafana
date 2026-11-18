@@ -1,8 +1,8 @@
 import { HttpResponse, http } from 'msw';
 
 import server from '@grafana/test-utils/server';
-import { type Repository, type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
-import { getIconForKind } from 'app/features/search/service/utils';
+import { type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
+import { getIconForKind } from 'app/features/search/service/icons';
 
 import { setupProvisioningMswServer } from '../mocks/server';
 
@@ -10,13 +10,12 @@ import {
   resourceKindInfos,
   getAvailableResourceKinds,
   getKindInfoByGroupKind,
-  getKindInfoByItemType,
+  getKindInfoByKind,
   getKindInfoByResource,
   getKindInfoByStat,
   getKindInfoByStatGroup,
   getMigratableKinds,
   getReportedGroup,
-  getRepositoryRoute,
   coversGroup,
   isResourceKindAvailable,
   readImmediateParent,
@@ -28,33 +27,56 @@ describe('resourceKinds registry', () => {
       group: 'dashboard.grafana.app',
       kind: 'Dashboard',
       resource: 'dashboards',
-      itemType: 'Dashboard',
     });
     expect(resourceKindInfos.folder).toMatchObject({
       group: 'folder.grafana.app',
       kind: 'Folder',
       resource: 'folders',
-      itemType: 'Folder',
     });
     expect(resourceKindInfos.playlist).toMatchObject({
       group: 'playlist.grafana.app',
       kind: 'Playlist',
       resource: 'playlists',
-      itemType: 'Playlist',
     });
     expect(resourceKindInfos.librarypanel).toMatchObject({
       group: 'dashboard.grafana.app',
       kind: 'LibraryPanel',
       resource: 'librarypanels',
-      itemType: 'LibraryPanel',
     });
     expect(resourceKindInfos.datasource).toMatchObject({
       group: 'datasource.grafana.app',
       kind: 'DataSource',
       resource: 'datasources',
-      itemType: 'DataSource',
       collectionGroup: true,
     });
+    expect(resourceKindInfos.repository).toMatchObject({
+      group: 'provisioning.grafana.app',
+      kind: 'Repository',
+      resource: 'repositories',
+    });
+    expect(resourceKindInfos.connection).toMatchObject({
+      group: 'provisioning.grafana.app',
+      kind: 'Connection',
+      resource: 'connections',
+    });
+  });
+
+  // A bootstrap repository provisions repositories and connections, and their stat badges fall
+  // back to a generic icon and a dead link for any kind the registry does not know.
+  it('resolves provisioning kinds from a repository stat, including their admin routes', () => {
+    const repository = getKindInfoByStat({ group: 'provisioning.grafana.app', resource: 'repositories' });
+    const connection = getKindInfoByStat({ group: 'provisioning.grafana.app', resource: 'connections' });
+
+    expect(repository?.icon).toBe('code-branch');
+    expect(repository?.getRoute?.('bootstrap')).toBe('/admin/provisioning/bootstrap');
+    expect(connection?.icon).toBe('plug');
+    expect(connection?.getRoute?.('github-app')).toBe('/admin/provisioning/connections/github-app/edit');
+  });
+
+  // They are configuration, not content: the Migrate flow must never offer to move them.
+  it('never enumerates provisioning kinds for migration', async () => {
+    expect(await resourceKindInfos.repository.list()).toEqual([]);
+    expect(await resourceKindInfos.connection.list()).toEqual([]);
   });
 
   it('sources icons from the search package', () => {
@@ -111,14 +133,14 @@ describe('getKindInfoByResource', () => {
   });
 });
 
-describe('getKindInfoByItemType', () => {
-  it('resolves by item type', () => {
-    expect(getKindInfoByItemType('Dashboard')).toBe(resourceKindInfos.dashboard);
-    expect(getKindInfoByItemType('Folder')).toBe(resourceKindInfos.folder);
+describe('getKindInfoByKind', () => {
+  it('resolves by kind', () => {
+    expect(getKindInfoByKind('Dashboard')).toBe(resourceKindInfos.dashboard);
+    expect(getKindInfoByKind('Folder')).toBe(resourceKindInfos.folder);
   });
 
   it('returns undefined for the non-resource File type', () => {
-    expect(getKindInfoByItemType('File')).toBeUndefined();
+    expect(getKindInfoByKind('File')).toBeUndefined();
   });
 });
 
@@ -199,46 +221,6 @@ describe('getRoute', () => {
   });
 });
 
-describe('getRepositoryRoute', () => {
-  const makeRepo = (target: 'folder' | 'folderless' | 'instance'): Repository => ({
-    metadata: { name: 'my-repo' },
-    spec: { title: 'My Repo', type: 'github', sync: { target, enabled: true }, workflows: [] },
-  });
-
-  it('routes folder-scoped kinds to the repository folder for folder targets', () => {
-    expect(getRepositoryRoute(resourceKindInfos.folder, makeRepo('folder'))).toBe('/dashboards/f/my-repo');
-    expect(getRepositoryRoute(resourceKindInfos.dashboard, makeRepo('folder'))).toBe('/dashboards/f/my-repo');
-  });
-
-  it('routes folder-scoped kinds to their collection page for non-folder targets', () => {
-    expect(getRepositoryRoute(resourceKindInfos.dashboard, makeRepo('instance'))).toBe('/dashboards');
-    expect(getRepositoryRoute(resourceKindInfos.folder, makeRepo('folderless'))).toBe('/dashboards');
-  });
-
-  it('routes non-folder-scoped kinds to their collection page regardless of target', () => {
-    expect(getRepositoryRoute(resourceKindInfos.playlist, makeRepo('folder'))).toBe('/playlists');
-    expect(getRepositoryRoute(resourceKindInfos.playlist, makeRepo('instance'))).toBe('/playlists');
-  });
-
-  it('routes library panels to their own collection page regardless of target', () => {
-    // Library panels live in folders but aren't browsable in the dashboards folder
-    // view, so they always resolve to /library-panels.
-    expect(getRepositoryRoute(resourceKindInfos.librarypanel, makeRepo('folder'))).toBe('/library-panels');
-    expect(getRepositoryRoute(resourceKindInfos.librarypanel, makeRepo('instance'))).toBe('/library-panels');
-  });
-
-  it('falls back to the collection page when the repository name or spec is missing', () => {
-    // No spec → not a folder target → collection page.
-    expect(getRepositoryRoute(resourceKindInfos.dashboard, {})).toBe('/dashboards');
-    // Folder target but no metadata → no folder to scope to → collection page
-    // (rather than a broken `/dashboards/f/undefined`).
-    const noMetadata: Repository = {
-      spec: { title: 'r', type: 'github', sync: { target: 'folder', enabled: true }, workflows: [] },
-    };
-    expect(getRepositoryRoute(resourceKindInfos.folder, noMetadata)).toBe('/dashboards');
-  });
-});
-
 describe('getAvailableResourceKinds', () => {
   it('falls back to all known kinds when availableResources is unset', () => {
     expect(getAvailableResourceKinds(undefined)).toEqual([
@@ -246,6 +228,8 @@ describe('getAvailableResourceKinds', () => {
       resourceKindInfos.dashboard,
       resourceKindInfos.playlist,
       resourceKindInfos.librarypanel,
+      resourceKindInfos.repository,
+      resourceKindInfos.connection,
       resourceKindInfos.datasource,
     ]);
   });

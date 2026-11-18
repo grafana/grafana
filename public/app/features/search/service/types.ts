@@ -35,7 +35,8 @@ export interface SearchQuery {
   // Used for pagination. See also offset param.
   from?: number;
   starred?: boolean;
-  permission?: PermissionLevel;
+  // `create` means the user can create dashboards in the folder
+  permission?: PermissionLevel | 'create';
   deleted?: boolean;
   // Dashboard lifecycle filter. 'draft' returns only drafts, 'all' includes them; unset uses the server default
   lifecycle?: 'draft' | 'all';

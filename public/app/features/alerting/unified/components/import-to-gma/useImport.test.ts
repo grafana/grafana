@@ -226,6 +226,7 @@ describe('promote header wiring', () => {
 
     expect(headers).toHaveLength(1);
     expect(headers[0].get('X-Grafana-Alerting-Promote')).toBe('true');
+    expect(headers[0].get('X-Grafana-Alerting-Import-Source')).toBe('wizard');
   });
 
   it('omits the promote header when staging (no promote)', async () => {
@@ -335,6 +336,7 @@ describe('rules import wiring', () => {
     expect(headers.get('X-Grafana-Alerting-Notification-Settings')).toBe(JSON.stringify({ policy: 'team-a' }));
     // The imported rules stay editable in the UI.
     expect(headers.has('X-Disable-Provenance')).toBe(true);
+    expect(headers.get('X-Grafana-Alerting-Import-Source')).toBe('wizard');
   });
 
   it('leaves out the notification settings header for the default routing tree', async () => {
