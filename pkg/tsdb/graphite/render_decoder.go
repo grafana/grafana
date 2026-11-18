@@ -14,9 +14,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
-// maxRenderSizeHint bounds the per-series scratch capacity taken from maxDataPoints.
-const maxRenderSizeHint = 1 << 16
-
 const (
 	pointValueValid uint8 = 1 << iota
 	pointTimeValid
@@ -64,18 +61,12 @@ func (c *cappedReader) Read(p []byte) (int, error) {
 
 // decodeRender streams a Graphite /render JSON body into the frames that
 // toDataFrames builds from the same body.
-func decodeRender(r io.Reader, maxBytes int64, refID string, sizeHint int) (data.Frames, error) {
+func decodeRender(r io.Reader, maxBytes int64, refID string) (data.Frames, error) {
 	body := &cappedReader{r: r, n: maxBytes}
-	hint := min(max(sizeHint, 0), maxRenderSizeHint)
 	d := &renderDecoder{
 		dec:    jsontext.NewDecoder(newNonFiniteReader(body), jsontext.AllowDuplicateNames(true), jsontext.AllowInvalidUTF8(true)),
 		refID:  refID,
 		frames: data.Frames{},
-		s: seriesBuffer{
-			values: make([]float64, 0, hint),
-			times:  make([]float64, 0, hint),
-			valid:  make([]uint8, 0, hint),
-		},
 	}
 	err := d.decode()
 	switch {
@@ -492,7 +483,7 @@ func (d *renderDecoder) emit() {
 	d.frames = append(d.frames, frame)
 }
 
-func (s *Service) decodeRenderResponse(res *http.Response, refID string, maxDataPoints int64) (data.Frames, error) {
+func (s *Service) decodeRenderResponse(res *http.Response, refID string) (data.Frames, error) {
 	defer func() {
 		if err := res.Body.Close(); err != nil {
 			s.logger.Warn("Failed to close response body", "err", err)
@@ -500,7 +491,7 @@ func (s *Service) decodeRenderResponse(res *http.Response, refID string, maxData
 	}()
 
 	maxBytes := s.caps.renderResponse()
-	frames, err := decodeRender(res.Body, maxBytes, refID, int(maxDataPoints))
+	frames, err := decodeRender(res.Body, maxBytes, refID)
 	if err != nil {
 		if errors.As(err, new(renderTooLargeError)) {
 			s.logger.Error("Graphite /render response exceeded the configured cap", "max_bytes", maxBytes)

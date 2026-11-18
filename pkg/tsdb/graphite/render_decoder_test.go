@@ -175,6 +175,11 @@ func TestDecodeRender(t *testing.T) {
 			wantErr: "series", wantSource: backend.ErrorSourcePlugin,
 		},
 		{
+			name: "repeated legacy series key clears an earlier timestamp error",
+			body: `{"series":[{"target":"a","datapoints":[[1]]}],"series":[{"target":"b","datapoints":[[1,100]]}]}`,
+			want: data.Frames{renderFrame("b", data.Labels{}, pt(100, 1))},
+		},
+		{
 			name: "string, numeric and bool tags",
 			body: `[{"target":"a","tags":{"s":"v","i":5,"f":3.25,"big":1e21,"neg":-0,"b":true,"z":null,"o":{"k":"v"},"l":[1]},"datapoints":[[1,100]]}]`,
 			want: data.Frames{renderFrame("a", data.Labels{"s": "v", "i": "5", "f": "3.25", "big": "1000000000000000000000", "neg": "-0"}, pt(100, 1))},
@@ -345,6 +350,16 @@ func TestDecodeRender(t *testing.T) {
 			wantErr: "failed to parse data point timestamp",
 		},
 		{
+			name: "duplicate datapoints: an empty point clears the earlier value",
+			body: `[{"target":"a","datapoints":[[7,100]],"datapoints":[[]],"datapoints":[[{},200]]}]`,
+			want: data.Frames{renderFrame("a", data.Labels{}, pt(200, 0))},
+		},
+		{
+			name: "duplicate datapoints: a one-element point clears the earlier timestamp",
+			body: `[{"target":"a","datapoints":[[7,100]],"datapoints":[[5]],"datapoints":[[1,{}]]}]`,
+			want: data.Frames{renderFrame("a", data.Labels{}, pt(0, 1))},
+		},
+		{
 			name: "duplicate target: the last string wins and null is ignored",
 			body: `[{"target":"a","TARGET":"b","target":null,"datapoints":[[1,100]]}]`,
 			want: data.Frames{renderFrame("b", data.Labels{}, pt(100, 1))},
@@ -439,7 +454,7 @@ func TestDecodeRender(t *testing.T) {
 	for _, tt := range slices.Concat(tests, keyOrderCases()) {
 		for _, rd := range renderReaders {
 			t.Run(tt.name+"/"+rd.name, func(t *testing.T) {
-				frames, err := decodeRender(rd.wrap(strings.NewReader(tt.body)), defaultRenderResponseMaxBytes, "A", 2)
+				frames, err := decodeRender(rd.wrap(strings.NewReader(tt.body)), defaultRenderResponseMaxBytes, "A")
 				if tt.wantErr != "" {
 					require.Error(t, err)
 					assert.Contains(t, err.Error(), tt.wantErr)
@@ -511,7 +526,7 @@ func TestDecodeRenderCap(t *testing.T) {
 	for _, tt := range tests {
 		for _, rd := range renderReaders {
 			t.Run(tt.name+"/"+rd.name, func(t *testing.T) {
-				frames, err := decodeRender(rd.wrap(strings.NewReader(tt.body)), tt.maxBytes, "A", 0)
+				frames, err := decodeRender(rd.wrap(strings.NewReader(tt.body)), tt.maxBytes, "A")
 				if !tt.wantErr {
 					require.NoError(t, err)
 					require.Len(t, frames, 1)
@@ -529,7 +544,7 @@ func TestDecodeRenderCap(t *testing.T) {
 
 func TestDecodeRenderCapNeverReadsPastOneExtraByte(t *testing.T) {
 	r := &countingReader{r: strings.NewReader(strings.Repeat(" ", 1<<20))}
-	_, err := decodeRender(r, 1<<10, "A", 0)
+	_, err := decodeRender(r, 1<<10, "A")
 	require.Error(t, err)
 	assert.LessOrEqual(t, r.n, int64(1<<10+1))
 }
@@ -547,24 +562,62 @@ func (c *countingReader) Read(p []byte) (int, error) {
 
 func TestDecodeRenderReadError(t *testing.T) {
 	body := `[{"target":"a","datapoints":[[1,100]]}]`
-	_, err := decodeRender(iotest.TimeoutReader(strings.NewReader(body)), defaultRenderResponseMaxBytes, "A", 0)
+	_, err := decodeRender(iotest.TimeoutReader(strings.NewReader(body)), defaultRenderResponseMaxBytes, "A")
 	require.ErrorIs(t, err, iotest.ErrTimeout)
 	assert.Equal(t, backend.ErrorSourceDownstream, errorSource(err))
 }
 
-func TestDecodeRenderRefIDAndSizeHint(t *testing.T) {
-	body := `[{"target":"a","datapoints":[[1,100],[2,160]]},{"target":"b","datapoints":[[3,100]]}]`
-	for _, hint := range []int{-1, 0, 1, 1 << 40, math.MaxInt} {
-		t.Run(strconv.Itoa(hint), func(t *testing.T) {
-			frames, err := decodeRender(strings.NewReader(body), defaultRenderResponseMaxBytes, "B", hint)
-			require.NoError(t, err)
-			want := data.Frames{renderFrame("a", data.Labels{}, pt(100, 1), pt(160, 2)), renderFrame("b", data.Labels{}, pt(100, 3))}
-			for _, f := range want {
-				f.RefID = "B"
-			}
-			requireFramesEqual(t, want, frames)
+func TestRenderEmitAllocationsDoNotGrowWithPoints(t *testing.T) {
+	allocs := func(n int) float64 {
+		d := &renderDecoder{s: seriesBuffer{n: n, values: make([]float64, n), times: make([]float64, n), valid: make([]uint8, n)}}
+		for i := range n {
+			d.s.valid[i] = pointValueValid | pointTimeValid
+		}
+		return testing.AllocsPerRun(10, func() {
+			d.frames = d.frames[:0]
+			d.emit()
 		})
 	}
+	assert.Equal(t, allocs(1), allocs(4096))
+}
+
+type errorLogger struct {
+	log.Logger
+	errors []string
+}
+
+func (l *errorLogger) Error(msg string, _ ...any) { l.errors = append(l.errors, msg) }
+
+func TestDecodeRenderResponseLogsOnlyTheCapAsAnError(t *testing.T) {
+	tests := []struct {
+		name       string
+		body       string
+		wantErrors []string
+	}{
+		{name: "cap exceeded", body: "[" + strings.Repeat(" ", int(capMinBytes)) + "]", wantErrors: []string{"Graphite /render response exceeded the configured cap"}},
+		{name: "invalid JSON", body: "[x]"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			logger := &errorLogger{Logger: log.NewNullLogger()}
+			s := &Service{logger: logger, caps: caps{renderResponseMaxBytes: capMinBytes}}
+			res := &http.Response{Status: "200 OK", StatusCode: http.StatusOK, Body: io.NopCloser(strings.NewReader(tt.body))}
+			_, err := s.decodeRenderResponse(res, "A")
+			require.Error(t, err)
+			assert.Equal(t, tt.wantErrors, logger.errors)
+		})
+	}
+}
+
+func TestDecodeRenderRefID(t *testing.T) {
+	body := `[{"target":"a","datapoints":[[1,100],[2,160]]},{"target":"b","datapoints":[[3,100]]}]`
+	frames, err := decodeRender(strings.NewReader(body), defaultRenderResponseMaxBytes, "B")
+	require.NoError(t, err)
+	want := data.Frames{renderFrame("a", data.Labels{}, pt(100, 1), pt(160, 2)), renderFrame("b", data.Labels{}, pt(100, 3))}
+	for _, f := range want {
+		f.RefID = "B"
+	}
+	requireFramesEqual(t, want, frames)
 }
 
 // renderNonFiniteFixtures fail in the buffered decoder only because of
@@ -600,7 +653,7 @@ func TestDecodeRenderMatchesBufferedDecoder(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			want, wantErr := decodeRenderBuffered(body)
 			for _, rd := range renderReaders {
-				got, err := decodeRender(rd.wrap(bytes.NewReader(body)), defaultRenderResponseMaxBytes, "A", 0)
+				got, err := decodeRender(rd.wrap(bytes.NewReader(body)), defaultRenderResponseMaxBytes, "A")
 				switch {
 				case wantErr == nil:
 					require.NoError(t, err, rd.name)
@@ -647,8 +700,8 @@ func FuzzDecodeRender(f *testing.F) {
 	}
 
 	f.Fuzz(func(t *testing.T, body []byte) {
-		got, err := decodeRender(bytes.NewReader(body), defaultRenderResponseMaxBytes, "A", 4)
-		gotOneByte, errOneByte := decodeRender(iotest.OneByteReader(bytes.NewReader(body)), defaultRenderResponseMaxBytes, "A", 0)
+		got, err := decodeRender(bytes.NewReader(body), defaultRenderResponseMaxBytes, "A")
+		gotOneByte, errOneByte := decodeRender(iotest.OneByteReader(bytes.NewReader(body)), defaultRenderResponseMaxBytes, "A")
 		require.Equal(t, err == nil, errOneByte == nil, "whole: %v, one byte: %v", err, errOneByte)
 		require.Empty(t, diffFrames(got, gotOneByte))
 
@@ -801,7 +854,7 @@ func BenchmarkDecodeRender(b *testing.B) {
 	}{
 		{"buffered", decodeRenderBuffered},
 		{"streaming", func(body []byte) (data.Frames, error) {
-			return decodeRender(bytes.NewReader(body), capMaxBytes, "A", 1000)
+			return decodeRender(bytes.NewReader(body), capMaxBytes, "A")
 		}},
 	}
 	for _, shape := range shapes {

@@ -3,7 +3,6 @@ package graphite
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -23,10 +22,9 @@ import (
 )
 
 type queryModel struct {
-	req           *http.Request
-	formData      url.Values
-	rawTarget     string
-	maxDataPoints int64
+	req       *http.Request
+	formData  url.Values
+	rawTarget string
 }
 
 func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datasourceInfo) (*backend.QueryDataResponse, error) {
@@ -47,10 +45,9 @@ func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, d
 		}
 
 		graphiteQueries[query.RefID] = queryModel{
-			req:           graphiteReq,
-			formData:      formData,
-			rawTarget:     target,
-			maxDataPoints: query.MaxDataPoints,
+			req:       graphiteReq,
+			formData:  formData,
+			rawTarget: target,
 		}
 	}
 
@@ -104,7 +101,7 @@ func (s *Service) RunQuery(ctx context.Context, req *backend.QueryDataRequest, d
 
 		var queryFrames data.Frames
 		if streamRender && res.StatusCode/100 == 2 {
-			queryFrames, err = s.decodeRenderResponse(res, refId, graphiteReq.maxDataPoints)
+			queryFrames, err = s.decodeRenderResponse(res, refId)
 		} else {
 			queryFrames, err = s.toDataFrames(res, refId)
 		}
@@ -350,7 +347,7 @@ func epochMStoGraphiteTime(tr backend.TimeRange) (string, string) {
  */
 func parseDataTimePoint(dataTimePoint DataTimePoint) (time.Time, *float64, error) {
 	if !dataTimePoint[1].Valid {
-		return time.Time{}, nil, errors.New("failed to parse data point timestamp")
+		return time.Time{}, nil, errDataPointTimestamp
 	}
 
 	timestamp := time.Unix(int64(dataTimePoint[1].Float64), 0).UTC()
