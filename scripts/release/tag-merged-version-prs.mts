@@ -2,15 +2,14 @@
 // nx-release:pending, then swaps its label to nx-release:tagged. Safe to run again after a failure, and it
 // reports every tag that belongs to the pushed commit so the publish job can run on a re-run.
 //
-// Usage: node scripts/release/tag-merged-version-prs.mts
+// Usage: node scripts/release/tag-merged-version-prs.mts >> "$GITHUB_OUTPUT"
 // Reads its input from the environment: INDEPENDENT_PACKAGES (the packages output of independent-packages.mts),
 // GITHUB_REPOSITORY, GITHUB_SHA, a GH_TOKEN that may list and edit pull requests, GH_WRITER_TOKEN (falls back to
 // GH_TOKEN) for creating the tag refs, which only the writer app may do, and optionally DRY_RUN=true or
 // TAGS=<name@version>[,<name@version>...]. With TAGS it only checks that the given tags exist and reports
-// them, which is how a manual run publishes. Writes release_created, tagged and sha to GITHUB_OUTPUT.
+// them, which is how a manual run publishes. Prints release_created, tagged and sha to stdout.
 
 import { requireEnv } from './lib/env.mts';
-import { writeOutputs } from './lib/github-output.mts';
 import { isMainModule } from './lib/main.mts';
 import { parsePackages, type IndependentPackage } from './lib/packages.mts';
 import { run, stderrOf } from './lib/shell.mts';
@@ -346,8 +345,8 @@ export function createTaggingDeps(): Deps {
         'nx-release:tagged',
       ]);
     },
-    notice: (message) => console.log(`::notice::${message}`),
-    warning: (message) => console.log(`::warning::${message}`),
+    notice: (message) => console.error(`::notice::${message}`),
+    warning: (message) => console.error(`::warning::${message}`),
   };
 }
 
@@ -355,7 +354,10 @@ if (isMainModule(import.meta.url)) {
   try {
     const { dryRun, tags } = readOptions(process.env);
     const deps = createTaggingDeps();
-    writeOutputs(formatOutputs(tags ? resolveDispatchTags(tags, deps) : tagMergedVersionPrs(deps, { dryRun })));
+    const outputs = formatOutputs(tags ? resolveDispatchTags(tags, deps) : tagMergedVersionPrs(deps, { dryRun }));
+    for (const [key, value] of Object.entries(outputs)) {
+      console.log(`${key}=${value}`);
+    }
   } catch (error) {
     console.error(`::error::${error instanceof Error ? error.message : String(error)}`);
     process.exit(1);

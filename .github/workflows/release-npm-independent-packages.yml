@@ -88,7 +88,7 @@ jobs:
 
       - name: Find the independent packages
         id: packages
-        run: node scripts/release/independent-packages.mts
+        run: node scripts/release/independent-packages.mts >> "$GITHUB_OUTPUT"
 
       # Step 1: finish the last release. Tags the merge commit of the merged version pull request and swaps its
       # label, and reports what it tagged for the publish job.
@@ -98,7 +98,7 @@ jobs:
           GH_TOKEN: ${{ steps.get-github-app-token.outputs.token }}
           GH_WRITER_TOKEN: ${{ steps.get-tag-writer-app-token.outputs.token }}
           INDEPENDENT_PACKAGES: ${{ steps.packages.outputs.packages }}
-        run: node scripts/release/tag-merged-version-prs.mts
+        run: node scripts/release/tag-merged-version-prs.mts >> "$GITHUB_OUTPUT"
 
       # Step 2: prepare the next version pull request. A manual run that publishes given tags skips it.
       - name: Version and generate changelogs
@@ -106,7 +106,7 @@ jobs:
         if: env.TAGS == ''
         env:
           INDEPENDENT_PACKAGES: ${{ steps.packages.outputs.packages }}
-        run: node scripts/release/prepare-release-pr.mts
+        run: node scripts/release/prepare-release-pr.mts >> "$GITHUB_OUTPUT"
 
       - name: Decide what to do with the version pull request
         id: sync
@@ -114,7 +114,7 @@ jobs:
         env:
           CHANGED: ${{ steps.prepare.outputs.changed }}
           SUMMARY_PATH: ${{ steps.prepare.outputs.summary_path }}
-        run: node scripts/release/sync-release-pr.mts decide
+        run: node scripts/release/sync-release-pr.mts decide >> "$GITHUB_OUTPUT"
 
       - name: Describe the dry run
         if: env.TAGS == '' && env.DRY_RUN == 'true' && steps.sync.outputs.action == 'update'

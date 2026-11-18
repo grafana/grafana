@@ -2,18 +2,17 @@
 // Nx to bump the versions from the conventional commits since those tags and to write the changelog entries.
 // Both steps change files in the working tree, which the next step compares with the open version PR.
 //
-// Usage: node scripts/release/prepare-release-pr.mts
+// Usage: node scripts/release/prepare-release-pr.mts >> "$GITHUB_OUTPUT"
 // Reads INDEPENDENT_PACKAGES (the packages output of independent-packages.mts) from the environment and needs
-// the git tags fetched. Run from the repo root. Writes changed to GITHUB_OUTPUT,
-// and when it is true also summary_path: a JSON list of {name, currentVersion, newVersion, changelog} written
-// to RUNNER_TEMP.
+// the git tags fetched. Run from the repo root. Prints changed=true|false to stdout, and when it is true also
+// summary_path: a JSON list of {name, currentVersion, newVersion, changelog} written to RUNNER_TEMP. Nx prints its
+// own progress to stdout, so while it runs stdout is sent to stderr to keep it out of the output.
 
 import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { writeOutputs } from './lib/github-output.mts';
 import { isMainModule } from './lib/main.mts';
 import { parsePackages, type IndependentPackage } from './lib/packages.mts';
 import type { PackageRelease } from './lib/releases.mts';
@@ -144,22 +143,32 @@ export async function createVersioningDeps(packages: IndependentPackage[]): Prom
       });
       return toChangelogEntries(result.projectChangelogs);
     },
-    notice: (message) => console.log(`::notice::${message}`),
-    warning: (message) => console.log(`::warning::${message}`),
+    notice: (message) => console.error(`::notice::${message}`),
+    warning: (message) => console.error(`::warning::${message}`),
   };
+}
+
+async function withStdoutOnStderr<T>(work: () => Promise<T>): Promise<T> {
+  const stdoutWrite = process.stdout.write;
+  Object.assign(process.stdout, { write: process.stderr.write.bind(process.stderr) });
+  try {
+    return await work();
+  } finally {
+    Object.assign(process.stdout, { write: stdoutWrite });
+  }
 }
 
 if (isMainModule(import.meta.url)) {
   try {
     const packages = parsePackages(process.env.INDEPENDENT_PACKAGES);
-    const result = await prepareReleasePr(await createVersioningDeps(packages));
+    const result = await withStdoutOnStderr(async () => prepareReleasePr(await createVersioningDeps(packages)));
 
     if (result.changed) {
       const summaryPath = join(process.env.RUNNER_TEMP ?? tmpdir(), 'release-summary.json');
       writeFileSync(summaryPath, JSON.stringify(result.releases, null, 2));
-      writeOutputs({ changed: 'true', summary_path: summaryPath });
+      console.log(`changed=true\nsummary_path=${summaryPath}`);
     } else {
-      writeOutputs({ changed: 'false' });
+      console.log('changed=false');
     }
   } catch (error) {
     console.error(`::error::${error instanceof Error ? error.message : String(error)}`);

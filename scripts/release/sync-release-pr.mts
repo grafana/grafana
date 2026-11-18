@@ -1,10 +1,10 @@
 // Keeps the version PR in step with what prepare-release-pr.mts changed in the working tree. Run from the repo
 // root, with the full history fetched, in three steps:
 //
-//   node scripts/release/sync-release-pr.mts [decide]
+//   node scripts/release/sync-release-pr.mts [decide] >> "$GITHUB_OUTPUT"
 //     Leaves the PR alone when its branch already has exactly this result, or says it must be updated and writes
 //     its body. Reads RELEASE_BRANCH, CHANGED and SUMMARY_PATH (the changed and summary_path outputs of
-//     prepare-release-pr.mts). Writes action (leave or update) to GITHUB_OUTPUT, and for update also body_path,
+//     prepare-release-pr.mts). Prints action (leave or update) to stdout, and for update also body_path,
 //     the PR body, in RUNNER_TEMP.
 //   node scripts/release/sync-release-pr.mts reset-branch
 //     Creates the version PR branch at the current commit, or moves it there if it exists. Reads RELEASE_BRANCH
@@ -18,7 +18,6 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { requireEnv } from './lib/env.mts';
-import { writeOutputs } from './lib/github-output.mts';
 import { isMainModule } from './lib/main.mts';
 import { parseReleases, type PackageRelease } from './lib/releases.mts';
 import { run, stderrOf } from './lib/shell.mts';
@@ -282,20 +281,20 @@ export function createSyncingDeps(branch: string): Deps {
 function decide(): void {
   const options = readOptions(process.env);
   if (!options.changed) {
-    writeOutputs({ action: 'leave' });
+    console.log('action=leave');
     return;
   }
 
   const releases = parseReleases(readFileSync(options.summaryPath, 'utf8'));
   const action = decideAction(createSyncingDeps(options.branch));
   if (action === 'leave') {
-    writeOutputs({ action });
+    console.log(`action=${action}`);
     return;
   }
 
   const bodyPath = join(process.env.RUNNER_TEMP ?? tmpdir(), 'pr-body.md');
   writeFileSync(bodyPath, renderPrBody(releases));
-  writeOutputs({ action, body_path: bodyPath });
+  console.log(`action=${action}\nbody_path=${bodyPath}`);
 }
 
 function runCommand(command: Command): void {
@@ -304,14 +303,14 @@ function runCommand(command: Command): void {
   } else if (command === 'reset-branch') {
     const branch = requireEnv(process.env, 'RELEASE_BRANCH');
     const result = resetReleaseBranch(createBranchResetDeps(branch, requireEnv(process.env, 'GITHUB_REPOSITORY')));
-    console.log(`::notice::The branch ${branch} was ${result}.`);
+    console.error(`::notice::The branch ${branch} was ${result}.`);
   } else {
     const { branch, title, bodyPath } = readPrOptions(process.env);
     const result = openVersionPr(createPrOpeningDeps(branch, requireEnv(process.env, 'GITHUB_REPOSITORY')), {
       title,
       bodyPath,
     });
-    console.log(`::notice::The version pull request was ${result}.`);
+    console.error(`::notice::The version pull request was ${result}.`);
   }
 }
 
