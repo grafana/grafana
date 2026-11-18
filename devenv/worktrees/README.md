@@ -35,7 +35,7 @@ Plain `make run` / `pnpm start` are unchanged.
 ## How it works
 
 - State lives under `~/.grafana-worktrees` (override with `GRAFANA_WORKTREES_HOME`): a registry entry and a Traefik route file per worktree.
-- A shared Traefik container (`grafana-worktree-traefik`, port 80) routes `/public` and `/ws` to the worktree's own frontend
+- A shared Traefik container (`grafana-worktree-traefik`, port 80, defined in `docker-compose.yaml` next to this file) routes `/public` and `/ws` to the worktree's own frontend
   and everything else to the backend, and sets `X-Grafana-Frontend` so the backend renders the right bundle.
 - The backend honours that header only in development mode and only for `http://<name>.localhost`
   (`[frontend_dev] worktree_server_url_template`). `worktree:backend` enables it.
@@ -43,7 +43,7 @@ Plain `make run` / `pnpm start` are unchanged.
 
 ## Limits
 
-- Requires Docker, port 80, and `*.localhost` resolving to loopback (add hosts entries if yours doesn't).
+- Requires Docker with the Compose v2 plugin, port 80, and `*.localhost` resolving to loopback (add hosts entries if yours doesn't).
 - The backend worktree needs built `dist/` folders for the `graphite` and `grafana-testdata-datasource` plugins, or the backend fails
   at startup. Copy them from another worktree if the plugin build doesn't work.
 - You are responsible for the frontends being compatible with the backend.
