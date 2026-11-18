@@ -7,6 +7,7 @@ import { NavLandingPage } from 'app/core/components/NavLandingPage/NavLandingPag
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
+import { AdministrationLanding } from 'app/features/admin/AdministrationLanding';
 import { getAlertingRoutes } from 'app/features/alerting/routes';
 import { isAdmin, isLocalDevEnv, isOpenSourceEdition } from 'app/features/alerting/unified/utils/environment';
 import { ConnectionsRedirectNotice } from 'app/features/connections/components/ConnectionsRedirectNotice/ConnectionsRedirectNotice';
@@ -314,7 +315,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     {
       path: '/admin/general',
-      component: () => <NavLandingPage navId="cfg/general" />,
+      component: () => <AdministrationLanding navId="cfg/general" />,
     },
     {
       path: '/admin/plugins',
@@ -406,7 +407,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     // ADMIN
     {
       path: '/admin',
-      component: () => <NavLandingPage navId="cfg" header={<ConnectionsRedirectNotice />} />,
+      component: () => <AdministrationLanding navId="cfg" header={<ConnectionsRedirectNotice />} />,
     },
     {
       path: '/admin/authentication',
