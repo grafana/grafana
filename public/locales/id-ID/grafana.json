@@ -1590,10 +1590,17 @@
         "view-list": "Daftar",
         "wildcard-in-text": "Teks pencarian tidak boleh berisi * atau %."
       },
+      "sequence-drawer": {
+        "alert-rules": "",
+        "error": "",
+        "interval": "",
+        "missing-rule": "",
+        "recording-rules": "",
+        "this-rule": "",
+        "title": ""
+      },
       "sequence-pill": {
-        "label": "",
         "label-with-interval": "",
-        "tooltip": "",
         "tooltip-with-interval": ""
       },
       "shared": {
@@ -1815,17 +1822,18 @@
         "autosync-rules-error-title": "Impor Aturan Gagal",
         "autosync-rules-imported-note": "Aturan peringatan yang Anda pilih juga diimpor.",
         "autosync-rules-note": "Aturan peringatan yang Anda pilih juga akan diimpor.",
-        "autosync-success-body": "Sinkronisasi otomatis diaktifkan. Sedang dialihkan...",
+        "autosync-success-body": "",
         "autosync-success-title": "Sinkronisasi otomatis Diaktifkan",
         "autosync-title": "Konfirmasi Sinkronisasi otomatis",
         "body": "Yakin ingin memulai impor? Tindakan ini akan membuat sumber daya baru di Grafana Alerting.",
         "confirm": "Mulai Impor",
+        "continue": "",
         "error-body": "",
         "error-details": "",
         "error-title": "Impor Gagal",
         "importing-body": "Mengimpor sumber daya ke Grafana Alerting. Harap tunggu...",
         "importing-title": "Mengimpor...",
-        "success-body": "Sumber daya berhasil diimpor. Mengalihkan...",
+        "success-body": "",
         "success-title": "Impor Berhasil",
         "title": "Konfirmasikan Impor"
       },
@@ -7665,11 +7673,7 @@
       "usage-count_other": "Digunakan pada {{count}} dasbor"
     },
     "lifecycle": {
-      "applied": "Perubahan Anda diterapkan ke {{title}}",
-      "apply": "Terapkan",
-      "apply-body": "Semua orang yang memiliki akses akan melihatnya. Anda dapat memulihkan versi sebelumnya dari riwayat versi.",
-      "apply-failed": "Tidak dapat menerapkan perubahan. Coba lagi, atau bandingkan terlebih dahulu.",
-      "apply-needs-save": "",
+      "ask-assistant-to-update": "",
       "breadcrumb-draft": "Draf",
       "breadcrumb-pending-changes": "Perubahan berstatus menunggu",
       "change-added": "Ditambahkan",
@@ -7701,7 +7705,6 @@
       "draft-discarded": "",
       "draft-title": "Draf",
       "edited-dashboard": "",
-      "highlight-changes": "Sorot perubahan pada dasbor",
       "pending-body": "Melihat pratinjau perubahan berstatus menunggu, hanya Anda yang dapat melihatnya.",
       "pending-body-source": "Melihat pratinjau perubahan {{source}} yang berstatus menunggu, hanya Anda yang dapat melihatnya.",
       "pending-changes-changed": "",
@@ -7710,12 +7713,15 @@
       "pending-stale": "Dasbor telah diperbarui sejak perubahan Anda dibuat",
       "pending-title": "Perubahan berstatus menunggu",
       "preview-changes": "Lihat pratinjau perubahan",
-      "rebase": "Ubah basis",
       "record-pending-change-failed": "",
       "save": "Simpan",
+      "save-failed": "",
+      "save-needs-permission": "",
+      "save-pending-body": "",
+      "save-pending-failed": "",
+      "saved-pending": "",
       "show-original-dashboard": "Tampilkan dasbor asli",
-      "stop-highlighting-changes": "Hentikan penyorotan perubahan",
-      "apply-title_other": "Terapkan {{count}} perubahan ke “{{title}}”?"
+      "save-pending-title_other": ""
     },
     "link-edit-actions": {
       "add-link": "Tambahkan tautan",
@@ -13369,6 +13375,31 @@
     }
   },
   "navigation": {
+    "assistant-toolbar-button": {
+      "arrange-window": "",
+      "assistant-page": "",
+      "bottom": "",
+      "floating": "",
+      "left": "",
+      "menu": "",
+      "move": "",
+      "navigation-assistant-page": "",
+      "navigation-page-assistant": "",
+      "navigation-page-assistant-below": "",
+      "navigation-page-floating-assistant": "",
+      "page-assistant": "",
+      "page-assistant-below": "",
+      "page-floating-assistant": "",
+      "page-only": "",
+      "pop-up": "",
+      "right": ""
+    },
+    "assistant-workspace": {
+      "exit": "",
+      "exit-tooltip": "",
+      "open": "",
+      "open-tooltip": ""
+    },
     "breadcrumbs": {
       "aria-label": "Breadcrumb"
     },
@@ -13384,14 +13415,6 @@
         "open-all": "Buka asisten AI dan aplikasi bilah sisi"
       },
       "floating-resize": "Ubah lebar bilah sisi"
-    },
-    "fullscreen-workspace": {
-      "enter": "Masuk ke Ruang Kerja",
-      "error-exit": "Keluar dari ruang kerja",
-      "error-message": "Ruang kerja Grafana Assistant tidak dapat dimuat.",
-      "error-reload": "Muat ulang halaman",
-      "error-title": "Ruang kerja tidak tersedia",
-      "workspace": "Ruang kerja"
     },
     "help": {
       "aria-label": "Bantuan",
@@ -13429,6 +13452,7 @@
       "tv-alert": "Tekan Esc untuk keluar dari mode kios"
     },
     "megamenu": {
+      "click-to-dock": "",
       "close": "Tutup menu",
       "customise": "Sesuaikan navigasi",
       "customise-cancel": "Batalkan",
@@ -13581,8 +13605,10 @@
       "drag-handle": "Seret untuk menyusun ulang",
       "duplicate": "Duplikasikan blok",
       "frame": {
-        "aria-label-collapsed": "Blok yang diciutkan: {{name}}",
-        "aria-label-panel": "Blok visualisasi: {{name}}"
+        "aria-label-collapsed-titled": "",
+        "aria-label-collapsed-untitled": "",
+        "aria-label-panel-titled": "",
+        "aria-label-panel-untitled": ""
       },
       "markdown": {
         "aria-label-editor": "Markdown",
@@ -13670,7 +13696,7 @@
       "submit": "Tambahkan ke notebook",
       "success": "Panel ditambahkan ke {{title}}",
       "success-cells": "Ditambahkan ke {{title}}",
-      "success-link": "Lihat notebook",
+      "success-open-link": "",
       "tag-placeholder": "Filter menurut tag",
       "target-description": "Pilih tempat untuk menambahkan panel.",
       "target-existing": "Notebook yang ada",
@@ -13841,7 +13867,8 @@
       "swatch-placeholder-aria-label": "Pilih warna, {{placeholder}}"
     },
     "field-color": {
-      "color-by-label": "Seri warna berdasarkan"
+      "color-by-label": "Seri warna berdasarkan",
+      "reverse-label": ""
     },
     "number-input": {
       "error-out-of-range": "Di luar rentang. {{range}}",
@@ -15458,6 +15485,8 @@
       "header-title": "Judul",
       "header-type": "Jenis",
       "missing-folder-metadata": "File metadata folder tidak ada",
+      "resource-filter-aria-label": "",
+      "resource-filter-placeholder": "",
       "search-placeholder": "Cari berdasarkan jalur atau judul",
       "source": "Sumber",
       "status-filter-aria-label": "Filter menurut status",
