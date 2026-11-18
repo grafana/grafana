@@ -3,6 +3,7 @@ import { useAsync } from 'react-use';
 
 import {
   type DataSourceInstanceSettings,
+  type ScopedVars,
   type SelectableValue,
   type TimeRange,
   type VariableRegexApplyTo,
@@ -32,6 +33,7 @@ type VariableQueryType = QueryVariable['state']['query'];
 
 interface QueryVariableEditorFormProps {
   datasource?: DataSourceRef;
+  scopedVars?: ScopedVars;
   onDataSourceChange: (dsSettings: DataSourceInstanceSettings, preserveQuery?: boolean) => void;
   query: VariableQueryType;
   onQueryChange: (query: VariableQueryType) => void;
@@ -62,6 +64,7 @@ interface QueryVariableEditorFormProps {
 
 export function QueryVariableEditorForm({
   datasource: datasourceRef,
+  scopedVars,
   onDataSourceChange,
   query,
   onQueryChange,
@@ -90,7 +93,7 @@ export function QueryVariableEditorForm({
   options,
 }: QueryVariableEditorFormProps) {
   const { value: dsConfig } = useAsync(async () => {
-    const datasource = await getDataSourceInstance(datasourceRef ?? '');
+    const datasource = await getDataSourceInstance(datasourceRef ?? '', scopedVars);
     const VariableQueryEditor = await getVariableQueryEditor(datasource);
     const defaultQuery = datasource?.variables?.getDefaultQuery?.();
 
@@ -102,17 +105,20 @@ export function QueryVariableEditorForm({
 
     // update data source if it is not defined in variable model
     if (!datasourceRef) {
-      const instanceSettings = await getDataSourceInstanceSettings({
-        type: datasource.type,
-        uid: datasource.uid,
-      });
+      const instanceSettings = await getDataSourceInstanceSettings(
+        {
+          type: datasource.type,
+          uid: datasource.uid,
+        },
+        scopedVars
+      );
       if (instanceSettings) {
         onDataSourceChange(instanceSettings, true);
       }
     }
 
     return { datasource, VariableQueryEditor };
-  }, [datasourceRef]);
+  }, [datasourceRef, scopedVars]);
 
   // adjusting type miss match between DataSourcePicker onChange and onDataSourceChange
   const datasourceChangeHandler = useCallback(
@@ -134,7 +140,13 @@ export function QueryVariableEditorForm({
           label={t('dashboard-scene.query-variable-editor-form.label-data-source', 'Data source')}
           htmlFor="data-source-picker"
         >
-          <DataSourcePicker current={datasourceRef} onChange={datasourceChangeHandler} variables={true} width={30} />
+          <DataSourcePicker
+            current={datasourceRef}
+            onChange={datasourceChangeHandler}
+            variables={true}
+            width={30}
+            scopedVars={scopedVars}
+          />
         </Field>
 
         {datasource && VariableQueryEditor && (

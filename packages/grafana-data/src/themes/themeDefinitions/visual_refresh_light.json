@@ -194,6 +194,10 @@
       "link": "palette.blue700",
       "invalid": "palette.red700"
     },
+    "navmenu": {
+      "activeItemBackground": "palette.orange50",
+      "activeItemText": "palette.orange700"
+    },
     "tag": {
       "colors": [
         { "background": "palette.red50", "text": "palette.red800" },
