@@ -401,6 +401,26 @@ func TestDashboardPreferencesStorageHidesWatchAndDeleteCollection(t *testing.T) 
 	require.NotImplements(t, (*rest.CollectionDeleter)(nil), store)
 }
 
+func TestIsNotFoundForObject(t *testing.T) {
+	gr := folders.FolderResourceInfo.GroupResource()
+
+	tests := []struct {
+		name string
+		err  error
+		want bool
+	}{
+		{name: "a folder", err: apierrors.NewNotFound(gr, "f1"), want: true},
+		{name: "another folder", err: apierrors.NewNotFound(gr, "f2")},
+		{name: "dashboard preferences of the same name", err: apierrors.NewNotFound(dashv2beta1.DashboardPreferencesResourceInfo.GroupResource(), "f1")},
+		{name: "a NotFound without details", err: &apierrors.StatusError{ErrStatus: metav1.Status{Reason: metav1.StatusReasonNotFound}}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.want, isNotFoundForObject(tt.err, gr, "f1"))
+		})
+	}
+}
+
 func TestDashboardPreferencesStorageList(t *testing.T) {
 	ctx := k8srequest.WithNamespace(context.Background(), "stacks-1")
 	gvk := dashv2beta1.DashboardPreferencesResourceInfo.GroupVersionKind()

@@ -121,17 +121,23 @@ func dashboardPreferencesResetErrors(reset []dashv2beta1.DashboardPreferencesRes
 }
 
 func isDashboardPreferencesFieldSet(spec any, path string) bool {
+	_, ok := dashboardPreferencesFieldValue(spec, path)
+	return ok
+}
+
+// dashboardPreferencesFieldValue returns the value at path in an encoded spec, in which an unset field is absent.
+func dashboardPreferencesFieldValue(spec any, path string) (any, bool) {
 	value := spec
 	for key := range strings.SplitSeq(path, ".") {
 		obj, ok := value.(map[string]any)
 		if !ok {
-			return false
+			return nil, false
 		}
 		if value, ok = obj[key]; !ok {
-			return false
+			return nil, false
 		}
 	}
-	return true
+	return value, true
 }
 
 func dashboardPreferencesSchemaErrorToField(err error) *field.Error {
