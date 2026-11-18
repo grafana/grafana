@@ -2138,6 +2138,50 @@ func TestService_Check(t *testing.T) {
 			expected: false,
 		},
 		{
+			name: "should allow named dashboardtemplates get with unscoped dashboardtemplates:read",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "dashboardtemplates.grafana.app",
+				Resource:  "dashboardtemplates",
+				Verb:      "get",
+				Name:      "tpl1",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "dashboardtemplates:read", Scope: ""},
+			},
+			expected: true,
+		},
+		{
+			name: "should allow named dashboardtemplates delete with unscoped dashboardtemplates:write",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "dashboardtemplates.grafana.app",
+				Resource:  "dashboardtemplates",
+				Verb:      "delete",
+				Name:      "tpl1",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "dashboardtemplates:write", Scope: ""},
+			},
+			expected: true,
+		},
+		{
+			name: "should deny dashboardtemplates create with only dashboardtemplates:read",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "dashboardtemplates.grafana.app",
+				Resource:  "dashboardtemplates",
+				Verb:      "create",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "dashboardtemplates:read", Scope: ""},
+			},
+			expected: false,
+		},
+		{
 			name: "should allow datasources update via datasources:edit action set scoped to uid",
 			req: &authzv1.CheckRequest{
 				Namespace: "org-12",

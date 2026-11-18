@@ -2775,6 +2775,20 @@
     },
     {
       "metadata": {
+        "name": "folder.pendingDeletionWrites",
+        "resourceVersion": "1794428269469",
+        "creationTimestamp": "2026-11-11T20:17:49Z"
+      },
+      "spec": {
+        "description": "Record durable pending folder deletions before sending folder deletes to storage",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-search-and-storage",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "folderPickerCreatePermission",
         "resourceVersion": "1793306194106",
         "creationTimestamp": "2026-10-14T22:15:23Z",
@@ -3377,6 +3391,21 @@
     },
     {
       "metadata": {
+        "name": "grafana.logsInfiniteScrollTop",
+        "resourceVersion": "1794950185352",
+        "creationTimestamp": "2026-11-17T21:16:25Z"
+      },
+      "spec": {
+        "description": "Enable infinite scroll for logs when scrolling top",
+        "stage": "preview",
+        "codeowner": "@grafana/observability-logs",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.megaMenuPeekAndDock",
         "resourceVersion": "1794924578516",
         "creationTimestamp": "2026-11-17T10:20:15Z",
@@ -3479,6 +3508,23 @@
         "codeowner": "@grafana/identity-access-team",
         "frontend": true,
         "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.navigationAdminSubNav",
+        "resourceVersion": "1793749728452",
+        "creationTimestamp": "2026-10-28T21:50:37Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-03 23:48:48.452052 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Shows Administration as a single row in the mega menu, with its destinations in the section nav",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "frontend": true,
         "expression": "false"
       }
     },

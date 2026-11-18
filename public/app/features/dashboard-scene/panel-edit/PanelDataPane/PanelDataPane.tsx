@@ -45,7 +45,7 @@ export class PanelDataPane extends SceneObjectBase<PanelDataPaneState> {
   protected _urlSync = new SceneObjectUrlSyncConfig(this, { keys: ['tab'] });
 
   public onChangeTab = (tab: PanelDataPaneTab) => {
-    trackSidebarViewChange(tab.tabId, { silent: true });
+    trackSidebarViewChange(tab.tabId, { editor: 'classic' });
     this.setState({ tab: tab.tabId });
   };
 
