@@ -1,53 +1,56 @@
 import { API_GROUP as DASHBOARD_API_GROUP } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
+import { API_GROUP as FOLDER_API_GROUP } from '@grafana/api-clients/rtkq/folder/v1beta1';
+import { API_GROUP as PLAYLIST_API_GROUP } from '@grafana/api-clients/rtkq/playlist/v1';
 import { API_GROUP as PROVISIONING_API_GROUP } from '@grafana/api-clients/rtkq/provisioning/v0alpha1';
 import { t } from '@grafana/i18n';
-import kbn from 'app/core/utils/kbn';
-import { CONNECTIONS_URL, PROVISIONING_URL } from 'app/features/provisioning/constants';
 
-import { GENERATED_KINDS } from './coreKinds.gen';
-import { type KindInfo } from './types';
+import { CONNECTIONS_ROUTE, PROVISIONING_ROUTE } from './routes';
+import { type CollectionKindInfo, type KindInfo } from './types';
+
+// Every page path is built here, so the object name is encoded in one place
+function page(base: string, suffix = '') {
+  return (name: string) => `${base}/${encodeURIComponent(name)}${suffix}`;
+}
 
 /**
  * Kinds Grafana serves itself, each described once: what it is called, which icon it gets and where
  * its pages are, so that every list of mixed kinds shows a kind the same way.
- *
- * A kind's API group, Kind and resource come from the app manifests compiled into this build
- * (`coreKinds.gen.ts`), where the manifest declares the kind. Only presentation lives here.
  *
  * The plural labels keep the translation keys they had before this table existed: a renamed key
  * would show untranslated until it is translated again.
  */
 export const CORE_KINDS = {
   folder: {
-    ...GENERATED_KINDS.folder.Folder,
+    group: FOLDER_API_GROUP,
+    kind: 'Folder',
+    resource: 'folders',
     pluralLabel: () => t('provisioning.resource-kind.folders', 'Folders'),
     icon: 'folder',
-    getRoute: (name: string) => `/dashboards/f/${encodeURIComponent(name)}`,
+    getRoute: page('/dashboards/f'),
     listRoute: '/dashboards',
   },
   dashboard: {
-    ...GENERATED_KINDS.dashboard.Dashboard,
+    group: DASHBOARD_API_GROUP,
+    kind: 'Dashboard',
+    resource: 'dashboards',
     pluralLabel: () => t('provisioning.resource-kind.dashboards', 'Dashboards'),
     icon: 'apps',
-    // The page path is /d/:uid/:slug?, so the title that makes the slug is optional too
-    getRoute: (name: string, title?: string) => {
-      const path = `/d/${encodeURIComponent(name)}`;
-      return title === undefined ? path : `${path}/${kbn.slugifyForUrl(title)}`;
-    },
+    getRoute: page('/d'),
     listRoute: '/dashboards',
   },
   playlist: {
-    ...GENERATED_KINDS.playlist.Playlist,
+    group: PLAYLIST_API_GROUP,
+    kind: 'Playlist',
+    resource: 'playlists',
     pluralLabel: () => t('provisioning.resource-kind.playlists', 'Playlists'),
     icon: 'presentation-play',
     // The edit page, not /playlists/play, which starts the fullscreen slideshow at once
-    getRoute: (name: string) => `/playlists/edit/${encodeURIComponent(name)}`,
+    getRoute: page('/playlists/edit'),
     listRoute: '/playlists',
   },
-  // No `getRoute`: a library panel has no page of its own, only its row on the collection page.
-  // Library panels are served from the dashboards group but are not a manifest kind, so this
-  // identity is still written here.
+  // No `getRoute`: a library panel has no page of its own, only its row on the collection page
   librarypanel: {
+    // Served from the dashboards group, under its own plural
     group: DASHBOARD_API_GROUP,
     kind: 'LibraryPanel',
     resource: 'librarypanels',
@@ -55,15 +58,14 @@ export const CORE_KINDS = {
     icon: 'library-panel',
     listRoute: '/library-panels',
   },
-  // The provisioning app's manifest declares no kinds yet, so these two stay written here.
   repository: {
     group: PROVISIONING_API_GROUP,
     kind: 'Repository',
     resource: 'repositories',
     pluralLabel: () => t('provisioning.resource-kind.repositories', 'Repositories'),
     icon: 'code-branch',
-    getRoute: (name: string) => `${PROVISIONING_URL}/${encodeURIComponent(name)}`,
-    listRoute: PROVISIONING_URL,
+    getRoute: page(PROVISIONING_ROUTE),
+    listRoute: PROVISIONING_ROUTE,
   },
   connection: {
     group: PROVISIONING_API_GROUP,
@@ -71,19 +73,17 @@ export const CORE_KINDS = {
     resource: 'connections',
     pluralLabel: () => t('provisioning.resource-kind.connections', 'Connections'),
     icon: 'plug',
-    getRoute: (name: string) => `${CONNECTIONS_URL}/${encodeURIComponent(name)}/edit`,
-    listRoute: CONNECTIONS_URL,
+    getRoute: page(CONNECTIONS_ROUTE, '/edit'),
+    listRoute: CONNECTIONS_ROUTE,
   },
   datasource: {
-    // Not a served group but the storage collection the group of every data source plugin is
-    // stored in: each plugin serves its own `{plugin}.datasource.grafana.app`
-    group: 'datasource.grafana.app',
-    collectionGroup: true,
+    // Each data source plugin serves its own `{plugin}.datasource.grafana.app`
+    collection: 'datasource.grafana.app',
     kind: 'DataSource',
     resource: 'datasources',
     pluralLabel: () => t('provisioning.resource-kind.datasources', 'Data sources'),
     icon: 'database',
-    getRoute: (name: string) => `/connections/datasources/edit/${encodeURIComponent(name)}`,
+    getRoute: page('/connections/datasources/edit'),
     listRoute: '/connections/datasources',
   },
-} as const satisfies Record<string, KindInfo>;
+} as const satisfies Record<string, KindInfo | CollectionKindInfo>;

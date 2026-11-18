@@ -5,16 +5,8 @@ import { type IconName } from '@grafana/data';
  * kind, such as how to list or search it, spreads the kind's row into an entry of its own.
  */
 export interface KindInfo {
-  /** API group, e.g. `dashboard.grafana.app`. A collection of served groups when `collectionGroup` is set. */
+  /** API group that serves the kind, e.g. `dashboard.grafana.app`. */
   group: string;
-  /**
-   * Whether `group` names a storage collection served by one API group per member rather than a
-   * served group itself. Data sources are the case: each plugin serves
-   * `{plugin}.datasource.grafana.app`. Such a kind covers any group inside the collection, and is
-   * reported to the user as the collection — the plugin that served a resource is not what the
-   * kind is called.
-   */
-  collectionGroup?: boolean;
   /** Kubernetes kind, e.g. `Dashboard`. */
   kind: string;
   /** Plural resource name in API paths, e.g. `dashboards`. */
@@ -32,9 +24,10 @@ export interface KindInfo {
 }
 
 /**
- * Whether `group` identifies this kind. A collection kind also covers the groups served inside the
- * collection, which is what the backend reports for an individual resource and for a job result.
+ * A kind that no API group of its own serves: each member of `collection` serves it under
+ * `{member}.{collection}`. Data sources are the case, with one group per plugin.
  */
-export function coversGroup(kind: KindInfo, group: string): boolean {
-  return kind.group === group || (Boolean(kind.collectionGroup) && group.endsWith(`.${kind.group}`));
+export interface CollectionKindInfo extends Omit<KindInfo, 'group'> {
+  /** What the groups serving the kind end in, e.g. `datasource.grafana.app`. Not a served group itself. */
+  collection: string;
 }

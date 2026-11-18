@@ -18,6 +18,7 @@ import { generatedAPI, type ListStarsApiResponse } from 'app/api/clients/collect
 import { getAPIBaseURL } from 'app/api/utils';
 import { type TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { CORE_KINDS } from 'app/core/kinds/coreKinds';
+import kbn from 'app/core/utils/kbn';
 import { STARRED_KINDS } from 'app/features/stars/kinds';
 import { canUseStars, findStarredNames, userStarsFieldSelector } from 'app/features/stars/utils';
 import { dispatch } from 'app/store/store';
@@ -442,17 +443,13 @@ export function toDashboardResults(rsp: SearchAPIResponse, sort: string): DataFr
     const isRoot = hit.resource === 'dashboards' && isRootFolderUID(hit.folder);
     const location = isRoot ? 'general' : hit.folder;
     const folder = isRoot ? 'general' : hit.folder || 'general';
-    const route =
-      hit.resource === 'folders'
-        ? CORE_KINDS.folder.getRoute(hit.name)
-        : CORE_KINDS.dashboard.getRoute(hit.name, hit.title);
 
     const field = Object.fromEntries(Array.from(fieldNames, (name) => [name, hit.field?.[name] ?? null]));
 
     return {
       ...hit,
       uid: hit.name,
-      url: `${config.appSubUrl}${route}`,
+      url: toURL(hit.resource, hit.name, hit.title),
       // Sort tags so we aren't reliant on the backend having done this for us
       // Sorting order can be different between APIs/search implementations
       tags: (hit.tags || []).sort(),
@@ -510,10 +507,18 @@ async function loadLocationInfo(): Promise<Record<string, LocationInfo>> {
         locationInfo[hit.name] = {
           name: hit.title,
           kind: 'folder',
-          url: `${config.appSubUrl}${CORE_KINDS.folder.getRoute(hit.name)}`,
+          url: toURL('folders', hit.name, hit.title),
         };
       }
       return locationInfo;
     });
   return rsp;
+}
+
+export function toURL(resource: string, name: string, title: string): string {
+  const route =
+    resource === CORE_KINDS.folder.resource
+      ? CORE_KINDS.folder.getRoute(name)
+      : `${CORE_KINDS.dashboard.getRoute(name)}/${kbn.slugifyForUrl(title)}`;
+  return `${config.appSubUrl}${route}`;
 }
