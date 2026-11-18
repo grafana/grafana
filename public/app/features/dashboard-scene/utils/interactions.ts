@@ -229,8 +229,9 @@ export const DashboardInteractions = {
   },
 
   // Dashboard edit item actions
-  // dashboards_edit_action_clicked: when user adds or removes an item in edit mode
-  // props: { item: string } - item is one of: add_panel, group_row, group_tab, ungroup, paste_panel, remove_row, remove_tab
+  // dashboards_edit_action_clicked: when user adds, removes or changes an item in edit mode
+  // props: { item: string } - item is one of: add_panel, group_row, group_tab, ungroup, paste_panel, remove_row, remove_tab,
+  // or a PanelSettingItem
   trackAddPanelClick(
     source: 'sidebar' | 'canvas' = 'canvas',
     target?: 'row' | 'tab' | 'dashboard',
@@ -263,6 +264,15 @@ export const DashboardInteractions = {
     source: 'edit_pane' | 'edit_popover'
   ) {
     reportDashboardInteraction('edit_action_clicked', { item: `${action}_${elementType}`, source });
+  },
+  // A panel setting was changed. Never add the setting's value here: titles, descriptions and links are typed by users.
+  panelSettingChanged(properties: {
+    item: PanelSettingItem;
+    source: PanelSettingSource;
+    panel_type: string;
+    panel_id: number;
+  }) {
+    reportDashboardInteraction('edit_action_clicked', properties);
   },
   panelLinkClicked: (properties?: Record<string, unknown>) => {
     reportDashboardInteraction('panelheader_datalink_clicked', properties);
@@ -523,6 +533,22 @@ export const DashboardInteractions = {
 };
 
 export type AutoLayoutScope = 'dashboard' | 'row' | 'tab';
+
+export type PanelSettingItem =
+  | 'change_panel_title'
+  | 'change_panel_description'
+  | 'toggle_panel_subtitle'
+  | 'change_panel_background'
+  | 'change_panel_repeat'
+  | 'change_panel_repeat_direction'
+  | 'change_panel_max_per_row'
+  | 'add_panel_link'
+  | 'remove_panel_link'
+  | 'edit_panel_link'
+  | 'reorder_panel_links';
+
+// genai: a title generated with the AI button in the panel editor.
+export type PanelSettingSource = 'edit_pane' | 'panel_editor' | 'outline' | 'genai';
 
 const reportDashboardInteraction = (
   name: string,
