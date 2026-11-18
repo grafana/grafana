@@ -717,11 +717,11 @@ function buildKeymap(): readonly KeyBinding[] {
 
 export interface MarkdownLivePreview {
   /**
-   * Pass as CodeMirrorEditor's dedicated `theme` prop, not layered into `extensions` — see the
+   * Pass as InternalCodeMirrorEditor's dedicated `theme` prop, not layered into `extensions` — see the
    * comment inside buildEditorStyles for why a layered theme can't reliably win against the default.
    */
   theme: Extension;
-  /** Pass as CodeMirrorEditor's `extensions` prop, alongside anything else (e.g. a focus request). */
+  /** Pass as InternalCodeMirrorEditor's `extensions` prop, alongside anything else (e.g. a focus request). */
   extensions: Extension;
 }
 
