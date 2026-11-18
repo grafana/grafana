@@ -246,7 +246,10 @@ export function PanelDescriptionTextArea({ panel, id }: { panel: VizPanel; id?: 
         }
       },
     });
-    trackPanelSettingChange(panel, 'toggle_panel_subtitle');
+    // With no text to move, the toggle changes nothing.
+    if (description || subtitle) {
+      trackPanelSettingChange(panel, 'toggle_panel_subtitle');
+    }
   };
 
   const label = (
