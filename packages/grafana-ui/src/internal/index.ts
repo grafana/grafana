@@ -131,3 +131,8 @@ export { DRAWER_INSIDE_ATTRIBUTE } from '../components/Drawer/Drawer';
 
 // Core-only: lets Grafana core build CodeMirror editors on the same setup as @grafana/ui.
 export { loadCodeMirrorSetup } from '../components/CodeMirror/loadCodeMirrorSetup';
+export { TimePickerContent } from '../components/DateTimePickers/TimeRangePicker/TimePickerContent';
+export {
+  TimePickerContentTabs,
+  type TimePickerContentTabsProps,
+} from '../components/DateTimePickers/TimeRangePicker/TimePickerContentTabs';

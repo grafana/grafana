@@ -17604,6 +17604,18 @@
   },
   "theme-playground": {
     "label-base-theme": "Base theme",
+    "time-picker": {
+      "change-calendar": "The calendar opens inside the picker instead of in a modal, replacing the inputs and buttons and keeping only Cancel and Apply.",
+      "change-layout": "The calendar has a rounded border, the From and To inputs fill the container width and the Apply button is aligned to the right.",
+      "change-recent": "The \"Recently used absolute ranges\" list is removed from the Absolute tab.",
+      "change-search": "The quick range search is only on the Relative tab, with the placeholder \"Type quick ranges e.g. 3h\".",
+      "change-tabs": "Relative and Absolute are tabs instead of a collapsible \"Absolute time range\" section, with Relative open by default.",
+      "changes-title": "Main changes in the proposal",
+      "current": "Current: collapsible section",
+      "description": "The time picker below is forced into its narrow, single-column layout regardless of the real viewport width.",
+      "tabs": "Proposed: Absolute / Relative tabs",
+      "title": "Time picker (responsive)"
+    },
     "title": "Theme playground"
   },
   "theme-preview": {
@@ -17673,6 +17685,11 @@
       "to": "to",
       "zoom-out-button": "Zoom out time range",
       "zoom-out-tooltip-new": "Time range zoom out <br/> t -"
+    },
+    "tabs": {
+      "absolute": "Absolute",
+      "filter-placeholder": "Type quick ranges e.g. 3h",
+      "relative": "Relative"
     },
     "time-range": {
       "apply": "Apply time range",
