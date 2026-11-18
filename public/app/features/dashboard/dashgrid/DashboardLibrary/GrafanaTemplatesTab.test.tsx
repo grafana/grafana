@@ -86,7 +86,7 @@ describe('GrafanaTemplatesTab', () => {
         contextItem: expect.objectContaining({
           type: 'structured',
           hidden: false,
-          title: 'Dashboard Template: RED metrics',
+          title: 'RED metrics',
           data: expect.objectContaining({ templateName: 'RED metrics' }),
         }),
       });

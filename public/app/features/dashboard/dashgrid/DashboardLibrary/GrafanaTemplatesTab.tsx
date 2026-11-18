@@ -23,7 +23,7 @@ import {
 } from './constants';
 import { TemplateDashboardInteractions } from './interactions';
 import { type GnetDashboard, type GnetDashboardsResponse, type Link, type TemplateSelectionProps } from './types';
-import { buildTemplateContextData, buildTemplateContextTitle } from './utils/assistantHelpers';
+import { buildTemplateContextData } from './utils/assistantHelpers';
 import { getTemplateDashboardUrl } from './utils/templateDashboardHelpers';
 
 interface GrafanaTemplatesTabProps extends TemplateSelectionProps {
@@ -128,7 +128,8 @@ export const GrafanaTemplatesTab = ({
       kind: 'template_dashboard',
       contextItem: createAssistantContextItem('structured', {
         hidden: false,
-        title: buildTemplateContextTitle(dashboard, 'template_dashboard'),
+        // The prompt pill is narrow: a "Dashboard Template:" prefix leaves no room for the name.
+        title: dashboard.name,
         data: buildTemplateContextData(dashboard, 'template_dashboard'),
       }),
     });
