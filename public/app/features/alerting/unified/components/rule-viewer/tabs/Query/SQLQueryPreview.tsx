@@ -1,5 +1,5 @@
 import { t } from '@grafana/i18n';
-import { CodeMirrorEditor } from '@grafana/ui/unstable';
+import { CodeMirrorEditor } from '@grafana/ui';
 import { type AlertDataQuery } from 'app/types/unified-alerting-dto';
 
 interface Props {

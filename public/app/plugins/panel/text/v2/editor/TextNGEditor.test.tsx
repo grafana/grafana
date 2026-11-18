@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { type InterpolateFunction, toDataFrame, VariableOrigin } from '@grafana/data';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { setTestFlags } from '@grafana/test-utils/unstable';
-import { type CodeMirrorEditorProps } from '@grafana/ui/unstable';
+import { type CodeMirrorEditorProps } from '@grafana/ui';
 import config from 'app/core/config';
 
 import { CodeLanguage, RenderMode, TextMode } from '../../panelcfg.gen';
@@ -31,8 +31,8 @@ afterAll(() => {
 // The real CodeMirrorEditor pulls in a heavy, lazily-loaded CodeMirror bundle;
 // stub it with a plain textarea so these tests stay fast and deterministic.
 let mockEditorProps: CodeMirrorEditorProps | undefined;
-jest.mock('@grafana/ui/unstable', () => ({
-  ...jest.requireActual('@grafana/ui/unstable'),
+jest.mock('@grafana/ui', () => ({
+  ...jest.requireActual('@grafana/ui'),
   __esModule: true,
   CodeMirrorEditor: (props: CodeMirrorEditorProps) => {
     mockEditorProps = props;

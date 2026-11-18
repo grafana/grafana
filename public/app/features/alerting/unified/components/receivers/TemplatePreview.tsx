@@ -7,8 +7,7 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { type TemplateGroupTemplateKind } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Box, Button, useStyles2 } from '@grafana/ui';
-import { CodeMirrorEditor } from '@grafana/ui/unstable';
+import { Alert, Box, Button, CodeMirrorEditor, useStyles2 } from '@grafana/ui';
 
 import {
   type TemplatePreviewErrors,

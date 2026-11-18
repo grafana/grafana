@@ -21,8 +21,8 @@ import {
   ClipboardButton,
   Stack,
   TextLink,
+  CodeMirrorEditor,
 } from '@grafana/ui';
-import { CodeMirrorEditor } from '@grafana/ui/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 

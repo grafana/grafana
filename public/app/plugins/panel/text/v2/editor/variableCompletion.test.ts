@@ -5,7 +5,7 @@ import { act, render, screen } from '@testing-library/react';
 import { createElement } from 'react';
 
 import { VariableOrigin, type VariableSuggestion } from '@grafana/data';
-import { CodeMirrorEditor } from '@grafana/ui/unstable';
+import { CodeMirrorEditor } from '@grafana/ui';
 
 import { reducerCompletion, variableCompletionOptions } from './variableCompletion';
 

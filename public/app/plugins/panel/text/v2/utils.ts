@@ -1,6 +1,6 @@
 import { renderTextPanelMarkdown, textUtil, type DataFrame } from '@grafana/data';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
-import { type CodeMirrorEditorLanguage, type CodeMirrorThemeOverrides } from '@grafana/ui/unstable';
+import { type CodeMirrorEditorLanguage, type CodeMirrorThemeOverrides } from '@grafana/ui';
 
 import { CodeLanguage, TextMode } from '../panelcfg.gen';
 

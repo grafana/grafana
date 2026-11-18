@@ -2,8 +2,7 @@ import { css } from '@emotion/css';
 import { useCallback, useMemo, type ReactNode } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { useStyles2 } from '@grafana/ui';
-import { CodeMirrorEditor, type CodeMirrorSqlDialect } from '@grafana/ui/unstable';
+import { useStyles2, CodeMirrorEditor, type CodeMirrorSqlDialect } from '@grafana/ui';
 
 import { SQL_EXPRESSIONS_DIALECT } from '../../../utils/sqlIdentifier';
 

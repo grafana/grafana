@@ -40,8 +40,8 @@ afterAll(() => {
 });
 
 // Stub the lazy CodeMirror bundle used by the inline editor and the read-only code view.
-jest.mock('@grafana/ui/unstable', () => ({
-  ...jest.requireActual('@grafana/ui/unstable'),
+jest.mock('@grafana/ui', () => ({
+  ...jest.requireActual('@grafana/ui'),
   CodeMirrorEditor: ({
     value,
     basicSetup,

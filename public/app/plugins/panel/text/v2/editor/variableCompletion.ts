@@ -2,7 +2,7 @@ import {
   type CodeMirrorCompletionContext,
   type CodeMirrorCompletionResult,
   type VariableCompletionOptions,
-} from '@grafana/ui/unstable';
+} from '@grafana/ui';
 
 import { getMacroReducers } from '../reducerMacros';
 
