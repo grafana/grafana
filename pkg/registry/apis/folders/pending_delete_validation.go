@@ -47,6 +47,9 @@ func validatePendingDeletion(a admission.Attributes) error {
 			errs = append(errs, field.Invalid(spec.Child("deletionTimestamp"), p.Spec.DeletionTimestamp, "captured deletionTimestamp is immutable"))
 		}
 	}
+	if p.Spec.FolderName != "" && p.Spec.FolderUID != "" && p.Name != foldersv1alpha1.PendingDeletionName(p.Spec.FolderName, p.Spec.FolderUID) {
+		errs = append(errs, field.Invalid(field.NewPath("metadata", "name"), p.Name, "must equal spec.folderName + \"-\" + spec.folderUID"))
+	}
 	if len(errs) > 0 {
 		return apierrors.NewInvalid(foldersv1alpha1.PendingFolderDeletionResourceInfo.GroupVersionKind().GroupKind(), p.Name, errs)
 	}

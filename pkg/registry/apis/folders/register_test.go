@@ -3,9 +3,14 @@ package folders
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
+	restful "github.com/emicklei/go-restful/v3"
+
 	apiserverbuilder "github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/apiserver/keysroutes"
 	"github.com/grafana/grafana/pkg/services/apiserver/restoptions"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -19,6 +24,7 @@ import (
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	genericapiserver "k8s.io/apiserver/pkg/server"
+	serverstorage "k8s.io/apiserver/pkg/server/storage"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 	dynamicfake "k8s.io/client-go/dynamic/fake"
 
@@ -26,10 +32,12 @@ import (
 	authtypes "github.com/grafana/authlib/types"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	pending "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1alpha1"
+	foldersv1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission/rpclient"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -79,6 +87,64 @@ func TestFolderAPIBuilder_PendingDeletionStorage(t *testing.T) {
 				require.Contains(t, info.VersionedResourcesStorageMap[version], "folders")
 				require.NotContains(t, info.VersionedResourcesStorageMap[version], "pendingfolderdeletions")
 			}
+			t.Run("served versions", func(t *testing.T) {
+				want := []schema.GroupVersion{folders.SchemeGroupVersion, foldersv1beta1.SchemeGroupVersion}
+				if enabled {
+					want = append(want, pending.SchemeGroupVersion)
+				}
+				require.Equal(t, want, b.GetGroupVersions())
+				served := apiserverbuilder.ServedGroupVersions([]apiserverbuilder.APIGroupBuilder{b}, nil)
+				require.Len(t, served, len(want))
+				for _, gv := range want {
+					require.True(t, served[gv])
+				}
+			})
+			t.Run("mounted keys routes", func(t *testing.T) {
+				store := resource.NewMockResourceClient(t)
+				var listed []*resourcepb.ListRequest
+				store.On("List", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+					listed = append(listed, args.Get(1).(*resourcepb.ListRequest))
+				}).Return(&resourcepb.ListResponse{ResourceVersion: 1}, nil)
+				routes := keysroutes.Build(true, tracing.NewNoopTracerService(), store, []apiserverbuilder.APIGroupBuilder{b}, nil)
+				container := restful.NewContainer()
+				container.Router(restful.CurlyRouter{})
+				config := serverstorage.NewResourceConfig()
+				config.EnableVersions(folders.SchemeGroupVersion, foldersv1beta1.SchemeGroupVersion, pending.SchemeGroupVersion)
+				require.NoError(t, apiserverbuilder.AugmentWebServicesWithCustomRoutes(container, nil, nil, config, routes...))
+				for _, target := range []struct {
+					version, resource string
+					available         bool
+				}{
+					{"v1", "folders", true},
+					{"v1beta1", "folders", true},
+					{"v1alpha1", "pendingfolderdeletions", enabled},
+				} {
+					for _, namespace := range []string{"", "default"} {
+						path := "/apis/folder.grafana.app/" + target.version + "/"
+						if namespace != "" {
+							path += "namespaces/" + namespace + "/"
+						}
+						path += target.resource + "/list-keys"
+						req := httptest.NewRequest(http.MethodPost, path, nil)
+						req = req.WithContext(identity.WithServiceIdentityContext(req.Context(), 1))
+						rec := httptest.NewRecorder()
+						before := len(listed)
+						container.ServeHTTP(rec, req)
+						if !target.available {
+							require.Equal(t, http.StatusNotFound, rec.Code, path)
+							require.Len(t, listed, before, "unavailable routes must not reach unified storage")
+							continue
+						}
+						require.Equal(t, http.StatusOK, rec.Code, "%s: %s", path, rec.Body.String())
+						require.Len(t, listed, before+1)
+						require.True(t, listed[before].KeysOnly)
+						key := listed[before].Options.Key
+						require.Equal(t, folders.GROUP, key.Group)
+						require.Equal(t, target.resource, key.Resource)
+						require.Equal(t, namespace, key.Namespace)
+					}
+				}
+			})
 		})
 	}
 }
@@ -115,11 +181,13 @@ func TestFolderAPIBuilder_PendingDeletionAuthorization(t *testing.T) {
 
 func TestFolderAPIBuilder_PendingDeletionAdmission(t *testing.T) {
 	builder := &FolderAPIBuilder{}
-	valid := &pending.PendingFolderDeletion{ObjectMeta: metav1.ObjectMeta{Name: "reports-uid-a", Namespace: "default"},
+	valid := &pending.PendingFolderDeletion{ObjectMeta: metav1.ObjectMeta{Name: "reports-uid-a", Namespace: "default", UID: "pending-record-uid"},
 		Spec: pending.PendingFolderDeletionSpec{FolderName: "reports", FolderUID: "uid-a"}}
 	timestamp := "2026-11-11T12:00:00Z"
 	captured := valid.DeepCopy()
 	captured.Spec.DeletionTimestamp = &timestamp
+	wrongName := valid.DeepCopy()
+	wrongName.Name = "wrong"
 	for _, tc := range []struct {
 		name      string
 		mutate    func(*pending.PendingFolderDeletion)
@@ -127,6 +195,8 @@ func TestFolderAPIBuilder_PendingDeletionAdmission(t *testing.T) {
 		wantField string
 	}{
 		{"valid", func(*pending.PendingFolderDeletion) {}, nil, ""},
+		{"mismatched create name", func(p *pending.PendingFolderDeletion) { p.Name = "wrong" }, nil, "metadata.name"},
+		{"mismatched existing update name", func(p *pending.PendingFolderDeletion) { p.Name = "wrong" }, wrongName, "metadata.name"},
 		{"missing UID", func(p *pending.PendingFolderDeletion) { p.Spec.FolderUID = "" }, nil, "spec.folderUID"},
 		{"missing name", func(p *pending.PendingFolderDeletion) { p.Spec.FolderName = "" }, nil, "spec.folderName"},
 		{"invalid timestamp", func(p *pending.PendingFolderDeletion) { v := "bad"; p.Spec.DeletionTimestamp = &v }, nil, "spec.deletionTimestamp"},
@@ -157,6 +227,9 @@ func TestFolderAPIBuilder_PendingDeletionAdmission(t *testing.T) {
 				require.ErrorAs(t, err, &status)
 				require.EqualValues(t, 422, status.ErrStatus.Code)
 				require.Equal(t, tc.wantField, status.ErrStatus.Details.Causes[0].Field)
+				if obj.Spec.FolderName == "" || obj.Spec.FolderUID == "" {
+					require.Len(t, status.ErrStatus.Details.Causes, 1, "missing identity must not add a misleading name error")
+				}
 			} else {
 				require.NoError(t, err)
 			}

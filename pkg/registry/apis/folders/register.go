@@ -231,11 +231,14 @@ func WithPendingDeletionResourceEnabled(enabled bool) APIServiceOption {
 func (b *FolderAPIBuilder) GetGroupVersions() []schema.GroupVersion {
 	// Same pattern as dashboards: stable version first, then compatibility alias.
 	// This order feeds LegacyCodec(groupVersions...) and must match SetVersionPriority below.
-	return []schema.GroupVersion{
+	versions := []schema.GroupVersion{
 		foldersv1.FolderResourceInfo.GroupVersion(),
 		foldersv1beta1.FolderResourceInfo.GroupVersion(),
-		foldersv1alpha1.PendingFolderDeletionResourceInfo.GroupVersion(),
 	}
+	if b.pendingDeletionResourceEnabled {
+		versions = append(versions, foldersv1alpha1.PendingFolderDeletionResourceInfo.GroupVersion())
+	}
+	return versions
 }
 
 func addKnownTypes(scheme *runtime.Scheme, gv schema.GroupVersion, types ...runtime.Object) {
