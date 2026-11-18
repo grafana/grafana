@@ -15,6 +15,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/structpb"
 	"k8s.io/apimachinery/pkg/selection"
@@ -59,7 +60,7 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 	}
 	defer func() {
 		metricutil.ObserveWithExemplar(ctx,
-			s.vectorMetrics.HybridSearchDuration.WithLabelValues(group, resource, status.Code(retErr).String()),
+			s.vectorMetrics.HybridSearchDuration.WithLabelValues(group, resource, status.Code(retErr).String(), hybridSearchSource(ctx)),
 			time.Since(start).Seconds(),
 		)
 	}()
@@ -144,6 +145,30 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 		}
 	}
 	return &resourcepb.HybridSearchResponse{Results: results, Kinds: kinds}, nil
+}
+
+const hybridSearchCallerIDKey = "x-grafana-caller-id"
+
+func hybridSearchSource(ctx context.Context) string {
+	if incoming, ok := metadata.FromIncomingContext(ctx); ok {
+		if values, present := incoming[hybridSearchCallerIDKey]; present {
+			return recognizedHybridSearchSource(values)
+		}
+	}
+	if outgoing, ok := metadata.FromOutgoingContext(ctx); ok {
+		return recognizedHybridSearchSource(outgoing.Get(hybridSearchCallerIDKey))
+	}
+	return "unknown"
+}
+
+func recognizedHybridSearchSource(values []string) string {
+	if len(values) == 1 {
+		switch values[0] {
+		case "assistant", "gcx", "cmdk":
+			return values[0]
+		}
+	}
+	return "unknown"
 }
 
 func (s *searchServer) checkAllowedReadService(user types.AuthInfo, group, resource string) error {
