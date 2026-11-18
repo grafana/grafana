@@ -17,7 +17,7 @@ import {
   SceneObjectStateChangedEvent,
   SceneQueryRunner,
   sceneUtils,
-  type VizPanel,
+  VizPanel,
 } from '@grafana/scenes';
 import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
@@ -234,6 +234,16 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     this._layoutItemAdHocTransformations = collectAdHocTransformations(this._layoutItem);
   }
 
+  private refreshLibraryLayoutBaseline() {
+    const original = this._layoutItemState;
+    if (!original || !('body' in original) || !(original.body instanceof VizPanel)) {
+      return;
+    }
+    // Advance saved layout while retaining library content and its transformation baseline.
+    this._originalSaveModel = this.getSaveModel(original.body);
+    this._layoutItemState = sceneUtils.cloneSceneObjectState({ ...this._layoutItem.state, body: original.body });
+  }
+
   /**
    * Useful for testing to turn on debounce
    */
@@ -405,8 +415,9 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   };
 
   public dashboardSaved() {
-    // Saving a dashboard writes a library reference, not the library panel's content.
-    if (!getLibraryPanelBehavior(this.getPanel())) {
+    if (getLibraryPanelBehavior(this.getPanel())) {
+      this.refreshLibraryLayoutBaseline();
+    } else {
       this.setOriginalState(this.state.panelRef);
     }
     this.setState({ isDirty: this.hasUnsavedChanges() });
