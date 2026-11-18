@@ -60,14 +60,12 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `alertingNotificationHistory`                | Enables the notification history feature                                                                                            | Yes                |
 | `newClickhouseConfigPageDesign`              | Enables new design for the Clickhouse data source configuration page                                                                | Yes                |
 | `azureResourcePickerUpdates`                 | Enables the updated Azure Monitor resource picker                                                                                   | Yes                |
-| `flameGraph.tableNg`                         | Renders the flame graph's top table using TableNG instead of the legacy Table                                                       |                    |
 | `inlineLogDetailsNoScrolls`                  | Enables an inline version of Log Details that creates no new scrolls                                                                | Yes                |
 | `lokiAlignedQuerySplitting`                  | Aligns query splitting chunks with UTC midnight                                                                                     | Yes                |
 | `profilesHeatmap`                            | Enables heatmap visualization support for Pyroscope profiles                                                                        | Yes                |
 | `datasources.useNewStackInfoToSettingsCache` | Use the new cache for datasource.StackInfoToSettings, backend flag                                                                  |                    |
 | `grafana.dashboardSettingsRedesign`          | Redesigns dashboard settings page into Advanced Settings in a modal window                                                          | Yes                |
 | `grafana.thresholdsInterpolation`            | Enables using dashboard variables in panel threshold values                                                                         | Yes                |
-| `rawPrometheus.tableNg`                      | Renders the raw Prometheus query results table using TableNG instead of the legacy Table                                            |                    |
 | `grafana.dashboardAutoGridDefault`           | Uses auto grid as the default layout for new dashboards                                                                             | Yes                |
 
 ## Public preview feature toggles
