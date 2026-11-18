@@ -212,6 +212,8 @@ The tarball outputs package the target backend, production frontend, and [pinned
 
 On release builders, set `sandbox = true` and `sandbox-fallback = false` in the [Nix daemon configuration](https://nix.dev/manual/nix/latest/command-ref/conf-file#conf-sandbox). To verify the frontend, backend, and archive by rebuilding all three on a configured Linux builder, run `nix build --rebuild --no-link .#frontend .#backend-linux-amd64 .#tarball-linux-amd64`.
 
+The [Nix CI workflow](../.github/workflows/nix-build-grafana.yml) evaluates the frontend and both Linux backends in `ciJobs` on an AMD64 runner. Hestia builds cache misses in parallel, then the packaging job uses those outputs for the AMD64 and ARM64 tarballs.
+
 The target list in [flake.nix](../flake.nix) defines the available backends. Use `nix flake show` to list their package names. To run Grafana locally, extract the archive from `result/` and run `./bin/grafana server` from the extracted directory.
 
 ## Test Grafana

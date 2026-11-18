@@ -90,6 +90,13 @@
       ];
     in
     {
+      # Both Linux tarballs consume the same frontend from the AMD64 build host.
+      ciJobs = lib.getAttrs [
+        "frontend"
+        "backend-linux-amd64"
+        "backend-linux-arm64"
+      ] self.packages.x86_64-linux;
+
       packages = lib.mapAttrs (
         system: nativeTarget:
         let

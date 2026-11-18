@@ -14,8 +14,77 @@ permissions:
   actions: read # Lets Hestia detect evicted cache entries before substituting them.
 
 jobs:
+  eval:
+    name: Evaluate Nix build matrix
+    runs-on: ubuntu-x64-large
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+      any-jobs: ${{ steps.matrix.outputs.any-jobs }}
+      manifest-version: ${{ steps.matrix.outputs.manifest-version }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          filter: blob:none
+      - uses: NixOS/nix-installer-action@62c1943b776c509394b550f3f983adc14e9212d6 # v1.0.0
+        with:
+          installer-version: '2.35.4'
+          # Hestia configures a local substituter and a post-build hook.
+          trust-runner-user: 'true'
+          extra-conf: |
+            sandbox = true
+            sandbox-fallback = false
+      - uses: Mic92/hestia@dfed9ced335d28978ba74e513939a10db1f71025 # v3.1.0
+        with:
+          version: v3.1.0
+          upstream-cache-filter: 'true'
+          filter-drv-closures: 'true'
+      - name: Cache shared build inputs
+        run: nix build -L --no-link .#backend-linux-amd64.goModules
+      - id: matrix
+        uses: Mic92/hestia/matrix@dfed9ced335d28978ba74e513939a10db1f71025 # v3.1.0
+        with:
+          flake: .#ciJobs
+          nix-eval-jobs: nix run --inputs-from . nixpkgs#nix-eval-jobs --
+
   build:
-    name: Build Linux AMD64 tarball
+    needs: eval
+    if: needs.eval.outputs.any-jobs == 'true'
+    name: Build ${{ matrix.name }}
+    runs-on: ubuntu-x64-large
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.eval.outputs.matrix) }}
+    steps:
+      - uses: NixOS/nix-installer-action@62c1943b776c509394b550f3f983adc14e9212d6 # v1.0.0
+        with:
+          installer-version: '2.35.4'
+          trust-runner-user: 'true'
+          extra-conf: |
+            sandbox = true
+            sandbox-fallback = false
+      - uses: Mic92/hestia@dfed9ced335d28978ba74e513939a10db1f71025 # v3.1.0
+        with:
+          version: v3.1.0
+          upstream-cache-filter: 'true'
+          wait-manifest-version: ${{ needs.eval.outputs.manifest-version }}
+      - name: Build from cached derivation
+        env:
+          INSTALLABLES: ${{ matrix.installables }}
+        run: |
+          read -r -a installables <<< "$INSTALLABLES"
+          "$HESTIA_BIN" prefetch "${installables[@]}"
+          nix build -L --no-link "${installables[@]}"
+
+  package:
+    needs: [eval, build]
+    # The build matrix is skipped when every component is cached.
+    if: >-
+      !cancelled() && needs.eval.result == 'success' &&
+      (needs.build.result == 'success' ||
+      (needs.build.result == 'skipped' && needs.eval.outputs.any-jobs == 'false'))
+    name: Package Linux AMD64 and ARM64 tarballs
     runs-on: ubuntu-x64-large
     steps:
       - uses: actions/checkout@v6
@@ -26,7 +95,6 @@ jobs:
       - uses: NixOS/nix-installer-action@62c1943b776c509394b550f3f983adc14e9212d6 # v1.0.0
         with:
           installer-version: '2.35.4'
-          # The Nix daemon requires a trusted user to accept Hestia's substituter and build hook.
           trust-runner-user: 'true'
           extra-conf: |
             sandbox = true
@@ -35,12 +103,13 @@ jobs:
         with:
           version: v3.1.0
           upstream-cache-filter: 'true'
-      - name: Build Grafana
-        run: nix build -L .#tarball-linux-amd64
+          wait-manifest-version: ${{ needs.eval.outputs.manifest-version }}
+      - name: Build release tarballs
+        run: nix build -L .#tarball-linux-amd64 .#tarball-linux-arm64
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
-          name: grafana-nix-linux-amd64
-          path: result/*.tar.gz
+          name: grafana-nix-linux-tarballs
+          path: result*/*.tar.gz
           if-no-files-found: error
           compression-level: 0
           retention-days: 1
