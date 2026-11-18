@@ -601,7 +601,7 @@ You're now in the copied dashboard.
 You can save a dashboard as a custom template, which gives you and your team a consistent starting point for new dashboards.
 A custom template lets you apply your organization's preferred layout, panels, and settings.
 
-For directions on how to do this, as well as more information about dashboard templates, refer to [Create dashboards from templates and suggestions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-template-dashboards/).
+For directions on how to do this, refer to the [Create custom dashboards templates](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-template-dashboards/#create-custom-dashboard-templates) documentation.
 
 ## Frequently asked questions
 
