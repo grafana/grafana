@@ -97,9 +97,23 @@ function createQuestionEdit(owner: QuestionsOwner, ownerKind: QuestionsOwnerKind
   });
 }
 
-export function openEditQuestionPane(owner: QuestionsOwner, ownerKind: QuestionsOwnerKind, questionIndex: number) {
+/**
+ * Selects a question to edit it in the sidebar. From outside the sidebar, such as a question's control on the
+ * dashboard, pass `openSidebar` so the sidebar opens even when selecting leaves it closed (see `openElementSettings`).
+ */
+export function openEditQuestionPane(
+  owner: QuestionsOwner,
+  ownerKind: QuestionsOwnerKind,
+  questionIndex: number,
+  openSidebar = false
+) {
   const element = createQuestionEdit(owner, ownerKind, questionIndex);
-  getDashboardSceneFor(owner).state.sidebar.selectObject(element, { force: true, multi: false });
+  const { sidebar } = getDashboardSceneFor(owner).state;
+  if (openSidebar) {
+    sidebar.openElementSettings(element);
+  } else {
+    sidebar.selectObject(element, { force: true, multi: false });
+  }
 }
 
 /** Adds an empty question and opens it, with the question field focused. */

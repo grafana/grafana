@@ -193,6 +193,21 @@ describe('DashboardControlsExtensionPoint', () => {
       });
     });
 
+    // Selecting an element leaves the sidebar closed with grafana.dashboardSidebarExplicitOpen on, so the control has to
+    // open it. Otherwise the sidebar shows as loading while the editor opens, then closes with nothing in it.
+    it('opens the sidebar for a question when the sidebar only opens on request', async () => {
+      setTestFlags({ 'grafana.dashboardQuestions': true, 'grafana.dashboardSidebarExplicitOpen': true });
+      const { dashboard } = renderEditableControls(questions);
+
+      await hoverAndRest(screen.getByRole('button', { name: 'Why did errors rise?' }));
+      await userEvent.click(screen.getByRole('button', { name: 'Question settings' }));
+
+      await waitFor(() => expect(dashboard.state.sidebar.state.openPane?.getId()).toBe('element'));
+      const selected = dashboard.state.sidebar.getSelectedObject();
+      expect(selected instanceof QuestionEdit && selected.state.questionIndex).toBe(1);
+      expect(dashboard.state.sidebar.state.isLoading).toBeFalsy();
+    });
+
     it('deletes a question from its control once the editor confirms', async () => {
       setTestFlags({ 'grafana.dashboardQuestions': true });
       const publish = jest.spyOn(appEvents, 'publish');

@@ -155,7 +155,7 @@ function EditableQuestion({
     sidebar.runPaneRequest(async (signal) => {
       const { openEditQuestionPane } = await loadQuestionEdit();
       if (!signal.aborted) {
-        openEditQuestionPane(owner, ownerKind, index);
+        openEditQuestionPane(owner, ownerKind, index, true);
       }
     });
 
