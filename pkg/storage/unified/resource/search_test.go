@@ -534,7 +534,9 @@ func (m *mockSearchBackend) TotalDocs() int64 {
 }
 
 func (m *mockSearchBackend) GetOpenIndexes() []NamespacedResource {
-	return m.openIndexes
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return slices.Clone(m.openIndexes)
 }
 
 func (m *mockSearchBackend) Stop() {
@@ -2648,6 +2650,7 @@ func TestRebuildIndexes(t *testing.T) {
 		rsp, err := support.RebuildIndexes(context.Background(), rebuildReq)
 		require.NoError(t, err)
 		require.Equal(t, int64(0), rsp.RebuildCount, "no rebuilds should be triggered")
+		require.Zero(t, search.getIndexCalls, "collecting build metadata must not refresh index idle timestamps")
 
 		// Verify BuildTimes contains entries for key1 and key2, but not key3 (zero time)
 		require.Len(t, rsp.BuildTimes, 2, "should have 2 build times (key3 has zero time)")
@@ -2693,6 +2696,28 @@ func checkRebuildIndex(t *testing.T, support *searchServer, req rebuildRequest, 
 	} else {
 		require.Nil(t, idxAfter, "index should not exist after rebuildIndex")
 	}
+}
+
+func TestRebuildIndexPassesOriginalIndexToBackend(t *testing.T) {
+	key := NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}
+	original := &MockResourceIndex{}
+	var rebuildFrom ResourceIndex
+	backend := &initialBuildTestBackend{
+		mockSearchBackend: mockSearchBackend{cache: map[NamespacedResource]ResourceIndex{key: original}},
+		beforeBuild: func(_ context.Context, _ NamespacedResource, opts BuildIndexOptions) error {
+			rebuildFrom = opts.RebuildFrom
+			return ErrIndexClosedDuringRebuild
+		},
+	}
+	server, err := newSearchServer(SearchOptions{
+		Backend:   backend,
+		Resources: &TestDocumentBuilderSupplier{GroupsResources: map[string]string{"group": "resource"}},
+	}, &mockStorageBackend{}, nil, nil, nil, nil, nil, nil, nil, nil)
+	require.NoError(t, err)
+
+	server.rebuildIndex(t.Context(), rebuildRequest{NamespacedResource: key, minBuildTime: time.Now()})
+
+	require.Same(t, original, rebuildFrom)
 }
 
 type failingRebuildSearchBackend struct {

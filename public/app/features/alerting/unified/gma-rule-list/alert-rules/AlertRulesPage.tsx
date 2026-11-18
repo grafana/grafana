@@ -23,6 +23,7 @@ import { type AlertRuleFilter, alertRuleSearchSchema } from './alertRuleFilters'
 import { useAlertRuleSearchRejection } from './alertRuleSearch';
 
 function AlertRulesPage() {
+  const { navId, pageNav } = useAlertRulesNav();
   const { query, filter, parseIssues, filterHelp, mode, hasNonFolderFilters, applyQuery, setMode } =
     useRuleListSearchState(alertRuleSearchSchema);
   const rejectionIssues = useAlertRuleSearchRejection(filter, { parseIssues, mode });
@@ -30,7 +31,6 @@ function AlertRulesPage() {
 
   useTrackRuleListPageView('alert', mode);
 
-  const { navId, pageNav } = useAlertRulesNav();
   const headerHeight = useChromeHeaderHeight() ?? 0;
   const styles = useStyles2(getStyles, headerHeight);
 

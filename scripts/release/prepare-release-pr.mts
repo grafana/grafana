@@ -7,107 +7,89 @@
 
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
+import { releaseChangelog, releaseVersion } from 'nx/release';
 
 import { getIndependentPackages, type IndependentPackage } from './lib/independent-packages.mts';
 import { isMainModule } from './lib/main.mts';
 import { tagFor } from './lib/tags.mts';
 
-export interface VersionChange {
-  newVersion: string | null;
-}
-
-export interface Deps {
-  packages: IndependentPackage[];
-  readVersion(manifestPath: string): string;
-  tagExists(tag: string): boolean;
-  releaseVersion(projects: string[]): Promise<Record<string, VersionChange>>;
-  releaseChangelog(projects: string[]): Promise<void>;
-  notice(message: string): void;
-  warning(message: string): void;
-}
-
-export async function prepareReleasePr(deps: Deps): Promise<void> {
-  // Without packages the project list would be empty, which Nx may read as "every project".
-  if (deps.packages.length === 0) {
-    deps.notice('There are no independent packages to release.');
-    return;
-  }
-
-  // Nx counts commits from the tag of the last release. Without it, it would version from commits that were
-  // already released.
-  for (const pkg of deps.packages) {
-    const version = deps.readVersion(pkg.manifestPath);
+// Nx counts commits from the tag of the last release. Without it, it would version from commits that were
+// already released, so the first package whose tag is missing is reported.
+export function findMissingTag(
+  packages: IndependentPackage[],
+  versions: Record<string, string>,
+  existingTags: string[]
+): { name: string; version: string; tag: string } | undefined {
+  for (const pkg of packages) {
+    const version = versions[pkg.manifestPath];
     const tag = tagFor(pkg.name, version);
-    if (!deps.tagExists(tag)) {
-      deps.warning(
-        `The tag ${tag} does not exist, so Nx cannot tell which commits are new. Create it on the commit that published ${pkg.name} ${version}, then run the workflow again.`
-      );
-      return;
+    if (!existingTags.includes(tag)) {
+      return { name: pkg.name, version, tag };
     }
   }
-
-  const projects = deps.packages.map((pkg) => pkg.name);
-  const versions = await deps.releaseVersion(projects);
-
-  if (!deps.packages.some((pkg) => versions[pkg.name]?.newVersion)) {
-    deps.notice('No package has releasable commits since its last release.');
-    return;
-  }
-
-  await deps.releaseChangelog(projects);
+  return undefined;
 }
 
-// Nx returns far more than the core needs (dependent projects, the release graph, tag names), so its answer is
-// cut down to the one field the core reads.
-export function toVersionChanges(
+// Nx also returns projects that depend on the packages, which are not released here, so only the packages count.
+export function hasNewVersion(
+  packages: IndependentPackage[],
   projectsVersionData: Record<string, { newVersion: string | null }>
-): Record<string, VersionChange> {
-  return Object.fromEntries(
-    Object.entries(projectsVersionData).map(([project, { newVersion }]) => [project, { newVersion }])
-  );
+): boolean {
+  return packages.some((pkg) => projectsVersionData[pkg.name]?.newVersion);
 }
 
-export async function createVersioningDeps(packages: IndependentPackage[]): Promise<Deps> {
-  const { releaseChangelog, releaseVersion } = await import('nx/release');
-  const options = (projects: string[]) => ({ projects, gitCommit: false, gitTag: false, stageChanges: false });
-
-  // releaseChangelog needs everything releaseVersion returned, so it is kept here between the two calls.
-  let versionResult: Awaited<ReturnType<typeof releaseVersion>> | undefined;
-
-  return {
-    packages,
-    readVersion: (manifestPath) => JSON.parse(readFileSync(manifestPath, 'utf8')).version,
-    tagExists: (tag) => {
-      try {
-        execFileSync('git', ['rev-parse', '-q', '--verify', `refs/tags/${tag}`], { stdio: 'ignore' });
-        return true;
-      } catch {
-        return false;
-      }
-    },
-    releaseVersion: async (projects) => {
-      versionResult = await releaseVersion(options(projects));
-      return toVersionChanges(versionResult.projectsVersionData);
-    },
-    releaseChangelog: async (projects) => {
-      if (!versionResult) {
-        throw new Error('The changelog can only be written after the versions were bumped.');
-      }
-
-      await releaseChangelog({
-        ...options(projects),
-        versionData: versionResult.projectsVersionData,
-        releaseGraph: versionResult.releaseGraph,
-      });
-    },
-    notice: (message) => console.error(`::notice::${message}`),
-    warning: (message) => console.error(`::warning::${message}`),
-  };
+function tagExists(tag: string): boolean {
+  try {
+    execFileSync('git', ['rev-parse', '-q', '--verify', `refs/tags/${tag}`], { stdio: 'ignore' });
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 if (isMainModule(import.meta.url)) {
   try {
-    await prepareReleasePr(await createVersioningDeps(await getIndependentPackages()));
+    const packages = await getIndependentPackages();
+
+    // Without packages the project list would be empty, which Nx may read as "every project".
+    if (packages.length === 0) {
+      console.error('::notice::There are no independent packages to release.');
+      process.exit(0);
+    }
+
+    const versions = Object.fromEntries(
+      packages.map(({ manifestPath }) => [manifestPath, JSON.parse(readFileSync(manifestPath, 'utf8')).version])
+    );
+    const existingTags = packages
+      .map((pkg) => tagFor(pkg.name, versions[pkg.manifestPath]))
+      .filter((tag) => tagExists(tag));
+
+    const missing = findMissingTag(packages, versions, existingTags);
+    if (missing) {
+      console.error(
+        `::warning::The tag ${missing.tag} does not exist, so Nx cannot tell which commits are new. Create it on the commit that published ${missing.name} ${missing.version}, then run the workflow again.`
+      );
+      process.exit(0);
+    }
+
+    const options = {
+      projects: packages.map((pkg) => pkg.name),
+      gitCommit: false,
+      gitTag: false,
+      stageChanges: false,
+    };
+
+    const versionResult = await releaseVersion(options);
+    if (!hasNewVersion(packages, versionResult.projectsVersionData)) {
+      console.error('::notice::No package has releasable commits since its last release.');
+      process.exit(0);
+    }
+
+    await releaseChangelog({
+      ...options,
+      versionData: versionResult.projectsVersionData,
+      releaseGraph: versionResult.releaseGraph,
+    });
   } catch (error) {
     console.error(`::error::${error instanceof Error ? error.message : String(error)}`);
     process.exit(1);
