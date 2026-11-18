@@ -76,7 +76,7 @@ func (s *Storage) prepareInlineBlobs(ctx context.Context, raw json.RawMessage, k
 			Resource: key, Folder: meta.GetFolder(), Method: resourcepb.PutBlobRequest_GRPC,
 			ContentType: entry.ContentType, Value: entry.Data,
 		})
-		if err := resourceutil.StatusErrorFromResponse(rsp.GetError(), err); err != nil {
+		if err := resourceutil.StatusErrorFromGRPC(err); err != nil {
 			return nil, err
 		}
 		mediaType, params, err := mime.ParseMediaType(entry.ContentType)

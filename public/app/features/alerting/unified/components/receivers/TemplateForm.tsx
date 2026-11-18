@@ -35,7 +35,7 @@ import { isGranted } from '../../hooks/abilities/abilityUtils';
 import { useNotificationTemplateAbility } from '../../hooks/abilities/alertmanager/useNotificationTemplateAbility';
 import { NotificationTemplateAction } from '../../hooks/abilities/types';
 import { KnownProvenance } from '../../types/knownProvenance';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/constants';
 import { DOCS_URL_TEMPLATE_EXAMPLES, DOCS_URL_TEMPLATE_NOTIFICATIONS } from '../../utils/docs';
 import { isProvisionedResource } from '../../utils/k8s/utils';
 import { makeAMLink, stringifyErrorLike } from '../../utils/misc';
@@ -345,11 +345,12 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
                           <AutoSizer>
                             {({ width, height }) => (
                               <TemplateEditor
-                                value={getValues('content')}
+                                value={watch('content')}
                                 onBlur={(value) => setValue('content', value)}
-                                containerStyles={styles.editorContainer}
+                                readOnly={isProvisioned}
                                 width={width}
-                                height={height}
+                                height={`${height}px`}
+                                aria-label={t('alerting.template-form.label-template-group', 'Template group')}
                               />
                             )}
                           </AutoSizer>
@@ -523,10 +524,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     templatePayload: css({
       flex: 1,
-    }),
-    editorContainer: css({
-      width: 'fit-content',
-      border: 'none',
     }),
     payloadCollapseButton: css({
       backgroundColor: theme.colors.info.transparent,

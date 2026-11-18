@@ -117,9 +117,9 @@ export function useDataSourceInstanceSettings(
  * Prefer this over {@link useDataSourceInstanceSettings} when identity and plugin metadata are enough:
  * it avoids depending on per-instance settings that will later be fetched on demand.
  *
- * Resolves **by uid only**: a ref with no usable uid — including `'default'`, `undefined` and
- * type-only refs — yields `item: undefined` rather than the default data source. Template
- * variable strings (e.g. `$ds` or `${ds}`) are not interpolated; resolve them to a uid first.
+ * Resolves refs like {@link getDataSourceInstanceListItem}: a uid, name or numeric id, `'default'`,
+ * `undefined` (the default data source) or a type-only ref. Template variable strings (e.g. `$ds`
+ * or `${ds}`) resolve against the global variables only.
  *
  * @public
  */

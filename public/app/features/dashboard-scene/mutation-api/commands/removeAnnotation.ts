@@ -5,7 +5,7 @@
  * cannot be removed (they are auto-injected on dashboard load).
  */
 
-import type * as z from 'zod';
+import * as z from 'zod/mini';
 
 import {
   findAnnotationLayer,
@@ -20,7 +20,7 @@ type RemoveAnnotationPayload = z.infer<typeof payloads.removeAnnotation>;
 
 export const removeAnnotationCommand: MutationCommand<RemoveAnnotationPayload> = {
   name: 'REMOVE_ANNOTATION',
-  description: payloads.removeAnnotation.description ?? '',
+  description: z.globalRegistry.get(payloads.removeAnnotation)?.description ?? '',
 
   payloadSchema: payloads.removeAnnotation,
   permission: requiresEdit,

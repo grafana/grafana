@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	fake_secrets "github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -47,7 +47,7 @@ func TestIntegrationCreateReceiverPermissionEvents(t *testing.T) {
 				&usertest.FakeUserService{ExpectedSignedInUser: requester}, nil, resourcepermissions.NewActionSetService())
 			require.NoError(t, err)
 			sut.resourcePermissions = permissions
-			receiver, err := sut.GetReceiver(t.Context(), legacy_storage.NameToUid("grafana-default-email"), false, requester)
+			receiver, err := sut.GetReceiver(t.Context(), string(v1.ReceiverUID("grafana-default-email")), false, requester)
 			require.NoError(t, err)
 			receiver.Name = "new receiver"
 			receiver.UID = ""

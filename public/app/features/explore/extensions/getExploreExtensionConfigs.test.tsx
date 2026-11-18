@@ -5,6 +5,7 @@ import { PluginExtensionPoints } from '@grafana/data';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
+import { setMobileViewport } from 'app/features/dashboard-scene/utils/mobileViewportTestUtils';
 import { ADD_PANEL_MODAL_WIDTH, addPanelToNotebookTitle } from 'app/features/notebook/addPanel/addPanelModal';
 import { configureStore } from 'app/store/configureStore';
 
@@ -63,7 +64,6 @@ describe('getExploreExtensionConfigs', () => {
     afterEach(() => {
       contextSrvMock.hasPermission.mockRestore();
       setTestFlags({});
-      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1024 });
     });
 
     function addToDashboardExtension() {
@@ -73,7 +73,7 @@ describe('getExploreExtensionConfigs', () => {
     it('is hidden on mobile, even with permission', () => {
       contextSrvMock.hasPermission.mockReturnValue(true);
       setTestFlags({ 'grafana.mobileEditDeprecation': true });
-      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
+      setMobileViewport();
 
       expect(addToDashboardExtension()?.configure?.(undefined)).toBeUndefined();
     });

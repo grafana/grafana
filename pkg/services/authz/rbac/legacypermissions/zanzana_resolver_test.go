@@ -11,11 +11,15 @@ import (
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	claims "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/legacyscopes"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 )
@@ -33,7 +37,7 @@ func (c *verbErroringZanzanaClient) List(_ context.Context, req *authzv1.ListReq
 	return c.allResp, nil
 }
 
-func TestResolveCurrentUserPermissions_SkipsFailingAction(t *testing.T) {
+func TestListAllWithPrefix_SkipsFailingAction(t *testing.T) {
 	client := &verbErroringZanzanaClient{
 		failVerb: utils.VerbCreate,
 		allResp:  &authzv1.ListResponse{All: true},
@@ -47,7 +51,7 @@ func TestResolveCurrentUserPermissions_SkipsFailingAction(t *testing.T) {
 		OrgID:   1,
 	}
 
-	perms, err := r.ResolveCurrentUserPermissions(context.Background(), usr)
+	perms, err := r.listAllWithPrefix(context.Background(), claims.OrgNamespaceFormatter(usr.GetOrgID()), usr.GetUID(), nil, "", "")
 	require.NoError(t, err)
 
 	require.Contains(t, permScopes(perms, "dashboards:read"), ac.Scope("dashboards", "*"))
@@ -57,9 +61,7 @@ func TestResolveCurrentUserPermissions_SkipsFailingAction(t *testing.T) {
 }
 
 func TestResolveCurrentUserPermissions_UsesRequesterNamespace(t *testing.T) {
-	client := &capturingZanzanaClient{fakeZanzanaClient: fakeZanzanaClient{
-		listResp: &authzv1.ListResponse{},
-	}}
+	client := &userPermissionsZanzanaClient{}
 	r := NewZanzanaPermissionResolver(client, &usertest.FakeUserService{}, nil, false)
 	usr := &identity.StaticRequester{
 		Type:      claims.TypeUser,
@@ -69,18 +71,14 @@ func TestResolveCurrentUserPermissions_UsesRequesterNamespace(t *testing.T) {
 		Namespace: "stacks-123",
 	}
 
-	_, err := r.ResolveCurrentUserPermissions(context.Background(), usr)
+	_, err := r.ResolveCurrentUserPermissions(context.Background(), usr, false)
 	require.NoError(t, err)
-	require.NotEmpty(t, client.listCalls)
-	for _, call := range client.listCalls {
-		require.Equal(t, "stacks-123", call.Namespace)
-	}
+	require.Equal(t, "stacks-123", client.info.GetNamespace())
+	require.Empty(t, client.listCalls)
 }
 
 func TestResolveCurrentUserPermissions_DerivesNamespaceFromOrgWhenRequesterNamespaceIsEmpty(t *testing.T) {
-	client := &capturingZanzanaClient{fakeZanzanaClient: fakeZanzanaClient{
-		listResp: &authzv1.ListResponse{},
-	}}
+	client := &userPermissionsZanzanaClient{}
 	r := NewZanzanaPermissionResolver(client, &usertest.FakeUserService{}, nil, false)
 	usr := &identity.StaticRequester{
 		Type:    claims.TypeUser,
@@ -89,12 +87,10 @@ func TestResolveCurrentUserPermissions_DerivesNamespaceFromOrgWhenRequesterNames
 		OrgID:   2,
 	}
 
-	_, err := r.ResolveCurrentUserPermissions(context.Background(), usr)
+	_, err := r.ResolveCurrentUserPermissions(context.Background(), usr, false)
 	require.NoError(t, err)
-	require.NotEmpty(t, client.listCalls)
-	for _, call := range client.listCalls {
-		require.Equal(t, claims.OrgNamespaceFormatter(int64(2)), call.Namespace)
-	}
+	require.Equal(t, claims.OrgNamespaceFormatter(int64(2)), client.info.GetNamespace())
+	require.Empty(t, client.listCalls)
 }
 
 // capturingZanzanaClient records every ListRequest it receives so tests can
@@ -141,13 +137,19 @@ func legacyFilter(perms []ac.Permission, action, scope string) []ac.Permission {
 
 // zanzanaResolve runs the Zanzana list → legacy permission mapping for one action.
 func zanzanaResolve(resp *authzv1.ListResponse, action, scope string) ([]ac.Permission, error) {
-	group, resource, subresource, verb := common.TranslateActionToListParams(action)
-	if group == "" || resource == "" {
-		return nil, nil
+	r := &ZanzanaPermissionResolver{client: &fakeZanzanaClient{listResp: resp}}
+	if strings.HasPrefix(action, "annotations:") {
+		r.client = &annotationListClient{organization: resp}
 	}
-	fake := &fakeZanzanaClient{listResp: resp}
-	r := &ZanzanaPermissionResolver{client: fake}
-	return r.listPermissions(context.Background(), "org:1", "user:parity", nil, group, resource, subresource, verb, action, scope)
+	var permissions []ac.Permission
+	for _, entry := range common.TranslateActionToListParams(action) {
+		perms, err := r.listPermissions(context.Background(), "org:1", "user:parity", nil, entry.Group, entry.Resource, entry.Subresource, entry.Verb, action, scope)
+		if err != nil {
+			return nil, err
+		}
+		permissions = append(permissions, perms...)
+	}
+	return permissions, nil
 }
 
 func TestSearchPermissionsForIdentity_NoActionOrPrefix_ListsAllSupportedActions(t *testing.T) {
@@ -160,7 +162,7 @@ func TestSearchPermissionsForIdentity_NoActionOrPrefix_ListsAllSupportedActions(
 
 	result, err := r.searchPermissionsForIdentity(
 		context.Background(),
-		1,
+		claims.OrgNamespaceFormatter(1),
 		42,
 		"user-uid",
 		false,
@@ -194,7 +196,7 @@ func TestSearchPermissionsForIdentity_WithAction_DoesNotListAll(t *testing.T) {
 
 	result, err := r.searchPermissionsForIdentity(
 		context.Background(),
-		1,
+		claims.OrgNamespaceFormatter(1),
 		42,
 		"user-uid",
 		false,
@@ -208,7 +210,10 @@ func TestSearchPermissionsForIdentity_WithAction_DoesNotListAll(t *testing.T) {
 }
 
 func TestListPermissions_ScopeFilter_AppliesToFolderScopes(t *testing.T) {
-	group, resource, subresource, verb := common.TranslateActionToListParams("dashboards:read")
+	entries := common.TranslateActionToListParams("dashboards:read")
+	require.Len(t, entries, 1)
+	entry := entries[0]
+	group, resource, subresource, verb := entry.Group, entry.Resource, entry.Subresource, entry.Verb
 	fake := &fakeZanzanaClient{
 		listResp: &authzv1.ListResponse{
 			Folders: []string{"keep-me", "drop-me"},
@@ -238,7 +243,10 @@ func TestListPermissions_ScopeFilter_AppliesToFolderScopes(t *testing.T) {
 // Scope filter edge cases not covered by TestLegacyZanzanaParity (dashboard-namespace filter
 // with All=true; UID prefix must not false-positive).
 func TestListPermissions_ScopeFilter_IncludesWildcardGrants(t *testing.T) {
-	group, resource, subresource, verb := common.TranslateActionToListParams("dashboards:read")
+	entries := common.TranslateActionToListParams("dashboards:read")
+	require.Len(t, entries, 1)
+	entry := entries[0]
+	group, resource, subresource, verb := entry.Group, entry.Resource, entry.Subresource, entry.Verb
 
 	t.Run("All=true keeps dashboards wildcard when scope is dashboards namespace", func(t *testing.T) {
 		fake := &fakeZanzanaClient{
@@ -295,7 +303,10 @@ func TestListPermissions_ScopeFilter_IncludesWildcardGrants(t *testing.T) {
 }
 
 func TestListPermissions_ScopeFilter_WildcardScopeQuery(t *testing.T) {
-	group, resource, subresource, verb := common.TranslateActionToListParams("dashboards:read")
+	entries := common.TranslateActionToListParams("dashboards:read")
+	require.Len(t, entries, 1)
+	entry := entries[0]
+	group, resource, subresource, verb := entry.Group, entry.Resource, entry.Subresource, entry.Verb
 
 	t.Run("wildcard query scope matches only wildcards, not individual items", func(t *testing.T) {
 		fake := &fakeZanzanaClient{
@@ -365,7 +376,7 @@ func TestSearchPermissionsForIdentity_ServiceAccount_SubjectType(t *testing.T) {
 
 	_, err := r.searchPermissionsForIdentity(
 		context.Background(),
-		1,
+		claims.OrgNamespaceFormatter(1),
 		42,
 		"sa-uid-123",
 		true, // service account
@@ -387,7 +398,7 @@ func TestSearchPermissionsForIdentity_User_SubjectType(t *testing.T) {
 
 	_, err := r.searchPermissionsForIdentity(
 		context.Background(),
-		1,
+		claims.OrgNamespaceFormatter(1),
 		42,
 		"user-uid-456",
 		false, // regular user
@@ -413,7 +424,7 @@ func TestSearchPermissionsForIdentity_UnsupportedAction_ReturnsEmpty(t *testing.
 
 	result, err := r.searchPermissionsForIdentity(
 		context.Background(),
-		1,
+		claims.OrgNamespaceFormatter(1),
 		42,
 		"user-uid",
 		false,
@@ -441,7 +452,7 @@ func TestSearchPermissionsForIdentity_ActionPrefix_FiltersToMatchingActions(t *t
 
 	result, err := r.searchPermissionsForIdentity(
 		context.Background(),
-		1,
+		claims.OrgNamespaceFormatter(1),
 		42,
 		"user-uid",
 		false,
@@ -475,7 +486,7 @@ func TestSearchPermissionsForIdentity_ActionPrefix_WithScope(t *testing.T) {
 
 	result, err := r.searchPermissionsForIdentity(
 		context.Background(),
-		1,
+		claims.OrgNamespaceFormatter(1),
 		42,
 		"user-uid",
 		false,
@@ -510,6 +521,7 @@ func TestSearchAllUsers_NoActionOrPrefix_ReturnsEmpty(t *testing.T) {
 		context.Background(),
 		nil, // signedInUser not needed — early return
 		1,
+		claims.OrgNamespaceFormatter(1),
 		ac.SearchOptions{}, // no action, no prefix
 	)
 	require.NoError(t, err)
@@ -517,10 +529,10 @@ func TestSearchAllUsers_NoActionOrPrefix_ReturnsEmpty(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
-// Namespace is derived from orgID
+// Selected namespace is propagated to Zanzana
 // ---------------------------------------------------------------------------
 
-func TestSearchPermissionsForIdentity_NamespaceDerivedFromOrgID(t *testing.T) {
+func TestSearchPermissionsForIdentity_UsesSelectedNamespace(t *testing.T) {
 	fake := &capturingZanzanaClient{
 		fakeZanzanaClient: fakeZanzanaClient{
 			listResp: &authzv1.ListResponse{Items: []string{"dash-1"}},
@@ -530,7 +542,7 @@ func TestSearchPermissionsForIdentity_NamespaceDerivedFromOrgID(t *testing.T) {
 
 	_, err := r.searchPermissionsForIdentity(
 		context.Background(),
-		7, // orgID
+		"org-7", // selected namespace
 		42,
 		"user-uid",
 		false,
@@ -554,7 +566,7 @@ func TestSearchPermissionsForIdentity_ResultKeyedByUserID(t *testing.T) {
 
 	result, err := r.searchPermissionsForIdentity(
 		context.Background(),
-		1,
+		claims.OrgNamespaceFormatter(1),
 		99, // userID
 		"user-uid",
 		false,
@@ -575,7 +587,7 @@ func TestSearchPermissionsForIdentity_EmptyResult_OmitsUserKey(t *testing.T) {
 
 	result, err := r.searchPermissionsForIdentity(
 		context.Background(),
-		1,
+		claims.OrgNamespaceFormatter(1),
 		99,
 		"user-uid",
 		false,
@@ -646,6 +658,14 @@ func TestLegacyZanzanaParity(t *testing.T) {
 			action: "folders:read",
 			legacyPerms: []ac.Permission{
 				{Action: "folders:read", Scope: ac.Scope("folders", "*")},
+			},
+			zanzanaResp: &authzv1.ListResponse{All: true},
+		},
+		{
+			name:   "all_true_org_annotations_no_scope_filter",
+			action: "annotations:delete",
+			legacyPerms: []ac.Permission{
+				{Action: "annotations:delete", Scope: ac.ScopeAnnotationsTypeOrganization},
 			},
 			zanzanaResp: &authzv1.ListResponse{All: true},
 		},
@@ -744,7 +764,7 @@ func TestLegacyZanzanaParity(t *testing.T) {
 }
 
 // TestResolveCurrentUserPermissions_PassesTeamsAsContextualGroups verifies the merge
-// resolver sends the signed-in user's team memberships as List `Teams`, so team-based
+// resolver sends the signed-in user's team memberships to GetUserPermissions, so team-based
 // grants (resolved via contextual team:<name>#member tuples) surface in the merged
 // permissions. It mirrors the id token groups claim: external (proxy/IdP) groups when
 // id_use_external_groups_for_groups_claim is set, otherwise stored team memberships.
@@ -771,16 +791,14 @@ func TestResolveCurrentUserPermissions_PassesTeamsAsContextualGroups(t *testing.
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			cap := &capturingZanzanaClient{}
-			cap.listResp = &authzv1.ListResponse{}
+			cap := &userPermissionsZanzanaClient{}
 			r := NewZanzanaPermissionResolver(cap, &usertest.FakeUserService{}, nil, tc.useExternalGroups)
 
-			_, err := r.ResolveCurrentUserPermissions(context.Background(), newReq([]string{"stored-team"}, []string{"team_a", "everyone"}))
+			_, err := r.ResolveCurrentUserPermissions(context.Background(), newReq([]string{"stored-team"}, []string{"team_a", "everyone"}), false)
 			require.NoError(t, err)
-			require.NotEmpty(t, cap.listCalls, "expected the resolver to issue List requests")
-			for _, c := range cap.listCalls {
-				require.Equal(t, tc.wantTeams, c.Teams, "every List request must carry the user's teams")
-			}
+			require.NotNil(t, cap.info)
+			require.Equal(t, tc.wantTeams, cap.info.GetGroups())
+			require.Empty(t, cap.listCalls)
 		})
 	}
 }
@@ -882,12 +900,13 @@ func TestListPermissions_AllScopeKindFollowsResource(t *testing.T) {
 }
 
 // TestListPermissions_TeamActions verifies team actions produce legacy id-based scopes.
-// Without a scope resolver (nil in unit tests), items fall back to teams:uid:<name>.
+// The shared formatter adds both wildcard aliases without IAM lookups.
 func TestListPermissions_TeamActions(t *testing.T) {
 	t.Run("All=true produces teams:id:* wildcard", func(t *testing.T) {
 		perms, err := zanzanaResolve(&authzv1.ListResponse{All: true}, "teams:read", "")
 		require.NoError(t, err)
 		require.Equal(t, []ac.Permission{
+			{Action: "teams:read", Scope: "teams:uid:*"},
 			{Action: "teams:read", Scope: "teams:id:*"},
 		}, perms)
 	})
@@ -904,6 +923,7 @@ func TestListPermissions_TeamActions(t *testing.T) {
 		perms, err := zanzanaResolve(&authzv1.ListResponse{All: true}, "teams.permissions:read", "")
 		require.NoError(t, err)
 		require.Equal(t, []ac.Permission{
+			{Action: "teams.permissions:read", Scope: "teams:uid:*"},
 			{Action: "teams.permissions:read", Scope: "teams:id:*"},
 		}, perms)
 	})
@@ -911,8 +931,7 @@ func TestListPermissions_TeamActions(t *testing.T) {
 
 // TestListPermissions_UserActions verifies user actions produce legacy id-based scopes.
 // Most user actions are scoped to the global.users kind; users.permissions:read is the org-level
-// exception scoped to the users kind. Without a scope resolver (nil in unit tests), items fall
-// back to the Zanzana resource scope users:uid:<name>.
+// exception scoped to the users kind. UID-only targets keep the same kind.
 func TestListPermissions_UserActions(t *testing.T) {
 	// Server-level actions are scoped to global.users.
 	for _, action := range []string{"users:read", "users:write", "users:delete", "users.permissions:write"} {
@@ -920,6 +939,7 @@ func TestListPermissions_UserActions(t *testing.T) {
 			perms, err := zanzanaResolve(&authzv1.ListResponse{All: true}, action, "")
 			require.NoError(t, err)
 			require.Equal(t, []ac.Permission{
+				{Action: action, Scope: "global.users:uid:*"},
 				{Action: action, Scope: "global.users:id:*"},
 			}, perms)
 		})
@@ -929,6 +949,7 @@ func TestListPermissions_UserActions(t *testing.T) {
 		perms, err := zanzanaResolve(&authzv1.ListResponse{All: true}, "users.permissions:read", "")
 		require.NoError(t, err)
 		require.Equal(t, []ac.Permission{
+			{Action: "users.permissions:read", Scope: "users:uid:*"},
 			{Action: "users.permissions:read", Scope: "users:id:*"},
 		}, perms)
 	})
@@ -939,6 +960,7 @@ func TestListPermissions_UserActions(t *testing.T) {
 			perms, err := zanzanaResolve(&authzv1.ListResponse{All: true}, action, "")
 			require.NoError(t, err)
 			require.Equal(t, []ac.Permission{
+				{Action: action, Scope: "users:uid:*"},
 				{Action: action, Scope: "users:id:*"},
 			}, perms)
 		})
@@ -948,7 +970,7 @@ func TestListPermissions_UserActions(t *testing.T) {
 		perms, err := zanzanaResolve(&authzv1.ListResponse{Items: []string{"user-abc"}}, "users:read", "")
 		require.NoError(t, err)
 		require.Equal(t, []ac.Permission{
-			{Action: "users:read", Scope: "users:uid:user-abc"},
+			{Action: "users:read", Scope: "global.users:uid:user-abc"},
 		}, perms)
 	})
 }
@@ -1011,10 +1033,10 @@ func (c *datasourceSubresourceZanzanaClient) List(_ context.Context, req *authzv
 	return &authzv1.ListResponse{}, nil
 }
 
-func TestResolveCurrentUserPermissions_KeepsDatasourceSubresourcesSeparate(t *testing.T) {
+func TestListAllWithPrefix_KeepsDatasourceSubresourcesSeparate(t *testing.T) {
 	r := NewZanzanaPermissionResolver(&datasourceSubresourceZanzanaClient{}, &usertest.FakeUserService{}, nil, false)
 	usr := &identity.StaticRequester{Type: claims.TypeUser, UserID: 1, UserUID: "u1", OrgID: 1}
-	perms, err := r.ResolveCurrentUserPermissions(context.Background(), usr)
+	perms, err := r.listAllWithPrefix(context.Background(), claims.OrgNamespaceFormatter(usr.GetOrgID()), usr.GetUID(), nil, "", "")
 	require.NoError(t, err)
 	for action, uid := range map[string]string{
 		"datasources:read":          "base-only",
@@ -1043,6 +1065,100 @@ func TestSearchUsersPermissions_KeepsDatasourceSubresourcesSeparate(t *testing.T
 			perms, err := r.SearchUsersPermissions(context.Background(), usr, 1, ac.SearchOptions{UserID: 1, Action: action})
 			require.NoError(t, err)
 			require.Equal(t, []ac.Permission{{Action: action, Scope: "datasources:uid:" + uid}}, perms[1])
+		})
+	}
+}
+
+type userPermissionsZanzanaClient struct {
+	capturingZanzanaClient
+	response claims.GetUserPermissionsResponse
+	err      error
+	info     claims.AuthInfo
+}
+
+func (c *userPermissionsZanzanaClient) GetUserPermissions(_ context.Context, info claims.AuthInfo, _ claims.GetUserPermissionsRequest) (claims.GetUserPermissionsResponse, error) {
+	c.info = info
+	return c.response, c.err
+}
+func (*userPermissionsZanzanaClient) InvalidateUserPermissions(context.Context, claims.AuthInfo, claims.GetUserPermissionsRequest) error {
+	return nil
+}
+
+func TestResolveCurrentUserPermissionsDoesNotFallbackToList(t *testing.T) {
+	for _, code := range []codes.Code{codes.Unimplemented, codes.Unavailable, codes.PermissionDenied, codes.Canceled, codes.DeadlineExceeded} {
+		t.Run(code.String(), func(t *testing.T) {
+			client := &userPermissionsZanzanaClient{err: status.Error(code, "user permissions error")}
+			client.listResp = &authzv1.ListResponse{}
+			resolver := NewZanzanaPermissionResolver(client, nil, nil, false)
+			requester := &identity.StaticRequester{Type: claims.TypeUser, UserUID: "alice", OrgID: 1}
+			result, err := resolver.ResolveCurrentUserPermissions(t.Context(), requester, false)
+			require.Equal(t, code, status.Code(err))
+			require.Nil(t, result)
+			require.Empty(t, client.listCalls, "current-user enumeration must never retry through List")
+		})
+	}
+}
+
+type searchScopeResolverFunc func(context.Context, claims.NamespaceInfo, legacyscopes.ScopeReference) (string, error)
+
+func (f searchScopeResolverFunc) ResolveScope(ctx context.Context, ns claims.NamespaceInfo, ref legacyscopes.ScopeReference) (string, error) {
+	return f(ctx, ns, ref)
+}
+
+func TestSearchUserPermissionsKeepsAliasesInTenantNamespace(t *testing.T) {
+	for _, tc := range []struct {
+		name, namespace, transport, hitUID, scope string
+		orgID, userID                             int64
+		serviceAccount, prefix                    bool
+		wantNamespace, wantID                     string
+	}{
+		{name: "cloud user", namespace: "stacks-123", orgID: 1, userID: 42, wantNamespace: "stacks-123", wantID: "7"},
+		{name: "cloud service account with numeric filter", namespace: "stacks-123", orgID: 1, userID: 42, serviceAccount: true, scope: "teams:id:7", wantNamespace: "stacks-123", wantID: "7"},
+		{name: "cloud broad prefix search", namespace: "stacks-123", orgID: 1, hitUID: "target", prefix: true, wantNamespace: "stacks-123", wantID: "7"},
+		{name: "cloud broad search with UID fallback", namespace: "stacks-123", orgID: 1, wantNamespace: "stacks-123", wantID: "7"},
+		{name: "global requester uses transport tenant", namespace: "org-0", transport: "stacks-123", userID: 42, wantNamespace: "stacks-123", wantID: "7"},
+		{name: "legacy org fallback", orgID: 2, userID: 42, wantNamespace: "org-2", wantID: "8"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := t.Context()
+			if tc.transport != "" {
+				ctx = request.WithNamespace(ctx, tc.transport)
+			}
+			caller := &identity.StaticRequester{Type: claims.TypeUser, UserUID: "caller", OrgID: tc.orgID, Namespace: tc.namespace}
+			client := &capturingZanzanaClient{fakeZanzanaClient: fakeZanzanaClient{listResp: &authzv1.ListResponse{Items: []string{"shared"}}}}
+			users := &usertest.FakeUserService{
+				ExpectedUser:        &user.User{ID: 42, UID: "target", IsServiceAccount: tc.serviceAccount},
+				ExpectedSearchUsers: user.SearchUserQueryResult{TotalCount: 1, Users: []*user.UserSearchHitDTO{{ID: 42, UID: tc.hitUID}}},
+			}
+			r := NewZanzanaPermissionResolver(client, users, nil, false)
+			r.scopeResolver = searchScopeResolverFunc(func(_ context.Context, ns claims.NamespaceInfo, ref legacyscopes.ScopeReference) (string, error) {
+				if ref.Attribute == "id" {
+					return "shared", nil
+				}
+				return map[string]string{"stacks-123": "7", claims.OrgNamespaceFormatter(1): "99", claims.OrgNamespaceFormatter(2): "8"}[ns.Value], nil
+			})
+			options := ac.SearchOptions{UserID: tc.userID, Action: "teams:read", Scope: tc.scope}
+			if tc.prefix {
+				options.Action = ""
+				options.ActionPrefix = "teams:rea"
+			}
+			orgID := tc.orgID
+			if orgID == 0 {
+				orgID = 1
+			}
+			got, err := r.SearchUsersPermissions(ctx, caller, orgID, options)
+			require.NoError(t, err)
+			got, err = legacyscopes.ResolveSearchScopes(ctx, caller, tc.scope, r.scopeResolver, got)
+			require.NoError(t, err)
+			want := []ac.Permission{{Action: "teams:read", Scope: "teams:id:" + tc.wantID}}
+			if tc.scope == "" {
+				want = append(want, ac.Permission{Action: "teams:read", Scope: "teams:uid:shared"})
+			}
+			require.ElementsMatch(t, want, got[42], "aliases from another tenant must never survive the final formatting pass")
+			require.NotEmpty(t, client.listCalls)
+			for _, call := range client.listCalls {
+				require.Equal(t, tc.wantNamespace, call.Namespace)
+			}
 		})
 	}
 }

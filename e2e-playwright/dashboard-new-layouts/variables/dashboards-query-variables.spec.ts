@@ -6,9 +6,7 @@ import { importVariableTestDashboard, saveAndGotoDashboardUrl } from './helpers/
 
 test.use({
   featureToggles: {
-    dashboardNewLayouts: true,
     dashboardUndoRedo: true,
-    'grafana.queryVarEditorRedesign': true,
   },
 });
 

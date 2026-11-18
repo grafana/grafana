@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"hash/fnv"
 	"net/http"
+	"slices"
 	"sync"
 	"time"
 
@@ -81,13 +82,16 @@ const (
 	ReasonValidate           SyncReason = "validate"
 	ReasonSave               SyncReason = "save"
 	ReasonIdentifierMismatch SyncReason = "identifier_mismatch"
+	// ReasonIdentifierTaken: the name taken from the datasource is used by a policy tree or reserved.
+	ReasonIdentifierTaken SyncReason = "identifier_taken"
 	// ReasonForeignOwner: the config was staged manually, so sync does not overwrite it.
 	ReasonForeignOwner SyncReason = "foreign_owner"
 	// ReasonNoUpstreamConfig: Mimir returned an empty alertmanager_config.
 	// Distinct from ReasonSave — nothing was attempted to persist.
 	ReasonNoUpstreamConfig SyncReason = "no_upstream_config"
 	// ReasonConfigRead: couldn't read the org's config to check if it was already
-	// merged; the tick is skipped rather than risk overwriting it.
+	// merged, or couldn't record the sync identifier; the tick is skipped rather than risk
+	// overwriting it.
 	ReasonConfigRead SyncReason = "config_read"
 	// ReasonUnclassified is the safety net for errors not tagged with
 	// *SyncError. Keeps Prometheus label cardinality bounded.
@@ -115,6 +119,8 @@ func (r SyncReason) ConditionReason() string {
 		return "SaveFailed"
 	case ReasonIdentifierMismatch:
 		return "IdentifierMismatch"
+	case ReasonIdentifierTaken:
+		return "IdentifierTaken"
 	case ReasonForeignOwner:
 		return "ForeignOwner"
 	case ReasonNoUpstreamConfig:
@@ -174,7 +180,8 @@ func ClassifySaveError(err error) *SyncError {
 
 // amConfigReader reads an org's current Alertmanager configuration. Satisfied by
 // the Alertmanager config store; used to detect whether the external config was
-// already merged (a managed route keyed by the datasource UID).
+// already merged (a managed route keyed by the sync identifier) and to pick an
+// identifier that isn't already taken.
 type amConfigReader interface {
 	GetLatestAlertmanagerConfiguration(ctx context.Context, orgID int64) (*models.AlertConfiguration, error)
 }
@@ -297,11 +304,12 @@ func (s *ExternalAMSyncer) FetchExtraConfig(ctx context.Context, orgID int64) (*
 		return nil, 0
 	}
 
-	uid, origin, err := s.resolveExternalAMUIDForOrg(ctx, orgID)
+	target, err := s.resolveSyncTarget(ctx, orgID)
 	if err != nil {
 		s.logger.Warn("Failed to resolve external AM UID", "org_id", orgID, "error", err)
 		return nil, 0
 	}
+	uid, origin := target.uid, target.origin
 	if uid == "" {
 		// Flag on but sync isn't configured here (no ini override, no spec UID):
 		// record Unknown/NotConfigured, which also seeds the singleton (writeStatus
@@ -312,10 +320,19 @@ func (s *ExternalAMSyncer) FetchExtraConfig(ctx context.Context, orgID int64) (*
 
 	orgIDStr := fmt.Sprintf("%d", orgID)
 
+	identifier, err := s.ensureSyncIdentifier(ctx, orgID, target)
+	if err != nil {
+		reason := reasonOf(err)
+		s.logger.Warn("Failed to determine external AM sync identifier; skipping sync", "org_id", orgID, "reason", reason.Label(), "error", err)
+		s.metrics.ExternalAMConfigSyncFailures.WithLabelValues(orgIDStr, reason.Label()).Inc()
+		s.recordSyncResult(ctx, orgID, uid, origin, err)
+		return nil, 0
+	}
+
 	// Stop once the merge is committed: the imported config becomes a managed
-	// route keyed by the datasource UID. Record the terminal status and skip.
+	// route keyed by the sync identifier. Record the terminal status and skip.
 	// A read failure skips the tick but is still surfaced as a failure.
-	committed, err := s.isMergeCommitted(ctx, orgID, uid)
+	state, err := s.readImportState(ctx, orgID, identifier)
 	if err != nil {
 		readErr := &SyncError{Reason: ReasonConfigRead, Cause: err}
 		s.logger.Warn("Failed to check external AM merge state; skipping sync", "org_id", orgID, "error", err)
@@ -323,14 +340,14 @@ func (s *ExternalAMSyncer) FetchExtraConfig(ctx context.Context, orgID int64) (*
 		s.recordSyncResult(ctx, orgID, uid, origin, readErr)
 		return nil, 0
 	}
-	if committed {
+	if state.committed {
 		s.recordMergeCommitted(ctx, orgID, uid, origin)
 		return nil, 0
 	}
 
 	start := time.Now()
 
-	ec, newHash, fetchErr := s.fetchExtraConfig(ctx, orgID, uid)
+	ec, newHash, fetchErr := s.fetchExtraConfig(ctx, orgID, uid, identifier)
 	if fetchErr != nil {
 		reason := reasonOf(fetchErr).Label()
 		s.logger.Warn("Failed to fetch external AM configuration", "org_id", orgID, "reason", reason, "error", fetchErr)
@@ -345,12 +362,19 @@ func (s *ExternalAMSyncer) FetchExtraConfig(ctx context.Context, orgID int64) (*
 	s.metrics.ExternalAMConfigSyncTotal.WithLabelValues(orgIDStr).Inc()
 	s.metrics.ExternalAMConfigSyncDuration.WithLabelValues(orgIDStr).Observe(time.Since(start).Seconds())
 
-	// Cross-tick dedup against the last successful save.
+	// Cross-tick dedup against the last successful save. The remembered hash only says what was saved,
+	// not that it is still there: after sync is disabled the staged copy can be reverted, and re-enabling
+	// the same datasource must then import it again rather than skip it as unchanged.
 	s.lastSyncHashMu.RLock()
 	prevHash, hasPrev := s.lastSyncHash[orgID]
 	s.lastSyncHashMu.RUnlock()
-	if hasPrev && prevHash == newHash {
+	if hasPrev && prevHash == newHash && state.staged {
 		s.logger.Debug("Skipping external AM config save: response unchanged since last sync", "org_id", orgID)
+		// The saved config is still in place, so report the sync as working. The status may have moved on
+		// since (disabling sync marks it NotConfigured), and re-enabling would otherwise leave it there.
+		if !target.syncSucceeded {
+			s.recordSyncResult(ctx, orgID, uid, origin, nil)
+		}
 		return nil, 0
 	}
 
@@ -409,7 +433,7 @@ func (s *ExternalAMSyncer) writeSyncStatusFor(ctx context.Context, orgID int64, 
 // Config.status.
 func (s *ExternalAMSyncer) recordSyncResult(ctx context.Context, orgID int64, uid string, origin externalSyncOrigin, syncErr error) {
 	now := time.Now()
-	s.writeStatus(ctx, orgID, func(prev *alertingnotifv1beta1.ConfigStatus) alertingnotifv1beta1.ConfigStatus {
+	_ = s.writeStatus(ctx, orgID, func(prev *alertingnotifv1beta1.ConfigStatus) alertingnotifv1beta1.ConfigStatus {
 		return computeSyncStatus(prev, uid, origin, syncErr, now)
 	})
 }
@@ -418,7 +442,7 @@ func (s *ExternalAMSyncer) recordSyncResult(ctx context.Context, orgID int64, ui
 // external config has been merged into the org's Grafana config (sync stops).
 func (s *ExternalAMSyncer) recordMergeCommitted(ctx context.Context, orgID int64, uid string, origin externalSyncOrigin) {
 	now := time.Now()
-	s.writeStatus(ctx, orgID, func(prev *alertingnotifv1beta1.ConfigStatus) alertingnotifv1beta1.ConfigStatus {
+	_ = s.writeStatus(ctx, orgID, func(prev *alertingnotifv1beta1.ConfigStatus) alertingnotifv1beta1.ConfigStatus {
 		return computeCommittedStatus(prev, uid, origin, now)
 	})
 }
@@ -427,23 +451,24 @@ func (s *ExternalAMSyncer) recordMergeCommitted(ctx context.Context, orgID int64
 // the singleton if absent (writeStatus creates on missing). Best-effort.
 func (s *ExternalAMSyncer) recordNotConfigured(ctx context.Context, orgID int64) {
 	now := time.Now()
-	s.writeStatus(ctx, orgID, func(prev *alertingnotifv1beta1.ConfigStatus) alertingnotifv1beta1.ConfigStatus {
+	_ = s.writeStatus(ctx, orgID, func(prev *alertingnotifv1beta1.ConfigStatus) alertingnotifv1beta1.ConfigStatus {
 		return computeNotConfiguredStatus(prev, now)
 	})
 }
 
 // writeStatus upserts the org's Config.status using compute(prev), creating the
-// resource if absent. Optimistic via RetryOnConflict; best-effort (failures are
-// logged). Unchanged status produces no physical write (unified storage dedup).
-func (s *ExternalAMSyncer) writeStatus(ctx context.Context, orgID int64, compute func(prev *alertingnotifv1beta1.ConfigStatus) alertingnotifv1beta1.ConfigStatus) {
+// resource if absent. Optimistic via RetryOnConflict. Failures are logged and
+// returned; most callers treat the write as best-effort and ignore the error.
+// Unchanged status produces no physical write (unified storage dedup).
+func (s *ExternalAMSyncer) writeStatus(ctx context.Context, orgID int64, compute func(prev *alertingnotifv1beta1.ConfigStatus) alertingnotifv1beta1.ConfigStatus) error {
 	c, err := s.resolveCfgClient()
 	if err != nil {
 		s.logger.Warn("Failed to resolve Config client for status write", "org_id", orgID, "error", err)
-		return
+		return err
 	}
 	nsCtx, ns := s.orgServiceContext(ctx, orgID)
 	if ns == "" {
-		return
+		return nil
 	}
 	id := resource.Identifier{Namespace: ns, Name: alertingnotifv1beta1.ConfigSingletonName}
 
@@ -476,6 +501,7 @@ func (s *ExternalAMSyncer) writeStatus(ctx context.Context, orgID int64, compute
 	if err != nil {
 		s.logger.Warn("Failed to write Config status", "org_id", orgID, "error", err)
 	}
+	return err
 }
 
 // computeSyncStatus maps a sync outcome (nil = success) to the
@@ -539,6 +565,10 @@ func buildSyncStatus(prev *alertingnotifv1beta1.ConfigStatus, uid string, origin
 			Origin:        &originCopy,
 		},
 	}
+	// The identifier must survive every status write, or the next tick would choose a new one.
+	if identifier := recordedSyncIdentifier(prev, uid); identifier != "" {
+		st.ExternalAlertmanagerSync.Identifier = &identifier
+	}
 
 	// lastTransitionTime advances only when status flips.
 	transitionTime := now.UTC().Format(time.RFC3339)
@@ -590,7 +620,7 @@ func prevConditions(prev *alertingnotifv1beta1.ConfigStatus) []alertingnotifv1be
 // Returns the FNV-1a hash of the raw response body so the caller can dedup across
 // ticks. Failures are returned as *SyncError so callers can extract the reason
 // category via reasonOf without re-classifying.
-func (s *ExternalAMSyncer) fetchExtraConfig(ctx context.Context, orgID int64, uid string) (v1.ExtraConfiguration, uint64, error) {
+func (s *ExternalAMSyncer) fetchExtraConfig(ctx context.Context, orgID int64, uid, identifier string) (v1.ExtraConfiguration, uint64, error) {
 	fetchCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
@@ -611,7 +641,7 @@ func (s *ExternalAMSyncer) fetchExtraConfig(ctx context.Context, orgID int64, ui
 	}
 
 	return v1.ExtraConfiguration{
-		Identifier:         uid,
+		Identifier:         identifier,
 		AlertmanagerConfig: mimirCfg.AlertmanagerConfig,
 		TemplateFiles:      mimirCfg.TemplateFiles,
 		ManagedBy:          v1.ExtraConfigManagedByAutoSync,
@@ -629,45 +659,43 @@ func externalSyncDatasourceUIDFromConfig(c *alertingnotifv1beta1.Config) string 
 	return *c.Spec.ExternalAlertmanagerSync.DatasourceUid
 }
 
-// isMergeCommitted reports whether the org's config already contains a managed
-// route keyed by identifier — i.e. the external config was already imported.
-func (s *ExternalAMSyncer) isMergeCommitted(ctx context.Context, orgID int64, identifier string) (bool, error) {
+// importState is what the org's stored config says about the synced import.
+type importState struct {
+	// committed: the import was promoted into a managed route keyed by its identifier, so sync stops.
+	committed bool
+	// staged: the import is currently stored as an extra configuration with its identifier.
+	staged bool
+}
+
+// readImportState reads the org's stored config to see whether the synced import was promoted, and
+// whether it is still staged.
+func (s *ExternalAMSyncer) readImportState(ctx context.Context, orgID int64, identifier string) (importState, error) {
 	raw, err := s.configReader.GetLatestAlertmanagerConfiguration(ctx, orgID)
 	if err != nil {
-		return false, err
+		return importState{}, err
 	}
 	cfg, err := Load([]byte(raw.AlertmanagerConfiguration))
 	if err != nil {
-		return false, fmt.Errorf("parse alertmanager configuration: %w", err)
+		return importState{}, fmt.Errorf("parse alertmanager configuration: %w", err)
 	}
-	_, ok := cfg.ManagedRoutes[identifier]
-	return ok, nil
+	_, committed := cfg.ManagedRoutes[identifier]
+	staged := slices.ContainsFunc(cfg.ExtraConfigs, func(ec v1.ExtraConfiguration) bool { return ec.Identifier == identifier })
+	return importState{committed: committed, staged: staged}, nil
 }
 
 // resolveExternalAMUIDForOrg returns the datasource UID to use for external AM
 // sync for the given org and where it came from. The operator-level
 // ExternalAlertmanagerUID setting takes precedence over the per-org value.
-// The per-org value is read from the Config k8s resource; if its client
-// can't be constructed the sync fails for this tick rather than falling back to
-// anything. Returns "" when no UID is set (sync should be skipped).
+// The per-org value is read from the Config k8s resource. If that read fails,
+// the operator-level UID is still returned when set. Otherwise the error is
+// returned and the sync fails for this tick. Returns "" when no UID is set,
+// which means the sync is skipped.
 func (s *ExternalAMSyncer) resolveExternalAMUIDForOrg(ctx context.Context, orgID int64) (string, externalSyncOrigin, error) {
-	if uid := s.settings.UnifiedAlerting.ExternalAlertmanagerUID; uid != "" {
-		return uid, originIni, nil
-	}
-
-	c, err := s.resolveCfgClient()
+	target, err := s.resolveSyncTarget(ctx, orgID)
 	if err != nil {
 		return "", "", err
 	}
-	nsCtx, ns := s.orgServiceContext(ctx, orgID)
-	ac, err := c.Get(nsCtx, resource.Identifier{Namespace: ns, Name: alertingnotifv1beta1.ConfigSingletonName})
-	if err != nil {
-		if k8serrors.IsNotFound(err) {
-			return "", originAPI, nil
-		}
-		return "", "", err
-	}
-	return externalSyncDatasourceUIDFromConfig(ac), originAPI, nil
+	return target.uid, target.origin, nil
 }
 
 // IsConfiguredForOrg reports whether external Alertmanager sync is configured

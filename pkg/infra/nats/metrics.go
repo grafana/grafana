@@ -5,6 +5,7 @@ import (
 
 	natsclient "github.com/nats-io/nats.go"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
 const (
@@ -154,10 +155,14 @@ func (m *subscriberMetrics) collectors() []prometheus.Collector {
 // environments that actually run the embedded server, so external/Cloud
 // deployments never export a misleading `embedded_server_up 0`.
 type serverMetrics struct {
-	embeddedServerUp prometheus.Gauge
+	embeddedServerUp       prometheus.Gauge
+	embeddedServerRoutes   prometheus.GaugeFunc
+	discoveryWakesReceived prometheus.Counter
 }
 
-func newServerMetrics(reg prometheus.Registerer) *serverMetrics {
+// routedPeers is read at scrape time, so the gauge follows routes that fail or
+// drop between discovery reconciles.
+func newServerMetrics(reg prometheus.Registerer, routedPeers func() int) *serverMetrics {
 	m := &serverMetrics{
 		embeddedServerUp: prometheus.NewGauge(prometheus.GaugeOpts{
 			Namespace: metricsNamespace,
@@ -165,11 +170,25 @@ func newServerMetrics(reg prometheus.Registerer) *serverMetrics {
 			Name:      "embedded_server_up",
 			Help:      "Whether the embedded NATS server is running (1 = up, 0 = down).",
 		}),
+		embeddedServerRoutes: promauto.With(reg).NewGaugeFunc(prometheus.GaugeOpts{
+			Name: "grafana_nats_embedded_server_routes",
+			Help: "Number of other instances the embedded NATS server has an established cluster route to. Instances minus one when the cluster is fully connected.",
+		}, func() float64 { return float64(routedPeers()) }),
+		discoveryWakesReceived: prometheus.NewCounter(prometheus.CounterOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsSubsystem,
+			Name:      "discovery_wakes_received_total",
+			Help:      "Total number of wake hints received from peers leaving the cluster.",
+		}),
 	}
 
-	reg.MustRegister(m.embeddedServerUp)
+	reg.MustRegister(m.embeddedServerUp, m.discoveryWakesReceived)
 
 	return m
+}
+
+func (m *serverMetrics) recordDiscoveryWake() {
+	m.discoveryWakesReceived.Inc()
 }
 
 // clusterTLSMetrics covers certificate reloads. It is registered only when

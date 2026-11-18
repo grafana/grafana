@@ -1,7 +1,7 @@
 import { useAlertmanager } from 'app/features/alerting/unified/state/AlertmanagerContext';
 
 import { useContactPointsNav } from '../../navigation/useNotificationConfigNav';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/constants';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertmanagerPageWrapper } from '../AlertingPageWrapper';
 

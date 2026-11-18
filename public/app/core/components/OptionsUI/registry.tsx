@@ -32,6 +32,7 @@ import {
 } from '@grafana/data';
 import { actionsOverrideProcessor } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { type FieldConfig } from '@grafana/schema';
 import { RadioButtonGroup, Switch, TimeZonePicker } from '@grafana/ui';
 
@@ -482,7 +483,9 @@ export const getAllStandardFieldConfigs = () => {
     editor: standardEditorsRegistry.get('mappings').editor,
     override: standardEditorsRegistry.get('mappings').editor,
     process: valueMappingsOverrideProcessor,
-    settings: {},
+    settings: {
+      interpolateText: getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaPanelOptionInterpolation, false),
+    },
     defaultValue: [],
     shouldApply: (x) => x.type !== FieldType.time,
     category: [t('options-ui.registry.standard-field-configs.category-value-mappings', 'Value mappings')],
@@ -512,7 +515,7 @@ export const getAllStandardFieldConfigs = () => {
   const filterable: FieldConfigPropertyItem<FieldConfig, boolean | undefined, {}> = {
     id: 'filterable',
     path: 'filterable',
-    name: t('options-ui.registry.standard-field-configs.name-ad-hoc', 'Filter from values'),
+    name: t('options-ui.registry.standard-field-configs.name-ad-hoc', 'Cross-filter'),
     description: t(
       'options-ui.registry.standard-field-configs.description-ad-hoc',
       'Allow viewers to update dashboard filters by interacting with this panel.'

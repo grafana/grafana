@@ -144,11 +144,12 @@ func TestUnifiedUserTeamsErrors(t *testing.T) {
 		err         error
 		getterError error
 		want        string
+		wantCode    int32
 	}{
 		{name: "transport", err: errors.New("index unavailable"), want: "index unavailable"},
-		{name: "response", response: &resourcepb.ResourceSearchResponse{Error: &resourcepb.ErrorResult{Code: 500, Message: "index unavailable"}}, want: "index unavailable"},
 		{name: "unspecified format", response: &resourcepb.ResourceSearchResponse{}, want: "unsupported search result format"},
 		{name: "table format", response: &resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_RESOURCE_TABLE}, want: "unsupported search result format"},
+		{name: "status detail", err: resource.GRPCStatusError(&resourcepb.ErrorResult{Code: 503, Message: "index unavailable"}), want: "index unavailable", wantCode: 503},
 		{name: "format", response: &resourcepb.ResourceSearchResponse{ResultFormat: 99}, want: "unsupported search result format"},
 		{name: "nil field row", response: &resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES, Rows: []*resourcepb.ResourceSearchRow{nil}}, want: "has no resource key"},
 		{name: "nil field key", response: &resourcepb.ResourceSearchResponse{ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES, Rows: []*resourcepb.ResourceSearchRow{{}}}, want: "has no resource key"},
@@ -160,7 +161,11 @@ func TestUnifiedUserTeamsErrors(t *testing.T) {
 			page, err := NewUnifiedUserTeamsBackend(client, getter).ListUserTeams(t.Context(), UserTeamsQuery{UserUID: "alice", Limit: 10})
 			require.ErrorContains(t, err, tt.want)
 			require.Nil(t, page)
-			if tt.err != nil {
+			if tt.wantCode != 0 {
+				var status apierrors.APIStatus
+				require.ErrorAs(t, err, &status)
+				require.Equal(t, tt.wantCode, status.Status().Code)
+			} else if tt.err != nil {
 				require.ErrorIs(t, err, tt.err)
 			}
 			if tt.getterError != nil {

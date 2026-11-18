@@ -39,6 +39,9 @@ WHERE team_user.is_service_account = {{ .Arg .IsServiceAccount }}
 {{ if .UserID -}}
   AND team_member.user_id = {{ .Arg .UserID }}
 {{ end -}}
+{{ if .UserUID -}}
+  AND team_user.uid = {{ .Arg .UserUID }}
+{{ end -}}
 {{ if .External -}}
   AND team_member.external = {{ .Arg .IsExternal }}
 {{ end -}}

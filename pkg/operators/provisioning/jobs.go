@@ -70,7 +70,7 @@ func buildDriver(
 		provisioningClient.ProvisioningV0alpha1(),
 	)
 	// This is basically our own JobQueue system
-	return jobs.NewConcurrentJobDriver(
+	driver, err := jobs.NewConcurrentJobDriver(
 		dc.concurrentDrivers,
 		dc.maxJobTimeout,
 		dc.jobInterval,
@@ -83,15 +83,14 @@ func buildDriver(
 		nats.Enabled(controllerCfg.natsSubscriber),
 		workers...,
 	)
+	if err != nil {
+		return nil, err
+	}
+	driver.SetTracer(tracer)
+	return driver, nil
 }
 
 func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry prometheus.Registerer, tracer tracing.Tracer, maxSyncWorkers int) ([]jobs.Worker, *jobs.JobMetrics, error) {
-	featureManager, err := featuremgmt.ProvideManagerService(cfg)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to provide feature manager: %w", err)
-	}
-	features := featuremgmt.ProvideToggles(featureManager)
-	folderMetadataEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata) //nolint:staticcheck
 	// Evaluated per job via OpenFeature so the flag behaves consistently with the
 	// API server (see performanceEnabled in the provisioning apiserver package).
 	perfTestingEnabled := func(ctx context.Context) bool {
@@ -102,20 +101,19 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to get clients: %w", err)
 	}
-	parsers := resources.NewParserFactory(clients, folderMetadataEnabled)
+	parsers := resources.NewParserFactory(clients)
 
-	unified, err := controllerCfg.UnifiedStorageClient()
+	resourceLister, err := controllerCfg.ResourceLister()
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to get unified storage client: %w", err)
+		return nil, nil, err
 	}
-	resourceLister := resources.NewResourceLister(unified)
 
 	provisioningClient, err := controllerCfg.ProvisioningClient()
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create provisioning client: %w", err)
 	}
 
-	repositoryResources := resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister, folderMetadataEnabled)
+	repositoryResources := resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister)
 	statusPatcher := controller.NewRepositoryStatusPatcher(provisioningClient.ProvisioningV0alpha1())
 
 	urlProvider, err := controllerCfg.URLProvider()
@@ -125,7 +123,7 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 
 	metrics := jobs.RegisterJobMetrics(registry)
 
-	syncer := jobsync.NewSyncer(jobsync.Compare, jobsync.FullSync, jobsync.IncrementalSync, tracer, maxSyncWorkers, metrics, folderMetadataEnabled, cfg.ProvisioningSyncResourceTimeout)
+	syncer := jobsync.NewSyncer(jobsync.Compare, jobsync.FullSync, jobsync.IncrementalSync, tracer, maxSyncWorkers, metrics, cfg.ProvisioningSyncResourceTimeout)
 	syncWorker := jobsync.NewSyncWorker(
 		clients,
 		repositoryResources,
@@ -144,7 +142,6 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 	exportWorker := export.NewExportWorker(
 		clients,
 		repositoryResources,
-		resourceLister,
 		export.ExportAllWithNewUIDs,
 		stageIfPossible,
 		metrics,
@@ -155,7 +152,6 @@ func buildWorkers(cfg *setting.Cfg, controllerCfg *ControllerConfig, registry pr
 	migrateExportWorker := export.NewExportWorker(
 		clients,
 		repositoryResources,
-		resourceLister,
 		export.ExportAll,
 		stageIfPossible,
 		metrics,

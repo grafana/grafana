@@ -8,6 +8,8 @@ import (
 	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/grafana/authlib/authn"
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
@@ -436,13 +438,16 @@ func (e *recordingUserPermissionsEvaluator) GetLocalUserPermissions(_ context.Co
 }
 
 type recordingUserPermissionsResolver struct {
+	scopes      []accesscontrol.Permission
+	skipCache   bool
 	permissions []accesscontrol.Permission
 	user        identity.Requester
 	err         error
 }
 
-func (r *recordingUserPermissionsResolver) ResolveCurrentUserPermissions(_ context.Context, user identity.Requester) ([]accesscontrol.Permission, error) {
+func (r *recordingUserPermissionsResolver) ResolveCurrentUserPermissions(_ context.Context, user identity.Requester, skipCache bool) ([]accesscontrol.Permission, error) {
 	r.user = user
+	r.skipCache = skipCache
 	return r.permissions, r.err
 }
 
@@ -473,4 +478,41 @@ func (s *collectUserPermissionsStream) Context() context.Context {
 func (s *collectUserPermissionsStream) Send(response *authzv1.GetUserPermissionsResponse) error {
 	s.responses = append(s.responses, response)
 	return nil
+}
+
+func TestService_GetUserPermissionsForwardsPrincipalCacheBypass(t *testing.T) {
+	for _, subject := range []string{"user:test-uid", "anonymous:0"} {
+		for _, skip := range []bool{false, true} {
+			t.Run(fmt.Sprintf("%s/skip=%t", subject, skip), func(t *testing.T) {
+				service := setupService()
+				service.store = &fakeStore{userID: &store.UserIdentifiers{UID: "test-uid", ID: 42}, basicRole: &store.BasicRole{Role: "Viewer"}}
+				service.identityStore = &fakeIdentityStore{}
+				service.permissionStore = &snapshotPermissionStore{}
+				resolver := &recordingUserPermissionsResolver{}
+				service.userPermissionsResolver = resolver
+				caller := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{Rest: authn.AccessTokenClaims{Namespace: "org-12", Permissions: []string{"authz.grafana.app/userpermissions:get"}}})
+				stream := &collectUserPermissionsStream{ctx: types.WithAuthInfo(t.Context(), caller)}
+				require.NoError(t, service.GetUserPermissions(&authzv1.GetUserPermissionsRequest{Namespace: "org-12", Subject: subject, Options: &authzv1.GetUserPermissionsOptions{Skipcache: skip}}, stream))
+				require.NotNil(t, resolver.user)
+				require.Equal(t, skip, resolver.skipCache)
+			})
+		}
+	}
+}
+
+func (r *recordingUserPermissionsResolver) ResolvePermissionScopes(_ context.Context, _ identity.Requester, permissions []accesscontrol.Permission) ([]accesscontrol.Permission, error) {
+	r.scopes = permissions
+	return permissions, nil
+}
+
+func TestService_GetUserPermissionsRequiresServiceGrant(t *testing.T) {
+	service := setupService()
+	caller := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
+		Claims: jwt.Claims{Subject: types.NewTypeID(types.TypeAccessPolicy, "grafana")},
+		Rest:   authn.AccessTokenClaims{Namespace: "org-12"},
+	})
+	stream := &collectUserPermissionsStream{ctx: types.WithAuthInfo(t.Context(), caller)}
+	err := service.GetUserPermissions(&authzv1.GetUserPermissionsRequest{Namespace: "org-12", Subject: "user:test-uid"}, stream)
+	require.Equal(t, codes.PermissionDenied, status.Code(err))
+	require.Empty(t, stream.responses)
 }

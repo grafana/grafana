@@ -4,7 +4,7 @@ import { type Labels } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Drawer, Stack } from '@grafana/ui';
 import { SilencesEditor } from 'app/features/alerting/unified/components/silences/SilencesEditor';
-import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/constants';
 
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 

@@ -5,7 +5,7 @@ import { getWrapper } from 'test/test-utils';
 import { disablePlugin } from 'app/features/alerting/unified/mocks/server/configure';
 import { setOnCallIntegrations } from 'app/features/alerting/unified/mocks/server/handlers/plugins/configure-plugins';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
-import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/constants';
 import { type AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 

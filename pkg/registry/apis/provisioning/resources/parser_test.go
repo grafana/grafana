@@ -380,11 +380,10 @@ spec:
 			Return(&repository.FileInfo{Data: []byte(folderMetadataJSON), Hash: "h1"}, nil)
 
 		p := &parser{
-			repo:                  provisioning.ResourceRepositoryInfo{Type: provisioning.GitHubRepositoryType, Namespace: "xxx", Name: "repo"},
-			clients:               clients,
-			config:                repoConfig,
-			reader:                reader,
-			folderMetadataEnabled: true,
+			repo:    provisioning.ResourceRepositoryInfo{Type: provisioning.GitHubRepositoryType, Namespace: "xxx", Name: "repo"},
+			clients: clients,
+			config:  repoConfig,
+			reader:  reader,
 		}
 
 		parsed, err := p.Parse(context.Background(), &repository.FileInfo{
@@ -405,11 +404,10 @@ spec:
 			Return(&repository.FileInfo{Data: []byte(folderMetadataJSON), Hash: "h1"}, nil)
 
 		p := &parser{
-			repo:                  provisioning.ResourceRepositoryInfo{Type: provisioning.GitHubRepositoryType, Namespace: "xxx", Name: "repo"},
-			clients:               clients,
-			config:                repoConfig,
-			reader:                reader,
-			folderMetadataEnabled: true,
+			repo:    provisioning.ResourceRepositoryInfo{Type: provisioning.GitHubRepositoryType, Namespace: "xxx", Name: "repo"},
+			clients: clients,
+			config:  repoConfig,
+			reader:  reader,
 		}
 
 		parsed, err := p.Parse(context.Background(), &repository.FileInfo{
@@ -431,11 +429,10 @@ spec:
 			Return(nil, repository.ErrFileNotFound)
 
 		p := &parser{
-			repo:                  provisioning.ResourceRepositoryInfo{Type: provisioning.GitHubRepositoryType, Namespace: "xxx", Name: "repo"},
-			clients:               clients,
-			config:                repoConfig,
-			reader:                reader,
-			folderMetadataEnabled: true,
+			repo:    provisioning.ResourceRepositoryInfo{Type: provisioning.GitHubRepositoryType, Namespace: "xxx", Name: "repo"},
+			clients: clients,
+			config:  repoConfig,
+			reader:  reader,
 		}
 
 		parsed, err := p.Parse(context.Background(), &repository.FileInfo{
@@ -455,11 +452,10 @@ spec:
 			Return(nil, repository.ErrFileNotFound)
 
 		p := &parser{
-			repo:                  provisioning.ResourceRepositoryInfo{Type: provisioning.GitHubRepositoryType, Namespace: "xxx", Name: "repo"},
-			clients:               clients,
-			config:                repoConfig,
-			reader:                reader,
-			folderMetadataEnabled: true,
+			repo:    provisioning.ResourceRepositoryInfo{Type: provisioning.GitHubRepositoryType, Namespace: "xxx", Name: "repo"},
+			clients: clients,
+			config:  repoConfig,
+			reader:  reader,
 		}
 
 		parsed, err := p.Parse(context.Background(), &repository.FileInfo{
@@ -1175,4 +1171,43 @@ func TestParsedResource_Run(t *testing.T) {
 func TestExistingFolderCanonicalRoot(t *testing.T) {
 	parsed := &ParsedResource{Existing: &unstructured.Unstructured{Object: map[string]interface{}{"metadata": map[string]interface{}{"annotations": map[string]interface{}{"grafana.app/folder": "general"}}}}}
 	require.Empty(t, parsed.ExistingFolder(), "root must not become an orphan-folder cleanup target")
+}
+
+// TestParserAcceptsSecureValuesForIdentityReads pins that the secure-value guard
+// is not in Parse: a file that already carries a secret must still parse, or it
+// could never be deleted or superseded.
+func TestParserAcceptsSecureValuesForIdentityReads(t *testing.T) {
+	gvk := schema.GroupVersionKind{Group: "prometheus.datasource.grafana.app", Version: "v0alpha1", Kind: "DataSource"}
+	gvr := schema.GroupVersionResource{Group: gvk.Group, Version: gvk.Version, Resource: "datasources"}
+
+	clients := NewMockResourceClients(t)
+	clients.On("ForKind", mock.Anything, gvk).Return(nil, gvr, nil).Maybe()
+	clients.On("SupportedResources").Return(SupportedProvisioningResources).Maybe()
+
+	p := &parser{
+		repo: provisioning.ResourceRepositoryInfo{
+			Type:      provisioning.GitHubRepositoryType,
+			Namespace: "xxx",
+			Name:      "repo",
+		},
+		clients: clients,
+		config: &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Namespace: "xxx", Name: "repo"},
+			Spec:       provisioning.RepositorySpec{Type: provisioning.GitHubRepositoryType},
+		},
+	}
+
+	parsed, err := p.Parse(context.Background(), &repository.FileInfo{
+		Path: "datasource.yaml",
+		Data: []byte(`apiVersion: ` + gvk.GroupVersion().String() + `
+kind: DataSource
+metadata:
+  name: my-ds
+secure:
+  basicAuthPassword:
+    create: super-secret
+`),
+	})
+	require.NoError(t, err)
+	require.Equal(t, "my-ds", parsed.Obj.GetName())
 }

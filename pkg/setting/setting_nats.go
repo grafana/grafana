@@ -45,6 +45,8 @@ type NATSSettings struct {
 	// server is prepended automatically.
 	ClientURLs []string
 
+	// ListenAddress binds the cluster port. Empty lets the embedded server choose
+	// from the database type and whether discovery is on.
 	ListenAddress    string
 	ClientPort       int
 	ClusterPort      int
@@ -81,13 +83,13 @@ type NATSSettings struct {
 	NotificationMetadata bool
 
 	// Notifier feeds the watch pipeline directly from the NATS bus instead of
-	// polling. Delivery is at-most-once; a disabled or unavailable bus degrades
-	// to polling.
+	// polling. Delivery is at-most-once, so known delivery gaps expire watches;
+	// a disabled bus falls back to polling. Defaults to Enabled.
 	Notifier bool
 
 	// NotifierWatchMaxAge makes each NATS-backed watch client re-list once per
-	// max age, at a phase spread across clients.
-	// Zero disables expiry.
+	// max age, at a phase spread across clients. Zero disables expiry. Defaults
+	// to defaultNotifierWatchMaxAge while the notifier is on.
 	NotifierWatchMaxAge time.Duration
 
 	TLS  NATSTLSSettings
@@ -163,6 +165,27 @@ type NATSAuthSettings struct {
 	TokenExchangeNamespace string
 }
 
+// natsEnabledDefault is the [nats] enabled default for the single binary.
+// conf/defaults.ini leaves enabled empty so this and the targets decide. A var
+// so tests can check module targets with the default on.
+var natsEnabledDefault = false
+
+// natsEnabledByDefault reports whether an empty [nats] enabled turns the bus on
+// for these targets. Module targets can't run the embedded server, so they stay
+// off unless enabled is set, rather than failing to start once the default is on.
+func natsEnabledByDefault(targets []string) bool {
+	for _, target := range targets {
+		if target != "all" && target != "core" {
+			return false
+		}
+	}
+	return natsEnabledDefault
+}
+
+// defaultNotifierWatchMaxAge bounds how long a watch can miss a lost NATS
+// notification, matching what Grafana Cloud runs.
+const defaultNotifierWatchMaxAge = time.Hour
+
 func readNATSSettings(cfg *Cfg) error {
 	section := cfg.Raw.Section("nats")
 	// Token exchange reuses the cloud client wiring (signer URL + bootstrap token)
@@ -177,11 +200,24 @@ func readNATSSettings(cfg *Cfg) error {
 		return fmt.Errorf("invalid nats mode %q, expected %q or %q", mode, NATSModeEmbedded, NATSModeExternal)
 	}
 
+	cfg.explicitWatchSettings.notifier = explicitlySet(section, "notifier")
+	cfg.explicitWatchSettings.notifierWatchMaxAge = explicitlySet(section, "notifier_watch_max_age")
+	// The notifier and its max age default on with the bus only, so turning NATS
+	// on is a single setting and nothing changes while it is off. Shadow mode
+	// compares the bus with polling, so it keeps watches on polling.
+	enabled := section.Key("enabled").MustBool(natsEnabledByDefault(cfg.Target))
+	shadow := section.Key("notifier_shadow").MustBool(false)
+	notifier := section.Key("notifier").MustBool(enabled && !shadow)
+	var watchMaxAge time.Duration
+	if enabled && notifier {
+		watchMaxAge = defaultNotifierWatchMaxAge
+	}
+
 	cfg.NATS = NATSSettings{
-		Enabled:             section.Key("enabled").MustBool(false),
+		Enabled:             enabled,
 		Mode:                mode,
 		ClientURLs:          util.SplitString(section.Key("client_urls").MustString("")),
-		ListenAddress:       section.Key("listen_address").MustString("127.0.0.1"),
+		ListenAddress:       section.Key("listen_address").MustString(""),
 		ClientPort:          section.Key("client_port").MustInt(4222),
 		ClusterPort:         section.Key("cluster_port").MustInt(6222),
 		AdvertiseAddress:    section.Key("advertise_address").MustString(""),
@@ -195,11 +231,11 @@ func readNATSSettings(cfg *Cfg) error {
 
 		DiscoveryEnabled:     section.Key("discovery_enabled").MustBool(true),
 		DiscoveryInterval:    section.Key("discovery_interval").MustDuration(5 * time.Second),
-		DiscoveryTTL:         section.Key("discovery_ttl").MustDuration(30 * time.Second),
-		NotifierShadow:       section.Key("notifier_shadow").MustBool(false),
-		Notifier:             section.Key("notifier").MustBool(false),
+		DiscoveryTTL:         section.Key("discovery_ttl").MustDuration(15 * time.Second),
+		NotifierShadow:       shadow,
+		Notifier:             notifier,
 		NotificationMetadata: section.Key("notification_metadata").MustBool(false),
-		NotifierWatchMaxAge:  section.Key("notifier_watch_max_age").MustDuration(0),
+		NotifierWatchMaxAge:  section.Key("notifier_watch_max_age").MustDuration(watchMaxAge),
 		TLS: NATSTLSSettings{
 			Enabled:            section.Key("tls_enabled").MustBool(false),
 			CACertPath:         section.Key("tls_ca_cert_path").MustString(""),

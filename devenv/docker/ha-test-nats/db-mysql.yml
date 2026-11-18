@@ -1,0 +1,18 @@
+services:
+  db:
+    image: mysql:8.4.13
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: grafana
+      MYSQL_USER: grafana
+      MYSQL_PASSWORD: password
+    command: [mysqld, --character-set-server=utf8mb4, --collation-server=utf8mb4_unicode_ci, --max-connections=1001]
+    tmpfs:
+      - /var/lib/mysql
+    # Query over TCP: the init server the entrypoint runs first only listens on the socket,
+    # so a socket ping reports healthy before the real server accepts Grafana's connections.
+    healthcheck:
+      test: ["CMD", "mysql", "-h127.0.0.1", "-ugrafana", "-ppassword", "-e", "SELECT 1", "grafana"]
+      interval: 3s
+      timeout: 10s
+      retries: 40

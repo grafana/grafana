@@ -20,6 +20,7 @@ import appPlatformProvisioningv0alpha1Handlers from './apis/provisioning.grafana
 import appPlatformQuotasv0alpha1Handlers from './apis/quotas.grafana.app/v0alpha1/handlers';
 import appPlatformScopev0alpha1Handlers from './apis/scope.grafana.app/v0alpha1/handlers';
 import authHandlers from './auth/handlers';
+import gatewayHandlers from './gateway/handlers';
 
 const allHandlers: HttpHandler[] = [
   // Legacy handlers
@@ -28,6 +29,7 @@ const allHandlers: HttpHandler[] = [
   ...dashboardsHandlers,
   ...folderHandlers,
   ...frontendSettingsHandlers,
+  ...gatewayHandlers,
   ...pluginsHandlers,
   ...searchHandlers,
   ...teamsHandlers,
