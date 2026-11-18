@@ -53,7 +53,10 @@ describe('AlertRulesFilterSidebar', () => {
     expect(keys).toHaveLength(2);
     expect(keys[0]).toHaveValue('team');
     expect(keys[1]).toHaveValue('env');
-    expect(screen.getByRole('textbox', { name: 'Label value' })).toHaveValue('api');
+    const values = screen.getAllByRole('textbox', { name: 'Label value' });
+    expect(values[0]).toHaveValue('api');
+    expect(values[1]).toBeDisabled();
+    expect(values[1]).toHaveAttribute('placeholder', 'none');
   });
 
   it.each([
