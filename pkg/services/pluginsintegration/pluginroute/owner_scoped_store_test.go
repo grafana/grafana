@@ -137,6 +137,19 @@ func TestOwnedListStoreList(t *testing.T) {
 		require.Empty(t, names(store, "user-other"), "another user's object")
 		require.Empty(t, names(store, "team-t2"), "a team the caller is not in, without access to it")
 		require.Empty(t, names(store, "team-none"), "an object that does not exist")
+
+		parsed, err := fields.ParseSelector("metadata.name==team-t1")
+		require.NoError(t, err)
+		got, err := store.List(ctxFor(user), &metainternalversion.ListOptions{FieldSelector: parsed})
+		require.NoError(t, err, "== is the same selector as =")
+		items, err := meta.ExtractList(got)
+		require.NoError(t, err)
+		require.Equal(t, []string{"team-t1"}, namesOf(t, items))
+
+		other, err := fields.ParseSelector("spec.foo=bar")
+		require.NoError(t, err)
+		_, err = store.List(ctxFor(user), &metainternalversion.ListOptions{FieldSelector: other})
+		require.True(t, apierrors.IsBadRequest(err))
 	})
 
 	t.Run("a list without a requester fails", func(t *testing.T) {

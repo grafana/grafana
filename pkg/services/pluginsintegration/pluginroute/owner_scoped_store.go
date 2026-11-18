@@ -76,7 +76,7 @@ func (s *ownerScopedStore) List(ctx context.Context, options *metainternalversio
 // owned are the objects the caller already owns.
 func (s *ownerScopedStore) selectedObjects(ctx context.Context, selector fields.Selector, owned []runtime.Object) ([]runtime.Object, error) {
 	reqs := selector.Requirements()
-	if len(reqs) != 1 || reqs[0].Field != "metadata.name" || reqs[0].Operator != selection.Equals {
+	if len(reqs) != 1 || reqs[0].Field != "metadata.name" || (reqs[0].Operator != selection.Equals && reqs[0].Operator != selection.DoubleEquals) {
 		return nil, apierrors.NewBadRequest("only a metadata.name= fieldSelector is supported")
 	}
 	name := reqs[0].Value
