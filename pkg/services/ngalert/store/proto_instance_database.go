@@ -119,19 +119,13 @@ func (st ProtoInstanceDBStore) DeleteAlertInstancesByRule(ctx context.Context, k
 	})
 }
 
-// FullSync does not know about series, so it carries the stored ones over instead of dropping them.
 func (st ProtoInstanceDBStore) FullSync(ctx context.Context, instances []models.AlertInstance, batchSize int, jitterFunc func(int) time.Duration) error {
-	return st.fullSync(ctx, instances, nil, true)
+	return st.FullSyncWithSeries(ctx, instances, nil, batchSize, jitterFunc)
 }
 
 // FullSyncWithSeries rewrites the table from the instances and the recording series.
 // A rule that has only series gets a row of its own. A rule with an empty set gets none.
 func (st ProtoInstanceDBStore) FullSyncWithSeries(ctx context.Context, instances []models.AlertInstance, series map[models.AlertRuleKey][]models.RecordingSeries, batchSize int, jitterFunc func(int) time.Duration) error {
-	return st.fullSync(ctx, instances, series, false)
-}
-
-// fullSync with keepStoredSeries false writes exactly the series it is given.
-func (st ProtoInstanceDBStore) fullSync(ctx context.Context, instances []models.AlertInstance, series map[models.AlertRuleKey][]models.RecordingSeries, keepStoredSeries bool) error {
 	// Like FullSync, an empty state leaves the table alone. Empty series sets do not count as state.
 	if len(instances) == 0 && !hasSeries(series) {
 		return nil
@@ -187,29 +181,9 @@ func (st ProtoInstanceDBStore) fullSync(ctx context.Context, instances []models.
 		syncTimestamp := time.Now()
 		logger.Debug("Starting FullSync transaction", "rules_count", len(preparedRules), "timestamp", syncTimestamp)
 
-		var stored map[models.AlertRuleKey][]*pb.RecordingSeries
-		if keepStoredSeries {
-			var err error
-			if stored, err = readStoredSeries(sess); err != nil {
-				return err
-			}
-		}
-
 		// First we delete all records from the table
 		if _, err := sess.Exec("DELETE FROM alert_rule_state"); err != nil {
 			return fmt.Errorf("failed to delete alert_rule_state: %w", err)
-		}
-
-		// A rule with instances is an alert rule now, so its stored series are stale.
-		for _, prepared := range preparedRules {
-			delete(stored, prepared.ruleKey.AlertRuleKey)
-		}
-		for key, kept := range stored {
-			compressed, err := compressRuleState(nil, kept)
-			if err != nil {
-				return fmt.Errorf("failed to compress series for rule %s: %w", key.UID, err)
-			}
-			preparedRules = append(preparedRules, preparedRule{ruleKey: models.AlertRuleKeyWithGroup{AlertRuleKey: key}, compressedData: compressed})
 		}
 
 		for i, prepared := range preparedRules {

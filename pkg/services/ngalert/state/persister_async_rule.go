@@ -2,6 +2,7 @@ package state
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	"github.com/benbjohnson/clock"
@@ -19,6 +20,8 @@ type AsyncRuleStatePersister struct {
 	store    InstanceStore
 	clock    clock.Clock
 	interval time.Duration
+
+	warnNoSeriesProvider sync.Once
 }
 
 func NewAsyncRuleStatePersister(log log.Logger, clk clock.Clock, interval time.Duration, cfg ManagerCfg) StatePersister {
@@ -64,6 +67,11 @@ func (a *AsyncRuleStatePersister) fullSync(ctx context.Context, instancesProvide
 		// Series are written only here in async mode, so a snapshot cannot overwrite newer series.
 		err = seriesStore.FullSyncWithSeries(ctx, instances, seriesProvider.GetRecordingSeries(), 0, nil)
 	} else {
+		if hasSeriesStore {
+			a.warnNoSeriesProvider.Do(func() {
+				a.log.Info("The state cache does not provide recording series, so a full sync does not write them")
+			})
+		}
 		err = a.store.FullSync(ctx, instances, 0, nil)
 	}
 	if err != nil {
