@@ -161,10 +161,14 @@ export function toggleInlineMark(view: EditorView, kind: InlineMarkKind) {
 
   let enclosing: SyntaxNode | undefined;
   const contained: SyntaxNode[] = [];
+  const delimiters: Array<{ from: number; to: number }> = [];
   tree.iterate({
     from,
     to,
     enter: (ref) => {
+      if (inlineNames.includes(ref.name)) {
+        delimiters.push(...delimiterRanges(ref.node));
+      }
       if (ref.name !== targetName) {
         return;
       }
@@ -183,11 +187,20 @@ export function toggleInlineMark(view: EditorView, kind: InlineMarkKind) {
     }
   };
 
+  // Only actual delimiters count: a literal `_` next to the span is content, so the selection gets wrapped.
+  const onlyDelimiters = (start: number, end: number) => {
+    for (let pos = start; pos < end; ) {
+      const d = delimiters.find((r) => r.from <= pos && pos < r.to);
+      if (!d) {
+        return false;
+      }
+      pos = d.to;
+    }
+    return true;
+  };
   const [only] = contained;
   const onlyMarkedSpan =
-    !enclosing &&
-    contained.length === 1 &&
-    /^[*_~`]*$/.test(state.sliceDoc(from, only.from) + state.sliceDoc(only.to, to));
+    !enclosing && contained.length === 1 && onlyDelimiters(from, only.from) && onlyDelimiters(only.to, to);
 
   if (enclosing) {
     unwrap(enclosing);

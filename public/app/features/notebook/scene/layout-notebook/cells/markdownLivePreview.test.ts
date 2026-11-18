@@ -623,6 +623,14 @@ describe('toggleInlineMark delimiters', () => {
     expect(selected(view)).toBe('fo');
   });
 
+  it('bolds a selection where a literal delimiter character sits next to a bold span', () => {
+    const view = createView('_**foo**', 0, 8);
+
+    toggleInlineMark(view, 'bold');
+
+    expect(view.state.doc.toString()).toBe('**_foo**');
+  });
+
   it('wraps plain text and keeps it selected', () => {
     const view = createView('foo', 0, 3);
 
