@@ -1,12 +1,12 @@
 import { css, cx } from '@emotion/css';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { type ChatContextItem } from '@grafana/assistant';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { Button, Icon, Stack, useStyles2 } from '@grafana/ui';
+import { Button, Icon, useStyles2 } from '@grafana/ui';
 import { useHoldFloatingExtensionSidebar } from 'app/core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider';
 import { useTemplateDashboardsAvailability } from 'app/features/dashboard/dashgrid/DashboardLibrary/hooks/useTemplateDashboardsAvailability';
 import { type TemplateSelection } from 'app/features/dashboard/dashgrid/DashboardLibrary/types';
@@ -20,6 +20,45 @@ import { startPlanningInAssistant } from './handoff';
 
 interface Props {
   dashboard: DashboardScene;
+}
+
+/** How far the template panel starts behind the prompt. */
+const PROMPT_OVERLAP = 24;
+
+/** Below this the page scrolls instead of squeezing the template grid to nothing. */
+const MIN_HEIGHT_WITH_TEMPLATES = 360;
+
+/**
+ * Height that ends the landing at the bottom of the area its dashboard scrolls in, so the template grid scrolls
+ * inside its panel and the "build it yourself" actions under it stay in view. The dashboard body grows with its
+ * content, so no CSS height chain reaches this far down.
+ */
+function useFitToScrollArea(enabled: boolean) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [height, setHeight] = useState<number>();
+
+  useLayoutEffect(() => {
+    const element = ref.current;
+    if (!enabled || !element) {
+      setHeight(undefined);
+      return;
+    }
+    const update = () => {
+      let scrollArea = element.parentElement;
+      while (scrollArea && !/(auto|scroll)/.test(getComputedStyle(scrollArea).overflowY)) {
+        scrollArea = scrollArea.parentElement;
+      }
+      const bottom = scrollArea
+        ? scrollArea.getBoundingClientRect().bottom - parseFloat(getComputedStyle(scrollArea).paddingBottom || '0')
+        : window.innerHeight;
+      setHeight(Math.max(MIN_HEIGHT_WITH_TEMPLATES, Math.floor(bottom - element.getBoundingClientRect().top)));
+    };
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, [enabled]);
+
+  return { ref, height };
 }
 
 export function AssistantDashboardEmpty({ dashboard }: Props) {
@@ -36,6 +75,7 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
   const { testDataSource, showGrafanaTemplates, showCustomTemplates, isAvailable } =
     useTemplateDashboardsAvailability();
   const showTemplates = isAvailable && !assistantDriven;
+  const { ref: fitRef, height: fitHeight } = useFitToScrollArea(showTemplates);
   // The picked template travels to the Assistant as a context pill in the prompt.
   const [template, setTemplate] = useState<TemplateSelection>();
   const hostContextItems = useMemo(() => (template ? [template.contextItem] : []), [template]);
@@ -116,9 +156,9 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
   }, [assistantDriven, sidebar]);
 
   return (
-    <div className={styles.root}>
+    <div ref={fitRef} className={styles.root} style={fitHeight ? { height: fitHeight } : undefined}>
       <div className={cx(styles.content, showTemplates && styles.contentWithTemplates)}>
-        <Stack alignItems="center" direction="column" gap={2}>
+        <div className={styles.top}>
           <Icon name="apps" size="xxl" className={styles.appsIcon} />
           <h2 className={styles.title}>
             <Trans i18nKey="dashboard.empty.build-assistant">Build your dashboard with Assistant</Trans>
@@ -136,17 +176,17 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
               onHostContextItemRemove={onTemplatePillRemove}
             />
           </div>
-        </Stack>
-
-        {showTemplates && (
-          <LandingTemplates
-            testDataSource={testDataSource}
-            showGrafanaTemplates={showGrafanaTemplates}
-            showCustomTemplates={showCustomTemplates}
-            onSelectTemplate={onSelectTemplate}
-            selectedTemplateId={template?.id}
-          />
-        )}
+          {showTemplates && (
+            <LandingTemplates
+              className={styles.templates}
+              testDataSource={testDataSource}
+              showGrafanaTemplates={showGrafanaTemplates}
+              showCustomTemplates={showCustomTemplates}
+              onSelectTemplate={onSelectTemplate}
+              selectedTemplateId={template?.id}
+            />
+          )}
+        </div>
 
         <div className={styles.divider}>
           <div className={styles.orLine} />
@@ -188,9 +228,20 @@ function getStyles(theme: GrafanaTheme2) {
       maxWidth: 660,
       padding: theme.spacing(6, 4),
     }),
-    // Room for the template grid's columns under the prompt.
+    // Room for the template grid's columns under the prompt, and a fixed height for the grid to scroll in.
     contentWithTemplates: css({
       maxWidth: 1040,
+      height: '100%',
+      // The empty-state wrapper above already leaves room; the grid gets the rest.
+      paddingTop: theme.spacing(1),
+      paddingBottom: theme.spacing(3),
+    }),
+    top: css({
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      gap: theme.spacing(2),
+      minHeight: 0,
     }),
     appsIcon: css({
       fill: theme.v1.palette.orange,
@@ -203,7 +254,15 @@ function getStyles(theme: GrafanaTheme2) {
       textAlign: 'center',
     }),
     prompt: css({
+      position: 'relative',
+      zIndex: 1,
       width: '100%',
+    }),
+    // The panel starts behind the prompt, so the two read as one control.
+    templates: css({
+      alignSelf: 'stretch',
+      marginTop: `calc(-1 * (${theme.spacing(2)} + ${PROMPT_OVERLAP}px))`,
+      paddingTop: PROMPT_OVERLAP + 4,
     }),
     divider: css({
       display: 'flex',

@@ -44,6 +44,19 @@ describe('LandingTemplates', () => {
     expect(custom.compareDocumentPosition(grafana) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
+  it('collapses and expands the templates from their header', async () => {
+    const { user } = renderTemplates();
+    const toggle = screen.getByRole('button', { name: 'Start from a template' });
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+
+    await user.click(toggle);
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByTestId('grafana-card')).not.toBeInTheDocument();
+
+    await user.click(toggle);
+    expect(screen.getByTestId('grafana-card')).toBeInTheDocument();
+  });
+
   it('leaves out custom templates when they are not available', () => {
     renderTemplates({ showCustomTemplates: false });
 
