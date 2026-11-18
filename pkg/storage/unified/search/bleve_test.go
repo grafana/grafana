@@ -2155,10 +2155,12 @@ func TestRebuildAfterIndexEviction(t *testing.T) {
 		name        string
 		idleOnly    bool
 		memory      bool
+		grow        bool
 		owned       bool
 		wantDiscard bool
 	}{
 		{name: "idle-only memory", idleOnly: true, memory: true, owned: true, wantDiscard: true},
+		{name: "idle-only memory promoted to file", idleOnly: true, memory: true, grow: true, owned: true, wantDiscard: true},
 		{name: "age-based memory", memory: true, owned: true},
 		{name: "unowned file", idleOnly: true},
 	} {
@@ -2172,6 +2174,16 @@ func TestRebuildAfterIndexEviction(t *testing.T) {
 			}
 			original, err := backend.BuildIndex(t.Context(), key, int64(docs), "test", indexTestDocs(key, docs, 100), nil, false, time.Time{}, 0, resource.BuildIndexOptions{})
 			require.NoError(t, err)
+
+			if tc.grow {
+				docs = defaultFileThreshold
+				_, err := indexTestDocs(key, docs, 101)(original)
+				require.NoError(t, err)
+				count, err := original.DocCount(t.Context(), "", nil)
+				require.NoError(t, err)
+				require.EqualValues(t, docs, count)
+				require.Equal(t, indexStorageMemory, original.(*bleveIndex).indexStorage)
+			}
 
 			var replacement resource.ResourceIndex
 			rebuilt, err := backend.BuildIndex(t.Context(), key, int64(docs), "rebuild", func(index resource.ResourceIndex) (int64, error) {
@@ -2189,7 +2201,13 @@ func TestRebuildAfterIndexEviction(t *testing.T) {
 				backend.runEvictExpiredOrUnownedIndexes(deadline.Add(time.Millisecond))
 				require.Nil(t, backend.PeekIndex(key))
 				replacement = index
-				return indexTestDocs(key, docs, 101)(index)
+				rv, err := indexTestDocs(key, docs, 102)(index)
+				if tc.grow {
+					require.NoError(t, err)
+					promoted, _, _ := index.(*adaptiveBuildIndex).finalState()
+					require.Equal(t, indexStorageFile, promoted.indexStorage)
+				}
+				return rv, err
 			}, nil, true, time.Time{}, 0, resource.BuildIndexOptions{})
 
 			if tc.wantDiscard {
@@ -2198,6 +2216,7 @@ func TestRebuildAfterIndexEviction(t *testing.T) {
 				_, err = replacement.DocCount(t.Context(), "", nil)
 				require.ErrorIs(t, err, bleve.ErrorIndexClosed)
 				checkOpenIndexes(t, reg, 0, 0)
+				verifyDirEntriesCount(t, backend.getResourceDir(key), 0)
 			} else {
 				require.NoError(t, err)
 				require.Same(t, rebuilt, backend.PeekIndex(key))

@@ -1066,7 +1066,10 @@ func (b *bleveBackend) BuildIndex(
 	downloadOnly := b.opts.Snapshot.Store != nil && docCount < 0 && key.IsGlobal()
 	skipIfBuilding := options.SkipIfBuilding
 
-	prepared, err := b.prepareIndex(ctx, key, snapshotBuildEnabled, downloadOnly, mapper, selectableFields, searchFieldsHash, rebuild, lastImportTime, maxFreshSnapshotAge, resourceDir, logWithDetails, skipIfBuilding)
+	cachedIndex := b.getCachedIndex(key, time.Now())
+	originalHasMemoryIdleTimeout := b.opts.IndexCacheTTLIdleOnly && b.opts.IndexCacheTTL > 0 &&
+		cachedIndex != nil && cachedIndex.indexStorage == indexStorageMemory
+	prepared, err := b.prepareIndex(ctx, key, snapshotBuildEnabled, downloadOnly, mapper, selectableFields, searchFieldsHash, rebuild, cachedIndex != nil, lastImportTime, maxFreshSnapshotAge, resourceDir, logWithDetails, skipIfBuilding)
 	if err != nil {
 		return nil, err
 	}
@@ -1172,11 +1175,8 @@ func (b *bleveBackend) BuildIndex(
 
 	b.cacheMx.Lock()
 	prev := b.cache[key]
-	if rebuild && prev == nil &&
-		(key.IsGlobal() || b.opts.IndexCacheTTLIdleOnly && idx.indexStorage == indexStorageMemory) {
-		// Closed for being idle while it was being rebuilt. Publishing the rebuilt
-		// index would open it again and restart its idle clock, so it is closed
-		// instead.
+	// The original index can go idle even if its replacement was promoted to disk.
+	if rebuild && prev == nil && (key.IsGlobal() || originalHasMemoryIdleTimeout) {
 		b.cacheMx.Unlock()
 		return nil, resource.ErrIndexClosedDuringRebuild
 	}
@@ -1229,19 +1229,18 @@ func (b *bleveBackend) prepareIndex(
 	selectableFields []string,
 	searchFieldsHash string,
 	rebuild bool,
+	hasCachedIndex bool,
 	lastImportTime time.Time,
 	maxFreshSnapshotAge time.Duration,
 	resourceDir string,
 	logger log.Logger,
 	skipIfBuilding bool,
 ) (preparedBuildIndex, error) {
-	cachedIndex := b.getCachedIndex(key, time.Now())
-
 	// We only check for the existing file-based index if we don't already have an open index for this key,
 	// and if rebuild flag is not set.
 	// This happens on startup, or when memory-based index has expired. (We don't expire file-based indexes)
 	// If we do have an unexpired cached index already, or if rebuild is true, we always build a new index from scratch.
-	if cachedIndex == nil && !rebuild {
+	if !hasCachedIndex && !rebuild {
 		return b.prepareUncachedFileIndex(ctx, key, resourceDir, mapper, selectableFields, searchFieldsHash, lastImportTime, snapshotBuildEnabled, downloadOnly, logger, skipIfBuilding)
 	}
 
