@@ -931,6 +931,24 @@ describe('PanelDataQueriesTab', () => {
           ]);
         });
 
+        it('runs the first query added after clearing queries', async () => {
+          const { queriesTab } = await setupScene('panel-1');
+          queriesTab.onQueriesChange([]);
+          const runQueries = jest.spyOn(queriesTab.queryRunner, 'runQueries').mockImplementation(() => {});
+          const query = {
+            datasource: { type: 'grafana-testdata-datasource', uid: 'gdev-testdata' },
+            refId: 'A',
+            scenarioId: 'random_walk',
+          };
+
+          queriesTab.onQueriesChange([query]);
+          expect(runQueries).toHaveBeenCalledTimes(1);
+          expect(queriesTab.queryRunner.state.queries).toEqual([query]);
+
+          queriesTab.onQueriesChange([{ ...query, seriesCount: 5 }]);
+          expect(runQueries).toHaveBeenCalledTimes(1);
+        });
+
         it('does not run the empty query runner after removing the final query', async () => {
           const { queriesTab } = await setupScene('panel-1');
           const runQueries = jest.spyOn(queriesTab.queryRunner, 'runQueries');

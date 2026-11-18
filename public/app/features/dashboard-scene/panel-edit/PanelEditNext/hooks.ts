@@ -1,6 +1,6 @@
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
-import { useCallback, useEffect, useState } from 'react';
-import { useLocalStorage } from 'react-use';
+import { type PointerEvent, useCallback, useEffect, useRef, useState } from 'react';
+import { useLocalStorage, useWindowSize } from 'react-use';
 
 import { useTheme2 } from '@grafana/ui';
 import { MIN_SUGGESTIONS_PANE_WIDTH } from 'app/features/panel/suggestions/constants';
@@ -23,6 +23,21 @@ import {
   SIDEBAR_COLLAPSE_BELOW_PIXELS,
   SidebarSize,
 } from './constants';
+
+const DEFAULT_SIDEBAR_WINDOW_RATIO = 0.2;
+// A pen or touch tap often moves a pixel or two; anything under this counts as a click, not a drag.
+const CLICK_TOLERANCE_PIXELS = 3;
+
+/**
+ * Sidebar width used until the user drags the handle: 20% of the window, so smaller screens keep
+ * more room for the query editor. Never below the collapse threshold, or it would start closed.
+ */
+export function getDefaultSidebarWidth(windowWidth: number): number {
+  return Math.min(
+    DEFAULT_SIDEBAR_WIDTH,
+    Math.max(SIDEBAR_COLLAPSE_BELOW_PIXELS, Math.round(windowWidth * DEFAULT_SIDEBAR_WINDOW_RATIO))
+  );
+}
 
 export function useQueryEditorBanner() {
   const [dismissed = false, setDismissed] = useLocalStorage(QUERY_EDITOR_BANNER_DISMISSED_KEY, false);
@@ -88,17 +103,19 @@ export function useVizAndDataPaneLayout(model: PanelEditor) {
     QUERY_EDITOR_SIDEBAR_SIZE_KEY,
     SidebarSize.Mini
   );
-  const [storedSidebarWidth, setSidebarWidth] = useLocalStorage<number>(
-    QUERY_EDITOR_SIDEBAR_WIDTH_KEY,
-    DEFAULT_SIDEBAR_WIDTH
-  );
+  // No initial value: `useLocalStorage` would write it on first read, pinning the default to the
+  // window size at that moment. Only a drag persists a width, so until then it follows the window.
+  const [storedSidebarWidth, setSidebarWidth, removeSidebarWidth] =
+    useLocalStorage<number>(QUERY_EDITOR_SIDEBAR_WIDTH_KEY);
+  const { width: windowWidth } = useWindowSize();
+  const defaultSidebarWidth = getDefaultSidebarWidth(windowWidth);
   // Anything other than a positive number yields an invalid flex-basis, which drops out and leaves
   // the sidebar the width of its drag handle with the content clipped. Values that fail to parse
   // already fall back to the default, but valid JSON of the wrong shape (null, {}, -5) does not.
   const sidebarWidth =
     typeof storedSidebarWidth === 'number' && Number.isFinite(storedSidebarWidth) && storedSidebarWidth > 0
       ? storedSidebarWidth
-      : DEFAULT_SIDEBAR_WIDTH;
+      : defaultSidebarWidth;
 
   const [storedSidebarCollapsed, setSidebarCollapsed] = useLocalStorage<boolean>(
     QUERY_EDITOR_SIDEBAR_COLLAPSED_KEY,
@@ -140,12 +157,49 @@ export function useVizAndDataPaneLayout(model: PanelEditor) {
     usePixels: true,
     pixelPane: 'primary',
     initialSize: sidebarWidth,
-    resetSize: DEFAULT_SIDEBAR_WIDTH,
+    resetSize: defaultSidebarWidth,
     collapsed: isInitiallyCollapsed,
     collapseBelowPixels: SIDEBAR_COLLAPSE_BELOW_PIXELS,
     minFillingPixels: MIN_DATA_PANE_WIDTH,
     onPaneSizeChanged: setSidebarWidth,
   });
+
+  // `useSplitter` reports the size on every pointer-up, so a click without a drag would save the width and stop
+  // the sidebar following the window. A click puts the saved width back; arrow-key resizes are unaffected.
+  const pointerDownX = useRef<number | null>(null);
+  const startSidebarDrag = sidebarSplitter.splitterProps.onPointerDown;
+  const endSidebarDrag = sidebarSplitter.splitterProps.onPointerUp;
+  const onSidebarPointerDown = useCallback(
+    (e: PointerEvent<HTMLDivElement>) => {
+      pointerDownX.current = e.clientX;
+      startSidebarDrag?.(e);
+    },
+    [startSidebarDrag]
+  );
+  const onSidebarPointerUp = useCallback(
+    (e: PointerEvent<HTMLDivElement>) => {
+      endSidebarDrag?.(e);
+      const downX = pointerDownX.current;
+      pointerDownX.current = null;
+      if (downX === null || Math.abs(e.clientX - downX) >= CLICK_TOLERANCE_PIXELS) {
+        return;
+      }
+      if (storedSidebarWidth === undefined) {
+        removeSidebarWidth();
+      } else {
+        setSidebarWidth(storedSidebarWidth);
+      }
+    },
+    [endSidebarDrag, storedSidebarWidth, removeSidebarWidth, setSidebarWidth]
+  );
+
+  // A double-click reset reports its size like any resize, which would save it — possibly narrower than
+  // the default if the data pane reserve caps it. Clearing afterwards makes the sidebar follow the window again.
+  const resetSidebarSplitter = sidebarSplitter.splitterProps.onDoubleClick;
+  const onSidebarReset = useCallback(() => {
+    resetSidebarSplitter?.();
+    removeSidebarWidth();
+  }, [resetSidebarSplitter, removeSidebarWidth]);
 
   // `collapsed` only seeds the splitter's initial state, so the current value has to be written back
   // for a reload to pick it up. Matches how the options pane persists its own collapse.
@@ -164,6 +218,14 @@ export function useVizAndDataPaneLayout(model: PanelEditor) {
     setSidebarSize,
     isScrollingLayout,
     vizDataSplitter,
-    sidebarSplitter,
+    sidebarSplitter: {
+      ...sidebarSplitter,
+      splitterProps: {
+        ...sidebarSplitter.splitterProps,
+        onPointerDown: onSidebarPointerDown,
+        onPointerUp: onSidebarPointerUp,
+        onDoubleClick: onSidebarReset,
+      },
+    },
   };
 }

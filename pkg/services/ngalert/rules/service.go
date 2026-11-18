@@ -9,29 +9,61 @@ import (
 	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 )
 
+// RuleService is the rule storage surface for every caller except the legacy rule service, which
+// backs the app-platform legacy storage and must use the SQL store (rulestore.Store) directly.
+// Methods that only the legacy rule service or legacy fullpath maintenance needs stay off this
+// interface, so the wrapper cannot be handed to them.
+type RuleService interface {
+	ListAlertRuleUIDsInFolder(ctx context.Context, orgID int64, folderUID string) ([]string, error)
+	rulestore.NamespaceStore
+	rulestore.RuleReader
+	rulestore.RuleGroupIntervalReader
+	rulestore.RuleGroupReader
+	rulestore.RuleCounter
+	rulestore.RuleGroupCounter
+	rulestore.RuleWriter
+	rulestore.RuleAdminWriter
+	rulestore.RuleVersionReader
+	rulestore.RuleVersionFolderReader
+	rulestore.SchedulableRuleReader
+	rulestore.ReceiverRenamer
+	rulestore.TimeIntervalRenamer
+	rulestore.ContactPointRoutingReader
+	rulestore.StatusWriter
+	folder.RegistryService
+	rulestore.FolderRuleCounter
+	rulestore.MaintenanceStore
+
+	// isRuleService seals the interface so the SQL store cannot be passed where the wrapper is expected.
+	isRuleService()
+}
+
 // Service is the rule storage boundary for callers and folder operations.
 type Service struct {
 	sql rulestore.Store
 }
 
-var _ rulestore.Store = (*Service)(nil)
+var _ RuleService = (*Service)(nil)
 
 // ProvideService wraps the SQL store and registers the wrapper with the folder service, so folder
 // operations reach rule storage through the same boundary as every other caller.
 func ProvideService(sql *rulestore.RuleStore, folders folder.Service) (*Service, error) {
-	service := &Service{sql: sql}
+	service := NewService(sql)
 	if err := folders.RegisterService(service); err != nil {
 		return nil, err
 	}
 	return service, nil
 }
 
-func (s *Service) ListAlertRuleUIDsInFolder(ctx context.Context, orgID int64, folderUID string) ([]string, error) {
-	return s.sql.ListAlertRuleUIDsInFolder(ctx, orgID, folderUID)
+// NewService wraps a store without registering it with the folder service.
+func NewService(sql rulestore.Store) *Service {
+	return &Service{sql: sql}
 }
 
-func (s *Service) GetFolderUIDsWithMissingFullpath(ctx context.Context, orgID int64) ([]string, error) {
-	return s.sql.GetFolderUIDsWithMissingFullpath(ctx, orgID)
+func (s *Service) isRuleService() {}
+
+func (s *Service) ListAlertRuleUIDsInFolder(ctx context.Context, orgID int64, folderUID string) ([]string, error) {
+	return s.sql.ListAlertRuleUIDsInFolder(ctx, orgID, folderUID)
 }
 
 func (s *Service) GetUserVisibleNamespaces(ctx context.Context, orgID int64, user identity.Requester) (map[string]*folder.Folder, error) {
@@ -48,6 +80,10 @@ func (s *Service) GetNamespaceByTitle(ctx context.Context, title string, orgID i
 
 func (s *Service) GetOrCreateNamespaceByTitle(ctx context.Context, title string, orgID int64, user identity.Requester, parentUID string) (*folder.FolderReference, bool, error) {
 	return s.sql.GetOrCreateNamespaceByTitle(ctx, title, orgID, user, parentUID)
+}
+
+func (s *Service) GetOrCreateNamespaceByUID(ctx context.Context, uid, title string, orgID int64, user identity.Requester, parentUID string) (*folder.FolderReference, bool, error) {
+	return s.sql.GetOrCreateNamespaceByUID(ctx, uid, title, orgID, user, parentUID)
 }
 
 func (s *Service) GetNamespaceChildren(ctx context.Context, uid string, orgID int64, user identity.Requester) ([]*folder.FolderReference, error) {
@@ -72,10 +108,6 @@ func (s *Service) ListDeletedRules(ctx context.Context, orgID int64) ([]*ngmodel
 
 func (s *Service) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertRulesQuery) (ngmodels.RulesGroup, error) {
 	return s.sql.ListAlertRules(ctx, query)
-}
-
-func (s *Service) ListAlertRulesPaginated(ctx context.Context, query *ngmodels.ListAlertRulesExtendedQuery) (ngmodels.RulesGroup, string, error) {
-	return s.sql.ListAlertRulesPaginated(ctx, query)
 }
 
 func (s *Service) GetRuleGroupInterval(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string) (int64, error) {
@@ -108,10 +140,6 @@ func (s *Service) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user *
 
 func (s *Service) DeleteRuleFromTrashByGUID(ctx context.Context, orgID int64, ruleGUID string) (int64, error) {
 	return s.sql.DeleteRuleFromTrashByGUID(ctx, orgID, ruleGUID)
-}
-
-func (s *Service) UpdateFolderFullpathsForFolders(ctx context.Context, orgID int64, folderUIDs []string) error {
-	return s.sql.UpdateFolderFullpathsForFolders(ctx, orgID, folderUIDs)
 }
 
 func (s *Service) GetAlertRuleVersions(ctx context.Context, orgID int64, guid string) ([]*ngmodels.AlertRuleVersion, error) {

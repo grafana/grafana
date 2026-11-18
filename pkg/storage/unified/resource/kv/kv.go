@@ -140,7 +140,7 @@ type KV interface {
 	// Non-existent keys will be skipped silently without error.
 	BatchDelete(ctx context.Context, section string, keys []string) error
 
-	// UnixTimestamp returns the current time in seconds since Epoch.
+	// UnixTimestamp returns the store's current time in milliseconds since Epoch.
 	// This is used to ensure the server and client are not too far apart in time.
 	UnixTimestamp(ctx context.Context) (int64, error)
 
@@ -443,7 +443,7 @@ func (k *badgerKV) Keys(ctx context.Context, section string, opt ListOptions) it
 }
 
 func (k *badgerKV) UnixTimestamp(ctx context.Context) (int64, error) {
-	return time.Now().Unix(), nil
+	return time.Now().UnixMilli(), nil
 }
 
 // PrefixRangeEnd returns the end key for the given prefix

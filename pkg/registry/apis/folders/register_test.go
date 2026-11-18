@@ -3,27 +3,374 @@ package folders
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"testing"
+	"time"
 
+	restful "github.com/emicklei/go-restful/v3"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/admission"
+	k8suser "k8s.io/apiserver/pkg/authentication/user"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
+	openapinamer "k8s.io/apiserver/pkg/endpoints/openapi"
 	"k8s.io/apiserver/pkg/endpoints/request"
+	"k8s.io/apiserver/pkg/registry/rest"
+	genericapiserver "k8s.io/apiserver/pkg/server"
+	serverstorage "k8s.io/apiserver/pkg/server/storage"
+	"k8s.io/apiserver/pkg/storage/storagebackend"
+	"k8s.io/client-go/dynamic"
+	dynamicfake "k8s.io/client-go/dynamic/fake"
+	clientrest "k8s.io/client-go/rest"
+	basecompatibility "k8s.io/component-base/compatibility"
 
+	"github.com/grafana/authlib/authn"
+	authtypes "github.com/grafana/authlib/types"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	pending "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1alpha1"
+	foldersv1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission/rpclient"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	apiserverbuilder "github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/apiserver/keysroutes"
+	"github.com/grafana/grafana/pkg/services/apiserver/restoptions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/folder/cascadedelete"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
+
+func TestPendingClientConditionalCleanupThroughAPI(t *testing.T) {
+	b := NewAPIService(nil, nil, featuremgmt.WithFeatures(), nil, nil, nil, nil, 4, nil, WithPendingDeletionResourceEnabled(true))
+	scheme := runtime.NewScheme()
+	metav1.AddToGroupVersion(scheme, schema.GroupVersion{Version: "v1"})
+	require.NoError(t, b.InstallSchema(scheme))
+	codecs := serializer.NewCodecFactory(scheme)
+	opts, err := restoptions.NewRESTOptionsGetterMemory(storagebackend.Config{Codec: codecs.LegacyCodec(pending.SchemeGroupVersion)}, nil)
+	require.NoError(t, err)
+	info := genericapiserver.NewDefaultAPIGroupInfo(folders.GROUP, scheme, metav1.ParameterCodec, codecs)
+	require.NoError(t, b.UpdateAPIGroupInfo(&info, apiserverbuilder.APIGroupOptions{Scheme: scheme, OptsGetter: opts}))
+	info.VersionedResourcesStorageMap = map[string]map[string]rest.Storage{"v1alpha1": {"pendingfolderdeletions": info.VersionedResourcesStorageMap["v1alpha1"]["pendingfolderdeletions"]}}
+	config := genericapiserver.NewConfig(codecs)
+	config.ExternalAddress = "127.0.0.1:443"
+	config.LoopbackClientConfig = &clientrest.Config{}
+	config.EffectiveVersion = basecompatibility.NewEffectiveVersionFromString("", "", "")
+	config.SkipOpenAPIInstallation = true
+	config.OpenAPIV3Config = genericapiserver.DefaultOpenAPIV3Config(apiserverbuilder.GetOpenAPIDefinitions([]apiserverbuilder.APIGroupBuilder{b}), openapinamer.NewDefinitionNamer(scheme))
+	config.Authorization.Authorizer = b.GetAuthorizer()
+	server, err := config.Complete(nil).New("pending-test", genericapiserver.NewEmptyDelegate())
+	require.NoError(t, err)
+	t.Cleanup(server.Destroy)
+	require.NoError(t, server.InstallAPIGroup(&info))
+	httpServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := identity.WithServiceIdentityContext(r.Context(), 1)
+		ctx = request.WithUser(ctx, &k8suser.DefaultInfo{Name: "internal-test-service"})
+		server.Handler.FullHandlerChain.ServeHTTP(w, r.WithContext(ctx))
+	}))
+	defer httpServer.Close()
+	dyn, err := dynamic.NewForConfig(&clientrest.Config{Host: httpServer.URL})
+	require.NoError(t, err)
+	client := cascadedelete.NewPendingClient(dyn)
+	entry := &pending.PendingFolderDeletion{ObjectMeta: metav1.ObjectMeta{Name: "reports-old-uid", Namespace: "default"}, Spec: pending.PendingFolderDeletionSpec{FolderName: "reports", FolderUID: "old-uid"}}
+	u, err := runtime.DefaultUnstructuredConverter.ToUnstructured(entry)
+	require.NoError(t, err)
+	u["apiVersion"] = "folder.grafana.app/v1alpha1"
+	u["kind"] = "PendingFolderDeletion"
+	resource := dyn.Resource(pending.PendingFolderDeletionResourceInfo.GroupVersionResource()).Namespace("default")
+	_, err = resource.Create(t.Context(), &unstructured.Unstructured{Object: u}, metav1.CreateOptions{})
+	require.NoError(t, err)
+	stale, err := client.Get(t.Context(), "default", entry.Name)
+	require.NoError(t, err)
+	require.NoError(t, client.Capture(t.Context(), stale, metav1.Date(2026, 11, 11, 12, 0, 0, 0, time.UTC)))
+	require.True(t, apierrors.IsConflict(client.Remove(t.Context(), stale)), "stale API cleanup must preserve the captured entry")
+	fresh, err := client.Get(t.Context(), "default", entry.Name)
+	require.NoError(t, err)
+	require.NotNil(t, fresh.Spec.DeletionTimestamp)
+	require.Equal(t, "2026-11-11T12:00:00Z", *fresh.Spec.DeletionTimestamp)
+	require.NoError(t, client.Remove(t.Context(), fresh))
+	_, err = client.Get(t.Context(), "default", entry.Name)
+	require.True(t, apierrors.IsNotFound(err))
+
+	_, err = resource.Create(t.Context(), &unstructured.Unstructured{Object: u}, metav1.CreateOptions{})
+	require.NoError(t, err)
+	recreated, err := client.Get(t.Context(), "default", entry.Name)
+	require.NoError(t, err)
+	require.NotEqual(t, fresh.UID, recreated.UID)
+	// Use the current version to isolate the stale UID precondition.
+	fresh.ResourceVersion = recreated.ResourceVersion
+	require.True(t, apierrors.IsConflict(client.Remove(t.Context(), fresh)))
+	preserved, err := client.Get(t.Context(), "default", entry.Name)
+	require.NoError(t, err)
+	require.Equal(t, recreated, preserved)
+	require.NoError(t, client.Remove(t.Context(), recreated))
+}
+
+func TestFolderAPIBuilder_PendingDeletionSchema(t *testing.T) {
+	scheme := runtime.NewScheme()
+	require.NoError(t, (&FolderAPIBuilder{}).InstallSchema(scheme))
+	require.False(t, scheme.Recognizes(schema.GroupVersionKind{Group: "folder.grafana.app", Version: "v1alpha1", Kind: "Folder"}))
+	for _, version := range []string{"v1", "v1beta1"} {
+		require.True(t, scheme.Recognizes(schema.GroupVersionKind{Group: "folder.grafana.app", Version: version, Kind: "Folder"}))
+	}
+	require.Equal(t, "v1", scheme.PrioritizedVersionsForGroup("folder.grafana.app")[0].Version)
+	for _, kind := range []string{"PendingFolderDeletion", "PendingFolderDeletionList"} {
+		_, err := scheme.New(schema.GroupVersionKind{Group: "folder.grafana.app", Version: "v1alpha1", Kind: kind})
+		require.NoError(t, err)
+		require.False(t, scheme.Recognizes(schema.GroupVersionKind{Group: "folder.grafana.app", Version: "v1", Kind: kind}))
+	}
+}
+
+func TestFolderAPIBuilder_PendingDeletionStorage(t *testing.T) {
+	for _, enabled := range []bool{false, true} {
+		t.Run(fmt.Sprint(enabled), func(t *testing.T) {
+			b := NewAPIService(nil, nil, featuremgmt.WithFeatures(), nil, nil, nil, nil, 4, nil, WithPendingDeletionResourceEnabled(enabled))
+			scheme := runtime.NewScheme()
+			require.NoError(t, b.InstallSchema(scheme))
+			codecs := serializer.NewCodecFactory(scheme)
+			optsGetter, err := restoptions.NewRESTOptionsGetterMemory(storagebackend.Config{Codec: codecs.LegacyCodec(b.GetGroupVersions()...)}, nil)
+			require.NoError(t, err)
+			info := genericapiserver.NewDefaultAPIGroupInfo(folders.GROUP, scheme, metav1.ParameterCodec, codecs)
+			require.NoError(t, b.UpdateAPIGroupInfo(&info, apiserverbuilder.APIGroupOptions{Scheme: scheme, OptsGetter: optsGetter}))
+			if enabled {
+				require.Len(t, info.VersionedResourcesStorageMap, 3)
+				require.Len(t, info.VersionedResourcesStorageMap["v1alpha1"], 1)
+				require.Same(t, b.pendingDeletionStore, info.VersionedResourcesStorageMap["v1alpha1"]["pendingfolderdeletions"])
+				require.NotNil(t, b.pendingDeletionStore)
+			} else {
+				require.Len(t, info.VersionedResourcesStorageMap, 2)
+				require.Nil(t, b.pendingDeletionStore)
+			}
+			for _, version := range []string{"v1", "v1beta1"} {
+				require.Contains(t, info.VersionedResourcesStorageMap[version], "folders")
+				require.NotContains(t, info.VersionedResourcesStorageMap[version], "pendingfolderdeletions")
+			}
+			t.Run("served versions", func(t *testing.T) {
+				want := []schema.GroupVersion{folders.SchemeGroupVersion, foldersv1beta1.SchemeGroupVersion}
+				if enabled {
+					want = append(want, pending.SchemeGroupVersion)
+				}
+				require.Equal(t, want, b.GetGroupVersions())
+				served := apiserverbuilder.ServedGroupVersions([]apiserverbuilder.APIGroupBuilder{b}, nil)
+				require.Len(t, served, len(want))
+				for _, gv := range want {
+					require.True(t, served[gv])
+				}
+			})
+			t.Run("mounted keys routes", func(t *testing.T) {
+				store := resource.NewMockResourceClient(t)
+				var listed []*resourcepb.ListRequest
+				store.On("List", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+					listed = append(listed, args.Get(1).(*resourcepb.ListRequest))
+				}).Return(&resourcepb.ListResponse{ResourceVersion: 1}, nil)
+				routes := keysroutes.Build(true, tracing.NewNoopTracerService(), store, []apiserverbuilder.APIGroupBuilder{b}, nil)
+				container := restful.NewContainer()
+				container.Router(restful.CurlyRouter{})
+				config := serverstorage.NewResourceConfig()
+				config.EnableVersions(folders.SchemeGroupVersion, foldersv1beta1.SchemeGroupVersion, pending.SchemeGroupVersion)
+				require.NoError(t, apiserverbuilder.AugmentWebServicesWithCustomRoutes(container, nil, nil, config, routes...))
+				for _, target := range []struct {
+					version, resource string
+					available         bool
+				}{
+					{"v1", "folders", true},
+					{"v1beta1", "folders", true},
+					{"v1alpha1", "pendingfolderdeletions", enabled},
+				} {
+					for _, namespace := range []string{"", "default"} {
+						path := "/apis/folder.grafana.app/" + target.version + "/"
+						if namespace != "" {
+							path += "namespaces/" + namespace + "/"
+						}
+						path += target.resource + "/list-keys"
+						req := httptest.NewRequest(http.MethodPost, path, nil)
+						req = req.WithContext(identity.WithServiceIdentityContext(req.Context(), 1))
+						rec := httptest.NewRecorder()
+						before := len(listed)
+						container.ServeHTTP(rec, req)
+						if !target.available {
+							require.Equal(t, http.StatusNotFound, rec.Code, path)
+							require.Len(t, listed, before, "unavailable routes must not reach unified storage")
+							continue
+						}
+						require.Equal(t, http.StatusOK, rec.Code, "%s: %s", path, rec.Body.String())
+						require.Len(t, listed, before+1)
+						require.True(t, listed[before].KeysOnly)
+						key := listed[before].Options.Key
+						require.Equal(t, folders.GROUP, key.Group)
+						require.Equal(t, target.resource, key.Resource)
+						require.Equal(t, namespace, key.Namespace)
+					}
+				}
+			})
+		})
+	}
+}
+
+func TestFolderAPIBuilder_PendingDeletionAuthorization(t *testing.T) {
+	service := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
+		Rest: authn.AccessTokenClaims{Permissions: []string{"folder.grafana.app/pendingfolderdeletions:create"}},
+	})
+	delegated := authn.NewIDTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
+		Rest: authn.AccessTokenClaims{DelegatedPermissions: []string{"folder.grafana.app/pendingfolderdeletions:create"}},
+	}, &authn.Claims[authn.IDTokenClaims]{Rest: authn.IDTokenClaims{Type: authtypes.TypeUser}})
+	for _, tc := range []struct {
+		name string
+		ctx  context.Context
+		verb string
+		want authorizer.Decision
+	}{
+		{"no identity", context.Background(), "create", authorizer.DecisionDeny},
+		{"user", identity.WithRequester(context.Background(), &identity.StaticRequester{Type: authtypes.TypeUser}), "create", authorizer.DecisionDeny},
+		{"user-created service account", identity.WithRequester(context.Background(), &identity.StaticRequester{Type: authtypes.TypeServiceAccount}), "create", authorizer.DecisionDeny},
+		{"embedded service", identity.WithServiceIdentityContext(context.Background(), 1), "create", authorizer.DecisionAllow},
+		{"direct service", authtypes.WithAuthInfo(context.Background(), service), "create", authorizer.DecisionAllow},
+		{"wrong verb permission", authtypes.WithAuthInfo(context.Background(), service), "delete", authorizer.DecisionDeny},
+		{"delegated user", authtypes.WithAuthInfo(context.Background(), delegated), "create", authorizer.DecisionDeny},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			decision, _, _ := (&FolderAPIBuilder{}).GetAuthorizer().Authorize(tc.ctx, authorizer.AttributesRecord{
+				ResourceRequest: true, APIGroup: "folder.grafana.app", APIVersion: "v1alpha1", Resource: "pendingfolderdeletions", Verb: tc.verb,
+			})
+			require.Equal(t, tc.want, decision)
+		})
+	}
+}
+
+func TestFolderAPIBuilder_PendingDeletionAdmission(t *testing.T) {
+	builder := &FolderAPIBuilder{}
+	valid := &pending.PendingFolderDeletion{ObjectMeta: metav1.ObjectMeta{Name: "reports-uid-a", Namespace: "default", UID: "pending-record-uid"},
+		Spec: pending.PendingFolderDeletionSpec{FolderName: "reports", FolderUID: "uid-a"}}
+	timestamp := "2026-11-11T12:00:00Z"
+	captured := valid.DeepCopy()
+	captured.Spec.DeletionTimestamp = &timestamp
+	wrongName := valid.DeepCopy()
+	wrongName.Name = "wrong"
+	for _, tc := range []struct {
+		name      string
+		mutate    func(*pending.PendingFolderDeletion)
+		old       *pending.PendingFolderDeletion
+		wantField string
+	}{
+		{"valid", func(*pending.PendingFolderDeletion) {}, nil, ""},
+		{"mismatched create name", func(p *pending.PendingFolderDeletion) { p.Name = "wrong" }, nil, "metadata.name"},
+		{"mismatched existing update name", func(p *pending.PendingFolderDeletion) { p.Name = "wrong" }, wrongName, "metadata.name"},
+		{"missing UID", func(p *pending.PendingFolderDeletion) { p.Spec.FolderUID = "" }, nil, "spec.folderUID"},
+		{"missing name", func(p *pending.PendingFolderDeletion) { p.Spec.FolderName = "" }, nil, "spec.folderName"},
+		{"invalid timestamp", func(p *pending.PendingFolderDeletion) { v := "bad"; p.Spec.DeletionTimestamp = &v }, nil, "spec.deletionTimestamp"},
+		{"changed UID", func(p *pending.PendingFolderDeletion) { p.Spec.FolderUID = "uid-b" }, valid, "spec.folderUID"},
+		{"changed name", func(p *pending.PendingFolderDeletion) { p.Spec.FolderName = "other" }, valid, "spec.folderName"},
+		{"unchanged identity", func(*pending.PendingFolderDeletion) {}, valid, ""},
+		{"capture timestamp once", func(p *pending.PendingFolderDeletion) { p.Spec.DeletionTimestamp = &timestamp }, valid, ""},
+		{"preserve captured timestamp", func(p *pending.PendingFolderDeletion) { p.Spec.DeletionTimestamp = &timestamp }, captured, ""},
+		{"clear captured timestamp", func(*pending.PendingFolderDeletion) {}, captured, "spec.deletionTimestamp"},
+		{"change captured timestamp", func(p *pending.PendingFolderDeletion) { v := "2026-11-11T13:00:00Z"; p.Spec.DeletionTimestamp = &v }, captured, "spec.deletionTimestamp"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			obj := valid.DeepCopy()
+			tc.mutate(obj)
+			op := admission.Create
+			var old runtime.Object
+			if tc.old != nil {
+				op = admission.Update
+				old = tc.old
+			}
+			attrs := admission.NewAttributesRecord(obj, old, pending.SchemeGroupVersion.WithKind("PendingFolderDeletion"), "default", obj.Name,
+				pending.SchemeGroupVersion.WithResource("pendingfolderdeletions"), "", op, nil, false, nil)
+			require.NoError(t, builder.Mutate(context.Background(), attrs, nil))
+			err := builder.Validate(context.Background(), attrs, nil)
+			if tc.wantField != "" {
+				require.True(t, apierrors.IsInvalid(err), "expected validation status, got %v", err)
+				var status *apierrors.StatusError
+				require.ErrorAs(t, err, &status)
+				require.EqualValues(t, 422, status.ErrStatus.Code)
+				require.Equal(t, tc.wantField, status.ErrStatus.Details.Causes[0].Field)
+				if obj.Spec.FolderName == "" || obj.Spec.FolderUID == "" {
+					require.Len(t, status.ErrStatus.Details.Causes, 1, "missing identity must not add a misleading name error")
+				}
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestFolderDefaultResourcePermissionsUseRPClient(t *testing.T) {
+	gvr := iamv0.ResourcePermissionInfo.GroupVersionResource()
+	gr := folders.FolderResourceInfo.GroupVersionResource().GroupResource()
+	newClient := func() *dynamicfake.FakeDynamicClient {
+		return dynamicfake.NewSimpleDynamicClientWithCustomListKinds(runtime.NewScheme(), map[schema.GroupVersionResource]string{gvr: "ResourcePermissionList"})
+	}
+	newFolder := func(uid, parent string) (*folders.Folder, utils.GrafanaMetaAccessor) {
+		obj := &folders.Folder{ObjectMeta: metav1.ObjectMeta{
+			Name: uid, Namespace: "org-7", Annotations: map[string]string{"grafana.app/folder": parent},
+		}}
+		meta, err := utils.MetaAccessor(obj)
+		require.NoError(t, err)
+		return obj, meta
+	}
+
+	t.Run("writes root defaults and creator grant", func(t *testing.T) {
+		dyn := newClient()
+		resourceClient := dyn.Resource(gvr)
+		b := &FolderAPIBuilder{resourcePermissions: rpclient.New(rpclient.Static(resourceClient), gr)}
+		_, meta := newFolder("root-uid", "")
+		id := &identity.StaticRequester{Type: authtypes.TypeUser, UserUID: "user-123"}
+		require.NoError(t, b.setDefaultFolderPermissions(context.Background(), nil, id, meta))
+		rp, err := resourceClient.Namespace("org-7").Get(context.Background(), rpclient.Name(gr, "root-uid"), metav1.GetOptions{})
+		require.NoError(t, err)
+		permissions, found, err := unstructured.NestedSlice(rp.Object, "spec", "permissions")
+		require.NoError(t, err)
+		require.True(t, found)
+		require.Equal(t, []any{
+			map[string]any{"kind": "User", "name": "user-123", "verb": "admin"},
+			map[string]any{"kind": "BasicRole", "name": "Editor", "verb": "edit"},
+			map[string]any{"kind": "BasicRole", "name": "Viewer", "verb": "view"},
+		}, permissions)
+	})
+
+	t.Run("nested folders and absent client do not write", func(t *testing.T) {
+		dyn := newClient()
+		resourceClient := dyn.Resource(gvr)
+		b := &FolderAPIBuilder{resourcePermissions: rpclient.New(rpclient.Static(resourceClient), gr)}
+		_, meta := newFolder("nested-uid", "parent-uid")
+		require.NoError(t, b.setDefaultFolderPermissions(context.Background(), nil, &identity.StaticRequester{Type: authtypes.TypeUser, UserUID: "user-123"}, meta))
+		require.Empty(t, dyn.Actions())
+		_, rootMeta := newFolder("root-uid", "")
+		require.NoError(t, (&FolderAPIBuilder{}).setDefaultFolderPermissions(context.Background(), nil, &identity.StaticRequester{}, rootMeta))
+		require.Empty(t, dyn.Actions())
+	})
+
+	t.Run("after delete removes the matching permission", func(t *testing.T) {
+		rpName := rpclient.Name(gr, "root-uid")
+		dyn := newClient()
+		_, err := dyn.Resource(gvr).Namespace("org-7").Create(context.Background(), &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": iamv0.ResourcePermissionInfo.GroupVersion().String(), "kind": "ResourcePermission",
+			"metadata": map[string]any{"name": rpName, "namespace": "org-7"},
+		}}, metav1.CreateOptions{})
+		require.NoError(t, err)
+		resourceClient := dyn.Resource(gvr)
+		b := &FolderAPIBuilder{resourcePermissions: rpclient.New(rpclient.Static(resourceClient), gr)}
+		obj, _ := newFolder("root-uid", "")
+		b.afterDelete(obj, &metav1.DeleteOptions{})
+		_, err = resourceClient.Namespace("org-7").Get(context.Background(), rpName, metav1.GetOptions{})
+		require.True(t, apierrors.IsNotFound(err))
+	})
+}
 
 func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 	type input struct {

@@ -62,6 +62,11 @@ export { getModalStyles } from '../components/Modal/getModalStyles';
 export { MultiValueRemove, type MultiValueRemoveProps } from '../components/Select/MultiValue';
 export { getSvgSize } from '../components/Icon/utils';
 export { LoadingIndicator } from '../components/PanelChrome/LoadingIndicator';
+export {
+  PanelChromeHeaderControlsContext,
+  usePanelChromeHeaderControls,
+  type PanelChromeHeaderControls,
+} from '../components/PanelChrome/PanelChromeHeaderControlsContext';
 export { type ButtonLinkProps, getButtonStyles } from '../components/Button/Button';
 export {
   type TableSortByFieldState,
@@ -123,3 +128,6 @@ export { getSourceFrameIndex } from '../components/Table/TableNG/transformations
 export { getInternalRadius, getExternalRadius } from '../themes/mixins';
 export { BrandingContext, useBranding, type BrandingContextValue } from '../components/Branding/BrandingContext';
 export { DRAWER_INSIDE_ATTRIBUTE } from '../components/Drawer/Drawer';
+
+export { InternalCodeMirrorEditor } from '../components/CodeMirror/CodeEditorLazy';
+export type { InternalCodeMirrorEditorProps } from '../components/CodeMirror/types';

@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
+	ngrulesvc "github.com/grafana/grafana/pkg/services/ngalert/rules"
 	"github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
@@ -76,7 +77,7 @@ func TestIntegrationStatsDataAccess(t *testing.T) {
 		features:       featuremgmt.WithFeatures(),
 		namespacer:     request.GetNamespaceMapper(cfg),
 		unifiedStorage: unifiedStorage,
-		ruleStore:      &rules.RuleStore{SQLStore: db},
+		ruleService:    ngrulesvc.NewService(&rules.RuleStore{SQLStore: db}),
 	}
 
 	for _, tc := range []struct {

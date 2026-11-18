@@ -136,6 +136,8 @@ type Cfg struct {
 	Raw    *ini.File
 	Logger log.Logger
 
+	withoutGlobals bool
+
 	// for logging purposes
 	configFiles                  []string
 	appliedCommandLineProperties []string
@@ -201,6 +203,13 @@ type Cfg struct {
 	// ProvisioningResources is the configured set of provisionable resources, each as a
 	// "<group>/<Kind>[:cap...]" token (parsed by resources.ParseSupportedResources at startup).
 	ProvisioningResources []string
+	// ProvisioningResourceLister selects how provisioning answers "what does this repository
+	// manage": "search" (the unified-storage managed-object index) or "apis" (the provisioning
+	// API server's repository subresources). Empty means "search".
+	ProvisioningResourceLister string
+	// ProvisioningResourceListerPageSize is how many items the "apis" lister asks for per request
+	// when it reads a whole list. Non-positive (<=0) uses resources.DefaultListPageSize.
+	ProvisioningResourceListerPageSize int64
 	// ProvisioningBootstrapPath is the directory Grafana registers a local repository over
 	// at startup, so the mounted files can declare the instance's own provisioning config.
 	ProvisioningBootstrapPath                 string
@@ -630,7 +639,8 @@ type Cfg struct {
 
 	// MaxNestedFolderDepth is the hard ceiling for folder nesting depth.
 	// The SQL query builders use this value to generate JOIN chains.
-	MaxNestedFolderDepth int
+	MaxNestedFolderDepth           int
+	PendingDeletionResourceEnabled bool
 
 	SecureSocksDSProxy SecureSocksDSProxySettings
 
@@ -750,6 +760,7 @@ type Cfg struct {
 	IndexMinCount                              int
 	IndexRebuildInterval                       time.Duration
 	IndexCacheTTL                              time.Duration
+	IndexCacheTTLIdleOnly                      bool
 	IndexMinUpdateInterval                     time.Duration // Don't update index if it was updated less than this interval ago.
 	IndexModificationCacheTTL                  time.Duration // TTL for dedup cache used in ListModifiedSince. 0 disables the cache.
 	GlobalSearchIndexEnabled                   bool          // Build one index per namespace covering several resource types, alongside the per-resource indexes.
@@ -891,6 +902,8 @@ type Cfg struct {
 	EventRetentionPeriod time.Duration
 	EventPruningInterval time.Duration
 	SearchLookback       time.Duration
+	// NotifierSettleDelay is how long watch notifiers hold a change for
+	// lower RVs that arrive later. 0 uses each notifier's default.
 	NotifierSettleDelay  time.Duration
 	SeededWatchesEnabled bool
 	// explicitWatchSettings records which watch settings had a value before
@@ -991,6 +1004,9 @@ type CommandLineArgs struct {
 }
 
 func copyServerURLSettingsToGlobals(cfg *Cfg) {
+	if cfg.withoutGlobals {
+		return
+	}
 	AppUrl = cfg.AppURL
 	AppSubUrl = cfg.AppSubURL
 }
@@ -1555,6 +1571,18 @@ func NewCfgFromINIFile(iniFile *ini.File) (*Cfg, error) {
 	return cfg, nil
 }
 
+// NewCfgFromINIFileWithoutGlobals parses a config other than the running server's without writing package globals or environment variables, and returns an error for an invalid root_url instead of exiting.
+func NewCfgFromINIFileWithoutGlobals(iniFile *ini.File) (*Cfg, error) {
+	cfg := NewCfg()
+	cfg.withoutGlobals = true
+
+	if err := cfg.parseINIFile(iniFile); err != nil {
+		return nil, fmt.Errorf("failed to parse setting from INI file: %w", err)
+	}
+
+	return cfg, nil
+}
+
 func (cfg *Cfg) validateStaticRootPath() error {
 	if skipStaticRootValidation {
 		return nil
@@ -1826,6 +1854,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.Storage = readStorageSettings(iniFile)
 	cfg.Search = readSearchSettings(iniFile)
 	cfg.MaxNestedFolderDepth = maxDeptFolderSettings(iniFile)
+	cfg.PendingDeletionResourceEnabled = iniFile.Section("folder").Key("pending_deletion_resource_enabled").MustBool(false)
 
 	var err error
 	cfg.SecureSocksDSProxy, err = readSecureSocksDSProxySettings(iniFile)
@@ -1945,29 +1974,31 @@ func (cfg *Cfg) handleAWSConfig() {
 	cfg.AWSForwardSettingsPlugins = util.SplitString(awsPluginSec.Key("forward_settings_to_plugins").String())
 
 	// Also set environment variables that can be used by core plugins
-	err := os.Setenv(awsds.AssumeRoleEnabledEnvVarKeyName, strconv.FormatBool(cfg.AWSAssumeRoleEnabled))
-	if err != nil {
-		cfg.Logger.Error(fmt.Sprintf("could not set environment variable '%s'", awsds.AssumeRoleEnabledEnvVarKeyName), err)
-	}
+	if !cfg.withoutGlobals {
+		err := os.Setenv(awsds.AssumeRoleEnabledEnvVarKeyName, strconv.FormatBool(cfg.AWSAssumeRoleEnabled))
+		if err != nil {
+			cfg.Logger.Error(fmt.Sprintf("could not set environment variable '%s'", awsds.AssumeRoleEnabledEnvVarKeyName), err)
+		}
 
-	err = os.Setenv(awsds.AllowedAuthProvidersEnvVarKeyName, allowedAuthProviders)
-	if err != nil {
-		cfg.Logger.Error(fmt.Sprintf("could not set environment variable '%s'", awsds.AllowedAuthProvidersEnvVarKeyName), err)
-	}
+		err = os.Setenv(awsds.AllowedAuthProvidersEnvVarKeyName, allowedAuthProviders)
+		if err != nil {
+			cfg.Logger.Error(fmt.Sprintf("could not set environment variable '%s'", awsds.AllowedAuthProvidersEnvVarKeyName), err)
+		}
 
-	err = os.Setenv(awsds.ListMetricsPageLimitKeyName, strconv.Itoa(cfg.AWSListMetricsPageLimit))
-	if err != nil {
-		cfg.Logger.Error(fmt.Sprintf("could not set environment variable '%s'", awsds.ListMetricsPageLimitKeyName), err)
-	}
+		err = os.Setenv(awsds.ListMetricsPageLimitKeyName, strconv.Itoa(cfg.AWSListMetricsPageLimit))
+		if err != nil {
+			cfg.Logger.Error(fmt.Sprintf("could not set environment variable '%s'", awsds.ListMetricsPageLimitKeyName), err)
+		}
 
-	err = os.Setenv(awsds.GrafanaAssumeRoleExternalIdKeyName, cfg.AWSExternalId)
-	if err != nil {
-		cfg.Logger.Error(fmt.Sprintf("could not set environment variable '%s'", awsds.GrafanaAssumeRoleExternalIdKeyName), err)
-	}
+		err = os.Setenv(awsds.GrafanaAssumeRoleExternalIdKeyName, cfg.AWSExternalId)
+		if err != nil {
+			cfg.Logger.Error(fmt.Sprintf("could not set environment variable '%s'", awsds.GrafanaAssumeRoleExternalIdKeyName), err)
+		}
 
-	err = os.Setenv(awsds.SessionDurationEnvVarKeyName, cfg.AWSSessionDuration)
-	if err != nil {
-		cfg.Logger.Error(fmt.Sprintf("could not set environment variable '%s'", awsds.SessionDurationEnvVarKeyName), err)
+		err = os.Setenv(awsds.SessionDurationEnvVarKeyName, cfg.AWSSessionDuration)
+		if err != nil {
+			cfg.Logger.Error(fmt.Sprintf("could not set environment variable '%s'", awsds.SessionDurationEnvVarKeyName), err)
+		}
 	}
 }
 
@@ -2160,6 +2191,9 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 }
 
 func copyCookieSecuritySettingsToGlobals(cfg *Cfg) {
+	if cfg.withoutGlobals {
+		return
+	}
 	CookieSecure = cfg.CookieSecure
 	if cfg.CookieSameSiteDisabled {
 		CookieSameSiteDisabled = cfg.CookieSameSiteDisabled
@@ -2179,7 +2213,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 
 	cfg.ApiKeyMaxSecondsToLive = auth.Key("api_key_max_seconds_to_live").MustInt64(-1)
 
-	cfg.DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
+	readDisableLoginForm(iniFile, cfg)
 	cfg.DisableSignoutMenu = auth.Key("disable_signout_menu").MustBool(false)
 
 	// Deprecated
@@ -2374,6 +2408,9 @@ func readSnapshotsSettings(cfg *Cfg, iniFile *ini.File) error {
 func (cfg *Cfg) readServerSettings(iniFile *ini.File) error {
 	server := iniFile.Section("server")
 	if err := readServerURLSettings(iniFile, cfg); err != nil {
+		if cfg.withoutGlobals {
+			return err
+		}
 		cfg.Logger.Error("Invalid root_url.", "url", cfg.AppURL, "error", err)
 		os.Exit(1)
 	}
@@ -2671,6 +2708,8 @@ func (cfg *Cfg) readProvisioningSettings(iniFile *ini.File) error {
 	if len(cfg.ProvisioningResources) == 0 {
 		cfg.ProvisioningResources = defaultProvisioningResources()
 	}
+	cfg.ProvisioningResourceLister = strings.TrimSpace(iniFile.Section("provisioning").Key("resource_lister").String())
+	cfg.ProvisioningResourceListerPageSize = iniFile.Section("provisioning").Key("resource_lister_page_size").MustInt64(0)
 	cfg.ProvisioningBootstrapPath = strings.TrimSpace(valueAsString(iniFile.Section("provisioning"), "bootstrap_path", ""))
 	cfg.ProvisioningAllowImageRendering = iniFile.Section("provisioning").Key("allow_image_rendering").MustBool(true)
 	cfg.ProvisioningAllowInsecure = iniFile.Section("provisioning").Key("allow_insecure").MustBool(false)

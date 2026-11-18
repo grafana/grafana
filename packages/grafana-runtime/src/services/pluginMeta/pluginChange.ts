@@ -19,6 +19,6 @@ export async function refetchPluginMetasAfterPluginChange(settings: FrontendSett
   }
 
   const metas = await refetchPluginMetas();
-  setPanelPluginMetasFromResponse(metas);
-  setDatasourcePluginMetasFromResponse(metas);
+  await setPanelPluginMetasFromResponse(metas);
+  await setDatasourcePluginMetasFromResponse(metas);
 }

@@ -212,10 +212,13 @@ export const DashboardInteractions = {
       | 'duplicate'
       | 'delete'
       | 'view'
+      | 'restore'
+      | 'explore'
+      | 'more_actions'
       | 'use_library_panel',
     id: number,
-    source: 'panel' | 'edit_pane' | 'edit_popover' | 'keyboard',
-    panelType?: string
+    source: 'panel' | 'edit_pane' | 'edit_popover' | 'actions_popover' | 'keyboard',
+    panelType: string
   ) {
     reportDashboardInteraction('panel_action_clicked', { item, id, source, panelType });
   },
@@ -253,6 +256,13 @@ export const DashboardInteractions = {
   },
   trackDeleteDashboardElement(elementType: string, source: 'edit_pane' | 'edit_popover') {
     reportDashboardInteraction('edit_action_clicked', { item: `remove_${elementType.toLowerCase()}`, source });
+  },
+  trackDashboardSectionAction(
+    action: 'settings' | 'copy' | 'duplicate',
+    elementType: 'row' | 'tab',
+    source: 'edit_pane' | 'edit_popover'
+  ) {
+    reportDashboardInteraction('edit_action_clicked', { item: `${action}_${elementType}`, source });
   },
   panelLinkClicked: (properties?: Record<string, unknown>) => {
     reportDashboardInteraction('panelheader_datalink_clicked', properties);
@@ -470,8 +480,30 @@ export const DashboardInteractions = {
     reportDashboardInteraction('view_panel_action', properties);
   },
 
-  setVisualOption: (properties?: { ui: 'panel-edit' | 'view-panel'; option: string; value: string }) => {
+  setVisualOption: (properties?: {
+    ui: 'panel-edit' | 'view-panel';
+    option: string;
+    value: string;
+    panel_type: string;
+    panel_id: number;
+  }) => {
     reportDashboardInteraction('set_visualization_option', properties);
+  },
+
+  // Panels with options set from a variable, with grafana.panelOptionInterpolation
+  panelOptionVariableUsage: (properties: {
+    trigger: 'load' | 'save';
+    panel_count: number;
+    field_config_count: number;
+    threshold_count: number;
+    value_mapping_count: number;
+    dashboard_uid?: string;
+  }) => {
+    reportDashboardInteraction('panel_option_variable_usage', properties);
+  },
+
+  panelOptionVariableCreated: (properties: { type: 'custom' | 'switch' }) => {
+    reportDashboardInteraction('panel_option_variable_created', properties);
   },
 
   // tracks attempts to resize a panel that is managed by auto layout
