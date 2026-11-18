@@ -1599,10 +1599,17 @@
         "view-list": "Lista",
         "wildcard-in-text": "O texto de pesquisa não pode conter * ou %."
       },
+      "sequence-drawer": {
+        "alert-rules": "",
+        "error": "",
+        "interval": "",
+        "missing-rule": "",
+        "recording-rules": "",
+        "this-rule": "",
+        "title": ""
+      },
       "sequence-pill": {
-        "label": "",
         "label-with-interval": "",
-        "tooltip": "",
         "tooltip-with-interval": ""
       },
       "shared": {
@@ -1825,17 +1832,18 @@
         "autosync-rules-error-title": "Falha na importação de regras",
         "autosync-rules-imported-note": "As suas regras de alerta selecionadas também foram importadas.",
         "autosync-rules-note": "As suas regras de alerta selecionadas também serão importadas.",
-        "autosync-success-body": "Sincronização automática ativada. A redirecionar...",
+        "autosync-success-body": "",
         "autosync-success-title": "Sincronização automática ativada",
         "autosync-title": "Confirmar sincronização automática",
         "body": "Tem a certeza de que pretende iniciar a importação? Esta ação criará novos recursos na Grafana Alerting.",
         "confirm": "Iniciar importação",
+        "continue": "",
         "error-body": "",
         "error-details": "",
         "error-title": "Importação falhada",
         "importing-body": "A importar recursos para a Grafana Alerting. Aguarde...",
         "importing-title": "A importar...",
-        "success-body": "Recursos importados com sucesso. A redirecionar...",
+        "success-body": "",
         "success-title": "Importação bem-sucedida",
         "title": "Confirmar importação"
       },
@@ -7719,11 +7727,7 @@
       "usage-count_other": "Utilizado em {{count}} painéis de controlo"
     },
     "lifecycle": {
-      "applied": "Aplicou as suas alterações a {{title}}",
-      "apply": "Aplicar",
-      "apply-body": "Todas as pessoas com acesso vão vê-las. Pode restaurar a versão anterior a partir do histórico de versões.",
-      "apply-failed": "Não foi possível aplicar as alterações. Tente novamente ou compare-as primeiro.",
-      "apply-needs-save": "",
+      "ask-assistant-to-update": "",
       "breadcrumb-draft": "Rascunho",
       "breadcrumb-pending-changes": "Alterações pendentes",
       "change-added": "Adicionado",
@@ -7755,7 +7759,6 @@
       "draft-discarded": "",
       "draft-title": "Rascunho",
       "edited-dashboard": "",
-      "highlight-changes": "Destacar as alterações no painel de controlo",
       "pending-body": "A pré-visualizar alterações pendentes, só visíveis para si.",
       "pending-body-source": "A pré-visualizar alterações pendentes {{source}}, só visíveis para si.",
       "pending-changes-changed": "",
@@ -7764,13 +7767,16 @@
       "pending-stale": "O painel de controlo foi atualizado desde que as suas alterações foram feitas",
       "pending-title": "Alterações pendentes",
       "preview-changes": "Pré-visualizar alterações",
-      "rebase": "Ajustar a base",
       "record-pending-change-failed": "",
       "save": "Guardar",
+      "save-failed": "",
+      "save-needs-permission": "",
+      "save-pending-body": "",
+      "save-pending-failed": "",
+      "saved-pending": "",
       "show-original-dashboard": "Mostrar o painel de controlo original",
-      "stop-highlighting-changes": "Parar de destacar alterações",
-      "apply-title_one": "Aplicar {{count}} alteração a \"{{title}}\"?",
-      "apply-title_other": "Aplicar {{count}} alterações a \"{{title}}\"?"
+      "save-pending-title_one": "",
+      "save-pending-title_other": ""
     },
     "link-edit-actions": {
       "add-link": "Adicionar link",
@@ -13474,6 +13480,31 @@
     }
   },
   "navigation": {
+    "assistant-toolbar-button": {
+      "arrange-window": "",
+      "assistant-page": "",
+      "bottom": "",
+      "floating": "",
+      "left": "",
+      "menu": "",
+      "move": "",
+      "navigation-assistant-page": "",
+      "navigation-page-assistant": "",
+      "navigation-page-assistant-below": "",
+      "navigation-page-floating-assistant": "",
+      "page-assistant": "",
+      "page-assistant-below": "",
+      "page-floating-assistant": "",
+      "page-only": "",
+      "pop-up": "",
+      "right": ""
+    },
+    "assistant-workspace": {
+      "exit": "",
+      "exit-tooltip": "",
+      "open": "",
+      "open-tooltip": ""
+    },
     "breadcrumbs": {
       "aria-label": "Ligações de navegação"
     },
@@ -13489,14 +13520,6 @@
         "open-all": "Abrir assistentes de IA e aplicações da barra lateral"
       },
       "floating-resize": "Redimensionar largura da barra lateral"
-    },
-    "fullscreen-workspace": {
-      "enter": "Entrar no espaço de trabalho",
-      "error-exit": "Sair do espaço de trabalho",
-      "error-message": "Não foi possível carregar o espaço de trabalho do Assistente Grafana.",
-      "error-reload": "Atualizar página",
-      "error-title": "Espaço de trabalho indisponível",
-      "workspace": "Espaço de trabalho"
     },
     "help": {
       "aria-label": "Ajuda",
@@ -13534,6 +13557,7 @@
       "tv-alert": "Pressione ESC para sair do modo de quiosque"
     },
     "megamenu": {
+      "click-to-dock": "",
       "close": "Fechar menu",
       "customise": "Personalizar a navegação",
       "customise-cancel": "Cancelar",
@@ -13691,8 +13715,10 @@
       "drag-handle": "Arrastar para reordenar",
       "duplicate": "Duplicar bloco",
       "frame": {
-        "aria-label-collapsed": "Bloco recolhido: {{name}}",
-        "aria-label-panel": "Bloco de visualização: {{name}}"
+        "aria-label-collapsed-titled": "",
+        "aria-label-collapsed-untitled": "",
+        "aria-label-panel-titled": "",
+        "aria-label-panel-untitled": ""
       },
       "markdown": {
         "aria-label-editor": "Markdown",
@@ -13780,7 +13806,7 @@
       "submit": "Adicionar ao bloco de notas",
       "success": "Painel adicionado a {{title}}",
       "success-cells": "Adicionado a {{title}}",
-      "success-link": "Ver bloco de notas",
+      "success-open-link": "",
       "tag-placeholder": "Filtrar por etiqueta",
       "target-description": "Escolha onde adicionar o painel.",
       "target-existing": "Bloco de notas existente",
@@ -13952,7 +13978,8 @@
       "swatch-placeholder-aria-label": "Escolher uma cor, {{placeholder}}"
     },
     "field-color": {
-      "color-by-label": "Colorir séries por"
+      "color-by-label": "Colorir séries por",
+      "reverse-label": ""
     },
     "number-input": {
       "error-out-of-range": "Fora do intervalo. {{range}}",
@@ -15587,6 +15614,8 @@
       "header-title": "Título",
       "header-type": "Tipo",
       "missing-folder-metadata": "Ficheiro de metadados da pasta em falta",
+      "resource-filter-aria-label": "",
+      "resource-filter-placeholder": "",
       "search-placeholder": "Pesquisar por caminho ou título",
       "source": "Origem",
       "status-filter-aria-label": "Filtrar por estado",

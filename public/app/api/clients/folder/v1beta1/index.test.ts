@@ -17,7 +17,8 @@ describe('folderAPIv1beta1 getAffectedItems', () => {
       reducer: {
         [folderAPIv1beta1.reducerPath]: folderAPIv1beta1.reducer,
       },
-      middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(folderAPIv1beta1.middleware),
+      middleware: (getDefaultMiddleware) =>
+        getDefaultMiddleware({ serializableCheck: false, immutableCheck: false }).concat(folderAPIv1beta1.middleware),
     });
 
   beforeEach(() => {

@@ -660,6 +660,11 @@ func (m *grafanaMetaAccessor) FindTitle(defaultTitle string) string {
 		if ok && title != "" {
 			return title
 		}
+		// Global variables store their logical name at spec.spec.name.
+		title, ok, _ = unstructured.NestedString(obj.Object, "spec", "spec", "name")
+		if ok && title != "" {
+			return title
+		}
 	}
 
 	title := m.r.FieldByName("Title")

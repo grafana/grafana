@@ -2950,6 +2950,37 @@
         }
       }
     },
+    "recently-deleted": {
+      "action": {
+        "restore": "Restore",
+        "review": "Review"
+      },
+      "empty": "No recently deleted rules found",
+      "error": "Failed to load deleted rules",
+      "load-more": "Load more",
+      "restore": {
+        "body": "Restore \"{{title}}\"?",
+        "confirm": "Restore",
+        "conflict": "A rule with this name already exists.",
+        "error": "Failed to restore rule. Please try again.",
+        "restoring": "Restoring…",
+        "title": "Restore alert rule"
+      },
+      "retry": "Retry",
+      "review": {
+        "advanced": "Advanced",
+        "deleted-at": "Deleted {{time}}",
+        "deleted-by": "By {{name}}",
+        "title": "Review: {{title}}"
+      },
+      "table": {
+        "deleted": "Deleted",
+        "deleted-by": "Deleted by",
+        "folder": "Folder",
+        "title": "Title"
+      },
+      "unknown": "Unknown"
+    },
     "recording-rule": {
       "term": "Recording rule"
     },
@@ -9830,13 +9861,17 @@
     }
   },
   "feature-control": {
+    "add-new-flag": "Add new flag override",
     "button": {
       "aria-label": "Feature control",
       "close-tooltip": "Close feature control",
       "open-tooltip": "Open feature control"
     },
+    "cancel-flag": "Cancel",
+    "close": "Close",
     "delete-flag": "Delete",
     "description": "Override frontend feature flags locally for testing and development purposes.",
+    "disable-overrides": "Disable overrides",
     "dismiss": {
       "label": "Remove UI and toolbar button",
       "tooltip": "Any feature flag overrides defined will remain active.<br/> Use <3>{{ param }}</3> in the URL to enable UI again."
@@ -9846,11 +9881,18 @@
     "flag-type": "Flag type",
     "flag-value": "Flag value",
     "menu": "Open menu",
-    "new-flag": "new-flag-override",
     "ofrep-evaluation": "OFREP evaluation",
     "ofrep-reason": "Reason: <2>{{reason}}</2>",
     "ofrep-variant": "Variant: <2>{{variant}}</2>",
+    "override-status": {
+      "different": "Differs from the evaluated value",
+      "new": "Setting a value that is not otherwise evaluated",
+      "same": "Matches the evaluated value"
+    },
+    "restore-overrides": "Restore overrides",
     "save-flag": "Save",
+    "suspended-warning": "Overrides are temporarily disabled",
+    "suspended-warning-body": "Flags are evaluating to their default values. Restore overrides to re-enable them.",
     "title": "Feature control"
   },
   "folder-filter": {
@@ -12465,7 +12507,7 @@
     },
     "description-allow-download": "When controls are enabled, show an option to download the logs on display.",
     "description-enable-field-selector": "Experimental. Show a component to manage the displayed fields from the logs.",
-    "description-enable-infinite-scrolling": "Experimental. Request more results by scrolling to the bottom of the logs list.",
+    "description-enable-infinite-scrolling": "Experimental. Request more results by scrolling on the edge of the logs list.",
     "description-enable-logs-highlighting": "Use a predefined coloring scheme to highlight relevant parts of the log lines.",
     "description-order": "Show newest or oldest logs first. When Oldest first is selected, the view automatically scrolls to the newest logs at the bottom.",
     "description-prettify-json": "Format JSON log entries with indentation and line breaks.",
@@ -13482,6 +13524,9 @@
     }
   },
   "navigation": {
+    "administration-section-nav": {
+      "label": "Administration"
+    },
     "assistant-toolbar-button": {
       "arrange-window": "Arrange window",
       "assistant-page": "Assistant and page",
@@ -13594,7 +13639,10 @@
       "aria-label": "New",
       "new-template-dashboard-button": "Use template"
     },
-    "rss-button": "Latest from the blog"
+    "rss-button": "Latest from the blog",
+    "section-nav-menu": {
+      "label": "Menu"
+    }
   },
   "news": {
     "category-news": "News",
@@ -13980,7 +14028,8 @@
       "swatch-placeholder-aria-label": "Pick a color, {{placeholder}}"
     },
     "field-color": {
-      "color-by-label": "Color series by"
+      "color-by-label": "Color series by",
+      "reverse-label": "Reverse colors"
     },
     "number-input": {
       "error-out-of-range": "Out of range. {{range}}",

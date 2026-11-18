@@ -461,6 +461,9 @@ func (s *Storage) Delete(
 		return storage.NewKeyNotFoundError(key, 0)
 	}
 
+	// The user a service deletes on behalf of; the server records them as the deleter.
+	actingUser, _ := identity.MetadataIdentityUIDFrom(ctx)
+
 	var lastErr error
 	bo := backoff.New(ctx, updateRetryConfig)
 	for bo.Ongoing() {
@@ -468,7 +471,7 @@ func (s *Storage) Delete(
 			return err
 		}
 
-		cmd := &resourcepb.DeleteRequest{Key: k}
+		cmd := &resourcepb.DeleteRequest{Key: k, ActingUserUid: actingUser}
 
 		if preconditions != nil {
 			if err := preconditions.Check(key, out); err != nil {
