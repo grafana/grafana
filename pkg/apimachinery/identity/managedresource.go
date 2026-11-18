@@ -76,6 +76,15 @@ func isGrafanaCloudServiceIdentity(auth authtypes.AuthInfo, grafanaCloudServiceI
 	return len(ids) == 1 && ids[0] == grafanaCloudServiceIdentity
 }
 
+// isClassicFPToGrafanaCloud reports whether the configured service identity is converting a
+// classic-file-provisioning resource to the grafana-cloud manager.
+func isClassicFPToGrafanaCloud(auth authtypes.AuthInfo, old, proposed utils.ManagerProperties, hasOld bool, grafanaCloudServiceIdentity string) bool {
+	return hasOld &&
+		old.Kind == utils.ManagerKindClassicFP && // nolint:staticcheck
+		proposed.Kind == utils.ManagerKindGrafanaCloud &&
+		isGrafanaCloudServiceIdentity(auth, grafanaCloudServiceIdentity)
+}
+
 func CheckManagerWriteAuthz(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
 	kind := obj.GetAnnotation(utils.AnnoKeyManagerKind)
 	if kind == "" {
@@ -171,8 +180,10 @@ func CheckManagerOnUpdate(auth authtypes.AuthInfo, obj, old utils.GrafanaMetaAcc
 		return nil
 	}
 
-	if err := utils.CheckManagerPropertiesOnUpdate(managerOld, managerNew, hasOld, hasNew); err != nil {
-		return err
+	if !isClassicFPToGrafanaCloud(auth, managerOld, managerNew, hasOld, grafanaCloudServiceIdentity) {
+		if err := utils.CheckManagerPropertiesOnUpdate(managerOld, managerNew, hasOld, hasNew); err != nil {
+			return err
+		}
 	}
 
 	// Adding a manager or updating flags on the same owner. Gate only a *new* classic-FP or
