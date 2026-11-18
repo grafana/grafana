@@ -169,7 +169,7 @@ func (r *Runner) Run(ctx context.Context, observer Observer, primary func(), pre
 	go func() {
 		defer func() { <-r.inFlight }()
 
-		shadowCtx, cancel := context.WithTimeout(background, r.timeout)
+		shadowCtx, cancel := context.WithTimeout(WithContext(background), r.timeout)
 		defer cancel()
 
 		safely(

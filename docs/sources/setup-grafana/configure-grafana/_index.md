@@ -1109,6 +1109,12 @@ Increasing this value allows processing more dashboards in each cleanup cycle bu
 
 ### `[folder]`
 
+#### `pending_deletion_resource_enabled`
+
+Mounts the internal `PendingFolderDeletion` API at `folder.grafana.app/v1alpha1`. Default is `false`. This process-global setting requires a restart. It doesn't enable pending-deletion writers or recovery, and access remains restricted to authorized internal services.
+
+Pending entries use `<folder.metadata.name>-<folder.metadata.uid>` as their name: the exact folder API name followed by its Kubernetes incarnation UID, not its display title. Recording rejects names outside Grafana's supported character set (ASCII letters, digits, `-`, `_`, `:`, and `.`) and names longer than 253 bytes without altering them. `spec.folderName` and `spec.folderUID` retain the two original values separately.
+
 #### `deleted_resource_cleanup_interval`
 
 How often the background job deletes resources (alert rules, library panels) whose folder no longer exists. Requires the `deletedFolderResourceCleanup` feature toggle. Default and minimum: `5m`.

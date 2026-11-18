@@ -16,6 +16,7 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
+import { reportInteraction } from '@grafana/runtime';
 import {
   type CancelActivationHandler,
   CustomVariable,
@@ -76,6 +77,7 @@ let pluginPromise: Promise<PanelPlugin> | undefined;
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
   getRunRequest: () => (ds: DataSourceApi, request: DataQueryRequest) => {
     return runRequestMock(ds, request);
   },
@@ -520,6 +522,214 @@ describe('PanelEditor', () => {
       // Change back to already saved state
       panel.setState({ title: 'changed title' });
       expect(panelEditor.state.isDirty).toBe(false);
+    });
+  });
+
+  describe('Reporting the close and discard interactions', () => {
+    const NO_CHANGES = {
+      changed: false,
+      changed_options: false,
+      changed_field_config: false,
+      changed_overrides: false,
+      changed_queries: false,
+      changed_transformations: false,
+      changed_panel_info: false,
+      changed_repeat: false,
+      saved_in_editor: false,
+      panel_type: 'text',
+      panel_id: 1,
+      is_new_panel: false,
+      is_library_panel: false,
+      query_editor: 'classic',
+      isDynamicDashboard: true,
+    };
+
+    const reported = (name: string) =>
+      jest
+        .mocked(reportInteraction)
+        .mock.calls.filter(([interactionName]) => interactionName === name)
+        .map(([, properties, options]) => ({ properties, options }));
+
+    const closeEditor = () => {
+      deactivate!();
+      deactivate = undefined;
+    };
+
+    beforeEach(() => {
+      jest.mocked(reportInteraction).mockClear();
+    });
+
+    it('reports a non-silent close with no changed areas when nothing was edited', async () => {
+      await setup();
+
+      closeEditor();
+
+      expect(reported('panel_edit_closed')).toEqual([
+        { properties: { ...NO_CHANGES, outcome: 'kept' }, options: undefined },
+      ]);
+      expect(reported('panel_edit_discarded')).toEqual([]);
+    });
+
+    it('reports the areas the user changed when the editor closes', async () => {
+      const { panel } = await setup();
+
+      panel.setState({ title: 'changed title', options: { content: 'Hello' } });
+      closeEditor();
+
+      expect(reported('panel_edit_closed')).toEqual([
+        {
+          properties: {
+            ...NO_CHANGES,
+            changed: true,
+            changed_options: true,
+            changed_panel_info: true,
+            outcome: 'kept',
+          },
+          options: undefined,
+        },
+      ]);
+    });
+
+    it('does not count the default query the editor adds to a panel without data as a change', async () => {
+      const { panel } = await setup({ withoutData: true });
+      expect(getQueryRunnerFor(panel)?.state.queries).toHaveLength(1);
+
+      closeEditor();
+
+      expect(reported('panel_edit_closed')[0].properties).toEqual({ ...NO_CHANGES, outcome: 'kept' });
+    });
+
+    it('reports a discard with the discarded areas, then a close with the discarded outcome', async () => {
+      const { panel, panelEditor } = await setup();
+
+      getQueryRunnerFor(panel)?.setState({ maxDataPoints: 123 });
+      panelEditor.onDiscard();
+      closeEditor();
+
+      const discardedChanges = { ...NO_CHANGES, changed: true, changed_queries: true };
+      expect(reported('panel_edit_discarded')).toEqual([{ properties: discardedChanges, options: undefined }]);
+      expect(reported('panel_edit_closed')).toEqual([
+        { properties: { ...discardedChanges, outcome: 'discarded' }, options: undefined },
+      ]);
+    });
+
+    it('keeps the areas changed before a save inside the editor in the close event', async () => {
+      const { panel, panelEditor } = await setup();
+
+      getQueryRunnerFor(panel)?.setState({ maxDataPoints: 123 });
+      panelEditor.dashboardSaved();
+      closeEditor();
+
+      expect(reported('panel_edit_closed')[0].properties).toEqual({
+        ...NO_CHANGES,
+        changed: true,
+        changed_queries: true,
+        saved_in_editor: true,
+        outcome: 'kept',
+      });
+    });
+
+    it('reports a discard after a save inside the editor with only the areas changed since the save', async () => {
+      const { panel, panelEditor } = await setup();
+
+      getQueryRunnerFor(panel)?.setState({ maxDataPoints: 123 });
+      panelEditor.dashboardSaved();
+      panel.setState({ title: 'changed title' });
+      panelEditor.onDiscard();
+      closeEditor();
+
+      const discardedChanges = { ...NO_CHANGES, changed: true, changed_panel_info: true, saved_in_editor: true };
+      expect(getQueryRunnerFor(panel)?.state.maxDataPoints).toBe(123);
+      expect(reported('panel_edit_discarded')).toEqual([{ properties: discardedChanges, options: undefined }]);
+      expect(reported('panel_edit_closed')[0].properties).toEqual({ ...discardedChanges, outcome: 'discarded' });
+    });
+
+    it('reports saving a library panel from the editor as a library panel saved in the editor', async () => {
+      const saveLibPanel = jest.spyOn(libAPI, 'saveLibPanel').mockResolvedValue(undefined);
+      try {
+        const libraryPanel = new LibraryPanelBehavior({
+          uid: 'lib-uid',
+          name: 'Library panel',
+          isLoaded: true,
+          _loadedPanel: { uid: 'lib-uid', name: 'Library panel', type: 'panel', version: 1, model: { type: 'text' } },
+        });
+        const { panelEditor } = await setup({ libraryPanel });
+
+        panelEditor.onConfirmSaveLibraryPanel();
+        closeEditor();
+
+        expect(saveLibPanel).toHaveBeenCalledTimes(1);
+        expect(reported('panel_edit_closed')[0].properties).toEqual({
+          ...NO_CHANGES,
+          saved_in_editor: true,
+          is_library_panel: true,
+          outcome: 'kept',
+        });
+      } finally {
+        saveLibPanel.mockRestore();
+      }
+    });
+
+    it('reports a discarded new panel as a new panel with the discarded outcome', async () => {
+      const { panelEditor } = await setup({ isNewPanel: true });
+
+      panelEditor.onDiscard();
+      closeEditor();
+
+      expect(reported('panel_edit_closed')[0].properties).toEqual({
+        ...NO_CHANGES,
+        is_new_panel: true,
+        outcome: 'discarded',
+      });
+    });
+
+    it('reports a repeat change made in the editor', async () => {
+      const { gridItem } = await setup();
+
+      gridItem.setState({ variableName: 'server' });
+      closeEditor();
+
+      expect(reported('panel_edit_closed')[0].properties).toEqual({
+        ...NO_CHANGES,
+        changed: true,
+        changed_repeat: true,
+        outcome: 'kept',
+      });
+    });
+
+    it('reports the next query editor when the panel was edited with it', async () => {
+      store.delete(QUERY_EDITOR_V2_PREFERENCE_KEY);
+      setTestFlags({ queryEditorNext: true });
+      try {
+        await setup();
+
+        closeEditor();
+
+        expect(reported('panel_edit_closed')[0].properties).toEqual({
+          ...NO_CHANGES,
+          query_editor: 'next',
+          outcome: 'kept',
+        });
+      } finally {
+        setTestFlags({});
+      }
+    });
+
+    it('reports a dashboard without dynamic layouts as not dynamic', async () => {
+      setTestFlags({ dashboardNewLayouts: false });
+      try {
+        await setup();
+
+        closeEditor();
+
+        expect(reported('panel_edit_closed')[0].properties).toEqual({
+          ...NO_CHANGES,
+          isDynamicDashboard: false,
+          outcome: 'kept',
+        });
+      } finally {
+        setTestFlags({});
+      }
     });
   });
 

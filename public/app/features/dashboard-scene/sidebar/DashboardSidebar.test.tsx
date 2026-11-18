@@ -537,6 +537,19 @@ describe('DashboardSidebar', () => {
       await waitFor(() => expect(history.redo).toHaveBeenCalledTimes(1));
     });
 
+    it('steps through the plugin’s history with Undo and Redo in Agent editing too', async () => {
+      const scene = buildTestScene();
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+      scene.setState({ isEditing: true, mode: 'agent' });
+      jest.mocked(history.undo).mockClear();
+
+      expect(scene.state.sidebar.stepsPendingChangesHistory()).toBe(true);
+      scene.state.sidebar.undoAction();
+
+      await waitFor(() => expect(history.undo).toHaveBeenCalledTimes(1));
+      setTestFlags({});
+    });
+
     // A recording still on its way would land after the step and bring the undone change back.
     it('steps only once the recordings sent before have settled', async () => {
       let settle = () => {};
