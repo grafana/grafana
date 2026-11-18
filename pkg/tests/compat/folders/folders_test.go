@@ -164,12 +164,14 @@ func TestCompatUpdate(t *testing.T) {
 	_, err := folders.Patch(ctx, child, types.MergePatchType, []byte(patch), metav1.PatchOptions{}, "status")
 	require.NoError(t, err)
 
-	// Move child with an ordinary update, which must keep its status, and sibling
-	// through the legacy API.
+	// Move child with an ordinary update, and sibling through the legacy API. The update
+	// leaves out the status, as a client that only edits the spec does, so the stored
+	// status must survive it.
 	mover := client(h, h.Org1.Admin, childMoveVersion)
 	obj, err := mover.Get(ctx, child, metav1.GetOptions{})
 	require.NoError(t, err)
 	require.Equal(t, childTitle, title(t, obj), "a status write changed the spec")
+	unstructured.RemoveNestedField(obj.Object, "status")
 	require.NoError(t, unstructured.SetNestedField(obj.Object, updatedTitle, "spec", "title"))
 	annotations := obj.GetAnnotations()
 	annotations[utils.AnnoKeyFolder] = parentB
@@ -247,15 +249,18 @@ func checkTree(t *testing.T, h *apis.K8sTestHelper, res compat.Resource, tr tree
 		} {
 			t.Run(c.subresource, func(t *testing.T) { c.check(t, h, v, tr) })
 		}
-		for _, version := range []string{childWriteVersion, childMoveVersion} {
+		// Every served version, plus the ones child was written and moved through, which
+		// must stay served even if discovery stops listing them.
+		versions := append(slices.Clone(res.Versions), childWriteVersion, childMoveVersion)
+		slices.Sort(versions)
+		for _, version := range slices.Compact(versions) {
 			t.Run("child in "+version, func(t *testing.T) { checkChild(t, h, version, tr) })
 		}
 		t.Run("legacy", func(t *testing.T) { checkLegacy(t, h, tr) })
 	})
 }
 
-// checkChild reads child through one version explicitly, whether or not discovery
-// still lists it.
+// checkChild reads child and its status through one version.
 func checkChild(t *testing.T, h *apis.K8sTestHelper, version string, tr tree) {
 	obj, err := client(h, h.Org1.Admin, version).Get(context.Background(), child, metav1.GetOptions{})
 	require.NoError(t, err, "child through %s", version)
