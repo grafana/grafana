@@ -21,6 +21,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1"
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -89,6 +90,26 @@ func TestTeamAPIEndpoint_SearchTeams(t *testing.T) {
 		assert.Equal(t, http.StatusOK, res.StatusCode)
 		require.NoError(t, res.Body.Close())
 	})
+
+	for name, input := range map[string]struct {
+		err  error
+		code int
+	}{
+		"bad request": {err: errutil.BadRequest("team.test").Errorf("bad page"), code: http.StatusBadRequest},
+		"plain":       {err: errors.New("search failed"), code: http.StatusInternalServerError},
+	} {
+		t.Run("Search error status is preserved: "+name, func(t *testing.T) {
+			server := SetupAPITestServer(t, &teamtest.FakeService{ExpectedError: input.err})
+			req := server.NewGetRequest(searchTeamsURL)
+			req = webtest.RequestWithSignedInUser(req, authedUserWithPermissions(1, 1, []accesscontrol.Permission{
+				{Action: accesscontrol.ActionTeamsRead, Scope: accesscontrol.ScopeTeamsAll},
+			}))
+			res, err := server.Send(req)
+			require.NoError(t, err)
+			assert.Equal(t, input.code, res.StatusCode)
+			require.NoError(t, res.Body.Close())
+		})
+	}
 }
 
 func TestTeamAPIEndpoint_GetTeamByID(t *testing.T) {

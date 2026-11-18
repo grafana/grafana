@@ -152,6 +152,8 @@ export const FlagKeys = {
   DatasourcesQueryGateway: "datasources.queryGateway",
   /** Enables additional experimental color schemes for visualizations. */
   DatavizExperimentalColorSchemes: "dataviz.experimentalColorSchemes",
+  /** Enable the option to reverse by value color schemes */
+  DatavizReverseColorScheme: "dataviz.reverseColorScheme",
   /** Enables tabular numerals for visualization legend values */
   DatavizTabularNums: "dataviz.tabularNums",
   /** Disables legacy scripted dashboards, which are deprecated and will be removed in Grafana 14. Set to false to temporarily restore them. */
@@ -226,6 +228,8 @@ export const FlagKeys = {
   GrafanaKubernetesAnnotationsClient: "grafana.kubernetesAnnotationsClient",
   /** Enables log level inference from log line contents when level is not defined as a field or a label */
   GrafanaLogLevelInference: "grafana.logLevelInference",
+  /** Opens the mega menu over the page while the pointer rests on its toggle, and docks it when the toggle is clicked on wide screens. The toggle in the docked menu's header closes it, in place of the footer's dock button */
+  GrafanaMegaMenuPeekAndDock: "grafana.megaMenuPeekAndDock",
   /** Disables dashboard edit mode (manual and assistant-driven) on mobile/small-screen viewports */
   GrafanaMobileEditDeprecation: "grafana.mobileEditDeprecation",
   /** Enables multi-tenant fallback behavior */
@@ -1178,6 +1182,17 @@ export const useFlagDatavizExperimentalColorSchemes = (options?: ReactFlagEvalua
 };
 
 /**
+ * Enable the option to reverse by value color schemes
+ *
+ * **Details:**
+ * - flag key: `dataviz.reverseColorScheme`
+ * - default value: `false`
+ */
+export const useFlagDatavizReverseColorScheme = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dataviz.reverseColorScheme", false, options).value;
+};
+
+/**
  * Enables tabular numerals for visualization legend values
  *
  * **Details:**
@@ -1582,6 +1597,17 @@ export const useFlagGrafanaKubernetesAnnotationsClient = (options?: ReactFlagEva
  */
 export const useFlagGrafanaLogLevelInference = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.logLevelInference", false, options).value;
+};
+
+/**
+ * Opens the mega menu over the page while the pointer rests on its toggle, and docks it when the toggle is clicked on wide screens. The toggle in the docked menu's header closes it, in place of the footer's dock button
+ *
+ * **Details:**
+ * - flag key: `grafana.megaMenuPeekAndDock`
+ * - default value: `false`
+ */
+export const useFlagGrafanaMegaMenuPeekAndDock = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.megaMenuPeekAndDock", false, options).value;
 };
 
 /**
