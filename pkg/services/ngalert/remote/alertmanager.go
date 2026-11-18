@@ -8,7 +8,6 @@ import (
 	"hash/fnv"
 	"net/http"
 	"net/url"
-	"strings"
 	"time"
 
 	openapiRuntime "github.com/go-openapi/runtime"
@@ -73,9 +72,6 @@ type Alertmanager struct {
 	tenantID          string
 	url               string
 
-	lastConfigSync time.Time
-	syncInterval   time.Duration
-
 	amClient    *remoteClient.Alertmanager
 	mimirClient remoteClient.MimirClient
 
@@ -104,9 +100,6 @@ type AlertmanagerConfig struct {
 
 	// SmtpConfig returns the settings the remote Alertmanager needs to create an email sender.
 	SmtpConfig SmtpConfigFunc
-
-	// SyncInterval determines how often we should attempt to synchronize configuration.
-	SyncInterval time.Duration
 
 	// Timeout for the HTTP client.
 	Timeout time.Duration
@@ -210,15 +203,14 @@ func NewAlertmanager(
 		crypto:        crypto,
 		defaultConfig: cfg.DefaultConfig,
 
-		log:          logger,
-		metrics:      metrics,
-		mimirClient:  mc,
-		orgID:        cfg.OrgID,
-		state:        store,
-		sender:       s,
-		syncInterval: cfg.SyncInterval,
-		tenantID:     cfg.TenantID,
-		url:          cfg.URL,
+		log:         logger,
+		metrics:     metrics,
+		mimirClient: mc,
+		orgID:       cfg.OrgID,
+		state:       store,
+		sender:      s,
+		tenantID:    cfg.TenantID,
+		url:         cfg.URL,
 
 		externalURL:   cfg.ExternalURL,
 		promoteConfig: cfg.PromoteConfig,
@@ -296,11 +288,6 @@ func (am *Alertmanager) ApplyConfig(ctx context.Context, config alertingNotify.N
 			return false, fmt.Errorf("unable to upload the state to the remote Alertmanager: %w", err)
 		}
 		am.log.Debug("Completed state upload to remote Alertmanager", "url", am.url)
-	}
-
-	if time.Since(am.lastConfigSync) < am.syncInterval {
-		am.log.Debug("Not syncing configuration to remote Alertmanager, last sync was too recent")
-		return false, nil
 	}
 
 	am.log.Debug("Start configuration upload to remote Alertmanager", "url", am.url)
@@ -397,48 +384,7 @@ func (am *Alertmanager) sendConfiguration(ctx context.Context, cfg remoteClient.
 		return err
 	}
 	am.metrics.LastConfigSync.SetToCurrentTime()
-	am.lastConfigSync = time.Now()
 	return nil
-}
-
-// GetRemoteState gets the remote Alertmanager's internal state.
-func (am *Alertmanager) GetRemoteState(ctx context.Context) (notifier.ExternalState, error) {
-	var rs notifier.ExternalState
-
-	s, err := am.mimirClient.GetFullState(ctx)
-	if err != nil {
-		return rs, fmt.Errorf("failed to pull remote state: %w", err)
-	}
-
-	// Decode and unmarshal the base64-encoded state we got from Mimir.
-	decoded, err := base64.StdEncoding.DecodeString(s.State)
-	if err != nil {
-		return rs, fmt.Errorf("failed to base64-decode remote state: %w", err)
-	}
-	protoState := &alertingClusterPB.FullState{}
-	if err := protoState.Unmarshal(decoded); err != nil {
-		return rs, fmt.Errorf("failed to unmarshal remote state: %w", err)
-	}
-
-	// Mimir state has two parts:
-	// - "sil:<tenantID>": silences
-	// - "nfl:<tenantID>": notification log entries
-	// The tenant ID can be different in the remote AM, so we consider only the part before the ':'.
-	for _, p := range protoState.Parts {
-		k := strings.Split(p.Key, ":")
-		switch k[0] {
-		case "sil":
-			rs.Silences = p.Data
-		case "nfl":
-			rs.Nflog = p.Data
-		case "fls":
-			rs.FlushLog = p.Data
-		default:
-			return rs, fmt.Errorf("unknown part key %q", p.Key)
-		}
-	}
-
-	return rs, nil
 }
 
 // SendState gets the Alertmanager's internal state and sends it to the remote Alertmanager.

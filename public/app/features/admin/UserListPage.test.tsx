@@ -1,8 +1,9 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { type GrafanaBootConfig } from '@grafana/runtime';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import config from 'app/core/config';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -38,7 +39,7 @@ const renderPage = () => {
 };
 
 const enableEmailSharing = () => {
-  config.featureToggles.publicDashboardsEmailSharing = true;
+  setTestFlags({ publicDashboardsEmailSharing: true });
   config.licenseInfo = { ...config.licenseInfo, enabledFeatures: { publicDashboardsEmailSharing: true } };
 };
 
@@ -49,7 +50,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  config.featureToggles = originalConfigData.featureToggles;
+  act(() => setTestFlags({}));
   config.licenseInfo = originalConfigData.licenseInfo;
 });
 

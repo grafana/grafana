@@ -5,15 +5,14 @@ import (
 	"database/sql"
 	"fmt"
 
-	"k8s.io/apimachinery/pkg/runtime/schema"
-
+	sdkresource "github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/registry/apis/preferences/utils"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/storage/unified/migrations"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/xorm"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 // PreferencesCountValidation enforces strict count parity between the legacy
@@ -21,19 +20,21 @@ import (
 // emits: distinct owners (namespace, valid user, valid team), excluding
 // orphans. See countLegacy.
 func PreferencesCountValidation(resource schema.GroupResource) migrations.ValidatorFactory {
-	return func(client resourcepb.ResourceIndexClient, driverName string) migrations.Validator {
+	return func(client resourcepb.ResourceIndexClient, opts migrations.ValidatorOptions) migrations.Validator {
 		return &preferencesCountValidator{
-			resource:   resource,
-			client:     client,
-			driverName: driverName,
+			resource:           resource,
+			client:             client,
+			driverName:         opts.DriverName,
+			enableSQLKVBackend: opts.EnableSQLKVBackend,
 		}
 	}
 }
 
 type preferencesCountValidator struct {
-	resource   schema.GroupResource
-	client     resourcepb.ResourceIndexClient
-	driverName string
+	resource           schema.GroupResource
+	client             resourcepb.ResourceIndexClient
+	driverName         string
+	enableSQLKVBackend bool
 }
 
 func (v *preferencesCountValidator) Name() string { return "PreferencesCountValidator" }
@@ -137,15 +138,15 @@ func (v *preferencesCountValidator) countLegacy(sess *xorm.Session, orgID int64)
 	names := make(map[string]struct{}, len(rows))
 	for _, r := range rows {
 		// Mirror asPreferencesResource: team takes precedence over user.
-		owner := utils.OwnerReference{}
+		owner := sdkresource.OwnerReference{}
 		if r.TeamUID.Valid {
-			owner.Owner = utils.TeamResourceOwner
+			owner.Owner = sdkresource.TeamResourceOwner
 			owner.Identifier = r.TeamUID.String
 		} else if r.UserUID.Valid {
-			owner.Owner = utils.UserResourceOwner
+			owner.Owner = sdkresource.UserResourceOwner
 			owner.Identifier = r.UserUID.String
 		} else {
-			owner.Owner = utils.NamespaceResourceOwner
+			owner.Owner = sdkresource.NamespaceResourceOwner
 		}
 		names[owner.AsName()] = struct{}{}
 	}
@@ -154,17 +155,18 @@ func (v *preferencesCountValidator) countLegacy(sess *xorm.Session, orgID int64)
 
 func (v *preferencesCountValidator) countUnified(ctx context.Context, sess *xorm.Session, summary *resourcepb.BulkResponse_Summary) (int64, error) {
 	if v.driverName == migrator.SQLite {
-		return sess.Table("resource").
-			Where("namespace = ? AND `group` = ? AND resource = ?",
-				summary.Namespace, summary.Group, summary.Resource).
-			Count()
+		return migrations.CountUnifiedResourcesSQLite(ctx, sess, resource.ListRequestKey{
+			Namespace: summary.Namespace,
+			Group:     summary.Group,
+			Resource:  summary.Resource,
+		}, v.enableSQLKVBackend)
 	}
 
 	statsResp, err := v.client.GetStats(ctx, &resourcepb.ResourceStatsRequest{
 		Namespace: summary.Namespace,
 		Kinds:     []string{fmt.Sprintf("%s/%s", summary.Group, summary.Resource)},
 	})
-	if err := resource.ErrorFromResponse(statsResp.GetError(), err); err != nil {
+	if err != nil {
 		return 0, err
 	}
 	for _, stat := range statsResp.Stats {

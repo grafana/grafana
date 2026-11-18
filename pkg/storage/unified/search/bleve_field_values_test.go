@@ -3,7 +3,6 @@ package search
 import (
 	"testing"
 
-	blevesearch "github.com/blevesearch/bleve/v2/search"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -13,22 +12,15 @@ import (
 
 func TestHitsToFieldValuesUsesZeroForMalformedLegacyID(t *testing.T) {
 	key := &resourcepb.ResourceKey{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash-1"}
-	match := &blevesearch.DocumentMatch{
+	match := &queryHit{
 		ID: resource.SearchID(key),
 		Fields: map[string]any{
 			resource.SEARCH_FIELD_LABELS + "." + resource.SEARCH_FIELD_LEGACY_ID: "not-an-integer",
 			resource.SEARCH_FIELD_TITLE: "Dashboard",
 		},
 	}
-	hits := blevesearch.DocumentMatchCollection{match}
-	index := &bleveIndex{standard: resource.StandardSearchFields(), logger: log.NewNopLogger()}
-
-	table, err := index.hitsToTable(t.Context(), []string{resource.SEARCH_FIELD_LEGACY_ID, resource.SEARCH_FIELD_TITLE}, hits, nil, false)
-	require.NoError(t, err)
-	require.Len(t, table.Rows, 1)
-	legacyID, err := resource.DecodeCell(table.Columns[0], 0, table.Rows[0].Cells[0])
-	require.NoError(t, err)
-	require.Equal(t, int64(0), legacyID)
+	hits := []*queryHit{match}
+	logger := log.NewNopLogger()
 
 	schema := &fieldValueResultSchema{
 		fields: []*resourcepb.ResourceSearchField{
@@ -40,7 +32,7 @@ func TestHitsToFieldValuesUsesZeroForMalformedLegacyID(t *testing.T) {
 			{Name: resource.SEARCH_FIELD_TITLE, Type: resource.SearchFieldTypeString},
 		},
 	}
-	fields, rows, err := index.hitsToFieldValues(schema, hits, nil)
+	fields, rows, err := hitsToFieldValues(logger, schema, hits)
 	require.NoError(t, err)
 	require.Equal(t, schema.fields, fields)
 	require.Len(t, rows, 1)
@@ -53,13 +45,11 @@ func TestHitsToFieldValuesUsesZeroForMalformedLegacyID(t *testing.T) {
 
 func TestHitsToFieldValuesUsesZeroForInvalidResourceVersion(t *testing.T) {
 	key := &resourcepb.ResourceKey{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash-1"}
-	hits := blevesearch.DocumentMatchCollection{{
+	hits := []*queryHit{{
 		ID:     resource.SearchID(key),
 		Fields: map[string]any{resource.SEARCH_FIELD_RV_STRING: "not-an-integer"},
 	}}
-	index := &bleveIndex{logger: log.NewNopLogger()}
-
-	_, rows, err := index.hitsToFieldValues(&fieldValueResultSchema{includeResourceVersion: true}, hits, nil)
+	_, rows, err := hitsToFieldValues(log.NewNopLogger(), &fieldValueResultSchema{includeResourceVersion: true}, hits)
 	require.NoError(t, err)
 	require.Len(t, rows, 1)
 	require.Equal(t, key, rows[0].Key)
@@ -67,10 +57,8 @@ func TestHitsToFieldValuesUsesZeroForInvalidResourceVersion(t *testing.T) {
 }
 
 func TestHitsToFieldValuesRejectsInvalidResourceIdentity(t *testing.T) {
-	hits := blevesearch.DocumentMatchCollection{{ID: "not-a-search-id"}}
-	index := &bleveIndex{logger: log.NewNopLogger()}
-
-	_, _, err := index.hitsToFieldValues(&fieldValueResultSchema{}, hits, nil)
+	hits := []*queryHit{{ID: "not-a-search-id"}}
+	_, _, err := hitsToFieldValues(log.NewNopLogger(), &fieldValueResultSchema{}, hits)
 	require.Error(t, err)
 }
 
@@ -138,7 +126,7 @@ func TestNewSearchResultValue(t *testing.T) {
 // A stored value that is not a valid resource version must not fail the search:
 // it is indexed data, and the caller can do nothing about it.
 func TestHitResourceVersion(t *testing.T) {
-	idx := &bleveIndex{logger: log.NewNopLogger()}
+	logger := log.NewNopLogger()
 
 	for _, tc := range []struct {
 		name  string
@@ -153,11 +141,11 @@ func TestHitResourceVersion(t *testing.T) {
 		{name: "not a string", value: float64(12), want: 0},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			match := &blevesearch.DocumentMatch{ID: "default/group/resource/name"}
+			match := &queryHit{ID: "default/group/resource/name"}
 			if tc.value != nil {
 				match.Fields = map[string]any{resource.SEARCH_FIELD_RV_STRING: tc.value}
 			}
-			require.Equal(t, tc.want, idx.hitResourceVersion(match))
+			require.Equal(t, tc.want, hitResourceVersion(logger, match))
 		})
 	}
 }

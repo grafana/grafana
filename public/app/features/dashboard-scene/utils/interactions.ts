@@ -10,7 +10,11 @@ import {
 } from '../serialization/DashboardSceneSerializer';
 
 import { type GlobalVariablesMode, type PredefinedVariableScope } from './crossDashboardVariablesSelection';
-import { type DashboardEditSessionTracking, type DashboardModeTrigger } from './dashboardModeTracking';
+import {
+  type DashboardEditPeriodOutcome,
+  type DashboardEditSessionTracking,
+  type DashboardModeTrigger,
+} from './dashboardModeTracking';
 
 let isScenesContextSet = false;
 
@@ -169,15 +173,15 @@ export const DashboardInteractions = {
     reportDashboardInteraction('variable_value_changed', properties);
   },
 
-  // dashboards_global_variables_loaded
+  // dashboards_predefined_variables_loaded
   // after global/folder variables are resolved for a V2 dashboard load
-  globalVariablesLoaded: (properties: {
+  predefinedVariablesLoaded: (properties: {
     global_count: number;
     folder_count: number;
     total_count: number;
     mode?: GlobalVariablesMode;
   }) => {
-    reportDashboardInteraction('global_variables_loaded', properties);
+    reportDashboardInteraction('predefined_variables_loaded', properties);
   },
 
   // dashboards_predefined_variable_toggled
@@ -208,10 +212,13 @@ export const DashboardInteractions = {
       | 'duplicate'
       | 'delete'
       | 'view'
+      | 'restore'
+      | 'explore'
+      | 'more_actions'
       | 'use_library_panel',
     id: number,
-    source: 'panel' | 'edit_pane' | 'edit_popover' | 'keyboard',
-    panelType?: string
+    source: 'panel' | 'edit_pane' | 'edit_popover' | 'actions_popover' | 'keyboard',
+    panelType: string
   ) {
     reportDashboardInteraction('panel_action_clicked', { item, id, source, panelType });
   },
@@ -222,8 +229,9 @@ export const DashboardInteractions = {
   },
 
   // Dashboard edit item actions
-  // dashboards_edit_action_clicked: when user adds or removes an item in edit mode
-  // props: { item: string } - item is one of: add_panel, group_row, group_tab, ungroup, paste_panel, remove_row, remove_tab
+  // dashboards_edit_action_clicked: when user adds, removes or changes an item in edit mode
+  // props: { item: string } - item is one of: add_panel, group_row, group_tab, ungroup, paste_panel, remove_row, remove_tab,
+  // or a PanelSettingItem
   trackAddPanelClick(
     source: 'sidebar' | 'canvas' = 'canvas',
     target?: 'row' | 'tab' | 'dashboard',
@@ -249,6 +257,22 @@ export const DashboardInteractions = {
   },
   trackDeleteDashboardElement(elementType: string, source: 'edit_pane' | 'edit_popover') {
     reportDashboardInteraction('edit_action_clicked', { item: `remove_${elementType.toLowerCase()}`, source });
+  },
+  trackDashboardSectionAction(
+    action: 'settings' | 'copy' | 'duplicate',
+    elementType: 'row' | 'tab',
+    source: 'edit_pane' | 'edit_popover'
+  ) {
+    reportDashboardInteraction('edit_action_clicked', { item: `${action}_${elementType}`, source });
+  },
+  // A panel setting was changed. Never add the setting's value here: titles, descriptions and links are typed by users.
+  panelSettingChanged(properties: {
+    item: PanelSettingItem;
+    source: PanelSettingSource;
+    panel_type: string;
+    panel_id: number;
+  }) {
+    reportDashboardInteraction('edit_action_clicked', properties);
   },
   panelLinkClicked: (properties?: Record<string, unknown>) => {
     reportDashboardInteraction('panelheader_datalink_clicked', properties);
@@ -406,7 +430,7 @@ export const DashboardInteractions = {
   editPeriodEnded: (
     properties: Partial<DashboardEditSessionTracking> & {
       edit_session_id: string;
-      outcome: 'saved' | 'saved_as_copy' | 'discarded';
+      outcome: DashboardEditPeriodOutcome;
       has_unsaved_changes?: boolean;
     }
   ) => {
@@ -441,8 +465,8 @@ export const DashboardInteractions = {
     reportDashboardInteraction('mode_changed', properties);
   },
 
-  // click "Take me there" button from the dashboard settings for annotations, variables or the JSON model
-  takeMeToSidebarClicked: (properties: { item: 'annotations' | 'variables' | 'json-model' }) => {
+  // click "Take me there" button from the dashboard settings for annotations, variables, links or the JSON model
+  takeMeToSidebarClicked: (properties: { item: 'annotations' | 'variables' | 'links' | 'json-model' }) => {
     reportDashboardInteraction('take_me_to_sidebar_clicked', properties);
   },
 
@@ -466,8 +490,32 @@ export const DashboardInteractions = {
     reportDashboardInteraction('view_panel_action', properties);
   },
 
-  setVisualOption: (properties?: { ui: 'panel-edit' | 'view-panel'; option: string; value: string }) => {
+  setVisualOption: (properties?: {
+    ui: 'panel-edit' | 'view-panel';
+    option: string;
+    // Only set when the value cannot be free text; see getReportableOptionValue.
+    value?: string;
+    value_type: string;
+    panel_type: string;
+    panel_id: number;
+  }) => {
     reportDashboardInteraction('set_visualization_option', properties);
+  },
+
+  // Panels with options set from a variable, with grafana.panelOptionInterpolation
+  panelOptionVariableUsage: (properties: {
+    trigger: 'load' | 'save';
+    panel_count: number;
+    field_config_count: number;
+    threshold_count: number;
+    value_mapping_count: number;
+    dashboard_uid?: string;
+  }) => {
+    reportDashboardInteraction('panel_option_variable_usage', properties);
+  },
+
+  panelOptionVariableCreated: (properties: { type: 'custom' | 'switch' }) => {
+    reportDashboardInteraction('panel_option_variable_created', properties);
   },
 
   // tracks attempts to resize a panel that is managed by auto layout
@@ -485,6 +533,22 @@ export const DashboardInteractions = {
 };
 
 export type AutoLayoutScope = 'dashboard' | 'row' | 'tab';
+
+export type PanelSettingItem =
+  | 'change_panel_title'
+  | 'change_panel_description'
+  | 'toggle_panel_subtitle'
+  | 'change_panel_background'
+  | 'change_panel_repeat'
+  | 'change_panel_repeat_direction'
+  | 'change_panel_max_per_row'
+  | 'add_panel_link'
+  | 'remove_panel_link'
+  | 'edit_panel_link'
+  | 'reorder_panel_links';
+
+// genai: a title generated with the AI button in the panel editor.
+export type PanelSettingSource = 'edit_pane' | 'panel_editor' | 'outline' | 'genai';
 
 const reportDashboardInteraction = (
   name: string,

@@ -14,7 +14,7 @@ import {
 } from '@grafana/data';
 import { FieldColorModeId } from '@grafana/schema';
 
-import { getTagColorsFromName } from '../../../../utils/tags';
+import { getTagColor, getTagColorsFromName } from '../../../../utils/tags';
 import { Tag } from '../../../Tags/Tag';
 import { getActiveCellSelector, isTableCellStylesKeyEqual } from '../styles';
 import { type PillCellProps, type TableCellStyles } from '../types';
@@ -84,7 +84,10 @@ function getPillColors(
   getTextColorForBackground: (color: string) => string
 ): { background: string; text: string } {
   const cfg = field.config;
-  const onBackground = (background: string) => ({ background, text: getTextColorForBackground(background) });
+  const onBackground = (background: string) =>
+    theme.flags.visualDesignRefresh
+      ? getTagColor(background, theme)
+      : { background, text: getTextColorForBackground(background) };
 
   if (cfg.mappings?.length) {
     return onBackground(display.color ?? FALLBACK_COLOR);

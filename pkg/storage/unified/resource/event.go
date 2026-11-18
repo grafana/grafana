@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -57,7 +56,7 @@ type WrittenEvent struct {
 	Type           resourcepb.WatchEvent_Type
 	Key            *resourcepb.ResourceKey
 	PreviousRV     int64
-	PreviousAction kv.DataAction
+	PreviousAction DataAction
 	PreviousFolder string
 
 	// The json payload (without resourceVersion)
@@ -71,6 +70,14 @@ type WrittenEvent struct {
 
 	// Timestamp when the event is created
 	Timestamp int64
+}
+
+func (e *WrittenEvent) sizeBytes() int64 {
+	if e == nil {
+		return 0
+	}
+	// Count capacity because a short payload can retain a larger backing array.
+	return int64(cap(e.Value))
 }
 
 // EventAppender is a function to write events.

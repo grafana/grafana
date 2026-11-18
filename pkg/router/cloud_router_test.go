@@ -29,10 +29,10 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func TestProvideCloudRoutesLoaderFactoryNotConfigured(t *testing.T) {
+func TestNewCloudRoutesLoaderNotConfigured(t *testing.T) {
 	cfg := setting.NewCfg()
 
-	loader, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
+	loader, err := NewCloudRoutesLoader(cfg, PluginDependencies{})
 	require.NoError(t, err)
 	require.Nil(t, loader)
 }
@@ -50,18 +50,50 @@ func cfgWithCloudRouterSection(t *testing.T, kv map[string]string) *setting.Cfg 
 	return cfg
 }
 
-func TestProvideCloudRoutesLoaderFactory_NoTargetsConfigured(t *testing.T) {
+func TestNewCloudRoutesLoader_NoTargetsConfigured(t *testing.T) {
 	cfg := cfgWithCloudRouterSection(t, map[string]string{})
 
-	loader, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
+	loader, err := NewCloudRoutesLoader(cfg, PluginDependencies{})
 	require.NoError(t, err)
 	require.Nil(t, loader) // falls back to dummyRoutesLoader upstream
+}
+
+// [router.backend_grpc] only matters once a manifests URL is set, so an invalid
+// section must not stop a router that has no sources from falling back.
+func TestNewCloudRoutesLoader_BackendGRPCIgnoredWithoutManifestsURLs(t *testing.T) {
+	cfg := cfgWithCloudRouterSection(t, map[string]string{})
+	grpcSection, err := cfg.Raw.NewSection(backendGRPCSection)
+	require.NoError(t, err)
+	_, err = grpcSection.NewKey("retry_max", "-1")
+	require.NoError(t, err)
+
+	loader, err := NewCloudRoutesLoader(cfg, PluginDependencies{})
+	require.NoError(t, err)
+	require.Nil(t, loader)
+
+	cfg.Raw.Section(cloudRouterSection).Key("bridge_url").SetValue("https://bridge.invalid/plugins")
+	_, err = NewCloudRoutesLoader(cfg, PluginDependencies{MetricsRegister: prometheus.NewRegistry()})
+	require.ErrorContains(t, err, backendGRPCSection)
+}
+
+func TestNewCloudRoutesLoader_PluginsGroupPatternsWinOverRegex(t *testing.T) {
+	cfg := cfgWithCloudRouterSection(t, map[string]string{
+		"plugins_url":            "http://plugins.invalid/plugins",
+		"plugins_group_patterns": "*.a",
+		"plugins_group_regex":    "*.b",
+	})
+
+	loader, err := NewCloudRoutesLoader(cfg, PluginDependencies{MetricsRegister: prometheus.NewRegistry()})
+	require.NoError(t, err)
+	target := pluginManifestsTargetOf(loader.(*cloudLoader), sourcePlugins)
+	require.NotNil(t, target)
+	require.Len(t, target.patterns, 1)
 }
 
 // A deployment still configured only for the removed appmanifest apiserver
 // must not silently degrade to the dummy loader, reporting itself ready while
 // serving no real routes.
-func TestProvideCloudRoutesLoaderFactory_RemovedAppManifestKeyFailsLoudly(t *testing.T) {
+func TestNewCloudRoutesLoader_RemovedAppManifestKeyFailsLoudly(t *testing.T) {
 	for _, key := range []string{"appmanifest_apiserver_url", "apiserver_url"} {
 		t.Run(key, func(t *testing.T) {
 			cfg := cfgWithCloudRouterSection(t, map[string]string{
@@ -69,24 +101,24 @@ func TestProvideCloudRoutesLoaderFactory_RemovedAppManifestKeyFailsLoudly(t *tes
 				"cap_token":          "tok",
 				"token_exchange_url": "https://exchange.invalid",
 			})
-			_, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
+			_, err := NewCloudRoutesLoader(cfg, PluginDependencies{})
 			require.ErrorContains(t, err, key+" is no longer supported")
 		})
 	}
 }
 
-func TestProvideCloudRoutesLoaderFactory_AggregateOnlyRequiresCapToken(t *testing.T) {
+func TestNewCloudRoutesLoader_AggregateOnlyRequiresCapToken(t *testing.T) {
 	cfg := cfgWithCloudRouterSection(t, map[string]string{})
 	addAggregateSection(t, cfg, "baas_apiserver", map[string]string{
 		"url":      "https://baas.invalid",
 		"audience": "baas",
 	})
 
-	_, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
+	_, err := NewCloudRoutesLoader(cfg, PluginDependencies{})
 	require.ErrorContains(t, err, "cap_token and token_exchange_url are required")
 }
 
-func TestProvideCloudRoutesLoaderFactory_AggregateTargetRequiresAudience(t *testing.T) {
+func TestNewCloudRoutesLoader_AggregateTargetRequiresAudience(t *testing.T) {
 	cfg := cfgWithCloudRouterSection(t, map[string]string{
 		"cap_token":          "tok",
 		"token_exchange_url": "https://exchange.invalid",
@@ -95,28 +127,28 @@ func TestProvideCloudRoutesLoaderFactory_AggregateTargetRequiresAudience(t *test
 		"url": "https://baas.invalid",
 	})
 
-	_, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
+	_, err := NewCloudRoutesLoader(cfg, PluginDependencies{})
 	require.ErrorContains(t, err, "router.aggregate.baas_apiserver: audience is required")
 }
 
-func TestProvideCloudRoutesLoaderFactory_AnonymousDiscoveryAggregateNeedsNoCapToken(t *testing.T) {
+func TestNewCloudRoutesLoader_AnonymousDiscoveryAggregateNeedsNoCapToken(t *testing.T) {
 	cfg := cfgWithCloudRouterSection(t, map[string]string{})
 	addAggregateSection(t, cfg, "open", map[string]string{
 		"url":            "https://open.invalid",
 		"discovery_auth": "none",
 	})
 
-	loader, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
+	loader, err := NewCloudRoutesLoader(cfg, PluginDependencies{})
 	require.NoError(t, err)
 	require.NotNil(t, loader)
 }
 
-func TestProvideCloudRoutesLoaderFactory_AnonymousDiscoveryAggregateDoesNotExemptSignedTarget(t *testing.T) {
+func TestNewCloudRoutesLoader_AnonymousDiscoveryAggregateDoesNotExemptSignedTarget(t *testing.T) {
 	cfg := cfgWithCloudRouterSection(t, map[string]string{})
 	addAggregateSection(t, cfg, "open", map[string]string{"url": "https://open.invalid", "discovery_auth": "none"})
 	addAggregateSection(t, cfg, "signed", map[string]string{"url": "https://signed.invalid", "audience": "signed"})
 
-	_, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
+	_, err := NewCloudRoutesLoader(cfg, PluginDependencies{})
 	require.ErrorContains(t, err, "cap_token and token_exchange_url are required")
 }
 
@@ -207,42 +239,42 @@ func (c *capturingRoundTripper) RoundTrip(req *http.Request) (*http.Response, er
 	return &http.Response{StatusCode: http.StatusOK, Body: http.NoBody}, nil
 }
 
-// TestAggregateTokenWrapper_HeaderPerTarget pins the fix for the bug where
-// cloud_app_platform_apiserver -- an app-platform apiserver that
-// authenticates a standard bearer token from Authorization, same family as
-// manifestAuthWrapper's target -- was getting the CAP token on X-Access-Token
-// like baas_apiserver, so discovery/proxied requests to it never authenticated.
+// TestAggregateTokenWrapper_HeaderPerTarget pins which header carries the CAP
+// token on a target's discovery polls. cloud_app_platform_apiserver
+// authenticates a bearer token from Authorization and never reads
+// X-Access-Token, so it keeps that default by name until its deployment sets
+// discovery_auth = bearer.
 func TestAggregateTokenWrapper_HeaderPerTarget(t *testing.T) {
-	t.Run("cloud_app_platform_apiserver uses Authorization", func(t *testing.T) {
-		captured := &capturingRoundTripper{}
-		wrapped := aggregateTokenWrapper("cloud_app_platform_apiserver", authnlib.NewStaticTokenExchanger("exchanged-token"), "aud")(captured)
+	for _, tc := range []struct {
+		name, target, discoveryAuth string
+		wantHeader, otherHeader     string
+	}{
+		{name: "bearer uses Authorization", target: "custom", discoveryAuth: discoveryAuthBearer, wantHeader: "Authorization", otherHeader: "X-Access-Token"},
+		{name: "cap_token uses X-Access-Token", target: "custom", discoveryAuth: discoveryAuthCAPToken, wantHeader: "X-Access-Token", otherHeader: "Authorization"},
+		{name: "unset uses X-Access-Token", target: "baas_apiserver", wantHeader: "X-Access-Token", otherHeader: "Authorization"},
+		{name: "unset on cloud_app_platform_apiserver uses Authorization", target: legacyBearerTargetName, wantHeader: "Authorization", otherHeader: "X-Access-Token"},
+		{name: "cap_token on cloud_app_platform_apiserver uses X-Access-Token", target: legacyBearerTargetName, discoveryAuth: discoveryAuthCAPToken, wantHeader: "X-Access-Token", otherHeader: "Authorization"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			captured := &capturingRoundTripper{}
+			targetCfg := aggregateTargetConfig{Name: tc.target, Audience: "aud", DiscoveryAuth: tc.discoveryAuth}
+			wrapped := aggregateTokenWrapper(targetCfg, authnlib.NewStaticTokenExchanger("exchanged-token"))(captured)
 
-		resp, err := wrapped.RoundTrip(httptest.NewRequest(http.MethodGet, "https://cap.invalid/apis", nil))
-		require.NoError(t, err)
-		defer func() { _ = resp.Body.Close() }()
+			resp, err := wrapped.RoundTrip(httptest.NewRequest(http.MethodGet, "https://target.invalid/apis", nil))
+			require.NoError(t, err)
+			defer func() { _ = resp.Body.Close() }()
 
-		require.Equal(t, "Bearer exchanged-token", captured.req.Header.Get("Authorization"))
-		require.Empty(t, captured.req.Header.Get("X-Access-Token"))
-	})
-
-	t.Run("baas_apiserver uses X-Access-Token", func(t *testing.T) {
-		captured := &capturingRoundTripper{}
-		wrapped := aggregateTokenWrapper("baas_apiserver", authnlib.NewStaticTokenExchanger("exchanged-token"), "aud")(captured)
-
-		resp, err := wrapped.RoundTrip(httptest.NewRequest(http.MethodGet, "https://baas.invalid/apis", nil))
-		require.NoError(t, err)
-		defer func() { _ = resp.Body.Close() }()
-
-		require.Equal(t, "Bearer exchanged-token", captured.req.Header.Get("X-Access-Token"))
-		require.Empty(t, captured.req.Header.Get("Authorization"))
-	})
+			require.Equal(t, "Bearer exchanged-token", captured.req.Header.Get(tc.wantHeader))
+			require.Empty(t, captured.req.Header.Get(tc.otherHeader))
+		})
+	}
 }
 
-// TestProvideCloudRoutesLoaderFactory_TargetsGetOwnHTTPClients checks the
+// TestNewCloudRoutesLoader_TargetsGetOwnHTTPClients checks the
 // wiring side of the same concern: the transport is built inside the
 // per-target loop, so two configured targets end up with two distinct
 // clients rather than one shared one.
-func TestProvideCloudRoutesLoaderFactory_TargetsGetOwnHTTPClients(t *testing.T) {
+func TestNewCloudRoutesLoader_TargetsGetOwnHTTPClients(t *testing.T) {
 	cfg := cfgWithCloudRouterSection(t, map[string]string{
 		"cap_token":          "tok",
 		"token_exchange_url": "https://exchange.invalid",
@@ -256,13 +288,13 @@ func TestProvideCloudRoutesLoaderFactory_TargetsGetOwnHTTPClients(t *testing.T) 
 		"audience": "cap",
 	})
 
-	loaderIface, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
+	loaderIface, err := NewCloudRoutesLoader(cfg, PluginDependencies{})
 	require.NoError(t, err)
 	loader, ok := loaderIface.(*cloudLoader)
 	require.True(t, ok)
-	require.Len(t, loader.aggregateTargets, 2)
+	require.Len(t, aggregateTargetsOf(loader), 2)
 
-	first, second := loader.aggregateTargets[0], loader.aggregateTargets[1]
+	first, second := aggregateTargetsOf(loader)[0], aggregateTargetsOf(loader)[1]
 	require.NotNil(t, first.client)
 	require.NotNil(t, second.client)
 	require.NotSame(t, first.client, second.client)
@@ -274,45 +306,45 @@ func TestProvideCloudRoutesLoaderFactory_TargetsGetOwnHTTPClients(t *testing.T) 
 	require.NotSame(t, http.DefaultTransport, first.client.Transport)
 }
 
-// TestProvideCloudRoutesLoaderFactory_PluginsURLAloneActivatesWithoutCapToken
+// TestNewCloudRoutesLoader_PluginsURLAloneActivatesWithoutCapToken
 // pins plugins_url's independence from the aggregate auth gate: its operator
 // is an unauthenticated in-cluster endpoint, so it must not require
 // cap_token/token_exchange_url the way signed aggregate targets do.
-func TestProvideCloudRoutesLoaderFactory_PluginsURLAloneActivatesWithoutCapToken(t *testing.T) {
+func TestNewCloudRoutesLoader_PluginsURLAloneActivatesWithoutCapToken(t *testing.T) {
 	cfg := cfgWithCloudRouterSection(t, map[string]string{
 		"plugins_url": "https://plugins.invalid/plugins",
 	})
 	cfg.ExtJWTAuth.JWKSUrl = "https://jwks.invalid/keys"
 	cfg.ExtJWTAuth.Audiences = []string{"grafana"}
 
-	loaderIface, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
+	loaderIface, err := NewCloudRoutesLoader(cfg, PluginDependencies{})
 	require.NoError(t, err)
 	require.NotNil(t, loaderIface)
 
 	loader, ok := loaderIface.(*cloudLoader)
 	require.True(t, ok)
-	require.NotNil(t, loader.pluginsTarget)
-	require.Empty(t, loader.aggregateTargets)
+	require.NotNil(t, pluginManifestsTargetOf(loader, sourcePlugins))
+	require.Empty(t, aggregateTargetsOf(loader))
 }
 
-func TestProvideCloudRoutesLoaderFactory_CoreURLAloneActivatesWithoutCapToken(t *testing.T) {
+func TestNewCloudRoutesLoader_CoreURLAloneActivatesWithoutCapToken(t *testing.T) {
 	cfg := cfgWithCloudRouterSection(t, map[string]string{
 		"core_url": "https://core.invalid/plugins",
 	})
 	cfg.ExtJWTAuth.JWKSUrl = "https://jwks.invalid/keys"
 	cfg.ExtJWTAuth.Audiences = []string{"grafana"}
 
-	loaderIface, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
+	loaderIface, err := NewCloudRoutesLoader(cfg, PluginDependencies{})
 	require.NoError(t, err)
 	loader, ok := loaderIface.(*cloudLoader)
 	require.True(t, ok)
-	require.NotNil(t, loader.coreTarget)
-	require.Nil(t, loader.pluginsTarget)
-	require.Equal(t, sourceCoreURL, loader.coreTarget.source)
-	require.Equal(t, coreKeyPrefix, loader.coreTarget.keyPrefix)
+	require.NotNil(t, pluginManifestsTargetOf(loader, sourceCore))
+	require.Nil(t, pluginManifestsTargetOf(loader, sourcePlugins))
+	require.Equal(t, sourceCore, pluginManifestsTargetOf(loader, sourceCore).source)
+	require.Equal(t, sourceCore, pluginManifestsTargetOf(loader, sourceCore).keyPrefix)
 }
 
-func TestProvideCloudRoutesLoaderFactory_CoreAndPluginsURLShareRegisterer(t *testing.T) {
+func TestNewCloudRoutesLoader_CoreAndPluginsURLShareRegisterer(t *testing.T) {
 	cfg := cfgWithCloudRouterSection(t, map[string]string{
 		"plugins_url": "https://plugins.invalid/plugins",
 		"core_url":    "https://core.invalid/plugins",
@@ -320,28 +352,28 @@ func TestProvideCloudRoutesLoaderFactory_CoreAndPluginsURLShareRegisterer(t *tes
 	cfg.ExtJWTAuth.JWKSUrl = "https://jwks.invalid/keys"
 	cfg.ExtJWTAuth.Audiences = []string{"grafana"}
 
-	loaderIface, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{MetricsRegister: prometheus.NewRegistry()})
+	loaderIface, err := NewCloudRoutesLoader(cfg, PluginDependencies{MetricsRegister: prometheus.NewRegistry()})
 	require.NoError(t, err)
 	loader, ok := loaderIface.(*cloudLoader)
 	require.True(t, ok)
-	require.NotNil(t, loader.coreTarget)
-	require.NotNil(t, loader.pluginsTarget)
+	require.NotNil(t, pluginManifestsTargetOf(loader, sourceCore))
+	require.NotNil(t, pluginManifestsTargetOf(loader, sourcePlugins))
 }
 
-func TestProvideCloudRoutesLoaderFactory_PluginsURLRejectsNonAbsoluteURL(t *testing.T) {
+func TestNewCloudRoutesLoader_PluginsURLRejectsNonAbsoluteURL(t *testing.T) {
 	cfg := cfgWithCloudRouterSection(t, map[string]string{
 		"plugins_url": "/just/a/path",
 	})
 	cfg.ExtJWTAuth.JWKSUrl = "https://jwks.invalid/keys"
 	cfg.ExtJWTAuth.Audiences = []string{"grafana"}
 
-	_, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
+	_, err := NewCloudRoutesLoader(cfg, PluginDependencies{})
 	require.ErrorContains(t, err, "must be absolute")
 }
 
-// TestProvideCloudRoutesLoaderFactory_PluginManifestsTLS checks that each
+// TestNewCloudRoutesLoader_PluginManifestsTLS checks that each
 // plugin manifests source polls an HTTPS endpoint with its own TLS settings.
-func TestProvideCloudRoutesLoaderFactory_PluginManifestsTLS(t *testing.T) {
+func TestNewCloudRoutesLoader_PluginManifestsTLS(t *testing.T) {
 	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(`{"plugins":[]}`))
@@ -354,11 +386,11 @@ func TestProvideCloudRoutesLoaderFactory_PluginManifestsTLS(t *testing.T) {
 		t.Helper()
 		kv["plugins_url"] = srv.URL + "/plugins"
 		kv["core_url"] = srv.URL + "/core"
-		loaderIface, err := ProvideCloudRoutesLoaderFactory(cfgWithCloudRouterSection(t, kv), PluginDependencies{})
+		loaderIface, err := NewCloudRoutesLoader(cfgWithCloudRouterSection(t, kv), PluginDependencies{})
 		require.NoError(t, err)
 		loader, ok := loaderIface.(*cloudLoader)
 		require.True(t, ok)
-		return loader.pluginsTarget, loader.coreTarget
+		return pluginManifestsTargetOf(loader, sourcePlugins), pluginManifestsTargetOf(loader, sourceCore)
 	}
 	poll := func(target *pluginManifestsTarget) error {
 		_, err := fetchPluginManifests(context.Background(), target.client, target.url)
@@ -393,7 +425,7 @@ func TestProvideCloudRoutesLoaderFactory_PluginManifestsTLS(t *testing.T) {
 				prefix + "_url":     srv.URL,
 				prefix + "_ca_file": "/does/not/exist.crt",
 			})
-			_, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
+			_, err := NewCloudRoutesLoader(cfg, PluginDependencies{})
 			require.ErrorContains(t, err, prefix+"_url: reading ca_file")
 		}
 	})
@@ -434,7 +466,7 @@ func TestCloudLoader_PluginsAndAggregateCombineInLoad(t *testing.T) {
 	cfg.ExtJWTAuth.JWKSUrl = "https://jwks.invalid/keys"
 	cfg.ExtJWTAuth.Audiences = []string{"grafana"}
 
-	loaderIface, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
+	loaderIface, err := NewCloudRoutesLoader(cfg, PluginDependencies{})
 	require.NoError(t, err)
 	loader, ok := loaderIface.(*cloudLoader)
 	require.True(t, ok)
@@ -489,7 +521,7 @@ func TestCloudLoader_AggregateOnly(t *testing.T) {
 		"audience": "baas",
 	})
 
-	loaderIface, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
+	loaderIface, err := NewCloudRoutesLoader(cfg, PluginDependencies{})
 	require.NoError(t, err)
 	require.NotNil(t, loaderIface)
 
@@ -520,7 +552,7 @@ func TestCloudLoader_AggregateOnly(t *testing.T) {
 func TestCloudLoaderSingleTenantFallback(t *testing.T) {
 	t.Run("disabled returns a nil interface", func(t *testing.T) {
 		loader := &cloudLoader{}
-		require.True(t, loader.SingleTenantFallback() == nil)
+		require.True(t, loader.UnregisteredGroupHandler() == nil)
 	})
 	t.Run("discovery alone enables fallback", func(t *testing.T) {
 		gcom := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -541,11 +573,11 @@ func TestCloudLoaderSingleTenantFallback(t *testing.T) {
 		cfg := cfgWithCloudRouterSection(t, map[string]string{"st_discovery_url": "https://play.grafana.org/"})
 		cfg.GrafanaComAPIURL = gcom.URL + "/api"
 		cfg.GrafanaComSSOAPIToken = "test-gcom-token"
-		loader, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
+		loader, err := NewCloudRoutesLoader(cfg, PluginDependencies{})
 		require.NoError(t, err)
 		cloud, ok := loader.(*cloudLoader)
 		require.True(t, ok)
-		require.Same(t, cloud.singleTenantFallback, cloud.SingleTenantFallback())
+		require.Same(t, cloud.singleTenantFallback, cloud.UnregisteredGroupHandler())
 		host, err := cloud.singleTenantFallback.hostForNamespace(t.Context(), "stacks-35611")
 		require.NoError(t, err)
 		require.Equal(t, "http://play-grafana-http.hosted-grafana.svc.cluster.local.:80", host.url.String())
@@ -556,7 +588,7 @@ func TestCloudLoaderSingleTenantFallback(t *testing.T) {
 	for _, raw := range []string{"/relative", "http:///missing-host", "ftp://example.com", "http://%"} {
 		t.Run(raw, func(t *testing.T) {
 			cfg := cfgWithCloudRouterSection(t, map[string]string{"st_discovery_url": raw})
-			_, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
+			_, err := NewCloudRoutesLoader(cfg, PluginDependencies{})
 			require.Error(t, err)
 		})
 	}
@@ -565,7 +597,7 @@ func TestCloudLoaderSingleTenantFallback(t *testing.T) {
 func TestCloudLoaderSingleTenantLookupLimits(t *testing.T) {
 	stLimiter := func(t *testing.T, keys map[string]string) (*rate.Limiter, error) {
 		keys["st_discovery_url"] = "https://play.grafana.org/"
-		loader, err := ProvideCloudRoutesLoaderFactory(cfgWithCloudRouterSection(t, keys), PluginDependencies{})
+		loader, err := NewCloudRoutesLoader(cfgWithCloudRouterSection(t, keys), PluginDependencies{})
 		if err != nil {
 			return nil, err
 		}
@@ -604,8 +636,11 @@ func TestCloudLoaderSingleTenantLookupLimits(t *testing.T) {
 
 func TestCloudLoaderFallbackOnlyLifecycle(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-		cfg := cfgWithCloudRouterSection(t, map[string]string{"st_discovery_url": "https://play.grafana.org/"})
-		loader, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
+		// A host name would be resolved inside the bubble, which crashes when
+		// the lookup is shared with a goroutine outside it. Nothing listens on
+		// this port, so the poll fails at once.
+		cfg := cfgWithCloudRouterSection(t, map[string]string{"st_discovery_url": "http://127.0.0.1:1/"})
+		loader, err := NewCloudRoutesLoader(cfg, PluginDependencies{})
 		require.NoError(t, err)
 		cloud := loader.(*cloudLoader)
 		require.NoError(t, services.StartAndAwaitRunning(t.Context(), cloud))
@@ -615,9 +650,9 @@ func TestCloudLoaderFallbackOnlyLifecycle(t *testing.T) {
 	})
 }
 
-func TestProvideCloudRoutesLoaderFactory_PluginsWithoutTokenVerificationConfig(t *testing.T) {
+func TestNewCloudRoutesLoader_PluginsWithoutTokenVerificationConfig(t *testing.T) {
 	cfg := cfgWithCloudRouterSection(t, map[string]string{"plugins_url": "https://plugins.invalid/plugins"})
-	loader, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
+	loader, err := NewCloudRoutesLoader(cfg, PluginDependencies{})
 	require.NoError(t, err)
 	require.NotNil(t, loader)
 }
@@ -643,7 +678,7 @@ func TestCloudLoaderAggregateSectionPriority(t *testing.T) {
 	t.Cleanup(exchange.Close)
 	cfg := setting.NewCfg()
 	var err error
-	cfg.Raw, err = ini.Load([]byte(fmt.Sprintf(`
+	cfg.Raw, err = ini.Load(fmt.Appendf(nil, `
 [cloud_router]
 cap_token = token
 token_exchange_url = %s
@@ -653,12 +688,12 @@ audience = first
 [router.aggregate.a_second]
 url = %s
 audience = second
-`, exchange.URL, first.URL, second.URL)))
+`, exchange.URL, first.URL, second.URL))
 	require.NoError(t, err)
-	result, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
+	result, err := NewCloudRoutesLoader(cfg, PluginDependencies{})
 	require.NoError(t, err)
 	loader := result.(*cloudLoader)
-	require.Len(t, loader.aggregateTargets, 2)
+	require.Len(t, aggregateTargetsOf(loader), 2)
 	dirty := make(chan struct{}, 1)
 	assertWinner := func(name, version string) {
 		t.Helper()
@@ -668,13 +703,68 @@ audience = second
 		require.Equal(t, "aggregate:"+name, backends[0].Source())
 		require.Equal(t, []metav1.GroupVersionForDiscovery{{GroupVersion: "shared.ext.grafana.app/" + version, Version: version}}, backends[0].Group().Versions)
 	}
-	// Poll completion order must not determine priority or merge group versions.
-	loader.aggregateTargets[1].poll(t.Context(), dirty)
-	assertWinner("a_second", "v2")
-	loader.aggregateTargets[0].poll(t.Context(), dirty)
+	// Poll completion order must not determine priority or merge group
+	// versions. The loader serves nothing until every target has polled once.
+	aggregateTargetsOf(loader)[1].poll(t.Context(), dirty)
+	_, err = loader.Load(t.Context())
+	require.ErrorIs(t, err, errFirstPollPending)
+	aggregateTargetsOf(loader)[0].poll(t.Context(), dirty)
 	assertWinner("z_first", "v1")
 	require.Equal(t, []shadowedGroup{{Group: "shared.ext.grafana.app", Source: "aggregate:a_second", By: "aggregate:z_first"}}, loader.shadowedGroups())
 	first.Close()
-	loader.aggregateTargets[0].poll(t.Context(), dirty)
+	aggregateTargetsOf(loader)[0].poll(t.Context(), dirty)
 	assertWinner("z_first", "v1")
+}
+
+func TestPluginManifestsPollInterval(t *testing.T) {
+	section := func(t *testing.T, kv map[string]string) *setting.DynamicSection {
+		return cfgWithCloudRouterSection(t, kv).SectionWithEnvOverrides(cloudRouterSection)
+	}
+	targets, err := readManifestsTargets(setting.NewCfg(), section(t, map[string]string{
+		"plugins_url":           "https://plugins.invalid/plugins",
+		"core_url":              "https://core.invalid/plugins",
+		"plugins_poll_interval": "5m",
+	}), PluginDependencies{MetricsRegister: prometheus.NewRegistry()})
+	require.NoError(t, err)
+	require.Len(t, targets, 2)
+	require.Equal(t, 5*time.Minute, targets[0].cooldown.steady)
+	require.Equal(t, defaultAggregatePollInterval, targets[1].cooldown.steady)
+
+	targets, err = readManifestsTargets(setting.NewCfg(), section(t, map[string]string{
+		"bridge_url":           "https://bridge.invalid/plugins",
+		"bridge_poll_interval": "2m",
+	}), PluginDependencies{MetricsRegister: prometheus.NewRegistry()})
+	require.NoError(t, err)
+	require.Len(t, targets, 1)
+	require.Equal(t, sourceBridge, targets[0].source)
+	require.Equal(t, 2*time.Minute, targets[0].cooldown.steady)
+
+	_, err = readManifestsTargets(setting.NewCfg(), section(t, map[string]string{
+		"core_url":           "https://core.invalid/plugins",
+		"core_poll_interval": "0s",
+	}), PluginDependencies{MetricsRegister: prometheus.NewRegistry()})
+	require.ErrorContains(t, err, "core_poll_interval must be a positive duration")
+}
+
+// The loader tears its sources down once it stops, which closes the managed
+// plugin connections.
+func TestCloudLoaderStopClosesPluginConnections(t *testing.T) {
+	target, err := newPluginManifestsTarget(sourcePlugins, "http://127.0.0.1:1/plugins", nil, http.DefaultClient,
+		defaultPluginGRPCConfig(), PluginDependencies{MetricsRegister: prometheus.NewRegistry()})
+	require.NoError(t, err)
+	release, err := target.acquireConnection("localhost:50051", "grafana-appsdktest-app")
+	require.NoError(t, err)
+	defer release()
+	loader, err := newCloudLoader(nil, []*pluginManifestsTarget{target}, nil)
+	require.NoError(t, err)
+
+	require.NoError(t, services.StartAndAwaitRunning(t.Context(), loader))
+	target.connectionsMu.Lock()
+	require.Len(t, target.connections, 1, "running keeps the connections")
+	target.connectionsMu.Unlock()
+	require.NoError(t, services.StopAndAwaitTerminated(t.Context(), loader))
+	target.connectionsMu.Lock()
+	defer target.connectionsMu.Unlock()
+	require.True(t, target.closed)
+	require.Empty(t, target.connections)
 }

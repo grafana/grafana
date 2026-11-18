@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	claims "github.com/grafana/authlib/types"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 
@@ -52,6 +53,11 @@ func (c *legacySearchClient) Search(ctx context.Context, req SearchQuery) (*iamv
 	if err != nil {
 		return nil, err
 	}
+	// Service identities scoped to a namespace carry org ID 1, so the org must come from the namespace.
+	ns, err := claims.ParseNamespace(req.Namespace)
+	if err != nil {
+		return nil, err
+	}
 
 	if req.Limit > common.MaxListLimit {
 		return nil, fmt.Errorf("limit cannot be greater than %d", common.MaxListLimit)
@@ -78,9 +84,10 @@ func (c *legacySearchClient) Search(ctx context.Context, req SearchQuery) (*iamv
 		Page:         int(req.Page),
 		Query:        req.Query,
 		Name:         req.Title,
+		MemberUID:    req.Member,
 		UIDs:         req.UIDs,
 		TeamIds:      teamIDs,
-		OrgID:        signedInUser.GetOrgID(),
+		OrgID:        ns.OrgID,
 		SortOpts:     legacyTeamSortOptions(req.Sort),
 	}
 
@@ -97,14 +104,18 @@ func (c *legacySearchClient) Search(ctx context.Context, req SearchQuery) (*iamv
 		Hits:      make([]iamv0.GetSearchTeamsTeamHit, 0, len(res.Teams)),
 	}}
 	for _, t := range res.Teams {
-		result.Hits = append(result.Hits, iamv0.GetSearchTeamsTeamHit{
+		hit := iamv0.GetSearchTeamsTeamHit{
 			Name:        t.UID,
 			Title:       t.Name,
 			Email:       t.Email,
 			Provisioned: t.IsProvisioned,
 			ExternalUID: t.ExternalUID,
 			InternalId:  &t.ID,
-		})
+		}
+		if req.MemberCount {
+			hit.MemberCount = &t.MemberCount
+		}
+		result.Hits = append(result.Hits, hit)
 	}
 	return result, nil
 }

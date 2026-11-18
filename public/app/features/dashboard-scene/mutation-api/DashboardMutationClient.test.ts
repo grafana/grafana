@@ -33,11 +33,39 @@ describe('DashboardMutationClient', () => {
   });
 
   it('exposes every dashboard command', () => {
+    setTestFlags({
+      'assistant.dashboard.artifacts': true,
+      [FlagKeys.GrafanaDashboardPreviewMode]: true,
+      [FlagKeys.GrafanaDashboardComposer]: true,
+      [FlagKeys.AssistantDashboardPlanEditing]: true,
+    });
     const available = new Set(new DashboardMutationClient(dashboardScene()).getAvailableCommands());
 
     for (const cmd of DASHBOARD_COMMANDS) {
       expect(available.has(cmd.name)).toBe(true);
     }
+  });
+
+  // A plugin reads GET_PLAN to tell whether this build's plan previews are editable.
+  it('hides GET_PLAN while plan editing is off', () => {
+    expect(new DashboardMutationClient(dashboardScene()).getAvailableCommands()).not.toContain('GET_PLAN');
+
+    setTestFlags({
+      [FlagKeys.GrafanaDashboardPreviewMode]: true,
+      [FlagKeys.GrafanaDashboardComposer]: true,
+      [FlagKeys.AssistantDashboardPlanEditing]: true,
+    });
+
+    expect(new DashboardMutationClient(dashboardScene()).getAvailableCommands()).toContain('GET_PLAN');
+  });
+
+  // A plugin reads RELOAD_FROM_SERVER to tell whether this build previews its pending changes.
+  it('hides RELOAD_FROM_SERVER while plugin-provided pending changes are off', () => {
+    expect(new DashboardMutationClient(dashboardScene()).getAvailableCommands()).not.toContain('RELOAD_FROM_SERVER');
+
+    setTestFlags({ 'assistant.dashboard.artifacts': true });
+
+    expect(new DashboardMutationClient(dashboardScene()).getAvailableCommands()).toContain('RELOAD_FROM_SERVER');
   });
 
   it('also exposes CREATE_NOTEBOOK_SPEC when notebooks are enabled', () => {

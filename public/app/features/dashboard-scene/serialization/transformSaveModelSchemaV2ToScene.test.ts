@@ -3,6 +3,7 @@ import { cloneDeep } from 'lodash';
 
 import { type DataSourceInstanceSettings } from '@grafana/data';
 import { config, getDataSourceInstanceSettings } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
 import {
   behaviors,
   ConstantVariable,
@@ -17,6 +18,7 @@ import {
   type SceneDataTransformer,
   type SceneGridItem,
   SwitchVariable,
+  ScopesVariable,
 } from '@grafana/scenes';
 import { VariableRefresh } from '@grafana/schema';
 import {
@@ -91,12 +93,46 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('transformSaveModelSchemaV2ToScene', () => {
-  beforeAll(() => {
-    config.featureToggles.groupByVariable = true;
-  });
+  it('should merge a default GroupByVariable into the default adhoc variable on the same datasource', () => {
+    const scene = transformSaveModelSchemaV2ToScene(defaultDashboard, {
+      uid: 'dashboard-uid',
+      route: DashboardRoutes.Normal,
+      defaultVariables: [
+        {
+          kind: 'AdhocVariable',
+          group: 'prometheus',
+          datasource: { name: 'prom' },
+          spec: {
+            name: 'defaultFilter',
+            baseFilters: [],
+            filters: [],
+            defaultKeys: [],
+            hide: 'dontHide',
+            skipUrlSync: false,
+            allowCustomValue: true,
+          },
+        },
+        {
+          kind: 'GroupByVariable',
+          group: 'prometheus',
+          datasource: { name: 'prom' },
+          spec: {
+            name: 'defaultGroupBy',
+            current: { text: ['job'], value: ['job'] },
+            options: [],
+            multi: true,
+            hide: 'dontHide',
+            skipUrlSync: false,
+          },
+        },
+      ],
+    });
 
-  afterAll(() => {
-    config.featureToggles.groupByVariable = false;
+    const variables = scene.state.$variables!.state.variables;
+    const filter = variables.find((v) => v.state.name === 'defaultFilter') as AdHocFiltersVariable;
+    expect(filter.state.enableGroupBy).toBe(true);
+    expect(filter.state.filters).toEqual([expect.objectContaining({ key: 'job', operator: 'groupBy' })]);
+    expect(variables.find((v) => v.state.name === 'defaultGroupBy')).toBeUndefined();
   });
 
   it('should initialize the DashboardScene with the model state', () => {
@@ -421,6 +457,44 @@ describe('transformSaveModelSchemaV2ToScene', () => {
       expect(matching).toHaveLength(1);
       // The dashboard-local variable wins, so no origin is set.
       expect(matching[0].state.origin).toBeUndefined();
+    });
+  });
+
+  describe('scopes variable', () => {
+    afterEach(() => {
+      setTestFlags({});
+    });
+
+    it('adds a ScopesVariable when the scopeFilters flag is on', () => {
+      setTestFlags({ [FlagKeys.ScopeFilters]: true });
+
+      const scene = transformSaveModelSchemaV2ToScene(cloneDeep(defaultDashboard));
+
+      const variables = scene.state.$variables?.state.variables ?? [];
+      expect(variables.some((v) => v instanceof ScopesVariable)).toBe(true);
+    });
+
+    it('does not add a ScopesVariable when the scopeFilters flag is off', () => {
+      setTestFlags({ [FlagKeys.ScopeFilters]: false });
+
+      const scene = transformSaveModelSchemaV2ToScene(cloneDeep(defaultDashboard));
+
+      const variables = scene.state.$variables?.state.variables ?? [];
+      expect(variables.some((v) => v instanceof ScopesVariable)).toBe(false);
+    });
+
+    it('does not add a ScopesVariable for public dashboards', () => {
+      setTestFlags({ [FlagKeys.ScopeFilters]: true });
+      const originalToken = config.publicDashboardAccessToken;
+      config.publicDashboardAccessToken = 'test-public-token';
+      try {
+        const scene = transformSaveModelSchemaV2ToScene(cloneDeep(defaultDashboard));
+
+        const variables = scene.state.$variables?.state.variables ?? [];
+        expect(variables.some((v) => v instanceof ScopesVariable)).toBe(false);
+      } finally {
+        config.publicDashboardAccessToken = originalToken;
+      }
     });
   });
 

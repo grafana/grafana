@@ -5,6 +5,7 @@ import { PluginExtensionPoints } from '@grafana/data';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
+import { setMobileViewport } from 'app/features/dashboard-scene/utils/mobileViewportTestUtils';
 import { ADD_PANEL_MODAL_WIDTH, addPanelToNotebookTitle } from 'app/features/notebook/addPanel/addPanelModal';
 import { configureStore } from 'app/store/configureStore';
 
@@ -50,12 +51,43 @@ describe('getExploreExtensionConfigs', () => {
           title: 'Add to notebook',
           description: 'Add the query and panel from explore to a notebook',
           targets: [PluginExtensionPoints.ExploreToolbarAction],
-          icon: 'book',
+          icon: 'gf-notebook',
           configure: expect.any(Function),
           onClick: expect.any(Function),
           category: 'Dashboards',
         },
       ]);
+    });
+  });
+
+  describe('configure function for "add to dashboard" extension', () => {
+    afterEach(() => {
+      contextSrvMock.hasPermission.mockRestore();
+      setTestFlags({});
+    });
+
+    function addToDashboardExtension() {
+      return getExploreExtensionConfigs().find((extension) => extension.title === 'Add to dashboard');
+    }
+
+    it('is hidden on mobile, even with permission', () => {
+      contextSrvMock.hasPermission.mockReturnValue(true);
+      setTestFlags({ 'grafana.mobileEditDeprecation': true });
+      setMobileViewport();
+
+      expect(addToDashboardExtension()?.configure?.(undefined)).toBeUndefined();
+    });
+
+    it('is hidden without permission, even when not blocked on mobile', () => {
+      contextSrvMock.hasPermission.mockReturnValue(false);
+
+      expect(addToDashboardExtension()?.configure?.(undefined)).toBeUndefined();
+    });
+
+    it('is shown with permission and not blocked on mobile', () => {
+      contextSrvMock.hasPermission.mockReturnValue(true);
+
+      expect(addToDashboardExtension()?.configure?.(undefined)).toEqual({});
     });
   });
 

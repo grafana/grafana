@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	ngalertac "github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 )
@@ -14,6 +15,7 @@ type RuleAccessControlService interface {
 	AuthorizeAccessToRuleGroup(ctx context.Context, user identity.Requester, rules models.RulesGroup) error
 	AuthorizeAccessInFolder(ctx context.Context, user identity.Requester, namespaced models.Namespaced) error
 	AuthorizeRuleChanges(ctx context.Context, user identity.Requester, change *rulestore.GroupDelta) error
+	AuthorizeNotificationSettings(ctx context.Context, user identity.Requester, receivers []ngalertac.ReceiverRef) error
 	HasAccessInFolder(ctx context.Context, user identity.Requester, folder models.Namespaced) (bool, error)
 }
 

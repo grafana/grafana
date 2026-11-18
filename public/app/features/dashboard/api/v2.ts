@@ -1,7 +1,7 @@
 import { locationUtil, type UrlQueryMap } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type Status, type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { getFolderByUidFacade } from 'app/api/clients/folder/v1beta1/hooks';
+import { getCombinedFolder } from 'app/api/clients/folder/v1beta1/hooks';
 import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
 import {
@@ -15,7 +15,6 @@ import {
   type ResourceClient,
   type ResourceForCreate,
   type ResourceList,
-  type TableResponse,
 } from 'app/features/apiserver/types';
 import { convertSpecToWireFormat } from 'app/features/dashboard-scene/serialization/transformationCompat';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
@@ -34,9 +33,8 @@ import {
   DashboardVersionError,
   type DashboardWithAccessInfo,
   type ListDashboardHistoryOptions,
-  type ListDeletedDashboardsOptions,
 } from './types';
-import { buildRestorePayload, fetchDeletedDashboard, getRequestOptions, isV0V1StoredVersion } from './utils';
+import { fetchDeletedDashboard, getRequestOptions, isV0V1StoredVersion, restoreDashboardResource } from './utils';
 
 export function getK8sV2DashboardApiConfig() {
   return {
@@ -72,7 +70,7 @@ export class K8sDashboardV2API
       const folderAnnotation = dashboard.metadata.annotations?.[AnnoKeyFolder];
       if (dashboard.metadata.annotations && folderAnnotation && !isRootFolderUID(folderAnnotation)) {
         try {
-          const folder = await getFolderByUidFacade(folderAnnotation);
+          const folder = await getCombinedFolder(folderAnnotation);
           dashboard.metadata.annotations[AnnoKeyFolderTitle] = folder.title;
           dashboard.metadata.annotations[AnnoKeyFolderUrl] = folder.url;
         } catch (e) {
@@ -160,7 +158,7 @@ export class K8sDashboardV2API
 
     const requestOptions = getRequestOptions(options);
 
-    if (obj.metadata.name) {
+    if (obj.metadata.name && !options.create) {
       delete obj.metadata.labels?.[DeprecatedInternalId];
       return this.client.update(obj, undefined, requestOptions).then((v) => this.asSaveDashboardResponseDTO(v));
     }
@@ -256,10 +254,6 @@ export class K8sDashboardV2API
     });
   }
 
-  async listDeletedDashboards(options: ListDeletedDashboardsOptions): Promise<TableResponse> {
-    return this.client.listAsTable({ ...options, labelSelector: 'grafana.app/get-trash=true' });
-  }
-
   async getDeletedDashboard(name: string): Promise<Resource<DashboardV2Spec> | undefined> {
     return fetchDeletedDashboard(this.client, name);
   }
@@ -269,6 +263,6 @@ export class K8sDashboardV2API
   }
 
   restoreDashboard(dashboard: Resource<DashboardV2Spec>) {
-    return this.client.create(buildRestorePayload(dashboard));
+    return restoreDashboardResource(this.client, dashboard);
   }
 }

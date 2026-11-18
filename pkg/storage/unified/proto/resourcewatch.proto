@@ -68,4 +68,40 @@ message WatchNotification {
   // An empty folder is valid when previous_type is known.
   // +optional
   string previous_folder = 10;
+
+  // Object metadata at this revision. Only allowlisted label, annotation and
+  // finalizer keys are sent. Lets consumers filter without a GET.
+  // Unset when the publisher does not populate it, including older publishers.
+  // +optional
+  NotificationMetadata metadata = 11;
+}
+
+// NotificationMetadata is the subset of the object's metadata a notification
+// carries so consumers can filter without a GET.
+message NotificationMetadata {
+  // Selected labels (an allowlist, not all of them).
+  // +optional
+  map<string, string> labels = 1;
+
+  // Selected annotations (an allowlist, not all of them).
+  // +optional
+  map<string, string> annotations = 2;
+
+  // Selected metadata.finalizers (an allowlist, not all of them). With
+  // deletion_timestamp_millis it tells a consumer whether a pending delete
+  // still waits on its finalizer.
+  // +optional
+  repeated string finalizers = 3;
+
+  // metadata.generation. 0 when unknown.
+  // +optional
+  int64 generation = 4;
+
+  // metadata.creationTimestamp, in unix milliseconds. 0 when unknown.
+  // +optional
+  int64 creation_timestamp_millis = 5;
+
+  // metadata.deletionTimestamp, in unix milliseconds. 0 when unset.
+  // +optional
+  int64 deletion_timestamp_millis = 6;
 }

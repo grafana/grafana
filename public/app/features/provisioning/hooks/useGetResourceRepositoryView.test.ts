@@ -405,6 +405,32 @@ describe('useGetResourceRepositoryView', () => {
       expect(result.current.isInstanceManaged).toBe(true);
     });
 
+    it('returns Orphaned when no repositories exist and the folder names a repository that is gone', () => {
+      const folder = folderData({
+        [AnnoKeyManagerKind]: ManagerKind.Repo,
+        [AnnoKeyManagerIdentity]: 'deleted-repo',
+      });
+      setupMocks({ settingsItems: [], folder });
+
+      const { result } = renderHook(() => useGetResourceRepositoryView({ folderName: 'deleted-repo' }));
+
+      expect(result.current.status).toBe(RepoViewStatus.Orphaned);
+      expect(result.current.orphanedRepoName).toBe('deleted-repo');
+    });
+
+    it('stays Ready when no repositories exist and the folder is not managed by a repository', () => {
+      const folder = folderData({
+        [AnnoKeyManagerKind]: ManagerKind.Terraform,
+        [AnnoKeyManagerIdentity]: 'some-provider',
+      });
+      setupMocks({ settingsItems: [], folder });
+
+      const { result } = renderHook(() => useGetResourceRepositoryView({ folderName: 'nested-folder' }));
+
+      expect(result.current.status).toBe(RepoViewStatus.Ready);
+      expect(result.current.orphanedRepoName).toBeUndefined();
+    });
+
     it('returns Ready with no repository when items list is empty', () => {
       setupMocks({ settingsItems: [] });
 

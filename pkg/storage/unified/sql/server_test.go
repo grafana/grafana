@@ -11,16 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestBuildResourceServerOptionsGRPCErrorResultToStatus(t *testing.T) {
-	cfg := setting.NewCfg()
-	for _, enabled := range []bool{false, true} {
-		cfg.UnifiedStorageGRPCErrorResultToStatus = enabled
-		opts, err := buildResourceServerOptions(&ServerOptions{Cfg: cfg})
-		require.NoError(t, err)
-		require.Equal(t, enabled, opts.GRPCErrorResultToStatus)
-	}
-}
-
 func TestIsHighAvailabilityEnabled(t *testing.T) {
 	tests := []struct {
 		name string
@@ -193,6 +183,28 @@ func TestWithAuthorizeBeforeFetch(t *testing.T) {
 	require.True(t, resourceOpts.AuthorizeBeforeFetchEnabled)
 }
 
+func TestWithQuotaConfig(t *testing.T) {
+	cfg := setting.NewCfg()
+	cfg.EnforcedQuotaResources = []string{"dashboard.grafana.app/dashboards", "folder.grafana.app/folders"}
+	cfg.LoggedQuotaResources = []string{"playlist.grafana.app/playlists", "dashboard.grafana.app/dashboards"}
+	cfg.QuotasErrorMessageSupportInfo = "Contact support."
+	opts, err := buildResourceServerOptions(&ServerOptions{Cfg: cfg}, withQuotaConfig)
+	require.NoError(t, err)
+	require.Equal(t, map[string]bool{"dashboard.grafana.app/dashboards": true, "folder.grafana.app/folders": true}, opts.QuotasConfig.EnforcedResources)
+	require.Equal(t, map[string]bool{"playlist.grafana.app/playlists": true, "dashboard.grafana.app/dashboards": true}, opts.QuotasConfig.LoggedResources)
+	require.Equal(t, "Contact support.", opts.QuotasConfig.SupportMessage)
+	require.True(t, opts.QuotasConfig.ShouldCheck("playlist.grafana.app", "playlists"))
+	require.False(t, opts.QuotasConfig.ShouldEnforce("playlist.grafana.app", "playlists"))
+	require.False(t, opts.QuotasConfig.ShouldCheck("plugins.grafana.app", "plugins"))
+
+	cfg.EnforcedQuotaResources = nil
+	cfg.LoggedQuotaResources = nil
+	opts, err = buildResourceServerOptions(&ServerOptions{Cfg: cfg}, withQuotaConfig)
+	require.NoError(t, err)
+	require.Empty(t, opts.QuotasConfig.EnforcedResources)
+	require.Empty(t, opts.QuotasConfig.LoggedResources)
+}
+
 func TestWithSeededWatches(t *testing.T) {
 	for _, enabled := range []bool{false, true} {
 		cfg := setting.NewCfg()
@@ -207,21 +219,29 @@ func TestWithNatsWatchMaxAge(t *testing.T) {
 	const maxAge = 5 * time.Minute
 
 	tests := []struct {
-		name     string
-		enabled  bool
-		notifier bool
-		maxAge   time.Duration
-		want     time.Duration
+		name        string
+		storageType string
+		kv          bool
+		enabled     bool
+		notifier    bool
+		maxAge      time.Duration
+		want        time.Duration
 	}{
 		{name: "nats disabled leaves it off", notifier: true, maxAge: maxAge, want: 0},
 		{name: "notifier off leaves it off", enabled: true, maxAge: maxAge, want: 0},
 		{name: "enabled and notifier on propagates the age", enabled: true, notifier: true, maxAge: maxAge, want: maxAge},
+		{name: "kv backend propagates the age", kv: true, enabled: true, notifier: true, maxAge: maxAge, want: maxAge},
+		{name: "file backend polls, so it stays off", storageType: "file", enabled: true, notifier: true, maxAge: maxAge, want: 0},
 		{name: "zero leaves expiry off", enabled: true, notifier: true, maxAge: 0, want: 0},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := setting.NewCfg()
+			if tt.storageType != "" {
+				cfg.Raw.Section("grafana-apiserver").Key("storage_type").SetValue(tt.storageType)
+			}
+			cfg.EnableSQLKVBackend = tt.kv
 			cfg.NATS.Enabled = tt.enabled
 			cfg.NATS.Notifier = tt.notifier
 			cfg.NATS.NotifierWatchMaxAge = tt.maxAge

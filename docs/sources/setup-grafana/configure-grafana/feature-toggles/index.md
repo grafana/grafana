@@ -30,7 +30,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `lokiQuerySplitting`                         | Split large interval queries into subqueries with smaller time intervals                                                            | Yes                |
 | `renderAuthJWT`                              | Uses JWT-based auth for rendering instead of relying on remote cache                                                                | Yes                |
 | `awsDatasourcesTempCredentials`              | Support temporary security credentials in AWS plugins for Grafana Cloud customers                                                   | Yes                |
-| `provisioningFolderMetadata`                 | Allow setting folder metadata for provisioned folders                                                                               | Yes                |
 | `awsAsyncQueryCaching`                       | Enable caching for async queries for Redshift and Athena. Requires that the data source has caching and async query support enabled | Yes                |
 | `reportingHeaderSettings`                    | Enables configuration of PDF report settings                                                                                        |                    |
 | `reportingFooterSettings`                    | Enables the configurable footer settings for PDF reports                                                                            |                    |
@@ -39,15 +38,12 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `cloudWatchBatchQueries`                     | Runs CloudWatch metrics queries as separate batches                                                                                 |                    |
 | `annotationPermissionUpdate`                 | Change the way annotation permissions work by scoping them to folders and dashboards.                                               | Yes                |
 | `dashboardNewLayouts`                        | Enables new dashboard layouts                                                                                                       | Yes                |
-| `timeComparison`                             | Enables time comparison option in supported panels                                                                                  | Yes                |
 | `alertingQueryOptimization`                  | Optimizes eligible queries in order to reduce load on datasources                                                                   |                    |
 | `sqlExpressions`                             | Enables SQL Expressions, which can execute SQL queries against data source results.                                                 | Yes                |
-| `grafana.filterablePanels`                   | Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels              |                    |
+| `grafana.filterablePanels`                   | Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels              | Yes                |
 | `cloudWatchNewLabelParsing`                  | Updates CloudWatch label parsing to be more accurate                                                                                | Yes                |
-| `queryLibrary`                               | Enables Saved queries (query library) feature                                                                                       | Yes                |
 | `playlistsRBAC`                              | Enables RBAC for playlists                                                                                                          |                    |
 | `savedQueriesRBAC`                           | Enables Saved queries (query library) RBAC permissions                                                                              | Yes                |
-| `newSavedQueriesExperience`                  | Enables the new Saved queries (query library) modal experience                                                                      | Yes                |
 | `alertingListViewV2`                         | Enables the new alert list view design                                                                                              | Yes                |
 | `alertingNavigationV2`                       | Enables the new Alerting navigation structure with improved menu grouping                                                           | Yes                |
 | `pluginProxyPreserveTrailingSlash`           | Preserve plugin proxy trailing slash.                                                                                               |                    |
@@ -64,14 +60,12 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `alertingNotificationHistory`                | Enables the notification history feature                                                                                            | Yes                |
 | `newClickhouseConfigPageDesign`              | Enables new design for the Clickhouse data source configuration page                                                                | Yes                |
 | `azureResourcePickerUpdates`                 | Enables the updated Azure Monitor resource picker                                                                                   | Yes                |
-| `panelTimeSettings`                          | Enables a new panel time settings drawer                                                                                            | Yes                |
 | `inlineLogDetailsNoScrolls`                  | Enables an inline version of Log Details that creates no new scrolls                                                                | Yes                |
 | `lokiAlignedQuerySplitting`                  | Aligns query splitting chunks with UTC midnight                                                                                     | Yes                |
+| `profilesHeatmap`                            | Enables heatmap visualization support for Pyroscope profiles                                                                        | Yes                |
 | `datasources.useNewStackInfoToSettingsCache` | Use the new cache for datasource.StackInfoToSettings, backend flag                                                                  |                    |
-| `grafana.queryVarEditorRedesign`             | Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options                    | Yes                |
 | `grafana.dashboardSettingsRedesign`          | Redesigns dashboard settings page into Advanced Settings in a modal window                                                          | Yes                |
-| `grafana.thresholdsInterpolation`            | Enables using dashboard variables in panel threshold values                                                                         |                    |
-| `grafana.unifiedDataSourcePicker`            | Render the core Grafana data source picker behind the DataSourcePicker that @grafana/runtime exposes to plugins                     | Yes                |
+| `grafana.thresholdsInterpolation`            | Enables using dashboard variables in panel threshold values                                                                         | Yes                |
 | `grafana.dashboardAutoGridDefault`           | Uses auto grid as the default layout for new dashboards                                                                             | Yes                |
 
 ## Public preview feature toggles
@@ -82,9 +76,10 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | `panelTitleSearch`                 | Search for dashboards using panel title                                                                                        |
 | `faroDatasourceSelector`           | Enable the data source selector within the Frontend Apps section of the Frontend Observability                                 |
-| `provisioning.userAttribution`     | Author Git Sync commits as the acting Grafana user                                                                             |
 | `externalServiceAccounts`          | Automatic service account and token setup for plugins                                                                          |
+| `grafana.mobileEditDeprecation`    | Disables dashboard edit mode (manual and assistant-driven) on mobile/small-screen viewports                                    |
 | `dashboard.notebooks`              | Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels            |
+| `dashboardUndoRedo`                | Enables undo/redo in dynamic dashboards                                                                                        |
 | `feedbackButton`                   | Enables the feedback button in the dashboard edit sidebar                                                                      |
 | `pdfTables`                        | Enables generating table data as PDF in reporting                                                                              |
 | `canvasPanelPanZoom`               | Allow pan and zoom in canvas panel                                                                                             |
@@ -92,6 +87,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `secretsKeeperUI`                  | Enable the Secrets Keeper management UI for configuring external secret storage                                                |
 | `grafana.secretsReferenceValueUI`  | Enable referencing an existing secret in an active keeper when creating a secure value                                         |
 | `dashboardTemplates`               | Enables a flow to get started with a new dashboard from a template                                                             |
+| `grafana.customDashboardTemplates` | Enables custom dashboard templates for enterprise                                                                              |
 | `alertRuleRestore`                 | Enables the alert rule restore feature                                                                                         |
 | `alertingMigrationWizardUI`        | Enables the migration wizard UI to migrate alert rules and notification resources from external sources to Grafana Alerting    |
 | `azureMonitorLogsBuilderEditor`    | Enables the logs builder mode for the Azure Monitor data source                                                                |
@@ -102,6 +98,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `text.newFeatures`                 | Enables the new features in text panel                                                                                         |
 | `interactiveLearning`              | Enables the interactive learning app                                                                                           |
 | `transformationsEmptyPlaceholder`  | Show transformation quick-start cards in empty transformations state                                                           |
+| `grafana.dashboardGlobalVariables` | Enables global and folder-scoped dashboard variables via dashboard.grafana.app                                                 |
 | `pyroscopeUTF8LabelNames`          | Enables support for UTF-8 label names in Pyroscope label selectors                                                             |
 | `queryEditorNext`                  | Enables next generation query editor experience                                                                                |
 | `grafana.viewPanelPane`            | Enables the sidebar pane with new toggles and options in panel view mode                                                       |

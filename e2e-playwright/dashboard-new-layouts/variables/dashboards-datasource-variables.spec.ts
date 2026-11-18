@@ -1,13 +1,11 @@
-import { test, expect } from '../fixtures';
+import { expect, test } from '../fixtures';
 import { flows, type Variable } from '../helpers';
 
 import { importVariableTestDashboard, saveAndGotoDashboardUrl } from './helpers/flows';
 
 test.use({
   featureToggles: {
-    dashboardNewLayouts: true,
     dashboardUndoRedo: true,
-    groupByVariable: true,
   },
 });
 

@@ -55,6 +55,13 @@ function Harness({
 }
 
 describe('TableSidebar', () => {
+  it('shows reorder controls only for data columns', () => {
+    render(<Harness />);
+
+    expect(screen.getAllByRole('button', { name: /^Reorder / })).toHaveLength(2);
+    expect(screen.queryByRole('checkbox', { name: 'Show row numbers' })).not.toBeInTheDocument();
+  });
+
   it('removes all reorder controls when reordering is disabled', () => {
     const { rerender } = render(<Harness />);
     expect(screen.getByRole('button', { name: 'Reorder Column A' })).toBeVisible();
@@ -162,6 +169,22 @@ describe('TableSidebar', () => {
 
     rerender(<TableSidebar {...props} willCloseOnRelease />);
     expect(window.getComputedStyle(contents).opacity).toBe('0.5');
+  });
+
+  it('does not escape special characters in control names', () => {
+    render(
+      <TableSidebar
+        columns={[{ name: 'Image w/ Link', hideable: true }]}
+        reorderable
+        hiddenColumns={new Set()}
+        onToggleColumn={jest.fn()}
+        onColumnsReorder={jest.fn()}
+        onClose={jest.fn()}
+      />
+    );
+
+    expect(screen.getByRole('button', { name: 'Reorder Image w/ Link' })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: 'Hide Image w/ Link' })).toBeInTheDocument();
   });
 
   it('closes from the close button', async () => {

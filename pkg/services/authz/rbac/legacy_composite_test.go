@@ -6,9 +6,11 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
 )
@@ -102,7 +104,7 @@ func TestService_LegacyCheckComposites(t *testing.T) {
 			name: "any denies without a matching action",
 			expression: legacyAnyExpression(
 				legacyPermissionExpression("dashboards:read"),
-				legacyPermissionExpression("folders:read"),
+				legacyPermissionExpression("folders:write"),
 			),
 			permissions: []accesscontrol.Permission{
 				{
@@ -195,9 +197,10 @@ func TestService_LegacyCheckComposites(t *testing.T) {
 					s.userPermissionsEvaluator = localEvaluator
 
 					response, err := s.LegacyCheck(legacyCheckContext(t), &authzextv1.LegacyCheckRequest{
-						Namespace:  "org-12",
-						Subject:    subject,
-						Expression: tc.expression,
+						Namespace:      "org-12",
+						RequesterOrgId: proto.Int64(12),
+						Subject:        subject,
+						Expression:     tc.expression,
 					})
 
 					require.NoError(t, err)
@@ -290,17 +293,18 @@ func TestService_LegacyCheckEmptyComposites(t *testing.T) {
 							s.userPermissionsEvaluator = localEvaluator
 
 							response, err := s.LegacyCheck(legacyCheckContext(t), &authzextv1.LegacyCheckRequest{
-								Namespace:  "org-12",
-								Subject:    subject,
-								Expression: tc.expression,
+								Namespace:      "org-12",
+								RequesterOrgId: proto.Int64(12),
+								Subject:        subject,
+								Expression:     tc.expression,
 							})
 
 							require.NoError(t, err)
 							require.Empty(t, response.GetError())
 
-							hasPermissions := subject == "render:0" || len(grants.permissions) > 0
-							require.Equal(t, hasPermissions && tc.allowedWithPermissions, response.GetAllowed())
+							require.Equal(t, tc.allowedWithPermissions, response.GetAllowed())
 							require.Nil(t, localEvaluator.user)
+							require.Empty(t, permissions.presenceQueries)
 
 							if subject == "render:0" {
 								require.Empty(t, permissions.queries)
@@ -339,9 +343,10 @@ func TestService_LegacyCheckCompositeQueries(t *testing.T) {
 	s.permissionStore = permissions
 
 	response, err := s.LegacyCheck(legacyCheckContext(t), &authzextv1.LegacyCheckRequest{
-		Namespace: "org-12",
-		Subject:   "user:u-1",
-		SkipCache: true,
+		Namespace:      "org-12",
+		RequesterOrgId: proto.Int64(12),
+		Subject:        "user:u-1",
+		SkipCache:      true,
 		Expression: legacyAllExpression(
 			legacyPermissionExpression("dashboards:read", "dashboards:uid:dash-1"),
 			legacyPermissionExpression("folders:read", "folders:uid:folder-1"),
@@ -373,17 +378,15 @@ func TestService_LegacyCheckCompositeQueries(t *testing.T) {
 		},
 	}, permissions.queries)
 
+	require.Empty(t, permissions.presenceQueries)
+
 	// Even with cache bypass, identifiers, basic role and teams are fetched once.
 	require.Equal(t, 4, f.calls)
 	require.Equal(t, 1, identityStore.calls)
 }
 
-func TestService_LegacyCheckUnrelatedPermissionQuery(t *testing.T) {
-	s := NewTestService("u-1", []accesscontrol.Permission{
-		{
-			Action: "users:create",
-		},
-	}, nil)
+func TestService_LegacyCheckSharedWithMeAvoidsPresenceQuery(t *testing.T) {
+	s := NewTestService("u-1", nil, nil)
 	s.actionResolver = legacyActionResolver{}
 	s.store.(*fakeStore).basicRole = &store.BasicRole{Role: "Viewer"}
 	s.identityStore.(*fakeIdentityStore).userTeams = []int64{10}
@@ -392,8 +395,9 @@ func TestService_LegacyCheckUnrelatedPermissionQuery(t *testing.T) {
 	s.permissionStore = permissions
 
 	response, err := s.LegacyCheck(legacyCheckContext(t), &authzextv1.LegacyCheckRequest{
-		Namespace: "org-12",
-		Subject:   "user:u-1",
+		Namespace:      "org-12",
+		RequesterOrgId: proto.Int64(12),
+		Subject:        "user:u-1",
 		Expression: legacyAnyExpression(
 			legacyPermissionExpression("dashboards:read"),
 			legacyAllExpression(),
@@ -405,15 +409,17 @@ func TestService_LegacyCheckUnrelatedPermissionQuery(t *testing.T) {
 
 	require.True(t, response.GetAllowed())
 
-	require.Len(t, permissions.queries, 2)
-	require.Equal(t, "dashboards:read", permissions.queries[0].Action)
-	require.Equal(t, []string{"dashboards:view", "dashboards:edit"}, permissions.queries[0].ActionSets)
-	require.Equal(t, store.PermissionsQuery{
-		UserID:        1,
-		TeamIDs:       []int64{10},
-		Role:          "Viewer",
-		IsServerAdmin: false,
-	}, permissions.queries[1])
+	require.Equal(t, []store.PermissionsQuery{
+		{
+			UserID:        1,
+			TeamIDs:       []int64{10},
+			Role:          "Viewer",
+			IsServerAdmin: false,
+			Action:        "dashboards:read",
+			ActionSets:    []string{"dashboards:view", "dashboards:edit"},
+		},
+	}, permissions.queries)
+	require.Empty(t, permissions.presenceQueries)
 }
 
 func TestService_LegacyCheckCompositeStoreFailure(t *testing.T) {
@@ -431,17 +437,17 @@ func TestService_LegacyCheckCompositeStoreFailure(t *testing.T) {
 			failAction: "folders:read",
 		},
 		{
-			name:       "empty all denies when checking permission presence fails",
-			expression: legacyAllExpression(),
-			failAction: "",
+			name:       "shared with me denies when loading folder grants fails",
+			expression: legacyPermissionExpression(acimpl.SharedWithMeFolderPermission.Action, acimpl.SharedWithMeFolderPermission.Scope),
+			failAction: "folders:read",
 		},
 		{
-			name: "nested empty all denies when checking permission presence fails",
+			name: "nested empty all denies when loading a requested action fails",
 			expression: legacyAnyExpression(
 				legacyPermissionExpression("users:delete"),
 				legacyAllExpression(),
 			),
-			failAction: "",
+			failAction: "users:delete",
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -457,9 +463,10 @@ func TestService_LegacyCheckCompositeStoreFailure(t *testing.T) {
 			}
 
 			response, err := s.LegacyCheck(legacyCheckContext(t), &authzextv1.LegacyCheckRequest{
-				Namespace:  "org-12",
-				Subject:    "user:u-1",
-				Expression: tc.expression,
+				Namespace:      "org-12",
+				RequesterOrgId: proto.Int64(12),
+				Subject:        "user:u-1",
+				Expression:     tc.expression,
 			})
 
 			require.NoError(t, err)
@@ -484,4 +491,16 @@ func (s *legacyFailingActionStore) GetUserPermissions(
 	}
 
 	return s.PermissionStore.GetUserPermissions(ctx, ns, query)
+}
+
+func (s *legacyFailingActionStore) HasUserPermissions(
+	ctx context.Context,
+	ns types.NamespaceInfo,
+	query store.PermissionsQuery,
+) (bool, error) {
+	if query.Action == s.action {
+		return false, errors.New("permission store unavailable")
+	}
+
+	return s.PermissionStore.HasUserPermissions(ctx, ns, query)
 }

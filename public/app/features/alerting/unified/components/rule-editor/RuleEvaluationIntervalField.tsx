@@ -1,5 +1,5 @@
 import { useId } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, useWatch } from 'react-hook-form';
 
 import { t } from '@grafana/i18n';
 import { Field, Input, Stack } from '@grafana/ui';
@@ -31,11 +31,11 @@ export function RuleEvaluationIntervalField({ inputId }: RuleEvaluationIntervalF
 
   const {
     register,
-    watch,
     setValue,
     formState: { errors },
+    control,
   } = useFormContext<RuleFormValues>();
-  const evaluateEvery = watch('evaluateEvery');
+  const evaluateEvery = useWatch({ control, name: 'evaluateEvery' });
 
   return (
     <Stack direction="column" gap={1.5}>

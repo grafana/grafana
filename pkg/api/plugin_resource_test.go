@@ -51,7 +51,7 @@ func TestIntegrationCallResource(t *testing.T) {
 	cfg.StaticRootPath = staticRootPath
 	cfg.Azure = &azsettings.AzureSettings{}
 
-	coreRegistry := coreplugin.ProvideCoreRegistry(tracing.InitializeTracerForTest(), nil, nil, testdatasource.ProvideService(), nil)
+	coreRegistry := coreplugin.ProvideCoreRegistry(tracing.InitializeTracerForTest(), nil, testdatasource.ProvideService(), nil)
 
 	testCtx := pluginsintegration.CreateIntegrationTestCtx(t, cfg, coreRegistry)
 

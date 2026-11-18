@@ -1,7 +1,6 @@
 import { type ComponentProps } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
-import { base64UrlEncode } from '@grafana/alerting';
 import { notificationsAPIv1beta1 } from '@grafana/alerting/unstable';
 import { TextLink } from '@grafana/ui';
 
@@ -13,11 +12,9 @@ interface ContactPointLinkProps extends Omit<ComponentProps<typeof TextLink>, 'h
 }
 
 export const ContactPointLink = ({ name, ...props }: ContactPointLinkProps) => {
-  const encodedName = base64UrlEncode(name);
-
-  // find receiver by name using metadata.name field selector
+  // find receiver by title using spec.title field selector
   const { currentData, isLoading, isSuccess } = notificationsAPIv1beta1.endpoints.listReceiver.useQuery({
-    fieldSelector: stringifyFieldSelector([['metadata.name', encodedName]]),
+    fieldSelector: stringifyFieldSelector([['spec.title', name]]),
   });
 
   // grab the first result from the fieldSelector result

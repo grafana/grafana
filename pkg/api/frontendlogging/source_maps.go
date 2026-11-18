@@ -76,8 +76,6 @@ func (store *SourceMapStore) guessSourceMapLocation(ctx context.Context, sourceU
 	// determine if source comes from grafana core, locally or CDN, look in public build dir on fs
 	if strings.HasPrefix(u.Path, "/public/build/") || (store.cfg.CDNRootURL != nil &&
 		strings.HasPrefix(sourceURL, store.cfg.CDNRootURL.String()) && strings.Contains(u.Path, "/public/build/")) {
-		// The remainder carries the rspack/ segment for rspack assets, so one
-		// directory resolves both bundlers.
 		pathParts := strings.SplitN(u.Path, "/public/build/", 2)
 		if len(pathParts) == 2 {
 			return &sourceMapLocation{

@@ -123,7 +123,6 @@ func formatGitHubErrorDetails(errs []github.Error) string {
 const (
 	maxCommits      = 1000 // Maximum number of commits to fetch
 	maxWebhooks     = 100  // Maximum number of webhooks allowed per repository
-	maxPRFiles      = 1000 // Maximum number of files allowed in a pull request
 	maxRepositories = 1000 // Maximum number of repositories returned by a listing
 )
 
@@ -529,32 +528,6 @@ func (r *githubClient) EditWebhook(ctx context.Context, hook repo.WebhookConfig)
 		return translateGitHubError(err)
 	}
 	return nil
-}
-
-func (r *githubClient) ListPullRequestFiles(ctx context.Context, number int) ([]CommitFile, error) {
-	listFn := func(ctx context.Context, opts *github.ListOptions) ([]*github.CommitFile, *github.Response, error) {
-		return r.gh.PullRequests.ListFiles(ctx, r.owner, r.repo, number, opts)
-	}
-
-	files, err := paginatedList(
-		ctx,
-		listFn,
-		defaultListOptions(maxPRFiles),
-	)
-	if errors.Is(err, repo.ErrTooManyItems) {
-		return nil, fmt.Errorf("pull request contains too many files (more than %d)", maxPRFiles)
-	}
-	if err != nil {
-		return nil, translateGitHubError(err)
-	}
-
-	// Convert to the interface type
-	ret := make([]CommitFile, 0, len(files))
-	for _, f := range files {
-		ret = append(ret, f)
-	}
-
-	return ret, nil
 }
 
 func (r *githubClient) MergeBase(ctx context.Context, base, head string) (string, error) {

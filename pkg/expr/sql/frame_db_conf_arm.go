@@ -17,3 +17,7 @@ func MySQLColToFieldType(col *mysql.Column) (data.FieldType, error) {
 func SchemaFromFrame(frame *data.Frame) mysql.Schema {
 	return mysql.Schema{}
 }
+
+func SampleRow(frame *data.Frame, rowIdx int) []any {
+	return frame.RowCopy(rowIdx)
+}

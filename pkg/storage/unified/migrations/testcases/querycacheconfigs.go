@@ -7,8 +7,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/tests/apis"
 )
 
@@ -92,16 +94,26 @@ func (tc *queryCacheConfigsTestCase) Verify(t *testing.T, helper *apis.K8sTestHe
 
 	// K8s API requires enterprise license; verify via resource table directly.
 	namespace := authlib.OrgNamespaceFormatter(helper.Org1.OrgID)
-	engine := helper.GetEnv().SQLStore.GetEngine()
-
-	count, err := engine.Table("resource").
-		Where("namespace = ? AND resource = ?", namespace, "querycacheconfigs").
-		Count()
+	ctx := identity.WithServiceIdentityContext(t.Context(), helper.Org1.OrgID)
+	rsp, err := helper.GetEnv().ResourceClient.List(ctx, &resourcepb.ListRequest{
+		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+			Namespace: namespace,
+			Group:     "querycaching.grafana.app",
+			Resource:  "querycacheconfigs",
+		}},
+		Limit:    100,
+		KeysOnly: true,
+	})
 	require.NoError(t, err)
+	require.Empty(t, rsp.NextPageToken)
 
-	expectedCount := int64(0)
+	var expectedNames []string
 	if shouldExist {
-		expectedCount = int64(len(tc.names))
+		expectedNames = tc.names
 	}
-	require.Equal(t, expectedCount, count, "expected %d querycacheconfig resources in namespace %s", expectedCount, namespace)
+	names := make([]string, 0, len(rsp.Items))
+	for _, item := range rsp.Items {
+		names = append(names, item.Name)
+	}
+	require.ElementsMatch(t, expectedNames, names, "querycacheconfig resources in namespace %s", namespace)
 }

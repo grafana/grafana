@@ -42,7 +42,7 @@ var _ grafanarest.Storage = (*cascadeDeleteStorage)(nil)
 // elements) during cascade delete. Satisfied by *cleaner.ContentsCleaner; kept as an interface here
 // so the cascade can be faked in tests and the cleaner package need not import the apiserver.
 type FolderContentsDeleter interface {
-	DeleteInFolder(ctx context.Context, namespace, folderUID string) error
+	DeleteInFolder(ctx context.Context, namespace, folderUID string, user identity.Requester) error
 }
 
 // cascadeDeleteStorage wraps the folder storage and overrides Delete to recursively remove a
@@ -114,6 +114,11 @@ func (s *cascadeDeleteStorage) Delete(ctx context.Context, name string, deleteVa
 	if err != nil {
 		return nil, false, err
 	}
+	// The cascade controller owns deletion of a finalizer folder's subtree, so the delete only has to
+	// mark it terminating; walking the subtree here would bypass the controller's batching and status.
+	if f, ok := obj.(*foldersv1.Folder); ok && hasCascadeDeleteFinalizer(f) {
+		return s.Storage.Delete(ctx, name, deleteValidation, options)
+	}
 	if deleteValidation != nil {
 		if err := deleteValidation(ctx, obj); err != nil {
 			return nil, false, err
@@ -138,7 +143,7 @@ func (s *cascadeDeleteStorage) Delete(ctx context.Context, name string, deleteVa
 	// user authorized to force-delete the folder but not to see every contained resource would
 	// otherwise enumerate (and thus delete) only the visible subset, orphaning the rest.
 	cascadeCtx := identity.WithServiceIdentityContext(ctx, ns.OrgID)
-	return s.cascadeDelete(cascadeCtx, user, ns.Value, rootParent, name, cascadeDeleteOptions(options), true)
+	return s.cascadeDelete(cascadeCtx, user, ns.OrgID, ns.Value, rootParent, name, options, true)
 }
 
 // cascadeDeleteOptions returns the options reused for descendant deletes, carrying only the
@@ -179,20 +184,62 @@ func checkDeletePreconditions(obj runtime.Object, options *metav1.DeleteOptions)
 // requested param marks whether we are deleting the requested folder or not. We suppress
 // NotFound errors for children, since they might be already deleted or a stale search-index entry,
 // but we keep the error for the user-requested folder.
-func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, user identity.Requester, namespace, parentUID, name string, options *metav1.DeleteOptions, requested bool) (runtime.Object, bool, error) {
-	if err := s.markTerminating(ctx, name, options); err != nil {
+func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, user identity.Requester, orgID int64, namespace, parentUID, name string, options *metav1.DeleteOptions, requested bool) (runtime.Object, bool, error) {
+	// user must not be ctx's wildcard-permissioned enumeration identity; checked before markTerminating so a rejection doesn't stamp the folder as mid-deletion.
+	enumUser, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, false, err
+	}
+	if user.GetUID() == enumUser.GetUID() {
+		return nil, false, apierrors.NewForbidden(foldersv1.FolderResourceInfo.GroupResource(), name,
+			fmt.Errorf("cascade delete requester must not be the ctx enumeration identity: %w", folder.ErrAccessDenied))
+	}
+
+	// Check existence before authorization so stale search hits remain idempotent,
+	// but authorize all contained resources before recording or stamping this folder.
+	if _, err := s.Get(ctx, name, &metav1.GetOptions{}); err != nil {
+		if apierrors.IsNotFound(err) && !requested {
+			return nil, false, nil
+		}
+		return nil, false, err
+	}
+	if err := s.checkFolderContentsAccess(ctx, user, namespace, name, parentUID); err != nil {
+		return nil, false, err
+	}
+
+	deleteOptions := options
+	if writer, ok := s.Storage.(interface {
+		preparePendingDelete(context.Context, string, rest.ValidateObjectFunc, *metav1.DeleteOptions) (*metav1.DeleteOptions, error)
+	}); ok {
+		// Establish intent as the original caller before any cascade mutation, not
+		// just before the final folder delete. Keep the captured UID pinned below.
+		deleteOptions, err = writer.preparePendingDelete(identity.WithRequester(ctx, user), name, nil, options)
+		if apierrors.IsNotFound(err) && !requested {
+			return nil, false, nil
+		}
+		if err != nil {
+			return nil, false, err
+		}
+	}
+
+	if err := s.markTerminating(ctx, name, deleteOptions); err != nil {
 		if apierrors.IsNotFound(err) && !requested {
 			return nil, false, nil
 		}
 		return nil, false, err
 	}
 
-	// Authorize the requester to delete this folder's contained resources, mirroring the per-folder
-	// permissions legacy enforced (plus variables:delete when global variables are enabled). Runs
-	// after the NotFound skip so a stale or already-deleted child folder is skipped idempotently
-	// instead of 403-ing on an un-walkable inheritance chain.
-	if err := s.checkFolderContentsAccess(ctx, user, namespace, name, parentUID); err != nil {
-		return nil, false, err
+	// The stamp changes resourceVersion itself; retain the UID pin, but do not
+	// apply the caller's pre-stamp version to the final delete.
+	deleteOptions = deleteOptions.DeepCopy()
+	if deleteOptions.Preconditions != nil {
+		deleteOptions.Preconditions.ResourceVersion = nil
+	}
+
+	// Mark ctx authorized for an Unchecked contents delete, but only when accessClient is wired --
+	// checkFolderContentsAccess is a no-op without one, so nothing was actually verified above.
+	if s.accessClient != nil {
+		ctx = folder.WithUncheckedDeleteAuthorized(ctx, orgID, user, []string{name}, true)
 	}
 
 	children, err := s.childFolders(ctx, namespace, name)
@@ -201,7 +248,7 @@ func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, user identity.
 	}
 
 	for _, child := range children {
-		if _, _, err := s.cascadeDelete(ctx, user, namespace, name, child, options, false); err != nil {
+		if _, _, err := s.cascadeDelete(ctx, user, orgID, namespace, name, child, cascadeDeleteOptions(options), false); err != nil {
 			return nil, false, err
 		}
 	}
@@ -220,7 +267,7 @@ func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, user identity.
 	// failure aborts the cascade, same as the dashboard sweep above. Skipped on dry-run: the
 	// RegistryService cleanups mutate the DB directly and have no dry-run mode.
 	if s.contentsDeleter != nil && len(options.DryRun) == 0 {
-		if err := s.contentsDeleter.DeleteInFolder(ctx, namespace, name); err != nil {
+		if err := s.contentsDeleter.DeleteInFolder(ctx, namespace, name, user); err != nil {
 			// Surface a permission failure as 403 rather than a generic 500, so the client sees why.
 			if errors.Is(err, folder.ErrAccessDenied) {
 				return nil, false, apierrors.NewForbidden(foldersv1.FolderResourceInfo.GroupResource(), name, err)
@@ -234,7 +281,9 @@ func (s *cascadeDeleteStorage) cascadeDelete(ctx context.Context, user identity.
 
 	// Delete this folder last. NotFound is success for children (idempotent), but the requested
 	// folder keeps its missing-resource error.
-	obj, async, err := s.Storage.Delete(ctx, name, nil, options)
+	// TODO: Defer caller-identity execution to a follow-up; retain system execution for
+	// compatibility after the original caller's preflight authorization above.
+	obj, async, err := s.Storage.Delete(ctx, name, rest.ValidateAllObjectFunc, deleteOptions)
 	if apierrors.IsNotFound(err) && !requested {
 		return obj, async, nil
 	}
@@ -300,7 +349,7 @@ func (s *cascadeDeleteStorage) dashboardsInFolder(ctx context.Context, namespace
 			Offset:       offset,
 			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		})
-		if err := resource.StatusErrorFromResponse(resp.GetError(), err); err != nil {
+		if err := resource.StatusErrorFromGRPC(err); err != nil {
 			logging.FromContext(ctx).Error("Failed to search dashboards in folder", "namespace", namespace, "folder", folderUID, "error", err)
 			return nil, err
 		}
@@ -380,7 +429,7 @@ func (s *cascadeDeleteStorage) variablesInFolder(ctx context.Context, namespace,
 			Offset:       offset,
 			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		})
-		if err := resource.StatusErrorFromResponse(resp.GetError(), err); err != nil {
+		if err := resource.StatusErrorFromGRPC(err); err != nil {
 			logging.FromContext(ctx).Error("Failed to search variables in folder", "namespace", namespace, "folder", folderUID, "error", err)
 			return nil, err
 		}
@@ -410,6 +459,11 @@ func (s *cascadeDeleteStorage) variablesInFolder(ctx context.Context, namespace,
 // does not actually mutate folders.
 func (s *cascadeDeleteStorage) markTerminating(ctx context.Context, name string, options *metav1.DeleteOptions) error {
 	objInfo := rest.DefaultUpdatedObjectInfo(nil, func(_ context.Context, newObj, oldObj runtime.Object) (runtime.Object, error) {
+		// Updates may retry against a replacement; check the current stored object
+		// on every attempt before stamping or allowing any cascade work.
+		if err := checkDeletePreconditions(oldObj, options); err != nil {
+			return nil, err
+		}
 		// With a nil base object, DefaultUpdatedObjectInfo passes a nil newObj; mutate a copy of the
 		// existing folder instead.
 		obj := newObj

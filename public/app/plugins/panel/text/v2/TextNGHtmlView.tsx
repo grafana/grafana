@@ -5,6 +5,7 @@ interface Props {
   className?: string;
   testId?: string;
   hasData?: boolean;
+  minHeight?: number;
   consent?: TextSandboxProps['consent'];
 }
 

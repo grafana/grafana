@@ -177,22 +177,32 @@ it('sizes the grid from the clamped sidebar width when the panel shrinks, grows,
   const { rerender } = render(table(800));
   expect(screen.getByRole('grid')).toHaveStyle({ gridTemplateColumns: '571px' });
 
-  rerender(table(200));
-  expect(screen.getByRole('separator')).toHaveAttribute('aria-valuenow', '50');
-  expect(screen.getByRole('grid')).toHaveStyle({ gridTemplateColumns: '95px' });
-
-  rerender(table(800));
-  expect(screen.getByRole('grid')).toHaveStyle({ gridTemplateColumns: '571px' });
-
   const pane = screen.getByRole('group', { name: 'Column visibility' }).parentElement!;
   const rect = pane.getBoundingClientRect();
-  let paneWidth = 220;
+  let containerWidth = 800;
+  // The live ARIA updater measures both elements, so they need distinct sizes in jsdom.
+  const containerRect = jest.spyOn(pane.parentElement!, 'getBoundingClientRect').mockImplementation(() => ({
+    ...rect,
+    width: containerWidth,
+  }));
   // useSplitter measures its CSS limits by temporarily collapsing and expanding the pane.
   const paneRect = jest.spyOn(pane, 'getBoundingClientRect').mockImplementation(() => ({
     ...rect,
     width:
-      pane.style.flexGrow === '0' ? 0 : pane.style.flexGrow === '100' ? parseFloat(pane.style.maxWidth) : paneWidth,
+      pane.style.flexGrow === '100'
+        ? parseFloat(pane.style.maxWidth)
+        : parseFloat(pane.style.flexGrow) * (containerWidth - 8),
   }));
+
+  containerWidth = 200;
+  rerender(table(200));
+  expect(screen.getByRole('separator')).toHaveAttribute('aria-valuenow', '50');
+  expect(screen.getByRole('grid')).toHaveStyle({ gridTemplateColumns: '95px' });
+
+  containerWidth = 800;
+  rerender(table(800));
+  expect(screen.getByRole('grid')).toHaveStyle({ gridTemplateColumns: '571px' });
+
   const splitter = screen.getByRole('separator');
   splitter.setPointerCapture = jest.fn();
   splitter.releasePointerCapture = jest.fn();
@@ -204,10 +214,11 @@ it('sizes the grid from the clamped sidebar width when the panel shrinks, grows,
   expect(pane).toHaveStyle({ maxWidth: '396px' });
   expect(screen.getByRole('grid')).toHaveStyle({ gridTemplateColumns: '395px' });
 
-  paneWidth = 396;
   await user.pointer({ keys: '[/MouseLeft]', target: splitter });
+  expect(splitter).toHaveAttribute('aria-valuenow', '50');
   expect(screen.getByRole('grid')).toHaveStyle({ gridTemplateColumns: '395px' });
   paneRect.mockRestore();
+  containerRect.mockRestore();
 });
 
 it('reuses wrapped-cell measurements during unrelated renders with hidden columns', () => {
@@ -485,4 +496,90 @@ it('keeps reordered hidden columns in position when restored after refresh', asy
   await user.click(screen.getByRole('checkbox', { name: 'Show B' }));
   expect(screen.getAllByRole('columnheader').map((cell) => cell.textContent)).toEqual(['B', 'A', 'C']);
   expect(screen.getByRole('gridcell', { name: 'B1' })).toBeVisible();
+});
+
+it('moves header focus to the column taking the hidden slot when hiding the first column', async () => {
+  const user = userEvent.setup();
+  render(<Harness />);
+
+  await user.click(screen.getByRole('button', { name: 'Column options for A' }));
+  await user.click(await screen.findByRole('menuitem', { name: 'Hide column' }));
+
+  await waitFor(() => {
+    const header = (document.activeElement as HTMLElement | null)?.closest('[role="columnheader"]');
+    expect(header).not.toBeNull();
+  });
+  const focusedHeader = (document.activeElement as HTMLElement | null)?.closest('[role="columnheader"]');
+  expect(
+    within(focusedHeader as HTMLElement).getByRole('button', { name: 'Column options for B' })
+  ).toBeInTheDocument();
+});
+
+it('moves header focus to the column taking the hidden slot when hiding the middle column', async () => {
+  const user = userEvent.setup();
+  render(<Harness />);
+
+  await user.click(screen.getByRole('button', { name: 'Column options for B' }));
+  await user.click(await screen.findByRole('menuitem', { name: 'Hide column' }));
+
+  await waitFor(() => {
+    const header = (document.activeElement as HTMLElement | null)?.closest('[role="columnheader"]');
+    expect(header).not.toBeNull();
+  });
+  const focusedHeader = (document.activeElement as HTMLElement | null)?.closest('[role="columnheader"]');
+  expect(
+    within(focusedHeader as HTMLElement).getByRole('button', { name: 'Column options for C' })
+  ).toBeInTheDocument();
+});
+
+it('moves header focus to the previous column when hiding the last column', async () => {
+  const user = userEvent.setup();
+  render(<Harness />);
+
+  await user.click(screen.getByRole('button', { name: 'Column options for C' }));
+  await user.click(await screen.findByRole('menuitem', { name: 'Hide column' }));
+
+  await waitFor(() => {
+    const header = (document.activeElement as HTMLElement | null)?.closest('[role="columnheader"]');
+    expect(header).not.toBeNull();
+  });
+  const focusedHeader = (document.activeElement as HTMLElement | null)?.closest('[role="columnheader"]');
+  expect(
+    within(focusedHeader as HTMLElement).getByRole('button', { name: 'Column options for B' })
+  ).toBeInTheDocument();
+});
+
+it('focuses by displayed order rather than catalog order when hiding a reordered column', async () => {
+  const user = userEvent.setup();
+  render(<Harness />);
+
+  // Reorder to [B, A, C] so the catalog and the rendered order disagree: A is
+  // catalog index 0 but renders at index 1. Hiding A must focus C, which takes
+  // A's rendered slot - not B, which is what the catalog index would select.
+  await user.click(screen.getByRole('button', { name: 'Reorder B' }));
+  await user.keyboard('{ArrowUp}');
+  expect(screen.getAllByRole('columnheader').map((cell) => cell.textContent)).toEqual(['B', 'A', 'C']);
+
+  await user.click(screen.getByRole('button', { name: 'Column options for A' }));
+  await user.click(await screen.findByRole('menuitem', { name: 'Hide column' }));
+
+  await waitFor(() => {
+    const header = (document.activeElement as HTMLElement | null)?.closest('[role="columnheader"]');
+    expect(header).not.toBeNull();
+  });
+  const focusedHeader = (document.activeElement as HTMLElement | null)?.closest('[role="columnheader"]');
+  expect(
+    within(focusedHeader as HTMLElement).getByRole('button', { name: 'Column options for C' })
+  ).toBeInTheDocument();
+});
+
+it('keeps focus on the sidebar checkbox when hiding a column from the sidebar', async () => {
+  const user = userEvent.setup();
+  render(<Harness />);
+
+  const checkbox = screen.getByRole('checkbox', { name: 'Hide B' });
+  await user.click(checkbox);
+
+  expect(screen.queryByRole('gridcell', { name: 'B0' })).not.toBeInTheDocument();
+  expect(checkbox).toHaveFocus();
 });

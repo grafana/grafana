@@ -1,4 +1,4 @@
-import * as z from 'zod';
+import * as z from 'zod/mini';
 
 import { t } from '@grafana/i18n';
 import { getPanelPluginMetasMap } from '@grafana/runtime/internal';
@@ -12,7 +12,6 @@ import { NOTEBOOK_EDIT_KIND } from '../../scene/NotebookEditHistory';
 import { type NotebookScene } from '../../scene/NotebookScene';
 import { isEmptyMarkdown } from '../../scene/layout-notebook/cellEmptiness';
 import { validateNotebookSpec } from '../../schema/notebookSpecSchema';
-import { transformNotebookSceneToSaveModel } from '../../serialization/transformNotebookSceneToSaveModel';
 import { type Spec as NotebookSpec } from '../../types';
 
 import { requiresNotebookEdit } from './permissions';
@@ -41,34 +40,34 @@ function requestedCellNames(spec: NotebookSpec): string[] {
   return (endsWithEmptyBlock ? cells.slice(0, -1) : cells).map((cell) => cell.spec.element.name);
 }
 
-const applyNotebookSpecPayloadSchema = z
-  .object({
-    spec: z
-      .record(z.string(), z.unknown())
-      .describe('A complete notebook spec to apply (the same shape GET_NOTEBOOK_SPEC returns).'),
-    validate: z
-      .boolean()
-      .optional()
-      .default(false)
-      .describe('When true, validate the spec against the notebook schema and reject the mutation if it is invalid.'),
-    viewOnlyChanges: z
-      .enum(['keep', 'discard'])
-      .optional()
-      .describe(
+const applyNotebookSpecPayloadSchema = z.strictObject({
+  spec: z
+    .record(z.string(), z.unknown())
+    .check(z.describe('A complete notebook spec to apply (the same shape GET_NOTEBOOK_SPEC returns).')),
+  validate: z
+    ._default(z.boolean(), false)
+    .check(
+      z.describe('When true, validate the spec against the notebook schema and reject the mutation if it is invalid.')
+    ),
+  viewOnlyChanges: z
+    .optional(z.enum(['keep', 'discard']))
+    .check(
+      z.describe(
         'Required when GET_NOTEBOOK_SPEC reported pendingViewOnlyChanges for this notebook: ask the ' +
           'person reading whether to keep or discard their unsaved panel changes, then pass their answer ' +
           'here. Rejected with no effect on the notebook when changes are pending and this is omitted.'
-      ),
-    onConflict: z
-      .enum(['overwrite'])
-      .optional()
-      .describe(
+      )
+    ),
+  onConflict: z
+    .optional(z.enum(['overwrite']))
+    .check(
+      z.describe(
         'Set to "overwrite" only after the error said someone else saved this notebook first and the ' +
           'person chose to replace their version with this spec. Omit it otherwise: a conflict is then ' +
           'reported as an error and nothing is changed.'
-      ),
-  })
-  .strict();
+      )
+    ),
+});
 
 export type ApplyNotebookSpecPayload = z.infer<typeof applyNotebookSpecPayloadSchema>;
 
@@ -90,7 +89,9 @@ export const applyNotebookSpecCommand: MutationCommand<ApplyNotebookSpecPayload,
     'library panel cells) and the ordered NotebookLayout that places them. The scene is rebuilt from ' +
     'the spec. The change is saved automatically. Fails without changing anything if the person reading ' +
     'has unsaved panel changes you have not resolved yet (see viewOnlyChanges), or if someone else saved ' +
-    'the notebook since it was opened (see onConflict).',
+    'the notebook since it was opened (see onConflict). Comments attach to an element by its name in ' +
+    '`elements`: keep the names of elements that stay, give every new element a unique, random name ' +
+    '(for example `heading-k3x9qa`), and never reuse the name of an element that was removed.',
 
   payloadSchema: applyNotebookSpecPayloadSchema,
   permission: requiresNotebookEdit,
@@ -149,9 +150,13 @@ export const applyNotebookSpecCommand: MutationCommand<ApplyNotebookSpecPayload,
         }
       }
 
-      const { transformNotebookToScene } = await import(
-        /* webpackChunkName: "notebook-serialization" */ '../../serialization/transformNotebookToScene'
-      );
+      // Both are loaded before the scene changes, so a failed import cannot leave it changed but unsaved.
+      const [{ transformNotebookToScene }, { transformNotebookSceneToSaveModel }] = await Promise.all([
+        import(/* webpackChunkName: "notebook-serialization" */ '../../serialization/transformNotebookToScene'),
+        import(
+          /* webpackChunkName: "notebook-serialization" */ '../../serialization/transformNotebookSceneToSaveModel'
+        ),
+      ]);
 
       // Panel cells in the incoming spec are built synchronously by the transform below.
       await getPanelPluginMetasMap();

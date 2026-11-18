@@ -5,12 +5,11 @@ import { useState } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
-import { useFlagFoldersAppPlatformAPI } from '@grafana/runtime/internal';
 import { ConfirmModal, Space, Text, useStyles2 } from '@grafana/ui';
+import { useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 import { getStatusFromError } from 'app/core/utils/errors';
 
 import { FolderPicker } from '../../../core/components/Select/FolderPicker';
-import { useGetFolderQuery } from '../api/browseDashboardsAPI';
 
 export interface RestoreModalProps {
   onConfirm: (restoreTarget: string) => Promise<void>;
@@ -47,16 +46,9 @@ export const RestoreModal = ({
 }: RestoreModalProps) => {
   const styles = useStyles2(getStyles);
   const [userTarget, setUserTarget] = useState<string | undefined>();
-  const foldersAppPlatformAPI = useFlagFoldersAppPlatformAPI();
   const numberOfDashboards = selectedDashboards.length;
   const { error: originError, isFetching } = useGetFolderQuery(
-    originCandidate
-      ? {
-          folderUID: originCandidate,
-          accesscontrol: false,
-          isLegacyCall: foldersAppPlatformAPI,
-        }
-      : skipToken,
+    originCandidate ? { name: originCandidate } : skipToken,
     { refetchOnMountOrArgChange: true }
   );
   const autoTarget = getAutoTarget(originCandidate, isFetching, getStatusFromError(originError));
@@ -106,7 +98,7 @@ export const RestoreModal = ({
           <Space v={1} />
           {/* Field wrapper resets font-size to 14px, preventing cascade from parent Text components */}
           <div className={styles.field}>
-            <FolderPicker onChange={setUserTarget} value={restoreTarget} />
+            <FolderPicker onChange={setUserTarget} value={restoreTarget} permission="create" />
           </div>
         </>
       }

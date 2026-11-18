@@ -196,7 +196,7 @@ func RegisterAPIService(
 			display.NewLegacyDisplayProvider(store),   // Do legacy first
 			display.NewSearchDisplayProvider(unified), // then use search index
 		),
-		ssoLoginConfig:  sso.NewLoginConfigHandler(cfg, ssoService),
+		ssoLoginConfig:  sso.NewLoginConfigHandler(cfgProvider, ssoService),
 		userPermissions: userpermissions.NewHandler(userPermissionsClient, cfg.IDUseExternalGroupsForGroupsClaim),
 		features:        features,
 	}
@@ -244,6 +244,12 @@ func NewAPIService(
 		iamauthorizer.Versions,
 	)
 
+	var ssoCfgProvider configprovider.ConfigProvider
+	if features.SSOSettingsAPI && settingService != nil {
+		ssoCfgProvider = sso.NewTenantConfigProvider(settingService)
+	}
+	ssoReadService := ssosettingsimpl.ProvideReadOnlyDBService(dbProvider, ssoCfgProvider)
+
 	builder := &IdentityAccessManagementAPIBuilder{
 		store:                   store,
 		userLegacyStore:         user.NewLegacyStore(store, accessClient, tracingService),
@@ -256,25 +262,26 @@ func NewAPIService(
 			// TODO: include the search client here
 		),
 		// Standalone AuthInfo already carries the selected groups claim from its signed token.
-		userPermissions:            userpermissions.NewHandler(userPermissionsClient, false),
-		tracing:                    tracingService,
-		resourcePermissionsStorage: resourcePermissionsStorage,
-		mappers:                    mappers,
-		roleBindingsApiInstaller:   roleBindingsApiInstaller,
-		logger:                     log.New("iam.apis"),
-		accessClient:               accessClient,
-		resourceParentProvider:     resourceParentProvider,
-		zClient:                    zClient,
-		zTickets:                   make(chan bool, MaxConcurrentZanzanaWrites),
-		reg:                        reg,
-		roleApiInstaller:           roleApiInstaller,
-		globalRoleApiInstaller:     globalRoleApiInstaller,
-		apiConfig:                  Config{SingleOrganization: true},
-		teamLBACApiInstaller:       teamLBACApiInstaller,
-		settingService:             settingService,
-		features:                   features,
+		userPermissions:                  userpermissions.NewHandler(userPermissionsClient, false),
+		tracing:                          tracingService,
+		resourcePermissionsStorage:       resourcePermissionsStorage,
+		resourcePermissionsSearchHandler: newResourcePermissionsSearchHandler(resourcePermissionsStorage, iamauthorizer.NewResourcePermissionsAuthorizer(accessClient, resourceParentProvider)),
+		mappers:                          mappers,
+		roleBindingsApiInstaller:         roleBindingsApiInstaller,
+		logger:                           log.New("iam.apis"),
+		accessClient:                     accessClient,
+		resourceParentProvider:           resourceParentProvider,
+		zClient:                          zClient,
+		zTickets:                         make(chan bool, MaxConcurrentZanzanaWrites),
+		reg:                              reg,
+		roleApiInstaller:                 roleApiInstaller,
+		globalRoleApiInstaller:           globalRoleApiInstaller,
+		apiConfig:                        Config{SingleOrganization: true},
+		teamLBACApiInstaller:             teamLBACApiInstaller,
+		settingService:                   settingService,
+		features:                         features,
 		// Serve the SSOSetting kind read-only in standalone, gated by kubernetesSsoSettingsApi.
-		ssoLegacyStore: sso.NewLegacyStore(ssosettingsimpl.ProvideReadOnlyDBService(dbProvider), tracingService),
+		ssoLegacyStore: sso.NewLegacyStore(ssoReadService, tracingService),
 		authorizer: authorizer.AuthorizerFunc(
 			func(ctx context.Context, a authorizer.Attributes) (authorizer.Decision, string, error) {
 				user, ok := types.AuthInfoFrom(ctx)
@@ -284,6 +291,18 @@ func NewAPIService(
 
 				if a.GetResource() == "whoami" {
 					return whoamiAuthorizer.Authorize(ctx, a)
+				}
+
+				if a.GetResource() == "display" {
+					if user.GetIdentityType() == types.TypeAnonymous {
+						return authorizer.DecisionDeny, "anonymous identities cannot resolve display names", nil
+					}
+					switch a.GetVerb() {
+					case "get", "list":
+						return authorizer.DecisionAllow, "", nil
+					default:
+						return authorizer.DecisionDeny, "display is read-only", nil
+					}
 				}
 
 				if a.GetResource() == "globalroles" {
@@ -346,21 +365,18 @@ func NewAPIService(
 				}
 
 				if a.GetResource() == legacyiamv0.SSOSettingResourceInfo.GetName() {
-					// Standalone serves this kind read-only to service identities; scope to
-					// access policies and read verbs. Per-provider settings RBAC is a follow-up.
-					if user.GetIdentityType() != types.TypeAccessPolicy {
-						return authorizer.DecisionDeny, "only access policy identities have access for now", nil
-					}
-					switch a.GetVerb() {
-					case "get", "list", "watch":
+					// The LoginConfig endpoint is public because it's read before sign-in
+					if a.GetVerb() == utils.VerbGet && a.GetName() == sso.LoginConfigName {
 						return authorizer.DecisionAllow, "", nil
-					default:
-						return authorizer.DecisionDeny, "ssosettings is read-only in this apiserver", nil
 					}
+					return authorizer.DecisionDeny, "only the login config is served in this apiserver for now", nil
 				}
 
 				return authorizer.DecisionDeny, "access denied", nil
 			}),
+	}
+	if ssoCfgProvider != nil {
+		builder.ssoLoginConfig = sso.NewLoginConfigHandler(ssoCfgProvider, ssoReadService)
 	}
 	return builder
 }
@@ -602,10 +618,6 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamLBACRulesAPIGroup(
 	if teamStorage == nil && b.legacyTeamStore != nil {
 		teamStorage = b.legacyTeamStore
 	}
-	teamGetter, ok := teamStorage.(rest.Getter)
-	if !ok {
-		return fmt.Errorf("TeamLBACRule for-subject subresource requires Team getter storage")
-	}
 	teamLister, ok := teamStorage.(rest.Lister)
 	if !ok {
 		return fmt.Errorf("TeamLBACRule for-subject subresource requires Team lister storage")
@@ -621,7 +633,6 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamLBACRulesAPIGroup(
 	// /teamlbacrules/{name}/for-subject/{type}/{uid}.
 	storage[iamv0.TeamLBACRuleInfo.StoragePath("for-subject")] = teamlbacapi.NewRulesForSubjectREST(
 		teamLBACRuleGetter,
-		teamGetter,
 		teamLister,
 		b.tracing,
 		b.reg,

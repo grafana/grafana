@@ -7,6 +7,7 @@ import {
   LiveChannelScope,
   isLiveChannelStatusEvent,
 } from '@grafana/data';
+import { getBackendSrv } from '@grafana/runtime';
 
 import { CentrifugeService, type CentrifugeSrvDeps } from './service';
 
@@ -93,6 +94,17 @@ describe('CentrifugeService', () => {
 
     const errorEvent = events.find((e) => isLiveChannelStatusEvent(e) && e.error === 'Grafana Live connection timeout');
     expect(errorEvent).toBeDefined();
+  });
+
+  it('should check the session without an error alert when the transport closes', () => {
+    const get = jest.fn().mockRejectedValue({ status: 500 });
+    jest.mocked(getBackendSrv).mockReturnValue({ get } as unknown as ReturnType<typeof getBackendSrv>);
+
+    new CentrifugeService(makeDeps());
+    const onError = mockCentrifuge.on.mock.calls.find(([event]) => event === 'error')?.[1];
+    onError({ type: 'transport', error: { code: 2, message: 'transport closed' } });
+
+    expect(get).toHaveBeenCalledWith('/api/login/ping', undefined, undefined, { showErrorAlert: false });
   });
 
   it('should immediately shut down channel when liveEnabled is false', async () => {

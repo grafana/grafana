@@ -4,6 +4,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { useStyles2 } from '@grafana/ui';
+import { getInternalRadius } from '@grafana/ui/internal';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { KioskMode } from 'app/types/dashboard';
 
@@ -26,13 +27,13 @@ interface Props {
 
 /**
  * Rendered by each surface that wants it rather than by the scene, so the PDF capture route can
- * simply leave it out. `hideTimeControls` and kiosk mode stay here: they are properties of the
- * notebook and the display, not of the surface.
+ * simply leave it out. Kiosk mode stays here: it is a property of the display, not of the
+ * surface.
  */
 export function NotebookSceneControls({ model, stickyOffset }: Props) {
   const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
   const styles = useStyles2(getStyles);
-  const { timePicker, refreshPicker, hideTimeControls, isEditing, uid } = model.useState();
+  const { timePicker, refreshPicker, isEditing, uid } = model.useState();
   const { chrome } = useGrafana();
   const { kioskMode } = chrome.useState();
   // A display someone has put a notebook on: everything you would act on goes away — save status,
@@ -47,7 +48,8 @@ export function NotebookSceneControls({ model, stickyOffset }: Props) {
     <div
       className={cx(
         styles.controls,
-        usesCanvasBackground ? styles.controlsCanvasBackground : styles.controlsPageBackground
+        usesCanvasBackground ? styles.controlsCanvasBackground : styles.controlsPageBackground,
+        visualRefreshEnabled && !hostConfig.embedded && styles.controlsRoundedCorners
       )}
       style={{ top: stickyOffset, background: hostConfig.controlsBackground }}
       data-testid={selectors.pages.Notebooks.Item.controls}
@@ -55,18 +57,14 @@ export function NotebookSceneControls({ model, stickyOffset }: Props) {
       {!isKioskFull && (
         <>
           {/* Not gated on edit mode: the assistant writes without entering it, and a failed save has
-              to be visible and retryable there too. This renders nothing until there is something to
-              say. */}
-          <NotebookSaveStatus autosave={model.autosave} />
+              to be visible and retryable there too. The status says nothing until there is something to
+              report. While editing it keeps its space, so the undo and redo buttons do not move. */}
+          <NotebookSaveStatus autosave={model.autosave} reserveSpace={isEditing} />
           {isEditing && <NotebookEditHistoryControls history={model.editHistory} />}
         </>
       )}
-      {!hideTimeControls && (
-        <>
-          <timePicker.Component model={timePicker} />
-          <refreshPicker.Component model={refreshPicker} />
-        </>
-      )}
+      <timePicker.Component model={timePicker} />
+      <refreshPicker.Component model={refreshPicker} />
       {/* The toolbar checks nothing about kiosk itself — it is chrome, so the row simply does not
           render it on a kiosk display. */}
       {!isKioskFull && <NotebookToolbar uid={uid} scene={model} />}
@@ -97,5 +95,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   controlsPageBackground: css({
     background: theme.colors.background.page,
+  }),
+  // The row's opaque background would otherwise paint square over the corners of the Page wrapper.
+  // Matches the radii the dashboard's controls chrome takes from the same parent.
+  controlsRoundedCorners: css({
+    borderTopLeftRadius: getInternalRadius(theme, 0, { parentBorderRadius: 'lg' }),
+    borderTopRightRadius: getInternalRadius(theme, 0, { parentBorderRadius: 'lg' }),
   }),
 });

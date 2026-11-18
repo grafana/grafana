@@ -1,6 +1,8 @@
+import { MappingType } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { locationService, reportInteraction, setPluginImportUtils } from '@grafana/runtime';
 import {
+  type FieldConfigSource,
   type Spec as DashboardV2Spec,
   defaultPanelSpec,
   defaultVizConfigKind,
@@ -46,7 +48,10 @@ export function buildTestScene() {
   return dashboard;
 }
 
-function buildSceneWithTextPanels(panelOptions: Array<Record<string, unknown>>) {
+function buildSceneWithTextPanels(
+  panelOptions: Array<Record<string, unknown>>,
+  fieldConfigs: FieldConfigSource[] = []
+) {
   const elements: DashboardV2Spec['elements'] = {};
   const items: GridLayoutItemKind[] = [];
 
@@ -62,7 +67,7 @@ function buildSceneWithTextPanels(panelOptions: Array<Record<string, unknown>>) 
         vizConfig: {
           ...defaultVizConfigKind(),
           group: 'text',
-          spec: { options, fieldConfig: { defaults: {}, overrides: [] } },
+          spec: { options, fieldConfig: fieldConfigs[index] ?? { defaults: {}, overrides: [] } },
         },
       },
     };
@@ -255,15 +260,15 @@ describe('dashboard tracking', () => {
   });
 
   describe('global variables interactions', () => {
-    it('reports dashboards_global_variables_loaded', () => {
-      DashboardInteractions.globalVariablesLoaded({
+    it('reports dashboards_predefined_variables_loaded', () => {
+      DashboardInteractions.predefinedVariablesLoaded({
         global_count: 2,
         folder_count: 1,
         total_count: 3,
         mode: 'all',
       });
 
-      expect(reportInteraction).toHaveBeenCalledWith('dashboards_global_variables_loaded', {
+      expect(reportInteraction).toHaveBeenCalledWith('dashboards_predefined_variables_loaded', {
         global_count: 2,
         folder_count: 1,
         total_count: 3,
@@ -283,6 +288,71 @@ describe('dashboard tracking', () => {
         checked: true,
         isDynamicDashboard: true,
       });
+    });
+  });
+
+  describe('panel option variable usage tracking', () => {
+    testWithFlags({ 'grafana.panelOptionInterpolation': true, ...defaultFlags });
+
+    it('counts the panels that set options from variables, on load and on save', async () => {
+      const scene = buildSceneWithTextPanels(
+        [{}, {}, {}, {}],
+        [
+          { defaults: { varMappings: { min: '$min' } }, overrides: [] },
+          {
+            defaults: {},
+            overrides: [
+              {
+                matcher: { id: 'byName', options: 'A' },
+                properties: [
+                  {
+                    id: 'thresholds',
+                    value: { mode: 'absolute', steps: [{ value: 0, color: 'red', valueExpr: '$t' }] },
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            defaults: {
+              varMappings: { unit: '$unit' },
+              mappings: [{ type: MappingType.ValueToText, options: { 1: { text: 'Host ${host}' } } }],
+            },
+            overrides: [],
+          },
+          {
+            defaults: { mappings: [{ type: MappingType.ValueToText, options: { 1: { text: 'Costs in $' } } }] },
+            overrides: [],
+          },
+        ]
+      );
+      const counts = { panel_count: 3, field_config_count: 2, threshold_count: 1, value_mapping_count: 1 };
+
+      trackDashboardSceneLoaded(scene, 42);
+      await trackDashboardSceneCreatedOrSaved(false, scene, { name: 'name', url: 'url', diff_count: 0 });
+
+      for (const trigger of ['load', 'save']) {
+        expect(reportInteraction).toHaveBeenCalledWith('dashboards_panel_option_variable_usage', {
+          ...counts,
+          trigger,
+          dashboard_uid: 'dashboard-test',
+          isDynamicDashboard: true,
+        });
+      }
+    });
+
+    it.each([
+      ['the flag is off', { defaults: { varMappings: { min: '$min' } }, overrides: [] }, false, true],
+      ['the dashboard is not v2', { defaults: { varMappings: { min: '$min' } }, overrides: [] }, true, false],
+      ['no panel uses variables', { defaults: { min: 0 }, overrides: [] }, true, true],
+    ])('does not report when %s', (_, fieldConfig, isFlagOn, isV2) => {
+      setTestFlags({ 'grafana.panelOptionInterpolation': isFlagOn, ...defaultFlags });
+      const scene = buildSceneWithTextPanels([{}], [fieldConfig]);
+      jest.spyOn(scene, 'isV2').mockReturnValue(isV2);
+
+      trackDashboardSceneLoaded(scene, 42);
+
+      expect(reportInteraction).not.toHaveBeenCalledWith('dashboards_panel_option_variable_usage', expect.anything());
     });
   });
 

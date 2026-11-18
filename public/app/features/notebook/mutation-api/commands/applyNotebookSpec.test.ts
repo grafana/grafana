@@ -79,6 +79,26 @@ describe('APPLY_NOTEBOOK_SPEC', () => {
     });
   });
 
+  // A lost name orphans every comment anchored to it, so a whole-spec write must carry names through
+  // untouched, whether legacy (`heading-2`) or minted (`heading-k3x9qa`).
+  it('keeps the element names it was given, legacy and minted alike', async () => {
+    const scene = notebookScene();
+    const client = new NotebookMutationClient(scene);
+
+    const next = notebookSpec({
+      elements: {
+        'heading-2': markdownCell('## Legacy'),
+        'heading-k3x9qa': markdownCell('## Minted'),
+      },
+      cells: ['heading-k3x9qa', 'heading-2'],
+    });
+
+    const result = await client.execute({ type: 'APPLY_NOTEBOOK_SPEC', payload: { spec: next } });
+
+    expect(result.success).toBe(true);
+    expect(cellNamesOf(scene)).toEqual(['heading-k3x9qa', 'heading-2']);
+  });
+
   it('restores the document header from the applied spec', async () => {
     const scene = notebookScene();
     const client = new NotebookMutationClient(scene);
@@ -294,15 +314,15 @@ describe('APPLY_NOTEBOOK_SPEC', () => {
   });
 
   it('keeps auto-refresh running after the rebuild swaps the refresh picker', async () => {
-    // With the time controls hidden nothing renders the picker, so NotebookScene activates it itself.
-    const scene = notebookScene(notebookSpec({ hideTimepicker: true, autoRefresh: '30s' }));
+    // Nothing here renders the picker, so NotebookScene activates it itself.
+    const scene = notebookScene(notebookSpec({ autoRefresh: '30s' }));
     const before = scene.state.refreshPicker;
     expect(before.isActive).toBe(true);
 
     const client = new NotebookMutationClient(scene);
     await client.execute({
       type: 'APPLY_NOTEBOOK_SPEC',
-      payload: { spec: notebookSpec({ hideTimepicker: true, autoRefresh: '1m' }) },
+      payload: { spec: notebookSpec({ autoRefresh: '1m' }) },
     });
 
     expect(scene.state.refreshPicker).not.toBe(before);

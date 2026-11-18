@@ -27,6 +27,9 @@ jest.mock('../add-new/AddFilters', () => ({
 jest.mock('../../utils/interactions', () => ({
   DashboardInteractions: {
     editSessionStarted: jest.fn(),
+    editPeriodStarted: jest.fn(),
+    editPeriodEnded: jest.fn(),
+    editActorFirstChange: jest.fn(),
     addFilterButtonClicked: jest.fn(),
     variableActionButtonClicked: jest.fn(),
   },

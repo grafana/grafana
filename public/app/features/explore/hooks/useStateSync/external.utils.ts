@@ -28,14 +28,14 @@ function pruneObject(obj: object): object | undefined {
         // For arrays, recursively prune each item and filter out empty results
         const prunedArray = value
           .map((item: unknown) => (isObject(item) ? pruneObject(item) : item))
-          .filter((item: unknown) => !isEmpty(item));
+          .filter((item: unknown) => typeof item === 'boolean' || !isEmpty(item));
         return prunedArray.length > 0 ? prunedArray : undefined;
       }
       return pruneObject(value);
     }
     return value;
   });
-  pruned = omitBy<typeof pruned>(pruned, isEmpty);
+  pruned = omitBy<typeof pruned>(pruned, (value) => typeof value !== 'boolean' && isEmpty(value));
   if (isEmpty(pruned)) {
     return undefined;
   }

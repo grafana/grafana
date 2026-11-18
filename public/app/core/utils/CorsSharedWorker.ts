@@ -1,33 +1,31 @@
-// Almost identical to CorsWorker.ts. Main difference being it allows loading a SharedWorker if browser supports it
-
 export function sharedWorkersSupported() {
   return typeof window.SharedWorker !== 'undefined';
 }
 
-/**
- * Creating CorsSharedWorker should be called only if sharedWorkersSupported() is truthy
- */
+// Browsers refuse to start a worker from another origin, such as the CDN, so this starts a
+// same-origin blob worker that imports the real script. JSON.stringify escapes the URL so it
+// cannot break out of the import statement.
+// The worker revokes its own blob URL because WebKit fails to start a worker whose blob was
+// revoked before it was read. The import is hoisted, so the revoke runs after the real script.
 export class CorsSharedWorker {
   constructor(url: URL, options?: WorkerOptions) {
     if (!sharedWorkersSupported()) {
       throw new Error('SharedWorker is not supported');
     }
-    // by default, worker inherits HTML document's location and pathname which leads to wrong public path value
-    // the CorsWorkerPlugin will override it with the value based on the initial worker chunk, ie.
-    //    initial worker chunk: http://host.com/cdn/scripts/worker-123.js
-    //    resulting public path: http://host.com/cdn/scripts
 
     const scriptUrl = url.toString();
-    const scriptsBasePathUrl = new URL('.', url).toString();
-
-    const importScripts = `importScripts('${scriptUrl}');`;
     const objectURL = URL.createObjectURL(
-      new Blob([`__webpack_worker_public_path__ = '${scriptsBasePathUrl}'; ${importScripts}`], {
+      new Blob([`import ${JSON.stringify(scriptUrl)};URL.revokeObjectURL(self.location.href);`], {
         type: 'application/javascript',
       })
     );
-    const worker = new SharedWorker(objectURL, options);
-    URL.revokeObjectURL(objectURL);
+    const worker = new SharedWorker(objectURL, { ...options, type: 'module' });
+
+    // A worker that never starts never runs its own revoke, so cover that path here.
+    worker.addEventListener('error', () => {
+      URL.revokeObjectURL(objectURL);
+    });
+
     return worker;
   }
 }

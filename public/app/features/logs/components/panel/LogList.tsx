@@ -57,6 +57,8 @@ export interface Props {
   getRowContextQuery?: GetRowContextQueryFn;
   grammar?: Grammar;
   infiniteScrollMode?: InfiniteScrollMode;
+  /** Allows loading more logs when scrolling to the top of the list. Always enabled when infiniteScrollMode is "unlimited". */
+  infiniteScrollTop?: boolean;
   initialScrollPosition?: 'top' | 'bottom';
   isLabelFilterActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
   loadingState?: LoadingState;
@@ -140,6 +142,7 @@ export const LogList = ({
   getRowContextQuery,
   grammar,
   infiniteScrollMode,
+  infiniteScrollTop,
   initialScrollPosition = 'top',
   isLabelFilterActive,
   loadingState,
@@ -244,6 +247,7 @@ export const LogList = ({
             grammar={grammar}
             initialScrollPosition={initialScrollPosition}
             infiniteScrollMode={infiniteScrollMode}
+            infiniteScrollTop={infiniteScrollTop}
             loadingState={loadingState}
             loadMore={loadMore}
             logs={logs}
@@ -266,6 +270,7 @@ const LogListComponent = ({
   grammar,
   initialScrollPosition = 'top',
   infiniteScrollMode = 'interval',
+  infiniteScrollTop,
   loadingState,
   loadMore,
   logs,
@@ -282,6 +287,7 @@ const LogListComponent = ({
     fontSize,
     forceEscape,
     hasLogsWithErrors,
+    hasLogsWithErrorAttributes,
     hasSampledLogs,
     onClickFilterString,
     onClickFilterOutString,
@@ -395,7 +401,6 @@ const LogListComponent = ({
         grammar
       )
     );
-    virtualization.resetLogLineSizes();
     listRef.current?.resetAfterIndex(0);
   }, [
     forceEscape,
@@ -409,6 +414,30 @@ const LogListComponent = ({
     virtualization,
     wrapLogMessage,
   ]);
+
+  // Only wipe the cached row heights when something that can change how an already-rendered line looks changes.
+  useEffect(() => {
+    virtualization.resetLogLineSizes();
+    listRef.current?.resetAfterIndex(0);
+  }, [forceEscape, otelLogsFormattingEnabled, prettifyJSON, sortOrder, timeZone, virtualization, wrapLogMessage]);
+
+  // Cached height is only safe to carry over to a new `logs` array when it is the same underlying result set.
+  const prevDataFramesRef = useRef(dataFrames);
+  useEffect(() => {
+    const prevConfigs = prevDataFramesRef.current?.flatMap((frame) => frame.fields.map((field) => field.config));
+    const isSameResultSet =
+      !!prevConfigs?.length &&
+      !!dataFrames?.length &&
+      dataFrames.some(
+        (frame) =>
+          prevDataFramesRef.current!.includes(frame) || frame.fields.some((field) => prevConfigs.includes(field.config))
+      );
+    prevDataFramesRef.current = dataFrames;
+    if (!isSameResultSet) {
+      virtualization.resetLogLineSizes();
+    }
+    listRef.current?.resetAfterIndex(0);
+  }, [dataFrames, logs, virtualization]);
 
   useEffect(() => {
     listRef.current?.resetAfterIndex(0);
@@ -449,15 +478,15 @@ const LogListComponent = ({
     (log?: LogListModel) => {
       const scrollToUID = log ? log.uid : permalinkedLogId;
       if (scrollToUID) {
-        const index = processedLogs.findIndex((log) => log.uid === scrollToUID);
+        const index = filteredLogs.findIndex((log) => log.uid === scrollToUID);
         if (index >= 0) {
           listRef.current?.scrollToItem(index, 'start');
           return;
         }
       }
-      listRef.current?.scrollToItem(initialScrollPosition === 'top' ? 0 : processedLogs.length - 1);
+      listRef.current?.scrollToItem(initialScrollPosition === 'top' ? 0 : filteredLogs.length - 1);
     },
-    [initialScrollPosition, permalinkedLogId, processedLogs]
+    [filteredLogs, initialScrollPosition, permalinkedLogId]
   );
 
   const handleLogLineClick = useCallback(
@@ -551,6 +580,7 @@ const LogListComponent = ({
           displayedFields={displayedFields}
           handleOverflow={handleOverflow}
           infiniteScrollMode={infiniteScrollMode}
+          infiniteScrollTop={infiniteScrollTop}
           loadingState={loadingState}
           logs={filteredLogs}
           loadMore={loadMore}
@@ -564,13 +594,15 @@ const LogListComponent = ({
           virtualization={virtualization}
           wrapLogMessage={wrapLogMessage}
         >
-          {({ getItemKey, itemCount, onItemsRendered, Renderer }) => (
+          {({ getItemKey, itemCount, itemData, onItemsRendered, Log }) => (
             <VariableSizeList
               className={styles.logList}
               height={listHeight}
               itemCount={itemCount}
+              itemData={itemData}
               itemSize={getLogLineSize.bind(null, virtualization, filteredLogs, widthContainer, displayedFields, {
                 hasLogsWithErrors,
+                hasLogsWithErrorAttributes,
                 hasSampledLogs,
                 showDuplicates: dedupStrategy !== LogsDedupStrategy.none,
                 showTime,
@@ -585,7 +617,7 @@ const LogListComponent = ({
               style={wrapLogMessage ? { overflowY: 'scroll' } : { overflow: 'scroll' }}
               width="100%"
             >
-              {Renderer}
+              {Log}
             </VariableSizeList>
           )}
         </InfiniteScroll>

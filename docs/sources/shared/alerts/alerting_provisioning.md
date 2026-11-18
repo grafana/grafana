@@ -11,7 +11,7 @@ The Alerting Provisioning HTTP API can be used to create, modify, and delete res
 > If you are running Grafana Enterprise, you need to add specific permissions for some endpoints. For more information, refer to [Role-based access control permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/).
 
 {{< admonition type="warning" >}}
-The contact points, notification policies, notification template groups, and mute timings endpoints in this API are deprecated and will be removed in a future release. These endpoints don't return resources from a staged Alertmanager configuration. Use the [Grafana App Platform alerting APIs](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/packages/grafana-openapi/src/apis/notifications.alerting.grafana.app-v1beta1.json) instead.
+This API is partially replaced by the [Alert rules HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/alert-rules/) (for alert rules, recording rules, and rule groups) and the [Alert notifications HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/alert-notifications/) (for contact points, notification policies, notification template groups, and mute timings, including staged Alertmanager configurations). Those legacy endpoints are deprecated and will be removed in a future release. The file-provisioning `export` endpoints and receiver permission endpoints remain on this API.
 {{< /admonition >}}
 
 ## Grafana-managed endpoints
@@ -621,7 +621,7 @@ DELETE /api/v1/provisioning/alert-rules/:uid
 ```
 
 {{< admonition type="warning" >}}
-This API is deprecated and will be removed in a future release. Use the Grafana App Platform alerting APIs instead: `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/alertrules/{name}` for alert rules and `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/recordingrules/{name}` for recording rules.
+This API is deprecated and will be removed in a future release. Use the [Grafana App Platform alerting APIs](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/packages/grafana-openapi/src/apis/rules.alerting.grafana.app-v1beta1.json) instead: `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/alertrules/{name}` for alert rules and `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/recordingrules/{name}` for recording rules.
 {{< /admonition >}}
 
 #### Parameters
@@ -656,7 +656,7 @@ DELETE /api/v1/provisioning/folder/:folderUid/rule-groups/:group
 ```
 
 {{< admonition type="warning" >}}
-This API is deprecated and will be removed in a future release. Use the Grafana App Platform alerting APIs instead: `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/alertrules` for alert rules and `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/recordingrules` for recording rules.
+This API is deprecated and will be removed in a future release. Use the [Grafana App Platform alerting APIs](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/packages/grafana-openapi/src/apis/rules.alerting.grafana.app-v1beta1.json) instead: `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/alertrules` for alert rules and `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/recordingrules` for recording rules.
 {{< /admonition >}}
 
 #### Parameters
@@ -820,7 +820,7 @@ GET /api/v1/provisioning/alert-rules/:uid
 ```
 
 {{< admonition type="warning" >}}
-This API is deprecated and will be removed in a future release. Use the Grafana App Platform alerting APIs instead: `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/alertrules/{name}` for alert rules and `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/recordingrules/{name}` for recording rules.
+This API is deprecated and will be removed in a future release. Use the [Grafana App Platform alerting APIs](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/packages/grafana-openapi/src/apis/rules.alerting.grafana.app-v1beta1.json) instead: `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/alertrules/{name}` for alert rules and `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/recordingrules/{name}` for recording rules.
 {{< /admonition >}}
 
 #### Parameters
@@ -898,7 +898,7 @@ GET /api/v1/provisioning/folder/:folderUid/rule-groups/:group
 ```
 
 {{< admonition type="warning" >}}
-This API is deprecated and will be removed in a future release. Use the Grafana App Platform alerting APIs instead: `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/alertrules` for alert rules and `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/recordingrules` for recording rules.
+This API is deprecated and will be removed in a future release. Use the [Grafana App Platform alerting APIs](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/packages/grafana-openapi/src/apis/rules.alerting.grafana.app-v1beta1.json) instead: `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/alertrules` for alert rules and `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/recordingrules` for recording rules.
 {{< /admonition >}}
 
 #### Parameters
@@ -978,7 +978,7 @@ GET /api/v1/provisioning/alert-rules
 ```
 
 {{< admonition type="warning" >}}
-This API is deprecated and will be removed in a future release. Use the Grafana App Platform alerting APIs instead: `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/alertrules` for alert rules and `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/recordingrules` for recording rules.
+This API is deprecated and will be removed in a future release. Use the [Grafana App Platform alerting APIs](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/packages/grafana-openapi/src/apis/rules.alerting.grafana.app-v1beta1.json) instead: `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/alertrules` for alert rules and `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/recordingrules` for recording rules.
 {{< /admonition >}}
 
 #### All responses
@@ -1562,7 +1562,7 @@ POST /api/v1/provisioning/alert-rules
 ```
 
 {{< admonition type="warning" >}}
-This API is deprecated and will be removed in a future release. Use the Grafana App Platform alerting APIs instead: `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/alertrules` for alert rules and `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/recordingrules` for recording rules.
+This API is deprecated and will be removed in a future release. Use the [Grafana App Platform alerting APIs](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/packages/grafana-openapi/src/apis/rules.alerting.grafana.app-v1beta1.json) instead: `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/alertrules` for alert rules and `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/recordingrules` for recording rules.
 {{< /admonition >}}
 
 This action creates a new alert rule.
@@ -1706,7 +1706,7 @@ PUT /api/v1/provisioning/alert-rules/:uid
 ```
 
 {{< admonition type="warning" >}}
-This API is deprecated and will be removed in a future release. Use the Grafana App Platform alerting APIs instead: `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/alertrules/{name}` for alert rules and `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/recordingrules/{name}` for recording rules.
+This API is deprecated and will be removed in a future release. Use the [Grafana App Platform alerting APIs](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/packages/grafana-openapi/src/apis/rules.alerting.grafana.app-v1beta1.json) instead: `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/alertrules/{name}` for alert rules and `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/recordingrules/{name}` for recording rules.
 {{< /admonition >}}
 
 #### Parameters
@@ -1753,7 +1753,7 @@ PUT /api/v1/provisioning/folder/:folderUid/rule-groups/:group
 ```
 
 {{< admonition type="warning" >}}
-This API is deprecated and will be removed in a future release. Use the Grafana App Platform alerting APIs instead: `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/alertrules` for alert rules and `/apis/rules.alerting.grafana.app/v0alpha1/namespaces/{namespace}/recordingrules` for recording rules.
+This API is deprecated and will be removed in a future release. Use the [Grafana App Platform alerting APIs](https://editor.swagger.io/?url=https://raw.githubusercontent.com/grafana/grafana/main/packages/grafana-openapi/src/apis/rules.alerting.grafana.app-v1beta1.json) instead: `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/alertrules` for alert rules and `/apis/rules.alerting.grafana.app/v1beta1/namespaces/{namespace}/recordingrules` for recording rules.
 {{< /admonition >}}
 
 This action also changes the provenance setting (`X-Disable-Provenance`) for all alert rules in the alert group.

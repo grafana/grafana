@@ -16,5 +16,6 @@
     "grafana.app/deprecatedInternalID": "123"
   },
   "created": 1706690655000,
-  "createdBy": "user:abc"
+  "createdBy": "user:abc",
+  "updated": 1706690655000
 }

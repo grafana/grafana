@@ -6,7 +6,7 @@ import { getWrapper } from 'test/test-utils';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
-import { useIsUrlAllowed } from './mtFallback';
+import { useIsMtFallbackConfigured, useIsUrlAllowed } from './mtFallback';
 
 function locationFor(pathname: string): Location {
   return { pathname, search: '', hash: '', state: undefined };
@@ -14,6 +14,10 @@ function locationFor(pathname: string): Location {
 
 function renderUseIsUrlAllowed(pathname: string) {
   return renderHook(() => useIsUrlAllowed(locationFor(pathname)), { wrapper: getWrapper({}) });
+}
+
+function renderUseIsMtFallbackConfigured() {
+  return renderHook(() => useIsMtFallbackConfigured(), { wrapper: getWrapper({}) });
 }
 
 // setTestFlags fires OpenFeature events that update React state; wrap in act() so those
@@ -31,12 +35,12 @@ describe('useIsUrlAllowed', () => {
     });
   });
 
-  it('allows every path when the flag has no allow list', async () => {
+  it('allows nothing when the flag has no allow list', async () => {
     await setMTFallbackFlag({});
 
     const { result } = renderUseIsUrlAllowed('/some/random/path');
 
-    expect(result.current).toBe(true);
+    expect(result.current).toBe(false);
   });
 
   describe('with an allow list of exact and wildcard patterns', () => {
@@ -61,5 +65,36 @@ describe('useIsUrlAllowed', () => {
 
       expect(result.current).toBe(false);
     });
+  });
+});
+
+describe('useIsMtFallbackConfigured', () => {
+  afterEach(async () => {
+    await act(async () => {
+      setTestFlags({});
+    });
+  });
+
+  it('reports true when the flag has a non-empty allow list', async () => {
+    await setMTFallbackFlag({ allowList: ['/dashboards/*'] });
+
+    const { result } = renderUseIsMtFallbackConfigured();
+
+    expect(result.current).toBe(true);
+  });
+
+  it.each([
+    ['the flag is unset', undefined],
+    ['the flag value is an empty object', {}],
+    ['the allow list is empty', { allowList: [] }],
+    ['the allow list is not an array', { allowList: 'nope' }],
+  ])('reports false when %s', async (_, value) => {
+    if (value !== undefined) {
+      await setMTFallbackFlag(value as JsonValue);
+    }
+
+    const { result } = renderUseIsMtFallbackConfigured();
+
+    expect(result.current).toBe(false);
   });
 });

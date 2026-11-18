@@ -2,7 +2,7 @@ import { type DataSourceJsonData } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { getDataSourceInstanceList } from '@grafana/runtime/unstable';
 
-import { getDataSourcesWithValidRecordingTarget } from './narrowings';
+import { getDataSourcesManagingAlerts, getDataSourcesWithValidRecordingTarget } from './narrowings';
 import { DataSourceInstanceSettingsFactory, setupDataSources } from './testSetup/DataSources';
 
 jest.mock('@grafana/runtime/unstable', () => {
@@ -82,5 +82,69 @@ describe('getDataSourcesWithValidRecordingTarget', () => {
     listMock.mockRejectedValue(new Error('list request failed'));
 
     await expect(getDataSourcesWithValidRecordingTarget()).rejects.toThrow('list request failed');
+  });
+});
+
+describe('getDataSourcesManagingAlerts', () => {
+  const originalToggle = config.defaultDatasourceManageAlertsUiToggle;
+
+  afterEach(() => {
+    config.defaultDatasourceManageAlertsUiToggle = originalToggle;
+  });
+
+  it.each([true, false])(
+    'follows manageAlerts, and the config default (%s) when manageAlerts is undefined',
+    async (defaultToggle) => {
+      config.defaultDatasourceManageAlertsUiToggle = defaultToggle;
+      setupDataSources(
+        dataSource('managing', 'prometheus', { manageAlerts: true }),
+        dataSource('not-managing', 'loki', { manageAlerts: false }),
+        dataSource('unset')
+      );
+
+      const managing = await getDataSourcesManagingAlerts();
+
+      expect(managing.map((ds) => ds.uid).sort()).toEqual(defaultToggle ? ['managing', 'unset'] : ['managing']);
+    }
+  );
+
+  it('excludes data sources whose plugin does not support alerting', async () => {
+    const noAlerting = dataSource('no-alerting', 'graphite');
+    noAlerting.meta = { ...noAlerting.meta, id: 'graphite', alerting: false, metrics: true };
+    setupDataSources(dataSource('prom'), noAlerting);
+
+    const managing = await getDataSourcesManagingAlerts();
+
+    expect(managing.map((ds) => ds.uid)).toEqual(['prom']);
+  });
+
+  it('excludes the built-in Grafana data source', async () => {
+    setupDataSources(dataSource('prom'), grafanaBuiltIn);
+
+    const managing = await getDataSourcesManagingAlerts();
+
+    expect(managing.map((ds) => ds.uid)).toEqual(['prom']);
+  });
+
+  it('drops a listed data source without settings instead of judging it on the config default', async () => {
+    config.defaultDatasourceManageAlertsUiToggle = true;
+    setupDataSources(dataSource('healthy'), dataSource('without-settings'));
+    // eslint-disable-next-line @grafana/no-config-datasources
+    delete config.datasources['without-settings'];
+
+    const managing = await getDataSourcesManagingAlerts();
+
+    expect(managing.map((ds) => ds.uid)).toEqual(['healthy']);
+  });
+
+  it('drops a listed data source whose settings under the same name belong to another uid', async () => {
+    config.defaultDatasourceManageAlertsUiToggle = true;
+    setupDataSources(dataSource('healthy'), dataSource('renamed'));
+    // eslint-disable-next-line @grafana/no-config-datasources
+    config.datasources.renamed = dataSource('other-uid');
+
+    const managing = await getDataSourcesManagingAlerts();
+
+    expect(managing.map((ds) => ds.uid)).toEqual(['healthy']);
   });
 });

@@ -7,7 +7,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
 )
 
 func TestKvStorageBackend_WriteEvent_PreviousRevision(t *testing.T) {
@@ -23,10 +22,6 @@ func TestKvStorageBackend_WriteEvent_PreviousRevision(t *testing.T) {
 		}},
 		{name: "sqlkv", setup: func(t *testing.T) *kvStorageBackend {
 			return setupTestStorageBackend(t, withKV(setupSqlKV(t)))
-		}},
-		{name: "compat", setup: func(t *testing.T) *kvStorageBackend {
-			backend, _ := setupCompatSqlKVStorageBackend(t)
-			return backend
 		}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -56,17 +51,13 @@ func TestKvStorageBackend_WriteEvent_PreviousRevision(t *testing.T) {
 					if step.eventType != resourcepb.WatchEvent_ADDED {
 						previousRV = previous.ResourceVersion
 					}
-					requestRV := previousRV
-					if backend.rvManager != nil && previousRV > 0 {
-						requestRV = rvmanager.RVFromSnowflake(previousRV)
-					}
 					rv, err := backend.WriteEvent(ctx, WriteEvent{
 						Type:       step.eventType,
 						Key:        appsKey("test-resource"),
 						Value:      objectToJSONBytes(t, obj),
 						Object:     meta,
 						ObjectOld:  meta,
-						PreviousRV: requestRV,
+						PreviousRV: previousRV,
 					})
 					require.NoError(t, err)
 
@@ -133,33 +124,32 @@ func TestKvStorageBackend_WriteEvent_ReusesPreviousKey(t *testing.T) {
 }
 
 func TestKvStorageBackend_WriteEvent_PreviousImportedRevision(t *testing.T) {
-	for _, compat := range []bool{false, true} {
-		name := "sqlkv"
-		if compat {
-			name = "compat"
-		}
-		t.Run(name, func(t *testing.T) {
-			var backend *kvStorageBackend
-			if compat {
-				backend, _ = setupCompatSqlKVStorageBackend(t)
-			} else {
-				backend = setupTestStorageBackend(t, withKV(setupSqlKV(t)))
-			}
+	for _, tc := range []struct {
+		name  string
+		setup func(*testing.T) *kvStorageBackend
+	}{
+		{name: "badger", setup: func(t *testing.T) *kvStorageBackend { return setupTestStorageBackend(t) }},
+		{name: "sqlkv", setup: func(t *testing.T) *kvStorageBackend {
+			return setupTestStorageBackend(t, withKV(setupSqlKV(t)))
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			backend := tc.setup(t)
 			ctx := t.Context()
 			created := newBulkImportRequest("test-namespace", "item-1", resourcepb.BulkRequest_ADDED)
 			updated := newBulkImportRequest("test-namespace", "item-1", resourcepb.BulkRequest_MODIFIED)
 			updated.Folder = "imported-folder"
-			resp := backend.ProcessBulk(ctx, BulkSettings{
+			resp, err := backend.ProcessBulk(ctx, BulkSettings{
 				Collection: []*resourcepb.ResourceKey{{
 					Namespace: created.Key.Namespace,
 					Group:     created.Key.Group,
 					Resource:  created.Key.Resource,
 				}},
 			}, newBatchOnlyBulkIterator([]*resourcepb.BulkRequest{created, updated}))
-			require.Nil(t, resp.Error)
+			require.NoError(t, err)
 			require.Empty(t, resp.Rejected)
 			require.Equal(t, int64(2), resp.Processed)
-			_, err := backend.eventStore.LastEventKey(ctx)
+			_, err = backend.eventStore.LastEventKey(ctx)
 			require.ErrorIs(t, err, ErrNotFound, "bulk imports must not emit replayable events")
 
 			key, err := backend.dataStore.GetLatestResourceKey(ctx, GetRequestKey{

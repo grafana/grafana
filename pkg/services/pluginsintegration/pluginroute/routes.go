@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/keysroutes"
 	"github.com/grafana/grafana/pkg/services/apiserver/searchroutes"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/baasbridge" //nolint:staticcheck // deprecated shim; remove with it
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
@@ -297,12 +298,24 @@ func (b *manifestBuilder) keysRoutes(gv schema.GroupVersion) *builder.APIRoutes 
 	return nil
 }
 
+// allowsMissingParent is whether the route's operation for the method is
+// served when no object is stored under the name, so the plugin answers for
+// the name alone.
+func allowsMissingParent(route manifestroutes.Route, method string) bool {
+	op := manifestroutes.Operations(&route.Operations)[method]
+	if op == nil {
+		return false
+	}
+	allowed, _ := op.Extensions[manifestroutes.ExtensionAllowMissingParent].(bool)
+	return allowed
+}
+
 // routeHandler forwards a manifest route to the plugin's v3 route service. A
 // kind subresource route also carries the parent object, named by the path.
 func (b *manifestBuilder) routeHandler(gv schema.GroupVersion, route manifestroutes.Route) http.HandlerFunc {
 	path, resource := route.Path, ""
 	if route.Kind != nil {
-		path, resource = route.Subresource, strings.ToLower(route.Kind.Plural)
+		path, resource = route.Subresource, route.Kind.Resource
 	}
 	forward := httpadapter.HandlerFunc(b.clientV3)
 	checks := routeChecks(gv, route, resource)
@@ -345,16 +358,20 @@ func (b *manifestBuilder) routeHandler(gv schema.GroupVersion, route manifestrou
 				return
 			}
 			obj, err := b.getter(ctx, gv.WithResource(resource), name)
-			if err != nil {
+			switch {
+			case err == nil:
+				m, err := utils.MetaAccessor(obj)
+				if err != nil {
+					_ = errhttp.Write(ctx, err, w)
+					return
+				}
+				parentObj, parentMeta = obj, m
+			case apierrors.IsNotFound(err) && allowsMissingParent(route, r.Method):
+				// The plugin is called with the name alone.
+			default:
 				_ = errhttp.Write(ctx, err, w)
 				return
 			}
-			m, err := utils.MetaAccessor(obj)
-			if err != nil {
-				_ = errhttp.Write(ctx, err, w)
-				return
-			}
-			parentObj, parentMeta = obj, m
 		}
 
 		// Before the parent's secure values are decrypted, so a request the
@@ -364,11 +381,15 @@ func (b *manifestBuilder) routeHandler(gv schema.GroupVersion, route manifestrou
 				_ = errhttp.Write(ctx, err, w)
 				return
 			}
+			// Only an operator behind baasbridge is told; it is then not sent the
+			// caller's access token.
+			ctx = baasbridge.WithDeclaredAccessChecked(ctx) //nolint:staticcheck
 		}
 
 		if resource != "" {
 			parent := &pluginv3.RouteResource{}
 			parent.SetResource(resource)
+			parent.SetName(name)
 			if parentObj != nil {
 				raw, err := json.Marshal(parentObj)
 				if err != nil {
@@ -380,7 +401,6 @@ func (b *manifestBuilder) routeHandler(gv schema.GroupVersion, route manifestrou
 					_ = errhttp.Write(ctx, err, w)
 					return
 				}
-				parent.SetName(name)
 				parent.SetRv(parentMeta.GetResourceVersion())
 				parent.SetRaw(raw)
 				parent.SetDecryptedSecureValues(sv)
