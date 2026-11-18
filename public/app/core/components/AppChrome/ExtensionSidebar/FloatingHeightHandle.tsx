@@ -12,7 +12,11 @@ import {
   MAX_FLOATING_EXTENSION_SIDEBAR_WIDTH,
   MIN_FLOATING_EXTENSION_SIDEBAR_WIDTH,
 } from './constants';
-import { collapseFloatingExtensionSidebar, type FloatingExtensionSidebarHeightOptions } from './extensionSidebarLayout';
+import {
+  canCollapseFloatingExtensionSidebar,
+  collapseFloatingExtensionSidebar,
+  type FloatingExtensionSidebarHeightOptions,
+} from './extensionSidebarLayout';
 import { FLOATING_SNAP_DURATION_MS } from './useFloatingDrag';
 
 /** The CSS variable the extension sizes its floating surface with, set on the sidebar once the user resized it. */
@@ -91,6 +95,8 @@ export function FloatingHeightHandle({
     startWidth: number;
     startHeight: number;
     width: number;
+    options: FloatingExtensionSidebarHeightOptions;
+    floor: number;
   } | null>(null);
   const [renderedHeight, setRenderedHeight] = useState<number | undefined>(undefined);
 
@@ -160,8 +166,10 @@ export function FloatingHeightHandle({
   };
   useLayoutEffect(() => finishSettling, []); // eslint-disable-line react-hooks/exhaustive-deps -- on unmount only
 
-  // Below the minimum, the drag follows down to the collapsed height, so the collapse a release would make shows.
-  const followFloor = options.collapsedHeight ?? options.minHeight;
+  // Core offers the collapse only while the extension listens for it, as the drag to the bottom edge does. Read when
+  // the gesture starts: the listener comes and goes without a render.
+  const collapsibleOptions = (): FloatingExtensionSidebarHeightOptions =>
+    canCollapseFloatingExtensionSidebar() ? options : { minHeight: options.minHeight };
 
   const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
     if (event.button !== 0) {
@@ -174,6 +182,7 @@ export function FloatingHeightHandle({
     }
     event.preventDefault();
     event.currentTarget.setPointerCapture?.(event.pointerId);
+    const gestureOptions = collapsibleOptions();
     drag.current = {
       pointerId: event.pointerId,
       startX: event.clientX,
@@ -181,6 +190,9 @@ export function FloatingHeightHandle({
       startWidth: box.width,
       startHeight: box.height,
       width: box.width,
+      options: gestureOptions,
+      // Below the minimum, the drag follows down to the collapsed height, so the collapse a release would make shows.
+      floor: gestureOptions.collapsedHeight ?? gestureOptions.minHeight,
     };
   };
 
@@ -193,7 +205,7 @@ export function FloatingHeightHandle({
       active.width = clampWidth(active.startWidth + (active.startX - event.clientX));
       onWidthChange(active.width);
     }
-    write(clampHeight(active.startHeight + (active.startY - event.clientY), followFloor));
+    write(clampHeight(active.startHeight + (active.startY - event.clientY), active.floor));
   };
 
   const onPointerEnd = (event: PointerEvent<HTMLDivElement>) => {
@@ -204,14 +216,14 @@ export function FloatingHeightHandle({
     drag.current = null;
     event.currentTarget.releasePointerCapture?.(event.pointerId);
     const dragged = active.startHeight + (active.startY - event.clientY);
-    const from = clampHeight(dragged, followFloor);
-    const released = releasedFloatingHeight(dragged, options);
+    const from = clampHeight(dragged, active.floor);
+    const released = releasedFloatingHeight(dragged, active.options);
     if (released === 'collapse') {
       const committed = height;
-      settle(from, followFloor, () => {
+      settle(from, active.floor, () => {
         // The committed height comes back for the next time the extension expands.
         write(committed);
-        collapseFloatingExtensionSidebar('resize');
+        collapseFloatingExtensionSidebar({ method: 'resize', input: 'pointer' });
       });
       return;
     }
@@ -236,9 +248,13 @@ export function FloatingHeightHandle({
       return;
     }
     const step = event.shiftKey ? KEY_STEP_LARGE : KEY_STEP;
-    if (event.key === 'ArrowDown' && options.collapsedHeight !== undefined && current <= options.minHeight) {
+    if (
+      event.key === 'ArrowDown' &&
+      collapsibleOptions().collapsedHeight !== undefined &&
+      current <= options.minHeight
+    ) {
       event.preventDefault();
-      collapseFloatingExtensionSidebar('resize');
+      collapseFloatingExtensionSidebar({ method: 'resize', input: 'keyboard' });
     } else if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
       event.preventDefault();
       const next = clampHeight(current + (event.key === 'ArrowUp' ? step : -step), options.minHeight);

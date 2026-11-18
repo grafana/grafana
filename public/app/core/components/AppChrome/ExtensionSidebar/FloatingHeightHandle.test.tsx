@@ -169,12 +169,32 @@ describe('FloatingHeightHandle', () => {
       fireEvent.pointerUp(handle, { pointerId: 1, clientY: 700 });
       finishGlide();
       expect(collapse).toHaveBeenCalledTimes(1);
+      expect(collapse).toHaveBeenCalledWith({ method: 'resize', input: 'pointer' });
       expect(reportInteraction).toHaveBeenCalledWith('grafana_extension_sidebar_floating_collapsed', {
         method: 'resize',
       });
       expect(onHeightChange).not.toHaveBeenCalled();
       // Back to the committed height for the next time the extension expands.
       expect(variable()).toBe('500px');
+    });
+
+    it('offers no collapse while nothing listens for one, stopping at the minimum', () => {
+      resetExtensionSidebarPresentationForTests();
+      const { handle, variable, onHeightChange } = renderHandle();
+
+      fireEvent.pointerDown(handle, { pointerId: 1, button: 0, clientY: 300 });
+      fireEvent.pointerMove(handle, { pointerId: 1, clientY: 700 });
+      expect(variable()).toBe('400px');
+      fireEvent.pointerUp(handle, { pointerId: 1, clientY: 700 });
+      finishGlide();
+      expect(onHeightChange).toHaveBeenCalledWith(400);
+      expect(reportInteraction).not.toHaveBeenCalledWith(
+        'grafana_extension_sidebar_floating_collapsed',
+        expect.anything()
+      );
+
+      fireEvent.keyDown(handle, { key: 'ArrowDown' });
+      expect(collapse).not.toHaveBeenCalled();
     });
 
     it('stops at the minimum for an extension without a collapsed height', () => {
@@ -222,6 +242,8 @@ describe('FloatingHeightHandle', () => {
 
       fireEvent.keyDown(handle, { key: 'ArrowDown' });
       expect(collapse).toHaveBeenCalledTimes(1);
+      // The extension can move focus, since the handle goes with the conversation.
+      expect(collapse).toHaveBeenCalledWith({ method: 'resize', input: 'keyboard' });
       expect(onHeightChange).not.toHaveBeenCalled();
     });
 

@@ -265,6 +265,8 @@ export function onExtensionSidebarClosed(listener: () => void): () => void {
 
 /** @internal Called by `ExtensionSidebarContextProvider` when the open sidebar closes. */
 export function notifyExtensionSidebarClosed(): void {
+  // The sizes were the closed extension's; the next one declares its own.
+  setFloatingExtensionSidebarHeightOptions(null);
   [...closeListeners].forEach((listener) => listener());
 }
 
@@ -301,11 +303,22 @@ export function isFloatingExtensionSidebarHeld(): boolean {
   return floatingHolds.size > 0;
 }
 
+/**
+ * A request to collapse the floating sidebar: `drag` when the user dragged it to the bottom edge, `resize` when they
+ * resized it down to the extension's collapsed height; and whether the pointer or the keyboard asked.
+ */
+export interface FloatingExtensionSidebarCollapseRequest {
+  method: 'drag' | 'resize';
+  input: 'pointer' | 'keyboard';
+}
+
 /** Who wants to hear that the user asked to collapse the floating sidebar. Module state for the same reason. */
-const collapseListeners = new Set<() => void>();
+const collapseListeners = new Set<(request: FloatingExtensionSidebarCollapseRequest) => void>();
 
 /** Subscribes to requests to collapse the floating sidebar; returns the unsubscribe. */
-export function subscribeToFloatingExtensionSidebarCollapse(listener: () => void): () => void {
+export function subscribeToFloatingExtensionSidebarCollapse(
+  listener: (request: FloatingExtensionSidebarCollapseRequest) => void
+): () => void {
   collapseListeners.add(listener);
   return () => {
     collapseListeners.delete(listener);
@@ -317,28 +330,27 @@ export function canCollapseFloatingExtensionSidebar(): boolean {
   return collapseListeners.size > 0;
 }
 
-/**
- * Asks the floating sidebar's extension to collapse: `drag` when the user dragged the sidebar to the bottom edge,
- * `resize` when they let go of its height near the extension's collapsed height.
- */
-export function collapseFloatingExtensionSidebar(method: 'drag' | 'resize' = 'drag'): void {
-  collapseListeners.forEach((listener) => listener());
-  reportInteraction('grafana_extension_sidebar_floating_collapsed', { method });
+/** Asks the floating sidebar's extension to collapse. */
+export function collapseFloatingExtensionSidebar(
+  request: FloatingExtensionSidebarCollapseRequest = { method: 'drag', input: 'pointer' }
+): void {
+  collapseListeners.forEach((listener) => listener(request));
+  reportInteraction('grafana_extension_sidebar_floating_collapsed', { method: request.method });
 }
 
-/** The heights the floating sidebar's extension lets core resize it between; see `setFloatingHeightResize`. */
+/** The floating heights the sidebar's extension declared with `setSizing`. */
 export interface FloatingExtensionSidebarHeightOptions {
   minHeight: number;
   collapsedHeight?: number;
 }
 
 /**
- * The height resize the extension asked for, or `null` while it asks for none: core then shows no top or corner
+ * The floating heights the extension declared, or `null` while it declares none: core then shows no top or corner
  * handle and leaves the height to the extension. Module state for the same reason as the layout.
  */
 let floatingHeightOptions: FloatingExtensionSidebarHeightOptions | null = null;
 
-/** Sets the height resize the extension asked for. A call that changes nothing notifies no one. */
+/** Sets the floating heights the extension declared. A call that changes nothing notifies no one. */
 export function setFloatingExtensionSidebarHeightOptions(options: FloatingExtensionSidebarHeightOptions | null): void {
   // The extension calls this whenever its surface resizes, which a resize itself does.
   if (
@@ -351,7 +363,7 @@ export function setFloatingExtensionSidebarHeightOptions(options: FloatingExtens
   notify();
 }
 
-/** The height resize the extension asked for. Subscribe with `subscribeToExtensionSidebarPresentation`. */
+/** The floating heights the extension declared. Subscribe with `subscribeToExtensionSidebarPresentation`. */
 export function getFloatingExtensionSidebarHeightOptions(): FloatingExtensionSidebarHeightOptions | null {
   return floatingHeightOptions;
 }

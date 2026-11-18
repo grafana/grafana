@@ -255,14 +255,27 @@ describe('extensionSidebarLayout', () => {
     expect(listener).toHaveBeenCalledTimes(1);
   });
 
-  it('reports a collapse the height resize asked for as one', () => {
-    collapseFloatingExtensionSidebar('resize');
-    expect(reportInteraction).toHaveBeenCalledWith('grafana_extension_sidebar_floating_collapsed', {
+  it('tells collapse listeners how the user asked, a drag with the pointer unless told otherwise', () => {
+    const listener = jest.fn();
+    subscribeToFloatingExtensionSidebarCollapse(listener);
+
+    collapseFloatingExtensionSidebar();
+    expect(listener).toHaveBeenLastCalledWith({ method: 'drag', input: 'pointer' });
+
+    collapseFloatingExtensionSidebar({ method: 'resize', input: 'keyboard' });
+    expect(listener).toHaveBeenLastCalledWith({ method: 'resize', input: 'keyboard' });
+    expect(reportInteraction).toHaveBeenLastCalledWith('grafana_extension_sidebar_floating_collapsed', {
       method: 'resize',
     });
   });
 
-  it('keeps the height resize the extension asks for, telling subscribers only when it changes', () => {
+  it('forgets the declared floating heights when the sidebar closes or shows another extension', () => {
+    setFloatingExtensionSidebarHeightOptions({ minHeight: 400, collapsedHeight: 100 });
+    notifyExtensionSidebarClosed();
+    expect(getFloatingExtensionSidebarHeightOptions()).toBeNull();
+  });
+
+  it('keeps the floating heights the extension declares, telling subscribers only when they change', () => {
     expect(getFloatingExtensionSidebarHeightOptions()).toBeNull();
     const listener = jest.fn();
     subscribeToExtensionSidebarPresentation(listener);

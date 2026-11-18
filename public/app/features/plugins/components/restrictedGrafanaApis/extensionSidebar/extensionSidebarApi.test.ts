@@ -137,36 +137,43 @@ describe('extensionSidebarApi', () => {
     expect(listener).toHaveBeenCalledTimes(1);
   });
 
-  it('lets core resize the height between the heights the extension gives, until it passes null', () => {
-    const { setFloatingHeightResize } = extensionSidebarApi;
-    if (!setFloatingHeightResize) {
-      throw new Error('setFloatingHeightResize is absent');
+  it('resizes the floating height between the sizes the extension declares, until it leaves the height out', () => {
+    const { setSizing } = extensionSidebarApi;
+    if (!setSizing) {
+      throw new Error('setSizing is absent');
     }
 
-    setFloatingHeightResize({ minHeight: 400.4, collapsedHeight: 99.6 });
+    setSizing({ floating: { height: { min: 400.4, collapsed: 99.6 } } });
     expect(getFloatingExtensionSidebarHeightOptions()).toEqual({ minHeight: 400, collapsedHeight: 100 });
 
-    setFloatingHeightResize({ minHeight: 400 });
+    setSizing({ floating: { height: { min: 400 } } });
     expect(getFloatingExtensionSidebarHeightOptions()).toEqual({ minHeight: 400 });
 
-    setFloatingHeightResize(null);
+    // Collapsed, the extension leaves the height out: no height handles.
+    setSizing({ floating: {} });
+    expect(getFloatingExtensionSidebarHeightOptions()).toBeNull();
+
+    setSizing({ floating: { height: { min: 400 } } });
+    setSizing(null);
     expect(getFloatingExtensionSidebarHeightOptions()).toBeNull();
   });
 
   it.each([
     ['a value that is not an object', 'tall'],
-    ['no minimum', { collapsedHeight: 100 }],
-    ['a minimum that is not a positive number', { minHeight: -1 }],
-    ['a minimum that is not finite', { minHeight: Infinity }],
-  ])('hides the height handles for %s', (_, options) => {
-    extensionSidebarApi.setFloatingHeightResize?.({ minHeight: 400 });
+    ['no floating layout', {}],
+    ['a height that is not an object', { floating: { height: 400 } }],
+    ['no minimum', { floating: { height: { collapsed: 100 } } }],
+    ['a minimum that is not a positive number', { floating: { height: { min: -1 } } }],
+    ['a minimum that is not finite', { floating: { height: { min: Infinity } } }],
+  ])('shows no height handles for %s', (_, sizing) => {
+    extensionSidebarApi.setSizing?.({ floating: { height: { min: 400 } } });
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- a plugin calling from untyped code
-    extensionSidebarApi.setFloatingHeightResize?.(options as unknown as { minHeight: number });
+    extensionSidebarApi.setSizing?.(sizing as unknown as null);
     expect(getFloatingExtensionSidebarHeightOptions()).toBeNull();
   });
 
   it('leaves out a collapsed height that is not below the minimum', () => {
-    extensionSidebarApi.setFloatingHeightResize?.({ minHeight: 400, collapsedHeight: 400 });
+    extensionSidebarApi.setSizing?.({ floating: { height: { min: 400, collapsed: 400 } } });
     expect(getFloatingExtensionSidebarHeightOptions()).toEqual({ minHeight: 400 });
   });
 
