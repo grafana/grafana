@@ -17,7 +17,7 @@ export interface DraftDashboardExtension {
 
 let internalDraftDashboardExtension: DraftDashboardExtension | null = null;
 
-export function registerDraftDashboardExtension(extension: DraftDashboardExtension) {
+export function registerDraftDashboardExtension(extension: DraftDashboardExtension | null) {
   internalDraftDashboardExtension = extension;
 }
 

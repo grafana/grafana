@@ -20,6 +20,7 @@ import {
   type ResourceForCreate,
   type ResourceList,
 } from 'app/features/apiserver/types';
+import { getDraftDashboardExtension } from 'app/features/dashboard-scene/saving/enterprise-components/DraftDashboardExtension';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { type DeleteDashboardResponse } from 'app/features/manage-dashboards/types';
 import { removeExistingSourceLinks } from 'app/features/provisioning/utils/sourceLink';
@@ -53,7 +54,7 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
     this.client = new ScopedResourceClient<DashboardDataDTO>(getK8sV1DashboardApiConfig());
   }
 
-  saveDashboard(options: SaveDashboardCommand<Dashboard>): Promise<SaveDashboardResponseDTO> {
+  async saveDashboard(options: SaveDashboardCommand<Dashboard>): Promise<SaveDashboardResponseDTO> {
     const dashboard = options.dashboard;
     const obj: ResourceForCreate<DashboardDataDTO> = {
       metadata: {
@@ -105,6 +106,11 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
     // on create, always clear the id to prevent duplicate ids
     delete obj.spec.id;
     delete obj.metadata.labels?.[DeprecatedInternalId];
+
+    const createLabels = await getDraftDashboardExtension()?.getCreateLabels();
+    if (createLabels && Object.keys(createLabels).length > 0) {
+      obj.metadata.labels = { ...obj.metadata.labels, ...createLabels };
+    }
     return this.client.create(obj, { fieldValidation: 'Ignore' }).then((v) => this.asSaveDashboardResponseDTO(v));
   }
 
