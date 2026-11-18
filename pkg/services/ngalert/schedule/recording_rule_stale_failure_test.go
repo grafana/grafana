@@ -41,6 +41,22 @@ func (e statusError) Temporary() bool   { return false }
 
 var _ promremote.WriteError = statusError{}
 
+type statusErrorWithText struct {
+	code int
+	text string
+}
+
+func (e statusErrorWithText) Error() string     { return e.text }
+func (e statusErrorWithText) StatusCode() int   { return e.code }
+func (e statusErrorWithText) Data() []byte      { return nil }
+func (e statusErrorWithText) Unwrap() error     { return nil }
+func (e statusErrorWithText) IsRetryable() bool { return false }
+func (e statusErrorWithText) Is(error) bool     { return false }
+func (e statusErrorWithText) Timeout() bool     { return false }
+func (e statusErrorWithText) Temporary() bool   { return false }
+
+var _ promremote.WriteError = statusErrorWithText{}
+
 func TestClassifyMarkerError(t *testing.T) {
 	const activeSeries = `server returned HTTP status 429 Too Many Requests: failed pushing to ingester: the request has been rejected because the tenant exceeded the active series limit (err-mimir-max-active-series)`
 
@@ -58,8 +74,10 @@ func TestClassifyMarkerError(t *testing.T) {
 		{"rejected as out of order", fmt.Errorf("%w: err-mimir-sample-out-of-order", writer.ErrRejectedWrite), markerReasonTransient, true},
 		{"rejected as too old", fmt.Errorf("%w: err-mimir-sample-timestamp-too-old", writer.ErrRejectedWrite), markerReasonTransient, true},
 		{"rejected as too far in the past", fmt.Errorf("%w: err-mimir-too-far-in-past", writer.ErrRejectedWrite), markerReasonTransient, true},
-		{"rejected as too far in the future", fmt.Errorf("%w: err-mimir-too-far-in-future", writer.ErrRejectedWrite), markerReasonTransient, true},
-		{"rejected by the ingestion rate", fmt.Errorf("%w: err-mimir-tenant-max-ingestion-rate", writer.ErrRejectedWrite), markerReasonTransient, true},
+		{"rejected as too far in the future is dropped", fmt.Errorf("%w: err-mimir-too-far-in-future", writer.ErrRejectedWrite), markerReasonClientError, false},
+		{"prometheus out of order", errors.Join(writer.ErrUnexpectedWriteFailure, statusErrorWithText{400, "out of order sample"}), markerReasonTransient, true},
+		{"prometheus out of bounds", errors.Join(writer.ErrUnexpectedWriteFailure, statusErrorWithText{400, "out of bounds"}), markerReasonTransient, true},
+		{"prometheus too far in the future is dropped", errors.Join(writer.ErrUnexpectedWriteFailure, statusErrorWithText{400, "out of bounds: timestamp is too far in the future"}), markerReasonClientError, false},
 		{"non retryable write", fmt.Errorf("%w: too large", writer.ErrNonRetryableWrite), markerReasonClientError, false},
 		{"unauthorized", fmt.Errorf("%w: nope", writer.ErrDatasourceUnauthorized), markerReasonClientError, false},
 		{"forbidden", fmt.Errorf("%w: nope", writer.ErrDatasourceForbidden), markerReasonClientError, false},
@@ -243,7 +261,10 @@ func TestRecordingRuleStaleMarkerFailures(t *testing.T) {
 			{"400 expected rejection", http.StatusBadRequest, `err-mimir-label-value-too-long`, 1},
 			{"400 anything else", http.StatusBadRequest, `something new`, 1},
 			{"400 out of order", http.StatusBadRequest, `err-mimir-sample-out-of-order`, 2},
-			{"400 ingestion rate", http.StatusBadRequest, `err-mimir-tenant-max-ingestion-rate`, 2},
+			{"400 too far in the future", http.StatusBadRequest, `err-mimir-too-far-in-future`, 1},
+			{"400 prometheus out of order", http.StatusBadRequest, `out of order sample`, 2},
+			{"400 prometheus out of bounds", http.StatusBadRequest, `out of bounds`, 2},
+			{"400 prometheus too far in the future", http.StatusBadRequest, `out of bounds: timestamp is too far in the future`, 1},
 			{"403", http.StatusForbidden, `forbidden`, 1},
 			{"429 ingestion rate", http.StatusTooManyRequests, `err-mimir-tenant-max-ingestion-rate`, 2},
 			{"500", http.StatusInternalServerError, `oops`, 2},

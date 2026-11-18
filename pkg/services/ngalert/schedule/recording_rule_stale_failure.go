@@ -17,13 +17,19 @@ const (
 	markerReasonExpired         = "expired"
 )
 
+// Rejections that depend on timing: a retry carries a later timestamp, which they accept.
+// Checked against Mimir 3.2.6 and Prometheus 3.15.0. Prometheus words these as plain text.
 var retryableRejections = []string{
 	writer.MimirSampleOutOfOrderError,
 	writer.MimirSampleTimestampTooOldError,
 	writer.MimirSampleTooFarInPastError,
-	writer.MimirSampleTooFarInFutureError,
-	writer.MimirIngestionRateLimitedError,
+	"out of order sample",
+	"out of bounds",
 }
+
+// A later tick is even further ahead of a server that thinks the sample is in the future.
+// Prometheus words this as "out of bounds" too, so it is checked first.
+const tooFarInFuture = "too far in the future"
 
 type markerFailure struct {
 	reason string
@@ -39,10 +45,11 @@ func classifyMarkerError(err error) markerFailure {
 		return markerFailure{reason: markerReasonMaxActiveSeries}
 	}
 
-	// These rejections depend on timing or load, and a retry carries a later timestamp.
-	for _, id := range retryableRejections {
-		if strings.Contains(err.Error(), id) {
-			return markerFailure{reason: markerReasonTransient, retry: true}
+	if !strings.Contains(err.Error(), tooFarInFuture) {
+		for _, id := range retryableRejections {
+			if strings.Contains(err.Error(), id) {
+				return markerFailure{reason: markerReasonTransient, retry: true}
+			}
 		}
 	}
 
