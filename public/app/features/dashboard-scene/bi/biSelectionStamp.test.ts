@@ -1,6 +1,11 @@
 import { type AdHocFilterWithLabels } from '@grafana/scenes';
 
-import { getValidBiSelection, stripBiSelectionStamp } from './biSelectionStamp';
+import {
+  getValidBiSelection,
+  haveSameExpression,
+  releaseIdenticalBiSelection,
+  stripBiSelectionStamp,
+} from './biSelectionStamp';
 
 const biSelection = { sourcePanel: 'panel-1', key: 'country', values: ['UK', 'FR'] };
 const single = { sourcePanel: 'panel-1', key: 'country', values: ['UK'] };
@@ -68,5 +73,54 @@ describe('stripBiSelectionStamp', () => {
 
     expect(stripped).toEqual({ key: 'country', operator: '=', value: 'UK' });
     expect(stripped).not.toHaveProperty('meta');
+  });
+});
+
+describe('haveSameExpression', () => {
+  it('compares key, operator, value and values only', () => {
+    expect(
+      haveSameExpression(
+        { key: 'country', operator: '=|', value: 'UK', values: ['UK', 'FR'] },
+        { key: 'country', operator: '=|', value: 'UK', values: ['UK', 'FR'] }
+      )
+    ).toBe(true);
+    expect(
+      haveSameExpression(
+        { key: 'country', operator: '=|', value: 'UK', values: ['UK', 'FR'] },
+        { key: 'country', operator: '=|', value: 'UK', values: ['UK'] }
+      )
+    ).toBe(false);
+    expect(
+      haveSameExpression(
+        { key: 'country', operator: '=', value: 'UK' },
+        { key: 'country', operator: '!=', value: 'UK' }
+      )
+    ).toBe(false);
+  });
+});
+
+describe('releaseIdenticalBiSelection', () => {
+  it('strips the stamp of an identical selection', () => {
+    const other: AdHocFilterWithLabels = { key: 'region', operator: '=', value: 'EU' };
+    const filters: AdHocFilterWithLabels[] = [
+      other,
+      { key: 'country', operator: '=', value: 'UK', meta: { biSelection: single } },
+    ];
+
+    expect(releaseIdenticalBiSelection(filters, { key: 'country', operator: '=', value: 'UK' })).toEqual([
+      other,
+      { key: 'country', operator: '=', value: 'UK' },
+    ]);
+    expect(filters[1].meta).toEqual({ biSelection: single });
+  });
+
+  it('returns undefined when no selection matches', () => {
+    const filters: AdHocFilterWithLabels[] = [
+      { key: 'country', operator: '=', value: 'UK', meta: { biSelection: single } },
+      { key: 'region', operator: '=', value: 'EU' },
+    ];
+
+    expect(releaseIdenticalBiSelection(filters, { key: 'country', operator: '=', value: 'FR' })).toBeUndefined();
+    expect(releaseIdenticalBiSelection(filters, { key: 'region', operator: '=', value: 'EU' })).toBeUndefined();
   });
 });
