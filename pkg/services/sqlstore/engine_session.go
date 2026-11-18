@@ -25,6 +25,8 @@ func WithEngineSession(ctx context.Context, engine *xorm.Engine, tracer tracing.
 	}
 	if isNew {
 		defer sess.Close()
+		// xorm treats an unused session as closed until its DB wrapper is initialized.
+		sess.DB()
 	}
 	return callback(sess)
 }

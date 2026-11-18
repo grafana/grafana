@@ -251,6 +251,32 @@ func TestWithEngineSessionCallsCallbackOnceWithoutBeginningTransaction(t *testin
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 
+func TestWithEngineSessionReusesFreshSessionBeforeSQLAndRejectsClosedSession(t *testing.T) {
+	engine, mock := helperTestEngine(t)
+	tracer := tracing.NewNoopTracerService()
+	var owned *DBSession
+	err := WithEngineSession(context.Background(), engine, tracer, func(sess *DBSession) error {
+		owned = sess
+		ctx := context.WithValue(context.Background(), ContextSessionKey{}, sess)
+		return WithEngineSession(ctx, engine, tracer, func(reused *DBSession) error {
+			require.Same(t, sess, reused)
+			return nil
+		})
+	})
+	require.NoError(t, err)
+	require.True(t, owned.IsClosed())
+
+	called := false
+	ctx := context.WithValue(context.Background(), ContextSessionKey{}, owned)
+	err = WithEngineSession(ctx, engine, tracer, func(*DBSession) error {
+		called = true
+		return nil
+	})
+	require.ErrorContains(t, err, "closed or invalid")
+	require.False(t, called)
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
 func TestWithEngineTransactionBeginFailureDoesNotCallCallback(t *testing.T) {
 	engine, mock := helperTestEngine(t)
 	beginErr := errors.New("begin failed")

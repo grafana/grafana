@@ -52,89 +52,78 @@ func (s *server) Exec(ctx context.Context, _ *dbproxyv1.ExecRequest) (*dbproxyv1
 	return &dbproxyv1.ExecResponse{RowsAffected: 1}, nil
 }
 
-func TestNewConnExchangesWildcardTokenOnExec(t *testing.T) {
-	listener, err := net.Listen("tcp", "127.0.0.1:0")
-	if err != nil {
-		t.Fatal(err)
-	}
-	fixture := &server{requests: make(chan metadata.MD, 1)}
-	grpcServer := grpc.NewServer()
-	dbproxyv1.RegisterDatabaseProxyServiceServer(grpcServer, fixture)
-	go func() { _ = grpcServer.Serve(listener) }()
-	t.Cleanup(grpcServer.Stop)
-	exchange := exchanger{requests: make(chan authn.TokenExchangeRequest, 1)}
-	conn, err := client.NewConn(listener.Addr().String(), insecure.NewCredentials(), exchange)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { _ = conn.Close() })
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-	_, err = dbproxyv1.NewDatabaseProxyServiceClient(conn).Exec(ctx, &dbproxyv1.ExecRequest{Namespace: "stacks-123", QueryName: "test.auth", Sql: "UPDATE item SET value = ?"})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if tokens := (<-fixture.requests).Get("x-access-token"); len(tokens) != 1 || tokens[0] != "raw-token" {
-		t.Fatalf("token metadata = %v", tokens)
-	}
-	request := <-exchange.requests
-	if request.Namespace != "*" || len(request.Audiences) != 1 || request.Audiences[0] != "single-tenant-db-proxy" || request.SubjectToken != "" {
-		t.Fatalf("exchange request = %+v", request)
-	}
-}
-
-func TestNewConnExchangesWildcardTokenOnStream(t *testing.T) {
-	listener, err := net.Listen("tcp", "127.0.0.1:0")
-	if err != nil {
-		t.Fatal(err)
-	}
-	fixture := &server{requests: make(chan metadata.MD, 1)}
-	grpcServer := grpc.NewServer()
-	dbproxyv1.RegisterDatabaseProxyServiceServer(grpcServer, fixture)
-	go func() { _ = grpcServer.Serve(listener) }()
-	t.Cleanup(grpcServer.Stop)
-	exchange := exchanger{requests: make(chan authn.TokenExchangeRequest, 1)}
-	conn, err := client.NewConn(listener.Addr().String(), insecure.NewCredentials(), exchange)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer func() {
-		if err := conn.Close(); err != nil {
-			t.Errorf("close conn: %v", err)
-		}
-	}()
-	connector, err := sqldriver.New(dbproxyv1.NewDatabaseProxyServiceClient(conn)).OpenConnector("")
-	if err != nil {
-		t.Fatal(err)
-	}
-	pool := sql.OpenDB(connector)
-	defer func() {
-		if err := pool.Close(); err != nil {
-			t.Errorf("close pool: %v", err)
-		}
-	}()
-	ctx, cancel := context.WithTimeout(sqldriver.WithQuery(context.Background(), "stacks-123", "test.auth"), time.Second)
-	defer cancel()
-	rows, err := pool.QueryContext(ctx, "SELECT x")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer func() {
-		if err := rows.Close(); err != nil {
-			t.Errorf("close rows: %v", err)
-		}
-	}()
-	for rows.Next() {
-	}
-	if err := rows.Err(); err != nil {
-		t.Fatal(err)
-	}
-	request := <-exchange.requests
-	if request.Namespace != "*" || len(request.Audiences) != 1 || request.Audiences[0] != "single-tenant-db-proxy" || request.SubjectToken != "" {
-		t.Fatalf("exchange request = %+v", request)
-	}
-	if tokens := (<-fixture.requests).Get("x-access-token"); len(tokens) != 1 || tokens[0] != "raw-token" {
-		t.Fatalf("token metadata = %v", tokens)
+func TestNewConnExchangesWildcardToken(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		run  func(context.Context, *sql.DB) error
+	}{
+		{
+			name: "Query",
+			run: func(ctx context.Context, pool *sql.DB) error {
+				rows, err := pool.QueryContext(ctx, "SELECT x")
+				if err != nil {
+					return err
+				}
+				for rows.Next() {
+				}
+				if err := rows.Err(); err != nil {
+					_ = rows.Close()
+					return err
+				}
+				return rows.Close()
+			},
+		},
+		{
+			name: "Exec",
+			run: func(ctx context.Context, pool *sql.DB) error {
+				_, err := pool.ExecContext(ctx, "UPDATE item SET value = ?", 1)
+				return err
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			listener, err := net.Listen("tcp", "127.0.0.1:0")
+			if err != nil {
+				t.Fatal(err)
+			}
+			fixture := &server{requests: make(chan metadata.MD, 1)}
+			grpcServer := grpc.NewServer()
+			dbproxyv1.RegisterDatabaseProxyServiceServer(grpcServer, fixture)
+			go func() { _ = grpcServer.Serve(listener) }()
+			t.Cleanup(grpcServer.Stop)
+			exchange := exchanger{requests: make(chan authn.TokenExchangeRequest, 1)}
+			conn, err := client.NewConn(listener.Addr().String(), insecure.NewCredentials(), exchange)
+			if err != nil {
+				t.Fatal(err)
+			}
+			t.Cleanup(func() {
+				if err := conn.Close(); err != nil {
+					t.Errorf("close conn: %v", err)
+				}
+			})
+			connector, err := sqldriver.New(dbproxyv1.NewDatabaseProxyServiceClient(conn)).OpenConnector("")
+			if err != nil {
+				t.Fatal(err)
+			}
+			pool := sql.OpenDB(connector)
+			t.Cleanup(func() {
+				if err := pool.Close(); err != nil {
+					t.Errorf("close pool: %v", err)
+				}
+			})
+			ctx, cancel := context.WithTimeout(sqldriver.WithQuery(context.Background(), "stacks-123", "test.auth"), time.Second)
+			defer cancel()
+			if err := tc.run(ctx, pool); err != nil {
+				t.Fatal(err)
+			}
+			request := <-exchange.requests
+			if request.Namespace != "*" || len(request.Audiences) != 1 || request.Audiences[0] != "single-tenant-db-proxy" || request.SubjectToken != "" {
+				t.Fatalf("exchange request = %+v", request)
+			}
+			if tokens := (<-fixture.requests).Get("x-access-token"); len(tokens) != 1 || tokens[0] != "raw-token" {
+				t.Fatalf("token metadata = %v", tokens)
+			}
+		})
 	}
 }
 func TestNewConnNeedsExplicitDependenciesAndDefersEndpointFailure(t *testing.T) {
