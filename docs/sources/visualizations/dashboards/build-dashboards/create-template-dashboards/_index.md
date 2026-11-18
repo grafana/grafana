@@ -21,7 +21,11 @@ You can also create custom dashboard templates for your organization.
 
 ## Dashboard templates
 
-{{< docs/public-preview product="Dashboard templates" >}}
+{{< admonition type="note" >}}
+Dashboard templates is currently in public preview.
+Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
+To try it out, enable `dashboardTemplates` feature toggle.
+{{< /admonition >}}
 
 Grafana provides a variety of pre-built dashboard templates that you can use to quickly set up visualizations for your data.
 These dashboards use sample data, which you can replace with your own data, making it easier to get started with monitoring and analysis.
@@ -70,7 +74,13 @@ To create a dashboard from a template, follow these steps:
 
 ### Create custom dashboard templates
 
-{{< docs/public-preview product="Custom dashboard templates" >}}
+{{< admonition type="note" >}}
+Custom dashboard templates is currently in public preview.
+Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
+To try it out, enable `grafana.customDashboardTemplates` feature toggle.
+
+Custom dashboard templates is only available in Grafana Cloud and Enterprise.
+{{< /admonition >}}
 
 A custom dashboard template gives you and your team a consistent starting point for new dashboards.
 You can use it to apply your organization's preferred layout, panels, and settings.
@@ -171,7 +181,10 @@ This action is permanent and you can't recover deleted templates.
 
 ## Suggested dashboards
 
-{{< docs/public-preview product="Suggested dashboards" >}}
+{{< admonition type="note" >}}
+Suggested dashboards is currently in public preview.
+Grafana Labs offers limited support, and breaking changes might occur prior to the feature being made generally available.
+{{< /admonition >}}
 
 Suggested dashboards can be helpful when you have a data source configured, but you're not sure how to most effectively visualize your data.
 The process of creating a dashboard from a suggestion starts from the **Data sources** feature, so the suggestions are specific to your data source type (for example, Prometheus, Loki, or Elasticsearch).
