@@ -14,7 +14,7 @@ import (
 var _ legacyclient.LegacyCheckClientSetter = (*AccessControl)(nil)
 
 func (a *AccessControl) SetLegacyCheckClient(
-	client *legacyclient.LegacyClient,
+	client legacyclient.LegacyAccessClient,
 	useExternalGroups bool,
 	namespace types.NamespaceFormatter,
 ) {

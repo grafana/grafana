@@ -2,7 +2,7 @@ import { type UnknownAction } from '@reduxjs/toolkit';
 
 import { getBackendSrv } from '@grafana/runtime';
 import { playlistAPIv1 } from 'app/api/clients/playlist/v1';
-import { type Repository, type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
+import { type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
 import { getAPIBaseURL } from 'app/api/utils';
 import { CORE_KINDS } from 'app/core/kinds/coreKinds';
 import { type KindInfo } from 'app/core/kinds/types';
@@ -100,9 +100,8 @@ export const resourceKindInfos = {
   librarypanel: {
     ...CORE_KINDS.librarypanel,
     itemType: 'LibraryPanel',
-    // Library panels live inside folders on the backend, but the dashboards folder
-    // browse doesn't list them — they have their own collection page — so for
-    // routing they behave like a non-foldered kind and always resolve to listRoute.
+    // Library panels live inside folders on the backend, but the dashboards folder browse doesn't
+    // list them, so the migrate table groups them under one row like a non-foldered kind.
     folderScoped: false,
     // Library panels aren't in the unified search index; list them through their
     // apiserver (same group as dashboards, v0alpha1). Gated out of migration by
@@ -187,9 +186,8 @@ export interface ResourceKindInfo extends KindInfo {
   /** Label shown for this kind in the combined files/resources tree. */
   itemType: ResourceItemType;
   /**
-   * Whether resources of this kind are contained in folders, and so can be scoped
-   * to a repository's own folder. Foldered kinds (folders, dashboards) live in the
-   * dashboards browse; others (e.g. playlists) only have their `listRoute`.
+   * Whether the migrate table nests resources of this kind under their parent folder (folders,
+   * dashboards). Other kinds (e.g. playlists) are grouped under one row per kind.
    */
   folderScoped: boolean;
   /**
@@ -235,23 +233,6 @@ export function coversGroup(info: ResourceKindInfo, group: string): boolean {
 export function getReportedGroup(group?: string, kind?: string): string | undefined {
   const info = getKindInfoByGroupKind(group, kind);
   return info?.collection ?? group;
-}
-
-/**
- * Builds the in-app route to view a repository's resources of the given kind.
- * Folder-scoped kinds resolve to the repository's own folder (named after the
- * repository) for folder-target repos; everything else — non-folder targets, a
- * repo missing its name, or non-folder-scoped kinds — resolves to the kind's
- * collection page.
- */
-export function getRepositoryRoute(info: ResourceKindInfo, repo: Repository): string {
-  const repoName = repo.metadata?.name;
-  if (info.folderScoped && repo.spec?.sync.target === 'folder' && repoName) {
-    // The repository's folder is named after the repo, so reuse the folder kind's
-    // route rather than duplicating the `/dashboards/f/...` shape here.
-    return resourceKindInfos.folder.getRoute(repoName);
-  }
-  return info.listRoute;
 }
 
 /** Look up a kind by its plural resource name (`ResourceListItem.resource`). */
