@@ -1,6 +1,7 @@
-import { type AriaRole } from 'react';
+import { type AriaRole, cloneElement, isValidElement, type ReactNode } from 'react';
 
 import { type IconName } from '../../types/icon';
+import { Button, type ButtonProps, type ButtonVariant } from '../Button/Button';
 
 import { type AlertVariant } from './Alert';
 
@@ -22,4 +23,19 @@ export const getIconFromSeverity = (severity: AlertVariant): IconName => {
     case 'success':
       return 'check';
   }
+};
+
+export const buttonVariantsBySeverity: Record<AlertVariant, ButtonVariant> = {
+  error: 'destructive',
+  warning: 'warning',
+  info: 'info',
+  success: 'success',
+};
+
+export const getOutlineAction = (action: ReactNode, variant: ButtonVariant): ReactNode => {
+  if (isValidElement<ButtonProps>(action) && action.type === Button) {
+    return cloneElement(action, { variant, fill: 'outline' });
+  }
+
+  return action;
 };

@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { Button } from '../Button/Button';
+import { LinkButton } from '../LinkButton/LinkButton';
 
 import { AlertBanner } from './AlertBanner';
 
@@ -47,6 +48,34 @@ describe('AlertBanner', () => {
   });
 
   describe('action prop', () => {
+    it.each(['error', 'warning', 'info', 'success'] as const)(
+      'renders a Button action in a %s alert banner as an outline primary button',
+      (severity) => {
+        render(
+          <>
+            <AlertBanner title="Test" severity={severity} action={<Button variant="secondary">Action</Button>} />
+            <Button variant="primary" fill="outline">
+              Reference
+            </Button>
+          </>
+        );
+        expect(screen.getByRole('button', { name: 'Action' })).toHaveClass(
+          screen.getByRole('button', { name: 'Reference' }).className
+        );
+      }
+    );
+
+    it('leaves an action that is not a Button unchanged', () => {
+      render(
+        <>
+          <AlertBanner title="Test" severity="warning" action={<LinkButton href="/docs">Read docs</LinkButton>} />
+          <LinkButton href="/reference">Reference</LinkButton>
+        </>
+      );
+      expect(screen.getByRole('link', { name: 'Read docs' })).toHaveClass(
+        screen.getByRole('link', { name: 'Reference' }).className
+      );
+    });
     it('renders the provided action element', () => {
       render(
         <AlertBanner
