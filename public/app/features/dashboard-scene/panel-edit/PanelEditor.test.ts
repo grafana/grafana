@@ -965,6 +965,26 @@ describe('PanelEditor', () => {
       expect(panel.state.$behaviors?.length).toBe(1);
       expect(panel.state.$behaviors![0]).toBe(otherBehavior);
     });
+
+    it('reports clicking Save and Unlink on a library panel from the panel editor', () => {
+      const track = jest.spyOn(DashboardInteractions, 'panelActionClicked').mockImplementation();
+      const panel = new VizPanel({
+        key: 'panel-1',
+        pluginId: 'text',
+        $behaviors: [new LibraryPanelBehavior({ isLoaded: true, uid: 'uid', name: 'libraryPanelName' })],
+      });
+      new DashboardGridItem({ body: panel });
+      const editScene = buildPanelEditScene(panel);
+
+      editScene.onSaveLibraryPanel();
+      editScene.onUnlinkLibraryPanel();
+
+      expect(track.mock.calls).toEqual([
+        ['save_library_panel', 1, 'panel_editor', 'text'],
+        ['unlink_library_panel', 1, 'panel_editor', 'text'],
+      ]);
+      track.mockRestore();
+    });
   });
 
   describe('PanelDataPane', () => {

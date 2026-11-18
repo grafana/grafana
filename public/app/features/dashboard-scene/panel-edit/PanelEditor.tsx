@@ -42,6 +42,7 @@ import { DashboardEditActionEvent } from '../sidebar/events';
 import { SIDEBAR_COLLAPSED_KEY } from '../sidebar/shared';
 import { clearDefaultQuery } from '../utils/clearDefaultQuery';
 import { findVizPanelByKey } from '../utils/findVizPanel';
+import { DashboardInteractions } from '../utils/interactions';
 import { getEmptyQueryRunnerState } from '../utils/queryRunnerState';
 import { getDashboardSceneFor, getLibraryPanelBehavior } from '../utils/utils';
 import { getPanelIdForVizPanel } from '../utils/utils-panels';
@@ -471,7 +472,13 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
   public onSaveLibraryPanel = () => {
     this.setState({ showLibraryPanelSaveModal: true });
+    this.reportLibraryPanelAction('save_library_panel');
   };
+
+  private reportLibraryPanelAction(item: 'save_library_panel' | 'unlink_library_panel') {
+    const panel = this.getPanel();
+    DashboardInteractions.panelActionClicked(item, getPanelIdForVizPanel(panel), 'panel_editor', panel.state.pluginId);
+  }
 
   public onConfirmSaveLibraryPanel = () => {
     this._savedInEditor = true;
@@ -486,6 +493,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
   public onUnlinkLibraryPanel = () => {
     this.setState({ showLibraryPanelUnlinkModal: true });
+    this.reportLibraryPanelAction('unlink_library_panel');
   };
 
   public onDismissUnlinkLibraryPanelModal = () => {
