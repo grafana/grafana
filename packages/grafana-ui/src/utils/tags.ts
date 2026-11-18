@@ -1,12 +1,5 @@
-import memoize from 'micro-memoize';
-import tinycolor from 'tinycolor2';
-
 import { type GrafanaTheme2 } from '@grafana/data';
 import { DEFAULT_TAG_COLORS } from '@grafana/data/unstable';
-
-const TAG_TEXT_TARGET_CONTRAST = 7;
-const TAG_TEXT_MIN_CONTRAST = 4.5;
-const TAG_TEXT_SIMILARITY_TOLERANCE = 0.5;
 
 export function getTagColorIndexFromName(name = '', theme?: GrafanaTheme2): number {
   const colors = theme?.components.tag.colors ?? DEFAULT_TAG_COLORS;
@@ -34,13 +27,8 @@ export function getTagColorsFromName(name = '', theme?: GrafanaTheme2) {
  */
 export function getTagColor(index: number | string, theme?: GrafanaTheme2) {
   const colors = theme?.components.tag.colors ?? DEFAULT_TAG_COLORS;
-  const tagColors =
-    typeof index === 'string'
-      ? tinycolor(index).getAlpha() === 0
-        ? { background: 'rgba(0,0,0,0)', text: theme?.colors.text.primary ?? 'rgb(247, 248, 250)' }
-        : getTonalTagColors(index, theme?.isDark ?? true)
-      : colors[Math.abs(index % colors.length)];
-  const { background, text } = tagColors;
+  const { background, text } =
+    typeof index === 'string' ? getContrastingTagColors(index, theme) : colors[Math.abs(index % colors.length)];
 
   const result = { background, text };
 
@@ -51,150 +39,47 @@ export function getTagColor(index: number | string, theme?: GrafanaTheme2) {
   return result;
 }
 
-const getTonalTagColors = memoize(
-  (color: string, isDark: boolean) => {
-    const base = tinycolor(color);
-    base.setAlpha(1);
-    const background = base.toRgb();
-    const source = rgbToOklch(background);
-    const themeDirection = isDark ? -1 : 1;
-    const preferred = findTextColor(source, background, themeDirection);
-    const alternate = findTextColor(source, background, -themeDirection);
-    const hasSimilarContrast = Math.abs(preferred.contrast - alternate.contrast) <= TAG_TEXT_SIMILARITY_TOLERANCE;
-    // Keep the theme-directed candidate for a near tie; otherwise use the more legible candidate.
-    const shouldUseAlternate =
-      (!preferred.meetsTarget && alternate.meetsTarget) ||
-      (!preferred.meetsTarget &&
-        !alternate.meetsTarget &&
-        alternate.contrast > preferred.contrast &&
-        (preferred.contrast < TAG_TEXT_MIN_CONTRAST || !hasSimilarContrast));
-    const text = shouldUseAlternate ? alternate : preferred;
-
-    return {
-      background: base.toRgbString(),
-      text: tinycolor(text.color).toRgbString(),
-    };
-  },
-  { maxSize: 100 }
-);
-
-function findTextColor(source: OklchColor, background: RgbColor, direction: number) {
-  let lowerDelta = 0;
-  let upperDelta = 4;
-
-  for (let index = 0; index < 12; index++) {
-    const delta = (lowerDelta + upperDelta) / 2;
-    const color = getTextColor(source, delta, direction);
-    if (getContrast(background, color) >= TAG_TEXT_TARGET_CONTRAST) {
-      upperDelta = delta;
-    } else {
-      lowerDelta = delta;
-    }
+function getContrastingTagColors(color: string, theme?: GrafanaTheme2) {
+  if (isFullyTransparent(color)) {
+    return { background: 'rgba(0,0,0,0)', text: theme?.colors.text.primary ?? 'rgb(247, 248, 250)' };
   }
 
-  const color = getTextColor(source, upperDelta, direction);
-  const contrast = getContrast(background, color);
-  return {
-    color,
-    contrast,
-    meetsTarget: contrast >= TAG_TEXT_TARGET_CONTRAST,
-  };
+  return { background: `rgb(from ${color} r g b / 1)`, text: getContrastingTextColor(color) };
 }
 
-function getContrast(background: RgbColor, text: RgbColor) {
-  return tinycolor.readability(background, tinycolor(text).toRgbString());
+const TARGET_CONTRAST = 7;
+// WCAG 2 relative luminance, from linear sRGB channels.
+const LUMINANCE = '(0.2126 * r + 0.7152 * g + 0.0722 * b)';
+// Luminance where black and white text have equal contrast: (Y + 0.05) / 0.05 = 1.05 / (Y + 0.05).
+const CROSSOVER_LUMINANCE = Math.sqrt(1.05 * 0.05) - 0.05;
+// 1 above the crossover, so darker text wins; 0 below it, so lighter text wins. The large factor makes
+// clamp() act as a step function.
+const USE_DARKER = `clamp(0, (${LUMINANCE} - ${CROSSOVER_LUMINANCE.toFixed(4)}) * 1e9, 1)`;
+// Scale linear channels toward black until text luminance is (Y + 0.05) / target - 0.05.
+const DARKER_SCALE = `max(0, ((${LUMINANCE} + 0.05) / ${TARGET_CONTRAST} - 0.05) / max(${LUMINANCE}, 1e-6))`;
+// Mix linear channels toward white until text luminance is target * (Y + 0.05) - 0.05.
+const LIGHTER_MIX = `clamp(0, (${TARGET_CONTRAST} * (${LUMINANCE} + 0.05) - 0.05 - ${LUMINANCE}) / max(1 - ${LUMINANCE}, 1e-6), 1)`;
+
+function getContrastingChannel(channel: 'r' | 'g' | 'b') {
+  return `calc(${USE_DARKER} * ${channel} * ${DARKER_SCALE} + (1 - ${USE_DARKER}) * (${channel} + ${LIGHTER_MIX} * (1 - ${channel})))`;
 }
 
-interface OklchColor {
-  l: number;
-  c: number;
-  h: number;
+const CONTRASTING_CHANNELS = (['r', 'g', 'b'] as const).map(getContrastingChannel).join(' ');
+
+/**
+ * Builds a same-hue text color for an opaque background with CSS relative color syntax, so the browser
+ * resolves the color instead of JavaScript. Scaling or mixing in linear sRGB keeps the channel ratios,
+ * and so the hue, of the background. The text targets 7:1 contrast and falls back to black or white
+ * when the target is out of reach, which still gives at least 4.5:1.
+ */
+function getContrastingTextColor(background: string) {
+  return `color(from ${background} srgb-linear ${CONTRASTING_CHANNELS} / 1)`;
 }
 
-interface RgbColor {
-  r: number;
-  g: number;
-  b: number;
-}
+const ZERO_ALPHA = /^(?:transparent|#[0-9a-f]{3}0|#[0-9a-f]{6}00|(?:rgb|hsl)a?\(.*[,/]\s*0(?:\.0*)?%?\s*\))$/i;
 
-function getTextColor(source: OklchColor, delta: number, direction: number) {
-  return oklchToRgb({ ...source, l: clamp(source.l + direction * delta) });
-}
-
-function rgbToOklch(rgb: tinycolor.ColorFormats.RGBA): OklchColor {
-  const r = srgbToLinear(rgb.r / 255);
-  const g = srgbToLinear(rgb.g / 255);
-  const b = srgbToLinear(rgb.b / 255);
-  const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
-  const m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b);
-  const s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
-  const labL = 0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s;
-  const labA = 1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s;
-  const labB = 0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s;
-
-  return { l: labL, c: Math.hypot(labA, labB), h: Math.atan2(labB, labA) };
-}
-
-function oklchToRgb(color: OklchColor): RgbColor {
-  if (color.l === 0 || color.l === 1) {
-    const channel = color.l * 255;
-    return { r: channel, g: channel, b: channel };
-  }
-
-  let lowerChroma = 0;
-  let upperChroma = color.c;
-  let rgb = oklchToUnclampedRgb(color);
-
-  // Keep hue and lightness stable; reduce chroma only when requested color falls outside sRGB.
-  if (!isInGamut(rgb)) {
-    // The finite search may find no in-gamut candidate, so start with a neutral fallback.
-    rgb = oklchToUnclampedRgb({ ...color, c: 0 });
-    for (let index = 0; index < 8; index++) {
-      const chroma = (lowerChroma + upperChroma) / 2;
-      const candidate = oklchToUnclampedRgb({ ...color, c: chroma });
-      if (isInGamut(candidate)) {
-        lowerChroma = chroma;
-        rgb = candidate;
-      } else {
-        upperChroma = chroma;
-      }
-    }
-  }
-
-  return {
-    r: clamp(rgb.r) * 255,
-    g: clamp(rgb.g) * 255,
-    b: clamp(rgb.b) * 255,
-  };
-}
-
-function oklchToUnclampedRgb({ l, c, h }: OklchColor): RgbColor {
-  const a = c * Math.cos(h);
-  const b = c * Math.sin(h);
-  const lPrime = l + 0.3963377774 * a + 0.2158037573 * b;
-  const mPrime = l - 0.1055613458 * a - 0.0638541728 * b;
-  const sPrime = l - 0.0894841775 * a - 1.291485548 * b;
-  const linearR = 4.0767416621 * lPrime ** 3 - 3.3077115913 * mPrime ** 3 + 0.2309699292 * sPrime ** 3;
-  const linearG = -1.2684380046 * lPrime ** 3 + 2.6097574011 * mPrime ** 3 - 0.3413193965 * sPrime ** 3;
-  const linearB = -0.0041960863 * lPrime ** 3 - 0.7034186147 * mPrime ** 3 + 1.707614701 * sPrime ** 3;
-
-  return { r: linearToSrgb(linearR), g: linearToSrgb(linearG), b: linearToSrgb(linearB) };
-}
-
-function srgbToLinear(value: number) {
-  return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
-}
-
-function linearToSrgb(value: number) {
-  return value <= 0.0031308 ? 12.92 * value : 1.055 * value ** (1 / 2.4) - 0.055;
-}
-
-function isInGamut({ r, g, b }: RgbColor) {
-  return r >= 0 && r <= 1 && g >= 0 && g <= 1 && b >= 0 && b <= 1;
-}
-
-function clamp(value: number) {
-  return Math.max(0, Math.min(1, value));
+function isFullyTransparent(color: string) {
+  return ZERO_ALPHA.test(color.trim());
 }
 
 function djb2(str: string) {

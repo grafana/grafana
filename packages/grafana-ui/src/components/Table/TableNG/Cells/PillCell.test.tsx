@@ -1,5 +1,4 @@
 import { render, screen, type RenderResult } from '@testing-library/react';
-import tinycolor from 'tinycolor2';
 
 import {
   type Field,
@@ -13,9 +12,16 @@ import {
 import { FieldColorModeId } from '@grafana/schema';
 
 import { getTextColorForBackground } from '../../../../utils/colors';
+import * as tags from '../../../../utils/tags';
 import { getTagColorsFromName } from '../../../../utils/tags';
 
 import { PillCell } from './PillCell';
+
+// jsdom drops the relative color values that custom backgrounds produce, so check the source color
+// handed to getTagColor. tags.test.ts covers the colors themselves.
+const expectTagColorSource = (source: string) => {
+  expect(tags.getTagColor).toHaveBeenCalledWith(source, expect.anything());
+};
 
 describe('PillCell', () => {
   const theme = createTheme();
@@ -203,10 +209,15 @@ describe('PillCell', () => {
   });
 
   describe('Visual refresh', () => {
-    it.each([
-      ['dark', 'rgb(255, 0, 0)', 'rgb(0, 0, 0)'],
-      ['light', 'rgb(255, 0, 0)', 'rgb(0, 0, 0)'],
-    ] as const)('renders mapped pills with tonal colors in %s mode', (mode, backgroundColor, color) => {
+    beforeEach(() => {
+      jest.spyOn(tags, 'getTagColor');
+    });
+
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    it.each(['dark', 'light'] as const)('renders mapped pills with contrasting colors in %s mode', (mode) => {
       const theme = createTheme({ colors: { mode } });
       theme.flags.visualDesignRefresh = true;
       const field = fieldWithValues(['error']);
@@ -218,7 +229,8 @@ describe('PillCell', () => {
           <PillCell field={field} rowIdx={0} theme={theme} getTextColorForBackground={getTextColorForBackground} />
         </ThemeContext.Provider>
       );
-      expect(screen.getByText('error')).toHaveStyle({ backgroundColor, color });
+      expect(screen.getByText('error')).toBeInTheDocument();
+      expectTagColorSource('#ff0000');
     });
 
     // Tag reads the theme off context, so the flag has to be on the provided theme too — in the
@@ -272,9 +284,7 @@ describe('PillCell', () => {
       } satisfies Field;
 
       renderRefreshed(fixed);
-      const pill = screen.getByText('value1');
-      expect(pill).toHaveStyle({ backgroundColor: 'rgb(242, 73, 92)' });
-      expect(tinycolor.readability(pill.style.backgroundColor, pill.style.color)).toBeGreaterThanOrEqual(5.5);
+      expectTagColorSource(refreshTheme.visualization.getColorByName('red'));
     });
 
     it('keeps a categorical field palette as the background', () => {
@@ -286,9 +296,7 @@ describe('PillCell', () => {
 
       renderRefreshed(classic);
       const palette = fieldColorModeRegistry.get(FieldColorModeId.PaletteClassic).getColors!(refreshTheme);
-      const pill = screen.getByText('value1');
-      expect(pill.style.backgroundColor).toBe(tinycolor(getColorByStringHash(palette, 'value1')).toRgbString());
-      expect(tinycolor.readability(pill.style.backgroundColor, pill.style.color)).toBeGreaterThanOrEqual(4.5);
+      expectTagColorSource(getColorByStringHash(palette, 'value1'));
     });
   });
 

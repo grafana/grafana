@@ -1,15 +1,74 @@
-import tinycolor from 'tinycolor2';
-
 import { createTheme } from '@grafana/data';
 
 import { getTagColor } from './tags';
 
-const TAG_TEXT_TARGET_CONTRAST = 7;
-const TAG_TEXT_MIN_CONTRAST = 4.5;
+const TARGET_CONTRAST = 7;
+const MIN_CONTRAST = 4.5;
 
-describe.each(['dark', 'light'] as const)('tonal tag colors in %s mode', (mode) => {
+type Linear = [number, number, number];
+
+function hexToLinear(hex: string): Linear {
+  const channels = hex
+    .slice(1)
+    .match(/../g)!
+    .map((channel) => parseInt(channel, 16) / 255);
+  return channels.map((value) => (value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4)) as Linear;
+}
+
+function luminance([r, g, b]: Linear) {
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+function contrast(a: Linear, b: Linear) {
+  const [lighter, darker] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+/** Splits the channel expressions of a relative color on top-level whitespace. */
+function splitChannels(expression: string) {
+  const channels: string[] = [];
+  let depth = 0;
+  let current = '';
+  for (const char of expression) {
+    depth += char === '(' ? 1 : char === ')' ? -1 : 0;
+    if (char === ' ' && depth === 0) {
+      channels.push(current);
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  return [...channels, current];
+}
+
+const cssClamp = (min: number, value: number, max: number) => Math.min(max, Math.max(min, value));
+
+/** jsdom does not resolve relative colors, so evaluate the emitted CSS math the way a browser would. */
+function resolveTextColor(text: string, source: Linear): Linear {
+  const match = text.match(/^color\(from \S+ srgb-linear (.+) \/ 1\)$/);
+  if (!match) {
+    throw new Error(`Unexpected text color: ${text}`);
+  }
+
+  const [r, g, b] = source;
+  return splitChannels(match[1]).map((channel) =>
+    new Function('r', 'g', 'b', 'clamp', 'max', `return ${channel.replace(/\bcalc\(/g, '(')};`)(
+      r,
+      g,
+      b,
+      cssClamp,
+      Math.max
+    )
+  ) as Linear;
+}
+
+const black: Linear = [0, 0, 0];
+const white: Linear = [1, 1, 1];
+
+describe.each(['dark', 'light'] as const)('contrasting tag colors in %s mode', (mode) => {
   const theme = createTheme({ colors: { mode } });
-  const edgeCases = [
+  const sources = [
+    ...theme.components.tag.colors.map(({ background }) => background).filter((color) => /^#[0-9a-f]{6}$/i.test(color)),
     '#ffffff',
     '#000000',
     '#ff0000',
@@ -21,52 +80,44 @@ describe.each(['dark', 'light'] as const)('tonal tag colors in %s mode', (mode) 
     '#808080',
     '#7f8081',
     '#440154',
+    '#21918c',
+    '#fde725',
+    '#a352cc',
   ];
-  const colors = [...theme.components.tag.colors.map(({ background }) => background), ...edgeCases];
 
-  it.each(colors)('preserves the background and provides accessible text for %s', (base) => {
-    const { background, text } = getTagColor(base, theme);
-    const maximumContrast = Math.max(
-      tinycolor.readability(background, '#000000'),
-      tinycolor.readability(background, '#ffffff')
-    );
-    const requiredContrast =
-      maximumContrast >= TAG_TEXT_TARGET_CONTRAST ? TAG_TEXT_TARGET_CONTRAST : TAG_TEXT_MIN_CONTRAST;
+  it.each(sources)('keeps %s as an opaque background with accessible text', (source) => {
+    const { background, text } = getTagColor(source, theme);
+    const linear = hexToLinear(source);
+    const bestContrast = Math.max(contrast(linear, black), contrast(linear, white));
+    const required = bestContrast >= TARGET_CONTRAST ? TARGET_CONTRAST : MIN_CONTRAST;
 
-    expect(background).toBe(tinycolor(base).setAlpha(1).toRgbString());
-    expect(tinycolor.readability(background, text)).toBeGreaterThanOrEqual(requiredContrast);
+    expect(background).toBe(`rgb(from ${source} r g b / 1)`);
+    expect(contrast(linear, resolveTextColor(text, linear))).toBeGreaterThanOrEqual(required - 1e-6);
   });
+});
 
-  it('keeps transparent mappings transparent with theme text', () => {
-    expect(getTagColor('transparent', theme)).toEqual({
+it('keeps the hue of the background when the target contrast is reachable', () => {
+  const source = hexToLinear('#fde725');
+  const [r, g, b] = resolveTextColor(getTagColor('#fde725').text, source);
+
+  expect(r / g).toBeCloseTo(source[0] / source[1]);
+  expect(g / b).toBeCloseTo(source[1] / source[2]);
+});
+
+it.each(['transparent', 'rgba(0,0,0,0)', 'rgba(255, 255, 255, 0)', '#ffffff00', 'hsl(0 0% 0% / 0)'])(
+  'keeps %s transparent with theme text',
+  (color) => {
+    const theme = createTheme({ colors: { mode: 'light' } });
+    expect(getTagColor(color, theme)).toEqual({
       background: 'rgba(0,0,0,0)',
       text: theme.colors.text.primary,
       color: 'rgba(0,0,0,0)',
       borderColor: theme.colors.text.primary,
     });
-  });
-});
+  }
+);
 
-it.each([
-  ['dark', '#ffff00', 'rgb(255, 255, 0)', 'rgb(87, 87, 1)'],
-  ['light', '#000080', 'rgb(0, 0, 128)', 'rgb(131, 171, 255)'],
-] as const)('uses the target-meeting text direction in %s mode', (mode, source, background, text) => {
-  expect(getTagColor(source, createTheme({ colors: { mode } }))).toMatchObject({ background, text });
-});
-
-it.each([
-  ['dark', 'rgb(255, 0, 0)', 'rgb(0, 0, 0)'],
-  ['light', 'rgb(255, 0, 0)', 'rgb(0, 0, 0)'],
-] as const)('uses the legible red pair in %s mode', (mode, background, text) => {
-  expect(getTagColor('#ff0000', createTheme({ colors: { mode } }))).toMatchObject({ background, text });
-});
-
-it.each([
-  ['dark', 'rgb(0, 0, 0)'],
-  ['light', 'rgb(255, 255, 255)'],
-] as const)('prefers the %s theme direction when purple candidates have similar contrast', (mode, text) => {
-  expect(getTagColor('#A352CC', createTheme({ colors: { mode } }))).toMatchObject({
-    background: 'rgb(163, 82, 204)',
-    text,
-  });
+it('uses palette colors directly for an index', () => {
+  const theme = createTheme();
+  expect(getTagColor(1, theme)).toMatchObject(theme.components.tag.colors[1]);
 });
