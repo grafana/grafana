@@ -2950,6 +2950,37 @@
         }
       }
     },
+    "recently-deleted": {
+      "action": {
+        "restore": "Restore",
+        "review": "Review"
+      },
+      "empty": "No recently deleted rules found",
+      "error": "Failed to load deleted rules",
+      "load-more": "Load more",
+      "restore": {
+        "body": "Restore \"{{title}}\"?",
+        "confirm": "Restore",
+        "conflict": "A rule with this name already exists.",
+        "error": "Failed to restore rule. Please try again.",
+        "restoring": "Restoring…",
+        "title": "Restore alert rule"
+      },
+      "retry": "Retry",
+      "review": {
+        "advanced": "Advanced",
+        "deleted-at": "Deleted {{time}}",
+        "deleted-by": "By {{name}}",
+        "title": "Review: {{title}}"
+      },
+      "table": {
+        "deleted": "Deleted",
+        "deleted-by": "Deleted by",
+        "folder": "Folder",
+        "title": "Title"
+      },
+      "unknown": "Unknown"
+    },
     "recording-rule": {
       "term": "Recording rule"
     },
