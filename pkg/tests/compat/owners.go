@@ -133,7 +133,7 @@ func enterpriseCodeowners(root string) map[string]string {
 }
 
 func readCodeowners(file string) (map[string]string, error) {
-	f, err := os.Open(file) // #nosec G304 -- CODEOWNERS of the repository the tests run in
+	f, err := os.Open(file) // #nosec G304 G703 -- CODEOWNERS of the repository the tests run in, or of the grafana-enterprise checkout its go.mod points at
 	if err != nil {
 		return nil, err
 	}
