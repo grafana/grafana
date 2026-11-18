@@ -1512,7 +1512,19 @@ func (s *server) delete(ctx context.Context, user claims.AuthInfo, req *resource
 	obj.SetUpdatedTimestamp(&now.Time)
 	obj.SetManagedFields(nil)
 	obj.SetFinalizers(nil)
-	obj.SetUpdatedBy(user.GetUID())
+	// An access-policy caller (a service, authenticated from its token) may delete on a user's
+	// behalf; record that user rather than the service. Any other caller cannot choose the
+	// recorded deleter. The in-context service identity is not matched here: the server derives
+	// the caller from the token, whose subject is the service's own access policy.
+	deletedBy := user.GetUID()
+	if req.ActingUserUid != "" {
+		if user.GetIdentityType() == claims.TypeAccessPolicy {
+			deletedBy = req.ActingUserUid
+		} else {
+			s.log.Debug("ignoring acting user on delete from a non-service caller", "caller", user.GetUID())
+		}
+	}
+	obj.SetUpdatedBy(deletedBy)
 	obj.SetGeneration(utils.DeletedGeneration)
 	obj.SetAnnotation(utils.AnnoKeyKubectlLastAppliedConfig, "") // clears it
 	event.ObjectOld = oldObj
