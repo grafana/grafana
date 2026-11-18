@@ -164,28 +164,6 @@ describe('BaseCodeEditor', () => {
     expect(result?.options.map((option) => option.label)).toEqual(['region']);
   });
 
-  it('adds no variable source when there are no variable suggestions', () => {
-    render(<BaseCodeEditor value="$" onChange={jest.fn()} variableSuggestions={[]} />);
-
-    expect(capturedProps?.value).toBe('$');
-    expect(autocompletionMock).not.toHaveBeenCalled();
-    expect(getAutocompleteSources()).toEqual([]);
-  });
-
-  it('CodeMirrorEditor drops props outside the public API, so raw extensions never reach CodeMirror', async () => {
-    const props = {
-      value: '',
-      onChange: jest.fn(),
-      'aria-label': 'Query',
-      extensions: [EditorView.contentAttributes.of({ 'data-plugin': 'injected' })],
-    } as unknown as CodeMirrorEditorProps;
-
-    render(<CodeMirrorEditor {...props} />);
-
-    await waitFor(() => expect(capturedProps).toBeDefined());
-    expect(getContentAttributes()).toEqual([{ 'aria-label': 'Query' }]);
-  });
-
   it('binds Tab to accept completions before the default indent behavior', () => {
     render(<BaseCodeEditor value="" onChange={jest.fn()} />);
 

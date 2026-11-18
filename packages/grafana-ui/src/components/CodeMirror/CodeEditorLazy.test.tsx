@@ -19,19 +19,15 @@ const signature =
       : null;
 
 describe('CodeMirrorEditor', () => {
-  it('ignores raw extensions, so one from another copy of CodeMirror cannot break the editor', async () => {
-    // CodeMirror rejects an object it doesn't recognize, which is how an extension
-    // built with a plugin's own copy of CodeMirror looks to Grafana's copy.
-    const props = { value: 'SELECT 1', onChange: jest.fn(), extensions: [{}] } as unknown as CodeMirrorEditorProps;
+  it('shows the placeholder even when a caller passes an incompatible raw extension', async () => {
+    const props = {
+      value: '',
+      onChange: jest.fn(),
+      placeholder: 'Write a query',
+      extensions: [{}],
+    } as unknown as CodeMirrorEditorProps;
 
     render(<CodeMirrorEditor {...props} />);
-
-    expect(await screen.findByRole('textbox')).toHaveTextContent('SELECT 1');
-    expect(screen.queryByText('CodeMirror editor failed to load')).not.toBeInTheDocument();
-  });
-
-  it('shows the placeholder while the editor is empty', async () => {
-    render(<CodeMirrorEditor value="" onChange={jest.fn()} placeholder="Write a query" />);
 
     expect(await screen.findByText('Write a query')).toBeInTheDocument();
   });

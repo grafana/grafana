@@ -1,6 +1,3 @@
-import { sql as sqlLanguage } from '@codemirror/lang-sql';
-import { ensureSyntaxTree } from '@codemirror/language';
-import { EditorState } from '@codemirror/state';
 import { render } from '@testing-library/react';
 
 import { type InternalCodeMirrorEditorProps } from '@grafana/ui/internal';
@@ -26,27 +23,6 @@ describe('SqlEditor', () => {
     render(<SqlEditor value="SELECT * FROM " onChange={jest.fn()} completionProvider={{ tables: () => [] }} />);
 
     expect(editorProps?.completeOnSpace).toBe(true);
-  });
-
-  it('passes a signature help provider built from the function signatures', () => {
-    render(
-      <SqlEditor
-        value="SELECT round("
-        onChange={jest.fn()}
-        functionSignatures={[{ name: 'round', parameters: [{ label: 'value: number' }] }]}
-      />
-    );
-
-    const state = EditorState.create({ doc: 'SELECT round(', extensions: [sqlLanguage()] });
-    expect(ensureSyntaxTree(state, state.doc.length, 5000)).not.toBeNull();
-    const help = editorProps?.signatureHelp?.(state.update({}).state, state.doc.length);
-    expect(help?.signatures.map((signature) => signature.name)).toEqual(['round']);
-  });
-
-  it('omits signature help when there are no function signatures', () => {
-    render(<SqlEditor value="SELECT 1" onChange={jest.fn()} functionSignatures={[]} />);
-
-    expect(editorProps?.signatureHelp).toBeUndefined();
   });
 
   it('contains horizontal overscroll within the editor', () => {

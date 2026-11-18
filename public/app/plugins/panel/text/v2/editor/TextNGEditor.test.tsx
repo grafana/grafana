@@ -676,7 +676,7 @@ describe('TextNGEditor handlebars preview', () => {
 });
 
 describe('TextNGEditor variable completion', () => {
-  it('offers the panel variables in Text display format, next to reducer completion', () => {
+  it('passes variable suggestions, Text display options, and the reducer source to the editor', () => {
     const suggestions = [{ value: 'myVar', label: 'myVar', origin: VariableOrigin.Template }];
     render(
       <TextNGEditor
