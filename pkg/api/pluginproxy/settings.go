@@ -15,6 +15,9 @@ type DataSourceProxySettings struct {
 	LoginCookieName           string
 	DataProxyLogging          bool
 	DataProxyWhiteList        map[string]bool
+	// UnwrapTimeouts reports upstream timeouts wrapped by HTTP client middleware
+	// as 504 rather than 502. The legacy proxy leaves it unset.
+	UnwrapTimeouts bool
 
 	// Load azure settings (avoid fetching the settings unless we are running azure)
 	GetAzureSettings func(context.Context) (*azsettings.AzureSettings, error)
