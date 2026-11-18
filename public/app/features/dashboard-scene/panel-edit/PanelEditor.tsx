@@ -116,6 +116,8 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   // Analytics only: the baseline excludes what the editor itself sets up (default query, plugin defaults),
   // unlike _originalSaveModel, so it can tell which areas the user changed.
   private _changeBaseline!: PanelEditSnapshot;
+  // A discard after a save inside the editor only reverts what changed since that save.
+  private _savedBaseline?: PanelEditSnapshot;
   private _savedInEditor = false;
   private _discardSummary?: PanelEditSummary;
 
@@ -153,6 +155,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     // Each activation is a separate visit for the close event.
     this._discardSummary = undefined;
     this._savedInEditor = false;
+    this._savedBaseline = undefined;
     this.resetChangeBaseline();
 
     // Splitter layout and table view changes remount the preview; keep its event subscriptions alive.
@@ -202,10 +205,10 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     this._changeBaseline = takePanelEditSnapshot(this.state.panelRef.resolve(), this._layoutItem);
   }
 
-  private getEditSummary(): PanelEditSummary {
+  // The close event compares with when the visit started, so changes saved from inside the editor still count.
+  private getEditSummary(baseline = this._changeBaseline): PanelEditSummary {
     const panel = this.getPanel();
-    // Compared with when the visit started, so changes saved from inside the editor still count.
-    const areas = diffPanelEditSnapshots(this._changeBaseline, takePanelEditSnapshot(panel, this._layoutItem));
+    const areas = diffPanelEditSnapshots(baseline, takePanelEditSnapshot(panel, this._layoutItem));
 
     return {
       changed: Object.values(areas).some(Boolean),
@@ -430,8 +433,9 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   }
 
   public onDiscard = () => {
-    // Summarize before reverting, while the discarded changes are still on the panel.
-    this._discardSummary = this.getEditSummary();
+    // Summarize before reverting, while the discarded changes are still on the panel. Discarding a new panel
+    // removes it, saved or not, so it drops everything since the editor opened.
+    this._discardSummary = this.getEditSummary(this.state.isNewPanel ? undefined : this._savedBaseline);
     reportInteraction('panel_edit_discarded', { ...this._discardSummary });
     this.setState({ isDirty: false });
 
@@ -453,6 +457,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
 
   public dashboardSaved() {
     this._savedInEditor = true;
+    this._savedBaseline = takePanelEditSnapshot(this.getPanel(), this._layoutItem);
     this.setOriginalState(this.state.panelRef);
     this.setState({ isDirty: false });
 
