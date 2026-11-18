@@ -24,7 +24,7 @@ import {
   Tooltip,
   useStyles2,
 } from '@grafana/ui';
-import { ConfirmContent, getFocusStyles } from '@grafana/ui/internal';
+import { ConfirmContent } from '@grafana/ui/internal';
 import { attachSkeleton, type SkeletonComponent } from '@grafana/ui/unstable';
 import { type PluginDashboard } from 'app/types/plugins';
 
@@ -84,6 +84,8 @@ interface BaseProps {
   onSelect?: () => void;
   /** Shows the card as picked. Only read together with `onSelect`. */
   selected?: boolean;
+  /** With `onSelect`, adds a Preview action next to Use template in the hover actions. */
+  onPreview?: () => void;
 }
 
 // Discriminated on `kind` so the `dashboard` shape is correlated with the kind of card being rendered.
@@ -115,6 +117,7 @@ function DashboardCardComponent({
   createdByName,
   onSelect,
   selected = false,
+  onPreview,
 }: Props) {
   const styles = useStyles2(getStyles);
   const isCompatibilityAppEnabled = config.featureToggles.dashboardValidatorApp;
@@ -178,6 +181,11 @@ function DashboardCardComponent({
     <article
       className={cx(styles.card, onSelect && styles.selectableCard, onSelect && selected && styles.selectedCard)}
     >
+      {onSelect && (
+        // A click anywhere on the card picks it. Keyboard and screen readers use the Use template action
+        // instead, so this mouse target stays out of the tab order and the accessibility tree.
+        <button type="button" tabIndex={-1} aria-hidden="true" className={styles.selectButton} onClick={onSelect} />
+      )}
       {hasCardMenu && (
         <div className={styles.cardMenu}>
           <Dropdown
@@ -269,13 +277,30 @@ function DashboardCardComponent({
           </div>
         )}
         {onSelect && (
-          <button
-            type="button"
-            className={styles.selectButton}
-            aria-pressed={selected}
-            aria-label={t('dashboard-library.card.use-template-button-label', 'Use template: {{title}}', { title })}
-            onClick={onSelect}
-          />
+          <div className={cx(styles.thumbnailOverlay, styles.selectOverlay)}>
+            <Button
+              variant="secondary"
+              className={styles.overlayButton}
+              onClick={onSelect}
+              aria-pressed={selected}
+              aria-label={t('dashboard-library.card.use-template-button-label', 'Use template: {{title}}', { title })}
+            >
+              <Trans i18nKey="dashboard-library.card.use-template-button">Use template</Trans>
+            </Button>
+            {onPreview && (
+              <Button
+                variant="secondary"
+                className={styles.overlayButton}
+                icon="external-link-alt"
+                onClick={onPreview}
+                aria-label={t('dashboard-library.card.preview-template-button-label', 'Preview template: {{title}}', {
+                  title,
+                })}
+              >
+                <Trans i18nKey="dashboard-library.card.preview-template-button">Preview</Trans>
+              </Button>
+            )}
+          </div>
         )}
         {!onSelect && (
           <div className={styles.thumbnailOverlay}>
@@ -334,6 +359,11 @@ function DashboardCardComponent({
           <div className={styles.tagsContainer}>
             <TagList tags={tags} className={styles.tagList} />
           </div>
+        )}
+        {onSelect && kind === 'template_dashboard' && (
+          <p className={styles.createdBy}>
+            <Trans i18nKey="dashboard-library.card.provisioned-by-grafana">Provisioned by Grafana</Trans>
+          </p>
         )}
         {isCustomTemplate && createdByName && (
           <p className={styles.createdBy}>
@@ -554,17 +584,27 @@ function getStyles(theme: GrafanaTheme2) {
       },
     }),
     thumbnailOverlay,
+    // Quieter than the template modal's cards: the picker sits inside a bordered panel.
     selectableCard: css({
       width: '100%',
+      borderColor: theme.colors.border.weak,
       '&:hover': {
+        borderColor: theme.colors.border.medium,
         backgroundColor: theme.colors.action.hover,
+      },
+      [`&:hover .${thumbnailOverlay}, &:focus-within .${thumbnailOverlay}`]: {
+        opacity: 1,
       },
     }),
     selectedCard: css({
       borderColor: theme.colors.primary.border,
       boxShadow: `0 0 0 1px ${theme.colors.primary.border}`,
+      backgroundColor: theme.colors.action.selected,
+      '&:hover': {
+        borderColor: theme.colors.primary.border,
+      },
     }),
-    // Sits over the thumbnail and its gradient so the whole preview is one click target.
+    // Covers the whole card so it is one click target; the hover actions sit above it.
     selectButton: css({
       position: 'absolute',
       inset: 0,
@@ -574,7 +614,14 @@ function getStyles(theme: GrafanaTheme2) {
       background: 'transparent',
       borderRadius: theme.shape.radius.default,
       cursor: 'pointer',
-      '&:focus-visible': getFocusStyles(theme),
+    }),
+    // Above the card's click target; only its buttons take clicks, the rest falls through to it.
+    selectOverlay: css({
+      zIndex: 2,
+      pointerEvents: 'none',
+      '& > *': {
+        pointerEvents: 'auto',
+      },
     }),
     overlayButton: css({
       width: '80%',
@@ -738,15 +785,18 @@ function getStyles(theme: GrafanaTheme2) {
 
 interface DashboardCardSkeletonProps {
   showCompatibilityBadge?: boolean;
+  /** Fills its grid cell instead of the template modal's fixed card width. */
+  fluid?: boolean;
 }
 
 const DashboardCardSkeleton: SkeletonComponent<DashboardCardSkeletonProps> = ({
   rootProps,
   showCompatibilityBadge,
+  fluid,
 }) => {
   const styles = useStyles2(getSkeletonStyles);
   return (
-    <div className={styles.card} style={rootProps.style}>
+    <div className={cx(styles.card, fluid && styles.fluid)} style={rootProps.style}>
       <Skeleton containerClassName={styles.thumbnail} height="100%" />
       <Skeleton height={22} width="70%" />
       <Skeleton height={19} width="90%" />
@@ -756,6 +806,10 @@ const DashboardCardSkeleton: SkeletonComponent<DashboardCardSkeletonProps> = ({
 };
 
 const getSkeletonStyles = (theme: GrafanaTheme2) => ({
+  fluid: css({
+    width: '100%',
+    borderColor: theme.colors.border.weak,
+  }),
   card: css({
     width: '350px',
     border: `1px solid ${theme.colors.border.strong}`,

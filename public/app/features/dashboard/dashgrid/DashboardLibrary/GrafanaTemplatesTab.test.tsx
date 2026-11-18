@@ -110,6 +110,21 @@ describe('GrafanaTemplatesTab', () => {
       await waitFor(() => expect(onTemplatesLoad).toHaveBeenCalledWith(1));
     });
 
+    it('previews the template on its dashboard page in a new tab', async () => {
+      const open = jest.spyOn(window, 'open').mockImplementation(() => null);
+      const { user } = renderTab({ onSelectTemplate: jest.fn() });
+
+      await user.click(await screen.findByRole('button', { name: 'Preview template: RED metrics' }));
+
+      expect(open).toHaveBeenCalledWith(
+        expect.stringMatching(/\/dashboard\/template\?.*gnetId=1/),
+        '_blank',
+        'noopener,noreferrer'
+      );
+      expect(locationService.push).not.toHaveBeenCalled();
+      open.mockRestore();
+    });
+
     it('marks the selected template', async () => {
       renderTab({ onSelectTemplate: jest.fn(), selectedTemplateId: 'grafana:1' });
 

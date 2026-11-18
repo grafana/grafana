@@ -143,7 +143,7 @@ describe('DashboardCard', () => {
   });
 
   describe('Select mode', () => {
-    it('turns the thumbnail into one button that selects the card instead of opening it', async () => {
+    it('picks the card from its Use template action instead of opening it', async () => {
       const onSelect = jest.fn();
       const { user } = render(
         <DashboardCard
@@ -175,6 +175,68 @@ describe('DashboardCard', () => {
       );
 
       expect(screen.getByRole('button', { name: 'Use template: RED metrics' })).toHaveAttribute('aria-pressed', 'true');
+    });
+
+    it('offers Preview next to Use template when the caller can preview', async () => {
+      const onPreview = jest.fn();
+      const onSelect = jest.fn();
+      const { user } = render(
+        <DashboardCard
+          title="RED metrics"
+          dashboard={createMockGnetDashboard()}
+          onClick={mockOnClick}
+          onSelect={onSelect}
+          onPreview={onPreview}
+          kind="template_dashboard"
+        />
+      );
+
+      await user.click(screen.getByRole('button', { name: 'Preview template: RED metrics' }));
+
+      expect(onPreview).toHaveBeenCalledTimes(1);
+      expect(onSelect).not.toHaveBeenCalled();
+    });
+
+    it('has no Preview action without a preview handler', () => {
+      render(
+        <DashboardCard
+          title="RED metrics"
+          dashboard={createMockGnetDashboard()}
+          onClick={mockOnClick}
+          onSelect={jest.fn()}
+          kind="template_dashboard"
+        />
+      );
+
+      expect(screen.queryByRole('button', { name: 'Preview template: RED metrics' })).not.toBeInTheDocument();
+    });
+
+    it('says a Grafana template is provisioned by Grafana', () => {
+      render(
+        <DashboardCard
+          title="RED metrics"
+          dashboard={createMockGnetDashboard()}
+          onClick={mockOnClick}
+          onSelect={jest.fn()}
+          kind="template_dashboard"
+        />
+      );
+
+      expect(screen.getByText('Provisioned by Grafana')).toBeInTheDocument();
+    });
+
+    it('keeps the template modal card unchanged', () => {
+      render(
+        <DashboardCard
+          title="RED metrics"
+          dashboard={createMockGnetDashboard()}
+          onClick={mockOnClick}
+          kind="template_dashboard"
+        />
+      );
+
+      expect(screen.queryByText('Provisioned by Grafana')).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'View template: RED metrics' })).toBeInTheDocument();
     });
   });
 

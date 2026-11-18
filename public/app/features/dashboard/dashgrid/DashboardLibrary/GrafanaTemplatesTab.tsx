@@ -2,7 +2,7 @@ import { type MutableRefObject, useEffect } from 'react';
 import { useAsync } from 'react-use';
 
 import { createAssistantContextItem } from '@grafana/assistant';
-import { type DataSourceInstanceListItem } from '@grafana/data';
+import { type DataSourceInstanceListItem, locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getBackendSrv, locationService } from '@grafana/runtime';
 import {
@@ -128,6 +128,13 @@ export const GrafanaTemplatesTab = ({
     locationService.push(templateUrl);
   };
 
+  // A new tab keeps the landing, and its prompt, where the person left them.
+  const previewTemplate = (dashboard: GnetDashboard) => {
+    const sourceEntryPoint = DashboardTemplatesSourceEntryPointMap[entryPoint] || 'unknown';
+    const url = getTemplateDashboardUrl(dashboard, testDataSource, sourceEntryPoint);
+    window.open(locationUtil.assureBaseUrl(url), '_blank', 'noopener,noreferrer');
+  };
+
   const selectTemplate = (dashboard: GnetDashboard) => {
     onSelectTemplate?.({
       id: getGrafanaTemplateSelectionId(dashboard),
@@ -180,6 +187,7 @@ export const GrafanaTemplatesTab = ({
             kind="template_dashboard"
             showAssistantButton={isDashboardTemplatesAssistantButtonEnabled && isDashboardTemplatesAssistantToolEnabled}
             onSelect={onSelectTemplate ? () => selectTemplate(dashboard) : undefined}
+            onPreview={onSelectTemplate ? () => previewTemplate(dashboard) : undefined}
             selected={selectedTemplateId === getGrafanaTemplateSelectionId(dashboard)}
           />
         );
