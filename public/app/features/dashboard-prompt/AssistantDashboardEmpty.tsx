@@ -172,10 +172,12 @@ export function AssistantDashboardEmpty({ dashboard }: Props) {
     <div ref={fitRef} className={styles.root} style={fit ? { height: fit.height, marginTop: -fit.pullUp } : undefined}>
       <div className={cx(styles.content, showTemplates && styles.contentWithTemplates)}>
         <div className={styles.top}>
-          <Icon name="apps" size="xxl" className={styles.appsIcon} />
-          <h2 className={styles.title}>
-            <Trans i18nKey="dashboard.empty.build-assistant">Build your dashboard with Assistant</Trans>
-          </h2>
+          <div className={styles.heading}>
+            <Icon name="apps" size="xxl" className={styles.appsIcon} />
+            <h2 className={styles.title}>
+              <Trans i18nKey="dashboard.empty.build-assistant">Build your dashboard with Assistant</Trans>
+            </h2>
+          </div>
           <div className={styles.prompt}>
             <DashboardLandingPrompt
               onSubmit={onSubmitPrompt}
@@ -241,11 +243,11 @@ function getStyles(theme: GrafanaTheme2) {
       maxWidth: 660,
       padding: theme.spacing(6, 4),
     }),
-    // Room for the template grid's columns under the prompt, and a fixed height for the grid to scroll in.
     // Centered in the dashboard's free space; a long template grid takes what is left and scrolls inside its
     // panel. The extra room below keeps "Add visualization" well clear of the bottom edge.
     contentWithTemplates: css({
-      maxWidth: 1040,
+      // Wider than the prompt alone, for the grid's columns; the empty-state wrapper sets the actual cap.
+      maxWidth: 'none',
       height: '100%',
       justifyContent: 'center',
       paddingTop: theme.spacing(3),
@@ -261,8 +263,15 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
-      gap: theme.spacing(2),
+      gap: theme.spacing(3),
       minHeight: 0,
+    }),
+    // The icon belongs to the heading, closer to it than the heading is to the prompt.
+    heading: css({
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      gap: theme.spacing(1),
     }),
     appsIcon: css({
       fill: theme.v1.palette.orange,
@@ -273,6 +282,7 @@ function getStyles(theme: GrafanaTheme2) {
       fontWeight: theme.typography.fontWeightBold,
       letterSpacing: '-0.01em',
       textAlign: 'center',
+      textWrap: 'balance',
     }),
     prompt: css({
       position: 'relative',
@@ -282,7 +292,7 @@ function getStyles(theme: GrafanaTheme2) {
     // The panel starts behind the prompt, so the two read as one control.
     templates: css({
       alignSelf: 'stretch',
-      marginTop: `calc(-1 * (${theme.spacing(2)} + ${PROMPT_OVERLAP}px))`,
+      marginTop: `calc(-1 * (${theme.spacing(3)} + ${PROMPT_OVERLAP}px))`,
       // The header's top inset; the closed panel repeats it at the bottom (LandingTemplates `panelClosed`).
       paddingTop: `calc(${PROMPT_OVERLAP}px + ${theme.spacing(0.5)})`,
     }),

@@ -5,6 +5,7 @@ import { type DataSourceInstanceListItem, type GrafanaTheme2 } from '@grafana/da
 import { Trans } from '@grafana/i18n';
 import { Grid, Icon, useStyles2 } from '@grafana/ui';
 import { getFocusStyles } from '@grafana/ui/internal';
+import { DashboardCard } from 'app/features/dashboard/dashgrid/DashboardLibrary/DashboardCard';
 import { GrafanaTemplatesTab } from 'app/features/dashboard/dashgrid/DashboardLibrary/GrafanaTemplatesTab';
 import { getDashboardTemplatesTab } from 'app/features/dashboard/dashgrid/DashboardLibrary/enterprise-components/DashboardTemplatesTabExtension';
 import { type TemplateSelection } from 'app/features/dashboard/dashgrid/DashboardLibrary/types';
@@ -19,6 +20,10 @@ interface Props {
 }
 
 const noop = () => {};
+
+const GRID_COLUMNS = { xs: 1, sm: 2, lg: 3 } as const;
+/** Two rows on a desktop, enough to fill the panel while the lists load. */
+const LOADING_CARDS = 6;
 
 /**
  * The templates under the new-dashboard prompt: a collapsible panel holding one scrollable grid, the
@@ -93,20 +98,30 @@ export function LandingTemplates({
             <Trans i18nKey="dashboard.empty.templates-empty">No templates available</Trans>
           </p>
         )}
-        <Grid gap={2} columns={{ xs: 1, sm: 2, lg: 3 }}>
-          {renderCustomTemplates()}
-          {showGrafanaTemplates && (
-            <GrafanaTemplatesTab
-              entryPoint=""
-              testDataSource={testDataSource}
-              onClose={noop}
-              loadedFiredRef={grafanaLoadedFiredRef}
-              onSelectTemplate={onSelectTemplate}
-              selectedTemplateId={selectedTemplateId}
-              onTemplatesLoad={onGrafanaTemplatesLoad}
-            />
-          )}
-        </Grid>
+        {!loaded && (
+          <Grid gap={2} columns={GRID_COLUMNS}>
+            {Array.from({ length: LOADING_CARDS }).map((_, index) => (
+              <DashboardCard.Skeleton key={index} fluid />
+            ))}
+          </Grid>
+        )}
+        {/* Shown once every list has loaded, so the cards arrive together instead of reflowing list by list. */}
+        <div hidden={!loaded}>
+          <Grid gap={2} columns={GRID_COLUMNS}>
+            {renderCustomTemplates()}
+            {showGrafanaTemplates && (
+              <GrafanaTemplatesTab
+                entryPoint=""
+                testDataSource={testDataSource}
+                onClose={noop}
+                loadedFiredRef={grafanaLoadedFiredRef}
+                onSelectTemplate={onSelectTemplate}
+                selectedTemplateId={selectedTemplateId}
+                onTemplatesLoad={onGrafanaTemplatesLoad}
+              />
+            )}
+          </Grid>
+        </div>
       </div>
     </section>
   );
@@ -119,14 +134,11 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       flexDirection: 'column',
       minHeight: 0,
-      padding: theme.spacing(0, 2, 2),
+      // Same side inset as the prompt's text, so the label and cards line up with it.
+      padding: theme.spacing(0, 1, 1),
       background: theme.colors.background.secondary,
       border: `1px solid ${theme.colors.border.weak}`,
-      borderRadius: theme.shape.radius.lg,
-      [theme.breakpoints.down('sm')]: {
-        paddingLeft: theme.spacing(1),
-        paddingRight: theme.spacing(1),
-      },
+      borderRadius: theme.shape.radius.default,
     }),
     // Closed, the header sits as far from the panel's bottom edge as from the prompt above it: the same inset
     // the page leaves past the prompt's edge, since the header's own padding already applies on both sides.

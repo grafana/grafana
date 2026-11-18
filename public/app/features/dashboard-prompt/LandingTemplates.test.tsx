@@ -7,7 +7,8 @@ import { type TemplateSelectionProps } from 'app/features/dashboard/dashgrid/Das
 import { LandingTemplates } from './LandingTemplates';
 
 let mockGrafanaCount = 1;
-let mockCustomCount = 1;
+// `undefined` keeps the custom list loading.
+let mockCustomCount: number | undefined = 1;
 
 jest.mock('app/features/dashboard/dashgrid/DashboardLibrary/GrafanaTemplatesTab', () => {
   const { useEffect: useMockEffect } = jest.requireActual('react');
@@ -28,8 +29,12 @@ jest.mock(
 
 const mockGetDashboardTemplatesTab = jest.mocked(getDashboardTemplatesTab);
 const CustomTemplates = ({ onTemplatesLoad }: TemplateSelectionProps) => {
-  useEffect(() => onTemplatesLoad?.(mockCustomCount), [onTemplatesLoad]);
-  return mockCustomCount > 0 ? <article data-testid="custom-card" /> : null;
+  useEffect(() => {
+    if (mockCustomCount !== undefined) {
+      onTemplatesLoad?.(mockCustomCount);
+    }
+  }, [onTemplatesLoad]);
+  return (mockCustomCount ?? 0) > 0 ? <article data-testid="custom-card" /> : null;
 };
 
 function renderTemplates(props: Partial<Parameters<typeof LandingTemplates>[0]> = {}) {
@@ -82,6 +87,14 @@ describe('LandingTemplates', () => {
     await user.click(toggle);
 
     expect(screen.getByTestId('grafana-card')).toBe(card);
+  });
+
+  it('holds every card back until all lists have loaded, so they do not reflow', () => {
+    mockCustomCount = undefined;
+    renderTemplates();
+
+    expect(screen.getByRole('button', { name: 'Start from a template' })).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByTestId('grafana-card')).not.toBeVisible();
   });
 
   it('starts closed when no list has templates, and says so when opened', async () => {
