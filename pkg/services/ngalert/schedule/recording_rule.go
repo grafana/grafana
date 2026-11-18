@@ -393,12 +393,14 @@ func (r *recordingRule) writeStale(ctx context.Context, markerAt time.Time, curr
 	}
 
 	var failed, dropped writtenSeries
+	expired := 0
 	failedAt := make(map[seriesTarget]map[data.Fingerprint]time.Time)
 	for target, set := range missing {
 		try := make(seriesSet, len(set))
 		for fp, labels := range set {
 			if since, ok := r.failedAt[target][fp]; ok && markerAt.Sub(since) >= maxAge {
 				dropped = dropped.merge(writtenSeries{target: {fp: labels}})
+				expired++
 				continue
 			}
 			try[fp] = labels
@@ -413,10 +415,12 @@ func (r *recordingRule) writeStale(ctx context.Context, markerAt time.Time, curr
 		}
 
 		failure := classifyMarkerError(err)
+		r.metrics.StaleMarkerFailures.WithLabelValues(failure.reason).Add(float64(len(try)))
 		if suppressed, ok := r.failureLog.allow(markerAt); ok {
 			logger.Warn("Failed to write stale markers", "metric", target.name, "series", len(try), "reason", failure.reason, "retry", failure.retry, "suppressed", suppressed, "error", err)
 		}
 		if !failure.retry {
+			r.metrics.StaleMarkersDropped.WithLabelValues(failure.reason).Add(float64(len(try)))
 			dropped = dropped.merge(writtenSeries{target: try})
 			continue
 		}
@@ -431,6 +435,9 @@ func (r *recordingRule) writeStale(ctx context.Context, markerAt time.Time, curr
 		}
 	}
 
+	if expired > 0 {
+		r.metrics.StaleMarkersDropped.WithLabelValues(markerReasonExpired).Add(float64(expired))
+	}
 	r.failedAt = failedAt
 	r.written.remove(dropped)
 	return failed

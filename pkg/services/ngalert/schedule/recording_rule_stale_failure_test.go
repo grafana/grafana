@@ -12,6 +12,7 @@ import (
 	"github.com/benbjohnson/clock"
 	"github.com/m3db/prometheus_remote_client_golang/promremote"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
@@ -246,5 +247,73 @@ func TestRecordingRuleStaleMarkerFailures(t *testing.T) {
 				require.Equal(t, tc.attempts == 2, retried)
 			})
 		}
+	})
+}
+
+func TestRecordingRuleStaleMarkerMetrics(t *testing.T) {
+	a := map[string]string{"instance": "a"}
+	b := map[string]string{"instance": "b"}
+	c := map[string]string{"instance": "c"}
+
+	counts := func(h *staleHarness) (failures, dropped map[string]float64) {
+		failures, dropped = map[string]float64{}, map[string]float64{}
+		for _, reason := range []string{markerReasonMaxActiveSeries, markerReasonClientError, markerReasonTransient, markerReasonExpired} {
+			failures[reason] = testutil.ToFloat64(h.rule.metrics.StaleMarkerFailures.WithLabelValues(reason))
+			dropped[reason] = testutil.ToFloat64(h.rule.metrics.StaleMarkersDropped.WithLabelValues(reason))
+		}
+		return failures, dropped
+	}
+
+	// Two series go missing on the first tick after being written.
+	setup := func(t *testing.T, err error) *staleHarness {
+		h := newStaleHarness(t)
+		h.rule.cfg.StaleMarkerMaxAge = 2 * time.Minute
+		h.ev.resp = seriesResponse(a, b, c)
+		h.tick()
+		h.ev.resp = seriesResponse(a)
+		h.failStale = true
+		h.staleErr = err
+		return h
+	}
+
+	t.Run("a marker rejected for good counts as a failure and a drop with the same reason", func(t *testing.T) {
+		for reason, err := range map[string]error{
+			markerReasonMaxActiveSeries: foreignError{"err-mimir-max-active-series"},
+			markerReasonClientError:     fmt.Errorf("%w: bad label", writer.ErrRejectedWrite),
+		} {
+			h := setup(t, err)
+			h.tick()
+			h.tick()
+			failures, dropped := counts(h)
+			require.Equal(t, 2.0, failures[reason], "two series, one failed write, counted once")
+			require.Equal(t, 2.0, dropped[reason])
+			for other := range failures {
+				if other != reason {
+					require.Zero(t, failures[other]+dropped[other], other)
+				}
+			}
+		}
+	})
+
+	t.Run("a transient failure counts on every try and is dropped as expired after the age", func(t *testing.T) {
+		h := setup(t, foreignError{"temporarily unavailable"})
+		h.tick()
+		h.tick()
+		failures, dropped := counts(h)
+		require.Equal(t, 4.0, failures[markerReasonTransient], "two series on two ticks")
+		require.Zero(t, dropped[markerReasonTransient], "a retried marker is not dropped")
+		require.Zero(t, dropped[markerReasonExpired])
+
+		h.tick()
+		failures, dropped = counts(h)
+		require.Equal(t, 4.0, failures[markerReasonTransient], "no write at the age limit")
+		require.Equal(t, 2.0, dropped[markerReasonExpired])
+	})
+
+	t.Run("label values stay in the fixed set", func(t *testing.T) {
+		h := setup(t, foreignError{"a message with an instance name, instance=a"})
+		h.tick()
+		require.Equal(t, 1, testutil.CollectAndCount(h.rule.metrics.StaleMarkerFailures))
+		require.Zero(t, testutil.CollectAndCount(h.rule.metrics.StaleMarkersDropped), "nothing dropped yet")
 	})
 }

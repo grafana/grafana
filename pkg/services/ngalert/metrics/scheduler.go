@@ -34,6 +34,8 @@ type Scheduler struct {
 	SimplifiedEditorRules               *prometheus.GaugeVec
 	PrometheusImportedRules             *prometheus.GaugeVec
 	PluginOriginRules                   *prometheus.GaugeVec
+	StaleMarkerFailures                 *prometheus.CounterVec
+	StaleMarkersDropped                 *prometheus.CounterVec
 }
 
 func NewSchedulerMetrics(r prometheus.Registerer) *Scheduler {
@@ -211,6 +213,24 @@ func NewSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 				Help:      "The number of alert rules created by a plugin, by origin.",
 			},
 			[]string{"org", "origin"},
+		),
+		StaleMarkerFailures: promauto.With(r).NewCounterVec(
+			prometheus.CounterOpts{
+				Namespace: Namespace,
+				Subsystem: Subsystem,
+				Name:      "recording_rule_stale_marker_failures_total",
+				Help:      "The number of series whose stale marker failed to write, by reason.",
+			},
+			[]string{"reason"},
+		),
+		StaleMarkersDropped: promauto.With(r).NewCounterVec(
+			prometheus.CounterOpts{
+				Namespace: Namespace,
+				Subsystem: Subsystem,
+				Name:      "recording_rule_stale_markers_dropped_total",
+				Help:      "The number of series whose stale marker was given up on, by reason.",
+			},
+			[]string{"reason"},
 		),
 	}
 }
