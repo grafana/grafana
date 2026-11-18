@@ -33,6 +33,9 @@ import { getStandardTransformers } from 'app/features/transformers/standardTrans
 import { DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
+import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
+import { AutoGridLayout } from '../scene/layout-auto-grid/AutoGridLayout';
+import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
 import { type DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
@@ -156,6 +159,25 @@ describe('InspectJsonTab', () => {
     const obj = JSON.parse(tab.state.jsonText);
     expect(obj.gridPos).toEqual({ x: 0, y: 0, w: 8, h: 10 });
     expect(obj.type).toEqual('table');
+    expect(tab.isEditable()).toBe(false);
+  });
+
+  it('Can show panel json for a library panel in a V2 default grid', async () => {
+    const { tab } = await buildTestSceneWithLibraryPanel('v2');
+
+    const obj = JSON.parse(tab.state.jsonText);
+    expect(obj.kind).toBe('LibraryPanel');
+    expect(obj.spec.libraryPanel).toEqual({ uid: '111', name: 'LibraryPanel A' });
+  });
+
+  it('Can show panel json for a library panel laid out by the V2 auto grid', async () => {
+    const { tab } = await buildTestSceneWithLibraryPanel('v2', 'auto');
+
+    // In the V2 auto grid a library panel sits in an AutoGridItem, but the legacy representation needs a
+    // DashboardGridItem parent, so building the JSON threw instead of showing the panel.
+    const obj = JSON.parse(tab.state.jsonText);
+    expect(obj.kind).toBe('LibraryPanel');
+    expect(obj.spec.libraryPanel).toEqual({ uid: '111', name: 'LibraryPanel A' });
     expect(tab.isEditable()).toBe(false);
   });
 
@@ -413,7 +435,10 @@ async function buildTestScene() {
   return { scene, tab, panel };
 }
 
-async function buildTestSceneWithLibraryPanel() {
+async function buildTestSceneWithLibraryPanel(
+  serializerVersion: 'v1' | 'v2' = 'v1',
+  layout: 'default' | 'auto' = 'default'
+) {
   const libraryPanel = new VizPanel({
     title: 'Panel A',
     pluginId: 'table',
@@ -450,14 +475,22 @@ async function buildTestSceneWithLibraryPanel() {
 
   jest.spyOn(libpanels, 'getLibraryPanel').mockResolvedValue({ ...libraryPanelState, ...panel });
 
-  const scene = new DashboardScene({
-    title: 'hello',
-    uid: 'dash-1',
-    meta: {
-      canEdit: true,
+  const scene = new DashboardScene(
+    {
+      title: 'hello',
+      uid: 'dash-1',
+      meta: {
+        canEdit: true,
+      },
+      body:
+        layout === 'auto'
+          ? new AutoGridLayoutManager({
+              layout: new AutoGridLayout({ children: [new AutoGridItem({ body: libraryPanel })] }),
+            })
+          : DefaultGridLayoutManager.fromVizPanels([libraryPanel]),
     },
-    body: DefaultGridLayoutManager.fromVizPanels([libraryPanel]),
-  });
+    serializerVersion
+  );
 
   activateFullSceneTree(scene);
 
