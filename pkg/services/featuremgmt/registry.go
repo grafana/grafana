@@ -3542,8 +3542,8 @@ var (
 			Generate:     Generate{Go: true, React: true},
 		},
 		{
-			Name:         "datasources.gatewaySamplesRead",
-			Description:  "Record the samples Mimir read for each query in query gateway audit events",
+			Name:         "datasources.gatewayQueryUsage",
+			Description:  "Record billed query usage (Mimir samples read, Loki bytes processed) in query gateway audit events",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaDataSourcesPlugins,
 			HideFromDocs: true,

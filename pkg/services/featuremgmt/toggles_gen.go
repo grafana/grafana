@@ -1066,7 +1066,7 @@ const (
 	// Enable support for query gateway rate limits
 	FlagDatasourcesGatewayRateLimits = "datasources.gatewayRateLimits"
 
-	// FlagDatasourcesGatewaySamplesRead
-	// Record the samples Mimir read for each query in query gateway audit events
-	FlagDatasourcesGatewaySamplesRead = "datasources.gatewaySamplesRead"
+	// FlagDatasourcesGatewayQueryUsage
+	// Record billed query usage (Mimir samples read, Loki bytes processed) in query gateway audit events
+	FlagDatasourcesGatewayQueryUsage = "datasources.gatewayQueryUsage"
 )
