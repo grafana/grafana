@@ -181,6 +181,18 @@ func TestRawChunkWriter_ArrowChunksOfOneFrame(t *testing.T) {
 			want:       map[string]data.Frames{"A": {wantFrame("A", "table", 1, 2, 3, 4)}},
 		},
 		{
+			name: "first chunk without rows",
+			chunks: func(t *testing.T) []*pluginv2.QueryChunkedDataResponse {
+				return []*pluginv2.QueryChunkedDataResponse{
+					arrowChunk(t, "A", "1", "table"),
+					arrowChunk(t, "A", "1", "table", 1, 2),
+					arrowChunk(t, "A", "1", "table", 3),
+				}
+			},
+			withSchema: []bool{true, false, false},
+			want:       map[string]data.Frames{"A": {wantFrame("A", "table", 1, 2, 3)}},
+		},
+		{
 			name: "alternating frame IDs",
 			chunks: func(t *testing.T) []*pluginv2.QueryChunkedDataResponse {
 				return []*pluginv2.QueryChunkedDataResponse{
@@ -252,5 +264,70 @@ func TestRawChunkWriter_ArrowChunksOfOneFrame(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestRawChunkWriter_ArrowChunksKeepMetadataOfFirstChunk(t *testing.T) {
+	newFrame := func(meta *data.FrameMeta, values ...int64) *data.Frame {
+		field := data.NewField("value", data.Labels{"host": "a"}, values).SetConfig(&data.FieldConfig{Unit: "ms"})
+		frame := data.NewFrame("table", field).SetMeta(meta)
+		frame.RefID = "A"
+		return frame
+	}
+	first := &data.FrameMeta{
+		ExecutedQueryString: "SELECT value FROM metrics",
+		Notices:             []data.Notice{{Severity: data.NoticeSeverityInfo, Text: "first"}},
+	}
+	later := &data.FrameMeta{Notices: []data.Notice{{Severity: data.NoticeSeverityWarning, Text: "later"}}}
+
+	w := httptest.NewRecorder()
+	writer := NewChunkedHTTPWriter(w)
+	for _, frame := range []*data.Frame{newFrame(first, 1), newFrame(later, 2)} {
+		b, err := frame.MarshalArrow()
+		require.NoError(t, err)
+		require.NoError(t, writer.OnChunk(&pluginv2.QueryChunkedDataResponse{
+			RefId:   "A",
+			FrameId: "1",
+			Frame:   b,
+			Format:  pluginv2.DataFrameFormat_ARROW,
+		}))
+	}
+
+	rsp, err := AccumulateJSONLines(strings.NewReader(w.Body.String()))
+	require.NoError(t, err)
+	// A line without the schema has no meta, so the meta of the later chunk is dropped.
+	want := data.Frames{newFrame(first, 1, 2)}
+	if diff := cmp.Diff(want, rsp.Responses["A"].Frames, data.FrameTestCompareOptions()...); diff != "" {
+		t.Errorf("frames mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestRawChunkWriter_JSONChunksPassThrough(t *testing.T) {
+	frame := data.NewFrame("table", data.NewField("value", nil, []int64{1}))
+	first, err := data.FrameToJSON(frame, data.IncludeAll)
+	require.NoError(t, err)
+	later, err := data.FrameToJSON(frame, data.IncludeDataOnly)
+	require.NoError(t, err)
+
+	w := httptest.NewRecorder()
+	writer := NewChunkedHTTPWriter(w)
+	chunks := [][]byte{first, later}
+	for _, b := range chunks {
+		require.NoError(t, writer.OnChunk(&pluginv2.QueryChunkedDataResponse{
+			RefId:   "A",
+			FrameId: "1",
+			Frame:   b,
+			Format:  pluginv2.DataFrameFormat_JSON,
+		}))
+	}
+
+	lines := strings.Split(strings.TrimSuffix(w.Body.String(), "\n"), "\n")
+	require.Len(t, lines, len(chunks))
+	for i, want := range chunks {
+		var record struct {
+			Frame json.RawMessage `json:"frame"`
+		}
+		require.NoError(t, json.Unmarshal([]byte(lines[i]), &record))
+		require.Equal(t, string(want), string(record.Frame), "line %d", i)
 	}
 }
