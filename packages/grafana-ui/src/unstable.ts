@@ -41,3 +41,4 @@ export { RangeSliderG14 } from './components/Slider/RangeSliderG14';
 export type { RangeSliderG14Props } from './components/Slider/types';
 export { usePanelNotices, usePanelStatusSnapshot, PanelStatusActions } from './components/PanelChrome';
 export { SanitizedSVG } from './components/SanitizedSVG/SanitizedSVG';
+export { getTextContentStyles } from './themes/GlobalStyles/textContentStyles';
