@@ -4831,6 +4831,23 @@
     },
     {
       "metadata": {
+        "name": "logs.enableTimeMachine",
+        "resourceVersion": "1794871243020",
+        "creationTimestamp": "2026-11-16T20:54:21Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-11-16 23:20:43.020545615 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables multiple points of integration for Adaptive Logs Time Machine.",
+        "stage": "experimental",
+        "codeowner": "@grafana/adaptive-telemetry",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "logsTablePanelNG",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-03-24T11:30:23Z"
