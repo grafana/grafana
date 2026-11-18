@@ -3,9 +3,14 @@ import { ancestorsOf } from 'app/features/browse-dashboards/state/utils';
 import { type BrowseDashboardsState } from 'app/features/browse-dashboards/types';
 import { type DashboardViewItem } from 'app/features/search/types';
 
+import { PROVISIONING_URL } from '../constants';
 import { type RepoWorkflows } from '../types';
 
 import { isItemManagedByRepository } from './managedResource';
+
+export function getRepositoryResourcesUrl(name: string, resource: string): string {
+  return `${PROVISIONING_URL}/${name}?tab=resources&resource=${resource}`;
+}
 
 export function getIsReadOnlyWorkflows(workflows?: RepoWorkflows): boolean {
   // Repository is considered read-only if it has no workflows defined (workflows are required for write operations)

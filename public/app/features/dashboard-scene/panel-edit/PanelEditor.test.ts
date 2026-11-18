@@ -630,10 +630,31 @@ describe('PanelEditor', () => {
       });
     });
 
-    it('reports saving a library panel from the editor as saved in the editor', async () => {
+    it('reports a discard after a save inside the editor with only the areas changed since the save', async () => {
+      const { panel, panelEditor } = await setup();
+
+      getQueryRunnerFor(panel)?.setState({ maxDataPoints: 123 });
+      panelEditor.dashboardSaved();
+      panel.setState({ title: 'changed title' });
+      panelEditor.onDiscard();
+      closeEditor();
+
+      const discardedChanges = { ...NO_CHANGES, changed: true, changed_panel_info: true, saved_in_editor: true };
+      expect(getQueryRunnerFor(panel)?.state.maxDataPoints).toBe(123);
+      expect(reported('panel_edit_discarded')).toEqual([{ properties: discardedChanges, options: undefined }]);
+      expect(reported('panel_edit_closed')[0].properties).toEqual({ ...discardedChanges, outcome: 'discarded' });
+    });
+
+    it('reports saving a library panel from the editor as a library panel saved in the editor', async () => {
       const saveLibPanel = jest.spyOn(libAPI, 'saveLibPanel').mockResolvedValue(undefined);
       try {
-        const { panelEditor } = await setup();
+        const libraryPanel = new LibraryPanelBehavior({
+          uid: 'lib-uid',
+          name: 'Library panel',
+          isLoaded: true,
+          _loadedPanel: { uid: 'lib-uid', name: 'Library panel', type: 'panel', version: 1, model: { type: 'text' } },
+        });
+        const { panelEditor } = await setup({ libraryPanel });
 
         panelEditor.onConfirmSaveLibraryPanel();
         closeEditor();
@@ -642,6 +663,7 @@ describe('PanelEditor', () => {
         expect(reported('panel_edit_closed')[0].properties).toEqual({
           ...NO_CHANGES,
           saved_in_editor: true,
+          is_library_panel: true,
           outcome: 'kept',
         });
       } finally {

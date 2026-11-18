@@ -3,6 +3,8 @@
  */
 import { skipToken } from '@reduxjs/toolkit/query/react';
 
+import { type ComboboxOption } from '@grafana/ui';
+
 import { type ValidateAlertmanagerConfigImportArgs } from '../../../api/convertToGMAApi';
 import { isAutoSyncSelected } from '../Wizard/steps';
 import { type ImportFormValues, type Step1Values } from '../types';
@@ -181,4 +183,21 @@ export function buildDryRunArgs(
     datasourceName: values.notificationsDatasourceName ?? undefined,
     configIdentifier,
   };
+}
+
+/**
+ * The policy trees the rules step can route to: the ones the API knows, plus the one step 1 will create.
+ * That tree isn't known to the API yet, so it is offered first as the most relevant option.
+ */
+export function getRoutingTreeOptions(
+  existingTreeOptions: Array<ComboboxOption<string>>,
+  createdTreeName: string,
+  step1Completed: boolean
+): Array<ComboboxOption<string>> {
+  const isUncreatedTree =
+    step1Completed && createdTreeName && !existingTreeOptions.some((option) => option.value === createdTreeName);
+
+  return isUncreatedTree
+    ? [{ label: createdTreeName, value: createdTreeName }, ...existingTreeOptions]
+    : existingTreeOptions;
 }
