@@ -35,19 +35,13 @@ export function AlertRulesFilterSidebar({ query, filter, onApply }: AlertRulesFi
   const canViewContactPoints = isGranted(useGlobalContactPointAbility(ContactPointAction.View));
   const pluginsLabelId = useId();
 
-  const apply = (changes: Partial<Record<AlertFilterKey, Array<string | undefined>>>) =>
-    onApply(
-      Object.entries(changes).reduce(
-        (next, [key, values]) =>
-          setFilterValues(
-            next,
-            alertRuleSearchSchema,
-            key,
-            values.filter((value) => value !== undefined)
-          ),
-        query
-      )
-    );
+  const apply = (changes: Partial<Record<AlertFilterKey, Array<string | undefined>>>) => {
+    const newQuery = Object.entries(changes).reduce((currentQuery, [filterKey, values]) => {
+      const newValues = values.filter((value) => value !== undefined);
+      return setFilterValues(currentQuery, alertRuleSearchSchema, filterKey, newValues);
+    }, query);
+    onApply(newQuery);
+  };
 
   return (
     <Box width={32} shrink={0} paddingBottom={2}>
