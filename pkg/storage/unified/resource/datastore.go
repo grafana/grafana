@@ -33,9 +33,6 @@ const (
 type dataStore struct {
 	kv    KV
 	cache *gocache.Cache
-	// fastLatestKeyLookup resolves latest-version reads with a single-row
-	// descending lookup. Off by default while it is rolled out.
-	fastLatestKeyLookup bool
 }
 
 type dataImportBatchWriter interface {
@@ -251,7 +248,7 @@ func (d *dataStore) GetResourceKeyAtRevision(ctx context.Context, key GetRequest
 
 	listKey := ListRequestKey(key)
 
-	if rv == 0 && d.fastLatestKeyLookup {
+	if rv == 0 {
 		// The newest key for a single resource is the last one in key order, so a
 		// one-row descending lookup avoids scanning the resource's whole history.
 		dataKey, err := d.LastResourceVersion(ctx, listKey)
